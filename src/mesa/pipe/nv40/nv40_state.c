@@ -166,7 +166,42 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	uint32_t filter = 0;
 
 	ps = malloc(sizeof(struct nv40_sampler_state));
-	
+
+	ps->fmt = 0;
+	if (!cso->normalized_coords)
+		ps->fmt |= NV40TCL_TEX_FORMAT_RECT;
+
+	ps->wrap = ((wrap_mode(cso->wrap_s) << NV40TCL_TEX_WRAP_S_SHIFT) |
+		    (wrap_mode(cso->wrap_t) << NV40TCL_TEX_WRAP_T_SHIFT) |
+		    (wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_R_SHIFT));
+
+	ps->en = 0;
+	if (cso->max_anisotropy >= 2.0) {
+		/* no idea, binary driver sets it, works without it.. meh.. */
+		ps->wrap |= (1 << 5);
+
+		if (cso->max_anisotropy >= 16.0) {
+			ps->en |= (7 << 4);
+		} else
+		if (cso->max_anisotropy >= 12.0) {
+			ps->en |= (6 << 4);
+		} else
+		if (cso->max_anisotropy >= 10.0) {
+			ps->en |= (5 << 4);
+		} else
+		if (cso->max_anisotropy >= 8.0) {
+			ps->en |= (4 << 4);
+		} else
+		if (cso->max_anisotropy >= 6.0) {
+			ps->en |= (3 << 4);
+		} else
+		if (cso->max_anisotropy >= 4.0) {
+			ps->en |= (2 << 4);
+		} else {
+			ps->en |= (1 << 4); /* 2.0 */
+		}
+	}
+
 	switch (cso->mag_img_filter) {
 	case PIPE_TEX_FILTER_LINEAR:
 		filter |= NV40TCL_TEX_FILTER_MAG_LINEAR;
@@ -209,11 +244,8 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 		break;
 	}
 
-
-	ps->wrap = ((wrap_mode(cso->wrap_s) << NV40TCL_TEX_WRAP_S_SHIFT) |
-		    (wrap_mode(cso->wrap_t) << NV40TCL_TEX_WRAP_T_SHIFT) |
-		    (wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_R_SHIFT));
 	ps->filt = filter;
+
 	ps->bcol = ((float_to_ubyte(cso->border_color[3]) << 24) |
 		    (float_to_ubyte(cso->border_color[0]) << 16) |
 		    (float_to_ubyte(cso->border_color[1]) <<  8) |

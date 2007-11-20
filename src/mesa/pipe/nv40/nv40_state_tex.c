@@ -66,7 +66,8 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 		return;
 	}
 
-	txf  = tf->format | 0x8000;
+	txf  = ps->fmt;
+	txf |= tf->format | 0x8000;
 	txf |= ((mt->last_level - mt->first_level + 1) <<
 		NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
 
@@ -107,7 +108,7 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 		   NOUVEAU_BO_OR | NOUVEAU_BO_RD, NV40TCL_TEX_FORMAT_DMA0,
 		   NV40TCL_TEX_FORMAT_DMA1);
 	OUT_RING  (ps->wrap);
-	OUT_RING  (NV40TCL_TEX_ENABLE_ENABLE |
+	OUT_RING  (NV40TCL_TEX_ENABLE_ENABLE | ps->en |
 		   (0x00078000) /* mipmap related? */);
 	OUT_RING  (txs);
 	OUT_RING  (ps->filt | 0x3fd6 /*voodoo*/);
