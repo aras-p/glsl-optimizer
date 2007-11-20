@@ -31,38 +31,30 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
-#include "sp_context.h"
 #include "sp_headers.h"
-#include "sp_surface.h"
 #include "sp_quad.h"
-#include "sp_tile_cache.h"
 
+
+/**
+ * All this stage does is compute the quad's Z values (which is normally
+ * done by the shading stage).
+ * The next stage will do the actual depth test.
+ */
 static void
 earlyz_quad(
    struct quad_stage    *qs,
    struct quad_header   *quad )
 {
-   uint  i;
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
-   float xy[4][2];
+   const float dzdx = quad->coef[0].dadx[2];
+   const float dzdy = quad->coef[0].dady[2];
+   const float z0 = quad->coef[0].a0[2] + dzdx * fx + dzdy * fy;
 
-   xy[0][0] = fx;
-   xy[1][0] = fx + 1.0f;
-   xy[2][0] = fx;
-   xy[3][0] = fx + 1.0f;
-
-   xy[0][1] = fy;
-   xy[1][1] = fy;
-   xy[2][1] = fy + 1.0f;
-   xy[3][1] = fy + 1.0f;
-
-   for (i = 0; i < QUAD_SIZE; i++) {
-      quad->outputs.depth[i] =
-         quad->coef[0].a0[2] +
-         quad->coef[0].dadx[2] * xy[i][0] +
-         quad->coef[0].dady[2] * xy[i][1];
-   }
+   quad->outputs.depth[0] = z0;
+   quad->outputs.depth[1] = z0 + dzdx;
+   quad->outputs.depth[2] = z0 + dzdy;
+   quad->outputs.depth[3] = z0 + dzdx + dzdy;
 
    if (qs->next) {
       qs->next->run( qs->next, quad );
