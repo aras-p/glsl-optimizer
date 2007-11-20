@@ -108,6 +108,14 @@ nv04_region_copy(struct nouveau_context *nv, struct pipe_region *dst,
 	OUT_RING  ((dy << 16) | dx);
 	OUT_RING  (( h << 16) |  w);
 
+	nouveau_notifier_reset(nv->sync_notifier, 0);
+	BEGIN_RING(NvGdiRect, 0x104, 1);
+	OUT_RING  (0);
+	BEGIN_RING(NvGdiRect, 0x100, 1);
+	OUT_RING  (0);
+	FIRE_RING();
+	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
+
 	return 0;
 }
 
@@ -146,6 +154,14 @@ nv04_region_fill(struct nouveau_context *nv,
 		   NV04_GDI_RECTANGLE_TEXT_UNCLIPPED_RECTANGLE_POINT(0), 2);
 	OUT_RING  ((dx << 16) | dy);
 	OUT_RING  (( w << 16) |  h);
+
+	nouveau_notifier_reset(nv->sync_notifier, 0);
+	BEGIN_RING(NvGdiRect, 0x104, 1);
+	OUT_RING  (0);
+	BEGIN_RING(NvGdiRect, 0x100, 1);
+	OUT_RING  (0);
+	FIRE_RING();
+	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
 
 	return 0;
 }
