@@ -6,14 +6,10 @@
   TRUE,                                                                        \
   PIPE_FORMAT_##m,                                                             \
   NV40TCL_TEX_FORMAT_FORMAT_##tf,                                              \
-  (NV40TCL_TEX_SWIZZLE_S0_X_##ts0x << NV40TCL_TEX_SWIZZLE_S0_X_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S0_X_##ts0y << NV40TCL_TEX_SWIZZLE_S0_Y_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S0_X_##ts0z << NV40TCL_TEX_SWIZZLE_S0_Z_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S0_X_##ts0w << NV40TCL_TEX_SWIZZLE_S0_W_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S1_X_##ts1x << NV40TCL_TEX_SWIZZLE_S1_X_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S1_X_##ts1y << NV40TCL_TEX_SWIZZLE_S1_Y_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S1_X_##ts1z << NV40TCL_TEX_SWIZZLE_S1_Z_SHIFT) |        \
-  (NV40TCL_TEX_SWIZZLE_S1_X_##ts1w << NV40TCL_TEX_SWIZZLE_S1_W_SHIFT),         \
+  (NV40TCL_TEX_SWIZZLE_S0_X_##ts0x | NV40TCL_TEX_SWIZZLE_S0_Y_##ts0y |         \
+   NV40TCL_TEX_SWIZZLE_S0_Z_##ts0z | NV40TCL_TEX_SWIZZLE_S0_W_##ts0w |         \
+   NV40TCL_TEX_SWIZZLE_S1_X_##ts1x | NV40TCL_TEX_SWIZZLE_S1_Y_##ts1y |         \
+   NV40TCL_TEX_SWIZZLE_S1_Z_##ts1z | NV40TCL_TEX_SWIZZLE_S1_W_##ts1w),         \
 }
 
 struct nv40_texture_format {
@@ -53,20 +49,6 @@ nv40_tex_format(uint pipe_format)
 	return NULL;
 }
 
-static INLINE int
-nv40_tex_dims(uint pipe_target)
-{
-	switch (pipe_target) {
-	case PIPE_TEXTURE_1D: return 1;
-	case PIPE_TEXTURE_2D: return 2;
-	case PIPE_TEXTURE_3D: return 3;
-	case PIPE_TEXTURE_CUBE: return 2;
-	default:
-		NOUVEAU_ERR("AII unknown pipe target: %d\n", pipe_target);
-		return 2;
-	}
-}
-
 static void
 nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 {
@@ -78,20 +60,33 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 	int swizzled = 0; /*XXX: implement in region code? */
 
 	tf = nv40_tex_format(mt->format);
-	if (!tf->defined) {
+	if (!tf || !tf->defined) {
 		NOUVEAU_ERR("Unsupported texture format: 0x%x\n", mt->format);
 		return;
 	}
 
-	txf  = (tf->format | 0x80) << NV40TCL_TEX_FORMAT_FORMAT_SHIFT;
+	txf  = tf->format | 0x8000;
 	txf |= ((mt->last_level - mt->first_level + 1) <<
 		NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
+
 	if (1) /* XXX */
 		txf |= NV40TCL_TEX_FORMAT_NO_BORDER;
 
-	txf |= (nv40_tex_dims(mt->target) << NV40TCL_TEX_FORMAT_DIMS_SHIFT);
-	if (0) /*XXX*/
-		txf |= NV40TCL_TEX_FORMAT_RECT;
+	switch (mt->target) {
+	case PIPE_TEXTURE_2D:
+	case PIPE_TEXTURE_CUBE:
+		txf |= NV40TCL_TEX_FORMAT_DIMS_2D;
+		break;
+	case PIPE_TEXTURE_3D:
+		txf |= NV40TCL_TEX_FORMAT_DIMS_3D;
+		break;
+	case PIPE_TEXTURE_1D:
+		txf |= NV40TCL_TEX_FORMAT_DIMS_1D;
+		break;
+	default:
+		NOUVEAU_ERR("Unknown target %d\n", mt->target);
+		return;
+	}
 
 	if (swizzled) {
 		txp = 0;

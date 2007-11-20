@@ -6,9 +6,9 @@ static INLINE int
 nv04_surface_format(int cpp)
 {
 	switch (cpp) {
-	case 1: return 0x1;
-	case 2: return 0x4;
-	case 4: return 0xb;
+	case 1: return NV04_CONTEXT_SURFACES_2D_FORMAT_Y8;
+	case 2: return NV04_CONTEXT_SURFACES_2D_FORMAT_R5G6B5;
+	case 4: return NV04_CONTEXT_SURFACES_2D_FORMAT_Y32;
 	default:
 		return -1;
 	}
@@ -18,9 +18,9 @@ static INLINE int
 nv04_rect_format(int cpp)
 {
 	switch (cpp) {
-	case 1: return 0x3;
-	case 2: return 0x1;
-	case 4: return 0x3;
+	case 1: return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
+	case 2: return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A16R5G6B5;
+	case 4: return NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT_A8R8G8B8;
 	default:
 		return -1;
 	}
@@ -78,8 +78,6 @@ nv04_region_copy(struct nouveau_context *nv, struct pipe_region *dst,
 	if (src->cpp != dst->cpp)
 		return 1;
 
-	NOUVEAU_ERR("preg\n");
-
 	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
 	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
 	 */
@@ -96,10 +94,10 @@ nv04_region_copy(struct nouveau_context *nv, struct pipe_region *dst,
 		return 1;
 	}
 
-	BEGIN_RING(NvCtxSurf2D, 0x0184, 2);
+	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(src->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 	OUT_RELOCo(dst->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	BEGIN_RING(NvCtxSurf2D, 0x0300, 4);
+	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (format);
 	OUT_RING  (((dst->pitch * dst->cpp) << 16) | (src->pitch * src->cpp));
 	OUT_RELOCl(src->buffer, src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -131,20 +129,21 @@ nv04_region_fill(struct nouveau_context *nv,
 		return 1;
 	}
 
-	BEGIN_RING(NvCtxSurf2D, 0x0184, 2);
+	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(dst->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCo(dst->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	BEGIN_RING(NvCtxSurf2D, 0x0300, 4);
+	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (cs2d_format);
 	OUT_RING  (((dst->pitch * dst->cpp) << 16) | (dst->pitch * dst->cpp));
 	OUT_RELOCl(dst->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCl(dst->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
-	BEGIN_RING(NvGdiRect, 0x0300, 1);
+	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT, 1);
 	OUT_RING  (gdirect_format);
-	BEGIN_RING(NvGdiRect, 0x03fc, 1);
+	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_COLOR1_A, 1);
 	OUT_RING  (value);
-	BEGIN_RING(NvGdiRect, 0x0400, 2);
+	BEGIN_RING(NvGdiRect,
+		   NV04_GDI_RECTANGLE_TEXT_UNCLIPPED_RECTANGLE_POINT(0), 2);
 	OUT_RING  ((dx << 16) | dy);
 	OUT_RING  (( w << 16) |  h);
 
@@ -164,6 +163,7 @@ nv04_region_data(struct nouveau_context *nv, struct pipe_region *dst,
 int
 nouveau_region_init_nv04(struct nouveau_context *nv)
 {
+	unsigned class;
 	int ret;
 
 	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, 0x39,
@@ -171,43 +171,48 @@ nouveau_region_init_nv04(struct nouveau_context *nv)
 		NOUVEAU_ERR("Error creating m2mf object: %d\n", ret);
 		return 1;
 	}
-	BEGIN_RING(NvM2MF, 0x0180, 1);
+	BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
 
-	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, 0x62,
+	class = nv->chipset < 0x10 ? NV04_CONTEXT_SURFACES_2D :
+				     NV10_CONTEXT_SURFACES_2D;
+	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, class,
 				       &nv->NvCtxSurf2D))) {
 		NOUVEAU_ERR("Error creating 2D surface object: %d\n", ret);
 		return 1;
 	}
-	BEGIN_RING(NvCtxSurf2D, 0x0184, 2);
+	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RING  (nv->channel->vram->handle);
 	OUT_RING  (nv->channel->vram->handle);
 
-	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, 0x9f,
+	class = nv->chipset < 0x10 ? NV_IMAGE_BLIT :
+				     NV12_IMAGE_BLIT;
+	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, class,
 				       &nv->NvImageBlit))) {
 		NOUVEAU_ERR("Error creating blit object: %d\n", ret);
 		return 1;
 	}
-	BEGIN_RING(NvImageBlit, 0x0180, 1);
+	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
-	BEGIN_RING(NvImageBlit, 0x019c, 1);
+	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_SURFACE, 1);
 	OUT_RING  (nv->NvCtxSurf2D->handle);
-	BEGIN_RING(NvImageBlit, 0x02fc, 1);
-	OUT_RING  (3);
+	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_OPERATION, 1);
+	OUT_RING  (NV_IMAGE_BLIT_OPERATION_SRCCOPY);
 
-	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, 0x4a,
+	class = NV04_GDI_RECTANGLE_TEXT;
+	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, class,
 				       &nv->NvGdiRect))) {
 		NOUVEAU_ERR("Error creating rect object: %d\n", ret);
 		return 1;
 	}
-	BEGIN_RING(NvGdiRect, 0x0180, 1);
+	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
-	BEGIN_RING(NvGdiRect, 0x0198, 1);
+	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
 	OUT_RING  (nv->NvCtxSurf2D->handle);
-	BEGIN_RING(NvGdiRect, 0x02fc, 1);
-	OUT_RING  (3);
-	BEGIN_RING(NvGdiRect, 0x0304, 1);
-	OUT_RING  (2);
+	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
+	OUT_RING  (NV04_GDI_RECTANGLE_TEXT_OPERATION_SRCCOPY);
+	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT, 1);
+	OUT_RING  (NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
 	nv->region_display = nv04_region_display;
 	nv->region_copy = nv04_region_copy;

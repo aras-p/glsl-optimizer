@@ -119,21 +119,101 @@ nv40_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 	free(hwcso);
 }
 
+
+static INLINE unsigned
+wrap_mode(unsigned wrap) {
+	unsigned ret;
+
+	switch (wrap) {
+	case PIPE_TEX_WRAP_REPEAT:
+		ret = NV40TCL_TEX_WRAP_S_REPEAT;
+		break;
+	case PIPE_TEX_WRAP_MIRROR_REPEAT:
+		ret = NV40TCL_TEX_WRAP_S_MIRRORED_REPEAT;
+		break;
+	case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+		ret = NV40TCL_TEX_WRAP_S_CLAMP_TO_EDGE;
+		break;
+	case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+		ret = NV40TCL_TEX_WRAP_S_CLAMP_TO_BORDER;
+		break;
+	case PIPE_TEX_WRAP_CLAMP:
+		ret = NV40TCL_TEX_WRAP_S_CLAMP;
+		break;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
+		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP_TO_EDGE;
+		break;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
+		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP_TO_BORDER;
+		break;
+	case PIPE_TEX_WRAP_MIRROR_CLAMP:
+		ret = NV40TCL_TEX_WRAP_S_MIRROR_CLAMP;
+		break;
+	default:
+		NOUVEAU_ERR("unknown wrap mode: %d\n", wrap);
+		ret = NV40TCL_TEX_WRAP_S_REPEAT;
+		break;
+	}
+
+	return ret >> NV40TCL_TEX_WRAP_S_SHIFT;
+}
+
 static void *
 nv40_sampler_state_create(struct pipe_context *pipe,
 			  const struct pipe_sampler_state *cso)
 {
 	struct nv40_sampler_state *ps;
-	
+	uint32_t filter = 0;
+
 	ps = malloc(sizeof(struct nv40_sampler_state));
 	
-	ps->wrap = ((nv40_tex_wrap_mode(cso->wrap_r) << 16) |
-		    (nv40_tex_wrap_mode(cso->wrap_t) <<  8) |
-		    (nv40_tex_wrap_mode(cso->wrap_s) <<  0));
-	ps->filt = ((nv40_tex_filter(cso->min_img_filter,
-				     cso->min_mip_filter) << 16) |
-		    (nv40_tex_filter(cso->mag_img_filter,
-				     PIPE_TEX_MIPFILTER_NONE) << 24));
+	switch (cso->mag_img_filter) {
+	case PIPE_TEX_FILTER_LINEAR:
+		filter |= NV40TCL_TEX_FILTER_MAG_LINEAR;
+		break;
+	case PIPE_TEX_FILTER_NEAREST:
+	default:
+		filter |= NV40TCL_TEX_FILTER_MAG_NEAREST;
+		break;
+	}
+
+	switch (cso->min_img_filter) {
+	case PIPE_TEX_FILTER_LINEAR:
+		switch (cso->min_mip_filter) {
+		case PIPE_TEX_MIPFILTER_NEAREST:
+			filter |= NV40TCL_TEX_FILTER_MIN_LINEAR_MIPMAP_NEAREST;
+			break;
+		case PIPE_TEX_MIPFILTER_LINEAR:
+			filter |= NV40TCL_TEX_FILTER_MIN_LINEAR_MIPMAP_LINEAR;
+			break;
+		case PIPE_TEX_MIPFILTER_NONE:
+		default:
+			filter |= NV40TCL_TEX_FILTER_MIN_LINEAR;
+			break;
+		}
+		break;
+	case PIPE_TEX_FILTER_NEAREST:
+	default:
+		switch (cso->min_mip_filter) {
+		case PIPE_TEX_MIPFILTER_NEAREST:
+			filter |= NV40TCL_TEX_FILTER_MIN_NEAREST_MIPMAP_NEAREST;
+		break;
+		case PIPE_TEX_MIPFILTER_LINEAR:
+			filter |= NV40TCL_TEX_FILTER_MIN_NEAREST_MIPMAP_LINEAR;
+			break;
+		case PIPE_TEX_MIPFILTER_NONE:
+		default:
+			filter |= NV40TCL_TEX_FILTER_MIN_NEAREST;
+			break;
+		}
+		break;
+	}
+
+
+	ps->wrap = ((wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_S_SHIFT) |
+		    (wrap_mode(cso->wrap_t) << NV40TCL_TEX_WRAP_T_SHIFT) |
+		    (wrap_mode(cso->wrap_s) << NV40TCL_TEX_WRAP_R_SHIFT));
+	ps->filt = filter;
 	ps->bcol = ((float_to_ubyte(cso->border_color[3]) << 24) |
 		    (float_to_ubyte(cso->border_color[0]) << 16) |
 		    (float_to_ubyte(cso->border_color[1]) <<  8) |
@@ -497,33 +577,23 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	OUT_RING  (rt_enable);
 
 	if (0) {
-#if 0
-		rt_format |= (log2width <<
-			      NV40TCL_RT_FORMAT_LOG2_WIDTH_SHIFT);
-		rt_format |= (log2height <<
-			      NV40TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
-#endif
-		rt_format |= (NV40TCL_RT_FORMAT_TYPE_SWIZZLED <<
-			      NV40TCL_RT_FORMAT_TYPE_SHIFT);
+		rt_format |= (0 << NV40TCL_RT_FORMAT_LOG2_WIDTH_SHIFT);
+		rt_format |= (0 << NV40TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
+		rt_format |= NV40TCL_RT_FORMAT_TYPE_SWIZZLED;
 	} else {
-		rt_format |= (NV40TCL_RT_FORMAT_TYPE_LINEAR <<
-			      NV40TCL_RT_FORMAT_TYPE_SHIFT);
+		rt_format |= NV40TCL_RT_FORMAT_TYPE_LINEAR;
 	}
 
 	if (fb->cbufs[0]->format == PIPE_FORMAT_U_R5_G6_B5) {
-		rt_format |= (NV40TCL_RT_FORMAT_COLOR_R5G6B5 <<
-			      NV40TCL_RT_FORMAT_COLOR_SHIFT);
+		rt_format |= NV40TCL_RT_FORMAT_COLOR_R5G6B5;
 	} else {
-		rt_format |= (NV40TCL_RT_FORMAT_COLOR_A8R8G8B8 <<
-			      NV40TCL_RT_FORMAT_COLOR_SHIFT);
+		rt_format |= NV40TCL_RT_FORMAT_COLOR_A8R8G8B8;
 	}
 
 	if (fb->zbuf && fb->zbuf->format == PIPE_FORMAT_U_Z16) {
-		rt_format |= (NV40TCL_RT_FORMAT_DEPTH_Z16 <<
-			      NV40TCL_RT_FORMAT_DEPTH_SHIFT);
+		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z16;
 	} else {
-		rt_format |= (NV40TCL_RT_FORMAT_DEPTH_Z24S8 <<
-			      NV40TCL_RT_FORMAT_DEPTH_SHIFT);
+		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
 	}
 
 	BEGIN_RING(curie, NV40TCL_RT_HORIZ, 3);
