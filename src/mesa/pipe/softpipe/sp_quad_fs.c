@@ -104,6 +104,10 @@ shade_quad(
    machine->Inputs[0].xyzw[0].f[2] = fx;
    machine->Inputs[0].xyzw[0].f[3] = fx + 1.0f;
 
+   /* XXX for OpenGL we need to invert the Y pos here (y=0=top).
+    * but that'll mess up linear/perspective interpolation of other
+    * attributes...
+    */
    machine->Inputs[0].xyzw[1].f[0] = fy;
    machine->Inputs[0].xyzw[1].f[1] = fy;
    machine->Inputs[0].xyzw[1].f[2] = fy + 1.0f;

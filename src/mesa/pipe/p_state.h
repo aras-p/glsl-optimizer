@@ -92,6 +92,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_enable:1;
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
+   unsigned bypass_clipping:1;
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */

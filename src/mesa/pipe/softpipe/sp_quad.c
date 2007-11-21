@@ -28,24 +28,52 @@
 
 #include "sp_context.h"
 
+#include "sp_state.h"
+#include "pipe/tgsi/exec/tgsi_token.h"
 
+static void
+sp_push_quad_first(
+   struct softpipe_context *sp,
+   struct quad_stage       *quad )
+{
+   quad->next = sp->quad.first;
+   sp->quad.first = quad;
+}
+
+static void
+sp_build_depth_stencil(
+   struct softpipe_context *sp )
+{
+   if (sp->depth_stencil->stencil.front_enabled ||
+       sp->depth_stencil->stencil.back_enabled) {
+      sp_push_quad_first( sp, sp->quad.stencil_test );
+   }
+   else if (sp->depth_stencil->depth.enabled &&
+            sp->framebuffer.zbuf) {
+      sp_push_quad_first( sp, sp->quad.depth_test );
+   }
+}
 
 void
 sp_build_quad_pipeline(struct softpipe_context *sp)
 {
+   boolean  early_depth_test =
+               sp->depth_stencil->depth.enabled &&
+               sp->framebuffer.zbuf &&
+               !sp->alpha_test->enabled &&
+               sp->fs->shader.output_semantic_name[0] != TGSI_SEMANTIC_POSITION;
+
    /* build up the pipeline in reverse order... */
 
    sp->quad.first = sp->quad.output;
 
    if (sp->blend->colormask != 0xf) {
-      sp->quad.colormask->next = sp->quad.first;
-      sp->quad.first = sp->quad.colormask;
+      sp_push_quad_first( sp, sp->quad.colormask );
    }
 
    if (sp->blend->blend_enable ||
        sp->blend->logicop_enable) {
-      sp->quad.blend->next = sp->quad.first;
-      sp->quad.first = sp->quad.blend;
+      sp_push_quad_first( sp, sp->quad.blend );
    }
 
    if (sp->framebuffer.num_cbufs == 1) {
@@ -54,46 +82,38 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
    }
    else {
       /* insert bufloop stage */
-      sp->quad.bufloop->next = sp->quad.first;
-      sp->quad.first = sp->quad.bufloop;
+      sp_push_quad_first( sp, sp->quad.bufloop );
    }
 
    if (sp->depth_stencil->depth.occlusion_count) {
-      sp->quad.occlusion->next = sp->quad.first;
-      sp->quad.first = sp->quad.occlusion;
+      sp_push_quad_first( sp, sp->quad.occlusion );
    }
 
    if (sp->rasterizer->poly_smooth ||
        sp->rasterizer->line_smooth ||
        sp->rasterizer->point_smooth) {
-      sp->quad.coverage->next = sp->quad.first;
-      sp->quad.first = sp->quad.coverage;
+      sp_push_quad_first( sp, sp->quad.coverage );
    }
 
-   if (   sp->depth_stencil->stencil.front_enabled
-       || sp->depth_stencil->stencil.back_enabled) {
-      sp->quad.stencil_test->next = sp->quad.first;
-      sp->quad.first = sp->quad.stencil_test;
-   }
-   else if (sp->depth_stencil->depth.enabled &&
-            sp->framebuffer.zbuf) {
-      sp->quad.depth_test->next = sp->quad.first;
-      sp->quad.first = sp->quad.depth_test;
+   if (!early_depth_test) {
+      sp_build_depth_stencil( sp );
    }
 
    if (sp->alpha_test->enabled) {
-      sp->quad.alpha_test->next = sp->quad.first;
-      sp->quad.first = sp->quad.alpha_test;
+      sp_push_quad_first( sp, sp->quad.alpha_test );
    }
 
    /* XXX always enable shader? */
    if (1) {
-      sp->quad.shade->next = sp->quad.first;
-      sp->quad.first = sp->quad.shade;
+      sp_push_quad_first( sp, sp->quad.shade );
+   }
+
+   if (early_depth_test) {
+      sp_build_depth_stencil( sp );
+      sp_push_quad_first( sp, sp->quad.earlyz );
    }
 
    if (sp->rasterizer->poly_stipple_enable) {
-      sp->quad.polygon_stipple->next = sp->quad.first;
-      sp->quad.first = sp->quad.polygon_stipple;
+      sp_push_quad_first( sp, sp->quad.polygon_stipple );
    }
 }

@@ -37,6 +37,10 @@
 
 #include "pipe/tgsi/exec/tgsi_core.h"
 
+
+#define DBG 0
+
+
 /**
  * Fetch a float[4] vertex attribute from memory, doing format/type
  * conversion as needed.
@@ -96,7 +100,9 @@ void draw_vertex_fetch( struct draw_context *draw,
    for (j = 0; j < count; j++) {
       uint attr;
 
-      /*printf("fetch vertex %u: \n", j);*/
+#if DBG
+      printf("fetch vertex %u: \n", j);
+#endif
 
       /* loop over vertex attributes (vertex shader inputs) */
       for (attr = 0; attr < draw->vertex_shader->state->num_inputs; attr++) {
@@ -111,7 +117,9 @@ void draw_vertex_fetch( struct draw_context *draw,
 
          fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
 
-         /*printf("  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);*/
+#if DBG
+         printf("  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);
+#endif
 
          /* Transform to AoS xxxx/yyyy/zzzz/wwww representation:
           */

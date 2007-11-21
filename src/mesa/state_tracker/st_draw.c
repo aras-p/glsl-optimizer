@@ -318,7 +318,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 
 /**
  * Set the (private) draw module's post-transformed vertex format when in
- * GL_SELECT or GL_FEEDBACK mode.
+ * GL_SELECT or GL_FEEDBACK mode or for glRasterPos.
  */
 static void
 set_feedback_vertex_format(GLcontext *ctx)
@@ -328,7 +328,14 @@ set_feedback_vertex_format(GLcontext *ctx)
    enum interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
    GLuint n, i;
 
-   if (ctx->RenderMode == GL_FEEDBACK) {
+   if (ctx->RenderMode == GL_SELECT) {
+      assert(ctx->RenderMode == GL_SELECT);
+      n = 1;
+      attrs[0] = FORMAT_4F;
+      interp[0] = INTERP_NONE;
+   }
+   else {
+      /* GL_FEEDBACK, or glRasterPos */
       /* emit all attribs (pos, color, texcoord) as GLfloat[4] */
       n = st->state.vs->state.num_outputs;
       for (i = 0; i < n; i++) {
@@ -336,19 +343,14 @@ set_feedback_vertex_format(GLcontext *ctx)
          interp[i] = INTERP_NONE;
       }
    }
-   else {
-      assert(ctx->RenderMode == GL_SELECT);
-      n = 1;
-      attrs[0] = FORMAT_4F;
-      interp[0] = INTERP_NONE;
-   }
 
    draw_set_vertex_attributes(st->draw, attrs, interp, n);
 }
 
 
 /**
- * Called by VBO to draw arrays when in selection or feedback mode.
+ * Called by VBO to draw arrays when in selection or feedback mode and
+ * to implement glRasterPos.
  * This is very much like the normal draw_vbo() function above.
  * Look at code refactoring some day.
  * Might move this into the failover module some day.
@@ -373,8 +375,6 @@ st_feedback_draw_vbo(GLcontext *ctx,
    GLuint attr, i;
    ubyte *mapped_constants;
 
-   assert(ctx->RenderMode == GL_SELECT ||
-          ctx->RenderMode == GL_FEEDBACK);
    assert(draw);
 
    st_validate_state(ctx->st);

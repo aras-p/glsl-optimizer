@@ -72,8 +72,6 @@ struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context *intel);
 void intel_batchbuffer_free(struct intel_batchbuffer *batch);
 
 
-void intel_batchbuffer_finish(struct intel_batchbuffer *batch);
-
 struct _DriFenceObject *intel_batchbuffer_flush(struct intel_batchbuffer
                                                 *batch);
 

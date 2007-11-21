@@ -68,9 +68,10 @@ struct st_context
 
    struct pipe_context *pipe;
 
-   struct draw_context *draw;  /**< For selection/feedback */
+   struct draw_context *draw;  /**< For selection/feedback/rastpos only */
    struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
+   struct draw_stage *rastpos_stage;  /**< For glRasterPos */
 
    /* Some state is contained in constant objects.
     * Other state is just parameter values.

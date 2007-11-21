@@ -25,58 +25,68 @@
  * 
  **************************************************************************/
 
-/* Author:
- *    Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * \brief  Quad early-z testing
  */
 
-
 #include "pipe/p_defines.h"
-#include "i915_context.h"
-#include "i915_reg.h"
-#include "i915_batch.h"
+#include "pipe/p_util.h"
+#include "sp_headers.h"
+#include "sp_quad.h"
 
 
 /**
- * In future we may want a fence-like interface instead of finish.
+ * All this stage does is compute the quad's Z values (which is normally
+ * done by the shading stage).
+ * The next stage will do the actual depth test.
  */
-static void i915_flush( struct pipe_context *pipe,
-			unsigned flags )
+static void
+earlyz_quad(
+   struct quad_stage    *qs,
+   struct quad_header   *quad )
 {
-   struct i915_context *i915 = i915_context(pipe);
+   const float fx = (float) quad->x0;
+   const float fy = (float) quad->y0;
+   const float dzdx = quad->coef[0].dadx[2];
+   const float dzdy = quad->coef[0].dady[2];
+   const float z0 = quad->coef[0].a0[2] + dzdx * fx + dzdy * fy;
 
-   /* Do we need to emit an MI_FLUSH command to flush the hardware
-    * caches?
-    */
-   if (flags & (PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE)) {
-      unsigned flush = MI_FLUSH;
-      
-      if (!(flags & PIPE_FLUSH_RENDER_CACHE))
-	 flush |= INHIBIT_FLUSH_RENDER_CACHE;
+   quad->outputs.depth[0] = z0;
+   quad->outputs.depth[1] = z0 + dzdx;
+   quad->outputs.depth[2] = z0 + dzdy;
+   quad->outputs.depth[3] = z0 + dzdx + dzdy;
 
-      if (flags & PIPE_FLUSH_TEXTURE_CACHE)
-	 flush |= FLUSH_MAP_CACHE;
-
-      if (!BEGIN_BATCH(1, 0)) {
-	 FLUSH_BATCH();
-	 assert(BEGIN_BATCH(1, 0));
-      }
-      OUT_BATCH( flush );
-      ADVANCE_BATCH();
-   }
-
-   /* If there are no flags, just flush pending commands to hardware:
-    */
-   FLUSH_BATCH();
-
-   if (flags & PIPE_FLUSH_WAIT) {
-      if( i915->last_fence )
-	 i915->winsys->fence_wait(i915->winsys, i915->last_fence);
+   if (qs->next) {
+      qs->next->run( qs->next, quad );
    }
 }
 
-
-
-void i915_init_flush_functions( struct i915_context *i915 )
+static void
+earlyz_begin(
+   struct quad_stage *qs )
 {
-   i915->pipe.flush = i915_flush;
+   if (qs->next) {
+      qs->next->begin( qs->next );
+   }
+}
+
+static void
+earlyz_destroy(
+   struct quad_stage *qs )
+{
+   FREE( qs );
+}
+
+struct quad_stage *
+sp_quad_earlyz_stage(
+   struct softpipe_context *softpipe )
+{
+   struct quad_stage *stage = CALLOC_STRUCT( quad_stage );
+
+   stage->softpipe = softpipe;
+   stage->begin = earlyz_begin;
+   stage->run = earlyz_quad;
+   stage->destroy = earlyz_destroy;
+
+   return stage;
 }

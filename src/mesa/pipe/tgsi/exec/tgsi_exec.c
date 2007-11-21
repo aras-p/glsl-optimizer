@@ -1346,17 +1346,15 @@ linear_interpolation(
    unsigned attrib,
    unsigned chan )
 {
-   unsigned i;
-
-   for( i = 0; i < QUAD_SIZE; i++ ) {
-      const float x = mach->Inputs[0].xyzw[0].f[i];
-      const float y = mach->Inputs[0].xyzw[1].f[i];
-
-      mach->Inputs[attrib].xyzw[chan].f[i] =
-         mach->InterpCoefs[attrib].a0[chan] +
-         mach->InterpCoefs[attrib].dadx[chan] * x +
-         mach->InterpCoefs[attrib].dady[chan] * y;
-   }
+   const float x = mach->Inputs[0].xyzw[0].f[0];
+   const float y = mach->Inputs[0].xyzw[1].f[0];
+   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
+   const float dady = mach->InterpCoefs[attrib].dady[chan];
+   const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
+   mach->Inputs[attrib].xyzw[chan].f[0] = a0;
+   mach->Inputs[attrib].xyzw[chan].f[1] = a0 + dadx;
+   mach->Inputs[attrib].xyzw[chan].f[2] = a0 + dady;
+   mach->Inputs[attrib].xyzw[chan].f[3] = a0 + dadx + dady;
 }
 
 static void
@@ -1365,20 +1363,15 @@ perspective_interpolation(
    unsigned attrib,
    unsigned chan )
 {
-   unsigned i;
-
-   for( i = 0; i < QUAD_SIZE; i++ ) {
-      const float x = mach->Inputs[0].xyzw[0].f[i];
-      const float y = mach->Inputs[0].xyzw[1].f[i];
-      /* WPOS.w here is really 1/w */
-      const float w = 1.0f / mach->Inputs[0].xyzw[3].f[i];
-      assert(mach->Inputs[0].xyzw[3].f[i] != 0.0);
-
-      mach->Inputs[attrib].xyzw[chan].f[i] =
-         (mach->InterpCoefs[attrib].a0[chan] +
-         mach->InterpCoefs[attrib].dadx[chan] * x +
-         mach->InterpCoefs[attrib].dady[chan] * y) * w;
-   }
+   const float x = mach->Inputs[0].xyzw[0].f[0];
+   const float y = mach->Inputs[0].xyzw[1].f[0];
+   const float dadx = mach->InterpCoefs[attrib].dadx[chan];
+   const float dady = mach->InterpCoefs[attrib].dady[chan];
+   const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
+   mach->Inputs[attrib].xyzw[chan].f[0] = a0 / mach->Inputs[0].xyzw[3].f[0];
+   mach->Inputs[attrib].xyzw[chan].f[1] = (a0 + dadx) / mach->Inputs[0].xyzw[3].f[1];
+   mach->Inputs[attrib].xyzw[chan].f[2] = (a0 + dady) / mach->Inputs[0].xyzw[3].f[2];
+   mach->Inputs[attrib].xyzw[chan].f[3] = (a0 + dadx + dady) / mach->Inputs[0].xyzw[3].f[3];
 }
 
 
