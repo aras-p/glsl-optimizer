@@ -98,17 +98,9 @@ draw_set_vertex_info( struct draw_context *draw,
                       const struct vertex_info *info)
 {
    assert(info->interp_mode[0] == INTERP_LINEAR); /* should be vert pos */
-
    assert(info->num_attribs <= PIPE_MAX_SHADER_OUTPUTS);
 
-   /* Note that draw-module vertices will consist of the attributes passed
-    * to this function, plus a header/prefix containing the vertex header
-    * flags and GLfloat[4] clip pos.
-    */
-
    memcpy(&draw->vertex_info, info, sizeof(*info));
-
-   draw_compute_vertex_size(&draw->vertex_info);
 
    /* Need to know vertex size (in words) for vertex copying elsewhere.
     * Four words per attribute, plus vertex header (uint) and clip
