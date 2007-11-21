@@ -301,4 +301,8 @@ static INLINE float LOG2(float val)
 #define CEILF(x)   ((float) ceil(x))
 #endif
 
+/* Convenient...
+ */
+extern void _mesa_printf(const char *str, ...);
+
 #endif
