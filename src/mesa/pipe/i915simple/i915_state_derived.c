@@ -132,11 +132,8 @@ static void calculate_vertex_layout( struct i915_context *i915 )
       /* If the attributes have changed, tell the draw module about the new
        * vertex layout.  We'll also update the hardware vertex format info.
        */
-      draw_set_vertex_attributes( i915->draw,
-                                  NULL,/*vinfo.slot_to_attrib,*/
-                                  vinfo.interp_mode,
-                                  vinfo.num_attribs);
-      
+      draw_set_vertex_info( i915->draw, &vinfo);
+
       draw_set_twoside_attributes(i915->draw,
                                   front0, back0, front1, back1);
 

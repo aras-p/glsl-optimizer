@@ -92,10 +92,8 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
 }
 
 
-extern void draw_set_vertex_attributes( struct draw_context *draw,
-                                        const uint *attrs,
-                                        const enum interp_mode *interps,
-                                        unsigned nr_attrs );
+extern void draw_set_vertex_info( struct draw_context *draw,
+                                  const struct vertex_info *info);
 
 extern void draw_set_twoside_attributes(struct draw_context *draw,
                                         uint front0, uint back0,

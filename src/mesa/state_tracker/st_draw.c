@@ -324,27 +324,26 @@ static void
 set_feedback_vertex_format(GLcontext *ctx)
 {
    struct st_context *st = ctx->st;
-   uint attrs[PIPE_MAX_SHADER_OUTPUTS];
-   enum interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
-   GLuint n, i;
+   struct vertex_info vinfo;
+   GLuint i;
 
    if (ctx->RenderMode == GL_SELECT) {
       assert(ctx->RenderMode == GL_SELECT);
-      n = 1;
-      attrs[0] = FORMAT_4F;
-      interp[0] = INTERP_NONE;
+      vinfo.num_attribs = 1;
+      vinfo.format[0] = FORMAT_4F;
+      vinfo.interp_mode[0] = INTERP_NONE;
    }
    else {
       /* GL_FEEDBACK, or glRasterPos */
       /* emit all attribs (pos, color, texcoord) as GLfloat[4] */
-      n = st->state.vs->state.num_outputs;
-      for (i = 0; i < n; i++) {
-         attrs[i] = FORMAT_4F;
-         interp[i] = INTERP_NONE;
+      vinfo.num_attribs = st->state.vs->state.num_outputs;
+      for (i = 0; i < vinfo.num_attribs; i++) {
+         vinfo.format[i] = FORMAT_4F;
+         vinfo.interp_mode[i] = INTERP_LINEAR;
       }
    }
 
-   draw_set_vertex_attributes(st->draw, attrs, interp, n);
+   draw_set_vertex_info(st->draw, &vinfo);
 }
 
 

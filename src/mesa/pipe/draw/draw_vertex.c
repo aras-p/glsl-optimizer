@@ -87,37 +87,34 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
 
 
 /**
- * Tell the drawing module about the layout of post-transformation vertices
+ * Tell the drawing module about the contents of post-transformation vertices.
+ * Note that the vertex attribute format info isn't used by 'draw'; all
+ * attributes are handled as float[4].  But when the driver emits vertices
+ * it'll use that info.
+ * We _do_ care about the number of attributes and their interpolation modes.
  */
 void
-draw_set_vertex_attributes( struct draw_context *draw,
-                            const uint *slot_to_vf_attr,
-                            const enum interp_mode *interps,
-                            unsigned nr_attrs )
+draw_set_vertex_info( struct draw_context *draw,
+                      const struct vertex_info *info)
 {
-   struct vertex_info *vinfo = &draw->vertex_info;
-   unsigned i;
+   assert(info->interp_mode[0] == INTERP_LINEAR); /* should be vert pos */
 
-   assert(interps[0] == INTERP_LINEAR); /* should be vert pos */
-
-   assert(nr_attrs <= PIPE_MAX_SHADER_OUTPUTS);
+   assert(info->num_attribs <= PIPE_MAX_SHADER_OUTPUTS);
 
    /* Note that draw-module vertices will consist of the attributes passed
     * to this function, plus a header/prefix containing the vertex header
     * flags and GLfloat[4] clip pos.
     */
 
-   memset(vinfo, 0, sizeof(*vinfo));
+   memcpy(&draw->vertex_info, info, sizeof(*info));
 
-   /* copy attrib info */
-   for (i = 0; i < nr_attrs; i++) {
-      emit_vertex_attr(vinfo, FORMAT_4F, interps[i]);
-   }
+   draw_compute_vertex_size(&draw->vertex_info);
 
-   draw_compute_vertex_size(vinfo);
-
-   /* add extra words for vertex header (uint), clip pos (float[4]) */
-   vinfo->size += 5;
+   /* Need to know vertex size (in words) for vertex copying elsewhere.
+    * Four words per attribute, plus vertex header (uint) and clip
+    * position (float[4]).
+    */
+   draw->vertex_info.size = draw->vertex_info.num_attribs * 4 + 5;
 }
 
 
