@@ -60,8 +60,9 @@ static INLINE void copy_colors( struct draw_stage *stage,
    uint i;
 
    /* Look for constant/flat attribs and duplicate from src to dst vertex */
-   for (i = 1; i < num_attribs - 2; i++) {
-      if (interp[i + 2] == INTERP_CONSTANT) {
+   /* skip attrib[0] which is vert pos */
+   for (i = 1; i < num_attribs; i++) {
+      if (interp[i] == INTERP_CONSTANT) {
          copy_attr( i, dst, src );
       }
    }

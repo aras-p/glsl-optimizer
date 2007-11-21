@@ -75,7 +75,6 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
          vinfo->size += 3;
          break;
       case FORMAT_4F:
-      case FORMAT_4F_VIEWPORT:
          vinfo->size += 4;
          break;
       default:
@@ -99,27 +98,26 @@ draw_set_vertex_attributes( struct draw_context *draw,
    struct vertex_info *vinfo = &draw->vertex_info;
    unsigned i;
 
-#if 0
-   assert(slot_to_vf_attr[0] == TGSI_ATTRIB_POS);
-#endif
+   assert(interps[0] == INTERP_LINEAR); /* should be vert pos */
+
+   assert(nr_attrs <= PIPE_MAX_SHADER_OUTPUTS);
+
+   /* Note that draw-module vertices will consist of the attributes passed
+    * to this function, plus a header/prefix containing the vertex header
+    * flags and GLfloat[4] clip pos.
+    */
 
    memset(vinfo, 0, sizeof(*vinfo));
 
-   /*
-    * First three attribs are always the same: header, clip pos, winpos
-    */
-   emit_vertex_attr(vinfo, FORMAT_1F, INTERP_NONE);
-   emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
-   emit_vertex_attr(vinfo, FORMAT_4F_VIEWPORT, INTERP_LINEAR);
-
-   /*
-    * Remaining attribs (color, texcoords, etc)
-    */
-   for (i = 1; i < nr_attrs; i++) {
+   /* copy attrib info */
+   for (i = 0; i < nr_attrs; i++) {
       emit_vertex_attr(vinfo, FORMAT_4F, interps[i]);
    }
 
    draw_compute_vertex_size(vinfo);
+
+   /* add extra words for vertex header (uint), clip pos (float[4]) */
+   vinfo->size += 5;
 }
 
 

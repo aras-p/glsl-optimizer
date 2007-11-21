@@ -46,7 +46,6 @@ enum attrib_format {
    FORMAT_2F,
    FORMAT_3F,
    FORMAT_4F,
-   FORMAT_4F_VIEWPORT,
    FORMAT_4UB
 };
 

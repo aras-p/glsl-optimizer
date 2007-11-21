@@ -128,12 +128,8 @@ static void interp( const struct clipper *clip,
    /* Other attributes
     * Note: start at 1 to skip winpos (data[0]) since we just computed
     * it above.
-    * Subtract two from nr_attrs since the first two attribs (always 
-    * VF_ATTRIB_VERTEX_HEADER and VF_ATTRIB_CLIP_POS, see
-    * draw_set_vertex_attributes()) are in the vertex_header struct,
-    * not in the data[] array.
     */
-   for (j = 1; j < nr_attrs - 2; j++) {
+   for (j = 1; j < nr_attrs; j++) {
       interp_attr(dst->data[j], t, in->data[j], out->data[j]);
    }
 }
@@ -352,12 +348,8 @@ do_clip_line( struct draw_stage *stage,
 
 static void clip_begin( struct draw_stage *stage )
 {
-   /* sanity checks.  If these fail, review the clip/interp code! */
-   assert(stage->draw->vertex_info.num_attribs >= 3);
-#if 0
-   assert(stage->draw->vertex_info.slot_to_attrib[0] == TGSI_ATTRIB_VERTEX_HEADER);
-   assert(stage->draw->vertex_info.slot_to_attrib[1] == TGSI_ATTRIB_CLIP_POS);
-#endif
+   /* should always have position, at least */
+   assert(stage->draw->vertex_info.num_attribs >= 1);
 
    stage->next->begin( stage->next );
 }
