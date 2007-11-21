@@ -75,8 +75,10 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 		txf |= NV40TCL_TEX_FORMAT_NO_BORDER;
 
 	switch (mt->target) {
-	case PIPE_TEXTURE_2D:
 	case PIPE_TEXTURE_CUBE:
+		txf |= NV40TCL_TEX_FORMAT_CUBIC;
+		/* fall-through */
+	case PIPE_TEXTURE_2D:
 		txf |= NV40TCL_TEX_FORMAT_DIMS_2D;
 		break;
 	case PIPE_TEXTURE_3D:
