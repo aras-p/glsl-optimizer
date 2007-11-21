@@ -114,6 +114,7 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
 #define Elements(x) sizeof(x)/sizeof(*(x))
+#define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
 
 /**
  * Return a pointer aligned to next multiple of 16 bytes.
