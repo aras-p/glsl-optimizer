@@ -64,6 +64,14 @@ nv04_region_copy_m2mf(struct nouveau_context *nv, struct pipe_region *dst,
 		dst_offset += dst->pitch * count;
 	}
 
+	nouveau_notifier_reset(nv->sync_notifier, 0);
+	BEGIN_RING(NvM2MF, 0x104, 1);
+	OUT_RING  (0);
+	BEGIN_RING(NvM2MF, 0x100, 1);
+	OUT_RING  (0);
+	FIRE_RING();
+	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
+
 	return 0;
 }
 
