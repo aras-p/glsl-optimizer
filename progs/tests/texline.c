@@ -7,7 +7,6 @@
  * September 2000
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -211,7 +210,9 @@ static void SpecialKey( int key, int x, int y )
 
 static void Init( int argc, char *argv[] )
 {
+   GLfloat r[2];
    GLuint u;
+
    for (u = 0; u < 2; u++) {
       glActiveTextureARB(GL_TEXTURE0_ARB + u);
       glBindTexture(GL_TEXTURE_2D, 10+u);
@@ -242,6 +243,15 @@ static void Init( int argc, char *argv[] )
       printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
       printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
    }
+
+   glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, r);
+   printf("Non-smooth point size range: %g .. %g\n", r[0], r[1]);
+   glGetFloatv(GL_POINT_SIZE_RANGE, r);
+   printf("Smoothed point size range: %g .. %g\n", r[0], r[1]);
+   glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, r);
+   printf("Non-smooth line width range: %g .. %g\n", r[0], r[1]);
+   glGetFloatv(GL_LINE_WIDTH_RANGE, r);
+   printf("Smoothed line width range: %g .. %g\n", r[0], r[1]);
 }
 
 
