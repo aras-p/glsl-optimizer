@@ -720,7 +720,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->depthPitch	= dri_priv->depthPitch;
 
    /* Check if ddx has set up a surface reg to cover depth buffer */
-   screen->depthHasSurface = (sPriv->ddx_version.major > 4);
+   screen->depthHasSurface = (sPriv->ddx_version.major > 4) ||
+      /* these chips don't use tiled z without hyperz. So always pretend
+         we have set up a surface which will cause linear reads/writes */
+      ((screen->chip_family & RADEON_CLASS_R100) &&
+      !(screen->chip_flags & RADEON_CHIPSET_TCL));
 
    if ( dri_priv->textureSize == 0 ) {
       screen->texOffset[RADEON_LOCAL_TEX_HEAP] = screen->gart_texture_offset;
