@@ -175,8 +175,6 @@ static void i915_destroy( struct pipe_context *pipe )
 
    draw_destroy( i915->draw );
 
-   i915->winsys->fence_reference( i915->winsys, &i915->last_fence, NULL );
-   
    free( i915 );
 }
 
