@@ -205,8 +205,8 @@ static INLINE unsigned char float_to_ubyte( float f )
 
 static INLINE unsigned pack_ui32_float4( float a,
 					 float b, 
-					 float d, 
-					 float c )
+					 float c, 
+					 float d )
 {
    return pack_ub4( float_to_ubyte(a),
 		    float_to_ubyte(b),
