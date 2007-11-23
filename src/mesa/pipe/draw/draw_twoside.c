@@ -146,6 +146,13 @@ static void twoside_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void twoside_destroy( struct draw_stage *stage )
+{
+   draw_free_tmps( stage );
+   FREE( stage );
+}
+
+
 /**
  * Create twoside pipeline stage.
  */
@@ -163,6 +170,7 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    twoside->stage.tri = twoside_tri;
    twoside->stage.end = twoside_end;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
+   twoside->stage.destroy = twoside_destroy;
 
    return &twoside->stage;
 }

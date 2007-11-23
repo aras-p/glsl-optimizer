@@ -1808,7 +1808,7 @@ exec_instruction(
       micro_sub( &r[2], &r[2], &r[5] );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
-	 STORE( &r[2], 0, CHAN_X );
+         STORE( &r[2], 0, CHAN_X );
       }
 
       FETCH(&r[2], 1, CHAN_X);
@@ -1821,7 +1821,7 @@ exec_instruction(
       micro_sub( &r[3], &r[3], &r[1] );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-	 STORE( &r[3], 0, CHAN_Y );
+         STORE( &r[3], 0, CHAN_Y );
       }
 
       micro_mul( &r[5], &r[5], &r[4] );
@@ -1829,11 +1829,11 @@ exec_instruction(
       micro_sub( &r[5], &r[5], &r[0] );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-	 STORE( &r[5], 0, CHAN_Z );
+         STORE( &r[5], 0, CHAN_Z );
       }
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
-	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+         STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
       break;
 

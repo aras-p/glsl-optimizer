@@ -241,11 +241,17 @@ static void stipple_begin( struct clip_pipe_stage *stage )
 }
 
 
-
 static void stipple_end( struct clip_pipe_stage *stage )
 {
    stage->next->end( stage->next );
 }
+
+
+static void stipple_destroy( struct clip_pipe_stage *stage )
+{
+   FREE( stage );
+}
+
 
 struct clip_pipe_stage *clip_pipe_stipple( struct clip_pipeline *pipe )
 {
@@ -261,6 +267,7 @@ struct clip_pipe_stage *clip_pipe_stipple( struct clip_pipeline *pipe )
    stipple->stage.tri = clip_passthrough_tri;
    stipple->stage.reset_tmps = clip_pipe_reset_tmps;
    stipple->stage.end = stipple_end;
+   stipple->stage.destroy = stipple_destroy;
 
    return &stipple->stage;
 }

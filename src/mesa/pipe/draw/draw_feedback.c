@@ -224,6 +224,12 @@ static void feedback_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void feedback_destroy( struct draw_stage *stage )
+{
+   FREE( stage );
+}
+
+
 /**
  * Create feedback drawing stage.
  */
@@ -239,6 +245,7 @@ struct draw_stage *draw_feedback_stage( struct draw_context *draw )
    feedback->stage.tri = feedback_tri;
    feedback->stage.end = feedback_end;
    feedback->stage.reset_stipple_counter = feedback_reset_stipple_counter;
+   feedback->stage.destroy = feedback_destroy;
 
    return &feedback->stage;
 }

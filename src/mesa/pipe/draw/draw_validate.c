@@ -110,6 +110,10 @@ static void validate_begin( struct draw_stage *stage )
 }
 
 
+static void validate_destroy( struct draw_stage *stage )
+{
+   FREE( stage );
+}
 
 
 /**
@@ -127,6 +131,7 @@ struct draw_stage *draw_validate_stage( struct draw_context *draw )
    stage->tri = NULL;
    stage->end = NULL;
    stage->reset_stipple_counter = NULL;
+   stage->destroy = validate_destroy;
 
    return stage;
 }
