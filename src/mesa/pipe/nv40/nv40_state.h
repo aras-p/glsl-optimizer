@@ -57,11 +57,13 @@ struct nv40_vertex_program {
 	const struct pipe_shader_state *pipe;
 
 	boolean translated;
-	boolean on_hw;
-	int start_ip;
 
+	struct nouveau_resource *exec;
 	uint32_t *insn;
-	int       insn_len;
+	uint insn_len;
+
+	struct nouveau_resource *data;
+	uint data_start;
 
 	struct {
 		int pipe_id;

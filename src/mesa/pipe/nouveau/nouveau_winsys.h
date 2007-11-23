@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "pipe/p_winsys.h"
+#include "pipe/p_defines.h"
 
 #include "pipe/nouveau/nouveau_bo.h"
 #include "pipe/nouveau/nouveau_channel.h"
@@ -10,10 +11,26 @@
 #include "pipe/nouveau/nouveau_grobj.h"
 #include "pipe/nouveau/nouveau_notifier.h"
 
+struct nouveau_resource {
+	struct nouveau_resource *prev;
+	struct nouveau_resource *next;
+
+	boolean in_use;
+	void *priv;
+
+	uint start;
+	uint size;
+};
+
 struct nouveau_winsys {
 	struct nouveau_context *nv;
 
 	struct nouveau_channel *channel;
+
+	int  (*res_init)(struct nouveau_resource **heap, int size);
+	int  (*res_alloc)(struct nouveau_resource *heap, int size, void *priv,
+			  struct nouveau_resource **);
+	void (*res_free)(struct nouveau_resource **);
 
 	/*XXX: this is crappy, and bound to be slow.. however, it's nice and
 	 *     simple, it'll do for the moment*/

@@ -576,21 +576,108 @@ out_err:
 void
 nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 { 
+	struct nouveau_winsys *nvws = nv40->nvws;
+	struct pipe_context *pipe = &nv40->pipe;
+	boolean upload_code = FALSE, upload_data = FALSE;
+	float *map;
 	int i;
 
+	/* Translate TGSI shader into hw bytecode */
 	if (!vp->translated) {
-		NOUVEAU_ERR("vtxprog invalid, using passthrough shader\n");
-		vp = &passthrough_vp;
+		nv40_vertprog_translate(nv40, vp);
+		if (!vp->translated)
+			assert(0);
 	}
 
-	if (!vp->on_hw) {
-		if (nv40->vertprog.active_vp)
-			nv40->vertprog.active_vp->on_hw = FALSE;
-		vp->on_hw    = TRUE;
-		vp->start_ip = 0;
+	/* Allocate hw vtxprog exec slots */
+	/*XXX: when we do branching, need to patch targets if program moves.
+	 */
+	if (!vp->exec) {
+		struct nouveau_resource *heap = nv40->vertprog.exec_heap;
+		uint vplen = vp->insn_len / 4;
 
+		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
+			while (heap->next && heap->size < vplen) {
+				struct nv40_vertex_program *evict;
+				
+				evict = heap->next->priv;
+				nvws->res_free(&evict->exec);
+			}
+
+			if (nvws->res_alloc(heap, vplen, vp, &vp->exec))
+				assert(0);
+		}
+
+		upload_code = TRUE;
+	}
+
+	/* Allocate hw vtxprog const slots */
+	if (vp->num_consts && !vp->data) {
+		struct nouveau_resource *heap = nv40->vertprog.data_heap;
+		int count = vp->num_consts;
+
+		if (nvws->res_alloc(heap, count, vp, &vp->data)) {
+			while (heap->next && heap->size < count) {
+				struct nv40_vertex_program *evict;
+				
+				evict = heap->next->priv;
+				nvws->res_free(&evict->data);
+			}
+
+			if (nvws->res_alloc(heap, count, vp, &vp->data))
+				assert(0);
+		}
+
+		upload_data = TRUE;
+	}
+
+	/* If constants moved, patch the vtxprog to fix the offsets */
+	if (vp->num_consts && vp->data_start != vp->data->start) {
+		for (i = 0; i < vp->insn_len; i += 4) {
+			int id;
+
+			id = (vp->insn[i + 1] & NV40_VP_INST_CONST_SRC_MASK) >>
+			     NV40_VP_INST_CONST_SRC_SHIFT;
+			id -= vp->data_start;
+			id += vp->data->start;
+
+			vp->insn[i + 1] &= ~NV40_VP_INST_CONST_SRC_MASK;
+			vp->insn[i + 1] |= (id << NV40_VP_INST_CONST_SRC_SHIFT);
+		}
+
+		vp->data_start = vp->data->start;
+		upload_code = TRUE;
+	}
+
+	/* Update + Upload constant values */
+	if (vp->num_consts) {
+		map = pipe->winsys->buffer_map(pipe->winsys,
+					       nv40->vertprog.constant_buf,
+					       PIPE_BUFFER_FLAG_READ);
+		for (i = 0; i < vp->num_consts; i++) {
+			uint pid = vp->consts[i].pipe_id;
+
+			if (pid >= 0) {
+				if (!upload_data &&
+				    !memcmp(vp->consts[i].value, &map[pid*4],
+					    4 * sizeof(float)))
+					continue;
+				memcpy(vp->consts[i].value, &map[pid*4],
+				       4 * sizeof(float));
+			}
+
+			BEGIN_RING(curie, NV40TCL_VP_UPLOAD_CONST_ID, 5);
+			OUT_RING  (vp->consts[i].hw_id + vp->data->start);
+			OUT_RINGp ((uint32_t *)vp->consts[i].value, 4);
+		}
+		pipe->winsys->buffer_unmap(pipe->winsys,
+					   nv40->vertprog.constant_buf);
+	}
+
+	/* Upload vtxprog */
+	if (upload_code) {
 		BEGIN_RING(curie, NV40TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (vp->start_ip);
+		OUT_RING  (vp->exec->start);
 		for (i = 0; i < vp->insn_len; i += 4) {
 			BEGIN_RING(curie, NV40TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (&vp->insn[i], 4);
@@ -598,10 +685,11 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 	}
 
 	BEGIN_RING(curie, NV40TCL_VP_START_FROM_ID, 1);
-	OUT_RING  (vp->start_ip);
+	OUT_RING  (vp->exec->start);
 	BEGIN_RING(curie, NV40TCL_VP_ATTRIB_EN, 2);
 	OUT_RING  (vp->ir);
 	OUT_RING  (vp->or);
 
-	nv40->vertprog.active_vp = vp;
+	nv40->vertprog.active = vp;
 }
+

@@ -44,16 +44,19 @@ struct nv40_context {
 	uint32_t                   tex_dirty;
 
 	struct {
-		struct nv40_vertex_program *vp;
-		struct nv40_vertex_program *active_vp;
+		struct nouveau_resource *exec_heap;
+		struct nouveau_resource *data_heap;
 
+		struct nv40_vertex_program *active;
+
+		struct nv40_vertex_program *current;
 		struct pipe_buffer_handle *constant_buf;
 	} vertprog;
 
 	struct {
-		struct nv40_fragment_program *fp;
-		struct nv40_fragment_program *active_fp;
+		struct nv40_fragment_program *active;
 
+		struct nv40_fragment_program *current;
 		struct pipe_buffer_handle *constant_buf;
 	} fragprog;
 

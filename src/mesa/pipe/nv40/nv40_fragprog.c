@@ -645,6 +645,6 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 	BEGIN_RING(curie, NV40TCL_FP_CONTROL, 1);
 	OUT_RING  (fp_control);
 
-	nv40->fragprog.active_fp = fp;
+	nv40->fragprog.active = fp;
 }
 

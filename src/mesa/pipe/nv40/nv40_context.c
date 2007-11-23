@@ -241,6 +241,14 @@ nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 		return NULL;
 	}
 
+	if (nvws->res_init(&nv40->vertprog.exec_heap, 512) ||
+	    nvws->res_init(&nv40->vertprog.data_heap, 256)) {
+		nvws->res_free(&nv40->vertprog.exec_heap);
+		nvws->res_free(&nv40->vertprog.data_heap);
+		free(nv40);
+		return NULL;
+	}
+
 	if (!nv40_init_hwctx(nv40, curie_class)) {
 		free(nv40);
 		return NULL;

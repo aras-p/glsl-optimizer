@@ -443,7 +443,7 @@ nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	struct nv40_vertex_program *vp = hwcso;
 
-	nv40->vertprog.vp = vp;
+	nv40->vertprog.current = vp;
 	nv40->dirty |= NV40_NEW_VERTPROG;
 }
 
@@ -471,7 +471,7 @@ nv40_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	struct nv40_fragment_program *fp = hwcso;
 
-	nv40->fragprog.fp = fp;
+	nv40->fragprog.current = fp;
 	nv40->dirty |= NV40_NEW_FRAGPROG;
 }
 

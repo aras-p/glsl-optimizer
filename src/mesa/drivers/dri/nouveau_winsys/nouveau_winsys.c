@@ -4,6 +4,89 @@
 #include "pipe/nouveau/nouveau_winsys.h"
 
 static int
+nouveau_resource_init(struct nouveau_resource **heap, int size)
+{
+	struct nouveau_resource *r;
+
+	r = calloc(1, sizeof(struct nouveau_resource));
+	if (!r)
+		return 1;
+
+	r->start = 0;
+	r->size  = size;
+	*heap = r;
+	return 0;
+}
+
+static int
+nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
+		       struct nouveau_resource **res)
+{
+	struct nouveau_resource *r;
+
+	if (!heap || !size || !res || *res)
+		return 1;
+
+	while (heap) {
+		if (!heap->in_use && heap->size >= size) {
+			r = calloc(1, sizeof(struct nouveau_resource));
+			if (!r)
+				return 1;
+
+			r->start  = (heap->start + heap->size) - size;
+			r->size   = size;
+			r->in_use = TRUE;
+			r->priv   = priv;
+
+			heap->size -= size;
+
+			r->next = heap->next;
+			if (heap->next)
+				heap->next->prev = r;
+			r->prev = heap;
+			heap->next = r;
+
+			*res = r;
+			return 0;
+		}
+			
+		heap = heap->next;
+	}
+
+	return 1;
+}
+
+static void
+nouveau_resource_free(struct nouveau_resource **res)
+{
+	struct nouveau_resource *r;
+
+	if (!res || !*res)
+		return;
+	r = *res;
+
+	if (r->prev && !r->prev->in_use) {
+		r->prev->next = r->next;
+		if (r->next)
+			r->next->prev = r->prev;
+		r->prev->size += r->size;
+		free(r);
+	} else
+	if (r->next && !r->next->in_use) {
+		r->next->prev = r->prev;
+		if (r->prev)
+			r->prev->next = r->next;
+		r->next->size += r->size;
+		r->next->start = r->start;
+		free(r);
+	} else {
+		r->in_use = FALSE;
+	}
+
+	*res = NULL;
+}
+
+static int
 nouveau_pipe_notifier_alloc(struct nouveau_winsys *nvws, int count,
 			    struct nouveau_notifier **notify)
 {
@@ -66,6 +149,10 @@ nouveau_pipe_create(struct nouveau_context *nv)
 
 	nvws->nv		= nv;
 	nvws->channel		= nv->channel;
+
+	nvws->res_init		= nouveau_resource_init;
+	nvws->res_alloc		= nouveau_resource_alloc;
+	nvws->res_free		= nouveau_resource_free;
 
 	nvws->begin_ring        = nouveau_pipe_dma_beginp;
 	nvws->out_reloc         = nouveau_bo_emit_reloc;
