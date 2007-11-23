@@ -22,6 +22,7 @@
  * OF THIS SOFTWARE.
  */
 
+#define GL_GLEXT_PROTOTYPES
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
