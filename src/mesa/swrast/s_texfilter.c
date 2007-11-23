@@ -1191,7 +1191,8 @@ sample_linear_2d( GLcontext *ctx,
    (void) lambda;
    if (tObj->WrapS == GL_REPEAT &&
        tObj->WrapT == GL_REPEAT &&
-       image->_IsPowerOfTwo) {
+       image->_IsPowerOfTwo &&
+       image->Border == 0) {
       for (i=0;i<n;i++) {
          sample_2d_linear_repeat(ctx, tObj, image, texcoords[i], rgba[i]);
       }
