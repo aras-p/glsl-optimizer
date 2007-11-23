@@ -36,8 +36,8 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_shader_tokens.h"
 #include "pipe/draw/draw_context.h"
-#include "pipe/tgsi/exec/tgsi_core.h"
 
 #include "st_context.h"
 #include "st_cache.h"

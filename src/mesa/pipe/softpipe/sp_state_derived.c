@@ -26,14 +26,12 @@
  **************************************************************************/
 
 #include "pipe/p_util.h"
-
+#include "pipe/p_shader_tokens.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_vertex.h"
-
+#include "sp_headers.h"
 #include "sp_context.h"
 #include "sp_state.h"
-
-#include "pipe/tgsi/exec/tgsi_token.h"
 
 
 /**

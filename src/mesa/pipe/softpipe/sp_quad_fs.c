@@ -37,6 +37,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_shader_tokens.h"
 
 #include "x86/rtasm/x86sse.h"
 

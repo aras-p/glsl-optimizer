@@ -33,7 +33,7 @@
 #include "i915_state.h"
 #include "i915_reg.h"
 #include "i915_fpc.h"
-#include "pipe/tgsi/exec/tgsi_token.h"
+#include "pipe/p_shader_tokens.h"
 
 
 /**

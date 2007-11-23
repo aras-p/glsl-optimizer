@@ -35,7 +35,7 @@
 #define ST_PROGRAM_H
 
 #include "mtypes.h"
-#include "pipe/tgsi/exec/tgsi_token.h"
+#include "pipe/p_shader_tokens.h"
 #include "x86/rtasm/x86sse.h"
 
 

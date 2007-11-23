@@ -32,7 +32,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
-#include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/p_shader_tokens.h"
 #include "pipe/llvm/gallivm.h"
 
 

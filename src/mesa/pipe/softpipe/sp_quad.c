@@ -27,9 +27,9 @@
 
 
 #include "sp_context.h"
-
+#include "sp_headers.h"
 #include "sp_state.h"
-#include "pipe/tgsi/exec/tgsi_token.h"
+#include "pipe/p_shader_tokens.h"
 
 static void
 sp_push_quad_first(
