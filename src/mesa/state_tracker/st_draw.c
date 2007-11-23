@@ -50,37 +50,141 @@
 #include "pipe/draw/draw_context.h"
 
 
+static GLuint double_types[4] = {
+   PIPE_FORMAT_R64_FLOAT,
+   PIPE_FORMAT_R64G64_FLOAT,
+   PIPE_FORMAT_R64G64B64_FLOAT,
+   PIPE_FORMAT_R64G64B64A64_FLOAT
+};
+
+static GLuint float_types[4] = {
+   PIPE_FORMAT_R32_FLOAT,
+   PIPE_FORMAT_R32G32_FLOAT,
+   PIPE_FORMAT_R32G32B32_FLOAT,
+   PIPE_FORMAT_R32G32B32A32_FLOAT
+};
+
+static GLuint uint_types_norm[4] = {
+   PIPE_FORMAT_R32_UNORM,
+   PIPE_FORMAT_R32G32_UNORM,
+   PIPE_FORMAT_R32G32B32_UNORM,
+   PIPE_FORMAT_R32G32B32A32_UNORM
+};
+
+static GLuint uint_types_scale[4] = {
+   PIPE_FORMAT_R32_USCALED,
+   PIPE_FORMAT_R32G32_USCALED,
+   PIPE_FORMAT_R32G32B32_USCALED,
+   PIPE_FORMAT_R32G32B32A32_USCALED
+};
+
+static GLuint int_types_norm[4] = {
+   PIPE_FORMAT_R32_SNORM,
+   PIPE_FORMAT_R32G32_SNORM,
+   PIPE_FORMAT_R32G32B32_SNORM,
+   PIPE_FORMAT_R32G32B32A32_SNORM
+};
+
+static GLuint int_types_scale[4] = {
+   PIPE_FORMAT_R32_SSCALED,
+   PIPE_FORMAT_R32G32_SSCALED,
+   PIPE_FORMAT_R32G32B32_SSCALED,
+   PIPE_FORMAT_R32G32B32A32_SSCALED
+};
+
+static GLuint ushort_types_norm[4] = {
+   PIPE_FORMAT_R16_UNORM,
+   PIPE_FORMAT_R16G16_UNORM,
+   PIPE_FORMAT_R16G16B16_UNORM,
+   PIPE_FORMAT_R16G16B16A16_UNORM
+};
+
+static GLuint ushort_types_scale[4] = {
+   PIPE_FORMAT_R16_USCALED,
+   PIPE_FORMAT_R16G16_USCALED,
+   PIPE_FORMAT_R16G16B16_USCALED,
+   PIPE_FORMAT_R16G16B16A16_USCALED
+};
+
+static GLuint short_types_norm[4] = {
+   PIPE_FORMAT_R16_SNORM,
+   PIPE_FORMAT_R16G16_SNORM,
+   PIPE_FORMAT_R16G16B16_SNORM,
+   PIPE_FORMAT_R16G16B16A16_SNORM
+};
+
+static GLuint short_types_scale[4] = {
+   PIPE_FORMAT_R16_SSCALED,
+   PIPE_FORMAT_R16G16_SSCALED,
+   PIPE_FORMAT_R16G16B16_SSCALED,
+   PIPE_FORMAT_R16G16B16A16_SSCALED
+};
+
+static GLuint ubyte_types_norm[4] = {
+   PIPE_FORMAT_R8_UNORM,
+   PIPE_FORMAT_R8G8_UNORM,
+   PIPE_FORMAT_R8G8B8_UNORM,
+   PIPE_FORMAT_R8G8B8A8_UNORM
+};
+
+static GLuint ubyte_types_scale[4] = {
+   PIPE_FORMAT_R8_USCALED,
+   PIPE_FORMAT_R8G8_USCALED,
+   PIPE_FORMAT_R8G8B8_USCALED,
+   PIPE_FORMAT_R8G8B8A8_USCALED
+};
+
+static GLuint byte_types_norm[4] = {
+   PIPE_FORMAT_R8_SNORM,
+   PIPE_FORMAT_R8G8_SNORM,
+   PIPE_FORMAT_R8G8B8_SNORM,
+   PIPE_FORMAT_R8G8B8A8_SNORM
+};
+
+static GLuint byte_types_scale[4] = {
+   PIPE_FORMAT_R8_SSCALED,
+   PIPE_FORMAT_R8G8_SSCALED,
+   PIPE_FORMAT_R8G8B8_SSCALED,
+   PIPE_FORMAT_R8G8B8A8_SSCALED
+};
+
+
 /**
  * Return a PIPE_FORMAT_x for the given GL datatype and size.
  */
 static GLuint
-pipe_vertex_format(GLenum type, GLuint size)
+pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
 {
-   static const GLuint float_fmts[4] = {
-      PIPE_FORMAT_R32_FLOAT,
-      PIPE_FORMAT_R32G32_FLOAT,
-      PIPE_FORMAT_R32G32B32_FLOAT,
-      PIPE_FORMAT_R32G32B32A32_FLOAT,
-   };
-   static const GLuint int_fmts[4] = {
-      PIPE_FORMAT_R32_SSCALED,
-      PIPE_FORMAT_R32G32_SSCALED,
-      PIPE_FORMAT_R32G32B32_SSCALED,
-      PIPE_FORMAT_R32G32B32A32_SSCALED,
-   };
-
    assert(type >= GL_BYTE);
    assert(type <= GL_DOUBLE);
    assert(size >= 1);
    assert(size <= 4);
 
-   switch (type) {
-   case GL_FLOAT:
-      return float_fmts[size - 1];
-   case GL_INT:
-      return int_fmts[size - 1];
-   default:
-      assert(0);
+   if (normalized) {
+      switch (type) {
+      case GL_DOUBLE: return double_types[size-1];
+      case GL_FLOAT: return float_types[size-1];
+      case GL_INT: return int_types_norm[size-1];
+      case GL_SHORT: return short_types_norm[size-1];
+      case GL_BYTE: return byte_types_norm[size-1];
+      case GL_UNSIGNED_INT: return uint_types_norm[size-1];
+      case GL_UNSIGNED_SHORT: return ushort_types_norm[size-1];
+      case GL_UNSIGNED_BYTE: return ubyte_types_norm[size-1];
+      default: assert(0); return 0;
+      }      
+   }
+   else {
+      switch (type) {
+      case GL_DOUBLE: return double_types[size-1];
+      case GL_FLOAT: return float_types[size-1];
+      case GL_INT: return int_types_scale[size-1];
+      case GL_SHORT: return short_types_scale[size-1];
+      case GL_BYTE: return byte_types_scale[size-1];
+      case GL_UNSIGNED_INT: return uint_types_scale[size-1];
+      case GL_UNSIGNED_SHORT: return ushort_types_scale[size-1];
+      case GL_UNSIGNED_BYTE: return ubyte_types_scale[size-1];
+      default: assert(0); return 0;
+      }      
    }
    return 0; /* silence compiler warning */
 }
@@ -181,7 +285,8 @@ st_draw_vbo(GLcontext *ctx,
       velement.vertex_buffer_index = attr;
       velement.dst_offset = 0; /* need this? */
       velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
-                                               arrays[mesaAttr]->Size);
+                                               arrays[mesaAttr]->Size,
+                                               arrays[mesaAttr]->Normalized);
       assert(velement.src_format);
 
       /* tell pipe about this attribute */
@@ -438,7 +543,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
       velement.vertex_buffer_index = attr;
       velement.dst_offset = 0; /* need this? */
       velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
-                                               arrays[mesaAttr]->Size);
+                                               arrays[mesaAttr]->Size,
+                                               arrays[mesaAttr]->Normalized);
       assert(velement.src_format);
 
       /* tell draw about this attribute */
