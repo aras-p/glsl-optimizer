@@ -85,7 +85,7 @@ static void Init( void )
 static void Display( void )
 {
    glClearColor(0.3, 0.3, 0.3, 1);
-   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+   glClear( GL_COLOR_BUFFER_BIT);
 
    glEnable(GL_VERTEX_PROGRAM_ARB);
    glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, NULL );
@@ -126,7 +126,7 @@ int main( int argc, char *argv[] )
    glutInit( &argc, argv );
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 250, 250 );
-   glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH );
+   glutInitDisplayMode( GLUT_RGB | GLUT_SINGLE);
    glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
