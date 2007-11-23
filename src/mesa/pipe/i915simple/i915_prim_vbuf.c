@@ -99,7 +99,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
 
    /* FIXME: handle failure */
    assert(!i915->vbo);
-   i915->vbo = winsys->buffer_create(winsys, 64, 0, 0);
+   i915->vbo = winsys->buffer_create(winsys, 64);
    winsys->buffer_data( winsys, i915->vbo, 
                         size, NULL, 
                         I915_BUFFER_USAGE_LIT_VERTEX );
