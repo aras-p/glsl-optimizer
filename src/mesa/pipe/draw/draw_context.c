@@ -85,6 +85,7 @@ struct draw_context *draw_create( void )
    draw->prim = ~0; /* != any of PIPE_PRIM_x */
 
    draw_vertex_cache_invalidate( draw );
+   draw_set_mapped_element_buffer( draw, 0, NULL );
 
    return draw;
 }
