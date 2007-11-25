@@ -4,6 +4,7 @@
 
 #include "pipe/tgsi/exec/tgsi_token.h"
 #include "pipe/tgsi/exec/tgsi_parse.h"
+#include "pipe/tgsi/exec/tgsi_util.h"
 
 #include "nv40_context.h"
 #include "nv40_dma.h"
@@ -263,6 +264,66 @@ tgsi_mask(uint tgsi)
 }
 
 static boolean
+src_native_swz(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc,
+	       struct nv40_sreg *src)
+{
+	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
+	struct nv40_sreg tgsi = tgsi_src(fpc, fsrc);
+	uint mask = 0, zero_mask = 0, one_mask = 0, neg_mask = 0;
+	uint neg[4] = { fsrc->SrcRegisterExtSwz.NegateX,
+			fsrc->SrcRegisterExtSwz.NegateY,
+			fsrc->SrcRegisterExtSwz.NegateZ,
+			fsrc->SrcRegisterExtSwz.NegateW };
+	uint c;
+
+	for (c = 0; c < 4; c++) {
+		switch (tgsi_util_get_full_src_register_extswizzle(fsrc, c)) {
+		case TGSI_EXTSWIZZLE_X:
+		case TGSI_EXTSWIZZLE_Y:
+		case TGSI_EXTSWIZZLE_Z:
+		case TGSI_EXTSWIZZLE_W:
+			mask |= (1 << c);
+			break;
+		case TGSI_EXTSWIZZLE_ZERO:
+			zero_mask |= (1 << c);
+			tgsi.swz[c] = SWZ_X;
+			break;
+		case TGSI_EXTSWIZZLE_ONE:
+			one_mask |= (1 << c);
+			tgsi.swz[c] = SWZ_X;
+			break;
+		default:
+			assert(0);
+		}
+
+		if (!tgsi.negate && neg[c])
+			neg_mask |= (1 << c);
+	}
+
+	if (mask == MASK_ALL)
+		return TRUE;
+
+	*src = temp(fpc);
+
+	if (mask)
+		arith(fpc, 0, MOV, *src, mask, tgsi, none, none);
+
+	if (zero_mask)
+		arith(fpc, 0, SFL, *src, zero_mask, *src, none, none);
+
+	if (one_mask)
+		arith(fpc, 0, STR, *src, one_mask, *src, none, none);
+
+	if (neg_mask) {
+		struct nv40_sreg one = temp(fpc);
+		arith(fpc, 0, STR, one, neg_mask, one, none, none);
+		arith(fpc, 0, MUL, *src, neg_mask, *src, neg(one), none);
+	}
+
+	return FALSE;
+}
+
+static boolean
 nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 				const struct tgsi_full_instruction *finst)
 {
@@ -289,6 +350,18 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		const struct tgsi_full_src_register *fsrc;
 
 		fsrc = &finst->FullSrcRegisters[i];
+
+		switch (fsrc->SrcRegister.File) {
+		case TGSI_FILE_INPUT:
+		case TGSI_FILE_CONSTANT:
+		case TGSI_FILE_TEMPORARY:
+			if (!src_native_swz(fpc, fsrc, &src[i]))
+				continue;
+			break;
+		default:
+			break;
+		}
+
 		switch (fsrc->SrcRegister.File) {
 		case TGSI_FILE_INPUT:
 			if (ai == -1 || ai == fsrc->SrcRegister.Index) {
@@ -624,6 +697,12 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 	if (!fp->on_hw) {
 		if (!fp->buffer)
 			fp->buffer = ws->buffer_create(ws, 0x100);
+
+#if 0
+		int i;
+		for (i = 0; i < fp->insn_len; i++)
+			NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
+#endif
 
 		nv40->pipe.winsys->buffer_data(nv40->pipe.winsys, fp->buffer,
 					       fp->insn_len * sizeof(uint32_t),
