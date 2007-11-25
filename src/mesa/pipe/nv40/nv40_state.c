@@ -546,104 +546,156 @@ nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	}
 }
 
-#define get_region(surf) ((surf) ? surf->region : NULL)
 static void
 nv40_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct pipe_region *region;
-	uint32_t rt_enable = 0, rt_format = 0;
+	struct pipe_region *region[4], *zregion;
+	uint32_t rt_enable, rt_format, w, h;
+	int i, colour_format = 0, zeta_format = 0;
 
-	if ((region = get_region(fb->cbufs[0]))) {
-		rt_enable |= NV40TCL_RT_ENABLE_COLOR0;
+	rt_enable = 0;
+	for (i = 0; i < 4; i++) {
+		if (!fb->cbufs[i])
+			continue;
 
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR0, 1);
-		OUT_RELOCo(region->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR0_PITCH, 2);
-		OUT_RING  (region->pitch * region->cpp);
-		OUT_RELOCl(region->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	}
-
-	if ((region = get_region(fb->cbufs[1]))) {
-		rt_enable |= NV40TCL_RT_ENABLE_COLOR1;
-
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR1, 1);
-		OUT_RELOCo(region->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR1_OFFSET, 2);
-		OUT_RELOCl(region->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		OUT_RING  (region->pitch * region->cpp);
-	}
-
-	if ((region = get_region(fb->cbufs[2]))) {
-		rt_enable |= NV40TCL_RT_ENABLE_COLOR2;
-
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR2, 1);
-		OUT_RELOCo(region->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR2_OFFSET, 1);
-		OUT_RELOCl(region->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR2_PITCH, 1);
-		OUT_RING  (region->pitch * region->cpp);
-	}
-
-	if ((region = get_region(fb->cbufs[3]))) {
-		rt_enable |= NV40TCL_RT_ENABLE_COLOR3;
-
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR3, 1);
-		OUT_RELOCo(region->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR3_OFFSET, 1);
-		OUT_RELOCl(region->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR3_PITCH, 1);
-		OUT_RING  (region->pitch * region->cpp);
-	}
-
-	if ((region = get_region(fb->zbuf))) {
-		BEGIN_RING(curie, NV40TCL_DMA_ZETA, 1);
-		OUT_RELOCo(region->buffer,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
-		BEGIN_RING(curie, NV40TCL_ZETA_OFFSET, 1);
-		OUT_RELOCl(region->buffer, 0,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
-		BEGIN_RING(curie, NV40TCL_ZETA_PITCH, 1);
-		OUT_RING  (region->pitch * region->cpp);
+		if (colour_format) {
+			assert(w == fb->cbufs[i]->width);
+			assert(h == fb->cbufs[i]->height);
+			assert(colour_format == fb->cbufs[i]->format);
+		} else {
+			w = fb->cbufs[i]->width;
+			h = fb->cbufs[i]->height;
+			colour_format = fb->cbufs[i]->format;
+			rt_enable |= (NV40TCL_RT_ENABLE_COLOR0 << i);
+			region[i] = fb->cbufs[i]->region;
+		}
 	}
 
 	if (rt_enable & (NV40TCL_RT_ENABLE_COLOR1 | NV40TCL_RT_ENABLE_COLOR2 |
 			 NV40TCL_RT_ENABLE_COLOR3))
 		rt_enable |= NV40TCL_RT_ENABLE_MRT;
+
+	if (fb->zbuf) {
+		if (colour_format) {
+			assert(w == fb->zbuf->width);
+			assert(h == fb->zbuf->height);
+		} else {
+			w = fb->zbuf->width;
+			h = fb->zbuf->height;
+		}
+
+		zeta_format = fb->zbuf->format;
+		zregion = fb->zbuf->region;
+	}
+
+	if (fb->sbuf) {
+		if (colour_format) {
+			assert(w == fb->sbuf->width);
+			assert(h == fb->sbuf->height);
+		} else {
+			w = fb->zbuf->width;
+			h = fb->zbuf->height;
+		}
+		
+		if (zeta_format) {
+			assert(fb->sbuf->format == zeta_format);
+			assert(fb->sbuf->region == zregion);
+		} else {
+			zeta_format = fb->sbuf->format;
+			zregion = fb->sbuf->region;
+		}
+	}
+
+	rt_format = NV40TCL_RT_FORMAT_TYPE_LINEAR;
+
+	switch (colour_format) {
+	case PIPE_FORMAT_U_A8_R8_G8_B8:
+	case 0:
+		rt_format |= NV40TCL_RT_FORMAT_COLOR_A8R8G8B8;
+		break;
+	case PIPE_FORMAT_U_R5_G6_B5:
+		rt_format |= NV40TCL_RT_FORMAT_COLOR_R5G6B5;
+		break;
+	default:
+		assert(0);
+	}
+
+	switch (zeta_format) {
+	case PIPE_FORMAT_U_Z16:
+		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z16;
+		break;
+	case PIPE_FORMAT_Z24_S8:
+		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
+		break;
+	case 0:
+		break;
+	default:
+		assert(0);
+	}
+
+	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
+		BEGIN_RING(curie, NV40TCL_DMA_COLOR0, 1);
+		OUT_RELOCo(region[0]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR0_PITCH, 2);
+		OUT_RING  (region[0]->pitch * region[0]->cpp);
+		OUT_RELOCl(region[0]->buffer, 0,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	}
+
+	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
+		BEGIN_RING(curie, NV40TCL_DMA_COLOR1, 1);
+		OUT_RELOCo(region[1]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR1_OFFSET, 2);
+		OUT_RELOCl(region[1]->buffer, 0,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RING  (region[1]->pitch * region[1]->cpp);
+	}
+
+	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
+		BEGIN_RING(curie, NV40TCL_DMA_COLOR2, 1);
+		OUT_RELOCo(region[2]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR2_OFFSET, 1);
+		OUT_RELOCl(region[2]->buffer, 0,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR2_PITCH, 1);
+		OUT_RING  (region[2]->pitch * region[2]->cpp);
+	}
+
+	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
+		BEGIN_RING(curie, NV40TCL_DMA_COLOR3, 1);
+		OUT_RELOCo(region[3]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR3_OFFSET, 1);
+		OUT_RELOCl(region[3]->buffer, 0,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR3_PITCH, 1);
+		OUT_RING  (region[3]->pitch * region[3]->cpp);
+	}
+
+	if (zeta_format) {
+		BEGIN_RING(curie, NV40TCL_DMA_ZETA, 1);
+		OUT_RELOCo(zregion->buffer,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
+		BEGIN_RING(curie, NV40TCL_ZETA_OFFSET, 1);
+		OUT_RELOCl(zregion->buffer, 0,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
+		BEGIN_RING(curie, NV40TCL_ZETA_PITCH, 1);
+		OUT_RING  (zregion->pitch * zregion->cpp);
+	}
+
 	BEGIN_RING(curie, NV40TCL_RT_ENABLE, 1);
 	OUT_RING  (rt_enable);
-
-	if (0) {
-		rt_format |= (0 << NV40TCL_RT_FORMAT_LOG2_WIDTH_SHIFT);
-		rt_format |= (0 << NV40TCL_RT_FORMAT_LOG2_HEIGHT_SHIFT);
-		rt_format |= NV40TCL_RT_FORMAT_TYPE_SWIZZLED;
-	} else {
-		rt_format |= NV40TCL_RT_FORMAT_TYPE_LINEAR;
-	}
-
-	if (fb->cbufs[0]->format == PIPE_FORMAT_U_R5_G6_B5) {
-		rt_format |= NV40TCL_RT_FORMAT_COLOR_R5G6B5;
-	} else {
-		rt_format |= NV40TCL_RT_FORMAT_COLOR_A8R8G8B8;
-	}
-
-	if (fb->zbuf && fb->zbuf->format == PIPE_FORMAT_U_Z16) {
-		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z16;
-	} else {
-		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
-	}
-
 	BEGIN_RING(curie, NV40TCL_RT_HORIZ, 3);
-	OUT_RING  ((fb->cbufs[0]->width  << 16) | 0);
-	OUT_RING  ((fb->cbufs[0]->height << 16) | 0);
+	OUT_RING  ((w << 16) | 0);
+	OUT_RING  ((h << 16) | 0);
 	OUT_RING  (rt_format);
 	BEGIN_RING(curie, NV40TCL_VIEWPORT_HORIZ, 2);
-	OUT_RING  ((fb->cbufs[0]->width  << 16) | 0);
-	OUT_RING  ((fb->cbufs[0]->height << 16) | 0);
+	OUT_RING  ((w << 16) | 0);
+	OUT_RING  ((h << 16) | 0);
 	BEGIN_RING(curie, NV40TCL_VIEWPORT_CLIP_HORIZ(0), 2);
-	OUT_RING  (((fb->cbufs[0]->width - 1)  << 16) | 0);
-	OUT_RING  (((fb->cbufs[0]->height - 1) << 16) | 0);
+	OUT_RING  (((w - 1) << 16) | 0);
+	OUT_RING  (((h - 1) << 16) | 0);
 }
 
 static void
