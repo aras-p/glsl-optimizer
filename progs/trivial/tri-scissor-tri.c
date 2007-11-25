@@ -31,6 +31,7 @@
 #define CI_OFFSET_1 16
 #define CI_OFFSET_2 32
 
+GLint Width = 250, Height = 250;
 
 GLenum doubleBuffer;
 
@@ -40,7 +41,7 @@ static void Init(void)
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
 
-    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glClearColor(0.0, 0.0, 1.0, 0.0);
 }
 
 static void Reshape(int width, int height)
@@ -69,49 +70,30 @@ static void Key(unsigned char key, int x, int y)
 
 static void Draw(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-   glEnable(GL_DEPTH_TEST);
+   glClear(GL_COLOR_BUFFER_BIT); 
 
-   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-
-
-   glEnable(GL_POLYGON_OFFSET_FILL);
-   glPolygonOffset(1, 0);
-
-   glBegin(GL_QUADS);
-   glColor3f(1,0,0); 
-   glVertex3f( 0.9, -0.9, -10.0);
-   glVertex3f( 0.9,  0.9, -10.0);
-   glVertex3f(-0.9,  0.9, -40.0);
-   glVertex3f(-0.9,  -0.9, -40.0);
+   glBegin(GL_TRIANGLES);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.9, -0.9, -30.0);
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.9,  0.9, -30.0);
+   glColor3f(0,.9,0); 
+   glVertex3f(-0.9,  0.0, -30.0);
    glEnd();
 
-   glDisable(GL_POLYGON_OFFSET_FILL);
+   glScissor(Width / 4, Height / 4, Width / 2, Height / 2);
+   glEnable(GL_SCISSOR_TEST);
 
-   glBegin(GL_QUADS);
-   glColor3f(0,1,0); 
-   glVertex3f( 0.6, -0.6, -15.0);
-   glVertex3f( 0.6,  0.6, -15.0);
-   glVertex3f(-0.6,  0.6, -35.0);
-   glVertex3f(-0.6,  -0.6, -35.0);
+   glBegin(GL_TRIANGLES);
+   glColor3f(0,0,.7); 
+   glVertex3f(-0.9, -0.9, -30.0);
+   glColor3f(.8,0,0); 
+   glVertex3f(-0.9,  0.9, -30.0);
+   glColor3f(0,.9,0); 
+   glVertex3f( 0.9,  0.0, -30.0);
    glEnd();
 
-   glEnable(GL_POLYGON_OFFSET_LINE);
-   glPolygonOffset(-1, 0);
-
-   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-   glBegin(GL_QUADS);
-   glColor3f(0,0,1); 
-   glVertex3f( 0.3, -0.3, -20.0);
-   glVertex3f( 0.3,  0.3, -20.0);
-   glVertex3f(-0.3,  0.3, -30.0);
-   glVertex3f(-0.3,  -0.3, -30.0);
-   glEnd();
-
-
-   glDisable(GL_POLYGON_OFFSET_FILL);
+   glDisable(GL_SCISSOR_TEST);
 
    glFlush();
 
@@ -149,9 +131,9 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
+    glutInitWindowPosition(100, 0); glutInitWindowSize(Width, Height);
 
-    type = GLUT_RGB | GLUT_ALPHA | GLUT_DEPTH;
+    type = GLUT_RGB;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 

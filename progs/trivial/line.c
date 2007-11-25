@@ -40,7 +40,7 @@ static void Init(void)
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
 
-    glClearColor(0.3, 0.3, 0.3, 0.0);
+    glClearColor(0.0, 0.0, 1.0, 0.0);
 }
 
 static void Reshape(int width, int height)
@@ -71,15 +71,20 @@ static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
 
-   glBegin(GL_LINE_STRIP);
+   glBegin(GL_LINES);
    glColor3f(0,0,.7); 
    glVertex3f( 0.9, -0.9, -30.0);
    glColor3f(.8,0,0); 
    glVertex3f( 0.9,  0.9, -30.0);
+
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.9,  0.9, -30.0);
    glColor3f(0,.9,0); 
    glVertex3f(-0.9,  0.0, -30.0);
-   /* Repeat the first vertex - don't have lineloop support in GS yet
-    */
+
+
+   glColor3f(0,.9,0); 
+   glVertex3f(-0.9,  0.0, -30.0);
    glColor3f(0,0,.7); 
    glVertex3f( 0.9, -0.9, -30.0);
    glEnd();

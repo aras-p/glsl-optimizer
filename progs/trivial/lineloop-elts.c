@@ -1,4 +1,4 @@
-/* Basic VBO */
+/* Test rebasing */
 
 #include <assert.h>
 #include <string.h>
@@ -8,31 +8,21 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
 
-struct {
-   GLfloat pos[3];
-   GLubyte color[4];
-} verts[] =  
-{
-   { {  0.9, -0.9, 0.0 },
-     { 0x00, 0x00, 0xff, 0x00 } 
-   },
-
-   { {  0.9,  0.9, 0.0 },
-     { 0x00, 0xff, 0x00, 0x00 }
-   },
-
-   { { -0.9,  0.9, 0.0 },
-     { 0xff, 0x00, 0x00, 0x00 } 
-   },
-
-   { { -0.9, -0.9, 0.0 },
-     { 0xff, 0xff, 0xff, 0x00 }
-   },
+GLfloat verts[][4] = {
+   {  0.9, -0.9, 0.0, 1.0 },
+   {  0.9,  0.9, 0.0, 1.0 },
+   { -0.9,  0.9, 0.0, 1.0 },
+   { -0.9, -0.9, 0.0, 1.0 },
 };
 
-GLuint indices[] = { 0, 1, 2, 3 };
+GLubyte color[][4] = {
+   { 0x00, 0x00, 0xff, 0x00 },
+   { 0x00, 0xff, 0x00, 0x00 },
+   { 0xff, 0x00, 0x00, 0x00 },
+   { 0xff, 0xff, 0xff, 0x00 },
+};
 
-GLuint arrayObj, elementObj;
+GLuint indices[] = { 1, 2, 3 };
 
 static void Init( void )
 {
@@ -65,18 +55,8 @@ static void Init( void )
 
    glEnableClientState( GL_VERTEX_ARRAY );
    glEnableClientState( GL_COLOR_ARRAY );
-
-   glGenBuffersARB(1, &arrayObj);
-   glGenBuffersARB(1, &elementObj);
-
-   glBindBufferARB(GL_ARRAY_BUFFER_ARB, arrayObj);
-   glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, elementObj);
-
-   glBufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(verts), verts, GL_STATIC_DRAW_ARB);
-   glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, sizeof(indices), indices, GL_STATIC_DRAW_ARB);
-
-   glVertexPointer( 3, GL_FLOAT, sizeof(verts[0]), 0 );
-   glColorPointer( 4, GL_UNSIGNED_BYTE, sizeof(verts[0]), (void *)(3*sizeof(float)) );
+   glVertexPointer( 3, GL_FLOAT, sizeof(verts[0]), verts );
+   glColorPointer( 4, GL_UNSIGNED_BYTE, 0, color );
 
 }
 
@@ -87,8 +67,11 @@ static void Display( void )
    glClearColor(0.3, 0.3, 0.3, 1);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-   glEnable(GL_VERTEX_PROGRAM_ARB);
-   glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, NULL );
+   glEnable(GL_VERTEX_PROGRAM_NV);
+
+   /* Should have min_index == 1, maybe force a rebase:
+    */
+   glDrawElements( GL_LINE_LOOP, 3, GL_UNSIGNED_INT, indices );
 
    glFlush(); 
 }

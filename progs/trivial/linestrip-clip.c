@@ -40,7 +40,7 @@ static void Init(void)
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
 
-    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glClearColor(0.0, 0.0, 1.0, 0.0);
 }
 
 static void Reshape(int width, int height)
@@ -69,49 +69,21 @@ static void Key(unsigned char key, int x, int y)
 
 static void Draw(void)
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-   glEnable(GL_DEPTH_TEST);
+   glClear(GL_COLOR_BUFFER_BIT); 
 
-   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+   glBegin(GL_LINE_STRIP);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.9, -0.9, -30.0);
 
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.9,  0.9, -30.0);
 
+   glColor3f(0,.9,0); 
+   glVertex3f(-1.9,  0.0, -30.0);
 
-   glEnable(GL_POLYGON_OFFSET_FILL);
-   glPolygonOffset(1, 0);
-
-   glBegin(GL_QUADS);
-   glColor3f(1,0,0); 
-   glVertex3f( 0.9, -0.9, -10.0);
-   glVertex3f( 0.9,  0.9, -10.0);
-   glVertex3f(-0.9,  0.9, -40.0);
-   glVertex3f(-0.9,  -0.9, -40.0);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.8, -0.8, -30.0);
    glEnd();
-
-   glDisable(GL_POLYGON_OFFSET_FILL);
-
-   glBegin(GL_QUADS);
-   glColor3f(0,1,0); 
-   glVertex3f( 0.6, -0.6, -15.0);
-   glVertex3f( 0.6,  0.6, -15.0);
-   glVertex3f(-0.6,  0.6, -35.0);
-   glVertex3f(-0.6,  -0.6, -35.0);
-   glEnd();
-
-   glEnable(GL_POLYGON_OFFSET_LINE);
-   glPolygonOffset(-1, 0);
-
-   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-   glBegin(GL_QUADS);
-   glColor3f(0,0,1); 
-   glVertex3f( 0.3, -0.3, -20.0);
-   glVertex3f( 0.3,  0.3, -20.0);
-   glVertex3f(-0.3,  0.3, -30.0);
-   glVertex3f(-0.3,  -0.3, -30.0);
-   glEnd();
-
-
-   glDisable(GL_POLYGON_OFFSET_FILL);
 
    glFlush();
 
@@ -151,7 +123,7 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB | GLUT_ALPHA | GLUT_DEPTH;
+    type = GLUT_RGB;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
