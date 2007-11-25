@@ -278,6 +278,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
 	struct nv40_rasterizer_state *rs;
+	int i;
 
 	/*XXX: ignored:
 	 * 	light_twoside
@@ -326,6 +327,16 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 		break;
 	}
 
+	if (cso->point_sprite) {
+		rs->point_sprite = (1 << 0);
+		for (i = 0; i < 8; i++) {
+			if (cso->sprite_coord_mode[i] != PIPE_SPRITE_COORD_NONE)
+				rs->point_sprite |= (1 << (8 + i));
+		}
+	} else {
+		rs->point_sprite = 0;
+	}
+
 	return (void *)rs;
 }
 
@@ -358,6 +369,9 @@ nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 
 	BEGIN_RING(curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
 	OUT_RING  (rs->poly_stipple_en);
+
+	BEGIN_RING(curie, NV40TCL_POINT_SPRITE, 1);
+	OUT_RING  (rs->point_sprite);
 }
 
 static void

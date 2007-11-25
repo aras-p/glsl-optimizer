@@ -54,7 +54,7 @@ nv40_get_param(struct pipe_context *pipe, int param)
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
 	case PIPE_CAP_POINT_SPRITE:
-		return 0;
+		return 1;
 	case PIPE_CAP_MAX_RENDER_TARGETS:
 		return 4;
 	case PIPE_CAP_OCCLUSION_QUERY:

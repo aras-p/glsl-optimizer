@@ -51,6 +51,7 @@ struct nv40_rasterizer_state {
 	uint32_t cull_face;
 	uint32_t cull_face_en;
 
+	uint32_t point_sprite;
 };
 
 struct nv40_vertex_program {
