@@ -47,7 +47,7 @@ i915_fill_blit(struct i915_context *i915,
    unsigned BR13, CMD;
    BATCH_LOCALS;
 
-   dst_pitch *= cpp;
+   dst_pitch *= (short) cpp;
 
    switch (cpp) {
    case 1:
@@ -102,14 +102,14 @@ i915_copy_blit( struct i915_context *i915,
    BATCH_LOCALS;
 
 
-   DBG(i915,
+   I915_DBG(i915,
        "%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
        dst_buffer, dst_pitch, dst_offset, dst_x, dst_y, w, h);
 
-   src_pitch *= cpp;
-   dst_pitch *= cpp;
+   src_pitch *= (short) cpp;
+   dst_pitch *= (short) cpp;
 
    switch (cpp) {
    case 1:

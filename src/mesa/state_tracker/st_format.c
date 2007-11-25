@@ -109,12 +109,14 @@ st_get_format_info(
       info = format;
 
 #if 0
-      printf(
-         "PIPE_FORMAT: X(%u), Y(%u), Z(%u), W(%u)\n",
-         info.sizeX,
-         info.sizeY,
-         info.sizeZ,
-         info.sizeW );
+      {
+         char  fmtname[256];
+
+         pf_sprint_name( fmtname, format );
+         printf(
+            "%s\n",
+            fmtname );
+      }
 #endif
 
       /* Data type */

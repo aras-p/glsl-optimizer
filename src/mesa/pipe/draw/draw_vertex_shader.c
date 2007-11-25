@@ -32,13 +32,13 @@
   */
 
 #include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
 #include "draw_private.h"
 #include "draw_context.h"
 #include "draw_vertex.h"
 
 #include "x86/rtasm/x86sse.h"
 
-#include "pipe/tgsi/exec/tgsi_core.h"
 #include "pipe/llvm/gallivm.h"
 
 
@@ -158,10 +158,8 @@ run_vertex_program(struct draw_context *draw,
 #endif
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
-       * Skip 0 since we just did it above.
-       * Subtract two because of the VERTEX_HEADER, CLIP_POS attribs.
        */
-      for (slot = 1; slot < draw->vertex_info.num_attribs - 2; slot++) {
+      for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
          vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
          vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];

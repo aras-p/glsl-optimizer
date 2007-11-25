@@ -163,9 +163,9 @@ i915_region_copy(struct pipe_context *pipe,
    else {
       i915_copy_blit( i915_context(pipe),
 		      dst->cpp,
-		      src->pitch, src->buffer, src_offset,
-		      dst->pitch, dst->buffer, dst_offset,
-		      srcx, srcy, dstx, dsty, width, height );
+		      (short) src->pitch, src->buffer, src_offset,
+		      (short) dst->pitch, dst->buffer, dst_offset,
+		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
    }
 }
 
@@ -204,7 +204,7 @@ i915_region_fill(struct pipe_context *pipe,
 	 ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
 	 for (i = 0; i < height; i++) {
 	    for (j = 0; j < width; j++)
-	       row[j] = value;
+	       row[j] = (ushort) value;
 	    row += dst->pitch;
 	 }
       }
@@ -226,10 +226,10 @@ i915_region_fill(struct pipe_context *pipe,
    else {
       i915_fill_blit( i915_context(pipe),
 		      dst->cpp,
-		      dst->pitch, 
+		      (short) dst->pitch, 
 		      dst->buffer, dst_offset,
-		      dstx, dsty, 
-		      width, height, 
+		      (short) dstx, (short) dsty, 
+		      (short) width, (short) height, 
 		      value );
    }
 }

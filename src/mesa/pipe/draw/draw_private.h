@@ -47,7 +47,7 @@
 #include "draw_vertex.h"
 
 #include "x86/rtasm/x86sse.h"
-#include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/tgsi/exec/tgsi_exec.h"
 
 
 struct gallivm_prog;

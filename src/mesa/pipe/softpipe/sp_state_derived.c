@@ -26,14 +26,11 @@
  **************************************************************************/
 
 #include "pipe/p_util.h"
-
+#include "pipe/p_shader_tokens.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_vertex.h"
-
 #include "sp_context.h"
 #include "sp_state.h"
-
-#include "pipe/tgsi/exec/tgsi_token.h"
 
 
 /**
@@ -156,10 +153,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    if (1/*vinfo->attr_mask != softpipe->attr_mask*/) {
       /*softpipe->attr_mask = vinfo->attr_mask;*/
 
-      draw_set_vertex_attributes( softpipe->draw,
-                                  NULL,/*vinfo->slot_to_attrib,*/
-                                  vinfo->interp_mode,
-                                  vinfo->num_attribs);
+      draw_set_vertex_info( softpipe->draw, vinfo);
 
       draw_set_twoside_attributes(softpipe->draw,
                                   front0, back0, front1, back1);

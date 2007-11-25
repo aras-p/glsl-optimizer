@@ -25,8 +25,13 @@
  * 
  **************************************************************************/
 
-#include "tgsi_platform.h"
-#include "tgsi_core.h"
+#include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
+#include "pipe/tgsi/util/tgsi_parse.h"
+#include "pipe/tgsi/util/tgsi_util.h"
+#include "tgsi_exec.h"
+#include "tgsi_sse2.h"
+
 #include "x86/rtasm/x86sse.h"
 
 #if defined(__i386__) || defined(__386__)

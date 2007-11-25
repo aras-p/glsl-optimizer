@@ -169,6 +169,7 @@ DRAW_SOURCES = \
 	pipe/draw/draw_twoside.c \
 	pipe/draw/draw_unfilled.c \
 	pipe/draw/draw_validate.c \
+	pipe/draw/draw_vbuf.c \
 	pipe/draw/draw_vertex.c \
 	pipe/draw/draw_vertex_cache.c \
 	pipe/draw/draw_vertex_fetch.c \
@@ -177,15 +178,14 @@ DRAW_SOURCES = \
 	pipe/draw/draw_wide_prims.c
 
 TGSIEXEC_SOURCES = \
-	pipe/tgsi/exec/tgsi_build.c \
-	pipe/tgsi/exec/tgsi_dump.c \
 	pipe/tgsi/exec/tgsi_exec.c \
-	pipe/tgsi/exec/tgsi_parse.c \
-	pipe/tgsi/exec/tgsi_sse2.c \
-	pipe/tgsi/exec/tgsi_util.c
+	pipe/tgsi/exec/tgsi_sse2.c
 
-TGSIDECO_SOURCES = \
-	pipe/tgsi/deco/deco_caps.c
+TGSIUTIL_SOURCES = \
+	pipe/tgsi/util/tgsi_build.c \
+	pipe/tgsi/util/tgsi_dump.c \
+	pipe/tgsi/util/tgsi_parse.c \
+	pipe/tgsi/util/tgsi_util.c
 
 
 LLVMTGSI_SOURCES = \
@@ -384,7 +384,7 @@ SOLO_SOURCES = \
 	$(VF_SOURCES)		\
 	$(DRAW_SOURCES)		\
 	$(TGSIEXEC_SOURCES)	\
-	$(TGSIDECO_SOURCES)	\
+	$(TGSIUTIL_SOURCES)	\
 	$(STATECACHE_SOURCES)   \
 	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\

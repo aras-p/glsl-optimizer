@@ -31,7 +31,7 @@
 #ifndef SP_HEADERS_H
 #define SP_HEADERS_H
 
-#include "../tgsi/exec/tgsi_core.h"
+#include "pipe/tgsi/exec/tgsi_exec.h"
 
 #define PRIM_POINT 1
 #define PRIM_LINE  2

@@ -30,7 +30,8 @@
 #include "shader/prog_print.h"
 
 #include "pipe/p_state.h"
-#include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/p_shader_tokens.h"
+#include "pipe/tgsi/util/tgsi_dump.h"
 
 #include "pipe/cso_cache/cso_cache.h"
 

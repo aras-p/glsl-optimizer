@@ -31,11 +31,10 @@
   */
 
 #include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
 #include "draw_private.h"
 #include "draw_context.h"
 #include "draw_vertex.h"
-
-#include "pipe/tgsi/exec/tgsi_core.h"
 
 
 #define DBG 0
@@ -78,6 +77,13 @@ fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
       /* fall-through */
    case PIPE_FORMAT_R32_SSCALED:
       attrib[0] = (float) ((int *) ptr)[0];
+      break;
+
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      attrib[0] = (float) ((unsigned char *) ptr)[2] / 255.0f;
+      attrib[1] = (float) ((unsigned char *) ptr)[1] / 255.0f;
+      attrib[2] = (float) ((unsigned char *) ptr)[0] / 255.0f;
+      attrib[3] = (float) ((unsigned char *) ptr)[3] / 255.0f;
       break;
 
    default:

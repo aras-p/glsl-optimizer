@@ -32,11 +32,20 @@
 #include "pipe/p_util.h"
 
 
+static void
+PRINTF(
+   struct debug_stream  *stream,
+   const char           *fmt,
+                        ... )
+{
+   va_list  args;
+   char     buffer[256];
 
-
-#define PRINTF( ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
-
-
+   va_start( args, fmt );
+   vsprintf( buffer, fmt, args );
+   stream->winsys->printf( stream->winsys, buffer );
+   va_end( args );
+}
 
 
 static const char *opcodes[0x20] = {
@@ -129,27 +138,27 @@ print_reg_type_nr(struct debug_stream *stream, unsigned type, unsigned nr)
    case REG_TYPE_T:
       switch (nr) {
       case T_DIFFUSE:
-         PRINTF("T_DIFFUSE");
+         PRINTF(stream, "T_DIFFUSE");
          return;
       case T_SPECULAR:
-         PRINTF("T_SPECULAR");
+         PRINTF(stream, "T_SPECULAR");
          return;
       case T_FOG_W:
-         PRINTF("T_FOG_W");
+         PRINTF(stream, "T_FOG_W");
          return;
       default:
-         PRINTF("T_TEX%d", nr);
+         PRINTF(stream, "T_TEX%d", nr);
          return;
       }
    case REG_TYPE_OC:
       if (nr == 0) {
-         PRINTF("oC");
+         PRINTF(stream, "oC");
          return;
       }
       break;
    case REG_TYPE_OD:
       if (nr == 0) {
-         PRINTF("oD");
+         PRINTF(stream, "oD");
          return;
       }
       break;
@@ -157,7 +166,7 @@ print_reg_type_nr(struct debug_stream *stream, unsigned type, unsigned nr)
       break;
    }
 
-   PRINTF("%s[%d]", regname[type], nr);
+   PRINTF(stream, "%s[%d]", regname[type], nr);
 }
 
 #define REG_SWIZZLE_MASK 0x7777
@@ -178,33 +187,33 @@ print_reg_neg_swizzle(struct debug_stream *stream, unsigned reg)
        (reg & REG_NEGATE_MASK) == 0)
       return;
 
-   PRINTF(".");
+   PRINTF(stream, ".");
 
    for (i = 3; i >= 0; i--) {
       if (reg & (1 << ((i * 4) + 3)))
-         PRINTF("-");
+         PRINTF(stream, "-");
 
       switch ((reg >> (i * 4)) & 0x7) {
       case 0:
-         PRINTF("x");
+         PRINTF(stream, "x");
          break;
       case 1:
-         PRINTF("y");
+         PRINTF(stream, "y");
          break;
       case 2:
-         PRINTF("z");
+         PRINTF(stream, "z");
          break;
       case 3:
-         PRINTF("w");
+         PRINTF(stream, "w");
          break;
       case 4:
-         PRINTF("0");
+         PRINTF(stream, "0");
          break;
       case 5:
-         PRINTF("1");
+         PRINTF(stream, "1");
          break;
       default:
-         PRINTF("?");
+         PRINTF(stream, "?");
          break;
       }
    }
@@ -229,15 +238,15 @@ print_dest_reg(struct debug_stream *stream, unsigned dword)
    print_reg_type_nr(stream, type, nr);
    if ((dword & A0_DEST_CHANNEL_ALL) == A0_DEST_CHANNEL_ALL)
       return;
-   PRINTF(".");
+   PRINTF(stream, ".");
    if (dword & A0_DEST_CHANNEL_X)
-      PRINTF("x");
+      PRINTF(stream, "x");
    if (dword & A0_DEST_CHANNEL_Y)
-      PRINTF("y");
+      PRINTF(stream, "y");
    if (dword & A0_DEST_CHANNEL_Z)
-      PRINTF("z");
+      PRINTF(stream, "z");
    if (dword & A0_DEST_CHANNEL_W)
-      PRINTF("w");
+      PRINTF(stream, "w");
 }
 
 
@@ -253,29 +262,29 @@ print_arith_op(struct debug_stream *stream,
    if (opcode != A0_NOP) {
       print_dest_reg(stream, program[0]);
       if (program[0] & A0_DEST_SATURATE)
-         PRINTF(" = SATURATE ");
+         PRINTF(stream, " = SATURATE ");
       else
-         PRINTF(" = ");
+         PRINTF(stream, " = ");
    }
 
-   PRINTF("%s ", opcodes[opcode]);
+   PRINTF(stream, "%s ", opcodes[opcode]);
 
    print_src_reg(stream, GET_SRC0_REG(program[0], program[1]));
    if (args[opcode] == 1) {
-      PRINTF("\n");
+      PRINTF(stream, "\n");
       return;
    }
 
-   PRINTF(", ");
+   PRINTF(stream, ", ");
    print_src_reg(stream, GET_SRC1_REG(program[1], program[2]));
    if (args[opcode] == 2) {
-      PRINTF("\n");
+      PRINTF(stream, "\n");
       return;
    }
 
-   PRINTF(", ");
+   PRINTF(stream, ", ");
    print_src_reg(stream, GET_SRC2_REG(program[2]));
-   PRINTF("\n");
+   PRINTF(stream, "\n");
    return;
 }
 
@@ -285,40 +294,40 @@ print_tex_op(struct debug_stream *stream,
 	     unsigned opcode, const unsigned * program)
 {
    print_dest_reg(stream, program[0] | A0_DEST_CHANNEL_ALL);
-   PRINTF(" = ");
+   PRINTF(stream, " = ");
 
-   PRINTF("%s ", opcodes[opcode]);
+   PRINTF(stream, "%s ", opcodes[opcode]);
 
-   PRINTF("S[%d],", program[0] & T0_SAMPLER_NR_MASK);
+   PRINTF(stream, "S[%d],", program[0] & T0_SAMPLER_NR_MASK);
 
    print_reg_type_nr(stream, 
 		     (program[1] >> T1_ADDRESS_REG_TYPE_SHIFT) &
                      REG_TYPE_MASK,
                      (program[1] >> T1_ADDRESS_REG_NR_SHIFT) & REG_NR_MASK);
-   PRINTF("\n");
+   PRINTF(stream, "\n");
 }
 
 static void
 print_texkil_op(struct debug_stream *stream, 
                 unsigned opcode, const unsigned * program)
 {
-   PRINTF("TEXKIL ");
+   PRINTF(stream, "TEXKIL ");
 
    print_reg_type_nr(stream, 
 		     (program[1] >> T1_ADDRESS_REG_TYPE_SHIFT) &
                      REG_TYPE_MASK,
                      (program[1] >> T1_ADDRESS_REG_NR_SHIFT) & REG_NR_MASK);
-   PRINTF("\n");
+   PRINTF(stream, "\n");
 }
 
 static void
 print_dcl_op(struct debug_stream *stream, 
 	     unsigned opcode, const unsigned * program)
 {
-   PRINTF("%s ", opcodes[opcode]);
+   PRINTF(stream, "%s ", opcodes[opcode]);
    print_dest_reg(stream, 
 		  program[0] | A0_DEST_CHANNEL_ALL);
-   PRINTF("\n");
+   PRINTF(stream, "\n");
 }
 
 
@@ -327,9 +336,9 @@ i915_disassemble_program(struct debug_stream *stream,
 			 const unsigned * program, unsigned sz)
 {
    unsigned size = program[0] & 0x1ff;
-   int i;
+   unsigned i;
 
-   PRINTF("\t\tBEGIN\n");
+   PRINTF(stream, "\t\tBEGIN\n");
 
    assert(size + 2 == sz);
 
@@ -337,7 +346,7 @@ i915_disassemble_program(struct debug_stream *stream,
    for (i = 1; i < sz; i += 3, program += 3) {
       unsigned opcode = program[0] & (0x1f << 24);
 
-      PRINTF("\t\t");
+      PRINTF(stream, "\t\t");
 
       if ((int) opcode >= A0_NOP && opcode <= A0_SLT)
          print_arith_op(stream, opcode >> 24, program);
@@ -348,10 +357,10 @@ i915_disassemble_program(struct debug_stream *stream,
       else if (opcode == D0_DCL)
          print_dcl_op(stream, opcode >> 24, program);
       else
-         PRINTF("Unknown opcode 0x%x\n", opcode);
+         PRINTF(stream, "Unknown opcode 0x%x\n", opcode);
    }
 
-   PRINTF("\t\tEND\n\n");
+   PRINTF(stream, "\t\tEND\n\n");
 }
 
 

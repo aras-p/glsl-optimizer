@@ -307,6 +307,20 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 }
 
 
+void
+intel_batchbuffer_finish(struct intel_batchbuffer *batch)
+{
+   struct _DriFenceObject *fence = intel_batchbuffer_flush(batch);
+   if (fence) {
+      driFenceReference(fence);
+      driFenceFinish(fence,
+                     DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
+                     GL_FALSE);
+      driFenceUnReference(fence);
+   }
+}
+
+
 /*  This is the only way buffers get added to the validate list.
  */
 boolean

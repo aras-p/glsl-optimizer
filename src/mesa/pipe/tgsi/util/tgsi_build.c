@@ -1,5 +1,7 @@
-#include "tgsi_platform.h"
-#include "tgsi_core.h"
+#include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
+#include "tgsi_build.h"
+#include "tgsi_parse.h"
 
 /*
  * version

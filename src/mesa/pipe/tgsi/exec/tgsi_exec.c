@@ -46,14 +46,17 @@
  *
  *
  * Authors:
- *   Michael Krol
+ *   Michal Krol
  *   Brian Paul
  */
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
-#include "tgsi_core.h"
+#include "pipe/p_shader_tokens.h"
+#include "pipe/tgsi/util/tgsi_parse.h"
+#include "pipe/tgsi/util/tgsi_util.h"
+#include "tgsi_exec.h"
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1

@@ -175,9 +175,7 @@ static void i915_destroy( struct pipe_context *pipe )
 
    draw_destroy( i915->draw );
 
-   i915->winsys->fence_reference( i915->winsys, &i915->last_fence, NULL );
-   
-   free( i915 );
+   FREE( i915 );
 }
 
 
@@ -343,7 +341,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
     */
    i915->draw = draw_create();
    assert(i915->draw);
-   if (getenv("I915_VBUF")) {
+   if (GETENV("I915_VBUF")) {
       draw_set_rasterize_stage(i915->draw, i915_draw_vbuf_stage(i915));
    }
    else {

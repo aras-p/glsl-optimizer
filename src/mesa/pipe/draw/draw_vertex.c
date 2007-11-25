@@ -75,7 +75,6 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
          vinfo->size += 3;
          break;
       case FORMAT_4F:
-      case FORMAT_4F_VIEWPORT:
          vinfo->size += 4;
          break;
       default:
@@ -88,38 +87,26 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
 
 
 /**
- * Tell the drawing module about the layout of post-transformation vertices
+ * Tell the drawing module about the contents of post-transformation vertices.
+ * Note that the vertex attribute format info isn't used by 'draw'; all
+ * attributes are handled as float[4].  But when the driver emits vertices
+ * it'll use that info.
+ * We _do_ care about the number of attributes and their interpolation modes.
  */
 void
-draw_set_vertex_attributes( struct draw_context *draw,
-                            const uint *slot_to_vf_attr,
-                            const enum interp_mode *interps,
-                            unsigned nr_attrs )
+draw_set_vertex_info( struct draw_context *draw,
+                      const struct vertex_info *info)
 {
-   struct vertex_info *vinfo = &draw->vertex_info;
-   unsigned i;
+   assert(info->interp_mode[0] == INTERP_LINEAR); /* should be vert pos */
+   assert(info->num_attribs <= PIPE_MAX_SHADER_OUTPUTS);
 
-#if 0
-   assert(slot_to_vf_attr[0] == TGSI_ATTRIB_POS);
-#endif
+   memcpy(&draw->vertex_info, info, sizeof(*info));
 
-   memset(vinfo, 0, sizeof(*vinfo));
-
-   /*
-    * First three attribs are always the same: header, clip pos, winpos
+   /* Need to know vertex size (in words) for vertex copying elsewhere.
+    * Four words per attribute, plus vertex header (uint) and clip
+    * position (float[4]).
     */
-   emit_vertex_attr(vinfo, FORMAT_1F, INTERP_NONE);
-   emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
-   emit_vertex_attr(vinfo, FORMAT_4F_VIEWPORT, INTERP_LINEAR);
-
-   /*
-    * Remaining attribs (color, texcoords, etc)
-    */
-   for (i = 1; i < nr_attrs; i++) {
-      emit_vertex_attr(vinfo, FORMAT_4F, interps[i]);
-   }
-
-   draw_compute_vertex_size(vinfo);
+   draw->vertex_info.size = draw->vertex_info.num_attribs * 4 + 5;
 }
 
 
