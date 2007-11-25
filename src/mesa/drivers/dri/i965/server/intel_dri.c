@@ -1,1 +1,1 @@
-../intel/server/intel_dri.c
+../../intel/server/intel_dri.c
