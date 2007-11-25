@@ -333,7 +333,8 @@ _gl_get_context_mode_data(const __GLcontextModes *mode, int attribute,
 	*value_return = mode->bindToTextureRgba;
 	return 0;
       case GLX_BIND_TO_MIPMAP_TEXTURE_EXT:
-	*value_return = mode->bindToMipmapTexture;
+	*value_return = mode->bindToMipmapTexture == GL_TRUE ? GL_TRUE :
+	    GL_FALSE;
 	return 0;
       case GLX_BIND_TO_TEXTURE_TARGETS_EXT:
 	*value_return = mode->bindToTextureTargets;
