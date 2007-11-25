@@ -114,25 +114,4 @@ buffer_fence(struct pipe_buffer *buf,
              struct pipe_fence_handle *fence);
 
 
-/**
- * Remove the buffer's fence.
- * 
- * NOTE: Although it takes a generic pipe buffer argument, it will fail
- * on everything but buffers returned by fenced_buffer_create.
- */
-void
-buffer_unfence(struct pipe_buffer *buf);
-
-
-/**
- * Wait for the buffer fence to signal.
- *
- * See also pipe_winsys::fence_finish().
- */ 
-int
-buffer_finish(struct pipe_buffer *buf, 
-              unsigned flag);
-
-
-
 #endif /*PB_BUFFER_FENCED_H_*/

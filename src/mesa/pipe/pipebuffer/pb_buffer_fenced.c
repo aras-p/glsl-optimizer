@@ -261,30 +261,6 @@ buffer_fence(struct pipe_buffer *buf,
 }
 
 
-void
-buffer_unfence(struct pipe_buffer *buf)
-{
-   buffer_fence(buf, NULL);
-}
-
-
-int
-buffer_finish(struct pipe_buffer *buf, 
-             unsigned flag)
-{
-   if(buf->vtbl == &fenced_buffer_vtbl) {
-      struct fenced_buffer *fenced_buf = fenced_buffer(buf);
-      if(fenced_buf->fence) {
-         struct fenced_buffer_list *fenced_list = fenced_buf->list;
-         struct pipe_winsys *winsys = fenced_list->winsys;         
-         return winsys->fence_finish(winsys, fenced_buf->fence, flag);
-      }
-   }
-   
-   return 0;
-}
-
-
 struct fenced_buffer_list *
 fenced_buffer_list_create(struct pipe_winsys *winsys) 
 {
