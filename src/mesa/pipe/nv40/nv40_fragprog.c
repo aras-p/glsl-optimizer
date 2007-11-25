@@ -2,9 +2,9 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
-#include "pipe/tgsi/exec/tgsi_token.h"
-#include "pipe/tgsi/exec/tgsi_parse.h"
-#include "pipe/tgsi/exec/tgsi_util.h"
+#include "pipe/p_shader_tokens.h"
+#include "pipe/tgsi/util/tgsi_parse.h"
+#include "pipe/tgsi/util/tgsi_util.h"
 
 #include "nv40_context.h"
 #include "nv40_dma.h"
