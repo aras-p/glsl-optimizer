@@ -546,20 +546,12 @@ nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	}
 }
 
-static void
-nv40_set_feedback_state(struct pipe_context *pipe,
-			const struct pipe_feedback_state *feedback)
-{
-	NOUVEAU_ERR("\n");
-}
-
 #define get_region(surf) ((surf) ? surf->region : NULL)
 static void
 nv40_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct nouveau_winsys *nvws = nv40->nvws;
 	struct pipe_region *region;
 	uint32_t rt_enable = 0, rt_format = 0;
 
@@ -732,13 +724,6 @@ nv40_set_vertex_element(struct pipe_context *pipe, unsigned index,
 	nv40->dirty |= NV40_NEW_ARRAYS;
 }
 
-static void
-nv40_set_feedback_buffer(struct pipe_context *pipe, unsigned index,
-			 const struct pipe_feedback_buffer *fbb)
-{
-	NOUVEAU_ERR("\n");
-}
-
 void
 nv40_init_state_functions(struct nv40_context *nv40)
 {
@@ -774,7 +759,6 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.set_clip_state = nv40_set_clip_state;
 	nv40->pipe.set_clear_color_state = nv40_set_clear_color_state;
 	nv40->pipe.set_constant_buffer = nv40_set_constant_buffer;
-//	nv40->pipe.set_feedback_state = nv40_set_feedback_state;
 	nv40->pipe.set_framebuffer_state = nv40_set_framebuffer_state;
 	nv40->pipe.set_polygon_stipple = nv40_set_polygon_stipple;
 	nv40->pipe.set_sampler_units = nv40_set_sampler_units;
@@ -785,6 +769,7 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.set_vertex_buffer = nv40_set_vertex_buffer;
 	nv40->pipe.set_vertex_element = nv40_set_vertex_element;
 
+//	nv40->pipe.set_feedback_state = nv40_set_feedback_state;
 //	nv40->pipe.set_feedback_buffer = nv40_set_feedback_buffer;
 }
 
