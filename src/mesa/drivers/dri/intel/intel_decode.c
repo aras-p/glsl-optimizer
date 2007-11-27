@@ -214,7 +214,7 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	instr_out(data, hw_offset, 2, "(%d,%d)\n",
 		  data[2] & 0xffff, data[2] >> 16);
 	instr_out(data, hw_offset, 3, "(%d,%d)\n",
-		  data[2] & 0xffff, data[2] >> 16);
+		  data[3] & 0xffff, data[3] >> 16);
 	instr_out(data, hw_offset, 4, "offset 0x%08x\n", data[4]);
 	instr_out(data, hw_offset, 5, "color\n");
 	return len;
