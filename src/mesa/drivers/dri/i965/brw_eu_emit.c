@@ -676,7 +676,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       insn->header.execution_size = do_insn->header.execution_size;
 
       assert(do_insn->header.opcode == BRW_OPCODE_DO);
-      insn->bits3.if_else.jump_count = do_insn - insn;
+      insn->bits3.if_else.jump_count = do_insn - insn + 1;
       insn->bits3.if_else.pop_count = 0;
       insn->bits3.if_else.pad0 = 0;
    }
