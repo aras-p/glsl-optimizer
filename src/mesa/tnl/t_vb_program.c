@@ -30,20 +30,20 @@
  */
 
 
-#include "glheader.h"
-#include "colormac.h"
-#include "context.h"
-#include "macros.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/colormac.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/imports.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_statevars.h"
 #include "shader/prog_execute.h"
 #include "swrast/s_context.h"
 #include "swrast/s_texfilter.h"
 
-#include "tnl.h"
-#include "t_context.h"
-#include "t_pipeline.h"
+#include "tnl/tnl.h"
+#include "tnl/t_context.h"
+#include "tnl/t_pipeline.h"
 
 
 
@@ -63,18 +63,12 @@ struct vp_stage_data {
 #define VP_STAGE_DATA(stage) ((struct vp_stage_data *)(stage->privatePtr))
 
 
-/**
- * XXX the texture sampling code in this module is a bit of a hack.
- * The texture sampling code is in swrast, though it doesn't have any
- * real dependencies on the rest of swrast.  It should probably be
- * moved into main/ someday.
- */
-
-static void userclip( GLcontext *ctx,
-		      GLvector4f *clip,
-		      GLubyte *clipmask,
-		      GLubyte *clipormask,
-		      GLubyte *clipandmask )
+static void
+userclip( GLcontext *ctx,
+          GLvector4f *clip,
+          GLubyte *clipmask,
+          GLubyte *clipormask,
+          GLubyte *clipandmask )
 {
    GLuint p;
 
@@ -172,6 +166,12 @@ do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
 }
 
 
+/**
+ * XXX the texture sampling code in this module is a bit of a hack.
+ * The texture sampling code is in swrast, though it doesn't have any
+ * real dependencies on the rest of swrast.  It should probably be
+ * moved into main/ someday.
+ */
 static void
 vp_fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
                GLuint unit, GLfloat color[4])
@@ -270,6 +270,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
    }
 
+   /* make list of outputs to save some time below */
    numOutputs = 0;
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (program->Base.OutputsWritten & (1 << i)) {
@@ -347,8 +348,9 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
    if (program->IsPositionInvariant) {
       /* We need the exact same transform as in the fixed function path here
-         to guarantee invariance, depending on compiler optimization flags results
-         could be different otherwise */
+       * to guarantee invariance, depending on compiler optimization flags
+       * results could be different otherwise.
+       */
       VB->ClipPtr = TransformRaw( &store->results[0],
 				  &ctx->_ModelProjectMatrix,
 				  VB->AttribPtr[0] );
@@ -368,16 +370,15 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 	 break;
       }
    }
-
-
-   /* Setup the VB pointers so that the next pipeline stages get
-    * their data from the right place (the program output arrays).
-    */
    else {
+      /* Setup the VB pointers so that the next pipeline stages get
+       * their data from the right place (the program output arrays).
+       */
       VB->ClipPtr = &store->results[VERT_RESULT_HPOS];
       VB->ClipPtr->size = 4;
       VB->ClipPtr->count = VB->Count;
    }
+
    VB->ColorPtr[0] = &store->results[VERT_RESULT_COL0];
    VB->ColorPtr[1] = &store->results[VERT_RESULT_BFC0];
    VB->SecondaryColorPtr[0] = &store->results[VERT_RESULT_COL1];
