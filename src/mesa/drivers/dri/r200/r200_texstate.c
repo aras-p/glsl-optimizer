@@ -71,7 +71,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define _INVALID(f) \
     [ MESA_FORMAT_ ## f ] = { 0xffffffff, 0 }
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5) \
-			     && (tx_table_le[f].format != 0xffffffff) )
+			     && (tx_table_be[f].format != 0xffffffff) )
 
 struct tx_table {
    GLuint format, filter;
@@ -164,12 +164,15 @@ static void r200SetTexImages( r200ContextPtr rmesa,
     */
    if ( !t->image_override ) {
       if ( VALID_FORMAT( baseImage->TexFormat->MesaFormat ) ) {
+	 const struct tx_table *table = _mesa_little_endian() ? tx_table_le :
+								tx_table_be;
+
          t->pp_txformat &= ~(R200_TXFORMAT_FORMAT_MASK |
                              R200_TXFORMAT_ALPHA_IN_MAP);
          t->pp_txfilter &= ~R200_YUV_TO_RGB;
 
-	 t->pp_txformat |= tx_table_le[ baseImage->TexFormat->MesaFormat ].format;
-	 t->pp_txfilter |= tx_table_le[ baseImage->TexFormat->MesaFormat ].filter;
+	 t->pp_txformat |= table[ baseImage->TexFormat->MesaFormat ].format;
+	 t->pp_txfilter |= table[ baseImage->TexFormat->MesaFormat ].filter;
       }
       else {
          _mesa_problem(NULL, "unexpected texture format in %s", __FUNCTION__);
