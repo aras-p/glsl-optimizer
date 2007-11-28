@@ -87,13 +87,13 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
       switch (ps->format) {
       case PIPE_FORMAT_U_S8:
          {
-            const ubyte *src = stmap + srcY * ps->region->pitch + x;
+            const ubyte *src = stmap + srcY * ps->pitch + x;
             memcpy(values, src, width);
          }
          break;
       case PIPE_FORMAT_S8_Z24:
          {
-            const uint *src = (uint *) stmap + srcY * ps->region->pitch + x;
+            const uint *src = (uint *) stmap + srcY * ps->pitch + x;
             GLint k;
             for (k = 0; k < width; k++) {
                values[k] = src[k] >> 24;
@@ -102,7 +102,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
          break;
       case PIPE_FORMAT_Z24_S8:
          {
-            const uint *src = (uint *) stmap + srcY * ps->region->pitch + x;
+            const uint *src = (uint *) stmap + srcY * ps->pitch + x;
             GLint k;
             for (k = 0; k < width; k++) {
                values[k] = src[k] & 0xff;

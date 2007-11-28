@@ -47,22 +47,8 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   unsigned x, y, w, h;
 
    softpipe_update_derived(softpipe); /* not needed?? */
-
-   /* Use the X coord to trick region_fill() into filling at an offset
-    * from the start of the region.  Perhaps pipe_region should have the
-    * 'offset' field, not pipe_surface???
-    */
-   assert(ps->offset % ps->region->cpp == 0);
-   x = ps->offset / ps->region->cpp;
-   y = 0;
-   w = ps->width;
-   h = ps->height;
-
-   assert(w <= ps->region->pitch);
-   assert(h <= ps->region->height);
 
    if (ps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
       float clear[4];
@@ -78,7 +64,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
       sp_tile_cache_clear(softpipe->cbuf_cache[0], clear);
    }
 
-   pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue);
+   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
 
 
 #if 0

@@ -455,10 +455,6 @@ alloc_mipmap_tree(struct st_context *st,
 
    cpp = st_sizeof_format(pipeFormat);
 
-   /* allocate texture region/storage */
-   mt->region = st->pipe->winsys->region_alloc(st->pipe->winsys,
-                                               cpp, width, height, flags);
-
    mt->target = PIPE_TEXTURE_2D;
    mt->internal_format = GL_RGBA;
    mt->format = pipeFormat;
@@ -469,7 +465,10 @@ alloc_mipmap_tree(struct st_context *st,
    mt->depth0 = 1;
    mt->cpp = cpp;
    mt->compressed = 0;
-   mt->pitch = mt->region->pitch;
+   mt->pitch = st->pipe->winsys->surface_pitch(st->pipe->winsys, cpp, width,
+					       flags);
+   mt->region = st->pipe->winsys->region_alloc(st->pipe->winsys,
+                                               mt->pitch * cpp * height, flags);
    mt->depth_pitch = 0;
    mt->total_height = height;
    mt->level[0].level_offset = 0;
@@ -524,7 +523,7 @@ make_mipmap_tree(struct st_context *st,
    {
       static const GLuint dstImageOffsets = 0;
       GLboolean success;
-      GLuint pitch = mt->region->pitch;
+      GLuint pitch = mt->pitch;
       GLubyte *dest;
       const GLbitfield imageTransferStateSave = ctx->_ImageTransferState;
 
@@ -569,7 +568,7 @@ make_mipmap_tree(struct st_context *st,
    mt->depth0 = 1;
    mt->cpp = cpp;
    mt->compressed = 0;
-   mt->pitch = mt->region->pitch;
+   mt->pitch = mt->pitch;
    mt->depth_pitch = 0;
    mt->total_height = height;
    mt->level[0].level_offset = 0;
@@ -952,13 +951,13 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             switch (ps->format) {
             case PIPE_FORMAT_U_S8:
                {
-                  ubyte *dest = stmap + spanY * ps->region->pitch + spanX;
+                  ubyte *dest = stmap + spanY * ps->pitch + spanX;
                   memcpy(dest, values, spanWidth);
                }
                break;
             case PIPE_FORMAT_S8_Z24:
                {
-                  uint *dest = (uint *) stmap + spanY * ps->region->pitch + spanX;
+                  uint *dest = (uint *) stmap + spanY * ps->pitch + spanX;
                   GLint k;
                   for (k = 0; k < spanWidth; k++) {
                      uint p = dest[k];
@@ -1054,7 +1053,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    const uint flags = PIPE_SURFACE_FLAG_TEXTURE;
-   uint format = 0, cpp, comp, pitch;
+   uint format = 0, cpp, comp;
    ubyte *dest;
    struct pipe_mipmap_tree *mt;
    int row, col;
@@ -1091,9 +1090,9 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
 
    /* allocate texture region/storage */
+   mt->pitch = pipe->winsys->surface_pitch(pipe->winsys, cpp, width, flags);
    mt->region = pipe->winsys->region_alloc(pipe->winsys,
-                                           cpp, width, height, flags);
-   pitch = mt->region->pitch;
+					   mt->pitch * cpp * height, flags);
 
    /* map texture region */
    dest = pipe->region_map(pipe, mt->region);
@@ -1110,7 +1109,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
                  bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-      ubyte *destRow = dest + row * pitch * cpp;
+      ubyte *destRow = dest + row * mt->pitch * cpp;
 
       if (unpack->LsbFirst) {
          /* Lsb first */
@@ -1172,7 +1171,6 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    mt->depth0 = 1;
    mt->cpp = cpp;
    mt->compressed = 0;
-   mt->pitch = mt->region->pitch;
    mt->depth_pitch = 0;
    mt->total_height = height;
    mt->level[0].level_offset = 0;
@@ -1256,7 +1254,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
          y = ctx->DrawBuffer->Height - y - 1;
       }
 
-      dst = drawMap + (y * psDraw->region->pitch + dstx) * psDraw->region->cpp;
+      dst = drawMap + (y * psDraw->pitch + dstx) * psDraw->cpp;
       src = buffer + i * width;
 
       switch (psDraw->format) {
@@ -1297,6 +1295,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
    struct pipe_surface *psRead;
+   struct pipe_surface *psTex;
    struct pipe_mipmap_tree *mt;
    GLfloat *color;
    uint format;
@@ -1332,6 +1331,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!mt)
       return;
 
+   psTex = pipe->get_tex_surface(pipe, mt, 0, 0, 0);
+
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       srcy = ctx->DrawBuffer->Height - srcy - height;
    }
@@ -1342,20 +1343,15 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
     */
    if (st->haveFramebufferRegions) {
       /* copy source framebuffer region into mipmap/texture */
-      pipe->region_copy(pipe,
-                        mt->region, /* dest */
-                        0, /* dest_offset */
-                        0, 0, /* destx/y */
-                        psRead->region,
-                        0, /* src_offset */
-                        srcx, srcy, width, height);
+      pipe->surface_copy(pipe,
+			 psTex, /* dest */
+			 0, 0, /* destx/y */
+			 psRead,
+			 srcx, srcy, width, height);
    }
    else {
       /* alternate path using get/put_tile() */
-      struct pipe_surface *psTex;
       GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-
-      psTex = pipe->get_tex_surface(pipe, mt, 0, 0, 0);
 
       (void) pipe->region_map(pipe, psRead->region);
       (void) pipe->region_map(pipe, psTex->region);
@@ -1366,17 +1362,15 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       pipe->region_unmap(pipe, psRead->region);
       pipe->region_unmap(pipe, psTex->region);
 
-      pipe_surface_reference(&psTex, NULL);
-
       free(buf);
    }
-
 
    /* draw textured quad */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       mt, stvp, stfp, color, GL_TRUE);
 
+   pipe_surface_reference(&psTex, NULL);
    free_mipmap_tree(st->pipe, mt);
 }
 

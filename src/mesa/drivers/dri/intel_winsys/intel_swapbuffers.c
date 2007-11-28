@@ -89,15 +89,15 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
       const int cpp = intelScreen->front.cpp;
       const struct pipe_region *srcRegion = surf->region;
-      const int srcpitch = srcRegion->pitch;
+      const int srcpitch = surf->pitch;
       int BR13, CMD;
       int i;
 
       ASSERT(srcRegion);
-      ASSERT(srcRegion->cpp == cpp);
+      ASSERT(surf->cpp == cpp);
 
       DBG(SWAP, "screen pitch %d  src surface pitch %d\n",
-	  pitch, srcRegion->pitch);
+	  pitch, surf->pitch);
 
       if (cpp == 2) {
 	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);

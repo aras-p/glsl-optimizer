@@ -265,9 +265,6 @@ struct pipe_region
    struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
 
    unsigned refcount; /**< Reference count for region */
-   unsigned cpp;      /**< bytes per pixel */
-   unsigned pitch;    /**< in pixels */
-   unsigned height;   /**< in pixels */
    ubyte *map;    /**< only non-NULL when region is actually mapped */
    unsigned map_refcount;  /**< Reference count for mapping */
 };
@@ -281,7 +278,9 @@ struct pipe_surface
 {
    struct pipe_region *region;
    unsigned format;              /**< PIPE_FORMAT_x */
+   unsigned cpp;                 /**< bytes per pixel */
    unsigned width, height;
+   unsigned pitch;               /**< in pixels */
    unsigned offset;              /**< offset from start of region, in bytes */
    unsigned refcount;
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */

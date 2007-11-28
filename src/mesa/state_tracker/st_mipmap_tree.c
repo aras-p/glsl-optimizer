@@ -31,6 +31,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
 
@@ -87,10 +89,9 @@ st_miptree_create(struct pipe_context *pipe,
 
    ok = pipe->mipmap_tree_layout(pipe, mt);
    if (ok) {
-      /* note: it's OK to pass 'pitch' as 'width' here: */
-      mt->region = pipe->winsys->region_alloc(pipe->winsys, mt->cpp, mt->pitch,
-                                              mt->total_height, flags);
-      mt->pitch = mt->region->pitch; /*XXX NEW */
+      mt->region = pipe->winsys->region_alloc(pipe->winsys,
+					      mt->pitch * mt->cpp *
+					      mt->total_height, flags);
    }
 
    if (!mt->region) {
@@ -266,24 +267,27 @@ st_miptree_image_data(struct pipe_context *pipe,
                       GLuint src_row_pitch, GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
-   GLuint dst_offset = st_miptree_image_offset(dst, face, level);
-   const GLuint *dst_depth_offset = st_miptree_depth_offsets(dst, level);
    GLuint i;
    GLuint height = 0;
    const GLubyte *srcUB = src;
+   struct pipe_surface *dst_surface;
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      pipe->region_data(pipe, dst->region,
-                        dst_offset + dst_depth_offset[i], /* dst_offset */
-                        0, 0,                             /* dstx, dsty */
-                        srcUB,
-                        src_row_pitch,
-                        0, 0,                             /* source x, y */
-                        dst->level[level].width, height); /* width, height */
+
+      dst_surface = pipe->get_tex_surface(pipe, dst, face, level, i);
+
+      pipe->surface_data(pipe, dst_surface,
+			 0, 0,                             /* dstx, dsty */
+			 srcUB,
+			 src_row_pitch,
+			 0, 0,                             /* source x, y */
+			 dst->level[level].width, height); /* width, height */
+
+      pipe_surface_reference(&dst_surface, NULL);
 
       srcUB += src_image_pitch * dst->cpp;
    }
@@ -300,21 +304,25 @@ st_miptree_image_copy(struct pipe_context *pipe,
    GLuint width = src->level[level].width;
    GLuint height = src->level[level].height;
    GLuint depth = src->level[level].depth;
-   GLuint dst_offset = st_miptree_image_offset(dst, face, level);
-   GLuint src_offset = st_miptree_image_offset(src, face, level);
-   const GLuint *dst_depth_offset = st_miptree_depth_offsets(dst, level);
-   const GLuint *src_depth_offset = st_miptree_depth_offsets(src, level);
+   struct pipe_surface *src_surface;
+   struct pipe_surface *dst_surface;
    GLuint i;
 
    if (dst->compressed)
       height /= 4;
    for (i = 0; i < depth; i++) {
-      pipe->region_copy(pipe,
-                        dst->region, dst_offset + dst_depth_offset[i],
-                        0, 0, /* destX, Y */
-                        src->region, src_offset + src_depth_offset[i],
-                        0, 0, /* srcX, Y */
-                        width, height);
+      dst_surface = pipe->get_tex_surface(pipe, dst, face, level, i);
+      src_surface = pipe->get_tex_surface(pipe, src, face, level, i);
+
+      pipe->surface_copy(pipe,
+			 dst_surface,
+			 0, 0, /* destX, Y */
+			 src_surface,
+			 0, 0, /* srcX, Y */
+			 width, height);
+
+      pipe_surface_reference(&dst_surface, NULL);
+      pipe_surface_reference(&src_surface, NULL);
    }
 
 }

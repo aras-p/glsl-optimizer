@@ -43,12 +43,5 @@ void
 i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 	   unsigned clearValue)
 {
-   int x, y, w, h;
-
-   x = 0;
-   y = 0;
-   w = ps->width;
-   h = ps->height;
-
-   pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue);
+   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
 }

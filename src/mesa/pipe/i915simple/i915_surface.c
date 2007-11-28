@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "i915_context.h"
+#include "i915_blit.h"
 #include "i915_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
@@ -57,7 +58,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
 {
    const unsigned *src
       = ((const unsigned *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -75,7 +76,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
             pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
             pRow += 4;
          }
-         src += ps->region->pitch;
+         src += ps->pitch;
          p += w0 * 4;
       }
       break;
@@ -92,7 +93,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
                pRow[3] = (pixel & 0xffffff) * scale;
                pRow += 4;
             }
-            src += ps->region->pitch;
+            src += ps->pitch;
             p += w0 * 4;
          }
       }
@@ -122,7 +123,7 @@ i915_get_tile(struct pipe_context *pipe,
               uint x, uint y, uint w, uint h,
               void *p, int dst_stride)
 {
-   const uint cpp = ps->region->cpp;
+   const uint cpp = ps->cpp;
    const uint w0 = w;
    const ubyte *pSrc;
    ubyte *pDest;
@@ -136,13 +137,13 @@ i915_get_tile(struct pipe_context *pipe,
       dst_stride = w0 * cpp;
    }
 
-   pSrc = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pSrc = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w0 * cpp);
       pDest += dst_stride;
-      pSrc += ps->region->pitch * cpp;
+      pSrc += ps->pitch * cpp;
    }
 }
 
@@ -156,7 +157,7 @@ i915_put_tile(struct pipe_context *pipe,
               uint x, uint y, uint w, uint h,
               const void *p, int src_stride)
 {
-   const uint cpp = ps->region->cpp;
+   const uint cpp = ps->cpp;
    const uint w0 = w;
    const ubyte *pSrc;
    ubyte *pDest;
@@ -171,11 +172,11 @@ i915_put_tile(struct pipe_context *pipe,
    }
 
    pSrc = (const ubyte *) p;
-   pDest = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pDest = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w0 * cpp);
-      pDest += ps->region->pitch * cpp;
+      pDest += ps->pitch * cpp;
       pSrc += src_stride;
    }
 }
@@ -210,11 +211,174 @@ i915_get_tex_surface(struct pipe_context *pipe,
       assert(ps->format);
       assert(ps->refcount);
       pipe_region_reference(&ps->region, mt->region);
+      ps->cpp = mt->cpp;
       ps->width = mt->level[level].width;
       ps->height = mt->level[level].height;
+      ps->pitch = mt->pitch;
       ps->offset = offset;
    }
    return ps;
+}
+
+
+/*
+ * XXX Move this into core Mesa?
+ */
+static void
+_mesa_copy_rect(ubyte * dst,
+                unsigned cpp,
+                unsigned dst_pitch,
+                unsigned dst_x,
+                unsigned dst_y,
+                unsigned width,
+                unsigned height,
+                const ubyte * src,
+                unsigned src_pitch,
+		unsigned src_x, 
+		unsigned src_y)
+{
+   unsigned i;
+
+   dst_pitch *= cpp;
+   src_pitch *= cpp;
+   dst += dst_x * cpp;
+   src += src_x * cpp;
+   dst += dst_y * dst_pitch;
+   src += src_y * dst_pitch;
+   width *= cpp;
+
+   if (width == dst_pitch && width == src_pitch)
+      memcpy(dst, src, height * width);
+   else {
+      for (i = 0; i < height; i++) {
+         memcpy(dst, src, width);
+         dst += dst_pitch;
+         src += src_pitch;
+      }
+   }
+}
+
+
+/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
+ *
+ * - memcpy by span to current destination
+ * - upload data as new buffer and blit
+ *
+ * Currently always memcpy.
+ */
+static void
+i915_surface_data(struct pipe_context *pipe,
+		  struct pipe_surface *dst,
+		  unsigned dstx, unsigned dsty,
+		  const void *src, unsigned src_pitch,
+		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+{
+   _mesa_copy_rect(pipe->region_map(pipe, dst->region) + dst->offset,
+                   dst->cpp,
+                   dst->pitch,
+                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+
+   pipe->region_unmap(pipe, dst->region);
+}
+
+
+/* Assumes all values are within bounds -- no checking at this level -
+ * do it higher up if required.
+ */
+static void
+i915_surface_copy(struct pipe_context *pipe,
+		  struct pipe_surface *dst,
+		  unsigned dstx, unsigned dsty,
+		  struct pipe_surface *src,
+		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+{
+   assert( dst != src );
+   assert( dst->cpp == src->cpp );
+
+   if (0) {
+      _mesa_copy_rect(pipe->region_map(pipe, dst->region) + dst->offset,
+		      dst->cpp,
+		      dst->pitch,
+		      dstx, dsty, 
+		      width, height, 
+		      pipe->region_map(pipe, src->region) + src->offset, 
+		      src->pitch, 
+		      srcx, srcy);
+
+      pipe->region_unmap(pipe, src->region);
+      pipe->region_unmap(pipe, dst->region);
+   }
+   else {
+      i915_copy_blit( i915_context(pipe),
+		      dst->cpp,
+		      (short) src->pitch, src->region->buffer, src->offset,
+		      (short) dst->pitch, dst->region->buffer, dst->offset,
+		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
+   }
+}
+
+/* Fill a rectangular sub-region.  Need better logic about when to
+ * push buffers into AGP - will currently do so whenever possible.
+ */
+static ubyte *
+get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
+{
+   return dst->region->map + (y * dst->pitch + x) * dst->cpp;
+}
+
+
+static void
+i915_surface_fill(struct pipe_context *pipe,
+		  struct pipe_surface *dst,
+		  unsigned dstx, unsigned dsty,
+		  unsigned width, unsigned height, unsigned value)
+{
+   if (0) {
+      unsigned i, j;
+
+      (void)pipe->region_map(pipe, dst->region);
+
+      switch (dst->cpp) {
+      case 1: {
+	 ubyte *row = get_pointer(dst, dstx, dsty);
+	 for (i = 0; i < height; i++) {
+	    memset(row, value, width);
+	    row += dst->pitch;
+	 }
+      }
+	 break;
+      case 2: {
+	 ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+	 for (i = 0; i < height; i++) {
+	    for (j = 0; j < width; j++)
+	       row[j] = (ushort) value;
+	    row += dst->pitch;
+	 }
+      }
+	 break;
+      case 4: {
+	 unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
+	 for (i = 0; i < height; i++) {
+	    for (j = 0; j < width; j++)
+	       row[j] = value;
+	    row += dst->pitch;
+	 }
+      }
+	 break;
+      default:
+	 assert(0);
+	 break;
+      }
+   }
+   else {
+      i915_fill_blit( i915_context(pipe),
+		      dst->cpp,
+		      (short) dst->pitch, 
+		      dst->region->buffer, dst->offset,
+		      (short) dstx, (short) dsty, 
+		      (short) width, (short) height, 
+		      value );
+   }
 }
 
 
@@ -226,4 +390,7 @@ i915_init_surface_functions(struct i915_context *i915)
    i915->pipe.put_tile = i915_put_tile;
    i915->pipe.get_tile_rgba = i915_get_tile_rgba;
    i915->pipe.put_tile_rgba = i915_put_tile_rgba;
+   i915->pipe.surface_data = i915_surface_data;
+   i915->pipe.surface_copy = i915_surface_copy;
+   i915->pipe.surface_fill = i915_surface_fill;
 }
