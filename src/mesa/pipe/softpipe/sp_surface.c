@@ -77,7 +77,7 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
 {
    const unsigned *src
       = ((const unsigned *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -95,7 +95,7 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
          pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
          pRow += 4;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += w0 * 4;
    }
 }
@@ -108,7 +108,7 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
 {
    unsigned *dst
       = ((unsigned *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -127,7 +127,7 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
          dst[j] = (a << 24) | (r << 16) | (g << 8) | b;
          pRow += 4;
       }
-      dst += ps->region->pitch;
+      dst += ps->pitch;
       p += w0 * 4;
    }
 }
@@ -141,7 +141,7 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
 {
    const ushort *src
       = ((const ushort *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
 
    assert(ps->format == PIPE_FORMAT_U_A1_R5_G5_B5);
@@ -155,7 +155,7 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
          p[3] = ((pixel >> 15)       ) * 1.0f;
          p += 4;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
    }
 }
 
@@ -172,7 +172,7 @@ z16_get_tile(struct pipe_surface *ps,
 {
    const ushort *src
       = ((const ushort *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    const float scale = 1.0f / 65535.0f;
    unsigned i, j;
    unsigned w0 = w;
@@ -189,7 +189,7 @@ z16_get_tile(struct pipe_surface *ps,
          pRow[j * 4 + 2] =
          pRow[j * 4 + 3] = src[j] * scale;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += 4 * w0;
    }
 }
@@ -205,7 +205,7 @@ l8_get_tile(struct pipe_surface *ps,
 {
    const ubyte *src
       = ((const ubyte *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -222,7 +222,7 @@ l8_get_tile(struct pipe_surface *ps,
          pRow[3] = 1.0;
          pRow += 4;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += w0 * 4;
    }
 }
@@ -236,7 +236,7 @@ a8_get_tile(struct pipe_surface *ps,
 {
    const ubyte *src
       = ((const ubyte *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -253,7 +253,7 @@ a8_get_tile(struct pipe_surface *ps,
          pRow[3] = UBYTE_TO_FLOAT(src[j]);
          pRow += 4;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += w0 * 4;
    }
 }
@@ -267,7 +267,7 @@ r16g16b16a16_get_tile(struct pipe_surface *ps,
 {
    const short *src
       = ((const short *) (ps->region->map + ps->offset))
-      + (y * ps->region->pitch + x) * 4;
+      + (y * ps->pitch + x) * 4;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -286,7 +286,7 @@ r16g16b16a16_get_tile(struct pipe_surface *ps,
          pRow += 4;
          pixel += 4;
       }
-      src += ps->region->pitch * 4;
+      src += ps->pitch * 4;
       p += w0 * 4;
    }
 }
@@ -299,7 +299,7 @@ r16g16b16a16_put_tile(struct pipe_surface *ps,
 {
    short *dst
       = ((short *) (ps->region->map + ps->offset))
-      + (y * ps->region->pitch + x) * 4;
+      + (y * ps->pitch + x) * 4;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -321,7 +321,7 @@ r16g16b16a16_put_tile(struct pipe_surface *ps,
          dst[j*4+3] = a;
          pRow += 4;
       }
-      dst += ps->region->pitch * 4;
+      dst += ps->pitch * 4;
       p += w0 * 4;
    }
 }
@@ -336,7 +336,7 @@ i8_get_tile(struct pipe_surface *ps,
 {
    const ubyte *src
       = ((const ubyte *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -353,7 +353,7 @@ i8_get_tile(struct pipe_surface *ps,
          pRow[3] = UBYTE_TO_FLOAT(src[j]);
          pRow += 4;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += w0 * 4;
    }
 }
@@ -367,7 +367,7 @@ a8_l8_get_tile(struct pipe_surface *ps,
 {
    const ushort *src
       = ((const ushort *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -385,7 +385,7 @@ a8_l8_get_tile(struct pipe_surface *ps,
          pRow[3] = UBYTE_TO_FLOAT(p >> 8);
          pRow += 4;
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += w0 * 4;
    }
 }
@@ -404,7 +404,7 @@ z32_get_tile(struct pipe_surface *ps,
 {
    const uint *src
       = ((const uint *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    const double scale = 1.0 / (double) 0xffffffff;
    unsigned i, j;
    unsigned w0 = w;
@@ -421,7 +421,7 @@ z32_get_tile(struct pipe_surface *ps,
          pRow[j * 4 + 2] =
          pRow[j * 4 + 3] = (float) (scale * src[j]);
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += 4 * w0;
    }
 }
@@ -438,7 +438,7 @@ s8z24_get_tile(struct pipe_surface *ps,
 {
    const uint *src
       = ((const uint *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
    unsigned w0 = w;
@@ -455,7 +455,7 @@ s8z24_get_tile(struct pipe_surface *ps,
          pRow[j * 4 + 2] =
          pRow[j * 4 + 3] = (float) (scale * (src[j] & 0xffffff));
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += 4 * w0;
    }
 }
@@ -472,7 +472,7 @@ z24s8_get_tile(struct pipe_surface *ps,
 {
    const uint *src
       = ((const uint *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      + y * ps->pitch + x;
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
    unsigned w0 = w;
@@ -489,7 +489,7 @@ z24s8_get_tile(struct pipe_surface *ps,
          pRow[j * 4 + 2] =
          pRow[j * 4 + 3] = (float) (scale * (src[j] >> 8));
       }
-      src += ps->region->pitch;
+      src += ps->pitch;
       p += 4 * w0;
    }
 }
@@ -525,8 +525,10 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       assert(ps->format);
       assert(ps->refcount);
       pipe_region_reference(&ps->region, mt->region);
+      ps->cpp = mt->cpp;
       ps->width = mt->level[level].width;
       ps->height = mt->level[level].height;
+      ps->pitch = mt->pitch;
       ps->offset = offset;
    }
    return ps;
@@ -541,7 +543,7 @@ softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride)
 {
-   const uint cpp = ps->region->cpp;
+   const uint cpp = ps->cpp;
    const ubyte *pSrc;
    ubyte *pDest;
    uint i;
@@ -554,13 +556,13 @@ softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 
    CLIP_TILE;
 
-   pSrc = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pSrc = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
       pDest += dst_stride;
-      pSrc += ps->region->pitch * cpp;
+      pSrc += ps->pitch * cpp;
    }
 }
 
@@ -573,7 +575,7 @@ softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride)
 {
-   const uint cpp = ps->region->cpp;
+   const uint cpp = ps->cpp;
    const ubyte *pSrc;
    ubyte *pDest;
    uint i;
@@ -587,11 +589,11 @@ softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    CLIP_TILE;
 
    pSrc = (const ubyte *) p;
-   pDest = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pDest = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
-      pDest += ps->region->pitch * cpp;
+      pDest += ps->pitch * cpp;
       pSrc += src_stride;
    }
 }
@@ -691,6 +693,180 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
 }
 
 
+/**
+ * Copy 2D rect from one place to another.
+ * Position and sizes are in pixels.
+ */
+static void
+copy_rect(ubyte * dst,
+          unsigned cpp,
+          unsigned dst_pitch,
+          unsigned dst_x,
+          unsigned dst_y,
+          unsigned width,
+          unsigned height,
+          const ubyte * src,
+          unsigned src_pitch,
+          unsigned src_x, 
+          unsigned src_y)
+{
+   unsigned i;
+
+   dst_pitch *= cpp;
+   src_pitch *= cpp;
+   dst += dst_x * cpp;
+   src += src_x * cpp;
+   dst += dst_y * dst_pitch;
+   src += src_y * src_pitch;
+   width *= cpp;
+
+   if (width == dst_pitch && width == src_pitch)
+      memcpy(dst, src, height * width);
+   else {
+      for (i = 0; i < height; i++) {
+         memcpy(dst, src, width);
+         dst += dst_pitch;
+         src += src_pitch;
+      }
+   }
+}
+
+
+/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
+ *
+ * - memcpy by span to current destination
+ * - upload data as new buffer and blit
+ *
+ * Currently always memcpy.
+ */
+static void
+sp_surface_data(struct pipe_context *pipe,
+		struct pipe_surface *dst,
+		unsigned dstx, unsigned dsty,
+		const void *src, unsigned src_pitch,
+		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+{
+   copy_rect(pipe->region_map(pipe, dst->region) + dst->offset,
+             dst->cpp,
+             dst->pitch,
+             dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+
+   pipe->region_unmap(pipe, dst->region);
+}
+
+/* Assumes all values are within bounds -- no checking at this level -
+ * do it higher up if required.
+ */
+static void
+sp_surface_copy(struct pipe_context *pipe,
+		struct pipe_surface *dst,
+		unsigned dstx, unsigned dsty,
+		struct pipe_surface *src,
+		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+{
+   ubyte *src_map, *dst_map;
+   assert( dst->cpp == src->cpp );
+
+   dst_map = pipe->region_map(pipe, dst->region);
+   src_map = pipe->region_map(pipe, src->region);
+   copy_rect(dst_map + dst->offset,
+             dst->cpp,
+             dst->pitch,
+             dstx, dsty,
+             width, height,
+             src_map + src->offset,
+             src->pitch,
+             srcx, srcy);
+
+   pipe->region_unmap(pipe, src->region);
+   pipe->region_unmap(pipe, dst->region);
+}
+
+
+static ubyte *
+get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
+{
+   return dst->region->map + (y * dst->pitch + x) * dst->cpp;
+}
+
+
+#define UBYTE_TO_USHORT(B) ((B) | ((B) << 8))
+
+
+/**
+ * Fill a rectangular sub-region.  Need better logic about when to
+ * push buffers into AGP - will currently do so whenever possible.
+ */
+static void
+sp_surface_fill(struct pipe_context *pipe,
+		struct pipe_surface *dst,
+		unsigned dstx, unsigned dsty,
+		unsigned width, unsigned height, unsigned value)
+{
+   unsigned i, j;
+
+   assert(dst->pitch > 0);
+   assert(width <= dst->pitch);
+
+   (void)pipe->region_map(pipe, dst->region);
+
+   switch (dst->cpp) {
+   case 1:
+      {
+         ubyte *row = get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            memset(row, value, width);
+	 row += dst->pitch;
+         }
+      }
+      break;
+   case 2:
+      {
+         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = (ushort) value;
+            row += dst->pitch;
+         }
+      }
+      break;
+   case 4:
+      {
+         unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = value;
+            row += dst->pitch;
+         }
+      }
+      break;
+   case 8:
+      {
+         /* expand the 4-byte clear value to an 8-byte value */
+         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
+         ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
+         ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
+         ushort val3 = UBYTE_TO_USHORT((value >> 24) & 0xff);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+               row[j*4+0] = val0;
+               row[j*4+1] = val1;
+               row[j*4+2] = val2;
+               row[j*4+3] = val3;
+            }
+            row += dst->pitch * 4;
+         }
+      }
+      break;
+   default:
+      assert(0);
+      break;
+   }
+
+   pipe->region_unmap( pipe, dst->region );
+}
+
 
 void
 sp_init_surface_functions(struct softpipe_context *sp)
@@ -700,4 +876,8 @@ sp_init_surface_functions(struct softpipe_context *sp)
 
    sp->pipe.get_tile_rgba = softpipe_get_tile_rgba;
    sp->pipe.put_tile_rgba = softpipe_put_tile_rgba;
+
+   sp->pipe.surface_data = sp_surface_data;
+   sp->pipe.surface_copy = sp_surface_copy;
+   sp->pipe.surface_fill = sp_surface_fill;
 }

@@ -624,7 +624,7 @@ xmesa_new_color_surface(struct pipe_winsys *winsys, GLuint pipeFormat)
     * The region's size will get set in the xmesa_alloc_front/back_storage()
     * functions.
     */
-   xms->surface.region = winsys->region_alloc(winsys, 1, 1, 1, 0x0);
+   xms->surface.region = winsys->region_alloc(winsys, 1, 0x0);
 
    return &xms->surface;
 }

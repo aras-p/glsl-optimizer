@@ -44,6 +44,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 
 
 #define DBG if (0) printf
@@ -1150,7 +1151,6 @@ do_copy_texsubimage(GLcontext *ctx,
    struct st_renderbuffer *strb;
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_region *src_region, *dest_region;
-   uint dest_offset, src_offset;
    uint dest_format, src_format;
 
    (void) texImage;
@@ -1185,12 +1185,13 @@ do_copy_texsubimage(GLcontext *ctx,
        ctx->_ImageTransferState == 0x0 &&
        src_region &&
        dest_region &&
-       src_region->cpp == dest_region->cpp) {
+       strb->surface->cpp == stImage->mt->cpp) {
       /* do blit-style copy */
-      src_offset = 0;
-      dest_offset = st_miptree_image_offset(stImage->mt,
-                                            stImage->face,
-                                            stImage->level);
+      struct pipe_surface *dest_surface = pipe->get_tex_surface(pipe,
+								stImage->mt,
+								stImage->face,
+								stImage->level,
+								destZ);
 
       /* XXX may need to invert image depending on window
        * vs. user-created FBO
@@ -1213,18 +1214,18 @@ do_copy_texsubimage(GLcontext *ctx,
                         GL_COPY); /* ? */
 #else
 
-      pipe->region_copy(pipe,
-                        /* dest */
-                        dest_region,
-                        dest_offset,
-                        destX, destY,
-                        /* src */
-                        src_region,
-                        src_offset,
-                        srcX, srcY,
-                        /* size */
-                        width, height);
+      pipe->surface_copy(pipe,
+			 /* dest */
+			 dest_surface,
+			 destX, destY,
+			 /* src */
+			 strb->surface,
+			 srcX, srcY,
+			 /* size */
+			 width, height);
 #endif
+
+      pipe_surface_reference(&dest_surface, NULL);
    }
    else {
       fallback_copy_texsubimage(ctx, target, level,

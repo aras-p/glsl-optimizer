@@ -104,6 +104,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       assert(strb->surface);
       if (!strb->surface)
          return GL_FALSE;
+      strb->surface->cpp = cpp;
+      strb->surface->pitch = pipe->winsys->surface_pitch(pipe->winsys, cpp,
+							 width, flags);
    }
 
    /* free old region */
@@ -115,8 +118,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       pipe->winsys->region_release(pipe->winsys, &strb->surface->region);
    }
 
-   strb->surface->region = pipe->winsys->region_alloc(pipe->winsys, cpp,
-                                                      width, height, flags);
+   strb->surface->region = pipe->winsys->region_alloc(pipe->winsys,
+						      strb->surface->pitch *
+						      cpp * height, flags);
    if (!strb->surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 

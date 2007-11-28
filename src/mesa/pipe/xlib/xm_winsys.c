@@ -220,27 +220,30 @@ round_up(unsigned n, unsigned multiple)
 }
 
 
+static unsigned
+xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
+		 unsigned flags)
+{
+   return round_up(width, 64 / cpp);
+}
+
+
 static struct pipe_region *
-xm_region_alloc(struct pipe_winsys *winsys,
-                unsigned cpp, unsigned width, unsigned height, unsigned flags)
+xm_region_alloc(struct pipe_winsys *winsys, unsigned size, unsigned flags)
 {
    struct pipe_region *region = CALLOC_STRUCT(pipe_region);
    const unsigned alignment = 64;
 
-   region->cpp = cpp;
-   region->pitch = round_up(width, alignment / cpp);
-   region->height = height;
    region->refcount = 1;
 
-   assert(region->pitch > 0);
+   assert(size > 0);
 
-   region->buffer = winsys->buffer_create( winsys, alignment )
-;
+   region->buffer = winsys->buffer_create( winsys, alignment );
 
    /* NULL data --> just allocate the space */
    winsys->buffer_data( winsys,
                         region->buffer, 
-                        region->pitch * cpp * height, 
+                        size, 
                         NULL,
                         PIPE_BUFFER_USAGE_PIXEL );
    return region;
@@ -335,6 +338,7 @@ xmesa_get_pipe_winsys(void)
       ws->region_alloc = xm_region_alloc;
       ws->region_release = xm_region_release;
 
+      ws->surface_pitch = xm_surface_pitch;
       ws->surface_alloc = xm_surface_alloc;
       ws->surface_release = xm_surface_release;
 

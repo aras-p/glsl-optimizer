@@ -208,10 +208,11 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 8 dwords, 2 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
-      if (i915->framebuffer.cbufs[0]) {
-	 struct pipe_region *cbuf_region = i915->framebuffer.cbufs[0]->region;
-	 unsigned pitch = (cbuf_region->pitch *
-			   cbuf_region->cpp);
+      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+      struct pipe_surface *depth_surface = i915->framebuffer.zbuf;
+
+      if (cbuf_surface) {
+	 unsigned pitch = (cbuf_surface->pitch * cbuf_surface->cpp);
 
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
@@ -219,17 +220,15 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   BUF_3D_PITCH(pitch) |  /* pitch in bytes */
 		   BUF_3D_USE_FENCE);
 
-	 OUT_RELOC(cbuf_region->buffer,
+	 OUT_RELOC(cbuf_surface->region->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
 		   0);
       }
 
       /* What happens if no zbuf??
        */
-      if (i915->framebuffer.zbuf) {
-	 struct pipe_region *depth_region = i915->framebuffer.zbuf->region;
-	 unsigned zpitch = (depth_region->pitch *
-			    depth_region->cpp);
+      if (depth_surface) {
+	 unsigned zpitch = (depth_surface->pitch * depth_surface->cpp);
 			 
 	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
@@ -237,7 +236,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   BUF_3D_PITCH(zpitch) |  /* pitch in bytes */
 		   BUF_3D_USE_FENCE);
 
-	 OUT_RELOC(depth_region->buffer,
+	 OUT_RELOC(depth_surface->region->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
 		   0);
       }
@@ -245,13 +244,13 @@ i915_emit_hardware_state(struct i915_context *i915 )
       {
 	 unsigned cformat, zformat = 0;
       
-	 if (i915->framebuffer.cbufs[0])
-            cformat = i915->framebuffer.cbufs[0]->format;
+	 if (cbuf_surface)
+            cformat = cbuf_surface->format;
          else
             cformat = PIPE_FORMAT_U_A8_R8_G8_B8; /* arbitrary */
          cformat = translate_format(cformat);
 
-	 if (i915->framebuffer.zbuf) 
+	 if (depth_surface) 
 	    zformat = translate_depth_format( i915->framebuffer.zbuf->format );
 
 	 OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);

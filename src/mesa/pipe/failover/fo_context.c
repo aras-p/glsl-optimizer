@@ -142,9 +142,9 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 
    failover->pipe.region_map = hw->region_map;
    failover->pipe.region_unmap = hw->region_unmap;
-   failover->pipe.region_data = hw->region_data;
-   failover->pipe.region_copy = hw->region_copy;
-   failover->pipe.region_fill = hw->region_fill;
+   failover->pipe.surface_data = hw->surface_data;
+   failover->pipe.surface_copy = hw->surface_copy;
+   failover->pipe.surface_fill = hw->surface_fill;
    failover->pipe.mipmap_tree_layout = hw->mipmap_tree_layout;
    failover->pipe.flush = hw->flush;
 

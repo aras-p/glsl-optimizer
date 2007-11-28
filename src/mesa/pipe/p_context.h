@@ -208,30 +208,30 @@ struct pipe_context {
 
    void (*region_unmap)(struct pipe_context *pipe, struct pipe_region *r);
 
-   void (*region_data)(struct pipe_context *pipe,
-                       struct pipe_region *dest,
-                       unsigned dest_offset,
-                       unsigned destx, unsigned desty,
-                       const void *src, unsigned src_stride,
-                       unsigned srcx, unsigned srcy,
-                       unsigned width, unsigned height);
 
-   void (*region_copy)(struct pipe_context *pipe,
-                       struct pipe_region *dest,
-                       unsigned dest_offset,
-                       unsigned destx, unsigned desty,
-                       struct pipe_region *src,	/* don't make this const - 
-						   need to map/unmap */
-                       unsigned src_offset,
-                       unsigned srcx, unsigned srcy,
-                       unsigned width, unsigned height);
+   /*
+    * Surface functions
+    */
+   void (*surface_data)(struct pipe_context *pipe,
+			struct pipe_surface *dest,
+			unsigned destx, unsigned desty,
+			const void *src, unsigned src_stride,
+			unsigned srcx, unsigned srcy,
+			unsigned width, unsigned height);
 
-   void (*region_fill)(struct pipe_context *pipe,
-                       struct pipe_region *dst,
-                       unsigned dst_offset,
-                       unsigned dstx, unsigned dsty,
-                       unsigned width, unsigned height,
-                       unsigned value);
+   void (*surface_copy)(struct pipe_context *pipe,
+			struct pipe_surface *dest,
+			unsigned destx, unsigned desty,
+			struct pipe_surface *src, /* don't make this const - 
+						     need to map/unmap */
+			unsigned srcx, unsigned srcy,
+			unsigned width, unsigned height);
+
+   void (*surface_fill)(struct pipe_context *pipe,
+			struct pipe_surface *dst,
+			unsigned dstx, unsigned dsty,
+			unsigned width, unsigned height,
+			unsigned value);
 
 
    /*
