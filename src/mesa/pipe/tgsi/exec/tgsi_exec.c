@@ -1066,6 +1066,10 @@ fetch_source(
    case TGSI_UTIL_SIGN_KEEP:
       break;
    }
+
+   if (reg->SrcRegisterExtMod.Complement) {
+      micro_sub( chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], chan );
+   }
 }
 
 static void

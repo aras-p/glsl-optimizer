@@ -12,7 +12,13 @@ extern "C" {
 void
 tgsi_dump(
    const struct tgsi_token *tokens,
-   unsigned flags );
+   unsigned                flags );
+
+void
+tgsi_dump_str(
+   char                    **str,
+   const struct tgsi_token *tokens,
+   unsigned                flags );
 
 #if defined __cplusplus
 } // extern "C"

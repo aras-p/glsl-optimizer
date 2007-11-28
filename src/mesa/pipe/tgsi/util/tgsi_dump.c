@@ -31,129 +31,196 @@
 #include "tgsi_parse.h"
 #include "tgsi_build.h"
 
+struct gen_dump
+{
+   unsigned tabs;
+   void  (* write)(
+               struct gen_dump   *dump,
+               const void        *data,
+               unsigned          size );
+};
+
 struct text_dump
 {
-   FILE     *file;
-   unsigned tabs;
+   struct gen_dump   base;
+   char              *text;
+   unsigned          length;
+   unsigned          capacity;
 };
 
 static void
-text_dump_str(
-   struct text_dump *dump,
-   const char *str )
+_text_dump_write(
+   struct gen_dump   *dump,
+   const void        *data,
+   unsigned          size )
+{
+   struct text_dump  *td = (struct text_dump *) dump;
+   unsigned          new_length = td->length + size;
+
+   if( new_length >= td->capacity ) {
+      unsigned new_capacity = td->capacity;
+
+      do {
+         if( new_capacity == 0 ) {
+            new_capacity = 256;
+         }
+         else {
+            new_capacity *= 2;
+         }
+      } while( new_length >= new_capacity );
+      td->text = (char *) REALLOC(
+         td->text,
+         td->capacity,
+         new_capacity );
+      td->capacity = new_capacity;
+   }
+   memcpy(
+      &td->text[td->length],
+      data,
+      size );
+   td->length = new_length;
+   td->text[td->length] = '\0';
+}
+
+struct file_dump
+{
+   struct gen_dump   base;
+   FILE              *file;
+};
+
+static void
+_file_dump_write(
+   struct gen_dump   *dump,
+   const void        *data,
+   unsigned          size )
+{
+   struct file_dump  *fd = (struct file_dump *) dump;
+
+#if 0
+   fwrite( data, 1, size, fd->file );
+#else
+   {
+      unsigned i;
+
+      for (i = 0; i < size; i++ ) {
+         fprintf( fd->file, "%c", ((const char *) data)[i] );
+      }
+   }
+#endif
+}
+
+static void
+gen_dump_str(
+   struct gen_dump   *dump,
+   const char        *str )
 {
    unsigned i;
-   size_t len = strlen( str );
+   size_t   len = strlen( str );
 
-   for( i = 0; i < len; i++ ) {
-      fprintf( dump->file, "%c", str[i] );
-
-      if( str[i] == '\n' ) {
+   for (i = 0; i < len; i++) {
+      dump->write( dump, &str[i], 1 );
+      if (str[i] == '\n') {
          unsigned i;
 
-         for( i = 0; i < dump->tabs; i++ ) {
-            fprintf( dump->file, "    " );
+         for (i = 0; i < dump->tabs; i++) {
+            dump->write( dump, "    ", 4 );
          }
       }
    }
 }
 
 static void
-text_dump_chr(
-   struct text_dump *dump,
-   const char chr )
+gen_dump_chr(
+   struct gen_dump   *dump,
+   const char        chr )
 {
-   char str[2];
-
-   str[0] = chr;
-   str[1] = '\0';
-   text_dump_str( dump, str );
+   dump->write( dump, &chr, 1 );
 }
 
 static void
-text_dump_uix(
-   struct text_dump *dump,
-   const unsigned ui )
+gen_dump_uix(
+   struct gen_dump   *dump,
+   const unsigned    ui )
 {
-   char str[36];
+   char  str[36];
 
    sprintf( str, "0x%x", ui );
-   text_dump_str( dump, str );
+   gen_dump_str( dump, str );
 }
 
 static void
-text_dump_uid(
-   struct text_dump *dump,
-   const unsigned ui )
+gen_dump_uid(
+   struct gen_dump   *dump,
+   const unsigned    ui )
 {
-   char str[16];
+   char  str[16];
 
    sprintf( str, "%u", ui );
-   text_dump_str( dump, str );
+   gen_dump_str( dump, str );
 }
 
 static void
-text_dump_sid(
-   struct text_dump *dump,
-   const int si )
+gen_dump_sid(
+   struct gen_dump   *dump,
+   const int         si )
 {
-   char str[16];
+   char  str[16];
 
    sprintf( str, "%d", si );
-   text_dump_str( dump, str );
+   gen_dump_str( dump, str );
 }
 
 static void
-text_dump_flt(
-   struct text_dump *dump,
-   const float f )
+gen_dump_flt(
+   struct gen_dump   *dump,
+   const float       flt )
 {
-   char str[48];
+   char  str[48];
 
-   sprintf( str, "%10.4f", f );
-   text_dump_str( dump, str );
+   sprintf( str, "%10.4f", flt );
+   gen_dump_str( dump, str );
 }
 
 static void
-text_dump_enum(
-   struct text_dump *dump,
-   const unsigned e,
-   const char **enums,
-   const unsigned enums_count )
+gen_dump_enum(
+   struct gen_dump   *dump,
+   const unsigned    e,
+   const char        **enums,
+   const unsigned    enums_count )
 {
-   if( e >= enums_count ) {
-      text_dump_uid( dump, e );
+   if (e >= enums_count) {
+      gen_dump_uid( dump, e );
    }
    else {
-      text_dump_str( dump, enums[e] );
+      gen_dump_str( dump, enums[e] );
    }
 }
 
 static void
-text_dump_tab(
-   struct text_dump *dump )
+gen_dump_tab(
+   struct gen_dump   *dump )
 {
-   dump->tabs++;
+   ++dump->tabs;
 }
 
 static void
-text_dump_untab(
-   struct text_dump *dump )
+gen_dump_untab(
+   struct gen_dump   *dump )
 {
    assert( dump->tabs > 0 );
 
    --dump->tabs;
 }
 
-#define TXT(S)          text_dump_str( dump, S )
-#define CHR(C)          text_dump_chr( dump, C )
-#define UIX(I)          text_dump_uix( dump, I )
-#define UID(I)          text_dump_uid( dump, I )
-#define SID(I)          text_dump_sid( dump, I )
-#define FLT(F)          text_dump_flt( dump, F )
-#define TAB()           text_dump_tab( dump )
-#define UNT()           text_dump_untab( dump )
-#define ENM(E,ENUMS)    text_dump_enum( dump, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
+#define TXT(S)          gen_dump_str( dump, S )
+#define CHR(C)          gen_dump_chr( dump, C )
+#define UIX(I)          gen_dump_uix( dump, I )
+#define UID(I)          gen_dump_uid( dump, I )
+#define SID(I)          gen_dump_sid( dump, I )
+#define FLT(F)          gen_dump_flt( dump, F )
+#define TAB()           gen_dump_tab( dump )
+#define UNT()           gen_dump_untab( dump )
+#define ENM(E,ENUMS)    gen_dump_enum( dump, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
 
 static const char *TGSI_PROCESSOR_TYPES[] =
 {
@@ -659,8 +726,8 @@ static const char *TGSI_MODULATES[] =
 
 static void
 dump_declaration_short(
-   struct text_dump *dump,
-   struct tgsi_full_declaration *decl )
+   struct gen_dump               *dump,
+   struct tgsi_full_declaration  *decl )
 {
    TXT( "\nDCL " );
    ENM( decl->Declaration.File, TGSI_FILES_SHORT );
@@ -711,11 +778,11 @@ dump_declaration_short(
 
 static void
 dump_declaration_verbose(
-   struct text_dump *dump,
-   struct tgsi_full_declaration *decl,
-   unsigned ignored,
-   unsigned deflt,
-   struct tgsi_full_declaration *fd )
+   struct gen_dump               *dump,
+   struct tgsi_full_declaration  *decl,
+   unsigned                      ignored,
+   unsigned                      deflt,
+   struct tgsi_full_declaration  *fd )
 {
    TXT( "\nFile       : " );
    ENM( decl->Declaration.File, TGSI_FILES );
@@ -792,7 +859,7 @@ dump_declaration_verbose(
 
 static void
 dump_immediate_short(
-   struct text_dump *dump,
+   struct gen_dump            *dump,
    struct tgsi_full_immediate *imm )
 {
    unsigned i;
@@ -820,9 +887,9 @@ dump_immediate_short(
 
 static void
 dump_immediate_verbose(
-   struct text_dump *dump,
+   struct gen_dump            *dump,
    struct tgsi_full_immediate *imm,
-   unsigned ignored )
+   unsigned                   ignored )
 {
    unsigned i;
 
@@ -849,12 +916,12 @@ dump_immediate_verbose(
 
 static void
 dump_instruction_short(
-   struct text_dump *dump,
-   struct tgsi_full_instruction *inst,
-   unsigned instno )
+   struct gen_dump               *dump,
+   struct tgsi_full_instruction  *inst,
+   unsigned                      instno )
 {
    unsigned i;
-   boolean first_reg = TRUE;
+   boolean  first_reg = TRUE;
 
    CHR( '\n' );
    UID( instno );
@@ -915,6 +982,9 @@ dump_instruction_short(
       }
       CHR( ' ' );
 
+      if( src->SrcRegisterExtMod.Complement ) {
+         TXT( "(1 - " );
+      }
       if( src->SrcRegisterExtMod.Negate  ) {
          CHR( '-' );
       }
@@ -957,6 +1027,9 @@ dump_instruction_short(
       if( src->SrcRegisterExtMod.Absolute ) {
          CHR( '|' );
       }
+      if( src->SrcRegisterExtMod.Complement ) {
+         CHR( ')' );
+      }
 
       first_reg = FALSE;
    }
@@ -975,11 +1048,11 @@ dump_instruction_short(
 
 static void
 dump_instruction_verbose(
-   struct text_dump *dump,
-   struct tgsi_full_instruction *inst,
-   unsigned ignored,
-   unsigned deflt,
-   struct tgsi_full_instruction *fi )
+   struct gen_dump               *dump,
+   struct tgsi_full_instruction  *inst,
+   unsigned                      ignored,
+   unsigned                      deflt,
+   struct tgsi_full_instruction  *fi )
 {
    unsigned i;
 
@@ -1317,13 +1390,12 @@ dump_instruction_verbose(
    }
 }
 
-void
-tgsi_dump(
+static void
+dump_gen(
+   struct gen_dump         *dump,
    const struct tgsi_token *tokens,
-   unsigned flags )
+   unsigned                flags )
 {
-   struct text_dump _dump;
-   struct text_dump *dump = &_dump;
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
@@ -1332,18 +1404,7 @@ tgsi_dump(
    unsigned deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
    unsigned instno = 0;
 
-   {
-#if 0
-      static unsigned counter = 0;
-      char buffer[64];
-
-      sprintf( buffer, "tgsi-dump-%.4u.txt", counter++ );
-      dump->file = fopen( buffer, "wt" );
-#else
-      dump->file = stderr;
-#endif
-      dump->tabs = 0;
-   }
+   dump->tabs = 0;
 
    /* sanity check */
    assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_CONT], "OPCODE_CONT") == 0);
@@ -1457,3 +1518,52 @@ tgsi_dump(
    tgsi_parse_free( &parse );
 }
 
+void
+tgsi_dump(
+   const struct tgsi_token *tokens,
+   unsigned                flags )
+{
+   struct file_dump  dump;
+
+   dump.base.write = _file_dump_write;
+#if 0
+   {
+      static unsigned   counter = 0;
+      char              buffer[64];
+      sprintf( buffer, "tgsi-dump-%.4u.txt", counter++ );
+      dump.file = fopen( buffer, "wt" );
+   }
+#else
+   dump.file = stderr;
+#endif
+
+   dump_gen(
+      &dump.base,
+      tokens,
+      flags );
+
+#if 0
+   fclose( dump.file );
+#endif
+}
+
+void
+tgsi_dump_str(
+   char                    **str,
+   const struct tgsi_token *tokens,
+   unsigned                flags )
+{
+   struct text_dump  dump;
+
+   dump.base.write = _text_dump_write;
+   dump.text = NULL;
+   dump.length = 0;
+   dump.capacity = 0;
+
+   dump_gen(
+      &dump.base,
+      tokens,
+      flags );
+
+   *str = dump.text;
+}
