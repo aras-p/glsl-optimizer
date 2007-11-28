@@ -101,6 +101,7 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 		   longer exists in the Xserver */
 		(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
 		XF86DRIDestroyDrawable(dpy, sc->scr, draw);
+                __glxHashDelete(sc->drawHash, draw);
 		Xfree(pdraw);
 	    }
 	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);
