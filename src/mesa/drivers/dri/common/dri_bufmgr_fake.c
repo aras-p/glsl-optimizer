@@ -41,11 +41,10 @@
 #include "mm.h"
 #include "imports.h"
 
-#if 0
-#define DBG(...) _mesa_printf(__VA_ARGS__)
-#else
-#define DBG(...)
-#endif
+#define DBG(...) do {					\
+   if (bufmgr_fake->debug)				\
+      _mesa_printf(__VA_ARGS__);			\
+} while (0)
 
 /* Internal flags:
  */
@@ -129,6 +128,7 @@ typedef struct _bufmgr_fake {
    /** Driver-supplied argument to driver callbacks */
    void *driver_priv;
 
+   GLboolean debug;
 
    /** fake relocation list */
    struct fake_buffer_reloc reloc[MAX_RELOCS];
@@ -778,10 +778,10 @@ dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
    /* XXX: Sanity-check whether we've already validated this one under
     * different flags.  See drmAddValidateItem().
     */
+   bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
 
    DBG("drm_bo_validate: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
        bo_fake->bo.size / 1024);
-   bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
    {
@@ -1095,6 +1095,14 @@ dri_fake_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
       dri_bo_unreference(r->target_buf);
    }
    bufmgr_fake->nr_relocs = 0;
+}
+
+void
+dri_bufmgr_fake_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bufmgr;
+
+   bufmgr_fake->debug = enable_debug;
 }
 
 dri_bufmgr *

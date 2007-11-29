@@ -202,6 +202,7 @@ dri_bufmgr *dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 				 int (*fence_wait)(void *private,
 						   unsigned int cookie),
 				 void *driver_priv);
+void dri_bufmgr_fake_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug);
 void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 dri_bo *dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 				      unsigned int handle);
