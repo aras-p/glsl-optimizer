@@ -51,24 +51,24 @@ update_textures(struct st_context *st)
    for (u = 0; u < st->ctx->Const.MaxTextureImageUnits; u++) {
       struct gl_texture_object *texObj
          = st->ctx->Texture.Unit[u]._Current;
-      struct pipe_mipmap_tree *mt;
+      struct pipe_texture *pt;
       if (texObj) {
          GLboolean flush, retval;
 
-         retval = st_finalize_mipmap_tree(st->ctx, st->pipe, u, &flush);
+         retval = st_finalize_texture(st->ctx, st->pipe, u, &flush);
 #if 0
-         printf("finalize_mipmap_tree returned %d, flush = %d\n",
+         printf("finalize_texture returned %d, flush = %d\n",
                 retval, flush);
 #endif
 
-         mt = st_get_texobj_mipmap_tree(texObj);
+         pt = st_get_texobj_texture(texObj);
       }
       else {
-         mt = NULL;
+         pt = NULL;
       }
 
-      st->state.texture[u] = mt;
-      st->pipe->set_texture_state(st->pipe, u, mt);
+      st->state.texture[u] = pt;
+      st->pipe->set_texture_state(st->pipe, u, pt);
    }
 }
 

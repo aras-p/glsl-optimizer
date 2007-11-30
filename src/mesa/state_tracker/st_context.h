@@ -36,7 +36,6 @@
 struct st_context;
 struct st_region;
 struct st_texture_object;
-struct st_texture_image;
 struct st_fragment_program;
 struct draw_context;
 struct draw_stage;
@@ -59,6 +58,25 @@ struct st_tracked_state {
    void (*update)( struct st_context *st );
 };
 
+
+
+struct st_texture_image
+{
+   struct gl_texture_image base;
+
+   /* These aren't stored in gl_texture_image 
+    */
+   GLuint level;
+   GLuint face;
+
+   /* If stImage->pt != NULL, image data is stored here.
+    * Else if stImage->base.Data != NULL, image is stored there.
+    * Else there is no image data.
+    */
+   struct pipe_texture *pt;
+
+   struct pipe_surface *surface;
+};
 
 
 
@@ -91,7 +109,7 @@ struct st_context
       struct pipe_constant_buffer constants[2];
       struct pipe_feedback_state feedback;
       struct pipe_framebuffer_state framebuffer;
-      struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
+      struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
       struct pipe_poly_stipple poly_stipple;
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;

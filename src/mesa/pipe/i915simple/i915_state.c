@@ -525,11 +525,11 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 
 static void i915_set_texture_state(struct pipe_context *pipe,
 				   unsigned unit,
-				   struct pipe_mipmap_tree *texture)
+				   struct pipe_texture *texture)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->texture[unit] = texture;  /* ptr, not struct */
+   i915->texture[unit] = (struct i915_texture*)texture;  /* ptr, not struct */
 
    i915->dirty |= I915_NEW_TEXTURE;
 }

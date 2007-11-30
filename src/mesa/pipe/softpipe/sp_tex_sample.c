@@ -422,7 +422,7 @@ compute_lambda(struct tgsi_sampler *sampler,
       dsdy = FABSF(dsdy);
       rho = MAX2(dsdx, dsdy);
       if (sampler->state->normalized_coords)
-         rho *= sampler->texture->width0;
+         rho *= sampler->texture->width[0];
    }
    if (t) {
       float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
@@ -432,7 +432,7 @@ compute_lambda(struct tgsi_sampler *sampler,
       dtdy = FABSF(dtdy);
       max = MAX2(dtdx, dtdy);
       if (sampler->state->normalized_coords)
-         max *= sampler->texture->height0;
+         max *= sampler->texture->height[0];
       rho = MAX2(rho, max);
    }
    if (p) {
@@ -443,7 +443,7 @@ compute_lambda(struct tgsi_sampler *sampler,
       dpdy = FABSF(dpdy);
       max = MAX2(dpdx, dpdy);
       if (sampler->state->normalized_coords)
-         max *= sampler->texture->depth0;
+         max *= sampler->texture->depth[0];
       rho = MAX2(rho, max);
    }
 
@@ -620,8 +620,8 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
                         &level0, &level1, &levelBlend, &imgFilter);
 
    if (sampler->state->normalized_coords) {
-      width = sampler->texture->level[level0].width;
-      height = sampler->texture->level[level0].height;
+      width = sampler->texture->width[level0];
+      height = sampler->texture->height[level0];
    }
    else {
       width = height = 1;
@@ -757,9 +757,9 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
                         &level0, &level1, &levelBlend, &imgFilter);
 
    if (sampler->state->normalized_coords) {
-      width = sampler->texture->level[level0].width;
-      height = sampler->texture->level[level0].height;
-      depth = sampler->texture->level[level0].depth;
+      width = sampler->texture->width[level0];
+      height = sampler->texture->height[level0];
+      depth = sampler->texture->depth[level0];
    }
    else {
       width = height = depth = 1;
@@ -883,7 +883,7 @@ sp_get_samples_cube(struct tgsi_sampler *sampler,
 /**
  * Called via tgsi_sampler::get_samples()
  * Use the sampler's state setting to get a filtered RGBA value
- * from the sampler's texture (mipmap tree).
+ * from the sampler's texture.
  *
  * XXX we can implement many versions of this function, each
  * tightly coded for a specific combination of sampler state

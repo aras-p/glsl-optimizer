@@ -150,6 +150,34 @@ struct i915_alpha_test_state {
    unsigned LIS6;
 };
 
+struct i915_texture {
+   struct pipe_texture base;
+
+   /* Derived from the above:
+    */
+   unsigned pitch;
+   unsigned depth_pitch;          /* per-image on i945? */
+   unsigned total_height;
+
+   unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
+
+   /* Explicitly store the offset of each image for each cube face or
+    * depth value.  Pretty much have to accept that hardware formats
+    * are going to be so diverse that there is no unified way to
+    * compute the offsets of depth/cube images within a mipmap level,
+    * so have to store them as a lookup table:
+    */
+   unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];   /**< array [depth] of offsets */
+
+   /* Includes image offset tables:
+    */
+   unsigned level_offset[PIPE_MAX_TEXTURE_LEVELS];
+
+   /* The data is held here:
+    */
+   struct pipe_region *region;
+};
+
 struct i915_context
 {
    struct pipe_context pipe;
@@ -174,7 +202,7 @@ struct i915_context
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    uint sampler_units[PIPE_MAX_SAMPLERS];
-   struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
+   struct i915_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
 

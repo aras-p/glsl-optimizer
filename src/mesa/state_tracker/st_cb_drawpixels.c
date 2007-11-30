@@ -33,6 +33,7 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
+#include "main/texformat.h"
 #include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
@@ -50,6 +51,7 @@
 #include "st_draw.h"
 #include "st_format.h"
 #include "st_mesa_to_tgsi.h"
+#include "st_texture.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
@@ -440,63 +442,20 @@ _mesa_base_format(GLenum format)
 }
 
 
-
-static struct pipe_mipmap_tree *
-alloc_mipmap_tree(struct st_context *st,
-                  GLsizei width, GLsizei height, uint pipeFormat)
-{
-   const GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
-   struct pipe_mipmap_tree *mt;
-   GLuint cpp;
-
-   mt = CALLOC_STRUCT(pipe_mipmap_tree);
-   if (!mt)
-      return NULL;
-
-   cpp = st_sizeof_format(pipeFormat);
-
-   mt->target = PIPE_TEXTURE_2D;
-   mt->internal_format = GL_RGBA;
-   mt->format = pipeFormat;
-   mt->first_level = 0;
-   mt->last_level = 0;
-   mt->width0 = width;
-   mt->height0 = height;
-   mt->depth0 = 1;
-   mt->cpp = cpp;
-   mt->compressed = 0;
-   mt->pitch = st->pipe->winsys->surface_pitch(st->pipe->winsys, cpp, width,
-					       flags);
-   mt->region = st->pipe->winsys->region_alloc(st->pipe->winsys,
-                                               mt->pitch * cpp * height, flags);
-   mt->depth_pitch = 0;
-   mt->total_height = height;
-   mt->level[0].level_offset = 0;
-   mt->level[0].width = width;
-   mt->level[0].height = height;
-   mt->level[0].depth = 1;
-   mt->level[0].nr_images = 1;
-   mt->level[0].image_offset = NULL;
-   mt->refcount = 1;
-
-   return mt;
-}
-
-
 /**
- * Make mipmap tree containing an image for glDrawPixels image.
+ * Make texture containing an image for glDrawPixels image.
  * If 'pixels' is NULL, leave the texture image data undefined.
  */
-static struct pipe_mipmap_tree *
-make_mipmap_tree(struct st_context *st,
-                 GLsizei width, GLsizei height, GLenum format, GLenum type,
-                 const struct gl_pixelstore_attrib *unpack,
-                 const GLvoid *pixels)
+static struct pipe_texture *
+make_texture(struct st_context *st,
+	     GLsizei width, GLsizei height, GLenum format, GLenum type,
+	     const struct gl_pixelstore_attrib *unpack,
+	     const GLvoid *pixels)
 {
    GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
    const struct gl_texture_format *mformat;
-   struct pipe_mipmap_tree *mt;
+   struct pipe_texture *pt;
    GLuint pipeFormat, cpp;
    GLenum baseFormat;
 
@@ -509,29 +468,33 @@ make_mipmap_tree(struct st_context *st,
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 
-   mt = alloc_mipmap_tree(st, width, height, pipeFormat);
-   if (!mt)
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, baseFormat, 0, 0,
+			  width, height, 1, 0);
+   if (!pt)
       return NULL;
 
    if (unpack->BufferObj && unpack->BufferObj->Name) {
       /*
-      mt->region = buffer_object_region(unpack->BufferObj);
+      pt->region = buffer_object_region(unpack->BufferObj);
       */
       printf("st_DrawPixels (sourcing from PBO not implemented yet)\n");
    }
 
    {
+      struct pipe_surface *surface;
       static const GLuint dstImageOffsets = 0;
       GLboolean success;
-      GLuint pitch = mt->pitch;
       GLubyte *dest;
       const GLbitfield imageTransferStateSave = ctx->_ImageTransferState;
 
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
+      surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+
       /* map texture region */
-      dest = pipe->region_map(pipe, mt->region);
+      (void) pipe->region_map(pipe, surface->region);
+      dest = surface->region->map + surface->offset;
 
       /* Put image into texture region.
        * Note that the image is actually going to be upside down in
@@ -542,7 +505,7 @@ make_mipmap_tree(struct st_context *st,
                                     mformat,          /* gl_texture_format */
                                     dest,             /* dest */
                                     0, 0, 0,          /* dstX/Y/Zoffset */
-                                    pitch * cpp,      /* dstRowStride, bytes */
+                                    surface->pitch * cpp, /* dstRowStride, bytes */
                                     &dstImageOffsets, /* dstImageOffsets */
                                     width, height, 1, /* size */
                                     format, type,     /* src format/type */
@@ -550,44 +513,15 @@ make_mipmap_tree(struct st_context *st,
                                     unpack);
 
       /* unmap */
-      pipe->region_unmap(pipe, mt->region);
+      pipe->region_unmap(pipe, surface->region);
+      pipe_surface_reference(&surface, NULL);
       assert(success);
 
       /* restore */
       ctx->_ImageTransferState = imageTransferStateSave;
    }
 
-#if 0
-   mt->target = PIPE_TEXTURE_2D;
-   mt->internal_format = GL_RGBA;
-   mt->format = pipeFormat;
-   mt->first_level = 0;
-   mt->last_level = 0;
-   mt->width0 = width;
-   mt->height0 = height;
-   mt->depth0 = 1;
-   mt->cpp = cpp;
-   mt->compressed = 0;
-   mt->pitch = mt->pitch;
-   mt->depth_pitch = 0;
-   mt->total_height = height;
-   mt->level[0].level_offset = 0;
-   mt->level[0].width = width;
-   mt->level[0].height = height;
-   mt->level[0].depth = 1;
-   mt->level[0].nr_images = 1;
-   mt->level[0].image_offset = NULL;
-   mt->refcount = 1;
-#endif
-   return mt;
-}
-
-
-static void
-free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
-{
-   pipe->winsys->region_release(pipe->winsys, &mt->region);
-   free(mt);
+   return pt;
 }
 
 
@@ -693,7 +627,7 @@ static void
 draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
                    GLfloat zoomX, GLfloat zoomY,
-                   struct pipe_mipmap_tree *mt,
+                   struct pipe_texture *pt,
                    struct st_vertex_program *stvp,
                    struct st_fragment_program *stfp,
                    const GLfloat *color,
@@ -761,9 +695,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       pipe->set_viewport_state(pipe, &vp);
    }
 
-   /* mipmap tree state: */
+   /* texture state: */
    {
-      pipe->set_texture_state(pipe, unit, mt);
+      pipe->set_texture_state(pipe, unit, pt);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
@@ -1025,14 +959,13 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
        any_pixel_transfer_ops(st) ||
        !compatible_formats(format, type, ps->format)) {
       /* textured quad */
-      struct pipe_mipmap_tree *mt
-         = make_mipmap_tree(ctx->st, width, height, format, type,
-                            unpack, pixels);
-      if (mt) {
+      struct pipe_texture *pt
+         = make_texture(ctx->st, width, height, format, type, unpack, pixels);
+      if (pt) {
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                            mt, stvp, stfp, color, GL_FALSE);
-         free_mipmap_tree(st->pipe, mt);
+                            pt, stvp, stfp, color, GL_FALSE);
+	 st->pipe->texture_release(st->pipe, &pt);
       }
    }
    else {
@@ -1046,26 +979,29 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 /**
  * Create a texture which represents a bitmap image.
  */
-static struct pipe_mipmap_tree *
+static struct pipe_texture *
 make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                     const struct gl_pixelstore_attrib *unpack,
                     const GLubyte *bitmap)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const uint flags = PIPE_SURFACE_FLAG_TEXTURE;
+   struct pipe_surface *surface;
    uint format = 0, cpp, comp;
+   GLenum internal_format;
    ubyte *dest;
-   struct pipe_mipmap_tree *mt;
+   struct pipe_texture *pt;
    int row, col;
 
    /* find a texture format we know */
    if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8 )) {
       format = PIPE_FORMAT_U_I8;
+      internal_format = GL_INTENSITY8;
       cpp = 1;
       comp = 0;
    }
    else if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_R8_G8_B8 )) {
       format = PIPE_FORMAT_U_A8_R8_G8_B8;
+      internal_format = GL_RGBA8;
       cpp = 4;
       comp = 3; /* alpha channel */ /*XXX little-endian dependency */
    }
@@ -1075,31 +1011,25 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    }
 
    /**
-    * Create a mipmap tree.
+    * Create a texture.
     */
-   mt = CALLOC_STRUCT(pipe_mipmap_tree);
-   if (!mt)
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, internal_format,
+			  0, 0, width, height, 1, 0);
+   if (!pt)
       return NULL;
 
    if (unpack->BufferObj && unpack->BufferObj->Name) {
       /*
-      mt->region = buffer_object_region(unpack->BufferObj);
+      pt->region = buffer_object_region(unpack->BufferObj);
       */
       printf("st_Bitmap (sourcing from PBO not implemented yet)\n");
    }
 
-
-   /* allocate texture region/storage */
-   mt->pitch = pipe->winsys->surface_pitch(pipe->winsys, cpp, width, flags);
-   mt->region = pipe->winsys->region_alloc(pipe->winsys,
-					   mt->pitch * cpp * height, flags);
+   surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
 
    /* map texture region */
-   dest = pipe->region_map(pipe, mt->region);
-   if (!dest) {
-      printf("st_Bitmap region_map() failed!?!");
-      return NULL;
-   }
+   (void) pipe->region_map(pipe, surface->region);
+   dest = surface->region->map + surface->offset;
 
    /* Put image into texture region.
     * Note that the image is actually going to be upside down in
@@ -1109,7 +1039,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
                  bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-      ubyte *destRow = dest + row * mt->pitch * cpp;
+      ubyte *destRow = dest + row * surface->pitch * cpp;
 
       if (unpack->LsbFirst) {
          /* Lsb first */
@@ -1158,30 +1088,13 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    } /* row */
 
-   /* unmap */
-   pipe->region_unmap(pipe, mt->region);
+   /* Release surface */
+   pipe->region_unmap(pipe, surface->region);
+   pipe_surface_reference(&surface, NULL);
 
-   mt->target = PIPE_TEXTURE_2D;
-   mt->internal_format = GL_RGBA;
-   mt->format = format;
-   mt->first_level = 0;
-   mt->last_level = 0;
-   mt->width0 = width;
-   mt->height0 = height;
-   mt->depth0 = 1;
-   mt->cpp = cpp;
-   mt->compressed = 0;
-   mt->depth_pitch = 0;
-   mt->total_height = height;
-   mt->level[0].level_offset = 0;
-   mt->level[0].width = width;
-   mt->level[0].height = height;
-   mt->level[0].depth = 1;
-   mt->level[0].nr_images = 1;
-   mt->level[0].image_offset = NULL;
-   mt->refcount = 1;
+   pt->format = format;
 
-   return mt;
+   return pt;
 }
 
 
@@ -1193,21 +1106,21 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct st_fragment_program *stfp;
    struct st_vertex_program *stvp;
    struct st_context *st = ctx->st;
-   struct pipe_mipmap_tree *mt;
+   struct pipe_texture *pt;
 
    stvp = make_vertex_shader(ctx->st, GL_TRUE);
    stfp = combined_bitmap_fragment_program(ctx);
 
    st_validate_state(st);
 
-   mt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
-   if (mt) {
+   pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
+   if (pt) {
       draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                          width, height, 1.0, 1.0,
-                         mt, stvp, stfp,
+                         pt, stvp, stfp,
                          ctx->Current.RasterColor, GL_FALSE);
 
-      free_mipmap_tree(st->pipe, mt);
+      st->pipe->texture_release(st->pipe, &pt);
    }
 }
 
@@ -1296,7 +1209,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_fragment_program *stfp;
    struct pipe_surface *psRead;
    struct pipe_surface *psTex;
-   struct pipe_mipmap_tree *mt;
+   struct pipe_texture *pt;
    GLfloat *color;
    uint format;
 
@@ -1327,11 +1240,12 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    psRead = rbRead->surface;
    format = psRead->format;
 
-   mt = alloc_mipmap_tree(ctx->st, width, height, format);
-   if (!mt)
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format,
+			  rbRead->Base.InternalFormat, 0, 0, width, height, 1, 0);
+   if (!pt)
       return;
 
-   psTex = pipe->get_tex_surface(pipe, mt, 0, 0, 0);
+   psTex = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       srcy = ctx->DrawBuffer->Height - srcy - height;
@@ -1368,10 +1282,10 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* draw textured quad */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                      mt, stvp, stfp, color, GL_TRUE);
+                      pt, stvp, stfp, color, GL_TRUE);
 
    pipe_surface_reference(&psTex, NULL);
-   free_mipmap_tree(st->pipe, mt);
+   st->pipe->texture_release(st->pipe, &pt);
 }
 
 

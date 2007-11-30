@@ -288,27 +288,11 @@ struct pipe_surface
 
 
 /**
- * Describes the location of each texture image within a texture region.
+ * Texture. Represents one or several texture images on one or several mipmap
+ * levels.
  */
-struct pipe_mipmap_level
-{
-   unsigned level_offset;
-   unsigned width;
-   unsigned height;
-   unsigned depth;
-   unsigned nr_images;
-
-   /* Explicitly store the offset of each image for each cube face or
-    * depth value.  Pretty much have to accept that hardware formats
-    * are going to be so diverse that there is no unified way to
-    * compute the offsets of depth/cube images within a mipmap level,
-    * so have to store them as a lookup table:
-    */
-   unsigned *image_offset;   /**< array [depth] of offsets */
-};
-
-struct pipe_mipmap_tree
-{
+struct pipe_texture
+{ 
    /* Effectively the key:
     */
    unsigned target;            /* XXX convert to PIPE_TEXTURE_x */
@@ -318,24 +302,12 @@ struct pipe_mipmap_tree
    unsigned first_level;
    unsigned last_level;
 
-   unsigned width0, height0, depth0; /**< Level zero image dimensions */
+   unsigned width[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned height[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
    unsigned cpp;
 
    unsigned compressed:1;
-
-   /* Derived from the above:
-    */
-   unsigned pitch;
-   unsigned depth_pitch;          /* per-image on i945? */
-   unsigned total_height;
-
-   /* Includes image offset tables:
-    */
-   struct pipe_mipmap_level level[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_region *region;
 
    /* These are also refcounted:
     */

@@ -46,9 +46,11 @@
 static void update_sampler(struct i915_context *i915,
                            uint unit,
 			   const struct i915_sampler_state *sampler,
-			   const struct pipe_mipmap_tree *mt,
+			   const struct i915_texture *tex,
 			   unsigned state[3] )
 {
+   const struct pipe_texture *pt = &tex->base;
+
    /* Need to do this after updating the maps, which call the
     * intel_finalize_mipmap_tree and hence can update firstLevel:
     */
@@ -56,8 +58,8 @@ static void update_sampler(struct i915_context *i915,
    state[1] = sampler->state[1];
    state[2] = sampler->state[2];
 
-   if (mt->format == PIPE_FORMAT_YCBCR ||
-       mt->format == PIPE_FORMAT_YCBCR_REV)
+   if (pt->format == PIPE_FORMAT_YCBCR ||
+       pt->format == PIPE_FORMAT_YCBCR_REV)
       state[0] |= SS2_COLORSPACE_CONVERSION;
 
    /* 3D textures don't seem to respect the border color.
@@ -75,7 +77,7 @@ static void update_sampler(struct i915_context *i915,
       const unsigned ws = sampler->templ->wrap_s;
       const unsigned wt = sampler->templ->wrap_t;
       const unsigned wr = sampler->templ->wrap_r;
-      if (mt->target == PIPE_TEXTURE_3D &&
+      if (pt->target == PIPE_TEXTURE_3D &&
           (sampler->templ->min_img_filter != PIPE_TEX_FILTER_NEAREST ||
            sampler->templ->mag_img_filter != PIPE_TEX_FILTER_NEAREST) &&
           (ws == PIPE_TEX_WRAP_CLAMP ||
@@ -105,13 +107,13 @@ void i915_update_samplers( struct i915_context *i915 )
    i915->current.sampler_enable_flags = 0x0;
 
    for (unit = 0; unit < I915_TEX_UNITS; unit++) {
-      /* determine unit enable/disable by looking for a bound mipmap tree */
+      /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->texture[unit]) {
 	 update_sampler( i915,
                          unit,
                          i915->sampler[unit],       /* sampler state */
-                         i915->texture[unit],        /* mipmap tree */
+                         i915->texture[unit],        /* texture */
 			 i915->current.sampler[unit] /* the result */
                          );
 
@@ -179,18 +181,19 @@ static void
 i915_update_texture(struct i915_context *i915, uint unit,
                     uint state[6])
 {
-   const struct pipe_mipmap_tree *mt = i915->texture[unit];
+   const struct i915_texture *tex = i915->texture[unit];
+   const struct pipe_texture *pt = &tex->base;
    uint format, pitch;
-   const uint width = mt->width0, height = mt->height0, depth = mt->depth0;
-   const uint num_levels = mt->last_level - mt->first_level;
+   const uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
+   const uint num_levels = pt->last_level - pt->first_level;
 
-   assert(mt);
+   assert(tex);
    assert(width);
    assert(height);
    assert(depth);
 
-   format = translate_texture_format(mt->format);
-   pitch = mt->pitch * mt->cpp;
+   format = translate_texture_format(pt->format);
+   pitch = tex->pitch * pt->cpp;
 
    assert(format);
    assert(pitch);
@@ -217,7 +220,7 @@ i915_update_textures(struct i915_context *i915)
    uint unit;
 
    for (unit = 0; unit < I915_TEX_UNITS; unit++) {
-      /* determine unit enable/disable by looking for a bound mipmap tree */
+      /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->texture[unit]) {
          i915_update_texture(i915, unit, i915->current.texbuffer[unit]);

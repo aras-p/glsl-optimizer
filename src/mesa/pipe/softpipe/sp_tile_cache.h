@@ -71,7 +71,7 @@ sp_tile_cache_get_surface(struct softpipe_tile_cache *tc);
 
 extern void
 sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
-                          struct pipe_mipmap_tree *texture);
+                          struct pipe_texture *texture);
 
 extern void
 sp_flush_tile_cache(struct softpipe_context *softpipe,

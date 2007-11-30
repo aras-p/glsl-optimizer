@@ -34,6 +34,8 @@
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_shader_tokens.h"
 #include "pipe/llvm/gallivm.h"
+#include "pipe/tgsi/util/tgsi_dump.h"
+#include "pipe/tgsi/exec/tgsi_sse2.h"
 
 
 void * softpipe_create_fs_state(struct pipe_context *pipe,

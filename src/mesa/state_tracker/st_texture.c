@@ -25,7 +25,9 @@
  * 
  **************************************************************************/
 
-#include "st_mipmap_tree.h"
+#include "st_context.h"
+#include "st_format.h"
+#include "st_texture.h"
 #include "enums.h"
 
 #include "pipe/p_state.h"
@@ -56,19 +58,19 @@ target_to_target(GLenum target)
 }
 #endif
 
-struct pipe_mipmap_tree *
-st_miptree_create(struct pipe_context *pipe,
+struct pipe_texture *
+st_texture_create(struct st_context *st,
                   unsigned target,
-                     GLenum internal_format,
-                     GLuint first_level,
-                     GLuint last_level,
-                     GLuint width0,
-                     GLuint height0,
-                     GLuint depth0, GLuint cpp, GLuint compress_byte)
+		  unsigned format,
+		  GLenum internal_format,
+		  GLuint first_level,
+		  GLuint last_level,
+		  GLuint width0,
+		  GLuint height0,
+		  GLuint depth0,
+		  GLuint compress_byte)
 {
-   GLboolean ok;
-   struct pipe_mipmap_tree *mt = calloc(sizeof(*mt), 1);
-   GLbitfield flags = 0x0;
+   struct pipe_texture *pt = CALLOC_STRUCT(pipe_texture);
 
    assert(target <= PIPE_TEXTURE_CUBE);
 
@@ -76,102 +78,64 @@ st_miptree_create(struct pipe_context *pipe,
        _mesa_lookup_enum_by_nr(target),
        _mesa_lookup_enum_by_nr(internal_format), first_level, last_level);
 
-   mt->target = target;
-   mt->internal_format = internal_format;
-   mt->first_level = first_level;
-   mt->last_level = last_level;
-   mt->width0 = width0;
-   mt->height0 = height0;
-   mt->depth0 = depth0;
-   mt->cpp = compress_byte ? compress_byte : cpp;
-   mt->compressed = compress_byte ? 1 : 0;
-   mt->refcount = 1; 
-
-   ok = pipe->mipmap_tree_layout(pipe, mt);
-   if (ok) {
-      mt->region = pipe->winsys->region_alloc(pipe->winsys,
-					      mt->pitch * mt->cpp *
-					      mt->total_height, flags);
-   }
-
-   if (!mt->region) {
-      free(mt);
+   if (!pt)
       return NULL;
-   }
 
-   return mt;
-}
+   assert(format);
 
+   pt->target = target;
+   pt->format = format;
+   pt->internal_format = internal_format;
+   pt->first_level = first_level;
+   pt->last_level = last_level;
+   pt->width[0] = width0;
+   pt->height[0] = height0;
+   pt->depth[0] = depth0;
+   pt->compressed = compress_byte ? 1 : 0;
+   pt->cpp = pt->compressed ? compress_byte : st_sizeof_format(format);
+   pt->refcount = 1; 
 
-void
-st_miptree_reference(struct pipe_mipmap_tree **dst,
-                        struct pipe_mipmap_tree *src)
-{
-   src->refcount++;
-   *dst = src;
-   DBG("%s %p refcount now %d\n", __FUNCTION__, (void *) src, src->refcount);
-}
+   st->pipe->texture_create(st->pipe, &pt);
 
-void
-st_miptree_release(struct pipe_context *pipe,
-                   struct pipe_mipmap_tree **mt)
-{
-   if (!*mt)
-      return;
-
-   DBG("%s %p refcount will be %d\n",
-       __FUNCTION__, (void *) *mt, (*mt)->refcount - 1);
-   if (--(*mt)->refcount <= 0) {
-      GLuint i;
-
-      DBG("%s deleting %p\n", __FUNCTION__, (void *) *mt);
-
-      pipe->winsys->region_release(pipe->winsys, &((*mt)->region));
-
-      for (i = 0; i < MAX_TEXTURE_LEVELS; i++)
-         if ((*mt)->level[i].image_offset)
-            free((*mt)->level[i].image_offset);
-
-      free(*mt);
-   }
-   *mt = NULL;
+   return pt;
 }
 
 
 
 
-/* Can the image be pulled into a unified mipmap tree.  This mirrors
+/* Can the image be pulled into a unified mipmap texture.  This mirrors
  * the completeness test in a lot of ways.
  *
  * Not sure whether I want to pass gl_texture_image here.
  */
 GLboolean
-st_miptree_match_image(struct pipe_mipmap_tree *mt,
+st_texture_match_image(struct pipe_texture *pt,
                           struct gl_texture_image *image,
                           GLuint face, GLuint level)
 {
-   /* Images with borders are never pulled into mipmap trees. 
+   /* Images with borders are never pulled into mipmap textures. 
     */
    if (image->Border) 
       return GL_FALSE;
 
-   if (image->InternalFormat != mt->internal_format ||
-       image->IsCompressed != mt->compressed)
+   if (image->InternalFormat != pt->internal_format ||
+       image->IsCompressed != pt->compressed)
       return GL_FALSE;
 
    /* Test image dimensions against the base level image adjusted for
     * minification.  This will also catch images not present in the
-    * tree, changed targets, etc.
+    * texture, changed targets, etc.
     */
-   if (image->Width != mt->level[level].width ||
-       image->Height != mt->level[level].height ||
-       image->Depth != mt->level[level].depth)
+   if (image->Width != pt->width[level] ||
+       image->Height != pt->height[level] ||
+       image->Depth != pt->depth[level])
       return GL_FALSE;
 
    return GL_TRUE;
 }
 
 
+#if 000
 /* Although we use the image_offset[] array to store relative offsets
  * to cube faces, Mesa doesn't know anything about this and expects
  * each cube face to be treated as a separate image.
@@ -179,14 +143,14 @@ st_miptree_match_image(struct pipe_mipmap_tree *mt,
  * These functions present that view to mesa:
  */
 const GLuint *
-st_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
+st_texture_depth_offsets(struct pipe_texture *pt, GLuint level)
 {
    static const GLuint zero = 0;
 
-   if (mt->target != PIPE_TEXTURE_3D || mt->level[level].nr_images == 1)
+   if (pt->target != PIPE_TEXTURE_3D || pt->level[level].nr_images == 1)
       return &zero;
    else
-      return mt->level[level].image_offset;
+      return pt->level[level].image_offset;
 }
 
 
@@ -195,63 +159,47 @@ st_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
  * texture memory buffer, in bytes.
  */
 GLuint
-st_miptree_image_offset(const struct pipe_mipmap_tree * mt,
+st_texture_image_offset(const struct pipe_texture * pt,
                         GLuint face, GLuint level)
 {
-   if (mt->target == PIPE_TEXTURE_CUBE)
-      return (mt->level[level].level_offset +
-              mt->level[level].image_offset[face] * mt->cpp);
+   if (pt->target == PIPE_TEXTURE_CUBE)
+      return (pt->level[level].level_offset +
+              pt->level[level].image_offset[face] * pt->cpp);
    else
-      return mt->level[level].level_offset;
+      return pt->level[level].level_offset;
 }
-
-
-GLuint
-st_miptree_texel_offset(const struct pipe_mipmap_tree * mt,
-                        GLuint face, GLuint level,
-                        GLuint col, GLuint row, GLuint img)
-{
-   GLuint imgOffset = st_miptree_image_offset(mt, face, level);
-
-   return imgOffset + row * (mt->pitch + col) * mt->cpp;
-}
-
+#endif
 
 
 /**
- * Map a teximage in a mipmap tree.
+ * Map a teximage in a mipmap texture.
  * \param row_stride  returns row stride in bytes
  * \param image_stride  returns image stride in bytes (for 3D textures).
  * \return address of mapping
  */
 GLubyte *
-st_miptree_image_map(struct pipe_context *pipe,
-                        struct pipe_mipmap_tree * mt,
-                        GLuint face,
-                        GLuint level,
-                        GLuint * row_stride, GLuint * image_offsets)
+st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
+		     GLuint zoffset)
 {
-   GLubyte *ptr;
+   struct pipe_texture *pt = stImage->pt;
    DBG("%s \n", __FUNCTION__);
 
-   if (row_stride)
-      *row_stride = mt->pitch * mt->cpp;
+   stImage->surface = st->pipe->get_tex_surface(st->pipe, pt, stImage->face,
+						stImage->level,	zoffset);
 
-   if (image_offsets)
-      memcpy(image_offsets, mt->level[level].image_offset,
-             mt->level[level].depth * sizeof(GLuint));
+   (void) st->pipe->region_map(st->pipe, stImage->surface->region);
 
-   ptr = pipe->region_map(pipe, mt->region);
-
-   return ptr + st_miptree_image_offset(mt, face, level);
+   return stImage->surface->region->map + stImage->surface->offset;
 }
 
 void
-st_miptree_image_unmap(struct pipe_context *pipe,
-                          struct pipe_mipmap_tree *mt)
+st_texture_image_unmap(struct st_context *st, struct st_texture_image *stImage)
 {
    DBG("%s\n", __FUNCTION__);
-   pipe->region_unmap(pipe, mt->region);
+
+   st->pipe->region_unmap(st->pipe, stImage->surface->region);
+
+   pipe_surface_reference(&stImage->surface, NULL);
 }
 
 
@@ -259,14 +207,14 @@ st_miptree_image_unmap(struct pipe_context *pipe,
 /* Upload data for a particular image.
  */
 void
-st_miptree_image_data(struct pipe_context *pipe,
-                      struct pipe_mipmap_tree *dst,
+st_texture_image_data(struct pipe_context *pipe,
+                      struct pipe_texture *dst,
                       GLuint face,
                       GLuint level,
                       void *src,
                       GLuint src_row_pitch, GLuint src_image_pitch)
 {
-   GLuint depth = dst->level[level].depth;
+   GLuint depth = dst->depth[level];
    GLuint i;
    GLuint height = 0;
    const GLubyte *srcUB = src;
@@ -274,7 +222,7 @@ st_miptree_image_data(struct pipe_context *pipe,
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
-      height = dst->level[level].height;
+      height = dst->height[level];
       if(dst->compressed)
 	 height /= 4;
 
@@ -285,7 +233,7 @@ st_miptree_image_data(struct pipe_context *pipe,
 			 srcUB,
 			 src_row_pitch,
 			 0, 0,                             /* source x, y */
-			 dst->level[level].width, height); /* width, height */
+			 dst->width[level], height); /* width, height */
 
       pipe_surface_reference(&dst_surface, NULL);
 
@@ -293,17 +241,17 @@ st_miptree_image_data(struct pipe_context *pipe,
    }
 }
 
-/* Copy mipmap image between trees
+/* Copy mipmap image between textures
  */
 void
-st_miptree_image_copy(struct pipe_context *pipe,
-                         struct pipe_mipmap_tree *dst,
+st_texture_image_copy(struct pipe_context *pipe,
+                         struct pipe_texture *dst,
                          GLuint face, GLuint level,
-                         struct pipe_mipmap_tree *src)
+                         struct pipe_texture *src)
 {
-   GLuint width = src->level[level].width;
-   GLuint height = src->level[level].height;
-   GLuint depth = src->level[level].depth;
+   GLuint width = src->width[level];
+   GLuint height = src->height[level];
+   GLuint depth = src->depth[level];
    struct pipe_surface *src_surface;
    struct pipe_surface *dst_surface;
    GLuint i;

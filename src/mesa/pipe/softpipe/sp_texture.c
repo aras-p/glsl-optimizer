@@ -33,7 +33,11 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
-#include "sp_tex_layout.h"
+#include "pipe/p_winsys.h"
+
+#include "sp_context.h"
+#include "sp_state.h"
+#include "sp_texture.h"
 
 
 /* At the moment, just make softpipe use the same layout for its
@@ -54,100 +58,105 @@ static int align(int value, int alignment)
 
 
 static void
-sp_miptree_set_level_info(struct pipe_mipmap_tree *mt,
-                             unsigned level,
-                             unsigned nr_images,
-                             unsigned x, unsigned y, unsigned w, unsigned h, unsigned d)
+sp_miptree_set_level_info(struct softpipe_texture *spt,
+			  unsigned level,
+			  unsigned nr_images,
+			  unsigned x, unsigned y, unsigned w, unsigned h,
+			  unsigned d)
 {
+   struct pipe_texture *pt = &spt->base;
+
    assert(level < PIPE_MAX_TEXTURE_LEVELS);
 
-   mt->level[level].width = w;
-   mt->level[level].height = h;
-   mt->level[level].depth = d;
-   mt->level[level].level_offset = (x + y * mt->pitch) * mt->cpp;
-   mt->level[level].nr_images = nr_images;
+   pt->width[level] = w;
+   pt->height[level] = h;
+   pt->depth[level] = d;
+
+   spt->nr_images[level] = nr_images;
+   spt->level_offset[level] = (x + y * spt->pitch) * pt->cpp;
 
    /*
    DBG("%s level %d size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
-       level, w, h, d, x, y, mt->level[level].level_offset);
+       level, w, h, d, x, y, spt->level_offset[level]);
    */
 
    /* Not sure when this would happen, but anyway: 
     */
-   if (mt->level[level].image_offset) {
-      FREE( mt->level[level].image_offset );
-      mt->level[level].image_offset = NULL;
+   if (spt->image_offset[level]) {
+      FREE( spt->image_offset[level] );
+      spt->image_offset[level] = NULL;
    }
 
    assert(nr_images);
-   assert(!mt->level[level].image_offset);
+   assert(!spt->image_offset[level]);
 
-   mt->level[level].image_offset = (unsigned *) MALLOC( nr_images * sizeof(unsigned) );
-   mt->level[level].image_offset[0] = 0;
+   spt->image_offset[level] = (unsigned *) MALLOC( nr_images * sizeof(unsigned) );
+   spt->image_offset[level][0] = 0;
 }
 
 
 static void
-sp_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
-                               unsigned level, unsigned img, unsigned x, unsigned y)
+sp_miptree_set_image_offset(struct softpipe_texture *spt,
+			    unsigned level, unsigned img, unsigned x, unsigned y)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
 
-   assert(img < mt->level[level].nr_images);
+   assert(img < spt->nr_images[level]);
 
-   mt->level[level].image_offset[img] = (x + y * mt->pitch);
+   spt->image_offset[level][img] = (x + y * spt->pitch);
 
    /*
    DBG("%s level %d img %d pos %d,%d image_offset %x\n",
-       __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
+       __FUNCTION__, level, img, x, y, spt->image_offset[level][img]);
    */
 }
 
 
 static void
-sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
+sp_miptree_layout_2d( struct softpipe_texture *spt )
 {
+   struct pipe_texture *pt = &spt->base;
    int align_h = 2, align_w = 4;
    unsigned level;
    unsigned x = 0;
    unsigned y = 0;
-   unsigned width = mt->width0;
-   unsigned height = mt->height0;
+   unsigned width = pt->width[0];
+   unsigned height = pt->height[0];
 
-   mt->pitch = mt->width0;
+   spt->pitch = pt->width[0];
    /* XXX FIX THIS:
     * we use alignment=64 bytes in sp_region_alloc(). If we change
     * that, change this too.
     */
-   if (mt->pitch < 16)
-      mt->pitch = 16;
+   if (spt->pitch < 16)
+      spt->pitch = 16;
 
    /* May need to adjust pitch to accomodate the placement of
     * the 2nd mipmap.  This occurs when the alignment
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.
     */
-   if (mt->first_level != mt->last_level) {
-      unsigned mip1_width = align(minify(mt->width0), align_w)
-			+ minify(minify(mt->width0));
+   if (pt->first_level != pt->last_level) {
+      unsigned mip1_width = align(minify(pt->width[0]), align_w)
+			+ minify(minify(pt->width[0]));
 
-      if (mip1_width > mt->width0)
-	 mt->pitch = mip1_width;
+      if (mip1_width > pt->width[0])
+	 spt->pitch = mip1_width;
    }
 
    /* Pitch must be a whole number of dwords, even though we
     * express it in texels.
     */
-   mt->pitch = align(mt->pitch * mt->cpp, 4) / mt->cpp;
-   mt->total_height = 0;
+   spt->pitch = align(spt->pitch * pt->cpp, 4) / pt->cpp;
+   spt->total_height = 0;
 
-   for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
+   for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
       unsigned img_height;
 
-      sp_miptree_set_level_info(mt, level, 1, x, y, width, height, 1);
+      sp_miptree_set_level_info(spt, level, 1, x, y, width, height, 1);
 
-      if (mt->compressed)
+      if (pt->compressed)
 	 img_height = MAX2(1, height/4);
       else
 	 img_height = align(height, align_h);
@@ -156,11 +165,11 @@ sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
       /* Because the images are packed better, the final offset
        * might not be the maximal one:
        */
-      mt->total_height = MAX2(mt->total_height, y + img_height);
+      spt->total_height = MAX2(spt->total_height, y + img_height);
 
       /* Layout_below: step right after second mipmap.
        */
-      if (level == mt->first_level + 1) {
+      if (level == pt->first_level + 1) {
 	 x += align(width, align_w);
       }
       else {
@@ -193,16 +202,17 @@ static const int step_offsets[6][2] = {
 
 
 
-boolean
-softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
+static boolean
+softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct softpipe_texture * spt)
 {
+   struct pipe_texture *pt = &spt->base;
    unsigned level;
 
-   switch (mt->target) {
+   switch (pt->target) {
    case PIPE_TEXTURE_CUBE:{
-         const unsigned dim = mt->width0;
+         const unsigned dim = pt->width[0];
          unsigned face;
-         unsigned lvlWidth = mt->width0, lvlHeight = mt->height0;
+         unsigned lvlWidth = pt->width[0], lvlHeight = pt->height[0];
 
          assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
@@ -211,16 +221,16 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
           * or the final row of 4x4, 2x2 and 1x1 faces below this. 
           */
          if (dim > 32)
-            mt->pitch = ((dim * mt->cpp * 2 + 3) & ~3) / mt->cpp;
+            spt->pitch = ((dim * pt->cpp * 2 + 3) & ~3) / pt->cpp;
          else
-            mt->pitch = 14 * 8;
+            spt->pitch = 14 * 8;
 
-         mt->total_height = dim * 4 + 4;
+         spt->total_height = dim * 4 + 4;
 
          /* Set all the levels to effectively occupy the whole rectangular region. 
           */
-         for (level = mt->first_level; level <= mt->last_level; level++) {
-            sp_miptree_set_level_info(mt, level, 6,
+         for (level = pt->first_level; level <= pt->last_level; level++) {
+            sp_miptree_set_level_info(spt, level, 6,
                                          0, 0,
                                          lvlWidth, lvlHeight, 1);
 	    lvlWidth /= 2;
@@ -234,16 +244,16 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
             unsigned d = dim;
 
             if (dim == 4 && face >= 4) {
-               y = mt->total_height - 4;
+               y = spt->total_height - 4;
                x = (face - 4) * 8;
             }
-            else if (dim < 4 && (face > 0 || mt->first_level > 0)) {
-               y = mt->total_height - 4;
+            else if (dim < 4 && (face > 0 || pt->first_level > 0)) {
+               y = spt->total_height - 4;
                x = face * 8;
             }
 
-            for (level = mt->first_level; level <= mt->last_level; level++) {
-               sp_miptree_set_image_offset(mt, level, face, x, y);
+            for (level = pt->first_level; level <= pt->last_level; level++) {
+               sp_miptree_set_image_offset(spt, level, face, x, y);
 
                d >>= 1;
 
@@ -262,13 +272,13 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
                      break;
                   case PIPE_TEX_FACE_POS_Z:
                   case PIPE_TEX_FACE_NEG_Z:
-                     y = mt->total_height - 4;
+                     y = spt->total_height - 4;
                      x = (face - 4) * 8;
                      break;
                   }
 
                case 2:
-                  y = mt->total_height - 4;
+                  y = spt->total_height - 4;
                   x = 16 + face * 8;
                   break;
 
@@ -286,33 +296,33 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
          break;
       }
    case PIPE_TEXTURE_3D:{
-         unsigned width = mt->width0;
-         unsigned height = mt->height0;
-         unsigned depth = mt->depth0;
+         unsigned width = pt->width[0];
+         unsigned height = pt->height[0];
+         unsigned depth = pt->depth[0];
          unsigned pack_x_pitch, pack_x_nr;
          unsigned pack_y_pitch;
          unsigned level;
 
-         mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
-         mt->total_height = 0;
+         spt->pitch = ((pt->width[0] * pt->cpp + 3) & ~3) / pt->cpp;
+         spt->total_height = 0;
 
-         pack_y_pitch = MAX2(mt->height0, 2);
-         pack_x_pitch = mt->pitch;
+         pack_y_pitch = MAX2(pt->height[0], 2);
+         pack_x_pitch = spt->pitch;
          pack_x_nr = 1;
 
-         for (level = mt->first_level; level <= mt->last_level; level++) {
-            unsigned nr_images = mt->target == PIPE_TEXTURE_3D ? depth : 6;
+         for (level = pt->first_level; level <= pt->last_level; level++) {
+            unsigned nr_images = pt->target == PIPE_TEXTURE_3D ? depth : 6;
             int x = 0;
             int y = 0;
             unsigned q, j;
 
-            sp_miptree_set_level_info(mt, level, nr_images,
-                                         0, mt->total_height,
-                                         width, height, depth);
+            sp_miptree_set_level_info(spt, level, nr_images,
+				      0, spt->total_height,
+				      width, height, depth);
 
             for (q = 0; q < nr_images;) {
                for (j = 0; j < pack_x_nr && q < nr_images; j++, q++) {
-                  sp_miptree_set_image_offset(mt, level, q, x, y);
+                  sp_miptree_set_image_offset(spt, level, q, x, y);
                   x += pack_x_pitch;
                }
 
@@ -321,12 +331,12 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
             }
 
 
-            mt->total_height += y;
+            spt->total_height += y;
 
             if (pack_x_pitch > 4) {
                pack_x_pitch >>= 1;
                pack_x_nr <<= 1;
-               assert(pack_x_pitch * pack_x_nr <= mt->pitch);
+               assert(pack_x_pitch * pack_x_nr <= spt->pitch);
             }
 
             if (pack_y_pitch > 2) {
@@ -343,7 +353,7 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
 //   case PIPE_TEXTURE_RECTANGLE:
-         sp_miptree_layout_2d(mt);
+         sp_miptree_layout_2d(spt);
          break;
    default:
       assert(0);
@@ -352,10 +362,64 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
 
    /*
    DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__,
-       mt->pitch,
-       mt->total_height, mt->cpp, mt->pitch * mt->total_height * mt->cpp);
+       spt->pitch,
+       spt->total_height, pt->cpp, spt->pitch * spt->total_height * pt->cpp);
    */
 
    return TRUE;
 }
 
+void
+softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
+{
+   struct softpipe_texture *spt = REALLOC(*pt, sizeof(struct pipe_texture),
+					  sizeof(struct softpipe_texture));
+
+   if (spt) {
+      memset(&spt->base + 1, 0,
+	     sizeof(struct softpipe_texture) - sizeof(struct pipe_texture));
+
+      if (softpipe_mipmap_tree_layout(pipe, spt)) {
+	 spt->region = pipe->winsys->region_alloc(pipe->winsys,
+						  spt->pitch * (*pt)->cpp *
+						  spt->total_height,
+						  PIPE_SURFACE_FLAG_TEXTURE);
+      }
+
+      if (!spt->region) {
+	 FREE(spt);
+	 spt = NULL;
+      }
+   }
+
+   *pt = &spt->base;
+}
+
+void
+softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
+{
+   if (!*pt)
+      return;
+
+   /*
+   DBG("%s %p refcount will be %d\n",
+       __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
+   */
+   if (--(*pt)->refcount <= 0) {
+      struct softpipe_texture *spt = (struct softpipe_texture *)*pt;
+      uint i;
+
+      /*
+      DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
+      */
+
+      pipe->winsys->region_release(pipe->winsys, &spt->region);
+
+      for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
+         if (spt->image_offset[i])
+            free(spt->image_offset[i]);
+
+      free(spt);
+   }
+   *pt = NULL;
+}

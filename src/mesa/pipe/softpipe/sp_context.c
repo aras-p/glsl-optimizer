@@ -40,7 +40,7 @@
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
-#include "sp_tex_layout.h"
+#include "sp_texture.h"
 #include "sp_winsys.h"
 
 
@@ -98,9 +98,9 @@ softpipe_map_texture_surfaces(struct softpipe_context *sp)
    uint i;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct pipe_mipmap_tree *mt = sp->texture[i];
-      if (mt) {
-         pipe->region_map(pipe, mt->region);
+      struct softpipe_texture *spt = sp->texture[i];
+      if (spt) {
+         pipe->region_map(pipe, spt->region);
       }
    }
 }
@@ -146,9 +146,9 @@ softpipe_unmap_texture_surfaces(struct softpipe_context *sp)
    struct pipe_context *pipe = &sp->pipe;
    uint i;
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct pipe_mipmap_tree *mt = sp->texture[i];
-      if (mt) {
-         pipe->region_unmap(pipe, mt->region);
+      struct softpipe_texture *spt = sp->texture[i];
+      if (spt) {
+         pipe->region_unmap(pipe, spt->region);
       }
    }
 }
@@ -351,7 +351,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.get_vendor = softpipe_get_vendor;
 
    /* textures */
-   softpipe->pipe.mipmap_tree_layout = softpipe_mipmap_tree_layout;
+   softpipe->pipe.texture_create = softpipe_texture_create;
+   softpipe->pipe.texture_release = softpipe_texture_release;
    softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 
    /*

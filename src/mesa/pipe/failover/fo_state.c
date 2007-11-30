@@ -402,7 +402,7 @@ failover_delete_sampler_state(struct pipe_context *pipe, void *sampler)
 static void
 failover_set_texture_state(struct pipe_context *pipe,
 			   unsigned unit,
-                           struct pipe_mipmap_tree *texture)
+                           struct pipe_texture *texture)
 {
    struct failover_context *failover = failover_context(pipe);
 

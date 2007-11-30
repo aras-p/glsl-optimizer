@@ -145,7 +145,8 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->pipe.surface_data = hw->surface_data;
    failover->pipe.surface_copy = hw->surface_copy;
    failover->pipe.surface_fill = hw->surface_fill;
-   failover->pipe.mipmap_tree_layout = hw->mipmap_tree_layout;
+   failover->pipe.texture_create = hw->texture_create;
+   failover->pipe.texture_release = hw->texture_release;
    failover->pipe.flush = hw->flush;
 
    failover->dirty = 0;
