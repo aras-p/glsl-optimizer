@@ -101,6 +101,7 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 		   longer exists in the Xserver */
 		(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
 		XF86DRIDestroyDrawable(dpy, sc->scr, draw);
+                __glxHashDelete(sc->drawHash, draw);
 		Xfree(pdraw);
 	    }
 	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);
@@ -379,17 +380,21 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    const __GLcontextModes * mode;
 	    drm_context_t hwContext;
 
-	    /* The value of fbconfig cannot change because it is tested
-	     * later in the function.
-	     */
-	    if ( fbconfig == NULL ) {
-		/* FIXME: Is it possible for the __GLcontextModes structure
-		 * FIXME: to not be found?
-		 */
-		mode = _gl_context_modes_find_visual( psc->configs,
-						      vis->visualid );
-		assert( mode != NULL );
-		assert( mode->screen == screen );
+
+	    if (fbconfig == NULL) {
+		mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+		if (mode == NULL) {
+		   xError error;
+
+		   error.errorCode = BadValue;
+		   error.resourceID = vis->visualid;
+		   error.sequenceNumber = dpy->request;
+		   error.type = X_Error;
+		   error.majorCode = gc->majorOpcode;
+		   error.minorCode = X_GLXCreateContext;
+		   _XError(dpy, &error);
+		   return None;
+		}
 	    }
 	    else {
 		mode = fbconfig;
@@ -401,7 +406,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 
 
 		if (!XF86DRICreateContextWithConfig(dpy, psc->scr,
-						    mode->fbconfigID,
+						    mode->visualID,
 						    &gc->hwContextID, &hwContext))
 		    /* gah, handle this better */
 		    return NULL;
@@ -416,8 +421,6 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		    gc->isDirect = GL_TRUE;
 		    gc->screen = mode->screen;
 		    gc->psc = psc;
-		    gc->vid = mode->visualID;
-		    gc->fbconfigID = mode->fbconfigID;
 		    gc->mode = mode;
 		}
 		else {
@@ -1511,13 +1514,15 @@ static int __glXQueryContextInfo(Display *dpy, GLXContext ctx)
 		    ctx->share_xid = *pProp++;
 		    break;
 		case GLX_VISUAL_ID_EXT:
-		    ctx->vid = *pProp++;
+		    ctx->mode =
+			_gl_context_modes_find_visual(ctx->psc->visuals, *pProp++);
 		    break;
 		case GLX_SCREEN:
 		    ctx->screen = *pProp++;
 		    break;
 		case GLX_FBCONFIG_ID:
-		    ctx->fbconfigID = *pProp++;
+		    ctx->mode =
+			_gl_context_modes_find_fbconfig(ctx->psc->configs, *pProp++);
 		    break;
 		case GLX_RENDER_TYPE:
 		    ctx->renderType = *pProp++;
@@ -1542,7 +1547,7 @@ glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value)
     int retVal;
 
     /* get the information from the server if we don't have it already */
-    if (!ctx->isDirect && (ctx->vid == None)) {
+    if (!ctx->isDirect && (ctx->mode == NULL)) {
 	retVal = __glXQueryContextInfo(dpy, ctx);
 	if (Success != retVal) return retVal;
     }
@@ -1551,13 +1556,13 @@ glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value)
 	*value = (int)(ctx->share_xid);
 	break;
     case GLX_VISUAL_ID_EXT:
-	*value = (int)(ctx->vid);
+	*value = ctx->mode ? ctx->mode->visualID : None;
 	break;
     case GLX_SCREEN:
 	*value = (int)(ctx->screen);
 	break;
     case GLX_FBCONFIG_ID:
-	*value = (int)(ctx->fbconfigID);
+	*value = ctx->mode ? ctx->mode->fbconfigID : None;
 	break;
     case GLX_RENDER_TYPE:
 	*value = (int)(ctx->renderType);
@@ -2165,6 +2170,68 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
    return False;
 }
 
+#ifdef GLX_DIRECT_RENDERING
+GLboolean
+__driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator)
+{
+#ifdef XF86VIDMODE
+    __GLXscreenConfigs *psc;
+    XF86VidModeModeLine   mode_line;
+    int   dot_clock;
+    int   i;
+    __GLXdrawable *glxDraw;
+
+    glxDraw = containerOf(draw, __GLXdrawable, driDrawable);
+    psc = glxDraw->psc;
+    if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
+	XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line) ) {
+	unsigned   n = dot_clock * 1000;
+	unsigned   d = mode_line.vtotal * mode_line.htotal;
+	
+# define V_INTERLACE 0x010
+# define V_DBLSCAN   0x020
+
+	if (mode_line.flags & V_INTERLACE)
+	    n *= 2;
+	else if (mode_line.flags & V_DBLSCAN)
+	    d *= 2;
+
+	/* The OML_sync_control spec requires that if the refresh rate is a
+	 * whole number, that the returned numerator be equal to the refresh
+	 * rate and the denominator be 1.
+	 */
+
+	if (n % d == 0) {
+	    n /= d;
+	    d = 1;
+	}
+	else {
+	    static const unsigned f[] = { 13, 11, 7, 5, 3, 2, 0 };
+
+	    /* This is a poor man's way to reduce a fraction.  It's far from
+	     * perfect, but it will work well enough for this situation.
+	     */
+
+	    for (i = 0; f[i] != 0; i++) {
+		while (n % f[i] == 0 && d % f[i] == 0) {
+		    d /= f[i];
+		    n /= f[i];
+		}
+	    }
+	}
+
+	*numerator = n;
+	*denominator = d;
+
+	return True;
+    }
+    else
+	return False;
+#else
+    return False;
+#endif
+}
+#endif
 
 /**
  * Determine the refresh rate of the specified drawable and display.
@@ -2182,71 +2249,19 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
  *       when GLX_OML_sync_control appears in the client extension string.
  */
 
-GLboolean __glXGetMscRateOML(__DRIdrawable *draw,
+GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 			     int32_t * numerator, int32_t * denominator)
 {
 #if defined( GLX_DIRECT_RENDERING ) && defined( XF86VIDMODE )
-    __GLXdrawable *glxDraw =
-	containerOf(draw, __GLXdrawable, driDrawable);
-    __GLXscreenConfigs *psc = glxDraw->psc;
-    Display *dpy = psc->dpy;
-   __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+    __DRIdrawable *driDraw = GetDRIDrawable(dpy, drawable, NULL);
 
+    if (driDraw == NULL)
+	return False;
 
-   if ( priv != NULL ) {
-      XF86VidModeModeLine   mode_line;
-      int   dot_clock;
-      int   i;
-
-
-      if (XF86VidModeQueryVersion( dpy, & i, & i ) &&
-	  XF86VidModeGetModeLine(dpy, psc->scr, &dot_clock, &mode_line) ) {
-	 unsigned   n = dot_clock * 1000;
-	 unsigned   d = mode_line.vtotal * mode_line.htotal;
-
-# define V_INTERLACE 0x010
-# define V_DBLSCAN   0x020
-
-	 if ( (mode_line.flags & V_INTERLACE) ) {
-	    n *= 2;
-	 }
-	 else if ( (mode_line.flags & V_DBLSCAN) ) {
-	    d *= 2;
-	 }
-
-	 /* The OML_sync_control spec requires that if the refresh rate is a
-	  * whole number, that the returned numerator be equal to the refresh
-	  * rate and the denominator be 1.
-	  */
-
-	 if ( (n % d) == 0 ) {
-	    n /= d;
-	    d = 1;
-	 }
-	 else {
-	    static const unsigned f[] = { 13, 11, 7, 5, 3, 2, 0 };
-
-
-	    /* This is a poor man's way to reduce a fraction.  It's far from
-	     * perfect, but it will work well enough for this situation.
-	     */
-
-	    for ( i = 0 ; f[i] != 0 ; i++ ) {
-	       while ( ((n % f[i]) == 0) && ((d % f[i]) == 0) ) {
-		  d /= f[i];
-		  n /= f[i];
-	       }
-	    }
-	 }
-
-	 *numerator = n;
-	 *denominator = d;
-
-	 return True;
-      }
-   }
+    return __driGetMscRateOML(driDraw, numerator, denominator);
 #else
-   (void) draw;
+   (void) dpy;
+   (void) drawable;
    (void) numerator;
    (void) denominator;
 #endif

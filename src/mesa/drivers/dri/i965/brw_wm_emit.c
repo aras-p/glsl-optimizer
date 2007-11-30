@@ -810,6 +810,7 @@ static void emit_kil( struct brw_wm_compile *c,
       brw_push_insn_state(p);
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], brw_imm_f(0));   
       brw_set_predicate_control_flag_value(p, 0xff);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_AND(p, r0uw, brw_flag_reg(), r0uw);
       brw_pop_insn_state(p);
    }

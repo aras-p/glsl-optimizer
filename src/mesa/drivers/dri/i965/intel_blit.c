@@ -43,8 +43,7 @@
 
 #include "bufmgr.h"
 
-
-
+#define FILE_DEBUG_FLAG DEBUG_BLIT
 
 /*
  * Copy the back buffer to the front buffer. 

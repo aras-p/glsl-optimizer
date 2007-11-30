@@ -28,6 +28,10 @@ CFLAGS = -Wall -Wmissing-prototypes $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
 CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
 	$(X11_INCLUDES) 
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 GLUT_CFLAGS = -fexceptions
 
 EXTRA_LIB_PATH = -L/usr/X11R6/lib

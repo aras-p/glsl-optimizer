@@ -11,5 +11,9 @@ CFLAGS = -fPIC -O3 -I/usr/openwin/include -I/usr/include/X11R5 -I/usr/include/X1
 CXXFLAGS = -fPIC -O3 -I/usr/openwin/include -DSUNOS4
 GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/openwin/lib -lX11 -lXext -lXmu -lXi -lm
 

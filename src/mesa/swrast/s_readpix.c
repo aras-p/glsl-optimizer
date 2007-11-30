@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -129,7 +129,8 @@ read_depth_pixels( GLcontext *ctx,
          rb->GetRow(ctx, rb, width, x, y, dest);
          /* convert range from 24-bit to 32-bit */
          for (k = 0; k < width; k++) {
-            dest[k] = (dest[k] << 8) | (dest[k] >> 24);
+            /* Note: put MSByte of 24-bit value into LSByte */
+            dest[k] = (dest[k] << 8) | ((dest[k] >> 16) & 0xff);
          }
       }
    }

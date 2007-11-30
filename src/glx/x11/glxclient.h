@@ -233,15 +233,6 @@ struct __GLXcontextRec {
     XID share_xid;
 
     /**
-     * Visual id.
-     * 
-     * \deprecated
-     * This filed has been largely been replaced by the \c mode field, but
-     * the work is not quite done.
-     */
-    VisualID vid;
-
-    /**
      * Screen number.
      */
     GLint screen;
@@ -351,6 +342,11 @@ struct __GLXcontextRec {
      */
     GLint majorOpcode;
 
+    /**
+     * Pointer to the mode used to create this context.
+     */
+    const __GLcontextModes * mode;
+
 #ifdef GLX_DIRECT_RENDERING
     /**
      * Per context direct rendering interface functions and data.
@@ -358,27 +354,10 @@ struct __GLXcontextRec {
     __DRIcontext driContext;
 
     /**
-     * Pointer to the mode used to create this context.
-     */
-    const __GLcontextModes * mode;
-
-    /**
      * XID for the server side drm_context_t
      */
     XID hwContextID;
 #endif
-    
-    /**
-     * \c GLXFBConfigID used to create this context.  May be \c None.  This
-     * field has been replaced by the \c mode field.
-     *
-     * \since Internal API version 20030317.
-     *
-     * \deprecated
-     * This filed has been largely been replaced by the \c mode field, but
-     * the work is not quite done.
-     */
-    GLXFBConfigID  fbconfigID;
 
     /**
      * The current read-drawable for this context.  Will be None if this
@@ -740,7 +719,12 @@ extern int __glXGetInternalVersion(void);
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
 
-extern GLboolean __glXGetMscRateOML(__DRIdrawable *draw,
+extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 				    int32_t * numerator, int32_t * denominator);
+
+#ifdef GLX_DIRECT_RENDERING
+GLboolean
+__driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator);
+#endif
 
 #endif /* !__GLX_client_h__ */

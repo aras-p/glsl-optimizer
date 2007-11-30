@@ -5,6 +5,7 @@ include $(TOP)/configs/linux-x86
 CONFIG_NAME = linux-x86-static
 
 MKLIB_OPTIONS = -static
+PIC_FLAGS =
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a

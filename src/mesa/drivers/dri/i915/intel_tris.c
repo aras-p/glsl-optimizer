@@ -111,6 +111,9 @@ intelStartInlinePrimitive(struct intel_context *intel,
    BEGIN_BATCH(2, batch_flags);
    OUT_BATCH(0);
 
+   assert(intel->batch->id == intel->last_state_batch_id);
+   assert((intel->batch->dirty_state & (1<<1)) == 0);
+
    intel->prim.start_ptr = intel->batch->ptr;
    intel->prim.primitive = prim;
    intel->prim.flush = intel_flush_inline_primitive;
@@ -1072,6 +1075,8 @@ intel_meta_draw_poly(struct intel_context *intel,
    union fi *vb;
    GLint i;
 
+   LOCK_HARDWARE(intel);
+
    /* All 3d primitives should be emitted with INTEL_BATCH_CLIPRECTS,
     * otherwise the drawing origin (DR4) might not be set correctly.
     */
@@ -1089,6 +1094,7 @@ intel_meta_draw_poly(struct intel_context *intel,
    }
 
    INTEL_FIREVERTICES(intel);
+   UNLOCK_HARDWARE(intel);
 }
 
 void

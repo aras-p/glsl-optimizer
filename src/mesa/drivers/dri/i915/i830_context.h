@@ -196,10 +196,6 @@ extern void i830InitState(struct i830_context *i830);
  */
 extern void i830InitMetaFuncs(struct i830_context *i830);
 
-extern void
-i830RotateWindow(struct intel_context *intel, __DRIdrawablePrivate * dPriv,
-                 GLuint srcBuf);
-
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
  * macros used previously:

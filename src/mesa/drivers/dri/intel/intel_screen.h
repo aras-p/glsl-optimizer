@@ -30,7 +30,6 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
-#include "intel_rotate.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
 #include "dri_bufmgr.h"
@@ -46,6 +45,12 @@ typedef struct
    int offset;                  /* from start of video mem, in bytes */
    int pitch;                   /* row stride, in bytes */
    unsigned int bo_handle;	/* buffer object id if available, or -1 */
+   /**
+    * Flags if the region is tiled.
+    *
+    * Not included is Y versus X tiling.
+    */
+   GLboolean tiled;
 } intelRegion;
 
 typedef struct
@@ -53,7 +58,6 @@ typedef struct
    intelRegion front;
    intelRegion back;
    intelRegion third;
-   intelRegion rotated;
    intelRegion depth;
    intelRegion tex;
 
@@ -61,7 +65,6 @@ typedef struct
    struct intel_region *back_region;
    struct intel_region *third_region;
    struct intel_region *depth_region;
-   struct intel_region *rotated_region;
 
    int deviceID;
    int width;
@@ -82,11 +85,6 @@ typedef struct
    int irq_active;
    int allow_batchbuffer;
 
-   struct matrix23 rotMatrix;
-
-   int current_rotation;        /* 0, 90, 180 or 270 */
-   int rotatedWidth, rotatedHeight;
-
    /**
    * Configuration cache with default values for all contexts
    */
@@ -100,6 +98,8 @@ typedef struct
     * instead of the fake client-side memory manager.
     */
    GLboolean ttm;
+
+   unsigned batch_id;
 } intelScreenPrivate;
 
 
@@ -127,8 +127,5 @@ extern void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
 
 extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
-
-extern void
-intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
 
 #endif

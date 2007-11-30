@@ -25,6 +25,27 @@ static int doPrint = 1;
 static int deltaY;
 GLint windW, windH;
 
+static const struct {
+   GLenum mode;
+   const char *name;
+} LogicOpModes[] = {
+   { GL_SET, "GL_SET" },
+   { GL_COPY, "GL_COPY" },
+   { GL_NOOP, "GL_NOOP" },
+   { GL_AND, "GL_AND" },
+   { GL_INVERT, "GL_INVERT" },
+   { GL_OR, "GL_OR" },
+   { GL_XOR, "GL_XOR" },
+   { GL_NOR, "GL_NOR" },
+   { GL_NAND, "GL_NAND" },
+   { GL_OR_REVERSE, "GL_OR_REVERSE" },
+   { GL_OR_INVERTED, "GL_OR_INVERTED" },
+   { GL_AND_INVERTED, "GL_AND_INVERTED" },
+   { 0, NULL }
+};
+
+
+
 static void DrawString(const char *string)
 {
     int i;
@@ -47,7 +68,7 @@ static void Reshape(int width, int height)
     windH = (GLint)height;
 
     glViewport(0, 0, (GLint)width, (GLint)height);
-    deltaY = windH /16;
+    deltaY = windH /20;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -105,7 +126,7 @@ static void Draw(void)
 {
     int stringOffset = 5, stringx = 8;
     int x1, x2, xleft, xright;
-    int i;
+    int i, k;
 
     (dithering) ? glEnable(GL_DITHER) : glDisable(GL_DITHER);
     glDisable(GL_BLEND);
@@ -122,6 +143,7 @@ static void Draw(void)
     /* Draw labels */
     glColor3f(0.8, 0.8, 0.0);
     i = windH - deltaY + stringOffset;
+
     glRasterPos2f(stringx, i); i -= deltaY;
     DrawString("SOURCE");
     glRasterPos2f(stringx, i); i -= deltaY;
@@ -136,21 +158,12 @@ static void Draw(void)
     DrawString("reverse_subtract");
     glRasterPos2f(stringx, i); i -= deltaY;
     DrawString("clear");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("set");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("copy");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("noop");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("and");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("invert");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("or");
-    glRasterPos2f(stringx, i); i -= deltaY;
-    DrawString("xor");
 
+    for (k = 0; LogicOpModes[k].name; k++) {
+       glRasterPos2f(stringx, i);
+       i -= deltaY;
+       DrawString(LogicOpModes[k].name);
+    }
 
     i = windH - deltaY;
     x1 = windW/4;
@@ -193,43 +206,23 @@ static void Draw(void)
     glLogicOp(GL_CLEAR);
     glRectf(x1, i, x2, i+deltaY);
 
-    i -= deltaY;
-    glLogicOp(GL_SET);
-    glRectf(x1, i, x2, i+deltaY);
+    for (k = 0; LogicOpModes[k].name; k++) {
+       i -= deltaY;
+       glLogicOp(LogicOpModes[k].mode);
+       glRectf(x1, i, x2, i+deltaY);
+       if (LogicOpModes[k].mode == GL_XOR) {
+          glRectf(x1, i+10, x2, i+5);
+       }
+    }
 
-    i -= deltaY;
-    glLogicOp(GL_COPY);
-    glRectf(x1, i, x2, i+deltaY);
-
-    i -= deltaY;
-    glLogicOp(GL_NOOP);
-    glRectf(x1, i, x2, i+deltaY);
-
-    i -= deltaY;
-    glLogicOp(GL_AND);
-    glRectf(x1, i, x2, i+deltaY);
-
-    i -= deltaY;
-    glLogicOp(GL_INVERT);
-    glRectf(x1, i, x2, i+deltaY);
-
-    i -= deltaY;
-    glLogicOp(GL_OR);
-    glRectf(x1, i, x2, i+deltaY);
-
-    i -= deltaY;
-    glLogicOp(GL_XOR);
-    glRectf(x1, i, x2, i+deltaY);
-    glRectf(x1, i+10, x2, i+5);
-
-  if (doPrint) {
-      glDisable(GL_BLEND);
-      if (supportlogops & 2)
+    if (doPrint) {
+       glDisable(GL_BLEND);
+       if (supportlogops & 2)
           glDisable(GL_COLOR_LOGIC_OP);
-      glColor3f(1.0, 1.0, 1.0);
-      PrintColorStrings();
-  }
-  glFlush();
+       glColor3f(1.0, 1.0, 1.0);
+       PrintColorStrings();
+    }
+    glFlush();
 
     if (doubleBuffer) {
        glutSwapBuffers();
@@ -271,7 +264,7 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    glutInitWindowPosition(0, 0); glutInitWindowSize( 800, 400);
+    glutInitWindowPosition(0, 0); glutInitWindowSize( 800, 520);
 
     type = GLUT_RGB;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;

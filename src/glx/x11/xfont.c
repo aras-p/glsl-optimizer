@@ -34,6 +34,7 @@
   called by that routine when direct rendering is enabled.
 */
 
+#ifdef GLX_DIRECT_RENDERING
 
 #include "glxclient.h"
 
@@ -209,7 +210,6 @@ static XCharStruct *isvalid(XFontStruct *fs, int which)
   return(NULL);
 }
 
-
 void DRI_glXUseXFont( Font font, int first, int count, int listbase )
 {
   GLXContext CC;
@@ -374,4 +374,4 @@ bm_height);
   glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
 }
 
-/* The End. */
+#endif

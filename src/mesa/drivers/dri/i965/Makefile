@@ -21,6 +21,7 @@ DRIVER_SOURCES = \
 	intel_pixel_bitmap.c \
 	intel_state.c \
 	intel_tex.c \
+	intel_tex_format.c \
 	intel_tex_layout.c \
 	intel_tex_validate.c \
 	brw_cc.c \

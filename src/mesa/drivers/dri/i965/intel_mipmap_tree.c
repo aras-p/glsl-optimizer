@@ -32,6 +32,8 @@
 #include "enums.h"
 #include "imports.h"
 
+#define FILE_DEBUG_FLAG DEBUG_MIPTREE
+
 static GLenum target_to_target( GLenum target )
 {
    switch (target) {

@@ -635,18 +635,17 @@ __glXInitializeVisualConfigFromTags( __GLcontextModes *config, int count,
 
 
 #ifdef GLX_DIRECT_RENDERING
-static unsigned
+static void
 filter_modes( __GLcontextModes ** server_modes,
 	      const __GLcontextModes * driver_modes )
 {
     __GLcontextModes * m;
     __GLcontextModes ** prev_next;
     const __GLcontextModes * check;
-    unsigned modes_count = 0;
 
-    if ( driver_modes == NULL ) {
+    if (driver_modes == NULL) {
 	fprintf(stderr, "libGL warning: 3D driver returned no fbconfigs.\n");
-	return 0;
+	return;
     }
 
     /* For each mode in server_modes, check to see if a matching mode exists
@@ -684,12 +683,9 @@ filter_modes( __GLcontextModes ** server_modes,
 	    _gl_context_modes_destroy( m );
 	}
 	else {
-	    modes_count++;
 	    prev_next = & m->next;
 	}
     }
-
-    return modes_count;
 }
 
 #ifdef XDAMAGE_1_1_INTERFACE
@@ -792,7 +788,7 @@ static const __DRIinterfaceMethods interface_methods = {
     __glXDRIGetDrawableInfo,
 
     __glXGetUST,
-    __glXGetMscRateOML,
+    __driGetMscRateOML,
 
     __glXReportDamage,
 };
@@ -954,7 +950,8 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 							     & driver_modes );
 
 				    filter_modes(&psc->configs, driver_modes);
-				    _gl_context_modes_destroy( driver_modes );
+				    filter_modes(&psc->visuals, driver_modes);
+				    _gl_context_modes_destroy(driver_modes);
 				}
 			    }
 			}

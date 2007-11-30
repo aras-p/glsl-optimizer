@@ -418,6 +418,13 @@ struct r300_state_atom {
 #define R300_VPP_PARAM_0	1
 #define R300_VPP_CMDSIZE	1025	/* 256 4-component parameters */
 
+#define R300_VPUCP_CMD_0		0
+#define R300_VPUCP_X            1
+#define R300_VPUCP_Y            2
+#define R300_VPUCP_Z            3
+#define R300_VPUCP_W            4
+#define R300_VPUCP_CMDSIZE	5	/* 256 4-component parameters */
+
 #define R300_VPS_CMD_0		0
 #define R300_VPS_ZERO_0		1
 #define R300_VPS_ZERO_1		2
@@ -451,7 +458,7 @@ struct r300_hw_state {
 	struct r300_state_atom vir[2];	/* vap input route (2150/21E0) */
 	struct r300_state_atom vic;	/* vap input control (2180) */
 	struct r300_state_atom unk21DC;	/* (21DC) */
-	struct r300_state_atom unk221C;	/* (221C) */
+	struct r300_state_atom vap_clip_cntl;
 	struct r300_state_atom vap_clip;
 	struct r300_state_atom unk2288;	/* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
@@ -505,6 +512,7 @@ struct r300_hw_state {
 	struct r300_state_atom vpi;	/* vp instructions */
 	struct r300_state_atom vpp;	/* vp parameters */
 	struct r300_state_atom vps;	/* vertex point size (?) */
+	struct r300_state_atom vpucp[6];	/* vp user clip plane - 6 */
 	/* 8 texture units */
 	/* the state is grouped by function and not by
 	   texture unit. This makes single unit updates

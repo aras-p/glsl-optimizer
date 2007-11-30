@@ -36,6 +36,7 @@
 #include "texmem.h"
 
 #include "intel_screen.h"
+#include "intel_tex_obj.h"
 #include "i915_drm.h"
 #include "i830_common.h"
 #include "tnl/t_vertex.h"
@@ -72,49 +73,6 @@ extern void intelFallback(struct intel_context *intel, GLuint bit,
 #define INTEL_WRITE_PART  0x1
 #define INTEL_WRITE_FULL  0x2
 #define INTEL_READ        0x4
-
-struct intel_texture_object
-{
-   struct gl_texture_object base;       /* The "parent" object */
-
-   /* The mipmap tree must include at least these levels once
-    * validated:
-    */
-   GLuint firstLevel;
-   GLuint lastLevel;
-
-   /* Offset for firstLevel image:
-    */
-   GLuint textureOffset;
-
-   /* On validation any active images held in main memory or in other
-    * regions will be copied to this region and the old storage freed.
-    */
-   struct intel_mipmap_tree *mt;
-
-   GLboolean imageOverride;
-   GLint depthOverride;
-   GLuint pitchOverride;
-};
-
-
-
-struct intel_texture_image
-{
-   struct gl_texture_image base;
-
-   /* These aren't stored in gl_texture_image 
-    */
-   GLuint level;
-   GLuint face;
-
-   /* If intelImage->mt != NULL, image data is stored here.
-    * Else if intelImage->base.Data != NULL, image is stored there.
-    * Else there is no image data.
-    */
-   struct intel_mipmap_tree *mt;
-};
-
 
 #define INTEL_MAX_FIXUP 64
 
@@ -174,8 +132,6 @@ struct intel_context
 					GLuint pitch,
 					GLuint height,
 					GLenum format, GLenum type);
-      void (*rotate_window) (struct intel_context * intel,
-                             __DRIdrawablePrivate * dPriv, GLuint srcBuf);
 
       void (*assert_not_dirty) (struct intel_context *intel);
 
@@ -189,6 +145,7 @@ struct intel_context
    dri_fence *first_swap_fence;
 
    struct intel_batchbuffer *batch;
+   GLuint last_state_batch_id;
 
    struct
    {
@@ -229,14 +186,6 @@ struct intel_context
    GLuint vertex_size;
    GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
 
-#if 0
-   struct intel_region *front_region;   /* XXX FBO: obsolete */
-   struct intel_region *rotated_region; /* XXX FBO: obsolete */
-   struct intel_region *back_region;    /* XXX FBO: obsolete */
-   struct intel_region *draw_region;    /* XXX FBO: rename to color_region */
-   struct intel_region *depth_region;   /**< currently bound depth/Z region */
-#endif
-
    /* Fallback rasterization functions 
     */
    intel_point_func draw_point;
@@ -272,13 +221,9 @@ struct intel_context
     */
    driOptionCache optionCache;
 
-  /* Rotation. Need to match that of the
-   * current screen.
-   */
-
-  int width;
-  int height;
-  int current_rotation;
+   /* Last seen width/height of the screen */
+   int width;
+   int height;
 };
 
 /* These are functions now:
@@ -369,6 +314,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_REGION    0x400
 #define DEBUG_FBO       0x800
 #define DEBUG_LOCK      0x1000
+#define DEBUG_SYNC	0x2000
 
 #define DBG(...)  do { if (INTEL_DEBUG & FILE_DEBUG_FLAG) _mesa_printf(__VA_ARGS__); } while(0)
 
@@ -477,21 +423,5 @@ intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx;
 }
-
-static INLINE struct intel_texture_object *
-intel_texture_object(struct gl_texture_object *obj)
-{
-   return (struct intel_texture_object *) obj;
-}
-
-static INLINE struct intel_texture_image *
-intel_texture_image(struct gl_texture_image *img)
-{
-   return (struct intel_texture_image *) img;
-}
-
-extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
-                                                     *rb);
-
 
 #endif

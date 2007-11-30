@@ -12,3 +12,6 @@ CXXFLAGS = -O2 -fPIC
 GLUT_CFLAGS = -fexceptions
 APP_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lXext -lXmu -lXi -lX11 -lm
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing

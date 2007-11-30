@@ -28,6 +28,10 @@ CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES) \
 
 GLUT_CFLAGS = -fexceptions -DSOLARIS_2_4_BUG
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/openwin/lib
 

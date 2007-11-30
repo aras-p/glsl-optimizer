@@ -353,6 +353,15 @@ extern int INTEL_DEBUG;
 #define DEBUG_URB       0x20000
 #define DEBUG_VS        0x40000
 #define DEBUG_BATCH	0x80000
+#define DEBUG_BUFMGR	0x100000
+#define DEBUG_BLIT	0x200000
+#define DEBUG_REGION	0x400000
+#define DEBUG_MIPTREE	0x800000
+
+#define DBG(...) do {						\
+	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\
+		_mesa_printf(__VA_ARGS__);			\
+} while(0)
 
 /* ================================================================
  * intel_context.c:

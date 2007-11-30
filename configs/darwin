@@ -10,6 +10,10 @@ CXX = cc
 CFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
 CXXFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 # Library names (actual file names)
 GL_LIB_NAME = libGL.dylib
 GLU_LIB_NAME = libGLU.dylib

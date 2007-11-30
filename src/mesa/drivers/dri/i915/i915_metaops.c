@@ -35,7 +35,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
 #include "intel_regions.h"
-#include "intel_rotate.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"

@@ -21,6 +21,9 @@ CXX_ARCH_FLAGS = -m64
 CXXFLAGS = $(CXX_WARN_FLAGS) $(CXX_OPT_FLAGS) $(CXX_PIC_FLAGS) $(CXX_ARCH_FLAGS) $(DEFINES) \
         -I/usr/openwin/include
 
+# Work around aliasing bugs - developers should comment this out
+CXXFLAGS += -fno-strict-aliasing
+
 CFLAGS = -xarch=v9 -KPIC -O -I/usr/openwin/include -I/usr/dt/include -DUSE_XSHM -DPTHREADS
 #CXXFLAGS = -xarch=v9 -KPIC -O -I/usr/openwin/include -I/usr/dt/include -DPTHREADS
 GLUT_CFLAGS = -DSOLARIS_2_4_BUG

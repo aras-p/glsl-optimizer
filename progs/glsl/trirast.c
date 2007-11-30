@@ -106,8 +106,12 @@ Redisplay(void)
 static void
 Idle(void)
 {
-   Zrot = glutGet(GLUT_ELAPSED_TIME) * 0.0005;
-   glutPostRedisplay();
+   if (anim) {
+      Zrot = glutGet(GLUT_ELAPSED_TIME) * 0.0005;
+      glutPostRedisplay();
+   }
+   else
+      abort();
 }
 
 
@@ -148,6 +152,12 @@ Key(unsigned char key, int x, int y)
          glutIdleFunc(Idle);
       else
          glutIdleFunc(NULL);
+      break;
+   case 'z':
+      Zrot = 0;
+      break;
+   case 's':
+      Zrot += 0.05;
       break;
    case 27:
       CleanUp();

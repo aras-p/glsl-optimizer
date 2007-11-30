@@ -37,6 +37,8 @@
 #include "intel_tex_layout.h"
 #include "macros.h"
 
+#define FILE_DEBUG_FLAG DEBUG_MIPTREE
+
 GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
 {
    /* XXX: these vary depending on image format: 

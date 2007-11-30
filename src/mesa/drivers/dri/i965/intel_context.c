@@ -239,6 +239,9 @@ static const struct dri_debug_control debug_control[] =
     { "wm",    DEBUG_WM },
     { "vs",    DEBUG_VS },
     { "bat",   DEBUG_BATCH },
+    { "blit",  DEBUG_BLIT},
+    { "mip",   DEBUG_MIPTREE},
+    { "reg",   DEBUG_REGION},
     { NULL,    0 }
 };
 
@@ -644,7 +647,10 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
    /* Lost context?
     */
    if (sarea->ctxOwner != me) {
-      DBG("Lost Context: sarea->ctxOwner %x me %x\n", sarea->ctxOwner, me);
+      if (INTEL_DEBUG & DEBUG_BUFMGR) {
+	 fprintf(stderr, "Lost Context: sarea->ctxOwner %x me %x\n",
+		 sarea->ctxOwner, me);
+      }
       sarea->ctxOwner = me;
       intel->vtbl.lost_hardware( intel );
    }
@@ -653,7 +659,10 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
     * between contexts which all share a local buffer manager.
     */
    if (sarea->texAge != my_bufmgr) {
-      DBG("Lost Textures: sarea->texAge %x my_bufmgr %x\n", sarea->ctxOwner, my_bufmgr);
+      if (INTEL_DEBUG & DEBUG_BUFMGR) {
+	 fprintf(stderr, "Lost Textures: sarea->texAge %x my_bufmgr %x\n",
+		 sarea->ctxOwner, my_bufmgr);
+      }
       sarea->texAge = my_bufmgr;
       bm_fake_NotifyContendedLockTake( intel ); 
    }

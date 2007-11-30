@@ -31,6 +31,7 @@
 #include "intel_decode.h"
 #include "bufmgr.h"
 
+#define FILE_DEBUG_FLAG DEBUG_BATCH
 
 static void intel_batchbuffer_reset( struct intel_batchbuffer *batch )
 {

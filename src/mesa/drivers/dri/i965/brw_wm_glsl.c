@@ -324,6 +324,20 @@ static void emit_fb_write(struct brw_wm_compile *c,
 	nr += 8;
 	brw_pop_insn_state(p);
     }
+
+   if (c->key.source_depth_to_render_target)
+   {
+      if (c->key.computes_depth) {
+         src0 = get_src_reg(c, &inst->SrcReg[2], 2, 1);
+         brw_MOV(p, brw_message_reg(nr), src0);
+      } else {
+         src0 = get_src_reg(c, &inst->SrcReg[1], 1, 1);
+         brw_MOV(p, brw_message_reg(nr), src0);
+      }
+
+      nr += 2;
+   }
+
     fire_fb_write(c, 0, nr);
 }
 

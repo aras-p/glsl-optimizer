@@ -70,12 +70,14 @@ static void brwUseProgram(GLcontext *ctx, GLuint program)
         if (sh_prog) {
 	    if (sh_prog->VertexProgram) {
 		brw->attribs.VertexProgram->Current = sh_prog->VertexProgram;
+		sh_prog->VertexProgram->Base.RefCount++;
 		ctx->VertexProgram.Enabled = GL_TRUE;
 	    }else
 		ctx->VertexProgram.Enabled = GL_FALSE;
 		
 	    if (sh_prog->FragmentProgram) {
 		brw->attribs.FragmentProgram->Current = sh_prog->FragmentProgram;
+		sh_prog->FragmentProgram->Base.RefCount++;
 		ctx->FragmentProgram.Enabled = GL_TRUE;
 	    } else
 		ctx->FragmentProgram.Enabled = GL_FALSE;
@@ -89,7 +91,6 @@ static void brwInitProgFuncs( struct dd_function_table *functions )
 static void brwInitDriverFunctions( struct dd_function_table *functions )
 {
    intelInitDriverFunctions( functions );
-   brwInitTextureFuncs( functions );
    brwInitFragProgFuncs( functions );
    brwInitProgFuncs( functions );
 }

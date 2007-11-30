@@ -25,6 +25,9 @@ struct intel_batchbuffer
    GLubyte *ptr;
 
    GLuint size;
+
+   GLuint dirty_state;
+   GLuint id;
 };
 
 struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context

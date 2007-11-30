@@ -35,6 +35,7 @@ SOURCES = \
 	cva.c \
 	dinoshade.c \
 	drawbuffers.c \
+	exactrast.c \
 	floattex.c \
 	fbotest1.c \
 	fbotest2.c \

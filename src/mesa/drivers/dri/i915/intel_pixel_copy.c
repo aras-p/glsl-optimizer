@@ -342,8 +342,8 @@ do_blit_copypixels(GLcontext * ctx,
 
 
          intelEmitCopyBlit(intel, dst->cpp, 
-			   src->pitch, src->buffer, 0, 
-			   dst->pitch, dst->buffer, 0, 
+			   src->pitch, src->buffer, 0, src->tiled,
+			   dst->pitch, dst->buffer, 0, dst->tiled,
 			   rect.x1 + delta_x, 
 			   rect.y1 + delta_y,       /* srcx, srcy */
                            rect.x1, rect.y1,    /* dstx, dsty */

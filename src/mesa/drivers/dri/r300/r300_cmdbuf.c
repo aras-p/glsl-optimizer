@@ -317,12 +317,12 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
 	ALLOC_STATE(unk21DC, always, 2, 0);
 	r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
-	ALLOC_STATE(unk221C, always, 2, 0);
-	r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
-	ALLOC_STATE(vap_clip, always, 5, 0);
-	r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
 
 	if (has_tcl) {
+		ALLOC_STATE(vap_clip_cntl, always, 2, 0);
+		r300->hw.vap_clip_cntl.cmd[0] = cmdpacket0(R300_VAP_CLIP_CNTL, 1);
+		ALLOC_STATE(vap_clip, always, 5, 0);
+		r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
 		ALLOC_STATE(unk2288, always, 2, 0);
 		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
 	}
@@ -443,15 +443,24 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	/* VPU only on TCL */
 	if (has_tcl) {
+   	        int i;
 		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
 		r300->hw.vpi.cmd[R300_VPI_CMD_0] =
 		    cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
+
 		ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
 		r300->hw.vpp.cmd[R300_VPP_CMD_0] =
 		    cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
+
 		ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
 		r300->hw.vps.cmd[R300_VPS_CMD_0] =
 		    cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
+
+		for (i = 0; i < 6; i++) {
+		  ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
+		  r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
+ 		    cmdvpu(R300_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+		}
 	}
 
 	/* Textures */
