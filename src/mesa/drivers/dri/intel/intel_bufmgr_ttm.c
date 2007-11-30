@@ -54,7 +54,7 @@ struct intel_reloc_info
 {
     GLuint type;
     GLuint reloc;
-    GLuint delta;                /* not needed? */
+    GLuint delta;
     GLuint index;
     drm_handle_t handle;
 };
@@ -64,8 +64,8 @@ struct intel_bo_node
     drmMMListHead head;
     drmBO *buf;
     struct drm_i915_op_arg bo_arg;
-    unsigned long arg0;
-    unsigned long arg1;
+    uint64_t flags;
+    uint64_t mask;
     void (*destroy)(void *);
     void *priv;
 };
@@ -190,9 +190,9 @@ intel_setup_validate_list(int fd, struct intel_bo_list *list,
 	prevNext = &arg->next;
 	req->bo_req.handle = node->buf->handle;
 	req->op = drm_bo_validate;
-	req->bo_req.flags = node->arg0;
+	req->bo_req.flags = node->flags;
 	req->bo_req.hint = 0;
-	req->bo_req.mask = node->arg1;
+	req->bo_req.mask = node->mask;
 	req->bo_req.fence_class = 0; /* Backwards compat. */
 	arg->reloc_handle = 0;
 
@@ -255,7 +255,7 @@ intel_free_reloc_list(int fd, struct intel_bo_list *reloc_list)
 
 static int
 intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
-			  unsigned flags, unsigned mask,
+			  uint64_t flags, uint64_t mask,
 			  int *itemLoc, void (*destroy_cb)(void *))
 {
     struct intel_bo_node *node, *cur;
@@ -281,25 +281,25 @@ intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
 	}
 	cur->buf = buf_bo;
 	cur->priv = buf;
-	cur->arg0 = flags;
-	cur->arg1 = mask;
+	cur->flags = flags;
+	cur->mask = mask;
 	cur->destroy = destroy_cb;
 	ret = 1;
 
 	DRMLISTADDTAIL(&cur->head, &list->list);
     } else {
-	unsigned memMask = (cur->arg1 | mask) & DRM_BO_MASK_MEM;
-	unsigned memFlags = cur->arg0 & flags & memMask;
+	uint64_t memMask = (cur->mask | mask) & DRM_BO_MASK_MEM;
+	uint64_t memFlags = cur->flags & flags & memMask;
 
 	if (!memFlags) {
 	    return -EINVAL;
 	}
-	if (mask & cur->arg1 & ~DRM_BO_MASK_MEM  & (cur->arg0 ^ flags)) {
+	if (mask & cur->mask & ~DRM_BO_MASK_MEM  & (cur->flags ^ flags)) {
 	    return -EINVAL;
 	}
-	cur->arg1 |= mask;
-	cur->arg0 = memFlags | ((cur->arg0 | flags) &
-				cur->arg1 & ~DRM_BO_MASK_MEM);
+	cur->mask |= mask;
+	cur->flags = memFlags | ((cur->flags | flags) &
+				cur->mask & ~DRM_BO_MASK_MEM);
     }
     *itemLoc = count;
     return ret;
@@ -334,7 +334,6 @@ intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type,
 	return ret;
     return 0;
 }
-
 
 static int
 intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list,
@@ -450,7 +449,7 @@ driFenceSignaled(DriFenceObject * fence, unsigned type)
 static dri_bo *
 dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
 	      unsigned long size, unsigned int alignment,
-	      unsigned int location_mask)
+	      uint64_t location_mask)
 {
     dri_bufmgr_ttm *ttm_bufmgr;
     dri_bo_ttm *ttm_buf;
@@ -500,7 +499,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
 static dri_bo *
 dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
 		     unsigned long offset, unsigned long size, void *virtual,
-		     unsigned int location_mask)
+		     uint64_t location_mask)
 {
     return NULL;
 }
@@ -758,7 +757,7 @@ intel_dribo_destroy_callback(void *priv)
 }
 
 static void
-dri_ttm_emit_reloc(dri_bo *reloc_buf, GLuint flags, GLuint delta,
+dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		   GLuint offset, dri_bo *target_buf)
 {
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)reloc_buf;
@@ -787,7 +786,6 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, GLuint flags, GLuint delta,
 
     intel_add_validate_reloc(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list, &reloc,
 			     bufmgr_ttm->max_relocs);
-    return;
 }
 
 

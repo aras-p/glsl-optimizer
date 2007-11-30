@@ -35,7 +35,7 @@
 
 dri_bo *
 dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
-	     unsigned int alignment, unsigned int location_mask)
+	     unsigned int alignment, uint64_t location_mask)
 {
    assert((location_mask & ~(DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT |
 			     DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_PRIV0 |
@@ -48,7 +48,7 @@ dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
 dri_bo *
 dri_bo_alloc_static(dri_bufmgr *bufmgr, const char *name, unsigned long offset,
 		    unsigned long size, void *virtual,
-		    unsigned int location_mask)
+		    uint64_t location_mask)
 {
    assert((location_mask & ~(DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT |
 			     DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_PRIV0 |
@@ -139,9 +139,10 @@ dri_bufmgr_destroy(dri_bufmgr *bufmgr)
 }
 
 
-void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee)
+void dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
+		    GLuint offset, dri_bo *target_buf)
 {
-   batch_buf->bufmgr->emit_reloc(batch_buf, flags, delta, offset, relocatee);
+   reloc_buf->bufmgr->emit_reloc(reloc_buf, flags, delta, offset, target_buf);
 }
 
 void *dri_process_relocs(dri_bo *batch_buf, GLuint *count)

@@ -84,7 +84,7 @@ struct _dri_bufmgr {
     */
    dri_bo *(*bo_alloc)(dri_bufmgr *bufmgr_ctx, const char *name,
 		       unsigned long size, unsigned int alignment,
-		       unsigned int location_mask);
+		       uint64_t location_mask);
 
    /**
     * Allocates a buffer object for a static allocation.
@@ -94,7 +94,7 @@ struct _dri_bufmgr {
     */
    dri_bo *(*bo_alloc_static)(dri_bufmgr *bufmgr_ctx, const char *name,
 			      unsigned long offset, unsigned long size,
-			      void *virtual, unsigned int location_mask);
+			      void *virtual, uint64_t location_mask);
 
    /** Takes a reference on a buffer object */
    void (*bo_reference)(dri_bo *bo);
@@ -153,7 +153,7 @@ struct _dri_bufmgr {
     * \param target Buffer whose offset should be written into the relocation
     *	     entry.
     */
-   void (*emit_reloc)(dri_bo *reloc_buf, GLuint flags, GLuint delta,
+   void (*emit_reloc)(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		      GLuint offset, dri_bo *target);
 
    /**
@@ -175,10 +175,10 @@ struct _dri_bufmgr {
 };
 
 dri_bo *dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
-		     unsigned int alignment, unsigned int location_mask);
+		     unsigned int alignment, uint64_t location_mask);
 dri_bo *dri_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
 			    unsigned long offset, unsigned long size,
-			    void *virtual, unsigned int location_mask);
+			    void *virtual, uint64_t location_mask);
 void dri_bo_reference(dri_bo *bo);
 void dri_bo_unreference(dri_bo *bo);
 int dri_bo_map(dri_bo *buf, GLboolean write_enable);
@@ -207,7 +207,8 @@ void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 dri_bo *dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 				      unsigned int handle);
 
-void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
+void dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
+		    GLuint offset, dri_bo *target_buf);
 void *dri_process_relocs(dri_bo *batch_buf, uint32_t *count);
 void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);

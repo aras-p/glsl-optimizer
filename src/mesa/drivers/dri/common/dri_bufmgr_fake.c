@@ -66,7 +66,7 @@ struct fake_buffer_reloc
    dri_bo *target_buf;
    GLuint offset;
    GLuint delta;
-   GLuint validate_flags;
+   uint64_t validate_flags;
    GLboolean relocated;
 };
 
@@ -161,7 +161,7 @@ typedef struct _dri_bo_fake {
     * DRM_BO_NO_BACKING_STORE and BM_NO_FENCE_SUBDATA, which are the first two
     * driver private flags.
     */
-   unsigned int flags;
+   uint64_t flags;
    unsigned int alignment;
    GLboolean is_static, validated;
    unsigned int map_count;
@@ -576,7 +576,7 @@ dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr)
 static dri_bo *
 dri_fake_bo_alloc(dri_bufmgr *bufmgr, const char *name,
 		  unsigned long size, unsigned int alignment,
-		  unsigned int location_mask)
+		  uint64_t location_mask)
 {
    dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake;
@@ -614,7 +614,7 @@ dri_fake_bo_alloc(dri_bufmgr *bufmgr, const char *name,
 static dri_bo *
 dri_fake_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
 			 unsigned long offset, unsigned long size,
-			 void *virtual, unsigned int location_mask)
+			 void *virtual, uint64_t location_mask)
 {
    dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake;
@@ -770,7 +770,7 @@ dri_fake_bo_unmap(dri_bo *bo)
 }
 
 static int
-dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
+dri_fake_bo_validate(dri_bo *bo, uint64_t flags)
 {
    dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
@@ -914,7 +914,7 @@ dri_fake_destroy(dri_bufmgr *bufmgr)
 }
 
 static void
-dri_fake_emit_reloc(dri_bo *reloc_buf, GLuint flags, GLuint delta,
+dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		    GLuint offset, dri_bo *target_buf)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)reloc_buf->bufmgr;
