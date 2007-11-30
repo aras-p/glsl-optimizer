@@ -194,7 +194,6 @@ void run_vertex_shader(float (*ainputs)[16][4],
 
 
 struct pipe_sampler_state;
-struct pipe_mipmap_tree;
 struct softpipe_tile_cache;
 
 #define NUM_CHANNELS 4  /* R,G,B,A */
@@ -203,7 +202,6 @@ struct softpipe_tile_cache;
 struct tgsi_sampler
 {
    const struct pipe_sampler_state *state;
-   struct pipe_mipmap_tree *texture;
    /** Get samples for four fragments in a quad */
    void (*get_samples)(struct tgsi_sampler *sampler,
                        const float s[QUAD_SIZE],

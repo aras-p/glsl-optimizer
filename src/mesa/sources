@@ -236,7 +236,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_framebuffer.c \
 	state_tracker/st_mesa_to_tgsi.c \
 	state_tracker/st_program.c \
-	state_tracker/st_mipmap_tree.c
+	state_tracker/st_texture.c
 
 SHADER_SOURCES = \
 	shader/arbprogparse.c \

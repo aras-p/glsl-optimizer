@@ -155,7 +155,7 @@ struct pipe_context {
 
    void (*set_texture_state)( struct pipe_context *,
                               unsigned unit,
-                              struct pipe_mipmap_tree * );
+                              struct pipe_texture * );
 
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
@@ -180,7 +180,7 @@ struct pipe_context {
 
    /** Get a surface which is a "view" into a texture */
    struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
-                                           struct pipe_mipmap_tree *texture,
+                                           struct pipe_texture *texture,
                                            unsigned face, unsigned level,
                                            unsigned zslice);
 
@@ -237,8 +237,11 @@ struct pipe_context {
    /*
     * Texture functions
     */
-   boolean (*mipmap_tree_layout)( struct pipe_context *pipe,
-				  struct pipe_mipmap_tree *mt );
+   void (*texture_create)(struct pipe_context *pipe,
+			  struct pipe_texture **pt);
+
+   void (*texture_release)(struct pipe_context *pipe,
+			   struct pipe_texture **pt);
 
 
    /* Flush rendering:

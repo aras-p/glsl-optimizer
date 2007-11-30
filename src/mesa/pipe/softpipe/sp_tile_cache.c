@@ -51,7 +51,7 @@
 struct softpipe_tile_cache
 {
    struct pipe_surface *surface;  /**< the surface we're caching */
-   struct pipe_mipmap_tree *texture;  /**< if caching a texture */
+   struct pipe_texture *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
    float clear_value[4];
@@ -139,7 +139,7 @@ sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
 
 void
 sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
-                          struct pipe_mipmap_tree *texture)
+                          struct pipe_texture *texture)
 {
    uint i;
 

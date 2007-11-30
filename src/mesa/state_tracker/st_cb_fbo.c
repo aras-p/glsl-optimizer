@@ -286,7 +286,7 @@ st_render_texture(GLcontext *ctx,
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
    struct pipe_context *pipe = st->pipe;
-   struct pipe_mipmap_tree *mt;
+   struct pipe_texture *pt;
 
    assert(!att->Renderbuffer);
 
@@ -302,26 +302,26 @@ st_render_texture(GLcontext *ctx,
    rb->AllocStorage = NULL; /* should not get called */
    strb = st_renderbuffer(rb);
 
-   /* get the mipmap tree for the texture */
-   mt = st_get_texobj_mipmap_tree(att->Texture);
-   assert(mt);
-   assert(mt->level[att->TextureLevel].width);
+   /* get the texture for the texture object */
+   pt = st_get_texobj_texture(att->Texture);
+   assert(pt);
+   assert(pt->width[att->TextureLevel]);
 
-   rb->Width = mt->level[att->TextureLevel].width;
-   rb->Height = mt->level[att->TextureLevel].height;
+   rb->Width = pt->width[att->TextureLevel];
+   rb->Height = pt->height[att->TextureLevel];
 
-   /* the renderbuffer's surface is inside the mipmap_tree: */
-   strb->surface = pipe->get_tex_surface(pipe, mt,
+   /* the renderbuffer's surface is inside the texture */
+   strb->surface = pipe->get_tex_surface(pipe, pt,
                                          att->CubeMapFace,
                                          att->TextureLevel,
                                          att->Zoffset);
    assert(strb->surface);
 
-   init_renderbuffer_bits(strb, mt->format);
+   init_renderbuffer_bits(strb, pt->format);
 
    /*
-   printf("RENDER TO TEXTURE obj=%p mt=%p surf=%p  %d x %d\n",
-          att->Texture, mt, strb->surface, rb->Width, rb->Height);
+   printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
+          att->Texture, pt, strb->surface, rb->Width, rb->Height);
    */
 
    /* Invalidate buffer state so that the pipe's framebuffer state

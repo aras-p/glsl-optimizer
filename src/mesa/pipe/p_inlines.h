@@ -80,4 +80,24 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
    }
 }
 
+
+/**
+ * \sa pipe_region_reference
+ */
+static INLINE void
+pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
+		       struct pipe_texture *pt)
+{
+   assert(ptr);
+   if (*ptr) {
+      pipe->texture_release(pipe, ptr);
+      assert(!*ptr);
+   }
+   if (pt) {
+      /* reference the new thing */
+      pt->refcount++;
+      *ptr = pt;
+   }
+}
+
 #endif /* P_INLINES_H */

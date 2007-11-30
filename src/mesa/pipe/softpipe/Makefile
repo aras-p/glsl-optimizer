@@ -34,7 +34,7 @@ DRIVER_SOURCES = \
 	sp_state_rasterizer.c \
 	sp_state_surface.c \
 	sp_state_vertex.c \
-	sp_tex_layout.c \
+	sp_texture.c \
 	sp_tex_sample.c \
 	sp_tile_cache.c \
 	sp_surface.c 

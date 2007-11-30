@@ -565,34 +565,35 @@ z24s8_get_tile(struct pipe_surface *ps,
  */
 struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_mipmap_tree *mt,
+                         struct pipe_texture *pt,
                          unsigned face, unsigned level, unsigned zslice)
 {
+   struct softpipe_texture *spt = (struct softpipe_texture *)pt;
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
 
-   offset = mt->level[level].level_offset;
+   offset = spt->level_offset[level];
 
-   if (mt->target == PIPE_TEXTURE_CUBE) {
-      offset += mt->level[level].image_offset[face] * mt->cpp;
+   if (pt->target == PIPE_TEXTURE_CUBE) {
+      offset += spt->image_offset[level][face] * pt->cpp;
    }
-   else if (mt->target == PIPE_TEXTURE_3D) {
-      offset += mt->level[level].image_offset[zslice] * mt->cpp;
+   else if (pt->target == PIPE_TEXTURE_3D) {
+      offset += spt->image_offset[level][zslice] * pt->cpp;
    }
    else {
       assert(face == 0);
       assert(zslice == 0);
    }
 
-   ps = pipe->winsys->surface_alloc(pipe->winsys, mt->format);
+   ps = pipe->winsys->surface_alloc(pipe->winsys, pt->format);
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe_region_reference(&ps->region, mt->region);
-      ps->cpp = mt->cpp;
-      ps->width = mt->level[level].width;
-      ps->height = mt->level[level].height;
-      ps->pitch = mt->pitch;
+      pipe_region_reference(&ps->region, spt->region);
+      ps->cpp = pt->cpp;
+      ps->width = pt->width[level];
+      ps->height = pt->height[level];
+      ps->pitch = spt->pitch;
       ps->offset = offset;
    }
    return ps;

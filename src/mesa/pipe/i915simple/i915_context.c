@@ -29,7 +29,7 @@
 #include "i915_winsys.h"
 #include "i915_state.h"
 #include "i915_batch.h"
-#include "i915_tex_layout.h"
+#include "i915_texture.h"
 #include "i915_reg.h"
 
 #include "pipe/draw/draw_context.h"
@@ -357,11 +357,8 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pci_id = pci_id;
    i915->flags.is_i945 = is_i945;
 
-   if (i915->flags.is_i945)
-      i915->pipe.mipmap_tree_layout = i945_miptree_layout;
-   else
-      i915->pipe.mipmap_tree_layout = i915_miptree_layout;
-
+   i915->pipe.texture_create = i915_texture_create;
+   i915->pipe.texture_release = i915_texture_release;
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;

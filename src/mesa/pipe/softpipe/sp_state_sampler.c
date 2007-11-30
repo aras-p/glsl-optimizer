@@ -68,12 +68,12 @@ softpipe_delete_sampler_state(struct pipe_context *pipe,
 void
 softpipe_set_texture_state(struct pipe_context *pipe,
                            unsigned unit,
-                           struct pipe_mipmap_tree *texture)
+                           struct pipe_texture *texture)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   softpipe->texture[unit] = texture;  /* ptr, not struct */
+   softpipe->texture[unit] = (struct softpipe_texture *)texture;  /* ptr, not struct */
 
    sp_tile_cache_set_texture(softpipe->tex_cache[unit], texture);
 

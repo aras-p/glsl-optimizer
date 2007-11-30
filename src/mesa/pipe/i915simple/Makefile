@@ -22,7 +22,7 @@ DRIVER_SOURCES = \
 	i915_strings.c \
 	i915_prim_emit.c \
 	i915_prim_vbuf.c \
-	i915_tex_layout.c \
+	i915_texture.c \
 	i915_fpc_emit.c \
 	i915_fpc_translate.c \
 	i915_surface.c 
