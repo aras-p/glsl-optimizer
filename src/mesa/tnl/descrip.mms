@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.nano.tudelft.nl
-# Last revision : 3 October 2007
+# Last revision : 30 November 2007
 
 .first
 	define gl [---.include.gl]
@@ -11,6 +11,7 @@
 	define array_cache [-.array_cache]
 	define main [-.main]
 	define glapi [-.glapi]
+	define tnl [-.tnl]
 
 .include [---]mms-config.
 
