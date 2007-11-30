@@ -383,9 +383,15 @@ do {							\
 } while (0)
 
 static GLuint
+get_dirty(struct i830_hw_state *state)
+{
+   return state->active & ~state->emitted;
+}
+
+static GLuint
 get_state_size(struct i830_hw_state *state)
 {
-   GLuint dirty = state->active & ~state->emitted;
+   GLuint dirty = get_dirty(state);
    GLuint sz = 0;
    GLuint i;
 
@@ -416,7 +422,7 @@ get_state_size(struct i830_hw_state *state)
 /* Push the state into the sarea and/or texture memory.
  */
 static void
-i830_emit_state(struct intel_context *intel)
+i830_do_emit_state(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    struct i830_hw_state *state = i830->current;
@@ -433,10 +439,32 @@ i830_emit_state(struct intel_context *intel)
     */
    intel_batchbuffer_require_space(intel->batch, get_state_size(state), 0);
 
+   /* Workaround.  There are cases I haven't been able to track down
+    * where we aren't emitting a full state at the start of a new
+    * batchbuffer.  This code spots that we are on a new batchbuffer
+    * and forces a full state emit no matter what.  
+    *
+    * In the normal case state->emitted is already zero, this code is
+    * another set of checks to make sure it really is.
+    */
+   if (intel->batch->id != intel->last_state_batch_id ||
+       intel->batch->map == intel->batch->ptr) 
+   {
+      state->emitted = 0;
+      intel_batchbuffer_require_space(intel->batch, get_state_size(state), 0);
+   }
+
    /* Do this here as we may have flushed the batchbuffer above,
     * causing more state to be dirty!
     */
-   dirty = state->active & ~state->emitted;
+   dirty = get_dirty(state);
+   state->emitted |= dirty;
+   assert(get_dirty(state) == 0);
+
+   if (intel->batch->id != intel->last_state_batch_id) {
+      assert(dirty & I830_UPLOAD_CTX);
+      intel->last_state_batch_id = intel->batch->id;
+   }
 
    if (dirty & I830_UPLOAD_INVARIENT) {
       DBG("I830_UPLOAD_INVARIENT:\n");
@@ -515,7 +543,30 @@ i830_emit_state(struct intel_context *intel)
       }
    }
 
-   state->emitted |= dirty;
+   intel->batch->dirty_state &= ~dirty;
+   assert(get_dirty(state) == 0);
+}
+
+static void
+i830_emit_state(struct intel_context *intel)
+{
+   struct i830_context *i830 = i830_context(&intel->ctx);
+
+   i830_do_emit_state( intel );
+
+   /* Second chance - catch batchbuffer wrap in the middle of state
+    * emit.  This shouldn't happen but it has been observed in
+    * testing.
+    */
+   if (get_dirty( i830->current )) {
+      /* Force a full re-emit if this happens.
+       */
+      i830->current->emitted = 0;
+      i830_do_emit_state( intel );
+   }
+
+   assert(get_dirty(i830->current) == 0);
+   assert((intel->batch->dirty_state & (1<<1)) == 0);
 }
 
 static void
@@ -652,8 +703,7 @@ i830_assert_not_dirty( struct intel_context *intel )
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    struct i830_hw_state *state = i830->current;
-   GLuint dirty = state->active & ~state->emitted;
-   assert(!dirty);
+   assert(!get_dirty(state));
 }
 
 
