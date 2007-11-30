@@ -992,7 +992,6 @@ init_attrib_groups(GLcontext *ctx)
    /* Miscellaneous */
    ctx->NewState = _NEW_ALL;
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
-   ctx->_Facing = 0;
 
    return GL_TRUE;
 }

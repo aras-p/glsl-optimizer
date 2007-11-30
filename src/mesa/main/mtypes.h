@@ -3059,12 +3059,6 @@ struct __GLcontextRec
 
    struct gl_list_extensions ListExt; /**< driver dlist extensions */
 
-
-   GLuint _Facing; /**< This is a hack for 2-sided stencil test.
-		    *
-		    * We don't have a better way to communicate this value from
-		    * swrast_setup to swrast. */
-
    /** \name For debugging/development only */
    /*@{*/
    GLboolean FirstTimeCurrent;

@@ -58,7 +58,7 @@ _swrast_culltriangle( GLcontext *ctx,
    GLfloat fy = v2->attrib[FRAG_ATTRIB_WPOS][1] - v0->attrib[FRAG_ATTRIB_WPOS][1];
    GLfloat c = ex*fy-ey*fx;
 
-   if (c * SWRAST_CONTEXT(ctx)->_BackfaceSign > 0)
+   if (c * SWRAST_CONTEXT(ctx)->_BackfaceCullSign > 0)
       return 0;
 
    return 1;

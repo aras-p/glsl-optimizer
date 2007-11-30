@@ -308,6 +308,9 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    span.interpMask = interpFlags;
    span.arrayMask = SPAN_XY;
 
+   span.facing = swrast->PointLineFacing;
+
+
    /*
     * Draw
     */

@@ -106,6 +106,8 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
    INIT_SPAN(span, GL_POINT);
    span.interpMask = SPAN_Z | SPAN_RGBA;
 
+   span.facing = swrast->PointLineFacing;
+
    span.red   = ChanToFixed(vert->color[0]);
    span.green = ChanToFixed(vert->color[1]);
    span.blue  = ChanToFixed(vert->color[2]);
@@ -280,6 +282,8 @@ smooth_point(GLcontext *ctx, const SWvertex *vert)
    span.interpMask = SPAN_Z | SPAN_RGBA;
    span.arrayMask = SPAN_COVERAGE | SPAN_MASK;
 
+   span.facing = swrast->PointLineFacing;
+
    span.red   = ChanToFixed(vert->color[0]);
    span.green = ChanToFixed(vert->color[1]);
    span.blue  = ChanToFixed(vert->color[2]);
@@ -386,6 +390,7 @@ large_point(GLcontext *ctx, const SWvertex *vert)
    /* span init */
    INIT_SPAN(span, GL_POINT);
    span.arrayMask = SPAN_XY;
+   span.facing = swrast->PointLineFacing;
 
    if (ciMode) {
       span.interpMask = SPAN_Z | SPAN_INDEX;
@@ -492,7 +497,8 @@ pixel_point(GLcontext *ctx, const SWvertex *vert)
 
    /* check if we need to flush */
    if (span->end >= MAX_WIDTH ||
-       (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT))) {
+       (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT)) ||
+       span->facing != swrast->PointLineFacing) {
       if (ciMode)
          _swrast_write_index_span(ctx, span);
       else
@@ -501,6 +507,8 @@ pixel_point(GLcontext *ctx, const SWvertex *vert)
    }
 
    count = span->end;
+
+   span->facing = swrast->PointLineFacing;
 
    /* fragment attributes */
    if (ciMode) {

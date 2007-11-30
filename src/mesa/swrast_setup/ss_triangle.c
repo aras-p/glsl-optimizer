@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -68,6 +68,8 @@ static void _swsetup_render_line_tri( GLcontext *ctx,
          return;
    }
 
+   _swrast_SetFacing(ctx, facing);
+
    if (ctx->Light.ShadeModel == GL_FLAT) {
       COPY_CHAN4(c[0], v0->color);
       COPY_CHAN4(c[1], v1->color);
@@ -126,6 +128,8 @@ static void _swsetup_render_point_tri( GLcontext *ctx,
       if (facing == 0 && ctx->Polygon.CullFaceMode != GL_BACK)
          return;
    }
+
+   _swrast_SetFacing(ctx, facing);
 
    if (ctx->Light.ShadeModel == GL_FLAT) {
       /* save colors/indexes for v0, v1 vertices */
@@ -311,6 +315,4 @@ void _swsetup_choose_trifuncs( GLcontext *ctx )
    tnl->Driver.Render.Quad = quad_tab[ind];
    tnl->Driver.Render.Line = swsetup_line;
    tnl->Driver.Render.Points = swsetup_points;
-
-   ctx->_Facing = 0;
 }

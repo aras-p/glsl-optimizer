@@ -65,7 +65,7 @@
    GLfloat attrPlane[FRAG_ATTRIB_MAX][4][4];
    GLfloat wPlane[4];  /* win[3] */
 #endif
-   GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceSign;
+   GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceCullSign;
    
    (void) swrast;
 
@@ -104,6 +104,7 @@
    majDx = vMax->attrib[FRAG_ATTRIB_WPOS][0] - vMin->attrib[FRAG_ATTRIB_WPOS][0];
    majDy = vMax->attrib[FRAG_ATTRIB_WPOS][1] - vMin->attrib[FRAG_ATTRIB_WPOS][1];
 
+   /* front/back-face determination and cullling */
    {
       const GLfloat botDx = vMid->attrib[FRAG_ATTRIB_WPOS][0] - vMin->attrib[FRAG_ATTRIB_WPOS][0];
       const GLfloat botDy = vMid->attrib[FRAG_ATTRIB_WPOS][1] - vMin->attrib[FRAG_ATTRIB_WPOS][1];
@@ -112,6 +113,8 @@
       if (area * bf < 0 || area == 0 || IS_INF_OR_NAN(area))
 	 return;
       ltor = (GLboolean) (area < 0.0F);
+
+      span.facing = area * swrast->_BackfaceSign > 0.0F;
    }
 
    /* Plane equation setup:
