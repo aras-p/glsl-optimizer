@@ -723,6 +723,50 @@ CPPFLAGS="$_SAVE_CPPFLAGS"
 dnl Substitute the config
 AC_OUTPUT([configs/autoconf])
 
+dnl
+dnl Output some configuration info for the user
+dnl
+echo ""
+echo "        prefix:          $prefix"
+echo "        exec_prefix:     $exec_prefix"
+echo "        libdir:          $libdir"
+
+dnl Driver info
+echo ""
+echo "        Driver:          $mesa_driver"
+case "$mesa_driver" in
+x11|osmesa)
+    if echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1; then
+        echo "        OSMesa:          lib$OSMESA_LIB"
+    else
+        echo "        OSMesa:          no"
+    fi
+    ;;
+dri)
+    # cleanup the drivers var
+    dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
+    echo "        DRI drivers:     $dri_dirs"
+    echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
+    ;;
+esac
+
+dnl Libraries
+echo ""
+echo "        Shared libs:     $enable_shared"
+echo "        Static libs:     $enable_static"
+echo "        GLU:             $enable_glu"
+echo "        GLw:             $enable_glw"
+echo "        glut:            $enable_glut"
+
+dnl Programs
+# cleanup the programs var for display
+program_dirs=`echo $PROGRAM_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
+if test "x$program_dirs" = x; then
+    echo "        Demos:           no"
+else
+    echo "        Demos:           $program_dirs"
+fi
+
 echo ""
 echo "        Run 'make autoconf' to build Mesa"
 echo ""
