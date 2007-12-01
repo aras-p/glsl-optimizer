@@ -161,9 +161,10 @@ intel_create_bo_list(int numTarget, struct intel_bo_list *list,
 
 
 static struct drm_i915_op_arg *
-intel_setup_validate_list(int fd, struct intel_bo_list *list,
-			  struct intel_bo_list *reloc_list, GLuint *count_p)
+intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
 {
+    struct intel_bo_list *list = &bufmgr_ttm->list;
+    struct intel_bo_list *reloc_list = &bufmgr_ttm->reloc_list;
     struct intel_bo_node *node;
     struct intel_bo_reloc_node *rl_node;
     drmMMListHead *l, *rl;
@@ -216,8 +217,9 @@ intel_setup_validate_list(int fd, struct intel_bo_list *list,
 }
 
 static void
-intel_free_validate_list(int fd, struct intel_bo_list *list)
+intel_free_validate_list(dri_bufmgr_ttm *bufmgr_ttm)
 {
+    struct intel_bo_list *list = &bufmgr_ttm->list;
     struct intel_bo_node *node;
     drmMMListHead *l;
 
@@ -231,8 +233,9 @@ intel_free_validate_list(int fd, struct intel_bo_list *list)
 }
 
 static void
-intel_free_reloc_list(int fd, struct intel_bo_list *reloc_list)
+intel_free_reloc_list(dri_bufmgr_ttm *bufmgr_ttm)
 {
+    struct intel_bo_list *reloc_list = &bufmgr_ttm->reloc_list;
     struct intel_bo_reloc_node *reloc_node;
     drmMMListHead *rl, *tmp;
 
@@ -247,8 +250,8 @@ intel_free_reloc_list(int fd, struct intel_bo_list *reloc_list)
 	    /* TODO */
 	}
 
-	drmBOUnmap(fd, &reloc_node->type_list.buf);
-	drmBOUnreference(fd, &reloc_node->type_list.buf);
+	drmBOUnmap(bufmgr_ttm->fd, &reloc_node->type_list.buf);
+	drmBOUnreference(bufmgr_ttm->fd, &reloc_node->type_list.buf);
 	free(reloc_node);
     }
 }
@@ -258,6 +261,7 @@ intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
 			  uint64_t flags, uint64_t mask,
 			  int *itemLoc, void (*destroy_cb)(void *))
 {
+    struct intel_bo_list *list = &bufmgr_ttm->list;
     struct intel_bo_node *node, *cur;
     drmMMListHead *l;
     int count = 0;
@@ -310,13 +314,13 @@ intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
 	sizeof(uint32_t))
 
 static int
-intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type,
-				 int max_relocs)
+intel_create_new_reloc_type_list(dri_bufmgr_ttm *bufmgr_ttm,
+				 struct intel_bo_reloc_list *cur_type)
 {
     int ret;
 
     /* should allocate a drmBO here */
-    ret = drmBOCreate(fd, RELOC_BUF_SIZE(max_relocs), 0,
+    ret = drmBOCreate(bufmgr_ttm->fd, RELOC_BUF_SIZE(bufmgr_ttm->max_relocs), 0,
 		      NULL,
 		      DRM_BO_FLAG_MEM_LOCAL |
 		      DRM_BO_FLAG_READ |
@@ -327,7 +331,7 @@ intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type,
     if (ret)
 	return ret;
 
-    ret = drmBOMap(fd, &cur_type->buf,
+    ret = drmBOMap(bufmgr_ttm->fd, &cur_type->buf,
 		   DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
 		   0, (void **)&cur_type->relocs);
     if (ret)
@@ -336,10 +340,10 @@ intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type,
 }
 
 static int
-intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list,
-			 struct intel_reloc_info *reloc_info,
-			 uint32_t max_relocs)
+intel_add_validate_reloc(dri_bufmgr_ttm *bufmgr_ttm,
+			 struct intel_reloc_info *reloc_info)
 {
+    struct intel_bo_list *reloc_list = &bufmgr_ttm->reloc_list;
     struct intel_bo_reloc_node *rl_node, *cur;
     drmMMListHead *rl, *l;
     int ret = 0;
@@ -368,7 +372,7 @@ intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list,
 	cur_type = &cur->type_list;
 
 	DRMINITLISTHEAD(&cur->type_list.head);
-	ret = intel_create_new_reloc_type_list(fd, cur_type, max_relocs);
+	ret = intel_create_new_reloc_type_list(bufmgr_ttm, cur_type);
 	if (ret) {
 	    return -1;
 	}
@@ -400,7 +404,7 @@ intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list,
 		return -ENOMEM;
 	    }
 
-	    ret = intel_create_new_reloc_type_list(fd, cur_type, max_relocs);
+	    ret = intel_create_new_reloc_type_list(bufmgr_ttm, cur_type);
 	    DRMLISTADDTAIL(&cur_type->head, &cur->type_list.head);
 
 	    cur_type->relocs[0] = (reloc_info->type << 16);
@@ -421,7 +425,7 @@ intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list,
     reloc_start[num_relocs * I915_RELOC0_STRIDE + I915_RELOC_HEADER + 2] =
        reloc_info->index;
     reloc_start[0]++;
-    if (((reloc_start[0] & 0xffff)) > (max_relocs)) {
+    if (((reloc_start[0] & 0xffff)) > (bufmgr_ttm->max_relocs)) {
 	return -ENOMEM;
     }
     return 0;
@@ -770,7 +774,7 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
     mask = DRM_BO_MASK_MEM;
     mask |= flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE);
 
-    ret = intel_add_validate_buffer(&bufmgr_ttm->list, target_buf, flags, mask,
+    ret = intel_add_validate_buffer(bufmgr_ttm, target_buf, flags, mask,
 				    &newItem, intel_dribo_destroy_callback);
     if (ret < 0)
 	return;
@@ -784,8 +788,7 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
     reloc.index = newItem;
     reloc.handle = ttm_buf->drm_bo.handle;
 
-    intel_add_validate_reloc(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list, &reloc,
-			     bufmgr_ttm->max_relocs);
+    intel_add_validate_reloc(bufmgr_ttm, &reloc);
 }
 
 
@@ -798,13 +801,12 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
 
     dri_bo_unmap(batch_buf);
 
-    intel_add_validate_buffer(&bufmgr_ttm->list, batch_buf,
+    intel_add_validate_buffer(bufmgr_ttm, batch_buf,
 			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
 			      DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE,
 			      &itemLoc, NULL);
 
-    ptr = intel_setup_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list,
-				    &bufmgr_ttm->reloc_list, count);
+    ptr = intel_setup_validate_list(bufmgr_ttm, count);
 
     return ptr;
 }
@@ -814,8 +816,8 @@ dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
 
-    intel_free_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list);
-    intel_free_reloc_list(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list);
+    intel_free_validate_list(bufmgr_ttm);
+    intel_free_reloc_list(bufmgr_ttm);
 
     intel_bo_free_list(&bufmgr_ttm->list);
 }
