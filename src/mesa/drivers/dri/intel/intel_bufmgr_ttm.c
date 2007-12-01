@@ -256,8 +256,17 @@ intel_free_reloc_list(dri_bufmgr_ttm *bufmgr_ttm)
     }
 }
 
+/**
+ * Adds the given buffer to the list of buffers to be validated (moved into the
+ * appropriate memory type) with the next batch submission.
+ *
+ * If a buffer is validated multiple times in a batch submission, it ends up
+ * with the intersection of the memory type flags and the union of the
+ * remaining flags.
+ */
 static int
-intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
+intel_add_validate_buffer(dri_bufmgr_ttm *bufmgr_ttm,
+			  dri_bo *buf,
 			  uint64_t flags, uint64_t mask,
 			  int *itemLoc, void (*destroy_cb)(void *))
 {
@@ -269,6 +278,7 @@ intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
     drmBO *buf_bo = &((dri_bo_ttm *)buf)->drm_bo;
     cur = NULL;
 
+    /* Find the buffer in the validation list if it's already there. */
     for (l = list->list.next; l != &list->list; l = l->next) {
 	node = DRMLISTENTRY(struct intel_bo_node, l, head);
 	if (node->buf->handle == buf_bo->handle) {
@@ -296,9 +306,17 @@ intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf,
 	uint64_t memFlags = cur->flags & flags & memMask;
 
 	if (!memFlags) {
+	    fprintf(stderr,
+		    "%s: No shared memory types between "
+		    "0x%16llx and 0x%16llx\n",
+		    __FUNCTION__, cur->flags, flags);
 	    return -EINVAL;
 	}
 	if (mask & cur->mask & ~DRM_BO_MASK_MEM  & (cur->flags ^ flags)) {
+	    fprintf(stderr,
+		    "%s: Incompatible flags between 0x%16llx and 0x%16llx "
+		    "(0x%16llx, 0x%16llx masks)\n",
+		    __FUNCTION__, cur->flags, flags, cur->mask, mask);
 	    return -EINVAL;
 	}
 	cur->mask |= mask;
@@ -328,17 +346,25 @@ intel_create_new_reloc_type_list(dri_bufmgr_ttm *bufmgr_ttm,
 		      DRM_BO_FLAG_MAPPABLE |
 		      DRM_BO_FLAG_CACHED,
 		      0, &cur_type->buf);
-    if (ret)
+    if (ret) {
+	fprintf(stderr, "Failed to create relocation BO: %s\n",
+		strerror(-ret));
 	return ret;
+    }
 
     ret = drmBOMap(bufmgr_ttm->fd, &cur_type->buf,
 		   DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
 		   0, (void **)&cur_type->relocs);
-    if (ret)
+    if (ret) {
+	fprintf(stderr, "Failed to map relocation BO: %s\n", strerror(-ret));
 	return ret;
+    }
     return 0;
 }
 
+/**
+ * Adds the relocation @reloc_info to the relocation list.
+ */
 static int
 intel_add_validate_reloc(dri_bufmgr_ttm *bufmgr_ttm,
 			 struct intel_reloc_info *reloc_info)
@@ -801,6 +827,9 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
 
     dri_bo_unmap(batch_buf);
 
+    /* Add the batch buffer to the validation list.  There are no relocations
+     * pointing to it.
+     */
     intel_add_validate_buffer(bufmgr_ttm, batch_buf,
 			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
 			      DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE,
