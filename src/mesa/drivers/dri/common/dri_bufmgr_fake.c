@@ -754,6 +754,7 @@ dri_fake_bo_unmap(dri_bo *bo)
       return 0;
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
+   assert(bo_fake->map_count != 0);
    if (--bo_fake->map_count != 0) {
       _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
       return 0;
@@ -785,6 +786,12 @@ dri_fake_bo_validate(dri_bo *bo, uint64_t flags)
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
    {
+      /* Sanity check: Buffers should be unmapped before being validated.
+       * This is not so much of a problem for bufmgr_fake, but TTM refuses,
+       * and the problem is harder to debug there.
+       */
+      assert(bo_fake->map_count == 0);
+
       if (bo_fake->is_static) {
 	 /* Add it to the needs-fence list */
 	 bufmgr_fake->need_fence = 1;

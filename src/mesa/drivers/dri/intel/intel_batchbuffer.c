@@ -131,6 +131,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
    void *start;
    GLuint count;
 
+   dri_bo_unmap(batch->buf);
    start = dri_process_relocs(batch->buf, &count);
 
    batch->map = NULL;

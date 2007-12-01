@@ -825,8 +825,6 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
     void *ptr;
     int itemLoc;
 
-    dri_bo_unmap(batch_buf);
-
     /* Add the batch buffer to the validation list.  There are no relocations
      * pointing to it.
      */
