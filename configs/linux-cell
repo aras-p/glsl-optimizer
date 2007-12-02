@@ -17,6 +17,10 @@ CFLAGS = -g -W -Wall -Winline -m32 -mabi=altivec -maltivec -I. -I/usr/include -I
 
 CXXFLAGS = $(CFLAGS)
 
+# Omitting glw here:
+SRC_DIRS = mesa glu glut/glx
+
+
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread \
 	-L$(SDK)/lib -m32 -Wl,-m,elf32ppc -R$(SDK)/lib -lspe
 
