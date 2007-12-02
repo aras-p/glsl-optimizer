@@ -1,0 +1,37 @@
+# linux-cell
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = linux-cell
+
+
+# Compiler and flags
+CC = /usr/bin/ppu32-gcc
+CXX = /usr/bin/ppu32-g++
+
+# Cell SDK location
+SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
+
+
+CFLAGS = -g -W -Wall -Winline -m32 -mabi=altivec -maltivec -I. -I/usr/include -I$(SDK)/include -include altivec.h
+
+CXXFLAGS = $(CFLAGS)
+
+GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread \
+	-L$(SDK)/lib -m32 -Wl,-m,elf32ppc -R$(SDK)/lib -lspe
+
+
+
+### SPU stuff
+
+SPU_CC = /usr/bin/spu-gcc
+
+SPU_CFLAGS = -g -W -Wall -Winline -Wno-main -I. -I $(SDK)/spu/include -include spu_intrinsics.h -I $(TOP)/src/mesa/
+
+SPU_LFLAGS = -L$(SDK)/spu/lib -Wl,-N -lmisc
+
+SPU_AR = /usr/bin/ar
+SPU_AR_FLAGS = -qcs
+
+SPU_EMBED = /usr/bin/embedspu
+SPU_EMBED_FLAGS = -m32

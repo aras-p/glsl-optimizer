@@ -97,6 +97,7 @@ irix6-o32-static \
 linux \
 linux-alpha \
 linux-alpha-static \
+linux-cell \
 linux-debug \
 linux-directfb \
 linux-dri \

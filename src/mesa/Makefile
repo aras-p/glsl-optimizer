@@ -13,6 +13,11 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 SOFTPIPE_LIB = $(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
 
+ifeq ($(CONFIG_NAME), linux-cell)
+CELL_LIB = $(TOP)/src/mesa/pipe/cell/ppu/libcell.a
+endif
+
+
 .SUFFIXES : .cpp
 
 .c.o:
@@ -112,12 +117,12 @@ stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$
 osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB) $(CELL_LIB)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		$(SOFTPIPE_LIB) $(GL_LIB_DEPS)
+		$(SOFTPIPE_LIB) $(CELL_LIB)$(GL_LIB_DEPS)
 
 # Make the OSMesa library
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)
