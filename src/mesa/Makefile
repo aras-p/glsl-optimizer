@@ -65,7 +65,7 @@ linux-solo: depend subdirs libmesa.a
 # Stand-alone Mesa libGL, no built-in drivers (DirectFB)
 
 libgl-core: $(CORE_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS) \
+	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
 		$(GL_LIB_DEPS)
