@@ -7,5 +7,5 @@ Name: glw
 Description: Mesa OpenGL widget library
 Requires: gl
 Version: @VERSION@
-Libs: -L${libdir} -lGLU
+Libs: -L${libdir} -lGLw
 Cflags: -I${includedir}
