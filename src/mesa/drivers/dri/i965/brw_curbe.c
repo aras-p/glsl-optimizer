@@ -184,6 +184,7 @@ static GLfloat fixed_plane[6][4] = {
  */
 static void upload_constant_buffer(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
@@ -201,13 +202,10 @@ static void upload_constant_buffer(struct brw_context *brw)
    brw->curbe.tracked_state.dirty.mesa |= fp->param_state;
 
    if (sz == 0) {
-      struct brw_constant_buffer cb;
-      cb.header.opcode = CMD_CONST_BUFFER;
-      cb.header.length = sizeof(cb)/4 - 2;
-      cb.header.valid = 0;
-      cb.bits0.buffer_length = 0;
-      cb.bits0.buffer_address = 0;
-      BRW_BATCH_STRUCT(brw, &cb);
+      BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
+      OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
 
       if (brw->curbe.last_buf) {
 	 free(brw->curbe.last_buf);
@@ -321,39 +319,23 @@ static void upload_constant_buffer(struct brw_context *brw)
 		      buf);
    }
 
-   /* TODO: only emit the constant_buffer packet when necessary, ie:
-      - contents have changed
-      - offset has changed
-      - hw requirements due to other packets emitted.
-   */
-   {
-      struct brw_constant_buffer cb;
-      
-      memset(&cb, 0, sizeof(cb));
-
-      cb.header.opcode = CMD_CONST_BUFFER;
-      cb.header.length = sizeof(cb)/4 - 2;
-      cb.header.valid = 1;
-      cb.bits0.buffer_length = sz - 1;
-      cb.bits0.buffer_address = brw->curbe.gs_offset >> 6;
-      
-      /* Because this provokes an action (ie copy the constants into the
-       * URB), it shouldn't be shortcircuited if identical to the
-       * previous time - because eg. the urb destination may have
-       * changed, or the urb contents different to last time.  
-       *
-       * Note that the data referred to is actually copied internally,
-       * not just used in place according to passed pointer.
-       *
-       * It appears that the CS unit takes care of using each available
-       * URB entry (Const URB Entry == CURBE) in turn, and issuing
-       * flushes as necessary when doublebuffering of CURBEs isn't
-       * possible.
-       */
-/*       intel_batchbuffer_align(brw->intel.batch, 64, sizeof(cb)); */
-      BRW_BATCH_STRUCT(brw, &cb);
-/*       intel_batchbuffer_align(brw->intel.batch, 64, 0); */
-   }
+   /* Because this provokes an action (ie copy the constants into the
+    * URB), it shouldn't be shortcircuited if identical to the
+    * previous time - because eg. the urb destination may have
+    * changed, or the urb contents different to last time.
+    *
+    * Note that the data referred to is actually copied internally,
+    * not just used in place according to passed pointer.
+    *
+    * It appears that the CS unit takes care of using each available
+    * URB entry (Const URB Entry == CURBE) in turn, and issuing
+    * flushes as necessary when doublebuffering of CURBEs isn't
+    * possible.
+    */
+   BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
+   OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
+   OUT_BATCH(brw->curbe.gs_offset | (sz - 1));
+   ADVANCE_BATCH();
 }
 
 /* This tracked state is unique in that the state it monitors varies
