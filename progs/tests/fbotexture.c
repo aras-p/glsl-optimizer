@@ -38,6 +38,8 @@ static GLfloat Rot = 0.0;
 static GLboolean UsePackedDepthStencil = GL_FALSE;
 static GLuint TextureLevel = 1;  /* which texture level to render to */
 static GLenum TexIntFormat = GL_RGB; /* either GL_RGB or GL_RGBA */
+static GLboolean Cull = GL_FALSE;
+static GLboolean Wireframe = GL_FALSE;
 
 
 static void
@@ -115,6 +117,22 @@ RenderTexture(void)
 
    CheckError(__LINE__);
 
+   if (Wireframe) {
+      glPolygonMode(GL_FRONT, GL_LINE);
+   }
+   else {
+      glPolygonMode(GL_FRONT, GL_FILL);
+   }
+
+   if (Cull) {
+      /* cull back */
+      glCullFace(GL_BACK);
+      glEnable(GL_CULL_FACE);
+   }
+   else {
+      glDisable(GL_CULL_FACE);
+   }
+
 #if 0
    glBegin(GL_POLYGON);
    glColor3f(1, 0, 0);
@@ -129,7 +147,9 @@ RenderTexture(void)
    glEnable(GL_LIGHT0);
    glPushMatrix();
    glRotatef(0.5 * Rot, 1.0, 0.0, 0.0);
+   glFrontFace(GL_CW); /* Teapot patches backward */
    glutSolidTeapot(0.5);
+   glFrontFace(GL_CCW);
    glPopMatrix();
    glDisable(GL_LIGHTING);
    /*
@@ -139,6 +159,8 @@ RenderTexture(void)
 
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_STENCIL_TEST);
+   glDisable(GL_CULL_FACE);
+   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 #if DRAW
    /* Bind normal framebuffer */
@@ -245,21 +267,42 @@ Key(unsigned char key, int x, int y)
    (void) x;
    (void) y;
    switch (key) {
-      case 'a':
-         Anim = !Anim;
-         if (Anim)
-            glutIdleFunc(Idle);
-         else
-            glutIdleFunc(NULL);
-         break;
-      case 's':
-         Rot += 2.0;
-         break;
-      case 27:
-         CleanUp();
-         break;
+   case 'a':
+      Anim = !Anim;
+      if (Anim)
+         glutIdleFunc(Idle);
+      else
+         glutIdleFunc(NULL);
+      break;
+   case 'c':
+      Cull = !Cull;
+      break;
+   case 'w':
+      Wireframe = !Wireframe;
+      break;
+   case 's':
+      Rot += 2.0;
+      break;
+   case 'S':
+      Rot -= 2.0;
+      break;
+   case 27:
+      CleanUp();
+      break;
    }
    glutPostRedisplay();
+}
+
+
+static void
+Usage(void)
+{
+   printf("Usage:\n");
+   printf("  a    Toggle animation\n");
+   printf("  s/s  Step/rotate\n");
+   printf("  c    Toggle back-face culling\n");
+   printf("  w    Toggle wireframe mode (front-face only)\n");
+   printf("  Esc  Exit\n");
 }
 
 
@@ -402,6 +445,7 @@ main(int argc, char *argv[])
    if (Anim)
       glutIdleFunc(Idle);
    Init(argc, argv);
+   Usage();
    glutMainLoop();
    return 0;
 }
