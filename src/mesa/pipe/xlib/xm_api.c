@@ -329,7 +329,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    /*
     * Front renderbuffer
     */
-   b->frontxrb = xmesa_create_renderbuffer(winsys, 0, &vis->mesa_visual, GL_FALSE);
+   b->frontxrb = xmesa_create_renderbuffer(winsys, 0, vis, GL_FALSE);
    if (!b->frontxrb) {
       _mesa_free(b);
       return NULL;
@@ -343,7 +343,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
     * Back renderbuffer
     */
    if (vis->mesa_visual.doubleBufferMode) {
-      b->backxrb = xmesa_create_renderbuffer(winsys, 0, &vis->mesa_visual, GL_TRUE);
+      b->backxrb = xmesa_create_renderbuffer(winsys, 0, vis, GL_TRUE);
       if (!b->backxrb) {
          /* XXX free front xrb too */
          _mesa_free(b);
@@ -365,7 +365,11 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       /* Visual has alpha, but pixel format doesn't support it.
        * We'll use an alpha renderbuffer wrapper.
        */
-      b->swAlpha = GL_TRUE;
+#if 0
+      b->swAlpha = GL_TRUE; /* don't do any renderbuffer wrapping */
+#else
+      b->swAlpha = GL_FALSE;
+#endif
    }
    else {
       b->swAlpha = GL_FALSE;
