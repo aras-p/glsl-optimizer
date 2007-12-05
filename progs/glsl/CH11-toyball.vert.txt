@@ -14,11 +14,10 @@ uniform vec4 BallCenter;   // ball center in modelling coordinates
 
 void main()
 { 
-    ECposition   = gl_ModelViewMatrix * gl_Vertex;
+//orig:    ECposition   = gl_ModelViewMatrix * gl_Vertex;
 
-//  ECposition = gl_TextureMatrix[0] * gl_Vertex;
-//  ECposition = gl_MultiTexCoord0 * gl_Vertex;
-//    ECposition = gl_ModelViewMatrix * ECposition;
+    ECposition = gl_TextureMatrix[0] * gl_Vertex;
+    ECposition = gl_ModelViewMatrix * ECposition;
 
     ECballCenter = gl_ModelViewMatrix * BallCenter;
     gl_Position  = ftransform();

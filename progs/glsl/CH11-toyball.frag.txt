@@ -49,15 +49,14 @@ void main()
     inorout += dot(distance, vec4(1.0));
 
     distance.x = dot(p, HalfSpace4);
-//    distance.y = StripeWidth - abs(p.z);
-    distance.y = StripeWidth - abs(p.y);
+    distance.y = StripeWidth - abs(p.z);
     distance = smoothstep(-FWidth, FWidth, distance);
     inorout += distance.x;
 
     inorout = clamp(inorout, 0.0, 1.0);
 
-    surfColor = mix(Yellow, Blue, distance.y);
-    surfColor = mix(surfColor, Red, inorout);
+    surfColor = mix(Yellow, Red, inorout);
+    surfColor = mix(surfColor, Blue, distance.y);
 
     // normal = point on surface for sphere at (0,0,0)
     normal = p;
