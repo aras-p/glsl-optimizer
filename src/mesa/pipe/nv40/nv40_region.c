@@ -42,7 +42,7 @@ nv40_region_data(struct pipe_context *pipe,
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	struct nouveau_winsys *nvws = nv40->nvws;
 
-	nvws->region_data(nvws->nv, dst, dst_offset, dstx, dsty,
+	nvws->region_data(nvws, dst, dst_offset, dstx, dsty,
 			  src, src_pitch, srcx, srcy, width, height);
 }
 
@@ -56,7 +56,7 @@ nv40_region_copy(struct pipe_context *pipe, struct pipe_region *dst,
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	struct nouveau_winsys *nvws = nv40->nvws;
 
-	nvws->region_copy(nvws->nv, dst, dst_offset, dstx, dsty,
+	nvws->region_copy(nvws, dst, dst_offset, dstx, dsty,
 			  src, src_offset, srcx, srcy, width, height);
 }
 
@@ -69,7 +69,7 @@ nv40_region_fill(struct pipe_context *pipe,
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	struct nouveau_winsys *nvws = nv40->nvws;
 
-	nvws->region_fill(nvws->nv, dst, dst_offset, dstx, dsty,
+	nvws->region_fill(nvws, dst, dst_offset, dstx, dsty,
 			  width, height, value);
 }
 

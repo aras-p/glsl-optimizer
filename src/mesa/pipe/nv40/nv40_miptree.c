@@ -7,7 +7,6 @@
 boolean
 nv40_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	boolean swizzled = FALSE;
 	uint width = mt->width0, height = mt->height0, depth = mt->depth0;
 	uint offset;

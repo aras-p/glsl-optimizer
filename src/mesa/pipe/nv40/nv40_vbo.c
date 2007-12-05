@@ -175,7 +175,6 @@ nv40_vbo_format_to_ncomp(uint format)
 void
 nv40_vbo_arrays_update(struct nv40_context *nv40)
 {
-	struct nouveau_winsys *nvws = nv40->nvws;
 	struct nv40_vertex_program *vp = nv40->vertprog.active;
 	uint32_t inputs, vtxfmt[16];
 	int hw, num_hw;

@@ -620,7 +620,6 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 {
 	struct tgsi_parse_context parse;
 	struct nv40_fpc *fpc = NULL;
-	int i;
 
 	fpc = calloc(1, sizeof(struct nv40_fpc));
 	if (!fpc)

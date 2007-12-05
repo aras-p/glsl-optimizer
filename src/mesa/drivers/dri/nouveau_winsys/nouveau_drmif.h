@@ -40,12 +40,6 @@ struct nouveau_device_priv {
 	drm_context_t ctx;
 	drmLock *lock;
 	int needs_close;
-
-	struct {
-		struct nouveau_channel *channel;
-		struct nouveau_notifier *notify;
-		struct nouveau_grobj *m2mf;
-	} bufmgr;
 };
 #define nouveau_device(n) ((struct nouveau_device_priv *)(n))
 

@@ -31,45 +31,12 @@
 int
 nouveau_bo_init(struct nouveau_device *userdev)
 {
-	struct nouveau_device_priv *nv = nouveau_device(userdev);
-	struct nouveau_channel *chan;
-	int ret;
-
-	if ((ret = nouveau_channel_alloc(userdev, 0x80000001, 0x80000002,
-					 &nv->bufmgr.channel)))
-		return ret;
-	chan = nv->bufmgr.channel;
-
-	if ((ret = nouveau_notifier_alloc(nv->bufmgr.channel, 0x80000003, 1,
-					  &nv->bufmgr.notify)))
-		return ret;
-
-	if ((ret = nouveau_grobj_alloc(nv->bufmgr.channel, 0x80000004, 0x39,
-				       &nv->bufmgr.m2mf)))
-		return ret;
-
-	nouveau_notifier_reset(nv->bufmgr.notify, 0);
-	BEGIN_RING_CH(chan, nv->bufmgr.m2mf, 0x180, 1);
-	OUT_RING_CH  (chan, nv->bufmgr.notify->handle);
-	BEGIN_RING_CH(chan, nv->bufmgr.m2mf, 0x104, 1);
-	OUT_RING_CH  (chan, 0);
-	BEGIN_RING_CH(chan, nv->bufmgr.m2mf, 0x100, 1);
-	OUT_RING_CH  (chan, 0);
-	FIRE_RING_CH (chan);
-	if ((ret = nouveau_notifier_wait_status(nv->bufmgr.notify, 0, 0, 2000)))
-		return ret;
-
 	return 0;
 }
 
 void
 nouveau_bo_takedown(struct nouveau_device *userdev)
 {
-	struct nouveau_device_priv *nv = nouveau_device(userdev);
-
-	nouveau_notifier_free(&nv->bufmgr.notify);
-	nouveau_grobj_free(&nv->bufmgr.m2mf);
-	nouveau_channel_free(&nv->bufmgr.channel);
 }
 
 static int

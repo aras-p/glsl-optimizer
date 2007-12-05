@@ -61,6 +61,8 @@ nouveau_screen_create(__DRIscreenPrivate *driScrnPriv)
 
 	nv_screen->front_offset = nv_dri->front_offset;
 	nv_screen->front_pitch  = nv_dri->front_pitch * (nv_dri->bpp / 8);
+	nv_screen->front_cpp = nv_dri->bpp / 8;
+	nv_screen->front_height = nv_dri->height;
 
 	return GL_TRUE;
 }

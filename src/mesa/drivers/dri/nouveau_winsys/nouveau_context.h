@@ -31,6 +31,7 @@ struct nouveau_context {
 	drmLock                drm_lock;
 	GLboolean              locked;
 	struct nouveau_screen *nv_screen;
+	struct pipe_region *frontbuffer;
 
 	/* Bufmgr */
 	struct {
@@ -53,14 +54,19 @@ struct nouveau_context {
 	struct nouveau_grobj    *NvImageBlit;
 	struct nouveau_grobj    *NvGdiRect;
 	struct nouveau_grobj    *NvM2MF;
+	struct nouveau_grobj    *Nv2D;
 	uint32_t                 next_handle;
 	uint32_t                 next_sequence;
 
 	/* pipe_region accel */
-	int (*region_display)(void);
-	int (*region_copy)(struct nouveau_context *, struct pipe_region *,
-			   unsigned, unsigned, unsigned, struct pipe_region *,
-			   unsigned, unsigned, unsigned, unsigned, unsigned);
+	struct pipe_region *region_src, *region_dst;
+	unsigned region_src_offset, region_dst_offset;
+	int  (*region_copy_prep)(struct nouveau_context *,
+				 struct pipe_region *dst, uint32_t dst_offset,
+				 struct pipe_region *src, uint32_t src_offset);
+	void (*region_copy)(struct nouveau_context *, unsigned dx, unsigned dy,
+			    unsigned sx, unsigned sy, unsigned w, unsigned h);
+	void (*region_copy_done)(struct nouveau_context *);
 	int (*region_fill)(struct nouveau_context *, struct pipe_region *,
 			   unsigned, unsigned, unsigned, unsigned, unsigned,
 			   unsigned);

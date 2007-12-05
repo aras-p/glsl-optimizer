@@ -53,7 +53,6 @@ nv40_tex_format(uint pipe_format)
 static void
 nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 {
-	struct nouveau_winsys *nvws = nv40->nvws;
 	struct nv40_sampler_state *ps = nv40->tex_sampler[unit];
 	struct pipe_mipmap_tree *mt = nv40->tex_miptree[unit];
 	struct nv40_texture_format *tf;

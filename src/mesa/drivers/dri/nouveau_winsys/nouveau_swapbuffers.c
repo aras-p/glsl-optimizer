@@ -14,7 +14,6 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		    const drm_clip_rect_t *rect)
 {
 	struct nouveau_context *nv = dPriv->driContextPriv->driverPrivate;
-	struct nouveau_screen *nv_screen = nv->nv_screen;
 	struct pipe_region *p_region = surf->region;
 	drm_clip_rect_t *pbox;
 	int nbox, i;
@@ -27,17 +26,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 	pbox = dPriv->pClipRects;
 	nbox = dPriv->numClipRects;
 
-	BEGIN_RING(NvCtxSurf2D, 0x184, 2);
-	OUT_RELOCo(p_region->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RING  (nv->channel->vram->handle);
-
-	BEGIN_RING(NvCtxSurf2D, 0x300, 4);
-	OUT_RING  ((p_region->cpp == 4) ? 6 : 4);
-	OUT_RING  ((nv_screen->front_pitch << 16) |
-		   (p_region->pitch * p_region->cpp));
-	OUT_RELOCl(p_region->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RING  (nv_screen->front_offset);
-
+	nv->region_copy_prep(nv, nv->frontbuffer, 0, p_region, 0);
 	for (i = 0; i < nbox; i++, pbox++) {
 		int sx, sy, dx, dy, w, h;
 
@@ -48,10 +37,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		w  = pbox->x2 - pbox->x1;
 		h  = pbox->y2 - pbox->y1;
 
-		BEGIN_RING(NvImageBlit, 0x300, 3);
-		OUT_RING  ((sy << 16) | sx);
-		OUT_RING  ((dy << 16) | dx);
-		OUT_RING  (( h << 16) |  w);
+		nv->region_copy(nv, dx, dy, sx, sy, w, h);
 	}
 
 	FIRE_RING();

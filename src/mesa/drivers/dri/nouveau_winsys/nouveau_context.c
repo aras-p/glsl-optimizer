@@ -125,6 +125,36 @@ nouveau_context_create(const __GLcontextModes *glVis,
 					      debug_control);
 #endif
 
+	/*XXX: Hack up a fake region and buffer object for front buffer.
+	 *     This will go away with TTM, replaced with a simple reference
+	 *     of the front buffer handle passed to us by the DDX.
+	 */
+	{
+		struct pipe_region *fb_region;
+		struct nouveau_bo_priv *fb_bo;
+
+		fb_bo = calloc(1, sizeof(struct nouveau_bo_priv));
+		fb_bo->drm.offset = nv_screen->front_offset;
+		fb_bo->drm.flags = NOUVEAU_MEM_FB;
+		fb_bo->drm.size = nv_screen->front_pitch * 
+				  nv_screen->front_height;
+		fb_bo->refcount = 1;
+		fb_bo->base.flags = NOUVEAU_BO_PIN | NOUVEAU_BO_VRAM;
+		fb_bo->base.offset = fb_bo->drm.offset;
+		fb_bo->base.handle = (unsigned long)fb_bo;
+		fb_bo->base.size = fb_bo->drm.size;
+		fb_bo->base.device = nv_screen->device;
+
+		fb_region = calloc(1, sizeof(struct pipe_region));
+		fb_region->cpp = nv_screen->front_cpp;
+		fb_region->pitch = nv_screen->front_pitch / fb_region->cpp;
+		fb_region->height = nv_screen->front_height;
+		fb_region->refcount = 1;
+		fb_region->buffer = (void *)fb_bo;
+
+		nv->frontbuffer = fb_region;
+	}
+
 	if ((ret = nouveau_grobj_alloc(nv->channel, 0x00000000, 0x30,
 				       &nv->NvNull))) {
 		NOUVEAU_ERR("Error creating NULL object: %d\n", ret);

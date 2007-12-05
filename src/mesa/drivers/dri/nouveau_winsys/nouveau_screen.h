@@ -12,6 +12,8 @@ struct nouveau_screen {
 
 	uint32_t front_offset;
 	uint32_t front_pitch;
+	uint32_t front_cpp;
+	uint32_t front_height;
 };
 
 #endif
