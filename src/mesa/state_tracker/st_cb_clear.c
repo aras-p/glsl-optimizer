@@ -69,9 +69,12 @@ color_value(GLuint pipeFormat, const GLfloat color[4])
       return (r << 24) | (g << 16) | (b << 8) | a;
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       return (a << 24) | (r << 16) | (g << 8) | b;
+   case PIPE_FORMAT_U_B8_G8_R8_A8:
+      return (b << 24) | (g << 16) | (r << 8) | a;
    case PIPE_FORMAT_U_R5_G6_B5:
       return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
    default:
+      assert(0);
       return 0;
    }
 }
