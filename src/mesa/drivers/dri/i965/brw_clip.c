@@ -128,25 +128,14 @@ static void compile_clip_prog( struct brw_context *brw,
 						&brw->clip.prog_data );
 }
 
-
-static GLboolean search_cache( struct brw_context *brw, 
-			       struct brw_clip_prog_key *key )
-{
-   return brw_search_cache(&brw->cache[BRW_CLIP_PROG], 
-			   key, sizeof(*key),
-			   &brw->clip.prog_data,
-			   &brw->clip.prog_gs_offset);
-}
-
-
-
-
 /* Calculate interpolants for triangle and line rasterization.
  */
 static void upload_clip_prog( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_clip_prog_key key;
+   struct brw_clip_prog_data *prog_data;
+   uint32_t offset;
 
    memset(&key, 0, sizeof(key));
 
@@ -252,8 +241,23 @@ static void upload_clip_prog( struct brw_context *brw )
       }
    }
 
-   if (!search_cache(brw, &key))
-      compile_clip_prog( brw, &key );
+   if (brw_search_cache(&brw->cache[BRW_CLIP_PROG],
+			&key, sizeof(key),
+			&prog_data,
+			&offset)) {
+      if (offset != brw->clip.prog_gs_offset ||
+	  !brw->clip.prog_data ||
+	  memcmp(prog_data, &brw->clip.prog_data,
+		 sizeof(*brw->clip.prog_data)) != 0)
+      {
+	 brw->clip.prog_gs_offset = offset;
+	 brw->clip.prog_data = prog_data;
+	 brw->state.dirty.cache |= CACHE_NEW_CLIP_PROG;
+      }
+   } else {
+      compile_clip_prog(brw, &key);
+      brw->state.dirty.cache |= CACHE_NEW_CLIP_PROG;
+   }
 }
 
 

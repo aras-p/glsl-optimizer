@@ -326,18 +326,30 @@ static void brw_upload_wm_prog( struct brw_context *brw )
    struct brw_wm_prog_key key;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)
       brw->fragment_program;
-     
+   struct brw_wm_prog_data *prog_data;
+   uint32_t offset;
+
    brw_wm_populate_key(brw, &key);
 
    /* Make an early check for the key.
     */
-   if (brw_search_cache(&brw->cache[BRW_WM_PROG], 
+   if (brw_search_cache(&brw->cache[BRW_WM_PROG],
 			&key, sizeof(key),
-			&brw->wm.prog_data,
-			&brw->wm.prog_gs_offset))
-      return;
-
-   do_wm_prog(brw, fp, &key);
+			&prog_data,
+			&offset)) {
+      if (offset != brw->wm.prog_gs_offset ||
+	  !brw->wm.prog_data ||
+	  memcmp(prog_data, &brw->wm.prog_data,
+		 sizeof(*brw->wm.prog_data)) != 0)
+      {
+	 brw->wm.prog_gs_offset = offset;
+	 brw->wm.prog_data = prog_data;
+	 brw->state.dirty.cache |= CACHE_NEW_WM_PROG;
+      }
+   } else {
+      do_wm_prog(brw, fp, &key);
+      brw->state.dirty.cache |= CACHE_NEW_WM_PROG;
+   }
 }
 
 
