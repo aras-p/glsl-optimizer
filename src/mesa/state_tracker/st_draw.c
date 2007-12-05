@@ -83,6 +83,7 @@ pipe_vertex_format(GLenum type, GLuint size)
    default:
       assert(0);
    }
+   return 0; /* silence compiler warning */
 }
 
 
