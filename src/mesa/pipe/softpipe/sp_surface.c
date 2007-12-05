@@ -133,6 +133,70 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
 }
 
 
+/*** PIPE_FORMAT_U_B8_G8_R8_A8 ***/
+
+static void
+b8g8r8a8_get_tile(struct pipe_surface *ps,
+                  unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const unsigned *src
+      = ((const unsigned *) (ps->region->map + ps->offset))
+      + y * ps->pitch + x;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_B8_G8_R8_A8);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++) {
+         const unsigned pixel = src[j];
+         pRow[0] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
+         pRow[1] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
+         pRow[2] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
+         pRow[3] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
+         pRow += 4;
+      }
+      src += ps->pitch;
+      p += w0 * 4;
+   }
+}
+
+
+static void
+b8g8r8a8_put_tile(struct pipe_surface *ps,
+                  unsigned x, unsigned y, unsigned w, unsigned h,
+                  const float *p)
+{
+   unsigned *dst
+      = ((unsigned *) (ps->region->map + ps->offset))
+      + y * ps->pitch + x;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_B8_G8_R8_A8);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++) {
+         unsigned r, g, b, a;
+         UNCLAMPED_FLOAT_TO_UBYTE(r, pRow[0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(g, pRow[1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(b, pRow[2]);
+         UNCLAMPED_FLOAT_TO_UBYTE(a, pRow[3]);
+         dst[j] = (b << 24) | (g << 16) | (r << 8) | a;
+         pRow += 4;
+      }
+      dst += ps->pitch;
+      p += w0 * 4;
+   }
+}
+
+
 /*** PIPE_FORMAT_U_A1_R5_G5_B5 ***/
 
 static void
@@ -610,6 +674,9 @@ softpipe_get_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       a8r8g8b8_get_tile(ps, x, y, w, h, p);
       break;
+   case PIPE_FORMAT_U_B8_G8_R8_A8:
+      b8g8r8a8_get_tile(ps, x, y, w, h, p);
+      break;
    case PIPE_FORMAT_U_A1_R5_G5_B5:
       a1r5g5b5_get_tile(ps, x, y, w, h, p);
       break;
@@ -656,6 +723,9 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
    switch (ps->format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       a8r8g8b8_put_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_B8_G8_R8_A8:
+      b8g8r8a8_put_tile(ps, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_A1_R5_G5_B5:
       /*a1r5g5b5_put_tile(ps, x, y, w, h, p);*/
