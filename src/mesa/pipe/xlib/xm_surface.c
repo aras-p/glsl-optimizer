@@ -256,7 +256,7 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
       /* put to ximage */
       ximage = xms->ximage;
       char *dst;
-      int i;
+      uint i;
 
       /* this could be optimized/simplified */
       switch (ps->format) {
@@ -353,9 +353,32 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
             for (j = 0; j < w; j++) {
                uint pix = src[j];
                ubyte r = ((pix >> 16) & 0xff);
-               ubyte g = ((pix >> 8)  & 0xff);
+               ubyte g = ((pix >>  8) & 0xff);
                ubyte b = ( pix        & 0xff);
                ubyte a = ((pix >> 24) & 0xff);
+               p[0] = UBYTE_TO_FLOAT(r);
+               p[1] = UBYTE_TO_FLOAT(g);
+               p[2] = UBYTE_TO_FLOAT(b);
+               p[3] = UBYTE_TO_FLOAT(a);
+               p += 4;
+            }
+            src += ximage->width;
+            pRow += 4 * w0;
+         }
+      }
+      break;
+   case PIPE_FORMAT_U_B8_G8_R8_A8:
+      {
+         const uint *src
+            = (uint *) (ximage->data + y * ximage->bytes_per_line + x * 4);
+         for (i = 0; i < h; i++) {
+            float *p = pRow;
+            for (j = 0; j < w; j++) {
+               uint pix = src[j];
+               ubyte r = ((pix >>  8) & 0xff);
+               ubyte g = ((pix >> 16) & 0xff);
+               ubyte b = ((pix >> 24) & 0xff);
+               ubyte a = ( pix        & 0xff);
                p[0] = UBYTE_TO_FLOAT(r);
                p[1] = UBYTE_TO_FLOAT(g);
                p[2] = UBYTE_TO_FLOAT(b);
@@ -390,6 +413,7 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
       }
       break;
    default:
+      fprintf(stderr, "Bad format in xmesa_get_tile_rgba()\n");
       assert(0);
    }
 
@@ -461,6 +485,27 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
          }
       }
       break;
+   case PIPE_FORMAT_U_B8_G8_R8_A8:
+      {
+         uint *dst
+            = (uint *) (ximage->data + y * ximage->bytes_per_line + x * 4);
+         const float *pRow = pixels;
+         for (i = 0; i < h; i++) {
+            const float *p = pRow;
+            for (j = 0; j < w; j++) {
+               ubyte r, g, b, a;
+               UNCLAMPED_FLOAT_TO_UBYTE(r, p[0]);
+               UNCLAMPED_FLOAT_TO_UBYTE(g, p[1]);
+               UNCLAMPED_FLOAT_TO_UBYTE(b, p[2]);
+               UNCLAMPED_FLOAT_TO_UBYTE(a, p[3]);
+               dst[j] = PACK_8B8G8R8A(r, g, b, a);
+               p += 4;
+            }
+            dst += ximage->width;
+            pRow += 4 * w0;
+         }
+      }
+      break;
    case PIPE_FORMAT_U_R5_G6_B5:
       {
          ushort *dst =
@@ -483,6 +528,7 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
       break;
       
    default:
+      fprintf(stderr, "Bad format in xmesa_put_tile_rgba()\n");
       assert(0);
    }
 
@@ -689,6 +735,7 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, uint value)
          clear_16bit_ximage_surface(pipe, ps, value);
          break;
       case PIPE_FORMAT_U_A8_R8_G8_B8:
+      case PIPE_FORMAT_U_B8_G8_R8_A8:
          clear_32bit_ximage_surface(pipe, ps, value);
          break;
       default:

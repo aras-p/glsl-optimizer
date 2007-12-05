@@ -286,6 +286,10 @@ struct xmesa_buffer {
  */
 #define PACK_8B8G8R( R, G, B )   ( ((B) << 16) | ((G) << 8) | (R) )
 
+#define PACK_8B8G8R8A( R, G, B, A ) \
+        ( ((B) << 24) | ((G) << 16) | ((R) << 8) | (A) )
+
+
 
 
 /**
@@ -448,7 +452,7 @@ extern const int xmesa_kernel1[16];
 
 extern struct xmesa_renderbuffer *
 xmesa_create_renderbuffer(struct pipe_winsys *winsys,
-                          GLuint name, const GLvisual *visual,
+                          GLuint name, XMesaVisual xmvis,
                           GLboolean backBuffer);
 
 extern void

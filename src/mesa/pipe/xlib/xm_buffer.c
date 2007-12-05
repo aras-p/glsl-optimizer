@@ -163,6 +163,16 @@ alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
 #endif
 
 
+/**
+ * \return LSBFirst or MSBFirst
+ */
+static int host_byte_order( void )
+{
+   int i = 1;
+   char *cptr = (char *) &i;
+   return (*cptr==1) ? LSBFirst : MSBFirst;
+}
+
 
 /**
  * Setup an off-screen pixmap or Ximage to use as the back buffer.
@@ -377,9 +387,11 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 struct xmesa_renderbuffer *
 xmesa_create_renderbuffer(struct pipe_winsys *winsys,
-                          GLuint name, const GLvisual *visual,
+                          GLuint name, XMesaVisual xmvis,
                           GLboolean backBuffer)
 {
+   const GLvisual *visual = &xmvis->mesa_visual;
+   int byteOrder = ImageByteOrder(xmvis->display); /* LSBFirst or MSBFirst */
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
    if (xrb) {
       GLuint name = 0;
@@ -402,7 +414,21 @@ xmesa_create_renderbuffer(struct pipe_winsys *winsys,
          xrb->St.Base.GreenBits = visual->greenBits;
          xrb->St.Base.BlueBits = visual->blueBits;
          xrb->St.Base.AlphaBits = visual->alphaBits;
-         pipeFormat = PIPE_FORMAT_U_A8_R8_G8_B8;
+         if (visual->redMask   == 0xff0000 &&
+             visual->greenMask == 0x00ff00 &&
+             visual->blueMask  == 0x0000ff) {
+            if (host_byte_order() != byteOrder) {
+               pipeFormat = PIPE_FORMAT_U_B8_G8_R8_A8;
+               /*printf("Using format B8_G8_R8_A8 (LE dpy)\n");*/
+            }
+            else {
+               pipeFormat = PIPE_FORMAT_U_A8_R8_G8_B8;
+               /*printf("Using format A8_R8_G8_B8 (BE dpy)\n");*/
+            }
+         }
+         else {
+            assert(0);
+         }
       }
       else {
          xrb->St.Base.InternalFormat = GL_COLOR_INDEX;
