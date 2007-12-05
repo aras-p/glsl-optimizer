@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1443,7 +1443,6 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 	    (baseInternalFormat == GL_RGBA ||
 	     baseInternalFormat == GL_RGB) &&
             srcType == GL_UNSIGNED_BYTE) {
-
       int img, row, col;
       for (img = 0; img < srcDepth; img++) {
          const GLint srcRowStride = _mesa_image_row_stride(srcPacking,
@@ -1455,11 +1454,12 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
             + dstYoffset * dstRowStride
             + dstXoffset * dstFormat->TexelBytes;
          for (row = 0; row < srcHeight; row++) {
+            GLuint *d4 = (GLuint *) dstRow;
             for (col = 0; col < srcWidth; col++) {
-               dstRow[col * 4 + 0] = srcRow[col * 3 + BCOMP];
-               dstRow[col * 4 + 1] = srcRow[col * 3 + GCOMP];
-               dstRow[col * 4 + 2] = srcRow[col * 3 + RCOMP];
-               dstRow[col * 4 + 3] = 0xff;
+               d4[col] = ((0xff                    << 24) |
+                          (srcRow[col * 3 + RCOMP] << 16) |
+                          (srcRow[col * 3 + GCOMP] <<  8) |
+                          (srcRow[col * 3 + BCOMP] <<  0));
             }
             dstRow += dstRowStride;
             srcRow += srcRowStride;
@@ -1471,7 +1471,9 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 	    dstFormat == &_mesa_texformat_argb8888 &&
             srcFormat == GL_RGBA &&
 	    baseInternalFormat == GL_RGBA &&
-            (srcType == GL_UNSIGNED_BYTE && littleEndian)) {
+            srcType == GL_UNSIGNED_BYTE &&
+            littleEndian) {
+      /* same as above case, but src data has alpha too */
       GLint img, row, col;
       /* For some reason, streaming copies to write-combined regions
        * are extremely sensitive to the characteristics of how the
@@ -1488,13 +1490,13 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
             + dstImageOffsets[dstZoffset + img] * dstFormat->TexelBytes
             + dstYoffset * dstRowStride
             + dstXoffset * dstFormat->TexelBytes;
-
          for (row = 0; row < srcHeight; row++) {
+            GLuint *d4 = (GLuint *) dstRow;
             for (col = 0; col < srcWidth; col++) {
-               *(GLuint *)(dstRow + col * 4)  = (srcRow[col * 4 + RCOMP] << 16 |
-						 srcRow[col * 4 + GCOMP] << 8 |
-						 srcRow[col * 4 + BCOMP] << 0 |
-						 srcRow[col * 4 + ACOMP] << 24);
+               d4[col] = ((srcRow[col * 4 + ACOMP] << 24) |
+                          (srcRow[col * 4 + RCOMP] << 16) |
+                          (srcRow[col * 4 + GCOMP] <<  8) |
+                          (srcRow[col * 4 + BCOMP] <<  0));
             }
             dstRow += dstRowStride;
             srcRow += srcRowStride;
