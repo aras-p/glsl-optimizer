@@ -6,8 +6,6 @@
 #include "nv40_dma.h"
 #include "nv40_state.h"
 
-#include "nvgl_pipe.h"
-
 static void *
 nv40_alpha_test_state_create(struct pipe_context *pipe,
 			     const struct pipe_alpha_test_state *cso)

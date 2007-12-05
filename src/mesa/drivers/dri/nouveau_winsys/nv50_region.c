@@ -125,7 +125,7 @@ nv50_region_fill(struct nouveau_context *nv,
 	OUT_RING  (dst->pitch);
 	OUT_RING  (dst->height);
 
-	BEGIN_RING(Nv2D, 0x0580, 4);
+	BEGIN_RING(Nv2D, 0x0580, 3);
 	OUT_RING  (4);
 	OUT_RING  (rect_format);
 	OUT_RING  (value);

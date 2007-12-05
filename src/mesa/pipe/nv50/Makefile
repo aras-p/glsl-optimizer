@@ -1,0 +1,26 @@
+TOP = ../../../..
+include $(TOP)/configs/current
+
+LIBNAME = nv50
+
+DRIVER_SOURCES = \
+	nv50_clear.c \
+	nv50_context.c \
+	nv50_draw.c \
+	nv50_miptree.c \
+	nv50_query.c \
+	nv50_region.c \
+	nv50_state.c \
+	nv50_surface.c \
+	nv50_vbo.c
+
+C_SOURCES = \
+	$(COMMON_SOURCES) \
+	$(DRIVER_SOURCES)
+
+ASM_SOURCES = 
+
+include ../Makefile.template
+
+symlinks:
+

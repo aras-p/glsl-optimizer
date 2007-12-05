@@ -1,0 +1,62 @@
+#ifndef __NV50_CONTEXT_H__
+#define __NV50_CONTEXT_H__
+
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_state.h"
+
+#include "pipe/draw/draw_vertex.h"
+
+#include "pipe/nouveau/nouveau_winsys.h"
+#include "pipe/nouveau/nouveau_gldefs.h"
+
+#include "nv50_state.h"
+
+#define NOUVEAU_ERR(fmt, args...) \
+	fprintf(stderr, "%s:%d -  "fmt, __func__, __LINE__, ##args);
+#define NOUVEAU_MSG(fmt, args...) \
+	fprintf(stderr, "nouveau: "fmt, ##args);
+
+struct nv50_context {
+	struct pipe_context pipe;
+	struct nouveau_winsys *nvws;
+
+	struct draw_context *draw;
+
+	int chipset;
+	struct nouveau_grobj *tesla;
+	struct nouveau_notifier *sync;
+	uint32_t *pushbuf;
+};
+
+
+extern void nv50_init_region_functions(struct nv50_context *nv50);
+extern void nv50_init_surface_functions(struct nv50_context *nv50);
+extern void nv50_init_state_functions(struct nv50_context *nv50);
+
+/* nv50_draw.c */
+extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
+
+/* nv50_miptree.c */
+extern boolean nv50_miptree_layout(struct pipe_context *,
+				   struct pipe_mipmap_tree *);
+/* nv50_vbo.c */
+extern boolean nv50_draw_arrays(struct pipe_context *, unsigned mode,
+				unsigned start, unsigned count);
+extern boolean nv50_draw_elements(struct pipe_context *pipe,
+				  struct pipe_buffer_handle *indexBuffer,
+				  unsigned indexSize,
+				  unsigned mode, unsigned start,
+				  unsigned count);
+
+/* nv50_clear.c */
+extern void nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
+		       unsigned clearValue);
+
+/* nv50_query.c */
+extern void nv50_query_begin(struct pipe_context *, struct pipe_query_object *);
+extern void nv50_query_end(struct pipe_context *, struct pipe_query_object *);
+extern void nv50_query_wait(struct pipe_context *, struct pipe_query_object *);
+
+
+#endif

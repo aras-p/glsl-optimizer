@@ -5,7 +5,6 @@
 #include "nv40_context.h"
 #include "nv40_dma.h"
 #include "nv40_state.h"
-#include "nvgl_pipe.h"
 
 boolean
 nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,

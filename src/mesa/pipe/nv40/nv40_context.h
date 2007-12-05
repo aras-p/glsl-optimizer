@@ -8,6 +8,7 @@
 #include "pipe/draw/draw_vertex.h"
 
 #include "pipe/nouveau/nouveau_winsys.h"
+#include "pipe/nouveau/nouveau_gldefs.h"
 
 #include "nv40_state.h"
 

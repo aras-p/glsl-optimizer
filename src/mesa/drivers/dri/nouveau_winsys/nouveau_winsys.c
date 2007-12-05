@@ -181,6 +181,10 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	case 0x40:
 		hw_create = nv40_create;
 		break;
+	case 0x50:
+	case 0x80:
+		hw_create = nv50_create;
+		break;
 	default:
 		NOUVEAU_ERR("Unknown chipset NV%02x\n", (int)nv->chipset);
 		return NULL;

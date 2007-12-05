@@ -3,6 +3,7 @@ default:
 	cd i915simple ; make
 	cd failover ; make
 	cd nv40; make
+	cd nv50; make
 
 clean:
 	rm -f `find . -name \*.[oa]`
