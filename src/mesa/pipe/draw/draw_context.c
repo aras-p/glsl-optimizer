@@ -42,7 +42,7 @@ struct draw_context *draw_create( void )
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
 
 #if defined(__i386__) || defined(__386__)
-   draw->use_sse = GETENV( "GALLIUM_SSE" ) != NULL;
+   draw->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
 #else
    draw->use_sse = FALSE;
 #endif

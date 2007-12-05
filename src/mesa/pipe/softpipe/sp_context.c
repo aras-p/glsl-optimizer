@@ -244,7 +244,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    uint i;
 
 #if defined(__i386__) || defined(__386__)
-   softpipe->use_sse = GETENV( "GALLIUM_SSE" ) != NULL;
+   softpipe->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
 #else
    softpipe->use_sse = FALSE;
 #endif
