@@ -1,4 +1,4 @@
-# Gallium3D Cell driver: PPU code
+# Gallium3D Cell driver: SPU code
 
 # This makefile builds the g3d_spu.a file that's linked into the
 # PPU code/library.
@@ -15,7 +15,13 @@ PROG_SPU_A = $(PROG)_spu.a
 PROG_SPU_EMBED_O = $(PROG)_spu-embed.o
 
 
-SPU_OBJECTS = main.o tri.o
+SOURCES = \
+	main.c \
+	tri.c
+
+SPU_OBJECTS = $(SOURCES:.c=.o) \
+
+INCLUDE_DIRS = -I$(TOP)/src/mesa
 
 
 # The .a file will be linked into the main/PPU executable
@@ -40,3 +46,13 @@ tri.o: tri.c
 
 clean:
 	rm -f *.o *.a *.d $(PROG_SPU)
+
+
+
+depend: $(SOURCES)
+	rm -f depend
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDE_DIRS) $(SOURCES) 2> /dev/null
+
+include depend
+
