@@ -656,7 +656,7 @@ st_TexImage(GLcontext * ctx,
 #endif
 
 
-   /* intelCopyTexImage calls this function with pixels == NULL, with
+   /* st_CopyTexImage calls this function with pixels == NULL, with
     * the expectation that the texture will be set up but nothing
     * more will be done.  This is where those calls return:
     */
@@ -820,9 +820,6 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage, int compressed)
 {
-   /*
-   struct intel_context *intel = intel_context(ctx);
-   */
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstImageStride = _mesa_image_image_stride(&ctx->Pack, texImage->Width,
 						    texImage->Height, format,
@@ -947,7 +944,7 @@ st_TexSubimage(GLcontext * ctx,
 					   texImage->ImageOffsets,
 					   width, height, 1,
 					   format, type, pixels, packing)) {
-	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "st_TexSubImage");
       }
 
       if (stImage->pt && i < depth) {
