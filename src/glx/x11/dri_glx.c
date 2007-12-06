@@ -241,7 +241,10 @@ static __DRIdriver *OpenDriver(const char *driverName)
          driver->name = __glXstrdup(driverName);
          driver->libpath = __glXstrdup(realDriverName);
          if (!driver->name || !driver->libpath) {
-            if (driver->name) XFree(driver->name);
+            if (driver->name)
+               Xfree(driver->name);
+            if (driver->libpath)
+               Xfree(driver->libpath);
             Xfree(driver);
             driver = NULL;
             break; /* out of memory! */
