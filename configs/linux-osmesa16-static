@@ -29,4 +29,4 @@ PROGRAM_DIRS =
 
 # Dependencies
 OSMESA_LIB_DEPS = -lm -lpthread
-APP_LIB_DEPS = -lOSMesa16
+APP_LIB_DEPS = -lm -lpthread

@@ -28,4 +28,4 @@ PROGRAM_DIRS =
 # Dependencies
 OSMESA_LIB_DEPS = -lm -lpthread
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(OSMESA_LIB)
-APP_LIB_DEPS = -lOSMesa16
+APP_LIB_DEPS = -lm -lpthread
