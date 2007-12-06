@@ -193,6 +193,10 @@ intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
 	req->op = drm_bo_validate;
 	req->bo_req.flags = node->flags;
 	req->bo_req.hint = 0;
+#ifdef DRM_BO_HINT_PRESUMED_OFFSET
+	req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
+	req->bo_req.presumed_offset = ((dri_bo *) node->priv)->offset;
+#endif
 	req->bo_req.mask = node->mask;
 	req->bo_req.fence_class = 0; /* Backwards compat. */
 	arg->reloc_handle = 0;
@@ -839,10 +843,28 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
 }
 
 static void
+intel_update_buffer_offsets (dri_bufmgr_ttm *bufmgr_ttm)
+{
+    struct intel_bo_list *list = &bufmgr_ttm->list;
+    struct intel_bo_node *node;
+    drmMMListHead *l;
+    struct drm_i915_op_arg *arg;
+    struct drm_bo_arg_rep *rep;
+    
+    for (l = list->list.next; l != &list->list; l = l->next) {
+        node = DRMLISTENTRY(struct intel_bo_node, l, head);
+	arg = &node->bo_arg;
+	rep = &arg->d.rep;
+	((dri_bo *) node->priv)->offset = rep->bo_info.offset;
+    }
+}
+
+static void
 dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
 
+    intel_update_buffer_offsets (bufmgr_ttm);
     intel_free_validate_list(bufmgr_ttm);
     intel_free_reloc_list(bufmgr_ttm);
 

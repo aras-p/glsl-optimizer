@@ -246,7 +246,12 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              GLuint flags, GLuint delta)
 {
    dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
-   batch->ptr += 4;
+   /*
+    * Using the old buffer offset, write in what the right data would be, in case
+    * the buffer doesn't move and we can short-circuit the relocation processing
+    * in the kernel
+    */
+   intel_batchbuffer_emit_dword (batch, buffer->offset + delta);
 
    return GL_TRUE;
 }
