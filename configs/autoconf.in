@@ -63,6 +63,11 @@ DRIVER_DIRS = @DRIVER_DIRS@
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = @PROGRAM_DIRS@
 
+# Driver specific build vars
+DRI_DIRS = @DRI_DIRS@
+WINDOW_SYSTEM = @WINDOW_SYSTEM@
+USING_EGL = @USING_EGL@
+
 # Dependencies
 X11_INCLUDES = @X11_INCLUDES@
 
@@ -78,6 +83,12 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) @GLW_MESA_DEPS@ \
 	$(EXTRA_LIB_PATH) @GLW_LIB_DEPS@
 APP_LIB_DEPS = $(EXTRA_LIB_PATH) @APP_LIB_DEPS@
 
+# DRI dependencies
+DRI_LIB_DEPS = $(EXTRA_LIB_PATH) @DRI_LIB_DEPS@
+LIBDRM_CFLAGS = @LIBDRM_CFLAGS@
+LIBDRM_LIB = @LIBDRM_LIBS@
+EXPAT_INCLUDES = @EXPAT_INCLUDES@
+
 # Autoconf directories
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -85,3 +96,9 @@ libdir = @libdir@
 
 # Installation directories (for make install)
 INSTALL_DIR = $(prefix)
+
+# DRI installation directories
+DRI_DRIVER_INSTALL_DIR = @DRI_DRIVER_INSTALL_DIR@
+
+# Where libGL will look for DRI hardware drivers
+DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)

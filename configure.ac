@@ -87,14 +87,44 @@ AC_SUBST(GLW_LIB_NAME)
 AC_SUBST(OSMESA_LIB_NAME)
 
 dnl
-dnl Build directories for xlib driver
+dnl Driver configuration. Options are x11 (Xlib) and dri right now.
+dnl More later: osmesa, directfb, fbdev, ...
+dnl
+AC_ARG_WITH(driver,
+    [AS_HELP_STRING([--with-driver=DRIVER],
+        [driver for Mesa: x11,dri @<:@default=x11@:>@])],
+    mesa_driver="$withval",
+    mesa_driver="x11")
+dnl Check for valid option
+case "x$mesa_driver" in
+xx11|xdri)
+    ;;
+*)
+    AC_MSG_ERROR([Driver '$mesa_driver' is not a valid option])
+    ;;
+esac
+
+dnl
+dnl Driver specific build directories
 dnl
 SRC_DIRS="mesa"
-DRIVER_DIRS="x11 osmesa"
 GLU_DIRS="sgi"
+DRI_DIRS=""
+WINDOW_SYSTEM=""
+case "$mesa_driver" in
+x11)
+    DRIVER_DIRS="x11"
+    ;;
+dri)
+    SRC_DIRS="glx/x11 $SRC_DIRS"
+    DRIVER_DIRS="dri"
+    WINDOW_SYSTEM="dri"
+    ;;
+esac
 AC_SUBST(SRC_DIRS)
 AC_SUBST(GLU_DIRS)
 AC_SUBST(DRIVER_DIRS)
+AC_SUBST(WINDOW_SYSTEM)
 
 dnl
 dnl Find out if X is available. The variables have_x or no_x will be
@@ -119,23 +149,50 @@ if test "$x11_pkgconfig" = no; then
     AC_PATH_XTRA
 fi
 
-dnl
-dnl libGL for xlib driver
-dnl
-if test "$no_x" = yes; then
-    AC_MSG_ERROR([X11 development libraries needed for Xlib driver])
-fi
+dnl We need X for xlib and dri, so bomb now if it's not found
+case "$mesa_driver" in
+x11|dri)
+    if test "$no_x" = yes; then
+        AC_MSG_ERROR([X11 development libraries needed for $mesa_driver driver])
+    fi
+    ;;
+esac
 
-if test "$x11_pkgconfig" = yes; then
-PKG_CHECK_MODULES(X11GL, x11 xext)
-    X11_INCLUDES="$X11_INCLUDES $X11GL_CFLAGS"
-    GL_LIB_DEPS="$X11GL_LIBS"
-else
-    # should check these...
-    X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
-    GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
-fi
-GL_LIB_DEPS="$GL_LIB_DEPS -lm -lpthread"
+dnl
+dnl libGL configuration per driver
+dnl
+case "$mesa_driver" in
+x11)
+    if test "$x11_pkgconfig" = yes; then
+        PKG_CHECK_MODULES(X11GL, x11 xext)
+        X11_INCLUDES="$X11_INCLUDES $X11GL_CFLAGS"
+        GL_LIB_DEPS="$X11GL_LIBS"
+    else
+        # should check these...
+        X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
+        GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
+    fi
+    GL_LIB_DEPS="$GL_LIB_DEPS -lm -lpthread"
+    ;;
+dri)
+    # Check for libdrm
+    PKG_CHECK_MODULES(LIBDRM, libdrm)
+
+    # find the DRI deps for libGL
+    if test "$x11_pkgconfig" = yes; then
+        PKG_CHECK_MODULES(DRIGL, x11 xext xxf86vm xdamage xfixes)
+        X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
+        GL_LIB_DEPS="$DRIGL_LIBS"
+    else
+        # should check these...
+        X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
+        GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXxf86vm -lXdamage -lXfixes"
+    fi
+
+    # need DRM libs, -lpthread, etc.
+    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread -ldl"
+    ;;
+esac
 AC_SUBST(GL_LIB_DEPS)
 
 dnl
@@ -146,8 +203,109 @@ if test "$mesa_driver" = x11; then
 fi
 
 dnl
+dnl More DRI setup
+dnl
+AC_ARG_ENABLE(glx-tls,
+    [AS_HELP_STRING([--enable-glx-tls],
+        [enable TLS support in GLX @<:@default=no@:>@])],
+        GLX_USE_TLS="$enableval",
+        GLX_USE_TLS=no)
+dnl Directory for DRI drivers
+AC_ARG_WITH(dridriverdir,
+    [AS_HELP_STRING([--with-dridriverdir=DIR],
+        [directory for the DRI drivers @<:@/usr/X11R6/lib/modules/dri@:>@])],
+    DRI_DRIVER_INSTALL_DIR="$withval",
+    DRI_DRIVER_INSTALL_DIR='/usr/X11R6/lib/modules/dri')
+AC_SUBST(DRI_DRIVER_INSTALL_DIR)
+dnl Direct rendering or just indirect rendering
+AC_ARG_ENABLE(driglx-direct,
+    [AS_HELP_STRING([--enable-driglx-direct],
+        [enable direct rendering in GLX for DRI @<:@default=yes@:>@])],
+        driglx_direct="$enableval",
+        driglx_direct="yes")
+
+dnl Just default to no EGL for now
+USING_EGL=0
+AC_SUBST(USING_EGL)
+
+dnl Set DRI_DIRS, DEFINES and LIB_DEPS
+if test "$mesa_driver" = dri; then
+    # Use TLS in GLX?
+    if test "x$GLX_USE_TLS" = xyes; then
+        DEFINES="$DEFINES -DGLX_USE_TLS -DPTHREADS"
+    fi
+
+    if test "x$USING_EGL" = x1; then
+        PROGRAM_DIRS="egl"
+    fi
+
+    # Platform specific settings and drivers to build
+    case "$host_os" in
+    linux*)
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING -DHAVE_ALIAS"
+        if test "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+
+        case "$host_cpu" in
+        i*86)
+            DRI_DIRS="i810 i915tex i915 i965 mach64 mga r128 r200 r300 \
+                radeon s3v savage sis tdfx trident unichrome ffb"
+            ;;
+        x86_64)
+            DRI_DIRS="i915tex i915 i965 mach64 mga r128 r200 radeon tdfx \
+                unichrome savage r300"
+            ;;
+        powerpc*)
+            DRI_DIRS="mach64 r128 r200 r300 radeon tdfx"
+            ;;
+        esac
+        ;;
+    freebsd*)
+        DEFINES="$DEFINES -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1"
+        DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
+        if test "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+        if test "x$GXX" = xyes; then
+            CXXFLAGS="$CXXFLAGS -ansi -pedantic"
+        fi
+
+        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
+            unichrome savage sis"
+        ;;
+    esac
+    DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
+
+    # Check for expat
+    EXPAT_INCLUDES=""
+    EXPAT_LIB=-lexpat
+    AC_ARG_WITH(expat, AS_HELP_STRING([--with-expat=DIR],
+            [expat install directory]),[
+        EXPAT_INCLUDES="-I$withval/include"
+        CPPFLAGS="$CPPFLAGS $EXPAT_INCLUDES"
+        LDFLAGS="$LDFLAGS -L$withval/$LIB_DIR"
+        EXPAT_LIB="-L$withval/$LIB_DIR -lexpat"
+        ])
+    AC_CHECK_HEADER(expat.h,,AC_MSG_ERROR([Expat required for DRI.]))
+    AC_CHECK_LIB(expat, XML_ParserCreate,,
+        AC_MSG_ERROR([Expat required for DRI.]))
+
+    # put all the necessary libs together
+    DRI_LIB_DEPS="$LIBDRM_LIBS $EXPAT_LIB -lm -lpthread -ldl"
+fi
+AC_SUBST(DRI_DIRS)
+AC_SUBST(EXPAT_INCLUDES)
+AC_SUBST(DRI_LIB_DEPS)
+
+dnl
 dnl OSMesa configuration
 dnl
+if test "$mesa_driver" = x11; then
+    DRIVER_DIRS="$DRIVER_DIRS osmesa"
+fi
 OSMESA_LIB_DEPS=""
 OSMESA_MESA_DEPS='-l$(GL_LIB)'
 AC_SUBST(OSMESA_LIB_DEPS)
