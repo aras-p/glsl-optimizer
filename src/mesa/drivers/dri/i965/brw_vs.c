@@ -90,8 +90,6 @@ static void brw_upload_vs_prog( struct brw_context *brw )
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
-   struct brw_vs_prog_data *prog_data;
-   uint32_t offset;
 
    assert (vp && !vp->program.IsNVProgram);
    
@@ -112,23 +110,13 @@ static void brw_upload_vs_prog( struct brw_context *brw )
 
    /* Make an early check for the key.
     */
-   if (brw_search_cache(&brw->cache[BRW_VS_PROG],
+   if (brw_search_cache(&brw->cache[BRW_VS_PROG], 
 			&key, sizeof(key),
-			&prog_data,
-			&offset)) {
-      if (offset != brw->vs.prog_gs_offset ||
-	  !brw->vs.prog_data ||
-	  memcmp(prog_data, &brw->vs.prog_data,
-		 sizeof(*brw->vs.prog_data)) != 0)
-      {
-	 brw->vs.prog_gs_offset = offset;
-	 brw->vs.prog_data = prog_data;
-	 brw->state.dirty.cache |= CACHE_NEW_VS_PROG;
-      }
-   } else {
-      do_vs_prog(brw, vp, &key);
-      brw->state.dirty.cache |= CACHE_NEW_VS_PROG;
-   }
+			&brw->vs.prog_data,
+			&brw->vs.prog_gs_offset))
+       return;
+
+   do_vs_prog(brw, vp, &key);
 }
 
 

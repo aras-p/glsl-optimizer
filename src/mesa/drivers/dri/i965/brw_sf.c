@@ -1,4 +1,3 @@
-
 /*
  Copyright (C) Intel Corp.  2006.  All Rights Reserved.
  Intel funded Tungsten Graphics (http://www.tungstengraphics.com) to
@@ -126,13 +125,22 @@ static void compile_sf_prog( struct brw_context *brw,
 					      &brw->sf.prog_data );
 }
 
+
+static GLboolean search_cache( struct brw_context *brw, 
+			       struct brw_sf_prog_key *key )
+{
+   return brw_search_cache(&brw->cache[BRW_SF_PROG], 
+			   key, sizeof(*key),
+			   &brw->sf.prog_data,
+			   &brw->sf.prog_gs_offset);
+}
+
+
 /* Calculate interpolants for triangle and line rasterization.
  */
 static void upload_sf_prog( struct brw_context *brw )
 {
    struct brw_sf_prog_key key;
-   struct brw_sf_prog_data *prog_data;
-   uint32_t offset;
 
    memset(&key, 0, sizeof(key));
 
@@ -172,23 +180,9 @@ static void upload_sf_prog( struct brw_context *brw )
    if (key.do_twoside_color)
       key.frontface_ccw = (brw->attribs.Polygon->FrontFace == GL_CCW);
 
-   if (brw_search_cache(&brw->cache[BRW_SF_PROG],
-			&key, sizeof(key),
-			&prog_data,
-			&offset)) {
-      if (offset != brw->sf.prog_gs_offset ||
-	  !brw->sf.prog_data ||
-	  memcmp(prog_data, &brw->sf.prog_data,
-		 sizeof(*brw->sf.prog_data)) != 0)
-      {
-	 brw->sf.prog_gs_offset = offset;
-	 brw->sf.prog_data = prog_data;
-	 brw->state.dirty.cache |= CACHE_NEW_SF_PROG;
-      }
-   } else {
+
+   if (!search_cache(brw, &key))
       compile_sf_prog( brw, &key );
-      brw->state.dirty.cache |= CACHE_NEW_SF_PROG;
-   }
 }
 
 

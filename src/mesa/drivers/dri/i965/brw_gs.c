@@ -128,6 +128,17 @@ static void compile_gs_prog( struct brw_context *brw,
 					      &brw->gs.prog_data );
 }
 
+
+static GLboolean search_cache( struct brw_context *brw, 
+			       struct brw_gs_prog_key *key )
+{
+   return brw_search_cache(&brw->cache[BRW_GS_PROG], 
+			   key, sizeof(*key),
+			   &brw->gs.prog_data,
+			   &brw->gs.prog_gs_offset);
+}
+
+
 static const GLenum gs_prim[GL_POLYGON+1] = {  
    GL_POINTS,
    GL_LINES,
@@ -176,26 +187,8 @@ static void upload_gs_prog( struct brw_context *brw )
    }
 
    if (brw->gs.prog_active) {
-      struct brw_gs_prog_data *prog_data;
-      uint32_t offset;
-
-      if (brw_search_cache(&brw->cache[BRW_GS_PROG],
-			   &key, sizeof(key),
-			   &prog_data,
-			   &offset)) {
-	 if (offset != brw->gs.prog_gs_offset ||
-	     !brw->gs.prog_data ||
-	     memcmp(prog_data, &brw->gs.prog_data,
-		    sizeof(*brw->gs.prog_data)) != 0)
-	 {
-	    brw->gs.prog_gs_offset = offset;
-	    brw->gs.prog_data = prog_data;
-	    brw->state.dirty.cache |= CACHE_NEW_GS_PROG;
-	 }
-      } else {
+      if (!search_cache(brw, &key))
 	 compile_gs_prog( brw, &key );
-	 brw->state.dirty.cache |= CACHE_NEW_GS_PROG;
-      }
    }
 }
 
