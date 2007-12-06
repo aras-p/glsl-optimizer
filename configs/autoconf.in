@@ -46,7 +46,7 @@ GL_LIB = GL
 GLU_LIB = GLU
 GLUT_LIB = glut
 GLW_LIB = GLw
-OSMESA_LIB = OSMesa
+OSMESA_LIB = @OSMESA_LIB@
 
 # Library names (actual file names)
 GL_LIB_NAME = @GL_LIB_NAME@

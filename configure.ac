@@ -328,6 +328,30 @@ if test "x$x11_osmesa" = xyes; then
     fi
 fi
 
+dnl Configure the channel bits for OSMesa (libOSMesa, libOSMesa16, ...)
+AC_ARG_WITH(osmesa-bits,
+    [AS_HELP_STRING([--with-osmesa-bits=BITS],
+        [OSMesa channel bits and library name: 8, 16, 32 @<:@default=8@:>@])],
+        osmesa_bits="$withval",
+        osmesa_bits=8)
+if test "$mesa_driver" != osmesa && test "x$osmesa_bits" != x8; then
+    AC_MSG_WARN([Ignoring OSMesa channel bits for non-OSMesa driver])
+    osmesa_bits=8
+fi
+case "x$osmesa_bits" in
+x8)
+    OSMESA_LIB=OSMesa
+    ;;
+x16|x32)
+    OSMESA_LIB="OSMesa$osmesa_bits"
+    DEFINES="$DEFINES -DCHAN_BITS=$osmesa_bits -DDEFAULT_SOFTWARE_DEPTH_BITS=31"
+    ;;
+*)
+    AC_MSG_ERROR([OSMesa bits '$osmesa_bits' is not a valid option])
+    ;;
+esac
+AC_SUBST(OSMESA_LIB)
+
 case "$mesa_driver" in
 osmesa)
     OSMESA_LIB_DEPS="-lm -lpthread"
@@ -355,8 +379,11 @@ if test "x$enable_glu" = xyes; then
 
     case "$mesa_driver" in
     osmesa)
-        # If GLU is available, we can build the osdemos
-        PROGRAM_DIRS="$PROGRAM_DIRS osdemos"
+        # If GLU is available and we have libOSMesa (not 16 or 32),
+        # we can build the osdemos
+        if test "$osmesa_bits" = 8; then
+            PROGRAM_DIRS="$PROGRAM_DIRS osdemos"
+        fi
 
         # Link libGLU to libOSMesa instead of libGL
         GLU_LIB_DEPS=""
