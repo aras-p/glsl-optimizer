@@ -117,6 +117,7 @@ struct __DRIdisplayRec {
 */
 struct __DRIdriverRec {
    const char *name;
+   const char *libpath;
    void *handle;
    PFNCREATENEWSCREENFUNC createNewScreenFunc;
    struct __DRIdriverRec *next;
