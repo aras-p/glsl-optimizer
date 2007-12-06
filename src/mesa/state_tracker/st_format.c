@@ -256,6 +256,8 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
    case MESA_FORMAT_ARGB8888_REV:
    case MESA_FORMAT_ARGB8888:
       return PIPE_FORMAT_U_A8_R8_G8_B8;
+   case MESA_FORMAT_ARGB4444:
+      return PIPE_FORMAT_U_A4_R4_G4_B4;
    case MESA_FORMAT_AL88:
       return PIPE_FORMAT_U_A8_L8;
    case MESA_FORMAT_A8:
