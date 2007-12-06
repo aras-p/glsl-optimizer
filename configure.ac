@@ -87,17 +87,17 @@ AC_SUBST(GLW_LIB_NAME)
 AC_SUBST(OSMESA_LIB_NAME)
 
 dnl
-dnl Driver configuration. Options are x11 (Xlib) and dri right now.
-dnl More later: osmesa, directfb, fbdev, ...
+dnl Driver configuration. Options are x11 (Xlib), dri and osmesa right now.
+dnl More later: directfb, fbdev, ...
 dnl
 AC_ARG_WITH(driver,
     [AS_HELP_STRING([--with-driver=DRIVER],
-        [driver for Mesa: x11,dri @<:@default=x11@:>@])],
+        [driver for Mesa: x11,dri,osmesa @<:@default=x11@:>@])],
     mesa_driver="$withval",
     mesa_driver="x11")
 dnl Check for valid option
 case "x$mesa_driver" in
-xx11|xdri)
+xx11|xdri|xosmesa)
     ;;
 *)
     AC_MSG_ERROR([Driver '$mesa_driver' is not a valid option])
@@ -119,6 +119,9 @@ dri)
     SRC_DIRS="glx/x11 $SRC_DIRS"
     DRIVER_DIRS="dri"
     WINDOW_SYSTEM="dri"
+    ;;
+osmesa)
+    DRIVER_DIRS="osmesa"
     ;;
 esac
 AC_SUBST(SRC_DIRS)
@@ -191,6 +194,10 @@ dri)
 
     # need DRM libs, -lpthread, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread -ldl"
+    ;;
+osmesa)
+    # No libGL for osmesa
+    GL_LIB_DEPS=""
     ;;
 esac
 AC_SUBST(GL_LIB_DEPS)
@@ -304,10 +311,34 @@ dnl
 dnl OSMesa configuration
 dnl
 if test "$mesa_driver" = x11; then
-    DRIVER_DIRS="$DRIVER_DIRS osmesa"
+    default_x11_osmesa=yes
+else
+    default_x11_osmesa=no
 fi
-OSMESA_LIB_DEPS=""
-OSMESA_MESA_DEPS='-l$(GL_LIB)'
+AC_ARG_ENABLE(x11-osmesa,
+    [AS_HELP_STRING([--enable-x11-osmesa],
+        [enable OSMesa on X11 libGL @<:@default=yes for x11 driver@:>@])],
+        x11_osmesa="$enableval",
+        x11_osmesa="$default_x11_osmesa")
+if test "x$x11_osmesa" = xyes; then
+    if test "$mesa_driver" = x11; then
+        DRIVER_DIRS="$DRIVER_DIRS osmesa"
+    else
+        AC_MSG_ERROR([Can only enable OSMesa on libGL for X11])
+    fi
+fi
+
+case "$mesa_driver" in
+osmesa)
+    OSMESA_LIB_DEPS="-lm -lpthread"
+    OSMESA_MESA_DEPS=""
+    ;;
+*)
+    # Link OSMesa to libGL otherwise
+    OSMESA_LIB_DEPS=""
+    OSMESA_MESA_DEPS='-l$(GL_LIB)'
+    ;;
+esac
 AC_SUBST(OSMESA_LIB_DEPS)
 AC_SUBST(OSMESA_MESA_DEPS)
 
@@ -322,11 +353,23 @@ AC_ARG_ENABLE(glu,
 if test "x$enable_glu" = xyes; then
     SRC_DIRS="$SRC_DIRS glu"
 
-    # If GLU is available, we can build some programs
-    PROGRAM_DIRS="$PROGRAM_DIRS xdemos"
+    case "$mesa_driver" in
+    osmesa)
+        # If GLU is available, we can build the osdemos
+        PROGRAM_DIRS="$PROGRAM_DIRS osdemos"
 
-    GLU_LIB_DEPS="-lm"
-    GLU_MESA_DEPS='-l$(GL_LIB)'
+        # Link libGLU to libOSMesa instead of libGL
+        GLU_LIB_DEPS=""
+        GLU_MESA_DEPS='-l$(OSMESA_LIB)'
+        ;;
+    *)
+        # If GLU is available, we can build the xdemos
+        PROGRAM_DIRS="$PROGRAM_DIRS xdemos"
+
+        GLU_LIB_DEPS="-lm"
+        GLU_MESA_DEPS='-l$(GL_LIB)'
+        ;;
+    esac
 fi
 AC_SUBST(GLU_LIB_DEPS)
 AC_SUBST(GLU_MESA_DEPS)
@@ -339,6 +382,11 @@ AC_ARG_ENABLE(glw,
         [enable Xt/Motif widget library @<:@default=yes@:>@])],
     enable_glw="$enableval",
     enable_glw=yes)
+dnl Don't build GLw on osmesa
+if test "x$enable_glw" = xyes && test "$mesa_driver" = osmesa; then
+    AC_MSG_WARN([Disabling GLw since the driver is OSMesa])
+    enable_glw=no
+fi
 if test "x$enable_glw" = xyes; then
     SRC_DIRS="$SRC_DIRS glw"
     if test "$x11_pkgconfig" = yes; then
@@ -373,6 +421,12 @@ if test "x$enable_glu$enable_glut" = xnoyes; then
     AC_MSG_WARN([Disabling glut since GLU is disabled])
     enable_glut=no
 fi
+dnl Don't build glut on osmesa
+if test "x$enable_glut" = xyes && test "$mesa_driver" = osmesa; then
+    AC_MSG_WARN([Disabling glut since the driver is OSMesa])
+    enable_glut=no
+fi
+
 if test "x$enable_glut" = xyes; then
     SRC_DIRS="$SRC_DIRS glut/glx"
     GLUT_CFLAGS=""
