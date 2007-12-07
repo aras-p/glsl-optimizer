@@ -275,20 +275,23 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
 }
 
 /**
- * Search list of formats for first RGBA format.
+ * Find an RGBA format supported by the context/winsys.
  */
 static GLuint
 default_rgba_format(
    struct pipe_context *pipe )
 {
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_R8_G8_B8_A8 )) {
-      return PIPE_FORMAT_U_R8_G8_B8_A8;
-   }
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_R8_G8_B8 )) {
-      return PIPE_FORMAT_U_A8_R8_G8_B8;
-   }
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_R5_G6_B5 )) {
-      return PIPE_FORMAT_U_R5_G6_B5;
+   static const uint colorFormats[] = {
+      PIPE_FORMAT_U_R8_G8_B8_A8,
+      PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_U_B8_G8_R8_A8,
+      PIPE_FORMAT_U_R5_G6_B5
+   };
+   uint i;
+   for (i = 0; i < Elements(colorFormats); i++) {
+      if (pipe->is_format_supported( pipe, colorFormats[i] )) {
+         return colorFormats[i];
+      }
    }
    return PIPE_FORMAT_NONE;
 }
@@ -309,26 +312,27 @@ default_deep_rgba_format(
 
 
 /**
- * Search list of formats for first depth/Z format.
+ * Find an Z format supported by the context/winsys.
  */
 static GLuint
 default_depth_format(
    struct pipe_context *pipe )
 {
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_Z16 )) {
-      return PIPE_FORMAT_U_Z16;
-   }
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_Z32 )) {
-      return PIPE_FORMAT_U_Z32;
-   }
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 )) {
-      return PIPE_FORMAT_S8_Z24;
-   }
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 )) {
-      return PIPE_FORMAT_Z24_S8;
+   static const uint zFormats[] = {
+      PIPE_FORMAT_U_Z16,
+      PIPE_FORMAT_U_Z32,
+      PIPE_FORMAT_S8_Z24,
+      PIPE_FORMAT_Z24_S8
+   };
+   uint i;
+   for (i = 0; i < Elements(zFormats); i++) {
+      if (pipe->is_format_supported( pipe, zFormats[i] )) {
+         return zFormats[i];
+      }
    }
    return PIPE_FORMAT_NONE;
 }
+
 
 /**
  * Choose the PIPE_FORMAT_ to use for storing a texture image based
@@ -541,7 +545,7 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
  */
 const struct gl_texture_format *
 st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
-                         GLenum format, GLenum type)
+                       GLenum format, GLenum type)
 {
 #if 0
    struct intel_context *intel = intel_context(ctx);
@@ -549,6 +553,8 @@ st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
 #else
    const GLboolean do32bpt = 1;
 #endif
+
+   (void) ctx;
 
    switch (internalFormat) {
    case 4:
