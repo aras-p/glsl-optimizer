@@ -123,16 +123,24 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
 
 
 void
-sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
+sp_tile_cache_set_surface(struct softpipe_context *sp,
+			  struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
+   if (tc->surface && tc->surface->map)
+      pipe_surface_unmap(tc->surface);
+
    pipe_surface_reference(&tc->surface, ps);
 }
 
 
 struct pipe_surface *
-sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
+sp_tile_cache_get_surface(struct softpipe_context *sp,
+			  struct softpipe_tile_cache *tc)
 {
+   if (tc->surface && !tc->surface->map)
+      pipe_surface_map(tc->surface);
+
    return tc->surface;
 }
 
@@ -162,7 +170,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
    boolean is_depth_stencil;
    int inuse = 0, pos;
 
-   if (!ps || !ps->region || !ps->region->map)
+   if (!ps || !ps->buffer)
       return;
 
    is_depth_stencil = (ps->format == PIPE_FORMAT_S8_Z24 ||
@@ -366,6 +374,16 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
       /* XXX this call is a bit heavier than we'd like: */
       struct pipe_surface *ps
          = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
+
+      if (ps != tc->surface) {
+	 if (tc->surface && tc->surface->map)
+	    pipe_surface_unmap(tc->surface);
+
+	 pipe_surface_reference(&tc->surface, ps);
+
+	 if (!tc->surface->map)
+	    pipe_surface_map(tc->surface);
+      }
 
       pipe->get_tile_rgba(pipe, ps,
                           tile_x, tile_y, TILE_SIZE, TILE_SIZE,

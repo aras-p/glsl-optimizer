@@ -88,12 +88,11 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
       const int cpp = intelScreen->front.cpp;
-      const struct pipe_region *srcRegion = surf->region;
       const int srcpitch = surf->pitch;
       int BR13, CMD;
       int i;
 
-      ASSERT(srcRegion);
+      ASSERT(surf->buffer);
       ASSERT(surf->cpp == cpp);
 
       DBG(SWAP, "screen pitch %d  src surface pitch %d\n",
@@ -159,7 +158,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
          assert(box.x1 < box.x2);
          assert(box.y1 < box.y2);
 
-         /* XXX this could be done with pipe->region_copy() */
+         /* XXX this could be done with pipe->surface_copy() */
 	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
 	 OUT_BATCH(CMD);
 	 OUT_BATCH(BR13);
@@ -171,7 +170,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((sbox.y1 << 16) | sbox.x1);
 	 OUT_BATCH((srcpitch * cpp) & 0xffff);
-	 OUT_RELOC(dri_bo(srcRegion->buffer),
+	 OUT_RELOC(dri_bo(surf->buffer),
                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
 

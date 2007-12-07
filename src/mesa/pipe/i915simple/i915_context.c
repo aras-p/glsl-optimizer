@@ -348,7 +348,6 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
       draw_set_rasterize_stage(i915->draw, i915_draw_render_stage(i915));
    }
 
-   i915_init_region_functions(i915);
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);

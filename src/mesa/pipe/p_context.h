@@ -37,7 +37,7 @@ struct pipe_state_cache;
  * Gallium rendering context.  Basically:
  *  - state setting functions
  *  - VBO drawing functions
- *  - memory region function
+ *  - surface functions
  *  - device queries
  */
 struct pipe_context {
@@ -199,14 +199,6 @@ struct pipe_context {
                          uint x, uint y, uint w, uint h, float *p);
    void (*put_tile_rgba)(struct pipe_context *pipe, struct pipe_surface *ps,
                          uint x, uint y, uint w, uint h, const float *p);
-
-
-   /*
-    * Memory region functions
-    */
-   ubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
-
-   void (*region_unmap)(struct pipe_context *pipe, struct pipe_region *r);
 
 
    /*

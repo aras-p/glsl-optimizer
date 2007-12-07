@@ -33,6 +33,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
@@ -187,17 +188,15 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
    stImage->surface = st->pipe->get_tex_surface(st->pipe, pt, stImage->face,
 						stImage->level,	zoffset);
 
-   (void) st->pipe->region_map(st->pipe, stImage->surface->region);
-
-   return stImage->surface->region->map + stImage->surface->offset;
+   return pipe_surface_map(stImage->surface);
 }
 
 void
-st_texture_image_unmap(struct st_context *st, struct st_texture_image *stImage)
+st_texture_image_unmap(struct st_texture_image *stImage)
 {
    DBG("%s\n", __FUNCTION__);
 
-   st->pipe->region_unmap(st->pipe, stImage->surface->region);
+   pipe_surface_unmap(stImage->surface);
 
    pipe_surface_reference(&stImage->surface, NULL);
 }

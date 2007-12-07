@@ -109,22 +109,22 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 							 width, flags);
    }
 
-   /* free old region */
-   if (strb->surface->region) {
-      /* loop here since mapping is refcounted */
-      struct pipe_region *r = strb->surface->region;
-      while (r->map)
-         pipe->region_unmap(pipe, r);
-      pipe->winsys->region_release(pipe->winsys, &strb->surface->region);
-   }
+   /* loop here since mapping is refcounted */
+   while (strb->surface->map)
+      pipe_surface_unmap(strb->surface);
+   if (strb->surface->buffer)
+      pipe->winsys->buffer_reference(pipe->winsys, &strb->surface->buffer,
+				     NULL);
 
-   strb->surface->region = pipe->winsys->region_alloc(pipe->winsys,
-						      strb->surface->pitch *
-						      cpp * height, flags);
-   if (!strb->surface->region)
+   strb->surface->buffer = pipe->winsys->buffer_create(pipe->winsys, flags);
+   if (!strb->surface->buffer)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
-   ASSERT(strb->surface->region->buffer);
+   pipe->winsys->buffer_data(pipe->winsys, strb->surface->buffer,
+			     strb->surface->pitch * cpp * height, NULL,
+			     PIPE_BUFFER_USAGE_PIXEL);
+
+   ASSERT(strb->surface->buffer);
    ASSERT(strb->surface->format);
 
    strb->Base.Width  = strb->surface->width  = width;

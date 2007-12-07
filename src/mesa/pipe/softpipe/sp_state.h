@@ -78,7 +78,7 @@ struct softpipe_texture
 
    /* The data is held here:
     */
-   struct pipe_region *region;
+   struct pipe_buffer_handle *buffer;
 };
 
 void *

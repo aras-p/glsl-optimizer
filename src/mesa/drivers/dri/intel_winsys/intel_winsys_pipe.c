@@ -135,13 +135,12 @@ static void intel_buffer_get_subdata(struct pipe_winsys *winsys,
  * for all buffers.
  */
 static struct pipe_buffer_handle *
-intel_buffer_create(struct pipe_winsys *winsys, 
-		    unsigned alignment)
+intel_buffer_create(struct pipe_winsys *winsys, unsigned flags)
 {
    struct _DriBufferObject *buffer;
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    driGenBuffers( iws->regionPool, 
-		  "pipe buffer", 1, &buffer, alignment, 0, 0 );
+		  "pipe buffer", 1, &buffer, 64, 0, 0 );
    return pipe_bo(buffer);
 }
 
@@ -193,46 +192,6 @@ intel_i915_surface_pitch(struct pipe_winsys *winsys,
 }
 
 
-static struct pipe_region *
-intel_i915_region_alloc(struct pipe_winsys *winsys,
-                        unsigned size, unsigned flags)
-{
-   struct pipe_region *region = calloc(sizeof(*region), 1);
-   const unsigned alignment = 64;
-
-   region->refcount = 1;
-
-   region->buffer = winsys->buffer_create( winsys, alignment );
-
-   winsys->buffer_data( winsys,
-                        region->buffer, 
-                        size, 
-                        NULL,
-                        PIPE_BUFFER_USAGE_PIXEL );
-
-   return region;
-}
-
-static void
-intel_i915_region_release(struct pipe_winsys *winsys,
-                          struct pipe_region **region)
-{
-   if (!*region)
-      return;
-
-   assert((*region)->refcount > 0);
-   (*region)->refcount--;
-
-   if ((*region)->refcount == 0) {
-      assert((*region)->map_refcount == 0);
-
-      winsys->buffer_reference( winsys, &((*region)->buffer), NULL );
-      free(*region);
-   }
-   *region = NULL;
-}
-
-
 static struct pipe_surface *
 intel_i915_surface_alloc(struct pipe_winsys *winsys, unsigned format)
 {
@@ -252,8 +211,8 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    struct pipe_surface *surf = *s;
    surf->refcount--;
    if (surf->refcount == 0) {
-      if (surf->region)
-         winsys->region_release(winsys, &surf->region);
+      if (surf->buffer)
+	 winsys->buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -300,8 +259,6 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
-   iws->winsys.region_alloc = intel_i915_region_alloc;
-   iws->winsys.region_release = intel_i915_region_release;
    iws->winsys.surface_pitch = intel_i915_surface_pitch;
    iws->winsys.surface_alloc = intel_i915_surface_alloc;
    iws->winsys.surface_release = intel_i915_surface_release;

@@ -220,7 +220,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   BUF_3D_PITCH(pitch) |  /* pitch in bytes */
 		   BUF_3D_USE_FENCE);
 
-	 OUT_RELOC(cbuf_surface->region->buffer,
+	 OUT_RELOC(cbuf_surface->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
 		   0);
       }
@@ -236,7 +236,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   BUF_3D_PITCH(zpitch) |  /* pitch in bytes */
 		   BUF_3D_USE_FENCE);
 
-	 OUT_RELOC(depth_surface->region->buffer,
+	 OUT_RELOC(depth_surface->buffer,
 		   I915_BUFFER_ACCESS_WRITE,
 		   0);
       }
@@ -284,7 +284,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
             for (unit = 0; unit < I915_TEX_UNITS; unit++) {
                if (enabled & (1 << unit)) {
                   struct pipe_buffer_handle *buf =
-                     i915->texture[unit]->region->buffer;
+                     i915->texture[unit]->buffer;
                   uint offset = 0;
                   assert(buf);
 

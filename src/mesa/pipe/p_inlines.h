@@ -29,40 +29,42 @@
 #define P_INLINES_H
 
 #include "p_context.h"
+#include "p_defines.h"
 #include "p_winsys.h"
 
 
-/**
- * Set 'ptr' to point to 'region' and update reference counting.
- * The old thing pointed to, if any, will be unreferenced first.
- * 'region' may be NULL.
- */
-static INLINE void
-pipe_region_reference(struct pipe_region **ptr, struct pipe_region *region)
+static INLINE ubyte *
+pipe_surface_map(struct pipe_surface *surface)
 {
-   assert(ptr);
-   if (*ptr) {
-      /* unreference the old thing */
-      struct pipe_region *oldReg = *ptr;
-      assert(oldReg->refcount > 0);
-      oldReg->refcount--;
-      if (oldReg->refcount == 0) {
-         /* free the old region */
-         assert(oldReg->map_refcount == 0);
-         /* XXX dereference the region->buffer */
-         FREE( oldReg );
-      }
-      *ptr = NULL;
+   if (!surface->map_refcount++) {
+      surface->map = surface->winsys->buffer_map( surface->winsys,
+						  surface->buffer,
+						  PIPE_BUFFER_FLAG_WRITE | 
+						  PIPE_BUFFER_FLAG_READ )
+		   + surface->offset;
    }
-   if (region) {
-      /* reference the new thing */
-      region->refcount++;
-      *ptr = region;
+
+   return surface->map;
+}
+
+static INLINE void
+pipe_surface_unmap(struct pipe_surface *surface)
+{
+   if (surface->map_refcount > 0) {
+      assert(surface->map);
+      if (!--surface->map_refcount) {
+         surface->winsys->buffer_unmap( surface->winsys,
+					surface->buffer );
+         surface->map = NULL;
+      }
    }
 }
 
+
 /**
- * \sa pipe_region_reference
+ * Set 'ptr' to point to 'surf' and update reference counting.
+ * The old thing pointed to, if any, will be unreferenced first.
+ * 'surf' may be NULL.
  */
 static INLINE void
 pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
@@ -82,7 +84,7 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 
 
 /**
- * \sa pipe_region_reference
+ * \sa pipe_surface_reference
  */
 static INLINE void
 pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
@@ -99,5 +101,6 @@ pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
       *ptr = pt;
    }
 }
+
 
 #endif /* P_INLINES_H */
