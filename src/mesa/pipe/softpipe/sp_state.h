@@ -52,35 +52,6 @@ struct sp_fragment_shader_state {
 #endif
 };
 
-struct softpipe_texture
-{
-   struct pipe_texture base;
-
-   /* Derived from the above:
-    */
-   unsigned pitch;
-   unsigned depth_pitch;          /* per-image on i945? */
-   unsigned total_height;
-
-   unsigned nr_images[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* Explicitly store the offset of each image for each cube face or
-    * depth value.  Pretty much have to accept that hardware formats
-    * are going to be so diverse that there is no unified way to
-    * compute the offsets of depth/cube images within a mipmap level,
-    * so have to store them as a lookup table:
-    */
-   unsigned *image_offset[PIPE_MAX_TEXTURE_LEVELS];   /**< array [depth] of offsets */
-
-   /* Includes image offset tables:
-    */
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_buffer_handle *buffer;
-};
-
 void *
 softpipe_create_alpha_test_state(struct pipe_context *,
                                  const struct pipe_alpha_test_state *);

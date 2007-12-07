@@ -412,7 +412,7 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
        __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
    */
    if (--(*pt)->refcount <= 0) {
-      struct softpipe_texture *spt = (struct softpipe_texture *)*pt;
+      struct softpipe_texture *spt = softpipe_texture(*pt);
       uint i;
 
       /*
