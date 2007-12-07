@@ -269,9 +269,8 @@ static void
 finish_surface_init(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   if (!xrb->St.surface->region) {
-      xrb->St.surface->region = pipe->winsys->region_alloc(pipe->winsys, 1,
-							   0x0);
+   if (!xrb->St.surface->buffer) {
+      xrb->St.surface->buffer = pipe->winsys->buffer_create(pipe->winsys, 0x0);
    }
 }
 
@@ -301,7 +300,7 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    rb->Height = height;
    rb->InternalFormat = internalFormat;
 
-   if (!xrb->St.surface || !xrb->St.surface->region)
+   if (!xrb->St.surface || !xrb->St.surface->buffer)
       finish_surface_init(ctx, xrb);
 
    /* surface info */
@@ -363,7 +362,7 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = NULL;
    }
 
-   if (!xrb->St.surface || !xrb->St.surface->region)
+   if (!xrb->St.surface || !xrb->St.surface->buffer)
       finish_surface_init(ctx, xrb);
 
    xrb->St.surface->width = width;

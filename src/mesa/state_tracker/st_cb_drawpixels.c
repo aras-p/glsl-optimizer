@@ -492,11 +492,10 @@ make_texture(struct st_context *st,
 
       surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
 
-      /* map texture region */
-      (void) pipe->region_map(pipe, surface->region);
-      dest = surface->region->map + surface->offset;
+      /* map texture surface */
+      dest = pipe_surface_map(surface);
 
-      /* Put image into texture region.
+      /* Put image into texture surface.
        * Note that the image is actually going to be upside down in
        * the texture.  We deal with that with texcoords.
        */
@@ -513,7 +512,7 @@ make_texture(struct st_context *st,
                                     unpack);
 
       /* unmap */
-      pipe->region_unmap(pipe, surface->region);
+      pipe_surface_unmap(surface);
       pipe_surface_reference(&surface, NULL);
       assert(success);
 
@@ -852,7 +851,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    pipe->flush(pipe, 0);
 
    /* map the stencil buffer */
-   stmap = pipe->region_map(pipe, ps->region);
+   stmap = pipe_surface_map(ps);
 
    /* if width > MAX_WIDTH, have to process image in chunks */
    skipPixels = 0;
@@ -909,7 +908,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    /* unmap the stencil buffer */
-   pipe->region_unmap(pipe, ps->region);
+   pipe_surface_unmap(ps);
 }
 
 
@@ -1027,11 +1026,10 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
 
-   /* map texture region */
-   (void) pipe->region_map(pipe, surface->region);
-   dest = surface->region->map + surface->offset;
+   /* map texture surface */
+   dest = pipe_surface_map(surface);
 
-   /* Put image into texture region.
+   /* Put image into texture surface.
     * Note that the image is actually going to be upside down in
     * the texture.  We deal with that with texcoords.
     */
@@ -1089,7 +1087,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    } /* row */
 
    /* Release surface */
-   pipe->region_unmap(pipe, surface->region);
+   pipe_surface_unmap(surface);
    pipe_surface_reference(&surface, NULL);
 
    pt->format = format;
@@ -1130,8 +1128,6 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
                     GLint dstx, GLint dsty)
 {
-   struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
    struct st_renderbuffer *rbRead = st_renderbuffer(ctx->ReadBuffer->_StencilBuffer);
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
    struct pipe_surface *psRead = rbRead->surface;
@@ -1147,8 +1143,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    /* map the stencil buffers */
-   readMap = pipe->region_map(pipe, psRead->region);
-   drawMap = pipe->region_map(pipe, psDraw->region);
+   readMap = pipe_surface_map(psRead);
+   drawMap = pipe_surface_map(psDraw);
 
    /* this will do stencil pixel transfer ops */
    st_read_stencil_pixels(ctx, srcx, srcy, width, height, GL_UNSIGNED_BYTE,
@@ -1192,8 +1188,8 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    free(buffer);
 
    /* unmap the stencil buffers */
-   pipe->region_unmap(pipe, psRead->region);
-   pipe->region_unmap(pipe, psDraw->region);
+   pipe_surface_unmap(psRead);
+   pipe_surface_unmap(psDraw);
 }
 
 
@@ -1252,11 +1248,11 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    /* For some drivers (like Xlib) it's not possible to treat the
-    * front/back color buffers as regions (they're XImages and Pixmaps).
-    * So, this var tells us if we can use region_copy here...
+    * front/back color buffers as surfaces (they're XImages and Pixmaps).
+    * So, this var tells us if we can use surface_copy here...
     */
-   if (st->haveFramebufferRegions) {
-      /* copy source framebuffer region into mipmap/texture */
+   if (st->haveFramebufferSurfaces) {
+      /* copy source framebuffer surface into mipmap/texture */
       pipe->surface_copy(pipe,
 			 psTex, /* dest */
 			 0, 0, /* destx/y */
@@ -1267,14 +1263,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* alternate path using get/put_tile() */
       GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-      (void) pipe->region_map(pipe, psRead->region);
-      (void) pipe->region_map(pipe, psTex->region);
+      (void) pipe_surface_map(psRead);
+      (void) pipe_surface_map(psTex);
 
       pipe->get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
       pipe->put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
 
-      pipe->region_unmap(pipe, psRead->region);
-      pipe->region_unmap(pipe, psTex->region);
+      pipe_surface_unmap(psRead);
+      pipe_surface_unmap(psTex);
 
       free(buf);
    }

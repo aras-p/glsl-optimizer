@@ -140,8 +140,6 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 #endif
    failover->pipe.get_tex_surface = hw->get_tex_surface;
 
-   failover->pipe.region_map = hw->region_map;
-   failover->pipe.region_unmap = hw->region_unmap;
    failover->pipe.surface_data = hw->surface_data;
    failover->pipe.surface_copy = hw->surface_copy;
    failover->pipe.surface_fill = hw->surface_fill;

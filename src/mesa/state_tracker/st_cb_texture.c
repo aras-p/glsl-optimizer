@@ -64,7 +64,7 @@ struct st_texture_object
    GLuint textureOffset;
 
    /* On validation any active images held in main memory or in other
-    * regions will be copied to this region and the old storage freed.
+    * textures will be copied to this texture and the old storage freed.
     */
    struct pipe_texture *pt;
 
@@ -721,7 +721,7 @@ st_TexImage(GLcontext * ctx,
 	 }
 
 	 if (stImage->pt && i < depth) {
-	    st_texture_image_unmap(ctx->st, stImage);
+	    st_texture_image_unmap(stImage);
 	    texImage->Data = st_texture_image_map(ctx->st, stImage, i);
 	    pixels += srcImageStride;
 	 }
@@ -731,7 +731,7 @@ st_TexImage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (stImage->pt) {
-      st_texture_image_unmap(ctx->st, stImage);
+      st_texture_image_unmap(stImage);
       texImage->Data = NULL;
    }
 
@@ -860,7 +860,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       }
 
       if (stImage->pt && i < depth) {
-	 st_texture_image_unmap(ctx->st, stImage);
+	 st_texture_image_unmap(stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, i);
 	 pixels += dstImageStride;
       }
@@ -870,7 +870,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 
    /* Unmap */
    if (stImage->pt) {
-      st_texture_image_unmap(ctx->st, stImage);
+      st_texture_image_unmap(stImage);
       texImage->Data = NULL;
    }
 }
@@ -948,7 +948,7 @@ st_TexSubimage(GLcontext * ctx,
       }
 
       if (stImage->pt && i < depth) {
-	 st_texture_image_unmap(ctx->st, stImage);
+	 st_texture_image_unmap(stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i);
 	 pixels += srcImageStride;
       }
@@ -966,7 +966,7 @@ st_TexSubimage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    if (stImage->pt) {
-      st_texture_image_unmap(ctx->st, stImage);
+      st_texture_image_unmap(stImage);
       texImage->Data = NULL;
    }
 }
@@ -1051,8 +1051,8 @@ texture_face(GLenum target)
 
 
 /**
- * Do a CopyTexSubImage operation by mapping the source region and
- * dest region and using get_tile()/put_tile() to access the pixels/texels.
+ * Do a CopyTexSubImage operation by mapping the source surface and
+ * dest surface and using get_tile()/put_tile() to access the pixels/texels.
  *
  * Note: srcY=0=TOP of renderbuffer
  */
@@ -1088,8 +1088,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
    dest_surf = pipe->get_tex_surface(pipe, pt,
                                     face, level, destZ);
 
-   (void) pipe->region_map(pipe, dest_surf->region);
-   (void) pipe->region_map(pipe, src_surf->region);
+   (void) pipe_surface_map(dest_surf);
+   (void) pipe_surface_map(src_surf);
 
    /* buffer for one row */
    data = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
@@ -1110,8 +1110,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
 
-   (void) pipe->region_unmap(pipe, dest_surf->region);
-   (void) pipe->region_unmap(pipe, src_surf->region);
+   (void) pipe_surface_unmap(dest_surf);
+   (void) pipe_surface_unmap(src_surf);
 
    free(data);
 }
@@ -1178,8 +1178,8 @@ do_copy_texsubimage(GLcontext *ctx,
 
    if (src_format == dest_format &&
        ctx->_ImageTransferState == 0x0 &&
-       strb->surface->region &&
-       dest_surface->region &&
+       strb->surface->buffer &&
+       dest_surface->buffer &&
        strb->surface->cpp == stImage->pt->cpp) {
       /* do blit-style copy */
 

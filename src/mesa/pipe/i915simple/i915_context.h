@@ -175,7 +175,7 @@ struct i915_texture {
 
    /* The data is held here:
     */
-   struct pipe_region *region;
+   struct pipe_buffer_handle *buffer;
 };
 
 struct i915_context
@@ -289,10 +289,10 @@ void i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
 
 /***********************************************************************
- * i915_region.c: 
+ * i915_surface.c: 
  */
-void i915_init_region_functions( struct i915_context *i915 );
 void i915_init_surface_functions( struct i915_context *i915 );
+
 void i915_init_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );

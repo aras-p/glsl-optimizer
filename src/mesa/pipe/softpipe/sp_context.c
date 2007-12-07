@@ -31,12 +31,12 @@
 
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
 #include "sp_prim_setup.h"
-#include "sp_region.h"
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
@@ -65,44 +65,22 @@ softpipe_is_format_supported( struct pipe_context *pipe, uint format )
 void
 softpipe_map_surfaces(struct softpipe_context *sp)
 {
-   struct pipe_context *pipe = &sp->pipe;
+   struct pipe_surface *ps;
    unsigned i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-      struct pipe_surface *ps = sp->framebuffer.cbufs[i];
-      if (ps->region && !ps->region->map) {
-         pipe->region_map(pipe, ps->region);
-      }
+      ps = sp->framebuffer.cbufs[i];
+      if (ps->buffer)
+         pipe_surface_map(ps);
    }
 
-   if (sp->framebuffer.zbuf) {
-      struct pipe_surface *ps = sp->framebuffer.zbuf;
-      if (ps->region && !ps->region->map) {
-         pipe->region_map(pipe, ps->region);
-      }
-   }
+   ps = sp->framebuffer.zbuf;
+   if (ps && ps->buffer)
+      pipe_surface_map(ps);
 
-   if (sp->framebuffer.sbuf) {
-      struct pipe_surface *ps = sp->framebuffer.sbuf;
-      if (ps->region && !ps->region->map) {
-         pipe->region_map(pipe, ps->region);
-      }
-   }
-}
-
-
-void
-softpipe_map_texture_surfaces(struct softpipe_context *sp)
-{
-   struct pipe_context *pipe = &sp->pipe;
-   uint i;
-
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct softpipe_texture *spt = sp->texture[i];
-      if (spt) {
-         pipe->region_map(pipe, spt->region);
-      }
-   }
+   ps = sp->framebuffer.sbuf;
+   if (ps && ps->buffer)
+      pipe_surface_map(ps);
 }
 
 
@@ -112,7 +90,7 @@ softpipe_map_texture_surfaces(struct softpipe_context *sp)
 void
 softpipe_unmap_surfaces(struct softpipe_context *sp)
 {
-   struct pipe_context *pipe = &sp->pipe;
+   struct pipe_surface *ps;
    uint i;
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
@@ -121,36 +99,18 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
    sp_flush_tile_cache(sp, sp->sbuf_cache);
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-      struct pipe_surface *ps = sp->framebuffer.cbufs[i];
-      if (ps->region)
-         pipe->region_unmap(pipe, ps->region);
+      ps = sp->framebuffer.cbufs[i];
+      if (ps->map)
+         pipe_surface_unmap(ps);
    }
 
-   if (sp->framebuffer.zbuf) {
-      struct pipe_surface *ps = sp->framebuffer.zbuf;
-      if (ps->region)
-         pipe->region_unmap(pipe, ps->region);
-   }
+   ps = sp->framebuffer.zbuf;
+   if (ps && ps->map)
+      pipe_surface_unmap(ps);
 
-   if (sp->framebuffer.sbuf && sp->framebuffer.sbuf != sp->framebuffer.zbuf) {
-      struct pipe_surface *ps = sp->framebuffer.sbuf;
-      if (ps->region)
-         pipe->region_unmap(pipe, ps->region);
-   }
-}
-
-
-void
-softpipe_unmap_texture_surfaces(struct softpipe_context *sp)
-{
-   struct pipe_context *pipe = &sp->pipe;
-   uint i;
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct softpipe_texture *spt = sp->texture[i];
-      if (spt) {
-         pipe->region_unmap(pipe, spt->region);
-      }
-   }
+   ps = sp->framebuffer.sbuf;
+   if (ps && ps->map)
+      pipe_surface_unmap(ps);
 }
 
 
@@ -403,8 +363,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
       draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
 
-
-   sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);
 
    return &softpipe->pipe;

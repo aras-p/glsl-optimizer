@@ -256,32 +256,20 @@ struct pipe_sampler_state
 };
 
 
-/***
- *** Resource Objects
- ***/
-
-struct pipe_region
-{
-   struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
-
-   unsigned refcount; /**< Reference count for region */
-   ubyte *map;    /**< only non-NULL when region is actually mapped */
-   unsigned map_refcount;  /**< Reference count for mapping */
-};
-
-
 /**
- * 2D surface.  This is basically a view into a pipe_region (memory buffer).
+ * 2D surface.  This is basically a view into a memory buffer.
  * May be a renderbuffer, texture mipmap level, etc.
  */
 struct pipe_surface
 {
-   struct pipe_region *region;
+   struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
+   ubyte *map;    /**< only non-NULL when surface is actually mapped */
+   unsigned map_refcount;  /**< Reference count for mapping */
    unsigned format;              /**< PIPE_FORMAT_x */
    unsigned cpp;                 /**< bytes per pixel */
    unsigned width, height;
    unsigned pitch;               /**< in pixels */
-   unsigned offset;              /**< offset from start of region, in bytes */
+   unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
 };

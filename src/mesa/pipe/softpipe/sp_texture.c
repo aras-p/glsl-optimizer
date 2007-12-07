@@ -32,6 +32,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 
@@ -380,13 +381,18 @@ softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 	     sizeof(struct softpipe_texture) - sizeof(struct pipe_texture));
 
       if (softpipe_mipmap_tree_layout(pipe, spt)) {
-	 spt->region = pipe->winsys->region_alloc(pipe->winsys,
-						  spt->pitch * (*pt)->cpp *
-						  spt->total_height,
-						  PIPE_SURFACE_FLAG_TEXTURE);
+	 spt->buffer = pipe->winsys->buffer_create(pipe->winsys,
+						   PIPE_SURFACE_FLAG_TEXTURE);
+
+	 if (spt->buffer) {
+	    pipe->winsys->buffer_data(pipe->winsys, spt->buffer,
+				      spt->pitch * (*pt)->cpp *
+				      spt->total_height, NULL,
+				      PIPE_BUFFER_USAGE_PIXEL);
+	 }
       }
 
-      if (!spt->region) {
+      if (!spt->buffer) {
 	 FREE(spt);
 	 spt = NULL;
       }
@@ -413,7 +419,7 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
       */
 
-      pipe->winsys->region_release(pipe->winsys, &spt->region);
+      pipe->winsys->buffer_reference(pipe->winsys, &spt->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (spt->image_offset[i])

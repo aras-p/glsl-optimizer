@@ -186,7 +186,7 @@ xm_get_name(struct pipe_winsys *pws)
 
 
 static struct pipe_buffer_handle *
-xm_buffer_create(struct pipe_winsys *pws, unsigned alignment)
+xm_buffer_create(struct pipe_winsys *pws, unsigned flags)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
    buffer->refcount = 1;
@@ -228,47 +228,6 @@ xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
 }
 
 
-static struct pipe_region *
-xm_region_alloc(struct pipe_winsys *winsys, unsigned size, unsigned flags)
-{
-   struct pipe_region *region = CALLOC_STRUCT(pipe_region);
-   const unsigned alignment = 64;
-
-   region->refcount = 1;
-
-   assert(size > 0);
-
-   region->buffer = winsys->buffer_create( winsys, alignment );
-
-   /* NULL data --> just allocate the space */
-   winsys->buffer_data( winsys,
-                        region->buffer, 
-                        size, 
-                        NULL,
-                        PIPE_BUFFER_USAGE_PIXEL );
-   return region;
-}
-
-
-static void
-xm_region_release(struct pipe_winsys *winsys, struct pipe_region **region)
-{
-   if (!*region)
-      return;
-
-   assert((*region)->refcount > 0);
-   (*region)->refcount--;
-
-   if ((*region)->refcount == 0) {
-      assert((*region)->map_refcount == 0);
-
-      winsys->buffer_reference( winsys, &((*region)->buffer), NULL );
-      free(*region);
-   }
-   *region = NULL;
-}
-
-
 /**
  * Called via pipe->surface_alloc() to create new surfaces (textures,
  * renderbuffers, etc.
@@ -301,8 +260,8 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    struct pipe_surface *surf = *s;
    surf->refcount--;
    if (surf->refcount == 0) {
-      if (surf->region)
-         winsys->region_release(winsys, &surf->region);
+      if (surf->buffer)
+	 winsys->buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -334,9 +293,6 @@ xmesa_get_pipe_winsys(void)
       ws->buffer_data = xm_buffer_data;
       ws->buffer_subdata = xm_buffer_subdata;
       ws->buffer_get_subdata = xm_buffer_get_subdata;
-
-      ws->region_alloc = xm_region_alloc;
-      ws->region_release = xm_region_release;
 
       ws->surface_pitch = xm_surface_pitch;
       ws->surface_alloc = xm_surface_alloc;

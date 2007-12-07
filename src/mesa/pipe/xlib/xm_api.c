@@ -1512,7 +1512,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    pipe->get_tile_rgba = xmesa_get_tile_rgba;
    pipe->put_tile_rgba = xmesa_put_tile_rgba;
 
-   c->st->haveFramebufferRegions = GL_FALSE;
+   c->st->haveFramebufferSurfaces = GL_FALSE;
 
    /* special pipe->clear function */
    pipe->clear = xmesa_clear;

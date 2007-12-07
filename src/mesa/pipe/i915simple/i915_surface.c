@@ -29,6 +29,7 @@
 #include "i915_blit.h"
 #include "i915_state.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
@@ -57,7 +58,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h, float *p)
 {
    const unsigned *src
-      = ((const unsigned *) (ps->region->map + ps->offset))
+      = ((const unsigned *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -129,7 +130,7 @@ i915_get_tile(struct pipe_context *pipe,
    ubyte *pDest;
    uint i;
 
-   assert(ps->region->map);
+   assert(ps->map);
 
    CLIP_TILE;
 
@@ -137,7 +138,7 @@ i915_get_tile(struct pipe_context *pipe,
       dst_stride = w0 * cpp;
    }
 
-   pSrc = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
+   pSrc = ps->map + (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
@@ -163,7 +164,7 @@ i915_put_tile(struct pipe_context *pipe,
    ubyte *pDest;
    uint i;
 
-   assert(ps->region->map);
+   assert(ps->map);
 
    CLIP_TILE;
 
@@ -172,7 +173,7 @@ i915_put_tile(struct pipe_context *pipe,
    }
 
    pSrc = (const ubyte *) p;
-   pDest = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
+   pDest = ps->map + (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w0 * cpp);
@@ -211,7 +212,7 @@ i915_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe_region_reference(&ps->region, tex->region);
+      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
@@ -274,12 +275,12 @@ i915_surface_data(struct pipe_context *pipe,
 		  const void *src, unsigned src_pitch,
 		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   _mesa_copy_rect(pipe->region_map(pipe, dst->region) + dst->offset,
+   _mesa_copy_rect(pipe_surface_map(dst),
                    dst->cpp,
                    dst->pitch,
                    dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
-   pipe->region_unmap(pipe, dst->region);
+   pipe_surface_unmap(dst);
 }
 
 
@@ -297,23 +298,23 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( dst->cpp == src->cpp );
 
    if (0) {
-      _mesa_copy_rect(pipe->region_map(pipe, dst->region) + dst->offset,
+      _mesa_copy_rect(pipe_surface_map(dst),
 		      dst->cpp,
 		      dst->pitch,
 		      dstx, dsty, 
 		      width, height, 
-		      pipe->region_map(pipe, src->region) + src->offset, 
+		      pipe_surface_map(src), 
 		      src->pitch, 
 		      srcx, srcy);
 
-      pipe->region_unmap(pipe, src->region);
-      pipe->region_unmap(pipe, dst->region);
+      pipe_surface_unmap(src);
+      pipe_surface_unmap(dst);
    }
    else {
       i915_copy_blit( i915_context(pipe),
 		      dst->cpp,
-		      (short) src->pitch, src->region->buffer, src->offset,
-		      (short) dst->pitch, dst->region->buffer, dst->offset,
+		      (short) src->pitch, src->buffer, src->offset,
+		      (short) dst->pitch, dst->buffer, dst->offset,
 		      (short) srcx, (short) srcy, (short) dstx, (short) dsty, (short) width, (short) height );
    }
 }
@@ -324,7 +325,7 @@ i915_surface_copy(struct pipe_context *pipe,
 static ubyte *
 get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
 {
-   return dst->region->map + (y * dst->pitch + x) * dst->cpp;
+   return dst->map + (y * dst->pitch + x) * dst->cpp;
 }
 
 
@@ -337,7 +338,7 @@ i915_surface_fill(struct pipe_context *pipe,
    if (0) {
       unsigned i, j;
 
-      (void)pipe->region_map(pipe, dst->region);
+      (void)pipe_surface_map(dst);
 
       switch (dst->cpp) {
       case 1: {
@@ -375,7 +376,7 @@ i915_surface_fill(struct pipe_context *pipe,
       i915_fill_blit( i915_context(pipe),
 		      dst->cpp,
 		      (short) dst->pitch, 
-		      dst->region->buffer, dst->offset,
+		      dst->buffer, dst->offset,
 		      (short) dstx, (short) dsty, 
 		      (short) width, (short) height, 
 		      value );

@@ -39,6 +39,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "st_context.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
@@ -56,8 +57,6 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                        const struct gl_pixelstore_attrib *packing,
                        GLvoid *pixels)
 {
-   struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb = st_renderbuffer(fb->_StencilBuffer);
    struct pipe_surface *ps = strb->surface;
@@ -65,7 +64,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint j;
 
    /* map the stencil buffer */
-   stmap = pipe->region_map(pipe, ps->region);
+   stmap = pipe_surface_map(ps);
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -122,7 +121,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
 
    /* unmap the stencil buffer */
-   pipe->region_unmap(pipe, ps->region);
+   pipe_surface_unmap(ps);
 }
 
 
@@ -151,7 +150,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    /* Do all needed clipping here, so that we can forget about it later */
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
-      /* The ReadPixels region is totally outside the window bounds */
+      /* The ReadPixels surface is totally outside the window bounds */
       return;
    }
 
@@ -180,7 +179,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!strb)
       return;
 
-   pipe->region_map(pipe, strb->surface->region);
+   pipe_surface_map(strb->surface);
 
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */
@@ -231,7 +230,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
    }
 
-   pipe->region_unmap(pipe, strb->surface->region);
+   pipe_surface_unmap(strb->surface);
 }
 
 

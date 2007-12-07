@@ -33,6 +33,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 
@@ -494,13 +495,17 @@ i915_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
       if (i915->flags.is_i945 ? i945_miptree_layout(pipe, tex) :
 	  i915_miptree_layout(pipe, tex)) {
-	 tex->region = pipe->winsys->region_alloc(pipe->winsys,
-						  tex->pitch * tex->base.cpp *
-						  tex->total_height,
-						  PIPE_SURFACE_FLAG_TEXTURE);
+	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys,
+						   PIPE_SURFACE_FLAG_TEXTURE);
+
+	 if (tex->buffer)
+	    pipe->winsys->buffer_data(pipe->winsys, tex->buffer,
+				      tex->pitch * tex->base.cpp *
+				      tex->total_height, NULL,
+				      PIPE_BUFFER_USAGE_PIXEL);
       }
 
-      if (!tex->region) {
+      if (!tex->buffer) {
 	 FREE(tex);
 	 tex = NULL;
       }
@@ -527,7 +532,7 @@ i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe->winsys->region_release(pipe->winsys, &tex->region);
+      pipe->winsys->buffer_reference(pipe->winsys, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])

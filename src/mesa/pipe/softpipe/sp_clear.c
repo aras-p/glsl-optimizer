@@ -50,12 +50,12 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
    softpipe_update_derived(softpipe); /* not needed?? */
 
-   if (ps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
+   if (ps == sp_tile_cache_get_surface(softpipe, softpipe->zbuf_cache)) {
       float clear[4];
       clear[0] = 1.0; /* XXX hack */
       sp_tile_cache_clear(softpipe->zbuf_cache, clear);
    }
-   else if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
+   else if (ps == sp_tile_cache_get_surface(softpipe, softpipe->cbuf_cache[0])) {
       float clear[4];
       clear[0] = 0.2f; /* XXX hack */
       clear[1] = 0.2f; /* XXX hack */

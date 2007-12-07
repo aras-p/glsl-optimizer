@@ -76,7 +76,7 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
                   unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const unsigned *src
-      = ((const unsigned *) (ps->region->map + ps->offset))
+      = ((const unsigned *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -107,7 +107,7 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
                   const float *p)
 {
    unsigned *dst
-      = ((unsigned *) (ps->region->map + ps->offset))
+      = ((unsigned *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -140,7 +140,7 @@ b8g8r8a8_get_tile(struct pipe_surface *ps,
                   unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const unsigned *src
-      = ((const unsigned *) (ps->region->map + ps->offset))
+      = ((const unsigned *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -171,7 +171,7 @@ b8g8r8a8_put_tile(struct pipe_surface *ps,
                   const float *p)
 {
    unsigned *dst
-      = ((unsigned *) (ps->region->map + ps->offset))
+      = ((unsigned *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -204,7 +204,7 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
                   unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->region->map + ps->offset))
+      = ((const ushort *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
 
@@ -235,7 +235,7 @@ z16_get_tile(struct pipe_surface *ps,
              unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->region->map + ps->offset))
+      = ((const ushort *) (ps->map))
       + y * ps->pitch + x;
    const float scale = 1.0f / 65535.0f;
    unsigned i, j;
@@ -268,7 +268,7 @@ l8_get_tile(struct pipe_surface *ps,
                   unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ubyte *src
-      = ((const ubyte *) (ps->region->map + ps->offset))
+      = ((const ubyte *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -299,7 +299,7 @@ a8_get_tile(struct pipe_surface *ps,
                   unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ubyte *src
-      = ((const ubyte *) (ps->region->map + ps->offset))
+      = ((const ubyte *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -330,7 +330,7 @@ r16g16b16a16_get_tile(struct pipe_surface *ps,
                       unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const short *src
-      = ((const short *) (ps->region->map + ps->offset))
+      = ((const short *) (ps->map))
       + (y * ps->pitch + x) * 4;
    unsigned i, j;
    unsigned w0 = w;
@@ -362,7 +362,7 @@ r16g16b16a16_put_tile(struct pipe_surface *ps,
                       const float *p)
 {
    short *dst
-      = ((short *) (ps->region->map + ps->offset))
+      = ((short *) (ps->map))
       + (y * ps->pitch + x) * 4;
    unsigned i, j;
    unsigned w0 = w;
@@ -399,7 +399,7 @@ i8_get_tile(struct pipe_surface *ps,
             unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ubyte *src
-      = ((const ubyte *) (ps->region->map + ps->offset))
+      = ((const ubyte *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -430,7 +430,7 @@ a8_l8_get_tile(struct pipe_surface *ps,
                unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->region->map + ps->offset))
+      = ((const ushort *) (ps->map))
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -467,7 +467,7 @@ z32_get_tile(struct pipe_surface *ps,
              unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const uint *src
-      = ((const uint *) (ps->region->map + ps->offset))
+      = ((const uint *) (ps->map))
       + y * ps->pitch + x;
    const double scale = 1.0 / (double) 0xffffffff;
    unsigned i, j;
@@ -501,7 +501,7 @@ s8z24_get_tile(struct pipe_surface *ps,
                unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const uint *src
-      = ((const uint *) (ps->region->map + ps->offset))
+      = ((const uint *) (ps->map))
       + y * ps->pitch + x;
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
@@ -535,7 +535,7 @@ z24s8_get_tile(struct pipe_surface *ps,
                unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const uint *src
-      = ((const uint *) (ps->region->map + ps->offset))
+      = ((const uint *) (ps->map))
       + y * ps->pitch + x;
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
@@ -589,7 +589,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe_region_reference(&ps->region, spt->region);
+      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
@@ -613,7 +613,7 @@ softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    ubyte *pDest;
    uint i;
 
-   assert(ps->region->map);
+   assert(ps->map);
 
    if (dst_stride == 0) {
       dst_stride = w * cpp;
@@ -621,7 +621,7 @@ softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 
    CLIP_TILE;
 
-   pSrc = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
+   pSrc = ps->map + (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
@@ -645,7 +645,7 @@ softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    ubyte *pDest;
    uint i;
 
-   assert(ps->region->map);
+   assert(ps->map);
 
    if (src_stride == 0) {
       src_stride = w * cpp;
@@ -654,7 +654,7 @@ softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    CLIP_TILE;
 
    pSrc = (const ubyte *) p;
-   pDest = ps->region->map + ps->offset + (y * ps->pitch + x) * cpp;
+   pDest = ps->map + (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
@@ -817,12 +817,12 @@ sp_surface_data(struct pipe_context *pipe,
 		const void *src, unsigned src_pitch,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   copy_rect(pipe->region_map(pipe, dst->region) + dst->offset,
+   copy_rect(pipe_surface_map(dst),
              dst->cpp,
              dst->pitch,
              dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
-   pipe->region_unmap(pipe, dst->region);
+   pipe_surface_unmap(dst);
 }
 
 /* Assumes all values are within bounds -- no checking at this level -
@@ -835,29 +835,26 @@ sp_surface_copy(struct pipe_context *pipe,
 		struct pipe_surface *src,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   ubyte *src_map, *dst_map;
    assert( dst->cpp == src->cpp );
 
-   dst_map = pipe->region_map(pipe, dst->region);
-   src_map = pipe->region_map(pipe, src->region);
-   copy_rect(dst_map + dst->offset,
+   copy_rect(pipe_surface_map(dst),
              dst->cpp,
              dst->pitch,
              dstx, dsty,
              width, height,
-             src_map + src->offset,
+             pipe_surface_map(src),
              src->pitch,
              srcx, srcy);
 
-   pipe->region_unmap(pipe, src->region);
-   pipe->region_unmap(pipe, dst->region);
+   pipe_surface_unmap(src);
+   pipe_surface_unmap(dst);
 }
 
 
 static ubyte *
 get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
 {
-   return dst->region->map + (y * dst->pitch + x) * dst->cpp;
+   return dst->map + (y * dst->pitch + x) * dst->cpp;
 }
 
 
@@ -879,7 +876,7 @@ sp_surface_fill(struct pipe_context *pipe,
    assert(dst->pitch > 0);
    assert(width <= dst->pitch);
 
-   (void)pipe->region_map(pipe, dst->region);
+   (void)pipe_surface_map(dst);
 
    switch (dst->cpp) {
    case 1:
@@ -935,7 +932,7 @@ sp_surface_fill(struct pipe_context *pipe,
       break;
    }
 
-   pipe->region_unmap( pipe, dst->region );
+   pipe_surface_unmap( dst );
 }
 
 

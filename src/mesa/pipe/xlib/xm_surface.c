@@ -665,12 +665,12 @@ xmesa_new_color_surface(struct pipe_winsys *winsys, GLuint pipeFormat)
    xms->surface.refcount = 1;
    xms->surface.winsys = winsys;
 
-   /* Note, the region we allocate doesn't actually have any storage
+   /* Note, the buffer we allocate doesn't actually have any storage
     * since we're drawing into an XImage or Pixmap.
-    * The region's size will get set in the xmesa_alloc_front/back_storage()
+    * The surface's size will get set in the xmesa_alloc_front/back_storage()
     * functions.
     */
-   xms->surface.region = winsys->region_alloc(winsys, 1, 0x0);
+   xms->surface.buffer = winsys->buffer_create(winsys, 0x0);
 
    return &xms->surface;
 }
@@ -713,7 +713,7 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, uint value)
 
    {
       struct softpipe_context *sp = softpipe_context(pipe);
-      if (ps == sp_tile_cache_get_surface(sp->cbuf_cache[0])) {
+      if (ps == sp_tile_cache_get_surface(sp, sp->cbuf_cache[0])) {
          float clear[4];
          clear[0] = 0.2; /* XXX hack */
          clear[1] = 0.2;

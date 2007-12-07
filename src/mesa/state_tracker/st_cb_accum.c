@@ -42,6 +42,7 @@
 #include "st_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 
 
 /**
@@ -68,7 +69,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    GLfloat *accBuf;
    GLint i;
 
-   (void) pipe->region_map(pipe, acc_ps->region);
+   (void) pipe_surface_map(acc_ps);
 
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
@@ -83,7 +84,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    free(accBuf);
 
-   pipe->region_unmap(pipe, acc_ps->region);
+   pipe_surface_unmap(acc_ps);
 }
 
 
@@ -99,7 +100,7 @@ accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
 
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   (void) pipe->region_map(pipe, acc_ps->region);
+   (void) pipe_surface_map(acc_ps);
 
    pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
@@ -111,7 +112,7 @@ accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
 
    free(accBuf);
 
-   pipe->region_unmap(pipe, acc_ps->region);
+   pipe_surface_unmap(acc_ps);
 }
 
 
@@ -128,8 +129,8 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    colorBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   colorMap = pipe->region_map(pipe, color_ps->region);
-   accMap = pipe->region_map(pipe, acc_ps->region);
+   colorMap = pipe_surface_map(color_ps);
+   accMap = pipe_surface_map(acc_ps);
 
    pipe->get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, colorBuf);
    pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
@@ -143,8 +144,8 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    free(colorBuf);
    free(accBuf);
 
-   pipe->region_unmap(pipe, color_ps->region);
-   pipe->region_unmap(pipe, acc_ps->region);
+   pipe_surface_unmap(color_ps);
+   pipe_surface_unmap(acc_ps);
 }
 
 
@@ -159,8 +160,8 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   (void) pipe->region_map(pipe, color_ps->region);
-   (void) pipe->region_map(pipe, acc_ps->region);
+   (void) pipe_surface_map(color_ps);
+   (void) pipe_surface_map(acc_ps);
 
    pipe->get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, buf);
 
@@ -172,8 +173,8 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    free(buf);
 
-   pipe->region_unmap(pipe, color_ps->region);
-   pipe->region_unmap(pipe, acc_ps->region);
+   pipe_surface_unmap(color_ps);
+   pipe_surface_unmap(acc_ps);
 }
 
 
@@ -190,8 +191,8 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    abuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   (void) pipe->region_map(pipe, color_ps->region);
-   (void) pipe->region_map(pipe, acc_ps->region);
+   (void) pipe_surface_map(color_ps);
+   (void) pipe_surface_map(acc_ps);
 
    pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
 
@@ -218,8 +219,8 @@ accum_return(GLcontext *ctx, GLfloat value,
    if (cbuf)
       free(cbuf);
 
-   pipe->region_unmap(pipe, color_ps->region);
-   pipe->region_unmap(pipe, acc_ps->region);
+   pipe_surface_unmap(color_ps);
+   pipe_surface_unmap(acc_ps);
 }
 
 

@@ -34,7 +34,6 @@
 
 
 struct st_context;
-struct st_region;
 struct st_texture_object;
 struct st_fragment_program;
 struct draw_context;
@@ -131,11 +130,11 @@ struct st_context
    char vendor[100];
    char renderer[100];
 
-   /** Can we access the front/back color buffers as pipe_regions?
+   /** Can we access the front/back color buffers as pipe_surfaces?
     * We can't with the Xlib driver...
     * This is a hack that should be fixed someday.
     */
-   GLboolean haveFramebufferRegions;
+   GLboolean haveFramebufferSurfaces;
 
    /* State to be validated:
     */
