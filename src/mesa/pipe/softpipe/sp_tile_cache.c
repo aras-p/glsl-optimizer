@@ -124,8 +124,10 @@ void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
-   if (tc->surface && tc->surface->map)
+   if (tc->surface && tc->surface->map) {
+      assert(tc->surface != ps);
       pipe_surface_unmap(tc->surface);
+   }
 
    pipe_surface_reference(&tc->surface, ps);
 
@@ -287,39 +289,10 @@ get_tile(struct pipe_context *pipe,
 }
 
 
-void
-sp_flush_tile_cache(struct softpipe_context *softpipe,
-                    struct softpipe_tile_cache *tc)
-{
-   struct pipe_context *pipe = &softpipe->pipe;
-   struct pipe_surface *ps = tc->surface;
-   int inuse = 0, pos;
-
-   if (!ps || !ps->buffer)
-      return;
-
-   for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      struct softpipe_cached_tile *tile = tc->entries + pos;
-      if (tile->x >= 0) {
-         put_tile(pipe, ps, tile);
-         tile->x = tile->y = -1;  /* mark as empty */
-         inuse++;
-      }
-   }
-
-#if TILE_CLEAR_OPTIMIZATION
-   sp_tile_cache_flush_clear(&softpipe->pipe, tc);
-#endif
-#if 0
-   printf("flushed tiles in use: %d\n", inuse);
-#endif
-}
-
-
 /**
- * Actually clear the tiles which were flagged as being cleared.
+ * Actually clear the tiles which were flagged as being in a clear state.
  */
-void
+static void
 sp_tile_cache_flush_clear(struct pipe_context *pipe,
                           struct softpipe_tile_cache *tc)
 {
@@ -354,6 +327,47 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
 }
 
 
+/**
+ * Flush the tile cache: write all dirty tiles back to the surface.
+ * any tiles "flagged" as cleared will be "really" cleared.
+ */
+void
+sp_flush_tile_cache(struct softpipe_context *softpipe,
+                    struct softpipe_tile_cache *tc)
+{
+   struct pipe_context *pipe = &softpipe->pipe;
+   struct pipe_surface *ps = tc->surface;
+   int inuse = 0, pos;
+
+   if (!ps || !ps->buffer)
+      return;
+
+   if (!ps->map)
+      pipe_surface_map(ps);
+
+   for (pos = 0; pos < NUM_ENTRIES; pos++) {
+      struct softpipe_cached_tile *tile = tc->entries + pos;
+      if (tile->x >= 0) {
+         put_tile(pipe, ps, tile);
+         tile->x = tile->y = -1;  /* mark as empty */
+         inuse++;
+      }
+   }
+
+#if TILE_CLEAR_OPTIMIZATION
+   sp_tile_cache_flush_clear(&softpipe->pipe, tc);
+#endif
+
+#if 0
+   printf("flushed tiles in use: %d\n", inuse);
+#endif
+}
+
+
+/**
+ * Get a tile from the cache.
+ * \param x, y  position of tile, in pixels
+ */
 struct softpipe_cached_tile *
 sp_get_cached_tile(struct softpipe_context *softpipe,
                    struct softpipe_tile_cache *tc, int x, int y)
@@ -470,8 +484,10 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float value[4])
    tc->clear_value[3] = value[3];
 
 #if TILE_CLEAR_OPTIMIZATION
+   /* set flags to indicate all the tiles are cleared */
    memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
 #else
+   /* disable the optimization */
    memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
 #endif
 }
