@@ -37,11 +37,12 @@ static INLINE ubyte *
 pipe_surface_map(struct pipe_surface *surface)
 {
    if (!surface->map_refcount++) {
-      surface->map = surface->winsys->buffer_map( surface->winsys,
+      surface->map
+         = (ubyte *) surface->winsys->buffer_map( surface->winsys,
 						  surface->buffer,
 						  PIPE_BUFFER_FLAG_WRITE | 
 						  PIPE_BUFFER_FLAG_READ )
-		   + surface->offset;
+           + surface->offset;
    }
 
    return surface->map;
