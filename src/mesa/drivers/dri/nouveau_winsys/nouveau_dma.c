@@ -137,6 +137,7 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
 	uint32_t put_offset;
 	int i;
+	volatile int dum;
 
 	if (chan->dma.cur == chan->dma.put)
 		return;
@@ -188,6 +189,7 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 #endif
 	chan->dma.put  = chan->dma.cur;
 	NOUVEAU_DMA_BARRIER;
+	dum            = READ_GET(chan);
 	*chan->put     = put_offset;
 	NOUVEAU_DMA_BARRIER;
 }
