@@ -171,7 +171,6 @@ dnl Driver specific build directories
 dnl
 SRC_DIRS="mesa"
 GLU_DIRS="sgi"
-DRI_DIRS=""
 WINDOW_SYSTEM=""
 case "$mesa_driver" in
 x11)
@@ -379,6 +378,12 @@ if test "$mesa_driver" = dri; then
         PROGRAM_DIRS="egl"
     fi
 
+    # default drivers
+    if test "x$DRI_DIRS" = x; then
+        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
+            savage sis tdfx trident unichrome ffb"
+    fi
+
     # Platform specific settings and drivers to build
     case "$host_os" in
     linux*)
@@ -389,19 +394,19 @@ if test "$mesa_driver" = dri; then
         fi
 
         case "$host_cpu" in
-        i*86)
-            if test "x$DRI_DIRS" = x; then
-                DRI_DIRS="i810 i915tex i915 i965 mach64 mga r128 r200 r300 \
-                    radeon s3v savage sis tdfx trident unichrome ffb"
-            fi
-            ;;
         x86_64)
+            # ffb, gamma, and sis are missing because they have not be
+            # converted to use the new interface.  i810 are missing
+            # because there is no x86-64 system where they could *ever*
+            # be used.
             if test "x$DRI_DIRS" = x; then
-                DRI_DIRS="i915tex i915 i965 mach64 mga r128 r200 radeon tdfx \
-                    unichrome savage r300"
+                DRI_DIRS="i915 i965 mach64 mga r128 r200 r300 radeon \
+                    savage tdfx unichrome"
             fi
             ;;
         powerpc*)
+            # Build only the drivers for cards that exist on PowerPC.
+            # At some point MGA will be added, but not yet.
             if test "x$DRI_DIRS" = x; then
                 DRI_DIRS="mach64 r128 r200 r300 radeon tdfx"
             fi
@@ -419,6 +424,8 @@ if test "$mesa_driver" = dri; then
             CXXFLAGS="$CXXFLAGS -ansi -pedantic"
         fi
 
+        # ffb and gamma are missing because they have not been converted
+        # to use the new interface.
         if test "x$DRI_DIRS" = x; then
             DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
                 unichrome savage sis"
