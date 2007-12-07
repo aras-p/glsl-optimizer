@@ -442,7 +442,7 @@ i915_do_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I915_UPLOAD_PROGRAM) {
-      if (ProgramSize) {
+      if (state->ProgramSize) {
          if (INTEL_DEBUG & DEBUG_STATE)
             fprintf(stderr, "I915_UPLOAD_PROGRAM:\n");
 
