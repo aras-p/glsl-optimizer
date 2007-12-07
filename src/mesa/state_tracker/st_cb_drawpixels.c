@@ -456,7 +456,8 @@ make_texture(struct st_context *st,
    struct pipe_context *pipe = st->pipe;
    const struct gl_texture_format *mformat;
    struct pipe_texture *pt;
-   GLuint pipeFormat, cpp;
+   enum pipe_format pipeFormat;
+   GLuint cpp;
    GLenum baseFormat;
 
    baseFormat = _mesa_base_format(format);
@@ -729,7 +730,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
  * XXX probably move this to a re-usable place.
  */
 static GLboolean
-compatible_formats(GLenum format, GLenum type, GLuint pipeFormat)
+compatible_formats(GLenum format, GLenum type, enum pipe_format pipeFormat)
 {
    static const GLuint one = 1;
    GLubyte littleEndian = *((GLubyte *) &one);

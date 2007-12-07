@@ -51,7 +51,7 @@ struct pipe_context {
     * Queries
     */
    boolean (*is_format_supported)( struct pipe_context *pipe,
-                                   uint format );
+                                   enum pipe_format format );
 
    const char *(*get_name)( struct pipe_context *pipe );
 

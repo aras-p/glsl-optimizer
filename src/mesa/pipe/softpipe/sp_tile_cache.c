@@ -174,7 +174,8 @@ is_depth_stencil_surface(struct pipe_surface *ps)
  * Set pixels in a tile to the given clear color/value.
  */
 static void
-clear_tile(struct softpipe_cached_tile *tile, uint format,
+clear_tile(struct softpipe_cached_tile *tile,
+           enum pipe_format format,
            const float clear_value[4])
 {
    uint i, j;

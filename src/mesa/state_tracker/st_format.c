@@ -99,9 +99,7 @@ format_size(
  * XXX temporary here
  */
 GLboolean
-st_get_format_info(
-   GLuint format,
-   struct pipe_format_info *pinfo )
+st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
 {
    if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
       pipe_format_rgbazs_t info;
@@ -222,10 +220,10 @@ st_get_format_info(
  * Return bytes per pixel for the given format.
  */
 GLuint
-st_sizeof_format(GLuint pipeFormat)
+st_sizeof_format(enum pipe_format format)
 {
    struct pipe_format_info info;
-   if (!st_get_format_info( pipeFormat, &info )) {
+   if (!st_get_format_info( format, &info )) {
       assert( 0 );
       return 0;
    }
@@ -237,10 +235,10 @@ st_sizeof_format(GLuint pipeFormat)
  * Return bytes per pixel for the given format.
  */
 GLenum
-st_format_datatype(GLuint pipeFormat)
+st_format_datatype(enum pipe_format format)
 {
    struct pipe_format_info info;
-   if (!st_get_format_info( pipeFormat, &info )) {
+   if (!st_get_format_info( format, &info )) {
       assert( 0 );
       return 0;
    }
@@ -248,7 +246,7 @@ st_format_datatype(GLuint pipeFormat)
 }
 
 
-GLuint
+enum pipe_format
 st_mesa_format_to_pipe_format(GLuint mesaFormat)
 {
    switch (mesaFormat) {

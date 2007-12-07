@@ -29,6 +29,8 @@
 #define P_WINSYS_H
 
 
+#include "p_format.h"
+
 /**
  * \file
  * This is the interface that Gallium3D requires any window system
@@ -90,7 +92,7 @@ struct pipe_winsys
 
    /** allocate a new surface (no context dependency) */
    struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws,
-                                         unsigned format);
+                                         enum pipe_format format);
 
    void (*surface_release)(struct pipe_winsys *ws, struct pipe_surface **s);
 

@@ -39,6 +39,7 @@
 #define PIPE_STATE_H
 
 #include "p_compiler.h"
+#include "p_format.h"
 
 /**
  * Implementation limits
@@ -265,7 +266,7 @@ struct pipe_surface
    struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
    ubyte *map;    /**< only non-NULL when surface is actually mapped */
    unsigned map_refcount;  /**< Reference count for mapping */
-   unsigned format;              /**< PIPE_FORMAT_x */
+   enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned cpp;                 /**< bytes per pixel */
    unsigned width, height;
    unsigned pitch;               /**< in pixels */
@@ -286,7 +287,7 @@ struct pipe_texture
    unsigned target;            /* XXX convert to PIPE_TEXTURE_x */
    unsigned internal_format;   /* XXX convert to PIPE_FORMAT_x */
 
-   unsigned format;            /**< PIPE_FORMAT_x */
+   enum pipe_format format;    /**< PIPE_FORMAT_x */
    unsigned first_level;
    unsigned last_level;
 
@@ -331,7 +332,7 @@ struct pipe_vertex_element
    unsigned vertex_buffer_index:5;
 
    unsigned dst_offset:8; 
-   unsigned src_format; 	   /**< PIPE_FORMAT_* */
+   enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
 
 

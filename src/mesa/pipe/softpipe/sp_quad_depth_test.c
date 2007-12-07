@@ -54,7 +54,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct pipe_surface *ps = softpipe->framebuffer.zbuf;
-   const uint format = ps->format;
+   const enum pipe_format format = ps->format;
    unsigned bzzzz[QUAD_SIZE];  /**< Z values fetched from depth buffer */
    unsigned qzzzz[QUAD_SIZE];  /**< Z values from the quad */
    unsigned zmask = 0;
