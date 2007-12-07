@@ -264,21 +264,27 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.create_alpha_test_state = softpipe_create_alpha_test_state;
    softpipe->pipe.bind_alpha_test_state   = softpipe_bind_alpha_test_state;
    softpipe->pipe.delete_alpha_test_state = softpipe_delete_alpha_test_state;
+
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;
    softpipe->pipe.bind_blend_state   = softpipe_bind_blend_state;
    softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
+
    softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
    softpipe->pipe.bind_sampler_state   = softpipe_bind_sampler_state;
    softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
+
    softpipe->pipe.create_depth_stencil_state = softpipe_create_depth_stencil_state;
    softpipe->pipe.bind_depth_stencil_state   = softpipe_bind_depth_stencil_state;
    softpipe->pipe.delete_depth_stencil_state = softpipe_delete_depth_stencil_state;
+
    softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
    softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
    softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
+
    softpipe->pipe.create_fs_state = softpipe_create_fs_state;
    softpipe->pipe.bind_fs_state   = softpipe_bind_fs_state;
    softpipe->pipe.delete_fs_state = softpipe_delete_fs_state;
+
    softpipe->pipe.create_vs_state = softpipe_create_vs_state;
    softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
    softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
