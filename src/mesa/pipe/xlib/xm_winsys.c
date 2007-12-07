@@ -38,6 +38,8 @@
 #include "main/macros.h"
 
 #include "pipe/p_winsys.h"
+#include "pipe/p_format.h"
+#include "pipe/p_context.h"
 #include "pipe/softpipe/sp_winsys.h"
 
 
@@ -54,17 +56,52 @@ struct xm_buffer
 };
 
 
+struct xmesa_surface
+{
+   struct pipe_surface surface;
+   /* no extra fields for now */
+};
 
-/* Turn the softpipe opaque buffer pointer into a dri_bufmgr opaque
+
+/**
+ * Derived from softpipe_winsys.
+ * We just need one extra field which indicates the pixel format to use for
+ * drawing surfaces so that we're compatible with the XVisual/window format.
+ */
+struct xmesa_softpipe_winsys
+{
+   struct softpipe_winsys spws;
+   uint pixelformat;
+};
+
+
+
+/** Cast wrapper */
+static INLINE struct xmesa_surface *
+xmesa_surface(struct pipe_surface *ps)
+{
+   assert(0);
+   return (struct xmesa_surface *) ps;
+}
+
+/** cast wrapper */
+static INLINE struct xmesa_softpipe_winsys *
+xmesa_softpipe_winsys(struct softpipe_winsys *spws)
+{
+   return (struct xmesa_softpipe_winsys *) spws;
+}
+
+/**
+ * Turn the softpipe opaque buffer pointer into a dri_bufmgr opaque
  * buffer pointer...
  */
-static inline struct xm_buffer *
+static INLINE struct xm_buffer *
 xm_bo( struct pipe_buffer_handle *bo )
 {
    return (struct xm_buffer *) bo;
 }
 
-static inline struct pipe_buffer_handle *
+static INLINE struct pipe_buffer_handle *
 pipe_bo( struct xm_buffer *bo )
 {
    return (struct pipe_buffer_handle *) bo;
@@ -156,6 +193,33 @@ xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    memcpy(data, b + offset, size);
 }
 
+
+/**
+ * Display/copy the image in the surface into the X window specified
+ * by the XMesaBuffer.
+ */
+void
+xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
+{
+   XImage *ximage = b->tempImage;
+   struct xm_buffer *xm_buf = xm_bo(surf->buffer);
+
+   /* check that the XImage has been previously initialized */
+   assert(ximage->format);
+   assert(ximage->bitmap_unit);
+
+   /* update XImage's fields */
+   ximage->width = surf->width;
+   ximage->height = surf->height;
+   ximage->bytes_per_line = surf->pitch * (ximage->bits_per_pixel / 8);
+   ximage->data = xm_buf->data;
+
+   /* display image in Window */
+   XPutImage(b->xm_visual->display, b->drawable, b->gc,
+             ximage, 0, 0, 0, 0, surf->width, surf->height);
+}
+
+
 static void
 xm_flush_frontbuffer(struct pipe_winsys *pws,
                      struct pipe_surface *surf,
@@ -166,7 +230,11 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     * If we instead did front buffer rendering to a temporary XImage,
     * this would be the place to copy the Ximage to the on-screen Window.
     */
+   XMesaContext xmctx = (XMesaContext) context_private;
+
+   xmesa_display_surface(xmctx->xm_buffer, surf);
 }
+
 
 
 static void
@@ -177,6 +245,7 @@ xm_printf(struct pipe_winsys *pws, const char *fmtString, ...)
    vfprintf(stderr, fmtString, args);
    va_end( args );
 }
+
 
 static const char *
 xm_get_name(struct pipe_winsys *pws)
@@ -219,7 +288,6 @@ round_up(unsigned n, unsigned multiple)
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
-
 static unsigned
 xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
 		 unsigned flags)
@@ -243,12 +311,7 @@ xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
    xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
    xms->surface.winsys = ws;
-#if 0
-   /*
-    * This is really just a softpipe surface, not an XImage/Pixmap surface.
-    */
-   softpipe_init_surface_funcs(&xms->surface);
-#endif
+
    return &xms->surface;
 }
 
@@ -261,7 +324,7 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-	 winsys->buffer_reference(winsys, &surf->buffer, NULL);
+	winsys->buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -274,7 +337,7 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
  * For Xlib, this is a singleton object.
  * Nothing special for the Xlib driver so no subclassing or anything.
  */
-struct pipe_winsys *
+static struct pipe_winsys *
 xmesa_get_pipe_winsys(void)
 {
    static struct pipe_winsys *ws = NULL;
@@ -308,59 +371,65 @@ xmesa_get_pipe_winsys(void)
 
 
 /**
- * XXX this depends on the depths supported by the screen (8/16/32/etc).
- * Maybe when we're about to create a context/drawable we create a new
- * softpipe_winsys object that corresponds to the specified screen...
+ * The winsys being queried will have been created at glXCreateContext
+ * time, with a pixel format corresponding to the context's visual.
  *
- * Also, this query only really matters for on-screen drawables.
- * For textures and FBOs we (softpipe) can support any format.o
+ * XXX we should pass a flag indicating if the format is going to be
+ * use for a drawing surface vs. a texture.  In the later case, we
+ * can support any format.
  */
 static boolean
 xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
 {
-   /* Any format supported by softpipe can be listed here.
-    * This query is not used for allocating window-system color buffers
-    * (which would depend on the screen depth/bpp).
-    */
-   switch (format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
-   case PIPE_FORMAT_S_R16_G16_B16_A16:
-   case PIPE_FORMAT_S8_Z24:
-   case PIPE_FORMAT_U_S8:
-   case PIPE_FORMAT_U_Z16:
-   case PIPE_FORMAT_U_Z32:
+   struct xmesa_softpipe_winsys *xmws = xmesa_softpipe_winsys(sws);
+
+   if (format == xmws->pixelformat) {
       return TRUE;
-   default:
-      return FALSE;
-   };
+   }
+   else {
+      /* non-color / window surface format */
+      switch (format) {
+      case PIPE_FORMAT_S_R16_G16_B16_A16:
+      case PIPE_FORMAT_S8_Z24:
+      case PIPE_FORMAT_U_S8:
+      case PIPE_FORMAT_U_Z16:
+      case PIPE_FORMAT_U_Z32:
+         return TRUE;
+      default:
+         return FALSE;
+      };
+   }
 }
 
 
 /**
  * Return pointer to a softpipe_winsys object.
- * For Xlib, this is a singleton object.
  */
 static struct softpipe_winsys *
-xmesa_get_softpipe_winsys(void)
+xmesa_get_softpipe_winsys(uint pixelformat)
 {
-   static struct softpipe_winsys *spws = NULL;
+   struct xmesa_softpipe_winsys *xmws
+      = CALLOC_STRUCT(xmesa_softpipe_winsys);
+   if (!xmws)
+      return NULL;
 
-   if (!spws) {
-      spws = CALLOC_STRUCT(softpipe_winsys);
-      if (spws) {
-         spws->is_format_supported = xmesa_is_format_supported;
-      }
-   }
+   xmws->spws.is_format_supported = xmesa_is_format_supported;
+   xmws->pixelformat = pixelformat;
 
-   return spws;
+   return &xmws->spws;
 }
 
 
 struct pipe_context *
-xmesa_create_context(XMesaContext xmesa)
+xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 {
    struct pipe_winsys *pws = xmesa_get_pipe_winsys();
-   struct softpipe_winsys *spws = xmesa_get_softpipe_winsys();
+   struct softpipe_winsys *spws = xmesa_get_softpipe_winsys(pixelformat);
+   struct pipe_context *pipe;
    
-   return softpipe_create( pws, spws );
+   pipe = softpipe_create( pws, spws );
+   if (pipe)
+      pipe->priv = xmesa;
+
+   return pipe;
 }
