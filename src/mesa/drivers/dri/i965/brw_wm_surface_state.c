@@ -140,49 +140,51 @@ static GLuint translate_tex_format( GLuint mesa_format )
 }
 
 static
-void brw_update_texture_surface( GLcontext *ctx, 
-				 GLuint unit,
-				 struct brw_surface_state *surf )
+void brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = brw->attribs.Texture->Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
+   struct brw_surface_state surf;
 
-   memset(surf, 0, sizeof(*surf));
+   memset(&surf, 0, sizeof(surf));
 
-   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;   
-   surf->ss0.surface_type = translate_tex_target(tObj->Target);
-   surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat->MesaFormat);
+   surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
+   surf.ss0.surface_type = translate_tex_target(tObj->Target);
+   surf.ss0.surface_format = translate_tex_format(firstImage->TexFormat->MesaFormat);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
-/*    surf->ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
+/*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
 
    /* BRW_NEW_LOCK */
-   surf->ss1.base_addr = bmBufferOffset(intel,
+   surf.ss1.base_addr = bmBufferOffset(intel,
 					intelObj->mt->region->buffer);
 
-   surf->ss2.mip_count = intelObj->lastLevel - intelObj->firstLevel;
-   surf->ss2.width = firstImage->Width - 1;
-   surf->ss2.height = firstImage->Height - 1;
+   surf.ss2.mip_count = intelObj->lastLevel - intelObj->firstLevel;
+   surf.ss2.width = firstImage->Width - 1;
+   surf.ss2.height = firstImage->Height - 1;
 
-   surf->ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-   surf->ss3.tiled_surface = intelObj->mt->region->tiled; /* always zero */
-   surf->ss3.pitch = (intelObj->mt->pitch * intelObj->mt->cpp) - 1;
-   surf->ss3.depth = firstImage->Depth - 1;
+   surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
+   surf.ss3.tiled_surface = intelObj->mt->region->tiled; /* always zero */
+   surf.ss3.pitch = (intelObj->mt->pitch * intelObj->mt->cpp) - 1;
+   surf.ss3.depth = firstImage->Depth - 1;
 
-   surf->ss4.min_lod = 0;
+   surf.ss4.min_lod = 0;
  
    if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      surf->ss0.cube_pos_x = 1;
-      surf->ss0.cube_pos_y = 1;
-      surf->ss0.cube_pos_z = 1;
-      surf->ss0.cube_neg_x = 1;
-      surf->ss0.cube_neg_y = 1;
-      surf->ss0.cube_neg_z = 1;
+      surf.ss0.cube_pos_x = 1;
+      surf.ss0.cube_pos_y = 1;
+      surf.ss0.cube_pos_z = 1;
+      surf.ss0.cube_neg_x = 1;
+      surf.ss0.cube_neg_y = 1;
+      surf.ss0.cube_neg_z = 1;
    }
+
+   brw->wm.bind.surf_ss_offset[unit + 1] =
+      brw_cache_data( &brw->cache[BRW_SS_SURFACE], &surf );
 }
 
 
@@ -243,13 +245,9 @@ static void upload_wm_surfaces(struct brw_context *brw )
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA 
        */
       if (texUnit->_ReallyEnabled &&
-	  intel_finalize_mipmap_tree(intel,texUnit->_Current)) {
-
-	 struct brw_surface_state surf;
-
-	 brw_update_texture_surface(ctx, i, &surf);
-
-	 brw->wm.bind.surf_ss_offset[i+1] = brw_cache_data( &brw->cache[BRW_SS_SURFACE], &surf );
+	  intel_finalize_mipmap_tree(intel,texUnit->_Current))
+      {
+	 brw_update_texture_surface(ctx, i);
 	 brw->wm.nr_surfaces = i+2;
       }
       else if( texUnit->_ReallyEnabled &&
