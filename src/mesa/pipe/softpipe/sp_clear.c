@@ -57,10 +57,38 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    }
    else if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
       float clear[4];
-      clear[0] = 0.2f; /* XXX hack */
-      clear[1] = 0.2f; /* XXX hack */
-      clear[2] = 0.2f; /* XXX hack */
-      clear[3] = 0.2f; /* XXX hack */
+      /* XXX it sure would be nice if the clear color was passed to
+       * this function as float[4]....
+       */
+      uint r, g, b, a;
+      switch (ps->format) {
+      case PIPE_FORMAT_U_R8_G8_B8_A8:
+         r = (clearValue >> 24) & 0xff;
+         g = (clearValue >> 16) & 0xff;
+         g = (clearValue >>  8) & 0xff;
+         a = (clearValue      ) & 0xff;
+         break;
+      case PIPE_FORMAT_U_A8_R8_G8_B8:
+         r = (clearValue >> 16) & 0xff;
+         g = (clearValue >>  8) & 0xff;
+         b = (clearValue      ) & 0xff;
+         a = (clearValue >> 24) & 0xff;
+         break;
+      case PIPE_FORMAT_U_B8_G8_R8_A8:
+         r = (clearValue >>  8) & 0xff;
+         g = (clearValue >> 16) & 0xff;
+         b = (clearValue >> 24) & 0xff;
+         a = (clearValue      ) & 0xff;
+         break;
+      default:
+         assert(0);
+      }
+
+      clear[0] = r / 255.0;
+      clear[1] = g / 255.0;
+      clear[2] = b / 255.0;
+      clear[3] = a / 255.0;
+
       sp_tile_cache_clear(softpipe->cbuf_cache[0], clear);
    }
 
