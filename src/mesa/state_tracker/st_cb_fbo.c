@@ -55,7 +55,8 @@
  * Compute the renderbuffer's Red/Green/EtcBit fields from the pipe format.
  */
 static int
-init_renderbuffer_bits(struct st_renderbuffer *strb, uint pipeFormat)
+init_renderbuffer_bits(struct st_renderbuffer *strb,
+                       enum pipe_format pipeFormat)
 {
    struct pipe_format_info info;
 
@@ -86,7 +87,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const uint pipeFormat
+   const enum pipe_format pipeFormat
       = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
    GLuint cpp;
    GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */

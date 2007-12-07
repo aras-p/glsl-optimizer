@@ -127,7 +127,7 @@ void i915_update_samplers( struct i915_context *i915 )
 
 
 static uint
-translate_texture_format(uint pipeFormat)
+translate_texture_format(enum pipe_format pipeFormat)
 {
    switch (pipeFormat) {
    case PIPE_FORMAT_U_L8:

@@ -26,13 +26,13 @@
  **************************************************************************/
 
 
-#ifndef ST_CB_TEXIMAGE_H
-#define ST_CB_TEXIMAGE_H
+#ifndef ST_FORMAT_H
+#define ST_FORMAT_H
 
 
 struct pipe_format_info
 {
-   GLuint format;
+   enum pipe_format format;
    GLenum base_format;
    GLenum datatype;
    GLubyte red_bits;
@@ -47,21 +47,19 @@ struct pipe_format_info
 };
 
 
-extern GLboolean
-st_get_format_info(
-   GLuint format,
-   struct pipe_format_info *pinfo );
+GLboolean
+st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo);
 
 
 extern GLuint
-st_sizeof_format(GLuint pipeFormat);
+st_sizeof_format(enum pipe_format format);
 
 
 extern GLenum
-st_format_datatype(GLuint pipeFormat);
+st_format_datatype(enum pipe_format format);
 
 
-extern GLuint
+extern enum pipe_format
 st_mesa_format_to_pipe_format(GLuint mesaFormat);
 
 

@@ -55,7 +55,7 @@
 
 
 static GLuint
-color_value(GLuint pipeFormat, const GLfloat color[4])
+color_value(enum pipe_format pipeFormat, const GLfloat color[4])
 {
    GLubyte r, g, b, a;
 
@@ -81,7 +81,7 @@ color_value(GLuint pipeFormat, const GLfloat color[4])
  
 
 static uint
-depth_value(GLuint pipeFormat, GLfloat value)
+depth_value(enum pipe_format pipeFormat, GLfloat value)
 {
    switch (pipeFormat) {
    case PIPE_FORMAT_Z16_UNORM:
@@ -104,7 +104,7 @@ depth_value(GLuint pipeFormat, GLfloat value)
 
 
 static GLboolean
-is_depth_stencil_format(GLuint pipeFormat)
+is_depth_stencil_format(enum pipe_format pipeFormat)
 {
    switch (pipeFormat) {
    case PIPE_FORMAT_S8Z24_UNORM:

@@ -51,7 +51,8 @@
  * parameter or another function.
  */
 static boolean
-softpipe_is_format_supported( struct pipe_context *pipe, uint format )
+softpipe_is_format_supported( struct pipe_context *pipe,
+                              enum pipe_format format )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    /* ask winsys if the format is supported */

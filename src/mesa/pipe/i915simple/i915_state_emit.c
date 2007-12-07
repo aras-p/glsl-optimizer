@@ -35,7 +35,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
-static unsigned translate_format( unsigned format )
+static unsigned translate_format( enum pipe_format format )
 {
    switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -48,7 +48,7 @@ static unsigned translate_format( unsigned format )
    }
 }
 
-static unsigned translate_depth_format( unsigned zformat )
+static unsigned translate_depth_format( enum pipe_format zformat )
 {
    switch (zformat) {
    case PIPE_FORMAT_S8Z24_UNORM:

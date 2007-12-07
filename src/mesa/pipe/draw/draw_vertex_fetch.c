@@ -46,7 +46,7 @@
  * XXX this might be a temporary thing.
  */
 static void
-fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
+fetch_attrib4(const void *ptr, enum pipe_format format, float attrib[4])
 {
    /* defaults */
    attrib[1] = 0.0;

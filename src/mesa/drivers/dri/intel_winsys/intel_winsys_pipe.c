@@ -193,7 +193,7 @@ intel_i915_surface_pitch(struct pipe_winsys *winsys,
 
 
 static struct pipe_surface *
-intel_i915_surface_alloc(struct pipe_winsys *winsys, unsigned format)
+intel_i915_surface_alloc(struct pipe_winsys *winsys, enum pipe_format format)
 {
    struct pipe_surface *surf = CALLOC_STRUCT(pipe_surface);
    if (surf) {

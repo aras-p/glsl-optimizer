@@ -301,7 +301,7 @@ xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
  * renderbuffers, etc.
  */
 static struct pipe_surface *
-xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
+xm_surface_alloc(struct pipe_winsys *ws, enum pipe_format pipeFormat)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
 
@@ -379,7 +379,8 @@ xmesa_get_pipe_winsys(void)
  * can support any format.
  */
 static boolean
-xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
+xmesa_is_format_supported(struct softpipe_winsys *sws,
+                          enum pipe_format format)
 {
    struct xmesa_softpipe_winsys *xmws = xmesa_softpipe_winsys(sws);
 
