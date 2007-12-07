@@ -442,14 +442,16 @@ i915_do_emit_state(struct intel_context *intel)
    }
 
    if (dirty & I915_UPLOAD_PROGRAM) {
-      if (INTEL_DEBUG & DEBUG_STATE)
-         fprintf(stderr, "I915_UPLOAD_PROGRAM:\n");
+      if (ProgramSize) {
+         if (INTEL_DEBUG & DEBUG_STATE)
+            fprintf(stderr, "I915_UPLOAD_PROGRAM:\n");
 
-      assert((state->Program[0] & 0x1ff) + 2 == state->ProgramSize);
+         assert((state->Program[0] & 0x1ff) + 2 == state->ProgramSize);
 
-      emit(intel, state->Program, state->ProgramSize * sizeof(GLuint));
-      if (INTEL_DEBUG & DEBUG_STATE)
-         i915_disassemble_program(state->Program, state->ProgramSize);
+         emit(intel, state->Program, state->ProgramSize * sizeof(GLuint));
+         if (INTEL_DEBUG & DEBUG_STATE)
+            i915_disassemble_program(state->Program, state->ProgramSize);
+      }
    }
 
    intel->batch->dirty_state &= ~dirty;
