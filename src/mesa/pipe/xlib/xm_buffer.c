@@ -41,7 +41,6 @@
 #include "state_tracker/st_context.h"
 
 
-#if defined(USE_XSHM) && !defined(XFree86Server)
 static volatile int mesaXErrorFlag = 0;
 
 /**
@@ -458,8 +457,8 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
       if (!xmesa_find_buffer(b->display, b->cmap, b)) {
 #ifdef XFree86Server
          int client = 0;
-         if (b->frontxrb->drawable)
-            client = CLIENT_ID(b->frontxrb->drawable->id);
+         if (b->drawable)
+            client = CLIENT_ID(b->drawable->id);
          (void)FreeColors(b->cmap, client,
                           b->num_alloced, b->alloced_colors, 0);
 #else
@@ -478,21 +477,6 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
 
    if (fb->Visual.doubleBufferMode) {
       /* free back ximage/pixmap/shmregion */
-      if (b->backxrb->ximage) {
-#if defined(USE_XSHM) && !defined(XFree86Server)
-         if (b->shm) {
-            XShmDetach( b->display, &b->shminfo );
-            XDestroyImage( b->backxrb->ximage );
-            shmdt( b->shminfo.shmaddr );
-         }
-         else
-#endif
-            XMesaDestroyImage( b->backxrb->ximage );
-         b->backxrb->ximage = NULL;
-      }
-      if (b->backxrb->pixmap) {
-         XMesaFreePixmap( b->display, b->backxrb->pixmap );
-      }
    }
 
    if (b->rowimage) {

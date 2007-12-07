@@ -1433,7 +1433,6 @@ Fake_glXCreateContext( Display *dpy, XVisualInfo *visinfo,
       return NULL;
    }
 
-   glxCtx->xmesaContext->direct = GL_FALSE;
    glxCtx->glxContext.isDirect = GL_FALSE;
    glxCtx->glxContext.currentDpy = dpy;
    glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
@@ -1565,7 +1564,7 @@ Fake_glXCreateGLXPixmap( Display *dpy, XVisualInfo *visinfo, Pixmap pixmap )
    if (!b) {
       return 0;
    }
-   return b->frontxrb->pixmap;
+   return b->drawable;
 }
 
 
@@ -1591,7 +1590,7 @@ Fake_glXCreateGLXPixmapMESA( Display *dpy, XVisualInfo *visinfo,
    if (!b) {
       return 0;
    }
-   return b->frontxrb->pixmap;
+   return b->drawable;
 }
 
 
@@ -1662,9 +1661,9 @@ Fake_glXDestroyContext( Display *dpy, GLXContext ctx )
 static Bool
 Fake_glXIsDirect( Display *dpy, GLXContext ctx )
 {
-   struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
    (void) dpy;
-   return glxCtx->xmesaContext->direct;
+   (void) ctx;
+   return False;
 }
 
 
@@ -2360,7 +2359,7 @@ Fake_glXCreatePbuffer( Display *dpy, GLXFBConfig config,
     * glXMakeCurrent takes.
     */
    if (xmbuf)
-      return (GLXPbuffer) xmbuf->frontxrb->pixmap;
+      return (GLXPbuffer) xmbuf->drawable;
    else
       return 0;
 }
@@ -2444,7 +2443,6 @@ Fake_glXCreateNewContext( Display *dpy, GLXFBConfig config,
       return NULL;
    }
 
-   glxCtx->xmesaContext->direct = GL_FALSE;
    glxCtx->glxContext.isDirect = GL_FALSE;
    glxCtx->glxContext.currentDpy = dpy;
    glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
@@ -2642,7 +2640,7 @@ Fake_glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixm
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf = XMesaCreatePixmapBuffer(xmvis, pixmap, 0);
-   return xmbuf->frontxrb->pixmap; /* need to return an X ID */
+   return xmbuf->drawable; /* need to return an X ID */
 }
 
 
@@ -2667,7 +2665,6 @@ Fake_glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int re
       return NULL;
    }
 
-   glxCtx->xmesaContext->direct = GL_FALSE;
    glxCtx->glxContext.isDirect = GL_FALSE;
    glxCtx->glxContext.currentDpy = dpy;
    glxCtx->glxContext.xid = (XID) glxCtx;  /* self pointer */
@@ -2736,7 +2733,7 @@ Fake_glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
    /* A GLXPbuffer handle must be an X Drawable because that's what
     * glXMakeCurrent takes.
     */
-   return (GLXPbuffer) xmbuf->frontxrb->pixmap;
+   return (GLXPbuffer) xmbuf->drawable;
 }
 
 

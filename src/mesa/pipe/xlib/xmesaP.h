@@ -32,41 +32,14 @@
 #ifdef XFree86Server
 #include "xm_image.h"
 #endif
-#include "state_tracker/st_cb_fbo.h"
+
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_public.h"
-#include "pipe/softpipe/sp_context.h"
-#include "pipe/softpipe/sp_surface.h"
 
 
 extern _glthread_Mutex _xmesa_lock;
 
 extern XMesaBuffer XMesaBufferList;
-
-/* for PF_8R8G8B24 pixel format */
-typedef struct {
-   GLubyte b;
-   GLubyte g;
-   GLubyte r;
-} bgr_t;
-
-
-/** Framebuffer pixel formats */
-enum pixel_format {
-   PF_Index,		/**< Color Index mode */
-   PF_Truecolor,	/**< TrueColor or DirectColor, any depth */
-   PF_Dither_True,	/**< TrueColor with dithering */
-   PF_8A8R8G8B,		/**< 32-bit TrueColor:  8-A, 8-R, 8-G, 8-B bits */
-   PF_8A8B8G8R,		/**< 32-bit TrueColor:  8-A, 8-B, 8-G, 8-R bits */
-   PF_8R8G8B,		/**< 32-bit TrueColor:  8-R, 8-G, 8-B bits */
-   PF_8R8G8B24,		/**< 24-bit TrueColor:  8-R, 8-G, 8-B bits */
-   PF_5R6G5B,		/**< 16-bit TrueColor:  5-R, 6-G, 5-B bits */
-   PF_Dither,		/**< Color-mapped RGB with dither */
-   PF_Lookup,		/**< Color-mapped RGB without dither */
-   PF_1Bit,		/**< monochrome dithering of RGB */
-   PF_Grayscale,	/**< Grayscale or StaticGray */
-   PF_Dither_5R6G5B	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
-};
 
 
 /**
@@ -86,47 +59,17 @@ struct xmesa_visual {
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
-
-   enum pixel_format dithered_pf;  /* Pixel format when dithering */
-   enum pixel_format undithered_pf;/* Pixel format when not dithering */
-
-   GLfloat RedGamma;		/* Gamma values, 1.0 is default */
-   GLfloat GreenGamma;
-   GLfloat BlueGamma;
-
-   /* For PF_TRUECOLOR */
-   GLint rshift, gshift, bshift;/* Pixel color component shifts */
-   GLubyte Kernel[16];		/* Dither kernel */
-   unsigned long RtoPixel[512];	/* RGB to pixel conversion */
-   unsigned long GtoPixel[512];
-   unsigned long BtoPixel[512];
-   GLubyte PixelToR[256];	/* Pixel to RGB conversion */
-   GLubyte PixelToG[256];
-   GLubyte PixelToB[256];
-
-   /* For PF_1BIT */
-   int bitFlip;
 };
 
 
 /**
- * Context info, derived from GLcontext.
+ * Context info, derived from st_context.
  * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
    struct st_context *st;
-
-   XMesaVisual xm_visual;	/* Describes the buffers */
-   XMesaBuffer xm_buffer;	/* current span/point/line/triangle buffer */
-
-   XMesaDisplay *display;	/* == xm_visual->display */
-   GLboolean swapbytes;		/* Host byte order != display byte order? */
-   GLboolean direct;		/* Direct rendering context? */
-
-   enum pixel_format pixelformat;
-
-   GLubyte clearcolor[4];		/* current clearing color */
-   unsigned long clearpixel;		/* current clearing pixel value */
+   XMesaVisual xm_visual;	/** pixel format info */
+   XMesaBuffer xm_buffer;	/** current drawbuffer */
 };
 
 
@@ -141,46 +84,6 @@ typedef enum {
 } BufferType;
 
 
-/** Values for db_mode: */
-/*@{*/
-#define BACK_PIXMAP	1
-#define BACK_XIMAGE	2
-/*@}*/
-
-
-/**
- * An xmesa_renderbuffer represents the back or front color buffer.
- * For the front color buffer:
- *    <drawable> is the X window
- * For the back color buffer:
- *    Either <ximage> or <pixmap> will be used, never both.
- * In any case, <drawable> always equals <pixmap>.
- * For stand-alone Mesa, we could merge <drawable> and <pixmap> into one
- * field.  We don't do that for the server-side GLcore module because
- * pixmaps and drawables are different and we'd need a bunch of casts.
- */
-struct xmesa_renderbuffer
-{
-   struct st_renderbuffer St; /**< Base class (XXX temporary?) */
-
-   XMesaBuffer Parent;  /**< The XMesaBuffer this renderbuffer belongs to */
-   XMesaDrawable drawable;	/* Usually the X window ID */
-   XMesaPixmap pixmap;	/* Back color buffer */
-   XMesaImage *ximage;	/* The back buffer, if not using a Pixmap */
-
-   GLubyte *origin1;	/* used for PIXEL_ADDR1 macro */
-   GLint width1;
-   GLushort *origin2;	/* used for PIXEL_ADDR2 macro */
-   GLint width2;
-   GLubyte *origin3;	/* used for PIXEL_ADDR3 macro */
-   GLint width3;
-   GLuint *origin4;	/* used for PIXEL_ADDR4 macro */
-   GLint width4;
-
-   GLint bottom;	/* used for FLIP macro, equals height - 1 */
-};
-
-
 /**
  * Framebuffer information, derived from.
  * Basically corresponds to a GLXDrawable.
@@ -190,21 +93,12 @@ struct xmesa_buffer {
 
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
-
-   XMesaDisplay *display;
+   XMesaDrawable drawable;	/* Usually the X window ID */
+   XMesaColormap cmap;		/* the X colormap */
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
 
-   struct xmesa_renderbuffer *frontxrb; /* front color renderbuffer */
-   struct xmesa_renderbuffer *backxrb;  /* back color renderbuffer */
-
-   XMesaColormap cmap;		/* the X colormap */
-
+   XMesaImage *tempImage;
    unsigned long selectedEvents;/* for pbuffers only */
-
-   GLint db_mode;		/* 0 = single buffered */
-				/* BACK_PIXMAP = use Pixmap for back buffer */
-				/* BACK_XIMAGE = use XImage for back buffer */
-   GLboolean swAlpha;
 
    GLuint shm;			/* X Shared Memory extension status:	*/
 				/*    0 = not available			*/
@@ -214,33 +108,7 @@ struct xmesa_buffer {
    XShmSegmentInfo shminfo;
 #endif
 
-   XMesaImage *rowimage;	/* Used for optimized span writing */
-   XMesaPixmap stipple_pixmap;	/* For polygon stippling */
-   XMesaGC stipple_gc;		/* For polygon stippling */
-
    XMesaGC gc;			/* scratch GC for span, line, tri drawing */
-   XMesaGC cleargc;		/* GC for clearing the color buffer */
-   XMesaGC swapgc;		/* GC for swapping the color buffers */
-
-   /* The following are here instead of in the XMesaVisual
-    * because they depend on the window's colormap.
-    */
-
-   /* For PF_DITHER, PF_LOOKUP, PF_GRAYSCALE */
-   unsigned long color_table[576];	/* RGB -> pixel value */
-
-   /* For PF_DITHER, PF_LOOKUP, PF_GRAYSCALE */
-   GLubyte pixel_to_r[65536];		/* pixel value -> red */
-   GLubyte pixel_to_g[65536];		/* pixel value -> green */
-   GLubyte pixel_to_b[65536];		/* pixel value -> blue */
-
-   /* Used to do XAllocColor/XFreeColors accounting: */
-   int num_alloced;
-#if defined(XFree86Server)
-   Pixel alloced_colors[256];
-#else
-   unsigned long alloced_colors[256];
-#endif
 
    /* GLX_EXT_texture_from_pixmap */
    GLint TextureTarget; /** GLX_TEXTURE_1D_EXT, for example */
@@ -251,209 +119,23 @@ struct xmesa_buffer {
 };
 
 
-/**
- * If pixelformat==PF_TRUECOLOR:
- */
-#define PACK_TRUECOLOR( PIXEL, R, G, B )	\
-   PIXEL = xmesa->xm_visual->RtoPixel[R]	\
-         | xmesa->xm_visual->GtoPixel[G]	\
-         | xmesa->xm_visual->BtoPixel[B];	\
 
-
-/**
- * If pixelformat==PF_TRUEDITHER:
- */
-#define PACK_TRUEDITHER( PIXEL, X, Y, R, G, B )			\
-{								\
-   int d = xmesa->xm_visual->Kernel[((X)&3) | (((Y)&3)<<2)];	\
-   PIXEL = xmesa->xm_visual->RtoPixel[(R)+d]			\
-         | xmesa->xm_visual->GtoPixel[(G)+d]			\
-         | xmesa->xm_visual->BtoPixel[(B)+d];			\
+/** cast wrapper */
+static INLINE XMesaContext
+xmesa_context(GLcontext *ctx)
+{
+   return (XMesaContext) ctx->DriverCtx;
 }
 
 
+/** cast wrapper */
+static INLINE XMesaBuffer
+xmesa_buffer(GLframebuffer *fb)
+{
+   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
+   return (XMesaBuffer) st_framebuffer_private(stfb);
+}
 
-/**
- * If pixelformat==PF_8A8B8G8R:
- */
-#define PACK_8A8B8G8R( R, G, B, A )	\
-	( ((A) << 24) | ((B) << 16) | ((G) << 8) | (R) )
-
-
-/**
- * Like PACK_8A8B8G8R() but don't use alpha.  This is usually an acceptable
- * shortcut.
- */
-#define PACK_8B8G8R( R, G, B )   ( ((B) << 16) | ((G) << 8) | (R) )
-
-#define PACK_8B8G8R8A( R, G, B, A ) \
-        ( ((B) << 24) | ((G) << 16) | ((R) << 8) | (A) )
-
-
-
-
-/**
- * If pixelformat==PF_8R8G8B:
- */
-#define PACK_8R8G8B( R, G, B)	 ( ((R) << 16) | ((G) << 8) | (B) )
-
-
-/**
- * If pixelformat==PF_5R6G5B:
- */
-#define PACK_5R6G5B( R, G, B)	 ( (((R) & 0xf8) << 8) | (((G) & 0xfc) << 3) | ((B) >> 3) )
-
-
-/**
- * If pixelformat==PF_8A8R8G8B:
- */
-#define PACK_8A8R8G8B( R, G, B, A )	\
-	( ((A) << 24) | ((R) << 16) | ((G) << 8) | (B) )
-
-
-
-/**
- * If pixelformat==PF_DITHER:
- *
- * Improved 8-bit RGB dithering code contributed by Bob Mercier
- * (mercier@hollywood.cinenet.net).  Thanks Bob!
- */
-#ifdef DITHER666
-# define DITH_R   6
-# define DITH_G   6
-# define DITH_B   6
-# define DITH_MIX(r,g,b)  (((r) * DITH_G + (g)) * DITH_B + (b))
-#else
-# define DITH_R	5
-# define DITH_G	9
-# define DITH_B	5
-# define DITH_MIX(r,g,b)  (((g) << 6) | ((b) << 3) | (r))
-#endif
-#define DITH_DX	4
-#define DITH_DY	4
-#define DITH_N	(DITH_DX * DITH_DY)
-
-#define _dither(C, c, d)   (((unsigned)((DITH_N * (C - 1) + 1) * c + d)) >> 12)
-
-#define MAXC	256
-extern const int xmesa_kernel8[DITH_DY * DITH_DX];
-
-/* Dither for random X,Y */
-#define DITHER_SETUP						\
-	int __d;						\
-	unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table;
-
-#define DITHER( X, Y, R, G, B )				\
-	(__d = xmesa_kernel8[(((Y)&3)<<2) | ((X)&3)],	\
-	 ctable[DITH_MIX(_dither(DITH_R, (R), __d),	\
-		         _dither(DITH_G, (G), __d),	\
-		         _dither(DITH_B, (B), __d))])
-
-/* Dither for random X, fixed Y */
-#define XDITHER_SETUP(Y)					\
-	int __d;						\
-	unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table;	\
-	const int *kernel = &xmesa_kernel8[ ((Y)&3) << 2 ];
-
-#define XDITHER( X, R, G, B )				\
-	(__d = kernel[(X)&3],				\
-	ctable[DITH_MIX(_dither(DITH_R, (R), __d),	\
-		        _dither(DITH_G, (G), __d),	\
-		        _dither(DITH_B, (B), __d))])
-
-
-
-/*
- * Dithering for flat-shaded triangles.  Precompute all 16 possible
- * pixel values given the triangle's RGB color.  Contributed by Martin Shenk.
- */
-#define FLAT_DITHER_SETUP( R, G, B )					\
-	GLushort ditherValues[16];					\
-	{								\
-	   unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table;	\
-	   int msdr = (DITH_N*((DITH_R)-1)+1) * (R);			\
-	   int msdg = (DITH_N*((DITH_G)-1)+1) * (G);			\
-	   int msdb = (DITH_N*((DITH_B)-1)+1) * (B);			\
-	   int i;							\
-	   for (i=0;i<16;i++) {						\
-	      int k = xmesa_kernel8[i];					\
-	      int j = DITH_MIX( (msdr+k)>>12, (msdg+k)>>12, (msdb+k)>>12 );\
-	      ditherValues[i] = (GLushort) ctable[j];			\
-	   }								\
-        }
-
-#define FLAT_DITHER_ROW_SETUP(Y)					\
-	GLushort *ditherRow = ditherValues + ( ((Y)&3) << 2);
-
-#define FLAT_DITHER(X)  ditherRow[(X)&3]
-
-
-
-/**
- * If pixelformat==PF_LOOKUP:
- */
-#define _dither_lookup(C, c)   (((unsigned)((DITH_N * (C - 1) + 1) * c)) >> 12)
-
-#define LOOKUP_SETUP						\
-	unsigned long *ctable = XMESA_BUFFER(ctx->DrawBuffer)->color_table
-
-#define LOOKUP( R, G, B )				\
-	ctable[DITH_MIX(_dither_lookup(DITH_R, (R)),	\
-		        _dither_lookup(DITH_G, (G)),	\
-		        _dither_lookup(DITH_B, (B)))]
-
-
-
-/**
- * If pixelformat==PF_1BIT:
- */
-extern const int xmesa_kernel1[16];
-
-#define SETUP_1BIT  int bitFlip = xmesa->xm_visual->bitFlip
-#define DITHER_1BIT( X, Y, R, G, B )	\
-	(( ((int)(R)+(int)(G)+(int)(B)) > xmesa_kernel1[(((Y)&3) << 2) | ((X)&3)] ) ^ bitFlip)
-
-
-
-/**
- * If pixelformat==PF_GRAYSCALE:
- */
-#define GRAY_RGB( R, G, B )   XMESA_BUFFER(ctx->DrawBuffer)->color_table[((R) + (G) + (B))/3]
-
-
-
-/**
- * Converts a GL window Y coord to an X window Y coord:
- */
-#define YFLIP(XRB, Y)  ((XRB)->bottom - (Y))
-
-
-/**
- * Return the address of a 1, 2 or 4-byte pixel in the buffer's XImage:
- * X==0 is left, Y==0 is bottom.
- */
-#define PIXEL_ADDR1(XRB, X, Y)  \
-   ( (XRB)->origin1 - (Y) * (XRB)->width1 + (X) )
-
-#define PIXEL_ADDR2(XRB, X, Y)  \
-   ( (XRB)->origin2 - (Y) * (XRB)->width2 + (X) )
-
-#define PIXEL_ADDR3(XRB, X, Y)  \
-   ( (bgr_t *) ( (XRB)->origin3 - (Y) * (XRB)->width3 + 3 * (X) ))
-
-#define PIXEL_ADDR4(XRB, X, Y)  \
-   ( (XRB)->origin4 - (Y) * (XRB)->width4 + (X) )
-
-
-
-/*
- * External functions:
- */
-
-extern struct xmesa_renderbuffer *
-xmesa_create_renderbuffer(struct pipe_winsys *winsys,
-                          GLuint name, XMesaVisual xmvis,
-                          GLboolean backBuffer);
 
 extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);
@@ -461,115 +143,14 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb);
 extern XMesaBuffer
 xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis);
 
-extern unsigned long
-xmesa_color_to_pixel( XMesaContext xmesa,
-                      GLubyte r, GLubyte g, GLubyte b, GLubyte a,
-                      GLuint pixelFormat );
-
-extern void
-xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
-                      GLuint *width, GLuint *height);
-
 extern void
 xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
-
 
 extern void
 xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
 
-
-/**
- * Using a function instead of an ordinary cast is safer.
- */
-static INLINE struct xmesa_renderbuffer *
-xmesa_renderbuffer(struct gl_renderbuffer *rb)
-{
-   return (struct xmesa_renderbuffer *) rb;
-}
-
-
-/**
- * Return pointer to XMesaContext corresponding to a Mesa GLcontext.
- * Since we're using structure containment, it's just a cast!.
- * XXX should use inlined function for better type safety.
- */
-static INLINE XMesaContext
-XMESA_CONTEXT(GLcontext *ctx)
-{
-   return (XMesaContext) ctx->DriverCtx;
-}
-
-
-/**
- * Return pointer to XMesaBuffer corresponding to a Mesa GLframebuffer.
- * Since we're using structure containment, it's just a cast!.
- * XXX should use inlined function for better type safety.
- */
-static INLINE XMesaBuffer
-XMESA_BUFFER(GLframebuffer *fb)
-{
-   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
-   return (XMesaBuffer) st_framebuffer_private(stfb);
-}
-
-
-
-struct pipe_context;
-
-struct xmesa_surface
-{
-   struct pipe_surface surface;
-   struct xmesa_renderbuffer *xrb;
-   XMesaDisplay *display;
-   BufferType type;
-   XMesaDrawable drawable;
-   XMesaImage *ximage;
-   XMesaGC gc;
-};
-
-
-/** Cast wrapper */
-static INLINE struct xmesa_surface *
-xmesa_surface(struct pipe_surface *ps)
-{
-   return (struct xmesa_surface *) ps;
-}
-
-
-extern void
-xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, uint value);
-
 extern struct pipe_context *
-xmesa_create_context(XMesaContext xm);
-
-extern struct pipe_surface *
-xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
-
-extern struct pipe_surface *
-xmesa_new_color_surface(struct pipe_winsys *winsys, GLuint format);
-
-extern struct pipe_winsys *
-xmesa_get_pipe_winsys(void);
-
-extern void
-xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
-               uint x, uint y, uint w, uint h, void *p, int dst_stride);
-
-extern void
-xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
-               uint x, uint y, uint w, uint h, const void *p, int src_stride);
-
-extern void
-xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, float *p);
-
-extern void
-xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, const float *p);
-
-
-extern struct pipe_surface *
-xmesa_create_front_surface(XMesaVisual vis, Window win);
+xmesa_create_pipe_context(XMesaContext xm, uint pixelformat);
 
 static INLINE GLuint
 xmesa_buffer_width(XMesaBuffer b)
@@ -583,5 +164,7 @@ xmesa_buffer_height(XMesaBuffer b)
    return b->stfb->Base.Height;
 }
 
+extern void
+xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf);
 
 #endif
