@@ -155,7 +155,7 @@ st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex)
 {
    struct st_renderbuffer *strb;
 
-   assert(surfIndex <= ST_SURFACE_BACK_RIGHT);
+   assert(surfIndex <= ST_SURFACE_DEPTH);
 
    /* sanity checks, ST tokens should match Mesa tokens */
    assert(ST_SURFACE_FRONT_LEFT == BUFFER_FRONT_LEFT);
