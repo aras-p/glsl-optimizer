@@ -32,6 +32,7 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_surface.h"
+#include "sp_texture.h"
 #include "sp_tile_cache.h"
 
 /**
@@ -568,7 +569,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_texture *pt,
                          unsigned face, unsigned level, unsigned zslice)
 {
-   struct softpipe_texture *spt = (struct softpipe_texture *)pt;
+   struct softpipe_texture *spt = softpipe_texture(pt);
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
 

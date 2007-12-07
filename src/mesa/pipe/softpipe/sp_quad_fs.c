@@ -49,6 +49,7 @@
 #include "sp_state.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
+#include "sp_texture.h"
 #include "sp_tex_sample.h"
 
 
