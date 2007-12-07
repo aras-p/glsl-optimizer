@@ -632,11 +632,11 @@ if test "x$enable_glut" = xyes; then
         GLUT_CFLAGS="-fexceptions"
     fi
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES(GLUT, x11 xmu xt xi)
+        PKG_CHECK_MODULES(GLUT, x11 xmu xi)
         GLUT_LIB_DEPS="$GLUT_LIBS"
     else
         # should check these...
-        GLUT_LIB_DEPS="$X_LIBS -lX11 -lXmu -lXt -lXi"
+        GLUT_LIB_DEPS="$X_LIBS -lX11 -lXmu -lXi"
     fi
     GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
 
