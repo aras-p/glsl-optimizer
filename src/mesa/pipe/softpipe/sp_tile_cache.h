@@ -80,10 +80,6 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
                     struct softpipe_tile_cache *tc);
 
 extern void
-sp_tile_cache_flush_clear(struct pipe_context *pipe,
-                          struct softpipe_tile_cache *tc);
-
-extern void
 sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float value[4]);
 
 extern struct softpipe_cached_tile *
