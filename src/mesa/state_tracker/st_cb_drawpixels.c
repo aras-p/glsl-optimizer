@@ -734,42 +734,42 @@ compatible_formats(GLenum format, GLenum type, GLuint pipeFormat)
    static const GLuint one = 1;
    GLubyte littleEndian = *((GLubyte *) &one);
 
-   if (pipeFormat == PIPE_FORMAT_U_R8_G8_B8_A8 &&
+   if (pipeFormat == PIPE_FORMAT_R8G8B8A8_UNORM &&
        format == GL_RGBA &&
        type == GL_UNSIGNED_BYTE &&
        !littleEndian) {
       return GL_TRUE;
    }
-   else if (pipeFormat == PIPE_FORMAT_U_R8_G8_B8_A8 &&
+   else if (pipeFormat == PIPE_FORMAT_R8G8B8A8_UNORM &&
             format == GL_ABGR_EXT &&
             type == GL_UNSIGNED_BYTE &&
             littleEndian) {
       return GL_TRUE;
    }
-   else if (pipeFormat == PIPE_FORMAT_U_A8_R8_G8_B8 &&
+   else if (pipeFormat == PIPE_FORMAT_A8R8G8B8_UNORM &&
             format == GL_BGRA &&
             type == GL_UNSIGNED_BYTE &&
             littleEndian) {
       return GL_TRUE;
    }
-   else if (pipeFormat == PIPE_FORMAT_U_R5_G6_B5 &&
+   else if (pipeFormat == PIPE_FORMAT_R5G6B5_UNORM &&
             format == GL_RGB &&
             type == GL_UNSIGNED_SHORT_5_6_5) {
       /* endian don't care */
       return GL_TRUE;
    }
-   else if (pipeFormat == PIPE_FORMAT_U_R5_G6_B5 &&
+   else if (pipeFormat == PIPE_FORMAT_R5G6B5_UNORM &&
             format == GL_BGR &&
             type == GL_UNSIGNED_SHORT_5_6_5_REV) {
       /* endian don't care */
       return GL_TRUE;
    }
-   else if (pipeFormat == PIPE_FORMAT_U_S8 &&
+   else if (pipeFormat == PIPE_FORMAT_S8_UNORM &&
             format == GL_STENCIL_INDEX &&
             type == GL_UNSIGNED_BYTE) {
       return GL_TRUE;
    }
-   else if (pipeFormat == PIPE_FORMAT_U_Z32 &&
+   else if (pipeFormat == PIPE_FORMAT_Z32_UNORM &&
             format == GL_DEPTH_COMPONENT &&
             type == GL_UNSIGNED_INT) {
       return GL_TRUE;
@@ -888,7 +888,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                   memcpy(dest, values, spanWidth);
                }
                break;
-            case PIPE_FORMAT_S8_Z24:
+            case PIPE_FORMAT_S8Z24_UNORM:
                {
                   uint *dest = (uint *) stmap + spanY * ps->pitch + spanX;
                   GLint k;
@@ -998,8 +998,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       cpp = 1;
       comp = 0;
    }
-   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_R8_G8_B8 )) {
-      format = PIPE_FORMAT_U_A8_R8_G8_B8;
+   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM )) {
+      format = PIPE_FORMAT_A8R8G8B8_UNORM;
       internal_format = GL_RGBA8;
       cpp = 4;
       comp = 3; /* alpha channel */ /*XXX little-endian dependency */
@@ -1167,7 +1167,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       src = buffer + i * width;
 
       switch (psDraw->format) {
-      case PIPE_FORMAT_S8_Z24:
+      case PIPE_FORMAT_S8Z24_UNORM:
          {
             uint *dst4 = (uint *) dst;
             int j;

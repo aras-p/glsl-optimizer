@@ -120,7 +120,7 @@ st_get_format_info(
 #endif
 
       /* Data type */
-      if (format == PIPE_FORMAT_U_A1_R5_G5_B5 || format == PIPE_FORMAT_U_R5_G6_B5) {
+      if (format == PIPE_FORMAT_A1R5G5B5_UNORM || format == PIPE_FORMAT_R5G6B5_UNORM) {
          pinfo->datatype = GL_UNSIGNED_SHORT;
       }
       else {
@@ -255,9 +255,9 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       /* fix this */
    case MESA_FORMAT_ARGB8888_REV:
    case MESA_FORMAT_ARGB8888:
-      return PIPE_FORMAT_U_A8_R8_G8_B8;
+      return PIPE_FORMAT_A8R8G8B8_UNORM;
    case MESA_FORMAT_ARGB4444:
-      return PIPE_FORMAT_U_A4_R4_G4_B4;
+      return PIPE_FORMAT_A4R4G4B4_UNORM;
    case MESA_FORMAT_AL88:
       return PIPE_FORMAT_U_A8_L8;
    case MESA_FORMAT_A8:
@@ -267,7 +267,7 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
    case MESA_FORMAT_I8:
       return PIPE_FORMAT_U_I8;
    case MESA_FORMAT_Z16:
-      return PIPE_FORMAT_U_Z16;
+      return PIPE_FORMAT_Z16_UNORM;
    default:
       assert(0);
       return 0;
@@ -282,10 +282,10 @@ default_rgba_format(
    struct pipe_context *pipe )
 {
    static const uint colorFormats[] = {
-      PIPE_FORMAT_U_R8_G8_B8_A8,
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_B8_G8_R8_A8,
-      PIPE_FORMAT_U_R5_G6_B5
+      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_R5G6B5_UNORM
    };
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
@@ -304,8 +304,8 @@ static GLuint
 default_deep_rgba_format(
    struct pipe_context *pipe )
 {
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_S_R16_G16_B16_A16 )) {
-      return PIPE_FORMAT_S_R16_G16_B16_A16;
+   if (pipe->is_format_supported( pipe, PIPE_FORMAT_R16G16B16A16_SNORM )) {
+      return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
    return PIPE_FORMAT_NONE;
 }
@@ -319,10 +319,10 @@ default_depth_format(
    struct pipe_context *pipe )
 {
    static const uint zFormats[] = {
-      PIPE_FORMAT_U_Z16,
-      PIPE_FORMAT_U_Z32,
-      PIPE_FORMAT_S8_Z24,
-      PIPE_FORMAT_Z24_S8
+      PIPE_FORMAT_Z16_UNORM,
+      PIPE_FORMAT_Z32_UNORM,
+      PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_Z24S8_UNORM
    };
    uint i;
    for (i = 0; i < Elements(zFormats); i++) {
@@ -358,16 +358,16 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_COMPRESSED_RGBA:
       if (format == GL_BGRA) {
          if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_R8_G8_B8 ))
-               return PIPE_FORMAT_U_A8_R8_G8_B8;
+            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM ))
+               return PIPE_FORMAT_A8R8G8B8_UNORM;
          }
          else if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A4_R4_G4_B4 ))
-               return PIPE_FORMAT_U_A4_R4_G4_B4;
+            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM ))
+               return PIPE_FORMAT_A4R4G4B4_UNORM;
          }
          else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A1_R5_G5_B5 ))
-               return PIPE_FORMAT_U_A1_R5_G5_B5;
+            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM ))
+               return PIPE_FORMAT_A1R5G5B5_UNORM;
          }
       }
       return default_rgba_format( pipe );
@@ -376,8 +376,8 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_RGB:
    case GL_COMPRESSED_RGB:
       if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_R5_G6_B5 ))
-            return PIPE_FORMAT_U_R5_G6_B5;
+         if (pipe->is_format_supported( pipe, PIPE_FORMAT_R5G6B5_UNORM ))
+            return PIPE_FORMAT_R5G6B5_UNORM;
       }
       return default_rgba_format( pipe );
 
@@ -390,13 +390,13 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
 
    case GL_RGBA4:
    case GL_RGBA2:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A4_R4_G4_B4 ))
-         return PIPE_FORMAT_U_A4_R4_G4_B4;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM ))
+         return PIPE_FORMAT_A4R4G4B4_UNORM;
       return default_rgba_format( pipe );
 
    case GL_RGB5_A1:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A1_R5_G5_B5 ))
-         return PIPE_FORMAT_U_A1_R5_G5_B5;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM ))
+         return PIPE_FORMAT_A1R5G5B5_UNORM;
       return default_rgba_format( pipe );
 
    case GL_RGB8:
@@ -408,8 +408,8 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A1_R5_G5_B5 ))
-         return PIPE_FORMAT_U_A1_R5_G5_B5;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM ))
+         return PIPE_FORMAT_A1R5G5B5_UNORM;
       return default_rgba_format( pipe );
 
    case GL_ALPHA:
@@ -491,18 +491,18 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
 #endif
 
    case GL_DEPTH_COMPONENT16:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_Z16 ))
-         return PIPE_FORMAT_U_Z16;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z16_UNORM ))
+         return PIPE_FORMAT_Z16_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT24:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 ))
-         return PIPE_FORMAT_S8_Z24;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 ))
-         return PIPE_FORMAT_Z24_S8;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM ))
+         return PIPE_FORMAT_S8Z24_UNORM;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM ))
+         return PIPE_FORMAT_Z24S8_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT32:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_Z32 ))
-         return PIPE_FORMAT_U_Z32;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z32_UNORM ))
+         return PIPE_FORMAT_Z32_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT:
       return default_depth_format( pipe );
@@ -514,18 +514,18 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_STENCIL_INDEX16_EXT:
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_S8 ))
          return PIPE_FORMAT_U_S8;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 ))
-         return PIPE_FORMAT_S8_Z24;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 ))
-         return PIPE_FORMAT_Z24_S8;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM ))
+         return PIPE_FORMAT_S8Z24_UNORM;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM ))
+         return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 ))
-         return PIPE_FORMAT_S8_Z24;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 ))
-         return PIPE_FORMAT_Z24_S8;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM ))
+         return PIPE_FORMAT_S8Z24_UNORM;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM ))
+         return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 
    default:
