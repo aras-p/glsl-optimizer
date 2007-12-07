@@ -397,7 +397,7 @@ xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
          return TRUE;
       default:
          return FALSE;
-      };
+      }
    }
 }
 
