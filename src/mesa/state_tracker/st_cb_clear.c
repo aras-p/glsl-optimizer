@@ -65,13 +65,13 @@ color_value(GLuint pipeFormat, const GLfloat color[4])
    UNCLAMPED_FLOAT_TO_UBYTE(a, color[3]);
 
    switch (pipeFormat) {
-   case PIPE_FORMAT_U_R8_G8_B8_A8:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
       return (r << 24) | (g << 16) | (b << 8) | a;
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return (a << 24) | (r << 16) | (g << 8) | b;
-   case PIPE_FORMAT_U_B8_G8_R8_A8:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return (b << 24) | (g << 16) | (r << 8) | a;
-   case PIPE_FORMAT_U_R5_G6_B5:
+   case PIPE_FORMAT_R5G6B5_UNORM:
       return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
    default:
       assert(0);
@@ -84,17 +84,17 @@ static uint
 depth_value(GLuint pipeFormat, GLfloat value)
 {
    switch (pipeFormat) {
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       return (uint) (value * 0xffff);
-   case PIPE_FORMAT_U_Z32:
+   case PIPE_FORMAT_Z32_UNORM:
       /* special-case to avoid overflow */
       if (value == 1.0)
          return 0xffffffff;
       else
          return (uint) (value * 0xffffffff);
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return (uint) (value * 0xffffff);
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       return ((uint) (value * 0xffffff)) << 8;
    default:
       assert(0);
@@ -107,8 +107,8 @@ static GLboolean
 is_depth_stencil_format(GLuint pipeFormat)
 {
    switch (pipeFormat) {
-   case PIPE_FORMAT_S8_Z24:
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -523,10 +523,10 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
 
       switch (strb->surface->format) {
-      case PIPE_FORMAT_S8_Z24:
+      case PIPE_FORMAT_S8Z24_UNORM:
          clearValue |= ctx->Stencil.Clear << 24;
          break;
-      case PIPE_FORMAT_Z24_S8:
+      case PIPE_FORMAT_Z24S8_UNORM:
          clearValue |= clearValue | ctx->Stencil.Clear;
          break;
       default:

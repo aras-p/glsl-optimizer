@@ -90,7 +90,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             memcpy(values, src, width);
          }
          break;
-      case PIPE_FORMAT_S8_Z24:
+      case PIPE_FORMAT_S8Z24_UNORM:
          {
             const uint *src = (uint *) stmap + srcY * ps->pitch + x;
             GLint k;
@@ -99,7 +99,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             }
          }
          break;
-      case PIPE_FORMAT_Z24_S8:
+      case PIPE_FORMAT_Z24S8_UNORM:
          {
             const uint *src = (uint *) stmap + srcY * ps->pitch + x;
             GLint k;
