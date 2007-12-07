@@ -50,32 +50,32 @@ i915_is_format_supported( struct pipe_context *pipe,
 #if 0
    /* XXX: This is broken -- rewrite if still needed. */
    static const unsigned tex_supported[] = {
-      PIPE_FORMAT_U_R8_G8_B8_A8,
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_R5_G6_B5,
+      PIPE_FORMAT_R8G8B8A8_UNORM,
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_U_L8,
       PIPE_FORMAT_U_A8,
       PIPE_FORMAT_U_I8,
       PIPE_FORMAT_U_L8_A8,
       PIPE_FORMAT_YCBCR,
       PIPE_FORMAT_YCBCR_REV,
-      PIPE_FORMAT_S8_Z24,
+      PIPE_FORMAT_S8Z24_UNORM,
    };
 
 
    /* Actually a lot more than this - add later:
     */
    static const unsigned render_supported[] = {
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_R5_G6_B5,
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_R5G6B5_UNORM,
    };
 
    /* 
     */
    static const unsigned z_stencil_supported[] = {
-      PIPE_FORMAT_U_Z16,
-      PIPE_FORMAT_U_Z32,
-      PIPE_FORMAT_S8_Z24,
+      PIPE_FORMAT_Z16_UNORM,
+      PIPE_FORMAT_Z32_UNORM,
+      PIPE_FORMAT_S8Z24_UNORM,
    };
 
    switch (type) {
@@ -97,9 +97,9 @@ i915_is_format_supported( struct pipe_context *pipe,
    }
 #else
    switch( format ) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
-   case PIPE_FORMAT_U_R5_G6_B5:
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return TRUE;
    };
    return FALSE;

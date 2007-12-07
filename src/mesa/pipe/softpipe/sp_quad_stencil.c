@@ -234,14 +234,14 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* get stencil values from cached tile */
    switch (ps->format) {
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
          int y = quad->y0 % TILE_SIZE + (j >> 1);
          stencilVals[j] = tile->data.depth32[y][x] >> 24;
       }
       break;
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
          int y = quad->y0 % TILE_SIZE + (j >> 1);
@@ -298,7 +298,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* put new stencil values into cached tile */
    switch (ps->format) {
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
          int y = quad->y0 % TILE_SIZE + (j >> 1);
@@ -307,7 +307,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
          tile->data.depth32[y][x] = s8z24;
       }
       break;
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
          int y = quad->y0 % TILE_SIZE + (j >> 1);

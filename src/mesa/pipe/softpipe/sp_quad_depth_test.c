@@ -74,7 +74,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
     * Also, get the zbuffer values (bzzzz) from the cached tile.
     */
    switch (format) {
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       {
          float scale = 65535.0;
 
@@ -89,7 +89,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          }
       }
       break;
-   case PIPE_FORMAT_U_Z32:
+   case PIPE_FORMAT_Z32_UNORM:
       {
          double scale = (double) (uint) ~0UL;
 
@@ -104,7 +104,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          }
       }
       break;
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       {
          float scale = (float) ((1 << 24) - 1);
 
@@ -119,7 +119,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          }
       }
       break;
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       {
          float scale = (float) ((1 << 24) - 1);
 
@@ -202,21 +202,21 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
       /* put updated Z values back into cached tile */
       switch (format) {
-      case PIPE_FORMAT_U_Z16:
+      case PIPE_FORMAT_Z16_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
             int x = quad->x0 % TILE_SIZE + (j & 1);
             int y = quad->y0 % TILE_SIZE + (j >> 1);
             tile->data.depth16[y][x] = (ushort) bzzzz[j];
          }
          break;
-      case PIPE_FORMAT_U_Z32:
+      case PIPE_FORMAT_Z32_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
             int x = quad->x0 % TILE_SIZE + (j & 1);
             int y = quad->y0 % TILE_SIZE + (j >> 1);
             tile->data.depth32[y][x] = bzzzz[j];
          }
          break;
-      case PIPE_FORMAT_S8_Z24:
+      case PIPE_FORMAT_S8Z24_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
             int x = quad->x0 % TILE_SIZE + (j & 1);
             int y = quad->y0 % TILE_SIZE + (j >> 1);
@@ -225,7 +225,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
             tile->data.depth32[y][x] = s8z24;
          }
          break;
-      case PIPE_FORMAT_Z24_S8:
+      case PIPE_FORMAT_Z24S8_UNORM:
          for (j = 0; j < QUAD_SIZE; j++) {
             int x = quad->x0 % TILE_SIZE + (j & 1);
             int y = quad->y0 % TILE_SIZE + (j >> 1);

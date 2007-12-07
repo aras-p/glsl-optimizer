@@ -406,7 +406,7 @@ choose_pixel_format(XMesaVisual v)
          return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
       }
       else {
-         return PIPE_FORMAT_U_R8_G8_B8_A8;
+         return PIPE_FORMAT_R8G8B8A8_UNORM;
       }
    }
    else if (   GET_REDMASK(v)   == 0xff0000
@@ -415,10 +415,10 @@ choose_pixel_format(XMesaVisual v)
             && v->BitsPerPixel == 32) {
       if (CHECK_BYTE_ORDER(v)) {
          /* no byteswapping needed */
-         return PIPE_FORMAT_U_A8_R8_G8_B8;
+         return PIPE_FORMAT_A8R8G8B8_UNORM;
       }
       else {
-         return PIPE_FORMAT_U_B8_G8_R8_A8;
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
       }
    }
    else if (   GET_REDMASK(v)   == 0xf800
@@ -427,7 +427,7 @@ choose_pixel_format(XMesaVisual v)
             && CHECK_BYTE_ORDER(v)
             && v->BitsPerPixel == 16) {
       /* 5-6-5 RGB */
-      return PIPE_FORMAT_U_R5_G6_B5;
+      return PIPE_FORMAT_R5G6B5_UNORM;
    }
 
    assert(0);
