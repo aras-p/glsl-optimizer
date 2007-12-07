@@ -66,7 +66,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
          sp->framebuffer.cbufs[i] = fb->cbufs[i];
 
          /* update cache */
-         sp_tile_cache_set_surface(sp, sp->cbuf_cache[i], ps);
+         sp_tile_cache_set_surface(sp->cbuf_cache[i], ps);
       }
    }
 
@@ -92,7 +92,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       sp->framebuffer.zbuf = fb->zbuf;
 
       /* update cache */
-      sp_tile_cache_set_surface(sp, sp->zbuf_cache, ps);
+      sp_tile_cache_set_surface(sp->zbuf_cache, ps);
    }
 
    /* XXX combined depth/stencil here */
@@ -116,12 +116,12 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       if (fb->sbuf != fb->zbuf) {
          /* separate stencil buf */
          sp->sbuf_cache = sp->sbuf_cache_sep;
-         sp_tile_cache_set_surface(sp, sp->sbuf_cache, ps);
+         sp_tile_cache_set_surface(sp->sbuf_cache, ps);
       }
       else {
          /* combined depth/stencil */
          sp->sbuf_cache = sp->zbuf_cache;
-         sp_tile_cache_set_surface(sp, sp->sbuf_cache, ps);
+         sp_tile_cache_set_surface(sp->sbuf_cache, ps);
       }
    }
 
