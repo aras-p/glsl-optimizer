@@ -28,7 +28,7 @@
 #ifndef SP_TILE_CACHE_H
 #define SP_TILE_CACHE_H
 
-#define TILE_CLEAR_OPTIMIZATION 0
+#define TILE_CLEAR_OPTIMIZATION 1
 
 
 #include "pipe/p_compiler.h"
