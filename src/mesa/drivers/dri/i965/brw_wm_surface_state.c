@@ -196,11 +196,8 @@ static void upload_wm_surfaces(struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
-   struct brw_surface_binding_table bind;
    GLuint i;
 
-   memcpy(&bind, &brw->wm.bind, sizeof(bind));
-      
    {
       struct brw_surface_state surf;
       struct intel_region *region = brw->state.draw_region;
