@@ -105,9 +105,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       if (!strb->surface)
          return GL_FALSE;
       strb->surface->cpp = cpp;
-      strb->surface->pitch = pipe->winsys->surface_pitch(pipe->winsys, cpp,
-							 width, flags);
    }
+
+   strb->surface->pitch = pipe->winsys->surface_pitch(pipe->winsys, cpp,
+                                                      width, flags);
 
    /* loop here since mapping is refcounted */
    while (strb->surface->map)
