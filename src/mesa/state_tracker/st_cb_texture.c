@@ -706,6 +706,7 @@ st_TexImage(GLcontext * ctx,
       GLuint srcImageStride = _mesa_image_image_stride(unpack, width, height,
 						       format, type);
       int i;
+      const GLubyte *src = (const GLubyte *) pixels;
 
       for (i = 0; i++ < depth;) {
 	 if (!texImage->TexFormat->StoreImage(ctx, dims, 
@@ -716,14 +717,14 @@ st_TexImage(GLcontext * ctx,
 					      dstRowStride,
 					      texImage->ImageOffsets,
 					      width, height, 1,
-					      format, type, pixels, unpack)) {
+					      format, type, src, unpack)) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
 	 }
 
 	 if (stImage->pt && i < depth) {
 	    st_texture_image_unmap(stImage);
 	    texImage->Data = st_texture_image_map(ctx->st, stImage, i);
-	    pixels += srcImageStride;
+	    src += srcImageStride;
 	 }
       }
    }
@@ -826,6 +827,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 						    type);
    GLuint depth;
    int i;
+   GLubyte *dest;
 
    /* Map */
    if (stImage->pt) {
@@ -850,19 +852,21 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
    depth = texImage->Depth;
    texImage->Depth = 1;
 
+   dest = (GLubyte *) pixels;
+
    for (i = 0; i++ < depth;) {
       if (compressed) {
-	 _mesa_get_compressed_teximage(ctx, target, level, pixels,
+	 _mesa_get_compressed_teximage(ctx, target, level, dest,
 				       texObj, texImage);
       } else {
-	 _mesa_get_teximage(ctx, target, level, format, type, pixels,
+	 _mesa_get_teximage(ctx, target, level, format, type, dest,
 			    texObj, texImage);
       }
 
       if (stImage->pt && i < depth) {
 	 st_texture_image_unmap(stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, i);
-	 pixels += dstImageStride;
+	 dest += dstImageStride;
       }
    }
 
@@ -916,6 +920,7 @@ st_TexSubimage(GLcontext * ctx,
    GLuint srcImageStride = _mesa_image_image_stride(packing, width, height,
 						    format, type);
    int i;
+   const GLubyte *src;
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -935,6 +940,8 @@ st_TexSubimage(GLcontext * ctx,
       dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
    }
 
+   src = (const GLubyte *) pixels;
+
    for (i = 0; i++ < depth;) {
       if (!texImage->TexFormat->StoreImage(ctx, dims, texImage->_BaseFormat,
 					   texImage->TexFormat,
@@ -943,14 +950,14 @@ st_TexSubimage(GLcontext * ctx,
 					   dstRowStride,
 					   texImage->ImageOffsets,
 					   width, height, 1,
-					   format, type, pixels, packing)) {
+					   format, type, src, packing)) {
 	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "st_TexSubImage");
       }
 
       if (stImage->pt && i < depth) {
 	 st_texture_image_unmap(stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i);
-	 pixels += srcImageStride;
+	 src += srcImageStride;
       }
    }
 
