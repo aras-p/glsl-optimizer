@@ -386,7 +386,7 @@ softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
 	 if (spt->buffer) {
 	    pipe->winsys->buffer_data(pipe->winsys, spt->buffer,
-				      spt->pitch * (*pt)->cpp *
+				      spt->pitch * spt->base.cpp *
 				      spt->total_height, NULL,
 				      PIPE_BUFFER_USAGE_PIXEL);
 	 }
