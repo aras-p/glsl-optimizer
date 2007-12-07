@@ -255,6 +255,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    /* queries */
    softpipe->pipe.is_format_supported = softpipe_is_format_supported;
+   softpipe->pipe.get_name = softpipe_get_name;
+   softpipe->pipe.get_vendor = softpipe_get_vendor;
    softpipe->pipe.get_param = softpipe_get_param;
    softpipe->pipe.get_paramf = softpipe_get_paramf;
 
@@ -306,9 +308,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.begin_query = softpipe_begin_query;
    softpipe->pipe.end_query = softpipe_end_query;
    softpipe->pipe.wait_query = softpipe_wait_query;
-
-   softpipe->pipe.get_name = softpipe_get_name;
-   softpipe->pipe.get_vendor = softpipe_get_vendor;
 
    /* textures */
    softpipe->pipe.texture_create = softpipe_texture_create;
