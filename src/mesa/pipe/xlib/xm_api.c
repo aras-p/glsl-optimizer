@@ -400,23 +400,25 @@ choose_pixel_format(XMesaVisual v)
    if (   GET_REDMASK(v)   == 0x0000ff
        && GET_GREENMASK(v) == 0x00ff00
        && GET_BLUEMASK(v)  == 0xff0000
-       && CHECK_BYTE_ORDER(v)
        && v->BitsPerPixel == 32) {
-      /* common 32 bpp config used on SGI, Sun */
-      assert(0);
-      return 0 /* PIXEL_FORMAT_U_A8_B8_G8_A8 */;
+      if (CHECK_BYTE_ORDER(v)) {
+         /* no byteswapping needed */
+         return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
+      }
+      else {
+         return PIPE_FORMAT_U_R8_G8_B8_A8;
+      }
    }
    else if (   GET_REDMASK(v)   == 0xff0000
             && GET_GREENMASK(v) == 0x00ff00
             && GET_BLUEMASK(v)  == 0x0000ff
-            && CHECK_BYTE_ORDER(v)) {
-      if (v->BitsPerPixel == 32) {
+            && v->BitsPerPixel == 32) {
+      if (CHECK_BYTE_ORDER(v)) {
+         /* no byteswapping needed */
          return PIPE_FORMAT_U_A8_R8_G8_B8;
       }
-      else if (v->BitsPerPixel == 24) {
-         /* not supported yet */
-         abort();
-         return 0;
+      else {
+         return PIPE_FORMAT_U_B8_G8_R8_A8;
       }
    }
    else if (   GET_REDMASK(v)   == 0xf800
@@ -734,6 +736,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       return NULL;
 
    pf = choose_pixel_format(v);
+   assert(pf);
 
    pipe = xmesa_create_pipe_context( c, pf );
 
