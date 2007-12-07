@@ -38,9 +38,9 @@
 static unsigned translate_format( unsigned format )
 {
    switch (format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return COLOR_BUF_ARGB8888;
-   case PIPE_FORMAT_U_R5_G6_B5:
+   case PIPE_FORMAT_R5G6B5_UNORM:
       return COLOR_BUF_RGB565;
    default:
       assert(0);
@@ -51,9 +51,9 @@ static unsigned translate_format( unsigned format )
 static unsigned translate_depth_format( unsigned zformat )
 {
    switch (zformat) {
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return DEPTH_FRMT_24_FIXED_8_OTHER;
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       return DEPTH_FRMT_16_FIXED;
    default:
       assert(0);
@@ -247,7 +247,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 if (cbuf_surface)
             cformat = cbuf_surface->format;
          else
-            cformat = PIPE_FORMAT_U_A8_R8_G8_B8; /* arbitrary */
+            cformat = PIPE_FORMAT_A8R8G8B8_UNORM; /* arbitrary */
          cformat = translate_format(cformat);
 
 	 if (depth_surface) 

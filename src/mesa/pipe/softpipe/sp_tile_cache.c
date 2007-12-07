@@ -163,9 +163,9 @@ static INLINE boolean
 is_depth_stencil_surface(struct pipe_surface *ps)
 {
    return (ps &&
-           (ps->format == PIPE_FORMAT_S8_Z24 ||
-            ps->format == PIPE_FORMAT_U_Z16 ||
-            ps->format == PIPE_FORMAT_U_Z32 ||
+           (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+            ps->format == PIPE_FORMAT_Z16_UNORM ||
+            ps->format == PIPE_FORMAT_Z32_UNORM ||
             ps->format == PIPE_FORMAT_U_S8));
 }
 
@@ -180,7 +180,7 @@ clear_tile(struct softpipe_cached_tile *tile, uint format,
    uint i, j;
 
    switch (format) {
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       {
          ushort clear_val = (ushort) (clear_value[0] * 0xffff);
          for (i = 0; i < TILE_SIZE; i++) {
@@ -190,7 +190,7 @@ clear_tile(struct softpipe_cached_tile *tile, uint format,
          }
       }
       break;
-   case PIPE_FORMAT_U_Z32:
+   case PIPE_FORMAT_Z32_UNORM:
       {
          uint clear_val = (uint) (clear_value[0] * 0xffffffff);
          for (i = 0; i < TILE_SIZE; i++) {
@@ -200,7 +200,7 @@ clear_tile(struct softpipe_cached_tile *tile, uint format,
          }
       }
       break;
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       {
          uint clear_val = (uint) (clear_value[0] * 0xffffff);
          clear_val |= ((uint) clear_value[1]) << 24;

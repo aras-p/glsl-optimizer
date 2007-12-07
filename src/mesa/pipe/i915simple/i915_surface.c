@@ -66,7 +66,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
    CLIP_TILE;
 
    switch (ps->format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       for (i = 0; i < h; i++) {
          float *pRow = p;
          for (j = 0; j < w; j++) {
@@ -81,7 +81,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
          p += w0 * 4;
       }
       break;
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       {
          const float scale = 1.0f / (float) 0xffffff;
          for (i = 0; i < h; i++) {

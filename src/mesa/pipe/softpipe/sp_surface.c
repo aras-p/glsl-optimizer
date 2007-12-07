@@ -70,7 +70,7 @@
 #endif
 
 
-/*** PIPE_FORMAT_U_A8_R8_G8_B8 ***/
+/*** PIPE_FORMAT_A8R8G8B8_UNORM ***/
 
 static void
 a8r8g8b8_get_tile(struct pipe_surface *ps,
@@ -82,7 +82,7 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
+   assert(ps->format == PIPE_FORMAT_A8R8G8B8_UNORM);
 
    CLIP_TILE;
 
@@ -113,7 +113,7 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
+   assert(ps->format == PIPE_FORMAT_A8R8G8B8_UNORM);
 
    CLIP_TILE;
 
@@ -134,7 +134,7 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
 }
 
 
-/*** PIPE_FORMAT_U_B8_G8_R8_A8 ***/
+/*** PIPE_FORMAT_B8G8R8A8_UNORM ***/
 
 static void
 b8g8r8a8_get_tile(struct pipe_surface *ps,
@@ -146,7 +146,7 @@ b8g8r8a8_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_U_B8_G8_R8_A8);
+   assert(ps->format == PIPE_FORMAT_B8G8R8A8_UNORM);
 
    CLIP_TILE;
 
@@ -177,7 +177,7 @@ b8g8r8a8_put_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_U_B8_G8_R8_A8);
+   assert(ps->format == PIPE_FORMAT_B8G8R8A8_UNORM);
 
    CLIP_TILE;
 
@@ -198,7 +198,7 @@ b8g8r8a8_put_tile(struct pipe_surface *ps,
 }
 
 
-/*** PIPE_FORMAT_U_A1_R5_G5_B5 ***/
+/*** PIPE_FORMAT_A1R5G5B5_UNORM ***/
 
 static void
 a1r5g5b5_get_tile(struct pipe_surface *ps,
@@ -209,7 +209,7 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
       + y * ps->pitch + x;
    unsigned i, j;
 
-   assert(ps->format == PIPE_FORMAT_U_A1_R5_G5_B5);
+   assert(ps->format == PIPE_FORMAT_A1R5G5B5_UNORM);
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
@@ -226,7 +226,7 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
 
 
 
-/*** PIPE_FORMAT_U_Z16 ***/
+/*** PIPE_FORMAT_Z16_UNORM ***/
 
 /**
  * Return each Z value as four floats in [0,1].
@@ -242,7 +242,7 @@ z16_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_U_Z16);
+   assert(ps->format == PIPE_FORMAT_Z16_UNORM);
 
    CLIP_TILE;
 
@@ -324,7 +324,7 @@ a8_get_tile(struct pipe_surface *ps,
 }
 
 
-/*** PIPE_FORMAT_S_R16_G16_B16_A16 ***/
+/*** PIPE_FORMAT_R16G16B16A16_SNORM ***/
 
 static void
 r16g16b16a16_get_tile(struct pipe_surface *ps,
@@ -336,7 +336,7 @@ r16g16b16a16_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_S_R16_G16_B16_A16);
+   assert(ps->format == PIPE_FORMAT_R16G16B16A16_SNORM);
 
    CLIP_TILE;
 
@@ -368,7 +368,7 @@ r16g16b16a16_put_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_S_R16_G16_B16_A16);
+   assert(ps->format == PIPE_FORMAT_R16G16B16A16_SNORM);
 
    CLIP_TILE;
 
@@ -458,7 +458,7 @@ a8_l8_get_tile(struct pipe_surface *ps,
 
 
 
-/*** PIPE_FORMAT_U_Z32 ***/
+/*** PIPE_FORMAT_Z32_UNORM ***/
 
 /**
  * Return each Z value as four floats in [0,1].
@@ -474,7 +474,7 @@ z32_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_U_Z16);
+   assert(ps->format == PIPE_FORMAT_Z16_UNORM);
 
    CLIP_TILE;
 
@@ -492,7 +492,7 @@ z32_get_tile(struct pipe_surface *ps,
 }
 
 
-/*** PIPE_FORMAT_S8_Z24 ***/
+/*** PIPE_FORMAT_S8Z24_UNORM ***/
 
 /**
  * Return Z component as four float in [0,1].  Stencil part ignored.
@@ -508,7 +508,7 @@ s8z24_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_S8_Z24);
+   assert(ps->format == PIPE_FORMAT_S8Z24_UNORM);
 
    CLIP_TILE;
 
@@ -526,7 +526,7 @@ s8z24_get_tile(struct pipe_surface *ps,
 }
 
 
-/*** PIPE_FORMAT_Z24_S8 ***/
+/*** PIPE_FORMAT_Z24S8_UNORM ***/
 
 /**
  * Return Z component as four float in [0,1].  Stencil part ignored.
@@ -542,7 +542,7 @@ z24s8_get_tile(struct pipe_surface *ps,
    unsigned i, j;
    unsigned w0 = w;
 
-   assert(ps->format == PIPE_FORMAT_Z24_S8);
+   assert(ps->format == PIPE_FORMAT_Z24S8_UNORM);
 
    CLIP_TILE;
 
@@ -673,13 +673,13 @@ softpipe_get_tile_rgba(struct pipe_context *pipe,
                        float *p)
 {
    switch (ps->format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_B8_G8_R8_A8:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_A1_R5_G5_B5:
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
       a1r5g5b5_get_tile(ps, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_L8:
@@ -694,19 +694,19 @@ softpipe_get_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_U_A8_L8:
       a8_l8_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_S_R16_G16_B16_A16:
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
       r16g16b16a16_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       z16_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_Z32:
+   case PIPE_FORMAT_Z32_UNORM:
       z32_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       s8z24_get_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       z24s8_get_tile(ps, x, y, w, h, p);
       break;
    default:
@@ -723,13 +723,13 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
                        const float *p)
 {
    switch (ps->format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_put_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_B8_G8_R8_A8:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_put_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_A1_R5_G5_B5:
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
       /*a1r5g5b5_put_tile(ps, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_U_L8:
@@ -744,19 +744,19 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_U_A8_L8:
       /*a8_l8_put_tile(ps, x, y, w, h, p);*/
       break;
-   case PIPE_FORMAT_S_R16_G16_B16_A16:
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
       r16g16b16a16_put_tile(ps, x, y, w, h, p);
       break;
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       /*z16_put_tile(ps, x, y, w, h, p);*/
       break;
-   case PIPE_FORMAT_U_Z32:
+   case PIPE_FORMAT_Z32_UNORM:
       /*z32_put_tile(ps, x, y, w, h, p);*/
       break;
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       /*s8z24_put_tile(ps, x, y, w, h, p);*/
       break;
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       /*z24s8_put_tile(ps, x, y, w, h, p);*/
       break;
    default:

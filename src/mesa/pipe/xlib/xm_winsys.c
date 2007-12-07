@@ -389,11 +389,11 @@ xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
    else {
       /* non-color / window surface format */
       switch (format) {
-      case PIPE_FORMAT_S_R16_G16_B16_A16:
-      case PIPE_FORMAT_S8_Z24:
+      case PIPE_FORMAT_R16G16B16A16_SNORM:
+      case PIPE_FORMAT_S8Z24_UNORM:
       case PIPE_FORMAT_U_S8:
-      case PIPE_FORMAT_U_Z16:
-      case PIPE_FORMAT_U_Z32:
+      case PIPE_FORMAT_Z16_UNORM:
+      case PIPE_FORMAT_Z32_UNORM:
          return TRUE;
       default:
          return FALSE;

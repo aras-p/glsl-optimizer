@@ -79,7 +79,7 @@ fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
       attrib[0] = (float) ((int *) ptr)[0];
       break;
 
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       attrib[0] = (float) ((unsigned char *) ptr)[2] / 255.0f;
       attrib[1] = (float) ((unsigned char *) ptr)[1] / 255.0f;
       attrib[2] = (float) ((unsigned char *) ptr)[0] / 255.0f;

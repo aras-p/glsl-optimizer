@@ -138,13 +138,13 @@ translate_texture_format(uint pipeFormat)
       return MAPSURF_8BIT | MT_8BIT_A8;
    case PIPE_FORMAT_U_A8_L8:
       return MAPSURF_16BIT | MT_16BIT_AY88;
-   case PIPE_FORMAT_U_R5_G6_B5:
+   case PIPE_FORMAT_R5G6B5_UNORM:
       return MAPSURF_16BIT | MT_16BIT_RGB565;
-   case PIPE_FORMAT_U_A1_R5_G5_B5:
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
       return MAPSURF_16BIT | MT_16BIT_ARGB1555;
-   case PIPE_FORMAT_U_A4_R4_G4_B4:
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
       return MAPSURF_16BIT | MT_16BIT_ARGB4444;
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
    case PIPE_FORMAT_YCBCR_REV:
       return (MAPSURF_422 | MT_422_YCRCB_NORMAL);
@@ -155,7 +155,7 @@ translate_texture_format(uint pipeFormat)
    case PIPE_FORMAT_RGBA_FXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
 #endif
-   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_Z16_UNORM:
       return (MAPSURF_16BIT | MT_16BIT_L16);
 #if 0
    case PIPE_FORMAT_RGBA_DXT1:
@@ -166,7 +166,7 @@ translate_texture_format(uint pipeFormat)
    case PIPE_FORMAT_RGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
 #endif
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_S8Z24_UNORM:
       return (MAPSURF_32BIT | MT_32BIT_xL824);
    default:
       fprintf(stderr, "i915: translate_texture_format() bad image format %x\n",
