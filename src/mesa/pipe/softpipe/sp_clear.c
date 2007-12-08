@@ -47,19 +47,28 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint i;
 
+#if 0
    softpipe_update_derived(softpipe); /* not needed?? */
+#endif
 
+#if TILE_CLEAR_OPTIMIZATION
    if (ps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
       sp_tile_cache_clear(softpipe->zbuf_cache, clearValue);
-   }
-   else if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
-      sp_tile_cache_clear(softpipe->cbuf_cache[0], clearValue);
+      return;
    }
 
-#if !TILE_CLEAR_OPTIMIZATION
-   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
+         sp_tile_cache_clear(softpipe->cbuf_cache[i], clearValue);
+         return;
+      }
+   }
 #endif
+
+   /* non-cached surface */
+   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
 
 #if 0
    sp_clear_tile_cache(ps, clearValue);
