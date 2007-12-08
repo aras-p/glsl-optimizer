@@ -59,7 +59,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
       return;
    }
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
          sp_tile_cache_clear(softpipe->cbuf_cache[i], clearValue);
          return;

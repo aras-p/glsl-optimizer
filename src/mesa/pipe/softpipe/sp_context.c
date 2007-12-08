@@ -94,7 +94,7 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
    struct pipe_surface *ps;
    uint i;
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+   for (i = 0; i < sp->framebuffer.num_cbufs; i++)
       sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
    sp_flush_tile_cache(sp, sp->zbuf_cache);
    sp_flush_tile_cache(sp, sp->sbuf_cache);
