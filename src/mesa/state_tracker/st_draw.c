@@ -34,7 +34,6 @@
 #include "main/image.h"
 
 #include "vbo/vbo.h"
-#include "vbo/vbo_context.h"
 
 #include "st_atom.h"
 #include "st_cache.h"
@@ -519,14 +518,11 @@ st_feedback_draw_vbo(GLcontext *ctx,
 void st_init_draw( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
-   struct vbo_context *vbo = (struct vbo_context *) ctx->swtnl_im;
 
    /* actually, not used here, but elsewhere */
    create_default_attribs_buffer(st);
 
-   assert(vbo);
-   assert(vbo->draw_prims);
-   vbo->draw_prims = st_draw_vbo;
+   vbo_set_draw_func(ctx, st_draw_vbo);
 }
 
 
