@@ -30,10 +30,9 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "sp_context.h"
-#include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_texture.h"
-#include "sp_tile_cache.h"
+
 
 /**
  * Softpipe surface functions.
@@ -48,14 +47,6 @@
 
 
 
-#if 0
-#define CLIP_TILE \
-   do { \
-      assert(x + w <= ps->width);               \
-      assert(y + h <= ps->height);              \
-   } while(0)
-
-#else
 #define CLIP_TILE \
    do { \
       if (x >= ps->width) \
@@ -65,9 +56,8 @@
       if (x + w > ps->width) \
          w = ps->width - x; \
       if (y + h > ps->height) \
-         h = ps->height -y; \
+         h = ps->height - y; \
    } while(0)
-#endif
 
 
 /*** PIPE_FORMAT_A8R8G8B8_UNORM ***/
@@ -611,6 +601,7 @@ softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 {
    const uint cpp = ps->cpp;
    const ubyte *pSrc;
+   const uint src_stride = ps->pitch * cpp;
    ubyte *pDest;
    uint i;
 
@@ -628,7 +619,7 @@ softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
       pDest += dst_stride;
-      pSrc += ps->pitch * cpp;
+      pSrc += src_stride;
    }
 }
 
@@ -643,6 +634,7 @@ softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 {
    const uint cpp = ps->cpp;
    const ubyte *pSrc;
+   const uint dst_stride = ps->pitch * cpp;
    ubyte *pDest;
    uint i;
 
@@ -659,7 +651,7 @@ softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
-      pDest += ps->pitch * cpp;
+      pDest += dst_stride;
       pSrc += src_stride;
    }
 }
