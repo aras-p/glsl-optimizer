@@ -51,9 +51,11 @@ struct softpipe_cached_tile
    int z, face, level; /**< Extra texture indexes */
    union {
       float color[TILE_SIZE][TILE_SIZE][4];
+      uint color32[TILE_SIZE][TILE_SIZE];
       uint depth32[TILE_SIZE][TILE_SIZE];
       ushort depth16[TILE_SIZE][TILE_SIZE];
       ubyte stencil8[TILE_SIZE][TILE_SIZE];
+      ubyte any[1];
    } data;
 };
 
@@ -80,7 +82,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
                     struct softpipe_tile_cache *tc);
 
 extern void
-sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float value[4]);
+sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue);
 
 extern struct softpipe_cached_tile *
 sp_get_cached_tile(struct softpipe_context *softpipe,

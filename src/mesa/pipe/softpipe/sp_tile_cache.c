@@ -52,7 +52,9 @@ struct softpipe_tile_cache
    struct pipe_texture *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
-   float clear_value[4];
+   float clear_color[4];
+   uint clear_val;
+   boolean depth_stencil; /** Is the surface a depth/stencil format? */
 };
 
 
@@ -67,6 +69,9 @@ struct softpipe_tile_cache
 
 
 
+/**
+ * Is the tile at (x,y) in cleared state?
+ */
 static INLINE uint
 is_clear_flag_set(const uint *bitvec, int x, int y)
 {
@@ -80,6 +85,9 @@ is_clear_flag_set(const uint *bitvec, int x, int y)
 }
    
 
+/**
+ * Mark the tile at (x,y) as not cleared.
+ */
 static INLINE void
 clear_clear_flag(uint *bitvec, int x, int y)
 {
@@ -120,10 +128,15 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
 }
 
 
+/**
+ * Specify the surface to cache.
+ */
 void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
+   assert(!tc->texture);
+
    if (tc->surface && tc->surface->map) {
       assert(tc->surface != ps);
       pipe_surface_unmap(tc->surface);
@@ -133,9 +146,19 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
 
    if (!ps->map)
       pipe_surface_map(ps);
+
+   if (ps) {
+      tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
+                           ps->format == PIPE_FORMAT_Z16_UNORM ||
+                           ps->format == PIPE_FORMAT_Z32_UNORM ||
+                           ps->format == PIPE_FORMAT_U_S8);
+   }
 }
 
 
+/**
+ * Return the surface being cached.
+ */
 struct pipe_surface *
 sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
 {
@@ -143,11 +166,16 @@ sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
 }
 
 
+/**
+ * Specify the texture to cache.
+ */
 void
 sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
                           struct pipe_texture *texture)
 {
    uint i;
+
+   assert(!tc->surface);
 
    tc->texture = texture;
 
@@ -159,133 +187,74 @@ sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
 }
 
 
-static INLINE boolean
-is_depth_stencil_surface(struct pipe_surface *ps)
+/**
+ * Set pixels in a tile to the given clear color/value, float.
+ */
+static void
+clear_tile_rgba(struct softpipe_cached_tile *tile,
+                enum pipe_format format,
+                const float clear_value[4])
 {
-   return (ps &&
-           (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
-            ps->format == PIPE_FORMAT_Z16_UNORM ||
-            ps->format == PIPE_FORMAT_Z32_UNORM ||
-            ps->format == PIPE_FORMAT_U_S8));
+   if (clear_value[0] == 0.0 &&
+       clear_value[1] == 0.0 &&
+       clear_value[2] == 0.0 &&
+       clear_value[3] == 0.0) {
+      memset(tile->data.color, 0, sizeof(tile->data.color));
+   }
+   else {
+      uint i, j;
+      for (i = 0; i < TILE_SIZE; i++) {
+         for (j = 0; j < TILE_SIZE; j++) {
+            tile->data.color[i][j][0] = clear_value[0];
+            tile->data.color[i][j][1] = clear_value[1];
+            tile->data.color[i][j][2] = clear_value[2];
+            tile->data.color[i][j][3] = clear_value[3];
+         }
+      }
+   }
 }
 
 
 /**
- * Set pixels in a tile to the given clear color/value.
+ * Set a tile to a solid value/color.
  */
 static void
 clear_tile(struct softpipe_cached_tile *tile,
            enum pipe_format format,
-           const float clear_value[4])
+           uint clear_value)
 {
    uint i, j;
 
    switch (format) {
-   case PIPE_FORMAT_Z16_UNORM:
-      {
-         ushort clear_val = (ushort) (clear_value[0] * 0xffff);
-         for (i = 0; i < TILE_SIZE; i++) {
-            for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.depth16[i][j] = clear_val;
-            }
-         }
-      }
-      break;
-   case PIPE_FORMAT_Z32_UNORM:
-      {
-         uint clear_val = (uint) (clear_value[0] * 0xffffffff);
-         for (i = 0; i < TILE_SIZE; i++) {
-            for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.depth32[i][j] = clear_val;
-            }
-         }
-      }
-      break;
-   case PIPE_FORMAT_S8Z24_UNORM:
-      {
-         uint clear_val = (uint) (clear_value[0] * 0xffffff);
-         clear_val |= ((uint) clear_value[1]) << 24;
-         for (i = 0; i < TILE_SIZE; i++) {
-            for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.depth32[i][j] = clear_val;
-            }
-         }
-      }
-      break;
    case PIPE_FORMAT_U_S8:
-      {
-         ubyte clear_val = (uint) clear_value[0];
+      /* 8 bpp */
+      memset(tile->data.any, 0, TILE_SIZE * TILE_SIZE);
+      break;
+   case PIPE_FORMAT_Z16_UNORM:
+      /* 16 bpp */
+      if (clear_value == 0) {
+         memset(tile->data.any, 0, 2 * TILE_SIZE * TILE_SIZE);
+      }
+      else {
          for (i = 0; i < TILE_SIZE; i++) {
             for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.stencil8[i][j] = clear_val;
+               tile->data.depth16[i][j] = clear_value;
             }
          }
       }
       break;
    default:
-      /* color */
-      if (clear_value[0] == 0.0 &&
-          clear_value[1] == 0.0 &&
-          clear_value[2] == 0.0 &&
-          clear_value[3] == 0.0) {
-         memset(tile->data.color, 0, sizeof(tile->data.color));
+      /* 32 bpp */
+      if (clear_value == 0) {
+         memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
       }
       else {
          for (i = 0; i < TILE_SIZE; i++) {
             for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.color[i][j][0] = clear_value[0];
-               tile->data.color[i][j][1] = clear_value[1];
-               tile->data.color[i][j][2] = clear_value[2];
-               tile->data.color[i][j][3] = clear_value[3];
+               tile->data.color32[i][j] = clear_value;
             }
          }
       }
-   }
-}
-
-
-static INLINE void
-put_tile(struct pipe_context *pipe,
-         struct pipe_surface *ps, 
-         struct softpipe_cached_tile *tile)
-{
-   assert(tile->x >= 0);
-   assert(tile->x % TILE_SIZE == 0);
-   assert(tile->y >= 0);
-   assert(tile->y % TILE_SIZE == 0);
-
-   if (is_depth_stencil_surface(ps)) {
-      pipe->put_tile(pipe, ps,
-                     tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                     tile->data.depth32, 0/*STRIDE*/);
-   }
-   else {
-      pipe->put_tile_rgba(pipe, ps,
-                          tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                          (float *) tile->data.color);
-   }
-}
-
-
-static INLINE void
-get_tile(struct pipe_context *pipe,
-         struct pipe_surface *ps, 
-         struct softpipe_cached_tile *tile)
-{
-   assert(tile->x >= 0);
-   assert(tile->x % TILE_SIZE == 0);
-   assert(tile->y >= 0);
-   assert(tile->y % TILE_SIZE == 0);
-
-   if (is_depth_stencil_surface(ps)) {
-      pipe->get_tile(pipe, ps,
-                     tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                     tile->data.depth32, 0/*STRIDE*/);
-   }
-   else {
-      pipe->get_tile_rgba(pipe, ps,
-                          tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                          (float *) tile->data.color);
    }
 }
 
@@ -305,15 +274,15 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
    uint numCleared = 0;
 
    /* clear one tile to the clear value */
-   clear_tile(&tile, ps->format, tc->clear_value);
+   clear_tile(&tile, ps->format, tc->clear_val);
 
    /* push the tile to all positions marked as clear */
    for (y = 0; y < h; y += TILE_SIZE) {
       for (x = 0; x < w; x += TILE_SIZE) {
          if (is_clear_flag_set(tc->clear_flags, x, y)) {
-            tile.x = x;
-            tile.y = y;
-            put_tile(pipe, ps, &tile);
+            pipe->put_tile(pipe, ps,
+                           x, y, TILE_SIZE, TILE_SIZE,
+                           tile.data.color32, 0/*STRIDE*/);
 
             /* do this? */
             clear_clear_flag(tc->clear_flags, x, y);
@@ -349,7 +318,16 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
       struct softpipe_cached_tile *tile = tc->entries + pos;
       if (tile->x >= 0) {
-         put_tile(pipe, ps, tile);
+         if (tc->depth_stencil) {
+            pipe->put_tile(pipe, ps,
+                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                           tile->data.depth32, 0/*STRIDE*/);
+         }
+         else {
+            pipe->put_tile_rgba(pipe, ps,
+                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                (float *) tile->data.color);
+         }
          tile->x = tile->y = -1;  /* mark as empty */
          inuse++;
       }
@@ -389,7 +367,16 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
 
       if (tile->x != -1) {
          /* put dirty tile back in framebuffer */
-         put_tile(pipe, ps, tile);
+         if (tc->depth_stencil) {
+            pipe->put_tile(pipe, ps,
+                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                           tile->data.depth32, 0/*STRIDE*/);
+         }
+         else {
+            pipe->put_tile_rgba(pipe, ps,
+                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                (float *) tile->data.color);
+         }
       }
 
       tile->x = tile_x;
@@ -397,12 +384,26 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
 
       if (is_clear_flag_set(tc->clear_flags, x, y)) {
          /* don't get tile from framebuffer, just clear it */
-         clear_tile(tile, ps->format, tc->clear_value);
+         if (tc->depth_stencil) {
+            clear_tile(tile, ps->format, tc->clear_val);
+         }
+         else {
+            clear_tile_rgba(tile, ps->format, tc->clear_color);
+         }
          clear_clear_flag(tc->clear_flags, x, y);
       }
       else {
          /* get new tile data from surface */
-         get_tile(pipe, ps, tile);
+         if (tc->depth_stencil) {
+            pipe->get_tile(pipe, ps,
+                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                           tile->data.depth32, 0/*STRIDE*/);
+         }
+         else {
+            pipe->get_tile_rgba(pipe, ps,
+                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                (float *) tile->data.color);
+         }
       }
    }
 
@@ -477,12 +478,39 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
  * Save the color and set a 'clearflag' for each tile of the screen.
  */
 void
-sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float value[4])
+sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue)
 {
-   tc->clear_value[0] = value[0];
-   tc->clear_value[1] = value[1];
-   tc->clear_value[2] = value[2];
-   tc->clear_value[3] = value[3];
+   uint r, g, b, a;
+
+   tc->clear_val = clearValue;
+
+   switch (tc->surface->format) {
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      r = (clearValue >> 24) & 0xff;
+      g = (clearValue >> 16) & 0xff;
+      b = (clearValue >>  8) & 0xff;
+      a = (clearValue      ) & 0xff;
+      break;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      r = (clearValue >> 16) & 0xff;
+      g = (clearValue >>  8) & 0xff;
+      b = (clearValue      ) & 0xff;
+      a = (clearValue >> 24) & 0xff;
+      break;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      r = (clearValue >>  8) & 0xff;
+      g = (clearValue >> 16) & 0xff;
+      b = (clearValue >> 24) & 0xff;
+      a = (clearValue      ) & 0xff;
+      break;
+   default:
+      r = g = b = a = 0;
+   }
+
+   tc->clear_color[0] = r / 255.0;
+   tc->clear_color[1] = g / 255.0;
+   tc->clear_color[2] = b / 255.0;
+   tc->clear_color[3] = a / 255.0;
 
 #if TILE_CLEAR_OPTIMIZATION
    /* set flags to indicate all the tiles are cleared */
