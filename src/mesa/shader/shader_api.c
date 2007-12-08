@@ -52,7 +52,7 @@
 /**
  * Allocate a new gl_shader_program object, initialize it.
  */
-struct gl_shader_program *
+static struct gl_shader_program *
 _mesa_new_shader_program(GLcontext *ctx, GLuint name)
 {
    struct gl_shader_program *shProg;
@@ -371,7 +371,7 @@ copy_string(GLchar *dst, GLsizei maxLength, GLsizei *length, const GLchar *src)
 /**
  * Called via ctx->Driver.AttachShader()
  */
-void
+static void
 _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
@@ -410,7 +410,38 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 }
 
 
-void
+static GLint
+_mesa_get_attrib_location(GLcontext *ctx, GLuint program,
+                          const GLchar *name)
+{
+   struct gl_shader_program *shProg
+      = _mesa_lookup_shader_program(ctx, program);
+
+   if (!shProg) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
+      return -1;
+   }
+
+   if (!shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetAttribLocation(program not linked)");
+      return -1;
+   }
+
+   if (!name)
+      return -1;
+
+   if (shProg->Attributes) {
+      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
+      if (i >= 0) {
+         return shProg->Attributes->Parameters[i].StateIndexes[0];
+      }
+   }
+   return -1;
+}
+
+
+static void
 _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
                            const GLchar *name)
 {
@@ -456,7 +487,7 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
 }
 
 
-GLuint
+static GLuint
 _mesa_create_shader(GLcontext *ctx, GLenum type)
 {
    struct gl_shader *sh;
@@ -480,7 +511,7 @@ _mesa_create_shader(GLcontext *ctx, GLenum type)
 }
 
 
-GLuint 
+static GLuint 
 _mesa_create_program(GLcontext *ctx)
 {
    GLuint name;
@@ -501,7 +532,7 @@ _mesa_create_program(GLcontext *ctx)
  * Named w/ "2" to indicate OpenGL 2.x vs GL_ARB_fragment_programs's
  * DeleteProgramARB.
  */
-void
+static void
 _mesa_delete_program2(GLcontext *ctx, GLuint name)
 {
    /*
@@ -527,7 +558,7 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
 }
 
 
-void
+static void
 _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
@@ -542,7 +573,7 @@ _mesa_delete_shader(GLcontext *ctx, GLuint shader)
 }
 
 
-void
+static void
 _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
@@ -602,7 +633,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 }
 
 
-void
+static void
 _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                         GLsizei maxLength, GLsizei *length, GLint *size,
                         GLenum *type, GLchar *nameOut)
@@ -637,7 +668,7 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
 /**
  * Called via ctx->Driver.GetActiveUniform().
  */
-void
+static void
 _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
@@ -681,7 +712,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
 /**
  * Called via ctx->Driver.GetAttachedShaders().
  */
-void
+static void
 _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
                            GLsizei *count, GLuint *obj)
 {
@@ -701,38 +732,7 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
 }
 
 
-GLint
-_mesa_get_attrib_location(GLcontext *ctx, GLuint program,
-                          const GLchar *name)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
-
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
-      return -1;
-   }
-
-   if (!shProg->LinkStatus) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetAttribLocation(program not linked)");
-      return -1;
-   }
-
-   if (!name)
-      return -1;
-
-   if (shProg->Attributes) {
-      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
-      if (i >= 0) {
-         return shProg->Attributes->Parameters[i].StateIndexes[0];
-      }
-   }
-   return -1;
-}
-
-
-GLuint
+static GLuint
 _mesa_get_handle(GLcontext *ctx, GLenum pname)
 {
 #if 0
@@ -756,7 +756,7 @@ _mesa_get_handle(GLcontext *ctx, GLenum pname)
 }
 
 
-void
+static void
 _mesa_get_programiv(GLcontext *ctx, GLuint program,
                     GLenum pname, GLint *params)
 {
@@ -810,7 +810,7 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
 }
 
 
-void
+static void
 _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
 {
    struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
@@ -843,7 +843,7 @@ _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
 }
 
 
-void
+static void
 _mesa_get_program_info_log(GLcontext *ctx, GLuint program, GLsizei bufSize,
                            GLsizei *length, GLchar *infoLog)
 {
@@ -857,7 +857,7 @@ _mesa_get_program_info_log(GLcontext *ctx, GLuint program, GLsizei bufSize,
 }
 
 
-void
+static void
 _mesa_get_shader_info_log(GLcontext *ctx, GLuint shader, GLsizei bufSize,
                           GLsizei *length, GLchar *infoLog)
 {
@@ -873,7 +873,7 @@ _mesa_get_shader_info_log(GLcontext *ctx, GLuint shader, GLsizei bufSize,
 /**
  * Called via ctx->Driver.GetShaderSource().
  */
-void
+static void
 _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
                         GLsizei *length, GLchar *sourceOut)
 {
@@ -889,7 +889,7 @@ _mesa_get_shader_source(GLcontext *ctx, GLuint shader, GLsizei maxLength,
 /**
  * Called via ctx->Driver.GetUniformfv().
  */
-void
+static void
 _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
                     GLfloat *params)
 {
@@ -915,7 +915,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
 /**
  * Called via ctx->Driver.GetUniformLocation().
  */
-GLint
+static GLint
 _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 {
    struct gl_shader_program *shProg
@@ -940,7 +940,7 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_is_program(GLcontext *ctx, GLuint name)
 {
    struct gl_shader_program *shProg = _mesa_lookup_shader_program(ctx, name);
@@ -948,7 +948,7 @@ _mesa_is_program(GLcontext *ctx, GLuint name)
 }
 
 
-GLboolean
+static GLboolean
 _mesa_is_shader(GLcontext *ctx, GLuint name)
 {
    struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
@@ -960,7 +960,7 @@ _mesa_is_shader(GLcontext *ctx, GLuint name)
 /**
  * Called via ctx->Driver.ShaderSource()
  */
-void
+static void
 _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
@@ -981,7 +981,7 @@ _mesa_shader_source(GLcontext *ctx, GLuint shader, const GLchar *source)
 /**
  * Called via ctx->Driver.CompileShader()
  */
-void
+static void
 _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
 {
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shaderObj);
@@ -998,7 +998,7 @@ _mesa_compile_shader(GLcontext *ctx, GLuint shaderObj)
 /**
  * Called via ctx->Driver.LinkProgram()
  */
-void
+static void
 _mesa_link_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
@@ -1070,7 +1070,7 @@ update_textures_used(struct gl_program *prog)
 /**
  * Called via ctx->Driver.Uniform().
  */
-void
+static void
 _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
@@ -1182,7 +1182,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 /**
  * Called by ctx->Driver.UniformMatrix().
  */
-void
+static void
 _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLenum matrixType, GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
@@ -1230,7 +1230,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 }
 
 
-void
+static void
 _mesa_validate_program(GLcontext *ctx, GLuint program)
 {
    struct gl_shader_program *shProg;
@@ -1255,4 +1255,41 @@ _mesa_validate_program(GLcontext *ctx, GLuint program)
      processing exceeds the combined limit on the total number of texture
      image units allowed.
    */
+}
+
+
+/**
+ * Plug in Mesa's GLSL functions into the device driver function table.
+ */
+void
+_mesa_init_glsl_driver_functions(struct dd_function_table *driver)
+{
+   driver->AttachShader = _mesa_attach_shader;
+   driver->BindAttribLocation = _mesa_bind_attrib_location;
+   driver->CompileShader = _mesa_compile_shader;
+   driver->CreateProgram = _mesa_create_program;
+   driver->CreateShader = _mesa_create_shader;
+   driver->DeleteProgram2 = _mesa_delete_program2;
+   driver->DeleteShader = _mesa_delete_shader;
+   driver->DetachShader = _mesa_detach_shader;
+   driver->GetActiveAttrib = _mesa_get_active_attrib;
+   driver->GetActiveUniform = _mesa_get_active_uniform;
+   driver->GetAttachedShaders = _mesa_get_attached_shaders;
+   driver->GetAttribLocation = _mesa_get_attrib_location;
+   driver->GetHandle = _mesa_get_handle;
+   driver->GetProgramiv = _mesa_get_programiv;
+   driver->GetProgramInfoLog = _mesa_get_program_info_log;
+   driver->GetShaderiv = _mesa_get_shaderiv;
+   driver->GetShaderInfoLog = _mesa_get_shader_info_log;
+   driver->GetShaderSource = _mesa_get_shader_source;
+   driver->GetUniformfv = _mesa_get_uniformfv;
+   driver->GetUniformLocation = _mesa_get_uniform_location;
+   driver->IsProgram = _mesa_is_program;
+   driver->IsShader = _mesa_is_shader;
+   driver->LinkProgram = _mesa_link_program;
+   driver->ShaderSource = _mesa_shader_source;
+   driver->Uniform = _mesa_uniform;
+   driver->UniformMatrix = _mesa_uniform_matrix;
+   driver->UseProgram = _mesa_use_program;
+   driver->ValidateProgram = _mesa_validate_program;
 }
