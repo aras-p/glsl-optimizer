@@ -55,7 +55,7 @@ softpipe_flush( struct pipe_context *pipe,
     * - flush the render cache
     */
 
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++)
       if (softpipe->cbuf_cache[i])
          sp_flush_tile_cache(softpipe, softpipe->cbuf_cache[i]);
 
