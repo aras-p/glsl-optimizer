@@ -55,6 +55,9 @@ struct softpipe_tile_cache
    float clear_color[4];
    uint clear_val;
    boolean depth_stencil; /** Is the surface a depth/stencil format? */
+
+   struct pipe_surface *tex_surf;
+   int tex_face, tex_level, tex_z;
 };
 
 
@@ -179,11 +182,17 @@ sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
 
    tc->texture = texture;
 
+   if (tc->tex_surf && tc->tex_surf->map)
+      pipe_surface_unmap(tc->tex_surf);
+   pipe_surface_reference(&tc->tex_surf, NULL);
+
    /* mark as entries as invalid/empty */
    /* XXX we should try to avoid this when the teximage hasn't changed */
    for (i = 0; i < NUM_ENTRIES; i++) {
       tc->entries[i].x = -1;
    }
+
+   tc->tex_face = -1; /* any invalid value here */
 }
 
 
@@ -448,19 +457,33 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
        z != tile->z ||
        face != tile->face ||
        level != tile->level) {
-      /* XXX this call is a bit heavier than we'd like: */
-      struct pipe_surface *ps
-         = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
+      /* cache miss */
 
-      pipe_surface_map(ps);
+      /* check if we need to get a new surface */
+      if (!tc->tex_surf ||
+          tc->tex_face != face ||
+          tc->tex_level != level ||
+          tc->tex_z != z) {
+         /* get new surface (view into texture) */
+         struct pipe_surface *ps;
 
-      pipe->get_tile_rgba(pipe, ps,
+         if (tc->tex_surf && tc->tex_surf->map)
+            pipe_surface_unmap(tc->tex_surf);
+
+         ps = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
+         pipe_surface_reference(&tc->tex_surf, ps);
+
+         pipe_surface_map(ps);
+
+         tc->tex_face = face;
+         tc->tex_level = level;
+         tc->tex_z = z;
+      }
+
+      /* get tile from the surface (view into texture) */
+      pipe->get_tile_rgba(pipe, tc->tex_surf,
                           tile_x, tile_y, TILE_SIZE, TILE_SIZE,
                           (float *) tile->data.color);
-
-      pipe_surface_unmap(ps);
-      pipe_surface_reference(&ps, NULL);
-
       tile->x = tile_x;
       tile->y = tile_y;
       tile->z = z;
