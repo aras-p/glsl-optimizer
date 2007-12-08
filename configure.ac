@@ -77,7 +77,7 @@ dnl shared/static libraries, mimic libtool options
 dnl
 AC_ARG_ENABLE(static,
     [AS_HELP_STRING([--enable-static],
-        [build static libraries @<:@default=no@:>@])],
+        [build static libraries @<:@default=disabled@:>@])],
     enable_static="$enableval",
     enable_static=no
 )
@@ -90,7 +90,7 @@ x ) enable_static=no ;;
 esac
 AC_ARG_ENABLE(shared,
     [AS_HELP_STRING([--disable-shared],
-        [build shared libraries @<:@default=yes@:>@])],
+        [build shared libraries @<:@default=enabled@:>@])],
     enable_shared="$enableval",
     enable_shared=yes
 )
@@ -320,7 +320,7 @@ dnl More DRI setup
 dnl
 AC_ARG_ENABLE(glx-tls,
     [AS_HELP_STRING([--enable-glx-tls],
-        [enable TLS support in GLX @<:@default=no@:>@])],
+        [enable TLS support in GLX @<:@default=disabled@:>@])],
         GLX_USE_TLS="$enableval",
         GLX_USE_TLS=no)
 dnl Directory for DRI drivers
@@ -332,8 +332,8 @@ AC_ARG_WITH(dri-driverdir,
 AC_SUBST(DRI_DRIVER_INSTALL_DIR)
 dnl Direct rendering or just indirect rendering
 AC_ARG_ENABLE(driglx-direct,
-    [AS_HELP_STRING([--enable-driglx-direct],
-        [enable direct rendering in GLX for DRI @<:@default=yes@:>@])],
+    [AS_HELP_STRING([--disable-driglx-direct],
+        [enable direct rendering in GLX for DRI @<:@default=enabled@:>@])],
         driglx_direct="$enableval",
         driglx_direct="yes")
 
@@ -464,8 +464,8 @@ else
     default_x11_osmesa=no
 fi
 AC_ARG_ENABLE(x11-osmesa,
-    [AS_HELP_STRING([--enable-x11-osmesa],
-        [enable OSMesa on X11 libGL @<:@default=yes for x11 driver@:>@])],
+    [AS_HELP_STRING([--disable-x11-osmesa],
+        [enable OSMesa on X11 libGL @<:@default=enabled for x11 driver@:>@])],
         x11_osmesa="$enableval",
         x11_osmesa="$default_x11_osmesa")
 if test "x$x11_osmesa" = xyes; then
@@ -528,8 +528,8 @@ dnl
 dnl GLU configuration
 dnl
 AC_ARG_ENABLE(glu,
-    [AS_HELP_STRING([--enable-glu],
-        [enable OpenGL Utility library @<:@default=yes@:>@])],
+    [AS_HELP_STRING([--disable-glu],
+        [enable OpenGL Utility library @<:@default=enabled@:>@])],
     enable_glu="$enableval",
     enable_glu=yes)
 if test "x$enable_glu" = xyes; then
@@ -576,8 +576,8 @@ dnl
 dnl GLw configuration
 dnl
 AC_ARG_ENABLE(glw,
-    [AS_HELP_STRING([--enable-glw],
-        [enable Xt/Motif widget library @<:@default=yes@:>@])],
+    [AS_HELP_STRING([--disable-glw],
+        [enable Xt/Motif widget library @<:@default=enabled@:>@])],
     enable_glw="$enableval",
     enable_glw=yes)
 dnl Don't build GLw on osmesa
@@ -616,8 +616,8 @@ else
     default_glut=no
 fi
 AC_ARG_ENABLE(glut,
-    [AS_HELP_STRING([--enable-glut],
-        [enable GLUT library @<:@default=yes if source available@:>@])],
+    [AS_HELP_STRING([--disable-glut],
+        [enable GLUT library @<:@default=enabled if source available@:>@])],
     enable_glut="$enableval",
     enable_glut="$default_glut")
 
