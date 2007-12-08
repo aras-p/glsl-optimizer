@@ -175,6 +175,9 @@ do_flush_locked(struct intel_batchbuffer *batch,
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
 		   intel->intelScreen->deviceID);
       dri_bo_unmap(batch->buf);
+
+      if (intel->vtbl.debug_batch != NULL)
+	 intel->vtbl.debug_batch(intel);
    }
 }
 

@@ -30,6 +30,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
+#include "dri_bufmgr.h"
 #include "xmlconfig.h"
 #include "i830_common.h"
 
@@ -42,6 +43,7 @@ typedef struct {
    char *map;           /* memory map */
    int offset;          /* from start of video mem, in bytes */
    int pitch;           /* row stride, in pixels */
+   unsigned int bo_handle;
    unsigned int tiled; 
 } intelRegion;
 
@@ -52,7 +54,12 @@ typedef struct
    intelRegion rotated;
    intelRegion depth;
    intelRegion tex;
-   
+
+   struct intel_region *front_region;
+   struct intel_region *back_region;
+   struct intel_region *depth_region;
+   struct intel_region *rotated_region;
+
    int deviceID;
    int width;
    int height;
@@ -76,10 +83,23 @@ typedef struct
    int current_rotation;  /* 0, 90, 180 or 270 */
    int rotatedWidth, rotatedHeight;
 
+   GLboolean no_hw;
+
    /**
     * Configuration cache with default values for all contexts 
     */
    driOptionCache optionCache;
+
+   dri_bufmgr *bufmgr;
+   unsigned int maxBatchSize;
+
+   /**
+    * This value indicates that the kernel memory manager is being used
+    * instead of the fake client-side memory manager.
+    */
+   GLboolean ttm;
+
+   unsigned batch_id;
 } intelScreenPrivate;
 
 

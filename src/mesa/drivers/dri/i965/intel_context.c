@@ -58,8 +58,9 @@
 #include "intel_blit.h"
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
+#include "intel_decode.h"
 
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 #include "utils.h"
 #include "vblank.h"
@@ -267,14 +268,20 @@ void intelFlush( GLcontext *ctx )
 {
    struct intel_context *intel = intel_context( ctx );
 
-   bmLockAndFence(intel);
+   if (intel->batch->map != intel->batch->ptr)
+      intel_batchbuffer_flush(intel->batch);
 }
 
 void intelFinish( GLcontext *ctx ) 
 {
    struct intel_context *intel = intel_context( ctx );
 
-   bmFinishFence(intel, bmLockAndFence(intel));
+   intelFlush(ctx);
+   if (intel->batch->last_fence) {
+      dri_fence_wait(intel->batch->last_fence);
+      dri_fence_unreference(intel->batch->last_fence);
+      intel->batch->last_fence = NULL;
+   }
 }
 
 static void
@@ -333,7 +340,23 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    intelInitBufferFuncs( functions );
 }
 
+static void
+intel_update_screen_regions(struct intel_context *intel)
+{
+   intel->bufmgr = intel->intelScreen->bufmgr;
 
+   intel_region_release(intel, &intel->front_region);
+   intel_region_reference(&intel->front_region,
+			  intel->intelScreen->front_region);
+
+   intel_region_release(intel, &intel->back_region);
+   intel_region_reference(&intel->back_region,
+			  intel->intelScreen->back_region);
+
+   intel_region_release(intel, &intel->depth_region);
+   intel_region_reference(&intel->depth_region,
+			  intel->intelScreen->depth_region);
+}
 
 GLboolean intelInitContext( struct intel_context *intel,
 			    const __GLcontextModes *mesaVis,
@@ -439,8 +462,6 @@ GLboolean intelInitContext( struct intel_context *intel,
    /* Initialize swrast, tnl driver tables: */
    intelInitSpanFuncs( ctx );
 
-   intel->no_hw = getenv("INTEL_NO_HW") != NULL;
-
    if (!intel->intelScreen->irq_active) {
       _mesa_printf("IRQs not active.  Exiting\n");
       exit(1);
@@ -450,61 +471,12 @@ GLboolean intelInitContext( struct intel_context *intel,
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
 
+   intel_update_screen_regions(intel);
 
-   /* Buffer manager: 
-    */
-   intel->bm = bm_fake_intel_Attach( intel );
-
-
-   bmInitPool(intel,
-	      intel->intelScreen->tex.offset, /* low offset */
-	      intel->intelScreen->tex.map, /* low virtual */
-	      intel->intelScreen->tex.size,
-	      BM_MEM_AGP);
-
-   /* These are still static, but create regions for them.  
-    */
-   intel->front_region = 
-      intel_region_create_static(intel,
-				 BM_MEM_AGP,
-				 intelScreen->front.offset,
-				 intelScreen->front.map,
-				 intelScreen->cpp,
-				 intelScreen->front.pitch / intelScreen->cpp,
-				 intelScreen->height,
-				 intelScreen->front.size,
-				 intelScreen->front.tiled != 0);
-
-   intel->back_region = 
-      intel_region_create_static(intel,
-				 BM_MEM_AGP,
-				 intelScreen->back.offset,
-				 intelScreen->back.map,
-				 intelScreen->cpp,
-				 intelScreen->back.pitch / intelScreen->cpp,
-				 intelScreen->height,
-				 intelScreen->back.size,
-                                 intelScreen->back.tiled != 0);
-
-   /* Still assuming front.cpp == depth.cpp
-    *
-    * XXX: Setting tiling to false because Depth tiling only supports
-    * YMAJOR but the blitter only supports XMAJOR tiling.  Have to
-    * resolve later.
-    */
-   intel->depth_region = 
-      intel_region_create_static(intel,
-				 BM_MEM_AGP,
-				 intelScreen->depth.offset,
-				 intelScreen->depth.map,
-				 intelScreen->cpp,
-				 intelScreen->depth.pitch / intelScreen->cpp,
-				 intelScreen->height,
-				 intelScreen->depth.size,
-                                 intelScreen->depth.tiled != 0);
-   
    intel_bufferobj_init( intel );
    intel->batch = intel_batchbuffer_alloc( intel );
+   intel->last_swap_fence = NULL;
+   intel->first_swap_fence = NULL;
 
    if (intel->ctx.Mesa_DXTn) {
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
@@ -549,7 +521,17 @@ void intelDestroyContext(__DRIcontextPrivate *driContextPriv)
       intel->Fallback = 0;	/* don't call _swrast_Flush later */
       intel_batchbuffer_free(intel->batch);
       intel->batch = NULL;
-      
+
+      if (intel->last_swap_fence) {
+	 dri_fence_wait(intel->last_swap_fence);
+	 dri_fence_unreference(intel->last_swap_fence);
+	 intel->last_swap_fence = NULL;
+      }
+      if (intel->first_swap_fence) {
+	 dri_fence_wait(intel->first_swap_fence);
+	 dri_fence_unreference(intel->first_swap_fence);
+	 intel->first_swap_fence = NULL;
+      }
 
       if ( release_texture_heaps ) {
          /* This share group is about to go away, free our private
@@ -628,7 +610,6 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
    __DRIscreenPrivate *sPriv = intel->driScreen;
    volatile drmI830Sarea * sarea = intel->sarea;
    int me = intel->hHWContext;
-   int my_bufmgr = bmCtxId(intel);
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
 
@@ -655,16 +636,20 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
       intel->vtbl.lost_hardware( intel );
    }
 
-   /* As above, but don't evict the texture data on transitions
-    * between contexts which all share a local buffer manager.
+   /* If the last consumer of the texture memory wasn't us, notify the fake
+    * bufmgr and record the new owner.  We should have the memory shared
+    * between contexts of a single fake bufmgr, but this will at least make
+    * things correct for now.
     */
-   if (sarea->texAge != my_bufmgr) {
+   if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
+      sarea->texAge = intel->hHWContext;
+      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      if (INTEL_DEBUG & DEBUG_BATCH)
+	 intel_decode_context_reset();
       if (INTEL_DEBUG & DEBUG_BUFMGR) {
-	 fprintf(stderr, "Lost Textures: sarea->texAge %x my_bufmgr %x\n",
-		 sarea->ctxOwner, my_bufmgr);
+	 fprintf(stderr, "Lost Textures: sarea->texAge %x hw context %x\n",
+		 sarea->ctxOwner, intel->hHWContext);
       }
-      sarea->texAge = my_bufmgr;
-      bm_fake_NotifyContendedLockTake( intel ); 
    }
 
    /* Drawable changed?
@@ -694,29 +679,6 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
    intel->locked = 1;
 
-   if (bmError(intel)) {
-      bmEvictAll(intel);
-      intel->vtbl.lost_hardware( intel );
-   }
-
-   /* Make sure nothing has been emitted prior to getting the lock:
-    */
-   assert(intel->batch->map == 0);
-
-   /* XXX: postpone, may not be needed:
-    */
-   if (!intel_batchbuffer_map(intel->batch)) {
-      bmEvictAll(intel);
-      intel->vtbl.lost_hardware( intel );
-
-      /* This could only fail if the batchbuffer was greater in size
-       * than the available texture memory:
-       */
-      if (!intel_batchbuffer_map(intel->batch)) {
-	 _mesa_printf("double failure to map batchbuffer\n");
-	 assert(0);
-      }
-   }
 }
  
   
@@ -724,11 +686,6 @@ void LOCK_HARDWARE( struct intel_context *intel )
  */
 void UNLOCK_HARDWARE( struct intel_context *intel )
 {
-   /* Make sure everything has been released: 
-    */
-   assert(intel->batch->ptr == intel->batch->map + intel->batch->offset);
-
-   intel_batchbuffer_unmap(intel->batch);
    intel->vtbl.note_unlock( intel );
    intel->locked = 0;
 

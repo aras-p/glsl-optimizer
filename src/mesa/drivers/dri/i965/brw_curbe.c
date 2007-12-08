@@ -312,11 +312,7 @@ static void upload_constant_buffer(struct brw_context *brw)
 
       /* Copy data to the buffer:
        */
-      bmBufferSubData(&brw->intel,
-		      pool->buffer,
-		      brw->curbe.gs_offset,
-		      bufsz,
-		      buf);
+      dri_bo_subdata(pool->buffer, brw->curbe.gs_offset, bufsz, buf);
    }
 
    /* Because this provokes an action (ie copy the constants into the

@@ -151,17 +151,16 @@ struct intel_context
 			     GLfloat s0, GLfloat s1,
 			     GLfloat t0, GLfloat t1);
 
-
-
+      void (*debug_batch)(struct intel_context *intel);
    } vtbl;
 
    GLint refcount;   
    GLuint Fallback;
    GLuint NewGLState;
    
-   GLuint last_swap_fence;
-   GLuint second_last_swap_fence;
-   
+   dri_fence *first_swap_fence;
+   dri_fence *last_swap_fence;
+
    GLuint stats_wm;
 
    struct intel_batchbuffer *batch;
@@ -178,29 +177,17 @@ struct intel_context
    GLboolean hw_stencil;
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
-   GLboolean no_hw;
    GLboolean no_rast;
-   GLboolean thrashing;
    GLboolean locked;
    GLboolean strict_conformance;
    GLboolean need_flush;
-
-
-   
-   /* AGP memory buffer manager:
-    */
-   struct bufmgr *bm;
-
 
    /* State for intelvb.c and inteltris.c.
     */
    GLenum render_primitive;
    GLenum reduced_primitive;
 
-   struct intel_region *front_region;
-   struct intel_region *back_region;
    struct intel_region *draw_region;
-   struct intel_region *depth_region;
 
    /* These refer to the current draw (front vs. back) buffer:
     */
@@ -217,6 +204,12 @@ struct intel_context
    drm_context_t hHWContext;
    drmLock *driHwLock;
    int driFd;
+
+   /* Cached values from the screen private. */
+   dri_bufmgr *bufmgr;
+   struct intel_region *front_region;
+   struct intel_region *back_region;
+   struct intel_region *depth_region;
 
    __DRIdrawablePrivate *driDrawable;
    __DRIdrawablePrivate *driReadDrawable;

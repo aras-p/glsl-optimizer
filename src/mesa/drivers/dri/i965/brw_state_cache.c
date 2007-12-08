@@ -187,12 +187,7 @@ GLuint brw_upload_cache( struct brw_cache *cache,
 
    /* Copy data to the buffer:
     */
-   bmBufferSubData(&cache->brw->intel,
-		   cache->pool->buffer,
-		   offset,
-		   data_size,
-		   data);
-   
+   dri_bo_subdata(cache->pool->buffer, offset, data_size, data);
 
    cache->brw->state.dirty.cache |= 1<<cache->id;
    cache->last_addr = offset;

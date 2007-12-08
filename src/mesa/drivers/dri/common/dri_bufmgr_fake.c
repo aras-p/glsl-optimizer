@@ -181,7 +181,7 @@ typedef struct _dri_bo_fake {
 
    struct block *block;
    void *backing_store;
-   void (*invalidate_cb)(dri_bufmgr *bufmgr, void * );
+   void (*invalidate_cb)(dri_bo *bo, void *ptr);
    void *invalidate_ptr;
 } dri_bo_fake;
 
@@ -318,9 +318,9 @@ static void
 free_backing_store(dri_bo *bo)
 {
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
-   assert(!(bo_fake->flags & (BM_PINNED|BM_NO_BACKING_STORE)));
 
    if (bo_fake->backing_store) {
+      assert(!(bo_fake->flags & (BM_PINNED|BM_NO_BACKING_STORE)));
       ALIGN_FREE(bo_fake->backing_store);
       bo_fake->backing_store = NULL;
    }
@@ -332,8 +332,8 @@ set_dirty(dri_bo *bo)
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
 
-   if (bo_fake->flags & BM_NO_BACKING_STORE)
-      bo_fake->invalidate_cb(&bufmgr_fake->bufmgr, bo_fake->invalidate_ptr);
+   if (bo_fake->flags & BM_NO_BACKING_STORE && bo_fake->invalidate_cb != NULL)
+      bo_fake->invalidate_cb(bo, bo_fake->invalidate_ptr);
 
    assert(!(bo_fake->flags & BM_PINNED));
 
@@ -674,6 +674,40 @@ dri_fake_bo_unreference(dri_bo *bo)
       DBG("drm_bo_unreference: free %s\n", bo_fake->name);
       return;
    }
+   _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
+}
+
+/**
+ * Set the buffer as not requiring backing store, and instead get the callback
+ * invoked whenever it would be set dirty.
+ */
+void dri_bo_fake_disable_backing_store(dri_bo *bo,
+				       void (*invalidate_cb)(dri_bo *bo,
+							     void *ptr),
+				       void *ptr)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
+   dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
+
+   _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
+
+   if (bo_fake->backing_store)
+      free_backing_store(bo);
+
+   bo_fake->flags |= BM_NO_BACKING_STORE;
+
+   DBG("disable_backing_store set buf %d dirty\n", bo_fake->id);
+   bo_fake->dirty = 1;
+   bo_fake->invalidate_cb = invalidate_cb;
+   bo_fake->invalidate_ptr = ptr;
+
+   /* Note that it is invalid right from the start.  Also note
+    * invalidate_cb is called with the bufmgr locked, so cannot
+    * itself make bufmgr calls.
+    */
+   if (invalidate_cb != NULL)
+      invalidate_cb(bo, ptr);
+
    _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
 }
 

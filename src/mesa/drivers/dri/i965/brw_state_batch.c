@@ -95,8 +95,6 @@ static void clear_batch_cache( struct brw_context *brw )
 
    brw_clear_all_caches(brw);
 
-   bmReleaseBuffers(&brw->intel);
-   
    brw_invalidate_pools(brw);
 }
 

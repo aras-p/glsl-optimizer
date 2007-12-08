@@ -5,11 +5,11 @@ include $(TOP)/configs/current
 LIBNAME = i965_dri.so
 
 DRIVER_SOURCES = \
-	bufmgr_fake.c \
 	intel_batchbuffer.c \
 	intel_blit.c \
 	intel_buffer_objects.c \
 	intel_buffers.c \
+	intel_bufmgr_ttm.c \
 	intel_context.c \
 	intel_decode.c \
 	intel_ioctl.c \
@@ -53,6 +53,7 @@ DRIVER_SOURCES = \
 	brw_sf_state.c \
 	brw_state_batch.c \
 	brw_state_cache.c \
+	brw_state_dump.c \
 	brw_state_pool.c \
 	brw_state_upload.c \
 	brw_tex.c \
@@ -80,6 +81,7 @@ DRIVER_SOURCES = \
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
+	$(COMMON_BM_SOURCES) \
 	$(MINIGLX_SOURCES) \
 	$(DRIVER_SOURCES)
 
