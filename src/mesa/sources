@@ -80,7 +80,7 @@ MATH_SOURCES = \
 	math/m_vector.c \
 	math/m_xform.c
 
-SWRAST_SOURCES = \
+__SWRAST_SOURCES = \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
 	swrast/s_accum.c \
@@ -111,7 +111,7 @@ SWRAST_SOURCES = \
 	swrast/s_triangle.c \
 	swrast/s_zoom.c
 
-SWRAST_SETUP_SOURCES = \
+__SWRAST_SETUP_SOURCES = \
 	swrast_setup/ss_context.c \
 	swrast_setup/ss_triangle.c 
 
@@ -326,7 +326,7 @@ SPARC_SOURCES =			\
 SPARC_API =			\
 	sparc/glapi_sparc.S
 
-COMMON_DRIVER_SOURCES =			\
+__COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
 X11_DRIVER_SOURCES =		\
