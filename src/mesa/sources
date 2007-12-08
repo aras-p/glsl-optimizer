@@ -115,7 +115,7 @@ __SWRAST_SETUP_SOURCES = \
 	swrast_setup/ss_context.c \
 	swrast_setup/ss_triangle.c 
 
-TNL_SOURCES = \
+__TNL_SOURCES = \
 	tnl/t_context.c \
 	tnl/t_pipeline.c \
 	tnl/t_draw.c \
