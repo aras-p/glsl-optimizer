@@ -16,7 +16,7 @@ nv40_query_object_find(struct nv40_context *nv40, struct pipe_query_object *q)
 	return -1;
 }
 
-void
+static void
 nv40_query_begin(struct pipe_context *pipe, struct pipe_query_object *q)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
@@ -53,7 +53,24 @@ nv40_query_update(struct pipe_context *pipe, struct pipe_query_object *q)
 	}
 }
 
-void
+static void
+nv40_query_wait(struct pipe_context *pipe, struct pipe_query_object *q)
+{
+	nv40_query_update(pipe, q);
+	if (!q->ready) {
+		struct nv40_context *nv40 = (struct nv40_context *)pipe;
+		int id;
+		
+		id = nv40_query_object_find(nv40, q);
+		assert(id >= 0);
+
+		nv40->nvws->notifier_wait(nv40->query, id, 0, 0);
+		nv40_query_update(pipe, q);
+		assert(q->ready);
+	}
+}
+
+static void
 nv40_query_end(struct pipe_context *pipe, struct pipe_query_object *q)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
@@ -80,19 +97,9 @@ nv40_query_end(struct pipe_context *pipe, struct pipe_query_object *q)
 }
 
 void
-nv40_query_wait(struct pipe_context *pipe, struct pipe_query_object *q)
+nv40_init_query_functions(struct nv40_context *nv40)
 {
-	nv40_query_update(pipe, q);
-	if (!q->ready) {
-		struct nv40_context *nv40 = (struct nv40_context *)pipe;
-		int id;
-		
-		id = nv40_query_object_find(nv40, q);
-		assert(id >= 0);
-
-		nv40->nvws->notifier_wait(nv40->query, id, 0, 0);
-		nv40_query_update(pipe, q);
-		assert(q->ready);
-	}
+	nv40->pipe.begin_query = nv40_query_begin;
+	nv40->pipe.end_query = nv40_query_end;
+	nv40->pipe.wait_query = nv40_query_wait;
 }
-

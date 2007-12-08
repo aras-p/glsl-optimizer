@@ -10,9 +10,9 @@ static boolean
 nv40_is_format_supported(struct pipe_context *pipe, uint format)
 {
 	switch (format) {
-	case PIPE_FORMAT_U_A8_R8_G8_B8:
-	case PIPE_FORMAT_U_R5_G6_B5: 
-	case PIPE_FORMAT_Z24_S8:
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_R5G6B5_UNORM: 
+	case PIPE_FORMAT_Z24S8_UNORM:
 		return TRUE;
 	default:
 		break;
@@ -267,17 +267,12 @@ nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 	nv40->pipe.draw_elements = nv40_draw_elements;
 	nv40->pipe.clear = nv40_clear;
 
-	nv40->pipe.begin_query = nv40_query_begin;
-	nv40->pipe.end_query = nv40_query_end;
-	nv40->pipe.wait_query = nv40_query_wait;
-
-	nv40->pipe.mipmap_tree_layout = nv40_miptree_layout;
-
 	nv40->pipe.flush = nv40_flush;
 
-	nv40_init_region_functions(nv40);
+	nv40_init_query_functions(nv40);
 	nv40_init_surface_functions(nv40);
 	nv40_init_state_functions(nv40);
+	nv40_init_miptree_functions(nv40);
 
 	nv40->draw = draw_create();
 	assert(nv40->draw);

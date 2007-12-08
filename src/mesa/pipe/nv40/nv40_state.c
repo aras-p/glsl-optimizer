@@ -549,7 +549,7 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct pipe_region *region[4], *zregion;
+	struct pipe_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format, w, h;
 	int i, colour_format = 0, zeta_format = 0;
 
@@ -567,7 +567,7 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 			h = fb->cbufs[i]->height;
 			colour_format = fb->cbufs[i]->format;
 			rt_enable |= (NV40TCL_RT_ENABLE_COLOR0 << i);
-			region[i] = fb->cbufs[i]->region;
+			rt[i] = fb->cbufs[i];
 		}
 	}
 
@@ -585,7 +585,7 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 		}
 
 		zeta_format = fb->zbuf->format;
-		zregion = fb->zbuf->region;
+		zeta = fb->zbuf;
 	}
 
 	if (fb->sbuf) {
@@ -599,21 +599,21 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 		
 		if (zeta_format) {
 			assert(fb->sbuf->format == zeta_format);
-			assert(fb->sbuf->region == zregion);
+			assert(fb->sbuf == zeta);
 		} else {
 			zeta_format = fb->sbuf->format;
-			zregion = fb->sbuf->region;
+			zeta = fb->sbuf;
 		}
 	}
 
 	rt_format = NV40TCL_RT_FORMAT_TYPE_LINEAR;
 
 	switch (colour_format) {
-	case PIPE_FORMAT_U_A8_R8_G8_B8:
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
 	case 0:
 		rt_format |= NV40TCL_RT_FORMAT_COLOR_A8R8G8B8;
 		break;
-	case PIPE_FORMAT_U_R5_G6_B5:
+	case PIPE_FORMAT_R5G6B5_UNORM:
 		rt_format |= NV40TCL_RT_FORMAT_COLOR_R5G6B5;
 		break;
 	default:
@@ -621,13 +621,12 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	switch (zeta_format) {
-	case PIPE_FORMAT_U_Z16:
+	case PIPE_FORMAT_Z16_UNORM:
 		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z16;
 		break;
-	case PIPE_FORMAT_Z24_S8:
-		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
-		break;
+	case PIPE_FORMAT_Z24S8_UNORM:
 	case 0:
+		rt_format |= NV40TCL_RT_FORMAT_ZETA_Z24S8;
 		break;
 	default:
 		assert(0);
@@ -635,51 +634,47 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
 		BEGIN_RING(curie, NV40TCL_DMA_COLOR0, 1);
-		OUT_RELOCo(region[0]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCo(rt[0]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR0_PITCH, 2);
-		OUT_RING  (region[0]->pitch * region[0]->cpp);
-		OUT_RELOCl(region[0]->buffer, 0,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RING  (rt[0]->pitch * rt[0]->cpp);
+		OUT_RELOCl(rt[0]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
 		BEGIN_RING(curie, NV40TCL_DMA_COLOR1, 1);
-		OUT_RELOCo(region[1]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCo(rt[1]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR1_OFFSET, 2);
-		OUT_RELOCl(region[1]->buffer, 0,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		OUT_RING  (region[1]->pitch * region[1]->cpp);
+		OUT_RELOCl(rt[1]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RING  (rt[1]->pitch * rt[1]->cpp);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
 		BEGIN_RING(curie, NV40TCL_DMA_COLOR2, 1);
-		OUT_RELOCo(region[2]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCo(rt[2]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR2_OFFSET, 1);
-		OUT_RELOCl(region[2]->buffer, 0,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCl(rt[2]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR2_PITCH, 1);
-		OUT_RING  (region[2]->pitch * region[2]->cpp);
+		OUT_RING  (rt[2]->pitch * rt[2]->cpp);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
 		BEGIN_RING(curie, NV40TCL_DMA_COLOR3, 1);
-		OUT_RELOCo(region[3]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCo(rt[3]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR3_OFFSET, 1);
-		OUT_RELOCl(region[3]->buffer, 0,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		OUT_RELOCl(rt[3]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR3_PITCH, 1);
-		OUT_RING  (region[3]->pitch * region[3]->cpp);
+		OUT_RING  (rt[3]->pitch * rt[3]->cpp);
 	}
 
 	if (zeta_format) {
 		BEGIN_RING(curie, NV40TCL_DMA_ZETA, 1);
-		OUT_RELOCo(zregion->buffer,
+		OUT_RELOCo(zeta->buffer,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
 		BEGIN_RING(curie, NV40TCL_ZETA_OFFSET, 1);
-		OUT_RELOCl(zregion->buffer, 0,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
+		OUT_RELOCl(zeta->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR |
+			   NOUVEAU_BO_RD);
 		BEGIN_RING(curie, NV40TCL_ZETA_PITCH, 1);
-		OUT_RING  (zregion->pitch * zregion->cpp);
+		OUT_RING  (zeta->pitch * zeta->cpp);
 	}
 
 	BEGIN_RING(curie, NV40TCL_RT_ENABLE, 1);
@@ -725,7 +720,7 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 
 static void
 nv40_set_texture_state(struct pipe_context *pipe, unsigned unit,
-		       struct pipe_mipmap_tree *miptree)
+		       struct pipe_texture *miptree)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 

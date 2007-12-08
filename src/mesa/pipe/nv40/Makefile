@@ -10,7 +10,6 @@ DRIVER_SOURCES = \
 	nv40_fragprog.c \
 	nv40_miptree.c \
 	nv40_query.c \
-	nv40_region.c \
 	nv40_state.c \
 	nv40_state_emit.c \
 	nv40_state_tex.c \

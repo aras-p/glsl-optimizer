@@ -124,4 +124,16 @@ struct nv40_depth_stencil_state {
 	} stencil;
 };
 
+struct nv40_miptree {
+	struct pipe_texture base;
+
+	struct pipe_buffer_handle *buffer;
+	uint total_size;
+
+	struct {
+		uint pitch;
+		uint *image_offset;
+	} level[PIPE_MAX_TEXTURE_LEVELS];
+};
+
 #endif

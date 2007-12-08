@@ -56,15 +56,15 @@ nv50_get_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h, float *p)
 {
    const unsigned *src
-      = ((const unsigned *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
+      = ((const unsigned *) (ps->map + ps->offset))
+      + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
 
    CLIP_TILE;
 
    switch (ps->format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       for (i = 0; i < h; i++) {
          float *pRow = p;
          for (j = 0; j < w; j++) {
@@ -75,11 +75,11 @@ nv50_get_tile_rgba(struct pipe_context *pipe,
             pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
             pRow += 4;
          }
-         src += ps->region->pitch;
+         src += ps->pitch;
          p += w0 * 4;
       }
       break;
-   case PIPE_FORMAT_Z24_S8:
+   case PIPE_FORMAT_Z24S8_UNORM:
       {
          const float scale = 1.0 / (float) 0xffffff;
          for (i = 0; i < h; i++) {
@@ -92,7 +92,7 @@ nv50_get_tile_rgba(struct pipe_context *pipe,
                pRow[3] = ((pixel & 0xffffff) >> 8) * scale;
                pRow += 4;
             }
-            src += ps->region->pitch;
+            src += ps->pitch;
             p += w0 * 4;
          }
       }
@@ -122,13 +122,13 @@ nv50_get_tile(struct pipe_context *pipe,
               uint x, uint y, uint w, uint h,
               void *p, int dst_stride)
 {
-   const uint cpp = ps->region->cpp;
+   const uint cpp = ps->cpp;
    const uint w0 = w;
    const ubyte *pSrc;
    ubyte *pDest;
    uint i;
 
-   assert(ps->region->map);
+   assert(ps->map);
 
    CLIP_TILE;
 
@@ -136,13 +136,13 @@ nv50_get_tile(struct pipe_context *pipe,
       dst_stride = w0 * cpp;
    }
 
-   pSrc = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pSrc = ps->map + ps->offset + (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w0 * cpp);
       pDest += dst_stride;
-      pSrc += ps->region->pitch * cpp;
+      pSrc += ps->pitch * cpp;
    }
 }
 
@@ -156,13 +156,13 @@ nv50_put_tile(struct pipe_context *pipe,
               uint x, uint y, uint w, uint h,
               const void *p, int src_stride)
 {
-   const uint cpp = ps->region->cpp;
+   const uint cpp = ps->cpp;
    const uint w0 = w;
    const ubyte *pSrc;
    ubyte *pDest;
    uint i;
 
-   assert(ps->region->map);
+   assert(ps->map);
 
    CLIP_TILE;
 
@@ -171,52 +171,60 @@ nv50_put_tile(struct pipe_context *pipe,
    }
 
    pSrc = (const ubyte *) p;
-   pDest = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pDest = ps->map + ps->offset + (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w0 * cpp);
-      pDest += ps->region->pitch * cpp;
+      pDest += ps->pitch * cpp;
       pSrc += src_stride;
    }
 }
 
 
-/*
- * XXX note: same as code in sp_surface.c
- */
 static struct pipe_surface *
 nv50_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_mipmap_tree *mt,
+                     struct pipe_texture *pt,
                      unsigned face, unsigned level, unsigned zslice)
 {
-   struct pipe_surface *ps;
-   unsigned offset;  /* in bytes */
-
-   offset = mt->level[level].level_offset;
-
-   if (mt->target == PIPE_TEXTURE_CUBE) {
-      offset += mt->level[level].image_offset[face] * mt->cpp;
-   }
-   else if (mt->target == PIPE_TEXTURE_3D) {
-      offset += mt->level[level].image_offset[zslice] * mt->cpp;
-   }
-   else {
-      assert(face == 0);
-      assert(zslice == 0);
-   }
-
-   ps = pipe->winsys->surface_alloc(pipe->winsys, mt->format);
-   if (ps) {
-      assert(ps->format);
-      assert(ps->refcount);
-      pipe_region_reference(&ps->region, mt->region);
-      ps->width = mt->level[level].width;
-      ps->height = mt->level[level].height;
-      ps->offset = offset;
-   }
-   return ps;
+	NOUVEAU_ERR("unimplemented\n");
+	return NULL;
 }
 
+static void
+nv50_surface_data(struct pipe_context *pipe, struct pipe_surface *dest,
+		  unsigned destx, unsigned desty, const void *src,
+		  unsigned src_stride, unsigned srcx, unsigned srcy,
+		  unsigned width, unsigned height)
+{
+	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nouveau_winsys *nvws = nv50->nvws;
+
+	nvws->surface_data(nvws, dest, destx, desty, src, src_stride,
+			   srcx, srcy, width, height);
+}
+
+static void
+nv50_surface_copy(struct pipe_context *pipe, struct pipe_surface *dest,
+		  unsigned destx, unsigned desty, struct pipe_surface *src,
+		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+{
+	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nouveau_winsys *nvws = nv50->nvws;
+
+	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
+			   width, height);
+}
+
+static void
+nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
+		  unsigned destx, unsigned desty, unsigned width,
+		  unsigned height, unsigned value)
+{
+	struct nv50_context *nv50 = (struct nv50_context *)pipe;
+	struct nouveau_winsys *nvws = nv50->nvws;
+
+	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
+}
 
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
@@ -226,4 +234,7 @@ nv50_init_surface_functions(struct nv50_context *nv50)
    nv50->pipe.put_tile = nv50_put_tile;
    nv50->pipe.get_tile_rgba = nv50_get_tile_rgba;
    nv50->pipe.put_tile_rgba = nv50_put_tile_rgba;
+   nv50->pipe.surface_data = nv50_surface_data;
+   nv50->pipe.surface_copy = nv50_surface_copy;
+   nv50->pipe.surface_fill = nv50_surface_fill;
 }

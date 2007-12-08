@@ -1,18 +1,8 @@
-#include "glheader.h"
-#include "context.h"
-#include "extensions.h"
-
-#include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
-#include "tnl/t_vertex.h"
-
-#include "drivers/common/driverfuncs.h"
-
-#include "drirenderbuffer.h"
+#include "main/glheader.h"
+#include "glapi/glthread.h"
+#include <GL/internal/glcore.h>
 
 #include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -130,7 +120,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	 *     of the front buffer handle passed to us by the DDX.
 	 */
 	{
-		struct pipe_region *fb_region;
+		struct pipe_surface *fb_surf;
 		struct nouveau_bo_priv *fb_bo;
 
 		fb_bo = calloc(1, sizeof(struct nouveau_bo_priv));
@@ -145,14 +135,14 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		fb_bo->base.size = fb_bo->drm.size;
 		fb_bo->base.device = nv_screen->device;
 
-		fb_region = calloc(1, sizeof(struct pipe_region));
-		fb_region->cpp = nv_screen->front_cpp;
-		fb_region->pitch = nv_screen->front_pitch / fb_region->cpp;
-		fb_region->height = nv_screen->front_height;
-		fb_region->refcount = 1;
-		fb_region->buffer = (void *)fb_bo;
+		fb_surf = calloc(1, sizeof(struct pipe_surface));
+		fb_surf->cpp = nv_screen->front_cpp;
+		fb_surf->pitch = nv_screen->front_pitch / fb_surf->cpp;
+		fb_surf->height = nv_screen->front_height;
+		fb_surf->refcount = 1;
+		fb_surf->buffer = (void *)fb_bo;
 
-		nv->frontbuffer = fb_region;
+		nv->frontbuffer = fb_surf;
 	}
 
 	if ((ret = nouveau_grobj_alloc(nv->channel, 0x00000000, 0x30,
@@ -169,9 +159,9 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	if (nv->chipset < 0x50)
-		ret = nouveau_region_init_nv04(nv);
+		ret = nouveau_surface_init_nv04(nv);
 	else
-		ret = nouveau_region_init_nv50(nv);
+		ret = nouveau_surface_init_nv50(nv);
 	if (ret) {
 		return GL_FALSE;
 	}

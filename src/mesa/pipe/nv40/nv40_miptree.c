@@ -4,63 +4,105 @@
 
 #include "nv40_context.h"
 
-boolean
-nv40_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
+static void
+nv40_miptree_layout(struct nv40_miptree *nv40mt)
 {
+	struct pipe_texture *pt = &nv40mt->base;
 	boolean swizzled = FALSE;
-	uint width = mt->width0, height = mt->height0, depth = mt->depth0;
-	uint offset;
+	uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
+	uint offset = 0;
 	int nr_faces, l, f;
 
-	mt->pitch = mt->width0;
-	mt->total_height = 0;
-
-	if (mt->target == PIPE_TEXTURE_CUBE) {
+	if (pt->target == PIPE_TEXTURE_CUBE) {
 		nr_faces = 6;
 	} else
-	if (mt->target == PIPE_TEXTURE_3D) {
-		nr_faces = mt->depth0;
+	if (pt->target == PIPE_TEXTURE_3D) {
+		nr_faces = pt->depth[0];
 	} else {
 		nr_faces = 1;
 	}
+	
+	for (l = pt->first_level; l <= pt->last_level; l++) {
+		pt->width[l] = width;
+		pt->height[l] = height;
+		pt->depth[l] = depth;
 
-	for (l = mt->first_level; l <= mt->last_level; l++) {
-		mt->level[l].width = width;
-		mt->level[l].height = height;
-		mt->level[l].depth = depth;
-		mt->level[l].level_offset = 0;
+		if (swizzled)
+			nv40mt->level[l].pitch = pt->width[l] * pt->cpp;
+		else
+			nv40mt->level[l].pitch = pt->width[0] * pt->cpp;
+		nv40mt->level[l].pitch = (nv40mt->level[l].pitch + 63) & ~63;
 
-		mt->level[l].nr_images = nr_faces;
-		mt->level[l].image_offset = malloc(nr_faces * sizeof(unsigned));
-		for (f = 0; f < nr_faces; f++)
-			mt->total_height += height;
+		nv40mt->level[l].image_offset =
+			calloc(nr_faces, sizeof(unsigned));
 
 		width  = MAX2(1, width  >> 1);
 		height = MAX2(1, height >> 1);
 		depth  = MAX2(1, depth  >> 1);
+
 	}
 
-	offset = 0;
 	for (f = 0; f < nr_faces; f++) {
-		for (l = mt->first_level; l <= mt->last_level; l++) {
-			if (f == 0) {
-				mt->level[l].level_offset = offset;
-			}
-
-			uint pitch;
-
-			if (swizzled)
-				pitch = mt->level[l].width * mt->cpp;
-			else
-				pitch = mt->width0 * mt->cpp;
-			pitch = (pitch + 63) & ~63;
-
-			mt->level[l].image_offset[f] =
-				(offset - mt->level[l].level_offset) / mt->cpp;
-			offset += pitch * mt->level[l].height;
+		for (l = pt->first_level; l <= pt->last_level; l++) {
+			nv40mt->level[l].image_offset[f] = offset;
+			offset += nv40mt->level[l].pitch * pt->height[l];
 		}
 	}
 
-	return TRUE;
+	nv40mt->total_size = offset;
+}
+
+static void
+nv40_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
+{
+	struct pipe_texture *mt = *pt;
+	struct pipe_winsys *ws = pipe->winsys;
+	struct nv40_miptree *nv40mt;
+
+	*pt = NULL;
+
+	nv40mt = calloc(1, sizeof(struct nv40_miptree));
+	if (!nv40mt)
+		return;
+
+	memcpy(&nv40mt->base, mt, sizeof(struct pipe_texture));
+	nv40_miptree_layout(nv40mt);
+
+	nv40mt->buffer = ws->buffer_create(ws, PIPE_SURFACE_FLAG_TEXTURE);
+	if (!nv40mt->buffer) {
+		free(nv40mt);
+		return;
+	}
+	
+	ws->buffer_data(ws, nv40mt->buffer, nv40mt->total_size, NULL,
+			PIPE_BUFFER_USAGE_PIXEL);
+	*pt = &nv40mt->base;
+}
+
+static void
+nv40_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
+{
+	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_texture *mt = *pt;
+
+	*pt = NULL;
+	if (--mt->refcount <= 0) {
+		struct nv40_miptree *nv40mt = (struct nv40_miptree *)mt;
+		int l;
+
+		ws->buffer_reference(ws, &nv40mt->buffer, NULL);
+		for (l = 0; l < PIPE_MAX_TEXTURE_LEVELS; l++) {
+			if (nv40mt->level[l].image_offset)
+				free(nv40mt->level[l].image_offset);
+		}
+		free(nv40mt);
+	}
+}
+
+void
+nv40_init_miptree_functions(struct nv40_context *nv40)
+{
+	nv40->pipe.texture_create = nv40_miptree_create;
+	nv40->pipe.texture_release = nv40_miptree_release;
 }
 

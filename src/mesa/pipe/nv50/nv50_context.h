@@ -30,16 +30,14 @@ struct nv50_context {
 };
 
 
-extern void nv50_init_region_functions(struct nv50_context *nv50);
+extern void nv50_init_miptree_functions(struct nv50_context *nv50);
 extern void nv50_init_surface_functions(struct nv50_context *nv50);
 extern void nv50_init_state_functions(struct nv50_context *nv50);
+extern void nv50_init_query_functions(struct nv50_context *nv50);
 
 /* nv50_draw.c */
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 
-/* nv50_miptree.c */
-extern boolean nv50_miptree_layout(struct pipe_context *,
-				   struct pipe_mipmap_tree *);
 /* nv50_vbo.c */
 extern boolean nv50_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
@@ -52,11 +50,5 @@ extern boolean nv50_draw_elements(struct pipe_context *pipe,
 /* nv50_clear.c */
 extern void nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 		       unsigned clearValue);
-
-/* nv50_query.c */
-extern void nv50_query_begin(struct pipe_context *, struct pipe_query_object *);
-extern void nv50_query_end(struct pipe_context *, struct pipe_query_object *);
-extern void nv50_query_wait(struct pipe_context *, struct pipe_query_object *);
-
 
 #endif

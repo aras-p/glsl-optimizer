@@ -10,6 +10,5 @@ void
 nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 	   unsigned clearValue)
 {
-	pipe->region_fill(pipe, ps->region, 0, 0, 0, ps->width, ps->height,
-			  clearValue);
+	pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
 }

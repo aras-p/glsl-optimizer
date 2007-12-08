@@ -27,15 +27,15 @@ nv04_rect_format(int cpp)
 }
 
 static void
-nv04_region_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
-		      unsigned sx, unsigned sy, unsigned w, unsigned h)
+nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
+		       unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
-	struct pipe_region *dst = nv->region_dst;
-	struct pipe_region *src = nv->region_dst;
+	struct pipe_surface *dst = nv->surf_dst;
+	struct pipe_surface *src = nv->surf_dst;
 	unsigned dst_offset, src_offset;
-	
-	dst_offset = nv->region_dst_offset + (dy * dst->pitch + dx) * dst->cpp;
-	src_offset = nv->region_src_offset + (sy * src->pitch + sx) * src->cpp;
+
+	dst_offset = dst->offset + (dy * dst->pitch + dx) * dst->cpp;
+	src_offset = src->offset + (sy * src->pitch + sx) * src->cpp;
 
 	while (h) {
 		int count = (h > 2047) ? 2047 : h;
@@ -59,8 +59,8 @@ nv04_region_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 }
 
 static void
-nv04_region_copy_blit(struct nouveau_context *nv, unsigned dx, unsigned dy,
-		      unsigned sx, unsigned sy, unsigned w, unsigned h)
+nv04_surface_copy_blit(struct nouveau_context *nv, unsigned dx, unsigned dy,
+		       unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	BEGIN_RING(NvImageBlit, 0x0300, 3);
 	OUT_RING  ((sy << 16) | sx);
@@ -69,9 +69,8 @@ nv04_region_copy_blit(struct nouveau_context *nv, unsigned dx, unsigned dy,
 }
 
 static int
-nv04_region_copy_prep(struct nouveau_context *nv,
-		      struct pipe_region *dst, unsigned dst_offset,
-		      struct pipe_region *src, unsigned src_offset)
+nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
+		       struct pipe_surface *src)
 {
 	int format;
 
@@ -81,18 +80,16 @@ nv04_region_copy_prep(struct nouveau_context *nv,
 	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
 	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
 	 */
-	if ((src_offset & 63) || (dst_offset & 63)) {
+	if ((src->offset & 63) || (dst->offset & 63)) {
 		BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
 		OUT_RELOCo(src->buffer, NOUVEAU_BO_GART | NOUVEAU_BO_VRAM |
 			   NOUVEAU_BO_RD);
 		OUT_RELOCo(dst->buffer, NOUVEAU_BO_GART | NOUVEAU_BO_VRAM |
 			   NOUVEAU_BO_WR);
 
-		nv->region_copy = nv04_region_copy_m2mf;
-		nv->region_dst = dst;
-		nv->region_dst_offset = dst_offset;
-		nv->region_src = src;
-		nv->region_src_offset = src_offset;
+		nv->surface_copy = nv04_surface_copy_m2mf;
+		nv->surf_dst = dst;
+		nv->surf_src = src;
 		return 0;
 
 	}
@@ -101,7 +98,7 @@ nv04_region_copy_prep(struct nouveau_context *nv,
 		NOUVEAU_ERR("Bad cpp = %d\n", dst->cpp);
 		return 1;
 	}
-	nv->region_copy = nv04_region_copy_blit;
+	nv->surface_copy = nv04_surface_copy_blit;
 
 	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RELOCo(src->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -110,14 +107,14 @@ nv04_region_copy_prep(struct nouveau_context *nv,
 	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (format);
 	OUT_RING  (((dst->pitch * dst->cpp) << 16) | (src->pitch * src->cpp));
-	OUT_RELOCl(src->buffer, src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RELOCl(dst->buffer, dst_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(src->buffer, src->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+	OUT_RELOCl(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	return 0;
 }
 
 static void
-nv04_region_copy_done(struct nouveau_context *nv)
+nv04_surface_copy_done(struct nouveau_context *nv)
 {
 	nouveau_notifier_reset(nv->sync_notifier, 0);
 	BEGIN_RING(NvGdiRect, 0x104, 1);
@@ -129,10 +126,9 @@ nv04_region_copy_done(struct nouveau_context *nv)
 }
 
 static int
-nv04_region_fill(struct nouveau_context *nv,
-		 struct pipe_region *dst, unsigned dst_offset,
-		 unsigned dx, unsigned dy, unsigned w, unsigned h,
-		 unsigned value)
+nv04_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
+		  unsigned dx, unsigned dy, unsigned w, unsigned h,
+		  unsigned value)
 {
 	int cs2d_format, gdirect_format;
 
@@ -152,8 +148,8 @@ nv04_region_fill(struct nouveau_context *nv,
 	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_FORMAT, 4);
 	OUT_RING  (cs2d_format);
 	OUT_RING  (((dst->pitch * dst->cpp) << 16) | (dst->pitch * dst->cpp));
-	OUT_RELOCl(dst->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(dst->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_COLOR_FORMAT, 1);
 	OUT_RING  (gdirect_format);
@@ -176,17 +172,16 @@ nv04_region_fill(struct nouveau_context *nv,
 }
 
 static int
-nv04_region_data(struct nouveau_context *nv, struct pipe_region *dst,
-		 unsigned dst_offset, unsigned dx, unsigned dy,
-		 const void *src, unsigned src_pitch,
-		 unsigned sx, unsigned sy, unsigned w, unsigned h)
+nv04_surface_data(struct nouveau_context *nv, struct pipe_surface *dst,
+		  unsigned dx, unsigned dy, const void *src, unsigned src_pitch,
+		  unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	NOUVEAU_ERR("unimplemented!!\n");
 	return 0;
 }
 
 int
-nouveau_region_init_nv04(struct nouveau_context *nv)
+nouveau_surface_init_nv04(struct nouveau_context *nv)
 {
 	unsigned class;
 	int ret;
@@ -239,11 +234,11 @@ nouveau_region_init_nv04(struct nouveau_context *nv)
 	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT, 1);
 	OUT_RING  (NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
-	nv->region_copy_prep = nv04_region_copy_prep;
-	nv->region_copy = nv04_region_copy_blit;
-	nv->region_copy_done = nv04_region_copy_done;
-	nv->region_fill = nv04_region_fill;
-	nv->region_data = nv04_region_data;
+	nv->surface_copy_prep = nv04_surface_copy_prep;
+	nv->surface_copy = nv04_surface_copy_blit;
+	nv->surface_copy_done = nv04_surface_copy_done;
+	nv->surface_fill = nv04_surface_fill;
+	nv->surface_data = nv04_surface_data;
 	return 0;
 }
 

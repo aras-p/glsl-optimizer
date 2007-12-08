@@ -1,5 +1,6 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 
 #include "nouveau_context.h"
 #include "nouveau_device.h"
@@ -33,46 +34,18 @@ nouveau_get_name(struct pipe_winsys *pws)
 	return "Nouveau/DRI";
 }
 
-static struct pipe_region *
-nouveau_region_alloc(struct pipe_winsys *ws, unsigned cpp,
-		     unsigned width, unsigned height, unsigned flags)
+static unsigned
+nouveau_surface_pitch(struct pipe_winsys *ws, unsigned cpp, unsigned width,
+		      unsigned flags)
 {
-	struct pipe_region *region;
+	unsigned pitch = width * cpp;
 
-	region = calloc(sizeof(*region), 1);
-	region->cpp = cpp;
-	region->pitch = ((cpp * width + 63) & ~63) / cpp;
-	region->height = height;
-	region->refcount = 1;
-	region->buffer = ws->buffer_create(ws, 64);
-
-	ws->buffer_data(ws, region->buffer, region->pitch * cpp * height, NULL,
-			PIPE_BUFFER_USAGE_PIXEL);
-	return region;
-}
-
-static void
-nouveau_region_release(struct pipe_winsys *pws, struct pipe_region **pregion)
-{
-	struct pipe_region *region;
-
-	if (!pregion || !*pregion)
-		return;
-	region = *pregion;
-	*pregion = NULL;
-
-	assert(region->refcount > 0);
-	region->refcount--;
-
-	if (region->refcount == 0) {
-		assert(region->map_refcount == 0);
-		pws->buffer_reference(pws, &region->buffer, NULL);
-		free(region);
-	}
+	pitch = (pitch + 63) & ~63;
+	return pitch / cpp;
 }
 
 static struct pipe_surface *
-nouveau_surface_alloc(struct pipe_winsys *pws, unsigned format)
+nouveau_surface_alloc(struct pipe_winsys *ws, unsigned format)
 {
 	struct pipe_surface *surf;
 	
@@ -82,19 +55,19 @@ nouveau_surface_alloc(struct pipe_winsys *pws, unsigned format)
 
 	surf->format = format;
 	surf->refcount = 1;
-	surf->winsys = pws;
-
+	surf->winsys = ws;
 	return surf;
 }
 
 static void
-nouveau_surface_release(struct pipe_winsys *pws, struct pipe_surface **s)
+nouveau_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
 {
-	struct pipe_surface *surf = *s; *s = NULL;
+	struct pipe_surface *surf = *s;
 
-	if (surf->refcount-- == 0) {
-		if (surf->region)
-			pws->region_release(pws, &surf->region);
+	*s = NULL;
+	if (--surf->refcount <= 0) {
+		if (surf->buffer)
+			ws->buffer_reference(ws, &surf->buffer, NULL);
 		free(surf);
 	}
 }
@@ -229,9 +202,7 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 	pws->flush_frontbuffer = nouveau_flush_frontbuffer;
 	pws->printf = nouveau_printf;
 
-	pws->region_alloc = nouveau_region_alloc;
-	pws->region_release = nouveau_region_release;
-
+	pws->surface_pitch = nouveau_surface_pitch;
 	pws->surface_alloc = nouveau_surface_alloc;
 	pws->surface_release = nouveau_surface_release;
 

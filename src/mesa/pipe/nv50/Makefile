@@ -9,7 +9,6 @@ DRIVER_SOURCES = \
 	nv50_draw.c \
 	nv50_miptree.c \
 	nv50_query.c \
-	nv50_region.c \
 	nv50_state.c \
 	nv50_surface.c \
 	nv50_vbo.c

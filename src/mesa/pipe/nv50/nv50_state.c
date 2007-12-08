@@ -169,7 +169,7 @@ nv50_set_scissor_state(struct pipe_context *pipe,
 
 static void
 nv50_set_texture_state(struct pipe_context *pipe, unsigned unit,
-		       struct pipe_mipmap_tree *miptree)
+		       struct pipe_texture *pt)
 {
 }
 

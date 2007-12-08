@@ -49,9 +49,9 @@ static boolean
 nouveau_is_format_supported(struct softpipe_winsys *sws, uint format)
 {
 	switch (format) {
-	case PIPE_FORMAT_U_A8_R8_G8_B8:
-	case PIPE_FORMAT_U_R5_G6_B5:
-	case PIPE_FORMAT_S8_Z24:
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case PIPE_FORMAT_R5G6B5_UNORM:
+	case PIPE_FORMAT_S8Z24_UNORM:
 		return TRUE;
 	default:
 		break;

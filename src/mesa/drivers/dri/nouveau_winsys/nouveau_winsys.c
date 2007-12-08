@@ -1,3 +1,5 @@
+#include "pipe/p_util.h"
+
 #include "nouveau_context.h"
 #include "nouveau_winsys_pipe.h"
 
@@ -128,40 +130,38 @@ nouveau_pipe_dma_kickoff(struct nouveau_channel *userchan)
 }
 
 static int
-nouveau_pipe_region_copy(struct nouveau_winsys *nvws, struct pipe_region *dst,
-			 unsigned dst_offset, unsigned dx, unsigned dy,
-			 struct pipe_region *src, unsigned src_offset,
-			 unsigned sx, unsigned sy, unsigned w, unsigned h)
+nouveau_pipe_surface_copy(struct nouveau_winsys *nvws, struct pipe_surface *dst,
+			  unsigned dx, unsigned dy, struct pipe_surface *src,
+			  unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	struct nouveau_context *nv = nvws->nv;
 
-	if (nv->region_copy_prep(nv, dst, dst_offset, src, src_offset))
+	if (nv->surface_copy_prep(nv, dst, src))
 		return 1;
-	nv->region_copy(nv, dx, dy, sx, sy, w, h);
-	nv->region_copy_done(nv);
+	nv->surface_copy(nv, dx, dy, sx, sy, w, h);
+	nv->surface_copy_done(nv);
 
 	return 0;
 }
 
 static int
-nouveau_pipe_region_fill(struct nouveau_winsys *nvws, struct pipe_region *dst,
-			 unsigned dst_offset, unsigned dx, unsigned dy,
-			 unsigned w, unsigned h, unsigned value)
+nouveau_pipe_surface_fill(struct nouveau_winsys *nvws, struct pipe_surface *dst,
+			  unsigned dx, unsigned dy, unsigned w, unsigned h,
+			  unsigned value)
 {
-	if (nvws->nv->region_fill(nvws->nv, dst, dst_offset, dx, dy,
-				  w, h, value))
+	if (nvws->nv->surface_fill(nvws->nv, dst, dx, dy, w, h, value))
 		return 1;
 	return 0;
 }
 
 static int
-nouveau_pipe_region_data(struct nouveau_winsys *nvws, struct pipe_region *dst,
-			 unsigned dst_offset, unsigned dx, unsigned dy,
-			 const void *src, unsigned src_pitch,
-			 unsigned sx, unsigned sy, unsigned w, unsigned h)
+nouveau_pipe_surface_data(struct nouveau_winsys *nvws, struct pipe_surface *dst,
+			  unsigned dx, unsigned dy, const void *src,
+			  unsigned src_pitch, unsigned sx, unsigned sy,
+			  unsigned w, unsigned h)
 {
-	if (nvws->nv->region_data(nvws->nv, dst, dst_offset, dx, dy, src,
-				  src_pitch, sx, sy, w, h))
+	if (nvws->nv->surface_data(nvws->nv, dst, dx, dy, src, src_pitch, sx,
+				   sy, w, h))
 		return 1;
 	return 0;
 }
@@ -211,9 +211,9 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->notifier_retval	= nouveau_notifier_return_val;
 	nvws->notifier_wait	= nouveau_notifier_wait_status;
 
-	nvws->region_copy	= nouveau_pipe_region_copy;
-	nvws->region_fill	= nouveau_pipe_region_fill;
-	nvws->region_data	= nouveau_pipe_region_data;
+	nvws->surface_copy	= nouveau_pipe_surface_copy;
+	nvws->surface_fill	= nouveau_pipe_surface_fill;
+	nvws->surface_data	= nouveau_pipe_surface_data;
 
 	return hw_create(nouveau_create_pipe_winsys(nv), nvws, nv->chipset);
 }

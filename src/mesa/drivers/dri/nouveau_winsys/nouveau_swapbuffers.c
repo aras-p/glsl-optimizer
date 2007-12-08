@@ -1,7 +1,10 @@
-#include "context.h"
+#include "main/glheader.h"
+#include "glapi/glthread.h"
+#include <GL/internal/glcore.h>
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
 #include "nouveau_context.h"
@@ -14,7 +17,6 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		    const drm_clip_rect_t *rect)
 {
 	struct nouveau_context *nv = dPriv->driContextPriv->driverPrivate;
-	struct pipe_region *p_region = surf->region;
 	drm_clip_rect_t *pbox;
 	int nbox, i;
 
@@ -26,7 +28,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 	pbox = dPriv->pClipRects;
 	nbox = dPriv->numClipRects;
 
-	nv->region_copy_prep(nv, nv->frontbuffer, 0, p_region, 0);
+	nv->surface_copy_prep(nv, nv->frontbuffer, surf);
 	for (i = 0; i < nbox; i++, pbox++) {
 		int sx, sy, dx, dy, w, h;
 
@@ -37,7 +39,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		w  = pbox->x2 - pbox->x1;
 		h  = pbox->y2 - pbox->y1;
 
-		nv->region_copy(nv, dx, dy, sx, sy, w, h);
+		nv->surface_copy(nv, dx, dy, sx, sy, w, h);
 	}
 
 	FIRE_RING();

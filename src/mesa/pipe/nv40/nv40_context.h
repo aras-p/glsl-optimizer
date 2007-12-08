@@ -41,7 +41,7 @@ struct nv40_context {
 	uint32_t dirty;
 
 	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
-	struct pipe_mipmap_tree   *tex_miptree[PIPE_MAX_SAMPLERS];
+	struct pipe_texture       *tex_miptree[PIPE_MAX_SAMPLERS];
 	uint32_t                   tex_dirty;
 
 	struct {
@@ -66,16 +66,13 @@ struct nv40_context {
 };
 
 
-extern void nv40_init_region_functions(struct nv40_context *nv40);
-extern void nv40_init_surface_functions(struct nv40_context *nv40);
 extern void nv40_init_state_functions(struct nv40_context *nv40);
+extern void nv40_init_surface_functions(struct nv40_context *nv40);
+extern void nv40_init_miptree_functions(struct nv40_context *nv40);
+extern void nv40_init_query_functions(struct nv40_context *nv40);
 
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nv40_context *nv40);
-
-/* nv40_miptree.c */
-extern boolean nv40_miptree_layout(struct pipe_context *,
-				   struct pipe_mipmap_tree *);
 
 /* nv40_vertprog.c */
 extern void nv40_vertprog_translate(struct nv40_context *,
@@ -106,10 +103,5 @@ extern void nv40_vbo_arrays_update(struct nv40_context *nv40);
 /* nv40_clear.c */
 extern void nv40_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 		       unsigned clearValue);
-
-/* nv40_query.c */
-extern void nv40_query_begin(struct pipe_context *, struct pipe_query_object *);
-extern void nv40_query_end(struct pipe_context *, struct pipe_query_object *);
-extern void nv40_query_wait(struct pipe_context *, struct pipe_query_object *);
 
 #endif

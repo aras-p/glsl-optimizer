@@ -1,9 +1,6 @@
 #ifndef __NOUVEAU_CONTEXT_H__
 #define __NOUVEAU_CONTEXT_H__
 
-#include "glheader.h"
-#include "context.h"
-
 #include "dri_util.h"
 #include "xmlconfig.h"
 
@@ -31,7 +28,7 @@ struct nouveau_context {
 	drmLock                drm_lock;
 	GLboolean              locked;
 	struct nouveau_screen *nv_screen;
-	struct pipe_region *frontbuffer;
+	struct pipe_surface *frontbuffer;
 
 	/* Bufmgr */
 	struct {
@@ -58,28 +55,21 @@ struct nouveau_context {
 	uint32_t                 next_handle;
 	uint32_t                 next_sequence;
 
-	/* pipe_region accel */
-	struct pipe_region *region_src, *region_dst;
-	unsigned region_src_offset, region_dst_offset;
-	int  (*region_copy_prep)(struct nouveau_context *,
-				 struct pipe_region *dst, uint32_t dst_offset,
-				 struct pipe_region *src, uint32_t src_offset);
-	void (*region_copy)(struct nouveau_context *, unsigned dx, unsigned dy,
-			    unsigned sx, unsigned sy, unsigned w, unsigned h);
-	void (*region_copy_done)(struct nouveau_context *);
-	int (*region_fill)(struct nouveau_context *, struct pipe_region *,
-			   unsigned, unsigned, unsigned, unsigned, unsigned,
-			   unsigned);
-	int (*region_data)(struct nouveau_context *, struct pipe_region *,
-			   unsigned, unsigned, unsigned, const void *,
-			   unsigned, unsigned, unsigned, unsigned, unsigned);
+	/* pipe_surface accel */
+	struct pipe_surface *surf_src, *surf_dst;
+	unsigned surf_src_offset, surf_dst_offset;
+	int  (*surface_copy_prep)(struct nouveau_context *,
+				  struct pipe_surface *dst,
+				  struct pipe_surface *src);
+	void (*surface_copy)(struct nouveau_context *, unsigned dx, unsigned dy,
+			     unsigned sx, unsigned sy, unsigned w, unsigned h);
+	void (*surface_copy_done)(struct nouveau_context *);
+	int (*surface_fill)(struct nouveau_context *, struct pipe_surface *,
+			    unsigned, unsigned, unsigned, unsigned, unsigned);
+	int (*surface_data)(struct nouveau_context *, struct pipe_surface *,
+			    unsigned, unsigned, const void *, unsigned,
+			    unsigned, unsigned, unsigned, unsigned);
 };
-
-static INLINE struct nouveau_context *
-nouveau_context(GLcontext *ctx)
-{
-	return (struct nouveau_context *)ctx;
-}
 
 extern GLboolean nouveau_context_create(const __GLcontextModes *,
 					__DRIcontextPrivate *, void *);
@@ -105,7 +95,7 @@ extern int __nouveau_debug;
 extern void LOCK_HARDWARE(struct nouveau_context *);
 extern void UNLOCK_HARDWARE(struct nouveau_context *);
 
-extern int nouveau_region_init_nv04(struct nouveau_context *);
-extern int nouveau_region_init_nv50(struct nouveau_context *);
+extern int nouveau_surface_init_nv04(struct nouveau_context *);
+extern int nouveau_surface_init_nv50(struct nouveau_context *);
 
 #endif

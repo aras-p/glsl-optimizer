@@ -16,9 +16,8 @@ nv50_format(int cpp)
 }
 
 static int
-nv50_region_copy_prep(struct nouveau_context *nv,
-		      struct pipe_region *dst, unsigned dst_offset,
-		      struct pipe_region *src, unsigned src_offset)
+nv50_surface_copy_prep(struct nouveau_context *nv,
+		       struct pipe_surface *dst, struct pipe_surface *src)
 {
 	int surf_format;
 
@@ -38,8 +37,8 @@ nv50_region_copy_prep(struct nouveau_context *nv,
 	OUT_RING  (dst->pitch * dst->cpp);
 	OUT_RING  (dst->pitch);
 	OUT_RING  (dst->height);
-	OUT_RELOCh(dst->buffer, dst_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(dst->buffer, dst_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCh(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(Nv2D, NV50_2D_CLIP_X, 4);
 	OUT_RING  (0);
 	OUT_RING  (0);
@@ -53,15 +52,15 @@ nv50_region_copy_prep(struct nouveau_context *nv,
 	OUT_RING  (src->pitch * src->cpp);
 	OUT_RING  (src->pitch);
 	OUT_RING  (src->height);
-	OUT_RELOCh(src->buffer, src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RELOCl(src->buffer, src_offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+	OUT_RELOCh(src->buffer, src->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+	OUT_RELOCl(src->buffer, src->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
 	return 0;
 }
 
 static void
-nv50_region_copy(struct nouveau_context *nv, unsigned dx, unsigned dy,
-		 unsigned sx, unsigned sy, unsigned w, unsigned h)
+nv50_surface_copy(struct nouveau_context *nv, unsigned dx, unsigned dy,
+		  unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	BEGIN_RING(Nv2D, 0x0110, 1);
 	OUT_RING  (0);
@@ -81,7 +80,7 @@ nv50_region_copy(struct nouveau_context *nv, unsigned dx, unsigned dy,
 }
 
 static void
-nv50_region_copy_done(struct nouveau_context *nv)
+nv50_surface_copy_done(struct nouveau_context *nv)
 {
 	nouveau_notifier_reset(nv->sync_notifier, 0);
 	BEGIN_RING(Nv2D, 0x104, 1);
@@ -93,10 +92,9 @@ nv50_region_copy_done(struct nouveau_context *nv)
 }
 
 static int
-nv50_region_fill(struct nouveau_context *nv,
-		 struct pipe_region *dst, unsigned dst_offset,
-		 unsigned dx, unsigned dy, unsigned w, unsigned h,
-		 unsigned value)
+nv50_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
+		  unsigned dx, unsigned dy, unsigned w, unsigned h,
+		  unsigned value)
 {
 	int surf_format, rect_format;
 
@@ -117,8 +115,8 @@ nv50_region_fill(struct nouveau_context *nv,
 	OUT_RING  (dst->pitch * dst->cpp);
 	OUT_RING  (dst->pitch);
 	OUT_RING  (dst->height);
-	OUT_RELOCh(dst->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(dst->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCh(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(dst->buffer, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(Nv2D, NV50_2D_CLIP_X, 4);
 	OUT_RING  (0);
 	OUT_RING  (0);
@@ -148,17 +146,16 @@ nv50_region_fill(struct nouveau_context *nv,
 }
 
 static int
-nv50_region_data(struct nouveau_context *nv, struct pipe_region *dst,
-		 unsigned dst_offset, unsigned dx, unsigned dy,
-		 const void *src, unsigned src_pitch,
-		 unsigned sx, unsigned sy, unsigned w, unsigned h)
+nv50_surface_data(struct nouveau_context *nv, struct pipe_surface *dst,
+		  unsigned dx, unsigned dy, const void *src, unsigned src_pitch,
+		  unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	NOUVEAU_ERR("unimplemented!!\n");
 	return 0;
 }
 
 int
-nouveau_region_init_nv50(struct nouveau_context *nv)
+nouveau_surface_init_nv50(struct nouveau_context *nv)
 {
 	int ret;
 
@@ -175,11 +172,11 @@ nouveau_region_init_nv50(struct nouveau_context *nv)
 	BEGIN_RING(Nv2D, NV50_2D_OPERATION, 1);
 	OUT_RING  (NV50_2D_OPERATION_SRCCOPY);
 
-	nv->region_copy_prep = nv50_region_copy_prep;
-	nv->region_copy = nv50_region_copy;
-	nv->region_copy_done = nv50_region_copy_done;
-	nv->region_fill = nv50_region_fill;
-	nv->region_data = nv50_region_data;
+	nv->surface_copy_prep = nv50_surface_copy_prep;
+	nv->surface_copy = nv50_surface_copy;
+	nv->surface_copy_done = nv50_surface_copy_done;
+	nv->surface_fill = nv50_surface_fill;
+	nv->surface_data = nv50_surface_data;
 	return 0;
 }
 

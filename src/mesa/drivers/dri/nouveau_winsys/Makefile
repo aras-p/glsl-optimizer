@@ -25,8 +25,8 @@ DRIVER_SOURCES = \
 	nouveau_winsys.c \
 	nouveau_winsys_pipe.c \
 	nouveau_winsys_softpipe.c \
-	nv04_region.c \
-	nv50_region.c
+	nv04_surface.c \
+	nv50_surface.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

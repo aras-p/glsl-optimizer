@@ -53,15 +53,14 @@ struct nouveau_winsys {
 	int       (*notifier_wait)(struct nouveau_notifier *, int id,
 				   int status, int timeout);
 
-	int (*region_copy)(struct nouveau_winsys *, struct pipe_region *,
-			   unsigned, unsigned, unsigned, struct pipe_region *,
-			   unsigned, unsigned, unsigned, unsigned, unsigned);
-	int (*region_fill)(struct nouveau_winsys *, struct pipe_region *,
-			   unsigned, unsigned, unsigned, unsigned, unsigned,
-			   unsigned);
-	int (*region_data)(struct nouveau_winsys *, struct pipe_region *,
-			   unsigned, unsigned, unsigned, const void *,
-			   unsigned, unsigned, unsigned, unsigned, unsigned);
+	int (*surface_copy)(struct nouveau_winsys *, struct pipe_surface *,
+			    unsigned, unsigned, struct pipe_surface *,
+			    unsigned, unsigned, unsigned, unsigned);
+	int (*surface_fill)(struct nouveau_winsys *, struct pipe_surface *,
+			    unsigned, unsigned, unsigned, unsigned, unsigned);
+	int (*surface_data)(struct nouveau_winsys *, struct pipe_surface *,
+			    unsigned, unsigned, const void *, unsigned,
+			    unsigned, unsigned, unsigned, unsigned);
 };
 
 extern struct pipe_context *

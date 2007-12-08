@@ -25,18 +25,9 @@
  * 
  **************************************************************************/
 
-
-#include "glheader.h"
-#include "context.h"
-#include "extensions.h"
-
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-
-#include "drirenderbuffer.h"
-#include "vblank.h"
-#include "utils.h"
-#include "xmlpool.h"            /* for symbolic values of enum-type options */
+#include "main/glheader.h"
+#include "glapi/glthread.h"
+#include <GL/internal/glcore.h>
 
 #include "nouveau_context.h"
 #include "nouveau_screen.h"
