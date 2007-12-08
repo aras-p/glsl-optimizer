@@ -29,7 +29,7 @@
 #include "main/context.h"
 #include "main/extensions.h"
 #include "vbo/vbo.h"
-#include "drivers/common/driverfuncs.h"
+#include "shader/shader_api.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
