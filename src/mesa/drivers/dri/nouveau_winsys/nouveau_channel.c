@@ -85,11 +85,6 @@ nouveau_channel_alloc(struct nouveau_device *userdev, uint32_t fb_ctxdma,
 		return ret;
 	}
 
-	chan->max_relocs = chan->drm.cmdbuf_size / 4;
-	chan->num_relocs = 0;
-	chan->relocs =
-		malloc(sizeof(struct nouveau_bo_reloc) * chan->max_relocs);
-
 	nouveau_dma_channel_init(&chan->base);
 	nouveau_pushbuf_init(&chan->base);
 
@@ -114,9 +109,6 @@ nouveau_channel_free(struct nouveau_channel **userchan)
 		*userchan = NULL;
 
 		FIRE_RING_CH(&chan->base);
-
-		if (chan->relocs)
-			free(chan->relocs);
 
 		nouveau_grobj_free(&chan->base.vram);
 		nouveau_grobj_free(&chan->base.gart);

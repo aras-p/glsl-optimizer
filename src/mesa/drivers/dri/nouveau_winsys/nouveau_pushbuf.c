@@ -54,7 +54,8 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(nvchan->pb_tail);
-	int i, ret;
+	struct nouveau_pushbuf_bo *pbbo;
+	int ret;
 
 	if (!nvpb)
 		goto out_realloc;
@@ -66,36 +67,42 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	if (ret)
 		return ret;
 
-	/* Validate buffers */
-	nouveau_bo_validate(chan);
+	/* Validate buffers + apply relocations */
+	while ((pbbo = ptr_to_pbbo(nvpb->buffers))) {
+		struct nouveau_pushbuf_reloc *r;
+		struct nouveau_bo *bo = &ptr_to_bo(pbbo->handle)->base;
 
-	/* Apply relocations */
-	if (nvchan->num_relocs) {		
-		for (i = 0; i < nvchan->num_relocs; i++) {
-			struct nouveau_bo_reloc *r = &nvchan->relocs[i];
+		ret = nouveau_bo_validate(chan, bo, pbbo->flags);
+		assert (ret == 0);
+
+		while ((r = ptr_to_pbrel(pbbo->relocs))) {
 			uint32_t push;
 
 			if (r->flags & NOUVEAU_BO_LOW) {
-				push = r->bo->base.offset + r->data;
+				push = bo->offset + r->data;
 			} else
 			if (r->flags & NOUVEAU_BO_HIGH) {
-				push = (r->bo->base.offset + r->data) >> 32;
+				push = (bo->offset + r->data) >> 32;
 			} else {
 				push = r->data;
 			}
 
 			if (r->flags & NOUVEAU_BO_OR) {
-				if (r->bo->base.flags & NOUVEAU_BO_VRAM)
+				if (bo->flags & NOUVEAU_BO_VRAM)
 					push |= r->vor;
 				else
 					push |= r->tor;
 			}
 
 			*r->ptr = push;
+			pbbo->relocs = r->next;
+			free(r);
 		}
 
-		nvchan->num_relocs = 0;
+		nvpb->buffers = pbbo->next;
+		free(pbbo);
 	}
+	nvpb->nr_buffers = 0;
 
 	/* Emit JMP to indirect pushbuf */
 	if (nvchan->dma.free < 1)
@@ -171,6 +178,64 @@ out_realloc:
 		nvchan->pb_head = &nvpb->base;
 	}
 	nvchan->pb_tail = &nvpb->base;
+
+	return 0;
+}
+
+static struct nouveau_pushbuf_bo *
+nouveau_pushbuf_emit_buffer(struct nouveau_channel *chan, struct nouveau_bo *bo)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(nvchan->pb_tail);
+	struct nouveau_pushbuf_bo *pbbo = ptr_to_pbbo(nvpb->buffers);
+
+	while (pbbo) {
+		if (pbbo->handle == bo->handle)
+			return pbbo;
+		pbbo = ptr_to_pbbo(pbbo->next);
+	}
+
+	pbbo = malloc(sizeof(struct nouveau_pushbuf_bo));
+	pbbo->next = nvpb->buffers;
+	nvpb->buffers = pbbo_to_ptr(pbbo);
+	nvpb->nr_buffers++;
+
+	pbbo->handle = bo_to_ptr(bo);
+	pbbo->flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
+	pbbo->relocs = 0;
+	pbbo->nr_relocs = 0;
+	return pbbo;
+}
+
+int
+nouveau_pushbuf_emit_reloc(struct nouveau_channel *chan, void *ptr,
+			   struct nouveau_bo *bo, uint32_t data, uint32_t flags,
+			   uint32_t vor, uint32_t tor)
+{
+	struct nouveau_pushbuf_bo *pbbo;
+	struct nouveau_pushbuf_reloc *r;
+
+	if (!chan)
+		return -EINVAL;
+
+	pbbo = nouveau_pushbuf_emit_buffer(chan, bo);
+	if (!pbbo)
+		return -EFAULT;
+
+	r = malloc(sizeof(struct nouveau_pushbuf_reloc));
+	r->next = pbbo->relocs;
+	pbbo->relocs = pbrel_to_ptr(r);
+	pbbo->nr_relocs++;
+
+	pbbo->flags |= (flags & NOUVEAU_BO_RDWR);
+	pbbo->flags &= (flags | NOUVEAU_BO_RDWR);
+
+	r->handle = bo_to_ptr(r);
+	r->ptr = ptr;
+	r->flags = flags;
+	r->data = data;
+	r->vor = vor;
+	r->tor = tor;
 
 	return 0;
 }

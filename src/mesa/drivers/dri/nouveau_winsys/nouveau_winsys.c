@@ -204,7 +204,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->res_free		= nouveau_resource_free;
 
 	nvws->begin_ring        = nouveau_pipe_dma_beginp;
-	nvws->out_reloc         = nouveau_bo_emit_reloc;
+	nvws->out_reloc         = nouveau_pushbuf_emit_reloc;
 	nvws->fire_ring		= nouveau_pipe_dma_kickoff;
 
 	nvws->grobj_alloc	= nouveau_pipe_grobj_alloc;

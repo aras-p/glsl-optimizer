@@ -94,6 +94,24 @@ nouveau_fence_wait(struct nouveau_fence **);
 extern void
 nouveau_fence_flush(struct nouveau_channel *);
 
+struct nouveau_pushbuf_reloc {
+	uint64_t next;
+	uint64_t handle;
+	uint32_t *ptr;
+	uint32_t flags;
+	uint32_t data;
+	uint32_t vor;
+	uint32_t tor;
+};
+
+struct nouveau_pushbuf_bo {
+	uint64_t next;
+	uint64_t handle;
+	uint64_t flags;
+	uint64_t relocs;
+	int nr_relocs;
+};
+
 struct nouveau_pushbuf {
 	struct nouveau_channel *channel;
 	unsigned remaining;
@@ -106,14 +124,28 @@ struct nouveau_pushbuf_priv {
 
 	struct nouveau_resource *res;
 	struct nouveau_fence *fence;
+
+	uint64_t buffers;
+	int nr_buffers;
 };
 #define nouveau_pushbuf(n) ((struct nouveau_pushbuf_priv *)(n))
+#define pbbo_to_ptr(o) ((uint64_t)(unsigned long)(o))
+#define ptr_to_pbbo(h) ((struct nouveau_pushbuf_bo *)(unsigned long)(h))
+#define pbrel_to_ptr(o) ((uint64_t)(unsigned long)(o))
+#define ptr_to_pbrel(h) ((struct nouveau_pushbuf_reloc *)(unsigned long)(h))
+#define bo_to_ptr(o) ((uint64_t)(unsigned long)(o))
+#define ptr_to_bo(h) ((struct nouveau_bo_priv *)(unsigned long)(h))
 
 extern int
 nouveau_pushbuf_init(struct nouveau_channel *);
 
 extern int
 nouveau_pushbuf_flush(struct nouveau_channel *);
+
+extern int
+nouveau_pushbuf_emit_reloc(struct nouveau_channel *, void *ptr,
+			   struct nouveau_bo *, uint32_t data, uint32_t flags,
+			   uint32_t vor, uint32_t tor);
 
 struct nouveau_channel_priv {
 	struct nouveau_channel base;
@@ -141,16 +173,6 @@ struct nouveau_channel_priv {
 
 		int push_free;
 	} dma;
-
-	struct {
-		struct nouveau_bo_priv *bo;
-		uint32_t flags;
-	} buffers[128];
-	int nr_buffers;
-
-	struct nouveau_bo_reloc *relocs;
-	int num_relocs;
-	int max_relocs;
 
 	struct nouveau_fence *fence_head;
 	struct nouveau_fence *fence_tail;
@@ -222,14 +244,6 @@ struct nouveau_bo_priv {
 
 	int refcount;
 };
-
-struct nouveau_bo_reloc {
-	struct nouveau_bo_priv *bo;
-	uint32_t *ptr;
-	uint32_t flags;
-	uint32_t data, vor, tor;
-};
-
 #define nouveau_bo(n) ((struct nouveau_bo_priv *)(n))
 
 extern int
@@ -261,13 +275,9 @@ nouveau_bo_map(struct nouveau_bo *, uint32_t flags);
 extern void
 nouveau_bo_unmap(struct nouveau_bo *);
 
-extern void
-nouveau_bo_emit_reloc(struct nouveau_channel *chan, void *ptr,
-		      struct nouveau_bo *, uint32_t data, uint32_t flags,
-		      uint32_t vor, uint32_t tor);
-
-extern void
-nouveau_bo_validate(struct nouveau_channel *);
+extern int
+nouveau_bo_validate(struct nouveau_channel *, struct nouveau_bo *,
+		    uint32_t flags);
 
 extern int
 nouveau_resource_init(struct nouveau_resource **heap, int size);

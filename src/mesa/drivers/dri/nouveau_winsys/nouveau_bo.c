@@ -232,47 +232,6 @@ nouveau_bo_unmap(struct nouveau_bo *userbo)
 	userbo->map = NULL;
 }
 
-void
-nouveau_bo_emit_reloc(struct nouveau_channel *userchan, void *ptr,
-		      struct nouveau_bo *userbo, uint32_t data, uint32_t flags,
-		      uint32_t vor, uint32_t tor)
-{
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
-	struct nouveau_bo_priv *bo = nouveau_bo(userbo);
-	struct nouveau_bo_reloc *r;
-	int i, on_list = 0;
-
-	for (i = 0; i < chan->nr_buffers; i++) {
-		if (chan->buffers[i].bo == bo) {
-			on_list = 1;
-			break;
-		}
-	}
-
-	if (i >= 128)
-		return;
-
-	if (on_list) {
-		chan->buffers[i].flags &= (flags | NOUVEAU_BO_RDWR);
-		chan->buffers[i].flags |= (flags & NOUVEAU_BO_RDWR);
-	} else {
-		chan->buffers[i].bo = bo;
-		chan->buffers[i].flags = flags;
-		chan->nr_buffers++;
-	}
-
-	if (chan->num_relocs >= chan->max_relocs)
-		FIRE_RING_CH(userchan);
-	r = &chan->relocs[chan->num_relocs++];
-
-	r->ptr = ptr;
-	r->bo = bo;
-	r->data = data;
-	r->flags = flags;
-	r->vor = vor;
-	r->tor = tor;
-}
-
 static int
 nouveau_bo_upload(struct nouveau_bo_priv *bo)
 {
@@ -280,35 +239,30 @@ nouveau_bo_upload(struct nouveau_bo_priv *bo)
 	return 0;
 }
 
-void
-nouveau_bo_validate(struct nouveau_channel *userchan)
+int
+nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
+		    uint32_t flags)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
-	int i;
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
 
-	for (i = 0; i < chan->nr_buffers; i++) {
-		struct nouveau_bo_priv *bo = chan->buffers[i].bo;
+	if (!nvbo->drm.size) {
+		nouveau_bo_realloc_gpu(nvbo, flags, nvbo->base.size);
+		nouveau_bo_upload(nvbo);
+	} else
+	if (nvbo->user || nvbo->base.map)
+		nouveau_bo_upload(nvbo);
 
-		if (!bo->drm.size) {
-			nouveau_bo_realloc_gpu(bo, chan->buffers[i].flags,
-					       bo->base.size);
-			nouveau_bo_upload(bo);
-		} else
-		if (bo->user || bo->base.map)
-			nouveau_bo_upload(bo);
-
-		if (!bo->user && !bo->base.map) {
-			free(bo->sysmem);
-			bo->sysmem = NULL;
-		}
-
-
-		bo->base.offset = bo->drm.offset;
-		if (bo->drm.flags & NOUVEAU_MEM_AGP)
-			bo->base.flags = NOUVEAU_BO_GART;
-		else
-			bo->base.flags = NOUVEAU_BO_VRAM;
+	if (!nvbo->user && !nvbo->base.map) {
+		free(nvbo->sysmem);
+		nvbo->sysmem = NULL;
 	}
-	chan->nr_buffers = 0;
+
+	nvbo->base.offset = nvbo->drm.offset;
+	if (nvbo->drm.flags & NOUVEAU_MEM_AGP)
+		nvbo->base.flags = NOUVEAU_BO_GART;
+	else
+		nvbo->base.flags = NOUVEAU_BO_VRAM;
+
+	return 0;
 }
 

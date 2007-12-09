@@ -25,7 +25,7 @@ struct nouveau_winsys {
 	/*XXX: this is crappy, and bound to be slow.. however, it's nice and
 	 *     simple, it'll do for the moment*/
 	uint32_t *(*begin_ring)(struct nouveau_grobj *, int mthd, int size);
-	void      (*out_reloc)(struct nouveau_channel *, void *ptr,
+	int       (*out_reloc)(struct nouveau_channel *, void *ptr,
 			       struct nouveau_bo *, uint32_t data,
 			       uint32_t flags, uint32_t vor, uint32_t tor);
 	void      (*fire_ring)(struct nouveau_channel *);

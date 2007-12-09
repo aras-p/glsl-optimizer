@@ -49,8 +49,8 @@
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
-	nouveau_bo_emit_reloc(nv->channel, nv->pushbuf, (void*)(bo), (data),   \
-			      (flags), (vor), (tor));                          \
+	nouveau_pushbuf_emit_reloc(nv->channel, nv->pushbuf, (void*)(bo),      \
+				   (data), (flags), (vor), (tor));             \
 	OUT_RING(0);                                                           \
 } while(0)
 
