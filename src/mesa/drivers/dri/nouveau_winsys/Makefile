@@ -22,6 +22,7 @@ DRIVER_SOURCES = \
 	nouveau_lock.c \
 	nouveau_notifier.c \
 	nouveau_pushbuf.c \
+	nouveau_resource.c \
 	nouveau_screen.c \
 	nouveau_swapbuffers.c \
 	nouveau_winsys.c \

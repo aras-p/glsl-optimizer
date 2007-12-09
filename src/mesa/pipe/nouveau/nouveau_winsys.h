@@ -17,7 +17,8 @@ struct nouveau_winsys {
 
 	struct nouveau_channel *channel;
 
-	int  (*res_init)(struct nouveau_resource **heap, int size);
+	int  (*res_init)(struct nouveau_resource **heap, unsigned start,
+			 unsigned size);
 	int  (*res_alloc)(struct nouveau_resource *heap, int size, void *priv,
 			  struct nouveau_resource **);
 	void (*res_free)(struct nouveau_resource **);

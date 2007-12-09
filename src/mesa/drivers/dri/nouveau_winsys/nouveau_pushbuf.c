@@ -36,7 +36,7 @@ nouveau_pushbuf_init(struct nouveau_channel *chan)
 		return -EINVAL;
 
 	/* Everything except first 4KiB of the push buffer is managed by us */
-	if (nouveau_resource_init(&nvchan->pb_heap,
+	if (nouveau_resource_init(&nvchan->pb_heap, 4096,
 				  nvchan->drm.cmdbuf_size - 4096))
 		return -EINVAL;
 
@@ -116,7 +116,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 #ifdef NOUVEAU_DMA_DEBUG
 	nvchan->dma.push_free = 1;
 #endif
-	OUT_RING_CH(chan, 0x20000000 | (nvpb->res->start + 4096));
+	OUT_RING_CH(chan, 0x20000000 | nvpb->res->start);
 
 	/* Add JMP back to master pushbuf from indirect pushbuf */
 	(*nvpb->base.cur++) =
@@ -179,7 +179,7 @@ out_realloc:
 
 	nvpb->base.channel = chan;
 	nvpb->base.remaining = nvpb->res->size / 4;
-	nvpb->base.cur = &nvchan->pushbuf[(nvpb->res->start + 4096)/4];
+	nvpb->base.cur = &nvchan->pushbuf[nvpb->res->start/4];
 
 	if (nvchan->pb_tail) {
 		nouveau_pushbuf(nvchan->pb_tail)->next = &nvpb->base;

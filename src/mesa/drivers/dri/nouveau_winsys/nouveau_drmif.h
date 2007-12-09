@@ -281,7 +281,8 @@ nouveau_bo_validate(struct nouveau_channel *, struct nouveau_bo *,
 		    struct nouveau_fence *fence, uint32_t flags);
 
 extern int
-nouveau_resource_init(struct nouveau_resource **heap, int size);
+nouveau_resource_init(struct nouveau_resource **heap, unsigned start,
+		      unsigned size);
 
 extern int
 nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
