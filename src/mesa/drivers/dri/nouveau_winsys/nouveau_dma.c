@@ -141,35 +141,6 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 	if (chan->dma.cur == chan->dma.put)
 		return;
 
-	if (chan->num_relocs) {
-		nouveau_bo_validate(userchan);
-		
-		for (i = 0; i < chan->num_relocs; i++) {
-			struct nouveau_bo_reloc *r = &chan->relocs[i];
-			uint32_t push;
-
-			if (r->flags & NOUVEAU_BO_LOW) {
-				push = r->bo->base.offset + r->data;
-			} else
-			if (r->flags & NOUVEAU_BO_HIGH) {
-				push = (r->bo->base.offset + r->data) >> 32;
-			} else {
-				push = r->data;
-			}
-
-			if (r->flags & NOUVEAU_BO_OR) {
-				if (r->bo->base.flags & NOUVEAU_BO_VRAM)
-					push |= r->vor;
-				else
-					push |= r->tor;
-			}
-
-			*r->ptr = push;
-		}
-
-		chan->num_relocs = 0;
-	}
-
 #ifdef NOUVEAU_DMA_DEBUG
 	if (chan->dma.push_free) {
 		NOUVEAU_ERR("Packet incomplete: %d left\n", chan->dma.push_free);
@@ -178,8 +149,20 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 #endif
 
 #ifdef NOUVEAU_DMA_DUMP_POSTRELOC_PUSHBUF
-	for (i = chan->dma.put; i < chan->dma.cur; i++)
-		NOUVEAU_MSG("0x%08x\n", chan->pushbuf[i]);
+	for (i = chan->dma.put; i < chan->dma.cur; i++) {
+		NOUVEAU_MSG("0x%08x 0x%08x\n", (i<<2)+chan->dma.base,
+			    chan->pushbuf[i]);
+		if ((chan->pushbuf[i] & 0xf0000000) == 0x20000000) {
+			int n = (((chan->pushbuf[i] & 0x0fffffff) -
+				  chan->dma.base) / 4);
+
+			do {
+				NOUVEAU_MSG("\t0x%08x 0x%08x\n",
+					    (n<<2)+chan->dma.base,
+					    chan->pushbuf[n]);
+			} while ((chan->pushbuf[n++]&0xf0000000) != 0x20000000);
+		}
+	}
 #endif
 
 	put_offset = (chan->dma.cur << 2) + chan->dma.base;

@@ -5,7 +5,7 @@
 
 #include "pipe/nouveau/nouveau_winsys.h"
 
-static int
+int
 nouveau_resource_init(struct nouveau_resource **heap, int size)
 {
 	struct nouveau_resource *r;
@@ -20,7 +20,7 @@ nouveau_resource_init(struct nouveau_resource **heap, int size)
 	return 0;
 }
 
-static int
+int
 nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
 		       struct nouveau_resource **res)
 {
@@ -58,7 +58,7 @@ nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
 	return 1;
 }
 
-static void
+void
 nouveau_resource_free(struct nouveau_resource **res)
 {
 	struct nouveau_resource *r;
@@ -108,25 +108,31 @@ nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 				   grclass, grobj);
 }
 
-static uint32_t *
+uint32_t *
 nouveau_pipe_dma_beginp(struct nouveau_grobj *grobj, int mthd, int size)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(grobj->channel);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(grobj->channel);
 	uint32_t *pushbuf;
 
-	BEGIN_RING_CH(&chan->base, grobj, mthd, size);
-	pushbuf = &chan->pushbuf[chan->dma.cur];
-	chan->dma.cur += size;
-#ifdef NOUVEAU_DMA_DEBUG
-	chan->dma.push_free -= size;
-#endif
+	if (!nvchan->pb_tail || nvchan->pb_tail->remaining < (size + 1))
+		nouveau_pushbuf_flush(grobj->channel);
+
+	if (grobj->bound == NOUVEAU_GROBJ_UNBOUND)
+		nouveau_dma_subc_bind(grobj);
+	nvchan->subchannel[grobj->subc].seq = nvchan->subc_sequence++;
+
+	pushbuf = nvchan->pb_tail->cur;
+	nvchan->pb_tail->cur += (size + 1);
+	nvchan->pb_tail->remaining -= (size + 1);
+
+	(*pushbuf++) = ((grobj->subc << 13) | (size << 18) | mthd);
 	return pushbuf;
 }
 
-static void
-nouveau_pipe_dma_kickoff(struct nouveau_channel *userchan)
+void
+nouveau_pipe_dma_kickoff(struct nouveau_channel *chan)
 {
-	FIRE_RING_CH(userchan);
+	nouveau_pushbuf_flush(chan);
 }
 
 static int

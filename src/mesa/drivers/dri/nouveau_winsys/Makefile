@@ -17,9 +17,11 @@ DRIVER_SOURCES = \
 	nouveau_context.c \
 	nouveau_device.c \
 	nouveau_dma.c \
+	nouveau_fence.c \
 	nouveau_grobj.c \
 	nouveau_lock.c \
 	nouveau_notifier.c \
+	nouveau_pushbuf.c \
 	nouveau_screen.c \
 	nouveau_swapbuffers.c \
 	nouveau_winsys.c \

@@ -10,17 +10,7 @@
 #include "pipe/nouveau/nouveau_class.h"
 #include "pipe/nouveau/nouveau_grobj.h"
 #include "pipe/nouveau/nouveau_notifier.h"
-
-struct nouveau_resource {
-	struct nouveau_resource *prev;
-	struct nouveau_resource *next;
-
-	boolean in_use;
-	void *priv;
-
-	uint start;
-	uint size;
-};
+#include "pipe/nouveau/nouveau_resource.h"
 
 struct nouveau_winsys {
 	struct nouveau_context *nv;

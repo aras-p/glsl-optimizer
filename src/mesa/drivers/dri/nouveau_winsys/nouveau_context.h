@@ -44,6 +44,7 @@ struct nouveau_context {
 	struct nouveau_bo *reloc_head;
 
 	/* Hardware context */
+	uint32_t                *pushbuf;
 	struct nouveau_channel  *channel;
 	struct nouveau_notifier *sync_notifier;
 	struct nouveau_grobj    *NvNull;
@@ -97,5 +98,8 @@ extern void UNLOCK_HARDWARE(struct nouveau_context *);
 
 extern int nouveau_surface_init_nv04(struct nouveau_context *);
 extern int nouveau_surface_init_nv50(struct nouveau_context *);
+
+extern uint32_t *nouveau_pipe_dma_beginp(struct nouveau_grobj *, int, int);
+extern void nouveau_pipe_dma_kickoff(struct nouveau_channel *);
 
 #endif

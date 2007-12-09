@@ -32,6 +32,7 @@
 #include "pipe/nouveau/nouveau_grobj.h"
 #include "pipe/nouveau/nouveau_notifier.h"
 #include "pipe/nouveau/nouveau_bo.h"
+#include "pipe/nouveau/nouveau_resource.h"
 
 struct nouveau_device_priv {
 	struct nouveau_device base;
@@ -58,6 +59,61 @@ nouveau_device_get_param(struct nouveau_device *, uint64_t param, uint64_t *v);
 
 extern int
 nouveau_device_set_param(struct nouveau_device *, uint64_t param, uint64_t val);
+
+struct nouveau_fence {
+	struct nouveau_channel *channel;
+};
+
+struct nouveau_fence_priv {
+	struct nouveau_fence base;
+	int refcount;
+
+	struct nouveau_fence *next;
+
+	uint32_t sequence;
+	int emitted;
+	int signalled;
+};
+#define nouveau_fence(n) ((struct nouveau_fence_priv *)(n))
+
+extern int
+nouveau_fence_new(struct nouveau_channel *, struct nouveau_fence **);
+
+extern int
+nouveau_fence_ref(struct nouveau_fence *, struct nouveau_fence **);
+
+extern void
+nouveau_fence_del(struct nouveau_fence **);
+
+extern void
+nouveau_fence_emit(struct nouveau_fence *);
+
+extern int
+nouveau_fence_wait(struct nouveau_fence **);
+
+extern void
+nouveau_fence_flush(struct nouveau_channel *);
+
+struct nouveau_pushbuf {
+	struct nouveau_channel *channel;
+	unsigned remaining;
+	uint32_t *cur;
+};
+
+struct nouveau_pushbuf_priv {
+	struct nouveau_pushbuf base;
+	struct nouveau_pushbuf *next;
+
+	struct nouveau_resource *res;
+	struct nouveau_fence *fence;
+};
+#define nouveau_pushbuf(n) ((struct nouveau_pushbuf_priv *)(n))
+
+extern int
+nouveau_pushbuf_init(struct nouveau_channel *);
+
+extern int
+nouveau_pushbuf_flush(struct nouveau_channel *);
 
 struct nouveau_channel_priv {
 	struct nouveau_channel base;
@@ -95,6 +151,14 @@ struct nouveau_channel_priv {
 	struct nouveau_bo_reloc *relocs;
 	int num_relocs;
 	int max_relocs;
+
+	struct nouveau_fence *fence_head;
+	struct nouveau_fence *fence_tail;
+	uint32_t fence_sequence;
+
+	struct nouveau_resource *pb_heap;
+	struct nouveau_pushbuf *pb_head;
+	struct nouveau_pushbuf *pb_tail;
 };
 #define nouveau_channel(n) ((struct nouveau_channel_priv *)(n))
 
@@ -147,6 +211,8 @@ nouveau_notifier_wait_status(struct nouveau_notifier *, int id, int status,
 
 struct nouveau_bo_priv {
 	struct nouveau_bo base;
+
+	struct nouveau_fence *fence;
 
 	struct drm_nouveau_mem_alloc drm;
 	void *map;
@@ -202,5 +268,15 @@ nouveau_bo_emit_reloc(struct nouveau_channel *chan, void *ptr,
 
 extern void
 nouveau_bo_validate(struct nouveau_channel *);
+
+extern int
+nouveau_resource_init(struct nouveau_resource **heap, int size);
+
+extern int
+nouveau_resource_alloc(struct nouveau_resource *heap, int size, void *priv,
+		       struct nouveau_resource **);
+
+extern void
+nouveau_resource_free(struct nouveau_resource **);
 
 #endif

@@ -26,15 +26,16 @@
 
 /* Push buffer access macros */
 #define BEGIN_RING(obj,mthd,size) do {                                         \
-	BEGIN_RING_CH(nv->channel, nv->obj, (mthd), (size));                   \
+	nv->pushbuf = nouveau_pipe_dma_beginp(nv->obj, (mthd), (size));        \
 } while(0)
 
 #define OUT_RING(data) do {                                                    \
-	OUT_RING_CH(nv->channel, (data));                                      \
+	(*nv->pushbuf++) = (data);                                             \
 } while(0)
 
 #define OUT_RINGp(src,size) do {                                               \
-	OUT_RINGp_CH(nv->channel, (src), (size));                              \
+	memcpy(nv->pushbuf, (src), (size)<<2);                                 \
+	nv->pushbuf += (size);                                                 \
 } while(0)
 
 #define OUT_RINGf(data) do {                                                   \
@@ -43,18 +44,13 @@
 	OUT_RING(c.u);                                                         \
 } while(0)
 
-#define WAIT_RING(size) do {                                                   \
-	WAIT_RING_CH(nv->channel, (size));                                     \
-} while(0)
-
 #define FIRE_RING() do {                                                       \
-	FIRE_RING_CH(nv->channel);                                             \
+	nouveau_pipe_dma_kickoff(nv->channel);                                 \
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
-	struct nouveau_channel_priv *chan = nouveau_channel(nv->channel);      \
-	nouveau_bo_emit_reloc(nv->channel, &chan->pushbuf[chan->dma.cur],      \
-			      (void*)(bo), (data), (flags), (vor), (tor));     \
+	nouveau_bo_emit_reloc(nv->channel, nv->pushbuf, (void*)(bo), (data),   \
+			      (flags), (vor), (tor));                          \
 	OUT_RING(0);                                                           \
 } while(0)
 

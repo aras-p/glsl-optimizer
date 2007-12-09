@@ -1,0 +1,135 @@
+/*
+ * Copyright 2007 Nouveau Project
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <stdlib.h>
+#include <errno.h>
+
+#include "nouveau_drmif.h"
+#include "nouveau_dma.h"
+#include "nouveau_local.h"
+
+int
+nouveau_fence_new(struct nouveau_channel *chan, struct nouveau_fence **fence)
+{
+	struct nouveau_fence_priv *nvfence;
+
+	if (!chan || !fence || *fence)
+		return -EINVAL;
+	
+	nvfence = calloc(1, sizeof(struct nouveau_fence_priv));
+	if (!nvfence)
+		return -ENOMEM;
+	nvfence->base.channel = chan;
+	nvfence->refcount = 1;
+
+	*fence = &nvfence->base;
+	return 0;
+}
+
+int
+nouveau_fence_ref(struct nouveau_fence *ref, struct nouveau_fence **fence)
+{
+	struct nouveau_fence_priv *nvfence;
+
+	if (!ref || !fence || *fence)
+		return -EINVAL;
+	nvfence = nouveau_fence(ref);
+	nvfence->refcount++;
+
+	*fence = &nvfence->base;
+	return 0;
+}
+
+void
+nouveau_fence_del(struct nouveau_fence **fence)
+{
+	struct nouveau_fence_priv *nvfence;
+
+	if (!fence || !*fence)
+		return;
+	nvfence = nouveau_fence(*fence);
+	*fence = NULL;
+
+	if (--nvfence->refcount <= 0) {
+		if (nvfence->emitted && !nvfence->signalled)
+			nouveau_fence_wait((void *)&nvfence);
+		free(nvfence);
+	}
+}
+
+void
+nouveau_fence_emit(struct nouveau_fence *fence)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(fence->channel);
+	struct nouveau_fence_priv *nvfence = nouveau_fence(fence);
+
+	nvfence->emitted = 1;
+	nvfence->sequence = ++nvchan->fence_sequence;
+	if (nvfence->sequence == 0xffffffff)
+		NOUVEAU_ERR("AII wrap unhandled\n");
+
+	BEGIN_RING_CH(&nvchan->base, nvchan->subchannel[0].grobj, 0x50, 1);
+	OUT_RING_CH  (&nvchan->base, nvfence->sequence);
+
+	if (nvchan->fence_tail) {
+		nouveau_fence(nvchan->fence_tail)->next = fence;
+	} else {
+		nvchan->fence_head = fence;
+	}
+	nvchan->fence_tail = fence;
+}
+
+void
+nouveau_fence_flush(struct nouveau_channel *chan)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_fence_priv *nvfence = nouveau_fence(nvchan->fence_head);
+	uint32_t sequence = *nvchan->ref_cnt;
+
+	while (nvchan->fence_head && nvfence->sequence <= sequence) {
+		nvfence->signalled = 1;
+
+		nvchan->fence_head = nvfence->next;
+		if (nvchan->fence_head == NULL)
+			nvchan->fence_tail = NULL;
+		nvfence = nouveau_fence(nvchan->fence_head);
+	}
+}
+
+int
+nouveau_fence_wait(struct nouveau_fence **fence)
+{
+	struct nouveau_fence_priv *nvfence;
+	
+	if (!fence || !*fence)
+		return -EINVAL;
+	nvfence = nouveau_fence(*fence);
+
+	if (nvfence->emitted) {
+		while (!nvfence->signalled)
+			nouveau_fence_flush(nvfence->base.channel);
+	}
+	nouveau_fence_del(fence);
+
+	return 0;
+}
+

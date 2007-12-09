@@ -91,6 +91,7 @@ nouveau_channel_alloc(struct nouveau_device *userdev, uint32_t fb_ctxdma,
 		malloc(sizeof(struct nouveau_bo_reloc) * chan->max_relocs);
 
 	nouveau_dma_channel_init(&chan->base);
+	nouveau_pushbuf_init(&chan->base);
 
 	*userchan = &chan->base;
 	return 0;
