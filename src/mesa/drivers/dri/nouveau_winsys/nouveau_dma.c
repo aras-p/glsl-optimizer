@@ -155,7 +155,6 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 		if ((chan->pushbuf[i] & 0xf0000000) == 0x20000000) {
 			int n = (((chan->pushbuf[i] & 0x0fffffff) -
 				  chan->dma.base) / 4);
-
 			do {
 				NOUVEAU_MSG("\t0x%08x 0x%08x\n",
 					    (n<<2)+chan->dma.base,

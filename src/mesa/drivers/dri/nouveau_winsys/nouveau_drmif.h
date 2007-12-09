@@ -243,6 +243,7 @@ struct nouveau_bo_priv {
 	int user;
 
 	int refcount;
+	int sync_hack;
 };
 #define nouveau_bo(n) ((struct nouveau_bo_priv *)(n))
 
@@ -277,7 +278,7 @@ nouveau_bo_unmap(struct nouveau_bo *);
 
 extern int
 nouveau_bo_validate(struct nouveau_channel *, struct nouveau_bo *,
-		    uint32_t flags);
+		    struct nouveau_fence *fence, uint32_t flags);
 
 extern int
 nouveau_resource_init(struct nouveau_resource **heap, int size);

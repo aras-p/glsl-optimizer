@@ -82,13 +82,7 @@ nv50_surface_copy(struct nouveau_context *nv, unsigned dx, unsigned dy,
 static void
 nv50_surface_copy_done(struct nouveau_context *nv)
 {
-	nouveau_notifier_reset(nv->sync_notifier, 0);
-	BEGIN_RING(Nv2D, 0x104, 1);
-	OUT_RING  (0);
-	BEGIN_RING(Nv2D, 0x100, 1);
-	OUT_RING  (0);
 	FIRE_RING();
-	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
 }
 
 static int
@@ -134,13 +128,7 @@ nv50_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 	OUT_RING  (dx + w);
 	OUT_RING  (dy + h);
 
-	nouveau_notifier_reset(nv->sync_notifier, 0);
-	BEGIN_RING(Nv2D, 0x104, 1);
-	OUT_RING  (0);
-	BEGIN_RING(Nv2D, 0x100, 1);
-	OUT_RING  (0);
 	FIRE_RING();
-	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
 
 	return 0;
 }

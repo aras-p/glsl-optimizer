@@ -116,13 +116,7 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 static void
 nv04_surface_copy_done(struct nouveau_context *nv)
 {
-	nouveau_notifier_reset(nv->sync_notifier, 0);
-	BEGIN_RING(NvGdiRect, 0x104, 1);
-	OUT_RING  (0);
-	BEGIN_RING(NvGdiRect, 0x100, 1);
-	OUT_RING  (0);
 	FIRE_RING();
-	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
 }
 
 static int
@@ -160,14 +154,7 @@ nv04_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 	OUT_RING  ((dx << 16) | dy);
 	OUT_RING  (( w << 16) |  h);
 
-	nouveau_notifier_reset(nv->sync_notifier, 0);
-	BEGIN_RING(NvGdiRect, 0x104, 1);
-	OUT_RING  (0);
-	BEGIN_RING(NvGdiRect, 0x100, 1);
-	OUT_RING  (0);
 	FIRE_RING();
-	nouveau_notifier_wait_status(nv->sync_notifier, 0, 0, 2000);
-
 	return 0;
 }
 

@@ -55,6 +55,8 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(nvchan->pb_tail);
 	struct nouveau_pushbuf_bo *pbbo;
+	struct nouveau_fence *fence = NULL;
+	int sync_hack = 0;
 	int ret;
 
 	if (!nvpb)
@@ -63,7 +65,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	if (nvpb->base.remaining == nvpb->res->size / 4)
 		return 0;
 
-	ret = nouveau_fence_new(chan, &nvpb->fence);
+	ret = nouveau_fence_new(chan, &fence);
 	if (ret)
 		return ret;
 
@@ -72,8 +74,11 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 		struct nouveau_pushbuf_reloc *r;
 		struct nouveau_bo *bo = &ptr_to_bo(pbbo->handle)->base;
 
-		ret = nouveau_bo_validate(chan, bo, pbbo->flags);
+		ret = nouveau_bo_validate(chan, bo, fence, pbbo->flags);
 		assert (ret == 0);
+
+		sync_hack |= nouveau_bo(bo)->sync_hack;
+		nouveau_bo(bo)->sync_hack = 0;
 
 		while ((r = ptr_to_pbrel(pbbo->relocs))) {
 			uint32_t push;
@@ -108,6 +113,9 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	if (nvchan->dma.free < 1)
 		WAIT_RING_CH(chan, 1);
 	nvchan->dma.free -= 1;
+#ifdef NOUVEAU_DMA_DEBUG
+	nvchan->dma.push_free = 1;
+#endif
 	OUT_RING_CH(chan, 0x20000000 | (nvpb->res->start + 4096));
 
 	/* Add JMP back to master pushbuf from indirect pushbuf */
@@ -115,6 +123,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 		0x20000000 | ((nvchan->dma.cur << 2) + nvchan->dma.base);
 
 	/* Fence */
+	nvpb->fence = fence;
 	nouveau_fence_emit(nvpb->fence);
 
 	/* Kickoff */
@@ -173,11 +182,17 @@ out_realloc:
 	nvpb->base.cur = &nvchan->pushbuf[(nvpb->res->start + 4096)/4];
 
 	if (nvchan->pb_tail) {
-		nouveau_pushbuf(nvchan->pb_tail)->next = & nvpb->base;
+		nouveau_pushbuf(nvchan->pb_tail)->next = &nvpb->base;
 	} else {
 		nvchan->pb_head = &nvpb->base;
 	}
 	nvchan->pb_tail = &nvpb->base;
+
+	if (sync_hack) {
+		struct nouveau_fence *f = NULL;
+		nouveau_fence_ref(nvpb->fence, &f);
+		nouveau_fence_wait(&f);
+	}
 
 	return 0;
 }

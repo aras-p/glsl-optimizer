@@ -205,6 +205,9 @@ nouveau_bo_del(struct nouveau_bo **userbo)
 	if (--bo->refcount)
 		return;
 
+	if (bo->fence)
+		nouveau_fence_wait(&bo->fence);
+
 	nouveau_bo_realloc_gpu(bo, 0, 0);
 	if (bo->sysmem && !bo->user)
 		free(bo->sysmem);
@@ -235,13 +238,15 @@ nouveau_bo_unmap(struct nouveau_bo *userbo)
 static int
 nouveau_bo_upload(struct nouveau_bo_priv *bo)
 {
+	if (bo->fence)
+		nouveau_fence_wait(&bo->fence);
 	memcpy(bo->map, bo->sysmem, bo->drm.size);
 	return 0;
 }
 
 int
 nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
-		    uint32_t flags)
+		    struct nouveau_fence *fence, uint32_t flags)
 {
 	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
 
@@ -249,13 +254,22 @@ nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
 		nouveau_bo_realloc_gpu(nvbo, flags, nvbo->base.size);
 		nouveau_bo_upload(nvbo);
 	} else
-	if (nvbo->user || nvbo->base.map)
+	if (nvbo->user) {
 		nouveau_bo_upload(nvbo);
+	} else
+	if (nvbo->base.map) {
+		nouveau_bo_upload(nvbo);
+		nvbo->sync_hack = 1;
+	}
 
 	if (!nvbo->user && !nvbo->base.map) {
 		free(nvbo->sysmem);
 		nvbo->sysmem = NULL;
 	}
+
+	if (nvbo->fence)
+		nouveau_fence_del(&nvbo->fence);
+	nouveau_fence_ref(fence, &nvbo->fence);
 
 	nvbo->base.offset = nvbo->drm.offset;
 	if (nvbo->drm.flags & NOUVEAU_MEM_AGP)
