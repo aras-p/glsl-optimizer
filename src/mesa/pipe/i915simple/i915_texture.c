@@ -496,7 +496,8 @@ i915_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
       if (i915->flags.is_i945 ? i945_miptree_layout(pipe, tex) :
 	  i915_miptree_layout(pipe, tex)) {
 	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys,
-						   PIPE_SURFACE_FLAG_TEXTURE);
+						   PIPE_SURFACE_FLAG_TEXTURE,
+						   0, 0);
 
 	 if (tex->buffer)
 	    pipe->winsys->buffer_data(pipe->winsys, tex->buffer,

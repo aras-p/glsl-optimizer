@@ -105,42 +105,48 @@ intel_buffer_reference(struct pipe_winsys *winsys,
 
 /* Grabs the hardware lock!
  */
-static void intel_buffer_data(struct pipe_winsys *winsys, 
-			      struct pipe_buffer_handle *buf,
-			      unsigned size, const void *data,
-			      unsigned usage )
+static int intel_buffer_data(struct pipe_winsys *winsys, 
+			     struct pipe_buffer_handle *buf,
+			     unsigned size, const void *data,
+			     unsigned usage )
 {
    driBOData( dri_bo(buf), size, data, 0 );
+   return 0;
 }
 
-static void intel_buffer_subdata(struct pipe_winsys *winsys, 
-				 struct pipe_buffer_handle *buf,
-				 unsigned long offset, 
-				 unsigned long size, 
-				 const void *data)
+static int intel_buffer_subdata(struct pipe_winsys *winsys, 
+				struct pipe_buffer_handle *buf,
+				unsigned long offset, 
+				unsigned long size, 
+				const void *data)
 {
    driBOSubData( dri_bo(buf), offset, size, data );
+   return 0;
 }
 
-static void intel_buffer_get_subdata(struct pipe_winsys *winsys, 
-				     struct pipe_buffer_handle *buf,
-				     unsigned long offset, 
-				     unsigned long size, 
-				     void *data)
+static int intel_buffer_get_subdata(struct pipe_winsys *winsys, 
+				    struct pipe_buffer_handle *buf,
+				    unsigned long offset, 
+				    unsigned long size, 
+				    void *data)
 {
    driBOGetSubData( dri_bo(buf), offset, size, data );
+   return 0;
 }
 
 /* Pipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
  */
 static struct pipe_buffer_handle *
-intel_buffer_create(struct pipe_winsys *winsys, unsigned flags)
+intel_buffer_create(struct pipe_winsys *winsys, 
+                    unsigned alignment, 
+                    unsigned flags, 
+                    unsigned hint )
 {
    struct _DriBufferObject *buffer;
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    driGenBuffers( iws->regionPool, 
-		  "pipe buffer", 1, &buffer, 64, 0, 0 );
+		  "pipe buffer", 1, &buffer, alignment, flags, hint );
    return pipe_bo(buffer);
 }
 
