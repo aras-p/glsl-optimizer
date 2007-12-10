@@ -118,7 +118,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       pipe->winsys->buffer_reference(pipe->winsys, &strb->surface->buffer,
 				     NULL);
 
-   strb->surface->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, flags, 0);
+   strb->surface->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
    if (!strb->surface->buffer)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
