@@ -28,14 +28,29 @@
 #include "nouveau_dma.h"
 #include "nouveau_local.h"
 
-#define READ_GET(ch) ((*(ch)->get - (ch)->dma.base) >> 2)
-#define WRITE_PUT(ch, val) do {                       \
-	volatile int dum;                             \
-	NOUVEAU_DMA_BARRIER;	                      \
-	dum=READ_GET(ch);                             \
-	*(ch)->put = (((val) << 2) + (ch)->dma.base); \
-	NOUVEAU_DMA_BARRIER;	                      \
-} while(0)
+static __inline__ uint32_t
+READ_GET(struct nouveau_channel_priv *nvchan)
+{
+	return ((*nvchan->get - nvchan->dma.base) >> 2);
+}
+
+static __inline__ void
+WRITE_PUT(struct nouveau_channel_priv *nvchan, uint32_t val)
+{
+	uint32_t put = ((val << 2) + nvchan->dma.base);
+	volatile int dum;
+
+	NOUVEAU_DMA_BARRIER;
+	dum = READ_GET(nvchan);
+
+	*nvchan->put = put;
+	nvchan->dma.put = val;
+#ifdef NOUVEAU_DMA_TRACE
+	NOUVEAU_MSG("WRITE_PUT %d/0x%08x\n", nvchan->drm.channel, put);
+#endif
+
+	NOUVEAU_DMA_BARRIER;
+}
 
 void
 nouveau_dma_channel_init(struct nouveau_channel *userchan)
@@ -57,6 +72,8 @@ nouveau_dma_channel_init(struct nouveau_channel *userchan)
 		return - EBUSY;                                                \
 } while(0)
 
+#define IN_MASTER_RING(chan, ptr) ((ptr) <= (chan)->dma.max)
+
 int
 nouveau_dma_wait(struct nouveau_channel *userchan, int size)
 {
@@ -67,7 +84,11 @@ nouveau_dma_wait(struct nouveau_channel *userchan, int size)
 
 	t_start = NOUVEAU_TIME_MSEC();
 	while (chan->dma.free < size) {
+		CHECK_TIMEOUT();
+
 		get = READ_GET(chan);
+		if (!IN_MASTER_RING(chan, get))
+			continue;
 
 		if (chan->dma.put >= get) {
 			chan->dma.free = chan->dma.max - chan->dma.cur;
@@ -86,6 +107,8 @@ nouveau_dma_wait(struct nouveau_channel *userchan, int size)
 					do {
 						CHECK_TIMEOUT();
 						get = READ_GET(chan);
+						if (!IN_MASTER_RING(chan, get))
+							continue;
 					} while (get <= RING_SKIPS);
 				}
 
@@ -96,8 +119,6 @@ nouveau_dma_wait(struct nouveau_channel *userchan, int size)
 		} else {
 			chan->dma.free = get - chan->dma.cur - 1;
 		}
-
-		CHECK_TIMEOUT();
 	}
 
 	return 0;
@@ -135,9 +156,6 @@ void
 nouveau_dma_kickoff(struct nouveau_channel *userchan)
 {
 	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
-	uint32_t put_offset;
-	int i;
-	volatile int dum;
 
 	if (chan->dma.cur == chan->dma.put)
 		return;
@@ -165,13 +183,5 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 	}
 #endif
 
-	put_offset = (chan->dma.cur << 2) + chan->dma.base;
-#ifdef NOUVEAU_DMA_TRACE
-	NOUVEAU_MSG("FIRE_RING %d/0x%08x\n", chan->drm.channel, put_offset);
-#endif
-	chan->dma.put  = chan->dma.cur;
-	NOUVEAU_DMA_BARRIER;
-	dum            = READ_GET(chan);
-	*chan->put     = put_offset;
-	NOUVEAU_DMA_BARRIER;
+	WRITE_PUT(chan, chan->dma.cur);
 }
