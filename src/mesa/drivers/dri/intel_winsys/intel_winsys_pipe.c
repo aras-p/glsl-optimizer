@@ -191,7 +191,7 @@ intel_i915_surface_pitch(struct pipe_winsys *winsys,
     */
 
    /* XXX is the pitch different for textures vs. drawables? */
-   if (flags & PIPE_SURFACE_FLAG_TEXTURE)  /* or PIPE_SURFACE_FLAG_RENDER? */
+   if (1/*flags & PIPE_SURFACE_FLAG_TEXTURE*/)  /* or PIPE_SURFACE_FLAG_RENDER? */
       return ((cpp * width + 63) & ~63) / cpp;
    else
       return ((cpp * width + 63) & ~63) / cpp;

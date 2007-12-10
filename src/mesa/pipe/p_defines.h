@@ -161,10 +161,11 @@
 #define PIPE_TEX_FACE_MAX     6
 
 /**
- * Surface flags
+ * Surfaces, textures, etc. (others may be added)
  */
-#define PIPE_SURFACE_FLAG_TEXTURE 0x1
-#define PIPE_SURFACE_FLAG_RENDER  0x2
+#define PIPE_TEXTURE        1
+#define PIPE_SURFACE        2  /**< user-created surfaces */
+#define PIPE_SCREEN_SURFACE 3  /**< On-screen front/back colorbuffer */
 
 
 /**

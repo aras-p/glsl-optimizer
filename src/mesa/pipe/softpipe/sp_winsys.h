@@ -25,21 +25,23 @@
  * 
  **************************************************************************/
 
-#ifndef SP_WINSYS_H
-#define SP_WINSYS_H
-
-
-#include "pipe/p_compiler.h" // for boolean
-
-
 /* This is the interface that softpipe requires any window system
  * hosting it to implement.  This is the only include file in softpipe
  * which is public.
  */
 
+
+#ifndef SP_WINSYS_H
+#define SP_WINSYS_H
+
+
+#include "pipe/p_compiler.h" /* for boolean */
+
+
 struct softpipe_winsys {
+   /** test if the given format is supported for front/back color bufs */
    boolean (*is_format_supported)( struct softpipe_winsys *sws,
-                                   uint format );
+                                   enum pipe_format format );
 
 };
 

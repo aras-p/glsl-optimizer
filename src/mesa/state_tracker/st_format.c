@@ -276,10 +276,9 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
  * Find an RGBA format supported by the context/winsys.
  */
 static GLuint
-default_rgba_format(
-   struct pipe_context *pipe )
+default_rgba_format(struct pipe_context *pipe, uint type)
 {
-   static const uint colorFormats[] = {
+   static const enum pipe_format colorFormats[] = {
       PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
@@ -287,7 +286,7 @@ default_rgba_format(
    };
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
-      if (pipe->is_format_supported( pipe, colorFormats[i] )) {
+      if (pipe->is_format_supported( pipe, colorFormats[i], type )) {
          return colorFormats[i];
       }
    }
@@ -299,10 +298,9 @@ default_rgba_format(
  * Search list of formats for first RGBA format with >8 bits/channel.
  */
 static GLuint
-default_deep_rgba_format(
-   struct pipe_context *pipe )
+default_deep_rgba_format(struct pipe_context *pipe, uint type)
 {
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_R16G16B16A16_SNORM )) {
+   if (pipe->is_format_supported(pipe, PIPE_FORMAT_R16G16B16A16_SNORM, type)) {
       return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
    return PIPE_FORMAT_NONE;
@@ -313,10 +311,9 @@ default_deep_rgba_format(
  * Find an Z format supported by the context/winsys.
  */
 static GLuint
-default_depth_format(
-   struct pipe_context *pipe )
+default_depth_format(struct pipe_context *pipe, uint type)
 {
-   static const uint zFormats[] = {
+   static const enum pipe_format zFormats[] = {
       PIPE_FORMAT_Z16_UNORM,
       PIPE_FORMAT_Z32_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
@@ -324,7 +321,7 @@ default_depth_format(
    };
    uint i;
    for (i = 0; i < Elements(zFormats); i++) {
-      if (pipe->is_format_supported( pipe, zFormats[i] )) {
+      if (pipe->is_format_supported( pipe, zFormats[i], type )) {
          return zFormats[i];
       }
    }
@@ -348,67 +345,71 @@ default_depth_format(
  */
 GLuint
 st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
-                      GLenum format, GLenum type)
+                      GLenum format, GLenum type, uint surfType)
 {
+   assert(surfType == PIPE_TEXTURE ||
+          surfType == PIPE_SURFACE ||
+          surfType == PIPE_SCREEN_SURFACE);
+
    switch (internalFormat) {
    case 4:
    case GL_RGBA:
    case GL_COMPRESSED_RGBA:
       if (format == GL_BGRA) {
          if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM ))
+            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM, surfType ))
                return PIPE_FORMAT_A8R8G8B8_UNORM;
          }
          else if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM ))
+            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM, surfType ))
                return PIPE_FORMAT_A4R4G4B4_UNORM;
          }
          else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM ))
+            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
                return PIPE_FORMAT_A1R5G5B5_UNORM;
          }
       }
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
       if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_R5G6B5_UNORM ))
+         if (pipe->is_format_supported( pipe, PIPE_FORMAT_R5G6B5_UNORM, surfType ))
             return PIPE_FORMAT_R5G6B5_UNORM;
       }
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
    case GL_RGBA16:
-      return default_deep_rgba_format( pipe );
+      return default_deep_rgba_format( pipe, surfType );
 
    case GL_RGBA4:
    case GL_RGBA2:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM, surfType ))
          return PIPE_FORMAT_A4R4G4B4_UNORM;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_RGB5_A1:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -416,9 +417,9 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8 ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8, surfType ))
          return PIPE_FORMAT_U_A8;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case 1:
    case GL_LUMINANCE:
@@ -427,9 +428,9 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8 ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8, surfType ))
          return PIPE_FORMAT_U_A8;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -440,9 +441,9 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_L8 ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_L8, surfType ))
          return PIPE_FORMAT_U_A8_L8;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -450,17 +451,17 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8 ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8, surfType ))
          return PIPE_FORMAT_U_I8;
-      return default_rgba_format( pipe );
+      return default_rgba_format( pipe, surfType );
 
    case GL_YCBCR_MESA:
       if (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE) {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_YCBCR ))
+         if (pipe->is_format_supported( pipe, PIPE_FORMAT_YCBCR, surfType ))
             return PIPE_FORMAT_YCBCR;
       }
       else {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_YCBCR_REV ))
+         if (pipe->is_format_supported( pipe, PIPE_FORMAT_YCBCR_REV, surfType ))
             return PIPE_FORMAT_YCBCR_REV;
       }
       return PIPE_FORMAT_NONE;
@@ -489,40 +490,40 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
 #endif
 
    case GL_DEPTH_COMPONENT16:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z16_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z16_UNORM, surfType ))
          return PIPE_FORMAT_Z16_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT24:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM, surfType ))
          return PIPE_FORMAT_S8Z24_UNORM;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM, surfType ))
          return PIPE_FORMAT_Z24S8_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT32:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z32_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z32_UNORM, surfType ))
          return PIPE_FORMAT_Z32_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT:
-      return default_depth_format( pipe );
+      return default_depth_format( pipe, surfType );
 
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_S8 ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_S8, surfType ))
          return PIPE_FORMAT_U_S8;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM, surfType ))
          return PIPE_FORMAT_S8Z24_UNORM;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM, surfType ))
          return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8Z24_UNORM, surfType ))
          return PIPE_FORMAT_S8Z24_UNORM;
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24S8_UNORM, surfType ))
          return PIPE_FORMAT_Z24S8_UNORM;
       return PIPE_FORMAT_NONE;
 

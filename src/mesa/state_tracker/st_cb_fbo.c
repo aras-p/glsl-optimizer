@@ -87,12 +87,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
+   uint type = strb->screenSurface ? PIPE_SCREEN_SURFACE : PIPE_SURFACE;
    const enum pipe_format pipeFormat
-      = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
+      = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE, type);
    GLuint cpp;
-   GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */
+   GLbitfield flags = 0x0; /* XXX needed? */
 
    cpp = init_renderbuffer_bits(strb, pipeFormat);
+   assert(cpp);
 
    if (strb->surface && strb->surface->format != pipeFormat) {
       /* need to change surface types, free this surface */
@@ -201,9 +203,11 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
 /**
  * Allocate a renderbuffer for a an on-screen window (not a user-created
  * renderbuffer).  The window system code determines the internal format.
+ * \param screenSurface  indicates if the renderbuffer is a front/back color
+ *                       buffer that'll be displayed/copied to the screen
  */
 struct gl_renderbuffer *
-st_new_renderbuffer_fb(GLenum intFormat)
+st_new_renderbuffer_fb(GLenum intFormat, GLboolean screenSurface)
 {
    struct st_renderbuffer *strb;
 
@@ -216,6 +220,7 @@ st_new_renderbuffer_fb(GLenum intFormat)
    _mesa_init_renderbuffer(&strb->Base, 0);
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.InternalFormat = intFormat;
+   strb->screenSurface = screenSurface;
 
    switch (intFormat) {
    case GL_RGB5:

@@ -71,7 +71,7 @@ struct xmesa_surface
 struct xmesa_softpipe_winsys
 {
    struct softpipe_winsys spws;
-   uint pixelformat;
+   enum pipe_format pixelformat;
 };
 
 
@@ -377,35 +377,17 @@ xmesa_get_pipe_winsys(void)
 
 
 /**
+ * Called via softpipe_winsys->is_format_supported().
+ * This function is only called to test formats for front/back color surfaces.
  * The winsys being queried will have been created at glXCreateContext
  * time, with a pixel format corresponding to the context's visual.
- *
- * XXX we should pass a flag indicating if the format is going to be
- * use for a drawing surface vs. a texture.  In the later case, we
- * can support any format.
  */
 static boolean
 xmesa_is_format_supported(struct softpipe_winsys *sws,
                           enum pipe_format format)
 {
    struct xmesa_softpipe_winsys *xmws = xmesa_softpipe_winsys(sws);
-
-   if (format == xmws->pixelformat) {
-      return TRUE;
-   }
-   else {
-      /* non-color / window surface format */
-      switch (format) {
-      case PIPE_FORMAT_R16G16B16A16_SNORM:
-      case PIPE_FORMAT_S8Z24_UNORM:
-      case PIPE_FORMAT_U_S8:
-      case PIPE_FORMAT_Z16_UNORM:
-      case PIPE_FORMAT_Z32_UNORM:
-         return TRUE;
-      default:
-         return FALSE;
-      }
-   }
+   return (format == xmws->pixelformat);
 }
 
 

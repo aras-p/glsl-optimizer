@@ -39,6 +39,7 @@ struct st_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct pipe_surface *surface;
+   GLboolean screenSurface;  /**< A front/back colorbuffer? */
 };
 
 
@@ -50,7 +51,7 @@ st_renderbuffer(struct gl_renderbuffer *rb)
 
 
 extern struct gl_renderbuffer *
-st_new_renderbuffer_fb(GLenum intFormat);
+st_new_renderbuffer_fb(GLenum intFormat, GLboolean screen_surface);
 
 
 extern void
