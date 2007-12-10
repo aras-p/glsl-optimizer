@@ -43,8 +43,7 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 
 static void cbuf_loop_begin(struct quad_stage *qs)
 {
-   if (qs->next)
-      qs->next->begin(qs->next);
+   qs->next->begin(qs->next);
 }
 
 

@@ -304,8 +304,7 @@ static void shade_begin(struct quad_stage *qs)
       }
    }
 
-   if (qs->next)
-      qs->next->begin(qs->next);
+   qs->next->begin(qs->next);
 }
 
 

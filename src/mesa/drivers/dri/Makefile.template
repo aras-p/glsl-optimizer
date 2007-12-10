@@ -2,13 +2,16 @@
 
 MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
-COMMON_SOURCES = \
+COMMON_GALLIUM_SOURCES = \
         ../common/utils.c \
-        ../common/texmem.c \
         ../common/vblank.c \
         ../common/dri_util.c \
-        ../common/xmlconfig.c \
-        ../common/drirenderbuffer.c 
+        ../common/xmlconfig.c
+
+COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
+        ../../common/driverfuncs.c \
+        ../common/texmem.c \
+        ../common/drirenderbuffer.c
 
 COMMON_BM_SOURCES = \
 	../common/dri_bufmgr.c \

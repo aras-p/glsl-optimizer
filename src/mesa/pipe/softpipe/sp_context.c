@@ -46,17 +46,29 @@
 
 
 /**
- * Query format support.
- * If we find texture and drawable support differs, add a selector
- * parameter or another function.
+ * Query format support for creating a texture, drawing surface, etc.
+ * \param format  the format to test
+ * \param type  one of PIPE_TEXTURE, PIPE_SURFACE, PIPE_SCREEN_SURFACE
  */
 static boolean
 softpipe_is_format_supported( struct pipe_context *pipe,
-                              enum pipe_format format )
+                              enum pipe_format format, uint type )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
-   /* ask winsys if the format is supported */
-   return softpipe->winsys->is_format_supported( softpipe->winsys, format );
+
+   switch (type) {
+   case PIPE_TEXTURE:
+      /* softpipe supports all texture formats */
+      return TRUE;
+   case PIPE_SURFACE:
+      /* softpipe supports all (off-screen) surface formats */
+      return TRUE;
+   case PIPE_SCREEN_SURFACE:
+      return softpipe->winsys->is_format_supported( softpipe->winsys, format );
+   default:
+      assert(0);
+      return FALSE;
+   }
 }
 
 

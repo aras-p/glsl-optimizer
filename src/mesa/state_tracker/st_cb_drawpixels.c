@@ -993,13 +993,13 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    int row, col;
 
    /* find a texture format we know */
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8 )) {
+   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_U_I8;
       internal_format = GL_INTENSITY8;
       cpp = 1;
       comp = 0;
    }
-   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM )) {
+   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_A8R8G8B8_UNORM;
       internal_format = GL_RGBA8;
       cpp = 4;

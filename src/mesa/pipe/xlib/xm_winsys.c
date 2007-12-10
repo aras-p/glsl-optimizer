@@ -42,6 +42,52 @@
 #include "pipe/p_context.h"
 #include "pipe/softpipe/sp_winsys.h"
 
+#ifdef GALLIUM_CELL
+#include "pipe/cell/ppu/cell_context.h"
+#include "pipe/cell/ppu/cell_winsys.h"
+#endif
+
+
+/** XXX from Mesa core */
+static void *
+align_malloc(size_t bytes, unsigned long alignment)
+{
+#if defined(HAVE_POSIX_MEMALIGN)
+   void *mem;
+
+   (void) posix_memalign(& mem, alignment, bytes);
+   return mem;
+#else
+   uintptr_t ptr, buf;
+
+   assert( alignment > 0 );
+
+   ptr = (uintptr_t) malloc(bytes + alignment + sizeof(void *));
+   if (!ptr)
+      return NULL;
+
+   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
+   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
+
+   return (void *) buf;
+#endif /* defined(HAVE_POSIX_MEMALIGN) */
+}
+
+
+/** XXX from Mesa core */
+static void
+align_free(void *ptr)
+{
+#if defined(HAVE_POSIX_MEMALIGN)
+   free(ptr);
+#else
+   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
+   void *realAddr = *cubbyHole;
+   free(realAddr);
+#endif /* defined(HAVE_POSIX_MEMALIGN) */
+}
+
+
 
 /**
  * Low-level OS/window system memory buffer
@@ -59,7 +105,8 @@ struct xm_buffer
 struct xmesa_surface
 {
    struct pipe_surface surface;
-   /* no extra fields for now */
+
+   int tileSize;
 };
 
 
@@ -71,7 +118,7 @@ struct xmesa_surface
 struct xmesa_softpipe_winsys
 {
    struct softpipe_winsys spws;
-   uint pixelformat;
+   enum pipe_format pixelformat;
 };
 
 
@@ -80,7 +127,7 @@ struct xmesa_softpipe_winsys
 static INLINE struct xmesa_surface *
 xmesa_surface(struct pipe_surface *ps)
 {
-   assert(0);
+//   assert(0);
    return (struct xmesa_surface *) ps;
 }
 
@@ -138,7 +185,7 @@ xm_buffer_reference(struct pipe_winsys *pws,
       if (oldBuf->refcount == 0) {
          if (oldBuf->data) {
             if (!oldBuf->userBuffer)
-               free(oldBuf->data);
+               align_free(oldBuf->data);
             oldBuf->data = NULL;
          }
          free(oldBuf);
@@ -163,8 +210,8 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    assert(!xm_buf->userBuffer);
    if (xm_buf->size != size) {
       if (xm_buf->data)
-         free(xm_buf->data);
-      xm_buf->data = malloc(size);
+         align_free(xm_buf->data);
+      xm_buf->data = align_malloc(size, 16);
       xm_buf->size = size;
    }
    if (data)
@@ -198,6 +245,45 @@ xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 
 
 /**
+ * Display a surface that's in a tiled configuration.  That is, all the
+ * pixels for a TILE_SIZExTILE_SIZE block are contiguous in memory.
+ */
+static void
+xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
+{
+   XImage *ximage = b->tempImage;
+   struct xm_buffer *xm_buf = xm_bo(surf->buffer);
+   const int TILE_SIZE = 32;
+   uint x, y;
+
+   /* check that the XImage has been previously initialized */
+   assert(ximage->format);
+   assert(ximage->bitmap_unit);
+
+   /* update XImage's fields */
+   ximage->width = TILE_SIZE;
+   ximage->height = TILE_SIZE;
+   ximage->bytes_per_line = TILE_SIZE * 4;
+
+   for (y = 0; y < surf->height; y += TILE_SIZE) {
+      for (x = 0; x < surf->width; x += TILE_SIZE) {
+         int dx = x;
+         int dy = y;
+         int tx = x / TILE_SIZE;
+         int ty = y / TILE_SIZE;
+         int offset = ty * (surf->width / TILE_SIZE) + tx;
+         offset *= 4 * TILE_SIZE * TILE_SIZE;
+
+         ximage->data = (char *) xm_buf->data + offset;
+
+         XPutImage(b->xm_visual->display, b->drawable, b->gc,
+                   ximage, 0, 0, dx, dy, TILE_SIZE, TILE_SIZE);
+      }
+   }
+}
+
+
+/**
  * Display/copy the image in the surface into the X window specified
  * by the XMesaBuffer.
  */
@@ -206,6 +292,13 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
 {
    XImage *ximage = b->tempImage;
    struct xm_buffer *xm_buf = xm_bo(surf->buffer);
+   const struct xmesa_surface *xm_surf
+      = xmesa_surface((struct pipe_surface *) surf);
+
+   if (xm_surf->tileSize) {
+      xmesa_display_surface_tiled(b, surf);
+      return;
+   }
 
    /* check that the XImage has been previously initialized */
    assert(ximage->format);
@@ -234,7 +327,6 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     * this would be the place to copy the Ximage to the on-screen Window.
     */
    XMesaContext xmctx = (XMesaContext) context_private;
-
    xmesa_display_surface(xmctx->xm_buffer, surf);
 }
 
@@ -318,6 +410,12 @@ xm_surface_alloc(struct pipe_winsys *ws, enum pipe_format pipeFormat)
    xms->surface.refcount = 1;
    xms->surface.winsys = ws;
 
+#ifdef GALLIUM_CELL
+   if (getenv("GALLIUM_CELL")) {
+      xms->tileSize = 32; /** probably temporary */
+   }
+#endif
+
    return &xms->surface;
 }
 
@@ -377,35 +475,17 @@ xmesa_get_pipe_winsys(void)
 
 
 /**
+ * Called via softpipe_winsys->is_format_supported().
+ * This function is only called to test formats for front/back color surfaces.
  * The winsys being queried will have been created at glXCreateContext
  * time, with a pixel format corresponding to the context's visual.
- *
- * XXX we should pass a flag indicating if the format is going to be
- * use for a drawing surface vs. a texture.  In the later case, we
- * can support any format.
  */
 static boolean
 xmesa_is_format_supported(struct softpipe_winsys *sws,
                           enum pipe_format format)
 {
    struct xmesa_softpipe_winsys *xmws = xmesa_softpipe_winsys(sws);
-
-   if (format == xmws->pixelformat) {
-      return TRUE;
-   }
-   else {
-      /* non-color / window surface format */
-      switch (format) {
-      case PIPE_FORMAT_R16G16B16A16_SNORM:
-      case PIPE_FORMAT_S8Z24_UNORM:
-      case PIPE_FORMAT_U_S8:
-      case PIPE_FORMAT_Z16_UNORM:
-      case PIPE_FORMAT_Z32_UNORM:
-         return TRUE;
-      default:
-         return FALSE;
-      }
-   }
+   return (format == xmws->pixelformat);
 }
 
 
@@ -431,12 +511,24 @@ struct pipe_context *
 xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 {
    struct pipe_winsys *pws = xmesa_get_pipe_winsys();
-   struct softpipe_winsys *spws = xmesa_get_softpipe_winsys(pixelformat);
    struct pipe_context *pipe;
    
-   pipe = softpipe_create( pws, spws );
-   if (pipe)
-      pipe->priv = xmesa;
+#ifdef GALLIUM_CELL
+   if (getenv("GALLIUM_CELL")) {
+      struct cell_winsys *cws = cell_get_winsys(pixelformat);
+      pipe = cell_create_context(pws, cws);
+      if (pipe)
+         pipe->priv = xmesa;
+      return pipe;
+   }
+   else
+#endif
+   {
+      struct softpipe_winsys *spws = xmesa_get_softpipe_winsys(pixelformat);
+      pipe = softpipe_create( pws, spws );
+      if (pipe)
+         pipe->priv = xmesa;
 
-   return pipe;
+      return pipe;
+   }
 }

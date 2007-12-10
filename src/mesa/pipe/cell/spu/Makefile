@@ -45,7 +45,7 @@ tri.o: tri.c
 
 
 clean:
-	rm -f *.o *.a *.d $(PROG_SPU)
+	rm -f *~ *.o *.a *.d $(PROG_SPU)
 
 
 

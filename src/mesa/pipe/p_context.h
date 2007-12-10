@@ -50,8 +50,9 @@ struct pipe_context {
    /*
     * Queries
     */
+   /** type is one of PIPE_SURFACE, PIPE_TEXTURE, etc. */
    boolean (*is_format_supported)( struct pipe_context *pipe,
-                                   enum pipe_format format );
+                                   enum pipe_format format, uint type );
 
    const char *(*get_name)( struct pipe_context *pipe );
 

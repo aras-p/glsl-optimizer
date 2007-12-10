@@ -25,64 +25,57 @@
  * 
  **************************************************************************/
 
+#ifndef CELL_SPU
+#define CELL_SPU
+
+
+#include <libspe.h>
+#include <libmisc.h>
+#include "pipe/cell/common.h"
+
+#include "cell_context.h"
+
+
+#define MAX_SPUS 7
+
 /**
- * \brief  Quad early-z testing
+ * SPU/SPE handles, etc
  */
-
-#include "pipe/p_defines.h"
-#include "pipe/p_util.h"
-#include "sp_headers.h"
-#include "sp_quad.h"
+extern spe_program_handle_t g3d_spu;
+extern speid_t speid[MAX_SPUS];
+extern spe_spu_control_area_t *control_ps_area[MAX_SPUS];
 
 
 /**
- * All this stage does is compute the quad's Z values (which is normally
- * done by the shading stage).
- * The next stage will do the actual depth test.
+ * Data sent to SPUs
  */
-static void
-earlyz_quad(
-   struct quad_stage    *qs,
-   struct quad_header   *quad )
-{
-   const float fx = (float) quad->x0;
-   const float fy = (float) quad->y0;
-   const float dzdx = quad->coef[0].dadx[2];
-   const float dzdy = quad->coef[0].dady[2];
-   const float z0 = quad->coef[0].a0[2] + dzdx * fx + dzdy * fy;
+extern struct cell_init_info inits[MAX_SPUS] ALIGN16;
+extern struct cell_command command[MAX_SPUS] ALIGN16;
 
-   quad->outputs.depth[0] = z0;
-   quad->outputs.depth[1] = z0 + dzdx;
-   quad->outputs.depth[2] = z0 + dzdy;
-   quad->outputs.depth[3] = z0 + dzdx + dzdy;
 
-   qs->next->run( qs->next, quad );
-}
+void
+send_mbox_message(spe_spu_control_area_t *ca, unsigned int msg);
 
-static void
-earlyz_begin(
-   struct quad_stage *qs )
-{
-   qs->next->begin( qs->next );
-}
+uint
+wait_mbox_message(spe_spu_control_area_t *ca);
 
-static void
-earlyz_destroy(
-   struct quad_stage *qs )
-{
-   FREE( qs );
-}
 
-struct quad_stage *
-sp_quad_earlyz_stage(
-   struct softpipe_context *softpipe )
-{
-   struct quad_stage *stage = CALLOC_STRUCT( quad_stage );
+void
+cell_start_spus(uint num_spus);
 
-   stage->softpipe = softpipe;
-   stage->begin = earlyz_begin;
-   stage->run = earlyz_quad;
-   stage->destroy = earlyz_destroy;
 
-   return stage;
-}
+void
+finish_all(uint num_spus);
+
+void
+test_spus(struct cell_context *cell);
+
+
+void
+wait_spus(uint num_spus);
+
+void
+cell_spu_exit(struct cell_context *cell);
+
+
+#endif /* CELL_SPU */

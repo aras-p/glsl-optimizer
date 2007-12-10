@@ -25,64 +25,41 @@
  * 
  **************************************************************************/
 
-/**
- * \brief  Quad early-z testing
- */
-
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
-#include "sp_headers.h"
-#include "sp_quad.h"
+#include "pipe/draw/draw_context.h"
+#include "cell_context.h"
+#include "cell_state.h"
 
 
-/**
- * All this stage does is compute the quad's Z values (which is normally
- * done by the shading stage).
- * The next stage will do the actual depth test.
- */
-static void
-earlyz_quad(
-   struct quad_stage    *qs,
-   struct quad_header   *quad )
+void *
+cell_create_rasterizer_state(struct pipe_context *pipe,
+                             const struct pipe_rasterizer_state *setup)
 {
-   const float fx = (float) quad->x0;
-   const float fy = (float) quad->y0;
-   const float dzdx = quad->coef[0].dadx[2];
-   const float dzdy = quad->coef[0].dady[2];
-   const float z0 = quad->coef[0].a0[2] + dzdx * fx + dzdy * fy;
-
-   quad->outputs.depth[0] = z0;
-   quad->outputs.depth[1] = z0 + dzdx;
-   quad->outputs.depth[2] = z0 + dzdy;
-   quad->outputs.depth[3] = z0 + dzdx + dzdy;
-
-   qs->next->run( qs->next, quad );
+   struct pipe_rasterizer_state *state =
+      MALLOC( sizeof(struct pipe_rasterizer_state) );
+   memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
+   return state;
 }
 
-static void
-earlyz_begin(
-   struct quad_stage *qs )
+
+void
+cell_bind_rasterizer_state(struct pipe_context *pipe, void *setup)
 {
-   qs->next->begin( qs->next );
+   struct cell_context *cell = cell_context(pipe);
+
+   /* pass-through to draw module */
+   draw_set_rasterizer_state(cell->draw, setup);
+
+   cell->rasterizer = (struct pipe_rasterizer_state *)setup;
+
+   cell->dirty |= CELL_NEW_RASTERIZER;
 }
 
-static void
-earlyz_destroy(
-   struct quad_stage *qs )
+void
+cell_delete_rasterizer_state(struct pipe_context *pipe, void *rasterizer)
 {
-   FREE( qs );
+   FREE( rasterizer );
 }
 
-struct quad_stage *
-sp_quad_earlyz_stage(
-   struct softpipe_context *softpipe )
-{
-   struct quad_stage *stage = CALLOC_STRUCT( quad_stage );
 
-   stage->softpipe = softpipe;
-   stage->begin = earlyz_begin;
-   stage->run = earlyz_quad;
-   stage->destroy = earlyz_destroy;
-
-   return stage;
-}

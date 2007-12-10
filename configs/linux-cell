@@ -13,7 +13,7 @@ CXX = /usr/bin/ppu32-g++
 SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
 
 
-CFLAGS = -g -W -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I/usr/include -I$(SDK)/include -include altivec.h
+CFLAGS = -g -W -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I/usr/include -I$(SDK)/include -include altivec.h -DGALLIUM_CELL
 
 CXXFLAGS = $(CFLAGS)
 

@@ -39,72 +39,61 @@
 
 
 /**
- * Query format support.
- * If we find texture and drawable support differs, add a selector
- * parameter or another function.
+ * Query format support for creating a texture, drawing surface, etc.
+ * \param format  the format to test
+ * \param type  one of PIPE_TEXTURE, PIPE_SURFACE, PIPE_SCREEN_SURFACE
  */
 static boolean
 i915_is_format_supported( struct pipe_context *pipe,
-                          enum pipe_format format )
+                          enum pipe_format format, uint type )
 {
-#if 0
-   /* XXX: This is broken -- rewrite if still needed. */
-   static const unsigned tex_supported[] = {
+   static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_U_L8,
       PIPE_FORMAT_U_A8,
       PIPE_FORMAT_U_I8,
-      PIPE_FORMAT_U_L8_A8,
+      PIPE_FORMAT_U_A8_L8,
       PIPE_FORMAT_YCBCR,
       PIPE_FORMAT_YCBCR_REV,
       PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_NONE  /* list terminator */
    };
-
-
-   /* Actually a lot more than this - add later:
-    */
-   static const unsigned render_supported[] = {
+   static const enum pipe_format surface_supported[] = {
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
-   };
-
-   /* 
-    */
-   static const unsigned z_stencil_supported[] = {
-      PIPE_FORMAT_Z16_UNORM,
-      PIPE_FORMAT_Z32_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
+      PIPE_FORMAT_R16G16B16A16_SNORM,
+      PIPE_FORMAT_NONE  /* list terminator */
    };
+   static const enum pipe_format screen_surface_supported[] = {
+      PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_NONE  /* list terminator */
+   };
+   const enum pipe_format *list;
+   uint i;
 
    switch (type) {
-   case PIPE_RENDER_FORMAT:
-      *numFormats = Elements(render_supported);
-      return render_supported;
-
-   case PIPE_TEX_FORMAT:
-      *numFormats = Elements(tex_supported);
-      return render_supported;
-
-   case PIPE_Z_STENCIL_FORMAT:
-      *numFormats = Elements(render_supported);
-      return render_supported;
-      
+   case PIPE_TEXTURE:
+      list = tex_supported;
+      break;
+   case PIPE_SURFACE:
+      list = surface_supported;
+      break;
+   case PIPE_SCREEN_SURFACE:
+      list = screen_surface_supported;
+      break;
    default:
-      *numFormats = 0;
-      return NULL;
+      assert(0);
    }
-#else
-   switch( format ) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_R5G6B5_UNORM:
-   case PIPE_FORMAT_S8Z24_UNORM:
-      return TRUE;
-   default:
-      return FALSE;
-   };
-#endif
+
+   for (i = 0; list[i] != PIPE_FORMAT_NONE; i++) {
+      if (list[i] == format)
+         return TRUE;
+   }
+
+   return FALSE;
 }
 
 

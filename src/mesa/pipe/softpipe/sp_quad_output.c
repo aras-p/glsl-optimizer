@@ -67,8 +67,7 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
 
 static void output_begin(struct quad_stage *qs)
 {
-   if (qs->next)
-      qs->next->begin(qs->next);
+   assert(qs->next == NULL);
 }
 
 

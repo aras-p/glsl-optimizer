@@ -45,6 +45,10 @@
 #include "pipe/p_inlines.h"
 
 
+#define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
+   us = ( (short) ( CLAMP((f), -1.0, 1.0) * 32767.0F) )
+
+
 /**
  * For hardware that supports deep color buffers, we could accelerate
  * most/all the accum operations with blending/texturing.
@@ -55,7 +59,6 @@
 void
 st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
    struct pipe_surface *acc_ps = acc_strb->surface;
    const GLint xpos = ctx->DrawBuffer->_Xmin;
@@ -66,27 +69,103 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    const GLfloat g = ctx->Accum.ClearColor[1];
    const GLfloat b = ctx->Accum.ClearColor[2];
    const GLfloat a = ctx->Accum.ClearColor[3];
-   GLfloat *accBuf;
-   GLint i;
 
    (void) pipe_surface_map(acc_ps);
 
-   accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-
-   for (i = 0; i < width * height; i++) {
-      accBuf[i * 4 + 0] = r;
-      accBuf[i * 4 + 1] = g;
-      accBuf[i * 4 + 2] = b;
-      accBuf[i * 4 + 3] = a;
+   switch (acc_ps->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         const short sr = (short) (32767 * r);
+         const short sg = (short) (32767 * g);
+         const short sb = (short) (32767 * b);
+         const short sa = (short) (32767 * a);
+         short *acc = ((short *) acc_ps->map)
+            + (ypos * acc_ps->pitch + xpos) * 4;
+         int i, j;
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+               acc[j*4+0] = sr;
+               acc[j*4+1] = sg;
+               acc[j*4+2] = sb;
+               acc[j*4+3] = sa;
+            }
+            acc += acc_ps->pitch * 4;
+         }
+      }
+      break;
+   default:
+      assert(0);
    }
-
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
-
-   free(accBuf);
 
    pipe_surface_unmap(acc_ps);
 }
 
+
+/** Get block of values from accum buffer, converting to float */
+static void
+get_accum_tile(struct pipe_context *pipe,
+               struct pipe_surface *acc_surf,
+               int xpos, int ypos, int width, int height,
+               float *buf)
+{
+   switch (acc_surf->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         const short *acc = ((const short *) acc_surf->map)
+            + (ypos * acc_surf->pitch + xpos) * 4;
+         int i, j;
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+               buf[j*4+0] = SHORT_TO_FLOAT(acc[j*4+0]);
+               buf[j*4+1] = SHORT_TO_FLOAT(acc[j*4+1]);
+               buf[j*4+2] = SHORT_TO_FLOAT(acc[j*4+2]);
+               buf[j*4+3] = SHORT_TO_FLOAT(acc[j*4+3]);
+            }
+            acc += acc_surf->pitch * 4;
+            buf += width * 4;
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
+}
+
+
+/** Put block of values into accum buffer, converting from float */
+static void
+put_accum_tile(struct pipe_context *pipe,
+               struct pipe_surface *acc_surf,
+               int xpos, int ypos, int width, int height,
+               const float *buf)
+{
+   switch (acc_surf->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         short *acc = ((short *) acc_surf->map)
+            + (ypos * acc_surf->pitch + xpos) * 4;
+         int i, j;
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+               short r, g, b, a;
+               UNCLAMPED_FLOAT_TO_SHORT(r, buf[j*4+0]);
+               UNCLAMPED_FLOAT_TO_SHORT(g, buf[j*4+1]);
+               UNCLAMPED_FLOAT_TO_SHORT(b, buf[j*4+2]);
+               UNCLAMPED_FLOAT_TO_SHORT(a, buf[j*4+3]);
+               acc[j*4+0] = r;
+               acc[j*4+1] = g;
+               acc[j*4+2] = b;
+               acc[j*4+3] = a;
+            }
+            acc += acc_surf->pitch * 4;
+            buf += width * 4;
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
+}
 
 
 /** For ADD/MULT */
@@ -102,13 +181,13 @@ accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
 
    (void) pipe_surface_map(acc_ps);
 
-   pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   get_accum_tile(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
       accBuf[i] = accBuf[i] * scale + bias;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   put_accum_tile(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    free(accBuf);
 
@@ -133,13 +212,13 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    accMap = pipe_surface_map(acc_ps);
 
    pipe->get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, colorBuf);
-   pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   get_accum_tile(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
       accBuf[i] = accBuf[i] + colorBuf[i] * value;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   put_accum_tile(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    free(colorBuf);
    free(accBuf);
@@ -169,7 +248,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
       buf[i] = buf[i] * value;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, buf);
+   put_accum_tile(pipe, acc_ps, xpos, ypos, width, height, buf);
 
    free(buf);
 
@@ -194,7 +273,7 @@ accum_return(GLcontext *ctx, GLfloat value,
    (void) pipe_surface_map(color_ps);
    (void) pipe_surface_map(acc_ps);
 
-   pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
+   get_accum_tile(pipe, acc_ps, xpos, ypos, width, height, abuf);
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
       cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));

@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,64 +25,39 @@
  * 
  **************************************************************************/
 
-/**
- * \brief  Quad early-z testing
+/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "pipe/p_defines.h"
-#include "pipe/p_util.h"
-#include "sp_headers.h"
-#include "sp_quad.h"
+
+#include "cell_context.h"
+#include "cell_state.h"
+
+#include "pipe/draw/draw_context.h"
 
 
-/**
- * All this stage does is compute the quad's Z values (which is normally
- * done by the shading stage).
- * The next stage will do the actual depth test.
- */
-static void
-earlyz_quad(
-   struct quad_stage    *qs,
-   struct quad_header   *quad )
+void
+cell_set_vertex_element(struct pipe_context *pipe,
+                            unsigned index,
+                            const struct pipe_vertex_element *attrib)
 {
-   const float fx = (float) quad->x0;
-   const float fy = (float) quad->y0;
-   const float dzdx = quad->coef[0].dadx[2];
-   const float dzdy = quad->coef[0].dady[2];
-   const float z0 = quad->coef[0].a0[2] + dzdx * fx + dzdy * fy;
+   struct cell_context *cell = cell_context(pipe);
+   assert(index < PIPE_ATTRIB_MAX);
+   cell->vertex_element[index] = *attrib; /* struct copy */
+   cell->dirty |= CELL_NEW_VERTEX;
 
-   quad->outputs.depth[0] = z0;
-   quad->outputs.depth[1] = z0 + dzdx;
-   quad->outputs.depth[2] = z0 + dzdy;
-   quad->outputs.depth[3] = z0 + dzdx + dzdy;
-
-   qs->next->run( qs->next, quad );
+   draw_set_vertex_element(cell->draw, index, attrib);
 }
 
-static void
-earlyz_begin(
-   struct quad_stage *qs )
+
+void
+cell_set_vertex_buffer(struct pipe_context *pipe,
+                           unsigned index,
+                           const struct pipe_vertex_buffer *buffer)
 {
-   qs->next->begin( qs->next );
-}
+   struct cell_context *cell = cell_context(pipe);
+   assert(index < PIPE_ATTRIB_MAX);
+   cell->vertex_buffer[index] = *buffer; /* struct copy */
+   cell->dirty |= CELL_NEW_VERTEX;
 
-static void
-earlyz_destroy(
-   struct quad_stage *qs )
-{
-   FREE( qs );
-}
-
-struct quad_stage *
-sp_quad_earlyz_stage(
-   struct softpipe_context *softpipe )
-{
-   struct quad_stage *stage = CALLOC_STRUCT( quad_stage );
-
-   stage->softpipe = softpipe;
-   stage->begin = earlyz_begin;
-   stage->run = earlyz_quad;
-   stage->destroy = earlyz_destroy;
-
-   return stage;
+   draw_set_vertex_buffer(cell->draw, index, buffer);
 }
