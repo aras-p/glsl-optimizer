@@ -76,6 +76,27 @@ nouveau_fence_del(struct nouveau_fence **fence)
 	}
 }
 
+int
+nouveau_fence_signal_cb(struct nouveau_fence *fence, void (*func)(void *),
+			void *priv)
+{
+	struct nouveau_fence_priv *nvfence = nouveau_fence(fence);
+	struct nouveau_fence_cb *cb;
+
+	if (!nvfence || !func)
+		return -EINVAL;
+
+	cb = malloc(sizeof(struct nouveau_fence_cb));
+	if (!cb)
+		return -ENOMEM;
+
+	cb->func = func;
+	cb->priv = priv;
+	cb->next = nvfence->signal_cb;
+	nvfence->signal_cb = cb;
+	return 0;
+}
+
 void
 nouveau_fence_emit(struct nouveau_fence *fence)
 {
@@ -102,16 +123,33 @@ void
 nouveau_fence_flush(struct nouveau_channel *chan)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	struct nouveau_fence_priv *nvfence = nouveau_fence(nvchan->fence_head);
 	uint32_t sequence = *nvchan->ref_cnt;
 
-	while (nvchan->fence_head && nvfence->sequence <= sequence) {
-		nvfence->signalled = 1;
+	while (nvchan->fence_head) {
+		struct nouveau_fence *fence = NULL;
+		struct nouveau_fence_priv *nvfence;
+	
+		nouveau_fence_ref(nvchan->fence_head, &fence);
+		nvfence = nouveau_fence(nvchan->fence_head);
+
+		if (nvfence->sequence > sequence) {
+			nouveau_fence_del(&fence);
+			break;
+		}
 
 		nvchan->fence_head = nvfence->next;
 		if (nvchan->fence_head == NULL)
 			nvchan->fence_tail = NULL;
-		nvfence = nouveau_fence(nvchan->fence_head);
+		nvfence->signalled = 1;
+
+		while (nvfence->signal_cb) {
+			struct nouveau_fence_cb *cb = nvfence->signal_cb;
+			nvfence->signal_cb = cb->next;
+			cb->func(cb->priv);
+			free(cb);
+		}
+
+		nouveau_fence_del(&fence);
 	}
 }
 

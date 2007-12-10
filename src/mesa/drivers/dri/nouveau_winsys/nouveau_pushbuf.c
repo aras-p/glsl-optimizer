@@ -48,6 +48,16 @@ nouveau_pushbuf_init(struct nouveau_channel *chan)
 	return 0;
 }
 
+static void
+nouveau_pushbuf_fence_signalled(void *priv)
+{
+	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(priv);
+
+	nouveau_fence_del(&nvpb->fence);
+	nouveau_resource_free(&nvpb->res);
+	free(nvpb);
+}
+
 /* This would be our TTM "superioctl" */
 int
 nouveau_pushbuf_flush(struct nouveau_channel *chan)
@@ -64,6 +74,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 
 	if (nvpb->base.remaining == nvpb->res->size / 4)
 		return 0;
+	nvchan->pb_tail = NULL;
 
 	ret = nouveau_fence_new(chan, &fence);
 	if (ret)
@@ -124,10 +135,18 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 
 	/* Fence */
 	nvpb->fence = fence;
+	nouveau_fence_signal_cb(nvpb->fence, nouveau_pushbuf_fence_signalled,
+				nvpb);
 	nouveau_fence_emit(nvpb->fence);
 
 	/* Kickoff */
 	FIRE_RING_CH(chan);
+
+	if (sync_hack) {
+		struct nouveau_fence *f = NULL;
+		nouveau_fence_ref(nvpb->fence, &f);
+		nouveau_fence_wait(&f);
+	}
 
 	/* Allocate space for next push buffer */
 out_realloc:
@@ -135,64 +154,15 @@ out_realloc:
 	if (!nvpb)
 		return -ENOMEM;
 
-	if (nouveau_resource_alloc(nvchan->pb_heap, 0x2000, NULL, &nvpb->res)) {
-		struct nouveau_pushbuf_priv *e;
-		int nr = 0;
-
-		/* Update fences */
+	while (nouveau_resource_alloc(nvchan->pb_heap, 0x2000, NULL,
+				      &nvpb->res)) {
 		nouveau_fence_flush(chan);
-
-		/* Free any push buffers that have already been executed */
-		e = nouveau_pushbuf(nvchan->pb_head);
-		while (e && e->fence) {
-			if (!e->fence || !nouveau_fence(e->fence)->signalled)
-				break;
-			nouveau_fence_del(&e->fence);
-			nouveau_resource_free(&e->res);
-			nr++;
-
-			nvchan->pb_head = e->next;
-			if (nvchan->pb_head == NULL)
-				nvchan->pb_tail = NULL;
-			free(e);
-			e = nouveau_pushbuf(nvchan->pb_head);
-		}
-
-		/* We didn't free any buffers above.  As a last resort, busy
-		 * wait on the oldest buffer becoming available.
-		 */
-		if (!nr) {
-			e = nouveau_pushbuf(nvchan->pb_head);
-			nouveau_fence_wait(&e->fence);
-			nouveau_resource_free(&e->res);
-
-			nvchan->pb_head = e->next;
-			if (nvchan->pb_head == NULL)
-				nvchan->pb_tail = NULL;
-			free(e);
-		}
-
-		if (nouveau_resource_alloc(nvchan->pb_heap, 0x2000, nvpb,
-					   &nvpb->res))
-			assert(0);
 	}
 
 	nvpb->base.channel = chan;
 	nvpb->base.remaining = nvpb->res->size / 4;
 	nvpb->base.cur = &nvchan->pushbuf[nvpb->res->start/4];
-
-	if (nvchan->pb_tail) {
-		nouveau_pushbuf(nvchan->pb_tail)->next = &nvpb->base;
-	} else {
-		nvchan->pb_head = &nvpb->base;
-	}
 	nvchan->pb_tail = &nvpb->base;
-
-	if (sync_hack) {
-		struct nouveau_fence *f = NULL;
-		nouveau_fence_ref(nvpb->fence, &f);
-		nouveau_fence_wait(&f);
-	}
 
 	return 0;
 }
