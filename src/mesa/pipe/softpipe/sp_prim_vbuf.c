@@ -275,6 +275,16 @@ static void reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void vbuf_destroy( struct draw_stage *stage )
+{
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
+   FREE( vbuf->element_map );
+   FREE( vbuf->vertex_map );
+   FREE( stage );
+}
+
+
 /**
  * Create a new primitive vbuf/render stage.
  */
@@ -290,6 +300,7 @@ struct draw_stage *sp_draw_vbuf_stage( struct draw_context *draw_context,
    vbuf->stage.tri = vbuf_first_tri;
    vbuf->stage.end = vbuf_end;
    vbuf->stage.reset_stipple_counter = reset_stipple_counter;
+   vbuf->stage.destroy = vbuf_destroy;
 
    vbuf->pipe = pipe;
    vbuf->draw = draw;

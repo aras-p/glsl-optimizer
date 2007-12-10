@@ -42,6 +42,13 @@
 /** Opaque type for a buffer */
 struct pipe_buffer_handle;
 
+/** Opaque type */
+struct pipe_fence_handle;
+
+struct pipe_region;
+struct pipe_surface;
+
+
 /**
  * Gallium3D drivers are (meant to be!) independent of both GL and the
  * window system.  The window system provides a buffer manager and a
@@ -52,14 +59,6 @@ struct pipe_buffer_handle;
  * driver and the hardware driver about the format of command buffers,
  * etc.
  */
-
-
-struct pipe_region;
-struct pipe_surface;
-
-/** Opaque type */
-struct pipe_buffer_handle;
-
 struct pipe_winsys
 {
    /** Returns name of this winsys interface */
@@ -96,6 +95,7 @@ struct pipe_winsys
 
    void (*surface_release)(struct pipe_winsys *ws, struct pipe_surface **s);
 
+   
    /**
     * The buffer manager is modeled after the dri_bufmgr interface, which 
     * in turn is modeled after the ARB_vertex_buffer_object extension,  
@@ -104,14 +104,15 @@ struct pipe_winsys
     * systems must then implement that interface (rather than the
     * other way around...).
     */
-   struct pipe_buffer_handle *(*buffer_create)(struct pipe_winsys *sws, 
-					       unsigned alignment );
+   struct pipe_buffer_handle *(*buffer_create)( struct pipe_winsys *sws, 
+					        unsigned alignment,
+                                                unsigned flags,
+                                                unsigned hint );
 
    /** Create a buffer that wraps user-space data */
    struct pipe_buffer_handle *(*user_buffer_create)(struct pipe_winsys *sws, 
                                                     void *ptr,
                                                     unsigned bytes);
-
 
    /** 
     * Map the entire data store of a buffer object into the client's address.
@@ -135,25 +136,64 @@ struct pipe_winsys
     * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
     * usage argument is only an optimization hint, not a guarantee, therefore 
     * proper behavior must be observed in all circumstances.
+    * 
+    * Returns zero on success.
     */
-   void (*buffer_data)(struct pipe_winsys *sws, 
+   int (*buffer_data)(struct pipe_winsys *sws, 
 		       struct pipe_buffer_handle *buf,
 		       unsigned size, const void *data,
 		       unsigned usage);
 
-   /** Modify some or all of the data contained in a buffer's data store */
-   void (*buffer_subdata)(struct pipe_winsys *sws, 
-			  struct pipe_buffer_handle *buf,
-			  unsigned long offset, 
-			  unsigned long size, 
-			  const void *data);
+   /** 
+    * Modify some or all of the data contained in a buffer's data store.
+    * 
+    * Returns zero on success.
+    */
+   int (*buffer_subdata)(struct pipe_winsys *sws, 
+                         struct pipe_buffer_handle *buf,
+                         unsigned long offset, 
+                         unsigned long size, 
+                         const void *data);
 
-   /** Query some or all of the data contained in a buffer's data store */
-   void (*buffer_get_subdata)(struct pipe_winsys *sws, 
-			      struct pipe_buffer_handle *buf,
-			      unsigned long offset, 
-			      unsigned long size, 
-			      void *data);
+   /** 
+    * Query some or all of the data contained in a buffer's data store.
+    * 
+    * Returns zero on success.
+    */
+   int (*buffer_get_subdata)(struct pipe_winsys *sws, 
+                             struct pipe_buffer_handle *buf,
+                             unsigned long offset, 
+                             unsigned long size, 
+                             void *data);
+
+
+   /** Set ptr = buf, with reference counting */
+   void (*fence_reference)( struct pipe_winsys *sws,
+                            struct pipe_fence_handle **ptr,
+                            struct pipe_fence_handle *fence );
+
+   /**
+    * Checks whether the fence has been signalled.
+    *  
+    * The meaning of flag is pipe-driver specific.
+    *
+    * Returns zero if it has.
+    */
+   int (*fence_signalled)( struct pipe_winsys *sws,
+                           struct pipe_fence_handle *fence,
+                           unsigned flag );
+
+   /**
+    * Wait for the fence to finish.
+    * 
+    * The meaning of flag is pipe-driver specific.
+    * 
+    * Returns zero on success.
+    */
+   int (*fence_finish)( struct pipe_winsys *sws,
+                        struct pipe_fence_handle *fence,
+                        unsigned flag );
+
 
 };
 

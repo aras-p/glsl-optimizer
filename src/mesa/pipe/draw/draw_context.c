@@ -42,7 +42,7 @@ struct draw_context *draw_create( void )
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
 
 #if defined(__i386__) || defined(__386__)
-   draw->use_sse = GETENV( "GALLIUM_SSE" ) != NULL;
+   draw->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
 #else
    draw->use_sse = FALSE;
 #endif
@@ -85,6 +85,7 @@ struct draw_context *draw_create( void )
    draw->prim = ~0; /* != any of PIPE_PRIM_x */
 
    draw_vertex_cache_invalidate( draw );
+   draw_set_mapped_element_buffer( draw, 0, NULL );
 
    return draw;
 }
@@ -92,6 +93,16 @@ struct draw_context *draw_create( void )
 
 void draw_destroy( struct draw_context *draw )
 {
+   draw->pipeline.wide->destroy( draw->pipeline.wide );
+   draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
+   draw->pipeline.twoside->destroy( draw->pipeline.twoside );
+   draw->pipeline.offset->destroy( draw->pipeline.offset );
+   draw->pipeline.clip->destroy( draw->pipeline.clip );
+   draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
+   draw->pipeline.cull->destroy( draw->pipeline.cull );
+   draw->pipeline.feedback->destroy( draw->pipeline.feedback );
+   draw->pipeline.validate->destroy( draw->pipeline.validate );
+   draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    FREE( draw->vcache.vertex[0] ); /* Frees all the vertices. */
    FREE( draw );
 }

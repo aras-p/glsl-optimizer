@@ -80,13 +80,13 @@ static void Draw(void)
 
    glBegin(GL_POINTS);
    glColor3f(1,0,0); 
-   glVertex3f( 0.9, -0.9, -30.0);
+   glVertex3f( 0.9, -0.9, -10.0);
    glColor3f(1,1,0); 
-   glVertex3f( 0.9,  0.9, -30.0);
+   glVertex3f( 0.9,  0.9, -5.0);
    glColor3f(1,0,1); 
    glVertex3f(-0.9,  0.9, -30.0);
    glColor3f(0,1,1); 
-   glVertex3f(-0.9,  -0.9, -30.0);
+   glVertex3f(-0.9,  -0.9, -20.0);
    glEnd();
 
    glFlush();

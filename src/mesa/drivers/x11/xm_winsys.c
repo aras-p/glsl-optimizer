@@ -210,7 +210,10 @@ xm_get_name(struct pipe_winsys *pws)
 
 
 static struct pipe_buffer_handle *
-xm_buffer_create(struct pipe_winsys *pws, unsigned alignment)
+xm_buffer_create(struct pipe_winsys *pws, 
+                 unsigned alignment, 
+                 unsigned flags, 
+                 unsigned hint)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
    buffer->refcount = 1;
@@ -258,7 +261,7 @@ xm_region_alloc(struct pipe_winsys *winsys,
 
    assert(region->pitch > 0);
 
-   region->buffer = winsys->buffer_create( winsys, alignment )
+   region->buffer = winsys->buffer_create( winsys, alignment, 0, 0 )
 ;
 
    /* NULL data --> just allocate the space */

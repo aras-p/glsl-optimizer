@@ -1,4 +1,3 @@
-
 TOP = ../../..
 include $(TOP)/configs/current
 
@@ -7,7 +6,7 @@ ifeq ($(CONFIG_NAME), linux-cell)
 CELL_DIR = cell
 endif
 
-SUBDIRS = softpipe i915simple nv40 nv50 failover $(CELL_DIR)
+SUBDIRS = softpipe i915simple nv40 nv50 failover pipebuffer $(CELL_DIR)
 
 
 default: subdirs

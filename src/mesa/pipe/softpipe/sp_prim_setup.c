@@ -1124,6 +1124,12 @@ static void reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void render_destroy( struct draw_stage *stage )
+{
+   FREE( stage );
+}
+
+
 /**
  * Create a new primitive setup/render stage.
  */
@@ -1139,6 +1145,7 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
    setup->stage.tri = setup_tri;
    setup->stage.end = setup_end;
    setup->stage.reset_stipple_counter = reset_stipple_counter;
+   setup->stage.destroy = render_destroy;
 
    setup->quad.coef = setup->coef;
 

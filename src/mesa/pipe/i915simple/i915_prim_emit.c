@@ -194,6 +194,11 @@ static void reset_stipple_counter( struct draw_stage *stage )
 {
 }
 
+static void render_destroy( struct draw_stage *stage )
+{
+   FREE( stage );
+}
+
 
 /**
  * Create a new primitive setup/render stage.  This gets plugged into
@@ -211,6 +216,7 @@ struct draw_stage *i915_draw_render_stage( struct i915_context *i915 )
    setup->stage.tri = setup_tri;
    setup->stage.end = setup_end;
    setup->stage.reset_stipple_counter = reset_stipple_counter;
+   setup->stage.destroy = render_destroy;
 
    return &setup->stage;
 }

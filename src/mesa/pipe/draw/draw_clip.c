@@ -415,6 +415,13 @@ static void clip_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void clip_destroy( struct draw_stage *stage )
+{
+   draw_free_tmps( stage );
+   FREE( stage );
+}
+
+
 /**
  * Allocate a new clipper stage.
  * \return pointer to new stage object
@@ -432,6 +439,7 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
    clipper->stage.tri = clip_tri;
    clipper->stage.end = clip_end;
    clipper->stage.reset_stipple_counter = clip_reset_stipple_counter;
+   clipper->stage.destroy = clip_destroy;
 
    clipper->plane = draw->plane;
 

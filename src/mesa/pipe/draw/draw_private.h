@@ -124,6 +124,8 @@ struct draw_stage
    void (*reset_tmps)( struct draw_stage * );
 
    void (*reset_stipple_counter)( struct draw_stage * );
+
+   void (*destroy)( struct draw_stage * );
 };
 
 

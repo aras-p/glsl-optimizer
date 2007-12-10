@@ -382,7 +382,9 @@ softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
       if (softpipe_mipmap_tree_layout(pipe, spt)) {
 	 spt->buffer = pipe->winsys->buffer_create(pipe->winsys,
-						   PIPE_SURFACE_FLAG_TEXTURE);
+						   32,
+						   PIPE_SURFACE_FLAG_TEXTURE,
+						   0);
 
 	 if (spt->buffer) {
 	    pipe->winsys->buffer_data(pipe->winsys, spt->buffer,

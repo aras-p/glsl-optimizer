@@ -114,6 +114,7 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
 #define Elements(x) sizeof(x)/sizeof(*(x))
+#define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
 
 /**
  * Return a pointer aligned to next multiple of 16 bytes.
@@ -204,8 +205,8 @@ static INLINE unsigned char float_to_ubyte( float f )
 
 static INLINE unsigned pack_ui32_float4( float a,
 					 float b, 
-					 float d, 
-					 float c )
+					 float c, 
+					 float d )
 {
    return pack_ub4( float_to_ubyte(a),
 		    float_to_ubyte(b),
@@ -299,5 +300,9 @@ static INLINE float LOG2(float val)
 #else
 #define CEILF(x)   ((float) ceil(x))
 #endif
+
+/* Convenient...
+ */
+extern void _mesa_printf(const char *str, ...);
 
 #endif

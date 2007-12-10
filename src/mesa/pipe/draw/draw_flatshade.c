@@ -127,6 +127,13 @@ static void flatshade_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void flatshade_destroy( struct draw_stage *stage )
+{
+   draw_free_tmps( stage );
+   FREE( stage );
+}
+
+
 /**
  * Create flatshading drawing stage.
  */
@@ -144,6 +151,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    flatshade->tri = flatshade_tri;
    flatshade->end = flatshade_end;
    flatshade->reset_stipple_counter = flatshade_reset_stipple_counter;
+   flatshade->destroy = flatshade_destroy;
 
    return flatshade;
 }

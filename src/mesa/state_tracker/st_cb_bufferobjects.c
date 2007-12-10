@@ -63,7 +63,7 @@ st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 
    _mesa_initialize_buffer_object(&st_obj->Base, name, target);
 
-   st_obj->buffer = st->pipe->winsys->buffer_create( st->pipe->winsys, 32 );
+   st_obj->buffer = st->pipe->winsys->buffer_create( st->pipe->winsys, 32, 0, 0 );
 
    return &st_obj->Base;
 }

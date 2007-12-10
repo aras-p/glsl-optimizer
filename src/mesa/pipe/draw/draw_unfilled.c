@@ -168,6 +168,13 @@ static void unfilled_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void unfilled_destroy( struct draw_stage *stage )
+{
+   draw_free_tmps( stage );
+   FREE( stage );
+}
+
+
 /**
  * Create unfilled triangle stage.
  */
@@ -186,6 +193,7 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.tri = unfilled_tri;
    unfilled->stage.end = unfilled_end;
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;
+   unfilled->stage.destroy = unfilled_destroy;
 
    return &unfilled->stage;
 }

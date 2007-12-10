@@ -155,7 +155,7 @@ xm_buffer_reference(struct pipe_winsys *pws,
    }
 }
 
-static void
+static int
 xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
                unsigned size, const void *data, unsigned usage )
 {
@@ -169,9 +169,10 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    }
    if (data)
       memcpy(xm_buf->data, data, size);
+   return 0;
 }
 
-static void
+static int
 xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
                   unsigned long offset, unsigned long size, const void *data)
 {
@@ -180,9 +181,10 @@ xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    assert(!xm_buf->userBuffer);
    assert(b);
    memcpy(b + offset, data, size);
+   return 0;
 }
 
-static void
+static int
 xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
                       unsigned long offset, unsigned long size, void *data)
 {
@@ -191,6 +193,7 @@ xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    assert(!xm_buf->userBuffer);
    assert(b);
    memcpy(data, b + offset, size);
+   return 0;
 }
 
 
@@ -255,7 +258,10 @@ xm_get_name(struct pipe_winsys *pws)
 
 
 static struct pipe_buffer_handle *
-xm_buffer_create(struct pipe_winsys *pws, unsigned flags)
+xm_buffer_create(struct pipe_winsys *pws, 
+                 unsigned alignment, 
+                 unsigned flags,
+                 unsigned hints)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
    buffer->refcount = 1;

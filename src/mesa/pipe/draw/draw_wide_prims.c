@@ -315,7 +315,6 @@ static void wide_begin( struct draw_stage *stage )
 }
 
 
-
 static void wide_end( struct draw_stage *stage )
 {
    stage->next->end( stage->next );
@@ -326,6 +325,14 @@ static void draw_reset_stipple_counter( struct draw_stage *stage )
 {
    stage->next->reset_stipple_counter( stage->next );
 }
+
+
+static void wide_destroy( struct draw_stage *stage )
+{
+   draw_free_tmps( stage );
+   FREE( stage );
+}
+
 
 struct draw_stage *draw_wide_stage( struct draw_context *draw )
 {
@@ -341,6 +348,7 @@ struct draw_stage *draw_wide_stage( struct draw_context *draw )
    wide->stage.tri = passthrough_tri;
    wide->stage.end = wide_end;
    wide->stage.reset_stipple_counter = draw_reset_stipple_counter;
+   wide->stage.destroy = wide_destroy;
 
    return &wide->stage;
 }

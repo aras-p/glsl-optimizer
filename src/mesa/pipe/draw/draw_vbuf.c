@@ -369,6 +369,15 @@ vbuf_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void vbuf_destroy( struct draw_stage *stage )
+{
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
+   FREE( vbuf->indices );
+   FREE( stage );
+}
+
+
 /**
  * Create a new primitive vbuf/render stage.
  */
@@ -384,12 +393,12 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    vbuf->stage.tri = vbuf_first_tri;
    vbuf->stage.end = vbuf_end;
    vbuf->stage.reset_stipple_counter = vbuf_reset_stipple_counter;
+   vbuf->stage.destroy = vbuf_destroy;
    
    vbuf->render = render;
 
    assert(render->max_indices < UNDEFINED_VERTEX_ID);
    vbuf->max_indices = render->max_indices;
-   /* FIXME: free this memory on takedown */
    vbuf->indices = MALLOC( vbuf->max_indices );
    
    vbuf->vertices = NULL;
