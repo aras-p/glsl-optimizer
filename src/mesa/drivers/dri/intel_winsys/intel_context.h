@@ -35,7 +35,6 @@
 
 
 struct pipe_context;
-struct pipe_region;
 struct intel_context;
 struct _DriBufferObject;
 struct st_context;

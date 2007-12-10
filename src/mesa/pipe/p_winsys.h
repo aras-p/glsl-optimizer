@@ -45,7 +45,6 @@ struct pipe_buffer_handle;
 /** Opaque type */
 struct pipe_fence_handle;
 
-struct pipe_region;
 struct pipe_surface;
 
 
@@ -80,12 +79,6 @@ struct pipe_winsys
    /**
     * flags is bitmask of PIPE_SURFACE_FLAG_RENDER, PIPE_SURFACE_FLAG_TEXTURE
     */
-   struct pipe_region *(*region_alloc)(struct pipe_winsys *ws,
-                                       unsigned size, unsigned flags);
-
-   void (*region_release)(struct pipe_winsys *ws, struct pipe_region **r);
-
-
    unsigned (*surface_pitch)(struct pipe_winsys *ws, unsigned cpp,
 			     unsigned with, unsigned flags);
 
