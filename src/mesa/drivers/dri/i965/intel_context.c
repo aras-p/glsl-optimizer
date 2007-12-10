@@ -470,6 +470,8 @@ GLboolean intelInitContext( struct intel_context *intel,
 
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
+   if (!intel->intelScreen->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
+      dri_bufmgr_fake_set_debug(intel->intelScreen->bufmgr, GL_TRUE);
 
    intel_update_screen_regions(intel);
 
