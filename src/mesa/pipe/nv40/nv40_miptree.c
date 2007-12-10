@@ -68,7 +68,7 @@ nv40_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
 	memcpy(&nv40mt->base, mt, sizeof(struct pipe_texture));
 	nv40_miptree_layout(nv40mt);
 
-	nv40mt->buffer = ws->buffer_create(ws, 0, PIPE_SURFACE_FLAG_TEXTURE, 0);
+	nv40mt->buffer = ws->buffer_create(ws, 256, 0, 0);
 	if (!nv40mt->buffer) {
 		free(nv40mt);
 		return;
