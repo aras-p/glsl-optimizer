@@ -141,7 +141,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    assert(!tc->texture);
 
    if (tc->surface && tc->surface->map) {
-      assert(tc->surface != ps);
+      /*assert(tc->surface != ps);*/
       pipe_surface_unmap(tc->surface);
    }
 
