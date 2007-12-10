@@ -30,7 +30,7 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       /* set current cbuffer */
-      softpipe->cbuf = softpipe->framebuffer.cbufs[i];
+      softpipe->current_cbuf = i;
 
       /* pass blended quad to next stage */
       qs->next->run(qs->next, quad);
@@ -38,8 +38,6 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
       /* restore quad's colors for next buffer */
       memcpy(quad->outputs.color, tmp, sizeof(tmp));
    }
-
-   softpipe->cbuf = NULL; /* prevent accidental use */
 }
 
 
