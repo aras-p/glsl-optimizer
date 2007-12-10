@@ -266,9 +266,14 @@ st_draw_vbo(GLcontext *ctx,
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
-         uint bytes = (arrays[mesaAttr]->Size
-                       * _mesa_sizeof_type(arrays[mesaAttr]->Type)
-                       * (max_index + 1));
+         uint bytes;
+	
+         if (!arrays[mesaAttr]->StrideB) {
+            bytes = arrays[mesaAttr]->Size
+                    * _mesa_sizeof_type(arrays[mesaAttr]->Type);
+         } else {
+            bytes = arrays[mesaAttr]->StrideB * (max_index + 1);
+         }
 
          /* wrap user data */
          vbuffer[attr].buffer
