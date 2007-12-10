@@ -25,70 +25,57 @@
  * 
  **************************************************************************/
 
+#ifndef CELL_SPU
+#define CELL_SPU
+
+
+#include <libspe.h>
+#include <libmisc.h>
+#include "pipe/cell/common.h"
+
+#include "cell_context.h"
+
+
+#define MAX_SPUS 7
+
 /**
- * Types and tokens which are common to the SPU and PPU code.
+ * SPU/SPE handles, etc
  */
-
-
-#ifndef CELL_COMMON_H
-#define CELL_COMMON_H
-
-#include "pipe/p_util.h"
-
-
-#define ALIGN16 __attribute__( (aligned( 16 )) )
-
-#define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
-
-
-
-#define TILE_SIZE 32
-
-
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
-#define CELL_CMD_FINISH       5
+extern spe_program_handle_t g3d_spu;
+extern speid_t speid[MAX_SPUS];
+extern spe_spu_control_area_t *control_ps_area[MAX_SPUS];
 
 
 /**
- * Tell SPUs about the framebuffer size, location
+ * Data sent to SPUs
  */
-struct cell_command_framebuffer
-{
-   void *start;
-   int width, height;
-   unsigned format;
-} ALIGN16;
+extern struct cell_init_info inits[MAX_SPUS] ALIGN16;
+extern struct cell_command command[MAX_SPUS] ALIGN16;
 
 
-/**
- * Clear framebuffer tiles to given value/color.
- */
-struct cell_command_clear_tiles
-{
-   uint value;
-} ALIGN16;
+void
+send_mbox_message(spe_spu_control_area_t *ca, unsigned int msg);
+
+uint
+wait_mbox_message(spe_spu_control_area_t *ca);
 
 
-/** XXX unions don't seem to work */
-struct cell_command
-{
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
-} ALIGN16;
+void
+cell_start_spus(uint num_spus);
 
 
-struct cell_init_info
-{
-   unsigned id;
-   unsigned num_spus;
-   struct cell_command *cmd;
-} ALIGN16;
+void
+finish_all(uint num_spus);
+
+void
+test_spus(struct cell_context *cell);
 
 
+void
+wait_spus(uint num_spus);
+
+void
+cell_spu_exit(struct cell_context *cell);
 
 
-#endif /* CELL_COMMON_H */
+#endif /* CELL_SPU */

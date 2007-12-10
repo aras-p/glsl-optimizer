@@ -17,7 +17,18 @@ SPU_CODE_MODULE = ../spu/g3d_spu.a
 
 SOURCES = \
 	cell_context.c \
-	cell_surface.c
+	cell_flush.c \
+	cell_state_blend.c \
+	cell_state_clip.c \
+	cell_state_fs.c \
+	cell_state_rasterizer.c \
+	cell_state_sampler.c \
+	cell_state_surface.c \
+	cell_state_vertex.c \
+	cell_spu.c \
+	cell_surface.c \
+	cell_winsys.c
+
 
 OBJECTS = $(SOURCES:.c=.o) \
 
@@ -42,7 +53,7 @@ $(CELL_LIB): $(OBJECTS) $(SPU_CODE_MODULE)
 
 
 clean:
-	rm -f *.o $(CELL_LIB)
+	rm -f *.o *~ $(CELL_LIB)
 
 
 

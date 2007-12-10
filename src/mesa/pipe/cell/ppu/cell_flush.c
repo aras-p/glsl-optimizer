@@ -25,82 +25,30 @@
  * 
  **************************************************************************/
 
-/**
- * Authors
- *  Brian Paul
- */
 
-#include <stdio.h>
-#include <assert.h>
-#include <stdint.h>
-#include "pipe/p_inlines.h"
-#include "pipe/p_util.h"
-#include "pipe/cell/common.h"
+#include <cbe_mfc.h>
+
 #include "cell_context.h"
-#include "cell_surface.h"
+#include "cell_flush.h"
 #include "cell_spu.h"
 
 
-
-struct pipe_surface *
-cell_create_surface(int width, int height)
-{
-#if 0
-   /* XXX total hack */
-   struct pipe_surface *ps = CALLOC_STRUCT(pipe_surface);
-
-   printf("cell_create_surface\n");
-
-   ps->width = width;
-   ps->height = height;
-
-   ps->region = CALLOC_STRUCT(pipe_region);
-   ps->region->map = align_malloc(width * height * 4, 16);
-   return ps;
-#endif
-   return NULL;
-}
-
-
-
 void
-cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
-                   unsigned clearValue)
+cell_flush(struct pipe_context *pipe, unsigned flags)
 {
    struct cell_context *cell = cell_context(pipe);
    uint i;
 
-   printf("%s 0x%08x\n", __FUNCTION__, clearValue);
+   printf("%s\n", __FUNCTION__);
 
-   {
-      char s[100];
-      pf_sprint_name(s, ps->format);
-      printf("format  = %s\n", s);
-   }
-
-   if (!ps->map)
-      pipe_surface_map(ps);
-
+   /* Send CMD_FINISH to all SPUs */
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].fb.start = ps->map;
-      command[i].fb.width = ps->width;
-      command[i].fb.height = ps->height;
-      command[i].fb.format = ps->format;
-      send_mbox_message(control_ps_area[i], CELL_CMD_FRAMEBUFFER);
+      send_mbox_message(control_ps_area[i], CELL_CMD_FINISH);
    }
 
+   /* Wait for ack */
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].clear.value = clearValue | (i << 21);
-      send_mbox_message(control_ps_area[i], CELL_CMD_CLEAR_TILES);
+      uint k = wait_mbox_message(control_ps_area[i]);
+      assert(k == CELL_CMD_FINISH);
    }
-}
-
-
-void
-cell_set_clear_color_state(struct pipe_context *pipe,
-                           const struct pipe_clear_color_state *clear)
-{
-   struct cell_context *cell = cell_context(pipe);
-
-   cell->clear_color = *clear; /* struct copy */
 }

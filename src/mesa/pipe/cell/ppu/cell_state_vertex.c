@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,70 +25,39 @@
  * 
  **************************************************************************/
 
-/**
- * Types and tokens which are common to the SPU and PPU code.
+/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
 
-#ifndef CELL_COMMON_H
-#define CELL_COMMON_H
+#include "cell_context.h"
+#include "cell_state.h"
 
-#include "pipe/p_util.h"
-
-
-#define ALIGN16 __attribute__( (aligned( 16 )) )
-
-#define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
+#include "pipe/draw/draw_context.h"
 
 
-
-#define TILE_SIZE 32
-
-
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
-#define CELL_CMD_FINISH       5
-
-
-/**
- * Tell SPUs about the framebuffer size, location
- */
-struct cell_command_framebuffer
+void
+cell_set_vertex_element(struct pipe_context *pipe,
+                            unsigned index,
+                            const struct pipe_vertex_element *attrib)
 {
-   void *start;
-   int width, height;
-   unsigned format;
-} ALIGN16;
+   struct cell_context *cell = cell_context(pipe);
+   assert(index < PIPE_ATTRIB_MAX);
+   cell->vertex_element[index] = *attrib; /* struct copy */
+   cell->dirty |= CELL_NEW_VERTEX;
+
+   draw_set_vertex_element(cell->draw, index, attrib);
+}
 
 
-/**
- * Clear framebuffer tiles to given value/color.
- */
-struct cell_command_clear_tiles
+void
+cell_set_vertex_buffer(struct pipe_context *pipe,
+                           unsigned index,
+                           const struct pipe_vertex_buffer *buffer)
 {
-   uint value;
-} ALIGN16;
+   struct cell_context *cell = cell_context(pipe);
+   assert(index < PIPE_ATTRIB_MAX);
+   cell->vertex_buffer[index] = *buffer; /* struct copy */
+   cell->dirty |= CELL_NEW_VERTEX;
 
-
-/** XXX unions don't seem to work */
-struct cell_command
-{
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
-} ALIGN16;
-
-
-struct cell_init_info
-{
-   unsigned id;
-   unsigned num_spus;
-   struct cell_command *cmd;
-} ALIGN16;
-
-
-
-
-#endif /* CELL_COMMON_H */
+   draw_set_vertex_buffer(cell->draw, index, buffer);
+}

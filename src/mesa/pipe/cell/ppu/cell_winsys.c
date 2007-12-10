@@ -25,70 +25,16 @@
  * 
  **************************************************************************/
 
-/**
- * Types and tokens which are common to the SPU and PPU code.
- */
-
-
-#ifndef CELL_COMMON_H
-#define CELL_COMMON_H
 
 #include "pipe/p_util.h"
+#include "cell_winsys.h"
 
 
-#define ALIGN16 __attribute__( (aligned( 16 )) )
-
-#define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
-
-
-
-#define TILE_SIZE 32
-
-
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
-#define CELL_CMD_FINISH       5
-
-
-/**
- * Tell SPUs about the framebuffer size, location
- */
-struct cell_command_framebuffer
+struct cell_winsys *
+cell_get_winsys(uint format)
 {
-   void *start;
-   int width, height;
-   unsigned format;
-} ALIGN16;
-
-
-/**
- * Clear framebuffer tiles to given value/color.
- */
-struct cell_command_clear_tiles
-{
-   uint value;
-} ALIGN16;
-
-
-/** XXX unions don't seem to work */
-struct cell_command
-{
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
-} ALIGN16;
-
-
-struct cell_init_info
-{
-   unsigned id;
-   unsigned num_spus;
-   struct cell_command *cmd;
-} ALIGN16;
-
-
-
-
-#endif /* CELL_COMMON_H */
+   struct cell_winsys *cws = CALLOC_STRUCT(cell_winsys);
+   if (cws)
+      cws->preferredFormat = format;
+   return cws;
+}

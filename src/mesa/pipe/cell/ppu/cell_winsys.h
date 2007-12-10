@@ -25,70 +25,26 @@
  * 
  **************************************************************************/
 
-/**
- * Types and tokens which are common to the SPU and PPU code.
- */
 
+#ifndef CELL_WINSYS_H
+#define CELL_WINSYS_H
 
-#ifndef CELL_COMMON_H
-#define CELL_COMMON_H
-
-#include "pipe/p_util.h"
-
-
-#define ALIGN16 __attribute__( (aligned( 16 )) )
-
-#define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
-
-
-
-#define TILE_SIZE 32
-
-
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
-#define CELL_CMD_FINISH       5
+#include "pipe/p_compiler.h"
 
 
 /**
- * Tell SPUs about the framebuffer size, location
+ * Very simple winsys at this time.
+ * Will probably eventually add SPU control info.
  */
-struct cell_command_framebuffer
+struct cell_winsys
 {
-   void *start;
-   int width, height;
-   unsigned format;
-} ALIGN16;
+   uint preferredFormat;
+};
 
 
-/**
- * Clear framebuffer tiles to given value/color.
- */
-struct cell_command_clear_tiles
-{
-   uint value;
-} ALIGN16;
-
-
-/** XXX unions don't seem to work */
-struct cell_command
-{
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
-} ALIGN16;
-
-
-struct cell_init_info
-{
-   unsigned id;
-   unsigned num_spus;
-   struct cell_command *cmd;
-} ALIGN16;
+extern struct cell_winsys *
+cell_get_winsys(uint format);
 
 
 
-
-#endif /* CELL_COMMON_H */
+#endif

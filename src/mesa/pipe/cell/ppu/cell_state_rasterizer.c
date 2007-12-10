@@ -25,70 +25,41 @@
  * 
  **************************************************************************/
 
-/**
- * Types and tokens which are common to the SPU and PPU code.
- */
-
-
-#ifndef CELL_COMMON_H
-#define CELL_COMMON_H
-
+#include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/draw/draw_context.h"
+#include "cell_context.h"
+#include "cell_state.h"
 
 
-#define ALIGN16 __attribute__( (aligned( 16 )) )
-
-#define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
-
-
-
-#define TILE_SIZE 32
-
-
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
-#define CELL_CMD_FINISH       5
-
-
-/**
- * Tell SPUs about the framebuffer size, location
- */
-struct cell_command_framebuffer
+void *
+cell_create_rasterizer_state(struct pipe_context *pipe,
+                             const struct pipe_rasterizer_state *setup)
 {
-   void *start;
-   int width, height;
-   unsigned format;
-} ALIGN16;
+   struct pipe_rasterizer_state *state =
+      MALLOC( sizeof(struct pipe_rasterizer_state) );
+   memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
+   return state;
+}
 
 
-/**
- * Clear framebuffer tiles to given value/color.
- */
-struct cell_command_clear_tiles
+void
+cell_bind_rasterizer_state(struct pipe_context *pipe, void *setup)
 {
-   uint value;
-} ALIGN16;
+   struct cell_context *cell = cell_context(pipe);
 
+   /* pass-through to draw module */
+   draw_set_rasterizer_state(cell->draw, setup);
 
-/** XXX unions don't seem to work */
-struct cell_command
+   cell->rasterizer = (struct pipe_rasterizer_state *)setup;
+
+   cell->dirty |= CELL_NEW_RASTERIZER;
+}
+
+void
+cell_delete_rasterizer_state(struct pipe_context *pipe, void *rasterizer)
 {
-   struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
-} ALIGN16;
+   FREE( rasterizer );
+}
 
 
-struct cell_init_info
-{
-   unsigned id;
-   unsigned num_spus;
-   struct cell_command *cmd;
-} ALIGN16;
-
-
-
-
-#endif /* CELL_COMMON_H */

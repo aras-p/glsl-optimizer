@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,82 +25,76 @@
  * 
  **************************************************************************/
 
-/**
- * Authors
+/* Authors:
  *  Brian Paul
  */
 
-#include <stdio.h>
-#include <assert.h>
-#include <stdint.h>
-#include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
-#include "pipe/cell/common.h"
 #include "cell_context.h"
-#include "cell_surface.h"
-#include "cell_spu.h"
-
-
-
-struct pipe_surface *
-cell_create_surface(int width, int height)
-{
+#include "cell_state.h"
 #if 0
-   /* XXX total hack */
-   struct pipe_surface *ps = CALLOC_STRUCT(pipe_surface);
-
-   printf("cell_create_surface\n");
-
-   ps->width = width;
-   ps->height = height;
-
-   ps->region = CALLOC_STRUCT(pipe_region);
-   ps->region->map = align_malloc(width * height * 4, 16);
-   return ps;
+#include "cell_texture.h"
+#include "cell_tile_cache.h"
 #endif
-   return NULL;
+
+
+void *
+cell_create_sampler_state(struct pipe_context *pipe,
+                          const struct pipe_sampler_state *sampler)
+{
+   struct pipe_sampler_state *state = MALLOC( sizeof(struct pipe_sampler_state) );
+   memcpy(state, sampler, sizeof(struct pipe_sampler_state));
+   return state;
+}
+
+void
+cell_bind_sampler_state(struct pipe_context *pipe,
+                            unsigned unit, void *sampler)
+{
+   struct cell_context *cell = cell_context(pipe);
+
+   assert(unit < PIPE_MAX_SAMPLERS);
+   cell->sampler[unit] = (struct pipe_sampler_state *)sampler;
+
+   cell->dirty |= CELL_NEW_SAMPLER;
 }
 
 
+void
+cell_delete_sampler_state(struct pipe_context *pipe,
+                              void *sampler)
+{
+   FREE( sampler );
+}
+
 
 void
-cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
-                   unsigned clearValue)
+cell_set_texture_state(struct pipe_context *pipe,
+                           unsigned unit,
+                           struct pipe_texture *texture)
+{
+   struct cell_context *cell = cell_context(pipe);
+
+   assert(unit < PIPE_MAX_SAMPLERS);
+
+#if 0
+   cell->texture[unit] = cell_texture(texture);  /* ptr, not struct */
+   cell_tile_cache_set_texture(cell->tex_cache[unit], texture);
+#endif
+
+   cell->dirty |= CELL_NEW_TEXTURE;
+}
+
+
+void
+cell_set_sampler_units(struct pipe_context *pipe,
+                           uint num_samplers, const uint *units )
 {
    struct cell_context *cell = cell_context(pipe);
    uint i;
-
-   printf("%s 0x%08x\n", __FUNCTION__, clearValue);
-
-   {
-      char s[100];
-      pf_sprint_name(s, ps->format);
-      printf("format  = %s\n", s);
-   }
-
-   if (!ps->map)
-      pipe_surface_map(ps);
-
-   for (i = 0; i < cell->num_spus; i++) {
-      command[i].fb.start = ps->map;
-      command[i].fb.width = ps->width;
-      command[i].fb.height = ps->height;
-      command[i].fb.format = ps->format;
-      send_mbox_message(control_ps_area[i], CELL_CMD_FRAMEBUFFER);
-   }
-
-   for (i = 0; i < cell->num_spus; i++) {
-      command[i].clear.value = clearValue | (i << 21);
-      send_mbox_message(control_ps_area[i], CELL_CMD_CLEAR_TILES);
-   }
+   for (i = 0; i < num_samplers; i++)
+      cell->sampler_units[i] = units[i];
+   cell->dirty |= CELL_NEW_SAMPLER;
 }
 
 
-void
-cell_set_clear_color_state(struct pipe_context *pipe,
-                           const struct pipe_clear_color_state *clear)
-{
-   struct cell_context *cell = cell_context(pipe);
-
-   cell->clear_color = *clear; /* struct copy */
-}
