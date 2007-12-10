@@ -695,7 +695,7 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 
 	if (!fp->on_hw) {
 		if (!fp->buffer)
-			fp->buffer = ws->buffer_create(ws, 0x100);
+			fp->buffer = ws->buffer_create(ws, 0x100, 0, 0);
 
 #if 0
 		int i;

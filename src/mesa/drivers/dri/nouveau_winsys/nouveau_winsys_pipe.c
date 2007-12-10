@@ -73,7 +73,8 @@ nouveau_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
 }
 
 static struct pipe_buffer_handle *
-nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment)
+nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
+		       unsigned flags, unsigned hint)
 {
 	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
 	struct nouveau_device *dev = nvpws->nv->nv_screen->device;
@@ -144,7 +145,7 @@ nouveau_pipe_bo_reference(struct pipe_winsys *pws,
 	}
 }
 
-static void
+static int
 nouveau_pipe_bo_data(struct pipe_winsys *pws, struct pipe_buffer_handle *bo,
 		     unsigned size, const void *data, unsigned usage)
 {
@@ -155,13 +156,15 @@ nouveau_pipe_bo_data(struct pipe_winsys *pws, struct pipe_buffer_handle *bo,
 
 	if (data) {
 		if (nouveau_bo_map(nvbo, NOUVEAU_BO_WR))
-			return;
+			return 1;
 		memcpy(nvbo->map, data, size);
 		nouveau_bo_unmap(nvbo);
 	}
+
+	return 0;
 }
 
-static void
+static int
 nouveau_pipe_bo_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *bo,
 			unsigned long offset, unsigned long size,
 			const void *data)
@@ -169,12 +172,14 @@ nouveau_pipe_bo_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *bo,
 	struct nouveau_bo *nvbo = (struct nouveau_bo *)bo;
 
 	if (nouveau_bo_map(nvbo, NOUVEAU_BO_WR))
-		return;
+		return 1;
 	memcpy(nvbo->map + offset, data, size);
 	nouveau_bo_unmap(nvbo);
+
+	return 0;
 }
 
-static void
+static int
 nouveau_pipe_bo_get_subdata(struct pipe_winsys *pws,
 			    struct pipe_buffer_handle *bo, unsigned long offset,
 			    unsigned long size, void *data)
@@ -182,9 +187,11 @@ nouveau_pipe_bo_get_subdata(struct pipe_winsys *pws,
 	struct nouveau_bo *nvbo = (struct nouveau_bo *)bo;
 
 	if (nouveau_bo_map(nvbo, NOUVEAU_BO_RD))
-		return;
+		return 1;
 	memcpy(data, nvbo->map + offset, size);
 	nouveau_bo_unmap(nvbo);
+
+	return 0;
 }
 
 struct pipe_winsys *
