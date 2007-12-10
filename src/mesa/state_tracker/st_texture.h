@@ -33,7 +33,6 @@
 
 struct pipe_context;
 struct pipe_texture;
-struct pipe_region;
 
 
 extern struct pipe_texture *
