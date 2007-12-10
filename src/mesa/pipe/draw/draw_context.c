@@ -102,7 +102,8 @@ void draw_destroy( struct draw_context *draw )
    draw->pipeline.cull->destroy( draw->pipeline.cull );
    draw->pipeline.feedback->destroy( draw->pipeline.feedback );
    draw->pipeline.validate->destroy( draw->pipeline.validate );
-   draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
+   if (draw->pipeline.rasterize)
+      draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    FREE( draw->vcache.vertex[0] ); /* Frees all the vertices. */
    FREE( draw );
 }

@@ -154,7 +154,7 @@ struct softpipe_context {
    struct draw_stage *setup;
    struct draw_stage *vbuf;
 
-   struct pipe_surface *cbuf;      /**< current color buffer (one of cbufs) */
+   uint current_cbuf;      /**< current color buffer being written to */
 
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    struct softpipe_tile_cache *zbuf_cache;
