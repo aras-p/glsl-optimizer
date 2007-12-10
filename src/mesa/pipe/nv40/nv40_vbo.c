@@ -158,16 +158,28 @@ nv40_draw_elements(struct pipe_context *pipe,
 }
 
 static INLINE int
-nv40_vbo_format_to_ncomp(uint format)
+nv40_vbo_ncomp(uint format)
 {
-	switch (format) {
-	case PIPE_FORMAT_R32G32B32A32_FLOAT: return 4;
-	case PIPE_FORMAT_R32G32B32_FLOAT: return 3;
-	case PIPE_FORMAT_R32G32_FLOAT: return 2;
-	case PIPE_FORMAT_R32_FLOAT: return 1;
+	int ncomp = 0;
+
+	if (pf_size_x(format)) ncomp++;
+	if (pf_size_y(format)) ncomp++;
+	if (pf_size_z(format)) ncomp++;
+	if (pf_size_w(format)) ncomp++;
+
+	return ncomp;
+}
+
+static INLINE int
+nv40_vbo_type(uint format)
+{
+	switch (pf_type(format)) {
+	case PIPE_FORMAT_TYPE_FLOAT:
+		return NV40TCL_VTXFMT_TYPE_FLOAT;
+	case PIPE_FORMAT_TYPE_UNORM:
+		return NV40TCL_VTXFMT_TYPE_UBYTE;
 	default:
-	       NOUVEAU_ERR("AII, unknown vbo format %d\n", format);
-	       return 1;
+		assert(0);
 	}
 }
 
@@ -207,9 +219,9 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 			  NOUVEAU_BO_OR | NOUVEAU_BO_RD, 0,
 			  NV40TCL_VTXBUF_ADDRESS_DMA1);
 		vtxfmt[hw] = ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
-			      (nv40_vbo_format_to_ncomp(ve->src_format) <<
+			      (nv40_vbo_ncomp(ve->src_format) <<
 			       NV40TCL_VTXFMT_SIZE_SHIFT) |
-			      NV40TCL_VTXFMT_TYPE_FLOAT);
+			      nv40_vbo_type(ve->src_format));
 	}
 
 	BEGIN_RING(curie, 0x1710, 1);
