@@ -127,7 +127,7 @@ struct xmesa_softpipe_winsys
 static INLINE struct xmesa_surface *
 xmesa_surface(struct pipe_surface *ps)
 {
-   assert(0);
+//   assert(0);
    return (struct xmesa_surface *) ps;
 }
 
