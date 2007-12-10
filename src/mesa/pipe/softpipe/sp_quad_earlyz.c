@@ -56,18 +56,14 @@ earlyz_quad(
    quad->outputs.depth[2] = z0 + dzdy;
    quad->outputs.depth[3] = z0 + dzdx + dzdy;
 
-   if (qs->next) {
-      qs->next->run( qs->next, quad );
-   }
+   qs->next->run( qs->next, quad );
 }
 
 static void
 earlyz_begin(
    struct quad_stage *qs )
 {
-   if (qs->next) {
-      qs->next->begin( qs->next );
-   }
+   qs->next->begin( qs->next );
 }
 
 static void

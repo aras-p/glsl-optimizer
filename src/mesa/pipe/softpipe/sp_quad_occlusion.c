@@ -52,15 +52,13 @@ occlusion_count_quad(struct quad_stage *qs, struct quad_header *quad)
    occ->count += (quad->mask >> 2) & 1;
    occ->count += (quad->mask >> 3) & 1;
 
-   if (quad->mask)
-      qs->next->run(qs->next, quad);
+   qs->next->run(qs->next, quad);
 }
 
 
 static void occlusion_begin(struct quad_stage *qs)
 {
-   if (qs->next)
-      qs->next->begin(qs->next);
+   qs->next->begin(qs->next);
 }
 
 

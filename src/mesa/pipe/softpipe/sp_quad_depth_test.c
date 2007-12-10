@@ -253,8 +253,7 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
 static void depth_test_begin(struct quad_stage *qs)
 {
-   if (qs->next)
-      qs->next->begin(qs->next);
+   qs->next->begin(qs->next);
 }
 
 
