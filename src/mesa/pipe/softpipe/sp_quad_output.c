@@ -49,6 +49,7 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
    /* in-tile pos: */
    const int itx = quad->x0 % TILE_SIZE;
    const int ity = quad->y0 % TILE_SIZE;
+   float (*quadColor)[4] = quad->outputs.color;
    int i, j;
 
    /* get/swizzle dest colors */
@@ -57,7 +58,7 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
          int x = itx + (j & 1);
          int y = ity + (j >> 1);
          for (i = 0; i < 4; i++) { /* loop over color chans */
-            tile->data.color[y][x][i] = quad->outputs.color[i][j];
+            tile->data.color[y][x][i] = quadColor[i][j];
          }
       }
    }

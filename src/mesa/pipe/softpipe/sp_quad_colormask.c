@@ -52,6 +52,7 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
       = sp_get_cached_tile(softpipe,
                            softpipe->cbuf_cache[softpipe->current_cbuf],
                            quad->x0, quad->y0);
+   float (*quadColor)[4] = quad->outputs.color;
    uint i, j;
 
    /* get/swizzle dest colors */
@@ -65,19 +66,19 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* R */
    if (!(softpipe->blend->colormask & PIPE_MASK_R))
-       COPY_4V(quad->outputs.color[0], dest[0]);
+       COPY_4V(quadColor[0], dest[0]);
 
    /* G */
    if (!(softpipe->blend->colormask & PIPE_MASK_G))
-       COPY_4V(quad->outputs.color[1], dest[1]);
+       COPY_4V(quadColor[1], dest[1]);
 
    /* B */
    if (!(softpipe->blend->colormask & PIPE_MASK_B))
-       COPY_4V(quad->outputs.color[2], dest[2]);
+       COPY_4V(quadColor[2], dest[2]);
 
    /* A */
    if (!(softpipe->blend->colormask & PIPE_MASK_A))
-       COPY_4V(quad->outputs.color[3], dest[3]);
+       COPY_4V(quadColor[3], dest[3]);
 
    /* pass quad to next stage */
    qs->next->run(qs->next, quad);

@@ -16,6 +16,7 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_context *softpipe = qs->softpipe;
    const float ref = softpipe->alpha_test->ref;
    unsigned passMask = 0x0, j;
+   const float *aaaa = quad->outputs.color[3];
 
    switch (softpipe->alpha_test->func) {
    case PIPE_FUNC_NEVER:
@@ -27,42 +28,42 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
        * passMask = (quad->outputs.color[3] <= vec4(ref));
        */
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->outputs.color[3][j] < ref) {
+         if (aaaa[j] < ref) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_EQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->outputs.color[3][j] == ref) {
+         if (aaaa[j] == ref) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_LEQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->outputs.color[3][j] <= ref) {
+         if (aaaa[j] <= ref) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_GREATER:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->outputs.color[3][j] > ref) {
+         if (aaaa[j] > ref) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_NOTEQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->outputs.color[3][j] != ref) {
+         if (aaaa[j] != ref) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_GEQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if (quad->outputs.color[3][j] >= ref) {
+         if (aaaa[j] >= ref) {
             passMask |= (1 << j);
          }
       }
