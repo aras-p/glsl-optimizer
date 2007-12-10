@@ -52,6 +52,7 @@
  * Note: this is exactly like a8r8g8b8_get_tile() in sp_surface.c
  * Share it someday.
  */
+/** XXX this will go away eventually */
 static void
 i915_get_tile_rgba(struct pipe_context *pipe,
                    struct pipe_surface *ps,
@@ -105,13 +106,42 @@ i915_get_tile_rgba(struct pipe_context *pipe,
 }
 
 
+/** XXX this will go away eventually */
 static void
 i915_put_tile_rgba(struct pipe_context *pipe,
                    struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h, const float *p)
 {
-   /* TODO */
-   assert(0);
+   unsigned *dst
+      = ((unsigned *) (ps->map))
+      + y * ps->pitch + x;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_A8R8G8B8_UNORM);
+
+   CLIP_TILE;
+
+   switch (ps->format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      for (i = 0; i < h; i++) {
+         const float *pRow = p;
+         for (j = 0; j < w; j++) {
+            unsigned r, g, b, a;
+            UNCLAMPED_FLOAT_TO_UBYTE(r, pRow[0]);
+            UNCLAMPED_FLOAT_TO_UBYTE(g, pRow[1]);
+            UNCLAMPED_FLOAT_TO_UBYTE(b, pRow[2]);
+            UNCLAMPED_FLOAT_TO_UBYTE(a, pRow[3]);
+            dst[j] = (a << 24) | (r << 16) | (g << 8) | b;
+            pRow += 4;
+         }
+         dst += ps->pitch;
+         p += w0 * 4;
+      }
+      break;
+   default:
+      assert(0);
+   }
 }
 
 
