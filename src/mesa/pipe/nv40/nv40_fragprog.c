@@ -85,6 +85,9 @@ emit_src(struct nv40_fpc *fpc, uint32_t *hw, int pos, struct nv40_sreg src)
 		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
 		hw[0] |= (src.index << NV40_FP_OP_INPUT_SRC_SHIFT);
 		break;
+	case NV40SR_OUTPUT:
+		sr |= NV40_FP_REG_SRC_HALF;
+		/* fall-through */
 	case NV40SR_TEMP:
 		sr |= (NV40_FP_REG_TYPE_TEMP << NV40_FP_REG_TYPE_SHIFT);
 		sr |= (src.index << NV40_FP_REG_SRC_SHIFT);
@@ -129,7 +132,7 @@ emit_dst(struct nv40_fpc *fpc, uint32_t *hw, struct nv40_sreg dst)
 		if (dst.index == 1) {
 			fp->writes_depth = 1;
 		} else {
-			hw[0] |= NV40_FP_OP_UNK0_7;
+			hw[0] |= NV40_FP_OP_OUT_REG_HALF;
 		}
 		break;
 	case NV40SR_NONE:
@@ -212,6 +215,15 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 		src = nv40_sr(NV40SR_TEMP, fsrc->SrcRegister.Index + 1);
 		if (fpc->high_temp < src.index)
 			fpc->high_temp = src.index;
+		break;
+	/* This is clearly insane, but gallium hands us shaders like this.
+	 * Luckily fragprog results are just temp regs..
+	 */
+	case TGSI_FILE_OUTPUT:
+		if (fsrc->SrcRegister.Index == fpc->colour_id)
+			return nv40_sr(NV40SR_OUTPUT, 0);
+		else
+			return nv40_sr(NV40SR_OUTPUT, 1);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -390,6 +402,8 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			break;
 		case TGSI_FILE_SAMPLER:
 			unit = fsrc->SrcRegister.Index;
+			break;
+		case TGSI_FILE_OUTPUT:
 			break;
 		default:
 			NOUVEAU_ERR("bad src file\n");

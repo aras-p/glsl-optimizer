@@ -292,9 +292,9 @@
 //== Opcode / Destination selection ==
 #define NV40_FP_OP_PROGRAM_END                                          (1 << 0)
 #define NV40_FP_OP_OUT_REG_SHIFT                                               1
-#define NV40_FP_OP_OUT_REG_MASK                                        (31 << 1)
+#define NV40_FP_OP_OUT_REG_MASK                                        (63 << 1)
 /* Needs to be set when writing outputs to get expected result.. */
-#define NV40_FP_OP_UNK0_7                                               (1 << 7)
+#define NV40_FP_OP_OUT_REG_HALF                                         (1 << 7)
 #define NV40_FP_OP_COND_WRITE_ENABLE                                    (1 << 8)
 #define NV40_FP_OP_OUTMASK_SHIFT                                               9
 #define NV40_FP_OP_OUTMASK_MASK                                       (0xF << 9)
@@ -456,8 +456,8 @@
 #        define NV40_FP_REG_TYPE_INPUT                                         1
 #        define NV40_FP_REG_TYPE_CONST                                         2
 #define NV40_FP_REG_SRC_SHIFT                                                  2
-#define NV40_FP_REG_SRC_MASK                                           (31 << 2)
-#define NV40_FP_REG_UNK_0                                               (1 << 8)
+#define NV40_FP_REG_SRC_MASK                                           (63 << 2)
+#define NV40_FP_REG_SRC_HALF                                            (1 << 8)
 #define NV40_FP_REG_SWZ_ALL_SHIFT                                              9
 #define NV40_FP_REG_SWZ_ALL_MASK                                      (255 << 9)
 #define NV40_FP_REG_SWZ_X_SHIFT                                                9
