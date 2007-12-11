@@ -35,11 +35,11 @@
 
 #include "glxheader.h"
 #include "xmesaP.h"
-#include "main/macros.h"
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
+#include "pipe/p_util.h"
 #include "pipe/softpipe/sp_winsys.h"
 
 #ifdef GALLIUM_CELL
@@ -47,47 +47,6 @@
 #include "pipe/cell/ppu/cell_winsys.h"
 #endif
 #include "xm_winsys_aub.h"
-
-
-/** XXX from Mesa core */
-static void *
-align_malloc(size_t bytes, unsigned long alignment)
-{
-#if defined(HAVE_POSIX_MEMALIGN)
-   void *mem;
-
-   (void) posix_memalign(& mem, alignment, bytes);
-   return mem;
-#else
-   uintptr_t ptr, buf;
-
-   assert( alignment > 0 );
-
-   ptr = (uintptr_t) malloc(bytes + alignment + sizeof(void *));
-   if (!ptr)
-      return NULL;
-
-   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
-   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
-
-   return (void *) buf;
-#endif /* defined(HAVE_POSIX_MEMALIGN) */
-}
-
-
-/** XXX from Mesa core */
-static void
-align_free(void *ptr)
-{
-#if defined(HAVE_POSIX_MEMALIGN)
-   free(ptr);
-#else
-   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
-   void *realAddr = *cubbyHole;
-   free(realAddr);
-#endif /* defined(HAVE_POSIX_MEMALIGN) */
-}
-
 
 
 /**

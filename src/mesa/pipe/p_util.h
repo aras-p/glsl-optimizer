@@ -30,6 +30,8 @@
 
 #include "p_compiler.h"
 #include <math.h>
+#include <stdint.h>
+
 
 #ifdef WIN32
 
@@ -93,7 +95,7 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define GETENV( X )  NULL
 
-#else // WIN32
+#else /* WIN32 */
 
 #define MALLOC( SIZE )  malloc( SIZE )
 
@@ -105,9 +107,55 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define GETENV( X )  getenv( X )
 
-#endif // WIN32
+#endif /* WIN32 */
 
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
+
+
+
+/**
+ * Return memory on given byte alignment
+ */
+static INLINE void *
+align_malloc(size_t bytes, unsigned long alignment)
+{
+#if defined(HAVE_POSIX_MEMALIGN)
+   void *mem;
+
+   (void) posix_memalign(& mem, alignment, bytes);
+   return mem;
+#else
+   uintptr_t ptr, buf;
+
+   assert( alignment > 0 );
+
+   ptr = (uintptr_t) MALLOC(bytes + alignment + sizeof(void *));
+   if (!ptr)
+      return NULL;
+
+   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
+   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
+
+   return (void *) buf;
+#endif /* defined(HAVE_POSIX_MEMALIGN) */
+}
+
+/**
+ * Free memory returned by align_malloc().
+ */
+static INLINE void
+align_free(void *ptr)
+{
+#if defined(HAVE_POSIX_MEMALIGN)
+   FREE(ptr);
+#else
+   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
+   void *realAddr = *cubbyHole;
+   FREE(realAddr);
+#endif /* defined(HAVE_POSIX_MEMALIGN) */
+}
+
+
 
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
