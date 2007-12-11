@@ -34,8 +34,9 @@
   - Pipe drivers:
     - \ref softpipe
     - \ref i915simple
-    - \ref failover
+    - Simple 965 driver (brw_context.h, brw_winsys.h)
     - Cell driver (cell_context.h, cell_winsys.h)
+    - \ref failover
 
   - Winsys drivers:
     - X11 winsys driver (xm_winsys.c)
@@ -126,6 +127,7 @@
   will have equivalent functionality and performance to the current Mesa
   i915tex driver, but from a much smaller codebase.
 
+  \sa i915_context.h
   \sa i915_winsys.h
 */
 
