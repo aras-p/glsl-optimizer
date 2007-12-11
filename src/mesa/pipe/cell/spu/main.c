@@ -34,6 +34,7 @@
 #include <libmisc.h>
 #include <spu_mfcio.h>
 
+#include "main.h"
 #include "tri.h"
 #include "pipe/cell/common.h"
 
@@ -43,21 +44,15 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
-static struct cell_init_info init;
+struct cell_init_info init;
 
-struct framebuffer {
-   void *start;
-   uint width, height;
-   uint width_tiles, height_tiles; /**< width and height in tiles */
-};
-static struct framebuffer fb;
+struct framebuffer fb;
 
-
-static int DefaultTag = 1;
+int DefaultTag;
 
 
 
-static inline void
+void
 wait_on_mask(unsigned tag)
 {
    mfc_write_tag_mask( tag );
@@ -66,7 +61,7 @@ wait_on_mask(unsigned tag)
 
 
 
-static void
+void
 get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile)
 {
    uint offset = ty * fb->width_tiles + tx;
@@ -89,7 +84,7 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile)
            0  /* rid */);
 }
 
-static void
+void
 put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile)
 {
    uint offset = ty * fb->width_tiles + tx;
@@ -136,31 +131,28 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
 }
 
 
-/** Invert all pixels in all tiles */
 static void
-invert_tiles(void)
+triangle(const struct cell_command_triangle *tri)
 {
    uint num_tiles = fb.width_tiles * fb.height_tiles;
-   uint i, j;
-   uint tile[TILE_SIZE * TILE_SIZE] ALIGN16;
+   struct prim_header prim;
+   uint i;
+
+   prim.v[0].data[0][0] = tri->x0;
+   prim.v[0].data[0][1] = tri->y0;
+   prim.v[1].data[0][0] = tri->x1;
+   prim.v[1].data[0][1] = tri->y1;
+   prim.v[2].data[0][0] = tri->x2;
+   prim.v[2].data[0][1] = tri->y2;
+   prim.color = tri->color;
 
    for (i = init.id; i < num_tiles; i += init.num_spus) {
       uint tx = i % fb.width_tiles;
       uint ty = i / fb.width_tiles;
-
-      get_tile(&fb, tx, ty, tile);
-      wait_on_mask(1 << DefaultTag);
-
-      for (j = 0; j < TILE_SIZE * TILE_SIZE; j++) {
-         tile[j] = ~tile[j];
-      }
-
-      put_tile(&fb, tx, ty, tile);
+      draw_triangle(&prim, tx, ty);
    }
 }
 
-
-struct cell_command cmd ALIGN16;
 
 
 /**
@@ -169,7 +161,9 @@ struct cell_command cmd ALIGN16;
 static void
 main_loop(void)
 {
+   struct cell_command cmd ALIGN16;
    int exitFlag = 0;
+
    printf("SPU %u: Enter main loop\n", init.id);
 
    assert((sizeof(struct cell_command) & 0xf) == 0);
@@ -207,17 +201,23 @@ main_loop(void)
                 cmd.fb.start);
          fb.width = cmd.fb.width;
          fb.height = cmd.fb.height;
-         fb.width_tiles = fb.width / TILE_SIZE;
-         fb.height_tiles = fb.height / TILE_SIZE;
+         fb.width_tiles = (fb.width + TILE_SIZE - 1) / TILE_SIZE;
+         fb.height_tiles = (fb.height + TILE_SIZE - 1) / TILE_SIZE;
+         printf("SPU %u: %u x %u tiles\n",
+                init.id, fb.width_tiles, fb.height_tiles);
          fb.start = cmd.fb.start;
          break;
       case CELL_CMD_CLEAR_TILES:
          printf("SPU %u: CLEAR to 0x%08x\n", init.id, cmd.clear.value);
          clear_tiles(&cmd.clear);
          break;
-      case CELL_CMD_INVERT_TILES:
-         printf("SPU %u: INVERT_TILES\n", init.id);
-         invert_tiles();
+      case CELL_CMD_TRIANGLE:
+         printf("SPU %u: TRIANGLE (%g,%g) (%g,%g) (%g,%g)\n",
+                init.id,
+                cmd.tri.x0, cmd.tri.y0,
+                cmd.tri.x1, cmd.tri.y1,
+                cmd.tri.x2, cmd.tri.y2);
+         triangle(&cmd.tri);
          break;
       case CELL_CMD_FINISH:
          printf("SPU %u: FINISH\n", init.id);
@@ -244,6 +244,8 @@ main(unsigned long long speid,
      unsigned long long envp)
 {
    int tag = 0;
+
+   DefaultTag = 1;
 
    (void) speid;
    (void) envp;

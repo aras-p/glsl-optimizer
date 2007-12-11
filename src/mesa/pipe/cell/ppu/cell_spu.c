@@ -171,20 +171,6 @@ test_spus(struct cell_context *cell)
    }
 
    for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(control_ps_area[i], CELL_CMD_INVERT_TILES);
-   }
-
-   finish_all(cell->num_spus);
-
-   {
-      uint *b = (uint*) surf->map;
-      printf("PPU: Inverted results: 0x%x 0x%x 0x%x 0x%x\n",
-             b[0], b[1000], b[2000], b[3000]);
-   }
-
-
-
-   for (i = 0; i < cell->num_spus; i++) {
       send_mbox_message(control_ps_area[i], CELL_CMD_EXIT);
    }
 }

@@ -211,6 +211,7 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    if (xm_buf->size != size) {
       if (xm_buf->data)
          align_free(xm_buf->data);
+      /* align to 16-byte multiple for Cell */
       xm_buf->data = align_malloc(size, 16);
       xm_buf->size = size;
    }
@@ -254,6 +255,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
    XImage *ximage = b->tempImage;
    struct xm_buffer *xm_buf = xm_bo(surf->buffer);
    const int TILE_SIZE = 32;
+   const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
    uint x, y;
 
    /* check that the XImage has been previously initialized */
@@ -271,7 +273,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
          int dy = y;
          int tx = x / TILE_SIZE;
          int ty = y / TILE_SIZE;
-         int offset = ty * (surf->width / TILE_SIZE) + tx;
+         int offset = ty * tilesPerRow + tx;
          offset *= 4 * TILE_SIZE * TILE_SIZE;
 
          ximage->data = (char *) xm_buf->data + offset;

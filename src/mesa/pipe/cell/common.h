@@ -49,7 +49,7 @@
 #define CELL_CMD_EXIT         1
 #define CELL_CMD_FRAMEBUFFER  2
 #define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
+#define CELL_CMD_TRIANGLE     4
 #define CELL_CMD_FINISH       5
 
 
@@ -73,11 +73,21 @@ struct cell_command_clear_tiles
 } ALIGN16;
 
 
+struct cell_command_triangle
+{
+   float x0, y0;
+   float x1, y1;
+   float x2, y2;
+   uint color;
+} ALIGN16;
+
+
 /** XXX unions don't seem to work */
 struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_tiles clear;
+   struct cell_command_triangle tri;
 } ALIGN16;
 
 
