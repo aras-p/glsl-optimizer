@@ -39,7 +39,6 @@ extern struct pipe_texture *
 st_texture_create(struct st_context *st,
                   unsigned target,
 		  unsigned format,
-                  GLenum internal_format,
                   GLuint first_level,
                   GLuint last_level,
                   GLuint width0,

@@ -264,10 +264,9 @@ struct pipe_texture
 { 
    /* Effectively the key:
     */
-   unsigned target;            /* XXX convert to PIPE_TEXTURE_x */
-   unsigned internal_format;   /* XXX convert to PIPE_FORMAT_x */
-
+   unsigned target;            /**< PIPE_TEXTURE_x */
    enum pipe_format format;    /**< PIPE_FORMAT_x */
+
    unsigned first_level;
    unsigned last_level;
 

@@ -366,7 +366,6 @@ guess_and_alloc_texture(struct st_context *st,
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat),
-				 stImage->base.InternalFormat,
                                  firstLevel,
                                  lastLevel,
                                  width,
@@ -1481,7 +1480,8 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (stObj->pt &&
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
-	stObj->pt->internal_format != firstImage->base.InternalFormat ||
+	stObj->pt->format !=
+	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
 	stObj->pt->first_level != stObj->firstLevel ||
 	stObj->pt->last_level != stObj->lastLevel ||
 	stObj->pt->width[0] != firstImage->base.Width ||
@@ -1499,7 +1499,6 @@ st_finalize_texture(GLcontext *ctx,
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
                                     st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat),
-				    firstImage->base.InternalFormat,
                                     stObj->firstLevel,
                                     stObj->lastLevel,
                                     firstImage->base.Width,

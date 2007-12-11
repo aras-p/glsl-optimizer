@@ -63,7 +63,6 @@ struct pipe_texture *
 st_texture_create(struct st_context *st,
                   unsigned target,
 		  unsigned format,
-		  GLenum internal_format,
 		  GLuint first_level,
 		  GLuint last_level,
 		  GLuint width0,
@@ -77,7 +76,7 @@ st_texture_create(struct st_context *st,
 
    DBG("%s target %s format %s level %d..%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(internal_format), first_level, last_level);
+       _mesa_lookup_enum_by_nr(format), first_level, last_level);
 
    if (!pt)
       return NULL;
@@ -86,7 +85,6 @@ st_texture_create(struct st_context *st,
 
    pt->target = target;
    pt->format = format;
-   pt->internal_format = internal_format;
    pt->first_level = first_level;
    pt->last_level = last_level;
    pt->width[0] = width0;
@@ -119,7 +117,7 @@ st_texture_match_image(struct pipe_texture *pt,
    if (image->Border) 
       return GL_FALSE;
 
-   if (image->InternalFormat != pt->internal_format ||
+   if (st_mesa_format_to_pipe_format(image->TexFormat->MesaFormat) != pt->format ||
        image->IsCompressed != pt->compressed)
       return GL_FALSE;
 
