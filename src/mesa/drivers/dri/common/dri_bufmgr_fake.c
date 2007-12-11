@@ -962,6 +962,7 @@ dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
    struct fake_buffer_reloc *r = &bufmgr_fake->reloc[bufmgr_fake->nr_relocs++];
    dri_bo_fake *target_fake = (dri_bo_fake *)target_buf;
    dri_bo_fake *reloc_fake = (dri_bo_fake *)reloc_buf;
+   int i;
 
    assert(bufmgr_fake->nr_relocs <= MAX_RELOCS);
 
@@ -986,6 +987,17 @@ dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
    r->offset = offset;
    r->delta = delta;
    r->validate_flags = flags;
+
+   /* Check that a conflicting relocation hasn't already been emitted. */
+   for (i = 0; i < bufmgr_fake->nr_relocs - 1; i++) {
+      struct fake_buffer_reloc *r2 = &bufmgr_fake->reloc[i];
+
+      assert(r->reloc_buf != r2->reloc_buf ||
+	     r->offset != r2->offset ||
+	     (r->target_buf == r2->target_buf &&
+	      r->delta == r2->delta &&
+	      r->validate_flags == r2->validate_flags));
+   }
 
    return;
 }
