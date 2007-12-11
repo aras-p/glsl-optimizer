@@ -152,7 +152,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (0);
 
-	pipe->winsys->buffer_unmap(pipe->winsys, ib);
+	pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
 	pipe->flush(pipe, 0);
 	return TRUE;
 }
