@@ -1,17 +1,200 @@
 /** \mainpage
 
-\sa http://www.tungstengraphics.com/wiki/index.php/Gallium3D
-\sa \ref glxgears
+  \section about About
+
+  Gallium3D is <a href="http://www.tungstengraphics.com/">Tungsten Graphics</a>'
+  new architecture for building 3D graphics drivers. Initially
+  supporting Mesa and Linux graphics drivers, Gallium3D is designed to allow
+  portability to all major operating systems and graphics interfaces.
+
+  Compared to existing Linux graphics drivers, Gallium3D will:
+
+  - Make drivers smaller and simpler.
+    Current DRI drivers are rather complicated. They're large, contain
+    duplicated code and are burdened with implementing many concepts tightly
+    tied to the OpenGL 1.x/2.x API. 
+
+  - Model modern graphics hardware.
+    The new driver architecture is an abstraction of modern graphics hardware,
+    rather than an OpenGL->hardware translator. The new driver interface will
+    assume the presence of programmable vertex/fragment shaders and flexible
+    memory objects. 
+
+  - Support multiple graphics APIs.
+    The OpenGL 3.0 API will be very different from OpenGL 1.x/2.x. We'd like a
+    driver model that is API-neutral so that it's not tied to a specific
+    graphics API.
+
+  \section contents Contents
+
+  - \ref overview
+
+  - \ref statetracker
+  
+  - Pipe drivers:
+    - \ref softpipe
+    - \ref i915simple
+    - \ref failover
+    - Cell driver (cell_context.h, cell_winsys.h)
+
+  - Winsys drivers:
+    - X11 winsys driver (xm_winsys.c)
+    - Intel DRI winsys driver (intel_context.h, intel_winsys_pipe.c)
+  
+  - Ancillary Modules:
+    - \ref draw
+    - \ref tgsi
+      - LLVM TGSI backend (gallivm.h)
+
+  - \ref callgraph
+
+  \section external External documentation
+
+  - <a href="http://www.tungstengraphics.com/gallium3D.htm">Gallium3D's Architectural Overview</a>
+  - <a href="http://www.tungstengraphics.com/wiki/index.php/Gallium3D">Technical Overview</a>
+  - <a href="http://www.tungstengraphics.com/wiki/files/gallium3d-xds2007.pdf">Gallium3D talk from XDS 2007</a>
 
 */
 
-/** \page glxgears glxgears example
+/** \page overview Overview
 
-  Profile of the glxgears application with the Gallium3D's softpipe reference driver.
+  The public interface of a Gallium3D driver is described by the p_context.h
+  header file. The pipe_context structure is an abstract base class with
+  methods for:
+
+  - Setting rendering state (texture sampler state, vertex array info, drawing surfaces, etc.) 
+
+  - Setting shader state, using the TGSI binary shader representation. 
+
+  - Vertex array and indexed vertex array drawing. 
+
+  - Region (memory) management for textures, renderbuffers, vertex buffers, etc. 
+
+  - Hardware queries (number of texture units, max texture size, etc). 
+
+  The p_state.h header defines all the state objects (such as polygon
+  rasterization options, blend modes, etc) and resources (drawing surfaces,
+  textures, memory buffers). The pipe interface uses "constant state" objects.
+  That is, state objects are created once and are immutable. State objects are
+  put into effect by binding them. This allows Gallium3D drivers to create
+  corresponding hardware state objects which can be quickly handled.
+
+  The p_defines.h header defines numerous constants and tokens (blend modes,
+  texture wrap modes, surface formats, etc.
+
+  The p_winsys.h header defines the window system and OS facilities which
+  Gallium3D drivers rely upon. For example, memory allocation is typically a
+  service the OS provides while window size/position information is provided by
+  the window system. Pipe drivers use the winsys interface to handle these
+  things.
+
+  By abstracting OS and window system services, pipe drivers are portable to
+  other platforms (e.g. embedded devices).
+*/
+
+/** \page statetracker The State Tracker
+
+  The state tracker is the piece which interfaces core Mesa to the Gallium3D
+  interface. It's responsible for translating Mesa state (blend modes, texture
+  state, etc) and drawing commands (like glDrawArrays and glDrawPixels) into
+  pipe objects and operations.
+
+  Traditional fixed-function OpenGL components (such as lighting and texture
+  combining) are implemented with shaders. OpenGL commands such as glDrawPixels
+  are translated into textured quadrilateral rendering. Basically, any
+  rendering operation that isn't directly supported by modern graphics hardware
+  is translated into a hardware-friendly form.
+
+  Future state trackers will be created for OpenGL 3.0 and OpenGL-ES 2.x.
+*/
+
+/** \page softpipe Softpipe Driver
+
+  The softpipe driver is a software implementation of the Gallium3D interface.
+  It will be used as a reference implementation and as a fallback driver when a
+  hardware driver isn't available. The softpipe driver will make extensive use
+  of run-time code generation to efficiently execute vertex, fragment and
+  rasterization operations.
   
-  The functions in the graph below are clickable (in the HTML output).
+  \sa sp_winsys.h
+*/
 
-  Please from the top right of this page: =============================>
+/** \page i915simple Simple i915 Driver
+
+  The i915 Gallium3D Driver is an initial hardware driver implementation within
+  the Gallium3D driver architecture. We expect that once complete this driver
+  will have equivalent functionality and performance to the current Mesa
+  i915tex driver, but from a much smaller codebase.
+
+  \sa i915_winsys.h
+*/
+
+/** \page failover Failover Module
+
+  The failover module acts as a selector between a hardware driver and the
+  softpipe driver. When the hardware can't implement a particular rendering
+  operation, the failover module will pass the request to the softpipe driver.
+  This is a different solution to the "software fallbacks" scheme of previous
+  Mesa drivers.
+
+  \sa fo_winsys.h
+*/
+
+/** \page draw Draw Module
+  The Draw module provides point/line/polygon rendering services such as
+  vertex transformation, polygon culling and clipping. It will be used by
+  drivers for hardware which lacks vertex transformation (such as the
+  i915/i945). It may also be instantiated and used directly by the state
+  tracker to implement some API functionality that doesn't map well to hardware
+  capabilities.
+
+  The interface of this module corresponds closely to the subset of the Gallium
+  Driver Interface which is relevent to these steps in the pipeline. Specifically
+  there are calls for:
+
+  - Vertex shader constant state objects
+  - Vertex buffer binding
+  - Vertex element layout (vertex fetch) constant state objects
+  - DrawArrays and DrawElements
+  - Rasterizer constant state objects. 
+
+  The Draw module is effectively the part of \ref softpipe which is concerned with
+  vertex processing, split off into a separate module so that it can be reused
+  by drivers for rasterization-only hardware. As such it is also instantiated
+  by the \ref i915simple driver.
+
+  Additionally, there are cases in the Mesa OpenGL state_tracker where it is
+  required to obtain transformed vertices and yet it is anticipated that using
+  hardware transformation even if available would reduce performance, usually
+  because the setup costs or latency are prohibitive. For this reason the Mesa
+  state_tracker also instantiates a copy of this module. 
+
+  \sa draw_context.h
+*/
+
+/** \page tgsi TGSI
+
+  The TGSI module provides a universal representation of shaders and
+  CPU-based execution of shaders. All Mesa vertex/fragment programs and shaders
+  are translated into the TGSI representation before being passed to the
+  driver. In turn, the driver will convert the TGSI instructions into
+  GPU-specific instructions. For hardware that lacks vertex or fragment shader
+  support, the TGSI's executor can be used. The TGSI executor includes support
+  for SSE code generation. Support for other processors (such as Cell) will be
+  added in the future. 
+
+  \sa tgsi_parse.h
+  \sa <a href="http://www.tungstengraphics.com/wiki/files/tgsi.pdf">TGSI specification</a>
+*/
+
+/** \page callgraph Glxgears callgraph example
+
+  Below is a call graph of the glxgears application together with the Gallium3D's softpipe reference driver.
+  
+  \htmlonly
+  The functions in the graph below are clickable.
+  \endhtmlonly
+
   \dot
 digraph {
 	graph [fontname=Arial, fontsize=10];
@@ -134,5 +317,5 @@ digraph {
 
   \enddot
 
-  \sa http://code.google.com/p/jrfonseca/wiki/Gprof2Dot
- */
+  The graph above was generated by the <a href="http://code.google.com/p/jrfonseca/wiki/Gprof2Dot">gprof2dot.py script</a>.
+*/
