@@ -178,36 +178,62 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
 }
 
 
-static unsigned
-intel_i915_surface_pitch(struct pipe_winsys *winsys,
-			 unsigned cpp, unsigned width, unsigned flags)
-{
-   /* Choose a pitch to match hardware requirements - requires 64 byte
-    * alignment of render targets.  
-    *
-    * XXX: is this ok for textures??
-    * clearly want to be able to render to textures under some
-    * circumstances, but maybe not always a requirement.
-    */
-
-   /* XXX is the pitch different for textures vs. drawables? */
-   if (1/*flags & PIPE_SURFACE_FLAG_TEXTURE*/)  /* or PIPE_SURFACE_FLAG_RENDER? */
-      return ((cpp * width + 63) & ~63) / cpp;
-   else
-      return ((cpp * width + 63) & ~63) / cpp;
-}
-
-
 static struct pipe_surface *
-intel_i915_surface_alloc(struct pipe_winsys *winsys, enum pipe_format format)
+intel_i915_surface_alloc(struct pipe_winsys *winsys)
 {
    struct pipe_surface *surf = CALLOC_STRUCT(pipe_surface);
    if (surf) {
-      surf->format = format;
       surf->refcount = 1;
       surf->winsys = winsys;
    }
    return surf;
+}
+
+
+/**
+ * Round n up to next multiple.
+ */
+static INLINE unsigned
+round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
+/**
+ * Copied from xm_winsys.c
+ */
+static int
+intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
+                                 struct pipe_surface *surf,
+                                 unsigned width, unsigned height,
+                                 enum pipe_format format, 
+                                 unsigned flags)
+{
+   const unsigned alignment = 64;
+   int ret;
+
+   surf->width = width;
+   surf->height = height;
+   surf->format = format;
+   surf->cpp = pf_get_size(format);
+   surf->pitch = round_up(width, alignment / surf->cpp);
+
+   assert(!surf->buffer);
+   surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+   if(!surf->buffer)
+      return -1;
+
+   ret = winsys->buffer_data(winsys, 
+                             surf->buffer,
+                             surf->pitch * surf->cpp * height,
+                             NULL,
+                             0);
+   if(ret) {
+      winsys->buffer_reference(winsys, &surf->buffer, NULL);
+      return ret;
+   }
+   
+   return 0;
 }
 
 
@@ -265,8 +291,8 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
-   iws->winsys.surface_pitch = intel_i915_surface_pitch;
    iws->winsys.surface_alloc = intel_i915_surface_alloc;
+   iws->winsys.surface_alloc_storage = intel_i915_surface_alloc_storage;
    iws->winsys.surface_release = intel_i915_surface_release;
 
    if (fd)

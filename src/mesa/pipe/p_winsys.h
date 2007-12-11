@@ -76,16 +76,16 @@ struct pipe_winsys
 		   const char *, ... );	
 
 
-   /**
-    * flags is bitmask of PIPE_SURFACE_FLAG_RENDER, PIPE_SURFACE_FLAG_TEXTURE
-    */
-   unsigned (*surface_pitch)(struct pipe_winsys *ws, unsigned cpp,
-			     unsigned with, unsigned flags);
-
    /** allocate a new surface (no context dependency) */
-   struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws,
-                                         enum pipe_format format);
+   struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws);
 
+   /** allocate storage for a pipe_surface */
+   int (*surface_alloc_storage)(struct pipe_winsys *ws,
+                                struct pipe_surface *surf,
+                                unsigned width, unsigned height,
+                                enum pipe_format format,
+                                unsigned flags);
+   
    void (*surface_release)(struct pipe_winsys *ws, struct pipe_surface **s);
 
    

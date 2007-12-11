@@ -90,28 +90,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    uint type = strb->screenSurface ? PIPE_SCREEN_SURFACE : PIPE_SURFACE;
    const enum pipe_format pipeFormat
       = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE, type);
-   GLuint cpp;
    GLbitfield flags = 0x0; /* XXX needed? */
 
-   cpp = init_renderbuffer_bits(strb, pipeFormat);
-   assert(cpp);
-
-   if (strb->surface && strb->surface->format != pipeFormat) {
-      /* need to change surface types, free this surface */
-      pipe_surface_reference(&strb->surface, NULL);
-      assert(strb->surface == NULL);
-   }
-
    if (!strb->surface) {
-      strb->surface = pipe->winsys->surface_alloc(pipe->winsys, pipeFormat);
+      strb->surface = pipe->winsys->surface_alloc(pipe->winsys);
       assert(strb->surface);
       if (!strb->surface)
          return GL_FALSE;
-      strb->surface->cpp = cpp;
    }
-
-   strb->surface->pitch = pipe->winsys->surface_pitch(pipe->winsys, cpp,
-                                                      width, flags);
 
    /* loop here since mapping is refcounted */
    while (strb->surface->map)
@@ -120,20 +106,24 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       pipe->winsys->buffer_reference(pipe->winsys, &strb->surface->buffer,
 				     NULL);
 
-   /* XXX don't hard-code magic 32 here */
-   strb->surface->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
+   pipe->winsys->surface_alloc_storage(pipe->winsys,
+                                       strb->surface,
+                                       width,
+                                       height,
+                                       pipeFormat,
+                                       flags);
    if (!strb->surface->buffer)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
-   pipe->winsys->buffer_data(pipe->winsys, strb->surface->buffer,
-			     strb->surface->pitch * cpp * height, NULL,
-			     PIPE_BUFFER_USAGE_PIXEL);
-
    ASSERT(strb->surface->buffer);
    ASSERT(strb->surface->format);
+   ASSERT(strb->surface->cpp);
+   ASSERT(strb->surface->width == width);
+   ASSERT(strb->surface->height == height);
+   ASSERT(strb->surface->pitch);
 
-   strb->Base.Width  = strb->surface->width  = width;
-   strb->Base.Height = strb->surface->height = height;
+   strb->Base.Width  = width;
+   strb->Base.Height = height;
 
    return GL_TRUE;
 }

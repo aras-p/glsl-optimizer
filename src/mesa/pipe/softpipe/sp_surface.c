@@ -576,11 +576,11 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       assert(zslice == 0);
    }
 
-   ps = pipe->winsys->surface_alloc(pipe->winsys, pt->format);
+   ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
-      assert(ps->format);
       assert(ps->refcount);
       pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
+      ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];

@@ -388,11 +388,38 @@ round_up(unsigned n, unsigned multiple)
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
-static unsigned
-xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
-		 unsigned flags)
+static int
+xm_surface_alloc_storage(struct pipe_winsys *winsys,
+                         struct pipe_surface *surf,
+                         unsigned width, unsigned height,
+                         enum pipe_format format, 
+                         unsigned flags)
 {
-   return round_up(width, 64 / cpp);
+   const unsigned alignment = 64;
+   int ret;
+
+   surf->width = width;
+   surf->height = height;
+   surf->format = format;
+   surf->cpp = pf_get_size(format);
+   surf->pitch = round_up(width, alignment / surf->cpp);
+
+   assert(!surf->buffer);
+   surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+   if(!surf->buffer)
+      return -1;
+
+   ret = winsys->buffer_data(winsys, 
+                             surf->buffer,
+                             surf->pitch * surf->cpp * height,
+                             NULL,
+                             0);
+   if(ret) {
+      winsys->buffer_reference(winsys, &surf->buffer, NULL);
+      return ret;
+   }
+   
+   return 0;
 }
 
 
@@ -401,14 +428,12 @@ xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
  * renderbuffers, etc.
  */
 static struct pipe_surface *
-xm_surface_alloc(struct pipe_winsys *ws, enum pipe_format pipeFormat)
+xm_surface_alloc(struct pipe_winsys *ws)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
 
    assert(ws);
-   assert(pipeFormat);
 
-   xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
    xms->surface.winsys = ws;
 
@@ -463,8 +488,8 @@ xmesa_get_pipe_winsys(void)
       ws->buffer_subdata = xm_buffer_subdata;
       ws->buffer_get_subdata = xm_buffer_get_subdata;
 
-      ws->surface_pitch = xm_surface_pitch;
       ws->surface_alloc = xm_surface_alloc;
+      ws->surface_alloc_storage = xm_surface_alloc_storage;
       ws->surface_release = xm_surface_release;
 
       ws->flush_frontbuffer = xm_flush_frontbuffer;
