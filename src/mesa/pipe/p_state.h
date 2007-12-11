@@ -200,11 +200,6 @@ struct pipe_blend_color {
    float color[4];
 };
 
-struct pipe_clear_color_state
-{
-   float color[4];
-};
-
 struct pipe_framebuffer_state
 {
    /** multiple colorbuffers for multiple render targets */

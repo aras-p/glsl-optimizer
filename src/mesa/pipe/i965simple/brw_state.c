@@ -377,14 +377,6 @@ static void brw_set_framebuffer_state(struct pipe_context *pipe,
 
 
 
-static void brw_set_clear_color_state(struct pipe_context *pipe,
-                               const struct pipe_clear_color_state *clear)
-{
-   struct brw_context *brw = brw_context(pipe);
-
-   brw->attribs.ClearColor = *clear; /* struct copy */
-}
-
 /************************************************************************
  * Rasterizer state
  */
@@ -449,7 +441,6 @@ brw_init_state_functions( struct brw_context *brw )
 
    brw->pipe.set_blend_color = brw_set_blend_color;
    brw->pipe.set_clip_state = brw_set_clip_state;
-   brw->pipe.set_clear_color_state = brw_set_clear_color_state;
    brw->pipe.set_constant_buffer = brw_set_constant_buffer;
    brw->pipe.set_framebuffer_state = brw_set_framebuffer_state;
 

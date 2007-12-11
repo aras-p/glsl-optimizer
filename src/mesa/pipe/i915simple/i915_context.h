@@ -194,7 +194,6 @@ struct i915_context
    const struct pipe_shader_state *fs;
 
    struct pipe_blend_color blend_color;
-   struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;

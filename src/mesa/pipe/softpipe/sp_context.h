@@ -82,7 +82,6 @@ struct softpipe_context {
    const struct sp_vertex_shader_state *vs;
 
    struct pipe_blend_color blend_color;
-   struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[2];
    struct pipe_framebuffer_state framebuffer;

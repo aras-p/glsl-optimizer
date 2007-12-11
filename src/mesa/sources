@@ -200,7 +200,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_alphatest.c \
 	state_tracker/st_atom_blend.c \
-	state_tracker/st_atom_clear_color.c \
 	state_tracker/st_atom_clip.c \
 	state_tracker/st_atom_constbuf.c \
 	state_tracker/st_atom_depth.c \

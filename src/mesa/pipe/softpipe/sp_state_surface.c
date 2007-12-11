@@ -131,11 +131,3 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
 
 
 
-void
-softpipe_set_clear_color_state(struct pipe_context *pipe,
-                               const struct pipe_clear_color_state *clear)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->clear_color = *clear; /* struct copy */
-}

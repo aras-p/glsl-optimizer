@@ -79,7 +79,6 @@ struct failover_context {
    const struct fo_state     *vertex_shader;
 
    struct pipe_blend_color blend_color;
-   struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;

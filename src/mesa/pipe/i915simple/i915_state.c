@@ -548,16 +548,6 @@ static void i915_set_framebuffer_state(struct pipe_context *pipe,
 
 
 
-static void i915_set_clear_color_state(struct pipe_context *pipe,
-                               const struct pipe_clear_color_state *clear)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   i915->clear_color = *clear; /* struct copy */
-}
-
-
-
 static void i915_set_clip_state( struct pipe_context *pipe,
 			     const struct pipe_clip_state *clip )
 {
@@ -720,7 +710,6 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->pipe.set_blend_color = i915_set_blend_color;
    i915->pipe.set_clip_state = i915_set_clip_state;
-   i915->pipe.set_clear_color_state = i915_set_clear_color_state;
    i915->pipe.set_constant_buffer = i915_set_constant_buffer;
    i915->pipe.set_framebuffer_state = i915_set_framebuffer_state;
 

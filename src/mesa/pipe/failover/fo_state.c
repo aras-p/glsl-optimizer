@@ -146,16 +146,6 @@ failover_set_clip_state( struct pipe_context *pipe,
    failover->hw->set_clip_state( failover->hw, clip );
 }
 
-static void 
-failover_set_clear_color_state( struct pipe_context *pipe,
-				const struct pipe_clear_color_state *clear_color )
-{
-   struct failover_context *failover = failover_context(pipe);
-
-   failover->clear_color = *clear_color;
-   failover->dirty |= FO_NEW_CLEAR_COLOR;
-   failover->hw->set_clear_color_state( failover->hw, clear_color );
-}
 
 static void *
 failover_create_depth_stencil_state(struct pipe_context *pipe,
@@ -480,7 +470,6 @@ failover_init_state_functions( struct failover_context *failover )
 
    failover->pipe.set_blend_color = failover_set_blend_color;
    failover->pipe.set_clip_state = failover_set_clip_state;
-   failover->pipe.set_clear_color_state = failover_set_clear_color_state;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_sampler_units = failover_set_sampler_units;

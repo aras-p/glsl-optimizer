@@ -103,7 +103,6 @@ struct st_context
       const struct cso_vertex_shader   *vs;
 
       struct pipe_blend_color  blend_color;
-      struct pipe_clear_color_state clear_color;
       struct pipe_clip_state clip;
       struct pipe_constant_buffer constants[2];
       struct pipe_framebuffer_state framebuffer;

@@ -475,7 +475,6 @@ struct brw_context
       struct pipe_scissor_state       Scissor;
       struct pipe_viewport_state      Viewport;
       struct pipe_framebuffer_state   FrameBuffer;
-      struct pipe_clear_color_state   ClearColor;
 
       const struct pipe_constant_buffer *Constants[2];
       const struct brw_texture          *Texture[PIPE_MAX_SAMPLERS];
