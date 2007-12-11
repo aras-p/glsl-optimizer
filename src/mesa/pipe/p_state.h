@@ -152,7 +152,6 @@ struct pipe_depth_stencil_state
       unsigned writemask:1; /**< allow depth buffer writes? */
       unsigned func:3;      /**< depth test func (PIPE_FUNC_x) */
       unsigned occlusion_count:1; /**< XXX move this elsewhere? */
-      float clear;      /**< Clear value in [0,1] (XXX correct place?) */
    } depth;
    struct {
       unsigned front_enabled:1;
@@ -168,7 +167,6 @@ struct pipe_depth_stencil_state
       ubyte ref_value[2];    /**< [0] = front, [1] = back */
       ubyte value_mask[2];
       ubyte write_mask[2];
-      ubyte clear_value;
    } stencil;
 };
 
