@@ -7,15 +7,38 @@
 #include "nv40_dma.h"
 
 static boolean
-nv40_is_format_supported(struct pipe_context *pipe, uint format)
+nv40_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
+			 uint type)
 {
-	switch (format) {
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case PIPE_FORMAT_R5G6B5_UNORM: 
-	case PIPE_FORMAT_Z24S8_UNORM:
-		return TRUE;
-	default:
+	switch (type) {
+	case PIPE_SURFACE:
+	case PIPE_SCREEN_SURFACE:
+		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_Z24S8_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
 		break;
+	case PIPE_TEXTURE:
+		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_A1R5G5B5_UNORM:
+		case PIPE_FORMAT_A4R4G4B4_UNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_U_L8:
+		case PIPE_FORMAT_U_A8:
+		case PIPE_FORMAT_U_I8:
+		case PIPE_FORMAT_U_A8_L8:
+			return TRUE;
+		default:
+			break;
+		}
+		break;
+	default:
+		assert(0);
 	};
 
 	return FALSE;

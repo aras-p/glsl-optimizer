@@ -44,6 +44,12 @@ nv40_draw_reset_stipple_counter(struct draw_stage *draw)
 	NOUVEAU_ERR("\n");
 }
 
+static void
+nv40_draw_destroy(struct draw_stage *draw)
+{
+	free(draw);
+}
+
 struct draw_stage *
 nv40_draw_render_stage(struct nv40_context *nv40)
 {
@@ -57,6 +63,7 @@ nv40_draw_render_stage(struct nv40_context *nv40)
 	nv40draw->draw.tri = nv40_draw_tri;
 	nv40draw->draw.end = nv40_draw_end;
 	nv40draw->draw.reset_stipple_counter = nv40_draw_reset_stipple_counter;
+	nv40draw->draw.destroy = nv40_draw_destroy;
 
 	return &nv40draw->draw;
 }
