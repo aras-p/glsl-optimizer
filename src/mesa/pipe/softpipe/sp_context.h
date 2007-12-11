@@ -93,10 +93,10 @@ struct softpipe_context {
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    unsigned dirty;
 
-   /*
-    * Active queries
+   /* Counter for occlusion queries.  Note this supports overlapping
+    * queries.
     */
-   struct pipe_query_object *queries[PIPE_QUERY_TYPES];
+   uint64_t occlusion_count;
 
    /*
     * Mapped vertex buffers

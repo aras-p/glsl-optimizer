@@ -42,6 +42,7 @@
 #include "sp_tile_cache.h"
 #include "sp_texture.h"
 #include "sp_winsys.h"
+#include "sp_query.h"
 
 
 
@@ -147,37 +148,6 @@ static void softpipe_destroy( struct pipe_context *pipe )
    softpipe->quad.output->destroy( softpipe->quad.output );
 
    FREE( softpipe );
-}
-
-
-static void
-softpipe_begin_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   struct softpipe_context *softpipe = softpipe_context( pipe );
-   assert(q->type < PIPE_QUERY_TYPES);
-   assert(!softpipe->queries[q->type]);
-   softpipe->queries[q->type] = q;
-}
-
-
-static void
-softpipe_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   struct softpipe_context *softpipe = softpipe_context( pipe );
-   assert(q->type < PIPE_QUERY_TYPES);
-   assert(softpipe->queries[q->type]);
-   q->ready = 1;  /* software rendering is synchronous */
-   softpipe->queries[q->type] = NULL;
-}
-
-
-static void
-softpipe_wait_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   /* Should never get here since we indicated that the result was
-    * ready in softpipe_end_query().
-    */
-   assert(0);
 }
 
 
@@ -320,9 +290,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
 
-   softpipe->pipe.begin_query = softpipe_begin_query;
-   softpipe->pipe.end_query = softpipe_end_query;
-   softpipe->pipe.wait_query = softpipe_wait_query;
+   softpipe_init_query_funcs( softpipe );
 
    /* textures */
    softpipe->pipe.texture_create = softpipe_texture_create;

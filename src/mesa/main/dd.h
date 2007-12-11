@@ -811,8 +811,10 @@ struct dd_function_table {
     */
    /*@{*/
    struct gl_query_object * (*NewQueryObject)(GLcontext *ctx, GLuint id);
+   void (*DeleteQuery)(GLcontext *ctx, struct gl_query_object *q);
    void (*BeginQuery)(GLcontext *ctx, struct gl_query_object *q);
    void (*EndQuery)(GLcontext *ctx, struct gl_query_object *q);
+   void (*CheckQuery)(GLcontext *ctx, struct gl_query_object *q);
    void (*WaitQuery)(GLcontext *ctx, struct gl_query_object *q);
    /*@}*/
 

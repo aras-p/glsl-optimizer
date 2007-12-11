@@ -7,6 +7,7 @@ LIBNAME = softpipe
 DRIVER_SOURCES = \
 	sp_clear.c \
 	sp_flush.c \
+	sp_query.c \
 	sp_context.c \
 	sp_draw_arrays.c \
 	sp_prim_setup.c \

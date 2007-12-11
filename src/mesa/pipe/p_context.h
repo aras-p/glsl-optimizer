@@ -29,9 +29,13 @@
 #define PIPE_CONTEXT_H
 
 #include "p_state.h"
+#include <stdint.h>
 
 struct pipe_state_cache;
 
+/* Opaque driver handles:
+ */
+struct pipe_query;
 
 /**
  * Gallium rendering context.  Basically:
@@ -81,9 +85,19 @@ struct pipe_context {
    /**
     * Query objects
     */
-   void (*begin_query)(struct pipe_context *pipe, struct pipe_query_object *q);
-   void (*end_query)(struct pipe_context *pipe, struct pipe_query_object *q);
-   void (*wait_query)(struct pipe_context *pipe, struct pipe_query_object *q);
+   struct pipe_query *(*create_query)( struct pipe_context *pipe,
+                                              unsigned query_type );
+
+   void (*destroy_query)(struct pipe_context *pipe,
+                         struct pipe_query *q);
+
+   void (*begin_query)(struct pipe_context *pipe, struct pipe_query *q);
+   void (*end_query)(struct pipe_context *pipe, struct pipe_query *q);
+
+   boolean (*get_query_result)(struct pipe_context *pipe, 
+                               struct pipe_query *q,
+                               boolean wait,
+                               uint64_t *result);
 
    /*
     * State functions

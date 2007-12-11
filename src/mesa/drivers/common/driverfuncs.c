@@ -224,6 +224,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
    /* query objects */
    driver->NewQueryObject = _mesa_new_query_object;
+   driver->DeleteQuery = _mesa_delete_query;
    driver->BeginQuery = _mesa_begin_query;
    driver->EndQuery = _mesa_end_query;
    driver->WaitQuery = _mesa_wait_query;
