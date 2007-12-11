@@ -33,7 +33,7 @@
 
 #include "storage.h"
 
-#include "pipe/tgsi/exec/tgsi_token.h"
+#include "pipe/p_shader_tokens.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>
 #include <llvm/Value.h>

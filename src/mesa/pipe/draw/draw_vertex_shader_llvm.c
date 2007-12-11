@@ -38,7 +38,7 @@
 #ifdef MESA_LLVM
 
 #include "pipe/llvm/gallivm.h"
-#include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/p_shader_tokens.h"
 
 #define DBG 0
 

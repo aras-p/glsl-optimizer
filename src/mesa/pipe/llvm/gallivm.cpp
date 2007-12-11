@@ -37,12 +37,12 @@
 #include "storage.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_shader_tokens.h"
+#include "pipe/tgsi/util/tgsi_parse.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
-#include "pipe/tgsi/exec/tgsi_token.h"
-#include "pipe/tgsi/exec/tgsi_build.h"
-#include "pipe/tgsi/exec/tgsi_util.h"
-#include "pipe/tgsi/exec/tgsi_parse.h"
-#include "pipe/tgsi/exec/tgsi_dump.h"
+#include "pipe/tgsi/util/tgsi_util.h"
+#include "pipe/tgsi/util/tgsi_build.h"
+#include "pipe/tgsi/util/tgsi_dump.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>
