@@ -107,13 +107,3 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    }
 #endif
 }
-
-
-void
-cell_set_clear_color_state(struct pipe_context *pipe,
-                           const struct pipe_clear_color_state *clear)
-{
-   struct cell_context *cell = cell_context(pipe);
-
-   cell->clear_color = *clear; /* struct copy */
-}

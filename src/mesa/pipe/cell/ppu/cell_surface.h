@@ -41,9 +41,5 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue);
 
 
-extern void
-cell_set_clear_color_state(struct pipe_context *pipe,
-                           const struct pipe_clear_color_state *clear);
-
 
 #endif /* CELL_SURFACE */

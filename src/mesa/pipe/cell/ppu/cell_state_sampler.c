@@ -66,25 +66,3 @@ cell_delete_sampler_state(struct pipe_context *pipe,
 {
    FREE( sampler );
 }
-
-
-void
-cell_set_sampler_texture(struct pipe_context *pipe,
-			 unsigned sampler,
-			 struct pipe_texture *texture)
-{
-   struct cell_context *cell = cell_context(pipe);
-
-   assert(unit < PIPE_MAX_SAMPLERS);
-
-#if 0
-   cell->texture[sampler] = cell_texture(texture);  /* ptr, not struct */
-   cell_tile_cache_set_texture(cell->tex_cache[sampler], texture);
-#endif
-
-   cell->dirty |= CELL_NEW_TEXTURE;
-}
-
-
-
-
