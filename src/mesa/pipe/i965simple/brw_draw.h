@@ -34,8 +34,7 @@ struct brw_context;
 
 
 
-void brw_draw_init( struct brw_context *brw );
-void brw_draw_destroy( struct brw_context *brw );
+void brw_init_draw_functions( struct brw_context *brw );
 
 
 boolean brw_upload_vertices( struct brw_context *brw,

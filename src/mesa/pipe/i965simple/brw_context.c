@@ -195,36 +195,7 @@ brw_is_format_supported( struct pipe_context *pipe,
 #endif
 }
 
-static void
-brw_begin_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   /* should never be called */
-   assert(0);
-}
 
-
-static void
-brw_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   /* should never be called */
-   assert(0);
-}
-
-
-static boolean
-brw_draw_elements(struct pipe_context *pipe,
-                  struct pipe_buffer_handle *indexBuffer,
-                  unsigned indexSize,
-                  unsigned prim, unsigned start, unsigned count)
-{
-   return FALSE;
-}
-
-static boolean brw_draw_arrays(struct pipe_context *pipe,
-                               unsigned prim, unsigned start, unsigned count)
-{
-   return brw_draw_elements(pipe, NULL, 0, prim, start, count);
-}
 
 
 struct pipe_context *brw_create(struct pipe_winsys *pipe_winsys,
@@ -248,39 +219,25 @@ struct pipe_context *brw_create(struct pipe_winsys *pipe_winsys,
    brw->pipe.is_format_supported = brw_is_format_supported;
    brw->pipe.get_param = brw_get_param;
    brw->pipe.get_paramf = brw_get_paramf;
-
    brw->pipe.clear = brw_clear;
-
-   brw->pipe.begin_query = brw_begin_query;
-   brw->pipe.end_query = brw_end_query;
-
-   brw->pipe.draw_arrays = brw_draw_arrays;
-   brw->pipe.draw_elements = brw_draw_elements;
+   brw->pipe.texture_create  = brw_texture_create;
+   brw->pipe.texture_release = brw_texture_release;
 
    brw_init_surface_functions(brw);
    brw_init_state_functions(brw);
    brw_init_flush_functions(brw);
    brw_init_string_functions(brw);
-
-   brw->pci_id = pci_id;
-
-   brw->pipe.texture_create  = brw_texture_create;
-   brw->pipe.texture_release = brw_texture_release;
-
-   brw->dirty = ~0;
-   brw->hardware_dirty = ~0;
-
-   /* Batch stream debugging is a bit hacked up at the moment:
-    */
-   brw->batch_start = NULL;
+   brw_init_draw_functions( brw );
 
 
    brw_init_state( brw );
 
+   brw->pci_id = pci_id;
+   brw->dirty = ~0;
+   brw->hardware_dirty = ~0;
+   brw->batch_start = NULL;
+
    memset(&brw->wm.bind, ~0, sizeof(brw->wm.bind));
-
-   brw_draw_init( brw );
-
 
    return &brw->pipe;
 }

@@ -226,13 +226,10 @@ static boolean brw_draw_arrays( struct pipe_context *pipe,
 
 
 
-void brw_draw_init( struct brw_context *brw )
+void brw_init_draw_functions( struct brw_context *brw )
 {
    brw->pipe.draw_arrays = brw_draw_arrays;
    brw->pipe.draw_elements = brw_draw_elements;
 }
 
-void brw_draw_destroy( struct brw_context *brw )
-{
-}
 
