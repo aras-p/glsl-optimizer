@@ -139,9 +139,6 @@ struct pipe_context {
                                 uint shader, uint index,
                                 const struct pipe_constant_buffer *buf );
 
-   void (*set_feedback_state)( struct pipe_context *,
-                               const struct pipe_feedback_state *);
-
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );
 
@@ -172,12 +169,6 @@ struct pipe_context {
 			       unsigned index,
 			       const struct pipe_vertex_element * );
 
-   /*
-    * Vertex feedback
-    */
-   void (*set_feedback_buffer)(struct pipe_context *,
-                               unsigned index,
-                               const struct pipe_feedback_buffer *);
 
    /** Get a surface which is a "view" into a texture */
    struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,

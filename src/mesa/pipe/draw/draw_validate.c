@@ -100,11 +100,6 @@ static void validate_begin( struct draw_stage *stage )
       next = draw->pipeline.flatshade;
    }
 
-   if (draw->feedback.enabled || draw->feedback.discard) {
-      draw->pipeline.feedback->next = next;
-      next = draw->pipeline.feedback;
-   }
-
    draw->pipeline.first = next;
    draw->pipeline.first->begin( draw->pipeline.first );
 }

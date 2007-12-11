@@ -102,9 +102,6 @@ void softpipe_set_constant_buffer(struct pipe_context *,
                                   uint shader, uint index,
                                   const struct pipe_constant_buffer *buf);
 
-void softpipe_set_feedback_state( struct pipe_context *,
-                                  const struct pipe_feedback_state * );
-
 void *softpipe_create_fs_state(struct pipe_context *,
                                const struct pipe_shader_state *);
 void softpipe_bind_fs_state(struct pipe_context *, void *);
@@ -137,11 +134,6 @@ void softpipe_set_vertex_element(struct pipe_context *,
 void softpipe_set_vertex_buffer(struct pipe_context *,
                                 unsigned index,
                                 const struct pipe_vertex_buffer *);
-
-void softpipe_set_feedback_buffer(struct pipe_context *,
-                                  uint index,
-                                  const struct pipe_feedback_buffer *);
-
 
 
 void softpipe_update_derived( struct softpipe_context *softpipe );

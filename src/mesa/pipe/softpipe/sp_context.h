@@ -85,7 +85,6 @@ struct softpipe_context {
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[2];
-   struct pipe_feedback_state feedback;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
@@ -116,9 +115,6 @@ struct softpipe_context {
    boolean need_z;  /**< produce quad/fragment Z values? */
    boolean need_w;  /**< produce quad/fragment W values? */
    int psize_slot;
-
-   /** Feedback buffers */
-   struct pipe_feedback_buffer feedback_buffer[PIPE_MAX_FEEDBACK_ATTRIBS];
 
 #if 0
    /* Stipple derived state:

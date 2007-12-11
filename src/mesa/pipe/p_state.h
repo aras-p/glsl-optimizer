@@ -103,19 +103,6 @@ struct pipe_rasterizer_state
 };
 
 
-/**
- * Post-transform vertex feeback
- */
-struct pipe_feedback_state {
-   uint enabled:1;        /**< enable feedback? */
-   uint discard:1;        /**< discard primitives? */
-   uint interleaved:1;    /**< interleaved output? */
-   uint num_attribs;
-   uint attrib[PIPE_MAX_FEEDBACK_ATTRIBS];
-   uint size[PIPE_MAX_FEEDBACK_ATTRIBS];
-};
-
-
 struct pipe_poly_stipple {
    unsigned stipple[32];
 };
@@ -335,15 +322,6 @@ struct pipe_vertex_element
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
 
-
-/**
- * Vertex feedback buffer
- */
-struct pipe_feedback_buffer {
-   struct pipe_buffer_handle *buffer;
-   unsigned size;
-   unsigned start_offset;
-};
 
 
 /**

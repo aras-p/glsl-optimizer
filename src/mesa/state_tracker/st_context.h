@@ -106,7 +106,6 @@ struct st_context
       struct pipe_clear_color_state clear_color;
       struct pipe_clip_state clip;
       struct pipe_constant_buffer constants[2];
-      struct pipe_feedback_state feedback;
       struct pipe_framebuffer_state framebuffer;
       struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
       struct pipe_poly_stipple poly_stipple;

@@ -162,7 +162,6 @@ DRAW_SOURCES = \
 	pipe/draw/draw_context.c\
 	pipe/draw/draw_cull.c \
 	pipe/draw/draw_debug.c \
-	pipe/draw/draw_feedback.c \
 	pipe/draw/draw_flatshade.c \
 	pipe/draw/draw_offset.c \
 	pipe/draw/draw_prim.c \
