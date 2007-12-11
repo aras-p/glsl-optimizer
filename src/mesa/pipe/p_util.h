@@ -117,11 +117,10 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
  * Return memory on given byte alignment
  */
 static INLINE void *
-align_malloc(size_t bytes, unsigned long alignment)
+align_malloc(size_t bytes, uint alignment)
 {
 #if defined(HAVE_POSIX_MEMALIGN)
    void *mem;
-
    (void) posix_memalign(& mem, alignment, bytes);
    return mem;
 #else
