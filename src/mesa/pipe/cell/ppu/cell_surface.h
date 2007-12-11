@@ -26,15 +26,13 @@
  **************************************************************************/
 
 
-#ifndef CELL_SURFACE
-#define CELL_SURFACE
+#ifndef CELL_SURFACE_H
+#define CELL_SURFACE_H
 
 
-#include "pipe/p_state.h"
+struct pipe_context;
+struct pipe_surface;
 
-
-extern struct pipe_surface *
-cell_create_surface(int width, int height);
 
 extern void
 cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
@@ -42,4 +40,4 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
 
 
 
-#endif /* CELL_SURFACE */
+#endif /* CELL_SURFACE_H */

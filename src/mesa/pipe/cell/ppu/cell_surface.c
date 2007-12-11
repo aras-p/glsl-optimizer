@@ -41,28 +41,6 @@
 #include "cell_spu.h"
 
 
-
-struct pipe_surface *
-cell_create_surface(int width, int height)
-{
-#if 0
-   /* XXX total hack */
-   struct pipe_surface *ps = CALLOC_STRUCT(pipe_surface);
-
-   printf("cell_create_surface\n");
-
-   ps->width = width;
-   ps->height = height;
-
-   ps->region = CALLOC_STRUCT(pipe_region);
-   ps->region->map = align_malloc(width * height * 4, 16);
-   return ps;
-#endif
-   return NULL;
-}
-
-
-
 void
 cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue)
