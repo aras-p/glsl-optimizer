@@ -50,8 +50,8 @@ spe_spu_control_area_t *control_ps_area[MAX_SPUS];
 /**
  * Data sent to SPUs
  */
-struct cell_init_info inits[MAX_SPUS] ALIGN16;
-struct cell_command command[MAX_SPUS] ALIGN16;
+struct cell_init_info inits[MAX_SPUS];
+struct cell_command command[MAX_SPUS];
 
 
 /**

@@ -36,7 +36,7 @@
 #include "cell_context.h"
 
 
-#define MAX_SPUS 7
+#define MAX_SPUS 8
 
 /**
  * SPU/SPE handles, etc
@@ -49,8 +49,8 @@ extern spe_spu_control_area_t *control_ps_area[MAX_SPUS];
 /**
  * Data sent to SPUs
  */
-extern struct cell_init_info inits[MAX_SPUS] ALIGN16;
-extern struct cell_command command[MAX_SPUS] ALIGN16;
+extern struct cell_init_info inits[MAX_SPUS];
+extern struct cell_command command[MAX_SPUS];
 
 
 void

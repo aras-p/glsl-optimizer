@@ -114,7 +114,7 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
 {
    uint num_tiles = fb.width_tiles * fb.height_tiles;
    uint i;
-   uint tile[TILE_SIZE * TILE_SIZE] ALIGN16;
+   uint tile[TILE_SIZE * TILE_SIZE] ALIGN16_ATTRIB;
 
    for (i = 0; i < TILE_SIZE * TILE_SIZE; i++)
       tile[i] = clear->value;
@@ -161,7 +161,7 @@ triangle(const struct cell_command_triangle *tri)
 static void
 main_loop(void)
 {
-   struct cell_command cmd ALIGN16;
+   struct cell_command cmd;
    int exitFlag = 0;
 
    printf("SPU %u: Enter main loop\n", init.id);

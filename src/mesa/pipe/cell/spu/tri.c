@@ -66,7 +66,7 @@
 
 static int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
-static uint tile[TILE_SIZE][TILE_SIZE] ALIGN16;
+static uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 #endif
 
