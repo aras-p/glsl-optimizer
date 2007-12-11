@@ -215,6 +215,59 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
 }
 
 
+/*** PIPE_FORMAT_A4R4G4B4_UNORM ***/
+
+static void
+a4r4g4b4_get_tile(struct pipe_surface *ps,
+                  unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const ushort *src
+      = ((const ushort *) (ps->map))
+      + y * ps->pitch + x;
+   unsigned i, j;
+
+   assert(ps->format == PIPE_FORMAT_A4R4G4B4_UNORM);
+
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         const ushort pixel = src[j];
+         p[0] = ((pixel >>  8) & 0xf) * (1.0f / 15.0f);
+         p[1] = ((pixel >>  4) & 0xf) * (1.0f / 15.0f);
+         p[2] = ((pixel      ) & 0xf) * (1.0f / 15.0f);
+         p[3] = ((pixel >> 12)      ) * (1.0f / 15.0f);
+         p += 4;
+      }
+      src += ps->pitch;
+   }
+}
+
+
+/*** PIPE_FORMAT_R5G6B5_UNORM ***/
+
+static void
+r5g6b5_get_tile(struct pipe_surface *ps,
+		unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const ushort *src
+      = ((const ushort *) (ps->map))
+      + y * ps->pitch + x;
+   unsigned i, j;
+
+   assert(ps->format == PIPE_FORMAT_R5G6B5_UNORM);
+
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         const ushort pixel = src[j];
+         p[0] = ((pixel >> 11) & 0x1f) * (1.0f / 31.0f);
+         p[1] = ((pixel >>  5) & 0x3f) * (1.0f / 63.0f);
+         p[2] = ((pixel      ) & 0x1f) * (1.0f / 31.0f);
+         p[3] = 1.0f;
+         p += 4;
+      }
+      src += ps->pitch;
+   }
+}
+
 
 /*** PIPE_FORMAT_Z16_UNORM ***/
 
@@ -673,6 +726,12 @@ softpipe_get_tile_rgba(struct pipe_context *pipe,
       break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       a1r5g5b5_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      a4r4g4b4_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      r5g6b5_get_tile(ps, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_L8:
       l8_get_tile(ps, x, y, w, h, p);
