@@ -60,6 +60,7 @@ SOURCES = \
 	readrate.c \
 	seccolor.c \
 	sharedtex.c \
+	stencil_twoside.c \
 	stencilwrap.c \
 	stencil_wrap.c \
 	subtexrate.c \
