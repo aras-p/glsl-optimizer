@@ -75,11 +75,15 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
+#include "xm_winsys_aub.h"
+
 /**
  * Global X driver lock
  */
 _glthread_Mutex _xmesa_lock;
 
+
+int xmesa_mode;
 
 
 /**********************************************************************/
@@ -738,7 +742,14 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    pf = choose_pixel_format(v);
    assert(pf);
 
-   pipe = xmesa_create_pipe_context( c, pf );
+   if (!getenv("XM_AUB")) {
+      xmesa_mode = XMESA_SOFTPIPE;
+      pipe = xmesa_create_pipe_context( c, pf );
+   }
+   else {
+      xmesa_mode = XMESA_AUB;
+      pipe = xmesa_create_i965simple( xmesa_get_pipe_winsys_aub() );
+   }
 
    c->st = st_create_context(pipe, &v->mesa_visual,
                              share_list ? share_list->st : NULL);
@@ -1164,7 +1175,10 @@ void XMesaSwapBuffers( XMesaBuffer b )
 
    surf = st_get_framebuffer_surface(b->stfb, ST_SURFACE_BACK_LEFT);
    if (surf) {
-      xmesa_display_surface(b, surf);
+      if (xmesa_mode == XMESA_AUB)
+         xmesa_display_aub( surf );
+      else
+	 xmesa_display_surface(b, surf);
    }
 
    xmesa_check_and_update_buffer_size(NULL, b);

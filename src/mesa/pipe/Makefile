@@ -6,7 +6,7 @@ ifeq ($(CONFIG_NAME), linux-cell)
 CELL_DIR = cell
 endif
 
-SUBDIRS = softpipe i915simple failover pipebuffer $(CELL_DIR)
+SUBDIRS = softpipe i915simple i965simple failover pipebuffer $(CELL_DIR)
 
 
 default: subdirs

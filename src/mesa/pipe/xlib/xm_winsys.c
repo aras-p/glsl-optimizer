@@ -46,6 +46,7 @@
 #include "pipe/cell/ppu/cell_context.h"
 #include "pipe/cell/ppu/cell_winsys.h"
 #endif
+#include "xm_winsys_aub.h"
 
 
 /** XXX from Mesa core */
@@ -468,12 +469,15 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
  * For Xlib, this is a singleton object.
  * Nothing special for the Xlib driver so no subclassing or anything.
  */
-static struct pipe_winsys *
-xmesa_get_pipe_winsys(void)
+struct pipe_winsys *
+xmesa_get_pipe_winsys_aub(void)
 {
    static struct pipe_winsys *ws = NULL;
 
-   if (!ws) {
+   if (!ws && getenv("XM_AUB")) {
+      ws = xmesa_create_pipe_winsys_aub();
+   }
+   else if (!ws) {
       ws = CALLOC_STRUCT(pipe_winsys);
    
       /* Fill in this struct with callbacks that pipe will need to
@@ -537,7 +541,7 @@ xmesa_get_softpipe_winsys(uint pixelformat)
 struct pipe_context *
 xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 {
-   struct pipe_winsys *pws = xmesa_get_pipe_winsys();
+   struct pipe_winsys *pws = xmesa_get_pipe_winsys_aub();
    struct pipe_context *pipe;
    
 #ifdef GALLIUM_CELL

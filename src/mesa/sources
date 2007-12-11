@@ -334,7 +334,9 @@ X11_DRIVER_SOURCES =		\
 	pipe/xlib/fakeglx.c	\
 	pipe/xlib/xfonts.c	\
 	pipe/xlib/xm_api.c	\
-	pipe/xlib/xm_winsys.c
+	pipe/xlib/xm_winsys.c	\
+	pipe/xlib/xm_winsys_aub.c	\
+	pipe/xlib/brw_aub.c
 
 OSMESA_DRIVER_SOURCES = \
 	drivers/osmesa/osmesa.c
