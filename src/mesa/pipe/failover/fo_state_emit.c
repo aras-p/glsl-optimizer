@@ -109,7 +109,7 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_TEXTURE) {
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
 	 if (failover->dirty_texture & (1<<i)) {
-	    failover->sw->set_texture_state( failover->sw, i, 
+	    failover->sw->set_sampler_texture( failover->sw, i, 
 					     failover->texture[i] );
 	 }
       }

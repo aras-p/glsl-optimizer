@@ -69,32 +69,22 @@ cell_delete_sampler_state(struct pipe_context *pipe,
 
 
 void
-cell_set_texture_state(struct pipe_context *pipe,
-                           unsigned unit,
-                           struct pipe_texture *texture)
+cell_set_sampler_texture(struct pipe_context *pipe,
+			 unsigned sampler,
+			 struct pipe_texture *texture)
 {
    struct cell_context *cell = cell_context(pipe);
 
    assert(unit < PIPE_MAX_SAMPLERS);
 
 #if 0
-   cell->texture[unit] = cell_texture(texture);  /* ptr, not struct */
-   cell_tile_cache_set_texture(cell->tex_cache[unit], texture);
+   cell->texture[sampler] = cell_texture(texture);  /* ptr, not struct */
+   cell_tile_cache_set_texture(cell->tex_cache[sampler], texture);
 #endif
 
    cell->dirty |= CELL_NEW_TEXTURE;
 }
 
 
-void
-cell_set_sampler_units(struct pipe_context *pipe,
-                           uint num_samplers, const uint *units )
-{
-   struct cell_context *cell = cell_context(pipe);
-   uint i;
-   for (i = 0; i < num_samplers; i++)
-      cell->sampler_units[i] = units[i];
-   cell->dirty |= CELL_NEW_SAMPLER;
-}
 
 

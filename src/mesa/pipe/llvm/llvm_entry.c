@@ -219,8 +219,7 @@ int run_fragment_shader(float x, float y,
                         int num_inputs,
                         float (*aconsts)[4],
                         int num_consts,
-                        struct tgsi_sampler *samplers,
-                        unsigned *sampler_units)
+                        struct tgsi_sampler *samplers)
 {
    float4  inputs[4][16];
    float4  consts[32];

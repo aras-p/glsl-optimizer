@@ -110,11 +110,6 @@ static void brw_delete_sampler_state(struct pipe_context *pipe,
 }
 
 
-static void brw_set_sampler_units(struct pipe_context *pipe,
-				  uint numSamplers, const uint *units)
-{
-}
-
 /************************************************************************
  * Depth stencil 
  */
@@ -349,7 +344,7 @@ static void brw_set_constant_buffer(struct pipe_context *pipe,
  */
 
 
-static void brw_set_texture_state(struct pipe_context *pipe,
+static void brw_set_sampler_texture(struct pipe_context *pipe,
                                   unsigned unit,
                                   struct pipe_texture *texture)
 {
@@ -448,9 +443,8 @@ brw_init_state_functions( struct brw_context *brw )
 //   brw->pipe.set_feedback_buffer = brw_set_feedback_buffer;
 
    brw->pipe.set_polygon_stipple = brw_set_polygon_stipple;
-   brw->pipe.set_sampler_units = brw_set_sampler_units;
    brw->pipe.set_scissor_state = brw_set_scissor_state;
-   brw->pipe.set_texture_state = brw_set_texture_state;
+   brw->pipe.set_sampler_texture = brw_set_sampler_texture;
    brw->pipe.set_viewport_state = brw_set_viewport_state;
    brw->pipe.set_vertex_buffer = brw_set_vertex_buffer;
    brw->pipe.set_vertex_element = brw_set_vertex_element;

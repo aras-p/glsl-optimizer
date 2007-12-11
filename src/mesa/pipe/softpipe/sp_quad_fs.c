@@ -98,7 +98,6 @@ shade_quad(
    /* Consts does not require 16 byte alignment. */
    machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
-   machine->SamplerUnits = softpipe->sampler_units;
    machine->InterpCoefs = quad->coef;
 
    machine->Inputs[0].xyzw[0].f[0] = fx;
@@ -206,7 +205,7 @@ shade_quad_llvm(struct quad_stage *qs,
    /*quad->mask &=*/
       gallivm_fragment_shader_exec(llvm, fx, fy, dests, inputs,
                                    softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
-                                   qss->samplers, softpipe->sampler_units);
+                                   qss->samplers);
 #if DLLVM
    printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
           dests[0][0][0], dests[0][0][1], dests[0][0][2], dests[0][0][3], 

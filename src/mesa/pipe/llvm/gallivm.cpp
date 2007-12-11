@@ -927,23 +927,21 @@ typedef int (*fragment_shader_runner)(float x, float y,
                                       float (*inputs)[16][4],
                                       int num_attribs,
                                       float (*consts)[4], int num_consts,
-                                      struct tgsi_sampler *samplers,
-                                      unsigned *sampler_units);
+                                      struct tgsi_sampler *samplers);
 
 int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                                  float fx, float fy,
                                  float (*dests)[16][4],
                                  float (*inputs)[16][4],
                                  float (*consts)[4],
-                                 struct tgsi_sampler *samplers,
-                                 unsigned *sampler_units)
+                                 struct tgsi_sampler *samplers)
 {
    fragment_shader_runner runner = reinterpret_cast<fragment_shader_runner>(prog->function);
    assert(runner);
 
    runner(fx, fy, dests, inputs, prog->num_interp,
           consts, prog->num_consts,
-          samplers, sampler_units);
+          samplers);
 
    return 0;
 }

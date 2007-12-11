@@ -217,7 +217,6 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.set_framebuffer_state = cell_set_framebuffer_state;
 
    cell->pipe.set_polygon_stipple = cell_set_polygon_stipple;
-   cell->pipe.set_sampler_units = cell_set_sampler_units;
    cell->pipe.set_scissor_state = cell_set_scissor_state;
    cell->pipe.set_texture_state = cell_set_texture_state;
    cell->pipe.set_viewport_state = cell_set_viewport_state;

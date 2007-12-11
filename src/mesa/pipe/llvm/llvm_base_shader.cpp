@@ -770,8 +770,6 @@ Module* createBaseShader() {
     int32_num_consts_125->setName("num_consts");
     Value* ptr_samplers = args++;
     ptr_samplers->setName("samplers");
-    Value* ptr_sampler_units = args++;
-    ptr_sampler_units->setName("sampler_units");
     
     BasicBlock* label_entry_126 = new BasicBlock("entry",func_run_fragment_shader,0);
     BasicBlock* label_forbody6_i_127 = new BasicBlock("forbody6.i",func_run_fragment_shader,0);

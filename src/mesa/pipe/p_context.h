@@ -142,15 +142,15 @@ struct pipe_context {
    void (*set_polygon_stipple)( struct pipe_context *,
 				const struct pipe_poly_stipple * );
 
-   void (*set_sampler_units)( struct pipe_context *,
-                              uint num_samplers, const uint *units );
-
    void (*set_scissor_state)( struct pipe_context *,
                               const struct pipe_scissor_state * );
 
-   void (*set_texture_state)( struct pipe_context *,
-                              unsigned unit,
-                              struct pipe_texture * );
+
+   /* Currently a sampler is constrained to sample from a single texture:
+    */
+   void (*set_sampler_texture)( struct pipe_context *,
+				unsigned sampler,
+				struct pipe_texture * );
 
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );

@@ -8,7 +8,8 @@ st_get_texobj_texture(struct gl_texture_object *texObj);
 
 extern GLboolean
 st_finalize_texture(GLcontext *ctx,
-		    struct pipe_context *pipe, GLuint unit,
+		    struct pipe_context *pipe, 
+		    struct gl_texture_object *tObj,
 		    GLboolean *needFlush);
 
 

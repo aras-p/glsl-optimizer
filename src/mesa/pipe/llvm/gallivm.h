@@ -67,8 +67,7 @@ int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                                  float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
                                  float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                                  float (*consts)[4],
-                                 struct tgsi_sampler *samplers,
-                                 unsigned *sampler_units);
+                                 struct tgsi_sampler *samplers);
 void gallivm_prog_inputs_interpolate(struct gallivm_prog *prog,
                                      float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                                      const struct tgsi_interp_coef *coefs);

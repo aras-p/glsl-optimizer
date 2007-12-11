@@ -697,7 +697,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* texture state: */
    {
-      pipe->set_texture_state(pipe, unit, pt);
+      pipe->set_sampler_texture(pipe, unit, pt);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
@@ -719,7 +719,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
    pipe->bind_vs_state(pipe, ctx->st->state.vs->data);
-   pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
+   pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 }

@@ -58,7 +58,6 @@ struct cell_context
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
-   uint sampler_units[PIPE_MAX_SAMPLERS];
    uint dirty;
 
    /** The primitive drawing context */

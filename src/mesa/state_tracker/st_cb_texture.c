@@ -1412,10 +1412,10 @@ copy_image_data_to_texture(struct st_context *st,
  */
 GLboolean
 st_finalize_texture(GLcontext *ctx,
-		    struct pipe_context *pipe, GLuint unit,
+		    struct pipe_context *pipe,
+		    struct gl_texture_object *tObj,
 		    GLboolean *needFlush)
 {
-   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct st_texture_object *stObj = st_texture_object(tObj);
    int comp_byte = 0;
    int cpp;
