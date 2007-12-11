@@ -43,12 +43,12 @@ cell_flush(struct pipe_context *pipe, unsigned flags)
 
    /* Send CMD_FINISH to all SPUs */
    for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(control_ps_area[i], CELL_CMD_FINISH);
+      send_mbox_message(spe_contexts[i], CELL_CMD_FINISH);
    }
 
    /* Wait for ack */
    for (i = 0; i < cell->num_spus; i++) {
-      uint k = wait_mbox_message(control_ps_area[i]);
+      uint k = wait_mbox_message(spe_contexts[i]);
       assert(k == CELL_CMD_FINISH);
    }
 }

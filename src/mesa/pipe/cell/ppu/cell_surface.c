@@ -78,13 +78,13 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       command[i].fb.width = ps->width;
       command[i].fb.height = ps->height;
       command[i].fb.format = ps->format;
-      send_mbox_message(control_ps_area[i], CELL_CMD_FRAMEBUFFER);
+      send_mbox_message(spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
    for (i = 0; i < cell->num_spus; i++) {
       /* XXX clear color varies per-SPU for debugging */
       command[i].clear.value = clearValue | (i << 21);
-      send_mbox_message(control_ps_area[i], CELL_CMD_CLEAR_TILES);
+      send_mbox_message(spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
 
 #if 1
@@ -103,7 +103,7 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       /* XXX color varies per SPU */
       command[i].tri.color = 0xffff00 | ((i*40)<<24);  /* yellow */
 
-      send_mbox_message(control_ps_area[i], CELL_CMD_TRIANGLE);
+      send_mbox_message(spe_contexts[i], CELL_CMD_TRIANGLE);
    }
 #endif
 }

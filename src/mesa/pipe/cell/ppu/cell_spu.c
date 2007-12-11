@@ -27,6 +27,7 @@
 
 
 #include <cbe_mfc.h>
+#include <pthread.h>
 
 #include "cell_spu.h"
 #include "pipe/p_format.h"
@@ -43,9 +44,8 @@ helpful headers:
 /**
  * SPU/SPE handles, etc
  */
-speid_t speid[MAX_SPUS];
-spe_spu_control_area_t *control_ps_area[MAX_SPUS];
-
+spe_context_ptr_t spe_contexts[MAX_SPUS];
+pthread_t spe_threads[MAX_SPUS];
 
 /**
  * Data sent to SPUs
@@ -58,11 +58,9 @@ struct cell_command command[MAX_SPUS];
  * Write a 1-word message to the given SPE mailbox.
  */
 void
-send_mbox_message(spe_spu_control_area_t *ca, unsigned int msg)
+send_mbox_message(spe_context_ptr_t ctx, unsigned int msg)
 {
-   while (_spe_in_mbox_status(ca) < 1)
-      ;
-   _spe_in_mbox_write(ca, msg);
+   spe_in_mbox_write(ctx, &msg, 1, SPE_MBOX_ALL_BLOCKING);
 }
 
 
@@ -70,13 +68,30 @@ send_mbox_message(spe_spu_control_area_t *ca, unsigned int msg)
  * Wait for a 1-word message to arrive in given mailbox.
  */
 uint
-wait_mbox_message(spe_spu_control_area_t *ca)
+wait_mbox_message(spe_context_ptr_t ctx)
 {
-   uint k;
-   while (_spe_out_mbox_status(ca) < 1)
-      ;
-   k = _spe_out_mbox_read(ca);
-   return k;
+   do {
+      unsigned data;
+      int count = spe_out_mbox_read(ctx, &data, 1);
+
+      if (count == 1) {
+	 return data;
+      }
+      
+      if (count < 0) {
+	 /* error */ ;
+      }
+   } while (1);
+}
+
+
+static void *cell_thread_function(void *arg)
+{
+   struct cell_init_info *init = (struct cell_init_info *) arg;
+   unsigned entry = SPE_DEFAULT_ENTRY;
+   
+   spe_context_run(spe_contexts[init->id], &entry, 0, init, NULL, NULL);
+   pthread_exit(NULL);
 }
 
 
@@ -96,22 +111,17 @@ cell_start_spus(uint num_spus)
    ASSERT_ALIGN16(&inits[0]);
    ASSERT_ALIGN16(&inits[1]);
 
-   /* XXX do we need to create a gid with spe_create_group()? */
-
    for (i = 0; i < num_spus; i++) {
       inits[i].id = i;
       inits[i].num_spus = num_spus;
       inits[i].cmd = &command[i];
 
-      speid[i] = spe_create_thread(0,          /* gid */
-                                   &g3d_spu,   /* spe program handle */
-                                   &inits[i],  /* argp */
-                                   NULL,       /* envp */
-                                   -1,         /* mask */
-                                   SPE_MAP_PS/*0*/ );        /* flags */
+      spe_contexts[i] = spe_context_create(0, NULL);
 
-      control_ps_area[i] = spe_get_ps_area(speid[i], SPE_CONTROL_AREA);
-      assert(control_ps_area[i]);
+      spe_program_load(spe_contexts[i], &g3d_spu);
+      
+      pthread_create(&spe_threads[i], NULL, cell_thread_function,
+		     & inits[i]);
    }
 }
 
@@ -124,14 +134,15 @@ finish_all(uint num_spus)
    uint i;
 
    for (i = 0; i < num_spus; i++) {
-      send_mbox_message(control_ps_area[i], CELL_CMD_FINISH);
+      send_mbox_message(spe_contexts[i], CELL_CMD_FINISH);
    }
    for (i = 0; i < num_spus; i++) {
       /* wait for mbox message */
       unsigned k;
-      while (_spe_out_mbox_status(control_ps_area[i]) < 1)
+
+      while (spe_out_mbox_read(spe_contexts[i], &k, 1) < 1)
          ;
-      k = _spe_out_mbox_read(control_ps_area[i]);
+
       assert(k == CELL_CMD_FINISH);
    }
 }
@@ -154,12 +165,12 @@ test_spus(struct cell_context *cell)
       command[i].fb.width = surf->width;
       command[i].fb.height = surf->height;
       command[i].fb.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      send_mbox_message(control_ps_area[i], CELL_CMD_FRAMEBUFFER);
+      send_mbox_message(spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
    for (i = 0; i < cell->num_spus; i++) {
       command[i].clear.value = 0xff880044; /* XXX */
-      send_mbox_message(control_ps_area[i], CELL_CMD_CLEAR_TILES);
+      send_mbox_message(spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
 
    finish_all(cell->num_spus);
@@ -171,7 +182,7 @@ test_spus(struct cell_context *cell)
    }
 
    for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(control_ps_area[i], CELL_CMD_EXIT);
+      send_mbox_message(spe_contexts[i], CELL_CMD_EXIT);
    }
 }
 
@@ -182,10 +193,11 @@ test_spus(struct cell_context *cell)
 void
 wait_spus(uint num_spus)
 {
-   int i, status;
+   unsigned i;
+   void *value;
 
    for (i = 0; i < num_spus; i++) {
-      spe_wait( speid[i], &status, 1 );
+      pthread_join(spe_threads[i], &value);
    }
 }
 
@@ -196,14 +208,11 @@ wait_spus(uint num_spus)
 void
 cell_spu_exit(struct cell_context *cell)
 {
-   uint i;
-   int status;
+   unsigned i;
 
    for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(control_ps_area[i], CELL_CMD_EXIT);
+      send_mbox_message(spe_contexts[i], CELL_CMD_EXIT);
    }
 
-   for (i = 0; i < cell->num_spus; i++) {
-      spe_wait( speid[i], &status, 1 );
-   }
+   wait_spus(cell->num_spus);
 }
