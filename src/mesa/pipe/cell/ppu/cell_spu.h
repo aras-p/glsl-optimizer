@@ -39,18 +39,29 @@
 #define MAX_SPUS 8
 
 /**
- * SPU/SPE handles, etc
+ * Global vars, for now anyway.
  */
+struct cell_global_info
+{
+   /**
+    * SPU/SPE handles, etc
+    */
+   spe_context_ptr_t spe_contexts[MAX_SPUS];
+   pthread_t spe_threads[MAX_SPUS];
+
+   /**
+    * Data sent to SPUs
+    */
+   struct cell_init_info inits[MAX_SPUS];
+   struct cell_command command[MAX_SPUS];
+};
+
+
+extern struct cell_global_info cell_global;
+
+
+/** This is the handle for the actual SPE code */
 extern spe_program_handle_t g3d_spu;
-extern spe_context_ptr_t spe_contexts[MAX_SPUS];
-extern pthread_t spe_threads[MAX_SPUS];
-
-
-/**
- * Data sent to SPUs
- */
-extern struct cell_init_info inits[MAX_SPUS];
-extern struct cell_command command[MAX_SPUS];
 
 
 extern void

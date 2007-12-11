@@ -34,7 +34,7 @@
 #include "pipe/cell/common.h"
 
 
-extern struct cell_init_info init;
+extern volatile struct cell_init_info init;
 
 struct framebuffer {
    void *start;

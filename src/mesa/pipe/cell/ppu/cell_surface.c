@@ -52,36 +52,39 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       pipe_surface_map(ps);
 
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].fb.start = ps->map;
-      command[i].fb.width = ps->width;
-      command[i].fb.height = ps->height;
-      command[i].fb.format = ps->format;
-      send_mbox_message(spe_contexts[i], CELL_CMD_FRAMEBUFFER);
+      struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
+      fb->start = ps->map;
+      fb->width = ps->width;
+      fb->height = ps->height;
+      fb->format = ps->format;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
    for (i = 0; i < cell->num_spus; i++) {
       /* XXX clear color varies per-SPU for debugging */
-      command[i].clear.value = clearValue | (i << 21);
-      send_mbox_message(spe_contexts[i], CELL_CMD_CLEAR_TILES);
+      cell_global.command[i].clear.value = clearValue | (i << 21);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
 
 #if 1
    /* XXX Draw a test triangle over the cleared surface */
    for (i = 0; i < cell->num_spus; i++) {
       /* Same triangle data for all SPUs, of course: */
-      command[i].tri.x0 = 20.0;
-      command[i].tri.y0 = ps->height - 20;
+      struct cell_command_triangle *tri = &cell_global.command[i].tri;
 
-      command[i].tri.x1 = ps->width - 20.0;
-      command[i].tri.y1 = ps->height - 20;
+      tri->x0 = 20.0;
+      tri->y0 = ps->height - 20;
 
-      command[i].tri.x2 = ps->width / 2;
-      command[i].tri.y2 = 20.0;
+      tri->x1 = ps->width - 20.0;
+      tri->y1 = ps->height - 20;
+
+      tri->x2 = ps->width / 2;
+      tri->y2 = 20.0;
 
       /* XXX color varies per SPU */
-      command[i].tri.color = 0xffff00 | ((i*40)<<24);  /* yellow */
+      tri->color = 0xffff00 | ((i*40)<<24);  /* yellow */
 
-      send_mbox_message(spe_contexts[i], CELL_CMD_TRIANGLE);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_TRIANGLE);
    }
 #endif
 }

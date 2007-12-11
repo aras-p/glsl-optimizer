@@ -44,7 +44,7 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
-struct cell_init_info init;
+volatile struct cell_init_info init;
 
 struct framebuffer fb;
 
@@ -238,17 +238,21 @@ main_loop(void)
 
 
 
+/**
+ * SPE entrypoint.
+ * Note: example programs declare params as 'unsigned long long' but
+ * that doesn't work.
+ */
 int
-main(unsigned long long speid,
-     unsigned long long argp,
-     unsigned long long envp)
+main(unsigned long speid, unsigned long argp)
 {
    int tag = 0;
 
+   (void) speid;
+
    DefaultTag = 1;
 
-   (void) speid;
-   (void) envp;
+   printf("SPU: main() speid=%lu\n", speid);
 
    mfc_get(&init,  /* dest */
            (unsigned int) argp, /* src */
@@ -257,6 +261,7 @@ main(unsigned long long speid,
            0, /* tid */
            0  /* rid */);
    wait_on_mask( 1 << tag );
+
 
    main_loop();
 

@@ -26,7 +26,6 @@
  **************************************************************************/
 
 
-#include <cbe_mfc.h>
 #include <pthread.h>
 
 #include "cell_spu.h"
@@ -41,17 +40,7 @@ helpful headers:
 */
 
 
-/**
- * SPU/SPE handles, etc
- */
-spe_context_ptr_t spe_contexts[MAX_SPUS];
-pthread_t spe_threads[MAX_SPUS];
-
-/**
- * Data sent to SPUs
- */
-struct cell_init_info inits[MAX_SPUS];
-struct cell_command command[MAX_SPUS];
+struct cell_global_info cell_global;
 
 
 /**
@@ -89,8 +78,15 @@ static void *cell_thread_function(void *arg)
 {
    struct cell_init_info *init = (struct cell_init_info *) arg;
    unsigned entry = SPE_DEFAULT_ENTRY;
-   
-   spe_context_run(spe_contexts[init->id], &entry, 0, init, NULL, NULL);
+
+   ASSERT_ALIGN16(init);
+
+   if (spe_context_run(cell_global.spe_contexts[init->id], &entry, 0,
+                       init, NULL, NULL) < 0) {
+      fprintf(stderr, "spe_context_run() failed\n");
+      exit(1);
+   }
+
    pthread_exit(NULL);
 }
 
@@ -103,25 +99,32 @@ cell_start_spus(uint num_spus)
 {
    uint i;
 
-   assert((sizeof(struct cell_command) & 0xf) == 0);
-   ASSERT_ALIGN16(&command[0]);
-   ASSERT_ALIGN16(&command[1]);
+   assert(num_spus <= MAX_SPUS);
 
-   assert((sizeof(struct cell_init_info) & 0xf) == 0);
-   ASSERT_ALIGN16(&inits[0]);
-   ASSERT_ALIGN16(&inits[1]);
+   ASSERT_ALIGN16(&cell_global.command[0]);
+   ASSERT_ALIGN16(&cell_global.command[1]);
+
+   ASSERT_ALIGN16(&cell_global.inits[0]);
+   ASSERT_ALIGN16(&cell_global.inits[1]);
 
    for (i = 0; i < num_spus; i++) {
-      inits[i].id = i;
-      inits[i].num_spus = num_spus;
-      inits[i].cmd = &command[i];
+      cell_global.inits[i].id = i;
+      cell_global.inits[i].num_spus = num_spus;
+      cell_global.inits[i].cmd = &cell_global.command[i];
 
-      spe_contexts[i] = spe_context_create(0, NULL);
+      cell_global.spe_contexts[i] = spe_context_create(0, NULL);
+      if (!cell_global.spe_contexts[i]) {
+         fprintf(stderr, "spe_context_create() failed\n");
+         exit(1);
+      }
 
-      spe_program_load(spe_contexts[i], &g3d_spu);
+      if (spe_program_load(cell_global.spe_contexts[i], &g3d_spu)) {
+         fprintf(stderr, "spe_program_load() failed\n");
+         exit(1);
+      }
       
-      pthread_create(&spe_threads[i], NULL, cell_thread_function,
-		     & inits[i]);
+      pthread_create(&cell_global.spe_threads[i], NULL, &cell_thread_function,
+		     &cell_global.inits[i]);
    }
 }
 
@@ -134,13 +137,13 @@ finish_all(uint num_spus)
    uint i;
 
    for (i = 0; i < num_spus; i++) {
-      send_mbox_message(spe_contexts[i], CELL_CMD_FINISH);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FINISH);
    }
    for (i = 0; i < num_spus; i++) {
       /* wait for mbox message */
       unsigned k;
 
-      while (spe_out_mbox_read(spe_contexts[i], &k, 1) < 1)
+      while (spe_out_mbox_read(cell_global.spe_contexts[i], &k, 1) < 1)
          ;
 
       assert(k == CELL_CMD_FINISH);
@@ -161,16 +164,16 @@ test_spus(struct cell_context *cell)
    sleep(2);
 
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].fb.start = surf->map;
-      command[i].fb.width = surf->width;
-      command[i].fb.height = surf->height;
-      command[i].fb.format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      send_mbox_message(spe_contexts[i], CELL_CMD_FRAMEBUFFER);
+      cell_global.command[i].fb.start = surf->map;
+      cell_global.command[i].fb.width = surf->width;
+      cell_global.command[i].fb.height = surf->height;
+      cell_global.command[i].fb.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].clear.value = 0xff880044; /* XXX */
-      send_mbox_message(spe_contexts[i], CELL_CMD_CLEAR_TILES);
+      cell_global.command[i].clear.value = 0xff880044; /* XXX */
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
 
    finish_all(cell->num_spus);
@@ -182,7 +185,7 @@ test_spus(struct cell_context *cell)
    }
 
    for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(spe_contexts[i], CELL_CMD_EXIT);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_EXIT);
    }
 }
 
@@ -193,11 +196,11 @@ test_spus(struct cell_context *cell)
 void
 wait_spus(uint num_spus)
 {
-   unsigned i;
+   uint i;
    void *value;
 
    for (i = 0; i < num_spus; i++) {
-      pthread_join(spe_threads[i], &value);
+      pthread_join(cell_global.spe_threads[i], &value);
    }
 }
 
@@ -211,7 +214,7 @@ cell_spu_exit(struct cell_context *cell)
    unsigned i;
 
    for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(spe_contexts[i], CELL_CMD_EXIT);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_EXIT);
    }
 
    wait_spus(cell->num_spus);

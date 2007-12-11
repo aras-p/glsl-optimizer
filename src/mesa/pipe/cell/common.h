@@ -91,6 +91,7 @@ struct cell_command
 } ALIGN16_ATTRIB;
 
 
+/** This is the object passed to spe_create_thread() */
 struct cell_init_info
 {
    unsigned id;
