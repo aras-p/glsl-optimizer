@@ -17,6 +17,7 @@ nv40_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM: 
 		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z16_UNORM:
 			return TRUE;
 		default:
 			break;
@@ -32,6 +33,8 @@ nv40_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
 		case PIPE_FORMAT_U_A8:
 		case PIPE_FORMAT_U_I8:
 		case PIPE_FORMAT_U_A8_L8:
+		case PIPE_FORMAT_Z16_UNORM:
+		case PIPE_FORMAT_Z24S8_UNORM:
 			return TRUE;
 		default:
 			break;
@@ -83,7 +86,7 @@ nv40_get_param(struct pipe_context *pipe, int param)
 	case PIPE_CAP_OCCLUSION_QUERY:
 		return 1;
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
-		return 0;
+		return 1;
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 		return 13;
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:

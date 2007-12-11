@@ -244,6 +244,37 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 
 	ps->filt = filter;
 
+	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+		switch (cso->compare_func) {
+		case PIPE_FUNC_NEVER:
+			ps->wrap |= (0x0 << 28);
+			break;
+		case PIPE_FUNC_GREATER:
+			ps->wrap |= (0x1 << 28);
+			break;
+		case PIPE_FUNC_EQUAL:
+			ps->wrap |= (0x2 << 28);
+			break;
+		case PIPE_FUNC_GEQUAL:
+			ps->wrap |= (0x3 << 28);
+			break;
+		case PIPE_FUNC_LESS:
+			ps->wrap |= (0x4 << 28);
+			break;
+		case PIPE_FUNC_NOTEQUAL:
+			ps->wrap |= (0x5 << 28);
+			break;
+		case PIPE_FUNC_LEQUAL:
+			ps->wrap |= (0x6 << 28);
+			break;
+		case PIPE_FUNC_ALWAYS:
+			ps->wrap |= (0x7 << 28);
+			break;
+		default:
+			break;
+		}
+	}
+
 	ps->bcol = ((float_to_ubyte(cso->border_color[3]) << 24) |
 		    (float_to_ubyte(cso->border_color[0]) << 16) |
 		    (float_to_ubyte(cso->border_color[1]) <<  8) |
