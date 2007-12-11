@@ -47,10 +47,8 @@ struct cell_context
    const struct pipe_rasterizer_state *rasterizer;
 
    struct pipe_blend_color blend_color;
-   struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[2];
-   struct pipe_feedback_state feedback;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
