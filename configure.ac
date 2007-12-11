@@ -730,6 +730,12 @@ CPPFLAGS="$_SAVE_CPPFLAGS"
 dnl Substitute the config
 AC_OUTPUT([configs/autoconf])
 
+dnl Replace the configs/current symlink
+if test -f configs/current || test -L configs/current; then
+    rm -f configs/current
+fi
+ln -s autoconf configs/current
+
 dnl
 dnl Output some configuration info for the user
 dnl
@@ -775,5 +781,5 @@ else
 fi
 
 echo ""
-echo "        Run 'make autoconf' to build Mesa"
+echo "        Run 'make' to build Mesa"
 echo ""
