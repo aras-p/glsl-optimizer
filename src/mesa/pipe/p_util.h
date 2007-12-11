@@ -169,13 +169,25 @@ align_free(void *ptr)
 static INLINE void *
 align16( void *unaligned )
 {
-   union {
-      void *p;
-      uint64 u;
-   } pu;
-   pu.p = unaligned;
-   pu.u = (pu.u + 15) & ~15;
-   return pu.p;
+   if (sizeof(void *) == 64) {
+      union {
+         void *p;
+         uint64 u;
+      } pu;
+      pu.p = unaligned;
+      pu.u = (pu.u + 15) & ~15;
+      return pu.p;
+   }
+   else {
+      /* 32-bit pointers */
+      union {
+         void *p;
+         uint u;
+      } pu;
+      pu.p = unaligned;
+      pu.u = (pu.u + 15) & ~15;
+      return pu.p;
+   }
 }
 
 
