@@ -487,18 +487,6 @@ try_pbo_upload(GLcontext *ctx,
 
 
 
-static GLboolean
-try_pbo_zcopy(GLcontext *ctx,
-              struct st_texture_image *stImage,
-              const struct gl_pixelstore_attrib *unpack,
-              GLint internalFormat,
-              GLint width, GLint height,
-              GLenum format, GLenum type, const void *pixels)
-{
-   return GL_FALSE;
-}
-
-
 
 
 
@@ -618,24 +606,6 @@ st_TexImage(GLcontext * ctx,
 
       DBG("trying pbo upload\n");
 
-      /* Attempt to texture directly from PBO data (zero copy upload).
-       *
-       * Currently disable as it can lead to worse as well as better
-       * performance (in particular when pipe_region_cow() is
-       * required).
-       */
-      if (stObj->pt == stImage->pt &&
-          stObj->pt->first_level == level &&
-          stObj->pt->last_level == level) {
-
-         if (try_pbo_zcopy(intel, stImage, unpack,
-                           internalFormat,
-                           width, height, format, type, pixels)) {
-
-            DBG("pbo zcopy upload succeeded\n");
-            return;
-         }
-      }
 
 
       /* Otherwise, attempt to use the blitter for PBO image uploads.
@@ -652,7 +622,6 @@ st_TexImage(GLcontext * ctx,
 #else
    (void) try_pbo_upload;
    (void) check_pbo_format;
-   (void) try_pbo_zcopy;
 #endif
 
 
