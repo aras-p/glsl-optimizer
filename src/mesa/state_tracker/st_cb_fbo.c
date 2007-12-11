@@ -120,6 +120,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       pipe->winsys->buffer_reference(pipe->winsys, &strb->surface->buffer,
 				     NULL);
 
+   /* XXX don't hard-code magic 32 here */
    strb->surface->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
    if (!strb->surface->buffer)
       return GL_FALSE; /* out of memory, try s/w buffer? */

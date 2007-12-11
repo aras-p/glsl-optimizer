@@ -199,6 +199,7 @@ static void
 create_default_attribs_buffer(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
+   /* XXX don't hardcode magic 32 here */
    st->default_attrib_buffer = pipe->winsys->buffer_create( pipe->winsys, 32, 0, 0 );
 }
 
