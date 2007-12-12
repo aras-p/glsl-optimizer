@@ -34,6 +34,7 @@
 #include "drm.h"
 #include "mm.h"
 #include "texmem.h"
+#include "dri_bufmgr.h"
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
@@ -142,10 +143,25 @@ struct intel_context
    GLuint Fallback;
    GLuint NewGLState;
 
+   dri_bufmgr *bufmgr;
+   unsigned int maxBatchSize;
+
+   struct intel_region *front_region;
+   struct intel_region *back_region;
+   struct intel_region *third_region;
+   struct intel_region *depth_region;
+
+   /**
+    * This value indicates that the kernel memory manager is being used
+    * instead of the fake client-side memory manager.
+    */
+   GLboolean ttm;
+
    dri_fence *last_swap_fence;
    dri_fence *first_swap_fence;
 
    struct intel_batchbuffer *batch;
+   unsigned batch_id;
    GLuint last_state_batch_id;
 
    struct

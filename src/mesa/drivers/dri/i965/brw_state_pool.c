@@ -88,7 +88,7 @@ static void brw_init_pool( struct brw_context *brw,
    pool->size = size;   
    pool->brw = brw;
 
-   pool->buffer = dri_bo_alloc(brw->intel.intelScreen->bufmgr,
+   pool->buffer = dri_bo_alloc(brw->intel.bufmgr,
 			       (pool_id == BRW_GS_POOL) ? "GS pool" : "SS pool",
 			       size, 4096, DRM_BO_FLAG_MEM_TT);
 
@@ -97,7 +97,7 @@ static void brw_init_pool( struct brw_context *brw,
     * the contents at approximately the same cost as the memcpy, and only
     * if the contents are lost.
     */
-   if (!brw->intel.intelScreen->ttm) {
+   if (!brw->intel.ttm) {
       dri_bo_fake_disable_backing_store(pool->buffer, brw_invalidate_pool_cb,
 					pool);
    }

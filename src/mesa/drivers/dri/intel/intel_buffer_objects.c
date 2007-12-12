@@ -40,7 +40,7 @@ static void
 intel_bufferobj_alloc_buffer(struct intel_context *intel,
 			     struct intel_buffer_object *intel_obj)
 {
-   intel_obj->buffer = dri_bo_alloc(intel->intelScreen->bufmgr, "bufferobj",
+   intel_obj->buffer = dri_bo_alloc(intel->bufmgr, "bufferobj",
 				    intel_obj->Base.Size, 64,
 				    DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
 }
@@ -85,7 +85,7 @@ intel_bufferobj_cow(struct intel_context *intel,
                     struct intel_buffer_object *intel_obj)
 {
    assert(intel_obj->region);
-   intel_region_cow(intel->intelScreen, intel_obj->region);
+   intel_region_cow(intel, intel_obj->region);
 }
 
 

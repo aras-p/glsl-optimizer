@@ -472,7 +472,7 @@ void brw_draw_init( struct brw_context *brw )
       /* Set the internal VBOs to no-backing-store.  We only use them as a
        * temporary within a brw_try_draw_prims while the lock is held.
        */
-      if (!brw->intel.intelScreen->ttm) {
+      if (!brw->intel.ttm) {
 	 struct intel_buffer_object *intel_bo =
 	    intel_buffer_object(brw->vb.upload.vbo[i]);
 

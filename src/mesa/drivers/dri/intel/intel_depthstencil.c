@@ -95,12 +95,12 @@ map_regions(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    if (depthRb && depthRb->region) {
-      intel_region_map(intel->intelScreen, depthRb->region);
+      intel_region_map(intel, depthRb->region);
       depthRb->pfMap = depthRb->region->map;
       depthRb->pfPitch = depthRb->region->pitch;
    }
    if (stencilRb && stencilRb->region) {
-      intel_region_map(intel->intelScreen, stencilRb->region);
+      intel_region_map(intel, stencilRb->region);
       stencilRb->pfMap = stencilRb->region->map;
       stencilRb->pfPitch = stencilRb->region->pitch;
    }
@@ -113,12 +113,12 @@ unmap_regions(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    if (depthRb && depthRb->region) {
-      intel_region_unmap(intel->intelScreen, depthRb->region);
+      intel_region_unmap(intel, depthRb->region);
       depthRb->pfMap = NULL;
       depthRb->pfPitch = 0;
    }
    if (stencilRb && stencilRb->region) {
-      intel_region_unmap(intel->intelScreen, stencilRb->region);
+      intel_region_unmap(intel, stencilRb->region);
       stencilRb->pfMap = NULL;
       stencilRb->pfPitch = 0;
    }

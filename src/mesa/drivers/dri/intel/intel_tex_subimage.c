@@ -65,7 +65,7 @@ intelTexSubimage(GLcontext * ctx,
       return;
 
    if (intelImage->mt)
-      intel_region_idle(intel->intelScreen, intelImage->mt->region);
+      intel_region_idle(intel, intelImage->mt->region);
 
    LOCK_HARDWARE(intel);
 

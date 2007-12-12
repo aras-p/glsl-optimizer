@@ -78,15 +78,15 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
-   batch->buf = dri_bo_alloc(intel->intelScreen->bufmgr, "batchbuffer",
-			     intel->intelScreen->maxBatchSize, 4096,
+   batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
+			     intel->maxBatchSize, 4096,
 			     DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
    dri_bo_map(batch->buf, GL_TRUE);
    batch->map = batch->buf->virtual;
-   batch->size = intel->intelScreen->maxBatchSize;
+   batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
-   batch->id = batch->intel->intelScreen->batch_id++;
+   batch->id = batch->intel->batch_id++;
 }
 
 struct intel_batchbuffer *
@@ -144,7 +144,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
 
    if (!(intel->numClipRects == 0 && !ignore_cliprects)) {
-      if (intel->intelScreen->ttm == GL_TRUE) {
+      if (intel->ttm == GL_TRUE) {
 	 intel_exec_ioctl(batch->intel,
 			  used, ignore_cliprects, allow_unlock,
 			  start, count, &batch->last_fence);

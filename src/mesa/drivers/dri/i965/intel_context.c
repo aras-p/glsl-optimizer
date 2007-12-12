@@ -59,8 +59,9 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_decode.h"
+#include "intel_bufmgr_ttm.h"
 
-#include "dri_bufmgr.h"
+#include "i915_drm.h"
 
 #include "utils.h"
 #include "vblank.h"
@@ -315,6 +316,82 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	intel->stats_wm--;
 }
 
+/** Driver-specific fence emit implementation for the fake memory manager. */
+static unsigned int
+intel_fence_emit(void *private)
+{
+   struct intel_context *intel = (struct intel_context *)private;
+   unsigned int fence;
+
+   /* XXX: Need to emit a flush, if we haven't already (at least with the
+    * current batchbuffer implementation, we have).
+    */
+
+   fence = intelEmitIrqLocked(intel);
+
+   return fence;
+}
+
+/** Driver-specific fence wait implementation for the fake memory manager. */
+static int
+intel_fence_wait(void *private, unsigned int cookie)
+{
+   struct intel_context *intel = (struct intel_context *)private;
+
+   intelWaitIrq(intel, cookie);
+
+   return 0;
+}
+
+static GLboolean
+intel_init_bufmgr(struct intel_context *intel)
+{
+   intelScreenPrivate *intelScreen = intel->intelScreen;
+   GLboolean ttm_disable = getenv("INTEL_NO_TTM") != NULL;
+
+   /* If we've got a new enough DDX that's initializing TTM and giving us
+    * object handles for the shared buffers, use that.
+    */
+   intel->ttm = GL_FALSE;
+   if (!ttm_disable &&
+       intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
+       intel->intelScreen->drmMinor >= 11 &&
+       intel->intelScreen->front.bo_handle != -1)
+   {
+      intel->bufmgr = intel_bufmgr_ttm_init(intel->driFd,
+					    DRM_FENCE_TYPE_EXE,
+					    DRM_FENCE_TYPE_EXE |
+					    DRM_I915_FENCE_TYPE_RW,
+					    BATCH_SZ);
+      if (intel->bufmgr != NULL)
+	 intel->ttm = GL_TRUE;
+   }
+   /* Otherwise, use the classic buffer manager. */
+   if (intel->bufmgr == NULL) {
+      if (ttm_disable) {
+	 fprintf(stderr, "TTM buffer manager disabled.  Using classic.\n");
+      } else {
+	 fprintf(stderr, "Failed to initialize TTM buffer manager.  "
+		 "Falling back to classic.\n");
+      }
+
+      if (intelScreen->tex.size == 0) {
+	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
+		 __func__, __LINE__);
+	 return GL_FALSE;
+      }
+
+      intel->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
+					   intelScreen->tex.map,
+					   intelScreen->tex.size,
+					   intel_fence_emit,
+					   intel_fence_wait,
+					   intel);
+   }
+
+   return GL_TRUE;
+}
+
 
 void intelInitDriverFunctions( struct dd_function_table *functions )
 {
@@ -338,24 +415,6 @@ void intelInitDriverFunctions( struct dd_function_table *functions )
    intelInitTextureFuncs( functions );
    intelInitStateFuncs( functions );
    intelInitBufferFuncs( functions );
-}
-
-static void
-intel_update_screen_regions(struct intel_context *intel)
-{
-   intel->bufmgr = intel->intelScreen->bufmgr;
-
-   intel_region_release(intel, &intel->front_region);
-   intel_region_reference(&intel->front_region,
-			  intel->intelScreen->front_region);
-
-   intel_region_release(intel, &intel->back_region);
-   intel_region_reference(&intel->back_region,
-			  intel->intelScreen->back_region);
-
-   intel_region_release(intel, &intel->depth_region);
-   intel_region_reference(&intel->depth_region,
-			  intel->intelScreen->depth_region);
 }
 
 GLboolean intelInitContext( struct intel_context *intel,
@@ -383,6 +442,16 @@ GLboolean intelInitContext( struct intel_context *intel,
    intel->intelScreen = intelScreen;
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
+
+   /* Dri stuff */
+   intel->hHWContext = driContextPriv->hHWContext;
+   intel->driFd = sPriv->fd;
+   intel->driHwLock = (drmLock *) &sPriv->pSAREA->lock;
+
+   intel->maxBatchSize = BATCH_SZ;
+
+   if (!intel_init_bufmgr(intel))
+      return GL_FALSE;
 
    driParseConfigFiles (&intel->optionCache, &intelScreen->optionCache,
 		   intel->driScreen->myNum, "i965");
@@ -431,11 +500,6 @@ GLboolean intelInitContext( struct intel_context *intel,
    _swrast_allow_pixel_fog( ctx, GL_FALSE );
    _swrast_allow_vertex_fog( ctx, GL_TRUE );
 
-   /* Dri stuff */
-   intel->hHWContext = driContextPriv->hHWContext;
-   intel->driFd = sPriv->fd;
-   intel->driHwLock = (drmLock *) &sPriv->pSAREA->lock;
-
    intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
    intel->hw_stipple = 1;
 
@@ -470,10 +534,10 @@ GLboolean intelInitContext( struct intel_context *intel,
 
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
-   if (!intel->intelScreen->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
-      dri_bufmgr_fake_set_debug(intel->intelScreen->bufmgr, GL_TRUE);
+   if (!intel->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
+      dri_bufmgr_fake_set_debug(intel->bufmgr, GL_TRUE);
 
-   intel_update_screen_regions(intel);
+   intel_recreate_static_regions(intel);
 
    intel_bufferobj_init( intel );
    intel->batch = intel_batchbuffer_alloc( intel );
@@ -493,12 +557,16 @@ GLboolean intelInitContext( struct intel_context *intel,
 /* 			  DRI_TEXMGR_DO_TEXTURE_2D |  */
 /* 			  DRI_TEXMGR_DO_TEXTURE_RECT ); */
 
-
+   /* Force all software fallbacks */
    if (getenv("INTEL_NO_RAST")) {
       fprintf(stderr, "disabling 3D rasterization\n");
       intel->no_rast = 1;
    }
 
+   /* Disable all hardware rendering (skip emitting batches and fences/waits
+    * to the kernel)
+    */
+   intel->no_hw = getenv("INTEL_NO_HW") != NULL;
 
    return GL_TRUE;
 }
@@ -643,9 +711,9 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
     * between contexts of a single fake bufmgr, but this will at least make
     * things correct for now.
     */
-   if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
+   if (!intel->ttm && sarea->texAge != intel->hHWContext) {
       sarea->texAge = intel->hHWContext;
-      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      dri_bufmgr_fake_contended_lock_take(intel->bufmgr);
       if (INTEL_DEBUG & DEBUG_BATCH)
 	 intel_decode_context_reset();
       if (INTEL_DEBUG & DEBUG_BUFMGR) {

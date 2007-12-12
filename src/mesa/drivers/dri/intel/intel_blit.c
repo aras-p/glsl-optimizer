@@ -459,7 +459,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                struct intel_region *irb_region =
 		  intel_get_rb_region(fb, buf);
                dri_bo *write_buffer =
-                  intel_region_buffer(intel->intelScreen, irb_region,
+                  intel_region_buffer(intel, irb_region,
                                       all ? INTEL_WRITE_FULL :
                                       INTEL_WRITE_PART);
 

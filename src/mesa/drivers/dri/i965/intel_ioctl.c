@@ -52,15 +52,15 @@ static void intelWaitIdleLocked( struct intel_context *intel )
    if (INTEL_DEBUG & DEBUG_SYNC)
       fprintf(stderr, "waiting for idle\n");
 
-   fence = intelEmitIrqLocked(intel->intelScreen);
-   intelWaitIrq(intel->intelScreen, fence);
+   fence = intelEmitIrqLocked(intel);
+   intelWaitIrq(intel, fence);
 }
 
-int intelEmitIrqLocked( intelScreenPrivate *intelScreen )
+int intelEmitIrqLocked( struct intel_context *intel )
 {
    int seq = 1;
 
-   if (!intelScreen->no_hw) {
+   if (!intel->no_hw) {
       drmI830IrqEmit ie;
       int ret;
       /*
@@ -69,7 +69,7 @@ int intelEmitIrqLocked( intelScreenPrivate *intelScreen )
       */
       ie.irq_seq = &seq;
 
-      ret = drmCommandWriteRead( intelScreen->driScrnPriv->fd,
+      ret = drmCommandWriteRead( intel->driFd,
 				 DRM_I830_IRQ_EMIT, 
 				 &ie, sizeof(ie) );
       if ( ret ) {
@@ -84,14 +84,12 @@ int intelEmitIrqLocked( intelScreenPrivate *intelScreen )
    return seq;
 }
 
-void intelWaitIrq( intelScreenPrivate *intelScreen, int seq )
+void intelWaitIrq( struct intel_context *intel, int seq )
 {
-   if (!intelScreen->no_hw) {
+   if (!intel->no_hw) {
       drmI830IrqWait iw;
       int ret, lastdispatch;
-      volatile drmI830Sarea *sarea = (volatile drmI830Sarea *)
-	 (((GLubyte *)intelScreen->driScrnPriv->pSAREA) +
-	  intelScreen->sarea_priv_offset);
+      volatile drmI830Sarea *sarea = intel->sarea;
 
       if (0)
 	 fprintf(stderr, "%s %d\n", __FUNCTION__, seq );
@@ -100,7 +98,7 @@ void intelWaitIrq( intelScreenPrivate *intelScreen, int seq )
 	
       do {
 	 lastdispatch = sarea->last_dispatch;
-	 ret = drmCommandWrite( intelScreen->driScrnPriv->fd,
+	 ret = drmCommandWrite( intel->driFd,
 				DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
 
 	 /* This seems quite often to return before it should!?! 
@@ -151,7 +149,7 @@ void intel_batch_ioctl( struct intel_context *intel,
 	      batch.start, 
 	      batch.start + batch.used * 4);
 
-   if (!intel->intelScreen->no_hw) {
+   if (!intel->no_hw) {
       if (drmCommandWrite (intel->driFd, DRM_I830_BATCHBUFFER, &batch, 
 			   sizeof(batch))) {
 	 fprintf(stderr, "DRM_I830_BATCHBUFFER: %d\n",  -errno);
@@ -190,7 +188,7 @@ intel_exec_ioctl(struct intel_context *intel,
    execbuf.ops_list = (unsigned)start; // TODO
    execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
 
-   if (intel->intelScreen->no_hw)
+   if (intel->no_hw)
       return;
 
    if (drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
@@ -201,7 +199,7 @@ intel_exec_ioctl(struct intel_context *intel,
    }
 
 
-   fo = intel_ttm_fence_create_from_arg(intel->intelScreen->bufmgr, "fence buffers",
+   fo = intel_ttm_fence_create_from_arg(intel->bufmgr, "fence buffers",
 					&execbuf.fence_arg);
    if (!fo) {
       fprintf(stderr, "failed to fence handle: %08x\n", execbuf.fence_arg.handle);

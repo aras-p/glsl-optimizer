@@ -39,7 +39,7 @@ static void
 intel_bufferobj_alloc_buffer(struct intel_context *intel,
 			     struct intel_buffer_object *intel_obj)
 {
-   intel_obj->buffer = dri_bo_alloc(intel->intelScreen->bufmgr, "bufferobj",
+   intel_obj->buffer = dri_bo_alloc(intel->bufmgr, "bufferobj",
 				    intel_obj->Base.Size, 64,
 				    DRM_BO_FLAG_MEM_TT);
 }

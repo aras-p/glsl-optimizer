@@ -81,7 +81,7 @@ static void upload_wm_unit(struct brw_context *brw )
 	 brw->wm.scratch_buffer = NULL;
       }
       if (!brw->wm.scratch_buffer) {
-	 brw->wm.scratch_buffer = dri_bo_alloc(intel->intelScreen->bufmgr,
+	 brw->wm.scratch_buffer = dri_bo_alloc(intel->bufmgr,
 					       "wm scratch",
 					       brw->wm.scratch_buffer_size,
 					       4096, DRM_BO_FLAG_MEM_TT);

@@ -60,6 +60,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 #include "intel_decode.h"
+#include "intel_bufmgr_ttm.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -291,6 +292,81 @@ intelFinish(GLcontext * ctx)
    }
 }
 
+/** Driver-specific fence emit implementation for the fake memory manager. */
+static unsigned int
+intel_fence_emit(void *private)
+{
+   struct intel_context *intel = (struct intel_context *)private;
+   unsigned int fence;
+
+   /* XXX: Need to emit a flush, if we haven't already (at least with the
+    * current batchbuffer implementation, we have).
+    */
+
+   fence = intelEmitIrqLocked(intel);
+
+   return fence;
+}
+
+/** Driver-specific fence wait implementation for the fake memory manager. */
+static int
+intel_fence_wait(void *private, unsigned int cookie)
+{
+   struct intel_context *intel = (struct intel_context *)private;
+
+   intelWaitIrq(intel, cookie);
+
+   return 0;
+}
+
+static GLboolean
+intel_init_bufmgr(struct intel_context *intel)
+{
+   intelScreenPrivate *intelScreen = intel->intelScreen;
+   GLboolean ttm_disable = getenv("INTEL_NO_TTM") != NULL;
+
+   /* If we've got a new enough DDX that's initializing TTM and giving us
+    * object handles for the shared buffers, use that.
+    */
+   intel->ttm = GL_FALSE;
+   if (!ttm_disable &&
+       intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
+       intel->intelScreen->drmMinor >= 11 &&
+       intel->intelScreen->front.bo_handle != -1)
+   {
+      intel->bufmgr = intel_bufmgr_ttm_init(intel->driFd,
+					    DRM_FENCE_TYPE_EXE,
+					    DRM_FENCE_TYPE_EXE |
+					    DRM_I915_FENCE_TYPE_RW,
+					    BATCH_SZ);
+      if (intel->bufmgr != NULL)
+	 intel->ttm = GL_TRUE;
+   }
+   /* Otherwise, use the classic buffer manager. */
+   if (intel->bufmgr == NULL) {
+      if (ttm_disable) {
+	 fprintf(stderr, "TTM buffer manager disabled.  Using classic.\n");
+      } else {
+	 fprintf(stderr, "Failed to initialize TTM buffer manager.  "
+		 "Falling back to classic.\n");
+      }
+
+      if (intelScreen->tex.size == 0) {
+	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
+		 __func__, __LINE__);
+	 return GL_FALSE;
+      }
+
+      intel->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
+					   intelScreen->tex.map,
+					   intelScreen->tex.size,
+					   intel_fence_emit,
+					   intel_fence_wait,
+					   intel);
+   }
+
+   return GL_TRUE;
+}
 
 void
 intelInitDriverFunctions(struct dd_function_table *functions)
@@ -338,8 +414,21 @@ intelInitContext(struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
+   /* Dri stuff */
+   intel->hHWContext = driContextPriv->hHWContext;
+   intel->driFd = sPriv->fd;
+   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
+
    intel->width = intelScreen->width;
    intel->height = intelScreen->height;
+
+   if (intelScreen->deviceID == PCI_CHIP_I865_G)
+      intel->maxBatchSize = 4096;
+   else
+      intel->maxBatchSize = BATCH_SZ;
+
+   if (!intel_init_bufmgr(intel))
+      return GL_FALSE;
 
    if (!lockMutexInit) {
       lockMutexInit = GL_TRUE;
@@ -391,11 +480,6 @@ intelInitContext(struct intel_context *intel,
    _swrast_allow_pixel_fog(ctx, GL_FALSE);
    _swrast_allow_vertex_fog(ctx, GL_TRUE);
 
-   /* Dri stuff */
-   intel->hHWContext = driContextPriv->hHWContext;
-   intel->driFd = sPriv->fd;
-   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
-
    intel->hw_stipple = 1;
 
    /* XXX FBO: this doesn't seem to be used anywhere */
@@ -436,9 +520,10 @@ intelInitContext(struct intel_context *intel,
 /* 		      GL_TRUE, */
                      GL_FALSE);
 
-   if (intelScreen->ttm)
+   if (intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
+   intel_recreate_static_regions(intel);
 
    intel->batch = intel_batchbuffer_alloc(intel);
    intel->last_swap_fence = NULL;
@@ -457,11 +542,10 @@ intelInitContext(struct intel_context *intel,
 
    intel->prim.primitive = ~0;
 
-
 #if DO_DEBUG
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
-   if (!intel->intelScreen->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
-      dri_bufmgr_fake_set_debug(intel->intelScreen->bufmgr, GL_TRUE);
+   if (!intel->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
+      dri_bufmgr_fake_set_debug(intel->bufmgr, GL_TRUE);
 #endif
 
    if (getenv("INTEL_NO_RAST")) {
@@ -507,6 +591,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 	 intel->first_swap_fence = NULL;
       }
 
+      dri_bufmgr_destroy(intel->bufmgr);
 
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private
@@ -551,21 +636,21 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
          if (intel_fb->color_rb[0] && !intel_fb->color_rb[0]->region) {
             intel_region_reference(&intel_fb->color_rb[0]->region,
-				   intel->intelScreen->front_region);
+				   intel->front_region);
          }
          if (intel_fb->color_rb[1] && !intel_fb->color_rb[1]->region) {
             intel_region_reference(&intel_fb->color_rb[1]->region,
-				   intel->intelScreen->back_region);
+				   intel->back_region);
          }
          if (intel_fb->color_rb[2] && !intel_fb->color_rb[2]->region) {
             intel_region_reference(&intel_fb->color_rb[2]->region,
-				   intel->intelScreen->third_region);
+				   intel->third_region);
          }
          if (irbDepth && !irbDepth->region) {
-            intel_region_reference(&irbDepth->region, intel->intelScreen->depth_region);
+            intel_region_reference(&irbDepth->region, intel->depth_region);
          }
          if (irbStencil && !irbStencil->region) {
-            intel_region_reference(&irbStencil->region, intel->intelScreen->depth_region);
+            intel_region_reference(&irbStencil->region, intel->depth_region);
          }
       }
 
@@ -618,7 +703,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
    drmI830Sarea *sarea = intel->sarea;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
@@ -639,9 +723,9 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * between contexts of a single fake bufmgr, but this will at least make
     * things correct for now.
     */
-   if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
+   if (!intel->ttm && sarea->texAge != intel->hHWContext) {
       sarea->texAge = intel->hHWContext;
-      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      dri_bufmgr_fake_contended_lock_take(intel->bufmgr);
       if (INTEL_DEBUG & DEBUG_BATCH)
 	 intel_decode_context_reset();
    }

@@ -67,6 +67,8 @@ void intel_region_reference( struct intel_region **dst,
 void intel_region_release(struct intel_context *intel,
 			  struct intel_region **ib );
 
+void intel_recreate_static_regions(struct intel_context *intel);
+
 /* Static regions may be tiled.  The assumption is that the X server
  * has set up fence registers to define tiled zones in agp and these
  * buffers are within those zones.  Tiling regions without fence

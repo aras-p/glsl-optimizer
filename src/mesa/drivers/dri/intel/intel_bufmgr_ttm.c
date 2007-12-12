@@ -560,6 +560,8 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 
     ret = drmBOReference(ttm_bufmgr->fd, handle, &ttm_buf->drm_bo);
     if (ret != 0) {
+       fprintf(stderr, "Couldn't reference %s handle 0x%08x: %s\n",
+	       name, handle, strerror(-ret));
 	free(ttm_buf);
 	return NULL;
     }
