@@ -45,14 +45,8 @@ DRIVER_SOURCES = \
 	brw_vs_state.c \
 	brw_vtbl.c \
 	brw_wm.c \
-	brw_wm_debug.c \
-	brw_wm_emit.c \
-	brw_wm_fp.c \
 	brw_wm_iz.c \
 	brw_wm_glsl.c \
-	brw_wm_pass0.c \
-	brw_wm_pass1.c \
-	brw_wm_pass2.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c
