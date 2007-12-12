@@ -1,0 +1,4 @@
+!!ARBfp1.0
+TEMP R0;
+POW result.color,  fragment.color.x, fragment.color.y;
+END

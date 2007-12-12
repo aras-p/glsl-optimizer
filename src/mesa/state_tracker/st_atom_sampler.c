@@ -172,26 +172,13 @@ update_samplers(struct st_context *st)
          st->pipe->bind_sampler_state(st->pipe, u, cso->data);
       }
    }
-
-
-   /* mapping from sampler vars to texture units */
-   {
-      struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
-      uint sample_units[PIPE_MAX_SAMPLERS];
-      uint s;
-      for (s = 0; s < PIPE_MAX_SAMPLERS; s++) {
-         sample_units[s] = fprog->Base.SamplerUnits[s];
-      }
-
-      st->pipe->set_sampler_units(st->pipe, PIPE_MAX_SAMPLERS, sample_units);
-   }
 }
 
 
 const struct st_tracked_state st_update_sampler = {
    .name = "st_update_sampler",
    .dirty = {
-      .mesa = _NEW_TEXTURE | _NEW_PROGRAM,
+      .mesa = _NEW_TEXTURE,
       .st  = 0,
    },
    .update = update_samplers

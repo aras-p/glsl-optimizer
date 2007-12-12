@@ -7,6 +7,8 @@
 #include <math.h>
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
+#include <unistd.h>
+#include <signal.h>
 
 static const char *filename = NULL;
 static GLuint nr_steps = 4;
@@ -18,8 +20,24 @@ static void usage( char *name )
    fprintf( stderr, "options:\n" );
    fprintf( stderr, "    -f     flat shaded\n" );
    fprintf( stderr, "    -nNr  subdivision steps\n" );
+   fprintf( stderr, "    -fps  show frames per second\n" );
 }
 
+unsigned show_fps = 0;
+unsigned int frame_cnt = 0;
+void alarmhandler(int);
+
+void alarmhandler (int sig)
+{
+   if (sig == SIGALRM) {
+      printf("%d frames in 5.0 seconds = %.3f FPS\n", frame_cnt,
+             frame_cnt / 5.0);
+
+      frame_cnt = 0;
+   }
+   signal(SIGALRM, alarmhandler);
+   alarm(5);
+}
 
 static void args(int argc, char *argv[])
 {
@@ -31,6 +49,9 @@ static void args(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-f") == 0) {
 	 glShadeModel(GL_FLAT);
+      }
+      else if (strcmp(argv[i], "-fps") == 0) {
+         show_fps = 1;
       }
       else if (i == argc - 1) {
 	 filename = argv[i];
@@ -168,7 +189,11 @@ static void Display( void )
    glEnd();
 
 
-   glFlush(); 
+   glFlush();
+   if (show_fps) {
+      ++frame_cnt;
+      glutPostRedisplay();
+   }
 }
 
 
@@ -211,6 +236,10 @@ int main( int argc, char *argv[] )
    glutDisplayFunc( Display );
    args( argc, argv );
    Init();
+   if (show_fps) {
+      signal(SIGALRM, alarmhandler);
+      alarm(5);
+   }
    glutMainLoop();
    return 0;
 }

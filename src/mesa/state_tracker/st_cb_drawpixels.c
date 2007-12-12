@@ -469,8 +469,8 @@ make_texture(struct st_context *st,
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, baseFormat, 0, 0,
-			  width, height, 1, 0);
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, 0, width, height,
+			  1, 0);
    if (!pt)
       return NULL;
 
@@ -697,7 +697,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* texture state: */
    {
-      pipe->set_texture_state(pipe, unit, pt);
+      pipe->set_sampler_texture(pipe, unit, pt);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
@@ -719,7 +719,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
    pipe->bind_vs_state(pipe, ctx->st->state.vs->data);
-   pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
+   pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 }
@@ -987,7 +987,6 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_surface *surface;
    uint format = 0, cpp, comp;
-   GLenum internal_format;
    ubyte *dest;
    struct pipe_texture *pt;
    int row, col;
@@ -995,13 +994,11 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /* find a texture format we know */
    if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_U_I8;
-      internal_format = GL_INTENSITY8;
       cpp = 1;
       comp = 0;
    }
    else if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      internal_format = GL_RGBA8;
       cpp = 4;
       comp = 3; /* alpha channel */ /*XXX little-endian dependency */
    }
@@ -1013,8 +1010,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /**
     * Create a texture.
     */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, internal_format,
-			  0, 0, width, height, 1, 0);
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, 0, width, height,
+			  1, 0);
    if (!pt)
       return NULL;
 
@@ -1237,8 +1234,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    psRead = rbRead->surface;
    format = psRead->format;
 
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format,
-			  rbRead->Base.InternalFormat, 0, 0, width, height, 1, 0);
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, 0, width, height,
+			  1, 0);
    if (!pt)
       return;
 

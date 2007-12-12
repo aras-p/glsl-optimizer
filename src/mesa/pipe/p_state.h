@@ -103,19 +103,6 @@ struct pipe_rasterizer_state
 };
 
 
-/**
- * Post-transform vertex feeback
- */
-struct pipe_feedback_state {
-   uint enabled:1;        /**< enable feedback? */
-   uint discard:1;        /**< discard primitives? */
-   uint interleaved:1;    /**< interleaved output? */
-   uint num_attribs;
-   uint attrib[PIPE_MAX_FEEDBACK_ATTRIBS];
-   uint size[PIPE_MAX_FEEDBACK_ATTRIBS];
-};
-
-
 struct pipe_poly_stipple {
    unsigned stipple[32];
 };
@@ -165,7 +152,6 @@ struct pipe_depth_stencil_state
       unsigned writemask:1; /**< allow depth buffer writes? */
       unsigned func:3;      /**< depth test func (PIPE_FUNC_x) */
       unsigned occlusion_count:1; /**< XXX move this elsewhere? */
-      float clear;      /**< Clear value in [0,1] (XXX correct place?) */
    } depth;
    struct {
       unsigned front_enabled:1;
@@ -181,7 +167,6 @@ struct pipe_depth_stencil_state
       ubyte ref_value[2];    /**< [0] = front, [1] = back */
       ubyte value_mask[2];
       ubyte write_mask[2];
-      ubyte clear_value;
    } stencil;
 };
 
@@ -210,11 +195,6 @@ struct pipe_blend_state {
 };
 
 struct pipe_blend_color {
-   float color[4];
-};
-
-struct pipe_clear_color_state
-{
    float color[4];
 };
 
@@ -284,10 +264,9 @@ struct pipe_texture
 { 
    /* Effectively the key:
     */
-   unsigned target;            /* XXX convert to PIPE_TEXTURE_x */
-   unsigned internal_format;   /* XXX convert to PIPE_FORMAT_x */
-
+   unsigned target;            /**< PIPE_TEXTURE_x */
    enum pipe_format format;    /**< PIPE_FORMAT_x */
+
    unsigned first_level;
    unsigned last_level;
 
@@ -335,25 +314,6 @@ struct pipe_vertex_element
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
 
-
-/**
- * Vertex feedback buffer
- */
-struct pipe_feedback_buffer {
-   struct pipe_buffer_handle *buffer;
-   unsigned size;
-   unsigned start_offset;
-};
-
-
-/**
- * Hardware queries (occlusion, transform feedback, timing, etc)
- */
-struct pipe_query_object {
-   uint type:3;   /**< PIPE_QUERY_x */
-   uint ready:1;  /**< is result ready? */
-   uint64 count;
-};
 
 
 #endif

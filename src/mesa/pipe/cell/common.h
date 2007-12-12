@@ -33,11 +33,11 @@
 #ifndef CELL_COMMON_H
 #define CELL_COMMON_H
 
+#include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 
 
-#define ALIGN16 __attribute__( (aligned( 16 )) )
-
+/** for sanity checking */
 #define ASSERT_ALIGN16(ptr) \
    assert((((unsigned long) (ptr)) & 0xf) == 0);
 
@@ -49,7 +49,7 @@
 #define CELL_CMD_EXIT         1
 #define CELL_CMD_FRAMEBUFFER  2
 #define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_INVERT_TILES 4
+#define CELL_CMD_TRIANGLE     4
 #define CELL_CMD_FINISH       5
 
 
@@ -61,7 +61,7 @@ struct cell_command_framebuffer
    void *start;
    int width, height;
    unsigned format;
-} ALIGN16;
+} ALIGN16_ATTRIB;
 
 
 /**
@@ -70,7 +70,14 @@ struct cell_command_framebuffer
 struct cell_command_clear_tiles
 {
    uint value;
-} ALIGN16;
+} ALIGN16_ATTRIB;
+
+
+struct cell_command_triangle
+{
+   float vert[3][4];
+   float color[3][4];
+} ALIGN16_ATTRIB;
 
 
 /** XXX unions don't seem to work */
@@ -78,15 +85,17 @@ struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_tiles clear;
-} ALIGN16;
+   struct cell_command_triangle tri;
+} ALIGN16_ATTRIB;
 
 
+/** This is the object passed to spe_create_thread() */
 struct cell_init_info
 {
    unsigned id;
    unsigned num_spus;
    struct cell_command *cmd;
-} ALIGN16;
+} ALIGN16_ATTRIB;
 
 
 

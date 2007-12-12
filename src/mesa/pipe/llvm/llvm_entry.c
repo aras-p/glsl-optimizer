@@ -1,4 +1,4 @@
-/* clang --emit-llvm llvm_builtins.c |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -funcname=createBaseShader */
+/* clang --emit-llvm llvm_entry.c |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -funcname=createBaseShader */
 /**************************************************************************
  *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -68,6 +68,7 @@ compute_clipmask(float4 clip, float4 (*plane), unsigned nr)
    return mask;
 }
 
+
 inline void collect_results(float4 *results, struct vertex_header *vOut,
                             float4 *planes, int nr_planes,
                             float4 scale, float4 trans,
@@ -76,7 +77,6 @@ inline void collect_results(float4 *results, struct vertex_header *vOut,
    /* store results */
    unsigned slot;
    float x, y, z, w;
-
    /* Handle attr[0] (position) specially:
     */
    float4 res0 = results[0];
@@ -85,7 +85,6 @@ inline void collect_results(float4 *results, struct vertex_header *vOut,
    y = clip[1] = res0.y;
    z = clip[2] = res0.z;
    w = clip[3] = res0.w;
-
    vOut->clipmask = compute_clipmask(res0, planes, nr_planes);
    vOut->edgeflag = 1;
 
@@ -164,31 +163,39 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
    }
 }
 
-extern void execute_shader(float4 dests[16], float4 inputs[16],
-                           float4 consts[32], float4 temps[128]);
 
-void run_vertex_shader(float (*ainputs)[16][4],
-                       float (*dests)[16][4],
+struct ShaderInput
+{
+   float4  *dests;
+   float4  *inputs;
+   float4  *temps;
+   float4  *consts;
+   int     kilmask;
+};
+
+extern void execute_shader(struct ShaderInput *input);
+
+void run_vertex_shader(float4 (*inputs)[16],
+                       float4 (*results)[16],
                        float (*aconsts)[4],
                        int num_vertices,
                        int num_inputs,
                        int num_attribs,
                        int num_consts)
 {
-   float4  inputs[16*32*4][16];
    float4  consts[32];
-   float4  results[16*32*4][16];
    float4  temps[128];//MAX_PROGRAM_TEMPS
 
+   struct ShaderInput args;
    /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
      num_vertices, num_inputs, num_attribs, num_consts);*/
-   from_array(inputs, ainputs, num_vertices, num_inputs);
    from_consts(consts, aconsts, num_consts);
+   args.consts = consts;
+   args.temps = temps;
    for (int i = 0; i < num_vertices; ++i) {
-      float4 *in  = inputs[i];
-      float4 *res = results[i];
-      execute_shader(res, in, consts, temps);
-      to_array(dests[i], res, num_attribs);
+      args.dests  = results[i];
+      args.inputs = inputs[i];
+      execute_shader(&args);
    }
 }
 
@@ -213,30 +220,33 @@ struct tgsi_sampler
    struct softpipe_tile_cache *cache;
 };
 
+
 int run_fragment_shader(float x, float y,
-                        float (*dests)[16][4],
-                        float (*ainputs)[16][4],
+                        float4 (*results)[16],
+                        float4 (*inputs)[16],
                         int num_inputs,
                         float (*aconsts)[4],
                         int num_consts,
-                        struct tgsi_sampler *samplers,
-                        unsigned *sampler_units)
+                        struct tgsi_sampler *samplers)
 {
-   float4  inputs[4][16];
    float4  consts[32];
-   float4  results[4][16];
    float4  temps[128];//MAX_PROGRAM_TEMPS
-   int     kilmask = 0;
+   struct ShaderInput args;
+   int mask = 0;
+   args.kilmask = 0;
 
-   from_array(inputs, ainputs, 4, num_inputs);
    from_consts(consts, aconsts, num_consts);
+   args.consts = consts;
+   args.temps = temps;
    //printf("AAAAAAAAAAAAAAAAAAAAAAA FRAGMENT SHADER %f %f\n", x, y);
    for (int i = 0; i < 4; ++i) {
-      float4 *in  = inputs[i];
-      float4 *res = results[i];
-      execute_shader(res, in, consts, temps);
-      to_array(dests[i], res, 2);
+      args.inputs  = inputs[i];
+      args.dests   = results[i];
+      mask = args.kilmask;
+      args.kilmask = 0;
+      execute_shader(&args);
+      args.kilmask = mask | (args.kilmask << i);
    }
-   return ~kilmask;
+   return ~args.kilmask;
 }
 

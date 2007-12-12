@@ -159,7 +159,6 @@ struct draw_context
       struct draw_stage *validate; 
 
       /* stages (in logical order) */
-      struct draw_stage *feedback;
       struct draw_stage *flatshade;
       struct draw_stage *clip;
       struct draw_stage *cull;
@@ -172,13 +171,10 @@ struct draw_context
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
-   struct pipe_feedback_state feedback;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    const struct draw_vertex_shader *vertex_shader;
-   struct pipe_vertex_buffer feedback_buffer[PIPE_ATTRIB_MAX];
-   struct pipe_vertex_element feedback_element[PIPE_ATTRIB_MAX];
 
    /* user-space vertex data, buffers */
    struct {
@@ -192,10 +188,6 @@ struct draw_context
 
       /** constant buffer (for vertex shader) */
       const void *constants;
-
-      /** The vertex feedback buffer */
-      void *feedback_buffer[PIPE_MAX_FEEDBACK_ATTRIBS];
-      uint feedback_buffer_size[PIPE_MAX_FEEDBACK_ATTRIBS]; /* in bytes */
    } user;
 
    /* Clip derived state:
@@ -257,7 +249,6 @@ struct draw_context
 
 
 
-extern struct draw_stage *draw_feedback_stage( struct draw_context *context );
 extern struct draw_stage *draw_unfilled_stage( struct draw_context *context );
 extern struct draw_stage *draw_twoside_stage( struct draw_context *context );
 extern struct draw_stage *draw_offset_stage( struct draw_context *context );

@@ -138,18 +138,6 @@ softpipe_draw_elements(struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
-   /* Map feedback buffers if enabled */
-   if (sp->feedback.enabled) {
-      const uint n = sp->feedback.interleaved ? 1 : sp->feedback.num_attribs;
-      for (i = 0; i < n; i++) {
-         void *ptr = pipe->winsys->buffer_map(pipe->winsys,
-                                              sp->feedback_buffer[i].buffer,
-                                              PIPE_BUFFER_FLAG_WRITE);
-         draw_set_mapped_feedback_buffer(draw, i, ptr,
-                                         sp->feedback_buffer[i].size);
-      }
-   }
-
 
    /* draw! */
    draw_arrays(draw, mode, start, count);
@@ -169,16 +157,6 @@ softpipe_draw_elements(struct pipe_context *pipe,
    if (indexBuffer) {
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
-   }
-
-   /* Unmap feedback buffers if enabled */
-   if (sp->feedback.enabled) {
-      const uint n = sp->feedback.interleaved ? 1 : sp->feedback.num_attribs;
-      for (i = 0; i < n; i++) {
-         pipe->winsys->buffer_unmap(pipe->winsys,
-                                    sp->feedback_buffer[i].buffer);
-         draw_set_mapped_feedback_buffer(draw, i, NULL, 0);
-      }
    }
 
 

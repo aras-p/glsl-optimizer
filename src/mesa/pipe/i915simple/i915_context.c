@@ -170,21 +170,6 @@ static void i915_destroy( struct pipe_context *pipe )
 
 
 
-static void
-i915_begin_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   /* should never be called */
-   assert(0);
-}
-
-
-static void
-i915_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   /* should never be called */
-   assert(0);
-}
-
 
 static boolean
 i915_draw_elements( struct pipe_context *pipe,
@@ -223,18 +208,6 @@ i915_draw_elements( struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
-   /* Map feedback buffers if enabled */
-   if (i915->feedback.enabled) {
-      const uint n = i915->feedback.interleaved ? 1 : i915->feedback.num_attribs;
-      for (i = 0; i < n; i++) {
-         void *ptr = pipe->winsys->buffer_map(pipe->winsys,
-                                              i915->feedback_buffer[i].buffer,
-                                              PIPE_BUFFER_FLAG_WRITE);
-         draw_set_mapped_feedback_buffer(draw, i, ptr,
-                                         i915->feedback_buffer[i].size);
-      }
-   }
-
 
    draw_set_mapped_constant_buffer(draw,
                                 i915->current.constants[PIPE_SHADER_VERTEX]);
@@ -254,16 +227,6 @@ i915_draw_elements( struct pipe_context *pipe,
    if (indexBuffer) {
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
-   }
-
-   /* Unmap feedback buffers if enabled */
-   if (i915->feedback.enabled) {
-      const uint n = i915->feedback.interleaved ? 1 : i915->feedback.num_attribs;
-      for (i = 0; i < n; i++) {
-         pipe->winsys->buffer_unmap(pipe->winsys,
-                                    i915->feedback_buffer[i].buffer);
-         draw_set_mapped_feedback_buffer(draw, i, NULL, 0);
-      }
    }
 
    return TRUE;
@@ -320,8 +283,6 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    i915->pipe.clear = i915_clear;
 
-   i915->pipe.begin_query = i915_begin_query;
-   i915->pipe.end_query = i915_end_query;
 
    i915->pipe.draw_arrays = i915_draw_arrays;
    i915->pipe.draw_elements = i915_draw_elements;

@@ -1,8 +1,8 @@
-# Configuration for debugging on Linux
+# Configuration for Linux and LLVM with debugging info
 
 include $(TOP)/configs/linux
 
-CONFIG_NAME = linux-debug
+CONFIG_NAME = linux-llvm
 
 OPT_FLAGS = -g -ansi -pedantic
 DEFINES += -DDEBUG -DDEBUG_MATH

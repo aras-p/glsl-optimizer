@@ -35,58 +35,18 @@
 
 #include "glxheader.h"
 #include "xmesaP.h"
-#include "main/macros.h"
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
+#include "pipe/p_util.h"
 #include "pipe/softpipe/sp_winsys.h"
 
 #ifdef GALLIUM_CELL
 #include "pipe/cell/ppu/cell_context.h"
 #include "pipe/cell/ppu/cell_winsys.h"
 #endif
-
-
-/** XXX from Mesa core */
-static void *
-align_malloc(size_t bytes, unsigned long alignment)
-{
-#if defined(HAVE_POSIX_MEMALIGN)
-   void *mem;
-
-   (void) posix_memalign(& mem, alignment, bytes);
-   return mem;
-#else
-   uintptr_t ptr, buf;
-
-   assert( alignment > 0 );
-
-   ptr = (uintptr_t) malloc(bytes + alignment + sizeof(void *));
-   if (!ptr)
-      return NULL;
-
-   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
-   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
-
-   return (void *) buf;
-#endif /* defined(HAVE_POSIX_MEMALIGN) */
-}
-
-
-/** XXX from Mesa core */
-static void
-align_free(void *ptr)
-{
-#if defined(HAVE_POSIX_MEMALIGN)
-   free(ptr);
-#else
-   void **cubbyHole = (void **) ((char *) ptr - sizeof(void *));
-   void *realAddr = *cubbyHole;
-   free(realAddr);
-#endif /* defined(HAVE_POSIX_MEMALIGN) */
-}
-
+#include "xm_winsys_aub.h"
 
 
 /**
@@ -211,6 +171,7 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    if (xm_buf->size != size) {
       if (xm_buf->data)
          align_free(xm_buf->data);
+      /* align to 16-byte multiple for Cell */
       xm_buf->data = align_malloc(size, 16);
       xm_buf->size = size;
    }
@@ -254,6 +215,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
    XImage *ximage = b->tempImage;
    struct xm_buffer *xm_buf = xm_bo(surf->buffer);
    const int TILE_SIZE = 32;
+   const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
    uint x, y;
 
    /* check that the XImage has been previously initialized */
@@ -271,7 +233,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
          int dy = y;
          int tx = x / TILE_SIZE;
          int ty = y / TILE_SIZE;
-         int offset = ty * (surf->width / TILE_SIZE) + tx;
+         int offset = ty * tilesPerRow + tx;
          offset *= 4 * TILE_SIZE * TILE_SIZE;
 
          ximage->data = (char *) xm_buf->data + offset;
@@ -386,11 +348,38 @@ round_up(unsigned n, unsigned multiple)
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
-static unsigned
-xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
-		 unsigned flags)
+static int
+xm_surface_alloc_storage(struct pipe_winsys *winsys,
+                         struct pipe_surface *surf,
+                         unsigned width, unsigned height,
+                         enum pipe_format format, 
+                         unsigned flags)
 {
-   return round_up(width, 64 / cpp);
+   const unsigned alignment = 64;
+   int ret;
+
+   surf->width = width;
+   surf->height = height;
+   surf->format = format;
+   surf->cpp = pf_get_size(format);
+   surf->pitch = round_up(width, alignment / surf->cpp);
+
+   assert(!surf->buffer);
+   surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+   if(!surf->buffer)
+      return -1;
+
+   ret = winsys->buffer_data(winsys, 
+                             surf->buffer,
+                             surf->pitch * surf->cpp * height,
+                             NULL,
+                             0);
+   if(ret) {
+      winsys->buffer_reference(winsys, &surf->buffer, NULL);
+      return ret;
+   }
+   
+   return 0;
 }
 
 
@@ -399,14 +388,12 @@ xm_surface_pitch(struct pipe_winsys *winsys, unsigned cpp, unsigned width,
  * renderbuffers, etc.
  */
 static struct pipe_surface *
-xm_surface_alloc(struct pipe_winsys *ws, enum pipe_format pipeFormat)
+xm_surface_alloc(struct pipe_winsys *ws)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
 
    assert(ws);
-   assert(pipeFormat);
 
-   xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
    xms->surface.winsys = ws;
 
@@ -441,12 +428,15 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
  * For Xlib, this is a singleton object.
  * Nothing special for the Xlib driver so no subclassing or anything.
  */
-static struct pipe_winsys *
-xmesa_get_pipe_winsys(void)
+struct pipe_winsys *
+xmesa_get_pipe_winsys_aub(void)
 {
    static struct pipe_winsys *ws = NULL;
 
-   if (!ws) {
+   if (!ws && getenv("XM_AUB")) {
+      ws = xmesa_create_pipe_winsys_aub();
+   }
+   else if (!ws) {
       ws = CALLOC_STRUCT(pipe_winsys);
    
       /* Fill in this struct with callbacks that pipe will need to
@@ -461,8 +451,8 @@ xmesa_get_pipe_winsys(void)
       ws->buffer_subdata = xm_buffer_subdata;
       ws->buffer_get_subdata = xm_buffer_get_subdata;
 
-      ws->surface_pitch = xm_surface_pitch;
       ws->surface_alloc = xm_surface_alloc;
+      ws->surface_alloc_storage = xm_surface_alloc_storage;
       ws->surface_release = xm_surface_release;
 
       ws->flush_frontbuffer = xm_flush_frontbuffer;
@@ -510,7 +500,7 @@ xmesa_get_softpipe_winsys(uint pixelformat)
 struct pipe_context *
 xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 {
-   struct pipe_winsys *pws = xmesa_get_pipe_winsys();
+   struct pipe_winsys *pws = xmesa_get_pipe_winsys_aub();
    struct pipe_context *pipe;
    
 #ifdef GALLIUM_CELL

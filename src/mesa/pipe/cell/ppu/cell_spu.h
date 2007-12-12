@@ -29,35 +29,46 @@
 #define CELL_SPU
 
 
-#include <libspe.h>
+#include <libspe2.h>
 #include <libmisc.h>
 #include "pipe/cell/common.h"
 
 #include "cell_context.h"
 
 
-#define MAX_SPUS 7
+#define MAX_SPUS 8
 
 /**
- * SPU/SPE handles, etc
+ * Global vars, for now anyway.
  */
+struct cell_global_info
+{
+   /**
+    * SPU/SPE handles, etc
+    */
+   spe_context_ptr_t spe_contexts[MAX_SPUS];
+   pthread_t spe_threads[MAX_SPUS];
+
+   /**
+    * Data sent to SPUs
+    */
+   struct cell_init_info inits[MAX_SPUS];
+   struct cell_command command[MAX_SPUS];
+};
+
+
+extern struct cell_global_info cell_global;
+
+
+/** This is the handle for the actual SPE code */
 extern spe_program_handle_t g3d_spu;
-extern speid_t speid[MAX_SPUS];
-extern spe_spu_control_area_t *control_ps_area[MAX_SPUS];
 
 
-/**
- * Data sent to SPUs
- */
-extern struct cell_init_info inits[MAX_SPUS] ALIGN16;
-extern struct cell_command command[MAX_SPUS] ALIGN16;
+extern void
+send_mbox_message(spe_context_ptr_t ctx, unsigned int msg);
 
-
-void
-send_mbox_message(spe_spu_control_area_t *ca, unsigned int msg);
-
-uint
-wait_mbox_message(spe_spu_control_area_t *ca);
+extern uint
+wait_mbox_message(spe_context_ptr_t ctx);
 
 
 void

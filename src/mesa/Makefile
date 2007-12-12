@@ -11,7 +11,9 @@ GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
-SOFTPIPE_LIB = $(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
+PIPE_LIB = \
+	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a \
+	$(TOP)/src/mesa/pipe/i965simple/libi965simple.a
 
 ifeq ($(CONFIG_NAME), linux-cell)
 CELL_LIB = $(TOP)/src/mesa/pipe/cell/ppu/libcell.a
@@ -118,12 +120,12 @@ stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$
 osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		$(SOFTPIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
+		$(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
 
 # Make the OSMesa library
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)

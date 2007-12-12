@@ -73,9 +73,11 @@ typedef unsigned long long uint64;
 #if defined __GNUC__
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___aligned[SIZE] __attribute__(( aligned( 16 ) ))
 #define ALIGN16_ASSIGN(NAME) NAME##___aligned
+#define ALIGN16_ATTRIB  __attribute__(( aligned( 16 ) ))
 #else
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___unaligned[SIZE + 1]
 #define ALIGN16_ASSIGN(NAME) align16(NAME##___unaligned)
+#define ALIGN16_ATTRIB
 #endif
 
 

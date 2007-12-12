@@ -32,7 +32,6 @@
   */
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
 
-
 extern float powf(float a, float b);
 
 inline float approx(float a, float b)
@@ -105,4 +104,12 @@ inline float4 vsin(float4 val)
    result.z = res;
    result.w = res;
    return result;
+}
+
+inline int kilp(float4 val)
+{
+   if (val.x < 0 || val.y < 0 || val.z < 0 || val.w < 0)
+      return 1;
+   else
+      return 0;
 }

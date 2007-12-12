@@ -173,6 +173,7 @@ static struct rastpos_stage *
 new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
 {
    struct rastpos_stage *rs = CALLOC_STRUCT(rastpos_stage);
+   GLuint i;
 
    rs->stage.draw = draw;
    rs->stage.next = NULL;
@@ -183,6 +184,26 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
    rs->stage.end = rastpos_end;
    rs->stage.reset_stipple_counter = rastpos_reset_stipple_counter;
    rs->ctx = ctx;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      rs->array[i].Size = 4;
+      rs->array[i].Type = GL_FLOAT;
+      rs->array[i].Stride = 0;
+      rs->array[i].StrideB = 0;
+      rs->array[i].Ptr = (GLubyte *) ctx->Current.Attrib[i];
+      rs->array[i].Enabled = GL_TRUE;
+      rs->array[i].Normalized = GL_TRUE;
+      rs->array[i].BufferObj = NULL;
+      rs->arrays[i] = &rs->array[i];
+   }
+
+   rs->prim.mode = GL_POINTS;
+   rs->prim.indexed = 0;
+   rs->prim.begin = 1;
+   rs->prim.end = 1;
+   rs->prim.weak = 0;
+   rs->prim.start = 0;
+   rs->prim.count = 1;
 
    return rs;
 }
@@ -201,31 +222,8 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
    }
    else {
       /* create rastpos draw stage */
-      GLuint i;
-
       rs = new_draw_rastpos_stage(ctx, draw);
       st->rastpos_stage = &rs->stage;
-
-      /* one-time init */
-      for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-         rs->array[i].Size = 4;
-         rs->array[i].Type = GL_FLOAT;
-         rs->array[i].Stride = 0;
-         rs->array[i].StrideB = 0;
-         rs->array[i].Ptr = (GLubyte *) ctx->Current.Attrib[i];
-         rs->array[i].Enabled = GL_TRUE;
-         rs->array[i].Normalized = GL_TRUE;
-         rs->array[i].BufferObj = NULL;
-         rs->arrays[i] = &rs->array[i];
-      }
-
-      rs->prim.mode = GL_POINTS;
-      rs->prim.indexed = 0;
-      rs->prim.begin = 1;
-      rs->prim.end = 1;
-      rs->prim.weak = 0;
-      rs->prim.start = 0;
-      rs->prim.count = 1;
    }
 
    /* plug our rastpos stage into the draw module */

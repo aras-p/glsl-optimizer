@@ -42,6 +42,7 @@
 #include "sp_tile_cache.h"
 #include "sp_texture.h"
 #include "sp_winsys.h"
+#include "sp_query.h"
 
 
 
@@ -147,37 +148,6 @@ static void softpipe_destroy( struct pipe_context *pipe )
    softpipe->quad.output->destroy( softpipe->quad.output );
 
    FREE( softpipe );
-}
-
-
-static void
-softpipe_begin_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   struct softpipe_context *softpipe = softpipe_context( pipe );
-   assert(q->type < PIPE_QUERY_TYPES);
-   assert(!softpipe->queries[q->type]);
-   softpipe->queries[q->type] = q;
-}
-
-
-static void
-softpipe_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   struct softpipe_context *softpipe = softpipe_context( pipe );
-   assert(q->type < PIPE_QUERY_TYPES);
-   assert(softpipe->queries[q->type]);
-   q->ready = 1;  /* software rendering is synchronous */
-   softpipe->queries[q->type] = NULL;
-}
-
-
-static void
-softpipe_wait_query(struct pipe_context *pipe, struct pipe_query_object *q)
-{
-   /* Should never get here since we indicated that the result was
-    * ready in softpipe_end_query().
-    */
-   assert(0);
 }
 
 
@@ -304,19 +274,15 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
-   softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
-   softpipe->pipe.set_feedback_state = softpipe_set_feedback_state;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
-   softpipe->pipe.set_sampler_units = softpipe_set_sampler_units;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_texture_state = softpipe_set_texture_state;
+   softpipe->pipe.set_sampler_texture = softpipe_set_sampler_texture;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
    softpipe->pipe.set_vertex_buffer = softpipe_set_vertex_buffer;
    softpipe->pipe.set_vertex_element = softpipe_set_vertex_element;
-   softpipe->pipe.set_feedback_buffer = softpipe_set_feedback_buffer;
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
@@ -324,9 +290,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
 
-   softpipe->pipe.begin_query = softpipe_begin_query;
-   softpipe->pipe.end_query = softpipe_end_query;
-   softpipe->pipe.wait_query = softpipe_wait_query;
+   softpipe_init_query_funcs( softpipe );
 
    /* textures */
    softpipe->pipe.texture_create = softpipe_texture_create;

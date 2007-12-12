@@ -732,14 +732,10 @@ void Instructions::end()
    m_builder.CreateRetVoid();
 }
 
-void Instructions::cal(int label, llvm::Value *out, llvm::Value *in,
-                    llvm::Value *cst, llvm::Value *temp)
+void Instructions::cal(int label, llvm::Value *input)
 {
    std::vector<Value*> params;
-   params.push_back(out);
-   params.push_back(in);
-   params.push_back(cst);
-   params.push_back(temp);
+   params.push_back(input);
    llvm::Function *func = findFunction(label);
 
    m_builder.CreateCall(func, params.begin(), params.end());
@@ -773,15 +769,9 @@ void Instructions::bgnSub(unsigned label)
    llvm::Function *func = findFunction(label);
 
    Function::arg_iterator args = func->arg_begin();
-   Value *ptr_OUT = args++;
-   ptr_OUT->setName("OUT");
-   Value *ptr_IN = args++;
-   ptr_IN->setName("IN");
-   Value *ptr_CONST = args++;
-   ptr_CONST->setName("CONST");
-   Value *ptr_TEMP = args++;
-   ptr_TEMP->setName("TEMP");
-   m_storage->pushArguments(ptr_OUT, ptr_IN, ptr_CONST, ptr_TEMP);
+   Value *ptr_INPUT = args++;
+   ptr_INPUT->setName("INPUT");
+   m_storage->pushArguments(ptr_INPUT);
 
    llvm::BasicBlock *entry = new BasicBlock("entry", func, 0);
 
@@ -874,6 +864,15 @@ llvm::Value * Instructions::scs(llvm::Value *in)
    return call;
 }
 
+llvm::Value * Instructions::kilp(llvm::Value *in)
+{
+   llvm::Function *func = m_mod->getFunction("kilp");
+   assert(func);
+
+   CallInst *call = m_builder.CreateCall(func, in, name("kilpres"));
+   call->setTailCall(false);
+   return call;
+}
 
 llvm::Value * Instructions::sin(llvm::Value *in)
 {
@@ -885,4 +884,5 @@ llvm::Value * Instructions::sin(llvm::Value *in)
    return call;
 }
 #endif //MESA_LLVM
+
 

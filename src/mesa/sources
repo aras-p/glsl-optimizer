@@ -162,7 +162,6 @@ DRAW_SOURCES = \
 	pipe/draw/draw_context.c\
 	pipe/draw/draw_cull.c \
 	pipe/draw/draw_debug.c \
-	pipe/draw/draw_feedback.c \
 	pipe/draw/draw_flatshade.c \
 	pipe/draw/draw_offset.c \
 	pipe/draw/draw_prim.c \
@@ -201,7 +200,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_alphatest.c \
 	state_tracker/st_atom_blend.c \
-	state_tracker/st_atom_clear_color.c \
 	state_tracker/st_atom_clip.c \
 	state_tracker/st_atom_constbuf.c \
 	state_tracker/st_atom_depth.c \
@@ -334,7 +332,9 @@ X11_DRIVER_SOURCES =		\
 	pipe/xlib/fakeglx.c	\
 	pipe/xlib/xfonts.c	\
 	pipe/xlib/xm_api.c	\
-	pipe/xlib/xm_winsys.c
+	pipe/xlib/xm_winsys.c	\
+	pipe/xlib/xm_winsys_aub.c	\
+	pipe/xlib/brw_aub.c
 
 OSMESA_DRIVER_SOURCES = \
 	drivers/osmesa/osmesa.c

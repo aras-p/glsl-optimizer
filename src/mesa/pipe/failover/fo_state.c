@@ -146,16 +146,6 @@ failover_set_clip_state( struct pipe_context *pipe,
    failover->hw->set_clip_state( failover->hw, clip );
 }
 
-static void 
-failover_set_clear_color_state( struct pipe_context *pipe,
-				const struct pipe_clear_color_state *clear_color )
-{
-   struct failover_context *failover = failover_context(pipe);
-
-   failover->clear_color = *clear_color;
-   failover->dirty |= FO_NEW_CLEAR_COLOR;
-   failover->hw->set_clear_color_state( failover->hw, clear_color );
-}
 
 static void *
 failover_create_depth_stencil_state(struct pipe_context *pipe,
@@ -294,18 +284,6 @@ failover_set_polygon_stipple( struct pipe_context *pipe,
    failover->hw->set_polygon_stipple( failover->hw, stipple );
 }
 
-static void
-failover_set_sampler_units( struct pipe_context *pipe,
-                            uint num_samplers, const uint *units )
-{
-   struct failover_context *failover = failover_context(pipe);
-   uint i;
-
-   for (i = 0; i < num_samplers; i++)
-      failover->sampler_units[i] = units[i];
-   failover->dirty |= FO_NEW_SAMPLER;
-   failover->hw->set_sampler_units(failover->hw, num_samplers, units);
-}
 
 static void *
 failover_create_rasterizer_state(struct pipe_context *pipe,
@@ -400,16 +378,16 @@ failover_delete_sampler_state(struct pipe_context *pipe, void *sampler)
 
 
 static void
-failover_set_texture_state(struct pipe_context *pipe,
-			   unsigned unit,
-                           struct pipe_texture *texture)
+failover_set_sampler_texture(struct pipe_context *pipe,
+			     unsigned unit,
+			     struct pipe_texture *texture)
 {
    struct failover_context *failover = failover_context(pipe);
 
    failover->texture[unit] = texture;
    failover->dirty |= FO_NEW_TEXTURE;
    failover->dirty_texture |= (1<<unit);
-   failover->hw->set_texture_state( failover->hw, unit, texture );
+   failover->hw->set_sampler_texture( failover->hw, unit, texture );
 }
 
 
@@ -480,12 +458,10 @@ failover_init_state_functions( struct failover_context *failover )
 
    failover->pipe.set_blend_color = failover_set_blend_color;
    failover->pipe.set_clip_state = failover_set_clip_state;
-   failover->pipe.set_clear_color_state = failover_set_clear_color_state;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
-   failover->pipe.set_sampler_units = failover_set_sampler_units;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
-   failover->pipe.set_texture_state = failover_set_texture_state;
+   failover->pipe.set_sampler_texture = failover_set_sampler_texture;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
    failover->pipe.set_vertex_buffer = failover_set_vertex_buffer;
    failover->pipe.set_vertex_element = failover_set_vertex_element;

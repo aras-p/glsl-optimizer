@@ -51,13 +51,9 @@ class Storage
 {
 public:
    Storage(llvm::BasicBlock *block,
-           llvm::Value *out,
-           llvm::Value *in, llvm::Value *consts, llvm::Value *temps);
+           llvm::Value *input);
 
    llvm::Value *inputPtr() const;
-   llvm::Value *outputPtr() const;
-   llvm::Value *constPtr() const;
-   llvm::Value *tempPtr() const;
 
    void setCurrentBlock(llvm::BasicBlock *block);
 
@@ -75,14 +71,15 @@ public:
    llvm::Value *addrElement(int idx) const;
    void setAddrElement(int idx, llvm::Value *val, int mask);
 
+   void setKilElement(llvm::Value *val);
+
    llvm::Value *shuffleVector(llvm::Value *vec, int shuffle);
 
    llvm::Value *extractIndex(llvm::Value *vec);
 
    int numConsts() const;
 
-   void pushArguments(llvm::Value *out, llvm::Value *in,
-                      llvm::Value *constPtr, llvm::Value *temp);
+   void pushArguments(llvm::Value *input);
    void popArguments();
    void pushTemps();
    void popTemps();
@@ -93,17 +90,25 @@ private:
    llvm::Value *maskWrite(llvm::Value *src, int mask, llvm::Value *templ);
    const char *name(const char *prefix);
 
+   enum Args {
+      DestsArg   = 0,
+      InputsArg  = 1,
+      TempsArg   = 2,
+      ConstsArg  = 3,
+      KilArg     = 4
+   };
+   llvm::Value *elemPtr(Args arg);
+   llvm::Value *elemIdx(llvm::Value *ptr, int idx,
+                        llvm::Value *indIdx = 0);
+   llvm::Value *element(Args arg, int idx, llvm::Value *indIdx = 0);
+
 private:
    llvm::BasicBlock *m_block;
-   llvm::Value *m_OUT;
-   llvm::Value *m_IN;
-   llvm::Value *m_CONST;
-   llvm::Value *m_TEMPS;
+   llvm::Value *m_INPUT;
 
    std::map<int, llvm::ConstantInt*> m_constInts;
    std::map<int, llvm::Constant*>    m_intVecs;
    std::vector<llvm::Value*>         m_addrs;
-   std::vector<llvm::Value*>         m_dstCache;
    std::vector<llvm::Constant*>      m_immediates;
 
    llvm::VectorType *m_floatVecType;
@@ -121,13 +126,7 @@ private:
    llvm::Value      *m_undefIntVec;
    llvm::Value      *m_extSwizzleVec;
 
-   struct Args {
-      llvm::Value *out;
-      llvm::Value *in;
-      llvm::Value *cst;
-      llvm::Value *temp;
-   };
-   std::stack<Args> m_argStack;
+   std::stack<llvm::Value*> m_argStack;
    std::stack<std::vector<llvm::Value*> > m_tempStack;
 };
 

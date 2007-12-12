@@ -13,7 +13,7 @@ CXX = /usr/bin/ppu32-g++
 SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
 
 
-CFLAGS = -g -W -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I/usr/include -I$(SDK)/include -include altivec.h -DGALLIUM_CELL
+CFLAGS = -g -W -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I/usr/include -I$(SDK)/include -DGALLIUM_CELL
 
 CXXFLAGS = $(CFLAGS)
 
@@ -25,7 +25,7 @@ MKDEP_OPTIONS = -fdepend -Y
 
 
 GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread \
-	-L$(SDK)/lib -m32 -Wl,-m,elf32ppc -R$(SDK)/lib -lspe
+	-L$(SDK)/lib -m32 -Wl,-m,elf32ppc -R$(SDK)/lib -lspe2
 
 
 

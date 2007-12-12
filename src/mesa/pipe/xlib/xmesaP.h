@@ -41,6 +41,12 @@ extern _glthread_Mutex _xmesa_lock;
 
 extern XMesaBuffer XMesaBufferList;
 
+/*
+ */
+#define XMESA_SOFTPIPE 1
+#define XMESA_AUB      2
+extern int xmesa_mode;
+
 
 /**
  * Visual inforation, derived from GLvisual.

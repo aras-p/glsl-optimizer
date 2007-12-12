@@ -37,12 +37,12 @@
 #include "storage.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_shader_tokens.h"
+#include "pipe/tgsi/util/tgsi_parse.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
-#include "pipe/tgsi/exec/tgsi_token.h"
-#include "pipe/tgsi/exec/tgsi_build.h"
-#include "pipe/tgsi/exec/tgsi_util.h"
-#include "pipe/tgsi/exec/tgsi_parse.h"
-#include "pipe/tgsi/exec/tgsi_dump.h"
+#include "pipe/tgsi/util/tgsi_util.h"
+#include "pipe/tgsi/util/tgsi_build.h"
+#include "pipe/tgsi/util/tgsi_dump.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>
@@ -157,6 +157,7 @@ add_interpolator(struct gallivm_prog *prog,
    prog->interpolators[prog->num_interp] = *interp;
    ++prog->num_interp;
 }
+
 static void
 translate_declaration(struct gallivm_prog *prog,
                       llvm::Module *module,
@@ -432,7 +433,11 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_DDY:
       break;
-   case TGSI_OPCODE_KILP:
+   case TGSI_OPCODE_KILP: {
+      out = instr->kilp(inputs[0]);
+      storage->setKilElement(out);
+      return;
+   }
       break;
    case TGSI_OPCODE_PK2H:
       break;
@@ -466,8 +471,6 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_TXD:
       break;
-   case TGSI_OPCODE_TXP:
-      break;
    case TGSI_OPCODE_UP2H:
       break;
    case TGSI_OPCODE_UP2US:
@@ -485,11 +488,7 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_BRA:
       break;
    case TGSI_OPCODE_CAL: {
-      instr->cal(inst->InstructionExtLabel.Label,
-                 storage->outputPtr(),
-                 storage->inputPtr(),
-                 storage->constPtr(),
-                 storage->tempPtr());
+      instr->cal(inst->InstructionExtLabel.Label, storage->inputPtr());
       return;
    }
       break;
@@ -740,14 +739,8 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
    shader->setName(func_name.c_str());
 
    Function::arg_iterator args = shader->arg_begin();
-   Value *ptr_OUT = args++;
-   ptr_OUT->setName("OUT");
-   Value *ptr_IN = args++;
-   ptr_IN->setName("IN");
-   Value *ptr_CONST = args++;
-   ptr_CONST->setName("CONST");
-   Value *ptr_TEMPS = args++;
-   ptr_TEMPS->setName("TEMPS");
+   Value *ptr_INPUT = args++;
+   ptr_INPUT->setName("input");
 
    BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
 
@@ -755,7 +748,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
 
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
-   Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST, ptr_TEMPS);
+   Storage storage(label_entry, ptr_INPUT);
    Instructions instr(mod, shader, label_entry, &storage);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
@@ -927,25 +920,21 @@ typedef int (*fragment_shader_runner)(float x, float y,
                                       float (*inputs)[16][4],
                                       int num_attribs,
                                       float (*consts)[4], int num_consts,
-                                      struct tgsi_sampler *samplers,
-                                      unsigned *sampler_units);
+                                      struct tgsi_sampler *samplers);
 
 int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                                  float fx, float fy,
                                  float (*dests)[16][4],
                                  float (*inputs)[16][4],
                                  float (*consts)[4],
-                                 struct tgsi_sampler *samplers,
-                                 unsigned *sampler_units)
+                                 struct tgsi_sampler *samplers)
 {
    fragment_shader_runner runner = reinterpret_cast<fragment_shader_runner>(prog->function);
    assert(runner);
 
-   runner(fx, fy, dests, inputs, prog->num_interp,
-          consts, prog->num_consts,
-          samplers, sampler_units);
-
-   return 0;
+   return runner(fx, fy, dests, inputs, prog->num_interp,
+                 consts, prog->num_consts,
+                 samplers);
 }
 
 void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
@@ -1025,11 +1014,12 @@ struct gallivm_cpu_engine * gallivm_cpu_engine_create(struct gallivm_prog *prog)
    llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
    llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
    llvm::ExecutionEngine *ee = llvm::ExecutionEngine::create(mp, false);
+   ee->DisableLazyCompilation();
    cpu->engine = ee;
 
    llvm::Function *func = func_for_shader(prog);
 
-   prog->function = ee->getPointerToFunctionOrStub(func);
+   prog->function = ee->getPointerToFunction(func);
    CPU = cpu;
    return cpu;
 }
@@ -1047,10 +1037,11 @@ void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *cpu, struct gallivm_prog
    llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
    llvm::ExecutionEngine *ee = cpu->engine;
    assert(ee);
+   ee->DisableLazyCompilation();
    ee->addModuleProvider(mp);
 
    llvm::Function *func = func_for_shader(prog);
-   prog->function = ee->getPointerToFunctionOrStub(func);
+   prog->function = ee->getPointerToFunction(func);
 }
 
 void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *cpu)

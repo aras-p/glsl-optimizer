@@ -366,4 +366,51 @@ static INLINE char *pf_sprint_name( char *str, uint format )
    return str;
 }
 
+static INLINE uint pf_get_component_bits( uint format, uint comp )
+{
+   uint size;
+
+   if (pf_swizzle_x(format) == comp) {
+      size = pf_size_x(format);
+   }
+   else if (pf_swizzle_y(format) == comp) {
+      size = pf_size_y(format);
+   }
+   else if (pf_swizzle_z(format) == comp) {
+      size = pf_size_z(format);
+   }
+   else if (pf_swizzle_w(format) == comp) {
+      size = pf_size_w(format);
+   }
+   else {
+      size = 0;
+   }
+   return size << (pf_exp8(format) * 3);
+}
+
+static INLINE uint pf_get_bits( uint format )
+{
+   if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
+      return
+         pf_get_component_bits( format, PIPE_FORMAT_COMP_R ) +
+         pf_get_component_bits( format, PIPE_FORMAT_COMP_G ) +
+         pf_get_component_bits( format, PIPE_FORMAT_COMP_B ) +
+         pf_get_component_bits( format, PIPE_FORMAT_COMP_A ) +
+         pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
+         pf_get_component_bits( format, PIPE_FORMAT_COMP_S );
+   }
+   else {
+      assert( pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR );
+
+      /* TODO */
+      assert( 0 );
+      return 0;
+   }
+}
+
+static INLINE uint pf_get_size( uint format ) {
+   assert(pf_get_bits(format) % 8 == 0);
+   return pf_get_bits(format) / 8;
+}
+
 #endif

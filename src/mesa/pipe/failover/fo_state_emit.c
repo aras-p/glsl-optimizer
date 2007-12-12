@@ -69,9 +69,6 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_CLIP)
       failover->sw->set_clip_state( failover->sw, &failover->clip );
 
-   if (failover->dirty & FO_NEW_CLEAR_COLOR)
-      failover->sw->set_clear_color_state( failover->sw, &failover->clear_color );
-
    if (failover->dirty & FO_NEW_DEPTH_STENCIL)
       failover->sw->bind_depth_stencil_state( failover->sw,
                                               failover->depth_stencil->sw_state );
@@ -112,7 +109,7 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_TEXTURE) {
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
 	 if (failover->dirty_texture & (1<<i)) {
-	    failover->sw->set_texture_state( failover->sw, i, 
+	    failover->sw->set_sampler_texture( failover->sw, i, 
 					     failover->texture[i] );
 	 }
       }

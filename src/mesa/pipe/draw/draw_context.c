@@ -55,7 +55,6 @@ struct draw_context *draw_create( void )
    draw->pipeline.clip      = draw_clip_stage( draw );
    draw->pipeline.flatshade = draw_flatshade_stage( draw );
    draw->pipeline.cull      = draw_cull_stage( draw );
-   draw->pipeline.feedback  = draw_feedback_stage( draw );
    draw->pipeline.validate  = draw_validate_stage( draw );
    draw->pipeline.first     = draw->pipeline.validate;
 
@@ -100,7 +99,6 @@ void draw_destroy( struct draw_context *draw )
    draw->pipeline.clip->destroy( draw->pipeline.clip );
    draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
    draw->pipeline.cull->destroy( draw->pipeline.cull );
-   draw->pipeline.feedback->destroy( draw->pipeline.feedback );
    draw->pipeline.validate->destroy( draw->pipeline.validate );
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
@@ -116,13 +114,6 @@ void draw_flush( struct draw_context *draw )
       draw_do_flush( draw, DRAW_FLUSH_DRAW );
 }
 
-
-void draw_set_feedback_state( struct draw_context *draw,
-                              const struct pipe_feedback_state *feedback )
-{
-   draw_flush( draw );
-   draw->feedback = *feedback;
-}
 
 
 /**
@@ -220,18 +211,6 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
    draw_flush( draw );
 
    draw->user.constants = buffer;
-}
-
-
-void
-draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
-                                void *buffer, uint size)
-{
-   draw_flush( draw );
-
-   assert(index < PIPE_MAX_FEEDBACK_ATTRIBS);
-   draw->user.feedback_buffer[index] = buffer;
-   draw->user.feedback_buffer_size[index] = size; /* in bytes */
 }
 
 

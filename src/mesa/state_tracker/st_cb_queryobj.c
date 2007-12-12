@@ -47,7 +47,7 @@
 struct st_query_object
 {
    struct gl_query_object base;
-   struct pipe_query_object pq;
+   struct pipe_query *pq;
 };
 
 
@@ -68,11 +68,27 @@ st_NewQueryObject(GLcontext *ctx, GLuint id)
    if (stq) {
       stq->base.Id = id;
       stq->base.Ready = GL_TRUE;
+      stq->pq = NULL;
       return &stq->base;
    }
    return NULL;
 }
 
+
+
+static void
+st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_query_object *stq = st_query_object(q);
+
+   if (stq->pq) {
+      pipe->destroy_query(pipe, stq->pq);
+      stq->pq = NULL;
+   }
+
+   FREE(stq);
+}
 
 /**
  * Do glReadPixels by getting rows from the framebuffer surface with
@@ -85,25 +101,17 @@ st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_query_object *stq = st_query_object(q);
 
-   stq->pq.count = 0;
-
    switch (q->Target) {
    case GL_SAMPLES_PASSED_ARB:
-      stq->pq.type = PIPE_QUERY_OCCLUSION_COUNTER;
-      break;
-   case GL_PRIMITIVES_GENERATED_NV:
-      /* someday */
-      stq->pq.type = PIPE_QUERY_PRIMITIVES_GENERATED;
-      break;
-   case GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN_NV:
-      /* someday */
-      stq->pq.type = PIPE_QUERY_PRIMITIVES_EMITTED;
+      if (!stq->pq)
+	 stq->pq = pipe->create_query( pipe, PIPE_QUERY_OCCLUSION_COUNTER );
       break;
    default:
       assert(0);
+      return;
    }
 
-   pipe->begin_query(pipe, &stq->pq);
+   pipe->begin_query(pipe, stq->pq);
 }
 
 
@@ -113,10 +121,7 @@ st_EndQuery(GLcontext *ctx, struct gl_query_object *q)
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_query_object *stq = st_query_object(q);
 
-   pipe->end_query(pipe, &stq->pq);
-   stq->base.Ready = stq->pq.ready;
-   if (stq->base.Ready)
-      stq->base.Result = stq->pq.count;
+   pipe->end_query(pipe, stq->pq);
 }
 
 
@@ -129,17 +134,42 @@ st_WaitQuery(GLcontext *ctx, struct gl_query_object *q)
    /* this function should only be called if we don't have a ready result */
    assert(!stq->base.Ready);
 
-   pipe->wait_query(pipe, &stq->pq);
+   while (!stq->base.Ready &&
+	  !pipe->get_query_result(pipe, 
+				  stq->pq,
+				  TRUE,
+				  &q->Result))
+   {
+      /* nothing */
+   }
+			    
    q->Ready = GL_TRUE;
-   q->Result = stq->pq.count;
 }
+
+
+static void
+st_CheckQuery(GLcontext *ctx, struct gl_query_object *q)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_query_object *stq = st_query_object(q);
+
+   if (!q->Ready) {
+      q->Ready = pipe->get_query_result(pipe, 
+					stq->pq,
+					FALSE,
+					&q->Result);
+   }
+}
+
 
 
 
 void st_init_query_functions(struct dd_function_table *functions)
 {
    functions->NewQueryObject = st_NewQueryObject;
+   functions->DeleteQuery = st_DeleteQuery;
    functions->BeginQuery = st_BeginQuery;
    functions->EndQuery = st_EndQuery;
    functions->WaitQuery = st_WaitQuery;
+   functions->CheckQuery = st_CheckQuery;
 }

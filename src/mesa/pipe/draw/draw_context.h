@@ -82,9 +82,6 @@ void draw_set_viewport_state( struct draw_context *draw,
 void draw_set_clip_state( struct draw_context *pipe,
                           const struct pipe_clip_state *clip );
 
-void draw_set_feedback_state( struct draw_context *draw,
-                              const struct pipe_feedback_state * );
-
 void draw_set_rasterizer_state( struct draw_context *draw,
                                 const struct pipe_rasterizer_state *raster );
 
@@ -120,9 +117,6 @@ void draw_set_mapped_vertex_buffer(struct draw_context *draw,
 void draw_set_mapped_constant_buffer(struct draw_context *draw,
                                      const void *buffer);
 
-void
-draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
-                                void *buffer, uint size);
 
 
 /***********************************************************************

@@ -1,0 +1,4 @@
+!!ARBfp1.0
+TEMP R0, R1;
+SWZ result.color, fragment.color, 1, 0, 0, 1;
+END

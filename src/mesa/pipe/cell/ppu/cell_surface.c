@@ -41,28 +41,6 @@
 #include "cell_spu.h"
 
 
-
-struct pipe_surface *
-cell_create_surface(int width, int height)
-{
-#if 0
-   /* XXX total hack */
-   struct pipe_surface *ps = CALLOC_STRUCT(pipe_surface);
-
-   printf("cell_create_surface\n");
-
-   ps->width = width;
-   ps->height = height;
-
-   ps->region = CALLOC_STRUCT(pipe_region);
-   ps->region->map = align_malloc(width * height * 4, 16);
-   return ps;
-#endif
-   return NULL;
-}
-
-
-
 void
 cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue)
@@ -70,37 +48,54 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    struct cell_context *cell = cell_context(pipe);
    uint i;
 
-   printf("%s 0x%08x\n", __FUNCTION__, clearValue);
-
-   {
-      char s[100];
-      pf_sprint_name(s, ps->format);
-      printf("format  = %s\n", s);
-   }
-
    if (!ps->map)
       pipe_surface_map(ps);
 
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].fb.start = ps->map;
-      command[i].fb.width = ps->width;
-      command[i].fb.height = ps->height;
-      command[i].fb.format = ps->format;
-      send_mbox_message(control_ps_area[i], CELL_CMD_FRAMEBUFFER);
+      struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
+      fb->start = ps->map;
+      fb->width = ps->width;
+      fb->height = ps->height;
+      fb->format = ps->format;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
    for (i = 0; i < cell->num_spus; i++) {
-      command[i].clear.value = clearValue | (i << 21);
-      send_mbox_message(control_ps_area[i], CELL_CMD_CLEAR_TILES);
+      /* XXX clear color varies per-SPU for debugging */
+      cell_global.command[i].clear.value = clearValue | (i << 21);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
-}
 
+#if 1
+   /* XXX Draw a test triangle over the cleared surface */
+   for (i = 0; i < cell->num_spus; i++) {
+      /* Same triangle data for all SPUs */
+      struct cell_command_triangle *tri = &cell_global.command[i].tri;
+      tri->vert[0][0] = 20.0;
+      tri->vert[0][1] = ps->height - 20;
 
-void
-cell_set_clear_color_state(struct pipe_context *pipe,
-                           const struct pipe_clear_color_state *clear)
-{
-   struct cell_context *cell = cell_context(pipe);
+      tri->vert[1][0] = ps->width - 20.0;
+      tri->vert[1][1] = ps->height - 20;
 
-   cell->clear_color = *clear; /* struct copy */
+      tri->vert[2][0] = ps->width / 2;
+      tri->vert[2][1] = 20.0;
+
+      tri->color[0][0] = 1.0;
+      tri->color[0][1] = 0.0;
+      tri->color[0][2] = 0.0;
+      tri->color[0][3] = 0.0;
+
+      tri->color[1][0] = 0.0;
+      tri->color[1][1] = 1.0;
+      tri->color[1][2] = 0.0;
+      tri->color[1][3] = 0.0;
+
+      tri->color[2][0] = 0.0;
+      tri->color[2][1] = 0.0;
+      tri->color[2][2] = 1.0;
+      tri->color[2][3] = 0.0;
+
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_TRIANGLE);
+   }
+#endif
 }

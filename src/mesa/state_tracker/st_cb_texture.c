@@ -366,7 +366,6 @@ guess_and_alloc_texture(struct st_context *st,
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat),
-				 stImage->base.InternalFormat,
                                  firstLevel,
                                  lastLevel,
                                  width,
@@ -485,18 +484,6 @@ try_pbo_upload(GLcontext *ctx,
 #endif
 }
 
-
-
-static GLboolean
-try_pbo_zcopy(GLcontext *ctx,
-              struct st_texture_image *stImage,
-              const struct gl_pixelstore_attrib *unpack,
-              GLint internalFormat,
-              GLint width, GLint height,
-              GLenum format, GLenum type, const void *pixels)
-{
-   return GL_FALSE;
-}
 
 
 
@@ -618,24 +605,6 @@ st_TexImage(GLcontext * ctx,
 
       DBG("trying pbo upload\n");
 
-      /* Attempt to texture directly from PBO data (zero copy upload).
-       *
-       * Currently disable as it can lead to worse as well as better
-       * performance (in particular when pipe_region_cow() is
-       * required).
-       */
-      if (stObj->pt == stImage->pt &&
-          stObj->pt->first_level == level &&
-          stObj->pt->last_level == level) {
-
-         if (try_pbo_zcopy(intel, stImage, unpack,
-                           internalFormat,
-                           width, height, format, type, pixels)) {
-
-            DBG("pbo zcopy upload succeeded\n");
-            return;
-         }
-      }
 
 
       /* Otherwise, attempt to use the blitter for PBO image uploads.
@@ -652,7 +621,6 @@ st_TexImage(GLcontext * ctx,
 #else
    (void) try_pbo_upload;
    (void) check_pbo_format;
-   (void) try_pbo_zcopy;
 #endif
 
 
@@ -1443,10 +1411,10 @@ copy_image_data_to_texture(struct st_context *st,
  */
 GLboolean
 st_finalize_texture(GLcontext *ctx,
-		    struct pipe_context *pipe, GLuint unit,
+		    struct pipe_context *pipe,
+		    struct gl_texture_object *tObj,
 		    GLboolean *needFlush)
 {
-   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct st_texture_object *stObj = st_texture_object(tObj);
    int comp_byte = 0;
    int cpp;
@@ -1512,7 +1480,8 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (stObj->pt &&
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
-	stObj->pt->internal_format != firstImage->base.InternalFormat ||
+	stObj->pt->format !=
+	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
 	stObj->pt->first_level != stObj->firstLevel ||
 	stObj->pt->last_level != stObj->lastLevel ||
 	stObj->pt->width[0] != firstImage->base.Width ||
@@ -1530,7 +1499,6 @@ st_finalize_texture(GLcontext *ctx,
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
                                     st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat),
-				    firstImage->base.InternalFormat,
                                     stObj->firstLevel,
                                     stObj->lastLevel,
                                     firstImage->base.Width,

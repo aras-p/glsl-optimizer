@@ -46,20 +46,24 @@
 static void 
 update_textures(struct st_context *st)
 {
-   GLuint u;
+   GLuint s;
 
-   for (u = 0; u < st->ctx->Const.MaxTextureImageUnits; u++) {
+   /* ST_NEW_FRAGMENT_PROGRAM
+    */
+   struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+
+   for (s = 0; s < st->ctx->Const.MaxTextureCoordUnits; s++) {
+      GLuint su = fprog->Base.SamplerUnits[s];
+      
       struct gl_texture_object *texObj
-         = st->ctx->Texture.Unit[u]._Current;
+         = st->ctx->Texture.Unit[su]._Current;
+
       struct pipe_texture *pt;
+
       if (texObj) {
          GLboolean flush, retval;
 
-         retval = st_finalize_texture(st->ctx, st->pipe, u, &flush);
-#if 0
-         printf("finalize_texture returned %d, flush = %d\n",
-                retval, flush);
-#endif
+         retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
 
          pt = st_get_texobj_texture(texObj);
       }
@@ -67,8 +71,14 @@ update_textures(struct st_context *st)
          pt = NULL;
       }
 
-      st->state.texture[u] = pt;
-      st->pipe->set_texture_state(st->pipe, u, pt);
+      /* XXX: need to ensure that textures are unbound/removed from
+       * this table before being deleted, otherwise the pointer
+       * comparison below could fail.
+       */
+      if (st->state.sampler_texture[s] != pt) {
+	 st->state.sampler_texture[s] = pt;
+	 st->pipe->set_sampler_texture(st->pipe, s, pt);
+      }
    }
 }
 
@@ -77,7 +87,7 @@ const struct st_tracked_state st_update_texture = {
    .name = "st_update_texture",
    .dirty = {
       .mesa = _NEW_TEXTURE,
-      .st  = 0,
+      .st  = ST_NEW_FRAGMENT_PROGRAM,
    },
    .update = update_textures
 };

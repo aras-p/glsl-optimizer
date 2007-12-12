@@ -94,8 +94,8 @@ _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
  * Not removed from hash table here.
  * XXX maybe add Delete() method to gl_query_object class and call that instead
  */
-static void
-delete_query_object(struct gl_query_object *q)
+void
+_mesa_delete_query(struct gl_query_object *q)
 {
    _mesa_free(q);
 }
@@ -171,7 +171,7 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
          if (q) {
             ASSERT(!q->Active); /* should be caught earlier */
             _mesa_HashRemove(ctx->Query.QueryObjects, ids[i]);
-            delete_query_object(q);
+            ctx->Driver.DeleteQuery(ctx, q);
          }
       }
    }
@@ -386,6 +386,8 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
          }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
+	 if (!q->Ready)
+	    ctx->Driver.CheckQuery( ctx, q );
          *params = q->Ready;
          break;
       default:
@@ -424,6 +426,8 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
          }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
+	 if (!q->Ready)
+	    ctx->Driver.CheckQuery( ctx, q );
          *params = q->Ready;
          break;
       default:
@@ -461,6 +465,8 @@ _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
          *params = q->Result;
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
+	 if (!q->Ready)
+	    ctx->Driver.CheckQuery( ctx, q );
          *params = q->Ready;
          break;
       default:
@@ -496,6 +502,8 @@ _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
          *params = q->Result;
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
+	 if (!q->Ready)
+	    ctx->Driver.CheckQuery( ctx, q );
          *params = q->Ready;
          break;
       default:
@@ -527,8 +535,8 @@ static void
 delete_queryobj_cb(GLuint id, void *data, void *userData)
 {
    struct gl_query_object *q= (struct gl_query_object *) data;
-   (void) userData;
-   delete_query_object(q);
+   GLcontext *ctx = (GLcontext *)userData;
+   ctx->Driver.DeleteQuery(ctx, q);
 }
 
 

@@ -101,7 +101,6 @@ update_depth_stencil(struct st_context *st)
    depth_stencil.depth.enabled = st->ctx->Depth.Test;
    depth_stencil.depth.writemask = st->ctx->Depth.Mask;
    depth_stencil.depth.func = st_compare_func_to_pipe(st->ctx->Depth.Func);
-   depth_stencil.depth.clear = st->ctx->Depth.Clear;
 
    if (st->ctx->Query.CurrentOcclusionObject &&
        st->ctx->Query.CurrentOcclusionObject->Active)
@@ -126,7 +125,6 @@ update_depth_stencil(struct st_context *st)
          depth_stencil.stencil.value_mask[1] = st->ctx->Stencil.ValueMask[1] & 0xff;
          depth_stencil.stencil.write_mask[1] = st->ctx->Stencil.WriteMask[1] & 0xff;
       }
-      depth_stencil.stencil.clear_value = st->ctx->Stencil.Clear & 0xff;
    }
 
    cso = st_cached_depth_stencil_state(st, &depth_stencil);

@@ -47,11 +47,11 @@
  * Triangle edge info
  */
 struct edge {
-   float dx;			/**< X(v1) - X(v0), used only during setup */
-   float dy;			/**< Y(v1) - Y(v0), used only during setup */
+   float dx;		/**< X(v1) - X(v0), used only during setup */
+   float dy;		/**< Y(v1) - Y(v0), used only during setup */
    float dxdy;		/**< dx/dy */
-   float sx, sy;		/**< first sample point coord */
-   int lines;			/**< number of lines on this edge */
+   float sx, sy;	/**< first sample point coord */
+   int lines;		/**< number of lines on this edge */
 };
 
 
@@ -178,10 +178,9 @@ static INLINE int block( int x )
  * this is pretty nasty...  may need to rework flush_spans again to
  * fix it, if possible.
  */
-static unsigned calculate_mask( struct setup_stage *setup,
-			    int x )
+static unsigned calculate_mask( struct setup_stage *setup, int x )
 {
-   unsigned mask = 0;
+   unsigned mask = 0x0;
 
    if (x >= setup->span.left[0] && x < setup->span.right[0]) 
       mask |= MASK_TOP_LEFT;
@@ -207,18 +206,21 @@ static void flush_spans( struct setup_stage *setup )
    int minleft, maxright;
    int x;
 
-   switch (setup->span.y_flags) {      
-   case 3:
+   switch (setup->span.y_flags) {
+   case 0x3:
+      /* both odd and even lines written (both quad rows) */
       minleft = MIN2(setup->span.left[0], setup->span.left[1]);
       maxright = MAX2(setup->span.right[0], setup->span.right[1]);
       break;
 
-   case 1:
+   case 0x1:
+      /* only even line written (quad top row) */
       minleft = setup->span.left[0];
       maxright = setup->span.right[0];
       break;
 
-   case 2:
+   case 0x2:
+      /* only odd line written (quad bottom row) */
       minleft = setup->span.left[1];
       maxright = setup->span.right[1];
       break;
@@ -227,12 +229,12 @@ static void flush_spans( struct setup_stage *setup )
       return;
    }
 
-
-   for (x = block(minleft); x <= block(maxright); )
-   {
+   /* XXX this loop could be moved into the above switch cases and
+    * calculate_mask() could be simplified a bit...
+    */
+   for (x = block(minleft); x <= block(maxright); x += 2) {
       emit_quad( setup, x, setup->span.y, 
                  calculate_mask( setup, x ) );
-      x += 2;
    }
 
    setup->span.y = 0;
@@ -593,7 +595,8 @@ static void subtriangle( struct setup_stage *setup,
             setup->span.y = block(_y);
          }
 
-         setup->span.left[_y&1] = left;setup->span.right[_y&1] = right;
+         setup->span.left[_y&1] = left;
+         setup->span.right[_y&1] = right;
          setup->span.y_flags |= 1<<(_y&1);
       }
    }

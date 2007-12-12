@@ -2245,6 +2245,11 @@ tgsi_emit_sse2(
             &parse.FullToken.FullInstruction );
          break;
 
+      case TGSI_TOKEN_TYPE_IMMEDIATE:
+         /* XXX implement this */
+         assert(0);
+         break;
+
       default:
          assert( 0 );
       }
@@ -2319,6 +2324,11 @@ tgsi_emit_sse2_fs(
          emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
+         break;
+
+      case TGSI_TOKEN_TYPE_IMMEDIATE:
+         /* XXX implement this */
+         assert(0);
          break;
 
       default:
