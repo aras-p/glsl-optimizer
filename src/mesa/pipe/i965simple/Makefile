@@ -28,7 +28,6 @@ DRIVER_SOURCES = \
 	brw_gs_emit.c \
 	brw_gs_state.c \
 	brw_misc_state.c \
-        brw_regions.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
