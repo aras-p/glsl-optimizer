@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,31 +25,24 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_BUFFERS_H
-#define INTEL_BUFFERS_H
+#ifndef SP_RGBA_TILE_H
+#define SP_RGBA_TILE_H
 
+#include "pipe/p_compiler.h"
 
-struct intel_context;
-struct intel_framebuffer;
+struct pipe_context;
+struct pipe_surface;
 
+extern void
+softpipe_get_tile_rgba(struct pipe_context *pipe,
+                       struct pipe_surface *ps,
+                       uint x, uint y, uint w, uint h,
+                       float *p);
 
-extern GLboolean
-intel_intersect_cliprects(drm_clip_rect_t * dest,
-                          const drm_clip_rect_t * a,
-                          const drm_clip_rect_t * b);
+extern void
+softpipe_put_tile_rgba(struct pipe_context *pipe,
+                       struct pipe_surface *ps,
+                       uint x, uint y, uint w, uint h,
+                       const float *p);
 
-extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
-
-extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
-
-extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
-
-extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
-
-extern void intelWindowMoved(struct intel_context *intel);
-
-extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
-
-extern void intelInitBufferFuncs(struct dd_function_table *functions);
-
-#endif /* INTEL_BUFFERS_H */
+#endif

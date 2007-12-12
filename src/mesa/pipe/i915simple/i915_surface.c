@@ -34,6 +34,8 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
+#include "pipe/softpipe/sp_rgba_tile.h" /* XXX TEMPORARY */
+
 
 #define CLIP_TILE \
    do { \
@@ -46,103 +48,6 @@
       if (y + h > ps->height) \
          h = ps->height -y; \
    } while(0)
-
-
-/**
- * Note: this is exactly like a8r8g8b8_get_tile() in sp_surface.c
- * Share it someday.
- */
-/** XXX this will go away eventually */
-static void
-i915_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
-                   uint x, uint y, uint w, uint h, float *p)
-{
-   const unsigned *src
-      = ((const unsigned *) (ps->map))
-      + y * ps->pitch + x;
-   unsigned i, j;
-   unsigned w0 = w;
-
-   CLIP_TILE;
-
-   switch (ps->format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      for (i = 0; i < h; i++) {
-         float *pRow = p;
-         for (j = 0; j < w; j++) {
-            const unsigned pixel = src[j];
-            pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
-            pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
-            pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
-            pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
-            pRow += 4;
-         }
-         src += ps->pitch;
-         p += w0 * 4;
-      }
-      break;
-   case PIPE_FORMAT_S8Z24_UNORM:
-      {
-         const float scale = 1.0f / (float) 0xffffff;
-         for (i = 0; i < h; i++) {
-            float *pRow = p;
-            for (j = 0; j < w; j++) {
-               const unsigned pixel = src[j];
-               pRow[0] =
-               pRow[1] =
-               pRow[2] =
-               pRow[3] = (pixel & 0xffffff) * scale;
-               pRow += 4;
-            }
-            src += ps->pitch;
-            p += w0 * 4;
-         }
-      }
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
-/** XXX this will go away eventually */
-static void
-i915_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
-                   uint x, uint y, uint w, uint h, const float *p)
-{
-   unsigned *dst
-      = ((unsigned *) (ps->map))
-      + y * ps->pitch + x;
-   unsigned i, j;
-   unsigned w0 = w;
-
-   assert(ps->format == PIPE_FORMAT_A8R8G8B8_UNORM);
-
-   CLIP_TILE;
-
-   switch (ps->format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      for (i = 0; i < h; i++) {
-         const float *pRow = p;
-         for (j = 0; j < w; j++) {
-            unsigned r, g, b, a;
-            UNCLAMPED_FLOAT_TO_UBYTE(r, pRow[0]);
-            UNCLAMPED_FLOAT_TO_UBYTE(g, pRow[1]);
-            UNCLAMPED_FLOAT_TO_UBYTE(b, pRow[2]);
-            UNCLAMPED_FLOAT_TO_UBYTE(a, pRow[3]);
-            dst[j] = (a << 24) | (r << 16) | (g << 8) | b;
-            pRow += 4;
-         }
-         dst += ps->pitch;
-         p += w0 * 4;
-      }
-      break;
-   default:
-      assert(0);
-   }
-}
 
 
 /*
@@ -240,7 +145,6 @@ i915_get_tex_surface(struct pipe_context *pipe,
 
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
-      assert(ps->format);
       assert(ps->refcount);
       pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
       ps->format = pt->format;
@@ -421,8 +325,9 @@ i915_init_surface_functions(struct i915_context *i915)
    i915->pipe.get_tex_surface = i915_get_tex_surface;
    i915->pipe.get_tile = i915_get_tile;
    i915->pipe.put_tile = i915_put_tile;
-   i915->pipe.get_tile_rgba = i915_get_tile_rgba;
-   i915->pipe.put_tile_rgba = i915_put_tile_rgba;
+   i915->pipe.get_tile_rgba = softpipe_get_tile_rgba;
+   i915->pipe.put_tile_rgba = softpipe_put_tile_rgba;
+
    i915->pipe.surface_data = i915_surface_data;
    i915->pipe.surface_copy = i915_surface_copy;
    i915->pipe.surface_fill = i915_surface_fill;

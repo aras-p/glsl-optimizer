@@ -134,7 +134,7 @@ brw_get_paramf(struct pipe_context *pipe, int param)
 
 static boolean
 brw_is_format_supported( struct pipe_context *pipe,
-                          uint format )
+                          enum pipe_format format, uint type )
 {
 #if 0
    /* XXX: This is broken -- rewrite if still needed. */
@@ -190,6 +190,8 @@ brw_is_format_supported( struct pipe_context *pipe,
    case PIPE_FORMAT_R5G6B5_UNORM:
    case PIPE_FORMAT_S8Z24_UNORM:
       return TRUE;
+   default:
+      return FALSE;
    };
    return FALSE;
 #endif

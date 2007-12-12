@@ -31,9 +31,10 @@
 
 #include "intel_context.h"
 #include "intel_winsys.h"
-#include "pipe/softpipe/sp_winsys.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_format.h"
+#include "pipe/softpipe/sp_winsys.h"
 
 
 struct intel_softpipe_winsys {
@@ -45,7 +46,8 @@ struct intel_softpipe_winsys {
  * Return list of surface formats supported by this driver.
  */
 static boolean
-intel_is_format_supported(struct softpipe_winsys *sws, uint format)
+intel_is_format_supported(struct softpipe_winsys *sws,
+                          enum pipe_format format)
 {
    switch(format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:

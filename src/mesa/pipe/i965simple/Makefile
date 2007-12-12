@@ -28,8 +28,6 @@ DRIVER_SOURCES = \
 	brw_gs_emit.c \
 	brw_gs_state.c \
 	brw_misc_state.c \
-	brw_program.c \
-        brw_regions.c \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
@@ -38,7 +36,6 @@ DRIVER_SOURCES = \
 	brw_state_cache.c \
 	brw_state_pool.c \
 	brw_state_upload.c \
-	brw_tex.c \
 	brw_tex_layout.c \
 	brw_urb.c \
 	brw_util.c \
@@ -48,14 +45,8 @@ DRIVER_SOURCES = \
 	brw_vs_state.c \
 	brw_vtbl.c \
 	brw_wm.c \
-	brw_wm_debug.c \
-	brw_wm_emit.c \
-	brw_wm_fp.c \
 	brw_wm_iz.c \
 	brw_wm_glsl.c \
-	brw_wm_pass0.c \
-	brw_wm_pass1.c \
-	brw_wm_pass2.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c

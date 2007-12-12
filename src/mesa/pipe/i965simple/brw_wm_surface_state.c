@@ -147,7 +147,7 @@ void brw_update_texture_surface( GLcontext *ctx,
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
 
    /* Updated in emit_reloc */
-   surf.ss1.base_addr = intelObj->mt->region->buffer->offset;
+   surf.ss1.base_addr = brw_buffer_offset( intelObj->mt->region->buffer );
 
    surf.ss2.mip_count = intelObj->lastLevel - intelObj->firstLevel;
    surf.ss2.width = firstImage->Width - 1;
@@ -198,6 +198,8 @@ static void upload_wm_surfaces(struct brw_context *brw )
 
 	 surf.ss0.surface_type = BRW_SURFACE_2D;
 
+	 surf.ss1.base_addr = brw_buffer_offset( region->buffer );
+
 	 surf.ss2.width = region->pitch - 1; /* XXX: not really! */
 	 surf.ss2.height = region->height - 1;
 	 surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
@@ -217,6 +219,9 @@ static void upload_wm_surfaces(struct brw_context *brw )
       surf.ss0.writedisable_green = !brw->attribs.Color->ColorMask[1];
       surf.ss0.writedisable_blue =  !brw->attribs.Color->ColorMask[2];
       surf.ss0.writedisable_alpha = !brw->attribs.Color->ColorMask[3];
+
+
+
 
       brw->wm.bind.surf_ss_offset[0] = brw_cache_data( &brw->cache[BRW_SS_SURFACE], &surf );
 
@@ -251,6 +256,11 @@ static void upload_wm_surfaces(struct brw_context *brw )
 					    &brw->wm.bind );
 }
 
+
+/* KW: Will find a different way to acheive this, see for example the
+ * state caches with relocs in the i915 swz driver.
+ */
+#if 0
 static void emit_reloc_wm_surfaces(struct brw_context *brw)
 {
    int unit;
@@ -281,6 +291,9 @@ static void emit_reloc_wm_surfaces(struct brw_context *brw)
       }
    }
 }
+#endif
+
+
 
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
@@ -289,6 +302,5 @@ const struct brw_tracked_state brw_wm_surfaces = {
       .cache = 0
    },
    .update = upload_wm_surfaces,
-   .emit_reloc = emit_reloc_wm_surfaces,
 };
 #endif

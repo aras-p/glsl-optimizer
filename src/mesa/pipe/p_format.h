@@ -150,8 +150,8 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
  * Shorthand macro for common format swizzles.
  */
 #define _PIPE_FORMAT_R000 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0 )
-#define _PIPE_FORMAT_RG00 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_A )
-#define _PIPE_FORMAT_RGB0 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_A )
+#define _PIPE_FORMAT_RG00 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0 )
+#define _PIPE_FORMAT_RGB0 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_0 )
 #define _PIPE_FORMAT_RGBA _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_A )
 #define _PIPE_FORMAT_ARGB _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_A, PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_B )
 #define _PIPE_FORMAT_BGRA _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_G, PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_A )
@@ -366,7 +366,7 @@ static INLINE char *pf_sprint_name( char *str, uint format )
    return str;
 }
 
-static INLINE uint pf_get_component_bits( uint format, uint comp )
+static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
 {
    uint size;
 
@@ -388,7 +388,7 @@ static INLINE uint pf_get_component_bits( uint format, uint comp )
    return size << (pf_exp8(format) * 3);
 }
 
-static INLINE uint pf_get_bits( uint format )
+static INLINE uint pf_get_bits( enum pipe_format format )
 {
    if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
       return
@@ -408,7 +408,7 @@ static INLINE uint pf_get_bits( uint format )
    }
 }
 
-static INLINE uint pf_get_size( uint format ) {
+static INLINE uint pf_get_size( enum pipe_format format ) {
    assert(pf_get_bits(format) % 8 == 0);
    return pf_get_bits(format) / 8;
 }

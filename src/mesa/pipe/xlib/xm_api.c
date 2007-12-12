@@ -60,15 +60,9 @@
 #include "glxheader.h"
 #include "GL/xmesa.h"
 #include "xmesaP.h"
-#include "context.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "glthread.h"
-#include "imports.h"
-#include "macros.h"
-#include "renderbuffer.h"
-#include "teximage.h"
-#include "vbo/vbo.h"
+#include "main/context.h"
+#include "main/framebuffer.h"
+#include "glapi/glthread.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -257,6 +251,52 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
 }
 
 
+/**
+ * Choose the pixel format for the given visual.
+ * This will tell the gallium driver how to pack pixel data into
+ * drawing surfaces.
+ */
+static GLuint
+choose_pixel_format(XMesaVisual v)
+{
+   if (   GET_REDMASK(v)   == 0x0000ff
+       && GET_GREENMASK(v) == 0x00ff00
+       && GET_BLUEMASK(v)  == 0xff0000
+       && v->BitsPerPixel == 32) {
+      if (CHECK_BYTE_ORDER(v)) {
+         /* no byteswapping needed */
+         return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
+      }
+      else {
+         return PIPE_FORMAT_R8G8B8A8_UNORM;
+      }
+   }
+   else if (   GET_REDMASK(v)   == 0xff0000
+            && GET_GREENMASK(v) == 0x00ff00
+            && GET_BLUEMASK(v)  == 0x0000ff
+            && v->BitsPerPixel == 32) {
+      if (CHECK_BYTE_ORDER(v)) {
+         /* no byteswapping needed */
+         return PIPE_FORMAT_A8R8G8B8_UNORM;
+      }
+      else {
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
+      }
+   }
+   else if (   GET_REDMASK(v)   == 0xf800
+            && GET_GREENMASK(v) == 0x07e0
+            && GET_BLUEMASK(v)  == 0x001f
+            && CHECK_BYTE_ORDER(v)
+            && v->BitsPerPixel == 16) {
+      /* 5-6-5 RGB */
+      return PIPE_FORMAT_R5G6B5_UNORM;
+   }
+
+   assert(0);
+   return 0;
+}
+
+
 
 /**********************************************************************/
 /*****                Linked list of XMesaBuffers                 *****/
@@ -282,6 +322,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
 {
    XMesaBuffer b;
    GLframebuffer *fb;
+   enum pipe_format colorFormat, depthFormat, stencilFormat;
 
    ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
 
@@ -295,10 +336,35 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->type = type;
    b->cmap = cmap;
 
+   /* determine PIPE_FORMATs for buffers */
+   colorFormat = choose_pixel_format(vis);
+
+   if (vis->mesa_visual.depthBits == 0)
+      depthFormat = PIPE_FORMAT_NONE;
+   else if (vis->mesa_visual.depthBits <= 16)
+      depthFormat = PIPE_FORMAT_Z16_UNORM;
+   else if (vis->mesa_visual.depthBits <= 24)
+      depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+   else
+      depthFormat = PIPE_FORMAT_Z32_UNORM;
+
+   if (vis->mesa_visual.stencilBits == 8) {
+      if (depthFormat == PIPE_FORMAT_S8Z24_UNORM)
+         stencilFormat = depthFormat;
+      else
+         stencilFormat = PIPE_FORMAT_S8_UNORM;
+   }
+   else {
+      stencilFormat = PIPE_FORMAT_NONE;
+   }
+
+
    /*
     * Create framebuffer, but we'll plug in our own renderbuffers below.
     */
-   b->stfb = st_create_framebuffer(&vis->mesa_visual, GL_TRUE, (void *) b);
+   b->stfb = st_create_framebuffer(&vis->mesa_visual, GL_TRUE,
+                                   colorFormat, depthFormat, stencilFormat,
+                                   (void *) b);
    fb = &b->stfb->Base;
 
    /*
@@ -391,52 +457,6 @@ xmesa_free_buffer(XMesaBuffer buffer)
 /**********************************************************************/
 /*****                   Misc Private Functions                   *****/
 /**********************************************************************/
-
-
-/**
- * Choose the pixel format for the given visual.
- * This will tell the gallium driver how to pack pixel data into
- * drawing surfaces.
- */
-static GLuint
-choose_pixel_format(XMesaVisual v)
-{
-   if (   GET_REDMASK(v)   == 0x0000ff
-       && GET_GREENMASK(v) == 0x00ff00
-       && GET_BLUEMASK(v)  == 0xff0000
-       && v->BitsPerPixel == 32) {
-      if (CHECK_BYTE_ORDER(v)) {
-         /* no byteswapping needed */
-         return 0 /* PIXEL_FORMAT_U_A8_B8_G8_R8 */;
-      }
-      else {
-         return PIPE_FORMAT_R8G8B8A8_UNORM;
-      }
-   }
-   else if (   GET_REDMASK(v)   == 0xff0000
-            && GET_GREENMASK(v) == 0x00ff00
-            && GET_BLUEMASK(v)  == 0x0000ff
-            && v->BitsPerPixel == 32) {
-      if (CHECK_BYTE_ORDER(v)) {
-         /* no byteswapping needed */
-         return PIPE_FORMAT_A8R8G8B8_UNORM;
-      }
-      else {
-         return PIPE_FORMAT_B8G8R8A8_UNORM;
-      }
-   }
-   else if (   GET_REDMASK(v)   == 0xf800
-            && GET_GREENMASK(v) == 0x07e0
-            && GET_BLUEMASK(v)  == 0x001f
-            && CHECK_BYTE_ORDER(v)
-            && v->BitsPerPixel == 16) {
-      /* 5-6-5 RGB */
-      return PIPE_FORMAT_R5G6B5_UNORM;
-   }
-
-   assert(0);
-   return 0;
-}
 
 
 /**

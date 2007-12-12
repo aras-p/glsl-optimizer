@@ -165,7 +165,6 @@
  */
 #define PIPE_TEXTURE        1
 #define PIPE_SURFACE        2  /**< user-created surfaces */
-#define PIPE_SCREEN_SURFACE 3  /**< On-screen front/back colorbuffer */
 
 
 /**

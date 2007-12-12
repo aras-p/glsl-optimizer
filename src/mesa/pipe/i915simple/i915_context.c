@@ -41,7 +41,7 @@
 /**
  * Query format support for creating a texture, drawing surface, etc.
  * \param format  the format to test
- * \param type  one of PIPE_TEXTURE, PIPE_SURFACE, PIPE_SCREEN_SURFACE
+ * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
  */
 static boolean
 i915_is_format_supported( struct pipe_context *pipe,
@@ -64,11 +64,7 @@ i915_is_format_supported( struct pipe_context *pipe,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_S8Z24_UNORM,
-      PIPE_FORMAT_R16G16B16A16_SNORM,
-      PIPE_FORMAT_NONE  /* list terminator */
-   };
-   static const enum pipe_format screen_surface_supported[] = {
-      PIPE_FORMAT_A8R8G8B8_UNORM,
+      /*PIPE_FORMAT_R16G16B16A16_SNORM,*/
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
@@ -80,9 +76,6 @@ i915_is_format_supported( struct pipe_context *pipe,
       break;
    case PIPE_SURFACE:
       list = surface_supported;
-      break;
-   case PIPE_SCREEN_SURFACE:
-      list = screen_surface_supported;
       break;
    default:
       assert(0);

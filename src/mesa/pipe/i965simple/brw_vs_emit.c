@@ -732,11 +732,11 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 
 
 static struct brw_reg get_dst( struct brw_vs_compile *c,
-			       struct tgsi_dst_register dst )
+			       const struct tgsi_dst_register *dst )
 {
-   struct brw_reg reg = get_reg(c, dst.File, dst.Index);
+   struct brw_reg reg = get_reg(c, dst->File, dst->Index);
 
-   reg.dw1.bits.writemask = dst.WriteMask;
+   reg.dw1.bits.writemask = dst->WriteMask;
 
    return reg;
 }
@@ -950,14 +950,14 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
 {
    struct tgsi_parse_context parse;
    const struct tgsi_token *tokens = c->vp->program.tokens;
-   struct brw_instruction *brw_inst1, *brw_inst2;
-   const struct tgsi_full_instruction *inst1, *inst2;
-   int offset;
    tgsi_parse_init(&parse, tokens);
    while (!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
       if (parse.FullToken.Token.Type == TGSI_TOKEN_TYPE_INSTRUCTION) {
 #if 0
+         struct brw_instruction *brw_inst1, *brw_inst2;
+         const struct tgsi_full_instruction *inst1, *inst2;
+         int offset;
          inst1 = &parse.FullToken.FullInstruction;
          brw_inst1 = inst1->Data;
          switch (inst1->Opcode) {
@@ -982,29 +982,277 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
    tgsi_parse_free(&parse);
 }
 
+static void process_declaration(const struct tgsi_full_declaration *decl,
+                                struct brw_prog_info *info)
+{
+   switch(decl->Declaration.File) {
+   case TGSI_FILE_CONSTANT: {
+   }
+      break;
+   case TGSI_FILE_INPUT: {
+   }
+      break;
+   case TGSI_FILE_OUTPUT: {
+      if (decl->Declaration.Semantic) {
+         int idx = 0;
+         if (decl->Declaration.Declare == TGSI_DECLARE_MASK) {
+            printf("DECLARATION MASK = %d\n",
+                   decl->u.DeclarationMask.Mask);
+            assert(0);
+         } else { //range
+            idx = decl->u.DeclarationRange.First;
+         }
+         switch (decl->Semantic.SemanticName) {
+         case TGSI_SEMANTIC_POSITION: {
+            info->pos_idx = idx;
+         }
+            break;
+         case TGSI_SEMANTIC_COLOR:
+            break;
+         case TGSI_SEMANTIC_BCOLOR:
+            break;
+         case TGSI_SEMANTIC_FOG:
+            break;
+         case TGSI_SEMANTIC_PSIZE: {
+            info->writes_psize = TRUE;
+            info->psize_idx = idx;
+         }
+            break;
+         case TGSI_SEMANTIC_GENERIC:
+            break;
+         }
+      }
+   }
+      break;
+   case TGSI_FILE_TEMPORARY: {
+      info->num_temps++;
+   }
+      break;
+   case TGSI_FILE_SAMPLER: {
+   }
+      break;
+   case TGSI_FILE_ADDRESS: {
+      info->num_addrs++;
+   }
+      break;
+   case TGSI_FILE_IMMEDIATE: {
+   }
+      break;
+   case TGSI_FILE_NULL: {
+   }
+      break;
+   }
+}
+
+static void process_instruction(struct brw_vs_compile *c,
+                                struct tgsi_full_instruction *inst,
+                                struct brw_prog_info *info)
+{
+   struct brw_reg args[3], dst;
+   struct brw_compile *p = &c->func;
+   struct brw_indirect stack_index = brw_indirect(0, 0);
+   unsigned i;
+   unsigned index;
+   unsigned file;
+   /*FIXME: might not be the only one*/
+   const struct tgsi_dst_register *dst_reg = &inst->FullDstRegisters[0].DstRegister;
+   /*
+   struct brw_instruction *if_inst[MAX_IFSN];
+   unsigned insn, if_insn = 0;
+   */
+
+   /* Get argument regs.  SWZ is special and does this itself. */
+   if (inst->Instruction.Opcode != TGSI_OPCODE_SWZ)
+      for (i = 0; i < 3; i++) {
+         struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+         index = src->SrcRegister.Index;
+         file = src->SrcRegister.File;
+         if (file == TGSI_FILE_OUTPUT&&c->output_regs[index].used_in_src)
+            args[i] = c->output_regs[index].reg;
+         else
+            args[i] = get_arg(c, &src->SrcRegister);
+      }
+
+   /* Get dest regs.  Note that it is possible for a reg to be both
+    * dst and arg, given the static allocation of registers.  So
+    * care needs to be taken emitting multi-operation instructions.
+    */
+   index = dst_reg->Index;
+   file = dst_reg->File;
+   if (file == TGSI_FILE_OUTPUT && c->output_regs[index].used_in_src)
+      dst = c->output_regs[index].reg;
+   else
+      dst = get_dst(c, dst_reg);
+
+   switch (inst->Instruction.Opcode) {
+   case TGSI_OPCODE_ABS:
+      brw_MOV(p, dst, brw_abs(args[0]));
+      break;
+   case TGSI_OPCODE_ADD:
+      brw_ADD(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_DP3:
+      brw_DP3(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_DP4:
+      brw_DP4(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_DPH:
+      brw_DPH(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_DST:
+      unalias2(c, dst, args[0], args[1], emit_dst_noalias);
+      break;
+   case TGSI_OPCODE_EXP:
+      unalias1(c, dst, args[0], emit_exp_noalias);
+      break;
+   case TGSI_OPCODE_EX2:
+      emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, args[0], BRW_MATH_PRECISION_FULL);
+      break;
+   case TGSI_OPCODE_ARL:
+      emit_arl(c, dst, args[0]);
+      break;
+   case TGSI_OPCODE_FLR:
+      brw_RNDD(p, dst, args[0]);
+      break;
+   case TGSI_OPCODE_FRC:
+      brw_FRC(p, dst, args[0]);
+      break;
+   case TGSI_OPCODE_LOG:
+      unalias1(c, dst, args[0], emit_log_noalias);
+      break;
+   case TGSI_OPCODE_LG2:
+      emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, args[0], BRW_MATH_PRECISION_FULL);
+      break;
+   case TGSI_OPCODE_LIT:
+      unalias1(c, dst, args[0], emit_lit_noalias);
+      break;
+   case TGSI_OPCODE_MAD:
+      brw_MOV(p, brw_acc_reg(), args[2]);
+      brw_MAC(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_MAX:
+      emit_max(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_MIN:
+      emit_min(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_MOV:
+#if 0
+   case TGSI_OPCODE_SWZ:
+      /* The args[0] value can't be used here as it won't have
+       * correctly encoded the full swizzle:
+       */
+      emit_swz(c, dst, inst->SrcReg[0] );
+#endif
+      brw_MOV(p, dst, args[0]);
+      break;
+   case TGSI_OPCODE_MUL:
+      brw_MUL(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_POW:
+      emit_math2(c, BRW_MATH_FUNCTION_POW, dst, args[0], args[1], BRW_MATH_PRECISION_FULL);
+      break;
+   case TGSI_OPCODE_RCP:
+      emit_math1(c, BRW_MATH_FUNCTION_INV, dst, args[0], BRW_MATH_PRECISION_FULL);
+      break;
+   case TGSI_OPCODE_RSQ:
+      emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, args[0], BRW_MATH_PRECISION_FULL);
+      break;
+
+   case TGSI_OPCODE_SEQ:
+      emit_seq(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_SNE:
+      emit_sne(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_SGE:
+      emit_sge(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_SGT:
+      emit_sgt(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_SLT:
+      emit_slt(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_SLE:
+      emit_sle(p, dst, args[0], args[1]);
+      break;
+   case TGSI_OPCODE_SUB:
+      brw_ADD(p, dst, args[0], negate(args[1]));
+      break;
+   case TGSI_OPCODE_XPD:
+      emit_xpd(p, dst, args[0], args[1]);
+      break;
+#if 0
+   case TGSI_OPCODE_IF:
+      assert(if_insn < MAX_IFSN);
+      if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
+      break;
+   case TGSI_OPCODE_ELSE:
+      if_inst[if_insn-1] = brw_ELSE(p, if_inst[if_insn-1]);
+      break;
+   case TGSI_OPCODE_ENDIF:
+      assert(if_insn > 0);
+      brw_ENDIF(p, if_inst[--if_insn]);
+      break;
+   case TGSI_OPCODE_BRA:
+      brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+      brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+      brw_set_predicate_control_flag_value(p, 0xff);
+      break;
+   case TGSI_OPCODE_CAL:
+      brw_set_access_mode(p, BRW_ALIGN_1);
+      brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
+      brw_set_access_mode(p, BRW_ALIGN_16);
+      brw_ADD(p, get_addr_reg(stack_index),
+              get_addr_reg(stack_index), brw_imm_d(4));
+      inst->Data = &p->store[p->nr_insn];
+      brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+      break;
+#endif
+   case TGSI_OPCODE_RET:
+      brw_ADD(p, get_addr_reg(stack_index),
+              get_addr_reg(stack_index), brw_imm_d(-4));
+      brw_set_access_mode(p, BRW_ALIGN_1);
+      brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
+      brw_set_access_mode(p, BRW_ALIGN_16);
+   case TGSI_OPCODE_END:
+      brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+      break;
+   case TGSI_OPCODE_BGNSUB:
+   case TGSI_OPCODE_ENDSUB:
+      break;
+   default:
+      printf("Unsupport opcode %d in vertex shader\n", inst->Instruction.Opcode);
+      break;
+   }
+
+   if (dst_reg->File == TGSI_FILE_OUTPUT
+       && dst_reg->Index != info->pos_idx
+       && c->output_regs[dst_reg->Index].used_in_src)
+      brw_MOV(p, get_dst(c, dst_reg), dst);
+
+   release_tmps(c);
+}
+
 /* Emit the fragment program instructions here.
  */
 void brw_vs_emit(struct brw_vs_compile *c)
 {
 #define MAX_IFSN 32
    struct brw_compile *p = &c->func;
-   unsigned insn, if_insn = 0;
    struct brw_instruction *end_inst;
-   struct brw_instruction *if_inst[MAX_IFSN];
-   struct brw_indirect stack_index = brw_indirect(0, 0);
    struct tgsi_parse_context parse;
+   struct brw_indirect stack_index = brw_indirect(0, 0);
    const struct tgsi_token *tokens = c->vp->program.tokens;
    struct brw_prog_info prog_info;
    unsigned allocated_registers = 0;
    memset(&prog_info, 0, sizeof(struct brw_prog_info));
 
-   unsigned index;
-   unsigned file;
-
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
 
-#if 0
    tgsi_parse_init(&parse, tokens);
    /* Message registers can't be read, so copy the output into GRF register
       if they are used in source registers */
@@ -1014,11 +1262,13 @@ void brw_vs_emit(struct brw_vs_compile *c)
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_INSTRUCTION: {
          const struct tgsi_full_instruction *inst = &parse.FullToken.FullInstruction;
-         struct prog_src_register *src = &inst->SrcReg[i];
-         unsigned index = src->Index;
-         unsigned file = src->File;
-         if (file == TGSI_FILE_OUTPUT)
-            c->output_regs[index].used_in_src = TRUE;
+         for (i = 0; i < 3; ++i) {
+            const struct tgsi_src_register *src = &inst->FullSrcRegisters[i].SrcRegister;
+            unsigned index = src->Index;
+            unsigned file = src->File;
+            if (file == TGSI_FILE_OUTPUT)
+               c->output_regs[index].used_in_src = TRUE;
+         }
       }
          break;
       default:
@@ -1026,7 +1276,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
          break;
       }
    }
-#endif
+   tgsi_parse_free(&parse);
 
    tgsi_parse_init(&parse, tokens);
 
@@ -1036,205 +1286,27 @@ void brw_vs_emit(struct brw_vs_compile *c)
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_DECLARATION: {
          struct tgsi_full_declaration *decl = &parse.FullToken.FullDeclaration;
-         /* FIXME: fill in brw_prog_info based on declarations here */
+         process_declaration(decl, &prog_info);
       }
          break;
       case TGSI_TOKEN_TYPE_IMMEDIATE: {
-
       }
          break;
       case TGSI_TOKEN_TYPE_INSTRUCTION: {
+         struct tgsi_full_instruction *inst = &parse.FullToken.FullInstruction;
          if (!allocated_registers) {
-            /* first instruction after declerations.
-             * know that we know used vars allocate
-             * registers */
+            /* first instruction (declerations finished).
+             * now that we know what vars are being used allocate
+             * registers for them.*/
             brw_vs_alloc_regs(c, &prog_info);
             brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
             allocated_registers = 1;
          }
+         process_instruction(c, inst, &prog_info);
       }
          break;
       }
    }
-#if 0
-      struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
-      struct brw_reg args[3], dst;
-      unsigned i;
-
-      /* Get argument regs.  SWZ is special and does this itself.
-       */
-      inst->Data = &p->store[p->nr_insn];
-      if (inst->Opcode != TGSI_OPCODE_SWZ)
-         for (i = 0; i < 3; i++) {
-            struct prog_src_register *src = &inst->SrcReg[i];
-            index = src->Index;
-            file = src->File;
-            if (file == TGSI_FILE_OUTPUT&&c->output_regs[index].used_in_src)
-               args[i] = c->output_regs[index].reg;
-            else
-               args[i] = get_arg(c, src);
-         }
-
-      /* Get dest regs.  Note that it is possible for a reg to be both
-       * dst and arg, given the static allocation of registers.  So
-       * care needs to be taken emitting multi-operation instructions.
-       */
-      index = inst->DstReg.Index;
-      file = inst->DstReg.File;
-      if (file == TGSI_FILE_OUTPUT && c->output_regs[index].used_in_src)
-         dst = c->output_regs[index].reg;
-      else
-         dst = get_dst(c, inst->DstReg);
-
-      switch (inst->Opcode) {
-      case TGSI_OPCODE_ABS:
-	 brw_MOV(p, dst, brw_abs(args[0]));
-	 break;
-      case TGSI_OPCODE_ADD:
-	 brw_ADD(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_DP3:
-	 brw_DP3(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_DP4:
-	 brw_DP4(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_DPH:
-	 brw_DPH(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_DST:
-	 unalias2(c, dst, args[0], args[1], emit_dst_noalias);
-	 break;
-      case TGSI_OPCODE_EXP:
-	 unalias1(c, dst, args[0], emit_exp_noalias);
-	 break;
-      case TGSI_OPCODE_EX2:
-	 emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, args[0], BRW_MATH_PRECISION_FULL);
-	 break;
-      case TGSI_OPCODE_ARL:
-	 emit_arl(c, dst, args[0]);
-	 break;
-      case TGSI_OPCODE_FLR:
-	 brw_RNDD(p, dst, args[0]);
-	 break;
-      case TGSI_OPCODE_FRC:
-	 brw_FRC(p, dst, args[0]);
-	 break;
-      case TGSI_OPCODE_LOG:
-	 unalias1(c, dst, args[0], emit_log_noalias);
-	 break;
-      case TGSI_OPCODE_LG2:
-	 emit_math1(c, BRW_MATH_FUNCTION_LOG, dst, args[0], BRW_MATH_PRECISION_FULL);
-	 break;
-      case TGSI_OPCODE_LIT:
-	 unalias1(c, dst, args[0], emit_lit_noalias);
-	 break;
-      case TGSI_OPCODE_MAD:
-	 brw_MOV(p, brw_acc_reg(), args[2]);
-	 brw_MAC(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_MAX:
-	 emit_max(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_MIN:
-	 emit_min(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_MOV:
-	 brw_MOV(p, dst, args[0]);
-	 break;
-      case TGSI_OPCODE_MUL:
-	 brw_MUL(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_POW:
-	 emit_math2(c, BRW_MATH_FUNCTION_POW, dst, args[0], args[1], BRW_MATH_PRECISION_FULL);
-	 break;
-      case TGSI_OPCODE_RCP:
-	 emit_math1(c, BRW_MATH_FUNCTION_INV, dst, args[0], BRW_MATH_PRECISION_FULL);
-	 break;
-      case TGSI_OPCODE_RSQ:
-	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, args[0], BRW_MATH_PRECISION_FULL);
-	 break;
-
-      case TGSI_OPCODE_SEQ:
-         emit_seq(p, dst, args[0], args[1]);
-         break;
-      case TGSI_OPCODE_SNE:
-         emit_sne(p, dst, args[0], args[1]);
-         break;
-      case TGSI_OPCODE_SGE:
-	 emit_sge(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_SGT:
-         emit_sgt(p, dst, args[0], args[1]);
-         break;
-      case TGSI_OPCODE_SLT:
-	 emit_slt(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_SLE:
-         emit_sle(p, dst, args[0], args[1]);
-         break;
-      case TGSI_OPCODE_SUB:
-	 brw_ADD(p, dst, args[0], negate(args[1]));
-	 break;
-      case TGSI_OPCODE_SWZ:
-	 /* The args[0] value can't be used here as it won't have
-	  * correctly encoded the full swizzle:
-	  */
-	 emit_swz(c, dst, inst->SrcReg[0] );
-	 break;
-      case TGSI_OPCODE_XPD:
-	 emit_xpd(p, dst, args[0], args[1]);
-	 break;
-      case TGSI_OPCODE_IF:
-	 assert(if_insn < MAX_IFSN);
-         if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
-	 break;
-      case TGSI_OPCODE_ELSE:
-	 if_inst[if_insn-1] = brw_ELSE(p, if_inst[if_insn-1]);
-	 break;
-      case TGSI_OPCODE_ENDIF:
-         assert(if_insn > 0);
-	 brw_ENDIF(p, if_inst[--if_insn]);
-	 break;
-      case TGSI_OPCODE_BRA:
-         brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-         brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-         brw_set_predicate_control_flag_value(p, 0xff);
-         break;
-      case TGSI_OPCODE_CAL:
-	 brw_set_access_mode(p, BRW_ALIGN_1);
-	 brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
-	 brw_set_access_mode(p, BRW_ALIGN_16);
-	 brw_ADD(p, get_addr_reg(stack_index),
-                 get_addr_reg(stack_index), brw_imm_d(4));
-	 inst->Data = &p->store[p->nr_insn];
-	 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-         break;
-      case TGSI_OPCODE_RET:
-	 brw_ADD(p, get_addr_reg(stack_index),
-                 get_addr_reg(stack_index), brw_imm_d(-4));
-	 brw_set_access_mode(p, BRW_ALIGN_1);
-         brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
-	 brw_set_access_mode(p, BRW_ALIGN_16);
-      case TGSI_OPCODE_END:
-         brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-         break;
-      case TGSI_OPCODE_BGNSUB:
-      case TGSI_OPCODE_ENDSUB:
-	 break;
-      default:
-	 printf("Unsupport opcode %d in vertex shader\n", inst->Opcode);
-	 break;
-      }
-
-      if (inst->DstReg.File == TGSI_FILE_OUTPUT
-          && inst->DstReg.Index != VERT_RESULT_HPOS
-          && c->output_regs[inst->DstReg.Index].used_in_src)
-         brw_MOV(p, get_dst(c, inst->DstReg), dst);
-
-      release_tmps(c);
-   }
-#endif
 
    end_inst = &p->store[p->nr_insn];
    emit_vertex_write(c, &prog_info);

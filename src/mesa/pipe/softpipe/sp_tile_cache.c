@@ -147,10 +147,10 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
 
    pipe_surface_reference(&tc->surface, ps);
 
-   if (!ps->map)
-      pipe_surface_map(ps);
-
    if (ps) {
+      if (!ps->map)
+         pipe_surface_map(ps);
+
       tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
                            ps->format == PIPE_FORMAT_Z32_UNORM ||

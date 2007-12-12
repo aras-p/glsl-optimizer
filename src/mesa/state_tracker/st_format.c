@@ -283,9 +283,9 @@ static GLuint
 default_rgba_format(struct pipe_context *pipe, uint type)
 {
    static const enum pipe_format colorFormats[] = {
-      PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_B8G8R8A8_UNORM,
+      PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM
    };
    uint i;
@@ -334,56 +334,22 @@ default_depth_format(struct pipe_context *pipe, uint type)
 
 
 /**
- * Choose the PIPE_FORMAT_ to use for storing a texture image based
- * on the user's internalFormat, format and type parameters.
- * We query the pipe device for a list of formats which it supports
- * and choose from them.
- * If we find a device that needs a more intricate selection mechanism,
- * this function _could_ get pushed down into the pipe device.
- *
- * Note: also used for glRenderbufferStorageEXT()
- *
- * Note: format and type may be GL_NONE (see renderbuffers)
+ * Choose the PIPE_FORMAT_ to use for user-created renderbuffers.
  *
  * \return PIPE_FORMAT_NONE if error/problem.
  */
-GLuint
-st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
-                      GLenum format, GLenum type, uint surfType)
+enum pipe_format
+st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
 {
-   assert(surfType == PIPE_TEXTURE ||
-          surfType == PIPE_SURFACE ||
-          surfType == PIPE_SCREEN_SURFACE);
+   uint surfType = PIPE_SURFACE;
 
    switch (internalFormat) {
    case 4:
    case GL_RGBA:
    case GL_COMPRESSED_RGBA:
-      if (format == GL_BGRA) {
-         if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM, surfType ))
-               return PIPE_FORMAT_A8R8G8B8_UNORM;
-         }
-         else if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A4R4G4B4_UNORM, surfType ))
-               return PIPE_FORMAT_A4R4G4B4_UNORM;
-         }
-         else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
-            if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
-               return PIPE_FORMAT_A1R5G5B5_UNORM;
-         }
-      }
-      return default_rgba_format( pipe, surfType );
-
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
-      if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_R5G6B5_UNORM, surfType ))
-            return PIPE_FORMAT_R5G6B5_UNORM;
-      }
-      return default_rgba_format( pipe, surfType );
-
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
@@ -413,6 +379,8 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_R3_G3_B2:
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_R5G6B5_UNORM, surfType ))
+         return PIPE_FORMAT_R5G6B5_UNORM;
       return default_rgba_format( pipe, surfType );
 
    case GL_ALPHA:
@@ -432,7 +400,7 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8, surfType ))
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_L8, surfType ))
          return PIPE_FORMAT_U_A8;
       return default_rgba_format( pipe, surfType );
 
@@ -459,18 +427,10 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
          return PIPE_FORMAT_U_I8;
       return default_rgba_format( pipe, surfType );
 
-   case GL_YCBCR_MESA:
-      if (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE) {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_YCBCR, surfType ))
-            return PIPE_FORMAT_YCBCR;
-      }
-      else {
-         if (pipe->is_format_supported( pipe, PIPE_FORMAT_YCBCR_REV, surfType ))
-            return PIPE_FORMAT_YCBCR_REV;
-      }
-      return PIPE_FORMAT_NONE;
-
 #if 0
+   /* not supported for renderbuffers */
+   case GL_YCBCR_MESA:
+      return PIPE_FORMAT_NONE;
    case GL_COMPRESSED_RGB_FXT1_3DFX:
       return &_mesa_texformat_rgb_fxt1;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:

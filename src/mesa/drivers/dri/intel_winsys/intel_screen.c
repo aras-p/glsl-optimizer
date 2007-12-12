@@ -274,11 +274,34 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       return GL_FALSE;          /* not implemented */
    }
    else {
+      enum pipe_format colorFormat, depthFormat, stencilFormat;
       struct intel_framebuffer *intelfb = CALLOC_STRUCT(intel_framebuffer);
+
       if (!intelfb)
          return GL_FALSE;
 
-      intelfb->stfb = st_create_framebuffer(visual, GL_TRUE, (void*) intelfb);
+      if (visual->redBits == 5)
+         colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
+      else
+         colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+      if (visual->depthBits == 16)
+         depthFormat = PIPE_FORMAT_Z16_UNORM;
+      else if (visual->depthBits == 24)
+         depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+      else
+         depthFormat = PIPE_FORMAT_NONE;
+
+      if (visual->stencilBits == 8)
+         stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
+      else
+         stencilFormat = PIPE_FORMAT_NONE;
+
+      intelfb->stfb = st_create_framebuffer(visual, GL_TRUE,
+                                            colorFormat,
+                                            depthFormat,
+                                            stencilFormat,
+                                            (void*) intelfb);
       if (!intelfb->stfb) {
          free(intelfb);
          return GL_FALSE;

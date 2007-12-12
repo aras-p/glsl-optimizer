@@ -49,7 +49,7 @@
 /**
  * Query format support for creating a texture, drawing surface, etc.
  * \param format  the format to test
- * \param type  one of PIPE_TEXTURE, PIPE_SURFACE, PIPE_SCREEN_SURFACE
+ * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
  */
 static boolean
 softpipe_is_format_supported( struct pipe_context *pipe,
@@ -64,8 +64,6 @@ softpipe_is_format_supported( struct pipe_context *pipe,
    case PIPE_SURFACE:
       /* softpipe supports all (off-screen) surface formats */
       return TRUE;
-   case PIPE_SCREEN_SURFACE:
-      return softpipe->winsys->is_format_supported( softpipe->winsys, format );
    default:
       assert(0);
       return FALSE;

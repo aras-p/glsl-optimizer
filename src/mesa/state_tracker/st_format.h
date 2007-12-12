@@ -63,9 +63,8 @@ extern enum pipe_format
 st_mesa_format_to_pipe_format(GLuint mesaFormat);
 
 
-extern GLuint
-st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
-                      GLenum format, GLenum type, uint surfType);
+extern enum pipe_format
+st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat);
 
 
 extern const struct gl_texture_format *

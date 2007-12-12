@@ -33,6 +33,8 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
+#include "pipe/softpipe/sp_rgba_tile.h" /* XXX TEMPORARY */
+
 
 #define CLIP_TILE \
    do { \
@@ -45,73 +47,6 @@
       if (y + h > ps->height) \
          h = ps->height -y; \
    } while(0)
-
-
-/**
- * Note: this is exactly like a8r8g8b8_get_tile() in sp_surface.c
- * Share it someday.
- */
-static void
-brw_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
-                   uint x, uint y, uint w, uint h, float *p)
-{
-   const unsigned *src
-      = ((const unsigned *) (ps->map + ps->offset))
-      + y * ps->pitch + x;
-   unsigned i, j;
-   unsigned w0 = w;
-
-   CLIP_TILE;
-
-   switch (ps->format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      for (i = 0; i < h; i++) {
-         float *pRow = p;
-         for (j = 0; j < w; j++) {
-            const unsigned pixel = src[j];
-            pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
-            pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
-            pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
-            pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
-            pRow += 4;
-         }
-         src += ps->pitch;
-         p += w0 * 4;
-      }
-      break;
-   case PIPE_FORMAT_S8Z24_UNORM:
-      {
-         const float scale = 1.0f / (float) 0xffffff;
-         for (i = 0; i < h; i++) {
-            float *pRow = p;
-            for (j = 0; j < w; j++) {
-               const unsigned pixel = src[j];
-               pRow[0] =
-               pRow[1] =
-               pRow[2] =
-               pRow[3] = (pixel & 0xffffff) * scale;
-               pRow += 4;
-            }
-            src += ps->pitch;
-            p += w0 * 4;
-         }
-      }
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
-static void
-brw_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
-                   uint x, uint y, uint w, uint h, const float *p)
-{
-   /* TODO */
-   assert(0);
-}
 
 
 /*
@@ -388,8 +323,8 @@ brw_init_surface_functions(struct brw_context *brw)
    brw->pipe.get_tex_surface = brw_get_tex_surface;
    brw->pipe.get_tile = brw_get_tile;
    brw->pipe.put_tile = brw_put_tile;
-   brw->pipe.get_tile_rgba = brw_get_tile_rgba;
-   brw->pipe.put_tile_rgba = brw_put_tile_rgba;
+   brw->pipe.get_tile_rgba = softpipe_get_tile_rgba;
+   brw->pipe.put_tile_rgba = softpipe_put_tile_rgba;
 
    brw->pipe.surface_data  = brw_surface_data;
    brw->pipe.surface_copy  = brw_surface_copy;
