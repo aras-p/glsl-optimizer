@@ -28,6 +28,12 @@ AC_PROG_CXX
 AC_PATH_PROG(MAKE, make)
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
+
+dnl Make sure the pkg-config macros are defined
+m4_ifdef([PKG_PROG_PKG_CONFIG],,[
+    AC_MSG_ERROR([The pkg-config autoconf macros are not defined.
+                  Did you run 'make configure'?])]
+)
 PKG_PROG_PKG_CONFIG()
 
 dnl LIB_DIR - library basename
