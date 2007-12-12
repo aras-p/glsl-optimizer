@@ -25,6 +25,7 @@ DRIVER_SOURCES = \
 	sp_quad_output.c \
 	sp_quad_stencil.c \
 	sp_quad_stipple.c \
+	sp_rgba_tile.c \
 	sp_state_blend.c \
 	sp_state_clip.c \
 	sp_state_derived.c \

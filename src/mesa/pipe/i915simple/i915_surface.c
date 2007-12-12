@@ -34,6 +34,8 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
+#include "pipe/softpipe/sp_rgba_tile.h" /* XXX TEMPORARY */
+
 
 #define CLIP_TILE \
    do { \
@@ -420,8 +422,13 @@ i915_init_surface_functions(struct i915_context *i915)
    i915->pipe.get_tex_surface = i915_get_tex_surface;
    i915->pipe.get_tile = i915_get_tile;
    i915->pipe.put_tile = i915_put_tile;
+#if 0
    i915->pipe.get_tile_rgba = i915_get_tile_rgba;
    i915->pipe.put_tile_rgba = i915_put_tile_rgba;
+#else
+   i915->pipe.get_tile_rgba = softpipe_get_tile_rgba;
+   i915->pipe.put_tile_rgba = softpipe_put_tile_rgba;
+#endif
    i915->pipe.surface_data = i915_surface_data;
    i915->pipe.surface_copy = i915_surface_copy;
    i915->pipe.surface_fill = i915_surface_fill;
