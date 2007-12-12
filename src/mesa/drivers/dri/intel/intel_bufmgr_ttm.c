@@ -754,7 +754,7 @@ dri_ttm_fence_wait(dri_fence *fence)
     int ret;
 
     _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
-    ret = drmFenceWait(bufmgr_ttm->fd, 0, &fence_ttm->drm_fence, 0);
+    ret = drmFenceWait(bufmgr_ttm->fd, DRM_FENCE_FLAG_WAIT_LAZY, &fence_ttm->drm_fence, 0);
     _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
     if (ret != 0) {
 	_mesa_printf("%s:%d: Error %d waiting for fence %s.\n",
