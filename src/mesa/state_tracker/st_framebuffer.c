@@ -35,15 +35,16 @@
 #include "st_cb_fbo.h"
 
 
-struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
-                                              boolean createRenderbuffers,
-                                              void *private)
+struct st_framebuffer *
+st_create_framebuffer( const __GLcontextModes *visual,
+                       boolean createRenderbuffers, /* XXX remove? */
+                       enum pipe_format colorFormat,
+                       enum pipe_format depthFormat,
+                       enum pipe_format stencilFormat,
+                       void *private)
 {
-   struct st_framebuffer *stfb
-      = CALLOC_STRUCT(st_framebuffer);
+   struct st_framebuffer *stfb = CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
-      GLenum rgbFormat = (visual->redBits == 5 ? GL_RGB5 : GL_RGBA8);
-
       _mesa_initialize_framebuffer(&stfb->Base, visual);
 
       if (createRenderbuffers) {
@@ -52,20 +53,20 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
             /* XXX allocation should only happen in the unusual case
                it's actually needed */
             struct gl_renderbuffer *rb
-               = st_new_renderbuffer_fb(rgbFormat, GL_TRUE);
+               = st_new_renderbuffer_fb(colorFormat);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
          }
 
          if (visual->doubleBufferMode) {
             struct gl_renderbuffer *rb
-               = st_new_renderbuffer_fb(rgbFormat, GL_TRUE);
+               = st_new_renderbuffer_fb(colorFormat);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
          }
 
          if (visual->depthBits == 24 && visual->stencilBits == 8) {
             /* combined depth/stencil buffer */
             struct gl_renderbuffer *depthStencilRb
-               = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT, GL_FALSE);
+               = st_new_renderbuffer_fb(depthFormat);
             /* note: bind RB to two attachment points */
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthStencilRb);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, depthStencilRb);
@@ -76,26 +77,26 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
             if (visual->depthBits == 32) {
                /* 32-bit depth buffer */
                struct gl_renderbuffer *depthRb
-                  = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT32, GL_FALSE);
+                  = st_new_renderbuffer_fb(depthFormat);
                _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
             }
             else if (visual->depthBits == 24) {
                /* 24-bit depth buffer, ignore stencil bits */
                struct gl_renderbuffer *depthRb
-                  = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT, GL_FALSE);
+                  = st_new_renderbuffer_fb(depthFormat);
                _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
             }
             else if (visual->depthBits > 0) {
                /* 16-bit depth buffer */
                struct gl_renderbuffer *depthRb
-                  = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT16, GL_FALSE);
+                  = st_new_renderbuffer_fb(depthFormat);
                _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
             }
 
             if (visual->stencilBits > 0) {
                /* 8-bit stencil */
                struct gl_renderbuffer *stencilRb
-                  = st_new_renderbuffer_fb(GL_STENCIL_INDEX8_EXT, GL_FALSE);
+                  = st_new_renderbuffer_fb(stencilFormat);
                _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL, stencilRb);
             }
          }
@@ -103,7 +104,7 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
          if (visual->accumRedBits > 0) {
             /* 16-bit/channel accum */
             struct gl_renderbuffer *accumRb
-               = st_new_renderbuffer_fb(GL_RGBA16, GL_FALSE);
+               = st_new_renderbuffer_fb(PIPE_FORMAT_R16G16B16A16_SNORM);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_ACCUM, accumRb);
          }
       }

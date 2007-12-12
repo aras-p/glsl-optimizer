@@ -87,9 +87,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   uint type = strb->screenSurface ? PIPE_SCREEN_SURFACE : PIPE_SURFACE;
-   const enum pipe_format pipeFormat
-      = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE, type);
+   enum pipe_format pipeFormat;
    GLbitfield flags = 0x0; /* XXX needed? */
 
    if (!strb->surface) {
@@ -105,6 +103,18 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (strb->surface->buffer)
       pipe->winsys->buffer_reference(pipe->winsys, &strb->surface->buffer,
 				     NULL);
+
+   /* Determine surface format here */
+   if (strb->format != PIPE_FORMAT_NONE) {
+      assert(strb->format != 0);
+      /* we'll hit this for front/back color bufs */
+      pipeFormat = strb->format;
+   }
+   else {
+      pipeFormat = st_choose_renderbuffer_format(pipe, internalFormat);
+   }
+
+   init_renderbuffer_bits(strb, pipeFormat);
 
    pipe->winsys->surface_alloc_storage(pipe->winsys,
                                        strb->surface,
@@ -185,6 +195,7 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
       strb->Base.Delete = st_renderbuffer_delete;
       strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
       strb->Base.GetPointer = null_get_pointer;
+      strb->format = PIPE_FORMAT_NONE;
       return &strb->Base;
    }
    return NULL;
@@ -193,12 +204,10 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
 
 /**
  * Allocate a renderbuffer for a an on-screen window (not a user-created
- * renderbuffer).  The window system code determines the internal format.
- * \param screenSurface  indicates if the renderbuffer is a front/back color
- *                       buffer that'll be displayed/copied to the screen
+ * renderbuffer).  The window system code determines the format.
  */
 struct gl_renderbuffer *
-st_new_renderbuffer_fb(GLenum intFormat, GLboolean screenSurface)
+st_new_renderbuffer_fb(enum pipe_format format)
 {
    struct st_renderbuffer *strb;
 
@@ -210,28 +219,37 @@ st_new_renderbuffer_fb(GLenum intFormat, GLboolean screenSurface)
 
    _mesa_init_renderbuffer(&strb->Base, 0);
    strb->Base.ClassID = 0x4242; /* just a unique value */
-   strb->Base.InternalFormat = intFormat;
-   strb->screenSurface = screenSurface;
+   strb->format = format;
 
-   switch (intFormat) {
-   case GL_RGB5:
-   case GL_RGBA8:
-   case GL_RGBA16:
+   switch (format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      strb->Base.InternalFormat = GL_RGBA;
       strb->Base._BaseFormat = GL_RGBA;
       break;
-   case GL_DEPTH_COMPONENT16:
-   case GL_DEPTH_COMPONENT32:
+   case PIPE_FORMAT_Z16_UNORM:
+      strb->Base.InternalFormat = GL_DEPTH_COMPONENT16;
       strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
-   case GL_DEPTH24_STENCIL8_EXT:
+   case PIPE_FORMAT_Z32_UNORM:
+      strb->Base.InternalFormat = GL_DEPTH_COMPONENT32;
+      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
+      strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
       strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
-   case GL_STENCIL_INDEX8_EXT:
-      strb->Base._BaseFormat = GL_STENCIL_INDEX;
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      strb->Base.InternalFormat = GL_RGBA16;
+      strb->Base._BaseFormat = GL_RGBA;
       break;
    default:
       _mesa_problem(NULL,
-		    "Unexpected intFormat in st_new_renderbuffer");
+		    "Unexpected format in st_new_renderbuffer_fb");
       return NULL;
    }
 
@@ -245,6 +263,7 @@ st_new_renderbuffer_fb(GLenum intFormat, GLboolean screenSurface)
 
    return &strb->Base;
 }
+
 
 
 

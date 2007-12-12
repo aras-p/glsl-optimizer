@@ -783,6 +783,11 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       /*a1r5g5b5_put_tile(ps, x, y, w, h, p);*/
       break;
+   case PIPE_FORMAT_R5G6B5_UNORM:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      /* XXX need these */
+      fprintf(stderr, "unsup pipe format in softpipe_put_tile_rgba()\n");
+      break;
    case PIPE_FORMAT_U_L8:
       /*l8_put_tile(ps, x, y, w, h, p);*/
       break;
