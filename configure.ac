@@ -149,6 +149,13 @@ if test "x$enable_debug" = xyes; then
         CXXFLAGS="$CXXFLAGS -g"
     fi
 fi
+dnl These will be used near the end in the arch specific options
+AC_ARG_ENABLE(asm,
+    [AS_HELP_STRING([--disable-asm],
+        [disable assembly usage @<:@default=enabled on supported plaforms@:>@])],
+    enable_asm="$enableval",
+    enable_asm=yes
+)
 
 dnl
 dnl library names
@@ -714,18 +721,24 @@ linux*)
     PIC_FLAGS="-fPIC"
     case "$host_cpu" in
     i*86)
-        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        ASM_SOURCES='$(X86_SOURCES)'
-        ASM_API='$(X86_API)'
+        if test "x$enable_asm" = xyes; then
+            ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+            ASM_SOURCES='$(X86_SOURCES)'
+            ASM_API='$(X86_API)'
+        fi
         ;;
     x86_64)
-        ASM_FLAGS="-DUSE_X86_64_ASM"
-        ASM_SOURCES='$(X86-64_SOURCES)'
-        ASM_API='$(X86-64_API)'
+        if test "x$enable_asm" = xyes; then
+            ASM_FLAGS="-DUSE_X86_64_ASM"
+            ASM_SOURCES='$(X86-64_SOURCES)'
+            ASM_API='$(X86-64_API)'
+        fi
         ;;
     powerpc)
-        ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
-        ASM_SOURCES='$(PPC_SOURCES)'
+        if test "x$enable_asm" = xyes; then
+            ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
+            ASM_SOURCES='$(PPC_SOURCES)'
+        fi
         ;;
     esac
     ;;
@@ -734,14 +747,18 @@ freebsd*)
     case "$host_os" in
     i*86)
         PIC_FLAGS=""
-        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-        ASM_SOURCES='$(X86_SOURCES)'
-        ASM_API='$(X86_API)'
+        if test "x$enable_asm" = xyes; then
+            ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+            ASM_SOURCES='$(X86_SOURCES)'
+            ASM_API='$(X86_API)'
+        fi
         ;;
     x86_64)
-        ASM_FLAGS="-DUSE_X86_64_ASM"
-        ASM_SOURCES='$(X86-64_SOURCES)'
-        ASM_API='$(X86-64_API)'
+        if test "x$enable_asm" = xyes; then
+            ASM_FLAGS="-DUSE_X86_64_ASM"
+            ASM_SOURCES='$(X86-64_SOURCES)'
+            ASM_API='$(X86-64_API)'
+        fi
         ;;
     esac
     ;;
