@@ -152,6 +152,63 @@ nouveau_dma_subc_bind(struct nouveau_grobj *grobj)
 }
 #endif
 
+#ifdef NOUVEAU_DMA_DUMP_POSTRELOC_PUSHBUF
+static void
+nouveau_dma_parse_pushbuf(struct nouveau_channel *chan, int get, int put)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	unsigned mthd_count = 0;
+	
+	while (get != put) {
+		uint32_t gpuget = (get << 2) + nvchan->dma.base;
+		uint32_t data;
+
+		if (get < 0 || get >= nvchan->drm.cmdbuf_size) {
+			NOUVEAU_ERR("DMA_PT 0x%08x\n", gpuget);
+			assert(0);
+		}
+		data = nvchan->pushbuf[get++];
+
+		if (mthd_count) {
+			NOUVEAU_MSG("0x%08x 0x%08x\n", gpuget, data);
+			mthd_count--;
+			continue;
+		}
+
+		switch (data & 0x60000000) {
+		case 0x00000000:
+			mthd_count = (data >> 18) & 0x7ff;
+			NOUVEAU_MSG("0x%08x 0x%08x MTHD "
+				    "Sc %d Mthd 0x%04x Size %d\n",
+				    gpuget, data, (data>>13) & 7, data & 0x1ffc,
+				    mthd_count);
+			break;
+		case 0x20000000:
+			get = (data & 0x1ffffffc) >> 2;
+			NOUVEAU_MSG("0x%08x 0x%08x JUMP 0x%08x\n",
+				    gpuget, data, data & 0x1ffffffc);
+			continue;
+		case 0x40000000:
+			mthd_count = (data >> 18) & 0x7ff;
+			NOUVEAU_MSG("0x%08x 0x%08x NINC "
+				    "Sc %d Mthd 0x%04x Size %d\n",
+				    gpuget, data, (data>>13) & 7, data & 0x1ffc,
+				    mthd_count);
+			break;
+		case 0x60000000:
+			/* DMA_OPCODE_CALL apparently, doesn't seem to work on
+			 * my NV40 at least..
+			 */
+			/* fall-through */
+		default:
+			NOUVEAU_MSG("DMA_PUSHER 0x%08x 0x%08x\n",
+				    gpuget, data);
+			assert(0);
+		}
+	}
+}
+#endif
+
 void
 nouveau_dma_kickoff(struct nouveau_channel *userchan)
 {
@@ -168,19 +225,7 @@ nouveau_dma_kickoff(struct nouveau_channel *userchan)
 #endif
 
 #ifdef NOUVEAU_DMA_DUMP_POSTRELOC_PUSHBUF
-	for (i = chan->dma.put; i < chan->dma.cur; i++) {
-		NOUVEAU_MSG("0x%08x 0x%08x\n", (i<<2)+chan->dma.base,
-			    chan->pushbuf[i]);
-		if ((chan->pushbuf[i] & 0xf0000000) == 0x20000000) {
-			int n = (((chan->pushbuf[i] & 0x0fffffff) -
-				  chan->dma.base) / 4);
-			do {
-				NOUVEAU_MSG("\t0x%08x 0x%08x\n",
-					    (n<<2)+chan->dma.base,
-					    chan->pushbuf[n]);
-			} while ((chan->pushbuf[n++]&0xf0000000) != 0x20000000);
-		}
-	}
+	nouveau_dma_parse_pushbuf(userchan, chan->dma.put, chan->dma.cur);
 #endif
 
 	WRITE_PUT(chan, chan->dma.cur);
