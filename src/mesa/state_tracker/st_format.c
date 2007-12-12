@@ -413,6 +413,8 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_R3_G3_B2:
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_R5G6B5_UNORM, surfType ))
+         return PIPE_FORMAT_R5G6B5_UNORM;
       return default_rgba_format( pipe, surfType );
 
    case GL_ALPHA:
