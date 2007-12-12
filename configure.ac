@@ -804,6 +804,18 @@ else
     echo "        Demos:           $program_dirs"
 fi
 
+dnl Compiler options
+# cleanup the CFLAGS/CXXFLAGS/DEFINES vars
+cflags=`echo $CFLAGS $OPT_FLAGS $PIC_FLAGS $ARCH_FLAGS | \
+    $SED 's/^ *//;s/  */ /;s/ *$//'`
+cxxflags=`echo $CXXFLAGS $OPT_FLAGS $PIC_FLAGS $ARCH_FLAGS | \
+    $SED 's/^ *//;s/  */ /;s/ *$//'`
+defines=`echo $DEFINES $ASM_FLAGS | $SED 's/^ *//;s/  */ /;s/ *$//'`
+echo ""
+echo "        CFLAGS:          $cflags"
+echo "        CXXFLAGS:        $cxxflags"
+echo "        Macros:          $defines"
+
 echo ""
 echo "        Run 'make' to build Mesa"
 echo ""
