@@ -36,7 +36,6 @@ DRIVER_SOURCES = \
 	brw_state_cache.c \
 	brw_state_pool.c \
 	brw_state_upload.c \
-	brw_tex.c \
 	brw_tex_layout.c \
 	brw_urb.c \
 	brw_util.c \
