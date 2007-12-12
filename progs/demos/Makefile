@@ -45,6 +45,7 @@ PROGS = \
 	multiarb \
 	paltex \
 	pointblast \
+	rain \
 	ray \
 	readpix \
 	reflect \
@@ -73,7 +74,7 @@ PROGS = \
 
 .SUFFIXES:
 .SUFFIXES: .c
-
+.SUFFIXES: .cxx
 
 # make executable from .c file:
 .c: $(LIB_DEP) readtex.o
@@ -154,6 +155,14 @@ fslight: fslight.o
 fslight.o: fslight.c extfuncs.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
 
+rain: particles.o rain.o readtex.o
+	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
+
+rain.o: rain.cxx readtex.h
+	$(CXX) -c -I../ $(CXXFLAGS) $<
+
+particles.o: particles.cxx
+	$(CXX) -c -I../ $(CXXFLAGS) $<
 
 
 viewdds: viewdds.c
