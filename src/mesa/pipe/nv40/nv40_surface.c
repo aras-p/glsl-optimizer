@@ -190,10 +190,11 @@ nv40_get_tex_surface(struct pipe_context *pipe,
 	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
 	struct pipe_surface *ps;
 
-	ps = ws->surface_alloc(ws, pt->format);
+	ps = ws->surface_alloc(ws);
 	if (!ps)
 		return NULL;
 	ws->buffer_reference(ws, &ps->buffer, nv40mt->buffer);
+	ps->format = pt->format;
 	ps->cpp = pt->cpp;
 	ps->width = pt->width[level];
 	ps->height = pt->height[level];

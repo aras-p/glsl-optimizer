@@ -10,6 +10,7 @@ static void *
 nv50_alpha_test_state_create(struct pipe_context *pipe,
 			     const struct pipe_alpha_test_state *cso)
 {
+	return NULL;
 }
 
 static void
@@ -26,6 +27,7 @@ static void *
 nv50_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
+	return NULL;
 }
 
 static void
@@ -42,6 +44,7 @@ static void *
 nv50_sampler_state_create(struct pipe_context *pipe,
 			  const struct pipe_sampler_state *cso)
 {
+	return NULL;
 }
 
 static void
@@ -55,10 +58,17 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 }
 
+static void
+nv50_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
+			 struct pipe_texture *pt)
+{
+}
+
 static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
+	return NULL;
 }
 
 static void
@@ -75,6 +85,7 @@ static void *
 nv50_depth_stencil_state_create(struct pipe_context *pipe,
 				const struct pipe_depth_stencil_state *cso)
 {
+	return NULL;
 }
 
 static void
@@ -132,12 +143,6 @@ nv50_set_clip_state(struct pipe_context *pipe,
 }
 
 static void
-nv50_set_clear_color_state(struct pipe_context *pipe,
-			   const struct pipe_clear_color_state *ccol)
-{
-}
-
-static void
 nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
@@ -156,20 +161,8 @@ nv50_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 static void
-nv50_set_sampler_units(struct pipe_context *pipe,
-		       uint num_samplers, const uint *units)
-{
-}
-
-static void
 nv50_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
-{
-}
-
-static void
-nv50_set_texture_state(struct pipe_context *pipe, unsigned unit,
-		       struct pipe_texture *pt)
 {
 }
 
@@ -205,6 +198,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.create_sampler_state = nv50_sampler_state_create;
 	nv50->pipe.bind_sampler_state = nv50_sampler_state_bind;
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
+	nv50->pipe.set_sampler_texture = nv50_set_sampler_texture;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;
@@ -224,19 +218,13 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
 	nv50->pipe.set_blend_color = nv50_set_blend_color;
 	nv50->pipe.set_clip_state = nv50_set_clip_state;
-	nv50->pipe.set_clear_color_state = nv50_set_clear_color_state;
 	nv50->pipe.set_constant_buffer = nv50_set_constant_buffer;
 	nv50->pipe.set_framebuffer_state = nv50_set_framebuffer_state;
 	nv50->pipe.set_polygon_stipple = nv50_set_polygon_stipple;
-	nv50->pipe.set_sampler_units = nv50_set_sampler_units;
 	nv50->pipe.set_scissor_state = nv50_set_scissor_state;
-	nv50->pipe.set_texture_state = nv50_set_texture_state;
 	nv50->pipe.set_viewport_state = nv50_set_viewport_state;
 
 	nv50->pipe.set_vertex_buffer = nv50_set_vertex_buffer;
 	nv50->pipe.set_vertex_element = nv50_set_vertex_element;
-
-//	nv50->pipe.set_feedback_state = nv50_set_feedback_state;
-//	nv50->pipe.set_feedback_buffer = nv50_set_feedback_buffer;
 }
 

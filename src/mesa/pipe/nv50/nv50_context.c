@@ -7,16 +7,9 @@
 #include "nv50_dma.h"
 
 static boolean
-nv50_is_format_supported(struct pipe_context *pipe, uint format)
+nv50_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
+			 uint type)
 {
-	switch (format) {
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case PIPE_FORMAT_Z24S8_UNORM:
-		return TRUE;
-	default:
-		break;
-	};
-
 	return FALSE;
 }
 

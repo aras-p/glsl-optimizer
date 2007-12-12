@@ -34,18 +34,8 @@ nouveau_get_name(struct pipe_winsys *pws)
 	return "Nouveau/DRI";
 }
 
-static unsigned
-nouveau_surface_pitch(struct pipe_winsys *ws, unsigned cpp, unsigned width,
-		      unsigned flags)
-{
-	unsigned pitch = width * cpp;
-
-	pitch = (pitch + 63) & ~63;
-	return pitch / cpp;
-}
-
 static struct pipe_surface *
-nouveau_surface_alloc(struct pipe_winsys *ws, unsigned format)
+nouveau_surface_alloc(struct pipe_winsys *ws)
 {
 	struct pipe_surface *surf;
 	
@@ -53,10 +43,36 @@ nouveau_surface_alloc(struct pipe_winsys *ws, unsigned format)
 	if (!surf)
 		return NULL;
 
-	surf->format = format;
 	surf->refcount = 1;
 	surf->winsys = ws;
 	return surf;
+}
+
+static int
+nouveau_surface_alloc_storage(struct pipe_winsys *ws, struct pipe_surface *surf,
+			      unsigned width, unsigned height,
+			      enum pipe_format format, unsigned flags)
+{
+	unsigned pitch = ((width * pf_get_size(format)) + 63) & ~63;
+	int ret;
+
+	surf->format = format;
+	surf->width = width;
+	surf->height = height;
+	surf->cpp = pf_get_size(format);
+	surf->pitch = pitch / surf->cpp;
+
+	surf->buffer = ws->buffer_create(ws, 256, 0, 0);
+	if (!surf->buffer)
+		return 1;
+
+	ret = ws->buffer_data(ws, surf->buffer, pitch * height, NULL, 0);
+	if (ret) {
+		ws->buffer_reference(ws, &surf->buffer, NULL);
+		return ret;
+	}
+
+	return 0;
 }
 
 static void
@@ -209,8 +225,8 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 	pws->flush_frontbuffer = nouveau_flush_frontbuffer;
 	pws->printf = nouveau_printf;
 
-	pws->surface_pitch = nouveau_surface_pitch;
 	pws->surface_alloc = nouveau_surface_alloc;
+	pws->surface_alloc_storage = nouveau_surface_alloc_storage;
 	pws->surface_release = nouveau_surface_release;
 
 	pws->buffer_create = nouveau_pipe_bo_create;

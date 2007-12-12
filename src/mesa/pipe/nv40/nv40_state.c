@@ -302,6 +302,18 @@ nv40_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 	free(hwcso);
 }
 
+static void
+nv40_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
+			 struct pipe_texture *miptree)
+{
+	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+
+	nv40->tex_miptree[unit]  = miptree;
+	nv40->tex_dirty         |= unit;
+
+	nv40->dirty |= NV40_NEW_TEXTURE;
+}
+
 static void *
 nv40_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
@@ -547,19 +559,6 @@ nv40_set_clip_state(struct pipe_context *pipe,
 }
 
 static void
-nv40_set_clear_color_state(struct pipe_context *pipe,
-			   const struct pipe_clear_color_state *ccol)
-{
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-
-	BEGIN_RING(curie, NV40TCL_CLEAR_VALUE_COLOR, 1);
-	OUT_RING  ((float_to_ubyte(ccol->color[3]) << 24) |
-		   (float_to_ubyte(ccol->color[0]) << 16) |
-		   (float_to_ubyte(ccol->color[1]) <<  8) |
-		   (float_to_ubyte(ccol->color[2]) <<  0));
-}
-
-static void
 nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
@@ -733,12 +732,6 @@ nv40_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 static void
-nv40_set_sampler_units(struct pipe_context *pipe,
-		       uint num_samplers, const uint *units)
-{
-}
-
-static void
 nv40_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
 {
@@ -747,18 +740,6 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 	BEGIN_RING(curie, NV40TCL_SCISSOR_HORIZ, 2);
 	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
 	OUT_RING  (((s->maxy - s->miny) << 16) | s->miny);
-}
-
-static void
-nv40_set_texture_state(struct pipe_context *pipe, unsigned unit,
-		       struct pipe_texture *miptree)
-{
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-
-	nv40->tex_miptree[unit]  = miptree;
-	nv40->tex_dirty         |= unit;
-
-	nv40->dirty |= NV40_NEW_TEXTURE;
 }
 
 static void
@@ -814,6 +795,7 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.create_sampler_state = nv40_sampler_state_create;
 	nv40->pipe.bind_sampler_state = nv40_sampler_state_bind;
 	nv40->pipe.delete_sampler_state = nv40_sampler_state_delete;
+	nv40->pipe.set_sampler_texture = nv40_set_sampler_texture;
 
 	nv40->pipe.create_rasterizer_state = nv40_rasterizer_state_create;
 	nv40->pipe.bind_rasterizer_state = nv40_rasterizer_state_bind;
@@ -833,19 +815,13 @@ nv40_init_state_functions(struct nv40_context *nv40)
 
 	nv40->pipe.set_blend_color = nv40_set_blend_color;
 	nv40->pipe.set_clip_state = nv40_set_clip_state;
-	nv40->pipe.set_clear_color_state = nv40_set_clear_color_state;
 	nv40->pipe.set_constant_buffer = nv40_set_constant_buffer;
 	nv40->pipe.set_framebuffer_state = nv40_set_framebuffer_state;
 	nv40->pipe.set_polygon_stipple = nv40_set_polygon_stipple;
-	nv40->pipe.set_sampler_units = nv40_set_sampler_units;
 	nv40->pipe.set_scissor_state = nv40_set_scissor_state;
-	nv40->pipe.set_texture_state = nv40_set_texture_state;
 	nv40->pipe.set_viewport_state = nv40_set_viewport_state;
 
 	nv40->pipe.set_vertex_buffer = nv40_set_vertex_buffer;
 	nv40->pipe.set_vertex_element = nv40_set_vertex_element;
-
-//	nv40->pipe.set_feedback_state = nv40_set_feedback_state;
-//	nv40->pipe.set_feedback_buffer = nv40_set_feedback_buffer;
 }
 

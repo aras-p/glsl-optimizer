@@ -35,7 +35,7 @@ struct nv40_context {
 
 	/* query objects */
 	struct nouveau_notifier *query;
-	struct pipe_query_object **query_objects;
+	boolean *query_objects;
 	uint num_query_objects;
 
 	uint32_t dirty;
@@ -64,7 +64,7 @@ struct nv40_context {
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
 };
-
+#define nv40_context(ctx) ((struct nv40_context *)(ctx))
 
 extern void nv40_init_state_functions(struct nv40_context *nv40);
 extern void nv40_init_surface_functions(struct nv40_context *nv40);
