@@ -427,10 +427,12 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/mesa/math \
-	-I$(TOP)/src/mesa/tnl \
 	-I$(TOP)/src/mesa/shader \
 	-I$(TOP)/src/mesa/shader/grammar \
-	-I$(TOP)/src/mesa/shader/slang \
+	-I$(TOP)/src/mesa/shader/slang
+
+OLD_INCLUDE_DIRS = \
+	-I$(TOP)/src/mesa/tnl \
 	-I$(TOP)/src/mesa/swrast \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/mesa/pipe/tgsi
