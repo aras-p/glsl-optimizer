@@ -275,6 +275,37 @@ r5g6b5_get_tile_rgba(struct pipe_surface *ps,
 }
 
 
+static void
+r5g5b5_put_tile_rgba(struct pipe_surface *ps,
+                     unsigned x, unsigned y, unsigned w, unsigned h,
+                     const float *p)
+{
+   ushort *dst
+      = ((ushort *) (ps->map))
+      + y * ps->pitch + x;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_R5G6B5_UNORM);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++) {
+         uint r = (uint) (CLAMP(pRow[0], 0.0, 1.0) * 31.0);
+         uint g = (uint) (CLAMP(pRow[1], 0.0, 1.0) * 63.0);
+         uint b = (uint) (CLAMP(pRow[2], 0.0, 1.0) * 31.0);
+         dst[j] = (r << 11) | (g << 5) | (b);
+         pRow += 4;
+      }
+      dst += ps->pitch;
+      p += w0 * 4;
+   }
+}
+
+
+
 /*** PIPE_FORMAT_Z16_UNORM ***/
 
 /**
@@ -690,9 +721,9 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
       /*a1r5g5b5_put_tile_rgba(ps, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_R5G6B5_UNORM:
+      r5g5b5_put_tile_rgba(ps, x, y, w, h, p);
+      break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
-      /* XXX need these */
-      fprintf(stderr, "unsup pipe format in softpipe_put_tile_rgba()\n");
       break;
    case PIPE_FORMAT_U_L8:
       /*l8_put_tile_rgba(ps, x, y, w, h, p);*/
