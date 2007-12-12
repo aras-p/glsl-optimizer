@@ -36,7 +36,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "sp_surface.h"
+
 #include "sp_rgba_tile.h"
 
 
