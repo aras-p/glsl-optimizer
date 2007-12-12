@@ -312,7 +312,7 @@ src_native_swz(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc,
 			neg_mask |= (1 << c);
 	}
 
-	if (mask == MASK_ALL)
+	if (mask == MASK_ALL && !neg_mask)
 		return TRUE;
 
 	*src = temp(fpc);
