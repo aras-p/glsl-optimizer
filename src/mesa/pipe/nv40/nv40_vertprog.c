@@ -184,7 +184,7 @@ emit_dst(struct nv40_vpc *vpc, uint32_t *hw, int slot, struct nv40_sreg dst)
 		hw[3] |= (dst.index << NV40_VP_INST_DEST_SHIFT);
 		if (slot == 0) {
 			hw[0] |= NV40_VP_INST_VEC_RESULT;
-			hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK;
+			hw[0] |= NV40_VP_INST_VEC_DEST_TEMP_MASK | (1<<20);
 		} else {
 			hw[3] |= NV40_VP_INST_SCA_RESULT;
 			hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
@@ -212,12 +212,11 @@ nv40_vp_arith(struct nv40_vpc *vpc, int slot, int op,
 
 	if (slot == 0) {
 		hw[1] |= (op << NV40_VP_INST_VEC_OPCODE_SHIFT);
-		hw[3] |= (NV40_VP_INST_SCA_RESULT |
-			  NV40_VP_INST_SCA_DEST_TEMP_MASK);
+		hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
 		hw[3] |= (mask << NV40_VP_INST_VEC_WRITEMASK_SHIFT);
 	} else {
 		hw[1] |= (op << NV40_VP_INST_SCA_OPCODE_SHIFT);
-		hw[1] |= (NV40_VP_INST_VEC_DEST_TEMP_MASK | (1 << 20));
+		hw[0] |= (NV40_VP_INST_VEC_DEST_TEMP_MASK | (1 << 20));
 		hw[3] |= (mask << NV40_VP_INST_SCA_WRITEMASK_SHIFT);
 	}
 
