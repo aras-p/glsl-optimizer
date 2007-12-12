@@ -240,7 +240,6 @@ i915_get_tex_surface(struct pipe_context *pipe,
 
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
-      assert(ps->format);
       assert(ps->refcount);
       pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
       ps->format = pt->format;
