@@ -138,13 +138,13 @@ triangle(const struct cell_command_triangle *tri)
    struct prim_header prim;
    uint i;
 
-   prim.v[0].data[0][0] = tri->x0;
-   prim.v[0].data[0][1] = tri->y0;
-   prim.v[1].data[0][0] = tri->x1;
-   prim.v[1].data[0][1] = tri->y1;
-   prim.v[2].data[0][0] = tri->x2;
-   prim.v[2].data[0][1] = tri->y2;
-   prim.color = tri->color;
+   COPY_4V(prim.v[0].data[0], tri->vert[0]);
+   COPY_4V(prim.v[1].data[0], tri->vert[1]);
+   COPY_4V(prim.v[2].data[0], tri->vert[2]);
+
+   COPY_4V(prim.v[0].data[1], tri->color[0]);
+   COPY_4V(prim.v[1].data[1], tri->color[1]);
+   COPY_4V(prim.v[2].data[1], tri->color[2]);
 
    for (i = init.id; i < num_tiles; i += init.num_spus) {
       uint tx = i % fb.width_tiles;
@@ -212,11 +212,7 @@ main_loop(void)
          clear_tiles(&cmd.clear);
          break;
       case CELL_CMD_TRIANGLE:
-         printf("SPU %u: TRIANGLE (%g,%g) (%g,%g) (%g,%g)\n",
-                init.id,
-                cmd.tri.x0, cmd.tri.y0,
-                cmd.tri.x1, cmd.tri.y1,
-                cmd.tri.x2, cmd.tri.y2);
+         printf("SPU %u: TRIANGLE\n", init.id);
          triangle(&cmd.tri);
          break;
       case CELL_CMD_FINISH:

@@ -75,10 +75,8 @@ struct cell_command_clear_tiles
 
 struct cell_command_triangle
 {
-   float x0, y0;
-   float x1, y1;
-   float x2, y2;
-   uint color;
+   float vert[3][4];
+   float color[3][4];
 } ALIGN16_ATTRIB;
 
 

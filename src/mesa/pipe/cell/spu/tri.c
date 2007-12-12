@@ -46,6 +46,11 @@
 #include "main.h"
 #include "tri.h"
 
+/*
+#include <vmx2spu.h>
+#include <spu_internals.h>
+*/
+
 
 #if 1
 
@@ -63,6 +68,8 @@
 #define MASK_BOTTOM_LEFT  (1 << QUAD_BOTTOM_LEFT)
 #define MASK_BOTTOM_RIGHT (1 << QUAD_BOTTOM_RIGHT)
 #define MASK_ALL          0xf
+
+#define PIPE_MAX_SHADER_INPUTS 8 /* XXX temp */
 
 static int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
@@ -84,6 +91,13 @@ struct edge {
    int lines;		/**< number of lines on this edge */
 };
 
+
+struct interp_coef
+{
+   float a0[4];
+   float dadx[4];
+   float dady[4];
+};
 
 /**
  * Triangle setup info (derived from draw_stage).
@@ -113,7 +127,10 @@ struct setup_stage {
 
 #if 0
    struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
+#else
+   struct interp_coef coef[PIPE_MAX_SHADER_INPUTS];
 #endif
+
 #if 0
    struct quad_header quad; 
 #endif
@@ -189,6 +206,41 @@ clip_emit_quad(struct setup_stage *setup)
 #endif
 
 /**
+ * Evaluate attribute coefficients (plane equations) to compute
+ * attribute values for the four fragments in a quad.
+ * Eg: four colors will be compute.
+ */
+static INLINE void
+eval_coeff( struct setup_stage *setup, uint slot,
+            float x, float y, float result[4][4])
+{
+   uint i;
+   const float *dadx = setup->coef[slot].dadx;
+   const float *dady = setup->coef[slot].dady;
+
+   /* loop over XYZW comps */
+   for (i = 0; i < 4; i++) {
+      result[QUAD_TOP_LEFT][i] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
+      result[QUAD_TOP_RIGHT][i] = result[0][i] + dadx[i];
+      result[QUAD_BOTTOM_LEFT][i] = result[0][i] + dady[i];
+      result[QUAD_BOTTOM_RIGHT][i] = result[0][i] + dadx[i] + dady[i];
+   }
+}
+
+
+static INLINE uint
+pack_color(const float color[4])
+{
+   uint r = (uint) (color[0] * 255.0);
+   uint g = (uint) (color[1] * 255.0);
+   uint b = (uint) (color[2] * 255.0);
+   uint a = (uint) (color[3] * 255.0);
+   uint icolor = (b << 24) | (g << 16) | (r << 8) | a;
+   return icolor;
+}
+
+
+/**
  * Emit a quad (pass to next stage).  No clipping is done.
  */
 static INLINE void
@@ -204,14 +256,18 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    /* Cell: "write" quad fragments to the tile by setting prim color */
    int ix = x - cliprect_minx;
    int iy = y - cliprect_miny;
+   float colors[4][4];
+
+   eval_coeff(setup, 1, (float) x, (float) y, colors);
+
    if (mask & MASK_TOP_LEFT)
-      tile[iy][ix] = setup->color;
+      tile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
    if (mask & MASK_TOP_RIGHT)
-      tile[iy][ix+1] = setup->color;
+      tile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
    if (mask & MASK_BOTTOM_LEFT)
-      tile[iy+1][ix] = setup->color;
+      tile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
    if (mask & MASK_BOTTOM_RIGHT)
-      tile[iy+1][ix+1] = setup->color;
+      tile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
 #endif
 }
 
@@ -445,41 +501,41 @@ static void const_coeff( struct setup_stage *setup,
 #endif
 
 
-#if 0
 /**
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a triangle.
  */
 static void tri_linear_coeff( struct setup_stage *setup,
-                              unsigned slot,
-                              unsigned i)
+                              unsigned slot )
 {
-   float botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
-   float majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
-   float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-   float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+   uint i;
+   for (i = 0; i < 4; i++) {
+      float botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
+      float majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
+      float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
+      float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
-   assert(slot < PIPE_MAX_SHADER_INPUTS);
-   assert(i <= 3);
+      assert(slot < PIPE_MAX_SHADER_INPUTS);
 
-   setup->coef[slot].dadx[i] = a * setup->oneoverarea;
-   setup->coef[slot].dady[i] = b * setup->oneoverarea;
+      setup->coef[slot].dadx[i] = a * setup->oneoverarea;
+      setup->coef[slot].dady[i] = b * setup->oneoverarea;
 
-   /* calculate a0 as the value which would be sampled for the
-    * fragment at (0,0), taking into account that we want to sample at
-    * pixel centers, in other words (0.5, 0.5).
-    *
-    * this is neat but unfortunately not a good way to do things for
-    * triangles with very large values of dadx or dady as it will
-    * result in the subtraction and re-addition from a0 of a very
-    * large number, which means we'll end up loosing a lot of the
-    * fractional bits and precision from a0.  the way to fix this is
-    * to define a0 as the sample at a pixel center somewhere near vmin
-    * instead - i'll switch to this later.
-    */
-   setup->coef[slot].a0[i] = (setup->vmin->data[slot][i] - 
-			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5f) + 
-			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5f)));
+      /* calculate a0 as the value which would be sampled for the
+       * fragment at (0,0), taking into account that we want to sample at
+       * pixel centers, in other words (0.5, 0.5).
+       *
+       * this is neat but unfortunately not a good way to do things for
+       * triangles with very large values of dadx or dady as it will
+       * result in the subtraction and re-addition from a0 of a very
+       * large number, which means we'll end up loosing a lot of the
+       * fractional bits and precision from a0.  the way to fix this is
+       * to define a0 as the sample at a pixel center somewhere near vmin
+       * instead - i'll switch to this later.
+       */
+      setup->coef[slot].a0[i] = (setup->vmin->data[slot][i] - 
+                                 (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5f) + 
+                                  setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5f)));
+   }
 
    /*
    _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
@@ -489,7 +545,6 @@ static void tri_linear_coeff( struct setup_stage *setup,
 		setup->coef[slot].dady[i]);
    */
 }
-#endif
 
 
 #if 0
@@ -536,13 +591,13 @@ static void tri_persp_coeff( struct setup_stage *setup,
 #endif
 
 
-#if 0
 /**
  * Compute the setup->coef[] array dadx, dady, a0 values.
  * Must be called after setup->vmin,vmid,vmax,vprovoke are initialized.
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
+#if 0
    const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    unsigned slot, j;
 
@@ -575,8 +630,10 @@ static void setup_tri_coefficients( struct setup_stage *setup )
          assert(0);
       }
    }
-}
+#else
+   tri_linear_coeff(setup, 1);  /* slot 1 = color */
 #endif
+}
 
 
 static void setup_tri_edges( struct setup_stage *setup )
@@ -710,9 +767,7 @@ static void setup_tri(
    */
 
    setup_sort_vertices( setup, prim );
-#if 0
    setup_tri_coefficients( setup );
-#endif
    setup_tri_edges( setup );
 
 #if 0
