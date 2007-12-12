@@ -131,6 +131,24 @@ if test "$enable_static" = yes; then
 fi
 AC_SUBST(MKLIB_OPTIONS)
 
+dnl
+dnl other compiler options
+dnl
+AC_ARG_ENABLE(debug,
+    [AS_HELP_STRING([--enable-debug],
+        [use debug compiler flags and macros @<:@default=disabled@:>@])],
+    enable_debug="$enableval",
+    enable_debug=no
+)
+if test "x$enable_debug" = xyes; then
+    DEFINES="$DEFINES -DDEBUG"
+    if test "x$GCC" = xyes; then
+        CFLAGS="$CFLAGS -g"
+    fi
+    if test "x$GXX" = xyes; then
+        CXXFLAGS="$CXXFLAGS -g"
+    fi
+fi
 
 dnl
 dnl library names
