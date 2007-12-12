@@ -60,8 +60,6 @@ cell_is_format_supported( struct pipe_context *pipe,
    case PIPE_SURFACE:
       /* cell supports all (off-screen) surface formats, XXX for now */
       return TRUE;
-   case PIPE_SCREEN_SURFACE:
-      return format == cell->winsys->preferredFormat;
    default:
       assert(0);
       return FALSE;
