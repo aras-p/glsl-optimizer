@@ -69,6 +69,7 @@ i915_is_format_supported( struct pipe_context *pipe,
    };
    static const enum pipe_format screen_surface_supported[] = {
       PIPE_FORMAT_A8R8G8B8_UNORM,
+      PIPE_FORMAT_R5G6B5_UNORM,
       PIPE_FORMAT_NONE  /* list terminator */
    };
    const enum pipe_format *list;
