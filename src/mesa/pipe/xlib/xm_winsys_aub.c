@@ -493,6 +493,13 @@ static void aub_i965_batch_reloc( struct brw_winsys *sws,
    iws->data[iws->nr++] = aub_bo(buf)->offset + delta;
 }
 
+static unsigned aub_i965_get_buffer_offset( struct brw_winsys *sws,
+					    struct pipe_buffer_handle *buf,
+					    unsigned access_flags )
+{
+   return aub_bo(buf)->offset;
+}
+
 
 
 static void aub_i965_batch_flush( struct brw_winsys *sws,
@@ -605,6 +612,7 @@ xmesa_create_i965simple( struct pipe_winsys *winsys )
    iws->winsys.batch_reloc = aub_i965_batch_reloc;
    iws->winsys.batch_flush = aub_i965_batch_flush;
    iws->winsys.buffer_subdata_typed = aub_i965_buffer_subdata_typed;
+   iws->winsys.get_buffer_offset = aub_i965_get_buffer_offset;
 
    iws->pipe_winsys = winsys;
 
