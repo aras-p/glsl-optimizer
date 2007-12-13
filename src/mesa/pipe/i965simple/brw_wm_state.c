@@ -34,15 +34,13 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_wm.h"
+#include "pipe/p_util.h"
 
 /***********************************************************************
  * WM unit - fragment programs and rasterization
  */
-
-#if 0
 static void upload_wm_unit(struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_state wm;
    unsigned max_threads;
    unsigned per_thread;
@@ -56,7 +54,7 @@ static void upload_wm_unit(struct brw_context *brw )
    memset(&wm, 0, sizeof(wm));
 
    /* CACHE_NEW_WM_PROG */
-   wm.thread0.grf_reg_count = ALIGN(brw->wm.prog_data->total_grf, 16) / 16 - 1;
+   wm.thread0.grf_reg_count = align(brw->wm.prog_data->total_grf, 16) / 16 - 1;
    wm.thread0.kernel_start_pointer = brw->wm.prog_gs_offset >> 6;
    wm.thread3.dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
    wm.thread3.urb_entry_read_length = brw->wm.prog_data->urb_read_length;
@@ -64,9 +62,10 @@ static void upload_wm_unit(struct brw_context *brw )
 
    wm.wm5.max_threads = max_threads;
 
-   per_thread = ALIGN(brw->wm.prog_data->total_scratch, 1024);
+   per_thread = align(brw->wm.prog_data->total_scratch, 1024);
    assert(per_thread <= 12 * 1024);
 
+#if 0
    if (brw->wm.prog_data->total_scratch) {
       unsigned total = per_thread * (max_threads + 1);
 
@@ -95,6 +94,7 @@ static void upload_wm_unit(struct brw_context *brw )
     * so just fail for now if we hit that path.
     */
    assert(brw->wm.prog_data->total_scratch == 0);
+#endif
 
    /* CACHE_NEW_SURFACE */
    wm.thread1.binding_table_entry_count = brw->wm.nr_surfaces;
@@ -112,23 +112,20 @@ static void upload_wm_unit(struct brw_context *brw )
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    {
-      const struct gl_fragment_program *fp = brw->fragment_program;
+      const struct brw_fragment_program *fp = brw->attribs.FragmentProgram;
 
-      if (fp->Base.InputsRead & (1<<FRAG_ATTRIB_WPOS))
+      if (fp->UsesDepth)
 	 wm.wm5.program_uses_depth = 1; /* as far as we can tell */
 
-      if (fp->Base.OutputsWritten & (1<<FRAG_RESULT_DEPR))
+      if (fp->ComputesDepth)
 	 wm.wm5.program_computes_depth = 1;
 
-      /* _NEW_COLOR */
+      /* BRW_NEW_ALPHA_TEST */
       if (fp->UsesKill ||
-	  brw->attribs.Color->AlphaEnabled)
+	  brw->attribs.AlphaTest->enabled)
 	 wm.wm5.program_uses_killpixel = 1;
 
-      if (brw_wm_is_glsl(fp))
-	  wm.wm5.enable_8_pix = 1;
-      else
-	  wm.wm5.enable_16_pix = 1;
+      wm.wm5.enable_8_pix = 1;
    }
 
    wm.wm5.thread_dispatch_enable = 1;	/* AKA: color_write */
@@ -138,11 +135,11 @@ static void upload_wm_unit(struct brw_context *brw )
    wm.wm5.line_aa_region_width = 0;
    wm.wm5.line_endcap_aa_region_width = 1;
 
-   /* _NEW_POLYGONSTIPPLE */
-   if (brw->attribs.Polygon->StippleFlag)
+   /* BRW_NEW_RASTERIZER */
+   if (brw->attribs.Raster->poly_stipple_enable)
       wm.wm5.polygon_stipple = 1;
 
-   /* _NEW_POLYGON */
+#if 0
    if (brw->attribs.Polygon->OffsetFill) {
       wm.wm5.depth_offset = 1;
       /* Something wierd going on with legacy_global_depth_bias,
@@ -156,13 +153,13 @@ static void upload_wm_unit(struct brw_context *brw )
        */
       wm.global_depth_offset_scale = brw->attribs.Polygon->OffsetFactor;
    }
+#endif
 
-   /* _NEW_LINE */
-   if (brw->attribs.Line->StippleFlag) {
+   if (brw->attribs.Raster->line_stipple_enable) {
       wm.wm5.line_stipple = 1;
    }
 
-   if (BRW_DEBUG & DEBUG_STATS || intel->stats_wm)
+   if (BRW_DEBUG & DEBUG_STATS)
       wm.wm4.stats_enable = 1;
 
    brw->wm.state_gs_offset = brw_cache_data( &brw->cache[BRW_WM_UNIT], &wm );
@@ -183,14 +180,10 @@ static void upload_wm_unit(struct brw_context *brw )
 
 const struct brw_tracked_state brw_wm_unit = {
    .dirty = {
-      .mesa = (_NEW_POLYGON |
-	       _NEW_POLYGONSTIPPLE |
-	       _NEW_LINE |
-	       _NEW_COLOR),
-
-      .brw = (BRW_NEW_FRAGMENT_PROGRAM |
-	      BRW_NEW_CURBE_OFFSETS |
-	      BRW_NEW_LOCK),
+      .brw = (BRW_NEW_RASTERIZER |
+	      BRW_NEW_ALPHA_TEST |
+	      BRW_NEW_FS |
+	      BRW_NEW_CURBE_OFFSETS),
 
       .cache = (CACHE_NEW_SURFACE |
 		CACHE_NEW_WM_PROG |
@@ -199,4 +192,3 @@ const struct brw_tracked_state brw_wm_unit = {
    .update = upload_wm_unit
 };
 
-#endif

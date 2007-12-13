@@ -315,7 +315,7 @@ static void upload_pipe_control(struct brw_context *brw)
 
 const struct brw_tracked_state brw_pipe_control = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_pipe_control
@@ -380,7 +380,7 @@ static void upload_invarient_state( struct brw_context *brw )
 
 const struct brw_tracked_state brw_invarient_state = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_invarient_state
@@ -416,7 +416,7 @@ static void upload_state_base_address( struct brw_context *brw )
 
 const struct brw_tracked_state brw_state_base_address = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_state_base_address

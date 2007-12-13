@@ -36,7 +36,7 @@
 #define INTEL_BATCH_CLIPRECTS    0x2
 
 #define BEGIN_BATCH( dwords, relocs ) \
-   (brw->batch_start = brw->winsys->batch_start(brw->winsys, dwords, relocs))
+   brw->winsys->batch_start(brw->winsys, dwords, relocs)
 
 #define OUT_BATCH( dword ) \
    brw->winsys->batch_dword(brw->winsys, dword)
@@ -50,7 +50,6 @@
  */
 #define FLUSH_BATCH(fence) do {				\
    brw->winsys->batch_flush(brw->winsys, fence);	\
-   brw->batch_start = NULL;				\
    brw->hardware_dirty = ~0;				\
 } while (0)
 

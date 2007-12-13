@@ -31,6 +31,7 @@ DRIVER_SOURCES = \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
+        brw_shader_info.c \
         brw_state.c \
 	brw_state_batch.c \
 	brw_state_cache.c \
@@ -44,6 +45,7 @@ DRIVER_SOURCES = \
 	brw_vs_state.c \
 	brw_wm.c \
 	brw_wm_iz.c \
+	brw_wm_decl.c \
 	brw_wm_glsl.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \

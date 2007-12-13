@@ -36,171 +36,6 @@
 #include "brw_util.h"
 #include "brw_sf.h"
 
-#if 0
-static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
-				    struct brw_reg vert,
-				    unsigned attr)
-{
-   unsigned off = c->attr_to_idx[attr] / 2;
-   unsigned sub = c->attr_to_idx[attr] % 2;
-
-   return brw_vec4_grf(vert.nr + off, sub * 4);
-}
-
-static boolean have_attr(struct brw_sf_compile *c,
-			   unsigned attr)
-{
-   return (c->key.attrs & (1<<attr)) ? 1 : 0;
-}
-
-
-
-/***********************************************************************
- * Twoside lighting
- */
-static void copy_bfc( struct brw_sf_compile *c,
-		      struct brw_reg vert )
-{
-   struct brw_compile *p = &c->func;
-   unsigned i;
-
-   for (i = 0; i < 2; i++) {
-      if (have_attr(c, VERT_RESULT_COL0+i) &&
-	  have_attr(c, VERT_RESULT_BFC0+i))
-	 brw_MOV(p,
-		 get_vert_attr(c, vert, VERT_RESULT_COL0+i),
-		 get_vert_attr(c, vert, VERT_RESULT_BFC0+i));
-   }
-}
-
-
-static void do_twoside_color( struct brw_sf_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_instruction *if_insn;
-   unsigned backface_conditional = c->key.frontface_ccw ? BRW_CONDITIONAL_G : BRW_CONDITIONAL_L;
-
-   /* Already done in clip program:
-    */
-   if (c->key.primitive == SF_UNFILLED_TRIS)
-      return;
-
-   /* XXX: What happens if BFC isn't present?  This could only happen
-    * for user-supplied vertex programs, as t_vp_build.c always does
-    * the right thing.
-    */
-   if (!(have_attr(c, VERT_RESULT_COL0) && have_attr(c, VERT_RESULT_BFC0)) &&
-       !(have_attr(c, VERT_RESULT_COL1) && have_attr(c, VERT_RESULT_BFC1)))
-      return;
-
-   /* Need to use BRW_EXECUTE_4 and also do an 4-wide compare in order
-    * to get all channels active inside the IF.  In the clipping code
-    * we run with NoMask, so it's not an option and we can use
-    * BRW_EXECUTE_1 for all comparisions.
-    */
-   brw_push_insn_state(p);
-   brw_CMP(p, vec4(brw_null_reg()), backface_conditional, c->det, brw_imm_f(0));
-   if_insn = brw_IF(p, BRW_EXECUTE_4);
-   {
-      switch (c->nr_verts) {
-      case 3: copy_bfc(c, c->vert[2]);
-      case 2: copy_bfc(c, c->vert[1]);
-      case 1: copy_bfc(c, c->vert[0]);
-      }
-   }
-   brw_ENDIF(p, if_insn);
-   brw_pop_insn_state(p);
-}
-
-
-
-/***********************************************************************
- * Flat shading
- */
-
-#define VERT_RESULT_COLOR_BITS ((1<<VERT_RESULT_COL0) | \
-                                 (1<<VERT_RESULT_COL1))
-
-static void copy_colors( struct brw_sf_compile *c,
-		     struct brw_reg dst,
-		     struct brw_reg src)
-{
-   struct brw_compile *p = &c->func;
-   unsigned i;
-
-   for (i = VERT_RESULT_COL0; i <= VERT_RESULT_COL1; i++) {
-      if (have_attr(c,i))
-	 brw_MOV(p,
-		 get_vert_attr(c, dst, i),
-		 get_vert_attr(c, src, i));
-   }
-}
-
-
-
-/* Need to use a computed jump to copy flatshaded attributes as the
- * vertices are ordered according to y-coordinate before reaching this
- * point, so the PV could be anywhere.
- */
-static void do_flatshade_triangle( struct brw_sf_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg ip = brw_ip_reg();
-   unsigned nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
-   if (!nr)
-      return;
-
-   /* Already done in clip program:
-    */
-   if (c->key.primitive == SF_UNFILLED_TRIS)
-      return;
-
-   brw_push_insn_state(p);
-
-   brw_MUL(p, c->pv, c->pv, brw_imm_ud(nr*2+1));
-   brw_JMPI(p, ip, ip, c->pv);
-
-   copy_colors(c, c->vert[1], c->vert[0]);
-   copy_colors(c, c->vert[2], c->vert[0]);
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr*4+1));
-
-   copy_colors(c, c->vert[0], c->vert[1]);
-   copy_colors(c, c->vert[2], c->vert[1]);
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr*2));
-
-   copy_colors(c, c->vert[0], c->vert[2]);
-   copy_colors(c, c->vert[1], c->vert[2]);
-
-   brw_pop_insn_state(p);
-}
-
-
-static void do_flatshade_line( struct brw_sf_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg ip = brw_ip_reg();
-   unsigned nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
-
-   if (!nr)
-      return;
-
-   /* Already done in clip program:
-    */
-   if (c->key.primitive == SF_UNFILLED_TRIS)
-      return;
-
-   brw_push_insn_state(p);
-
-   brw_MUL(p, c->pv, c->pv, brw_imm_ud(nr+1));
-   brw_JMPI(p, ip, ip, c->pv);
-   copy_colors(c, c->vert[1], c->vert[0]);
-
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr));
-   copy_colors(c, c->vert[0], c->vert[1]);
-
-   brw_pop_insn_state(p);
-}
-
 
 
 /***********************************************************************
@@ -277,9 +112,6 @@ static void copy_z_inv_w( struct brw_sf_compile *c )
 
 static void invert_det( struct brw_sf_compile *c)
 {
-   /* Looks like we invert all 8 elements just to get 1/det in
-    * position 2 !?!
-    */
    brw_math(&c->func,
 	    c->inv_det,
 	    BRW_MATH_FUNCTION_INV,
@@ -302,22 +134,16 @@ static boolean calculate_masks( struct brw_sf_compile *c,
 				  ushort *pc_linear)
 {
    boolean is_last_attr = (reg == c->nr_setup_regs - 1);
-   unsigned persp_mask = c->key.attrs & ~NON_PERPECTIVE_ATTRS;
-   unsigned linear_mask;
 
-   if (c->key.do_flat_shading)
-      linear_mask = c->key.attrs & ~(FRAG_BIT_COL0|FRAG_BIT_COL1);
-   else
-      linear_mask = c->key.attrs;
 
    *pc_persp = 0;
    *pc_linear = 0;
    *pc = 0xf;
 
-   if (persp_mask & (1 << c->idx_to_attr[reg*2]))
-      *pc_persp = 0xf;
+//   if (persp_mask & (1 << c->idx_to_attr[reg*2]))
+//      *pc_persp = 0xf;
 
-   if (linear_mask & (1 << c->idx_to_attr[reg*2]))
+//   if (linear_mask & (1 << c->idx_to_attr[reg*2]))
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -325,10 +151,10 @@ static boolean calculate_masks( struct brw_sf_compile *c,
    if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-      if (persp_mask & (1 << c->idx_to_attr[reg*2+1]))
-	 *pc_persp |= 0xf0;
+//      if (persp_mask & (1 << c->idx_to_attr[reg*2+1]))
+//	 *pc_persp |= 0xf0;
 
-      if (linear_mask & (1 << c->idx_to_attr[reg*2+1]))
+//      if (linear_mask & (1 << c->idx_to_attr[reg*2+1]))
 	 *pc_linear |= 0xf0;
    }
 
@@ -346,12 +172,6 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
    alloc_regs(c);
    invert_det(c);
    copy_z_inv_w(c);
-
-   if (c->key.do_twoside_color)
-      do_twoside_color(c);
-
-   if (c->key.do_flat_shading)
-      do_flatshade_triangle(c);
 
 
    for (i = 0; i < c->nr_setup_regs; i++)
@@ -433,9 +253,6 @@ void brw_emit_line_setup( struct brw_sf_compile *c )
    invert_det(c);
    copy_z_inv_w(c);
 
-   if (c->key.do_flat_shading)
-      do_flatshade_line(c);
-
    for (i = 0; i < c->nr_setup_regs; i++)
    {
       /* Pair of incoming attributes:
@@ -491,86 +308,6 @@ void brw_emit_line_setup( struct brw_sf_compile *c )
    }
 }
 
-void brw_emit_point_sprite_setup( struct brw_sf_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   unsigned i;
-
-   c->nr_verts = 1;
-   alloc_regs(c);
-   copy_z_inv_w(c);
-   for (i = 0; i < c->nr_setup_regs; i++)
-   {
-      struct brw_sf_point_tex *tex = &c->point_attrs[c->idx_to_attr[2*i]];
-      struct brw_reg a0 = offset(c->vert[0], i);
-      ushort pc, pc_persp, pc_linear;
-      boolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
-
-      if (pc_persp)
-      {
-	  if (!tex->CoordReplace) {
-	      brw_set_predicate_control_flag_value(p, pc_persp);
-	      brw_MUL(p, a0, a0, c->inv_w[0]);
-	  }
-      }
-
-      if (tex->CoordReplace) {
-	  /* Caculate 1.0/PointWidth */
-	  brw_math(&c->func,
-		  c->tmp,
-		  BRW_MATH_FUNCTION_INV,
-		  BRW_MATH_SATURATE_NONE,
-		  0,
-		  c->dx0,
-		  BRW_MATH_DATA_SCALAR,
-		  BRW_MATH_PRECISION_FULL);
-
-	  if (c->key.SpriteOrigin == GL_UPPER_LEFT) {
-	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
-	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
-		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
-	  } else {
-	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
-	  	brw_MUL(p, c->m2Cy, c->tmp, c->inv_w[0]);
-		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
-	  }
-      } else {
-	  brw_MOV(p, c->m1Cx, brw_imm_ud(0));
-	  brw_MOV(p, c->m2Cy, brw_imm_ud(0));
-      }
-
-      {
-	 brw_set_predicate_control_flag_value(p, pc);
-	 if (tex->CoordReplace) {
-	     if (c->key.SpriteOrigin == GL_UPPER_LEFT) {
-		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
-		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
-	     }
-	     else
-		 brw_MOV(p, c->m3C0, brw_imm_f(0.0));
-	 } else {
-	 	brw_MOV(p, c->m3C0, a0); /* constant value */
-	 }
-
-	 /* Copy m0..m3 to URB.
-	  */
-	 brw_urb_WRITE(p,
-		       brw_null_reg(),
-		       0,
-		       brw_vec8_grf(0, 0),
-		       0, 	/* allocate */
-		       1,	/* used */
-		       4, 	/* msg len */
-		       0,	/* response len */
-		       last, 	/* eot */
-		       last, 	/* writes complete */
-		       i*4,	/* urb destination offset */
-		       BRW_URB_SWIZZLE_TRANSPOSE);
-      }
-   }
-}
 
 /* Points setup - several simplifications as all attributes are
  * constant across the face of the point (point sprites excluded!)
@@ -629,68 +366,3 @@ void brw_emit_point_setup( struct brw_sf_compile *c )
       }
    }
 }
-
-void brw_emit_anyprim_setup( struct brw_sf_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg ip = brw_ip_reg();
-   struct brw_reg payload_prim = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0);
-   struct brw_reg payload_attr = get_element_ud(brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0), 0);
-   struct brw_reg primmask;
-   struct brw_instruction *jmp;
-   struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
-
-   alloc_regs(c);
-
-   primmask = retype(get_element(c->tmp, 0), BRW_REGISTER_TYPE_UD);
-
-   brw_MOV(p, primmask, brw_imm_ud(1));
-   brw_SHL(p, primmask, primmask, payload_prim);
-
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
-   brw_AND(p, v1_null_ud, primmask, brw_imm_ud((1<<_3DPRIM_TRILIST) |
-					       (1<<_3DPRIM_TRISTRIP) |
-					       (1<<_3DPRIM_TRIFAN) |
-					       (1<<_3DPRIM_TRISTRIP_REVERSE) |
-					       (1<<_3DPRIM_POLYGON) |
-					       (1<<_3DPRIM_RECTLIST) |
-					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
-   {
-      brw_push_insn_state(p);
-      brw_emit_tri_setup( c );
-      brw_pop_insn_state(p);
-      /* note - thread killed in subroutine */
-   }
-   brw_land_fwd_jump(p, jmp);
-
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
-   brw_AND(p, v1_null_ud, primmask, brw_imm_ud((1<<_3DPRIM_LINELIST) |
-					       (1<<_3DPRIM_LINESTRIP) |
-					       (1<<_3DPRIM_LINELOOP) |
-					       (1<<_3DPRIM_LINESTRIP_CONT) |
-					       (1<<_3DPRIM_LINESTRIP_BF) |
-					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
-   {
-      brw_push_insn_state(p);
-      brw_emit_line_setup( c );
-      brw_pop_insn_state(p);
-      /* note - thread killed in subroutine */
-   }
-   brw_land_fwd_jump(p, jmp);
-
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
-   brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
-   {
-      brw_push_insn_state(p);
-      brw_emit_point_sprite_setup( c );
-      brw_pop_insn_state(p);
-   }
-   brw_land_fwd_jump(p, jmp);
-
-   brw_emit_point_setup( c );
-}
-
-#endif

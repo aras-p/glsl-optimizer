@@ -198,6 +198,10 @@ static void * brw_create_fs_state(struct pipe_context *pipe,
    /* XXX: Do I have to duplicate the tokens as well??
     */
    brw_fp->program = *shader;
+   brw_fp->id = brw_context(pipe)->program_id++;
+
+   brw_shader_info(shader->tokens,
+		   &brw_fp->info);
 
    return (void *)brw_fp;
 }
@@ -228,6 +232,9 @@ static void *brw_create_vs_state(struct pipe_context *pipe,
    /* XXX: Do I have to duplicate the tokens as well??
     */
    brw_vp->program = *shader;
+   brw_vp->id = brw_context(pipe)->program_id++;
+   brw_shader_info(shader->tokens,
+		   &brw_vp->info);
 
    tgsi_dump(shader->tokens, 0);
 

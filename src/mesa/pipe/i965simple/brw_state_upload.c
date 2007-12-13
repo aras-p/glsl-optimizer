@@ -97,8 +97,6 @@ const struct brw_tracked_state *atoms[] =
 
 void brw_init_state( struct brw_context *brw )
 {
-   unsigned i;
-
    brw_init_pools(brw);
    brw_init_caches(brw);
 
@@ -156,7 +154,7 @@ void brw_validate_state( struct brw_context *brw )
        state->brw == 0)
       return;
 
-   if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
+   if (brw->state.dirty.brw & BRW_NEW_SCENE)
       brw_clear_batch_cache_flush(brw);
 
    if (BRW_DEBUG) {

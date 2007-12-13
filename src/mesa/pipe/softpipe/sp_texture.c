@@ -52,10 +52,6 @@ static unsigned minify( unsigned d )
    return MAX2(1, d>>1);
 }
 
-static int align(int value, int alignment)
-{
-   return (value + alignment - 1) & ~(alignment - 1);
-}
 
 
 static void

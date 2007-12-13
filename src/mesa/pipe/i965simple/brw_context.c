@@ -237,7 +237,6 @@ struct pipe_context *brw_create(struct pipe_winsys *pipe_winsys,
    brw->pci_id = pci_id;
    brw->dirty = ~0;
    brw->hardware_dirty = ~0;
-   brw->batch_start = NULL;
 
    memset(&brw->wm.bind, ~0, sizeof(brw->wm.bind));
 

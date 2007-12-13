@@ -149,10 +149,10 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
       unsigned mip1_width;
 
       if (pt->compressed) {
-         mip1_width = ALIGN(minify(pt->width[0]), align_w)
-                      + ALIGN(minify(minify(pt->width[0])), align_w);
+         mip1_width = align(minify(pt->width[0]), align_w)
+                      + align(minify(minify(pt->width[0])), align_w);
       } else {
-         mip1_width = ALIGN(minify(pt->width[0]), align_w)
+         mip1_width = align(minify(pt->width[0]), align_w)
                       + minify(minify(pt->width[0]));
       }
 
@@ -164,7 +164,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
    /* Pitch must be a whole number of dwords, even though we
     * express it in texels.
     */
-   tex->pitch = ALIGN(tex->pitch * pt->cpp, 4) / pt->cpp;
+   tex->pitch = align(tex->pitch * pt->cpp, 4) / pt->cpp;
    tex->total_height = 0;
 
    for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
@@ -176,7 +176,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
       if (pt->compressed)
 	 img_height = MAX2(1, height/4);
       else
-	 img_height = ALIGN(height, align_h);
+	 img_height = align(height, align_h);
 
 
       /* Because the images are packed better, the final offset
@@ -187,7 +187,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
       /* Layout_below: step right after second mipmap.
        */
       if (level == pt->first_level + 1) {
-	 x += ALIGN(width, align_w);
+	 x += align(width, align_w);
       }
       else {
 	 y += img_height;
@@ -221,13 +221,13 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
 #if 0
       if (pt->compressed) {
          align_w = intel_compressed_alignment(pt->internal_format);
-         pt->pitch = ALIGN(width, align_w);
+         pt->pitch = align(width, align_w);
          pack_y_pitch = (height + 3) / 4;
       } else
 #endif
       {
-         tex->pitch = ALIGN(pt->width[0] * pt->cpp, 4) / pt->cpp;
-         pack_y_pitch = ALIGN(pt->height[0], align_h);
+         tex->pitch = align(pt->width[0] * pt->cpp, 4) / pt->cpp;
+         pack_y_pitch = align(pt->height[0], align_h);
       }
 
       pack_x_pitch = tex->pitch;
@@ -262,8 +262,8 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
          if (pt->compressed) {
             pack_y_pitch = (height + 3) / 4;
 
-            if (pack_x_pitch > ALIGN(width, align_w)) {
-               pack_x_pitch = ALIGN(width, align_w);
+            if (pack_x_pitch > align(width, align_w)) {
+               pack_x_pitch = align(width, align_w);
                pack_x_nr <<= 1;
             }
          } else {
@@ -275,7 +275,7 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
 
             if (pack_y_pitch > 2) {
                pack_y_pitch >>= 1;
-               pack_y_pitch = ALIGN(pack_y_pitch, align_h);
+               pack_y_pitch = align(pack_y_pitch, align_h);
             }
          }
 
@@ -305,8 +305,6 @@ brw_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
                                      sizeof(struct brw_texture));
 
    if (tex) {
-      struct brw_context *brw = brw_context(pipe);
-
       memset(&tex->base + 1, 0,
 	     sizeof(struct brw_texture) - sizeof(struct pipe_texture));
 

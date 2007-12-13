@@ -33,7 +33,9 @@
 #include "brw_context.h"
 #include "brw_util.h"
 #include "brw_wm.h"
+#include "brw_eu.h"
 #include "brw_state.h"
+#include "pipe/p_util.h"
 
 
 
@@ -41,24 +43,22 @@ static void do_wm_prog( struct brw_context *brw,
 			struct brw_fragment_program *fp,
 			struct brw_wm_prog_key *key)
 {
-   struct brw_wm_compile *c;
+   struct brw_wm_compile *c = CALLOC_STRUCT(brw_wm_compile);
    const unsigned *program;
    unsigned program_size;
 
-   c = brw->wm.compile_data;
-   if (c == NULL) {
-     brw->wm.compile_data = calloc(1, sizeof(*brw->wm.compile_data));
-     c = brw->wm.compile_data;
-   } else {
-     memset(c, 0, sizeof(*brw->wm.compile_data));
-   }
-   memcpy(&c->key, key, sizeof(*key));
-
+   c->key = *key;
    c->fp = fp;
+   
+   c->delta_xy[0] = brw_null_reg();
+   c->delta_xy[1] = brw_null_reg();
+   c->pixel_xy[0] = brw_null_reg();
+   c->pixel_xy[1] = brw_null_reg();
+   c->pixel_w = brw_null_reg();
+
 
    fprintf(stderr, "XXXXXXXX FP\n");
    
-
    brw_wm_glsl_emit(c);
 
    /* get the program
@@ -74,6 +74,8 @@ static void do_wm_prog( struct brw_context *brw,
 					      program_size,
 					      &c->prog_data,
 					      &brw->wm.prog_data );
+
+   FREE(c);
 }
 
 
@@ -86,8 +88,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
       (struct brw_fragment_program *)brw->attribs.FragmentProgram;
    unsigned lookup = 0;
    unsigned line_aa;
-   unsigned i;
-
+   
    memset(key, 0, sizeof(*key));
 
    /* Build the index for table lookup
@@ -204,7 +205,6 @@ static void brw_upload_wm_prog( struct brw_context *brw )
 const struct brw_tracked_state brw_wm_prog = {
    .dirty = {
       .brw   = (BRW_NEW_FS |
-		BRW_NEW_WM_INPUT_DIMENSIONS |
 		BRW_NEW_REDUCED_PRIMITIVE),
       .cache = 0
    },
