@@ -665,6 +665,7 @@ dri_fake_bo_unreference(dri_bo *bo)
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
    if (--bo_fake->refcount == 0) {
+      assert(bo_fake->map_count == 0);
       /* No remaining references, so free it */
       if (bo_fake->block)
 	 free_block(bufmgr_fake, bo_fake->block);
