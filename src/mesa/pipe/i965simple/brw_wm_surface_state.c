@@ -33,8 +33,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-
-#if 0
 static unsigned translate_tex_target( int target )
 {
    switch (target) {
@@ -75,13 +73,13 @@ static unsigned translate_tex_format( unsigned mesa_format )
       assert(0);		/* not supported for sampling */
       return BRW_SURFACEFORMAT_R8G8B8_UNORM;
 
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
       return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
-   case PIPE_FORMAT_RGBA8888_REV:
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
       return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
 
-   case PIPE_FORMAT_U_R5_G6_B5:
+   case PIPE_FORMAT_R5G6B5_UNORM:
       return BRW_SURFACEFORMAT_B5G6R5_UNORM;
 
    case PIPE_FORMAT_A1R5G5B5_UNORM:
@@ -95,14 +93,15 @@ static unsigned translate_tex_format( unsigned mesa_format )
 
    case PIPE_FORMAT_YCBCR:
       return BRW_SURFACEFORMAT_YCRCB_SWAPUVY;
-
+#if 0
    case PIPE_FORMAT_RGB_FXT1:
    case PIPE_FORMAT_RGBA_FXT1:
       return BRW_SURFACEFORMAT_FXT1;
+#endif
 
    case PIPE_FORMAT_Z16_UNORM:
       return BRW_SURFACEFORMAT_I16_UNORM;
-
+#if 0
    case PIPE_FORMAT_RGB_DXT1:
        return BRW_SURFACEFORMAT_DXT1_RGB;
 
@@ -119,6 +118,7 @@ static unsigned translate_tex_format( unsigned mesa_format )
       return BRW_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB;
    case PIPE_FORMAT_SRGB_DXT1:
       return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
+#endif
 
    default:
       assert(0);
@@ -126,41 +126,46 @@ static unsigned translate_tex_format( unsigned mesa_format )
    }
 }
 
+static unsigned brw_buffer_offset(struct brw_context *brw,
+                                  struct pipe_buffer_handle *buffer)
+{
+   return brw->winsys->get_buffer_offset(brw->winsys,
+                                         buffer,
+                                         0);
+}
+
 static
-void brw_update_texture_surface( GLcontext *ctx,
+void brw_update_texture_surface( struct brw_context *brw,
 				 unsigned unit )
 {
-   struct brw_context *brw = brw_context(ctx);
-   struct gl_texture_object *tObj = brw->attribs.Texture->Unit[unit]._Current;
-   struct intel_texture_object *intelObj = intel_texture_object(tObj);
-   struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
+   const struct brw_texture *tObj = brw->attribs.Texture[unit];
    struct brw_surface_state surf;
 
    memset(&surf, 0, sizeof(surf));
 
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf.ss0.surface_type = translate_tex_target(tObj->Target);
-   surf.ss0.surface_format = translate_tex_format(firstImage->TexFormat->MesaFormat);
+   surf.ss0.surface_type = translate_tex_target(tObj->base.target);
+   surf.ss0.surface_format = translate_tex_format(tObj->base.format);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
 
    /* Updated in emit_reloc */
-   surf.ss1.base_addr = brw_buffer_offset( intelObj->mt->region->buffer );
+   surf.ss1.base_addr = brw_buffer_offset( brw, tObj->buffer );
 
-   surf.ss2.mip_count = intelObj->lastLevel - intelObj->firstLevel;
-   surf.ss2.width = firstImage->Width - 1;
-   surf.ss2.height = firstImage->Height - 1;
+   surf.ss2.mip_count = tObj->base.last_level - tObj->base.first_level;
+   surf.ss2.width = tObj->base.width[0];
+   surf.ss2.height = tObj->base.height[0];
 
    surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-   surf.ss3.tiled_surface = intelObj->mt->region->tiled; /* always zero */
-   surf.ss3.pitch = (intelObj->mt->pitch * intelObj->mt->cpp) - 1;
-   surf.ss3.depth = firstImage->Depth - 1;
+   surf.ss3.tiled_surface = 0; /* always zero */
+   surf.ss3.pitch = tObj->pitch;
+   surf.ss3.depth = tObj->base.depth[0];
 
    surf.ss4.min_lod = 0;
 
-   if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
+   if (tObj->base.target == PIPE_TEXTURE_CUBE) {
       surf.ss0.cube_pos_x = 1;
       surf.ss0.cube_pos_y = 1;
       surf.ss0.cube_pos_z = 1;
@@ -180,13 +185,11 @@ void brw_update_texture_surface( GLcontext *ctx,
 
 static void upload_wm_surfaces(struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   struct intel_context *intel = &brw->intel;
    unsigned i;
 
    {
       struct brw_surface_state surf;
-      struct intel_region *region = brw->state.draw_region;
+      struct pipe_surface *region = brw->attribs.FrameBuffer.cbufs[0];/*fixme*/
 
       memset(&surf, 0, sizeof(surf));
 
@@ -198,27 +201,27 @@ static void upload_wm_surfaces(struct brw_context *brw )
 
 	 surf.ss0.surface_type = BRW_SURFACE_2D;
 
-	 surf.ss1.base_addr = brw_buffer_offset( region->buffer );
+	 surf.ss1.base_addr = brw_buffer_offset( brw, region->buffer );
 
-	 surf.ss2.width = region->pitch - 1; /* XXX: not really! */
-	 surf.ss2.height = region->height - 1;
+	 surf.ss2.width = region->width;
+	 surf.ss2.height = region->height;
 	 surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-	 surf.ss3.tiled_surface = region->tiled;
-	 surf.ss3.pitch = (region->pitch * region->cpp) - 1;
+	 surf.ss3.tiled_surface = 0;
+	 surf.ss3.pitch = region->pitch;
       } else {
 	 surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 surf.ss0.surface_type = BRW_SURFACE_NULL;
       }
 
       /* _NEW_COLOR */
-      surf.ss0.color_blend = (!brw->attribs.Color->_LogicOpEnabled &&
-			      brw->attribs.Color->BlendEnabled);
+      surf.ss0.color_blend = (!brw->attribs.Blend->logicop_enable &&
+			      brw->attribs.Blend->blend_enable);
 
 
-      surf.ss0.writedisable_red =   !brw->attribs.Color->ColorMask[0];
-      surf.ss0.writedisable_green = !brw->attribs.Color->ColorMask[1];
-      surf.ss0.writedisable_blue =  !brw->attribs.Color->ColorMask[2];
-      surf.ss0.writedisable_alpha = !brw->attribs.Color->ColorMask[3];
+      surf.ss0.writedisable_red =   !brw->attribs.BlendColor.color[0];
+      surf.ss0.writedisable_green = !brw->attribs.BlendColor.color[1];
+      surf.ss0.writedisable_blue =  !brw->attribs.BlendColor.color[2];
+      surf.ss0.writedisable_alpha = !brw->attribs.BlendColor.color[3];
 
 
 
@@ -230,23 +233,24 @@ static void upload_wm_surfaces(struct brw_context *brw )
 
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+      const struct brw_texture *texUnit = brw->attribs.Texture[i];
 
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA
        */
-      if (texUnit->_ReallyEnabled &&
-	  intel_finalize_mipmap_tree(intel, i)) {
+      if (texUnit->base.refcount/*(texUnit->refcount > 0) == really used */) {
 
-	 brw_update_texture_surface(ctx, i);
+	 brw_update_texture_surface(brw, i);
 
 	 brw->wm.nr_surfaces = i+2;
       }
-      else if( texUnit->_ReallyEnabled &&
+#if 0
+      else if( texUnit->refcount &&
 	       texUnit->_Current == intel->frame_buffer_texobj )
       {
 	 brw->wm.bind.surf_ss_offset[i+1] = brw->wm.bind.surf_ss_offset[0];
 	 brw->wm.nr_surfaces = i+2;
       }
+#endif
       else {
 	 brw->wm.bind.surf_ss_offset[i+1] = 0;
       }
@@ -293,14 +297,10 @@ static void emit_reloc_wm_surfaces(struct brw_context *brw)
 }
 #endif
 
-
-
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
-      .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
    .update = upload_wm_surfaces,
 };
-#endif
