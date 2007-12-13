@@ -100,6 +100,7 @@ shade_quad(
 
    machine->InterpCoefs = quad->coef;
 
+#if 1 /* XXX only do this if the fp really reads fragment.position */
    machine->Inputs[0].xyzw[0].f[0] = fx;
    machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
    machine->Inputs[0].xyzw[0].f[2] = fx;
@@ -113,6 +114,10 @@ shade_quad(
    machine->Inputs[0].xyzw[1].f[1] = fy;
    machine->Inputs[0].xyzw[1].f[2] = fy + 1.0f;
    machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
+#endif
+
+   machine->QuadX = quad->x0;
+   machine->QuadY = quad->y0;
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)
@@ -123,7 +128,11 @@ shade_quad(
          machine->Outputs,
          machine->Consts,
          machine->Temps,
-         machine->InterpCoefs );
+         machine->InterpCoefs
+#if 0
+         ,quad->x0, quad->y0
+#endif
+ );
       quad->mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
    }
    else

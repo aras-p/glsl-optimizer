@@ -1352,8 +1352,7 @@ linear_interpolation(
    unsigned attrib,
    unsigned chan )
 {
-   const float x = mach->Inputs[0].xyzw[0].f[0];
-   const float y = mach->Inputs[0].xyzw[1].f[0];
+   const float x = mach->QuadX, y = mach->QuadY;
    const float dadx = mach->InterpCoefs[attrib].dadx[chan];
    const float dady = mach->InterpCoefs[attrib].dady[chan];
    const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
@@ -1369,8 +1368,7 @@ perspective_interpolation(
    unsigned attrib,
    unsigned chan )
 {
-   const float x = mach->Inputs[0].xyzw[0].f[0];
-   const float y = mach->Inputs[0].xyzw[1].f[0];
+   const float x = mach->QuadX, y = mach->QuadY;
    const float dadx = mach->InterpCoefs[attrib].dadx[chan];
    const float dady = mach->InterpCoefs[attrib].dady[chan];
    const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
