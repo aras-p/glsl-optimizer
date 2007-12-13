@@ -90,7 +90,9 @@ static void Init( void )
    }
 
    fprintf(stderr, "%.*s\n", sz, buf);
-      
+
+   glEnable(GL_VERTEX_PROGRAM_NV);
+
    glGenProgramsARB(1, &prognum);
 
    glBindProgramARB(GL_VERTEX_PROGRAM_ARB, prognum);
@@ -167,8 +169,6 @@ static void Display( void )
 {
    glClearColor(0.3, 0.3, 0.3, 1);
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-   glEnable(GL_VERTEX_PROGRAM_NV);
 
    glBegin(GL_TRIANGLES);
 
