@@ -32,7 +32,6 @@
 #include "dri_util.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
-#include "dri_bufmgr.h"
 
 /* XXX: change name or eliminate to avoid conflict with "struct
  * intel_region"!!!
@@ -61,11 +60,6 @@ typedef struct
    intelRegion depth;
    intelRegion tex;
 
-   struct intel_region *front_region;
-   struct intel_region *back_region;
-   struct intel_region *third_region;
-   struct intel_region *depth_region;
-
    int deviceID;
    int width;
    int height;
@@ -89,17 +83,6 @@ typedef struct
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;
-
-   dri_bufmgr *bufmgr;
-   unsigned int maxBatchSize;
-
-   /**
-    * This value indicates that the kernel memory manager is being used
-    * instead of the fake client-side memory manager.
-    */
-   GLboolean ttm;
-
-   unsigned batch_id;
 } intelScreenPrivate;
 
 

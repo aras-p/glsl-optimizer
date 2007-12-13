@@ -30,6 +30,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
+#include "dri_bufmgr.h"
 #include "xmlconfig.h"
 #include "i830_common.h"
 
@@ -42,6 +43,7 @@ typedef struct {
    char *map;           /* memory map */
    int offset;          /* from start of video mem, in bytes */
    int pitch;           /* row stride, in pixels */
+   unsigned int bo_handle;
    unsigned int tiled; 
 } intelRegion;
 
@@ -52,7 +54,7 @@ typedef struct
    intelRegion rotated;
    intelRegion depth;
    intelRegion tex;
-   
+
    int deviceID;
    int width;
    int height;

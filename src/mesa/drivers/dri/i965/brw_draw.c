@@ -289,7 +289,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    LOCK_HARDWARE(intel);
 
    if (brw->intel.numClipRects == 0) {
-      assert(intel->batch->ptr == intel->batch->map + intel->batch->offset);
+      assert(intel->batch->ptr == intel->batch->map);
       UNLOCK_HARDWARE(intel);
       return GL_TRUE;
    }
@@ -358,14 +358,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
     * way around this, as not every flush is due to a buffer filling
     * up.
     */
-   if (!intel_batchbuffer_flush( brw->intel.batch )) {
-      DBG("%s intel_batchbuffer_flush failed\n", __FUNCTION__);
-      retval = GL_FALSE;
-   }
-
-   if (retval && intel->thrashing) {
-      bmSetFence(intel);
-   }
+   intel_batchbuffer_flush( brw->intel.batch );
 
    /* Free any old data so it doesn't clog up texture memory - we
     * won't be referencing it again.
@@ -425,7 +418,6 @@ void brw_draw_prims( GLcontext *ctx,
 		     GLuint min_index,
 		     GLuint max_index )
 {
-   struct intel_context *intel = intel_context(ctx);
    GLboolean retval;
 
    /* Decide if we want to rebase.  If so we end up recursing once
@@ -445,20 +437,6 @@ void brw_draw_prims( GLcontext *ctx,
     */
    retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
-   
-   /* This looks like out-of-memory but potentially we have
-    * situation where there is enough memory but it has become
-    * fragmented.  Clear out all heaps and start from scratch by
-    * faking a contended lock event:  (done elsewhere)
-    */
-   if (!retval && !intel->Fallback && bmError(intel)) {
-      DBG("retrying\n");
-      /* Then try a second time only to upload textures and draw the
-       * primitives:
-       */
-      retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
-   }
-
    /* Otherwise, we really are out of memory.  Pass the drawing
     * command to the software tnl module and which will in turn call
     * swrast to do the drawing.
@@ -468,13 +446,6 @@ void brw_draw_prims( GLcontext *ctx,
       _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
    }
 }
-
-
-static void brw_invalidate_vbo_cb( struct intel_context *intel, void *ptr )
-{
-   /* nothing to do, we don't rely on the contents being preserved */
-}
-
 
 void brw_draw_init( struct brw_context *brw )
 {
@@ -490,22 +461,25 @@ void brw_draw_init( struct brw_context *brw )
 
    for (i = 0; i < BRW_NR_UPLOAD_BUFS; i++) {
       brw->vb.upload.vbo[i] = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
-      
-      /* NOTE:  These are set to no-backing-store.
-       */
-      bmBufferSetInvalidateCB(&brw->intel,
-			      intel_bufferobj_buffer(intel_buffer_object(brw->vb.upload.vbo[i])),
-			      brw_invalidate_vbo_cb,
-			      &brw->intel,
-			      GL_TRUE);
-   }
 
-   ctx->Driver.BufferData( ctx, 
-			   GL_ARRAY_BUFFER_ARB, 
-			   BRW_UPLOAD_INIT_SIZE,
-			   NULL,
-			   GL_DYNAMIC_DRAW_ARB,
-			   brw->vb.upload.vbo[0] );
+      ctx->Driver.BufferData(ctx,
+			     GL_ARRAY_BUFFER_ARB,
+			     BRW_UPLOAD_INIT_SIZE,
+			     NULL,
+			     GL_DYNAMIC_DRAW_ARB,
+			     brw->vb.upload.vbo[i]);
+
+      /* Set the internal VBOs to no-backing-store.  We only use them as a
+       * temporary within a brw_try_draw_prims while the lock is held.
+       */
+      if (!brw->intel.ttm) {
+	 struct intel_buffer_object *intel_bo =
+	    intel_buffer_object(brw->vb.upload.vbo[i]);
+
+	 dri_bo_fake_disable_backing_store(intel_bufferobj_buffer(intel_bo),
+					   NULL, NULL);
+      }
+   }
 }
 
 void brw_draw_destroy( struct brw_context *brw )

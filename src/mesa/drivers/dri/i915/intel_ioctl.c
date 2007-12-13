@@ -47,15 +47,14 @@
 #define FILE_DEBUG_FLAG DEBUG_IOCTL
 
 int
-intelEmitIrqLocked(intelScreenPrivate *intelScreen)
+intelEmitIrqLocked(struct intel_context *intel)
 {
    drmI830IrqEmit ie;
    int ret, seq;
 
    ie.irq_seq = &seq;
 
-   ret = drmCommandWriteRead(intelScreen->driScrnPriv->fd,
-			     DRM_I830_IRQ_EMIT, &ie, sizeof(ie));
+   ret = drmCommandWriteRead(intel->driFd, DRM_I830_IRQ_EMIT, &ie, sizeof(ie));
    if (ret) {
       fprintf(stderr, "%s: drmI830IrqEmit: %d\n", __FUNCTION__, ret);
       exit(1);
@@ -67,7 +66,7 @@ intelEmitIrqLocked(intelScreenPrivate *intelScreen)
 }
 
 void
-intelWaitIrq(intelScreenPrivate *intelScreen, int seq)
+intelWaitIrq(struct intel_context *intel, int seq)
 {
    drm_i915_irq_wait_t iw;
    int ret;
@@ -77,8 +76,7 @@ intelWaitIrq(intelScreenPrivate *intelScreen, int seq)
    iw.irq_seq = seq;
 
    do {
-      ret = drmCommandWrite(intelScreen->driScrnPriv->fd,
-			    DRM_I830_IRQ_WAIT, &iw, sizeof(iw));
+      ret = drmCommandWrite(intel->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw));
    } while (ret == -EAGAIN || ret == -EINTR);
 
    if (ret) {
@@ -170,7 +168,7 @@ intel_exec_ioctl(struct intel_context *intel,
    }
 
 
-   fo = intel_ttm_fence_create_from_arg(intel->intelScreen->bufmgr, "fence buffers",
+   fo = intel_ttm_fence_create_from_arg(intel->bufmgr, "fence buffers",
 					&execbuf.fence_arg);
    if (!fo) {
       fprintf(stderr, "failed to fence handle: %08x\n", execbuf.fence_arg.handle);

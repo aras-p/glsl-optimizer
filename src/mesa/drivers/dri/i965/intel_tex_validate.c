@@ -31,7 +31,7 @@
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 /**
  * Compute which mipmap levels that really need to be sent to the hardware.
@@ -116,11 +116,13 @@ static void intel_texture_invalidate( struct intel_texture_object *intelObj )
       intelObj->dirty_images[face] = ~0;
 }
 
+#if 0
 static void intel_texture_invalidate_cb( struct intel_context *intel,
 					 void *ptr )
 {
    intel_texture_invalidate( (struct intel_texture_object *) ptr );
 }
+#endif
 
 /*  
  */
@@ -207,7 +209,7 @@ GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
 					  firstImage->Depth,
 					  cpp,
 					  firstImage->IsCompressed);
-
+#if 0
       /* Tell the buffer manager that we will manage the backing
        * store, but we still want it to do fencing for us.
        */
@@ -216,6 +218,7 @@ GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
 			      intel_texture_invalidate_cb,
 			      intelObj,
 			      GL_FALSE);
+#endif
    }
 
    /* Pull in any images not in the object's tree:

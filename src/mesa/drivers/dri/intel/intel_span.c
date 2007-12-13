@@ -195,9 +195,9 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
             /* this is a user-created intel_renderbuffer */
             if (irb->region) {
                if (map)
-                  intel_region_map(intel->intelScreen, irb->region);
+                  intel_region_map(intel, irb->region);
                else
-                  intel_region_unmap(intel->intelScreen, irb->region);
+                  intel_region_unmap(intel, irb->region);
                irb->pfMap = irb->region->map;
                irb->pfPitch = irb->region->pitch;
             }
@@ -228,9 +228,9 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    irb = intel_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
    if (irb && irb->region) {
       if (map)
-         intel_region_map(intel->intelScreen, irb->region);
+         intel_region_map(intel, irb->region);
       else
-         intel_region_unmap(intel->intelScreen, irb->region);
+         intel_region_unmap(intel, irb->region);
       irb->pfMap = irb->region->map;
       irb->pfPitch = irb->region->pitch;
    }
@@ -269,12 +269,12 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
       irb = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
       if (irb && irb->region && irb->Base.Name != 0) {
          if (map) {
-            intel_region_map(intel->intelScreen, irb->region);
+            intel_region_map(intel, irb->region);
             irb->pfMap = irb->region->map;
             irb->pfPitch = irb->region->pitch;
          }
          else {
-            intel_region_unmap(intel->intelScreen, irb->region);
+            intel_region_unmap(intel, irb->region);
             irb->pfMap = NULL;
             irb->pfPitch = 0;
          }
@@ -286,12 +286,12 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
       irb = intel_renderbuffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
       if (irb && irb->region && irb->Base.Name != 0) {
          if (map) {
-            intel_region_map(intel->intelScreen, irb->region);
+            intel_region_map(intel, irb->region);
             irb->pfMap = irb->region->map;
             irb->pfPitch = irb->region->pitch;
          }
          else {
-            intel_region_unmap(intel->intelScreen, irb->region);
+            intel_region_unmap(intel, irb->region);
             irb->pfMap = NULL;
             irb->pfPitch = 0;
          }
@@ -320,9 +320,9 @@ intelSpanRenderStart(GLcontext * ctx)
    /* Just map the framebuffer and all textures.  Bufmgr code will
     * take care of waiting on the necessary fences:
     */
-   intel_region_map(intel->intelScreen, intel->front_region);
-   intel_region_map(intel->intelScreen, intel->back_region);
-   intel_region_map(intel->intelScreen, intel->intelScreen->depth_region);
+   intel_region_map(intel, intel->front_region);
+   intel_region_map(intel, intel->back_region);
+   intel_region_map(intel, intel->depth_region);
 #endif
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
@@ -352,7 +352,7 @@ intelSpanRenderFinish(GLcontext * ctx)
 #if 0
    intel_region_unmap(intel, intel->front_region);
    intel_region_unmap(intel, intel->back_region);
-   intel_region_unmap(intel, intel->intelScreen->depth_region);
+   intel_region_unmap(intel, intel->depth_region);
 #endif
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {

@@ -78,15 +78,15 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
-   batch->buf = dri_bo_alloc(intel->intelScreen->bufmgr, "batchbuffer",
-			     intel->intelScreen->maxBatchSize, 4096,
+   batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
+			     intel->maxBatchSize, 4096,
 			     DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
    dri_bo_map(batch->buf, GL_TRUE);
    batch->map = batch->buf->virtual;
-   batch->size = intel->intelScreen->maxBatchSize;
+   batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
-   batch->id = batch->intel->intelScreen->batch_id++;
+   batch->id = batch->intel->batch_id++;
 }
 
 struct intel_batchbuffer *
@@ -144,7 +144,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
 
    if (!(intel->numClipRects == 0 && !ignore_cliprects)) {
-      if (intel->intelScreen->ttm == GL_TRUE) {
+      if (intel->ttm == GL_TRUE) {
 	 intel_exec_ioctl(batch->intel,
 			  used, ignore_cliprects, allow_unlock,
 			  start, count, &batch->last_fence);
@@ -175,6 +175,9 @@ do_flush_locked(struct intel_batchbuffer *batch,
       intel_decode(batch->buf->virtual, used / 4, batch->buf->offset,
 		   intel->intelScreen->deviceID);
       dri_bo_unmap(batch->buf);
+
+      if (intel->vtbl.debug_batch != NULL)
+	 intel->vtbl.debug_batch(intel);
    }
 }
 
@@ -243,7 +246,12 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              GLuint flags, GLuint delta)
 {
    dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
-   batch->ptr += 4;
+   /*
+    * Using the old buffer offset, write in what the right data would be, in case
+    * the buffer doesn't move and we can short-circuit the relocation processing
+    * in the kernel
+    */
+   intel_batchbuffer_emit_dword (batch, buffer->offset + delta);
 
    return GL_TRUE;
 }

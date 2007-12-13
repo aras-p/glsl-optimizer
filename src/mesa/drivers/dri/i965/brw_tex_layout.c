@@ -35,6 +35,7 @@
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex_layout.h"
+#include "intel_context.h"
 #include "macros.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE

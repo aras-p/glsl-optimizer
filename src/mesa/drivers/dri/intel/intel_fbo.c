@@ -282,7 +282,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
 	  height, pitch);
 
-      irb->region = intel_region_alloc(intel->intelScreen, cpp, pitch, height);
+      irb->region = intel_region_alloc(intel, cpp, pitch, height);
       if (!irb->region)
          return GL_FALSE;       /* out of memory? */
 

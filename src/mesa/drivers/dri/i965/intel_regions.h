@@ -29,7 +29,8 @@
 #define INTEL_REGIONS_H
 
 #include "mtypes.h"
-#include "bufmgr.h"		/* for DBG! */
+#include "dri_bufmgr.h"		/* for DBG! */
+#include "intel_screen.h"
 struct intel_context;
 
 /* A layer on top of the bufmgr buffers that adds a few useful things:
@@ -40,7 +41,7 @@ struct intel_context;
  * - Blitter commands for copying 2D regions between buffers.
  */
 struct intel_region {
-   struct buffer *buffer;
+   dri_bo *buffer;
    GLuint refcount;
    GLuint cpp;
    GLuint pitch;
@@ -66,20 +67,31 @@ void intel_region_reference( struct intel_region **dst,
 void intel_region_release(struct intel_context *intel,
 			  struct intel_region **ib );
 
+void intel_recreate_static_regions(struct intel_context *intel);
+
 /* Static regions may be tiled.  The assumption is that the X server
  * has set up fence registers to define tiled zones in agp and these
  * buffers are within those zones.  Tiling regions without fence
  * registers is more work.
  */
-struct intel_region *intel_region_create_static( struct intel_context *intel,
-						 GLuint mem_type,
-						 GLuint offset,
-						 void *virtual,
-						 GLuint cpp,
-						 GLuint pitch,
-						 GLuint height,
-						 GLuint size,
-						 GLboolean tiled );
+struct intel_region *
+intel_region_create_static(intelScreenPrivate *intelScreen,
+			   char *name,
+			   GLuint mem_type,
+			   unsigned int bo_handle,
+			   GLuint offset,
+			   void *virtual,
+			   GLuint cpp,
+			   GLuint pitch, GLuint height, GLboolean tiled);
+void
+intel_region_update_static(intelScreenPrivate *intelScreen,
+			   struct intel_region *region,
+			   GLuint mem_type,
+			   unsigned int bo_handle,
+			   GLuint offset,
+			   void *virtual,
+			   GLuint cpp, GLuint pitch, GLuint height,
+			   GLboolean tiled);
 
 /* Map/unmap regions.  This is refcounted also: 
  */

@@ -222,7 +222,7 @@ try_pbo_upload(struct intel_context *intel,
    LOCK_HARDWARE(intel);
    {
       dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
-      dri_bo *dst_buffer = intel_region_buffer(intel->intelScreen,
+      dri_bo *dst_buffer = intel_region_buffer(intel,
 					       intelImage->mt->region,
 					       INTEL_WRITE_FULL);
 
@@ -280,7 +280,7 @@ try_pbo_zcopy(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   intel_region_attach_pbo(intel->intelScreen, intelImage->mt->region, pbo);
+   intel_region_attach_pbo(intel, intelImage->mt->region, pbo);
 
    return GL_TRUE;
 }
@@ -459,7 +459,7 @@ intelTexImage(GLcontext * ctx,
 
 
    if (intelImage->mt)
-      intel_region_idle(intel->intelScreen, intelImage->mt->region);
+      intel_region_idle(intel, intelImage->mt->region);
 
    LOCK_HARDWARE(intel);
 

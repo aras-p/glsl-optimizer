@@ -151,20 +151,34 @@ struct intel_context
 			     GLfloat s0, GLfloat s1,
 			     GLfloat t0, GLfloat t1);
 
-
-
+      void (*debug_batch)(struct intel_context *intel);
    } vtbl;
 
    GLint refcount;   
    GLuint Fallback;
    GLuint NewGLState;
-   
-   GLuint last_swap_fence;
-   GLuint second_last_swap_fence;
-   
+
+   dri_bufmgr *bufmgr;
+   unsigned int maxBatchSize;
+
+   struct intel_region *front_region;
+   struct intel_region *back_region;
+   struct intel_region *third_region;
+   struct intel_region *depth_region;
+
+   /**
+    * This value indicates that the kernel memory manager is being used
+    * instead of the fake client-side memory manager.
+    */
+   GLboolean ttm;
+
+   dri_fence *first_swap_fence;
+   dri_fence *last_swap_fence;
+
    GLuint stats_wm;
 
    struct intel_batchbuffer *batch;
+   unsigned batch_id;
 
    GLubyte clear_chan[4];
    GLuint ClearColor;
@@ -178,29 +192,17 @@ struct intel_context
    GLboolean hw_stencil;
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
-   GLboolean no_hw;
    GLboolean no_rast;
-   GLboolean thrashing;
    GLboolean locked;
    GLboolean strict_conformance;
    GLboolean need_flush;
-
-
-   
-   /* AGP memory buffer manager:
-    */
-   struct bufmgr *bm;
-
 
    /* State for intelvb.c and inteltris.c.
     */
    GLenum render_primitive;
    GLenum reduced_primitive;
 
-   struct intel_region *front_region;
-   struct intel_region *back_region;
    struct intel_region *draw_region;
-   struct intel_region *depth_region;
 
    /* These refer to the current draw (front vs. back) buffer:
     */
@@ -225,6 +227,8 @@ struct intel_context
    volatile drmI830Sarea *sarea; 
 
    GLuint lastStamp;
+
+   GLboolean no_hw;
 
    /**
     * Configuration cache

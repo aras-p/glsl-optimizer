@@ -140,6 +140,27 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
    case GL_DEPTH24_STENCIL8_EXT:
       return &_mesa_texformat_z24_s8;
 
+#ifndef I915
+   case GL_SRGB_EXT:
+   case GL_SRGB8_EXT:
+   case GL_SRGB_ALPHA_EXT:
+   case GL_SRGB8_ALPHA8_EXT:
+   case GL_SLUMINANCE_EXT:
+   case GL_SLUMINANCE8_EXT:
+   case GL_SLUMINANCE_ALPHA_EXT:
+   case GL_SLUMINANCE8_ALPHA8_EXT:
+   case GL_COMPRESSED_SRGB_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_EXT:
+   case GL_COMPRESSED_SLUMINANCE_EXT:
+   case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+       return &_mesa_texformat_srgba8;
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+     return &_mesa_texformat_srgb_dxt1;
+#endif
+
    default:
       fprintf(stderr, "unexpected texture format %s in %s\n",
               _mesa_lookup_enum_by_nr(internalFormat), __FUNCTION__);

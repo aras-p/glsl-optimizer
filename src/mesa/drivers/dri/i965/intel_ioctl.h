@@ -35,10 +35,12 @@ int intelEmitIrqLocked( struct intel_context *intel );
 
 void intel_batch_ioctl( struct intel_context *intel, 
 			GLuint start_offset,
-			GLuint used);
-
-void intel_cmd_ioctl( struct intel_context *intel, 
-		      char *buf,
-		      GLuint used);
+			GLuint used,
+			GLboolean ignore_cliprects,
+			GLboolean allow_unlock );
+void intel_exec_ioctl(struct intel_context *intel,
+		      GLuint used,
+		      GLboolean ignore_cliprects, GLboolean allow_unlock,
+		      void *start, GLuint count, dri_fence **fence);
 
 #endif

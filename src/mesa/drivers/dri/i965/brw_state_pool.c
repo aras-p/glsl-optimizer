@@ -34,7 +34,7 @@
 #include "imports.h"
 
 #include "intel_ioctl.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 GLboolean brw_pool_alloc( struct brw_mem_pool *pool,
 			  GLuint size,
@@ -64,27 +64,20 @@ void brw_invalidate_pool( struct intel_context *intel,
 {
    if (INTEL_DEBUG & DEBUG_STATE)
       _mesa_printf("\n\n\n %s \n\n\n", __FUNCTION__);
-   
-   bmBufferData(intel,
-		pool->buffer,
-		pool->size,
-		NULL,
-		0); 
 
    pool->offset = 0;
 
    brw_clear_all_caches(pool->brw);
 }
 
-static void brw_invalidate_pool_cb( struct intel_context *intel, void *ptr )
+static void
+brw_invalidate_pool_cb(dri_bo *bo, void *ptr)
 {
-   struct brw_mem_pool *pool = (struct brw_mem_pool *) ptr;
+   struct brw_mem_pool *pool = ptr;
+   struct brw_context *brw = pool->brw;
 
-   pool->offset = 0;
-   brw_clear_all_caches(pool->brw);
+   brw_invalidate_pool(&brw->intel, pool);
 }
-
-
 
 static void brw_init_pool( struct brw_context *brw,
 			   GLuint pool_id,
@@ -94,30 +87,28 @@ static void brw_init_pool( struct brw_context *brw,
 
    pool->size = size;   
    pool->brw = brw;
-   
-   bmGenBuffers(&brw->intel, "pool", 1, &pool->buffer, 12);
 
-   /* Also want to say not to wait on fences when data is presented
+   pool->buffer = dri_bo_alloc(brw->intel.bufmgr,
+			       (pool_id == BRW_GS_POOL) ? "GS pool" : "SS pool",
+			       size, 4096, DRM_BO_FLAG_MEM_TT);
+
+   /* Disable the backing store for the state cache.  It's not worth the
+    * cost of keeping a backing store copy, since we can just regenerate
+    * the contents at approximately the same cost as the memcpy, and only
+    * if the contents are lost.
     */
-   bmBufferSetInvalidateCB(&brw->intel, pool->buffer, 
-			   brw_invalidate_pool_cb, 
-			   pool,
-			   GL_TRUE);   
-
-   bmBufferData(&brw->intel,
-		pool->buffer,
-		pool->size,
-		NULL,
-		0); 
-
+   if (!brw->intel.ttm) {
+      dri_bo_fake_disable_backing_store(pool->buffer, brw_invalidate_pool_cb,
+					pool);
+   }
 }
 
 static void brw_destroy_pool( struct brw_context *brw,
 			      GLuint pool_id )
 {
    struct brw_mem_pool *pool = &brw->pool[pool_id];
-   
-   bmDeleteBuffers(&brw->intel, 1, &pool->buffer);
+
+   dri_bo_unreference(pool->buffer);
 }
 
 

@@ -107,6 +107,12 @@ GLboolean brw_search_cache( struct brw_cache *cache,
 void brw_init_caches( struct brw_context *brw );
 void brw_destroy_caches( struct brw_context *brw );
 
+static inline dri_bo *brw_cache_buffer(struct brw_context *brw,
+				       enum brw_cache_id id)
+{
+   return brw->cache[id].pool->buffer;
+}
+
 /***********************************************************************
  * brw_state_batch.c
  */

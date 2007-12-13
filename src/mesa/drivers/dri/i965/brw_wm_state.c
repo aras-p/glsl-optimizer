@@ -34,25 +34,19 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
+#include "dri_bufmgr.h"
 #include "brw_wm.h"
-#include "bufmgr.h"
 
 /***********************************************************************
  * WM unit - fragment programs and rasterization
  */
-
-static void invalidate_scratch_cb( struct intel_context *intel,
-				   void *unused )
-{
-   /* nothing */
-}
-
 
 static void upload_wm_unit(struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_state wm;
    GLuint max_threads;
+   GLuint per_thread;
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       max_threads = 0; 
@@ -71,41 +65,37 @@ static void upload_wm_unit(struct brw_context *brw )
 
    wm.wm5.max_threads = max_threads;      
 
+   per_thread = ALIGN(brw->wm.prog_data->total_scratch, 1024);
+   assert(per_thread <= 12 * 1024);
+
    if (brw->wm.prog_data->total_scratch) {
-      GLuint per_thread = ALIGN(brw->wm.prog_data->total_scratch, 1024);
       GLuint total = per_thread * (max_threads + 1);
 
       /* Scratch space -- just have to make sure there is sufficient
        * allocated for the active program and current number of threads.
-       */      
-
-      if (!brw->wm.scratch_buffer) {
-	 bmGenBuffers(intel, "wm scratch", 1, &brw->wm.scratch_buffer, 12);
-	 bmBufferSetInvalidateCB(intel,
-				 brw->wm.scratch_buffer,
-				 invalidate_scratch_cb,
-				 NULL,
-				 GL_FALSE);
-      }
-
-      if (total > brw->wm.scratch_buffer_size) {
-	 brw->wm.scratch_buffer_size = total;
-	 bmBufferData(intel,
-		      brw->wm.scratch_buffer,
-		      brw->wm.scratch_buffer_size,
-		      NULL,
-		      0);
-      }
-		   
-      assert(per_thread <= 12 * 1024);
-      wm.thread2.per_thread_scratch_space = (per_thread / 1024) - 1;
-
-      /* XXX: could make this dynamic as this is so rarely active:
        */
-      /* BRW_NEW_LOCK */
-      wm.thread2.scratch_space_base_pointer = 
-	 bmBufferOffset(intel, brw->wm.scratch_buffer) >> 10;
+      brw->wm.scratch_buffer_size = total;
+      if (brw->wm.scratch_buffer &&
+	  brw->wm.scratch_buffer_size > brw->wm.scratch_buffer->size) {
+	 dri_bo_unreference(brw->wm.scratch_buffer);
+	 brw->wm.scratch_buffer = NULL;
+      }
+      if (!brw->wm.scratch_buffer) {
+	 brw->wm.scratch_buffer = dri_bo_alloc(intel->bufmgr,
+					       "wm scratch",
+					       brw->wm.scratch_buffer_size,
+					       4096, DRM_BO_FLAG_MEM_TT);
+      }
    }
+   /* XXX: Scratch buffers are not implemented correectly.
+    *
+    * The scratch offset to be programmed into wm is relative to the general
+    * state base address.  However, using dri_bo_alloc/dri_bo_emit_reloc (or
+    * the previous bmGenBuffers scheme), we get an offset relative to the
+    * start of framebuffer.  Even before then, it was broken in other ways,
+    * so just fail for now if we hit that path.
+    */
+   assert(brw->wm.prog_data->total_scratch == 0);
 
    /* CACHE_NEW_SURFACE */
    wm.thread1.binding_table_entry_count = brw->wm.nr_surfaces;
@@ -177,6 +167,19 @@ static void upload_wm_unit(struct brw_context *brw )
       wm.wm4.stats_enable = 1;
 
    brw->wm.state_gs_offset = brw_cache_data( &brw->cache[BRW_WM_UNIT], &wm );
+
+   if (brw->wm.prog_data->total_scratch) {
+      /*
+      dri_emit_reloc(brw->cache[BRW_WM_UNIT].pool->buffer,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
+		     (per_thread / 1024) - 1,
+		     brw->wm.state_gs_offset +
+		     ((char *)&wm.thread2 - (char *)&wm),
+		     brw->wm.scratch_buffer);
+      */
+   } else {
+      wm.thread2.scratch_space_base_pointer = 0;
+   }
 }
 
 const struct brw_tracked_state brw_wm_unit = {

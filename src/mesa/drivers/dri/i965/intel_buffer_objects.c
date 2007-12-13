@@ -32,8 +32,17 @@
 
 #include "intel_context.h"
 #include "intel_buffer_objects.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
+/** Allocates a new dri_bo to store the data for the buffer object. */
+static void
+intel_bufferobj_alloc_buffer(struct intel_context *intel,
+			     struct intel_buffer_object *intel_obj)
+{
+   intel_obj->buffer = dri_bo_alloc(intel->bufmgr, "bufferobj",
+				    intel_obj->Base.Size, 64,
+				    DRM_BO_FLAG_MEM_TT);
+}
 
 /**
  * There is some duplication between mesa's bufferobjects and our
@@ -45,15 +54,9 @@ static struct gl_buffer_object *intel_bufferobj_alloc( GLcontext *ctx,
 						       GLuint name, 
 						       GLenum target )
 {
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_buffer_object *obj = MALLOC_STRUCT(intel_buffer_object);
+   struct intel_buffer_object *obj = CALLOC_STRUCT(intel_buffer_object);
 
    _mesa_initialize_buffer_object(&obj->Base, name, target);
-
-   /* XXX:  We generate our own handle, which is different to 'name' above.
-    */
-   bmGenBuffers(intel, "bufferobj", 1, &obj->buffer, 6);
-   assert(obj->buffer);
 
    return &obj->Base;
 }
@@ -66,14 +69,13 @@ static struct gl_buffer_object *intel_bufferobj_alloc( GLcontext *ctx,
 static void intel_bufferobj_free( GLcontext *ctx, 
 				  struct gl_buffer_object *obj )
 { 
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
 
-   if (intel_obj->buffer) 
-      bmDeleteBuffers( intel, 1, &intel_obj->buffer );
-  
+   if (intel_obj->buffer)
+      dri_bo_unreference(intel_obj->buffer);
+
    _mesa_free(intel_obj);
 }
 
@@ -103,7 +105,23 @@ static void intel_bufferobj_data( GLcontext *ctx,
    obj->Size = size;
    obj->Usage = usage;
 
-   bmBufferData(intel, intel_obj->buffer, size, data, 0);
+   /* While it would seem to make sense to always reallocate the buffer here,
+    * since it should allow us better concurrency between rendering and
+    * map-cpu write-unmap, doing so was a minor (~10%) performance loss
+    * for both classic and TTM mode with openarena.  That may change with
+    * improved buffer manager algorithms.
+    */
+   if (intel_obj->buffer != NULL && intel_obj->buffer->size != size) {
+      dri_bo_unreference(intel_obj->buffer);
+      intel_obj->buffer = NULL;
+   }
+   if (size != 0) {
+      if (intel_obj->buffer == NULL)
+	 intel_bufferobj_alloc_buffer(intel, intel_obj);
+
+      if (data != NULL)
+	 dri_bo_subdata(intel_obj->buffer, 0, size, data);
+   }
 }
 
 
@@ -120,11 +138,10 @@ static void intel_bufferobj_subdata( GLcontext *ctx,
 				     const GLvoid * data,
 				     struct gl_buffer_object * obj )
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   bmBufferSubData(intel, intel_obj->buffer, offset, size, data);
+   dri_bo_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
@@ -138,11 +155,10 @@ static void intel_bufferobj_get_subdata( GLcontext *ctx,
 					 GLvoid * data,
 					 struct gl_buffer_object * obj )
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   bmBufferGetSubData(intel, intel_obj->buffer, offset, size, data);
+   dri_bo_get_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
@@ -155,14 +171,15 @@ static void *intel_bufferobj_map( GLcontext *ctx,
 				  GLenum access,
 				  struct gl_buffer_object *obj )
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    /* XXX: Translate access to flags arg below:
     */
    assert(intel_obj);
    assert(intel_obj->buffer);
-   obj->Pointer = bmMapBuffer(intel, intel_obj->buffer, 0);
+
+   dri_bo_map(intel_obj->buffer, GL_TRUE);
+   obj->Pointer = intel_obj->buffer->virtual;
    return obj->Pointer;
 }
 
@@ -174,18 +191,17 @@ static GLboolean intel_bufferobj_unmap( GLcontext *ctx,
 					GLenum target,
 					struct gl_buffer_object *obj )
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
    assert(intel_obj->buffer);
    assert(obj->Pointer);
-   bmUnmapBuffer(intel, intel_obj->buffer);
+   dri_bo_unmap(intel_obj->buffer);
    obj->Pointer = NULL;
    return GL_TRUE;
 }
 
-struct buffer *intel_bufferobj_buffer( const struct intel_buffer_object *intel_obj )
+dri_bo *intel_bufferobj_buffer( const struct intel_buffer_object *intel_obj )
 {
    assert(intel_obj->Base.Name);
    assert(intel_obj->buffer);

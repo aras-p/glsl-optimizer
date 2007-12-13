@@ -112,7 +112,7 @@ do_texture_drawpixels(GLcontext * ctx,
 
    /* Set the 3d engine to draw into the destination region:
     */
-   intel->vtbl.meta_draw_region(intel, dst, intel->intelScreen->depth_region);
+   intel->vtbl.meta_draw_region(intel, dst, intel->depth_region);
 
    intel->vtbl.meta_import_pixel_state(intel);
 

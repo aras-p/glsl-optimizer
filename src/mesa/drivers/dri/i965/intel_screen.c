@@ -42,7 +42,10 @@
 #include "intel_tex.h"
 #include "intel_span.h"
 #include "intel_ioctl.h"
+#include "intel_regions.h"
+#include "intel_bufmgr_ttm.h"
 
+#include "i915_drm.h"
 #include "i830_dri.h"
 
 PUBLIC const char __driConfigOptions[] =
@@ -125,7 +128,6 @@ intelMapScreenRegions(__DRIscreenPrivate *sPriv)
           intelScreen->tex.map);
    return GL_TRUE;
 }
-
 
 void
 intelUnmapScreenRegions(intelScreenPrivate *intelScreen)
@@ -243,6 +245,16 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
    intelScreen->depth.size = sarea->depth_size;
    intelScreen->depth.tiled = sarea->depth_tiled;
 
+   if (intelScreen->driScrnPriv->ddx_version.minor >= 9) {
+      intelScreen->front.bo_handle = sarea->front_bo_handle;
+      intelScreen->back.bo_handle = sarea->back_bo_handle;
+      intelScreen->depth.bo_handle = sarea->depth_bo_handle;
+   } else {
+      intelScreen->front.bo_handle = -1;
+      intelScreen->back.bo_handle = -1;
+      intelScreen->depth.bo_handle = -1;
+   }
+
    intelScreen->tex.offset = sarea->tex_offset;
    intelScreen->logTextureGranularity = sarea->log_tex_granularity;
    intelScreen->tex.handle = sarea->tex_handle;
@@ -357,7 +369,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    sPriv->extensions = intelExtensions;
-   
+
    return GL_TRUE;
 }
 

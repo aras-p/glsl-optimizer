@@ -101,7 +101,7 @@ intel_miptree_create(struct intel_context *intel,
       if (!mt->compressed) {
 	 int align;
 
-	 if (intel->intelScreen->ttm) {
+	 if (intel->ttm) {
 	    /* XXX: Align pitch to multiple of 64 bytes for now to allow
 	     * render-to-texture to work in all cases. This should probably be
 	     * replaced at some point by some scheme to only do this when really
@@ -124,7 +124,7 @@ intel_miptree_create(struct intel_context *intel,
 	 mt->pitch /= cpp;
       }
 
-      mt->region = intel_region_alloc(intel->intelScreen,
+      mt->region = intel_region_alloc(intel,
                                       mt->cpp, mt->pitch, mt->total_height);
    }
 
@@ -305,7 +305,7 @@ intel_miptree_image_map(struct intel_context * intel,
       memcpy(image_offsets, mt->level[level].image_offset,
              mt->level[level].depth * sizeof(GLuint));
 
-   return (intel_region_map(intel->intelScreen, mt->region) +
+   return (intel_region_map(intel, mt->region) +
            intel_miptree_image_offset(mt, face, level));
 }
 
@@ -314,7 +314,7 @@ intel_miptree_image_unmap(struct intel_context *intel,
                           struct intel_mipmap_tree *mt)
 {
    DBG("%s\n", __FUNCTION__);
-   intel_region_unmap(intel->intelScreen, mt->region);
+   intel_region_unmap(intel, mt->region);
 }
 
 
@@ -340,7 +340,7 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      intel_region_data(intel->intelScreen, dst->region,
+      intel_region_data(intel, dst->region,
                         dst_offset + dst_depth_offset[i], /* dst_offset */
                         0, 0,                             /* dstx, dsty */
                         src,
@@ -377,7 +377,7 @@ intel_miptree_image_copy(struct intel_context *intel,
    }
 
    for (i = 0; i < depth; i++) {
-      intel_region_copy(intel->intelScreen,
+      intel_region_copy(intel,
                         dst->region, dst_offset + dst_depth_offset[i],
                         0,
                         0,

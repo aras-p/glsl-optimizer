@@ -41,27 +41,19 @@
 #include "intel_blit.h"
 #include "intel_regions.h"
 #include "drm.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
+#include "intel_bufmgr_ttm.h"
+#include "i915_drm.h"
 
-static int intelWaitIdleLocked( struct intel_context *intel )
+static void intelWaitIdleLocked( struct intel_context *intel )
 {
-   static int in_wait_idle = 0;
    unsigned int fence;
 
-   if (!in_wait_idle) {
-      if (INTEL_DEBUG & DEBUG_SYNC) {
-	 fprintf(stderr, "waiting for idle\n");
-      }
+   if (INTEL_DEBUG & DEBUG_SYNC)
+      fprintf(stderr, "waiting for idle\n");
 
-      in_wait_idle = 1;
-      fence = bmSetFence(intel);
-      intelWaitIrq(intel, fence);
-      in_wait_idle = 0;
-
-      return bmTestFence(intel, fence);
-   } else {
-      return 1;
-   }
+   fence = intelEmitIrqLocked(intel);
+   intelWaitIrq(intel, fence);
 }
 
 int intelEmitIrqLocked( struct intel_context *intel )
@@ -71,13 +63,14 @@ int intelEmitIrqLocked( struct intel_context *intel )
    if (!intel->no_hw) {
       drmI830IrqEmit ie;
       int ret;
-      
+      /*
       assert(((*(int *)intel->driHwLock) & ~DRM_LOCK_CONT) == 
 	     (DRM_LOCK_HELD|intel->hHWContext));
-
+      */
       ie.irq_seq = &seq;
 
-      ret = drmCommandWriteRead( intel->driFd, DRM_I830_IRQ_EMIT, 
+      ret = drmCommandWriteRead( intel->driFd,
+				 DRM_I830_IRQ_EMIT, 
 				 &ie, sizeof(ie) );
       if ( ret ) {
 	 fprintf( stderr, "%s: drmI830IrqEmit: %d\n", __FUNCTION__, ret );
@@ -96,21 +89,25 @@ void intelWaitIrq( struct intel_context *intel, int seq )
    if (!intel->no_hw) {
       drmI830IrqWait iw;
       int ret, lastdispatch;
-      
+      volatile drmI830Sarea *sarea = intel->sarea;
+
       if (0)
 	 fprintf(stderr, "%s %d\n", __FUNCTION__, seq );
 
       iw.irq_seq = seq;
 	
       do {
-	 lastdispatch = intel->sarea->last_dispatch;
-	 ret = drmCommandWrite( intel->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
+	 lastdispatch = sarea->last_dispatch;
+	 ret = drmCommandWrite( intel->driFd,
+				DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
 
 	 /* This seems quite often to return before it should!?! 
 	  */
-      } while (ret == -EAGAIN || ret == -EINTR || (ret == -EBUSY && lastdispatch != intel->sarea->last_dispatch) || (ret == 0 && seq > intel->sarea->last_dispatch)
-	       || (ret == 0 && intel->sarea->last_dispatch - seq >= (1 << 24)));
-      
+      } while (ret == -EAGAIN ||
+	       ret == -EINTR ||
+	       (ret == -EBUSY && lastdispatch != sarea->last_dispatch) ||
+	       (ret == 0 && seq > sarea->last_dispatch) ||
+	       (ret == 0 && sarea->last_dispatch - seq >= (1 << 24)));
 
       if ( ret ) {
 	 fprintf( stderr, "%s: drmI830IrqWait: %d\n", __FUNCTION__, ret );
@@ -123,7 +120,9 @@ void intelWaitIrq( struct intel_context *intel, int seq )
 
 void intel_batch_ioctl( struct intel_context *intel, 
 			GLuint start_offset,
-			GLuint used)
+			GLuint used,
+			GLboolean ignore_cliprects,
+			GLboolean allow_unlock )
 {
    drmI830BatchBuffer batch;
 
@@ -157,45 +156,61 @@ void intel_batch_ioctl( struct intel_context *intel,
 	 UNLOCK_HARDWARE(intel);
 	 exit(1);
       }
-
-      if (INTEL_DEBUG & DEBUG_SYNC) {
-	intelWaitIdleLocked(intel);
-      }
    }
 }
 
-void intel_cmd_ioctl( struct intel_context *intel, 
-		      char *buf,
-		      GLuint used)
+void
+intel_exec_ioctl(struct intel_context *intel,
+		 GLuint used,
+		 GLboolean ignore_cliprects, GLboolean allow_unlock,
+		 void *start, GLuint count, dri_fence **fence)
 {
-   drmI830CmdBuffer cmd;
+   struct drm_i915_execbuffer execbuf;
+   dri_fence *fo;
 
    assert(intel->locked);
    assert(used);
 
-   cmd.buf = buf;
-   cmd.sz = used;
-   cmd.cliprects = intel->pClipRects;
-   cmd.num_cliprects = 0;
-   cmd.DR1 = 0;
-   cmd.DR4 = 0;
-      
-   if (INTEL_DEBUG & DEBUG_DMA)
-      fprintf(stderr, "%s: 0x%x..0x%x\n",
-	      __FUNCTION__, 
-	      0, 
-	      0 + cmd.sz);
-
-   if (!intel->no_hw) {
-      if (drmCommandWrite (intel->driFd, DRM_I830_CMDBUFFER, &cmd, 
-			   sizeof(cmd))) {
-	 fprintf(stderr, "DRM_I830_CMDBUFFER: %d\n",  -errno);
-	 UNLOCK_HARDWARE(intel);
-	 exit(1);
-      }
-
-      if (INTEL_DEBUG & DEBUG_SYNC) {
-	intelWaitIdleLocked(intel);
-      }
+   if (*fence) {
+     dri_fence_unreference(*fence);
    }
+
+   memset(&execbuf, 0, sizeof(execbuf));
+
+   execbuf.num_buffers = count;
+   execbuf.batch.used = used;
+   execbuf.batch.cliprects = intel->pClipRects;
+   execbuf.batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   execbuf.batch.DR1 = 0;
+   execbuf.batch.DR4 = ((((GLuint) intel->drawX) & 0xffff) |
+			(((GLuint) intel->drawY) << 16));
+
+   execbuf.ops_list = (unsigned)start; // TODO
+   execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
+
+   if (intel->no_hw)
+      return;
+
+   if (drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
+                       sizeof(execbuf))) {
+      fprintf(stderr, "DRM_I830_EXECBUFFER: %d\n", -errno);
+      UNLOCK_HARDWARE(intel);
+      exit(1);
+   }
+
+
+   fo = intel_ttm_fence_create_from_arg(intel->bufmgr, "fence buffers",
+					&execbuf.fence_arg);
+   if (!fo) {
+      fprintf(stderr, "failed to fence handle: %08x\n", execbuf.fence_arg.handle);
+      UNLOCK_HARDWARE(intel);
+      exit(1);
+   }
+   *fence = fo;
+
+   /* FIXME: use hardware contexts to avoid 'losing' hardware after
+    * each buffer flush.
+    */
+   intel->vtbl.lost_hardware(intel);
+
 }
