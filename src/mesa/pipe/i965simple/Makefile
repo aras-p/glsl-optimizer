@@ -40,7 +40,6 @@ DRIVER_SOURCES = \
 	brw_urb.c \
 	brw_util.c \
 	brw_vs.c \
-	brw_vs_constval.c \
 	brw_vs_emit.c \
 	brw_vs_state.c \
 	brw_vtbl.c \
