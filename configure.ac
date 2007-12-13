@@ -180,17 +180,17 @@ AC_SUBST(GLW_LIB_NAME)
 AC_SUBST(OSMESA_LIB_NAME)
 
 dnl
-dnl Driver configuration. Options are x11 (Xlib), dri and osmesa right now.
+dnl Driver configuration. Options are xlib, dri and osmesa right now.
 dnl More later: directfb, fbdev, ...
 dnl
 AC_ARG_WITH(driver,
     [AS_HELP_STRING([--with-driver=DRIVER],
-        [driver for Mesa: x11,dri,osmesa @<:@default=x11@:>@])],
+        [driver for Mesa: xlib,dri,osmesa @<:@default=xlib@:>@])],
     mesa_driver="$withval",
-    mesa_driver="x11")
+    mesa_driver="xlib")
 dnl Check for valid option
 case "x$mesa_driver" in
-xx11|xdri|xosmesa)
+xxlib|xdri|xosmesa)
     ;;
 *)
     AC_MSG_ERROR([Driver '$mesa_driver' is not a valid option])
@@ -204,7 +204,7 @@ SRC_DIRS="mesa"
 GLU_DIRS="sgi"
 WINDOW_SYSTEM=""
 case "$mesa_driver" in
-x11)
+xlib)
     DRIVER_DIRS="x11"
     ;;
 dri)
@@ -279,7 +279,7 @@ fi
 
 dnl We need X for xlib and dri, so bomb now if it's not found
 case "$mesa_driver" in
-x11|dri)
+xlib|dri)
     if test "$no_x" = yes; then
         AC_MSG_ERROR([X11 development libraries needed for $mesa_driver driver])
     fi
@@ -290,11 +290,11 @@ dnl
 dnl libGL configuration per driver
 dnl
 case "$mesa_driver" in
-x11)
+xlib)
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES(X11GL, x11 xext)
-        X11_INCLUDES="$X11_INCLUDES $X11GL_CFLAGS"
-        GL_LIB_DEPS="$X11GL_LIBS"
+        PKG_CHECK_MODULES(XLIBGL, x11 xext)
+        X11_INCLUDES="$X11_INCLUDES $XLIBGL_CFLAGS"
+        GL_LIB_DEPS="$XLIBGL_LIBS"
     else
         # should check these...
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
@@ -342,7 +342,7 @@ AC_SUBST(GL_LIB_DEPS)
 dnl
 dnl More X11 setup
 dnl
-if test "$mesa_driver" = x11; then
+if test "$mesa_driver" = xlib; then
     DEFINES="$DEFINES -DUSE_XSHM"
 fi
 
@@ -489,21 +489,21 @@ AC_SUBST(DRI_LIB_DEPS)
 dnl
 dnl OSMesa configuration
 dnl
-if test "$mesa_driver" = x11; then
-    default_x11_osmesa=yes
+if test "$mesa_driver" = xlib; then
+    default_xlib_osmesa=yes
 else
-    default_x11_osmesa=no
+    default_xlib_osmesa=no
 fi
-AC_ARG_ENABLE(x11-osmesa,
-    [AS_HELP_STRING([--disable-x11-osmesa],
-        [enable OSMesa on X11 libGL @<:@default=enabled for x11 driver@:>@])],
-        x11_osmesa="$enableval",
-        x11_osmesa="$default_x11_osmesa")
-if test "x$x11_osmesa" = xyes; then
-    if test "$mesa_driver" = x11; then
+AC_ARG_ENABLE(xlib-osmesa,
+    [AS_HELP_STRING([--disable-xlib-osmesa],
+        [enable OSMesa on Xlib libGL @<:@default=enabled for xlib driver@:>@])],
+        xlib_osmesa="$enableval",
+        xlib_osmesa="$default_xlib_osmesa")
+if test "x$xlib_osmesa" = xyes; then
+    if test "$mesa_driver" = xlib; then
         DRIVER_DIRS="$DRIVER_DIRS osmesa"
     else
-        AC_MSG_ERROR([Can only enable OSMesa on libGL for X11])
+        AC_MSG_ERROR([Can only enable OSMesa on libGL for Xlib])
     fi
 fi
 
@@ -789,7 +789,7 @@ dnl Driver info
 echo ""
 echo "        Driver:          $mesa_driver"
 case "$mesa_driver" in
-x11|osmesa)
+xlib|osmesa)
     if echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1; then
         echo "        OSMesa:          lib$OSMESA_LIB"
     else
