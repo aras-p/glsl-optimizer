@@ -31,6 +31,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
+#include "pipe/softpipe/sp_rgba_tile.h"
 
 
 #define CLIP_TILE \
@@ -254,8 +255,8 @@ nv40_init_surface_functions(struct nv40_context *nv40)
    nv40->pipe.get_tex_surface = nv40_get_tex_surface;
    nv40->pipe.get_tile = nv40_get_tile;
    nv40->pipe.put_tile = nv40_put_tile;
-   nv40->pipe.get_tile_rgba = nv40_get_tile_rgba;
-   nv40->pipe.put_tile_rgba = nv40_put_tile_rgba;
+   nv40->pipe.get_tile_rgba = softpipe_get_tile_rgba;
+   nv40->pipe.put_tile_rgba = softpipe_put_tile_rgba;
    nv40->pipe.surface_data = nv40_surface_data;
    nv40->pipe.surface_copy = nv40_surface_copy;
    nv40->pipe.surface_fill = nv40_surface_fill;

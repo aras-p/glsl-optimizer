@@ -76,6 +76,7 @@ nouveau_create_buffer(__DRIscreenPrivate * driScrnPriv,
 		      const __GLcontextModes *glVis, GLboolean pixmapBuffer)
 {
 	struct nouveau_framebuffer *nvfb;
+	enum pipe_format colour, depth, stencil;
 
 	if (pixmapBuffer)
 		return GL_FALSE;
@@ -84,7 +85,25 @@ nouveau_create_buffer(__DRIscreenPrivate * driScrnPriv,
 	if (!nvfb)
 		return GL_FALSE;
 
-	nvfb->stfb = st_create_framebuffer(glVis, GL_TRUE, (void*)nvfb);
+	if (glVis->redBits == 5)
+		colour = PIPE_FORMAT_R5G6B5_UNORM;
+	else
+		colour = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+	if (glVis->depthBits == 16)
+		depth = PIPE_FORMAT_Z16_UNORM;
+	else if (glVis->depthBits == 24)
+		depth = PIPE_FORMAT_Z24S8_UNORM;
+	else
+		depth = PIPE_FORMAT_NONE;
+
+	if (glVis->stencilBits == 8)
+		stencil = PIPE_FORMAT_Z24S8_UNORM;
+	else
+		stencil = PIPE_FORMAT_NONE;
+
+	nvfb->stfb = st_create_framebuffer(glVis, GL_TRUE, colour, depth,
+					   stencil, (void*)nvfb);
 	if (!nvfb->stfb) {
 		free(nvfb);
 		return  GL_FALSE;

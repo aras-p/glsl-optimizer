@@ -12,7 +12,6 @@ nv40_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
 {
 	switch (type) {
 	case PIPE_SURFACE:
-	case PIPE_SCREEN_SURFACE:
 		switch (format) {
 		case PIPE_FORMAT_A8R8G8B8_UNORM:
 		case PIPE_FORMAT_R5G6B5_UNORM: 
