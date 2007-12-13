@@ -53,18 +53,18 @@ WRITE_PUT(struct nouveau_channel_priv *nvchan, uint32_t val)
 }
 
 void
-nouveau_dma_channel_init(struct nouveau_channel *userchan)
+nouveau_dma_channel_init(struct nouveau_channel *chan)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	int i;
 
-	chan->dma.base = chan->drm.put_base;
-	chan->dma.cur  = chan->dma.put = RING_SKIPS;
-	chan->dma.max  = (chan->drm.cmdbuf_size >> 2) - 2;
-	chan->dma.free = chan->dma.max - chan->dma.cur;
+	nvchan->dma.base = nvchan->drm.put_base;
+	nvchan->dma.cur  = nvchan->dma.put = RING_SKIPS;
+	nvchan->dma.max  = (nvchan->drm.cmdbuf_size >> 2) - 2;
+	nvchan->dma.free = nvchan->dma.max - nvchan->dma.cur;
 
 	for (i = 0; i < RING_SKIPS; i++)
-		chan->pushbuf[i] = 0x00000000;
+		nvchan->pushbuf[i] = 0x00000000;
 }
 
 #define CHECK_TIMEOUT() do {                                                   \
@@ -75,49 +75,51 @@ nouveau_dma_channel_init(struct nouveau_channel *userchan)
 #define IN_MASTER_RING(chan, ptr) ((ptr) <= (chan)->dma.max)
 
 int
-nouveau_dma_wait(struct nouveau_channel *userchan, int size)
+nouveau_dma_wait(struct nouveau_channel *chan, int size)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	uint32_t get, t_start;
 
-	FIRE_RING_CH(userchan);
+	FIRE_RING_CH(chan);
 
 	t_start = NOUVEAU_TIME_MSEC();
-	while (chan->dma.free < size) {
+	while (nvchan->dma.free < size) {
 		CHECK_TIMEOUT();
 
-		get = READ_GET(chan);
-		if (!IN_MASTER_RING(chan, get))
+		get = READ_GET(nvchan);
+		if (!IN_MASTER_RING(nvchan, get))
 			continue;
 
-		if (chan->dma.put >= get) {
-			chan->dma.free = chan->dma.max - chan->dma.cur;
+		if (nvchan->dma.put >= get) {
+			nvchan->dma.free = nvchan->dma.max - nvchan->dma.cur;
 
-			if (chan->dma.free < size) {
+			if (nvchan->dma.free < size) {
 #ifdef NOUVEAU_DMA_DEBUG
-				chan->dma.push_free = 1;
+				nvchan->dma.push_free = 1;
 #endif
-				OUT_RING_CH(userchan,
-					    0x20000000 | chan->dma.base);
+				OUT_RING_CH(chan,
+					    0x20000000 | nvchan->dma.base);
 				if (get <= RING_SKIPS) {
 					/*corner case - will be idle*/
-					if (chan->dma.put <= RING_SKIPS)
-						WRITE_PUT(chan, RING_SKIPS + 1);
+					if (nvchan->dma.put <= RING_SKIPS)
+						WRITE_PUT(nvchan,
+							  RING_SKIPS + 1);
 
 					do {
 						CHECK_TIMEOUT();
-						get = READ_GET(chan);
-						if (!IN_MASTER_RING(chan, get))
+						get = READ_GET(nvchan);
+						if (!IN_MASTER_RING(nvchan,
+								    get))
 							continue;
 					} while (get <= RING_SKIPS);
 				}
 
-				WRITE_PUT(chan, RING_SKIPS);
-				chan->dma.cur  = chan->dma.put = RING_SKIPS;
-				chan->dma.free = get - (RING_SKIPS + 1);
+				WRITE_PUT(nvchan, RING_SKIPS);
+				nvchan->dma.cur  = nvchan->dma.put = RING_SKIPS;
+				nvchan->dma.free = get - (RING_SKIPS + 1);
 			}
 		} else {
-			chan->dma.free = get - chan->dma.cur - 1;
+			nvchan->dma.free = get - nvchan->dma.cur - 1;
 		}
 	}
 
@@ -128,22 +130,22 @@ nouveau_dma_wait(struct nouveau_channel *userchan, int size)
 void
 nouveau_dma_subc_bind(struct nouveau_grobj *grobj)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(grobj->channel);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(grobj->channel);
 	int subc = -1, i;
 	
 	for (i = 0; i < 8; i++) {
-		if (chan->subchannel[i].grobj &&
-		    chan->subchannel[i].grobj->bound == 
+		if (nvchan->subchannel[i].grobj &&
+		    nvchan->subchannel[i].grobj->bound == 
 		    NOUVEAU_GROBJ_EXPLICIT_BIND)
 			continue;
-		if (chan->subchannel[i].seq < chan->subchannel[subc].seq)
+		if (nvchan->subchannel[i].seq < nvchan->subchannel[subc].seq)
 			subc = i;
 	}
 	assert(subc >= 0);
 
-	if (chan->subchannel[subc].grobj)
-		chan->subchannel[subc].grobj->bound = 0;
-	chan->subchannel[subc].grobj = grobj;
+	if (nvchan->subchannel[subc].grobj)
+		nvchan->subchannel[subc].grobj->bound = 0;
+	nvchan->subchannel[subc].grobj = grobj;
 	grobj->subc  = subc;
 	grobj->bound = NOUVEAU_GROBJ_BOUND;
 
@@ -210,23 +212,24 @@ nouveau_dma_parse_pushbuf(struct nouveau_channel *chan, int get, int put)
 #endif
 
 void
-nouveau_dma_kickoff(struct nouveau_channel *userchan)
+nouveau_dma_kickoff(struct nouveau_channel *chan)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 
-	if (chan->dma.cur == chan->dma.put)
+	if (nvchan->dma.cur == nvchan->dma.put)
 		return;
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (chan->dma.push_free) {
-		NOUVEAU_ERR("Packet incomplete: %d left\n", chan->dma.push_free);
+	if (nvchan->dma.push_free) {
+		NOUVEAU_ERR("Packet incomplete: %d left\n",
+			    nvchan->dma.push_free);
 		return;
 	}
 #endif
 
 #ifdef NOUVEAU_DMA_DUMP_POSTRELOC_PUSHBUF
-	nouveau_dma_parse_pushbuf(userchan, chan->dma.put, chan->dma.cur);
+	nouveau_dma_parse_pushbuf(chan, nvchan->dma.put, nvchan->dma.cur);
 #endif
 
-	WRITE_PUT(chan, chan->dma.cur);
+	WRITE_PUT(nvchan, nvchan->dma.cur);
 }

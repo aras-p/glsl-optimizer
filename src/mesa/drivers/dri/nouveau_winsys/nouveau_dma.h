@@ -39,112 +39,112 @@ static char faulty[1024];
 #endif
 
 static inline void
-nouveau_dma_out(struct nouveau_channel *userchan, uint32_t data)
+nouveau_dma_out(struct nouveau_channel *chan, uint32_t data)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (chan->dma.push_free == 0) {
+	if (nvchan->dma.push_free == 0) {
 		NOUVEAU_ERR("No space left in packet. Error at %s\n",faulty);
 		return;
 	}
-	chan->dma.push_free--;
+	nvchan->dma.push_free--;
 #endif
 #ifdef NOUVEAU_DMA_TRACE
 	{
-		uint32_t offset = (chan->dma.cur << 2) + chan->dma.base;
+		uint32_t offset = (nvchan->dma.cur << 2) + nvchan->dma.base;
 		NOUVEAU_MSG("\tOUT_RING %d/0x%08x -> 0x%08x\n",
-			    chan->drm.channel, offset, data);
+			    nvchan->drm.channel, offset, data);
 	}
 #endif
-	chan->pushbuf[chan->dma.cur++] = data;
+	nvchan->pushbuf[nvchan->dma.cur++] = data;
 }
 
 static inline void
-nouveau_dma_outp(struct nouveau_channel *userchan, uint32_t *ptr, int size)
+nouveau_dma_outp(struct nouveau_channel *chan, uint32_t *ptr, int size)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	(void)chan;
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (chan->dma.push_free < size) {
+	if (nvchan->dma.push_free < size) {
 		NOUVEAU_ERR("Packet too small.  Free=%d, Need=%d\n",
-			    chan->dma.push_free, size);
+			    nvchan->dma.push_free, size);
 		return;
 	}
 #endif
 #ifdef NOUVEAU_DMA_TRACE
 	while (size--) {
-		nouveau_dma_out(userchan, *ptr);
+		nouveau_dma_out(chan, *ptr);
 		ptr++;
 	}
 #else
-	memcpy(&chan->pushbuf[chan->dma.cur], ptr, size << 2);
+	memcpy(&nvchan->pushbuf[nvchan->dma.cur], ptr, size << 2);
 #ifdef NOUVEAU_DMA_DEBUG
-	chan->dma.push_free -= size;
+	nvchan->dma.push_free -= size;
 #endif
-	chan->dma.cur += size;
+	nvchan->dma.cur += size;
 #endif
 }
 
 static inline void
-nouveau_dma_begin(struct nouveau_channel *userchan, struct nouveau_grobj *grobj,
+nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 		  int method, int size, const char* file, int line)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	int push_size = size + 1;
 
 #ifdef NOUVEAU_DMA_SUBCHAN_LRU
 	if (grobj->bound == NOUVEAU_GROBJ_UNBOUND)
 		nouveau_dma_subc_bind(grobj);
-	chan->subchannel[grobj->subc].seq = chan->subc_sequence++;
+	nvchan->subchannel[grobj->subc].seq = nvchan->subc_sequence++;
 #endif
 
 #ifdef NOUVEAU_DMA_TRACE
-	NOUVEAU_MSG("BEGIN_RING %d/%08x/%d/0x%04x/%d\n", chan->drm.channel,
+	NOUVEAU_MSG("BEGIN_RING %d/%08x/%d/0x%04x/%d\n", nvchan->drm.channel,
 		    grobj->handle, grobj->subc, method, size);
 #endif
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (chan->dma.push_free) {
+	if (nvchan->dma.push_free) {
 		NOUVEAU_ERR("Previous packet incomplete: %d left. Error at %s\n",
-			    chan->dma.push_free,faulty);
+			    nvchan->dma.push_free,faulty);
 		return;
 	}
 	sprintf(faulty,"%s:%d",file,line);
 #endif
 
-	if (chan->dma.free < push_size) {
-		if (nouveau_dma_wait(userchan, push_size) &&
-		    userchan->hang_notify) {
-			userchan->hang_notify(userchan);
+	if (nvchan->dma.free < push_size) {
+		if (nouveau_dma_wait(chan, push_size) &&
+		    chan->hang_notify) {
+			chan->hang_notify(chan);
 		}
 	}
-	chan->dma.free -= push_size;
+	nvchan->dma.free -= push_size;
 #ifdef NOUVEAU_DMA_DEBUG
-	chan->dma.push_free = push_size;
+	nvchan->dma.push_free = push_size;
 #endif
 
-	nouveau_dma_out(userchan, (size << 18) | (grobj->subc << 13) | method);
+	nouveau_dma_out(chan, (size << 18) | (grobj->subc << 13) | method);
 }
 
 static inline void
-nouveau_dma_bind(struct nouveau_channel *userchan, struct nouveau_grobj *grobj,
+nouveau_dma_bind(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 		 int subc)
 {
-	struct nouveau_channel_priv *chan = nouveau_channel(userchan);
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 
-	if (chan->subchannel[subc].grobj == grobj)
+	if (nvchan->subchannel[subc].grobj == grobj)
 		return;
 
-	if (chan->subchannel[subc].grobj)
-		chan->subchannel[subc].grobj->bound = NOUVEAU_GROBJ_UNBOUND;
-	chan->subchannel[subc].grobj = grobj;
+	if (nvchan->subchannel[subc].grobj)
+		nvchan->subchannel[subc].grobj->bound = NOUVEAU_GROBJ_UNBOUND;
+	nvchan->subchannel[subc].grobj = grobj;
 	grobj->subc  = subc;
 	grobj->bound = NOUVEAU_GROBJ_EXPLICIT_BIND;
 
-	nouveau_dma_begin(userchan, grobj, 0x0000, 1, __FUNCTION__, __LINE__);
-	nouveau_dma_out  (userchan, grobj->handle);
+	nouveau_dma_begin(chan, grobj, 0x0000, 1, __FUNCTION__, __LINE__);
+	nouveau_dma_out  (chan, grobj->handle);
 }
 
 #define BIND_RING_CH(ch,gr,sc)       nouveau_dma_bind((ch), (gr), (sc))

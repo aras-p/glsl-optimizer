@@ -29,62 +29,62 @@
 #include "nouveau_local.h"
 
 int
-nouveau_bo_init(struct nouveau_device *userdev)
+nouveau_bo_init(struct nouveau_device *dev)
 {
 	return 0;
 }
 
 void
-nouveau_bo_takedown(struct nouveau_device *userdev)
+nouveau_bo_takedown(struct nouveau_device *dev)
 {
 }
 
 static int
-nouveau_bo_realloc_gpu(struct nouveau_bo_priv *bo, uint32_t flags, int size)
+nouveau_bo_realloc_gpu(struct nouveau_bo_priv *nvbo, uint32_t flags, int size)
 {
-	struct nouveau_device_priv *nv = nouveau_device(bo->base.device);
+	struct nouveau_device_priv *nvdev = nouveau_device(nvbo->base.device);
 	int ret;
 
-	if (bo->drm.size && bo->drm.size != size) {
+	if (nvbo->drm.size && nvbo->drm.size != size) {
 		struct drm_nouveau_mem_free f;
 
-		if (bo->map) {
-			drmUnmap(bo->map, bo->drm.size);
-			bo->map = NULL;
+		if (nvbo->map) {
+			drmUnmap(nvbo->map, nvbo->drm.size);
+			nvbo->map = NULL;
 		}
 
-		f.flags = bo->drm.flags;
-		f.offset = bo->drm.offset;
-		drmCommandWrite(nv->fd, DRM_NOUVEAU_MEM_FREE, &f, sizeof(f));
+		f.flags = nvbo->drm.flags;
+		f.offset = nvbo->drm.offset;
+		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_MEM_FREE, &f, sizeof(f));
 
-		bo->drm.size = 0;
+		nvbo->drm.size = 0;
 	}
 
-	if (size && !bo->drm.size) {
+	if (size && !nvbo->drm.size) {
 		if (flags) {
-			bo->drm.flags = 0;
+			nvbo->drm.flags = 0;
 			if (flags & NOUVEAU_BO_VRAM)
-				bo->drm.flags |= NOUVEAU_MEM_FB;
+				nvbo->drm.flags |= NOUVEAU_MEM_FB;
 			if (flags & NOUVEAU_BO_GART)
-				bo->drm.flags |= (NOUVEAU_MEM_AGP |
-						  NOUVEAU_MEM_PCI);
-			bo->drm.flags |= NOUVEAU_MEM_MAPPED;
+				nvbo->drm.flags |= (NOUVEAU_MEM_AGP |
+						    NOUVEAU_MEM_PCI);
+			nvbo->drm.flags |= NOUVEAU_MEM_MAPPED;
 		}
 
-		bo->drm.size = size;
+		nvbo->drm.size = size;
 		
-		ret = drmCommandWriteRead(nv->fd, DRM_NOUVEAU_MEM_ALLOC,
-					  &bo->drm, sizeof(bo->drm));
+		ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_MEM_ALLOC,
+					  &nvbo->drm, sizeof(nvbo->drm));
 		if (ret) {
-			free(bo);
+			free(nvbo);
 			return ret;
 		}
 
-		ret = drmMap(nv->fd, bo->drm.map_handle, bo->drm.size,
-			     &bo->map);
+		ret = drmMap(nvdev->fd, nvbo->drm.map_handle, nvbo->drm.size,
+			     &nvbo->map);
 		if (ret) {
-			bo->map = NULL;
-			nouveau_bo_del((void *)&bo);
+			nvbo->map = NULL;
+			nouveau_bo_del((void *)&nvbo);
 			return ret;
 		}
 	}
@@ -93,154 +93,154 @@ nouveau_bo_realloc_gpu(struct nouveau_bo_priv *bo, uint32_t flags, int size)
 }
 
 int
-nouveau_bo_new(struct nouveau_device *userdev, uint32_t flags, int align,
-	       int size, struct nouveau_bo **userbo)
+nouveau_bo_new(struct nouveau_device *dev, uint32_t flags, int align,
+	       int size, struct nouveau_bo **bo)
 {
-	struct nouveau_bo_priv *bo;
+	struct nouveau_bo_priv *nvbo;
 	int ret;
 
-	if (!userdev || !userbo || *userbo)
+	if (!dev || !bo || *bo)
 		return -EINVAL;
 
-	bo = calloc(1, sizeof(*bo));
-	if (!bo)
+	nvbo = calloc(1, sizeof(struct nouveau_bo_priv));
+	if (!nvbo)
 		return -ENOMEM;
-	bo->base.device = userdev;
-	bo->drm.alignment = align;
+	nvbo->base.device = dev;
+	nvbo->drm.alignment = align;
 
 	if (flags & NOUVEAU_BO_PIN) {
-		ret = nouveau_bo_realloc_gpu(bo, flags, size);
+		ret = nouveau_bo_realloc_gpu(nvbo, flags, size);
 		if (ret) {
-			free(bo);
+			free(nvbo);
 			return ret;
 		}	
 	} else {
-		bo->sysmem = malloc(size);
-		if (!bo->sysmem) {
-			free(bo);
+		nvbo->sysmem = malloc(size);
+		if (!nvbo->sysmem) {
+			free(nvbo);
 			return -ENOMEM;
 		}
 	}
 
-	bo->base.size = size;
-	bo->base.offset = bo->drm.offset;
-	bo->base.handle = (unsigned long)bo;
-	bo->refcount = 1;
-	*userbo = &bo->base;
+	nvbo->base.size = size;
+	nvbo->base.offset = nvbo->drm.offset;
+	nvbo->base.handle = bo_to_ptr(nvbo);
+	nvbo->refcount = 1;
+	*bo = &nvbo->base;
 	return 0;
 }
 
 int
-nouveau_bo_user(struct nouveau_device *userdev, void *ptr, int size,
-		struct nouveau_bo **userbo)
+nouveau_bo_user(struct nouveau_device *dev, void *ptr, int size,
+		struct nouveau_bo **bo)
 {
-	struct nouveau_bo_priv *bo;
+	struct nouveau_bo_priv *nvbo;
 
-	if (!userdev || !userbo || *userbo)
+	if (!dev || !bo || *bo)
 		return -EINVAL;
 
-	bo = calloc(1, sizeof(*bo));
-	if (!bo)
+	nvbo = calloc(1, sizeof(*nvbo));
+	if (!nvbo)
 		return -ENOMEM;
-	bo->base.device = userdev;
+	nvbo->base.device = dev;
 	
-	bo->sysmem = ptr;
-	bo->user = 1;
+	nvbo->sysmem = ptr;
+	nvbo->user = 1;
 
-	bo->base.size = size;
-	bo->base.offset = bo->drm.offset;
-	bo->base.handle = (unsigned long)bo;
-	bo->refcount = 1;
-	*userbo = &bo->base;
+	nvbo->base.size = size;
+	nvbo->base.offset = nvbo->drm.offset;
+	nvbo->base.handle = bo_to_ptr(nvbo);
+	nvbo->refcount = 1;
+	*bo = &nvbo->base;
 	return 0;
 }
 
 int
-nouveau_bo_ref(struct nouveau_device *userdev, uint64_t handle,
-	       struct nouveau_bo **userbo)
+nouveau_bo_ref(struct nouveau_device *dev, uint64_t handle,
+	       struct nouveau_bo **bo)
 {
-	struct nouveau_bo_priv *bo = (void *)(unsigned long)handle;
+	struct nouveau_bo_priv *nvbo = ptr_to_bo(handle);
 
-	if (!userdev || !userbo || *userbo)
+	if (!dev || !bo || *bo)
 		return -EINVAL;
 
-	bo->refcount++;
-	*userbo = &bo->base;
+	nvbo->refcount++;
+	*bo = &nvbo->base;
 	return 0;
 }
 
 int
-nouveau_bo_resize(struct nouveau_bo *userbo, int size)
+nouveau_bo_resize(struct nouveau_bo *bo, int size)
 {
-	struct nouveau_bo_priv *bo = nouveau_bo(userbo);
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
 	int ret;
 
-	if (!bo || bo->user)
+	if (!nvbo || nvbo->user)
 		return -EINVAL;
 
-	if (bo->sysmem) {
-		bo->sysmem = realloc(bo->sysmem, size);
-		if (!bo->sysmem)
+	if (nvbo->sysmem) {
+		nvbo->sysmem = realloc(nvbo->sysmem, size);
+		if (!nvbo->sysmem)
 			return -ENOMEM;
 	} else {
-		ret = nouveau_bo_realloc_gpu(bo, 0, size);
+		ret = nouveau_bo_realloc_gpu(nvbo, 0, size);
 		if (ret)
 			return ret;
 	}
 
-	bo->base.size = size;
+	nvbo->base.size = size;
 	return 0;
 }
 
 void
-nouveau_bo_del(struct nouveau_bo **userbo)
+nouveau_bo_del(struct nouveau_bo **bo)
 {
-	struct nouveau_bo_priv *bo;
+	struct nouveau_bo_priv *nvbo;
 
-	if (!userbo || !*userbo)
+	if (!bo || !*bo)
 		return;
-	bo = nouveau_bo(*userbo);
-	*userbo = NULL;
+	nvbo = nouveau_bo(*bo);
+	*bo = NULL;
 
-	if (--bo->refcount)
+	if (--nvbo->refcount)
 		return;
 
-	if (bo->fence)
-		nouveau_fence_wait(&bo->fence);
+	if (nvbo->fence)
+		nouveau_fence_wait(&nvbo->fence);
 
-	nouveau_bo_realloc_gpu(bo, 0, 0);
-	if (bo->sysmem && !bo->user)
-		free(bo->sysmem);
-	free(bo);
+	nouveau_bo_realloc_gpu(nvbo, 0, 0);
+	if (nvbo->sysmem && !nvbo->user)
+		free(nvbo->sysmem);
+	free(nvbo);
 }
 
 int
-nouveau_bo_map(struct nouveau_bo *userbo, uint32_t flags)
+nouveau_bo_map(struct nouveau_bo *bo, uint32_t flags)
 {
-	struct nouveau_bo_priv *bo = nouveau_bo(userbo);
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
 
-	if (!bo)
+	if (!nvbo)
 		return -EINVAL;
 
-	if (bo->sysmem)
-		userbo->map = bo->sysmem;
+	if (nvbo->sysmem)
+		bo->map = nvbo->sysmem;
 	else
-		userbo->map = bo->map;
+		bo->map = nvbo->map;
 	return 0;
 }
 
 void
-nouveau_bo_unmap(struct nouveau_bo *userbo)
+nouveau_bo_unmap(struct nouveau_bo *bo)
 {
-	userbo->map = NULL;
+	bo->map = NULL;
 }
 
 static int
-nouveau_bo_upload(struct nouveau_bo_priv *bo)
+nouveau_bo_upload(struct nouveau_bo_priv *nvbo)
 {
-	if (bo->fence)
-		nouveau_fence_wait(&bo->fence);
-	memcpy(bo->map, bo->sysmem, bo->drm.size);
+	if (nvbo->fence)
+		nouveau_fence_wait(&nvbo->fence);
+	memcpy(nvbo->map, nvbo->sysmem, nvbo->drm.size);
 	return 0;
 }
 

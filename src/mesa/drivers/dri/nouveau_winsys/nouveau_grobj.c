@@ -26,82 +26,82 @@
 #include "nouveau_drmif.h"
 
 int
-nouveau_grobj_alloc(struct nouveau_channel *userchan, uint32_t handle,
-		    int class, struct nouveau_grobj **usergrobj)
+nouveau_grobj_alloc(struct nouveau_channel *chan, uint32_t handle,
+		    int class, struct nouveau_grobj **grobj)
 {
-	struct nouveau_device_priv *nv = nouveau_device(userchan->device);
-	struct nouveau_grobj_priv *gr;
+	struct nouveau_device_priv *nvdev = nouveau_device(chan->device);
+	struct nouveau_grobj_priv *nvgrobj;
 	struct drm_nouveau_grobj_alloc g;
 	int ret;
 
-	if (!nv || !usergrobj || *usergrobj)
+	if (!nvdev || !grobj || *grobj)
 		return -EINVAL;
 
-	gr = calloc(1, sizeof(*gr));
-	if (!gr)
+	nvgrobj = calloc(1, sizeof(*nvgrobj));
+	if (!nvgrobj)
 		return -ENOMEM;
-	gr->base.channel = userchan;
-	gr->base.handle  = handle;
-	gr->base.grclass = class;
+	nvgrobj->base.channel = chan;
+	nvgrobj->base.handle  = handle;
+	nvgrobj->base.grclass = class;
 
-	g.channel = userchan->id;
+	g.channel = chan->id;
 	g.handle  = handle;
 	g.class   = class;
-	ret = drmCommandWrite(nv->fd, DRM_NOUVEAU_GROBJ_ALLOC, &g, sizeof(g));
+	ret = drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GROBJ_ALLOC,
+			      &g, sizeof(g));
 	if (ret) {
-		nouveau_grobj_free((void *)&gr);
+		nouveau_grobj_free((void *)&grobj);
 		return ret;
 	}
 
-	*usergrobj = &gr->base;
+	*grobj = &nvgrobj->base;
 	return 0;
 }
 
 int
-nouveau_grobj_ref(struct nouveau_channel *userchan, uint32_t handle,
-		  struct nouveau_grobj **usergr)
+nouveau_grobj_ref(struct nouveau_channel *chan, uint32_t handle,
+		  struct nouveau_grobj **grobj)
 {
-	struct nouveau_grobj_priv *gr;
+	struct nouveau_grobj_priv *nvgrobj;
 
-	if (!userchan || !usergr || *usergr)
+	if (!chan || !grobj || *grobj)
 		return -EINVAL;
 
-	gr = calloc(1, sizeof(*gr));
-	if (!gr)
+	nvgrobj = calloc(1, sizeof(struct nouveau_grobj_priv));
+	if (!nvgrobj)
 		return -ENOMEM;
-	gr->base.channel = userchan;
-	gr->base.handle = handle;
-	gr->base.grclass = 0;
+	nvgrobj->base.channel = chan;
+	nvgrobj->base.handle = handle;
+	nvgrobj->base.grclass = 0;
 
-	*usergr = &gr->base;
+	*grobj = &nvgrobj->base;
 	return 0;
 }
 
 void
-nouveau_grobj_free(struct nouveau_grobj **usergrobj)
+nouveau_grobj_free(struct nouveau_grobj **grobj)
 {
-	struct nouveau_grobj_priv *gr;
+	struct nouveau_device_priv *nvdev;
+	struct nouveau_channel_priv *chan;
+	struct nouveau_grobj_priv *nvgrobj;
 
-	if (!usergrobj)
+	if (!grobj || !*grobj)
 		return;
-	gr = nouveau_grobj(*usergrobj);
-	*usergrobj = NULL;
+	nvgrobj = nouveau_grobj(*grobj);
+	*grobj = NULL;
 
-	if (gr) {
-		struct nouveau_channel_priv *chan;
-		struct nouveau_device_priv *nv;
+
+	chan = nouveau_channel(nvgrobj->base.channel);
+	nvdev = nouveau_device(chan->base.device);
+
+	if (nvgrobj->base.grclass) {
 		struct drm_nouveau_gpuobj_free f;
 
-		chan = nouveau_channel(gr->base.channel);
-		nv   = nouveau_device(chan->base.device);
-
-		if (gr->base.grclass) {
-			f.channel = chan->drm.channel;
-			f.handle  = gr->base.handle;
-			drmCommandWrite(nv->fd, DRM_NOUVEAU_GPUOBJ_FREE,
-					&f, sizeof(f));	
-		}
-		free(gr);
+		f.channel = chan->drm.channel;
+		f.handle  = nvgrobj->base.handle;
+		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GPUOBJ_FREE,
+				&f, sizeof(f));	
 	}
+	free(nvgrobj);
 }
 

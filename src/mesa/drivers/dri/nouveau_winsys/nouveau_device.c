@@ -27,40 +27,40 @@
 #include "nouveau_drmif.h"
 
 int
-nouveau_device_open_existing(struct nouveau_device **userdev, int close,
+nouveau_device_open_existing(struct nouveau_device **dev, int close,
 			     int fd, drm_context_t ctx)
 {
-	struct nouveau_device_priv *nv;
+	struct nouveau_device_priv *nvdev;
 	int ret;
 
-	if (!userdev || *userdev)
+	if (!dev || *dev)
 	    return -EINVAL;
 
-	nv = calloc(1, sizeof(*nv));
-	if (!nv)
+	nvdev = calloc(1, sizeof(*nvdev));
+	if (!nvdev)
 	    return -ENOMEM;
-	nv->fd = fd;
-	nv->ctx = ctx;
-	nv->needs_close = close;
+	nvdev->fd = fd;
+	nvdev->ctx = ctx;
+	nvdev->needs_close = close;
 
-	drmCommandNone(nv->fd, DRM_NOUVEAU_CARD_INIT);
+	drmCommandNone(nvdev->fd, DRM_NOUVEAU_CARD_INIT);
 
-	if ((ret = nouveau_bo_init(&nv->base))) {
-		nouveau_device_close((void *)&nv);
+	if ((ret = nouveau_bo_init(&nvdev->base))) {
+		nouveau_device_close((void *)&nvdev);
 		return ret;
 	}
 
-	*userdev = &nv->base;
+	*dev = &nvdev->base;
 	return 0;
 }
 
 int
-nouveau_device_open(struct nouveau_device **userdev, const char *busid)
+nouveau_device_open(struct nouveau_device **dev, const char *busid)
 {
 	drm_context_t ctx;
 	int fd, ret;
 
-	if (!userdev || *userdev)
+	if (!dev || *dev)
 		return -EINVAL;
 
 	fd = drmOpen("nouveau", busid);
@@ -73,7 +73,7 @@ nouveau_device_open(struct nouveau_device **userdev, const char *busid)
 		return ret;
 	}
 
-	ret = nouveau_device_open_existing(userdev, 1, fd, ctx);
+	ret = nouveau_device_open_existing(dev, 1, fd, ctx);
 	if (ret) {
 	    drmDestroyContext(fd, ctx);
 	    drmClose(fd);
@@ -84,37 +84,38 @@ nouveau_device_open(struct nouveau_device **userdev, const char *busid)
 }
 
 void
-nouveau_device_close(struct nouveau_device **userdev)
+nouveau_device_close(struct nouveau_device **dev)
 {
-	struct nouveau_device_priv *nv;
+	struct nouveau_device_priv *nvdev;
 
-	if (userdev || !*userdev)
+	if (dev || !*dev)
 		return;
-	nv = (struct nouveau_device_priv *)*userdev;
-	*userdev = NULL;
+	nvdev = nouveau_device(*dev);
+	*dev = NULL;
 
-	nouveau_bo_takedown(&nv->base);
+	nouveau_bo_takedown(&nvdev->base);
 
-	if (nv->needs_close) {
-		drmDestroyContext(nv->fd, nv->ctx);
-		drmClose(nv->fd);
+	if (nvdev->needs_close) {
+		drmDestroyContext(nvdev->fd, nvdev->ctx);
+		drmClose(nvdev->fd);
 	}
-	free(nv);
+	free(nvdev);
 }
 
 int
-nouveau_device_get_param(struct nouveau_device *userdev,
+nouveau_device_get_param(struct nouveau_device *dev,
 			 uint64_t param, uint64_t *value)
 {
-	struct nouveau_device_priv *nv = (struct nouveau_device_priv *)userdev;
+	struct nouveau_device_priv *nvdev = nouveau_device(dev);
 	struct drm_nouveau_getparam g;
 	int ret;
 
-	if (!nv || !value)
+	if (!nvdev || !value)
 		return -EINVAL;
 
 	g.param = param;
-	ret = drmCommandWriteRead(nv->fd, DRM_NOUVEAU_GETPARAM, &g, sizeof(g));
+	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_GETPARAM,
+				  &g, sizeof(g));
 	if (ret)
 		return ret;
 
@@ -123,19 +124,20 @@ nouveau_device_get_param(struct nouveau_device *userdev,
 }
 
 int
-nouveau_device_set_param(struct nouveau_device *userdev,
+nouveau_device_set_param(struct nouveau_device *dev,
 			 uint64_t param, uint64_t value)
 {
-	struct nouveau_device_priv *nv = (struct nouveau_device_priv *)userdev;
+	struct nouveau_device_priv *nvdev = nouveau_device(dev);
 	struct drm_nouveau_setparam s;
 	int ret;
 
-	if (!nv)
+	if (!nvdev)
 		return -EINVAL;
 
 	s.param = param;
 	s.value = value;
-	ret = drmCommandWriteRead(nv->fd, DRM_NOUVEAU_SETPARAM, &s, sizeof(s));
+	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_SETPARAM,
+				  &s, sizeof(s));
 	if (ret)
 		return ret;
 

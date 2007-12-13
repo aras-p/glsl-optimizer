@@ -27,70 +27,67 @@
 #include "nouveau_local.h"
 
 #define NOTIFIER(__v)                                                          \
-	struct nouveau_notifier_priv *notifier = nouveau_notifier(user);       \
-	volatile uint32_t *n = (void*)notifier->map + (id * 32)
+	struct nouveau_notifier_priv *nvnotify = nouveau_notifier(notifier);   \
+	volatile uint32_t *__v = (void*)nvnotify->map + (id * 32)
 
 int
-nouveau_notifier_alloc(struct nouveau_channel *userchan, uint32_t handle,
-		       int count, struct nouveau_notifier **usernotifier)
+nouveau_notifier_alloc(struct nouveau_channel *chan, uint32_t handle,
+		       int count, struct nouveau_notifier **notifier)
 {
-	struct nouveau_notifier_priv *notifier;
+	struct nouveau_notifier_priv *nvnotify;
 	int ret;
 
-	if (!userchan || !usernotifier || *usernotifier)
+	if (!chan || !notifier || *notifier)
 		return -EINVAL;
 
-	notifier = calloc(1, sizeof(*notifier));
-	if (!notifier)
+	nvnotify = calloc(1, sizeof(struct nouveau_notifier_priv));
+	if (!nvnotify)
 		return -ENOMEM;
-	notifier->base.channel = userchan;
-	notifier->base.handle  = handle;
+	nvnotify->base.channel = chan;
+	nvnotify->base.handle  = handle;
 
-	notifier->drm.channel = userchan->id;
-	notifier->drm.handle  = handle;
-	notifier->drm.count   = count;
-	if ((ret = drmCommandWriteRead(nouveau_device(userchan->device)->fd,
+	nvnotify->drm.channel = chan->id;
+	nvnotify->drm.handle  = handle;
+	nvnotify->drm.count   = count;
+	if ((ret = drmCommandWriteRead(nouveau_device(chan->device)->fd,
 				       DRM_NOUVEAU_NOTIFIEROBJ_ALLOC,
-				       &notifier->drm,
-				       sizeof(notifier->drm)))) {
-		nouveau_notifier_free((void *)&notifier);
+				       &nvnotify->drm,
+				       sizeof(nvnotify->drm)))) {
+		nouveau_notifier_free((void *)&nvnotify);
 		return ret;
 	}
 
-	notifier->map = (void *)nouveau_channel(userchan)->notifier_block +
-				notifier->drm.offset;
-	*usernotifier = &notifier->base;
+	nvnotify->map = (void *)nouveau_channel(chan)->notifier_block +
+				nvnotify->drm.offset;
+	*notifier = &nvnotify->base;
 	return 0;
 }
 
 void
-nouveau_notifier_free(struct nouveau_notifier **usernotifier)
+nouveau_notifier_free(struct nouveau_notifier **notifier)
 {
 
-	struct nouveau_notifier_priv *notifier;
+	struct nouveau_notifier_priv *nvnotify;
+	struct nouveau_channel_priv *nvchan;
+	struct nouveau_device_priv *nvdev;
+	struct drm_nouveau_gpuobj_free f;
 
-	if (!usernotifier)
+	if (!notifier || !*notifier)
 		return;
-	notifier = nouveau_notifier(*usernotifier);
-	*usernotifier = NULL;
+	nvnotify = nouveau_notifier(*notifier);
+	*notifier = NULL;
 
-	if (notifier) {
-		struct nouveau_channel_priv *chan;
-		struct nouveau_device_priv *nv;
-		struct drm_nouveau_gpuobj_free f;
+	nvchan = nouveau_channel(nvnotify->base.channel);
+	nvdev   = nouveau_device(nvchan->base.device);
 
-		chan = nouveau_channel(notifier->base.channel);
-		nv   = nouveau_device(chan->base.device);
-
-		f.channel = chan->drm.channel;
-		f.handle  = notifier->base.handle;
-		drmCommandWrite(nv->fd, DRM_NOUVEAU_GPUOBJ_FREE, &f, sizeof(f));		
-		free(notifier);
-	}
+	f.channel = nvchan->drm.channel;
+	f.handle  = nvnotify->base.handle;
+	drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GPUOBJ_FREE, &f, sizeof(f));		
+	free(nvnotify);
 }
 
 void
-nouveau_notifier_reset(struct nouveau_notifier *user, int id)
+nouveau_notifier_reset(struct nouveau_notifier *notifier, int id)
 {
 	NOTIFIER(n);
 
@@ -102,7 +99,7 @@ nouveau_notifier_reset(struct nouveau_notifier *user, int id)
 }
 
 uint32_t
-nouveau_notifier_status(struct nouveau_notifier *user, int id)
+nouveau_notifier_status(struct nouveau_notifier *notifier, int id)
 {
 	NOTIFIER(n);
 
@@ -110,7 +107,7 @@ nouveau_notifier_status(struct nouveau_notifier *user, int id)
 }
 
 uint32_t
-nouveau_notifier_return_val(struct nouveau_notifier *user, int id)
+nouveau_notifier_return_val(struct nouveau_notifier *notifier, int id)
 {
 	NOTIFIER(n);
 
@@ -118,7 +115,7 @@ nouveau_notifier_return_val(struct nouveau_notifier *user, int id)
 }
 
 int
-nouveau_notifier_wait_status(struct nouveau_notifier *user, int id,
+nouveau_notifier_wait_status(struct nouveau_notifier *notifier, int id,
 			     int status, int timeout)
 {
 	NOTIFIER(n);
