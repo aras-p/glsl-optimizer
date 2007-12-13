@@ -233,7 +233,7 @@ fi
 AC_ARG_WITH(demos,
     [AS_HELP_STRING([--with-demos@<:@=DIRS...@:>@],
         [optional comma delimited demo directories to build
-        @<:@default=yes if source available@:>@])],
+        @<:@default=auto if source available@:>@])],
     with_demos="$withval",
     with_demos="$default_demos")
 if test "x$with_demos" = x; then
@@ -372,7 +372,7 @@ AC_ARG_ENABLE(driglx-direct,
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH(dri-drivers,
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
-        [comma delimited DRI drivers to build @<:@default=auto by platform@:>@])],
+        [comma delimited DRI drivers, e.g. "i965,radeon,nouveau" @<:@default=auto@:>@])],
     with_dri_drivers="$withval",
     with_dri_drivers=yes)
 if test "x$with_dri_drivers" = x; then
