@@ -203,6 +203,9 @@ static void * brw_create_fs_state(struct pipe_context *pipe,
    brw_shader_info(shader->tokens,
 		   &brw_fp->info);
 
+   tgsi_dump(shader->tokens, 0);
+
+
    return (void *)brw_fp;
 }
 

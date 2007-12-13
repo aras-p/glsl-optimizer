@@ -189,6 +189,9 @@ static void upload_wm_surfaces(struct brw_context *brw )
 
    {
       struct brw_surface_state surf;
+
+      /* BRW_NEW_FRAMEBUFFER
+       */
       struct pipe_surface *region = brw->attribs.FrameBuffer.cbufs[0];/*fixme*/
 
       memset(&surf, 0, sizeof(surf));
@@ -213,7 +216,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
 	 surf.ss0.surface_type = BRW_SURFACE_NULL;
       }
 
-      /* _NEW_COLOR */
+      /* BRW_NEW_BLEND */
       surf.ss0.color_blend = (!brw->attribs.Blend->logicop_enable &&
 			      brw->attribs.Blend->blend_enable);
 
@@ -235,7 +238,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct brw_texture *texUnit = brw->attribs.Texture[i];
 
-      /* _NEW_TEXTURE, BRW_NEW_TEXDATA
+      /* BRW_NEW_TEXTURE
        */
       if (texUnit->base.refcount/*(texUnit->refcount > 0) == really used */) {
 
@@ -299,7 +302,9 @@ static void emit_reloc_wm_surfaces(struct brw_context *brw)
 
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = (BRW_NEW_FRAMEBUFFER |
+	      BRW_NEW_BLEND |
+	      BRW_NEW_TEXTURE),
       .cache = 0
    },
    .update = upload_wm_surfaces,
