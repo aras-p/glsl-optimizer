@@ -97,13 +97,6 @@ static void brw_upload_vs_prog( struct brw_context *brw )
    key.copy_edgeflag = (brw->attribs.Raster->fill_cw != PIPE_POLYGON_MODE_FILL ||
 			brw->attribs.Raster->fill_ccw != PIPE_POLYGON_MODE_FILL);
 
-#if 0
-   /* BRW_NEW_METAOPS
-    */
-   if (brw->metaops.active)
-      key.know_w_is_one = 1;
-#endif
-
    /* Make an early check for the key.
     */
    if (brw_search_cache(&brw->cache[BRW_VS_PROG],
@@ -120,9 +113,6 @@ static void brw_upload_vs_prog( struct brw_context *brw )
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-#if 0
-      .brw   = BRW_NEW_VS | BRW_NEW_METAOPS,
-#endif
       .brw   = BRW_NEW_VS,
       .cache = 0
    },
