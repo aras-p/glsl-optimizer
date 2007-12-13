@@ -9,7 +9,8 @@ m4_define(mesa_minor, 1)
 m4_define(mesa_tiny, 0)
 m4_define(mesa_version, [mesa_major().mesa_minor().mesa_tiny()])
 
-AC_INIT(Mesa, mesa_version(), mesa3d@sourceforge.net)
+AC_INIT([Mesa],[mesa_version()],
+    [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR(bin)
 AC_CANONICAL_HOST
 
@@ -769,7 +770,8 @@ LDFLAGS="$_SAVE_LDFLAGS"
 CPPFLAGS="$_SAVE_CPPFLAGS"
 
 dnl Substitute the config
-AC_OUTPUT([configs/autoconf])
+AC_CONFIG_FILES([configs/autoconf])
+AC_OUTPUT
 
 dnl Replace the configs/current symlink
 if test -f configs/current || test -L configs/current; then
