@@ -207,18 +207,21 @@ static unsigned get_index_type(int type)
 boolean brw_upload_vertex_buffers( struct brw_context *brw )
 {
    struct brw_array_state vbp;
+   unsigned nr_enabled = 0;
    unsigned i;
-   int nr_enabled = brw->vb.last_vb + 1;
 
    memset(&vbp, 0, sizeof(vbp));
 
    /* This is a hardware limit:
     */
-   if (nr_enabled >= BRW_VEP_MAX)
-	 return FALSE;
 
-   for (i = 0; i < nr_enabled; i++)
+   for (i = 0; i < BRW_VEP_MAX; i++)
    {
+      if (brw->vb.vbo_array[i] == NULL) {
+	 nr_enabled = i;
+	 break;
+      }
+
       vbp.vb[i].vb0.bits.pitch = brw->vb.vbo_array[i].pitch;
       vbp.vb[i].vb0.bits.pad = 0;
       vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
