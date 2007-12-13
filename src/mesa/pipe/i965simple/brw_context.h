@@ -489,7 +489,7 @@ struct brw_context
       /* Arrays with buffer objects to copy non-bufferobj arrays into
        * for upload:
        */
-      struct pipe_vertex_buffer vbo_array[PIPE_ATTRIB_MAX];
+      struct pipe_vertex_buffer *vbo_array[PIPE_ATTRIB_MAX];
 
       struct brw_vertex_element inputs[PIPE_ATTRIB_MAX];
 

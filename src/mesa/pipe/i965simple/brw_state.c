@@ -273,14 +273,11 @@ static void brw_set_viewport_state( struct pipe_context *pipe,
 
 
 static void brw_set_vertex_buffer( struct pipe_context *pipe,
-                                    unsigned index,
-                                    const struct pipe_vertex_buffer *buffer )
+				   unsigned index,
+				   const struct pipe_vertex_buffer *buffer )
 {
    struct brw_context *brw = brw_context(pipe);
-   brw->vb.vbo_array[index] = *buffer;
-   if (index > brw->vb.last_vb)
-      brw->vb.last_vb = index;
-   assert(brw->vb.last_vb < BRW_VEP_MAX);
+   brw->vb.vbo_array[index] = buffer;
 }
 
 static void brw_set_vertex_element(struct pipe_context *pipe,

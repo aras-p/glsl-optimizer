@@ -202,9 +202,7 @@ static void upload_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((depth_surface->pitch * depth_surface->cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-#if 0
-		(depth_surface->region->tiled << 27) |
-#endif
+//		(depth_surface->region->tiled << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(depth_surface->buffer,
 		PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE, 0);

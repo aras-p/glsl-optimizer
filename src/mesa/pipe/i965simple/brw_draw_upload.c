@@ -217,18 +217,18 @@ boolean brw_upload_vertex_buffers( struct brw_context *brw )
 
    for (i = 0; i < BRW_VEP_MAX; i++)
    {
-      if (brw->vb.vbo_array[i] == NULL) {
+      if (brw->vb.vbo_array[i]->buffer == NULL) {
 	 nr_enabled = i;
 	 break;
       }
 
-      vbp.vb[i].vb0.bits.pitch = brw->vb.vbo_array[i].pitch;
+      vbp.vb[i].vb0.bits.pitch = brw->vb.vbo_array[i]->pitch;
       vbp.vb[i].vb0.bits.pad = 0;
       vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
       vbp.vb[i].vb0.bits.vb_index = i;
-      vbp.vb[i].offset = brw->vb.vbo_array[i].buffer_offset;
-      vbp.vb[i].buffer = brw->vb.vbo_array[i].buffer;
-      vbp.vb[i].max_index = brw->vb.vbo_array[i].max_index;
+      vbp.vb[i].offset = brw->vb.vbo_array[i]->buffer_offset;
+      vbp.vb[i].buffer = brw->vb.vbo_array[i]->buffer;
+      vbp.vb[i].max_index = brw->vb.vbo_array[i]->max_index;
    }
 
 
@@ -263,7 +263,7 @@ boolean brw_upload_vertex_elements( struct brw_context *brw )
    for (i = 0; i < nr_enabled; i++) {
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
-      switch (brw->vb.vbo_array[input->vep.ve0.vertex_buffer_index].pitch) {
+      switch (brw->vb.vbo_array[input->vep.ve0.vertex_buffer_index]->pitch) {
       case 0: input->vep.ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_0;
       case 1: input->vep.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_0;
       case 2: input->vep.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_0;

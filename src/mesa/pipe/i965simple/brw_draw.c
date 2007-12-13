@@ -151,7 +151,6 @@ static boolean brw_try_draw_elements( struct pipe_context *pipe,
 				      unsigned count )
 {
    struct brw_context *brw = brw_context(pipe);
-   boolean retval = FALSE;
 
    /* Set the first primitive ahead of validate_state:
     */
