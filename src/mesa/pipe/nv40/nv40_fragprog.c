@@ -701,10 +701,34 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 {
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	uint32_t fp_control;
+	int i;
 
 	if (!fp->translated) {
-		NOUVEAU_ERR("fragprog invalid, using passthrough shader\n");
-		fp = &passthrough_fp;
+		nv40_fragprog_translate(nv40, fp);
+		if (!fp->translated) {
+			NOUVEAU_ERR("invalid, using passthrough shader\n");
+			fp = &passthrough_fp;
+		}
+	}
+
+	if (fp->num_consts) {
+		float *map = ws->buffer_map(ws, nv40->fragprog.constant_buf,
+					    PIPE_BUFFER_FLAG_READ);
+		for (i = 0; i < fp->num_consts; i++) {
+			uint pid = fp->consts[i].pipe_id;
+
+			if (pid == -1)
+				continue;
+
+			if (!memcmp(&fp->insn[fp->consts[i].hw_id], &map[pid*4],
+				    4 * sizeof(float)))
+				continue;
+
+			memcpy(&fp->insn[fp->consts[i].hw_id], &map[pid*4],
+			       4 * sizeof(float));
+			fp->on_hw = 0;
+		}
+		ws->buffer_unmap(ws, nv40->fragprog.constant_buf);
 	}
 
 	if (!fp->on_hw) {
@@ -712,7 +736,6 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 			fp->buffer = ws->buffer_create(ws, 0x100, 0, 0);
 
 #if 0
-		int i;
 		for (i = 0; i < fp->insn_len; i++)
 			NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
 #endif
