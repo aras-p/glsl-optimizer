@@ -79,14 +79,15 @@ static GLint S_FIXED(GLfloat value, GLuint frac_bits)
 }
 
 
-static GLuint upload_default_color( struct brw_context *brw,
-				    const GLfloat *color )
+static dri_bo *upload_default_color( struct brw_context *brw,
+				     const GLfloat *color )
 {
    struct brw_sampler_default_color sdc;
 
    COPY_4V(sdc.color, color); 
    
-   return brw_cache_data( &brw->cache[BRW_SAMPLER_DEFAULT_COLOR], &sdc );
+   return brw_cache_data( &brw->cache, BRW_SAMPLER_DEFAULT_COLOR, &sdc,
+			  NULL, 0 );
 }
 
 
@@ -94,7 +95,7 @@ static GLuint upload_default_color( struct brw_context *brw,
  */
 static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
 				      struct gl_texture_object *texObj,
-				      GLuint sdc_gs_offset,
+				      dri_bo *sdc_bo,
 				      struct brw_sampler_state *sampler)
 {   
    _mesa_memset(sampler, 0, sizeof(*sampler));
@@ -195,7 +196,7 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
    sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(texObj->MaxLod, 0), 13), 6);
    sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(texObj->MinLod, 0), 13), 6);
    
-   sampler->ss2.default_color_pointer = sdc_gs_offset >> 5;
+   sampler->ss2.default_color_pointer = sdc_bo->offset >> 5; /* reloc */
 }
 
 
@@ -208,6 +209,7 @@ static void upload_wm_samplers( struct brw_context *brw )
 {
    GLuint unit;
    GLuint sampler_count = 0;
+   dri_bo *reloc_bufs[BRW_MAX_TEX_UNIT];
 
    /* _NEW_TEXTURE */
    for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
@@ -215,15 +217,20 @@ static void upload_wm_samplers( struct brw_context *brw )
 	 struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[unit];
 	 struct gl_texture_object *texObj = texUnit->_Current;
 
-	 GLuint sdc_gs_offset = upload_default_color(brw, texObj->BorderColor);
+	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
+	 brw->wm.sdc_bo[unit] = upload_default_color(brw, texObj->BorderColor);
 
 	 brw_update_sampler_state(texUnit,
-				  texObj, 
-				  sdc_gs_offset,
+				  texObj,
+				  brw->wm.sdc_bo[unit],
 				  &brw->wm.sampler[unit]);
 
 	 sampler_count = unit + 1;
+      } else {
+	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
+	 brw->wm.sdc_bo[unit] = NULL;
       }
+      reloc_bufs[unit] = brw->wm.sdc_bo[unit];
    }
    
    if (brw->wm.sampler_count != sampler_count) {
@@ -231,15 +238,39 @@ static void upload_wm_samplers( struct brw_context *brw )
       brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 
-   brw->wm.sampler_gs_offset = 0;
-
-   if (brw->wm.sampler_count) 
-      brw->wm.sampler_gs_offset = 
-	 brw_cache_data_sz(&brw->cache[BRW_SAMPLER],
+   dri_bo_unreference(brw->wm.sampler_bo);
+   if (brw->wm.sampler_count) {
+      brw->wm.sampler_bo =
+	 brw_cache_data_sz(&brw->cache, BRW_SAMPLER,
 			   brw->wm.sampler,
-			   sizeof(struct brw_sampler_state) * brw->wm.sampler_count);
+			   sizeof(struct brw_sampler_state) *
+			   brw->wm.sampler_count,
+			   reloc_bufs, BRW_MAX_TEX_UNIT);
+   } else {
+      brw->wm.sampler_bo = NULL;
+   }
 }
 
+static void emit_reloc_wm_samplers(struct brw_context *brw)
+{
+   GLuint unit;
+
+   if (brw->wm.sampler_count == 0)
+      return;
+
+   /* Emit SDC relocations */
+   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
+      if (!brw->attribs.Texture->Unit[unit]._ReallyEnabled)
+	 continue;
+
+      dri_emit_reloc(brw->wm.sampler_bo,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		     0,
+		     unit * sizeof(struct brw_sampler_state) +
+		     offsetof(struct brw_sampler_state, ss2),
+		     brw->wm.sdc_bo[unit]);
+   }
+}
 
 const struct brw_tracked_state brw_wm_samplers = {
    .dirty = {
@@ -247,7 +278,8 @@ const struct brw_tracked_state brw_wm_samplers = {
       .brw = 0,
       .cache = 0
    },
-   .update = upload_wm_samplers
+   .update = upload_wm_samplers,
+  .emit_reloc = emit_reloc_wm_samplers,
 };
 
 

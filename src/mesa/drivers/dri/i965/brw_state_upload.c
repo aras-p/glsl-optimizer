@@ -112,8 +112,7 @@ void brw_init_state( struct brw_context *brw )
 {
    GLuint i;
 
-   brw_init_pools(brw);
-   brw_init_caches(brw);
+   brw_init_cache(brw);
 
    brw->state.atoms = _mesa_malloc(sizeof(atoms));
    brw->state.nr_atoms = sizeof(atoms)/sizeof(*atoms);
@@ -138,9 +137,8 @@ void brw_destroy_state( struct brw_context *brw )
       brw->state.atoms = NULL;
    }
 
-   brw_destroy_caches(brw);
+   brw_destroy_cache(brw);
    brw_destroy_batch_cache(brw);
-   brw_destroy_pools(brw);   
 }
 
 /***********************************************************************

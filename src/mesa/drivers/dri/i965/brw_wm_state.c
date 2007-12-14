@@ -47,6 +47,7 @@ static void upload_wm_unit(struct brw_context *brw )
    struct brw_wm_unit_state wm;
    GLuint max_threads;
    GLuint per_thread;
+   dri_bo *reloc_bufs[3];
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       max_threads = 0; 
@@ -58,7 +59,7 @@ static void upload_wm_unit(struct brw_context *brw )
 
    /* CACHE_NEW_WM_PROG */
    wm.thread0.grf_reg_count = ALIGN(brw->wm.prog_data->total_grf, 16) / 16 - 1;
-   wm.thread0.kernel_start_pointer = brw->wm.prog_gs_offset >> 6;
+   wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
    wm.thread3.dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
    wm.thread3.urb_entry_read_length = brw->wm.prog_data->urb_read_length;
    wm.thread3.const_urb_entry_read_length = brw->wm.prog_data->curb_read_length;
@@ -87,18 +88,20 @@ static void upload_wm_unit(struct brw_context *brw )
 					       4096, DRM_BO_FLAG_MEM_TT);
       }
    }
-   /* XXX: Scratch buffers are not implemented correectly.
-    *
-    * The scratch offset to be programmed into wm is relative to the general
-    * state base address.  However, using dri_bo_alloc/dri_bo_emit_reloc (or
-    * the previous bmGenBuffers scheme), we get an offset relative to the
-    * start of framebuffer.  Even before then, it was broken in other ways,
-    * so just fail for now if we hit that path.
-    */
-   assert(brw->wm.prog_data->total_scratch == 0);
 
    /* CACHE_NEW_SURFACE */
    wm.thread1.binding_table_entry_count = brw->wm.nr_surfaces;
+
+   /* CACHE_NEW_WM_PROG */
+   if (per_thread != 0) {
+   /* reloc */
+      wm.thread2.scratch_space_base_pointer =
+	 brw->wm.scratch_buffer->offset >> 10;
+      wm.thread2.per_thread_scratch_space = per_thread / 1024 - 1;
+   } else {
+      wm.thread2.scratch_space_base_pointer = 0;
+      wm.thread2.per_thread_scratch_space = 0;
+   }
 
    /* BRW_NEW_CURBE_OFFSETS */
    wm.thread3.const_urb_entry_read_offset = brw->curbe.wm_start * 2;
@@ -109,7 +112,12 @@ static void upload_wm_unit(struct brw_context *brw )
 
    /* CACHE_NEW_SAMPLER */
    wm.wm4.sampler_count = (brw->wm.sampler_count + 1) / 4;
-   wm.wm4.sampler_state_pointer = brw->wm.sampler_gs_offset >> 5;
+   if (brw->wm.sampler_bo != NULL) {
+      /* reloc */
+      wm.wm4.sampler_state_pointer = brw->wm.sampler_bo->offset >> 5;
+   } else {
+      wm.wm4.sampler_state_pointer = 0;
+   }
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
    {
@@ -166,19 +174,44 @@ static void upload_wm_unit(struct brw_context *brw )
    if (INTEL_DEBUG & DEBUG_STATS || intel->stats_wm)
       wm.wm4.stats_enable = 1;
 
-   brw->wm.state_gs_offset = brw_cache_data( &brw->cache[BRW_WM_UNIT], &wm );
+   reloc_bufs[0] = brw->wm.prog_bo;
+   reloc_bufs[1] = brw->wm.scratch_buffer;
+   reloc_bufs[2] = brw->wm.sampler_bo;
 
-   if (brw->wm.prog_data->total_scratch) {
-      /*
-      dri_emit_reloc(brw->cache[BRW_WM_UNIT].pool->buffer,
+   brw->wm.thread0_delta = wm.thread0.grf_reg_count << 1;
+   brw->wm.thread2_delta = wm.thread2.per_thread_scratch_space;
+   brw->wm.wm4_delta = wm.wm4.stats_enable | (wm.wm4.sampler_count << 2);
+
+   dri_bo_unreference(brw->wm.state_bo);
+   brw->wm.state_bo = brw_cache_data( &brw->cache, BRW_WM_UNIT, &wm,
+				      reloc_bufs, 3 );
+}
+
+static void emit_reloc_wm_unit(struct brw_context *brw)
+{
+   /* Emit WM program relocation */
+   dri_emit_reloc(brw->wm.state_bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  brw->wm.thread0_delta,
+		  offsetof(struct brw_wm_unit_state, thread0),
+		  brw->wm.prog_bo);
+
+   /* Emit scratch space relocation */
+   if (brw->wm.scratch_buffer != NULL) {
+      dri_emit_reloc(brw->wm.state_bo,
 		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
-		     (per_thread / 1024) - 1,
-		     brw->wm.state_gs_offset +
-		     ((char *)&wm.thread2 - (char *)&wm),
+		     brw->wm.thread2_delta,
+		     offsetof(struct brw_wm_unit_state, thread2),
 		     brw->wm.scratch_buffer);
-      */
-   } else {
-      wm.thread2.scratch_space_base_pointer = 0;
+   }
+
+   /* Emit sampler state relocation */
+   if (brw->wm.sampler_bo != NULL) {
+      dri_emit_reloc(brw->wm.state_bo,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		     brw->wm.wm4_delta,
+		     offsetof(struct brw_wm_unit_state, wm4),
+		     brw->wm.sampler_bo);
    }
 }
 
@@ -197,6 +230,7 @@ const struct brw_tracked_state brw_wm_unit = {
 		CACHE_NEW_WM_PROG | 
 		CACHE_NEW_SAMPLER)
    },
-   .update = upload_wm_unit
+   .update = upload_wm_unit,
+   .emit_reloc = emit_reloc_wm_unit,
 };
 

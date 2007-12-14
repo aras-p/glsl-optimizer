@@ -128,31 +128,25 @@ const struct brw_tracked_state brw_drawing_rect = {
  * state pointers.
  *
  * The binding table pointers are relative to the surface state base address,
- * which is the BRW_SS_POOL cache buffer.
+ * which is 0.
  */
 static void upload_binding_table_pointers(struct brw_context *brw)
 {
-   struct brw_binding_table_pointers btp;
-   memset(&btp, 0, sizeof(btp));
+   struct intel_context *intel = &brw->intel;
 
-   btp.header.opcode = CMD_BINDING_TABLE_PTRS;
-   btp.header.length = sizeof(btp)/4 - 2;
-   btp.vs = 0;
-   btp.gs = 0;
-   btp.clp = 0;
-   btp.sf = 0;
-   btp.wm = brw->wm.bind_ss_offset;
-
-   BRW_CACHED_BATCH_STRUCT(brw, &btp);
+   BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
+   OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
+   OUT_BATCH(0); /* vs */
+   OUT_BATCH(0); /* gs */
+   OUT_BATCH(0); /* clip */
+   OUT_BATCH(0); /* sf */
+   OUT_RELOC(brw->wm.bind_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_binding_table_pointers = {
-   .dirty = {
-      .mesa = 0,
-      .brw = 0,
-      .cache = CACHE_NEW_SURF_BIND 
-   },
-   .update = upload_binding_table_pointers
+   .update = upload_binding_table_pointers,
+   .always_update = GL_TRUE, /* Has a relocation in the batchbuffer */
 };
 
 
@@ -160,39 +154,33 @@ const struct brw_tracked_state brw_binding_table_pointers = {
  * Upload pointers to the per-stage state.
  *
  * The state pointers in this packet are all relative to the general state
- * base address set by CMD_STATE_BASE_ADDRESS, which is the BRW_GS_POOL buffer.
+ * base address set by CMD_STATE_BASE_ADDRESS, which is 0.
  */
 static void upload_pipelined_state_pointers(struct brw_context *brw )
 {
-   struct brw_pipelined_state_pointers psp;
-   memset(&psp, 0, sizeof(psp));
+   struct intel_context *intel = &brw->intel;
 
-   psp.header.opcode = CMD_PIPELINED_STATE_POINTERS;
-   psp.header.length = sizeof(psp)/4 - 2;
+   BEGIN_BATCH(7, INTEL_BATCH_NO_CLIPRECTS);
+   OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
+   OUT_RELOC(brw->vs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   if (brw->gs.prog_active)
+      OUT_RELOC(brw->gs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 1);
+   else
+      OUT_BATCH(0);
+   if (!brw->metaops.active)
+      OUT_RELOC(brw->clip.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 1);
+   else
+      OUT_BATCH(0);
+   OUT_RELOC(brw->sf.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->wm.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->cc.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   ADVANCE_BATCH();
 
-   psp.vs.offset = brw->vs.state_gs_offset >> 5;
-   psp.sf.offset = brw->sf.state_gs_offset >> 5;
-   psp.wm.offset = brw->wm.state_gs_offset >> 5;
-   psp.cc.offset = brw->cc.state_gs_offset >> 5;
-
-   /* GS gets turned on and off regularly.  Need to re-emit URB fence
-    * after this occurs.  
-    */
-   if (brw->gs.prog_active) {
-      psp.gs.offset = brw->gs.state_gs_offset >> 5;
-      psp.gs.enable = 1;
-   }
-
-   if (!brw->metaops.active) {
-      psp.clp.offset = brw->clip.state_gs_offset >> 5;
-      psp.clp.enable = 1;
-   }
-
-
-   if (BRW_CACHED_BATCH_STRUCT(brw, &psp))
-      brw->state.dirty.brw |= BRW_NEW_PSP;
+   brw->state.dirty.brw |= BRW_NEW_PSP;
 }
 
+#if 0
+/* Combined into brw_psp_urb_cbs */
 const struct brw_tracked_state brw_pipelined_state_pointers = {
    .dirty = {
       .mesa = 0,
@@ -206,7 +194,9 @@ const struct brw_tracked_state brw_pipelined_state_pointers = {
 		CACHE_NEW_CC_UNIT)
    },
    .update = upload_pipelined_state_pointers
+   .always_update = GL_TRUE, /* Has a relocation in the batchbuffer */
 };
+#endif
 
 static void upload_psp_urb_cbs(struct brw_context *brw )
 {
@@ -228,7 +218,8 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 		CACHE_NEW_WM_UNIT | 
 		CACHE_NEW_CC_UNIT)
    },
-   .update = upload_psp_urb_cbs
+   .update = upload_psp_urb_cbs,
+   .always_update = GL_TRUE, /* psp has relocations. */
 };
 
 /**
@@ -491,20 +482,19 @@ static void upload_state_base_address( struct brw_context *brw )
     */
    BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
-   OUT_RELOC(brw->pool[BRW_GS_POOL].buffer,
-	     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-	     1); /* General state base address */
-   OUT_RELOC(brw->pool[BRW_SS_POOL].buffer,
-	     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-	     1); /* Surface state base address */
+   OUT_BATCH(1); /* General state base address */
+   OUT_BATCH(1); /* Surface state base address */
    OUT_BATCH(1); /* Indirect object base address */
    OUT_BATCH(1); /* General state upper bound */
    OUT_BATCH(1); /* Indirect object upper bound */
    ADVANCE_BATCH();
 }
 
-
 const struct brw_tracked_state brw_state_base_address = {
-   .always_update = GL_TRUE,
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_CONTEXT,
+      .cache = 0,
+   },
    .update = upload_state_base_address
 };

@@ -97,7 +97,8 @@ static void upload_sf_vp(struct brw_context *brw)
       sfv.scissor.ymax = y2;
    }
 
-   brw->sf.vp_gs_offset = brw_cache_data( &brw->cache[BRW_SF_VP], &sfv );
+   dri_bo_unreference(brw->sf.vp_bo);
+   brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
 }
 
 const struct brw_tracked_state brw_sf_vp = {
@@ -116,10 +117,11 @@ static void upload_sf_unit( struct brw_context *brw )
 {
    struct brw_sf_unit_state sf;
    memset(&sf, 0, sizeof(sf));
+   dri_bo *reloc_bufs[2];
 
    /* CACHE_NEW_SF_PROG */
    sf.thread0.grf_reg_count = ALIGN(brw->sf.prog_data->total_grf, 16) / 16 - 1;
-   sf.thread0.kernel_start_pointer = brw->sf.prog_gs_offset >> 6;
+   sf.thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
    sf.thread3.urb_entry_read_length = brw->sf.prog_data->urb_read_length;
 
    sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
@@ -138,7 +140,7 @@ static void upload_sf_unit( struct brw_context *brw )
       sf.thread4.stats_enable = 1; 
 
    /* CACHE_NEW_SF_VP */
-   sf.sf5.sf_viewport_state_offset = brw->sf.vp_gs_offset >> 5;
+   sf.sf5.sf_viewport_state_offset = brw->sf.vp_bo->offset >> 5; /* reloc */
    
    sf.sf5.viewport_transform = 1;
    
@@ -202,9 +204,33 @@ static void upload_sf_unit( struct brw_context *brw )
    sf.sf6.dest_org_vbias = 0x8;
    sf.sf6.dest_org_hbias = 0x8;
 
-   brw->sf.state_gs_offset = brw_cache_data( &brw->cache[BRW_SF_UNIT], &sf );
+   reloc_bufs[0] = brw->sf.prog_bo;
+   reloc_bufs[1] = brw->sf.vp_bo;
+
+   brw->sf.thread0_delta = sf.thread0.grf_reg_count << 1;
+   brw->sf.sf5_delta = sf.sf5.front_winding | (sf.sf5.viewport_transform << 1);
+
+   dri_bo_unreference(brw->sf.state_bo);
+   brw->sf.state_bo = brw_cache_data( &brw->cache, BRW_SF_UNIT, &sf,
+				      reloc_bufs, 2 );
 }
 
+static void emit_reloc_sf_unit(struct brw_context *brw)
+{
+   /* Emit SF program relocation */
+   dri_emit_reloc(brw->sf.state_bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  brw->sf.thread0_delta,
+		  offsetof(struct brw_sf_unit_state, thread0),
+		  brw->sf.prog_bo);
+
+   /* Emit SF viewport relocation */
+   dri_emit_reloc(brw->sf.state_bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  brw->sf.sf5_delta,
+		  offsetof(struct brw_sf_unit_state, sf5),
+		  brw->sf.vp_bo);
+}
 
 const struct brw_tracked_state brw_sf_unit = {
    .dirty = {
@@ -217,7 +243,6 @@ const struct brw_tracked_state brw_sf_unit = {
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)
    },
-   .update = upload_sf_unit
+   .update = upload_sf_unit,
+   .emit_reloc = emit_reloc_sf_unit,
 };
-
-

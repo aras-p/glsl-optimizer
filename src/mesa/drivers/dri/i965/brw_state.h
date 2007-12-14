@@ -83,35 +83,42 @@ const struct brw_tracked_state brw_clear_batch_cache;
 /***********************************************************************
  * brw_state_cache.c
  */
-GLuint brw_cache_data(struct brw_cache *cache,
-		      const void *data );
+dri_bo *brw_cache_data(struct brw_cache *cache,
+		       enum brw_cache_id cache_id,
+		       const void *data,
+		       dri_bo **reloc_bufs,
+		       GLuint nr_reloc_bufs);
 
-GLuint brw_cache_data_sz(struct brw_cache *cache,
-			 const void *data,
-			 GLuint data_sz);
+dri_bo *brw_cache_data_sz(struct brw_cache *cache,
+			  enum brw_cache_id cache_id,
+			  const void *data,
+			  GLuint data_size,
+			  dri_bo **reloc_bufs,
+			  GLuint nr_reloc_bufs);
 
-GLuint brw_upload_cache( struct brw_cache *cache,
-			 const void *key,
-			 GLuint key_sz,
-			 const void *data,
-			 GLuint data_sz,
-			 const void *aux,
-			 void *aux_return );
+dri_bo *brw_upload_cache( struct brw_cache *cache,
+			  enum brw_cache_id cache_id,
+			  const void *key,
+			  GLuint key_sz,
+			  dri_bo **reloc_bufs,
+			  GLuint nr_reloc_bufs,
+			  const void *data,
+			  GLuint data_sz,
+			  const void *aux,
+			  void *aux_return );
 
-GLboolean brw_search_cache( struct brw_cache *cache,
-			    const void *key,
-			    GLuint key_size,
-			    void *aux_return,
-			    GLuint *offset_return);
+dri_bo *brw_search_cache( struct brw_cache *cache,
+			  enum brw_cache_id cache_id,
+			  const void *key,
+			  GLuint key_size,
+			  dri_bo **reloc_bufs,
+			  GLuint nr_reloc_bufs,
+			  void *aux_return);
+void brw_clear_cache( struct brw_context *brw );
+void brw_state_cache_check_size( struct brw_context *brw );
 
-void brw_init_caches( struct brw_context *brw );
-void brw_destroy_caches( struct brw_context *brw );
-
-static inline dri_bo *brw_cache_buffer(struct brw_context *brw,
-				       enum brw_cache_id id)
-{
-   return brw->cache[id].pool->buffer;
-}
+void brw_init_cache( struct brw_context *brw );
+void brw_destroy_cache( struct brw_context *brw );
 
 /***********************************************************************
  * brw_state_batch.c
@@ -122,31 +129,7 @@ static inline dri_bo *brw_cache_buffer(struct brw_context *brw,
 GLboolean brw_cached_batch_struct( struct brw_context *brw,
 				   const void *data,
 				   GLuint sz );
-
 void brw_destroy_batch_cache( struct brw_context *brw );
-
-
-/***********************************************************************
- * brw_state_pool.c
- */
-void brw_init_pools( struct brw_context *brw );
-void brw_destroy_pools( struct brw_context *brw );
-
-GLboolean brw_pool_alloc( struct brw_mem_pool *pool,
-			  GLuint size,
-			  GLuint alignment,
-			  GLuint *offset_return);
-
-void brw_pool_fence( struct brw_context *brw,
-		     struct brw_mem_pool *pool,
-		     GLuint fence );
-
-
-void brw_pool_check_wrap( struct brw_context *brw,
-			  struct brw_mem_pool *pool );
-
-void brw_clear_all_caches( struct brw_context *brw );
-void brw_invalidate_pools( struct brw_context *brw );
 void brw_clear_batch_cache_flush( struct brw_context *brw );
 
 #endif
