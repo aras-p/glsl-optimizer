@@ -45,17 +45,6 @@
 #include "intel_bufmgr_ttm.h"
 #include "i915_drm.h"
 
-static void intelWaitIdleLocked( struct intel_context *intel )
-{
-   unsigned int fence;
-
-   if (INTEL_DEBUG & DEBUG_SYNC)
-      fprintf(stderr, "waiting for idle\n");
-
-   fence = intelEmitIrqLocked(intel);
-   intelWaitIrq(intel, fence);
-}
-
 int intelEmitIrqLocked( struct intel_context *intel )
 {
    int seq = 1;

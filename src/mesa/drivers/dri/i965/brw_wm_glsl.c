@@ -5,7 +5,7 @@
 #include "brw_wm.h"
 
 /* Only guess, need a flag in gl_fragment_program later */
-GLboolean brw_wm_is_glsl(struct gl_fragment_program *fp)
+GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp)
 {
     int i;
     for (i = 0; i < fp->Base.NumInstructions; i++) {

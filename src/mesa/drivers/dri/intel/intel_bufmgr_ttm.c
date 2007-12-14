@@ -304,7 +304,7 @@ intel_setup_reloc_list(dri_bo *bo)
      * at the last intel_free_validate_list().
      */
     if (bo_ttm->reloc_buf != NULL)
-       return;
+       return 0;
 
     bo_ttm->reloc_buf = malloc(sizeof(bo_ttm->drm_bo));
 
@@ -459,7 +459,6 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 static void
 dri_ttm_bo_reference(dri_bo *buf)
 {
-    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
 
     ttm_buf->refcount++;

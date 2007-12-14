@@ -555,19 +555,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    return GL_TRUE;
 }
 
-
-static GLuint element_size( GLenum type )
-{
-   switch(type) {
-   case GL_UNSIGNED_INT: return 4;
-   case GL_UNSIGNED_SHORT: return 2;
-   case GL_UNSIGNED_BYTE: return 1;
-   default: assert(0); return 0;
-   }
-}
-
-
-
 void brw_upload_indices( struct brw_context *brw,
 			 const struct _mesa_index_buffer *index_buffer )
 {
