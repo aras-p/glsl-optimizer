@@ -534,8 +534,8 @@ GLboolean intelInitContext( struct intel_context *intel,
 
    INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
 				       debug_control );
-   if (!intel->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
-      dri_bufmgr_fake_set_debug(intel->bufmgr, GL_TRUE);
+   if (INTEL_DEBUG & DEBUG_BUFMGR)
+      dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 
    intel_recreate_static_regions(intel);
 

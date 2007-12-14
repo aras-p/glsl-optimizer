@@ -48,7 +48,10 @@
 
 #include "intel_bufmgr_ttm.h"
 
-#define BUFMGR_DEBUG 0
+#define DBG(...) do {					\
+   if (bufmgr_ttm->bufmgr.debug)			\
+      _mesa_printf(__VA_ARGS__);			\
+} while (0)
 
 struct intel_reloc_info
 {
@@ -485,13 +488,11 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
 	      unsigned long size, unsigned int alignment,
 	      uint64_t location_mask)
 {
-    dri_bufmgr_ttm *ttm_bufmgr;
+    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
     dri_bo_ttm *ttm_buf;
     unsigned int pageSize = getpagesize();
     int ret;
     unsigned int flags, hint;
-
-    ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
 
     ttm_buf = malloc(sizeof(*ttm_buf));
     if (!ttm_buf)
@@ -506,7 +507,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     /* No hints we want to use. */
     hint = 0;
 
-    ret = drmBOCreate(ttm_bufmgr->fd, size, alignment / pageSize,
+    ret = drmBOCreate(bufmgr_ttm->fd, size, alignment / pageSize,
 		      NULL, flags, hint, &ttm_buf->drm_bo);
     if (ret != 0) {
 	free(ttm_buf);
@@ -519,9 +520,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->name = name;
     ttm_buf->refcount = 1;
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
-#endif
+    DBG("bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
     return &ttm_buf->bo;
 }
@@ -548,17 +547,15 @@ dri_bo *
 intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 			      unsigned int handle)
 {
-    dri_bufmgr_ttm *ttm_bufmgr;
+    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
     dri_bo_ttm *ttm_buf;
     int ret;
-
-    ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
 
     ttm_buf = malloc(sizeof(*ttm_buf));
     if (!ttm_buf)
 	return NULL;
 
-    ret = drmBOReference(ttm_bufmgr->fd, handle, &ttm_buf->drm_bo);
+    ret = drmBOReference(bufmgr_ttm->fd, handle, &ttm_buf->drm_bo);
     if (ret != 0) {
        fprintf(stderr, "Couldn't reference %s handle 0x%08x: %s\n",
 	       name, handle, strerror(-ret));
@@ -572,10 +569,8 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->name = name;
     ttm_buf->refcount = 1;
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "bo_create_from_handle: %p %08x (%s)\n",
-	    &ttm_buf->bo, handle, ttm_buf->name);
-#endif
+    DBG("bo_create_from_handle: %p %08x (%s)\n",
+	&ttm_buf->bo, handle, ttm_buf->name);
 
     return &ttm_buf->bo;
 }
@@ -609,10 +604,8 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	    fprintf(stderr, "drmBOUnreference failed (%s): %s\n",
 		    ttm_buf->name, strerror(-ret));
 	}
-#if BUFMGR_DEBUG
-	fprintf(stderr, "bo_unreference final: %p (%s)\n",
-		&ttm_buf->bo, ttm_buf->name);
-#endif
+	DBG("bo_unreference final: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+
 	_glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
 	free(buf);
 	return;
@@ -635,9 +628,7 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
 
     assert(buf->virtual == NULL);
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "bo_map: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
-#endif
+    DBG("bo_map: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
     return drmBOMap(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, 0, &buf->virtual);
 }
@@ -657,9 +648,7 @@ dri_ttm_bo_unmap(dri_bo *buf)
 
     buf->virtual = NULL;
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "bo_unmap: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
-#endif
+    DBG("bo_unmap: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
     return drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
 }
@@ -674,10 +663,8 @@ dri_fence *
 intel_ttm_fence_create_from_arg(dri_bufmgr *bufmgr, const char *name,
 				drm_fence_arg_t *arg)
 {
-    dri_bufmgr_ttm *ttm_bufmgr;
+    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
     dri_fence_ttm *ttm_fence;
-
-    ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
 
     ttm_fence = malloc(sizeof(*ttm_fence));
     if (!ttm_fence)
@@ -694,10 +681,8 @@ intel_ttm_fence_create_from_arg(dri_bufmgr *bufmgr, const char *name,
     ttm_fence->name = name;
     ttm_fence->refcount = 1;
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "fence_create_from_handle: %p (%s)\n", &ttm_fence->fence,
-	    ttm_fence->name);
-#endif
+    DBG("fence_create_from_handle: %p (%s)\n",
+	&ttm_fence->fence, ttm_fence->name);
 
     return &ttm_fence->fence;
 }
@@ -712,10 +697,7 @@ dri_ttm_fence_reference(dri_fence *fence)
     _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     ++fence_ttm->refcount;
     _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
-#if BUFMGR_DEBUG
-    fprintf(stderr, "fence_reference: %p (%s)\n", &fence_ttm->fence,
-	    fence_ttm->name);
-#endif
+    DBG("fence_reference: %p (%s)\n", &fence_ttm->fence, fence_ttm->name);
 }
 
 static void
@@ -727,10 +709,8 @@ dri_ttm_fence_unreference(dri_fence *fence)
     if (!fence)
 	return;
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "fence_unreference: %p (%s)\n", &fence_ttm->fence,
-	    fence_ttm->name);
-#endif
+    DBG("fence_unreference: %p (%s)\n", &fence_ttm->fence, fence_ttm->name);
+
     _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     if (--fence_ttm->refcount == 0) {
 	int ret;
@@ -764,10 +744,7 @@ dri_ttm_fence_wait(dri_fence *fence)
 	abort();
     }
 
-#if BUFMGR_DEBUG
-    fprintf(stderr, "fence_wait: %p (%s)\n", &fence_ttm->fence,
-	    fence_ttm->name);
-#endif
+    DBG("fence_wait: %p (%s)\n", &fence_ttm->fence, fence_ttm->name);
 }
 
 static void

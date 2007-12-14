@@ -172,6 +172,8 @@ struct _dri_bufmgr {
    void *(*process_relocs)(dri_bo *batch_buf, GLuint *count);
 
    void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
+
+   GLboolean debug; /**< Enables verbose debugging printouts */
 };
 
 dri_bo *dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
@@ -202,7 +204,7 @@ dri_bufmgr *dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 				 int (*fence_wait)(void *private,
 						   unsigned int cookie),
 				 void *driver_priv);
-void dri_bufmgr_fake_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug);
+void dri_bufmgr_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug);
 void dri_bo_fake_disable_backing_store(dri_bo *bo,
 				       void (*invalidate_cb)(dri_bo *bo,
 							     void *ptr),

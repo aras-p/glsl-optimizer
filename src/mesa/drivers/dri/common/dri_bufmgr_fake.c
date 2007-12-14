@@ -42,7 +42,7 @@
 #include "imports.h"
 
 #define DBG(...) do {					\
-   if (bufmgr_fake->debug)				\
+   if (bufmgr_fake->bufmgr.debug)			\
       _mesa_printf(__VA_ARGS__);			\
 } while (0)
 
@@ -1149,14 +1149,6 @@ dri_fake_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
       dri_bo_unreference(r->target_buf);
    }
    bufmgr_fake->nr_relocs = 0;
-}
-
-void
-dri_bufmgr_fake_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug)
-{
-   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bufmgr;
-
-   bufmgr_fake->debug = enable_debug;
 }
 
 dri_bufmgr *
