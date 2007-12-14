@@ -126,7 +126,7 @@ static struct brw_reg get_src_reg(struct brw_wm_compile *c,
 
    /* Can't handle this, don't know if we need to:
     */
-   assert(src->SrcRegisterExtSwz.ExtDivide == 0);
+   assert(src->SrcRegisterExtSwz.ExtDivide == TGSI_EXTSWIZZLE_ONE);
        
    /* Not handling indirect lookups yet:
     */
