@@ -936,10 +936,12 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 			  
       /* TODO: Use D0_MASK_XY where possible.
        */
-      if (p->state->unit[unit].enabled) 
+      if (p->state->unit[unit].enabled) {
 	 p->src_texture[unit] = emit_texld( p, OPCODE_TXP,
 					    tmp, WRITEMASK_XYZW, 
 					    unit, dim, texcoord );
+         p->program->Base.SamplersUsed |= (1 << unit);
+      }
       else
 	 p->src_texture[unit] = get_zero(p);
    }
