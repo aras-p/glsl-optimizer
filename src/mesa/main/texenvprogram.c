@@ -955,7 +955,10 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 					    unit, dim, texcoord );
 	 if (p->state->unit[unit].shadow)
 	    p->program->Base.ShadowSamplers |= 1 << unit;
-      } else
+
+         p->program->Base.SamplersUsed |= (1 << unit);
+      }
+      else
 	 p->src_texture[unit] = get_zero(p);
    }
 }
