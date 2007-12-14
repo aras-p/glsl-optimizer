@@ -265,7 +265,6 @@ struct clip_pipe_stage *clip_pipe_stipple( struct clip_pipeline *pipe )
    stipple->stage.point = clip_passthrough_point;
    stipple->stage.line = stipple_line;
    stipple->stage.tri = clip_passthrough_tri;
-   stipple->stage.reset_tmps = clip_pipe_reset_tmps;
    stipple->stage.end = stipple_end;
    stipple->stage.destroy = stipple_destroy;
 

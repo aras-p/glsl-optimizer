@@ -238,17 +238,6 @@ void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
    }
 }
 
-/**
- * Reset the vertex ids for the stage's temp verts.
- */
-void draw_reset_tmps( struct draw_stage *stage )
-{
-   unsigned i;
-   
-   if (stage->tmp)
-      for (i = 0; i < stage->nr_tmps; i++)
-	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
-}
 
 void draw_free_tmps( struct draw_stage *stage )
 {
@@ -271,10 +260,11 @@ void draw_reset_vertex_ids(struct draw_context *draw)
    struct draw_stage *stage = draw->pipeline.first;
    
    while (stage) {
-      if (stage->reset_tmps)
-	 stage->reset_tmps(stage);
-      else
-	 draw_reset_tmps(stage);
+      unsigned i;
+
+      for (i = 0; i < stage->nr_tmps; i++)
+	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
+
       stage = stage->next;
    }
 
