@@ -55,8 +55,6 @@ static boolean
 softpipe_is_format_supported( struct pipe_context *pipe,
                               enum pipe_format format, uint type )
 {
-   struct softpipe_context *softpipe = softpipe_context( pipe );
-
    switch (type) {
    case PIPE_TEXTURE:
       /* softpipe supports all texture formats */
