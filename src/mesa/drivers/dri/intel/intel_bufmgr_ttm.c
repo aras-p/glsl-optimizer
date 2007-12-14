@@ -98,7 +98,6 @@ typedef struct _dri_bufmgr_ttm {
     dri_bufmgr bufmgr;
 
     int fd;
-    _glthread_Mutex mutex;
     unsigned int fence_type;
     unsigned int fence_type_flush;
 
@@ -112,7 +111,7 @@ typedef struct _dri_bufmgr_ttm {
 typedef struct _dri_bo_ttm {
     dri_bo bo;
 
-    int refcount;		/* Protected by bufmgr->mutex */
+    int refcount;
     drmBO drm_bo;
     const char *name;
 } dri_bo_ttm;
@@ -121,7 +120,7 @@ typedef struct _dri_fence_ttm
 {
     dri_fence fence;
 
-    int refcount;		/* Protected by bufmgr->mutex */
+    int refcount;
     const char *name;
     drmFence drm_fence;
 } dri_fence_ttm;
@@ -475,9 +474,7 @@ driFenceSignaled(DriFenceObject * fence, unsigned type)
     if (fence == NULL)
 	return GL_TRUE;
 
-    _glthread_LOCK_MUTEX(fence->mutex);
     ret = drmFenceSignaled(bufmgr_ttm->fd, &fence->fence, type, &signaled);
-    _glthread_UNLOCK_MUTEX(fence->mutex);
     BM_CKFATAL(ret);
     return signaled;
 }
@@ -581,9 +578,7 @@ dri_ttm_bo_reference(dri_bo *buf)
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
 
-    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     ttm_buf->refcount++;
-    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
 }
 
 static void
@@ -595,7 +590,6 @@ dri_ttm_bo_unreference(dri_bo *buf)
     if (!buf)
 	return;
 
-    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     if (--ttm_buf->refcount == 0) {
 	int ret;
 
@@ -606,11 +600,9 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	}
 	DBG("bo_unreference final: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
-	_glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
 	free(buf);
 	return;
     }
-    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
 }
 
 static int
@@ -694,9 +686,7 @@ dri_ttm_fence_reference(dri_fence *fence)
     dri_fence_ttm *fence_ttm = (dri_fence_ttm *)fence;
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)fence->bufmgr;
 
-    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     ++fence_ttm->refcount;
-    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
     DBG("fence_reference: %p (%s)\n", &fence_ttm->fence, fence_ttm->name);
 }
 
@@ -711,7 +701,6 @@ dri_ttm_fence_unreference(dri_fence *fence)
 
     DBG("fence_unreference: %p (%s)\n", &fence_ttm->fence, fence_ttm->name);
 
-    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     if (--fence_ttm->refcount == 0) {
 	int ret;
 
@@ -721,11 +710,9 @@ dri_ttm_fence_unreference(dri_fence *fence)
 		    fence_ttm->name, strerror(-ret));
 	}
 
-	_glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
 	free(fence);
 	return;
     }
-    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
 }
 
 static void
@@ -735,9 +722,7 @@ dri_ttm_fence_wait(dri_fence *fence)
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)fence->bufmgr;
     int ret;
 
-    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
     ret = drmFenceWait(bufmgr_ttm->fd, DRM_FENCE_FLAG_WAIT_LAZY, &fence_ttm->drm_fence, 0);
-    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
     if (ret != 0) {
 	_mesa_printf("%s:%d: Error %d waiting for fence %s.\n",
 		     __FILE__, __LINE__, ret, fence_ttm->name);
@@ -755,7 +740,6 @@ dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
     intel_bo_free_list(&bufmgr_ttm->list);
     intel_bo_free_list(&bufmgr_ttm->reloc_list);
 
-    _glthread_DESTROY_MUTEX(bufmgr_ttm->mutex);
     free(bufmgr);
 }
 
@@ -869,7 +853,6 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->fd = fd;
     bufmgr_ttm->fence_type = fence_type;
     bufmgr_ttm->fence_type_flush = fence_type_flush;
-    _glthread_INIT_MUTEX(bufmgr_ttm->mutex);
 
     /* lets go with one relocation per every four dwords - purely heuristic */
     bufmgr_ttm->max_relocs = batch_size / sizeof(uint32_t) / 4;
