@@ -941,6 +941,10 @@ static void load_texture( struct texenv_fragment_program *p, GLuint unit )
 					    tmp, WRITEMASK_XYZW, 
 					    unit, dim, texcoord );
          p->program->Base.SamplersUsed |= (1 << unit);
+         /* This identity mapping should already be in place
+          * (see _mesa_init_program_struct()) but let's be safe.
+          */
+         p->program->Base.SamplerUnits[unit] = unit;
       }
       else
 	 p->src_texture[unit] = get_zero(p);
