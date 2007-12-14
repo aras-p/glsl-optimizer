@@ -585,6 +585,20 @@ make_temp_decl(
 }
 
 
+static struct tgsi_full_declaration
+make_sampler_decl(GLuint index)
+{
+   struct tgsi_full_declaration decl;
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_SAMPLER;
+   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.u.DeclarationRange.First = index;
+   decl.u.DeclarationRange.Last = index;
+   return decl;
+}
+
+
+
 /**
  * Find the temporaries which are used in the given program.
  */
@@ -787,6 +801,19 @@ tgsi_translate_mesa_program(
          numImmediates++;
       }
    }
+
+   /* texture samplers */
+   for (i = 0; i < 8; i++) {
+      if (program->SamplersUsed & (1 << i)) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_sampler_decl( i );
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
+
 
    for( i = 0; i < program->NumInstructions; i++ ) {
       compile_instruction(
