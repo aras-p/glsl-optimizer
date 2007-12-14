@@ -183,15 +183,3 @@ void brw_upload_urb_fence(struct brw_context *brw)
 
    BRW_BATCH_STRUCT(brw, &uf);
 }
-
-
-#if 0
-const struct brw_tracked_state brw_urb_fence = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_URB_FENCE | BRW_NEW_PSP,
-      .cache = 0
-   },
-   .update = brw_upload_urb_fence
-};
-#endif

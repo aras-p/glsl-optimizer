@@ -156,14 +156,6 @@ void brw_upload_constant_buffer_state(struct brw_context *brw)
    BRW_CACHED_BATCH_STRUCT(brw, &cbs);
 }
 
-const struct brw_tracked_state brw_constant_buffer_state = {
-   .dirty = {
-      .brw = BRW_NEW_URB_FENCE,
-      .cache = 0
-   },
-   .update = brw_upload_constant_buffer_state
-};
-
 
 static float fixed_plane[6][4] = {
    { 0,    0,   -1, 1 },
