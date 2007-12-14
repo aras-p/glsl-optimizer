@@ -54,24 +54,31 @@ struct nv40_rasterizer_state {
 	uint32_t point_sprite;
 };
 
+struct nv40_vertex_program_exec {
+	uint32_t data[4];
+	boolean has_branch_offset;
+	int const_index;
+};
+
+struct nv40_vertex_program_data {
+	int index; /* immediates == -1 */
+	float value[4];
+};
+
 struct nv40_vertex_program {
 	const struct pipe_shader_state *pipe;
 
 	boolean translated;
+	struct nv40_vertex_program_exec *insns;
+	unsigned nr_insns;
+	struct nv40_vertex_program_data *consts;
+	unsigned nr_consts;
 
 	struct nouveau_resource *exec;
-	uint32_t *insn;
-	uint insn_len;
-
+	unsigned exec_start;
 	struct nouveau_resource *data;
-	uint data_start;
-
-	struct {
-		int pipe_id;
-		int hw_id;
-		float value[4];
-	} consts[256];
-	int num_consts;
+	unsigned data_start;
+	unsigned data_start_min;
 
 	uint32_t ir;
 	uint32_t or;

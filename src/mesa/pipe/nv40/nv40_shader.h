@@ -90,8 +90,8 @@
 #    define NV40_VP_INST_OP_ADD                                             0x03
 #    define NV40_VP_INST_OP_MAD                                             0x04
 #    define NV40_VP_INST_OP_DP3                                             0x05
-#    define NV40_VP_INST_OP_DP4                                             0x07
 #    define NV40_VP_INST_OP_DPH                                             0x06
+#    define NV40_VP_INST_OP_DP4                                             0x07
 #    define NV40_VP_INST_OP_DST                                             0x08
 #    define NV40_VP_INST_OP_MIN                                             0x09
 #    define NV40_VP_INST_OP_MAX                                             0x0A
@@ -109,9 +109,11 @@
 #    define NV40_VP_INST_OP_SSG                                             0x16
 #    define NV40_VP_INST_OP_ARR                                             0x17
 #    define NV40_VP_INST_OP_ARA                                             0x18
-#    define NV40_VP_INST_OP_TXWHAT                                          0x19
+#    define NV40_VP_INST_OP_TXL                                             0x19
 #define NV40_VP_INST_SCA_OPCODE_SHIFT                                         27
 #define NV40_VP_INST_SCA_OPCODE_MASK                                (0x1F << 27)
+#    define NV40_VP_INST_OP_NOP                                             0x00
+#    define NV40_VP_INST_OP_MOV                                             0x01
 #    define NV40_VP_INST_OP_RCP                                             0x02
 #    define NV40_VP_INST_OP_RCC                                             0x03
 #    define NV40_VP_INST_OP_RSQ                                             0x04
