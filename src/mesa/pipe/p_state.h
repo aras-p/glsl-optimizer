@@ -94,6 +94,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
    unsigned bypass_clipping:1;
+   unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */

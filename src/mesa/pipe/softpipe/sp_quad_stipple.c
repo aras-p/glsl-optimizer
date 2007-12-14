@@ -22,10 +22,18 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
    if (quad->prim == PRIM_TRI) {
       struct softpipe_context *softpipe = qs->softpipe;
       /* need to invert Y to index into OpenGL's stipple pattern */
-      const int y0 = softpipe->framebuffer.cbufs[0]->height - 1 - quad->y0;
-      const int y1 = y0 - 1;
-      const unsigned stipple0 = softpipe->poly_stipple.stipple[y0 % 32];
-      const unsigned stipple1 = softpipe->poly_stipple.stipple[y1 % 32];
+      int y0, y1;
+      uint stipple0, stipple1;
+      if (softpipe->rasterizer->origin_lower_left) {
+         y0 = softpipe->framebuffer.cbufs[0]->height - 1 - quad->y0;
+         y1 = y0 - 1;
+      }
+      else {
+         y0 = quad->y0;
+         y1 = y0 + 1;
+      }
+      stipple0 = softpipe->poly_stipple.stipple[y0 % 32];
+      stipple1 = softpipe->poly_stipple.stipple[y1 % 32];
 
 #if 1
       const int col0 = quad->x0 % 32;

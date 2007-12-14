@@ -480,15 +480,23 @@ static void tri_persp_coeff( struct setup_stage *setup,
 static void
 setup_fragcoord_coeff(struct setup_stage *setup)
 {
-   const int winHeight = setup->softpipe->framebuffer.cbufs[0]->height;
    /*X*/
    setup->coef[0].a0[0] = 0;
    setup->coef[0].dadx[0] = 1.0;
    setup->coef[0].dady[0] = 0.0;
    /*Y*/
-   setup->coef[0].a0[1] = winHeight - 1;
+   if (setup->softpipe->rasterizer->origin_lower_left) {
+      /* y=0=bottom */
+      const int winHeight = setup->softpipe->framebuffer.cbufs[0]->height;
+      setup->coef[0].a0[1] = winHeight - 1;
+      setup->coef[0].dady[1] = -1.0;
+   }
+   else {
+      /* y=0=top */
+      setup->coef[0].a0[1] = 0.0;
+      setup->coef[0].dady[1] = 1.0;
+   }
    setup->coef[0].dadx[1] = 0.0;
-   setup->coef[0].dady[1] = -1.0;
    /*Z*/
    setup->coef[0].a0[2] = setup->posCoef.a0[2];
    setup->coef[0].dadx[2] = setup->posCoef.dadx[2];
