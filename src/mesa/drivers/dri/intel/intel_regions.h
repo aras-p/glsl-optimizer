@@ -73,9 +73,6 @@ void intel_region_release(struct intel_region **ib);
 
 void intel_recreate_static_regions(struct intel_context *intel);
 
-void intel_region_idle(struct intel_context *intel,
-		       struct intel_region *ib);
-
 /* Map/unmap regions.  This is refcounted also: 
  */
 GLubyte *intel_region_map(struct intel_context *intel,

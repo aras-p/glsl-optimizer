@@ -64,9 +64,6 @@ intelTexSubimage(GLcontext * ctx,
    if (!pixels)
       return;
 
-   if (intelImage->mt)
-      intel_region_idle(intel, intelImage->mt->region);
-
    LOCK_HARDWARE(intel);
 
    /* Map buffer if necessary.  Need to lock to prevent other contexts

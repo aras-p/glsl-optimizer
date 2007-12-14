@@ -49,23 +49,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
 
-void
-intel_region_idle(struct intel_context *intel, struct intel_region *region)
-{
-   DBG("%s\n", __FUNCTION__);
-   /* XXX: Using this function is likely bogus -- it ought to only have been
-    * used before a map, anyway, but leave this cheap implementation of it
-    * for now.
-    */
-   if (region && region->buffer) {
-      /* Mapping it for read will ensure that any acceleration to the region
-       * would have landed already.
-       */
-      dri_bo_map(region->buffer, GL_TRUE);
-      dri_bo_unmap(region->buffer);
-   }
-}
-
 /* XXX: Thread safety?
  */
 GLubyte *
