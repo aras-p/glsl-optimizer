@@ -237,6 +237,9 @@ static void upload_wm_surfaces(struct brw_context *brw )
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct brw_texture *texUnit = brw->attribs.Texture[i];
+      if (texUnit == NULL)
+	 continue;
+
 
       /* BRW_NEW_TEXTURE
        */
