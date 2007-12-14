@@ -448,6 +448,8 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->bo.bufmgr = bufmgr;
     ttm_buf->name = name;
     ttm_buf->refcount = 1;
+    ttm_buf->reloc_buf = NULL;
+    ttm_buf->relocs = NULL;
 
     DBG("bo_create_from_handle: %p %08x (%s)\n",
 	&ttm_buf->bo, handle, ttm_buf->name);
