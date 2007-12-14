@@ -243,6 +243,10 @@ st_new_renderbuffer_fb(enum pipe_format format)
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
       strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
+   case PIPE_FORMAT_S8_UNORM:
+      strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
+      strb->Base._BaseFormat = GL_STENCIL_INDEX;
+      break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
       strb->Base.InternalFormat = GL_RGBA16;
       strb->Base._BaseFormat = GL_RGBA;
