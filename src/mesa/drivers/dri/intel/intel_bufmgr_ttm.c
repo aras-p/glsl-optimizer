@@ -211,7 +211,6 @@ intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
     if (!first)
 	return 0;
 
-    dri_ttm_dump_validation_list(bufmgr_ttm);
     *count_p = count;
     return first;
 }
