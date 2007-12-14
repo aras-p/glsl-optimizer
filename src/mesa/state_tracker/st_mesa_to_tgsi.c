@@ -675,44 +675,22 @@ tgsi_translate_mesa_program(
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < numInputs; i++) {
          struct tgsi_full_declaration fulldecl;
-         switch (inputSemanticName[i]) {
-         case TGSI_SEMANTIC_POSITION:
-            /* Fragment XY pos */
-            fulldecl = make_input_decl(i,
-                                       GL_TRUE, TGSI_INTERPOLATE_CONSTANT,
-                                       TGSI_WRITEMASK_XY,
-                                       GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
-            ti += tgsi_build_full_declaration(
-                                              &fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
-            /* Fragment ZW pos */
-            fulldecl = make_input_decl(i,
-                                       GL_TRUE, TGSI_INTERPOLATE_LINEAR,
-                                       TGSI_WRITEMASK_ZW,
-                                       GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
-            ti += tgsi_build_full_declaration(&fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
-            break;
-         default:
-            fulldecl = make_input_decl(i,
-                                       GL_TRUE, interpMode[i],
-                                       TGSI_WRITEMASK_XYZW,
-                                       GL_TRUE, inputSemanticName[i],
-                                       inputSemanticIndex[i]);
-            ti += tgsi_build_full_declaration(&fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
-            break;
-         }
+         fulldecl = make_input_decl(i,
+                                    GL_TRUE, interpMode[i],
+                                    TGSI_WRITEMASK_XYZW,
+                                    GL_TRUE, inputSemanticName[i],
+                                    inputSemanticIndex[i]);
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
       }
    }
    else {
       /* vertex prog */
+      /* XXX: this could probaby be merged with the clause above.
+       * the only difference is the semantic tags.
+       */
       for (i = 0; i < numInputs; i++) {
          struct tgsi_full_declaration fulldecl;
          fulldecl = make_input_decl(i,

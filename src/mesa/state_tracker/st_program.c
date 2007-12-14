@@ -47,7 +47,7 @@
 #include "st_mesa_to_tgsi.h"
 
 
-#define TGSI_DEBUG 0
+#define TGSI_DEBUG 01
 
 
 /**
@@ -283,15 +283,16 @@ st_translate_fragment_program(struct st_context *st,
    const struct cso_fragment_shader *cso;
    GLuint interpMode[16];  /* XXX size? */
    GLuint attr;
-   GLbitfield inputsRead = stfp->Base.Base.InputsRead;
-
-   /* For software rendering, we always need the fragment input position
-    * in order to calculate interpolated values.
-    * For i915, we always want to emit the semantic info for position.
-    */
-   inputsRead |= FRAG_BIT_WPOS;
+   const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
+   GLuint vslot = 0;
 
    memset(&fs, 0, sizeof(fs));
+
+   /* which vertex output goes to the first fragment input: */
+   if (inputsRead & FRAG_BIT_WPOS)
+      vslot = 0;
+   else
+      vslot = 1;
 
    /*
     * Convert Mesa program inputs to TGSI input register semantics.
@@ -300,15 +301,17 @@ st_translate_fragment_program(struct st_context *st,
       if (inputsRead & (1 << attr)) {
          const GLuint slot = fs.num_inputs;
 
-         fs.num_inputs++;
-
          defaultInputMapping[attr] = slot;
+
+         fs.input_map[slot] = vslot++;
+
+         fs.num_inputs++;
 
          switch (attr) {
          case FRAG_ATTRIB_WPOS:
             fs.input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
             fs.input_semantic_index[slot] = 0;
-            interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
+            interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL0:
             fs.input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;

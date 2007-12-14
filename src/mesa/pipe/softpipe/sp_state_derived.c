@@ -51,18 +51,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    memset(vinfo, 0, sizeof(*vinfo));
 
-   if (softpipe->depth_stencil->depth.enabled)
-      softpipe->need_z = TRUE;
-   else
-      softpipe->need_z = FALSE;
-   softpipe->need_w = FALSE;
 
    if (fs->input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       /* Need Z if depth test is enabled or the fragment program uses the
        * fragment position (XYZW).
        */
-      softpipe->need_z = TRUE;
-      softpipe->need_w = TRUE;
    }
 
    softpipe->psize_slot = -1;
@@ -121,7 +114,6 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
          draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
-         softpipe->need_w = TRUE;
          break;
 
       default:
@@ -129,7 +121,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       }
    }
 
+#if 00
    softpipe->nr_frag_attrs = vinfo->num_attribs;
+#else
+   softpipe->nr_frag_attrs = fs->num_inputs;
+#endif
 
    /* We want these after all other attribs since they won't get passed
     * to the fragment shader.  All prior vertex output attribs should match

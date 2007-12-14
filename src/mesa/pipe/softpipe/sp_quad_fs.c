@@ -74,15 +74,49 @@ quad_shade_stage(struct quad_stage *qs)
 }
 
 
+/**
+ * Compute quad X,Y,Z,W for the four fragments in a quad.
+ * Note that we only need to "compute" X and Y for the upper-left fragment.
+ * We could do less work if we're not depth testing, or there's no
+ * perspective-corrected attributes, but that's seldom.
+ */
+static void
+setup_pos_vector(const struct tgsi_interp_coef *coef,
+                 float x, float y,
+                 struct tgsi_exec_vector *quadpos)
+{
+   uint chan;
+   /* do X */
+   quadpos->xyzw[0].f[0] = x;
+   /* do Y */
+   quadpos->xyzw[1].f[0] = y;
+   /* do Z and W for all fragments in the quad */
+   for (chan = 2; chan < 4; chan++) {
+      const float dadx = coef->dadx[chan];
+      const float dady = coef->dady[chan];
+      const float a0 = coef->a0[chan] + dadx * x + dady * y;
+      quadpos->xyzw[chan].f[0] = a0;
+      quadpos->xyzw[chan].f[1] = a0 + dadx;
+      quadpos->xyzw[chan].f[2] = a0 + dady;
+      quadpos->xyzw[chan].f[3] = a0 + dadx + dady;
+   }
+}
+
+
 typedef void (XSTDCALL *codegen_function)(
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
    float (*constant)[4],
    struct tgsi_exec_vector *temporary,
-   const struct tgsi_interp_coef *coef );
+   const struct tgsi_interp_coef *coef
+#if 0
+   ,const struct tgsi_exec_vector *quadPos
+#endif
+ );
 
-/* This should be done by the fragment shader execution unit (code
- * generated from the decl instructions).  Do it here for now.
+
+/**
+ * Execute fragment shader for the four fragments in the quad.
  */
 static void
 shade_quad(
@@ -91,33 +125,15 @@ shade_quad(
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
-   const float fx = (float) quad->x0;
-   const float fy = (float) quad->y0;
    struct tgsi_exec_machine *machine = &qss->machine;
 
-   /* Consts does not require 16 byte alignment. */
+   /* Consts do not require 16 byte alignment. */
    machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
    machine->InterpCoefs = quad->coef;
 
-#if 1 /* XXX only do this if the fp really reads fragment.position */
-   machine->Inputs[0].xyzw[0].f[0] = fx;
-   machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
-   machine->Inputs[0].xyzw[0].f[2] = fx;
-   machine->Inputs[0].xyzw[0].f[3] = fx + 1.0f;
-
-   /* XXX for OpenGL we need to invert the Y pos here (y=0=top).
-    * but that'll mess up linear/perspective interpolation of other
-    * attributes...
-    */
-   machine->Inputs[0].xyzw[1].f[0] = fy;
-   machine->Inputs[0].xyzw[1].f[1] = fy;
-   machine->Inputs[0].xyzw[1].f[2] = fy + 1.0f;
-   machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
-#endif
-
-   machine->QuadX = quad->x0;
-   machine->QuadY = quad->y0;
+   /* Compute X, Y, Z, W vals for this quad */
+   setup_pos_vector(quad->posCoef, quad->x0, quad->y0, &machine->QuadPos);
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)
@@ -130,9 +146,9 @@ shade_quad(
          machine->Temps,
          machine->InterpCoefs
 #if 0
-         ,quad->x0, quad->y0
+         ,machine->QuadPos
 #endif
- );
+           );
       quad->mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
    }
    else

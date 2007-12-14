@@ -110,8 +110,6 @@ struct softpipe_context {
    struct vertex_info vertex_info;
    unsigned attr_mask;
    unsigned nr_frag_attrs;  /**< number of active fragment attribs */
-   boolean need_z;  /**< produce quad/fragment Z values? */
-   boolean need_w;  /**< produce quad/fragment W values? */
    int psize_slot;
 
 #if 0

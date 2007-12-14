@@ -170,7 +170,6 @@ struct tgsi_exec_machine
    struct tgsi_exec_vector       *Inputs;
    struct tgsi_exec_vector       *Outputs;
    const struct tgsi_token       *Tokens;
-   float                         QuadX, QuadY; /**< for frag progs only */
    unsigned                      Processor;
 
    /* GEOMETRY processor only. */
@@ -178,6 +177,7 @@ struct tgsi_exec_machine
 
    /* FRAGMENT processor only. */
    const struct tgsi_interp_coef *InterpCoefs;
+   struct tgsi_exec_vector       QuadPos;
 
    /* Conditional execution masks */
    uint CondMask;  /**< For IF/ELSE/ENDIF */

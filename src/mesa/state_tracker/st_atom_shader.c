@@ -151,8 +151,7 @@ find_translated_vp(struct st_context *st,
 {
    static const GLuint UNUSED = ~0;
    struct translated_vertex_program *xvp;
-   const GLbitfield fragInputsRead
-      = stfp->Base.Base.InputsRead | FRAG_BIT_WPOS;
+   const GLbitfield fragInputsRead = stfp->Base.Base.InputsRead;
 
    /*
     * Translate fragment program if needed.
@@ -206,6 +205,7 @@ find_translated_vp(struct st_context *st,
    if (xvp->serialNo != stvp->serialNo) {
       GLuint outAttr, dummySlot;
       const GLbitfield outputsWritten = stvp->Base.Base.OutputsWritten;
+      GLuint numVpOuts = 0;
 
       /* Compute mapping of vertex program outputs to slots, which depends
        * on the fragment program's input->slot mapping.
@@ -214,11 +214,24 @@ find_translated_vp(struct st_context *st,
          /* set default: */
          xvp->output_to_slot[outAttr] = UNUSED;
 
-         if (outputsWritten & (1 << outAttr)) {
+         if (outAttr == VERT_RESULT_HPOS) {
+            /* always put xformed position into slot zero */
+            xvp->output_to_slot[VERT_RESULT_HPOS] = 0;
+            numVpOuts++;
+         }
+         else if (outputsWritten & (1 << outAttr)) {
             /* see if the frag prog wants this vert output */
-            GLint fpIn = vp_out_to_fp_in(outAttr);
-            if (fpIn >= 0) {
-               xvp->output_to_slot[outAttr] = stfp->input_to_slot[fpIn];
+            GLint fpInAttrib = vp_out_to_fp_in(outAttr);
+            if (fpInAttrib >= 0) {
+               GLuint fpInSlot = stfp->input_to_slot[fpInAttrib];
+               GLuint vpOutSlot = stfp->fs->state.input_map[fpInSlot];
+               xvp->output_to_slot[outAttr] = vpOutSlot;
+               numVpOuts++;
+            }
+            else if (outAttr == VERT_RESULT_BFC0 ||
+                     outAttr == VERT_RESULT_BFC1) {
+               /* backface colors go into last slots */
+               xvp->output_to_slot[outAttr] = numVpOuts++;
             }
          }
       }

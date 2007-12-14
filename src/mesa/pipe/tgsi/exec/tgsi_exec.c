@@ -1352,7 +1352,8 @@ linear_interpolation(
    unsigned attrib,
    unsigned chan )
 {
-   const float x = mach->QuadX, y = mach->QuadY;
+   const float x = mach->QuadPos.xyzw[0].f[0];
+   const float y = mach->QuadPos.xyzw[1].f[0];
    const float dadx = mach->InterpCoefs[attrib].dadx[chan];
    const float dady = mach->InterpCoefs[attrib].dady[chan];
    const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
@@ -1368,14 +1369,17 @@ perspective_interpolation(
    unsigned attrib,
    unsigned chan )
 {
-   const float x = mach->QuadX, y = mach->QuadY;
+   const float x = mach->QuadPos.xyzw[0].f[0];
+   const float y = mach->QuadPos.xyzw[1].f[0];
    const float dadx = mach->InterpCoefs[attrib].dadx[chan];
    const float dady = mach->InterpCoefs[attrib].dady[chan];
    const float a0 = mach->InterpCoefs[attrib].a0[chan] + dadx * x + dady * y;
-   mach->Inputs[attrib].xyzw[chan].f[0] = a0 / mach->Inputs[0].xyzw[3].f[0];
-   mach->Inputs[attrib].xyzw[chan].f[1] = (a0 + dadx) / mach->Inputs[0].xyzw[3].f[1];
-   mach->Inputs[attrib].xyzw[chan].f[2] = (a0 + dady) / mach->Inputs[0].xyzw[3].f[2];
-   mach->Inputs[attrib].xyzw[chan].f[3] = (a0 + dadx + dady) / mach->Inputs[0].xyzw[3].f[3];
+   const float *w = mach->QuadPos.xyzw[3].f;
+   /* divide by W here */
+   mach->Inputs[attrib].xyzw[chan].f[0] = a0 / w[0];
+   mach->Inputs[attrib].xyzw[chan].f[1] = (a0 + dadx) / w[1];
+   mach->Inputs[attrib].xyzw[chan].f[2] = (a0 + dady) / w[2];
+   mach->Inputs[attrib].xyzw[chan].f[3] = (a0 + dadx + dady) / w[3];
 }
 
 
@@ -1399,17 +1403,6 @@ exec_declaration(
          first = decl->u.DeclarationRange.First;
          last = decl->u.DeclarationRange.Last;
          mask = decl->Declaration.UsageMask;
-
-         /* Do not touch WPOS.xy */
-         if( first == 0 ) {
-            mask &= ~TGSI_WRITEMASK_XY;
-            if( mask == TGSI_WRITEMASK_NONE ) {
-               first++;
-               if( first > last ) {
-                  return;
-               }
-            }
-         }
 
          switch( decl->Interpolation.Interpolate ) {
          case TGSI_INTERPOLATE_CONSTANT:
