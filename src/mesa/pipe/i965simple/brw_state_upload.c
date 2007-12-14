@@ -90,8 +90,7 @@ const struct brw_tracked_state *atoms[] =
 
    &brw_psp_urb_cbs,
 
-
-   NULL,			/* brw_constant_buffer */
+   &brw_constant_buffer
 };
 
 
