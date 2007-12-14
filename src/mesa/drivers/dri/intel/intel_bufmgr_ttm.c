@@ -767,6 +767,7 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->bufmgr.emit_reloc = dri_ttm_emit_reloc;
     bufmgr_ttm->bufmgr.process_relocs = dri_ttm_process_reloc;
     bufmgr_ttm->bufmgr.post_submit = dri_ttm_post_submit;
+    bufmgr_ttm->bufmgr.debug = GL_FALSE;
 
     return &bufmgr_ttm->bufmgr;
 }
