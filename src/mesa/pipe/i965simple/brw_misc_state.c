@@ -202,9 +202,7 @@ static void upload_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((depth_surface->pitch * depth_surface->cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-#if 0
-		(depth_surface->region->tiled << 27) |
-#endif
+//		(depth_surface->region->tiled << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(depth_surface->buffer,
 		PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE, 0);
@@ -317,7 +315,7 @@ static void upload_pipe_control(struct brw_context *brw)
 
 const struct brw_tracked_state brw_pipe_control = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_pipe_control
@@ -382,7 +380,7 @@ static void upload_invarient_state( struct brw_context *brw )
 
 const struct brw_tracked_state brw_invarient_state = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_invarient_state
@@ -418,7 +416,7 @@ static void upload_state_base_address( struct brw_context *brw )
 
 const struct brw_tracked_state brw_state_base_address = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_state_base_address

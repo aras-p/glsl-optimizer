@@ -142,7 +142,7 @@ static void upload_cc_vp( struct brw_context *brw )
 
 const struct brw_tracked_state brw_cc_vp = {
    .dirty = {
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_cc_vp

@@ -35,6 +35,9 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "brw_util.h"
+#include "brw_wm.h"
+#include "pipe/p_state.h"
+#include "pipe/p_util.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
 
@@ -43,11 +46,10 @@
 static void calculate_curbe_offsets( struct brw_context *brw )
 {
    /* CACHE_NEW_WM_PROG */
-   unsigned nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
+   unsigned nr_fp_regs = align(brw->wm.prog_data->max_const, 16);
 
    /* BRW_NEW_VERTEX_PROGRAM */
-   struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->attribs.VertexProgram;
-   unsigned nr_vp_regs = (vp->program.num_inputs * 4 + 15) / 16;
+   unsigned nr_vp_regs = align(brw->vs.prog_data->max_const, 16);
    unsigned nr_clip_regs = 0;
    unsigned total_regs;
 
@@ -55,7 +57,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
    /* BRW_NEW_CLIP ? */
    if (brw->attribs.Transform->ClipPlanesEnabled) {
       unsigned nr_planes = 6 + brw_count_bits(brw->attribs.Transform->ClipPlanesEnabled);
-      nr_clip_regs = (nr_planes * 4 + 15) / 16;
+      nr_clip_regs = align(nr_planes * 4, 16);
    }
 #endif
 
@@ -172,28 +174,18 @@ static float fixed_plane[6][4] = {
    { 1,    0,    0, 1 }
 };
 
-#if 0
 /* Upload a new set of constants.  Too much variability to go into the
  * cache mechanism, but maybe would benefit from a comparison against
  * the current uploaded set of constants.
  */
 static void upload_constant_buffer(struct brw_context *brw)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
-   struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
    struct brw_mem_pool *pool = &brw->pool[BRW_GS_POOL];
    unsigned sz = brw->curbe.total_size;
    unsigned bufsz = sz * 16 * sizeof(float);
    float *buf;
    unsigned i;
 
-   /* Update our own dependency flags.  This works because this
-    * function will also be called whenever fp or vp changes.
-    */
-   brw->curbe.tracked_state.dirty.mesa = (_NEW_TRANSFORM|_NEW_PROJECTION);
-   brw->curbe.tracked_state.dirty.mesa |= vp->param_state;
-   brw->curbe.tracked_state.dirty.mesa |= fp->param_state;
 
    if (sz == 0) {
       struct brw_constant_buffer cb;
@@ -220,10 +212,16 @@ static void upload_constant_buffer(struct brw_context *brw)
    if (brw->curbe.wm_size) {
       unsigned offset = brw->curbe.wm_start * 16;
 
-      _mesa_load_state_parameters(ctx, fp->program.Base.Parameters);
+      /* First the constant buffer constants:
+       */
+      
+      /* Then any internally generated constants: 
+       */
+      for (i = 0; i < brw->wm.prog_data->nr_internal_consts; i++)
+	 buf[offset + i] = brw->wm.prog_data->internal_const[i];
 
-      for (i = 0; i < brw->wm.prog_data->nr_params; i++)
-	 buf[offset + i] = brw->wm.prog_data->param[i][0];
+      assert(brw->wm.prog_data->max_const == 
+	     brw->wm.prog_data->nr_internal_consts);
    }
 
 
@@ -243,34 +241,26 @@ static void upload_constant_buffer(struct brw_context *brw)
 	 buf[offset + i * 4 + 3] = fixed_plane[i][3];
       }
 
-      /* Clip planes: _NEW_TRANSFORM plus _NEW_PROJECTION to get to
-       * clip-space:
+      /* Clip planes: BRW_NEW_CLIP:
        */
-      assert(MAX_CLIP_PLANES == 6);
-      for (j = 0; j < MAX_CLIP_PLANES; j++) {
-	 if (brw->attribs.Transform->ClipPlanesEnabled & (1<<j)) {
-	    buf[offset + i * 4 + 0] = brw->attribs.Transform->_ClipUserPlane[j][0];
-	    buf[offset + i * 4 + 1] = brw->attribs.Transform->_ClipUserPlane[j][1];
-	    buf[offset + i * 4 + 2] = brw->attribs.Transform->_ClipUserPlane[j][2];
-	    buf[offset + i * 4 + 3] = brw->attribs.Transform->_ClipUserPlane[j][3];
-	    i++;
-	 }
+      for (j = 0; j < brw->attribs.Clip.nr; j++) {
+	 buf[offset + i * 4 + 0] = brw->attribs.Clip.ucp[j][0];
+	 buf[offset + i * 4 + 1] = brw->attribs.Clip.ucp[j][1];
+	 buf[offset + i * 4 + 2] = brw->attribs.Clip.ucp[j][2];
+	 buf[offset + i * 4 + 3] = brw->attribs.Clip.ucp[j][3];
+	 i++;
       }
    }
 
 
    if (brw->curbe.vs_size) {
-      unsigned offset = brw->curbe.vs_start * 16;
-      unsigned nr = vp->program.Base.Parameters->NumParameters;
+//      unsigned offset = brw->curbe.vs_start * 16;
+//      unsigned nr = vp->max_const;
 
-      _mesa_load_state_parameters(ctx, vp->program.Base.Parameters);
+      /* map the vertex constant buffer and copy to curbe: */
 
-      for (i = 0; i < nr; i++) {
-	 buf[offset + i * 4 + 0] = vp->program.Base.Parameters->ParameterValues[i][0];
-	 buf[offset + i * 4 + 1] = vp->program.Base.Parameters->ParameterValues[i][1];
-	 buf[offset + i * 4 + 2] = vp->program.Base.Parameters->ParameterValues[i][2];
-	 buf[offset + i * 4 + 3] = vp->program.Base.Parameters->ParameterValues[i][3];
-      }
+//      assert(nr == 0);
+      assert(0);
    }
 
    if (0) {
@@ -309,7 +299,12 @@ static void upload_constant_buffer(struct brw_context *brw)
 
       /* Copy data to the buffer:
        */
-      dri_bo_subdata(pool->buffer, brw->curbe.gs_offset, bufsz, buf);
+      brw->winsys->buffer_subdata_typed(brw->winsys,
+					pool->buffer, 
+					brw->curbe.gs_offset, 
+					bufsz, 
+					buf,
+					BRW_CONSTANT_BUFFER );
    }
 
    /* TODO: only emit the constant_buffer packet when necessary, ie:
@@ -341,9 +336,7 @@ static void upload_constant_buffer(struct brw_context *brw)
        * flushes as necessary when doublebuffering of CURBEs isn't
        * possible.
        */
-/*       intel_batchbuffer_align(brw->intel.batch, 64, sizeof(cb)); */
       BRW_BATCH_STRUCT(brw, &cb);
-/*       intel_batchbuffer_align(brw->intel.batch, 64, 0); */
    }
 }
 
@@ -355,9 +348,8 @@ static void upload_constant_buffer(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_constant_buffer = {
    .dirty = {
-      .mesa = (_NEW_TRANSFORM|_NEW_PROJECTION),      /* plus fp and vp flags */
-      .brw  = (BRW_NEW_FRAGMENT_PROGRAM |
-	       BRW_NEW_VERTEX_PROGRAM |
+      .brw  = (BRW_NEW_CLIP |
+	       BRW_NEW_CONSTANTS |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
 	       BRW_NEW_PSP | /* Implicit - hardware requires this, not used above */
 	       BRW_NEW_CURBE_OFFSETS),
@@ -366,4 +358,3 @@ const struct brw_tracked_state brw_constant_buffer = {
    .update = upload_constant_buffer
 };
 
-#endif

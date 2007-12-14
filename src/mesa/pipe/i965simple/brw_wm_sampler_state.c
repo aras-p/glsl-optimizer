@@ -229,12 +229,12 @@ static void brw_update_sampler_state( const struct pipe_sampler_state *pipe_samp
  * complicates various things.  However, this is still too confusing -
  * FIXME: simplify all the different new texture state flags.
  */
-void brw_upload_wm_samplers(struct brw_context *brw)
+static void upload_wm_samplers(struct brw_context *brw)
 {
    unsigned unit;
    unsigned sampler_count = 0;
 
-   /* _NEW_TEXTURE */
+   /* BRW_NEW_SAMPLER */
    for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
       if (brw->attribs.Samplers[unit]) { /* FIXME: correctly detect enabled ones */
          const struct pipe_sampler_state *sampler = brw->attribs.Samplers[unit];
@@ -262,14 +262,11 @@ void brw_upload_wm_samplers(struct brw_context *brw)
 			   sizeof(struct brw_sampler_state) * brw->wm.sampler_count);
 }
 
-#if 0
 const struct brw_tracked_state brw_wm_samplers = {
    .dirty = {
-      .mesa = _NEW_TEXTURE,
-      .brw = 0,
+      .brw = BRW_NEW_SAMPLER,
       .cache = 0
    },
    .update = upload_wm_samplers
 };
-#endif
 

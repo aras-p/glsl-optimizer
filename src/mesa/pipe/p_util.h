@@ -360,6 +360,11 @@ static INLINE float LOG2(float val)
 #define CEILF(x)   ((float) ceil(x))
 #endif
 
+static INLINE int align(int value, int alignment)
+{
+   return (value + alignment - 1) & ~(alignment - 1);
+}
+
 /* Convenient...
  */
 extern void _mesa_printf(const char *str, ...);

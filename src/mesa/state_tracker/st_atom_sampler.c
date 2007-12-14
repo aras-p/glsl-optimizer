@@ -35,6 +35,7 @@
 #include "st_context.h"
 #include "st_cache.h"
 #include "st_atom.h"
+#include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
@@ -116,17 +117,23 @@ gl_filter_to_img_filter(GLenum filter)
 static void 
 update_samplers(struct st_context *st)
 {
-   GLuint u;
+   const struct st_fragment_program *fs = st->fp;
+   GLuint su;
 
-   for (u = 0; u < st->ctx->Const.MaxTextureImageUnits; u++) {
-      const struct gl_texture_object *texobj
-         = st->ctx->Texture.Unit[u]._Current;
+   /* loop over sampler units (aka tex image units) */
+   for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_state sampler;
       const struct cso_sampler *cso;
 
       memset(&sampler, 0, sizeof(sampler));
 
-      if (texobj) {
+      if (fs->Base.Base.SamplersUsed & (1 << su)) {
+         GLuint texUnit = fs->Base.Base.SamplerUnits[su];
+         const struct gl_texture_object *texobj
+            = st->ctx->Texture.Unit[texUnit]._Current;
+
+         assert(texobj);
+
          sampler.wrap_s = gl_wrap_to_sp(texobj->WrapS);
          sampler.wrap_t = gl_wrap_to_sp(texobj->WrapT);
          sampler.wrap_r = gl_wrap_to_sp(texobj->WrapR);
@@ -138,7 +145,7 @@ update_samplers(struct st_context *st)
          if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
             sampler.normalized_coords = 1;
 
-         sampler.lod_bias = st->ctx->Texture.Unit[u].LodBias;
+         sampler.lod_bias = st->ctx->Texture.Unit[su].LodBias;
 #if 1
          sampler.min_lod = texobj->MinLod;
          sampler.max_lod = texobj->MaxLod;
@@ -166,10 +173,10 @@ update_samplers(struct st_context *st)
 
       cso = st_cached_sampler_state(st, &sampler);
 
-      if (cso != st->state.sampler[u]) {
+      if (cso != st->state.sampler[su]) {
          /* state has changed */
-         st->state.sampler[u] = cso;
-         st->pipe->bind_sampler_state(st->pipe, u, cso->data);
+         st->state.sampler[su] = cso;
+         st->pipe->bind_sampler_state(st->pipe, su, cso->data);
       }
    }
 }

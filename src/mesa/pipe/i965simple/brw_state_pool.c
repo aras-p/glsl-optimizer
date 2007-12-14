@@ -43,17 +43,18 @@
  */
 
 #include "pipe/p_winsys.h"
+#include "pipe/p_util.h"
 #include "brw_context.h"
 #include "brw_state.h"
 
 boolean brw_pool_alloc( struct brw_mem_pool *pool,
 			  unsigned size,
-			  unsigned align,
+			  unsigned alignment,
 			  unsigned *offset_return)
 {
-   unsigned fixup = ALIGN(pool->offset, align) - pool->offset;
+   unsigned fixup = align(pool->offset, alignment) - pool->offset;
 
-   size = ALIGN(size, 4);
+   size = align(size, 4);
 
    if (pool->offset + fixup + size >= pool->size) {
       printf("%s failed\n", __FUNCTION__);
@@ -114,7 +115,7 @@ void brw_pool_check_wrap( struct brw_context *brw,
 			  struct brw_mem_pool *pool )
 {
    if (pool->offset > (pool->size * 3) / 4) {
-      brw->state.dirty.brw |= BRW_NEW_CONTEXT;
+      brw->state.dirty.brw |= BRW_NEW_SCENE;
    }
 
 }

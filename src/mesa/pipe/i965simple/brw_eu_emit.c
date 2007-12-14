@@ -363,10 +363,10 @@ static struct brw_instruction *next_insn( struct brw_compile *p,
 }
 
 
-static struct brw_instruction *brw_alu1( struct brw_compile *p,
-					 unsigned opcode,
-					 struct brw_reg dest,
-					 struct brw_reg src )
+struct brw_instruction *brw_alu1( struct brw_compile *p,
+				  unsigned opcode,
+				  struct brw_reg dest,
+				  struct brw_reg src )
 {
    struct brw_instruction *insn = next_insn(p, opcode);
    brw_set_dest(insn, dest);
@@ -374,11 +374,11 @@ static struct brw_instruction *brw_alu1( struct brw_compile *p,
    return insn;
 }
 
-static struct brw_instruction *brw_alu2(struct brw_compile *p,
-					unsigned opcode,
-					struct brw_reg dest,
-					struct brw_reg src0,
-					struct brw_reg src1 )
+struct brw_instruction *brw_alu2(struct brw_compile *p,
+				 unsigned opcode,
+				 struct brw_reg dest,
+				 struct brw_reg src0,
+				 struct brw_reg src1 )
 {
    struct brw_instruction *insn = next_insn(p, opcode);
    brw_set_dest(insn, dest);

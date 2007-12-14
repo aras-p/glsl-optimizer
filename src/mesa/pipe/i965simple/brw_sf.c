@@ -36,9 +36,8 @@
 #include "brw_util.h"
 #include "brw_sf.h"
 #include "brw_state.h"
+#include "tgsi/util/tgsi_parse.h"
 
-#if 0
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
@@ -46,7 +45,6 @@ static void compile_sf_prog( struct brw_context *brw,
    struct brw_sf_compile c;
    const unsigned *program;
    unsigned program_size;
-   unsigned i, idx;
 
    memset(&c, 0, sizeof(c));
 
@@ -55,27 +53,17 @@ static void compile_sf_prog( struct brw_context *brw,
    brw_init_compile(&c.func);
 
    c.key = *key;
-   c.nr_attrs = brw_count_bits(c.key.attrs);
+
+
+   c.nr_attrs = c.key.vp_output_count;
    c.nr_attr_regs = (c.nr_attrs+1)/2;
-   c.nr_setup_attrs = brw_count_bits(c.key.attrs & DO_SETUP_BITS);
+
+   c.nr_setup_attrs = c.key.fp_input_count;
    c.nr_setup_regs = (c.nr_setup_attrs+1)/2;
 
    c.prog_data.urb_read_length = c.nr_attr_regs;
    c.prog_data.urb_entry_size = c.nr_setup_regs * 2;
 
-   /* Construct map from attribute number to position in the vertex.
-    */
-   for (i = idx = 0; i < VERT_RESULT_MAX; i++)
-      if (c.key.attrs & (1<<i)) {
-	 c.attr_to_idx[i] = idx;
-	 c.idx_to_attr[idx] = i;
-	 if (i >= VERT_RESULT_TEX0 && i <= VERT_RESULT_TEX7) {
-		 c.point_attrs[i].CoordReplace =
-			brw->attribs.Point->CoordReplace[i - VERT_RESULT_TEX0];
-	 } else
-		 c.point_attrs[i].CoordReplace = FALSE;
-	 idx++;
-      }
 
    /* Which primitive?  Or all three?
     */
@@ -90,19 +78,15 @@ static void compile_sf_prog( struct brw_context *brw,
       break;
    case SF_POINTS:
       c.nr_verts = 1;
-      if (key->do_point_sprite)
-	  brw_emit_point_sprite_setup( &c );
-      else
-	  brw_emit_point_setup( &c );
+      brw_emit_point_setup( &c );
       break;
+
    case SF_UNFILLED_TRIS:
-      c.nr_verts = 3;
-      brw_emit_anyprim_setup( &c );
-      break;
    default:
       assert(0);
       return;
    }
+
 
 
    /* get the program
@@ -142,20 +126,15 @@ static void upload_sf_prog( struct brw_context *brw )
    /* Populate the key, noting state dependencies:
     */
    /* CACHE_NEW_VS_PROG */
-   key.attrs = brw->vs.prog_data->outputs_written;
+   key.vp_output_count = brw->vs.prog_data->outputs_written;
 
    /* BRW_NEW_REDUCED_PRIMITIVE */
    switch (brw->reduced_primitive) {
    case PIPE_PRIM_TRIANGLES:
-      /* NOTE: We just use the edgeflag attribute as an indicator that
-       * unfilled triangles are active.  We don't actually do the
-       * edgeflag testing here, it is already done in the clip
-       * program.
-       */
-      if (key.attrs & (1<<VERT_RESULT_EDGE))
-	 key.primitive = SF_UNFILLED_TRIS;
-      else
-	 key.primitive = SF_TRIANGLES;
+//      if (key.attrs & (1<<VERT_RESULT_EDGE))
+//	 key.primitive = SF_UNFILLED_TRIS;
+//      else
+      key.primitive = SF_TRIANGLES;
       break;
    case PIPE_PRIM_LINES:
       key.primitive = SF_LINES;
@@ -165,16 +144,15 @@ static void upload_sf_prog( struct brw_context *brw )
       break;
    }
 
-   /* BRW_NEW_POINT */
-   key.do_point_sprite = brw->attribs.Point->PointSprite;
-   key.SpriteOrigin = brw->attribs.Point->SpriteOrigin;
-   /* BRW_NEW_RASTER */
-   key.do_flat_shading = (brw->attribs.Raster->flatshade);
-   key.do_twoside_color = (brw->attribs.Light->Enabled && brw->attribs.Light->Model.TwoSide);
 
-   /* _NEW_POLYGON */
-   if (key.do_twoside_color)
-      key.frontface_ccw = (brw->attribs.Polygon->FrontFace == GL_CCW);
+//   key.do_point_sprite = brw->attribs.Point->PointSprite;
+//   key.SpriteOrigin = brw->attribs.Point->SpriteOrigin;
+
+//   key.do_flat_shading = (brw->attribs.Raster->flatshade);
+//   key.do_twoside_color = (brw->attribs.Light->Enabled && brw->attribs.Light->Model.TwoSide);
+
+//   if (key.do_twoside_color)
+//      key.frontface_ccw = (brw->attribs.Polygon->FrontFace == GL_CCW);
 
 
    if (!search_cache(brw, &key))
@@ -184,11 +162,150 @@ static void upload_sf_prog( struct brw_context *brw )
 
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
-      .brw   = (BRW_NEW_RASTER |
-		BRW_NEW_REDUCED_PRIMITIVE),
-      .cache = CACHE_NEW_VS_PROG
+      .brw   = (BRW_NEW_RASTERIZER |
+		BRW_NEW_REDUCED_PRIMITIVE |
+		BRW_NEW_VS |
+		BRW_NEW_FS),
+      .cache = 0,
    },
    .update = upload_sf_prog
 };
 
-#endif
+
+/* Build a struct like the one we'd like the state tracker to pass to
+ * us.
+ */
+static void update_sf_linkage( struct brw_context *brw )
+{
+   const struct brw_vertex_program *vs = brw->attribs.VertexProgram;
+   const struct brw_fragment_program *fs = brw->attribs.FragmentProgram;
+   struct pipe_setup_linkage state;
+   struct tgsi_parse_context parse;
+
+   int i, j;
+   int nr_vp_outputs = 0;
+   int done = 0;
+
+   struct { 
+      unsigned semantic:8;
+      unsigned semantic_index:16;
+   } fp_semantic[32], vp_semantic[32];
+
+   memset(&state, 0, sizeof(state));
+
+   state.fp_input_count = 0;
+
+
+
+   
+   /* First scan fp inputs
+    */
+   tgsi_parse_init( &parse, fs->program.tokens );
+   while( !done &&
+	  !tgsi_parse_end_of_tokens( &parse ) ) 
+   {
+      tgsi_parse_token( &parse );
+
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+	 if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_INPUT) 
+	 {
+	    int first = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
+	    int last = parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
+
+	    for (i = first; i < last; i++) {
+	       state.fp_input[i].vp_output = ~0;
+	       state.fp_input[i].bf_vp_output = ~0;
+	       state.fp_input[i].interp_mode = 
+		  parse.FullToken.FullDeclaration.Interpolation.Interpolate;
+
+	       fp_semantic[i].semantic = 
+		  parse.FullToken.FullDeclaration.Semantic.SemanticName;
+	       fp_semantic[i].semantic_index = 
+		  parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
+
+	    }
+
+	    assert(last > state.fp_input_count);
+	    state.fp_input_count = last;
+	 }
+	 break;
+      default:
+	 done = 1;
+	 break;
+      }
+   }
+
+
+   assert(state.fp_input_count == fs->program.num_inputs);
+
+      
+   /* Then scan vp outputs
+    */
+   done = 0;
+   tgsi_parse_init( &parse, vs->program.tokens );
+   while( !done &&
+	  !tgsi_parse_end_of_tokens( &parse ) ) 
+   {
+      tgsi_parse_token( &parse );
+
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+	 if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_INPUT) 
+	 {
+	    int first = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
+	    int last = parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
+
+	    for (i = first; i < last; i++) {
+	       vp_semantic[i].semantic = 
+		  parse.FullToken.FullDeclaration.Semantic.SemanticName;
+	       vp_semantic[i].semantic_index = 
+		  parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
+	    }
+	    
+	    assert(last > nr_vp_outputs);
+	    nr_vp_outputs = last;
+	 }
+	 break;
+      default:
+	 done = 1;
+	 break;
+      }
+   }
+
+
+   /* Now match based on semantic information.
+    */
+   for (i = 0; i< state.fp_input_count; i++) {
+      for (j = 0; j < nr_vp_outputs; j++) {
+	 if (fp_semantic[i].semantic == vp_semantic[j].semantic &&
+	     fp_semantic[i].semantic_index == vp_semantic[j].semantic_index) {
+	    state.fp_input[i].vp_output = j;
+	 }
+      }
+      if (fp_semantic[i].semantic == TGSI_SEMANTIC_COLOR) {
+	 for (j = 0; j < nr_vp_outputs; j++) {
+	    if (TGSI_SEMANTIC_BCOLOR == vp_semantic[j].semantic &&
+		fp_semantic[i].semantic_index == vp_semantic[j].semantic_index) {
+	       state.fp_input[i].bf_vp_output = j;
+	    }
+	 }
+      }
+   }
+
+   if (memcmp(&brw->sf.linkage, &state, sizeof(state)) != 0) {
+      brw->sf.linkage = state;
+      brw->state.dirty.brw |= BRW_NEW_SF_LINKAGE;
+   }
+}
+
+
+const struct brw_tracked_state brw_sf_linkage = {
+   .dirty = {
+      .brw   = (BRW_NEW_VS |
+		BRW_NEW_FS),
+      .cache = 0,
+   },
+   .update = update_sf_linkage
+};
+

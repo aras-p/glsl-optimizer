@@ -94,6 +94,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
    unsigned bypass_clipping:1;
+   unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
@@ -139,6 +140,7 @@ struct pipe_shader_state {
    const struct tgsi_token *tokens;
    ubyte num_inputs;
    ubyte num_outputs;
+   ubyte input_map[PIPE_MAX_SHADER_INPUTS]; /* XXX this may be temporary */
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */

@@ -928,8 +928,9 @@ i915_translate_instructions(struct i915_fp_compile *p,
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* XXX no-op? */
-         assert(0);
+         /* This is a no-op.  We'll get immediates from the usual constant/
+          * uniform buffer.
+          */
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:

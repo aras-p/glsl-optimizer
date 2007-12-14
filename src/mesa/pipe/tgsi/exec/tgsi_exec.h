@@ -177,6 +177,7 @@ struct tgsi_exec_machine
 
    /* FRAGMENT processor only. */
    const struct tgsi_interp_coef *InterpCoefs;
+   struct tgsi_exec_vector       QuadPos;
 
    /* Conditional execution masks */
    uint CondMask;  /**< For IF/ELSE/ENDIF */

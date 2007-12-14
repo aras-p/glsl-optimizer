@@ -73,6 +73,7 @@ struct quad_header {
    float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
 
    const struct tgsi_interp_coef *coef;
+   const struct tgsi_interp_coef *posCoef;
 
    unsigned nr_attrs;
 };

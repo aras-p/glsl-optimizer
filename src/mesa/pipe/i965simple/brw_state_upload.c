@@ -97,39 +97,16 @@ const struct brw_tracked_state *atoms[] =
 
 void brw_init_state( struct brw_context *brw )
 {
-   unsigned i;
-
    brw_init_pools(brw);
    brw_init_caches(brw);
 
-   brw->state.atoms = MALLOC(sizeof(atoms));
-   brw->state.nr_atoms = sizeof(atoms)/sizeof(*atoms);
-   memcpy(brw->state.atoms, atoms, sizeof(atoms));
-
-   /* Patch in a pointer to the dynamic state atom:
-    */
-   for (i = 0; i < brw->state.nr_atoms; i++)
-      if (brw->state.atoms[i] == NULL)
-	 brw->state.atoms[i] = &brw->curbe.tracked_state;
-
-   memcpy(&brw->curbe.tracked_state,
-		&brw_constant_buffer,
-		sizeof(brw_constant_buffer));
-
    brw->state.dirty.brw = ~0;
    brw->emit_state_always = 0;
-
-
 }
 
 
 void brw_destroy_state( struct brw_context *brw )
 {
-   if (brw->state.atoms) {
-      FREE(brw->state.atoms);
-      brw->state.atoms = NULL;
-   }
-
    brw_destroy_caches(brw);
    brw_destroy_batch_cache(brw);
    brw_destroy_pools(brw);
@@ -177,7 +154,7 @@ void brw_validate_state( struct brw_context *brw )
        state->brw == 0)
       return;
 
-   if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
+   if (brw->state.dirty.brw & BRW_NEW_SCENE)
       brw_clear_batch_cache_flush(brw);
 
    if (BRW_DEBUG) {
@@ -189,21 +166,17 @@ void brw_validate_state( struct brw_context *brw )
       memset(&examined, 0, sizeof(examined));
       prev = *state;
 
-      for (i = 0; i < brw->state.nr_atoms; i++) {
-	 const struct brw_tracked_state *atom = brw->state.atoms[i];
+      for (i = 0; i < Elements(atoms); i++) {
+	 const struct brw_tracked_state *atom = atoms[i];
 	 struct brw_state_flags generated;
 
 	 assert(atom->dirty.brw ||
 		atom->dirty.cache);
 	 assert(atom->update);
 
-	 if (check_state(state, &atom->dirty) || atom->always_update) {
+	 if (check_state(state, &atom->dirty)) {
 	    atom->update( brw );
-
-/* 	    emit_foo(brw); */
 	 }
-	 if (atom->emit_reloc != NULL)
-	    atom->emit_reloc(brw);
 
 	 accumulate_state(&examined, &atom->dirty);
 
@@ -218,12 +191,10 @@ void brw_validate_state( struct brw_context *brw )
    }
    else {
       for (i = 0; i < Elements(atoms); i++) {
-	 const struct brw_tracked_state *atom = brw->state.atoms[i];
+	 const struct brw_tracked_state *atom = atoms[i];
 
-	 if (check_state(state, &atom->dirty) || atom->always_update)
+	 if (check_state(state, &atom->dirty))
 	    atom->update( brw );
-	 if (atom->emit_reloc != NULL)
-	    atom->emit_reloc(brw);
       }
    }
 

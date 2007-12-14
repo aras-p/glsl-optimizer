@@ -198,6 +198,13 @@ static void * brw_create_fs_state(struct pipe_context *pipe,
    /* XXX: Do I have to duplicate the tokens as well??
     */
    brw_fp->program = *shader;
+   brw_fp->id = brw_context(pipe)->program_id++;
+
+   brw_shader_info(shader->tokens,
+		   &brw_fp->info);
+
+   tgsi_dump(shader->tokens, 0);
+
 
    return (void *)brw_fp;
 }
@@ -228,6 +235,9 @@ static void *brw_create_vs_state(struct pipe_context *pipe,
    /* XXX: Do I have to duplicate the tokens as well??
     */
    brw_vp->program = *shader;
+   brw_vp->id = brw_context(pipe)->program_id++;
+   brw_shader_info(shader->tokens,
+		   &brw_vp->info);
 
    tgsi_dump(shader->tokens, 0);
 
@@ -273,14 +283,11 @@ static void brw_set_viewport_state( struct pipe_context *pipe,
 
 
 static void brw_set_vertex_buffer( struct pipe_context *pipe,
-                                    unsigned index,
-                                    const struct pipe_vertex_buffer *buffer )
+				   unsigned index,
+				   const struct pipe_vertex_buffer *buffer )
 {
    struct brw_context *brw = brw_context(pipe);
-   brw->vb.vbo_array[index] = *buffer;
-   if (index > brw->vb.last_vb)
-      brw->vb.last_vb = index;
-   assert(brw->vb.last_vb < BRW_VEP_MAX);
+   brw->vb.vbo_array[index] = buffer;
 }
 
 static void brw_set_vertex_element(struct pipe_context *pipe,

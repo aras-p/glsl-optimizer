@@ -47,9 +47,9 @@ earlyz_quad(
 {
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
-   const float dzdx = quad->coef[0].dadx[2];
-   const float dzdy = quad->coef[0].dady[2];
-   const float z0 = quad->coef[0].a0[2] + dzdx * fx + dzdy * fy;
+   const float dzdx = quad->posCoef->dadx[2];
+   const float dzdy = quad->posCoef->dady[2];
+   const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
 
    quad->outputs.depth[0] = z0;
    quad->outputs.depth[1] = z0 + dzdx;

@@ -95,6 +95,8 @@ enum brw_cache_id {
    BRW_MAX_CACHE
 };
 
+#define BRW_CONSTANT_BUFFER BRW_MAX_CACHE
+
 /**
  * Additional winsys interface for i965simple.
  *
@@ -163,6 +165,13 @@ struct brw_winsys {
 				const void *data,
 				unsigned data_type);
    
+
+   /* A cheat so we don't have to think about relocations in a couple
+    * of places yet:
+    */
+   unsigned (*get_buffer_offset)( struct brw_winsys *sws,
+				  struct pipe_buffer_handle *buf,
+				  unsigned flags );
 
 };
 

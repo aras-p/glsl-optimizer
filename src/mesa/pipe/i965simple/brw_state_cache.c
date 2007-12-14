@@ -178,8 +178,9 @@ unsigned brw_upload_cache( struct brw_cache *cache,
 
    if (BRW_DEBUG & DEBUG_STATE)
       printf("upload %s: %d bytes to pool buffer %p offset %x\n",
-             cache->name, data_size,
-             cache->pool->buffer,
+             cache->name, 
+	     data_size,
+             (void*)cache->pool->buffer,
              offset);
 
    /* Copy data to the buffer:

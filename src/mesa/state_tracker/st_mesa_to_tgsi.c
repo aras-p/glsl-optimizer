@@ -585,6 +585,20 @@ make_temp_decl(
 }
 
 
+static struct tgsi_full_declaration
+make_sampler_decl(GLuint index)
+{
+   struct tgsi_full_declaration decl;
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_SAMPLER;
+   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.u.DeclarationRange.First = index;
+   decl.u.DeclarationRange.Last = index;
+   return decl;
+}
+
+
+
 /**
  * Find the temporaries which are used in the given program.
  */
@@ -675,44 +689,22 @@ tgsi_translate_mesa_program(
    if (procType == TGSI_PROCESSOR_FRAGMENT) {
       for (i = 0; i < numInputs; i++) {
          struct tgsi_full_declaration fulldecl;
-         switch (inputSemanticName[i]) {
-         case TGSI_SEMANTIC_POSITION:
-            /* Fragment XY pos */
-            fulldecl = make_input_decl(i,
-                                       GL_TRUE, TGSI_INTERPOLATE_CONSTANT,
-                                       TGSI_WRITEMASK_XY,
-                                       GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
-            ti += tgsi_build_full_declaration(
-                                              &fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
-            /* Fragment ZW pos */
-            fulldecl = make_input_decl(i,
-                                       GL_TRUE, TGSI_INTERPOLATE_LINEAR,
-                                       TGSI_WRITEMASK_ZW,
-                                       GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
-            ti += tgsi_build_full_declaration(&fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
-            break;
-         default:
-            fulldecl = make_input_decl(i,
-                                       GL_TRUE, interpMode[i],
-                                       TGSI_WRITEMASK_XYZW,
-                                       GL_TRUE, inputSemanticName[i],
-                                       inputSemanticIndex[i]);
-            ti += tgsi_build_full_declaration(&fulldecl,
-                                              &tokens[ti],
-                                              header,
-                                              maxTokens - ti );
-            break;
-         }
+         fulldecl = make_input_decl(i,
+                                    GL_TRUE, interpMode[i],
+                                    TGSI_WRITEMASK_XYZW,
+                                    GL_TRUE, inputSemanticName[i],
+                                    inputSemanticIndex[i]);
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
       }
    }
    else {
       /* vertex prog */
+      /* XXX: this could probaby be merged with the clause above.
+       * the only difference is the semantic tags.
+       */
       for (i = 0; i < numInputs; i++) {
          struct tgsi_full_declaration fulldecl;
          fulldecl = make_input_decl(i,
@@ -809,6 +801,19 @@ tgsi_translate_mesa_program(
          numImmediates++;
       }
    }
+
+   /* texture samplers */
+   for (i = 0; i < 8; i++) {
+      if (program->SamplersUsed & (1 << i)) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_sampler_decl( i );
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
+
 
    for( i = 0; i < program->NumInstructions; i++ ) {
       compile_instruction(

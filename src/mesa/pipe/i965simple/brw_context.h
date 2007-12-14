@@ -119,7 +119,6 @@
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define BRW_FALLBACK_TEXTURE		 0x1
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
@@ -147,16 +146,13 @@ struct brw_winsys;
 /* Raised for other internal events:
  */
 #define BRW_NEW_URB_FENCE               0x10000
-#define BRW_NEW_INPUT_DIMENSIONS        0x20000
+#define BRW_NEW_PSP                     0x20000
 #define BRW_NEW_CURBE_OFFSETS           0x40000
 #define BRW_NEW_REDUCED_PRIMITIVE       0x80000
 #define BRW_NEW_PRIMITIVE               0x100000
-#define BRW_NEW_CONTEXT                 0x200000
-#define BRW_NEW_WM_INPUT_DIMENSIONS     0x400000
-#define BRW_NEW_INPUT_VARYING           0x800000
-#define BRW_NEW_PSP                     0x1000000
+#define BRW_NEW_SCENE                 0x200000
+#define BRW_NEW_SF_LINKAGE              0x400000
 
-#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
 extern int BRW_DEBUG;
 
 #define DEBUG_TEXTURE	0x1
@@ -198,21 +194,45 @@ struct brw_state_flags {
    unsigned brw;
 };
 
+
+struct brw_shader_info {
+   int nr_regs[8];		/* TGSI_FILE_* */
+};
+   
+
+
 struct brw_vertex_program {
    struct pipe_shader_state program;
-   unsigned id;
-   unsigned param_state;		/* flags indicating state tracked by params */
+   struct brw_shader_info info;
+   int id;
 };
 
 
 
 struct brw_fragment_program {
    struct pipe_shader_state program;
-   unsigned id;
-   unsigned param_state;		/* flags indicating state tracked by params */
+   struct brw_shader_info info;
+   
+   boolean UsesDepth;
    boolean UsesKill;
    boolean ComputesDepth;
+   int id;
 };
+
+
+
+
+struct pipe_setup_linkage {
+   struct {
+      unsigned vp_output:5;
+      unsigned interp_mode:4;
+      unsigned bf_vp_output:5;
+   } fp_input[PIPE_MAX_SHADER_INPUTS];
+
+   unsigned fp_input_count:5;
+   unsigned max_vp_output:5;
+};
+   
 
 
 struct brw_texture {
@@ -248,6 +268,12 @@ struct brw_texture {
  * corresponding to a different brw_wm_prog_key struct, with different
  * compiled programs:
  */
+/* Data about a particular attempt to compile a program.  Note that
+ * there can be many of these, each in a different GL state
+ * corresponding to a different brw_wm_prog_key struct, with different
+ * compiled programs:
+ */
+
 struct brw_wm_prog_data {
    unsigned curb_read_length;
    unsigned urb_read_length;
@@ -256,13 +282,14 @@ struct brw_wm_prog_data {
    unsigned total_grf;
    unsigned total_scratch;
 
-   unsigned nr_params;
-   boolean error;
-
-   /* Pointer to tracked values (only valid once
-    * _mesa_load_state_parameters has been called at runtime).
+   /* Internally generated constants for the CURBE.  These are loaded
+    * ahead of the data from the constant buffer.
     */
-   const float *param[BRW_MAX_CURBE];
+   const float internal_const[8];
+   unsigned nr_internal_consts;
+   unsigned max_const;
+
+   boolean error;
 };
 
 struct brw_sf_prog_data {
@@ -298,16 +325,11 @@ struct brw_vs_prog_data {
 
    unsigned inputs_read;
 
+   unsigned max_const;
+
    /* Used for calculating urb partitions:
     */
    unsigned urb_entry_size;
-};
-
-
-/* Size == 0 if output either not written, or always [0,0,0,1]
- */
-struct brw_vs_ouput_sizes {
-   ubyte output_size[PIPE_MAX_SHADER_OUTPUTS];
 };
 
 
@@ -374,8 +396,6 @@ struct brw_cache {
 struct brw_tracked_state {
    struct brw_state_flags dirty;
    void (*update)( struct brw_context *brw );
-   void (*emit_reloc)( struct brw_context *brw );
-   boolean always_update;
 };
 
 
@@ -455,8 +475,6 @@ struct brw_context
 
    struct {
       struct brw_state_flags dirty;
-      struct brw_tracked_state **atoms;
-      unsigned nr_atoms;
    } state;
 
 
@@ -489,34 +507,23 @@ struct brw_context
       /* Arrays with buffer objects to copy non-bufferobj arrays into
        * for upload:
        */
-      struct pipe_vertex_buffer vbo_array[PIPE_ATTRIB_MAX];
+      struct pipe_vertex_buffer *vbo_array[PIPE_ATTRIB_MAX];
 
       struct brw_vertex_element inputs[PIPE_ATTRIB_MAX];
 
 #define BRW_NR_UPLOAD_BUFS 17
 #define BRW_UPLOAD_INIT_SIZE (128*1024)
 
-      struct {
-	 struct pipe_buffer_handle *vbo[BRW_NR_UPLOAD_BUFS];
-	 unsigned buf;
-	 unsigned offset;
-	 unsigned size;
-	 unsigned wrap;
-      } upload;
-
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
        */
       struct brw_vertex_info info;
-      int last_vb;
    } vb;
 
 
-   unsigned *batch_start;
    unsigned hardware_dirty;
    unsigned dirty;
    unsigned pci_id;
-
    /* BRW_NEW_URB_ALLOCATIONS:
     */
    struct {
@@ -557,11 +564,6 @@ struct brw_context
       unsigned vs_size;
       unsigned total_size;
 
-      /* Dynamic tracker which changes to reflect the state referenced
-       * by active fp and vp program parameters:
-       */
-      struct brw_tracked_state tracked_state;
-
       unsigned gs_offset;
 
       float *last_buf;
@@ -595,6 +597,8 @@ struct brw_context
    struct {
       struct brw_sf_prog_data *prog_data;
 
+      struct pipe_setup_linkage linkage;
+
       unsigned prog_gs_offset;
       unsigned vp_gs_offset;
       unsigned state_gs_offset;
@@ -602,11 +606,8 @@ struct brw_context
 
    struct {
       struct brw_wm_prog_data *prog_data;
-      struct brw_wm_compile *compile_data;
 
-      /* Input sizes, calculated from active vertex program:
-       */
-      unsigned input_size_masks[4];
+//      struct brw_wm_compiler *compile_data;
 
 
       /**
@@ -667,8 +668,6 @@ void brw_destroy_state(struct brw_context *brw);
  * brw_tex.c
  */
 void brwUpdateTextureState( struct brw_context *brw );
-void brw_FrameBufferTexInit( struct brw_context *brw );
-void brw_FrameBufferTexDestroy( struct brw_context *brw );
 
 
 /* brw_urb.c

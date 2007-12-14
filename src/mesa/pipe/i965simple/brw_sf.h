@@ -42,15 +42,26 @@
 #define SF_TRIANGLES 2
 #define SF_UNFILLED_TRIS   3
 
+
+
 struct brw_sf_prog_key {
-   unsigned attrs:32;
+   unsigned vp_output_count:5;
+   unsigned fp_input_count:5;
+
    unsigned primitive:2;
    unsigned do_twoside_color:1;
    unsigned do_flat_shading:1;
    unsigned frontface_ccw:1;
    unsigned do_point_sprite:1;
-   unsigned pad:10;
-   int SpriteOrigin;
+
+   /* Interpolation masks;
+    */
+   unsigned linear_mask;
+   unsigned persp_mask;
+   unsigned const_mask;
+
+
+//   int SpriteOrigin;
 };
 
 struct brw_sf_point_tex {

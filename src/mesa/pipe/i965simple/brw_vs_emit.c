@@ -103,28 +103,26 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
    c->first_output = reg;
    mrf = 4;
    for (i = 0; i < c->vp->program.num_outputs; i++) {
-      if (c->prog_data.outputs_written & (1<<i)) {
-	 c->nr_outputs++;
+      c->nr_outputs++;
 #if 0
-	 if (i == VERT_RESULT_HPOS) {
-	    c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	    reg++;
-	 }
-	 else if (i == VERT_RESULT_PSIZ) {
-	    c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
-	    reg++;
-	    mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
-	 }
-	 else {
-	    c->regs[TGSI_FILE_OUTPUT][i] = brw_message_reg(mrf);
-	    mrf++;
-	 }
-#else
-         /* for now stuff everything in grf */
+      if (i == VERT_RESULT_HPOS) {
          c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
          reg++;
-#endif
       }
+      else if (i == VERT_RESULT_PSIZ) {
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
+         reg++;
+         mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
+      }
+      else {
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_message_reg(mrf);
+         mrf++;
+      }
+#else
+      /* for now stuff everything in grf */
+      c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
+      reg++;
+#endif
    }
 
    /* Allocate program temporaries:
@@ -627,11 +625,9 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
    case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_INPUT:
    case TGSI_FILE_OUTPUT:
+   case TGSI_FILE_CONSTANT:
       assert(c->regs[file][index].nr != 0);
       return c->regs[file][index];
-   case TGSI_FILE_CONSTANT:
-      assert(c->regs[TGSI_FILE_CONSTANT][index].nr != 0);
-      return c->regs[TGSI_FILE_CONSTANT][index];
    case TGSI_FILE_ADDRESS:
       assert(index == 0);
       return c->regs[file][index];

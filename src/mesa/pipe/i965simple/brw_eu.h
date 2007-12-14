@@ -694,6 +694,17 @@ void brw_init_compile( struct brw_compile *p );
 const unsigned *brw_get_program( struct brw_compile *p, unsigned *sz );
 
 
+struct brw_instruction *brw_alu1( struct brw_compile *p,
+				  unsigned opcode,
+				  struct brw_reg dest,
+				  struct brw_reg src );
+
+struct brw_instruction *brw_alu2(struct brw_compile *p,
+				 unsigned opcode,
+				 struct brw_reg dest,
+				 struct brw_reg src0,
+				 struct brw_reg src1 );
+
 /* Helpers for regular instructions:
  */
 #define ALU1(OP)					\
