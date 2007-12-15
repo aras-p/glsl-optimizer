@@ -50,13 +50,15 @@ target_to_target(GLenum target)
 
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
-                     GLenum target,
-                     GLenum internal_format,
-                     GLuint first_level,
-                     GLuint last_level,
-                     GLuint width0,
-                     GLuint height0,
-                     GLuint depth0, GLuint cpp, GLuint compress_byte)
+		     GLenum target,
+		     GLenum internal_format,
+		     GLuint first_level,
+		     GLuint last_level,
+		     GLuint width0,
+		     GLuint height0,
+		     GLuint depth0,
+		     GLuint cpp,
+		     GLuint compress_byte)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -207,11 +209,11 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 
 void
 intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
-                             GLuint level,
-                             GLuint nr_images,
-                             GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
+			     GLuint level,
+			     GLuint nr_images,
+			     GLuint x, GLuint y,
+			     GLuint w, GLuint h, GLuint d)
 {
-
    mt->level[level].width = w;
    mt->level[level].height = h;
    mt->level[level].depth = d;
@@ -238,7 +240,8 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 
 void
 intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
-                               GLuint level, GLuint img, GLuint x, GLuint y)
+			       GLuint level, GLuint img,
+			       GLuint x, GLuint y)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
@@ -271,12 +274,12 @@ intel_miptree_depth_offsets(struct intel_mipmap_tree *mt, GLuint level)
 
 
 GLuint
-intel_miptree_image_offset(struct intel_mipmap_tree * mt,
-                           GLuint face, GLuint level)
+intel_miptree_image_offset(struct intel_mipmap_tree *mt,
+			   GLuint face, GLuint level)
 {
    if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
       return (mt->level[level].level_offset +
-              mt->level[level].image_offset[face] * mt->cpp);
+	      mt->level[level].image_offset[face] * mt->cpp);
    else
       return mt->level[level].level_offset;
 }
@@ -323,11 +326,12 @@ intel_miptree_image_unmap(struct intel_context *intel,
  */
 void
 intel_miptree_image_data(struct intel_context *intel,
-                         struct intel_mipmap_tree *dst,
-                         GLuint face,
-                         GLuint level,
-                         void *src,
-                         GLuint src_row_pitch, GLuint src_image_pitch)
+			 struct intel_mipmap_tree *dst,
+			 GLuint face,
+			 GLuint level,
+			 void *src,
+			 GLuint src_row_pitch,
+			 GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
    GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
@@ -340,13 +344,14 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      intel_region_data(intel, dst->region,
-                        dst_offset + dst_depth_offset[i], /* dst_offset */
-                        0, 0,                             /* dstx, dsty */
-                        src,
-                        src_row_pitch,
-                        0, 0,                             /* source x, y */
-                        dst->level[level].width, height); /* width, height */
+      intel_region_data(intel,
+			dst->region,
+			dst_offset + dst_depth_offset[i], /* dst_offset */
+			0, 0,                             /* dstx, dsty */
+			src,
+			src_row_pitch,
+			0, 0,                             /* source x, y */
+			dst->level[level].width, height); /* width, height */
 
       src += src_image_pitch * dst->cpp;
    }

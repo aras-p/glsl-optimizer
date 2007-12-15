@@ -34,7 +34,8 @@
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
-static GLenum target_to_target( GLenum target )
+static GLenum
+target_to_target(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
@@ -49,16 +50,17 @@ static GLenum target_to_target( GLenum target )
    }
 }
 
-struct intel_mipmap_tree *intel_miptree_create( struct intel_context *intel,
-						GLenum target,
-						GLenum internal_format,
-						GLuint first_level,
-						GLuint last_level,
-						GLuint width0,
-						GLuint height0,
-						GLuint depth0,
-						GLuint cpp,
-						GLboolean compressed)
+struct intel_mipmap_tree *
+intel_miptree_create(struct intel_context *intel,
+		     GLenum target,
+		     GLenum internal_format,
+		     GLuint first_level,
+		     GLuint last_level,
+		     GLuint width0,
+		     GLuint height0,
+		     GLuint depth0,
+		     GLuint cpp,
+		     GLboolean compressed)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -132,11 +134,12 @@ void intel_miptree_destroy( struct intel_context *intel,
 
 
 
-void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
-				  GLuint level,
-				  GLuint nr_images,
-				  GLuint x, GLuint y,
-				  GLuint w, GLuint h, GLuint d)
+void
+intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
+			     GLuint level,
+			     GLuint nr_images,
+			     GLuint x, GLuint y,
+			     GLuint w, GLuint h, GLuint d)
 {
    mt->level[level].width = w;
    mt->level[level].height = h;
@@ -163,10 +166,10 @@ void intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 
 
 
-void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
-				    GLuint level,
-				    GLuint img,
-				    GLuint x, GLuint y)
+void
+intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
+			       GLuint level, GLuint img,
+			       GLuint x, GLuint y)
 {
    if (INTEL_DEBUG & DEBUG_TEXTURE)
       _mesa_printf("%s level %d img %d pos %d,%d\n", __FUNCTION__, level, img, x, y);
@@ -185,22 +188,21 @@ void intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
  *
  * These functions present that view to mesa:
  */
-const GLuint *intel_miptree_depth_offsets(struct intel_mipmap_tree *mt,
-					  GLuint level)
+const GLuint *
+intel_miptree_depth_offsets(struct intel_mipmap_tree *mt, GLuint level)
 {
    static const GLuint zero = 0;
 
-   if (mt->target != GL_TEXTURE_3D ||
-       mt->level[level].nr_images == 1)
+   if (mt->target != GL_TEXTURE_3D || mt->level[level].nr_images == 1)
       return &zero;
    else
       return mt->level[level].image_offset;
 }
 
 
-GLuint intel_miptree_image_offset(struct intel_mipmap_tree *mt,
-				  GLuint face,
-				  GLuint level)
+GLuint
+intel_miptree_image_offset(struct intel_mipmap_tree *mt,
+			   GLuint face, GLuint level)
 {
    if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
       return (mt->level[level].level_offset +
@@ -216,13 +218,14 @@ GLuint intel_miptree_image_offset(struct intel_mipmap_tree *mt,
 extern GLuint intel_compressed_alignment(GLenum);
 /* Upload data for a particular image.
  */
-GLboolean intel_miptree_image_data(struct intel_context *intel, 
-				   struct intel_mipmap_tree *dst,
-				   GLuint face,
-				   GLuint level,
-				   const void *src, 
-				   GLuint src_row_pitch,
-				   GLuint src_image_pitch)
+GLboolean
+intel_miptree_image_data(struct intel_context *intel,
+			 struct intel_mipmap_tree *dst,
+			 GLuint face,
+			 GLuint level,
+			 const void *src,
+			 GLuint src_row_pitch,
+			 GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
    GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
@@ -244,14 +247,12 @@ GLboolean intel_miptree_image_data(struct intel_context *intel,
    for (i = 0; i < depth; i++) {
       intel_region_data(intel,
 			dst->region,
-			dst_offset + dst_depth_offset[i],
-			0,
-			0,
+			dst_offset + dst_depth_offset[i], /* dst_offset */
+			0, 0,                             /* dstx, dsty */
 			src,
 			src_row_pitch,
-			0, 0,	/* source x,y */
-			width,
-			height);
+			0, 0,                             /* source x, y */
+			width, height);
       src += src_image_pitch;
    }
    return GL_TRUE;
