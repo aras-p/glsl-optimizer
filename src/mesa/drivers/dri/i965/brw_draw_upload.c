@@ -68,9 +68,11 @@ struct brw_array_state {
 };
 
 
-static dri_bo *array_buffer( const struct gl_client_array *array )
+static dri_bo *array_buffer( struct intel_context *intel,
+			     const struct gl_client_array *array )
 {
-   return intel_bufferobj_buffer(intel_buffer_object(array->BufferObj));
+   return intel_bufferobj_buffer(intel, intel_buffer_object(array->BufferObj),
+				 INTEL_WRITE_PART);
 }
 
 static GLuint double_types[5] = {
@@ -525,7 +527,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
       vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
       vbp.vb[i].vb0.bits.vb_index = i;
       vbp.vb[i].offset = (GLuint)input->glarray->Ptr;
-      vbp.vb[i].buffer = array_buffer(input->glarray);
+      vbp.vb[i].buffer = array_buffer(intel, input->glarray);
       vbp.vb[i].max_index = max_index;
    }
 
@@ -608,7 +610,9 @@ void brw_upload_indices( struct brw_context *brw,
     */
    {
       struct brw_indexbuffer ib;
-      dri_bo *buffer = intel_bufferobj_buffer(intel_buffer_object(bufferobj));
+      dri_bo *buffer = intel_bufferobj_buffer(intel,
+					      intel_buffer_object(bufferobj),
+					      INTEL_READ);
 
       memset(&ib, 0, sizeof(ib));
    

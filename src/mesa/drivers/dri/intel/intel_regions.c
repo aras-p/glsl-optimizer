@@ -178,6 +178,8 @@ intel_region_data(struct intel_context *intel,
                   const void *src, GLuint src_pitch,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
+   GLboolean locked = GL_FALSE;
+
    DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
@@ -191,8 +193,10 @@ intel_region_data(struct intel_context *intel,
          intel_region_cow(intel, dst);
    }
 
-
-   LOCK_HARDWARE(intel);
+   if (!intel->locked) {
+      LOCK_HARDWARE(intel);
+      locked = GL_TRUE;
+   }
 
    _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
                    dst->cpp,
@@ -201,7 +205,8 @@ intel_region_data(struct intel_context *intel,
 
    intel_region_unmap(intel, dst);
 
-   UNLOCK_HARDWARE(intel);
+   if (locked)
+      UNLOCK_HARDWARE(intel);
 
 }
 
