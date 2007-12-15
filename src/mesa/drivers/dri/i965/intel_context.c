@@ -616,10 +616,10 @@ void intelDestroyContext(__DRIcontextPrivate *driContextPriv)
        * buffers:
        */
 #if 0
-      intel_region_release(intel, &intel->front_region);
-      intel_region_release(intel, &intel->back_region);
-      intel_region_release(intel, &intel->depth_region);
-      intel_region_release(intel, &intel->draw_region);
+      intel_region_release(&intel->front_region);
+      intel_region_release(&intel->back_region);
+      intel_region_release(&intel->depth_region);
+      intel_region_release(&intel->draw_region);
 #endif
 
       /* free the Mesa context */

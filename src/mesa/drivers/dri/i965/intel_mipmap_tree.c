@@ -119,7 +119,7 @@ void intel_miptree_destroy( struct intel_context *intel,
    if (mt) {
       GLuint i;
 
-      intel_region_release(intel, &(mt->region));
+      intel_region_release(&mt->region);
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++)
 	 if (mt->level[i].image_offset)
@@ -242,17 +242,16 @@ GLboolean intel_miptree_image_data(struct intel_context *intel,
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
-      if (!intel_region_data(intel,
-			     dst->region, 
-			     dst_offset + dst_depth_offset[i],
-			     0,
-			     0,
-			     src,
-			     src_row_pitch,
-			     0, 0,	/* source x,y */
-			     width,
-			     height))
-	 return GL_FALSE;
+      intel_region_data(intel,
+			dst->region,
+			dst_offset + dst_depth_offset[i],
+			0,
+			0,
+			src,
+			src_row_pitch,
+			0, 0,	/* source x,y */
+			width,
+			height);
       src += src_image_pitch;
    }
    return GL_TRUE;

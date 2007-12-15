@@ -556,12 +556,12 @@ static void intelDrawBuffer(GLcontext *ctx, GLenum mode )
 
    if (front) {
       if (intel->draw_region != intel->front_region) {
-	 intel_region_release(intel, &intel->draw_region);
+	 intel_region_release(&intel->draw_region);
 	 intel_region_reference(&intel->draw_region, intel->front_region);
       }
    } else {
       if (intel->draw_region != intel->back_region) {
-	 intel_region_release(intel, &intel->draw_region);
+	 intel_region_release(&intel->draw_region);
 	 intel_region_reference(&intel->draw_region, intel->back_region);
       }
    }

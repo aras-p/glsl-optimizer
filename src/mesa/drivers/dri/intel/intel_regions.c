@@ -442,6 +442,7 @@ intel_recreate_static_regions(struct intel_context *intel)
 			    &intelScreen->back,
 			    DRM_BO_FLAG_MEM_TT);
 
+#ifdef I915
    if (intelScreen->third.handle) {
       intel->third_region =
 	 intel_recreate_static(intel, "third",
@@ -449,6 +450,7 @@ intel_recreate_static_regions(struct intel_context *intel)
 			       &intelScreen->third,
 			       DRM_BO_FLAG_MEM_TT);
    }
+#endif /* I915 */
 
    /* Still assumes front.cpp == depth.cpp.  We can kill this when we move to
     * private buffers.

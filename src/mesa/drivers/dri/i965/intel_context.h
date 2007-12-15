@@ -63,7 +63,9 @@ typedef void (*intel_point_func)(struct intel_context *, intelVertex *);
 extern void intelFallback( struct intel_context *intel, GLuint bit, GLboolean mode );
 #define FALLBACK( intel, bit, mode ) intelFallback( intel, bit, mode )
 
-
+#define INTEL_WRITE_PART  0x1
+#define INTEL_WRITE_FULL  0x2
+#define INTEL_READ        0x4
 
 struct intel_texture_object
 {

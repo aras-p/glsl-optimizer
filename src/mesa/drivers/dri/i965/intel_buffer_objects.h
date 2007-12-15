@@ -40,6 +40,10 @@ struct gl_buffer_object;
 struct intel_buffer_object {
    struct gl_buffer_object Base;
    dri_bo *buffer;   /* the low-level buffer manager's buffer handle */
+
+   struct intel_region *region; /* Is there a zero-copy texture
+                                   associated with this (pixel)
+                                   buffer object? */
 };
 
 
