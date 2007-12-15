@@ -75,21 +75,19 @@ brw_get_tex_surface(struct pipe_context *pipe,
    return ps;
 }
 
-/*
- * XXX Move this into core Mesa?
- */
+
 static void
-_mesa_copy_rect(ubyte * dst,
-                unsigned cpp,
-                unsigned dst_pitch,
-                unsigned dst_x,
-                unsigned dst_y,
-                unsigned width,
-                unsigned height,
-                const ubyte * src,
-                unsigned src_pitch,
-		unsigned src_x,
-		unsigned src_y)
+copy_rect(ubyte * dst,
+          unsigned cpp,
+          unsigned dst_pitch,
+          unsigned dst_x,
+          unsigned dst_y,
+          unsigned width,
+          unsigned height,
+          const ubyte *src,
+          unsigned src_pitch,
+          unsigned src_x,
+          unsigned src_y)
 {
    unsigned i;
 
@@ -126,10 +124,9 @@ brw_surface_data(struct pipe_context *pipe,
                  const void *src, unsigned src_pitch,
                  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   _mesa_copy_rect(pipe_surface_map(dst) + dst->offset,
-                   dst->cpp,
-                   dst->pitch,
-                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+   copy_rect(pipe_surface_map(dst) + dst->offset,
+             dst->cpp, dst->pitch,
+             dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    pipe_surface_unmap(dst);
 }
@@ -149,7 +146,7 @@ brw_surface_copy(struct pipe_context *pipe,
    assert(dst->cpp == src->cpp);
 
    if (0) {
-      _mesa_copy_rect(pipe_surface_map(dst) + dst->offset,
+      copy_rect(pipe_surface_map(dst) + dst->offset,
 		      dst->cpp,
 		      dst->pitch,
 		      dstx, dsty,
