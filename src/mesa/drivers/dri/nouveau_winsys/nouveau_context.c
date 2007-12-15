@@ -1,6 +1,7 @@
 #include "main/glheader.h"
 #include "glapi/glthread.h"
 #include <GL/internal/glcore.h>
+#include "utils.h"
 
 #include "state_tracker/st_public.h"
 #include "pipe/p_defines.h"
@@ -11,55 +12,6 @@
 #include "nouveau_local.h"
 #include "nouveau_screen.h"
 #include "nouveau_winsys_pipe.h"
-
-#define need_GL_ARB_fragment_program
-#define need_GL_ARB_multisample
-#define need_GL_ARB_occlusion_query
-#define need_GL_ARB_point_parameters
-#define need_GL_ARB_texture_compression
-#define need_GL_ARB_vertex_program
-#define need_GL_ARB_vertex_buffer_object
-#define need_GL_EXT_compiled_vertex_array
-#define need_GL_EXT_fog_coord
-#define need_GL_EXT_secondary_color
-#define need_GL_EXT_framebuffer_object
-#include "extension_helper.h"
-
-const struct dri_extension common_extensions[] =
-{
-	{ NULL, 0 }
-};
-
-const struct dri_extension nv40_extensions[] =
-{
-	{ "GL_ARB_fragment_program", NULL },
-	{ "GL_ARB_multisample", GL_ARB_multisample_functions },
-	{ "GL_ARB_occlusion_query", GL_ARB_occlusion_query_functions },
-	{ "GL_ARB_point_parameters", GL_ARB_point_parameters_functions },
-	{ "GL_ARB_texture_border_clamp", NULL },
-	{ "GL_ARB_texture_compression", GL_ARB_texture_compression_functions },
-	{ "GL_ARB_texture_cube_map", NULL },
-	{ "GL_ARB_texture_env_add", NULL },
-	{ "GL_ARB_texture_env_combine", NULL },
-	{ "GL_ARB_texture_env_crossbar", NULL },
-	{ "GL_ARB_texture_env_dot3", NULL },
-	{ "GL_ARB_texture_mirrored_repeat", NULL },
-	{ "GL_ARB_texture_non_power_of_two", NULL },
-	{ "GL_ARB_vertex_program", GL_ARB_vertex_program_functions },
-	{ "GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions },
-	{ "GL_ATI_texture_env_combine3", NULL },
-	{ "GL_EXT_compiled_vertex_array", GL_EXT_compiled_vertex_array_functions },
-	{ "GL_EXT_fog_coord", GL_EXT_fog_coord_functions },
-	{ "GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions },
-	{ "GL_EXT_secondary_color", GL_EXT_secondary_color_functions },
-	{ "GL_EXT_texture_edge_clamp", NULL },
-	{ "GL_EXT_texture_env_add", NULL },
-	{ "GL_EXT_texture_env_combine", NULL },
-	{ "GL_EXT_texture_env_dot3", NULL },
-	{ "GL_EXT_texture_mirror_clamp", NULL },
-	{ "GL_NV_texture_rectangle", NULL },
-	{ NULL, 0 }
-};
 
 #ifdef DEBUG
 static const struct dri_debug_control debug_control[] = {
