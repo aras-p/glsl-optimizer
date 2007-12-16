@@ -345,26 +345,38 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	rs->poly_stipple_en = cso->poly_stipple_enable ? 1 : 0;
 
 	if (cso->front_winding == PIPE_WINDING_CCW) {
-		rs->front_face = 0x0901;
+		rs->front_face = NV40TCL_FRONT_FACE_CCW;
 		rs->poly_mode_front = nvgl_polygon_mode(cso->fill_ccw);
 		rs->poly_mode_back  = nvgl_polygon_mode(cso->fill_cw);
 	} else {
-		rs->front_face = 0x0900;
+		rs->front_face = NV40TCL_FRONT_FACE_CW;
 		rs->poly_mode_front = nvgl_polygon_mode(cso->fill_cw);
 		rs->poly_mode_back  = nvgl_polygon_mode(cso->fill_ccw);
 	}
 
-	rs->cull_face_en = 0;
-	rs->cull_face    = 0x0900;
 	switch (cso->cull_mode) {
 	case PIPE_WINDING_CCW:
-		rs->cull_face = 0x0901;
-		/* fall-through */
+		rs->cull_face_en = 1;
+		if (cso->front_winding == PIPE_WINDING_CCW)
+			rs->cull_face    = NV40TCL_CULL_FACE_FRONT;
+		else
+			rs->cull_face    = NV40TCL_CULL_FACE_BACK;
+		break;
 	case PIPE_WINDING_CW:
 		rs->cull_face_en = 1;
+		if (cso->front_winding == PIPE_WINDING_CW)
+			rs->cull_face    = NV40TCL_CULL_FACE_FRONT;
+		else
+			rs->cull_face    = NV40TCL_CULL_FACE_BACK;
+		break;
+	case PIPE_WINDING_BOTH:
+		rs->cull_face_en = 1;
+		rs->cull_face    = NV40TCL_CULL_FACE_FRONT_AND_BACK;
 		break;
 	case PIPE_WINDING_NONE:
 	default:
+		rs->cull_face_en = 0;
+		rs->cull_face    = 0;
 		break;
 	}
 
