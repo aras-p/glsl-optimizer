@@ -27,6 +27,8 @@
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
 
+#define PB_RSVD_DWORDS 2
+
 int
 nouveau_pushbuf_init(struct nouveau_channel *chan)
 {
@@ -72,7 +74,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	if (!nvpb)
 		goto out_realloc;
 
-	if (nvpb->base.remaining == nvpb->res->size / 4)
+	if (nvpb->base.remaining == (nvpb->res->size / 4) - PB_RSVD_DWORDS)
 		return 0;
 	nvchan->pb_tail = NULL;
 
@@ -154,13 +156,13 @@ out_realloc:
 	if (!nvpb)
 		return -ENOMEM;
 
-	while (nouveau_resource_alloc(nvchan->pb_heap, 0x2000, NULL,
+	while (nouveau_resource_alloc(nvchan->pb_heap, 0x2100, NULL,
 				      &nvpb->res)) {
 		nouveau_fence_flush(chan);
 	}
 
 	nvpb->base.channel = chan;
-	nvpb->base.remaining = nvpb->res->size / 4;
+	nvpb->base.remaining = (nvpb->res->size / 4) - PB_RSVD_DWORDS;
 	nvpb->base.cur = &nvchan->pushbuf[nvpb->res->start/4];
 	nvchan->pb_tail = &nvpb->base;
 
