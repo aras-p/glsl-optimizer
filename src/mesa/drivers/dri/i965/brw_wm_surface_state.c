@@ -203,6 +203,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
    struct brw_wm_surface_key key;
 
+   memset(&key, 0, sizeof(key));
    key.target = tObj->Target;
    key.format = firstImage->TexFormat->MesaFormat;
    key.bo = intelObj->mt->region->buffer;
