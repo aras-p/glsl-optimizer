@@ -236,13 +236,11 @@ clear_tile(struct softpipe_cached_tile *tile,
 {
    uint i, j;
 
-   switch (format) {
-   case PIPE_FORMAT_U_S8:
-      /* 8 bpp */
+   switch (pf_get_size(format)) {
+   case 1:
       memset(tile->data.any, 0, TILE_SIZE * TILE_SIZE);
       break;
-   case PIPE_FORMAT_Z16_UNORM:
-      /* 16 bpp */
+   case 2:
       if (clear_value == 0) {
          memset(tile->data.any, 0, 2 * TILE_SIZE * TILE_SIZE);
       }
@@ -254,8 +252,7 @@ clear_tile(struct softpipe_cached_tile *tile,
          }
       }
       break;
-   default:
-      /* 32 bpp */
+   case 4:
       if (clear_value == 0) {
          memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
       }
@@ -266,6 +263,9 @@ clear_tile(struct softpipe_cached_tile *tile,
             }
          }
       }
+      break;
+   default:
+      assert(0);
    }
 }
 
