@@ -505,7 +505,11 @@ nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nv40_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_vertex_program *vp = hwcso;
+
+	nv40_vertprog_destroy(nv40, vp);
+	free(vp);
 }
 
 static void *
@@ -533,7 +537,11 @@ nv40_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nv40_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_fragment_program *fp = hwcso;
+
+	nv40_fragprog_destroy(nv40, fp);
+	free(fp);
 }
 
 static void

@@ -79,12 +79,16 @@ extern void nv40_vertprog_translate(struct nv40_context *,
 				    struct nv40_vertex_program *);
 extern void nv40_vertprog_bind(struct nv40_context *,
 			       struct nv40_vertex_program *);
+extern void nv40_vertprog_destroy(struct nv40_context *,
+				  struct nv40_vertex_program *);
 
 /* nv40_fragprog.c */
 extern void nv40_fragprog_translate(struct nv40_context *,
 				    struct nv40_fragment_program *);
 extern void nv40_fragprog_bind(struct nv40_context *,
 			       struct nv40_fragment_program *);
+extern void nv40_fragprog_destroy(struct nv40_context *,
+				  struct nv40_fragment_program *);
 
 /* nv40_state.c and friends */
 extern void nv40_emit_hw_state(struct nv40_context *nv40);

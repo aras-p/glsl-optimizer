@@ -721,3 +721,12 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 	nv40->vertprog.active = vp;
 }
 
+void
+nv40_vertprog_destroy(struct nv40_context *nv40, struct nv40_vertex_program *vp)
+{
+	if (vp->nr_consts)
+		free(vp->consts);
+	if (vp->nr_insns)
+		free(vp->insns);
+}
+

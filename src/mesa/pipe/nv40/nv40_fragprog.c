@@ -27,22 +27,6 @@
 #define abs(s) nv40_sr_abs((s))
 #define scale(s,v) nv40_sr_scale((s), NV40_FP_OP_DST_SCALE_##v)
 
-static uint32_t
-passthrough_fp_data[] = {
-	0x01403e81, 0x1c9dc801, 0x0001c800, 0x3fe1c800
-};
-
-static struct nv40_fragment_program
-passthrough_fp = {
-	.pipe = NULL,
-	.translated = TRUE,
-	.insn = passthrough_fp_data,
-	.insn_len = sizeof(passthrough_fp_data) / sizeof(uint32_t),
-	.buffer = NULL,
-	.uses_kil = 0,
-	.num_regs = 2,
-};
-
 struct nv40_fpc {
 	struct nv40_fragment_program *fp;
 
@@ -705,10 +689,8 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 
 	if (!fp->translated) {
 		nv40_fragprog_translate(nv40, fp);
-		if (!fp->translated) {
-			NOUVEAU_ERR("invalid, using passthrough shader\n");
-			fp = &passthrough_fp;
-		}
+		if (!fp->translated)
+			assert(0);
 	}
 
 	if (fp->num_consts) {
@@ -761,5 +743,13 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 	OUT_RING  (fp_control);
 
 	nv40->fragprog.active = fp;
+}
+
+void
+nv40_fragprog_destroy(struct nv40_context *nv40,
+		      struct nv40_fragment_program *fp)
+{
+	if (fp->insn_len)
+		free(fp->insn);
 }
 
