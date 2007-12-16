@@ -103,9 +103,7 @@ struct nv40_fragment_program {
 
 	struct pipe_buffer_handle *buffer;
 
-	boolean uses_kil;
-	boolean writes_depth;
-	int     num_regs;
+	uint32_t fp_control;
 };
 
 struct nv40_depth_push {

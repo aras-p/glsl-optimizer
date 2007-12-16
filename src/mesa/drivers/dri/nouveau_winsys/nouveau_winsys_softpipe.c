@@ -31,8 +31,9 @@
 
 #include "imports.h"
 
-#include "pipe/softpipe/sp_winsys.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_format.h"
+#include "pipe/softpipe/sp_winsys.h"
 
 #include "nouveau_context.h"
 #include "nouveau_winsys_pipe.h"
@@ -51,7 +52,7 @@ nouveau_is_format_supported(struct softpipe_winsys *sws, uint format)
 	switch (format) {
 	case PIPE_FORMAT_A8R8G8B8_UNORM:
 	case PIPE_FORMAT_R5G6B5_UNORM:
-	case PIPE_FORMAT_S8Z24_UNORM:
+	case PIPE_FORMAT_Z24S8_UNORM:
 		return TRUE;
 	default:
 		break;

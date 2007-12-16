@@ -36,6 +36,7 @@ struct nv40_fpc {
 
 	int high_temp;
 	int temp_temp_count;
+	int num_regs;
 
 	uint depth_id;
 	uint colour_id;
@@ -160,12 +161,12 @@ emit_dst(struct nv40_fpc *fpc, struct nv40_sreg dst)
 
 	switch (dst.type) {
 	case NV40SR_TEMP:
-		if (fp->num_regs < (dst.index + 1))
-			fp->num_regs = dst.index + 1;
+		if (fpc->num_regs < (dst.index + 1))
+			fpc->num_regs = dst.index + 1;
 		break;
 	case NV40SR_OUTPUT:
 		if (dst.index == 1) {
-			fp->writes_depth = 1;
+			fp->fp_control |= 0xe;
 		} else {
 			hw[0] |= NV40_FP_OP_OUT_REG_HALF;
 		}
@@ -194,7 +195,7 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 	memset(hw, 0, sizeof(uint32_t) * 4);
 
 	if (op == NV40_FP_OP_OPCODE_KIL)
-		fp->uses_kil = TRUE;
+		fp->fp_control |= NV40TCL_FP_CONTROL_KIL;
 	hw[0] |= (op << NV40_FP_OP_OPCODE_SHIFT);
 	hw[0] |= (mask << NV40_FP_OP_OUTMASK_SHIFT);
 	hw[2] |= (dst.dst_scale << NV40_FP_OP_DST_SCALE_SHIFT);
@@ -672,7 +673,7 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 		return;
 	fpc->fp = fp;
 	fpc->high_temp = -1;
-	fp->num_regs = 2;
+	fpc->num_regs = 2;
 
 	tgsi_parse_init(&parse, fp->pipe->tokens);
 
@@ -727,6 +728,8 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 		}
 	}
 
+	fp->fp_control |= fpc->num_regs << NV40TCL_FP_CONTROL_TEMP_COUNT_SHIFT;
+
 	/* Terminate final instruction */
 	fp->insn[fpc->inst_offset] |= 0x00000001;
 
@@ -749,7 +752,6 @@ void
 nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 {
 	struct pipe_winsys *ws = nv40->pipe.winsys;
-	uint32_t fp_control;
 	int i;
 
 	if (!fp->translated) {
@@ -790,18 +792,12 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 		fp->on_hw = TRUE;
 	}
 
-	fp_control = fp->num_regs << NV40TCL_FP_CONTROL_TEMP_COUNT_SHIFT;
-	if (fp->uses_kil)
-		fp_control |= NV40TCL_FP_CONTROL_KIL;
-	if (fp->writes_depth)
-		fp_control |= 0xe;
-
 	BEGIN_RING(curie, NV40TCL_FP_ADDRESS, 1);
 	OUT_RELOC (fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 		   NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
 		   NV40TCL_FP_ADDRESS_DMA0, NV40TCL_FP_ADDRESS_DMA1);
 	BEGIN_RING(curie, NV40TCL_FP_CONTROL, 1);
-	OUT_RING  (fp_control);
+	OUT_RING  (fp->fp_control);
 
 	nv40->fragprog.active = fp;
 }
