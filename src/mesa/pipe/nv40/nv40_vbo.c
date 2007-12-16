@@ -32,6 +32,68 @@ nv40_vbo_type(uint format)
 	}
 }
 
+static boolean
+nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
+		       struct pipe_vertex_element *ve,
+		       struct pipe_vertex_buffer *vb)
+{
+	struct pipe_winsys *ws = nv40->pipe.winsys;
+	int type, ncomp;
+	void *map;
+
+	type = nv40_vbo_type(ve->src_format);
+	ncomp = nv40_vbo_ncomp(ve->src_format);
+
+	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_FLAG_READ);
+	map += vb->buffer_offset + ve->src_offset;
+
+	switch (type) {
+	case NV40TCL_VTXFMT_TYPE_FLOAT:
+	{
+		float *v = map;
+
+		BEGIN_RING(curie, NV40TCL_VTX_ATTR_4F_X(attrib), 4);
+		switch (ncomp) {
+		case 4:
+			OUT_RINGf(v[0]);
+			OUT_RINGf(v[1]);
+			OUT_RINGf(v[2]);
+			OUT_RINGf(v[3]);
+			break;
+		case 3:
+			OUT_RINGf(v[0]);
+			OUT_RINGf(v[1]);
+			OUT_RINGf(v[2]);
+			OUT_RINGf(1.0);
+			break;
+		case 2:
+			OUT_RINGf(v[0]);
+			OUT_RINGf(v[1]);
+			OUT_RINGf(0.0);
+			OUT_RINGf(1.0);
+			break;
+		case 1:
+			OUT_RINGf(v[0]);
+			OUT_RINGf(0.0);
+			OUT_RINGf(0.0);
+			OUT_RINGf(1.0);
+			break;
+		default:
+			ws->buffer_unmap(ws, vb->buffer);
+			return FALSE;
+		}
+	}
+		break;
+	default:
+		ws->buffer_unmap(ws, vb->buffer);
+		return FALSE;
+	}
+
+	ws->buffer_unmap(ws, vb->buffer);
+
+	return TRUE;
+}
+
 static void
 nv40_vbo_arrays_update(struct nv40_context *nv40)
 {
@@ -49,13 +111,11 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 	num_hw++;
 
 	inputs = vp->ir;
-	BEGIN_RING(curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
 	for (hw = 0; hw < num_hw; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 
 		if (!(inputs & (1 << hw))) {
-			OUT_RING(0);
 			vtxfmt[hw] = NV40TCL_VTXFMT_TYPE_FLOAT;
 			continue;
 		}
@@ -63,6 +123,13 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 		ve = &nv40->vtxelt[hw];
 		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
 
+		if (vb->pitch == 0) {
+			vtxfmt[hw] = NV40TCL_VTXFMT_TYPE_FLOAT;
+			if (nv40_vbo_static_attrib(nv40, hw, ve, vb) == TRUE)
+				continue;
+		}
+
+		BEGIN_RING(curie, NV40TCL_VTXBUF_ADDRESS(hw), 1);
 		OUT_RELOC(vb->buffer, vb->buffer_offset + ve->src_offset,
 			  NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
 			  NOUVEAU_BO_OR | NOUVEAU_BO_RD, 0,
