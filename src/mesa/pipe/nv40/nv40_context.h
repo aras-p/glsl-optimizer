@@ -98,7 +98,6 @@ extern boolean nv40_draw_elements(struct pipe_context *pipe,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);
-extern void nv40_vbo_arrays_update(struct nv40_context *nv40);
 
 /* nv40_clear.c */
 extern void nv40_clear(struct pipe_context *pipe, struct pipe_surface *ps,

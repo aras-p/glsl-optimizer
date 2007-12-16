@@ -25,10 +25,5 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 		nv40_vertprog_bind(nv40, nv40->vertprog.current);
 		nv40->dirty &= ~NV40_NEW_VERTPROG;
 	}
-
-	if (nv40->dirty & NV40_NEW_ARRAYS) {
-		nv40_vbo_arrays_update(nv40);
-		nv40->dirty &= ~NV40_NEW_ARRAYS;
-	}
 }
 
