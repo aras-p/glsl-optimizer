@@ -309,7 +309,7 @@ nv40_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 
 	nv40->tex_miptree[unit]  = miptree;
-	nv40->tex_dirty         |= unit;
+	nv40->tex_dirty         |= (1 << unit);
 
 	nv40->dirty |= NV40_NEW_TEXTURE;
 }
