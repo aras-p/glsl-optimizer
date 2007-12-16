@@ -84,6 +84,11 @@ struct nv40_vertex_program {
 	uint32_t or;
 };
 
+struct nv40_fragment_program_data {
+	unsigned offset;
+	unsigned index;
+};
+
 struct nv40_fragment_program {
 	const struct pipe_shader_state *pipe;
 
@@ -93,11 +98,8 @@ struct nv40_fragment_program {
 	uint32_t *insn;
 	int       insn_len;
 
-	struct {
-		int pipe_id;
-		int hw_id;
-	} consts[256];
-	int num_consts;
+	struct nv40_fragment_program_data *consts;
+	unsigned nr_consts;
 
 	struct pipe_buffer_handle *buffer;
 

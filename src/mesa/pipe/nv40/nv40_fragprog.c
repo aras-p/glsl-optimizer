@@ -27,6 +27,8 @@
 #define abs(s) nv40_sr_abs((s))
 #define scale(s,v) nv40_sr_scale((s), NV40_FP_OP_DST_SCALE_##v)
 
+#define MAX_CONSTS 128
+#define MAX_IMM 32
 struct nv40_fpc {
 	struct nv40_fragment_program *fp;
 
@@ -38,10 +40,16 @@ struct nv40_fpc {
 	uint depth_id;
 	uint colour_id;
 
-	boolean inst_has_const;
-	int inst_const_id;
-
 	unsigned inst_offset;
+
+	struct {
+		int pipe;
+		float vals[4];
+	} consts[MAX_CONSTS];
+	int nr_consts;
+
+	struct nv40_sreg imm[MAX_IMM];
+	unsigned nr_imm;
 };
 
 static INLINE struct nv40_sreg
@@ -52,6 +60,21 @@ temp(struct nv40_fpc *fpc)
 	idx  = fpc->temp_temp_count++;
 	idx += fpc->high_temp + 1;
 	return nv40_sr(NV40SR_TEMP, idx);
+}
+
+static INLINE struct nv40_sreg
+constant(struct nv40_fpc *fpc, int pipe, float vals[4])
+{
+	int idx;
+
+	if (fpc->nr_consts == MAX_CONSTS)
+		assert(0);
+	idx = fpc->nr_consts++;
+
+	fpc->consts[idx].pipe = pipe;
+	if (pipe == -1)
+		memcpy(fpc->consts[idx].vals, vals, 4 * sizeof(float));
+	return nv40_sr(NV40SR_CONST, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
@@ -73,7 +96,8 @@ grow_insns(struct nv40_fpc *fpc, int size)
 static void
 emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
 {
-	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
+	struct nv40_fragment_program *fp = fpc->fp;
+	uint32_t *hw = &fp->insn[fpc->inst_offset];
 	uint32_t sr = 0;
 
 	switch (src.type) {
@@ -89,9 +113,23 @@ emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
 		sr |= (src.index << NV40_FP_REG_SRC_SHIFT);
 		break;
 	case NV40SR_CONST:
+		grow_insns(fpc, 4);
+		hw = &fp->insn[fpc->inst_offset];
+		if (fpc->consts[src.index].pipe >= 0) {
+			struct nv40_fragment_program_data *fpd;
+
+			fp->consts = realloc(fp->consts, ++fp->nr_consts *
+					     sizeof(*fpd));
+			fpd = &fp->consts[fp->nr_consts - 1];
+			fpd->offset = fpc->inst_offset + 4;
+			fpd->index = fpc->consts[src.index].pipe;
+		} else {
+			memcpy(&fp->insn[fpc->inst_offset + 4],
+				fpc->consts[src.index].vals,
+				sizeof(uint32_t) * 4);
+		}
+
 		sr |= (NV40_FP_REG_TYPE_CONST << NV40_FP_REG_TYPE_SHIFT);	
-		fpc->inst_has_const = TRUE;
-		fpc->inst_const_id = src.index;
 		break;
 	case NV40SR_NONE:
 		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
@@ -155,8 +193,6 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 	hw = &fp->insn[fpc->inst_offset];
 	memset(hw, 0, sizeof(uint32_t) * 4);
 
-	fpc->inst_has_const = FALSE;
-
 	if (op == NV40_FP_OP_OPCODE_KIL)
 		fp->uses_kil = TRUE;
 	hw[0] |= (op << NV40_FP_OP_OPCODE_SHIFT);
@@ -178,13 +214,6 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 	emit_src(fpc, 0, s0);
 	emit_src(fpc, 1, s1);
 	emit_src(fpc, 2, s2);
-
-	if (fpc->inst_has_const) {
-		grow_insns(fpc, 4);
-		fp->consts[fp->num_consts].pipe_id = fpc->inst_const_id;
-		fp->consts[fp->num_consts].hw_id = fpc->inst_offset + 4;
-		fp->num_consts++;
-	}
 }
 
 static void
@@ -207,7 +236,11 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 			      fpc->attrib_map[fsrc->SrcRegister.Index]);
 		break;
 	case TGSI_FILE_CONSTANT:
-		src = nv40_sr(NV40SR_CONST, fsrc->SrcRegister.Index);
+		src = constant(fpc, fsrc->SrcRegister.Index, NULL);
+		break;
+	case TGSI_FILE_IMMEDIATE:
+		assert(fsrc->SrcRegister.Index < fpc->nr_imm);
+		src = fpc->imm[fsrc->SrcRegister.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
 		src = nv40_sr(NV40SR_TEMP, fsrc->SrcRegister.Index + 1);
@@ -386,6 +419,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			}
 			break;
 		case TGSI_FILE_CONSTANT:
+		case TGSI_FILE_IMMEDIATE:
 			if (ci == -1 || ci == fsrc->SrcRegister.Index) {
 				ci = fsrc->SrcRegister.Index;
 				src[i] = tgsi_src(fpc, fsrc);
@@ -665,6 +699,19 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 		}
 			break;
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
+		{
+			struct tgsi_full_immediate *imm;
+			float vals[4];
+			int i;
+			
+			imm = &parse.FullToken.FullImmediate;
+			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
+			assert(fpc->nr_imm < MAX_IMM);
+
+			for (i = 0; i < imm->Immediate.Size; i++)
+				vals[i] = imm->u.ImmediateFloat32[i].Float;
+			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
+		}
 			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 		{
@@ -711,21 +758,17 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 			assert(0);
 	}
 
-	if (fp->num_consts) {
+	if (fp->nr_consts) {
 		float *map = ws->buffer_map(ws, nv40->fragprog.constant_buf,
 					    PIPE_BUFFER_FLAG_READ);
-		for (i = 0; i < fp->num_consts; i++) {
-			uint pid = fp->consts[i].pipe_id;
+		for (i = 0; i < fp->nr_consts; i++) {
+			struct nv40_fragment_program_data *fpd = &fp->consts[i];
+			uint32_t *p = &fp->insn[fpd->offset];
+			uint32_t *cb = (uint32_t *)&map[fpd->index * 4];
 
-			if (pid == -1)
+			if (!memcmp(p, cb, 4 * sizeof(float)))
 				continue;
-
-			if (!memcmp(&fp->insn[fp->consts[i].hw_id], &map[pid*4],
-				    4 * sizeof(float)))
-				continue;
-
-			memcpy(&fp->insn[fp->consts[i].hw_id], &map[pid*4],
-			       4 * sizeof(float));
+			memcpy(p, cb, 4 * sizeof(float));
 			fp->on_hw = 0;
 		}
 		ws->buffer_unmap(ws, nv40->fragprog.constant_buf);
