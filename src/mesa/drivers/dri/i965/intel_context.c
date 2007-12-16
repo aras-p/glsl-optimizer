@@ -207,15 +207,33 @@ const struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
+const struct dri_extension ttm_extensions[] = {
+   {"GL_ARB_pixel_buffer_object", NULL},
+   {NULL, NULL}
+};
+
 const struct dri_extension arb_oc_extension = 
     { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions};
 
+/**
+ * Initializes potential list of extensions if ctx == NULL, or actually enables
+ * extensions for a context.
+ */
 void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
-{	     
-	struct intel_context *intel = ctx?intel_context(ctx):NULL;
-	driInitExtensions(ctx, card_extensions, enable_imaging);
-	if (!ctx || intel->intelScreen->drmMinor >= 8)
-		driInitSingleExtension (ctx, &arb_oc_extension);
+{
+   struct intel_context *intel = ctx?intel_context(ctx):NULL;
+
+   /* Disable imaging extension until convolution is working in teximage paths.
+    */
+   enable_imaging = GL_FALSE;
+
+   driInitExtensions(ctx, card_extensions, enable_imaging);
+
+   if (intel == NULL || intel->ttm)
+      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
+
+   if (intel == NULL || intel->intelScreen->drmMinor >= 8)
+      driInitSingleExtension(ctx, &arb_oc_extension);
 }
 
 static const struct dri_debug_control debug_control[] =
