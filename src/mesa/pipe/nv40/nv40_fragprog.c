@@ -39,7 +39,9 @@ struct nv40_fpc {
 	uint colour_id;
 
 	boolean inst_has_const;
-	int     inst_const_id;
+	int inst_const_id;
+
+	unsigned inst_offset;
 };
 
 static INLINE struct nv40_sreg
@@ -60,8 +62,18 @@ temp(struct nv40_fpc *fpc)
 		    (d), (m), (s0), none, none)
 
 static void
-emit_src(struct nv40_fpc *fpc, uint32_t *hw, int pos, struct nv40_sreg src)
+grow_insns(struct nv40_fpc *fpc, int size)
 {
+	struct nv40_fragment_program *fp = fpc->fp;
+
+	fp->insn_len += size;
+	fp->insn = realloc(fp->insn, sizeof(uint32_t) * fp->insn_len);
+}
+
+static void
+emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
+{
+	uint32_t *hw = &fpc->fp->insn[fpc->inst_offset];
 	uint32_t sr = 0;
 
 	switch (src.type) {
@@ -103,9 +115,10 @@ emit_src(struct nv40_fpc *fpc, uint32_t *hw, int pos, struct nv40_sreg src)
 }
 
 static void
-emit_dst(struct nv40_fpc *fpc, uint32_t *hw, struct nv40_sreg dst)
+emit_dst(struct nv40_fpc *fpc, struct nv40_sreg dst)
 {
 	struct nv40_fragment_program *fp = fpc->fp;
+	uint32_t *hw = &fp->insn[fpc->inst_offset];
 
 	switch (dst.type) {
 	case NV40SR_TEMP:
@@ -135,7 +148,12 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 	      struct nv40_sreg s0, struct nv40_sreg s1, struct nv40_sreg s2)
 {
 	struct nv40_fragment_program *fp = fpc->fp;
-	uint32_t *hw = &fp->insn[fp->insn_len];
+	uint32_t *hw;
+
+	fpc->inst_offset = fp->insn_len;
+	grow_insns(fpc, 4);
+	hw = &fp->insn[fpc->inst_offset];
+	memset(hw, 0, sizeof(uint32_t) * 4);
 
 	fpc->inst_has_const = FALSE;
 
@@ -156,17 +174,16 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 		  (dst.cc_swz[2] << NV40_FP_OP_COND_SWZ_Z_SHIFT) |
 		  (dst.cc_swz[3] << NV40_FP_OP_COND_SWZ_W_SHIFT));
 
-	emit_dst(fpc, hw, dst);
-	emit_src(fpc, hw, 0, s0);
-	emit_src(fpc, hw, 1, s1);
-	emit_src(fpc, hw, 2, s2);
+	emit_dst(fpc, dst);
+	emit_src(fpc, 0, s0);
+	emit_src(fpc, 1, s1);
+	emit_src(fpc, 2, s2);
 
-	fp->insn_len += 4;
 	if (fpc->inst_has_const) {
+		grow_insns(fpc, 4);
 		fp->consts[fp->num_consts].pipe_id = fpc->inst_const_id;
-		fp->consts[fp->num_consts].hw_id = fp->insn_len;
+		fp->consts[fp->num_consts].hw_id = fpc->inst_offset + 4;
 		fp->num_consts++;
-		fp->insn_len += 4;
 	}
 }
 
@@ -175,11 +192,8 @@ nv40_fp_tex(struct nv40_fpc *fpc, int sat, int op, int unit,
 	    struct nv40_sreg dst, int mask,
 	    struct nv40_sreg s0, struct nv40_sreg s1, struct nv40_sreg s2)
 {
-	struct nv40_fragment_program *fp = fpc->fp;
-	uint32_t *hw = &fp->insn[fp->insn_len];
-
 	nv40_fp_arith(fpc, sat, op, dst, mask, s0, s1, s2);
-	hw[0] |= (unit << NV40_FP_OP_TEX_UNIT_SHIFT);
+	fpc->fp->insn[fpc->inst_offset] |= (unit << NV40_FP_OP_TEX_UNIT_SHIFT);
 }
 
 static INLINE struct nv40_sreg
@@ -622,7 +636,6 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 	fpc = calloc(1, sizeof(struct nv40_fpc));
 	if (!fpc)
 		return;
-	fp->insn = calloc(1, 128*4*sizeof(uint32_t));
 	fpc->fp = fp;
 	fpc->high_temp = -1;
 	fp->num_regs = 2;
@@ -667,12 +680,17 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 		}
 	}
 
-	if (fpc->inst_has_const == FALSE)
-		fp->insn[fp->insn_len - 4] |= 0x00000001;
-	else
-		fp->insn[fp->insn_len - 8] |= 0x00000001;
-	fp->insn[fp->insn_len++]  = 0x00000001;
+	/* Terminate final instruction */
+	fp->insn[fpc->inst_offset] |= 0x00000001;
 
+	/* Append NOP + END instruction, may or may not be necessary. */
+	fpc->inst_offset = fp->insn_len;
+	grow_insns(fpc, 4);
+	fp->insn[fpc->inst_offset + 0] = 0x00000001;
+	fp->insn[fpc->inst_offset + 1] = 0x00000000;
+	fp->insn[fpc->inst_offset + 2] = 0x00000000;
+	fp->insn[fpc->inst_offset + 3] = 0x00000000;
+	
 	fp->translated = TRUE;
 	fp->on_hw = FALSE;
 out_err:
