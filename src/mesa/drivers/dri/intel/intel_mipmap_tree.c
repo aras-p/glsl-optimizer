@@ -78,28 +78,17 @@ intel_miptree_create(struct intel_context *intel,
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
-   switch (intel->intelScreen->deviceID) {
-   case PCI_CHIP_I945_G:
-   case PCI_CHIP_I945_GM:
-   case PCI_CHIP_I945_GME:
-   case PCI_CHIP_G33_G:
-   case PCI_CHIP_Q33_G:
-   case PCI_CHIP_Q35_G:
+#ifdef I915
+   if (IS_945(intel->intelScreen->deviceID))
       ok = i945_miptree_layout(mt);
-      break;
-   case PCI_CHIP_I915_G:
-   case PCI_CHIP_I915_GM:
-   case PCI_CHIP_I830_M:
-   case PCI_CHIP_I855_GM:
-   case PCI_CHIP_I865_G:
-   default:
-      /* All the i830 chips and the i915 use this layout:
-       */
+   else
       ok = i915_miptree_layout(mt);
-      break;
-   }
+#else
+   ok = brw_miptree_layout(mt);
+#endif
 
    if (ok) {
+#ifdef I915
       if (!mt->compressed) {
 	 int align;
 
@@ -125,6 +114,7 @@ intel_miptree_create(struct intel_context *intel,
 
 	 mt->pitch /= cpp;
       }
+#endif /* I915 */
 
       mt->region = intel_region_alloc(intel,
                                       mt->cpp, mt->pitch, mt->total_height);

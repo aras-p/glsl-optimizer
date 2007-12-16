@@ -22,7 +22,9 @@ DRIVER_SOURCES = \
 	intel_state.c \
 	intel_tex.c \
 	intel_tex_format.c \
+	intel_tex_image.c \
 	intel_tex_layout.c \
+	intel_tex_subimage.c \
 	intel_tex_validate.c \
 	brw_cc.c \
 	brw_clip.c \

@@ -312,7 +312,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
       /* _NEW_TEXTURE, BRW_NEW_TEXDATA 
        */
       if (texUnit->_ReallyEnabled &&
-	  intel_finalize_mipmap_tree(intel,texUnit->_Current))
+	  intel_finalize_mipmap_tree(intel, i))
       {
 	 brw_update_texture_surface(ctx, i);
 	 brw->wm.nr_surfaces = i+2;

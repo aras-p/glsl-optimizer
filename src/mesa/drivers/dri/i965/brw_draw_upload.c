@@ -255,7 +255,7 @@ static void copy_strided_array( GLubyte *dest,
 				GLuint count )
 {
    if (size == stride) 
-      do_memcpy(dest, src, count * size);
+      memcpy(dest, src, count * size);
    else {
       GLuint i,j;
    

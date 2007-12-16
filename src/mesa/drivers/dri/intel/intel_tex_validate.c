@@ -40,6 +40,7 @@ intel_calculate_first_last_level(struct intel_texture_object *intelObj)
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
+#ifdef I915
          firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
          firstLevel = MAX2(firstLevel, tObj->BaseLevel);
          lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
@@ -47,6 +48,18 @@ intel_calculate_first_last_level(struct intel_texture_object *intelObj)
          lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
          lastLevel = MIN2(lastLevel, tObj->MaxLevel);
          lastLevel = MAX2(firstLevel, lastLevel);       /* need at least one level */
+#else
+	 /* Currently not taking min/max lod into account here, those
+	  * values are programmed as sampler state elsewhere and we
+	  * upload the same mipmap levels regardless.  Not sure if
+	  * this makes sense as it means it isn't possible for the app
+	  * to use min/max lod to reduce texture memory pressure:
+	  */
+	 firstLevel = tObj->BaseLevel;
+	 lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
+			  tObj->MaxLevel);
+	 lastLevel = MAX2(firstLevel, lastLevel); /* need at least one level */
+#endif
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -211,8 +224,15 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       }
    }
 
+#ifdef I915
+   /* XXX: what is this flush about?
+    * On 965, it causes a batch flush in the middle of the state relocation
+    * emits, which means that the eventual rendering doesn't have all of the
+    * required relocations in place.
+    */
    if (need_flush)
       intel_batchbuffer_flush(intel->batch);
+#endif
 
    return GL_TRUE;
 }

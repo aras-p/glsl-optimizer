@@ -35,6 +35,7 @@
 #include "texmem.h"
 
 #include "intel_screen.h"
+#include "intel_tex_obj.h"
 #include "i830_common.h"
 #include "tnl/t_vertex.h"
 
@@ -66,27 +67,6 @@ extern void intelFallback( struct intel_context *intel, GLuint bit, GLboolean mo
 #define INTEL_WRITE_PART  0x1
 #define INTEL_WRITE_FULL  0x2
 #define INTEL_READ        0x4
-
-struct intel_texture_object
-{
-   struct gl_texture_object base; /* The "parent" object */
-
-   /* The mipmap tree must include at least these levels once
-    * validated:
-    */
-   GLuint firstLevel;
-   GLuint lastLevel;
-
-   GLuint dirty_images[6];
-   GLuint dirty;
-
-   /* On validation any active images held in main memory or in other
-    * regions will be copied to this region and the old storage freed.
-    */
-   struct intel_mipmap_tree *mt;
-};
-
-
 
 struct intel_context
 {
@@ -308,32 +288,6 @@ static inline void * __memcpy(void * to, const void * from, size_t n)
 #endif
 
 
-/* The system memcpy (at least on ubuntu 5.10) has problems copying
- * to agp (writecombined) memory from a source which isn't 64-byte
- * aligned - there is a 4x performance falloff.
- *
- * The x86 __memcpy is immune to this but is slightly slower
- * (10%-ish) than the system memcpy.
- *
- * The sse_memcpy seems to have a slight cliff at 64/32 bytes, but
- * isn't much faster than x86_memcpy for agp copies.
- * 
- * TODO: switch dynamically.
- */
-static inline void *do_memcpy( void *dest, const void *src, size_t n )
-{
-   if ( (((unsigned long)src) & 63) ||
-	(((unsigned long)dest) & 63)) {
-      return  __memcpy(dest, src, n);	
-   }
-   else
-      return memcpy(dest, src, n);
-}
-
-
-
-
-
 /* ================================================================
  * Debugging:
  */
@@ -493,16 +447,6 @@ void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
 static inline struct intel_context *intel_context( GLcontext *ctx )
 {
    return (struct intel_context *)ctx;
-}
-
-static inline struct intel_texture_object *intel_texture_object( struct gl_texture_object *obj )
-{
-   return (struct intel_texture_object *)obj;
-}
-
-static inline struct intel_texture_image *intel_texture_image( struct gl_texture_image *img )
-{
-   return (struct intel_texture_image *)img;
 }
 
 #endif
