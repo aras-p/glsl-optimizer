@@ -93,13 +93,15 @@ nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 		OUT_RING  (cb->b_enable);
 		OUT_RING  (cb->b_srcfunc);
 		OUT_RING  (cb->b_dstfunc);
-		BEGIN_RING(curie, NV40TCL_BLEND_EQUATION, 2);
+		BEGIN_RING(curie, NV40TCL_BLEND_EQUATION, 1);
 		OUT_RING  (cb->b_eqn);
-		OUT_RING  (cb->c_mask);
 	} else {
 		BEGIN_RING(curie, NV40TCL_BLEND_ENABLE, 1);
 		OUT_RING  (0);
 	}
+
+	BEGIN_RING(curie, NV40TCL_COLOR_MASK, 1);
+	OUT_RING  (cb->c_mask);
 
 	if (cb->l_enable) {
 		BEGIN_RING(curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
