@@ -80,17 +80,21 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-      const struct intel_region *frontRegion
-	 = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
-      const struct intel_region *backRegion
-	 = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
-      const int nbox = dPriv->numClipRects;
-      const drm_clip_rect_t *pbox = dPriv->pClipRects;
-      const int cpp = frontRegion->cpp;
-      int src_pitch = backRegion->pitch * cpp;
-      int dst_pitch = frontRegion->pitch * cpp;
+      struct intel_region *src, *dst;
+      int nbox = dPriv->numClipRects;
+      drm_clip_rect_t *pbox = dPriv->pClipRects;
+      int cpp;
+      int src_pitch, dst_pitch;
       int BR13, CMD;
       int i;
+
+      src = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
+      dst = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
+
+      src_pitch = src->pitch * src->cpp;
+      dst_pitch = dst->pitch * dst->cpp;
+
+      cpp = src->cpp;
 
       ASSERT(intel_fb);
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
@@ -109,39 +113,29 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       }
 
 #ifndef I915
-      if (backRegion->tiled) {
+      if (src->tiled) {
 	 CMD |= XY_SRC_TILED;
 	 src_pitch /= 4;
       }
-      if (frontRegion->tiled) {
+      if (dst->tiled) {
 	 CMD |= XY_DST_TILED;
 	 dst_pitch /= 4;
       }
 #endif
 
       for (i = 0; i < nbox; i++, pbox++) {
-	 drm_clip_rect_t box;
-
-	 if (pbox->x1 >= pbox->x2 ||
-	     pbox->y1 >= pbox->y2 ||
-	     pbox->x2 > intelScreen->width || pbox->y2 > intelScreen->height)
-	    continue;
-
-	 box = *pbox;
+	 drm_clip_rect_t box = *pbox;
 
 	 if (rect) {
-	    if (rect->x1 > box.x1)
-	       box.x1 = rect->x1;
-	    if (rect->y1 > box.y1)
-	       box.y1 = rect->y1;
-	    if (rect->x2 < box.x2)
-	       box.x2 = rect->x2;
-	    if (rect->y2 < box.y2)
-	       box.y2 = rect->y2;
-
-	    if (box.x1 >= box.x2 || box.y1 >= box.y2)
+	    if (!intel_intersect_cliprects(&box, &box, rect))
 	       continue;
 	 }
+
+	 if (box.x1 >= box.x2 ||
+	     box.y1 >= box.y2 ||
+	     box.x2 > intelScreen->width ||
+	     box.y2 > intelScreen->height)
+	    continue;
 
 	 assert(box.x1 < box.x2);
 	 assert(box.y1 < box.y2);
@@ -152,13 +146,10 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH((box.y2 << 16) | box.x2);
 
-	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-		   0);
+	 OUT_RELOC(dst->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH(src_pitch);
-	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		   0);
-
+	 OUT_RELOC(src->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
 	 ADVANCE_BATCH();
       }
 
@@ -178,12 +169,14 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
 void
 intelEmitFillBlit(struct intel_context *intel,
-                  GLuint cpp,
-                  GLshort dst_pitch,
-                  dri_bo *dst_buffer,
-                  GLuint dst_offset,
+		  GLuint cpp,
+		  GLshort dst_pitch,
+		  dri_bo *dst_buffer,
+		  GLuint dst_offset,
 		  GLboolean dst_tiled,
-                  GLshort x, GLshort y, GLshort w, GLshort h, GLuint color)
+		  GLshort x, GLshort y,
+		  GLshort w, GLshort h,
+		  GLuint color)
 {
    GLuint BR13, CMD;
    BATCH_LOCALS;
@@ -227,7 +220,6 @@ intelEmitFillBlit(struct intel_context *intel,
    ADVANCE_BATCH();
 }
 
-
 static GLuint translate_raster_op(GLenum logicop)
 {
    switch(logicop) {
@@ -256,17 +248,17 @@ static GLuint translate_raster_op(GLenum logicop)
  */
 void
 intelEmitCopyBlit(struct intel_context *intel,
-                  GLuint cpp,
-                  GLshort src_pitch,
-                  dri_bo *src_buffer,
-                  GLuint src_offset,
+		  GLuint cpp,
+		  GLshort src_pitch,
+		  dri_bo *src_buffer,
+		  GLuint src_offset,
 		  GLboolean src_tiled,
-                  GLshort dst_pitch,
-                  dri_bo *dst_buffer,
-                  GLuint dst_offset,
+		  GLshort dst_pitch,
+		  dri_bo *dst_buffer,
+		  GLuint dst_offset,
 		  GLboolean dst_tiled,
-                  GLshort src_x, GLshort src_y,
-                  GLshort dst_x, GLshort dst_y, 
+		  GLshort src_x, GLshort src_y,
+		  GLshort dst_x, GLshort dst_y,
 		  GLshort w, GLshort h,
 		  GLenum logic_op)
 {
@@ -284,7 +276,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    src_pitch *= cpp;
    dst_pitch *= cpp;
 
-   BR13 = (translate_raster_op(logic_op) << 16);
+   BR13 = translate_raster_op(logic_op) << 16;
 
    switch (cpp) {
    case 1:
@@ -316,6 +308,8 @@ intelEmitCopyBlit(struct intel_context *intel,
       return;
    }
 
+   dst_pitch &= 0xffff;
+   src_pitch &= 0xffff;
 
    /* Initial y values don't seem to work with negative pitches.  If
     * we adjust the offsets manually (below), it seems to work fine.
@@ -333,10 +327,12 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((dst_y << 16) | dst_x);
       OUT_BATCH((dst_y2 << 16) | dst_x2);
-      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
+      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		dst_offset);
       OUT_BATCH((src_y << 16) | src_x);
       OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, src_offset);
+      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		src_offset);
       ADVANCE_BATCH();
    }
    else {
@@ -349,11 +345,11 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH((0 << 16) | dst_x);
       OUT_BATCH((h << 16) | dst_x2);
       OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                dst_offset + dst_y * dst_pitch);
+		dst_offset + dst_y * dst_pitch);
       OUT_BATCH((0 << 16) | src_x);
       OUT_BATCH(src_pitch);
       OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-                src_offset + src_y * src_pitch);
+		src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
 }
@@ -367,7 +363,7 @@ intelEmitCopyBlit(struct intel_context *intel,
  * \param mask  bitmask of BUFFER_BIT_* values indicating buffers to clear
  */
 void
-intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
+intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
