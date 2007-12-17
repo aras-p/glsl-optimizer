@@ -289,7 +289,7 @@ static void brw_set_vertex_element(struct pipe_context *pipe,
    el.vep.ve0.valid = 1;
    el.vep.ve0.vertex_buffer_index = element->vertex_buffer_index;
 
-   el.vep.ve1.dst_offset   = element->dst_offset;
+   el.vep.ve1.dst_offset   = index * 4;
    el.vep.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_SRC;
    el.vep.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_SRC;
    el.vep.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_SRC;
