@@ -15,10 +15,8 @@ nv40_alpha_test_state_create(struct pipe_context *pipe,
 	at = malloc(sizeof(struct nv40_alpha_test_state));
 
 	at->enabled = cso->enabled ? 1 : 0;
-	if (at->enabled) {
-		at->func = nvgl_comparison_op(cso->func);
-		at->ref  = float_to_ubyte(cso->ref);
-	}
+	at->func = nvgl_comparison_op(cso->func);
+	at->ref  = float_to_ubyte(cso->ref);
 
 	return (void *)at;
 }
@@ -29,15 +27,10 @@ nv40_alpha_test_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	struct nv40_alpha_test_state *at = hwcso;
 
-	if (at->enabled) {
-		BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
-		OUT_RING  (at->enabled);
-		OUT_RING  (at->func);
-		OUT_RING  (at->ref);
-	} else {
-		BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 1);
-		OUT_RING  (0);
-	}
+	BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	OUT_RING  (at->enabled);
+	OUT_RING  (at->func);
+	OUT_RING  (at->ref);
 }
 
 static void
@@ -55,19 +48,15 @@ nv40_blend_state_create(struct pipe_context *pipe,
 	cb = malloc(sizeof(struct nv40_blend_state));
 
 	cb->b_enable = cso->blend_enable ? 1 : 0;
-	if (cb->b_enable) {
-		cb->b_srcfunc = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
-				 (nvgl_blend_func(cso->rgb_src_factor)));
-		cb->b_dstfunc = ((nvgl_blend_func(cso->alpha_dst_factor)<<16) |
-				 (nvgl_blend_func(cso->rgb_dst_factor)));
-		cb->b_eqn = ((nvgl_blend_eqn(cso->alpha_func) << 16) |
-			     (nvgl_blend_eqn(cso->rgb_func)));
-	}
+	cb->b_srcfunc = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
+			 (nvgl_blend_func(cso->rgb_src_factor)));
+	cb->b_dstfunc = ((nvgl_blend_func(cso->alpha_dst_factor)<<16) |
+			 (nvgl_blend_func(cso->rgb_dst_factor)));
+	cb->b_eqn = ((nvgl_blend_eqn(cso->alpha_func) << 16) |
+		     (nvgl_blend_eqn(cso->rgb_func)));
 
 	cb->l_enable = cso->logicop_enable ? 1 : 0;
-	if (cb->l_enable) {
-		cb->l_op = nvgl_logicop_func(cso->logicop_func);
-	}
+	cb->l_op = nvgl_logicop_func(cso->logicop_func);
 
 	cb->c_mask = (((cso->colormask & PIPE_MASK_A) ? (0x01<<24) : 0) |
 		      ((cso->colormask & PIPE_MASK_R) ? (0x01<<16) : 0) |
@@ -88,29 +77,19 @@ nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 	BEGIN_RING(curie, NV40TCL_DITHER_ENABLE, 1);
 	OUT_RING  (cb->d_enable);
 
-	if (cb->b_enable) {
-		BEGIN_RING(curie, NV40TCL_BLEND_ENABLE, 3);
-		OUT_RING  (cb->b_enable);
-		OUT_RING  (cb->b_srcfunc);
-		OUT_RING  (cb->b_dstfunc);
-		BEGIN_RING(curie, NV40TCL_BLEND_EQUATION, 1);
-		OUT_RING  (cb->b_eqn);
-	} else {
-		BEGIN_RING(curie, NV40TCL_BLEND_ENABLE, 1);
-		OUT_RING  (0);
-	}
+	BEGIN_RING(curie, NV40TCL_BLEND_ENABLE, 3);
+	OUT_RING  (cb->b_enable);
+	OUT_RING  (cb->b_srcfunc);
+	OUT_RING  (cb->b_dstfunc);
+	BEGIN_RING(curie, NV40TCL_BLEND_EQUATION, 1);
+	OUT_RING  (cb->b_eqn);
 
 	BEGIN_RING(curie, NV40TCL_COLOR_MASK, 1);
 	OUT_RING  (cb->c_mask);
 
-	if (cb->l_enable) {
-		BEGIN_RING(curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
-		OUT_RING  (cb->l_enable);
-		OUT_RING  (cb->l_op);
-	} else {
-		BEGIN_RING(curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 1);
-		OUT_RING  (0);
-	}
+	BEGIN_RING(curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
+	OUT_RING  (cb->l_enable);
+	OUT_RING  (cb->l_op);
 }
 
 static void
