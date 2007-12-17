@@ -124,6 +124,7 @@ emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
 			fpd = &fp->consts[fp->nr_consts - 1];
 			fpd->offset = fpc->inst_offset + 4;
 			fpd->index = fpc->consts[src.index].pipe;
+			memset(&fp->insn[fpd->offset], 0, sizeof(uint32_t) * 4);
 		} else {
 			memcpy(&fp->insn[fpc->inst_offset + 4],
 				fpc->consts[src.index].vals,

@@ -55,17 +55,14 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 static void
 nv40_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
 {
-	struct pipe_texture *mt = *pt;
 	struct pipe_winsys *ws = pipe->winsys;
 	struct nv40_miptree *nv40mt;
 
-	*pt = NULL;
-
-	nv40mt = calloc(1, sizeof(struct nv40_miptree));
+	nv40mt = realloc(*pt, sizeof(struct nv40_miptree));
 	if (!nv40mt)
 		return;
+	*pt = NULL;
 
-	memcpy(&nv40mt->base, mt, sizeof(struct pipe_texture));
 	nv40_miptree_layout(nv40mt);
 
 	nv40mt->buffer = ws->buffer_create(ws, 256, 0, 0);
@@ -91,7 +88,7 @@ nv40_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
 		int l;
 
 		ws->buffer_reference(ws, &nv40mt->buffer, NULL);
-		for (l = 0; l < PIPE_MAX_TEXTURE_LEVELS; l++) {
+		for (l = mt->first_level; l <= mt->last_level; l++) {
 			if (nv40mt->level[l].image_offset)
 				free(nv40mt->level[l].image_offset);
 		}
