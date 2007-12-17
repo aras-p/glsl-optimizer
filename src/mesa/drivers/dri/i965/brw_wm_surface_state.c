@@ -247,7 +247,10 @@ brw_wm_get_binding_table(struct brw_context *brw)
       int i;
 
       for (i = 0; i < brw->wm.nr_surfaces; i++)
-	 data[i] = brw->wm.surf_bo[i]->offset;
+         if (brw->wm.surf_bo[i])
+            data[i] = brw->wm.surf_bo[i]->offset;
+         else
+            data[i] = 0;
 
       bind_bo = brw_upload_cache( &brw->cache, BRW_SS_SURF_BIND,
 				  NULL, 0,
