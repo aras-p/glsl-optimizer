@@ -49,14 +49,14 @@ cell_delete_sampler_state(struct pipe_context *, void *);
 
 
 extern void *
-cell_create_depth_stencil_state(struct pipe_context *,
+cell_create_depth_stencil_alpha_state(struct pipe_context *,
                                 const struct pipe_depth_stencil_alpha_state *);
 
 extern void
-cell_bind_depth_stencil_state(struct pipe_context *, void *);
+cell_bind_depth_stencil_alpha_state(struct pipe_context *, void *);
 
 extern void
-cell_delete_depth_stencil_state(struct pipe_context *, void *);
+cell_delete_depth_stencil_alpha_state(struct pipe_context *, void *);
 
 
 void *cell_create_fs_state(struct pipe_context *,

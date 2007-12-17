@@ -184,9 +184,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.bind_sampler_state   = cell_bind_sampler_state;
    cell->pipe.delete_sampler_state = cell_delete_sampler_state;
 
-   cell->pipe.create_depth_stencil_state = cell_create_depth_stencil_state;
-   cell->pipe.bind_depth_stencil_state   = cell_bind_depth_stencil_state;
-   cell->pipe.delete_depth_stencil_state = cell_delete_depth_stencil_state;
+   cell->pipe.create_depth_stencil_alpha_state = cell_create_depth_stencil_alpha_state;
+   cell->pipe.bind_depth_stencil_alpha_state   = cell_bind_depth_stencil_alpha_state;
+   cell->pipe.delete_depth_stencil_alpha_state = cell_delete_depth_stencil_alpha_state;
 
    cell->pipe.create_rasterizer_state = cell_create_rasterizer_state;
    cell->pipe.bind_rasterizer_state   = cell_bind_rasterizer_state;

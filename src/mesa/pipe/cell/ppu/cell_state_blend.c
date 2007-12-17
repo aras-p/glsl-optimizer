@@ -71,8 +71,8 @@ void cell_set_blend_color( struct pipe_context *pipe,
 
 
 void *
-cell_create_depth_stencil_state(struct pipe_context *pipe,
-                              const struct pipe_depth_stencil_alpha_state *depth_stencil)
+cell_create_depth_stencil_alpha_state(struct pipe_context *pipe,
+                                      const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
    struct pipe_depth_stencil_alpha_state *state =
       MALLOC( sizeof(struct pipe_depth_stencil_alpha_state) );
@@ -81,8 +81,8 @@ cell_create_depth_stencil_state(struct pipe_context *pipe,
 }
 
 void
-cell_bind_depth_stencil_state(struct pipe_context *pipe,
-                                  void *depth_stencil)
+cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
+                                    void *depth_stencil)
 {
    struct cell_context *cell = cell_context(pipe);
 
@@ -92,7 +92,7 @@ cell_bind_depth_stencil_state(struct pipe_context *pipe,
 }
 
 void
-cell_delete_depth_stencil_state(struct pipe_context *pipe, void *depth)
+cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *depth)
 {
    FREE( depth );
 }
