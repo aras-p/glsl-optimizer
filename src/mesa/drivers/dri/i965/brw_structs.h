@@ -924,6 +924,7 @@ struct brw_sf_viewport
       GLfloat m32;  
    } viewport;
 
+   /* scissor coordinates are inclusive */
    struct {
       GLshort xmin;
       GLshort ymin;

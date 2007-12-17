@@ -43,61 +43,40 @@ static void upload_sf_vp(struct brw_context *brw)
    struct brw_sf_viewport sfv;
 
    memset(&sfv, 0, sizeof(sfv));
-   
-   if (brw->intel.driDrawable) 
-   {
-      /* _NEW_VIEWPORT, BRW_NEW_METAOPS */
 
-      if (!brw->metaops.active) {
-	 const GLfloat *v = ctx->Viewport._WindowMap.m;
-	 
-	 sfv.viewport.m00 =   v[MAT_SX];
-	 sfv.viewport.m11 = - v[MAT_SY];
-	 sfv.viewport.m22 =   v[MAT_SZ] * depth_scale;
-	 sfv.viewport.m30 =   v[MAT_TX];
-	 sfv.viewport.m31 = - v[MAT_TY] + brw->intel.driDrawable->h;
-	 sfv.viewport.m32 =   v[MAT_TZ] * depth_scale;
-      }
-      else {
-	 sfv.viewport.m00 =   1;
-	 sfv.viewport.m11 = - 1;
-	 sfv.viewport.m22 =   1;
-	 sfv.viewport.m30 =   0;
-	 sfv.viewport.m31 =   brw->intel.driDrawable->h;
-	 sfv.viewport.m32 =   0;
-      }
+   /* _NEW_VIEWPORT, BRW_NEW_METAOPS */
+
+   if (!brw->metaops.active) {
+      const GLfloat *v = ctx->Viewport._WindowMap.m;
+
+      sfv.viewport.m00 =   v[MAT_SX];
+      sfv.viewport.m11 = - v[MAT_SY];
+      sfv.viewport.m22 =   v[MAT_SZ] * depth_scale;
+      sfv.viewport.m30 =   v[MAT_TX];
+      sfv.viewport.m31 = - v[MAT_TY] + ctx->DrawBuffer->Height;
+      sfv.viewport.m32 =   v[MAT_TZ] * depth_scale;
+   } else {
+      sfv.viewport.m00 =   1;
+      sfv.viewport.m11 = - 1;
+      sfv.viewport.m22 =   1;
+      sfv.viewport.m30 =   0;
+      sfv.viewport.m31 =   ctx->DrawBuffer->Height;
+      sfv.viewport.m32 =   0;
    }
 
-   /* XXX: what state for this? */
-   if (brw->intel.driDrawable)
-   {
-      intelScreenPrivate *screen = brw->intel.intelScreen;
-      /* _NEW_SCISSOR */
-      GLint x = brw->attribs.Scissor->X;
-      GLint y = brw->attribs.Scissor->Y;
-      GLuint w = brw->attribs.Scissor->Width;
-      GLuint h = brw->attribs.Scissor->Height;
+   /* _NEW_SCISSOR */
 
-      GLint x1 = x;
-      GLint y1 = brw->intel.driDrawable->h - (y + h);
-      GLint x2 = x + w - 1;
-      GLint y2 = y1 + h - 1;
-
-      if (x1 < 0) x1 = 0;
-      if (y1 < 0) y1 = 0;
-      if (x2 < 0) x2 = 0;
-      if (y2 < 0) y2 = 0;
-
-      if (x2 >= screen->width) x2 = screen->width-1;
-      if (y2 >= screen->height) y2 = screen->height-1;
-      if (x1 >= screen->width) x1 = screen->width-1;
-      if (y1 >= screen->height) y1 = screen->height-1;
-      
-      sfv.scissor.xmin = x1;
-      sfv.scissor.xmax = x2;
-      sfv.scissor.ymin = y1;
-      sfv.scissor.ymax = y2;
-   }
+   /* The scissor only needs to handle the intersection of drawable and
+    * scissor rect.  Clipping to the boundaries of static shared buffers
+    * for front/back/depth is covered by looping over cliprects in brw_draw.c.
+    *
+    * Note that the hardware's coordinates are inclusive, while Mesa's min is
+    * inclusive but max is exclusive.
+    */
+   sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
+   sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+   sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+   sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
 
    dri_bo_unreference(brw->sf.vp_bo);
    brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
