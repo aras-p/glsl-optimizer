@@ -207,6 +207,7 @@ do {								\
 void intelSpanRenderStart( GLcontext *ctx )
 {
    struct intel_context *intel = intel_context(ctx);
+   int i;
 
    if (intel->need_flush) {
       LOCK_HARDWARE(intel);
@@ -226,11 +227,19 @@ void intelSpanRenderStart( GLcontext *ctx )
    intel_region_map(intel, intel->front_region);
    intel_region_map(intel, intel->back_region);
    intel_region_map(intel, intel->depth_region);
+
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+         intel_tex_map_images(intel, intel_texture_object(texObj));
+      }
+   }
 }
 
 void intelSpanRenderFinish( GLcontext *ctx )
 {
    struct intel_context *intel = intel_context( ctx );
+   int i;
 
    _swrast_flush( ctx );
 
@@ -239,6 +248,13 @@ void intelSpanRenderFinish( GLcontext *ctx )
    intel_region_unmap(intel, intel->front_region);
    intel_region_unmap(intel, intel->back_region);
    intel_region_unmap(intel, intel->depth_region);
+
+   for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+      if (ctx->Texture.Unit[i]._ReallyEnabled) {
+         struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
+         intel_tex_unmap_images(intel, intel_texture_object(texObj));
+      }
+   }
 
    UNLOCK_HARDWARE( intel );
 }
