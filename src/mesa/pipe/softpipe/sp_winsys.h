@@ -37,6 +37,7 @@
 
 #include "pipe/p_compiler.h" /* for boolean */
 
+enum pipe_format;
 
 struct softpipe_winsys {
    /** test if the given format is supported for front/back color bufs */
