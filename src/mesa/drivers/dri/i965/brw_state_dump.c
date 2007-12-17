@@ -99,7 +99,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
       surf = (struct brw_surface_state *)(surf_bo->virtual);
 
       sprintf(name, "WM SS%d", i);
-      state_out(name, surf, surfoff, 0, "\n",
+      state_out(name, surf, surfoff, 0, "%s\n",
 		get_965_surfacetype(surf->ss0.surface_type));
       state_out(name, surf, surfoff, 1, "offset\n");
       state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
