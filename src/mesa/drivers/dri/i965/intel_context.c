@@ -524,17 +524,10 @@ GLboolean intelInitContext( struct intel_context *intel,
    switch(mesaVis->depthBits) {
    case 0:			/* what to do in this case? */
    case 16:
-      intel->depth_scale = 1.0/0xffff;
       intel->polygon_offset_scale = 1.0/0xffff;
-      intel->depth_clear_mask = ~0;
-      intel->ClearDepth = 0xffff;
       break;
    case 24:
-      intel->depth_scale = 1.0/0xffffff;
       intel->polygon_offset_scale = 2.0/0xffffff; /* req'd to pass glean */
-      intel->depth_clear_mask = 0x00ffffff;
-      intel->stencil_clear_mask = 0xff000000;
-      intel->ClearDepth = 0x00ffffff;
       break;
    default:
       assert(0); 

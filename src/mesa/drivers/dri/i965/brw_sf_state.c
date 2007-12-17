@@ -38,6 +38,8 @@
 
 static void upload_sf_vp(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
+   const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
 
    memset(&sfv, 0, sizeof(sfv));
@@ -47,14 +49,14 @@ static void upload_sf_vp(struct brw_context *brw)
       /* _NEW_VIEWPORT, BRW_NEW_METAOPS */
 
       if (!brw->metaops.active) {
-	 const GLfloat *v = brw->intel.ctx.Viewport._WindowMap.m;
+	 const GLfloat *v = ctx->Viewport._WindowMap.m;
 	 
 	 sfv.viewport.m00 =   v[MAT_SX];
 	 sfv.viewport.m11 = - v[MAT_SY];
-	 sfv.viewport.m22 =   v[MAT_SZ] * brw->intel.depth_scale;
+	 sfv.viewport.m22 =   v[MAT_SZ] * depth_scale;
 	 sfv.viewport.m30 =   v[MAT_TX];
 	 sfv.viewport.m31 = - v[MAT_TY] + brw->intel.driDrawable->h;
-	 sfv.viewport.m32 =   v[MAT_TZ] * brw->intel.depth_scale;
+	 sfv.viewport.m32 =   v[MAT_TZ] * depth_scale;
       }
       else {
 	 sfv.viewport.m00 =   1;

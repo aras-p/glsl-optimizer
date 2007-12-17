@@ -164,12 +164,8 @@ struct intel_context
 
    GLubyte clear_chan[4];
    GLuint ClearColor;
-   GLuint ClearDepth;
 
-   GLfloat depth_scale;
    GLfloat polygon_offset_scale; /* dependent on depth_scale, bpp */
-   GLuint depth_clear_mask;
-   GLuint stencil_clear_mask;
 
    GLboolean hw_stencil;
    GLboolean hw_stipple;
