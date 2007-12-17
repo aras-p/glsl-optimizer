@@ -176,10 +176,6 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
 
    /* state setters */
-   cell->pipe.create_alpha_test_state = cell_create_alpha_test_state;
-   cell->pipe.bind_alpha_test_state   = cell_bind_alpha_test_state;
-   cell->pipe.delete_alpha_test_state = cell_delete_alpha_test_state;
-
    cell->pipe.create_blend_state = cell_create_blend_state;
    cell->pipe.bind_blend_state   = cell_bind_blend_state;
    cell->pipe.delete_blend_state = cell_delete_blend_state;

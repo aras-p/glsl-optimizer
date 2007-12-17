@@ -69,44 +69,14 @@ void cell_set_blend_color( struct pipe_context *pipe,
 }
 
 
-/** XXX move someday?  Or consolidate all these simple state setters
- * into one file.
- */
-
-void *
-cell_create_alpha_test_state(struct pipe_context *pipe,
-                                 const struct pipe_alpha_test_state *alpha)
-{
-   struct pipe_alpha_test_state *state = MALLOC( sizeof(struct pipe_alpha_test_state) );
-   memcpy(state, alpha, sizeof(struct pipe_alpha_test_state));
-   return state;
-}
-
-void
-cell_bind_alpha_test_state(struct pipe_context *pipe,
-                               void *alpha)
-{
-   struct cell_context *cell = cell_context(pipe);
-
-   cell->alpha_test = (const struct pipe_alpha_test_state *)alpha;
-
-   cell->dirty |= CELL_NEW_ALPHA_TEST;
-}
-
-void
-cell_delete_alpha_test_state(struct pipe_context *pipe,
-                                 void *alpha)
-{
-   FREE( alpha );
-}
 
 void *
 cell_create_depth_stencil_state(struct pipe_context *pipe,
-                              const struct pipe_depth_stencil_state *depth_stencil)
+                              const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
-   struct pipe_depth_stencil_state *state =
-      MALLOC( sizeof(struct pipe_depth_stencil_state) );
-   memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_state));
+   struct pipe_depth_stencil_alpha_state *state =
+      MALLOC( sizeof(struct pipe_depth_stencil_alpha_state) );
+   memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_alpha_state));
    return state;
 }
 
@@ -116,7 +86,7 @@ cell_bind_depth_stencil_state(struct pipe_context *pipe,
 {
    struct cell_context *cell = cell_context(pipe);
 
-   cell->depth_stencil = (const struct pipe_depth_stencil_state *)depth_stencil;
+   cell->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
 
    cell->dirty |= CELL_NEW_DEPTH_STENCIL;
 }

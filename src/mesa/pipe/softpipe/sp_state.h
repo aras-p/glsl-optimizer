@@ -52,13 +52,6 @@ struct sp_fragment_shader_state {
 #endif
 };
 
-void *
-softpipe_create_alpha_test_state(struct pipe_context *,
-                                 const struct pipe_alpha_test_state *);
-void
-softpipe_bind_alpha_test_state(struct pipe_context *, void *);
-void
-softpipe_delete_alpha_test_state(struct pipe_context *, void *);
 
 void *
 softpipe_create_blend_state(struct pipe_context *,
@@ -76,7 +69,7 @@ void softpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
 softpipe_create_depth_stencil_state(struct pipe_context *,
-                                    const struct pipe_depth_stencil_state *);
+                                    const struct pipe_depth_stencil_alpha_state *);
 void softpipe_bind_depth_stencil_state(struct pipe_context *, void *);
 void softpipe_delete_depth_stencil_state(struct pipe_context *, void *);
 

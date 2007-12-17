@@ -14,11 +14,11 @@ static void
 alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   const float ref = softpipe->alpha_test->ref;
+   const float ref = softpipe->depth_stencil->alpha.ref;
    unsigned passMask = 0x0, j;
    const float *aaaa = quad->outputs.color[3];
 
-   switch (softpipe->alpha_test->func) {
+   switch (softpipe->depth_stencil->alpha.func) {
    case PIPE_FUNC_NEVER:
       quad->mask = 0x0;
       break;

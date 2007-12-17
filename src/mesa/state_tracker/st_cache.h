@@ -39,9 +39,6 @@ struct pipe_blend_state;
 struct pipe_sampler_state;
 struct st_context;
 
-const struct cso_alpha_test *
-st_cached_alpha_test_state(struct st_context *st,
-                           const struct pipe_alpha_test_state *alpha);
 
 const struct cso_blend *
 st_cached_blend_state(struct st_context *st,
@@ -51,9 +48,9 @@ const struct cso_sampler *
 st_cached_sampler_state(struct st_context *st,
                         const struct pipe_sampler_state *sampler);
 
-const struct cso_depth_stencil *
-st_cached_depth_stencil_state(struct st_context *st,
-                              const struct pipe_depth_stencil_state *depth_stencil);
+const struct cso_depth_stencil_alpha *
+st_cached_depth_stencil_alpha_state(struct st_context *st,
+                              const struct pipe_depth_stencil_alpha_state *depth_stencil);
 
 const struct cso_rasterizer *
 st_cached_rasterizer_state(struct st_context *st,

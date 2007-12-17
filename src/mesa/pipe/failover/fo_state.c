@@ -45,45 +45,6 @@
  * lower overheads.
  */
 
-static void *
-failover_create_alpha_test_state(struct pipe_context *pipe,
-                                 const struct pipe_alpha_test_state *templ)
-{
-   struct fo_state *state = malloc(sizeof(struct fo_state));
-   struct failover_context *failover = failover_context(pipe);
-
-   state->sw_state = failover->sw->create_alpha_test_state(pipe, templ);
-   state->hw_state = failover->hw->create_alpha_test_state(pipe, templ);
-
-   return state;
-}
-
-static void
-failover_bind_alpha_test_state(struct pipe_context *pipe,
-                               void *alpha)
-{
-   struct failover_context *failover = failover_context(pipe);
-   struct fo_state *state = (struct fo_state *)alpha;
-
-   failover->alpha_test = state;
-   failover->dirty |= FO_NEW_ALPHA_TEST;
-   failover->hw->bind_alpha_test_state(failover->hw,
-                                       state->hw_state);
-}
-
-static void
-failover_delete_alpha_test_state(struct pipe_context *pipe,
-                                 void *alpha)
-{
-   struct fo_state *state = (struct fo_state*)alpha;
-   struct failover_context *failover = failover_context(pipe);
-
-   failover->sw->delete_alpha_test_state(pipe, state->sw_state);
-   failover->hw->delete_alpha_test_state(pipe, state->hw_state);
-   state->sw_state = 0;
-   state->hw_state = 0;
-   free(state);
-}
 
 
 static void *
@@ -149,13 +110,13 @@ failover_set_clip_state( struct pipe_context *pipe,
 
 static void *
 failover_create_depth_stencil_state(struct pipe_context *pipe,
-                              const struct pipe_depth_stencil_state *templ)
+                              const struct pipe_depth_stencil_alpha_state *templ)
 {
    struct fo_state *state = malloc(sizeof(struct fo_state));
    struct failover_context *failover = failover_context(pipe);
 
-   state->sw_state = failover->sw->create_depth_stencil_state(pipe, templ);
-   state->hw_state = failover->hw->create_depth_stencil_state(pipe, templ);
+   state->sw_state = failover->sw->create_depth_stencil_alpha_state(pipe, templ);
+   state->hw_state = failover->hw->create_depth_stencil_alpha_state(pipe, templ);
 
    return state;
 }
@@ -168,7 +129,7 @@ failover_bind_depth_stencil_state(struct pipe_context *pipe,
    struct fo_state *state = (struct fo_state *)depth_stencil;
    failover->depth_stencil = state;
    failover->dirty |= FO_NEW_DEPTH_STENCIL;
-   failover->hw->bind_depth_stencil_state(failover->hw, state->hw_state);
+   failover->hw->bind_depth_stencil_alpha_state(failover->hw, state->hw_state);
 }
 
 static void
@@ -178,8 +139,8 @@ failover_delete_depth_stencil_state(struct pipe_context *pipe,
    struct fo_state *state = (struct fo_state*)ds;
    struct failover_context *failover = failover_context(pipe);
 
-   failover->sw->delete_depth_stencil_state(pipe, state->sw_state);
-   failover->hw->delete_depth_stencil_state(pipe, state->hw_state);
+   failover->sw->delete_depth_stencil_alpha_state(pipe, state->sw_state);
+   failover->hw->delete_depth_stencil_alpha_state(pipe, state->hw_state);
    state->sw_state = 0;
    state->hw_state = 0;
    free(state);
@@ -434,18 +395,15 @@ failover_set_vertex_element(struct pipe_context *pipe,
 void
 failover_init_state_functions( struct failover_context *failover )
 {
-   failover->pipe.create_alpha_test_state = failover_create_alpha_test_state;
-   failover->pipe.bind_alpha_test_state   = failover_bind_alpha_test_state;
-   failover->pipe.delete_alpha_test_state = failover_delete_alpha_test_state;
    failover->pipe.create_blend_state = failover_create_blend_state;
    failover->pipe.bind_blend_state   = failover_bind_blend_state;
    failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.create_sampler_state = failover_create_sampler_state;
    failover->pipe.bind_sampler_state   = failover_bind_sampler_state;
    failover->pipe.delete_sampler_state = failover_delete_sampler_state;
-   failover->pipe.create_depth_stencil_state = failover_create_depth_stencil_state;
-   failover->pipe.bind_depth_stencil_state   = failover_bind_depth_stencil_state;
-   failover->pipe.delete_depth_stencil_state = failover_delete_depth_stencil_state;
+   failover->pipe.create_depth_stencil_alpha_state = failover_create_depth_stencil_state;
+   failover->pipe.bind_depth_stencil_alpha_state   = failover_bind_depth_stencil_state;
+   failover->pipe.delete_depth_stencil_alpha_state = failover_delete_depth_stencil_state;
    failover->pipe.create_rasterizer_state = failover_create_rasterizer_state;
    failover->pipe.bind_rasterizer_state = failover_bind_rasterizer_state;
    failover->pipe.delete_rasterizer_state = failover_delete_rasterizer_state;

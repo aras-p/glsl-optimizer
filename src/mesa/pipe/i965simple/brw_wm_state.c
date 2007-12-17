@@ -122,7 +122,7 @@ static void upload_wm_unit(struct brw_context *brw )
 
       /* BRW_NEW_ALPHA_TEST */
       if (fp->UsesKill ||
-	  brw->attribs.AlphaTest->enabled)
+	  brw->attribs.DepthStencil->alpha.enabled)
 	 wm.wm5.program_uses_killpixel = 1;
 
       wm.wm5.enable_8_pix = 1;

@@ -201,16 +201,16 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
       calculate_vertex_layout( softpipe );
 
    if (softpipe->dirty & (SP_NEW_SCISSOR |
-                          SP_NEW_DEPTH_STENCIL |
+                          SP_NEW_DEPTH_STENCIL_ALPHA |
                           SP_NEW_FRAMEBUFFER))
       compute_cliprect(softpipe);
 
    if (softpipe->dirty & (SP_NEW_BLEND |
-                          SP_NEW_DEPTH_STENCIL |
-                          SP_NEW_ALPHA_TEST |
+                          SP_NEW_DEPTH_STENCIL_ALPHA |
                           SP_NEW_FRAMEBUFFER |
                           SP_NEW_RASTERIZER |
-                          SP_NEW_FS))
+                          SP_NEW_FS | 
+			  SP_NEW_QUERY))
       sp_build_quad_pipeline(softpipe);
 
    softpipe->dirty = 0;

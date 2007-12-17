@@ -147,7 +147,7 @@ struct pipe_shader_state {
    ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 };
 
-struct pipe_depth_stencil_state
+struct pipe_depth_stencil_alpha_state
 {
    struct {
       unsigned enabled:1;   /**< depth test enabled? */
@@ -156,27 +156,23 @@ struct pipe_depth_stencil_state
       unsigned occlusion_count:1; /**< XXX move this elsewhere? */
    } depth;
    struct {
-      unsigned front_enabled:1;
-      unsigned front_func:3;     /**< PIPE_FUNC_x */
-      unsigned front_fail_op:3;  /**< PIPE_STENCIL_OP_x */
-      unsigned front_zpass_op:3; /**< PIPE_STENCIL_OP_x */
-      unsigned front_zfail_op:3; /**< PIPE_STENCIL_OP_x */
-      unsigned back_enabled:1;
-      unsigned back_func:3;      /**< PIPE_FUNC_x */
-      unsigned back_fail_op:3;   /**< PIPE_STENCIL_OP_x */
-      unsigned back_zpass_op:3;  /**< PIPE_STENCIL_OP_x */
-      unsigned back_zfail_op:3;  /**< PIPE_STENCIL_OP_x */
-      ubyte ref_value[2];    /**< [0] = front, [1] = back */
-      ubyte value_mask[2];
-      ubyte write_mask[2];
-   } stencil;
+      unsigned enabled:1;
+      unsigned func:3;     /**< PIPE_FUNC_x */
+      unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
+      unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */
+      unsigned zfail_op:3; /**< PIPE_STENCIL_OP_x */
+      ubyte ref_value;    
+      ubyte value_mask;
+      ubyte write_mask;
+   } stencil[2];		/**< [0] = front, [1] = back */
+
+   struct {
+      unsigned enabled:1;
+      unsigned func:3;    /**< PIPE_FUNC_x */
+      float ref;      /**< reference value */
+   } alpha;
 };
 
-struct pipe_alpha_test_state {
-   unsigned enabled:1;
-   unsigned func:3;    /**< PIPE_FUNC_x */
-   float ref;      /**< reference value */
-};
 
 struct pipe_blend_state {
    unsigned blend_enable:1;

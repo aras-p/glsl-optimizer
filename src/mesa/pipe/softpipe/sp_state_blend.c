@@ -73,40 +73,14 @@ void softpipe_set_blend_color( struct pipe_context *pipe,
  * into one file.
  */
 
-void *
-softpipe_create_alpha_test_state(struct pipe_context *pipe,
-                                 const struct pipe_alpha_test_state *alpha)
-{
-   struct pipe_alpha_test_state *state = MALLOC( sizeof(struct pipe_alpha_test_state) );
-   memcpy(state, alpha, sizeof(struct pipe_alpha_test_state));
-   return state;
-}
-
-void
-softpipe_bind_alpha_test_state(struct pipe_context *pipe,
-                               void *alpha)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->alpha_test = (const struct pipe_alpha_test_state *)alpha;
-
-   softpipe->dirty |= SP_NEW_ALPHA_TEST;
-}
-
-void
-softpipe_delete_alpha_test_state(struct pipe_context *pipe,
-                                 void *alpha)
-{
-   FREE( alpha );
-}
 
 void *
 softpipe_create_depth_stencil_state(struct pipe_context *pipe,
-                              const struct pipe_depth_stencil_state *depth_stencil)
+				    const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
-   struct pipe_depth_stencil_state *state =
-      MALLOC( sizeof(struct pipe_depth_stencil_state) );
-   memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_state));
+   struct pipe_depth_stencil_alpha_state *state =
+      MALLOC( sizeof(struct pipe_depth_stencil_alpha_state) );
+   memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_alpha_state));
    return state;
 }
 
@@ -116,9 +90,9 @@ softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->depth_stencil = (const struct pipe_depth_stencil_state *)depth_stencil;
+   softpipe->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
 
-   softpipe->dirty |= SP_NEW_DEPTH_STENCIL;
+   softpipe->dirty |= SP_NEW_DEPTH_STENCIL_ALPHA;
 }
 
 void

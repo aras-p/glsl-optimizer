@@ -116,9 +116,9 @@ static void brw_delete_sampler_state(struct pipe_context *pipe,
 
 static void *
 brw_create_depth_stencil_state(struct pipe_context *pipe,
-                           const struct pipe_depth_stencil_state *depth_stencil)
+                           const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
-   DUP( pipe_depth_stencil_state, depth_stencil );
+   DUP( pipe_depth_stencil_alpha_state, depth_stencil );
 }
 
 static void brw_bind_depth_stencil_state(struct pipe_context *pipe,
@@ -126,7 +126,7 @@ static void brw_bind_depth_stencil_state(struct pipe_context *pipe,
 {
    struct brw_context *brw = brw_context(pipe);
 
-   brw->attribs.DepthStencil = (const struct pipe_depth_stencil_state *)depth_stencil;
+   brw->attribs.DepthStencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
 
    brw->state.dirty.brw |= BRW_NEW_DEPTH_STENCIL;
 }
@@ -135,32 +135,6 @@ static void brw_delete_depth_stencil_state(struct pipe_context *pipe,
                                            void *depth_stencil)
 {
    free(depth_stencil);
-}
-
-/************************************************************************
- * Alpha test 
- */
-static void *
-brw_create_alpha_test_state(struct pipe_context *pipe,
-                             const struct pipe_alpha_test_state *alpha_test)
-{
-   DUP(pipe_alpha_test_state, alpha_test);
-}
-
-static void brw_bind_alpha_test_state(struct pipe_context *pipe,
-                                       void *alpha)
-{
-   struct brw_context *brw = brw_context(pipe);
-
-   brw->attribs.AlphaTest = (const struct pipe_alpha_test_state*)alpha;
-
-   brw->state.dirty.brw |= BRW_NEW_ALPHA_TEST;
-}
-
-static void brw_delete_alpha_test_state(struct pipe_context *pipe,
-                                         void *alpha)
-{
-   free(alpha);
 }
 
 /************************************************************************
@@ -415,10 +389,6 @@ static void brw_delete_rasterizer_state(struct pipe_context *pipe,
 void
 brw_init_state_functions( struct brw_context *brw )
 {
-   brw->pipe.create_alpha_test_state = brw_create_alpha_test_state;
-   brw->pipe.bind_alpha_test_state   = brw_bind_alpha_test_state;
-   brw->pipe.delete_alpha_test_state = brw_delete_alpha_test_state;
-
    brw->pipe.create_blend_state = brw_create_blend_state;
    brw->pipe.bind_blend_state = brw_bind_blend_state;
    brw->pipe.delete_blend_state = brw_delete_blend_state;
@@ -427,9 +397,9 @@ brw_init_state_functions( struct brw_context *brw )
    brw->pipe.bind_sampler_state = brw_bind_sampler_state;
    brw->pipe.delete_sampler_state = brw_delete_sampler_state;
 
-   brw->pipe.create_depth_stencil_state = brw_create_depth_stencil_state;
-   brw->pipe.bind_depth_stencil_state = brw_bind_depth_stencil_state;
-   brw->pipe.delete_depth_stencil_state = brw_delete_depth_stencil_state;
+   brw->pipe.create_depth_stencil_alpha_state = brw_create_depth_stencil_state;
+   brw->pipe.bind_depth_stencil_alpha_state = brw_bind_depth_stencil_state;
+   brw->pipe.delete_depth_stencil_alpha_state = brw_delete_depth_stencil_state;
 
    brw->pipe.create_rasterizer_state = brw_create_rasterizer_state;
    brw->pipe.bind_rasterizer_state = brw_bind_rasterizer_state;

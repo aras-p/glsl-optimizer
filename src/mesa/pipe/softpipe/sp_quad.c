@@ -43,8 +43,8 @@ static void
 sp_build_depth_stencil(
    struct softpipe_context *sp )
 {
-   if (sp->depth_stencil->stencil.front_enabled ||
-       sp->depth_stencil->stencil.back_enabled) {
+   if (sp->depth_stencil->stencil[0].enabled ||
+       sp->depth_stencil->stencil[1].enabled) {
       sp_push_quad_first( sp, sp->quad.stencil_test );
    }
    else if (sp->depth_stencil->depth.enabled &&
@@ -59,7 +59,7 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
    boolean  early_depth_test =
                sp->depth_stencil->depth.enabled &&
                sp->framebuffer.zbuf &&
-               !sp->alpha_test->enabled &&
+               !sp->depth_stencil->alpha.enabled &&
                sp->fs->shader.output_semantic_name[0] != TGSI_SEMANTIC_POSITION;
 
    /* build up the pipeline in reverse order... */
@@ -98,7 +98,7 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp_build_depth_stencil( sp );
    }
 
-   if (sp->alpha_test->enabled) {
+   if (sp->depth_stencil->alpha.enabled) {
       sp_push_quad_first( sp, sp->quad.alpha_test );
    }
 

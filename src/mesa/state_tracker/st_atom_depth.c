@@ -91,10 +91,10 @@ gl_stencil_op_to_pipe(GLenum func)
 }
 
 static void
-update_depth_stencil(struct st_context *st)
+update_depth_stencil_alpha(struct st_context *st)
 {
-   struct pipe_depth_stencil_state depth_stencil;
-   const struct cso_depth_stencil *cso;
+   struct pipe_depth_stencil_alpha_state depth_stencil;
+   const struct cso_depth_stencil_alpha *cso;
 
    memset(&depth_stencil, 0, sizeof(depth_stencil));
 
@@ -107,40 +107,47 @@ update_depth_stencil(struct st_context *st)
       depth_stencil.depth.occlusion_count = 1;
 
    if (st->ctx->Stencil.Enabled) {
-      depth_stencil.stencil.front_enabled = 1;
-      depth_stencil.stencil.front_func = st_compare_func_to_pipe(st->ctx->Stencil.Function[0]);
-      depth_stencil.stencil.front_fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[0]);
-      depth_stencil.stencil.front_zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[0]);
-      depth_stencil.stencil.front_zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[0]);
-      depth_stencil.stencil.ref_value[0] = st->ctx->Stencil.Ref[0] & 0xff;
-      depth_stencil.stencil.value_mask[0] = st->ctx->Stencil.ValueMask[0] & 0xff;
-      depth_stencil.stencil.write_mask[0] = st->ctx->Stencil.WriteMask[0] & 0xff;
+      depth_stencil.stencil[0].enabled = 1;
+      depth_stencil.stencil[0].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[0]);
+      depth_stencil.stencil[0].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[0]);
+      depth_stencil.stencil[0].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[0]);
+      depth_stencil.stencil[0].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[0]);
+      depth_stencil.stencil[0].ref_value = st->ctx->Stencil.Ref[0] & 0xff;
+      depth_stencil.stencil[0].value_mask = st->ctx->Stencil.ValueMask[0] & 0xff;
+      depth_stencil.stencil[0].write_mask = st->ctx->Stencil.WriteMask[0] & 0xff;
+
       if (st->ctx->Stencil.TestTwoSide) {
-         depth_stencil.stencil.back_enabled = 1;
-         depth_stencil.stencil.back_func = st_compare_func_to_pipe(st->ctx->Stencil.Function[1]);
-         depth_stencil.stencil.back_fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[1]);
-         depth_stencil.stencil.back_zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[1]);
-         depth_stencil.stencil.back_zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[1]);
-         depth_stencil.stencil.ref_value[1] = st->ctx->Stencil.Ref[1] & 0xff;
-         depth_stencil.stencil.value_mask[1] = st->ctx->Stencil.ValueMask[1] & 0xff;
-         depth_stencil.stencil.write_mask[1] = st->ctx->Stencil.WriteMask[1] & 0xff;
+         depth_stencil.stencil[1].enabled = 1;
+         depth_stencil.stencil[1].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[1]);
+         depth_stencil.stencil[1].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[1]);
+         depth_stencil.stencil[1].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[1]);
+         depth_stencil.stencil[1].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[1]);
+         depth_stencil.stencil[1].ref_value = st->ctx->Stencil.Ref[1] & 0xff;
+         depth_stencil.stencil[1].value_mask = st->ctx->Stencil.ValueMask[1] & 0xff;
+         depth_stencil.stencil[1].write_mask = st->ctx->Stencil.WriteMask[1] & 0xff;
       }
    }
 
-   cso = st_cached_depth_stencil_state(st, &depth_stencil);
+   if (st->ctx->Color.AlphaEnabled) {
+      depth_stencil.alpha.enabled = 1;
+      depth_stencil.alpha.func = st_compare_func_to_pipe(st->ctx->Color.AlphaFunc);
+      depth_stencil.alpha.ref = st->ctx->Color.AlphaRef;
+   }
+
+   cso = st_cached_depth_stencil_alpha_state(st, &depth_stencil);
    if (st->state.depth_stencil != cso) {
       /* state has changed */
       st->state.depth_stencil = cso;
-      st->pipe->bind_depth_stencil_state(st->pipe, cso->data); /* bind new state */
+      st->pipe->bind_depth_stencil_alpha_state(st->pipe, cso->data); /* bind new state */
    }
 }
 
 
-const struct st_tracked_state st_update_depth_stencil = {
+const struct st_tracked_state st_update_depth_stencil_alpha = {
    .name = "st_update_depth_stencil",
    .dirty = {
-      .mesa = (_NEW_DEPTH|_NEW_STENCIL),
+      .mesa = (_NEW_DEPTH|_NEW_STENCIL|_NEW_COLOR),
       .st  = 0,
    },
-   .update = update_depth_stencil
+   .update = update_depth_stencil_alpha
 };

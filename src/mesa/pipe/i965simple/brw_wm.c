@@ -93,15 +93,14 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
    /* Build the index for table lookup
     */
-   /* _NEW_COLOR */
+   /* BRW_NEW_DEPTH_STENCIL */
    if (fp->UsesKill ||
-       brw->attribs.AlphaTest->enabled)
+       brw->attribs.DepthStencil->alpha.enabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
    if (fp->ComputesDepth)
       lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
-   /* _NEW_DEPTH */
    if (brw->attribs.DepthStencil->depth.enabled)
       lookup |= IZ_DEPTH_TEST_ENABLE_BIT;
 
@@ -109,13 +108,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
        brw->attribs.DepthStencil->depth.writemask) /* ?? */
       lookup |= IZ_DEPTH_WRITE_ENABLE_BIT;
 
-   /* _NEW_STENCIL */
-   if (brw->attribs.DepthStencil->stencil.front_enabled) {
+   if (brw->attribs.DepthStencil->stencil[0].enabled) {
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
-      if (brw->attribs.DepthStencil->stencil.write_mask[0] ||
-	  (brw->attribs.DepthStencil->stencil.back_enabled &&
-           brw->attribs.DepthStencil->stencil.write_mask[1]))
+      if (brw->attribs.DepthStencil->stencil[0].write_mask ||
+	  brw->attribs.DepthStencil->stencil[1].write_mask)
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 

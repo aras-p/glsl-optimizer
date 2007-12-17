@@ -284,13 +284,13 @@ static void i915_delete_sampler_state(struct pipe_context *pipe,
 
 static void *
 i915_create_depth_stencil_state(struct pipe_context *pipe,
-                           const struct pipe_depth_stencil_state *depth_stencil)
+				const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
    struct i915_depth_stencil_state *cso = CALLOC_STRUCT( i915_depth_stencil_state );
 
    {
-      int testmask = depth_stencil->stencil.value_mask[0] & 0xff;
-      int writemask = depth_stencil->stencil.write_mask[0] & 0xff;
+      int testmask = depth_stencil->stencil[0].value_mask & 0xff;
+      int writemask = depth_stencil->stencil[0].write_mask & 0xff;
 
       cso->stencil_modes4 |= (_3DSTATE_MODES_4_CMD |
                               ENABLE_STENCIL_TEST_MASK |
@@ -299,12 +299,12 @@ i915_create_depth_stencil_state(struct pipe_context *pipe,
                               STENCIL_WRITE_MASK(writemask));
    }
 
-   if (depth_stencil->stencil.front_enabled) {
-      int test = i915_translate_compare_func(depth_stencil->stencil.front_func);
-      int fop  = i915_translate_stencil_op(depth_stencil->stencil.front_fail_op);
-      int dfop = i915_translate_stencil_op(depth_stencil->stencil.front_zfail_op);
-      int dpop = i915_translate_stencil_op(depth_stencil->stencil.front_zpass_op);
-      int ref  = depth_stencil->stencil.ref_value[0] & 0xff;
+   if (depth_stencil->stencil[0].enabled) {
+      int test = i915_translate_compare_func(depth_stencil->stencil[0].func);
+      int fop  = i915_translate_stencil_op(depth_stencil->stencil[0].fail_op);
+      int dfop = i915_translate_stencil_op(depth_stencil->stencil[0].zfail_op);
+      int dpop = i915_translate_stencil_op(depth_stencil->stencil[0].zpass_op);
+      int ref  = depth_stencil->stencil[0].ref_value & 0xff;
 
       cso->stencil_LIS5 |= (S5_STENCIL_TEST_ENABLE |
                             S5_STENCIL_WRITE_ENABLE |
@@ -315,14 +315,14 @@ i915_create_depth_stencil_state(struct pipe_context *pipe,
                             (dpop << S5_STENCIL_PASS_Z_PASS_SHIFT));
    }
 
-   if (depth_stencil->stencil.back_enabled) {
-      int test  = i915_translate_compare_func(depth_stencil->stencil.back_func);
-      int fop   = i915_translate_stencil_op(depth_stencil->stencil.back_fail_op);
-      int dfop  = i915_translate_stencil_op(depth_stencil->stencil.back_zfail_op);
-      int dpop  = i915_translate_stencil_op(depth_stencil->stencil.back_zpass_op);
-      int ref   = depth_stencil->stencil.ref_value[1] & 0xff;
-      int tmask = depth_stencil->stencil.value_mask[1] & 0xff;
-      int wmask = depth_stencil->stencil.write_mask[1] & 0xff;
+   if (depth_stencil->stencil[1].enabled) {
+      int test  = i915_translate_compare_func(depth_stencil->stencil[1].func);
+      int fop   = i915_translate_stencil_op(depth_stencil->stencil[1].fail_op);
+      int dfop  = i915_translate_stencil_op(depth_stencil->stencil[1].zfail_op);
+      int dpop  = i915_translate_stencil_op(depth_stencil->stencil[1].zpass_op);
+      int ref   = depth_stencil->stencil[1].ref_value & 0xff;
+      int tmask = depth_stencil->stencil[1].value_mask & 0xff;
+      int wmask = depth_stencil->stencil[1].write_mask & 0xff;
 
       cso->bfo[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
                      BFO_ENABLE_STENCIL_FUNCS |
@@ -363,6 +363,15 @@ i915_create_depth_stencil_state(struct pipe_context *pipe,
 	 cso->depth_LIS6 |= S6_DEPTH_WRITE_ENABLE;
    }
 
+   if (depth_stencil->alpha.enabled) {
+      int test = i915_translate_compare_func(depth_stencil->alpha.func);
+      ubyte refByte = float_to_ubyte(depth_stencil->alpha.ref);
+
+      cso->depth_LIS6 |= (S6_ALPHA_TEST_ENABLE |
+			  (test << S6_ALPHA_TEST_FUNC_SHIFT) |
+			  (((unsigned) refByte) << S6_ALPHA_REF_SHIFT));
+   }
+
    return cso;
 }
 
@@ -382,39 +391,6 @@ static void i915_delete_depth_stencil_state(struct pipe_context *pipe,
    FREE(depth_stencil);
 }
 
-
-static void *
-i915_create_alpha_test_state(struct pipe_context *pipe,
-                             const struct pipe_alpha_test_state *alpha_test)
-{
-   struct i915_alpha_test_state *cso = CALLOC_STRUCT( i915_alpha_test_state );
-
-   if (alpha_test->enabled) {
-      int test = i915_translate_compare_func(alpha_test->func);
-      ubyte refByte = float_to_ubyte(alpha_test->ref);
-
-      cso->LIS6 |= (S6_ALPHA_TEST_ENABLE |
-                    (test << S6_ALPHA_TEST_FUNC_SHIFT) |
-                    (((unsigned) refByte) << S6_ALPHA_REF_SHIFT));
-   }
-   return cso;
-}
-
-static void i915_bind_alpha_test_state(struct pipe_context *pipe,
-                                       void *alpha)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   i915->alpha_test = (const struct i915_alpha_test_state*)alpha;
-
-   i915->dirty |= I915_NEW_ALPHA_TEST;
-}
-
-static void i915_delete_alpha_test_state(struct pipe_context *pipe,
-                                         void *alpha)
-{
-   FREE(alpha);
-}
 
 static void i915_set_scissor_state( struct pipe_context *pipe,
                                  const struct pipe_scissor_state *scissor )
@@ -674,10 +650,6 @@ static void i915_set_vertex_element( struct pipe_context *pipe,
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
-   i915->pipe.create_alpha_test_state = i915_create_alpha_test_state;
-   i915->pipe.bind_alpha_test_state   = i915_bind_alpha_test_state;
-   i915->pipe.delete_alpha_test_state = i915_delete_alpha_test_state;
-
    i915->pipe.create_blend_state = i915_create_blend_state;
    i915->pipe.bind_blend_state = i915_bind_blend_state;
    i915->pipe.delete_blend_state = i915_delete_blend_state;
@@ -686,9 +658,9 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.bind_sampler_state = i915_bind_sampler_state;
    i915->pipe.delete_sampler_state = i915_delete_sampler_state;
 
-   i915->pipe.create_depth_stencil_state = i915_create_depth_stencil_state;
-   i915->pipe.bind_depth_stencil_state = i915_bind_depth_stencil_state;
-   i915->pipe.delete_depth_stencil_state = i915_delete_depth_stencil_state;
+   i915->pipe.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
+   i915->pipe.bind_depth_stencil_alpha_state = i915_bind_depth_stencil_state;
+   i915->pipe.delete_depth_stencil_alpha_state = i915_delete_depth_stencil_state;
 
    i915->pipe.create_rasterizer_state = i915_create_rasterizer_state;
    i915->pipe.bind_rasterizer_state = i915_bind_rasterizer_state;

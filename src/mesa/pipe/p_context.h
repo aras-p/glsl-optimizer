@@ -102,11 +102,6 @@ struct pipe_context {
    /*
     * State functions
     */
-   void * (*create_alpha_test_state)(struct pipe_context *,
-                                     const struct pipe_alpha_test_state *);
-   void   (*bind_alpha_test_state)(struct pipe_context *, void *);
-   void   (*delete_alpha_test_state)(struct pipe_context *, void *);
-
    void * (*create_blend_state)(struct pipe_context *,
                                 const struct pipe_blend_state *);
    void   (*bind_blend_state)(struct pipe_context *, void *);
@@ -122,10 +117,10 @@ struct pipe_context {
    void   (*bind_rasterizer_state)(struct pipe_context *, void *);
    void   (*delete_rasterizer_state)(struct pipe_context *, void *);
 
-   void * (*create_depth_stencil_state)(struct pipe_context *,
-                                        const struct pipe_depth_stencil_state *);
-   void   (*bind_depth_stencil_state)(struct pipe_context *, void *);
-   void   (*delete_depth_stencil_state)(struct pipe_context *, void *);
+   void * (*create_depth_stencil_alpha_state)(struct pipe_context *,
+                                        const struct pipe_depth_stencil_alpha_state *);
+   void   (*bind_depth_stencil_alpha_state)(struct pipe_context *, void *);
+   void   (*delete_depth_stencil_alpha_state)(struct pipe_context *, void *);
 
    void * (*create_fs_state)(struct pipe_context *,
                              const struct pipe_shader_state *);

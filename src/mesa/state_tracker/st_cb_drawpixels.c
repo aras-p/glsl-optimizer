@@ -789,7 +789,7 @@ compatible_formats(GLenum format, GLenum type, enum pipe_format pipeFormat)
 static GLboolean
 any_fragment_ops(const struct st_context *st)
 {
-   if (st->state.alpha_test->state.enabled ||
+   if (st->state.depth_stencil->state.alpha.enabled ||
        st->state.blend->state.blend_enable ||
        st->state.blend->state.logicop_enable ||
        st->state.depth_stencil->state.depth.enabled)

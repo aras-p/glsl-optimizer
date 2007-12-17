@@ -27,13 +27,6 @@ cell_set_framebuffer_state( struct pipe_context *,
                             const struct pipe_framebuffer_state * );
 
 
-extern void *
-cell_create_alpha_test_state(struct pipe_context *,
-                             const struct pipe_alpha_test_state *);
-extern void
-cell_bind_alpha_test_state(struct pipe_context *, void *);
-extern void
-cell_delete_alpha_test_state(struct pipe_context *, void *);
 
 extern void *
 cell_create_blend_state(struct pipe_context *, const struct pipe_blend_state *);
@@ -57,7 +50,7 @@ cell_delete_sampler_state(struct pipe_context *, void *);
 
 extern void *
 cell_create_depth_stencil_state(struct pipe_context *,
-                                const struct pipe_depth_stencil_state *);
+                                const struct pipe_depth_stencil_alpha_state *);
 
 extern void
 cell_bind_depth_stencil_state(struct pipe_context *, void *);
