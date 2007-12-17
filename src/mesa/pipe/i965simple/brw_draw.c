@@ -170,9 +170,8 @@ static boolean brw_try_draw_elements( struct pipe_context *pipe,
    if (brw->state.dirty.brw)
       brw_validate_state( brw );
 
-   if (brw_emit_prim(brw, 
-		     index_buffer != NULL, 
-		     start, count))
+   if (!brw_emit_prim(brw, index_buffer != NULL,
+                      start, count))
       return FALSE;
 
    return TRUE;
