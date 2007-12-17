@@ -53,6 +53,17 @@
       _mesa_printf(__VA_ARGS__);			\
 } while (0)
 
+/*
+ * These bits are always specified in each validation
+ * request. Other bits are not supported at this point
+ * as it would require a bit of investigation to figure
+ * out what mask value should be used.
+ */
+#define INTEL_BO_MASK  (DRM_BO_MASK_MEM | \
+			DRM_BO_FLAG_READ | \
+			DRM_BO_FLAG_WRITE | \
+			DRM_BO_FLAG_EXE)
+
 /* Buffer validation list */
 struct intel_bo_list {
     unsigned numCurrent;
@@ -98,7 +109,6 @@ struct intel_bo_node
     dri_bo *bo;
     struct drm_i915_op_arg bo_arg;
     uint64_t flags;
-    uint64_t mask;
 };
 
 static void
@@ -197,7 +207,7 @@ intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
 	req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
 	req->bo_req.presumed_offset = node->bo->offset;
 #endif
-	req->bo_req.mask = node->mask;
+	req->bo_req.mask = INTEL_BO_MASK;
 	req->bo_req.fence_class = 0; /* Backwards compat. */
 
 	if (ttm_buf->reloc_buf != NULL)
@@ -221,12 +231,12 @@ intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
  *
  * If a buffer is validated multiple times in a batch submission, it ends up
  * with the intersection of the memory type flags and the union of the
- * remaining flags.
+ * access flags.
  */
 static struct intel_bo_node *
 intel_add_validate_buffer(dri_bufmgr_ttm *bufmgr_ttm,
 			  dri_bo *buf,
-			  uint64_t flags, uint64_t mask,
+			  uint64_t flags,
 			  int *itemLoc)
 {
     struct intel_bo_list *list = &bufmgr_ttm->list;
@@ -257,31 +267,27 @@ intel_add_validate_buffer(dri_bufmgr_ttm *bufmgr_ttm,
 	cur->bo = buf;
 	dri_bo_reference(buf);
 	cur->flags = flags;
-	cur->mask = mask;
 	ret = 1;
 
 	DRMLISTADDTAIL(&cur->head, &list->list);
     } else {
-	uint64_t memMask = (cur->mask | mask) & DRM_BO_MASK_MEM;
-	uint64_t memFlags = cur->flags & flags & memMask;
+	uint64_t memFlags = cur->flags & flags & DRM_BO_MASK_MEM;
+	uint64_t modeFlags = (cur->flags | flags) & ~DRM_BO_MASK_MEM;
 
-	if (!memFlags) {
+	if (memFlags == 0) {
 	    fprintf(stderr,
 		    "%s: No shared memory types between "
 		    "0x%16llx and 0x%16llx\n",
 		    __FUNCTION__, cur->flags, flags);
 	    return NULL;
 	}
-	if (mask & cur->mask & ~DRM_BO_MASK_MEM  & (cur->flags ^ flags)) {
+	if (flags & ~INTEL_BO_MASK) {
 	    fprintf(stderr,
-		    "%s: Incompatible flags between 0x%16llx and 0x%16llx "
-		    "(0x%16llx, 0x%16llx masks)\n",
-		    __FUNCTION__, cur->flags, flags, cur->mask, mask);
+		    "%s: Flags bits 0x%16llx are not supposed to be used in a relocation\n",
+		    __FUNCTION__, flags & ~INTEL_BO_MASK);
 	    return NULL;
 	}
-	cur->mask |= mask;
-	cur->flags = memFlags | ((cur->flags | flags) &
-				cur->mask & ~DRM_BO_MASK_MEM);
+	cur->flags = memFlags | modeFlags;
     }
     *itemLoc = count;
 
@@ -649,15 +655,10 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
     dri_bo_ttm *reloc_buf_ttm = (dri_bo_ttm *)reloc_buf;
     struct intel_bo_node *node;
     int index;
-    int mask;
     int num_relocs;
     uint32_t *this_reloc;
 
-    mask = DRM_BO_MASK_MEM;
-    mask |= flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE);
-
-    node = intel_add_validate_buffer(bufmgr_ttm, target_buf, flags, mask,
-				     &index);
+    node = intel_add_validate_buffer(bufmgr_ttm, target_buf, flags, &index);
 
     intel_setup_reloc_list(reloc_buf);
 
@@ -692,7 +693,6 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
      */
     intel_add_validate_buffer(bufmgr_ttm, batch_buf,
 			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
-			      DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE,
 			      &index);
 
     ptr = intel_setup_validate_list(bufmgr_ttm, count);
