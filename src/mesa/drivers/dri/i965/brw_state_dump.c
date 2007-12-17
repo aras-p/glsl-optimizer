@@ -70,6 +70,20 @@ state_struct_out(const char *name, dri_bo *buffer, unsigned int state_size)
    dri_bo_unmap(buffer);
 }
 
+static const char *
+get_965_surfacetype(unsigned int surfacetype)
+{
+    switch (surfacetype) {
+    case 0: return "1D";
+    case 1: return "2D";
+    case 2: return "3D";
+    case 3: return "CUBE";
+    case 4: return "BUFFER";
+    case 7: return "NULL";
+    default: return "unknown";
+    }
+}
+
 static void dump_wm_surface_state(struct brw_context *brw)
 {
    int i;
@@ -85,7 +99,8 @@ static void dump_wm_surface_state(struct brw_context *brw)
       surf = (struct brw_surface_state *)(surf_bo->virtual);
 
       sprintf(name, "WM SS%d", i);
-      state_out(name, surf, surfoff, 0, "\n");
+      state_out(name, surf, surfoff, 0, "\n",
+		get_965_surfacetype(surf->ss0.surface_type));
       state_out(name, surf, surfoff, 1, "offset\n");
       state_out(name, surf, surfoff, 2, "%dx%d size, %d mips\n",
 		surf->ss2.width + 1, surf->ss2.height + 1, surf->ss2.mip_count);
