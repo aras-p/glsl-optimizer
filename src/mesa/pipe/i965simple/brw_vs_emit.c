@@ -995,7 +995,7 @@ static void process_declaration(const struct tgsi_full_declaration *decl,
             printf("DECLARATION MASK = %d\n",
                    decl->u.DeclarationMask.Mask);
             assert(0);
-         } else { //range
+         } else { /*range*/
             idx = decl->u.DeclarationRange.First;
          }
          switch (decl->Semantic.SemanticName) {
@@ -1057,17 +1057,15 @@ static void process_instruction(struct brw_vs_compile *c,
    unsigned insn, if_insn = 0;
    */
 
-   /* Get argument regs.  SWZ is special and does this itself. */
-   if (inst->Instruction.Opcode != TGSI_OPCODE_SWZ)
-      for (i = 0; i < 3; i++) {
-         struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
-         index = src->SrcRegister.Index;
-         file = src->SrcRegister.File;
-         if (file == TGSI_FILE_OUTPUT&&c->output_regs[index].used_in_src)
-            args[i] = c->output_regs[index].reg;
-         else
-            args[i] = get_arg(c, &src->SrcRegister);
-      }
+   for (i = 0; i < 3; i++) {
+      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      index = src->SrcRegister.Index;
+      file = src->SrcRegister.File;
+      if (file == TGSI_FILE_OUTPUT&&c->output_regs[index].used_in_src)
+         args[i] = c->output_regs[index].reg;
+      else
+         args[i] = get_arg(c, &src->SrcRegister);
+   }
 
    /* Get dest regs.  Note that it is possible for a reg to be both
     * dst and arg, given the static allocation of registers.  So
@@ -1208,11 +1206,16 @@ static void process_instruction(struct brw_vs_compile *c,
       break;
 #endif
    case TGSI_OPCODE_RET:
+#if 0
       brw_ADD(p, get_addr_reg(stack_index),
               get_addr_reg(stack_index), brw_imm_d(-4));
       brw_set_access_mode(p, BRW_ALIGN_1);
       brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
       brw_set_access_mode(p, BRW_ALIGN_16);
+#else
+      /*brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));*/
+#endif
+      break;
    case TGSI_OPCODE_END:
       brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
       break;
@@ -1295,7 +1298,11 @@ void brw_vs_emit(struct brw_vs_compile *c)
              * now that we know what vars are being used allocate
              * registers for them.*/
             brw_vs_alloc_regs(c, &prog_info);
+
+	    brw_set_access_mode(p, BRW_ALIGN_1);
             brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
+	    brw_set_access_mode(p, BRW_ALIGN_16);
+
             allocated_registers = 1;
          }
          process_instruction(c, inst, &prog_info);

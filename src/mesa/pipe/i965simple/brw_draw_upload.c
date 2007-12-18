@@ -217,7 +217,7 @@ boolean brw_upload_vertex_buffers( struct brw_context *brw )
 
    for (i = 0; i < BRW_VEP_MAX; i++)
    {
-      if (brw->vb.vbo_array[i]->buffer == NULL) {
+      if (brw->vb.vbo_array[i] == NULL) {
 	 nr_enabled = i;
 	 break;
       }
