@@ -233,37 +233,48 @@ static void upload_depthbuffer(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
 
-   unsigned int format;
+   if (region == NULL) {
+      BEGIN_BATCH(5, INTEL_BATCH_NO_CLIPRECTS);
+      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
+      OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
+		(BRW_SURFACE_NULL << 29));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
+   } else {
+      unsigned int format;
 
-   switch (region->cpp) {
-   case 2:
-      format = BRW_DEPTHFORMAT_D16_UNORM;
-      break;
-   case 4:
-      if (intel->depth_buffer_is_float)
-	 format = BRW_DEPTHFORMAT_D32_FLOAT;
-      else
-	 format = BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
-      break;
-   default:
-      assert(0);
-      return;
+      switch (region->cpp) {
+      case 2:
+	 format = BRW_DEPTHFORMAT_D16_UNORM;
+	 break;
+      case 4:
+	 if (intel->depth_buffer_is_float)
+	    format = BRW_DEPTHFORMAT_D32_FLOAT;
+	 else
+	    format = BRW_DEPTHFORMAT_D24_UNORM_S8_UINT;
+	 break;
+      default:
+	 assert(0);
+	 return;
+      }
+
+      BEGIN_BATCH(5, INTEL_BATCH_NO_CLIPRECTS);
+      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
+      OUT_BATCH(((region->pitch * region->cpp) - 1) |
+		(format << 18) |
+		(BRW_TILEWALK_YMAJOR << 26) |
+		(region->tiled << 27) |
+		(BRW_SURFACE_2D << 29));
+      OUT_RELOC(region->buffer,
+		DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
+      OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
+		((region->pitch - 1) << 6) |
+		((region->height - 1) << 19));
+      OUT_BATCH(0);
+      ADVANCE_BATCH();
    }
-
-   BEGIN_BATCH(5, INTEL_BATCH_NO_CLIPRECTS);
-   OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
-   OUT_BATCH(((region->pitch * region->cpp) - 1) |
-	     (format << 18) |
-	     (BRW_TILEWALK_YMAJOR << 26) |
-	     (region->tiled << 27) |
-	     (BRW_SURFACE_2D << 29));
-   OUT_RELOC(region->buffer,
-	     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
-   OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
-	     ((region->pitch - 1) << 6) |
-	     ((region->height - 1) << 19));
-   OUT_BATCH(0);
-   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_depthbuffer = {
