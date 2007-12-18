@@ -218,11 +218,14 @@ mm_bufmgr_destroy(struct buffer_manager *mgr)
 
 
 struct buffer_manager *
-mm_bufmgr_create(struct buffer_manager *provider, 
-                 size_t size, size_t align2) 
+mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer, 
+                             size_t size, size_t align2) 
 {
    struct mm_buffer_manager *mm;
 
+   if(!buffer)
+      return NULL;
+   
    mm = (struct mm_buffer_manager *)calloc(1, sizeof(*mm));
    if (!mm)
       return NULL;
@@ -237,9 +240,7 @@ mm_bufmgr_create(struct buffer_manager *provider,
 
    _glthread_INIT_MUTEX(mm->mutex);
 
-   mm->buffer = provider->create_buffer(provider, size); 
-   if (!mm->buffer)
-      goto failure;
+   mm->buffer = buffer; 
 
    mm->map = buffer_map(mm->buffer, 
                         PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE );
@@ -257,9 +258,28 @@ if(mm->heap)
    mmDestroy(mm->heap);
    if(mm->map)
       buffer_unmap(mm->buffer);
-   if(mm->buffer)
-      buffer_release(mm->buffer);
    if(mm)
       free(mm);
    return NULL;
+}
+
+
+struct buffer_manager *
+mm_bufmgr_create(struct buffer_manager *provider, 
+                 size_t size, size_t align2) 
+{
+   struct pipe_buffer *buffer;
+   struct buffer_manager *mgr;
+
+   buffer = provider->create_buffer(provider, size); 
+   if (!buffer)
+      return NULL;
+   
+   mgr = mm_bufmgr_create_from_buffer(buffer, size, align2);
+   if (!mgr) {
+      buffer_release(buffer);
+      return NULL;
+   }
+
+  return mgr;
 }

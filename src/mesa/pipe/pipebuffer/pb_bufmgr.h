@@ -65,7 +65,7 @@ struct buffer_manager
    /* XXX: we will likely need more allocation flags */
    struct pipe_buffer *
    (*create_buffer)( struct buffer_manager *mgr, 
-	             size_t size);
+	             size_t size );
 
    void
    (*destroy)( struct buffer_manager *mgr );
@@ -95,6 +95,15 @@ pool_bufmgr_create(struct buffer_manager *provider,
 struct buffer_manager *
 mm_bufmgr_create(struct buffer_manager *provider, 
                  size_t size, size_t align2);
+
+/**
+ * Same as mm_bufmgr_create.
+ * 
+ * Buffer will be release when the manager is destroyed.
+ */
+struct buffer_manager *
+mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer, 
+                             size_t size, size_t align2);
 
 
 /** 
