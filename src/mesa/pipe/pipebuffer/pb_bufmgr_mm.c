@@ -230,8 +230,6 @@ mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer,
    if (!mm)
       return NULL;
 
-   assert(provider);
-   assert(provider->create_buffer);
    mm->base.create_buffer = mm_bufmgr_create_buffer;
    mm->base.destroy = mm_bufmgr_destroy;
 
@@ -271,6 +269,8 @@ mm_bufmgr_create(struct buffer_manager *provider,
    struct pipe_buffer *buffer;
    struct buffer_manager *mgr;
 
+   assert(provider);
+   assert(provider->create_buffer);
    buffer = provider->create_buffer(provider, size); 
    if (!buffer)
       return NULL;
