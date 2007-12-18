@@ -47,7 +47,7 @@
 #include "st_mesa_to_tgsi.h"
 
 
-#define TGSI_DEBUG 01
+#define TGSI_DEBUG 0
 
 
 /**
