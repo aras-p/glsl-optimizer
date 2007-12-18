@@ -33,89 +33,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-
-#include "pipe/softpipe/sp_rgba_tile.h" /* XXX TEMPORARY */
-
-
-#define CLIP_TILE \
-   do { \
-      if (x >= ps->width) \
-         return; \
-      if (y >= ps->height) \
-         return; \
-      if (x + w > ps->width) \
-         w = ps->width - x; \
-      if (y + h > ps->height) \
-         h = ps->height -y; \
-   } while(0)
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static void
-i915_get_tile(struct pipe_context *pipe,
-              struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h,
-              void *p, int dst_stride)
-{
-   const uint cpp = ps->cpp;
-   const uint w0 = w;
-   const ubyte *pSrc;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   CLIP_TILE;
-
-   if (dst_stride == 0) {
-      dst_stride = w0 * cpp;
-   }
-
-   pSrc = ps->map + (y * ps->pitch + x) * cpp;
-   pDest = (ubyte *) p;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
-      pDest += dst_stride;
-      pSrc += ps->pitch * cpp;
-   }
-}
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static void
-i915_put_tile(struct pipe_context *pipe,
-              struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h,
-              const void *p, int src_stride)
-{
-   const uint cpp = ps->cpp;
-   const uint w0 = w;
-   const ubyte *pSrc;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   CLIP_TILE;
-
-   if (src_stride == 0) {
-      src_stride = w0 * cpp;
-   }
-
-   pSrc = (const ubyte *) p;
-   pDest = ps->map + (y * ps->pitch + x) * cpp;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
-      pDest += ps->pitch * cpp;
-      pSrc += src_stride;
-   }
-}
+#include "pipe/util/p_tile.h"
 
 
 /*
@@ -158,21 +76,18 @@ i915_get_tex_surface(struct pipe_context *pipe,
 }
 
 
-/*
- * XXX Move this into core Mesa?
- */
 static void
-_mesa_copy_rect(ubyte * dst,
-                unsigned cpp,
-                unsigned dst_pitch,
-                unsigned dst_x,
-                unsigned dst_y,
-                unsigned width,
-                unsigned height,
-                const ubyte * src,
-                unsigned src_pitch,
-		unsigned src_x, 
-		unsigned src_y)
+copy_rect(ubyte * dst,
+          unsigned cpp,
+          unsigned dst_pitch,
+          unsigned dst_x,
+          unsigned dst_y,
+          unsigned width,
+          unsigned height,
+          const ubyte *src,
+          unsigned src_pitch,
+          unsigned src_x, 
+          unsigned src_y)
 {
    unsigned i;
 
@@ -210,10 +125,9 @@ i915_surface_data(struct pipe_context *pipe,
 		  const void *src, unsigned src_pitch,
 		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   _mesa_copy_rect(pipe_surface_map(dst),
-                   dst->cpp,
-                   dst->pitch,
-                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+   copy_rect(pipe_surface_map(dst),
+             dst->cpp, dst->pitch,
+             dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    pipe_surface_unmap(dst);
 }
@@ -233,7 +147,7 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( dst->cpp == src->cpp );
 
    if (0) {
-      _mesa_copy_rect(pipe_surface_map(dst),
+      copy_rect(pipe_surface_map(dst),
 		      dst->cpp,
 		      dst->pitch,
 		      dstx, dsty, 
@@ -323,10 +237,10 @@ void
 i915_init_surface_functions(struct i915_context *i915)
 {
    i915->pipe.get_tex_surface = i915_get_tex_surface;
-   i915->pipe.get_tile = i915_get_tile;
-   i915->pipe.put_tile = i915_put_tile;
-   i915->pipe.get_tile_rgba = softpipe_get_tile_rgba;
-   i915->pipe.put_tile_rgba = softpipe_put_tile_rgba;
+   i915->pipe.get_tile = pipe_get_tile_raw;
+   i915->pipe.put_tile = pipe_put_tile_raw;
+   i915->pipe.get_tile_rgba = pipe_get_tile_rgba;
+   i915->pipe.put_tile_rgba = pipe_put_tile_rgba;
 
    i915->pipe.surface_data = i915_surface_data;
    i915->pipe.surface_copy = i915_surface_copy;

@@ -211,24 +211,13 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* choose front or back face function, operator, etc */
    /* XXX we could do these initializations once per primitive */
-   if (softpipe->depth_stencil->stencil.back_enabled && quad->facing) {
-      func = softpipe->depth_stencil->stencil.back_func;
-      failOp = softpipe->depth_stencil->stencil.back_fail_op;
-      zFailOp = softpipe->depth_stencil->stencil.back_zfail_op;
-      zPassOp = softpipe->depth_stencil->stencil.back_zpass_op;
-      ref = softpipe->depth_stencil->stencil.ref_value[1];
-      wrtMask = softpipe->depth_stencil->stencil.write_mask[1];
-      valMask = softpipe->depth_stencil->stencil.value_mask[1];
-   }
-   else {
-      func = softpipe->depth_stencil->stencil.front_func;
-      failOp = softpipe->depth_stencil->stencil.front_fail_op;
-      zFailOp = softpipe->depth_stencil->stencil.front_zfail_op;
-      zPassOp = softpipe->depth_stencil->stencil.front_zpass_op;
-      ref = softpipe->depth_stencil->stencil.ref_value[0];
-      wrtMask = softpipe->depth_stencil->stencil.write_mask[0];
-      valMask = softpipe->depth_stencil->stencil.value_mask[0];
-   }
+   func    = softpipe->depth_stencil->stencil[quad->facing].func;
+   failOp  = softpipe->depth_stencil->stencil[quad->facing].fail_op;
+   zFailOp = softpipe->depth_stencil->stencil[quad->facing].zfail_op;
+   zPassOp = softpipe->depth_stencil->stencil[quad->facing].zpass_op;
+   ref     = softpipe->depth_stencil->stencil[quad->facing].ref_value;
+   wrtMask = softpipe->depth_stencil->stencil[quad->facing].write_mask;
+   valMask = softpipe->depth_stencil->stencil[quad->facing].value_mask;
 
    assert(ps); /* shouldn't get here if there's no stencil buffer */
 

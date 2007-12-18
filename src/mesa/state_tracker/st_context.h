@@ -97,7 +97,7 @@ struct st_context
       const struct cso_alpha_test      *alpha_test;
       const struct cso_blend           *blend;
       const struct cso_sampler         *sampler[PIPE_MAX_SAMPLERS];
-      const struct cso_depth_stencil   *depth_stencil;
+      const struct cso_depth_stencil_alpha   *depth_stencil;
       const struct cso_rasterizer      *rasterizer;
       const struct cso_fragment_shader *fs;
       const struct cso_vertex_shader   *vs;

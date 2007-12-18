@@ -156,38 +156,37 @@ static void upload_cc_unit( struct brw_context *brw )
    memset(&cc, 0, sizeof(cc));
 
    /* BRW_NEW_DEPTH_STENCIL */
-   if (brw->attribs.DepthStencil->stencil.front_enabled) {
-      cc.cc0.stencil_enable = brw->attribs.DepthStencil->stencil.front_enabled;
-      cc.cc0.stencil_func = brw_translate_compare_func(brw->attribs.DepthStencil->stencil.front_func);
-      cc.cc0.stencil_fail_op = brw_translate_stencil_op(brw->attribs.DepthStencil->stencil.front_fail_op);
+   if (brw->attribs.DepthStencil->stencil[0].enabled) {
+      cc.cc0.stencil_enable = brw->attribs.DepthStencil->stencil[0].enabled;
+      cc.cc0.stencil_func = brw_translate_compare_func(brw->attribs.DepthStencil->stencil[0].func);
+      cc.cc0.stencil_fail_op = brw_translate_stencil_op(brw->attribs.DepthStencil->stencil[0].fail_op);
       cc.cc0.stencil_pass_depth_fail_op = brw_translate_stencil_op(
-         brw->attribs.DepthStencil->stencil.front_zfail_op);
+         brw->attribs.DepthStencil->stencil[0].zfail_op);
       cc.cc0.stencil_pass_depth_pass_op = brw_translate_stencil_op(
-         brw->attribs.DepthStencil->stencil.front_zpass_op);
-      cc.cc1.stencil_ref = brw->attribs.DepthStencil->stencil.ref_value[0];
-      cc.cc1.stencil_write_mask = brw->attribs.DepthStencil->stencil.write_mask[0];
-      cc.cc1.stencil_test_mask = brw->attribs.DepthStencil->stencil.value_mask[0];
+         brw->attribs.DepthStencil->stencil[0].zpass_op);
+      cc.cc1.stencil_ref = brw->attribs.DepthStencil->stencil[0].ref_value;
+      cc.cc1.stencil_write_mask = brw->attribs.DepthStencil->stencil[0].write_mask;
+      cc.cc1.stencil_test_mask = brw->attribs.DepthStencil->stencil[0].value_mask;
 
-      if (brw->attribs.DepthStencil->stencil.back_enabled) {
-	 cc.cc0.bf_stencil_enable = brw->attribs.DepthStencil->stencil.back_enabled;
+      if (brw->attribs.DepthStencil->stencil[1].enabled) {
+	 cc.cc0.bf_stencil_enable = brw->attribs.DepthStencil->stencil[1].enabled;
 	 cc.cc0.bf_stencil_func = brw_translate_compare_func(
-            brw->attribs.DepthStencil->stencil.back_func);
+            brw->attribs.DepthStencil->stencil[1].func);
 	 cc.cc0.bf_stencil_fail_op = brw_translate_stencil_op(
-            brw->attribs.DepthStencil->stencil.back_fail_op);
+            brw->attribs.DepthStencil->stencil[1].fail_op);
 	 cc.cc0.bf_stencil_pass_depth_fail_op = brw_translate_stencil_op(
-            brw->attribs.DepthStencil->stencil.back_zfail_op);
+            brw->attribs.DepthStencil->stencil[1].zfail_op);
 	 cc.cc0.bf_stencil_pass_depth_pass_op = brw_translate_stencil_op(
-            brw->attribs.DepthStencil->stencil.back_zpass_op);
-	 cc.cc1.bf_stencil_ref = brw->attribs.DepthStencil->stencil.ref_value[1];
-	 cc.cc2.bf_stencil_write_mask = brw->attribs.DepthStencil->stencil.write_mask[1];
-	 cc.cc2.bf_stencil_test_mask = brw->attribs.DepthStencil->stencil.value_mask[1];
+            brw->attribs.DepthStencil->stencil[1].zpass_op);
+	 cc.cc1.bf_stencil_ref = brw->attribs.DepthStencil->stencil[1].ref_value;
+	 cc.cc2.bf_stencil_write_mask = brw->attribs.DepthStencil->stencil[1].write_mask;
+	 cc.cc2.bf_stencil_test_mask = brw->attribs.DepthStencil->stencil[1].value_mask;
       }
 
       /* Not really sure about this:
        */
-      if (brw->attribs.DepthStencil->stencil.write_mask[0] ||
-	  (brw->attribs.DepthStencil->stencil.back_enabled &&
-           brw->attribs.DepthStencil->stencil.write_mask[1]))
+      if (brw->attribs.DepthStencil->stencil[0].write_mask ||
+	  brw->attribs.DepthStencil->stencil[1].write_mask)
 	 cc.cc0.stencil_write_enable = 1;
    }
 
@@ -228,11 +227,13 @@ static void upload_cc_unit( struct brw_context *brw )
    
    /* BRW_NEW_ALPHATEST
     */
-   if (brw->attribs.AlphaTest->enabled) {
+   if (brw->attribs.DepthStencil->alpha.enabled) {
       cc.cc3.alpha_test = 1;
-      cc.cc3.alpha_test_func = brw_translate_compare_func(brw->attribs.AlphaTest->func);
+      cc.cc3.alpha_test_func = 
+	 brw_translate_compare_func(brw->attribs.DepthStencil->alpha.func);
 
-      UNCLAMPED_FLOAT_TO_UBYTE(cc.cc7.alpha_ref.ub[0], brw->attribs.AlphaTest->ref);
+      UNCLAMPED_FLOAT_TO_UBYTE(cc.cc7.alpha_ref.ub[0], 
+			       brw->attribs.DepthStencil->alpha.ref);
 
       cc.cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
    }

@@ -29,24 +29,10 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/util/p_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_texture.h"
-#include "sp_rgba_tile.h"
-
-
-
-#define CLIP_TILE \
-   do { \
-      if (x >= ps->width) \
-         return; \
-      if (y >= ps->height) \
-         return; \
-      if (x + w > ps->width) \
-         w = ps->width - x; \
-      if (y + h > ps->height) \
-         h = ps->height - y; \
-   } while(0)
 
 
 /**
@@ -87,72 +73,6 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       ps->offset = offset;
    }
    return ps;
-}
-
-
-/**
- * Move raw block of pixels from surface to user memory.
- */
-void
-softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
-                  uint x, uint y, uint w, uint h,
-                  void *p, int dst_stride)
-{
-   const uint cpp = ps->cpp;
-   const ubyte *pSrc;
-   const uint src_stride = ps->pitch * cpp;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   if (dst_stride == 0) {
-      dst_stride = w * cpp;
-   }
-
-   CLIP_TILE;
-
-   pSrc = ps->map + (y * ps->pitch + x) * cpp;
-   pDest = (ubyte *) p;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w * cpp);
-      pDest += dst_stride;
-      pSrc += src_stride;
-   }
-}
-
-
-/**
- * Move raw block of pixels from user memory to surface.
- */
-void
-softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
-                  uint x, uint y, uint w, uint h,
-                  const void *p, int src_stride)
-{
-   const uint cpp = ps->cpp;
-   const ubyte *pSrc;
-   const uint dst_stride = ps->pitch * cpp;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   if (src_stride == 0) {
-      src_stride = w * cpp;
-   }
-
-   CLIP_TILE;
-
-   pSrc = (const ubyte *) p;
-   pDest = ps->map + (y * ps->pitch + x) * cpp;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w * cpp);
-      pDest += dst_stride;
-      pSrc += src_stride;
-   }
 }
 
 
@@ -308,6 +228,10 @@ sp_surface_fill(struct pipe_context *pipe,
          ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
          ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
          ushort val3 = UBYTE_TO_USHORT((value >> 24) & 0xff);
+         val0 = (val0 << 8) | val0;
+         val1 = (val1 << 8) | val1;
+         val2 = (val2 << 8) | val2;
+         val3 = (val3 << 8) | val3;
          for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++) {
                row[j*4+0] = val0;
@@ -331,11 +255,10 @@ sp_surface_fill(struct pipe_context *pipe,
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
-   sp->pipe.get_tile = softpipe_get_tile;
-   sp->pipe.put_tile = softpipe_put_tile;
-
-   sp->pipe.get_tile_rgba = softpipe_get_tile_rgba;
-   sp->pipe.put_tile_rgba = softpipe_put_tile_rgba;
+   sp->pipe.get_tile = pipe_get_tile_raw;
+   sp->pipe.put_tile = pipe_put_tile_raw;
+   sp->pipe.get_tile_rgba = pipe_get_tile_rgba;
+   sp->pipe.put_tile_rgba = pipe_put_tile_rgba;
 
    sp->pipe.surface_data = sp_surface_data;
    sp->pipe.surface_copy = sp_surface_copy;

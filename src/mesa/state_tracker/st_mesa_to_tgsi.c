@@ -597,6 +597,19 @@ make_sampler_decl(GLuint index)
    return decl;
 }
 
+/** Reference into a constant buffer */
+static struct tgsi_full_declaration
+make_constant_decl(GLuint first, GLuint last)
+{
+   struct tgsi_full_declaration decl;
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_CONSTANT;
+   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.u.DeclarationRange.First = first;
+   decl.u.DeclarationRange.Last = last;
+   return decl;
+}
+
 
 
 /**
@@ -788,7 +801,7 @@ tgsi_translate_mesa_program(
 
    /* immediates/literals */
    for (i = 0; program->Parameters && i < program->Parameters->NumParameters;
-	i++) {
+        i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
          struct tgsi_full_immediate fullimm
             = make_immediate(program->Parameters->ParameterValues[i],
@@ -799,6 +812,49 @@ tgsi_translate_mesa_program(
                                          maxTokens - ti);
          immediates[i] = numImmediates;
          numImmediates++;
+      }
+   }
+
+   /* constant buffer refs */
+   {
+      GLint start = -1, end = -1;
+
+      for (i = 0;
+           program->Parameters && i < program->Parameters->NumParameters;
+           i++) {
+         GLboolean emit = (i == program->Parameters->NumParameters - 1);
+
+         switch (program->Parameters->Parameters[i].Type) {
+         case PROGRAM_ENV_PARAM:
+         case PROGRAM_STATE_VAR:
+         case PROGRAM_NAMED_PARAM:
+         case PROGRAM_UNIFORM:
+            if (start == -1) {
+               /* begin a sequence */
+               start = i;
+               end = i;
+            }
+            else {
+               /* continue sequence */
+               end = i;
+            }
+            break;
+         default:
+            if (start != -1) {
+               /* end of sequence */
+               emit = GL_TRUE;
+            }
+         }
+
+         if (emit && start >= 0) {
+            struct tgsi_full_declaration fulldecl;
+            fulldecl = make_constant_decl( start, end );
+            ti += tgsi_build_full_declaration(&fulldecl,
+                                              &tokens[ti],
+                                              header,
+                                              maxTokens - ti);
+            start = end = -1;
+         }
       }
    }
 

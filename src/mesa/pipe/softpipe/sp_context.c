@@ -240,10 +240,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.get_paramf = softpipe_get_paramf;
 
    /* state setters */
-   softpipe->pipe.create_alpha_test_state = softpipe_create_alpha_test_state;
-   softpipe->pipe.bind_alpha_test_state   = softpipe_bind_alpha_test_state;
-   softpipe->pipe.delete_alpha_test_state = softpipe_delete_alpha_test_state;
-
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;
    softpipe->pipe.bind_blend_state   = softpipe_bind_blend_state;
    softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
@@ -252,9 +248,9 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.bind_sampler_state   = softpipe_bind_sampler_state;
    softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
 
-   softpipe->pipe.create_depth_stencil_state = softpipe_create_depth_stencil_state;
-   softpipe->pipe.bind_depth_stencil_state   = softpipe_bind_depth_stencil_state;
-   softpipe->pipe.delete_depth_stencil_state = softpipe_delete_depth_stencil_state;
+   softpipe->pipe.create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
+   softpipe->pipe.bind_depth_stencil_alpha_state   = softpipe_bind_depth_stencil_state;
+   softpipe->pipe.delete_depth_stencil_alpha_state = softpipe_delete_depth_stencil_state;
 
    softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
    softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;

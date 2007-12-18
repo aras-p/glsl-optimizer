@@ -70,7 +70,6 @@ struct failover_context {
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct fo_state     *alpha_test;
    const struct fo_state     *blend;
    const struct fo_state     *sampler[PIPE_MAX_SAMPLERS];
    const struct fo_state     *depth_stencil;

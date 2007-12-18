@@ -55,10 +55,6 @@ failover_state_emit( struct failover_context *failover )
 {
    unsigned i;
 
-   if (failover->dirty & FO_NEW_ALPHA_TEST)
-      failover->sw->bind_alpha_test_state( failover->sw,
-                                           failover->alpha_test->sw_state );
-
    if (failover->dirty & FO_NEW_BLEND)
       failover->sw->bind_blend_state( failover->sw,
                                       failover->blend->sw_state );
@@ -70,8 +66,8 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_clip_state( failover->sw, &failover->clip );
 
    if (failover->dirty & FO_NEW_DEPTH_STENCIL)
-      failover->sw->bind_depth_stencil_state( failover->sw,
-                                              failover->depth_stencil->sw_state );
+      failover->sw->bind_depth_stencil_alpha_state( failover->sw,
+						    failover->depth_stencil->sw_state );
 
    if (failover->dirty & FO_NEW_FRAMEBUFFER)
       failover->sw->set_framebuffer_state( failover->sw, &failover->framebuffer );

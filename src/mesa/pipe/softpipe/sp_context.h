@@ -53,13 +53,13 @@ struct softpipe_tile_cache;
 #define SP_NEW_SCISSOR       0x20
 #define SP_NEW_STIPPLE       0x40
 #define SP_NEW_FRAMEBUFFER   0x80
-#define SP_NEW_ALPHA_TEST    0x100
-#define SP_NEW_DEPTH_STENCIL 0x200
+#define SP_NEW_DEPTH_STENCIL_ALPHA 0x100
+#define SP_NEW_CONSTANTS     0x200
 #define SP_NEW_SAMPLER       0x400
 #define SP_NEW_TEXTURE       0x800
 #define SP_NEW_VERTEX        0x1000
 #define SP_NEW_VS            0x2000
-#define SP_NEW_CONSTANTS     0x4000
+#define SP_NEW_QUERY         0x4000
 
 struct sp_vertex_shader_state {
    struct pipe_shader_state *state;
@@ -73,10 +73,9 @@ struct softpipe_context {
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct pipe_alpha_test_state *alpha_test;
    const struct pipe_blend_state   *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
-   const struct pipe_depth_stencil_state   *depth_stencil;
+   const struct pipe_depth_stencil_alpha_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    const struct sp_fragment_shader_state *fs;
    const struct sp_vertex_shader_state *vs;

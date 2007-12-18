@@ -46,7 +46,7 @@ void st_validate_state( struct st_context *st );
 
 const struct st_tracked_state st_update_framebuffer;
 const struct st_tracked_state st_update_clip;
-const struct st_tracked_state st_update_depth_stencil;
+const struct st_tracked_state st_update_depth_stencil_alpha;
 const struct st_tracked_state st_update_shader;
 const struct st_tracked_state st_update_rasterizer;
 const struct st_tracked_state st_update_polygon_stipple;
@@ -57,7 +57,6 @@ const struct st_tracked_state st_update_sampler;
 const struct st_tracked_state st_update_texture;
 const struct st_tracked_state st_update_fs_constants;
 const struct st_tracked_state st_update_vs_constants;
-const struct st_tracked_state st_update_alpha_test;
 const struct st_tracked_state st_update_pixel_transfer;
 
 

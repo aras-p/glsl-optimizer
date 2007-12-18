@@ -479,9 +479,8 @@ struct brw_context
 
 
    struct {
-      const struct pipe_alpha_test_state    *AlphaTest;
       const struct pipe_blend_state         *Blend;
-      const struct pipe_depth_stencil_state *DepthStencil;
+      const struct pipe_depth_stencil_alpha_state *DepthStencil;
       const struct pipe_poly_stipple        *PolygonStipple;
       const struct pipe_rasterizer_state    *Raster;
       const struct pipe_sampler_state       *Samplers[PIPE_MAX_SAMPLERS];

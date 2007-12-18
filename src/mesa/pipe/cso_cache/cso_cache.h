@@ -40,7 +40,6 @@
 struct cso_hash;
 
 struct cso_cache {
-   struct cso_hash *alpha_hash;
    struct cso_hash *blend_hash;
    struct cso_hash *depth_stencil_hash;
    struct cso_hash *fs_hash;
@@ -54,8 +53,8 @@ struct cso_blend {
    void   *data;
 };
 
-struct cso_depth_stencil {
-   struct pipe_depth_stencil_state state;
+struct cso_depth_stencil_alpha {
+   struct pipe_depth_stencil_alpha_state state;
    void *data;
 };
 
@@ -79,19 +78,14 @@ struct cso_sampler {
    void *data;
 };
 
-struct cso_alpha_test {
-   struct pipe_alpha_test_state state;
-   void *data;
-};
 
 enum cso_cache_type {
    CSO_BLEND,
    CSO_SAMPLER,
-   CSO_DEPTH_STENCIL,
+   CSO_DEPTH_STENCIL_ALPHA,
    CSO_RASTERIZER,
    CSO_FRAGMENT_SHADER,
-   CSO_VERTEX_SHADER,
-   CSO_ALPHA_TEST
+   CSO_VERTEX_SHADER
 };
 
 unsigned cso_construct_key(void *item, int item_size);

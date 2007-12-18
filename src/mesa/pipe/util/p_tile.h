@@ -1,8 +1,8 @@
 /**************************************************************************
- *
+ * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,47 +22,60 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
+ * 
  **************************************************************************/
 
- /*
-  * Authors:
-  *   Zack Rusin <zack@tungstengraphics.com>
-  */
+#ifndef P_TILE_H
+#define P_TILE_H
 
-#ifndef ST_CACHE_H
-#define ST_CACHE_H
+#include "pipe/p_compiler.h"
 
-#include "pipe/cso_cache/cso_cache.h"
-
-struct pipe_blend_state;
-struct pipe_sampler_state;
-struct st_context;
+struct pipe_context;
+struct pipe_surface;
 
 
-const struct cso_blend *
-st_cached_blend_state(struct st_context *st,
-                      const struct pipe_blend_state *blend);
-
-const struct cso_sampler *
-st_cached_sampler_state(struct st_context *st,
-                        const struct pipe_sampler_state *sampler);
-
-const struct cso_depth_stencil_alpha *
-st_cached_depth_stencil_alpha_state(struct st_context *st,
-                              const struct pipe_depth_stencil_alpha_state *depth_stencil);
-
-const struct cso_rasterizer *
-st_cached_rasterizer_state(struct st_context *st,
-                           const struct pipe_rasterizer_state *raster);
-
-const struct cso_fragment_shader *
-st_cached_fs_state(struct st_context *st,
-                   const struct pipe_shader_state *templ);
+/**
+ * Clip tile against surface dims.
+ * \return TRUE if tile is totally clipped, FALSE otherwise
+ */
+static INLINE boolean
+pipe_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_surface *ps)
+{
+   if (x >= ps->width)
+      return TRUE;
+   if (y >= ps->height)
+      return TRUE;
+   if (x + *w > ps->width)
+      *w = ps->width - x;
+   if (y + *h > ps->height)
+      *h = ps->height - y;
+   return FALSE;
+}
 
 
-const struct cso_vertex_shader *
-st_cached_vs_state(struct st_context *st,
-                   const struct pipe_shader_state *templ);
+extern void
+pipe_get_tile_raw(struct pipe_context *pipe,
+                  struct pipe_surface *ps,
+                  uint x, uint y, uint w, uint h,
+                  void *p, int dst_stride);
+
+extern void
+pipe_put_tile_raw(struct pipe_context *pipe,
+                  struct pipe_surface *ps,
+                  uint x, uint y, uint w, uint h,
+                  const void *p, int src_stride);
+
+
+extern void
+pipe_get_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_surface *ps,
+                   uint x, uint y, uint w, uint h,
+                   float *p);
+
+extern void
+pipe_put_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_surface *ps,
+                   uint x, uint y, uint w, uint h,
+                   const float *p);
 
 #endif

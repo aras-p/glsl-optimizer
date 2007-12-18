@@ -58,6 +58,8 @@ struct softpipe_tile_cache
 
    struct pipe_surface *tex_surf;
    int tex_face, tex_level, tex_z;
+
+   struct softpipe_cached_tile tile;  /**< scratch tile for clears */
 };
 
 
@@ -234,13 +236,11 @@ clear_tile(struct softpipe_cached_tile *tile,
 {
    uint i, j;
 
-   switch (format) {
-   case PIPE_FORMAT_U_S8:
-      /* 8 bpp */
+   switch (pf_get_size(format)) {
+   case 1:
       memset(tile->data.any, 0, TILE_SIZE * TILE_SIZE);
       break;
-   case PIPE_FORMAT_Z16_UNORM:
-      /* 16 bpp */
+   case 2:
       if (clear_value == 0) {
          memset(tile->data.any, 0, 2 * TILE_SIZE * TILE_SIZE);
       }
@@ -252,8 +252,7 @@ clear_tile(struct softpipe_cached_tile *tile,
          }
       }
       break;
-   default:
-      /* 32 bpp */
+   case 4:
       if (clear_value == 0) {
          memset(tile->data.any, 0, 4 * TILE_SIZE * TILE_SIZE);
       }
@@ -264,6 +263,9 @@ clear_tile(struct softpipe_cached_tile *tile,
             }
          }
       }
+      break;
+   default:
+      assert(0);
    }
 }
 
@@ -279,11 +281,10 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
    const uint w = tc->surface->width;
    const uint h = tc->surface->height;
    uint x, y;
-   struct softpipe_cached_tile tile;
    uint numCleared = 0;
 
-   /* clear one tile to the clear value */
-   clear_tile(&tile, ps->format, tc->clear_val);
+   /* clear the scratch tile to the clear value */
+   clear_tile(&tc->tile, ps->format, tc->clear_val);
 
    /* push the tile to all positions marked as clear */
    for (y = 0; y < h; y += TILE_SIZE) {
@@ -291,7 +292,7 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
          if (is_clear_flag_set(tc->clear_flags, x, y)) {
             pipe->put_tile(pipe, ps,
                            x, y, TILE_SIZE, TILE_SIZE,
-                           tile.data.color32, 0/*STRIDE*/);
+                           tc->tile.data.color32, 0/*STRIDE*/);
 
             /* do this? */
             clear_clear_flag(tc->clear_flags, x, y);

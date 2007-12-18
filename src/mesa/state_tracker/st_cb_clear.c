@@ -272,14 +272,6 @@ clear_with_quad(GLcontext *ctx,
    const GLfloat x1 = ctx->DrawBuffer->_Xmax;
    const GLfloat y1 = ctx->DrawBuffer->_Ymax;
 
-   /* alpha state: disabled */
-   {
-      struct pipe_alpha_test_state alpha_test;
-      const struct cso_alpha_test *cso;
-      memset(&alpha_test, 0, sizeof(alpha_test));
-      cso = st_cached_alpha_test_state(st, &alpha_test);
-      pipe->bind_alpha_test_state(pipe, cso->data);
-   }
 
    /* blend state: RGBA masking */
    {
@@ -304,8 +296,8 @@ clear_with_quad(GLcontext *ctx,
 
    /* depth_stencil state: always pass/set to ref value */
    {
-      struct pipe_depth_stencil_state depth_stencil;
-      const struct cso_depth_stencil *cso;
+      struct pipe_depth_stencil_alpha_state depth_stencil;
+      const struct cso_depth_stencil_alpha *cso;
       memset(&depth_stencil, 0, sizeof(depth_stencil));
       if (depth) {
          depth_stencil.depth.enabled = 1;
@@ -314,17 +306,17 @@ clear_with_quad(GLcontext *ctx,
       }
 
       if (stencil) {
-         depth_stencil.stencil.front_enabled = 1;
-         depth_stencil.stencil.front_func = PIPE_FUNC_ALWAYS;
-         depth_stencil.stencil.front_fail_op = PIPE_STENCIL_OP_REPLACE;
-         depth_stencil.stencil.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
-         depth_stencil.stencil.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
-         depth_stencil.stencil.ref_value[0] = ctx->Stencil.Clear;
-         depth_stencil.stencil.value_mask[0] = 0xff;
-         depth_stencil.stencil.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
+         depth_stencil.stencil[0].enabled = 1;
+         depth_stencil.stencil[0].func = PIPE_FUNC_ALWAYS;
+         depth_stencil.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
+         depth_stencil.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
+         depth_stencil.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
+         depth_stencil.stencil[0].ref_value = ctx->Stencil.Clear;
+         depth_stencil.stencil[0].value_mask = 0xff;
+         depth_stencil.stencil[0].write_mask = ctx->Stencil.WriteMask[0] & 0xff;
       }
-      cso = st_cached_depth_stencil_state(st, &depth_stencil);
-      pipe->bind_depth_stencil_state(pipe, cso->data);
+      cso = st_cached_depth_stencil_alpha_state(st, &depth_stencil);
+      pipe->bind_depth_stencil_alpha_state(pipe, cso->data);
    }
 
    /* rasterizer state: nothing */
@@ -381,9 +373,8 @@ clear_with_quad(GLcontext *ctx,
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore pipe state */
-   pipe->bind_alpha_test_state(pipe, st->state.alpha_test->data);
    pipe->bind_blend_state(pipe, st->state.blend->data);
-   pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil->data);
+   pipe->bind_depth_stencil_alpha_state(pipe, st->state.depth_stencil->data);
    pipe->bind_fs_state(pipe, st->state.fs->data);
    pipe->bind_vs_state(pipe, st->state.vs->data);
    pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);
