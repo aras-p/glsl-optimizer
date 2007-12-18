@@ -591,8 +591,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 	 intel->first_swap_fence = NULL;
       }
 
-      dri_bufmgr_destroy(intel->bufmgr);
-
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private
           * texture object data.
@@ -603,6 +601,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
+
+      dri_bufmgr_destroy(intel->bufmgr);
    }
 }
 
