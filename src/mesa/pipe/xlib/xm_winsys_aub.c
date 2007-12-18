@@ -51,7 +51,6 @@ struct aub_buffer {
    unsigned refcount;
    unsigned map_count;
    boolean dump_on_unmap;
-   boolean userbuffer;
 };
 
 
@@ -276,9 +275,15 @@ static struct pipe_buffer_handle *
 aub_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
    struct aub_buffer *sbo = CALLOC_STRUCT(aub_buffer);
-   sbo->size = bytes;
-   sbo->userbuffer = 1;
-   sbo->data = ptr;
+
+   /* Lets hope this is meant for upload, not as a result!  
+    */
+   aub_buffer_data( winsys, 
+		    pipe_bo(sbo),
+		    bytes, 
+		    ptr,
+		    0 );
+
    return pipe_bo(sbo);
 }
 
