@@ -19,7 +19,8 @@ PROGS = \
 	points \
 	texdemo1 \
 	toyball \
-	trirast
+	trirast \
+	twoside
 
 
 ##### RULES #####
