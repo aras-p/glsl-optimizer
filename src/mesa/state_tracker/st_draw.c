@@ -289,7 +289,7 @@ st_draw_vbo(GLcontext *ctx,
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
       vbuffer[attr].max_index = 0;  /* need this? */
       velement.vertex_buffer_index = attr;
-      velement.dst_offset = 0; /* need this? */
+      velement.nr_components = arrays[mesaAttr]->Size;
       velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
                                                arrays[mesaAttr]->Size,
                                                arrays[mesaAttr]->Normalized);
@@ -415,7 +415,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
       velement.src_offset = i * 4 * sizeof(GLfloat);
       velement.vertex_buffer_index = 0;
       velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velement.dst_offset = 0;
+      velement.nr_components = 4;
       pipe->set_vertex_element(pipe, i, &velement);
    }
 
@@ -547,7 +547,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
       vbuffer[attr].max_index = 0;  /* need this? */
       velement.vertex_buffer_index = attr;
-      velement.dst_offset = 0; /* need this? */
+      velement.nr_components = arrays[mesaAttr]->Size;
       velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
                                                arrays[mesaAttr]->Size,
                                                arrays[mesaAttr]->Normalized);
