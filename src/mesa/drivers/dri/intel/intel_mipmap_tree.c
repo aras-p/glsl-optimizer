@@ -78,44 +78,19 @@ intel_miptree_create(struct intel_context *intel,
    mt->cpp = compress_byte ? compress_byte : cpp;
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
+   mt->pitch = 0;
 
 #ifdef I915
    if (IS_945(intel->intelScreen->deviceID))
-      ok = i945_miptree_layout(mt);
+      ok = i945_miptree_layout(intel, mt);
    else
-      ok = i915_miptree_layout(mt);
+      ok = i915_miptree_layout(intel, mt);
 #else
-   ok = brw_miptree_layout(mt);
+   ok = brw_miptree_layout(intel, mt);
 #endif
 
    if (ok) {
-#ifdef I915
-      if (!mt->compressed) {
-	 int align;
-
-	 if (intel->ttm) {
-	    /* XXX: Align pitch to multiple of 64 bytes for now to allow
-	     * render-to-texture to work in all cases. This should probably be
-	     * replaced at some point by some scheme to only do this when really
-	     * necessary.
-	     */
-	    align = 63;
-	 } else {
-	    align = 3;
-	 }
-
-	 mt->pitch = (mt->pitch * cpp + align) & ~align;
-
-	 /* XXX: At least the i915 seems very upset when the pitch is a multiple
-	  * of 1024 and sometimes 512 bytes - performance can drop by several
-	  * times. Go to the next multiple of the required alignment for now.
-	  */
-	 if (!(mt->pitch & 511))
-	    mt->pitch += align + 1;
-
-	 mt->pitch /= cpp;
-      }
-#endif /* I915 */
+      assert (mt->pitch);
 
       mt->region = intel_region_alloc(intel,
                                       mt->cpp, mt->pitch, mt->total_height);
@@ -129,6 +104,52 @@ intel_miptree_create(struct intel_context *intel,
    return mt;
 }
 
+/**
+ * intel_miptree_pitch_align:
+ *
+ * @intel: intel context pointer
+ *
+ * @mt: the miptree to compute pitch alignment for
+ *
+ * @pitch: the natural pitch value
+ *
+ * Given @pitch, compute a larger value which accounts for
+ * any necessary alignment required by the device
+ */
+
+int intel_miptree_pitch_align (struct intel_context *intel,
+			       struct intel_mipmap_tree *mt,
+			       int pitch)
+{
+   if (!mt->compressed) {
+      int pitch_align;
+
+      if (intel->ttm) {
+	 /* XXX: Align pitch to multiple of 64 bytes for now to allow
+	  * render-to-texture to work in all cases. This should probably be
+	  * replaced at some point by some scheme to only do this when really
+	  * necessary.
+	  */
+	 pitch_align = 64;
+      } else {
+	 pitch_align = 4;
+      }
+
+      pitch = ALIGN(pitch * mt->cpp, pitch_align);
+
+#ifdef I915
+      /* XXX: At least the i915 seems very upset when the pitch is a multiple
+       * of 1024 and sometimes 512 bytes - performance can drop by several
+       * times. Go to the next multiple of the required alignment for now.
+       */
+      if (!(pitch & 511))
+	 pitch += pitch_align;
+#endif
+
+      pitch /= mt->cpp;
+   }
+   return pitch;
+}
 
 void
 intel_miptree_reference(struct intel_mipmap_tree **dst,
