@@ -109,7 +109,7 @@ static void update_raster_state( struct st_context *st )
     * GL_LIGHT_MODEL_TWO_SIDE is set) or from vertex programs (when
     * GL_VERTEX_PROGRAM_TWO_SIDE is set).  Note the logic here.
     */
-   if (ctx->VertexProgram._Enabled) {
+   if (ctx->VertexProgram._Current) {
       raster.light_twoside = ctx->VertexProgram.TwoSideEnabled;
    }
    else if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
