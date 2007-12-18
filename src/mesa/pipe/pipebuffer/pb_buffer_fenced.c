@@ -230,6 +230,9 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
 {
    struct fenced_buffer *buf;
    
+   if(!buffer)
+      return NULL;
+   
    buf = (struct fenced_buffer *)calloc(1, sizeof(struct fenced_buffer));
    if(!buf)
       return NULL;
