@@ -7,39 +7,6 @@
 #include "nv40_state.h"
 
 static void *
-nv40_alpha_test_state_create(struct pipe_context *pipe,
-			     const struct pipe_alpha_test_state *cso)
-{
-	struct nv40_alpha_test_state *at;
-
-	at = malloc(sizeof(struct nv40_alpha_test_state));
-
-	at->enabled = cso->enabled ? 1 : 0;
-	at->func = nvgl_comparison_op(cso->func);
-	at->ref  = float_to_ubyte(cso->ref);
-
-	return (void *)at;
-}
-
-static void
-nv40_alpha_test_state_bind(struct pipe_context *pipe, void *hwcso)
-{
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct nv40_alpha_test_state *at = hwcso;
-
-	BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
-	OUT_RING  (at->enabled);
-	OUT_RING  (at->func);
-	OUT_RING  (at->ref);
-}
-
-static void
-nv40_alpha_test_state_delete(struct pipe_context *pipe, void *hwcso)
-{
-	free(hwcso);
-}
-
-static void *
 nv40_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
@@ -414,61 +381,59 @@ nv40_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 	free(hwcso);
 }
 
-static void *
-nv40_depth_stencil_state_create(struct pipe_context *pipe,
-				const struct pipe_depth_stencil_state *cso)
+static void
+nv40_translate_stencil(const struct pipe_depth_stencil_alpha_state *cso,
+		       unsigned idx, struct nv40_stencil_push *hw)
 {
-	struct nv40_depth_stencil_state *zs;
+	hw->enable = cso->stencil[idx].enabled ? 1 : 0;
+	hw->wmask = cso->stencil[idx].write_mask;
+	hw->func = nvgl_comparison_op(cso->stencil[idx].func);
+	hw->ref	= cso->stencil[idx].ref_value;
+	hw->vmask = cso->stencil[idx].value_mask;
+	hw->fail = nvgl_stencil_op(cso->stencil[idx].fail_op);
+	hw->zfail = nvgl_stencil_op(cso->stencil[idx].zfail_op);
+	hw->zpass = nvgl_stencil_op(cso->stencil[idx].zpass_op);
+}
 
-	/*XXX: ignored:
-	 * 	depth.occlusion_count
-	 * 	depth.clear
-	 * 	stencil.clear_value
-	 */
-	zs = malloc(sizeof(struct nv40_depth_stencil_state));
+static void *
+nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
+			const struct pipe_depth_stencil_alpha_state *cso)
+{
+	struct nv40_depth_stencil_alpha_state *hw;
 
-	zs->depth.func		= nvgl_comparison_op(cso->depth.func);
-	zs->depth.write_enable	= cso->depth.writemask ? 1 : 0;
-	zs->depth.test_enable	= cso->depth.enabled ? 1 : 0;
+	hw = malloc(sizeof(struct nv40_depth_stencil_alpha_state));
 
-	zs->stencil.back.enable	= cso->stencil.back_enabled ? 1 : 0;
-	zs->stencil.back.wmask	= cso->stencil.write_mask[1];
-	zs->stencil.back.func	=
-		nvgl_comparison_op(cso->stencil.back_func);
-	zs->stencil.back.ref	= cso->stencil.ref_value[1];
-	zs->stencil.back.vmask	= cso->stencil.value_mask[1];
-	zs->stencil.back.fail	= nvgl_stencil_op(cso->stencil.back_fail_op);
-	zs->stencil.back.zfail	= nvgl_stencil_op(cso->stencil.back_zfail_op);
-	zs->stencil.back.zpass	= nvgl_stencil_op(cso->stencil.back_zpass_op);
+	hw->depth.func		= nvgl_comparison_op(cso->depth.func);
+	hw->depth.write_enable	= cso->depth.writemask ? 1 : 0;
+	hw->depth.test_enable	= cso->depth.enabled ? 1 : 0;
 
-	zs->stencil.front.enable= cso->stencil.front_enabled ? 1 : 0;
-	zs->stencil.front.wmask	= cso->stencil.write_mask[0];
-	zs->stencil.front.func	=
-		nvgl_comparison_op(cso->stencil.front_func);
-	zs->stencil.front.ref	= cso->stencil.ref_value[0];
-	zs->stencil.front.vmask	= cso->stencil.value_mask[0];
-	zs->stencil.front.fail	= nvgl_stencil_op(cso->stencil.front_fail_op);
-	zs->stencil.front.zfail	= nvgl_stencil_op(cso->stencil.front_zfail_op);
-	zs->stencil.front.zpass	= nvgl_stencil_op(cso->stencil.front_zpass_op);
+	nv40_translate_stencil(cso, 0, &hw->stencil.front);
+	nv40_translate_stencil(cso, 1, &hw->stencil.back);
 
-	return (void *)zs;
+	hw->alpha.enabled = cso->alpha.enabled ? 1 : 0;
+	hw->alpha.func = nvgl_comparison_op(cso->alpha.func);
+	hw->alpha.ref  = float_to_ubyte(cso->alpha.ref);
+
+	return (void *)hw;
 }
 
 static void
-nv40_depth_stencil_state_bind(struct pipe_context *pipe, void *hwcso)
+nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct nv40_depth_stencil_state *zs = hwcso;
+	struct nv40_depth_stencil_alpha_state *hw = hwcso;
 
 	BEGIN_RING(curie, NV40TCL_DEPTH_FUNC, 3);
-	OUT_RINGp ((uint32_t *)&zs->depth, 3);
+	OUT_RINGp ((uint32_t *)&hw->depth, 3);
 	BEGIN_RING(curie, NV40TCL_STENCIL_BACK_ENABLE, 16);
-	OUT_RINGp ((uint32_t *)&zs->stencil.back, 8);
-	OUT_RINGp ((uint32_t *)&zs->stencil.front, 8);
+	OUT_RINGp ((uint32_t *)&hw->stencil.back, 8);
+	OUT_RINGp ((uint32_t *)&hw->stencil.front, 8);
+	BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	OUT_RINGp ((uint32_t *)&hw->alpha.enabled, 3);
 }
 
 static void
-nv40_depth_stencil_state_delete(struct pipe_context *pipe, void *hwcso)
+nv40_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 	free(hwcso);
 }
@@ -785,10 +750,6 @@ nv40_set_vertex_element(struct pipe_context *pipe, unsigned index,
 void
 nv40_init_state_functions(struct nv40_context *nv40)
 {
-	nv40->pipe.create_alpha_test_state = nv40_alpha_test_state_create;
-	nv40->pipe.bind_alpha_test_state = nv40_alpha_test_state_bind;
-	nv40->pipe.delete_alpha_test_state = nv40_alpha_test_state_delete;
-
 	nv40->pipe.create_blend_state = nv40_blend_state_create;
 	nv40->pipe.bind_blend_state = nv40_blend_state_bind;
 	nv40->pipe.delete_blend_state = nv40_blend_state_delete;
@@ -802,9 +763,12 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.bind_rasterizer_state = nv40_rasterizer_state_bind;
 	nv40->pipe.delete_rasterizer_state = nv40_rasterizer_state_delete;
 
-	nv40->pipe.create_depth_stencil_state = nv40_depth_stencil_state_create;
-	nv40->pipe.bind_depth_stencil_state = nv40_depth_stencil_state_bind;
-	nv40->pipe.delete_depth_stencil_state = nv40_depth_stencil_state_delete;
+	nv40->pipe.create_depth_stencil_alpha_state =
+		nv40_depth_stencil_alpha_state_create;
+	nv40->pipe.bind_depth_stencil_alpha_state =
+		nv40_depth_stencil_alpha_state_bind;
+	nv40->pipe.delete_depth_stencil_alpha_state =
+		nv40_depth_stencil_alpha_state_delete;
 
 	nv40->pipe.create_vs_state = nv40_vp_state_create;
 	nv40->pipe.bind_vs_state = nv40_vp_state_bind;

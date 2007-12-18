@@ -31,88 +31,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
-#include "pipe/softpipe/sp_rgba_tile.h"
-
-
-#define CLIP_TILE \
-   do { \
-      if (x >= ps->width) \
-         return; \
-      if (y >= ps->height) \
-         return; \
-      if (x + w > ps->width) \
-         w = ps->width - x; \
-      if (y + h > ps->height) \
-         h = ps->height -y; \
-   } while(0)
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static void
-nv40_get_tile(struct pipe_context *pipe,
-              struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h,
-              void *p, int dst_stride)
-{
-   const uint cpp = ps->cpp;
-   const uint w0 = w;
-   const ubyte *pSrc;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   CLIP_TILE;
-
-   if (dst_stride == 0) {
-      dst_stride = w0 * cpp;
-   }
-
-   pSrc = ps->map + ps->offset + (y * ps->pitch + x) * cpp;
-   pDest = (ubyte *) p;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
-      pDest += dst_stride;
-      pSrc += ps->pitch * cpp;
-   }
-}
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static void
-nv40_put_tile(struct pipe_context *pipe,
-              struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h,
-              const void *p, int src_stride)
-{
-   const uint cpp = ps->cpp;
-   const uint w0 = w;
-   const ubyte *pSrc;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   CLIP_TILE;
-
-   if (src_stride == 0) {
-      src_stride = w0 * cpp;
-   }
-
-   pSrc = (const ubyte *) p;
-   pDest = ps->map + ps->offset + (y * ps->pitch + x) * cpp;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
-      pDest += ps->pitch * cpp;
-      pSrc += src_stride;
-   }
-}
-
+#include "pipe/util/p_tile.h"
 
 static struct pipe_surface *
 nv40_get_tex_surface(struct pipe_context *pipe,
@@ -185,10 +104,10 @@ void
 nv40_init_surface_functions(struct nv40_context *nv40)
 {
    nv40->pipe.get_tex_surface = nv40_get_tex_surface;
-   nv40->pipe.get_tile = nv40_get_tile;
-   nv40->pipe.put_tile = nv40_put_tile;
-   nv40->pipe.get_tile_rgba = softpipe_get_tile_rgba;
-   nv40->pipe.put_tile_rgba = softpipe_put_tile_rgba;
+   nv40->pipe.get_tile = pipe_get_tile_raw;
+   nv40->pipe.put_tile = pipe_put_tile_raw;
+   nv40->pipe.get_tile_rgba = pipe_get_tile_rgba;
+   nv40->pipe.put_tile_rgba = pipe_put_tile_rgba;
    nv40->pipe.surface_data = nv40_surface_data;
    nv40->pipe.surface_copy = nv40_surface_copy;
    nv40->pipe.surface_fill = nv40_surface_fill;

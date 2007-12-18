@@ -3,12 +3,6 @@
 
 #include "pipe/p_state.h"
 
-struct nv40_alpha_test_state {
-	uint32_t enabled;
-	uint32_t func;
-	uint32_t ref;
-};
-
 struct nv40_blend_state {
 	uint32_t b_enable;
 	uint32_t b_srcfunc;
@@ -106,12 +100,6 @@ struct nv40_fragment_program {
 	uint32_t fp_control;
 };
 
-struct nv40_depth_push {
-	uint32_t func;
-	uint32_t write_enable;
-	uint32_t test_enable;
-};
-
 struct nv40_stencil_push {
 	uint32_t enable;
 	uint32_t wmask;
@@ -123,12 +111,23 @@ struct nv40_stencil_push {
 	uint32_t zpass;
 };
 
-struct nv40_depth_stencil_state {
-	struct nv40_depth_push depth;
-	union {
+struct nv40_depth_stencil_alpha_state {
+	struct {
+		uint32_t func;
+		uint32_t write_enable;
+		uint32_t test_enable;
+	} depth;
+
+	struct {
 		struct nv40_stencil_push back;
 		struct nv40_stencil_push front;
 	} stencil;
+
+	struct {
+		uint32_t enabled;
+		uint32_t func;
+		uint32_t ref;
+	} alpha;
 };
 
 struct nv40_miptree {

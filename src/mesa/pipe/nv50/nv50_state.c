@@ -7,23 +7,6 @@
 #include "nv50_state.h"
 
 static void *
-nv50_alpha_test_state_create(struct pipe_context *pipe,
-			     const struct pipe_alpha_test_state *cso)
-{
-	return NULL;
-}
-
-static void
-nv50_alpha_test_state_bind(struct pipe_context *pipe, void *hwcso)
-{
-}
-
-static void
-nv50_alpha_test_state_delete(struct pipe_context *pipe, void *hwcso)
-{
-}
-
-static void *
 nv50_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
@@ -82,19 +65,19 @@ nv50_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void *
-nv50_depth_stencil_state_create(struct pipe_context *pipe,
-				const struct pipe_depth_stencil_state *cso)
+nv50_depth_stencil_alpha_state_create(struct pipe_context *pipe,
+			const struct pipe_depth_stencil_alpha_state *cso)
 {
 	return NULL;
 }
 
 static void
-nv50_depth_stencil_state_bind(struct pipe_context *pipe, void *hwcso)
+nv50_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 }
 
 static void
-nv50_depth_stencil_state_delete(struct pipe_context *pipe, void *hwcso)
+nv50_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
 }
 
@@ -187,10 +170,6 @@ nv50_set_vertex_element(struct pipe_context *pipe, unsigned index,
 void
 nv50_init_state_functions(struct nv50_context *nv50)
 {
-	nv50->pipe.create_alpha_test_state = nv50_alpha_test_state_create;
-	nv50->pipe.bind_alpha_test_state = nv50_alpha_test_state_bind;
-	nv50->pipe.delete_alpha_test_state = nv50_alpha_test_state_delete;
-
 	nv50->pipe.create_blend_state = nv50_blend_state_create;
 	nv50->pipe.bind_blend_state = nv50_blend_state_bind;
 	nv50->pipe.delete_blend_state = nv50_blend_state_delete;
@@ -204,9 +183,12 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;
 	nv50->pipe.delete_rasterizer_state = nv50_rasterizer_state_delete;
 
-	nv50->pipe.create_depth_stencil_state = nv50_depth_stencil_state_create;
-	nv50->pipe.bind_depth_stencil_state = nv50_depth_stencil_state_bind;
-	nv50->pipe.delete_depth_stencil_state = nv50_depth_stencil_state_delete;
+	nv50->pipe.create_depth_stencil_alpha_state =
+		nv50_depth_stencil_alpha_state_create;
+	nv50->pipe.bind_depth_stencil_alpha_state =
+		nv50_depth_stencil_alpha_state_bind;
+	nv50->pipe.delete_depth_stencil_alpha_state =
+		nv50_depth_stencil_alpha_state_delete;
 
 	nv50->pipe.create_vs_state = nv50_vp_state_create;
 	nv50->pipe.bind_vs_state = nv50_vp_state_bind;

@@ -31,155 +31,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
-
-
-#define CLIP_TILE \
-   do { \
-      if (x >= ps->width) \
-         return; \
-      if (y >= ps->height) \
-         return; \
-      if (x + w > ps->width) \
-         w = ps->width - x; \
-      if (y + h > ps->height) \
-         h = ps->height -y; \
-   } while(0)
-
-
-/**
- * Note: this is exactly like a8r8g8b8_get_tile() in sp_surface.c
- * Share it someday.
- */
-static void
-nv50_get_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
-                   uint x, uint y, uint w, uint h, float *p)
-{
-   const unsigned *src
-      = ((const unsigned *) (ps->map + ps->offset))
-      + y * ps->pitch + x;
-   unsigned i, j;
-   unsigned w0 = w;
-
-   CLIP_TILE;
-
-   switch (ps->format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      for (i = 0; i < h; i++) {
-         float *pRow = p;
-         for (j = 0; j < w; j++) {
-            const unsigned pixel = src[j];
-            pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
-            pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
-            pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
-            pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
-            pRow += 4;
-         }
-         src += ps->pitch;
-         p += w0 * 4;
-      }
-      break;
-   case PIPE_FORMAT_Z24S8_UNORM:
-      {
-         const float scale = 1.0 / (float) 0xffffff;
-         for (i = 0; i < h; i++) {
-            float *pRow = p;
-            for (j = 0; j < w; j++) {
-               const unsigned pixel = src[j];
-               pRow[0] =
-               pRow[1] =
-               pRow[2] =
-               pRow[3] = ((pixel & 0xffffff) >> 8) * scale;
-               pRow += 4;
-            }
-            src += ps->pitch;
-            p += w0 * 4;
-         }
-      }
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
-static void
-nv50_put_tile_rgba(struct pipe_context *pipe,
-                   struct pipe_surface *ps,
-                   uint x, uint y, uint w, uint h, const float *p)
-{
-   /* TODO */
-   assert(0);
-}
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static void
-nv50_get_tile(struct pipe_context *pipe,
-              struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h,
-              void *p, int dst_stride)
-{
-   const uint cpp = ps->cpp;
-   const uint w0 = w;
-   const ubyte *pSrc;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   CLIP_TILE;
-
-   if (dst_stride == 0) {
-      dst_stride = w0 * cpp;
-   }
-
-   pSrc = ps->map + ps->offset + (y * ps->pitch + x) * cpp;
-   pDest = (ubyte *) p;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
-      pDest += dst_stride;
-      pSrc += ps->pitch * cpp;
-   }
-}
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static void
-nv50_put_tile(struct pipe_context *pipe,
-              struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h,
-              const void *p, int src_stride)
-{
-   const uint cpp = ps->cpp;
-   const uint w0 = w;
-   const ubyte *pSrc;
-   ubyte *pDest;
-   uint i;
-
-   assert(ps->map);
-
-   CLIP_TILE;
-
-   if (src_stride == 0) {
-      src_stride = w0 * cpp;
-   }
-
-   pSrc = (const ubyte *) p;
-   pDest = ps->map + ps->offset + (y * ps->pitch + x) * cpp;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
-      pDest += ps->pitch * cpp;
-      pSrc += src_stride;
-   }
-}
-
+#include "pipe/util/p_tile.h"
 
 static struct pipe_surface *
 nv50_get_tex_surface(struct pipe_context *pipe,
@@ -230,10 +82,10 @@ void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
    nv50->pipe.get_tex_surface = nv50_get_tex_surface;
-   nv50->pipe.get_tile = nv50_get_tile;
-   nv50->pipe.put_tile = nv50_put_tile;
-   nv50->pipe.get_tile_rgba = nv50_get_tile_rgba;
-   nv50->pipe.put_tile_rgba = nv50_put_tile_rgba;
+   nv50->pipe.get_tile = pipe_get_tile_raw;
+   nv50->pipe.put_tile = pipe_put_tile_raw;
+   nv50->pipe.get_tile_rgba = pipe_get_tile_rgba;
+   nv50->pipe.put_tile_rgba = pipe_put_tile_rgba;
    nv50->pipe.surface_data = nv50_surface_data;
    nv50->pipe.surface_copy = nv50_surface_copy;
    nv50->pipe.surface_fill = nv50_surface_fill;
