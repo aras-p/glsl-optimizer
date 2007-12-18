@@ -1020,20 +1020,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
    }
 
-   /**
-    ** Release old regions, reference new regions
-    **/
-#if 0                           /* XXX FBO: this seems to be redundant with i915_state_draw_region() */
-   if (intel->draw_region != colorRegion) {
-      intel_region_release(&intel->draw_region);
-      intel_region_reference(&intel->draw_region, colorRegion);
-   }
-   if (intel->intelScreen->depth_region != depthRegion) {
-      intel_region_release(&intel->intelScreen->depth_region);
-      intel_region_reference(&intel->intelScreen->depth_region, depthRegion);
-   }
-#endif
-
    intel->vtbl.set_draw_region(intel, colorRegion, depthRegion);
 
    /* update viewport since it depends on window size */
