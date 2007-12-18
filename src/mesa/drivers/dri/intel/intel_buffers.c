@@ -59,6 +59,7 @@ typedef struct drm_i915_flip {
 
 #endif
 
+#define FILE_DEBUG_FLAG DEBUG_BLIT
 
 /**
  * XXX move this into a new dri/common/cliprects.c file.
@@ -389,9 +390,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint buf;
 
-   if (INTEL_DEBUG & DEBUG_BLIT)
-      _mesa_printf("%s 0x%x\n", __FUNCTION__, mask);
-
    intel->vtbl.install_meta_state(intel);
 
    /* Back and stencil cliprects are the same.  Try and do both
@@ -470,6 +468,28 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
    intel_batchbuffer_flush(intel->batch);
 }
 
+static const char *buffer_names[] = {
+   [BUFFER_FRONT_LEFT] = "front",
+   [BUFFER_BACK_LEFT] = "back",
+   [BUFFER_FRONT_RIGHT] = "front right",
+   [BUFFER_BACK_RIGHT] = "back right",
+   [BUFFER_AUX0] = "aux0",
+   [BUFFER_AUX1] = "aux1",
+   [BUFFER_AUX2] = "aux2",
+   [BUFFER_AUX3] = "aux3",
+   [BUFFER_DEPTH] = "depth",
+   [BUFFER_STENCIL] = "stencil",
+   [BUFFER_ACCUM] = "accum",
+   [BUFFER_COLOR0] = "color0",
+   [BUFFER_COLOR1] = "color1",
+   [BUFFER_COLOR2] = "color2",
+   [BUFFER_COLOR3] = "color3",
+   [BUFFER_COLOR4] = "color4",
+   [BUFFER_COLOR5] = "color5",
+   [BUFFER_COLOR6] = "color6",
+   [BUFFER_COLOR7] = "color7",
+};
+
 /**
  * Called by ctx->Driver.Clear.
  */
@@ -538,17 +558,43 @@ intelClear(GLcontext *ctx, GLbitfield mask)
       }
    }
 
-
    intelFlush(ctx);             /* XXX intelClearWithBlit also does this */
 
-   if (blit_mask)
+   if (blit_mask) {
+      if (INTEL_DEBUG & DEBUG_BLIT) {
+	 DBG("blit clear:");
+	 for (i = 0; i < BUFFER_COUNT; i++) {
+	    if (blit_mask & (1 << i))
+	       DBG(" %s", buffer_names[i]);
+	 }
+	 DBG("\n");
+      }
       intelClearWithBlit(ctx, blit_mask);
+   }
 
-   if (tri_mask)
+   if (tri_mask) {
+      if (INTEL_DEBUG & DEBUG_BLIT) {
+	 DBG("tri clear:");
+	 for (i = 0; i < BUFFER_COUNT; i++) {
+	    if (tri_mask & (1 << i))
+	       DBG(" %s", buffer_names[i]);
+	 }
+	 DBG("\n");
+      }
       intelClearWithTris(intel, tri_mask);
+   }
 
-   if (swrast_mask)
+   if (swrast_mask) {
+      if (INTEL_DEBUG & DEBUG_BLIT) {
+	 DBG("swrast clear:");
+	 for (i = 0; i < BUFFER_COUNT; i++) {
+	    if (swrast_mask & (1 << i))
+	       DBG(" %s", buffer_names[i]);
+	 }
+	 DBG("\n");
+      }
       _swrast_Clear(ctx, swrast_mask);
+   }
 }
 
 
