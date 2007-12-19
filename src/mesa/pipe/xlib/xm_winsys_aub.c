@@ -596,6 +596,14 @@ static void aub_i965_buffer_subdata_typed(struct brw_winsys *winsys,
       aub_type = DW_SURFACE_STATE;
       aub_sub_type = DWSS_BINDING_TABLE_STATE; 
       break;
+   case BRW_CONSTANT_BUFFER:
+      aub_type = DW_CONSTANT_URB_ENTRY;
+      aub_sub_type = 0; 
+      break;
+
+   default:
+      assert(0);
+      break;
    }
 
    xmesa_buffer_subdata_aub( iws->pipe_winsys,
