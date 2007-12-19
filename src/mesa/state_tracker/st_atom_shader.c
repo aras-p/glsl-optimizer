@@ -228,12 +228,17 @@ find_translated_vp(struct st_context *st,
                xvp->output_to_slot[outAttr] = vpOutSlot;
                numVpOuts++;
             }
-            else if (outAttr == VERT_RESULT_BFC0 ||
+            else if (outAttr == VERT_RESULT_PSIZ ||
+                     outAttr == VERT_RESULT_BFC0 ||
                      outAttr == VERT_RESULT_BFC1) {
                /* backface colors go into last slots */
                xvp->output_to_slot[outAttr] = numVpOuts++;
             }
          }
+         /*
+         printf("output_to_slot[%d] = %d\n", outAttr, 
+                xvp->output_to_slot[outAttr]);
+         */
       }
 
       /* Unneeded vertex program outputs will go to this slot.
