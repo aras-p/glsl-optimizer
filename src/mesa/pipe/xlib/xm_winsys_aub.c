@@ -35,9 +35,9 @@
 
 #include "glxheader.h"
 #include "xmesaP.h"
-#include "main/macros.h"
 
 #include "pipe/p_winsys.h"
+#include "pipe/p_util.h"
 #include "pipe/i965simple/brw_winsys.h"
 #include "brw_aub.h"
 #include "xm_winsys_aub.h"
@@ -159,7 +159,7 @@ static int aub_buffer_data(struct pipe_winsys *winsys,
       assert(iws->used + size < iws->size);
       sbo->data = iws->pool + iws->used;
       sbo->offset = AUB_BUF_START + iws->used;
-      iws->used += size;
+      iws->used += align(size, 4096);
    }
 
    sbo->size = size;
@@ -235,7 +235,7 @@ void xmesa_commands_aub(struct pipe_winsys *winsys,
 		     cmds,
 		     nr_dwords * sizeof(int) );
 
-   iws->used += size;
+   iws->used += align(size, 4096);
 }
 
 
