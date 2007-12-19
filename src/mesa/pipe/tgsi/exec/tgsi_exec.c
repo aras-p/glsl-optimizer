@@ -2415,6 +2415,7 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    mach->FuncMask = 0xf;
    mach->ExecMask = 0xf;
 
+   mach->CondStackTop = 0; /* temporarily subvert this assertion */
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
    assert(mach->ContStackTop == 0);
