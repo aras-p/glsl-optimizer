@@ -254,12 +254,13 @@ static void upload_constant_buffer(struct brw_context *brw)
       /* map the vertex constant buffer and copy to curbe: */
       ws->buffer_map(ws, cbuffer->buffer, 0);
       ws->buffer_get_subdata(ws, cbuffer->buffer,
-                             0, cbuffer->size,
+                             0, 
+			     cbuffer->size,
                              &buf[offset]);
       ws->buffer_unmap(ws, cbuffer->buffer);
    }
 
-   if (0) {
+   if (1) {
       for (i = 0; i < sz*16; i+=4)
 	 _mesa_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
