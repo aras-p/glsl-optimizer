@@ -911,6 +911,9 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
       colorRegion = NULL;
+
+      if (fb->Name != 0)
+	 intelSetRenderbufferClipRects(intel);
    }
    else {
       /* draw to exactly one color buffer */
