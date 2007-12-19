@@ -226,10 +226,16 @@ void xmesa_commands_aub(struct pipe_winsys *winsys,
 			unsigned nr_dwords)
 {
    struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
+   unsigned size = nr_dwords * 4;
+
+   assert(iws->used + size < iws->size);
+
    brw_aub_gtt_cmds( iws->aubfile, 
-		     0,		/* ?? */
+		     AUB_BUF_START + iws->used,
 		     cmds,
 		     nr_dwords * sizeof(int) );
+
+   iws->used += size;
 }
 
 
