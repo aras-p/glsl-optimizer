@@ -43,7 +43,6 @@
  */
 const struct brw_tracked_state *atoms[] =
 {
-   &brw_wm_input_sizes,
    &brw_vs_prog,
    &brw_gs_prog,
    &brw_clip_prog,
@@ -84,8 +83,6 @@ const struct brw_tracked_state *atoms[] =
    &brw_depthbuffer,
 
    &brw_polygon_stipple,
-   &brw_polygon_stipple_offset,
-
    &brw_line_stipple,
 
    &brw_psp_urb_cbs,
@@ -191,6 +188,10 @@ void brw_validate_state( struct brw_context *brw )
    else {
       for (i = 0; i < Elements(atoms); i++) {
 	 const struct brw_tracked_state *atom = atoms[i];
+
+	 assert(atom->dirty.brw ||
+		atom->dirty.cache);
+	 assert(atom->update);
 
 	 if (check_state(state, &atom->dirty))
 	    atom->update( brw );

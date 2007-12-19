@@ -42,7 +42,7 @@
  * Blend color
  */
 
-void brw_upload_blend_constant_color(struct brw_context *brw)
+static void upload_blend_constant_color(struct brw_context *brw)
 {
    struct brw_blend_constant_color bcc;
 
@@ -57,6 +57,19 @@ void brw_upload_blend_constant_color(struct brw_context *brw)
    BRW_CACHED_BATCH_STRUCT(brw, &bcc);
 }
 
+
+const struct brw_tracked_state brw_blend_constant_color = {
+   .dirty = {
+      .brw = BRW_NEW_BLEND,
+      .cache = 0
+   },
+   .update = upload_blend_constant_color
+};
+
+
+/***********************************************************************
+ * Drawing rectangle 
+ */
 static void upload_drawing_rect(struct brw_context *brw)
 {
    struct brw_drawrect bdr;
@@ -243,7 +256,7 @@ static void upload_depthbuffer(struct brw_context *brw)
 
 const struct brw_tracked_state brw_depthbuffer = {
    .dirty = {
-      .brw = 0,
+      .brw = BRW_NEW_SCENE,
       .cache = 0
    },
    .update = upload_depthbuffer,
@@ -251,50 +264,43 @@ const struct brw_tracked_state brw_depthbuffer = {
 
 
 
-/***********************************************************************
- * Polygon stipple offset packet
- */
-
-static void upload_polygon_stipple_offset(struct brw_context *brw)
-{
-   struct brw_polygon_stipple_offset bpso;
-
-   memset(&bpso, 0, sizeof(bpso));
-   bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
-   bpso.header.length = sizeof(bpso)/4-2;
-
-   bpso.bits0.x_offset = 0;
-   bpso.bits0.y_offset = 0;
-
-   BRW_CACHED_BATCH_STRUCT(brw, &bpso);
-}
 
 /***********************************************************************
  * Polygon stipple packet
  */
 
-void brw_upload_polygon_stipple(struct brw_context *brw)
+static void upload_polygon_stipple(struct brw_context *brw)
 {
    struct brw_polygon_stipple bps;
    unsigned i;
 
-   /*update the offset at the same time it will always be 0*/
-   upload_polygon_stipple_offset(brw);
    memset(&bps, 0, sizeof(bps));
    bps.header.opcode = CMD_POLY_STIPPLE_PATTERN;
    bps.header.length = sizeof(bps)/4-2;
 
-   for (i = 0; i < 32; i++)
-      bps.stipple[i] = brw->attribs.PolygonStipple->stipple[31 - i]; /* invert */
+   /* XXX: state tracker should send *all* state down initially!
+    */
+   if (brw->attribs.PolygonStipple)
+      for (i = 0; i < 32; i++)
+	 bps.stipple[i] = brw->attribs.PolygonStipple->stipple[31 - i]; /* invert */
 
    BRW_CACHED_BATCH_STRUCT(brw, &bps);
 }
+
+const struct brw_tracked_state brw_polygon_stipple = {
+   .dirty = {
+      .brw = BRW_NEW_STIPPLE,
+      .cache = 0
+   },
+   .update = upload_polygon_stipple
+};
+
 
 /***********************************************************************
  * Line stipple packet
  */
 
-void brw_upload_line_stipple(struct brw_context *brw)
+static void upload_line_stipple(struct brw_context *brw)
 {
    struct brw_line_stipple bls;
    float tmp;
@@ -315,6 +321,14 @@ void brw_upload_line_stipple(struct brw_context *brw)
 
    BRW_CACHED_BATCH_STRUCT(brw, &bls);
 }
+
+const struct brw_tracked_state brw_line_stipple = {
+   .dirty = {
+      .brw = BRW_NEW_STIPPLE,
+      .cache = 0
+   },
+   .update = upload_line_stipple
+};
 
 
 /***********************************************************************
@@ -355,6 +369,15 @@ const struct brw_tracked_state brw_pipe_control = {
 
 static void upload_invarient_state( struct brw_context *brw )
 {
+   {
+      struct brw_mi_flush flush;
+
+      memset(&flush, 0, sizeof(flush));      
+      flush.opcode = CMD_MI_FLUSH;
+      flush.flags = BRW_FLUSH_STATE_CACHE | BRW_FLUSH_READ_CACHE;
+      BRW_BATCH_STRUCT(brw, &flush);
+   }
+
    {
       /* 0x61040000  Pipeline Select */
       /*     PipelineSelect            : 0 */
@@ -402,6 +425,19 @@ static void upload_invarient_state( struct brw_context *brw )
 	 vfs.statistics_enable = 1;
 
       BRW_BATCH_STRUCT(brw, &vfs);
+   }
+
+   
+   {
+      struct brw_polygon_stipple_offset bpso;
+      
+      memset(&bpso, 0, sizeof(bpso));
+      bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
+      bpso.header.length = sizeof(bpso)/4-2;      
+      bpso.bits0.x_offset = 0;
+      bpso.bits0.y_offset = 0;
+
+      BRW_BATCH_STRUCT(brw, &bpso);
    }
 }
 
