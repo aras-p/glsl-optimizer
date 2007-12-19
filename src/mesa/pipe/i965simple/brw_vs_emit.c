@@ -117,9 +117,14 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
          mrf++;
       }
 #else
-      /* for now stuff everything in grf */
-      c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
-      reg++;
+      /*treat pos differently for now */
+      if (i == info->pos_idx) {
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
+         reg++;
+      } else {
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_message_reg(mrf);
+         mrf++;
+      }
 #endif
    }
 
