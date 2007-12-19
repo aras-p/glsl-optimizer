@@ -235,28 +235,18 @@ static void upload_wm_surfaces(struct brw_context *brw )
    }
 
 
+   /* BRW_NEW_TEXTURE
+    */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct brw_texture *texUnit = brw->attribs.Texture[i];
-      if (texUnit == NULL)
-	 continue;
 
-
-      /* BRW_NEW_TEXTURE
-       */
-      if (texUnit->base.refcount/*(texUnit->refcount > 0) == really used */) {
+      if (texUnit &&
+	  texUnit->base.refcount/*(texUnit->refcount > 0) == really used */) {
 
 	 brw_update_texture_surface(brw, i);
 
 	 brw->wm.nr_surfaces = i+2;
       }
-#if 0
-      else if( texUnit->refcount &&
-	       texUnit->_Current == intel->frame_buffer_texobj )
-      {
-	 brw->wm.bind.surf_ss_offset[i+1] = brw->wm.bind.surf_ss_offset[0];
-	 brw->wm.nr_surfaces = i+2;
-      }
-#endif
       else {
 	 brw->wm.bind.surf_ss_offset[i+1] = 0;
       }
