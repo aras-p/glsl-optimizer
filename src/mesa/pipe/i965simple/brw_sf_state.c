@@ -133,7 +133,7 @@ static void upload_sf_unit( struct brw_context *brw )
    else
       sf.sf6.cull_mode = BRW_CULLMODE_NONE;
 #else
-   sf.sf5.front_winding = BRW_FRONTWINDING_CW;
+   sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
    sf.sf6.cull_mode = BRW_CULLMODE_NONE;
 #endif
 
@@ -149,7 +149,7 @@ static void upload_sf_unit( struct brw_context *brw )
 
    sf.sf7.sprite_point = brw->attribs.Raster->point_sprite;
    sf.sf7.point_size = CLAMP(brw->attribs.Raster->line_width, 1.0, 255.0) * (1<<3);
-   sf.sf7.use_point_size_state = brw->attribs.Raster->point_size_per_vertex;
+   sf.sf7.use_point_size_state = !brw->attribs.Raster->point_size_per_vertex;
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */
