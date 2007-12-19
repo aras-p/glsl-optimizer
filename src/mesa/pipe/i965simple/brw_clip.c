@@ -154,6 +154,8 @@ static void upload_clip_prog(struct brw_context *brw)
    key.do_flat_shading = (brw->attribs.Raster->flatshade);
    /* BRW_NEW_CLIP */
    key.nr_userclip = brw->attribs.Clip.nr; /* XXX */
+
+#if 0
    key.clip_mode = BRW_CLIPMODE_NORMAL;
 
    if (key.primitive == PIPE_PRIM_TRIANGLES) {
@@ -185,6 +187,9 @@ static void upload_clip_prog(struct brw_context *brw)
 	 }
       }
    }
+#else
+   key.clip_mode = BRW_CLIPMODE_ACCEPT_ALL;
+#endif
 
    if (!search_cache(brw, &key))
       compile_clip_prog( brw, &key );
