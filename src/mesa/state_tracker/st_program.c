@@ -167,6 +167,7 @@ st_translate_vertex_program(struct st_context *st,
 
          switch (attr) {
          case VERT_RESULT_HPOS:
+            assert(slot == 0);
             vs.output_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
             vs.output_semantic_index[slot] = 0;
             break;
@@ -217,6 +218,8 @@ st_translate_vertex_program(struct st_context *st,
          }
       }
    }
+
+   assert(vs.output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
 
 
    if (outputMapping) {
