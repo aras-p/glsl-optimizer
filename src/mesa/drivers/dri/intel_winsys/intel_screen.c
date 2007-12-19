@@ -297,10 +297,12 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else
          stencilFormat = PIPE_FORMAT_NONE;
 
-      intelfb->stfb = st_create_framebuffer(visual, GL_TRUE,
+      intelfb->stfb = st_create_framebuffer(visual,
                                             colorFormat,
                                             depthFormat,
                                             stencilFormat,
+                                            driDrawPriv->w,
+                                            driDrawPriv->h,
                                             (void*) intelfb);
       if (!intelfb->stfb) {
          free(intelfb);

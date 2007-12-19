@@ -191,6 +191,7 @@ struct st_framebuffer
 {
    GLframebuffer Base;
    void *Private;
+   GLuint InitWidth, InitHeight;
 };
 
 

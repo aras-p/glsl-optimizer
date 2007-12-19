@@ -207,7 +207,7 @@ static GLboolean window_exists( XMesaDisplay *dpy, Window win )
 }
 
 static Status
-get_drawable_size( XMesaDisplay *dpy, Drawable d, GLuint *width, GLuint *height )
+get_drawable_size( XMesaDisplay *dpy, Drawable d, uint *width, uint *height )
 {
    Window root;
    Status stat;
@@ -323,6 +323,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    XMesaBuffer b;
    GLframebuffer *fb;
    enum pipe_format colorFormat, depthFormat, stencilFormat;
+   uint width, height;
 
    ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
 
@@ -359,11 +360,14 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    }
 
 
+   get_drawable_size(vis->display, d, &width, &height);
+
    /*
     * Create framebuffer, but we'll plug in our own renderbuffers below.
     */
-   b->stfb = st_create_framebuffer(&vis->mesa_visual, GL_TRUE,
+   b->stfb = st_create_framebuffer(&vis->mesa_visual,
                                    colorFormat, depthFormat, stencilFormat,
+                                   width, height,
                                    (void *) b);
    fb = &b->stfb->Base;
 
