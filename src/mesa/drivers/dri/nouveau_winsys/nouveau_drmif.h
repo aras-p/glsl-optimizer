@@ -161,12 +161,6 @@ struct nouveau_channel_priv {
 
 	struct drm_nouveau_channel_alloc drm;
 
-	struct {
-		struct nouveau_grobj *grobj;
-		uint32_t seq;
-	} subchannel[8];
-	uint32_t subc_sequence;
-
 	uint32_t *pushbuf;
 	void     *notifier_block;
 

@@ -94,12 +94,6 @@ nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	int push_size = size + 1;
 
-#ifdef NOUVEAU_DMA_SUBCHAN_LRU
-	if (grobj->bound == NOUVEAU_GROBJ_UNBOUND)
-		nouveau_dma_subc_bind(grobj);
-	nvchan->subchannel[grobj->subc].seq = nvchan->subc_sequence++;
-#endif
-
 #ifdef NOUVEAU_DMA_TRACE
 	NOUVEAU_MSG("BEGIN_RING %d/%08x/%d/0x%04x/%d\n", nvchan->drm.channel,
 		    grobj->handle, grobj->subc, method, size);
@@ -128,26 +122,6 @@ nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 	nouveau_dma_out(chan, (size << 18) | (grobj->subc << 13) | method);
 }
 
-static inline void
-nouveau_dma_bind(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
-		 int subc)
-{
-	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-
-	if (nvchan->subchannel[subc].grobj == grobj)
-		return;
-
-	if (nvchan->subchannel[subc].grobj)
-		nvchan->subchannel[subc].grobj->bound = NOUVEAU_GROBJ_UNBOUND;
-	nvchan->subchannel[subc].grobj = grobj;
-	grobj->subc  = subc;
-	grobj->bound = NOUVEAU_GROBJ_EXPLICIT_BIND;
-
-	nouveau_dma_begin(chan, grobj, 0x0000, 1, __FUNCTION__, __LINE__);
-	nouveau_dma_out  (chan, grobj->handle);
-}
-
-#define BIND_RING_CH(ch,gr,sc)       nouveau_dma_bind((ch), (gr), (sc))
 #define BEGIN_RING_CH(ch,gr,m,sz)    nouveau_dma_begin((ch), (gr), (m), (sz), __FUNCTION__, __LINE__ )
 #define OUT_RING_CH(ch, data)        nouveau_dma_out((ch), (data))
 #define OUT_RINGp_CH(ch,ptr,dwords)  nouveau_dma_outp((ch), (void*)(ptr),      \

@@ -178,6 +178,7 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 		NOUVEAU_ERR("Error creating m2mf object: %d\n", ret);
 		return 1;
 	}
+	BIND_RING (NvM2MF, nv->next_subchannel++);
 	BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
 
@@ -188,6 +189,7 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 		NOUVEAU_ERR("Error creating 2D surface object: %d\n", ret);
 		return 1;
 	}
+	BIND_RING (NvCtxSurf2D, nv->next_subchannel++);
 	BEGIN_RING(NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D_DMA_IMAGE_SOURCE, 2);
 	OUT_RING  (nv->channel->vram->handle);
 	OUT_RING  (nv->channel->vram->handle);
@@ -199,6 +201,7 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 		NOUVEAU_ERR("Error creating blit object: %d\n", ret);
 		return 1;
 	}
+	BIND_RING (NvImageBlit, nv->next_subchannel++);
 	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
 	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_SURFACE, 1);
@@ -212,6 +215,7 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 		NOUVEAU_ERR("Error creating rect object: %d\n", ret);
 		return 1;
 	}
+	BIND_RING (NvGdiRect, nv->next_subchannel++);
 	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
 	BEGIN_RING(NvGdiRect, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);

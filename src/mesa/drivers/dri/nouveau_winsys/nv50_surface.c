@@ -151,7 +151,7 @@ nouveau_surface_init_nv50(struct nouveau_context *nv)
 				  &nv->Nv2D);
 	if (ret)
 		return ret;
-
+	BIND_RING (Nv2D, 0);
 	BEGIN_RING(Nv2D, NV50_2D_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
 	BEGIN_RING(Nv2D, NV50_2D_DMA_IN_MEMORY0, 2);

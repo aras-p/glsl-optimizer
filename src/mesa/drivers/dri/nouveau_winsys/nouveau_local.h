@@ -20,13 +20,16 @@
 //#define NOUVEAU_DMA_TRACE
 //#define NOUVEAU_DMA_DEBUG
 //#define NOUVEAU_DMA_DUMP_POSTRELOC_PUSHBUF
-#define NOUVEAU_DMA_SUBCHAN_LRU
 #define NOUVEAU_DMA_BARRIER 
 #define NOUVEAU_DMA_TIMEOUT 2000
 
 /* Push buffer access macros */
 #define BEGIN_RING(obj,mthd,size) do {                                         \
 	nv->pushbuf = nouveau_pipe_dma_beginp(nv->obj, (mthd), (size));        \
+} while(0)
+
+#define BEGIN_RING_GR(obj,mthd,size) do {                                      \
+	nv->pushbuf = nouveau_pipe_dma_beginp(obj, (mthd), (size));            \
 } while(0)
 
 #define OUT_RING(data) do {                                                    \
@@ -46,6 +49,12 @@
 
 #define FIRE_RING() do {                                                       \
 	nouveau_pipe_dma_kickoff(nv->channel);                                 \
+} while(0)
+
+#define BIND_RING(o,s) do {                                                    \
+	nv->o->subc = (s);                                                     \
+	BEGIN_RING(o, 0x0000, 1);                                              \
+	OUT_RING  (nv->o->handle);                                             \
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \

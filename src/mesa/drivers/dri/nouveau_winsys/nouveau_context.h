@@ -54,6 +54,7 @@ struct nouveau_context {
 	struct nouveau_grobj    *NvM2MF;
 	struct nouveau_grobj    *Nv2D;
 	uint32_t                 next_handle;
+	uint32_t                 next_subchannel;
 	uint32_t                 next_sequence;
 
 	/* pipe_surface accel */

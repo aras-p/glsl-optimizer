@@ -20,9 +20,18 @@ nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 			 struct nouveau_grobj **grobj)
 {
 	struct nouveau_context *nv = nvws->nv;
+	int ret;
 
-	return nouveau_grobj_alloc(nv->channel, nv->next_handle++,
-				   grclass, grobj);
+	ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++,
+				  grclass, grobj);
+	if (ret)
+		return ret;
+
+	(*grobj)->subc = nv->next_subchannel++;
+	assert((*grobj)->subc <= 7);
+	BEGIN_RING_GR(*grobj, 0x0000, 1);
+	OUT_RING     ((*grobj)->handle);
+	return 0;
 }
 
 uint32_t *
@@ -33,10 +42,6 @@ nouveau_pipe_dma_beginp(struct nouveau_grobj *grobj, int mthd, int size)
 
 	if (!nvchan->pb_tail || nvchan->pb_tail->remaining < (size + 1))
 		nouveau_pushbuf_flush(grobj->channel);
-
-	if (grobj->bound == NOUVEAU_GROBJ_UNBOUND)
-		nouveau_dma_subc_bind(grobj);
-	nvchan->subchannel[grobj->subc].seq = nvchan->subc_sequence++;
 
 	pushbuf = nvchan->pb_tail->cur;
 	nvchan->pb_tail->cur += (size + 1);

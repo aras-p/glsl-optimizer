@@ -126,34 +126,6 @@ nouveau_dma_wait(struct nouveau_channel *chan, int size)
 	return 0;
 }
 
-#ifdef NOUVEAU_DMA_SUBCHAN_LRU
-void
-nouveau_dma_subc_bind(struct nouveau_grobj *grobj)
-{
-	struct nouveau_channel_priv *nvchan = nouveau_channel(grobj->channel);
-	int subc = -1, i;
-	
-	for (i = 0; i < 8; i++) {
-		if (nvchan->subchannel[i].grobj &&
-		    nvchan->subchannel[i].grobj->bound == 
-		    NOUVEAU_GROBJ_EXPLICIT_BIND)
-			continue;
-		if (nvchan->subchannel[i].seq < nvchan->subchannel[subc].seq)
-			subc = i;
-	}
-	assert(subc >= 0);
-
-	if (nvchan->subchannel[subc].grobj)
-		nvchan->subchannel[subc].grobj->bound = 0;
-	nvchan->subchannel[subc].grobj = grobj;
-	grobj->subc  = subc;
-	grobj->bound = NOUVEAU_GROBJ_BOUND;
-
-	BEGIN_RING_CH(grobj->channel, grobj, 0, 1);
-	nouveau_dma_out  (grobj->channel, grobj->handle);
-}
-#endif
-
 #ifdef NOUVEAU_DMA_DUMP_POSTRELOC_PUSHBUF
 static void
 nouveau_dma_parse_pushbuf(struct nouveau_channel *chan, int get, int put)
