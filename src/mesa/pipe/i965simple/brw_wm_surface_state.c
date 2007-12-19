@@ -221,10 +221,10 @@ static void upload_wm_surfaces(struct brw_context *brw )
 			      brw->attribs.Blend->blend_enable);
 
 
-      surf.ss0.writedisable_red =   !brw->attribs.BlendColor.color[0];
-      surf.ss0.writedisable_green = !brw->attribs.BlendColor.color[1];
-      surf.ss0.writedisable_blue =  !brw->attribs.BlendColor.color[2];
-      surf.ss0.writedisable_alpha = !brw->attribs.BlendColor.color[3];
+      surf.ss0.writedisable_red =   !(brw->attribs.Blend->colormask & PIPE_MASK_R);
+      surf.ss0.writedisable_green = !(brw->attribs.Blend->colormask & PIPE_MASK_G);
+      surf.ss0.writedisable_blue =  !(brw->attribs.Blend->colormask & PIPE_MASK_B);
+      surf.ss0.writedisable_alpha = !(brw->attribs.Blend->colormask & PIPE_MASK_A);
 
 
 
