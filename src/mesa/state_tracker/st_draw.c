@@ -287,7 +287,7 @@ st_draw_vbo(GLcontext *ctx,
 
       /* common-case setup */
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
-      vbuffer[attr].max_index = 0;  /* need this? */
+      vbuffer[attr].max_index = max_index;
       velement.vertex_buffer_index = attr;
       velement.nr_components = arrays[mesaAttr]->Size;
       velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
@@ -545,7 +545,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
       /* common-case setup */
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
-      vbuffer[attr].max_index = 0;  /* need this? */
+      vbuffer[attr].max_index = max_index;
       velement.vertex_buffer_index = attr;
       velement.nr_components = arrays[mesaAttr]->Size;
       velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
