@@ -9,7 +9,7 @@
 static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
 {
    c->tmp_index++;
-   c->reg_index = MAX2(c->reg_index, c->tmp_index);
+   c->reg_index = MAX2(c->reg_index, c->tmp_start + c->tmp_index);
    return brw_vec8_grf(c->tmp_start + c->tmp_index, 0);
 }
 
