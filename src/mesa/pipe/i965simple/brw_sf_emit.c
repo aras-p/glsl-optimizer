@@ -148,7 +148,7 @@ static boolean calculate_masks( struct brw_sf_compile *c,
 
    /* Maybe only processs one attribute on the final round:
     */
-   if (reg*2+1 < c->nr_setup_attrs) {
+   if (1 || reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
 //      if (persp_mask & (1 << c->idx_to_attr[reg*2+1]))
