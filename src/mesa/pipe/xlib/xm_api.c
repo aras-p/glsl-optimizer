@@ -1067,11 +1067,11 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
        */
       _glapi_check_multithread();
 
+      st_make_current(c->st, drawBuffer->stfb, readBuffer->stfb);
+
       xmesa_check_and_update_buffer_size(c, drawBuffer);
       if (readBuffer != drawBuffer)
          xmesa_check_and_update_buffer_size(c, readBuffer);
-
-      st_make_current(c->st, drawBuffer->stfb, readBuffer->stfb);
 
       /* Solution to Stephane Rehel's problem with glXReleaseBuffersMESA(): */
       drawBuffer->wasCurrent = GL_TRUE;
