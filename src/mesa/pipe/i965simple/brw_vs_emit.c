@@ -74,25 +74,23 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
 
    /* Vertex program parameters from curbe:
     */
+#if 0
    nr_params = c->vp->program.num_inputs; /*FIXME: i think this is wrong... */
    for (i = 0; i < nr_params; i++) {
-      c->regs[TGSI_FILE_INPUT][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
+      c->regs[TGSI_FILE_INPUT][i] = stride(brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
    }
    reg += (nr_params+1)/2;
-
+#endif
    c->prog_data.curb_read_length = reg - 1;
 
 
 
    /* Allocate input regs:
     */
-   c->nr_inputs = 0;
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
-      if (c->prog_data.inputs_read & (1<<i)) {
-	 c->nr_inputs++;
+   c->nr_inputs = c->vp->program.num_inputs;
+   for (i = 0; i < c->nr_inputs; i++) {
 	 c->regs[TGSI_FILE_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
-      }
    }
 
 
@@ -1061,7 +1059,7 @@ static void process_instruction(struct brw_vs_compile *c,
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
       index = src->SrcRegister.Index;
       file = src->SrcRegister.File;
-      if (file == TGSI_FILE_OUTPUT&&c->output_regs[index].used_in_src)
+      if (file == TGSI_FILE_OUTPUT && c->output_regs[index].used_in_src)
          args[i] = c->output_regs[index].reg;
       else
          args[i] = get_arg(c, &src->SrcRegister);
