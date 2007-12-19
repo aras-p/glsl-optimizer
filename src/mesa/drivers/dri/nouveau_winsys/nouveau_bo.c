@@ -253,20 +253,15 @@ nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	if (!nvbo->drm.size) {
 		nouveau_bo_realloc_gpu(nvbo, flags, nvbo->base.size);
 		nouveau_bo_upload(nvbo);
+		if (!nvbo->user) {
+			free(nvbo->sysmem);
+			nvbo->sysmem = NULL;
+		}
 	} else
 	if (nvbo->user) {
 		nouveau_bo_upload(nvbo);
-	} else
-	if (nvbo->base.map) {
-		nouveau_bo_upload(nvbo);
-		nvbo->sync_hack = 1;
 	}
-
-	if (!nvbo->user && !nvbo->base.map) {
-		free(nvbo->sysmem);
-		nvbo->sysmem = NULL;
-	}
-
+	
 	if (nvbo->fence)
 		nouveau_fence_del(&nvbo->fence);
 	nouveau_fence_ref(fence, &nvbo->fence);

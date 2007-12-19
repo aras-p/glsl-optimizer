@@ -252,7 +252,6 @@ struct nouveau_bo_priv {
 	int user;
 
 	int refcount;
-	int sync_hack;
 };
 #define nouveau_bo(n) ((struct nouveau_bo_priv *)(n))
 

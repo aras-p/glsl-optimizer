@@ -68,7 +68,6 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(nvchan->pb_tail);
 	struct nouveau_pushbuf_bo *pbbo;
 	struct nouveau_fence *fence = NULL;
-	int sync_hack = 0;
 	int ret;
 
 	if (!nvpb)
@@ -89,9 +88,6 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 
 		ret = nouveau_bo_validate(chan, bo, fence, pbbo->flags);
 		assert (ret == 0);
-
-		sync_hack |= nouveau_bo(bo)->sync_hack;
-		nouveau_bo(bo)->sync_hack = 0;
 
 		while ((r = ptr_to_pbrel(pbbo->relocs))) {
 			uint32_t push;
@@ -143,12 +139,6 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 
 	/* Kickoff */
 	FIRE_RING_CH(chan);
-
-	if (sync_hack) {
-		struct nouveau_fence *f = NULL;
-		nouveau_fence_ref(nvpb->fence, &f);
-		nouveau_fence_wait(&f);
-	}
 
 	/* Allocate space for next push buffer */
 out_realloc:
