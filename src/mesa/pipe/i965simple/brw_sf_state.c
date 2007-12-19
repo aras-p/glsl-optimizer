@@ -58,9 +58,9 @@ static void upload_sf_vp(struct brw_context *brw)
 
    /* _NEW_SCISSOR */
    sfv.scissor.xmin = brw->attribs.Scissor.minx;
-   sfv.scissor.xmax = brw->attribs.Scissor.maxx;
+   sfv.scissor.xmax = brw->attribs.Scissor.maxx - 1;
    sfv.scissor.ymin = brw->attribs.Scissor.miny;
-   sfv.scissor.ymax = brw->attribs.Scissor.maxy;
+   sfv.scissor.ymax = brw->attribs.Scissor.maxy - 1;
 
    brw->sf.vp_gs_offset = brw_cache_data( &brw->cache[BRW_SF_VP], &sfv );
 }
