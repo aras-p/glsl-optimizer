@@ -57,6 +57,33 @@ void brw_upload_blend_constant_color(struct brw_context *brw)
    BRW_CACHED_BATCH_STRUCT(brw, &bcc);
 }
 
+static void upload_drawing_rect(struct brw_context *brw)
+{
+   struct brw_drawrect bdr;
+
+   memset(&bdr, 0, sizeof(bdr));
+   bdr.header.opcode = CMD_DRAW_RECT;
+   bdr.header.length = sizeof(bdr)/4 - 2;
+   bdr.xmin = 0;
+   bdr.ymin = 0;
+   bdr.xmax = brw->attribs.FrameBuffer.cbufs[0]->width;
+   bdr.ymax = brw->attribs.FrameBuffer.cbufs[0]->height;
+   bdr.xorg = 0;
+   bdr.yorg = 0;
+
+   /* Can't use BRW_CACHED_BATCH_STRUCT because this is also emitted
+    * uncached in brw_draw.c:
+    */
+   BRW_BATCH_STRUCT(brw, &bdr);
+}
+
+const struct brw_tracked_state brw_drawing_rect = {
+   .dirty = {
+      .brw = BRW_NEW_SCENE,
+      .cache = 0
+   },
+   .update = upload_drawing_rect
+};
 
 /**
  * Upload the binding table pointers, which point each stage's array of surface
@@ -117,7 +144,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
       psp.gs.enable = 1;
    }
 
-   {
+   if (0) {
       psp.clp.offset = brw->clip.state_gs_offset >> 5;
       psp.clp.enable = 1;
    }
