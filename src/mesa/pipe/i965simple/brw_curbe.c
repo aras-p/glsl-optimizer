@@ -37,6 +37,7 @@
 #include "brw_util.h"
 #include "brw_wm.h"
 #include "pipe/p_state.h"
+#include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
@@ -246,13 +247,16 @@ static void upload_constant_buffer(struct brw_context *brw)
 
 
    if (brw->curbe.vs_size) {
-//      unsigned offset = brw->curbe.vs_start * 16;
-//      unsigned nr = vp->max_const;
-
+      unsigned offset = brw->curbe.vs_start * 16;
+      /*unsigned nr = vp->max_const;*/
+      const struct pipe_constant_buffer *cbuffer = brw->attribs.Constants[0];
+      struct pipe_winsys *ws = brw->pipe.winsys;
       /* map the vertex constant buffer and copy to curbe: */
-
-//      assert(nr == 0);
-      assert(0);
+      ws->buffer_map(ws, cbuffer->buffer, 0);
+      ws->buffer_get_subdata(ws, cbuffer->buffer,
+                             0, cbuffer->size,
+                             &buf[offset]);
+      ws->buffer_unmap(ws, cbuffer->buffer);
    }
 
    if (0) {

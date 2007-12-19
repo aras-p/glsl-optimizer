@@ -38,6 +38,7 @@
 struct brw_prog_info {
    unsigned num_temps;
    unsigned num_addrs;
+   unsigned num_consts;
 
    unsigned writes_psize;
 
@@ -74,13 +75,11 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
 
    /* Vertex program parameters from curbe:
     */
-#if 0
-   nr_params = c->vp->program.num_inputs; /*FIXME: i think this is wrong... */
+   nr_params = c->prog_data.max_const;
    for (i = 0; i < nr_params; i++) {
-      c->regs[TGSI_FILE_INPUT][i] = stride(brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
+      c->regs[TGSI_FILE_CONSTANT][i] = stride(brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
    }
    reg += (nr_params+1)/2;
-#endif
    c->prog_data.curb_read_length = reg - 1;
 
 
@@ -986,6 +985,13 @@ static void process_declaration(const struct tgsi_full_declaration *decl,
 {
    switch(decl->Declaration.File) {
    case TGSI_FILE_CONSTANT: {
+      if (decl->Declaration.Declare == TGSI_DECLARE_MASK) {
+         printf("DECLARATION MASK = %d\n",
+                decl->u.DeclarationMask.Mask);
+         assert(0);
+      } else { /*range*/
+         info->num_consts += decl->u.DeclarationRange.Last - decl->u.DeclarationRange.First + 1;
+      }
    }
       break;
    case TGSI_FILE_INPUT: {
@@ -1300,12 +1306,12 @@ void brw_vs_emit(struct brw_vs_compile *c)
             /* first instruction (declerations finished).
              * now that we know what vars are being used allocate
              * registers for them.*/
+            c->prog_data.max_const = prog_info.num_consts;
             brw_vs_alloc_regs(c, &prog_info);
 
 	    brw_set_access_mode(p, BRW_ALIGN_1);
             brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 	    brw_set_access_mode(p, BRW_ALIGN_16);
-
             allocated_registers = 1;
          }
          process_instruction(c, inst, &prog_info);
@@ -1318,4 +1324,5 @@ void brw_vs_emit(struct brw_vs_compile *c)
    emit_vertex_write(c, &prog_info);
    post_vs_emit(c, end_inst);
    tgsi_parse_free(&parse);
+
 }

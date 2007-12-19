@@ -259,7 +259,7 @@ static int aub_buffer_get_subdata(struct pipe_winsys *winsys,
 				     void *data)
 {
    struct aub_buffer *sbo = aub_bo(buf);
-   assert(sbo->size > offset + size);
+   assert(sbo->size >= offset + size);
    memcpy(data, sbo->data + offset, size);
    return 0;
 }
