@@ -516,7 +516,7 @@ setup_fragcoord_coeff(struct setup_stage *setup)
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
    const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
-#define USE_INPUT_MAP 0
+#define USE_INPUT_MAP 01
 #if USE_INPUT_MAP
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
 #endif
@@ -553,6 +553,12 @@ static void setup_tri_coefficients( struct setup_stage *setup )
           * new case to the switch below.
           */
          setup_fragcoord_coeff(setup);
+      }
+      else if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
       else {
 #endif

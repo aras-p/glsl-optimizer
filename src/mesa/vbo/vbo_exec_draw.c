@@ -221,7 +221,17 @@ void vbo_exec_vtx_flush( struct vbo_exec_context *exec )
       if (exec->vtx.copied.nr != exec->vtx.vert_count) {
 	 GLcontext *ctx = exec->ctx;
 
+	 GLenum target = GL_ARRAY_BUFFER_ARB;
+	 GLenum access = GL_READ_WRITE_ARB;
+	 GLenum usage = GL_STREAM_DRAW_ARB;
+	 GLsizei size = VBO_VERT_BUFFER_SIZE * sizeof(GLfloat);
+	 
+	 /* Before the unmap (why?)
+	  */
 	 vbo_exec_bind_arrays( ctx );
+
+	 ctx->Driver.UnmapBuffer(ctx, target, exec->vtx.bufferobj);
+	 exec->vtx.buffer_map = NULL;
 
 	 vbo_context(ctx)->draw_prims( ctx, 
 				       exec->vtx.inputs, 
@@ -230,6 +240,12 @@ void vbo_exec_vtx_flush( struct vbo_exec_context *exec )
 				       NULL,
 				       0,
 				       exec->vtx.vert_count - 1);
+
+	 /* Get new data:
+	  */
+	 ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
+	 exec->vtx.buffer_map
+	    = ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
       }
    }
 

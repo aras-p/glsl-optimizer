@@ -272,31 +272,27 @@ static void brw_set_vertex_element(struct pipe_context *pipe,
    struct brw_context *brw = brw_context(pipe);
 
    assert(index < PIPE_ATTRIB_MAX);
-   struct brw_vertex_element el;
-   memset(&el, 0, sizeof(struct brw_vertex_element));
+   struct brw_vertex_element_state el;
+   memset(&el, 0, sizeof(el));
 
-   /* do we need those anymore?*/
-   el.index = index;
-#if 0
-   /*FIXME*/
-   el.element_size = 0;
-   el.count = 0;
-   el.vbo_rebase_offset = 0;
-#endif
+   el.ve0.src_offset = element->src_offset;
+   el.ve0.src_format = brw_translate_surface_format(element->src_format);
+   el.ve0.valid = 1;
+   el.ve0.vertex_buffer_index = element->vertex_buffer_index;
 
-   el.vep.ve0.src_offset = element->src_offset;
-   el.vep.ve0.src_format = brw_translate_surface_format(element->src_format);
-   el.vep.ve0.valid = 1;
-   el.vep.ve0.vertex_buffer_index = element->vertex_buffer_index;
+   el.ve1.dst_offset   = index * 4;
 
-   el.vep.ve1.dst_offset   = index * 4;
-   el.vep.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_SRC;
-   el.vep.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_SRC;
-   el.vep.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_SRC;
-   el.vep.ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_SRC;
-   /*can we count of brw->vb.vbo_array[element->vertex_buffer_index]
-    * being initialized ok to actually compute vbcomponent's
-    * correctly? */
+   el.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_SRC;
+   el.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_SRC;
+   el.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_SRC;
+   el.ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_SRC;
+
+   switch (element->nr_components) {
+   case 1: el.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_0;
+   case 2: el.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_0;
+   case 3: el.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_1_FLT;
+      break;
+   }
 
    brw->vb.inputs[index] = el;
 }

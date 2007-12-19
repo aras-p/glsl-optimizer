@@ -81,21 +81,21 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          break;
 
       case TGSI_SEMANTIC_COLOR:
-         if (fs->input_semantic_index[i] == 0) {
+         if (vs->output_semantic_index[i] == 0) {
             front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
          }
          else {
-            assert(fs->input_semantic_index[i] == 1);
+            assert(vs->output_semantic_index[i] == 1);
             front1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
          }
          break;
 
       case TGSI_SEMANTIC_BCOLOR:
-         if (fs->input_semantic_index[i] == 0) {
+         if (vs->output_semantic_index[i] == 0) {
             emitBack0 = TRUE;
          }
          else {
-            assert(fs->input_semantic_index[i] == 1);
+            assert(vs->output_semantic_index[i] == 1);
             emitBack1 = TRUE;
          }
          break;
@@ -121,11 +121,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       }
    }
 
-#if 00
-   softpipe->nr_frag_attrs = vinfo->num_attribs;
-#else
    softpipe->nr_frag_attrs = fs->num_inputs;
-#endif
 
    /* We want these after all other attribs since they won't get passed
     * to the fragment shader.  All prior vertex output attribs should match

@@ -443,14 +443,6 @@ struct brw_cached_batch_item {
  */
 #define ATTRIB_BIT_DWORDS  ((PIPE_ATTRIB_MAX+31)/32)
 
-struct brw_vertex_element {
-   struct brw_vertex_element_state vep;
-
-   unsigned index;
-   unsigned element_size;
-   unsigned count;
-   unsigned vbo_rebase_offset;
-};
 
 
 
@@ -508,7 +500,7 @@ struct brw_context
        */
       struct pipe_vertex_buffer *vbo_array[PIPE_ATTRIB_MAX];
 
-      struct brw_vertex_element inputs[PIPE_ATTRIB_MAX];
+      struct brw_vertex_element_state inputs[PIPE_ATTRIB_MAX];
 
 #define BRW_NR_UPLOAD_BUFS 17
 #define BRW_UPLOAD_INIT_SIZE (128*1024)

@@ -217,7 +217,7 @@ boolean brw_upload_vertex_buffers( struct brw_context *brw )
 
    for (i = 0; i < BRW_VEP_MAX; i++)
    {
-      if (brw->vb.vbo_array[i]->buffer == NULL) {
+      if (brw->vb.vbo_array[i] == NULL) {
 	 nr_enabled = i;
 	 break;
       }
@@ -260,18 +260,8 @@ boolean brw_upload_vertex_elements( struct brw_context *brw )
 
    memset(&vep, 0, sizeof(vep));
 
-   for (i = 0; i < nr_enabled; i++) {
-      struct brw_vertex_element *input = &brw->vb.inputs[i];
-
-      switch (brw->vb.vbo_array[input->vep.ve0.vertex_buffer_index]->pitch) {
-      case 0: input->vep.ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_0;
-      case 1: input->vep.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_0;
-      case 2: input->vep.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_0;
-      case 3: input->vep.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_1_FLT;
-	 break;
-      }
-      vep.ve[i] = input->vep;
-   }
+   for (i = 0; i < nr_enabled; i++) 
+      vep.ve[i] = brw->vb.inputs[i];
 
 
    vep.header.length = (1 + nr_enabled * sizeof(vep.ve[0])/4) - 2;

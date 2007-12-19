@@ -158,8 +158,11 @@ static boolean brw_try_draw_elements( struct pipe_context *pipe,
 
    /* Upload index, vertex data:
     */
-   if (index_buffer && 
+   if (index_buffer &&
        !brw_upload_indices( brw, index_buffer, index_size, start, count ))
+      return FALSE;
+
+   if (!brw_upload_vertex_buffers(brw))
       return FALSE;
 
    if (!brw_upload_vertex_elements( brw ))
