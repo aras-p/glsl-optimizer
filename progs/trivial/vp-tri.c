@@ -48,12 +48,12 @@ static void Display( void )
    glEnable(GL_VERTEX_PROGRAM_NV);
 
    glBegin(GL_TRIANGLES);
-   glColor3f(0,0,1); 
-   glVertex3f( 0.9, -0.9, 0.0);
-   glColor3f(0,1,0); 
-   glVertex3f( 0.9,  0.9, 0.0);
-   glColor3f(1,0,0); 
-   glVertex3f(-0.9,  0.0, 0.0);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.9, -0.9, -0.0);
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.9,  0.9, -0.0);
+   glColor3f(0,.9,0); 
+   glVertex3f(-0.9,  0.0, -0.0);
    glEnd();
 
 
