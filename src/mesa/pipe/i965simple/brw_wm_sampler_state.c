@@ -236,7 +236,8 @@ static void upload_wm_samplers(struct brw_context *brw)
 
    /* BRW_NEW_SAMPLER */
    for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
-      if (brw->attribs.Samplers[unit]) { /* FIXME: correctly detect enabled ones */
+      /* determine unit enable/disable by looking for a bound texture */
+      if (brw->attribs.Texture[unit]) {
          const struct pipe_sampler_state *sampler = brw->attribs.Samplers[unit];
 	 unsigned sdc_gs_offset = upload_default_color(brw, sampler->border_color);
 
