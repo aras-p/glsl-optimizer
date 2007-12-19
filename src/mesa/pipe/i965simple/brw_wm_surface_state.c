@@ -210,7 +210,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
 	 surf.ss2.height = pipe_surface->height - 1;
 	 surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
 	 surf.ss3.tiled_surface = 0;
-	 surf.ss3.pitch = pipe_surface->pitch - 1;
+	 surf.ss3.pitch = (pipe_surface->pitch * pipe_surface->cpp) - 1;
       } else {
 	 surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 surf.ss0.surface_type = BRW_SURFACE_NULL;
