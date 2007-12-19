@@ -351,7 +351,7 @@ intel_miptree_image_data(struct intel_context *intel,
    GLuint i;
    GLuint height = 0;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s: %d/%d\n", __FUNCTION__, face, level);
    for (i = 0; i < depth; i++) {
       height = dst->level[level].height;
       if(dst->compressed)

@@ -90,14 +90,12 @@ intelTexSubimage(GLcontext * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "intelTexSubImage");
    }
 
-#if 0
    /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target,
+      intel_generate_mipmap(ctx, target,
                             &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
                             texObj);
    }
-#endif
 
    _mesa_unmap_teximage_pbo(ctx, packing);
 

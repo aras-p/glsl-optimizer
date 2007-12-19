@@ -1365,7 +1365,7 @@ struct gl_texture_image
    GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
    GLuint CompressedSize;	/**< GL_ARB_texture_compression */
 
-   GLuint RowStride;		/**< == Width unless IsClientData and padded */
+   GLuint RowStride;		/**< Padded width in units of texels */
    GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
                                      each 2D slice in 'Data', in texels */
    GLvoid *Data;		/**< Image data, accessed via FetchTexel() */

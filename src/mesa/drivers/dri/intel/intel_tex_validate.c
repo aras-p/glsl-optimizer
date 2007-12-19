@@ -75,6 +75,10 @@ intel_calculate_first_last_level(struct intel_texture_object *intelObj)
    intelObj->lastLevel = lastLevel;
 }
 
+/**
+ * Copies the image's contents at its level into the object's miptree,
+ * and updates the image to point at the object's miptree.
+ */
 static void
 copy_image_data_to_tree(struct intel_context *intel,
                         struct intel_texture_object *intelObj,
