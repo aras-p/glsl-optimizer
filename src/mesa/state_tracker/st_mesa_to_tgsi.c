@@ -47,7 +47,9 @@
  */
 static GLuint
 map_register_file(
-   enum register_file file )
+   enum register_file file,
+   GLuint index,
+   const GLuint immediateMapping[] )
 {
    switch( file ) {
    case PROGRAM_UNDEFINED:
@@ -56,10 +58,20 @@ map_register_file(
       return TGSI_FILE_TEMPORARY;
    //case PROGRAM_LOCAL_PARAM:
    //case PROGRAM_ENV_PARAM:
+
+      /* Because of the longstanding problem with mesa arb shaders
+       * where constants, immediates and state variables are all
+       * bundled together as PROGRAM_STATE_VAR, we can't tell from the
+       * mesa register file whether this is a CONSTANT or an
+       * IMMEDIATE, hence we need all the other information.
+       */
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      return TGSI_FILE_CONSTANT;
+      if (immediateMapping[index] != ~0) 
+	 return TGSI_FILE_IMMEDIATE;
+      else
+	 return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:
       return TGSI_FILE_IMMEDIATE;
    case PROGRAM_INPUT:
@@ -194,7 +206,7 @@ compile_instruction(
    fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs( inst->Opcode );
 
    fulldst = &fullinst->FullDstRegisters[0];
-   fulldst->DstRegister.File = map_register_file( inst->DstReg.File );
+   fulldst->DstRegister.File = map_register_file( inst->DstReg.File, 0, NULL );
    fulldst->DstRegister.Index = map_register_file_index(
       fulldst->DstRegister.File,
       inst->DstReg.Index,
@@ -208,7 +220,9 @@ compile_instruction(
       GLuint j;
 
       fullsrc = &fullinst->FullSrcRegisters[i];
-      fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File );
+      fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File,
+						     inst->SrcReg[i].Index,
+						     immediateMapping );
       fullsrc->SrcRegister.Index = map_register_file_index(
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
@@ -813,6 +827,8 @@ tgsi_translate_mesa_program(
    }
 
    /* immediates/literals */
+   memset(immediates, ~0, sizeof(immediates));
+
    for (i = 0; program->Parameters && i < program->Parameters->NumParameters;
         i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
