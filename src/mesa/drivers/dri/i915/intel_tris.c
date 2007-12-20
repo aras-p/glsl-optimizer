@@ -1074,8 +1074,10 @@ intel_meta_draw_poly(struct intel_context *intel,
 {
    union fi *vb;
    GLint i;
+   GLboolean was_locked = intel->locked;
 
-   LOCK_HARDWARE(intel);
+   if (!was_locked)
+       LOCK_HARDWARE(intel);
 
    /* All 3d primitives should be emitted with INTEL_BATCH_CLIPRECTS,
     * otherwise the drawing origin (DR4) might not be set correctly.
@@ -1094,7 +1096,9 @@ intel_meta_draw_poly(struct intel_context *intel,
    }
 
    INTEL_FIREVERTICES(intel);
-   UNLOCK_HARDWARE(intel);
+
+   if (!was_locked)
+       UNLOCK_HARDWARE(intel);
 }
 
 void
