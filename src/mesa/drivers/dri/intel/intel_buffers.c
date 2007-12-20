@@ -370,11 +370,14 @@ intelWindowMoved(struct intel_context *intel)
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    /* Update hardware scissor */
-   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-                       ctx->Scissor.Width, ctx->Scissor.Height);
+   if (ctx->Driver.Scissor != NULL) {
+      ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			  ctx->Scissor.Width, ctx->Scissor.Height);
+   }
 
    /* Re-calculate viewport related state */
-   ctx->Driver.DepthRange( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
+   if (ctx->Driver.DepthRange != NULL)
+      ctx->Driver.DepthRange( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 }
 
 
@@ -994,7 +997,10 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
          ASSERT(irbStencil->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
          /* need to re-compute stencil hw state */
-         ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+	 if (ctx->Driver.Enable != NULL)
+	    ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+	 else
+	    ctx->NewState |= _NEW_STENCIL;
          if (!depthRegion)
             depthRegion = irbStencil->region;
       }
@@ -1006,28 +1012,46 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /* XXX FBO: instead of FALSE, pass ctx->Stencil.Enabled ??? */
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
       /* need to re-compute stencil hw state */
-      ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+      if (ctx->Driver.Enable != NULL)
+	 ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+      else
+	 ctx->NewState |= _NEW_STENCIL;
    }
 
    /*
     * Update depth test state
     */
-   if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
-      ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-   }
-   else {
-      ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
+   if (ctx->Driver.Enable) {
+      if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
+	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+      } else {
+	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
+      }
+   } else {
+      ctx->NewState |= _NEW_DEPTH;
    }
 
    intel->vtbl.set_draw_region(intel, colorRegion, depthRegion);
 
    /* update viewport since it depends on window size */
-   ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
-                        ctx->Viewport.Width, ctx->Viewport.Height);
+   if (ctx->Driver.Viewport) {
+      ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
+			   ctx->Viewport.Width, ctx->Viewport.Height);
+   } else {
+      ctx->NewState |= _NEW_VIEWPORT;
+   }
 
-   /* Update hardware scissor */
-   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-                       ctx->Scissor.Width, ctx->Scissor.Height);
+   /* Set state we know depends on drawable parameters:
+    */
+   if (ctx->Driver.Scissor)
+      ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			  ctx->Scissor.Width, ctx->Scissor.Height);
+   intel->NewGLState |= _NEW_SCISSOR;
+
+   if (ctx->Driver.DepthRange)
+      ctx->Driver.DepthRange(ctx,
+			     ctx->Viewport.Near,
+			     ctx->Viewport.Far);
 }
 
 
