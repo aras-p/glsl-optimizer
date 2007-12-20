@@ -190,7 +190,7 @@ do_texture_copypixels(GLcontext * ctx,
 				  dstx, dstx + width,
 				  dsty, dsty + height,
 				  ctx->Current.RasterPos[ 2 ],
-				  0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0 );
+				  0, 0.0, 0.0, 0.0, 0.0 );
    
    intel->vtbl.leave_meta_state( intel );
    

@@ -35,26 +35,44 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "macros.h"
+#include "intel_fbo.h"
 
 static void upload_sf_vp(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
+   struct intel_renderbuffer *irb =
+      intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
+   GLfloat y_scale, y_bias;
 
    memset(&sfv, 0, sizeof(sfv));
+
+   if (ctx->DrawBuffer->Name) {
+      /* User-created FBO */
+      if (irb && !irb->RenderToTexture) {
+	 y_scale = -1.0;
+	 y_bias = ctx->DrawBuffer->Height;
+      } else {
+	 y_scale = 1.0;
+	 y_bias = 0;
+      }
+   } else {
+      y_scale = -1.0;
+      y_bias = ctx->DrawBuffer->Height;
+   }
 
    /* _NEW_VIEWPORT, BRW_NEW_METAOPS */
 
    if (!brw->metaops.active) {
       const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-      sfv.viewport.m00 =   v[MAT_SX];
-      sfv.viewport.m11 = - v[MAT_SY];
-      sfv.viewport.m22 =   v[MAT_SZ] * depth_scale;
-      sfv.viewport.m30 =   v[MAT_TX];
-      sfv.viewport.m31 = - v[MAT_TY] + ctx->DrawBuffer->Height;
-      sfv.viewport.m32 =   v[MAT_TZ] * depth_scale;
+      sfv.viewport.m00 = v[MAT_SX];
+      sfv.viewport.m11 = v[MAT_SY] * y_scale;
+      sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
+      sfv.viewport.m30 = v[MAT_TX];
+      sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
+      sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
    } else {
       sfv.viewport.m00 =   1;
       sfv.viewport.m11 = - 1;

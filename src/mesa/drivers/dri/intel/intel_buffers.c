@@ -29,6 +29,7 @@
 #include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
+#include "intel_chipset.h"
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
 #include "intel_regions.h"
@@ -40,7 +41,7 @@
 #include "framebuffer.h"
 #include "swrast/swrast.h"
 #include "vblank.h"
-
+#include "i915_drm.h"
 
 /* This block can be removed when libdrm >= 2.3.1 is required */
 
@@ -196,6 +197,77 @@ intelSetBackClipRects(struct intel_context *intel)
    }
 }
 
+#ifdef I915
+static void
+intelUpdatePageFlipping(struct intel_context *intel,
+			GLint areaA, GLint areaB)
+{
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   GLboolean pf_active;
+   GLint pf_planes;
+
+   /* Update page flipping info */
+   pf_planes = 0;
+
+   if (areaA > 0)
+      pf_planes |= 1;
+
+   if (areaB > 0)
+      pf_planes |= 2;
+
+   intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
+				(intel_fb->pf_planes & 0x2)) & 0x3;
+
+   intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
+
+   pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
+
+   if (INTEL_DEBUG & DEBUG_LOCK)
+      if (pf_active != intel_fb->pf_active)
+	 _mesa_printf("%s - Page flipping %sactive\n", __progname,
+		      pf_active ? "" : "in");
+
+   if (pf_active) {
+      /* Sync pages between planes if flipping on both at the same time */
+      if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
+	  (intel->sarea->pf_current_page & 0x3) !=
+	  (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
+	 drm_i915_flip_t flip;
+
+	 if (intel_fb->pf_current_page ==
+	     (intel->sarea->pf_current_page & 0x3)) {
+	    /* XXX: This is ugly, but emitting two flips 'in a row' can cause
+	     * lockups for unknown reasons.
+	     */
+	    intel->sarea->pf_current_page =
+	       intel->sarea->pf_current_page & 0x3;
+	    intel->sarea->pf_current_page |=
+	       ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
+		intel_fb->pf_num_pages) << 2;
+
+	    flip.pipes = 0x2;
+	 } else {
+	    intel->sarea->pf_current_page =
+	       intel->sarea->pf_current_page & (0x3 << 2);
+	    intel->sarea->pf_current_page |=
+	       (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
+	       intel_fb->pf_num_pages;
+
+	    flip.pipes = 0x1;
+	 }
+
+	 drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
+      }
+
+      intel_fb->pf_planes = pf_planes;
+   }
+
+   intel_fb->pf_active = pf_active;
+   intel_flip_renderbuffers(intel_fb);
+   intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+}
+#endif /* I915 */
 
 /**
  * This will be called whenever the currently bound window is moved/resized.
@@ -232,7 +304,7 @@ intelWindowMoved(struct intel_context *intel)
    }
 
    if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
-      drmI830Sarea *sarea = intel->sarea;
+      volatile drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
       drm_clip_rect_t planeA_rect = { .x1 = sarea->planeA_x, .y1 = sarea->planeA_y,
@@ -244,69 +316,10 @@ intelWindowMoved(struct intel_context *intel)
       GLint areaA = driIntersectArea( drw_rect, planeA_rect );
       GLint areaB = driIntersectArea( drw_rect, planeB_rect );
       GLuint flags = dPriv->vblFlags;
-      GLboolean pf_active;
-      GLint pf_planes;
 
-      /* Update page flipping info
-       */
-      pf_planes = 0;
-
-      if (areaA > 0)
-	 pf_planes |= 1;
-
-      if (areaB > 0)
-	 pf_planes |= 2;
-
-      intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				   (intel_fb->pf_planes & 0x2)) & 0x3;
-
-      intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
-
-      pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
-
-      if (INTEL_DEBUG & DEBUG_LOCK)
-	 if (pf_active != intel_fb->pf_active)
-	    _mesa_printf("%s - Page flipping %sactive\n", __progname,
-			 pf_active ? "" : "in");
-
-      if (pf_active) {
-	 /* Sync pages between planes if flipping on both at the same time */
-	 if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
-	     (intel->sarea->pf_current_page & 0x3) !=
-	     (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
-	    drm_i915_flip_t flip;
-
-	    if (intel_fb->pf_current_page ==
-		(intel->sarea->pf_current_page & 0x3)) {
-	       /* XXX: This is ugly, but emitting two flips 'in a row' can cause
-		* lockups for unknown reasons.
-		*/
-               intel->sarea->pf_current_page =
-		  intel->sarea->pf_current_page & 0x3;
-	       intel->sarea->pf_current_page |=
-		  ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
-		   intel_fb->pf_num_pages) << 2;
-
-	       flip.pipes = 0x2;
-	    } else {
-               intel->sarea->pf_current_page =
-		  intel->sarea->pf_current_page & (0x3 << 2);
-	       intel->sarea->pf_current_page |=
-		  (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
-		  intel_fb->pf_num_pages;
-
-	       flip.pipes = 0x1;
-	    }
-
-	    drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
-	 }
-
-	 intel_fb->pf_planes = pf_planes;
-      }
-
-      intel_fb->pf_active = pf_active;
-      intel_flip_renderbuffers(intel_fb);
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+#ifdef I915
+      intelUpdatePageFlipping(intel, areaA, areaB);
+#endif
 
       /* Update vblank info
        */
@@ -523,8 +536,12 @@ intelClear(GLcontext *ctx, GLbitfield mask)
          = intel_get_rb_region(fb, BUFFER_STENCIL);
       if (stencilRegion) {
          /* have hw stencil */
-         if ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
-            /* not clearing all stencil bits, so use triangle clearing */
+         if (IS_965(intel->intelScreen->deviceID) ||
+	     (ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
+	    /* We have to use the 3D engine if we're clearing a partial mask
+	     * of the stencil buffer, or if we're on a 965 which has a tiled
+	     * depth/stencil buffer in a layout we can't blit to.
+	     */
             tri_mask |= BUFFER_BIT_STENCIL;
          }
          else {
@@ -537,7 +554,8 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    /* HW depth */
    if (mask & BUFFER_BIT_DEPTH) {
       /* clear depth with whatever method is used for stencil (see above) */
-      if (tri_mask & BUFFER_BIT_STENCIL)
+      if (IS_965(intel->intelScreen->deviceID) ||
+	  tri_mask & BUFFER_BIT_STENCIL)
          tri_mask |= BUFFER_BIT_DEPTH;
       else
          blit_mask |= BUFFER_BIT_DEPTH;
@@ -632,6 +650,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 static GLboolean
 intelPageFlip(const __DRIdrawablePrivate * dPriv)
 {
+#ifdef I915
    struct intel_context *intel;
    int ret;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
@@ -684,6 +703,9 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
 
    return GL_TRUE;
+#else
+   return GL_FALSE;
+#endif
 }
 
 #if 0

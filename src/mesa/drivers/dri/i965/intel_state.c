@@ -195,15 +195,16 @@ int intel_translate_logic_op( GLenum opcode )
 static void intelClearColor(GLcontext *ctx, const GLfloat color[4])
 {
    struct intel_context *intel = intel_context(ctx);
-   intelScreenPrivate *screen = intel->intelScreen;
 
    UNCLAMPED_FLOAT_TO_RGBA_CHAN(intel->clear_chan, color);
 
-   intel->ClearColor = INTEL_PACKCOLOR(screen->fbFormat,
-				       intel->clear_chan[0], 
-				       intel->clear_chan[1], 
-				       intel->clear_chan[2], 
-				       intel->clear_chan[3]);
+   intel->ClearColor8888 = INTEL_PACKCOLOR8888(intel->clear_chan[0],
+					       intel->clear_chan[1],
+					       intel->clear_chan[2],
+					       intel->clear_chan[3]);
+   intel->ClearColor565 = INTEL_PACKCOLOR565(intel->clear_chan[0],
+					     intel->clear_chan[1],
+					     intel->clear_chan[2]);
 }
 
 

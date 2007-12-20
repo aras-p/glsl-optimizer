@@ -33,6 +33,7 @@
 #include "mtypes.h"
 #include "drm.h"
 #include "texmem.h"
+#include "dri_bufmgr.h"
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
@@ -60,6 +61,8 @@ typedef void (*intel_point_func)(struct intel_context *, intelVertex *);
 #define INTEL_FALLBACK_USER		 0x4
 #define INTEL_FALLBACK_RENDERMODE	 0x8
 #define INTEL_FALLBACK_TEXTURE   	 0x10
+#define INTEL_FALLBACK_DEPTH_BUFFER	 0x20
+#define INTEL_FALLBACK_STENCIL_BUFFER	 0x40
 
 extern void intelFallback( struct intel_context *intel, GLuint bit, GLboolean mode );
 #define FALLBACK( intel, bit, mode ) intelFallback( intel, bit, mode )
@@ -124,12 +127,11 @@ struct intel_context
       void (*meta_frame_buffer_texture)( struct intel_context *intel,
 					 GLint xoff, GLint yoff );
 
-      void (*meta_draw_quad)(struct intel_context *intel, 
+      void (*meta_draw_quad)(struct intel_context *intel,
 			     GLfloat x0, GLfloat x1,
-			     GLfloat y0, GLfloat y1, 
+			     GLfloat y0, GLfloat y1,
 			     GLfloat z,
-			     GLubyte red, GLubyte green,
-			     GLubyte blue, GLubyte alpha,
+			     GLuint color, /* ARGB32 */
 			     GLfloat s0, GLfloat s1,
 			     GLfloat t0, GLfloat t1);
 
@@ -163,7 +165,8 @@ struct intel_context
    unsigned batch_id;
 
    GLubyte clear_chan[4];
-   GLuint ClearColor;
+   GLuint ClearColor565;
+   GLuint ClearColor8888;
 
    GLfloat polygon_offset_scale; /* dependent on depth_scale, bpp */
 
@@ -189,6 +192,7 @@ struct intel_context
    GLuint numClipRects;		/* cliprects for that buffer */
    drm_clip_rect_t *pClipRects;
    struct gl_texture_object *frame_buffer_texobj;
+   drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    GLboolean scissor;
    drm_clip_rect_t draw_rect;
@@ -313,6 +317,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_BLIT	0x200000
 #define DEBUG_REGION	0x400000
 #define DEBUG_MIPTREE	0x800000
+#define DEBUG_FBO	0x1000000
 
 #define DBG(...) do {						\
 	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\

@@ -77,7 +77,6 @@ const struct brw_tracked_state brw_blend_constant_color = {
 static void upload_drawing_rect(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
    struct brw_drawrect bdr;
    int x1, y1;
    int x2, y2;
@@ -105,8 +104,8 @@ static void upload_drawing_rect(struct brw_context *brw)
    bdr.ymin = y1;
    bdr.xmax = x2;
    bdr.ymax = y2;
-   bdr.xorg = dPriv->x;
-   bdr.yorg = dPriv->y;
+   bdr.xorg = intel->drawX;
+   bdr.yorg = intel->drawY;
 
    /* Can't use BRW_CACHED_BATCH_STRUCT because this is also emitted
     * uncached in brw_draw.c:

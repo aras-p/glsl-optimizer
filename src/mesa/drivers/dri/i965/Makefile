@@ -12,6 +12,8 @@ DRIVER_SOURCES = \
 	intel_bufmgr_ttm.c \
 	intel_context.c \
 	intel_decode.c \
+	intel_depthstencil.c \
+	intel_fbo.c \
 	intel_ioctl.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
@@ -21,6 +23,7 @@ DRIVER_SOURCES = \
 	intel_pixel_bitmap.c \
 	intel_state.c \
 	intel_tex.c \
+	intel_tex_copy.c \
 	intel_tex_format.c \
 	intel_tex_image.c \
 	intel_tex_layout.c \

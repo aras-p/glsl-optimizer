@@ -57,10 +57,13 @@
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_regions.h"
+#include "intel_buffers.h"
 #include "intel_buffer_objects.h"
 #include "intel_decode.h"
+#include "intel_fbo.h"
 #include "intel_bufmgr_ttm.h"
 
+#include "drirenderbuffer.h"
 #include "i915_drm.h"
 
 #include "utils.h"
@@ -83,6 +86,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_cull_vertex
 #define need_GL_EXT_fog_coord
+#define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #define need_GL_EXT_point_parameters
@@ -202,12 +206,12 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions},
     { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions},
     { "GL_ARB_fragment_shader",            NULL },
-    /* XXX not implement yet, to compile builtin glsl lib */
     { "GL_ARB_draw_buffers",               NULL },
     { NULL,                                NULL }
 };
 
 const struct dri_extension ttm_extensions[] = {
+   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
    {"GL_ARB_pixel_buffer_object", NULL},
    {NULL, NULL}
 };
@@ -262,6 +266,7 @@ static const struct dri_debug_control debug_control[] =
     { "blit",  DEBUG_BLIT},
     { "mip",   DEBUG_MIPTREE},
     { "reg",   DEBUG_REGION},
+    { "fbo",   DEBUG_FBO },
     { NULL,    0 }
 };
 
@@ -551,6 +556,8 @@ GLboolean intelInitContext( struct intel_context *intel,
    intel_recreate_static_regions(intel);
 
    intel_bufferobj_init( intel );
+   intel_fbo_init( intel );
+
    intel->batch = intel_batchbuffer_alloc( intel );
    intel->last_swap_fence = NULL;
    intel->first_swap_fence = NULL;
@@ -623,16 +630,6 @@ void intelDestroyContext(__DRIcontextPrivate *driContextPriv)
 	  */
       }
 
-      /* Free the regions created to describe front/back/depth
-       * buffers:
-       */
-#if 0
-      intel_region_release(&intel->front_region);
-      intel_region_release(&intel->back_region);
-      intel_region_release(&intel->depth_region);
-      intel_region_release(&intel->draw_region);
-#endif
-
       /* free the Mesa context */
       intel->ctx.VertexProgram.Current = NULL;
       intel->ctx.FragmentProgram.Current = NULL;
@@ -653,7 +650,44 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
 {
 
    if (driContextPriv) {
-      struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
+      struct intel_context *intel =
+	 (struct intel_context *) driContextPriv->driverPrivate;
+      struct intel_framebuffer *intel_fb =
+	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
+      GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
+
+      /* XXX FBO temporary fix-ups! */
+      /* if the renderbuffers don't have regions, init them from the context.
+       * They will be unreferenced when the renderbuffer is destroyed.
+       */
+      {
+         struct intel_renderbuffer *irbDepth
+            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+         struct intel_renderbuffer *irbStencil
+            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+
+         if (intel_fb->color_rb[0] && !intel_fb->color_rb[0]->region) {
+            intel_region_reference(&intel_fb->color_rb[0]->region,
+				   intel->front_region);
+         }
+         if (intel_fb->color_rb[1] && !intel_fb->color_rb[1]->region) {
+            intel_region_reference(&intel_fb->color_rb[1]->region,
+				   intel->back_region);
+         }
+         if (intel_fb->color_rb[2] && !intel_fb->color_rb[2]->region) {
+            intel_region_reference(&intel_fb->color_rb[2]->region,
+				   intel->third_region);
+         }
+         if (irbDepth && !irbDepth->region) {
+            intel_region_reference(&irbDepth->region, intel->depth_region);
+         }
+         if (irbStencil && !irbStencil->region) {
+            intel_region_reference(&irbStencil->region, intel->depth_region);
+         }
+      }
+
+      /* set GLframebuffer size to match window, if needed */
+      driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
 
       if (intel->driReadDrawable != driReadPriv) {
           intel->driReadDrawable = driReadPriv;
@@ -673,10 +707,10 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
       }
 
       _mesa_make_current(&intel->ctx,
-			 (GLframebuffer *) driDrawPriv->driverPrivate,
-			 (GLframebuffer *) driReadPriv->driverPrivate);
+			 &intel_fb->Base,
+			 readFb);
 
-      intel->ctx.Driver.DrawBuffer( &intel->ctx, intel->ctx.Color.DrawBuffer[0] );
+      intel_draw_buffer(&intel->ctx, &intel_fb->Base);
    } else {
       _mesa_make_current(NULL, NULL, NULL);
    }

@@ -536,3 +536,77 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
 
    UNLOCK_HARDWARE(intel);
 }
+
+void
+intelEmitImmediateColorExpandBlit(struct intel_context *intel,
+				  GLuint cpp,
+				  GLubyte *src_bits, GLuint src_size,
+				  GLuint fg_color,
+				  GLshort dst_pitch,
+				  dri_bo *dst_buffer,
+				  GLuint dst_offset,
+				  GLboolean dst_tiled,
+				  GLshort x, GLshort y,
+				  GLshort w, GLshort h,
+				  GLenum logic_op)
+{
+   int dwords = ALIGN(src_size, 8) / 4;
+   uint32_t opcode, br13, blit_cmd;
+
+   assert( logic_op - GL_CLEAR >= 0 );
+   assert( logic_op - GL_CLEAR < 0x10 );
+
+   if (w < 0 || h < 0)
+      return;
+
+   dst_pitch *= cpp;
+
+   if (dst_tiled)
+      dst_pitch /= 4;
+
+   DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d, %d bytes %d dwords\n",
+       __FUNCTION__,
+       dst_buffer, dst_pitch, dst_offset, x, y, w, h, src_size, dwords);
+
+   intel_batchbuffer_require_space( intel->batch,
+				    (8 * 4) +
+				    (3 * 4) +
+				    dwords,
+				    INTEL_BATCH_NO_CLIPRECTS );
+
+   opcode = XY_SETUP_BLT_CMD;
+   if (cpp == 4)
+      opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
+   if (dst_tiled)
+      opcode |= XY_DST_TILED;
+
+   br13 = dst_pitch | (translate_raster_op(logic_op) << 16) | (1 << 29);
+   if (cpp == 2)
+      br13 |= BR13_565;
+   else
+      br13 |= BR13_8888;
+
+   blit_cmd = XY_TEXT_IMMEDIATE_BLIT_CMD | XY_TEXT_BYTE_PACKED; /* packing? */
+   if (dst_tiled)
+      blit_cmd |= XY_DST_TILED;
+
+   BEGIN_BATCH(8 + 3, INTEL_BATCH_NO_CLIPRECTS);
+   OUT_BATCH(opcode);
+   OUT_BATCH(br13);
+   OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
+   OUT_BATCH((100 << 16) | 100); /* clip x2, y2 */
+   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
+   OUT_BATCH(0); /* bg */
+   OUT_BATCH(fg_color); /* fg */
+   OUT_BATCH(0); /* pattern base addr */
+
+   OUT_BATCH(blit_cmd | ((3 - 2) + dwords));
+   OUT_BATCH((y << 16) | x);
+   OUT_BATCH(((y + h) << 16) | (x + w));
+   ADVANCE_BATCH();
+
+   intel_batchbuffer_data( intel->batch,
+			   src_bits,
+			   dwords * 4,
+			   INTEL_BATCH_NO_CLIPRECTS );
+}

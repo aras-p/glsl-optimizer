@@ -42,7 +42,7 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-
+#include "intel_tex.h"
 
 struct brw_array_state {
    union header_union header;
