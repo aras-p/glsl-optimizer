@@ -196,7 +196,7 @@ const struct dri_extension card_extensions[] =
     { "GL_MESA_pack_invert",               NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
-    /* { "GL_SGIS_generate_mipmap",           NULL }, */
+    { "GL_SGIS_generate_mipmap",           NULL },
     { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions},
     { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions},
     { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions},
