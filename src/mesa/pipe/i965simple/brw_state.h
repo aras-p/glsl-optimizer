@@ -115,7 +115,6 @@ static inline struct pipe_buffer_handle *brw_cache_buffer(struct brw_context *br
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) brw_batchbuffer_data( brw->winsys, (s), sizeof(*(s)))
 #define BRW_CACHED_BATCH_STRUCT(brw, s) brw_cached_batch_struct( brw, (s), sizeof(*(s)) )
 
 boolean brw_cached_batch_struct( struct brw_context *brw,

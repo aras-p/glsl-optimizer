@@ -49,22 +49,18 @@ static void brw_flush( struct pipe_context *pipe,
     * caches?
     */
    if (flags & (PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE)) {
-      unsigned flush = CMD_MI_FLUSH;
-      
-#if 0
+      struct brw_mi_flush flush;
+
+      memset(&flush, 0, sizeof(flush));      
+      flush.opcode = CMD_MI_FLUSH;
+
       if (!(flags & PIPE_FLUSH_RENDER_CACHE))
-	 flush |= INHIBIT_FLUSH_RENDER_CACHE;
+	 flush.flags |= BRW_INHIBIT_FLUSH_RENDER_CACHE;
 
       if (flags & PIPE_FLUSH_TEXTURE_CACHE)
-	 flush |= FLUSH_MAP_CACHE;
-#endif
+	 flush.flags |= BRW_FLUSH_READ_CACHE;
 
-      if (!BEGIN_BATCH(1, 0)) {
-	 FLUSH_BATCH( &fence );
-	 assert(BEGIN_BATCH(1, 0));
-      }
-      OUT_BATCH( flush );
-      ADVANCE_BATCH();
+      BRW_BATCH_STRUCT(brw, &flush);
    }
 
    /* If there are no flags, just flush pending commands to hardware:
