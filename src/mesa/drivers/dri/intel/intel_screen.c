@@ -41,7 +41,6 @@
 #include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_span.h"
-#include "intel_tris.h"
 #include "intel_ioctl.h"
 #include "intel_fbo.h"
 

@@ -51,19 +51,4 @@ extern void intelWrapInlinePrimitive(struct intel_context *intel);
 GLuint *intelExtendInlinePrimitive(struct intel_context *intel,
                                    GLuint dwords);
 
-
-void intel_meta_draw_quad(struct intel_context *intel,
-                          GLfloat x0, GLfloat x1,
-                          GLfloat y0, GLfloat y1,
-                          GLfloat z,
-                          GLuint color,
-                          GLfloat s0, GLfloat s1, GLfloat t0, GLfloat t1);
-
-void intel_meta_draw_poly(struct intel_context *intel,
-                          GLuint n,
-                          GLfloat xy[][2],
-                          GLfloat z, GLuint color, GLfloat tex[][2]);
-
-
-
 #endif

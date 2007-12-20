@@ -31,7 +31,6 @@
 #include "intel_buffers.h"
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
-#include "intel_tris.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
@@ -420,13 +419,14 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
       else
 	 intel->vtbl.meta_no_depth_write(intel);
 
-      intel_meta_draw_quad(intel,
-			   fb->_Xmin,
-			   fb->_Xmax,
-			   fb->_Ymin,
-			   fb->_Ymax,
-			   intel->ctx.Depth.Clear, intel->ClearColor8888,
-			   0, 0, 0, 0);   /* texcoords */
+      intel->vtbl.meta_draw_quad(intel,
+				 fb->_Xmin,
+				 fb->_Xmax,
+				 fb->_Ymin,
+				 fb->_Ymax,
+				 intel->ctx.Depth.Clear,
+				 intel->ClearColor8888,
+				 0, 0, 0, 0);   /* texcoords */
 
       mask &= ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
    }
@@ -448,13 +448,13 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 	 /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
 	  * drawing origin may not be correctly emitted.
 	  */
-	 intel_meta_draw_quad(intel,
-			      fb->_Xmin,
-			      fb->_Xmax,
-			      fb->_Ymin,
-			      fb->_Ymax,
-			      0, intel->ClearColor8888,
-			      0, 0, 0, 0);   /* texcoords */
+	 intel->vtbl.meta_draw_quad(intel,
+				    fb->_Xmin,
+				    fb->_Xmax,
+				    fb->_Ymin,
+				    fb->_Ymax,
+				    0, intel->ClearColor8888,
+				    0, 0, 0, 0);   /* texcoords */
 
 	 mask &= ~bufBit;
       }

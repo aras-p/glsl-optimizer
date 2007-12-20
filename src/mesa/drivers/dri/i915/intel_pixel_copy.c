@@ -219,13 +219,13 @@ do_texture_copypixels(GLcontext * ctx,
       /* Just use the regular cliprect mechanism...  Does this need to
        * even hold the lock???
        */
-      intel_meta_draw_quad(intel, 
-			   dstx, 
-			   dstx + width * ctx->Pixel.ZoomX, 
-			   dPriv->h - (dsty + height * ctx->Pixel.ZoomY), 
-			   dPriv->h - (dsty), 0,   /* XXX: what z value? */
-                           0x00ff00ff,
-                           srcx, srcx + width, srcy, srcy + height);
+      intel->vtbl.meta_draw_quad(intel,
+				 dstx,
+				 dstx + width * ctx->Pixel.ZoomX,
+				 dPriv->h - (dsty + height * ctx->Pixel.ZoomY),
+				 dPriv->h - (dsty), 0, /* XXX: what z value? */
+				 0x00ff00ff,
+				 srcx, srcx + width, srcy, srcy + height);
 
     out:
       intel->vtbl.leave_meta_state(intel);

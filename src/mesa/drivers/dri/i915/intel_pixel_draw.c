@@ -170,13 +170,13 @@ do_texture_drawpixels(GLcontext * ctx,
        * incorrect coordinate space.  Does this even need to hold the
        * lock???
        */
-      intel_meta_draw_quad(intel,
-                           dstx, dstx + width * ctx->Pixel.ZoomX,
-                           dPriv->h - (y + height * ctx->Pixel.ZoomY),
-                           dPriv->h - (y),
-                           -ctx->Current.RasterPos[2] * .5,
-                           0x00ff00ff,
-                           srcx, srcx + width, srcy + height, srcy);
+      intel->vtbl.meta_draw_quad(intel,
+				 dstx, dstx + width * ctx->Pixel.ZoomX,
+				 dPriv->h - (y + height * ctx->Pixel.ZoomY),
+				 dPriv->h - (y),
+				 -ctx->Current.RasterPos[2] * .5,
+				 0x00ff00ff,
+				 srcx, srcx + width, srcy + height, srcy);
     out:
       intel->vtbl.leave_meta_state(intel);
       intel_batchbuffer_flush(intel->batch);
