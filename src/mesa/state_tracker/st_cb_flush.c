@@ -83,7 +83,7 @@ void st_flush( struct st_context *st, uint pipeFlushFlags )
  */
 static void st_Flush(GLcontext *ctx)
 {
-   st_flush(ctx->st, 0x0);
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE);
 }
 
 
@@ -92,7 +92,7 @@ static void st_Flush(GLcontext *ctx)
  */
 static void st_Finish(GLcontext *ctx)
 {
-   st_flush(ctx->st, PIPE_FLUSH_WAIT);
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_WAIT);
 }
 
 

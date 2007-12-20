@@ -155,7 +155,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    /* make sure rendering has completed */
-   pipe->flush(pipe, 0x0);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
 
    if (pack->BufferObj && pack->BufferObj->Name) {
       /* reading into a PBO */
