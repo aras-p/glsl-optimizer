@@ -175,7 +175,7 @@ static void upload_constant_buffer(struct brw_context *brw)
 {
    struct brw_mem_pool *pool = &brw->pool[BRW_GS_POOL];
    unsigned sz = brw->curbe.total_size;
-   unsigned bufsz = sz * 16 * sizeof(float);
+   unsigned bufsz = sz * sizeof(float);
    float *buf;
    unsigned i;
 
@@ -261,7 +261,7 @@ static void upload_constant_buffer(struct brw_context *brw)
    }
 
    if (1) {
-      for (i = 0; i < sz*16; i+=4)
+      for (i = 0; i < sz; i+=4)
 	 _mesa_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
 

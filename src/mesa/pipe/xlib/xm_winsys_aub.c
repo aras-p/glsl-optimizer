@@ -165,7 +165,7 @@ static int aub_buffer_data(struct pipe_winsys *winsys,
    sbo->size = size;
 
    if (data != NULL) {
-      memcpy(iws->pool, data, size);
+      memcpy(sbo->data, data, size);
 
       brw_aub_gtt_data( iws->aubfile, 
 			sbo->offset,
