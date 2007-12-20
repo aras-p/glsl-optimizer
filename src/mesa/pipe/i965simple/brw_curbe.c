@@ -252,13 +252,23 @@ static void upload_constant_buffer(struct brw_context *brw)
       /*unsigned nr = vp->max_const;*/
       const struct pipe_constant_buffer *cbuffer = brw->attribs.Constants[0];
       struct pipe_winsys *ws = brw->pipe.winsys;
-      /* map the vertex constant buffer and copy to curbe: */
-      ws->buffer_map(ws, cbuffer->buffer, 0);
-      ws->buffer_get_subdata(ws, cbuffer->buffer,
-                             0, 
-			     cbuffer->size,
-                             &buf[offset]);
-      ws->buffer_unmap(ws, cbuffer->buffer);
+      if (cbuffer->size) {
+         /* map the vertex constant buffer and copy to curbe: */
+         ws->buffer_map(ws, cbuffer->buffer, 0);
+         ws->buffer_get_subdata(ws, cbuffer->buffer,
+                                0,
+                                cbuffer->size,
+                                &buf[offset]);
+         ws->buffer_unmap(ws, cbuffer->buffer);
+         offset += cbuffer->size;
+      }
+      /*immediates*/
+#if 0
+      if (brw->vs.prog_data->num_imm) {
+         memcpy(&buf[offset], brw->vs.prog_data->imm_buf,
+                brw->vs.prog_data->num_imm * 4 * sizeof(float));
+      }
+#endif
    }
 
    if (1) {

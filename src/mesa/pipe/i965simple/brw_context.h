@@ -327,6 +327,9 @@ struct brw_vs_prog_data {
 
    unsigned max_const;
 
+   float    imm_buf[PIPE_MAX_CONSTANT][4];
+   unsigned num_imm;
+
    /* Used for calculating urb partitions:
     */
    unsigned urb_entry_size;

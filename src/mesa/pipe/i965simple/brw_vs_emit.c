@@ -627,9 +627,12 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
    case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_INPUT:
    case TGSI_FILE_OUTPUT:
-   case TGSI_FILE_CONSTANT:
       assert(c->regs[file][index].nr != 0);
       return c->regs[file][index];
+   case TGSI_FILE_CONSTANT:
+   case TGSI_FILE_IMMEDIATE:
+      assert(c->regs[TGSI_FILE_CONSTANT][index].nr != 0);
+      return c->regs[TGSI_FILE_CONSTANT][index];
    case TGSI_FILE_ADDRESS:
       assert(index == 0);
       return c->regs[file][index];
@@ -1298,6 +1301,14 @@ void brw_vs_emit(struct brw_vs_compile *c)
       }
          break;
       case TGSI_TOKEN_TYPE_IMMEDIATE: {
+         int i;
+         struct tgsi_full_immediate *imm = &parse.FullToken.FullImmediate;
+         /*assert(imm->Immediate.Size == 4);*/
+         c->prog_data.imm_buf[c->prog_data.num_imm][0] = imm->u.ImmediateFloat32[0].Float;
+         c->prog_data.imm_buf[c->prog_data.num_imm][1] = imm->u.ImmediateFloat32[1].Float;
+         c->prog_data.imm_buf[c->prog_data.num_imm][2] = imm->u.ImmediateFloat32[2].Float;
+         c->prog_data.imm_buf[c->prog_data.num_imm][3] = imm->u.ImmediateFloat32[3].Float;
+         c->prog_data.num_imm++;
       }
          break;
       case TGSI_TOKEN_TYPE_INSTRUCTION: {
@@ -1306,7 +1317,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
             /* first instruction (declerations finished).
              * now that we know what vars are being used allocate
              * registers for them.*/
-            c->prog_data.max_const = prog_info.num_consts;
+            c->prog_data.max_const = prog_info.num_consts + c->prog_data.num_imm;
             brw_vs_alloc_regs(c, &prog_info);
 
 	    brw_set_access_mode(p, BRW_ALIGN_1);
