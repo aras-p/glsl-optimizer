@@ -399,7 +399,7 @@ sizeof_glsl_type(GLenum type)
    case GL_FLOAT_MAT4:
       return 16;
    case GL_FLOAT_MAT2x3:
-      return 6;
+      return 8;   /* 2 rows of 4, actually */
    case GL_FLOAT_MAT2x4:
       return 8;
    case GL_FLOAT_MAT3x2:
@@ -409,7 +409,7 @@ sizeof_glsl_type(GLenum type)
    case GL_FLOAT_MAT4x2:
       return 16;  /* 4 rows of 4, actually */
    case GL_FLOAT_MAT4x3:
-      return 12;
+      return 16;  /* 4 rows of 4, actually */
    default:
       return 0; /* error */
    }
@@ -680,9 +680,9 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
                shProg->Attributes->Parameters[index].Name);
    sz = shProg->Attributes->Parameters[index].Size;
    if (size)
-      *size = sz;
-   if (type)
-      *type = vec_types[sz]; /* XXX this is a temporary hack */
+      *size = 1;   /* attributes may not be arrays */
+   if (type && sz > 0 && sz <= 4)  /* XXX this is a temporary hack */
+      *type = vec_types[sz - 1];
 }
 
 
@@ -954,9 +954,40 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    if (shProg) {
       GLint i;
       if (location >= 0 && location < shProg->Uniforms->NumParameters) {
-         for (i = 0; i < shProg->Uniforms->Parameters[location].Size; i++) {
-            params[i] = shProg->Uniforms->ParameterValues[location][i];
+         GLuint uSize;
+         GLenum uType;
+         GLint rows = 0;
+         uType = shProg->Uniforms->Parameters[location].DataType;
+         uSize = sizeof_glsl_type(uType);
+         /* Matrix types need special handling, because they span several
+          * parameters, and may also not be fully packed.
+          */
+         switch (shProg->Uniforms->Parameters[location].DataType) {
+            case GL_FLOAT_MAT2:
+            case GL_FLOAT_MAT3x2:
+            case GL_FLOAT_MAT4x2:
+               rows = 2;
+               break;
+            case GL_FLOAT_MAT2x3:
+            case GL_FLOAT_MAT3:
+            case GL_FLOAT_MAT4x3:
+               rows = 3;
+               break;
+            case GL_FLOAT_MAT2x4:
+            case GL_FLOAT_MAT3x4:
+            case GL_FLOAT_MAT4:
+               rows = 4;
          }
+         if (rows != 0) {
+            GLint r, c;
+            for (c = 0, i = 0; c * 4 < uSize; c++)
+               for (r = 0; r < rows; r++, i++)
+                  params[i] = shProg->Uniforms->ParameterValues[location + c][r];
+         }
+         else
+            for (i = 0; i < uSize; i++) {
+               params[i] = shProg->Uniforms->ParameterValues[location][i];
+            }
       }
       else {
          _mesa_error(ctx, GL_INVALID_VALUE, "glGetUniformfv(location)");
@@ -1110,11 +1141,16 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    GLint elems, i, k;
+   GLenum uType;
+   GLsizei maxCount;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
       return;
    }
+
+   if (location == -1)
+      return;   /* The standard specifies this as a no-op */
 
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
@@ -1123,10 +1159,11 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   uType = shProg->Uniforms->Parameters[location].Type;
    /*
     * If we're setting a sampler, we must use glUniformi1()!
     */
-   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
+   if (uType == PROGRAM_SAMPLER) {
       GLint unit;
       if (type != GL_INT || count != 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1170,10 +1207,35 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   if (count * elems > shProg->Uniforms->Parameters[location].Size) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
-      return;
+   /* OpenGL requires types to match exactly, except that one can convert
+    * float or int array to boolean array.
+    */
+   switch (uType)
+   {
+      case GL_BOOL:
+      case GL_BOOL_VEC2:
+      case GL_BOOL_VEC3:
+      case GL_BOOL_VEC4:
+         if (elems != sizeof_glsl_type(shProg->Uniforms->Parameters[location].DataType)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count mismatch)");
+         }
+         break;
+      case PROGRAM_SAMPLER:
+         break;
+      default:
+         if (uType != type) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
+         }
+         break;
    }
+
+   /* XXX if this is a base type, then count must equal 1. However, we
+    * don't have enough information from the compiler to distinguish a
+    * base type from a 1-element array of that type. The standard allows
+    * count to overrun an array, in which case the overflow is ignored.
+    */
+   maxCount = shProg->Uniforms->Parameters[location].Size / elems;
+   if (count > maxCount) count = maxCount;
 
    for (k = 0; k < count; k++) {
       GLfloat *uniformVal = shProg->Uniforms->ParameterValues[location + k];
