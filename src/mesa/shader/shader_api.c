@@ -1152,18 +1152,21 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    if (location == -1)
       return;   /* The standard specifies this as a no-op */
 
+   /* The spec says this is GL_INVALID_OPERATION, although it seems like it
+    * ought to be GL_INVALID_VALUE
+    */
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(location)");
       return;
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   uType = shProg->Uniforms->Parameters[location].Type;
+   uType = shProg->Uniforms->Parameters[location].DataType;
    /*
     * If we're setting a sampler, we must use glUniformi1()!
     */
-   if (uType == PROGRAM_SAMPLER) {
+   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
       GLint unit;
       if (type != GL_INT || count != 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1216,14 +1219,15 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       case GL_BOOL_VEC2:
       case GL_BOOL_VEC3:
       case GL_BOOL_VEC4:
-         if (elems != sizeof_glsl_type(shProg->Uniforms->Parameters[location].DataType)) {
+         if (elems != sizeof_glsl_type(uType)) {
             _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count mismatch)");
          }
          break;
       case PROGRAM_SAMPLER:
          break;
       default:
-         if (uType != type) {
+         if (shProg->Uniforms->Parameters[location].Type != PROGRAM_SAMPLER 
+             && uType != type) {
             _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(type mismatch)");
          }
          break;
@@ -1280,8 +1284,13 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
          "glUniformMatrix(program not linked)");
       return;
    }
-   if (location < 0 || location >= shProg->Uniforms->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
+   if (location == -1)
+      return;   /* The standard specifies this as a no-op */
+   /* The spec says this is GL_INVALID_OPERATION, although it seems like it
+    * ought to be GL_INVALID_VALUE
+    */
+   if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniformMatrix(location)");
       return;
    }
    if (values == NULL) {
