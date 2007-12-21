@@ -1278,6 +1278,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLenum matrixType, GLint location, GLsizei count,
                      GLboolean transpose, const GLfloat *values)
 {
+   GLsizei maxCount, i;
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
@@ -1297,6 +1298,10 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix");
       return;
    }
+   if (count < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(count < 0)");
+      return;
+   }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
@@ -1305,23 +1310,30 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
     * the rows.
     */
    /* XXXX need to test 3x3 and 2x2 matrices... */
-   if (transpose) {
-      GLuint row, col;
-      for (col = 0; col < cols; col++) {
-         GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
-         for (row = 0; row < rows; row++) {
-            v[row] = values[row * cols + col];
+   maxCount = shProg->Uniforms->Parameters[location].Size / (4 * cols);
+   if (count > maxCount)
+      count = maxCount;
+   for (i = 0; i < count; i++) {
+      if (transpose) {
+         GLuint row, col;
+         for (col = 0; col < cols; col++) {
+            GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
+            for (row = 0; row < rows; row++) {
+               v[row] = values[row * cols + col];
+            }
          }
       }
-   }
-   else {
-      GLuint row, col;
-      for (col = 0; col < cols; col++) {
-         GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
-         for (row = 0; row < rows; row++) {
-            v[row] = values[col * rows + row];
+      else {
+         GLuint row, col;
+         for (col = 0; col < cols; col++) {
+            GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
+            for (row = 0; row < rows; row++) {
+               v[row] = values[col * rows + row];
+            }
          }
       }
+      location += cols;
+      values += rows * cols;
    }
 }
 
