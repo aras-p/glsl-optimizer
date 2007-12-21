@@ -24,6 +24,7 @@ cva
 dinoshade
 drawbuffers
 extfuncs.h
+exactrast
 fbotest1
 fbotest2
 fbotexture
@@ -51,6 +52,8 @@ readtex.c
 readtex.h
 seccolor
 sharedtex
+shader_api
+stencil_twoside
 stencil_wrap
 stencilwrap
 subtexrate

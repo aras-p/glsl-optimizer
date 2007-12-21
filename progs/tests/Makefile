@@ -59,6 +59,7 @@ SOURCES = \
 	random.c \
 	readrate.c \
 	seccolor.c \
+	shader_api.c \
 	sharedtex.c \
 	stencil_twoside.c \
 	stencilwrap.c \
