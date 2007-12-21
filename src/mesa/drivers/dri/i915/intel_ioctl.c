@@ -157,7 +157,7 @@ intel_exec_ioctl(struct intel_context *intel,
    execbuf.batch.DR4 = ((((GLuint) intel->drawX) & 0xffff) |
 			(((GLuint) intel->drawY) << 16));
 
-   execbuf.ops_list = (unsigned)start; // TODO
+   execbuf.ops_list = (unsigned long)start; // TODO
    execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
 
    if (drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
