@@ -1258,6 +1258,13 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
             uniformVal[i] = fValues[i];
          }
       }
+      if (uType == GL_BOOL ||
+          uType == GL_BOOL_VEC2 ||
+          uType == GL_BOOL_VEC3 ||
+          uType == GL_BOOL_VEC4) {
+          for (i = 0; i < elems; i++)
+              uniformVal[i] = uniformVal[i] ? 1.0f : 0.0f;
+      }
    }
 
    if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {

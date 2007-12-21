@@ -49,7 +49,7 @@ static void check_status(GLuint id, GLenum pname, void (*query)(GLuint, GLenum, 
     query(id, pname, &status);
     if (!status)
     {
-        char info[1024];
+        char info[65536];
 
         fprintf(stderr, "Compilation/link failure:\n");
         glGetInfoLogARB(id, sizeof(info), NULL, info);
@@ -272,6 +272,42 @@ static void test_uniform_neg_location(void)
    glUniformMatrix2fv(-1, 1, GL_FALSE, data);
    assert_no_error();
    glUniformMatrix2fv(-200, 1, GL_FALSE, data);
+   assert_error(GL_INVALID_OPERATION);
+}
+
+static void test_uniform_bool_conversion(void)
+{
+    GLuint program;
+    GLint location;
+    GLint value[16];  /* in case glGetUniformiv goes nuts on the stack */
+
+    assert_no_error();
+    program = make_program("uniform bool b;\nvoid main() { gl_Position.x = b ? 1.5 : 0.5; }\n", NULL);
+    location = glGetUniformLocation(program, "b");
+    assert(location != -1);
+    assert_no_error();
+    glUniform1i(location, 5);
+    assert_no_error();
+    glGetUniformiv(program, location, &value[0]);
+    assert_no_error();
+    assert(value[0] == 1);
+}
+
+static void test_uniform_multiple_samplers(void)
+{
+   GLuint program;
+   GLint location;
+   GLint values[2] = {0, 1};
+
+   assert_no_error();
+   program = make_program(NULL, "uniform sampler2D s[2];\nvoid main() { gl_FragColor = texture2D(s[1], vec2(0.0, 0.0)); }\n");
+   location = glGetUniformLocation(program, "s[0]");
+   if (location == -1)  /* Mesa doesn't currently support indexing */
+      location = glGetUniformLocation(program, "s");
+   assert(location != -1);
+   assert_no_error();
+   glUniform1iv(location, 2, values);
+   assert_no_error();
 }
 
 static void run_test(const char *name, void (*callback)(void))
@@ -294,5 +330,8 @@ int main(int argc, char **argv)
    RUN_TEST(test_uniform_scalar_count);
    RUN_TEST(test_uniform_query_matrix);
    RUN_TEST(test_uniform_neg_location);
+   RUN_TEST(test_uniform_bool_conversion);
+   /* Leave this one at the end, since it crashes Mesa's shader compiler */
+   RUN_TEST(test_uniform_multiple_samplers);
    return 0;
 }
