@@ -247,7 +247,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
       if (brw->attribs.Stencil->WriteMask[0] ||
-	  (brw->attribs.Stencil->TestTwoSide && brw->attribs.Stencil->WriteMask[1]))
+	  (brw->attribs.Stencil->_TestTwoSide &&
+	   brw->attribs.Stencil->WriteMask[1]))
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 

@@ -77,8 +77,8 @@ static void upload_cc_unit( struct brw_context *brw )
       cc.cc1.stencil_write_mask = brw->attribs.Stencil->WriteMask[0];
       cc.cc1.stencil_test_mask = brw->attribs.Stencil->ValueMask[0];
 
-      if (brw->attribs.Stencil->TestTwoSide) {
-	 cc.cc0.bf_stencil_enable = brw->attribs.Stencil->TestTwoSide;
+      if (brw->attribs.Stencil->_TestTwoSide) {
+	 cc.cc0.bf_stencil_enable = brw->attribs.Stencil->_TestTwoSide;
 	 cc.cc0.bf_stencil_func = intel_translate_compare_func(brw->attribs.Stencil->Function[1]);
 	 cc.cc0.bf_stencil_fail_op = intel_translate_stencil_op(brw->attribs.Stencil->FailFunc[1]);
 	 cc.cc0.bf_stencil_pass_depth_fail_op = intel_translate_stencil_op(brw->attribs.Stencil->ZFailFunc[1]);
@@ -91,7 +91,8 @@ static void upload_cc_unit( struct brw_context *brw )
       /* Not really sure about this:
        */
       if (brw->attribs.Stencil->WriteMask[0] ||
-	  (brw->attribs.Stencil->TestTwoSide && brw->attribs.Stencil->WriteMask[1]))
+	  (brw->attribs.Stencil->_TestTwoSide &&
+	   brw->attribs.Stencil->WriteMask[1]))
 	 cc.cc0.stencil_write_enable = 1;
    }
 

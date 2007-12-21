@@ -89,6 +89,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
+#define need_GL_ATI_separate_stencil
 #define need_GL_EXT_point_parameters
 #define need_GL_VERSION_2_0
 #define need_GL_VERSION_2_1
@@ -188,7 +189,14 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
     { "GL_EXT_multi_draw_arrays",          GL_EXT_multi_draw_arrays_functions },
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
+    { "GL_ATI_separate_stencil",           GL_ATI_separate_stencil_functions },
     { "GL_EXT_stencil_wrap",               NULL },
+    /* Do not enable this extension.  It conflicts with GL_ATI_separate_stencil
+     * and 2.0's separate stencil, because mesa's computed _TestTwoSide will
+     * only reflect whether it's enabled through this extension, even if the
+     * application is using the other interfaces.
+     */
+/*{ "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },*/
     { "GL_EXT_texture_edge_clamp",         NULL },
     { "GL_EXT_texture_env_combine",        NULL },
     { "GL_EXT_texture_env_dot3",           NULL },
