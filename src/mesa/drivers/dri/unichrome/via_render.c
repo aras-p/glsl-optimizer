@@ -106,7 +106,7 @@ static GLboolean via_run_fastrender(GLcontext *ctx,
     tnl->clipspace.new_inputs |= VERT_BIT_POS;
 
     for (i = 0; i < VB->PrimitiveCount; ++i) {
-        GLuint mode = VB->Primitive[i].mode;
+        GLuint mode = _tnl_translate_prim(&VB->Primitive[i]);
         GLuint start = VB->Primitive[i].start;
         GLuint length = VB->Primitive[i].count;
         if (length)
