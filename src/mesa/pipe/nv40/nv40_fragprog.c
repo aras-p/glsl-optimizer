@@ -378,7 +378,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	int ai = -1, ci = -1;
 	int i;
 
-	if (finst->Instruction.Opcode == TGSI_OPCODE_RET)
+	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
 		return TRUE;
 
 	fpc->temp_temp_count = 0;
@@ -536,6 +536,9 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		break;
 	case TGSI_OPCODE_RCP:
 		arith(fpc, sat, RCP, dst, mask, src[0], none, none);
+		break;
+	case TGSI_OPCODE_RET:
+		assert(0);
 		break;
 	case TGSI_OPCODE_RFL:
 		tmp = temp(fpc);

@@ -141,8 +141,9 @@ nouveau_create_buffer(__DRIscreenPrivate * driScrnPriv,
 	else
 		stencil = PIPE_FORMAT_NONE;
 
-	nvfb->stfb = st_create_framebuffer(glVis, GL_TRUE, colour, depth,
-					   stencil, (void*)nvfb);
+	nvfb->stfb = st_create_framebuffer(glVis, colour, depth, stencil,
+					   driDrawPriv->w, driDrawPriv->h,
+					   (void*)nvfb);
 	if (!nvfb->stfb) {
 		free(nvfb);
 		return  GL_FALSE;

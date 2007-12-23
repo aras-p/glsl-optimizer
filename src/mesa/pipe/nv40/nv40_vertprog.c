@@ -47,9 +47,12 @@ struct nv40_vpc {
 
 	int high_temp;
 	int temp_temp_count;
+
+	struct nv40_sreg *imm;
+	unsigned nr_imm;
 };
 
-static INLINE struct nv40_sreg
+static struct nv40_sreg
 temp(struct nv40_vpc *vpc)
 {
 	int idx;
@@ -59,7 +62,7 @@ temp(struct nv40_vpc *vpc)
 	return nv40_sr(NV40SR_TEMP, idx);
 }
 
-static INLINE struct nv40_sreg
+static struct nv40_sreg
 constant(struct nv40_vpc *vpc, int pipe, float x, float y, float z, float w)
 {
 	struct nv40_vertex_program *vp = vpc->vp;
@@ -251,6 +254,9 @@ tgsi_src(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	case TGSI_FILE_CONSTANT:
 		src = constant(vpc, fsrc->SrcRegister.Index, 0, 0, 0, 0);
 		break;
+	case TGSI_FILE_IMMEDIATE:
+		src = vpc->imm[fsrc->SrcRegister.Index];
+		break;
 	case TGSI_FILE_TEMPORARY:
 		if (vpc->high_temp < fsrc->SrcRegister.Index)
 			vpc->high_temp = fsrc->SrcRegister.Index;
@@ -315,7 +321,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	int ai = -1, ci = -1;
 	int i;
 
-	if (finst->Instruction.Opcode == TGSI_OPCODE_RET)
+	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
 		return TRUE;
 
 	vpc->temp_temp_count = 0;
@@ -343,7 +349,11 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
+		/*XXX: index comparison is broken now that consts come from
+		 *     two different register files.
+		 */
 		case TGSI_FILE_CONSTANT:
+		case TGSI_FILE_IMMEDIATE:
 			if (ci == -1 || ci == fsrc->SrcRegister.Index) {
 				ci = fsrc->SrcRegister.Index;
 				src[i] = tgsi_src(vpc, fsrc);
@@ -435,6 +445,8 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	case TGSI_OPCODE_RCP:
 		arith(vpc, 1, OP_RCP, dst, mask, none, none, src[0]);
 		break;
+	case TGSI_OPCODE_RET:
+		break;
 	case TGSI_OPCODE_RSQ:
 		arith(vpc, 1, OP_RSQ, dst, mask, none, none, src[0]);
 		break;
@@ -518,6 +530,35 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 	return TRUE;
 }
 
+static boolean
+nv40_vertprog_prepare(struct nv40_vpc *vpc)
+{
+	struct tgsi_parse_context p;
+	int nr_imm = 0;
+
+	tgsi_parse_init(&p, vpc->vp->pipe->tokens);
+	while (!tgsi_parse_end_of_tokens(&p)) {
+		const union tgsi_full_token *tok = &p.FullToken;
+
+		tgsi_parse_token(&p);
+		switch(tok->Token.Type) {
+		case TGSI_TOKEN_TYPE_IMMEDIATE:
+			nr_imm++;
+			break;
+		default:
+			break;
+		}
+	}
+	tgsi_parse_free(&p);
+
+	if (nr_imm) {
+		vpc->imm = calloc(nr_imm, sizeof(struct nv40_sreg));
+		assert(vpc->imm);
+	}
+
+	return TRUE;
+}
+
 void
 nv40_vertprog_translate(struct nv40_context *nv40,
 			struct nv40_vertex_program *vp)
@@ -530,6 +571,11 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 		return;
 	vpc->vp = vp;
 	vpc->high_temp = -1;
+
+	if (!nv40_vertprog_prepare(vpc)) {
+		free(vpc);
+		return;
+	}
 
 	tgsi_parse_init(&parse, vp->pipe->tokens);
 
@@ -552,6 +598,19 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 		}
 			break;
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
+		{
+			const struct tgsi_full_immediate *imm;
+
+			imm = &parse.FullToken.FullImmediate;
+			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
+//			assert(imm->Immediate.Size == 4);
+			vpc->imm[vpc->nr_imm++] =
+				constant(vpc, -1,
+					 imm->u.ImmediateFloat32[0].Float,
+					 imm->u.ImmediateFloat32[1].Float,
+					 imm->u.ImmediateFloat32[2].Float,
+					 imm->u.ImmediateFloat32[3].Float);
+		}
 			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 		{
