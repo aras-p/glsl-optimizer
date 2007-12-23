@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
@@ -59,6 +60,28 @@ nouveau_fence_ref(struct nouveau_fence *ref, struct nouveau_fence **fence)
 	return 0;
 }
 
+static void
+nouveau_fence_del_unsignalled(struct nouveau_fence *fence)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(fence->channel);
+	struct nouveau_fence *le;
+
+	if (nvchan->fence_head == fence) {
+		nvchan->fence_head = nouveau_fence(fence)->next;
+		if (nvchan->fence_head == NULL)
+			nvchan->fence_tail = NULL;
+		return;
+	}
+
+	le = nvchan->fence_head;
+	while (le && nouveau_fence(le)->next != fence)
+		le = nouveau_fence(le)->next;
+	assert(le && nouveau_fence(le)->next == fence);
+	nouveau_fence(le)->next = nouveau_fence(fence)->next;
+	if (nvchan->fence_tail == fence)
+		nvchan->fence_tail = le;
+}
+
 void
 nouveau_fence_del(struct nouveau_fence **fence)
 {
@@ -69,11 +92,19 @@ nouveau_fence_del(struct nouveau_fence **fence)
 	nvfence = nouveau_fence(*fence);
 	*fence = NULL;
 
-	if (--nvfence->refcount <= 0) {
-		if (nvfence->emitted && !nvfence->signalled)
+	if (--nvfence->refcount)
+		return;
+
+	if (nvfence->emitted && !nvfence->signalled) {
+		if (nvfence->signal_cb) {
+			nvfence->refcount++;
 			nouveau_fence_wait((void *)&nvfence);
-		free(nvfence);
+			return;
+		}
+
+		nouveau_fence_del_unsignalled(&nvfence->base);
 	}
+	free(nvfence);
 }
 
 int
@@ -139,9 +170,7 @@ nouveau_fence_flush(struct nouveau_channel *chan)
 			break;
 		}
 
-		nvchan->fence_head = nvfence->next;
-		if (nvchan->fence_head == NULL)
-			nvchan->fence_tail = NULL;
+		nouveau_fence_del_unsignalled(&nvfence->base);
 		nvfence->signalled = 1;
 
 		while (nvfence->signal_cb) {
