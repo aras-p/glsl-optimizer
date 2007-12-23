@@ -23,41 +23,69 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
 #include "nouveau_local.h"
 
-int
-nouveau_bo_init(struct nouveau_device *dev)
+static void
+nouveau_mem_free(struct nouveau_device *dev, struct drm_nouveau_mem_alloc *ma,
+		 void **map)
 {
-	return 0;
+	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+	struct drm_nouveau_mem_free mf;
+
+	if (map && *map) {
+		drmUnmap(*map, ma->size);
+		*map = NULL;
+	}
+
+	if (ma->size) {
+		mf.offset = ma->offset;
+		mf.flags = ma->flags;
+		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_MEM_FREE,
+				&mf, sizeof(mf));
+		ma->size = 0;
+	}
 }
 
-void
-nouveau_bo_takedown(struct nouveau_device *dev)
+static int
+nouveau_mem_alloc(struct nouveau_device *dev, unsigned size, unsigned align,
+		  uint32_t flags, struct drm_nouveau_mem_alloc *ma, void **map)
 {
+	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+	int ret;
+
+	ma->alignment = align;
+	ma->size = size;
+	ma->flags = flags;
+	if (map)
+		ma->flags |= NOUVEAU_MEM_MAPPED;
+	ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_MEM_ALLOC, ma,
+				  sizeof(struct drm_nouveau_mem_alloc));
+	if (ret)
+		return ret;
+
+	if (map) {
+		ret = drmMap(nvdev->fd, ma->map_handle, ma->size, map);
+		if (ret) {
+			*map = NULL;
+			nouveau_mem_free(dev, ma, map);
+			return ret;
+		}
+	}
+
+	return 0;
 }
 
 static int
 nouveau_bo_realloc_gpu(struct nouveau_bo_priv *nvbo, uint32_t flags, int size)
 {
-	struct nouveau_device_priv *nvdev = nouveau_device(nvbo->base.device);
 	int ret;
 
 	if (nvbo->drm.size && nvbo->drm.size != size) {
-		struct drm_nouveau_mem_free f;
-
-		if (nvbo->map) {
-			drmUnmap(nvbo->map, nvbo->drm.size);
-			nvbo->map = NULL;
-		}
-
-		f.flags = nvbo->drm.flags;
-		f.offset = nvbo->drm.offset;
-		drmCommandWrite(nvdev->fd, DRM_NOUVEAU_MEM_FREE, &f, sizeof(f));
-
-		nvbo->drm.size = 0;
+		nouveau_mem_free(nvbo->base.device, &nvbo->drm, &nvbo->map);
 	}
 
 	if (size && !nvbo->drm.size) {
@@ -71,25 +99,74 @@ nouveau_bo_realloc_gpu(struct nouveau_bo_priv *nvbo, uint32_t flags, int size)
 			nvbo->drm.flags |= NOUVEAU_MEM_MAPPED;
 		}
 
-		nvbo->drm.size = size;
-		
-		ret = drmCommandWriteRead(nvdev->fd, DRM_NOUVEAU_MEM_ALLOC,
-					  &nvbo->drm, sizeof(nvbo->drm));
+		ret = nouveau_mem_alloc(nvbo->base.device, size,
+					nvbo->drm.alignment, nvbo->drm.flags,
+					&nvbo->drm, &nvbo->map);
 		if (ret) {
-			free(nvbo);
-			return ret;
-		}
-
-		ret = drmMap(nvdev->fd, nvbo->drm.map_handle, nvbo->drm.size,
-			     &nvbo->map);
-		if (ret) {
-			nvbo->map = NULL;
-			nouveau_bo_del((void *)&nvbo);
-			return ret;
+			assert(0);
 		}
 	}
 
 	return 0;
+}
+
+static void
+nouveau_bo_tmp_del(void *priv)
+{
+	struct nouveau_resource *r = priv;
+
+	nouveau_fence_del((struct nouveau_fence **)&r->priv);
+	nouveau_resource_free(&r);
+}
+
+static struct nouveau_resource *
+nouveau_bo_tmp(struct nouveau_channel *chan, unsigned size,
+	       struct nouveau_fence *fence)
+{
+	struct nouveau_device_priv *nvdev = nouveau_device(chan->device);
+	struct nouveau_resource *r = NULL;
+	struct nouveau_fence *ref = NULL;
+
+	if (fence)
+		nouveau_fence_ref(fence, &ref);
+	else
+		nouveau_fence_new(chan, &ref);
+	assert(ref);
+
+	while (nouveau_resource_alloc(nvdev->sa_heap, size, ref, &r)) {
+		nouveau_fence_flush(chan);
+	}
+	nouveau_fence_signal_cb(ref, nouveau_bo_tmp_del, r);
+
+	return r;
+}
+
+int
+nouveau_bo_init(struct nouveau_device *dev)
+{
+	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+	int ret;
+
+	ret = nouveau_mem_alloc(dev, 128*1024, 0, NOUVEAU_MEM_AGP |
+				NOUVEAU_MEM_PCI, &nvdev->sa, &nvdev->sa_map);
+	if (ret)
+		return ret;
+
+	ret = nouveau_resource_init(&nvdev->sa_heap, 0, nvdev->sa.size);
+	if (ret) {
+		nouveau_mem_free(dev, &nvdev->sa, &nvdev->sa_map);
+		return ret;
+	}
+
+	return 0;
+}
+
+void
+nouveau_bo_takedown(struct nouveau_device *dev)
+{
+	struct nouveau_device_priv *nvdev = nouveau_device(dev);
+
+	nouveau_mem_free(dev, &nvdev->sa, &nvdev->sa_map);
 }
 
 int
@@ -247,9 +324,36 @@ nouveau_bo_upload(struct nouveau_bo_priv *nvbo)
 	return 0;
 }
 
-int
-nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
-		    struct nouveau_fence *fence, uint32_t flags)
+static int
+nouveau_bo_validate_user(struct nouveau_channel *chan, struct nouveau_bo *bo,
+			 struct nouveau_fence *fence, uint32_t flags)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_device_priv *nvdev = nouveau_device(chan->device);
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	struct nouveau_resource *r;
+
+	if (nvchan->user_charge + bo->size > nvdev->sa.size)
+		return 1;
+	nvchan->user_charge += bo->size;
+
+	if (!(flags & NOUVEAU_BO_GART))
+		return 1;
+
+	r = nouveau_bo_tmp(chan, bo->size, fence);
+	if (!r)
+		return 1;
+
+	memcpy(nvdev->sa_map + r->start, nvbo->sysmem, bo->size);
+
+	nvbo->base.offset = nvdev->sa.offset + r->start;
+	nvbo->base.flags = NOUVEAU_BO_GART;
+	return 0;
+}
+
+static int
+nouveau_bo_validate_bo(struct nouveau_channel *chan, struct nouveau_bo *bo,
+		       struct nouveau_fence *fence, uint32_t flags)
 {
 	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
 
@@ -264,16 +368,39 @@ nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	if (nvbo->user) {
 		nouveau_bo_upload(nvbo);
 	}
-	
-	if (nvbo->fence)
-		nouveau_fence_del(&nvbo->fence);
-	nouveau_fence_ref(fence, &nvbo->fence);
 
 	nvbo->base.offset = nvbo->drm.offset;
-	if (nvbo->drm.flags & NOUVEAU_MEM_AGP)
+	if (nvbo->drm.flags & (NOUVEAU_MEM_AGP | NOUVEAU_MEM_PCI))
 		nvbo->base.flags = NOUVEAU_BO_GART;
 	else
 		nvbo->base.flags = NOUVEAU_BO_VRAM;
+
+	return 0;
+}
+
+int
+nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
+		    struct nouveau_fence *fence, uint32_t flags)
+{
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	int ret;
+
+	if (nvbo->user) {
+		ret = nouveau_bo_validate_user(chan, bo, fence, flags);
+		if (ret) {
+			ret = nouveau_bo_validate_bo(chan, bo, fence, flags);
+			if (ret)
+				return ret;
+		}
+	} else {
+		ret = nouveau_bo_validate_bo(chan, bo, fence, flags);
+		if (ret)
+			return ret;
+	}
+
+	if (nvbo->fence)
+		nouveau_fence_del(&nvbo->fence);
+	nouveau_fence_ref(fence, &nvbo->fence);
 
 	return 0;
 }

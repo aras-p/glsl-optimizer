@@ -42,6 +42,10 @@ struct nouveau_device_priv {
 	drm_context_t ctx;
 	drmLock *lock;
 	int needs_close;
+
+	struct drm_nouveau_mem_alloc sa;
+	void *sa_map;
+	struct nouveau_resource *sa_heap;
 };
 #define nouveau_device(n) ((struct nouveau_device_priv *)(n))
 
@@ -180,6 +184,8 @@ struct nouveau_channel_priv {
 	struct nouveau_resource *pb_heap;
 	struct nouveau_pushbuf *pb_head;
 	struct nouveau_pushbuf *pb_tail;
+
+	unsigned user_charge;
 };
 #define nouveau_channel(n) ((struct nouveau_channel_priv *)(n))
 

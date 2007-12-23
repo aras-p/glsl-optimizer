@@ -105,6 +105,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 		return ret;
 
 	/* Validate buffers + apply relocations */
+	nvchan->user_charge = 0;
 	while ((pbbo = ptr_to_pbbo(nvpb->buffers))) {
 		struct nouveau_pushbuf_reloc *r;
 		struct nouveau_bo *bo = &ptr_to_bo(pbbo->handle)->base;
