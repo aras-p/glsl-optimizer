@@ -109,14 +109,9 @@ nouveau_fence_emit(struct nouveau_fence *fence)
 		NOUVEAU_ERR("AII wrap unhandled\n");
 
 	/*XXX: assumes subc 0 is populated */
-	if (nvchan->dma.free < 2)
-		WAIT_RING_CH(&nvchan->base, 2);
-	nvchan->dma.free -= 2;
-#ifdef NOUVEAU_DMA_DEBUG
-	nvchan->dma.push_free += 2;
-#endif
-	OUT_RING_CH(&nvchan->base, 0x00040050);
-	OUT_RING_CH(&nvchan->base, nvfence->sequence);
+	RING_SPACE_CH(fence->channel, 2);
+	OUT_RING_CH  (fence->channel, 0x00040050);
+	OUT_RING_CH  (fence->channel, nvfence->sequence);
 
 	if (nvchan->fence_tail) {
 		nouveau_fence(nvchan->fence_tail)->next = fence;

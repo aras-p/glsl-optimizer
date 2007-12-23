@@ -37,15 +37,15 @@ nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 uint32_t *
 nouveau_pipe_dma_beginp(struct nouveau_grobj *grobj, int mthd, int size)
 {
-	struct nouveau_channel_priv *nvchan = nouveau_channel(grobj->channel);
+	struct nouveau_channel *chan = grobj->channel;
 	uint32_t *pushbuf;
 
-	if (!nvchan->pb_tail || nvchan->pb_tail->remaining < (size + 1))
-		nouveau_pushbuf_flush(grobj->channel);
+	if (chan->pushbuf->remaining < (size + 1))
+		nouveau_pushbuf_flush(chan);
 
-	pushbuf = nvchan->pb_tail->cur;
-	nvchan->pb_tail->cur += (size + 1);
-	nvchan->pb_tail->remaining -= (size + 1);
+	pushbuf = chan->pushbuf->cur;
+	chan->pushbuf->cur += (size + 1);
+	chan->pushbuf->remaining -= (size + 1);
 
 	(*pushbuf++) = ((grobj->subc << 13) | (size << 18) | mthd);
 	return pushbuf;

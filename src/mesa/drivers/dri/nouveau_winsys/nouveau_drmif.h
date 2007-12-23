@@ -33,6 +33,7 @@
 #include "pipe/nouveau/nouveau_notifier.h"
 #include "pipe/nouveau/nouveau_bo.h"
 #include "pipe/nouveau/nouveau_resource.h"
+#include "pipe/nouveau/nouveau_pushbuf.h"
 
 struct nouveau_device_priv {
 	struct nouveau_device base;
@@ -121,12 +122,6 @@ struct nouveau_pushbuf_bo {
 	int nr_relocs;
 };
 
-struct nouveau_pushbuf {
-	struct nouveau_channel *channel;
-	unsigned remaining;
-	uint32_t *cur;
-};
-
 struct nouveau_pushbuf_priv {
 	struct nouveau_pushbuf base;
 	struct nouveau_pushbuf *next;
@@ -138,6 +133,7 @@ struct nouveau_pushbuf_priv {
 	int nr_buffers;
 };
 #define nouveau_pushbuf(n) ((struct nouveau_pushbuf_priv *)(n))
+
 #define pbbo_to_ptr(o) ((uint64_t)(unsigned long)(o))
 #define ptr_to_pbbo(h) ((struct nouveau_pushbuf_bo *)(unsigned long)(h))
 #define pbrel_to_ptr(o) ((uint64_t)(unsigned long)(o))

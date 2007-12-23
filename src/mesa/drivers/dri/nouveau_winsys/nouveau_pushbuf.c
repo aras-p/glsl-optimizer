@@ -29,6 +29,30 @@
 
 #define PB_RSVD_DWORDS 2
 
+static int
+nouveau_pushbuf_space(struct nouveau_channel *chan)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_pushbuf_priv *nvpb;
+
+	nvpb = calloc(1, sizeof(struct nouveau_pushbuf_priv));
+	if (!nvpb)
+		return -ENOMEM;
+
+	while (nouveau_resource_alloc(nvchan->pb_heap, 0x2100, NULL,
+				      &nvpb->res)) {
+		nouveau_fence_flush(chan);
+	}
+
+	nvpb->base.channel = chan;
+	nvpb->base.remaining = (nvpb->res->size / 4) - PB_RSVD_DWORDS;
+	nvpb->base.cur = &nvchan->pushbuf[nvpb->res->start/4];
+	nvchan->pb_tail = &nvpb->base;
+	nvchan->base.pushbuf = nvchan->pb_tail;
+
+	return 0;
+}
+
 int
 nouveau_pushbuf_init(struct nouveau_channel *chan)
 {
@@ -46,6 +70,8 @@ nouveau_pushbuf_init(struct nouveau_channel *chan)
 	assert(nvchan->dma.cur <= (4096/4));
 	nvchan->dma.max = (4096 / 4) - 2;
 	nvchan->dma.free = nvchan->dma.max - nvchan->dma.cur;
+
+	assert(!nouveau_pushbuf_space(chan));
 
 	return 0;
 }
@@ -65,13 +91,10 @@ int
 nouveau_pushbuf_flush(struct nouveau_channel *chan)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(nvchan->pb_tail);
+	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(chan->pushbuf);
 	struct nouveau_pushbuf_bo *pbbo;
 	struct nouveau_fence *fence = NULL;
 	int ret;
-
-	if (!nvpb)
-		goto out_realloc;
 
 	if (nvpb->base.remaining == (nvpb->res->size / 4) - PB_RSVD_DWORDS)
 		return 0;
@@ -119,12 +142,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	nvpb->nr_buffers = 0;
 
 	/* Emit JMP to indirect pushbuf */
-	if (nvchan->dma.free < 1)
-		WAIT_RING_CH(chan, 1);
-	nvchan->dma.free -= 1;
-#ifdef NOUVEAU_DMA_DEBUG
-	nvchan->dma.push_free = 1;
-#endif
+	RING_SPACE_CH(chan, 1);
 	OUT_RING_CH(chan, 0x20000000 | nvpb->res->start);
 
 	/* Add JMP back to master pushbuf from indirect pushbuf */
@@ -141,20 +159,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	FIRE_RING_CH(chan);
 
 	/* Allocate space for next push buffer */
-out_realloc:
-	nvpb = calloc(1, sizeof(struct nouveau_pushbuf_priv));
-	if (!nvpb)
-		return -ENOMEM;
-
-	while (nouveau_resource_alloc(nvchan->pb_heap, 0x2100, NULL,
-				      &nvpb->res)) {
-		nouveau_fence_flush(chan);
-	}
-
-	nvpb->base.channel = chan;
-	nvpb->base.remaining = (nvpb->res->size / 4) - PB_RSVD_DWORDS;
-	nvpb->base.cur = &nvchan->pushbuf[nvpb->res->start/4];
-	nvchan->pb_tail = &nvpb->base;
+	assert(!nouveau_pushbuf_space(chan));
 
 	return 0;
 }

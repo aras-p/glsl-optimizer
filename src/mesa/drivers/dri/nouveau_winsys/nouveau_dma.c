@@ -59,12 +59,13 @@ nouveau_dma_channel_init(struct nouveau_channel *chan)
 	int i;
 
 	nvchan->dma.base = nvchan->drm.put_base;
-	nvchan->dma.cur  = nvchan->dma.put = RING_SKIPS;
+	nvchan->dma.cur  = nvchan->dma.put = 0;
 	nvchan->dma.max  = (nvchan->drm.cmdbuf_size >> 2) - 2;
 	nvchan->dma.free = nvchan->dma.max - nvchan->dma.cur;
 
+	RING_SPACE_CH(chan, RING_SKIPS);
 	for (i = 0; i < RING_SKIPS; i++)
-		nvchan->pushbuf[i] = 0x00000000;
+		OUT_RING_CH(chan, 0);
 }
 
 #define CHECK_TIMEOUT() do {                                                   \

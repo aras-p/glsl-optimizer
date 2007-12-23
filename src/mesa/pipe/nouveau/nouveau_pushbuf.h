@@ -20,20 +20,13 @@
  * SOFTWARE.
  */
 
-#ifndef __NOUVEAU_CHANNEL_H__
-#define __NOUVEAU_CHANNEL_H__
+#ifndef __NOUVEAU_PUSHBUF_H__
+#define __NOUVEAU_PUSHBUF_H__
 
-struct nouveau_channel {
-	struct nouveau_device *device;
-	int id;
-
-	struct nouveau_pushbuf *pushbuf;
-
-	struct nouveau_grobj *vram;
-	struct nouveau_grobj *gart;
-
-	void *user_private;
-	void (*hang_notify)(struct nouveau_channel *);
+struct nouveau_pushbuf {
+	struct nouveau_channel *channel;
+	unsigned remaining;
+	uint32_t *cur;
 };
 
 #endif

@@ -88,11 +88,26 @@ nouveau_dma_outp(struct nouveau_channel *chan, uint32_t *ptr, int size)
 }
 
 static inline void
+nouveau_dma_space(struct nouveau_channel *chan, int size)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+
+	if (nvchan->dma.free < size) {
+		if (nouveau_dma_wait(chan, size) && chan->hang_notify)
+			chan->hang_notify(chan);
+	}
+	nvchan->dma.free -= size;
+#ifdef NOUVEAU_DMA_DEBUG
+	nvchan->dma.push_free = size;
+#endif
+}
+
+static inline void
 nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 		  int method, int size, const char* file, int line)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	int push_size = size + 1;
+	(void)nvchan;
 
 #ifdef NOUVEAU_DMA_TRACE
 	NOUVEAU_MSG("BEGIN_RING %d/%08x/%d/0x%04x/%d\n", nvchan->drm.channel,
@@ -108,20 +123,11 @@ nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 	sprintf(faulty,"%s:%d",file,line);
 #endif
 
-	if (nvchan->dma.free < push_size) {
-		if (nouveau_dma_wait(chan, push_size) &&
-		    chan->hang_notify) {
-			chan->hang_notify(chan);
-		}
-	}
-	nvchan->dma.free -= push_size;
-#ifdef NOUVEAU_DMA_DEBUG
-	nvchan->dma.push_free = push_size;
-#endif
-
+	nouveau_dma_space(chan, (size + 1));
 	nouveau_dma_out(chan, (size << 18) | (grobj->subc << 13) | method);
 }
 
+#define RING_SPACE_CH(ch,sz)         nouveau_dma_space((ch), (sz))
 #define BEGIN_RING_CH(ch,gr,m,sz)    nouveau_dma_begin((ch), (gr), (m), (sz), __FUNCTION__, __LINE__ )
 #define OUT_RING_CH(ch, data)        nouveau_dma_out((ch), (data))
 #define OUT_RINGp_CH(ch,ptr,dwords)  nouveau_dma_outp((ch), (void*)(ptr),      \

@@ -30,19 +30,6 @@ struct nouveau_context {
 	struct nouveau_screen *nv_screen;
 	struct pipe_surface *frontbuffer;
 
-	/* Bufmgr */
-	struct {
-		struct nouveau_channel *channel;
-		struct nouveau_notifier *notify;
-		struct nouveau_grobj *m2mf;
-		uint32_t m2mf_src_ctxdma;
-		uint32_t m2mf_dst_ctxdma;
-		uint32_t next_sequence;
-	} bo;
-
-	/* Relocations */
-	struct nouveau_bo *reloc_head;
-
 	/* Hardware context */
 	uint32_t                *pushbuf;
 	struct nouveau_channel  *channel;
