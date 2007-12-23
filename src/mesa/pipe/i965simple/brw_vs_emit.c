@@ -38,6 +38,7 @@
 struct brw_prog_info {
    unsigned num_temps;
    unsigned num_addrs;
+   unsigned num_consts;
 
    unsigned writes_psize;
 
@@ -74,25 +75,21 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
 
    /* Vertex program parameters from curbe:
     */
-   nr_params = c->vp->program.num_inputs; /*FIXME: i think this is wrong... */
+   nr_params = c->prog_data.max_const;
    for (i = 0; i < nr_params; i++) {
-      c->regs[TGSI_FILE_INPUT][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
+      c->regs[TGSI_FILE_CONSTANT][i] = stride(brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
    }
    reg += (nr_params+1)/2;
-
    c->prog_data.curb_read_length = reg - 1;
 
 
 
    /* Allocate input regs:
     */
-   c->nr_inputs = 0;
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
-      if (c->prog_data.inputs_read & (1<<i)) {
-	 c->nr_inputs++;
+   c->nr_inputs = c->vp->program.num_inputs;
+   for (i = 0; i < c->nr_inputs; i++) {
 	 c->regs[TGSI_FILE_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
-      }
    }
 
 
@@ -119,9 +116,14 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
          mrf++;
       }
 #else
-      /* for now stuff everything in grf */
-      c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
-      reg++;
+      /*treat pos differently for now */
+      if (i == info->pos_idx) {
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_vec8_grf(reg, 0);
+         reg++;
+      } else {
+         c->regs[TGSI_FILE_OUTPUT][i] = brw_message_reg(mrf);
+         mrf++;
+      }
 #endif
    }
 
@@ -625,9 +627,12 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
    case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_INPUT:
    case TGSI_FILE_OUTPUT:
-   case TGSI_FILE_CONSTANT:
       assert(c->regs[file][index].nr != 0);
       return c->regs[file][index];
+   case TGSI_FILE_CONSTANT:
+   case TGSI_FILE_IMMEDIATE:
+      assert(c->regs[TGSI_FILE_CONSTANT][index].nr != 0);
+      return c->regs[TGSI_FILE_CONSTANT][index];
    case TGSI_FILE_ADDRESS:
       assert(index == 0);
       return c->regs[file][index];
@@ -983,6 +988,13 @@ static void process_declaration(const struct tgsi_full_declaration *decl,
 {
    switch(decl->Declaration.File) {
    case TGSI_FILE_CONSTANT: {
+      if (decl->Declaration.Declare == TGSI_DECLARE_MASK) {
+         printf("DECLARATION MASK = %d\n",
+                decl->u.DeclarationMask.Mask);
+         assert(0);
+      } else { /*range*/
+         info->num_consts += decl->u.DeclarationRange.Last - decl->u.DeclarationRange.First + 1;
+      }
    }
       break;
    case TGSI_FILE_INPUT: {
@@ -1061,7 +1073,7 @@ static void process_instruction(struct brw_vs_compile *c,
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
       index = src->SrcRegister.Index;
       file = src->SrcRegister.File;
-      if (file == TGSI_FILE_OUTPUT&&c->output_regs[index].used_in_src)
+      if (file == TGSI_FILE_OUTPUT && c->output_regs[index].used_in_src)
          args[i] = c->output_regs[index].reg;
       else
          args[i] = get_arg(c, &src->SrcRegister);
@@ -1289,6 +1301,14 @@ void brw_vs_emit(struct brw_vs_compile *c)
       }
          break;
       case TGSI_TOKEN_TYPE_IMMEDIATE: {
+         int i;
+         struct tgsi_full_immediate *imm = &parse.FullToken.FullImmediate;
+         /*assert(imm->Immediate.Size == 4);*/
+         c->prog_data.imm_buf[c->prog_data.num_imm][0] = imm->u.ImmediateFloat32[0].Float;
+         c->prog_data.imm_buf[c->prog_data.num_imm][1] = imm->u.ImmediateFloat32[1].Float;
+         c->prog_data.imm_buf[c->prog_data.num_imm][2] = imm->u.ImmediateFloat32[2].Float;
+         c->prog_data.imm_buf[c->prog_data.num_imm][3] = imm->u.ImmediateFloat32[3].Float;
+         c->prog_data.num_imm++;
       }
          break;
       case TGSI_TOKEN_TYPE_INSTRUCTION: {
@@ -1297,12 +1317,12 @@ void brw_vs_emit(struct brw_vs_compile *c)
             /* first instruction (declerations finished).
              * now that we know what vars are being used allocate
              * registers for them.*/
+            c->prog_data.max_const = prog_info.num_consts + c->prog_data.num_imm;
             brw_vs_alloc_regs(c, &prog_info);
 
 	    brw_set_access_mode(p, BRW_ALIGN_1);
             brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 	    brw_set_access_mode(p, BRW_ALIGN_16);
-
             allocated_registers = 1;
          }
          process_instruction(c, inst, &prog_info);
@@ -1315,4 +1335,5 @@ void brw_vs_emit(struct brw_vs_compile *c)
    emit_vertex_write(c, &prog_info);
    post_vs_emit(c, end_inst);
    tgsi_parse_free(&parse);
+
 }

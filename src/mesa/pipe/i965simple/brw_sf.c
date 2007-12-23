@@ -128,6 +128,10 @@ static void upload_sf_prog( struct brw_context *brw )
    /* CACHE_NEW_VS_PROG */
    key.vp_output_count = brw->vs.prog_data->outputs_written;
 
+   /* BRW_NEW_FS */
+   key.fp_input_count = brw->attribs.FragmentProgram->info.nr_regs[TGSI_FILE_INPUT];
+
+
    /* BRW_NEW_REDUCED_PRIMITIVE */
    switch (brw->reduced_primitive) {
    case PIPE_PRIM_TRIANGLES:

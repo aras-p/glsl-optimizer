@@ -35,9 +35,9 @@
 
 #include "glxheader.h"
 #include "xmesaP.h"
-#include "main/macros.h"
 
 #include "pipe/p_winsys.h"
+#include "pipe/p_util.h"
 #include "pipe/i965simple/brw_winsys.h"
 #include "brw_aub.h"
 #include "xm_winsys_aub.h"
@@ -159,13 +159,13 @@ static int aub_buffer_data(struct pipe_winsys *winsys,
       assert(iws->used + size < iws->size);
       sbo->data = iws->pool + iws->used;
       sbo->offset = AUB_BUF_START + iws->used;
-      iws->used += size;
+      iws->used += align(size, 4096);
    }
 
    sbo->size = size;
 
    if (data != NULL) {
-      memcpy(iws->pool, data, size);
+      memcpy(sbo->data, data, size);
 
       brw_aub_gtt_data( iws->aubfile, 
 			sbo->offset,
@@ -226,10 +226,16 @@ void xmesa_commands_aub(struct pipe_winsys *winsys,
 			unsigned nr_dwords)
 {
    struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
+   unsigned size = nr_dwords * 4;
+
+   assert(iws->used + size < iws->size);
+
    brw_aub_gtt_cmds( iws->aubfile, 
-		     0,		/* ?? */
+		     AUB_BUF_START + iws->used,
 		     cmds,
 		     nr_dwords * sizeof(int) );
+
+   iws->used += align(size, 4096);
 }
 
 
@@ -253,7 +259,7 @@ static int aub_buffer_get_subdata(struct pipe_winsys *winsys,
 				     void *data)
 {
    struct aub_buffer *sbo = aub_bo(buf);
-   assert(sbo->size > offset + size);
+   assert(sbo->size >= offset + size);
    memcpy(data, sbo->data + offset, size);
    return 0;
 }
@@ -589,6 +595,14 @@ static void aub_i965_buffer_subdata_typed(struct brw_winsys *winsys,
    case BRW_SS_SURF_BIND:
       aub_type = DW_SURFACE_STATE;
       aub_sub_type = DWSS_BINDING_TABLE_STATE; 
+      break;
+   case BRW_CONSTANT_BUFFER:
+      aub_type = DW_CONSTANT_URB_ENTRY;
+      aub_sub_type = 0; 
+      break;
+
+   default:
+      assert(0);
       break;
    }
 

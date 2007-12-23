@@ -365,7 +365,7 @@ st_finish_render_texture(GLcontext *ctx,
 
    assert(strb);
 
-   ctx->st->pipe->flush(ctx->st->pipe, 0x0);
+   ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE);
 
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);

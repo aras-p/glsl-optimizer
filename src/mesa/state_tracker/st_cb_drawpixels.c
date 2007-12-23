@@ -849,7 +849,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint skipPixels;
    ubyte *stmap;
 
-   pipe->flush(pipe, 0);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
 
    /* map the stencil buffer */
    stmap = pipe_surface_map(ps);
@@ -1208,7 +1208,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    uint format;
 
    /* make sure rendering has completed */
-   pipe->flush(pipe, 0x0);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
 
    st_validate_state(st);
 

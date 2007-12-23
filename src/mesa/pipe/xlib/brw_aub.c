@@ -331,7 +331,7 @@ void brw_aub_dump_bmp( struct brw_aubfile *aubfile,
    db.format = format;
    db.bpp = surface->cpp * 8;
    db.pitch = surface->pitch;
-   db.xsize = surface->pitch;
+   db.xsize = surface->width;
    db.ysize = surface->height;
    db.addr = gtt_offset;
    db.unknown = /* surface->tiled ? 0x4 : */ 0x0;

@@ -453,7 +453,6 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_CALLNZ",
    "OPCODE_IFC",
    "OPCODE_BREAKC",
-   "OPCODE_TXP",
    "OPCODE_KIL",
    "OPCODE_END"
 };
@@ -592,7 +591,6 @@ static const char *TGSI_OPCODES_SHORT[] =
    "CALLNZ",
    "IFC",
    "BREAKC",
-   "TXP",
    "KIL",
    "END"
 };
@@ -1518,12 +1516,23 @@ dump_gen(
    tgsi_parse_free( &parse );
 }
 
+
+static void
+sanity_checks(void)
+{
+   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "OPCODE_END") == 0);
+   assert(strcmp(TGSI_OPCODES_SHORT[TGSI_OPCODE_END], "END") == 0);
+}
+
+
 void
 tgsi_dump(
    const struct tgsi_token *tokens,
    unsigned                flags )
 {
    struct file_dump  dump;
+
+   sanity_checks();
 
    dump.base.write = _file_dump_write;
 #if 0

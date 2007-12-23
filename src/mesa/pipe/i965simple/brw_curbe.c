@@ -34,9 +34,11 @@
 #include "brw_context.h"
 #include "brw_defines.h"
 #include "brw_state.h"
+#include "brw_batch.h"
 #include "brw_util.h"
 #include "brw_wm.h"
 #include "pipe/p_state.h"
+#include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FALLBACKS
@@ -174,7 +176,7 @@ static void upload_constant_buffer(struct brw_context *brw)
 {
    struct brw_mem_pool *pool = &brw->pool[BRW_GS_POOL];
    unsigned sz = brw->curbe.total_size;
-   unsigned bufsz = sz * 16 * sizeof(float);
+   unsigned bufsz = sz * sizeof(float);
    float *buf;
    unsigned i;
 
@@ -246,17 +248,31 @@ static void upload_constant_buffer(struct brw_context *brw)
 
 
    if (brw->curbe.vs_size) {
-//      unsigned offset = brw->curbe.vs_start * 16;
-//      unsigned nr = vp->max_const;
-
-      /* map the vertex constant buffer and copy to curbe: */
-
-//      assert(nr == 0);
-      assert(0);
+      unsigned offset = brw->curbe.vs_start * 16;
+      /*unsigned nr = vp->max_const;*/
+      const struct pipe_constant_buffer *cbuffer = brw->attribs.Constants[0];
+      struct pipe_winsys *ws = brw->pipe.winsys;
+      if (cbuffer->size) {
+         /* map the vertex constant buffer and copy to curbe: */
+         ws->buffer_map(ws, cbuffer->buffer, 0);
+         ws->buffer_get_subdata(ws, cbuffer->buffer,
+                                0,
+                                cbuffer->size,
+                                &buf[offset]);
+         ws->buffer_unmap(ws, cbuffer->buffer);
+         offset += cbuffer->size;
+      }
+      /*immediates*/
+#if 0
+      if (brw->vs.prog_data->num_imm) {
+         memcpy(&buf[offset], brw->vs.prog_data->imm_buf,
+                brw->vs.prog_data->num_imm * 4 * sizeof(float));
+      }
+#endif
    }
 
-   if (0) {
-      for (i = 0; i < sz*16; i+=4)
+   if (1) {
+      for (i = 0; i < sz; i+=4)
 	 _mesa_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
 

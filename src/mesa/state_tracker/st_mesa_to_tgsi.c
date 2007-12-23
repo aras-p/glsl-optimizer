@@ -47,7 +47,9 @@
  */
 static GLuint
 map_register_file(
-   enum register_file file )
+   enum register_file file,
+   GLuint index,
+   const GLuint immediateMapping[] )
 {
    switch( file ) {
    case PROGRAM_UNDEFINED:
@@ -56,10 +58,20 @@ map_register_file(
       return TGSI_FILE_TEMPORARY;
    //case PROGRAM_LOCAL_PARAM:
    //case PROGRAM_ENV_PARAM:
+
+      /* Because of the longstanding problem with mesa arb shaders
+       * where constants, immediates and state variables are all
+       * bundled together as PROGRAM_STATE_VAR, we can't tell from the
+       * mesa register file whether this is a CONSTANT or an
+       * IMMEDIATE, hence we need all the other information.
+       */
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      return TGSI_FILE_CONSTANT;
+      if (immediateMapping[index] != ~0) 
+	 return TGSI_FILE_IMMEDIATE;
+      else
+	 return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:
       return TGSI_FILE_IMMEDIATE;
    case PROGRAM_INPUT:
@@ -180,7 +192,8 @@ compile_instruction(
    const GLuint outputMapping[],
    const GLuint immediateMapping[],
    GLuint preamble_size,
-   GLuint processor )
+   GLuint processor,
+   GLboolean *insideSubroutine)
 {
    GLuint i;
    struct tgsi_full_dst_register *fulldst;
@@ -193,7 +206,7 @@ compile_instruction(
    fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs( inst->Opcode );
 
    fulldst = &fullinst->FullDstRegisters[0];
-   fulldst->DstRegister.File = map_register_file( inst->DstReg.File );
+   fulldst->DstRegister.File = map_register_file( inst->DstReg.File, 0, NULL );
    fulldst->DstRegister.Index = map_register_file_index(
       fulldst->DstRegister.File,
       inst->DstReg.Index,
@@ -207,7 +220,9 @@ compile_instruction(
       GLuint j;
 
       fullsrc = &fullinst->FullSrcRegisters[i];
-      fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File );
+      fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File,
+						     inst->SrcReg[i].Index,
+						     immediateMapping );
       fullsrc->SrcRegister.Index = map_register_file_index(
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
@@ -283,6 +298,7 @@ compile_instruction(
       break;
    case OPCODE_BGNSUB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_BGNSUB;
+      *insideSubroutine = GL_TRUE;
       break;
    case OPCODE_BRA:
       fullinst->Instruction.Opcode = TGSI_OPCODE_BRA;
@@ -334,6 +350,7 @@ compile_instruction(
       break;
    case OPCODE_ENDSUB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ENDSUB;
+      *insideSubroutine = GL_FALSE;
       break;
    case OPCODE_EX2:
       fullinst->Instruction.Opcode = TGSI_OPCODE_EX2;
@@ -412,7 +429,16 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_RCP;
       break;
    case OPCODE_RET:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_RET;
+      /* If RET is used inside main (not a real subroutine) we may want
+       * to execute END instead of RET.  TBD...
+       */
+      if (1 /*  *insideSubroutine */) {
+         fullinst->Instruction.Opcode = TGSI_OPCODE_RET;
+      }
+      else {
+         /* inside main() pseudo-function */
+         fullinst->Instruction.Opcode = TGSI_OPCODE_END;
+      }
       break;
    case OPCODE_RSQ:
       fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;
@@ -499,7 +525,7 @@ compile_instruction(
       fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
       break;
    case OPCODE_END:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_RET;
+      fullinst->Instruction.Opcode = TGSI_OPCODE_END;
       break;
    default:
       assert( 0 );
@@ -682,6 +708,7 @@ tgsi_translate_mesa_program(
    GLuint preamble_size = 0;
    GLuint immediates[1000];
    GLuint numImmediates = 0;
+   GLboolean insideSubroutine = GL_FALSE;
 
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
           procType == TGSI_PROCESSOR_VERTEX);
@@ -800,6 +827,8 @@ tgsi_translate_mesa_program(
    }
 
    /* immediates/literals */
+   memset(immediates, ~0, sizeof(immediates));
+
    for (i = 0; program->Parameters && i < program->Parameters->NumParameters;
         i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
@@ -879,7 +908,8 @@ tgsi_translate_mesa_program(
             outputMapping,
             immediates,
             preamble_size,
-            procType );
+            procType,
+            &insideSubroutine);
 
       ti += tgsi_build_full_instruction(
          &fullinst,

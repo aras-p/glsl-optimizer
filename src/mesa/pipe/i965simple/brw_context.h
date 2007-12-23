@@ -327,6 +327,9 @@ struct brw_vs_prog_data {
 
    unsigned max_const;
 
+   float    imm_buf[PIPE_MAX_CONSTANT][4];
+   unsigned num_imm;
+
    /* Used for calculating urb partitions:
     */
    unsigned urb_entry_size;
@@ -666,8 +669,6 @@ void brwUpdateTextureState( struct brw_context *brw );
 void brw_upload_urb_fence(struct brw_context *brw);
 
 void brw_upload_constant_buffer_state(struct brw_context *brw);
-void brw_upload_polygon_stipple(struct brw_context *brw);
-void brw_upload_line_stipple(struct brw_context *brw);
 
 void brw_init_surface_functions(struct brw_context *brw);
 void brw_init_state_functions(struct brw_context *brw);

@@ -65,7 +65,6 @@ const struct brw_tracked_state brw_urb_fence;
 const struct brw_tracked_state brw_vertex_state;
 const struct brw_tracked_state brw_vs_prog;
 const struct brw_tracked_state brw_vs_unit;
-const struct brw_tracked_state brw_wm_input_sizes;
 const struct brw_tracked_state brw_wm_prog;
 const struct brw_tracked_state brw_wm_samplers;
 const struct brw_tracked_state brw_wm_surfaces;
@@ -116,7 +115,6 @@ static inline struct pipe_buffer_handle *brw_cache_buffer(struct brw_context *br
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) brw_batchbuffer_data( brw->winsys, (s), sizeof(*(s)))
 #define BRW_CACHED_BATCH_STRUCT(brw, s) brw_cached_batch_struct( brw, (s), sizeof(*(s)) )
 
 boolean brw_cached_batch_struct( struct brw_context *brw,
@@ -149,10 +147,6 @@ void brw_clear_all_caches( struct brw_context *brw );
 void brw_invalidate_pools( struct brw_context *brw );
 void brw_clear_batch_cache_flush( struct brw_context *brw );
 
-void brw_upload_cc_unit(struct brw_context *brw);
-void brw_upload_clip_prog(struct brw_context *brw);
-void brw_upload_blend_constant_color(struct brw_context *brw);
-void brw_upload_wm_samplers(struct brw_context *brw);
 
 /* brw_shader_info.c
  */

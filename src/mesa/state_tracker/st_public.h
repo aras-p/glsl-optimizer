@@ -55,10 +55,10 @@ void st_copy_context_state(struct st_context *dst, struct st_context *src,
                            uint mask);
 
 struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
-                                              boolean createRenderbuffers,
                                               enum pipe_format colorFormat,
                                               enum pipe_format depthFormat,
                                               enum pipe_format stencilFormat,
+                                              uint width, uint height,
                                               void *privateData);
 
 void st_resize_framebuffer( struct st_framebuffer *stfb,

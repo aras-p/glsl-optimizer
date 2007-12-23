@@ -935,6 +935,7 @@ static void brw_wm_emit_instruction( struct brw_wm_compile *c,
       break;
 
    case TGSI_OPCODE_RET:
+#if 0
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_ADD(p, 
@@ -944,6 +945,9 @@ static void brw_wm_emit_instruction( struct brw_wm_compile *c,
       brw_MOV(p, brw_ip_reg(), deref_1ud(c->stack_index, 0));
       brw_set_access_mode(p, BRW_ALIGN_16);
       brw_pop_insn_state(p);
+#else
+      emit_fb_write(c, inst);
+#endif
 
       break;
    case TGSI_OPCODE_LOOP:

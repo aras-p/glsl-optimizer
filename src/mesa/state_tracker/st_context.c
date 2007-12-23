@@ -28,6 +28,8 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/extensions.h"
+#include "main/matrix.h"
+#include "main/buffers.h"
 #include "vbo/vbo.h"
 #include "shader/shader_api.h"
 #include "st_public.h"
@@ -163,7 +165,19 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *read)
 {
    if (st) {
+      GLboolean firstTime = st->ctx->FirstTimeCurrent;
       _mesa_make_current(st->ctx, &draw->Base, &read->Base);
+      /* Need to initialize viewport here since draw->Base->Width/Height
+       * will still be zero at this point.
+       * This could be improved, but would require rather extensive work
+       * elsewhere (allocate rb surface storage sooner)
+       */
+      if (firstTime) {
+         GLuint w = draw->InitWidth, h = draw->InitHeight;
+         _mesa_set_viewport(st->ctx, 0, 0, w, h);
+         _mesa_set_scissor(st->ctx, 0, 0, w, h);
+
+      }
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

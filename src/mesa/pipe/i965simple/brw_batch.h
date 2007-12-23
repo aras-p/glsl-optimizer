@@ -53,4 +53,6 @@
    brw->hardware_dirty = ~0;				\
 } while (0)
 
+#define BRW_BATCH_STRUCT(brw, s) brw_batchbuffer_data( brw->winsys, (s), sizeof(*(s)))
+
 #endif
