@@ -222,6 +222,9 @@ nouveau_bo_map(struct nouveau_bo *bo, uint32_t flags)
 	if (!nvbo)
 		return -EINVAL;
 
+	if (nvbo->fence)
+		nouveau_fence_wait(&nvbo->fence);
+
 	if (nvbo->sysmem)
 		bo->map = nvbo->sysmem;
 	else
