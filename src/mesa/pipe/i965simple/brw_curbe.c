@@ -252,9 +252,14 @@ static void upload_constant_buffer(struct brw_context *brw)
       /*unsigned nr = vp->max_const;*/
       const struct pipe_constant_buffer *cbuffer = brw->attribs.Constants[0];
       struct pipe_winsys *ws = brw->pipe.winsys;
-      if (cbuffer->size) {
+      /* FIXME: buffer size is num_consts + num_immediates */
+      if (brw->vs.prog_data->num_consts) {
          /* map the vertex constant buffer and copy to curbe: */
          ws->buffer_map(ws, cbuffer->buffer, 0);
+         /* FIXME: this is wrong. the cbuffer->size currently
+          * represents size of consts + immediates. so if we'll
+          * have both we'll copy over the end of the buffer
+          * with the subsequent memcpy */
          ws->buffer_get_subdata(ws, cbuffer->buffer,
                                 0,
                                 cbuffer->size,
@@ -263,12 +268,10 @@ static void upload_constant_buffer(struct brw_context *brw)
          offset += cbuffer->size;
       }
       /*immediates*/
-#if 0
       if (brw->vs.prog_data->num_imm) {
          memcpy(&buf[offset], brw->vs.prog_data->imm_buf,
                 brw->vs.prog_data->num_imm * 4 * sizeof(float));
       }
-#endif
    }
 
    if (1) {
