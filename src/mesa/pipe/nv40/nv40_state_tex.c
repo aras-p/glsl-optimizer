@@ -109,12 +109,10 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 	if (pt->format == PIPE_FORMAT_U_A8_L8)
 		txs |= (1<<16); /*nfi*/
 
-	BEGIN_RING(curie, NV40TCL_TEX_OFFSET(unit), 8);
-	OUT_RELOCl(nv40mt->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-		   NOUVEAU_BO_RD);
-	OUT_RELOCd(nv40mt->buffer, txf, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-		   NOUVEAU_BO_OR | NOUVEAU_BO_RD, NV40TCL_TEX_FORMAT_DMA0,
-		   NV40TCL_TEX_FORMAT_DMA1);
+	nv40->tex[unit].buffer = nv40mt->buffer;
+	nv40->tex[unit].format = txf;
+
+	BEGIN_RING(curie, NV40TCL_TEX_WRAP(unit), 6);
 	OUT_RING  (ps->wrap);
 	OUT_RING  (NV40TCL_TEX_ENABLE_ENABLE | ps->en |
 		   (0x00078000) /* mipmap related? */);
@@ -135,6 +133,7 @@ nv40_state_tex_update(struct nv40_context *nv40)
 		if (nv40->tex_miptree[unit]) {
 			nv40_tex_unit_enable(nv40, unit);
 		} else {
+			nv40->tex[unit].buffer = NULL;
 			BEGIN_RING(curie, NV40TCL_TEX_ENABLE(unit), 1);
 			OUT_RING  (0);
 		}

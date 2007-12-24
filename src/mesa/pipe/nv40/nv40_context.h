@@ -44,6 +44,21 @@ struct nv40_context {
 	struct pipe_texture       *tex_miptree[PIPE_MAX_SAMPLERS];
 	uint32_t                   tex_dirty;
 
+	uint32_t rt_enable;
+	struct pipe_buffer_handle *rt[4];
+	struct pipe_buffer_handle *zeta;
+
+	struct {
+		struct pipe_buffer_handle *buffer;
+		uint32_t format;
+	} tex[16];
+
+	unsigned vb_enable;
+	struct {
+		struct pipe_buffer_handle *buffer;
+		unsigned delta;
+	} vb[16];
+
 	struct {
 		struct nouveau_resource *exec_heap;
 		struct nouveau_resource *data_heap;

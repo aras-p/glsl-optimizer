@@ -630,50 +630,36 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR0, 1);
-		OUT_RELOCo(rt[0]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR0_PITCH, 2);
+		BEGIN_RING(curie, NV40TCL_COLOR0_PITCH, 1);
 		OUT_RING  (rt[0]->pitch * rt[0]->cpp);
-		OUT_RELOCl(rt[0]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		nv40->rt[0] = rt[0]->buffer;
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR1, 1);
-		OUT_RELOCo(rt[1]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR1_OFFSET, 2);
-		OUT_RELOCl(rt[1]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		BEGIN_RING(curie, NV40TCL_COLOR1_PITCH, 2);
 		OUT_RING  (rt[1]->pitch * rt[1]->cpp);
+		nv40->rt[1] = rt[1]->buffer;
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR2, 1);
-		OUT_RELOCo(rt[2]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR2_OFFSET, 1);
-		OUT_RELOCl(rt[2]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR2_PITCH, 1);
 		OUT_RING  (rt[2]->pitch * rt[2]->cpp);
+		nv40->rt[2] = rt[2]->buffer;
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR3, 1);
-		OUT_RELOCo(rt[3]->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR3_OFFSET, 1);
-		OUT_RELOCl(rt[3]->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		BEGIN_RING(curie, NV40TCL_COLOR3_PITCH, 1);
 		OUT_RING  (rt[3]->pitch * rt[3]->cpp);
+		nv40->rt[3] = rt[3]->buffer;
 	}
 
 	if (zeta_format) {
-		BEGIN_RING(curie, NV40TCL_DMA_ZETA, 1);
-		OUT_RELOCo(zeta->buffer,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR | NOUVEAU_BO_RD);
-		BEGIN_RING(curie, NV40TCL_ZETA_OFFSET, 1);
-		OUT_RELOCl(zeta->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR |
-			   NOUVEAU_BO_RD);
 		BEGIN_RING(curie, NV40TCL_ZETA_PITCH, 1);
 		OUT_RING  (zeta->pitch * zeta->cpp);
+		nv40->zeta = zeta->buffer;
 	}
 
+	nv40->rt_enable = rt_enable;
 	BEGIN_RING(curie, NV40TCL_RT_ENABLE, 1);
 	OUT_RING  (rt_enable);
 	BEGIN_RING(curie, NV40TCL_RT_HORIZ, 3);

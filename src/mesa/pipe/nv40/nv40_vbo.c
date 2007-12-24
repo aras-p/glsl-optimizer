@@ -6,6 +6,9 @@
 #include "nv40_dma.h"
 #include "nv40_state.h"
 
+#include "pipe/nouveau/nouveau_channel.h"
+#include "pipe/nouveau/nouveau_pushbuf.h"
+
 static INLINE int
 nv40_vbo_ncomp(uint format)
 {
@@ -101,6 +104,8 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 	uint32_t inputs, vtxfmt[16];
 	int hw, num_hw;
 
+	nv40->vb_enable = 0;
+
 	inputs = vp->ir;
 	for (hw = 0; hw < 16 && inputs; hw++) {
 		if (inputs & (1 << hw)) {
@@ -129,19 +134,16 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 				continue;
 		}
 
-		BEGIN_RING(curie, NV40TCL_VTXBUF_ADDRESS(hw), 1);
-		OUT_RELOC(vb->buffer, vb->buffer_offset + ve->src_offset,
-			  NOUVEAU_BO_GART | NOUVEAU_BO_VRAM | NOUVEAU_BO_LOW |
-			  NOUVEAU_BO_OR | NOUVEAU_BO_RD, 0,
-			  NV40TCL_VTXBUF_ADDRESS_DMA1);
+		nv40->vb_enable |= (1 << hw);
+		nv40->vb[hw].delta = vb->buffer_offset + ve->src_offset;
+		nv40->vb[hw].buffer = vb->buffer;
+
 		vtxfmt[hw] = ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
 			      (nv40_vbo_ncomp(ve->src_format) <<
 			       NV40TCL_VTXFMT_SIZE_SHIFT) |
 			      nv40_vbo_type(ve->src_format));
 	}
 
-	BEGIN_RING(curie, 0x1710, 1);
-	OUT_RING  (0); /* vtx cache flush */
 	BEGIN_RING(curie, NV40TCL_VTXFMT(0), num_hw);
 	OUT_RINGp (vtxfmt, num_hw);
 }
@@ -149,13 +151,30 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 static boolean
 nv40_vbo_validate_state(struct nv40_context *nv40)
 {
-	if (nv40->dirty & ~NV40_NEW_ARRAYS)
-		nv40_emit_hw_state(nv40);
+	unsigned inputs;
+
+	nv40_emit_hw_state(nv40);
 
 	if (nv40->dirty & NV40_NEW_ARRAYS) {
 		nv40_vbo_arrays_update(nv40);
 		nv40->dirty &= ~NV40_NEW_ARRAYS;
 	}
+
+	inputs = nv40->vb_enable;
+	while (inputs) {
+		unsigned a = ffs(inputs) - 1;
+
+		inputs &= ~(1 << a);
+
+		BEGIN_RING(curie, NV40TCL_VTXBUF_ADDRESS(a), 1);
+		OUT_RELOC (nv40->vb[a].buffer, nv40->vb[a].delta,
+			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_LOW |
+			   NOUVEAU_BO_OR | NOUVEAU_BO_RD, 0,
+			   NV40TCL_VTXBUF_ADDRESS_DMA1);
+	}
+
+	BEGIN_RING(curie, 0x1710, 1);
+	OUT_RING  (0); /* vtx cache flush */
 
 	return TRUE;
 }

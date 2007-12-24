@@ -796,10 +796,6 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 		fp->on_hw = TRUE;
 	}
 
-	BEGIN_RING(curie, NV40TCL_FP_ADDRESS, 1);
-	OUT_RELOC (fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-		   NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-		   NV40TCL_FP_ADDRESS_DMA0, NV40TCL_FP_ADDRESS_DMA1);
 	BEGIN_RING(curie, NV40TCL_FP_CONTROL, 1);
 	OUT_RING  (fp->fp_control);
 
