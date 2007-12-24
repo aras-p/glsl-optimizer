@@ -42,34 +42,37 @@ static inline void
 nouveau_dma_out(struct nouveau_channel *chan, uint32_t data)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_dma_priv *dma = nvchan->dma;
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (nvchan->dma.push_free == 0) {
-		NOUVEAU_ERR("No space left in packet. Error at %s\n",faulty);
+	if (dma->push_free == 0) {
+		NOUVEAU_ERR("No space left in packet at %s\n", faulty);
 		return;
 	}
-	nvchan->dma.push_free--;
+	dma->push_free--;
 #endif
 #ifdef NOUVEAU_DMA_TRACE
 	{
-		uint32_t offset = (nvchan->dma.cur << 2) + nvchan->dma.base;
+		uint32_t offset = (dma->cur << 2) + dma->base;
 		NOUVEAU_MSG("\tOUT_RING %d/0x%08x -> 0x%08x\n",
 			    nvchan->drm.channel, offset, data);
 	}
 #endif
-	nvchan->pushbuf[nvchan->dma.cur++] = data;
+	nvchan->pushbuf[dma->cur + (dma->base - nvchan->drm.put_base)/4] = data;
+	dma->cur++;
 }
 
 static inline void
 nouveau_dma_outp(struct nouveau_channel *chan, uint32_t *ptr, int size)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	(void)chan;
+	struct nouveau_dma_priv *dma = nvchan->dma;
+	(void)dma;
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (nvchan->dma.push_free < size) {
+	if (dma->push_free < size) {
 		NOUVEAU_ERR("Packet too small.  Free=%d, Need=%d\n",
-			    nvchan->dma.push_free, size);
+			    dma->push_free, size);
 		return;
 	}
 #endif
@@ -79,11 +82,11 @@ nouveau_dma_outp(struct nouveau_channel *chan, uint32_t *ptr, int size)
 		ptr++;
 	}
 #else
-	memcpy(&nvchan->pushbuf[nvchan->dma.cur], ptr, size << 2);
+	memcpy(&nvchan->pushbuf[dma->cur], ptr, size << 2);
 #ifdef NOUVEAU_DMA_DEBUG
-	nvchan->dma.push_free -= size;
+	dma->push_free -= size;
 #endif
-	nvchan->dma.cur += size;
+	dma->cur += size;
 #endif
 }
 
@@ -91,14 +94,15 @@ static inline void
 nouveau_dma_space(struct nouveau_channel *chan, int size)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_dma_priv *dma = nvchan->dma;
 
-	if (nvchan->dma.free < size) {
+	if (dma->free < size) {
 		if (nouveau_dma_wait(chan, size) && chan->hang_notify)
 			chan->hang_notify(chan);
 	}
-	nvchan->dma.free -= size;
+	dma->free -= size;
 #ifdef NOUVEAU_DMA_DEBUG
-	nvchan->dma.push_free = size;
+	dma->push_free = size;
 #endif
 }
 
@@ -107,7 +111,8 @@ nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 		  int method, int size, const char* file, int line)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	(void)nvchan;
+	struct nouveau_dma_priv *dma = nvchan->dma;
+	(void)dma;
 
 #ifdef NOUVEAU_DMA_TRACE
 	NOUVEAU_MSG("BEGIN_RING %d/%08x/%d/0x%04x/%d\n", nvchan->drm.channel,
@@ -115,9 +120,9 @@ nouveau_dma_begin(struct nouveau_channel *chan, struct nouveau_grobj *grobj,
 #endif
 
 #ifdef NOUVEAU_DMA_DEBUG
-	if (nvchan->dma.push_free) {
-		NOUVEAU_ERR("Previous packet incomplete: %d left. Error at %s\n",
-			    nvchan->dma.push_free,faulty);
+	if (dma->push_free) {
+		NOUVEAU_ERR("Previous packet incomplete: %d left at %s\n",
+			    dma->push_free, faulty);
 		return;
 	}
 	sprintf(faulty,"%s:%d",file,line);

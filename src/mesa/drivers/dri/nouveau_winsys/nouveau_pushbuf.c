@@ -27,28 +27,34 @@
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
 
-#define PB_RSVD_DWORDS 2
+#define PB_BUFMGR_DWORDS   (4096 / 2)
+#define PB_MIN_USER_DWORDS  2048
 
 static int
-nouveau_pushbuf_space(struct nouveau_channel *chan)
+nouveau_pushbuf_space(struct nouveau_channel *chan, unsigned min)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	struct nouveau_pushbuf_priv *nvpb;
+	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
 
-	nvpb = calloc(1, sizeof(struct nouveau_pushbuf_priv));
-	if (!nvpb)
-		return -ENOMEM;
+	assert((min + 1) <= nvchan->dma->max);
 
-	while (nouveau_resource_alloc(nvchan->pb_heap, 0x2100, NULL,
-				      &nvpb->res)) {
-		nouveau_fence_flush(chan);
-	}
+	/* Wait for enough space in push buffer */
+	min = min < PB_MIN_USER_DWORDS ? PB_MIN_USER_DWORDS : min;
+	min += 1; /* a bit extra for the NOP */
+	if (nvchan->dma->free < min)
+		WAIT_RING_CH(chan, min);
 
+	/* Insert NOP, may turn into a jump later */
+	RING_SPACE_CH(chan, 1);
+	nvpb->nop_jump = nvchan->dma->cur;
+	OUT_RING_CH(chan, 0);
+
+	/* Any remaining space is available to the user */
+	nvpb->start = nvchan->dma->cur;
+	nvpb->size = nvchan->dma->free;
 	nvpb->base.channel = chan;
-	nvpb->base.remaining = (nvpb->res->size / 4) - PB_RSVD_DWORDS;
-	nvpb->base.cur = &nvchan->pushbuf[nvpb->res->start/4];
-	nvchan->pb_tail = &nvpb->base;
-	nvchan->base.pushbuf = nvchan->pb_tail;
+	nvpb->base.remaining = nvpb->size;
+	nvpb->base.cur = &nvchan->pushbuf[nvpb->start];
 
 	return 0;
 }
@@ -57,52 +63,64 @@ int
 nouveau_pushbuf_init(struct nouveau_channel *chan)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
+	struct nouveau_dma_priv *m = &nvchan->dma_master;
+	struct nouveau_dma_priv *b = &nvchan->dma_bufmgr;
+	int i;
 
 	if (!nvchan)
 		return -EINVAL;
 
-	/* Everything except first 4KiB of the push buffer is managed by us */
-	if (nouveau_resource_init(&nvchan->pb_heap, 4096,
-				  nvchan->drm.cmdbuf_size - 4096))
-		return -EINVAL;
+	/* Reassign last bit of push buffer for a "separate" bufmgr
+	 * ring buffer
+	 */
+	m->max -= PB_BUFMGR_DWORDS;
+	m->free -= PB_BUFMGR_DWORDS;
 
-	/* Shrink master ring to 4KiB */
-	assert(nvchan->dma.cur <= (4096/4));
-	nvchan->dma.max = (4096 / 4) - 2;
-	nvchan->dma.free = nvchan->dma.max - nvchan->dma.cur;
+	b->base = m->base + ((m->max + 2) << 2);
+	b->max = PB_BUFMGR_DWORDS - 2;
+	b->cur = b->put = 0;
+	b->free = b->max - b->cur;
 
-	assert(!nouveau_pushbuf_space(chan));
+	/* Some NOPs just to be safe
+	 *XXX: RING_SKIPS
+	 */
+	nvchan->dma = b;
+	RING_SPACE_CH(chan, 8);
+	for (i = 0; i < 8; i++)
+		OUT_RING_CH(chan, 0);
+	nvchan->dma = m;
+
+	nouveau_pushbuf_space(chan, 0);
+	chan->pushbuf = &nvchan->pb.base;
 
 	return 0;
 }
 
-static void
-nouveau_pushbuf_fence_signalled(void *priv)
-{
-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(priv);
-
-	nouveau_fence_del(&nvpb->fence);
-	nouveau_resource_free(&nvpb->res);
-	free(nvpb);
-}
-
 /* This would be our TTM "superioctl" */
 int
-nouveau_pushbuf_flush(struct nouveau_channel *chan)
+nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 {
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(chan->pushbuf);
+	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
 	struct nouveau_pushbuf_bo *pbbo;
 	struct nouveau_fence *fence = NULL;
 	int ret;
 
-	if (nvpb->base.remaining == (nvpb->res->size / 4) - PB_RSVD_DWORDS)
+	if (nvpb->base.remaining == nvpb->size)
 		return 0;
-	nvchan->pb_tail = NULL;
+
+	nvpb->size -= nvpb->base.remaining;
+	nvchan->dma->cur += nvpb->size;
+	nvchan->dma->free -= nvpb->size;
+	assert(nvchan->dma->cur <= nvchan->dma->max);
 
 	ret = nouveau_fence_new(chan, &fence);
 	if (ret)
 		return ret;
+
+	nvchan->dma = &nvchan->dma_bufmgr;
+	nvchan->pushbuf[nvpb->nop_jump] = 0x20000000 |
+		(nvchan->dma->base + (nvchan->dma->cur << 2));
 
 	/* Validate buffers + apply relocations */
 	nvchan->user_charge = 0;
@@ -142,25 +160,19 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 	}
 	nvpb->nr_buffers = 0;
 
-	/* Emit JMP to indirect pushbuf */
+	/* Switch back to user's ring */
 	RING_SPACE_CH(chan, 1);
-	OUT_RING_CH(chan, 0x20000000 | nvpb->res->start);
+	OUT_RING_CH(chan, 0x20000000 | ((nvpb->start << 2) +
+					nvchan->dma_master.base));
+	nvchan->dma = &nvchan->dma_master;
 
-	/* Add JMP back to master pushbuf from indirect pushbuf */
-	(*nvpb->base.cur++) =
-		0x20000000 | ((nvchan->dma.cur << 2) + nvchan->dma.base);
-
-	/* Fence */
-	nvpb->fence = fence;
-	nouveau_fence_signal_cb(nvpb->fence, nouveau_pushbuf_fence_signalled,
-				nvpb);
-	nouveau_fence_emit(nvpb->fence);
-
-	/* Kickoff */
+	/* Fence + kickoff */
+	nouveau_fence_emit(fence);
 	FIRE_RING_CH(chan);
+	nouveau_fence_del(&fence);
 
 	/* Allocate space for next push buffer */
-	assert(!nouveau_pushbuf_space(chan));
+	assert(!nouveau_pushbuf_space(chan, min));
 
 	return 0;
 }
@@ -168,8 +180,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan)
 static struct nouveau_pushbuf_bo *
 nouveau_pushbuf_emit_buffer(struct nouveau_channel *chan, struct nouveau_bo *bo)
 {
-	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
-	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(nvchan->pb_tail);
+	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(chan->pushbuf);
 	struct nouveau_pushbuf_bo *pbbo = ptr_to_pbbo(nvpb->buffers);
 
 	while (pbbo) {

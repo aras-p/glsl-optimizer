@@ -128,10 +128,10 @@ struct nouveau_pushbuf_bo {
 
 struct nouveau_pushbuf_priv {
 	struct nouveau_pushbuf base;
-	struct nouveau_pushbuf *next;
 
-	struct nouveau_resource *res;
-	struct nouveau_fence *fence;
+	unsigned nop_jump;
+	unsigned start;
+	unsigned size;
 
 	uint64_t buffers;
 	int nr_buffers;
@@ -149,12 +149,22 @@ extern int
 nouveau_pushbuf_init(struct nouveau_channel *);
 
 extern int
-nouveau_pushbuf_flush(struct nouveau_channel *);
+nouveau_pushbuf_flush(struct nouveau_channel *, unsigned min);
 
 extern int
 nouveau_pushbuf_emit_reloc(struct nouveau_channel *, void *ptr,
 			   struct nouveau_bo *, uint32_t data, uint32_t flags,
 			   uint32_t vor, uint32_t tor);
+
+struct nouveau_dma_priv {
+	uint32_t base;
+	uint32_t max;
+	uint32_t cur;
+	uint32_t put;
+	uint32_t free;
+
+	int push_free;
+} dma;
 
 struct nouveau_channel_priv {
 	struct nouveau_channel base;
@@ -169,21 +179,15 @@ struct nouveau_channel_priv {
 	volatile uint32_t *get;
 	volatile uint32_t *ref_cnt;
 
-	struct {
-		uint32_t base, max;
-		uint32_t cur, put;
-		uint32_t free;
-
-		int push_free;
-	} dma;
+	struct nouveau_dma_priv dma_master;
+	struct nouveau_dma_priv dma_bufmgr;
+	struct nouveau_dma_priv *dma;
 
 	struct nouveau_fence *fence_head;
 	struct nouveau_fence *fence_tail;
 	uint32_t fence_sequence;
 
-	struct nouveau_resource *pb_heap;
-	struct nouveau_pushbuf *pb_head;
-	struct nouveau_pushbuf *pb_tail;
+	struct nouveau_pushbuf_priv pb;
 
 	unsigned user_charge;
 };

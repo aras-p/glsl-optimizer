@@ -40,8 +40,9 @@ nouveau_pipe_dma_beginp(struct nouveau_grobj *grobj, int mthd, int size)
 	struct nouveau_channel *chan = grobj->channel;
 	uint32_t *pushbuf;
 
-	if (chan->pushbuf->remaining < (size + 1))
-		nouveau_pushbuf_flush(chan);
+	if (chan->pushbuf->remaining < (size + 1)) {
+		nouveau_pushbuf_flush(chan, size + 1);
+	}
 
 	pushbuf = chan->pushbuf->cur;
 	chan->pushbuf->cur += (size + 1);
@@ -54,7 +55,7 @@ nouveau_pipe_dma_beginp(struct nouveau_grobj *grobj, int mthd, int size)
 void
 nouveau_pipe_dma_kickoff(struct nouveau_channel *chan)
 {
-	nouveau_pushbuf_flush(chan);
+	nouveau_pushbuf_flush(chan, 0);
 }
 
 static int
