@@ -187,24 +187,7 @@ has Mesa packages (like RPM or DEB) which you can easily install.
 </a></p>
 
 
-<h2><a name="part2">2.2 Running <code>configure; make</code> doesn't Work</a></h2>
-<p>
-Mesa no longer supports GNU autoconf/automake.  Why?
-<ul>
-<li>It seemed to seldom work on anything but Linux
-<li>The config files were hard to maintain and hard to understand
-<li>libtool caused a lot of grief
-</ul>
-
-<p>
-Now Mesa again uses a conventional Makefile system (as it did originally).
-Basically, each Makefile in the tree includes one of the configuration
-files from the config/ directory.
-The config files specify all the variables for a variety of popular systems.
-</p>
-
-
-<h2><a name="part2">2.3 I get undefined symbols such as bgnpolygon, v3f, etc...</a></h2>
+<h2><a name="part2">2.2 I get undefined symbols such as bgnpolygon, v3f, etc...</a></h2>
 <p>
 <a name="part2">You're application is written in IRIS GL, not OpenGL.
 IRIS GL was the predecessor to OpenGL and is a different thing (almost)
@@ -213,7 +196,7 @@ Mesa's not the solution.
 </a></p>
 
 
-<h2><a name="part2">2.4 Where is the GLUT library?</a></h2>
+<h2><a name="part2">2.3 Where is the GLUT library?</a></h2>
 <p>
 <a name="part2">GLUT (OpenGL Utility Toolkit) is in the separate MesaGLUT-x.y.z.tar.gz file.
 If you don't already have GLUT installed, you should grab the MesaGLUT
@@ -222,7 +205,7 @@ package and compile it with the rest of Mesa.
 
 
 
-<h2><a name="part2">2.5 What's the proper place for the libraries and headers?</a></h2>
+<h2><a name="part2">2.4 What's the proper place for the libraries and headers?</a></h2>
 <p>
 <a name="part2">On Linux-based systems you'll want to follow the
 </a><a href="http://oss.sgi.com/projects/ogl-sample/ABI/index.html"
