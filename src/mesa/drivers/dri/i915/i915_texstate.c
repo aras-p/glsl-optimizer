@@ -246,7 +246,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
          state[I915_TEXREG_SS2] |=
             (SS2_SHADOW_ENABLE |
-             intel_translate_compare_func(tObj->CompareFunc));
+             intel_translate_shadow_compare_func(tObj->CompareFunc));
 
          minFilt = FILTER_4X4_FLAT;
          magFilt = FILTER_4X4_FLAT;
