@@ -149,7 +149,8 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 }
 
 static boolean
-nv40_vbo_validate_state(struct nv40_context *nv40)
+nv40_vbo_validate_state(struct nv40_context *nv40,
+			struct pipe_buffer_handle *ib, unsigned ib_format)
 {
 	unsigned inputs;
 
@@ -173,6 +174,14 @@ nv40_vbo_validate_state(struct nv40_context *nv40)
 			   NV40TCL_VTXBUF_ADDRESS_DMA1);
 	}
 
+	if (ib) {
+		BEGIN_RING(curie, 0x181c, 2);
+		OUT_RELOCl(ib, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
+			   NOUVEAU_BO_RD);
+		OUT_RELOCd(ib, ib_format, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
+			   NOUVEAU_BO_RD | NOUVEAU_BO_OR, 0, 1);
+	}
+
 	BEGIN_RING(curie, 0x1710, 1);
 	OUT_RING  (0); /* vtx cache flush */
 
@@ -186,7 +195,7 @@ nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
 	unsigned nr;
 
-	assert(nv40_vbo_validate_state(nv40));
+	assert(nv40_vbo_validate_state(nv40, NULL, 0));
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -286,45 +295,109 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 	}
 }
 
-boolean
-nv40_draw_elements(struct pipe_context *pipe,
-		   struct pipe_buffer_handle *indexBuffer, unsigned indexSize,
-		   unsigned mode, unsigned start, unsigned count)
+static boolean
+nv40_draw_elements_inline(struct pipe_context *pipe,
+			  struct pipe_buffer_handle *ib, unsigned ib_size,
+			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	void *ib;
+	struct pipe_winsys *ws = pipe->winsys;
+	void *map;
 
-	assert(nv40_vbo_validate_state(nv40));
+	assert(nv40_vbo_validate_state(nv40, NULL, 0));
 
-	ib = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
-				      PIPE_BUFFER_FLAG_READ);
-	if (!ib) {
-		NOUVEAU_ERR("Couldn't map index buffer!!\n");
-		return FALSE;
-	}
+	map = ws->buffer_map(ws, ib, PIPE_BUFFER_FLAG_READ);
+	if (!ib)
+		assert(0);
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
 
-	switch (indexSize) {
+	switch (ib_size) {
 	case 1:
-		nv40_draw_elements_u08(nv40, ib, start, count);
+		nv40_draw_elements_u08(nv40, map, start, count);
 		break;
 	case 2:
-		nv40_draw_elements_u16(nv40, ib, start, count);
+		nv40_draw_elements_u16(nv40, map, start, count);
 		break;
 	case 4:
-		nv40_draw_elements_u32(nv40, ib, start, count);
+		nv40_draw_elements_u32(nv40, map, start, count);
 		break;
 	default:
-		NOUVEAU_ERR("unsupported elt size %d\n", indexSize);
+		assert(0);
 		break;
 	}
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (0);
 
-	pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
+	ws->buffer_unmap(ws, ib);
+
+	return TRUE;
+}
+
+static boolean
+nv40_draw_elements_vbo(struct pipe_context *pipe,
+		       struct pipe_buffer_handle *ib, unsigned ib_size,
+		       unsigned mode, unsigned start, unsigned count)
+{
+	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	unsigned nr;
+
+	switch (ib_size) {
+	case 2:
+		assert(nv40_vbo_validate_state(nv40, ib, 0x00000010));
+		break;
+	case 4:
+		assert(nv40_vbo_validate_state(nv40, ib, 0x00000000));
+		break;
+	default:
+		assert(0);
+	}
+
+
+	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
+	OUT_RING  (nvgl_primitive(mode));
+
+	nr = (count & 0xff);
+	if (nr) {
+		BEGIN_RING(curie, 0x1824, 1);
+		OUT_RING  (((nr - 1) << 24) | start);
+		start += nr;
+	}
+
+	nr = count >> 8;
+	while (nr) {
+		unsigned push = nr > 2047 ? 2047 : nr;
+
+		nr -= push;
+
+		BEGIN_RING_NI(curie, 0x1824, push);
+		while (push--) {
+			OUT_RING(((0x100 - 1) << 24) | start);
+			start += 0x100;
+		}
+	}
+
+	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
+	OUT_RING  (0);
+
+	return TRUE;
+}
+
+boolean
+nv40_draw_elements(struct pipe_context *pipe,
+		   struct pipe_buffer_handle *indexBuffer, unsigned indexSize,
+		   unsigned mode, unsigned start, unsigned count)
+{
+	if (indexSize != 1) {
+		nv40_draw_elements_vbo(pipe, indexBuffer, indexSize,
+				       mode, start, count);
+	} else {
+		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
+					  mode, start, count);
+	}
+
 	pipe->flush(pipe, 0);
 	return TRUE;
 }
