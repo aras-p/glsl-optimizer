@@ -554,8 +554,13 @@ alloc_shared_state( GLcontext *ctx )
       (*ctx->Driver.DeleteTexture)(ctx, ss->DefaultCubeMap);
    if (ss->DefaultRect)
       (*ctx->Driver.DeleteTexture)(ctx, ss->DefaultRect);
-   if (ss)
-      _mesa_free(ss);
+   if (ss->Default1DArray)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->Default1DArray);
+   if (ss->Default2DArray)
+      (*ctx->Driver.DeleteTexture)(ctx, ss->Default2DArray);
+
+   _mesa_free(ss);
+
    return GL_FALSE;
 }
 
@@ -678,6 +683,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    ctx->Driver.DeleteTexture(ctx, ss->Default3D);
    ctx->Driver.DeleteTexture(ctx, ss->DefaultCubeMap);
    ctx->Driver.DeleteTexture(ctx, ss->DefaultRect);
+   ctx->Driver.DeleteTexture(ctx, ss->Default1DArray);
+   ctx->Driver.DeleteTexture(ctx, ss->Default2DArray);
+
    /* all other textures */
    _mesa_HashDeleteAll(ss->TexObjects, delete_texture_cb, ctx);
    _mesa_DeleteHashTable(ss->TexObjects);
