@@ -111,7 +111,7 @@ GetExtensionFuncs(void)
    glUniform1f_func = (PFNGLUNIFORM1FPROC) glutGetProcAddress("glUniform1f");
    glUniform2f_func = (PFNGLUNIFORM2FPROC) glutGetProcAddress("glUniform2f");
    glUniform3f_func = (PFNGLUNIFORM3FPROC) glutGetProcAddress("glUniform3f");
-   glUniform4f_func = (PFNGLUNIFORM4FPROC) glutGetProcAddress("glUniform3f");
+   glUniform4f_func = (PFNGLUNIFORM4FPROC) glutGetProcAddress("glUniform4f");
    glUniform1fv_func = (PFNGLUNIFORM1FVPROC) glutGetProcAddress("glUniform1fv");
    glUniform2fv_func = (PFNGLUNIFORM2FVPROC) glutGetProcAddress("glUniform2fv");
    glUniform3fv_func = (PFNGLUNIFORM3FVPROC) glutGetProcAddress("glUniform3fv");
