@@ -425,8 +425,7 @@ nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 
 	BEGIN_RING(curie, NV40TCL_DEPTH_FUNC, 3);
 	OUT_RINGp ((uint32_t *)&hw->depth, 3);
-	/*XXX: fix in nouveau_class.h, faces backwards.. */
-	BEGIN_RING(curie, NV40TCL_STENCIL_BACK_ENABLE, 16);
+	BEGIN_RING(curie, NV40TCL_STENCIL_FRONT_ENABLE, 16);
 	OUT_RINGp ((uint32_t *)&hw->stencil.front, 8);
 	OUT_RINGp ((uint32_t *)&hw->stencil.back, 8);
 	BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 3);

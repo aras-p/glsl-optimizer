@@ -175,11 +175,12 @@ nv40_vbo_validate_state(struct nv40_context *nv40,
 	}
 
 	if (ib) {
-		BEGIN_RING(curie, 0x181c, 2);
+		BEGIN_RING(curie, NV40TCL_IDXBUF_ADDRESS, 2);
 		OUT_RELOCl(ib, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
 			   NOUVEAU_BO_RD);
 		OUT_RELOCd(ib, ib_format, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-			   NOUVEAU_BO_RD | NOUVEAU_BO_OR, 0, 1);
+			   NOUVEAU_BO_RD | NOUVEAU_BO_OR,
+			   0, NV40TCL_IDXBUF_FORMAT_DMA1);
 	}
 
 	BEGIN_RING(curie, 0x1710, 1);
@@ -342,26 +343,27 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	unsigned nr;
+	unsigned nr, type;
 
 	switch (ib_size) {
 	case 2:
-		assert(nv40_vbo_validate_state(nv40, ib, 0x00000010));
+		type = NV40TCL_IDXBUF_FORMAT_TYPE_U16;
 		break;
 	case 4:
-		assert(nv40_vbo_validate_state(nv40, ib, 0x00000000));
+		type = NV40TCL_IDXBUF_FORMAT_TYPE_U32;
 		break;
 	default:
 		assert(0);
 	}
 
+	assert(nv40_vbo_validate_state(nv40, ib, type));
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
 
 	nr = (count & 0xff);
 	if (nr) {
-		BEGIN_RING(curie, 0x1824, 1);
+		BEGIN_RING(curie, NV40TCL_VB_INDEX_BATCH, 1);
 		OUT_RING  (((nr - 1) << 24) | start);
 		start += nr;
 	}
@@ -372,7 +374,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 
 		nr -= push;
 
-		BEGIN_RING_NI(curie, 0x1824, push);
+		BEGIN_RING_NI(curie, NV40TCL_VB_INDEX_BATCH, push);
 		while (push--) {
 			OUT_RING(((0x100 - 1) << 24) | start);
 			start += 0x100;

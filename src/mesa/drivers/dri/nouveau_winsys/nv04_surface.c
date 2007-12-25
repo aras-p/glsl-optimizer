@@ -40,7 +40,7 @@ nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 	while (h) {
 		int count = (h > 2047) ? 2047 : h;
 
-		BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
+		BEGIN_RING(NvM2MF, NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
 		OUT_RELOCl(src->buffer, src_offset, NOUVEAU_BO_VRAM |
 			   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 		OUT_RELOCl(dst->buffer, dst_offset, NOUVEAU_BO_VRAM |
@@ -81,7 +81,8 @@ nv04_surface_copy_prep(struct nouveau_context *nv, struct pipe_surface *dst,
 	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
 	 */
 	if ((src->offset & 63) || (dst->offset & 63)) {
-		BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
+		BEGIN_RING(NvM2MF,
+			   NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
 		OUT_RELOCo(src->buffer, NOUVEAU_BO_GART | NOUVEAU_BO_VRAM |
 			   NOUVEAU_BO_RD);
 		OUT_RELOCo(dst->buffer, NOUVEAU_BO_GART | NOUVEAU_BO_VRAM |
@@ -179,7 +180,7 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 		return 1;
 	}
 	BIND_RING (NvM2MF, nv->next_subchannel++);
-	BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
+	BEGIN_RING(NvM2MF, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
 
 	class = nv->chipset < 0x10 ? NV04_CONTEXT_SURFACES_2D :
@@ -194,7 +195,7 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 	OUT_RING  (nv->channel->vram->handle);
 	OUT_RING  (nv->channel->vram->handle);
 
-	class = nv->chipset < 0x10 ? NV_IMAGE_BLIT :
+	class = nv->chipset < 0x10 ? NV04_IMAGE_BLIT :
 				     NV12_IMAGE_BLIT;
 	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, class,
 				       &nv->NvImageBlit))) {
@@ -202,12 +203,12 @@ nouveau_surface_init_nv04(struct nouveau_context *nv)
 		return 1;
 	}
 	BIND_RING (NvImageBlit, nv->next_subchannel++);
-	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_DMA_NOTIFY, 1);
+	BEGIN_RING(NvImageBlit, NV04_IMAGE_BLIT_DMA_NOTIFY, 1);
 	OUT_RING  (nv->sync_notifier->handle);
-	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_SURFACE, 1);
+	BEGIN_RING(NvImageBlit, NV04_IMAGE_BLIT_SURFACE, 1);
 	OUT_RING  (nv->NvCtxSurf2D->handle);
-	BEGIN_RING(NvImageBlit, NV_IMAGE_BLIT_OPERATION, 1);
-	OUT_RING  (NV_IMAGE_BLIT_OPERATION_SRCCOPY);
+	BEGIN_RING(NvImageBlit, NV04_IMAGE_BLIT_OPERATION, 1);
+	OUT_RING  (NV04_IMAGE_BLIT_OPERATION_SRCCOPY);
 
 	class = NV04_GDI_RECTANGLE_TEXT;
 	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, class,
