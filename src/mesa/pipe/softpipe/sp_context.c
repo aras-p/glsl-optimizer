@@ -127,6 +127,7 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
 static void softpipe_destroy( struct pipe_context *pipe )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
+   uint i;
 
    draw_destroy( softpipe->draw );
 
@@ -142,6 +143,14 @@ static void softpipe_destroy( struct pipe_context *pipe )
    softpipe->quad.blend->destroy( softpipe->quad.blend );
    softpipe->quad.colormask->destroy( softpipe->quad.colormask );
    softpipe->quad.output->destroy( softpipe->quad.output );
+
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+      sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
+   sp_destroy_tile_cache(softpipe->zbuf_cache);
+   sp_destroy_tile_cache(softpipe->sbuf_cache_sep);
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+      sp_destroy_tile_cache(softpipe->tex_cache[i]);
 
    FREE( softpipe );
 }
