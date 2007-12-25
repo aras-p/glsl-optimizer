@@ -143,6 +143,7 @@ _mesa_delete_program_cache(GLcontext *ctx, struct gl_program_cache *cache)
 {
    clear_cache(ctx, cache);
    _mesa_free(cache->items);
+   _mesa_free(cache);
 }
 
 
