@@ -179,7 +179,7 @@ DRI_CONF_OPT_BEGIN_V(fp_optimization,enum,def,"0:1") \
         DRI_CONF_DESC_END \
 DRI_CONF_OPT_END
 
-const char __driConfigOptions[] =
+PUBLIC const char __driConfigOptions[] =
 DRI_CONF_BEGIN
 	DRI_CONF_SECTION_PERFORMANCE
 		DRI_CONF_TCL_MODE(DRI_CONF_TCL_CODEGEN)
