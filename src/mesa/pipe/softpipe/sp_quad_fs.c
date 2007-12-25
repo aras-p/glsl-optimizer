@@ -335,6 +335,7 @@ static void shade_destroy(struct quad_stage *qs)
 {
    struct quad_shade_stage *qss = (struct quad_shade_stage *) qs;
 
+   tgsi_exec_machine_free_data(&qss->machine);
    FREE( qss->inputs );
    FREE( qss->outputs );
    FREE( qs );
