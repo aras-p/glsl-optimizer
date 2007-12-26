@@ -169,7 +169,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 	/* Fence + kickoff */
 	nouveau_fence_emit(fence);
 	FIRE_RING_CH(chan);
-	nouveau_fence_del(&fence);
+	nouveau_fence_ref(NULL, &fence);
 
 	/* Allocate space for next push buffer */
 	assert(!nouveau_pushbuf_space(chan, min));

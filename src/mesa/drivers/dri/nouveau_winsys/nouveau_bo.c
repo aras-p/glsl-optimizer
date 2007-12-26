@@ -115,7 +115,7 @@ nouveau_bo_tmp_del(void *priv)
 {
 	struct nouveau_resource *r = priv;
 
-	nouveau_fence_del((struct nouveau_fence **)&r->priv);
+	nouveau_fence_ref(NULL, (struct nouveau_fence **)&r->priv);
 	nouveau_resource_free(&r);
 }
 
@@ -398,10 +398,7 @@ nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
 			return ret;
 	}
 
-	if (nvbo->fence)
-		nouveau_fence_del(&nvbo->fence);
 	nouveau_fence_ref(fence, &nvbo->fence);
-
 	return 0;
 }
 

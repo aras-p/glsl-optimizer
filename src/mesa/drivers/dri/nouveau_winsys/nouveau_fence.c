@@ -28,6 +28,53 @@
 #include "nouveau_dma.h"
 #include "nouveau_local.h"
 
+static void
+nouveau_fence_del_unsignalled(struct nouveau_fence *fence)
+{
+	struct nouveau_channel_priv *nvchan = nouveau_channel(fence->channel);
+	struct nouveau_fence *le;
+
+	if (nvchan->fence_head == fence) {
+		nvchan->fence_head = nouveau_fence(fence)->next;
+		if (nvchan->fence_head == NULL)
+			nvchan->fence_tail = NULL;
+		return;
+	}
+
+	le = nvchan->fence_head;
+	while (le && nouveau_fence(le)->next != fence)
+		le = nouveau_fence(le)->next;
+	assert(le && nouveau_fence(le)->next == fence);
+	nouveau_fence(le)->next = nouveau_fence(fence)->next;
+	if (nvchan->fence_tail == fence)
+		nvchan->fence_tail = le;
+}
+
+static void
+nouveau_fence_del(struct nouveau_fence **fence)
+{
+	struct nouveau_fence_priv *nvfence;
+
+	if (!fence || !*fence)
+		return;
+	nvfence = nouveau_fence(*fence);
+	*fence = NULL;
+
+	if (--nvfence->refcount)
+		return;
+
+	if (nvfence->emitted && !nvfence->signalled) {
+		if (nvfence->signal_cb) {
+			nvfence->refcount++;
+			nouveau_fence_wait((void *)&nvfence);
+			return;
+		}
+
+		nouveau_fence_del_unsignalled(&nvfence->base);
+	}
+	free(nvfence);
+}
+
 int
 nouveau_fence_new(struct nouveau_channel *chan, struct nouveau_fence **fence)
 {
@@ -51,60 +98,21 @@ nouveau_fence_ref(struct nouveau_fence *ref, struct nouveau_fence **fence)
 {
 	struct nouveau_fence_priv *nvfence;
 
-	if (!ref || !fence || *fence)
+	if (!fence)
 		return -EINVAL;
-	nvfence = nouveau_fence(ref);
-	nvfence->refcount++;
 
-	*fence = &nvfence->base;
+	if (*fence) {
+		nouveau_fence_del(fence);
+		*fence = NULL;
+	}
+
+	if (ref) {
+		nvfence = nouveau_fence(ref);
+		nvfence->refcount++;	
+		*fence = &nvfence->base;
+	}
+
 	return 0;
-}
-
-static void
-nouveau_fence_del_unsignalled(struct nouveau_fence *fence)
-{
-	struct nouveau_channel_priv *nvchan = nouveau_channel(fence->channel);
-	struct nouveau_fence *le;
-
-	if (nvchan->fence_head == fence) {
-		nvchan->fence_head = nouveau_fence(fence)->next;
-		if (nvchan->fence_head == NULL)
-			nvchan->fence_tail = NULL;
-		return;
-	}
-
-	le = nvchan->fence_head;
-	while (le && nouveau_fence(le)->next != fence)
-		le = nouveau_fence(le)->next;
-	assert(le && nouveau_fence(le)->next == fence);
-	nouveau_fence(le)->next = nouveau_fence(fence)->next;
-	if (nvchan->fence_tail == fence)
-		nvchan->fence_tail = le;
-}
-
-void
-nouveau_fence_del(struct nouveau_fence **fence)
-{
-	struct nouveau_fence_priv *nvfence;
-
-	if (!fence || !*fence)
-		return;
-	nvfence = nouveau_fence(*fence);
-	*fence = NULL;
-
-	if (--nvfence->refcount)
-		return;
-
-	if (nvfence->emitted && !nvfence->signalled) {
-		if (nvfence->signal_cb) {
-			nvfence->refcount++;
-			nouveau_fence_wait((void *)&nvfence);
-			return;
-		}
-
-		nouveau_fence_del_unsignalled(&nvfence->base);
-	}
-	free(nvfence);
 }
 
 int
@@ -159,28 +167,31 @@ nouveau_fence_flush(struct nouveau_channel *chan)
 	uint32_t sequence = *nvchan->ref_cnt;
 
 	while (nvchan->fence_head) {
-		struct nouveau_fence *fence = NULL;
 		struct nouveau_fence_priv *nvfence;
 	
-		nouveau_fence_ref(nvchan->fence_head, &fence);
 		nvfence = nouveau_fence(nvchan->fence_head);
-
-		if (nvfence->sequence > sequence) {
-			nouveau_fence_del(&fence);
+		if (nvfence->sequence > sequence)
 			break;
-		}
 
 		nouveau_fence_del_unsignalled(&nvfence->base);
 		nvfence->signalled = 1;
 
-		while (nvfence->signal_cb) {
-			struct nouveau_fence_cb *cb = nvfence->signal_cb;
-			nvfence->signal_cb = cb->next;
-			cb->func(cb->priv);
-			free(cb);
-		}
+		if (nvfence->signal_cb) {
+			struct nouveau_fence *fence = NULL;
 
-		nouveau_fence_del(&fence);
+			nouveau_fence_ref(nvchan->fence_head, &fence);
+
+			while (nvfence->signal_cb) {
+				struct nouveau_fence_cb *cb;
+				
+				cb = nvfence->signal_cb;
+				nvfence->signal_cb = cb->next;
+				cb->func(cb->priv);
+				free(cb);
+			}
+
+			nouveau_fence_ref(NULL, &fence);
+		}
 	}
 }
 
@@ -197,7 +208,7 @@ nouveau_fence_wait(struct nouveau_fence **fence)
 		while (!nvfence->signalled)
 			nouveau_fence_flush(nvfence->base.channel);
 	}
-	nouveau_fence_del(fence);
+	nouveau_fence_ref(NULL, fence);
 
 	return 0;
 }

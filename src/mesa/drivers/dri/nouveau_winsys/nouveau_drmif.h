@@ -94,11 +94,9 @@ nouveau_fence_new(struct nouveau_channel *, struct nouveau_fence **);
 extern int
 nouveau_fence_ref(struct nouveau_fence *, struct nouveau_fence **);
 
-extern void
-nouveau_fence_del(struct nouveau_fence **);
-
 extern int
 nouveau_fence_signal_cb(struct nouveau_fence *, void (*)(void *), void *);
+
 extern void
 nouveau_fence_emit(struct nouveau_fence *);
 
