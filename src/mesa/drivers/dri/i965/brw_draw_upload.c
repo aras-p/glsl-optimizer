@@ -42,7 +42,7 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
-
+#include "intel_tex.h"
 
 struct brw_array_state {
    union header_union header;
@@ -68,9 +68,11 @@ struct brw_array_state {
 };
 
 
-static dri_bo *array_buffer( const struct gl_client_array *array )
+static dri_bo *array_buffer( struct intel_context *intel,
+			     const struct gl_client_array *array )
 {
-   return intel_bufferobj_buffer(intel_buffer_object(array->BufferObj));
+   return intel_bufferobj_buffer(intel, intel_buffer_object(array->BufferObj),
+				 INTEL_WRITE_PART);
 }
 
 static GLuint double_types[5] = {
@@ -253,7 +255,7 @@ static void copy_strided_array( GLubyte *dest,
 				GLuint count )
 {
    if (size == stride) 
-      do_memcpy(dest, src, count * size);
+      memcpy(dest, src, count * size);
    else {
       GLuint i,j;
    
@@ -525,7 +527,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
       vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
       vbp.vb[i].vb0.bits.vb_index = i;
       vbp.vb[i].offset = (GLuint)input->glarray->Ptr;
-      vbp.vb[i].buffer = array_buffer(input->glarray);
+      vbp.vb[i].buffer = array_buffer(intel, input->glarray);
       vbp.vb[i].max_index = max_index;
    }
 
@@ -554,19 +556,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 
    return GL_TRUE;
 }
-
-
-static GLuint element_size( GLenum type )
-{
-   switch(type) {
-   case GL_UNSIGNED_INT: return 4;
-   case GL_UNSIGNED_SHORT: return 2;
-   case GL_UNSIGNED_BYTE: return 1;
-   default: assert(0); return 0;
-   }
-}
-
-
 
 void brw_upload_indices( struct brw_context *brw,
 			 const struct _mesa_index_buffer *index_buffer )
@@ -621,7 +610,9 @@ void brw_upload_indices( struct brw_context *brw,
     */
    {
       struct brw_indexbuffer ib;
-      dri_bo *buffer = intel_bufferobj_buffer(intel_buffer_object(bufferobj));
+      dri_bo *buffer = intel_bufferobj_buffer(intel,
+					      intel_buffer_object(bufferobj),
+					      INTEL_READ);
 
       memset(&ib, 0, sizeof(ib));
    

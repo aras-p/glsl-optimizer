@@ -28,6 +28,7 @@
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_regions.h"
+#include "intel_chipset.h"
 #include "enums.h"
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
@@ -50,13 +51,15 @@ target_to_target(GLenum target)
 
 struct intel_mipmap_tree *
 intel_miptree_create(struct intel_context *intel,
-                     GLenum target,
-                     GLenum internal_format,
-                     GLuint first_level,
-                     GLuint last_level,
-                     GLuint width0,
-                     GLuint height0,
-                     GLuint depth0, GLuint cpp, GLuint compress_byte)
+		     GLenum target,
+		     GLenum internal_format,
+		     GLuint first_level,
+		     GLuint last_level,
+		     GLuint width0,
+		     GLuint height0,
+		     GLuint depth0,
+		     GLuint cpp,
+		     GLuint compress_byte)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -75,54 +78,19 @@ intel_miptree_create(struct intel_context *intel,
    mt->cpp = compress_byte ? compress_byte : cpp;
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
+   mt->pitch = 0;
 
-   switch (intel->intelScreen->deviceID) {
-   case PCI_CHIP_I945_G:
-   case PCI_CHIP_I945_GM:
-   case PCI_CHIP_I945_GME:
-   case PCI_CHIP_G33_G:
-   case PCI_CHIP_Q33_G:
-   case PCI_CHIP_Q35_G:
-      ok = i945_miptree_layout(mt);
-      break;
-   case PCI_CHIP_I915_G:
-   case PCI_CHIP_I915_GM:
-   case PCI_CHIP_I830_M:
-   case PCI_CHIP_I855_GM:
-   case PCI_CHIP_I865_G:
-   default:
-      /* All the i830 chips and the i915 use this layout:
-       */
-      ok = i915_miptree_layout(mt);
-      break;
-   }
+#ifdef I915
+   if (IS_945(intel->intelScreen->deviceID))
+      ok = i945_miptree_layout(intel, mt);
+   else
+      ok = i915_miptree_layout(intel, mt);
+#else
+   ok = brw_miptree_layout(intel, mt);
+#endif
 
    if (ok) {
-      if (!mt->compressed) {
-	 int align;
-
-	 if (intel->ttm) {
-	    /* XXX: Align pitch to multiple of 64 bytes for now to allow
-	     * render-to-texture to work in all cases. This should probably be
-	     * replaced at some point by some scheme to only do this when really
-	     * necessary.
-	     */
-	    align = 63;
-	 } else {
-	    align = 3;
-	 }
-
-	 mt->pitch = (mt->pitch * cpp + align) & ~align;
-
-	 /* XXX: At least the i915 seems very upset when the pitch is a multiple
-	  * of 1024 and sometimes 512 bytes - performance can drop by several
-	  * times. Go to the next multiple of the required alignment for now.
-	  */
-	 if (!(mt->pitch & 511))
-	    mt->pitch += align + 1;
-
-	 mt->pitch /= cpp;
-      }
+      assert (mt->pitch);
 
       mt->region = intel_region_alloc(intel,
                                       mt->cpp, mt->pitch, mt->total_height);
@@ -136,6 +104,52 @@ intel_miptree_create(struct intel_context *intel,
    return mt;
 }
 
+/**
+ * intel_miptree_pitch_align:
+ *
+ * @intel: intel context pointer
+ *
+ * @mt: the miptree to compute pitch alignment for
+ *
+ * @pitch: the natural pitch value
+ *
+ * Given @pitch, compute a larger value which accounts for
+ * any necessary alignment required by the device
+ */
+
+int intel_miptree_pitch_align (struct intel_context *intel,
+			       struct intel_mipmap_tree *mt,
+			       int pitch)
+{
+   if (!mt->compressed) {
+      int pitch_align;
+
+      if (intel->ttm) {
+	 /* XXX: Align pitch to multiple of 64 bytes for now to allow
+	  * render-to-texture to work in all cases. This should probably be
+	  * replaced at some point by some scheme to only do this when really
+	  * necessary.
+	  */
+	 pitch_align = 64;
+      } else {
+	 pitch_align = 4;
+      }
+
+      pitch = ALIGN(pitch * mt->cpp, pitch_align);
+
+#ifdef I915
+      /* XXX: At least the i915 seems very upset when the pitch is a multiple
+       * of 1024 and sometimes 512 bytes - performance can drop by several
+       * times. Go to the next multiple of the required alignment for now.
+       */
+      if (!(pitch & 511))
+	 pitch += pitch_align;
+#endif
+
+      pitch /= mt->cpp;
+   }
+   return pitch;
+}
 
 void
 intel_miptree_reference(struct intel_mipmap_tree **dst,
@@ -207,11 +221,11 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
 
 void
 intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
-                             GLuint level,
-                             GLuint nr_images,
-                             GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
+			     GLuint level,
+			     GLuint nr_images,
+			     GLuint x, GLuint y,
+			     GLuint w, GLuint h, GLuint d)
 {
-
    mt->level[level].width = w;
    mt->level[level].height = h;
    mt->level[level].depth = d;
@@ -238,7 +252,8 @@ intel_miptree_set_level_info(struct intel_mipmap_tree *mt,
 
 void
 intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
-                               GLuint level, GLuint img, GLuint x, GLuint y)
+			       GLuint level, GLuint img,
+			       GLuint x, GLuint y)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
@@ -271,12 +286,12 @@ intel_miptree_depth_offsets(struct intel_mipmap_tree *mt, GLuint level)
 
 
 GLuint
-intel_miptree_image_offset(struct intel_mipmap_tree * mt,
-                           GLuint face, GLuint level)
+intel_miptree_image_offset(struct intel_mipmap_tree *mt,
+			   GLuint face, GLuint level)
 {
    if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
       return (mt->level[level].level_offset +
-              mt->level[level].image_offset[face] * mt->cpp);
+	      mt->level[level].image_offset[face] * mt->cpp);
    else
       return mt->level[level].level_offset;
 }
@@ -323,11 +338,12 @@ intel_miptree_image_unmap(struct intel_context *intel,
  */
 void
 intel_miptree_image_data(struct intel_context *intel,
-                         struct intel_mipmap_tree *dst,
-                         GLuint face,
-                         GLuint level,
-                         void *src,
-                         GLuint src_row_pitch, GLuint src_image_pitch)
+			 struct intel_mipmap_tree *dst,
+			 GLuint face,
+			 GLuint level,
+			 void *src,
+			 GLuint src_row_pitch,
+			 GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
    GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
@@ -335,18 +351,19 @@ intel_miptree_image_data(struct intel_context *intel,
    GLuint i;
    GLuint height = 0;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG("%s: %d/%d\n", __FUNCTION__, face, level);
    for (i = 0; i < depth; i++) {
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      intel_region_data(intel, dst->region,
-                        dst_offset + dst_depth_offset[i], /* dst_offset */
-                        0, 0,                             /* dstx, dsty */
-                        src,
-                        src_row_pitch,
-                        0, 0,                             /* source x, y */
-                        dst->level[level].width, height); /* width, height */
+      intel_region_data(intel,
+			dst->region,
+			dst_offset + dst_depth_offset[i], /* dst_offset */
+			0, 0,                             /* dstx, dsty */
+			src,
+			src_row_pitch,
+			0, 0,                             /* source x, y */
+			dst->level[level].width, height); /* width, height */
 
       src += src_image_pitch * dst->cpp;
    }

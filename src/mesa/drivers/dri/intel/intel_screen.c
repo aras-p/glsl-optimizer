@@ -41,10 +41,11 @@
 #include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_span.h"
-#include "intel_tris.h"
 #include "intel_ioctl.h"
 #include "intel_fbo.h"
+#include "intel_chipset.h"
 
+#include "i915_drm.h"
 #include "i830_dri.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
@@ -571,9 +572,9 @@ extern GLboolean i830CreateContext(const __GLcontextModes * mesaVis,
 extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
                                    __DRIcontextPrivate * driContextPriv,
                                    void *sharedContextPrivate);
-
-
-
+extern GLboolean brwCreateContext(const __GLcontextModes * mesaVis,
+				  __DRIcontextPrivate * driContextPriv,
+				  void *sharedContextPrivate);
 
 static GLboolean
 intelCreateContext(const __GLcontextModes * mesaVis,
@@ -583,29 +584,21 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
-   switch (intelScreen->deviceID) {
-      /* Don't deal with i830 until texture work complete:
-       */
-   case PCI_CHIP_845_G:
-   case PCI_CHIP_I830_M:
-   case PCI_CHIP_I855_GM:
-   case PCI_CHIP_I865_G:
+#ifdef I915
+   if (IS_9XX(intelScreen->deviceID)) {
+      if (!IS_965(intelScreen->deviceID)) {
+	 return i915CreateContext(mesaVis, driContextPriv,
+				  sharedContextPrivate);
+      }
+   } else {
       return i830CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
-
-   case PCI_CHIP_I915_G:
-   case PCI_CHIP_I915_GM:
-   case PCI_CHIP_I945_G:
-   case PCI_CHIP_I945_GM:
-   case PCI_CHIP_I945_GME:
-   case PCI_CHIP_G33_G:
-   case PCI_CHIP_Q35_G:
-   case PCI_CHIP_Q33_G:
-      return i915CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
-
-   default:
-      fprintf(stderr, "Unrecognized deviceID %x\n", intelScreen->deviceID);
-      return GL_FALSE;
    }
+#else
+   if (IS_965(intelScreen->deviceID))
+      return brwCreateContext(mesaVis, driContextPriv, sharedContextPrivate);
+#endif
+   fprintf(stderr, "Unrecognized deviceID %x\n", intelScreen->deviceID);
+   return GL_FALSE;
 }
 
 
@@ -625,7 +618,9 @@ static const struct __DriverAPIRec intelAPI = {
    .WaitForSBC = NULL,
    .SwapBuffersMSC = NULL,
    .CopySubBuffer = intelCopySubBuffer,
+#ifdef I915
    .setTexOffset = intelSetTexOffset,
+#endif
 };
 
 
@@ -723,7 +718,11 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
  */
 PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
+#ifdef I915
    static const __DRIversion ddx_expected = { 1, 5, 0 };
+#else
+   static const __DRIversion ddx_expected = { 1, 6, 0 };
+#endif
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 5, 0 };
    I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;

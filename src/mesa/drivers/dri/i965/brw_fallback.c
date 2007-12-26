@@ -45,7 +45,8 @@ static GLboolean do_check_fallback(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
-   
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+
    /* BRW_NEW_METAOPS
     */
    if (brw->metaops.active)
@@ -58,11 +59,15 @@ static GLboolean do_check_fallback(struct brw_context *brw)
 
    /* _NEW_BUFFERS
     */
-   if (ctx->DrawBuffer->_ColorDrawBufferMask[0] != BUFFER_BIT_FRONT_LEFT &&
-       ctx->DrawBuffer->_ColorDrawBufferMask[0] != BUFFER_BIT_BACK_LEFT) {
-      DBG("FALLBACK: draw buffer %d: 0x%08x\n",
-	  ctx->DrawBuffer->_ColorDrawBufferMask[0]);
-      return GL_TRUE;
+   /* We can only handle a single draw buffer at the moment, and only as the
+    * first color buffer.
+    */
+   for (i = 0; i < MAX_DRAW_BUFFERS; i++) {
+      if (fb->_NumColorDrawBuffers[i] > (i == 0 ? 1 : 0)) {
+	 DBG("FALLBACK: draw buffer %d: 0x%08x\n",
+	     i, ctx->DrawBuffer->_ColorDrawBufferMask[i]);
+	 return GL_TRUE;
+      }
    }
 
    /* _NEW_RENDERMODE

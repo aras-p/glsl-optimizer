@@ -45,17 +45,6 @@
 #include "intel_bufmgr_ttm.h"
 #include "i915_drm.h"
 
-static void intelWaitIdleLocked( struct intel_context *intel )
-{
-   unsigned int fence;
-
-   if (INTEL_DEBUG & DEBUG_SYNC)
-      fprintf(stderr, "waiting for idle\n");
-
-   fence = intelEmitIrqLocked(intel);
-   intelWaitIrq(intel, fence);
-}
-
 int intelEmitIrqLocked( struct intel_context *intel )
 {
    int seq = 1;
@@ -185,7 +174,7 @@ intel_exec_ioctl(struct intel_context *intel,
    execbuf.batch.DR4 = ((((GLuint) intel->drawX) & 0xffff) |
 			(((GLuint) intel->drawY) << 16));
 
-   execbuf.ops_list = (unsigned)start; // TODO
+   execbuf.ops_list = (unsigned long)start; // TODO
    execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
 
    if (intel->no_hw)

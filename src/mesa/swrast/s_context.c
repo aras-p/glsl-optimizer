@@ -117,7 +117,7 @@ _swrast_update_rasterflags( GLcontext *ctx )
 
 
 /**
- * Examine polycon culls tate to compute the _BackfaceCullSign field.
+ * Examine polygon cull state to compute the _BackfaceCullSign field.
  * _BackfaceCullSign will be 0 if no culling, -1 if culling back-faces,
  * and 1 if culling front-faces.  The Polygon FrontFace state also
  * factors in.
@@ -128,21 +128,17 @@ _swrast_update_polygon( GLcontext *ctx )
    GLfloat backface_sign;
 
    if (ctx->Polygon.CullFlag) {
-      backface_sign = 1.0;
       switch (ctx->Polygon.CullFaceMode) {
       case GL_BACK:
-	 if (ctx->Polygon.FrontFace == GL_CCW)
-	    backface_sign = -1.0;
+         backface_sign = -1.0;
 	 break;
       case GL_FRONT:
-	 if (ctx->Polygon.FrontFace != GL_CCW)
-	    backface_sign = -1.0;
+         backface_sign = 1.0;
 	 break;
       case GL_FRONT_AND_BACK:
          /* fallthrough */
       default:
 	 backface_sign = 0.0;
-	 break;
       }
    }
    else {

@@ -376,8 +376,7 @@ static void meta_draw_quad(struct intel_context *intel,
 			   GLfloat x0, GLfloat x1,
 			   GLfloat y0, GLfloat y1, 
 			   GLfloat z,
-			   GLubyte red, GLubyte green,
-			   GLubyte blue, GLubyte alpha,
+			   GLuint color,
 			   GLfloat s0, GLfloat s1,
 			   GLfloat t0, GLfloat t1)
 {
@@ -388,7 +387,6 @@ static void meta_draw_quad(struct intel_context *intel,
    struct gl_client_array *attribs[VERT_ATTRIB_MAX];
    struct _mesa_prim prim[1];
    GLfloat pos[4][3];
-   GLubyte color[4];
 
    ctx->Driver.BufferData(ctx,
 			  GL_ARRAY_BUFFER_ARB,
@@ -413,7 +411,6 @@ static void meta_draw_quad(struct intel_context *intel,
    pos[3][1] = y1;
    pos[3][2] = z;
 
-
    ctx->Driver.BufferSubData(ctx,
 			     GL_ARRAY_BUFFER_ARB,
 			     0,
@@ -421,16 +418,14 @@ static void meta_draw_quad(struct intel_context *intel,
 			     pos,
 			     brw->metaops.vbo);
 
-   color[0] = red;
-   color[1] = green;
-   color[2] = blue;
-   color[3] = alpha;
+   /* Convert incoming ARGB to required RGBA */
+   color = (color >> 24) | (color << 8);
 
    ctx->Driver.BufferSubData(ctx,
 			     GL_ARRAY_BUFFER_ARB,
 			     sizeof(pos),
 			     sizeof(color),
-			     color,
+			     &color,
 			     brw->metaops.vbo);
 
    /* Ignoring texture coords. 

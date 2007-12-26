@@ -29,6 +29,7 @@
 #include "enums.h"
 #include "image.h"
 #include "teximage.h"
+#include "mipmap.h"
 #include "swrast/swrast.h"
 
 #include "intel_screen.h"
@@ -85,12 +86,14 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
 
 static GLboolean
 do_copy_texsubimage(struct intel_context *intel,
+		    GLenum target,
                     struct intel_texture_image *intelImage,
                     GLenum internalFormat,
                     GLint dstx, GLint dsty,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLcontext *ctx = &intel->ctx;
+   struct gl_texture_object *texObj = intelImage->base.TexObject;
    const struct intel_region *src =
       get_teximage_source(intel, internalFormat);
 
@@ -156,16 +159,12 @@ do_copy_texsubimage(struct intel_context *intel,
 
    UNLOCK_HARDWARE(intel);
 
-#if 0
-   /* GL_SGIS_generate_mipmap -- this can be accelerated now.
-    * XXX Add a ctx->Driver.GenerateMipmaps() function?
-    */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+   /* GL_SGIS_generate_mipmap */
+   if (intelImage->level == texObj->BaseLevel && texObj->GenerateMipmap) {
       intel_generate_mipmap(ctx, target,
                             &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
                             texObj);
    }
-#endif
 
    return GL_TRUE;
 }
@@ -197,7 +196,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                           GL_RGBA, CHAN_TYPE, NULL,
                           &ctx->DefaultPacking, texObj, texImage);
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, 0, 0, x, y, width, 1))
       goto fail;
@@ -234,7 +233,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                           &ctx->DefaultPacking, texObj, texImage);
 
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, 0, 0, x, y, width, height))
       goto fail;
@@ -264,7 +263,7 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    /* Need to check texture is compatible with source format. 
     */
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
       _swrast_copy_texsubimage1d(ctx, target, level, xoffset, x, y, width);
@@ -290,7 +289,7 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    /* Need to check texture is compatible with source format. 
     */
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(intel_context(ctx), target,
                             intel_texture_image(texImage),
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {

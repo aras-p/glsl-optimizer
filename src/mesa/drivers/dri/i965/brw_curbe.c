@@ -188,7 +188,6 @@ static void upload_constant_buffer(struct brw_context *brw)
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
-   struct brw_mem_pool *pool = &brw->pool[BRW_GS_POOL];
    GLuint sz = brw->curbe.total_size;
    GLuint bufsz = sz * 16 * sizeof(GLfloat);
    GLfloat *buf;
@@ -291,7 +290,6 @@ static void upload_constant_buffer(struct brw_context *brw)
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
       free(buf);
-/*       return; */
    } 
    else {
       if (brw->curbe.last_buf)
@@ -299,20 +297,16 @@ static void upload_constant_buffer(struct brw_context *brw)
       brw->curbe.last_buf = buf;
       brw->curbe.last_bufsz = bufsz;
 
-      
-      if (!brw_pool_alloc(pool, 
-			  bufsz,
-			  1 << 6,
-			  &brw->curbe.gs_offset)) {
-	 _mesa_printf("out of GS memory for curbe\n");
-	 assert(0);
-	 return;
-      }
-            
+      dri_bo_unreference(brw->curbe.curbe_bo);
+      brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
+					 bufsz, 1 << 6,
+					 DRM_BO_FLAG_MEM_LOCAL |
+					 DRM_BO_FLAG_CACHED |
+					 DRM_BO_FLAG_CACHED_MAPPED);
 
       /* Copy data to the buffer:
        */
-      dri_bo_subdata(pool->buffer, brw->curbe.gs_offset, bufsz, buf);
+      dri_bo_subdata(brw->curbe.curbe_bo, 0, bufsz, buf);
    }
 
    /* Because this provokes an action (ie copy the constants into the
@@ -330,7 +324,8 @@ static void upload_constant_buffer(struct brw_context *brw)
     */
    BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
-   OUT_BATCH(brw->curbe.gs_offset | (sz - 1));
+   OUT_RELOC(brw->curbe.curbe_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+	     (sz - 1));
    ADVANCE_BATCH();
 }
 
@@ -350,6 +345,7 @@ const struct brw_tracked_state brw_constant_buffer = {
 	       BRW_NEW_CURBE_OFFSETS),
       .cache = (CACHE_NEW_WM_PROG) 
    },
-   .update = upload_constant_buffer
+   .update = upload_constant_buffer,
+   .always_update = GL_TRUE, /* Has a relocation in the batchbuffer */
 };
 

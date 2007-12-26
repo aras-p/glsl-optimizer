@@ -29,9 +29,9 @@
 #include "intel_context.h"
 #include "intel_blit.h"
 #include "intel_buffers.h"
+#include "intel_chipset.h"
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
-#include "intel_tris.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
@@ -41,7 +41,7 @@
 #include "framebuffer.h"
 #include "swrast/swrast.h"
 #include "vblank.h"
-
+#include "i915_drm.h"
 
 /* This block can be removed when libdrm >= 2.3.1 is required */
 
@@ -59,6 +59,7 @@ typedef struct drm_i915_flip {
 
 #endif
 
+#define FILE_DEBUG_FLAG DEBUG_BLIT
 
 /**
  * XXX move this into a new dri/common/cliprects.c file.
@@ -196,6 +197,77 @@ intelSetBackClipRects(struct intel_context *intel)
    }
 }
 
+#ifdef I915
+static void
+intelUpdatePageFlipping(struct intel_context *intel,
+			GLint areaA, GLint areaB)
+{
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   GLboolean pf_active;
+   GLint pf_planes;
+
+   /* Update page flipping info */
+   pf_planes = 0;
+
+   if (areaA > 0)
+      pf_planes |= 1;
+
+   if (areaB > 0)
+      pf_planes |= 2;
+
+   intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
+				(intel_fb->pf_planes & 0x2)) & 0x3;
+
+   intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
+
+   pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
+
+   if (INTEL_DEBUG & DEBUG_LOCK)
+      if (pf_active != intel_fb->pf_active)
+	 _mesa_printf("%s - Page flipping %sactive\n", __progname,
+		      pf_active ? "" : "in");
+
+   if (pf_active) {
+      /* Sync pages between planes if flipping on both at the same time */
+      if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
+	  (intel->sarea->pf_current_page & 0x3) !=
+	  (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
+	 drm_i915_flip_t flip;
+
+	 if (intel_fb->pf_current_page ==
+	     (intel->sarea->pf_current_page & 0x3)) {
+	    /* XXX: This is ugly, but emitting two flips 'in a row' can cause
+	     * lockups for unknown reasons.
+	     */
+	    intel->sarea->pf_current_page =
+	       intel->sarea->pf_current_page & 0x3;
+	    intel->sarea->pf_current_page |=
+	       ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
+		intel_fb->pf_num_pages) << 2;
+
+	    flip.pipes = 0x2;
+	 } else {
+	    intel->sarea->pf_current_page =
+	       intel->sarea->pf_current_page & (0x3 << 2);
+	    intel->sarea->pf_current_page |=
+	       (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
+	       intel_fb->pf_num_pages;
+
+	    flip.pipes = 0x1;
+	 }
+
+	 drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
+      }
+
+      intel_fb->pf_planes = pf_planes;
+   }
+
+   intel_fb->pf_active = pf_active;
+   intel_flip_renderbuffers(intel_fb);
+   intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+}
+#endif /* I915 */
 
 /**
  * This will be called whenever the currently bound window is moved/resized.
@@ -232,7 +304,7 @@ intelWindowMoved(struct intel_context *intel)
    }
 
    if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
-      drmI830Sarea *sarea = intel->sarea;
+      volatile drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
       drm_clip_rect_t planeA_rect = { .x1 = sarea->planeA_x, .y1 = sarea->planeA_y,
@@ -244,69 +316,10 @@ intelWindowMoved(struct intel_context *intel)
       GLint areaA = driIntersectArea( drw_rect, planeA_rect );
       GLint areaB = driIntersectArea( drw_rect, planeB_rect );
       GLuint flags = dPriv->vblFlags;
-      GLboolean pf_active;
-      GLint pf_planes;
 
-      /* Update page flipping info
-       */
-      pf_planes = 0;
-
-      if (areaA > 0)
-	 pf_planes |= 1;
-
-      if (areaB > 0)
-	 pf_planes |= 2;
-
-      intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				   (intel_fb->pf_planes & 0x2)) & 0x3;
-
-      intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
-
-      pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
-
-      if (INTEL_DEBUG & DEBUG_LOCK)
-	 if (pf_active != intel_fb->pf_active)
-	    _mesa_printf("%s - Page flipping %sactive\n", __progname,
-			 pf_active ? "" : "in");
-
-      if (pf_active) {
-	 /* Sync pages between planes if flipping on both at the same time */
-	 if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
-	     (intel->sarea->pf_current_page & 0x3) !=
-	     (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
-	    drm_i915_flip_t flip;
-
-	    if (intel_fb->pf_current_page ==
-		(intel->sarea->pf_current_page & 0x3)) {
-	       /* XXX: This is ugly, but emitting two flips 'in a row' can cause
-		* lockups for unknown reasons.
-		*/
-               intel->sarea->pf_current_page =
-		  intel->sarea->pf_current_page & 0x3;
-	       intel->sarea->pf_current_page |=
-		  ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
-		   intel_fb->pf_num_pages) << 2;
-
-	       flip.pipes = 0x2;
-	    } else {
-               intel->sarea->pf_current_page =
-		  intel->sarea->pf_current_page & (0x3 << 2);
-	       intel->sarea->pf_current_page |=
-		  (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
-		  intel_fb->pf_num_pages;
-
-	       flip.pipes = 0x1;
-	    }
-
-	    drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
-	 }
-
-	 intel_fb->pf_planes = pf_planes;
-      }
-
-      intel_fb->pf_active = pf_active;
-      intel_flip_renderbuffers(intel_fb);
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+#ifdef I915
+      intelUpdatePageFlipping(intel, areaA, areaB);
+#endif
 
       /* Update vblank info
        */
@@ -370,11 +383,14 @@ intelWindowMoved(struct intel_context *intel)
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    /* Update hardware scissor */
-   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-                       ctx->Scissor.Width, ctx->Scissor.Height);
+   if (ctx->Driver.Scissor != NULL) {
+      ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			  ctx->Scissor.Width, ctx->Scissor.Height);
+   }
 
    /* Re-calculate viewport related state */
-   ctx->Driver.DepthRange( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
+   if (ctx->Driver.DepthRange != NULL)
+      ctx->Driver.DepthRange( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 }
 
 
@@ -389,9 +405,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint buf;
 
-   if (INTEL_DEBUG & DEBUG_BLIT)
-      _mesa_printf("%s 0x%x\n", __FUNCTION__, mask);
-
    intel->vtbl.install_meta_state(intel);
 
    /* Back and stencil cliprects are the same.  Try and do both
@@ -402,8 +415,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 	 intel_get_rb_region(fb, BUFFER_BACK_LEFT);
       struct intel_region *depthRegion =
 	 intel_get_rb_region(fb, BUFFER_DEPTH);
-      const GLuint clearColor = (backRegion && backRegion->cpp == 4)
-	 ? intel->ClearColor8888 : intel->ClearColor565;
 
       intel->vtbl.meta_draw_region(intel, backRegion, depthRegion);
 
@@ -424,13 +435,14 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
       else
 	 intel->vtbl.meta_no_depth_write(intel);
 
-      intel_meta_draw_quad(intel,
-			   fb->_Xmin,
-			   fb->_Xmax,
-			   fb->_Ymin,
-			   fb->_Ymax,
-			   intel->ctx.Depth.Clear, clearColor,
-			   0, 0, 0, 0);   /* texcoords */
+      intel->vtbl.meta_draw_quad(intel,
+				 fb->_Xmin,
+				 fb->_Xmax,
+				 fb->_Ymin,
+				 fb->_Ymax,
+				 intel->ctx.Depth.Clear,
+				 intel->ClearColor8888,
+				 0, 0, 0, 0);   /* texcoords */
 
       mask &= ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
    }
@@ -441,8 +453,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
       if (mask & bufBit) {
 	 struct intel_renderbuffer *irbColor =
 	    intel_renderbuffer(fb->Attachment[buf].Renderbuffer);
-	 GLuint color = (irbColor->region->cpp == 4)
-	    ? intel->ClearColor8888 : intel->ClearColor565;
 
 	 ASSERT(irbColor);
 
@@ -454,13 +464,13 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 	 /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
 	  * drawing origin may not be correctly emitted.
 	  */
-	 intel_meta_draw_quad(intel,
-			      fb->_Xmin,
-			      fb->_Xmax,
-			      fb->_Ymin,
-			      fb->_Ymax,
-			      0, color,
-			      0, 0, 0, 0);   /* texcoords */
+	 intel->vtbl.meta_draw_quad(intel,
+				    fb->_Xmin,
+				    fb->_Xmax,
+				    fb->_Ymin,
+				    fb->_Ymax,
+				    0, intel->ClearColor8888,
+				    0, 0, 0, 0);   /* texcoords */
 
 	 mask &= ~bufBit;
       }
@@ -469,6 +479,28 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
    intel->vtbl.leave_meta_state(intel);
    intel_batchbuffer_flush(intel->batch);
 }
+
+static const char *buffer_names[] = {
+   [BUFFER_FRONT_LEFT] = "front",
+   [BUFFER_BACK_LEFT] = "back",
+   [BUFFER_FRONT_RIGHT] = "front right",
+   [BUFFER_BACK_RIGHT] = "back right",
+   [BUFFER_AUX0] = "aux0",
+   [BUFFER_AUX1] = "aux1",
+   [BUFFER_AUX2] = "aux2",
+   [BUFFER_AUX3] = "aux3",
+   [BUFFER_DEPTH] = "depth",
+   [BUFFER_STENCIL] = "stencil",
+   [BUFFER_ACCUM] = "accum",
+   [BUFFER_COLOR0] = "color0",
+   [BUFFER_COLOR1] = "color1",
+   [BUFFER_COLOR2] = "color2",
+   [BUFFER_COLOR3] = "color3",
+   [BUFFER_COLOR4] = "color4",
+   [BUFFER_COLOR5] = "color5",
+   [BUFFER_COLOR6] = "color6",
+   [BUFFER_COLOR7] = "color7",
+};
 
 /**
  * Called by ctx->Driver.Clear.
@@ -504,8 +536,12 @@ intelClear(GLcontext *ctx, GLbitfield mask)
          = intel_get_rb_region(fb, BUFFER_STENCIL);
       if (stencilRegion) {
          /* have hw stencil */
-         if ((ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
-            /* not clearing all stencil bits, so use triangle clearing */
+         if (IS_965(intel->intelScreen->deviceID) ||
+	     (ctx->Stencil.WriteMask[0] & 0xff) != 0xff) {
+	    /* We have to use the 3D engine if we're clearing a partial mask
+	     * of the stencil buffer, or if we're on a 965 which has a tiled
+	     * depth/stencil buffer in a layout we can't blit to.
+	     */
             tri_mask |= BUFFER_BIT_STENCIL;
          }
          else {
@@ -518,7 +554,8 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    /* HW depth */
    if (mask & BUFFER_BIT_DEPTH) {
       /* clear depth with whatever method is used for stencil (see above) */
-      if (tri_mask & BUFFER_BIT_STENCIL)
+      if (IS_965(intel->intelScreen->deviceID) ||
+	  tri_mask & BUFFER_BIT_STENCIL)
          tri_mask |= BUFFER_BIT_DEPTH;
       else
          blit_mask |= BUFFER_BIT_DEPTH;
@@ -538,17 +575,43 @@ intelClear(GLcontext *ctx, GLbitfield mask)
       }
    }
 
-
    intelFlush(ctx);             /* XXX intelClearWithBlit also does this */
 
-   if (blit_mask)
+   if (blit_mask) {
+      if (INTEL_DEBUG & DEBUG_BLIT) {
+	 DBG("blit clear:");
+	 for (i = 0; i < BUFFER_COUNT; i++) {
+	    if (blit_mask & (1 << i))
+	       DBG(" %s", buffer_names[i]);
+	 }
+	 DBG("\n");
+      }
       intelClearWithBlit(ctx, blit_mask);
+   }
 
-   if (tri_mask)
+   if (tri_mask) {
+      if (INTEL_DEBUG & DEBUG_BLIT) {
+	 DBG("tri clear:");
+	 for (i = 0; i < BUFFER_COUNT; i++) {
+	    if (tri_mask & (1 << i))
+	       DBG(" %s", buffer_names[i]);
+	 }
+	 DBG("\n");
+      }
       intelClearWithTris(intel, tri_mask);
+   }
 
-   if (swrast_mask)
+   if (swrast_mask) {
+      if (INTEL_DEBUG & DEBUG_BLIT) {
+	 DBG("swrast clear:");
+	 for (i = 0; i < BUFFER_COUNT; i++) {
+	    if (swrast_mask & (1 << i))
+	       DBG(" %s", buffer_names[i]);
+	 }
+	 DBG("\n");
+      }
       _swrast_Clear(ctx, swrast_mask);
+   }
 }
 
 
@@ -564,7 +627,8 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 			     BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
 			     BUFFER_BACK_LEFT);
 
-   if (intel_fb->Base.Name == 0 && intel_rb->pf_pending == intel_fb->pf_seq) {
+   if (intel_fb->Base.Name == 0 && intel_rb &&
+       intel_rb->pf_pending == intel_fb->pf_seq) {
       GLint pf_planes = intel_fb->pf_planes;
       BATCH_LOCALS;
 
@@ -586,6 +650,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 static GLboolean
 intelPageFlip(const __DRIdrawablePrivate * dPriv)
 {
+#ifdef I915
    struct intel_context *intel;
    int ret;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
@@ -638,6 +703,9 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
 
    return GL_TRUE;
+#else
+   return GL_FALSE;
+#endif
 }
 
 #if 0
@@ -863,16 +931,14 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /*
     * How many color buffers are we drawing into?
     */
-   if (fb->_NumColorDrawBuffers[0] != 1
-#if 0
-       /* XXX FBO temporary - always use software rendering */
-       || 1
-#endif
-      ) {
+   if (fb->_NumColorDrawBuffers[0] != 1) {
       /* writing to 0 or 2 or 4 color buffers */
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
-      front = 1;                /* might not have back color buffer */
+      colorRegion = NULL;
+
+      if (fb->Name != 0)
+	 intelSetRenderbufferClipRects(intel);
    }
    else {
       /* draw to exactly one color buffer */
@@ -881,29 +947,29 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
          front = 1;
       }
-   }
 
-   /*
-    * Get the intel_renderbuffer for the colorbuffer we're drawing into.
-    * And set up cliprects.
-    */
-   if (fb->Name == 0) {
-      /* drawing to window system buffer */
-      if (front) {
-         intelSetFrontClipRects(intel);
-         colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
+      /*
+       * Get the intel_renderbuffer for the colorbuffer we're drawing into.
+       * And set up cliprects.
+       */
+      if (fb->Name == 0) {
+	 /* drawing to window system buffer */
+	 if (front) {
+	    intelSetFrontClipRects(intel);
+	    colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
+	 }
+	 else {
+	    intelSetBackClipRects(intel);
+	    colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
+	 }
       }
       else {
-         intelSetBackClipRects(intel);
-         colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
+	 /* drawing to user-created FBO */
+	 struct intel_renderbuffer *irb;
+	 intelSetRenderbufferClipRects(intel);
+	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
+	 colorRegion = (irb && irb->region) ? irb->region : NULL;
       }
-   }
-   else {
-      /* drawing to user-created FBO */
-      struct intel_renderbuffer *irb;
-      intelSetRenderbufferClipRects(intel);
-      irb = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
-      colorRegion = (irb && irb->region) ? irb->region : NULL;
    }
 
    /* Update culling direction which changes depending on the
@@ -953,7 +1019,10 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
          ASSERT(irbStencil->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
          /* need to re-compute stencil hw state */
-         ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+	 if (ctx->Driver.Enable != NULL)
+	    ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+	 else
+	    ctx->NewState |= _NEW_STENCIL;
          if (!depthRegion)
             depthRegion = irbStencil->region;
       }
@@ -965,42 +1034,46 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /* XXX FBO: instead of FALSE, pass ctx->Stencil.Enabled ??? */
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
       /* need to re-compute stencil hw state */
-      ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+      if (ctx->Driver.Enable != NULL)
+	 ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
+      else
+	 ctx->NewState |= _NEW_STENCIL;
    }
 
    /*
     * Update depth test state
     */
-   if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
-      ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+   if (ctx->Driver.Enable) {
+      if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
+	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+      } else {
+	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
+      }
+   } else {
+      ctx->NewState |= _NEW_DEPTH;
    }
-   else {
-      ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
-   }
-
-   /**
-    ** Release old regions, reference new regions
-    **/
-#if 0                           /* XXX FBO: this seems to be redundant with i915_state_draw_region() */
-   if (intel->draw_region != colorRegion) {
-      intel_region_release(&intel->draw_region);
-      intel_region_reference(&intel->draw_region, colorRegion);
-   }
-   if (intel->intelScreen->depth_region != depthRegion) {
-      intel_region_release(&intel->intelScreen->depth_region);
-      intel_region_reference(&intel->intelScreen->depth_region, depthRegion);
-   }
-#endif
 
    intel->vtbl.set_draw_region(intel, colorRegion, depthRegion);
 
    /* update viewport since it depends on window size */
-   ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
-                        ctx->Viewport.Width, ctx->Viewport.Height);
+   if (ctx->Driver.Viewport) {
+      ctx->Driver.Viewport(ctx, ctx->Viewport.X, ctx->Viewport.Y,
+			   ctx->Viewport.Width, ctx->Viewport.Height);
+   } else {
+      ctx->NewState |= _NEW_VIEWPORT;
+   }
 
-   /* Update hardware scissor */
-   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-                       ctx->Scissor.Width, ctx->Scissor.Height);
+   /* Set state we know depends on drawable parameters:
+    */
+   if (ctx->Driver.Scissor)
+      ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			  ctx->Scissor.Width, ctx->Scissor.Height);
+   intel->NewGLState |= _NEW_SCISSOR;
+
+   if (ctx->Driver.DepthRange)
+      ctx->Driver.DepthRange(ctx,
+			     ctx->Viewport.Near,
+			     ctx->Viewport.Far);
 }
 
 

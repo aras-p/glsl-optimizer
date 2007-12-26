@@ -112,6 +112,14 @@ struct intel_context
                                 struct intel_region * draw_region,
                                 struct intel_region * depth_region);
 
+      void (*meta_draw_quad)(struct intel_context *intel,
+			     GLfloat x0, GLfloat x1,
+			     GLfloat y0, GLfloat y1,
+			     GLfloat z,
+			     GLuint color, /* ARGB32 */
+			     GLfloat s0, GLfloat s1,
+			     GLfloat t0, GLfloat t1);
+
       void (*meta_color_mask) (struct intel_context * intel, GLboolean);
 
       void (*meta_stencil_replace) (struct intel_context * intel,
@@ -425,6 +433,7 @@ extern void intelInitStateFuncs(struct dd_function_table *functions);
 #define BLENDFACT_INV_CONST_ALPHA	0x0f
 #define BLENDFACT_MASK          	0x0f
 
+extern int intel_translate_shadow_compare_func(GLenum func);
 extern int intel_translate_compare_func(GLenum func);
 extern int intel_translate_stencil_op(GLenum op);
 extern int intel_translate_blend_factor(GLenum factor);

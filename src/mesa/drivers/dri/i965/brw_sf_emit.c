@@ -343,13 +343,16 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 
 
 
-void brw_emit_tri_setup( struct brw_sf_compile *c )
+void brw_emit_tri_setup( struct brw_sf_compile *c, GLboolean allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
 
    c->nr_verts = 3;
-   alloc_regs(c);
+
+   if (allocate)
+      alloc_regs(c);
+
    invert_det(c);
    copy_z_inv_w(c);
 
@@ -428,14 +431,17 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
 
 
 
-void brw_emit_line_setup( struct brw_sf_compile *c )
+void brw_emit_line_setup( struct brw_sf_compile *c, GLboolean allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
 
 
    c->nr_verts = 2;
-   alloc_regs(c);
+
+   if (allocate)
+      alloc_regs(c);
+
    invert_det(c);
    copy_z_inv_w(c);
 
@@ -497,13 +503,16 @@ void brw_emit_line_setup( struct brw_sf_compile *c )
    } 
 }
 
-void brw_emit_point_sprite_setup( struct brw_sf_compile *c )
+void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
 
    c->nr_verts = 1;
-   alloc_regs(c);
+
+   if (allocate)
+      alloc_regs(c);
+
    copy_z_inv_w(c);
    for (i = 0; i < c->nr_setup_regs; i++)
    {
@@ -581,13 +590,16 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c )
 /* Points setup - several simplifications as all attributes are
  * constant across the face of the point (point sprites excluded!)
  */
-void brw_emit_point_setup( struct brw_sf_compile *c )
+void brw_emit_point_setup( struct brw_sf_compile *c, GLboolean allocate)
 {
    struct brw_compile *p = &c->func;
    GLuint i;
 
    c->nr_verts = 1;
-   alloc_regs(c);
+   
+   if (allocate)
+      alloc_regs(c);
+
    copy_z_inv_w(c);
 
    brw_MOV(p, c->m1Cx, brw_imm_ud(0)); /* zero - move out of loop */
@@ -645,7 +657,10 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    struct brw_reg primmask;
    struct brw_instruction *jmp;
    struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
+   
+   GLuint saveflag;
 
+   c->nr_verts = 3;
    alloc_regs(c);
 
    primmask = retype(get_element(c->tmp, 0), BRW_REGISTER_TYPE_UD);
@@ -663,10 +678,15 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      saveflag = p->flag_value;
       brw_push_insn_state(p); 
-      brw_emit_tri_setup( c );
+      brw_emit_tri_setup( c, GL_FALSE );
       brw_pop_insn_state(p);
-      /* note - thread killed in subroutine */
+      p->flag_value = saveflag;
+      /* note - thread killed in subroutine, so must
+       * restore the flag which is changed when building
+       * the subroutine. fix #13240
+       */
    }
    brw_land_fwd_jump(p, jmp);
 
@@ -679,9 +699,11 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      saveflag = p->flag_value;
       brw_push_insn_state(p); 
-      brw_emit_line_setup( c );
+      brw_emit_line_setup( c, GL_FALSE );
       brw_pop_insn_state(p);
+      p->flag_value = saveflag;
       /* note - thread killed in subroutine */
    }
    brw_land_fwd_jump(p, jmp); 
@@ -690,13 +712,15 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      saveflag = p->flag_value;
       brw_push_insn_state(p); 
-      brw_emit_point_sprite_setup( c );
+      brw_emit_point_sprite_setup( c, GL_FALSE );
       brw_pop_insn_state(p);
+      p->flag_value = saveflag;
    }
    brw_land_fwd_jump(p, jmp); 
 
-   brw_emit_point_setup( c );
+   brw_emit_point_setup( c, GL_FALSE );
 }
 
 

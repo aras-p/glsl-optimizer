@@ -56,6 +56,7 @@ static PFNGLUNIFORMMATRIX4X3FVPROC glUniformMatrix4x3fv_func = NULL;
 
 /* OpenGL 1.4 */
 static PFNGLPOINTPARAMETERFVPROC glPointParameterfv_func = NULL;
+static PFNGLSECONDARYCOLOR3FVPROC glSecondaryColor3fv_func = NULL;
 
 /* GL_ARB_vertex/fragment_program */
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB_func = NULL;
@@ -132,7 +133,9 @@ GetExtensionFuncs(void)
    glUniformMatrix3x4fv_func = (PFNGLUNIFORMMATRIX3X4FVPROC) glutGetProcAddress("glUniformMatrix3x4fv");
    glUniformMatrix4x3fv_func = (PFNGLUNIFORMMATRIX4X3FVPROC) glutGetProcAddress("glUniformMatrix4x3fv");
 
+   /* OpenGL 1.4 */
    glPointParameterfv_func = (PFNGLPOINTPARAMETERFVPROC) glutGetProcAddress("glPointParameterfv");
+   glSecondaryColor3fv_func = (PFNGLSECONDARYCOLOR3FVPROC) glutGetProcAddress("glSecondaryColor3fv");
 
    /* GL_ARB_vertex/fragment_program */
    glBindProgramARB_func = (PFNGLBINDPROGRAMARBPROC) glutGetProcAddress("glBindProgramARB");

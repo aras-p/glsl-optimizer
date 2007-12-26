@@ -531,20 +531,19 @@ make_1d_mipmap(const struct gl_texture_format *format, GLint border,
 }
 
 
-/**
- * XXX need to use the tex image's row stride!
- */
 static void
 make_2d_mipmap(const struct gl_texture_format *format, GLint border,
-               GLint srcWidth, GLint srcHeight, const GLubyte *srcPtr,
-               GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
+               GLint srcWidth, GLint srcHeight,
+	       const GLubyte *srcPtr, GLint srcRowStride,
+               GLint dstWidth, GLint dstHeight,
+	       GLubyte *dstPtr, GLint dstRowStride)
 {
    const GLint bpt = format->TexelBytes;
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
    const GLint dstWidthNB = dstWidth - 2 * border;
    const GLint dstHeightNB = dstHeight - 2 * border;
-   const GLint srcRowStride = bpt * srcWidth;
-   const GLint dstRowStride = bpt * dstWidth;
+   const GLint srcRowBytes = bpt * srcRowStride;
+   const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
    GLint row;
@@ -552,7 +551,7 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
    if (srcHeight > 1) 
-      srcB = srcA + srcRowStride;
+      srcB = srcA + srcRowBytes;
    else
       srcB = srcA;
    dst = dstPtr + border * ((dstWidth + 1) * bpt);
@@ -560,9 +559,9 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
    for (row = 0; row < dstHeightNB; row++) {
       do_row(format, srcWidthNB, srcA, srcB,
              dstWidthNB, dst);
-      srcA += 2 * srcRowStride;
-      srcB += 2 * srcRowStride;
-      dst += dstRowStride;
+      srcA += 2 * srcRowBytes;
+      srcB += 2 * srcRowBytes;
+      dst += dstRowBytes;
    }
 
    /* This is ugly but probably won't be used much */
@@ -620,9 +619,9 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
 static void
 make_3d_mipmap(const struct gl_texture_format *format, GLint border,
                GLint srcWidth, GLint srcHeight, GLint srcDepth,
-               const GLubyte *srcPtr,
+               const GLubyte *srcPtr, GLint srcRowStride,
                GLint dstWidth, GLint dstHeight, GLint dstDepth,
-               GLubyte *dstPtr)
+               GLubyte *dstPtr, GLint dstRowStride)
 {
    const GLint bpt = format->TexelBytes;
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
@@ -717,13 +716,13 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
    /* Luckily we can leverage the make_2d_mipmap() function here! */
    if (border > 0) {
       /* do front border image */
-      make_2d_mipmap(format, 1, srcWidth, srcHeight, srcPtr,
-                     dstWidth, dstHeight, dstPtr);
+      make_2d_mipmap(format, 1, srcWidth, srcHeight, srcPtr, srcRowStride,
+                     dstWidth, dstHeight, dstPtr, dstRowStride);
       /* do back border image */
       make_2d_mipmap(format, 1, srcWidth, srcHeight,
-                     srcPtr + bytesPerSrcImage * (srcDepth - 1),
+                     srcPtr + bytesPerSrcImage * (srcDepth - 1), srcRowStride,
                      dstWidth, dstHeight,
-                     dstPtr + bytesPerDstImage * (dstDepth - 1));
+                     dstPtr + bytesPerDstImage * (dstDepth - 1), dstRowStride);
       /* do four remaining border edges that span the image slices */
       if (srcDepth == dstDepth) {
          /* just copy border pixels from src to dst */
@@ -798,15 +797,16 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 
 static void
 make_1d_stack_mipmap(const struct gl_texture_format *format, GLint border,
-                     GLint srcWidth, const GLubyte *srcPtr,
-                     GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
+                     GLint srcWidth, const GLubyte *srcPtr, GLuint srcRowStride,
+                     GLint dstWidth, GLint dstHeight,
+		     GLubyte *dstPtr, GLuint dstRowStride )
 {
    const GLint bpt = format->TexelBytes;
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
    const GLint dstWidthNB = dstWidth - 2 * border;
    const GLint dstHeightNB = dstHeight - 2 * border;
-   const GLint srcRowStride = bpt * srcWidth;
-   const GLint dstRowStride = bpt * dstWidth;
+   const GLint srcRowBytes = bpt * srcRowStride;
+   const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *src;
    GLubyte *dst;
    GLint row;
@@ -818,8 +818,8 @@ make_1d_stack_mipmap(const struct gl_texture_format *format, GLint border,
    for (row = 0; row < dstHeightNB; row++) {
       do_row(format, srcWidthNB, src, src,
              dstWidthNB, dst);
-      src += srcRowStride;
-      dst += dstRowStride;
+      src += srcRowBytes;
+      dst += dstRowBytes;
    }
 
    if (border) {
@@ -840,17 +840,18 @@ make_1d_stack_mipmap(const struct gl_texture_format *format, GLint border,
  */
 static void
 make_2d_stack_mipmap(const struct gl_texture_format *format, GLint border,
-                     GLint srcWidth, GLint srcHeight, const GLubyte *srcPtr,
+                     GLint srcWidth, GLint srcHeight,
+		     const GLubyte *srcPtr, GLint srcRowStride,
                      GLint dstWidth, GLint dstHeight, GLint dstDepth,
-                     GLubyte *dstPtr)
+                     GLubyte *dstPtr, GLint dstRowStride)
 {
    const GLint bpt = format->TexelBytes;
    const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
    const GLint dstWidthNB = dstWidth - 2 * border;
    const GLint dstHeightNB = dstHeight - 2 * border;
    const GLint dstDepthNB = dstDepth - 2 * border;
-   const GLint srcRowStride = bpt * srcWidth;
-   const GLint dstRowStride = bpt * dstWidth;
+   const GLint srcRowBytes = bpt * srcRowStride;
+   const GLint dstRowBytes = bpt * dstRowStride;
    const GLubyte *srcA, *srcB;
    GLubyte *dst;
    GLint layer;
@@ -859,7 +860,7 @@ make_2d_stack_mipmap(const struct gl_texture_format *format, GLint border,
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
    if (srcHeight > 1) 
-      srcB = srcA + srcRowStride;
+      srcB = srcA + srcRowBytes;
    else
       srcB = srcA;
    dst = dstPtr + border * ((dstWidth + 1) * bpt);
@@ -868,9 +869,9 @@ make_2d_stack_mipmap(const struct gl_texture_format *format, GLint border,
       for (row = 0; row < dstHeightNB; row++) {
          do_row(format, srcWidthNB, srcA, srcB,
                 dstWidthNB, dst);
-         srcA += 2 * srcRowStride;
-         srcB += 2 * srcRowStride;
-         dst += dstRowStride;
+         srcA += 2 * srcRowBytes;
+         srcB += 2 * srcRowBytes;
+         dst += dstRowBytes;
       }
 
       /* This is ugly but probably won't be used much */
@@ -1132,23 +1133,28 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
          case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
             make_2d_mipmap(convertFormat, border,
-                           srcWidth, srcHeight, srcData,
-                           dstWidth, dstHeight, dstData);
+                           srcWidth, srcHeight, srcData, srcImage->RowStride,
+                           dstWidth, dstHeight, dstData, dstImage->RowStride);
             break;
          case GL_TEXTURE_3D:
             make_3d_mipmap(convertFormat, border,
-                           srcWidth, srcHeight, srcDepth, srcData,
-                           dstWidth, dstHeight, dstDepth, dstData);
+                           srcWidth, srcHeight, srcDepth,
+			   srcData, srcImage->RowStride,
+                           dstWidth, dstHeight, dstDepth,
+			   dstData, dstImage->RowStride);
             break;
          case GL_TEXTURE_1D_ARRAY_EXT:
             make_1d_stack_mipmap(convertFormat, border,
-                                 srcWidth, srcData,
-                                 dstWidth, dstHeight, dstData);
+                                 srcWidth, srcData, srcImage->RowStride,
+                                 dstWidth, dstHeight,
+				 dstData, dstImage->RowStride);
             break;
          case GL_TEXTURE_2D_ARRAY_EXT:
             make_2d_stack_mipmap(convertFormat, border,
-                                 srcWidth, srcHeight, srcData,
-                                 dstWidth, dstHeight, dstDepth, dstData);
+                                 srcWidth, srcHeight,
+				 srcData, srcImage->RowStride,
+                                 dstWidth, dstHeight,
+				 dstDepth, dstData, dstImage->RowStride);
             break;
          case GL_TEXTURE_RECTANGLE_NV:
             /* no mipmaps, do nothing */

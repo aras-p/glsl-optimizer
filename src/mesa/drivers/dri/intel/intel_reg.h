@@ -61,6 +61,9 @@
 
 #define XY_SRC_COPY_BLT_CMD             (CMD_2D | (0x53 << 22) | 6)
 
+#define XY_TEXT_IMMEDIATE_BLIT_CMD	(CMD_2D | (0x31 << 22))
+# define XY_TEXT_BYTE_PACKED		(1 << 16)
+
 /* BR00 */
 #define XY_BLT_WRITE_ALPHA	(1 << 21)
 #define XY_BLT_WRITE_RGB	(1 << 20)

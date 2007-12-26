@@ -91,11 +91,6 @@ static void clear_batch_cache( struct brw_context *brw )
    }
 
    brw->cached_batch_items = NULL;
-
-
-   brw_clear_all_caches(brw);
-
-   brw_invalidate_pools(brw);
 }
 
 void brw_clear_batch_cache_flush( struct brw_context *brw )

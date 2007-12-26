@@ -269,6 +269,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
 		       struct brw_wm_prog_key *key );
 
-GLboolean brw_wm_is_glsl(struct gl_fragment_program *fp);
+GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
 void brw_wm_glsl_emit(struct brw_wm_compile *c);
 #endif

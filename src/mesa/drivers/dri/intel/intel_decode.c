@@ -214,7 +214,7 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	instr_out(data, hw_offset, 2, "(%d,%d)\n",
 		  data[2] & 0xffff, data[2] >> 16);
 	instr_out(data, hw_offset, 3, "(%d,%d)\n",
-		  data[2] & 0xffff, data[2] >> 16);
+		  data[3] & 0xffff, data[3] >> 16);
 	instr_out(data, hw_offset, 4, "offset 0x%08x\n", data[4]);
 	instr_out(data, hw_offset, 5, "color\n");
 	return len;
@@ -915,6 +915,26 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	instr_out(data, hw_offset, 3, "Clip binding table\n");
 	instr_out(data, hw_offset, 4, "SF binding table\n");
 	instr_out(data, hw_offset, 5, "WM binding table\n");
+
+	return len;
+
+    case 0x7900:
+	if (len != 4)
+	    fprintf(out, "Bad count in 3DSTATE_DRAWING_RECTANGLE\n");
+	if (count < 4)
+	    BUFFER_FAIL(count, len, "3DSTATE_DRAWING_RECTANGLE");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_DRAWING_RECTANGLE\n");
+	instr_out(data, hw_offset, 1, "top left: %d,%d\n",
+		  data[1] & 0xffff,
+		  (data[1] >> 16) & 0xffff);
+	instr_out(data, hw_offset, 2, "bottom right: %d,%d\n",
+		  data[2] & 0xffff,
+		  (data[2] >> 16) & 0xffff);
+	instr_out(data, hw_offset, 3, "origin: %d,%d\n",
+		  (int)data[3] & 0xffff,
+		  ((int)data[3] >> 16) & 0xffff);
 
 	return len;
 

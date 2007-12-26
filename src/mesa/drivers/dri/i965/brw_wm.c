@@ -201,15 +201,13 @@ static void do_wm_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c->func, &program_size);
 
-   /*
-    */
-   brw->wm.prog_gs_offset = brw_upload_cache( &brw->cache[BRW_WM_PROG],
-					      &c->key,
-					      sizeof(c->key),
-					      program,
-					      program_size,
-					      &c->prog_data,
-					      &brw->wm.prog_data );
+   dri_bo_unreference(brw->wm.prog_bo);
+   brw->wm.prog_bo = brw_upload_cache( &brw->cache, BRW_WM_PROG,
+				       &c->key, sizeof(c->key),
+				       NULL, 0,
+				       program, program_size,
+				       &c->prog_data,
+				       &brw->wm.prog_data );
 }
 
 
@@ -249,7 +247,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       lookup |= IZ_STENCIL_TEST_ENABLE_BIT;
 
       if (brw->attribs.Stencil->WriteMask[0] ||
-	  (brw->attribs.Stencil->TestTwoSide && brw->attribs.Stencil->WriteMask[1]))
+	  (brw->attribs.Stencil->_TestTwoSide &&
+	   brw->attribs.Stencil->WriteMask[1]))
 	 lookup |= IZ_STENCIL_WRITE_ENABLE_BIT;
    }
 
@@ -331,13 +330,13 @@ static void brw_upload_wm_prog( struct brw_context *brw )
 
    /* Make an early check for the key.
     */
-   if (brw_search_cache(&brw->cache[BRW_WM_PROG], 
-			&key, sizeof(key),
-			&brw->wm.prog_data,
-			&brw->wm.prog_gs_offset))
-      return;
-
-   do_wm_prog(brw, fp, &key);
+   dri_bo_unreference(brw->wm.prog_bo);
+   brw->wm.prog_bo = brw_search_cache(&brw->cache, BRW_WM_PROG,
+				      &key, sizeof(key),
+				      NULL, 0,
+				      &brw->wm.prog_data);
+   if (brw->wm.prog_bo == NULL)
+      do_wm_prog(brw, fp, &key);
 }
 
 

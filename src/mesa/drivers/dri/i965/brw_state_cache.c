@@ -28,7 +28,33 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-      
+
+/** @file brw_state_cache.c
+ *
+ * This file implements a simple static state cache for 965.  The consumers
+ * can query the hash table of state using a cache_id, opaque key data,
+ * and list of buffers that will be used in relocations, and receive the
+ * corresponding state buffer object of state (plus associated auxiliary
+ * data) in return.
+ *
+ * The inner workings are a simple hash table based on a CRC of the key data.
+ * The cache_id and relocation target buffers associated with the state
+ * buffer are included as auxiliary key data, but are not part of the hash
+ * value (this should be fixed, but will likely be fixed instead by making
+ * consumers use structured keys).
+ *
+ * Replacement is not implemented.  Instead, when the cache gets too big, at
+ * a safe point (unlock) we throw out all of the cache data let it regenerate
+ * it for the next rendering operation.
+ *
+ * The reloc_buf pointers need to be included as key data, otherwise the
+ * non-unique values stuffed in the offset in key data through
+ * brw_cache_data() may result in successful probe for state buffers
+ * even when the buffer being referenced doesn't match.  The result would be
+ * that the same state cache entry is used twice for different buffers,
+ * only one of the two buffers referenced gets put into the offset, and the
+ * incorrect program is run for the other instance.
+ */
 
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
@@ -42,15 +68,6 @@
 #include "brw_clip.h"
 #include "brw_sf.h"
 #include "brw_gs.h"
-
-
-/***********************************************************************
- * Check cache for uploaded version of struct, else upload new one.
- * Fail when memory is exhausted.
- *
- * XXX: FIXME: Currently search is so slow it would be quicker to
- * regenerate the data every time...
- */
 
 static GLuint hash_key( const void *key, GLuint key_size )
 {
@@ -67,17 +84,34 @@ static GLuint hash_key( const void *key, GLuint key_size )
    return hash;
 }
 
-static struct brw_cache_item *search_cache( struct brw_cache *cache,
-					     GLuint hash,
-					     const void *key,
-					     GLuint key_size)
+/**
+ * Marks a new buffer as being chosen for the given cache id.
+ */
+static void
+update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
+		  dri_bo *bo)
+{
+   dri_bo_unreference(cache->last_bo[cache_id]);
+   cache->last_bo[cache_id] = bo;
+   dri_bo_reference(cache->last_bo[cache_id]);
+   cache->brw->state.dirty.cache |= 1 << cache_id;
+}
+
+static struct brw_cache_item *
+search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
+	     GLuint hash, const void *key, GLuint key_size,
+	     dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
 {
    struct brw_cache_item *c;
 
    for (c = cache->items[hash % cache->size]; c; c = c->next) {
-      if (c->hash == hash && 
+      if (c->cache_id == cache_id &&
+	  c->hash == hash &&
 	  c->key_size == key_size &&
-	  memcmp(c->key, key, key_size) == 0)
+	  memcmp(c->key, key, key_size) == 0 &&
+	  c->nr_reloc_bufs == nr_reloc_bufs &&
+	  memcmp(c->reloc_bufs, reloc_bufs,
+		 nr_reloc_bufs * sizeof(dri_bo *)) == 0)
 	 return c;
    }
 
@@ -92,8 +126,7 @@ static void rehash( struct brw_cache *cache )
    GLuint size, i;
 
    size = cache->size * 3;
-   items = (struct brw_cache_item**) _mesa_malloc(size * sizeof(*items));
-   _mesa_memset(items, 0, size * sizeof(*items));
+   items = (struct brw_cache_item**) _mesa_calloc(size * sizeof(*items));
 
    for (i = 0; i < cache->size; i++)
       for (c = cache->items[i]; c; c = next) {
@@ -107,116 +140,156 @@ static void rehash( struct brw_cache *cache )
    cache->size = size;
 }
 
-
-GLboolean brw_search_cache( struct brw_cache *cache,
-			    const void *key,
-			    GLuint key_size,
-			    void *aux_return,
-			    GLuint *offset_return)
+/**
+ * Returns the buffer object matching cache_id and key, or NULL.
+ */
+dri_bo *brw_search_cache( struct brw_cache *cache,
+			  enum brw_cache_id cache_id,
+			  const void *key,
+			  GLuint key_size,
+			  dri_bo **reloc_bufs, GLuint nr_reloc_bufs,
+			  void *aux_return )
 {
    struct brw_cache_item *item;
-   GLuint addr = 0;
    GLuint hash = hash_key(key, key_size);
 
-   item = search_cache(cache, hash, key, key_size);
+   item = search_cache(cache, cache_id, hash, key, key_size,
+		       reloc_bufs, nr_reloc_bufs);
 
-   if (item) {
-      if (aux_return) 
-	 *(void **)aux_return = (void *)((char *)item->key + item->key_size);
-      
-      *offset_return = addr = item->offset;
-   }    
-    
-   if (item == NULL || addr != cache->last_addr) {
-      cache->brw->state.dirty.cache |= 1<<cache->id;
-      cache->last_addr = addr;
-   }
-   
-   return item != NULL;
+   if (item == NULL)
+      return NULL;
+
+   if (aux_return)
+      *(void **)aux_return = (void *)((char *)item->key + item->key_size);
+
+   update_cache_last(cache, cache_id, item->bo);
+
+   dri_bo_reference(item->bo);
+   return item->bo;
 }
 
-GLuint brw_upload_cache( struct brw_cache *cache,
-			 const void *key,
-			 GLuint key_size,
-			 const void *data,
-			 GLuint data_size,
-			 const void *aux,
-			 void *aux_return )
-{   
-   GLuint offset;
+dri_bo *
+brw_upload_cache( struct brw_cache *cache,
+		  enum brw_cache_id cache_id,
+		  const void *key,
+		  GLuint key_size,
+		  dri_bo **reloc_bufs,
+		  GLuint nr_reloc_bufs,
+		  const void *data,
+		  GLuint data_size,
+		  const void *aux,
+		  void *aux_return )
+{
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
    GLuint hash = hash_key(key, key_size);
-   void *tmp = _mesa_malloc(key_size + cache->aux_size);
-   
-   if (!brw_pool_alloc(cache->pool, data_size, 1 << 6, &offset)) {
-      /* Should not be possible: 
-       */
-      _mesa_printf("brw_pool_alloc failed\n");
-      exit(1);
-   }
+   GLuint relocs_size = nr_reloc_bufs * sizeof(dri_bo *);
+   GLuint aux_size = cache->aux_size[cache_id];
+   void *tmp;
+   dri_bo *bo;
+   int i;
+
+   /* Create the buffer object to contain the data */
+   bo = dri_bo_alloc(cache->brw->intel.bufmgr,
+		     cache->name[cache_id], data_size, 1 << 6,
+		     DRM_BO_FLAG_MEM_LOCAL |
+		     DRM_BO_FLAG_CACHED |
+		     DRM_BO_FLAG_CACHED_MAPPED);
+
+
+   /* Set up the memory containing the key, aux_data, and reloc_bufs */
+   tmp = _mesa_malloc(key_size + aux_size + relocs_size);
 
    memcpy(tmp, key, key_size);
+   memcpy(tmp + key_size, aux, cache->aux_size[cache_id]);
+   memcpy(tmp + key_size + aux_size, reloc_bufs, relocs_size);
+   for (i = 0; i < nr_reloc_bufs; i++) {
+      if (reloc_bufs[i] != NULL)
+	 dri_bo_reference(reloc_bufs[i]);
+   }
 
-   if (cache->aux_size)
-      memcpy(tmp+key_size, aux, cache->aux_size);
-	 
+   item->cache_id = cache_id;
    item->key = tmp;
    item->hash = hash;
    item->key_size = key_size;
-   item->offset = offset;
+   item->reloc_bufs = tmp + key_size + aux_size;
+   item->nr_reloc_bufs = nr_reloc_bufs;
+
+   item->bo = bo;
+   dri_bo_reference(bo);
    item->data_size = data_size;
 
-   if (++cache->n_items > cache->size * 1.5)
+   if (cache->n_items > cache->size * 1.5)
       rehash(cache);
-   
+
    hash %= cache->size;
    item->next = cache->items[hash];
    cache->items[hash] = item;
-      
+   cache->n_items++;
+
    if (aux_return) {
-      assert(cache->aux_size);
+      assert(cache->aux_size[cache_id]);
       *(void **)aux_return = (void *)((char *)item->key + item->key_size);
    }
 
    if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("upload %s: %d bytes to pool buffer %d offset %x\n",
-		   cache->name,
-		   data_size, 
-		   cache->pool->buffer,
-		   offset);
+      _mesa_printf("upload %s: %d bytes to cache id %d\n",
+		   cache->name[cache_id],
+		   data_size);
 
-   /* Copy data to the buffer:
-    */
-   dri_bo_subdata(cache->pool->buffer, offset, data_size, data);
+   /* Copy data to the buffer */
+   dri_bo_subdata(bo, 0, data_size, data);
 
-   cache->brw->state.dirty.cache |= 1<<cache->id;
-   cache->last_addr = offset;
+   update_cache_last(cache, cache_id, bo);
 
-   return offset;
+   return bo;
 }
 
 /* This doesn't really work with aux data.  Use search/upload instead
  */
-GLuint brw_cache_data_sz(struct brw_cache *cache,
-			 const void *data,
-			 GLuint data_size)
+dri_bo *
+brw_cache_data_sz(struct brw_cache *cache,
+		  enum brw_cache_id cache_id,
+		  const void *data,
+		  GLuint data_size,
+		  dri_bo **reloc_bufs,
+		  GLuint nr_reloc_bufs)
 {
-   GLuint addr;
+   dri_bo *bo;
+   struct brw_cache_item *item;
+   GLuint hash = hash_key(data, data_size);
 
-   if (!brw_search_cache(cache, data, data_size, NULL, &addr)) {
-      addr = brw_upload_cache(cache, 
-			      data, data_size, 
-			      data, data_size, 
-			      NULL, NULL);
+   item = search_cache(cache, cache_id, hash, data, data_size,
+		       reloc_bufs, nr_reloc_bufs);
+   if (item) {
+      dri_bo_reference(item->bo);
+      return item->bo;
    }
 
-   return addr;
+   bo = brw_upload_cache(cache, cache_id,
+			 data, data_size,
+			 reloc_bufs, nr_reloc_bufs,
+			 data, data_size,
+			 NULL, NULL);
+
+   return bo;
 }
 
-GLuint brw_cache_data(struct brw_cache *cache,
-		      const void *data)
+/**
+ * Wrapper around brw_cache_data_sz using the cache_id's canonical key size.
+ *
+ * If nr_reloc_bufs is nonzero, brw_search_cache()/brw_upload_cache() would be
+ * better to use, as the potentially changing offsets in the data-used-as-key
+ * will result in excessive cache misses.
+ */
+dri_bo *
+brw_cache_data(struct brw_cache *cache,
+	       enum brw_cache_id cache_id,
+	       const void *data,
+	       dri_bo **reloc_bufs,
+	       GLuint nr_reloc_bufs)
 {
-   return brw_cache_data_sz(cache, data, cache->key_size);
+   return brw_cache_data_sz(cache, cache_id, data, cache->key_size[cache_id],
+			    reloc_bufs, nr_reloc_bufs);
 }
 
 enum pool_type {
@@ -224,18 +297,25 @@ enum pool_type {
    DW_GENERAL_STATE
 };
 
-static void brw_init_cache( struct brw_context *brw, 
-			    const char *name,
-			    GLuint id,
-			    GLuint key_size,
-			    GLuint aux_size,
-			    enum pool_type pool_type)
+static void
+brw_init_cache_id( struct brw_context *brw,
+		const char *name,
+		enum brw_cache_id id,
+		GLuint key_size,
+		GLuint aux_size)
 {
-   struct brw_cache *cache = &brw->cache[id];
+   struct brw_cache *cache = &brw->cache;
+
+   cache->name[id] = strdup(name);
+   cache->key_size[id] = key_size;
+   cache->aux_size[id] = aux_size;
+}
+
+void brw_init_cache( struct brw_context *brw )
+{
+   struct brw_cache *cache = &brw->cache;
+
    cache->brw = brw;
-   cache->id = id;
-   cache->name = name;
-   cache->items = NULL;
 
    cache->size = 7;
    cache->n_items = 0;
@@ -243,137 +323,107 @@ static void brw_init_cache( struct brw_context *brw,
       _mesa_calloc(cache->size * 
 		   sizeof(struct brw_cache_item));
 
+   brw_init_cache_id(brw,
+		     "CC_VP",
+		     BRW_CC_VP,
+		     sizeof(struct brw_cc_viewport),
+		     0);
 
-   cache->key_size = key_size;
-   cache->aux_size = aux_size;
-   switch (pool_type) {
-   case DW_GENERAL_STATE: cache->pool = &brw->pool[BRW_GS_POOL]; break;
-   case DW_SURFACE_STATE: cache->pool = &brw->pool[BRW_SS_POOL]; break;
-   default: assert(0); break;
-   }
-}
+   brw_init_cache_id(brw,
+		     "CC_UNIT",
+		     BRW_CC_UNIT,
+		     sizeof(struct brw_cc_unit_state),
+		     0);
 
-void brw_init_caches( struct brw_context *brw )
-{
+   brw_init_cache_id(brw,
+		     "WM_PROG",
+		     BRW_WM_PROG,
+		     sizeof(struct brw_wm_prog_key),
+		     sizeof(struct brw_wm_prog_data));
 
-   brw_init_cache(brw,
-		  "CC_VP",
-		  BRW_CC_VP,
-		  sizeof(struct brw_cc_viewport),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "SAMPLER_DEFAULT_COLOR",
+		     BRW_SAMPLER_DEFAULT_COLOR,
+		     sizeof(struct brw_sampler_default_color),
+		     0);
 
-   brw_init_cache(brw,
-		  "CC_UNIT",
-		  BRW_CC_UNIT,
-		  sizeof(struct brw_cc_unit_state),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "SAMPLER",
+		     BRW_SAMPLER,
+		     0,		/* variable key/data size */
+		     0);
 
-   brw_init_cache(brw,
-		  "WM_PROG",
-		  BRW_WM_PROG,
-		  sizeof(struct brw_wm_prog_key),
-		  sizeof(struct brw_wm_prog_data),
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "WM_UNIT",
+		     BRW_WM_UNIT,
+		     sizeof(struct brw_wm_unit_state),
+		     0);
 
-   brw_init_cache(brw,
-		  "SAMPLER_DEFAULT_COLOR",
-		  BRW_SAMPLER_DEFAULT_COLOR,
-		  sizeof(struct brw_sampler_default_color),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "SF_PROG",
+		     BRW_SF_PROG,
+		     sizeof(struct brw_sf_prog_key),
+		     sizeof(struct brw_sf_prog_data));
 
-   brw_init_cache(brw,
-		  "SAMPLER",
-		  BRW_SAMPLER,
-		  0,		/* variable key/data size */
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "SF_VP",
+		     BRW_SF_VP,
+		     sizeof(struct brw_sf_viewport),
+		     0);
 
-   brw_init_cache(brw,
-		  "WM_UNIT",
-		  BRW_WM_UNIT,
-		  sizeof(struct brw_wm_unit_state),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "SF_UNIT",
+		     BRW_SF_UNIT,
+		     sizeof(struct brw_sf_unit_state),
+		     0);
 
-   brw_init_cache(brw,
-		  "SF_PROG",
-		  BRW_SF_PROG,
-		  sizeof(struct brw_sf_prog_key),
-		  sizeof(struct brw_sf_prog_data),
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "VS_UNIT",
+		     BRW_VS_UNIT,
+		     sizeof(struct brw_vs_unit_state),
+		     0);
 
-   brw_init_cache(brw,
-		  "SF_VP",
-		  BRW_SF_VP,
-		  sizeof(struct brw_sf_viewport),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "VS_PROG",
+		     BRW_VS_PROG,
+		     sizeof(struct brw_vs_prog_key),
+		     sizeof(struct brw_vs_prog_data));
 
-   brw_init_cache(brw,
-		  "SF_UNIT",
-		  BRW_SF_UNIT,
-		  sizeof(struct brw_sf_unit_state),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "CLIP_UNIT",
+		     BRW_CLIP_UNIT,
+		     sizeof(struct brw_clip_unit_state),
+		     0);
 
-   brw_init_cache(brw,
-		  "VS_UNIT",
-		  BRW_VS_UNIT,
-		  sizeof(struct brw_vs_unit_state),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "CLIP_PROG",
+		     BRW_CLIP_PROG,
+		     sizeof(struct brw_clip_prog_key),
+		     sizeof(struct brw_clip_prog_data));
 
-   brw_init_cache(brw,
-		  "VS_PROG",
-		  BRW_VS_PROG,
-		  sizeof(struct brw_vs_prog_key),
-		  sizeof(struct brw_vs_prog_data),
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "GS_UNIT",
+		     BRW_GS_UNIT,
+		     sizeof(struct brw_gs_unit_state),
+		     0);
 
-   brw_init_cache(brw,
-		  "CLIP_UNIT",
-		  BRW_CLIP_UNIT,
-		  sizeof(struct brw_clip_unit_state),
-		  0,
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "GS_PROG",
+		     BRW_GS_PROG,
+		     sizeof(struct brw_gs_prog_key),
+		     sizeof(struct brw_gs_prog_data));
 
-   brw_init_cache(brw,
-		  "CLIP_PROG",
-		  BRW_CLIP_PROG,
-		  sizeof(struct brw_clip_prog_key),
-		  sizeof(struct brw_clip_prog_data),
-		  DW_GENERAL_STATE);
+   brw_init_cache_id(brw,
+		     "SS_SURFACE",
+		     BRW_SS_SURFACE,
+		     sizeof(struct brw_surface_state),
+		     0);
 
-   brw_init_cache(brw,
-		  "GS_UNIT",
-		  BRW_GS_UNIT,
-		  sizeof(struct brw_gs_unit_state),
-		  0,
-		  DW_GENERAL_STATE);
-
-   brw_init_cache(brw,
-		  "GS_PROG",
-		  BRW_GS_PROG,
-		  sizeof(struct brw_gs_prog_key),
-		  sizeof(struct brw_gs_prog_data),
-		  DW_GENERAL_STATE);
-
-   brw_init_cache(brw,
-		  "SS_SURFACE",
-		  BRW_SS_SURFACE,
-		  sizeof(struct brw_surface_state),
-		  0,
-		  DW_SURFACE_STATE);
-
-   brw_init_cache(brw,
-		  "SS_SURF_BIND",
-		  BRW_SS_SURF_BIND,
-		  sizeof(struct brw_surface_binding_table),
-		  0,
-		  DW_SURFACE_STATE);
+   brw_init_cache_id(brw,
+		     "SS_SURF_BIND",
+		     BRW_SS_SURF_BIND,
+		     0,
+		     0);
 }
 
 
@@ -399,7 +449,12 @@ static void clear_cache( struct brw_cache *cache )
 
    for (i = 0; i < cache->size; i++) {
       for (c = cache->items[i]; c; c = next) {
+	 int j;
+
 	 next = c->next;
+	 for (j = 0; j < c->nr_reloc_bufs; j++)
+	    dri_bo_unreference(c->reloc_bufs[j]);
+	 dri_bo_unreference(c->bo);
 	 free((void *)c->key);
 	 free(c);
       }
@@ -409,15 +464,12 @@ static void clear_cache( struct brw_cache *cache )
    cache->n_items = 0;
 }
 
-void brw_clear_all_caches( struct brw_context *brw )
+void brw_clear_cache( struct brw_context *brw )
 {
-   GLint i;
-
    if (INTEL_DEBUG & DEBUG_STATE)
       _mesa_printf("%s\n", __FUNCTION__);
 
-   for (i = 0; i < BRW_MAX_CACHE; i++)
-      clear_cache(&brw->cache[i]);      
+   clear_cache(&brw->cache);
 
    if (brw->curbe.last_buf) {
       _mesa_free(brw->curbe.last_buf);
@@ -429,14 +481,24 @@ void brw_clear_all_caches( struct brw_context *brw )
    brw->state.dirty.cache |= ~0;
 }
 
+void brw_state_cache_check_size( struct brw_context *brw )
+{
+   /* un-tuned guess.  We've got around 20 state objects for a total of around
+    * 32k, so 1000 of them is around 1.5MB.
+    */
+   if (brw->cache.n_items > 1000)
+      brw_clear_cache(brw);
+}
 
-
-
-
-void brw_destroy_caches( struct brw_context *brw )
+void brw_destroy_cache( struct brw_context *brw )
 {
    GLuint i;
 
+   clear_cache(&brw->cache);
    for (i = 0; i < BRW_MAX_CACHE; i++)
-      clear_cache(&brw->cache[i]);      
+      free(brw->cache.name[i]);
+
+   free(brw->cache.items);
+   brw->cache.items = NULL;
+   brw->cache.size = 0;
 }

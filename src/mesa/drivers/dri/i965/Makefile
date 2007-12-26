@@ -12,6 +12,8 @@ DRIVER_SOURCES = \
 	intel_bufmgr_ttm.c \
 	intel_context.c \
 	intel_decode.c \
+	intel_depthstencil.c \
+	intel_fbo.c \
 	intel_ioctl.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
@@ -21,8 +23,11 @@ DRIVER_SOURCES = \
 	intel_pixel_bitmap.c \
 	intel_state.c \
 	intel_tex.c \
+	intel_tex_copy.c \
 	intel_tex_format.c \
+	intel_tex_image.c \
 	intel_tex_layout.c \
+	intel_tex_subimage.c \
 	intel_tex_validate.c \
 	brw_cc.c \
 	brw_clip.c \
@@ -54,7 +59,6 @@ DRIVER_SOURCES = \
 	brw_state_batch.c \
 	brw_state_cache.c \
 	brw_state_dump.c \
-	brw_state_pool.c \
 	brw_state_upload.c \
 	brw_tex.c \
 	brw_tex_layout.c \

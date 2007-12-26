@@ -154,3 +154,9 @@ void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 {
    batch_buf->bufmgr->post_submit(batch_buf, last_fence);
 }
+
+void
+dri_bufmgr_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug)
+{
+   bufmgr->debug = enable_debug;
+}

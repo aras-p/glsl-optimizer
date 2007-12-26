@@ -49,23 +49,6 @@
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
 
-void
-intel_region_idle(struct intel_context *intel, struct intel_region *region)
-{
-   DBG("%s\n", __FUNCTION__);
-   /* XXX: Using this function is likely bogus -- it ought to only have been
-    * used before a map, anyway, but leave this cheap implementation of it
-    * for now.
-    */
-   if (region && region->buffer) {
-      /* Mapping it for read will ensure that any acceleration to the region
-       * would have landed already.
-       */
-      dri_bo_map(region->buffer, GL_TRUE);
-      dri_bo_unmap(region->buffer);
-   }
-}
-
 /* XXX: Thread safety?
  */
 GLubyte *
@@ -195,6 +178,8 @@ intel_region_data(struct intel_context *intel,
                   const void *src, GLuint src_pitch,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
+   GLboolean locked = GL_FALSE;
+
    DBG("%s\n", __FUNCTION__);
 
    if (intel == NULL)
@@ -208,8 +193,10 @@ intel_region_data(struct intel_context *intel,
          intel_region_cow(intel, dst);
    }
 
-
-   LOCK_HARDWARE(intel);
+   if (!intel->locked) {
+      LOCK_HARDWARE(intel);
+      locked = GL_TRUE;
+   }
 
    _mesa_copy_rect(intel_region_map(intel, dst) + dst_offset,
                    dst->cpp,
@@ -218,7 +205,8 @@ intel_region_data(struct intel_context *intel,
 
    intel_region_unmap(intel, dst);
 
-   UNLOCK_HARDWARE(intel);
+   if (locked)
+      UNLOCK_HARDWARE(intel);
 
 }
 
@@ -459,6 +447,7 @@ intel_recreate_static_regions(struct intel_context *intel)
 			    &intelScreen->back,
 			    DRM_BO_FLAG_MEM_TT);
 
+#ifdef I915
    if (intelScreen->third.handle) {
       intel->third_region =
 	 intel_recreate_static(intel, "third",
@@ -466,6 +455,7 @@ intel_recreate_static_regions(struct intel_context *intel)
 			       &intelScreen->third,
 			       DRM_BO_FLAG_MEM_TT);
    }
+#endif /* I915 */
 
    /* Still assumes front.cpp == depth.cpp.  We can kill this when we move to
     * private buffers.

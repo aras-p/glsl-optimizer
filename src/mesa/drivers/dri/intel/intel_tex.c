@@ -1,4 +1,6 @@
+#include "swrast/swrast.h"
 #include "texobj.h"
+#include "mipmap.h"
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -155,6 +157,46 @@ timed_memcpy(void *dest, const void *src, size_t n)
 }
 #endif /* DO_DEBUG */
 
+/**
+ * Generate new mipmap data from BASE+1 to BASE+p (the minimally-sized mipmap
+ * level).
+ *
+ * The texture object's miptree must be mapped.
+ *
+ * It would be really nice if this was just called by Mesa whenever mipmaps
+ * needed to be regenerated, rather than us having to remember to do so in
+ * each texture image modification path.
+ *
+ * This function should also include an accelerated path.
+ */
+void
+intel_generate_mipmap(GLcontext *ctx, GLenum target,
+                      const struct gl_texture_unit *texUnit,
+                      struct gl_texture_object *texObj)
+{
+   struct intel_texture_object *intelObj = intel_texture_object(texObj);
+   GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   int face, i;
+
+   _mesa_generate_mipmap(ctx, target, texUnit, texObj);
+
+   /* Update the level information in our private data in the new images, since
+    * it didn't get set as part of a normal TexImage path.
+    */
+   for (face = 0; face < nr_faces; face++) {
+      for (i = texObj->BaseLevel + 1; i < texObj->MaxLevel; i++) {
+         struct intel_texture_image *intelImage;
+
+	 intelImage = intel_texture_image(texObj->Image[face][i]);
+	 if (intelImage == NULL)
+	    break;
+
+	 intelImage->level = i;
+	 intelImage->face = face;
+      }
+   }
+}
+
 
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
@@ -166,10 +208,17 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->TexSubImage1D = intelTexSubImage1D;
    functions->TexSubImage2D = intelTexSubImage2D;
    functions->TexSubImage3D = intelTexSubImage3D;
+#ifdef I915
    functions->CopyTexImage1D = intelCopyTexImage1D;
    functions->CopyTexImage2D = intelCopyTexImage2D;
    functions->CopyTexSubImage1D = intelCopyTexSubImage1D;
    functions->CopyTexSubImage2D = intelCopyTexSubImage2D;
+#else
+   functions->CopyTexImage1D = _swrast_copy_teximage1d;
+   functions->CopyTexImage2D = _swrast_copy_teximage2d;
+   functions->CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+   functions->CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+#endif
    functions->GetTexImage = intelGetTexImage;
 
    /* compressed texture functions */

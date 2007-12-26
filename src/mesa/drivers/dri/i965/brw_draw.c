@@ -476,7 +476,9 @@ void brw_draw_init( struct brw_context *brw )
 	 struct intel_buffer_object *intel_bo =
 	    intel_buffer_object(brw->vb.upload.vbo[i]);
 
-	 dri_bo_fake_disable_backing_store(intel_bufferobj_buffer(intel_bo),
+	 dri_bo_fake_disable_backing_store(intel_bufferobj_buffer(&brw->intel,
+								  intel_bo,
+								  INTEL_READ),
 					   NULL, NULL);
       }
    }

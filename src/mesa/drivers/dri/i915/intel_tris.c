@@ -1066,7 +1066,7 @@ union fi
 /**********************************************************************/
 /*             Used only with the metaops callbacks.                  */
 /**********************************************************************/
-void
+static void
 intel_meta_draw_poly(struct intel_context *intel,
                      GLuint n,
                      GLfloat xy[][2],
@@ -1074,8 +1074,10 @@ intel_meta_draw_poly(struct intel_context *intel,
 {
    union fi *vb;
    GLint i;
+   GLboolean was_locked = intel->locked;
 
-   LOCK_HARDWARE(intel);
+   if (!was_locked)
+       LOCK_HARDWARE(intel);
 
    /* All 3d primitives should be emitted with INTEL_BATCH_CLIPRECTS,
     * otherwise the drawing origin (DR4) might not be set correctly.
@@ -1094,10 +1096,12 @@ intel_meta_draw_poly(struct intel_context *intel,
    }
 
    INTEL_FIREVERTICES(intel);
-   UNLOCK_HARDWARE(intel);
+
+   if (!was_locked)
+       UNLOCK_HARDWARE(intel);
 }
 
-void
+static void
 intel_meta_draw_quad(struct intel_context *intel,
                      GLfloat x0, GLfloat x1,
                      GLfloat y0, GLfloat y1,
@@ -1139,6 +1143,7 @@ intel_meta_draw_quad(struct intel_context *intel,
 void
 intelInitTriFuncs(GLcontext * ctx)
 {
+   struct intel_context *intel = intel_context(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    static int firsttime = 1;
 
@@ -1155,4 +1160,6 @@ intelInitTriFuncs(GLcontext * ctx)
    tnl->Driver.Render.BuildVertices = _tnl_build_vertices;
    tnl->Driver.Render.CopyPV = _tnl_copy_pv;
    tnl->Driver.Render.Interp = _tnl_interp;
+
+   intel->vtbl.meta_draw_quad = intel_meta_draw_quad;
 }

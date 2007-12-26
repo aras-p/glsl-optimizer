@@ -169,8 +169,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    brw->state.dirty.mesa = ~0;
    brw->state.dirty.brw = ~0;
 
-   memset(&brw->wm.bind, ~0, sizeof(brw->wm.bind));
-
    brw->emit_state_always = 0;
 
    ctx->FragmentProgram._MaintainTexEnvProgram = 1;

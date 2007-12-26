@@ -457,10 +457,6 @@ intelTexImage(GLcontext * ctx,
    if (!pixels)
       return;
 
-
-   if (intelImage->mt)
-      intel_region_idle(intel, intelImage->mt->region);
-
    LOCK_HARDWARE(intel);
 
    if (intelImage->mt) {
@@ -470,6 +466,7 @@ intelTexImage(GLcontext * ctx,
                                                intelImage->level,
                                                &dstRowStride,
                                                intelImage->base.ImageOffsets);
+      texImage->RowStride = dstRowStride / intelImage->mt->cpp;
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
@@ -487,8 +484,8 @@ intelTexImage(GLcontext * ctx,
       texImage->Data = malloc(sizeInBytes);
    }
 
-   DBG("Upload image %dx%dx%d row_len %x "
-       "pitch %x\n",
+   DBG("Upload image %dx%dx%d row_len %d "
+       "pitch %d\n",
        width, height, depth, width * texelBytes, dstRowStride);
 
    /* Copy data.  Would like to know when it's ok for us to eg. use
@@ -508,6 +505,13 @@ intelTexImage(GLcontext * ctx,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
    }
 
+   /* GL_SGIS_generate_mipmap */
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      intel_generate_mipmap(ctx, target,
+                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
+                            texObj);
+   }
+
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (intelImage->mt) {
@@ -516,16 +520,6 @@ intelTexImage(GLcontext * ctx,
    }
 
    UNLOCK_HARDWARE(intel);
-
-#if 0
-   /* GL_SGIS_generate_mipmap -- this can be accelerated now.
-    */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
-   }
-#endif
 }
 
 void

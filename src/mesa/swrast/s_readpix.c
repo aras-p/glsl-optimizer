@@ -570,7 +570,8 @@ _swrast_ReadPixels( GLcontext *ctx,
    /* Do all needed clipping here, so that we can forget about it later */
    if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
       /* The ReadPixels region is totally outside the window bounds */
-      goto end;
+      RENDER_FINISH(swrast, ctx);
+      return;
    }
 
    if (clippedPacking.BufferObj->Name) {
@@ -580,7 +581,8 @@ _swrast_ReadPixels( GLcontext *ctx,
                                      format, type, pixels)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glReadPixels(invalid PBO access)");
-         goto end;
+	 RENDER_FINISH(swrast, ctx);
+	 return;
       }
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
@@ -588,7 +590,8 @@ _swrast_ReadPixels( GLcontext *ctx,
       if (!buf) {
          /* buffer is already mapped - that's an error */
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
-         goto end;
+	 RENDER_FINISH(swrast, ctx);
+	 return;
       }
       pixels = ADD_POINTERS(buf, pixels);
    }
@@ -629,8 +632,6 @@ _swrast_ReadPixels( GLcontext *ctx,
          /* don't return yet, clean-up */
    }
 
-
-end:
    RENDER_FINISH(swrast, ctx);
 
    if (clippedPacking.BufferObj->Name) {

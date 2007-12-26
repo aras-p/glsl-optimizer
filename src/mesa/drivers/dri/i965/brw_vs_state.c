@@ -43,7 +43,7 @@ static void upload_vs_unit( struct brw_context *brw )
    memset(&vs, 0, sizeof(vs));
 
    /* CACHE_NEW_VS_PROG */
-   vs.thread0.kernel_start_pointer = brw->vs.prog_gs_offset >> 6;
+   vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
    vs.thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
    vs.thread3.urb_entry_read_length = brw->vs.prog_data->urb_read_length;
    vs.thread3.const_urb_entry_read_length = brw->vs.prog_data->curb_read_length;
@@ -87,9 +87,22 @@ static void upload_vs_unit( struct brw_context *brw )
     */
    vs.vs6.vs_enable = 1;
 
-   brw->vs.state_gs_offset = brw_cache_data( &brw->cache[BRW_VS_UNIT], &vs );
+   brw->vs.thread0_delta = vs.thread0.grf_reg_count << 1;
+
+   dri_bo_unreference(brw->vs.state_bo);
+   brw->vs.state_bo = brw_cache_data( &brw->cache, BRW_VS_UNIT , &vs,
+				      &brw->vs.prog_bo, 1 );
 }
 
+static void emit_reloc_vs_unit(struct brw_context *brw)
+{
+   /* Emit VS program relocation */
+   dri_emit_reloc(brw->vs.state_bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  brw->vs.thread0_delta,
+		  offsetof(struct brw_vs_unit_state, thread0),
+		  brw->vs.prog_bo);
+}
 
 const struct brw_tracked_state brw_vs_unit = {
    .dirty = {
@@ -98,5 +111,6 @@ const struct brw_tracked_state brw_vs_unit = {
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_VS_PROG
    },
-   .update = upload_vs_unit
+   .update = upload_vs_unit,
+   .emit_reloc = emit_reloc_vs_unit,
 };

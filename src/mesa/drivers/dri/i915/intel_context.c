@@ -202,7 +202,7 @@ const struct dri_extension card_extensions[] = {
    {"GL_NV_blend_square", NULL},
    {"GL_NV_vertex_program", GL_NV_vertex_program_functions},
    {"GL_NV_vertex_program1_1", NULL},
-/*     { "GL_SGIS_generate_mipmap",           NULL }, */
+   { "GL_SGIS_generate_mipmap", NULL },
    {NULL, NULL}
 };
 
@@ -544,8 +544,8 @@ intelInitContext(struct intel_context *intel,
 
 #if DO_DEBUG
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
-   if (!intel->ttm && (INTEL_DEBUG & DEBUG_BUFMGR))
-      dri_bufmgr_fake_set_debug(intel->bufmgr, GL_TRUE);
+   if (INTEL_DEBUG & DEBUG_BUFMGR)
+      dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 #endif
 
    if (getenv("INTEL_NO_RAST")) {
@@ -591,8 +591,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 	 intel->first_swap_fence = NULL;
       }
 
-      dri_bufmgr_destroy(intel->bufmgr);
-
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private
           * texture object data.
@@ -603,6 +601,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       /* free the Mesa context */
       _mesa_free_context_data(&intel->ctx);
+
+      dri_bufmgr_destroy(intel->bufmgr);
    }
 }
 
