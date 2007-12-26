@@ -127,6 +127,7 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
 static void softpipe_destroy( struct pipe_context *pipe )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
+   struct pipe_winsys *ws = pipe->winsys;
    uint i;
 
    draw_destroy( softpipe->draw );
@@ -151,6 +152,12 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       sp_destroy_tile_cache(softpipe->tex_cache[i]);
+
+   for (i = 0; i < Elements(softpipe->constants); i++) {
+      if (softpipe->constants[i].buffer) {
+         ws->buffer_reference(ws, &softpipe->constants[i].buffer, NULL);
+      }
+   }
 
    FREE( softpipe );
 }
