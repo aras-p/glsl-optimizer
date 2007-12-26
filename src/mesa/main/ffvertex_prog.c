@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -1529,6 +1529,8 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
 	 
       prog = (struct gl_vertex_program *)
          ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
+      if (!prog)
+         return NULL;
 
       create_new_program( key, prog,
                           ctx->Const.VertexProgram.MaxTemps );
@@ -1541,10 +1543,8 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
       _mesa_program_cache_insert(ctx, ctx->VertexProgram.Cache,
                                  key, sizeof(*key), &prog->Base);
    }
-   else {
-      /* use cached program */
-      _mesa_free(key);
-   }
+
+   _mesa_free(key);
 
    return prog;
 }
