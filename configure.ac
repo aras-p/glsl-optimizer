@@ -80,6 +80,38 @@ AC_SUBST(OPT_FLAGS)
 AC_SUBST(ARCH_FLAGS)
 
 dnl
+dnl Hacks to enable 32 or 64 bit build
+dnl
+AC_ARG_ENABLE(32-bit,
+    [AS_HELP_STRING([--enable-32-bit],
+        [build 32-bit libraries @<:@default=auto@:>@])],
+    enable_32bit="$enableval",
+    enable_32bit=auto
+)
+if test "x$enable_32bit" = xyes; then
+    if test "x$GCC" = xyes; then
+        CFLAGS="$CFLAGS -m32"
+    fi
+    if test "x$GXX" = xyes; then
+        CXXFLAGS="$CXXFLAGS -m32"
+    fi
+fi
+AC_ARG_ENABLE(64-bit,
+    [AS_HELP_STRING([--enable-64-bit],
+        [build 64-bit libraries @<:@default=auto@:>@])],
+    enable_64bit="$enableval",
+    enable_64bit=auto
+)
+if test "x$enable_64bit" = xyes; then
+    if test "x$GCC" = xyes; then
+        CFLAGS="$CFLAGS -m64"
+    fi
+    if test "x$GXX" = xyes; then
+        CXXFLAGS="$CXXFLAGS -m64"
+    fi
+fi
+
+dnl
 dnl shared/static libraries, mimic libtool options
 dnl
 AC_ARG_ENABLE(static,

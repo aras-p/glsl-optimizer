@@ -124,6 +124,13 @@ available for a few architectures. These will be used by default if
 one of these architectures is detected. This option ensures that
 assembly will not be used.
 </li>
+<li><code>--enable-32-bit, --enable-64-bit</code> - By default, the
+build will compile code as directed by the environment variables
+<code>CC</code>, <code>CFLAGS</code>, etc. If the compiler is
+<code>gcc</code>, these options offer a helper to add the compiler flags
+to force 32- or 64-bit code generation as used on the x86 and x86_64
+architectures.
+</li>
 </ul>
 </p>
 
