@@ -348,8 +348,8 @@ nouveau_bo_validate_user(struct nouveau_channel *chan, struct nouveau_bo *bo,
 
 	memcpy(nvdev->sa_map + r->start, nvbo->sysmem, bo->size);
 
-	nvbo->base.offset = nvdev->sa.offset + r->start;
-	nvbo->base.flags = NOUVEAU_BO_GART;
+	nvbo->offset = nvdev->sa.offset + r->start;
+	nvbo->flags = NOUVEAU_BO_GART;
 	return 0;
 }
 
@@ -371,11 +371,11 @@ nouveau_bo_validate_bo(struct nouveau_channel *chan, struct nouveau_bo *bo,
 		nouveau_bo_upload(nvbo);
 	}
 
-	nvbo->base.offset = nvbo->drm.offset;
+	nvbo->offset = nvbo->drm.offset;
 	if (nvbo->drm.flags & (NOUVEAU_MEM_AGP | NOUVEAU_MEM_PCI))
-		nvbo->base.flags = NOUVEAU_BO_GART;
+		nvbo->flags = NOUVEAU_BO_GART;
 	else
-		nvbo->base.flags = NOUVEAU_BO_VRAM;
+		nvbo->flags = NOUVEAU_BO_VRAM;
 
 	return 0;
 }

@@ -251,6 +251,9 @@ struct nouveau_bo_priv {
 	int user;
 
 	int refcount;
+
+	uint64_t offset;
+	uint64_t flags;
 };
 #define nouveau_bo(n) ((struct nouveau_bo_priv *)(n))
 

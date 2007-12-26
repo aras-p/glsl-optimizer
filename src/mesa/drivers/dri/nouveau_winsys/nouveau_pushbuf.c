@@ -131,6 +131,16 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 		ret = nouveau_bo_validate(chan, bo, fence, pbbo->flags);
 		assert (ret == 0);
 
+		if (bo->offset == nouveau_bo(bo)->offset &&
+		    bo->flags == nouveau_bo(bo)->flags) {
+			/*XXX: could avoid reloc in this case, except with the
+			 *     current design we'd confuse the GPU quite a bit
+			 *     if we did this.  Will fix soon.
+			 */
+		}
+		bo->offset = nouveau_bo(bo)->offset;
+		bo->flags = nouveau_bo(bo)->flags;
+
 		while ((r = ptr_to_pbrel(pbbo->relocs))) {
 			uint32_t push;
 
