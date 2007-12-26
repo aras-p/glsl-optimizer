@@ -242,6 +242,7 @@ struct nouveau_bo_priv {
 	struct nouveau_bo base;
 
 	struct nouveau_fence *fence;
+	struct nouveau_fence *wr_fence;
 
 	struct drm_nouveau_mem_alloc drm;
 	void *map;

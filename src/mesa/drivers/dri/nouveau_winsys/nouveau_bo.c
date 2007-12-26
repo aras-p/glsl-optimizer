@@ -299,8 +299,10 @@ nouveau_bo_map(struct nouveau_bo *bo, uint32_t flags)
 	if (!nvbo)
 		return -EINVAL;
 
-	if (nvbo->fence)
+	if (flags & NOUVEAU_BO_WR)
 		nouveau_fence_wait(&nvbo->fence);
+	else
+		nouveau_fence_wait(&nvbo->wr_fence);
 
 	if (nvbo->sysmem)
 		bo->map = nvbo->sysmem;
@@ -385,6 +387,8 @@ nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
 	int ret;
 
+	assert(bo->map == NULL);
+
 	if (nvbo->user) {
 		ret = nouveau_bo_validate_user(chan, bo, fence, flags);
 		if (ret) {
@@ -398,6 +402,8 @@ nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
 			return ret;
 	}
 
+	if (flags & NOUVEAU_BO_WR)
+		nouveau_fence_ref(fence, &nvbo->wr_fence);
 	nouveau_fence_ref(fence, &nvbo->fence);
 	return 0;
 }
