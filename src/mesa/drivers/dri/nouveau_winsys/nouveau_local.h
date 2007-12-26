@@ -24,21 +24,13 @@
 #define NOUVEAU_DMA_TIMEOUT 2000
 
 /* Push buffer access macros */
-#define BEGIN_RING(obj,mthd,size) do {                                         \
-	nv->pushbuf = nouveau_pipe_dma_beginp(nv->obj, (mthd), (size));        \
-} while(0)
-
-#define BEGIN_RING_GR(obj,mthd,size) do {                                      \
-	nv->pushbuf = nouveau_pipe_dma_beginp(obj, (mthd), (size));            \
-} while(0)
-
 #define OUT_RING(data) do {                                                    \
-	(*nv->pushbuf++) = (data);                                             \
+	(*nv->channel->pushbuf->cur++) = (data);                               \
 } while(0)
 
 #define OUT_RINGp(src,size) do {                                               \
-	memcpy(nv->pushbuf, (src), (size)<<2);                                 \
-	nv->pushbuf += (size);                                                 \
+	memcpy(nv->channel->pushbuf->cur, (src), (size)<<2);                   \
+	nv->channel->pushbuf->cur += (size);                                   \
 } while(0)
 
 #define OUT_RINGf(data) do {                                                   \
@@ -48,7 +40,18 @@
 } while(0)
 
 #define FIRE_RING() do {                                                       \
-	nouveau_pipe_dma_kickoff(nv->channel);                                 \
+	nouveau_pushbuf_flush(nv->channel, 0);                                 \
+} while(0)
+
+#define BEGIN_RING_GR(obj,mthd,size) do {                                      \
+	if (nv->channel->pushbuf->remaining < ((size) + 1))                    \
+		nouveau_pushbuf_flush(nv->channel, ((size) + 1));              \
+	OUT_RING(((obj)->subc << 13) | ((size) << 18) | (mthd));               \
+	nv->channel->pushbuf->remaining -= ((size) + 1);                       \
+} while(0)
+
+#define BEGIN_RING(obj,mthd,size) do {                                         \
+	BEGIN_RING_GR(nv->obj, (mthd), (size));                                \
 } while(0)
 
 #define BIND_RING(o,s) do {                                                    \
@@ -58,8 +61,8 @@
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
-	nouveau_pushbuf_emit_reloc(nv->channel, nv->pushbuf, (void*)(bo),      \
-				   (data), (flags), (vor), (tor));             \
+	nouveau_pushbuf_emit_reloc(nv->channel, nv->channel->pushbuf->cur,     \
+				   (void*)(bo), (data), (flags), (vor), (tor));\
 	OUT_RING(0);                                                           \
 } while(0)
 

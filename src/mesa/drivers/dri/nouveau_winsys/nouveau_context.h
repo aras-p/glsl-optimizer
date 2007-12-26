@@ -31,7 +31,6 @@ struct nouveau_context {
 	struct pipe_surface *frontbuffer;
 
 	/* Hardware context */
-	uint32_t                *pushbuf;
 	struct nouveau_channel  *channel;
 	struct nouveau_notifier *sync_notifier;
 	struct nouveau_grobj    *NvNull;

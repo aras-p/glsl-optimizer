@@ -11,6 +11,7 @@
 #include "pipe/nouveau/nouveau_grobj.h"
 #include "pipe/nouveau/nouveau_notifier.h"
 #include "pipe/nouveau/nouveau_resource.h"
+#include "pipe/nouveau/nouveau_pushbuf.h"
 
 struct nouveau_winsys {
 	struct nouveau_context *nv;
@@ -23,13 +24,10 @@ struct nouveau_winsys {
 			  struct nouveau_resource **);
 	void (*res_free)(struct nouveau_resource **);
 
-	/*XXX: this is crappy, and bound to be slow.. however, it's nice and
-	 *     simple, it'll do for the moment*/
-	uint32_t *(*begin_ring)(struct nouveau_grobj *, int mthd, int size);
-	int       (*out_reloc)(struct nouveau_channel *, void *ptr,
-			       struct nouveau_bo *, uint32_t data,
-			       uint32_t flags, uint32_t vor, uint32_t tor);
-	void      (*fire_ring)(struct nouveau_channel *);
+	int  (*push_reloc)(struct nouveau_channel *, void *ptr,
+			   struct nouveau_bo *, uint32_t data,
+			   uint32_t flags, uint32_t vor, uint32_t tor);
+	int  (*push_flush)(struct nouveau_channel *, unsigned size);
 			       
 	int       (*grobj_alloc)(struct nouveau_winsys *, int grclass,
 				 struct nouveau_grobj **);

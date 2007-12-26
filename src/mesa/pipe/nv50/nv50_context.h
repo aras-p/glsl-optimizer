@@ -26,7 +26,6 @@ struct nv50_context {
 	int chipset;
 	struct nouveau_grobj *tesla;
 	struct nouveau_notifier *sync;
-	uint32_t *pushbuf;
 };
 
 

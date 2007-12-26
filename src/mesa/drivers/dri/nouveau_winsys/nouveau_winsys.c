@@ -34,30 +34,6 @@ nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 	return 0;
 }
 
-uint32_t *
-nouveau_pipe_dma_beginp(struct nouveau_grobj *grobj, int mthd, int size)
-{
-	struct nouveau_channel *chan = grobj->channel;
-	uint32_t *pushbuf;
-
-	if (chan->pushbuf->remaining < (size + 1)) {
-		nouveau_pushbuf_flush(chan, size + 1);
-	}
-
-	pushbuf = chan->pushbuf->cur;
-	chan->pushbuf->cur += (size + 1);
-	chan->pushbuf->remaining -= (size + 1);
-
-	(*pushbuf++) = ((grobj->subc << 13) | (size << 18) | mthd);
-	return pushbuf;
-}
-
-void
-nouveau_pipe_dma_kickoff(struct nouveau_channel *chan)
-{
-	nouveau_pushbuf_flush(chan, 0);
-}
-
 static int
 nouveau_pipe_surface_copy(struct nouveau_winsys *nvws, struct pipe_surface *dst,
 			  unsigned dx, unsigned dy, struct pipe_surface *src,
@@ -126,9 +102,8 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->res_alloc		= nouveau_resource_alloc;
 	nvws->res_free		= nouveau_resource_free;
 
-	nvws->begin_ring        = nouveau_pipe_dma_beginp;
-	nvws->out_reloc         = nouveau_pushbuf_emit_reloc;
-	nvws->fire_ring		= nouveau_pipe_dma_kickoff;
+	nvws->push_reloc        = nouveau_pushbuf_emit_reloc;
+	nvws->push_flush	= nouveau_pushbuf_flush;
 
 	nvws->grobj_alloc	= nouveau_pipe_grobj_alloc;
 	nvws->grobj_free	= nouveau_grobj_free;

@@ -31,7 +31,6 @@ struct nv40_context {
 	int chipset;
 	struct nouveau_grobj *curie;
 	struct nouveau_notifier *sync;
-	uint32_t *pushbuf;
 
 	/* query objects */
 	struct nouveau_notifier *query;

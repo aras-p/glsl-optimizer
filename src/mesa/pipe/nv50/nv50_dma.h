@@ -3,21 +3,13 @@
 
 #include "pipe/nouveau/nouveau_winsys.h"
 
-#define BEGIN_RING(obj,mthd,size) do {                                         \
-	nv50->pushbuf = nv50->nvws->begin_ring(nv50->obj, (mthd), (size));     \
-} while(0)
-
-#define BEGIN_RING_NI(obj,mthd,size) do {                                      \
-	BEGIN_RING(obj, (mthd) | 0x40000000, (size));                          \
-} while(0)
-
 #define OUT_RING(data) do {                                                    \
-	(*nv50->pushbuf++) = (data);                                           \
+	(*nv50->nvws->channel->pushbuf->cur++) = (data);                       \
 } while(0)
 
 #define OUT_RINGp(src,size) do {                                               \
-	memcpy(nv50->pushbuf, (src), (size) * 4);                              \
-	nv50->pushbuf += (size);                                               \
+	memcpy(nv50->nvws->channel->pushbuf->cur, (src), (size) * 4);          \
+	nv50->nvws->channel->pushbuf->cur += (size);                           \
 } while(0)
 
 #define OUT_RINGf(data) do {                                                   \
@@ -26,14 +18,26 @@
 	OUT_RING(c.u);                                                         \
 } while(0)
 
+#define BEGIN_RING(obj,mthd,size) do {                                         \
+	if (nv50->nvws->channel->pushbuf->remaining < ((size) + 1))            \
+		nv50->nvws->push_flush(nv50->nvws->channel, ((size) + 1));     \
+	OUT_RING((nv50->obj->subc << 13) | ((size) << 18) | (mthd));           \
+	nv50->nvws->channel->pushbuf->remaining -= ((size) + 1);               \
+} while(0)
+
+#define BEGIN_RING_NI(obj,mthd,size) do {                                      \
+	BEGIN_RING(obj, (mthd) | 0x40000000, (size));                          \
+} while(0)
+
 #define FIRE_RING() do {                                                       \
-	nv50->nvws->fire_ring(nv50->nvws->channel);                            \
+	nv50->nvws->push_flush(nv50->nvws->channel, 0);                        \
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
-	nv50->nvws->out_reloc(nv50->nvws->channel, nv50->pushbuf,              \
-			      (struct nouveau_bo *)(bo),                       \
-			      (data), (flags), (vor), (tor));                  \
+	nv50->nvws->push_reloc(nv50->nvws->channel,                            \
+			       nv50->nvws->channel->pushbuf->cur,              \
+			       (struct nouveau_bo *)(bo),                      \
+			       (data), (flags), (vor), (tor));                 \
 	OUT_RING(0);                                                           \
 } while(0)
 
