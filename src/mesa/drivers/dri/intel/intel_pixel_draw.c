@@ -378,6 +378,7 @@ intelDrawPixels(GLcontext * ctx,
       ctx->FragmentProgram._Current = fpSave;
       ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
       ctx->FragmentProgram._Active = GL_TRUE;
+      _swrast_InvalidateState(ctx, _NEW_PROGRAM);
    }
    else {
       _swrast_DrawPixels( ctx, x, y, width, height, format, type,
