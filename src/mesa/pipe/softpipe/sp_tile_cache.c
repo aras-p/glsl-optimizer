@@ -126,9 +126,17 @@ void
 sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
 {
    uint pos;
+
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      assert(tc->entries[pos].x < 0);
+      //assert(tc->entries[pos].x < 0);
    }
+   if (tc->surface) {
+      pipe_surface_reference(&tc->surface, NULL);
+   }
+   if (tc->tex_surf) {
+      pipe_surface_reference(&tc->tex_surf, NULL);
+   }
+
    FREE( tc );
 }
 
@@ -466,15 +474,12 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
           tc->tex_level != level ||
           tc->tex_z != z) {
          /* get new surface (view into texture) */
-         struct pipe_surface *ps;
 
          if (tc->tex_surf && tc->tex_surf->map)
             pipe_surface_unmap(tc->tex_surf);
 
-         ps = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
-         pipe_surface_reference(&tc->tex_surf, ps);
-
-         pipe_surface_map(ps);
+         tc->tex_surf = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
+         pipe_surface_map(tc->tex_surf);
 
          tc->tex_face = face;
          tc->tex_level = level;
