@@ -8,3 +8,8 @@ depend
 depend.bak
 lib
 lib64
+configure
+autom4te.cache
+aclocal.m4
+config.log
+config.status

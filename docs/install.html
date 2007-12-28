@@ -24,7 +24,13 @@
 <h3>1.1 Compilation</h3>
 
 <p>
-Mesa may be compiled in several different ways:
+Mesa is built by reading Makefile stubs from the configs directory.
+There are configurations for many Unix variants and different Mesa
+options. Type <b>make</b> from the top-level directory to see a list of
+supported system configurations. Alternatively, an autoconf system can
+be used to create a Makefile stub for your system. See the <a
+href="autoconf.html">autoconf instructions</a> for more details. Mesa
+may be compiled in several ways using the predefined configurations:
 </p>
 <ul>
 <li><b><em>Stand-alone/Xlib mode</em></b> - Mesa will be compiled as

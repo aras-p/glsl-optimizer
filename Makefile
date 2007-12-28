@@ -29,6 +29,8 @@ realclean:
 	$(MAKE) clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
+	-rm -f $(TOP)/configs/autoconf
+	-rm -rf autom4te.cache
 	-rm -f `find . -name \*.o`
 	-rm -f `find . -name \*.a`
 	-rm -f `find . -name \*.so`
@@ -66,6 +68,7 @@ aix-64 \
 aix-64-static \
 aix-gcc \
 aix-static \
+autoconf \
 bluegene-osmesa \
 bluegene-xlc-osmesa \
 beos \
@@ -173,8 +176,14 @@ GLUT_NAME = MesaGLUT-7.1pre
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
+	$(DIRECTORY)/configure						\
+	$(DIRECTORY)/configure.ac					\
+	$(DIRECTORY)/aclocal.m4						\
 	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/mms-config.					\
+	$(DIRECTORY)/bin/config.guess					\
+	$(DIRECTORY)/bin/config.sub					\
+	$(DIRECTORY)/bin/install-sh					\
 	$(DIRECTORY)/bin/mklib						\
 	$(DIRECTORY)/bin/minstall					\
 	$(DIRECTORY)/configs/[a-z]*					\
@@ -433,8 +442,19 @@ LIB_FILES = $(MAIN_FILES) $(DRI_FILES) $(SGI_GLU_FILES) $(GLW_FILES)
 
 
 # Everything for new a Mesa release:
-tarballs: rm_depend lib_gz demo_gz glut_gz lib_bz2 demo_bz2 glut_bz2 lib_zip demo_zip glut_zip md5
+tarballs: rm_depend configure aclocal.m4 lib_gz demo_gz glut_gz \
+	lib_bz2 demo_bz2 glut_bz2 lib_zip demo_zip glut_zip md5
 
+
+# Helper for autoconf builds
+ACLOCAL = aclocal
+ACLOCAL_FLAGS =
+AUTOCONF = autoconf
+AC_FLAGS =
+aclocal.m4: configure.ac
+	$(ACLOCAL) $(ACLOCAL_FLAGS)
+configure: configure.ac aclocal.m4
+	$(AUTOCONF) $(AC_FLAGS)
 
 rm_depend:
 	@for dep in $(DEPEND_FILES) ; do \
@@ -444,6 +464,7 @@ rm_depend:
 
 lib_gz:
 	rm -f configs/current ; \
+	rm -f configs/autoconf ; \
 	cd .. ; \
 	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	gzip $(LIB_NAME).tar ; \
@@ -463,6 +484,7 @@ glut_gz:
 
 lib_bz2:
 	rm -f configs/current ; \
+	rm -f configs/autoconf ; \
 	cd .. ; \
 	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
 	bzip2 $(LIB_NAME).tar ; \
@@ -482,6 +504,7 @@ glut_bz2:
 
 lib_zip:
 	rm -f configs/current ; \
+	rm -f configs/autoconf ; \
 	rm -f $(LIB_NAME).zip ; \
 	cd .. ; \
 	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
