@@ -616,6 +616,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       if (draw->vertex_buffer[i].buffer) {
          pipe->winsys->buffer_unmap(pipe->winsys,
                                     draw->vertex_buffer[i].buffer);
+         winsys->buffer_reference(winsys, &draw->vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }
