@@ -31,7 +31,7 @@ nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 		       unsigned sx, unsigned sy, unsigned w, unsigned h)
 {
 	struct pipe_surface *dst = nv->surf_dst;
-	struct pipe_surface *src = nv->surf_dst;
+	struct pipe_surface *src = nv->surf_src;
 	unsigned dst_offset, src_offset;
 
 	dst_offset = dst->offset + (dy * dst->pitch + dx) * dst->cpp;
@@ -53,8 +53,8 @@ nv04_surface_copy_m2mf(struct nouveau_context *nv, unsigned dx, unsigned dy,
 		OUT_RING  (0);
 
 		h -= count;
-		src_offset += src->pitch * count;
-		dst_offset += dst->pitch * count;
+		src_offset += src->pitch * src->cpp * count;
+		dst_offset += dst->pitch * dst->cpp * count;
 	}
 }
 
