@@ -127,24 +127,24 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 		ps->wrap |= (1 << 5);
 
 		if (cso->max_anisotropy >= 16.0) {
-			ps->en |= (7 << 4);
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_16X;
 		} else
 		if (cso->max_anisotropy >= 12.0) {
-			ps->en |= (6 << 4);
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_12X;
 		} else
 		if (cso->max_anisotropy >= 10.0) {
-			ps->en |= (5 << 4);
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_10X;
 		} else
 		if (cso->max_anisotropy >= 8.0) {
-			ps->en |= (4 << 4);
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_8X;
 		} else
 		if (cso->max_anisotropy >= 6.0) {
-			ps->en |= (3 << 4);
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_6X;
 		} else
 		if (cso->max_anisotropy >= 4.0) {
-			ps->en |= (2 << 4);
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_4X;
 		} else {
-			ps->en |= (1 << 4); /* 2.0 */
+			ps->en |= NV40TCL_TEX_ENABLE_ANISO_2X;
 		}
 	}
 
@@ -195,28 +195,28 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 		switch (cso->compare_func) {
 		case PIPE_FUNC_NEVER:
-			ps->wrap |= (0x0 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_NEVER;
 			break;
 		case PIPE_FUNC_GREATER:
-			ps->wrap |= (0x1 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_GREATER;
 			break;
 		case PIPE_FUNC_EQUAL:
-			ps->wrap |= (0x2 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_EQUAL;
 			break;
 		case PIPE_FUNC_GEQUAL:
-			ps->wrap |= (0x3 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_GEQUAL;
 			break;
 		case PIPE_FUNC_LESS:
-			ps->wrap |= (0x4 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_LESS;
 			break;
 		case PIPE_FUNC_NOTEQUAL:
-			ps->wrap |= (0x5 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_NOTEQUAL;
 			break;
 		case PIPE_FUNC_LEQUAL:
-			ps->wrap |= (0x6 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_LEQUAL;
 			break;
 		case PIPE_FUNC_ALWAYS:
-			ps->wrap |= (0x7 << 28);
+			ps->wrap |= NV40TCL_TEX_WRAP_RCOMP_ALWAYS;
 			break;
 		default:
 			break;
