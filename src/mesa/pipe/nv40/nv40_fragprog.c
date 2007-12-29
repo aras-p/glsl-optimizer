@@ -781,18 +781,34 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 	}
 
 	if (!fp->on_hw) {
+		const uint32_t le = 1;
+		uint32_t *map;
+
 		if (!fp->buffer)
 			fp->buffer = ws->buffer_create(ws, 0x100, 0, 0);
+		ws->buffer_data(ws, fp->buffer, fp->insn_len * 4, NULL, 0);
+
+		map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_FLAG_READ);
 
 #if 0
-		for (i = 0; i < fp->insn_len; i++)
+		for (i = 0; i < fp->insn_len; i++) {
 			NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
+		}
 #endif
 
-		nv40->pipe.winsys->buffer_data(nv40->pipe.winsys, fp->buffer,
-					       fp->insn_len * sizeof(uint32_t),
-					       fp->insn,
-					       PIPE_BUFFER_USAGE_PIXEL);
+		if ((*(const uint8_t *)&le)) {
+			for (i = 0; i < fp->insn_len; i++) {
+				map[i] = fp->insn[i];
+			}
+		} else {
+			/* Weird swapping for big-endian chips */
+			for (i = 0; i < fp->insn_len; i++) {
+				map[i] = ((fp->insn[i] & 0xffff) << 16) |
+					  ((fp->insn[i] >> 16) & 0xffff);
+			}
+		}
+
+		ws->buffer_unmap(ws, fp->buffer);
 		fp->on_hw = TRUE;
 	}
 
