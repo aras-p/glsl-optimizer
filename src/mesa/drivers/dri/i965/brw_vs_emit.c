@@ -1137,7 +1137,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
         break;
       case OPCODE_CAL:
 	 brw_set_access_mode(p, BRW_ALIGN_1);
-	 brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
+	 brw_ADD(p, deref_1d(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
 	 brw_ADD(p, get_addr_reg(stack_index),
 			 get_addr_reg(stack_index), brw_imm_d(4));
@@ -1148,7 +1148,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_ADD(p, get_addr_reg(stack_index),
 			 get_addr_reg(stack_index), brw_imm_d(-4));
 	 brw_set_access_mode(p, BRW_ALIGN_1);
-         brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
+         brw_MOV(p, brw_ip_reg(), deref_1d(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
       case OPCODE_END:	
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));

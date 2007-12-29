@@ -648,6 +648,11 @@ static __inline struct brw_reg deref_1uw(struct brw_indirect ptr, GLint offset)
    return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UW);
 }
 
+static __inline struct brw_reg deref_1d(struct brw_indirect ptr, GLint offset)
+{
+   return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_D);
+}
+
 static __inline struct brw_reg deref_1ud(struct brw_indirect ptr, GLint offset)
 {
    return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UD);
