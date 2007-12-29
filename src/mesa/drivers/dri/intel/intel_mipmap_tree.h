@@ -73,6 +73,7 @@ struct intel_mipmap_level
     * are going to be so diverse that there is no unified way to
     * compute the offsets of depth/cube images within a mipmap level,
     * so have to store them as a lookup table:
+    * NOTE level_offset is a byte offset, but the image_offsets are _pixel_ offsets!!!
     */
    GLuint *image_offset;
 };

@@ -358,7 +358,7 @@ intel_miptree_image_data(struct intel_context *intel,
 	 height /= 4;
       intel_region_data(intel,
 			dst->region,
-			dst_offset + dst_depth_offset[i], /* dst_offset */
+			dst_offset + dst_depth_offset[i] * dst->cpp, /* dst_offset */
 			0, 0,                             /* dstx, dsty */
 			src,
 			src_row_pitch,
@@ -395,10 +395,10 @@ intel_miptree_image_copy(struct intel_context *intel,
 
    for (i = 0; i < depth; i++) {
       intel_region_copy(intel,
-                        dst->region, dst_offset + dst_depth_offset[i],
+                        dst->region, dst_offset + dst_depth_offset[i] * dst->cpp,
                         0,
                         0,
-                        src->region, src_offset + src_depth_offset[i],
+                        src->region, src_offset + src_depth_offset[i] * src->cpp,
                         0, 0, width, height);
    }
 
