@@ -788,7 +788,7 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 			fp->buffer = ws->buffer_create(ws, 0x100, 0, 0);
 		ws->buffer_data(ws, fp->buffer, fp->insn_len * 4, NULL, 0);
 
-		map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_FLAG_READ);
+		map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_FLAG_WRITE);
 
 #if 0
 		for (i = 0; i < fp->insn_len; i++) {
