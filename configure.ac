@@ -523,20 +523,20 @@ dnl
 dnl OSMesa configuration
 dnl
 if test "$mesa_driver" = xlib; then
-    default_xlib_osmesa=yes
+    default_gl_osmesa=yes
 else
-    default_xlib_osmesa=no
+    default_gl_osmesa=no
 fi
-AC_ARG_ENABLE(xlib-osmesa,
-    [AS_HELP_STRING([--disable-xlib-osmesa],
-        [enable OSMesa on Xlib libGL @<:@default=enabled for xlib driver@:>@])],
-        xlib_osmesa="$enableval",
-        xlib_osmesa="$default_xlib_osmesa")
-if test "x$xlib_osmesa" = xyes; then
-    if test "$mesa_driver" = xlib; then
-        DRIVER_DIRS="$DRIVER_DIRS osmesa"
+AC_ARG_ENABLE(gl-osmesa,
+    [AS_HELP_STRING([--enable-gl-osmesa],
+        [enable OSMesa on libGL @<:@default=enabled for xlib driver@:>@])],
+        gl_osmesa="$enableval",
+        gl_osmesa="$default_gl_osmesa")
+if test "x$gl_osmesa" = xyes; then
+    if test "$mesa_driver" = osmesa; then
+        AC_MSG_ERROR([libGL is not available for OSMesa driver])
     else
-        AC_MSG_ERROR([Can only enable OSMesa on libGL for Xlib])
+        DRIVER_DIRS="$DRIVER_DIRS osmesa"
     fi
 fi
 
@@ -822,21 +822,17 @@ echo "        libdir:          $libdir"
 dnl Driver info
 echo ""
 echo "        Driver:          $mesa_driver"
-case "$mesa_driver" in
-xlib|osmesa)
-    if echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1; then
-        echo "        OSMesa:          lib$OSMESA_LIB"
-    else
-        echo "        OSMesa:          no"
-    fi
-    ;;
-dri)
+if echo "$DRIVER_DIRS" | grep 'osmesa' >/dev/null 2>&1; then
+    echo "        OSMesa:          lib$OSMESA_LIB"
+else
+    echo "        OSMesa:          no"
+fi
+if test "$mesa_driver" = dri; then
     # cleanup the drivers var
     dri_dirs=`echo $DRI_DIRS | $SED 's/^ *//;s/  */ /;s/ *$//'`
     echo "        DRI drivers:     $dri_dirs"
     echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
-    ;;
-esac
+fi
 
 dnl Libraries
 echo ""

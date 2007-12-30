@@ -25,19 +25,17 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 # Figure out what to make here
 default:
-	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
-		$(MAKE) linux-solo ; \
-	elif [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		$(MAKE) osmesa-only ; \
-	elif [ "$(DRIVER_DIRS)" = "beos" ]; then \
-		$(MAKE) beos ; \
-	elif [ "$(DRIVER_DIRS)" = "directfb" ]; then \
-		$(MAKE) directfb ; \
-	elif [ "$(DRIVER_DIRS)" = "fbdev osmesa" ]; then \
-		$(MAKE) fbdev ; $(MAKE) osmesa-only ; \
-	else \
-		$(MAKE) stand-alone ; \
-	fi
+	@for driver in $(DRIVER_DIRS) ; do \
+	  case "$$driver" in \
+	    x11)      $(MAKE) stand-alone ;; \
+	    dri)      $(MAKE) linux-solo ;; \
+	    osmesa)   $(MAKE) osmesa-only ;; \
+	    beos)     $(MAKE) beos ;; \
+	    directfb) $(MAKE) directfb ;; \
+	    fbdev)    $(MAKE) fbdev ;; \
+	    *) echo "$$driver is invalid in DRIVER_DIRS" >&2; exit 1;; \
+	  esac ; \
+	done
 
 
 ######################################################################
@@ -105,7 +103,7 @@ OSMESA16_OBJECTS = \
 	$(OSMESA_DRIVER_OBJECTS)
 
 
-stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
+stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
@@ -174,9 +172,11 @@ install: default gl.pc
 	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
 		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
 	fi
-	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
-		cd drivers/dri ; $(MAKE) install ; \
-	fi
+	@for target in $(DRIVER_DIRS); do \
+	  case "$$target" in \
+	    dri) cd drivers/dri ; $(MAKE) install ;; \
+	  esac; \
+	done
 
 ## NOT INSTALLED YET:
 ## $(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES

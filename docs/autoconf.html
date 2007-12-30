@@ -116,6 +116,12 @@ be used. In this case, the <code>--with-x</code>,
 <code>--x-includes</code> and <code>--x-libraries</code> options can
 control the use of X for Mesa.
 </li>
+<li><code>--enable-gl-osmesa</code> - The <a href="osmesa.html">OSMesa
+library</a> can be built on top of libGL for drivers that provide it.
+This option controls whether to build libOSMesa. By default, this is
+enabled for the Xlib driver and disabled otherwise. Note that this
+option is different than using OSMesa as the driver.
+</li>
 <li><code>--enable-debug</code> - This option will enable compiler
 options and macros to aid in debugging the Mesa libraries.
 </li>
@@ -155,16 +161,6 @@ to the option <code>--with-driver=xlib</code>. The libX11 and libXext
 libraries, as well as the X11 development headers, will be need to
 support the Xlib driver.
 </li>
-
-<!-- Xlib specific options -->
-<p>
-<ul>
-<li><code>--disable-xlib-osmesa</code> - By default, the OSMesa library
-will be built and linked to the Xlib enabled libGL. This option disables
-building of libOSMesa.
-</li>
-</ul>
-</p>
 
 <a name="dri">
 <li><b><em>DRI</em></b> - This mode uses the DRI hardware drivers for
