@@ -324,6 +324,14 @@ read_buffer_enum_to_index(GLenum buffer)
          return BUFFER_COLOR2;
       case GL_COLOR_ATTACHMENT3_EXT:
          return BUFFER_COLOR3;
+      case GL_COLOR_ATTACHMENT4_EXT:
+         return BUFFER_COLOR4;
+      case GL_COLOR_ATTACHMENT5_EXT:
+         return BUFFER_COLOR5;
+      case GL_COLOR_ATTACHMENT6_EXT:
+         return BUFFER_COLOR6;
+      case GL_COLOR_ATTACHMENT7_EXT:
+         return BUFFER_COLOR7;
       default:
          /* error */
          return -1;
