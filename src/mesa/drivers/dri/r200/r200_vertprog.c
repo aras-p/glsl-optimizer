@@ -408,6 +408,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    int fog_temp_i = 0;
    int free_inputs;
    int array_count = 0;
+   int u_temp_used;
 
    vp->native = GL_FALSE;
    vp->translated = GL_TRUE;
@@ -1051,14 +1052,15 @@ else {
          dofogfix = 0;
       }
 
+      u_temp_used = (R200_VSF_MAX_TEMPS - 1) - u_temp_i;
       if (mesa_vp->Base.NumNativeTemporaries <
-	 (mesa_vp->Base.NumTemporaries + (R200_VSF_MAX_TEMPS - 1 - u_temp_i))) {
+	 (mesa_vp->Base.NumTemporaries + u_temp_used)) {
 	 mesa_vp->Base.NumNativeTemporaries =
-	    mesa_vp->Base.NumTemporaries + (R200_VSF_MAX_TEMPS - 1 - u_temp_i);
+	    mesa_vp->Base.NumTemporaries + u_temp_used;
       }
-      if (u_temp_i < mesa_vp->Base.NumTemporaries) {
+      if ((mesa_vp->Base.NumTemporaries + u_temp_used) > R200_VSF_MAX_TEMPS) {
 	 if (R200_DEBUG & DEBUG_FALLBACKS) {
-	    fprintf(stderr, "Ran out of temps, num temps %d, us %d\n", mesa_vp->Base.NumTemporaries, u_temp_i);
+	    fprintf(stderr, "Ran out of temps, num temps %d, us %d\n", mesa_vp->Base.NumTemporaries, u_temp_used);
 	 }
 	 return GL_FALSE;
       }

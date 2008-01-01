@@ -101,8 +101,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define FREE_TEMPS() \
 	do { \
-		if(u_temp_i < vp->num_temporaries) { \
-			WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_i); \
+		int u_temp_used = (VSF_MAX_FRAGMENT_TEMPS - 1) - u_temp_i; \
+		if((vp->num_temporaries + u_temp_used) > VSF_MAX_FRAGMENT_TEMPS) { \
+			WARN_ONCE("Ran out of temps, num temps %d, us %d\n", vp->num_temporaries, u_temp_used); \
 			vp->native = GL_FALSE; \
 		} \
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
