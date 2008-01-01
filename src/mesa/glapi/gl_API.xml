@@ -3380,7 +3380,9 @@
         <size name="GetTexParameterfv" mode="get"/>
         <size name="GetTexParameteriv" mode="get"/>
     </enum>
-    <enum name="MAX_3D_TEXTURE_SIZE"                      value="0x8073"/>
+    <enum name="MAX_3D_TEXTURE_SIZE"           count="1"  value="0x8073">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="UNSIGNED_BYTE_2_3_3_REV"                  value="0x8362"/>
     <enum name="UNSIGNED_SHORT_5_6_5"                     value="0x8363"/>
     <enum name="UNSIGNED_SHORT_5_6_5_REV"                 value="0x8364"/>
