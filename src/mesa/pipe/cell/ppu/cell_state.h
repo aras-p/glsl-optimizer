@@ -104,4 +104,6 @@ void cell_set_viewport_state( struct pipe_context *,
                               const struct pipe_viewport_state * );
 
 
+void cell_update_derived( struct cell_context *softpipe );
+
 #endif

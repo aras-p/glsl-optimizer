@@ -31,7 +31,23 @@
 
 
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/draw/draw_vertex.h"
 #include "cell_winsys.h"
+
+
+struct cell_vertex_shader_state
+{
+   struct pipe_shader_state shader;
+   void *draw_data;
+};
+
+
+struct cell_fragment_shader_state
+{
+   struct pipe_shader_state shader;
+   void *data;
+};
 
 
 struct cell_context
@@ -44,6 +60,8 @@ struct cell_context
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_alpha_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
+   const struct cell_vertex_shader_state *vs;
+   const struct cell_fragment_shader_state *fs;
 
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
@@ -55,12 +73,19 @@ struct cell_context
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+
+
    uint dirty;
 
    /** The primitive drawing context */
    struct draw_context *draw;
-   struct draw_stage *setup;
+   struct draw_stage *render_stage;
    struct draw_stage *vbuf;
+
+   struct vertex_info vertex_info;
+
+   /** Mapped constant buffers */
+   void *mapped_constants[PIPE_SHADER_TYPES];
 
 
    uint num_spus;
