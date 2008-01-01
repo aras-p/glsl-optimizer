@@ -42,6 +42,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 #include "pipe/p_util.h"
 #include "main.h"
 #include "tri.h"
@@ -235,8 +236,16 @@ pack_color(const float color[4])
    uint g = (uint) (color[1] * 255.0);
    uint b = (uint) (color[2] * 255.0);
    uint a = (uint) (color[3] * 255.0);
-   uint icolor = (b << 24) | (g << 16) | (r << 8) | a;
-   return icolor;
+   const enum pipe_format format = PIPE_FORMAT_A8R8G8B8_UNORM; /* XXX temp */
+   switch (format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      return (a << 24) | (r << 16) | (g << 8) | b;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return (b << 24) | (g << 16) | (r << 8) | a;
+   default:
+      assert(0);
+      return 0;
+   }
 }
 
 
