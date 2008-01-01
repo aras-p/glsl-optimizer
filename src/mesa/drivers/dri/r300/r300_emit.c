@@ -394,20 +394,20 @@ int r300EmitArrays(GLcontext * ctx)
 				inputs[i] = -1;
 			}
 		}
+
 		/* Fixed, apply to vir0 only */
-		if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
-			inputs = vir_inputs;
-			if (InputsRead & VERT_ATTRIB_POS)
-				inputs[VERT_ATTRIB_POS] = 0;
-			if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-				inputs[VERT_ATTRIB_COLOR0] = 2;
-			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
-				inputs[VERT_ATTRIB_COLOR1] = 3;
-			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
-				if (InputsRead & (1 << i))
-					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
-		}
+		memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
+		inputs = vir_inputs;
+		if (InputsRead & VERT_ATTRIB_POS)
+			inputs[VERT_ATTRIB_POS] = 0;
+		if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
+			inputs[VERT_ATTRIB_COLOR0] = 2;
+		if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
+			inputs[VERT_ATTRIB_COLOR1] = 3;
+		for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
+			if (InputsRead & (1 << i))
+				inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
+
 		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 	}
 
