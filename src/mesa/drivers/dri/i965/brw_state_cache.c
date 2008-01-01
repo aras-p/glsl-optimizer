@@ -69,7 +69,8 @@
 #include "brw_sf.h"
 #include "brw_gs.h"
 
-static GLuint hash_key( const void *key, GLuint key_size )
+static GLuint hash_key( const void *key, GLuint key_size,
+			dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
 {
    GLuint *ikey = (GLuint *)key;
    GLuint hash = 0, i;
@@ -78,6 +79,12 @@ static GLuint hash_key( const void *key, GLuint key_size )
 
    /* I'm sure this can be improved on:
     */
+   for (i = 0; i < key_size/4; i++)
+      hash ^= ikey[i];
+
+   /* Include the BO pointers as key data as well */
+   ikey = (void *)reloc_bufs;
+   key_size = nr_reloc_bufs * sizeof(dri_bo *);
    for (i = 0; i < key_size/4; i++)
       hash ^= ikey[i];
 
@@ -151,7 +158,7 @@ dri_bo *brw_search_cache( struct brw_cache *cache,
 			  void *aux_return )
 {
    struct brw_cache_item *item;
-   GLuint hash = hash_key(key, key_size);
+   GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
 
    item = search_cache(cache, cache_id, hash, key, key_size,
 		       reloc_bufs, nr_reloc_bufs);
@@ -181,7 +188,7 @@ brw_upload_cache( struct brw_cache *cache,
 		  void *aux_return )
 {
    struct brw_cache_item *item = CALLOC_STRUCT(brw_cache_item);
-   GLuint hash = hash_key(key, key_size);
+   GLuint hash = hash_key(key, key_size, reloc_bufs, nr_reloc_bufs);
    GLuint relocs_size = nr_reloc_bufs * sizeof(dri_bo *);
    GLuint aux_size = cache->aux_size[cache_id];
    void *tmp;
@@ -256,7 +263,7 @@ brw_cache_data_sz(struct brw_cache *cache,
 {
    dri_bo *bo;
    struct brw_cache_item *item;
-   GLuint hash = hash_key(data, data_size);
+   GLuint hash = hash_key(data, data_size, reloc_bufs, nr_reloc_bufs);
 
    item = search_cache(cache, cache_id, hash, data, data_size,
 		       reloc_bufs, nr_reloc_bufs);
