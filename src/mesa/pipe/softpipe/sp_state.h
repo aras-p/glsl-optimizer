@@ -60,9 +60,7 @@ struct gallivm_prog;
 
 
 
-/**
- * Softpipe fs state is derived from pipe_shader_state.
- */
+/** Subclass of pipe_shader_state */
 struct sp_fragment_shader_state {
    struct pipe_shader_state   shader;
 #if defined(__i386__) || defined(__386__)
@@ -72,6 +70,14 @@ struct sp_fragment_shader_state {
    struct gallivm_prog *llvm_prog;
 #endif
 };
+
+
+/** Subclass of pipe_shader_state */
+struct sp_vertex_shader_state {
+   struct pipe_shader_state shader;
+   void  *draw_data;
+};
+
 
 
 void *

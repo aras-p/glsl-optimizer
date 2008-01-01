@@ -43,12 +43,9 @@ struct softpipe_winsys;
 struct draw_context;
 struct draw_stage;
 struct softpipe_tile_cache;
+struct sp_fragment_shader_state;
+struct sp_vertex_shader_state;
 
-
-struct sp_vertex_shader_state {
-   struct pipe_shader_state *state;
-   void  *draw_data;
-};
 
 struct softpipe_context {
    struct pipe_context pipe;  /**< base class */

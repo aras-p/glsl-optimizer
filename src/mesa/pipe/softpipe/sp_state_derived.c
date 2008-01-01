@@ -40,7 +40,7 @@
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
-   const struct pipe_shader_state *vs = softpipe->vs->state;
+   const struct pipe_shader_state *vs = &softpipe->vs->shader;
    const struct pipe_shader_state *fs = &softpipe->fs->shader;
    const enum interp_mode colorInterp
       = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;

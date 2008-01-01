@@ -42,18 +42,20 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
                                 const struct pipe_shader_state *templ)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct sp_fragment_shader_state *state;
 
    /* Decide whether we'll be codegenerating this shader and if so do
     * that now.
     */
 
-   struct sp_fragment_shader_state *state = MALLOC( sizeof(struct sp_fragment_shader_state) );
+   state = CALLOC_STRUCT(sp_fragment_shader_state);
+   if (!state)
+      return NULL;
+
    state->shader = *templ;
 
-   if( softpipe->dump_fs ) {
-      tgsi_dump(
-         state->shader.tokens,
-         0 );
+   if (softpipe->dump_fs) {
+      tgsi_dump(state->shader.tokens, 0);
    }
 
 #if defined(__i386__) || defined(__386__)
@@ -75,6 +77,7 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
    return state;
 }
 
+
 void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
@@ -83,6 +86,7 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 
    softpipe->dirty |= SP_NEW_FS;
 }
+
 
 void softpipe_delete_fs_state(struct pipe_context *pipe,
                               void *shader)
@@ -103,28 +107,23 @@ void * softpipe_create_vs_state(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_vertex_shader_state *state;
 
-   state = MALLOC( sizeof(struct sp_vertex_shader_state) );
+   state = CALLOC_STRUCT(sp_vertex_shader_state);
    if (state == NULL ) {
       return NULL;
    }
 
-   state->state = MALLOC( sizeof(struct pipe_shader_state) );
-   if (state->state == NULL) {
-      FREE( state );
-      return NULL;
-   }
-   memcpy( state->state, templ, sizeof(struct pipe_shader_state) );
+   state->shader = *templ;
 
    state->draw_data = draw_create_vertex_shader(softpipe->draw,
-                                                state->state);
+                                                &state->shader);
    if (state->draw_data == NULL) {
-      FREE( state->state );
       FREE( state );
       return NULL;
    }
 
    return state;
 }
+
 
 void softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
@@ -137,8 +136,8 @@ void softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
    softpipe->dirty |= SP_NEW_VS;
 }
 
-void softpipe_delete_vs_state(struct pipe_context *pipe,
-                              void *vs)
+
+void softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -146,10 +145,8 @@ void softpipe_delete_vs_state(struct pipe_context *pipe,
       (struct sp_vertex_shader_state *)vs;
 
    draw_delete_vertex_shader(softpipe->draw, state->draw_data);
-   FREE( state->state );
    FREE( state );
 }
-
 
 
 void softpipe_set_constant_buffer(struct pipe_context *pipe,
@@ -170,5 +167,3 @@ void softpipe_set_constant_buffer(struct pipe_context *pipe,
 
    softpipe->dirty |= SP_NEW_CONSTANTS;
 }
-
-
