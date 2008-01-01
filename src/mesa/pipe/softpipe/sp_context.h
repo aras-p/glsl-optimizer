@@ -45,22 +45,6 @@ struct draw_stage;
 struct softpipe_tile_cache;
 
 
-#define SP_NEW_VIEWPORT      0x1
-#define SP_NEW_RASTERIZER    0x2
-#define SP_NEW_FS            0x4
-#define SP_NEW_BLEND         0x8
-#define SP_NEW_CLIP          0x10
-#define SP_NEW_SCISSOR       0x20
-#define SP_NEW_STIPPLE       0x40
-#define SP_NEW_FRAMEBUFFER   0x80
-#define SP_NEW_DEPTH_STENCIL_ALPHA 0x100
-#define SP_NEW_CONSTANTS     0x200
-#define SP_NEW_SAMPLER       0x400
-#define SP_NEW_TEXTURE       0x800
-#define SP_NEW_VERTEX        0x1000
-#define SP_NEW_VS            0x2000
-#define SP_NEW_QUERY         0x4000
-
 struct sp_vertex_shader_state {
    struct pipe_shader_state *state;
    void  *draw_data;
