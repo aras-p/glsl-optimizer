@@ -59,12 +59,18 @@
     <enum name="FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT"   value="0x8CDC"/>
     <enum name="FRAMEBUFFER_UNSUPPORTED_EXT"              value="0x8CDD"/>
     <enum name="FRAMEBUFFER_STATUS_ERROR_EXT"             value="0x8CDE"/>
-
-    <enum name="FRAMEBUFFER_BINDING_EXT"                  value="0x8CA6"/>
-    <enum name="RENDERBUFFER_BINDING_EXT"                 value="0x8CA7"/>
-    <enum name="MAX_COLOR_ATTACHMENTS_EXT"                value="0x8CDF"/>
-    <enum name="MAX_RENDERBUFFER_SIZE_EXT"                value="0x84E8"/>
-
+    <enum name="FRAMEBUFFER_BINDING_EXT"        count="1" value="0x8CA6">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="RENDERBUFFER_BINDING_EXT"       count="1" value="0x8CA7">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_COLOR_ATTACHMENTS_EXT"      count="1" value="0x8CDF">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="MAX_RENDERBUFFER_SIZE_EXT"      count="1" value="0x84E8">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="INVALID_FRAMEBUFFER_OPERATION_EXT"        value="0x0506"/>
 
     <function name="IsRenderbufferEXT" offset="assign">
