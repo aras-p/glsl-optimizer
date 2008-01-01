@@ -548,8 +548,9 @@ cleanup:
       (*ctx->Driver.DeleteTexture)(ctx, ss->Default1DArray);
    if (ss->Default2DArray)
       (*ctx->Driver.DeleteTexture)(ctx, ss->Default2DArray);
-   if (ss)
-      _mesa_free(ss);
+
+   _mesa_free(ss);
+
    return GL_FALSE;
 }
 
