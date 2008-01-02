@@ -36,62 +36,99 @@
 #include "brw_defines.h"
 #include "macros.h"
 
-static void upload_vs_unit( struct brw_context *brw )
-{
-   struct brw_vs_unit_state vs;
+struct brw_vs_unit_key {
+   unsigned int total_grf;
+   unsigned int urb_entry_read_length;
+   unsigned int curb_entry_read_length;
 
-   memset(&vs, 0, sizeof(vs));
+   unsigned int curbe_offset;
+
+   unsigned int nr_urb_entries, urb_size;
+};
+
+static void
+vs_unit_populate_key(struct brw_context *brw, struct brw_vs_unit_key *key)
+{
+   memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_VS_PROG */
-   vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
-   vs.thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
-   vs.thread3.urb_entry_read_length = brw->vs.prog_data->urb_read_length;
-   vs.thread3.const_urb_entry_read_length = brw->vs.prog_data->curb_read_length;
-   vs.thread3.dispatch_grf_start_reg = 1;
+   key->total_grf = brw->vs.prog_data->total_grf;
+   key->urb_entry_read_length = brw->vs.prog_data->urb_read_length;
+   key->curb_entry_read_length = brw->vs.prog_data->curb_read_length;
 
-
-   /* BRW_NEW_URB_FENCE  */
-   vs.thread4.nr_urb_entries = brw->urb.nr_vs_entries; 
-   vs.thread4.urb_entry_allocation_size = brw->urb.vsize - 1;
-   vs.thread4.max_threads = MIN2(
-      MAX2(0, (brw->urb.nr_vs_entries - 6) / 2 - 1), 
-      15);
-
-
-
-   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
-      vs.thread4.max_threads = 0; 
+   /* BRW_NEW_URB_FENCE */
+   key->nr_urb_entries = brw->urb.nr_vs_entries;
+   key->urb_size = brw->urb.vsize;
 
    /* BRW_NEW_CURBE_OFFSETS, _NEW_TRANSFORM */
    if (brw->attribs.Transform->ClipPlanesEnabled) {
       /* Note that we read in the userclip planes as well, hence
        * clip_start:
        */
-      vs.thread3.const_urb_entry_read_offset = brw->curbe.clip_start * 2;
+      key->curbe_offset = brw->curbe.clip_start;
    }
    else {
-      vs.thread3.const_urb_entry_read_offset = brw->curbe.vs_start * 2;
+      key->curbe_offset = brw->curbe.vs_start;
    }
+}
 
+static dri_bo *
+vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
+{
+   struct brw_vs_unit_state vs;
+
+   memset(&vs, 0, sizeof(vs));
+
+   vs.thread0.kernel_start_pointer = brw->vs.prog_bo->offset >> 6; /* reloc */
+   vs.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
    vs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+   vs.thread3.urb_entry_read_length = key->urb_entry_read_length;
+   vs.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
+   vs.thread3.dispatch_grf_start_reg = 1;
    vs.thread3.urb_entry_read_offset = 0;
+   vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
+
+   vs.thread4.nr_urb_entries = key->nr_urb_entries;
+   vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
+   vs.thread4.max_threads = MIN2(MAX2(0, (key->nr_urb_entries - 6) / 2 - 1),
+				 15);
+
+   if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
+      vs.thread4.max_threads = 0;
 
    /* No samplers for ARB_vp programs:
     */
    vs.vs5.sampler_count = 0;
 
    if (INTEL_DEBUG & DEBUG_STATS)
-      vs.thread4.stats_enable = 1; 
+      vs.thread4.stats_enable = 1;
 
-   /* Vertex program always enabled: 
+   /* Vertex program always enabled:
     */
    vs.vs6.vs_enable = 1;
 
    brw->vs.thread0_delta = vs.thread0.grf_reg_count << 1;
+   return brw_upload_cache(&brw->cache, BRW_VS_UNIT,
+			   key, sizeof(*key),
+			   &brw->vs.prog_bo, 1,
+			   &vs, sizeof(vs),
+			   NULL, NULL);
+}
+
+static void upload_vs_unit( struct brw_context *brw )
+{
+   struct brw_vs_unit_key key;
+
+   vs_unit_populate_key(brw, &key);
 
    dri_bo_unreference(brw->vs.state_bo);
-   brw->vs.state_bo = brw_cache_data( &brw->cache, BRW_VS_UNIT , &vs,
-				      &brw->vs.prog_bo, 1 );
+   brw->vs.state_bo = brw_search_cache(&brw->cache, BRW_VS_UNIT,
+				       &key, sizeof(key),
+				       &brw->vs.prog_bo, 1,
+				       NULL);
+   if (brw->vs.state_bo == NULL) {
+      brw->vs.state_bo = vs_unit_create_from_key(brw, &key);
+   }
 }
 
 static void emit_reloc_vs_unit(struct brw_context *brw)
