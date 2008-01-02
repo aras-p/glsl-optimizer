@@ -34,8 +34,7 @@ struct nv40_context {
 
 	/* query objects */
 	struct nouveau_notifier *query;
-	boolean *query_objects;
-	uint num_query_objects;
+	struct nouveau_resource *query_heap;
 
 	uint32_t dirty;
 

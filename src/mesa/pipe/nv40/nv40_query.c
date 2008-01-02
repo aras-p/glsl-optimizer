@@ -3,94 +3,97 @@
 #include "nv40_context.h"
 #include "nv40_dma.h"
 
-/*XXX: Maybe go notifier per-query one day?  not sure if PRAMIN space is
- *     plentiful enough however.. */
 struct nv40_query {
+	struct nouveau_resource *object;
 	unsigned type;
-	int id;
+	boolean ready;
+	uint64_t result;
 };
 #define nv40_query(o) ((struct nv40_query *)(o))
 
 static struct pipe_query *
 nv40_query_create(struct pipe_context *pipe, unsigned query_type)
 {
-	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_query *nv40query;
-	int id;
+	struct nv40_query *q;
 
-	for (id = 0; id < nv40->num_query_objects; id++) {
-		if (nv40->query_objects[id] == 0)
-			break;
-	}
-	
-	if (id == nv40->num_query_objects)
-		return NULL;
-	nv40->query_objects[id] = TRUE;
+	q = calloc(1, sizeof(struct nv40_query));
+	q->type = query_type;
 
-	nv40query = malloc(sizeof(struct nv40_query));
-	nv40query->type = query_type;
-	nv40query->id = id;
-
-	return (struct pipe_query *)nv40query;
+	return (struct pipe_query *)q;
 }
 
 static void
-nv40_query_destroy(struct pipe_context *pipe, struct pipe_query *q)
+nv40_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_query *nv40query = nv40_query(q);
+	struct nv40_query *q = nv40_query(pq);
 
-	assert(nv40->query_objects[nv40query->id]);
-	nv40->query_objects[nv40query->id] = FALSE;
-	free(nv40query);
+	if (q->object)
+		nv40->nvws->res_free(&q->object);
+	free(q);
 }
 
 static void
-nv40_query_begin(struct pipe_context *pipe, struct pipe_query *q)
+nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_query *nv40query = nv40_query(q);
+	struct nv40_query *q = nv40_query(pq);
 
-	assert(nv40query->type == PIPE_QUERY_OCCLUSION_COUNTER);
+	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
-	nv40->nvws->notifier_reset(nv40->query, nv40query->id);
+	if (nv40->nvws->res_alloc(nv40->query_heap, 1, NULL, &q->object))
+		assert(0);
+	nv40->nvws->notifier_reset(nv40->query, q->object->start);
 
 	BEGIN_RING(curie, NV40TCL_QUERY_RESET, 1);
 	OUT_RING  (1);
 	BEGIN_RING(curie, NV40TCL_QUERY_UNK17CC, 1);
 	OUT_RING  (1);
+
+	q->ready = FALSE;
 }
 
 static void
-nv40_query_end(struct pipe_context *pipe, struct pipe_query *q)
+nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct nv40_query *nv40query = nv40_query(q);
+	struct nv40_query *q = nv40_query(pq);
 
 	BEGIN_RING(curie, NV40TCL_QUERY_GET, 1);
 	OUT_RING  ((0x01 << NV40TCL_QUERY_GET_UNK24_SHIFT) |
-		   ((nv40query->id * 32) << NV40TCL_QUERY_GET_OFFSET_SHIFT));
+		   ((q->object->start * 32) << NV40TCL_QUERY_GET_OFFSET_SHIFT));
 	FIRE_RING();
 }
 
 static boolean
-nv40_query_result(struct pipe_context *pipe, struct pipe_query *q,
+nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 		  boolean wait, uint64_t *result)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
-	struct nv40_query *nv40query = nv40_query(q);
+	struct nv40_query *q = nv40_query(pq);
 	struct nouveau_winsys *nvws = nv40->nvws;
-	boolean status;
 
-	status = nvws->notifier_status(nv40->query, nv40query->id);
-	if (status != NV_NOTIFY_STATE_STATUS_COMPLETED) {
-		if (wait == FALSE)
-			return FALSE;
-		nvws->notifier_wait(nv40->query, nv40query->id,
-				    NV_NOTIFY_STATE_STATUS_COMPLETED, 0);
+	assert(q->object && q->type == PIPE_QUERY_OCCLUSION_COUNTER);
+
+	if (!q->ready) {
+		unsigned status;
+
+		status = nvws->notifier_status(nv40->query, q->object->start);
+		if (status != NV_NOTIFY_STATE_STATUS_COMPLETED) {
+			if (wait == FALSE)
+				return FALSE;
+			nvws->notifier_wait(nv40->query, q->object->start,
+					    NV_NOTIFY_STATE_STATUS_COMPLETED,
+					    0);
+		}
+
+		q->result = nvws->notifier_retval(nv40->query,
+						  q->object->start);
+		q->ready = TRUE;
+		nvws->res_free(&q->object);
 	}
 
-	*result = nvws->notifier_retval(nv40->query, nv40query->id);
+	*result = q->result;
 	return TRUE;
 }
 

@@ -6,46 +6,6 @@
 #include "nv40_context.h"
 #include "nv40_dma.h"
 
-static boolean
-nv40_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
-			 uint type)
-{
-	switch (type) {
-	case PIPE_SURFACE:
-		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
-		case PIPE_FORMAT_Z24S8_UNORM:
-		case PIPE_FORMAT_Z16_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-		break;
-	case PIPE_TEXTURE:
-		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_A1R5G5B5_UNORM:
-		case PIPE_FORMAT_A4R4G4B4_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
-		case PIPE_FORMAT_U_L8:
-		case PIPE_FORMAT_U_A8:
-		case PIPE_FORMAT_U_I8:
-		case PIPE_FORMAT_U_A8_L8:
-		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-		break;
-	default:
-		assert(0);
-	};
-
-	return FALSE;
-}
-
 static const char *
 nv40_get_name(struct pipe_context *pipe)
 {
@@ -149,8 +109,21 @@ static void
 nv40_destroy(struct pipe_context *pipe)
 {
 	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nouveau_winsys *nvws = nv40->nvws;
 
-	draw_destroy(nv40->draw);
+	if (nv40->draw)
+		draw_destroy(nv40->draw);
+
+	nvws->res_free(&nv40->vertprog.exec_heap);
+	nvws->res_free(&nv40->vertprog.data_heap);
+
+	nvws->res_free(&nv40->query_heap);
+	nvws->notifier_free(&nv40->query);
+
+	nvws->notifier_free(&nv40->sync);
+
+	nvws->grobj_free(&nv40->curie);
+
 	free(nv40);
 }
 
@@ -160,14 +133,8 @@ nv40_init_hwctx(struct nv40_context *nv40, int curie_class)
 	struct nouveau_winsys *nvws = nv40->nvws;
 	int ret;
 
-	if ((ret = nvws->notifier_alloc(nvws, nv40->num_query_objects,
-					&nv40->query))) {
-		NOUVEAU_ERR("Error creating query notifier objects: %d\n", ret);
-		return FALSE;
-	}
-
-	if ((ret = nvws->grobj_alloc(nvws, curie_class,
-				     &nv40->curie))) {
+	ret = nvws->grobj_alloc(nvws, curie_class, &nv40->curie);
+	if (ret) {
 		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
 		return FALSE;
 	}
@@ -237,12 +204,12 @@ nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 	}
 
 	if (GRCLASS4097_CHIPSETS & (1 << (chipset & 0x0f))) {
-		curie_class = 0x4097;
+		curie_class = NV40TCL;
 	} else
 	if (GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f))) {
-		curie_class = 0x4497;
+		curie_class = NV44TCL;
 	} else {
-		NOUVEAU_ERR("Unknown NV4X chipset: NV%02x\n", chipset);
+		NOUVEAU_ERR("Unknown NV4x chipset: NV%02x\n", chipset);
 		return NULL;
 	}
 
@@ -252,37 +219,46 @@ nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 	nv40->chipset = chipset;
 	nv40->nvws = nvws;
 
-	if ((ret = nvws->notifier_alloc(nvws, 1, &nv40->sync))) {
+	/* Notifier for sync purposes */
+	ret = nvws->notifier_alloc(nvws, 1, &nv40->sync);
+	if (ret) {
 		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		free(nv40);
+		nv40_destroy(&nv40->pipe);
 		return NULL;
 	}
 
-	nv40->num_query_objects = 32;
-	nv40->query_objects = calloc(nv40->num_query_objects,
-				     sizeof(struct pipe_query_object *));
-	if (!nv40->query_objects) {
-		free(nv40);
+	/* Query objects */
+	ret = nvws->notifier_alloc(nvws, 32, &nv40->query);
+	if (ret) {
+		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
+		nv40_destroy(&nv40->pipe);
 		return NULL;
 	}
 
+	ret = nvws->res_init(&nv40->query_heap, 0, 32);
+	if (ret) {
+		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
+		nv40_destroy(&nv40->pipe);
+		return NULL;
+	}
+
+	/* Vtxprog resources */
 	if (nvws->res_init(&nv40->vertprog.exec_heap, 0, 512) ||
 	    nvws->res_init(&nv40->vertprog.data_heap, 0, 256)) {
-		nvws->res_free(&nv40->vertprog.exec_heap);
-		nvws->res_free(&nv40->vertprog.data_heap);
-		free(nv40);
+		nv40_destroy(&nv40->pipe);
 		return NULL;
 	}
 
+	/* Static curie initialisation */
 	if (!nv40_init_hwctx(nv40, curie_class)) {
-		free(nv40);
+		nv40_destroy(&nv40->pipe);
 		return NULL;
 	}
 
+	/* Pipe context setup */
 	nv40->pipe.winsys = pipe_winsys;
 
 	nv40->pipe.destroy = nv40_destroy;
-	nv40->pipe.is_format_supported = nv40_is_format_supported;
 	nv40->pipe.get_name = nv40_get_name;
 	nv40->pipe.get_vendor = nv40_get_vendor;
 	nv40->pipe.get_param = nv40_get_param;
@@ -305,5 +281,4 @@ nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 
 	return &nv40->pipe;
 }
-
-		
+	

@@ -33,9 +33,48 @@
 #include "pipe/p_inlines.h"
 #include "pipe/util/p_tile.h"
 
+static boolean
+nv40_surface_format_supported(struct pipe_context *pipe,
+			      enum pipe_format format, uint type)
+{
+	switch (type) {
+	case PIPE_SURFACE:
+		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z16_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
+		break;
+	case PIPE_TEXTURE:
+		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_A1R5G5B5_UNORM:
+		case PIPE_FORMAT_A4R4G4B4_UNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM: 
+		case PIPE_FORMAT_U_L8:
+		case PIPE_FORMAT_U_A8:
+		case PIPE_FORMAT_U_I8:
+		case PIPE_FORMAT_U_A8_L8:
+		case PIPE_FORMAT_Z16_UNORM:
+		case PIPE_FORMAT_Z24S8_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
+		break;
+	default:
+		assert(0);
+	};
+
+	return FALSE;
+}
+
 static struct pipe_surface *
-nv40_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
+nv40_get_tex_surface(struct pipe_context *pipe, struct pipe_texture *pt,
                      unsigned face, unsigned level, unsigned zslice)
 {
 	struct pipe_winsys *ws = pipe->winsys;
@@ -103,12 +142,13 @@ nv40_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 void
 nv40_init_surface_functions(struct nv40_context *nv40)
 {
-   nv40->pipe.get_tex_surface = nv40_get_tex_surface;
-   nv40->pipe.get_tile = pipe_get_tile_raw;
-   nv40->pipe.put_tile = pipe_put_tile_raw;
-   nv40->pipe.get_tile_rgba = pipe_get_tile_rgba;
-   nv40->pipe.put_tile_rgba = pipe_put_tile_rgba;
-   nv40->pipe.surface_data = nv40_surface_data;
-   nv40->pipe.surface_copy = nv40_surface_copy;
-   nv40->pipe.surface_fill = nv40_surface_fill;
+	nv40->pipe.is_format_supported = nv40_surface_format_supported;
+	nv40->pipe.get_tex_surface = nv40_get_tex_surface;
+	nv40->pipe.get_tile = pipe_get_tile_raw;
+	nv40->pipe.put_tile = pipe_put_tile_raw;
+	nv40->pipe.get_tile_rgba = pipe_get_tile_rgba;
+	nv40->pipe.put_tile_rgba = pipe_put_tile_rgba;
+	nv40->pipe.surface_data = nv40_surface_data;
+	nv40->pipe.surface_copy = nv40_surface_copy;
+	nv40->pipe.surface_fill = nv40_surface_fill;
 }
