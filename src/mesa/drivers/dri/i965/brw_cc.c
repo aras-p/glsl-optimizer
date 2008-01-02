@@ -59,55 +59,145 @@ const struct brw_tracked_state brw_cc_vp = {
    .update = upload_cc_vp
 };
 
+struct brw_cc_unit_key {
+   GLboolean stencil, stencil_two_side, color_blend, alpha_enabled;
 
-static void upload_cc_unit( struct brw_context *brw )
+   GLenum stencil_func[2], stencil_fail_op[2];
+   GLenum stencil_pass_depth_fail_op[2], stencil_pass_depth_pass_op[2];
+   GLubyte stencil_ref[2], stencil_write_mask[2], stencil_test_mask[2];
+   GLenum logic_op;
+
+   GLenum blend_eq_rgb, blend_eq_a;
+   GLenum blend_src_rgb, blend_src_a;
+   GLenum blend_dst_rgb, blend_dst_a;
+
+   GLenum alpha_func;
+   GLubyte alpha_ref;
+
+   GLboolean dither;
+
+   GLboolean depth_test;
+   GLubyte depth_mask;
+   GLenum depth_func;
+};
+
+static void
+cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
+{
+   struct gl_stencil_attrib *stencil = brw->attribs.Stencil;
+
+   memset(key, 0, sizeof(*key));
+
+   key->stencil = stencil->Enabled;
+   key->stencil_two_side = stencil->_TestTwoSide;
+
+   if (key->stencil) {
+      key->stencil_func[0] = stencil->Function[0];
+      key->stencil_fail_op[0] = stencil->FailFunc[0];
+      key->stencil_pass_depth_fail_op[0] = stencil->ZFailFunc[0];
+      key->stencil_pass_depth_pass_op[0] = stencil->ZPassFunc[0];
+      key->stencil_ref[0] = stencil->Ref[0];
+      key->stencil_write_mask[0] = stencil->WriteMask[0];
+      key->stencil_test_mask[0] = stencil->ValueMask[0];
+   }
+   if (key->stencil_two_side) {
+      key->stencil_func[1] = stencil->Function[1];
+      key->stencil_fail_op[1] = stencil->FailFunc[1];
+      key->stencil_pass_depth_fail_op[1] = stencil->ZFailFunc[1];
+      key->stencil_pass_depth_pass_op[1] = stencil->ZPassFunc[1];
+      key->stencil_ref[1] = stencil->Ref[1];
+      key->stencil_write_mask[1] = stencil->WriteMask[1];
+      key->stencil_test_mask[1] = stencil->ValueMask[1];
+   }
+
+   if (brw->attribs.Color->_LogicOpEnabled)
+      key->logic_op = brw->attribs.Color->LogicOp;
+   else
+      key->logic_op = GL_COPY;
+
+   key->color_blend = brw->attribs.Color->BlendEnabled;
+   if (key->color_blend) {
+      key->blend_eq_rgb = brw->attribs.Color->BlendEquationRGB;
+      key->blend_eq_a = brw->attribs.Color->BlendEquationA;
+      key->blend_src_rgb = brw->attribs.Color->BlendSrcRGB;
+      key->blend_dst_rgb = brw->attribs.Color->BlendDstRGB;
+      key->blend_src_a = brw->attribs.Color->BlendSrcA;
+      key->blend_dst_a = brw->attribs.Color->BlendDstA;
+   }
+
+   key->alpha_enabled = brw->attribs.Color->AlphaEnabled;
+   if (key->alpha_enabled) {
+      key->alpha_func = brw->attribs.Color->AlphaFunc;
+      key->alpha_ref = brw->attribs.Color->AlphaRef;
+   }
+
+   key->dither = brw->attribs.Color->DitherFlag;
+
+   key->depth_test = brw->attribs.Depth->Test;
+   if (key->depth_test) {
+      key->depth_func = brw->attribs.Depth->Func;
+      key->depth_mask = brw->attribs.Depth->Mask;
+   }
+}
+
+/**
+ * Creates the state cache entry for the given CC unit key.
+ */
+static dri_bo *
+cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
    struct brw_cc_unit_state cc;
-   
+
    memset(&cc, 0, sizeof(cc));
 
    /* _NEW_STENCIL */
-   if (brw->attribs.Stencil->Enabled) {
-      cc.cc0.stencil_enable = brw->attribs.Stencil->Enabled;
-      cc.cc0.stencil_func = intel_translate_compare_func(brw->attribs.Stencil->Function[0]);
-      cc.cc0.stencil_fail_op = intel_translate_stencil_op(brw->attribs.Stencil->FailFunc[0]);
-      cc.cc0.stencil_pass_depth_fail_op = intel_translate_stencil_op(brw->attribs.Stencil->ZFailFunc[0]);
-      cc.cc0.stencil_pass_depth_pass_op = intel_translate_stencil_op(brw->attribs.Stencil->ZPassFunc[0]);
-      cc.cc1.stencil_ref = brw->attribs.Stencil->Ref[0];
-      cc.cc1.stencil_write_mask = brw->attribs.Stencil->WriteMask[0];
-      cc.cc1.stencil_test_mask = brw->attribs.Stencil->ValueMask[0];
+   if (key->stencil) {
+      cc.cc0.stencil_enable = 1;
+      cc.cc0.stencil_func =
+	 intel_translate_compare_func(key->stencil_func[0]);
+      cc.cc0.stencil_fail_op =
+	 intel_translate_stencil_op(key->stencil_fail_op[0]);
+      cc.cc0.stencil_pass_depth_fail_op =
+	 intel_translate_stencil_op(key->stencil_pass_depth_fail_op[0]);
+      cc.cc0.stencil_pass_depth_pass_op =
+	 intel_translate_stencil_op(key->stencil_pass_depth_pass_op[0]);
+      cc.cc1.stencil_ref = key->stencil_ref[0];
+      cc.cc1.stencil_write_mask = key->stencil_write_mask[0];
+      cc.cc1.stencil_test_mask = key->stencil_test_mask[0];
 
-      if (brw->attribs.Stencil->_TestTwoSide) {
-	 cc.cc0.bf_stencil_enable = brw->attribs.Stencil->_TestTwoSide;
-	 cc.cc0.bf_stencil_func = intel_translate_compare_func(brw->attribs.Stencil->Function[1]);
-	 cc.cc0.bf_stencil_fail_op = intel_translate_stencil_op(brw->attribs.Stencil->FailFunc[1]);
-	 cc.cc0.bf_stencil_pass_depth_fail_op = intel_translate_stencil_op(brw->attribs.Stencil->ZFailFunc[1]);
-	 cc.cc0.bf_stencil_pass_depth_pass_op = intel_translate_stencil_op(brw->attribs.Stencil->ZPassFunc[1]);
-	 cc.cc1.bf_stencil_ref = brw->attribs.Stencil->Ref[1];
-	 cc.cc2.bf_stencil_write_mask = brw->attribs.Stencil->WriteMask[1];
-	 cc.cc2.bf_stencil_test_mask = brw->attribs.Stencil->ValueMask[1];
+      if (key->stencil_two_side) {
+	 cc.cc0.bf_stencil_enable = 1;
+	 cc.cc0.bf_stencil_func =
+	    intel_translate_compare_func(key->stencil_func[1]);
+	 cc.cc0.bf_stencil_fail_op =
+	    intel_translate_stencil_op(key->stencil_fail_op[1]);
+	 cc.cc0.bf_stencil_pass_depth_fail_op =
+	    intel_translate_stencil_op(key->stencil_pass_depth_fail_op[1]);
+	 cc.cc0.bf_stencil_pass_depth_pass_op =
+	    intel_translate_stencil_op(key->stencil_pass_depth_pass_op[1]);
+	 cc.cc1.bf_stencil_ref = key->stencil_ref[1];
+	 cc.cc2.bf_stencil_write_mask = key->stencil_write_mask[1];
+	 cc.cc2.bf_stencil_test_mask = key->stencil_test_mask[1];
       }
 
       /* Not really sure about this:
        */
-      if (brw->attribs.Stencil->WriteMask[0] ||
-	  (brw->attribs.Stencil->_TestTwoSide &&
-	   brw->attribs.Stencil->WriteMask[1]))
+      if (key->stencil_write_mask[0] ||
+	  (key->stencil_two_side && key->stencil_write_mask[1]))
 	 cc.cc0.stencil_write_enable = 1;
    }
 
    /* _NEW_COLOR */
-   if (brw->attribs.Color->_LogicOpEnabled) {
+   if (key->logic_op != GL_COPY) {
       cc.cc2.logicop_enable = 1;
-      cc.cc5.logicop_func = intel_translate_logic_op( brw->attribs.Color->LogicOp );
-   }
-   else if (brw->attribs.Color->BlendEnabled) {
-      GLenum eqRGB = brw->attribs.Color->BlendEquationRGB;
-      GLenum eqA = brw->attribs.Color->BlendEquationA;
-      GLenum srcRGB = brw->attribs.Color->BlendSrcRGB;
-      GLenum dstRGB = brw->attribs.Color->BlendDstRGB;
-      GLenum srcA = brw->attribs.Color->BlendSrcA;
-      GLenum dstA = brw->attribs.Color->BlendDstA;
+      cc.cc5.logicop_func = intel_translate_logic_op(key->logic_op);
+   } else if (key->color_blend) {
+      GLenum eqRGB = key->blend_eq_rgb;
+      GLenum eqA = key->blend_eq_a;
+      GLenum srcRGB = key->blend_src_rgb;
+      GLenum dstRGB = key->blend_dst_rgb;
+      GLenum srcA = key->blend_src_a;
+      GLenum dstA = key->blend_dst_a;
 
       if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
 	 srcRGB = dstRGB = GL_ONE;
@@ -117,51 +207,68 @@ static void upload_cc_unit( struct brw_context *brw )
 	 srcA = dstA = GL_ONE;
       }
 
-      cc.cc6.dest_blend_factor = brw_translate_blend_factor(dstRGB); 
-      cc.cc6.src_blend_factor = brw_translate_blend_factor(srcRGB); 
-      cc.cc6.blend_function = brw_translate_blend_equation( eqRGB );
+      cc.cc6.dest_blend_factor = brw_translate_blend_factor(dstRGB);
+      cc.cc6.src_blend_factor = brw_translate_blend_factor(srcRGB);
+      cc.cc6.blend_function = brw_translate_blend_equation(eqRGB);
 
-      cc.cc5.ia_dest_blend_factor = brw_translate_blend_factor(dstA); 
-      cc.cc5.ia_src_blend_factor = brw_translate_blend_factor(srcA); 
-      cc.cc5.ia_blend_function = brw_translate_blend_equation( eqA );
+      cc.cc5.ia_dest_blend_factor = brw_translate_blend_factor(dstA);
+      cc.cc5.ia_src_blend_factor = brw_translate_blend_factor(srcA);
+      cc.cc5.ia_blend_function = brw_translate_blend_equation(eqA);
 
       cc.cc3.blend_enable = 1;
-      cc.cc3.ia_blend_enable = (srcA != srcRGB || 
-				dstA != dstRGB || 
+      cc.cc3.ia_blend_enable = (srcA != srcRGB ||
+				dstA != dstRGB ||
 				eqA != eqRGB);
    }
 
-   if (brw->attribs.Color->AlphaEnabled) {
+   if (key->alpha_enabled) {
       cc.cc3.alpha_test = 1;
-      cc.cc3.alpha_test_func = intel_translate_compare_func(brw->attribs.Color->AlphaFunc);
-
-      UNCLAMPED_FLOAT_TO_UBYTE(cc.cc7.alpha_ref.ub[0], brw->attribs.Color->AlphaRef);
-
+      cc.cc3.alpha_test_func = intel_translate_compare_func(key->alpha_func);
       cc.cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
+
+      UNCLAMPED_FLOAT_TO_UBYTE(cc.cc7.alpha_ref.ub[0], key->alpha_ref);
    }
 
-   if (brw->attribs.Color->DitherFlag) {
+   if (key->dither) {
       cc.cc5.dither_enable = 1;
-      cc.cc6.y_dither_offset = 0; 
-      cc.cc6.x_dither_offset = 0;     
+      cc.cc6.y_dither_offset = 0;
+      cc.cc6.x_dither_offset = 0;
    }
 
    /* _NEW_DEPTH */
-   if (brw->attribs.Depth->Test) {
-      cc.cc2.depth_test = brw->attribs.Depth->Test;
-      cc.cc2.depth_test_function = intel_translate_compare_func(brw->attribs.Depth->Func);
-      cc.cc2.depth_write_enable = brw->attribs.Depth->Mask;
+   if (key->depth_test) {
+      cc.cc2.depth_test = 1;
+      cc.cc2.depth_test_function = intel_translate_compare_func(key->depth_func);
+      cc.cc2.depth_write_enable = key->depth_mask;
    }
- 
+
    /* CACHE_NEW_CC_VP */
    cc.cc4.cc_viewport_state_offset = brw->cc.vp_bo->offset >> 5; /* reloc */
- 
+
    if (INTEL_DEBUG & DEBUG_STATS)
-      cc.cc5.statistics_enable = 1; 
+      cc.cc5.statistics_enable = 1;
+
+   return brw_upload_cache(&brw->cache, BRW_CC_UNIT,
+			   key, sizeof(*key),
+			   &brw->cc.vp_bo, 1,
+			   &cc, sizeof(cc),
+			   NULL, NULL);
+}
+
+static void upload_cc_unit( struct brw_context *brw )
+{
+   struct brw_cc_unit_key key;
+
+   cc_unit_populate_key(brw, &key);
 
    dri_bo_unreference(brw->cc.state_bo);
-   brw->cc.state_bo = brw_cache_data( &brw->cache, BRW_CC_UNIT, &cc,
-				      &brw->cc.vp_bo, 1);
+   brw->cc.state_bo = brw_search_cache(&brw->cache, BRW_CC_UNIT,
+				       &key, sizeof(key),
+				       &brw->cc.vp_bo, 1,
+				       NULL);
+
+   if (brw->cc.state_bo == NULL)
+      brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
 }
 
 static void emit_reloc_cc_unit(struct brw_context *brw)
