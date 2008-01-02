@@ -36,50 +36,89 @@
 #include "brw_defines.h"
 #include "macros.h"
 
+struct brw_gs_unit_key {
+   unsigned int total_grf;
+   unsigned int urb_entry_read_length;
 
+   unsigned int curbe_offset;
 
-static void upload_gs_unit( struct brw_context *brw )
+   unsigned int nr_urb_entries, urb_size;
+   GLboolean prog_active;
+};
+
+static void
+gs_unit_populate_key(struct brw_context *brw, struct brw_gs_unit_key *key)
+{
+   memset(key, 0, sizeof(*key));
+
+   /* CACHE_NEW_GS_PROG */
+   key->prog_active = brw->gs.prog_active;
+   if (key->prog_active) {
+      key->total_grf = brw->gs.prog_data->total_grf;
+      key->urb_entry_read_length = brw->gs.prog_data->urb_read_length;
+   } else {
+      key->total_grf = 1;
+      key->urb_entry_read_length = 1;
+   }
+
+   /* BRW_NEW_CURBE_OFFSETS */
+   key->curbe_offset = brw->curbe.clip_start;
+
+   /* BRW_NEW_URB_FENCE */
+   key->nr_urb_entries = brw->urb.nr_gs_entries;
+   key->urb_size = brw->urb.vsize;
+}
+
+static dri_bo *
+gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 {
    struct brw_gs_unit_state gs;
 
    memset(&gs, 0, sizeof(gs));
 
-   /* CACHE_NEW_GS_PROG */
-   if (brw->gs.prog_active) {
-      gs.thread0.grf_reg_count =
-	 ALIGN(brw->gs.prog_data->total_grf, 16) / 16 - 1;
-      /* reloc */
+   gs.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   if (key->prog_active) /* reloc */
       gs.thread0.kernel_start_pointer = brw->gs.prog_bo->offset >> 6;
-      gs.thread3.urb_entry_read_length = brw->gs.prog_data->urb_read_length;
-   }
-   else {
-      gs.thread0.grf_reg_count = 0;
-      gs.thread0.kernel_start_pointer = 0;
-      gs.thread3.urb_entry_read_length = 1;
-   }
 
-   /* BRW_NEW_URB_FENCE */
-   gs.thread4.nr_urb_entries = brw->urb.nr_gs_entries; 
-   gs.thread4.urb_entry_allocation_size = brw->urb.vsize - 1;
-
-   gs.thread4.max_threads = 0; /* Hardware requirement */
-
-   if (INTEL_DEBUG & DEBUG_STATS)
-      gs.thread4.stats_enable = 1; 
-
-   /* CONSTANT */
    gs.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
    gs.thread1.single_program_flow = 1;
+
    gs.thread3.dispatch_grf_start_reg = 1;
    gs.thread3.const_urb_entry_read_offset = 0;
    gs.thread3.const_urb_entry_read_length = 0;
    gs.thread3.urb_entry_read_offset = 0;
+   gs.thread3.urb_entry_read_length = key->urb_entry_read_length;
+
+   gs.thread4.nr_urb_entries = key->nr_urb_entries;
+   gs.thread4.urb_entry_allocation_size = key->urb_size - 1;
+
+   gs.thread4.max_threads = 0; /* Hardware requirement */
+
+   if (INTEL_DEBUG & DEBUG_STATS)
+      gs.thread4.stats_enable = 1;
 
    brw->gs.thread0_delta = gs.thread0.grf_reg_count << 1;
+   return brw_upload_cache(&brw->cache, BRW_GS_UNIT,
+			   key, sizeof(*key),
+			   &brw->gs.prog_bo, 1,
+			   &gs, sizeof(gs),
+			   NULL, NULL);
+}
+
+static void upload_gs_unit( struct brw_context *brw )
+{
+   struct brw_gs_unit_key key;
+
+   gs_unit_populate_key(brw, &key);
 
    dri_bo_unreference(brw->gs.state_bo);
-   brw->gs.state_bo = brw_cache_data( &brw->cache, BRW_GS_UNIT, &gs,
-				      &brw->gs.prog_bo, 1 );
+   brw->gs.state_bo = brw_search_cache(&brw->cache, BRW_GS_UNIT,
+				       &key, sizeof(key),
+				       &brw->gs.prog_bo, 1,
+				       NULL);
+   if (brw->gs.state_bo == NULL) {
+      brw->gs.state_bo = gs_unit_create_from_key(brw, &key);
+   }
 }
 
 static void emit_reloc_gs_unit(struct brw_context *brw)
