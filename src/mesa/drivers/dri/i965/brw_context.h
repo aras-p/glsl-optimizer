@@ -590,7 +590,6 @@ struct brw_context
 
       GLuint max_threads;
       dri_bo *scratch_buffer;
-      GLuint scratch_buffer_size;
 
       GLuint sampler_count;
       dri_bo *sampler_bo;
