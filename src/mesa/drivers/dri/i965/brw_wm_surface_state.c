@@ -225,7 +225,92 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
       brw->wm.surf_bo[unit + 1] = brw_create_texture_surface(brw, &key);
 }
 
-#define OFFSET(TYPE, FIELD) ( (GLuint)&(((TYPE *)0)->FIELD) )
+/**
+ * Sets up a surface state structure to point at the given region.
+ * While it is only used for the front/back buffer currently, it should be
+ * usable for further buffers when doing ARB_draw_buffer support.
+ */
+static void
+brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
+			  unsigned int unit)
+{
+   dri_bo *region_bo = NULL;
+
+   struct {
+      unsigned int surface_type;
+      unsigned int surface_format;
+      unsigned int width, height, cpp;
+      GLubyte color_mask[4];
+      GLboolean tiled, color_blend;
+   } key;
+
+   memset(&key, 0, sizeof(key));
+
+   if (region != NULL) {
+      region_bo = region->buffer;
+
+      key.surface_type = BRW_SURFACE_2D;
+      if (region->cpp == 4)
+	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      else
+	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
+      key.tiled = region->tiled;
+      key.width = region->pitch; /* XXX: not really! */
+      key.height = region->height;
+      key.cpp = region->cpp;
+   } else {
+      key.surface_type = BRW_SURFACE_NULL;
+      key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      key.tiled = 0;
+      key.width = 1;
+      key.height = 1;
+      key.cpp = 4;
+   }
+
+   memcpy(key.color_mask, brw->attribs.Color->ColorMask,
+	  sizeof(key.color_mask));
+   key.color_blend = (!brw->attribs.Color->_LogicOpEnabled &&
+		      brw->attribs.Color->BlendEnabled);
+
+   dri_bo_unreference(brw->wm.surf_bo[unit]);
+   brw->wm.surf_bo[unit] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+					    &key, sizeof(key),
+					    &region_bo, 1,
+					    NULL);
+   if (brw->wm.surf_bo[unit] == NULL) {
+      struct brw_surface_state surf;
+
+      memset(&surf, 0, sizeof(surf));
+
+      surf.ss0.surface_format = key.surface_format;
+      surf.ss0.surface_type = key.surface_type;
+      if (region_bo != NULL)
+	 surf.ss1.base_addr = region_bo->offset; /* reloc */
+
+      surf.ss2.width = key.width - 1;
+      surf.ss2.height = key.height - 1;
+      surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
+      surf.ss3.tiled_surface = key.tiled;
+      surf.ss3.pitch = (key.width * key.cpp) - 1;
+
+      /* _NEW_COLOR */
+      surf.ss0.color_blend = key.color_blend;
+      surf.ss0.writedisable_red =   !key.color_mask[0];
+      surf.ss0.writedisable_green = !key.color_mask[1];
+      surf.ss0.writedisable_blue =  !key.color_mask[2];
+      surf.ss0.writedisable_alpha = !key.color_mask[3];
+
+      /* Key size will never match key size for textures, so we're safe. */
+      brw->wm.surf_bo[unit] = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
+					       &key, sizeof(key),
+					       &region_bo, 1,
+					       &surf, sizeof(surf),
+					       NULL, NULL);
+
+      brw->wm.nr_surfaces = 1;
+   }
+}
+
 
 /**
  * Constructs the binding table for the WM surface state, which maps unit
@@ -270,53 +355,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
    struct intel_context *intel = &brw->intel;
    GLuint i;
 
-   {
-      struct brw_surface_state surf;
-      struct intel_region *region = brw->state.draw_region;
-      dri_bo *region_bo;
-
-      memset(&surf, 0, sizeof(surf));
-
-      if (region != NULL) {
-	 if (region->cpp == 4)
-	    surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-	 else
-	    surf.ss0.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
-
-	 surf.ss0.surface_type = BRW_SURFACE_2D;
-
-	 surf.ss1.base_addr = region->buffer->offset; /* reloc */
-
-	 surf.ss2.width = region->pitch - 1; /* XXX: not really! */
-	 surf.ss2.height = region->height - 1;
-	 surf.ss3.tile_walk = BRW_TILEWALK_XMAJOR;
-	 surf.ss3.tiled_surface = region->tiled;
-	 surf.ss3.pitch = (region->pitch * region->cpp) - 1;
-	 region_bo = region->buffer;
-      } else {
-	 surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-	 surf.ss0.surface_type = BRW_SURFACE_NULL;
-	 region_bo = NULL;
-      }
-
-      /* _NEW_COLOR */
-      surf.ss0.color_blend = (!brw->attribs.Color->_LogicOpEnabled &&
-			      brw->attribs.Color->BlendEnabled);
-
-
-      surf.ss0.writedisable_red =   !brw->attribs.Color->ColorMask[0];
-      surf.ss0.writedisable_green = !brw->attribs.Color->ColorMask[1];
-      surf.ss0.writedisable_blue =  !brw->attribs.Color->ColorMask[2];
-      surf.ss0.writedisable_alpha = !brw->attribs.Color->ColorMask[3];
-
-      /* Key size will never match key size for textures, so we're safe. */
-      dri_bo_unreference(brw->wm.surf_bo[0]);
-      brw->wm.surf_bo[0] = brw_cache_data( &brw->cache, BRW_SS_SURFACE, &surf,
-					   &region_bo, 1 );
-
-      brw->wm.nr_surfaces = 1;
-   }
-
+   brw_update_region_surface(brw, brw->state.draw_region, 0);
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
