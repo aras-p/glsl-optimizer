@@ -253,10 +253,10 @@ intelCalcViewport(GLcontext * ctx)
    }
 
    m[MAT_SX] = v[MAT_SX];
-   m[MAT_TX] = v[MAT_TX] + SUBPIXEL_X;
+   m[MAT_TX] = v[MAT_TX];
 
    m[MAT_SY] = v[MAT_SY] * yScale;
-   m[MAT_TY] = v[MAT_TY] * yScale + yBias + SUBPIXEL_Y;
+   m[MAT_TY] = v[MAT_TY] * yScale + yBias;
 
    m[MAT_SZ] = v[MAT_SZ] * depthScale;
    m[MAT_TZ] = v[MAT_TZ] * depthScale;

@@ -247,8 +247,8 @@ intel_draw_point(struct intel_context *intel, intelVertexPtr v0)
    int j;
 
    /* Adjust for sub pixel position -- still required for conform. */
-   *(float *) &vb[0] = v0->v.x - 0.125;
-   *(float *) &vb[1] = v0->v.y - 0.125;
+   *(float *) &vb[0] = v0->v.x;
+   *(float *) &vb[1] = v0->v.y;
    for (j = 2; j < vertsize; j++)
       vb[j] = v0->ui[j];
 }
