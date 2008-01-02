@@ -59,7 +59,7 @@
  * as it would require a bit of investigation to figure
  * out what mask value should be used.
  */
-#define INTEL_BO_MASK  (DRM_BO_MASK_MEMTYPE | \
+#define INTEL_BO_MASK  (DRM_BO_MASK_MEM | \
 			DRM_BO_FLAG_READ | \
 			DRM_BO_FLAG_WRITE | \
 			DRM_BO_FLAG_EXE)
