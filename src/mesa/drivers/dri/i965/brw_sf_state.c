@@ -110,87 +110,126 @@ const struct brw_tracked_state brw_sf_vp = {
    .update = upload_sf_vp
 };
 
+struct brw_sf_unit_key {
+   unsigned int total_grf;
+   unsigned int urb_entry_read_length;
 
+   unsigned int nr_urb_entries, urb_size, sfsize;
 
-static void upload_sf_unit( struct brw_context *brw )
+   GLenum front_face, cull_face;
+   GLboolean scissor, line_smooth, point_sprite, point_attenuated;
+   float line_width;
+   float point_size;
+};
+
+static void
+sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
 {
-   struct brw_sf_unit_state sf;
-   memset(&sf, 0, sizeof(sf));
-   dri_bo *reloc_bufs[2];
+   memset(key, 0, sizeof(*key));
 
    /* CACHE_NEW_SF_PROG */
-   sf.thread0.grf_reg_count = ALIGN(brw->sf.prog_data->total_grf, 16) / 16 - 1;
-   sf.thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
-   sf.thread3.urb_entry_read_length = brw->sf.prog_data->urb_read_length;
-
-   sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
-   sf.thread3.dispatch_grf_start_reg = 3;
-   sf.thread3.urb_entry_read_offset = 1;
+   key->total_grf = brw->sf.prog_data->total_grf;
+   key->urb_entry_read_length = brw->sf.prog_data->urb_read_length;
 
    /* BRW_NEW_URB_FENCE */
-   sf.thread4.nr_urb_entries = brw->urb.nr_sf_entries;
-   sf.thread4.urb_entry_allocation_size = brw->urb.sfsize - 1;
-   sf.thread4.max_threads = MIN2(12, brw->urb.nr_sf_entries / 2) - 1;
+   key->nr_urb_entries = brw->urb.nr_sf_entries;
+   key->urb_size = brw->urb.vsize;
+   key->sfsize = brw->urb.sfsize;
+
+   key->scissor = brw->attribs.Scissor->Enabled;
+   key->front_face = brw->attribs.Polygon->FrontFace;
+
+   if (brw->attribs.Polygon->CullFlag)
+      key->cull_face = brw->attribs.Polygon->CullFaceMode;
+   else
+      key->cull_face = GL_NONE;
+
+   key->line_width = brw->attribs.Line->Width;
+   key->line_smooth = brw->attribs.Line->SmoothFlag;
+
+   key->point_sprite = brw->attribs.Point->PointSprite;
+   key->point_size = brw->attribs.Point->Size;
+   key->point_attenuated = brw->attribs.Point->_Attenuated;
+}
+
+static dri_bo *
+sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
+			dri_bo **reloc_bufs)
+{
+   struct brw_sf_unit_state sf;
+
+   memset(&sf, 0, sizeof(sf));
+
+   sf.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   sf.thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
+
+   sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+
+   sf.thread3.dispatch_grf_start_reg = 3;
+   sf.thread3.urb_entry_read_offset = 1;
+   sf.thread3.urb_entry_read_length = key->urb_entry_read_length;
+
+   sf.thread4.nr_urb_entries = key->nr_urb_entries;
+   sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
+   sf.thread4.max_threads = MIN2(12, key->nr_urb_entries / 2) - 1;
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
-      sf.thread4.max_threads = 0; 
+      sf.thread4.max_threads = 0;
 
    if (INTEL_DEBUG & DEBUG_STATS)
-      sf.thread4.stats_enable = 1; 
+      sf.thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
    sf.sf5.sf_viewport_state_offset = brw->sf.vp_bo->offset >> 5; /* reloc */
-   
+
    sf.sf5.viewport_transform = 1;
-   
+
    /* _NEW_SCISSOR */
-   if (brw->attribs.Scissor->Enabled) 
-      sf.sf6.scissor = 1;  
+   if (key->scissor)
+      sf.sf6.scissor = 1;
 
    /* _NEW_POLYGON */
-   if (brw->attribs.Polygon->FrontFace == GL_CCW)
+   if (key->front_face == GL_CCW)
       sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
    else
       sf.sf5.front_winding = BRW_FRONTWINDING_CW;
 
-   if (brw->attribs.Polygon->CullFlag) {
-      switch (brw->attribs.Polygon->CullFaceMode) {
-      case GL_FRONT:
-	 sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
-	 break;
-      case GL_BACK:
-	 sf.sf6.cull_mode = BRW_CULLMODE_BACK;
-	 break;
-      case GL_FRONT_AND_BACK:
-	 sf.sf6.cull_mode = BRW_CULLMODE_BOTH;
-	 break;
-      default:
-	 assert(0);
-	 break;
-      }
-   }
-   else
+   switch (key->cull_face) {
+   case GL_FRONT:
+      sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
+      break;
+   case GL_BACK:
+      sf.sf6.cull_mode = BRW_CULLMODE_BACK;
+      break;
+   case GL_FRONT_AND_BACK:
+      sf.sf6.cull_mode = BRW_CULLMODE_BOTH;
+      break;
+   case GL_NONE:
       sf.sf6.cull_mode = BRW_CULLMODE_NONE;
-      
+      break;
+   default:
+      assert(0);
+      break;
+   }
 
    /* _NEW_LINE */
    /* XXX use ctx->Const.Min/MaxLineWidth here */
-   sf.sf6.line_width = CLAMP(brw->attribs.Line->Width, 1.0, 5.0) * (1<<1);
+   sf.sf6.line_width = CLAMP(key->line_width, 1.0, 5.0) * (1<<1);
 
    sf.sf6.line_endcap_aa_region_width = 1;
-   if (brw->attribs.Line->SmoothFlag)
+   if (key->line_smooth)
       sf.sf6.aa_enable = 1;
-   else if (sf.sf6.line_width <= 0x2) 
-       sf.sf6.line_width = 0; 
+   else if (sf.sf6.line_width <= 0x2)
+       sf.sf6.line_width = 0;
 
    /* _NEW_POINT */
    sf.sf6.point_rast_rule = 1;	/* opengl conventions */
    /* XXX clamp max depends on AA vs. non-AA */
 
-   sf.sf7.sprite_point = brw->attribs.Point->PointSprite;
-   sf.sf7.point_size = CLAMP(brw->attribs.Point->Size, 1.0, 255.0) * (1<<3);
-   sf.sf7.use_point_size_state = !brw->attribs.Point->_Attenuated;
-      
+   sf.sf7.sprite_point = key->point_sprite;
+   sf.sf7.point_size = CLAMP(key->point_size, 1.0, 255.0) * (1<<3);
+   sf.sf7.use_point_size_state = !key->point_attenuated;
+
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */
    sf.sf7.trifan_pv = 2;
@@ -203,15 +242,34 @@ static void upload_sf_unit( struct brw_context *brw )
    sf.sf6.dest_org_vbias = 0x8;
    sf.sf6.dest_org_hbias = 0x8;
 
-   reloc_bufs[0] = brw->sf.prog_bo;
-   reloc_bufs[1] = brw->sf.vp_bo;
-
    brw->sf.thread0_delta = sf.thread0.grf_reg_count << 1;
    brw->sf.sf5_delta = sf.sf5.front_winding | (sf.sf5.viewport_transform << 1);
 
+   return brw_upload_cache(&brw->cache, BRW_SF_UNIT,
+			   key, sizeof(*key),
+			   reloc_bufs, 2,
+			   &sf, sizeof(sf),
+			   NULL, NULL);
+}
+
+static void upload_sf_unit( struct brw_context *brw )
+{
+   struct brw_sf_unit_key key;
+   dri_bo *reloc_bufs[2];
+
+   sf_unit_populate_key(brw, &key);
+
+   reloc_bufs[0] = brw->sf.prog_bo;
+   reloc_bufs[1] = brw->sf.vp_bo;
+
    dri_bo_unreference(brw->sf.state_bo);
-   brw->sf.state_bo = brw_cache_data( &brw->cache, BRW_SF_UNIT, &sf,
-				      reloc_bufs, 2 );
+   brw->sf.state_bo = brw_search_cache(&brw->cache, BRW_SF_UNIT,
+				       &key, sizeof(key),
+				       reloc_bufs, 2,
+				       NULL);
+   if (brw->sf.state_bo == NULL) {
+      brw->sf.state_bo = sf_unit_create_from_key(brw, &key, reloc_bufs);
+   }
 }
 
 static void emit_reloc_sf_unit(struct brw_context *brw)
