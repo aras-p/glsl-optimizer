@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,8 +29,8 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_vertex.h"
-#include "sp_context.h"
-#include "sp_state.h"
+#include "cell_context.h"
+#include "cell_state.h"
 
 
 /**
@@ -38,31 +38,43 @@
  * we need.
  * Derived from:  fs, setup states.
  */
-static void calculate_vertex_layout( struct softpipe_context *softpipe )
+static void calculate_vertex_layout( struct cell_context *cell )
 {
-   const struct pipe_shader_state *vs = &softpipe->vs->shader;
-   const struct pipe_shader_state *fs = &softpipe->fs->shader;
+#if 0
+   const struct pipe_shader_state *vs = cell->vs->state;
+   const struct pipe_shader_state *fs = &cell->fs->shader;
    const enum interp_mode colorInterp
-      = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
-   struct vertex_info *vinfo = &softpipe->vertex_info;
+      = cell->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+   struct vertex_info *vinfo = &cell->vertex_info;
    boolean emitBack0 = FALSE, emitBack1 = FALSE, emitPsize = FALSE;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    uint i;
+#endif
+   const enum interp_mode colorInterp
+      = cell->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+   struct vertex_info *vinfo = &cell->vertex_info;
+   uint front0;
 
    memset(vinfo, 0, sizeof(*vinfo));
 
-
+#if 0
    if (fs->input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       /* Need Z if depth test is enabled or the fragment program uses the
        * fragment position (XYZW).
        */
    }
 
-   softpipe->psize_slot = -1;
+   cell->psize_slot = -1;
+#endif
 
    /* always emit vertex pos */
    draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
 
+#if 1
+   front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+#endif
+
+#if 0
    /*
     * XXX I think we need to reconcile the vertex shader outputs with
     * the fragment shader inputs here to make sure the slots line up.
@@ -121,7 +133,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       }
    }
 
-   softpipe->nr_frag_attrs = fs->num_inputs;
+   cell->nr_frag_attrs = fs->num_inputs;
 
    /* We want these after all other attribs since they won't get passed
     * to the fragment shader.  All prior vertex output attribs should match
@@ -134,7 +146,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
    }
    if (emitPsize) {
-      softpipe->psize_slot
+      cell->psize_slot
          = draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT);
    }
 
@@ -142,22 +154,27 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * the new vertex layout.
     */
    /* XXX we also need to do this when the shading mode (interp modes) change: */
-   if (1/*vinfo->attr_mask != softpipe->attr_mask*/) {
-      /*softpipe->attr_mask = vinfo->attr_mask;*/
+#endif
 
-      draw_set_vertex_info( softpipe->draw, vinfo);
+   if (1/*vinfo->attr_mask != cell->attr_mask*/) {
+      /*cell->attr_mask = vinfo->attr_mask;*/
 
-      draw_set_twoside_attributes(softpipe->draw,
+      draw_set_vertex_info( cell->draw, vinfo);
+
+#if 0
+      draw_set_twoside_attributes(cell->draw,
                                   front0, back0, front1, back1);
+#endif
    }
 }
 
 
+#if 0
 /**
  * Recompute cliprect from scissor bounds, scissor enable and surface size.
  */
 static void
-compute_cliprect(struct softpipe_context *sp)
+compute_cliprect(struct cell_context *sp)
 {
    unsigned surfWidth, surfHeight;
 
@@ -186,28 +203,20 @@ compute_cliprect(struct softpipe_context *sp)
       sp->cliprect.maxy = surfHeight;
    }
 }
+#endif
 
 
-/* Hopefully this will remain quite simple, otherwise need to pull in
- * something like the state tracker mechanism.
- */
-void softpipe_update_derived( struct softpipe_context *softpipe )
+void cell_update_derived( struct cell_context *cell )
 {
-   if (softpipe->dirty & (SP_NEW_RASTERIZER | SP_NEW_FS))
-      calculate_vertex_layout( softpipe );
+   if (cell->dirty & (CELL_NEW_RASTERIZER | CELL_NEW_FS))
+      calculate_vertex_layout( cell );
 
-   if (softpipe->dirty & (SP_NEW_SCISSOR |
-                          SP_NEW_DEPTH_STENCIL_ALPHA |
-                          SP_NEW_FRAMEBUFFER))
-      compute_cliprect(softpipe);
+#if 0
+   if (cell->dirty & (CELL_NEW_SCISSOR |
+                      CELL_NEW_DEPTH_STENCIL_ALPHA |
+                      CELL_NEW_FRAMEBUFFER))
+      compute_cliprect(cell);
+#endif
 
-   if (softpipe->dirty & (SP_NEW_BLEND |
-                          SP_NEW_DEPTH_STENCIL_ALPHA |
-                          SP_NEW_FRAMEBUFFER |
-                          SP_NEW_RASTERIZER |
-                          SP_NEW_FS | 
-			  SP_NEW_QUERY))
-      sp_build_quad_pipeline(softpipe);
-
-   softpipe->dirty = 0;
+   cell->dirty = 0;
 }

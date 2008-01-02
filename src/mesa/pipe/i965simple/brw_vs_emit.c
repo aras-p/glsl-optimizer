@@ -630,6 +630,8 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
       assert(c->regs[file][index].nr != 0);
       return c->regs[file][index];
    case TGSI_FILE_CONSTANT:
+      assert(c->regs[TGSI_FILE_CONSTANT][index + c->prog_data.num_consts].nr != 0);
+      return c->regs[TGSI_FILE_CONSTANT][index + c->prog_data.num_consts];
    case TGSI_FILE_IMMEDIATE:
       assert(c->regs[TGSI_FILE_CONSTANT][index].nr != 0);
       return c->regs[TGSI_FILE_CONSTANT][index];
@@ -1317,6 +1319,7 @@ void brw_vs_emit(struct brw_vs_compile *c)
             /* first instruction (declerations finished).
              * now that we know what vars are being used allocate
              * registers for them.*/
+            c->prog_data.num_consts = prog_info.num_consts;
             c->prog_data.max_const = prog_info.num_consts + c->prog_data.num_imm;
             brw_vs_alloc_regs(c, &prog_info);
 

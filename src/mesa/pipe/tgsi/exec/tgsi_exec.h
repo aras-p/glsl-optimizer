@@ -227,6 +227,11 @@ uint
 tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
 
+
+void
+tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach);
+
+
 #if defined __cplusplus
 } /* extern "C" */
 #endif

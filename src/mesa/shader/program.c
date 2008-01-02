@@ -101,6 +101,7 @@ _mesa_free_program_data(GLcontext *ctx)
       if (ctx->VertexProgram.Current->Base.RefCount <= 0)
          ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
    }
+   _mesa_delete_program_cache(ctx, ctx->VertexProgram.Cache);
 #endif
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
    if (ctx->FragmentProgram.Current) {
@@ -108,6 +109,7 @@ _mesa_free_program_data(GLcontext *ctx)
       if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
          ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
    }
+   _mesa_delete_program_cache(ctx, ctx->FragmentProgram.Cache);
 #endif
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader

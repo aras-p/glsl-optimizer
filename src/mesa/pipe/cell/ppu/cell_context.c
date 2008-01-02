@@ -40,7 +40,9 @@
 #include "pipe/cell/common.h"
 #include "pipe/draw/draw_context.h"
 #include "cell_context.h"
+#include "cell_draw_arrays.h"
 #include "cell_flush.h"
+#include "cell_render.h"
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
@@ -212,12 +214,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;
    cell->pipe.set_vertex_element = cell_set_vertex_element;
-#if 0
-   cell->pipe.set_feedback_buffer = cell_set_feedback_buffer;
 
    cell->pipe.draw_arrays = cell_draw_arrays;
    cell->pipe.draw_elements = cell_draw_elements;
-#endif
 
    cell->pipe.clear = cell_clear_surface;
    cell->pipe.flush = cell_flush;
@@ -234,6 +233,10 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
 
    cell->draw = draw_create();
+
+   cell->render_stage = cell_draw_render_stage(cell);
+   draw_set_rasterize_stage(cell->draw, cell->render_stage);
+
 
    /*
     * SPU stuff

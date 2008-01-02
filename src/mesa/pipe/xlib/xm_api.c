@@ -447,6 +447,10 @@ xmesa_free_buffer(XMesaBuffer buffer)
          /* Unreference.  If count = zero we'll really delete the buffer */
          _mesa_unreference_framebuffer(&fb);
 
+         XFreeGC(b->xm_visual->display, b->gc);
+
+         free(buffer);
+
          return;
       }
       /* continue search */

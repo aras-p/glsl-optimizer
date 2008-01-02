@@ -51,6 +51,7 @@
 #include "st_extensions.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
+#include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/cso_cache/cso_cache.h"
 
@@ -136,6 +137,9 @@ struct st_context *st_create_context(struct pipe_context *pipe,
 
 static void st_destroy_context_priv( struct st_context *st )
 {
+   struct pipe_winsys *ws = st->pipe->winsys;
+   uint i;
+
    draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );
@@ -145,6 +149,12 @@ static void st_destroy_context_priv( struct st_context *st )
    cso_cache_delete( st->cache );
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
+
+   for (i = 0; i < Elements(st->state.constants); i++) {
+      if (st->state.constants[i].buffer) {
+         ws->buffer_reference(ws, &st->state.constants[i].buffer, NULL);
+      }
+   }
 
    st->pipe->destroy( st->pipe );
    free( st );

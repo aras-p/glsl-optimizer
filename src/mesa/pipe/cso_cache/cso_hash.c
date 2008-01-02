@@ -101,8 +101,15 @@ static void *cso_data_allocate_node(struct cso_hash_data *hash)
    return malloc(hash->nodeSize);
 }
 
-static void cso_data_free_node(void *node)
+static void cso_data_free_node(struct cso_node *node)
 {
+   /* XXX still a leak here.
+    * Need to cast value ptr to original cso type, then free the
+    * driver-specific data hanging off of it.  For example:
+   struct cso_sampler *csamp = (struct cso_sampler *) node->value;
+   free(csamp->data);
+   */
+   free(node->value);
    free(node);
 }
 

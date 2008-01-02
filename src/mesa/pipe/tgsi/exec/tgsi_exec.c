@@ -275,6 +275,22 @@ tgsi_exec_machine_init(
 }
 
 
+void
+tgsi_exec_machine_free_data(struct tgsi_exec_machine *mach)
+{
+   if (mach->Instructions) {
+      FREE(mach->Instructions);
+      mach->Instructions = NULL;
+      mach->NumInstructions = 0;
+   }
+   if (mach->Declarations) {
+      FREE(mach->Declarations);
+      mach->Declarations = NULL;
+      mach->NumDeclarations = 0;
+   }
+}
+
+
 static void
 micro_abs(
    union tgsi_exec_channel *dst,

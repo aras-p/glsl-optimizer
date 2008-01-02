@@ -28,8 +28,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
-#if 0
 #include "pipe/draw/draw_context.h"
+#if 0
 #include "pipe/p_shader_tokens.h"
 #include "pipe/llvm/gallivm.h"
 #include "pipe/tgsi/util/tgsi_dump.h"
@@ -40,25 +40,22 @@
 #include "cell_state.h"
 
 
-void * cell_create_fs_state(struct pipe_context *pipe,
-                                const struct pipe_shader_state *templ)
+void *
+cell_create_fs_state(struct pipe_context *pipe,
+                     const struct pipe_shader_state *templ)
 {
    struct cell_context *cell = cell_context(pipe);
+   struct cell_fragment_shader_state *state;
 
-   return malloc(5); /* XXX temp */
+   state = CALLOC_STRUCT(cell_fragment_shader_state);
+   if (!state)
+      return NULL;
 
-#if 0
-   /* Decide whether we'll be codegenerating this shader and if so do
-    * that now.
-    */
-
-   struct sp_fragment_shader_state *state = MALLOC( sizeof(struct sp_fragment_shader_state) );
    state->shader = *templ;
 
-   if( cell->dump_fs ) {
-      tgsi_dump(
-         state->shader.tokens,
-         0 );
+#if 0
+   if (cell->dump_fs) {
+      tgsi_dump(state->shader.tokens, 0);
    }
 
 #if defined(__i386__) || defined(__386__)
@@ -76,32 +73,32 @@ void * cell_create_fs_state(struct pipe_context *pipe,
    else
       gallivm_cpu_jit_compile(gallivm_global_cpu_engine(), state->llvm_prog);
 #endif
-   return state;
 #endif
+
+   return state;
 }
 
-void cell_bind_fs_state(struct pipe_context *pipe, void *fs)
+
+void
+cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct cell_context *cell = cell_context(pipe);
-#if 0
-   cell->fs = (struct sp_fragment_shader_state *) fs;
 
-   cell->dirty |= SP_NEW_FS;
-#endif
+   cell->fs = (struct cell_fragment_shader_state *) fs;
+
+   cell->dirty |= CELL_NEW_FS;
 }
 
-void cell_delete_fs_state(struct pipe_context *pipe,
-                              void *shader)
-{
-#if 0
-   struct sp_fragment_shader_state *state = shader;
 
-#if defined(__i386__) || defined(__386__)
-   x86_release_func( &state->sse2_program );
-#endif
+void
+cell_delete_fs_state(struct pipe_context *pipe, void *fs)
+{
+   struct cell_context *cell = cell_context(pipe);
+
+   struct cell_fragment_shader_state *state =
+      (struct cell_fragment_shader_state *) fs;
 
    FREE( state );
-#endif
 }
 
 
@@ -109,73 +106,56 @@ void *
 cell_create_vs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
-   return malloc(5); /* XXX */
-#if 0 
    struct cell_context *cell = cell_context(pipe);
-   struct sp_vertex_shader_state *state;
+   struct cell_vertex_shader_state *state;
 
-   state = MALLOC( sizeof(struct sp_vertex_shader_state) );
-   if (state == NULL ) {
+   state = CALLOC_STRUCT(cell_vertex_shader_state);
+   if (!state)
       return NULL;
-   }
 
-   state->state = MALLOC( sizeof(struct pipe_shader_state) );
-   if (state->state == NULL) {
-      FREE( state );
-      return NULL;
-   }
-   memcpy( state->state, templ, sizeof(struct pipe_shader_state) );
+   state->shader = *templ;
 
-   state->draw_data = draw_create_vertex_shader(cell->draw,
-                                                state->state);
+   state->draw_data = draw_create_vertex_shader(cell->draw, &state->shader);
    if (state->draw_data == NULL) {
-      FREE( state->state );
       FREE( state );
       return NULL;
    }
 
    return state;
-#endif
 }
-
 
 
 void
 cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
-#if 0
    struct cell_context *cell = cell_context(pipe);
 
-   cell->vs = (const struct sp_vertex_shader_state *)vs;
+   cell->vs = (const struct cell_vertex_shader_state *) vs;
 
    draw_bind_vertex_shader(cell->draw, cell->vs->draw_data);
 
-   cell->dirty |= SP_NEW_VS;
-#endif
+   cell->dirty |= CELL_NEW_VS;
 }
+
 
 void
 cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
-#if 0
    struct cell_context *cell = cell_context(pipe);
 
-   struct sp_vertex_shader_state *state =
-      (struct sp_vertex_shader_state *)vs;
+   struct cell_vertex_shader_state *state =
+      (struct cell_vertex_shader_state *) vs;
 
    draw_delete_vertex_shader(cell->draw, state->draw_data);
-   FREE( state->state );
    FREE( state );
-#endif
 }
 
 
-
-void cell_set_constant_buffer(struct pipe_context *pipe,
-                              uint shader, uint index,
-                              const struct pipe_constant_buffer *buf)
+void
+cell_set_constant_buffer(struct pipe_context *pipe,
+                         uint shader, uint index,
+                         const struct pipe_constant_buffer *buf)
 {
-#if 0
    struct cell_context *cell = cell_context(pipe);
    struct pipe_winsys *ws = pipe->winsys;
 
@@ -188,8 +168,5 @@ void cell_set_constant_buffer(struct pipe_context *pipe,
                         buf->buffer);
    cell->constants[shader].size = buf->size;
 
-   cell->dirty |= SP_NEW_CONSTANTS;
-#endif
+   cell->dirty |= CELL_NEW_CONSTANTS;
 }
-
-

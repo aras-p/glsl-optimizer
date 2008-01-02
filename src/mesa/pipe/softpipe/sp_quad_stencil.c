@@ -208,16 +208,22 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_cached_tile *tile
       = sp_get_cached_tile(softpipe, softpipe->sbuf_cache, quad->x0, quad->y0);
    uint j;
+   uint face = quad->facing;
+
+   if (!softpipe->depth_stencil->stencil[1].enabled) {
+      /* single-sided stencil test, use front (face=0) state */
+      face = 0;
+   }
 
    /* choose front or back face function, operator, etc */
    /* XXX we could do these initializations once per primitive */
-   func    = softpipe->depth_stencil->stencil[quad->facing].func;
-   failOp  = softpipe->depth_stencil->stencil[quad->facing].fail_op;
-   zFailOp = softpipe->depth_stencil->stencil[quad->facing].zfail_op;
-   zPassOp = softpipe->depth_stencil->stencil[quad->facing].zpass_op;
-   ref     = softpipe->depth_stencil->stencil[quad->facing].ref_value;
-   wrtMask = softpipe->depth_stencil->stencil[quad->facing].write_mask;
-   valMask = softpipe->depth_stencil->stencil[quad->facing].value_mask;
+   func    = softpipe->depth_stencil->stencil[face].func;
+   failOp  = softpipe->depth_stencil->stencil[face].fail_op;
+   zFailOp = softpipe->depth_stencil->stencil[face].zfail_op;
+   zPassOp = softpipe->depth_stencil->stencil[face].zpass_op;
+   ref     = softpipe->depth_stencil->stencil[face].ref_value;
+   wrtMask = softpipe->depth_stencil->stencil[face].write_mask;
+   valMask = softpipe->depth_stencil->stencil[face].value_mask;
 
    assert(ps); /* shouldn't get here if there's no stencil buffer */
 
