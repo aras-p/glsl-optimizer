@@ -91,16 +91,31 @@ static dri_bo *upload_default_color( struct brw_context *brw,
 }
 
 
-/*
+struct wm_sampler_key {
+   int sampler_count;
+
+   struct wm_sampler_entry {
+      GLenum wrap_r, wrap_s, wrap_t;
+      float maxlod, minlod;
+      float lod_bias;
+      float max_aniso;
+      GLenum minfilter, magfilter;
+      GLenum comparemode;
+      dri_bo *sdc_bo;
+   } sampler[BRW_MAX_TEX_UNIT];
+};
+
+/**
+ * Sets the sampler state for a single unit based off of the sampler key
+ * entry.
  */
-static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
-				      struct gl_texture_object *texObj,
-				      dri_bo *sdc_bo,
-				      struct brw_sampler_state *sampler)
-{   
+static void brw_update_sampler_state(struct wm_sampler_entry *key,
+				     dri_bo *sdc_bo,
+				     struct brw_sampler_state *sampler)
+{
    _mesa_memset(sampler, 0, sizeof(*sampler));
 
-   switch (texObj->MinFilter) {
+   switch (key->minfilter) {
    case GL_NEAREST:
       sampler->ss0.min_filter = BRW_MAPFILTER_NEAREST;
       sampler->ss0.mip_filter = BRW_MIPFILTER_NONE;
@@ -131,17 +146,17 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
 
    /* Set Anisotropy: 
     */
-   if ( texObj->MaxAnisotropy > 1.0 ) {
+   if (key->max_aniso > 1.0) {
       sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC; 
       sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
 
-      if (texObj->MaxAnisotropy > 2.0) {
-	 sampler->ss3.max_aniso = MAX2((texObj->MaxAnisotropy - 2) / 2,
+      if (key->max_aniso > 2.0) {
+	 sampler->ss3.max_aniso = MAX2((key->max_aniso - 2) / 2,
 				       BRW_ANISORATIO_16);
       }
    }
    else {
-      switch (texObj->MagFilter) {
+      switch (key->magfilter) {
       case GL_NEAREST:
 	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
 	 break;
@@ -153,9 +168,9 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
       }  
    }
 
-   sampler->ss1.r_wrap_mode = translate_wrap_mode(texObj->WrapR);
-   sampler->ss1.s_wrap_mode = translate_wrap_mode(texObj->WrapS);
-   sampler->ss1.t_wrap_mode = translate_wrap_mode(texObj->WrapT);
+   sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
+   sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
+   sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
 
    /* Fulsim complains if I don't do this.  Hardware doesn't mind:
     */
@@ -169,17 +184,18 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
 
    /* Set shadow function: 
     */
-   if (texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+   if (key->comparemode == GL_COMPARE_R_TO_TEXTURE_ARB) {
       /* Shadowing is "enabled" by emitting a particular sampler
        * message (sample_c).  So need to recompile WM program when
        * shadow comparison is enabled on each/any texture unit.
        */
-      sampler->ss0.shadow_function = intel_translate_shadow_compare_func(texObj->CompareFunc);
+      sampler->ss0.shadow_function =
+	 intel_translate_shadow_compare_func(key->comparemode);
    }
 
    /* Set LOD bias: 
     */
-   sampler->ss0.lod_bias = S_FIXED(CLAMP(texUnit->LodBias + texObj->LodBias, -16, 15), 6);
+   sampler->ss0.lod_bias = S_FIXED(CLAMP(key->lod_bias, -16, 15), 6);
 
    sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
    sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
@@ -193,13 +209,46 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
     */
    sampler->ss0.base_level = U_FIXED(0, 1);
 
-   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(texObj->MaxLod, 0), 13), 6);
-   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(texObj->MinLod, 0), 13), 6);
+   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(key->maxlod, 0), 13), 6);
+   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(key->minlod, 0), 13), 6);
    
    sampler->ss2.default_color_pointer = sdc_bo->offset >> 5; /* reloc */
 }
 
+/** Sets up the cache key for sampler state for all texture units */
+static void
+brw_wm_sampler_populate_key(struct brw_context *brw,
+			    struct wm_sampler_key *key)
+{
+   int unit;
 
+   memset(key, 0, sizeof(*key));
+
+   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
+      if (brw->attribs.Texture->Unit[unit]._ReallyEnabled) {
+	 struct wm_sampler_entry *entry = &key->sampler[unit];
+	 struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[unit];
+	 struct gl_texture_object *texObj = texUnit->_Current;
+
+	 entry->wrap_r = texObj->WrapR;
+	 entry->wrap_s = texObj->WrapS;
+	 entry->wrap_t = texObj->WrapT;
+
+	 entry->maxlod = texObj->MaxLod;
+	 entry->minlod = texObj->MinLod;
+	 entry->lod_bias = texUnit->LodBias + texObj->LodBias;
+	 entry->max_aniso = texObj->MaxAnisotropy;
+	 entry->minfilter = texObj->MinFilter;
+	 entry->magfilter = texObj->MagFilter;
+	 entry->comparemode = texObj->CompareMode;
+
+	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
+	 brw->wm.sdc_bo[unit] = upload_default_color(brw, texObj->BorderColor);
+
+	 key->sampler_count = unit + 1;
+      }
+   }
+}
 
 /* All samplers must be uploaded in a single contiguous array, which
  * complicates various things.  However, this is still too confusing -
@@ -207,47 +256,46 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
  */
 static void upload_wm_samplers( struct brw_context *brw )
 {
-   GLuint unit;
-   GLuint sampler_count = 0;
-   dri_bo *reloc_bufs[BRW_MAX_TEX_UNIT];
+   struct wm_sampler_key key;
+   int i;
 
-   /* _NEW_TEXTURE */
-   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
-      if (brw->attribs.Texture->Unit[unit]._ReallyEnabled) {	 
-	 struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[unit];
-	 struct gl_texture_object *texObj = texUnit->_Current;
+   brw_wm_sampler_populate_key(brw, &key);
 
-	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
-	 brw->wm.sdc_bo[unit] = upload_default_color(brw, texObj->BorderColor);
-
-	 brw_update_sampler_state(texUnit,
-				  texObj,
-				  brw->wm.sdc_bo[unit],
-				  &brw->wm.sampler[unit]);
-
-	 sampler_count = unit + 1;
-      } else {
-	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
-	 brw->wm.sdc_bo[unit] = NULL;
-      }
-      reloc_bufs[unit] = brw->wm.sdc_bo[unit];
-   }
-   
-   if (brw->wm.sampler_count != sampler_count) {
-      brw->wm.sampler_count = sampler_count;
+   if (brw->wm.sampler_count != key.sampler_count) {
+      brw->wm.sampler_count = key.sampler_count;
       brw->state.dirty.cache |= CACHE_NEW_SAMPLER;
    }
 
    dri_bo_unreference(brw->wm.sampler_bo);
-   if (brw->wm.sampler_count) {
-      brw->wm.sampler_bo =
-	 brw_cache_data_sz(&brw->cache, BRW_SAMPLER,
-			   brw->wm.sampler,
-			   sizeof(struct brw_sampler_state) *
-			   brw->wm.sampler_count,
-			   reloc_bufs, BRW_MAX_TEX_UNIT);
-   } else {
-      brw->wm.sampler_bo = NULL;
+   brw->wm.sampler_bo = NULL;
+   if (brw->wm.sampler_count == 0)
+      return;
+
+   brw->wm.sampler_bo = brw_search_cache(&brw->cache, BRW_SAMPLER,
+					 &key, sizeof(key),
+					 brw->wm.sdc_bo, key.sampler_count,
+					 NULL);
+
+   /* If we didnt find it in the cache, compute the state and put it in the
+    * cache.
+    */
+   if (brw->wm.sampler_bo == NULL) {
+      struct brw_sampler_state sampler[BRW_MAX_TEX_UNIT];
+
+      memset(sampler, 0, sizeof(sampler));
+      for (i = 0; i < key.sampler_count; i++) {
+	 if (brw->wm.sdc_bo[i] == NULL)
+	    continue;
+
+	 brw_update_sampler_state(&key.sampler[i], brw->wm.sdc_bo[i],
+				  &sampler[i]);
+      }
+
+      brw->wm.sampler_bo = brw_upload_cache(&brw->cache, BRW_SAMPLER,
+					    &key, sizeof(key),
+					    brw->wm.sdc_bo, key.sampler_count,
+					    &sampler, sizeof(sampler),
+					    NULL, NULL);
    }
 }
 

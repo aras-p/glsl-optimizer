@@ -582,12 +582,6 @@ struct brw_context
        */
       GLuint input_size_masks[4];
 
-
-      /**
-       * Array of sampler state uploaded at sampler_bo of BRW_SAMPLER
-       * cache
-       */
-      struct brw_sampler_state sampler[BRW_MAX_TEX_UNIT];
       /** Array of surface default colors (texture border color) */
       dri_bo *sdc_bo[BRW_MAX_TEX_UNIT];
 
