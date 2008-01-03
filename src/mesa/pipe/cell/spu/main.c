@@ -119,6 +119,7 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
    uint num_tiles = fb.width_tiles * fb.height_tiles;
    uint i;
    uint tile[TILE_SIZE * TILE_SIZE] ALIGN16_ATTRIB;
+   int tag = init.id;
 
    for (i = 0; i < TILE_SIZE * TILE_SIZE; i++)
       tile[i] = clear->value;
@@ -131,9 +132,9 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
    for (i = init.id; i < num_tiles; i += init.num_spus) {
       uint tx = i % fb.width_tiles;
       uint ty = i / fb.width_tiles;
-      put_tile(&fb, tx, ty, tile, DefaultTag);
+      put_tile(&fb, tx, ty, tile, tag);
       /* XXX we don't want this here, but it fixes bad tile results */
-      wait_on_mask(1 << DefaultTag);
+      wait_on_mask(1 << tag);
    }
 
 }
@@ -148,6 +149,15 @@ tile_bounding_box(const struct cell_command_render *render,
                   uint *txmin, uint *tymin,
                   uint *box_num_tiles, uint *box_width_tiles)
 {
+#if 0
+   /* Debug: full-window bounding box */
+   uint txmax = fb.width_tiles - 1;
+   uint tymax = fb.height_tiles - 1;
+   *txmin = 0;
+   *tymin = 0;
+   *box_num_tiles = fb.width_tiles * fb.height_tiles;
+   *box_width_tiles = fb.width_tiles;
+#else
    uint txmax, tymax, box_height_tiles;
 
    *txmin = (uint) render->xmin / TILE_SIZE;
@@ -157,11 +167,12 @@ tile_bounding_box(const struct cell_command_render *render,
    *box_width_tiles = txmax - *txmin + 1;
    box_height_tiles = tymax - *tymin + 1;
    *box_num_tiles = *box_width_tiles * box_height_tiles;
-   /*
+#endif
+#if 0
    printf("Render bounds: %g, %g  ...  %g, %g\n",
           render->xmin, render->ymin, render->xmax, render->ymax);
    printf("Render tiles:  %u, %u .. %u, %u\n", *txmin, *tymin, txmax, tymax);
-   */
+#endif
 }
 
 
@@ -171,7 +182,7 @@ render(const struct cell_command_render *render)
 {
    const uint num_tiles = fb.width_tiles * fb.height_tiles;
    struct cell_prim_buffer prim_buffer ALIGN16_ATTRIB;
-   int tag = DefaultTag;
+   int tag = init.id /**DefaultTag**/;
    uint i, j, vertex_bytes;
 
    /*
@@ -206,8 +217,11 @@ render(const struct cell_command_render *render)
       const uint tx = txmin + i % box_width_tiles;
       const uint ty = tymin + i / box_width_tiles;
 
-      get_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
-      wait_on_mask(1 << DefaultTag);  /* XXX temporary */
+      assert(tx < fb.width_tiles);
+      assert(ty < fb.height_tiles);
+
+      get_tile(&fb, tx, ty, (uint *) tile, tag);
+      wait_on_mask(1 << tag);  /* XXX temporary */
 
       assert(render->prim_type == PIPE_PRIM_TRIANGLES);
 
@@ -239,8 +253,8 @@ render(const struct cell_command_render *render)
          tri_draw(&prim, tx, ty);
       }
 
-      put_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
-      wait_on_mask(1 << DefaultTag); /* XXX temp */
+      put_tile(&fb, tx, ty, (uint *) tile, tag);
+      wait_on_mask(1 << tag); /* XXX temp */
    }
 }
 
