@@ -328,7 +328,6 @@ struct brw_state_pointers {
 struct brw_tracked_state {
    struct brw_state_flags dirty;
    void (*update)( struct brw_context *brw );
-   void (*emit_reloc)( struct brw_context *brw );
    GLboolean always_update;
 };
 
@@ -540,7 +539,6 @@ struct brw_context
    struct {
       struct brw_vs_prog_data *prog_data;
 
-      GLuint thread0_delta;
       dri_bo *prog_bo;
       dri_bo *state_bo;
    } vs;
@@ -549,7 +547,6 @@ struct brw_context
       struct brw_gs_prog_data *prog_data;
 
       GLboolean prog_active;
-      GLuint thread0_delta;
       dri_bo *prog_bo;
       dri_bo *state_bo;
    } gs;
@@ -557,7 +554,6 @@ struct brw_context
    struct {
       struct brw_clip_prog_data *prog_data;
 
-      GLuint thread0_delta;
       dri_bo *prog_bo;
       dri_bo *state_bo;
       dri_bo *vp_bo;
@@ -567,8 +563,6 @@ struct brw_context
    struct {
       struct brw_sf_prog_data *prog_data;
 
-      GLuint thread0_delta;
-      GLuint sf5_delta;
       dri_bo *prog_bo;
       dri_bo *state_bo;
       dri_bo *vp_bo;
@@ -598,9 +592,6 @@ struct brw_context
       dri_bo *bind_bo;
       dri_bo *surf_bo[BRW_WM_MAX_SURF];
 
-      GLuint thread0_delta;
-      GLuint thread2_delta;
-      GLuint wm4_delta;
       dri_bo *prog_bo;
       dri_bo *state_bo;
    } wm;

@@ -157,6 +157,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			dri_bo **reloc_bufs)
 {
    struct brw_sf_unit_state sf;
+   dri_bo *bo;
 
    memset(&sf, 0, sizeof(sf));
 
@@ -242,14 +243,27 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    sf.sf6.dest_org_vbias = 0x8;
    sf.sf6.dest_org_hbias = 0x8;
 
-   brw->sf.thread0_delta = sf.thread0.grf_reg_count << 1;
-   brw->sf.sf5_delta = sf.sf5.front_winding | (sf.sf5.viewport_transform << 1);
+   bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
+			 key, sizeof(*key),
+			 reloc_bufs, 2,
+			 &sf, sizeof(sf),
+			 NULL, NULL);
 
-   return brw_upload_cache(&brw->cache, BRW_SF_UNIT,
-			   key, sizeof(*key),
-			   reloc_bufs, 2,
-			   &sf, sizeof(sf),
-			   NULL, NULL);
+   /* Emit SF program relocation */
+   dri_emit_reloc(bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  sf.thread0.grf_reg_count << 1,
+		  offsetof(struct brw_sf_unit_state, thread0),
+		  brw->sf.prog_bo);
+
+   /* Emit SF viewport relocation */
+   dri_emit_reloc(bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  sf.sf5.front_winding | (sf.sf5.viewport_transform << 1),
+		  offsetof(struct brw_sf_unit_state, sf5),
+		  brw->sf.vp_bo);
+
+   return bo;
 }
 
 static void upload_sf_unit( struct brw_context *brw )
@@ -272,23 +286,6 @@ static void upload_sf_unit( struct brw_context *brw )
    }
 }
 
-static void emit_reloc_sf_unit(struct brw_context *brw)
-{
-   /* Emit SF program relocation */
-   dri_emit_reloc(brw->sf.state_bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  brw->sf.thread0_delta,
-		  offsetof(struct brw_sf_unit_state, thread0),
-		  brw->sf.prog_bo);
-
-   /* Emit SF viewport relocation */
-   dri_emit_reloc(brw->sf.state_bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  brw->sf.sf5_delta,
-		  offsetof(struct brw_sf_unit_state, sf5),
-		  brw->sf.vp_bo);
-}
-
 const struct brw_tracked_state brw_sf_unit = {
    .dirty = {
       .mesa  = (_NEW_POLYGON | 
@@ -301,5 +298,4 @@ const struct brw_tracked_state brw_sf_unit = {
 		CACHE_NEW_SF_PROG)
    },
    .update = upload_sf_unit,
-   .emit_reloc = emit_reloc_sf_unit,
 };

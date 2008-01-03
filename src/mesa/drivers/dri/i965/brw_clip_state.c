@@ -69,6 +69,7 @@ clip_unit_create_from_key(struct brw_context *brw,
 			  struct brw_clip_unit_key *key)
 {
    struct brw_clip_unit_state clip;
+   dri_bo *bo;
 
    memset(&clip, 0, sizeof(clip));
 
@@ -106,12 +107,22 @@ clip_unit_create_from_key(struct brw_context *brw,
    clip.viewport_ymin = -1;
    clip.viewport_ymax = 1;
 
-   brw->clip.thread0_delta = clip.thread0.grf_reg_count << 1;
-   return brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
-			   key, sizeof(*key),
-			   &brw->clip.prog_bo, 1,
-			   &clip, sizeof(clip),
-			   NULL, NULL);
+   bo = brw_upload_cache(&brw->cache, BRW_CLIP_UNIT,
+			 key, sizeof(*key),
+			 &brw->clip.prog_bo, 1,
+			 &clip, sizeof(clip),
+			 NULL, NULL);
+
+   if (!brw->metaops.active) {
+      /* Emit clip program relocation */
+      dri_emit_reloc(bo,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		     clip.thread0.grf_reg_count << 1,
+		     offsetof(struct brw_clip_unit_state, thread0),
+		     brw->clip.prog_bo);
+   }
+
+   return bo;
 }
 
 static void upload_clip_unit( struct brw_context *brw )
@@ -130,18 +141,6 @@ static void upload_clip_unit( struct brw_context *brw )
    }
 }
 
-static void emit_reloc_clip_unit(struct brw_context *brw)
-{
-   if (!brw->metaops.active) {
-      /* Emit clip program relocation */
-      dri_emit_reloc(brw->clip.state_bo,
-		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		     brw->clip.thread0_delta,
-		     offsetof(struct brw_clip_unit_state, thread0),
-		     brw->clip.prog_bo);
-   }
-}
-
 const struct brw_tracked_state brw_clip_unit = {
    .dirty = {
       .mesa  = 0,
@@ -150,5 +149,4 @@ const struct brw_tracked_state brw_clip_unit = {
       .cache = CACHE_NEW_CLIP_PROG
    },
    .update = upload_clip_unit,
-   .emit_reloc = emit_reloc_clip_unit,
 };

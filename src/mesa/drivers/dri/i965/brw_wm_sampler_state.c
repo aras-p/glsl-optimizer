@@ -296,27 +296,19 @@ static void upload_wm_samplers( struct brw_context *brw )
 					    brw->wm.sdc_bo, key.sampler_count,
 					    &sampler, sizeof(sampler),
 					    NULL, NULL);
-   }
-}
 
-static void emit_reloc_wm_samplers(struct brw_context *brw)
-{
-   GLuint unit;
+      /* Emit SDC relocations */
+      for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+	 if (!brw->attribs.Texture->Unit[i]._ReallyEnabled)
+	    continue;
 
-   if (brw->wm.sampler_count == 0)
-      return;
-
-   /* Emit SDC relocations */
-   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
-      if (!brw->attribs.Texture->Unit[unit]._ReallyEnabled)
-	 continue;
-
-      dri_emit_reloc(brw->wm.sampler_bo,
-		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		     0,
-		     unit * sizeof(struct brw_sampler_state) +
-		     offsetof(struct brw_sampler_state, ss2),
-		     brw->wm.sdc_bo[unit]);
+	 dri_emit_reloc(brw->wm.sampler_bo,
+			DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+			0,
+			i * sizeof(struct brw_sampler_state) +
+			offsetof(struct brw_sampler_state, ss2),
+			brw->wm.sdc_bo[i]);
+      }
    }
 }
 
@@ -327,7 +319,6 @@ const struct brw_tracked_state brw_wm_samplers = {
       .cache = 0
    },
    .update = upload_wm_samplers,
-  .emit_reloc = emit_reloc_wm_samplers,
 };
 
 

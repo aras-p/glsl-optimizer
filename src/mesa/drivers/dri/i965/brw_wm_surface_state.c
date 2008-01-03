@@ -154,6 +154,7 @@ brw_create_texture_surface( struct brw_context *brw,
 			    struct brw_wm_surface_key *key )
 {
    struct brw_surface_state surf;
+   dri_bo *bo;
 
    memset(&surf, 0, sizeof(surf));
 
@@ -187,11 +188,20 @@ brw_create_texture_surface( struct brw_context *brw,
       surf.ss0.cube_neg_z = 1;
    }
 
-   return brw_upload_cache( &brw->cache, BRW_SS_SURFACE,
-			    key, sizeof(*key),
-			    &key->bo, 1,
-			    &surf, sizeof(surf),
-			    NULL, NULL );
+   bo = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
+			 key, sizeof(*key),
+			 &key->bo, 1,
+			 &surf, sizeof(surf),
+			 NULL, NULL);
+
+   /* Emit relocation to surface contents */
+   dri_emit_reloc(bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  0,
+		  offsetof(struct brw_surface_state, ss1),
+		  key->bo);
+
+   return bo;
 }
 
 static void
@@ -307,7 +317,15 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 					       &surf, sizeof(surf),
 					       NULL, NULL);
 
-      brw->wm.nr_surfaces = 1;
+      if (region_bo != NULL) {
+	 dri_emit_reloc(brw->wm.surf_bo[unit],
+			DRM_BO_FLAG_MEM_TT |
+			DRM_BO_FLAG_READ |
+			DRM_BO_FLAG_WRITE,
+			0,
+			offsetof(struct brw_surface_state, ss1),
+			region_bo);
+      }
    }
 }
 
@@ -343,6 +361,19 @@ brw_wm_get_binding_table(struct brw_context *brw)
 				  data, data_size,
 				  NULL, NULL);
 
+      /* Emit binding table relocations to surface state */
+      for (i = 0; i < BRW_WM_MAX_SURF; i++) {
+	 if (brw->wm.surf_bo[i] != NULL) {
+	    dri_emit_reloc(bind_bo,
+			   DRM_BO_FLAG_MEM_TT |
+			   DRM_BO_FLAG_READ |
+			   DRM_BO_FLAG_WRITE,
+			   0,
+			   i * 4,
+			   brw->wm.surf_bo[i]);
+	 }
+      }
+
       free(data);
    }
 
@@ -356,6 +387,7 @@ static void upload_wm_surfaces(struct brw_context *brw )
    GLuint i;
 
    brw_update_region_surface(brw, brw->state.draw_region, 0);
+   brw->wm.nr_surfaces = 1;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
@@ -385,48 +417,6 @@ static void upload_wm_surfaces(struct brw_context *brw )
    brw->wm.bind_bo = brw_wm_get_binding_table(brw);
 }
 
-static void emit_reloc_wm_surfaces(struct brw_context *brw)
-{
-   int unit, i;
-
-   /* Emit SS framebuffer relocation */
-   if (brw->state.draw_region != NULL) {
-      dri_emit_reloc(brw->wm.surf_bo[0],
-		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
-		     0,
-		     offsetof(struct brw_surface_state, ss1),
-		     brw->state.draw_region->buffer);
-   }
-
-   /* Emit SS relocations for texture buffers */
-   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
-      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[unit];
-      struct gl_texture_object *tObj = texUnit->_Current;
-      struct intel_texture_object *intelObj = intel_texture_object(tObj);
-
-      if (texUnit->_ReallyEnabled && intelObj->mt != NULL) {
-	 dri_emit_reloc(brw->wm.surf_bo[unit + 1],
-			DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-			0,
-			offsetof(struct brw_surface_state, ss1),
-			intelObj->mt->region->buffer);
-      }
-   }
-
-   /* Emit binding table relocations to surface state */
-   for (i = 0; i < BRW_WM_MAX_SURF; i++) {
-      if (brw->wm.surf_bo[i] != NULL) {
-	 dri_emit_reloc(brw->wm.bind_bo,
-			DRM_BO_FLAG_MEM_TT |
-			DRM_BO_FLAG_READ |
-			DRM_BO_FLAG_WRITE,
-			0,
-			i * 4,
-			brw->wm.surf_bo[i]);
-      }
-   }
-}
-
 const struct brw_tracked_state brw_wm_surfaces = {
    .dirty = {
       .mesa = _NEW_COLOR | _NEW_TEXTURE | _NEW_BUFFERS,
@@ -434,7 +424,6 @@ const struct brw_tracked_state brw_wm_surfaces = {
       .cache = 0
    },
    .update = upload_wm_surfaces,
-   .emit_reloc = emit_reloc_wm_surfaces,
 };
 
 

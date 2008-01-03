@@ -76,6 +76,7 @@ static dri_bo *
 vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 {
    struct brw_vs_unit_state vs;
+   dri_bo *bo;
 
    memset(&vs, 0, sizeof(vs));
 
@@ -107,12 +108,20 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     */
    vs.vs6.vs_enable = 1;
 
-   brw->vs.thread0_delta = vs.thread0.grf_reg_count << 1;
-   return brw_upload_cache(&brw->cache, BRW_VS_UNIT,
-			   key, sizeof(*key),
-			   &brw->vs.prog_bo, 1,
-			   &vs, sizeof(vs),
-			   NULL, NULL);
+   bo = brw_upload_cache(&brw->cache, BRW_VS_UNIT,
+			 key, sizeof(*key),
+			 &brw->vs.prog_bo, 1,
+			 &vs, sizeof(vs),
+			 NULL, NULL);
+
+   /* Emit VS program relocation */
+   dri_emit_reloc(bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  vs.thread0.grf_reg_count << 1,
+		  offsetof(struct brw_vs_unit_state, thread0),
+		  brw->vs.prog_bo);
+
+   return bo;
 }
 
 static void upload_vs_unit( struct brw_context *brw )
@@ -131,16 +140,6 @@ static void upload_vs_unit( struct brw_context *brw )
    }
 }
 
-static void emit_reloc_vs_unit(struct brw_context *brw)
-{
-   /* Emit VS program relocation */
-   dri_emit_reloc(brw->vs.state_bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  brw->vs.thread0_delta,
-		  offsetof(struct brw_vs_unit_state, thread0),
-		  brw->vs.prog_bo);
-}
-
 const struct brw_tracked_state brw_vs_unit = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM,
@@ -149,5 +148,4 @@ const struct brw_tracked_state brw_vs_unit = {
       .cache = CACHE_NEW_VS_PROG
    },
    .update = upload_vs_unit,
-   .emit_reloc = emit_reloc_vs_unit,
 };

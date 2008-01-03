@@ -73,6 +73,7 @@ static dri_bo *
 gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
 {
    struct brw_gs_unit_state gs;
+   dri_bo *bo;
 
    memset(&gs, 0, sizeof(gs));
 
@@ -97,12 +98,22 @@ gs_unit_create_from_key(struct brw_context *brw, struct brw_gs_unit_key *key)
    if (INTEL_DEBUG & DEBUG_STATS)
       gs.thread4.stats_enable = 1;
 
-   brw->gs.thread0_delta = gs.thread0.grf_reg_count << 1;
-   return brw_upload_cache(&brw->cache, BRW_GS_UNIT,
-			   key, sizeof(*key),
-			   &brw->gs.prog_bo, 1,
-			   &gs, sizeof(gs),
-			   NULL, NULL);
+   bo = brw_upload_cache(&brw->cache, BRW_GS_UNIT,
+			 key, sizeof(*key),
+			 &brw->gs.prog_bo, 1,
+			 &gs, sizeof(gs),
+			 NULL, NULL);
+
+   if (key->prog_active) {
+      /* Emit GS program relocation */
+      dri_emit_reloc(bo,
+		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		     gs.thread0.grf_reg_count << 1,
+		     offsetof(struct brw_gs_unit_state, thread0),
+		     brw->gs.prog_bo);
+   }
+
+   return bo;
 }
 
 static void upload_gs_unit( struct brw_context *brw )
@@ -121,18 +132,6 @@ static void upload_gs_unit( struct brw_context *brw )
    }
 }
 
-static void emit_reloc_gs_unit(struct brw_context *brw)
-{
-   if (brw->gs.prog_active) {
-      /* Emit GS program relocation */
-      dri_emit_reloc(brw->gs.state_bo,
-		     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		     brw->gs.thread0_delta,
-		     offsetof(struct brw_gs_unit_state, thread0),
-		     brw->gs.prog_bo);
-   }
-}
-
 const struct brw_tracked_state brw_gs_unit = {
    .dirty = {
       .mesa  = 0,
@@ -141,5 +140,4 @@ const struct brw_tracked_state brw_gs_unit = {
       .cache = CACHE_NEW_GS_PROG
    },
    .update = upload_gs_unit,
-   .emit_reloc = emit_reloc_gs_unit,
 };

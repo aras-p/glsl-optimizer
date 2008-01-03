@@ -232,8 +232,6 @@ void brw_validate_state( struct brw_context *brw )
 	    
 /* 	    emit_foo(brw); */
 	 }
-	 if (atom->emit_reloc != NULL)
-	    atom->emit_reloc(brw);
 
 	 accumulate_state(&examined, &atom->dirty);
 
@@ -252,8 +250,6 @@ void brw_validate_state( struct brw_context *brw )
 
 	 if (check_state(state, &atom->dirty) || atom->always_update)
 	    atom->update( brw );
-	 if (atom->emit_reloc != NULL)
-	    atom->emit_reloc(brw);
       }
    }
 

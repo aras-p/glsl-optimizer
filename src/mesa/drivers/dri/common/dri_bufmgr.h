@@ -136,7 +136,10 @@ struct _dri_bufmgr {
    void (*destroy)(dri_bufmgr *bufmgr);
 
    /**
-    * Add relocation entry in reloc_buf, to be set on command submission.
+    * Add relocation entry in reloc_buf, which will be updated with the
+    * target buffer's real offset on on command submission.
+    *
+    * Relocations remain in place for the lifetime of the buffer object.
     *
     * \param reloc_buf Buffer to write the relocation into.
     * \param flags BO flags to be used in validating the target buffer.

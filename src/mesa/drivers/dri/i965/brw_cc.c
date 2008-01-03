@@ -147,6 +147,7 @@ static dri_bo *
 cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
 {
    struct brw_cc_unit_state cc;
+   dri_bo *bo;
 
    memset(&cc, 0, sizeof(cc));
 
@@ -248,11 +249,20 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    if (INTEL_DEBUG & DEBUG_STATS)
       cc.cc5.statistics_enable = 1;
 
-   return brw_upload_cache(&brw->cache, BRW_CC_UNIT,
-			   key, sizeof(*key),
-			   &brw->cc.vp_bo, 1,
-			   &cc, sizeof(cc),
-			   NULL, NULL);
+   bo = brw_upload_cache(&brw->cache, BRW_CC_UNIT,
+			 key, sizeof(*key),
+			 &brw->cc.vp_bo, 1,
+			 &cc, sizeof(cc),
+			 NULL, NULL);
+
+   /* Emit CC viewport relocation */
+   dri_emit_reloc(bo,
+		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  0,
+		  offsetof(struct brw_cc_unit_state, cc4),
+		  brw->cc.vp_bo);
+
+   return bo;
 }
 
 static void upload_cc_unit( struct brw_context *brw )
@@ -271,16 +281,6 @@ static void upload_cc_unit( struct brw_context *brw )
       brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
 }
 
-static void emit_reloc_cc_unit(struct brw_context *brw)
-{
-   /* Emit CC viewport relocation */
-   dri_emit_reloc(brw->cc.state_bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		  0,
-		  offsetof(struct brw_cc_unit_state, cc4),
-		  brw->cc.vp_bo);
-}
-
 const struct brw_tracked_state brw_cc_unit = {
    .dirty = {
       .mesa = _NEW_STENCIL | _NEW_COLOR | _NEW_DEPTH,
@@ -288,7 +288,6 @@ const struct brw_tracked_state brw_cc_unit = {
       .cache = CACHE_NEW_CC_VP
    },
    .update = upload_cc_unit,
-   .emit_reloc = emit_reloc_cc_unit,
 };
 
 

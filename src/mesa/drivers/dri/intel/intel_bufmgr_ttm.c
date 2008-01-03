@@ -81,6 +81,15 @@ typedef struct _dri_bufmgr_ttm {
     struct intel_bo_list list; /* list of buffers to be validated */
 } dri_bufmgr_ttm;
 
+/**
+ * Private information associated with a relocation that isn't already stored
+ * in the relocation buffer to be passed to the kernel.
+ */
+struct dri_ttm_reloc {
+    dri_bo *target_buf;
+    uint64_t validate_flags;
+};
+
 typedef struct _dri_bo_ttm {
     dri_bo bo;
 
@@ -88,9 +97,15 @@ typedef struct _dri_bo_ttm {
     drmBO drm_bo;
     const char *name;
 
+    /* Index of the buffer within the validation list while preparing a
+     * batchbuffer execution.
+     */
+    int validate_index;
+
     /** DRM buffer object containing relocation list */
     drmBO *reloc_buf;
-    uint32_t *relocs;
+    uint32_t *reloc_buf_data;
+    struct dri_ttm_reloc *relocs;
 } dri_bo_ttm;
 
 typedef struct _dri_fence_ttm
@@ -130,13 +145,8 @@ intel_free_validate_list(dri_bufmgr_ttm *bufmgr_ttm)
     for (l = list->list.next; l != &list->list; l = list->list.next) {
         struct intel_bo_node *node =
 	   DRMLISTENTRY(struct intel_bo_node, l, head);
-	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)node->bo;
 
 	DRMLISTDEL(l);
-
-	/* Clear relocation list */
-	if (bo_ttm->relocs != NULL)
-	   bo_ttm->relocs[0] = bo_ttm->relocs[0] & ~0xffff;
 
 	dri_bo_unreference(node->bo);
 
@@ -157,9 +167,10 @@ static void dri_ttm_dump_validation_list(dri_bufmgr_ttm *bufmgr_ttm)
 	    DRMLISTENTRY(struct intel_bo_node, l, head);
 	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)node->bo;
 
-	if (bo_ttm->relocs != NULL) {
-	    for (j = 0; j < (bo_ttm->relocs[0] & 0xffff); j++) {
-		uint32_t *reloc_entry = bo_ttm->relocs + I915_RELOC_HEADER +
+	if (bo_ttm->reloc_buf_data != NULL) {
+	    for (j = 0; j < (bo_ttm->reloc_buf_data[0] & 0xffff); j++) {
+		uint32_t *reloc_entry = bo_ttm->reloc_buf_data +
+		    I915_RELOC_HEADER +
 		    j * I915_RELOC0_STRIDE;
 
 		DBG("%2d: %s@0x%08x -> %d + 0x%08x\n",
@@ -234,11 +245,10 @@ intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
  * access flags.
  */
 static struct intel_bo_node *
-intel_add_validate_buffer(dri_bufmgr_ttm *bufmgr_ttm,
-			  dri_bo *buf,
-			  uint64_t flags,
-			  int *itemLoc)
+intel_add_validate_buffer(dri_bo *buf,
+			  uint64_t flags)
 {
+    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
     struct intel_bo_list *list = &bufmgr_ttm->list;
     struct intel_bo_node *cur;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
@@ -289,7 +299,8 @@ intel_add_validate_buffer(dri_bufmgr_ttm *bufmgr_ttm,
 	}
 	cur->flags = memFlags | modeFlags;
     }
-    *itemLoc = count;
+
+    ttm_buf->validate_index = count;
 
     return cur;
 }
@@ -312,6 +323,8 @@ intel_setup_reloc_list(dri_bo *bo)
        return 0;
 
     bo_ttm->reloc_buf = malloc(sizeof(bo_ttm->drm_bo));
+    bo_ttm->relocs = malloc(sizeof(struct dri_ttm_reloc) *
+			    bufmgr_ttm->max_relocs);
 
     ret = drmBOCreate(bufmgr_ttm->fd,
 		      RELOC_BUF_SIZE(bufmgr_ttm->max_relocs), 0,
@@ -330,7 +343,7 @@ intel_setup_reloc_list(dri_bo *bo)
 
     ret = drmBOMap(bufmgr_ttm->fd, bo_ttm->reloc_buf,
 		   DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
-		   0, (void **)&bo_ttm->relocs);
+		   0, (void **)&bo_ttm->reloc_buf_data);
     if (ret) {
        fprintf(stderr, "Failed to map relocation BO: %s\n",
 	       strerror(-ret));
@@ -343,10 +356,10 @@ intel_setup_reloc_list(dri_bo *bo)
      * DWORD 2: unused
      * DWORD 3: unused
      */
-    bo_ttm->relocs[0] = I915_RELOC_TYPE_0 << 16;
-    bo_ttm->relocs[1] = 0;
-    bo_ttm->relocs[2] = 0;
-    bo_ttm->relocs[3] = 0;
+    bo_ttm->reloc_buf_data[0] = I915_RELOC_TYPE_0 << 16;
+    bo_ttm->reloc_buf_data[1] = 0;
+    bo_ttm->reloc_buf_data[2] = 0;
+    bo_ttm->reloc_buf_data[3] = 0;
 
     return 0;
 }
@@ -404,6 +417,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->name = name;
     ttm_buf->refcount = 1;
     ttm_buf->reloc_buf = NULL;
+    ttm_buf->reloc_buf_data = NULL;
     ttm_buf->relocs = NULL;
 
     DBG("bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
@@ -455,6 +469,7 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->name = name;
     ttm_buf->refcount = 1;
     ttm_buf->reloc_buf = NULL;
+    ttm_buf->reloc_buf_data = NULL;
     ttm_buf->relocs = NULL;
 
     DBG("bo_create_from_handle: %p %08x (%s)\n",
@@ -484,6 +499,14 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	int ret;
 
 	if (ttm_buf->reloc_buf) {
+	    int i;
+
+	    /* Unreference all the target buffers */
+	    for (i = 0; i < (ttm_buf->reloc_buf_data[0] & 0xffff); i++)
+		 dri_bo_unreference(ttm_buf->relocs[i].target_buf);
+	    free(ttm_buf->relocs);
+
+	    /* Free the kernel BO containing relocation entries */
 	    drmBOUnmap(bufmgr_ttm->fd, ttm_buf->reloc_buf);
 	    drmBOUnreference(bufmgr_ttm->fd, ttm_buf->reloc_buf);
 	    free(ttm_buf->reloc_buf);
@@ -653,47 +676,83 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)reloc_buf->bufmgr;
     dri_bo_ttm *reloc_buf_ttm = (dri_bo_ttm *)reloc_buf;
-    struct intel_bo_node *node;
-    int index;
     int num_relocs;
     uint32_t *this_reloc;
 
-    node = intel_add_validate_buffer(bufmgr_ttm, target_buf, flags, &index);
-
     intel_setup_reloc_list(reloc_buf);
 
-    num_relocs = (reloc_buf_ttm->relocs[0] & 0xffff);
+    num_relocs = (reloc_buf_ttm->reloc_buf_data[0] & 0xffff);
 
     /* Check overflow */
-    assert((reloc_buf_ttm->relocs[0] & 0xffff) < bufmgr_ttm->max_relocs);
+    assert((reloc_buf_ttm->reloc_buf_data[0] & 0xffff) <
+	   bufmgr_ttm->max_relocs);
 
-    this_reloc = reloc_buf_ttm->relocs + I915_RELOC_HEADER +
+    this_reloc = reloc_buf_ttm->reloc_buf_data + I915_RELOC_HEADER +
 	num_relocs * I915_RELOC0_STRIDE;
 
     this_reloc[0] = offset;
     this_reloc[1] = delta;
-    this_reloc[2] = index;
+    this_reloc[2] = -1; /* To be filled in at exec time */
     this_reloc[3] = 0;
 
-    reloc_buf_ttm->relocs[0]++; /* Increment relocation count */
+    reloc_buf_ttm->relocs[num_relocs].validate_flags = flags;
+    reloc_buf_ttm->relocs[num_relocs].target_buf = target_buf;
+    dri_bo_reference(target_buf);
+
+    reloc_buf_ttm->reloc_buf_data[0]++; /* Increment relocation count */
     /* Check wraparound */
-    assert((reloc_buf_ttm->relocs[0] & 0xffff) != 0);
+    assert((reloc_buf_ttm->reloc_buf_data[0] & 0xffff) != 0);
 }
 
+/**
+ * Walk the tree of relocations rooted at BO and accumulate the list of
+ * validations to be performed and update the relocation buffers with
+ * index values into the validation list.
+ */
+static void
+dri_ttm_bo_process_reloc(dri_bo *bo)
+{
+    dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
+    unsigned int nr_relocs;
+    int i;
+
+    if (bo_ttm->reloc_buf_data == NULL)
+	return;
+
+    nr_relocs = bo_ttm->reloc_buf_data[0] & 0xffff;
+
+    for (i = 0; i < nr_relocs; i++) {
+	struct dri_ttm_reloc *r = &bo_ttm->relocs[i];
+	dri_bo_ttm *target_ttm = (dri_bo_ttm *)r->target_buf;
+	uint32_t *reloc_entry;
+
+	/* Continue walking the tree depth-first. */
+	dri_ttm_bo_process_reloc(r->target_buf);
+
+	/* Add the target to the validate list */
+	intel_add_validate_buffer(r->target_buf, r->validate_flags);
+
+	/* Update the index of the target in the relocation entry */
+	reloc_entry = bo_ttm->reloc_buf_data + I915_RELOC_HEADER +
+	    i * I915_RELOC0_STRIDE;
+	reloc_entry[2] = target_ttm->validate_index;
+    }
+}
 
 static void *
 dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
     void *ptr;
-    int index;
+
+    /* Update indices and set up the validate list. */
+    dri_ttm_bo_process_reloc(batch_buf);
 
     /* Add the batch buffer to the validation list.  There are no relocations
      * pointing to it.
      */
-    intel_add_validate_buffer(bufmgr_ttm, batch_buf,
-			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
-			      &index);
+    intel_add_validate_buffer(batch_buf,
+			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
 
     ptr = intel_setup_validate_list(bufmgr_ttm, count);
 
