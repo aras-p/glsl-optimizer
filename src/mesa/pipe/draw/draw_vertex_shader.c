@@ -227,7 +227,7 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 }
 
 
-void *
+struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
 {
@@ -263,10 +263,10 @@ draw_create_vertex_shader(struct draw_context *draw,
 }
 
 void draw_bind_vertex_shader(struct draw_context *draw,
-                             void *vcso)
+                             struct draw_vertex_shader *dvs)
 {
    draw_flush(draw);
-   draw->vertex_shader = (struct draw_vertex_shader*)(vcso);
+   draw->vertex_shader = dvs;
 
    /* specify the fragment program to interpret/execute */
    tgsi_exec_machine_init(&draw->machine,
@@ -276,15 +276,11 @@ void draw_bind_vertex_shader(struct draw_context *draw,
 }
 
 void draw_delete_vertex_shader(struct draw_context *draw,
-                               void *vcso)
+                               struct draw_vertex_shader *dvs)
 {
-   struct draw_vertex_shader *vs;
-
-   vs = (struct draw_vertex_shader *) vcso;
-
 #if defined(__i386__) || defined(__386__)
-   x86_release_func( (struct x86_function *) &vs->sse2_program );
+   x86_release_func( (struct x86_function *) &dvs->sse2_program );
 #endif
 
-   FREE( vs );
+   FREE( dvs );
 }

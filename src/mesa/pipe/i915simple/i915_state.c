@@ -438,12 +438,12 @@ i915_create_vs_state(struct pipe_context *pipe,
    return draw_create_vertex_shader(i915->draw, templ);
 }
 
-static void i915_bind_vs_state(struct pipe_context *pipe, void *vs)
+static void i915_bind_vs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_context *i915 = i915_context(pipe);
 
    /* just pass-through to draw module */
-   draw_bind_vertex_shader(i915->draw, vs);
+   draw_bind_vertex_shader(i915->draw, (struct draw_vertex_shader *) shader);
 }
 
 static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
@@ -451,7 +451,7 @@ static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
    struct i915_context *i915 = i915_context(pipe);
 
    /* just pass-through to draw module */
-   draw_delete_vertex_shader(i915->draw, shader);
+   draw_delete_vertex_shader(i915->draw, (struct draw_vertex_shader *) shader);
 }
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
