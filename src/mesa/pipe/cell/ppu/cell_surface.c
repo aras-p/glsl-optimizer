@@ -71,37 +71,4 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       cell_global.command[i].clear.value = clearValue | (i << 21);
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
-
-#if 0
-   /* XXX Draw a test triangle over the cleared surface */
-   for (i = 0; i < cell->num_spus; i++) {
-      /* Same triangle data for all SPUs */
-      struct cell_command_triangle *tri = &cell_global.command[i].tri;
-      tri->vert[0][0] = 20.0;
-      tri->vert[0][1] = ps->height - 20;
-
-      tri->vert[1][0] = ps->width - 20.0;
-      tri->vert[1][1] = ps->height - 20;
-
-      tri->vert[2][0] = ps->width / 2;
-      tri->vert[2][1] = 20.0;
-
-      tri->color[0][0] = 1.0;
-      tri->color[0][1] = 0.0;
-      tri->color[0][2] = 0.0;
-      tri->color[0][3] = 0.0;
-
-      tri->color[1][0] = 0.0;
-      tri->color[1][1] = 1.0;
-      tri->color[1][2] = 0.0;
-      tri->color[1][3] = 0.0;
-
-      tri->color[2][0] = 0.0;
-      tri->color[2][1] = 0.0;
-      tri->color[2][2] = 1.0;
-      tri->color[2][3] = 0.0;
-
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_TRIANGLE);
-   }
-#endif
 }

@@ -139,30 +139,6 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
 
 
 static void
-triangle(const struct cell_command_triangle *tri)
-{
-   uint num_tiles = fb.width_tiles * fb.height_tiles;
-   struct prim_header prim;
-   uint i;
-
-   COPY_4V(prim.v[0].data[0], tri->vert[0]);
-   COPY_4V(prim.v[1].data[0], tri->vert[1]);
-   COPY_4V(prim.v[2].data[0], tri->vert[2]);
-
-   COPY_4V(prim.v[0].data[1], tri->color[0]);
-   COPY_4V(prim.v[1].data[1], tri->color[1]);
-   COPY_4V(prim.v[2].data[1], tri->color[2]);
-
-   for (i = init.id; i < num_tiles; i += init.num_spus) {
-      uint tx = i % fb.width_tiles;
-      uint ty = i / fb.width_tiles;
-      draw_triangle(&prim, tx, ty);
-   }
-}
-
-
-
-static void
 render(const struct cell_command_render *render)
 {
    const uint num_tiles = fb.width_tiles * fb.height_tiles;
@@ -223,7 +199,7 @@ render(const struct cell_command_render *render)
          COPY_4V(prim.v[1].data[1], prim_buffer.vertex[j+1][1]);
          COPY_4V(prim.v[2].data[1], prim_buffer.vertex[j+2][1]);
 
-         draw_triangle(&prim, tx, ty);
+         tri_draw(&prim, tx, ty);
       }
 
       put_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
@@ -287,10 +263,6 @@ main_loop(void)
       case CELL_CMD_CLEAR_TILES:
          printf("SPU %u: CLEAR to 0x%08x\n", init.id, cmd.clear.value);
          clear_tiles(&cmd.clear);
-         break;
-      case CELL_CMD_TRIANGLE:
-         printf("SPU %u: TRIANGLE\n", init.id);
-         triangle(&cmd.tri);
          break;
       case CELL_CMD_RENDER:
          printf("SPU %u: RENDER %u verts, prim %u\n",

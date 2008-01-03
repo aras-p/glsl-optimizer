@@ -49,7 +49,6 @@
 #define CELL_CMD_EXIT         1
 #define CELL_CMD_FRAMEBUFFER  2
 #define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_TRIANGLE     4
 #define CELL_CMD_FINISH       5
 #define CELL_CMD_RENDER       6
 
@@ -74,13 +73,6 @@ struct cell_command_clear_tiles
 } ALIGN16_ATTRIB;
 
 
-struct cell_command_triangle
-{
-   float vert[3][4];
-   float color[3][4];
-} ALIGN16_ATTRIB;
-
-
 struct cell_command_render
 {
    uint prim_type;
@@ -95,7 +87,6 @@ struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_tiles clear;
-   struct cell_command_triangle tri;
    struct cell_command_render render;
 } ALIGN16_ATTRIB;
 

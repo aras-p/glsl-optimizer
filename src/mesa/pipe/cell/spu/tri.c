@@ -868,25 +868,10 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
 #endif
 
 
-void
-draw_triangle(struct prim_header *tri, uint tx, uint ty)
-{
-   /* set clipping bounds to tile bounds */
-   cliprect_minx = tx * TILE_SIZE;
-   cliprect_miny = ty * TILE_SIZE;
-   cliprect_maxx = (tx + 1) * TILE_SIZE;
-   cliprect_maxy = (ty + 1) * TILE_SIZE;
-
-   get_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
-   wait_on_mask(1 << DefaultTag);
-
-   setup_tri(tri);
-
-   put_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
-   wait_on_mask(1 << DefaultTag);
-}
-
-
+/**
+ * Draw triangle into tile at (tx, ty) (tile coords)
+ * The tile data should have already been fetched.
+ */
 void
 tri_draw(struct prim_header *tri, uint tx, uint ty)
 {
