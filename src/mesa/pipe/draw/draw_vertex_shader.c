@@ -117,7 +117,11 @@ run_vertex_program(struct draw_context *draw,
 #if defined(__i386__) || defined(__386__)
    if (draw->use_sse) {
       /* SSE */
-      codegen_function func = (codegen_function) x86_get_func( &draw->vertex_shader->sse2_program );
+      /* cast away const */
+      struct draw_vertex_shader *shader
+         = (struct draw_vertex_shader *)draw->vertex_shader;
+      codegen_function func
+         = (codegen_function) x86_get_func( &shader->sse2_program );
       func(
          machine->Inputs,
          machine->Outputs,
@@ -193,7 +197,8 @@ run_vertex_program(struct draw_context *draw,
  * Run the vertex shader on all vertices in the vertex queue.
  * Called by the draw module when the vertx cache needs to be flushed.
  */
-void draw_vertex_shader_queue_flush( struct draw_context *draw )
+void
+draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
    unsigned i, j;
 
@@ -246,7 +251,7 @@ draw_create_vertex_shader(struct draw_context *draw,
       struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
 
       x86_init_func( &vs->sse2_program );
-      tgsi_emit_sse2( sh->tokens, &vs->sse2_program );
+      tgsi_emit_sse2( (struct tgsi_token *) sh->tokens, &vs->sse2_program );
    }
 #endif
 #ifdef MESA_LLVM
@@ -255,15 +260,18 @@ draw_create_vertex_shader(struct draw_context *draw,
    if (!draw->engine) {
       draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);
    }
-   else
+   else {
       gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
+   }
 #endif
 
    return vs;
 }
 
-void draw_bind_vertex_shader(struct draw_context *draw,
-                             struct draw_vertex_shader *dvs)
+
+void
+draw_bind_vertex_shader(struct draw_context *draw,
+                        struct draw_vertex_shader *dvs)
 {
    draw_flush(draw);
    draw->vertex_shader = dvs;
@@ -275,8 +283,10 @@ void draw_bind_vertex_shader(struct draw_context *draw,
                           NULL /*samplers*/ );
 }
 
-void draw_delete_vertex_shader(struct draw_context *draw,
-                               struct draw_vertex_shader *dvs)
+
+void
+draw_delete_vertex_shader(struct draw_context *draw,
+                          struct draw_vertex_shader *dvs)
 {
 #if defined(__i386__) || defined(__386__)
    x86_release_func( (struct x86_function *) &dvs->sse2_program );
