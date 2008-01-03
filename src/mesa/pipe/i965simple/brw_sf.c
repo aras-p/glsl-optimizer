@@ -58,7 +58,7 @@ static void compile_sf_prog( struct brw_context *brw,
    c.nr_attrs = c.key.vp_output_count;
    c.nr_attr_regs = (c.nr_attrs+1)/2;
 
-   c.nr_setup_attrs = c.key.fp_input_count;
+   c.nr_setup_attrs = c.key.fp_input_count + 1; /* +1 for position */
    c.nr_setup_regs = (c.nr_setup_attrs+1)/2;
 
    c.prog_data.urb_read_length = c.nr_attr_regs;
@@ -204,6 +204,14 @@ static void upload_sf_prog( struct brw_context *brw )
 	 break;
       }
    }
+
+   /* Hack: Adjust for position.  Optimize away when not required (ie
+    * for perspective interpolation).
+    */
+   key.persp_mask <<= 1;
+   key.linear_mask <<= 1; 
+   key.linear_mask |= 1;
+   key.const_mask <<= 1;
 
    _mesa_printf("key.persp_mask: %x\n", key.persp_mask);
    _mesa_printf("key.linear_mask: %x\n", key.linear_mask);
