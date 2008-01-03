@@ -486,10 +486,10 @@ intelInitContext(struct intel_context *intel,
    switch (mesaVis->depthBits) {
    case 0:                     /* what to do in this case? */
    case 16:
-      intel->polygon_offset_scale = 1.0 / 0xffff;
+      intel->polygon_offset_scale = 1.0;
       break;
    case 24:
-      intel->polygon_offset_scale = 2.0 / 0xffffff;     /* req'd to pass glean */
+      intel->polygon_offset_scale = 2.0;     /* req'd to pass glean */
       break;
    default:
       assert(0);
