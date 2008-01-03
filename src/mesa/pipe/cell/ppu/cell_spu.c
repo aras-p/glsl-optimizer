@@ -158,16 +158,19 @@ void
 test_spus(struct cell_context *cell)
 {
    uint i;
-   struct pipe_surface *surf = cell->framebuffer.cbufs[0];
+   struct pipe_surface *csurf = cell->framebuffer.cbufs[0];
+   struct pipe_surface *zsurf = cell->framebuffer.zbuf;
 
    printf("PPU: sleep(2)\n\n\n");
    sleep(2);
 
    for (i = 0; i < cell->num_spus; i++) {
-      cell_global.command[i].fb.start = surf->map;
-      cell_global.command[i].fb.width = surf->width;
-      cell_global.command[i].fb.height = surf->height;
-      cell_global.command[i].fb.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      cell_global.command[i].fb.color_start = csurf->map;
+      cell_global.command[i].fb.depth_start = zsurf ? zsurf->map : NULL;
+      cell_global.command[i].fb.width = csurf->width;
+      cell_global.command[i].fb.height = csurf->height;
+      cell_global.command[i].fb.color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      cell_global.command[i].fb.depth_format = PIPE_FORMAT_Z32_UNORM;
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
@@ -179,7 +182,7 @@ test_spus(struct cell_context *cell)
    finish_all(cell->num_spus);
 
    {
-      uint *b = (uint*) surf->map;
+      uint *b = (uint*) csurf->map;
       printf("PPU: Clear results: 0x%x 0x%x 0x%x 0x%x\n",
              b[0], b[1000], b[2000], b[3000]);
    }

@@ -234,7 +234,7 @@ pack_color(const float color[4])
    uint g = (uint) (color[1] * 255.0);
    uint b = (uint) (color[2] * 255.0);
    uint a = (uint) (color[3] * 255.0);
-   switch (fb.format) {
+   switch (fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return (a << 24) | (r << 16) | (g << 8) | b;
    case PIPE_FORMAT_B8G8R8A8_UNORM:

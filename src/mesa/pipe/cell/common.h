@@ -59,9 +59,9 @@
  */
 struct cell_command_framebuffer
 {
-   void *start;
    int width, height;
-   enum pipe_format format;
+   void *color_start, *depth_start;
+   enum pipe_format color_format, depth_format;
 } ALIGN16_ATTRIB;
 
 

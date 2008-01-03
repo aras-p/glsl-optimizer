@@ -70,7 +70,7 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
 {
    uint offset = ty * fb->width_tiles + tx;
    uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
-   ubyte *src = (ubyte *) fb->start + offset * bytesPerTile;
+   ubyte *src = (ubyte *) fb->color_start + offset * bytesPerTile;
 
    assert(tx < fb->width_tiles);
    assert(ty < fb->height_tiles);
@@ -94,7 +94,7 @@ put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
 {
    uint offset = ty * fb->width_tiles + tx;
    uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
-   ubyte *dst = (ubyte *) fb->start + offset * bytesPerTile;
+   ubyte *dst = (ubyte *) fb->color_start + offset * bytesPerTile;
 
    assert(tx < fb->width_tiles);
    assert(ty < fb->height_tiles);
@@ -180,7 +180,6 @@ tile_bounding_box(const struct cell_command_render *render,
 static void
 render(const struct cell_command_render *render)
 {
-   const uint num_tiles = fb.width_tiles * fb.height_tiles;
    struct cell_prim_buffer prim_buffer ALIGN16_ATTRIB;
    int tag = init.id /**DefaultTag**/;
    uint i, j, vertex_bytes;
@@ -302,16 +301,20 @@ main_loop(void)
          printf("SPU %u: FRAMEBUFFER: %d x %d at %p, format 0x%x\n", init.id,
                 cmd.fb.width,
                 cmd.fb.height,
-                cmd.fb.start,
-                cmd.fb.format);
-         fb.format = cmd.fb.format;
+                cmd.fb.color_start,
+                cmd.fb.color_format);
+         fb.color_start = cmd.fb.color_start;
+         fb.depth_start = cmd.fb.depth_start;
+         fb.color_format = cmd.fb.color_format;
+         fb.depth_format = cmd.fb.depth_format;
          fb.width = cmd.fb.width;
          fb.height = cmd.fb.height;
          fb.width_tiles = (fb.width + TILE_SIZE - 1) / TILE_SIZE;
          fb.height_tiles = (fb.height + TILE_SIZE - 1) / TILE_SIZE;
+         /*
          printf("SPU %u: %u x %u tiles\n",
                 init.id, fb.width_tiles, fb.height_tiles);
-         fb.start = cmd.fb.start;
+         */
          break;
       case CELL_CMD_CLEAR_TILES:
          printf("SPU %u: CLEAR to 0x%08x\n", init.id, cmd.clear.value);

@@ -55,16 +55,17 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       printf("Cell: Skipping non 32bpp clear_surface\n");
       return;
    }
-
+#if 0
    for (i = 0; i < cell->num_spus; i++) {
       struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
       printf("%s %u start = 0x%x\n", __FUNCTION__, i, ps->map);
-      fb->start = ps->map;
+      fb->color_start = ps->map;
       fb->width = ps->width;
       fb->height = ps->height;
-      fb->format = ps->format;
+      fb->color_format = ps->format;
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
+#endif
 
    for (i = 0; i < cell->num_spus; i++) {
 #if 1
