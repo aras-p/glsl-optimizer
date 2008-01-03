@@ -8,6 +8,7 @@ CONFIG_NAME = linux-cell
 # Compiler and flags
 CC = ppu32-gcc
 CXX = ppu32-g++
+HOST_CC = gcc
 
 # Cell SDK location
 SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr

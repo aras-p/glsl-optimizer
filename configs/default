@@ -18,6 +18,7 @@ DRM_SOURCE_PATH=$(TOP)/../drm
 # Compiler and flags
 CC = cc
 CXX = CC
+HOST_CC = $(CC)
 CFLAGS = -O
 CXXFLAGS = -O
 GLU_CFLAGS = 
