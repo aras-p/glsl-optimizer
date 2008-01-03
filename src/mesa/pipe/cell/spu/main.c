@@ -49,7 +49,8 @@ volatile struct cell_init_info init;
 
 struct framebuffer fb;
 
-uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 int DefaultTag;
 
@@ -66,11 +67,13 @@ wait_on_mask(unsigned tag)
 
 void
 get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
-         int tag)
+         int tag, int zBuf)
 {
-   uint offset = ty * fb->width_tiles + tx;
-   uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
-   ubyte *src = (ubyte *) fb->color_start + offset * bytesPerTile;
+   const uint offset = ty * fb->width_tiles + tx;
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
+   const ubyte *src = zBuf ? fb->depth_start : fb->color_start;
+
+   src += offset * bytesPerTile;
 
    assert(tx < fb->width_tiles);
    assert(ty < fb->height_tiles);
@@ -90,11 +93,13 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
 
 void
 put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
-         int tag)
+         int tag, int zBuf)
 {
-   uint offset = ty * fb->width_tiles + tx;
-   uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
-   ubyte *dst = (ubyte *) fb->color_start + offset * bytesPerTile;
+   const uint offset = ty * fb->width_tiles + tx;
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
+   ubyte *dst = zBuf ? fb->depth_start : fb->color_start;
+
+   dst += offset * bytesPerTile;
 
    assert(tx < fb->width_tiles);
    assert(ty < fb->height_tiles);
@@ -117,12 +122,12 @@ static void
 clear_tiles(const struct cell_command_clear_tiles *clear)
 {
    uint num_tiles = fb.width_tiles * fb.height_tiles;
-   uint i;
-   uint tile[TILE_SIZE * TILE_SIZE] ALIGN16_ATTRIB;
+   uint i, j;
    int tag = init.id;
 
-   for (i = 0; i < TILE_SIZE * TILE_SIZE; i++)
-      tile[i] = clear->value;
+   for (i = 0; i < TILE_SIZE; i++)
+      for (j = 0; j < TILE_SIZE; j++)
+         ctile[i][j] = clear->value;
 
    /*
    printf("SPU: %s num=%d w=%d h=%d\n",
@@ -132,7 +137,7 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
    for (i = init.id; i < num_tiles; i += init.num_spus) {
       uint tx = i % fb.width_tiles;
       uint ty = i / fb.width_tiles;
-      put_tile(&fb, tx, ty, tile, tag);
+      put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
       /* XXX we don't want this here, but it fixes bad tile results */
       wait_on_mask(1 << tag);
    }
@@ -219,8 +224,13 @@ render(const struct cell_command_render *render)
       assert(tx < fb.width_tiles);
       assert(ty < fb.height_tiles);
 
-      get_tile(&fb, tx, ty, (uint *) tile, tag);
+      get_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
       wait_on_mask(1 << tag);  /* XXX temporary */
+
+      if (fb.depth_format == PIPE_FORMAT_Z32_UNORM) {
+         get_tile(&fb, tx, ty, (uint *) ztile, tag+1, 1);
+         wait_on_mask(1 << (tag+1));  /* XXX temporary */
+      }
 
       assert(render->prim_type == PIPE_PRIM_TRIANGLES);
 
@@ -252,8 +262,13 @@ render(const struct cell_command_render *render)
          tri_draw(&prim, tx, ty);
       }
 
-      put_tile(&fb, tx, ty, (uint *) tile, tag);
+      put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
       wait_on_mask(1 << tag); /* XXX temp */
+
+      if (fb.depth_format == PIPE_FORMAT_Z32_UNORM) {
+         put_tile(&fb, tx, ty, (uint *) ztile, tag+1, 1);
+         wait_on_mask(1 << (tag+1));  /* XXX temporary */
+      }
    }
 }
 

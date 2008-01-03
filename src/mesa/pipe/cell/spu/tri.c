@@ -267,13 +267,13 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    eval_coeff(setup, 1, (float) x, (float) y, colors);
 
    if (mask & MASK_TOP_LEFT)
-      tile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
+      ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
    if (mask & MASK_TOP_RIGHT)
-      tile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
+      ctile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
    if (mask & MASK_BOTTOM_LEFT)
-      tile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
+      ctile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
    if (mask & MASK_BOTTOM_RIGHT)
-      tile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+      ctile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
 #endif
 }
 

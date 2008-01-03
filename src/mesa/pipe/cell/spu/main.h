@@ -49,7 +49,8 @@ struct framebuffer {
 
 extern struct framebuffer fb;
 
-extern uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+extern uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 extern int DefaultTag;
 
@@ -59,11 +60,11 @@ wait_on_mask(unsigned tag);
 
 void
 get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
-         int tag);
+          int tag, int zBuf);
 
 void
 put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
-         int tag);
+         int tag, int zBuf);
 
 
 #endif /* MAIN_H */
