@@ -67,8 +67,21 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    }
 
    for (i = 0; i < cell->num_spus; i++) {
-      /* XXX clear color varies per-SPU for debugging */
-      cell_global.command[i].clear.value = clearValue | (i << 21);
+#if 1
+      uint clr = clearValue;
+      /* XXX debug: clear color varied per-SPU to visualize tiles */
+      if ((clr & 0xff) == 0)
+         clr |= 64 + i * 8;
+      if ((clr & 0xff00) == 0)
+         clr |= (64 + i * 8) << 8;
+      if ((clr & 0xff0000) == 0)
+         clr |= (64 + i * 8) << 16;
+      if ((clr & 0xff000000) == 0)
+         clr |= (64 + i * 8) << 24;
+      cell_global.command[i].clear.value = clr;
+#else
+      cell_global.command[i].clear.value = clearValue;
+#endif
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
 }
