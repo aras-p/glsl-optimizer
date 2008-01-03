@@ -149,7 +149,7 @@ tile_bounding_box(const struct cell_command_render *render,
                   uint *txmin, uint *tymin,
                   uint *box_num_tiles, uint *box_width_tiles)
 {
-#if 0
+#if 1
    /* Debug: full-window bounding box */
    uint txmax = fb.width_tiles - 1;
    uint tymax = fb.height_tiles - 1;
