@@ -38,6 +38,7 @@ extern volatile struct cell_init_info init;
 
 struct framebuffer {
    void *start;                    /**< addr of surface in main memory */
+   enum pipe_format format;
    uint width, height;             /**< size in pixels */
    uint width_tiles, height_tiles; /**< width and height in tiles */
 };

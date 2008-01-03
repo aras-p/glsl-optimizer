@@ -35,6 +35,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
+#include "pipe/p_format.h"
 
 
 /** for sanity checking */
@@ -60,7 +61,7 @@ struct cell_command_framebuffer
 {
    void *start;
    int width, height;
-   unsigned format;
+   enum pipe_format format;
 } ALIGN16_ATTRIB;
 
 

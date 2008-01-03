@@ -285,10 +285,12 @@ main_loop(void)
          exitFlag = 1;
          break;
       case CELL_CMD_FRAMEBUFFER:
-         printf("SPU %u: FRAMEBUFFER: %d x %d at %p\n", init.id,
+         printf("SPU %u: FRAMEBUFFER: %d x %d at %p, format 0x%x\n", init.id,
                 cmd.fb.width,
                 cmd.fb.height,
-                cmd.fb.start);
+                cmd.fb.start,
+                cmd.fb.format);
+         fb.format = cmd.fb.format;
          fb.width = cmd.fb.width;
          fb.height = cmd.fb.height;
          fb.width_tiles = (fb.width + TILE_SIZE - 1) / TILE_SIZE;
