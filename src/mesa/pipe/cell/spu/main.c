@@ -87,6 +87,7 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
            0  /* rid */);
 }
 
+
 void
 put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
          int tag)
@@ -138,6 +139,33 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
 }
 
 
+/**
+ * Given a rendering command's bounding box (in pixels) compute the
+ * location of the corresponding screen tile bounding box.
+ */
+static INLINE void
+tile_bounding_box(const struct cell_command_render *render,
+                  uint *txmin, uint *tymin,
+                  uint *box_num_tiles, uint *box_width_tiles)
+{
+   uint txmax, tymax, box_height_tiles;
+
+   *txmin = (uint) render->xmin / TILE_SIZE;
+   *tymin = (uint) render->ymin / TILE_SIZE;
+   txmax = (uint) render->xmax / TILE_SIZE;
+   tymax = (uint) render->ymax / TILE_SIZE;
+   *box_width_tiles = txmax - *txmin + 1;
+   box_height_tiles = tymax - *tymin + 1;
+   *box_num_tiles = *box_width_tiles * box_height_tiles;
+   /*
+   printf("Render bounds: %g, %g  ...  %g, %g\n",
+          render->xmin, render->ymin, render->xmax, render->ymax);
+   printf("Render tiles:  %u, %u .. %u, %u\n", *txmin, *tymin, txmax, tymax);
+   */
+}
+
+
+
 static void
 render(const struct cell_command_render *render)
 {
@@ -167,10 +195,16 @@ render(const struct cell_command_render *render)
            0  /* rid */);
    wait_on_mask( 1 << tag );  /* XXX temporary */
 
+   /* find tiles which intersect the prim bounding box */
+   uint txmin, tymin, box_width_tiles, box_num_tiles;
+   tile_bounding_box(render, &txmin, &tymin,
+                     &box_num_tiles, &box_width_tiles);
+
+
    /* loop over tiles */
-   for (i = init.id; i < num_tiles; i += init.num_spus) {
-      const uint tx = i % fb.width_tiles;
-      const uint ty = i / fb.width_tiles;
+   for (i = init.id; i < box_num_tiles; i += init.num_spus) {
+      const uint tx = txmin + i % box_width_tiles;
+      const uint ty = tymin + i / box_width_tiles;
 
       get_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
       wait_on_mask(1 << DefaultTag);  /* XXX temporary */

@@ -166,6 +166,11 @@ cell_flush_prim_buffer(struct cell_context *cell)
    }
 
    cell->prim_buffer.num_verts = 0;
+
+   cell->prim_buffer.xmin = 1e100;
+   cell->prim_buffer.ymin = 1e100;
+   cell->prim_buffer.xmax = -1e100;
+   cell->prim_buffer.ymax = -1e100;
 }
 
 
