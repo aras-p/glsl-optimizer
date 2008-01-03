@@ -171,6 +171,11 @@ cell_flush_prim_buffer(struct cell_context *cell)
    cell->prim_buffer.ymin = 1e100;
    cell->prim_buffer.xmax = -1e100;
    cell->prim_buffer.ymax = -1e100;
+
+   /* XXX temporary, need to double-buffer the prim buffer until we get
+    * a real command buffer/list system.
+    */
+   cell_flush(&cell->pipe, 0x0);
 }
 
 
