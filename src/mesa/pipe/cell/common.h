@@ -76,7 +76,7 @@ struct cell_command_clear_tiles
 struct cell_command_render
 {
    uint prim_type;
-   uint num_verts;
+   uint num_verts, num_attribs;
    float xmin, ymin, xmax, ymax;
    void *vertex_data;
 } ALIGN16_ATTRIB;

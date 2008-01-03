@@ -144,7 +144,7 @@ render(const struct cell_command_render *render)
    const uint num_tiles = fb.width_tiles * fb.height_tiles;
    struct cell_prim_buffer prim_buffer ALIGN16_ATTRIB;
    int tag = DefaultTag;
-   uint i, j;
+   uint i, j, vertex_bytes;
 
    /*
    printf("SPU %u: RENDER buffer dst=%p  src=%p  size=%d\n",
@@ -155,10 +155,13 @@ render(const struct cell_command_render *render)
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(&prim_buffer);
 
+   /* how much vertex data */
+   vertex_bytes = render->num_verts * render->num_attribs * 4 * sizeof(float);
+
    /* get vertex data from main memory */
    mfc_get(&prim_buffer,  /* dest */
            (unsigned int) render->vertex_data,  /* src */
-           sizeof(prim_buffer), /* bytes */
+           vertex_bytes,  /* size */
            tag,
            0, /* tid */
            0  /* rid */);
@@ -166,8 +169,8 @@ render(const struct cell_command_render *render)
 
    /* loop over tiles */
    for (i = init.id; i < num_tiles; i += init.num_spus) {
-      uint tx = i % fb.width_tiles;
-      uint ty = i / fb.width_tiles;
+      const uint tx = i % fb.width_tiles;
+      const uint ty = i / fb.width_tiles;
 
       get_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
       wait_on_mask(1 << DefaultTag);  /* XXX temporary */
