@@ -63,6 +63,8 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    const struct gl_fragment_program *fp = brw->fragment_program;
    struct intel_context *intel = &brw->intel;
 
+   memset(key, 0, sizeof(*key));
+
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       key->max_threads = 1;
    else
@@ -71,11 +73,15 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    /* CACHE_NEW_WM_PROG */
    key->total_grf = brw->wm.prog_data->total_grf;
    key->urb_entry_read_length = brw->wm.prog_data->urb_read_length;
+   key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
    key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
    key->total_scratch = ALIGN(brw->wm.prog_data->total_scratch, 1024);
 
    /* BRW_NEW_URB_FENCE */
    key->urb_size = brw->urb.vsize;
+
+   /* BRW_NEW_CURBE_OFFSETS */
+   key->curbe_offset = brw->curbe.wm_start;
 
    /* CACHE_NEW_SURFACE */
    key->nr_surfaces = brw->wm.nr_surfaces;
