@@ -161,9 +161,12 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 {
    struct cell_context *cell;
 
-   cell = CALLOC_STRUCT(cell_context);
+   /* some fields need to be 16-byte aligned, so align the whole object */
+   cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
    if (!cell)
       return NULL;
+
+   memset(cell, 0, sizeof(*cell));
 
    cell->winsys = cws;
    cell->pipe.winsys = winsys;

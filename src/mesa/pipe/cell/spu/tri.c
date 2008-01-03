@@ -74,8 +74,6 @@
 
 static int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
-static uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-
 #endif
 
 
@@ -879,11 +877,26 @@ draw_triangle(struct prim_header *tri, uint tx, uint ty)
    cliprect_maxx = (tx + 1) * TILE_SIZE;
    cliprect_maxy = (ty + 1) * TILE_SIZE;
 
-   get_tile(&fb, tx, ty, (uint *) tile);
+   get_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
    wait_on_mask(1 << DefaultTag);
 
    setup_tri(tri);
 
-   put_tile(&fb, tx, ty, (uint *) tile);
+   put_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
    wait_on_mask(1 << DefaultTag);
 }
+
+
+void
+tri_draw(struct prim_header *tri, uint tx, uint ty)
+{
+   /* set clipping bounds to tile bounds */
+   cliprect_minx = tx * TILE_SIZE;
+   cliprect_miny = ty * TILE_SIZE;
+   cliprect_maxx = (tx + 1) * TILE_SIZE;
+   cliprect_maxy = (ty + 1) * TILE_SIZE;
+
+   setup_tri(tri);
+}
+
+

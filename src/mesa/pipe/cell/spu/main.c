@@ -37,6 +37,7 @@
 #include "main.h"
 #include "tri.h"
 #include "pipe/cell/common.h"
+#include "pipe/p_defines.h"
 
 /*
 helpful headers:
@@ -47,6 +48,8 @@ helpful headers:
 volatile struct cell_init_info init;
 
 struct framebuffer fb;
+
+uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 int DefaultTag;
 
@@ -62,12 +65,12 @@ wait_on_mask(unsigned tag)
 
 
 void
-get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile)
+get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
+         int tag)
 {
    uint offset = ty * fb->width_tiles + tx;
    uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
    ubyte *src = (ubyte *) fb->start + offset * bytesPerTile;
-   int tag = DefaultTag;
 
    assert(tx < fb->width_tiles);
    assert(ty < fb->height_tiles);
@@ -85,12 +88,12 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile)
 }
 
 void
-put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile)
+put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
+         int tag)
 {
    uint offset = ty * fb->width_tiles + tx;
    uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
    ubyte *dst = (ubyte *) fb->start + offset * bytesPerTile;
-   int tag = DefaultTag;
 
    assert(tx < fb->width_tiles);
    assert(ty < fb->height_tiles);
@@ -100,7 +103,7 @@ put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile)
           tile, (unsigned int) dst, bytesPerTile);
    */
    mfc_put((void *) tile,  /* src in local memory */
-           (unsigned int) dst,  /* dst in main mory */
+           (unsigned int) dst,  /* dst in main memory */
            bytesPerTile,
            tag,
            0, /* tid */
@@ -119,15 +122,19 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
    for (i = 0; i < TILE_SIZE * TILE_SIZE; i++)
       tile[i] = clear->value;
 
+   /*
    printf("SPU: %s num=%d w=%d h=%d\n",
           __FUNCTION__, num_tiles, fb.width_tiles, fb.height_tiles);
+   */
+
    for (i = init.id; i < num_tiles; i += init.num_spus) {
       uint tx = i % fb.width_tiles;
       uint ty = i / fb.width_tiles;
-      put_tile(&fb, tx, ty, tile);
+      put_tile(&fb, tx, ty, tile, DefaultTag);
       /* XXX we don't want this here, but it fixes bad tile results */
       wait_on_mask(1 << DefaultTag);
    }
+
 }
 
 
@@ -153,6 +160,76 @@ triangle(const struct cell_command_triangle *tri)
    }
 }
 
+
+
+static void
+render(const struct cell_command_render *render)
+{
+   const uint num_tiles = fb.width_tiles * fb.height_tiles;
+   struct cell_prim_buffer prim_buffer ALIGN16_ATTRIB;
+   int tag = DefaultTag;
+   uint i, j;
+
+   /*
+   printf("SPU %u: RENDER buffer dst=%p  src=%p  size=%d\n",
+          init.id,
+          &prim_buffer, render->vertex_data, (int)sizeof(prim_buffer));
+   */
+
+   ASSERT_ALIGN16(render->vertex_data);
+   ASSERT_ALIGN16(&prim_buffer);
+
+   /* get vertex data from main memory */
+   mfc_get(&prim_buffer,  /* dest */
+           (unsigned int) render->vertex_data,  /* src */
+           sizeof(prim_buffer), /* bytes */
+           tag,
+           0, /* tid */
+           0  /* rid */);
+   wait_on_mask( 1 << tag );  /* XXX temporary */
+
+   /* loop over tiles */
+   for (i = init.id; i < num_tiles; i += init.num_spus) {
+      uint tx = i % fb.width_tiles;
+      uint ty = i / fb.width_tiles;
+
+      get_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
+      wait_on_mask(1 << DefaultTag);  /* XXX temporary */
+
+      assert(render->prim_type == PIPE_PRIM_TRIANGLES);
+
+      /* loop over tris */
+      for (j = 0; j < render->num_verts; j += 3) {
+         struct prim_header prim;
+
+         /*
+         printf("  %u: Triangle %g,%g  %g,%g  %g,%g\n",
+                init.id,
+                prim_buffer.vertex[j*3+0][0][0],
+                prim_buffer.vertex[j*3+0][0][1],
+                prim_buffer.vertex[j*3+1][0][0],
+                prim_buffer.vertex[j*3+1][0][1],
+                prim_buffer.vertex[j*3+2][0][0],
+                prim_buffer.vertex[j*3+2][0][1]);
+         */
+
+         /* pos */
+         COPY_4V(prim.v[0].data[0], prim_buffer.vertex[j+0][0]);
+         COPY_4V(prim.v[1].data[0], prim_buffer.vertex[j+1][0]);
+         COPY_4V(prim.v[2].data[0], prim_buffer.vertex[j+2][0]);
+
+         /* color */
+         COPY_4V(prim.v[0].data[1], prim_buffer.vertex[j+0][1]);
+         COPY_4V(prim.v[1].data[1], prim_buffer.vertex[j+1][1]);
+         COPY_4V(prim.v[2].data[1], prim_buffer.vertex[j+2][1]);
+
+         draw_triangle(&prim, tx, ty);
+      }
+
+      put_tile(&fb, tx, ty, (uint *) tile, DefaultTag);
+      wait_on_mask(1 << DefaultTag); /* XXX temp */
+   }
+}
 
 
 /**
@@ -215,6 +292,12 @@ main_loop(void)
          printf("SPU %u: TRIANGLE\n", init.id);
          triangle(&cmd.tri);
          break;
+      case CELL_CMD_RENDER:
+         printf("SPU %u: RENDER %u verts, prim %u\n",
+                init.id, cmd.render.num_verts, cmd.render.prim_type);
+         render(&cmd.render);
+         break;
+
       case CELL_CMD_FINISH:
          printf("SPU %u: FINISH\n", init.id);
          /* wait for all outstanding DMAs to finish */

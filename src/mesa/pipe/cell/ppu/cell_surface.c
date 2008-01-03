@@ -51,8 +51,14 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    if (!ps->map)
       pipe_surface_map(ps);
 
+   if (pf_get_size(ps->format) != 4) {
+      printf("Cell: Skipping non 32bpp clear_surface\n");
+      return;
+   }
+
    for (i = 0; i < cell->num_spus; i++) {
       struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
+      printf("%s %u start = 0x%x\n", __FUNCTION__, i, ps->map);
       fb->start = ps->map;
       fb->width = ps->width;
       fb->height = ps->height;
@@ -66,7 +72,7 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
    }
 
-#if 1
+#if 0
    /* XXX Draw a test triangle over the cleared surface */
    for (i = 0; i < cell->num_spus; i++) {
       /* Same triangle data for all SPUs */

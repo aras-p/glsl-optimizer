@@ -29,6 +29,7 @@
 #include "cell_context.h"
 #include "cell_flush.h"
 #include "cell_spu.h"
+#include "cell_render.h"
 
 
 void
@@ -38,6 +39,8 @@ cell_flush(struct pipe_context *pipe, unsigned flags)
    uint i;
 
    printf("%s\n", __FUNCTION__);
+
+   cell_flush_prim_buffer(cell);
 
    /* Send CMD_FINISH to all SPUs */
    for (i = 0; i < cell->num_spus; i++) {

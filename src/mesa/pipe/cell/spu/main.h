@@ -37,13 +37,16 @@
 extern volatile struct cell_init_info init;
 
 struct framebuffer {
-   void *start;
-   uint width, height;
+   void *start;                    /**< addr of surface in main memory */
+   uint width, height;             /**< size in pixels */
    uint width_tiles, height_tiles; /**< width and height in tiles */
 };
 
+/* XXX Collect these globals in a struct: */
+
 extern struct framebuffer fb;
 
+extern uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 extern int DefaultTag;
 
@@ -52,10 +55,12 @@ void
 wait_on_mask(unsigned tag);
 
 void
-get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile);
+get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
+         int tag);
 
 void
-put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile);
+put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
+         int tag);
 
 
 #endif /* MAIN_H */

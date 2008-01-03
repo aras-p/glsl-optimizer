@@ -34,6 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/draw/draw_vertex.h"
 #include "cell_winsys.h"
+#include "pipe/cell/common.h"
 
 
 struct cell_vertex_shader_state
@@ -90,7 +91,7 @@ struct cell_context
 
    uint num_spus;
    
-
+   struct cell_prim_buffer prim_buffer;
 };
 
 

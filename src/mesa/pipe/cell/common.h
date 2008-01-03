@@ -51,6 +51,7 @@
 #define CELL_CMD_CLEAR_TILES  3
 #define CELL_CMD_TRIANGLE     4
 #define CELL_CMD_FINISH       5
+#define CELL_CMD_RENDER       6
 
 
 /**
@@ -80,12 +81,22 @@ struct cell_command_triangle
 } ALIGN16_ATTRIB;
 
 
+struct cell_command_render
+{
+   uint prim_type;
+   uint num_verts;
+   float xmin, ymin, xmax, ymax;
+   void *vertex_data;
+} ALIGN16_ATTRIB;
+
+
 /** XXX unions don't seem to work */
 struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_tiles clear;
    struct cell_command_triangle tri;
+   struct cell_command_render render;
 } ALIGN16_ATTRIB;
 
 
@@ -97,6 +108,16 @@ struct cell_init_info
    struct cell_command *cmd;
 } ALIGN16_ATTRIB;
 
+
+/** Temporary */
+#define CELL_MAX_VERTS 48
+#define CELL_MAX_ATTRIBS 2
+struct cell_prim_buffer
+{
+   float vertex[CELL_MAX_VERTS][CELL_MAX_ATTRIBS][4] ALIGN16_ATTRIB;
+   float xmin, ymin, xmax, ymax;
+   uint num_verts;
+} ALIGN16_ATTRIB;
 
 
 

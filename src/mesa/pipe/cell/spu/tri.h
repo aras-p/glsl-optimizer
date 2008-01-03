@@ -49,4 +49,8 @@ extern void
 draw_triangle(struct prim_header *tri, uint tx, uint ty);
 
 
+extern void
+tri_draw(struct prim_header *tri, uint tx, uint ty);
+
+
 #endif /* TRI_H */
