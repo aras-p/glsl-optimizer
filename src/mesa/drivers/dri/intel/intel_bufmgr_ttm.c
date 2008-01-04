@@ -100,7 +100,10 @@ typedef struct _dri_bo_ttm {
     drmBO drm_bo;
     const char *name;
 
-    /* Index of the buffer within the validation list while preparing a
+    uint64_t last_flags;
+
+    /**
+     * Index of the buffer within the validation list while preparing a
      * batchbuffer execution.
      */
     int validate_index;
@@ -430,6 +433,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->reloc_buf = NULL;
     ttm_buf->reloc_buf_data = NULL;
     ttm_buf->relocs = NULL;
+    ttm_buf->last_flags = ttm_buf->drm_bo.flags;
 
     DBG("bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
@@ -482,6 +486,7 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->reloc_buf = NULL;
     ttm_buf->reloc_buf_data = NULL;
     ttm_buf->relocs = NULL;
+    ttm_buf->last_flags = ttm_buf->drm_bo.flags;
 
     DBG("bo_create_from_handle: %p %08x (%s)\n",
 	&ttm_buf->bo, handle, ttm_buf->name);
@@ -786,20 +791,63 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
     return ptr;
 }
 
+static const char *
+intel_get_flags_mem_type_string(uint64_t flags)
+{
+    switch (flags & DRM_BO_MASK_MEM) {
+    case DRM_BO_FLAG_MEM_LOCAL: return "local";
+    case DRM_BO_FLAG_MEM_TT: return "ttm";
+    case DRM_BO_FLAG_MEM_VRAM: return "vram";
+    case DRM_BO_FLAG_MEM_PRIV0: return "priv0";
+    case DRM_BO_FLAG_MEM_PRIV1: return "priv1";
+    case DRM_BO_FLAG_MEM_PRIV2: return "priv2";
+    case DRM_BO_FLAG_MEM_PRIV3: return "priv3";
+    case DRM_BO_FLAG_MEM_PRIV4: return "priv4";
+    default: return NULL;
+    }
+}
+
+static const char *
+intel_get_flags_caching_string(uint64_t flags)
+{
+    switch (flags & (DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED)) {
+    case 0: return "UU";
+    case DRM_BO_FLAG_CACHED: return "CU";
+    case DRM_BO_FLAG_CACHED_MAPPED: return "UC";
+    case DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED: return "CC";
+    default: return NULL;
+    }
+}
+
 static void
 intel_update_buffer_offsets (dri_bufmgr_ttm *bufmgr_ttm)
 {
     struct intel_bo_list *list = &bufmgr_ttm->list;
-    struct intel_bo_node *node;
     drmMMListHead *l;
-    struct drm_i915_op_arg *arg;
-    struct drm_bo_arg_rep *rep;
-    
+
     for (l = list->list.next; l != &list->list; l = l->next) {
-        node = DRMLISTENTRY(struct intel_bo_node, l, head);
-	arg = &node->bo_arg;
-	rep = &arg->d.rep;
-	node->bo->offset = rep->bo_info.offset;
+        struct intel_bo_node *node =
+	    DRMLISTENTRY(struct intel_bo_node, l, head);
+	struct drm_i915_op_arg *arg = &node->bo_arg;
+	struct drm_bo_arg_rep *rep = &arg->d.rep;
+	dri_bo *bo = node->bo;
+	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
+
+	if (rep->bo_info.flags != bo_ttm->last_flags) {
+	    DBG("BO %s migrated: %s/%s -> %s/%s\n",
+		bo_ttm->name,
+		intel_get_flags_mem_type_string(bo_ttm->last_flags),
+		intel_get_flags_caching_string(bo_ttm->last_flags),
+		intel_get_flags_mem_type_string(rep->bo_info.flags),
+		intel_get_flags_caching_string(rep->bo_info.flags));
+
+	    bo_ttm->last_flags = rep->bo_info.flags;
+	}
+	if (rep->bo_info.offset != bo->offset) {
+	    DBG("BO %s migrated: 0x%08x -> 0x%08x\n",
+		bo_ttm->name, bo->offset, rep->bo_info.offset);
+	    bo->offset = rep->bo_info.offset;
+	}
     }
 }
 
