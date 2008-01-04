@@ -245,15 +245,6 @@ draw_create_vertex_shader(struct draw_context *draw,
 
    vs->state = shader;
 
-#if defined(__i386__) || defined(__386__)
-   if (draw->use_sse) {
-      /* cast-away const */
-      struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
-
-      x86_init_func( &vs->sse2_program );
-      tgsi_emit_sse2( (struct tgsi_token *) sh->tokens, &vs->sse2_program );
-   }
-#endif
 #ifdef MESA_LLVM
    vs->llvm_prog = gallivm_from_tgsi(shader->tokens, GALLIVM_VS);
    draw->engine = gallivm_global_cpu_engine();
@@ -262,6 +253,14 @@ draw_create_vertex_shader(struct draw_context *draw,
    }
    else {
       gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
+   }
+#elif defined(__i386__) || defined(__386__)
+   if (draw->use_sse) {
+      /* cast-away const */
+      struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
+
+      x86_init_func( &vs->sse2_program );
+      tgsi_emit_sse2( (struct tgsi_token *) sh->tokens, &vs->sse2_program );
    }
 #endif
 
