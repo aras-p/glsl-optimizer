@@ -97,7 +97,7 @@ st_get_texobj_texture(struct gl_texture_object *texObj)
 }
 
 
-static unsigned
+static enum pipe_texture_target
 gl_target_to_pipe(GLenum target)
 {
    switch (target) {

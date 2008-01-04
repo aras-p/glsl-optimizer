@@ -39,6 +39,7 @@
 #define PIPE_STATE_H
 
 #include "p_compiler.h"
+#include "p_defines.h"
 #include "p_format.h"
 
 /**
@@ -262,8 +263,8 @@ struct pipe_texture
 { 
    /* Effectively the key:
     */
-   unsigned target;            /**< PIPE_TEXTURE_x */
-   enum pipe_format format;    /**< PIPE_FORMAT_x */
+   enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
+   enum pipe_format format;         /**< PIPE_FORMAT_x */
 
    unsigned first_level;
    unsigned last_level;

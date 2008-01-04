@@ -33,7 +33,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-static unsigned translate_tex_target( int target )
+static unsigned translate_tex_target( enum pipe_texture_target target )
 {
    switch (target) {
    case PIPE_TEXTURE_1D:
@@ -54,9 +54,9 @@ static unsigned translate_tex_target( int target )
    }
 }
 
-static unsigned translate_tex_format( unsigned mesa_format )
+static unsigned translate_tex_format( enum pipe_format pipe_format )
 {
-   switch( mesa_format ) {
+   switch( pipe_format ) {
    case PIPE_FORMAT_U_L8:
       return BRW_SURFACEFORMAT_L8_UNORM;
 

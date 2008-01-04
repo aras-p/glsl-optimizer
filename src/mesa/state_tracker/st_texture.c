@@ -61,8 +61,8 @@ target_to_target(GLenum target)
 
 struct pipe_texture *
 st_texture_create(struct st_context *st,
-                  unsigned target,
-		  unsigned format,
+                  enum pipe_texture_target target,
+		  enum pipe_format format,
 		  GLuint first_level,
 		  GLuint last_level,
 		  GLuint width0,
