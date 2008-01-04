@@ -79,6 +79,9 @@ typedef struct _dri_bufmgr_ttm {
 
     uint32_t max_relocs;
     struct intel_bo_list list; /* list of buffers to be validated */
+
+    drmBO *cached_reloc_buf;
+    uint32_t *cached_reloc_buf_data;
 } dri_bufmgr_ttm;
 
 /**
@@ -322,32 +325,40 @@ intel_setup_reloc_list(dri_bo *bo)
     if (bo_ttm->reloc_buf != NULL)
        return 0;
 
-    bo_ttm->reloc_buf = malloc(sizeof(bo_ttm->drm_bo));
     bo_ttm->relocs = malloc(sizeof(struct dri_ttm_reloc) *
 			    bufmgr_ttm->max_relocs);
 
-    ret = drmBOCreate(bufmgr_ttm->fd,
-		      RELOC_BUF_SIZE(bufmgr_ttm->max_relocs), 0,
-		      NULL,
-		      DRM_BO_FLAG_MEM_LOCAL |
-		      DRM_BO_FLAG_READ |
-		      DRM_BO_FLAG_WRITE |
-		      DRM_BO_FLAG_MAPPABLE |
-		      DRM_BO_FLAG_CACHED,
-		      0, bo_ttm->reloc_buf);
-    if (ret) {
-       fprintf(stderr, "Failed to create relocation BO: %s\n",
-	       strerror(-ret));
-       return ret;
-    }
+    if (bufmgr_ttm->cached_reloc_buf != NULL) {
+       bo_ttm->reloc_buf = bufmgr_ttm->cached_reloc_buf;
+       bo_ttm->reloc_buf_data = bufmgr_ttm->cached_reloc_buf_data;
 
-    ret = drmBOMap(bufmgr_ttm->fd, bo_ttm->reloc_buf,
-		   DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
-		   0, (void **)&bo_ttm->reloc_buf_data);
-    if (ret) {
-       fprintf(stderr, "Failed to map relocation BO: %s\n",
-	       strerror(-ret));
-       return ret;
+       bufmgr_ttm->cached_reloc_buf = NULL;
+       bufmgr_ttm->cached_reloc_buf_data = NULL;
+    } else {
+       bo_ttm->reloc_buf = malloc(sizeof(bo_ttm->drm_bo));
+       ret = drmBOCreate(bufmgr_ttm->fd,
+			 RELOC_BUF_SIZE(bufmgr_ttm->max_relocs), 0,
+			 NULL,
+			 DRM_BO_FLAG_MEM_LOCAL |
+			 DRM_BO_FLAG_READ |
+			 DRM_BO_FLAG_WRITE |
+			 DRM_BO_FLAG_MAPPABLE |
+			 DRM_BO_FLAG_CACHED,
+			 0, bo_ttm->reloc_buf);
+       if (ret) {
+	  fprintf(stderr, "Failed to create relocation BO: %s\n",
+		  strerror(-ret));
+	  return ret;
+       }
+
+       ret = drmBOMap(bufmgr_ttm->fd, bo_ttm->reloc_buf,
+		      DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
+		      0, (void **)&bo_ttm->reloc_buf_data);
+       if (ret) {
+	  fprintf(stderr, "Failed to map relocation BO: %s\n",
+		  strerror(-ret));
+	  return ret;
+       }
     }
 
     /* Initialize the relocation list with the header:
@@ -506,10 +517,19 @@ dri_ttm_bo_unreference(dri_bo *buf)
 		 dri_bo_unreference(ttm_buf->relocs[i].target_buf);
 	    free(ttm_buf->relocs);
 
-	    /* Free the kernel BO containing relocation entries */
-	    drmBOUnmap(bufmgr_ttm->fd, ttm_buf->reloc_buf);
-	    drmBOUnreference(bufmgr_ttm->fd, ttm_buf->reloc_buf);
-	    free(ttm_buf->reloc_buf);
+	    if (bufmgr_ttm->cached_reloc_buf == NULL) {
+	       /* Cache a single relocation buffer allocation to avoid
+		* repeated create/map/unmap/destroy for batchbuffer
+		* relocations.
+		*/
+	       bufmgr_ttm->cached_reloc_buf = ttm_buf->reloc_buf;
+	       bufmgr_ttm->cached_reloc_buf_data = ttm_buf->reloc_buf_data;
+	    } else {
+	       /* Free the kernel BO containing relocation entries */
+	       drmBOUnmap(bufmgr_ttm->fd, ttm_buf->reloc_buf);
+	       drmBOUnreference(bufmgr_ttm->fd, ttm_buf->reloc_buf);
+	       free(ttm_buf->reloc_buf);
+	    }
 	}
 
 	ret = drmBOUnreference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
@@ -655,6 +675,13 @@ static void
 dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
+
+    if (bufmgr_ttm->cached_reloc_buf) {
+       /* Free the cached kernel BO containing relocation entries */
+       drmBOUnmap(bufmgr_ttm->fd, bufmgr_ttm->cached_reloc_buf);
+       drmBOUnreference(bufmgr_ttm->fd, bufmgr_ttm->cached_reloc_buf);
+       free(bufmgr_ttm->cached_reloc_buf);
+    }
 
     intel_free_validate_list(bufmgr_ttm);
 
