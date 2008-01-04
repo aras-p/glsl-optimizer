@@ -499,11 +499,13 @@ pixel_point(GLcontext *ctx, const SWvertex *vert)
    if (span->end >= MAX_WIDTH ||
        (swrast->_RasterMask & (BLEND_BIT | LOGIC_OP_BIT | MASKING_BIT)) ||
        span->facing != swrast->PointLineFacing) {
-      if (ciMode)
-         _swrast_write_index_span(ctx, span);
-      else
-         _swrast_write_rgba_span(ctx, span);
-      span->end = 0;
+      if (span->end > 0) {
+         if (ciMode)
+            _swrast_write_index_span(ctx, span);
+         else
+            _swrast_write_rgba_span(ctx, span);
+         span->end = 0;
+      }
    }
 
    count = span->end;
