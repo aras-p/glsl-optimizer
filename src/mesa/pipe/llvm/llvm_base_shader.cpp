@@ -209,7 +209,7 @@ Module* createBaseShader() {
     /*Linkage=*/GlobalValue::ExternalLinkage,
     /*Name=*/"run_vertex_shader", mod); 
   func_run_vertex_shader->setCallingConv(CallingConv::C);
-  ParamAttrsList *func_run_vertex_shader_PAL = 0;
+  const ParamAttrsList *func_run_vertex_shader_PAL = 0;
   func_run_vertex_shader->setParamAttrs(func_run_vertex_shader_PAL);
   
   Function* func_execute_shader = new Function(
@@ -217,7 +217,7 @@ Module* createBaseShader() {
     /*Linkage=*/GlobalValue::ExternalLinkage,
     /*Name=*/"execute_shader", mod); // (external, no body)
   func_execute_shader->setCallingConv(CallingConv::C);
-  ParamAttrsList *func_execute_shader_PAL = 0;
+  const ParamAttrsList *func_execute_shader_PAL = 0;
   func_execute_shader->setParamAttrs(func_execute_shader_PAL);
   
   Function* func_run_fragment_shader = new Function(
@@ -225,7 +225,7 @@ Module* createBaseShader() {
     /*Linkage=*/GlobalValue::ExternalLinkage,
     /*Name=*/"run_fragment_shader", mod); 
   func_run_fragment_shader->setCallingConv(CallingConv::C);
-  ParamAttrsList *func_run_fragment_shader_PAL = 0;
+  const ParamAttrsList *func_run_fragment_shader_PAL = 0;
   func_run_fragment_shader->setParamAttrs(func_run_fragment_shader_PAL);
   
   // Global Variable Declarations
@@ -644,7 +644,7 @@ Module* createBaseShader() {
     StoreInst* void_110 = new StoreInst(ptr_arraydecay16, ptr_tmp12, false, label_forbody_92);
     CallInst* void_111 = new CallInst(func_execute_shader, ptr_args, "", label_forbody_92);
     void_111->setCallingConv(CallingConv::C);
-    void_111->setTailCall(false);ParamAttrsList *void_111_PAL = 0;
+    void_111->setTailCall(false);const ParamAttrsList *void_111_PAL = 0;
     void_111->setParamAttrs(void_111_PAL);
     
     BinaryOperator* int32_indvar_next_112 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_106, const_int32_31, "indvar.next", label_forbody_92);
@@ -790,7 +790,7 @@ Module* createBaseShader() {
     StoreInst* void_162 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
     CallInst* void_163 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
     void_163->setCallingConv(CallingConv::C);
-    void_163->setTailCall(false);ParamAttrsList *void_163_PAL = 0;
+    void_163->setTailCall(false);const ParamAttrsList *void_163_PAL = 0;
     void_163->setParamAttrs(void_163_PAL);
     
     LoadInst* int32_tmp23 = new LoadInst(ptr_tmp, "tmp23", false, label_from_consts_exit_124);
@@ -807,7 +807,7 @@ Module* createBaseShader() {
     StoreInst* void_166 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
     CallInst* void_167 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
     void_167->setCallingConv(CallingConv::C);
-    void_167->setTailCall(false);ParamAttrsList *void_167_PAL = 0;
+    void_167->setTailCall(false);const ParamAttrsList *void_167_PAL = 0;
     void_167->setParamAttrs(void_167_PAL);
     
     LoadInst* int32_tmp23_1 = new LoadInst(ptr_tmp, "tmp23.1", false, label_from_consts_exit_124);
@@ -826,7 +826,7 @@ Module* createBaseShader() {
     StoreInst* void_170 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
     CallInst* void_171 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
     void_171->setCallingConv(CallingConv::C);
-    void_171->setTailCall(false);ParamAttrsList *void_171_PAL = 0;
+    void_171->setTailCall(false);const ParamAttrsList *void_171_PAL = 0;
     void_171->setParamAttrs(void_171_PAL);
     
     LoadInst* int32_tmp23_2 = new LoadInst(ptr_tmp, "tmp23.2", false, label_from_consts_exit_124);
@@ -845,7 +845,7 @@ Module* createBaseShader() {
     StoreInst* void_174 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
     CallInst* void_175 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
     void_175->setCallingConv(CallingConv::C);
-    void_175->setTailCall(false);ParamAttrsList *void_175_PAL = 0;
+    void_175->setTailCall(false);const ParamAttrsList *void_175_PAL = 0;
     void_175->setParamAttrs(void_175_PAL);
     
     LoadInst* int32_tmp23_3 = new LoadInst(ptr_tmp, "tmp23.3", false, label_from_consts_exit_124);

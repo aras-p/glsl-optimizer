@@ -59,13 +59,6 @@ softpipe_create_fs_state(struct pipe_context *pipe,
       tgsi_dump(state->shader.tokens, 0);
    }
 
-#if defined(__i386__) || defined(__386__)
-   if (softpipe->use_sse) {
-      x86_init_func( &state->sse2_program );
-      tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
-   }
-#endif
-
 #ifdef MESA_LLVM
    state->llvm_prog = gallivm_from_tgsi(state->shader.tokens, GALLIVM_FS);
    if (!gallivm_global_cpu_engine()) {
@@ -73,6 +66,11 @@ softpipe_create_fs_state(struct pipe_context *pipe,
    }
    else
       gallivm_cpu_jit_compile(gallivm_global_cpu_engine(), state->llvm_prog);
+#elif defined(__i386__) || defined(__386__)
+   if (softpipe->use_sse) {
+      x86_init_func( &state->sse2_program );
+      tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
+   }
 #endif
 
    return state;

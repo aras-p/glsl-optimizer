@@ -8,6 +8,7 @@
 COMMON_SOURCES = 
 
 OBJECTS = $(C_SOURCES:.c=.o) \
+          $(CPP_SOURCES:.cpp=.o) \
 	  $(ASM_SOURCES:.S=.o) 
 
 
@@ -22,7 +23,10 @@ INCLUDES = \
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(LLVM_CFLAGS) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+.cpp.o:
+	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES)  $< -o $@
@@ -37,10 +41,10 @@ $(LIBNAME): $(OBJECTS) Makefile $(TOP)/src/mesa/pipe/Makefile.template
 	$(TOP)/bin/mklib -o $@ -static $(OBJECTS)
 
 
-depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	rm -f depend
 	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
+	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) $(CPP_SOURCES) \
 		$(ASM_SOURCES) 2> /dev/null
 
 
