@@ -835,6 +835,8 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->fd = fd;
     bufmgr_ttm->fence_type = fence_type;
     bufmgr_ttm->fence_type_flush = fence_type_flush;
+    bufmgr_ttm->cached_reloc_buf = NULL;
+    bufmgr_ttm->cached_reloc_buf_data = NULL;
 
     /* lets go with one relocation per every four dwords - purely heuristic */
     bufmgr_ttm->max_relocs = batch_size / sizeof(uint32_t) / 4;
