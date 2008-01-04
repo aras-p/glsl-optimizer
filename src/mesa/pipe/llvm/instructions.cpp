@@ -41,6 +41,7 @@
 #include <llvm/Function.h>
 #include <llvm/InstrTypes.h>
 #include <llvm/Instructions.h>
+#include <llvm/ParameterAttributes.h>
 
 #include <sstream>
 #include <fstream>
@@ -103,13 +104,13 @@ const char * Instructions::name(const char *prefix)
 llvm::Value * Instructions::dp3(llvm::Value *in1, llvm::Value *in2)
 {
    Value *mulRes = mul(in1, in2);
-   ExtractElementInst *x = m_builder.CreateExtractElement(mulRes,
+   Value *x = m_builder.CreateExtractElement(mulRes,
                                                           m_storage->constantInt(0),
                                                           name("extractx"));
-   ExtractElementInst *y = m_builder.CreateExtractElement(mulRes,
+   Value *y = m_builder.CreateExtractElement(mulRes,
                                                           m_storage->constantInt(1),
                                                           name("extracty"));
-   ExtractElementInst *z = m_builder.CreateExtractElement(mulRes,
+   Value *z = m_builder.CreateExtractElement(mulRes,
                                                           m_storage->constantInt(2),
                                                           name("extractz"));
    Value *xy = m_builder.CreateAdd(x, y,name("xy"));
@@ -127,13 +128,13 @@ llvm::Value *Instructions::callFSqrt(llvm::Value *val)
       FunctionType* fsqrtType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fsqrtArgs,
-         /*isVarArg=*/false,
-         /*ParamAttrs=*/fsqrtPal);
+         /*isVarArg=*/false);
       m_llvmFSqrt = new Function(
          /*Type=*/fsqrtType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"llvm.sqrt.f32", m_mod);
       m_llvmFSqrt->setCallingConv(CallingConv::C);
+      m_llvmFSqrt->setParamAttrs(fsqrtPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFSqrt, val,
                                          name("sqrt"));
@@ -144,9 +145,9 @@ llvm::Value *Instructions::callFSqrt(llvm::Value *val)
 
 llvm::Value * Instructions::rsq(llvm::Value *in1)
 {
-   ExtractElementInst *x = m_builder.CreateExtractElement(in1,
-                                                          m_storage->constantInt(0),
-                                                          name("extractx"));
+   Value *x = m_builder.CreateExtractElement(in1,
+                                             m_storage->constantInt(0),
+                                             name("extractx"));
    Value *abs  = callFAbs(x);
    Value *sqrt = callFSqrt(abs);
 
@@ -161,9 +162,9 @@ llvm::Value * Instructions::vectorFromVals(llvm::Value *x, llvm::Value *y,
                                            llvm::Value *z, llvm::Value *w)
 {
    Constant *const_vec = Constant::getNullValue(m_floatVecType);
-   InsertElementInst *res = m_builder.CreateInsertElement(const_vec, x,
-                                                          m_storage->constantInt(0),
-                                                          name("vecx"));
+   Value *res = m_builder.CreateInsertElement(const_vec, x,
+                                              m_storage->constantInt(0),
+                                              name("vecx"));
    res = m_builder.CreateInsertElement(res, y, m_storage->constantInt(1),
                                name("vecxy"));
    res = m_builder.CreateInsertElement(res, z, m_storage->constantInt(2),
@@ -184,13 +185,13 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
       FunctionType* fabsType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fabsArgs,
-         /*isVarArg=*/false,
-         /*ParamAttrs=*/fabsPal);
+         /*isVarArg=*/false);
       m_llvmFAbs = new Function(
          /*Type=*/fabsType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"fabs", m_mod);
       m_llvmFAbs->setCallingConv(CallingConv::C);
+      m_llvmFAbs->setParamAttrs(fabsPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFAbs, val,
                                          name("fabs"));
@@ -227,13 +228,13 @@ llvm::Value * Instructions::callPow(llvm::Value *val1, llvm::Value *val2)
       FunctionType* powType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/powArgs,
-         /*isVarArg=*/false,
-         /*ParamAttrs=*/powPal);
+         /*isVarArg=*/false);
       m_llvmPow = new Function(
          /*Type=*/powType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"llvm.pow.f32", m_mod);
       m_llvmPow->setCallingConv(CallingConv::C);
+      m_llvmPow->setParamAttrs(powPal);
    }
    std::vector<Value*> params;
    params.push_back(val1);
@@ -247,21 +248,21 @@ llvm::Value * Instructions::callPow(llvm::Value *val1, llvm::Value *val2)
 
 llvm::Value * Instructions::pow(llvm::Value *in1, llvm::Value *in2)
 {
-   ExtractElementInst *x1 = m_builder.CreateExtractElement(in1,
-                                                           m_storage->constantInt(0),
-                                                           name("x1"));
-   ExtractElementInst *x2 = m_builder.CreateExtractElement(in2,
-                                                           m_storage->constantInt(0),
-                                                           name("x2"));
+   Value *x1 = m_builder.CreateExtractElement(in1,
+                                              m_storage->constantInt(0),
+                                              name("x1"));
+   Value *x2 = m_builder.CreateExtractElement(in2,
+                                              m_storage->constantInt(0),
+                                              name("x2"));
    llvm::Value *val = callPow(x1, x2);
    return vectorFromVals(val, val, val, val);
 }
 
 llvm::Value * Instructions::rcp(llvm::Value *in1)
 {
-   ExtractElementInst *x1 = m_builder.CreateExtractElement(in1,
-                                                           m_storage->constantInt(0),
-                                                           name("x1"));
+   Value *x1 = m_builder.CreateExtractElement(in1,
+                                              m_storage->constantInt(0),
+                                              name("x1"));
    Value *res = m_builder.CreateFDiv(ConstantFP::get(Type::FloatTy,
                                                               APFloat(1.f)),
                                               x1, name("rcp"));
@@ -290,18 +291,18 @@ llvm::Value * Instructions::dph(llvm::Value *in1, llvm::Value *in2)
 
 llvm::Value * Instructions::dst(llvm::Value *in1, llvm::Value *in2)
 {
-   ExtractElementInst *y1 = m_builder.CreateExtractElement(in1,
-                                                           m_storage->constantInt(1),
-                                                           name("y1"));
-   ExtractElementInst *z = m_builder.CreateExtractElement(in1,
-                                                          m_storage->constantInt(2),
-                                                          name("z"));
-   ExtractElementInst *y2 = m_builder.CreateExtractElement(in2,
-                                                           m_storage->constantInt(1),
-                                                           name("y2"));
-   ExtractElementInst *w = m_builder.CreateExtractElement(in2,
-                                                          m_storage->constantInt(3),
-                                                          name("w"));
+   Value *y1 = m_builder.CreateExtractElement(in1,
+                                              m_storage->constantInt(1),
+                                              name("y1"));
+   Value *z = m_builder.CreateExtractElement(in1,
+                                             m_storage->constantInt(2),
+                                             name("z"));
+   Value *y2 = m_builder.CreateExtractElement(in2,
+                                              m_storage->constantInt(1),
+                                              name("y2"));
+   Value *w = m_builder.CreateExtractElement(in2,
+                                             m_storage->constantInt(3),
+                                             name("w"));
    Value *ry = m_builder.CreateMul(y1, y2, name("tyuy"));
    return vectorFromVals(ConstantFP::get(Type::FloatTy, APFloat(1.f)),
                          ry, z, w);
@@ -326,13 +327,13 @@ llvm::Value * Instructions::callFloor(llvm::Value *val)
       FunctionType* floorType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/floorArgs,
-         /*isVarArg=*/false,
-         /*ParamAttrs=*/floorPal);
+         /*isVarArg=*/false);
       m_llvmFloor = new Function(
          /*Type=*/floorType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"floorf", m_mod);
       m_llvmFloor->setCallingConv(CallingConv::C);
+      m_llvmFloor->setParamAttrs(floorPal);
    }
    CallInst *call =  m_builder.CreateCall(m_llvmFloor, val,
                                           name("floorf"));
@@ -369,13 +370,13 @@ llvm::Value * Instructions::callFLog(llvm::Value *val)
       FunctionType* flogType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/flogArgs,
-         /*isVarArg=*/false,
-         /*ParamAttrs=*/flogPal);
+         /*isVarArg=*/false);
       m_llvmFlog = new Function(
          /*Type=*/flogType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"logf", m_mod);
       m_llvmFlog->setCallingConv(CallingConv::C);
+      m_llvmFlog->setParamAttrs(flogPal);
    }
    CallInst *call = m_builder.CreateCall(m_llvmFlog, val,
                                          name("logf"));
@@ -399,20 +400,20 @@ llvm::Value * Instructions::min(llvm::Value *in1, llvm::Value *in2)
    std::vector<llvm::Value*> vec2 = extractVector(in2);
 
    Value *xcmp  = m_builder.CreateFCmpOLT(vec1[0], vec2[0], name("xcmp"));
-   SelectInst *selx = m_builder.CreateSelect(xcmp, vec1[0], vec2[0],
-                                             name("selx"));
+   Value *selx = m_builder.CreateSelect(xcmp, vec1[0], vec2[0],
+                                        name("selx"));
 
    Value *ycmp  = m_builder.CreateFCmpOLT(vec1[1], vec2[1], name("ycmp"));
-   SelectInst *sely = m_builder.CreateSelect(ycmp, vec1[1], vec2[1],
-                                             name("sely"));
+   Value *sely = m_builder.CreateSelect(ycmp, vec1[1], vec2[1],
+                                        name("sely"));
 
    Value *zcmp  = m_builder.CreateFCmpOLT(vec1[2], vec2[2], name("zcmp"));
-   SelectInst *selz = m_builder.CreateSelect(zcmp, vec1[2], vec2[2],
-                                             name("selz"));
+   Value *selz = m_builder.CreateSelect(zcmp, vec1[2], vec2[2],
+                                        name("selz"));
 
    Value *wcmp  = m_builder.CreateFCmpOLT(vec1[3], vec2[3], name("wcmp"));
-   SelectInst *selw = m_builder.CreateSelect(wcmp, vec1[3], vec2[3],
-                                             name("selw"));
+   Value *selw = m_builder.CreateSelect(wcmp, vec1[3], vec2[3],
+                                        name("selw"));
 
    return vectorFromVals(selx, sely, selz, selw);
 }
@@ -423,24 +424,24 @@ llvm::Value * Instructions::max(llvm::Value *in1, llvm::Value *in2)
    std::vector<llvm::Value*> vec2 = extractVector(in2);
 
    Value *xcmp  = m_builder.CreateFCmpOGT(vec1[0], vec2[0],
-                                             name("xcmp"));
-   SelectInst *selx = m_builder.CreateSelect(xcmp, vec1[0], vec2[0],
-                                             name("selx"));
+                                          name("xcmp"));
+   Value *selx = m_builder.CreateSelect(xcmp, vec1[0], vec2[0],
+                                        name("selx"));
 
    Value *ycmp  = m_builder.CreateFCmpOGT(vec1[1], vec2[1],
-                                             name("ycmp"));
-   SelectInst *sely = m_builder.CreateSelect(ycmp, vec1[1], vec2[1],
-                                             name("sely"));
+                                          name("ycmp"));
+   Value *sely = m_builder.CreateSelect(ycmp, vec1[1], vec2[1],
+                                        name("sely"));
 
    Value *zcmp  = m_builder.CreateFCmpOGT(vec1[2], vec2[2],
-                                             name("zcmp"));
-   SelectInst *selz = m_builder.CreateSelect(zcmp, vec1[2], vec2[2],
-                                             name("selz"));
+                                          name("zcmp"));
+   Value *selz = m_builder.CreateSelect(zcmp, vec1[2], vec2[2],
+                                        name("selz"));
 
    Value *wcmp  = m_builder.CreateFCmpOGT(vec1[3], vec2[3],
-                                             name("wcmp"));
-   SelectInst *selw = m_builder.CreateSelect(wcmp, vec1[3], vec2[3],
-                                             name("selw"));
+                                          name("wcmp"));
+   Value *selw = m_builder.CreateSelect(wcmp, vec1[3], vec2[3],
+                                        name("selw"));
 
    return vectorFromVals(selx, sely, selz, selw);
 }
@@ -474,17 +475,17 @@ void Instructions::printVector(llvm::Value *val)
       func_printf = declarePrintf();
    assert(func_printf);
    std::vector<llvm::Value*> vec = extractVector(val);
-   CastInst *dx = m_builder.CreateFPExt(vec[0], Type::DoubleTy, name("dx"));
-   CastInst *dy = m_builder.CreateFPExt(vec[1], Type::DoubleTy, name("dy"));
-   CastInst *dz = m_builder.CreateFPExt(vec[2], Type::DoubleTy, name("dz"));
-   CastInst *dw = m_builder.CreateFPExt(vec[3], Type::DoubleTy, name("dw"));
+   Value *dx = m_builder.CreateFPExt(vec[0], Type::DoubleTy, name("dx"));
+   Value *dy = m_builder.CreateFPExt(vec[1], Type::DoubleTy, name("dy"));
+   Value *dz = m_builder.CreateFPExt(vec[2], Type::DoubleTy, name("dz"));
+   Value *dw = m_builder.CreateFPExt(vec[3], Type::DoubleTy, name("dw"));
    std::vector<Value*> params;
    params.push_back(m_fmtPtr);
    params.push_back(dx);
    params.push_back(dy);
    params.push_back(dz);
    params.push_back(dw);
-   CallInst* call = m_builder.CreateCall(func_printf, params.begin(), params.end(),
+   CallInst *call = m_builder.CreateCall(func_printf, params.begin(), params.end(),
                                          name("printf"));
    call->setCallingConv(CallingConv::C);
    call->setTailCall(true);
@@ -497,13 +498,13 @@ llvm::Function * Instructions::declarePrintf()
    FunctionType* funcTy = FunctionType::get(
       /*Result=*/IntegerType::get(32),
       /*Params=*/args,
-      /*isVarArg=*/true,
-      /*ParamAttrs=*/params);
+      /*isVarArg=*/true);
    Function* func_printf = new Function(
       /*Type=*/funcTy,
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Name=*/"printf", m_mod);
    func_printf->setCallingConv(CallingConv::C);
+   func_printf->setParamAttrs(params);
    return func_printf;
 }
 
@@ -516,16 +517,16 @@ llvm::Value * Instructions::sgt(llvm::Value *in1, llvm::Value *in2)
    std::vector<llvm::Value*> vec1 = extractVector(in1);
    std::vector<llvm::Value*> vec2 = extractVector(in2);
    Value *xcmp = m_builder.CreateFCmpOGT(vec1[0], vec2[0], name("xcmp"));
-   SelectInst *x = m_builder.CreateSelect(xcmp, const1f, const0f, name("xsel"));
+   Value *x = m_builder.CreateSelect(xcmp, const1f, const0f, name("xsel"));
 
    Value *ycmp = m_builder.CreateFCmpOGT(vec1[1], vec2[1], name("ycmp"));
-   SelectInst *y = m_builder.CreateSelect(ycmp, const1f, const0f, name("ysel"));
+   Value *y = m_builder.CreateSelect(ycmp, const1f, const0f, name("ysel"));
 
    Value *zcmp = m_builder.CreateFCmpOGT(vec1[2], vec2[2], name("zcmp"));
-   SelectInst *z = m_builder.CreateSelect(zcmp, const1f, const0f, name("zsel"));
+   Value *z = m_builder.CreateSelect(zcmp, const1f, const0f, name("zsel"));
 
    Value *wcmp = m_builder.CreateFCmpOGT(vec1[3], vec2[3], name("wcmp"));
-   SelectInst *w = m_builder.CreateSelect(wcmp, const1f, const0f, name("wsel"));
+   Value *w = m_builder.CreateSelect(wcmp, const1f, const0f, name("wsel"));
 
    return vectorFromVals(x, y, z, w);
 }
@@ -538,16 +539,16 @@ llvm::Value * Instructions::sge(llvm::Value *in1, llvm::Value *in2)
    std::vector<llvm::Value*> vec2 = extractVector(in2);
 
    Value *xcmp = m_builder.CreateFCmpOGE(vec1[0], vec2[0], name("xcmp"));
-   SelectInst *x = m_builder.CreateSelect(xcmp, const1f, const0f, name("xsel"));
+   Value *x = m_builder.CreateSelect(xcmp, const1f, const0f, name("xsel"));
 
    Value *ycmp = m_builder.CreateFCmpOGE(vec1[1], vec2[1], name("ycmp"));
-   SelectInst *y = m_builder.CreateSelect(ycmp, const1f, const0f, name("ysel"));
+   Value *y = m_builder.CreateSelect(ycmp, const1f, const0f, name("ysel"));
 
    Value *zcmp = m_builder.CreateFCmpOGE(vec1[2], vec2[2], name("zcmp"));
-   SelectInst *z = m_builder.CreateSelect(zcmp, const1f, const0f, name("zsel"));
+   Value *z = m_builder.CreateSelect(zcmp, const1f, const0f, name("zsel"));
 
    Value *wcmp = m_builder.CreateFCmpOGE(vec1[3], vec2[3], name("wcmp"));
-   SelectInst *w = m_builder.CreateSelect(wcmp, const1f, const0f, name("wsel"));
+   Value *w = m_builder.CreateSelect(wcmp, const1f, const0f, name("wsel"));
 
    return vectorFromVals(x, y, z, w);
 }
@@ -562,41 +563,41 @@ llvm::Value * Instructions::slt(llvm::Value *in1, llvm::Value *in2)
    std::vector<llvm::Value*> vec2 = extractVector(in2);
 
    Value *xcmp = m_builder.CreateFCmpOLT(vec1[0], vec2[0], name("xcmp"));
-   SelectInst *x = m_builder.CreateSelect(xcmp, const1f, const0f, name("xsel"));
+   Value *x = m_builder.CreateSelect(xcmp, const1f, const0f, name("xsel"));
 
    Value *ycmp = m_builder.CreateFCmpOLT(vec1[1], vec2[1], name("ycmp"));
-   SelectInst *y = m_builder.CreateSelect(ycmp, const1f, const0f, name("ysel"));
+   Value *y = m_builder.CreateSelect(ycmp, const1f, const0f, name("ysel"));
 
    Value *zcmp = m_builder.CreateFCmpOLT(vec1[2], vec2[2], name("zcmp"));
-   SelectInst *z = m_builder.CreateSelect(zcmp, const1f, const0f, name("zsel"));
+   Value *z = m_builder.CreateSelect(zcmp, const1f, const0f, name("zsel"));
 
    Value *wcmp = m_builder.CreateFCmpOLT(vec1[3], vec2[3], name("wcmp"));
-   SelectInst *w = m_builder.CreateSelect(wcmp, const1f, const0f, name("wsel"));
+   Value *w = m_builder.CreateSelect(wcmp, const1f, const0f, name("wsel"));
 
    return vectorFromVals(x, y, z, w);
 }
 
 llvm::Value * Instructions::cross(llvm::Value *in1, llvm::Value *in2)
 {
-   ExtractElementInst *x1 = m_builder.CreateExtractElement(in1,
-                                                           m_storage->constantInt(0),
-                                                           name("x1"));
-   ExtractElementInst *y1 = m_builder.CreateExtractElement(in1,
-                                                           m_storage->constantInt(1),
-                                                           name("y1"));
-   ExtractElementInst *z1 = m_builder.CreateExtractElement(in1,
-                                                           m_storage->constantInt(2),
-                                                           name("z1"));
+   Value *x1 = m_builder.CreateExtractElement(in1,
+                                              m_storage->constantInt(0),
+                                              name("x1"));
+   Value *y1 = m_builder.CreateExtractElement(in1,
+                                              m_storage->constantInt(1),
+                                              name("y1"));
+   Value *z1 = m_builder.CreateExtractElement(in1,
+                                              m_storage->constantInt(2),
+                                              name("z1"));
 
-   ExtractElementInst *x2 = m_builder.CreateExtractElement(in2,
-                                                           m_storage->constantInt(0),
-                                                           name("x2"));
-   ExtractElementInst *y2 = m_builder.CreateExtractElement(in2,
-                                                           m_storage->constantInt(1),
-                                                           name("y2"));
-   ExtractElementInst *z2 = m_builder.CreateExtractElement(in2,
-                                                           m_storage->constantInt(2),
-                                                           name("z2"));
+   Value *x2 = m_builder.CreateExtractElement(in2,
+                                              m_storage->constantInt(0),
+                                              name("x2"));
+   Value *y2 = m_builder.CreateExtractElement(in2,
+                                              m_storage->constantInt(1),
+                                              name("y2"));
+   Value *z2 = m_builder.CreateExtractElement(in2,
+                                              m_storage->constantInt(2),
+                                              name("z2"));
    Value *y1z2 = mul(y1, z2);
    Value *z1y2 = mul(z1, y2);
 
@@ -631,8 +632,8 @@ void Instructions::ifop(llvm::Value *in)
 
    Constant *float0 = Constant::getNullValue(Type::FloatTy);
 
-   ExtractElementInst *x = m_builder.CreateExtractElement(in, m_storage->constantInt(0),
-                                                  name("extractx"));
+   Value *x = m_builder.CreateExtractElement(in, m_storage->constantInt(0),
+                                             name("extractx"));
    Value *xcmp = m_builder.CreateFCmpUNE(x, float0, name("xcmp"));
    m_builder.CreateCondBr(xcmp, ifthen, ifend);
    //m_builder.SetInsertPoint(yblock);
@@ -708,22 +709,22 @@ void Instructions::brk()
 llvm::Value * Instructions::trunc(llvm::Value *in)
 {
    std::vector<llvm::Value*> vec = extractVector(in);
-   CastInst *icastx = m_builder.CreateFPToSI(vec[0], IntegerType::get(32),
-                                             name("ftoix"));
-   CastInst *icasty = m_builder.CreateFPToSI(vec[1], IntegerType::get(32),
-                                             name("ftoiy"));
-   CastInst *icastz = m_builder.CreateFPToSI(vec[2], IntegerType::get(32),
-                                             name("ftoiz"));
-   CastInst *icastw = m_builder.CreateFPToSI(vec[3], IntegerType::get(32),
-                                             name("ftoiw"));
-   CastInst *fx = m_builder.CreateSIToFP(icastx, Type::FloatTy,
-                                         name("fx"));
-   CastInst *fy = m_builder.CreateSIToFP(icasty, Type::FloatTy,
-                                         name("fy"));
-   CastInst *fz = m_builder.CreateSIToFP(icastz, Type::FloatTy,
-                                         name("fz"));
-   CastInst *fw = m_builder.CreateSIToFP(icastw, Type::FloatTy,
-                                         name("fw"));
+   Value *icastx = m_builder.CreateFPToSI(vec[0], IntegerType::get(32),
+                                          name("ftoix"));
+   Value *icasty = m_builder.CreateFPToSI(vec[1], IntegerType::get(32),
+                                          name("ftoiy"));
+   Value *icastz = m_builder.CreateFPToSI(vec[2], IntegerType::get(32),
+                                          name("ftoiz"));
+   Value *icastw = m_builder.CreateFPToSI(vec[3], IntegerType::get(32),
+                                          name("ftoiw"));
+   Value *fx = m_builder.CreateSIToFP(icastx, Type::FloatTy,
+                                      name("fx"));
+   Value *fy = m_builder.CreateSIToFP(icasty, Type::FloatTy,
+                                      name("fy"));
+   Value *fz = m_builder.CreateSIToFP(icastz, Type::FloatTy,
+                                      name("fz"));
+   Value *fw = m_builder.CreateSIToFP(icastw, Type::FloatTy,
+                                      name("fw"));
    return vectorFromVals(fx, fy, fz, fw);
 }
 
@@ -743,7 +744,7 @@ void Instructions::cal(int label, llvm::Value *input)
 
 llvm::Function * Instructions::declareFunc(int label)
 {
-   PointerType *vecPtr = PointerType::get(m_floatVecType);
+   PointerType *vecPtr = PointerType::getUnqual(m_floatVecType);
    std::vector<const Type*> args;
    args.push_back(vecPtr);
    args.push_back(vecPtr);
@@ -753,14 +754,14 @@ llvm::Function * Instructions::declareFunc(int label)
    FunctionType *funcType = FunctionType::get(
       /*Result=*/Type::VoidTy,
       /*Params=*/args,
-      /*isVarArg=*/false,
-      /*ParamAttrs=*/params);
+      /*isVarArg=*/false);
    std::string name = createFuncName(label);
    Function *func = new Function(
       /*Type=*/funcType,
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Name=*/name.c_str(), m_mod);
    func->setCallingConv(CallingConv::C);
+   func->setParamAttrs(params);
    return func;
 }
 
