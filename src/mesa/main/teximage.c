@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  7.1
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2691,8 +2691,8 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       }
       else {
          /* no error, set the tex image parameters */
-         _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
-                                    border, internalFormat);
+         _mesa_init_teximage_fields(ctx, target, texImage, width, height,
+                                    depth, border, internalFormat);
          texImage->TexFormat = (*ctx->Driver.ChooseTextureFormat)(ctx,
                                           internalFormat, format, type);
       }
