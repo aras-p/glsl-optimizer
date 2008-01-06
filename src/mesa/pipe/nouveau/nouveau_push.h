@@ -1,15 +1,21 @@
-#ifndef __NV50_DMA_H__
-#define __NV50_DMA_H__
+#ifndef __NOUVEAU_PUSH_H__
+#define __NOUVEAU_PUSH_H__
 
 #include "pipe/nouveau/nouveau_winsys.h"
 
+#ifndef NOUVEAU_PUSH_CONTEXT
+#error undefined push context
+#endif
+
 #define OUT_RING(data) do {                                                    \
-	(*nv50->nvws->channel->pushbuf->cur++) = (data);                       \
+	NOUVEAU_PUSH_CONTEXT(pc);                                              \
+	(*pc->nvws->channel->pushbuf->cur++) = (data);                         \
 } while(0)
 
 #define OUT_RINGp(src,size) do {                                               \
-	memcpy(nv50->nvws->channel->pushbuf->cur, (src), (size) * 4);          \
-	nv50->nvws->channel->pushbuf->cur += (size);                           \
+	NOUVEAU_PUSH_CONTEXT(pc);                                              \
+	memcpy(pc->nvws->channel->pushbuf->cur, (src), (size) * 4);            \
+	pc->nvws->channel->pushbuf->cur += (size);                             \
 } while(0)
 
 #define OUT_RINGf(data) do {                                                   \
@@ -19,10 +25,11 @@
 } while(0)
 
 #define BEGIN_RING(obj,mthd,size) do {                                         \
-	if (nv50->nvws->channel->pushbuf->remaining < ((size) + 1))            \
-		nv50->nvws->push_flush(nv50->nvws->channel, ((size) + 1));     \
-	OUT_RING((nv50->obj->subc << 13) | ((size) << 18) | (mthd));           \
-	nv50->nvws->channel->pushbuf->remaining -= ((size) + 1);               \
+	NOUVEAU_PUSH_CONTEXT(pc);                                              \
+	if (pc->nvws->channel->pushbuf->remaining < ((size) + 1))              \
+		pc->nvws->push_flush(pc->nvws->channel, ((size) + 1));         \
+	OUT_RING((pc->obj->subc << 13) | ((size) << 18) | (mthd));             \
+	pc->nvws->channel->pushbuf->remaining -= ((size) + 1);                 \
 } while(0)
 
 #define BEGIN_RING_NI(obj,mthd,size) do {                                      \
@@ -30,14 +37,16 @@
 } while(0)
 
 #define FIRE_RING() do {                                                       \
-	nv50->nvws->push_flush(nv50->nvws->channel, 0);                        \
+	NOUVEAU_PUSH_CONTEXT(pc);                                              \
+	pc->nvws->push_flush(pc->nvws->channel, 0);                            \
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
-	nv50->nvws->push_reloc(nv50->nvws->channel,                            \
-			       nv50->nvws->channel->pushbuf->cur,              \
-			       (struct nouveau_bo *)(bo),                      \
-			       (data), (flags), (vor), (tor));                 \
+	NOUVEAU_PUSH_CONTEXT(pc);                                              \
+	pc->nvws->push_reloc(pc->nvws->channel,                                \
+  		 	     pc->nvws->channel->pushbuf->cur,                  \
+			     (struct nouveau_bo *)(bo),                        \
+			     (data), (flags), (vor), (tor));                   \
 	OUT_RING(0);                                                           \
 } while(0)
 
@@ -49,8 +58,8 @@
 /* FB/TT object handle */
 #define OUT_RELOCo(bo,flags) do {                                              \
 	OUT_RELOC((bo), 0, (flags) | NOUVEAU_BO_OR,                            \
-		  nv50->nvws->channel->vram->handle,                           \
-		  nv50->nvws->channel->gart->handle);                          \
+		  pc->nvws->channel->vram->handle,                             \
+		  pc->nvws->channel->gart->handle);                            \
 } while(0)
 
 /* Low 32-bits of offset */

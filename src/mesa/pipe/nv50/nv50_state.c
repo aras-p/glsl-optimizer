@@ -3,7 +3,6 @@
 #include "pipe/p_util.h"
 
 #include "nv50_context.h"
-#include "nv50_dma.h"
 #include "nv50_state.h"
 
 static void *
@@ -85,6 +84,7 @@ static void *
 nv50_vp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
+	return NULL;
 }
 
 static void
@@ -101,6 +101,7 @@ static void *
 nv50_fp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
+	return NULL;
 }
 
 static void

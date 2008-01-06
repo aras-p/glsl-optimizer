@@ -10,6 +10,10 @@
 #include "pipe/nouveau/nouveau_winsys.h"
 #include "pipe/nouveau/nouveau_gldefs.h"
 
+#define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
+	struct nv50_context *ctx = nv50
+#include "pipe/nouveau/nouveau_push.h"
+
 #include "nv50_state.h"
 
 #define NOUVEAU_ERR(fmt, args...) \

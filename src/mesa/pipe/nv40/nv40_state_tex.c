@@ -1,5 +1,4 @@
 #include "nv40_context.h"
-#include "nv40_dma.h"
 
 #define _(m,tf,ts0x,ts0y,ts0z,ts0w,ts1x,ts1y,ts1z,ts1w)                        \
 {                                                                              \

@@ -7,7 +7,6 @@
 #include "pipe/tgsi/util/tgsi_util.h"
 
 #include "nv40_context.h"
-#include "nv40_dma.h"
 
 #define SWZ_X 0
 #define SWZ_Y 1

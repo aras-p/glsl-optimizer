@@ -1,5 +1,4 @@
 #include "nv40_context.h"
-#include "nv40_dma.h"
 #include "nv40_state.h"
 
 void

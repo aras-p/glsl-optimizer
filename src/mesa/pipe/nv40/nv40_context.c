@@ -4,7 +4,6 @@
 #include "pipe/p_util.h"
 
 #include "nv40_context.h"
-#include "nv40_dma.h"
 
 static const char *
 nv40_get_name(struct pipe_context *pipe)

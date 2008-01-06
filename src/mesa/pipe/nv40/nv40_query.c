@@ -1,7 +1,6 @@
 #include "pipe/p_context.h"
 
 #include "nv40_context.h"
-#include "nv40_dma.h"
 
 struct nv40_query {
 	struct nouveau_resource *object;

@@ -6,7 +6,6 @@
 #include "pipe/tgsi/util/tgsi_parse.h"
 
 #include "nv40_context.h"
-#include "nv40_dma.h"
 #include "nv40_state.h"
 
 /* TODO (at least...):

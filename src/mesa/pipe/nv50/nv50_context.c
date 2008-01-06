@@ -4,7 +4,6 @@
 #include "pipe/p_util.h"
 
 #include "nv50_context.h"
-#include "nv50_dma.h"
 
 static boolean
 nv50_is_format_supported(struct pipe_context *pipe, enum pipe_format format,

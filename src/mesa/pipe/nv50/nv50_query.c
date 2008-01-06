@@ -1,7 +1,6 @@
 #include "pipe/p_context.h"
 
 #include "nv50_context.h"
-#include "nv50_dma.h"
 
 static struct pipe_query *
 nv50_query_create(struct pipe_context *pipe, unsigned type)
