@@ -583,6 +583,51 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 }
 
 
+/*
+ * Example DrawBuffers scenarios:
+ *
+ * 1. glDrawBuffer(GL_FRONT_AND_BACK), fixed-func or shader writes to
+ * "gl_FragColor" or program writes to the "result.color" register:
+ *
+ *   fragment color output   renderbuffer
+ *   ---------------------   ---------------
+ *   color[0]                Front, Back
+ *
+ *
+ * 2. glDrawBuffers(3, [GL_FRONT, GL_AUX0, GL_AUX1]), shader writes to
+ * gl_FragData[i] or program writes to result.color[i] registers:
+ *
+ *   fragment color output   renderbuffer
+ *   ---------------------   ---------------
+ *   color[0]                Front
+ *   color[1]                Aux0
+ *   color[3]                Aux1
+ *
+ *
+ * 3. glDrawBuffers(3, [GL_FRONT, GL_AUX0, GL_AUX1]) and shader writes to
+ * gl_FragColor, or fixed function:
+ *
+ *   fragment color output   renderbuffer
+ *   ---------------------   ---------------
+ *   color[0]                Front, Aux0, Aux1
+ *
+ *
+ * In either case, the list of renderbuffers is stored in the
+ * framebuffer->_ColorDrawBuffers[] array and
+ * framebuffer->_NumColorDrawBuffers indicates the number of buffers.
+ * The renderer (like swrast) has to look at the current fragment shader
+ * to see if it writes to gl_FragColor vs. gl_FragData[i] to determine
+ * how to map color outputs to renderbuffers.
+ *
+ * Note that these two calls are equivalent (for fixed function fragment
+ * shading anyway):
+ *   a)  glDrawBuffer(GL_FRONT_AND_BACK);  (assuming non-stereo framebuffer)
+ *   b)  glDrawBuffers(2, [GL_FRONT_LEFT, GL_BACK_LEFT]);
+ */
+
+
+
+
 /**
  * Update the (derived) list of color drawing renderbuffer pointers.
  * Later, when we're rendering we'll loop from 0 to _NumColorDrawBuffers
@@ -591,39 +636,39 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 static void
 update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   GLuint output;
+   GLuint output, count = 0;
 
-   /*
-    * Fragment programs can write to multiple colorbuffers with
-    * the GL_ARB_draw_buffers extension.
+   /* First, interpret _ColorDrawBufferMask[] in the manner that would be
+    * used if the fragment program/shader writes to gl_FragData[]
     */
    for (output = 0; output < ctx->Const.MaxDrawBuffers; output++) {
-      GLbitfield bufferMask = fb->_ColorDrawBufferMask[output];
-      GLuint count = 0;
-      GLuint i;
-      if (!fb->DeletePending) {
-         /* We need the inner loop here because glDrawBuffer(GL_FRONT_AND_BACK)
-          * can specify writing to two or four color buffers (for example).
-          */
-         for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
-            const GLuint bufferBit = 1 << i;
-            if (bufferBit & bufferMask) {
-               struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-               if (rb && rb->Width > 0 && rb->Height > 0) {
-                  fb->_ColorDrawBuffers[output][count] = rb;
-                  count++;
-               }
-               else {
-                  /*
-                  _mesa_warning(ctx, "DrawBuffer names a missing buffer!\n");
-                  */
-               }
-               bufferMask &= ~bufferBit;
-            }
-         }
+      GLuint buf = _mesa_ffs(fb->_ColorDrawBufferMask[output]);
+      if (buf) {
+         struct gl_renderbuffer *rb = fb->Attachment[buf - 1].Renderbuffer;
+         fb->_ColorDrawBuffers[output] = rb; /* may be NULL */
+         if (rb)
+            count = output + 1;
       }
-      fb->_NumColorDrawBuffers[output] = count;
    }
+
+   /* Second, handle the GL_FRONT_AND_BACK case, overwriting the above
+    * if needed.
+    */
+   GLbitfield bufferMask = fb->_ColorDrawBufferMask[0];
+   if (_mesa_bitcount(bufferMask) > 1) {
+      GLuint i;
+      count = 0;
+      for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
+         if (bufferMask & (1 << i)) {
+            struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
+            fb->_ColorDrawBuffers[count] = rb;
+            count++;
+         }
+         bufferMask &= ~(1 << i);
+      }
+   }
+                               
+   fb->_NumColorDrawBuffers = count;
 }
 
 

@@ -121,7 +121,7 @@ void xmesa_choose_point( GLcontext *ctx )
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped)
+   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped)
 
 
 /*
@@ -598,7 +598,7 @@ get_line_func(GLcontext *ctx)
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_line_func) NULL;
    if (xmbuf->swAlpha)                    return (swrast_line_func) NULL;
 
-   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
+   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
 
    if (xrb->ximage
        && swrast->_RasterMask==DEPTH_BIT
@@ -661,7 +661,7 @@ get_line_func(GLcontext *ctx)
    }
 
 #ifndef XFree86Server
-   if (ctx->DrawBuffer->_NumColorDrawBuffers[0] == 1
+   if (ctx->DrawBuffer->_NumColorDrawBuffers == 1
        && ctx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT
        && swrast->_RasterMask == LOGIC_OP_BIT
        && ctx->Color.LogicOp == GL_XOR

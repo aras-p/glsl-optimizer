@@ -43,7 +43,7 @@ static void upload_sf_vp(struct brw_context *brw)
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
    struct brw_sf_viewport sfv;
    struct intel_renderbuffer *irb =
-      intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
+      intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
    GLfloat y_scale, y_bias;
 
    memset(&sfv, 0, sizeof(sfv));

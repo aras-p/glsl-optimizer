@@ -149,12 +149,12 @@ static void nouveauClear( GLcontext *ctx, GLbitfield mask )
 		clear_value = PACK_COLOR_8888(c[3],c[0],c[1],c[2]);
 
 		if (ctx->DrawBuffer) {
-			/* FIXME: find correct color buffer, instead of [0][0] */
-			if (ctx->DrawBuffer->_ColorDrawBuffers[0][0]) {
-				color_bits = ctx->DrawBuffer->_ColorDrawBuffers[0][0]->RedBits;
-				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0][0]->GreenBits;
-				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0][0]->BlueBits;
-				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0][0]->AlphaBits;
+			/* FIXME: find correct color buffer, instead of [0] */
+			if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
+				color_bits = ctx->DrawBuffer->_ColorDrawBuffers[0]->RedBits;
+				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0]->GreenBits;
+				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0]->BlueBits;
+				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0]->AlphaBits;
 			}
 		}
 

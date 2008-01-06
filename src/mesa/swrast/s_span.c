@@ -792,6 +792,7 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    ASSERT(span->end <= MAX_WIDTH);
    ASSERT(span->primitive == GL_POINT  ||  span->primitive == GL_LINE ||
@@ -818,7 +819,7 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Depth bounds test */
-   if (ctx->Depth.BoundsTest && ctx->DrawBuffer->Visual.depthBits > 0) {
+   if (ctx->Depth.BoundsTest && fb->Visual.depthBits > 0) {
       if (!_swrast_depth_bounds_test(ctx, span)) {
          return;
       }
@@ -830,10 +831,10 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       GLuint i;
       for (i = 0; i < span->end; i++) {
          if (span->array->mask[i]) {
-            assert(span->array->x[i] >= ctx->DrawBuffer->_Xmin);
-            assert(span->array->x[i] < ctx->DrawBuffer->_Xmax);
-            assert(span->array->y[i] >= ctx->DrawBuffer->_Ymin);
-            assert(span->array->y[i] < ctx->DrawBuffer->_Ymax);
+            assert(span->array->x[i] >= fb->_Xmin);
+            assert(span->array->x[i] < fb->_Xmax);
+            assert(span->array->y[i] >= fb->_Ymin);
+            assert(span->array->y[i] < fb->_Ymax);
          }
       }
    }
@@ -912,21 +913,20 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
     * Write to renderbuffers
     */
    {
-      struct gl_framebuffer *fb = ctx->DrawBuffer;
-      const GLuint output = 0; /* only frag progs can write to other outputs */
-      const GLuint numDrawBuffers = fb->_NumColorDrawBuffers[output];
-      GLuint indexSave[MAX_WIDTH];
+      const GLuint numBuffers = fb->_NumColorDrawBuffers;
       GLuint buf;
 
-      if (numDrawBuffers > 1) {
-         /* save indexes for second, third renderbuffer writes */
-         _mesa_memcpy(indexSave, span->array->index,
-                      span->end * sizeof(indexSave[0]));
-      }
+      for (buf = 0; buf < numBuffers; buf++) {
+         struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
+         GLuint indexSave[MAX_WIDTH];
 
-      for (buf = 0; buf < fb->_NumColorDrawBuffers[output]; buf++) {
-         struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][buf];
          ASSERT(rb->_BaseFormat == GL_COLOR_INDEX);
+
+         if (numBuffers > 1) {
+            /* save indexes for second, third renderbuffer writes */
+            _mesa_memcpy(indexSave, span->array->index,
+                         span->end * sizeof(indexSave[0]));
+         }
 
          if (ctx->Color.IndexLogicOpEnabled) {
             _swrast_logicop_ci_span(ctx, rb, span);
@@ -1002,7 +1002,7 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
             }
          }
 
-         if (buf + 1 < numDrawBuffers) {
+         if (buf + 1 < numBuffers) {
             /* restore original span values */
             _mesa_memcpy(span->array->index, indexSave,
                          span->end * sizeof(indexSave[0]));
@@ -1119,7 +1119,7 @@ clamp_colors(SWspan *span)
 
 /**
  * Convert the span's color arrays to the given type.
- * The only way 'output' can be greater than one is when we have a fragment
+ * The only way 'output' can be greater than zero is when we have a fragment
  * program that writes to gl_FragData[1] or higher.
  * \param output  which fragment program color output is being processed
  */
@@ -1249,7 +1249,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
                              || ctx->ATIFragmentShader._Enabled);
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   GLuint output;
 
    /*
    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
@@ -1399,67 +1398,69 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    /*
     * Write to renderbuffers
     */
-   /* Loop over color outputs (GL_ARB_draw_buffers) written by frag prog */
-   for (output = 0; output < swrast->_NumColorOutputs; output++) {
-      if (swrast->_ColorOutputsMask & (1 << output)) {
-        const GLuint numDrawBuffers = fb->_NumColorDrawBuffers[output];
-        GLchan rgbaSave[MAX_WIDTH][4];
-        GLuint buf;
+   {
+      const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+      const GLboolean multiFragOutputs
+         = fp && fp->Base.InputsRead >= (1 << FRAG_RESULT_DATA0);
+      const GLuint numBuffers = fb->_NumColorDrawBuffers;
+      GLuint buf;
 
-        ASSERT(numDrawBuffers > 0);
+      for (buf = 0; buf < numBuffers; buf++) {
+         struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buf];
 
-        if (fb->_ColorDrawBuffers[output][0]->DataType
-            != span->array->ChanType || output > 0) {
-           convert_color_type(span,
-                              fb->_ColorDrawBuffers[output][0]->DataType,
-                              output);
-        }
+         /* color[fragOutput] will be written to buffer[buf] */
 
-        if (numDrawBuffers > 1) {
-           /* save colors for second, third renderbuffer writes */
-           _mesa_memcpy(rgbaSave, span->array->rgba,
-                        4 * span->end * sizeof(GLchan));
-        }
+         if (rb) {
+            GLchan rgbaSave[MAX_WIDTH][4];
+            const GLuint fragOutput = multiFragOutputs ? buf : 0;
 
-        /* Loop over renderbuffers (i.e. GL_FRONT_AND_BACK) */
-        for (buf = 0; buf < numDrawBuffers; buf++) {
-           struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[output][buf];
-           ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
+            if (rb->DataType != span->array->ChanType || fragOutput > 0) {
+               convert_color_type(span, rb->DataType, fragOutput);
+            }
 
-           if (ctx->Color._LogicOpEnabled) {
-              _swrast_logicop_rgba_span(ctx, rb, span);
-           }
-           else if (ctx->Color.BlendEnabled) {
-              _swrast_blend_span(ctx, rb, span);
-           }
+            if (!multiFragOutputs && numBuffers > 1) {
+               /* save colors for second, third renderbuffer writes */
+               _mesa_memcpy(rgbaSave, span->array->rgba,
+                            4 * span->end * sizeof(GLchan));
+            }
 
-           if (colorMask != 0xffffffff) {
-              _swrast_mask_rgba_span(ctx, rb, span);
-           }
+            ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
 
-           if (span->arrayMask & SPAN_XY) {
-              /* array of pixel coords */
-              ASSERT(rb->PutValues);
-              rb->PutValues(ctx, rb, span->end,
-                            span->array->x, span->array->y,
-                            span->array->rgba, span->array->mask);
-           }
-           else {
-              /* horizontal run of pixels */
-              ASSERT(rb->PutRow);
-              rb->PutRow(ctx, rb, span->end, span->x, span->y,
-                         span->array->rgba,
-                         span->writeAll ? NULL: span->array->mask);
-           }
+            if (ctx->Color._LogicOpEnabled) {
+               _swrast_logicop_rgba_span(ctx, rb, span);
+            }
+            else if (ctx->Color.BlendEnabled) {
+               _swrast_blend_span(ctx, rb, span);
+            }
 
-           if (buf + 1 < numDrawBuffers) {
-              /* restore original span values */
-              _mesa_memcpy(span->array->rgba, rgbaSave,
-                           4 * span->end * sizeof(GLchan));
-           }
-        } /* for buf */
-      } /* if output is written to */
-   } /* for output */
+            if (colorMask != 0xffffffff) {
+               _swrast_mask_rgba_span(ctx, rb, span);
+            }
+
+            if (span->arrayMask & SPAN_XY) {
+               /* array of pixel coords */
+               ASSERT(rb->PutValues);
+               rb->PutValues(ctx, rb, span->end,
+                             span->array->x, span->array->y,
+                             span->array->rgba, span->array->mask);
+            }
+            else {
+               /* horizontal run of pixels */
+               ASSERT(rb->PutRow);
+               rb->PutRow(ctx, rb, span->end, span->x, span->y,
+                          span->array->rgba,
+                          span->writeAll ? NULL: span->array->mask);
+            }
+
+            if (!multiFragOutputs && numBuffers > 1) {
+               /* restore original span values */
+               _mesa_memcpy(span->array->rgba, rgbaSave,
+                            4 * span->end * sizeof(GLchan));
+            }
+
+         } /* if rb */
+      } /* for buf */
+   }
 
 end:
    /* restore these values before returning */

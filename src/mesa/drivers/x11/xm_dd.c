@@ -435,7 +435,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
                          const GLvoid *pixels )
 {
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
 
    if (swrast->NewState)
@@ -544,7 +544,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
                          const GLvoid *pixels )
 {
    struct xmesa_renderbuffer *xrb
-      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
+      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
@@ -654,7 +654,7 @@ xmesa_CopyPixels( GLcontext *ctx,
    struct xmesa_renderbuffer *srcXrb
       = xmesa_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer->Wrapped);
    struct xmesa_renderbuffer *dstXrb
-      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
+      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
 
    ASSERT(dpy);
    ASSERT(gc);

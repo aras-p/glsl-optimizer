@@ -53,7 +53,7 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
                       const GLvoid *pixels)
 {
    const GLint imgX = x, imgY = y;
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    const GLenum rbType = rb->DataType;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan span;
@@ -608,8 +608,8 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                        IMAGE_POST_CONVOLUTION_SCALE_BIAS);
    }
 
-   if (ctx->DrawBuffer->_NumColorDrawBuffers[0] > 0 &&
-       ctx->DrawBuffer->_ColorDrawBuffers[0][0]->DataType != GL_FLOAT &&
+   if (ctx->DrawBuffer->_NumColorDrawBuffers > 0 &&
+       ctx->DrawBuffer->_ColorDrawBuffers[0]->DataType != GL_FLOAT &&
        ctx->Color.ClampFragmentColor != GL_FALSE) {
       /* need to clamp colors before applying fragment ops */
       transferOps |= IMAGE_CLAMP_BIT;

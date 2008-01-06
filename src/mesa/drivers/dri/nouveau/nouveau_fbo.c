@@ -177,8 +177,7 @@ nouveau_window_moved(GLcontext * ctx)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nouveau_renderbuffer_t *nrb;
 
-	nrb = (nouveau_renderbuffer_t *)
-		ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+	nrb = (nouveau_renderbuffer_t *) ctx->DrawBuffer->_ColorDrawBuffers[0];
 	if (!nrb)
 		return;
 
@@ -204,7 +203,7 @@ nouveau_build_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 	_mesa_update_framebuffer(ctx);
 	_mesa_update_draw_buffer_bounds(ctx);
 
-	color[0] = (nouveau_renderbuffer_t *) fb->_ColorDrawBuffers[0][0];
+	color[0] = (nouveau_renderbuffer_t *) fb->_ColorDrawBuffers[0];
 	if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped)
 		depth = (nouveau_renderbuffer_t *) fb->_DepthBuffer->Wrapped;
 	else

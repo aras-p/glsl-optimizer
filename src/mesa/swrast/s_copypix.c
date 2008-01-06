@@ -830,10 +830,10 @@ fast_copy_pixels(GLcontext *ctx,
    }
 
    if (type == GL_COLOR) {
-      if (dstFb->_NumColorDrawBuffers[0] != 1)
+      if (dstFb->_NumColorDrawBuffers != 1)
          return GL_FALSE;
       srcRb = srcFb->_ColorReadBuffer;
-      dstRb = dstFb->_ColorDrawBuffers[0][0];
+      dstRb = dstFb->_ColorDrawBuffers[0];
    }
    else if (type == GL_STENCIL) {
       srcRb = srcFb->_StencilBuffer;

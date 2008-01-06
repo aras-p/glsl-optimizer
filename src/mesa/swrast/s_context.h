@@ -136,10 +136,6 @@ typedef struct
    GLboolean _DeferredTexture;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
-   /** Multiple render targets */
-   GLbitfield _ColorOutputsMask;
-   GLuint _NumColorOutputs;
-
    /** List/array of the fragment attributes to interpolate */
    GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
    /** Same info, but as a bitmask */

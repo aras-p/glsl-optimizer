@@ -62,12 +62,9 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    /* We can only handle a single draw buffer at the moment, and only as the
     * first color buffer.
     */
-   for (i = 0; i < MAX_DRAW_BUFFERS; i++) {
-      if (fb->_NumColorDrawBuffers[i] > (i == 0 ? 1 : 0)) {
-	 DBG("FALLBACK: draw buffer %d: 0x%08x\n",
-	     i, ctx->DrawBuffer->_ColorDrawBufferMask[i]);
-	 return GL_TRUE;
-      }
+   if (fb->_NumColorDrawBuffers > 1) {
+      DBG("FALLBACK: multiple color draw buffers\n");
+      return GL_TRUE;
    }
 
    /* _NEW_RENDERMODE

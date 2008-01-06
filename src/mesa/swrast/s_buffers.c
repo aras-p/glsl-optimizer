@@ -251,7 +251,7 @@ static void
 clear_color_buffers(GLcontext *ctx)
 {
    GLboolean masking;
-   GLuint i;
+   GLuint buf;
 
    if (ctx->Visual.rgbMode) {
       if (ctx->Color.ColorMask[0] && 
@@ -265,7 +265,7 @@ clear_color_buffers(GLcontext *ctx)
       }
    }
    else {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
       const GLuint indexBits = (1 << rb->IndexBits) - 1;
       if ((ctx->Color.IndexMask & indexBits) == indexBits) {
          masking = GL_FALSE;
@@ -275,8 +275,8 @@ clear_color_buffers(GLcontext *ctx)
       }
    }
 
-   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers[0]; i++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
+   for (buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[buf];
       if (ctx->Visual.rgbMode) {
          if (masking) {
             clear_rgba_buffer_with_masking(ctx, rb);
@@ -331,7 +331,7 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
 
    /* do software clearing here */
    if (buffers) {
-      if (buffers & ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
+      if (buffers & ctx->DrawBuffer->_NumColorDrawBuffers > 0) {
          clear_color_buffers(ctx);
       }
       if (buffers & BUFFER_BIT_DEPTH) {

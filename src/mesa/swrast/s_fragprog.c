@@ -167,11 +167,11 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
                 * Note that colors beyond 0 and 1 will overwrite other
                 * attributes, such as FOGC, TEX0, TEX1, etc.  That's OK.
                 */
-               GLuint output;
-               for (output = 0; output < swrast->_NumColorOutputs; output++) {
-                  if (outputsWritten & (1 << (FRAG_RESULT_DATA0 + output))) {
-                     COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0+output][i],
-                             machine->Outputs[FRAG_RESULT_DATA0 + output]);
+               GLuint buf;
+               for (buf = 0; buf < ctx->DrawBuffer->_NumColorDrawBuffers; buf++) {
+                  if (outputsWritten & (1 << (FRAG_RESULT_DATA0 + buf))) {
+                     COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0 + buf][i],
+                             machine->Outputs[FRAG_RESULT_DATA0 + buf]);
                   }
                }
             }

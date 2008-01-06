@@ -508,8 +508,9 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
    /* Set per-FBO state */
    fb->ColorDrawBuffer[output] = buffer;
    fb->_ColorDrawBufferMask[output] = destMask;
-   /* not really needed, will be set later */
-   fb->_NumColorDrawBuffers[output] = 0;
+
+   /* this will be computed later, but zero to be safe */
+   fb->_NumColorDrawBuffers = 0;
 
    if (fb->Name == 0) {
       /* Only set the per-context DrawBuffer state if we're currently

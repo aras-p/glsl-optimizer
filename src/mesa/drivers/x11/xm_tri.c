@@ -45,7 +45,7 @@
 
 
 #define GET_XRB(XRB)  struct xmesa_renderbuffer *XRB = \
-   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped)
+   xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped)
 
 
 /**********************************************************************/
@@ -1479,7 +1479,7 @@ get_triangle_func(GLcontext *ctx)
    if (xmbuf->swAlpha)
       return (swrast_tri_func) NULL;
 
-   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
+   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
 
    if (xrb->ximage) {
       if (   ctx->Light.ShadeModel==GL_SMOOTH

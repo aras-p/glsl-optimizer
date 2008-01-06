@@ -102,7 +102,7 @@ struct intel_region *
 intel_drawbuf_region(struct intel_context *intel)
 {
    struct intel_renderbuffer *irbColor =
-      intel_renderbuffer(intel->ctx.DrawBuffer->_ColorDrawBuffers[0][0]);
+      intel_renderbuffer(intel->ctx.DrawBuffer->_ColorDrawBuffers[0]);
    if (irbColor)
       return irbColor->region;
    else
@@ -931,7 +931,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /*
     * How many color buffers are we drawing into?
     */
-   if (fb->_NumColorDrawBuffers[0] != 1) {
+   if (fb->_NumColorDrawBuffers != 1) {
       /* writing to 0 or 2 or 4 color buffers */
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
@@ -967,7 +967,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	 /* drawing to user-created FBO */
 	 struct intel_renderbuffer *irb;
 	 intelSetRenderbufferClipRects(intel);
-	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
+	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
 	 colorRegion = (irb && irb->region) ? irb->region : NULL;
       }
    }

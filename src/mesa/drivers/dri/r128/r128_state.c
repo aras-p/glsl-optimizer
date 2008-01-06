@@ -813,7 +813,7 @@ static void r128UpdateWindow( GLcontext *ctx )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
    int x = rmesa->driDrawable->x;
    int y = rmesa->driDrawable->y;
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
    driRenderbuffer *drb = (driRenderbuffer *) rb;
 
    rmesa->setup.window_xy_offset = (((y & 0xFFF) << R128_WINDOW_Y_SHIFT) |

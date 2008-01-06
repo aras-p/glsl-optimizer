@@ -525,8 +525,8 @@ accum_return(GLcontext *ctx, GLfloat value,
          }
 
          /* store colors */
-         for (buffer = 0; buffer < fb->_NumColorDrawBuffers[0]; buffer++) {
-            struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[0][buffer];
+         for (buffer = 0; buffer < fb->_NumColorDrawBuffers; buffer++) {
+            struct gl_renderbuffer *rb = fb->_ColorDrawBuffers[buffer];
             if (masking) {
                _swrast_mask_rgba_span(ctx, rb, &span);
             }

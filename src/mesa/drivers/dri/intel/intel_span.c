@@ -186,21 +186,18 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    struct intel_renderbuffer *irb;
 
    /* color draw buffers */
-   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-      for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers[i]; j++) {
-         struct gl_renderbuffer *rb =
-            ctx->DrawBuffer->_ColorDrawBuffers[i][j];
-         irb = intel_renderbuffer(rb);
-         if (irb) {
-            /* this is a user-created intel_renderbuffer */
-            if (irb->region) {
-               if (map)
-                  intel_region_map(intel, irb->region);
-               else
-                  intel_region_unmap(intel, irb->region);
-               irb->pfMap = irb->region->map;
-               irb->pfPitch = irb->region->pitch;
-            }
+   for (j = 0; j < ctx->DrawBuffer->_NumColorDrawBuffers; j++) {
+      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[j];
+      irb = intel_renderbuffer(rb);
+      if (irb) {
+         /* this is a user-created intel_renderbuffer */
+         if (irb->region) {
+            if (map)
+               intel_region_map(intel, irb->region);
+            else
+               intel_region_unmap(intel, irb->region);
+            irb->pfMap = irb->region->map;
+            irb->pfPitch = irb->region->pitch;
          }
       }
    }

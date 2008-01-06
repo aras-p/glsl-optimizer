@@ -2400,8 +2400,8 @@ struct gl_framebuffer
    GLint _ColorReadBufferIndex; /* -1 = None */
 
    /* These are computed from _ColorDrawBufferMask and _ColorReadBufferIndex */
-   GLuint _NumColorDrawBuffers[MAX_DRAW_BUFFERS];
-   struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
+   GLuint _NumColorDrawBuffers;
+   struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS];
    struct gl_renderbuffer *_ColorReadBuffer;
 
    /** The Actual depth/stencil buffers to use.  May be wrappers around the
