@@ -88,6 +88,7 @@ struct nv40_fragment_program {
 
 	boolean translated;
 	boolean on_hw;
+	unsigned samplers;
 
 	uint32_t *insn;
 	int       insn_len;

@@ -223,8 +223,12 @@ nv40_fp_tex(struct nv40_fpc *fpc, int sat, int op, int unit,
 	    struct nv40_sreg dst, int mask,
 	    struct nv40_sreg s0, struct nv40_sreg s1, struct nv40_sreg s2)
 {
+	struct nv40_fragment_program *fp = fpc->fp;
+
 	nv40_fp_arith(fpc, sat, op, dst, mask, s0, s1, s2);
-	fpc->fp->insn[fpc->inst_offset] |= (unit << NV40_FP_OP_TEX_UNIT_SHIFT);
+
+	fp->insn[fpc->inst_offset] |= (unit << NV40_FP_OP_TEX_UNIT_SHIFT);
+	fp->samplers |= (1 << unit);
 }
 
 static INLINE struct nv40_sreg

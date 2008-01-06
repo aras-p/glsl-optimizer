@@ -9,24 +9,25 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 
 	if (nv40->dirty & NV40_NEW_FRAGPROG) {
 		nv40_fragprog_bind(nv40, nv40->fragprog.current);
-		/*XXX: clear NV40_NEW_FRAGPROG if no now program uploaded */
+		/*XXX: clear NV40_NEW_FRAGPROG if no new program uploaded */
 	}
 
-	if (nv40->dirty & NV40_NEW_TEXTURE)
+	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
 		nv40_state_tex_update(nv40);
 
-	if (nv40->dirty & (NV40_NEW_TEXTURE | NV40_NEW_FRAGPROG)) {
 		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
 		OUT_RING  (2);
 		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
 		OUT_RING  (1);
-		nv40->dirty &= ~(NV40_NEW_TEXTURE | NV40_NEW_FRAGPROG);
+		nv40->dirty &= ~NV40_NEW_FRAGPROG;
 	}
 
 	if (nv40->dirty & NV40_NEW_VERTPROG) {
 		nv40_vertprog_bind(nv40, nv40->vertprog.current);
 		nv40->dirty &= ~NV40_NEW_VERTPROG;
 	}
+
+	nv40->dirty_samplers = 0;
 
 	/* Emit relocs for every referenced buffer.
 	 * This is to ensure the bufmgr has an accurate idea of how
@@ -73,7 +74,7 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 
 	/* Texture images */
 	for (i = 0; i < 16; i++) {
-		if (!nv40->tex[i].buffer)
+		if (!(nv40->fp_samplers & (1 << i)))
 			continue;
 		BEGIN_RING(curie, NV40TCL_TEX_OFFSET(i), 2);
 		OUT_RELOCl(nv40->tex[i].buffer, 0, NOUVEAU_BO_VRAM |

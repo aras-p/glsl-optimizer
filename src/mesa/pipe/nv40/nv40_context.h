@@ -17,7 +17,6 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-#define NV40_NEW_TEXTURE	(1 << 0)
 #define NV40_NEW_VERTPROG	(1 << 1)
 #define NV40_NEW_FRAGPROG	(1 << 2)
 #define NV40_NEW_ARRAYS		(1 << 3)
@@ -39,8 +38,10 @@ struct nv40_context {
 	uint32_t dirty;
 
 	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
-	struct pipe_texture       *tex_miptree[PIPE_MAX_SAMPLERS];
-	uint32_t                   tex_dirty;
+	struct nv40_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
+	unsigned dirty_samplers;
+	unsigned fp_samplers;
+	unsigned vp_samplers;
 
 	uint32_t rt_enable;
 	struct pipe_buffer_handle *rt[4];

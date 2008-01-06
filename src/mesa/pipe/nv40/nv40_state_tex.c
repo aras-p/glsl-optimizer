@@ -60,8 +60,8 @@ static void
 nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 {
 	struct nv40_sampler_state *ps = nv40->tex_sampler[unit];
-	struct pipe_texture *pt = nv40->tex_miptree[unit];
-	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
+	struct nv40_miptree *nv40mt = nv40->tex_miptree[unit];
+	struct pipe_texture *pt = &nv40mt->base;
 	struct nv40_texture_format *tf;
 	uint32_t txf, txs, txp;
 	int swizzled = 0; /*XXX: implement in region code? */
@@ -127,18 +127,26 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 void
 nv40_state_tex_update(struct nv40_context *nv40)
 {
-	while (nv40->tex_dirty) {
-		int unit = ffs(nv40->tex_dirty) - 1;
+	struct nv40_fragment_program *fp = nv40->fragprog.active;
+	unsigned samplers, unit;
 
-		if (nv40->tex_miptree[unit]) {
-			nv40_tex_unit_enable(nv40, unit);
-		} else {
-			nv40->tex[unit].buffer = NULL;
-			BEGIN_RING(curie, NV40TCL_TEX_ENABLE(unit), 1);
-			OUT_RING  (0);
-		}
+	samplers = nv40->fp_samplers & ~fp->samplers;
+	while (samplers) {
+		unit = ffs(samplers) - 1;
+		samplers &= ~(1 << unit);
 
-		nv40->tex_dirty &= ~(1 << unit);
+		BEGIN_RING(curie, NV40TCL_TEX_ENABLE(unit), 1);
+		OUT_RING  (0);
 	}
+
+	samplers = nv40->dirty_samplers & fp->samplers;
+	while (samplers) {
+		unit = ffs(samplers) - 1;
+		samplers &= ~(1 << unit);
+
+		nv40_tex_unit_enable(nv40, unit);
+	}
+
+	nv40->fp_samplers = fp->samplers;
 }
 
