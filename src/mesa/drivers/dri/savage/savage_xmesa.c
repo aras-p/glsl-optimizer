@@ -730,7 +730,7 @@ void savageXMesaSetClipRects(savageContextPtr imesa)
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
 
    if ((dPriv->numBackClipRects == 0)
-       || (imesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT)) {
+       || (imesa->glCtx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT)) {
       imesa->numClipRects = dPriv->numClipRects;
       imesa->pClipRects = dPriv->pClipRects;
       imesa->drawX = dPriv->x;

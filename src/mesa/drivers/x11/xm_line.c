@@ -587,8 +587,8 @@ get_line_func(GLcontext *ctx)
    const int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
    const struct xmesa_renderbuffer *xrb;
 
-   if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
-        & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
+   if ((ctx->DrawBuffer->_ColorDrawBufferIndexes[0] != BUFFER_BIT_FRONT_LEFT) &&
+       (ctx->DrawBuffer->_ColorDrawBufferIndexes[0] != BUFFER_BIT_BACK_LEFT))
       return (swrast_line_func) NULL;
    if (ctx->RenderMode != GL_RENDER)      return (swrast_line_func) NULL;
    if (ctx->Line.SmoothFlag)              return (swrast_line_func) NULL;
@@ -662,7 +662,7 @@ get_line_func(GLcontext *ctx)
 
 #ifndef XFree86Server
    if (ctx->DrawBuffer->_NumColorDrawBuffers == 1
-       && ctx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT
+       && ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT
        && swrast->_RasterMask == LOGIC_OP_BIT
        && ctx->Color.LogicOp == GL_XOR
        && !ctx->Line.StippleFlag

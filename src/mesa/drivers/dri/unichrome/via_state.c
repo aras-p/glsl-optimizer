@@ -656,13 +656,18 @@ static void viaDrawBuffer(GLcontext *ctx, GLenum mode)
    if (!ctx->DrawBuffer)
       return;
 
-   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
-   case BUFFER_BIT_FRONT_LEFT:
+   if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
+      FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_TRUE);
+      return;
+   }
+
+   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
+   case BUFFER_FRONT_LEFT:
       VIA_FLUSH_DMA(vmesa);
       vmesa->drawBuffer = &vmesa->front;
       FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);
       break;
-   case BUFFER_BIT_BACK_LEFT:
+   case BUFFER_BACK_LEFT:
       VIA_FLUSH_DMA(vmesa);
       vmesa->drawBuffer = &vmesa->back;
       FALLBACK(vmesa, VIA_FALLBACK_DRAW_BUFFER, GL_FALSE);

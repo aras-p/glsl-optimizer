@@ -1462,8 +1462,8 @@ get_triangle_func(GLcontext *ctx)
 #endif
 
    /* trivial fallback tests */
-   if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
-        & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
+   if ((ctx->DrawBuffer->_ColorDrawBufferIndexes[0] != BUFFER_BIT_FRONT_LEFT) &&
+       (ctx->DrawBuffer->_ColorDrawBufferIndexes[0] != BUFFER_BIT_BACK_LEFT))
       return (swrast_tri_func) NULL;
    if (ctx->RenderMode != GL_RENDER)
       return (swrast_tri_func) NULL;

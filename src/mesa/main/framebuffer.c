@@ -109,8 +109,9 @@ _mesa_new_framebuffer(GLcontext *ctx, GLuint name)
    if (fb) {
       fb->Name = name;
       fb->RefCount = 1;
+      fb->_NumColorDrawBuffers = 1;
       fb->ColorDrawBuffer[0] = GL_COLOR_ATTACHMENT0_EXT;
-      fb->_ColorDrawBufferMask[0] = BUFFER_BIT_COLOR0;
+      fb->_ColorDrawBufferIndexes[0] = BUFFER_COLOR0;
       fb->ColorReadBuffer = GL_COLOR_ATTACHMENT0_EXT;
       fb->_ColorReadBufferIndex = BUFFER_COLOR0;
       fb->Delete = _mesa_destroy_framebuffer;
@@ -141,14 +142,16 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
 
    /* Init read/draw renderbuffer state */
    if (visual->doubleBufferMode) {
+      fb->_NumColorDrawBuffers = 1;
       fb->ColorDrawBuffer[0] = GL_BACK;
-      fb->_ColorDrawBufferMask[0] = BUFFER_BIT_BACK_LEFT;
+      fb->_ColorDrawBufferIndexes[0] = BUFFER_BACK_LEFT;
       fb->ColorReadBuffer = GL_BACK;
       fb->_ColorReadBufferIndex = BUFFER_BACK_LEFT;
    }
    else {
+      fb->_NumColorDrawBuffers = 1;
       fb->ColorDrawBuffer[0] = GL_FRONT;
-      fb->_ColorDrawBufferMask[0] = BUFFER_BIT_FRONT_LEFT;
+      fb->_ColorDrawBufferIndexes[0] = BUFFER_FRONT_LEFT;
       fb->ColorReadBuffer = GL_FRONT;
       fb->_ColorReadBufferIndex = BUFFER_FRONT_LEFT;
    }
@@ -636,39 +639,17 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 static void
 update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   GLuint output, count = 0;
+   GLuint output;
 
-   /* First, interpret _ColorDrawBufferMask[] in the manner that would be
-    * used if the fragment program/shader writes to gl_FragData[]
-    */
-   for (output = 0; output < ctx->Const.MaxDrawBuffers; output++) {
-      GLuint buf = _mesa_ffs(fb->_ColorDrawBufferMask[output]);
-      if (buf) {
-         struct gl_renderbuffer *rb = fb->Attachment[buf - 1].Renderbuffer;
-         fb->_ColorDrawBuffers[output] = rb; /* may be NULL */
-         if (rb)
-            count = output + 1;
+   for (output = 0; output < fb->_NumColorDrawBuffers; output++) {
+      GLint buf = fb->_ColorDrawBufferIndexes[output];
+      if (buf >= 0) {
+         fb->_ColorDrawBuffers[output] = fb->Attachment[buf].Renderbuffer;
+      }
+      else {
+         fb->_ColorDrawBuffers[output] = NULL;
       }
    }
-
-   /* Second, handle the GL_FRONT_AND_BACK case, overwriting the above
-    * if needed.
-    */
-   GLbitfield bufferMask = fb->_ColorDrawBufferMask[0];
-   if (_mesa_bitcount(bufferMask) > 1) {
-      GLuint i;
-      count = 0;
-      for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
-         if (bufferMask & (1 << i)) {
-            struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-            fb->_ColorDrawBuffers[count] = rb;
-            count++;
-         }
-         bufferMask &= ~(1 << i);
-      }
-   }
-                               
-   fb->_NumColorDrawBuffers = count;
 }
 
 

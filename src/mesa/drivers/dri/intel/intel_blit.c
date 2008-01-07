@@ -98,10 +98,10 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
       ASSERT(intel_fb);
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
-      ASSERT(frontRegion);
-      ASSERT(backRegion);
-      ASSERT(frontRegion->pitch == backRegion->pitch);
-      ASSERT(frontRegion->cpp == backRegion->cpp);
+      ASSERT(src);
+      ASSERT(dst);
+      ASSERT(src->pitch == dst->pitch);
+      ASSERT(src->cpp == dst->cpp);
 
       if (cpp == 2) {
 	 BR13 = (0xCC << 16) | (1 << 24);
@@ -357,7 +357,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 
 /**
  * Use blitting to clear the renderbuffers named by 'flags'.
- * Note: we can't use the ctx->DrawBuffer->_ColorDrawBufferMask field
+ * Note: we can't use the ctx->DrawBuffer->_ColorDrawBufferIndexes field
  * since that might include software renderbuffers or renderbuffers
  * which we're clearing with triangles.
  * \param mask  bitmask of BUFFER_BIT_* values indicating buffers to clear

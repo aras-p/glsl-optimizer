@@ -2395,12 +2395,10 @@ struct gl_framebuffer
    GLenum ColorDrawBuffer[MAX_DRAW_BUFFERS];
    GLenum ColorReadBuffer;
 
-   /* These are computed from ColorDrawBuffer and ColorReadBuffer */
-   GLbitfield _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
-   GLint _ColorReadBufferIndex; /* -1 = None */
-
-   /* These are computed from _ColorDrawBufferMask and _ColorReadBufferIndex */
+   /** Computed from ColorDraw/ReadBuffer above */
    GLuint _NumColorDrawBuffers;
+   GLint _ColorDrawBufferIndexes[MAX_DRAW_BUFFERS]; /**< BUFFER_x or -1 */
+   GLint _ColorReadBufferIndex; /* -1 = None */
    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS];
    struct gl_renderbuffer *_ColorReadBuffer;
 

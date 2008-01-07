@@ -328,7 +328,7 @@ nouveauDoSwapBuffers(nouveauContextPtr nmesa, __DRIdrawablePrivate *dPriv)
 	int nbox, i;
 
 	fb = (struct gl_framebuffer *)dPriv->driverPrivate;
-	if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+	if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 		src = (nouveau_renderbuffer_t *)
 			fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
 	} else {

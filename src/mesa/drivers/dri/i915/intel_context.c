@@ -788,9 +788,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
        if (intel_fb)
 	  intel_rb =
 	     intel_get_renderbuffer(&intel_fb->Base,
-				    intel_fb->Base._ColorDrawBufferMask[0] ==
-				    BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
-				    BUFFER_BACK_LEFT);
+				    intel_fb->Base._ColorDrawBufferIndexes[0]);
     }
 
     if (intel_rb && dPriv->vblFlags &&

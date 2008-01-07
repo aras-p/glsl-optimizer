@@ -848,7 +848,7 @@ static void sisRenderStart( GLcontext *ctx )
 
    RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
-   if (ctx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT && 
+   if (ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT && 
       smesa->driDrawable->numClipRects != 0)
    {
       multipass_cliprect(ctx, 0);

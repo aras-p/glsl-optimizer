@@ -71,7 +71,10 @@ intel_renderbuffer(struct gl_renderbuffer *rb)
 struct intel_renderbuffer *
 intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
 {
-   return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   if (attIndex >= 0)
+      return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   else
+      return NULL;
 }
 
 

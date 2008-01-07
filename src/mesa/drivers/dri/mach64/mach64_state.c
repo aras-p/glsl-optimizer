@@ -726,24 +726,26 @@ static void mach64DDDrawBuffer( GLcontext *ctx, GLenum mode )
 
    FLUSH_BATCH( mmesa );
 
-   /*
-    * _DrawDestMask is easier to cope with than <mode>.
-    */
-   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
-   case BUFFER_BIT_FRONT_LEFT:
+   if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
+      /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
+      FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_TRUE );
+      return;
+   }
+
+   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
+   case BUFFER_FRONT_LEFT:
       FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_FALSE );
       mach64SetCliprects( ctx, GL_FRONT_LEFT );
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
 	 fprintf(stderr,"%s: BUFFER_BIT_FRONT_LEFT\n", __FUNCTION__);
       break;
-   case BUFFER_BIT_BACK_LEFT:
+   case BUFFER_BACK_LEFT:
       FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_FALSE );
       mach64SetCliprects( ctx, GL_BACK_LEFT );
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
 	 fprintf(stderr,"%s: BUFFER_BIT_BACK_LEFT\n", __FUNCTION__);
       break;
    default:
-      /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
       FALLBACK( mmesa, MACH64_FALLBACK_DRAW_BUFFER, GL_TRUE );
       if (MACH64_DEBUG & DEBUG_VERBOSE_MSG)
 	 fprintf(stderr,"%s: fallback (mode=%d)\n", __FUNCTION__, mode);

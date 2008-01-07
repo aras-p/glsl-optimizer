@@ -70,7 +70,7 @@ void mach64GetLock( mach64ContextPtr mmesa, GLuint flags )
 
    if ( mmesa->lastStamp != dPriv->lastStamp ) {
       mmesa->lastStamp = dPriv->lastStamp;
-      if (mmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
+      if (mmesa->glCtx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT)
          mach64SetCliprects( mmesa->glCtx, GL_BACK_LEFT );
       else
          mach64SetCliprects( mmesa->glCtx, GL_FRONT_LEFT );

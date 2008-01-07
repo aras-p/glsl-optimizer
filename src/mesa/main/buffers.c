@@ -159,7 +159,10 @@ _mesa_Clear( GLbitfield mask )
        */
       bufferMask = 0;
       if (mask & GL_COLOR_BUFFER_BIT) {
-         bufferMask |= ctx->DrawBuffer->_ColorDrawBufferMask[0];
+         GLuint i;
+         for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers; i++) {
+            bufferMask |= (1 << ctx->DrawBuffer->_ColorDrawBufferIndexes[i]);
+         }
       }
 
       if ((mask & GL_DEPTH_BUFFER_BIT)
@@ -487,41 +490,6 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
 
 
 /**
- * Set color output state.  Traditionally, there was only one color
- * output, but fragment programs can now have several distinct color
- * outputs (see GL_ARB_draw_buffers).  This function sets the state
- * for one such color output.
- * \param ctx  current context
- * \param output  which fragment program output
- * \param buffer  buffer to write to (like GL_LEFT)
- * \param destMask  BUFFER_* bitmask
- *                  (like BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
- */
-static void
-set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
-                 GLbitfield destMask)
-{
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-
-   ASSERT(output < ctx->Const.MaxDrawBuffers);
-
-   /* Set per-FBO state */
-   fb->ColorDrawBuffer[output] = buffer;
-   fb->_ColorDrawBufferMask[output] = destMask;
-
-   /* this will be computed later, but zero to be safe */
-   fb->_NumColorDrawBuffers = 0;
-
-   if (fb->Name == 0) {
-      /* Only set the per-context DrawBuffer state if we're currently
-       * drawing to a window system framebuffer.
-       */
-      ctx->Color.DrawBuffer[output] = buffer;
-   }
-}
-
-
-/**
  * Helper function to set the GL_DRAW_BUFFER state in the context and
  * current FBO.
  *
@@ -531,7 +499,7 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
  * \param ctx  current context
  * \param n    number of color outputs to set
  * \param buffers  array[n] of colorbuffer names, like GL_LEFT.
- * \param destMask  array[n] of BUFFER_* bitmasks which correspond to the
+ * \param destMask  array[n] of BUFFER_BIT_* bitmasks which correspond to the
  *                  colorbuffer names.  (i.e. GL_FRONT_AND_BACK =>
  *                  BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
  */
@@ -539,13 +507,13 @@ void
 _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
                   const GLbitfield *destMask)
 {
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLbitfield mask[MAX_DRAW_BUFFERS];
-   GLuint output;
 
    if (!destMask) {
       /* compute destMask values now */
-      const GLbitfield supportedMask
-         = supported_buffer_bitmask(ctx, ctx->DrawBuffer);
+      const GLbitfield supportedMask = supported_buffer_bitmask(ctx, fb);
+      GLuint output;
       for (output = 0; output < n; output++) {
          mask[output] = draw_buffer_enum_to_bitmask(buffers[output]);
          ASSERT(mask[output] != BAD_MASK);
@@ -554,13 +522,44 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       destMask = mask;
    }
 
-   for (output = 0; output < n; output++) {
-      set_color_output(ctx, output, buffers[output], destMask[output]);
+   if (n == 1) {
+      GLuint buf, count = 0;
+      /* init to -1 to help catch errors */
+      fb->_ColorDrawBufferIndexes[0] = -1;
+      for (buf = 0; buf < BUFFER_COUNT; buf++) {
+         if (destMask[0] & (1 << buf)) {
+            fb->_ColorDrawBufferIndexes[count] = buf;
+            count++;
+         }
+      }
+      fb->ColorDrawBuffer[0] = buffers[0];
+      fb->_NumColorDrawBuffers = count;
+   }
+   else {
+      GLuint buf, count = 0;
+      for (buf = 0; buf < n; buf++ ) {
+         if (destMask[buf]) {
+            fb->_ColorDrawBufferIndexes[buf] = _mesa_ffs(destMask[buf]) - 1;
+            count = buf + 1;
+         }
+         else {
+            fb->_ColorDrawBufferIndexes[buf] = -1;
+         }
+      }
+      /* set remaining outputs to -1 (GL_NONE) */
+      while (buf < ctx->Const.MaxDrawBuffers) {
+         fb->_ColorDrawBufferIndexes[buf] = -1;
+         buf++;
+      }
+      fb->_NumColorDrawBuffers = count;
    }
 
-   /* set remaining color outputs to NONE */
-   for (output = n; output < ctx->Const.MaxDrawBuffers; output++) {
-      set_color_output(ctx, output, GL_NONE, 0x0);
+   if (fb->Name == 0) {
+      /* also set context drawbuffer state */
+      GLuint buf;
+      for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
+         ctx->Color.DrawBuffer[buf] = fb->ColorDrawBuffer[buf];
+      }
    }
 
    ctx->NewState |= _NEW_COLOR;

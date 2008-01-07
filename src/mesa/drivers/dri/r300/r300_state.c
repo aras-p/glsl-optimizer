@@ -1007,12 +1007,12 @@ void r300UpdateDrawBuffer(GLcontext * ctx)
 	struct gl_framebuffer *fb = ctx->DrawBuffer;
 	driRenderbuffer *drb;
 
-	if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+	if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
 		/* draw to front */
 		drb =
 		    (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].
 		    Renderbuffer;
-	} else if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT) {
+	} else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
 		/* draw to back */
 		drb =
 		    (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].

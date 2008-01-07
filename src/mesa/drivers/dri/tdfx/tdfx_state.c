@@ -1033,21 +1033,23 @@ static void tdfxDDDrawBuffer( GLcontext *ctx, GLenum mode )
 
    FLUSH_BATCH( fxMesa );
 
-   /*
-    * _ColorDrawBufferMask is easier to cope with than <mode>.
-    */
-   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
-   case BUFFER_BIT_FRONT_LEFT:
+   if (ctx->DrawBuffer->_NumColorDrawBuffers > 1) {
+      FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_TRUE );
+      return;
+   }
+
+   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
+   case BUFFER_FRONT_LEFT:
       fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_FRONTBUFFER;
       fxMesa->new_state |= TDFX_NEW_RENDER;
       FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case BUFFER_BIT_BACK_LEFT:
+   case BUFFER_BACK_LEFT:
       fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_BACKBUFFER;
       fxMesa->new_state |= TDFX_NEW_RENDER;
       FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case 0:
+   case -1:
       FX_grColorMaskv( ctx, false4 );
       FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;

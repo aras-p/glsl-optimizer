@@ -156,7 +156,7 @@ static const char *fp_tex_prog =
  *   FragmentProgram->_Current
  *   VertexProgram->_Enabled
  *   brw->vertex_program
- *   DrawBuffer->_ColorDrawBufferMask[0]
+ *   DrawBuffer->_ColorDrawBufferIndexes[0]
  * 
  *
  * More if drawpixels-through-texture is added.  
@@ -481,6 +481,7 @@ static void install_meta_state( struct intel_context *intel )
 {
    GLcontext *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
+   GLuint i;
 
    if (!brw->metaops.vbo) {
       init_metaops_state(brw);
@@ -490,7 +491,12 @@ static void install_meta_state( struct intel_context *intel )
    
    meta_no_texture(&brw->intel);
    meta_flat_shade(&brw->intel);
-   brw->metaops.restore_draw_mask = ctx->DrawBuffer->_ColorDrawBufferMask[0];
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      brw->metaops.restore_draw_buffers[i]
+         = ctx->DrawBuffer->_ColorDrawBufferIndexes[i];
+   }
+   brw->metaops.restore_num_draw_buffers = ctx->DrawBuffer->_NumColorDrawBuffers;
+
    brw->metaops.restore_fp = ctx->FragmentProgram.Current;
 
    /* This works without adjusting refcounts.  Fix later? 
@@ -506,10 +512,16 @@ static void leave_meta_state( struct intel_context *intel )
 {
    GLcontext *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(ctx);
+   GLuint i;
 
    restore_attribs(brw);
 
-   ctx->DrawBuffer->_ColorDrawBufferMask[0] = brw->metaops.restore_draw_mask;
+   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+      ctx->DrawBuffer->_ColorDrawBufferIndexes[i]
+         = brw->metaops.restore_draw_buffers[i];
+   }
+   ctx->DrawBuffer->_NumColorDrawBuffers = brw->metaops.restore_num_draw_buffers;
+
    ctx->FragmentProgram.Current = brw->metaops.restore_fp;
 
    brw->state.draw_region = brw->metaops.saved_draw_region;

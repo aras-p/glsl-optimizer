@@ -463,7 +463,9 @@ struct brw_context
       struct intel_region *saved_draw_region;
       struct intel_region *saved_depth_region;
 
-      GLuint restore_draw_mask;
+      GLuint restore_draw_buffers[MAX_DRAW_BUFFERS];
+      GLuint restore_num_draw_buffers;
+
       struct gl_fragment_program *restore_fp;
       
       GLboolean active;

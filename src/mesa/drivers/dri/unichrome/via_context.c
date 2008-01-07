@@ -736,8 +736,8 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
    draw_buffer =  (struct via_renderbuffer *) drawable->driverPrivate;
    read_buffer =  (struct via_renderbuffer *) readable->driverPrivate;
    
-   switch (vmesa->glCtx->DrawBuffer->_ColorDrawBufferMask[0]) {
-   case BUFFER_BIT_BACK_LEFT: 
+   switch (vmesa->glCtx->DrawBuffer->_ColorDrawBufferIndexes[0]) {
+   case BUFFER_BACK_LEFT: 
       if (drawable->numBackClipRects == 0) {
 	 vmesa->numClipRects = drawable->numClipRects;
 	 vmesa->pClipRects = drawable->pClipRects;
@@ -747,7 +747,7 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 	 vmesa->pClipRects = drawable->pBackClipRects;
       }
       break;
-   case BUFFER_BIT_FRONT_LEFT:
+   case BUFFER_FRONT_LEFT:
       vmesa->numClipRects = drawable->numClipRects;
       vmesa->pClipRects = drawable->pClipRects;
       break;

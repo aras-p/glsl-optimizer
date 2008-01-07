@@ -1859,8 +1859,7 @@ void r200SetCliprects( r200ContextPtr rmesa )
    GLframebuffer *const draw_fb = (GLframebuffer*) drawable->driverPrivate;
    GLframebuffer *const read_fb = (GLframebuffer*) readable->driverPrivate;
 
-   if (draw_fb->_ColorDrawBufferMask[0]
-       == BUFFER_BIT_BACK_LEFT) {
+   if (draw_fb->_ColorDrawBufferIndexes[0] == BUFFER_BIT_BACK_LEFT) {
       /* Can't ignore 2d windows if we are page flipping.
        */
       if ( drawable->numBackClipRects == 0 || rmesa->doPageFlip ) {
@@ -1910,17 +1909,18 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
 
    R200_FIREVERTICES(rmesa);	/* don't pipeline cliprect changes */
 
-   /*
-    * _ColorDrawBufferMask is easier to cope with than <mode>.
-    * Check for software fallback, update cliprects.
-    */
-   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
-   case BUFFER_BIT_FRONT_LEFT:
-   case BUFFER_BIT_BACK_LEFT:
+   if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
+      /* 0 (GL_NONE) buffers or multiple color drawing buffers */
+      FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_TRUE );
+      return;
+   }
+
+   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
+   case BUFFER_FRONT_LEFT:
+   case BUFFER_BACK_LEFT:
       FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
    default:
-      /* 0 (GL_NONE) buffers or multiple color drawing buffers */
       FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
@@ -2445,11 +2445,11 @@ r200UpdateDrawBuffer(GLcontext *ctx)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    driRenderbuffer *drb;
 
-   if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+   if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
       /* draw to front */
       drb = (driRenderbuffer *) fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
    }
-   else if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT) {
+   else if (fb->_ColorDrawBufferIndexes[0] == BUFFER_BACK_LEFT) {
       /* draw to back */
       drb = (driRenderbuffer *) fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
    }

@@ -119,7 +119,7 @@ static void nouveauFlush( GLcontext *ctx )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-	if (ctx->DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT)
+	if (ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT)
 		nouveauDoSwapBuffers(nmesa, nmesa->driDrawable);
 	FIRE_RING();
 }

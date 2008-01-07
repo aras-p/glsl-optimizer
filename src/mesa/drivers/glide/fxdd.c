@@ -1955,8 +1955,8 @@ fx_check_IsInHardware(GLcontext * ctx)
       return FX_FALLBACK_STENCIL;
    }
 
-   if (ctx->DrawBuffer->_ColorDrawBufferMask[0] != BUFFER_BIT_FRONT_LEFT &&
-       ctx->DrawBuffer->_ColorDrawBufferMask[0] != BUFFER_BIT_BACK_LEFT) {
+   if ((ctx->DrawBuffer->_ColorDrawBufferIndexes[0] != BUFFER_BIT_FRONT_LEFT) &&
+       (ctx->DrawBuffer->_ColorDrawBufferIndexes[0] != BUFFER_BIT_BACK_LEFT)) {
       return FX_FALLBACK_DRAW_BUFFER;
    }
 

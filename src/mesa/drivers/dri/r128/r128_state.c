@@ -897,18 +897,22 @@ static void r128DDDrawBuffer( GLcontext *ctx, GLenum mode )
 
    FLUSH_BATCH( rmesa );
 
-   /*
-    * _ColorDrawBufferMask is easier to cope with than <mode>.
-    */
-   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
-   case BUFFER_BIT_FRONT_LEFT:
-   case BUFFER_BIT_BACK_LEFT:
-      FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      break;
-   default:
+   if (ctx->DrawBuffer->_NumColorDrawBuffers != 1) {
       /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
       FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_TRUE );
-      break;
+      return;
+   }
+   else {
+      switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
+      case BUFFER_FRONT_LEFT:
+      case BUFFER_BACK_LEFT:
+         FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_FALSE );
+         break;
+      default:
+         /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
+         FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_TRUE );
+         break;
+      }
    }
 
    rmesa->new_state |= R128_NEW_WINDOW;

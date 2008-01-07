@@ -290,15 +290,14 @@ intelWindowMoved(struct intel_context *intel)
    }
    else {
       /* drawing to a window */
-      switch (intel_fb->Base._ColorDrawBufferMask[0]) {
-      case BUFFER_BIT_FRONT_LEFT:
+      switch (intel_fb->Base._ColorDrawBufferIndexes[0]) {
+      case BUFFER_FRONT_LEFT:
          intelSetFrontClipRects(intel);
          break;
-      case BUFFER_BIT_BACK_LEFT:
+      case BUFFER_BACK_LEFT:
          intelSetBackClipRects(intel);
          break;
       default:
-         /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
          intelSetFrontClipRects(intel);
       }
    }
@@ -623,8 +622,8 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
       (struct intel_framebuffer *) intel->ctx.DrawBuffer;
    struct intel_renderbuffer *intel_rb =
       intel_get_renderbuffer(&intel_fb->Base,
-			     intel_fb->Base._ColorDrawBufferMask[0] ==
-			     BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
+			     intel_fb->Base._ColorDrawBufferIndexes[0] ==
+			     BUFFER_FRONT_LEFT ? BUFFER_FRONT_LEFT :
 			     BUFFER_BACK_LEFT);
 
    if (intel_fb->Base.Name == 0 && intel_rb &&
@@ -944,7 +943,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /* draw to exactly one color buffer */
       /*_mesa_debug(ctx, "Hardware rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
-      if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
+      if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
          front = 1;
       }
 

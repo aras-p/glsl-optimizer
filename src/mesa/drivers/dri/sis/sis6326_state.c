@@ -497,25 +497,27 @@ void sis6326DDDrawBuffer( GLcontext *ctx, GLenum mode )
    __GLSiSHardware *current = &smesa->current;
 
    if(getenv("SIS_DRAW_FRONT"))
-      ctx->DrawBuffer->_ColorDrawBufferMask[0] = GL_FRONT_LEFT;
+      ctx->DrawBuffer->_ColorDrawBufferIndexes[0] = BUFFER_FRONT_LEFT;
 
-   /*
-    * _DrawDestMask is easier to cope with than <mode>.
-    */
+   if (ctx->DrawBuffer->_NumColorDrawBuffers > 1) {
+      FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_TRUE );
+      return;
+   }
+
    current->hwDstSet &= ~MASK_DstBufferPitch;
-   switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
-   case BUFFER_BIT_FRONT_LEFT:
+
+   switch ( ctx->DrawBuffer->_ColorDrawBufferIndexes[0] ) {
+   case BUFFER_FRONT_LEFT:
       current->hwOffsetDest = smesa->front.offset;
       current->hwDstSet |= smesa->front.pitch;
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
-   case BUFFER_BIT_BACK_LEFT:
+   case BUFFER_BACK_LEFT:
       current->hwOffsetDest = smesa->back.offset;
       current->hwDstSet |= smesa->back.pitch;
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_FALSE );
       break;
    default:
-      /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
       FALLBACK( smesa, SIS_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
