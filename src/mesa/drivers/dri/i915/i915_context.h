@@ -29,6 +29,7 @@
 #define I915CONTEXT_INC
 
 #include "intel_context.h"
+#include "i915_reg.h"
 
 #define I915_FALLBACK_TEXTURE		 0x1000
 #define I915_FALLBACK_COLORMASK		 0x2000
@@ -110,6 +111,7 @@
 
 #define I915_PROGRAM_SIZE      192
 
+#define I915_MAX_INSN          (I915_MAX_TEX_INSN+I915_MAX_ALU_INSN)
 
 /* Hardware version of a parsed fragment program.  "Derived" from the
  * mesa fragment_program struct.
@@ -161,6 +163,10 @@ struct i915_fragment_program
                                  */
 
 
+   /* Track which R registers are "live" for each instruction.
+    * A register is live between the time it's written to and the last time
+    * it's read. */
+   GLuint usedRegs[I915_MAX_INSN];
 
    /* Helpers for i915_fragprog.c:
     */

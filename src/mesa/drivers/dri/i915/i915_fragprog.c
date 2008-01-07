@@ -231,7 +231,7 @@ do {								\
    GLuint coord = src_vector( p, &inst->SrcReg[0], program);	\
    /* Texel lookup */						\
 								\
-   i915_emit_texld( p,						\
+   i915_emit_texld( p, get_live_regs(p, inst),						\
 	       get_result_vector( p, inst ),			\
 	       get_result_flags( inst ),			\
 	       sampler,						\
@@ -254,6 +254,43 @@ do {									\
 #define EMIT_2ARG_ARITH( OP ) EMIT_ARITH( OP, 2 )
 #define EMIT_3ARG_ARITH( OP ) EMIT_ARITH( OP, 3 )
 
+/* 
+ * TODO: consider moving this into core 
+ */
+static void calc_live_regs( struct i915_fragment_program *p )
+{
+    const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current;
+    GLuint regsUsed = 0xffff0000;
+    GLint i;
+   
+    for (i = program->Base.NumInstructions - 1; i >= 0; i--) {
+        struct prog_instruction *inst = &program->Base.Instructions[i];
+        int opArgs = _mesa_num_inst_src_regs(inst->Opcode);
+        int a;
+
+        /* Register is written to: unmark as live for this and preceeding ops */ 
+        if (inst->DstReg.File == PROGRAM_TEMPORARY)
+            regsUsed &= ~(1 << inst->DstReg.Index);
+
+        for (a = 0; a < opArgs; a++) {
+            /* Register is read from: mark as live for this and preceeding ops */ 
+            if (inst->SrcReg[a].File == PROGRAM_TEMPORARY)
+                regsUsed |= 1 << inst->SrcReg[a].Index;
+        }
+
+        p->usedRegs[i] = regsUsed;
+    }
+}
+
+static GLuint get_live_regs( struct i915_fragment_program *p, 
+                             const struct prog_instruction *inst )
+{
+    const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current;
+    GLuint nr = inst - program->Base.Instructions;
+
+    return p->usedRegs[nr];
+}
+ 
 
 /* Possible concerns:
  *
@@ -288,6 +325,15 @@ upload_program(struct i915_fragment_program *p)
                       swizzle(tmp, ONE, ZERO, ONE, ONE), 0, 0);
       return;
    }
+
+   if (program->Base.NumInstructions > I915_MAX_INSN) {
+       i915_program_error( p, "Exceeded max instructions" );
+       return;
+    }
+
+   /* Not always needed:
+    */
+   calc_live_regs(p);
 
    while (1) {
       GLuint src0, src1, src2, flags;
@@ -423,7 +469,8 @@ upload_program(struct i915_fragment_program *p)
          src0 = src_vector(p, &inst->SrcReg[0], program);
          tmp = i915_get_utemp(p);
 
-         i915_emit_texld(p, tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
+         i915_emit_texld(p, get_live_regs(p, inst),
+                         tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
                          0, src0, T0_TEXKILL);
          break;
 

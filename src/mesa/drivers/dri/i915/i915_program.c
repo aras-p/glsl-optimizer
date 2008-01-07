@@ -194,27 +194,43 @@ i915_emit_arith(struct i915_fragment_program * p,
    return dest;
 }
 
+static GLuint get_free_rreg (struct i915_fragment_program *p, 
+                             GLuint live_regs)
+{
+    int bit = ffs(~live_regs);
+    if (!bit) {
+        i915_program_error(p, "Can't find free R reg");
+        return UREG_BAD;
+    }
+    return UREG(REG_TYPE_R, bit - 1);
+}
+
 GLuint i915_emit_texld( struct i915_fragment_program *p,
+			GLuint live_regs,               
 			GLuint dest,
 			GLuint destmask,
 			GLuint sampler,
 			GLuint coord,
 			GLuint op )
 {
-   if (coord != UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord))) {
-      /* No real way to work around this in the general case - need to
-       * allocate and declare a new temporary register (a utemp won't
-       * do).  Will fallback for now.
-       */
-      i915_program_error(p, "Can't (yet) swizzle TEX arguments");
-      return 0;
-   }
+    if (coord != UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord))) {
+        /* With the help of the "needed registers" table created earlier, pick
+         * a register we can MOV the swizzled TC to (since TEX doesn't support
+         * swizzled sources) */
+        GLuint swizCoord = get_free_rreg(p, live_regs);
+        if (swizCoord == UREG_BAD) 
+            return 0;
 
-   /* Don't worry about saturate as we only support  
+        i915_emit_arith( p, A0_MOV, swizCoord, A0_DEST_CHANNEL_ALL, 0, coord, 0, 0 );
+        coord = swizCoord;
+    }
+
+   /* Don't worry about saturate as we only support texture formats
+    * that are always in the 0..1 range.
     */
    if (destmask != A0_DEST_CHANNEL_ALL) {
       GLuint tmp = i915_get_utemp(p);
-      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, op );
+      i915_emit_texld( p, 0, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, op );
       i915_emit_arith( p, A0_MOV, dest, destmask, 0, tmp, 0, 0 );
       return dest;
    }

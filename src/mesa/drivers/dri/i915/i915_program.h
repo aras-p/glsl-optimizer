@@ -112,6 +112,7 @@ extern void i915_release_utemps(struct i915_fragment_program *p);
 
 
 extern GLuint i915_emit_texld(struct i915_fragment_program *p,
+                              GLuint live_regs,
                               GLuint dest,
                               GLuint destmask,
                               GLuint sampler, GLuint coord, GLuint op);
