@@ -11,10 +11,6 @@
    NV40TCL_TEX_SWIZZLE_S1_Z_##ts1z | NV40TCL_TEX_SWIZZLE_S1_W_##ts1w),         \
 }
 
-#define NV40TCL_TEX_FORMAT_FORMAT_Z16 0x1200
-#define NV40TCL_TEX_FORMAT_FORMAT_Z24 0x1000
-#define NV40TCL_TEX_FORMAT_FORMAT_A8L8_2 0x0b00
-
 struct nv40_texture_format {
 	boolean defined;
 	uint	pipe;
@@ -31,7 +27,7 @@ nv40_texture_formats[] = {
 	_(U_L8          , L8      ,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(U_A8          , L8      , ZERO, ZERO, ZERO,   S1, X, X, X, X),
 	_(U_I8          , L8      ,   S1,   S1,   S1,   S1, X, X, X, X),
-	_(U_A8_L8       , A8L8_2  ,   S1,   S1,   S1,   S1, X, X, X, Y),
+	_(U_A8_L8       , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
 	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X),
 //	_(RGB_DXT1      , 0x86,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0x00, 0x00),
