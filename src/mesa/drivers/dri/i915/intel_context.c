@@ -634,23 +634,23 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
          struct intel_renderbuffer *irbStencil
             = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
 
-         if (intel_fb->color_rb[0] && !intel_fb->color_rb[0]->region) {
-            intel_region_reference(&intel_fb->color_rb[0]->region,
-				   intel->front_region);
+         if (intel_fb->color_rb[0]) {
+	    intel_renderbuffer_set_region(intel_fb->color_rb[0],
+					  intel->front_region);
          }
-         if (intel_fb->color_rb[1] && !intel_fb->color_rb[1]->region) {
-            intel_region_reference(&intel_fb->color_rb[1]->region,
-				   intel->back_region);
+         if (intel_fb->color_rb[1]) {
+	    intel_renderbuffer_set_region(intel_fb->color_rb[1],
+					  intel->back_region);
          }
-         if (intel_fb->color_rb[2] && !intel_fb->color_rb[2]->region) {
-            intel_region_reference(&intel_fb->color_rb[2]->region,
-				   intel->third_region);
+         if (intel_fb->color_rb[2]) {
+	    intel_renderbuffer_set_region(intel_fb->color_rb[2],
+					  intel->third_region);
          }
-         if (irbDepth && !irbDepth->region) {
-            intel_region_reference(&irbDepth->region, intel->depth_region);
+         if (irbDepth) {
+	    intel_renderbuffer_set_region(irbDepth, intel->depth_region);
          }
-         if (irbStencil && !irbStencil->region) {
-            intel_region_reference(&irbStencil->region, intel->depth_region);
+         if (irbStencil) {
+	    intel_renderbuffer_set_region(irbStencil, intel->depth_region);
          }
       }
 

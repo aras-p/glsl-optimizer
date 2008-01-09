@@ -85,14 +85,12 @@ struct intel_renderbuffer
 extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
                                                      *rb);
 
-extern struct intel_renderbuffer *intel_create_renderbuffer(GLenum intFormat,
-                                                            GLsizei width,
-                                                            GLsizei height,
-                                                            int offset,
-                                                            int pitch,
-                                                            int cpp,
-                                                            void *map);
+extern void
+intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
+			      struct intel_region *region);
 
+extern struct intel_renderbuffer *
+intel_create_renderbuffer(GLenum intFormat);
 
 extern void intel_fbo_init(struct intel_context *intel);
 

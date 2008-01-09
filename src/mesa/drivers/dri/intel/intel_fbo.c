@@ -355,16 +355,27 @@ intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
+void
+intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
+			      struct intel_region *region)
+{
+   struct intel_region *old;
+
+   old = rb->region;
+   rb->region = NULL;
+   intel_region_reference(&rb->region, region);
+   intel_region_release(&old);
+
+   rb->pfMap = region->map;
+   rb->pfPitch = region->pitch;
+}
 
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
  * not a user-created renderbuffer.
- * \param width  the screen width
- * \param height  the screen height
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
-                          int offset, int pitch, int cpp, void *map)
+intel_create_renderbuffer(GLenum intFormat)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -388,7 +399,6 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
       irb->Base.GreenBits = 6;
       irb->Base.BlueBits = 5;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      cpp = 2;
       break;
    case GL_RGBA8:
       irb->Base._ActualFormat = GL_RGBA8;
@@ -398,28 +408,24 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
       irb->Base.BlueBits = 8;
       irb->Base.AlphaBits = 8;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      cpp = 4;
       break;
    case GL_STENCIL_INDEX8_EXT:
       irb->Base._ActualFormat = GL_STENCIL_INDEX8_EXT;
       irb->Base._BaseFormat = GL_STENCIL_INDEX;
       irb->Base.StencilBits = 8;
       irb->Base.DataType = GL_UNSIGNED_BYTE;
-      cpp = 1;
       break;
    case GL_DEPTH_COMPONENT16:
       irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       irb->Base.DepthBits = 16;
       irb->Base.DataType = GL_UNSIGNED_SHORT;
-      cpp = 2;
       break;
    case GL_DEPTH_COMPONENT24:
       irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
       irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       irb->Base.DepthBits = 24;
       irb->Base.DataType = GL_UNSIGNED_INT;
-      cpp = 4;
       break;
    case GL_DEPTH24_STENCIL8_EXT:
       irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
@@ -427,7 +433,6 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
       irb->Base.DepthBits = 24;
       irb->Base.StencilBits = 8;
       irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
       break;
    default:
       _mesa_problem(NULL,
@@ -443,15 +448,6 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
    irb->Base.GetPointer = intel_get_pointer;
    /* This sets the Get/PutRow/Value functions */
    intel_set_span_functions(&irb->Base);
-
-   irb->pfMap = map;
-   irb->pfPitch = pitch / cpp;	/* in pixels */
-
-#if 00
-   irb->region = intel_region_create_static(intel,
-                                            DRM_MM_TT,
-                                            offset, map, cpp, width, height);
-#endif
 
    return irb;
 }
