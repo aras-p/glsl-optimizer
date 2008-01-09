@@ -176,7 +176,8 @@ test_spus(struct cell_context *cell)
 
    for (i = 0; i < cell->num_spus; i++) {
       cell_global.command[i].clear.value = 0xff880044; /* XXX */
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
+      cell_global.command[i].clear.surface = 0;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
    }
 
    finish_all(cell->num_spus);

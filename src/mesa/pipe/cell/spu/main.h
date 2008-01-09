@@ -50,7 +50,7 @@ struct framebuffer {
 extern struct framebuffer fb;
 
 extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-extern uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 extern int DefaultTag;
 

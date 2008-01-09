@@ -50,7 +50,7 @@ volatile struct cell_init_info init;
 struct framebuffer fb;
 
 uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 int DefaultTag;
 
@@ -70,7 +70,7 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
          int tag, int zBuf)
 {
    const uint offset = ty * fb->width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
    const ubyte *src = zBuf ? fb->depth_start : fb->color_start;
 
    src += offset * bytesPerTile;
@@ -96,7 +96,7 @@ put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
          int tag, int zBuf)
 {
    const uint offset = ty * fb->width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * 4;
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
    ubyte *dst = zBuf ? fb->depth_start : fb->color_start;
 
    dst += offset * bytesPerTile;
@@ -119,15 +119,22 @@ put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
 
 
 static void
-clear_tiles(const struct cell_command_clear_tiles *clear)
+clear_surface(const struct cell_command_clear_surface *clear)
 {
    uint num_tiles = fb.width_tiles * fb.height_tiles;
    uint i, j;
    int tag = init.id;
 
-   for (i = 0; i < TILE_SIZE; i++)
-      for (j = 0; j < TILE_SIZE; j++)
-         ctile[i][j] = clear->value;
+   if (clear->surface == 0) {
+      for (i = 0; i < TILE_SIZE; i++)
+         for (j = 0; j < TILE_SIZE; j++)
+            ctile[i][j] = clear->value;
+   }
+   else {
+      for (i = 0; i < TILE_SIZE; i++)
+         for (j = 0; j < TILE_SIZE; j++)
+            ztile[i][j] = clear->value;
+   }
 
    /*
    printf("SPU: %s num=%d w=%d h=%d\n",
@@ -137,7 +144,10 @@ clear_tiles(const struct cell_command_clear_tiles *clear)
    for (i = init.id; i < num_tiles; i += init.num_spus) {
       uint tx = i % fb.width_tiles;
       uint ty = i / fb.width_tiles;
-      put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
+      if (clear->surface == 0)
+         put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
+      else
+         put_tile(&fb, tx, ty, (uint *) ztile, tag, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
       wait_on_mask(1 << tag);
    }
@@ -227,7 +237,7 @@ render(const struct cell_command_render *render)
       get_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
       wait_on_mask(1 << tag);  /* XXX temporary */
 
-      if (fb.depth_format == PIPE_FORMAT_Z32_UNORM) {
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
          get_tile(&fb, tx, ty, (uint *) ztile, tag+1, 1);
          wait_on_mask(1 << (tag+1));  /* XXX temporary */
       }
@@ -265,7 +275,7 @@ render(const struct cell_command_render *render)
       put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
       wait_on_mask(1 << tag); /* XXX temp */
 
-      if (fb.depth_format == PIPE_FORMAT_Z32_UNORM) {
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
          put_tile(&fb, tx, ty, (uint *) ztile, tag+1, 1);
          wait_on_mask(1 << (tag+1));  /* XXX temporary */
       }
@@ -313,11 +323,14 @@ main_loop(void)
          exitFlag = 1;
          break;
       case CELL_CMD_FRAMEBUFFER:
-         printf("SPU %u: FRAMEBUFFER: %d x %d at %p, format 0x%x\n", init.id,
+         printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
+                init.id,
                 cmd.fb.width,
                 cmd.fb.height,
                 cmd.fb.color_start,
-                cmd.fb.color_format);
+                cmd.fb.color_format,
+                cmd.fb.depth_format);
+         printf("Z16 = 0x%x\n", PIPE_FORMAT_Z16_UNORM);
          fb.color_start = cmd.fb.color_start;
          fb.depth_start = cmd.fb.depth_start;
          fb.color_format = cmd.fb.color_format;
@@ -331,9 +344,10 @@ main_loop(void)
                 init.id, fb.width_tiles, fb.height_tiles);
          */
          break;
-      case CELL_CMD_CLEAR_TILES:
-         printf("SPU %u: CLEAR to 0x%08x\n", init.id, cmd.clear.value);
-         clear_tiles(&cmd.clear);
+      case CELL_CMD_CLEAR_SURFACE:
+         printf("SPU %u: CLEAR SURF %u to 0x%08x\n", init.id,
+                cmd.clear.surface, cmd.clear.value);
+         clear_surface(&cmd.clear);
          break;
       case CELL_CMD_RENDER:
          printf("SPU %u: RENDER %u verts, prim %u\n",

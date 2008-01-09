@@ -47,42 +47,43 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
 {
    struct cell_context *cell = cell_context(pipe);
    uint i;
+   uint surfIndex;
 
    if (!ps->map)
       pipe_surface_map(ps);
 
-   if (pf_get_size(ps->format) != 4) {
-      printf("Cell: Skipping non 32bpp clear_surface\n");
-      return;
+   if (ps == cell->framebuffer.zbuf) {
+      surfIndex = 1;
    }
-#if 0
-   for (i = 0; i < cell->num_spus; i++) {
-      struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
-      printf("%s %u start = 0x%x\n", __FUNCTION__, i, ps->map);
-      fb->color_start = ps->map;
-      fb->width = ps->width;
-      fb->height = ps->height;
-      fb->color_format = ps->format;
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
+   else {
+      surfIndex = 0;
    }
-#endif
+
+   printf("Clear surf %u\n", surfIndex);
 
    for (i = 0; i < cell->num_spus; i++) {
 #if 1
       uint clr = clearValue;
-      /* XXX debug: clear color varied per-SPU to visualize tiles */
-      if ((clr & 0xff) == 0)
-         clr |= 64 + i * 8;
-      if ((clr & 0xff00) == 0)
-         clr |= (64 + i * 8) << 8;
-      if ((clr & 0xff0000) == 0)
-         clr |= (64 + i * 8) << 16;
-      if ((clr & 0xff000000) == 0)
-         clr |= (64 + i * 8) << 24;
+      if (surfIndex == 0) {
+         /* XXX debug: clear color varied per-SPU to visualize tiles */
+         if ((clr & 0xff) == 0)
+            clr |= 64 + i * 8;
+         if ((clr & 0xff00) == 0)
+            clr |= (64 + i * 8) << 8;
+         if ((clr & 0xff0000) == 0)
+            clr |= (64 + i * 8) << 16;
+         if ((clr & 0xff000000) == 0)
+            clr |= (64 + i * 8) << 24;
+      }
       cell_global.command[i].clear.value = clr;
 #else
       cell_global.command[i].clear.value = clearValue;
 #endif
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
+      cell_global.command[i].clear.surface = surfIndex;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
    }
+
+   /* XXX temporary */
+   cell_flush(&cell->pipe, 0x0);
+
 }

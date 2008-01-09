@@ -227,6 +227,22 @@ eval_coeff( struct setup_stage *setup, uint slot,
 }
 
 
+static INLINE void
+eval_z( struct setup_stage *setup,
+        float x, float y, float result[4])
+{
+   uint slot = 0;
+   uint i = 2;
+   const float *dadx = setup->coef[slot].dadx;
+   const float *dady = setup->coef[slot].dady;
+
+   result[QUAD_TOP_LEFT] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
+   result[QUAD_TOP_RIGHT] = result[0] + dadx[i];
+   result[QUAD_BOTTOM_LEFT] = result[0] + dady[i];
+   result[QUAD_BOTTOM_RIGHT] = result[0] + dadx[i] + dady[i];
+}
+
+
 static INLINE uint
 pack_color(const float color[4])
 {
@@ -263,8 +279,47 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    int ix = x - cliprect_minx;
    int iy = y - cliprect_miny;
    float colors[4][4];
+   uint z;
 
    eval_coeff(setup, 1, (float) x, (float) y, colors);
+
+
+   if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      float zvals[4];
+      eval_z(setup, (float) x, (float) y, zvals);
+
+      if (mask & MASK_TOP_LEFT) {
+         z = (uint) (zvals[0] * 65535.0);
+         if (z < ztile[iy][ix])
+            ztile[iy][ix] = z;
+         else
+            mask &= ~MASK_TOP_LEFT;
+      }
+
+      if (mask & MASK_TOP_RIGHT) {
+         z = (uint) (zvals[1] * 65535.0);
+         if (z < ztile[iy][ix+1])
+            ztile[iy][ix+1] = z;
+         else
+            mask &= ~MASK_TOP_RIGHT;
+      }
+
+      if (mask & MASK_BOTTOM_LEFT) {
+         z = (uint) (zvals[2] * 65535.0);
+         if (z < ztile[iy+1][ix])
+            ztile[iy+1][ix] = z;
+         else
+            mask &= ~MASK_BOTTOM_LEFT;
+      }
+
+      if (mask & MASK_BOTTOM_RIGHT) {
+         z = (uint) (zvals[3] * 65535.0);
+         if (z < ztile[iy+1][ix+1])
+            ztile[iy+1][ix+1] = z;
+         else
+            mask &= ~MASK_BOTTOM_RIGHT;
+      }
+   }
 
    if (mask & MASK_TOP_LEFT)
       ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
@@ -512,10 +567,10 @@ static void const_coeff( struct setup_stage *setup,
  * for a triangle.
  */
 static void tri_linear_coeff( struct setup_stage *setup,
-                              unsigned slot )
+                              uint slot, uint firstComp, uint lastComp )
 {
    uint i;
-   for (i = 0; i < 4; i++) {
+   for (i = firstComp; i < lastComp; i++) {
       float botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
       float majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
       float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
@@ -637,7 +692,8 @@ static void setup_tri_coefficients( struct setup_stage *setup )
       }
    }
 #else
-   tri_linear_coeff(setup, 1);  /* slot 1 = color */
+   tri_linear_coeff(setup, 0, 2, 3);  /* slot 0, z */
+   tri_linear_coeff(setup, 1, 0, 4);  /* slot 1, color */
 #endif
 }
 

@@ -47,11 +47,11 @@
 #define TILE_SIZE 32
 
 
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_FINISH       5
-#define CELL_CMD_RENDER       6
+#define CELL_CMD_EXIT          1
+#define CELL_CMD_FRAMEBUFFER   2
+#define CELL_CMD_CLEAR_SURFACE 3
+#define CELL_CMD_FINISH        4
+#define CELL_CMD_RENDER        5
 
 
 /**
@@ -66,10 +66,11 @@ struct cell_command_framebuffer
 
 
 /**
- * Clear framebuffer tiles to given value/color.
+ * Clear framebuffer to the given value/color.
  */
-struct cell_command_clear_tiles
+struct cell_command_clear_surface
 {
+   uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
 } ALIGN16_ATTRIB;
 
@@ -87,7 +88,7 @@ struct cell_command_render
 struct cell_command
 {
    struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
+   struct cell_command_clear_surface clear;
    struct cell_command_render render;
 } ALIGN16_ATTRIB;
 
