@@ -135,8 +135,13 @@ struct brw_context;
 #define BRW_NEW_METAOPS                 0x1000
 #define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_LOCK                    0x4000
-
-
+/**
+ * Used for any batch entry with a relocated pointer that will be used
+ * by any 3D rendering.
+ */
+#define BRW_NEW_BATCH			0x8000
+/** brw->depth_region updated */
+#define BRW_NEW_DEPTH_BUFFER		0x10000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -328,7 +333,6 @@ struct brw_state_pointers {
 struct brw_tracked_state {
    struct brw_state_flags dirty;
    void (*update)( struct brw_context *brw );
-   GLboolean always_update;
 };
 
 /* Flags for brw->state.cache.

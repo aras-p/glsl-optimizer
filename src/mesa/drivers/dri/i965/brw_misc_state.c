@@ -93,8 +93,12 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 }
 
 const struct brw_tracked_state brw_binding_table_pointers = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_BATCH,
+      .cache = CACHE_NEW_SURF_BIND,
+   },
    .update = upload_binding_table_pointers,
-   .always_update = GL_TRUE, /* Has a relocation in the batchbuffer */
 };
 
 
@@ -132,7 +136,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 const struct brw_tracked_state brw_pipelined_state_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_METAOPS,
+      .brw = BRW_NEW_METAOPS | BRW_NEW_BATCH,
       .cache = (CACHE_NEW_VS_UNIT | 
 		CACHE_NEW_GS_UNIT | 
 		CACHE_NEW_GS_PROG | 
@@ -142,7 +146,6 @@ const struct brw_tracked_state brw_pipelined_state_pointers = {
 		CACHE_NEW_CC_UNIT)
    },
    .update = upload_pipelined_state_pointers
-   .always_update = GL_TRUE, /* Has a relocation in the batchbuffer */
 };
 #endif
 
@@ -157,7 +160,7 @@ static void upload_psp_urb_cbs(struct brw_context *brw )
 const struct brw_tracked_state brw_psp_urb_cbs = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_URB_FENCE | BRW_NEW_METAOPS,
+      .brw = BRW_NEW_URB_FENCE | BRW_NEW_METAOPS | BRW_NEW_BATCH,
       .cache = (CACHE_NEW_VS_UNIT | 
 		CACHE_NEW_GS_UNIT | 
 		CACHE_NEW_GS_PROG | 
@@ -167,7 +170,6 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 		CACHE_NEW_CC_UNIT)
    },
    .update = upload_psp_urb_cbs,
-   .always_update = GL_TRUE, /* psp has relocations. */
 };
 
 /**
@@ -226,8 +228,12 @@ static void upload_depthbuffer(struct brw_context *brw)
 }
 
 const struct brw_tracked_state brw_depthbuffer = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
+      .cache = 0,
+   },
    .update = upload_depthbuffer,
-   .always_update = GL_TRUE,
 };
 
 

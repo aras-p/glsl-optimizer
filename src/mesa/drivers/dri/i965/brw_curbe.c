@@ -342,10 +342,10 @@ const struct brw_tracked_state brw_constant_buffer = {
 	       BRW_NEW_VERTEX_PROGRAM |
 	       BRW_NEW_URB_FENCE | /* Implicit - hardware requires this, not used above */
 	       BRW_NEW_PSP | /* Implicit - hardware requires this, not used above */
-	       BRW_NEW_CURBE_OFFSETS),
+	       BRW_NEW_CURBE_OFFSETS |
+	       BRW_NEW_BATCH),
       .cache = (CACHE_NEW_WM_PROG) 
    },
    .update = upload_constant_buffer,
-   .always_update = GL_TRUE, /* Has a relocation in the batchbuffer */
 };
 

@@ -222,11 +222,10 @@ void brw_validate_state( struct brw_context *brw )
 
 	 assert(atom->dirty.mesa ||
 		atom->dirty.brw ||
-		atom->dirty.cache ||
-		atom->always_update);
+		atom->dirty.cache);
 	 assert(atom->update);
 
-	 if (check_state(state, &atom->dirty) || atom->always_update) {
+	 if (check_state(state, &atom->dirty)) {
 	    atom->update( brw );
 	    
 /* 	    emit_foo(brw); */
@@ -247,7 +246,7 @@ void brw_validate_state( struct brw_context *brw )
       for (i = 0; i < Elements(atoms); i++) {	 
 	 const struct brw_tracked_state *atom = brw->state.atoms[i];
 
-	 if (check_state(state, &atom->dirty) || atom->always_update)
+	 if (check_state(state, &atom->dirty))
 	    atom->update( brw );
       }
    }

@@ -75,6 +75,9 @@ static void brw_set_draw_region( struct intel_context *intel,
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
+   if (brw->state.depth_region != depth_region)
+      brw->state.dirty.brw |= BRW_NEW_DEPTH_BUFFER;
+
    intel_region_release(&brw->state.draw_region);
    intel_region_release(&brw->state.depth_region);
    intel_region_reference(&brw->state.draw_region, draw_region);
