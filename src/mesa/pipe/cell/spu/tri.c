@@ -72,8 +72,6 @@
 
 #define PIPE_MAX_SHADER_INPUTS 8 /* XXX temp */
 
-static int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
-
 #endif
 
 
@@ -123,6 +121,8 @@ struct setup_stage {
    struct edge emaj;
 
    float oneoverarea;
+
+   int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
 #if 0
    struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
@@ -276,8 +276,8 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    sp->quad.first->run(sp->quad.first, &setup->quad);
 #else
    /* Cell: "write" quad fragments to the tile by setting prim color */
-   int ix = x - cliprect_minx;
-   int iy = y - cliprect_miny;
+   int ix = x - setup->cliprect_minx;
+   int iy = y - setup->cliprect_miny;
    float colors[4][4];
    uint z;
 
@@ -496,6 +496,20 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
 	 }
       }
    }
+
+   /* Check if triangle is completely outside the tile bounds */
+   if (setup->vmin->data[0][1] > setup->cliprect_maxy)
+      return FALSE;
+   if (setup->vmax->data[0][1] < setup->cliprect_miny)
+      return FALSE;
+   if (setup->vmin->data[0][0] < setup->cliprect_minx &&
+       setup->vmid->data[0][0] < setup->cliprect_minx &&
+       setup->vmax->data[0][0] < setup->cliprect_minx)
+      return FALSE;
+   if (setup->vmin->data[0][0] > setup->cliprect_maxx &&
+       setup->vmid->data[0][0] > setup->cliprect_maxx &&
+       setup->vmax->data[0][0] > setup->cliprect_maxx)
+      return FALSE;
 
    setup->ebot.dx = setup->vmid->data[0][0] - setup->vmin->data[0][0];
    setup->ebot.dy = setup->vmid->data[0][1] - setup->vmin->data[0][1];
@@ -733,18 +747,10 @@ static void subtriangle( struct setup_stage *setup,
 			 struct edge *eright,
 			 unsigned lines )
 {
-#if 0
-   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
-   const int minx = (int) cliprect->minx;
-   const int maxx = (int) cliprect->maxx;
-   const int miny = (int) cliprect->miny;
-   const int maxy = (int) cliprect->maxy;
-#else
-   const int minx = cliprect_minx;
-   const int maxx = cliprect_maxx;
-   const int miny = cliprect_miny;
-   const int maxy = cliprect_maxy;
-#endif
+   const int minx = setup->cliprect_minx;
+   const int maxx = setup->cliprect_maxx;
+   const int miny = setup->cliprect_miny;
+   const int maxy = setup->cliprect_maxy;
    int y, start_y, finish_y;
    int sy = (int)eleft->sy;
 
@@ -810,25 +816,19 @@ static void subtriangle( struct setup_stage *setup,
 /**
  * Do setup for triangle rasterization, then render the triangle.
  */
-static void setup_tri(
-#if 0
-                       struct draw_stage *stage,
-#endif
-		       struct prim_header *prim )
+static void
+setup_tri(struct setup_stage *setup, struct prim_header *prim)
 {
-#if 0
-   struct setup_stage *setup = setup_stage( stage );
-#else
-   struct setup_stage ss;
-   struct setup_stage *setup = &ss;
-   ss.color = prim->color;
-#endif
+   setup->color = prim->color;  /* XXX temporary */
 
    /*
    _mesa_printf("%s\n", __FUNCTION__ );
    */
 
-   setup_sort_vertices( setup, prim );
+   if (!setup_sort_vertices( setup, prim )) {
+      return; /* totally clipped */
+   }
+
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
@@ -930,13 +930,13 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
 void
 tri_draw(struct prim_header *tri, uint tx, uint ty)
 {
+   struct setup_stage setup;
+
    /* set clipping bounds to tile bounds */
-   cliprect_minx = tx * TILE_SIZE;
-   cliprect_miny = ty * TILE_SIZE;
-   cliprect_maxx = (tx + 1) * TILE_SIZE;
-   cliprect_maxy = (ty + 1) * TILE_SIZE;
+   setup.cliprect_minx = tx * TILE_SIZE;
+   setup.cliprect_miny = ty * TILE_SIZE;
+   setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
+   setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
 
-   setup_tri(tri);
+   setup_tri(&setup, tri);
 }
-
-
