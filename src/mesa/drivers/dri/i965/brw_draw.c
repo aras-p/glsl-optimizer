@@ -270,12 +270,23 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    LOCK_HARDWARE(intel);
 
    if (brw->intel.numClipRects == 0) {
-      assert(intel->batch->ptr == intel->batch->map);
       UNLOCK_HARDWARE(intel);
       return GL_TRUE;
    }
 
    {
+      /* Flush the batch if it's approaching full, so that we don't wrap while
+       * we've got validated state that needs to be in the same batch as the
+       * primitives.  This fraction is just a guess (minimal full state plus
+       * a primitive is around 512 bytes), and would be better if we had
+       * an upper bound of how much we might emit in a single
+       * brw_try_draw_prims().
+       */
+      if (intel->batch->ptr - intel->batch->map > intel->batch->size * 3 / 4)
+	 intel_batchbuffer_flush(intel->batch);
+
+      brw->no_batch_wrap = GL_TRUE;
+
       /* Set the first primitive early, ahead of validate_state:
        */
       brw_set_prim(brw, prim[0].mode);
@@ -310,12 +321,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
  out:
 
-   /* Currently have to do this to synchronize with the map/unmap of
-    * the vertex buffer in brw_exec_api.c.  Not sure if there is any
-    * way around this, as not every flush is due to a buffer filling
-    * up.
-    */
-   intel_batchbuffer_flush( brw->intel.batch );
+   brw->no_batch_wrap = GL_FALSE;
 
    /* Free any old data so it doesn't clog up texture memory - we
     * won't be referencing it again.

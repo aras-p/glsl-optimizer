@@ -91,6 +91,9 @@ static void brw_new_batch( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
+   /* Check that we didn't just wrap our batchbuffer at a bad time. */
+   assert(!brw->no_batch_wrap);
+
    /* Mark all context state as needing to be re-emitted.
     * This is probably not as severe as on 915, since almost all of our state
     * is just in referenced buffers.

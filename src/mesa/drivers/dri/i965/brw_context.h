@@ -414,6 +414,7 @@ struct brw_context
    GLboolean emit_state_always;
    GLboolean wrap;
    GLboolean tmp_fallback;
+   GLboolean no_batch_wrap;
 
    struct {
       struct brw_state_flags dirty;
