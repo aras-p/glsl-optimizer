@@ -85,7 +85,6 @@ const struct brw_tracked_state *atoms[] =
    &brw_binding_table_pointers,
    &brw_blend_constant_color,
 
-   &brw_drawing_rect,
    &brw_depthbuffer,
 
    &brw_polygon_stipple,

@@ -48,7 +48,6 @@ const struct brw_tracked_state brw_curbe_offsets;
 const struct brw_tracked_state brw_invarient_state;
 const struct brw_tracked_state brw_gs_prog;
 const struct brw_tracked_state brw_gs_unit;
-const struct brw_tracked_state brw_drawing_rect;
 const struct brw_tracked_state brw_line_stipple;
 const struct brw_tracked_state brw_pipelined_state_pointers;
 const struct brw_tracked_state brw_binding_table_pointers;

@@ -71,57 +71,6 @@ const struct brw_tracked_state brw_blend_constant_color = {
    .update = upload_blend_constant_color
 };
 
-/***********************************************************************
- * Drawing rectangle -- Need for AUB file only.
- */
-static void upload_drawing_rect(struct brw_context *brw)
-{
-   struct intel_context *intel = &brw->intel;
-   struct brw_drawrect bdr;
-   int x1, y1;
-   int x2, y2;
-
-   /* If there is a single cliprect, set it here.  Otherwise iterate
-    * over them in brw_draw_prim().
-    */
-   if (brw->intel.numClipRects > 1) 
-      return; 
- 
-   x1 = brw->intel.pClipRects[0].x1;
-   y1 = brw->intel.pClipRects[0].y1;
-   x2 = brw->intel.pClipRects[0].x2;
-   y2 = brw->intel.pClipRects[0].y2;
-	 
-   if (x1 < 0) x1 = 0;
-   if (y1 < 0) y1 = 0;
-   if (x2 > intel->intelScreen->width) x2 = intel->intelScreen->width;
-   if (y2 > intel->intelScreen->height) y2 = intel->intelScreen->height;
-
-   memset(&bdr, 0, sizeof(bdr));
-   bdr.header.opcode = CMD_DRAW_RECT;
-   bdr.header.length = sizeof(bdr)/4 - 2;
-   bdr.xmin = x1;
-   bdr.ymin = y1;
-   bdr.xmax = x2;
-   bdr.ymax = y2;
-   bdr.xorg = intel->drawX;
-   bdr.yorg = intel->drawY;
-
-   /* Can't use BRW_CACHED_BATCH_STRUCT because this is also emitted
-    * uncached in brw_draw.c:
-    */
-   BRW_BATCH_STRUCT(brw, &bdr);
-}
-
-const struct brw_tracked_state brw_drawing_rect = {
-   .dirty = {
-      .mesa = _NEW_WINDOW_POS,
-      .brw = 0,
-      .cache = 0
-   },
-   .update = upload_drawing_rect
-};
-
 /**
  * Upload the binding table pointers, which point each stage's array of surface
  * state pointers.
