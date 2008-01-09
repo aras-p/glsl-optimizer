@@ -123,8 +123,6 @@ render_tri(struct draw_stage *stage, struct prim_header *prim)
    struct cell_prim_buffer *buf = &cell->prim_buffer;
    uint i;
 
-   printf("Cell render tri\n");
-
    if (buf->num_verts + 3 > CELL_MAX_VERTS) {
       cell_flush_prim_buffer(cell);
    }
@@ -150,7 +148,6 @@ cell_flush_prim_buffer(struct cell_context *cell)
    if (cell->prim_buffer.num_verts == 0)
       return;
 
-   printf("*** Flushing prim buffer\n");
    for (i = 0; i < cell->num_spus; i++) {
       struct cell_command_render *render = &cell_global.command[i].render;
       render->prim_type = PIPE_PRIM_TRIANGLES;

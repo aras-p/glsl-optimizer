@@ -38,8 +38,6 @@ cell_flush(struct pipe_context *pipe, unsigned flags)
    struct cell_context *cell = cell_context(pipe);
    uint i;
 
-   printf("%s\n", __FUNCTION__);
-
    cell_flush_prim_buffer(cell);
 
    /* Send CMD_FINISH to all SPUs */

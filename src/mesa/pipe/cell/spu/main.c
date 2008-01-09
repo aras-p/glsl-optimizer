@@ -45,6 +45,8 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
+static boolean Debug = TRUE;
+
 volatile struct cell_init_info init;
 
 struct framebuffer fb;
@@ -292,7 +294,8 @@ main_loop(void)
    struct cell_command cmd;
    int exitFlag = 0;
 
-   printf("SPU %u: Enter main loop\n", init.id);
+   if (Debug)
+      printf("SPU %u: Enter main loop\n", init.id);
 
    assert((sizeof(struct cell_command) & 0xf) == 0);
    ASSERT_ALIGN16(&cmd);
@@ -301,12 +304,14 @@ main_loop(void)
       unsigned opcode;
       int tag = 0;
 
-      printf("SPU %u: Wait for cmd...\n", init.id);
+      if (Debug)
+         printf("SPU %u: Wait for cmd...\n", init.id);
 
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
 
-      printf("SPU %u: got cmd %u\n", init.id, opcode);
+      if (Debug)
+         printf("SPU %u: got cmd %u\n", init.id, opcode);
 
       /* command payload */
       mfc_get(&cmd,  /* dest */
@@ -319,18 +324,19 @@ main_loop(void)
 
       switch (opcode) {
       case CELL_CMD_EXIT:
-         printf("SPU %u: EXIT\n", init.id);
+         if (Debug)
+            printf("SPU %u: EXIT\n", init.id);
          exitFlag = 1;
          break;
       case CELL_CMD_FRAMEBUFFER:
-         printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
-                init.id,
-                cmd.fb.width,
-                cmd.fb.height,
-                cmd.fb.color_start,
-                cmd.fb.color_format,
-                cmd.fb.depth_format);
-         printf("Z16 = 0x%x\n", PIPE_FORMAT_Z16_UNORM);
+         if (Debug)
+            printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
+                   init.id,
+                   cmd.fb.width,
+                   cmd.fb.height,
+                   cmd.fb.color_start,
+                   cmd.fb.color_format,
+                   cmd.fb.depth_format);
          fb.color_start = cmd.fb.color_start;
          fb.depth_start = cmd.fb.depth_start;
          fb.color_format = cmd.fb.color_format;
@@ -345,18 +351,21 @@ main_loop(void)
          */
          break;
       case CELL_CMD_CLEAR_SURFACE:
-         printf("SPU %u: CLEAR SURF %u to 0x%08x\n", init.id,
-                cmd.clear.surface, cmd.clear.value);
+         if (Debug)
+            printf("SPU %u: CLEAR SURF %u to 0x%08x\n", init.id,
+                   cmd.clear.surface, cmd.clear.value);
          clear_surface(&cmd.clear);
          break;
       case CELL_CMD_RENDER:
-         printf("SPU %u: RENDER %u verts, prim %u\n",
-                init.id, cmd.render.num_verts, cmd.render.prim_type);
+         if (Debug)
+            printf("SPU %u: RENDER %u verts, prim %u\n",
+                   init.id, cmd.render.num_verts, cmd.render.prim_type);
          render(&cmd.render);
          break;
 
       case CELL_CMD_FINISH:
-         printf("SPU %u: FINISH\n", init.id);
+         if (Debug)
+            printf("SPU %u: FINISH\n", init.id);
          /* wait for all outstanding DMAs to finish */
          mfc_write_tag_mask(~0);
          mfc_read_tag_status_all();
@@ -369,7 +378,8 @@ main_loop(void)
 
    }
 
-   printf("SPU %u: Exit main loop\n", init.id);
+   if (Debug)
+      printf("SPU %u: Exit main loop\n", init.id);
 }
 
 
@@ -388,7 +398,8 @@ main(unsigned long speid, unsigned long argp)
 
    DefaultTag = 1;
 
-   printf("SPU: main() speid=%lu\n", speid);
+   if (Debug)
+      printf("SPU: main() speid=%lu\n", speid);
 
    mfc_get(&init,  /* dest */
            (unsigned int) argp, /* src */

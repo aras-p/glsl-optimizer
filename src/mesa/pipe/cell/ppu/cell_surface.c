@@ -59,8 +59,6 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       surfIndex = 0;
    }
 
-   printf("Clear surf %u\n", surfIndex);
-
    for (i = 0; i < cell->num_spus; i++) {
 #if 1
       uint clr = clearValue;
