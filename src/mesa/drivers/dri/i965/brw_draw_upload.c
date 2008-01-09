@@ -583,7 +583,10 @@ void brw_upload_indices( struct brw_context *brw,
 				 index_buffer->ptr,
 				 bufferobj);
    } else {
-       if (((1 << get_index_type(index_buffer->type)) - 1) & offset) {
+      /* If the index buffer isn't aligned to its element size, we have to
+       * rebase it into a temporary.
+       */
+       if ((get_size(index_buffer->type) - 1) & offset) {
            struct gl_buffer_object *vbo;
            GLuint voffset;
            GLubyte *map = ctx->Driver.MapBuffer(ctx,
