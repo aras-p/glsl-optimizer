@@ -123,25 +123,6 @@ static GLuint trim(GLenum prim, GLuint length)
 }
 
 
-static void brw_emit_cliprect( struct brw_context *brw, 
-			       const drm_clip_rect_t *rect )
-{
-   struct brw_drawrect bdr;
-
-   bdr.header.opcode = CMD_DRAW_RECT;
-   bdr.header.length = sizeof(bdr)/4 - 2;
-   bdr.xmin = rect->x1;
-   bdr.xmax = rect->x2 - 1;
-   bdr.ymin = rect->y1;
-   bdr.ymax = rect->y2 - 1;
-   bdr.xorg = brw->intel.drawX;
-   bdr.yorg = brw->intel.drawY;
-
-   intel_batchbuffer_data( brw->intel.batch, &bdr, sizeof(bdr), 
-			   INTEL_BATCH_NO_CLIPRECTS);
-}
-
-
 static void brw_emit_prim( struct brw_context *brw, 
 			   const struct _mesa_prim *prim )
 
@@ -165,8 +146,8 @@ static void brw_emit_prim( struct brw_context *brw,
    prim_packet.base_vert_location = 0;
 
    if (prim_packet.verts_per_instance) {
-      intel_batchbuffer_data( brw->intel.batch, &prim_packet, sizeof(prim_packet), 
-			      INTEL_BATCH_NO_CLIPRECTS);
+      intel_batchbuffer_data( brw->intel.batch, &prim_packet,
+			      sizeof(prim_packet), INTEL_BATCH_CLIPRECTS);
    }
 }
 
@@ -270,7 +251,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
-   GLuint i, j;
+   GLuint i;
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
@@ -320,31 +301,8 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 	 goto out;
       }
 
-      /* For single cliprect, state is already emitted: 
-       */
-      if (brw->intel.numClipRects == 1) {
-	 for (i = 0; i < nr_prims; i++) {
-	    brw_emit_prim(brw, &prim[i]);   
-	 }
-      }
-      else {
-	 /* Otherwise, explicitly do the cliprects at this point:
-	  */
-          GLuint nprims = 0;
-	 for (j = 0; j < brw->intel.numClipRects; j++) {
-	    brw_emit_cliprect(brw, &brw->intel.pClipRects[j]);
-
-	    /* Emit prims to batchbuffer: 
-	     */
-	    for (i = 0; i < nr_prims; i++) {
-	       brw_emit_prim(brw, &prim[i]);   
-
-          if (++nprims == VBO_MAX_PRIM) {
-              intel_batchbuffer_flush(brw->intel.batch);
-              nprims = 0;
-          }
-	    }
-	 }
+      for (i = 0; i < nr_prims; i++) {
+	 brw_emit_prim(brw, &prim[i]);
       }
 
       retval = GL_TRUE;

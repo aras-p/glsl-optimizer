@@ -10,8 +10,10 @@ struct intel_context;
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
 
-#define INTEL_BATCH_NO_CLIPRECTS 0x1
-#define INTEL_BATCH_CLIPRECTS    0x2
+enum cliprects_enable {
+   INTEL_BATCH_CLIPRECTS = 0,
+   INTEL_BATCH_NO_CLIPRECTS = 1
+};
 
 struct intel_batchbuffer
 {
@@ -19,10 +21,11 @@ struct intel_batchbuffer
 
    dri_bo *buf;
    dri_fence *last_fence;
-   GLuint flags;
 
    GLubyte *map;
    GLubyte *ptr;
+
+   enum cliprects_enable cliprects_enable;
 
    GLuint size;
 
@@ -48,7 +51,8 @@ void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                            const void *data, GLuint bytes, GLuint flags);
+                            const void *data, GLuint bytes,
+			    enum cliprects_enable cliprects_enable);
 
 void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
                                      GLuint bytes);
@@ -80,29 +84,37 @@ intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
 
 static INLINE void
 intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
-                                GLuint sz, GLuint flags)
+                                GLuint sz,
+				enum cliprects_enable cliprects_enable)
 {
    assert(sz < batch->size - 8);
-   if (intel_batchbuffer_space(batch) < sz ||
-       (batch->flags != 0 && flags != 0 && batch->flags != flags))
+   if (intel_batchbuffer_space(batch) < sz)
       intel_batchbuffer_flush(batch);
 
-   batch->flags |= flags;
+   /* Upgrade the buffer to being looped over per cliprect if this batch
+    * emit needs it.  The code used to emit a batch whenever the
+    * cliprects_enable was changed, but reducing the overhead of frequent
+    * batch flushing is more important than reducing state parsing,
+    * particularly as we move towards private backbuffers and number
+    * cliprects always being 1 except at swap.
+    */
+   if (cliprects_enable == INTEL_BATCH_CLIPRECTS)
+      batch->cliprects_enable = INTEL_BATCH_CLIPRECTS;
 }
 
 /* Here are the crusty old macros, to be removed:
  */
 #define BATCH_LOCALS
 
-#define BEGIN_BATCH(n, flags) do {				\
-   intel_batchbuffer_require_space(intel->batch, (n)*4, flags);	\
+#define BEGIN_BATCH(n, cliprects_enable) do {				\
+   intel_batchbuffer_require_space(intel->batch, (n)*4, cliprects_enable); \
 } while (0)
 
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
 
-#define OUT_RELOC(buf, flags, delta) do { 				\
+#define OUT_RELOC(buf, cliprects_enable, delta) do { 			\
    assert((delta) >= 0);						\
-   intel_batchbuffer_emit_reloc(intel->batch, buf, flags, delta);	\
+   intel_batchbuffer_emit_reloc(intel->batch, buf, cliprects_enable, delta); \
 } while (0)
 
 #define ADVANCE_BATCH() do { } while(0)

@@ -129,11 +129,11 @@ void
 intelWrapInlinePrimitive(struct intel_context *intel)
 {
    GLuint prim = intel->prim.primitive;
-   GLuint batchflags = intel->batch->flags;
+   GLuint cliprects_enable = intel->batch->cliprects_enable;
 
    intel_flush_inline_primitive(intel);
    intel_batchbuffer_flush(intel->batch);
-   intelStartInlinePrimitive(intel, prim, batchflags);  /* ??? */
+   intelStartInlinePrimitive(intel, prim, cliprects_enable);  /* ??? */
 }
 
 GLuint *

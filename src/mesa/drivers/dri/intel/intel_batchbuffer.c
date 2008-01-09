@@ -87,6 +87,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
    batch->id = batch->intel->batch_id++;
+   batch->cliprects_enable = INTEL_BATCH_NO_CLIPRECTS;
 }
 
 struct intel_batchbuffer *
@@ -124,8 +125,7 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
  */
 static void
 do_flush_locked(struct intel_batchbuffer *batch,
-		GLuint used,
-		GLboolean ignore_cliprects, GLboolean allow_unlock)
+		GLuint used, GLboolean allow_unlock)
 {
    struct intel_context *intel = batch->intel;
    void *start;
@@ -136,28 +136,33 @@ do_flush_locked(struct intel_batchbuffer *batch,
 
    batch->map = NULL;
    batch->ptr = NULL;
-   batch->flags = 0;
 
    /* Throw away non-effective packets.  Won't work once we have
     * hardware contexts which would preserve statechanges beyond a
     * single buffer.
     */
 
-   if (!(intel->numClipRects == 0 && !ignore_cliprects)) {
+   if (!(intel->numClipRects == 0 &&
+	 batch->cliprects_enable == INTEL_BATCH_CLIPRECTS)) {
       if (intel->ttm == GL_TRUE) {
 	 intel_exec_ioctl(batch->intel,
-			  used, ignore_cliprects, allow_unlock,
+			  used,
+			  batch->cliprects_enable == INTEL_BATCH_NO_CLIPRECTS,
+			  allow_unlock,
 			  start, count, &batch->last_fence);
       } else {
 	 intel_batch_ioctl(batch->intel,
 			   batch->buf->offset,
-			   used, ignore_cliprects, allow_unlock);
+			   used,
+			   batch->cliprects_enable == INTEL_BATCH_NO_CLIPRECTS,
+			   allow_unlock);
       }
    }
       
    dri_post_submit(batch->buf, &batch->last_fence);
 
-   if (intel->numClipRects == 0 && !ignore_cliprects) {
+   if (intel->numClipRects == 0 &&
+       batch->cliprects_enable == INTEL_BATCH_CLIPRECTS) {
       if (allow_unlock) {
 	 /* If we are not doing any actual user-visible rendering,
 	  * do a sched_yield to keep the app from pegging the cpu while
@@ -212,9 +217,8 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    if (!was_locked)
       LOCK_HARDWARE(intel);
 
-   do_flush_locked(batch, used, !(batch->flags & INTEL_BATCH_CLIPRECTS),
-		   GL_FALSE);
-     
+   do_flush_locked(batch, used, GL_FALSE);
+
    if (!was_locked)
       UNLOCK_HARDWARE(intel);
 
@@ -258,10 +262,11 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                       const void *data, GLuint bytes, GLuint flags)
+                       const void *data, GLuint bytes,
+		       enum cliprects_enable cliprects_enable)
 {
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(batch, bytes, flags);
+   intel_batchbuffer_require_space(batch, bytes, cliprects_enable);
    __memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
 }

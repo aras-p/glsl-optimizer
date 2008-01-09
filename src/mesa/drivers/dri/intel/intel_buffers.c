@@ -135,6 +135,9 @@ intel_readbuf_region(struct intel_context *intel)
 static void
 intelSetRenderbufferClipRects(struct intel_context *intel)
 {
+   /* flush batch since pClipRects may change */
+   intel_batchbuffer_flush(intel->batch);
+
    assert(intel->ctx.DrawBuffer->Width > 0);
    assert(intel->ctx.DrawBuffer->Height > 0);
    intel->fboRect.x1 = 0;
@@ -160,6 +163,9 @@ intelSetFrontClipRects(struct intel_context *intel)
    if (!dPriv)
       return;
 
+   /* flush batch since pClipRects may change */
+   intel_batchbuffer_flush(intel->batch);
+
    intel->numClipRects = dPriv->numClipRects;
    intel->pClipRects = dPriv->pClipRects;
    intel->drawX = dPriv->x;
@@ -178,6 +184,9 @@ intelSetBackClipRects(struct intel_context *intel)
 
    if (!dPriv)
       return;
+
+   /* flush batch since pClipRects may change */
+   intel_batchbuffer_flush(intel->batch);
 
    intel_fb = dPriv->driverPrivate;
 
