@@ -315,7 +315,6 @@ do_blit_copypixels(GLcontext * ctx,
 			   ctx->Color.LogicOp : GL_COPY);
       }
 
-      intel->need_flush = GL_TRUE;
    out:
       intel_batchbuffer_flush(intel->batch);
    }

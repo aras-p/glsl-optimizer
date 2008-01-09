@@ -746,7 +746,6 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
 
 
    intel->locked = 1;
-   intel->need_flush = 1;
 
    /* Lost context?
     */

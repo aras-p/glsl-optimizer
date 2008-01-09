@@ -176,7 +176,6 @@ struct intel_context
    GLboolean no_rast;
    GLboolean locked;
    GLboolean strict_conformance;
-   GLboolean need_flush;
 
    /* State for intelvb.c and inteltris.c.
     */

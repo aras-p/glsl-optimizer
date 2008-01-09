@@ -299,7 +299,6 @@ do_blit_bitmap( GLcontext *ctx,
 	    } 
 	 } 
       }
-      intel->need_flush = GL_TRUE;
    out:
       intel_batchbuffer_flush(intel->batch);
    }
