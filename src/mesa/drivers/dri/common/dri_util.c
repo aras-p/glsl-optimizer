@@ -172,14 +172,22 @@ static GLboolean driUnbindContext(__DRIcontext *ctx)
  * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
  * function.
  */
-static GLboolean DoBindContext(__DRIcontext *ctx,
-			       __DRIdrawable *pdraw,
-			       __DRIdrawable *pread)
+static GLboolean driBindContext(__DRIcontext * ctx,
+				__DRIdrawable *pdraw,
+				__DRIdrawable *pread)
 {
     __DRIdrawablePrivate *pdp;
     __DRIdrawablePrivate *prp;
     __DRIcontextPrivate * const pcp = ctx->private;
     __DRIscreenPrivate *psp = pcp->driScreenPriv;
+
+    /*
+    ** Assume error checking is done properly in glXMakeCurrent before
+    ** calling driBindContext.
+    */
+
+    if (ctx == NULL || pdraw == None || pread == None)
+	return GL_FALSE;
 
     pdp = (__DRIdrawablePrivate *) pdraw->private;
     prp = (__DRIdrawablePrivate *) pread->private;
@@ -215,26 +223,6 @@ static GLboolean DoBindContext(__DRIcontext *ctx,
     return GL_TRUE;
 }
 
-
-/**
- * This function takes both a read buffer and a draw buffer.  This is needed
- * for \c glXMakeCurrentReadSGI or GLX 1.3's \c glXMakeContextCurrent
- * function.
- */
-static GLboolean driBindContext(__DRIcontext * ctx,
-				__DRIdrawable *pdraw,
-				__DRIdrawable *pread)
-{
-    /*
-    ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driBindContext.
-    */
-
-    if (ctx == NULL || pdraw == None || pread == None)
-	return GL_FALSE;
-
-    return DoBindContext( ctx, pdraw, pread );
-}
 /*@}*/
 
 
