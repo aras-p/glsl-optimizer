@@ -55,6 +55,18 @@ extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 extern int DefaultTag;
 
 
+/* DMA TAGS */
+
+#define TAG_SURFACE_CLEAR     10
+#define TAG_VERTEX_BUFFER     11
+#define TAG_READ_TILE_COLOR   12
+#define TAG_READ_TILE_Z       13
+#define TAG_WRITE_TILE_COLOR  14
+#define TAG_WRITE_TILE_Z      15
+
+
+
+
 void
 wait_on_mask(unsigned tag);
 

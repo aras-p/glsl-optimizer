@@ -283,10 +283,12 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
 
    eval_coeff(setup, 1, (float) x, (float) y, colors);
 
-
    if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
       float zvals[4];
       eval_z(setup, (float) x, (float) y, zvals);
+
+      wait_on_mask(1 << TAG_READ_TILE_Z);  /* XXX temporary */
+
 
       if (mask & MASK_TOP_LEFT) {
          z = (uint) (zvals[0] * 65535.0);
@@ -320,6 +322,9 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
             mask &= ~MASK_BOTTOM_RIGHT;
       }
    }
+
+   if (mask)
+      wait_on_mask(1 << TAG_READ_TILE_COLOR);
 
    if (mask & MASK_TOP_LEFT)
       ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);

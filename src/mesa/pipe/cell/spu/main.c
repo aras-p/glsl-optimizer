@@ -45,7 +45,7 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
-static boolean Debug = TRUE;
+static boolean Debug = FALSE;
 
 volatile struct cell_init_info init;
 
@@ -59,9 +59,10 @@ int DefaultTag;
 
 
 void
-wait_on_mask(unsigned tag)
+wait_on_mask(unsigned tagMask)
 {
-   mfc_write_tag_mask( tag );
+   mfc_write_tag_mask( tagMask );
+   /* wait for completion of _any_ DMAs specified by tagMask */
    mfc_read_tag_status_any();
 }
 
@@ -125,7 +126,6 @@ clear_surface(const struct cell_command_clear_surface *clear)
 {
    uint num_tiles = fb.width_tiles * fb.height_tiles;
    uint i, j;
-   int tag = init.id;
 
    if (clear->surface == 0) {
       for (i = 0; i < TILE_SIZE; i++)
@@ -147,13 +147,15 @@ clear_surface(const struct cell_command_clear_surface *clear)
       uint tx = i % fb.width_tiles;
       uint ty = i / fb.width_tiles;
       if (clear->surface == 0)
-         put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
+         put_tile(&fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
       else
-         put_tile(&fb, tx, ty, (uint *) ztile, tag, 1);
+         put_tile(&fb, tx, ty, (uint *) ztile, TAG_SURFACE_CLEAR, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
-      wait_on_mask(1 << tag);
    }
 
+#if 0
+   wait_on_mask(1 << TAG_SURFACE_CLEAR);
+#endif
 }
 
 
@@ -198,7 +200,6 @@ static void
 render(const struct cell_command_render *render)
 {
    struct cell_prim_buffer prim_buffer ALIGN16_ATTRIB;
-   int tag = init.id /**DefaultTag**/;
    uint i, j, vertex_bytes;
 
    /*
@@ -217,16 +218,18 @@ render(const struct cell_command_render *render)
    mfc_get(&prim_buffer,  /* dest */
            (unsigned int) render->vertex_data,  /* src */
            vertex_bytes,  /* size */
-           tag,
+           TAG_VERTEX_BUFFER,
            0, /* tid */
            0  /* rid */);
-   wait_on_mask( 1 << tag );  /* XXX temporary */
+   wait_on_mask(1 << TAG_VERTEX_BUFFER);
 
    /* find tiles which intersect the prim bounding box */
    uint txmin, tymin, box_width_tiles, box_num_tiles;
    tile_bounding_box(render, &txmin, &tymin,
                      &box_num_tiles, &box_width_tiles);
 
+   /* make sure any pending clears have completed */
+   wait_on_mask(1 << TAG_SURFACE_CLEAR);
 
    /* loop over tiles */
    for (i = init.id; i < box_num_tiles; i += init.num_spus) {
@@ -236,12 +239,12 @@ render(const struct cell_command_render *render)
       assert(tx < fb.width_tiles);
       assert(ty < fb.height_tiles);
 
-      get_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
-      wait_on_mask(1 << tag);  /* XXX temporary */
-
+      /* Start fetching color/z tiles.  We'll wait for completion when
+       * we need read/write to them later in triangle rasterization.
+       */
+      get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
       if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         get_tile(&fb, tx, ty, (uint *) ztile, tag+1, 1);
-         wait_on_mask(1 << (tag+1));  /* XXX temporary */
+         get_tile(&fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
       }
 
       assert(render->prim_type == PIPE_PRIM_TRIANGLES);
@@ -274,12 +277,23 @@ render(const struct cell_command_render *render)
          tri_draw(&prim, tx, ty);
       }
 
-      put_tile(&fb, tx, ty, (uint *) ctile, tag, 0);
-      wait_on_mask(1 << tag); /* XXX temp */
-
+      /* in case nothing was drawn, wait now for completion */
+      /* XXX temporary */
+      wait_on_mask(1 << TAG_READ_TILE_COLOR);
       if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         put_tile(&fb, tx, ty, (uint *) ztile, tag+1, 1);
-         wait_on_mask(1 << (tag+1));  /* XXX temporary */
+         wait_on_mask(1 << TAG_READ_TILE_Z);  /* XXX temporary */
+      }
+
+      /* XXX IF we wrote anything into the tile... */
+
+      put_tile(&fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+         put_tile(&fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
+      }
+
+      wait_on_mask(1 << TAG_WRITE_TILE_COLOR); /* XXX temp */
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+         wait_on_mask(1 << TAG_WRITE_TILE_Z);  /* XXX temporary */
       }
    }
 }
