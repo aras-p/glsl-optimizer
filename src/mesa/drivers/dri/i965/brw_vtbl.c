@@ -84,20 +84,15 @@ static void brw_set_draw_region( struct intel_context *intel,
 
 /* called from intelFlushBatchLocked
  */
-static void brw_lost_hardware( struct intel_context *intel )
+static void brw_new_batch( struct intel_context *intel )
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
-   /* Note that we effectively lose the context after this.
-    * 
-    * Setting this flag provokes a state buffer wrap and also flushes
-    * the hardware caches.
+   /* Mark all context state as needing to be re-emitted.
+    * This is probably not as severe as on 915, since almost all of our state
+    * is just in referenced buffers.
     */
    brw->state.dirty.brw |= BRW_NEW_CONTEXT;
-
-   /* Which means there shouldn't be any commands already queued:
-    */
-   assert(intel->batch->ptr == intel->batch->map);
 
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
@@ -169,7 +164,7 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.invalidate_state = brw_invalidate_state; 
    brw->intel.vtbl.note_fence = brw_note_fence; 
    brw->intel.vtbl.note_unlock = brw_note_unlock; 
-   brw->intel.vtbl.lost_hardware = brw_lost_hardware;
+   brw->intel.vtbl.new_batch = brw_new_batch;
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.set_draw_region = brw_set_draw_region;
    brw->intel.vtbl.flush_cmd = brw_flush_cmd;

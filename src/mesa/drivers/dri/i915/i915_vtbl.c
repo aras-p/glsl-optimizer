@@ -579,9 +579,14 @@ i915_set_draw_region(struct intel_context *intel,
 
 
 static void
-i915_lost_hardware(struct intel_context *intel)
+i915_new_batch(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
+
+   /* Mark all state as needing to be emitted when starting a new batchbuffer.
+    * Using hardware contexts would be an alternative, but they have some
+    * difficulties associated with them (physical address requirements).
+    */
    i915->state.emitted = 0;
 }
 
@@ -607,7 +612,7 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.check_vertex_size = i915_check_vertex_size;
    i915->intel.vtbl.destroy = i915_destroy_context;
    i915->intel.vtbl.emit_state = i915_emit_state;
-   i915->intel.vtbl.lost_hardware = i915_lost_hardware;
+   i915->intel.vtbl.new_batch = i915_new_batch;
    i915->intel.vtbl.reduced_primitive_state = i915_reduced_primitive_state;
    i915->intel.vtbl.render_start = i915_render_start;
    i915->intel.vtbl.render_prevalidate = i915_render_prevalidate;

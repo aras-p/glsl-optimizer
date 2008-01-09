@@ -124,11 +124,6 @@ intel_batch_ioctl(struct intel_context *intel,
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
-
-   /* FIXME: use hardware contexts to avoid 'losing' hardware after
-    * each buffer flush.
-    */
-   intel->vtbl.lost_hardware(intel);
 }
 
 void
@@ -176,10 +171,4 @@ intel_exec_ioctl(struct intel_context *intel,
       exit(1);
    }
    *fence = fo;
-
-   /* FIXME: use hardware contexts to avoid 'losing' hardware after
-    * each buffer flush.
-    */
-   intel->vtbl.lost_hardware(intel);
-
 }

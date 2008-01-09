@@ -755,7 +755,6 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
 		 sarea->ctxOwner, me);
       }
       sarea->ctxOwner = me;
-      intel->vtbl.lost_hardware( intel );
    }
 
    /* If the last consumer of the texture memory wasn't us, notify the fake

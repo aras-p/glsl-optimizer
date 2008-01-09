@@ -172,7 +172,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
          sched_yield();
          LOCK_HARDWARE(intel);
       }
-      intel->vtbl.lost_hardware(intel);
    }
 
    if (INTEL_DEBUG & DEBUG_BATCH) {
@@ -184,6 +183,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
       if (intel->vtbl.debug_batch != NULL)
 	 intel->vtbl.debug_batch(intel);
    }
+
+   intel->vtbl.new_batch(intel);
 }
 
 void

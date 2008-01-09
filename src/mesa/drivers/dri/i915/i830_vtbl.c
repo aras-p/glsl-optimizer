@@ -683,7 +683,7 @@ i830_update_color_z_regions(intelContextPtr intel,
 /* This isn't really handled at the moment.
  */
 static void
-i830_lost_hardware(struct intel_context *intel)
+i830_new_batch(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    i830->state.emitted = 0;
@@ -713,7 +713,7 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.check_vertex_size = i830_check_vertex_size;
    i830->intel.vtbl.destroy = i830_destroy_context;
    i830->intel.vtbl.emit_state = i830_emit_state;
-   i830->intel.vtbl.lost_hardware = i830_lost_hardware;
+   i830->intel.vtbl.new_batch = i830_new_batch;
    i830->intel.vtbl.reduced_primitive_state = i830_reduced_primitive_state;
    i830->intel.vtbl.set_draw_region = i830_set_draw_region;
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;

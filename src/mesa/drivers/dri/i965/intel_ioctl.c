@@ -196,10 +196,4 @@ intel_exec_ioctl(struct intel_context *intel,
       exit(1);
    }
    *fence = fo;
-
-   /* FIXME: use hardware contexts to avoid 'losing' hardware after
-    * each buffer flush.
-    */
-   intel->vtbl.lost_hardware(intel);
-
 }

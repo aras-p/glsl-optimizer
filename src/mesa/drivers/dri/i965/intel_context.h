@@ -79,7 +79,7 @@ struct intel_context
       void (*destroy)( struct intel_context *intel ); 
       void (*emit_state)( struct intel_context *intel );
       void (*emit_invarient_state)( struct intel_context *intel );
-      void (*lost_hardware)( struct intel_context *intel );
+      void (*new_batch)( struct intel_context *intel );
       void (*note_fence)( struct intel_context *intel, GLuint fence );
       void (*note_unlock)( struct intel_context *intel );
       void (*update_texture_state)( struct intel_context *intel );

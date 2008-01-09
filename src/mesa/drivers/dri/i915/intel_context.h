@@ -85,7 +85,7 @@ struct intel_context
    {
       void (*destroy) (struct intel_context * intel);
       void (*emit_state) (struct intel_context * intel);
-      void (*lost_hardware) (struct intel_context * intel);
+      void (*new_batch) (struct intel_context * intel);
       void (*update_texture_state) (struct intel_context * intel);
 
       void (*render_start) (struct intel_context * intel);
