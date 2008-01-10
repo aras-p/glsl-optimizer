@@ -34,6 +34,10 @@
 #include "pipe/cell/common.h"
 
 
+#define MAX_WIDTH 1024
+#define MAX_HEIGHT 1024
+
+
 extern volatile struct cell_init_info init;
 
 struct framebuffer {
@@ -43,6 +47,9 @@ struct framebuffer {
    enum pipe_format depth_format;
    uint width, height;             /**< size in pixels */
    uint width_tiles, height_tiles; /**< width and height in tiles */
+
+   uint color_clear_value;
+   uint depth_clear_value;
 };
 
 /* XXX Collect these globals in a struct: */
@@ -51,8 +58,6 @@ extern struct framebuffer fb;
 
 extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-
-extern int DefaultTag;
 
 
 /* DMA TAGS */
@@ -66,6 +71,13 @@ extern int DefaultTag;
 
 
 
+#define TILE_STATUS_CLEAR   1
+#define TILE_STATUS_DEFINED 2  /**< defined pixel data */
+#define TILE_STATUS_DIRTY   3  /**< modified, but not put back yet */
+
+extern ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+
 
 void
 wait_on_mask(unsigned tag);
@@ -77,6 +89,12 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
 void
 put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
          int tag, int zBuf);
+
+void
+clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value);
+
+void
+clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value);
 
 
 #endif /* MAIN_H */

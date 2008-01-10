@@ -122,6 +122,8 @@ struct setup_stage {
 
    float oneoverarea;
 
+   uint tx, ty;
+
    int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
 
 #if 0
@@ -287,8 +289,15 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
       float zvals[4];
       eval_z(setup, (float) x, (float) y, zvals);
 
-      wait_on_mask(1 << TAG_READ_TILE_Z);  /* XXX temporary */
-
+      if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
+         /* now, _really_ clear the tile */
+         clear_tile_z(ztile, fb.depth_clear_value);
+      }
+      else {
+         /* make sure we've got the tile from main mem */
+         wait_on_mask(1 << TAG_READ_TILE_Z);
+      }
+      tile_status_z[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
 
       if (mask & MASK_TOP_LEFT) {
          z = (uint) (zvals[0] * 65535.0);
@@ -323,17 +332,26 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
       }
    }
 
-   if (mask)
-      wait_on_mask(1 << TAG_READ_TILE_COLOR);
+   if (mask) {
+      if (tile_status[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
+         /* now, _really_ clear the tile */
+         clear_tile(ctile, fb.color_clear_value);
+      }
+      else {
+         /* make sure we've got the tile from main mem */
+         wait_on_mask(1 << TAG_READ_TILE_COLOR);
+      }
+      tile_status[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
 
-   if (mask & MASK_TOP_LEFT)
-      ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
-   if (mask & MASK_TOP_RIGHT)
-      ctile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
-   if (mask & MASK_BOTTOM_LEFT)
-      ctile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
-   if (mask & MASK_BOTTOM_RIGHT)
-      ctile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+      if (mask & MASK_TOP_LEFT)
+         ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
+      if (mask & MASK_TOP_RIGHT)
+         ctile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
+      if (mask & MASK_BOTTOM_LEFT)
+         ctile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
+      if (mask & MASK_BOTTOM_RIGHT)
+         ctile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+   }
 #endif
 }
 
@@ -936,6 +954,9 @@ void
 tri_draw(struct prim_header *tri, uint tx, uint ty)
 {
    struct setup_stage setup;
+
+   setup.tx = tx;
+   setup.ty = ty;
 
    /* set clipping bounds to tile bounds */
    setup.cliprect_minx = tx * TILE_SIZE;

@@ -54,7 +54,9 @@ struct framebuffer fb;
 uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
-int DefaultTag;
+ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+
 
 
 
@@ -120,12 +122,90 @@ put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
 }
 
 
+void
+clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value)
+{
+   uint i, j;
+   for (i = 0; i < TILE_SIZE; i++) {
+      for (j = 0; j < TILE_SIZE; j++) {
+         tile[i][j] = value;
+      }
+   }
+}
+
+void
+clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value)
+{
+   uint i, j;
+   for (i = 0; i < TILE_SIZE; i++) {
+      for (j = 0; j < TILE_SIZE; j++) {
+         tile[i][j] = value;
+      }
+   }
+}
+
+
+/**
+ * For tiles whose status is TILE_STATUS_CLEAR, write solid-filled
+ * tiles back to the main framebuffer.
+ */
+static void
+really_clear_tiles(uint surfaceIndex)
+{
+   const uint num_tiles = fb.width_tiles * fb.height_tiles;
+   uint i, j;
+
+   if (surfaceIndex == 0) {
+      for (i = 0; i < TILE_SIZE; i++)
+         for (j = 0; j < TILE_SIZE; j++)
+            ctile[i][j] = fb.color_clear_value;
+
+      for (i = init.id; i < num_tiles; i += init.num_spus) {
+         uint tx = i % fb.width_tiles;
+         uint ty = i / fb.width_tiles;
+         if (tile_status[ty][tx] == TILE_STATUS_CLEAR) {
+            put_tile(&fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
+         }
+      }
+   }
+   else {
+      for (i = 0; i < TILE_SIZE; i++)
+         for (j = 0; j < TILE_SIZE; j++)
+            ztile[i][j] = fb.depth_clear_value;
+
+      for (i = init.id; i < num_tiles; i += init.num_spus) {
+         uint tx = i % fb.width_tiles;
+         uint ty = i / fb.width_tiles;
+         if (tile_status_z[ty][tx] == TILE_STATUS_CLEAR)
+            put_tile(&fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 1);
+      }
+   }
+
+#if 0
+   wait_on_mask(1 << TAG_SURFACE_CLEAR);
+#endif
+}
+
 
 static void
 clear_surface(const struct cell_command_clear_surface *clear)
 {
-   uint num_tiles = fb.width_tiles * fb.height_tiles;
+   const uint num_tiles = fb.width_tiles * fb.height_tiles;
    uint i, j;
+
+#define CLEAR_OPT 1
+#if CLEAR_OPT
+   /* set all tile's status to CLEAR */
+   if (clear->surface == 0) {
+      memset(tile_status, TILE_STATUS_CLEAR, sizeof(tile_status));
+      fb.color_clear_value = clear->value;
+   }
+   else {
+      memset(tile_status_z, TILE_STATUS_CLEAR, sizeof(tile_status_z));
+      fb.depth_clear_value = clear->value;
+   }
+   return;
+#endif
 
    if (clear->surface == 0) {
       for (i = 0; i < TILE_SIZE; i++)
@@ -195,7 +275,6 @@ tile_bounding_box(const struct cell_command_render *render,
 }
 
 
-
 static void
 render(const struct cell_command_render *render)
 {
@@ -242,9 +321,14 @@ render(const struct cell_command_render *render)
       /* Start fetching color/z tiles.  We'll wait for completion when
        * we need read/write to them later in triangle rasterization.
        */
-      get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
       if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         get_tile(&fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
+         if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
+            get_tile(&fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
+         }
+      }
+
+      if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
+         get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
       }
 
       assert(render->prim_type == PIPE_PRIM_TRIANGLES);
@@ -277,23 +361,22 @@ render(const struct cell_command_render *render)
          tri_draw(&prim, tx, ty);
       }
 
-      /* in case nothing was drawn, wait now for completion */
-      /* XXX temporary */
-      wait_on_mask(1 << TAG_READ_TILE_COLOR);
+      /* write color/z tiles back to main framebuffer, if dirtied */
+      if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
+         put_tile(&fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
+         tile_status[ty][tx] = TILE_STATUS_DEFINED;
+      }
       if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         wait_on_mask(1 << TAG_READ_TILE_Z);  /* XXX temporary */
+         if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
+            put_tile(&fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
+            tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
+         }
       }
 
-      /* XXX IF we wrote anything into the tile... */
-
-      put_tile(&fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
+      /* XXX move these... */
+      wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
       if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         put_tile(&fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
-      }
-
-      wait_on_mask(1 << TAG_WRITE_TILE_COLOR); /* XXX temp */
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         wait_on_mask(1 << TAG_WRITE_TILE_Z);  /* XXX temporary */
+         wait_on_mask(1 << TAG_WRITE_TILE_Z);
       }
    }
 }
@@ -380,6 +463,7 @@ main_loop(void)
       case CELL_CMD_FINISH:
          if (Debug)
             printf("SPU %u: FINISH\n", init.id);
+         really_clear_tiles(0);
          /* wait for all outstanding DMAs to finish */
          mfc_write_tag_mask(~0);
          mfc_read_tag_status_all();
@@ -398,6 +482,14 @@ main_loop(void)
 
 
 
+static void
+one_time_init(void)
+{
+   memset(tile_status, TILE_STATUS_DEFINED, sizeof(tile_status));
+   memset(tile_status_z, TILE_STATUS_DEFINED, sizeof(tile_status_z));
+}
+
+
 /**
  * SPE entrypoint.
  * Note: example programs declare params as 'unsigned long long' but
@@ -410,7 +502,7 @@ main(unsigned long speid, unsigned long argp)
 
    (void) speid;
 
-   DefaultTag = 1;
+   one_time_init();
 
    if (Debug)
       printf("SPU: main() speid=%lu\n", speid);
