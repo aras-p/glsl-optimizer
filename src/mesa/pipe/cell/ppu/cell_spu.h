@@ -83,9 +83,6 @@ test_spus(struct cell_context *cell);
 
 
 void
-wait_spus(uint num_spus);
-
-void
 cell_spu_exit(struct cell_context *cell);
 
 

@@ -148,7 +148,6 @@ cell_destroy_context( struct pipe_context *pipe )
    struct cell_context *cell = cell_context(pipe);
 
    cell_spu_exit(cell);
-   wait_spus(cell->num_spus);
 
    free(cell);
 }
@@ -255,7 +254,6 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
 #if 0
    test_spus(cell);
-   wait_spus();
 #endif
 
    return &cell->pipe;

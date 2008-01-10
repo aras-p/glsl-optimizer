@@ -195,31 +195,22 @@ test_spus(struct cell_context *cell)
 
 
 /**
- * Wait for all SPUs to exit/return.
- */
-void
-wait_spus(uint num_spus)
-{
-   uint i;
-   void *value;
-
-   for (i = 0; i < num_spus; i++) {
-      pthread_join(cell_global.spe_threads[i], &value);
-   }
-}
-
-
-/**
  * Tell all the SPUs to stop/exit.
  */
 void
 cell_spu_exit(struct cell_context *cell)
 {
-   unsigned i;
+   uint i;
 
    for (i = 0; i < cell->num_spus; i++) {
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_EXIT);
    }
 
-   wait_spus(cell->num_spus);
+   /* wait for threads to exit */
+   for (i = 0; i < cell->num_spus; i++) {
+      void *value;
+      pthread_join(cell_global.spe_threads[i], &value);
+      cell_global.spe_threads[i] = 0;
+      cell_global.spe_contexts[i] = 0;
+   }
 }
