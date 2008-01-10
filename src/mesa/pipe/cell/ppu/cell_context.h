@@ -33,9 +33,12 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/draw/draw_vertex.h"
+#include "pipe/draw/draw_vbuf.h"
 #include "cell_winsys.h"
 #include "pipe/cell/common.h"
 
+
+struct cell_vbuf_render;
 
 struct cell_vertex_shader_state
 {
@@ -81,6 +84,9 @@ struct cell_context
    /** The primitive drawing context */
    struct draw_context *draw;
    struct draw_stage *render_stage;
+
+   /** For post-transformed vertex buffering: */
+   struct cell_vbuf_render *vbuf_render;
    struct draw_stage *vbuf;
 
    struct vertex_info vertex_info;

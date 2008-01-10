@@ -46,6 +46,7 @@
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
+#include "cell_vbuf.h"
 
 
 
@@ -236,9 +237,14 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell->draw = draw_create();
 
+#define VBUF 0
+#if VBUF
+   cell_init_vbuf(cell);
+   draw_set_rasterize_stage(cell->draw, cell->vbuf);
+#else
    cell->render_stage = cell_draw_render_stage(cell);
    draw_set_rasterize_stage(cell->draw, cell->render_stage);
-
+#endif
 
    cell->prim_buffer.xmin = 1e100;
    cell->prim_buffer.ymin = 1e100;
