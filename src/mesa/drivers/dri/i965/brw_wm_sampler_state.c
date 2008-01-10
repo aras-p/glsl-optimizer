@@ -100,7 +100,7 @@ struct wm_sampler_key {
       float lod_bias;
       float max_aniso;
       GLenum minfilter, magfilter;
-      GLenum comparemode;
+      GLenum comparemode, comparefunc;
       dri_bo *sdc_bo;
    } sampler[BRW_MAX_TEX_UNIT];
 };
@@ -190,7 +190,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
        * shadow comparison is enabled on each/any texture unit.
        */
       sampler->ss0.shadow_function =
-	 intel_translate_shadow_compare_func(key->comparemode);
+	 intel_translate_shadow_compare_func(key->comparefunc);
    }
 
    /* Set LOD bias: 
@@ -241,6 +241,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->minfilter = texObj->MinFilter;
 	 entry->magfilter = texObj->MagFilter;
 	 entry->comparemode = texObj->CompareMode;
+    entry->comparefunc = texObj->CompareFunc;
 
 	 dri_bo_unreference(brw->wm.sdc_bo[unit]);
 	 brw->wm.sdc_bo[unit] = upload_default_color(brw, texObj->BorderColor);
