@@ -538,6 +538,10 @@ struct brw_context
       struct brw_tracked_state tracked_state;
 
       dri_bo *curbe_bo;
+      /** Offset within curbe_bo of space for current curbe entry */
+      GLuint curbe_offset;
+      /** Offset within curbe_bo of space for next curbe entry */
+      GLuint curbe_next_offset;
 
       GLfloat *last_buf;
       GLuint last_bufsz;

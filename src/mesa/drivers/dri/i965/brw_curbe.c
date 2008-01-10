@@ -286,7 +286,8 @@ static void upload_constant_buffer(struct brw_context *brw)
 		   brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
    }
 
-   if (brw->curbe.last_buf &&
+   if (brw->curbe.curbe_bo != NULL &&
+       brw->curbe.last_buf &&
        bufsz == brw->curbe.last_bufsz &&
        memcmp(buf, brw->curbe.last_buf, bufsz) == 0) {
       free(buf);
@@ -297,16 +298,32 @@ static void upload_constant_buffer(struct brw_context *brw)
       brw->curbe.last_buf = buf;
       brw->curbe.last_bufsz = bufsz;
 
-      dri_bo_unreference(brw->curbe.curbe_bo);
-      brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
-					 bufsz, 1 << 6,
-					 DRM_BO_FLAG_MEM_LOCAL |
-					 DRM_BO_FLAG_CACHED |
-					 DRM_BO_FLAG_CACHED_MAPPED);
+      if (brw->curbe.curbe_bo != NULL &&
+	  brw->curbe.curbe_next_offset + bufsz > brw->curbe.curbe_bo->size)
+      {
+	 dri_bo_unreference(brw->curbe.curbe_bo);
+	 brw->curbe.curbe_bo = NULL;
+      }
+
+      if (brw->curbe.curbe_bo == NULL) {
+	 /* Allocate a single page for CURBE entries for this batchbuffer.
+	  * They're generally around 64b.
+	  */
+	 brw->curbe.curbe_bo = dri_bo_alloc(brw->intel.bufmgr, "CURBE",
+					    4096, 1 << 6,
+					    DRM_BO_FLAG_MEM_LOCAL |
+					    DRM_BO_FLAG_CACHED |
+					    DRM_BO_FLAG_CACHED_MAPPED);
+	 brw->curbe.curbe_next_offset = 0;
+      }
+
+      brw->curbe.curbe_offset = brw->curbe.curbe_next_offset;
+      brw->curbe.curbe_next_offset += bufsz;
+      brw->curbe.curbe_next_offset = ALIGN(brw->curbe.curbe_next_offset, 64);
 
       /* Copy data to the buffer:
        */
-      dri_bo_subdata(brw->curbe.curbe_bo, 0, bufsz, buf);
+      dri_bo_subdata(brw->curbe.curbe_bo, brw->curbe.curbe_offset, bufsz, buf);
    }
 
    /* Because this provokes an action (ie copy the constants into the
@@ -325,7 +342,7 @@ static void upload_constant_buffer(struct brw_context *brw)
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
    OUT_RELOC(brw->curbe.curbe_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-	     (sz - 1));
+	     (sz - 1) + brw->curbe.curbe_offset);
    ADVANCE_BATCH();
 }
 
