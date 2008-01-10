@@ -46,20 +46,6 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 {
    struct softpipe_texture *spt = softpipe_texture(pt);
    struct pipe_surface *ps;
-   unsigned offset;  /* in bytes */
-
-   offset = spt->level_offset[level];
-
-   if (pt->target == PIPE_TEXTURE_CUBE) {
-      offset += spt->image_offset[level][face] * pt->cpp;
-   }
-   else if (pt->target == PIPE_TEXTURE_3D) {
-      offset += spt->image_offset[level][zslice] * pt->cpp;
-   }
-   else {
-      assert(face == 0);
-      assert(zslice == 0);
-   }
 
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
@@ -69,8 +55,17 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->pitch = spt->pitch;
-      ps->offset = offset;
+      ps->pitch = ps->width;
+      ps->offset = spt->level_offset[level];
+
+      if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
+	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
+		       (pt->compressed ? ps->height/4 : ps->height) *
+		       ps->width * ps->cpp;
+      } else {
+	 assert(face == 0);
+	 assert(zslice == 0);
+      }
    }
    return ps;
 }
