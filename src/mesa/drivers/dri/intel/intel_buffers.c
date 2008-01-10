@@ -473,7 +473,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
    }
 
    intel->vtbl.leave_meta_state(intel);
-   intel_batchbuffer_flush(intel->batch);
 }
 
 static const char *buffer_names[] = {
