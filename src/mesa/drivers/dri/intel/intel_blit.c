@@ -142,7 +142,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 src_x = box.x1 - dPriv->x + dPriv->backX;
 	 src_y = box.y1 - dPriv->y + dPriv->backY;
 
-	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+	 BEGIN_BATCH(8, REFERENCES_CLIPRECTS);
 	 OUT_BATCH(CMD);
 	 OUT_BATCH(BR13 | dst_pitch);
 	 OUT_BATCH((box.y1 << 16) | box.x1);
@@ -212,7 +212,7 @@ intelEmitFillBlit(struct intel_context *intel,
    assert(w > 0);
    assert(h > 0);
 
-   BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
+   BEGIN_BATCH(6, NO_LOOP_CLIPRECTS);
    OUT_BATCH(CMD);
    OUT_BATCH(BR13 | dst_pitch);
    OUT_BATCH((y << 16) | x);
@@ -324,7 +324,7 @@ intelEmitCopyBlit(struct intel_context *intel,
       assert(dst_x < dst_x2);
       assert(dst_y < dst_y2);
 
-      BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+      BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
       OUT_BATCH(CMD);
       OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((dst_y << 16) | dst_x);
@@ -341,7 +341,7 @@ intelEmitCopyBlit(struct intel_context *intel,
       assert(dst_x < dst_x2);
       assert(h > 0);
 
-      BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+      BEGIN_BATCH(8, NO_LOOP_CLIPRECTS);
       OUT_BATCH(CMD);
       OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((0 << 16) | dst_x);
@@ -515,12 +515,12 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                   _mesa_debug(ctx, "hardware blit clear buf %d rb id %d\n",
                   buf, irb->Base.Name);
                 */
-	       intel_wait_flips(intel, INTEL_BATCH_NO_CLIPRECTS);
+	       intel_wait_flips(intel);
 
                assert(b.x1 < b.x2);
                assert(b.y1 < b.y2);
 
-               BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
+               BEGIN_BATCH(6, REFERENCES_CLIPRECTS);
                OUT_BATCH(CMD);
                OUT_BATCH(BR13);
                OUT_BATCH((b.y1 << 16) | b.x1);
@@ -574,7 +574,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				    (8 * 4) +
 				    (3 * 4) +
 				    dwords,
-				    INTEL_BATCH_NO_CLIPRECTS );
+				    NO_LOOP_CLIPRECTS );
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -592,7 +592,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    if (dst_tiled)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH(8 + 3, INTEL_BATCH_NO_CLIPRECTS);
+   BEGIN_BATCH(8 + 3, NO_LOOP_CLIPRECTS);
    OUT_BATCH(opcode);
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
@@ -610,5 +610,5 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_data( intel->batch,
 			   src_bits,
 			   dwords * 4,
-			   INTEL_BATCH_NO_CLIPRECTS );
+			   NO_LOOP_CLIPRECTS );
 }

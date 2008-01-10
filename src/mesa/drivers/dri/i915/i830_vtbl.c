@@ -295,7 +295,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(40, 0);
+   BEGIN_BATCH(40, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_DFLT_DIFFUSE_CMD);
    OUT_BATCH(0);
@@ -372,15 +372,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit( intel, state, size )			\
-do {							\
-   int k;						\
-   BEGIN_BATCH(size / sizeof(GLuint), 0);		\
-   for (k = 0 ; k < size / sizeof(GLuint) ; k++) {	\
-      if (0) _mesa_printf("  0x%08x\n", state[k]);		\
-      OUT_BATCH(state[k]);				\
-   }							\
-   ADVANCE_BATCH();					\
-} while (0)
+   intel_batchbuffer_data(intel->batch, state, size, IGNORE_CLIPRECTS )
 
 static GLuint
 get_dirty(struct i830_hw_state *state)
@@ -473,13 +465,13 @@ i830_do_emit_state(struct intel_context *intel)
 
    if (dirty & I830_UPLOAD_CTX) {
       DBG("I830_UPLOAD_CTX:\n");
-      emit(i830, state->Ctx, sizeof(state->Ctx));
+      emit(intel, state->Ctx, sizeof(state->Ctx));
 
    }
 
    if (dirty & I830_UPLOAD_BUFFERS) {
       DBG("I830_UPLOAD_BUFFERS:\n");
-      BEGIN_BATCH(I830_DEST_SETUP_SIZE + 2, 0);
+      BEGIN_BATCH(I830_DEST_SETUP_SIZE + 2, IGNORE_CLIPRECTS);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I830_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
@@ -505,14 +497,14 @@ i830_do_emit_state(struct intel_context *intel)
    
    if (dirty & I830_UPLOAD_STIPPLE) {
       DBG("I830_UPLOAD_STIPPLE:\n");
-      emit(i830, state->Stipple, sizeof(state->Stipple));
+      emit(intel, state->Stipple, sizeof(state->Stipple));
    }
 
    for (i = 0; i < I830_TEX_UNITS; i++) {
       if ((dirty & I830_UPLOAD_TEX(i))) {
          DBG("I830_UPLOAD_TEX(%d):\n", i);
 
-         BEGIN_BATCH(I830_TEX_SETUP_SIZE + 1, 0);
+         BEGIN_BATCH(I830_TEX_SETUP_SIZE + 1, IGNORE_CLIPRECTS);
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0LI]);
 
          if (state->tex_buffer[i]) {
@@ -539,7 +531,7 @@ i830_do_emit_state(struct intel_context *intel)
       if (dirty & I830_UPLOAD_TEXBLEND(i)) {
          DBG("I830_UPLOAD_TEXBLEND(%d): %d words\n", i,
              state->TexBlendWordsUsed[i]);
-         emit(i830, state->TexBlend[i], state->TexBlendWordsUsed[i] * 4);
+         emit(intel, state->TexBlend[i], state->TexBlendWordsUsed[i] * 4);
       }
    }
 

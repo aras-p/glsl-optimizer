@@ -170,7 +170,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 {
    BATCH_LOCALS;
 
-   BEGIN_BATCH(200, 0);
+   BEGIN_BATCH(200, IGNORE_CLIPRECTS);
 
    OUT_BATCH(_3DSTATE_AA_CMD |
              AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -229,7 +229,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit(intel, state, size )		     \
-   intel_batchbuffer_data(intel->batch, state, size, 0 )
+   intel_batchbuffer_data(intel->batch, state, size, IGNORE_CLIPRECTS )
 
 static GLuint
 get_dirty(struct i915_hw_state *state)
@@ -354,7 +354,7 @@ i915_do_emit_state(struct intel_context *intel)
    if (dirty & I915_UPLOAD_BUFFERS) {
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_BUFFERS:\n");
-      BEGIN_BATCH(I915_DEST_SETUP_SIZE + 2, 0);
+      BEGIN_BATCH(I915_DEST_SETUP_SIZE + 2, IGNORE_CLIPRECTS);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
@@ -400,7 +400,7 @@ i915_do_emit_state(struct intel_context *intel)
          if (dirty & I915_UPLOAD_TEX(i))
             nr++;
 
-      BEGIN_BATCH(2 + nr * 3, 0);
+      BEGIN_BATCH(2 + nr * 3, IGNORE_CLIPRECTS);
       OUT_BATCH(_3DSTATE_MAP_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)
@@ -424,7 +424,7 @@ i915_do_emit_state(struct intel_context *intel)
          }
       ADVANCE_BATCH();
 
-      BEGIN_BATCH(2 + nr * 3, 0);
+      BEGIN_BATCH(2 + nr * 3, IGNORE_CLIPRECTS);
       OUT_BATCH(_3DSTATE_SAMPLER_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)

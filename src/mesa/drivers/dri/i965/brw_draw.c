@@ -147,7 +147,7 @@ static void brw_emit_prim( struct brw_context *brw,
 
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
-			      sizeof(prim_packet), INTEL_BATCH_CLIPRECTS);
+			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
 }
 
@@ -255,6 +255,8 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
+
+   brw_validate_textures( brw );
 
    /* Bind all inputs, derive varying and size information:
     */

@@ -87,7 +87,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
    batch->id = batch->intel->batch_id++;
-   batch->cliprects_enable = INTEL_BATCH_NO_CLIPRECTS;
+   batch->cliprect_mode = IGNORE_CLIPRECTS;
 }
 
 struct intel_batchbuffer *
@@ -143,18 +143,18 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
 
    if (!(intel->numClipRects == 0 &&
-	 batch->cliprects_enable == INTEL_BATCH_CLIPRECTS)) {
+	 batch->cliprect_mode == LOOP_CLIPRECTS)) {
       if (intel->ttm == GL_TRUE) {
 	 intel_exec_ioctl(batch->intel,
 			  used,
-			  batch->cliprects_enable == INTEL_BATCH_NO_CLIPRECTS,
+			  batch->cliprect_mode != LOOP_CLIPRECTS,
 			  allow_unlock,
 			  start, count, &batch->last_fence);
       } else {
 	 intel_batch_ioctl(batch->intel,
 			   batch->buf->offset,
 			   used,
-			   batch->cliprects_enable == INTEL_BATCH_NO_CLIPRECTS,
+			   batch->cliprect_mode != LOOP_CLIPRECTS,
 			   allow_unlock);
       }
    }
@@ -162,7 +162,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
    dri_post_submit(batch->buf, &batch->last_fence);
 
    if (intel->numClipRects == 0 &&
-       batch->cliprects_enable == INTEL_BATCH_CLIPRECTS) {
+       batch->cliprect_mode == LOOP_CLIPRECTS) {
       if (allow_unlock) {
 	 /* If we are not doing any actual user-visible rendering,
 	  * do a sched_yield to keep the app from pegging the cpu while
@@ -264,10 +264,10 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,
                        const void *data, GLuint bytes,
-		       enum cliprects_enable cliprects_enable)
+		       enum cliprect_mode cliprect_mode)
 {
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(batch, bytes, cliprects_enable);
+   intel_batchbuffer_require_space(batch, bytes, cliprect_mode);
    __memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
 }

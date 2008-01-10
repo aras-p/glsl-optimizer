@@ -812,6 +812,12 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
 
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
    _glthread_UNLOCK_MUTEX(lockMutex); 
+
+   /**
+    * Nothing should be left in batch outside of LOCK/UNLOCK which references
+    * cliprects.
+    */
+   assert(intel->batch->cliprect_mode != REFERENCES_CLIPRECTS);
 }
 
 

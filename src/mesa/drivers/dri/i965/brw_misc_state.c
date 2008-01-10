@@ -82,7 +82,7 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
+   BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
    OUT_BATCH(0); /* vs */
    OUT_BATCH(0); /* gs */
@@ -112,7 +112,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
 
-   BEGIN_BATCH(7, INTEL_BATCH_NO_CLIPRECTS);
+   BEGIN_BATCH(7, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
    if (brw->gs.prog_active)
@@ -184,7 +184,7 @@ static void upload_depthbuffer(struct brw_context *brw)
    struct intel_region *region = brw->state.depth_region;
 
    if (region == NULL) {
-      BEGIN_BATCH(5, INTEL_BATCH_NO_CLIPRECTS);
+      BEGIN_BATCH(5, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
 		(BRW_SURFACE_NULL << 29));
@@ -210,7 +210,7 @@ static void upload_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      BEGIN_BATCH(5, INTEL_BATCH_NO_CLIPRECTS);
+      BEGIN_BATCH(5, IGNORE_CLIPRECTS);
       OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
@@ -445,7 +445,7 @@ static void upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
+   BEGIN_BATCH(6, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
    OUT_BATCH(1); /* General state base address */
    OUT_BATCH(1); /* Surface state base address */

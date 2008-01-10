@@ -1,3 +1,4 @@
+
 /**************************************************************************
  * 
  * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -42,7 +43,7 @@ extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
 
 extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
 
-extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
+extern void intel_wait_flips(struct intel_context *intel);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 

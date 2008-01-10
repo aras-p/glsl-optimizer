@@ -201,7 +201,7 @@ static void upload_constant_buffer(struct brw_context *brw)
    brw->curbe.tracked_state.dirty.mesa |= fp->param_state;
 
    if (sz == 0) {
-      BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
+      BEGIN_BATCH(2, IGNORE_CLIPRECTS);
       OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
       OUT_BATCH(0);
       ADVANCE_BATCH();
@@ -322,7 +322,7 @@ static void upload_constant_buffer(struct brw_context *brw)
     * flushes as necessary when doublebuffering of CURBEs isn't
     * possible.
     */
-   BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
+   BEGIN_BATCH(2, IGNORE_CLIPRECTS);
    OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
    OUT_RELOC(brw->curbe.curbe_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 	     (sz - 1));

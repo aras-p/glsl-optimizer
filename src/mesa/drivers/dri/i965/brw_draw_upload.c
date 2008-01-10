@@ -538,7 +538,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    vbp.header.bits.length = (1 + nr_enabled * 4) - 2;
    vbp.header.bits.opcode = CMD_VERTEX_BUFFER;
 
-   BEGIN_BATCH(vbp.header.bits.length+2, 0);
+   BEGIN_BATCH(vbp.header.bits.length+2, IGNORE_CLIPRECTS);
    OUT_BATCH( vbp.header.dword );
    
    for (i = 0; i < nr_enabled; i++) {
@@ -625,7 +625,7 @@ void brw_upload_indices( struct brw_context *brw,
       ib.header.bits.cut_index_enable = 0;
    
 
-      BEGIN_BATCH(4, 0);
+      BEGIN_BATCH(4, IGNORE_CLIPRECTS);
       OUT_BATCH( ib.header.dword );
       OUT_RELOC( buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, offset);
       OUT_RELOC( buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,

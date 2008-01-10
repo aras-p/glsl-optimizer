@@ -103,7 +103,7 @@ intelStartInlinePrimitive(struct intel_context *intel,
 
 /*    _mesa_printf("%s *", __progname); */
 
-   intel_wait_flips(intel, batch_flags);
+   intel_wait_flips(intel);
 
    /* Emit a slot which will be filled with the inline primitive
     * command later.
@@ -129,11 +129,11 @@ void
 intelWrapInlinePrimitive(struct intel_context *intel)
 {
    GLuint prim = intel->prim.primitive;
-   GLuint cliprects_enable = intel->batch->cliprects_enable;
+   enum cliprect_mode cliprect_mode = intel->batch->cliprect_mode;
 
    intel_flush_inline_primitive(intel);
    intel_batchbuffer_flush(intel->batch);
-   intelStartInlinePrimitive(intel, prim, cliprects_enable);  /* ??? */
+   intelStartInlinePrimitive(intel, prim, cliprect_mode);  /* ??? */
 }
 
 GLuint *
@@ -942,7 +942,7 @@ intelRasterPrimitive(GLcontext * ctx, GLenum rprim, GLuint hwprim)
    if (hwprim != intel->prim.primitive) {
       INTEL_FIREVERTICES(intel);
 
-      intelStartInlinePrimitive(intel, hwprim, INTEL_BATCH_CLIPRECTS);
+      intelStartInlinePrimitive(intel, hwprim, LOOP_CLIPRECTS);
    }
 }
 
@@ -1079,10 +1079,10 @@ intel_meta_draw_poly(struct intel_context *intel,
    if (!was_locked)
        LOCK_HARDWARE(intel);
 
-   /* All 3d primitives should be emitted with INTEL_BATCH_CLIPRECTS,
+   /* All 3d primitives should be emitted with LOOP_CLIPRECTS,
     * otherwise the drawing origin (DR4) might not be set correctly.
     */
-   intelStartInlinePrimitive(intel, PRIM3D_TRIFAN, INTEL_BATCH_CLIPRECTS);
+   intelStartInlinePrimitive(intel, PRIM3D_TRIFAN, LOOP_CLIPRECTS);
    vb = (union fi *) intelExtendInlinePrimitive(intel, n * 6);
 
    for (i = 0; i < n; i++) {

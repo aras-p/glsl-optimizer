@@ -469,9 +469,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 	 intel->vtbl.meta_color_mask(intel, GL_TRUE);
 	 intel->vtbl.meta_draw_region(intel, irbColor->region, NULL);
 
-	 /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
-	  * drawing origin may not be correctly emitted.
-	  */
 	 intel->vtbl.meta_draw_quad(intel,
 				    fb->_Xmin,
 				    fb->_Xmax,
@@ -625,7 +622,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
 
 /* Emit wait for pending flips */
 void
-intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
+intel_wait_flips(struct intel_context *intel)
 {
    struct intel_framebuffer *intel_fb =
       (struct intel_framebuffer *) intel->ctx.DrawBuffer;
@@ -641,7 +638,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
       BATCH_LOCALS;
 
       /* Wait for pending flips to take effect */
-      BEGIN_BATCH(2, batch_flags);
+      BEGIN_BATCH(2, NO_LOOP_CLIPRECTS);
       OUT_BATCH(pf_planes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
 		: 0);
       OUT_BATCH(pf_planes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)

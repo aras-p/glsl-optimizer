@@ -113,7 +113,7 @@ intelDmaPrimitive(struct intel_context *intel, GLenum prim)
       fprintf(stderr, "%s %s\n", __FUNCTION__, _mesa_lookup_enum_by_nr(prim));
    INTEL_FIREVERTICES(intel);
    intel->vtbl.reduced_primitive_state(intel, reduced_prim[prim]);
-   intelStartInlinePrimitive(intel, hw_prim[prim], INTEL_BATCH_CLIPRECTS);
+   intelStartInlinePrimitive(intel, hw_prim[prim], LOOP_CLIPRECTS);
 }
 
 

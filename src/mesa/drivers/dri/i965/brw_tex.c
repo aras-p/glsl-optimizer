@@ -44,6 +44,7 @@
 #include "intel_context.h"
 #include "intel_ioctl.h"
 #include "intel_regions.h"
+#include "intel_tex.h"
 #include "brw_context.h"
 #include "brw_defines.h"
 
@@ -75,4 +76,22 @@ void brw_FrameBufferTexDestroy( struct brw_context *brw )
 {
    brw->intel.ctx.Driver.DeleteTexture( &brw->intel.ctx,
 					brw->intel.frame_buffer_texobj );
+}
+
+/**
+ * Finalizes all textures, completing any rendering that needs to be done
+ * to prepare them.
+ */
+void brw_validate_textures( struct brw_context *brw )
+{
+   struct intel_context *intel = &brw->intel;
+   int i;
+
+   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
+
+      if (texUnit->_ReallyEnabled) {
+	 intel_finalize_mipmap_tree(intel, i);
+      }
+   }
 }

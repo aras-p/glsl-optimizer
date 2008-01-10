@@ -656,6 +656,7 @@ void brw_debug_batch(struct intel_context *intel);
 void brwUpdateTextureState( struct intel_context *intel );
 void brw_FrameBufferTexInit( struct brw_context *brw );
 void brw_FrameBufferTexDestroy( struct brw_context *brw );
+void brw_validate_textures( struct brw_context *brw );
 
 /*======================================================================
  * brw_metaops.c
