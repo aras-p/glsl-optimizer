@@ -120,6 +120,12 @@ static void emit_vertex( struct vbuf_stage *vbuf,
    vertex->vertex_id = vbuf->nr_vertices++;
 
    //vbuf->emit_vertex( vbuf->vertex_ptr, vertex );
+
+   /* Note: for softpipe, the vertex includes the vertex header info
+    * such as clip flags and clip coords.  In the future when vbuf is
+    * always used, we could just copy the vertex attributes/data here.
+    * The sp_prim_setup.c code doesn't use any of the vertex header info.
+    */
    memcpy(vbuf->vertex_ptr, vertex, vbuf->vertex_size);
 
    vbuf->vertex_ptr += vbuf->vertex_size;
