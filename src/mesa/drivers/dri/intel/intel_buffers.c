@@ -570,8 +570,6 @@ intelClear(GLcontext *ctx, GLbitfield mask)
       }
    }
 
-   intelFlush(ctx);             /* XXX intelClearWithBlit also does this */
-
    if (blit_mask) {
       if (INTEL_DEBUG & DEBUG_BLIT) {
 	 DBG("blit clear:");
