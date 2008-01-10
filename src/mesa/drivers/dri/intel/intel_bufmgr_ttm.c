@@ -435,7 +435,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->relocs = NULL;
     ttm_buf->last_flags = ttm_buf->drm_bo.flags;
 
-    DBG("bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+    DBG("bo_create: %p (%s) %db\n", &ttm_buf->bo, ttm_buf->name, size);
 
     return &ttm_buf->bo;
 }
