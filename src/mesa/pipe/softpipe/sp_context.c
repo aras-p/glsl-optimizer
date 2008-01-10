@@ -80,16 +80,16 @@ softpipe_map_surfaces(struct softpipe_context *sp)
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       ps = sp->framebuffer.cbufs[i];
-      if (ps->buffer)
+      if (ps->buffer && !ps->map)
          pipe_surface_map(ps);
    }
 
    ps = sp->framebuffer.zbuf;
-   if (ps && ps->buffer)
+   if (ps && ps->buffer && !ps->map)
       pipe_surface_map(ps);
 
    ps = sp->framebuffer.sbuf;
-   if (ps && ps->buffer)
+   if (ps && ps->buffer && !ps->map)
       pipe_surface_map(ps);
 }
 
