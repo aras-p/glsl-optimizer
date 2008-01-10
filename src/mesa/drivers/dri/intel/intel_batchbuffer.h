@@ -61,7 +61,11 @@ void intel_batchbuffer_free(struct intel_batchbuffer *batch);
 
 void intel_batchbuffer_finish(struct intel_batchbuffer *batch);
 
-void intel_batchbuffer_flush(struct intel_batchbuffer *batch);
+void _intel_batchbuffer_flush(struct intel_batchbuffer *batch,
+			      const char *file, int line);
+
+#define intel_batchbuffer_flush(batch) \
+	_intel_batchbuffer_flush(batch, __FILE__, __LINE__)
 
 void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
 

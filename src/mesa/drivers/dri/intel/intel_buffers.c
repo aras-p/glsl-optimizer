@@ -135,9 +135,6 @@ intel_readbuf_region(struct intel_context *intel)
 static void
 intelSetRenderbufferClipRects(struct intel_context *intel)
 {
-   /* flush batch since pClipRects may change */
-   intel_batchbuffer_flush(intel->batch);
-
    assert(intel->ctx.DrawBuffer->Width > 0);
    assert(intel->ctx.DrawBuffer->Height > 0);
    intel->fboRect.x1 = 0;
@@ -163,9 +160,6 @@ intelSetFrontClipRects(struct intel_context *intel)
    if (!dPriv)
       return;
 
-   /* flush batch since pClipRects may change */
-   intel_batchbuffer_flush(intel->batch);
-
    intel->numClipRects = dPriv->numClipRects;
    intel->pClipRects = dPriv->pClipRects;
    intel->drawX = dPriv->x;
@@ -184,9 +178,6 @@ intelSetBackClipRects(struct intel_context *intel)
 
    if (!dPriv)
       return;
-
-   /* flush batch since pClipRects may change */
-   intel_batchbuffer_flush(intel->batch);
 
    intel_fb = dPriv->driverPrivate;
 
@@ -932,6 +923,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 
    if (fb->Name)
       intel_validate_paired_depth_stencil(ctx, fb);
+
+   /* If the batch contents require looping over cliprects, flush them before
+    * we go changing which cliprects get referenced when that happens.
+    */
+   if (intel->batch->cliprect_mode == LOOP_CLIPRECTS)
+      intel_batchbuffer_flush(intel->batch);
 
    /*
     * How many color buffers are we drawing into?

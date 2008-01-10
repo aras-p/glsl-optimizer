@@ -188,7 +188,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
 }
 
 void
-intel_batchbuffer_flush(struct intel_batchbuffer *batch)
+_intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
+			 int line)
 {
    struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - batch->map;
@@ -197,6 +198,9 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    if (used == 0)
       return;
 
+   if (INTEL_DEBUG & DEBUG_BATCH)
+      fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
+	      used);
    /* Add the MI_BATCH_BUFFER_END.  Always add an MI_FLUSH - this is a
     * performance drain that we would like to avoid.
     */

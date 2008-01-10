@@ -156,6 +156,7 @@ intel_exec_ioctl(struct intel_context *intel,
 {
    struct drm_i915_execbuffer execbuf;
    dri_fence *fo;
+   int i;
 
    assert(intel->locked);
    assert(used);
