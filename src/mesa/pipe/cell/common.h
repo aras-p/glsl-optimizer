@@ -103,7 +103,7 @@ struct cell_init_info
 
 
 /** Temporary */
-#define CELL_MAX_VERTS 48
+#define CELL_MAX_VERTS 240
 #define CELL_MAX_ATTRIBS 2
 struct cell_prim_buffer
 {
