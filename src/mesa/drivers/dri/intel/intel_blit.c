@@ -85,6 +85,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       drm_clip_rect_t *pbox = dPriv->pClipRects;
       int cpp;
       int src_pitch, dst_pitch;
+      unsigned short src_x, src_y;
       int BR13, CMD;
       int i;
 
@@ -100,7 +101,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
       ASSERT(src);
       ASSERT(dst);
-      ASSERT(src->pitch == dst->pitch);
       ASSERT(src->cpp == dst->cpp);
 
       if (cpp == 2) {
@@ -139,6 +139,8 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
 	 assert(box.x1 < box.x2);
 	 assert(box.y1 < box.y2);
+	 src_x = box.x1 - dPriv->x + dPriv->backX;
+	 src_y = box.y1 - dPriv->y + dPriv->backY;
 
 	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
 	 OUT_BATCH(CMD);
@@ -147,7 +149,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 OUT_BATCH((box.y2 << 16) | box.x2);
 
 	 OUT_RELOC(dst->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, 0);
-	 OUT_BATCH((box.y1 << 16) | box.x1);
+	 OUT_BATCH((src_y << 16) | src_x);
 	 OUT_BATCH(src_pitch);
 	 OUT_RELOC(src->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
 	 ADVANCE_BATCH();
