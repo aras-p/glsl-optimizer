@@ -988,33 +988,24 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
 static void process_declaration(const struct tgsi_full_declaration *decl,
                                 struct brw_prog_info *info)
 {
+   int first = decl->u.DeclarationRange.First;
+   int last = decl->u.DeclarationRange.Last;
+
+   assert (decl->Declaration.Declare != TGSI_DECLARE_MASK);
+   
    switch(decl->Declaration.File) {
-   case TGSI_FILE_CONSTANT: {
-      if (decl->Declaration.Declare == TGSI_DECLARE_MASK) {
-         printf("DECLARATION MASK = %d\n",
-                decl->u.DeclarationMask.Mask);
-         assert(0);
-      } else { /*range*/
-         info->num_consts += decl->u.DeclarationRange.Last - decl->u.DeclarationRange.First + 1;
-      }
-   }
+   case TGSI_FILE_CONSTANT: 
+      info->num_consts += last - first + 1;
       break;
    case TGSI_FILE_INPUT: {
    }
       break;
    case TGSI_FILE_OUTPUT: {
+      assert(last == first);	/* for now */
       if (decl->Declaration.Semantic) {
-         int idx = 0;
-         if (decl->Declaration.Declare == TGSI_DECLARE_MASK) {
-            printf("DECLARATION MASK = %d\n",
-                   decl->u.DeclarationMask.Mask);
-            assert(0);
-         } else { /*range*/
-            idx = decl->u.DeclarationRange.First;
-         }
          switch (decl->Semantic.SemanticName) {
          case TGSI_SEMANTIC_POSITION: {
-            info->pos_idx = idx;
+            info->pos_idx = first;
          }
             break;
          case TGSI_SEMANTIC_COLOR:
@@ -1025,7 +1016,7 @@ static void process_declaration(const struct tgsi_full_declaration *decl,
             break;
          case TGSI_SEMANTIC_PSIZE: {
             info->writes_psize = TRUE;
-            info->psize_idx = idx;
+            info->psize_idx = first;
          }
             break;
          case TGSI_SEMANTIC_GENERIC:
@@ -1035,14 +1026,14 @@ static void process_declaration(const struct tgsi_full_declaration *decl,
    }
       break;
    case TGSI_FILE_TEMPORARY: {
-      info->num_temps++;
+      info->num_temps += (last - first) + 1;
    }
       break;
    case TGSI_FILE_SAMPLER: {
    }
       break;
    case TGSI_FILE_ADDRESS: {
-      info->num_addrs++;
+      info->num_addrs += (last - first) + 1;
    }
       break;
    case TGSI_FILE_IMMEDIATE: {
@@ -1303,7 +1294,6 @@ void brw_vs_emit(struct brw_vs_compile *c)
       }
          break;
       case TGSI_TOKEN_TYPE_IMMEDIATE: {
-         int i;
          struct tgsi_full_immediate *imm = &parse.FullToken.FullImmediate;
          /*assert(imm->Immediate.Size == 4);*/
          c->prog_data.imm_buf[c->prog_data.num_imm][0] = imm->u.ImmediateFloat32[0].Float;
