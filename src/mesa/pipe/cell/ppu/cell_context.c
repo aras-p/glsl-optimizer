@@ -149,7 +149,7 @@ cell_destroy_context( struct pipe_context *pipe )
 
    cell_spu_exit(cell);
 
-   free(cell);
+   align_free(cell);
 }
 
 
