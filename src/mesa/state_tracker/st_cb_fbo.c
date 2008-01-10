@@ -97,9 +97,6 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
          return GL_FALSE;
    }
 
-   /* loop here since mapping is refcounted */
-   while (strb->surface->map)
-      pipe_surface_unmap(strb->surface);
    if (strb->surface->buffer)
       pipe->winsys->buffer_reference(pipe->winsys, &strb->surface->buffer,
 				     NULL);

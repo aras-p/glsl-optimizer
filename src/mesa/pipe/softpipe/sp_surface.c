@@ -158,10 +158,10 @@ sp_surface_copy(struct pipe_context *pipe,
 }
 
 
-static ubyte *
-get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
+static void *
+get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
 {
-   return dst->map + (y * dst->pitch + x) * dst->cpp;
+   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
 }
 
 
@@ -179,16 +179,16 @@ sp_surface_fill(struct pipe_context *pipe,
 		unsigned width, unsigned height, unsigned value)
 {
    unsigned i, j;
+   void *dst_map = pipe_surface_map(dst);
 
    assert(dst->pitch > 0);
    assert(width <= dst->pitch);
 
-   (void)pipe_surface_map(dst);
 
    switch (dst->cpp) {
    case 1:
       {
-         ubyte *row = get_pointer(dst, dstx, dsty);
+	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
          for (i = 0; i < height; i++) {
             memset(row, value, width);
 	 row += dst->pitch;
@@ -197,7 +197,7 @@ sp_surface_fill(struct pipe_context *pipe,
       break;
    case 2:
       {
-         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         ushort *row = get_pointer(dst, dst_map, dstx, dsty);
          for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++)
                row[j] = (ushort) value;
@@ -207,7 +207,7 @@ sp_surface_fill(struct pipe_context *pipe,
       break;
    case 4:
       {
-         unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
+         unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
          for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++)
                row[j] = value;
@@ -218,7 +218,7 @@ sp_surface_fill(struct pipe_context *pipe,
    case 8:
       {
          /* expand the 4-byte clear value to an 8-byte value */
-         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         ushort *row = (ushort *) get_pointer(dst, dst_map, dstx, dsty);
          ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
          ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
          ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);

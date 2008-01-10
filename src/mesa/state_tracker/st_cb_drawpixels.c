@@ -1261,14 +1261,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* alternate path using get/put_tile() */
       GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-      (void) pipe_surface_map(psRead);
-      (void) pipe_surface_map(psTex);
-
       pipe->get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
       pipe->put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
-
-      pipe_surface_unmap(psRead);
-      pipe_surface_unmap(psTex);
 
       free(buf);
    }

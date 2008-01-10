@@ -242,8 +242,6 @@ struct pipe_sampler_state
 struct pipe_surface
 {
    struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
-   ubyte *map;    /**< only non-NULL when surface is actually mapped */
-   unsigned map_refcount;  /**< Reference count for mapping */
    enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned cpp;                 /**< bytes per pixel */
    unsigned width, height;

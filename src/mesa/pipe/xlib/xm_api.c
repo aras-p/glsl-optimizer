@@ -1247,22 +1247,11 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 GLboolean XMesaGetDepthBuffer( XMesaBuffer b, GLint *width, GLint *height,
                                GLint *bytesPerValue, void **buffer )
 {
-   struct pipe_surface *surf
-      = st_get_framebuffer_surface(b->stfb, ST_SURFACE_DEPTH);
-   if (surf) {
-      *width = surf->width;
-      *height = surf->pitch;
-      *bytesPerValue = surf->cpp;
-      *buffer = surf->map;
-      return GL_TRUE;
-   }
-   else {
-      *width = 0;
-      *height = 0;
-      *bytesPerValue = 0;
-      *buffer = 0;
-      return GL_FALSE;
-   }
+   *width = 0;
+   *height = 0;
+   *bytesPerValue = 0;
+   *buffer = 0;
+   return GL_FALSE;
 }
 
 

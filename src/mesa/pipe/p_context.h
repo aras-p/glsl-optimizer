@@ -194,9 +194,9 @@ struct pipe_context {
                     const void *p, int src_stride);
    /* XXX temporary here, move these to softpipe */
    void (*get_tile_rgba)(struct pipe_context *pipe, struct pipe_surface *ps,
-                         uint x, uint y, uint w, uint h, float *p);
+			 uint x, uint y, uint w, uint h, float *p);
    void (*put_tile_rgba)(struct pipe_context *pipe, struct pipe_surface *ps,
-                         uint x, uint y, uint w, uint h, const float *p);
+			 uint x, uint y, uint w, uint h, const float *p);
 
 
    /*

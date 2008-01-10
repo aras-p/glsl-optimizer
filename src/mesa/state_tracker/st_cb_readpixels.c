@@ -179,8 +179,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!strb)
       return;
 
-   pipe_surface_map(strb->surface);
-
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */
       df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
@@ -229,8 +227,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          }
       }
    }
-
-   pipe_surface_unmap(strb->surface);
 }
 
 

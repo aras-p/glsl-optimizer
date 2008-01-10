@@ -56,8 +56,6 @@ pipe_get_tile_raw(struct pipe_context *pipe,
    ubyte *pDest;
    uint i;
 
-   assert(ps->map);
-
    if (dst_stride == 0) {
       dst_stride = w * cpp;
    }
@@ -65,7 +63,7 @@ pipe_get_tile_raw(struct pipe_context *pipe,
    if (pipe_clip_tile(x, y, &w, &h, ps))
       return;
 
-   pSrc = ps->map + (y * ps->pitch + x) * cpp;
+   pSrc = (const ubyte *) pipe_surface_map(ps) + (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
@@ -73,6 +71,8 @@ pipe_get_tile_raw(struct pipe_context *pipe,
       pDest += dst_stride;
       pSrc += src_stride;
    }
+
+   pipe_surface_unmap(ps);
 }
 
 
@@ -92,8 +92,6 @@ pipe_put_tile_raw(struct pipe_context *pipe,
    ubyte *pDest;
    uint i;
 
-   assert(ps->map);
-
    if (src_stride == 0) {
       src_stride = w * cpp;
    }
@@ -102,13 +100,15 @@ pipe_put_tile_raw(struct pipe_context *pipe,
       return;
 
    pSrc = (const ubyte *) p;
-   pDest = ps->map + (y * ps->pitch + x) * cpp;
+   pDest = (ubyte *) pipe_surface_map(ps) + (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
       pDest += dst_stride;
       pSrc += src_stride;
    }
+
+   pipe_surface_unmap(ps);
 }
 
 
@@ -126,11 +126,12 @@ pipe_put_tile_raw(struct pipe_context *pipe,
 
 static void
 a8r8g8b8_get_tile_rgba(struct pipe_surface *ps,
+		       void *map,
                        unsigned x, unsigned y, unsigned w, unsigned h,
                        float *p)
 {
    const unsigned *src
-      = ((const unsigned *) (ps->map))
+      = ((const unsigned *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -158,11 +159,12 @@ a8r8g8b8_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 a8r8g8b8_put_tile_rgba(struct pipe_surface *ps,
+		       void *map,
                        unsigned x, unsigned y, unsigned w, unsigned h,
                        const float *p)
 {
    unsigned *dst
-      = ((unsigned *) (ps->map))
+      = ((unsigned *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -193,11 +195,12 @@ a8r8g8b8_put_tile_rgba(struct pipe_surface *ps,
 
 static void
 b8g8r8a8_get_tile_rgba(struct pipe_surface *ps,
+		       void *map,
                        unsigned x, unsigned y, unsigned w, unsigned h,
                        float *p)
 {
    const unsigned *src
-      = ((const unsigned *) (ps->map))
+      = ((const unsigned *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -225,11 +228,12 @@ b8g8r8a8_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 b8g8r8a8_put_tile_rgba(struct pipe_surface *ps,
+		       void *map,
                        unsigned x, unsigned y, unsigned w, unsigned h,
                        const float *p)
 {
    unsigned *dst
-      = ((unsigned *) (ps->map))
+      = ((unsigned *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -260,11 +264,12 @@ b8g8r8a8_put_tile_rgba(struct pipe_surface *ps,
 
 static void
 a1r5g5b5_get_tile_rgba(struct pipe_surface *ps,
+		       void *map,
                        unsigned x, unsigned y, unsigned w, unsigned h,
                        float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->map))
+      = ((const ushort *) map)
       + y * ps->pitch + x;
    unsigned i, j;
 
@@ -288,11 +293,12 @@ a1r5g5b5_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 a4r4g4b4_get_tile_rgba(struct pipe_surface *ps,
+		       void *map,
                        unsigned x, unsigned y, unsigned w, unsigned h,
                        float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->map))
+      = ((const ushort *) map)
       + y * ps->pitch + x;
    unsigned i, j;
 
@@ -316,11 +322,12 @@ a4r4g4b4_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 r5g6b5_get_tile_rgba(struct pipe_surface *ps,
+		     void *map,
                      unsigned x, unsigned y, unsigned w, unsigned h,
                      float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->map))
+      = ((const ushort *) map)
       + y * ps->pitch + x;
    unsigned i, j;
 
@@ -342,11 +349,12 @@ r5g6b5_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 r5g5b5_put_tile_rgba(struct pipe_surface *ps,
+		     void *map,
                      unsigned x, unsigned y, unsigned w, unsigned h,
                      const float *p)
 {
    ushort *dst
-      = ((ushort *) (ps->map))
+      = ((ushort *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -379,11 +387,12 @@ r5g5b5_put_tile_rgba(struct pipe_surface *ps,
  */
 static void
 z16_get_tile_rgba(struct pipe_surface *ps,
+		  void *map,
                   unsigned x, unsigned y, unsigned w, unsigned h,
                   float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->map))
+      = ((const ushort *) map)
       + y * ps->pitch + x;
    const float scale = 1.0f / 65535.0f;
    unsigned i, j;
@@ -414,11 +423,12 @@ z16_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 l8_get_tile_rgba(struct pipe_surface *ps,
+		 void *map,
                  unsigned x, unsigned y, unsigned w, unsigned h,
                  float *p)
 {
    const ubyte *src
-      = ((const ubyte *) (ps->map))
+      = ((const ubyte *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -447,11 +457,12 @@ l8_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 a8_get_tile_rgba(struct pipe_surface *ps,
+		 void *map,
                  unsigned x, unsigned y, unsigned w, unsigned h,
                  float *p)
 {
    const ubyte *src
-      = ((const ubyte *) (ps->map))
+      = ((const ubyte *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -480,11 +491,12 @@ a8_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 r16g16b16a16_get_tile_rgba(struct pipe_surface *ps,
+			   void *map,
                            unsigned x, unsigned y, unsigned w, unsigned h,
                            float *p)
 {
    const short *src
-      = ((const short *) (ps->map))
+      = ((const short *) map)
       + (y * ps->pitch + x) * 4;
    unsigned i, j;
    unsigned w0 = w;
@@ -513,11 +525,12 @@ r16g16b16a16_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 r16g16b16a16_put_tile_rgba(struct pipe_surface *ps,
+			   void *map,
                            unsigned x, unsigned y, unsigned w, unsigned h,
                            const float *p)
 {
    short *dst
-      = ((short *) (ps->map))
+      = ((short *) map)
       + (y * ps->pitch + x) * 4;
    unsigned i, j;
    unsigned w0 = w;
@@ -552,11 +565,12 @@ r16g16b16a16_put_tile_rgba(struct pipe_surface *ps,
 
 static void
 i8_get_tile_rgba(struct pipe_surface *ps,
+		 void *map,
                  unsigned x, unsigned y, unsigned w, unsigned h,
                  float *p)
 {
    const ubyte *src
-      = ((const ubyte *) (ps->map))
+      = ((const ubyte *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -585,11 +599,12 @@ i8_get_tile_rgba(struct pipe_surface *ps,
 
 static void
 a8_l8_get_tile_rgba(struct pipe_surface *ps,
+		    void *map,
                     unsigned x, unsigned y, unsigned w, unsigned h,
                     float *p)
 {
    const ushort *src
-      = ((const ushort *) (ps->map))
+      = ((const ushort *) map)
       + y * ps->pitch + x;
    unsigned i, j;
    unsigned w0 = w;
@@ -624,11 +639,12 @@ a8_l8_get_tile_rgba(struct pipe_surface *ps,
  */
 static void
 z32_get_tile_rgba(struct pipe_surface *ps,
+		  void *map,
                   unsigned x, unsigned y, unsigned w, unsigned h,
                   float *p)
 {
    const uint *src
-      = ((const uint *) (ps->map))
+      = ((const uint *) map)
       + y * ps->pitch + x;
    const double scale = 1.0 / (double) 0xffffffff;
    unsigned i, j;
@@ -660,11 +676,12 @@ z32_get_tile_rgba(struct pipe_surface *ps,
  */
 static void
 s8z24_get_tile_rgba(struct pipe_surface *ps,
+		    void *map,
                     unsigned x, unsigned y, unsigned w, unsigned h,
                     float *p)
 {
    const uint *src
-      = ((const uint *) (ps->map))
+      = ((const uint *) map)
       + y * ps->pitch + x;
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
@@ -696,11 +713,12 @@ s8z24_get_tile_rgba(struct pipe_surface *ps,
  */
 static void
 z24s8_get_tile_rgba(struct pipe_surface *ps,
+		    void *map,
                     unsigned x, unsigned y, unsigned w, unsigned h,
                     float *p)
 {
    const uint *src
-      = ((const uint *) (ps->map))
+      = ((const uint *) map)
       + y * ps->pitch + x;
    const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
@@ -731,52 +749,56 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
+   void *map = pipe_surface_map(ps);
+
    switch (ps->format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      a8r8g8b8_get_tile_rgba(ps, x, y, w, h, p);
+      a8r8g8b8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      b8g8r8a8_get_tile_rgba(ps, x, y, w, h, p);
+      b8g8r8a8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
-      a1r5g5b5_get_tile_rgba(ps, x, y, w, h, p);
+      a1r5g5b5_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
-      a4r4g4b4_get_tile_rgba(ps, x, y, w, h, p);
+      a4r4g4b4_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_R5G6B5_UNORM:
-      r5g6b5_get_tile_rgba(ps, x, y, w, h, p);
+      r5g6b5_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_L8:
-      l8_get_tile_rgba(ps, x, y, w, h, p);
+      l8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_A8:
-      a8_get_tile_rgba(ps, x, y, w, h, p);
+      a8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_I8:
-      i8_get_tile_rgba(ps, x, y, w, h, p);
+      i8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_U_A8_L8:
-      a8_l8_get_tile_rgba(ps, x, y, w, h, p);
+      a8_l8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
-      r16g16b16a16_get_tile_rgba(ps, x, y, w, h, p);
+      r16g16b16a16_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_Z16_UNORM:
-      z16_get_tile_rgba(ps, x, y, w, h, p);
+      z16_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_Z32_UNORM:
-      z32_get_tile_rgba(ps, x, y, w, h, p);
+      z32_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
-      s8z24_get_tile_rgba(ps, x, y, w, h, p);
+      s8z24_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
-      z24s8_get_tile_rgba(ps, x, y, w, h, p);
+      z24s8_get_tile_rgba(ps, map, x, y, w, h, p);
       break;
    default:
       assert(0);
    }
+
+   pipe_surface_unmap(ps);
 }
 
 
@@ -786,49 +808,53 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
+   void *map = pipe_surface_map(ps);
+
    switch (ps->format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      a8r8g8b8_put_tile_rgba(ps, x, y, w, h, p);
+      a8r8g8b8_put_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      b8g8r8a8_put_tile_rgba(ps, x, y, w, h, p);
+      b8g8r8a8_put_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_A1R5G5B5_UNORM:
-      /*a1r5g5b5_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*a1r5g5b5_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_R5G6B5_UNORM:
-      r5g5b5_put_tile_rgba(ps, x, y, w, h, p);
+      r5g5b5_put_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       break;
    case PIPE_FORMAT_U_L8:
-      /*l8_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*l8_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_U_A8:
-      /*a8_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*a8_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_U_I8:
-      /*i8_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*i8_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_U_A8_L8:
-      /*a8_l8_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*a8_l8_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
-      r16g16b16a16_put_tile_rgba(ps, x, y, w, h, p);
+      r16g16b16a16_put_tile_rgba(ps, map, x, y, w, h, p);
       break;
    case PIPE_FORMAT_Z16_UNORM:
-      /*z16_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*z16_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_Z32_UNORM:
-      /*z32_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*z32_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
-      /*s8z24_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*s8z24_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
-      /*z24s8_put_tile_rgba(ps, x, y, w, h, p);*/
+      /*z24s8_put_tile_rgba(ps, map, x, y, w, h, p);*/
       break;
    default:
       assert(0);
    }
+
+   pipe_surface_unmap(ps);
 }
