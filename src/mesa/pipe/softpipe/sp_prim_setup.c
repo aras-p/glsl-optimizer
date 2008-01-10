@@ -1286,18 +1286,20 @@ static void calc_det( struct prim_header *header )
 
 
 
-/* Test harness - feed vertex buffer back into prim pipeline.
+/**
+ * Render buffer of points/lines/triangles.
+ * Called by vbuf code when the vertex or index buffer is filled.
  *
  * The big issue at this point is that reset_stipple doesn't make it
  * through the interface.  Probably need to split primitives at reset
  * stipple, perhaps using the ~0 index marker.
  */
-void sp_vbuf_setup_draw( struct pipe_context *pipe,
-                         unsigned primitive,
-                         const ushort *elements,
-                         unsigned nr_elements,
-                         const void *vertex_buffer,
-                         unsigned nr_vertices )
+void sp_vbuf_render( struct pipe_context *pipe,
+                     unsigned primitive,
+                     const ushort *elements,
+                     unsigned nr_elements,
+                     const void *vertex_buffer,
+                     unsigned nr_vertices )
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    struct setup_stage *setup = setup_stage( softpipe->setup );

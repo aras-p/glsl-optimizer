@@ -345,7 +345,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    if (GETENV( "SP_VBUF" ) != NULL) {
       softpipe->vbuf = sp_draw_vbuf_stage(softpipe->draw, 
                                           &softpipe->pipe, 
-                                          sp_vbuf_setup_draw);
+                                          sp_vbuf_render);
 
       draw_set_rasterize_stage(softpipe->draw, softpipe->vbuf);
    }
