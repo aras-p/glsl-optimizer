@@ -159,7 +159,8 @@ static void calculate_vertex_layout( struct cell_context *cell )
    if (1/*vinfo->attr_mask != cell->attr_mask*/) {
       /*cell->attr_mask = vinfo->attr_mask;*/
 
-      draw_set_vertex_info( cell->draw, vinfo);
+      draw_compute_vertex_size(vinfo);
+      draw_set_vertex_info(cell->draw, vinfo);
 
 #if 0
       draw_set_twoside_attributes(cell->draw,
