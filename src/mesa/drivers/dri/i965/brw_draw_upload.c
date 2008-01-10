@@ -257,12 +257,12 @@ static void copy_strided_array( GLubyte *dest,
    if (size == stride) 
       memcpy(dest, src, count * size);
    else {
-      GLuint i,j;
+      GLuint i;
    
       for (i = 0; i < count; i++) {
-	 for (j = 0; j < size; j++)
-	    *dest++ = *src++;
-	 src += (stride - size);
+	 memcpy(dest, src, size);
+	 src += stride;
+	 dest += size;
       }
    }
 }
