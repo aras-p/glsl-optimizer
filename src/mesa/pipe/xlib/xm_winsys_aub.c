@@ -466,9 +466,10 @@ struct aub_brw_winsys {
                          
    struct pipe_winsys *pipe_winsys;
 
-   unsigned data[IWS_BATCHBUFFER_SIZE];
-   unsigned nr;
-   unsigned size;
+   unsigned batch_data[IWS_BATCHBUFFER_SIZE];
+   unsigned batch_nr;
+   unsigned batch_size;
+   unsigned batch_alloc;
 };
 
 
@@ -490,9 +491,10 @@ static unsigned *aub_i965_batch_start( struct brw_winsys *sws,
 {
    struct aub_brw_winsys *iws = aub_brw_winsys(sws);
 
-   if (iws->size < iws->nr + dwords)
+   if (iws->batch_size < iws->batch_nr + dwords)
       return NULL;
 
+   iws->batch_alloc = iws->batch_nr + dwords;
    return (void *)1;			/* not a valid pointer! */
 }
 
@@ -501,7 +503,8 @@ static void aub_i965_batch_dword( struct brw_winsys *sws,
 {
    struct aub_brw_winsys *iws = aub_brw_winsys(sws);
 
-   iws->data[iws->nr++] = dword;
+   assert(iws->batch_nr < iws->batch_alloc);
+   iws->batch_data[iws->batch_nr++] = dword;
 }
 
 static void aub_i965_batch_reloc( struct brw_winsys *sws,
@@ -511,7 +514,8 @@ static void aub_i965_batch_reloc( struct brw_winsys *sws,
 {
    struct aub_brw_winsys *iws = aub_brw_winsys(sws);
 
-   iws->data[iws->nr++] = aub_bo(buf)->offset + delta;
+   assert(iws->batch_nr < iws->batch_alloc);
+   iws->batch_data[iws->batch_nr++] = aub_bo(buf)->offset + delta;
 }
 
 static unsigned aub_i965_get_buffer_offset( struct brw_winsys *sws,
@@ -521,19 +525,27 @@ static unsigned aub_i965_get_buffer_offset( struct brw_winsys *sws,
    return aub_bo(buf)->offset;
 }
 
+static void aub_i965_batch_end( struct brw_winsys *sws )
+{
+   struct aub_brw_winsys *iws = aub_brw_winsys(sws);
 
+   assert(iws->batch_nr <= iws->batch_alloc);
+   iws->batch_alloc = 0;
+}
 
 static void aub_i965_batch_flush( struct brw_winsys *sws,
 				    struct pipe_fence_handle **fence )
 {
    struct aub_brw_winsys *iws = aub_brw_winsys(sws);
-   assert(iws->nr <= iws->size);
+   assert(iws->batch_nr <= iws->batch_size);
 
-   if (iws->nr)
+   if (iws->batch_nr) {
       xmesa_commands_aub( iws->pipe_winsys,
-			  iws->data,
-			  iws->nr );
-   iws->nr = 0;
+			  iws->batch_data,
+			  iws->batch_nr );
+   }
+
+   iws->batch_nr = 0;
 }
 
 
@@ -639,13 +651,14 @@ xmesa_create_i965simple( struct pipe_winsys *winsys )
    iws->winsys.batch_start = aub_i965_batch_start;
    iws->winsys.batch_dword = aub_i965_batch_dword;
    iws->winsys.batch_reloc = aub_i965_batch_reloc;
+   iws->winsys.batch_end = aub_i965_batch_end;
    iws->winsys.batch_flush = aub_i965_batch_flush;
    iws->winsys.buffer_subdata_typed = aub_i965_buffer_subdata_typed;
    iws->winsys.get_buffer_offset = aub_i965_get_buffer_offset;
 
    iws->pipe_winsys = winsys;
 
-   iws->size = IWS_BATCHBUFFER_SIZE;
+   iws->batch_size = IWS_BATCHBUFFER_SIZE;
 
    /* Create the i965simple context:
     */

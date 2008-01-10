@@ -193,9 +193,13 @@ static inline boolean brw_batchbuffer_data(struct brw_winsys *winsys,
    uint i;
    const unsigned *udata = (const unsigned*)(data);
    unsigned size = bytes/incr;
+
+   winsys->batch_start(winsys, size, 0);
    for (i = 0; i < size; ++i) {
       winsys->batch_dword(winsys, udata[i]);
    }
+   winsys->batch_end(winsys);
+
    return (i == size);
 }
 #endif
