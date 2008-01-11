@@ -84,7 +84,6 @@ cell_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 }
 
 
-#if 0
 static void
 cell_vbuf_draw(struct vbuf_render *vbr,
                uint prim,
@@ -130,7 +129,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
    cell_flush(&cell->pipe, 0x0);
 }
-#endif
+
 
 static void
 cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices, 
@@ -167,9 +166,7 @@ cell_init_vbuf(struct cell_context *cell)
    cell->vbuf_render->base.get_vertex_info = cell_vbuf_get_vertex_info;
    cell->vbuf_render->base.allocate_vertices = cell_vbuf_allocate_vertices;
    cell->vbuf_render->base.set_primitive = cell_vbuf_set_primitive;
-#if 0
    cell->vbuf_render->base.draw = cell_vbuf_draw;
-#endif
    cell->vbuf_render->base.release_vertices = cell_vbuf_release_vertices;
    cell->vbuf_render->base.destroy = cell_vbuf_destroy;
 

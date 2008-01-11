@@ -237,7 +237,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell->draw = draw_create();
 
-#define VBUF 0
+#define VBUF 1
 #if VBUF
    cell_init_vbuf(cell);
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
