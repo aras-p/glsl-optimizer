@@ -30,23 +30,8 @@
 #define TRI_H
 
 
-/**
- * Simplified types taken from other parts of Gallium
- */
-
-struct vertex_header {
-   float data[2][4];  /* pos and color */
-};
-
-
-struct prim_header {
-   struct vertex_header *v[3];
-   uint color;
-};
-
-
 extern void
-tri_draw(struct prim_header *tri, uint tx, uint ty);
+tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty);
 
 
 #endif /* TRI_H */

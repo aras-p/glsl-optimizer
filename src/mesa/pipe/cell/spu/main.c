@@ -256,13 +256,11 @@ render(const struct cell_command_render *render)
 
       /* loop over tris */
       for (j = 0; j < render->num_verts; j += 3) {
-         struct prim_header prim;
+         const float *v0 = (const float *) prim_buffer.vertex[j+0];
+         const float *v1 = (const float *) prim_buffer.vertex[j+1];
+         const float *v2 = (const float *) prim_buffer.vertex[j+2];
 
-         prim.v[0] = (struct vertex_header *) prim_buffer.vertex[j+0];
-         prim.v[1] = (struct vertex_header *) prim_buffer.vertex[j+1];
-         prim.v[2] = (struct vertex_header *) prim_buffer.vertex[j+2];
-
-         tri_draw(&prim, tx, ty);
+         tri_draw(v0, v1, v2, tx, ty);
       }
 
       /* write color/z tiles back to main framebuffer, if dirtied */
@@ -292,13 +290,16 @@ render_vbuf(const struct cell_command_render_vbuf *render)
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
    ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
-   uint i, j, vertex_bytes, index_bytes;
+
+   uint i, j, vertex_size, vertex_bytes, index_bytes;
 
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(render->index_data);
 
+   vertex_size = render->num_attribs * 4 * sizeof(float);
+
    /* how much vertex data */
-   vertex_bytes = render->num_verts * render->num_attribs * 4 * sizeof(float);
+   vertex_bytes = render->num_verts * vertex_size;
    index_bytes = render->num_indexes * sizeof(ushort);
    if (index_bytes < 8)
       index_bytes = 8;
@@ -369,19 +370,13 @@ render_vbuf(const struct cell_command_render_vbuf *render)
 
       /* loop over tris */
       for (j = 0; j < render->num_indexes; j += 3) {
-         struct prim_header prim;
-         const float *vbuf = (const float *) vertex_data;
          const float *v0, *v1, *v2;
 
-         v0 = vbuf + indexes[j] * render->num_attribs * 4;
-         v1 = vbuf + indexes[j+1] * render->num_attribs * 4;
-         v2 = vbuf + indexes[j+2] * render->num_attribs * 4;
+         v0 = (const float *) (vertex_data + indexes[j+0] * vertex_size);
+         v1 = (const float *) (vertex_data + indexes[j+1] * vertex_size);
+         v2 = (const float *) (vertex_data + indexes[j+2] * vertex_size);
 
-         prim.v[0] = (struct vertex_header *) v0;
-         prim.v[1] = (struct vertex_header *) v1;
-         prim.v[2] = (struct vertex_header *) v2;
-
-         tri_draw(&prim, tx, ty);
+         tri_draw(v0, v1, v2, tx, ty);
       }
 
       /* write color/z tiles back to main framebuffer, if dirtied */

@@ -54,6 +54,23 @@
 */
 
 
+/**
+ * Simplified types taken from other parts of Gallium
+ */
+
+struct vertex_header {
+   float data[2][4];  /* pos and color */
+};
+
+
+struct prim_header {
+   struct vertex_header *v[3];
+   uint color;
+};
+
+
+
+
 #if 1
 
 /* XXX fix this */
@@ -946,9 +963,14 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
  * The tile data should have already been fetched.
  */
 void
-tri_draw(struct prim_header *tri, uint tx, uint ty)
+tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 {
+   struct prim_header tri;
    struct setup_stage setup;
+
+   tri.v[0] = (struct vertex_header *) v0;
+   tri.v[1] = (struct vertex_header *) v1;
+   tri.v[2] = (struct vertex_header *) v2;
 
    setup.tx = tx;
    setup.ty = ty;
@@ -959,5 +981,5 @@ tri_draw(struct prim_header *tri, uint tx, uint ty)
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
 
-   setup_tri(&setup, tri);
+   setup_tri(&setup, &tri);
 }
