@@ -237,7 +237,7 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
 	 unsigned nr_images = pt->target == PIPE_TEXTURE_3D ? depth : 6;
 	 int x = 0;
 	 int y = 0;
-	 int q, j;
+	 uint q, j;
 
 	 intel_miptree_set_level_info(tex, level, nr_images,
 				      0, tex->total_height,

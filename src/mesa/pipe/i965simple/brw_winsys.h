@@ -190,7 +190,7 @@ static inline boolean brw_batchbuffer_data(struct brw_winsys *winsys,
                                            unsigned bytes)
 {
    static const unsigned incr = sizeof(unsigned);
-   int i;
+   uint i;
    const unsigned *udata = (const unsigned*)(data);
    unsigned size = bytes/incr;
    for (i = 0; i < size; ++i) {
