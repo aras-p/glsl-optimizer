@@ -98,6 +98,20 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    float xmin, ymin, xmax, ymax;
    uint i;
 
+#if 0
+   printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u\n",
+          nr_indices, nr_vertices);
+   printf("  ");
+   for (i = 0; i < nr_indices; i += 3) {
+      printf("%u %u %u, ", indices[i+0], indices[i+1], indices[i+2]);
+   }
+   printf("\n");
+#elif 0
+   printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u  indexes = [%u %u %u ...]\n",
+          nr_indices, nr_vertices,
+          indices[0], indices[1], indices[2]);
+#endif
+
    /* compute x/y bounding box */
    xmin = ymin = 1e50;
    xmax = ymax = -1e50;
@@ -112,8 +126,6 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       if (v[1] > ymax)
          ymax = v[1];
    }
-
-   /*printf("cell_vbuf_draw nr_indices = %u\n", nr_indices);*/
 
    if (prim != PIPE_PRIM_TRIANGLES)
       return; /* only render tris for now */
@@ -136,6 +148,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_RENDER);
    }
 
+   /* XXX this is temporary */
    cell_flush(&cell->pipe, 0x0);
 }
 
