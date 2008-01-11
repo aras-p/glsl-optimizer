@@ -237,14 +237,8 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell->draw = draw_create();
 
-#define VBUF 1
-#if VBUF
    cell_init_vbuf(cell);
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
-#else
-   cell->render_stage = cell_draw_render_stage(cell);
-   draw_set_rasterize_stage(cell->draw, cell->render_stage);
-#endif
 
    cell->prim_buffer.xmin = 1e100;
    cell->prim_buffer.ymin = 1e100;
@@ -254,7 +248,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    /*
     * SPU stuff
     */
-   cell->num_spus = 6;  /* XXX >6 seems to fail */
+   cell->num_spus = 6;
 
    cell_start_spus(cell->num_spus);
 

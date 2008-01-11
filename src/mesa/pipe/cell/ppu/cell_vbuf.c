@@ -119,7 +119,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       return; /* only render tris for now */
 
    for (i = 0; i < cell->num_spus; i++) {
-      struct cell_command_render_vbuf *render = &cell_global.command[i].render_vbuf;
+      struct cell_command_render *render = &cell_global.command[i].render;
       render->prim_type = prim;
       render->num_verts = nr_vertices;
       render->num_attribs = CELL_MAX_ATTRIBS; /* XXX fix */
@@ -133,7 +133,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
       ASSERT_ALIGN16(render->vertex_data);
       ASSERT_ALIGN16(render->index_data);
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_RENDER_VBUF);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_RENDER);
    }
 
    cell_flush(&cell->pipe, 0x0);

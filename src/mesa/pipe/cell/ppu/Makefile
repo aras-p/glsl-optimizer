@@ -19,7 +19,6 @@ SOURCES = \
 	cell_context.c \
 	cell_draw_arrays.c \
 	cell_flush.c \
-	cell_render.c \
 	cell_state_blend.c \
 	cell_state_clip.c \
 	cell_state_derived.c \

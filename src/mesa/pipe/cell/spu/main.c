@@ -208,94 +208,6 @@ tile_bounding_box(const struct cell_command_render *render,
 static void
 render(const struct cell_command_render *render)
 {
-   struct cell_prim_buffer prim_buffer ALIGN16_ATTRIB;
-   uint i, j, vertex_bytes;
-
-   /*
-   printf("SPU %u: RENDER buffer dst=%p  src=%p  size=%d\n",
-          init.id,
-          &prim_buffer, render->vertex_data, (int)sizeof(prim_buffer));
-   */
-
-   ASSERT_ALIGN16(render->vertex_data);
-   ASSERT_ALIGN16(&prim_buffer);
-
-   /* how much vertex data */
-   vertex_bytes = render->num_verts * render->num_attribs * 4 * sizeof(float);
-
-   /* get vertex data from main memory */
-   mfc_get(&prim_buffer,  /* dest */
-           (unsigned int) render->vertex_data,  /* src */
-           vertex_bytes,  /* size */
-           TAG_VERTEX_BUFFER,
-           0, /* tid */
-           0  /* rid */);
-   wait_on_mask(1 << TAG_VERTEX_BUFFER);
-
-   /* find tiles which intersect the prim bounding box */
-   uint txmin, tymin, box_width_tiles, box_num_tiles;
-   tile_bounding_box(render, &txmin, &tymin,
-                     &box_num_tiles, &box_width_tiles);
-
-   /* make sure any pending clears have completed */
-   wait_on_mask(1 << TAG_SURFACE_CLEAR);
-
-   /* loop over tiles */
-   for (i = init.id; i < box_num_tiles; i += init.num_spus) {
-      const uint tx = txmin + i % box_width_tiles;
-      const uint ty = tymin + i / box_width_tiles;
-
-      ASSERT(tx < fb.width_tiles);
-      ASSERT(ty < fb.height_tiles);
-
-      /* Start fetching color/z tiles.  We'll wait for completion when
-       * we need read/write to them later in triangle rasterization.
-       */
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
-            get_tile(&fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
-         }
-      }
-
-      if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
-         get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
-      }
-
-      ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
-
-      /* loop over tris */
-      for (j = 0; j < render->num_verts; j += 3) {
-         const float *v0 = (const float *) prim_buffer.vertex[j+0];
-         const float *v1 = (const float *) prim_buffer.vertex[j+1];
-         const float *v2 = (const float *) prim_buffer.vertex[j+2];
-
-         tri_draw(v0, v1, v2, tx, ty);
-      }
-
-      /* write color/z tiles back to main framebuffer, if dirtied */
-      if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
-         put_tile(&fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
-         tile_status[ty][tx] = TILE_STATUS_DEFINED;
-      }
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
-            put_tile(&fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
-            tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
-         }
-      }
-
-      /* XXX move these... */
-      wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-         wait_on_mask(1 << TAG_WRITE_TILE_Z);
-      }
-   }
-}
-
-
-static void
-render_vbuf(const struct cell_command_render_vbuf *render)
-{
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
    ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
@@ -483,18 +395,12 @@ main_loop(void)
          break;
       case CELL_CMD_RENDER:
          if (Debug)
-            printf("SPU %u: RENDER %u verts, prim %u\n",
-                   init.id, cmd.render.num_verts, cmd.render.prim_type);
-         render(&cmd.render);
-         break;
-      case CELL_CMD_RENDER_VBUF:
-         if (Debug)
-            printf("SPU %u: RENDER_VBUF prim %u, indices: %u, nr_vert: %u\n",
+            printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
                    init.id,
-                   cmd.render_vbuf.prim_type,
-                   cmd.render_vbuf.num_verts,
-                   cmd.render_vbuf.num_indexes);
-         render_vbuf(&cmd.render_vbuf);
+                   cmd.render.prim_type,
+                   cmd.render.num_verts,
+                   cmd.render.num_indexes);
+         render(&cmd.render);
          break;
 
       case CELL_CMD_FINISH:
