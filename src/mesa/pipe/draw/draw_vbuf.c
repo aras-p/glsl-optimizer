@@ -275,7 +275,7 @@ vbuf_flush_indices( struct draw_stage *stage )
    if(!vbuf->nr_indices)
       return;
    
-   assert(vbuf->vertex_ptr - vbuf->vertices == 
+   assert((uint) (vbuf->vertex_ptr - vbuf->vertices) == 
           vbuf->nr_vertices * vbuf->vertex_size / sizeof(unsigned));
 
    switch(vbuf->prim) {
@@ -405,7 +405,8 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 
    assert(render->max_indices < UNDEFINED_VERTEX_ID);
    vbuf->max_indices = render->max_indices;
-   vbuf->indices = align_malloc( vbuf->max_indices, 16 );
+   vbuf->indices
+      = align_malloc( vbuf->max_indices * sizeof(vbuf->indices[0]), 16 );
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;
