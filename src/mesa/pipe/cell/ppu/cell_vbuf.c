@@ -95,7 +95,23 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    struct cell_context *cell = cvbr->cell;
+   float xmin, ymin, xmax, ymax;
    uint i;
+
+   /* compute x/y bounding box */
+   xmin = ymin = 1e50;
+   xmax = ymax = -1e50;
+   for (i = 0; i < nr_vertices; i++) {
+      const float *v = (float *) ((ubyte *) vertices + i * vertex_size);
+      if (v[0] < xmin)
+         xmin = v[0];
+      if (v[0] > xmax)
+         xmax = v[0];
+      if (v[1] < ymin)
+         ymin = v[1];
+      if (v[1] > ymax)
+         ymax = v[1];
+   }
 
    /*printf("cell_vbuf_draw nr_indices = %u\n", nr_indices);*/
 
@@ -110,17 +126,10 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->vertex_data = vertices;
       render->index_data = indices;
       render->num_indexes = nr_indices;
-#if 0
-      render->xmin = cell->prim_buffer.xmin;
-      render->ymin = cell->prim_buffer.ymin;
-      render->xmax = cell->prim_buffer.xmax;
-      render->ymax = cell->prim_buffer.ymax;
-#else
-      render->xmin = -100;
-      render->ymin = -100;
-      render->xmax =  100;
-      render->ymax =  100;
-#endif
+      render->xmin = xmin;
+      render->ymin = ymin;
+      render->xmax = xmax;
+      render->ymax = ymax;
 
       ASSERT_ALIGN16(render->vertex_data);
       ASSERT_ALIGN16(render->index_data);
