@@ -40,7 +40,7 @@ struct vertex_header {
 
 
 struct prim_header {
-   struct vertex_header v[3];
+   struct vertex_header *v[3];
    uint color;
 };
 

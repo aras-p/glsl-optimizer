@@ -174,6 +174,9 @@ tile_bounding_box(const struct cell_command_render *render,
    *tymin = 0;
    *box_num_tiles = fb.width_tiles * fb.height_tiles;
    *box_width_tiles = fb.width_tiles;
+   (void) render;
+   (void) txmax;
+   (void) tymax;
 #else
    uint txmax, tymax, box_height_tiles;
 
@@ -255,26 +258,9 @@ render(const struct cell_command_render *render)
       for (j = 0; j < render->num_verts; j += 3) {
          struct prim_header prim;
 
-         /*
-         printf("  %u: Triangle %g,%g  %g,%g  %g,%g\n",
-                init.id,
-                prim_buffer.vertex[j*3+0][0][0],
-                prim_buffer.vertex[j*3+0][0][1],
-                prim_buffer.vertex[j*3+1][0][0],
-                prim_buffer.vertex[j*3+1][0][1],
-                prim_buffer.vertex[j*3+2][0][0],
-                prim_buffer.vertex[j*3+2][0][1]);
-         */
-
-         /* pos */
-         COPY_4V(prim.v[0].data[0], prim_buffer.vertex[j+0][0]);
-         COPY_4V(prim.v[1].data[0], prim_buffer.vertex[j+1][0]);
-         COPY_4V(prim.v[2].data[0], prim_buffer.vertex[j+2][0]);
-
-         /* color */
-         COPY_4V(prim.v[0].data[1], prim_buffer.vertex[j+0][1]);
-         COPY_4V(prim.v[1].data[1], prim_buffer.vertex[j+1][1]);
-         COPY_4V(prim.v[2].data[1], prim_buffer.vertex[j+2][1]);
+         prim.v[0] = (struct vertex_header *) prim_buffer.vertex[j+0];
+         prim.v[1] = (struct vertex_header *) prim_buffer.vertex[j+1];
+         prim.v[2] = (struct vertex_header *) prim_buffer.vertex[j+2];
 
          tri_draw(&prim, tx, ty);
       }
@@ -391,26 +377,9 @@ render_vbuf(const struct cell_command_render_vbuf *render)
          v1 = vbuf + indexes[j+1] * render->num_attribs * 4;
          v2 = vbuf + indexes[j+2] * render->num_attribs * 4;
 
-         /*
-         printf("  %u: Triangle %g,%g  %g,%g  %g,%g\n",
-                init.id,
-                prim_buffer.vertex[j*3+0][0][0],
-                prim_buffer.vertex[j*3+0][0][1],
-                prim_buffer.vertex[j*3+1][0][0],
-                prim_buffer.vertex[j*3+1][0][1],
-                prim_buffer.vertex[j*3+2][0][0],
-                prim_buffer.vertex[j*3+2][0][1]);
-         */
-
-         /* pos */
-         COPY_4V(prim.v[0].data[0], v0);
-         COPY_4V(prim.v[1].data[0], v1);
-         COPY_4V(prim.v[2].data[0], v2);
-
-         /* color */
-         COPY_4V(prim.v[0].data[1], v0 + 4);
-         COPY_4V(prim.v[1].data[1], v1 + 4);
-         COPY_4V(prim.v[2].data[1], v2 + 4);
+         prim.v[0] = (struct vertex_header *) v0;
+         prim.v[1] = (struct vertex_header *) v1;
+         prim.v[2] = (struct vertex_header *) v2;
 
          tri_draw(&prim, tx, ty);
       }

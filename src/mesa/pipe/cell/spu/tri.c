@@ -455,15 +455,9 @@ static void print_vertex(const struct setup_stage *setup,
 static boolean setup_sort_vertices( struct setup_stage *setup,
 				      const struct prim_header *prim )
 {
-#if 0
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
    const struct vertex_header *v2 = prim->v[2];
-#else
-   const struct vertex_header *v0 = &prim->v[0];
-   const struct vertex_header *v1 = &prim->v[1];
-   const struct vertex_header *v2 = &prim->v[2];
-#endif
 
 #if DEBUG_VERTS
    fprintf(stderr, "Triangle:\n");
