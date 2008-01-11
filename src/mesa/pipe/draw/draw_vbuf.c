@@ -291,8 +291,14 @@ vbuf_flush_indices( struct draw_stage *stage )
       assert(0);
    }
    
-   vbuf->render->draw(vbuf->render, vbuf->indices, vbuf->nr_indices);
-   
+   vbuf->render->draw( vbuf->render,
+                       vbuf->prim,
+                       vbuf->indices,
+                       vbuf->nr_indices,
+                       vbuf->vertices,
+                       vbuf->nr_vertices,
+                       vbuf->vertex_size );
+
    vbuf->nr_indices = 0;
 }
 
@@ -373,7 +379,7 @@ static void vbuf_destroy( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   FREE( vbuf->indices );
+   align_free( vbuf->indices );
    FREE( stage );
 }
 
@@ -399,7 +405,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 
    assert(render->max_indices < UNDEFINED_VERTEX_ID);
    vbuf->max_indices = render->max_indices;
-   vbuf->indices = MALLOC( vbuf->max_indices );
+   vbuf->indices = align_malloc( vbuf->max_indices, 16 );
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;

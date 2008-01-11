@@ -136,8 +136,12 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
 
 static void 
 i915_vbuf_render_draw( struct vbuf_render *render,
+                       uint prim,
                        const ushort *indices,
-                       unsigned nr_indices ) 
+                       uint nr_indices,
+                       const void *vertices,
+                       uint nr_vertices,
+                       uint vertex_bytes)
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
