@@ -62,6 +62,15 @@ wait_on_mask(unsigned tagMask)
 }
 
 
+static void
+wait_on_mask_all(unsigned tagMask)
+{
+   mfc_write_tag_mask( tagMask );
+   /* wait for completion of _any_ DMAs specified by tagMask */
+   mfc_read_tag_status_all();
+}
+
+
 
 /**
  * For tiles whose status is TILE_STATUS_CLEAR, write solid-filled
@@ -327,8 +336,8 @@ render_vbuf(const struct cell_command_render_vbuf *render)
            0, /* tid */
            0  /* rid */);
 
-   wait_on_mask(1 << TAG_VERTEX_BUFFER);
-   wait_on_mask(1 << TAG_INDEX_BUFFER);
+   wait_on_mask_all((1 << TAG_VERTEX_BUFFER) |
+                    (1 << TAG_INDEX_BUFFER));
 
    /* find tiles which intersect the prim bounding box */
    uint txmin, tymin, box_width_tiles, box_num_tiles;
