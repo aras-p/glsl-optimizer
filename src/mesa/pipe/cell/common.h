@@ -54,6 +54,7 @@
 #define CELL_CMD_RENDER        5
 
 
+
 /**
  * Tell SPUs about the framebuffer size, location
  */
@@ -77,6 +78,7 @@ struct cell_command_clear_surface
 
 #define CELL_MAX_VBUF_SIZE    (16 * 1024)
 #define CELL_MAX_VBUF_INDEXES 1024
+#define CELL_MAX_ATTRIBS      2 /* temporary! */
 struct cell_command_render
 {
    uint prim_type;
@@ -104,18 +106,6 @@ struct cell_init_info
    unsigned num_spus;
    struct cell_command *cmd;
 } ALIGN16_ATTRIB;
-
-
-/** Temporary */
-#define CELL_MAX_VERTS 240
-#define CELL_MAX_ATTRIBS 2
-struct cell_prim_buffer
-{
-   float vertex[CELL_MAX_VERTS][CELL_MAX_ATTRIBS][4] ALIGN16_ATTRIB;
-   float xmin, ymin, xmax, ymax;
-   uint num_verts;
-} ALIGN16_ATTRIB;
-
 
 
 #endif /* CELL_COMMON_H */

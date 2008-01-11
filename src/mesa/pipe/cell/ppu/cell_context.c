@@ -240,11 +240,6 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell_init_vbuf(cell);
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
 
-   cell->prim_buffer.xmin = 1e100;
-   cell->prim_buffer.ymin = 1e100;
-   cell->prim_buffer.xmax = -1e100;
-   cell->prim_buffer.ymax = -1e100;
-
    /*
     * SPU stuff
     */

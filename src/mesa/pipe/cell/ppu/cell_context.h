@@ -96,8 +96,6 @@ struct cell_context
 
 
    uint num_spus;
-   
-   struct cell_prim_buffer prim_buffer;
 };
 
 
