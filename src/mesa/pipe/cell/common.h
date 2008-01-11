@@ -47,12 +47,22 @@
 #define TILE_SIZE 32
 
 
+/**
+ * The low byte of a mailbox word contains the command opcode.
+ * Remaining higher bytes are command specific.
+ */
+#define CELL_CMD_OPCODE_MASK 0xf
+
 #define CELL_CMD_EXIT          1
 #define CELL_CMD_FRAMEBUFFER   2
 #define CELL_CMD_CLEAR_SURFACE 3
 #define CELL_CMD_FINISH        4
 #define CELL_CMD_RENDER        5
+#define CELL_CMD_BATCH         6
 
+
+#define CELL_NUM_BATCH_BUFFERS 2
+#define CELL_BATCH_BUFFER_SIZE 1024  /**< 16KB would be the max */
 
 
 /**
@@ -90,12 +100,23 @@ struct cell_command_render
 } ALIGN16_ATTRIB;
 
 
+/**
+ * Execute a command/batch buffer.
+ */
+struct cell_command_batch
+{
+   ushort buffer;    /**< which buffer [0, CELL_NUM_CMD_BUFFFERS-1] */
+   ushort length;    /**< in bytes */
+} ALIGN16_ATTRIB;
+
+
 /** XXX unions don't seem to work */
 struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_surface clear;
    struct cell_command_render render;
+   struct cell_command_batch batch;
 } ALIGN16_ATTRIB;
 
 
@@ -105,6 +126,7 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    struct cell_command *cmd;
+   ubyte *batch_buffers[CELL_NUM_BATCH_BUFFERS];
 } ALIGN16_ATTRIB;
 
 

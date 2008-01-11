@@ -25,65 +25,16 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_SPU
-#define CELL_SPU
 
-
-#include <libspe2.h>
-#include <libmisc.h>
-#include "pipe/cell/common.h"
-
-#include "cell_context.h"
-
-
-#define MAX_SPUS 8
-
-/**
- * Global vars, for now anyway.
- */
-struct cell_global_info
-{
-   /**
-    * SPU/SPE handles, etc
-    */
-   spe_context_ptr_t spe_contexts[MAX_SPUS];
-   pthread_t spe_threads[MAX_SPUS];
-
-   /**
-    * Data sent to SPUs
-    */
-   struct cell_init_info inits[MAX_SPUS];
-   struct cell_command command[MAX_SPUS];
-};
-
-
-extern struct cell_global_info cell_global;
-
-
-/** This is the handle for the actual SPE code */
-extern spe_program_handle_t g3d_spu;
+#ifndef CELL_BATCH_H
+#define CELL_BATCH_H
 
 
 extern void
-send_mbox_message(spe_context_ptr_t ctx, unsigned int msg);
-
-extern uint
-wait_mbox_message(spe_context_ptr_t ctx);
-
+cell_batch_flush(struct cell_context *cell);
 
 extern void
-cell_start_spus(struct cell_context *cell);
+cell_batch_append(struct cell_context *cell, const void *cmd, uint length);
 
 
-extern void
-finish_all(uint num_spus);
-
-extern void
-test_spus(struct cell_context *cell);
-
-
-extern void
-cell_spu_exit(struct cell_context *cell);
-
-
-#endif /* CELL_SPU */
+#endif /* CELL_BATCH_H */

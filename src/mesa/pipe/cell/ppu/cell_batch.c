@@ -25,65 +25,61 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_SPU
-#define CELL_SPU
-
-
-#include <libspe2.h>
-#include <libmisc.h>
-#include "pipe/cell/common.h"
 
 #include "cell_context.h"
+#include "cell_batch.h"
+#include "cell_spu.h"
 
 
-#define MAX_SPUS 8
+void
+cell_batch_flush(struct cell_context *cell)
+{
+   const uint batch = cell->cur_batch;
+   const uint size = cell->batch_buffer_size[batch];
+   uint i, cmd_word;
+
+   if (size == 0)
+      return;
+
+   assert(batch < CELL_NUM_BATCH_BUFFERS);
+
+   printf("cell_batch_dispatch: buf %u, size %u\n", batch, size);
+          
+   cmd_word = CELL_CMD_BATCH | (batch << 8) | (size << 16);
+
+   for (i = 0; i < cell->num_spus; i++) {
+      send_mbox_message(cell_global.spe_contexts[i], cmd_word);
+   }
+
+   /* XXX wait on DMA xfer of prev buffer to complete */
+
+   cell->cur_batch = (batch + 1) % CELL_NUM_BATCH_BUFFERS;
+
+   cell->batch_buffer_size[cell->cur_batch] = 0;  /* empty */
+}
+
 
 /**
- * Global vars, for now anyway.
+ * \param cmd  command to append
+ * \param length  command size in bytes
  */
-struct cell_global_info
+void
+cell_batch_append(struct cell_context *cell, const void *cmd, uint length)
 {
-   /**
-    * SPU/SPE handles, etc
-    */
-   spe_context_ptr_t spe_contexts[MAX_SPUS];
-   pthread_t spe_threads[MAX_SPUS];
+   uint size;
 
-   /**
-    * Data sent to SPUs
-    */
-   struct cell_init_info inits[MAX_SPUS];
-   struct cell_command command[MAX_SPUS];
-};
+   assert(cell->cur_batch >= 0);
 
+   size = cell->batch_buffer_size[cell->cur_batch];
 
-extern struct cell_global_info cell_global;
+   if (size + length > CELL_BATCH_BUFFER_SIZE) {
+      cell_batch_flush(cell);
+      size = 0;
+   }
 
+   assert(size + length <= CELL_BATCH_BUFFER_SIZE);
 
-/** This is the handle for the actual SPE code */
-extern spe_program_handle_t g3d_spu;
+   memcpy(cell->batch_buffer[cell->cur_batch] + size, cmd, length);
 
-
-extern void
-send_mbox_message(spe_context_ptr_t ctx, unsigned int msg);
-
-extern uint
-wait_mbox_message(spe_context_ptr_t ctx);
-
-
-extern void
-cell_start_spus(struct cell_context *cell);
-
-
-extern void
-finish_all(uint num_spus);
-
-extern void
-test_spus(struct cell_context *cell);
-
-
-extern void
-cell_spu_exit(struct cell_context *cell);
-
-
-#endif /* CELL_SPU */
+   cell->batch_buffer_size[cell->cur_batch] = size + length;
+}

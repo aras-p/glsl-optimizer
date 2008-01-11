@@ -322,6 +322,13 @@ render(const struct cell_command_render *render)
 
 
 
+static void
+batch(const struct cell_command_batch *batch)
+{
+}
+
+
+
 /**
  * Temporary/simple main loop for SPEs: Get a command, execute it, repeat.
  */
@@ -359,7 +366,7 @@ main_loop(void)
               0  /* rid */);
       wait_on_mask( 1 << tag );
 
-      switch (opcode) {
+      switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
          if (Debug)
             printf("SPU %u: EXIT\n", init.id);
@@ -401,6 +408,16 @@ main_loop(void)
                    cmd.render.num_verts,
                    cmd.render.num_indexes);
          render(&cmd.render);
+         break;
+
+      case CELL_CMD_BATCH:
+         /* execute a batch buffer */
+         if (Debug)
+            printf("SPU %u: BATCH buffer %u, len %u\n",
+                   init.id,
+                   cmd.batch.buffer,
+                   cmd.batch.length);
+         batch(&cmd.batch);
          break;
 
       case CELL_CMD_FINISH:

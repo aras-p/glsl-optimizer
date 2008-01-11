@@ -96,6 +96,11 @@ struct cell_context
 
 
    uint num_spus;
+
+   ubyte batch_buffer_size[CELL_NUM_BATCH_BUFFERS];
+   ubyte batch_buffer[CELL_NUM_BATCH_BUFFERS][CELL_BATCH_BUFFER_SIZE] ALIGN16_ATTRIB;
+   int cur_batch;  /**< which batch buffer is being filled */
+
 };
 
 

@@ -95,11 +95,11 @@ static void *cell_thread_function(void *arg)
  * Create the SPU threads
  */
 void
-cell_start_spus(uint num_spus)
+cell_start_spus(struct cell_context *cell)
 {
-   uint i;
+   uint i, j;
 
-   assert(num_spus <= MAX_SPUS);
+   assert(cell->num_spus <= MAX_SPUS);
 
    ASSERT_ALIGN16(&cell_global.command[0]);
    ASSERT_ALIGN16(&cell_global.command[1]);
@@ -107,10 +107,13 @@ cell_start_spus(uint num_spus)
    ASSERT_ALIGN16(&cell_global.inits[0]);
    ASSERT_ALIGN16(&cell_global.inits[1]);
 
-   for (i = 0; i < num_spus; i++) {
+   for (i = 0; i < cell->num_spus; i++) {
       cell_global.inits[i].id = i;
-      cell_global.inits[i].num_spus = num_spus;
+      cell_global.inits[i].num_spus = cell->num_spus;
       cell_global.inits[i].cmd = &cell_global.command[i];
+      for (j = 0; j < CELL_NUM_BATCH_BUFFERS; j++) {
+         cell_global.inits[i].batch_buffers[j] = cell->batch_buffer[j];
+      }
 
       cell_global.spe_contexts[i] = spe_context_create(0, NULL);
       if (!cell_global.spe_contexts[i]) {
