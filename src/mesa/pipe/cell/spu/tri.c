@@ -48,7 +48,6 @@ struct vertex_header {
 
 struct prim_header {
    struct vertex_header *v[3];
-   uint color;
 };
 
 
@@ -130,9 +129,6 @@ struct setup_stage {
 
 #if 0
    struct quad_header quad; 
-#endif
-#if 1
-   uint color;
 #endif
 
    struct {
@@ -832,12 +828,6 @@ static void subtriangle( struct setup_stage *setup,
 static void
 setup_tri(struct setup_stage *setup, struct prim_header *prim)
 {
-   setup->color = prim->color;  /* XXX temporary */
-
-   /*
-   _mesa_printf("%s\n", __FUNCTION__ );
-   */
-
    if (!setup_sort_vertices( setup, prim )) {
       return; /* totally clipped */
    }
