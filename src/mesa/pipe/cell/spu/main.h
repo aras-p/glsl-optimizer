@@ -29,8 +29,6 @@
 #define MAIN_H
 
 
-#include <libmisc.h>
-#include <spu_mfcio.h>
 #include "pipe/cell/common.h"
 
 
