@@ -360,8 +360,14 @@ vbuf_begin( struct draw_stage *stage )
 static void 
 vbuf_end( struct draw_stage *stage )
 {
+#if 0
    /* XXX: Overkill */
    vbuf_flush_indices( stage );
+#else
+   /* By flushing vertices we avoid having the vertex buffer grow and grow */
+   struct vbuf_stage *vbuf = vbuf_stage(stage);
+   vbuf_flush_vertices( stage, vbuf->vertex_size );
+#endif
    
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
