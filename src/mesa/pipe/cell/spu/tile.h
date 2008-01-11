@@ -25,56 +25,45 @@
  * 
  **************************************************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef TILE_H
+#define TILE_H
 
 
 #include <libmisc.h>
 #include <spu_mfcio.h>
+#include "main.h"
 #include "pipe/cell/common.h"
 
 
-extern volatile struct cell_init_info init;
-
-struct framebuffer {
-   void *color_start;              /**< addr of color surface in main memory */
-   void *depth_start;              /**< addr of depth surface in main memory */
-   enum pipe_format color_format;
-   enum pipe_format depth_format;
-   uint width, height;             /**< size in pixels */
-   uint width_tiles, height_tiles; /**< width and height in tiles */
-
-   uint color_clear_value;
-   uint depth_clear_value;
-};
-
-/* XXX Collect these globals in a struct: */
-
-extern struct framebuffer fb;
+#define MAX_WIDTH 1024
+#define MAX_HEIGHT 1024
 
 
-/* DMA TAGS */
-
-#define TAG_SURFACE_CLEAR     10
-#define TAG_VERTEX_BUFFER     11
-#define TAG_INDEX_BUFFER      16
-#define TAG_READ_TILE_COLOR   12
-#define TAG_READ_TILE_Z       13
-#define TAG_WRITE_TILE_COLOR  14
-#define TAG_WRITE_TILE_Z      15
+extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 
-/** The standard assert macro doesn't seem to work on SPUs */
-#define ASSERT(x) \
-   if (!(x)) { \
-      fprintf(stderr, "SPU %d: %s:%d: %s(): assertion %s failed.\n", \
-              init.id, __FILE__, __LINE__, __FUNCTION__, #x); \
-      exit(1); \
-   }
+#define TILE_STATUS_CLEAR   1
+#define TILE_STATUS_DEFINED 2  /**< defined pixel data */
+#define TILE_STATUS_DIRTY   3  /**< modified, but not put back yet */
+
+extern ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
 
 void
-wait_on_mask(unsigned tag);
+get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
+          int tag, int zBuf);
+
+void
+put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
+         int tag, int zBuf);
+
+void
+clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value);
+
+void
+clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value);
 
 
-#endif /* MAIN_H */
+#endif /* TILE_H */

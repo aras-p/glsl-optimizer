@@ -35,6 +35,7 @@
 
 #include "main.h"
 #include "tri.h"
+#include "tile.h"
 #include "pipe/cell/common.h"
 #include "pipe/p_defines.h"
 
@@ -50,13 +51,6 @@ volatile struct cell_init_info init;
 
 struct framebuffer fb;
 
-uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-
-ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-
-
 
 
 void
@@ -67,81 +61,6 @@ wait_on_mask(unsigned tagMask)
    mfc_read_tag_status_any();
 }
 
-
-
-void
-get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
-         int tag, int zBuf)
-{
-   const uint offset = ty * fb->width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
-   const ubyte *src = zBuf ? fb->depth_start : fb->color_start;
-
-   src += offset * bytesPerTile;
-
-   ASSERT(tx < fb->width_tiles);
-   ASSERT(ty < fb->height_tiles);
-   ASSERT_ALIGN16(tile);
-   /*
-   printf("get_tile:  dest: %p  src: 0x%x  size: %d\n",
-          tile, (unsigned int) src, bytesPerTile);
-   */
-   mfc_get(tile,  /* dest in local memory */
-           (unsigned int) src, /* src in main memory */
-           bytesPerTile,
-           tag,
-           0, /* tid */
-           0  /* rid */);
-}
-
-
-void
-put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
-         int tag, int zBuf)
-{
-   const uint offset = ty * fb->width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
-   ubyte *dst = zBuf ? fb->depth_start : fb->color_start;
-
-   dst += offset * bytesPerTile;
-
-   ASSERT(tx < fb->width_tiles);
-   ASSERT(ty < fb->height_tiles);
-   ASSERT_ALIGN16(tile);
-   /*
-   printf("put_tile:  src: %p  dst: 0x%x  size: %d\n",
-          tile, (unsigned int) dst, bytesPerTile);
-   */
-   mfc_put((void *) tile,  /* src in local memory */
-           (unsigned int) dst,  /* dst in main memory */
-           bytesPerTile,
-           tag,
-           0, /* tid */
-           0  /* rid */);
-}
-
-
-void
-clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value)
-{
-   uint i, j;
-   for (i = 0; i < TILE_SIZE; i++) {
-      for (j = 0; j < TILE_SIZE; j++) {
-         tile[i][j] = value;
-      }
-   }
-}
-
-void
-clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value)
-{
-   uint i, j;
-   for (i = 0; i < TILE_SIZE; i++) {
-      for (j = 0; j < TILE_SIZE; j++) {
-         tile[i][j] = value;
-      }
-   }
-}
 
 
 /**

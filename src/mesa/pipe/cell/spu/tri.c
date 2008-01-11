@@ -45,6 +45,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
 #include "main.h"
+#include "tile.h"
 #include "tri.h"
 
 /*

@@ -17,6 +17,7 @@ PROG_SPU_EMBED_O = $(PROG)_spu-embed.o
 
 SOURCES = \
 	main.c \
+	tile.c \
 	tri.c
 
 SPU_OBJECTS = $(SOURCES:.c=.o) \
@@ -39,6 +40,9 @@ $(PROG_SPU): $(SPU_OBJECTS)
 
 main.o: main.c
 	$(SPU_CC) $(SPU_CFLAGS) -c main.c
+
+tile.o: tile.c
+	$(SPU_CC) $(SPU_CFLAGS) -c tile.c
 
 tri.o: tri.c
 	$(SPU_CC) $(SPU_CFLAGS) -c tri.c
