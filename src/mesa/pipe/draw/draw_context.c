@@ -69,7 +69,7 @@ struct draw_context *draw_create( void )
    /* Statically allocate maximum sized vertices for the cache - could be cleverer...
     */
    {
-      int i;
+      uint i;
       char *tmp = MALLOC( Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE );
 
       for (i = 0; i < Elements(draw->vcache.vertex); i++)
