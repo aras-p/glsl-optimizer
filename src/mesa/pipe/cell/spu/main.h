@@ -98,4 +98,14 @@ void
 clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value);
 
 
+
+/** The standard assert macro doesn't seem to work on SPUs */
+#define ASSERT(x) \
+   if (!(x)) { \
+      fprintf(stderr, "SPU %d: %s:%d: %s(): assertion %s failed.\n", \
+              init.id, __FILE__, __LINE__, __FUNCTION__, #x); \
+      exit(1); \
+   }
+
+
 #endif /* MAIN_H */

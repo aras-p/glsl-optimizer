@@ -258,7 +258,7 @@ pack_color(const float color[4])
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return (b << 24) | (g << 16) | (r << 8) | a;
    default:
-      assert(0);
+      ASSERT(0);
       return 0;
    }
 }
@@ -613,7 +613,7 @@ static void tri_linear_coeff( struct setup_stage *setup,
       float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
       float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
-      assert(slot < PIPE_MAX_SHADER_INPUTS);
+      ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
 
       setup->coef[slot].dadx[i] = a * setup->oneoverarea;
       setup->coef[slot].dady[i] = b * setup->oneoverarea;
@@ -777,7 +777,7 @@ static void subtriangle( struct setup_stage *setup,
    int y, start_y, finish_y;
    int sy = (int)eleft->sy;
 
-   assert((int)eleft->sy == (int) eright->sy);
+   ASSERT((int)eleft->sy == (int) eright->sy);
 
    /* clip top/bottom */
    start_y = sy;

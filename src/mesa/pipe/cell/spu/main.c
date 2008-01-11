@@ -30,7 +30,6 @@
 
 
 #include <stdio.h>
-#include <assert.h>
 #include <libmisc.h>
 #include <spu_mfcio.h>
 
@@ -80,8 +79,8 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
 
    src += offset * bytesPerTile;
 
-   assert(tx < fb->width_tiles);
-   assert(ty < fb->height_tiles);
+   ASSERT(tx < fb->width_tiles);
+   ASSERT(ty < fb->height_tiles);
    ASSERT_ALIGN16(tile);
    /*
    printf("get_tile:  dest: %p  src: 0x%x  size: %d\n",
@@ -106,8 +105,8 @@ put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
 
    dst += offset * bytesPerTile;
 
-   assert(tx < fb->width_tiles);
-   assert(ty < fb->height_tiles);
+   ASSERT(tx < fb->width_tiles);
+   ASSERT(ty < fb->height_tiles);
    ASSERT_ALIGN16(tile);
    /*
    printf("put_tile:  src: %p  dst: 0x%x  size: %d\n",
@@ -315,8 +314,8 @@ render(const struct cell_command_render *render)
       const uint tx = txmin + i % box_width_tiles;
       const uint ty = tymin + i / box_width_tiles;
 
-      assert(tx < fb.width_tiles);
-      assert(ty < fb.height_tiles);
+      ASSERT(tx < fb.width_tiles);
+      ASSERT(ty < fb.height_tiles);
 
       /* Start fetching color/z tiles.  We'll wait for completion when
        * we need read/write to them later in triangle rasterization.
@@ -331,7 +330,7 @@ render(const struct cell_command_render *render)
          get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
       }
 
-      assert(render->prim_type == PIPE_PRIM_TRIANGLES);
+      ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
 
       /* loop over tris */
       for (j = 0; j < render->num_verts; j += 3) {
@@ -445,8 +444,8 @@ render_vbuf(const struct cell_command_render_vbuf *render)
       const uint tx = txmin + i % box_width_tiles;
       const uint ty = tymin + i / box_width_tiles;
 
-      assert(tx < fb.width_tiles);
-      assert(ty < fb.height_tiles);
+      ASSERT(tx < fb.width_tiles);
+      ASSERT(ty < fb.height_tiles);
 
       /* Start fetching color/z tiles.  We'll wait for completion when
        * we need read/write to them later in triangle rasterization.
@@ -461,7 +460,7 @@ render_vbuf(const struct cell_command_render_vbuf *render)
          get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
       }
 
-      assert(render->prim_type == PIPE_PRIM_TRIANGLES);
+      ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
 
       /* loop over tris */
       for (j = 0; j < render->num_indexes; j += 3) {
@@ -531,7 +530,7 @@ main_loop(void)
    if (Debug)
       printf("SPU %u: Enter main loop\n", init.id);
 
-   assert((sizeof(struct cell_command) & 0xf) == 0);
+   ASSERT((sizeof(struct cell_command) & 0xf) == 0);
    ASSERT_ALIGN16(&cmd);
 
    while (!exitFlag) {
