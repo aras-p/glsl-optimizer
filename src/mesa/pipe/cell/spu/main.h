@@ -64,6 +64,7 @@ extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
 
 #define TAG_SURFACE_CLEAR     10
 #define TAG_VERTEX_BUFFER     11
+#define TAG_INDEX_BUFFER      16
 #define TAG_READ_TILE_COLOR   12
 #define TAG_READ_TILE_Z       13
 #define TAG_WRITE_TILE_COLOR  14

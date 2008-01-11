@@ -52,6 +52,7 @@
 #define CELL_CMD_CLEAR_SURFACE 3
 #define CELL_CMD_FINISH        4
 #define CELL_CMD_RENDER        5
+#define CELL_CMD_RENDER_VBUF   6
 
 
 /**
@@ -84,12 +85,26 @@ struct cell_command_render
 } ALIGN16_ATTRIB;
 
 
+#define CELL_MAX_VBUF_SIZE    (16 * 1024)
+#define CELL_MAX_VBUF_INDEXES 1024
+struct cell_command_render_vbuf
+{
+   uint prim_type;
+   uint num_verts, num_attribs;
+   uint num_indexes;
+   const void *vertex_data;
+   const ushort *index_data;
+   float xmin, ymin, xmax, ymax;
+} ALIGN16_ATTRIB;
+
+
 /** XXX unions don't seem to work */
 struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_surface clear;
    struct cell_command_render render;
+   struct cell_command_render_vbuf render_vbuf;
 } ALIGN16_ATTRIB;
 
 

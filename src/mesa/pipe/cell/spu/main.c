@@ -382,6 +382,143 @@ render(const struct cell_command_render *render)
 }
 
 
+static void
+render_vbuf(const struct cell_command_render_vbuf *render)
+{
+   /* we'll DMA into these buffers */
+   ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
+   ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
+   uint i, j, vertex_bytes, index_bytes;
+
+   ASSERT_ALIGN16(render->vertex_data);
+   ASSERT_ALIGN16(render->index_data);
+
+   /* how much vertex data */
+   vertex_bytes = render->num_verts * render->num_attribs * 4 * sizeof(float);
+   index_bytes = render->num_indexes * sizeof(ushort);
+   if (index_bytes < 8)
+      index_bytes = 8;
+   else
+      index_bytes = (index_bytes + 15) & ~0xf; /* multiple of 16 */
+
+   /*
+   printf("VBUF: indices at %p,  vertices at %p  vertex_bytes %u  ind_bytes %u\n",
+          render->index_data, render->vertex_data, vertex_bytes, index_bytes);
+   */
+
+   /* get vertex data from main memory */
+   mfc_get(vertex_data,  /* dest */
+           (unsigned int) render->vertex_data,  /* src */
+           vertex_bytes,  /* size */
+           TAG_VERTEX_BUFFER,
+           0, /* tid */
+           0  /* rid */);
+
+   /* get index data from main memory */
+   mfc_get(indexes,  /* dest */
+           (unsigned int) render->index_data,  /* src */
+           index_bytes,
+           TAG_INDEX_BUFFER,
+           0, /* tid */
+           0  /* rid */);
+
+   wait_on_mask(1 << TAG_VERTEX_BUFFER);
+   wait_on_mask(1 << TAG_INDEX_BUFFER);
+
+   /* find tiles which intersect the prim bounding box */
+   uint txmin, tymin, box_width_tiles, box_num_tiles;
+#if 0
+   tile_bounding_box(render, &txmin, &tymin,
+                     &box_num_tiles, &box_width_tiles);
+#else
+   txmin = 0;
+   tymin = 0;
+   box_num_tiles = fb.width_tiles * fb.height_tiles;
+   box_width_tiles = fb.width_tiles;
+#endif
+
+   /* make sure any pending clears have completed */
+   wait_on_mask(1 << TAG_SURFACE_CLEAR);
+
+   /* loop over tiles */
+   for (i = init.id; i < box_num_tiles; i += init.num_spus) {
+      const uint tx = txmin + i % box_width_tiles;
+      const uint ty = tymin + i / box_width_tiles;
+
+      assert(tx < fb.width_tiles);
+      assert(ty < fb.height_tiles);
+
+      /* Start fetching color/z tiles.  We'll wait for completion when
+       * we need read/write to them later in triangle rasterization.
+       */
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+         if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
+            get_tile(&fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
+         }
+      }
+
+      if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
+         get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
+      }
+
+      assert(render->prim_type == PIPE_PRIM_TRIANGLES);
+
+      /* loop over tris */
+      for (j = 0; j < render->num_indexes; j += 3) {
+         struct prim_header prim;
+         const float *vbuf = (const float *) vertex_data;
+         const float *v0, *v1, *v2;
+
+         v0 = vbuf + indexes[j] * render->num_attribs * 4;
+         v1 = vbuf + indexes[j+1] * render->num_attribs * 4;
+         v2 = vbuf + indexes[j+2] * render->num_attribs * 4;
+
+         /*
+         printf("  %u: Triangle %g,%g  %g,%g  %g,%g\n",
+                init.id,
+                prim_buffer.vertex[j*3+0][0][0],
+                prim_buffer.vertex[j*3+0][0][1],
+                prim_buffer.vertex[j*3+1][0][0],
+                prim_buffer.vertex[j*3+1][0][1],
+                prim_buffer.vertex[j*3+2][0][0],
+                prim_buffer.vertex[j*3+2][0][1]);
+         */
+
+         /* pos */
+         COPY_4V(prim.v[0].data[0], v0);
+         COPY_4V(prim.v[1].data[0], v1);
+         COPY_4V(prim.v[2].data[0], v2);
+
+         /* color */
+         COPY_4V(prim.v[0].data[1], v0 + 4);
+         COPY_4V(prim.v[1].data[1], v1 + 4);
+         COPY_4V(prim.v[2].data[1], v2 + 4);
+
+         tri_draw(&prim, tx, ty);
+      }
+
+      /* write color/z tiles back to main framebuffer, if dirtied */
+      if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
+         put_tile(&fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
+         tile_status[ty][tx] = TILE_STATUS_DEFINED;
+      }
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+         if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
+            put_tile(&fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
+            tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
+         }
+      }
+
+      /* XXX move these... */
+      wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
+      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+         wait_on_mask(1 << TAG_WRITE_TILE_Z);
+      }
+   }
+}
+
+
+
 /**
  * Temporary/simple main loop for SPEs: Get a command, execute it, repeat.
  */
@@ -458,6 +595,15 @@ main_loop(void)
             printf("SPU %u: RENDER %u verts, prim %u\n",
                    init.id, cmd.render.num_verts, cmd.render.prim_type);
          render(&cmd.render);
+         break;
+      case CELL_CMD_RENDER_VBUF:
+         if (Debug)
+            printf("SPU %u: RENDER_VBUF prim %u, indices: %u, nr_vert: %u\n",
+                   init.id,
+                   cmd.render_vbuf.prim_type,
+                   cmd.render_vbuf.num_verts,
+                   cmd.render_vbuf.num_indexes);
+         render_vbuf(&cmd.render_vbuf);
          break;
 
       case CELL_CMD_FINISH:
