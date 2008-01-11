@@ -70,6 +70,7 @@
  */
 struct cell_command_framebuffer
 {
+   uint opcode;
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
@@ -81,6 +82,7 @@ struct cell_command_framebuffer
  */
 struct cell_command_clear_surface
 {
+   uint opcode;
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
 } ALIGN16_ATTRIB;
@@ -91,6 +93,7 @@ struct cell_command_clear_surface
 #define CELL_MAX_ATTRIBS      2 /* temporary! */
 struct cell_command_render
 {
+   uint opcode;
    uint prim_type;
    uint num_verts, num_attribs;
    uint num_indexes;
@@ -100,23 +103,12 @@ struct cell_command_render
 } ALIGN16_ATTRIB;
 
 
-/**
- * Execute a command/batch buffer.
- */
-struct cell_command_batch
-{
-   ushort buffer;    /**< which buffer [0, CELL_NUM_CMD_BUFFFERS-1] */
-   ushort length;    /**< in bytes */
-} ALIGN16_ATTRIB;
-
-
 /** XXX unions don't seem to work */
 struct cell_command
 {
    struct cell_command_framebuffer fb;
    struct cell_command_clear_surface clear;
    struct cell_command_render render;
-   struct cell_command_batch batch;
 } ALIGN16_ATTRIB;
 
 

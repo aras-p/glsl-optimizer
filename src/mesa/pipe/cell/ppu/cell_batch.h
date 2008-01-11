@@ -30,11 +30,17 @@
 #define CELL_BATCH_H
 
 
+struct cell_context;
+
+
 extern void
 cell_batch_flush(struct cell_context *cell);
 
 extern void
 cell_batch_append(struct cell_context *cell, const void *cmd, uint length);
+
+extern void *
+cell_batch_alloc(struct cell_context *cell, uint bytes);
 
 
 #endif /* CELL_BATCH_H */

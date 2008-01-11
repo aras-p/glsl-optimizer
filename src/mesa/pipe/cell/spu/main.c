@@ -115,10 +115,14 @@ really_clear_tiles(uint surfaceIndex)
 
 
 static void
-clear_surface(const struct cell_command_clear_surface *clear)
+cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
    const uint num_tiles = fb.width_tiles * fb.height_tiles;
    uint i, j;
+
+   if (Debug)
+      printf("SPU %u: CLEAR SURF %u to 0x%08x\n", init.id,
+             clear->surface, clear->value);
 
 #define CLEAR_OPT 1
 #if CLEAR_OPT
@@ -206,13 +210,21 @@ tile_bounding_box(const struct cell_command_render *render,
 
 
 static void
-render(const struct cell_command_render *render)
+cmd_render(const struct cell_command_render *render)
 {
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
    ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
 
    uint i, j, vertex_size, vertex_bytes, index_bytes;
+
+   if (Debug)
+      printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
+             init.id,
+             render->prim_type,
+             render->num_verts,
+             render->num_indexes);
+
 
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(render->index_data);
@@ -321,12 +333,114 @@ render(const struct cell_command_render *render)
 }
 
 
-
 static void
-batch(const struct cell_command_batch *batch)
+cmd_framebuffer(const struct cell_command_framebuffer *cmd)
 {
+   if (Debug)
+      printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
+             init.id,
+             cmd->width,
+             cmd->height,
+             cmd->color_start,
+             cmd->color_format,
+             cmd->depth_format);
+
+   fb.color_start = cmd->color_start;
+   fb.depth_start = cmd->depth_start;
+   fb.color_format = cmd->color_format;
+   fb.depth_format = cmd->depth_format;
+   fb.width = cmd->width;
+   fb.height = cmd->height;
+   fb.width_tiles = (fb.width + TILE_SIZE - 1) / TILE_SIZE;
+   fb.height_tiles = (fb.height + TILE_SIZE - 1) / TILE_SIZE;
 }
 
+
+static void
+cmd_finish(void)
+{
+   if (Debug)
+      printf("SPU %u: FINISH\n", init.id);
+   really_clear_tiles(0);
+   /* wait for all outstanding DMAs to finish */
+   mfc_write_tag_mask(~0);
+   mfc_read_tag_status_all();
+   /* send mbox message to PPU */
+   spu_write_out_mbox(CELL_CMD_FINISH);
+}
+
+
+/**
+ * Execute a batch of commands
+ * The opcode param encodes the location of the buffer and its size.
+ */
+static void
+cmd_batch(uint opcode)
+{
+   const uint buf = (opcode >> 8) & 0xff;
+   uint size = (opcode >> 16);
+   uint buffer[CELL_BATCH_BUFFER_SIZE / 4] ALIGN16_ATTRIB;
+   const uint usize = size / sizeof(uint);
+   uint pos;
+
+   if (Debug)
+      printf("SPU %u: BATCH buffer %u, len %u, from %p\n",
+             init.id, buf, size, init.batch_buffers[buf]);
+
+   ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
+
+   ASSERT_ALIGN16(init.batch_buffers[buf]);
+
+   size = (size + 0xf) & ~0xf;
+
+   mfc_get(buffer,  /* dest */
+           (unsigned int) init.batch_buffers[buf],  /* src */
+           size,
+           TAG_BATCH_BUFFER,
+           0, /* tid */
+           0  /* rid */);
+   wait_on_mask(1 << TAG_BATCH_BUFFER);
+
+   for (pos = 0; pos < usize; /* no incr */) {
+      switch (buffer[pos]) {
+      case CELL_CMD_FRAMEBUFFER:
+         {
+            struct cell_command_framebuffer *fb
+               = (struct cell_command_framebuffer *) &buffer[pos];
+            cmd_framebuffer(fb);
+            pos += sizeof(*fb) / 4;
+         }
+         break;
+      case CELL_CMD_CLEAR_SURFACE:
+         {
+            struct cell_command_clear_surface *clr
+               = (struct cell_command_clear_surface *) &buffer[pos];
+            cmd_clear_surface(clr);
+            pos += sizeof(*clr) / 4;
+         }
+         break;
+      case CELL_CMD_RENDER:
+         {
+            struct cell_command_render *render
+               = (struct cell_command_render *) &buffer[pos];
+            cmd_render(render);
+            pos += sizeof(*render) / 4;
+         }
+         break;
+      case CELL_CMD_FINISH:
+         cmd_finish();
+         pos += 1;
+         break;
+      default:
+         printf("SPU %u: bad opcode: 0x%x\n", init.id, buffer[pos]);
+         ASSERT(0);
+         break;
+      }
+   }
+
+   if (Debug)
+      printf("SPU %u: BATCH complete\n", init.id);
+}
 
 
 /**
@@ -355,7 +469,7 @@ main_loop(void)
       opcode = (unsigned int) spu_read_in_mbox();
 
       if (Debug)
-         printf("SPU %u: got cmd %u\n", init.id, opcode);
+         printf("SPU %u: got cmd 0x%x\n", init.id, opcode);
 
       /* command payload */
       mfc_get(&cmd,  /* dest */
@@ -373,62 +487,19 @@ main_loop(void)
          exitFlag = 1;
          break;
       case CELL_CMD_FRAMEBUFFER:
-         if (Debug)
-            printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
-                   init.id,
-                   cmd.fb.width,
-                   cmd.fb.height,
-                   cmd.fb.color_start,
-                   cmd.fb.color_format,
-                   cmd.fb.depth_format);
-         fb.color_start = cmd.fb.color_start;
-         fb.depth_start = cmd.fb.depth_start;
-         fb.color_format = cmd.fb.color_format;
-         fb.depth_format = cmd.fb.depth_format;
-         fb.width = cmd.fb.width;
-         fb.height = cmd.fb.height;
-         fb.width_tiles = (fb.width + TILE_SIZE - 1) / TILE_SIZE;
-         fb.height_tiles = (fb.height + TILE_SIZE - 1) / TILE_SIZE;
-         /*
-         printf("SPU %u: %u x %u tiles\n",
-                init.id, fb.width_tiles, fb.height_tiles);
-         */
+         cmd_framebuffer(&cmd.fb);
          break;
       case CELL_CMD_CLEAR_SURFACE:
-         if (Debug)
-            printf("SPU %u: CLEAR SURF %u to 0x%08x\n", init.id,
-                   cmd.clear.surface, cmd.clear.value);
-         clear_surface(&cmd.clear);
+         cmd_clear_surface(&cmd.clear);
          break;
       case CELL_CMD_RENDER:
-         if (Debug)
-            printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
-                   init.id,
-                   cmd.render.prim_type,
-                   cmd.render.num_verts,
-                   cmd.render.num_indexes);
-         render(&cmd.render);
+         cmd_render(&cmd.render);
          break;
-
       case CELL_CMD_BATCH:
-         /* execute a batch buffer */
-         if (Debug)
-            printf("SPU %u: BATCH buffer %u, len %u\n",
-                   init.id,
-                   cmd.batch.buffer,
-                   cmd.batch.length);
-         batch(&cmd.batch);
+         cmd_batch(opcode);
          break;
-
       case CELL_CMD_FINISH:
-         if (Debug)
-            printf("SPU %u: FINISH\n", init.id);
-         really_clear_tiles(0);
-         /* wait for all outstanding DMAs to finish */
-         mfc_write_tag_mask(~0);
-         mfc_read_tag_status_all();
-         /* send mbox message to PPU */
-         spu_write_out_mbox(CELL_CMD_FINISH);
+         cmd_finish();
          break;
       default:
          printf("Bad opcode!\n");

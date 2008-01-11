@@ -37,6 +37,7 @@
 #include "pipe/p_util.h"
 #include "pipe/cell/common.h"
 #include "cell_context.h"
+#include "cell_batch.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
 
@@ -59,6 +60,7 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       surfIndex = 0;
    }
 
+#if 0
    for (i = 0; i < cell->num_spus; i++) {
 #if 1
       uint clr = clearValue;
@@ -80,6 +82,16 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       cell_global.command[i].clear.surface = surfIndex;
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
    }
+#else
+   {
+      struct cell_command_clear_surface *clr
+         = (struct cell_command_clear_surface *)
+         cell_batch_alloc(cell, sizeof(*clr));
+      clr->opcode = CELL_CMD_CLEAR_SURFACE;
+      clr->surface = surfIndex;
+      clr->value = clearValue;
+   }
+#endif
 
    /* XXX temporary */
    cell_flush(&cell->pipe, 0x0);

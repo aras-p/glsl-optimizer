@@ -27,6 +27,7 @@
 
 
 #include "pipe/p_inlines.h"
+#include "cell_batch.h"
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_spu.h"
@@ -68,8 +69,10 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
       if (zsurf && !zsurf->map)
          pipe_surface_map(zsurf);
 
+#if 0
       for (i = 0; i < cell->num_spus; i++) {
          struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
+         fb->opcode = CELL_CMD_FRAMEBUFFER;
          fb->color_start = csurf->map;
          fb->color_format = csurf->format;
          fb->depth_start = zsurf ? zsurf->map : NULL;
@@ -78,7 +81,22 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
          fb->height = csurf->height;
          send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
       }
-
+#endif
+#if 1
+      {
+         struct cell_command_framebuffer *fb
+            = cell_batch_alloc(cell, sizeof(*fb));
+         fb->opcode = CELL_CMD_FRAMEBUFFER;
+         fb->color_start = csurf->map;
+         fb->color_format = csurf->format;
+         fb->depth_start = zsurf ? zsurf->map : NULL;
+         fb->depth_format = zsurf ? zsurf->format : PIPE_FORMAT_NONE;
+         fb->width = csurf->width;
+         fb->height = csurf->height;
+         /*cell_batch_flush(cell);*/
+         /*cell_flush(&cell->pipe, 0x0);*/
+      }
+#endif
       cell->dirty |= CELL_NEW_FRAMEBUFFER;
    }
 

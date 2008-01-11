@@ -55,12 +55,12 @@ extern struct framebuffer fb;
 
 #define TAG_SURFACE_CLEAR     10
 #define TAG_VERTEX_BUFFER     11
-#define TAG_INDEX_BUFFER      16
 #define TAG_READ_TILE_COLOR   12
 #define TAG_READ_TILE_Z       13
 #define TAG_WRITE_TILE_COLOR  14
 #define TAG_WRITE_TILE_Z      15
-
+#define TAG_INDEX_BUFFER      16
+#define TAG_BATCH_BUFFER      17
 
 /** The standard assert macro doesn't seem to work on SPUs */
 #define ASSERT(x) \

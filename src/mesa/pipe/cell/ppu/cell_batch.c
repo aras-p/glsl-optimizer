@@ -43,7 +43,7 @@ cell_batch_flush(struct cell_context *cell)
 
    assert(batch < CELL_NUM_BATCH_BUFFERS);
 
-   printf("cell_batch_dispatch: buf %u, size %u\n", batch, size);
+   /*printf("cell_batch_dispatch: buf %u, size %u\n", batch, size);*/
           
    cmd_word = CELL_CMD_BATCH | (batch << 8) | (size << 16);
 
@@ -82,4 +82,29 @@ cell_batch_append(struct cell_context *cell, const void *cmd, uint length)
    memcpy(cell->batch_buffer[cell->cur_batch] + size, cmd, length);
 
    cell->batch_buffer_size[cell->cur_batch] = size + length;
+}
+
+
+void *
+cell_batch_alloc(struct cell_context *cell, uint bytes)
+{
+   void *pos;
+   uint size;
+
+   assert(cell->cur_batch >= 0);
+
+   size = cell->batch_buffer_size[cell->cur_batch];
+
+   if (size + bytes > CELL_BATCH_BUFFER_SIZE) {
+      cell_batch_flush(cell);
+      size = 0;
+   }
+
+   assert(size + bytes <= CELL_BATCH_BUFFER_SIZE);
+
+   pos = (void *) (cell->batch_buffer[cell->cur_batch] + size);
+
+   cell->batch_buffer_size[cell->cur_batch] = size + bytes;
+
+   return pos;
 }
