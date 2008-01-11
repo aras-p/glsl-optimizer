@@ -29,18 +29,6 @@
  * Triangle rendering within a tile.
  */
 
-
-#if 0
-#include "sp_context.h"
-#include "sp_headers.h"
-#include "sp_quad.h"
-#include "sp_prim_setup.h"
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vertex.h"
-#include "pipe/p_util.h"
-#endif
-
-
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
@@ -48,10 +36,6 @@
 #include "tile.h"
 #include "tri.h"
 
-/*
-#include <vmx2spu.h>
-#include <spu_internals.h>
-*/
 
 
 /**
@@ -61,7 +45,6 @@
 struct vertex_header {
    float data[2][4];  /* pos and color */
 };
-
 
 struct prim_header {
    struct vertex_header *v[3];
@@ -119,11 +102,6 @@ struct interp_coef
  * Also used for line drawing (taking some liberties).
  */
 struct setup_stage {
-#if 0
-   struct draw_stage stage; /**< This must be first (base class) */
-
-   struct softpipe_context *softpipe;
-#endif
 
    /* Vertices are just an array of floats making up each attribute in
     * turn.  Currently fixed at 4 floats, but should change in time.
@@ -895,67 +873,6 @@ setup_tri(struct setup_stage *setup, struct prim_header *prim)
    flush_spans( setup );
 }
 
-
-
-
-#if 0
-static void setup_begin( struct draw_stage *stage )
-{
-   struct setup_stage *setup = setup_stage(stage);
-   struct softpipe_context *sp = setup->softpipe;
-
-   setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-
-   sp->quad.first->begin(sp->quad.first);
-}
-#endif
-
-#if 0
-static void setup_end( struct draw_stage *stage )
-{
-}
-#endif
-
-
-#if 0
-static void reset_stipple_counter( struct draw_stage *stage )
-{
-   struct setup_stage *setup = setup_stage(stage);
-   setup->softpipe->line_stipple_counter = 0;
-}
-#endif
-
-#if 0
-static void render_destroy( struct draw_stage *stage )
-{
-   FREE( stage );
-}
-#endif
-
-
-#if 0
-/**
- * Create a new primitive setup/render stage.
- */
-struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
-{
-   struct setup_stage *setup = CALLOC_STRUCT(setup_stage);
-
-   setup->softpipe = softpipe;
-   setup->stage.draw = softpipe->draw;
-   setup->stage.begin = setup_begin;
-   setup->stage.point = setup_point;
-   setup->stage.line = setup_line;
-   setup->stage.tri = setup_tri;
-   setup->stage.end = setup_end;
-   setup->stage.reset_stipple_counter = reset_stipple_counter;
-   setup->stage.destroy = render_destroy;
-
-   setup->quad.coef = setup->coef;
-
-   return &setup->stage;
-}
-#endif
 
 
 /**
