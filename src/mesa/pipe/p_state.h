@@ -56,18 +56,13 @@
 #define PIPE_MAX_SHADER_OUTPUTS 16
 
 
-/* fwd decl */
+/* fwd decls */
 struct pipe_surface;
+struct pipe_winsys;
 
 /* opaque type */
 struct pipe_buffer_handle;
 
-struct pipe_winsys;
-
-
-/***
- *** State objects
- ***/
 
 
 /**
@@ -115,12 +110,14 @@ struct pipe_viewport_state {
    float translate[4];
 };
 
+
 struct pipe_scissor_state {
    unsigned minx:16;
    unsigned miny:16;
    unsigned maxx:16;
    unsigned maxy:16;
 };
+
 
 struct pipe_clip_state {
    float ucp[PIPE_MAX_CLIP_PLANES][4];
@@ -148,13 +145,14 @@ struct pipe_shader_state {
    ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 };
 
+
 struct pipe_depth_stencil_alpha_state
 {
    struct {
-      unsigned enabled:1;   /**< depth test enabled? */
-      unsigned writemask:1; /**< allow depth buffer writes? */
-      unsigned func:3;      /**< depth test func (PIPE_FUNC_x) */
-      unsigned occlusion_count:1; /**< XXX move this elsewhere? */
+      unsigned enabled:1;         /**< depth test enabled? */
+      unsigned writemask:1;       /**< allow depth buffer writes? */
+      unsigned func:3;            /**< depth test func (PIPE_FUNC_x) */
+      unsigned occlusion_count:1; /**< do occlusion counting? */
    } depth;
    struct {
       unsigned enabled:1;
@@ -165,12 +163,11 @@ struct pipe_depth_stencil_alpha_state
       ubyte ref_value;    
       ubyte value_mask;
       ubyte write_mask;
-   } stencil[2];		/**< [0] = front, [1] = back */
-
+   } stencil[2];           /**< [0] = front, [1] = back */
    struct {
       unsigned enabled:1;
-      unsigned func:3;    /**< PIPE_FUNC_x */
-      float ref;      /**< reference value */
+      unsigned func:3;     /**< PIPE_FUNC_x */
+      float ref;           /**< reference value */
    } alpha;
 };
 
@@ -193,9 +190,11 @@ struct pipe_blend_state {
    unsigned dither:1;
 };
 
+
 struct pipe_blend_color {
    float color[4];
 };
+
 
 struct pipe_framebuffer_state
 {
@@ -312,7 +311,6 @@ struct pipe_vertex_element
  
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
-
 
 
 #endif
