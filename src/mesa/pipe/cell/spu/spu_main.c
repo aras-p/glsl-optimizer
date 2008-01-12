@@ -38,7 +38,6 @@
 #include "spu_tile.h"
 #include "pipe/cell/common.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_state.h"
 
 
 /*
@@ -49,10 +48,7 @@ helpful headers:
 
 static boolean Debug = TRUE;
 
-volatile struct cell_init_info init;
-
-struct framebuffer fb;
-
+struct spu_global spu;
 
 
 void
@@ -81,32 +77,32 @@ wait_on_mask_all(unsigned tagMask)
 static void
 really_clear_tiles(uint surfaceIndex)
 {
-   const uint num_tiles = fb.width_tiles * fb.height_tiles;
+   const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
    uint i, j;
 
    if (surfaceIndex == 0) {
       for (i = 0; i < TILE_SIZE; i++)
          for (j = 0; j < TILE_SIZE; j++)
-            ctile[i][j] = fb.color_clear_value;
+            ctile[i][j] = spu.fb.color_clear_value;
 
-      for (i = init.id; i < num_tiles; i += init.num_spus) {
-         uint tx = i % fb.width_tiles;
-         uint ty = i / fb.width_tiles;
+      for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
+         uint tx = i % spu.fb.width_tiles;
+         uint ty = i / spu.fb.width_tiles;
          if (tile_status[ty][tx] == TILE_STATUS_CLEAR) {
-            put_tile(&fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
+            put_tile(&spu.fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
          }
       }
    }
    else {
       for (i = 0; i < TILE_SIZE; i++)
          for (j = 0; j < TILE_SIZE; j++)
-            ztile[i][j] = fb.depth_clear_value;
+            ztile[i][j] = spu.fb.depth_clear_value;
 
-      for (i = init.id; i < num_tiles; i += init.num_spus) {
-         uint tx = i % fb.width_tiles;
-         uint ty = i / fb.width_tiles;
+      for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
+         uint tx = i % spu.fb.width_tiles;
+         uint ty = i / spu.fb.width_tiles;
          if (tile_status_z[ty][tx] == TILE_STATUS_CLEAR)
-            put_tile(&fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 1);
+            put_tile(&spu.fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 1);
       }
    }
 
@@ -119,11 +115,11 @@ really_clear_tiles(uint surfaceIndex)
 static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
-   const uint num_tiles = fb.width_tiles * fb.height_tiles;
+   const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
    uint i, j;
 
    if (Debug)
-      printf("SPU %u: CLEAR SURF %u to 0x%08x\n", init.id,
+      printf("SPU %u: CLEAR SURF %u to 0x%08x\n", spu.init.id,
              clear->surface, clear->value);
 
 #define CLEAR_OPT 1
@@ -131,11 +127,11 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
    /* set all tile's status to CLEAR */
    if (clear->surface == 0) {
       memset(tile_status, TILE_STATUS_CLEAR, sizeof(tile_status));
-      fb.color_clear_value = clear->value;
+      spu.fb.color_clear_value = clear->value;
    }
    else {
       memset(tile_status_z, TILE_STATUS_CLEAR, sizeof(tile_status_z));
-      fb.depth_clear_value = clear->value;
+      spu.fb.depth_clear_value = clear->value;
    }
    return;
 #endif
@@ -153,16 +149,16 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
    /*
    printf("SPU: %s num=%d w=%d h=%d\n",
-          __FUNCTION__, num_tiles, fb.width_tiles, fb.height_tiles);
+          __FUNCTION__, num_tiles, spu.fb.width_tiles, spu.fb.height_tiles);
    */
 
-   for (i = init.id; i < num_tiles; i += init.num_spus) {
-      uint tx = i % fb.width_tiles;
-      uint ty = i / fb.width_tiles;
+   for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
+      uint tx = i % spu.fb.width_tiles;
+      uint ty = i / spu.fb.width_tiles;
       if (clear->surface == 0)
-         put_tile(&fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
+         put_tile(&spu.fb, tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
       else
-         put_tile(&fb, tx, ty, (uint *) ztile, TAG_SURFACE_CLEAR, 1);
+         put_tile(&spu.fb, tx, ty, (uint *) ztile, TAG_SURFACE_CLEAR, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
    }
 
@@ -183,12 +179,12 @@ tile_bounding_box(const struct cell_command_render *render,
 {
 #if 1
    /* Debug: full-window bounding box */
-   uint txmax = fb.width_tiles - 1;
-   uint tymax = fb.height_tiles - 1;
+   uint txmax = spu.fb.width_tiles - 1;
+   uint tymax = spu.fb.height_tiles - 1;
    *txmin = 0;
    *tymin = 0;
-   *box_num_tiles = fb.width_tiles * fb.height_tiles;
-   *box_width_tiles = fb.width_tiles;
+   *box_num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
+   *box_width_tiles = spu.fb.width_tiles;
    (void) render;
    (void) txmax;
    (void) tymax;
@@ -222,7 +218,7 @@ cmd_render(const struct cell_command_render *render)
 
    if (Debug)
       printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
-             init.id,
+             spu.init.id,
              render->prim_type,
              render->num_verts,
              render->num_indexes);
@@ -273,32 +269,32 @@ cmd_render(const struct cell_command_render *render)
 #else
    txmin = 0;
    tymin = 0;
-   box_num_tiles = fb.width_tiles * fb.height_tiles;
-   box_width_tiles = fb.width_tiles;
+   box_num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
+   box_width_tiles = spu.fb.width_tiles;
 #endif
 
    /* make sure any pending clears have completed */
    wait_on_mask(1 << TAG_SURFACE_CLEAR);
 
    /* loop over tiles */
-   for (i = init.id; i < box_num_tiles; i += init.num_spus) {
+   for (i = spu.init.id; i < box_num_tiles; i += spu.init.num_spus) {
       const uint tx = txmin + i % box_width_tiles;
       const uint ty = tymin + i / box_width_tiles;
 
-      ASSERT(tx < fb.width_tiles);
-      ASSERT(ty < fb.height_tiles);
+      ASSERT(tx < spu.fb.width_tiles);
+      ASSERT(ty < spu.fb.height_tiles);
 
       /* Start fetching color/z tiles.  We'll wait for completion when
        * we need read/write to them later in triangle rasterization.
        */
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
          if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
-            get_tile(&fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
+            get_tile(&spu.fb, tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
          }
       }
 
       if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
-         get_tile(&fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
+         get_tile(&spu.fb, tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
       }
 
       ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
@@ -316,19 +312,19 @@ cmd_render(const struct cell_command_render *render)
 
       /* write color/z tiles back to main framebuffer, if dirtied */
       if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
-         put_tile(&fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
+         put_tile(&spu.fb, tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
          tile_status[ty][tx] = TILE_STATUS_DEFINED;
       }
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
          if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
-            put_tile(&fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
+            put_tile(&spu.fb, tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
             tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
          }
       }
 
       /* XXX move these... */
       wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
-      if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
          wait_on_mask(1 << TAG_WRITE_TILE_Z);
       }
    }
@@ -340,21 +336,21 @@ cmd_framebuffer(const struct cell_command_framebuffer *cmd)
 {
    if (Debug)
       printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
-             init.id,
+             spu.init.id,
              cmd->width,
              cmd->height,
              cmd->color_start,
              cmd->color_format,
              cmd->depth_format);
 
-   fb.color_start = cmd->color_start;
-   fb.depth_start = cmd->depth_start;
-   fb.color_format = cmd->color_format;
-   fb.depth_format = cmd->depth_format;
-   fb.width = cmd->width;
-   fb.height = cmd->height;
-   fb.width_tiles = (fb.width + TILE_SIZE - 1) / TILE_SIZE;
-   fb.height_tiles = (fb.height + TILE_SIZE - 1) / TILE_SIZE;
+   spu.fb.color_start = cmd->color_start;
+   spu.fb.depth_start = cmd->depth_start;
+   spu.fb.color_format = cmd->color_format;
+   spu.fb.depth_format = cmd->depth_format;
+   spu.fb.width = cmd->width;
+   spu.fb.height = cmd->height;
+   spu.fb.width_tiles = (spu.fb.width + TILE_SIZE - 1) / TILE_SIZE;
+   spu.fb.height_tiles = (spu.fb.height + TILE_SIZE - 1) / TILE_SIZE;
 }
 
 
@@ -363,7 +359,7 @@ cmd_state_depth_stencil(const struct pipe_depth_stencil_alpha_state *state)
 {
    if (Debug)
       printf("SPU %u: DEPTH_STENCIL: ztest %d\n",
-             init.id,
+             spu.init.id,
              state->depth.enabled);
    /* XXX copy/save the state */
 }
@@ -373,7 +369,7 @@ static void
 cmd_finish(void)
 {
    if (Debug)
-      printf("SPU %u: FINISH\n", init.id);
+      printf("SPU %u: FINISH\n", spu.init.id);
    really_clear_tiles(0);
    /* wait for all outstanding DMAs to finish */
    mfc_write_tag_mask(~0);
@@ -398,16 +394,16 @@ cmd_batch(uint opcode)
 
    if (Debug)
       printf("SPU %u: BATCH buffer %u, len %u, from %p\n",
-             init.id, buf, size, init.batch_buffers[buf]);
+             spu.init.id, buf, size, spu.init.batch_buffers[buf]);
 
    ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
 
-   ASSERT_ALIGN16(init.batch_buffers[buf]);
+   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
 
    size = (size + 0xf) & ~0xf;
 
    mfc_get(buffer,  /* dest */
-           (unsigned int) init.batch_buffers[buf],  /* src */
+           (unsigned int) spu.init.batch_buffers[buf],  /* src */
            size,
            TAG_BATCH_BUFFER,
            0, /* tid */
@@ -450,14 +446,14 @@ cmd_batch(uint opcode)
          pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
          break;
       default:
-         printf("SPU %u: bad opcode: 0x%x\n", init.id, buffer[pos]);
+         printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
          ASSERT(0);
          break;
       }
    }
 
    if (Debug)
-      printf("SPU %u: BATCH complete\n", init.id);
+      printf("SPU %u: BATCH complete\n", spu.init.id);
 }
 
 
@@ -471,7 +467,7 @@ main_loop(void)
    int exitFlag = 0;
 
    if (Debug)
-      printf("SPU %u: Enter main loop\n", init.id);
+      printf("SPU %u: Enter main loop\n", spu.init.id);
 
    ASSERT((sizeof(struct cell_command) & 0xf) == 0);
    ASSERT_ALIGN16(&cmd);
@@ -481,17 +477,17 @@ main_loop(void)
       int tag = 0;
 
       if (Debug)
-         printf("SPU %u: Wait for cmd...\n", init.id);
+         printf("SPU %u: Wait for cmd...\n", spu.init.id);
 
       /* read/wait from mailbox */
       opcode = (unsigned int) spu_read_in_mbox();
 
       if (Debug)
-         printf("SPU %u: got cmd 0x%x\n", init.id, opcode);
+         printf("SPU %u: got cmd 0x%x\n", spu.init.id, opcode);
 
       /* command payload */
       mfc_get(&cmd,  /* dest */
-              (unsigned int) init.cmd, /* src */
+              (unsigned int) spu.init.cmd, /* src */
               sizeof(struct cell_command), /* bytes */
               tag,
               0, /* tid */
@@ -501,7 +497,7 @@ main_loop(void)
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
          if (Debug)
-            printf("SPU %u: EXIT\n", init.id);
+            printf("SPU %u: EXIT\n", spu.init.id);
          exitFlag = 1;
          break;
       case CELL_CMD_FRAMEBUFFER:
@@ -526,7 +522,7 @@ main_loop(void)
    }
 
    if (Debug)
-      printf("SPU %u: Exit main loop\n", init.id);
+      printf("SPU %u: Exit main loop\n", spu.init.id);
 }
 
 
@@ -556,7 +552,7 @@ main(unsigned long speid, unsigned long argp)
    if (Debug)
       printf("SPU: main() speid=%lu\n", speid);
 
-   mfc_get(&init,  /* dest */
+   mfc_get(&spu.init,  /* dest */
            (unsigned int) argp, /* src */
            sizeof(struct cell_init_info), /* bytes */
            tag,

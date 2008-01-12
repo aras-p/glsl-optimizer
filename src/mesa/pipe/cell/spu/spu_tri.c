@@ -41,7 +41,6 @@
 /**
  * Simplified types taken from other parts of Gallium
  */
-
 struct vertex_header {
    float data[2][4];  /* pos and color */
 };
@@ -50,10 +49,6 @@ struct prim_header {
    struct vertex_header *v[3];
 };
 
-
-
-
-#if 1
 
 /* XXX fix this */
 #undef CEILF
@@ -69,10 +64,6 @@ struct prim_header {
 #define MASK_BOTTOM_LEFT  (1 << QUAD_BOTTOM_LEFT)
 #define MASK_BOTTOM_RIGHT (1 << QUAD_BOTTOM_RIGHT)
 #define MASK_ALL          0xf
-
-#define PIPE_MAX_SHADER_INPUTS 8 /* XXX temp */
-
-#endif
 
 
 #define DEBUG_VERTS 0
@@ -95,6 +86,7 @@ struct interp_coef
    float dadx[4];
    float dady[4];
 };
+
 
 /**
  * Triangle setup info (derived from draw_stage).
@@ -244,7 +236,7 @@ pack_color(const float color[4])
    uint g = (uint) (color[1] * 255.0);
    uint b = (uint) (color[2] * 255.0);
    uint a = (uint) (color[3] * 255.0);
-   switch (fb.color_format) {
+   switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return (a << 24) | (r << 16) | (g << 8) | b;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -277,13 +269,13 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
 
    eval_coeff(setup, 1, (float) x, (float) y, colors);
 
-   if (fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
       float zvals[4];
       eval_z(setup, (float) x, (float) y, zvals);
 
       if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
-         clear_tile_z(ztile, fb.depth_clear_value);
+         clear_tile_z(ztile, spu.fb.depth_clear_value);
       }
       else {
          /* make sure we've got the tile from main mem */
@@ -327,7 +319,7 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    if (mask) {
       if (tile_status[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
-         clear_tile(ctile, fb.color_clear_value);
+         clear_tile(ctile, spu.fb.color_clear_value);
       }
       else {
          /* make sure we've got the tile from main mem */

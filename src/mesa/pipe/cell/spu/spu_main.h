@@ -30,9 +30,8 @@
 
 
 #include "pipe/cell/common.h"
+#include "pipe/p_state.h"
 
-
-extern volatile struct cell_init_info init;
 
 struct framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
@@ -44,11 +43,27 @@ struct framebuffer {
 
    uint color_clear_value;
    uint depth_clear_value;
-};
+} ALIGN16_ATTRIB;
 
-/* XXX Collect these globals in a struct: */
 
-extern struct framebuffer fb;
+/**
+ * All SPU global/context state will be in singleton object of this type:
+ */
+struct spu_global
+{
+   struct cell_init_info init;
+
+   struct framebuffer fb;
+   struct pipe_depth_stencil_alpha_state depth_stencil;
+   struct pipe_blend_state blend;
+   /* XXX more state to come */
+
+} ALIGN16_ATTRIB;
+
+
+extern struct spu_global spu;
+
+
 
 
 /* DMA TAGS */
@@ -66,7 +81,7 @@ extern struct framebuffer fb;
 #define ASSERT(x) \
    if (!(x)) { \
       fprintf(stderr, "SPU %d: %s:%d: %s(): assertion %s failed.\n", \
-              init.id, __FILE__, __LINE__, __FUNCTION__, #x); \
+              spu.init.id, __FILE__, __LINE__, __FUNCTION__, #x); \
       exit(1); \
    }
 
