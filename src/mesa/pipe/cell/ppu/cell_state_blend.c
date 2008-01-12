@@ -33,6 +33,7 @@
 #include "cell_state.h"
 
 
+
 void *
 cell_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)

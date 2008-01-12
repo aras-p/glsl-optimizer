@@ -23,6 +23,7 @@ SOURCES = \
 	cell_state_blend.c \
 	cell_state_clip.c \
 	cell_state_derived.c \
+	cell_state_emit.c \
 	cell_state_fs.c \
 	cell_state_rasterizer.c \
 	cell_state_sampler.c \

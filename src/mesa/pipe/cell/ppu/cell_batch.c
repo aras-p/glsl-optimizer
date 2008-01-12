@@ -68,6 +68,7 @@ cell_batch_append(struct cell_context *cell, const void *cmd, uint length)
 {
    uint size;
 
+   assert(length % 4 == 0);
    assert(cell->cur_batch >= 0);
 
    size = cell->batch_buffer_size[cell->cur_batch];

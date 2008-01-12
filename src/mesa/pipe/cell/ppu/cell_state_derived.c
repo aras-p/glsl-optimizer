@@ -219,5 +219,7 @@ void cell_update_derived( struct cell_context *cell )
       compute_cliprect(cell);
 #endif
 
+   cell_emit_state(cell);
+
    cell->dirty = 0;
 }

@@ -38,6 +38,8 @@
 #include "spu_tile.h"
 #include "pipe/cell/common.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_state.h"
+
 
 /*
 helpful headers:
@@ -45,7 +47,7 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
-static boolean Debug = FALSE;
+static boolean Debug = TRUE;
 
 volatile struct cell_init_info init;
 
@@ -357,6 +359,17 @@ cmd_framebuffer(const struct cell_command_framebuffer *cmd)
 
 
 static void
+cmd_state_depth_stencil(const struct pipe_depth_stencil_alpha_state *state)
+{
+   if (Debug)
+      printf("SPU %u: DEPTH_STENCIL: ztest %d\n",
+             init.id,
+             state->depth.enabled);
+   /* XXX copy/save the state */
+}
+
+
+static void
 cmd_finish(void)
 {
    if (Debug)
@@ -430,6 +443,11 @@ cmd_batch(uint opcode)
       case CELL_CMD_FINISH:
          cmd_finish();
          pos += 1;
+         break;
+      case CELL_CMD_STATE_DEPTH_STENCIL:
+         cmd_state_depth_stencil((struct pipe_depth_stencil_alpha_state *)
+                                 &buffer[pos+1]);
+         pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
          break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", init.id, buffer[pos]);
