@@ -78,8 +78,8 @@ void *
 cell_create_rasterizer_state(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *setup)
 {
-   struct pipe_rasterizer_state *state =
-      MALLOC( sizeof(struct pipe_rasterizer_state) );
+   struct pipe_rasterizer_state *state
+      = MALLOC(sizeof(struct pipe_rasterizer_state));
    memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
    return state;
 }
@@ -98,10 +98,9 @@ cell_bind_rasterizer_state(struct pipe_context *pipe, void *setup)
    cell->dirty |= CELL_NEW_RASTERIZER;
 }
 
+
 void
 cell_delete_rasterizer_state(struct pipe_context *pipe, void *rasterizer)
 {
-   FREE( rasterizer );
+   FREE(rasterizer);
 }
-
-

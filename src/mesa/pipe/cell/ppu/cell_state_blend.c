@@ -32,17 +32,19 @@
 #include "cell_context.h"
 #include "cell_state.h"
 
+
 void *
 cell_create_blend_state(struct pipe_context *pipe,
-                            const struct pipe_blend_state *blend)
+                        const struct pipe_blend_state *blend)
 {
-   struct pipe_blend_state *state = MALLOC( sizeof(struct pipe_blend_state) );
+   struct pipe_blend_state *state = MALLOC(sizeof(struct pipe_blend_state));
    memcpy(state, blend, sizeof(struct pipe_blend_state));
    return state;
 }
 
-void cell_bind_blend_state( struct pipe_context *pipe,
-                                void *blend )
+
+void
+cell_bind_blend_state(struct pipe_context *pipe, void *blend)
 {
    struct cell_context *cell = cell_context(pipe);
 
@@ -51,15 +53,17 @@ void cell_bind_blend_state( struct pipe_context *pipe,
    cell->dirty |= CELL_NEW_BLEND;
 }
 
-void cell_delete_blend_state(struct pipe_context *pipe,
-                                 void *blend)
+
+void
+cell_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
-   FREE( blend );
+   FREE(blend);
 }
 
 
-void cell_set_blend_color( struct pipe_context *pipe,
-			     const struct pipe_blend_color *blend_color )
+void
+cell_set_blend_color(struct pipe_context *pipe,
+                     const struct pipe_blend_color *blend_color)
 {
    struct cell_context *cell = cell_context(pipe);
 
@@ -70,15 +74,17 @@ void cell_set_blend_color( struct pipe_context *pipe,
 
 
 
+
 void *
 cell_create_depth_stencil_alpha_state(struct pipe_context *pipe,
-                                      const struct pipe_depth_stencil_alpha_state *depth_stencil)
+                 const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
    struct pipe_depth_stencil_alpha_state *state =
-      MALLOC( sizeof(struct pipe_depth_stencil_alpha_state) );
+      MALLOC(sizeof(struct pipe_depth_stencil_alpha_state));
    memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_alpha_state));
    return state;
 }
+
 
 void
 cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
@@ -86,13 +92,15 @@ cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
 {
    struct cell_context *cell = cell_context(pipe);
 
-   cell->depth_stencil = (const struct pipe_depth_stencil_alpha_state *)depth_stencil;
+   cell->depth_stencil
+      = (const struct pipe_depth_stencil_alpha_state *) depth_stencil;
 
    cell->dirty |= CELL_NEW_DEPTH_STENCIL;
 }
 
+
 void
 cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *depth)
 {
-   FREE( depth );
+   FREE(depth);
 }
