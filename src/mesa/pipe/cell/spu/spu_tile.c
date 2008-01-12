@@ -40,17 +40,16 @@ ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
 
 void
-get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
-         int tag, int zBuf)
+get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf)
 {
-   const uint offset = ty * fb->width_tiles + tx;
+   const uint offset = ty * spu.fb.width_tiles + tx;
    const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
-   const ubyte *src = zBuf ? fb->depth_start : fb->color_start;
+   const ubyte *src = zBuf ? spu.fb.depth_start : spu.fb.color_start;
 
    src += offset * bytesPerTile;
 
-   ASSERT(tx < fb->width_tiles);
-   ASSERT(ty < fb->height_tiles);
+   ASSERT(tx < spu.fb.width_tiles);
+   ASSERT(ty < spu.fb.height_tiles);
    ASSERT_ALIGN16(tile);
    /*
    printf("get_tile:  dest: %p  src: 0x%x  size: %d\n",
@@ -66,17 +65,16 @@ get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
 
 
 void
-put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
-         int tag, int zBuf)
+put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
 {
-   const uint offset = ty * fb->width_tiles + tx;
+   const uint offset = ty * spu.fb.width_tiles + tx;
    const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
-   ubyte *dst = zBuf ? fb->depth_start : fb->color_start;
+   ubyte *dst = zBuf ? spu.fb.depth_start : spu.fb.color_start;
 
    dst += offset * bytesPerTile;
 
-   ASSERT(tx < fb->width_tiles);
-   ASSERT(ty < fb->height_tiles);
+   ASSERT(tx < spu.fb.width_tiles);
+   ASSERT(ty < spu.fb.height_tiles);
    ASSERT_ALIGN16(tile);
    /*
    printf("put_tile:  src: %p  dst: 0x%x  size: %d\n",

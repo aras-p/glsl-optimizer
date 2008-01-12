@@ -33,7 +33,7 @@
 #include "pipe/p_state.h"
 
 
-struct framebuffer {
+struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
    enum pipe_format color_format;
@@ -53,7 +53,7 @@ struct spu_global
 {
    struct cell_init_info init;
 
-   struct framebuffer fb;
+   struct spu_framebuffer fb;
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
    /* XXX more state to come */

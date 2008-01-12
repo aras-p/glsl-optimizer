@@ -52,12 +52,10 @@ extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_AT
 
 
 void
-get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile,
-          int tag, int zBuf);
+get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf);
 
 void
-put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile,
-         int tag, int zBuf);
+put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf);
 
 void
 clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value);
