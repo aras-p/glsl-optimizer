@@ -16,13 +16,17 @@ PROG_SPU_EMBED_O = $(PROG)_spu-embed.o
 
 
 SOURCES = \
-	main.c \
-	tile.c \
-	tri.c
+	spu_main.c \
+	spu_tile.c \
+	spu_tri.c
 
 SPU_OBJECTS = $(SOURCES:.c=.o) \
 
 INCLUDE_DIRS = -I$(TOP)/src/mesa
+
+
+.c.o:
+	$(SPU_CC) $(SPU_CFLAGS) -c $<
 
 
 # The .a file will be linked into the main/PPU executable
@@ -37,15 +41,6 @@ $(PROG_SPU_EMBED_O): $(PROG_SPU)
 $(PROG_SPU): $(SPU_OBJECTS)
 	$(SPU_CC) -o $(PROG_SPU) $(SPU_OBJECTS) $(SPU_LFLAGS)
 
-
-main.o: main.c
-	$(SPU_CC) $(SPU_CFLAGS) -c main.c
-
-tile.o: tile.c
-	$(SPU_CC) $(SPU_CFLAGS) -c tile.c
-
-tri.o: tri.c
-	$(SPU_CC) $(SPU_CFLAGS) -c tri.c
 
 
 clean:
