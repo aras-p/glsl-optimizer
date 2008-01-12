@@ -106,6 +106,11 @@ static void brw_new_batch( struct intel_context *intel )
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
+
+   /* Move to the end of the current upload buffer so that we'll force choosing
+    * a new buffer next time.
+    */
+   brw->vb.upload.offset = brw->vb.upload.vbo[brw->vb.upload.buf]->Size;
 }
 
 static void brw_note_fence( struct intel_context *intel, 

@@ -325,7 +325,7 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
    brw->no_batch_wrap = GL_FALSE;
 
-   /* Free any old data so it doesn't clog up texture memory - we
+   /* Free any completed data so it doesn't clog up texture memory - we
     * won't be referencing it again.
     */
    while (brw->vb.upload.wrap != brw->vb.upload.buf) {
