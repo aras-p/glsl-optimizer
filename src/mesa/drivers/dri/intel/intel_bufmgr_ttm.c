@@ -64,10 +64,9 @@
 			DRM_BO_FLAG_WRITE | \
 			DRM_BO_FLAG_EXE)
 
-/* Buffer validation list */
-struct intel_bo_list {
-    unsigned numCurrent;
-    drmMMListHead list;
+struct intel_validate_entry {
+    dri_bo *bo;
+    struct drm_i915_op_arg bo_arg;
 };
 
 typedef struct _dri_bufmgr_ttm {
@@ -78,7 +77,10 @@ typedef struct _dri_bufmgr_ttm {
     unsigned int fence_type_flush;
 
     uint32_t max_relocs;
-    struct intel_bo_list list; /* list of buffers to be validated */
+
+    struct intel_validate_entry *validate_array;
+    int validate_array_size;
+    int validate_count;
 
     drmBO *cached_reloc_buf;
     uint32_t *cached_reloc_buf_data;
@@ -133,123 +135,33 @@ typedef struct _dri_fence_ttm
     drmFence drm_fence;
 } dri_fence_ttm;
 
-/* Validation list node */
-struct intel_bo_node
-{
-    drmMMListHead head;
-    dri_bo *bo;
-    struct drm_i915_op_arg bo_arg;
-    uint64_t flags;
-};
-
-static void
-intel_init_validate_list(struct intel_bo_list *list)
-{
-    DRMINITLISTHEAD(&list->list);
-    list->numCurrent = 0;
-}
-
-/**
- * Empties the validation list and clears the relocations 
- */
-static void
-intel_free_validate_list(dri_bufmgr_ttm *bufmgr_ttm)
-{
-    struct intel_bo_list *list = &bufmgr_ttm->list;
-    drmMMListHead *l;
-
-    for (l = list->list.next; l != &list->list; l = list->list.next) {
-        struct intel_bo_node *node =
-	   DRMLISTENTRY(struct intel_bo_node, l, head);
-
-	DRMLISTDEL(l);
-
-	dri_bo_unreference(node->bo);
-
-	drmFree(node);
-	list->numCurrent--;
-    }
-}
-
 static void dri_ttm_dump_validation_list(dri_bufmgr_ttm *bufmgr_ttm)
 {
-    struct intel_bo_list *list = &bufmgr_ttm->list;
-    drmMMListHead *l;
-    int i = 0;
+    int i, j;
 
-    for (l = list->list.next; l != &list->list; l = l->next) {
-	int j;
-        struct intel_bo_node *node =
-	    DRMLISTENTRY(struct intel_bo_node, l, head);
-	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)node->bo;
+    for (i = 0; i < bufmgr_ttm->validate_count; i++) {
+	dri_bo *bo = bufmgr_ttm->validate_array[i].bo;
+	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
 
 	if (bo_ttm->reloc_buf_data != NULL) {
 	    for (j = 0; j < (bo_ttm->reloc_buf_data[0] & 0xffff); j++) {
 		uint32_t *reloc_entry = bo_ttm->reloc_buf_data +
 		    I915_RELOC_HEADER +
 		    j * I915_RELOC0_STRIDE;
+		dri_bo *target_bo =
+		    bufmgr_ttm->validate_array[reloc_entry[2]].bo;
+		dri_bo_ttm *target_ttm = (dri_bo_ttm *)target_bo;
 
-		DBG("%2d: %s@0x%08x -> %d + 0x%08x\n",
-		    i, bo_ttm->name,
-		    reloc_entry[0], reloc_entry[2], reloc_entry[1]);
+		DBG("%2d: %s@0x%08x -> %s@0x%08x + 0x%08x\n",
+		    i,
+		    bo_ttm->name, reloc_entry[0],
+		    target_ttm->name, target_bo->offset,
+		    reloc_entry[1]);
 	    }
 	} else {
 	    DBG("%2d: %s\n", i, bo_ttm->name);
 	}
-	i++;
     }
-}
-
-static struct drm_i915_op_arg *
-intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
-{
-    struct intel_bo_list *list = &bufmgr_ttm->list;
-    drmMMListHead *l;
-    struct drm_i915_op_arg *first;
-    uint64_t *prevNext = NULL;
-    GLuint count = 0;
-
-    first = NULL;
-
-    for (l = list->list.next; l != &list->list; l = l->next) {
-        struct intel_bo_node *node =
-	    DRMLISTENTRY(struct intel_bo_node, l, head);
-	dri_bo_ttm *ttm_buf = (dri_bo_ttm *)node->bo;
-	struct drm_i915_op_arg *arg = &node->bo_arg;
-	struct drm_bo_op_req *req = &arg->d.req;
-
-        if (!first)
-            first = arg;
-
-	if (prevNext)
-	    *prevNext = (unsigned long) arg;
-
-	memset(arg, 0, sizeof(*arg));
-	prevNext = &arg->next;
-	req->bo_req.handle = ttm_buf->drm_bo.handle;
-	req->op = drm_bo_validate;
-	req->bo_req.flags = node->flags;
-	req->bo_req.hint = 0;
-#ifdef DRM_BO_HINT_PRESUMED_OFFSET
-	req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
-	req->bo_req.presumed_offset = node->bo->offset;
-#endif
-	req->bo_req.mask = INTEL_BO_MASK;
-	req->bo_req.fence_class = 0; /* Backwards compat. */
-
-	if (ttm_buf->reloc_buf != NULL)
-	    arg->reloc_handle = ttm_buf->reloc_buf->handle;
-	else
-	    arg->reloc_handle = 0;
-
-	count++;
-    }
-
-    if (!first)
-	return 0;
-
-    *count_p = count;
-    return first;
 }
 
 /**
@@ -260,18 +172,12 @@ intel_setup_validate_list(dri_bufmgr_ttm *bufmgr_ttm, GLuint *count_p)
  * with the intersection of the memory type flags and the union of the
  * access flags.
  */
-static struct intel_bo_node *
+static void
 intel_add_validate_buffer(dri_bo *buf,
 			  uint64_t flags)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
-    struct intel_bo_list *list = &bufmgr_ttm->list;
-    struct intel_bo_node *cur;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
-    drmMMListHead *l;
-    int count = 0;
-    int ret = 0;
-    cur = NULL;
 
     /* If we delayed doing an unmap to mitigate map/unmap syscall thrashing,
      * do that now.
@@ -281,52 +187,95 @@ intel_add_validate_buffer(dri_bo *buf,
 	ttm_buf->delayed_unmap = GL_FALSE;
     }
 
-    /* Find the buffer in the validation list if it's already there. */
-    for (l = list->list.next; l != &list->list; l = l->next) {
-	struct intel_bo_node *node =
-	    DRMLISTENTRY(struct intel_bo_node, l, head);
+    if (ttm_buf->validate_index == -1) {
+	struct intel_validate_entry *entry;
+	struct drm_i915_op_arg *arg;
+	struct drm_bo_op_req *req;
+	int index;
 
-	if (((dri_bo_ttm *)node->bo)->drm_bo.handle == ttm_buf->drm_bo.handle) {
-	    cur = node;
-	    break;
-	}
-	count++;
-    }
+	/* Extend the array of validation entries as necessary. */
+	if (bufmgr_ttm->validate_count == bufmgr_ttm->validate_array_size) {
+	    int i, new_size = bufmgr_ttm->validate_array_size * 2;
 
-    if (!cur) {
-	cur = drmMalloc(sizeof(*cur));
-	if (!cur) {
-	    return NULL;
+	    if (new_size == 0)
+		new_size = 5;
+
+	    bufmgr_ttm->validate_array =
+	       realloc(bufmgr_ttm->validate_array,
+		       sizeof(struct intel_validate_entry) * new_size);
+	    bufmgr_ttm->validate_array_size = new_size;
+
+	    /* Update pointers for realloced mem. */
+	    for (i = 0; i < bufmgr_ttm->validate_count - 1; i++) {
+	       bufmgr_ttm->validate_array[i].bo_arg.next = (unsigned long)
+		  &bufmgr_ttm->validate_array[i + 1].bo_arg;
+	    }
 	}
-	cur->bo = buf;
+
+	/* Pick out the new array entry for ourselves */
+	index = bufmgr_ttm->validate_count;
+	ttm_buf->validate_index = index;
+	entry = &bufmgr_ttm->validate_array[index];
+	bufmgr_ttm->validate_count++;
+
+	/* Fill in array entry */
+	entry->bo = buf;
 	dri_bo_reference(buf);
-	cur->flags = flags;
-	ret = 1;
 
-	DRMLISTADDTAIL(&cur->head, &list->list);
+	/* Fill in kernel arg */
+	arg = &entry->bo_arg;
+	req = &arg->d.req;
+
+	memset(arg, 0, sizeof(*arg));
+	req->bo_req.handle = ttm_buf->drm_bo.handle;
+	req->op = drm_bo_validate;
+	req->bo_req.flags = flags;
+	req->bo_req.hint = 0;
+#ifdef DRM_BO_HINT_PRESUMED_OFFSET
+	req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
+	req->bo_req.presumed_offset = buf->offset;
+#endif
+	req->bo_req.mask = INTEL_BO_MASK;
+	req->bo_req.fence_class = 0; /* Backwards compat. */
+
+	if (ttm_buf->reloc_buf != NULL)
+	    arg->reloc_handle = ttm_buf->reloc_buf->handle;
+	else
+	    arg->reloc_handle = 0;
+
+	/* Hook up the linked list of args for the kernel */
+	arg->next = 0;
+	if (index != 0) {
+	    bufmgr_ttm->validate_array[index - 1].bo_arg.next =
+		(unsigned long)arg;
+	}
     } else {
-	uint64_t memFlags = cur->flags & flags & DRM_BO_MASK_MEM;
-	uint64_t modeFlags = (cur->flags | flags) & ~DRM_BO_MASK_MEM;
+	struct intel_validate_entry *entry =
+	    &bufmgr_ttm->validate_array[ttm_buf->validate_index];
+	struct drm_i915_op_arg *arg = &entry->bo_arg;
+	struct drm_bo_op_req *req = &arg->d.req;
+	uint64_t memFlags = req->bo_req.flags & flags & DRM_BO_MASK_MEM;
+	uint64_t modeFlags = (req->bo_req.flags | flags) & ~DRM_BO_MASK_MEM;
+
+	/* Buffer was already in the validate list.  Extend its flags as
+	 * necessary.
+	 */
 
 	if (memFlags == 0) {
 	    fprintf(stderr,
 		    "%s: No shared memory types between "
 		    "0x%16llx and 0x%16llx\n",
-		    __FUNCTION__, cur->flags, flags);
-	    return NULL;
+		    __FUNCTION__, req->bo_req.flags, flags);
+	    abort();
 	}
 	if (flags & ~INTEL_BO_MASK) {
 	    fprintf(stderr,
 		    "%s: Flags bits 0x%16llx are not supposed to be used in a relocation\n",
 		    __FUNCTION__, flags & ~INTEL_BO_MASK);
-	    return NULL;
+	    abort();
 	}
-	cur->flags = memFlags | modeFlags;
+	req->bo_req.flags = memFlags | modeFlags;
     }
-
-    ttm_buf->validate_index = count;
-
-    return cur;
 }
 
 
@@ -339,12 +288,6 @@ intel_setup_reloc_list(dri_bo *bo)
     dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bo->bufmgr;
     int ret;
-
-    /* If the buffer exists, then it was just created, or it was reintialized
-     * at the last intel_free_validate_list().
-     */
-    if (bo_ttm->reloc_buf != NULL)
-       return 0;
 
     bo_ttm->relocs = malloc(sizeof(struct dri_ttm_reloc) *
 			    bufmgr_ttm->max_relocs);
@@ -454,6 +397,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->last_flags = ttm_buf->drm_bo.flags;
     ttm_buf->shared = GL_FALSE;
     ttm_buf->delayed_unmap = GL_FALSE;
+    ttm_buf->validate_index = -1;
 
     DBG("bo_create: %p (%s) %db\n", &ttm_buf->bo, ttm_buf->name, size);
 
@@ -509,6 +453,7 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->last_flags = ttm_buf->drm_bo.flags;
     ttm_buf->shared = GL_TRUE;
     ttm_buf->delayed_unmap = GL_FALSE;
+    ttm_buf->validate_index = -1;
 
     DBG("bo_create_from_handle: %p %08x (%s)\n",
 	&ttm_buf->bo, handle, ttm_buf->name);
@@ -727,7 +672,7 @@ dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
        free(bufmgr_ttm->cached_reloc_buf);
     }
 
-    intel_free_validate_list(bufmgr_ttm);
+    free(bufmgr_ttm->validate_array);
 
     free(bufmgr);
 }
@@ -750,7 +695,9 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
     int num_relocs;
     uint32_t *this_reloc;
 
-    intel_setup_reloc_list(reloc_buf);
+    /* Create a new relocation list if needed */
+    if (reloc_buf_ttm->reloc_buf == NULL)
+	intel_setup_reloc_list(reloc_buf);
 
     num_relocs = (reloc_buf_ttm->reloc_buf_data[0] & 0xffff);
 
@@ -814,7 +761,6 @@ static void *
 dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
-    void *ptr;
 
     /* Update indices and set up the validate list. */
     dri_ttm_bo_process_reloc(batch_buf);
@@ -825,9 +771,8 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
     intel_add_validate_buffer(batch_buf,
 			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
 
-    ptr = intel_setup_validate_list(bufmgr_ttm, count);
-
-    return ptr;
+    *count = bufmgr_ttm->validate_count;
+    return &bufmgr_ttm->validate_array[0].bo_arg;
 }
 
 static const char *
@@ -861,17 +806,15 @@ intel_get_flags_caching_string(uint64_t flags)
 static void
 intel_update_buffer_offsets (dri_bufmgr_ttm *bufmgr_ttm)
 {
-    struct intel_bo_list *list = &bufmgr_ttm->list;
-    drmMMListHead *l;
+    int i;
 
-    for (l = list->list.next; l != &list->list; l = l->next) {
-        struct intel_bo_node *node =
-	    DRMLISTENTRY(struct intel_bo_node, l, head);
-	struct drm_i915_op_arg *arg = &node->bo_arg;
-	struct drm_bo_arg_rep *rep = &arg->d.rep;
-	dri_bo *bo = node->bo;
+    for (i = 0; i < bufmgr_ttm->validate_count; i++) {
+	dri_bo *bo = bufmgr_ttm->validate_array[i].bo;
 	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
+	struct drm_i915_op_arg *arg = &bufmgr_ttm->validate_array[i].bo_arg;
+	struct drm_bo_arg_rep *rep = &arg->d.rep;
 
+	/* Update the flags */
 	if (rep->bo_info.flags != bo_ttm->last_flags) {
 	    DBG("BO %s migrated: %s/%s -> %s/%s\n",
 		bo_ttm->name,
@@ -882,6 +825,7 @@ intel_update_buffer_offsets (dri_bufmgr_ttm *bufmgr_ttm)
 
 	    bo_ttm->last_flags = rep->bo_info.flags;
 	}
+	/* Update the buffer offset */
 	if (rep->bo_info.offset != bo->offset) {
 	    DBG("BO %s migrated: 0x%08x -> 0x%08x\n",
 		bo_ttm->name, bo->offset, rep->bo_info.offset);
@@ -894,13 +838,23 @@ static void
 dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
+    int i;
 
     intel_update_buffer_offsets (bufmgr_ttm);
 
     if (bufmgr_ttm->bufmgr.debug)
 	dri_ttm_dump_validation_list(bufmgr_ttm);
 
-    intel_free_validate_list(bufmgr_ttm);
+    for (i = 0; i < bufmgr_ttm->validate_count; i++) {
+	dri_bo *bo = bufmgr_ttm->validate_array[i].bo;
+	dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
+
+	/* Disconnect the buffer from the validate list */
+	bo_ttm->validate_index = -1;
+	dri_bo_unreference(bo);
+	bufmgr_ttm->validate_array[i].bo = NULL;
+    }
+    bufmgr_ttm->validate_count = 0;
 }
 
 /**
@@ -918,7 +872,7 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
 {
     dri_bufmgr_ttm *bufmgr_ttm;
 
-    bufmgr_ttm = malloc(sizeof(*bufmgr_ttm));
+    bufmgr_ttm = calloc(1, sizeof(*bufmgr_ttm));
     bufmgr_ttm->fd = fd;
     bufmgr_ttm->fence_type = fence_type;
     bufmgr_ttm->fence_type_flush = fence_type_flush;
@@ -932,8 +886,6 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
      * Every 4 was too few for the blender benchmark.
      */
     bufmgr_ttm->max_relocs = batch_size / sizeof(uint32_t) / 2 - 2;
-
-    intel_init_validate_list(&bufmgr_ttm->list);
 
     bufmgr_ttm->bufmgr.bo_alloc = dri_ttm_alloc;
     bufmgr_ttm->bufmgr.bo_alloc_static = dri_ttm_alloc_static;
