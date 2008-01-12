@@ -112,6 +112,16 @@ typedef struct _dri_bo_ttm {
     drmBO *reloc_buf;
     uint32_t *reloc_buf_data;
     struct dri_ttm_reloc *relocs;
+
+    /**
+     * Indicates that the buffer may be shared with other processes, so we
+     * can't hold maps beyond when the user does.
+     */
+    GLboolean shared;
+
+    GLboolean delayed_unmap;
+    /* Virtual address from the dri_bo_map whose unmap was delayed. */
+    void *saved_virtual;
 } dri_bo_ttm;
 
 typedef struct _dri_fence_ttm
@@ -262,6 +272,14 @@ intel_add_validate_buffer(dri_bo *buf,
     int count = 0;
     int ret = 0;
     cur = NULL;
+
+    /* If we delayed doing an unmap to mitigate map/unmap syscall thrashing,
+     * do that now.
+     */
+    if (ttm_buf->delayed_unmap) {
+	drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+	ttm_buf->delayed_unmap = GL_FALSE;
+    }
 
     /* Find the buffer in the validation list if it's already there. */
     for (l = list->list.next; l != &list->list; l = l->next) {
@@ -434,6 +452,8 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->reloc_buf_data = NULL;
     ttm_buf->relocs = NULL;
     ttm_buf->last_flags = ttm_buf->drm_bo.flags;
+    ttm_buf->shared = GL_FALSE;
+    ttm_buf->delayed_unmap = GL_FALSE;
 
     DBG("bo_create: %p (%s) %db\n", &ttm_buf->bo, ttm_buf->name, size);
 
@@ -487,6 +507,8 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->reloc_buf_data = NULL;
     ttm_buf->relocs = NULL;
     ttm_buf->last_flags = ttm_buf->drm_bo.flags;
+    ttm_buf->shared = GL_TRUE;
+    ttm_buf->delayed_unmap = GL_FALSE;
 
     DBG("bo_create_from_handle: %p %08x (%s)\n",
 	&ttm_buf->bo, handle, ttm_buf->name);
@@ -537,6 +559,9 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	    }
 	}
 
+	if (ttm_buf->delayed_unmap)
+	   drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+
 	ret = drmBOUnreference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
 	if (ret != 0) {
 	    fprintf(stderr, "drmBOUnreference failed (%s): %s\n",
@@ -566,6 +591,12 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
 
     DBG("bo_map: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
+    /* XXX: What about if we're upgrading from READ to WRITE? */
+    if (ttm_buf->delayed_unmap) {
+	buf->virtual = ttm_buf->saved_virtual;
+	return 0;
+    }
+
     return drmBOMap(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, 0, &buf->virtual);
 }
 
@@ -582,9 +613,17 @@ dri_ttm_bo_unmap(dri_bo *buf)
 
     assert(buf->virtual != NULL);
 
-    buf->virtual = NULL;
-
     DBG("bo_unmap: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+
+    if (!ttm_buf->shared) {
+	ttm_buf->saved_virtual = buf->virtual;
+	ttm_buf->delayed_unmap = GL_TRUE;
+	buf->virtual = NULL;
+
+	return 0;
+    }
+
+    buf->virtual = NULL;
 
     return drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
 }
