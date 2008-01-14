@@ -55,6 +55,7 @@
 #include "xf86drm.h"
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
+#include "GL/internal/dri_sarea.h"
 
 #define GLX_BAD_CONTEXT                    5
 
@@ -72,6 +73,9 @@ typedef struct __DRIutilversionRec2    __DRIutilversion2;
  * __DRIscreenPrivate struct.
  */
 extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
+
+/** Ditto for DRI2 capable drivers. */
+extern __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp);
 
 /**
  * Extensions.
@@ -214,6 +218,10 @@ struct __DriverAPIRec {
     int (*GetDrawableMSC) ( __DRIscreenPrivate * priv,
 			    __DRIdrawablePrivate *drawablePrivate,
 			    int64_t *count);
+
+    /* DRI2 Entry points */
+    void (*UpdateBuffer)(__DRIdrawablePrivate *dPriv,
+			 unsigned int *event);
 };
 
 
@@ -371,6 +379,9 @@ struct __DRIdrawablePrivateRec {
      * GLX_MESA_swap_control.
      */
     unsigned int swap_interval;
+    struct {
+	unsigned int tail;
+    } dri2;
 };
 
 /**
@@ -516,6 +527,19 @@ struct __DRIscreenPrivateRec {
      * Extensions provided by this driver.
      */
     const __DRIextension **extensions;
+
+    struct {
+	/* Flag to indicate that this is a DRI2 screen.  Many of the above
+	 * fields will not be valid or initializaed in that case. */
+	int enabled;
+	drmBO sareaBO;
+	void *sarea;
+	__DRIEventBuffer *buffer;
+	__DRILock *lock;
+    } dri2;
+
+    /* The lock actually in use, old sarea or DRI2 */
+    drmLock *lock;
 };
 
 
@@ -538,6 +562,8 @@ __driUtilMessage(const char *f, ...);
 extern void
 __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
 
+extern int
+__driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp);
 
 extern __DRIscreenPrivate * __driUtilCreateNewScreen( int scr, __DRIscreen *psc,
     __GLcontextModes * modes,

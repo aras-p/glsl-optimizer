@@ -205,16 +205,22 @@ static GLboolean driBindContext(__DRIcontext * ctx,
     ** Now that we have a context associated with this drawable, we can
     ** initialize the drawable information if has not been done before.
     */
-    if (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp) {
-	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-	__driUtilUpdateDrawableInfo(pdp);
-	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-    }
 
-    if ((pdp != prp) && (!prp->pStamp || *prp->pStamp != prp->lastStamp)) {
-	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-	__driUtilUpdateDrawableInfo(prp);
-	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+    if (psp->dri2.enabled) {
+       __driParseEvents(psp, pdp);
+       __driParseEvents(psp, prp);
+    } else {
+	if (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp) {
+	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+	    __driUtilUpdateDrawableInfo(pdp);
+	    DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+	}
+	
+	if ((pdp != prp) && (!prp->pStamp || *prp->pStamp != prp->lastStamp)) {
+	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+	    __driUtilUpdateDrawableInfo(prp);
+	    DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
+	}
     }
 
     /* Call device-specific MakeCurrent */
@@ -300,6 +306,103 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 
     DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 
+}
+
+int
+__driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
+{
+    __DRIDrawableConfigEvent *dc;
+    __DRIBufferAttachEvent *ba;
+    unsigned int tail, mask, *p, end, total, size, changed;
+    unsigned char *data;
+    size_t rect_size;
+    __DRIcontextPrivate *pcp = pdp->driContextPriv;
+
+    if (pcp == NULL)
+	return 0;
+
+    /* Check for wraparound. */
+    if (psp->dri2.buffer->prealloc - pdp->dri2.tail > psp->dri2.buffer->size) {
+       /* If prealloc overlaps into what we just parsed, the
+	* server overwrote it and we have to reset our tail
+	* pointer. */
+	DRM_UNLOCK(psp->fd, psp->lock, pcp->hHWContext);
+	(*dri_interface->reemitDrawableInfo)(pdp->pdraw);
+	DRM_LIGHT_LOCK(psp->fd, psp->lock, pcp->hHWContext);
+    }
+
+    total = psp->dri2.buffer->head - pdp->dri2.tail;
+    mask = psp->dri2.buffer->size - 1;
+    tail = pdp->dri2.tail;
+    end = psp->dri2.buffer->head;
+    data = psp->dri2.buffer->data;
+    changed = 0;
+
+    while (tail != end) {
+       p = (unsigned int *) (data + (tail & mask));
+       size = DRI2_EVENT_SIZE(*p);
+       if (size > total || (tail & mask) + size > psp->dri2.buffer->size) {
+	  /* illegal data, bail out. */
+	  fprintf(stderr, "illegal event size\n");
+	  break;
+       }
+
+       switch (DRI2_EVENT_TYPE(*p)) {
+       case DRI2_EVENT_DRAWABLE_CONFIG:
+	  dc = (__DRIDrawableConfigEvent *) p;
+
+	  if (dc->drawable != pdp->hHWDrawable)
+	     break;
+
+	  if (pdp->w != dc->width || pdp->h != dc->height)
+	     changed = 1;
+
+	  pdp->x = dc->x;
+	  pdp->y = dc->y;
+	  pdp->w = dc->width;
+	  pdp->h = dc->height;
+
+	  pdp->backX = 0;
+	  pdp->backY = 0;
+	  pdp->numBackClipRects = 1;
+	  pdp->pBackClipRects[0].x1 = 0;
+	  pdp->pBackClipRects[0].y1 = 0;
+	  pdp->pBackClipRects[0].x2 = pdp->w;
+	  pdp->pBackClipRects[0].y2 = pdp->h;
+
+	  pdp->numClipRects = dc->num_rects;
+	  _mesa_free(pdp->pClipRects);
+	  rect_size = dc->num_rects * sizeof dc->rects[0];
+	  pdp->pClipRects = _mesa_malloc(rect_size);
+	  memcpy(pdp->pClipRects, dc->rects, rect_size);
+
+	  if (changed)
+	      (*psp->DriverAPI.UpdateBuffer)(pdp, p);
+	  break;
+
+       case DRI2_EVENT_BUFFER_ATTACH:
+	  ba = (__DRIBufferAttachEvent *) p;
+
+	  if (ba->drawable != pdp->hHWDrawable)
+	     break;
+
+	  (*psp->DriverAPI.UpdateBuffer)(pdp, p);
+	  break;
+
+       default:
+	  break;
+       }
+
+       tail += size;
+    }
+
+    pdp->dri2.tail = tail;
+
+    /* FIXME: Return whether we changed anything.  This check always
+     * returns true if we received events, but we could refine the
+     * check to only return TRUE if the drawable actually changed.  */
+
+    return total > 0;
 }
 
 /*@}*/
@@ -497,6 +600,11 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
 
     pdp->swapBuffers = psp->DriverAPI.SwapBuffers;
 
+    if (psp->dri2.enabled) {
+	pdp->dri2.tail = 0;
+	pdp->pBackClipRects = _mesa_malloc(sizeof *pdp->pBackClipRects);
+    }
+
    return (void *) pdp;
 }
 
@@ -596,7 +704,7 @@ driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
      * context.
      */
 
-    if (!psp->dummyContextPriv.driScreenPriv) {
+    if (!psp->dri2.enabled && !psp->dummyContextPriv.driScreenPriv) {
         psp->dummyContextPriv.hHWContext = psp->pSAREA->dummy_context;
         psp->dummyContextPriv.driScreenPriv = psp;
         psp->dummyContextPriv.driDrawablePriv = NULL;
@@ -655,14 +763,18 @@ static void driDestroyScreen(__DRIscreen *screen)
 	if (psp->DriverAPI.DestroyScreen)
 	    (*psp->DriverAPI.DestroyScreen)(psp);
 
-	(void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
-	(void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
-	(void)drmCloseOnce(psp->fd);
+	if (psp->dri2.enabled) {
+	    drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
+	    drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
+	} else {
+	   (void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
+	   (void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
+	   (void)drmCloseOnce(psp->fd);
+	}
 
 	_mesa_free(psp);
     }
 }
-
 
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
@@ -730,6 +842,7 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
     psp->dri_version = *dri_version;
 
     psp->pSAREA = pSAREA;
+    psp->lock = (drmLock *) &psp->pSAREA->lock;
 
     psp->pFB = frame_buffer->base;
     psp->fbSize = frame_buffer->size;
@@ -743,6 +856,7 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
     psp->extensions = emptyExtensionList;
     psp->fd = fd;
     psp->myNum = scrn;
+    psp->dri2.enabled = GL_FALSE;
 
     /*
     ** Do not init dummy context here; actual initialization will be
@@ -758,6 +872,79 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 
     *driver_modes = __driDriverInitScreen(psp);
     if (*driver_modes == NULL) {
+	_mesa_free(psp);
+	return NULL;
+    }
+
+    return psp;
+}
+
+PUBLIC void *
+__DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
+			 const __DRIversion * ddx_version,
+			 const __DRIversion * dri_version,
+			 const __DRIversion * drm_version,
+			 int fd, 
+			 unsigned int sarea_handle,
+			 const __DRIinterfaceMethods * interface,
+			 __GLcontextModes ** driver_modes)
+{
+    __DRIscreenPrivate *psp;
+    static const __DRIextension *emptyExtensionList[] = { NULL };
+    dri_interface = interface;
+    unsigned int *p;
+
+    psp = _mesa_malloc(sizeof(*psp));
+    if (!psp)
+	return NULL;
+
+    psp->psc = psc;
+
+    psp->drm_version = *drm_version;
+    psp->ddx_version = *ddx_version;
+    psp->dri_version = *dri_version;
+    psp->extensions = emptyExtensionList;
+    psp->fd = fd;
+    psp->myNum = scrn;
+    psp->dri2.enabled = GL_TRUE;
+
+    if (drmBOReference(psp->fd, sarea_handle, &psp->dri2.sareaBO)) {
+	fprintf(stderr, "Failed to reference DRI2 sarea BO\n");
+	_mesa_free(psp);
+	return NULL;
+    }
+
+    if (drmBOMap(psp->fd, &psp->dri2.sareaBO,
+		 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0, &psp->dri2.sarea)) {
+	drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
+	_mesa_free(psp);
+	return NULL;
+    }
+
+    p = psp->dri2.sarea;
+    while (DRI2_SAREA_BLOCK_TYPE(*p)) {
+	switch (DRI2_SAREA_BLOCK_TYPE(*p)) {
+	case DRI2_SAREA_BLOCK_LOCK:
+	    psp->dri2.lock = (__DRILock *) p;
+	    break;
+	case DRI2_SAREA_BLOCK_EVENT_BUFFER:
+	    psp->dri2.buffer = (__DRIEventBuffer *) p;
+	    break;
+	}
+	p = DRI2_SAREA_BLOCK_NEXT(p);
+    }
+
+    psp->lock = (drmLock *) &psp->dri2.lock->lock;
+
+    psc->destroyScreen     = driDestroyScreen;
+    psc->getExtensions     = driGetExtensions;
+    psc->createNewDrawable = driCreateNewDrawable;
+    psc->createNewContext  = driCreateNewContext;
+
+    *driver_modes = __dri2DriverInitScreen(psp);
+    if (*driver_modes == NULL) {
+	drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
+	drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
 	_mesa_free(psp);
 	return NULL;
     }
