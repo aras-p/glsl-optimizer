@@ -39,6 +39,7 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
 {
    struct cell_context *cell = cell_context(pipe);
 
+   /* XXX revisit this memcmp! */
    if (memcmp(&cell->framebuffer, fb, sizeof(*fb))) {
       struct pipe_surface *csurf = fb->cbufs[0];
       struct pipe_surface *zsurf = fb->zbuf;
@@ -48,26 +49,26 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
 
       /* unmap old surfaces */
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-         if (cell->framebuffer.cbufs[i] &&
-             cell->framebuffer.cbufs[i]->map) {
+         if (cell->framebuffer.cbufs[i] && cell->cbuf_map[i]) {
             pipe_surface_unmap(cell->framebuffer.cbufs[i]);
+            cell->cbuf_map[i] = NULL;
          }
       }
 
-      if (cell->framebuffer.zbuf &&
-          cell->framebuffer.zbuf->map) {
+      if (cell->framebuffer.zbuf && cell->zbuf_map) {
          pipe_surface_unmap(cell->framebuffer.zbuf);
+         cell->zbuf_map = NULL;
       }
 
       /* update my state */
       cell->framebuffer = *fb;
 
       /* map new surfaces */
-      if (csurf && !csurf->map)
-         pipe_surface_map(csurf);
+      if (csurf)
+         cell->cbuf_map[0] = pipe_surface_map(csurf);
 
-      if (zsurf && !zsurf->map)
-         pipe_surface_map(zsurf);
+      if (zsurf)
+         cell->zbuf_map = pipe_surface_map(zsurf);
 
 #if 0
       for (i = 0; i < cell->num_spus; i++) {
@@ -87,9 +88,9 @@ cell_set_framebuffer_state(struct pipe_context *pipe,
          struct cell_command_framebuffer *fb
             = cell_batch_alloc(cell, sizeof(*fb));
          fb->opcode = CELL_CMD_FRAMEBUFFER;
-         fb->color_start = csurf->map;
+         fb->color_start = cell->cbuf_map[0];
          fb->color_format = csurf->format;
-         fb->depth_start = zsurf ? zsurf->map : NULL;
+         fb->depth_start = cell->zbuf_map;
          fb->depth_format = zsurf ? zsurf->format : PIPE_FORMAT_NONE;
          fb->width = csurf->width;
          fb->height = csurf->height;

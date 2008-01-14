@@ -78,6 +78,8 @@ struct cell_context
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
 
+   ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
+   ubyte *zbuf_map;
 
    uint dirty;
 

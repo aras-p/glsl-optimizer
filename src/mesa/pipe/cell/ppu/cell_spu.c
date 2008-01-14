@@ -168,8 +168,8 @@ test_spus(struct cell_context *cell)
    sleep(2);
 
    for (i = 0; i < cell->num_spus; i++) {
-      cell_global.command[i].fb.color_start = csurf->map;
-      cell_global.command[i].fb.depth_start = zsurf ? zsurf->map : NULL;
+      cell_global.command[i].fb.color_start = cell->cbuf_map[0];
+      cell_global.command[i].fb.depth_start = cell->zbuf_map;
       cell_global.command[i].fb.width = csurf->width;
       cell_global.command[i].fb.height = csurf->height;
       cell_global.command[i].fb.color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
@@ -186,7 +186,7 @@ test_spus(struct cell_context *cell)
    finish_all(cell->num_spus);
 
    {
-      uint *b = (uint*) csurf->map;
+      uint *b = (uint*) cell->cbuf_map[0];
       printf("PPU: Clear results: 0x%x 0x%x 0x%x 0x%x\n",
              b[0], b[1000], b[2000], b[3000]);
    }
