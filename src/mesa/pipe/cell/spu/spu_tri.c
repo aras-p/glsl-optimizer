@@ -236,6 +236,10 @@ pack_color(const float color[4])
    uint g = (uint) (color[1] * 255.0);
    uint b = (uint) (color[2] * 255.0);
    uint a = (uint) (color[3] * 255.0);
+   r = MIN2(r, 255);
+   g = MIN2(g, 255);
+   b = MIN2(b, 255);
+   a = MIN2(a, 255);
    switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return (a << 24) | (r << 16) | (g << 8) | b;
