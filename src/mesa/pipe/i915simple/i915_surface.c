@@ -240,8 +240,6 @@ i915_init_surface_functions(struct i915_context *i915)
    i915->pipe.get_tex_surface = i915_get_tex_surface;
    i915->pipe.get_tile = pipe_get_tile_raw;
    i915->pipe.put_tile = pipe_put_tile_raw;
-   i915->pipe.get_tile_rgba = pipe_get_tile_rgba;
-   i915->pipe.put_tile_rgba = pipe_put_tile_rgba;
 
    i915->pipe.surface_data = i915_surface_data;
    i915->pipe.surface_copy = i915_surface_copy;

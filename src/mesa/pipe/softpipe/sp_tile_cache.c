@@ -34,6 +34,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "pipe/util/p_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
@@ -369,9 +370,9 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
                            tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe->put_tile_rgba(pipe, ps,
-                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                                (float *) tile->data.color);
+            pipe_put_tile_rgba(pipe, ps,
+                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                               (float *) tile->data.color);
          }
          tile->x = tile->y = -1;  /* mark as empty */
          inuse++;
@@ -418,9 +419,9 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
                            tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe->put_tile_rgba(pipe, ps,
-                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                                (float *) tile->data.color);
+            pipe_put_tile_rgba(pipe, ps,
+                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                               (float *) tile->data.color);
          }
       }
 
@@ -445,9 +446,9 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
                            tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe->get_tile_rgba(pipe, ps,
-                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                                (float *) tile->data.color);
+            pipe_get_tile_rgba(pipe, ps,
+                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                               (float *) tile->data.color);
          }
       }
    }
@@ -514,9 +515,9 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
       }
 
       /* get tile from the surface (view into texture) */
-      pipe->get_tile_rgba(pipe, tc->tex_surf,
-                          tile_x, tile_y, TILE_SIZE, TILE_SIZE,
-                          (float *) tile->data.color);
+      pipe_get_tile_rgba(pipe, tc->tex_surf,
+                         tile_x, tile_y, TILE_SIZE, TILE_SIZE,
+                         (float *) tile->data.color);
       tile->x = tile_x;
       tile->y = tile_y;
       tile->z = z;

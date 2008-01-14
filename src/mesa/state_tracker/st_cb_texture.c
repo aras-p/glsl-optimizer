@@ -45,6 +45,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "pipe/util/p_tile.h"
 
 
 #define DBG if (0) printf
@@ -1068,8 +1069,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    /* do copy row by row */
    for (row = 0; row < height; row++) {
-      pipe->get_tile_rgba(pipe, src_surf, srcX, srcY + row, width, 1,
-			  data);
+      pipe_get_tile_rgba(pipe, src_surf, srcX, srcY + row, width, 1, data);
 
       /* XXX we're ignoring convolution for now */
       if (ctx->_ImageTransferState) {
@@ -1078,8 +1078,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
                             width, (GLfloat (*)[4])data);
       }
 
-      pipe->put_tile_rgba(pipe, dest_surf, destX, destY, width, 1,
-			  data);
+      pipe_put_tile_rgba(pipe, dest_surf, destX, destY, width, 1, data);
       destY += yStep;
    }
 

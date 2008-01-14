@@ -252,8 +252,6 @@ sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.get_tile = pipe_get_tile_raw;
    sp->pipe.put_tile = pipe_put_tile_raw;
-   sp->pipe.get_tile_rgba = pipe_get_tile_rgba;
-   sp->pipe.put_tile_rgba = pipe_put_tile_rgba;
 
    sp->pipe.surface_data = sp_surface_data;
    sp->pipe.surface_copy = sp_surface_copy;

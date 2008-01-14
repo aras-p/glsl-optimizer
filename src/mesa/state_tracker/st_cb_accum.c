@@ -43,6 +43,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "pipe/util/p_tile.h"
 
 
 #define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
@@ -80,7 +81,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       accBuf[i*4+3] = a;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 }
 
 
@@ -95,13 +96,13 @@ accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
 
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
       accBuf[i] = accBuf[i] * scale + bias;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    free(accBuf);
 }
@@ -119,14 +120,14 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    colorBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe->get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, colorBuf);
-   pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, colorBuf);
+   pipe_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
       accBuf[i] = accBuf[i] + colorBuf[i] * value;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    free(colorBuf);
    free(accBuf);
@@ -144,13 +145,13 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe->get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, buf);
+   pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, buf);
 
    for (i = 0; i < 4 * width * height; i++) {
       buf[i] = buf[i] * value;
    }
 
-   pipe->put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, buf);
+   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, buf);
 
    free(buf);
 }
@@ -169,11 +170,11 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    abuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe->get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
+   pipe_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
       cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      pipe->get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, cbuf);
+      pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, cbuf);
    }
 
    for (i = 0; i < width * height; i++) {
@@ -188,7 +189,7 @@ accum_return(GLcontext *ctx, GLfloat value,
       }
    }
 
-   pipe->put_tile_rgba(pipe, color_ps, xpos, ypos, width, height, abuf);
+   pipe_put_tile_rgba(pipe, color_ps, xpos, ypos, width, height, abuf);
 
    free(abuf);
    if (cbuf)

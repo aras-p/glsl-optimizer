@@ -56,6 +56,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/util/p_tile.h"
 #include "shader/prog_instruction.h"
 
 
@@ -1261,8 +1262,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* alternate path using get/put_tile() */
       GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-      pipe->get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
-      pipe->put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
+      pipe_get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
+      pipe_put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
 
       free(buf);
    }
