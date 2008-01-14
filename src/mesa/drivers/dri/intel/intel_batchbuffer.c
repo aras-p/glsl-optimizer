@@ -86,7 +86,6 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
-   batch->id = batch->intel->batch_id++;
    batch->cliprect_mode = IGNORE_CLIPRECTS;
 }
 

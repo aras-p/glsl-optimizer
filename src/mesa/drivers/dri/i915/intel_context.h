@@ -169,8 +169,7 @@ struct intel_context
    dri_fence *first_swap_fence;
 
    struct intel_batchbuffer *batch;
-   unsigned batch_id;
-   GLuint last_state_batch_id;
+   GLboolean no_batch_wrap;
 
    struct
    {

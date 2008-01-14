@@ -414,7 +414,7 @@ get_state_size(struct i830_hw_state *state)
 /* Push the state into the sarea and/or texture memory.
  */
 static void
-i830_do_emit_state(struct intel_context *intel)
+i830_emit_state(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    struct i830_hw_state *state = i830->current;
@@ -423,28 +423,18 @@ i830_do_emit_state(struct intel_context *intel)
    BATCH_LOCALS;
 
    /* We don't hold the lock at this point, so want to make sure that
-    * there won't be a buffer wrap.  
+    * there won't be a buffer wrap between the state emits and the primitive
+    * emit header.
     *
     * It might be better to talk about explicit places where
     * scheduling is allowed, rather than assume that it is whenever a
     * batchbuffer fills up.
-    */
-   intel_batchbuffer_require_space(intel->batch, get_state_size(state), 0);
-
-   /* Workaround.  There are cases I haven't been able to track down
-    * where we aren't emitting a full state at the start of a new
-    * batchbuffer.  This code spots that we are on a new batchbuffer
-    * and forces a full state emit no matter what.  
     *
-    * In the normal case state->emitted is already zero, this code is
-    * another set of checks to make sure it really is.
+    * Set the space as LOOP_CLIPRECTS now, since that's what our primitives
+    * will be emitted under.
     */
-   if (intel->batch->id != intel->last_state_batch_id ||
-       intel->batch->map == intel->batch->ptr) 
-   {
-      state->emitted = 0;
-      intel_batchbuffer_require_space(intel->batch, get_state_size(state), 0);
-   }
+   intel_batchbuffer_require_space(intel->batch, get_state_size(state) + 8,
+				   LOOP_CLIPRECTS);
 
    /* Do this here as we may have flushed the batchbuffer above,
     * causing more state to be dirty!
@@ -452,11 +442,6 @@ i830_do_emit_state(struct intel_context *intel)
    dirty = get_dirty(state);
    state->emitted |= dirty;
    assert(get_dirty(state) == 0);
-
-   if (intel->batch->id != intel->last_state_batch_id) {
-      assert(dirty & I830_UPLOAD_CTX);
-      intel->last_state_batch_id = intel->batch->id;
-   }
 
    if (dirty & I830_UPLOAD_INVARIENT) {
       DBG("I830_UPLOAD_INVARIENT:\n");
@@ -537,27 +522,6 @@ i830_do_emit_state(struct intel_context *intel)
 
    intel->batch->dirty_state &= ~dirty;
    assert(get_dirty(state) == 0);
-}
-
-static void
-i830_emit_state(struct intel_context *intel)
-{
-   struct i830_context *i830 = i830_context(&intel->ctx);
-
-   i830_do_emit_state( intel );
-
-   /* Second chance - catch batchbuffer wrap in the middle of state
-    * emit.  This shouldn't happen but it has been observed in
-    * testing.
-    */
-   if (get_dirty( i830->current )) {
-      /* Force a full re-emit if this happens.
-       */
-      i830->current->emitted = 0;
-      i830_do_emit_state( intel );
-   }
-
-   assert(get_dirty(i830->current) == 0);
    assert((intel->batch->dirty_state & (1<<1)) == 0);
 }
 
@@ -679,6 +643,9 @@ i830_new_batch(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    i830->state.emitted = 0;
+
+   /* Check that we didn't just wrap our batchbuffer at a bad time. */
+   assert(!intel->no_batch_wrap);
 }
 
 

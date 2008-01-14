@@ -89,21 +89,13 @@ intelStartInlinePrimitive(struct intel_context *intel,
 {
    BATCH_LOCALS;
 
+   intel_wait_flips(intel);
+
    intel->vtbl.emit_state(intel);
 
-   /* Need to make sure at the very least that we don't wrap
-    * batchbuffers in BEGIN_BATCH below, otherwise the primitive will
-    * be emitted to a batchbuffer missing the required full-state
-    * preamble.
-    */
-   if (intel_batchbuffer_space(intel->batch) < 100) {
-      intel_batchbuffer_flush(intel->batch);
-      intel->vtbl.emit_state(intel);
-   }
+   intel->no_batch_wrap = GL_TRUE;
 
 /*    _mesa_printf("%s *", __progname); */
-
-   intel_wait_flips(intel);
 
    /* Emit a slot which will be filled with the inline primitive
     * command later.
@@ -111,7 +103,6 @@ intelStartInlinePrimitive(struct intel_context *intel,
    BEGIN_BATCH(2, batch_flags);
    OUT_BATCH(0);
 
-   assert(intel->batch->id == intel->last_state_batch_id);
    assert((intel->batch->dirty_state & (1<<1)) == 0);
 
    intel->prim.start_ptr = intel->batch->ptr;
@@ -120,6 +111,8 @@ intelStartInlinePrimitive(struct intel_context *intel,
 
    OUT_BATCH(0);
    ADVANCE_BATCH();
+
+   intel->no_batch_wrap = GL_FALSE;
 
 /*    _mesa_printf(">"); */
 }
