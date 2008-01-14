@@ -810,13 +810,13 @@ void LOCK_HARDWARE( struct intel_context *intel )
     DRM_CAS(intel->driHwLock, intel->hHWContext,
         (DRM_LOCK_HELD|intel->hHWContext), __ret);
 
+    intel->locked = 1;
+
     if (__ret)
         intelContendedLock( intel, 0 );
 
     if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - locked\n", __progname);
-
-    intel->locked = 1;
 }
 
 
