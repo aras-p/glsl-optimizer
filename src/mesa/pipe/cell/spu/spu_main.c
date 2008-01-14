@@ -46,7 +46,7 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
-static boolean Debug = TRUE;
+static boolean Debug = FALSE;
 
 struct spu_global spu;
 
@@ -106,7 +106,7 @@ really_clear_tiles(uint surfaceIndex)
       }
    }
 
-#if 01
+#if 0
    wait_on_mask(1 << TAG_SURFACE_CLEAR);
 #endif
 }
@@ -165,6 +165,9 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 #if 0
    wait_on_mask(1 << TAG_SURFACE_CLEAR);
 #endif
+
+   if (Debug)
+      printf("SPU %u: CLEAR SURF done\n", spu.init.id);
 }
 
 
@@ -222,8 +225,10 @@ cmd_render(const struct cell_command_render *render)
              render->prim_type,
              render->num_verts,
              render->num_indexes);
+      /*
       printf("       bound: %g, %g .. %g, %g\n",
              render->xmin, render->ymin, render->xmax, render->ymax);
+      */
    }
 
    ASSERT_ALIGN16(render->vertex_data);
@@ -244,6 +249,7 @@ cmd_render(const struct cell_command_render *render)
           render->index_data, render->vertex_data, vertex_bytes, index_bytes);
    */
 
+   ASSERT(vertex_bytes % 16 == 0);
    /* get vertex data from main memory */
    mfc_get(vertex_data,  /* dest */
            (unsigned int) render->vertex_data,  /* src */
@@ -251,6 +257,8 @@ cmd_render(const struct cell_command_render *render)
            TAG_VERTEX_BUFFER,
            0, /* tid */
            0  /* rid */);
+
+   ASSERT(index_bytes % 16 == 0);
 
    /* get index data from main memory */
    mfc_get(indexes,  /* dest */
@@ -330,6 +338,10 @@ cmd_render(const struct cell_command_render *render)
          wait_on_mask(1 << TAG_WRITE_TILE_Z);
       }
    }
+
+   if (Debug)
+      printf("SPU %u: RENDER done\n",
+             spu.init.id);
 }
 
 
@@ -406,6 +418,9 @@ cmd_batch(uint opcode)
 
    size = (size + 0xf) & ~0xf;
 
+   ASSERT(size % 16 == 0);
+   ASSERT((unsigned int) spu.init.batch_buffers[buf] % 16 == 0);
+
    mfc_get(buffer,  /* dest */
            (unsigned int) spu.init.batch_buffers[buf],  /* src */
            size,
@@ -413,6 +428,10 @@ cmd_batch(uint opcode)
            0, /* tid */
            0  /* rid */);
    wait_on_mask(1 << TAG_BATCH_BUFFER);
+
+   /* send mbox message to indicate DMA completed */
+   /* XXX temporary */
+   spu_write_out_mbox(CELL_BATCH_FINISHED);
 
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {

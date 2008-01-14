@@ -77,9 +77,11 @@ put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
    ASSERT(ty < spu.fb.height_tiles);
    ASSERT_ALIGN16(tile);
    /*
-   printf("put_tile:  src: %p  dst: 0x%x  size: %d\n",
+   printf("SPU %u: put_tile:  src: %p  dst: 0x%x  size: %d\n",
+          spu.init.id,
           tile, (unsigned int) dst, bytesPerTile);
    */
+
    mfc_put((void *) tile,  /* src in local memory */
            (unsigned int) dst,  /* dst in main memory */
            bytesPerTile,

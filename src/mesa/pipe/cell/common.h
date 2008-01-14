@@ -65,6 +65,8 @@
 #define CELL_NUM_BATCH_BUFFERS 2
 #define CELL_BATCH_BUFFER_SIZE 1024  /**< 16KB would be the max */
 
+#define CELL_BATCH_FINISHED 0x1234   /**< mbox message */
+
 
 /**
  * Tell SPUs about the framebuffer size, location

@@ -43,16 +43,27 @@ cell_batch_flush(struct cell_context *cell)
 
    assert(batch < CELL_NUM_BATCH_BUFFERS);
 
-   /*printf("cell_batch_dispatch: buf %u, size %u\n", batch, size);*/
-          
+   /*
+   printf("cell_batch_dispatch: buf %u at %p, size %u\n",
+          batch, &cell->batch_buffer[batch][0], size);
+   */
+     
    cmd_word = CELL_CMD_BATCH | (batch << 8) | (size << 16);
 
    for (i = 0; i < cell->num_spus; i++) {
       send_mbox_message(cell_global.spe_contexts[i], cmd_word);
    }
 
-   /* XXX wait on DMA xfer of prev buffer to complete */
+   /* XXX wait for the DMX xfer to finish.
+    * Using mailboxes here is temporary.
+    * Ideally, we want to use a PPE-side DMA status check function...
+    */
+   for (i = 0; i < cell->num_spus; i++) {
+      uint k = wait_mbox_message(cell_global.spe_contexts[i]);
+      assert(k == CELL_BATCH_FINISHED);
+   }
 
+   /* next buffer */
    cell->cur_batch = (batch + 1) % CELL_NUM_BATCH_BUFFERS;
 
    cell->batch_buffer_size[cell->cur_batch] = 0;  /* empty */
