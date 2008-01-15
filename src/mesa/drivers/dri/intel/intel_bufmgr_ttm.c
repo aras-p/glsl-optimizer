@@ -925,8 +925,13 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->cached_reloc_buf = NULL;
     bufmgr_ttm->cached_reloc_buf_data = NULL;
 
-    /* lets go with one relocation per every four dwords - purely heuristic */
-    bufmgr_ttm->max_relocs = batch_size / sizeof(uint32_t) / 4;
+    /* Let's go with one relocation per every 2 dwords (but round down a bit
+     * since a power of two will mean an extra page allocation for the reloc
+     * buffer).
+     *
+     * Every 4 was too few for the blender benchmark.
+     */
+    bufmgr_ttm->max_relocs = batch_size / sizeof(uint32_t) / 2 - 2;
 
     intel_init_validate_list(&bufmgr_ttm->list);
 
