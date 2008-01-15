@@ -97,7 +97,7 @@ $(GLX_DIR)/indirect_dispatch.c: glX_proto_recv.py $(COMMON_GLX)
 $(GLX_DIR)/indirect_dispatch_swap.c: glX_proto_recv.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_c -s > $@
 
-$(GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py glX_API.xml $(COMMON_GLX)
+$(GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py gl_and_glX_API.xml $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_h -f gl_and_glX_API.xml -s > $@
 
 $(GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
@@ -114,7 +114,7 @@ $(GLX_DIR)/indirect_reqsize.h: glX_proto_size.py $(COMMON_GLX)
 $(GLX_DIR)/indirect_reqsize.c: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m reqsize_c | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_table.c: glX_server_table.py glX_API.xml $(COMMON_GLX)
+$(GLX_DIR)/indirect_table.c: glX_server_table.py gl_and_glX_API.xml $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_and_glX_API.xml > $@
 
 clean:
