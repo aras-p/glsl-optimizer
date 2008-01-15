@@ -216,6 +216,17 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       used += 8;
    }
 
+   /* Workaround for recursive batchbuffer flushing: If the window is
+    * moved, we can get into a case where we try to flush during a
+    * flush.  What happens is that when we try to grab the lock for
+    * the first flush, we detect that the window moved which then
+    * causes another flush (from the intel_draw_buffer() call in
+    * intelUpdatePageFlipping()).  To work around this we reset the
+    * batchbuffer tail pointer before trying to get the lock.  This
+    * prevent the nested buffer flush, but a better fix would be to
+    * avoid that in the first place. */
+   batch->ptr = batch->map;
+
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
