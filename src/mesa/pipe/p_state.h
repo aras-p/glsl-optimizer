@@ -243,6 +243,8 @@ struct pipe_surface
 {
    struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
    enum pipe_format format;      /**< PIPE_FORMAT_x */
+   unsigned status;              /**< PIPE_SURFACE_STATUS_x */
+   unsigned clear_value;         /**< may be temporary */
    unsigned cpp;                 /**< bytes per pixel */
    unsigned width, height;
    unsigned pitch;               /**< in pixels */

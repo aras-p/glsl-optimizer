@@ -170,6 +170,14 @@ enum pipe_texture_target {
 
 
 /**
+ * Surface status
+ */
+#define PIPE_SURFACE_STATUS_UNDEFINED  0
+#define PIPE_SURFACE_STATUS_DEFINED    1
+#define PIPE_SURFACE_STATUS_CLEAR      2
+
+
+/**
  * Buffer access flags
  */
 #define PIPE_BUFFER_FLAG_READ         0x1
