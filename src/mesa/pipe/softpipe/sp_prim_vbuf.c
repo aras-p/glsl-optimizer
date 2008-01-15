@@ -227,7 +227,9 @@ static void vbuf_flush_elements( struct draw_stage *stage )
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
    if (vbuf->nr_elements) {
+      /*
       fprintf(stderr, "%s (%d elts)\n", __FUNCTION__, vbuf->nr_elements);
+      */
 
       /* Draw now or add to list of primitives???
        */
