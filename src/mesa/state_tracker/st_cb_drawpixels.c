@@ -662,7 +662,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_fs_state(pipe, stfp->fs->data);
 
    /* vertex shader state: position + texcoord pass-through */
-   pipe->bind_vs_state(pipe, stvp->vs->data);
+   pipe->bind_vs_state(pipe, stvp->cso->data);
 
    /* texture sampling state: */
    {
@@ -719,7 +719,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore GL state */
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
-   pipe->bind_vs_state(pipe, ctx->st->state.vs->data);
+   pipe->bind_vs_state(pipe, ctx->st->state.vs->cso->data);
    pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);

@@ -208,7 +208,7 @@ make_vertex_shader(struct st_context *st)
    stvp = (struct st_vertex_program *) p;
    st_translate_vertex_program(st, stvp, NULL,
                                stvp->tokens, ST_MAX_SHADER_TOKENS);
-   assert(stvp->vs);
+   assert(stvp->cso);
 
    return stvp;
 }
@@ -350,7 +350,7 @@ clear_with_quad(GLcontext *ctx,
       if (!stvp) {
          stvp = make_vertex_shader(st);
       }
-      pipe->bind_vs_state(pipe, stvp->vs->data);
+      pipe->bind_vs_state(pipe, stvp->cso->data);
    }
 
    /* viewport state: viewport matching window dims */
@@ -376,7 +376,7 @@ clear_with_quad(GLcontext *ctx,
    pipe->bind_blend_state(pipe, st->state.blend->data);
    pipe->bind_depth_stencil_alpha_state(pipe, st->state.depth_stencil->data);
    pipe->bind_fs_state(pipe, st->state.fs->data);
-   pipe->bind_vs_state(pipe, st->state.vs->data);
+   pipe->bind_vs_state(pipe, st->state.vs->cso->data);
    pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);
    pipe->set_viewport_state(pipe, &st->state.viewport);
    /* OR:

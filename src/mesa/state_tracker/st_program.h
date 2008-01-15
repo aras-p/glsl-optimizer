@@ -90,7 +90,10 @@ struct st_vertex_program
    struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
    /** Pointer to the corresponding cached shader */
-   const struct cso_vertex_shader *vs;
+   const struct cso_vertex_shader *cso;
+
+   /** For using our private draw module (glRasterPos) */
+   struct draw_vertex_shader *draw_shader;
 
    GLuint param_state;
 };
@@ -122,7 +125,7 @@ st_translate_fragment_program(struct st_context *st,
                               GLuint maxTokens);
 
 
-extern const struct cso_vertex_shader *
+extern void
 st_translate_vertex_program(struct st_context *st,
                             struct st_vertex_program *vp,
                             const GLuint vert_output_to_slot[],

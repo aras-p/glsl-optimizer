@@ -43,6 +43,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "pipe/cso_cache/cso_cache.h"
+
 #include "st_context.h"
 #include "st_cache.h"
 #include "st_atom.h"
@@ -71,8 +73,8 @@ struct translated_vertex_program
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
-   /** Pointer to the translated, cached vertex shader */
-   const struct cso_vertex_shader *vs;
+   /** Pointer to the translated vertex program */
+   struct st_vertex_program *vp;
 
    struct translated_vertex_program *next;  /**< next in linked list */
 };
@@ -257,12 +259,13 @@ find_translated_vp(struct st_context *st,
 
       assert(stvp->Base.Base.NumInstructions > 1);
 
-      xvp->vs = st_translate_vertex_program(st, stvp,
-                                            xvp->output_to_slot,
-                                            xvp->tokens,
-                                            ST_MAX_SHADER_TOKENS);
-      assert(xvp->vs);
-      stvp->vs = NULL; /* don't want to use this */
+      st_translate_vertex_program(st, stvp,
+                                  xvp->output_to_slot,
+                                  xvp->tokens,
+                                  ST_MAX_SHADER_TOKENS);
+
+      assert(stvp->cso);
+      xvp->vp = stvp;
 
       /* translated VP is up to date now */
       xvp->serialNo = stvp->serialNo;
@@ -291,8 +294,8 @@ update_linkage( struct st_context *st )
    xvp = find_translated_vp(st, stvp, stfp);
 
    st->vp = stvp;
-   st->state.vs = xvp->vs;
-   st->pipe->bind_vs_state(st->pipe, st->state.vs->data);
+   st->state.vs = xvp->vp;
+   st->pipe->bind_vs_state(st->pipe, st->state.vs->cso->data);
 
    st->fp = stfp;
    st->state.fs = stfp->fs;

@@ -57,7 +57,7 @@
  * \param tokensOut  destination for TGSI tokens
  * \return  pointer to cached pipe_shader object.
  */
-const struct cso_vertex_shader *
+void
 st_translate_vertex_program(struct st_context *st,
                             struct st_vertex_program *stvp,
                             const GLuint outputMapping[],
@@ -256,12 +256,10 @@ st_translate_vertex_program(struct st_context *st,
    vs.tokens = tokensOut;
 
    cso = st_cached_vs_state(st, &vs);
-   stvp->vs = cso;
+   stvp->cso = cso;
 
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0 );
-
-   return cso;
 }
 
 
