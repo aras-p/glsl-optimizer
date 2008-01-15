@@ -43,75 +43,79 @@ all: $(OUTPUTS)
 
 server: $(SERVER_OUTPUTS)
 
-glprocs.h: $(COMMON) gl_procs.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_procs.py > glprocs.h
+glprocs.h: gl_procs.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapitemp.h: $(COMMON) gl_apitemp.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_apitemp.py > glapitemp.h
+glapitemp.h: gl_apitemp.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapioffsets.h: $(COMMON) gl_offsets.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_offsets.py > glapioffsets.h
+glapioffsets.h: gl_offsets.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapitable.h: $(COMMON) gl_table.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_table.py > glapitable.h
+glapitable.h: gl_table.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-dispatch.h: $(COMMON) gl_table.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_table.py -m remap_table > dispatch.h
+dispatch.h: gl_table.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
-../main/enums.c: $(COMMON) gl_enums.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_enums.py > ../main/enums.c
+../main/enums.c: gl_enums.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../x86/glapi_x86.S: $(COMMON) gl_x86_asm.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_x86_asm.py > ../x86/glapi_x86.S
+../x86/glapi_x86.S: gl_x86_asm.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../x86-64/glapi_x86-64.S: $(COMMON) gl_x86-64_asm.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_x86-64_asm.py > ../x86-64/glapi_x86-64.S
+../x86-64/glapi_x86-64.S: gl_x86-64_asm.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../sparc/glapi_sparc.S: $(COMMON) gl_SPARC_asm.py
-	$(PYTHON2) $(PYTHON_FLAGS) gl_SPARC_asm.py > ../sparc/glapi_sparc.S
+../sparc/glapi_sparc.S: gl_SPARC_asm.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
 
-../drivers/dri/common/extension_helper.h: $(COMMON) extension_helper.py
-	$(PYTHON2) $(PYTHON_FLAGS) extension_helper.py > ../drivers/dri/common/extension_helper.h
+../drivers/dri/common/extension_helper.h: extension_helper.py $(COMMON)
+	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-../../glx/x11/indirect.c: $(COMMON_GLX) glX_proto_send.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m proto | $(INDENT) $(INDENT_FLAGS) > ../../glx/x11/indirect.c
+../../glx/x11/indirect.c: glX_proto_send.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m proto | $(INDENT) $(INDENT_FLAGS) > $@
 
-../../glx/x11/indirect.h: $(COMMON_GLX) glX_proto_send.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m init_h > ../../glx/x11/indirect.h
+../../glx/x11/indirect.h: glX_proto_send.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_h > $@
 
-../../glx/x11/indirect_init.c: $(COMMON_GLX) glX_proto_send.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_send.py -m init_c > ../../glx/x11/indirect_init.c
+../../glx/x11/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_c > $@
 
-../../glx/x11/indirect_size.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-set -h _INDIRECT_SIZE_H_ | $(INDENT) $(INDENT_FLAGS) > ../../glx/x11/indirect_size.h
+../../glx/x11/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_h --only-set -h _INDIRECT_SIZE_H_ \
+	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-../../glx/x11/indirect_size.c: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c --only-set | $(INDENT) $(INDENT_FLAGS) > ../../glx/x11/indirect_size.c
+../../glx/x11/indirect_size.c: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_c --only-set \
+	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_dispatch.c: $(COMMON_GLX) glX_proto_recv.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_c > $@
+$(GLX_DIR)/indirect_dispatch.c: glX_proto_recv.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_c > $@
 
-$(GLX_DIR)/indirect_dispatch_swap.c: $(COMMON_GLX) glX_proto_recv.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_c -s > $@
+$(GLX_DIR)/indirect_dispatch_swap.c: glX_proto_recv.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_c -s > $@
 
-$(GLX_DIR)/indirect_dispatch.h: $(COMMON_GLX) glX_proto_recv.py glX_API.xml
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_recv.py -m dispatch_h -f gl_and_glX_API.xml -s > $@
+$(GLX_DIR)/indirect_dispatch.h: glX_proto_recv.py glX_API.xml $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m dispatch_h -f gl_and_glX_API.xml -s > $@
 
-$(GLX_DIR)/indirect_size_get.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' | $(INDENT) $(INDENT_FLAGS) > $@
+$(GLX_DIR)/indirect_size_get.h: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_h --only-get -h '_INDIRECT_SIZE_GET_H_' \
+	  | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_size_get.c: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m size_c | $(INDENT) $(INDENT_FLAGS) > $@
+$(GLX_DIR)/indirect_size_get.c: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_c | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_reqsize.h: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_h --only-get -h '_INDIRECT_SIZE_GET_H_' | $(INDENT) $(INDENT_FLAGS) -l200 > $@
+$(GLX_DIR)/indirect_reqsize.h: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m reqsize_h --only-get -h '_INDIRECT_SIZE_GET_H_' \
+	  | $(INDENT) $(INDENT_FLAGS) -l200 > $@
 
-$(GLX_DIR)/indirect_reqsize.c: $(COMMON_GLX) glX_proto_size.py
-	$(PYTHON2) $(PYTHON_FLAGS) glX_proto_size.py -m reqsize_c | $(INDENT) $(INDENT_FLAGS) > $@
+$(GLX_DIR)/indirect_reqsize.c: glX_proto_size.py $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -m reqsize_c | $(INDENT) $(INDENT_FLAGS) > $@
 
-$(GLX_DIR)/indirect_table.c: $(COMMON_GLX) glX_server_table.py glX_API.xml
-	$(PYTHON2) $(PYTHON_FLAGS) glX_server_table.py -f gl_and_glX_API.xml > $@
+$(GLX_DIR)/indirect_table.c: glX_server_table.py glX_API.xml $(COMMON_GLX)
+	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_and_glX_API.xml > $@
 
 clean:
 	rm -f *~ *.pyo
