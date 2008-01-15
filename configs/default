@@ -30,9 +30,11 @@ MKDEP_OPTIONS = -fdepend
 MAKE = make
 INSTALL = $(TOP)/bin/minstall
 
-# Python and flags (generally only needed by the developers)
+# Tools for regenerating glapi (generally only needed by the developers)
 PYTHON2 = python
 PYTHON_FLAGS = -t -O -O
+INDENT = indent
+INDENT_FLAGS = -i4 -nut -br -brs -npcs -ce -T GLubyte -T GLbyte -T Bool
 
 # Library names (base name)
 GL_LIB = GL
