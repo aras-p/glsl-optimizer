@@ -284,8 +284,10 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
-      if (intel->batch->ptr - intel->batch->map > intel->batch->size * 3 / 4)
-	 intel_batchbuffer_flush(intel->batch);
+      if (intel->batch->ptr - intel->batch->map > intel->batch->size * 3 / 4
+	/* brw_emit_prim may change the cliprect_mode to LOOP_CLIPRECTS */
+	|| intel->batch->cliprect_mode != LOOP_CLIPRECTS) 
+	      intel_batchbuffer_flush(intel->batch);
 
       brw->no_batch_wrap = GL_TRUE;
 
