@@ -190,11 +190,15 @@ static void st_program_string_notify( GLcontext *ctx,
          stvp->cso = NULL;
       }
 
+      if (stvp->draw_shader) {
+         draw_delete_vertex_shader(st->draw, stvp->draw_shader);
+         stvp->draw_shader = NULL;
+      }
+
       stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
 
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
-
    }
 }
 
