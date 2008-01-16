@@ -304,7 +304,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
    if (!extended)
       s[i++] = '.';
 
-   if (negateBase & 0x1)
+   if (negateBase & NEGATE_X)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 0)];
 
@@ -312,7 +312,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & 0x2)
+   if (negateBase & NEGATE_Y)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 1)];
 
@@ -320,7 +320,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & 0x4)
+   if (negateBase & NEGATE_Z)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 2)];
 
@@ -328,7 +328,7 @@ _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
       s[i++] = ',';
    }
 
-   if (negateBase & 0x8)
+   if (negateBase & NEGATE_W)
       s[i++] = '-';
    s[i++] = swz[GET_SWZ(swizzle, 3)];
 
