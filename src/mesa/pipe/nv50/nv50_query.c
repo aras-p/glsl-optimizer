@@ -29,7 +29,7 @@ nv50_query_end(struct pipe_context *pipe, struct pipe_query *q)
 
 static boolean
 nv50_query_result(struct pipe_context *pipe, struct pipe_query *q,
-		  boolean wait, uint64_t *result)
+		  boolean wait, uint64 *result)
 {
 	NOUVEAU_ERR("unimplemented\n");
 	*result = 0xdeadcafe;

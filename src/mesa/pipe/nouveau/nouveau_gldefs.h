@@ -36,7 +36,7 @@ nvgl_blend_func(unsigned factor)
 	case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
 		return 0x8004;
 	default:
-		assert(0);
+		return 0x0000;
 	}
 }
 
@@ -55,7 +55,7 @@ nvgl_blend_eqn(unsigned func)
 	case PIPE_BLEND_REVERSE_SUBTRACT:
 		return 0x800b;
 	default:
-		assert(0);
+		return 0x8006;
 	}
 }
 
@@ -96,7 +96,7 @@ nvgl_logicop_func(unsigned func)
 	case PIPE_LOGICOP_SET:
 		return 0x150f;
 	default:
-		assert(0);
+		return 0x1505;
 	}
 }
 
@@ -121,7 +121,7 @@ nvgl_comparison_op(unsigned op)
 	case PIPE_FUNC_ALWAYS:
 		return 0x0207;
 	default:
-		assert(0);
+		return 0x0207;
 	}
 }
 
@@ -136,7 +136,7 @@ nvgl_polygon_mode(unsigned mode)
 	case PIPE_POLYGON_MODE_FILL:
 		return 0x1b02;
 	default:
-		assert(0);
+		return 0x1b02;
 	}
 }
 
@@ -161,7 +161,7 @@ nvgl_stencil_op(unsigned op)
 	case PIPE_STENCIL_OP_DECR_WRAP:
 		return 0x8508;
 	default:
-		assert(0);
+		return 0x1e00;
 	}
 }
 
