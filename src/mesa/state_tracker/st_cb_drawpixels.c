@@ -158,6 +158,7 @@ make_bitmap_fragment_program(GLcontext *ctx)
    p->OutputsWritten = 0x0;
 
    stfp = (struct st_fragment_program *) p;
+   stfp->Base.UsesKill = GL_TRUE;
    st_translate_fragment_program(ctx->st, stfp, NULL,
                                  stfp->tokens, ST_MAX_SHADER_TOKENS);
 
@@ -536,30 +537,31 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 {
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
+   GLfloat sLeft = 0.0, sRight = 1.0;
    GLfloat tTop = invertTex, tBot = 1.0 - tTop;
 
    /* upper-left */
    verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].x */
-   verts[0][1][0] = 0.0;   /* attr[1].s */
+   verts[0][0][1] = y0;    /* attr[0].y */
+   verts[0][1][0] = sLeft; /* attr[1].s */
    verts[0][1][1] = tTop;  /* attr[1].t */
 
    /* upper-right */
    verts[1][0][0] = x1;
    verts[1][0][1] = y0;
-   verts[1][1][0] = 1.0;
+   verts[1][1][0] = sRight;
    verts[1][1][1] = tTop;
 
    /* lower-right */
    verts[2][0][0] = x1;
    verts[2][0][1] = y1;
-   verts[2][1][0] = 1.0;
+   verts[2][1][0] = sRight;
    verts[2][1][1] = tBot;
 
    /* lower-left */
    verts[3][0][0] = x0;
    verts[3][0][1] = y1;
-   verts[3][1][0] = 0.0;
+   verts[3][1][0] = sLeft;
    verts[3][1][1] = tBot;
 
    /* same for all verts: */
@@ -581,30 +583,31 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 {
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
    GLuint i;
+   GLfloat sLeft = 0.0, sRight = 1.0;
    GLfloat tTop = invertTex, tBot = 1.0 - tTop;
 
    /* upper-left */
    verts[0][0][0] = x0;    /* attr[0].x */
    verts[0][0][1] = y0;    /* attr[0].y */
-   verts[0][2][0] = 0.0;   /* attr[2].s */
+   verts[0][2][0] = sLeft; /* attr[2].s */
    verts[0][2][1] = tTop;  /* attr[2].t */
 
    /* upper-right */
    verts[1][0][0] = x1;
    verts[1][0][1] = y0;
-   verts[1][2][0] = 1.0;
+   verts[1][2][0] = sRight;
    verts[1][2][1] = tTop;
 
    /* lower-right */
    verts[2][0][0] = x1;
    verts[2][0][1] = y1;
-   verts[2][2][0] = 1.0;
+   verts[2][2][0] = sRight;
    verts[2][2][1] = tBot;
 
    /* lower-left */
    verts[3][0][0] = x0;
    verts[3][0][1] = y1;
-   verts[3][2][0] = 0.0;
+   verts[3][2][0] = sLeft;
    verts[3][2][1] = tBot;
 
    /* same for all verts: */
@@ -669,9 +672,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_sampler_state sampler;
       const struct cso_sampler *cso;
       memset(&sampler, 0, sizeof(sampler));
-      sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
-      sampler.wrap_t = PIPE_TEX_WRAP_REPEAT;
-      sampler.wrap_r = PIPE_TEX_WRAP_REPEAT;
+      sampler.wrap_s = PIPE_TEX_WRAP_CLAMP;
+      sampler.wrap_t = PIPE_TEX_WRAP_CLAMP;
+      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP;
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
