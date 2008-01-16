@@ -175,7 +175,7 @@ static void upload_sf_prog( struct brw_context *brw )
 	    //int semantic = parse.FullToken.FullDeclaration.Semantic.SemanticName;
 	    //int semantic_index = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
 
-	    _mesa_printf("fs input %d..%d interp mode %d\n", first, last, interp_mode);
+	    fprintf(stderr, "fs input %d..%d interp mode %d\n", first, last, interp_mode);
 	    
 	    switch (interp_mode) {
 	    case TGSI_INTERPOLATE_CONSTANT:
@@ -213,9 +213,9 @@ static void upload_sf_prog( struct brw_context *brw )
    key.linear_mask |= 1;
    key.const_mask <<= 1;
 
-   _mesa_printf("key.persp_mask: %x\n", key.persp_mask);
-   _mesa_printf("key.linear_mask: %x\n", key.linear_mask);
-   _mesa_printf("key.const_mask: %x\n", key.const_mask);
+   fprintf(stderr, "key.persp_mask: %x\n", key.persp_mask);
+   fprintf(stderr, "key.linear_mask: %x\n", key.linear_mask);
+   fprintf(stderr, "key.const_mask: %x\n", key.const_mask);
 
 
 //   key.do_point_sprite = brw->attribs.Point->PointSprite;

@@ -137,8 +137,8 @@ static boolean calculate_masks( struct brw_sf_compile *c,
    unsigned persp_mask = c->key.persp_mask;
    unsigned linear_mask = c->key.linear_mask;
 
-   _mesa_printf("persp_mask: %x\n", persp_mask);
-   _mesa_printf("linear_mask: %x\n", linear_mask);
+   fprintf(stderr, "persp_mask: %x\n", persp_mask);
+   fprintf(stderr, "linear_mask: %x\n", linear_mask);
 
    *pc_persp = 0;
    *pc_linear = 0;
@@ -162,9 +162,9 @@ static boolean calculate_masks( struct brw_sf_compile *c,
 	 *pc_linear |= 0xf0;
    }
 
-   _mesa_printf("pc: %x\n", *pc);
-   _mesa_printf("pc_persp: %x\n", *pc_persp);
-   _mesa_printf("pc_linear: %x\n", *pc_linear);
+   fprintf(stderr, "pc: %x\n", *pc);
+   fprintf(stderr, "pc_persp: %x\n", *pc_persp);
+   fprintf(stderr, "pc_linear: %x\n", *pc_linear);
    
 
    return is_last_attr;
@@ -177,7 +177,7 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    unsigned i;
 
-   _mesa_printf("%s START ==============\n", __FUNCTION__);
+   fprintf(stderr, "%s START ==============\n", __FUNCTION__);
 
    c->nr_verts = 3;
    alloc_regs(c);
@@ -250,7 +250,7 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
       }
    }
 
-   _mesa_printf("%s DONE ==============\n", __FUNCTION__);
+   fprintf(stderr, "%s DONE ==============\n", __FUNCTION__);
 
 }
 
