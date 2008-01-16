@@ -82,12 +82,8 @@ struct vbuf_render {
     * DrawElements, note indices are ushort:
     */
    void (*draw)( struct vbuf_render *,
-                 uint prim,
 		 const ushort *indices,
-		 uint nr_indices,
-                 const void *vertices,
-                 uint nr_vertices,
-                 uint vertex_bytes);
+		 uint nr_indices );
 
    /**
     * Called when vbuf is done with this set of vertices:
