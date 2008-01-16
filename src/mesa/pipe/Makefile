@@ -10,7 +10,7 @@ ifeq ($(CONFIG_NAME), linux-llvm)
 LLVM_DIR = llvm
 endif
 
-SUBDIRS = softpipe llvm i915simple i965simple failover pipebuffer $(CELL_DIR) $(LLVM_DIR)
+SUBDIRS = softpipe i915simple i965simple failover pipebuffer $(CELL_DIR) $(LLVM_DIR)
 
 
 default: subdirs
