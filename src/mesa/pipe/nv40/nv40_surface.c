@@ -146,8 +146,6 @@ nv40_init_surface_functions(struct nv40_context *nv40)
 	nv40->pipe.get_tex_surface = nv40_get_tex_surface;
 	nv40->pipe.get_tile = pipe_get_tile_raw;
 	nv40->pipe.put_tile = pipe_put_tile_raw;
-	nv40->pipe.get_tile_rgba = pipe_get_tile_rgba;
-	nv40->pipe.put_tile_rgba = pipe_put_tile_rgba;
 	nv40->pipe.surface_data = nv40_surface_data;
 	nv40->pipe.surface_copy = nv40_surface_copy;
 	nv40->pipe.surface_fill = nv40_surface_fill;

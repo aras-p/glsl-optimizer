@@ -84,8 +84,6 @@ nv50_init_surface_functions(struct nv50_context *nv50)
    nv50->pipe.get_tex_surface = nv50_get_tex_surface;
    nv50->pipe.get_tile = pipe_get_tile_raw;
    nv50->pipe.put_tile = pipe_put_tile_raw;
-   nv50->pipe.get_tile_rgba = pipe_get_tile_rgba;
-   nv50->pipe.put_tile_rgba = pipe_put_tile_rgba;
    nv50->pipe.surface_data = nv50_surface_data;
    nv50->pipe.surface_copy = nv50_surface_copy;
    nv50->pipe.surface_fill = nv50_surface_fill;
