@@ -39,6 +39,9 @@
 #include "shader/programopt.h"
 #include "shader/shader_api.h"
 
+#include "pipe/cso_cache/cso_cache.h"
+#include "pipe/draw/draw_context.h"
+
 #include "st_context.h"
 #include "st_program.h"
 #include "st_atom_shader.h"
@@ -181,17 +184,22 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stvp->serialNo++;
 
-      if (stvp->vs) {
-         /* free the TGSI code */
-         // cso_delete(stfp->vs);
-         stvp->vs = NULL;
+      if (stvp->cso) {
+         /* free the CSO data */
+         st->pipe->delete_vs_state(st->pipe, stvp->cso->data);
+         FREE((void *) stvp->cso);
+         stvp->cso = NULL;
+      }
+
+      if (stvp->draw_shader) {
+         draw_delete_vertex_shader(st->draw, stvp->draw_shader);
+         stvp->draw_shader = NULL;
       }
 
       stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
 
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
-
    }
 }
 

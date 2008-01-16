@@ -29,31 +29,26 @@
  * Triangle rendering within a tile.
  */
 
-
-#if 0
-#include "sp_context.h"
-#include "sp_headers.h"
-#include "sp_quad.h"
-#include "sp_prim_setup.h"
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vertex.h"
-#include "pipe/p_util.h"
-#endif
-
-
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
-#include "main.h"
-#include "tri.h"
-
-/*
-#include <vmx2spu.h>
-#include <spu_internals.h>
-*/
+#include "spu_main.h"
+#include "spu_tile.h"
+#include "spu_tri.h"
 
 
-#if 1
+
+/**
+ * Simplified types taken from other parts of Gallium
+ */
+struct vertex_header {
+   float data[2][4];  /* pos and color */
+};
+
+struct prim_header {
+   struct vertex_header *v[3];
+};
+
 
 /* XXX fix this */
 #undef CEILF
@@ -69,14 +64,6 @@
 #define MASK_BOTTOM_LEFT  (1 << QUAD_BOTTOM_LEFT)
 #define MASK_BOTTOM_RIGHT (1 << QUAD_BOTTOM_RIGHT)
 #define MASK_ALL          0xf
-
-#define PIPE_MAX_SHADER_INPUTS 8 /* XXX temp */
-
-static int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
-
-static uint tile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-
-#endif
 
 
 #define DEBUG_VERTS 0
@@ -100,16 +87,12 @@ struct interp_coef
    float dady[4];
 };
 
+
 /**
  * Triangle setup info (derived from draw_stage).
  * Also used for line drawing (taking some liberties).
  */
 struct setup_stage {
-#if 0
-   struct draw_stage stage; /**< This must be first (base class) */
-
-   struct softpipe_context *softpipe;
-#endif
 
    /* Vertices are just an array of floats making up each attribute in
     * turn.  Currently fixed at 4 floats, but should change in time.
@@ -126,6 +109,10 @@ struct setup_stage {
 
    float oneoverarea;
 
+   uint tx, ty;
+
+   int cliprect_minx, cliprect_maxx, cliprect_miny, cliprect_maxy;
+
 #if 0
    struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
 #else
@@ -134,9 +121,6 @@ struct setup_stage {
 
 #if 0
    struct quad_header quad; 
-#endif
-#if 1
-   uint color;
 #endif
 
    struct {
@@ -229,6 +213,22 @@ eval_coeff( struct setup_stage *setup, uint slot,
 }
 
 
+static INLINE void
+eval_z( struct setup_stage *setup,
+        float x, float y, float result[4])
+{
+   uint slot = 0;
+   uint i = 2;
+   const float *dadx = setup->coef[slot].dadx;
+   const float *dady = setup->coef[slot].dady;
+
+   result[QUAD_TOP_LEFT] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
+   result[QUAD_TOP_RIGHT] = result[0] + dadx[i];
+   result[QUAD_BOTTOM_LEFT] = result[0] + dady[i];
+   result[QUAD_BOTTOM_RIGHT] = result[0] + dadx[i] + dady[i];
+}
+
+
 static INLINE uint
 pack_color(const float color[4])
 {
@@ -236,14 +236,17 @@ pack_color(const float color[4])
    uint g = (uint) (color[1] * 255.0);
    uint b = (uint) (color[2] * 255.0);
    uint a = (uint) (color[3] * 255.0);
-   const enum pipe_format format = PIPE_FORMAT_A8R8G8B8_UNORM; /* XXX temp */
-   switch (format) {
+   r = MIN2(r, 255);
+   g = MIN2(g, 255);
+   b = MIN2(b, 255);
+   a = MIN2(a, 255);
+   switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return (a << 24) | (r << 16) | (g << 8) | b;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       return (b << 24) | (g << 16) | (r << 8) | a;
    default:
-      assert(0);
+      ASSERT(0);
       return 0;
    }
 }
@@ -263,20 +266,80 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    sp->quad.first->run(sp->quad.first, &setup->quad);
 #else
    /* Cell: "write" quad fragments to the tile by setting prim color */
-   int ix = x - cliprect_minx;
-   int iy = y - cliprect_miny;
+   int ix = x - setup->cliprect_minx;
+   int iy = y - setup->cliprect_miny;
    float colors[4][4];
+   uint z;
 
    eval_coeff(setup, 1, (float) x, (float) y, colors);
 
-   if (mask & MASK_TOP_LEFT)
-      tile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
-   if (mask & MASK_TOP_RIGHT)
-      tile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
-   if (mask & MASK_BOTTOM_LEFT)
-      tile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
-   if (mask & MASK_BOTTOM_RIGHT)
-      tile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      float zvals[4];
+      eval_z(setup, (float) x, (float) y, zvals);
+
+      if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
+         /* now, _really_ clear the tile */
+         clear_tile_z(ztile, spu.fb.depth_clear_value);
+      }
+      else {
+         /* make sure we've got the tile from main mem */
+         wait_on_mask(1 << TAG_READ_TILE_Z);
+      }
+      tile_status_z[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
+
+      if (mask & MASK_TOP_LEFT) {
+         z = (uint) (zvals[0] * 65535.0);
+         if (z < ztile[iy][ix])
+            ztile[iy][ix] = z;
+         else
+            mask &= ~MASK_TOP_LEFT;
+      }
+
+      if (mask & MASK_TOP_RIGHT) {
+         z = (uint) (zvals[1] * 65535.0);
+         if (z < ztile[iy][ix+1])
+            ztile[iy][ix+1] = z;
+         else
+            mask &= ~MASK_TOP_RIGHT;
+      }
+
+      if (mask & MASK_BOTTOM_LEFT) {
+         z = (uint) (zvals[2] * 65535.0);
+         if (z < ztile[iy+1][ix])
+            ztile[iy+1][ix] = z;
+         else
+            mask &= ~MASK_BOTTOM_LEFT;
+      }
+
+      if (mask & MASK_BOTTOM_RIGHT) {
+         z = (uint) (zvals[3] * 65535.0);
+         if (z < ztile[iy+1][ix+1])
+            ztile[iy+1][ix+1] = z;
+         else
+            mask &= ~MASK_BOTTOM_RIGHT;
+      }
+   }
+
+   if (mask) {
+      if (tile_status[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
+         /* now, _really_ clear the tile */
+         clear_tile(ctile, spu.fb.color_clear_value);
+      }
+      else {
+         /* make sure we've got the tile from main mem */
+         wait_on_mask(1 << TAG_READ_TILE_COLOR);
+      }
+      tile_status[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
+
+      if (mask & MASK_TOP_LEFT)
+         ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
+      if (mask & MASK_TOP_RIGHT)
+         ctile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
+      if (mask & MASK_BOTTOM_LEFT)
+         ctile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
+      if (mask & MASK_BOTTOM_RIGHT)
+         ctile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+   }
 #endif
 }
 
@@ -379,15 +442,9 @@ static void print_vertex(const struct setup_stage *setup,
 static boolean setup_sort_vertices( struct setup_stage *setup,
 				      const struct prim_header *prim )
 {
-#if 0
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
    const struct vertex_header *v2 = prim->v[2];
-#else
-   const struct vertex_header *v0 = &prim->v[0];
-   const struct vertex_header *v1 = &prim->v[1];
-   const struct vertex_header *v2 = &prim->v[2];
-#endif
 
 #if DEBUG_VERTS
    fprintf(stderr, "Triangle:\n");
@@ -444,6 +501,20 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
 	 }
       }
    }
+
+   /* Check if triangle is completely outside the tile bounds */
+   if (setup->vmin->data[0][1] > setup->cliprect_maxy)
+      return FALSE;
+   if (setup->vmax->data[0][1] < setup->cliprect_miny)
+      return FALSE;
+   if (setup->vmin->data[0][0] < setup->cliprect_minx &&
+       setup->vmid->data[0][0] < setup->cliprect_minx &&
+       setup->vmax->data[0][0] < setup->cliprect_minx)
+      return FALSE;
+   if (setup->vmin->data[0][0] > setup->cliprect_maxx &&
+       setup->vmid->data[0][0] > setup->cliprect_maxx &&
+       setup->vmax->data[0][0] > setup->cliprect_maxx)
+      return FALSE;
 
    setup->ebot.dx = setup->vmid->data[0][0] - setup->vmin->data[0][0];
    setup->ebot.dy = setup->vmid->data[0][1] - setup->vmin->data[0][1];
@@ -515,16 +586,16 @@ static void const_coeff( struct setup_stage *setup,
  * for a triangle.
  */
 static void tri_linear_coeff( struct setup_stage *setup,
-                              unsigned slot )
+                              uint slot, uint firstComp, uint lastComp )
 {
    uint i;
-   for (i = 0; i < 4; i++) {
+   for (i = firstComp; i < lastComp; i++) {
       float botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
       float majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
       float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
       float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
-      assert(slot < PIPE_MAX_SHADER_INPUTS);
+      ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
 
       setup->coef[slot].dadx[i] = a * setup->oneoverarea;
       setup->coef[slot].dady[i] = b * setup->oneoverarea;
@@ -640,7 +711,8 @@ static void setup_tri_coefficients( struct setup_stage *setup )
       }
    }
 #else
-   tri_linear_coeff(setup, 1);  /* slot 1 = color */
+   tri_linear_coeff(setup, 0, 2, 3);  /* slot 0, z */
+   tri_linear_coeff(setup, 1, 0, 4);  /* slot 1, color */
 #endif
 }
 
@@ -680,22 +752,14 @@ static void subtriangle( struct setup_stage *setup,
 			 struct edge *eright,
 			 unsigned lines )
 {
-#if 0
-   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
-   const int minx = (int) cliprect->minx;
-   const int maxx = (int) cliprect->maxx;
-   const int miny = (int) cliprect->miny;
-   const int maxy = (int) cliprect->maxy;
-#else
-   const int minx = cliprect_minx;
-   const int maxx = cliprect_maxx;
-   const int miny = cliprect_miny;
-   const int maxy = cliprect_maxy;
-#endif
+   const int minx = setup->cliprect_minx;
+   const int maxx = setup->cliprect_maxx;
+   const int miny = setup->cliprect_miny;
+   const int maxy = setup->cliprect_maxy;
    int y, start_y, finish_y;
    int sy = (int)eleft->sy;
 
-   assert((int)eleft->sy == (int) eright->sy);
+   ASSERT((int)eleft->sy == (int) eright->sy);
 
    /* clip top/bottom */
    start_y = sy;
@@ -757,25 +821,13 @@ static void subtriangle( struct setup_stage *setup,
 /**
  * Do setup for triangle rasterization, then render the triangle.
  */
-static void setup_tri(
-#if 0
-                       struct draw_stage *stage,
-#endif
-		       struct prim_header *prim )
+static void
+setup_tri(struct setup_stage *setup, struct prim_header *prim)
 {
-#if 0
-   struct setup_stage *setup = setup_stage( stage );
-#else
-   struct setup_stage ss;
-   struct setup_stage *setup = &ss;
-   ss.color = prim->color;
-#endif
+   if (!setup_sort_vertices( setup, prim )) {
+      return; /* totally clipped */
+   }
 
-   /*
-   _mesa_printf("%s\n", __FUNCTION__ );
-   */
-
-   setup_sort_vertices( setup, prim );
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
@@ -809,81 +861,28 @@ static void setup_tri(
 
 
 
-
-#if 0
-static void setup_begin( struct draw_stage *stage )
-{
-   struct setup_stage *setup = setup_stage(stage);
-   struct softpipe_context *sp = setup->softpipe;
-
-   setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-
-   sp->quad.first->begin(sp->quad.first);
-}
-#endif
-
-#if 0
-static void setup_end( struct draw_stage *stage )
-{
-}
-#endif
-
-
-#if 0
-static void reset_stipple_counter( struct draw_stage *stage )
-{
-   struct setup_stage *setup = setup_stage(stage);
-   setup->softpipe->line_stipple_counter = 0;
-}
-#endif
-
-#if 0
-static void render_destroy( struct draw_stage *stage )
-{
-   FREE( stage );
-}
-#endif
-
-
-#if 0
 /**
- * Create a new primitive setup/render stage.
+ * Draw triangle into tile at (tx, ty) (tile coords)
+ * The tile data should have already been fetched.
  */
-struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
-{
-   struct setup_stage *setup = CALLOC_STRUCT(setup_stage);
-
-   setup->softpipe = softpipe;
-   setup->stage.draw = softpipe->draw;
-   setup->stage.begin = setup_begin;
-   setup->stage.point = setup_point;
-   setup->stage.line = setup_line;
-   setup->stage.tri = setup_tri;
-   setup->stage.end = setup_end;
-   setup->stage.reset_stipple_counter = reset_stipple_counter;
-   setup->stage.destroy = render_destroy;
-
-   setup->quad.coef = setup->coef;
-
-   return &setup->stage;
-}
-#endif
-
-
 void
-draw_triangle(struct prim_header *tri, uint tx, uint ty)
+tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 {
+   struct prim_header tri;
+   struct setup_stage setup;
+
+   tri.v[0] = (struct vertex_header *) v0;
+   tri.v[1] = (struct vertex_header *) v1;
+   tri.v[2] = (struct vertex_header *) v2;
+
+   setup.tx = tx;
+   setup.ty = ty;
+
    /* set clipping bounds to tile bounds */
-   cliprect_minx = tx * TILE_SIZE;
-   cliprect_miny = ty * TILE_SIZE;
-   cliprect_maxx = (tx + 1) * TILE_SIZE;
-   cliprect_maxy = (ty + 1) * TILE_SIZE;
+   setup.cliprect_minx = tx * TILE_SIZE;
+   setup.cliprect_miny = ty * TILE_SIZE;
+   setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
+   setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
 
-   get_tile(&fb, tx, ty, (uint *) tile);
-   wait_on_mask(1 << DefaultTag);
-
-   setup_tri(tri);
-
-   put_tile(&fb, tx, ty, (uint *) tile);
-   wait_on_mask(1 << DefaultTag);
+   setup_tri(&setup, &tri);
 }

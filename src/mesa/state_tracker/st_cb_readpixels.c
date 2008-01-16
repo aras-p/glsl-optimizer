@@ -40,6 +40,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
+#include "pipe/util/p_tile.h"
 #include "st_context.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
@@ -179,8 +180,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!strb)
       return;
 
-   pipe_surface_map(strb->surface);
-
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */
       df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
@@ -212,7 +211,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    /* Do a row at a time to flip image data vertically */
    for (i = 0; i < height; i++) {
-      pipe->get_tile_rgba(pipe, strb->surface, x, y, width, 1, df);
+      pipe_get_tile_rgba(pipe, strb->surface, x, y, width, 1, df);
       y += yStep;
       df += dfStride;
       if (!dfStride) {
@@ -229,8 +228,6 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          }
       }
    }
-
-   pipe_surface_unmap(strb->surface);
 }
 
 

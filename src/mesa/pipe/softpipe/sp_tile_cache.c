@@ -34,6 +34,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "pipe/util/p_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
@@ -49,6 +50,7 @@
 struct softpipe_tile_cache
 {
    struct pipe_surface *surface;  /**< the surface we're caching */
+   void *surface_map;
    struct pipe_texture *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
@@ -57,6 +59,7 @@ struct softpipe_tile_cache
    boolean depth_stencil; /** Is the surface a depth/stencil format? */
 
    struct pipe_surface *tex_surf;
+   void *tex_surf_map;
    int tex_face, tex_level, tex_z;
 
    struct softpipe_cached_tile tile;  /**< scratch tile for clears */
@@ -150,7 +153,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
 {
    assert(!tc->texture);
 
-   if (tc->surface && tc->surface->map) {
+   if (tc->surface_map) {
       /*assert(tc->surface != ps);*/
       pipe_surface_unmap(tc->surface);
    }
@@ -158,8 +161,8 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    pipe_surface_reference(&tc->surface, ps);
 
    if (ps) {
-      if (!ps->map)
-         pipe_surface_map(ps);
+      if (tc->surface_map)
+	 tc->surface_map = pipe_surface_map(ps);
 
       tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
@@ -179,6 +182,32 @@ sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
 }
 
 
+void
+sp_tile_cache_map_surfaces(struct softpipe_tile_cache *tc)
+{
+   if (tc->surface && !tc->surface_map)
+      tc->surface_map = pipe_surface_map(tc->surface);
+
+   if (tc->tex_surf && !tc->tex_surf_map)
+      tc->tex_surf_map = pipe_surface_map(tc->tex_surf);
+}
+
+
+void
+sp_tile_cache_unmap_surfaces(struct softpipe_tile_cache *tc)
+{
+   if (tc->surface_map) {
+      pipe_surface_unmap(tc->surface);
+      tc->surface_map = NULL;
+   }
+
+   if (tc->tex_surf_map) {
+      pipe_surface_unmap(tc->tex_surf);
+      tc->tex_surf_map = NULL;
+   }
+}
+
+
 /**
  * Specify the texture to cache.
  */
@@ -192,8 +221,10 @@ sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
 
    tc->texture = texture;
 
-   if (tc->tex_surf && tc->tex_surf->map)
+   if (tc->tex_surf_map) {
       pipe_surface_unmap(tc->tex_surf);
+      tc->tex_surf_map = NULL;
+   }
    pipe_surface_reference(&tc->tex_surf, NULL);
 
    /* mark as entries as invalid/empty */
@@ -330,9 +361,6 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
    if (!ps || !ps->buffer)
       return;
 
-   if (!ps->map)
-      pipe_surface_map(ps);
-
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
       struct softpipe_cached_tile *tile = tc->entries + pos;
       if (tile->x >= 0) {
@@ -342,9 +370,9 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
                            tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe->put_tile_rgba(pipe, ps,
-                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                                (float *) tile->data.color);
+            pipe_put_tile_rgba(pipe, ps,
+                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                               (float *) tile->data.color);
          }
          tile->x = tile->y = -1;  /* mark as empty */
          inuse++;
@@ -391,9 +419,9 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
                            tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe->put_tile_rgba(pipe, ps,
-                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                                (float *) tile->data.color);
+            pipe_put_tile_rgba(pipe, ps,
+                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                               (float *) tile->data.color);
          }
       }
 
@@ -418,9 +446,9 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
                            tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            pipe->get_tile_rgba(pipe, ps,
-                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                                (float *) tile->data.color);
+            pipe_get_tile_rgba(pipe, ps,
+                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                               (float *) tile->data.color);
          }
       }
    }
@@ -475,11 +503,11 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
           tc->tex_z != z) {
          /* get new surface (view into texture) */
 
-         if (tc->tex_surf && tc->tex_surf->map)
+	 if (tc->tex_surf_map)
             pipe_surface_unmap(tc->tex_surf);
 
          tc->tex_surf = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
-         pipe_surface_map(tc->tex_surf);
+         tc->tex_surf_map = pipe_surface_map(tc->tex_surf);
 
          tc->tex_face = face;
          tc->tex_level = level;
@@ -487,9 +515,9 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
       }
 
       /* get tile from the surface (view into texture) */
-      pipe->get_tile_rgba(pipe, tc->tex_surf,
-                          tile_x, tile_y, TILE_SIZE, TILE_SIZE,
-                          (float *) tile->data.color);
+      pipe_get_tile_rgba(pipe, tc->tex_surf,
+                         tile_x, tile_y, TILE_SIZE, TILE_SIZE,
+                         (float *) tile->data.color);
       tile->x = tile_x;
       tile->y = tile_y;
       tile->z = z;

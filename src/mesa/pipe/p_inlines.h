@@ -33,34 +33,20 @@
 #include "p_winsys.h"
 
 
-static INLINE ubyte *
+static INLINE void *
 pipe_surface_map(struct pipe_surface *surface)
 {
-   if (!surface->map_refcount++) {
-      surface->map
-         = (ubyte *) surface->winsys->buffer_map( surface->winsys,
-						  surface->buffer,
-						  PIPE_BUFFER_FLAG_WRITE | 
-						  PIPE_BUFFER_FLAG_READ )
-           + surface->offset;
-   }
-
-   return surface->map;
+   return (char *)surface->winsys->buffer_map( surface->winsys, surface->buffer,
+					       PIPE_BUFFER_FLAG_WRITE |
+					       PIPE_BUFFER_FLAG_READ )
+      + surface->offset;
 }
 
 static INLINE void
 pipe_surface_unmap(struct pipe_surface *surface)
 {
-   if (surface->map_refcount > 0) {
-      assert(surface->map);
-      if (!--surface->map_refcount) {
-         surface->winsys->buffer_unmap( surface->winsys,
-					surface->buffer );
-         surface->map = NULL;
-      }
-   }
+   surface->winsys->buffer_unmap( surface->winsys, surface->buffer );
 }
-
 
 /**
  * Set 'ptr' to point to 'surf' and update reference counting.

@@ -56,6 +56,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/util/p_tile.h"
 #include "shader/prog_instruction.h"
 
 
@@ -661,7 +662,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_fs_state(pipe, stfp->fs->data);
 
    /* vertex shader state: position + texcoord pass-through */
-   pipe->bind_vs_state(pipe, stvp->vs->data);
+   pipe->bind_vs_state(pipe, stvp->cso->data);
 
    /* texture sampling state: */
    {
@@ -718,7 +719,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore GL state */
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
-   pipe->bind_vs_state(pipe, ctx->st->state.vs->data);
+   pipe->bind_vs_state(pipe, ctx->st->state.vs->cso->data);
    pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
@@ -1261,14 +1262,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* alternate path using get/put_tile() */
       GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-      (void) pipe_surface_map(psRead);
-      (void) pipe_surface_map(psTex);
-
-      pipe->get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
-      pipe->put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
-
-      pipe_surface_unmap(psRead);
-      pipe_surface_unmap(psTex);
+      pipe_get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
+      pipe_put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
 
       free(buf);
    }

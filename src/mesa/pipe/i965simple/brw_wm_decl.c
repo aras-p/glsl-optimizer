@@ -273,6 +273,12 @@ static void prealloc_reg(struct brw_wm_compile *c)
       c->reg_index += nr_curbe_regs;
    }
 
+   /* Adjust for parameter coefficients for position, which are
+    * currently always provided.
+    */
+//   c->position_coef[i] = brw_vec8_grf(c->reg_index, 0);
+   c->reg_index += 2;
+
    /* Next we receive the plane coefficients for parameter
     * interpolation:
     */
@@ -282,7 +288,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
    }
 
    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
-   c->prog_data.urb_read_length = c->fp->program.num_inputs * 2;
+   c->prog_data.urb_read_length = (c->fp->program.num_inputs + 1) * 2;
    c->prog_data.curb_read_length = nr_curbe_regs;
 
    /* That's the end of the payload, now we can start allocating registers.

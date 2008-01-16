@@ -45,7 +45,10 @@
 #ifdef GALLIUM_CELL
 #include "pipe/cell/ppu/cell_context.h"
 #include "pipe/cell/ppu/cell_winsys.h"
+#else
+#define TILE_SIZE 32  /* avoid compilation errors */
 #endif
+
 #include "xm_winsys_aub.h"
 
 
@@ -214,7 +217,6 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
 {
    XImage *ximage = b->tempImage;
    struct xm_buffer *xm_buf = xm_bo(surf->buffer);
-   const int TILE_SIZE = 32;
    const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
    uint x, y;
 
@@ -234,6 +236,7 @@ xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
          int tx = x / TILE_SIZE;
          int ty = y / TILE_SIZE;
          int offset = ty * tilesPerRow + tx;
+
          offset *= 4 * TILE_SIZE * TILE_SIZE;
 
          ximage->data = (char *) xm_buf->data + offset;
@@ -363,6 +366,10 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
    surf->format = format;
    surf->cpp = pf_get_size(format);
    surf->pitch = round_up(width, alignment / surf->cpp);
+
+#ifdef GALLIUM_CELL /* XXX a bit of a hack */
+   height = round_up(height, TILE_SIZE);
+#endif
 
    assert(!surf->buffer);
    surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);

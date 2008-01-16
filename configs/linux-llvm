@@ -1,3 +1,4 @@
+# -*-makefile-*-
 # Configuration for Linux and LLVM with debugging info
 
 include $(TOP)/configs/linux
@@ -5,7 +6,7 @@ include $(TOP)/configs/linux
 CONFIG_NAME = linux-llvm
 
 OPT_FLAGS = -g -ansi -pedantic
-DEFINES += -DDEBUG -DDEBUG_MATH
+DEFINES += -DDEBUG -DDEBUG_MATH -DMESA_LLVM=1
 
 LLVM_VERSION := $(shell llvm-config --version)
 
@@ -18,9 +19,8 @@ else
 endif
 
 ifeq ($(MESA_LLVM),1)
-#  LLVM_CFLAGS=`llvm-config --cflags` -DMESA_LLVM=1
-  LLVM_CFLAGS=-DMESA_LLVM=1
-  LLVM_CXXFLAGS=`llvm-config --cxxflags` -DMESA_LLVM=1 -Wno-long-long
+#  LLVM_CFLAGS=`llvm-config --cflags`
+  LLVM_CXXFLAGS=`llvm-config --cxxflags` -Wno-long-long
   LLVM_LDFLAGS=`llvm-config --ldflags`
   LLVM_LIBS=`llvm-config --libs`
   MKLIB_OPTIONS=-cplusplus

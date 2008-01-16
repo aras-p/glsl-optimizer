@@ -100,7 +100,7 @@ struct st_context
       const struct cso_depth_stencil_alpha   *depth_stencil;
       const struct cso_rasterizer      *rasterizer;
       const struct cso_fragment_shader *fs;
-      const struct cso_vertex_shader   *vs;
+      struct st_vertex_program   *vs;
 
       struct pipe_blend_color  blend_color;
       struct pipe_clip_state clip;

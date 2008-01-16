@@ -32,6 +32,7 @@
 
 #include "cell_context.h"
 #include "cell_render.h"
+#include "cell_spu.h"
 #include "pipe/p_util.h"
 #include "pipe/draw/draw_private.h"
 
@@ -89,11 +90,91 @@ render_line(struct draw_stage *stage, struct prim_header *prim)
 }
 
 
+/** Write a vertex into the prim buffer */
+static void
+save_vertex(struct cell_prim_buffer *buf, uint pos,
+            const struct vertex_header *vert)
+{
+   uint attr, j;
+
+   for (attr = 0; attr < 2; attr++) {
+      for (j = 0; j < 4; j++) {
+         buf->vertex[pos][attr][j] = vert->data[attr][j];
+      }
+   }
+
+   /* update bounding box */
+   if (vert->data[0][0] < buf->xmin)
+      buf->xmin = vert->data[0][0];
+   if (vert->data[0][0] > buf->xmax)
+      buf->xmax = vert->data[0][0];
+   if (vert->data[0][1] < buf->ymin)
+      buf->ymin = vert->data[0][1];
+   if (vert->data[0][1] > buf->ymax)
+      buf->ymax = vert->data[0][1];
+}
+
+
 static void
 render_tri(struct draw_stage *stage, struct prim_header *prim)
 {
-   printf("Cell render tri\n");
+   struct render_stage *rs = render_stage(stage);
+   struct cell_context *cell = rs->cell;
+   struct cell_prim_buffer *buf = &cell->prim_buffer;
+   uint i;
+
+   if (buf->num_verts + 3 > CELL_MAX_VERTS) {
+      cell_flush_prim_buffer(cell);
+   }
+
+   i = buf->num_verts;
+   assert(i+2 <= CELL_MAX_VERTS);
+   save_vertex(buf, i+0, prim->v[0]);
+   save_vertex(buf, i+1, prim->v[1]);
+   save_vertex(buf, i+2, prim->v[2]);
+   buf->num_verts += 3;
 }
+
+
+/**
+ * Send the a RENDER command to all SPUs to have them render the prims
+ * in the current prim_buffer.
+ */
+void
+cell_flush_prim_buffer(struct cell_context *cell)
+{
+   uint i;
+
+   if (cell->prim_buffer.num_verts == 0)
+      return;
+
+   for (i = 0; i < cell->num_spus; i++) {
+      struct cell_command_render *render = &cell_global.command[i].render;
+      render->prim_type = PIPE_PRIM_TRIANGLES;
+      render->num_verts = cell->prim_buffer.num_verts;
+      render->num_attribs = CELL_MAX_ATTRIBS;
+      render->xmin = cell->prim_buffer.xmin;
+      render->ymin = cell->prim_buffer.ymin;
+      render->xmax = cell->prim_buffer.xmax;
+      render->ymax = cell->prim_buffer.ymax;
+      render->vertex_data = &cell->prim_buffer.vertex;
+      ASSERT_ALIGN16(render->vertex_data);
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_RENDER);
+   }
+
+   cell->prim_buffer.num_verts = 0;
+
+   cell->prim_buffer.xmin = 1e100;
+   cell->prim_buffer.ymin = 1e100;
+   cell->prim_buffer.xmax = -1e100;
+   cell->prim_buffer.ymax = -1e100;
+
+   /* XXX temporary, need to double-buffer the prim buffer until we get
+    * a real command buffer/list system.
+    */
+   cell_flush(&cell->pipe, 0x0);
+}
+
 
 
 static void render_destroy( struct draw_stage *stage )

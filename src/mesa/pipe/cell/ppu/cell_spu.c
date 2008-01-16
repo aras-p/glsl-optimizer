@@ -95,11 +95,11 @@ static void *cell_thread_function(void *arg)
  * Create the SPU threads
  */
 void
-cell_start_spus(uint num_spus)
+cell_start_spus(struct cell_context *cell)
 {
-   uint i;
+   uint i, j;
 
-   assert(num_spus <= MAX_SPUS);
+   assert(cell->num_spus <= MAX_SPUS);
 
    ASSERT_ALIGN16(&cell_global.command[0]);
    ASSERT_ALIGN16(&cell_global.command[1]);
@@ -107,10 +107,13 @@ cell_start_spus(uint num_spus)
    ASSERT_ALIGN16(&cell_global.inits[0]);
    ASSERT_ALIGN16(&cell_global.inits[1]);
 
-   for (i = 0; i < num_spus; i++) {
+   for (i = 0; i < cell->num_spus; i++) {
       cell_global.inits[i].id = i;
-      cell_global.inits[i].num_spus = num_spus;
+      cell_global.inits[i].num_spus = cell->num_spus;
       cell_global.inits[i].cmd = &cell_global.command[i];
+      for (j = 0; j < CELL_NUM_BATCH_BUFFERS; j++) {
+         cell_global.inits[i].batch_buffers[j] = cell->batch_buffer[j];
+      }
 
       cell_global.spe_contexts[i] = spe_context_create(0, NULL);
       if (!cell_global.spe_contexts[i]) {
@@ -158,28 +161,32 @@ void
 test_spus(struct cell_context *cell)
 {
    uint i;
-   struct pipe_surface *surf = cell->framebuffer.cbufs[0];
+   struct pipe_surface *csurf = cell->framebuffer.cbufs[0];
+   struct pipe_surface *zsurf = cell->framebuffer.zbuf;
 
    printf("PPU: sleep(2)\n\n\n");
    sleep(2);
 
    for (i = 0; i < cell->num_spus; i++) {
-      cell_global.command[i].fb.start = surf->map;
-      cell_global.command[i].fb.width = surf->width;
-      cell_global.command[i].fb.height = surf->height;
-      cell_global.command[i].fb.format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      cell_global.command[i].fb.color_start = cell->cbuf_map[0];
+      cell_global.command[i].fb.depth_start = cell->zbuf_map;
+      cell_global.command[i].fb.width = csurf->width;
+      cell_global.command[i].fb.height = csurf->height;
+      cell_global.command[i].fb.color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
+      cell_global.command[i].fb.depth_format = PIPE_FORMAT_Z32_UNORM;
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
    }
 
    for (i = 0; i < cell->num_spus; i++) {
       cell_global.command[i].clear.value = 0xff880044; /* XXX */
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
+      cell_global.command[i].clear.surface = 0;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
    }
 
    finish_all(cell->num_spus);
 
    {
-      uint *b = (uint*) surf->map;
+      uint *b = (uint*) cell->cbuf_map[0];
       printf("PPU: Clear results: 0x%x 0x%x 0x%x 0x%x\n",
              b[0], b[1000], b[2000], b[3000]);
    }
@@ -191,31 +198,22 @@ test_spus(struct cell_context *cell)
 
 
 /**
- * Wait for all SPUs to exit/return.
- */
-void
-wait_spus(uint num_spus)
-{
-   uint i;
-   void *value;
-
-   for (i = 0; i < num_spus; i++) {
-      pthread_join(cell_global.spe_threads[i], &value);
-   }
-}
-
-
-/**
  * Tell all the SPUs to stop/exit.
  */
 void
 cell_spu_exit(struct cell_context *cell)
 {
-   unsigned i;
+   uint i;
 
    for (i = 0; i < cell->num_spus; i++) {
       send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_EXIT);
    }
 
-   wait_spus(cell->num_spus);
+   /* wait for threads to exit */
+   for (i = 0; i < cell->num_spus; i++) {
+      void *value;
+      pthread_join(cell_global.spe_threads[i], &value);
+      cell_global.spe_threads[i] = 0;
+      cell_global.spe_contexts[i] = 0;
+   }
 }

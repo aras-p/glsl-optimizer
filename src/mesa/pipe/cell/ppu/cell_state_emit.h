@@ -25,37 +25,12 @@
  * 
  **************************************************************************/
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef CELL_STATE_EMIT_H
+#define CELL_STATE_EMIT_H
 
 
-#include <libmisc.h>
-#include <spu_mfcio.h>
-#include "pipe/cell/common.h"
+extern void
+cell_emit_state(struct cell_context *cell);
 
 
-extern volatile struct cell_init_info init;
-
-struct framebuffer {
-   void *start;
-   uint width, height;
-   uint width_tiles, height_tiles; /**< width and height in tiles */
-};
-
-extern struct framebuffer fb;
-
-
-extern int DefaultTag;
-
-
-void
-wait_on_mask(unsigned tag);
-
-void
-get_tile(const struct framebuffer *fb, uint tx, uint ty, uint *tile);
-
-void
-put_tile(const struct framebuffer *fb, uint tx, uint ty, const uint *tile);
-
-
-#endif /* MAIN_H */
+#endif /* CELL_STATE_EMIT_H */

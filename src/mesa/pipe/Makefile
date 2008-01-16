@@ -6,8 +6,12 @@ ifeq ($(CONFIG_NAME), linux-cell)
 CELL_DIR = cell
 endif
 
-SUBDIRS = softpipe i915simple i965simple nv40 nv50 failover \
-	  pipebuffer $(CELL_DIR)
+ifeq ($(CONFIG_NAME), linux-llvm)
+LLVM_DIR = llvm
+endif
+
+SUBDIRS = softpipe i915simple i965simple nv40 nv50 failover pipebuffer \
+	  $(CELL_DIR) $(LLVM_DIR)
 
 
 default: subdirs

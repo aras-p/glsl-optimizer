@@ -241,7 +241,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->state.vs->state;
+   vs = &ctx->st->state.vs->cso->state;
 
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info
@@ -447,7 +447,7 @@ set_feedback_vertex_format(GLcontext *ctx)
    else {
       /* GL_FEEDBACK, or glRasterPos */
       /* emit all attribs (pos, color, texcoord) as GLfloat[4] */
-      vinfo.num_attribs = st->state.vs->state.num_outputs;
+      vinfo.num_attribs = st->state.vs->cso->state.num_outputs;
       for (i = 0; i < vinfo.num_attribs; i++) {
          vinfo.format[i] = FORMAT_4F;
          vinfo.interp_mode[i] = INTERP_LINEAR;
@@ -491,7 +491,11 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->state.vs->state;
+   vs = &ctx->st->state.vs->cso->state;
+
+   if (!st->state.vs->draw_shader) {
+      st->state.vs->draw_shader = draw_create_vertex_shader(draw, vs);
+   }
 
    /*
     * Set up the draw module's state.
@@ -503,7 +507,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, &st->state.rasterizer->state);
-   draw_bind_vertex_shader(draw, st->state.vs->data);
+   draw_bind_vertex_shader(draw, st->state.vs->draw_shader);
    set_feedback_vertex_format(ctx);
 
    /* loop over TGSI shader inputs to determine vertex buffer

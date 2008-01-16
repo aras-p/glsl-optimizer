@@ -46,6 +46,7 @@
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
+#include "cell_vbuf.h"
 
 
 
@@ -148,9 +149,8 @@ cell_destroy_context( struct pipe_context *pipe )
    struct cell_context *cell = cell_context(pipe);
 
    cell_spu_exit(cell);
-   wait_spus(cell->num_spus);
 
-   free(cell);
+   align_free(cell);
 }
 
 
@@ -160,10 +160,14 @@ struct pipe_context *
 cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 {
    struct cell_context *cell;
+   uint i;
 
-   cell = CALLOC_STRUCT(cell_context);
+   /* some fields need to be 16-byte aligned, so align the whole object */
+   cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
    if (!cell)
       return NULL;
+
+   memset(cell, 0, sizeof(*cell));
 
    cell->winsys = cws;
    cell->pipe.winsys = winsys;
@@ -234,20 +238,22 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell->draw = draw_create();
 
-   cell->render_stage = cell_draw_render_stage(cell);
-   draw_set_rasterize_stage(cell->draw, cell->render_stage);
-
+   cell_init_vbuf(cell);
+   draw_set_rasterize_stage(cell->draw, cell->vbuf);
 
    /*
     * SPU stuff
     */
-   cell->num_spus = 6;  /* XXX >6 seems to fail */
+   cell->num_spus = 6;
 
-   cell_start_spus(cell->num_spus);
+   cell_start_spus(cell);
+
+   for (i = 0; i < CELL_NUM_BATCH_BUFFERS; i++) {
+      cell->batch_buffer_size[i] = 0;
+   }
 
 #if 0
    test_spus(cell);
-   wait_spus();
 #endif
 
    return &cell->pipe;

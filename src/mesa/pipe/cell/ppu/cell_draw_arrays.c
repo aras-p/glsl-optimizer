@@ -121,18 +121,17 @@ cell_draw_elements(struct pipe_context *pipe,
     */
    for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
       if (sp->vertex_buffer[i].buffer) {
-         void *buf
-            = pipe->winsys->buffer_map(pipe->winsys,
-                                       sp->vertex_buffer[i].buffer,
-                                       PIPE_BUFFER_FLAG_READ);
+         void *buf = pipe->winsys->buffer_map(pipe->winsys,
+                                              sp->vertex_buffer[i].buffer,
+                                              PIPE_BUFFER_FLAG_READ);
          draw_set_mapped_vertex_buffer(draw, i, buf);
       }
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
-      void *mapped_indexes
-         = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
-                                    PIPE_BUFFER_FLAG_READ);
+      void *mapped_indexes = pipe->winsys->buffer_map(pipe->winsys,
+                                                      indexBuffer,
+                                                      PIPE_BUFFER_FLAG_READ);
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {
@@ -160,7 +159,6 @@ cell_draw_elements(struct pipe_context *pipe,
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
-
 
    /* Note: leave drawing surfaces mapped */
    cell_unmap_constant_buffers(sp);

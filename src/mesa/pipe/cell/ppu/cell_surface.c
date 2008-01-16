@@ -37,6 +37,7 @@
 #include "pipe/p_util.h"
 #include "pipe/cell/common.h"
 #include "cell_context.h"
+#include "cell_batch.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
 
@@ -47,55 +48,52 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
 {
    struct cell_context *cell = cell_context(pipe);
    uint i;
+   uint surfIndex;
 
-   if (!ps->map)
-      pipe_surface_map(ps);
+   if (!cell->cbuf_map[0])
+      cell->cbuf_map[0] = pipe_surface_map(ps);
 
-   for (i = 0; i < cell->num_spus; i++) {
-      struct cell_command_framebuffer *fb = &cell_global.command[i].fb;
-      fb->start = ps->map;
-      fb->width = ps->width;
-      fb->height = ps->height;
-      fb->format = ps->format;
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FRAMEBUFFER);
+   if (ps == cell->framebuffer.zbuf) {
+      surfIndex = 1;
+   }
+   else {
+      surfIndex = 0;
    }
 
+#if 0
    for (i = 0; i < cell->num_spus; i++) {
-      /* XXX clear color varies per-SPU for debugging */
-      cell_global.command[i].clear.value = clearValue | (i << 21);
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_TILES);
-   }
-
 #if 1
-   /* XXX Draw a test triangle over the cleared surface */
-   for (i = 0; i < cell->num_spus; i++) {
-      /* Same triangle data for all SPUs */
-      struct cell_command_triangle *tri = &cell_global.command[i].tri;
-      tri->vert[0][0] = 20.0;
-      tri->vert[0][1] = ps->height - 20;
-
-      tri->vert[1][0] = ps->width - 20.0;
-      tri->vert[1][1] = ps->height - 20;
-
-      tri->vert[2][0] = ps->width / 2;
-      tri->vert[2][1] = 20.0;
-
-      tri->color[0][0] = 1.0;
-      tri->color[0][1] = 0.0;
-      tri->color[0][2] = 0.0;
-      tri->color[0][3] = 0.0;
-
-      tri->color[1][0] = 0.0;
-      tri->color[1][1] = 1.0;
-      tri->color[1][2] = 0.0;
-      tri->color[1][3] = 0.0;
-
-      tri->color[2][0] = 0.0;
-      tri->color[2][1] = 0.0;
-      tri->color[2][2] = 1.0;
-      tri->color[2][3] = 0.0;
-
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_TRIANGLE);
+      uint clr = clearValue;
+      if (surfIndex == 0) {
+         /* XXX debug: clear color varied per-SPU to visualize tiles */
+         if ((clr & 0xff) == 0)
+            clr |= 64 + i * 8;
+         if ((clr & 0xff00) == 0)
+            clr |= (64 + i * 8) << 8;
+         if ((clr & 0xff0000) == 0)
+            clr |= (64 + i * 8) << 16;
+         if ((clr & 0xff000000) == 0)
+            clr |= (64 + i * 8) << 24;
+      }
+      cell_global.command[i].clear.value = clr;
+#else
+      cell_global.command[i].clear.value = clearValue;
+#endif
+      cell_global.command[i].clear.surface = surfIndex;
+      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
+   }
+#else
+   {
+      struct cell_command_clear_surface *clr
+         = (struct cell_command_clear_surface *)
+         cell_batch_alloc(cell, sizeof(*clr));
+      clr->opcode = CELL_CMD_CLEAR_SURFACE;
+      clr->surface = surfIndex;
+      clr->value = clearValue;
    }
 #endif
+
+   /* XXX temporary */
+   cell_flush(&cell->pipe, 0x0);
+
 }

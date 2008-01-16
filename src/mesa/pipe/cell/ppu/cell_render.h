@@ -31,6 +31,9 @@
 struct cell_context;
 struct draw_stage;
 
+extern void
+cell_flush_prim_buffer(struct cell_context *cell);
+
 extern struct draw_stage *cell_draw_render_stage( struct cell_context *cell );
 
 #endif /* CELL_RENDER_H */

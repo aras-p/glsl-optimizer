@@ -25,38 +25,14 @@
  * 
  **************************************************************************/
 
-
-#include "cell_context.h"
-#include "cell_flush.h"
-#include "cell_spu.h"
-#include "cell_render.h"
+#ifndef CELL_VBUF_H
+#define CELL_VBUF_H
 
 
-void
-cell_flush(struct pipe_context *pipe, unsigned flags)
-{
-   struct cell_context *cell = cell_context(pipe);
-   uint i;
+struct cell_context;
 
-   if (flags & PIPE_FLUSH_WAIT) {
-      uint *cmd = (uint *) cell_batch_alloc(cell, sizeof(uint));
-      *cmd = CELL_CMD_FINISH;
-   }
+extern void
+cell_init_vbuf(struct cell_context *cell);
 
-   cell_batch_flush(cell);
 
-#if 0
-   /* Send CMD_FINISH to all SPUs */
-   for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_FINISH);
-   }
-#endif
-
-   if (flags & PIPE_FLUSH_WAIT) {
-      /* Wait for ack */
-      for (i = 0; i < cell->num_spus; i++) {
-         uint k = wait_mbox_message(cell_global.spe_contexts[i]);
-         assert(k == CELL_CMD_FINISH);
-      }
-   }
-}
+#endif /* CELL_VBUF_H */

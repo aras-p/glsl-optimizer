@@ -71,21 +71,18 @@ extern uint
 wait_mbox_message(spe_context_ptr_t ctx);
 
 
-void
-cell_start_spus(uint num_spus);
+extern void
+cell_start_spus(struct cell_context *cell);
 
 
-void
+extern void
 finish_all(uint num_spus);
 
-void
+extern void
 test_spus(struct cell_context *cell);
 
 
-void
-wait_spus(uint num_spus);
-
-void
+extern void
 cell_spu_exit(struct cell_context *cell);
 
 

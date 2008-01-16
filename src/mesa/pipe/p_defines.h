@@ -115,10 +115,12 @@
 #define PIPE_STENCIL_OP_INVERT     7
 
 /** Texture types */
-#define PIPE_TEXTURE_1D   0
-#define PIPE_TEXTURE_2D   1
-#define PIPE_TEXTURE_3D   2
-#define PIPE_TEXTURE_CUBE 3
+enum pipe_texture_target {
+   PIPE_TEXTURE_1D   = 0,
+   PIPE_TEXTURE_2D   = 1,
+   PIPE_TEXTURE_3D   = 2,
+   PIPE_TEXTURE_CUBE = 3
+};
 
 #define PIPE_TEX_FACE_POS_X 0
 #define PIPE_TEX_FACE_NEG_X 1
@@ -165,6 +167,14 @@
  */
 #define PIPE_TEXTURE        1
 #define PIPE_SURFACE        2  /**< user-created surfaces */
+
+
+/**
+ * Surface status
+ */
+#define PIPE_SURFACE_STATUS_UNDEFINED  0
+#define PIPE_SURFACE_STATUS_DEFINED    1
+#define PIPE_SURFACE_STATUS_CLEAR      2
 
 
 /**

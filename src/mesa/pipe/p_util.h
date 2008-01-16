@@ -30,7 +30,6 @@
 
 #include "p_compiler.h"
 #include <math.h>
-#include <stdint.h>
 
 
 #ifdef WIN32
@@ -124,6 +123,7 @@ align_malloc(size_t bytes, uint alignment)
    (void) posix_memalign(& mem, alignment, bytes);
    return mem;
 #else
+   typedef unsigned long int uintptr_t;
    uintptr_t ptr, buf;
 
    assert( alignment > 0 );

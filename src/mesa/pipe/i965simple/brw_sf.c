@@ -58,7 +58,7 @@ static void compile_sf_prog( struct brw_context *brw,
    c.nr_attrs = c.key.vp_output_count;
    c.nr_attr_regs = (c.nr_attrs+1)/2;
 
-   c.nr_setup_attrs = c.key.fp_input_count;
+   c.nr_setup_attrs = c.key.fp_input_count + 1; /* +1 for position */
    c.nr_setup_regs = (c.nr_setup_attrs+1)/2;
 
    c.prog_data.urb_read_length = c.nr_attr_regs;
@@ -119,7 +119,11 @@ static boolean search_cache( struct brw_context *brw,
  */
 static void upload_sf_prog( struct brw_context *brw )
 {
+   const struct brw_fragment_program *fs = brw->attribs.FragmentProgram;
    struct brw_sf_prog_key key;
+   struct tgsi_parse_context parse;
+   int i, done = 0;
+
 
    memset(&key, 0, sizeof(key));
 
@@ -149,6 +153,71 @@ static void upload_sf_prog( struct brw_context *brw )
    }
 
 
+
+   /* Scan fp inputs to figure out what interpolation modes are
+    * required for each incoming vp output.  There is an assumption
+    * that the state tracker makes sure there is a 1:1 linkage between
+    * these sets of attributes (XXX: position??)
+    */
+   tgsi_parse_init( &parse, fs->program.tokens );
+   while( !done &&
+	  !tgsi_parse_end_of_tokens( &parse ) ) 
+   {
+      tgsi_parse_token( &parse );
+
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+	 if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_INPUT) 
+	 {
+	    int first = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
+	    int last = parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
+	    int interp_mode = parse.FullToken.FullDeclaration.Interpolation.Interpolate;
+	    //int semantic = parse.FullToken.FullDeclaration.Semantic.SemanticName;
+	    //int semantic_index = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
+
+	    fprintf(stderr, "fs input %d..%d interp mode %d\n", first, last, interp_mode);
+	    
+	    switch (interp_mode) {
+	    case TGSI_INTERPOLATE_CONSTANT:
+	       for (i = first; i <= last; i++) 
+		  key.const_mask |= (1 << i);
+	       break;
+	    case TGSI_INTERPOLATE_LINEAR:
+	       for (i = first; i <= last; i++) 
+		  key.linear_mask |= (1 << i);
+	       break;
+	    case TGSI_INTERPOLATE_PERSPECTIVE:
+	       for (i = first; i <= last; i++) 
+		  key.persp_mask |= (1 << i);
+	       break;
+	    default:
+	       break;
+	    }
+
+	    /* Also need stuff for flat shading, twosided color.
+	     */
+
+	 }
+	 break;
+      default:
+	 done = 1;
+	 break;
+      }
+   }
+
+   /* Hack: Adjust for position.  Optimize away when not required (ie
+    * for perspective interpolation).
+    */
+   key.persp_mask <<= 1;
+   key.linear_mask <<= 1; 
+   key.linear_mask |= 1;
+   key.const_mask <<= 1;
+
+   fprintf(stderr, "key.persp_mask: %x\n", key.persp_mask);
+   fprintf(stderr, "key.linear_mask: %x\n", key.linear_mask);
+   fprintf(stderr, "key.const_mask: %x\n", key.const_mask);
+
+
 //   key.do_point_sprite = brw->attribs.Point->PointSprite;
 //   key.SpriteOrigin = brw->attribs.Point->SpriteOrigin;
 
@@ -176,6 +245,8 @@ const struct brw_tracked_state brw_sf_prog = {
 };
 
 
+
+#if 0
 /* Build a struct like the one we'd like the state tracker to pass to
  * us.
  */
@@ -202,43 +273,6 @@ static void update_sf_linkage( struct brw_context *brw )
 
 
    
-   /* First scan fp inputs
-    */
-   tgsi_parse_init( &parse, fs->program.tokens );
-   while( !done &&
-	  !tgsi_parse_end_of_tokens( &parse ) ) 
-   {
-      tgsi_parse_token( &parse );
-
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-	 if (parse.FullToken.FullDeclaration.Declaration.File == TGSI_FILE_INPUT) 
-	 {
-	    int first = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
-	    int last = parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
-
-	    for (i = first; i < last; i++) {
-	       state.fp_input[i].vp_output = ~0;
-	       state.fp_input[i].bf_vp_output = ~0;
-	       state.fp_input[i].interp_mode = 
-		  parse.FullToken.FullDeclaration.Interpolation.Interpolate;
-
-	       fp_semantic[i].semantic = 
-		  parse.FullToken.FullDeclaration.Semantic.SemanticName;
-	       fp_semantic[i].semantic_index = 
-		  parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
-
-	    }
-
-	    assert(last > state.fp_input_count);
-	    state.fp_input_count = last;
-	 }
-	 break;
-      default:
-	 done = 1;
-	 break;
-      }
-   }
 
 
    assert(state.fp_input_count == fs->program.num_inputs);
@@ -313,3 +347,5 @@ const struct brw_tracked_state brw_sf_linkage = {
    .update = update_sf_linkage
 };
 
+
+#endif

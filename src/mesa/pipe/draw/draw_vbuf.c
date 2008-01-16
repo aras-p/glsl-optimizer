@@ -275,7 +275,7 @@ vbuf_flush_indices( struct draw_stage *stage )
    if(!vbuf->nr_indices)
       return;
    
-   assert(vbuf->vertex_ptr - vbuf->vertices == 
+   assert((uint) (vbuf->vertex_ptr - vbuf->vertices) == 
           vbuf->nr_vertices * vbuf->vertex_size / sizeof(unsigned));
 
    switch(vbuf->prim) {
@@ -291,8 +291,14 @@ vbuf_flush_indices( struct draw_stage *stage )
       assert(0);
    }
    
-   vbuf->render->draw(vbuf->render, vbuf->indices, vbuf->nr_indices);
-   
+   vbuf->render->draw( vbuf->render,
+                       vbuf->prim,
+                       vbuf->indices,
+                       vbuf->nr_indices,
+                       vbuf->vertices,
+                       vbuf->nr_vertices,
+                       vbuf->vertex_size );
+
    vbuf->nr_indices = 0;
 }
 
@@ -354,8 +360,14 @@ vbuf_begin( struct draw_stage *stage )
 static void 
 vbuf_end( struct draw_stage *stage )
 {
+#if 0
    /* XXX: Overkill */
    vbuf_flush_indices( stage );
+#else
+   /* By flushing vertices we avoid having the vertex buffer grow and grow */
+   struct vbuf_stage *vbuf = vbuf_stage(stage);
+   vbuf_flush_vertices( stage, vbuf->vertex_size );
+#endif
    
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
@@ -373,7 +385,7 @@ static void vbuf_destroy( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   FREE( vbuf->indices );
+   align_free( vbuf->indices );
    FREE( stage );
 }
 
@@ -399,7 +411,8 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 
    assert(render->max_indices < UNDEFINED_VERTEX_ID);
    vbuf->max_indices = render->max_indices;
-   vbuf->indices = MALLOC( vbuf->max_indices );
+   vbuf->indices
+      = align_malloc( vbuf->max_indices * sizeof(vbuf->indices[0]), 16 );
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;

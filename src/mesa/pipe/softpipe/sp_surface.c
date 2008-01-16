@@ -46,20 +46,6 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 {
    struct softpipe_texture *spt = softpipe_texture(pt);
    struct pipe_surface *ps;
-   unsigned offset;  /* in bytes */
-
-   offset = spt->level_offset[level];
-
-   if (pt->target == PIPE_TEXTURE_CUBE) {
-      offset += spt->image_offset[level][face] * pt->cpp;
-   }
-   else if (pt->target == PIPE_TEXTURE_3D) {
-      offset += spt->image_offset[level][zslice] * pt->cpp;
-   }
-   else {
-      assert(face == 0);
-      assert(zslice == 0);
-   }
 
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
@@ -69,8 +55,17 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
       ps->height = pt->height[level];
-      ps->pitch = spt->pitch;
-      ps->offset = offset;
+      ps->pitch = ps->width;
+      ps->offset = spt->level_offset[level];
+
+      if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
+	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
+		       (pt->compressed ? ps->height/4 : ps->height) *
+		       ps->width * ps->cpp;
+      } else {
+	 assert(face == 0);
+	 assert(zslice == 0);
+      }
    }
    return ps;
 }
@@ -163,10 +158,10 @@ sp_surface_copy(struct pipe_context *pipe,
 }
 
 
-static ubyte *
-get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
+static void *
+get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
 {
-   return dst->map + (y * dst->pitch + x) * dst->cpp;
+   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
 }
 
 
@@ -184,16 +179,16 @@ sp_surface_fill(struct pipe_context *pipe,
 		unsigned width, unsigned height, unsigned value)
 {
    unsigned i, j;
+   void *dst_map = pipe_surface_map(dst);
 
    assert(dst->pitch > 0);
    assert(width <= dst->pitch);
 
-   (void)pipe_surface_map(dst);
 
    switch (dst->cpp) {
    case 1:
       {
-         ubyte *row = get_pointer(dst, dstx, dsty);
+	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
          for (i = 0; i < height; i++) {
             memset(row, value, width);
 	 row += dst->pitch;
@@ -202,7 +197,7 @@ sp_surface_fill(struct pipe_context *pipe,
       break;
    case 2:
       {
-         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         ushort *row = get_pointer(dst, dst_map, dstx, dsty);
          for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++)
                row[j] = (ushort) value;
@@ -212,7 +207,7 @@ sp_surface_fill(struct pipe_context *pipe,
       break;
    case 4:
       {
-         unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
+         unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
          for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++)
                row[j] = value;
@@ -223,7 +218,7 @@ sp_surface_fill(struct pipe_context *pipe,
    case 8:
       {
          /* expand the 4-byte clear value to an 8-byte value */
-         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         ushort *row = (ushort *) get_pointer(dst, dst_map, dstx, dsty);
          ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
          ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
          ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
@@ -257,8 +252,6 @@ sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.get_tile = pipe_get_tile_raw;
    sp->pipe.put_tile = pipe_put_tile_raw;
-   sp->pipe.get_tile_rgba = pipe_get_tile_rgba;
-   sp->pipe.put_tile_rgba = pipe_put_tile_rgba;
 
    sp->pipe.surface_data = sp_surface_data;
    sp->pipe.surface_copy = sp_surface_copy;

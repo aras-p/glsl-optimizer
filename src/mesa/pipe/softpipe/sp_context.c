@@ -75,22 +75,15 @@ softpipe_is_format_supported( struct pipe_context *pipe,
 void
 softpipe_map_surfaces(struct softpipe_context *sp)
 {
-   struct pipe_surface *ps;
    unsigned i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-      ps = sp->framebuffer.cbufs[i];
-      if (ps->buffer)
-         pipe_surface_map(ps);
+      sp_tile_cache_map_surfaces(sp->cbuf_cache[i]);
    }
 
-   ps = sp->framebuffer.zbuf;
-   if (ps && ps->buffer)
-      pipe_surface_map(ps);
+   sp_tile_cache_map_surfaces(sp->zbuf_cache);
 
-   ps = sp->framebuffer.sbuf;
-   if (ps && ps->buffer)
-      pipe_surface_map(ps);
+   sp_tile_cache_map_surfaces(sp->sbuf_cache);
 }
 
 
@@ -100,7 +93,6 @@ softpipe_map_surfaces(struct softpipe_context *sp)
 void
 softpipe_unmap_surfaces(struct softpipe_context *sp)
 {
-   struct pipe_surface *ps;
    uint i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++)
@@ -109,18 +101,12 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
    sp_flush_tile_cache(sp, sp->sbuf_cache);
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-      ps = sp->framebuffer.cbufs[i];
-      if (ps->map)
-         pipe_surface_unmap(ps);
+      sp_tile_cache_unmap_surfaces(sp->cbuf_cache[i]);
    }
 
-   ps = sp->framebuffer.zbuf;
-   if (ps && ps->map)
-      pipe_surface_unmap(ps);
+   sp_tile_cache_unmap_surfaces(sp->zbuf_cache);
 
-   ps = sp->framebuffer.sbuf;
-   if (ps && ps->map)
-      pipe_surface_unmap(ps);
+   sp_tile_cache_unmap_surfaces(sp->sbuf_cache);
 }
 
 
@@ -345,7 +331,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    if (GETENV( "SP_VBUF" ) != NULL) {
       softpipe->vbuf = sp_draw_vbuf_stage(softpipe->draw, 
                                           &softpipe->pipe, 
-                                          sp_vbuf_setup_draw);
+                                          sp_vbuf_render);
 
       draw_set_rasterize_stage(softpipe->draw, softpipe->vbuf);
    }

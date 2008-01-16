@@ -117,7 +117,11 @@ run_vertex_program(struct draw_context *draw,
 #if defined(__i386__) || defined(__386__)
    if (draw->use_sse) {
       /* SSE */
-      codegen_function func = (codegen_function) x86_get_func( &draw->vertex_shader->sse2_program );
+      /* cast away const */
+      struct draw_vertex_shader *shader
+         = (struct draw_vertex_shader *)draw->vertex_shader;
+      codegen_function func
+         = (codegen_function) x86_get_func( &shader->sse2_program );
       func(
          machine->Inputs,
          machine->Outputs,
@@ -193,7 +197,8 @@ run_vertex_program(struct draw_context *draw,
  * Run the vertex shader on all vertices in the vertex queue.
  * Called by the draw module when the vertx cache needs to be flushed.
  */
-void draw_vertex_shader_queue_flush( struct draw_context *draw )
+void
+draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
    unsigned i, j;
 
@@ -227,7 +232,7 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 }
 
 
-void *
+struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
 {
@@ -240,33 +245,35 @@ draw_create_vertex_shader(struct draw_context *draw,
 
    vs->state = shader;
 
-#if defined(__i386__) || defined(__386__)
-   if (draw->use_sse) {
-      /* cast-away const */
-      struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
-
-      x86_init_func( &vs->sse2_program );
-      tgsi_emit_sse2( sh->tokens, &vs->sse2_program );
-   }
-#endif
 #ifdef MESA_LLVM
    vs->llvm_prog = gallivm_from_tgsi(shader->tokens, GALLIVM_VS);
    draw->engine = gallivm_global_cpu_engine();
    if (!draw->engine) {
       draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);
    }
-   else
+   else {
       gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
+   }
+#elif defined(__i386__) || defined(__386__)
+   if (draw->use_sse) {
+      /* cast-away const */
+      struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
+
+      x86_init_func( &vs->sse2_program );
+      tgsi_emit_sse2( (struct tgsi_token *) sh->tokens, &vs->sse2_program );
+   }
 #endif
 
    return vs;
 }
 
-void draw_bind_vertex_shader(struct draw_context *draw,
-                             void *vcso)
+
+void
+draw_bind_vertex_shader(struct draw_context *draw,
+                        struct draw_vertex_shader *dvs)
 {
    draw_flush(draw);
-   draw->vertex_shader = (struct draw_vertex_shader*)(vcso);
+   draw->vertex_shader = dvs;
 
    /* specify the fragment program to interpret/execute */
    tgsi_exec_machine_init(&draw->machine,
@@ -275,16 +282,14 @@ void draw_bind_vertex_shader(struct draw_context *draw,
                           NULL /*samplers*/ );
 }
 
-void draw_delete_vertex_shader(struct draw_context *draw,
-                               void *vcso)
+
+void
+draw_delete_vertex_shader(struct draw_context *draw,
+                          struct draw_vertex_shader *dvs)
 {
-   struct draw_vertex_shader *vs;
-
-   vs = (struct draw_vertex_shader *) vcso;
-
 #if defined(__i386__) || defined(__386__)
-   x86_release_func( (struct x86_function *) &vs->sse2_program );
+   x86_release_func( (struct x86_function *) &dvs->sse2_program );
 #endif
 
-   FREE( vs );
+   FREE( dvs );
 }

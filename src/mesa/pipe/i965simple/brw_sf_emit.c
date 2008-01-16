@@ -134,29 +134,38 @@ static boolean calculate_masks( struct brw_sf_compile *c,
 				  ushort *pc_linear)
 {
    boolean is_last_attr = (reg == c->nr_setup_regs - 1);
+   unsigned persp_mask = c->key.persp_mask;
+   unsigned linear_mask = c->key.linear_mask;
 
+   fprintf(stderr, "persp_mask: %x\n", persp_mask);
+   fprintf(stderr, "linear_mask: %x\n", linear_mask);
 
    *pc_persp = 0;
    *pc_linear = 0;
    *pc = 0xf;
 
-//   if (persp_mask & (1 << c->idx_to_attr[reg*2]))
-//      *pc_persp = 0xf;
+   if (persp_mask & (1 << (reg*2)))
+      *pc_persp = 0xf;
 
-//   if (linear_mask & (1 << c->idx_to_attr[reg*2]))
+   if (linear_mask & (1 << (reg*2)))
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
     */
-   if (1 || reg*2+1 < c->nr_setup_attrs) {
+   if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-//      if (persp_mask & (1 << c->idx_to_attr[reg*2+1]))
-//	 *pc_persp |= 0xf0;
+      if (persp_mask & (1 << (reg*2+1)))
+	 *pc_persp |= 0xf0;
 
-//      if (linear_mask & (1 << c->idx_to_attr[reg*2+1]))
+      if (linear_mask & (1 << (reg*2+1)))
 	 *pc_linear |= 0xf0;
    }
+
+   fprintf(stderr, "pc: %x\n", *pc);
+   fprintf(stderr, "pc_persp: %x\n", *pc_persp);
+   fprintf(stderr, "pc_linear: %x\n", *pc_linear);
+   
 
    return is_last_attr;
 }
@@ -167,6 +176,8 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
 {
    struct brw_compile *p = &c->func;
    unsigned i;
+
+   fprintf(stderr, "%s START ==============\n", __FUNCTION__);
 
    c->nr_verts = 3;
    alloc_regs(c);
@@ -181,7 +192,7 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
       struct brw_reg a0 = offset(c->vert[0], i);
       struct brw_reg a1 = offset(c->vert[1], i);
       struct brw_reg a2 = offset(c->vert[2], i);
-      ushort pc, pc_persp, pc_linear;
+      ushort pc = 0, pc_persp = 0, pc_linear = 0;
       boolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
 
       if (pc_persp)
@@ -238,6 +249,9 @@ void brw_emit_tri_setup( struct brw_sf_compile *c )
 		       BRW_URB_SWIZZLE_TRANSPOSE); /* XXX: Swizzle control "SF to windower" */
       }
    }
+
+   fprintf(stderr, "%s DONE ==============\n", __FUNCTION__);
+
 }
 
 

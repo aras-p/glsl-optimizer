@@ -171,10 +171,10 @@ i915_surface_copy(struct pipe_context *pipe,
 /* Fill a rectangular sub-region.  Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */
-static ubyte *
-get_pointer(struct pipe_surface *dst, unsigned x, unsigned y)
+static void *
+get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
 {
-   return dst->map + (y * dst->pitch + x) * dst->cpp;
+   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
 }
 
 
@@ -186,12 +186,11 @@ i915_surface_fill(struct pipe_context *pipe,
 {
    if (0) {
       unsigned i, j;
-
-      (void)pipe_surface_map(dst);
+      void *dst_map = pipe_surface_map(dst);
 
       switch (dst->cpp) {
       case 1: {
-	 ubyte *row = get_pointer(dst, dstx, dsty);
+	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
 	 for (i = 0; i < height; i++) {
 	    memset(row, value, width);
 	    row += dst->pitch;
@@ -199,7 +198,7 @@ i915_surface_fill(struct pipe_context *pipe,
       }
 	 break;
       case 2: {
-	 ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+	 ushort *row = get_pointer(dst, dst_map, dstx, dsty);
 	 for (i = 0; i < height; i++) {
 	    for (j = 0; j < width; j++)
 	       row[j] = (ushort) value;
@@ -208,7 +207,7 @@ i915_surface_fill(struct pipe_context *pipe,
       }
 	 break;
       case 4: {
-	 unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
+	 unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
 	 for (i = 0; i < height; i++) {
 	    for (j = 0; j < width; j++)
 	       row[j] = value;
@@ -220,6 +219,8 @@ i915_surface_fill(struct pipe_context *pipe,
 	 assert(0);
 	 break;
       }
+
+      pipe_surface_unmap( dst );
    }
    else {
       i915_fill_blit( i915_context(pipe),
@@ -239,8 +240,6 @@ i915_init_surface_functions(struct i915_context *i915)
    i915->pipe.get_tex_surface = i915_get_tex_surface;
    i915->pipe.get_tile = pipe_get_tile_raw;
    i915->pipe.put_tile = pipe_put_tile_raw;
-   i915->pipe.get_tile_rgba = pipe_get_tile_rgba;
-   i915->pipe.put_tile_rgba = pipe_put_tile_rgba;
 
    i915->pipe.surface_data = i915_surface_data;
    i915->pipe.surface_copy = i915_surface_copy;

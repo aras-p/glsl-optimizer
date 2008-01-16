@@ -35,6 +35,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
+#include "pipe/p_format.h"
 
 
 /** for sanity checking */
@@ -46,11 +47,25 @@
 #define TILE_SIZE 32
 
 
-#define CELL_CMD_EXIT         1
-#define CELL_CMD_FRAMEBUFFER  2
-#define CELL_CMD_CLEAR_TILES  3
-#define CELL_CMD_TRIANGLE     4
-#define CELL_CMD_FINISH       5
+/**
+ * The low byte of a mailbox word contains the command opcode.
+ * Remaining higher bytes are command specific.
+ */
+#define CELL_CMD_OPCODE_MASK 0xf
+
+#define CELL_CMD_EXIT          1
+#define CELL_CMD_FRAMEBUFFER   2
+#define CELL_CMD_CLEAR_SURFACE 3
+#define CELL_CMD_FINISH        4
+#define CELL_CMD_RENDER        5
+#define CELL_CMD_BATCH         6
+#define CELL_CMD_STATE_DEPTH_STENCIL 7
+
+
+#define CELL_NUM_BATCH_BUFFERS 2
+#define CELL_BATCH_BUFFER_SIZE 1024  /**< 16KB would be the max */
+
+#define CELL_BATCH_FINISHED 0x1234   /**< mbox message */
 
 
 /**
@@ -58,25 +73,36 @@
  */
 struct cell_command_framebuffer
 {
-   void *start;
+   uint opcode;
    int width, height;
-   unsigned format;
+   void *color_start, *depth_start;
+   enum pipe_format color_format, depth_format;
 } ALIGN16_ATTRIB;
 
 
 /**
- * Clear framebuffer tiles to given value/color.
+ * Clear framebuffer to the given value/color.
  */
-struct cell_command_clear_tiles
+struct cell_command_clear_surface
 {
+   uint opcode;
+   uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
 } ALIGN16_ATTRIB;
 
 
-struct cell_command_triangle
+#define CELL_MAX_VBUF_SIZE    (16 * 1024)
+#define CELL_MAX_VBUF_INDEXES 1024
+#define CELL_MAX_ATTRIBS      2 /* temporary! */
+struct cell_command_render
 {
-   float vert[3][4];
-   float color[3][4];
+   uint opcode;
+   uint prim_type;
+   uint num_verts, num_attribs;
+   uint num_indexes;
+   const void *vertex_data;
+   const ushort *index_data;
+   float xmin, ymin, xmax, ymax;
 } ALIGN16_ATTRIB;
 
 
@@ -84,8 +110,8 @@ struct cell_command_triangle
 struct cell_command
 {
    struct cell_command_framebuffer fb;
-   struct cell_command_clear_tiles clear;
-   struct cell_command_triangle tri;
+   struct cell_command_clear_surface clear;
+   struct cell_command_render render;
 } ALIGN16_ATTRIB;
 
 
@@ -95,9 +121,8 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    struct cell_command *cmd;
+   ubyte *batch_buffers[CELL_NUM_BATCH_BUFFERS];
 } ALIGN16_ATTRIB;
-
-
 
 
 #endif /* CELL_COMMON_H */

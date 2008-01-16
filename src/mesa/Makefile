@@ -20,14 +20,17 @@ CELL_LIB = $(TOP)/src/mesa/pipe/cell/ppu/libcell.a
 CELL_LIB_SPU = $(TOP)/src/mesa/pipe/cell/spu/g3d_spu.a
 endif
 
+ifeq ($(CONFIG_NAME), linux-llvm)
+LLVM_LIB = $(TOP)/src/mesa/pipe/llvm/libgallivm.a
+endif
 
 .SUFFIXES : .cpp
 
 .c.o:
-	$(CC) -c $(LLVM_CFLAGS) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 .cpp.o:
-	$(CXX) -c $(LLVM_CXXFLAGS) $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
@@ -120,12 +123,12 @@ stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$
 osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(LLVM_LIB)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		$(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
+		$(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(LLVM_LIB) $(GL_LIB_DEPS)
 
 # Make the OSMesa library
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)

@@ -630,8 +630,8 @@ static struct brw_reg get_reg( struct brw_vs_compile *c,
       assert(c->regs[file][index].nr != 0);
       return c->regs[file][index];
    case TGSI_FILE_CONSTANT:
-      assert(c->regs[TGSI_FILE_CONSTANT][index + c->prog_data.num_consts].nr != 0);
-      return c->regs[TGSI_FILE_CONSTANT][index + c->prog_data.num_consts];
+      assert(c->regs[TGSI_FILE_CONSTANT][index + c->prog_data.num_imm].nr != 0);
+      return c->regs[TGSI_FILE_CONSTANT][index + c->prog_data.num_imm];
    case TGSI_FILE_IMMEDIATE:
       assert(c->regs[TGSI_FILE_CONSTANT][index].nr != 0);
       return c->regs[TGSI_FILE_CONSTANT][index];

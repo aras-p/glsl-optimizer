@@ -45,6 +45,7 @@ struct vertex_buffer;
 struct vertex_info;
 struct draw_context;
 struct draw_stage;
+struct draw_vertex_shader;
 
 
 /**
@@ -89,12 +90,13 @@ void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );
 
 
-void * draw_create_vertex_shader(struct draw_context *draw,
-                                 const struct pipe_shader_state *shader);
+struct draw_vertex_shader *
+draw_create_vertex_shader(struct draw_context *draw,
+                          const struct pipe_shader_state *shader);
 void draw_bind_vertex_shader(struct draw_context *draw,
-                             void *vcso);
+                             struct draw_vertex_shader *dvs);
 void draw_delete_vertex_shader(struct draw_context *draw,
-                               void *vcso);
+                               struct draw_vertex_shader *dvs);
 
 boolean draw_use_sse(struct draw_context *draw);
 

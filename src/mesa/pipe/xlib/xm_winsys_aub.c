@@ -99,6 +99,8 @@ static void *aub_buffer_map(struct pipe_winsys *winsys,
 {
    struct aub_buffer *sbo = aub_bo(buf);
 
+   assert(sbo->data);
+
    if (flags & PIPE_BUFFER_FLAG_WRITE)
       sbo->dump_on_unmap = 1;
 
@@ -116,6 +118,9 @@ static void aub_buffer_unmap(struct pipe_winsys *winsys,
 
    if (sbo->map_count == 0 &&
        sbo->dump_on_unmap) {
+
+      sbo->dump_on_unmap = 0;
+
       brw_aub_gtt_data( iws->aubfile, 
 			sbo->offset,
 			sbo->data,
@@ -132,6 +137,7 @@ aub_buffer_reference(struct pipe_winsys *winsys,
 		       struct pipe_buffer_handle *buf)
 {
    if (*ptr) {
+      assert(aub_bo(*ptr)->refcount != 0);
       if (--(aub_bo(*ptr)->refcount) == 0)
 	 free(*ptr);
       *ptr = NULL;
@@ -273,7 +279,9 @@ aub_buffer_create(struct pipe_winsys *winsys,
                      unsigned flags,
                      unsigned hint)
 {
-   return pipe_bo(CALLOC_STRUCT(aub_buffer));
+   struct aub_buffer *sbo = CALLOC_STRUCT(aub_buffer);
+   sbo->refcount = 1;
+   return pipe_bo(sbo);
 }
 
 
@@ -281,6 +289,8 @@ static struct pipe_buffer_handle *
 aub_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
    struct aub_buffer *sbo = CALLOC_STRUCT(aub_buffer);
+
+   sbo->refcount = 1;
 
    /* Lets hope this is meant for upload, not as a result!  
     */

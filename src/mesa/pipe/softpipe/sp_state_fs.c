@@ -38,8 +38,9 @@
 #include "pipe/tgsi/exec/tgsi_sse2.h"
 
 
-void * softpipe_create_fs_state(struct pipe_context *pipe,
-                                const struct pipe_shader_state *templ)
+void *
+softpipe_create_fs_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_fragment_shader_state *state;
@@ -58,13 +59,6 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
       tgsi_dump(state->shader.tokens, 0);
    }
 
-#if defined(__i386__) || defined(__386__)
-   if (softpipe->use_sse) {
-      x86_init_func( &state->sse2_program );
-      tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
-   }
-#endif
-
 #ifdef MESA_LLVM
    state->llvm_prog = gallivm_from_tgsi(state->shader.tokens, GALLIVM_FS);
    if (!gallivm_global_cpu_engine()) {
@@ -72,13 +66,19 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
    }
    else
       gallivm_cpu_jit_compile(gallivm_global_cpu_engine(), state->llvm_prog);
+#elif defined(__i386__) || defined(__386__)
+   if (softpipe->use_sse) {
+      x86_init_func( &state->sse2_program );
+      tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
+   }
 #endif
 
    return state;
 }
 
 
-void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
+void
+softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -88,10 +88,10 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void softpipe_delete_fs_state(struct pipe_context *pipe,
-                              void *shader)
+void
+softpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
-   struct sp_fragment_shader_state *state = shader;
+   struct sp_fragment_shader_state *state = fs;
 
 #if defined(__i386__) || defined(__386__)
    x86_release_func( &state->sse2_program );
@@ -101,8 +101,9 @@ void softpipe_delete_fs_state(struct pipe_context *pipe,
 }
 
 
-void * softpipe_create_vs_state(struct pipe_context *pipe,
-                                const struct pipe_shader_state *templ)
+void *
+softpipe_create_vs_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_vertex_shader_state *state;
@@ -125,7 +126,8 @@ void * softpipe_create_vs_state(struct pipe_context *pipe,
 }
 
 
-void softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
+void
+softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -137,7 +139,8 @@ void softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 }
 
 
-void softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
+void
+softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -149,9 +152,11 @@ void softpipe_delete_vs_state(struct pipe_context *pipe, void *vs)
 }
 
 
-void softpipe_set_constant_buffer(struct pipe_context *pipe,
-                                  uint shader, uint index,
-                                  const struct pipe_constant_buffer *buf)
+
+void
+softpipe_set_constant_buffer(struct pipe_context *pipe,
+                             uint shader, uint index,
+                             const struct pipe_constant_buffer *buf)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct pipe_winsys *ws = pipe->winsys;

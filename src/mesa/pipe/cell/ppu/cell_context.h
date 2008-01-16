@@ -33,8 +33,12 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/draw/draw_vertex.h"
+#include "pipe/draw/draw_vbuf.h"
 #include "cell_winsys.h"
+#include "pipe/cell/common.h"
 
+
+struct cell_vbuf_render;
 
 struct cell_vertex_shader_state
 {
@@ -74,12 +78,17 @@ struct cell_context
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
 
+   ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
+   ubyte *zbuf_map;
 
    uint dirty;
 
    /** The primitive drawing context */
    struct draw_context *draw;
    struct draw_stage *render_stage;
+
+   /** For post-transformed vertex buffering: */
+   struct cell_vbuf_render *vbuf_render;
    struct draw_stage *vbuf;
 
    struct vertex_info vertex_info;
@@ -89,7 +98,10 @@ struct cell_context
 
 
    uint num_spus;
-   
+
+   ubyte batch_buffer_size[CELL_NUM_BATCH_BUFFERS];
+   ubyte batch_buffer[CELL_NUM_BATCH_BUFFERS][CELL_BATCH_BUFFER_SIZE] ALIGN16_ATTRIB;
+   int cur_batch;  /**< which batch buffer is being filled */
 
 };
 

@@ -25,28 +25,43 @@
  * 
  **************************************************************************/
 
-
-#ifndef TRI_H
-#define TRI_H
-
-
-/**
- * Simplified types taken from other parts of Gallium
- */
-
-struct vertex_header {
-   float data[2][4];  /* pos and color */
-};
+#ifndef SPU_TILE_H
+#define SPU_TILE_H
 
 
-struct prim_header {
-   struct vertex_header v[3];
-   uint color;
-};
+#include <libmisc.h>
+#include <spu_mfcio.h>
+#include "spu_main.h"
+#include "pipe/cell/common.h"
 
 
-extern void
-draw_triangle(struct prim_header *tri, uint tx, uint ty);
+#define MAX_WIDTH 1024
+#define MAX_HEIGHT 1024
 
 
-#endif /* TRI_H */
+extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+
+
+#define TILE_STATUS_CLEAR   1
+#define TILE_STATUS_DEFINED 2  /**< defined pixel data */
+#define TILE_STATUS_DIRTY   3  /**< modified, but not put back yet */
+
+extern ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+
+
+void
+get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf);
+
+void
+put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf);
+
+void
+clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value);
+
+void
+clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value);
+
+
+#endif /* SPU_TILE_H */
