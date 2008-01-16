@@ -72,7 +72,7 @@ struct brw_cc_unit_key {
    GLenum blend_dst_rgb, blend_dst_a;
 
    GLenum alpha_func;
-   GLubyte alpha_ref;
+   GLclampf alpha_ref;
 
    GLboolean dither;
 
