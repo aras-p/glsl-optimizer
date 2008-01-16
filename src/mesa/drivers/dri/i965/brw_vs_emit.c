@@ -229,13 +229,10 @@ static void emit_sop( struct brw_compile *p,
                       struct brw_reg arg1, 
 		      GLuint cond)
 {
-   brw_push_insn_state(p);
-   brw_CMP(p, brw_null_reg(), cond, arg0, arg1);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-   brw_MOV(p, dst, brw_imm_f(1.0f));
-   brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
    brw_MOV(p, dst, brw_imm_f(0.0f));
-   brw_pop_insn_state(p);
+   brw_CMP(p, brw_null_reg(), cond, arg0, arg1);
+   brw_MOV(p, dst, brw_imm_f(1.0f));
+   brw_set_predicate_control_flag_value(p, 0xff);
 }
 
 static void emit_seq( struct brw_compile *p,
