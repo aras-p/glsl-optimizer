@@ -30,7 +30,6 @@
 
 #include "p_compiler.h"
 #include <math.h>
-#include <stdint.h>
 
 
 #ifdef WIN32

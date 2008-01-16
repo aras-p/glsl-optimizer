@@ -29,7 +29,7 @@
 #define PIPE_CONTEXT_H
 
 #include "p_state.h"
-#include <stdint.h>
+
 
 struct pipe_state_cache;
 
@@ -97,7 +97,7 @@ struct pipe_context {
    boolean (*get_query_result)(struct pipe_context *pipe, 
                                struct pipe_query *q,
                                boolean wait,
-                               uint64_t *result);
+                               uint64 *result);
 
    /*
     * State functions
