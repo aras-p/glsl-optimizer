@@ -76,10 +76,10 @@ struct draw_context *draw_create( void )
 	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
    }
 
-   draw->attrib_front0 = -1;
-   draw->attrib_back0 = -1;
-   draw->attrib_front1 = -1;
-   draw->attrib_back1 = -1;
+   draw->attrib_front0 = 0;
+   draw->attrib_back0 = 0;
+   draw->attrib_front1 = 0;
+   draw->attrib_back1 = 0;
 
    draw->prim = ~0; /* != any of PIPE_PRIM_x */
 
