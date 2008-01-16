@@ -66,9 +66,15 @@ esac
 dnl Add flags for gcc and g++
 if test "x$GCC" = xyes; then
     CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -std=c99 -ffast-math"
+
+    # Work around aliasing bugs - developers should comment this out
+    CFLAGS="$CFLAGS -fno-strict-aliasing"
 fi
 if test "x$GXX" = xyes; then
     CXXFLAGS="$CXXFLAGS -Wall"
+
+    # Work around aliasing bugs - developers should comment this out
+    CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 fi
 
 dnl These should be unnecessary, but let the user set them if they want
