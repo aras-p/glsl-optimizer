@@ -37,7 +37,7 @@
 #include "draw_vertex.h"
 
 
-#define DBG 0
+#define DRAW_DBG 0
 
 
 /**
@@ -107,7 +107,7 @@ void draw_vertex_fetch( struct draw_context *draw,
    for (j = 0; j < count; j++) {
       uint attr;
 
-#if DBG
+#if DRAW_DBG
       printf("fetch vertex %u: \n", j);
 #endif
 
@@ -124,7 +124,7 @@ void draw_vertex_fetch( struct draw_context *draw,
 
          fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
 
-#if DBG
+#if DRAW_DBG
          printf("  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);
 #endif
 
