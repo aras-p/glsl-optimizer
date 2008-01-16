@@ -76,8 +76,7 @@ struct brw_cc_unit_key {
 
    GLboolean dither;
 
-   GLboolean depth_test;
-   GLubyte depth_mask;
+   GLboolean depth_test, depth_write;
    GLenum depth_func;
 };
 
@@ -136,7 +135,7 @@ cc_unit_populate_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    key->depth_test = brw->attribs.Depth->Test;
    if (key->depth_test) {
       key->depth_func = brw->attribs.Depth->Func;
-      key->depth_mask = brw->attribs.Depth->Mask;
+      key->depth_write = brw->attribs.Depth->Mask;
    }
 }
 
@@ -240,7 +239,7 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    if (key->depth_test) {
       cc.cc2.depth_test = 1;
       cc.cc2.depth_test_function = intel_translate_compare_func(key->depth_func);
-      cc.cc2.depth_write_enable = key->depth_mask;
+      cc.cc2.depth_write_enable = key->depth_write;
    }
 
    /* CACHE_NEW_CC_VP */
