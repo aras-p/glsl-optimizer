@@ -8,7 +8,7 @@
 static const char *
 nv40_get_name(struct pipe_context *pipe)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	static char buffer[128];
 
 	snprintf(buffer, sizeof(buffer), "NV%02X", nv40->chipset);
@@ -80,7 +80,7 @@ nv40_get_paramf(struct pipe_context *pipe, int param)
 static void
 nv40_flush(struct pipe_context *pipe, unsigned flags)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_winsys *nvws = nv40->nvws;
 	
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
@@ -107,7 +107,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags)
 static void
 nv40_destroy(struct pipe_context *pipe)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_winsys *nvws = nv40->nvws;
 
 	if (nv40->draw)

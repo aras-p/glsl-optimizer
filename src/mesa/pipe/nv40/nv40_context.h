@@ -82,7 +82,12 @@ struct nv40_context {
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
 };
-#define nv40_context(ctx) ((struct nv40_context *)(ctx))
+
+static inline struct nv40_context *
+nv40_context(struct pipe_context *pipe)
+{
+	return (struct nv40_context *)pipe;
+}
 
 extern void nv40_init_state_functions(struct nv40_context *nv40);
 extern void nv40_init_surface_functions(struct nv40_context *nv40);

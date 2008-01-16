@@ -8,7 +8,12 @@ struct nv40_query {
 	boolean ready;
 	uint64_t result;
 };
-#define nv40_query(o) ((struct nv40_query *)(o))
+
+static inline struct nv40_query *
+nv40_query(struct pipe_query *pipe)
+{
+	return (struct nv40_query *)pipe;
+}
 
 static struct pipe_query *
 nv40_query_create(struct pipe_context *pipe, unsigned query_type)
@@ -55,7 +60,7 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 static void
 nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_query *q = nv40_query(pq);
 
 	BEGIN_RING(curie, NV40TCL_QUERY_GET, 1);
@@ -66,9 +71,9 @@ nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 
 static boolean
 nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
-		  boolean wait, uint64_t *result)
+		  boolean wait, uint64 *result)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_query *q = nv40_query(pq);
 	struct nouveau_winsys *nvws = nv40->nvws;
 

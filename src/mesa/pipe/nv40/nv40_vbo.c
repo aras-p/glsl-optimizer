@@ -192,7 +192,7 @@ boolean
 nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned nr;
 
 	assert(nv40_vbo_validate_state(nv40, NULL, 0));
@@ -300,7 +300,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 			  struct pipe_buffer_handle *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct pipe_winsys *ws = pipe->winsys;
 	void *map;
 
@@ -341,7 +341,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       struct pipe_buffer_handle *ib, unsigned ib_size,
 		       unsigned mode, unsigned start, unsigned count)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned nr, type;
 
 	switch (ib_size) {

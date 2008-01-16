@@ -37,7 +37,7 @@ nv40_blend_state_create(struct pipe_context *pipe,
 static void
 nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_blend_state *cb = hwcso;
 
 	BEGIN_RING(curie, NV40TCL_DITHER_ENABLE, 1);
@@ -234,7 +234,7 @@ static void
 nv40_sampler_state_bind(struct pipe_context *pipe, unsigned unit,
 			void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_sampler_state *ps = hwcso;
 
 	nv40->tex_sampler[unit] = ps;
@@ -251,7 +251,7 @@ static void
 nv40_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
 			 struct pipe_texture *miptree)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	nv40->tex_miptree[unit] = (struct nv40_miptree *)miptree;
 	nv40->dirty_samplers |= (1 << unit);
@@ -339,7 +339,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 static void
 nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_rasterizer_state *rs = hwcso;
 
 	BEGIN_RING(curie, NV40TCL_SHADE_MODEL, 1);
@@ -415,7 +415,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 static void
 nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_depth_stencil_alpha_state *hw = hwcso;
 
 	BEGIN_RING(curie, NV40TCL_DEPTH_FUNC, 3);
@@ -448,7 +448,7 @@ nv40_vp_state_create(struct pipe_context *pipe,
 static void
 nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_vertex_program *vp = hwcso;
 
 	nv40->vertprog.current = vp;
@@ -458,7 +458,7 @@ nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nv40_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_vertex_program *vp = hwcso;
 
 	nv40_vertprog_destroy(nv40, vp);
@@ -480,7 +480,7 @@ nv40_fp_state_create(struct pipe_context *pipe,
 static void
 nv40_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_fragment_program *fp = hwcso;
 
 	nv40->fragprog.current = fp;
@@ -490,7 +490,7 @@ nv40_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nv40_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_fragment_program *fp = hwcso;
 
 	nv40_fragprog_destroy(nv40, fp);
@@ -501,7 +501,7 @@ static void
 nv40_set_blend_color(struct pipe_context *pipe,
 		     const struct pipe_blend_color *bcol)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	BEGIN_RING(curie, NV40TCL_BLEND_COLOR, 1);
 	OUT_RING  ((float_to_ubyte(bcol->color[3]) << 24) |
@@ -520,7 +520,7 @@ static void
 nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	if (shader == PIPE_SHADER_VERTEX) {
 		nv40->vertprog.constant_buf = buf->buffer;
@@ -536,7 +536,7 @@ static void
 nv40_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct pipe_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format, w, h;
 	int i, colour_format = 0, zeta_format = 0;
@@ -669,7 +669,7 @@ static void
 nv40_set_polygon_stipple(struct pipe_context *pipe,
 			 const struct pipe_poly_stipple *stipple)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	BEGIN_RING(curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 	OUT_RINGp ((uint32_t *)stipple->stipple, 32);
@@ -679,7 +679,7 @@ static void
 nv40_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	BEGIN_RING(curie, NV40TCL_SCISSOR_HORIZ, 2);
 	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
@@ -690,7 +690,7 @@ static void
 nv40_set_viewport_state(struct pipe_context *pipe,
 			const struct pipe_viewport_state *vpt)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	BEGIN_RING(curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
 	OUT_RINGf (vpt->translate[0]);
@@ -707,7 +707,7 @@ static void
 nv40_set_vertex_buffer(struct pipe_context *pipe, unsigned index,
 		       const struct pipe_vertex_buffer *vb)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	nv40->vtxbuf[index] = *vb;
 
@@ -718,7 +718,7 @@ static void
 nv40_set_vertex_element(struct pipe_context *pipe, unsigned index,
 			const struct pipe_vertex_element *ve)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 
 	nv40->vtxelt[index] = *ve;
 

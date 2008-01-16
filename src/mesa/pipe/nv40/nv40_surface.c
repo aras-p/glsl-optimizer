@@ -109,7 +109,7 @@ nv40_surface_data(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned src_stride, unsigned srcx, unsigned srcy,
 		  unsigned width, unsigned height)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_winsys *nvws = nv40->nvws;
 
 	nvws->surface_data(nvws, dest, destx, desty, src, src_stride,
@@ -121,7 +121,7 @@ nv40_surface_copy(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, struct pipe_surface *src,
 		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_winsys *nvws = nv40->nvws;
 
 	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
@@ -133,7 +133,7 @@ nv40_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned destx, unsigned desty, unsigned width,
 		  unsigned height, unsigned value)
 {
-	struct nv40_context *nv40 = (struct nv40_context *)pipe;
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_winsys *nvws = nv40->nvws;
 
 	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
