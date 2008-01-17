@@ -524,10 +524,13 @@ static void emit_op3fn(struct tnl_program *p,
    GLuint nr = p->program->Base.NumInstructions++;
       
    if (nr >= p->nr_instructions) {
+      int new_nr_instructions = p->nr_instructions * 2;
+
       p->program->Base.Instructions = 
 	 _mesa_realloc(p->program->Base.Instructions,
 		       sizeof(struct prog_instruction) * p->nr_instructions,
-		       sizeof(struct prog_instruction) * (p->nr_instructions *= 2));
+		       sizeof(struct prog_instruction) * new_nr_instructions);
+      p->nr_instructions = new_nr_instructions;
    }
 
    {      
