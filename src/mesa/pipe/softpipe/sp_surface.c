@@ -50,6 +50,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
       assert(ps->refcount);
+      assert(ps->winsys);
       pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;

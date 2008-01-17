@@ -28,6 +28,9 @@
 #ifndef ST_PUBLIC_H
 #define ST_PUBLIC_H
 
+#include "GL/gl.h"
+#include "GL/internal/glcore.h"  /* for __GLcontextModes */
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 

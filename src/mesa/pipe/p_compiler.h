@@ -50,6 +50,25 @@ typedef unsigned short     ushort;
 typedef unsigned long long uint64;
 
 
+#if defined(__MSC__)
+
+typedef unsigned short     uint16_t;
+typedef long               int32_t;
+typedef unsigned long      uint32_t;
+typedef long long          int64_t;
+typedef unsigned long long uint64_t;
+
+#if defined(_WIN64)
+typedef unsigned __int64   uintptr_t;
+#else
+typedef unsigned int       uintptr_t;
+#endif
+
+#else
+#include <stdint.h>
+#endif
+
+
 #define TRUE  1
 #define FALSE 0
 

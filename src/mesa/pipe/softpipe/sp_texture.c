@@ -126,7 +126,7 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 
       pipe->winsys->buffer_reference(pipe->winsys, &spt->buffer, NULL);
 
-      free(spt);
+      FREE(spt);
    }
    *pt = NULL;
 }

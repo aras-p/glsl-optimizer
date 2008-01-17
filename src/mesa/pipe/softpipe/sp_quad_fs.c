@@ -133,7 +133,7 @@ shade_quad(
    machine->InterpCoefs = quad->coef;
 
    /* Compute X, Y, Z, W vals for this quad */
-   setup_pos_vector(quad->posCoef, quad->x0, quad->y0, &machine->QuadPos);
+   setup_pos_vector(quad->posCoef, (float) quad->x0, (float) quad->y0, &machine->QuadPos);
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)

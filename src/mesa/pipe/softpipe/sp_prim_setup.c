@@ -488,7 +488,7 @@ setup_fragcoord_coeff(struct setup_stage *setup)
    if (setup->softpipe->rasterizer->origin_lower_left) {
       /* y=0=bottom */
       const int winHeight = setup->softpipe->framebuffer.cbufs[0]->height;
-      setup->coef[0].a0[1] = winHeight - 1;
+      setup->coef[0].a0[1] = (float) (winHeight - 1);
       setup->coef[0].dady[1] = -1.0;
    }
    else {

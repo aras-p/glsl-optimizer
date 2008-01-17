@@ -202,7 +202,7 @@ static void
 i915_vbuf_render_destroy( struct vbuf_render *render )
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
-   free(i915_render);
+   FREE(i915_render);
 }
 
 

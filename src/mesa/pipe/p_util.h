@@ -111,6 +111,32 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
 
+/**
+ * Return a pointer aligned to next multiple of N bytes.
+ */
+static INLINE void *
+align_pointer( void *unaligned, uint alignment )
+{
+   if (sizeof(void *) == 64) {
+      union {
+         void *p;
+         uint64 u;
+      } pu;
+      pu.p = unaligned;
+      pu.u = (pu.u + alignment - 1) & ~(uint64) (alignment - 1);
+      return pu.p;
+   }
+   else {
+      /* 32-bit pointers */
+      union {
+         void *p;
+         uint u;
+      } pu;
+      pu.p = unaligned;
+      pu.u = (pu.u + alignment - 1) & ~(alignment - 1);
+      return pu.p;
+   }
+}
 
 /**
  * Return memory on given byte alignment
@@ -123,19 +149,18 @@ align_malloc(size_t bytes, uint alignment)
    (void) posix_memalign(& mem, alignment, bytes);
    return mem;
 #else
-   typedef unsigned long int uintptr_t;
-   uintptr_t ptr, buf;
+   char *ptr, *buf;
 
    assert( alignment > 0 );
 
-   ptr = (uintptr_t) MALLOC(bytes + alignment + sizeof(void *));
+   ptr = (char *) MALLOC(bytes + alignment + sizeof(void *));
    if (!ptr)
       return NULL;
 
-   buf = (ptr + alignment + sizeof(void *)) & ~(uintptr_t)(alignment - 1);
-   *(uintptr_t *)(buf - sizeof(void *)) = ptr;
+   buf = (char *) align_pointer( ptr + sizeof(void *), alignment );
+   *(char **)(buf - sizeof(void *)) = ptr;
 
-   return (void *) buf;
+   return buf;
 #endif /* defined(HAVE_POSIX_MEMALIGN) */
 }
 
@@ -169,26 +194,15 @@ align_free(void *ptr)
 static INLINE void *
 align16( void *unaligned )
 {
-   if (sizeof(void *) == 64) {
-      union {
-         void *p;
-         uint64 u;
-      } pu;
-      pu.p = unaligned;
-      pu.u = (pu.u + 15) & ~15;
-      return pu.p;
-   }
-   else {
-      /* 32-bit pointers */
-      union {
-         void *p;
-         uint u;
-      } pu;
-      pu.p = unaligned;
-      pu.u = (pu.u + 15) & ~15;
-      return pu.p;
-   }
+   return align_pointer( unaligned, 16 );
 }
+
+
+static INLINE int align_int(int x, int align)
+{
+   return (x + align - 1) & ~(align - 1);
+}
+
 
 
 #if defined(__MSC__) && defined(__WIN32__)

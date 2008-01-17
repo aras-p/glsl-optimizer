@@ -17,7 +17,8 @@ INCLUDES = \
 	-I. \
 	-I$(TOP)/src/mesa/pipe \
 	-I$(TOP)/src/mesa \
-	-I$(TOP)/include
+	-I$(TOP)/include \
+        $(DRIVER_INCLUDES)
 
 
 ##### RULES #####
@@ -34,11 +35,11 @@ INCLUDES = \
 
 ##### TARGETS #####
 
-default:: depend symlinks $(LIBNAME)
+default: depend symlinks $(LIBNAME)
 
 
 $(LIBNAME): $(OBJECTS) Makefile $(TOP)/src/mesa/pipe/Makefile.template
-	$(TOP)/bin/mklib -o $@ -static $(OBJECTS)
+	$(TOP)/bin/mklib -o $@ -static $(OBJECTS) $(DRIVER_LIBS)
 
 
 depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
@@ -54,7 +55,7 @@ tags:
 
 
 # Remove .o and backup files
-clean:
+clean::
 	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
 	-rm -f depend depend.bak
 

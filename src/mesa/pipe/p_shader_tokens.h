@@ -109,7 +109,8 @@ struct tgsi_declaration_interpolation
 #define TGSI_SEMANTIC_FOG      3
 #define TGSI_SEMANTIC_PSIZE    4
 #define TGSI_SEMANTIC_GENERIC  5
-#define TGSI_SEMANTIC_COUNT    6 /**< number of semantic values */
+#define TGSI_SEMANTIC_NORMAL   6
+#define TGSI_SEMANTIC_COUNT    7 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
