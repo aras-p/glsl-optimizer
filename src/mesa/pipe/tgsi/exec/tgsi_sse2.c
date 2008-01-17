@@ -1967,6 +1967,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_RET:
+   case TGSI_OPCODE_END:
 #ifdef WIN32
       emit_retw( func, 16 );
 #else
