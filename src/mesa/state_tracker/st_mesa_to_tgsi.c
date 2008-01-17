@@ -41,7 +41,6 @@
 
 #define TGSI_DEBUG 0
 
-#define EMIT_IMMEDIATES 0
 
 /*
  * Map mesa register file to TGSI register file.
@@ -69,17 +68,12 @@ map_register_file(
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
    case PROGRAM_UNIFORM:
-      if (immediateMapping[index] != ~0) {
+      if (immediateMapping[index] != ~0) 
 	 return TGSI_FILE_IMMEDIATE;
-      }
       else
 	 return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:
-#if EMIT_IMMEDIATES
       return TGSI_FILE_IMMEDIATE;
-#else
-      return TGSI_FILE_CONSTANT;
-#endif
    case PROGRAM_INPUT:
       return TGSI_FILE_INPUT;
    case PROGRAM_OUTPUT:
@@ -834,7 +828,7 @@ tgsi_translate_mesa_program(
 
    /* immediates/literals */
    memset(immediates, ~0, sizeof(immediates));
-#if EMIT_IMMEDIATES
+
    for (i = 0; program->Parameters && i < program->Parameters->NumParameters;
         i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
@@ -849,7 +843,6 @@ tgsi_translate_mesa_program(
          numImmediates++;
       }
    }
-#endif
 
    /* constant buffer refs */
    {
