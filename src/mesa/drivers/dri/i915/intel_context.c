@@ -548,7 +548,7 @@ intelInitContext(struct intel_context *intel,
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 #endif
 
-   if (getenv("INTEL_NO_RAST")) {
+   if (driQueryOptionb(&intel->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D rasterization\n");
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
    }

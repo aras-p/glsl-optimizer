@@ -584,7 +584,7 @@ GLboolean intelInitContext( struct intel_context *intel,
 /* 			  DRI_TEXMGR_DO_TEXTURE_RECT ); */
 
    /* Force all software fallbacks */
-   if (getenv("INTEL_NO_RAST")) {
+   if (driQueryOptionb(&intel->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D rasterization\n");
       intel->no_rast = 1;
    }
