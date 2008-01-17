@@ -447,11 +447,17 @@ mm_buffer_vtbl = {
 
 static struct pb_buffer *
 mm_bufmgr_create_buffer(struct pb_manager *mgr, 
-                        size_t size)
+                        size_t size,
+                        const struct pb_desc *desc)
 {
    struct mm_pb_manager *mm = mm_pb_manager(mgr);
    struct mm_buffer *mm_buf;
 
+   /* We don't handle alignments larger then the one initially setup */
+   assert(desc->alignment % (1 << mm->align2) == 0);
+   if(desc->alignment % (1 << mm->align2))
+      return NULL;
+   
    _glthread_LOCK_MUTEX(mm->mutex);
 
    mm_buf = CALLOC_STRUCT(mm_buffer);
@@ -559,10 +565,15 @@ mm_bufmgr_create(struct pb_manager *provider,
 {
    struct pb_buffer *buffer;
    struct pb_manager *mgr;
+   struct pb_desc desc;
 
    assert(provider);
    assert(provider->create_buffer);
-   buffer = provider->create_buffer(provider, size); 
+   
+   memset(&desc, 0, sizeof(desc));
+   desc.alignment = 1 << align2;
+   
+   buffer = provider->create_buffer(provider, size, &desc); 
    if (!buffer)
       return NULL;
    

@@ -62,7 +62,7 @@ malloc_buffer(struct pb_buffer *buf)
 static void
 malloc_buffer_destroy(struct pb_buffer *buf)
 {
-   FREE(malloc_buffer(buf)->data);
+   align_free(malloc_buffer(buf)->data);
    FREE(buf);
 }
 
@@ -102,9 +102,8 @@ malloc_buffer_vtbl = {
 
 
 struct pb_buffer *
-pb_malloc_buffer_create( unsigned alignment,
-			 unsigned usage,
-			 unsigned size ) 
+pb_malloc_buffer_create(size_t size,
+                   	const struct pb_desc *desc) 
 {
    struct malloc_buffer *buf;
    
@@ -116,11 +115,11 @@ pb_malloc_buffer_create( unsigned alignment,
       return NULL;
    
    buf->base.vtbl = &malloc_buffer_vtbl;
-   buf->base.base.alignment = alignment;
-   buf->base.base.usage = usage;
+   buf->base.base.alignment = desc->alignment;
+   buf->base.base.usage = desc->usage;
    buf->base.base.size = size;
 
-   buf->data = MALLOC(size);
+   buf->data = align_malloc(size, desc->alignment < sizeof(void*) ? sizeof(void*) : desc->alignment);
    if(!buf->data) {
       FREE(buf);
       return NULL;

@@ -54,6 +54,18 @@
 struct pb_vtbl;
 
 /**
+ * Buffer description.
+ * 
+ * Used when allocating the buffer.
+ */
+struct pb_desc
+{
+   unsigned alignment;
+   unsigned usage;
+};
+
+
+/**
  * Base class for all pb_* buffers.
  */
 struct pb_buffer 
@@ -159,10 +171,8 @@ pb_user_buffer_create(void *data, unsigned bytes);
  * hardware.
  */
 struct pb_buffer *
-pb_malloc_buffer_create( unsigned alignment,
-			 unsigned usage,
-			 unsigned size );
-
+pb_malloc_buffer_create(size_t size, 
+                        const struct pb_desc *desc);
 
 
 static INLINE struct pipe_buffer *

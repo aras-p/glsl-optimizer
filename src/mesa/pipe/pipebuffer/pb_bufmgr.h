@@ -53,6 +53,7 @@
 #include <stddef.h>
 
 
+struct pb_desc;
 struct pipe_buffer;
 struct pipe_winsys;
 
@@ -65,7 +66,8 @@ struct pb_manager
    /* XXX: we will likely need more allocation flags */
    struct pb_buffer *
    (*create_buffer)( struct pb_manager *mgr, 
-	             size_t size );
+	             size_t size,
+	             const struct pb_desc *desc);
 
    void
    (*destroy)( struct pb_manager *mgr );
@@ -82,7 +84,8 @@ struct pb_manager
  */
 struct pb_manager *
 pool_bufmgr_create(struct pb_manager *provider, 
-                   size_t n, size_t size);
+                   size_t n, size_t size,
+                   const struct pb_desc *desc);
 
 
 /** 

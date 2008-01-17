@@ -63,7 +63,9 @@ fenced_pb_manager(struct pb_manager *mgr)
 
 
 static struct pb_buffer *
-fenced_bufmgr_create_buffer(struct pb_manager *mgr, size_t size)
+fenced_bufmgr_create_buffer(struct pb_manager *mgr, 
+                            size_t size,
+                            const struct pb_desc *desc)
 {
    struct fenced_pb_manager *fenced_mgr = fenced_pb_manager(mgr);
    struct pb_buffer *buf;
@@ -72,12 +74,12 @@ fenced_bufmgr_create_buffer(struct pb_manager *mgr, size_t size)
    /* check for free buffers before allocating new ones */
    fenced_buffer_list_check_free(fenced_mgr->fenced_list, 0);
    
-   buf = fenced_mgr->provider->create_buffer(fenced_mgr->provider, size);
+   buf = fenced_mgr->provider->create_buffer(fenced_mgr->provider, size, desc);
    if(!buf) {
       /* try harder to get a buffer */
       fenced_buffer_list_check_free(fenced_mgr->fenced_list, 1);
       
-      buf = fenced_mgr->provider->create_buffer(fenced_mgr->provider, size);
+      buf = fenced_mgr->provider->create_buffer(fenced_mgr->provider, size, desc);
       if(!buf) {
          /* give up */
          return NULL;

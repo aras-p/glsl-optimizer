@@ -62,6 +62,7 @@ struct pool_pb_manager
    _glthread_Mutex mutex;
    
    size_t bufSize;
+   size_t bufAlign;
    
    size_t numFree;
    size_t numTot;
@@ -160,13 +161,16 @@ pool_buffer_vtbl = {
 
 
 static struct pb_buffer *
-pool_bufmgr_create_buffer(struct pb_manager *mgr, size_t size)
+pool_bufmgr_create_buffer(struct pb_manager *mgr,
+                          size_t size,
+                          const struct pb_desc *desc)
 {
    struct pool_pb_manager *pool = pool_pb_manager(mgr);
    struct pool_buffer *pool_buf;
    struct list_head *item;
 
    assert(size == pool->bufSize);
+   assert(desc->alignment % pool->bufAlign == 0);
    
    _glthread_LOCK_MUTEX(pool->mutex);
 
@@ -213,7 +217,8 @@ pool_bufmgr_destroy(struct pb_manager *mgr)
 struct pb_manager *
 pool_bufmgr_create(struct pb_manager *provider, 
                    size_t numBufs, 
-                   size_t bufSize) 
+                   size_t bufSize,
+                   const struct pb_desc *desc) 
 {
    struct pool_pb_manager *pool;
    struct pool_buffer *pool_buf;
@@ -231,10 +236,11 @@ pool_bufmgr_create(struct pb_manager *provider,
    pool->numTot = numBufs;
    pool->numFree = numBufs;
    pool->bufSize = bufSize;
+   pool->bufAlign = desc->alignment; 
    
    _glthread_INIT_MUTEX(pool->mutex);
 
-   pool->buffer = provider->create_buffer(provider, numBufs*bufSize); 
+   pool->buffer = provider->create_buffer(provider, numBufs*bufSize, desc); 
    if (!pool->buffer)
       goto failure;
 
