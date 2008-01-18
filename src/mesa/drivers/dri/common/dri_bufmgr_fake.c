@@ -631,6 +631,7 @@ dri_fake_bo_unreference(dri_bo *bo)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
+   int i;
 
    if (!bo)
       return;
@@ -641,7 +642,11 @@ dri_fake_bo_unreference(dri_bo *bo)
       if (bo_fake->block)
 	 free_block(bufmgr_fake, bo_fake->block);
       free_backing_store(bo);
+
+      for (i = 0; i < bo_fake->nr_relocs; i++)
+	 dri_bo_unreference(bo_fake->relocs[i].target_buf);
       free(bo_fake->relocs);
+
       free(bo);
       DBG("drm_bo_unreference: free %s\n", bo_fake->name);
       return;
@@ -942,7 +947,7 @@ dri_fake_calculate_validate_flags(dri_bo *bo)
       /* Do the same for the tree of buffers we depend on */
       dri_fake_calculate_validate_flags(r->target_buf);
 
-      if (target_fake->flags == 0) {
+      if (target_fake->validate_flags == 0) {
 	 target_fake->validate_flags = r->validate_flags;
       } else {
 	 /* Mask the memory location to the intersection of all the memory
