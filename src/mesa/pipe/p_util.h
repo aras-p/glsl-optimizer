@@ -383,4 +383,13 @@ static INLINE int align(int value, int alignment)
  */
 extern void _mesa_printf(const char *str, ...);
 
+
+/* util/p_util.c
+ */
+extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
+                           unsigned dst_x, unsigned dst_y, unsigned width,
+                           unsigned height, const ubyte * src,
+                           unsigned src_pitch, unsigned src_x, unsigned src_y);
+
+
 #endif
