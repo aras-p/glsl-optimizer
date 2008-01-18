@@ -79,14 +79,18 @@ static GLuint hash_key( const void *key, GLuint key_size,
 
    /* I'm sure this can be improved on:
     */
-   for (i = 0; i < key_size/4; i++)
+   for (i = 0; i < key_size/4; i++) {
       hash ^= ikey[i];
+      hash = (hash << 5) | (hash >> 27);
+   }
 
    /* Include the BO pointers as key data as well */
    ikey = (void *)reloc_bufs;
    key_size = nr_reloc_bufs * sizeof(dri_bo *);
-   for (i = 0; i < key_size/4; i++)
+   for (i = 0; i < key_size/4; i++) {
       hash ^= ikey[i];
+      hash = (hash << 5) | (hash >> 27);
+   }
 
    return hash;
 }
@@ -110,6 +114,16 @@ search_cache(struct brw_cache *cache, enum brw_cache_id cache_id,
 	     dri_bo **reloc_bufs, GLuint nr_reloc_bufs)
 {
    struct brw_cache_item *c;
+
+#if 0
+   int bucketcount = 0;
+
+   for (c = cache->items[hash % cache->size]; c; c = c->next)
+      bucketcount++;
+
+   fprintf(stderr, "bucket %d/%d = %d/%d items\n", hash % cache->size,
+	   cache->size, bucketcount, cache->n_items);
+#endif
 
    for (c = cache->items[hash % cache->size]; c; c = c->next) {
       if (c->cache_id == cache_id &&
