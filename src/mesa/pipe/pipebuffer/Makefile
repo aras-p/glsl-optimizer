@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 
 LIBNAME = pipebuffer
 
-	
 DRIVER_SOURCES = \
 	pb_buffer.c \
 	pb_buffer_client.c \
