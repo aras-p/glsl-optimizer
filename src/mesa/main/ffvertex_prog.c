@@ -436,7 +436,7 @@ static struct ureg register_const4f( struct tnl_program *p,
    idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
                                      &swizzle );
    ASSERT(swizzle == SWIZZLE_NOOP);
-   return make_ureg(PROGRAM_STATE_VAR, idx);
+   return make_ureg(PROGRAM_CONSTANT, idx);
 }
 
 #define register_const1f(p, s0)         register_const4f(p, s0, 0, 0, 1)
