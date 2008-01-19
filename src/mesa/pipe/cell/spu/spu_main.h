@@ -76,6 +76,8 @@ extern struct spu_global spu;
 #define TAG_WRITE_TILE_Z      15
 #define TAG_INDEX_BUFFER      16
 #define TAG_BATCH_BUFFER      17
+#define TAG_MISC              18
+
 
 /** The standard assert macro doesn't seem to work on SPUs */
 #define ASSERT(x) \

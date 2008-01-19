@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,33 +25,49 @@
  * 
  **************************************************************************/
 
-/* This is the interface that softpipe requires any window system
- * hosting it to implement.  This is the only include file in softpipe
- * which is public.
+/**
+ * Miscellaneous utility functions.
  */
 
 
-#ifndef SP_WINSYS_H
-#define SP_WINSYS_H
+#include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 
 
-#include "pipe/p_compiler.h" /* for boolean */
+/**
+ * Copy 2D rect from one place to another.
+ * Position and sizes are in pixels.
+ */
+void
+pipe_copy_rect(ubyte * dst,
+               unsigned cpp,
+               unsigned dst_pitch,
+               unsigned dst_x,
+               unsigned dst_y,
+               unsigned width,
+               unsigned height,
+               const ubyte * src,
+               unsigned src_pitch,
+               unsigned src_x, 
+               unsigned src_y)
+{
+   unsigned i;
 
-enum pipe_format;
+   dst_pitch *= cpp;
+   src_pitch *= cpp;
+   dst += dst_x * cpp;
+   src += src_x * cpp;
+   dst += dst_y * dst_pitch;
+   src += src_y * src_pitch;
+   width *= cpp;
 
-struct softpipe_winsys {
-   /** test if the given format is supported for front/back color bufs */
-   boolean (*is_format_supported)( struct softpipe_winsys *sws,
-                                   enum pipe_format format );
-
-};
-
-struct pipe_winsys;
-struct pipe_context;
-
-
-struct pipe_context *softpipe_create( struct pipe_winsys *,
-				      struct softpipe_winsys * );
-
-
-#endif /* SP_WINSYS_H */
+   if (width == dst_pitch && width == src_pitch)
+      memcpy(dst, src, height * width);
+   else {
+      for (i = 0; i < height; i++) {
+         memcpy(dst, src, width);
+         dst += dst_pitch;
+         src += src_pitch;
+      }
+   }
+}

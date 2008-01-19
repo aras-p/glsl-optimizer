@@ -69,11 +69,13 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 #define DEBUG_SURFACE    0x2000
 #define DEBUG_WINSYS     0x4000
 
+#include "pipe/p_compiler.h"
+
 #if defined(DEBUG) && defined(FILE_DEBUG_FLAG)
 
 #include "pipe/p_winsys.h"
 
-static void
+static INLINE void
 I915_DBG(
    struct i915_context  *i915,
    const char           *fmt,
@@ -92,7 +94,7 @@ I915_DBG(
 
 #else
 
-static void
+static INLINE void
 I915_DBG(
    struct i915_context  *i915,
    const char           *fmt,

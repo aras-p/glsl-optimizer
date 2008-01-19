@@ -46,6 +46,8 @@ struct cell_vbuf_render
    struct vbuf_render base;
    struct cell_context *cell;
    uint prim;
+   uint vertex_size;
+   void *vertex_buffer;
 };
 
 
@@ -70,8 +72,12 @@ static void *
 cell_vbuf_allocate_vertices(struct vbuf_render *vbr,
                             ushort vertex_size, ushort nr_vertices)
 {
+   struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    /*printf("Alloc verts %u * %u\n", vertex_size, nr_vertices);*/
-   return align_malloc(vertex_size * nr_vertices, 16);
+   assert(!cvbr->vertex_buffer);
+   cvbr->vertex_buffer = align_malloc(vertex_size * nr_vertices, 16);
+   cvbr->vertex_size = vertex_size;
+   return cvbr->vertex_buffer;
 }
 
 
@@ -86,17 +92,22 @@ cell_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 
 static void
 cell_vbuf_draw(struct vbuf_render *vbr,
-               uint prim,
 	       const ushort *indices,
-               uint nr_indices,
-               const void *vertices,
-               uint nr_vertices,
-               uint vertex_size)
+               uint nr_indices)
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    struct cell_context *cell = cvbr->cell;
    float xmin, ymin, xmax, ymax;
    uint i;
+   uint nr_vertices = 0;
+   const void *vertices = cvbr->vertex_buffer;
+   const uint vertex_size = cvbr->vertex_size;
+
+   for (i = 0; i < nr_indices; i++) {
+      if (indices[i] > nr_vertices)
+         nr_vertices = indices[i];
+   }
+   nr_vertices++;
 
 #if 0
    printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u\n",
@@ -127,14 +138,14 @@ cell_vbuf_draw(struct vbuf_render *vbr,
          ymax = v[1];
    }
 
-   if (prim != PIPE_PRIM_TRIANGLES)
+   if (cvbr->prim != PIPE_PRIM_TRIANGLES)
       return; /* only render tris for now */
 
 #if 0
    for (i = 0; i < cell->num_spus; i++) {
       struct cell_command_render *render = &cell_global.command[i].render;
       render->opcode = CELL_CMD_RENDER;
-      render->prim_type = prim;
+      render->prim_type = cvbr->prim;
       render->num_verts = nr_vertices;
       render->num_attribs = CELL_MAX_ATTRIBS; /* XXX fix */
       render->vertex_data = vertices;
@@ -155,7 +166,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
          = (struct cell_command_render *)
          cell_batch_alloc(cell, sizeof(*render));
       render->opcode = CELL_CMD_RENDER;
-      render->prim_type = prim;
+      render->prim_type = cvbr->prim;
       render->num_verts = nr_vertices;
       render->num_attribs = CELL_MAX_ATTRIBS; /* XXX fix */
       render->vertex_data = vertices;
@@ -182,8 +193,13 @@ static void
 cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices, 
                            unsigned vertex_size, unsigned vertices_used)
 {
+   struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
+
    /*printf("Free verts %u * %u\n", vertex_size, vertices_used);*/
    align_free(vertices);
+
+   assert(vertices == cvbr->vertex_buffer);
+   cvbr->vertex_buffer = NULL;
 }
 
 

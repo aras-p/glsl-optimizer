@@ -76,40 +76,6 @@ brw_get_tex_surface(struct pipe_context *pipe,
 }
 
 
-static void
-copy_rect(ubyte * dst,
-          unsigned cpp,
-          unsigned dst_pitch,
-          unsigned dst_x,
-          unsigned dst_y,
-          unsigned width,
-          unsigned height,
-          const ubyte *src,
-          unsigned src_pitch,
-          unsigned src_x,
-          unsigned src_y)
-{
-   unsigned i;
-
-   dst_pitch *= cpp;
-   src_pitch *= cpp;
-   dst += dst_x * cpp;
-   src += src_x * cpp;
-   dst += dst_y * dst_pitch;
-   src += src_y * dst_pitch;
-   width *= cpp;
-
-   if (width == dst_pitch && width == src_pitch)
-      memcpy(dst, src, height * width);
-   else {
-      for (i = 0; i < height; i++) {
-         memcpy(dst, src, width);
-         dst += dst_pitch;
-         src += src_pitch;
-      }
-   }
-}
-
 /* Upload data to a rectangular sub-region.  Lots of choices how to do this:
  *
  * - memcpy by span to current destination
@@ -124,9 +90,9 @@ brw_surface_data(struct pipe_context *pipe,
                  const void *src, unsigned src_pitch,
                  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   copy_rect(pipe_surface_map(dst) + dst->offset,
-             dst->cpp, dst->pitch,
-             dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+   pipe_copy_rect(pipe_surface_map(dst) + dst->offset,
+                  dst->cpp, dst->pitch,
+                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    pipe_surface_unmap(dst);
 }
@@ -146,14 +112,14 @@ brw_surface_copy(struct pipe_context *pipe,
    assert(dst->cpp == src->cpp);
 
    if (0) {
-      copy_rect(pipe_surface_map(dst) + dst->offset,
-		      dst->cpp,
-		      dst->pitch,
-		      dstx, dsty,
-		      width, height,
-		      pipe_surface_map(src) + src->offset,
-		      src->pitch,
-		      srcx, srcy);
+      pipe_copy_rect(pipe_surface_map(dst) + dst->offset,
+                     dst->cpp,
+                     dst->pitch,
+                     dstx, dsty,
+                     width, height,
+                     pipe_surface_map(src) + src->offset,
+                     src->pitch,
+                     srcx, srcy);
 
       pipe_surface_unmap(src);
       pipe_surface_unmap(dst);

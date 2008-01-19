@@ -62,10 +62,12 @@
 #define CELL_CMD_STATE_DEPTH_STENCIL 7
 
 
-#define CELL_NUM_BATCH_BUFFERS 2
+#define CELL_NUM_BATCH_BUFFERS 3
 #define CELL_BATCH_BUFFER_SIZE 1024  /**< 16KB would be the max */
 
-#define CELL_BATCH_FINISHED 0x1234   /**< mbox message */
+#define CELL_BUFFER_STATUS_FREE 10
+#define CELL_BUFFER_STATUS_USED 20
+
 
 
 /**
@@ -122,6 +124,7 @@ struct cell_init_info
    unsigned num_spus;
    struct cell_command *cmd;
    ubyte *batch_buffers[CELL_NUM_BATCH_BUFFERS];
+   uint *buffer_status;  /**< points at cell_context->buffer_status */
 } ALIGN16_ATTRIB;
 
 

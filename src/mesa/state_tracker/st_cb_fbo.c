@@ -93,6 +93,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (!strb->surface) {
       strb->surface = pipe->winsys->surface_alloc(pipe->winsys);
       assert(strb->surface);
+      assert(strb->surface->refcount);
+      assert(strb->surface->winsys);
       if (!strb->surface)
          return GL_FALSE;
    }

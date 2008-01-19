@@ -83,7 +83,8 @@ vbuf_stage( struct draw_stage *stage )
 
 
 static void vbuf_flush_indices( struct draw_stage *stage );
-static void vbuf_flush_vertices( struct draw_stage *stage,
+static void vbuf_flush_vertices( struct draw_stage *stage );
+static void vbuf_alloc_vertices( struct draw_stage *stage,
                                  unsigned new_vertex_size );
 
 
@@ -98,8 +99,10 @@ overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 static INLINE void 
 check_space( struct vbuf_stage *vbuf, unsigned nr )
 {
-   if (vbuf->nr_vertices + nr > vbuf->max_vertices ) 
-      vbuf_flush_vertices(&vbuf->stage, vbuf->vertex_size );
+   if (vbuf->nr_vertices + nr > vbuf->max_vertices ) {
+      vbuf_flush_vertices(&vbuf->stage);
+      vbuf_alloc_vertices(&vbuf->stage, vbuf->vertex_size);
+   }
 
    if (vbuf->nr_indices + nr > vbuf->max_indices )
       vbuf_flush_indices(&vbuf->stage);
@@ -232,10 +235,12 @@ vbuf_first_tri( struct draw_stage *stage,
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
    vbuf_flush_indices( stage );   
+
    stage->tri = vbuf_tri;
-   stage->tri( stage, prim );
    vbuf->prim = PIPE_PRIM_TRIANGLES;
    vbuf->render->set_primitive(vbuf->render, PIPE_PRIM_TRIANGLES);
+
+   stage->tri( stage, prim );
 }
 
 
@@ -247,9 +252,10 @@ vbuf_first_line( struct draw_stage *stage,
 
    vbuf_flush_indices( stage );
    stage->line = vbuf_line;
-   stage->line( stage, prim );
    vbuf->prim = PIPE_PRIM_LINES;
    vbuf->render->set_primitive(vbuf->render, PIPE_PRIM_LINES);
+
+   stage->line( stage, prim );
 }
 
 
@@ -260,10 +266,12 @@ vbuf_first_point( struct draw_stage *stage,
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
    vbuf_flush_indices( stage );
+
    stage->point = vbuf_point;
-   stage->point( stage, prim );
    vbuf->prim = PIPE_PRIM_POINTS;
    vbuf->render->set_primitive(vbuf->render, PIPE_PRIM_POINTS);
+
+   stage->point( stage, prim );
 }
 
 
@@ -291,15 +299,13 @@ vbuf_flush_indices( struct draw_stage *stage )
       assert(0);
    }
    
-   vbuf->render->draw( vbuf->render,
-                       vbuf->prim,
-                       vbuf->indices,
-                       vbuf->nr_indices,
-                       vbuf->vertices,
-                       vbuf->nr_vertices,
-                       vbuf->vertex_size );
-
+   vbuf->render->draw(vbuf->render, vbuf->indices, vbuf->nr_indices);
+   
    vbuf->nr_indices = 0;
+
+   stage->point = vbuf_first_point;
+   stage->line = vbuf_first_line;
+   stage->tri = vbuf_first_tri;
 }
 
 
@@ -311,8 +317,7 @@ vbuf_flush_indices( struct draw_stage *stage )
  * we flush.
  */
 static void 
-vbuf_flush_vertices( struct draw_stage *stage,
-                     unsigned new_vertex_size )
+vbuf_flush_vertices( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
@@ -332,15 +337,24 @@ vbuf_flush_vertices( struct draw_stage *stage,
       vbuf->vertex_ptr = vbuf->vertices = NULL;
       
    }
+}
    
+
+static void 
+vbuf_alloc_vertices( struct draw_stage *stage,
+		     unsigned new_vertex_size )
+{
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
    assert(!vbuf->nr_indices);
+   assert(!vbuf->vertices);
    
    /* Allocate a new vertex buffer */
    vbuf->vertex_size = new_vertex_size;
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
    vbuf->vertices = vbuf->render->allocate_vertices(vbuf->render,
-                                                      vbuf->vertex_size,
-                                                      vbuf->max_vertices) ;
+                                                    (ushort) vbuf->vertex_size,
+                                                    (ushort) vbuf->max_vertices);
    vbuf->vertex_ptr = vbuf->vertices;
 }
 
@@ -352,22 +366,17 @@ vbuf_begin( struct draw_stage *stage )
    const struct vertex_info *vinfo = vbuf->render->get_vertex_info(vbuf->render);
    unsigned vertex_size = vinfo->size * sizeof(float);
 
-   if(vbuf->vertex_size != vertex_size)
-      vbuf_flush_vertices(&vbuf->stage, vertex_size);
+   /* XXX: Overkill */
+   vbuf_alloc_vertices(&vbuf->stage, vertex_size);
 }
 
 
 static void 
 vbuf_end( struct draw_stage *stage )
 {
-#if 0
+//   vbuf_flush_indices( stage );
    /* XXX: Overkill */
-   vbuf_flush_indices( stage );
-#else
-   /* By flushing vertices we avoid having the vertex buffer grow and grow */
-   struct vbuf_stage *vbuf = vbuf_stage(stage);
-   vbuf_flush_vertices( stage, vbuf->vertex_size );
-#endif
+   vbuf_flush_vertices( stage );
    
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;

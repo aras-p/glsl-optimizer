@@ -79,7 +79,10 @@ struct pipe_winsys
    /** allocate a new surface (no context dependency) */
    struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws);
 
-   /** allocate storage for a pipe_surface */
+   /**
+    * Allocate storage for a pipe_surface.
+    * Returns 0 if succeeds.
+    */
    int (*surface_alloc_storage)(struct pipe_winsys *ws,
                                 struct pipe_surface *surf,
                                 unsigned width, unsigned height,

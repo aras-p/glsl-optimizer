@@ -1135,10 +1135,8 @@ store_dest(
 
    case TGSI_SAT_ZERO_ONE:
       /* XXX need to obey ExecMask here */
-      micro_lt( dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C],
-                &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], chan );
-      micro_lt( dst, chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C],
-                chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+      micro_max(dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
+      micro_min(dst, dst, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
@@ -1646,6 +1644,7 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
 
+         /* XXX use micro_min()?? */
          micro_lt( &r[0], &r[0], &r[1], &r[0], &r[1] );
 
          STORE(&r[0], 0, chan_index);
@@ -1657,6 +1656,7 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
 
+         /* XXX use micro_max()?? */
          micro_lt( &r[0], &r[0], &r[1], &r[1], &r[0] );
 
          STORE(&r[0], 0, chan_index );

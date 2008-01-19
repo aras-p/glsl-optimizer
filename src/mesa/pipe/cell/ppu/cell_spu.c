@@ -114,6 +114,7 @@ cell_start_spus(struct cell_context *cell)
       for (j = 0; j < CELL_NUM_BATCH_BUFFERS; j++) {
          cell_global.inits[i].batch_buffers[j] = cell->batch_buffer[j];
       }
+      cell_global.inits[i].buffer_status = &cell->buffer_status[0][0][0];
 
       cell_global.spe_contexts[i] = spe_context_create(0, NULL);
       if (!cell_global.spe_contexts[i]) {

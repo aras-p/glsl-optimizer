@@ -36,6 +36,7 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
       stipple1 = softpipe->poly_stipple.stipple[y1 % 32];
 
 #if 1
+      {
       const int col0 = quad->x0 % 32;
       if ((stipple0 & (bit31 >> col0)) == 0)
          quad->mask &= ~MASK_TOP_LEFT;
@@ -48,6 +49,7 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
 
       if ((stipple1 & (bit30 >> col0)) == 0)
          quad->mask &= ~MASK_BOTTOM_RIGHT;
+      }
 #else
       /* We'd like to use this code, but we'd need to redefine
        * MASK_TOP_LEFT to be (1 << 1) and MASK_TOP_RIGHT to be (1 << 0),

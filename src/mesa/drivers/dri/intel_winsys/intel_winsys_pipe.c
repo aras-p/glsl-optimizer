@@ -227,7 +227,7 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                              surf->buffer,
                              surf->pitch * surf->cpp * height,
                              NULL,
-                             0);
+                             PIPE_BUFFER_USAGE_PIXEL);
    if(ret) {
       winsys->buffer_reference(winsys, &surf->buffer, NULL);
       return ret;

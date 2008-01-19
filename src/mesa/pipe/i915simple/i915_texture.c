@@ -123,7 +123,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
     * 2nd mipmap out past the width of its parent.
     */
    if (pt->first_level != pt->last_level) {
-      unsigned mip1_width = align(minify(pt->width[0]), align_w)
+      unsigned mip1_width = align_int(minify(pt->width[0]), align_w)
 			+ minify(minify(pt->width[0]));
 
       if (mip1_width > pt->width[0])
@@ -133,7 +133,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    /* Pitch must be a whole number of dwords, even though we
     * express it in texels.
     */
-   tex->pitch = align(tex->pitch * pt->cpp, 4) / pt->cpp;
+   tex->pitch = align_int(tex->pitch * pt->cpp, 4) / pt->cpp;
    tex->total_height = 0;
 
    for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
@@ -144,7 +144,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
       if (pt->compressed)
 	 img_height = MAX2(1, height/4);
       else
-	 img_height = align(height, align_h);
+	 img_height = align_int(height, align_h);
 
 
       /* Because the images are packed better, the final offset
@@ -155,7 +155,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
       /* Layout_below: step right after second mipmap.
        */
       if (level == pt->first_level + 1) {
-	 x += align(width, align_w);
+	 x += align_int(width, align_w);
       }
       else {
 	 y += img_height;
@@ -531,9 +531,9 @@ i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
-            free(tex->image_offset[i]);
+            FREE(tex->image_offset[i]);
 
-      free(tex);
+      FREE(tex);
    }
    *pt = NULL;
 }

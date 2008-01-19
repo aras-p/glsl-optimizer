@@ -497,6 +497,13 @@ _mesa_combine_programs(GLcontext *ctx,
    newProg->NumInstructions = newLength;
 
    if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
+      struct gl_fragment_program *fprogA, *fprogB, *newFprog;
+      fprogA = (struct gl_fragment_program *) progA;
+      fprogB = (struct gl_fragment_program *) progB;
+      newFprog = (struct gl_fragment_program *) newProg;
+
+      newFprog->UsesKill = fprogA->UsesKill || fprogB->UsesKill;
+
       /* connect color outputs/inputs */
       if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
           (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {

@@ -116,13 +116,6 @@ struct draw_stage
 
    void (*end)( struct draw_stage * );
 
-   /** 
-    * Reset temporary vertex ids in this stage 
-    * 
-    * draw_free_tmps will be called instead if null.
-    */
-   void (*reset_tmps)( struct draw_stage * );
-
    void (*reset_stipple_counter)( struct draw_stage * );
 
    void (*destroy)( struct draw_stage * );

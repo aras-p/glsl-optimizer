@@ -1695,7 +1695,7 @@ parse_attrib (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head
    if (found) {
       error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) attrib_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
                      attrib_var->name);
       program_error(ctx, Program->Position, error_msg);
       _mesa_free (error_msg);
@@ -1825,12 +1825,14 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
          break;
 
       case PARAM_CONSTANT:
+         /* parsing something like {1.0, 2.0, 3.0, 4.0} */
          parse_constant (inst, const_values, Program, use);
          idx = _mesa_add_named_constant(Program->Base.Parameters,
                                         (char *) param_var->name,
                                         const_values, 4);
          if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
+         param_var->param_binding_type = PROGRAM_CONSTANT;
          param_var->param_binding_length++;
          Program->Base.NumParameters++;
          break;
@@ -1878,7 +1880,7 @@ parse_param (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
    if (found) {
       char *error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) param_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
                      param_var->name);
       program_error (ctx, Program->Position, error_msg);
       _mesa_free (error_msg);
@@ -1978,7 +1980,7 @@ parse_temp (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
       if (found) {
          char *error_msg = (char *)
             _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-         _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+         _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
                         temp_var->name);
          program_error(ctx, Program->Position, error_msg);
          _mesa_free (error_msg);
@@ -2024,7 +2026,7 @@ parse_output (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head
    if (found) {
       char *error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) output_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
                      output_var->name);
       program_error (ctx, Program->Position, error_msg);
       _mesa_free (error_msg);
@@ -2055,7 +2057,7 @@ parse_alias (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
    if (found) {
       char *error_msg = (char *)
          _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
                      temp_var->name);
       program_error(ctx, Program->Position, error_msg);
       _mesa_free (error_msg);
@@ -2098,7 +2100,7 @@ parse_address (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_hea
       if (found) {
          char *error_msg = (char *)
             _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-         _mesa_sprintf (error_msg, "Duplicate Varible Declaration: %s",
+         _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
                         temp_var->name);
          program_error (ctx, Program->Position, error_msg);
          _mesa_free (error_msg);

@@ -34,9 +34,9 @@
 void
 cell_batch_flush(struct cell_context *cell)
 {
-   const uint batch = cell->cur_batch;
+   uint batch = cell->cur_batch;
    const uint size = cell->batch_buffer_size[batch];
-   uint i, cmd_word;
+   uint spu, cmd_word;
 
    if (size == 0)
       return;
@@ -48,25 +48,44 @@ cell_batch_flush(struct cell_context *cell)
           batch, &cell->batch_buffer[batch][0], size);
    */
      
+   /*
+    * Build "BATCH" command and sent to all SPUs.
+    */
    cmd_word = CELL_CMD_BATCH | (batch << 8) | (size << 16);
 
-   for (i = 0; i < cell->num_spus; i++) {
-      send_mbox_message(cell_global.spe_contexts[i], cmd_word);
+   for (spu = 0; spu < cell->num_spus; spu++) {
+      assert(cell->buffer_status[spu][batch][0] == CELL_BUFFER_STATUS_USED);
+      send_mbox_message(cell_global.spe_contexts[spu], cmd_word);
    }
 
-   /* XXX wait for the DMX xfer to finish.
-    * Using mailboxes here is temporary.
-    * Ideally, we want to use a PPE-side DMA status check function...
+   /* When the SPUs are done copying the buffer into their locals stores
+    * they'll write a BUFFER_STATUS_FREE message into the buffer_status[]
+    * array indicating that the PPU can re-use the buffer.
     */
-   for (i = 0; i < cell->num_spus; i++) {
-      uint k = wait_mbox_message(cell_global.spe_contexts[i]);
-      assert(k == CELL_BATCH_FINISHED);
+
+
+   /* Find a buffer that's marked as free by all SPUs */
+   while (1) {
+      uint num_free = 0;
+
+      batch = (batch + 1) % CELL_NUM_BATCH_BUFFERS;
+
+      for (spu = 0; spu < cell->num_spus; spu++) {
+         if (cell->buffer_status[spu][batch][0] == CELL_BUFFER_STATUS_FREE)
+            num_free++;
+      }
+
+      if (num_free == cell->num_spus) {
+         /* found a free buffer, now mark status as used */
+         for (spu = 0; spu < cell->num_spus; spu++) {
+            cell->buffer_status[spu][batch][0] = CELL_BUFFER_STATUS_USED;
+         }
+         break;
+      }
    }
 
-   /* next buffer */
-   cell->cur_batch = (batch + 1) % CELL_NUM_BATCH_BUFFERS;
-
-   cell->batch_buffer_size[cell->cur_batch] = 0;  /* empty */
+   cell->batch_buffer_size[batch] = 0;  /* empty */
+   cell->cur_batch = batch;
 }
 
 

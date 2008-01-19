@@ -488,7 +488,7 @@ setup_fragcoord_coeff(struct setup_stage *setup)
    if (setup->softpipe->rasterizer->origin_lower_left) {
       /* y=0=bottom */
       const int winHeight = setup->softpipe->framebuffer.cbufs[0]->height;
-      setup->coef[0].a0[1] = winHeight - 1;
+      setup->coef[0].a0[1] = (float) (winHeight - 1);
       setup->coef[0].dady[1] = -1.0;
    }
    else {
@@ -554,12 +554,6 @@ static void setup_tri_coefficients( struct setup_stage *setup )
           */
          setup_fragcoord_coeff(setup);
       }
-      else if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
-         /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
-         setup->coef[fragSlot].dadx[1] = 0.0;
-         setup->coef[fragSlot].dady[1] = 0.0;
-      }
       else {
 #endif
          uint j;
@@ -578,8 +572,18 @@ static void setup_tri_coefficients( struct setup_stage *setup )
             break;
          default:
             /* invalid interp mode */
-            assert(0);
+            /* assert(0); re-enable this and run demos/fogcoord.c ... */
+            ;
          }
+
+         if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+            /* FOG.y = front/back facing  XXX fix this */
+            setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+            setup->coef[fragSlot].dadx[1] = 0.0;
+            setup->coef[fragSlot].dady[1] = 0.0;
+         }
+
+
 #if USE_INPUT_MAP
       }
 #endif

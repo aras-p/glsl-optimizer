@@ -97,6 +97,8 @@ static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
    return (f >> shift) & mask;
 }
 
+/* XXX: The bit layout needs to be revised, can't currently encode 10-bit components. */
+
 #define pf_swizzle_x(f)       pf_get(f, 2, 0x7)  /**< PIPE_FORMAT_COMP_ */
 #define pf_swizzle_y(f)       pf_get(f, 5, 0x7)  /**< PIPE_FORMAT_COMP_ */
 #define pf_swizzle_z(f)       pf_get(f, 8, 0x7)  /**< PIPE_FORMAT_COMP_ */

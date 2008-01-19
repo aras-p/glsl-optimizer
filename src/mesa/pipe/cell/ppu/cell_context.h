@@ -38,6 +38,9 @@
 #include "pipe/cell/common.h"
 
 
+#define CELL_MAX_SPUS 6
+
+
 struct cell_vbuf_render;
 
 struct cell_vertex_shader_state
@@ -103,7 +106,11 @@ struct cell_context
    ubyte batch_buffer[CELL_NUM_BATCH_BUFFERS][CELL_BATCH_BUFFER_SIZE] ALIGN16_ATTRIB;
    int cur_batch;  /**< which batch buffer is being filled */
 
+   /** [4] to ensure 16-byte alignment for each status word */
+   uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BATCH_BUFFERS][4] ALIGN16_ATTRIB;
+
 };
+
 
 
 

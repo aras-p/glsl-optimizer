@@ -365,7 +365,7 @@ tgsi_build_immediate(
 
    immediate = tgsi_default_immediate();
 
-   header_bodysize_grow( header  );
+   header_bodysize_grow( header );
 
    return immediate;
 }
@@ -415,7 +415,7 @@ tgsi_build_full_immediate(
    struct tgsi_header *header,
    unsigned maxsize )
 {
-   unsigned size = 0,  i;
+   unsigned size = 0, i;
    struct tgsi_immediate *immediate;
 
    if( maxsize <= size )
@@ -433,7 +433,7 @@ tgsi_build_full_immediate(
       if32 = (struct tgsi_immediate_float32 *) &tokens[size];
       size++;
 
-      *if32  = tgsi_build_immediate_float32(
+      *if32 = tgsi_build_immediate_float32(
          full_imm->u.ImmediateFloat32[i].Float,
          immediate,
          header );

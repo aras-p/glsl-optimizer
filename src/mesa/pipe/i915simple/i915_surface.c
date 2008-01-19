@@ -64,6 +64,7 @@ i915_get_tex_surface(struct pipe_context *pipe,
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {
       assert(ps->refcount);
+      assert(ps->winsys);
       pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
@@ -73,41 +74,6 @@ i915_get_tex_surface(struct pipe_context *pipe,
       ps->offset = offset;
    }
    return ps;
-}
-
-
-static void
-copy_rect(ubyte * dst,
-          unsigned cpp,
-          unsigned dst_pitch,
-          unsigned dst_x,
-          unsigned dst_y,
-          unsigned width,
-          unsigned height,
-          const ubyte *src,
-          unsigned src_pitch,
-          unsigned src_x, 
-          unsigned src_y)
-{
-   unsigned i;
-
-   dst_pitch *= cpp;
-   src_pitch *= cpp;
-   dst += dst_x * cpp;
-   src += src_x * cpp;
-   dst += dst_y * dst_pitch;
-   src += src_y * dst_pitch;
-   width *= cpp;
-
-   if (width == dst_pitch && width == src_pitch)
-      memcpy(dst, src, height * width);
-   else {
-      for (i = 0; i < height; i++) {
-         memcpy(dst, src, width);
-         dst += dst_pitch;
-         src += src_pitch;
-      }
-   }
 }
 
 
@@ -125,9 +91,9 @@ i915_surface_data(struct pipe_context *pipe,
 		  const void *src, unsigned src_pitch,
 		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   copy_rect(pipe_surface_map(dst),
-             dst->cpp, dst->pitch,
-             dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+   pipe_copy_rect(pipe_surface_map(dst),
+                  dst->cpp, dst->pitch,
+                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    pipe_surface_unmap(dst);
 }
@@ -147,14 +113,14 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( dst->cpp == src->cpp );
 
    if (0) {
-      copy_rect(pipe_surface_map(dst),
-		      dst->cpp,
-		      dst->pitch,
-		      dstx, dsty, 
-		      width, height, 
-		      pipe_surface_map(src), 
-		      src->pitch, 
-		      srcx, srcy);
+      pipe_copy_rect(pipe_surface_map(dst),
+                     dst->cpp,
+                     dst->pitch,
+                     dstx, dsty, 
+                     width, height, 
+                     pipe_surface_map(src), 
+                     src->pitch, 
+                     srcx, srcy);
 
       pipe_surface_unmap(src);
       pipe_surface_unmap(dst);

@@ -76,10 +76,10 @@ struct draw_context *draw_create( void )
 	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
    }
 
-   draw->attrib_front0 = -1;
-   draw->attrib_back0 = -1;
-   draw->attrib_front1 = -1;
-   draw->attrib_back1 = -1;
+   draw->attrib_front0 = 0;
+   draw->attrib_back0 = 0;
+   draw->attrib_front1 = 0;
+   draw->attrib_back1 = 0;
 
    draw->prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -238,17 +238,6 @@ void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
    }
 }
 
-/**
- * Reset the vertex ids for the stage's temp verts.
- */
-void draw_reset_tmps( struct draw_stage *stage )
-{
-   unsigned i;
-   
-   if (stage->tmp)
-      for (i = 0; i < stage->nr_tmps; i++)
-	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
-}
 
 void draw_free_tmps( struct draw_stage *stage )
 {
@@ -271,10 +260,11 @@ void draw_reset_vertex_ids(struct draw_context *draw)
    struct draw_stage *stage = draw->pipeline.first;
    
    while (stage) {
-      if (stage->reset_tmps)
-	 stage->reset_tmps(stage);
-      else
-	 draw_reset_tmps(stage);
+      unsigned i;
+
+      for (i = 0; i < stage->nr_tmps; i++)
+	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
+
       stage = stage->next;
    }
 

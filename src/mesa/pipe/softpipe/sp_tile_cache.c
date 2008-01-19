@@ -286,7 +286,7 @@ clear_tile(struct softpipe_cached_tile *tile,
       else {
          for (i = 0; i < TILE_SIZE; i++) {
             for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.depth16[i][j] = clear_value;
+               tile->data.depth16[i][j] = (ushort) clear_value;
             }
          }
       }
@@ -564,10 +564,10 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue)
       r = g = b = a = 0;
    }
 
-   tc->clear_color[0] = r / 255.0;
-   tc->clear_color[1] = g / 255.0;
-   tc->clear_color[2] = b / 255.0;
-   tc->clear_color[3] = a / 255.0;
+   tc->clear_color[0] = r / 255.0f;
+   tc->clear_color[1] = g / 255.0f;
+   tc->clear_color[2] = b / 255.0f;
+   tc->clear_color[3] = a / 255.0f;
 
 #if TILE_CLEAR_OPTIMIZATION
    /* set flags to indicate all the tiles are cleared */
