@@ -396,6 +396,38 @@ cmd_finish(void)
 
 
 /**
+ * Tell the PPU that this SPU has finished copying a batch buffer to
+ * local store and that it may be reused by the PPU.
+ * This is done by writting a 16-byte batch-buffer-status block back into
+ * main memory (in cell_contex->buffer_status[]).
+ */
+static void
+release_batch_buffer(uint buffer)
+{
+   /* Evidently, using less than a 16-byte status doesn't work reliably */
+   static const uint status[4] ALIGN16_ATTRIB
+      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
+
+   const uint index = 4 * (spu.init.id * CELL_NUM_BATCH_BUFFERS + buffer);
+   uint *dst = spu.init.buffer_status + index;
+
+   ASSERT(buffer < CELL_NUM_BATCH_BUFFERS);
+
+   /*
+   printf("SPU %u: Set batch status buf=%u, index %u, at %p to FREE\n",
+          spu.init.id, buffer, index, dst);
+   */
+
+   mfc_put((void *) &status,    /* src in local memory */
+           (unsigned int) dst,  /* dst in main memory */
+           sizeof(status),      /* size */
+           TAG_MISC,            /* tag is unimportant */
+           0, /* tid */
+           0  /* rid */);
+}
+
+
+/**
  * Execute a batch of commands
  * The opcode param encodes the location of the buffer and its size.
  */
@@ -429,9 +461,9 @@ cmd_batch(uint opcode)
            0  /* rid */);
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
-   /* send mbox message to indicate DMA completed */
-   /* XXX temporary */
-   spu_write_out_mbox(CELL_BATCH_FINISHED);
+   /* Tell PPU we're done copying the buffer to local store */
+   release_batch_buffer(buf);
+
 
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {

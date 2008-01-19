@@ -160,7 +160,7 @@ struct pipe_context *
 cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 {
    struct cell_context *cell;
-   uint i;
+   uint spu, buf;
 
    /* some fields need to be 16-byte aligned, so align the whole object */
    cell = (struct cell_context*) align_malloc(sizeof(struct cell_context), 16);
@@ -248,9 +248,20 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell_start_spus(cell);
 
-   for (i = 0; i < CELL_NUM_BATCH_BUFFERS; i++) {
-      cell->batch_buffer_size[i] = 0;
+   for (buf = 0; buf < CELL_NUM_BATCH_BUFFERS; buf++) {
+      cell->batch_buffer_size[buf] = 0;
+
+      /* init batch buffer status values,
+       * mark 0th buffer as used, rest as free.
+       */
+      for (spu = 0; spu < cell->num_spus; spu++) {
+         if (buf == 0)
+            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
+         else
+            cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_FREE;
+      }
    }
+
 
 #if 0
    test_spus(cell);
@@ -258,3 +269,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    return &cell->pipe;
 }
+
+
+#if 0
+/** [4] to ensure 16-byte alignment for each status word */
+uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BATCH_BUFFERS][4] ALIGN16_ATTRIB;
+#endif
