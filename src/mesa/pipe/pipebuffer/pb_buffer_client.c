@@ -34,6 +34,7 @@
  */
 
 
+#include "pipe/p_util.h"
 #include "pb_buffer.h"
 #include "pipe/p_util.h"
 
@@ -61,7 +62,7 @@ static void
 pb_user_buffer_destroy(struct pb_buffer *buf)
 {
    assert(buf);
-   free(buf);
+   FREE(buf);
 }
 
 

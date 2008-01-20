@@ -62,7 +62,7 @@ static void
 malloc_buffer_destroy(struct pb_buffer *buf)
 {
    free(malloc_buffer(buf)->data);
-   free(buf);
+   FREE(buf);
 }
 
 
@@ -110,7 +110,7 @@ pb_malloc_buffer_create( unsigned alignment,
    /* TODO: accept an alignment parameter */
    /* TODO: do a single allocation */
    
-   buf = (struct malloc_buffer *)malloc(sizeof(struct malloc_buffer));
+   buf = (struct malloc_buffer *)MALLOC(sizeof(struct malloc_buffer));
    if(!buf)
       return NULL;
    
@@ -121,7 +121,7 @@ pb_malloc_buffer_create( unsigned alignment,
 
    buf->data = malloc(size);
    if(!buf->data) {
-      free(buf);
+      FREE(buf);
       return NULL;
    }
 
