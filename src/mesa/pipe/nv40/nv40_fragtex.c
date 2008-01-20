@@ -38,7 +38,7 @@ nv40_texture_formats[] = {
 };
 
 static struct nv40_texture_format *
-nv40_tex_format(uint pipe_format)
+nv40_fragtex_format(uint pipe_format)
 {
 	struct nv40_texture_format *tf = nv40_texture_formats;
 
@@ -53,7 +53,7 @@ nv40_tex_format(uint pipe_format)
 
 
 static void
-nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
+nv40_fragtex_build(struct nv40_context *nv40, int unit)
 {
 	struct nv40_sampler_state *ps = nv40->tex_sampler[unit];
 	struct nv40_miptree *nv40mt = nv40->tex_miptree[unit];
@@ -62,11 +62,9 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 	uint32_t txf, txs, txp;
 	int swizzled = 0; /*XXX: implement in region code? */
 
-	tf = nv40_tex_format(pt->format);
-	if (!tf || !tf->defined) {
-		NOUVEAU_ERR("Unsupported texture format: 0x%x\n", pt->format);
-		return;
-	}
+	tf = nv40_fragtex_format(pt->format);
+	if (!tf)
+		assert(0);
 
 	txf  = ps->fmt;
 	txf |= tf->format | 0x8000;
@@ -119,7 +117,7 @@ nv40_tex_unit_enable(struct nv40_context *nv40, int unit)
 }
 
 void
-nv40_state_tex_update(struct nv40_context *nv40)
+nv40_fragtex_bind(struct nv40_context *nv40)
 {
 	struct nv40_fragment_program *fp = nv40->fragprog.active;
 	unsigned samplers, unit;
@@ -138,7 +136,7 @@ nv40_state_tex_update(struct nv40_context *nv40)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		nv40_tex_unit_enable(nv40, unit);
+		nv40_fragtex_build(nv40, unit);
 	}
 
 	nv40->fp_samplers = fp->samplers;

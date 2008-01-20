@@ -12,7 +12,7 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 	}
 
 	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
-		nv40_state_tex_update(nv40);
+		nv40_fragtex_bind(nv40);
 
 		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
 		OUT_RING  (2);

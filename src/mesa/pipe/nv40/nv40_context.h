@@ -113,6 +113,9 @@ extern void nv40_fragprog_bind(struct nv40_context *,
 extern void nv40_fragprog_destroy(struct nv40_context *,
 				  struct nv40_fragment_program *);
 
+/* nv40_fragtex.c */
+extern void nv40_fragtex_bind(struct nv40_context *);
+
 /* nv40_state.c and friends */
 extern void nv40_emit_hw_state(struct nv40_context *nv40);
 extern void nv40_state_tex_update(struct nv40_context *nv40);
