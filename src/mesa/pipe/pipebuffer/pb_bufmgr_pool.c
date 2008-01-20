@@ -37,16 +37,20 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <unistd.h>
 
-#include "main/imports.h"
-#include "glapi/glthread.h"
 #include "linked_list.h"
 
+#include "p_compiler.h"
+#include "p_thread.h"
 #include "p_defines.h"
 
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
+
+#ifndef __MSC__
+#include <unistd.h>
+#include "main/imports.h"
+#endif
 
 
 /**
@@ -75,7 +79,7 @@ struct pool_pb_manager
 };
 
 
-static inline struct pool_pb_manager *
+static INLINE struct pool_pb_manager *
 pool_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -95,7 +99,7 @@ struct pool_buffer
 };
 
 
-static inline struct pool_buffer *
+static INLINE struct pool_buffer *
 pool_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -217,7 +221,7 @@ pool_bufmgr_create(struct pb_manager *provider,
 {
    struct pool_pb_manager *pool;
    struct pool_buffer *pool_buf;
-   int i;
+   size_t i;
 
    pool = (struct pool_pb_manager *)calloc(1, sizeof(*pool));
    if (!pool)

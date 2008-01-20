@@ -36,16 +36,20 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <unistd.h>
 
-#include "main/imports.h"
-#include "glapi/glthread.h"
 #include "linked_list.h"
 
+#include "p_compiler.h"
 #include "p_winsys.h"
+#include "p_thread.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
+
+#ifndef __MSC__
+#include <unistd.h>
+#include "main/imports.h"
+#endif
 
 
 /**
@@ -103,11 +107,12 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
    struct fenced_buffer *fenced_buf;   
    struct list_head *list, *prev;
    int signaled = -1;
-   int i;
 
    list = fenced_list->delayed.next;
 
    if (fenced_list->numDelayed > 3) {
+      unsigned i;
+
       for (i = 0; i < fenced_list->numDelayed; i += 3) {
          list = list->next;
       }
@@ -281,7 +286,7 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    while (fenced_list->numDelayed) {
       _glthread_UNLOCK_MUTEX(fenced_list->mutex);
       sched_yield();
-      _fenced_buffer_list_check_free(fenced_list, GL_TRUE);
+      _fenced_buffer_list_check_free(fenced_list, 1);
       _glthread_LOCK_MUTEX(fenced_list->mutex);
    }
 

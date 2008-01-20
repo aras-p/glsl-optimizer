@@ -52,7 +52,7 @@ struct fenced_pb_manager
 };
 
 
-static inline struct fenced_pb_manager *
+static INLINE struct fenced_pb_manager *
 fenced_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);

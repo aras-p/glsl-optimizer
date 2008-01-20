@@ -46,6 +46,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include "p_compiler.h"
 
 #include "pipe/p_state.h"
 
@@ -104,7 +105,7 @@ struct pb_vtbl
 
 /* Accessor functions for pb->vtbl:
  */
-static inline void *
+static INLINE void *
 pb_map(struct pb_buffer *buf, 
        unsigned flags)
 {
@@ -113,7 +114,7 @@ pb_map(struct pb_buffer *buf,
 }
 
 
-static inline void 
+static INLINE void 
 pb_unmap(struct pb_buffer *buf)
 {
    assert(buf);
@@ -121,7 +122,7 @@ pb_unmap(struct pb_buffer *buf)
 }
 
 
-static inline void
+static INLINE void
 pb_get_base_buffer( struct pb_buffer *buf,
 		    struct pb_buffer **base_buf,
 		    unsigned *offset )
@@ -129,7 +130,7 @@ pb_get_base_buffer( struct pb_buffer *buf,
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
 }
 
-static inline void 
+static INLINE void 
 pb_destroy(struct pb_buffer *buf)
 {
    assert(buf);
@@ -163,13 +164,13 @@ pb_malloc_buffer_create( unsigned alignment,
 
 
 
-static inline struct pipe_buffer *
+static INLINE struct pipe_buffer *
 pb_pipe_buffer( struct pb_buffer *pbuf )
 {
    return &pbuf->base;
 }
 
-static inline struct pb_buffer *
+static INLINE struct pb_buffer *
 pb_buffer( struct pipe_buffer *buf )
 {
    /* Could add a magic cookie check on debug builds.
