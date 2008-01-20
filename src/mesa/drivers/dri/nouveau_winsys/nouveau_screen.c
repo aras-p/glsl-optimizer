@@ -158,7 +158,7 @@ nouveau_destroy_buffer(__DRIdrawablePrivate * driDrawPriv)
 {
 	struct nouveau_framebuffer *nvfb;
 	
-	nvfb = (struct nouveau_framebuffer *)driDrawPriv;
+	nvfb = (struct nouveau_framebuffer *)driDrawPriv->driverPrivate;
 	st_unreference_framebuffer(&nvfb->stfb);
 	free(nvfb);
 }
