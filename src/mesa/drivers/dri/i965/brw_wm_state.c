@@ -54,7 +54,8 @@ struct brw_wm_unit_key {
 
    unsigned int nr_surfaces, sampler_count;
    GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
-   GLboolean polygon_stipple, stats_wm;
+   GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
+   GLfloat offset_units, offset_factor;
 };
 
 static void
@@ -105,6 +106,14 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    /* XXX: This needs a flag to indicate when it changes. */
    key->stats_wm = intel->stats_wm;
+
+   /* _NEW_LINE */
+   key->line_stipple = brw->attribs.Line->StippleFlag;
+
+   /* _NEW_POLYGON */
+   key->offset_enable = brw->attribs.Polygon->OffsetFill;
+   key->offset_units = brw->attribs.Polygon->OffsetUnits;
+   key->offset_factor = brw->attribs.Polygon->OffsetFactor;
 }
 
 static dri_bo *
@@ -164,25 +173,21 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
    wm.wm5.polygon_stipple = key->polygon_stipple;
 
-   /* _NEW_POLYGON */
-   if (brw->attribs.Polygon->OffsetFill) {
+   if (key->offset_enable) {
       wm.wm5.depth_offset = 1;
       /* Something wierd going on with legacy_global_depth_bias,
        * offset_constant, scaling and MRD.  This value passes glean
        * but gives some odd results elsewere (eg. the
        * quad-offset-units test).
        */
-      wm.global_depth_offset_constant = brw->attribs.Polygon->OffsetUnits * 2;
+      wm.global_depth_offset_constant = key->offset_units * 2;
 
       /* This is the only value that passes glean:
        */
-      wm.global_depth_offset_scale = brw->attribs.Polygon->OffsetFactor;
+      wm.global_depth_offset_scale = key->offset_factor;
    }
 
-   /* _NEW_LINE */
-   if (brw->attribs.Line->StippleFlag) {
-      wm.wm5.line_stipple = 1;
-   }
+   wm.wm5.line_stipple = key->line_stipple;
 
    if (INTEL_DEBUG & DEBUG_STATS || key->stats_wm)
       wm.wm4.stats_enable = 1;
