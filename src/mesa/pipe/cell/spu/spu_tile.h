@@ -40,7 +40,11 @@
 
 
 extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+#if ZSIZE == 2
 extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+#else
+extern uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+#endif
 
 
 #define TILE_STATUS_CLEAR   1
@@ -61,7 +65,13 @@ void
 clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value);
 
 void
-clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value);
+clear_tile_z(
+#if ZSIZE == 2
+             ushort tile[TILE_SIZE][TILE_SIZE],
+#else
+             uint tile[TILE_SIZE][TILE_SIZE],
+#endif
+             uint value);
 
 
 #endif /* SPU_TILE_H */

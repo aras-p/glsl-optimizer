@@ -32,7 +32,11 @@
 
 
 uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+#if ZSIZE == 2
 ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+#else
+uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+#endif
 
 ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
@@ -43,7 +47,7 @@ void
 get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf)
 {
    const uint offset = ty * spu.fb.width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? ZSIZE : 4);
    const ubyte *src = zBuf ? spu.fb.depth_start : spu.fb.color_start;
 
    src += offset * bytesPerTile;
@@ -68,7 +72,7 @@ void
 put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
 {
    const uint offset = ty * spu.fb.width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? 2 : 4);
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? ZSIZE : 4);
    ubyte *dst = zBuf ? spu.fb.depth_start : spu.fb.color_start;
 
    dst += offset * bytesPerTile;
@@ -81,7 +85,6 @@ put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
           spu.init.id,
           tile, (unsigned int) dst, bytesPerTile);
    */
-
    mfc_put((void *) tile,  /* src in local memory */
            (unsigned int) dst,  /* dst in main memory */
            bytesPerTile,
@@ -103,7 +106,13 @@ clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value)
 }
 
 void
-clear_tile_z(ushort tile[TILE_SIZE][TILE_SIZE], uint value)
+clear_tile_z(
+#if ZSIZE == 2
+             ushort tile[TILE_SIZE][TILE_SIZE],
+#else
+             uint tile[TILE_SIZE][TILE_SIZE],
+#endif
+             uint value)
 {
    uint i, j;
    for (i = 0; i < TILE_SIZE; i++) {

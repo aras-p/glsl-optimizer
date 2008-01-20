@@ -217,8 +217,8 @@ static INLINE void
 eval_z( struct setup_stage *setup,
         float x, float y, float result[4])
 {
-   uint slot = 0;
-   uint i = 2;
+   const uint slot = 0;
+   const uint i = 2;
    const float *dadx = setup->coef[slot].dadx;
    const float *dady = setup->coef[slot].dady;
 
@@ -252,6 +252,72 @@ pack_color(const float color[4])
 }
 
 
+static uint
+do_depth_test(struct setup_stage *setup, int x, int y, unsigned mask)
+{
+   int ix = x - setup->cliprect_minx;
+   int iy = y - setup->cliprect_miny;
+   float zvals[4];
+   float zscale = 65535.0;
+
+   if (ZSIZE == 2) {
+      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM);
+   }
+   else {
+      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
+   }
+   ASSERT(sizeof(ztile[0][0]) == ZSIZE);
+
+
+   eval_z(setup, (float) x, (float) y, zvals);
+
+   if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
+      /* now, _really_ clear the tile */
+      clear_tile_z(ztile, spu.fb.depth_clear_value);
+   }
+   else {
+      /* make sure we've got the tile from main mem */
+      wait_on_mask(1 << TAG_READ_TILE_Z);
+   }
+   tile_status_z[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
+
+
+   if (mask & MASK_TOP_LEFT) {
+      uint z = (uint) (zvals[0] * zscale);
+      if (z < ztile[iy][ix])
+         ztile[iy][ix] = z;
+      else
+         mask &= ~MASK_TOP_LEFT;
+   }
+
+   if (mask & MASK_TOP_RIGHT) {
+      uint z = (uint) (zvals[1] * zscale);
+      if (z < ztile[iy][ix+1])
+         ztile[iy][ix+1] = z;
+      else
+         mask &= ~MASK_TOP_RIGHT;
+   }
+
+   if (mask & MASK_BOTTOM_LEFT) {
+      uint z = (uint) (zvals[2] * zscale);
+      if (z < ztile[iy+1][ix])
+         ztile[iy+1][ix] = z;
+      else
+         mask &= ~MASK_BOTTOM_LEFT;
+   }
+
+   if (mask & MASK_BOTTOM_RIGHT) {
+      uint z = (uint) (zvals[3] * zscale);
+      if (z < ztile[iy+1][ix+1])
+         ztile[iy+1][ix+1] = z;
+      else
+         mask &= ~MASK_BOTTOM_RIGHT;
+   }
+
+   return mask;
+}
+
+
 /**
  * Emit a quad (pass to next stage).  No clipping is done.
  */
@@ -266,58 +332,14 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    sp->quad.first->run(sp->quad.first, &setup->quad);
 #else
    /* Cell: "write" quad fragments to the tile by setting prim color */
-   int ix = x - setup->cliprect_minx;
-   int iy = y - setup->cliprect_miny;
+   const int ix = x - setup->cliprect_minx;
+   const int iy = y - setup->cliprect_miny;
    float colors[4][4];
-   uint z;
 
    eval_coeff(setup, 1, (float) x, (float) y, colors);
 
-   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-      float zvals[4];
-      eval_z(setup, (float) x, (float) y, zvals);
-
-      if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
-         /* now, _really_ clear the tile */
-         clear_tile_z(ztile, spu.fb.depth_clear_value);
-      }
-      else {
-         /* make sure we've got the tile from main mem */
-         wait_on_mask(1 << TAG_READ_TILE_Z);
-      }
-      tile_status_z[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
-
-      if (mask & MASK_TOP_LEFT) {
-         z = (uint) (zvals[0] * 65535.0);
-         if (z < ztile[iy][ix])
-            ztile[iy][ix] = z;
-         else
-            mask &= ~MASK_TOP_LEFT;
-      }
-
-      if (mask & MASK_TOP_RIGHT) {
-         z = (uint) (zvals[1] * 65535.0);
-         if (z < ztile[iy][ix+1])
-            ztile[iy][ix+1] = z;
-         else
-            mask &= ~MASK_TOP_RIGHT;
-      }
-
-      if (mask & MASK_BOTTOM_LEFT) {
-         z = (uint) (zvals[2] * 65535.0);
-         if (z < ztile[iy+1][ix])
-            ztile[iy+1][ix] = z;
-         else
-            mask &= ~MASK_BOTTOM_LEFT;
-      }
-
-      if (mask & MASK_BOTTOM_RIGHT) {
-         z = (uint) (zvals[3] * 65535.0);
-         if (z < ztile[iy+1][ix+1])
-            ztile[iy+1][ix+1] = z;
-         else
-            mask &= ~MASK_BOTTOM_RIGHT;
-      }
+   if (spu.depth_stencil.depth.enabled) {
+      mask &= do_depth_test(setup, x, y, mask);
    }
 
    if (mask) {

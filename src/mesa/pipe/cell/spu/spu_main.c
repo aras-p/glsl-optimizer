@@ -239,8 +239,8 @@ cmd_render(const struct cell_command_render *render)
    /* how much vertex data */
    vertex_bytes = render->num_verts * vertex_size;
    index_bytes = render->num_indexes * sizeof(ushort);
-   if (index_bytes < 8)
-      index_bytes = 8;
+   if (index_bytes < 16)
+      index_bytes = 16;
    else
       index_bytes = (index_bytes + 15) & ~0xf; /* multiple of 16 */
 
@@ -297,7 +297,7 @@ cmd_render(const struct cell_command_render *render)
       /* Start fetching color/z tiles.  We'll wait for completion when
        * we need read/write to them later in triangle rasterization.
        */
-      if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      if (spu.depth_stencil.depth.enabled) {
          if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
             get_tile(tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
          }
@@ -325,7 +325,7 @@ cmd_render(const struct cell_command_render *render)
          put_tile(tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
          tile_status[ty][tx] = TILE_STATUS_DEFINED;
       }
-      if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      if (spu.depth_stencil.depth.enabled) {
          if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
             put_tile(tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
             tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
@@ -334,7 +334,7 @@ cmd_render(const struct cell_command_render *render)
 
       /* XXX move these... */
       wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
-      if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      if (spu.depth_stencil.depth.enabled) {
          wait_on_mask(1 << TAG_WRITE_TILE_Z);
       }
    }
@@ -365,6 +365,14 @@ cmd_framebuffer(const struct cell_command_framebuffer *cmd)
    spu.fb.height = cmd->height;
    spu.fb.width_tiles = (spu.fb.width + TILE_SIZE - 1) / TILE_SIZE;
    spu.fb.height_tiles = (spu.fb.height + TILE_SIZE - 1) / TILE_SIZE;
+
+   if (cmd->depth_format == PIPE_FORMAT_Z16_UNORM) {
+      ASSERT(ZSIZE == 2);
+   }
+   else if (cmd->depth_format == PIPE_FORMAT_Z32_UNORM) {
+      ASSERT(ZSIZE == 4);
+   }
+
 }
 
 
@@ -375,9 +383,9 @@ cmd_state_depth_stencil(const struct pipe_depth_stencil_alpha_state *state)
       printf("SPU %u: DEPTH_STENCIL: ztest %d\n",
              spu.init.id,
              state->depth.enabled);
-   /*
+
    memcpy(&spu.depth_stencil, state, sizeof(*state));
-   */
+
 }
 
 

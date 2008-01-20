@@ -32,6 +32,8 @@
 #include "pipe/cell/common.h"
 #include "pipe/p_state.h"
 
+/** XXX temp bytes/z value */
+#define ZSIZE 2
 
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
