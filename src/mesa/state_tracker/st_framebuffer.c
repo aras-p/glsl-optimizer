@@ -34,6 +34,7 @@
 #include "st_context.h"
 #include "st_cb_fbo.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_context.h"
 
 
 struct st_framebuffer *
@@ -171,7 +172,11 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
    GET_CURRENT_CONTEXT(ctx);
 
    if (ctx && ctx->DrawBuffer == &stfb->Base) {
-      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE);
+      st_flush( ctx->st, 
+		PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_SWAPBUFFERS);
+   }
+}
+
    }
 }
 
