@@ -66,6 +66,11 @@ struct intel_region *intel_region_alloc(struct intel_context *intel,
                                         GLuint cpp,
                                         GLuint pitch, GLuint height);
 
+struct intel_region *
+intel_region_alloc_for_handle(struct intel_context *intel,
+			      GLuint cpp, GLuint pitch, GLuint height,
+			      GLuint tiled, unsigned int handle);
+
 void intel_region_reference(struct intel_region **dst,
                             struct intel_region *src);
 

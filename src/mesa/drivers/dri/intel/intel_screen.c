@@ -49,6 +49,7 @@
 #include "i830_dri.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
+#include "intel_bufmgr_ttm.h"
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
@@ -285,6 +286,111 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
 
    if (0)
       intelPrintSAREA(sarea);
+}
+
+static void
+intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
+			  __DRIDrawableConfigEvent *event)
+{
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   struct intel_region *region;
+   struct intel_renderbuffer *rb, *depth_rb, *stencil_rb;
+   struct intel_context *intel = dPriv->driContextPriv->driverPrivate;
+   int cpp = intel->ctx.Visual.rgbBits / 8;
+   GLuint pitch = ((cpp * dPriv->w + 63) & ~63) / cpp;
+
+   rb = intel_fb->color_rb[1];
+   if (rb) {
+      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
+      intel_renderbuffer_set_region(rb, region);
+   }
+
+   rb = intel_fb->color_rb[2];
+   if (rb) {
+      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
+      intel_renderbuffer_set_region(rb, region);
+   }
+
+   depth_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+   stencil_rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+   if (depth_rb || stencil_rb)
+      region = intel_region_alloc(intel, cpp, pitch, dPriv->h);
+   if (depth_rb)
+      intel_renderbuffer_set_region(depth_rb, region);
+   if (stencil_rb)
+      intel_renderbuffer_set_region(stencil_rb, region);
+
+   /* FIXME: Tell the X server about the regions we just allocated and
+    * attached. */
+}
+
+#define BUFFER_FLAG_TILED 0x0100
+
+static void
+intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
+			__DRIBufferAttachEvent *ba)
+{
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   struct intel_renderbuffer *rb;
+   struct intel_region *region;
+   struct intel_context *intel = dPriv->driContextPriv->driverPrivate;
+   GLuint tiled;
+
+   switch (ba->buffer.attachment) {
+   case DRI_DRAWABLE_BUFFER_FRONT_LEFT:
+      rb = intel_fb->color_rb[0];
+      break;
+
+   case DRI_DRAWABLE_BUFFER_BACK_LEFT:
+      rb = intel_fb->color_rb[0];
+      break;
+
+   case DRI_DRAWABLE_BUFFER_DEPTH:
+     rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+     break;
+
+   case DRI_DRAWABLE_BUFFER_STENCIL:
+     rb = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+     break;
+
+   case DRI_DRAWABLE_BUFFER_ACCUM:
+   default:
+      fprintf(stderr, "unhandled buffer attach event, attacment type %d\n",
+	      ba->buffer.attachment);
+      return;
+   }
+
+#if 0
+   /* FIXME: Add this so we can filter out when the X server sends us
+    * attachment events for the buffers we just allocated.  Need to
+    * get the BO handle for a render buffer. */
+   if (intel_renderbuffer_get_region_handle(rb) == ba->buffer.handle)
+      return;
+#endif
+
+   tiled = (ba->buffer.flags & BUFFER_FLAG_TILED) > 0;
+   region = intel_region_alloc_for_handle(intel, ba->buffer.cpp,
+					  ba->buffer.pitch / ba->buffer.cpp,
+					  dPriv->h, tiled,
+					  ba->buffer.handle);
+
+   intel_renderbuffer_set_region(rb, region);
+}
+
+static void
+intelUpdateBuffer(__DRIdrawablePrivate *dPriv, unsigned int *event)
+{
+   switch (DRI2_EVENT_TYPE(*event)) {
+   case DRI2_EVENT_DRAWABLE_CONFIG:
+      /* flush all current regions, allocate new ones, except front buffer */
+      intelHandleDrawableConfig(dPriv, (__DRIDrawableConfigEvent *) event);
+      break;
+
+   case DRI2_EVENT_BUFFER_ATTACH:
+      /* attach buffer if different from what we have */
+      intelHandleBufferAttach(dPriv, (__DRIBufferAttachEvent *) event);
+      break;
+   }
 }
 
 static const __DRItexOffsetExtension intelTexOffsetExtension = {
@@ -569,6 +675,7 @@ static const struct __DriverAPIRec intelAPI = {
 #ifdef I915
    .setTexOffset = intelSetTexOffset,
 #endif
+   .UpdateBuffer = intelUpdateBuffer,
 };
 
 
@@ -723,3 +830,83 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
   return intel_context(ctx);
 }
 
+/**
+ * This is the driver specific part of the createNewScreen entry point.
+ * 
+ * \return the __GLcontextModes supported by this driver
+ */
+PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
+{
+   static const __DRIversion ddx_expected = { 1, 9, 0 };
+   static const __DRIversion dri_expected = { 4, 0, 0 };
+   static const __DRIversion drm_expected = { 1, 5, 0 };
+   intelScreenPrivate *intelScreen;
+   __GLcontextModes *modes, *m;
+
+   psp->DriverAPI = intelAPI;
+
+   if (!driCheckDriDdxDrmVersions2("i915",
+                                   &psp->dri_version, &dri_expected,
+                                   &psp->ddx_version, &ddx_expected,
+                                   &psp->drm_version, &drm_expected)) {
+      fprintf(stderr, "bad version voodoo\n");
+      return NULL;
+   }
+
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create is
+    * called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions(NULL, card_extensions, GL_FALSE);
+   driInitExtensions(NULL, ttm_extensions, GL_FALSE);
+
+   /* Allocate the private area */
+   intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));
+   if (!intelScreen) {
+      fprintf(stderr, "\nERROR!  Allocating private area failed\n");
+      return GL_FALSE;
+   }
+   /* parse information in __driConfigOptions */
+   driParseOptionInfo(&intelScreen->optionCache,
+                      __driConfigOptions, __driNConfigOptions);
+
+   intelScreen->driScrnPriv = psp;
+   psp->private = (void *) intelScreen;
+
+   intelScreen->drmMinor = psp->drm_version.minor;
+
+   /* Determine chipset ID? */
+   if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
+			&intelScreen->deviceID))
+      return GL_FALSE;
+
+   /* Determine if IRQs are active? */
+   if (!intel_get_param(psp, I830_PARAM_IRQ_ACTIVE,
+			&intelScreen->irq_active))
+      return GL_FALSE;
+
+   /* Determine if batchbuffers are allowed */
+   if (!intel_get_param(psp, I830_PARAM_ALLOW_BATCHBUFFER,
+			&intelScreen->allow_batchbuffer))
+      return GL_FALSE;
+
+   if (!intelScreen->allow_batchbuffer) {
+      fprintf(stderr, "batch buffer not allowed\n");
+      return GL_FALSE;
+   }
+
+   psp->extensions = intelExtensions;
+
+   modes = intelFillInModes(16, 16, 0, 1);
+   for (m = modes; m->next != NULL; m = m->next)
+     ;
+   m->next = intelFillInModes(32, 24, 8, 1);
+
+   return modes;
+}

@@ -302,7 +302,8 @@ intelWindowMoved(struct intel_context *intel)
       }
    }
 
-   if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
+   if (!intel->intelScreen->driScrnPriv->dri2.enabled &&
+       intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
       volatile drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };

@@ -132,9 +132,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 }
 
 	 if (box.x1 >= box.x2 ||
-	     box.y1 >= box.y2 ||
-	     box.x2 > intelScreen->width ||
-	     box.y2 > intelScreen->height)
+	     box.y1 >= box.y2)
 	    continue;
 
 	 assert(box.x1 < box.x2);

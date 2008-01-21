@@ -417,7 +417,7 @@ intelInitContext(struct intel_context *intel,
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;
-   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
+   intel->driHwLock = sPriv->lock;
 
    intel->width = intelScreen->width;
    intel->height = intelScreen->height;
@@ -523,7 +523,8 @@ intelInitContext(struct intel_context *intel,
    if (intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
-   intel_recreate_static_regions(intel);
+   if (!sPriv->dri2.enabled)
+      intel_recreate_static_regions(intel);
 
    intel->batch = intel_batchbuffer_alloc(intel);
    intel->last_swap_fence = NULL;
@@ -633,7 +634,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
       /* XXX FBO temporary fix-ups! */
       /* if the renderbuffers don't have regions, init them from the context */
-      {
+      if (!driContextPriv->driScreenPriv->dri2.enabled) {
          struct intel_renderbuffer *irbDepth
             = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
          struct intel_renderbuffer *irbStencil
@@ -709,6 +710,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
    drmI830Sarea *sarea = intel->sarea;
+   int drawable_changed = 0;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
 
@@ -720,8 +722,12 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * NOTE: This releases and regains the hw lock, so all state
     * checking must be done *after* this call:
     */
-   if (dPriv)
-      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+   if (dPriv) {
+      if (sPriv->dri2.enabled)
+	 drawable_changed = __driParseEvents(sPriv, dPriv);
+      else
+	 DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+   }
 
    /* If the last consumer of the texture memory wasn't us, notify the fake
     * bufmgr and record the new owner.  We should have the memory shared
@@ -735,42 +741,47 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 	 intel_decode_context_reset();
    }
 
-   if (sarea->width != intel->width ||
-       sarea->height != intel->height) {
-      int numClipRects = intel->numClipRects;
+   if (!sPriv->dri2.enabled) {
+      if (sarea->width != intel->width ||
+	  sarea->height != intel->height) {
+	 int numClipRects = intel->numClipRects;
 
-      /*
-       * FIXME: Really only need to do this when drawing to a
-       * common back- or front buffer.
+	 /*
+	  * FIXME: Really only need to do this when drawing to a
+	  * common back- or front buffer.
+	  */
+
+	 /*
+	  * This will essentially drop the outstanding batchbuffer on the floor.
+	  */
+	 intel->numClipRects = 0;
+
+	 if (intel->Fallback)
+	    _swrast_flush(&intel->ctx);
+
+	 INTEL_FIREVERTICES(intel);
+
+	 if (intel->batch->map != intel->batch->ptr)
+	    intel_batchbuffer_flush(intel->batch);
+
+	 intel->numClipRects = numClipRects;
+
+	 /* force window update */
+	 intel->lastStamp = 0;
+
+	 intel->width = sarea->width;
+	 intel->height = sarea->height;
+      }
+
+      /* Drawable changed?
        */
-
-      /*
-       * This will essentially drop the outstanding batchbuffer on the floor.
-       */
-      intel->numClipRects = 0;
-
-      if (intel->Fallback)
-	 _swrast_flush(&intel->ctx);
-
-      INTEL_FIREVERTICES(intel);
-
-      if (intel->batch->map != intel->batch->ptr)
-	 intel_batchbuffer_flush(intel->batch);
-
-      intel->numClipRects = numClipRects;
-
-      /* force window update */
-      intel->lastStamp = 0;
-
-      intel->width = sarea->width;
-      intel->height = sarea->height;
-   }
-
-   /* Drawable changed?
-    */
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved(intel);
-      intel->lastStamp = dPriv->lastStamp;
+      if (dPriv && intel->lastStamp != dPriv->lastStamp) {
+	 intelWindowMoved(intel);
+	 intel->lastStamp = dPriv->lastStamp;
+      }
+   } else if (drawable_changed) {
+     intelWindowMoved(intel);                                                 
+     intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
    }
 }
 

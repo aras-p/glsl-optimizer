@@ -76,25 +76,55 @@ intel_region_unmap(struct intel_context *intel, struct intel_region *region)
    }
 }
 
-struct intel_region *
-intel_region_alloc(struct intel_context *intel,
-                   GLuint cpp, GLuint pitch, GLuint height)
+static struct intel_region *
+intel_region_alloc_internal(struct intel_context *intel,
+			    GLuint cpp, GLuint pitch, GLuint height,
+			    GLuint tiled, dri_bo *buffer)
 {
-   struct intel_region *region = calloc(sizeof(*region), 1);
+   struct intel_region *region;
 
    DBG("%s\n", __FUNCTION__);
 
+   if (buffer == NULL)
+      return NULL;
+
+   region = calloc(sizeof(*region), 1);
    region->cpp = cpp;
    region->pitch = pitch;
    region->height = height;     /* needed? */
    region->refcount = 1;
+   region->tiled = tiled;
+   region->buffer = buffer;
 
-   region->buffer = dri_bo_alloc(intel->bufmgr, "region",
-				 pitch * cpp * height, 64,
-				 DRM_BO_FLAG_MEM_LOCAL |
-				 DRM_BO_FLAG_CACHED |
-				 DRM_BO_FLAG_CACHED_MAPPED);
    return region;
+}
+
+struct intel_region *
+intel_region_alloc(struct intel_context *intel,
+                   GLuint cpp, GLuint pitch, GLuint height)
+{
+   dri_bo *buffer;
+
+   buffer = dri_bo_alloc(intel->bufmgr, "region",
+			 pitch * cpp * height, 64,
+			 DRM_BO_FLAG_MEM_LOCAL |
+			 DRM_BO_FLAG_CACHED |
+			 DRM_BO_FLAG_CACHED_MAPPED);
+
+   return intel_region_alloc_internal(intel, cpp, pitch, height, 0, buffer);
+}
+
+struct intel_region *
+intel_region_alloc_for_handle(struct intel_context *intel,
+			      GLuint cpp, GLuint pitch, GLuint height,
+			      GLuint tiled, GLuint handle)
+{
+   dri_bo *buffer;
+
+   buffer = intel_ttm_bo_create_from_handle(intel->bufmgr, "region", handle);
+
+   return intel_region_alloc_internal(intel,
+				      cpp, pitch, height, tiled, buffer);
 }
 
 void
