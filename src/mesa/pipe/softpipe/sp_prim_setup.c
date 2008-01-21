@@ -1341,8 +1341,8 @@ void sp_vbuf_render( struct pipe_context *pipe,
       break;
 
    case PIPE_PRIM_POINTS:
-      for (i = 0; i < nr_elements; i += 2) {
-         prim.v[i] = (struct vertex_header *)((char *)vertex_buffer + 
+      for (i = 0; i < nr_elements; i++) {
+         prim.v[0] = (struct vertex_header *)((char *)vertex_buffer + 
                                               elements[i] * vertex_size);         
          setup->stage.point( &setup->stage, &prim );
       }
