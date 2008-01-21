@@ -373,7 +373,7 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    if (mask) {
       if (tile_status[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
-         clear_c_tile(ctile);
+         clear_c_tile(&ctile);
       }
       else {
          /* make sure we've got the tile from main mem */
@@ -382,13 +382,13 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
       tile_status[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
 
       if (mask & MASK_TOP_LEFT)
-         ctile[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
+         ctile.t32[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
       if (mask & MASK_TOP_RIGHT)
-         ctile[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
+         ctile.t32[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
       if (mask & MASK_BOTTOM_LEFT)
-         ctile[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
+         ctile.t32[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
       if (mask & MASK_BOTTOM_RIGHT)
-         ctile[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+         ctile.t32[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
    }
 #endif
 }

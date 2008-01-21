@@ -45,7 +45,7 @@ typedef union {
 } tile_t;
 
 
-extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+extern tile_t ctile ALIGN16_ATTRIB;
 extern tile_t ztile ALIGN16_ATTRIB;
 
 
@@ -58,17 +58,19 @@ extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_AT
 
 
 void
-get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf);
+get_tile(uint tx, uint ty, tile_t *tile, int tag, int zBuf);
 
 void
-put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf);
+put_tile(uint tx, uint ty, const tile_t *tile, int tag, int zBuf);
 
 
 
 static INLINE void
-clear_c_tile(uint tile[TILE_SIZE][TILE_SIZE])
+clear_c_tile(tile_t *ctile)
 {
-   memset32((uint*) tile, spu.fb.color_clear_value, TILE_SIZE * TILE_SIZE);
+   memset32((uint*) ctile->t32,
+            spu.fb.color_clear_value,
+            TILE_SIZE * TILE_SIZE);
 }
 
 

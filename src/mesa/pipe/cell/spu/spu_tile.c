@@ -31,7 +31,7 @@
 
 
 
-uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
+tile_t ctile ALIGN16_ATTRIB;
 tile_t ztile ALIGN16_ATTRIB;
 
 ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
@@ -40,7 +40,7 @@ ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
 
 void
-get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf)
+get_tile(uint tx, uint ty, tile_t *tile, int tag, int zBuf)
 {
    const uint offset = ty * spu.fb.width_tiles + tx;
    const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? spu.fb.zsize : 4);
@@ -55,7 +55,7 @@ get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf)
    printf("get_tile:  dest: %p  src: 0x%x  size: %d\n",
           tile, (unsigned int) src, bytesPerTile);
    */
-   mfc_get(tile,  /* dest in local memory */
+   mfc_get(tile->t32,  /* dest in local memory */
            (unsigned int) src, /* src in main memory */
            bytesPerTile,
            tag,
@@ -65,7 +65,7 @@ get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf)
 
 
 void
-put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
+put_tile(uint tx, uint ty, const tile_t *tile, int tag, int zBuf)
 {
    const uint offset = ty * spu.fb.width_tiles + tx;
    const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? spu.fb.zsize : 4);
@@ -81,7 +81,7 @@ put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
           spu.init.id,
           tile, (unsigned int) dst, bytesPerTile);
    */
-   mfc_put((void *) tile,  /* src in local memory */
+   mfc_put((void *) tile->t32,  /* src in local memory */
            (unsigned int) dst,  /* dst in main memory */
            bytesPerTile,
            tag,

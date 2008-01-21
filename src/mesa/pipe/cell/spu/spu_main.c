@@ -81,13 +81,13 @@ really_clear_tiles(uint surfaceIndex)
    uint i;
 
    if (surfaceIndex == 0) {
-      clear_c_tile(ctile);
+      clear_c_tile(&ctile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
          uint ty = i / spu.fb.width_tiles;
          if (tile_status[ty][tx] == TILE_STATUS_CLEAR) {
-            put_tile(tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
+            put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 0);
          }
       }
    }
@@ -98,7 +98,7 @@ really_clear_tiles(uint surfaceIndex)
          uint tx = i % spu.fb.width_tiles;
          uint ty = i / spu.fb.width_tiles;
          if (tile_status_z[ty][tx] == TILE_STATUS_CLEAR)
-            put_tile(tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 1);
+            put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 1);
       }
    }
 
@@ -134,7 +134,7 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
    if (clear->surface == 0) {
       spu.fb.color_clear_value = clear->value;
-      clear_c_tile(ctile);
+      clear_c_tile(&ctile);
    }
    else {
       spu.fb.depth_clear_value = clear->value;
@@ -150,9 +150,9 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
       uint tx = i % spu.fb.width_tiles;
       uint ty = i / spu.fb.width_tiles;
       if (clear->surface == 0)
-         put_tile(tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
+         put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 0);
       else
-         put_tile(tx, ty, (uint *) ztile.t32, TAG_SURFACE_CLEAR, 1);
+         put_tile(tx, ty, &ztile, TAG_SURFACE_CLEAR, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
    }
 
@@ -293,12 +293,12 @@ cmd_render(const struct cell_command_render *render)
        */
       if (spu.depth_stencil.depth.enabled) {
          if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
-            get_tile(tx, ty, (uint *) ztile.t32, TAG_READ_TILE_Z, 1);
+            get_tile(tx, ty, &ztile, TAG_READ_TILE_Z, 1);
          }
       }
 
       if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
-         get_tile(tx, ty, (uint *) ctile, TAG_READ_TILE_COLOR, 0);
+         get_tile(tx, ty, &ctile, TAG_READ_TILE_COLOR, 0);
       }
 
       ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
@@ -316,12 +316,12 @@ cmd_render(const struct cell_command_render *render)
 
       /* write color/z tiles back to main framebuffer, if dirtied */
       if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
-         put_tile(tx, ty, (uint *) ctile, TAG_WRITE_TILE_COLOR, 0);
+         put_tile(tx, ty, &ctile, TAG_WRITE_TILE_COLOR, 0);
          tile_status[ty][tx] = TILE_STATUS_DEFINED;
       }
       if (spu.depth_stencil.depth.enabled) {
          if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
-            put_tile(tx, ty, (uint *) ztile.t32, TAG_WRITE_TILE_Z, 1);
+            put_tile(tx, ty, &ztile, TAG_WRITE_TILE_Z, 1);
             tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
          }
       }
