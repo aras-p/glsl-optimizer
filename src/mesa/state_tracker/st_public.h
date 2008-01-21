@@ -81,5 +81,6 @@ void st_make_current(struct st_context *st,
 void st_flush( struct st_context *st, uint pipeFlushFlags );
 
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
+void st_notify_swapbuffers_complete(struct st_framebuffer *stfb);
 
 #endif
