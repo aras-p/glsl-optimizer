@@ -46,7 +46,8 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "p_compiler.h"
+
+#include "pipe/p_compiler.h"
 
 #include "pipe/p_state.h"
 
