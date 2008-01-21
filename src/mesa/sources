@@ -165,6 +165,7 @@ DRAW_SOURCES = \
 	pipe/draw/draw_flatshade.c \
 	pipe/draw/draw_offset.c \
 	pipe/draw/draw_prim.c \
+	pipe/draw/draw_stipple.c \
 	pipe/draw/draw_twoside.c \
 	pipe/draw/draw_unfilled.c \
 	pipe/draw/draw_validate.c \

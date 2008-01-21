@@ -49,6 +49,7 @@ struct draw_context *draw_create( void )
 
    /* create pipeline stages */
    draw->pipeline.wide      = draw_wide_stage( draw );
+   draw->pipeline.stipple   = draw_stipple_stage( draw );
    draw->pipeline.unfilled  = draw_unfilled_stage( draw );
    draw->pipeline.twoside   = draw_twoside_stage( draw );
    draw->pipeline.offset    = draw_offset_stage( draw );
@@ -93,6 +94,7 @@ struct draw_context *draw_create( void )
 void draw_destroy( struct draw_context *draw )
 {
    draw->pipeline.wide->destroy( draw->pipeline.wide );
+   draw->pipeline.stipple->destroy( draw->pipeline.stipple );
    draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
    draw->pipeline.twoside->destroy( draw->pipeline.twoside );
    draw->pipeline.offset->destroy( draw->pipeline.offset );

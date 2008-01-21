@@ -158,6 +158,7 @@ struct draw_context
       struct draw_stage *twoside;
       struct draw_stage *offset;
       struct draw_stage *unfilled;
+      struct draw_stage *stipple;
       struct draw_stage *wide;
       struct draw_stage *rasterize;
    } pipeline;
@@ -248,6 +249,7 @@ extern struct draw_stage *draw_offset_stage( struct draw_context *context );
 extern struct draw_stage *draw_clip_stage( struct draw_context *context );
 extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
 extern struct draw_stage *draw_cull_stage( struct draw_context *context );
+extern struct draw_stage *draw_stipple_stage( struct draw_context *context );
 extern struct draw_stage *draw_wide_stage( struct draw_context *context );
 extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 

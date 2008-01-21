@@ -58,6 +58,11 @@ static void validate_begin( struct draw_stage *stage )
       next = draw->pipeline.wide;
    }
 
+   if (draw->rasterizer->line_stipple_enable) {
+      draw->pipeline.stipple->next = next;
+      next = draw->pipeline.stipple;
+   }
+
    if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
        draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;
