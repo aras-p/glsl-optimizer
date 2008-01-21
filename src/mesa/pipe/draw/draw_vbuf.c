@@ -139,37 +139,38 @@ emit_vertex( struct vbuf_stage *vbuf,
    vertex->vertex_id = vbuf->nr_vertices++;
 
    for (i = 0; i < vinfo->num_attribs; i++) {
+      uint j = vinfo->src_index[i];
       switch (vinfo->format[i]) {
       case FORMAT_OMIT:
          /* no-op */
          break;
       case FORMAT_1F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          count++;
          break;
       case FORMAT_2F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][1]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
          count += 2;
          break;
       case FORMAT_3F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][1]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][2]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
          count += 3;
          break;
       case FORMAT_4F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][1]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][2]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[i][3]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[j][3]);
          count += 4;
          break;
       case FORMAT_4UB:
-	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[i][2] ),
-                                        float_to_ubyte( vertex->data[i][1] ),
-                                        float_to_ubyte( vertex->data[i][0] ),
-                                        float_to_ubyte( vertex->data[i][3] ));
+	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
+                                        float_to_ubyte( vertex->data[j][1] ),
+                                        float_to_ubyte( vertex->data[j][0] ),
+                                        float_to_ubyte( vertex->data[j][3] ));
          count += 1;
          break;
       default:

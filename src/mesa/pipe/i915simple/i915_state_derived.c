@@ -50,12 +50,13 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    boolean needW = 0;
    uint i;
    boolean texCoords[8];
+   uint src = 0;
 
    memset(texCoords, 0, sizeof(texCoords));
    memset(&vinfo, 0, sizeof(vinfo));
 
    /* pos */
-   draw_emit_vertex_attr(&vinfo, FORMAT_3F, INTERP_LINEAR);
+   draw_emit_vertex_attr(&vinfo, FORMAT_3F, INTERP_LINEAR, src++);
    /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
 
    for (i = 0; i < fs->num_inputs; i++) {
@@ -64,12 +65,12 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          break;
       case TGSI_SEMANTIC_COLOR:
          if (fs->input_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(&vinfo, FORMAT_4UB, colorInterp);
+            front0 = draw_emit_vertex_attr(&vinfo, FORMAT_4UB, colorInterp, src++);
             vinfo.hwfmt[0] |= S4_VFMT_COLOR;
          }
          else {
             assert(fs->input_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(&vinfo, FORMAT_4UB, colorInterp);
+            front1 = draw_emit_vertex_attr(&vinfo, FORMAT_4UB, colorInterp, src++);
             vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
          }
          break;
@@ -79,7 +80,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
             const uint unit = fs->input_semantic_index[i];
             uint hwtc;
             texCoords[unit] = TRUE;
-            draw_emit_vertex_attr(&vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
+            draw_emit_vertex_attr(&vinfo, FORMAT_4F, INTERP_PERSPECTIVE, src++);
             hwtc = TEXCOORDFMT_4D;
             needW = TRUE;
             vinfo.hwfmt[1] |= hwtc << (unit * 4);
@@ -87,7 +88,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          break;
       case TGSI_SEMANTIC_FOG:
          fprintf(stderr, "i915 fogcoord not implemented yet\n");
-         draw_emit_vertex_attr(&vinfo, FORMAT_1F, INTERP_PERSPECTIVE);
+         draw_emit_vertex_attr(&vinfo, FORMAT_1F, INTERP_PERSPECTIVE, src++);
          break;
       default:
          assert(0);
@@ -119,10 +120,10 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    if (i915->rasterizer->light_twoside) {
       if (front0) {
-         back0 = draw_emit_vertex_attr(&vinfo, FORMAT_OMIT, colorInterp);
+         back0 = draw_emit_vertex_attr(&vinfo, FORMAT_OMIT, colorInterp, src++);
       }
       if (back0) {
-         back1 = draw_emit_vertex_attr(&vinfo, FORMAT_OMIT, colorInterp);
+         back1 = draw_emit_vertex_attr(&vinfo, FORMAT_OMIT, colorInterp, src++);
       }
    }
 
