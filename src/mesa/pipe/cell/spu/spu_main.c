@@ -78,12 +78,10 @@ static void
 really_clear_tiles(uint surfaceIndex)
 {
    const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   uint i, j;
+   uint i;
 
    if (surfaceIndex == 0) {
-      for (i = 0; i < TILE_SIZE; i++)
-         for (j = 0; j < TILE_SIZE; j++)
-            ctile[i][j] = spu.fb.color_clear_value; /*0xff00ff;*/
+      clear_c_tile(ctile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
@@ -94,9 +92,7 @@ really_clear_tiles(uint surfaceIndex)
       }
    }
    else {
-      for (i = 0; i < TILE_SIZE; i++)
-         for (j = 0; j < TILE_SIZE; j++)
-            ztile[i][j] = spu.fb.depth_clear_value;
+      clear_z_tile(&ztile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
@@ -116,7 +112,7 @@ static void
 cmd_clear_surface(const struct cell_command_clear_surface *clear)
 {
    const uint num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   uint i, j;
+   uint i;
 
    if (Debug)
       printf("SPU %u: CLEAR SURF %u to 0x%08x\n", spu.init.id,
@@ -137,14 +133,12 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 #endif
 
    if (clear->surface == 0) {
-      for (i = 0; i < TILE_SIZE; i++)
-         for (j = 0; j < TILE_SIZE; j++)
-            ctile[i][j] = clear->value;
+      spu.fb.color_clear_value = clear->value;
+      clear_c_tile(ctile);
    }
    else {
-      for (i = 0; i < TILE_SIZE; i++)
-         for (j = 0; j < TILE_SIZE; j++)
-            ztile[i][j] = clear->value;
+      spu.fb.depth_clear_value = clear->value;
+      clear_z_tile(&ztile);
    }
 
    /*
@@ -158,7 +152,7 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
       if (clear->surface == 0)
          put_tile(tx, ty, (uint *) ctile, TAG_SURFACE_CLEAR, 0);
       else
-         put_tile(tx, ty, (uint *) ztile, TAG_SURFACE_CLEAR, 1);
+         put_tile(tx, ty, (uint *) ztile.t32, TAG_SURFACE_CLEAR, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
    }
 
@@ -299,7 +293,7 @@ cmd_render(const struct cell_command_render *render)
        */
       if (spu.depth_stencil.depth.enabled) {
          if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
-            get_tile(tx, ty, (uint *) ztile, TAG_READ_TILE_Z, 1);
+            get_tile(tx, ty, (uint *) ztile.t32, TAG_READ_TILE_Z, 1);
          }
       }
 
@@ -327,7 +321,7 @@ cmd_render(const struct cell_command_render *render)
       }
       if (spu.depth_stencil.depth.enabled) {
          if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
-            put_tile(tx, ty, (uint *) ztile, TAG_WRITE_TILE_Z, 1);
+            put_tile(tx, ty, (uint *) ztile.t32, TAG_WRITE_TILE_Z, 1);
             tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
          }
       }
@@ -366,13 +360,12 @@ cmd_framebuffer(const struct cell_command_framebuffer *cmd)
    spu.fb.width_tiles = (spu.fb.width + TILE_SIZE - 1) / TILE_SIZE;
    spu.fb.height_tiles = (spu.fb.height + TILE_SIZE - 1) / TILE_SIZE;
 
-   if (cmd->depth_format == PIPE_FORMAT_Z16_UNORM) {
-      ASSERT(ZSIZE == 2);
-   }
-   else if (cmd->depth_format == PIPE_FORMAT_Z32_UNORM) {
-      ASSERT(ZSIZE == 4);
-   }
-
+   if (spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM)
+      spu.fb.zsize = 4;
+   else if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM)
+      spu.fb.zsize = 2;
+   else
+      spu.fb.zsize = 0;
 }
 
 

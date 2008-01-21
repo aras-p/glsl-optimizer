@@ -258,22 +258,12 @@ do_depth_test(struct setup_stage *setup, int x, int y, unsigned mask)
    int ix = x - setup->cliprect_minx;
    int iy = y - setup->cliprect_miny;
    float zvals[4];
-   float zscale = 65535.0;
-
-   if (ZSIZE == 2) {
-      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM);
-   }
-   else {
-      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
-   }
-   ASSERT(sizeof(ztile[0][0]) == ZSIZE);
-
 
    eval_z(setup, (float) x, (float) y, zvals);
 
    if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
       /* now, _really_ clear the tile */
-      clear_tile_z(ztile, spu.fb.depth_clear_value);
+      clear_z_tile(&ztile);
    }
    else {
       /* make sure we've got the tile from main mem */
@@ -282,36 +272,74 @@ do_depth_test(struct setup_stage *setup, int x, int y, unsigned mask)
    tile_status_z[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
 
 
-   if (mask & MASK_TOP_LEFT) {
-      uint z = (uint) (zvals[0] * zscale);
-      if (z < ztile[iy][ix])
-         ztile[iy][ix] = z;
-      else
-         mask &= ~MASK_TOP_LEFT;
-   }
+   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      const float zscale = 65535.0;
+      if (mask & MASK_TOP_LEFT) {
+         uint z = (uint) (zvals[0] * zscale);
+         if (z < ztile.t16[iy][ix])
+            ztile.t16[iy][ix] = z;
+         else
+            mask &= ~MASK_TOP_LEFT;
+      }
 
-   if (mask & MASK_TOP_RIGHT) {
-      uint z = (uint) (zvals[1] * zscale);
-      if (z < ztile[iy][ix+1])
-         ztile[iy][ix+1] = z;
-      else
-         mask &= ~MASK_TOP_RIGHT;
-   }
+      if (mask & MASK_TOP_RIGHT) {
+         uint z = (uint) (zvals[1] * zscale);
+         if (z < ztile.t16[iy][ix+1])
+            ztile.t16[iy][ix+1] = z;
+         else
+            mask &= ~MASK_TOP_RIGHT;
+      }
 
-   if (mask & MASK_BOTTOM_LEFT) {
-      uint z = (uint) (zvals[2] * zscale);
-      if (z < ztile[iy+1][ix])
-         ztile[iy+1][ix] = z;
-      else
-         mask &= ~MASK_BOTTOM_LEFT;
-   }
+      if (mask & MASK_BOTTOM_LEFT) {
+         uint z = (uint) (zvals[2] * zscale);
+         if (z < ztile.t16[iy+1][ix])
+            ztile.t16[iy+1][ix] = z;
+         else
+            mask &= ~MASK_BOTTOM_LEFT;
+      }
 
-   if (mask & MASK_BOTTOM_RIGHT) {
-      uint z = (uint) (zvals[3] * zscale);
-      if (z < ztile[iy+1][ix+1])
-         ztile[iy+1][ix+1] = z;
-      else
-         mask &= ~MASK_BOTTOM_RIGHT;
+      if (mask & MASK_BOTTOM_RIGHT) {
+         uint z = (uint) (zvals[3] * zscale);
+         if (z < ztile.t16[iy+1][ix+1])
+            ztile.t16[iy+1][ix+1] = z;
+         else
+            mask &= ~MASK_BOTTOM_RIGHT;
+      }
+   }
+   else {
+      const float zscale = (float) 0xffffffff;
+      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
+      if (mask & MASK_TOP_LEFT) {
+         uint z = (uint) (zvals[0] * zscale);
+         if (z < ztile.t32[iy][ix])
+            ztile.t32[iy][ix] = z;
+         else
+            mask &= ~MASK_TOP_LEFT;
+      }
+
+      if (mask & MASK_TOP_RIGHT) {
+         uint z = (uint) (zvals[1] * zscale);
+         if (z < ztile.t32[iy][ix+1])
+            ztile.t32[iy][ix+1] = z;
+         else
+            mask &= ~MASK_TOP_RIGHT;
+      }
+
+      if (mask & MASK_BOTTOM_LEFT) {
+         uint z = (uint) (zvals[2] * zscale);
+         if (z < ztile.t32[iy+1][ix])
+            ztile.t32[iy+1][ix] = z;
+         else
+            mask &= ~MASK_BOTTOM_LEFT;
+      }
+
+      if (mask & MASK_BOTTOM_RIGHT) {
+         uint z = (uint) (zvals[3] * zscale);
+         if (z < ztile.t32[iy+1][ix+1])
+            ztile.t32[iy+1][ix+1] = z;
+         else
+            mask &= ~MASK_BOTTOM_RIGHT;
+      }
    }
 
    return mask;
@@ -345,7 +373,7 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    if (mask) {
       if (tile_status[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
-         clear_tile(ctile, spu.fb.color_clear_value);
+         clear_c_tile(ctile);
       }
       else {
          /* make sure we've got the tile from main mem */

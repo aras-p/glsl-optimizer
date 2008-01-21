@@ -32,11 +32,7 @@
 
 
 uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-#if ZSIZE == 2
-ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-#else
-uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-#endif
+tile_t ztile ALIGN16_ATTRIB;
 
 ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
@@ -47,7 +43,7 @@ void
 get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf)
 {
    const uint offset = ty * spu.fb.width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? ZSIZE : 4);
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? spu.fb.zsize : 4);
    const ubyte *src = zBuf ? spu.fb.depth_start : spu.fb.color_start;
 
    src += offset * bytesPerTile;
@@ -72,7 +68,7 @@ void
 put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
 {
    const uint offset = ty * spu.fb.width_tiles + tx;
-   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? ZSIZE : 4);
+   const uint bytesPerTile = TILE_SIZE * TILE_SIZE * (zBuf ? spu.fb.zsize : 4);
    ubyte *dst = zBuf ? spu.fb.depth_start : spu.fb.color_start;
 
    dst += offset * bytesPerTile;
@@ -91,34 +87,5 @@ put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf)
            tag,
            0, /* tid */
            0  /* rid */);
-}
-
-
-void
-clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value)
-{
-   uint i, j;
-   for (i = 0; i < TILE_SIZE; i++) {
-      for (j = 0; j < TILE_SIZE; j++) {
-         tile[i][j] = value;
-      }
-   }
-}
-
-void
-clear_tile_z(
-#if ZSIZE == 2
-             ushort tile[TILE_SIZE][TILE_SIZE],
-#else
-             uint tile[TILE_SIZE][TILE_SIZE],
-#endif
-             uint value)
-{
-   uint i, j;
-   for (i = 0; i < TILE_SIZE; i++) {
-      for (j = 0; j < TILE_SIZE; j++) {
-         tile[i][j] = value;
-      }
-   }
 }
 

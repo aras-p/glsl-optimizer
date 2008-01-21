@@ -39,12 +39,14 @@
 #define MAX_HEIGHT 1024
 
 
+typedef union {
+   ushort t16[TILE_SIZE][TILE_SIZE];
+   uint   t32[TILE_SIZE][TILE_SIZE];
+} tile_t;
+
+
 extern uint ctile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-#if ZSIZE == 2
-extern ushort ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-#else
-extern uint ztile[TILE_SIZE][TILE_SIZE] ALIGN16_ATTRIB;
-#endif
+extern tile_t ztile ALIGN16_ATTRIB;
 
 
 #define TILE_STATUS_CLEAR   1
@@ -61,17 +63,29 @@ get_tile(uint tx, uint ty, uint *tile, int tag, int zBuf);
 void
 put_tile(uint tx, uint ty, const uint *tile, int tag, int zBuf);
 
-void
-clear_tile(uint tile[TILE_SIZE][TILE_SIZE], uint value);
 
-void
-clear_tile_z(
-#if ZSIZE == 2
-             ushort tile[TILE_SIZE][TILE_SIZE],
-#else
-             uint tile[TILE_SIZE][TILE_SIZE],
-#endif
-             uint value);
+
+static INLINE void
+clear_c_tile(uint tile[TILE_SIZE][TILE_SIZE])
+{
+   memset32((uint*) tile, spu.fb.color_clear_value, TILE_SIZE * TILE_SIZE);
+}
+
+
+static INLINE void
+clear_z_tile(tile_t *ztile)
+{
+   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+      memset16((ushort*) ztile->t16,
+               spu.fb.depth_clear_value,
+               TILE_SIZE * TILE_SIZE);
+   }
+   else {
+      memset32((uint*) ztile->t32,
+               spu.fb.depth_clear_value,
+               TILE_SIZE * TILE_SIZE);
+   }
+}
 
 
 #endif /* SPU_TILE_H */

@@ -32,8 +32,6 @@
 #include "pipe/cell/common.h"
 #include "pipe/p_state.h"
 
-/** XXX temp bytes/z value */
-#define ZSIZE 2
 
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
@@ -45,6 +43,8 @@ struct spu_framebuffer {
 
    uint color_clear_value;
    uint depth_clear_value;
+
+   uint zsize;                     /**< 0, 2 or 4 bytes per Z */
 } ALIGN16_ATTRIB;
 
 
@@ -90,8 +90,26 @@ extern struct spu_global spu;
    }
 
 
-void
+extern void
 wait_on_mask(unsigned tag);
+
+
+static INLINE void
+memset16(ushort *d, ushort value, uint count)
+{
+   uint i;
+   for (i = 0; i < count; i++)
+      d[i] = value;
+}
+
+
+static INLINE void
+memset32(uint *d, uint value, uint count)
+{
+   uint i;
+   for (i = 0; i < count; i++)
+      d[i] = value;
+}
 
 
 #endif /* SPU_MAIN_H */
