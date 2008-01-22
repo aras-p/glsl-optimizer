@@ -46,6 +46,7 @@
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
+#include "cell_texture.h"
 #include "cell_vbuf.h"
 
 
@@ -225,14 +226,17 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.clear = cell_clear_surface;
    cell->pipe.flush = cell_flush;
 
+   /* textures */
+   cell->pipe.texture_create = cell_texture_create;
+   cell->pipe.texture_release = cell_texture_release;
+   cell->pipe.get_tex_surface = cell_get_tex_surface;
+
+   cell->pipe.set_sampler_texture = cell_set_sampler_texture;
+
 #if 0
    cell->pipe.begin_query = cell_begin_query;
    cell->pipe.end_query = cell_end_query;
    cell->pipe.wait_query = cell_wait_query;
-
-   /* textures */
-   cell->pipe.mipmap_tree_layout = cell_mipmap_tree_layout;
-   cell->pipe.get_tex_surface = cell_get_tex_surface;
 #endif
 
 

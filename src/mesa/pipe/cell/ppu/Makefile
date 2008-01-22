@@ -31,6 +31,7 @@ SOURCES = \
 	cell_state_vertex.c \
 	cell_spu.c \
 	cell_surface.c \
+	cell_texture.c \
 	cell_vbuf.c \
 	cell_winsys.c
 
