@@ -485,14 +485,14 @@ emit_DrawArrays_none( GLenum mode, GLint first, GLsizei count )
 
     for ( i = 0 ; i < count ; i++ ) {
 	if ( (pc + single_vertex_size) >= gc->bufEnd ) {
-	    pc = __glXFlushRenderBuffer(gc, gc->pc);
+	    pc = __glXFlushRenderBuffer(gc, pc);
 	}
 
 	pc = emit_element_none( pc, arrays, first + i );
     }
 
     if ( (pc + 4) >= gc->bufEnd ) {
-	pc = __glXFlushRenderBuffer(gc, gc->pc);
+	pc = __glXFlushRenderBuffer(gc, pc);
     }
 
     (void) memcpy( pc, end_cmd, 4 );
@@ -726,7 +726,7 @@ emit_DrawElements_none( GLenum mode, GLsizei count, GLenum type,
 	unsigned  index = 0;
 
 	if ( (pc + single_vertex_size) >= gc->bufEnd ) {
-	    pc = __glXFlushRenderBuffer(gc, gc->pc);
+	    pc = __glXFlushRenderBuffer(gc, pc);
 	}
 
 	switch( type ) {
@@ -744,7 +744,7 @@ emit_DrawElements_none( GLenum mode, GLsizei count, GLenum type,
     }
 
     if ( (pc + 4) >= gc->bufEnd ) {
-	pc = __glXFlushRenderBuffer(gc, gc->pc);
+	pc = __glXFlushRenderBuffer(gc, pc);
     }
 
     (void) memcpy( pc, end_cmd, 4 );
