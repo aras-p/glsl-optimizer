@@ -152,8 +152,8 @@ stipple_line(struct draw_stage *stage, struct prim_header *header)
    /* XXX ToDo: intead of iterating pixel-by-pixel, use a look-up table.
     */
    for (i = 0; i < length; i++) {
-      int result = stipple_test( stipple->counter+i,
-                                 stipple->pattern, stipple->factor );
+      int result = stipple_test( (int) stipple->counter+i,
+                                 (ushort) stipple->pattern, stipple->factor );
       if (result != state) {
          /* changing from "off" to "on" or vice versa */
 	 if (state) {
@@ -164,7 +164,7 @@ stipple_line(struct draw_stage *stage, struct prim_header *header)
 	 }
 	 else {
             /* starting an "on" segment */
-	    start = i;
+	    start = (float) i;
 	 }
 	 state = result;	   
       }
@@ -220,6 +220,13 @@ passthrough_tri(struct draw_stage *stage, struct prim_header *header)
 }
 
 
+static void 
+stipple_destroy( struct draw_stage *stage )
+{
+   FREE( stage );
+}
+
+
 /**
  * Create line stippler stage
  */
@@ -237,6 +244,7 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
    stipple->stage.tri = passthrough_tri;
    stipple->stage.reset_stipple_counter = reset_stipple_counter;
    stipple->stage.end = stipple_end;
+   stipple->stage.destroy = stipple_destroy;
 
    return &stipple->stage;
 }
