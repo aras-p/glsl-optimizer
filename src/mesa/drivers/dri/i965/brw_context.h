@@ -372,12 +372,8 @@ struct brw_cached_batch_item {
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
 
-   struct brw_vertex_element_state *vep;
-
-   GLuint index;
    GLuint element_size;
    GLuint count;
-   GLuint vbo_rebase_offset;
 };
 
 

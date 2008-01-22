@@ -423,7 +423,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
       tmp &= ~(1<<i);
       enabled[nr_enabled++] = input;
 
-      input->index = i;
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
       input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 
