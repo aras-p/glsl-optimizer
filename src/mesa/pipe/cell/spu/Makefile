@@ -22,11 +22,16 @@ SOURCES = \
 
 SPU_OBJECTS = $(SOURCES:.c=.o) \
 
+SPU_ASM_OUT = $(SOURCES:.c=.s) \
+
 INCLUDE_DIRS = -I$(TOP)/src/mesa
 
 
 .c.o:
 	$(SPU_CC) $(SPU_CFLAGS) -c $<
+
+.c.s:
+	$(SPU_CC) $(SPU_CFLAGS) -S $<
 
 
 # The .a file will be linked into the main/PPU executable
@@ -43,8 +48,11 @@ $(PROG_SPU): $(SPU_OBJECTS)
 
 
 
+asmfiles: $(SPU_ASM_OUT)
+
+
 clean:
-	rm -f *~ *.o *.a *.d $(PROG_SPU)
+	rm -f *~ *.o *.a *.d *.s $(PROG_SPU)
 
 
 
