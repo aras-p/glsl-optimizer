@@ -240,7 +240,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.wait_query = cell_wait_query;
 #endif
 
-   cell_init_surface_funcs(cell);
+   cell_init_surface_functions(cell);
 
    cell->draw = draw_create();
 
