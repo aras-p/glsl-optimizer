@@ -110,10 +110,11 @@ check_space( struct vbuf_stage *vbuf, unsigned nr )
 
 
 /**
- * Extract the needed fields from vertex_header and emit i915 dwords.
+ * Extract the needed fields from post-transformed vertex and emit
+ * a hardware(driver) vertex.
  * Recall that the vertices are constructed by the 'draw' module and
  * have a couple of slots at the beginning (1-dword header, 4-dword
- * clip pos) that we ignore here.
+ * clip pos) that we ignore here.  We only use the vertex->data[] fields.
  */
 static INLINE void 
 emit_vertex( struct vbuf_stage *vbuf,
@@ -233,18 +234,43 @@ vbuf_point( struct draw_stage *stage,
 }
 
 
+/**
+ * Set the prim type for subsequent vertices.
+ * This may result in a new vertex size.  The existing vbuffer (if any)
+ * will be flushed if needed and a new one allocated.
+ */
+static void
+vbuf_set_prim( struct draw_stage *stage, uint newprim )
+{
+   struct vbuf_stage *vbuf = vbuf_stage(stage);
+   const struct vertex_info *vinfo;
+   unsigned vertex_size;
+
+   assert(newprim == PIPE_PRIM_POINTS ||
+          newprim == PIPE_PRIM_LINES ||
+          newprim == PIPE_PRIM_TRIANGLES);
+
+   vbuf->prim = newprim;
+   vbuf->render->set_primitive(vbuf->render, newprim);
+
+   vinfo = vbuf->render->get_vertex_info(vbuf->render);
+   vertex_size = vinfo->size * sizeof(float);
+
+   if (vertex_size != vbuf->vertex_size)
+      vbuf_flush_vertices(stage);
+
+   if (!vbuf->vertices)
+      vbuf_alloc_vertices(stage, vertex_size);
+}
+
+
 static void 
 vbuf_first_tri( struct draw_stage *stage,
                 struct prim_header *prim )
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
    vbuf_flush_indices( stage );   
-
    stage->tri = vbuf_tri;
-   vbuf->prim = PIPE_PRIM_TRIANGLES;
-   vbuf->render->set_primitive(vbuf->render, PIPE_PRIM_TRIANGLES);
-
+   vbuf_set_prim(stage, PIPE_PRIM_TRIANGLES);
    stage->tri( stage, prim );
 }
 
@@ -253,13 +279,9 @@ static void
 vbuf_first_line( struct draw_stage *stage,
                  struct prim_header *prim )
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
    vbuf_flush_indices( stage );
    stage->line = vbuf_line;
-   vbuf->prim = PIPE_PRIM_LINES;
-   vbuf->render->set_primitive(vbuf->render, PIPE_PRIM_LINES);
-
+   vbuf_set_prim(stage, PIPE_PRIM_LINES);
    stage->line( stage, prim );
 }
 
@@ -268,14 +290,9 @@ static void
 vbuf_first_point( struct draw_stage *stage,
                   struct prim_header *prim )
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
    vbuf_flush_indices( stage );
-
    stage->point = vbuf_point;
-   vbuf->prim = PIPE_PRIM_POINTS;
-   vbuf->render->set_primitive(vbuf->render, PIPE_PRIM_POINTS);
-
+   vbuf_set_prim(stage, PIPE_PRIM_POINTS);
    stage->point( stage, prim );
 }
 
@@ -367,12 +384,7 @@ vbuf_alloc_vertices( struct draw_stage *stage,
 static void 
 vbuf_begin( struct draw_stage *stage )
 {
-   struct vbuf_stage *vbuf = vbuf_stage(stage);
-   const struct vertex_info *vinfo = vbuf->render->get_vertex_info(vbuf->render);
-   unsigned vertex_size = vinfo->size * sizeof(float);
-
-   /* XXX: Overkill */
-   vbuf_alloc_vertices(&vbuf->stage, vertex_size);
+   /* no-op, vbuffer allocated by first point/line/tri */
 }
 
 
@@ -431,6 +443,8 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;
+
+   vbuf->prim = ~0;
    
    return &vbuf->stage;
 }
