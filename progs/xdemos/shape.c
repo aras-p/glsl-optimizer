@@ -34,7 +34,6 @@
 static int Width=500, Height=500;
 
 static float Xangle = 0.0, Yangle = 0.0;
-static int Redraw = 0;
 static int Sides = 5;
 static int MinSides = 3;
 static int MaxSides = 20;
