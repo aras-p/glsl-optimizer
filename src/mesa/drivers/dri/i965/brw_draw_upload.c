@@ -391,8 +391,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
    GLuint tmp = brw->vs.prog_data->inputs_read; 
-   struct brw_vertex_element_packet vep;
-   struct brw_array_state vbp;
    GLuint i;
    const void *ptr = NULL;
    GLuint interleave = 0;
@@ -402,10 +400,6 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
-   
-
-   memset(&vbp, 0, sizeof(vbp));
-   memset(&vep, 0, sizeof(vep));
 
    /* First build an array of pointers to ve's in vb.inputs_read
     */
@@ -493,66 +487,61 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    if (nr_enabled >= BRW_VEP_MAX)
 	 return GL_FALSE;
 
-   /* This still defines a hardware VB for each input, even if they
+   /* Now emit VB and VEP state packets.
+    *
+    * This still defines a hardware VB for each input, even if they
     * are interleaved or from the same VBO.  TBD if this makes a
     * performance difference.
     */
+   BEGIN_BATCH(1 + nr_enabled * 4, IGNORE_CLIPRECTS);
+   OUT_BATCH((CMD_VERTEX_BUFFER << 16) |
+	     ((1 + nr_enabled * 4) - 2));
+
    for (i = 0; i < nr_enabled; i++) {
       struct brw_vertex_element *input = enabled[i];
 
-      input->vep = &vep.ve[i];
-      input->vep->ve0.src_format = get_surface_type(input->glarray->Type, 
-						    input->glarray->Size,
-						    input->glarray->Normalized);
-      input->vep->ve0.valid = 1;
-      input->vep->ve1.dst_offset = (i) * 4;
-      input->vep->ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_SRC;
-      input->vep->ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_SRC;
-      input->vep->ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_SRC;
-      input->vep->ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_SRC;
-
-      switch (input->glarray->Size) {
-      case 0: input->vep->ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_0;
-      case 1: input->vep->ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_0;
-      case 2: input->vep->ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_0;
-      case 3: input->vep->ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_1_FLT;
-	 break;
-      }
-
-      input->vep->ve0.vertex_buffer_index = i;
-      input->vep->ve0.src_offset = 0;
-
-      vbp.vb[i].vb0.bits.pitch = input->glarray->StrideB;
-      vbp.vb[i].vb0.bits.pad = 0;
-      vbp.vb[i].vb0.bits.access_type = BRW_VERTEXBUFFER_ACCESS_VERTEXDATA;
-      vbp.vb[i].vb0.bits.vb_index = i;
-      vbp.vb[i].offset = (GLuint)input->glarray->Ptr;
-      vbp.vb[i].buffer = array_buffer(intel, input->glarray);
-      vbp.vb[i].max_index = max_index;
-   }
-
-
-
-   /* Now emit VB and VEP state packets:
-    */
-   vbp.header.bits.length = (1 + nr_enabled * 4) - 2;
-   vbp.header.bits.opcode = CMD_VERTEX_BUFFER;
-
-   BEGIN_BATCH(vbp.header.bits.length+2, IGNORE_CLIPRECTS);
-   OUT_BATCH( vbp.header.dword );
-   
-   for (i = 0; i < nr_enabled; i++) {
-      OUT_BATCH( vbp.vb[i].vb0.dword );
-      OUT_RELOC( vbp.vb[i].buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		 vbp.vb[i].offset);
-      OUT_BATCH( vbp.vb[i].max_index );
-      OUT_BATCH( vbp.vb[i].instance_data_step_rate );
+      OUT_BATCH((i << BRW_VB0_INDEX_SHIFT) |
+		BRW_VB0_ACCESS_VERTEXDATA |
+		(input->glarray->StrideB << BRW_VB0_PITCH_SHIFT));
+      OUT_RELOC(array_buffer(intel, input->glarray),
+		DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		(GLuint)input->glarray->Ptr);
+      OUT_BATCH(max_index);
+      OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
 
-   vep.header.length = (1 + nr_enabled * sizeof(vep.ve[0])/4) - 2;
-   vep.header.opcode = CMD_VERTEX_ELEMENT;
-   brw_cached_batch_struct(brw, &vep, 4 + nr_enabled * sizeof(vep.ve[0]));
+   BEGIN_BATCH(1 + nr_enabled * 2, IGNORE_CLIPRECTS);
+   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + nr_enabled * 2) - 2));
+   for (i = 0; i < nr_enabled; i++) {
+      struct brw_vertex_element *input = enabled[i];
+      uint32_t format = get_surface_type(input->glarray->Type,
+					 input->glarray->Size,
+					 input->glarray->Normalized);
+      uint32_t comp0 = BRW_VE1_COMPONENT_STORE_SRC;
+      uint32_t comp1 = BRW_VE1_COMPONENT_STORE_SRC;
+      uint32_t comp2 = BRW_VE1_COMPONENT_STORE_SRC;
+      uint32_t comp3 = BRW_VE1_COMPONENT_STORE_SRC;
+
+      switch (input->glarray->Size) {
+      case 0: comp0 = BRW_VE1_COMPONENT_STORE_0;
+      case 1: comp1 = BRW_VE1_COMPONENT_STORE_0;
+      case 2: comp2 = BRW_VE1_COMPONENT_STORE_0;
+      case 3: comp3 = BRW_VE1_COMPONENT_STORE_1_FLT;
+	 break;
+      }
+
+      OUT_BATCH((i << BRW_VE0_INDEX_SHIFT) |
+		BRW_VE0_VALID |
+		(format << BRW_VE0_FORMAT_SHIFT) |
+		(0 << BRW_VE0_SRC_OFFSET_SHIFT));
+      OUT_BATCH((comp0 << BRW_VE1_COMPONENT_0_SHIFT) |
+		(comp1 << BRW_VE1_COMPONENT_1_SHIFT) |
+		(comp2 << BRW_VE1_COMPONENT_2_SHIFT) |
+		(comp3 << BRW_VE1_COMPONENT_3_SHIFT) |
+		((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
+   }
+   ADVANCE_BATCH();
 
    return GL_TRUE;
 }
