@@ -39,12 +39,13 @@
 #include "pipe/p_winsys.h"
 #include "pipe/cell/common.h"
 #include "pipe/draw/draw_context.h"
+#include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
 #include "cell_flush.h"
 #include "cell_render.h"
 #include "cell_state.h"
-#include "cell_clear.h"
+#include "cell_surface.h"
 #include "cell_spu.h"
 #include "cell_texture.h"
 #include "cell_vbuf.h"
@@ -239,6 +240,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.wait_query = cell_wait_query;
 #endif
 
+   cell_init_surface_funcs(cell);
 
    cell->draw = draw_create();
 
