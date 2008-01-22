@@ -58,6 +58,7 @@ struct spu_global
    struct spu_framebuffer fb;
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
+   struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    /* XXX more state to come */
 
 } ALIGN16_ATTRIB;

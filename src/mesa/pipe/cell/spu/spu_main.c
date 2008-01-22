@@ -378,7 +378,17 @@ cmd_state_depth_stencil(const struct pipe_depth_stencil_alpha_state *state)
              state->depth.enabled);
 
    memcpy(&spu.depth_stencil, state, sizeof(*state));
+}
 
+
+static void
+cmd_state_sampler(const struct pipe_sampler_state *state)
+{
+   if (Debug)
+      printf("SPU %u: SAMPLER\n",
+             spu.init.id);
+
+   memcpy(&spu.sampler[0], state, sizeof(*state));
 }
 
 
@@ -500,6 +510,11 @@ cmd_batch(uint opcode)
          cmd_state_depth_stencil((struct pipe_depth_stencil_alpha_state *)
                                  &buffer[pos+1]);
          pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
+         break;
+      case CELL_CMD_STATE_SAMPLER:
+         cmd_state_sampler((struct pipe_sampler_state *)
+                           &buffer[pos+1]);
+         pos += (1 + sizeof(struct pipe_sampler_state) / 4);
          break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
