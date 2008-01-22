@@ -44,7 +44,7 @@
 #include "cell_flush.h"
 #include "cell_render.h"
 #include "cell_state.h"
-#include "cell_surface.h"
+#include "cell_clear.h"
 #include "cell_spu.h"
 #include "cell_texture.h"
 #include "cell_vbuf.h"

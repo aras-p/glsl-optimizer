@@ -17,6 +17,7 @@ SPU_CODE_MODULE = ../spu/g3d_spu.a
 
 SOURCES = \
 	cell_batch.c \
+	cell_clear.c \
 	cell_context.c \
 	cell_draw_arrays.c \
 	cell_flush.c \
@@ -30,7 +31,6 @@ SOURCES = \
 	cell_state_surface.c \
 	cell_state_vertex.c \
 	cell_spu.c \
-	cell_surface.c \
 	cell_texture.c \
 	cell_vbuf.c \
 	cell_winsys.c
