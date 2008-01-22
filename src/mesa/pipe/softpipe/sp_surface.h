@@ -36,13 +36,6 @@
 
 struct pipe_context;
 struct softpipe_context;
-struct softpipe_tile_cache;
-
-
-extern struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice);
 
 
 extern void
