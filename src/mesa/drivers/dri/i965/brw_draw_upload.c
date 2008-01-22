@@ -303,8 +303,6 @@ static void get_space( struct brw_context *brw,
    brw->vb.upload.offset += size;
 }
 
-
-
 static struct gl_client_array *
 copy_array_to_vbo_array( struct brw_context *brw,
 			 GLuint i,
@@ -358,7 +356,19 @@ copy_array_to_vbo_array( struct brw_context *brw,
    return vbo_array;
 }
 
-
+/**
+ * Just a wrapper to highlight which cause of copy_array_to_vbo_array
+ * is happening in the profile.
+ */
+static struct gl_client_array *
+interleaved_copy_array_to_vbo_array(struct brw_context *brw,
+				    GLuint i,
+				    const struct gl_client_array *array,
+				    GLuint element_size,
+				    GLuint count)
+{
+   return copy_array_to_vbo_array(brw, i, array, element_size, count);
+}
 
 static struct gl_client_array *
 interleaved_vbo_array( struct brw_context *brw,
@@ -451,10 +461,11 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    if (nr_uploads > 1 && 
        interleave && 
        interleave <= 256) {
-      upload[0]->glarray = copy_array_to_vbo_array(brw, 0,
-						   upload[0]->glarray,
-						   interleave,
-						   upload[0]->count);
+      upload[0]->glarray =
+	 interleaved_copy_array_to_vbo_array(brw, 0,
+					     upload[0]->glarray,
+					     interleave,
+					     upload[0]->count);
 
       for (i = 1; i < nr_uploads; i++) {
 	 upload[i]->glarray = interleaved_vbo_array(brw,
