@@ -427,12 +427,6 @@ struct brw_context
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {
-
-      /* Arrays with buffer objects to copy non-bufferobj arrays into
-       * for upload:
-       */
-      struct gl_client_array vbo_array[VERT_ATTRIB_MAX];
-
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
 
 #define BRW_NR_UPLOAD_BUFS 17

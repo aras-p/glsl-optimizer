@@ -303,15 +303,14 @@ static void get_space( struct brw_context *brw,
    brw->vb.upload.offset += size;
 }
 
-static struct gl_client_array *
+static void
 copy_array_to_vbo_array( struct brw_context *brw,
-			 GLuint i,
+			 struct gl_client_array *vbo_array,
 			 const struct gl_client_array *array,
 			 GLuint element_size,
 			 GLuint count)
 {
    GLcontext *ctx = &brw->intel.ctx;
-   struct gl_client_array *vbo_array = &brw->vb.vbo_array[i];
    GLuint size = count * element_size;
    struct gl_buffer_object *vbo;
    GLuint offset;
@@ -352,33 +351,29 @@ copy_array_to_vbo_array( struct brw_context *brw,
 
       ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, vbo_array->BufferObj);
    }
-
-   return vbo_array;
 }
 
 /**
  * Just a wrapper to highlight which cause of copy_array_to_vbo_array
  * is happening in the profile.
  */
-static struct gl_client_array *
+static void
 interleaved_copy_array_to_vbo_array(struct brw_context *brw,
-				    GLuint i,
+				    struct gl_client_array *vbo_array,
 				    const struct gl_client_array *array,
 				    GLuint element_size,
 				    GLuint count)
 {
-   return copy_array_to_vbo_array(brw, i, array, element_size, count);
+   copy_array_to_vbo_array(brw, vbo_array, array, element_size, count);
 }
 
-static struct gl_client_array *
+static void
 interleaved_vbo_array( struct brw_context *brw,
-		       GLuint i,
+		       struct gl_client_array *vbo_array,
 		       const struct gl_client_array *uploaded_array,
 		       const struct gl_client_array *array,
 		       const char *ptr)
 {
-   struct gl_client_array *vbo_array = &brw->vb.vbo_array[i];
-
    vbo_array->Size = array->Size;
    vbo_array->Type = array->Type;
    vbo_array->Stride = array->Stride;
@@ -389,8 +384,6 @@ interleaved_vbo_array( struct brw_context *brw,
    vbo_array->Normalized = array->Normalized;
    vbo_array->_MaxElement = array->_MaxElement;	
    vbo_array->BufferObj = uploaded_array->BufferObj;
-
-   return vbo_array;
 }
 
 
@@ -404,6 +397,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    GLuint i;
    const void *ptr = NULL;
    GLuint interleave = 0;
+   struct gl_client_array vbo_array_temp[VERT_ATTRIB_MAX];
 
    struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint nr_enabled = 0;
@@ -457,30 +451,29 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 
    /* Upload interleaved arrays if all uploads are interleaved
     */
-   if (nr_uploads > 1 && 
-       interleave && 
-       interleave <= 256) {
-      upload[0]->glarray =
-	 interleaved_copy_array_to_vbo_array(brw, 0,
-					     upload[0]->glarray,
-					     interleave,
-					     upload[0]->count);
+   if (nr_uploads > 1 && interleave && interleave <= 256) {
+      interleaved_copy_array_to_vbo_array(brw, &vbo_array_temp[0],
+					  upload[0]->glarray,
+					  interleave,
+					  upload[0]->count);
+      upload[0]->glarray = &vbo_array_temp[0];
 
       for (i = 1; i < nr_uploads; i++) {
-	 upload[i]->glarray = interleaved_vbo_array(brw,
-						    i,
-						    upload[0]->glarray,
-						    upload[i]->glarray,
-						    ptr);
+	 interleaved_vbo_array(brw,
+			       &vbo_array_temp[i],
+			       upload[0]->glarray,
+			       upload[i]->glarray,
+			       ptr);
+	 upload[i]->glarray = &vbo_array_temp[i];
       }
    }
    else {
       for (i = 0; i < nr_uploads; i++) {
-	 upload[i]->glarray = copy_array_to_vbo_array(brw, i,
-						      upload[i]->glarray,
-						      upload[i]->element_size,
-						      upload[i]->count);
-
+	 copy_array_to_vbo_array(brw, &vbo_array_temp[i],
+				 upload[i]->glarray,
+				 upload[i]->element_size,
+				 upload[i]->count);
+	 upload[i]->glarray = &vbo_array_temp[i];
       }
    }
 
