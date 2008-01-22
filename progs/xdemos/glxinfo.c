@@ -657,7 +657,7 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
 
    /* multisample attribs */
 #ifdef GLX_ARB_multisample
-   if (ext && strstr(ext, "GLX_ARB_multisample") == 0) {
+   if (ext && strstr(ext, "GLX_ARB_multisample")) {
       glXGetConfig(dpy, vInfo, GLX_SAMPLE_BUFFERS_ARB, &attribs->numMultisample);
       glXGetConfig(dpy, vInfo, GLX_SAMPLES_ARB, &attribs->numSamples);
    }
