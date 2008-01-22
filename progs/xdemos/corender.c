@@ -26,6 +26,10 @@
 #include "ipc.h"
 
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 static int MyID = 0;  /* 0 or 1 */
 static int WindowID = 0;
 static GLXContext Context = 0;
