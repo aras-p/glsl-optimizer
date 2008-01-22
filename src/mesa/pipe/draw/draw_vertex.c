@@ -65,6 +65,8 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
          break;
       case FORMAT_4UB:
          /* fall-through */
+      case FORMAT_1F_PSIZE:
+         /* fall-through */
       case FORMAT_1F:
          vinfo->size += 1;
          break;

@@ -148,6 +148,10 @@ emit_vertex( struct vbuf_stage *vbuf,
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          count++;
          break;
+      case FORMAT_1F_PSIZE:
+         *vbuf->vertex_ptr++ = fui(vbuf->stage.draw->rasterizer->point_size);
+         count++;
+         break;
       case FORMAT_2F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
@@ -353,7 +357,7 @@ vbuf_alloc_vertices( struct draw_stage *stage,
    /* Allocate a new vertex buffer */
    vbuf->vertex_size = new_vertex_size;
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
-   vbuf->vertices = vbuf->render->allocate_vertices(vbuf->render,
+   vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
                                                     (ushort) vbuf->vertex_size,
                                                     (ushort) vbuf->max_vertices);
    vbuf->vertex_ptr = vbuf->vertices;
@@ -388,6 +392,7 @@ vbuf_end( struct draw_stage *stage )
 static void 
 vbuf_reset_stipple_counter( struct draw_stage *stage )
 {
+   (void) stage;
 }
 
 
@@ -421,8 +426,8 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 
    assert(render->max_indices < UNDEFINED_VERTEX_ID);
    vbuf->max_indices = render->max_indices;
-   vbuf->indices
-      = align_malloc( vbuf->max_indices * sizeof(vbuf->indices[0]), 16 );
+   vbuf->indices = (ushort *)
+      align_malloc( vbuf->max_indices * sizeof(vbuf->indices[0]), 16 );
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;

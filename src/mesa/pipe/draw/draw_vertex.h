@@ -41,12 +41,13 @@ struct draw_context;
  * Vertex attribute format
  */
 enum attrib_format {
-   FORMAT_OMIT,
+   FORMAT_OMIT,      /**< don't emit the attribute */
    FORMAT_1F,
+   FORMAT_1F_PSIZE,  /**< insert constant point size */
    FORMAT_2F,
    FORMAT_3F,
    FORMAT_4F,
-   FORMAT_4UB
+   FORMAT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
 };
 
 

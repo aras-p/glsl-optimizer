@@ -89,6 +89,10 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );
 
+void draw_convert_wide_points(struct draw_context *draw, boolean enable);
+
+void draw_convert_wide_lines(struct draw_context *draw, boolean enable);
+
 
 struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,

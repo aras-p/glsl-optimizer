@@ -195,6 +195,9 @@ struct draw_context
    uint attrib_front0, attrib_back0;
    uint attrib_front1, attrib_back1;
 
+   boolean convert_wide_points; /**< convert wide points to tris? */
+   boolean convert_wide_lines;  /**< convert side lines to tris? */
+
    boolean drawing; /**< do we presently have something queued for drawing? */
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;

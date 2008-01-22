@@ -51,8 +51,8 @@ static void validate_begin( struct draw_stage *stage )
     * shorter pipelines for lines & points.
     */
 
-   if (draw->rasterizer->line_width != 1.0 ||
-       draw->rasterizer->point_size != 1.0 ||
+   if ((draw->rasterizer->line_width != 1.0 && draw->convert_wide_lines) ||
+       (draw->rasterizer->point_size != 1.0 && draw->convert_wide_points) ||
        draw->rasterizer->point_sprite) {
       draw->pipeline.wide->next = next;
       next = draw->pipeline.wide;

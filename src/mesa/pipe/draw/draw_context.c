@@ -71,7 +71,7 @@ struct draw_context *draw_create( void )
     */
    {
       uint i;
-      char *tmp = MALLOC( Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE );
+      char *tmp = (char*) MALLOC( Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE );
 
       for (i = 0; i < Elements(draw->vcache.vertex); i++)
 	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
@@ -81,6 +81,9 @@ struct draw_context *draw_create( void )
    draw->attrib_back0 = 0;
    draw->attrib_front1 = 0;
    draw->attrib_back1 = 0;
+
+   draw->convert_wide_points = TRUE;
+   draw->convert_wide_lines = TRUE;
 
    draw->prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -217,6 +220,26 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
 }
 
 
+/**
+ * Tells the draw module whether to convert wide points (size != 1)
+ * into triangles.
+ */
+void
+draw_convert_wide_points(struct draw_context *draw, boolean enable)
+{
+   draw->convert_wide_points = enable;
+}
+
+
+/**
+ * Tells the draw module whether to convert wide lines (width != 1)
+ * into triangles.
+ */
+void
+draw_convert_wide_lines(struct draw_context *draw, boolean enable)
+{
+   draw->convert_wide_lines = enable;
+}
 
 
 
