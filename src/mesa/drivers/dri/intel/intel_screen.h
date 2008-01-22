@@ -42,7 +42,6 @@ typedef struct
    drmSize size;                /* region size in bytes */
    char *map;                   /* memory map */
    int offset;                  /* from start of video mem, in bytes */
-   int pitch;                   /* row stride, in bytes */
    unsigned int bo_handle;	/* buffer object id if available, or -1 */
    /**
     * Flags if the region is tiled.
@@ -63,11 +62,7 @@ typedef struct
    int deviceID;
    int width;
    int height;
-   int mem;                     /* unused */
-
-   int cpp;                     /* for front and back buffers */
-/*    int bitsPerPixel;   */
-   int fbFormat;                /* XXX FBO: this is obsolete - remove after i830 updates */
+   int pitch;                   /* common row stride, in pixels */
 
    int logTextureGranularity;
 

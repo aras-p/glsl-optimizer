@@ -75,7 +75,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
    case GL_RGBA8:
       return intel_readbuf_region(intel);
    case GL_RGB:
-      if (intel->intelScreen->cpp == 2)
+      if (intel->ctx.Visual.rgbBits == 16)
          return intel_readbuf_region(intel);
       return NULL;
    default:

@@ -194,13 +194,13 @@ intelPrintDRIInfo(intelScreenPrivate * intelScreen,
 {
    fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->front.size, intelScreen->front.offset,
-           intelScreen->front.pitch);
+           intelScreen->pitch);
    fprintf(stderr, "*** Back size:    0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->back.size, intelScreen->back.offset,
-           intelScreen->back.pitch);
+           intelScreen->pitch);
    fprintf(stderr, "*** Depth size:   0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->depth.size, intelScreen->depth.offset,
-           intelScreen->depth.pitch);
+           intelScreen->pitch);
    fprintf(stderr, "*** Texture size: 0x%x  offset: 0x%x\n",
            intelScreen->tex.size, intelScreen->tex.offset);
    fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
@@ -239,29 +239,26 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
 {
    intelScreen->width = sarea->width;
    intelScreen->height = sarea->height;
+   intelScreen->pitch = sarea->pitch;
 
    intelScreen->front.offset = sarea->front_offset;
-   intelScreen->front.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
    intelScreen->front.tiled = sarea->front_tiled;
 
    intelScreen->back.offset = sarea->back_offset;
-   intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
    intelScreen->back.tiled = sarea->back_tiled;
 
    if (intelScreen->driScrnPriv->ddx_version.minor >= 8) {
       intelScreen->third.offset = sarea->third_offset;
-      intelScreen->third.pitch = sarea->pitch * intelScreen->cpp;
       intelScreen->third.handle = sarea->third_handle;
       intelScreen->third.size = sarea->third_size;
       intelScreen->third.tiled = sarea->third_tiled;
    }
 
    intelScreen->depth.offset = sarea->depth_offset;
-   intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
    intelScreen->depth.tiled = sarea->depth_tiled;
@@ -349,21 +346,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
 
    intelScreen->deviceID = gDRIPriv->deviceID;
-
-   intelScreen->mem = gDRIPriv->mem;
-   intelScreen->cpp = gDRIPriv->cpp;
-
-   switch (gDRIPriv->bitsPerPixel) {
-   case 16:
-      intelScreen->fbFormat = DV_PF_565;
-      break;
-   case 32:
-      intelScreen->fbFormat = DV_PF_8888;
-      break;
-   default:
-      exit(1);
-      break;
-   }
 
    intelUpdateScreenFromSAREA(intelScreen, sarea);
 

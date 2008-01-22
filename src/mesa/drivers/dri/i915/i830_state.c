@@ -760,7 +760,7 @@ i830Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 
       /* Logicop doesn't seem to work at 16bpp:
        */
-      if (i830->intel.intelScreen->cpp == 2)
+      if (i830->intel.ctx.Visual.rgbBits == 16)
          FALLBACK(&i830->intel, I830_FALLBACK_LOGICOP, state);
       break;
 
@@ -879,8 +879,6 @@ i830Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void
 i830_init_packets(struct i830_context *i830)
 {
-   intelScreenPrivate *screen = i830->intel.intelScreen;
-
    /* Zero all state */
    memset(&i830->state, 0, sizeof(i830->state));
 
@@ -1033,35 +1031,7 @@ i830_init_packets(struct i830_context *i830)
 
    i830->state.Stipple[I830_STPREG_ST0] = _3DSTATE_STIPPLE;
 
-   i830->state.Buffer[I830_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-   i830->state.Buffer[I830_DESTREG_CBUFADDR1] = (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(screen->front.pitch) |     /* pitch in bytes */
-                                                 BUF_3D_USE_FENCE);
-
-
-   i830->state.Buffer[I830_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-   i830->state.Buffer[I830_DESTREG_DBUFADDR1] = (BUF_3D_ID_DEPTH | BUF_3D_PITCH(screen->depth.pitch) |  /* pitch in bytes */
-                                                 BUF_3D_USE_FENCE);
-
    i830->state.Buffer[I830_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
-
-#if 0
-   switch (screen->fbFormat) {
-   case DV_PF_565:
-      i830->state.Buffer[I830_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |   /* .5 */
-                                              DSTORG_VERT_BIAS(0x8) |   /* .5 */
-                                              screen->fbFormat |
-                                              DEPTH_IS_Z |
-                                              DEPTH_FRMT_16_FIXED);
-      break;
-   case DV_PF_8888:
-      i830->state.Buffer[I830_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |   /* .5 */
-                                              DSTORG_VERT_BIAS(0x8) |   /* .5 */
-                                              screen->fbFormat |
-                                              DEPTH_IS_Z |
-                                              DEPTH_FRMT_24_FIXED_8_OTHER);
-      break;
-   }
-#endif
    i830->state.Buffer[I830_DESTREG_SENABLE] = (_3DSTATE_SCISSOR_ENABLE_CMD |
                                                DISABLE_SCISSOR_RECT);
    i830->state.Buffer[I830_DESTREG_SR0] = _3DSTATE_SCISSOR_RECT_0_CMD;

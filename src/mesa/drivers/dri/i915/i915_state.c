@@ -742,7 +742,7 @@ i915Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 
       /* Logicop doesn't seem to work at 16bpp:
        */
-      if (i915->intel.intelScreen->cpp == 2)    /* XXX FBO fix */
+      if (ctx->Visual.rgbBits == 16)
          FALLBACK(&i915->intel, I915_FALLBACK_LOGICOP, state);
       break;
 
@@ -845,8 +845,6 @@ i915Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void
 i915_init_packets(struct i915_context *i915)
 {
-   intelScreenPrivate *screen = i915->intel.intelScreen;
-
    /* Zero all state */
    memset(&i915->state, 0, sizeof(i915->state));
 
@@ -864,7 +862,7 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Ctx[I915_CTXREG_LIS4] = 0;
       i915->state.Ctx[I915_CTXREG_LIS5] = 0;
 
-      if (screen->cpp == 2)     /* XXX FBO fix */
+      if (i915->intel.ctx.Visual.rgbBits == 16)
          i915->state.Ctx[I915_CTXREG_LIS5] |= S5_COLOR_DITHER_ENABLE;
 
 
@@ -907,45 +905,8 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Fog[I915_FOGREG_COLOR] = _3DSTATE_FOG_COLOR_CMD;
    }
 
-
    {
-      I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
-      /* color buffer offset/stride */
-      i915->state.Buffer[I915_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      /* XXX FBO: remove this?  Also get set in i915_set_draw_region() */
-      i915->state.Buffer[I915_DESTREG_CBUFADDR1] = (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(screen->front.pitch) |  /* pitch in bytes */
-                                                    BUF_3D_USE_FENCE);
-
-      i915->state.Buffer[I915_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      /* XXX FBO: remove this?  Also get set in i915_set_draw_region() */
-      i915->state.Buffer[I915_DESTREG_DBUFADDR1] = (BUF_3D_ID_DEPTH | BUF_3D_PITCH(screen->depth.pitch) |       /* pitch in bytes */
-                                                    BUF_3D_USE_FENCE);
-
       i915->state.Buffer[I915_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
-
-      /* XXX FBO: remove this?  Also get set in i915_set_draw_region() */
-#if 0                           /* seems we don't need this */
-      switch (screen->fbFormat) {
-      case DV_PF_565:
-         i915->state.Buffer[I915_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |        /* .5 */
-                                                 DSTORG_VERT_BIAS(0x8) |        /* .5 */
-                                                 LOD_PRECLAMP_OGL |
-                                                 TEX_DEFAULT_COLOR_OGL |
-                                                 DITHER_FULL_ALWAYS |
-                                                 screen->fbFormat |
-                                                 DEPTH_FRMT_16_FIXED);
-         break;
-      case DV_PF_8888:
-         i915->state.Buffer[I915_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |        /* .5 */
-                                                 DSTORG_VERT_BIAS(0x8) |        /* .5 */
-                                                 LOD_PRECLAMP_OGL |
-                                                 TEX_DEFAULT_COLOR_OGL |
-                                                 screen->fbFormat |
-                                                 DEPTH_FRMT_24_FIXED_8_OTHER);
-         break;
-      }
-#endif
-
 
       /* scissor */
       i915->state.Buffer[I915_DESTREG_SENABLE] =

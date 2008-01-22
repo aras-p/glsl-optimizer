@@ -394,8 +394,8 @@ intel_recreate_static(struct intel_context *intel,
       region->refcount = 1;
    }
 
-   region->cpp = intelScreen->cpp;
-   region->pitch = region_desc->pitch / intelScreen->cpp;
+   region->cpp = intel->ctx.Visual.rgbBits / 8;
+   region->pitch = intelScreen->pitch;
    region->height = intelScreen->height;     /* needed? */
    region->tiled = region_desc->tiled;
 
@@ -408,7 +408,7 @@ intel_recreate_static(struct intel_context *intel,
       region->buffer = dri_bo_alloc_static(intel->bufmgr,
 					   name,
 					   region_desc->offset,
-					   region_desc->pitch *
+					   intelScreen->pitch *
 					   intelScreen->height,
 					   region_desc->map,
 					   DRM_BO_FLAG_MEM_TT);
