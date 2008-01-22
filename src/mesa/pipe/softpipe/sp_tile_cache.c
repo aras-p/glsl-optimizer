@@ -329,7 +329,7 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
    for (y = 0; y < h; y += TILE_SIZE) {
       for (x = 0; x < w; x += TILE_SIZE) {
          if (is_clear_flag_set(tc->clear_flags, x, y)) {
-            pipe->put_tile(pipe, ps,
+            pipe_put_tile_raw(pipe, ps,
                            x, y, TILE_SIZE, TILE_SIZE,
                            tc->tile.data.color32, 0/*STRIDE*/);
 
@@ -365,7 +365,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
       struct softpipe_cached_tile *tile = tc->entries + pos;
       if (tile->x >= 0) {
          if (tc->depth_stencil) {
-            pipe->put_tile(pipe, ps,
+            pipe_put_tile_raw(pipe, ps,
                            tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                            tile->data.depth32, 0/*STRIDE*/);
          }
@@ -414,7 +414,7 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
       if (tile->x != -1) {
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
-            pipe->put_tile(pipe, ps,
+            pipe_put_tile_raw(pipe, ps,
                            tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                            tile->data.depth32, 0/*STRIDE*/);
          }
@@ -441,7 +441,7 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
       else {
          /* get new tile data from surface */
          if (tc->depth_stencil) {
-            pipe->get_tile(pipe, ps,
+            pipe_put_tile_raw(pipe, ps,
                            tile->x, tile->y, TILE_SIZE, TILE_SIZE,
                            tile->data.depth32, 0/*STRIDE*/);
          }

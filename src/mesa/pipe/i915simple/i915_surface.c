@@ -77,27 +77,6 @@ i915_get_tex_surface(struct pipe_context *pipe,
 }
 
 
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-static void
-i915_surface_data(struct pipe_context *pipe,
-		  struct pipe_surface *dst,
-		  unsigned dstx, unsigned dsty,
-		  const void *src, unsigned src_pitch,
-		  unsigned srcx, unsigned srcy, unsigned width, unsigned height)
-{
-   pipe_copy_rect(pipe_surface_map(dst),
-                  dst->cpp, dst->pitch,
-                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
-
-   pipe_surface_unmap(dst);
-}
-
 
 /* Assumes all values are within bounds -- no checking at this level -
  * do it higher up if required.
@@ -204,10 +183,7 @@ void
 i915_init_surface_functions(struct i915_context *i915)
 {
    i915->pipe.get_tex_surface = i915_get_tex_surface;
-   i915->pipe.get_tile = pipe_get_tile_raw;
-   i915->pipe.put_tile = pipe_put_tile_raw;
 
-   i915->pipe.surface_data = i915_surface_data;
    i915->pipe.surface_copy = i915_surface_copy;
    i915->pipe.surface_fill = i915_surface_fill;
 }

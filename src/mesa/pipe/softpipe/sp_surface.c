@@ -34,27 +34,6 @@
 #include "sp_surface.h"
 
 
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-static void
-sp_surface_data(struct pipe_context *pipe,
-		struct pipe_surface *dst,
-		unsigned dstx, unsigned dsty,
-		const void *src, unsigned src_pitch,
-		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
-{
-   pipe_copy_rect(pipe_surface_map(dst),
-                  dst->cpp,
-                  dst->pitch,
-                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
-
-   pipe_surface_unmap(dst);
-}
 
 /* Assumes all values are within bounds -- no checking at this level -
  * do it higher up if required.
@@ -174,10 +153,6 @@ sp_surface_fill(struct pipe_context *pipe,
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
-   sp->pipe.get_tile = pipe_get_tile_raw;
-   sp->pipe.put_tile = pipe_put_tile_raw;
-
-   sp->pipe.surface_data = sp_surface_data;
    sp->pipe.surface_copy = sp_surface_copy;
    sp->pipe.surface_fill = sp_surface_fill;
 }

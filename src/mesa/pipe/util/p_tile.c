@@ -577,7 +577,7 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
    if (!packed)
       return;
 
-   pipe->get_tile(pipe, ps, x, y, w, h, packed, w * ps->cpp);
+   pipe_get_tile_raw(pipe, ps, x, y, w, h, packed, w * ps->cpp);
 
    switch (ps->format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
@@ -693,7 +693,7 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
       assert(0);
    }
 
-   pipe->put_tile(pipe, ps, x, y, w, h, packed, w * ps->cpp);
+   pipe_put_tile_raw(pipe, ps, x, y, w, h, packed, w * ps->cpp);
 
    FREE(packed);
 }

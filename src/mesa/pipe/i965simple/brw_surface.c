@@ -203,10 +203,6 @@ void
 brw_init_surface_functions(struct brw_context *brw)
 {
    brw->pipe.get_tex_surface = brw_get_tex_surface;
-   brw->pipe.get_tile = pipe_get_tile_raw;
-   brw->pipe.put_tile = pipe_put_tile_raw;
-
-   brw->pipe.surface_data  = brw_surface_data;
    brw->pipe.surface_copy  = brw_surface_copy;
    brw->pipe.surface_fill  = brw_surface_fill;
 }
