@@ -424,6 +424,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/fbdev/Makefile		\
 	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/*[ch]		\
+	$(DIRECTORY)/src/glut/mini/glut.pc.in		\
 	$(DIRECTORY)/src/glut/directfb/Makefile		\
 	$(DIRECTORY)/src/glut/directfb/NOTES		\
 	$(DIRECTORY)/src/glut/directfb/*[ch]		\

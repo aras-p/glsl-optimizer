@@ -75,6 +75,10 @@ tags:
 	etags `find . -name \*.[ch]` `find ../include`
 
 
+# Dummy install target
+install:
+
+
 # Remove .o and backup files
 clean:
 	-rm -f drmtest $(TOP)/$(LIB_DIR)/libGL.so*
