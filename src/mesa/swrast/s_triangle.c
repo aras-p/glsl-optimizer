@@ -130,7 +130,7 @@ _swrast_culltriangle( GLcontext *ctx,
 #define T_SCALE theight
 
 #define SETUP_CODE							\
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];\
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];	\
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
@@ -139,8 +139,7 @@ _swrast_culltriangle( GLcontext *ctx,
    const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
    const GLint smask = obj->Image[0][b]->Width - 1;			\
    const GLint tmask = obj->Image[0][b]->Height - 1;			\
-   if (!texture) {							\
-      /* this shouldn't happen */					\
+   if (!rb || !texture) {						\
       return;								\
    }
 
@@ -182,7 +181,7 @@ _swrast_culltriangle( GLcontext *ctx,
 #define T_SCALE theight
 
 #define SETUP_CODE							\
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];\
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];	\
    struct gl_texture_object *obj = ctx->Texture.Unit[0].Current2D;	\
    const GLint b = obj->BaseLevel;					\
    const GLfloat twidth = (GLfloat) obj->Image[0][b]->Width;		\
@@ -191,8 +190,7 @@ _swrast_culltriangle( GLcontext *ctx,
    const GLchan *texture = (const GLchan *) obj->Image[0][b]->Data;	\
    const GLint smask = obj->Image[0][b]->Width - 1;			\
    const GLint tmask = obj->Image[0][b]->Height - 1;			\
-   if (!texture) {							\
-      /* this shouldn't happen */					\
+   if (!rb || !texture) {						\
       return;								\
    }
 

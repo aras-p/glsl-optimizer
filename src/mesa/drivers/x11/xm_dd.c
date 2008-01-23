@@ -436,7 +436,12 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
 {
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
-   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
+   struct xmesa_renderbuffer *xrb;
+
+   if (!rb)
+      return;
+
+   xrb = xmesa_renderbuffer(rb->Wrapped);
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
@@ -543,17 +548,21 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
                          const struct gl_pixelstore_attrib *unpack,
                          const GLvoid *pixels )
 {
-   struct xmesa_renderbuffer *xrb
-      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
    const XMesaGC gc = xmbuf->cleargc;  /* effected by glColorMask */
+   struct xmesa_renderbuffer *xrb;
 
    ASSERT(dpy);
    ASSERT(gc);
    ASSERT(xmesa->xm_visual->undithered_pf == PF_5R6G5B);
+
+   if (!ctx->DrawBuffer->_ColorDrawBuffers[0])
+      return;
+
+   xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
@@ -651,13 +660,17 @@ xmesa_CopyPixels( GLcontext *ctx,
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
    const XMesaGC gc = xmbuf->cleargc;  /* effected by glColorMask */
-   struct xmesa_renderbuffer *srcXrb
-      = xmesa_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer->Wrapped);
-   struct xmesa_renderbuffer *dstXrb
-      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
+   struct xmesa_renderbuffer *srcXrb, *dstXrb;
+
+   if (!ctx->ReadBuffer->_ColorReadBuffer ||
+       !ctx->DrawBuffer->_ColorDrawBuffers[0])
+      return;
 
    ASSERT(dpy);
    ASSERT(gc);
+
+   srcXrb = xmesa_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer->Wrapped);
+   dstXrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]->Wrapped);
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );

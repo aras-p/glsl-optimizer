@@ -641,6 +641,9 @@ update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    GLuint output;
 
+   /* set 0th buffer to NULL now in case _NumColorDrawBuffers is zero */
+   fb->_ColorDrawBuffers[0] = NULL;
+
    for (output = 0; output < fb->_NumColorDrawBuffers; output++) {
       GLint buf = fb->_ColorDrawBufferIndexes[output];
       if (buf >= 0) {

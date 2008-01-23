@@ -54,13 +54,18 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
 {
    const GLint imgX = x, imgY = y;
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0];
-   const GLenum rbType = rb->DataType;
+   GLenum rbType;
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan span;
    GLboolean simpleZoom;
    GLint yStep;  /* +1 or -1 */
    struct gl_pixelstore_attrib unpack;
    GLint destX, destY, drawWidth, drawHeight; /* post clipping */
+
+   if (!rb)
+      return GL_TRUE; /* no-op */
+
+   rbType = rb->DataType;
 
    if ((swrast->_RasterMask & ~CLIP_BIT) ||
        ctx->Texture._EnabledCoordUnits ||

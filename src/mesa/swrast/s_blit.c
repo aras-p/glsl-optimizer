@@ -745,6 +745,9 @@ _swrast_BlitFramebuffer(GLcontext *ctx,
    };
    GLint i;
 
+   if (!ctx->DrawBuffer->_NumColorDrawBuffers)
+      return;
+
    if (!clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
                   &dstX0, &dstY0, &dstX1, &dstY1)) {
       return;
