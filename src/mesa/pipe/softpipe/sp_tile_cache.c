@@ -538,6 +538,7 @@ void
 sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue)
 {
    uint r, g, b, a;
+   uint pos;
 
    tc->clear_val = clearValue;
 
@@ -576,4 +577,9 @@ sp_tile_cache_clear(struct softpipe_tile_cache *tc, uint clearValue)
    /* disable the optimization */
    memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
 #endif
+
+   for (pos = 0; pos < NUM_ENTRIES; pos++) {
+      struct softpipe_cached_tile *tile = tc->entries + pos;
+      tile->x = tile->y = -1;
+   }
 }
