@@ -42,6 +42,7 @@
 #include "p_compiler.h"
 #include "p_winsys.h"
 #include "p_thread.h"
+#include "p_util.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
@@ -248,7 +249,7 @@ fenced_buffer_list_create(struct pipe_winsys *winsys)
 {
    struct fenced_buffer_list *fenced_list;
 
-   fenced_list = (struct fenced_buffer_list *)calloc(1, sizeof(*fenced_list));
+   fenced_list = (struct fenced_buffer_list *)CALLOC(1, sizeof(*fenced_list));
    if (!fenced_list)
       return NULL;
 
@@ -292,7 +293,7 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
 
    _glthread_UNLOCK_MUTEX(fenced_list->mutex);
    
-   free(fenced_list);
+   FREE(fenced_list);
 }
 
 

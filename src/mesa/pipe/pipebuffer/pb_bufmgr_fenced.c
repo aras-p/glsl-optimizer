@@ -37,6 +37,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "p_util.h"
+
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
 #include "pb_bufmgr.h"
@@ -100,7 +102,7 @@ fenced_bufmgr_destroy(struct pb_manager *mgr)
 
    fenced_mgr->provider->destroy(fenced_mgr->provider);
    
-   free(fenced_mgr);
+   FREE(fenced_mgr);
 }
 
 
@@ -110,7 +112,7 @@ fenced_bufmgr_create(struct pb_manager *provider,
 {
    struct fenced_pb_manager *fenced_mgr;
 
-   fenced_mgr = (struct fenced_pb_manager *)calloc(1, sizeof(*fenced_mgr));
+   fenced_mgr = (struct fenced_pb_manager *)CALLOC(1, sizeof(*fenced_mgr));
    if (!fenced_mgr)
       return NULL;
 
@@ -120,7 +122,7 @@ fenced_bufmgr_create(struct pb_manager *provider,
    fenced_mgr->provider = provider;
    fenced_mgr->fenced_list = fenced_buffer_list_create(winsys);
    if(!fenced_mgr->fenced_list) {
-      free(fenced_mgr);
+      FREE(fenced_mgr);
       return NULL;
    }
       

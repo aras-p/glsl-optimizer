@@ -43,6 +43,7 @@
 #include "p_compiler.h"
 #include "p_thread.h"
 #include "p_defines.h"
+#include "p_util.h"
 
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
@@ -203,14 +204,14 @@ pool_bufmgr_destroy(struct pb_manager *mgr)
    struct pool_pb_manager *pool = pool_pb_manager(mgr);
    _glthread_LOCK_MUTEX(pool->mutex);
 
-   free(pool->bufs);
+   FREE(pool->bufs);
    
    pb_unmap(pool->buffer);
    pb_destroy(pool->buffer);
    
    _glthread_UNLOCK_MUTEX(pool->mutex);
    
-   free(mgr);
+   FREE(mgr);
 }
 
 
@@ -223,7 +224,7 @@ pool_bufmgr_create(struct pb_manager *provider,
    struct pool_buffer *pool_buf;
    size_t i;
 
-   pool = (struct pool_pb_manager *)calloc(1, sizeof(*pool));
+   pool = (struct pool_pb_manager *)CALLOC(1, sizeof(*pool));
    if (!pool)
       return NULL;
 
@@ -248,7 +249,7 @@ pool_bufmgr_create(struct pb_manager *provider,
    if(!pool->map)
       goto failure;
 
-   pool->bufs = (struct pool_buffer *) malloc(numBufs * sizeof(*pool->bufs));
+   pool->bufs = (struct pool_buffer *) MALLOC(numBufs * sizeof(*pool->bufs));
    if (!pool->bufs)
       goto failure;
 
@@ -265,12 +266,12 @@ pool_bufmgr_create(struct pb_manager *provider,
    
 failure:
    if(pool->bufs)
-      free(pool->bufs);
+      FREE(pool->bufs);
    if(pool->map)
       pb_unmap(pool->buffer);
    if(pool->buffer)
       pb_destroy(pool->buffer);
    if(pool)
-      free(pool);
+      FREE(pool);
    return NULL;
 }
