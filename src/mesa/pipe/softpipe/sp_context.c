@@ -82,9 +82,7 @@ softpipe_map_surfaces(struct softpipe_context *sp)
       sp_tile_cache_map_surfaces(sp->cbuf_cache[i]);
    }
 
-   sp_tile_cache_map_surfaces(sp->zbuf_cache);
-
-   sp_tile_cache_map_surfaces(sp->sbuf_cache);
+   sp_tile_cache_map_surfaces(sp->zsbuf_cache);
 }
 
 
@@ -98,16 +96,12 @@ softpipe_unmap_surfaces(struct softpipe_context *sp)
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++)
       sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
-   sp_flush_tile_cache(sp, sp->zbuf_cache);
-   sp_flush_tile_cache(sp, sp->sbuf_cache);
+   sp_flush_tile_cache(sp, sp->zsbuf_cache);
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       sp_tile_cache_unmap_surfaces(sp->cbuf_cache[i]);
    }
-
-   sp_tile_cache_unmap_surfaces(sp->zbuf_cache);
-
-   sp_tile_cache_unmap_surfaces(sp->sbuf_cache);
+   sp_tile_cache_unmap_surfaces(sp->zsbuf_cache);
 }
 
 
@@ -134,8 +128,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
-   sp_destroy_tile_cache(softpipe->zbuf_cache);
-   sp_destroy_tile_cache(softpipe->sbuf_cache_sep);
+   sp_destroy_tile_cache(softpipe->zsbuf_cache);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       sp_destroy_tile_cache(softpipe->tex_cache[i]);
@@ -298,9 +291,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
     */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
       softpipe->cbuf_cache[i] = sp_create_tile_cache();
-   softpipe->zbuf_cache = sp_create_tile_cache();
-   softpipe->sbuf_cache_sep = sp_create_tile_cache();
-   softpipe->sbuf_cache = softpipe->sbuf_cache_sep; /* initial value */
+   softpipe->zsbuf_cache = sp_create_tile_cache();
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       softpipe->tex_cache[i] = sp_create_tile_cache();

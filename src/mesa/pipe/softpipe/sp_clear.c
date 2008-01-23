@@ -53,24 +53,19 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    softpipe_update_derived(softpipe); /* not needed?? */
 #endif
 
-#if TILE_CLEAR_OPTIMIZATION
-   if (ps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
-      sp_tile_cache_clear(softpipe->zbuf_cache, clearValue);
+   if (ps == sp_tile_cache_get_surface(softpipe->zsbuf_cache)) {
+      sp_tile_cache_clear(softpipe->zsbuf_cache, clearValue);
       return;
    }
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
          sp_tile_cache_clear(softpipe->cbuf_cache[i], clearValue);
-         return;
       }
    }
-#endif
 
+#if !TILE_CLEAR_OPTIMIZATION
    /* non-cached surface */
    pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
-
-#if 0
-   sp_clear_tile_cache(ps, clearValue);
 #endif
 }

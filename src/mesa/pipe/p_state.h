@@ -202,8 +202,7 @@ struct pipe_framebuffer_state
    unsigned num_cbufs;
    struct pipe_surface *cbufs[PIPE_MAX_COLOR_BUFS];
 
-   struct pipe_surface *zbuf;      /**< Z buffer */
-   struct pipe_surface *sbuf;      /**< Stencil buffer */
+   struct pipe_surface *zsbuf;      /**< Z/stencil buffer */
 };
 
 

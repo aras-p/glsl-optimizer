@@ -74,14 +74,9 @@ framebuffer_size(const struct pipe_framebuffer_state *fb,
       *height = fb->cbufs[0]->height;
       return TRUE;
    }
-   else if (fb->zbuf) {
-      *width = fb->zbuf->width;
-      *height = fb->zbuf->height;
-      return TRUE;
-   }
-   else if (fb->sbuf) {
-      *width = fb->sbuf->width;
-      *height = fb->sbuf->height;
+   else if (fb->zsbuf) {
+      *width = fb->zsbuf->width;
+      *height = fb->zsbuf->height;
       return TRUE;
    }
    else {
@@ -209,7 +204,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
       struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-      struct pipe_surface *depth_surface = i915->framebuffer.zbuf;
+      struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
 
       if (cbuf_surface) {
 	 unsigned pitch = (cbuf_surface->pitch * cbuf_surface->cpp);
@@ -251,7 +246,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
          cformat = translate_format(cformat);
 
 	 if (depth_surface) 
-	    zformat = translate_depth_format( i915->framebuffer.zbuf->format );
+	    zformat = translate_depth_format( i915->framebuffer.zsbuf->format );
 
 	 OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
 	 OUT_BATCH(DSTORG_HORT_BIAS(0x8) | /* .5 */

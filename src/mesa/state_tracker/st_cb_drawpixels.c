@@ -848,7 +848,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
-   struct pipe_surface *ps = st->state.framebuffer.sbuf;
+   struct pipe_surface *ps = st->state.framebuffer.zsbuf;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    GLint skipPixels;
    ubyte *stmap;
@@ -940,13 +940,13 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
-      ps = st->state.framebuffer.zbuf;
+      ps = st->state.framebuffer.zsbuf;
       stfp = make_fragment_shader_z(ctx->st);
       stvp = make_vertex_shader(ctx->st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else if (format == GL_STENCIL_INDEX) {
-      ps = st->state.framebuffer.sbuf;
+      ps = st->state.framebuffer.zsbuf;
       /* XXX special case - can't use texture map */
       color = NULL;
    }

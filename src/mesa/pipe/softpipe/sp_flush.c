@@ -59,11 +59,8 @@ softpipe_flush( struct pipe_context *pipe,
       if (softpipe->cbuf_cache[i])
          sp_flush_tile_cache(softpipe, softpipe->cbuf_cache[i]);
 
-   if (softpipe->zbuf_cache)
-      sp_flush_tile_cache(softpipe, softpipe->zbuf_cache);
-
-   if (softpipe->sbuf_cache)
-      sp_flush_tile_cache(softpipe, softpipe->sbuf_cache);
+   if (softpipe->zsbuf_cache)
+      sp_flush_tile_cache(softpipe, softpipe->zsbuf_cache);
 
    /* Need this call for hardware buffers before swapbuffers.
     *

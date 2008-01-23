@@ -53,14 +53,14 @@ void
 sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct pipe_surface *ps = softpipe->framebuffer.zbuf;
+   struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
    const enum pipe_format format = ps->format;
    unsigned bzzzz[QUAD_SIZE];  /**< Z values fetched from depth buffer */
    unsigned qzzzz[QUAD_SIZE];  /**< Z values from the quad */
    unsigned zmask = 0;
    unsigned j;
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe, softpipe->zbuf_cache, quad->x0, quad->y0);
+      = sp_get_cached_tile(softpipe, softpipe->zsbuf_cache, quad->x0, quad->y0);
 
    assert(ps); /* shouldn't get here if there's no zbuffer */
 

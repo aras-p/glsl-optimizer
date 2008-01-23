@@ -131,11 +131,7 @@ struct softpipe_context {
    uint current_cbuf;      /**< current color buffer being written to */
 
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
-   struct softpipe_tile_cache *zbuf_cache;
-   /** Stencil buffer cache, for stencil separate from Z */
-   struct softpipe_tile_cache *sbuf_cache_sep;
-   /** This either points to zbuf_cache or sbuf_cache_sep */
-   struct softpipe_tile_cache *sbuf_cache;
+   struct softpipe_tile_cache *zsbuf_cache;
 
    struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 

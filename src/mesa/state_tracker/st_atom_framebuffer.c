@@ -65,14 +65,15 @@ update_framebuffer_state( struct st_context *st )
    if (strb) {
       strb = st_renderbuffer(strb->Base.Wrapped);
       assert(strb->surface);
-      framebuffer.zbuf = strb->surface;
+      framebuffer.zsbuf = strb->surface;
    }
-
-   strb = st_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
-   if (strb) {
-      strb = st_renderbuffer(strb->Base.Wrapped);
-      assert(strb->surface);
-      framebuffer.sbuf = strb->surface;
+   else {
+      strb = st_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
+      if (strb) {
+         strb = st_renderbuffer(strb->Base.Wrapped);
+         assert(strb->surface);
+         framebuffer.zsbuf = strb->surface;
+      }
    }
 
    /* XXX: The memcmp is insufficient for eliminating redundant state changes,

@@ -211,7 +211,7 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
  */
 static void upload_depthbuffer(struct brw_context *brw)
 {
-   struct pipe_surface *depth_surface = brw->attribs.FrameBuffer.zbuf;
+   struct pipe_surface *depth_surface = brw->attribs.FrameBuffer.zsbuf;
 
    BEGIN_BATCH(5, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
