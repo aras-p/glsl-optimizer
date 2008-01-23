@@ -74,6 +74,7 @@ static void update_raster_state( struct st_context *st )
    GLcontext *ctx = st->ctx;
    struct pipe_rasterizer_state raster;
    const struct cso_rasterizer *cso;
+   const struct gl_vertex_program *vertProg = ctx->VertexProgram._Current;
    uint i;
 
    memset(&raster, 0, sizeof(raster));
@@ -210,7 +211,19 @@ static void update_raster_state( struct st_context *st )
          raster.sprite_coord_mode[i] = PIPE_SPRITE_COORD_NONE;
       }
    }
-   raster.point_size_per_vertex = ctx->VertexProgram.PointSizeEnabled;
+   if (vertProg) {
+      if (vertProg->Base.Id == 0) {
+         if (vertProg->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+            /* generated program which emits point size */
+            raster.point_size_per_vertex = TRUE;
+         }
+      }
+      else if (ctx->VertexProgram.PointSizeEnabled) {
+         /* user-defined program and GL_VERTEX_PROGRAM_POINT_SIZE set */
+         raster.point_size_per_vertex = ctx->VertexProgram.PointSizeEnabled;
+      }
+   }
+
 
    /* _NEW_LINE
     */
