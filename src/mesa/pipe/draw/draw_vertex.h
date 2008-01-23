@@ -34,9 +34,6 @@
 #define DRAW_VERTEX_H
 
 
-struct draw_context;
-
-
 /**
  * Vertex attribute format
  */
@@ -63,7 +60,7 @@ enum interp_mode {
 
 
 /**
- * Information about post-transformed vertex layout.
+ * Information about hardware/rasterization vertex layout.
  */
 struct vertex_info
 {
@@ -71,7 +68,7 @@ struct vertex_info
    uint hwfmt[4];      /**< hardware format info for this format */
    enum interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
    enum attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
-   uint src_index[PIPE_MAX_SHADER_OUTPUTS];
+   uint src_index[PIPE_MAX_SHADER_OUTPUTS]; /**< map to post-xform attribs */
    uint size;          /**< total vertex size in dwords */
 };
 
@@ -97,13 +94,6 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
    return n;
 }
 
-
-extern void draw_set_vertex_info( struct draw_context *draw,
-                                  const struct vertex_info *info);
-
-extern void draw_set_twoside_attributes(struct draw_context *draw,
-                                        uint front0, uint back0,
-                                        uint front1, uint back1);
 
 extern void draw_compute_vertex_size(struct vertex_info *vinfo);
 

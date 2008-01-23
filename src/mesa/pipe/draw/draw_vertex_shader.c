@@ -38,7 +38,6 @@
 #endif
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_vertex.h"
 
 #include "x86/rtasm/x86sse.h"
 #include "pipe/llvm/gallivm.h"
@@ -176,7 +175,7 @@ run_vertex_program(struct draw_context *draw,
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
        */
-      for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
+      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
          vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
          vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
@@ -274,6 +273,8 @@ draw_bind_vertex_shader(struct draw_context *draw,
 {
    draw_flush(draw);
    draw->vertex_shader = dvs;
+
+   draw->num_vs_outputs = dvs->state->num_outputs;
 
    /* specify the fragment program to interpret/execute */
    tgsi_exec_machine_init(&draw->machine,

@@ -44,8 +44,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "draw_vertex.h"
-
 #include "x86/rtasm/x86sse.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
 
@@ -170,6 +168,8 @@ struct draw_context
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    const struct draw_vertex_shader *vertex_shader;
 
+   uint num_vs_outputs;  /**< convenience, from vertex_shader */
+
    /* user-space vertex data, buffers */
    struct {
       /** vertex element/index buffer (ex: glDrawElements) */
@@ -188,12 +188,6 @@ struct draw_context
     */
    float plane[12][4];
    unsigned nr_planes;
-
-   /** Describes the layout of post-transformation vertices */
-   struct vertex_info vertex_info;
-   /** Two-sided attributes: */
-   uint attrib_front0, attrib_back0;
-   uint attrib_front1, attrib_back1;
 
    boolean convert_wide_points; /**< convert wide points to tris? */
    boolean convert_wide_lines;  /**< convert side lines to tris? */
@@ -309,7 +303,9 @@ dup_vert( struct draw_stage *stage,
 	  unsigned idx )
 {   
    struct vertex_header *tmp = stage->tmp[idx];
-   memcpy(tmp, vert, stage->draw->vertex_info.size * sizeof(float) );
+   const uint vsize = sizeof(struct vertex_header)
+      + stage->draw->num_vs_outputs * 4 * sizeof(float);
+   memcpy(tmp, vert, vsize);
    tmp->vertex_id = UNDEFINED_VERTEX_ID;
    return tmp;
 }

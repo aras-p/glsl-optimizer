@@ -61,6 +61,7 @@ stipple_stage(struct draw_stage *stage)
 /**
  * Compute interpolated vertex attributes for 'dst' at position 't' 
  * between 'v0' and 'v1'.
+ * XXX using linear interpolation for all attribs at this time.
  */
 static void
 screen_interp( struct draw_context *draw,
@@ -70,28 +71,13 @@ screen_interp( struct draw_context *draw,
                const struct vertex_header *v1 )
 {
    uint attr;
-   for (attr = 0; attr < draw->vertex_info.num_attribs; attr++) {
-      switch (draw->vertex_info.interp_mode[attr]) {
-      case INTERP_NONE:
-      case INTERP_CONSTANT:
-         COPY_4FV(dst->data[attr], v0->data[attr]);
-         break;
-      case INTERP_PERSPECTIVE:
-         /* Fall-through */
-         /* XXX special-case perspective? */
-      case INTERP_LINEAR:
-         {
-            const float *val0 = v0->data[attr];
-            const float *val1 = v1->data[attr];
-            float *newv = dst->data[attr];
-            uint i;
-            for (i = 0; i < 4; i++) {
-               newv[i] = val0[i] + t * (val1[i] - val0[i]);
-            }
-         }
-         break;
-      default:
-         abort();
+   for (attr = 0; attr < draw->num_vs_outputs; attr++) {
+      const float *val0 = v0->data[attr];
+      const float *val1 = v1->data[attr];
+      float *newv = dst->data[attr];
+      uint i;
+      for (i = 0; i < 4; i++) {
+         newv[i] = val0[i] + t * (val1[i] - val0[i]);
       }
    }
 }

@@ -34,7 +34,6 @@
 #include "pipe/p_shader_tokens.h"
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_vertex.h"
 
 
 #define DRAW_DBG 0

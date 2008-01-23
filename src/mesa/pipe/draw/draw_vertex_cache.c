@@ -33,7 +33,6 @@
 #include "pipe/p_util.h"
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_vertex.h"
 
 
 void draw_vertex_cache_invalidate( struct draw_context *draw )

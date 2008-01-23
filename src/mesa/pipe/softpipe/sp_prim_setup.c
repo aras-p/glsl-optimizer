@@ -1278,7 +1278,7 @@ void sp_vbuf_render( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context( pipe );
    struct setup_stage *setup = setup_stage( softpipe->setup );
    struct prim_header prim;
-   unsigned vertex_size = setup->stage.draw->vertex_info.size * sizeof(float);
+   unsigned vertex_size = softpipe->vertex_info.size * sizeof(float);
    unsigned i, j;
 
    prim.det = 0;

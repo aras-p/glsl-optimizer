@@ -40,6 +40,7 @@
 
 
 struct softpipe_winsys;
+struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
 struct softpipe_tile_cache;
@@ -125,6 +126,7 @@ struct softpipe_context {
    struct draw_context *draw;
    struct draw_stage *setup;
    struct draw_stage *vbuf;
+   struct softpipe_vbuf_render *vbuf_render;
 
    uint current_cbuf;      /**< current color buffer being written to */
 

@@ -93,7 +93,7 @@ static void interp( const struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const unsigned nr_attrs = clip->stage.draw->vertex_info.num_attribs;
+   const unsigned nr_attrs = clip->stage.draw->num_vs_outputs;
    unsigned j;
 
    /* Vertex header.
@@ -349,7 +349,7 @@ do_clip_line( struct draw_stage *stage,
 static void clip_begin( struct draw_stage *stage )
 {
    /* should always have position, at least */
-   assert(stage->draw->vertex_info.num_attribs >= 1);
+   assert(stage->draw->num_vs_outputs > 0);
 
    stage->next->begin( stage->next );
 }

@@ -33,7 +33,6 @@
 #include "pipe/p_util.h"
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_vertex.h"
 
 #ifdef MESA_LLVM
 
@@ -132,7 +131,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    gallivm_prog_exec(prog, inputs, outputs, consts,
                      draw->vs.queue_nr,
                      draw->vertex_shader->state->num_inputs,
-                     draw->vertex_info.num_attribs - 2);
+                     draw->vertex_shader->state->num_outputs);
 
 
    /* store machine results */
@@ -173,7 +172,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
        */
-      for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
+      for (slot = 1; slot < draw->vs_num_outputs; slot++) {
          vOut->data[slot][0] = dests[slot][0];
          vOut->data[slot][1] = dests[slot][1];
          vOut->data[slot][2] = dests[slot][2];

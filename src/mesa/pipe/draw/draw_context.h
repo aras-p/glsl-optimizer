@@ -122,7 +122,6 @@ void draw_set_mapped_constant_buffer(struct draw_context *draw,
                                      const void *buffer);
 
 
-
 /***********************************************************************
  * draw_prim.c 
  */

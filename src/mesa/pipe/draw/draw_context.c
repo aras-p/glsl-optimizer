@@ -77,11 +77,6 @@ struct draw_context *draw_create( void )
 	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
    }
 
-   draw->attrib_front0 = 0;
-   draw->attrib_back0 = 0;
-   draw->attrib_front1 = 0;
-   draw->attrib_back1 = 0;
-
    draw->convert_wide_points = TRUE;
    draw->convert_wide_lines = TRUE;
 
@@ -240,7 +235,6 @@ draw_convert_wide_lines(struct draw_context *draw, boolean enable)
 {
    draw->convert_wide_lines = enable;
 }
-
 
 
 /**

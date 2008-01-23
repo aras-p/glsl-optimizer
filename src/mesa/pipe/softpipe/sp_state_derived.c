@@ -122,6 +122,8 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       }
    }
 
+   draw_compute_vertex_size(vinfo);
+
    softpipe->nr_frag_attrs = fs->num_inputs;
 
    /* We want these after all other attribs since they won't get passed
@@ -146,10 +148,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    if (1/*vinfo->attr_mask != softpipe->attr_mask*/) {
       /*softpipe->attr_mask = vinfo->attr_mask;*/
 
-      draw_set_vertex_info( softpipe->draw, vinfo);
+      /*draw_set_vertex_info( softpipe->draw, vinfo);*/
 
-      draw_set_twoside_attributes(softpipe->draw,
+      /*draw_set_twoside_attributes(softpipe->draw,
                                   front0, back0, front1, back1);
+      */
    }
 }
 

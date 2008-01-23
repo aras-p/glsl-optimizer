@@ -434,9 +434,12 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 static void
 set_feedback_vertex_format(GLcontext *ctx)
 {
+#if 0
    struct st_context *st = ctx->st;
    struct vertex_info vinfo;
    GLuint i;
+
+   memset(&vinfo, 0, sizeof(vinfo));
 
    if (ctx->RenderMode == GL_SELECT) {
       assert(ctx->RenderMode == GL_SELECT);
@@ -455,6 +458,7 @@ set_feedback_vertex_format(GLcontext *ctx)
    }
 
    draw_set_vertex_info(st->draw, &vinfo);
+#endif
 }
 
 

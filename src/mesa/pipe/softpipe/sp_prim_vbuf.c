@@ -263,8 +263,11 @@ static void vbuf_flush_elements( struct draw_stage *stage )
 static void vbuf_begin( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage(stage);
+   struct softpipe_context *softpipe = softpipe_context(vbuf->pipe);
 
-   vbuf->vertex_size = vbuf->draw_context->vertex_info.size * sizeof(float);
+   //vbuf->vertex_size = vbuf->draw_context->vertex_info.size * sizeof(float);
+
+   vbuf->vertex_size = softpipe->vertex_info.size * sizeof(float);
 }
 
 
