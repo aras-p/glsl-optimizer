@@ -442,7 +442,7 @@ set_feedback_vertex_format(GLcontext *ctx)
       assert(ctx->RenderMode == GL_SELECT);
       vinfo.num_attribs = 1;
       vinfo.format[0] = FORMAT_4F;
-      vinfo.interp_mode[0] = INTERP_NONE;
+      vinfo.interp_mode[0] = INTERP_LINEAR;
    }
    else {
       /* GL_FEEDBACK, or glRasterPos */
