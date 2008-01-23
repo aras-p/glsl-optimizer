@@ -25,56 +25,14 @@
  * 
  **************************************************************************/
 
-/*
- * Functions for specifying the post-transformation vertex layout.
- *
- * Author:
- *    Brian Paul
- *    Keith Whitwell
- */
+#ifndef SP_VBUF_H
+#define SP_VBUF_H
 
 
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vertex.h"
+struct softpipe_context;
+
+extern void
+sp_init_vbuf(struct softpipe_context *softpipe);
 
 
-/**
- * Compute the size of a vertex, in dwords/floats, to update the
- * vinfo->size field.
- */
-void
-draw_compute_vertex_size(struct vertex_info *vinfo)
-{
-   uint i;
-
-   vinfo->size = 0;
-   for (i = 0; i < vinfo->num_attribs; i++) {
-      switch (vinfo->format[i]) {
-      case FORMAT_OMIT:
-         break;
-      case FORMAT_HEADER:
-         vinfo->size += sizeof(struct vertex_header) / 4;
-         break;
-      case FORMAT_4UB:
-         /* fall-through */
-      case FORMAT_1F_PSIZE:
-         /* fall-through */
-      case FORMAT_1F:
-         vinfo->size += 1;
-         break;
-      case FORMAT_2F:
-         vinfo->size += 2;
-         break;
-      case FORMAT_3F:
-         vinfo->size += 3;
-         break;
-      case FORMAT_4F:
-         vinfo->size += 4;
-         break;
-      default:
-         assert(0);
-      }
-   }
-
-   assert(vinfo->size * 4 <= MAX_VERTEX_SIZE);
-}
+#endif /* SP_VBUF_H */

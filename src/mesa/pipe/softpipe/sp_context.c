@@ -37,6 +37,7 @@
 #include "sp_context.h"
 #include "sp_flush.h"
 #include "sp_prim_setup.h"
+#include "sp_prim_vbuf.h"
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
@@ -328,12 +329,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    assert(softpipe->draw);
    softpipe->setup = sp_draw_render_stage(softpipe);
 
-   if (0 && GETENV( "SP_VBUF" ) != NULL) {
-      softpipe->vbuf = sp_draw_vbuf_stage(softpipe->draw, 
-                                          &softpipe->pipe, 
-                                          sp_vbuf_render);
-
-      draw_set_rasterize_stage(softpipe->draw, softpipe->vbuf);
+   if (GETENV( "SP_VBUF" ) != NULL) {
+      sp_init_vbuf(softpipe);
    }
    else {
       draw_set_rasterize_stage(softpipe->draw, softpipe->setup);

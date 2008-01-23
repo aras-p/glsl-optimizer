@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -26,302 +26,198 @@
  **************************************************************************/
 
 /**
- * Build post-transformation, post-clipping vertex buffers and element
- * lists by hooking into the end of the primitive pipeline and
- * manipulating the vertex_id field in the vertex headers.
- *
- * Keith Whitwell <keith@tungstengraphics.com>
+ * Post-transform vertex buffering.  This is an optional part of the
+ * softpipe rendering pipeline.
+ * Probably not desired in general, but useful for testing/debuggin.
+ * Enabled/Disabled with SP_VBUF env var.
+ * 
+ * Authors
+ *  Brian Paul
  */
 
 
 #include "sp_context.h"
-#include "sp_headers.h"
-#include "sp_quad.h"
-#include "sp_prim_setup.h"
+#include "sp_prim_vbuf.h"
+#include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vertex.h"
-#include "pipe/p_util.h"
-
-static void vbuf_flush_elements( struct draw_stage *stage );
+#include "pipe/draw/draw_vbuf.h"
 
 
-#define VBUF_SIZE (64*1024)
-#define IBUF_SIZE (16*1024)
+#define SP_MAX_VBUF_INDEXES 1024
+#define SP_MAX_VBUF_SIZE    4096
 
 
 /**
- * Vertex buffer emit stage.
+ * Subclass of vbuf_render.
  */
-struct vbuf_stage {
-   struct draw_stage stage; /**< This must be first (base class) */
-
-   struct draw_context *draw_context;
-   struct pipe_context *pipe;
-   vbuf_draw_func draw;
-
-   /* Vertices are passed in as an array of floats making up each
-    * attribute in turn.  Will eventually convert to hardware format
-    * in this stage.
-    */
-   char *vertex_map;
-   char *vertex_ptr;
-   unsigned vertex_size;
-   unsigned nr_vertices;
-
-   unsigned max_vertices;
-
-   ushort *element_map;
-   unsigned nr_elements;
-
-   unsigned prim;
-   
+struct softpipe_vbuf_render
+{
+   struct vbuf_render base;
+   struct softpipe_context *softpipe;
+   uint prim;
+   uint vertex_size;
+   void *vertex_buffer;
 };
 
-/**
- * Basically a cast wrapper.
- */
-static INLINE struct vbuf_stage *vbuf_stage( struct draw_stage *stage )
+
+/** cast wrapper */
+static struct softpipe_vbuf_render *
+softpipe_vbuf_render(struct vbuf_render *vbr)
 {
-   return (struct vbuf_stage *)stage;
+   return (struct softpipe_vbuf_render *) vbr;
 }
 
 
 
-
-static boolean overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
+static const struct vertex_info *
+sp_vbuf_get_vertex_info(struct vbuf_render *vbr)
 {
-   unsigned long used = (unsigned long) ((char *) ptr - (char *) map);
-   return (used + bytes) > bufsz;
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   /* XXX check for state changes? */
+   return &cvbr->softpipe->vertex_info;
 }
 
 
-static boolean check_space( struct vbuf_stage *vbuf )
+static void *
+sp_vbuf_allocate_vertices(struct vbuf_render *vbr,
+                            ushort vertex_size, ushort nr_vertices)
 {
-   if (overflow( vbuf->vertex_map, 
-                 vbuf->vertex_ptr,  
-                 4 * vbuf->vertex_size, 
-                 VBUF_SIZE ))
-      return FALSE;
-
-   
-   if (vbuf->nr_elements + 4 > IBUF_SIZE / sizeof(ushort) )
-      return FALSE;
-   
-   return TRUE;
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   assert(!cvbr->vertex_buffer);
+   cvbr->vertex_buffer = align_malloc(vertex_size * nr_vertices, 16);
+   cvbr->vertex_size = vertex_size;
+   return cvbr->vertex_buffer;
 }
 
 
-static void emit_vertex( struct vbuf_stage *vbuf,
-                         struct vertex_header *vertex )
+static void
+sp_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices, 
+                           unsigned vertex_size, unsigned vertices_used)
 {
-//   fprintf(stderr, "emit vertex %d to %p\n", 
-//           vbuf->nr_vertices, vbuf->vertex_ptr);
-
-   vertex->vertex_id = vbuf->nr_vertices++;
-
-   //vbuf->emit_vertex( vbuf->vertex_ptr, vertex );
-
-   /* Note: for softpipe, the vertex includes the vertex header info
-    * such as clip flags and clip coords.  In the future when vbuf is
-    * always used, we could just copy the vertex attributes/data here.
-    * The sp_prim_setup.c code doesn't use any of the vertex header info.
-    */
-   memcpy(vbuf->vertex_ptr, vertex, vbuf->vertex_size);
-
-   vbuf->vertex_ptr += vbuf->vertex_size;
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   align_free(vertices);
+   assert(vertices == cvbr->vertex_buffer);
+   cvbr->vertex_buffer = NULL;
 }
 
+
+static void
+sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
+{
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   cvbr->prim = prim;
+}
 
 
 /**
- * 
+ * Recalculate prim's determinant.
+ * XXX is this needed?
  */
-static void vbuf_tri( struct draw_stage *stage,
-                      struct prim_header *prim )
+static void
+calc_det(struct prim_header *header)
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-   unsigned i;
+   /* Window coords: */
+   const float *v0 = header->v[0]->data[0];
+   const float *v1 = header->v[1]->data[0];
+   const float *v2 = header->v[2]->data[0];
 
-   if (!check_space( vbuf ))
-      vbuf_flush_elements( stage );
-
-   for (i = 0; i < 3; i++) {
-      if (prim->v[i]->vertex_id == UNDEFINED_VERTEX_ID) 
-         emit_vertex( vbuf, prim->v[i] );
-      
-      vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
-   }
-}
-
-
-static void vbuf_line(struct draw_stage *stage, 
-                      struct prim_header *prim)
-{
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-   unsigned i;
-
-   if (!check_space( vbuf ))
-      vbuf_flush_elements( stage );
-
-   for (i = 0; i < 2; i++) {
-      if (prim->v[i]->vertex_id == UNDEFINED_VERTEX_ID) 
-         emit_vertex( vbuf, prim->v[i] );
-
-      vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
-   }   
-}
-
-
-static void vbuf_point(struct draw_stage *stage, 
-                       struct prim_header *prim)
-{
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
-   if (!check_space( vbuf ))
-      vbuf_flush_elements( stage );
-
-   if (prim->v[0]->vertex_id == UNDEFINED_VERTEX_ID) 
-      emit_vertex( vbuf, prim->v[0] );
+   /* edge vectors e = v0 - v2, f = v1 - v2 */
+   const float ex = v0[0] - v2[0];
+   const float ey = v0[1] - v2[1];
+   const float fx = v1[0] - v2[0];
+   const float fy = v1[1] - v2[1];
    
-   vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[0]->vertex_id;
+   /* det = cross(e,f).z */
+   header->det = ex * fy - ey * fx;
 }
 
 
-static void vbuf_first_tri( struct draw_stage *stage,
-                            struct prim_header *prim )
+static void
+sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   struct softpipe_context *softpipe = cvbr->softpipe;
+   struct draw_stage *setup = softpipe->setup;
+   struct prim_header prim;
+   unsigned vertex_size = softpipe->vertex_info.size * sizeof(float);
+   unsigned i, j;
+   void *vertex_buffer = cvbr->vertex_buffer;
 
-   vbuf_flush_elements( stage );   
-   stage->tri = vbuf_tri;
-   stage->tri( stage, prim );
-   vbuf->prim = PIPE_PRIM_TRIANGLES;
-}
+   prim.det = 0;
+   prim.reset_line_stipple = 0;
+   prim.edgeflags = 0;
+   prim.pad = 0;
 
-static void vbuf_first_line( struct draw_stage *stage,
-                             struct prim_header *prim )
-{
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
+   setup->begin( setup );
 
-   vbuf_flush_elements( stage );
-   stage->line = vbuf_line;
-   stage->line( stage, prim );
-   vbuf->prim = PIPE_PRIM_LINES;
-}
+   switch (cvbr->prim) {
+   case PIPE_PRIM_TRIANGLES:
+      for (i = 0; i < nr_indices; i += 3) {
+         for (j = 0; j < 3; j++) 
+            prim.v[j] = (struct vertex_header *)((char *)vertex_buffer + 
+                                                 indices[i+j] * vertex_size);
+         
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
 
-static void vbuf_first_point( struct draw_stage *stage,
-                              struct prim_header *prim )
-{
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
+   case PIPE_PRIM_LINES:
+      for (i = 0; i < nr_indices; i += 2) {
+         for (j = 0; j < 2; j++) 
+            prim.v[j] = (struct vertex_header *)((char *)vertex_buffer + 
+                                                 indices[i+j] * vertex_size);
+         
+         setup->line( setup, &prim );
+      }
+      break;
 
-   vbuf_flush_elements( stage );
-   stage->point = vbuf_point;
-   stage->point( stage, prim );
-   vbuf->prim = PIPE_PRIM_POINTS;
-}
-
-
-
-static void vbuf_flush_elements( struct draw_stage *stage )
-{
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
-   if (vbuf->nr_elements) {
-      /*
-      fprintf(stderr, "%s (%d elts)\n", __FUNCTION__, vbuf->nr_elements);
-      */
-
-      /* Draw now or add to list of primitives???
-       */
-      vbuf->draw( vbuf->pipe,
-                  vbuf->prim,
-                  vbuf->element_map,
-                  vbuf->nr_elements,
-                  vbuf->vertex_map,
-                  (unsigned) (vbuf->vertex_ptr - vbuf->vertex_map) / vbuf->vertex_size );
-      
-      vbuf->nr_elements = 0;
-
-      vbuf->vertex_ptr = vbuf->vertex_map;
-      vbuf->nr_vertices = 0;
-
-      /* Reset vertex ids?  Actually, want to not do that unless our
-       * vertex buffer is full.  Would like separate
-       * flush-on-index-full and flush-on-vb-full, but may raise
-       * issues uploading vertices if the hardware wants to flush when
-       * we flush.
-       */
-      draw_reset_vertex_ids( vbuf->draw_context );
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < nr_indices; i++) {
+         prim.v[0] = (struct vertex_header *)((char *)vertex_buffer + 
+                                              indices[i] * vertex_size);         
+         setup->point( setup, &prim );
+      }
+      break;
    }
 
-   stage->tri = vbuf_first_tri;
-   stage->line = vbuf_first_line;
-   stage->point = vbuf_first_point;
+   setup->end( setup );
 }
 
 
-static void vbuf_begin( struct draw_stage *stage )
+static void
+sp_vbuf_destroy(struct vbuf_render *vbr)
 {
-   struct vbuf_stage *vbuf = vbuf_stage(stage);
-   struct softpipe_context *softpipe = softpipe_context(vbuf->pipe);
-
-   //vbuf->vertex_size = vbuf->draw_context->vertex_info.size * sizeof(float);
-
-   vbuf->vertex_size = softpipe->vertex_info.size * sizeof(float);
-}
-
-
-static void vbuf_end( struct draw_stage *stage )
-{
-   /* Overkill.
-    */
-   vbuf_flush_elements( stage );
-}
-
-
-static void reset_stipple_counter( struct draw_stage *stage )
-{
-   /* XXX:  This doesn't work.
-    */
-}
-
-
-static void vbuf_destroy( struct draw_stage *stage )
-{
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
-   FREE( vbuf->element_map );
-   FREE( vbuf->vertex_map );
-   FREE( stage );
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   cvbr->softpipe->vbuf_render = NULL;
+   FREE(cvbr);
 }
 
 
 /**
- * Create a new primitive vbuf/render stage.
+ * Initialize the post-transform vertex buffer information for the given
+ * context.
  */
-struct draw_stage *sp_draw_vbuf_stage( struct draw_context *draw_context,
-                                         struct pipe_context *pipe,
-                                         vbuf_draw_func draw )
+void
+sp_init_vbuf(struct softpipe_context *sp)
 {
-   struct vbuf_stage *vbuf = CALLOC_STRUCT(vbuf_stage);
+   assert(sp->draw);
 
-   vbuf->stage.begin = vbuf_begin;
-   vbuf->stage.point = vbuf_first_point;
-   vbuf->stage.line = vbuf_first_line;
-   vbuf->stage.tri = vbuf_first_tri;
-   vbuf->stage.end = vbuf_end;
-   vbuf->stage.reset_stipple_counter = reset_stipple_counter;
-   vbuf->stage.destroy = vbuf_destroy;
+   sp->vbuf_render = CALLOC_STRUCT(softpipe_vbuf_render);
 
-   vbuf->pipe = pipe;
-   vbuf->draw = draw;
-   vbuf->draw_context = draw_context;
+   sp->vbuf_render->base.max_indices = SP_MAX_VBUF_INDEXES;
+   sp->vbuf_render->base.max_vertex_buffer_bytes = SP_MAX_VBUF_SIZE;
 
-   vbuf->element_map = MALLOC( IBUF_SIZE );
-   vbuf->vertex_map = MALLOC( VBUF_SIZE );
-   
-   vbuf->vertex_ptr = vbuf->vertex_map;
-   
+   sp->vbuf_render->base.get_vertex_info = sp_vbuf_get_vertex_info;
+   sp->vbuf_render->base.allocate_vertices = sp_vbuf_allocate_vertices;
+   sp->vbuf_render->base.set_primitive = sp_vbuf_set_primitive;
+   sp->vbuf_render->base.draw = sp_vbuf_draw;
+   sp->vbuf_render->base.release_vertices = sp_vbuf_release_vertices;
+   sp->vbuf_render->base.destroy = sp_vbuf_destroy;
 
-   return &vbuf->stage;
+   sp->vbuf_render->softpipe = sp;
+
+   sp->vbuf = draw_vbuf_stage(sp->draw, &sp->vbuf_render->base);
+
+   draw_set_rasterize_stage(sp->draw, sp->vbuf);
 }

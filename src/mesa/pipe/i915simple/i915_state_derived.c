@@ -130,14 +130,6 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    draw_compute_vertex_size(&vinfo);
 
    if (memcmp(&i915->current.vertex_info, &vinfo, sizeof(vinfo))) {
-      /* If the attributes have changed, tell the draw module about the new
-       * vertex layout.  We'll also update the hardware vertex format info.
-       */
-      /*draw_set_vertex_info( i915->draw, &vinfo);*/
-
-      /*draw_set_twoside_attributes(i915->draw,
-                                    front0, back0, front1, back1);*/
-
       /* Need to set this flag so that the LIS2/4 registers get set.
        * It also means the i915_update_immediate() function must be called
        * after this one, in i915_update_derived().

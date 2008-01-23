@@ -145,6 +145,11 @@ emit_vertex( struct vbuf_stage *vbuf,
       case FORMAT_OMIT:
          /* no-op */
          break;
+      case FORMAT_HEADER:
+         memcpy(vbuf->vertex_ptr, vertex, sizeof(*vertex));
+         vbuf->vertex_ptr += sizeof(*vertex) / 4;
+         count += sizeof(*vertex) / 4;
+         break;
       case FORMAT_1F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          count++;

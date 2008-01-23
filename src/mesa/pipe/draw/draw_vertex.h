@@ -39,6 +39,7 @@
  */
 enum attrib_format {
    FORMAT_OMIT,      /**< don't emit the attribute */
+   FORMAT_HEADER,    /**< The 5-byte vertex header */
    FORMAT_1F,
    FORMAT_1F_PSIZE,  /**< insert constant point size */
    FORMAT_2F,
