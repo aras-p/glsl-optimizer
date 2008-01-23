@@ -158,6 +158,7 @@ struct draw_context
       struct draw_stage *twoside;
       struct draw_stage *offset;
       struct draw_stage *unfilled;
+      struct draw_stage *stipple;
       struct draw_stage *wide;
       struct draw_stage *rasterize;
    } pipeline;
@@ -193,6 +194,9 @@ struct draw_context
    /** Two-sided attributes: */
    uint attrib_front0, attrib_back0;
    uint attrib_front1, attrib_back1;
+
+   boolean convert_wide_points; /**< convert wide points to tris? */
+   boolean convert_wide_lines;  /**< convert side lines to tris? */
 
    boolean drawing; /**< do we presently have something queued for drawing? */
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
@@ -248,6 +252,7 @@ extern struct draw_stage *draw_offset_stage( struct draw_context *context );
 extern struct draw_stage *draw_clip_stage( struct draw_context *context );
 extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
 extern struct draw_stage *draw_cull_stage( struct draw_context *context );
+extern struct draw_stage *draw_stipple_stage( struct draw_context *context );
 extern struct draw_stage *draw_wide_stage( struct draw_context *context );
 extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 

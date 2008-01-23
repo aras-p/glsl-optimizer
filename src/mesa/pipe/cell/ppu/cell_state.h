@@ -86,6 +86,11 @@ void cell_set_constant_buffer(struct pipe_context *pipe,
 void cell_set_polygon_stipple( struct pipe_context *,
                                const struct pipe_poly_stipple * );
 
+void
+cell_set_sampler_texture(struct pipe_context *pipe,
+                         unsigned sampler,
+                         struct pipe_texture *texture);
+
 void cell_set_scissor_state( struct pipe_context *,
                              const struct pipe_scissor_state * );
 

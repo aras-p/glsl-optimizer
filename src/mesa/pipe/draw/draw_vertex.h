@@ -41,12 +41,13 @@ struct draw_context;
  * Vertex attribute format
  */
 enum attrib_format {
-   FORMAT_OMIT,
+   FORMAT_OMIT,      /**< don't emit the attribute */
    FORMAT_1F,
+   FORMAT_1F_PSIZE,  /**< insert constant point size */
    FORMAT_2F,
    FORMAT_3F,
    FORMAT_4F,
-   FORMAT_4UB
+   FORMAT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
 };
 
 
@@ -70,6 +71,7 @@ struct vertex_info
    uint hwfmt[4];      /**< hardware format info for this format */
    enum interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
    enum attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
+   uint src_index[PIPE_MAX_SHADER_OUTPUTS];
    uint size;          /**< total vertex size in dwords */
 };
 
@@ -77,16 +79,20 @@ struct vertex_info
 
 /**
  * Add another attribute to the given vertex_info object.
+ * \param src_index  indicates which post-transformed vertex attrib slot
+ *                   corresponds to this attribute.
  * \return slot in which the attribute was added
  */
 static INLINE uint
 draw_emit_vertex_attr(struct vertex_info *vinfo,
-                      enum attrib_format format, enum interp_mode interp)
+                      enum attrib_format format, enum interp_mode interp,
+                      uint src_index)
 {
    const uint n = vinfo->num_attribs;
    assert(n < PIPE_MAX_SHADER_OUTPUTS);
    vinfo->format[n] = format;
    vinfo->interp_mode[n] = interp;
+   vinfo->src_index[n] = src_index;
    vinfo->num_attribs++;
    return n;
 }

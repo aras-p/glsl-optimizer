@@ -25,15 +25,18 @@
  * 
  **************************************************************************/
 
-#ifndef SP_TEXTURE_H
-#define SP_TEXTURE_H
+#ifndef CELL_TEXTURE_H
+#define CELL_TEXTURE_H
 
 
 struct pipe_context;
 struct pipe_texture;
 
 
-struct softpipe_texture
+/**
+ * Subclass of pipe_texture
+ */
+struct cell_texture
 {
    struct pipe_texture base;
 
@@ -47,24 +50,24 @@ struct softpipe_texture
 
 
 /** cast wrapper */
-static INLINE struct softpipe_texture *
-softpipe_texture(struct pipe_texture *pt)
+static INLINE struct cell_texture *
+cell_texture(struct pipe_texture *pt)
 {
-   return (struct softpipe_texture *) pt;
+   return (struct cell_texture *) pt;
 }
 
 
 
 extern void
-softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt);
+cell_texture_create(struct pipe_context *pipe, struct pipe_texture **pt);
 
 extern void
-softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
+cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
 
 extern struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice);
+cell_get_tex_surface(struct pipe_context *pipe,
+                     struct pipe_texture *pt,
+                     unsigned face, unsigned level, unsigned zslice);
 
 
-#endif /* SP_TEXTURE */
+#endif /* CELL_TEXTURE */

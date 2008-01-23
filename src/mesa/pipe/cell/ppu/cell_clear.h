@@ -25,46 +25,19 @@
  * 
  **************************************************************************/
 
-#ifndef SP_TEXTURE_H
-#define SP_TEXTURE_H
+
+#ifndef CELL_SURFACE_H
+#define CELL_SURFACE_H
 
 
 struct pipe_context;
-struct pipe_texture;
-
-
-struct softpipe_texture
-{
-   struct pipe_texture base;
-
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_buffer_handle *buffer;
-   unsigned long buffer_size;
-};
-
-
-/** cast wrapper */
-static INLINE struct softpipe_texture *
-softpipe_texture(struct pipe_texture *pt)
-{
-   return (struct softpipe_texture *) pt;
-}
-
+struct pipe_surface;
 
 
 extern void
-softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt);
-
-extern void
-softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
-
-extern struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice);
+cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                   unsigned clearValue);
 
 
-#endif /* SP_TEXTURE */
+
+#endif /* CELL_SURFACE_H */

@@ -25,75 +25,158 @@
  * 
  **************************************************************************/
 
-/**
- * Authors
- *  Brian Paul
- */
-
-#include <stdio.h>
-#include <assert.h>
-#include <stdint.h>
-#include "pipe/p_inlines.h"
+#include "pipe/p_defines.h"
 #include "pipe/p_util.h"
-#include "pipe/cell/common.h"
+#include "pipe/p_inlines.h"
+#include "pipe/p_winsys.h"
+#include "pipe/util/p_tile.h"
 #include "cell_context.h"
-#include "cell_batch.h"
 #include "cell_surface.h"
-#include "cell_spu.h"
+
+
+/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
+ *
+ * - memcpy by span to current destination
+ * - upload data as new buffer and blit
+ *
+ * Currently always memcpy.
+ */
+static void
+cell_surface_data(struct pipe_context *pipe,
+                  struct pipe_surface *dst,
+                  unsigned dstx, unsigned dsty,
+                  const void *src, unsigned src_pitch,
+                  unsigned srcx, unsigned srcy,
+                  unsigned width, unsigned height)
+{
+   pipe_copy_rect(pipe_surface_map(dst),
+                  dst->cpp,
+                  dst->pitch,
+                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+
+   pipe_surface_unmap(dst);
+}
+
+
+static void
+cell_surface_copy(struct pipe_context *pipe,
+                  struct pipe_surface *dst,
+                  unsigned dstx, unsigned dsty,
+                  struct pipe_surface *src,
+                  unsigned srcx, unsigned srcy,
+                  unsigned width, unsigned height)
+{
+   assert( dst->cpp == src->cpp );
+
+   pipe_copy_rect(pipe_surface_map(dst),
+                  dst->cpp,
+                  dst->pitch,
+                  dstx, dsty,
+                  width, height,
+                  pipe_surface_map(src),
+                  src->pitch,
+                  srcx, srcy);
+
+   pipe_surface_unmap(src);
+   pipe_surface_unmap(dst);
+}
+
+
+static void *
+get_pointer(struct pipe_surface *dst, void *dst_map, unsigned x, unsigned y)
+{
+   return (char *)dst_map + (y * dst->pitch + x) * dst->cpp;
+}
+
+
+#define UBYTE_TO_USHORT(B) ((B) | ((B) << 8))
+
+
+/**
+ * Fill a rectangular sub-region.  Need better logic about when to
+ * push buffers into AGP - will currently do so whenever possible.
+ */
+static void
+cell_surface_fill(struct pipe_context *pipe,
+                  struct pipe_surface *dst,
+                  unsigned dstx, unsigned dsty,
+                  unsigned width, unsigned height, unsigned value)
+{
+   unsigned i, j;
+   void *dst_map = pipe_surface_map(dst);
+
+   assert(dst->pitch > 0);
+   assert(width <= dst->pitch);
+
+   switch (dst->cpp) {
+   case 1:
+      {
+	 ubyte *row = get_pointer(dst, dst_map, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            memset(row, value, width);
+	 row += dst->pitch;
+         }
+      }
+      break;
+   case 2:
+      {
+         ushort *row = get_pointer(dst, dst_map, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = (ushort) value;
+            row += dst->pitch;
+         }
+      }
+      break;
+   case 4:
+      {
+         unsigned *row = get_pointer(dst, dst_map, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = value;
+            row += dst->pitch;
+         }
+      }
+      break;
+   case 8:
+      {
+         /* expand the 4-byte clear value to an 8-byte value */
+         ushort *row = (ushort *) get_pointer(dst, dst_map, dstx, dsty);
+         ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
+         ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
+         ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
+         ushort val3 = UBYTE_TO_USHORT((value >> 24) & 0xff);
+         val0 = (val0 << 8) | val0;
+         val1 = (val1 << 8) | val1;
+         val2 = (val2 << 8) | val2;
+         val3 = (val3 << 8) | val3;
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+               row[j*4+0] = val0;
+               row[j*4+1] = val1;
+               row[j*4+2] = val2;
+               row[j*4+3] = val3;
+            }
+            row += dst->pitch * 4;
+         }
+      }
+      break;
+   default:
+      assert(0);
+      break;
+   }
+
+   pipe_surface_unmap( dst );
+}
 
 
 void
-cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
-                   unsigned clearValue)
+cell_init_surface_functions(struct cell_context *cell)
 {
-   struct cell_context *cell = cell_context(pipe);
-   uint i;
-   uint surfIndex;
+   cell->pipe.get_tile = pipe_get_tile_raw;
+   cell->pipe.put_tile = pipe_put_tile_raw;
 
-   if (!cell->cbuf_map[0])
-      cell->cbuf_map[0] = pipe_surface_map(ps);
-
-   if (ps == cell->framebuffer.zbuf) {
-      surfIndex = 1;
-   }
-   else {
-      surfIndex = 0;
-   }
-
-#if 0
-   for (i = 0; i < cell->num_spus; i++) {
-#if 1
-      uint clr = clearValue;
-      if (surfIndex == 0) {
-         /* XXX debug: clear color varied per-SPU to visualize tiles */
-         if ((clr & 0xff) == 0)
-            clr |= 64 + i * 8;
-         if ((clr & 0xff00) == 0)
-            clr |= (64 + i * 8) << 8;
-         if ((clr & 0xff0000) == 0)
-            clr |= (64 + i * 8) << 16;
-         if ((clr & 0xff000000) == 0)
-            clr |= (64 + i * 8) << 24;
-      }
-      cell_global.command[i].clear.value = clr;
-#else
-      cell_global.command[i].clear.value = clearValue;
-#endif
-      cell_global.command[i].clear.surface = surfIndex;
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
-   }
-#else
-   {
-      struct cell_command_clear_surface *clr
-         = (struct cell_command_clear_surface *)
-         cell_batch_alloc(cell, sizeof(*clr));
-      clr->opcode = CELL_CMD_CLEAR_SURFACE;
-      clr->surface = surfIndex;
-      clr->value = clearValue;
-   }
-#endif
-
-   /* XXX temporary */
-   cell_flush(&cell->pipe, 0x0);
-
+   cell->pipe.surface_data = cell_surface_data;
+   cell->pipe.surface_copy = cell_surface_copy;
+   cell->pipe.surface_fill = cell_surface_fill;
 }

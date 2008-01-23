@@ -31,40 +31,8 @@
 #ifndef SP_SURFACE_H
 #define SP_SURFACE_H
 
-#include "sp_headers.h"
-#include "pipe/p_state.h"
 
-struct pipe_context;
 struct softpipe_context;
-struct softpipe_tile_cache;
-
-
-extern struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice);
-
-
-extern void
-softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
-                  uint x, uint y, uint w, uint h, void *p, int dst_stride);
-
-extern void
-softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
-                  uint x, uint y, uint w, uint h,
-                  const void *p, int src_stride);
-
-extern void
-softpipe_get_tile_rgba(struct pipe_context *pipe,
-                       struct pipe_surface *ps,
-                       uint x, uint y, uint w, uint h,
-                       float *p);
-
-extern void
-softpipe_put_tile_rgba(struct pipe_context *pipe,
-                       struct pipe_surface *ps,
-                       uint x, uint y, uint w, uint h,
-                       const float *p);
 
 
 extern void

@@ -1,8 +1,8 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,19 +25,18 @@
  * 
  **************************************************************************/
 
+/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+ */
 
 #ifndef CELL_SURFACE_H
 #define CELL_SURFACE_H
 
 
-struct pipe_context;
-struct pipe_surface;
+struct cell_context;
 
 
 extern void
-cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
-                   unsigned clearValue);
+cell_init_surface_functions(struct cell_context *cell);
 
 
-
-#endif /* CELL_SURFACE_H */
+#endif /* SP_SURFACE_H */

@@ -48,6 +48,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    boolean emitBack0 = FALSE, emitBack1 = FALSE, emitPsize = FALSE;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    uint i;
+   int src = 0;
 
    memset(vinfo, 0, sizeof(*vinfo));
 
@@ -61,7 +62,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    softpipe->psize_slot = -1;
 
    /* always emit vertex pos */
-   draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
+   draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR, src++);
 
    /*
     * XXX I think we need to reconcile the vertex shader outputs with
@@ -82,11 +83,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
       case TGSI_SEMANTIC_COLOR:
          if (vs->output_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
          }
          else {
             assert(vs->output_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
          }
          break;
 
@@ -101,7 +102,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          break;
 
       case TGSI_SEMANTIC_FOG:
-         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_PERSPECTIVE);
+         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_PERSPECTIVE, src++);
          break;
 
       case TGSI_SEMANTIC_PSIZE:
@@ -113,7 +114,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
-         draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
+         draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE, src++);
          break;
 
       default:
@@ -128,14 +129,14 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * up 1:1 with the fragment shader inputs.
     */
    if (emitBack0) {
-      back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+      back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
    }
    if (emitBack1) {
-      back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+      back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
    }
    if (emitPsize) {
       softpipe->psize_slot
-         = draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT);
+         = draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT, src++);
    }
 
    /* If the attributes have changed, tell the draw module about

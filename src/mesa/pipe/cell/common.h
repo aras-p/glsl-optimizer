@@ -60,6 +60,7 @@
 #define CELL_CMD_RENDER        5
 #define CELL_CMD_BATCH         6
 #define CELL_CMD_STATE_DEPTH_STENCIL 7
+#define CELL_CMD_STATE_SAMPLER       8
 
 
 #define CELL_NUM_BATCH_BUFFERS 3

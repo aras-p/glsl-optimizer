@@ -36,9 +36,9 @@
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 
-#include "sp_context.h"
-#include "sp_state.h"
-#include "sp_texture.h"
+#include "cell_context.h"
+#include "cell_state.h"
+#include "cell_texture.h"
 
 
 /* Simple, maximally packed layout.
@@ -51,7 +51,7 @@ static unsigned minify( unsigned d )
 
 
 static void
-softpipe_texture_layout(struct softpipe_texture * spt)
+cell_texture_layout(struct cell_texture * spt)
 {
    struct pipe_texture *pt = &spt->base;
    unsigned level;
@@ -80,16 +80,16 @@ softpipe_texture_layout(struct softpipe_texture * spt)
 
 
 void
-softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
+cell_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 {
-   struct softpipe_texture *spt = REALLOC(*pt, sizeof(struct pipe_texture),
-					  sizeof(struct softpipe_texture));
+   struct cell_texture *spt = REALLOC(*pt, sizeof(struct pipe_texture),
+					  sizeof(struct cell_texture));
 
    if (spt) {
       memset(&spt->base + 1, 0,
-	     sizeof(struct softpipe_texture) - sizeof(struct pipe_texture));
+	     sizeof(struct cell_texture) - sizeof(struct pipe_texture));
 
-      softpipe_texture_layout(spt);
+      cell_texture_layout(spt);
 
       spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
 
@@ -108,7 +108,7 @@ softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 }
 
 void
-softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
+cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 {
    if (!*pt)
       return;
@@ -118,7 +118,7 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
        __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
    */
    if (--(*pt)->refcount <= 0) {
-      struct softpipe_texture *spt = softpipe_texture(*pt);
+      struct cell_texture *spt = cell_texture(*pt);
 
       /*
       DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
@@ -136,11 +136,11 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
  * Called via pipe->get_tex_surface()
  */
 struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
+cell_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_texture *pt,
                          unsigned face, unsigned level, unsigned zslice)
 {
-   struct softpipe_texture *spt = softpipe_texture(pt);
+   struct cell_texture *spt = cell_texture(pt);
    struct pipe_surface *ps;
 
    ps = pipe->winsys->surface_alloc(pipe->winsys);

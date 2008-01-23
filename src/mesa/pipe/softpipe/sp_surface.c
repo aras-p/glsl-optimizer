@@ -32,44 +32,6 @@
 #include "pipe/util/p_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
-#include "sp_texture.h"
-
-
-/**
- * Called via pipe->get_tex_surface()
- * XXX is this in the right place?
- */
-struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice)
-{
-   struct softpipe_texture *spt = softpipe_texture(pt);
-   struct pipe_surface *ps;
-
-   ps = pipe->winsys->surface_alloc(pipe->winsys);
-   if (ps) {
-      assert(ps->refcount);
-      assert(ps->winsys);
-      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
-      ps->format = pt->format;
-      ps->cpp = pt->cpp;
-      ps->width = pt->width[level];
-      ps->height = pt->height[level];
-      ps->pitch = ps->width;
-      ps->offset = spt->level_offset[level];
-
-      if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
-	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
-		       (pt->compressed ? ps->height/4 : ps->height) *
-		       ps->width * ps->cpp;
-      } else {
-	 assert(face == 0);
-	 assert(zslice == 0);
-      }
-   }
-   return ps;
-}
 
 
 /* Upload data to a rectangular sub-region.  Lots of choices how to do this:

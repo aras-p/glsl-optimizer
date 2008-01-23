@@ -42,4 +42,11 @@ cell_emit_state(struct cell_context *cell)
       cell_batch_append(cell, cell->depth_stencil,
                         sizeof(struct pipe_depth_stencil_alpha_state));
    }
+
+   if (cell->dirty & CELL_NEW_SAMPLER) {
+      uint cmd = CELL_CMD_STATE_SAMPLER;
+      cell_batch_append(cell, &cmd, 4);
+      cell_batch_append(cell, cell->sampler[0],
+                        sizeof(struct pipe_sampler_state));
+   }
 }

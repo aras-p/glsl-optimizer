@@ -33,6 +33,7 @@
  */
 
 #include "sp_context.h"
+#include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_tex_sample.h"
 #include "sp_tile_cache.h"

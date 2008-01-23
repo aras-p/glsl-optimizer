@@ -769,7 +769,7 @@ line_persp_coeff(struct setup_stage *setup,
 {
    /* XXX double-check/verify this arithmetic */
    const float a0 = setup->vmin->data[vertSlot][i] * setup->vmin->data[0][3];
-   const float a1 = setup->vmax->data[vertSlot][i] * setup->vmin->data[0][3];
+   const float a1 = setup->vmax->data[vertSlot][i] * setup->vmax->data[0][3];
    const float da = a1 - a0;
    const float dadx = da * setup->emaj.dx * setup->oneoverarea;
    const float dady = da * setup->emaj.dy * setup->oneoverarea;
@@ -873,20 +873,9 @@ plot(struct setup_stage *setup, int x, int y)
 
 
 /**
- * Determine whether or not to emit a line fragment by checking
- * line stipple pattern.
- */
-static INLINE unsigned
-stipple_test(int counter, ushort pattern, int factor)
-{
-   int b = (counter / factor) & 0xf;
-   return (1 << b) & pattern;
-}
-
-
-/**
  * Do setup for line rasterization, then render the line.
- * XXX single-pixel width, no stipple, etc
+ * Single-pixel width, no stipple, etc.  We rely on the 'draw' module
+ * to handle stippling and wide lines.
  */
 static void
 setup_line(struct draw_stage *stage, struct prim_header *prim)
@@ -894,8 +883,6 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
    struct setup_stage *setup = setup_stage( stage );
-   struct softpipe_context *sp = setup->softpipe;
-
    int x0 = (int) v0->data[0][0];
    int x1 = (int) v1->data[0][0];
    int y0 = (int) v0->data[0][1];
@@ -947,12 +934,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       const int errorDec = error - dx;
 
       for (i = 0; i < dx; i++) {
-         if (!sp->rasterizer->line_stipple_enable ||
-             stipple_test(sp->line_stipple_counter,
-                          (ushort) sp->rasterizer->line_stipple_pattern,
-                          sp->rasterizer->line_stipple_factor + 1)) {
-             plot(setup, x0, y0);
-         }
+         plot(setup, x0, y0);
 
          x0 += xstep;
          if (error < 0) {
@@ -962,8 +944,6 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
             error += errorDec;
             y0 += ystep;
          }
-
-         sp->line_stipple_counter++;
       }
    }
    else {
@@ -974,15 +954,9 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       const int errorDec = error - dy;
 
       for (i = 0; i < dy; i++) {
-         if (!sp->rasterizer->line_stipple_enable ||
-             stipple_test(sp->line_stipple_counter,
-                          (ushort) sp->rasterizer->line_stipple_pattern,
-                          sp->rasterizer->line_stipple_factor + 1)) {
-            plot(setup, x0, y0);
-         }
+         plot(setup, x0, y0);
 
          y0 += ystep;
-
          if (error < 0) {
             error += errorInc;
          }
@@ -990,8 +964,6 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
             error += errorDec;
             x0 += xstep;
          }
-
-         sp->line_stipple_counter++;
       }
    }
 
@@ -1234,8 +1206,6 @@ static void setup_end( struct draw_stage *stage )
 
 static void reset_stipple_counter( struct draw_stage *stage )
 {
-   struct setup_stage *setup = setup_stage(stage);
-   setup->softpipe->line_stipple_counter = 0;
 }
 
 
@@ -1341,8 +1311,8 @@ void sp_vbuf_render( struct pipe_context *pipe,
       break;
 
    case PIPE_PRIM_POINTS:
-      for (i = 0; i < nr_elements; i += 2) {
-         prim.v[i] = (struct vertex_header *)((char *)vertex_buffer + 
+      for (i = 0; i < nr_elements; i++) {
+         prim.v[0] = (struct vertex_header *)((char *)vertex_buffer + 
                                               elements[i] * vertex_size);         
          setup->stage.point( &setup->stage, &prim );
       }
