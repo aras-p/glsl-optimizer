@@ -268,16 +268,5 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
       }
    }
 
-
-#if 0
-   test_spus(cell);
-#endif
-
    return &cell->pipe;
 }
-
-
-#if 0
-/** [4] to ensure 16-byte alignment for each status word */
-uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BATCH_BUFFERS][4] ALIGN16_ATTRIB;
-#endif

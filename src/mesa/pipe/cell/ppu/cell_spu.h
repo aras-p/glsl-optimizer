@@ -76,13 +76,6 @@ cell_start_spus(struct cell_context *cell);
 
 
 extern void
-finish_all(uint num_spus);
-
-extern void
-test_spus(struct cell_context *cell);
-
-
-extern void
 cell_spu_exit(struct cell_context *cell);
 
 
