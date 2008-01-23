@@ -74,6 +74,7 @@ sp_vbuf_get_vertex_info(struct vbuf_render *vbr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    /* XXX check for state changes? */
+   assert(!cvbr->softpipe->dirty );
    return &cvbr->softpipe->vertex_info;
 }
 

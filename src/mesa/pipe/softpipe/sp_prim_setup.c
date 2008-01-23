@@ -515,12 +515,21 @@ setup_fragcoord_coeff(struct setup_stage *setup)
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const enum interp_mode *interp;
 #define USE_INPUT_MAP 01
 #if USE_INPUT_MAP
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
 #endif
    uint fragSlot;
+
+   if (setup->softpipe->vertex_info.format[0] == FORMAT_HEADER) {
+      /* skip header, pos slots */
+      interp = setup->softpipe->vertex_info.interp_mode + 2;
+   }
+   else {
+      /* skip pos slot */
+      interp = setup->softpipe->vertex_info.interp_mode + 1;
+   }
 
    /* z and w are done by linear interpolation:
     */
@@ -557,7 +566,7 @@ static void setup_tri_coefficients( struct setup_stage *setup )
       else {
 #endif
          uint j;
-         switch (interp[vertSlot]) {
+         switch (interp[fragSlot]) {
          case INTERP_CONSTANT:
             for (j = 0; j < NUM_CHANNELS; j++)
                const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
