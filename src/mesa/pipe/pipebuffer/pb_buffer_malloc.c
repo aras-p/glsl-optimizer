@@ -37,6 +37,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "pipe/p_util.h"
 #include "pb_buffer.h"
 
 
@@ -61,7 +62,7 @@ malloc_buffer(struct pb_buffer *buf)
 static void
 malloc_buffer_destroy(struct pb_buffer *buf)
 {
-   free(malloc_buffer(buf)->data);
+   FREE(malloc_buffer(buf)->data);
    FREE(buf);
 }
 
@@ -119,7 +120,7 @@ pb_malloc_buffer_create( unsigned alignment,
    buf->base.base.usage = usage;
    buf->base.base.size = size;
 
-   buf->data = malloc(size);
+   buf->data = MALLOC(size);
    if(!buf->data) {
       FREE(buf);
       return NULL;
