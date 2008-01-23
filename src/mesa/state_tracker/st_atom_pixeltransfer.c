@@ -109,6 +109,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    struct gl_program_parameter_list *params;
    struct gl_fragment_program *fp;
    GLuint ic = 0;
+   const GLuint colorTemp = 0;
 
    fp = (struct gl_fragment_program *)
       ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
@@ -117,11 +118,11 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 
    params = _mesa_new_parameter_list();
 
-   /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
+   /* TEX colorTemp, fragment.texcoord[0], texture[0], 2D; */
    _mesa_init_instructions(inst + ic, 1);
    inst[ic].Opcode = OPCODE_TEX;
-   inst[ic].DstReg.File = PROGRAM_OUTPUT;
-   inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+   inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+   inst[ic].DstReg.Index = colorTemp;
    inst[ic].SrcReg[0].File = PROGRAM_INPUT;
    inst[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
    inst[ic].TexSrcUnit = 0;
@@ -130,7 +131,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    fp->Base.InputsRead = (1 << FRAG_ATTRIB_TEX0);
    fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLR);
 
-   /* MAD result.color, result.color, scale, bias; */
+   /* MAD colorTemp, colorTemp, scale, bias; */
    if (key->scaleAndBias) {
       static const gl_state_index scale_state[STATE_LENGTH] =
          { STATE_INTERNAL, STATE_PT_SCALE, 0, 0, 0 };
@@ -153,10 +154,10 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_MAD;
-      inst[ic].DstReg.File = PROGRAM_OUTPUT;
-      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
-      inst[ic].SrcReg[0].File = PROGRAM_OUTPUT;
-      inst[ic].SrcReg[0].Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = colorTemp;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = colorTemp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = scale_p;
       inst[ic].SrcReg[2].File = PROGRAM_STATE_VAR;
@@ -178,65 +179,73 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
       GLint row1_p = _mesa_add_state_reference(params, row1_state);
       GLint row2_p = _mesa_add_state_reference(params, row2_state);
       GLint row3_p = _mesa_add_state_reference(params, row3_state);
+      const GLuint temp = 1;
 
-      /* MOV temp0, result.color; */
+      /* MOV temp, colorTemp; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_MOV;
       inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = 0;
-      inst[ic].SrcReg[0].File = PROGRAM_OUTPUT;
-      inst[ic].SrcReg[0].Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.Index = temp;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = colorTemp;
       ic++;
 
       /* XXX reimplement in terms of MUL/MAD (see t_vp_build.c) */
 
-      /* DP4 result.color.x, tmp0, matrow0; */
+      /* DP4 colorTemp.x, temp, matrow0; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_OUTPUT;
-      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = colorTemp;
       inst[ic].DstReg.WriteMask = WRITEMASK_X;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[0].Index = temp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row0_p;
       ic++;
 
-      /* DP4 result.color.y, tmp0, matrow1; */
+      /* DP4 colorTemp.y, temp, matrow1; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_OUTPUT;
-      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = colorTemp;
       inst[ic].DstReg.WriteMask = WRITEMASK_Y;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[0].Index = temp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row1_p;
       ic++;
 
-      /* DP4 result.color.z, tmp0, matrow2; */
+      /* DP4 colorTemp.z, temp, matrow2; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_OUTPUT;
-      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = colorTemp;
       inst[ic].DstReg.WriteMask = WRITEMASK_Z;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[0].Index = temp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row2_p;
       ic++;
 
-      /* DP4 result.color.w, tmp0, matrow3; */
+      /* DP4 colorTemp.w, temp, matrow3; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
-      inst[ic].DstReg.File = PROGRAM_OUTPUT;
-      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index =colorTemp;
       inst[ic].DstReg.WriteMask = WRITEMASK_W;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[0].Index = temp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row3_p;
       ic++;
+   }
+
+   /* Modify last instruction's dst reg to write to result.color */
+   {
+      struct prog_instruction *last = &inst[ic - 1];
+      last->DstReg.File = PROGRAM_OUTPUT;
+      last->DstReg.Index = FRAG_RESULT_COLR;
    }
 
    /* END; */
