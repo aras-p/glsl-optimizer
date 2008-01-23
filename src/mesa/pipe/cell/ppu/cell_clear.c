@@ -53,7 +53,7 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    if (!cell->cbuf_map[0])
       cell->cbuf_map[0] = pipe_surface_map(ps);
 
-   if (ps == cell->framebuffer.zbuf) {
+   if (ps == cell->framebuffer.zsbuf) {
       surfIndex = 1;
    }
    else {

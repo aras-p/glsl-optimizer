@@ -163,14 +163,14 @@ test_spus(struct cell_context *cell)
 {
    uint i;
    struct pipe_surface *csurf = cell->framebuffer.cbufs[0];
-   struct pipe_surface *zsurf = cell->framebuffer.zbuf;
+   struct pipe_surface *zsurf = cell->framebuffer.zsbuf;
 
    printf("PPU: sleep(2)\n\n\n");
    sleep(2);
 
    for (i = 0; i < cell->num_spus; i++) {
       cell_global.command[i].fb.color_start = cell->cbuf_map[0];
-      cell_global.command[i].fb.depth_start = cell->zbuf_map;
+      cell_global.command[i].fb.depth_start = cell->zsbuf_map;
       cell_global.command[i].fb.width = csurf->width;
       cell_global.command[i].fb.height = csurf->height;
       cell_global.command[i].fb.color_format = PIPE_FORMAT_A8R8G8B8_UNORM;
