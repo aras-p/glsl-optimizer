@@ -301,7 +301,6 @@ intel_setup_reloc_list(dri_bo *bo)
      * DWORD 0: relocation count
      * DWORD 1: relocation type  
      * DWORD 2+3: handle to next relocation list (currently none) 64-bits
-     * DWORD 3: unused
      */
     bo_ttm->reloc_buf_data[0] = 0;
     bo_ttm->reloc_buf_data[1] = I915_RELOC_TYPE_0;
@@ -714,10 +713,6 @@ dri_ttm_bo_process_reloc(dri_bo *bo)
 
 	/* Add the target to the validate list */
 	intel_add_validate_buffer(r->target_buf, r->validate_flags);
-
-	/* Update the index of the target in the relocation entry */
-	reloc_entry = bo_ttm->reloc_buf_data + I915_RELOC_HEADER +
-	    i * I915_RELOC0_STRIDE;
     }
 }
 
