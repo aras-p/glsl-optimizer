@@ -104,6 +104,12 @@ rastpos_line( struct draw_stage *stage, struct prim_header *prim )
    assert(0);
 }
 
+static void
+rastpos_destroy(struct draw_stage *stage)
+{
+   free(stage);
+}
+
 
 /**
  * Update a raster pos attribute from the vertex result if it's present,
@@ -183,6 +189,7 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
    rs->stage.tri = rastpos_tri;
    rs->stage.end = rastpos_end;
    rs->stage.reset_stipple_counter = rastpos_reset_stipple_counter;
+   rs->stage.destroy = rastpos_destroy;
    rs->ctx = ctx;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
