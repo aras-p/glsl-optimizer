@@ -188,6 +188,7 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
    rs->stage.line = rastpos_line;
    rs->stage.tri = rastpos_tri;
    rs->stage.end = rastpos_end;
+   rs->stage.destroy = rastpos_destroy;
    rs->stage.reset_stipple_counter = rastpos_reset_stipple_counter;
    rs->stage.destroy = rastpos_destroy;
    rs->ctx = ctx;
