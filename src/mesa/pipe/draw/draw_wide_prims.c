@@ -217,7 +217,7 @@ static void wide_point( struct draw_stage *stage,
 
    /* point size is either per-vertex or fixed size */
    if (wide->psize_slot >= 0) {
-      half_size = 0.5 * header->v[0]->data[wide->psize_slot][0];
+      half_size = 0.5f * header->v[0]->data[wide->psize_slot][0];
    }
    else {
       half_size = wide->half_point_size;
