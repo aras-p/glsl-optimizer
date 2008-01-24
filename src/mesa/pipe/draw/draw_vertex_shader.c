@@ -201,6 +201,10 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
    unsigned i, j;
 
+   /* XXX: do this on statechange: 
+    */
+   draw_update_vertex_fetch( draw );
+
 //   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
 #ifdef MESA_LLVM
    if (draw->vertex_shader->llvm_prog) {

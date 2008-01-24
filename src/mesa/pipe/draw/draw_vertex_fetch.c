@@ -42,53 +42,108 @@
 /**
  * Fetch a float[4] vertex attribute from memory, doing format/type
  * conversion as needed.
- * XXX this might be a temporary thing.
+ *
+ * This is probably needed/dupliocated elsewhere, eg format
+ * conversion, texture sampling etc.
  */
-static void
-fetch_attrib4(const void *ptr, enum pipe_format format, float attrib[4])
+#define FETCH_ATTRIB( NAME, SZ, CVT )			\
+static void						\
+fetch_##NAME(const void *ptr, float *attrib)		\
+{							\
+   static const float defaults[4] = { 0,0,0,1 };	\
+   int i;						\
+							\
+   for (i = 0; i < SZ; i++) {				\
+      attrib[i] = CVT;					\
+   }							\
+							\
+   for (; i < 4; i++) {					\
+      attrib[i] = defaults[i];				\
+   }							\
+}
+
+#define CVT_32_FLOAT   ((float *) ptr)[i]
+#define CVT_32_SSCALED (float) ((int *) ptr)[i]
+#define CVT_8_UNORM    (float) ((unsigned char *) ptr)[i] / 255.0f
+
+FETCH_ATTRIB( R32G32B32A32_FLOAT,   4, CVT_32_FLOAT )
+FETCH_ATTRIB( R32G32B32_FLOAT,      3, CVT_32_FLOAT )
+FETCH_ATTRIB( R32G32_FLOAT,         2, CVT_32_FLOAT )
+FETCH_ATTRIB( R32_FLOAT,            1, CVT_32_FLOAT )
+FETCH_ATTRIB( R32G32B32A32_SSCALED, 4, CVT_32_SSCALED )
+FETCH_ATTRIB( R32G32B32_SSCALED,    3, CVT_32_SSCALED )
+FETCH_ATTRIB( R32G32_SSCALED,       2, CVT_32_SSCALED )
+FETCH_ATTRIB( R32_SSCALED,          1, CVT_32_SSCALED )
+FETCH_ATTRIB( A8R8G8B8_UNORM,       4, CVT_8_UNORM )
+FETCH_ATTRIB( R8G8B8A8_UNORM,       4, CVT_8_UNORM )
+
+
+
+static fetch_func get_fetch_func( unsigned format )
 {
-   /* defaults */
-   attrib[1] = 0.0;
-   attrib[2] = 0.0;
-   attrib[3] = 1.0;
    switch (format) {
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
-      attrib[3] = ((float *) ptr)[3];
-      /* fall-through */
+      return fetch_R32G32B32A32_FLOAT;
    case PIPE_FORMAT_R32G32B32_FLOAT:
-      attrib[2] = ((float *) ptr)[2];
-      /* fall-through */
+      return fetch_R32G32B32_FLOAT;
    case PIPE_FORMAT_R32G32_FLOAT:
-      attrib[1] = ((float *) ptr)[1];
-      /* fall-through */
+      return fetch_R32G32_FLOAT;
    case PIPE_FORMAT_R32_FLOAT:
-      attrib[0] = ((float *) ptr)[0];
-      break;
-
+      return fetch_R32_FLOAT;
    case PIPE_FORMAT_R32G32B32A32_SSCALED:
-      attrib[3] = (float) ((int *) ptr)[3];
-      /* fall-through */
+      return fetch_R32G32B32A32_SSCALED;
    case PIPE_FORMAT_R32G32B32_SSCALED:
-      attrib[2] = (float) ((int *) ptr)[2];
-      /* fall-through */
+      return fetch_R32G32B32_SSCALED;
    case PIPE_FORMAT_R32G32_SSCALED:
-      attrib[1] = (float) ((int *) ptr)[1];
-      /* fall-through */
+      return fetch_R32G32_SSCALED;
    case PIPE_FORMAT_R32_SSCALED:
-      attrib[0] = (float) ((int *) ptr)[0];
-      break;
-
+      return fetch_R32_SSCALED;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+      return fetch_A8R8G8B8_UNORM;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
-      attrib[0] = (float) ((unsigned char *) ptr)[2] / 255.0f;
-      attrib[1] = (float) ((unsigned char *) ptr)[1] / 255.0f;
-      attrib[2] = (float) ((unsigned char *) ptr)[0] / 255.0f;
-      attrib[3] = (float) ((unsigned char *) ptr)[3] / 255.0f;
-      break;
-
+      return fetch_R8G8B8A8_UNORM;
    default:
+      /* Lots of missing cases! */
       assert(0);
+      return NULL;
    }
+}
+
+
+static void 
+transpose_4x4( float *out, const float *in )
+{
+   /* This can be achieved in 12 sse instructions, plus the final
+    * stores I guess.  This is probably a bit more than that - maybe
+    * 32 or so?
+    */
+   out[0] = in[0];  out[1] = in[4];  out[2] = in[8];   out[3] = in[12];
+   out[4] = in[1];  out[5] = in[5];  out[6] = in[9];   out[7] = in[13];
+   out[8] = in[2];  out[9] = in[6];  out[10] = in[10]; out[11] = in[14];
+   out[12] = in[3]; out[13] = in[7]; out[14] = in[11]; out[15] = in[15];
+}
+
+
+			       
+void draw_update_vertex_fetch( struct draw_context *draw )
+{
+   //unsigned nr_attrs = draw->vertex_element_count;
+   unsigned nr_attrs = draw->vertex_shader->state->num_inputs;
+   unsigned i;
+
+   for (i = 0; i < nr_attrs; i++) {
+      unsigned buf = draw->vertex_element[i].vertex_buffer_index;
+      unsigned format  = draw->vertex_element[i].src_format;
+
+      draw->vertex_fetch.src_ptr[i] = (const ubyte *) (draw->user.vbuffer[buf] + 
+						       draw->vertex_buffer[buf].buffer_offset + 
+						       draw->vertex_element[i].src_offset );
+
+      draw->vertex_fetch.pitch[i] = draw->vertex_buffer[buf].pitch;
+      draw->vertex_fetch.fetch[i] = get_fetch_func( format );
+   }
+
+   draw->vertex_fetch.nr_attrs = nr_attrs;
 }
 
 
@@ -100,40 +155,48 @@ void draw_vertex_fetch( struct draw_context *draw,
 			const unsigned *elts,
 			unsigned count )
 {
-   unsigned j;
+   unsigned nr_attrs = draw->vertex_fetch.nr_attrs;
+   unsigned attr;
 
-   /* loop over vertices */
-   for (j = 0; j < count; j++) {
-      uint attr;
+   assert(count <= 4);
 
-#if DRAW_DBG
-      printf("fetch vertex %u: \n", j);
-#endif
+//   _mesa_printf("%s %d\n", __FUNCTION__, count);
 
-      /* loop over vertex attributes (vertex shader inputs) */
-      for (attr = 0; attr < draw->vertex_shader->state->num_inputs; attr++) {
+   /* loop over vertex attributes (vertex shader inputs)
+    */
+   for (attr = 0; attr < nr_attrs; attr++) {
 
-         unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
-         const void *src
-            = (const void *) ((const ubyte *) draw->user.vbuffer[buf]
-                              + draw->vertex_buffer[buf].buffer_offset
-                              + draw->vertex_element[attr].src_offset
-                              + elts[j] * draw->vertex_buffer[buf].pitch);
-         float p[4];
+      const unsigned pitch   = draw->vertex_fetch.pitch[attr];
+      const ubyte *src = draw->vertex_fetch.src_ptr[attr];
+      const fetch_func fetch = draw->vertex_fetch.fetch[attr];
+      unsigned i;
+      float p[4][4];
 
-         fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
 
-#if DRAW_DBG
-         printf("  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);
-#endif
+      /* Fetch four attributes for four vertices.  
+       * 
+       * Could fetch directly into AOS format, but this is meant to be
+       * a prototype for an sse implementation, which would have
+       * difficulties doing that.
+       */
+      for (i = 0; i < count; i++) 
+	 fetch( src + elts[i] * pitch, p[i] );
 
-         /* Transform to AoS xxxx/yyyy/zzzz/wwww representation:
-          */
-         machine->Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
-         machine->Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
-         machine->Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
-         machine->Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
-      }
+      /* Be nice and zero out any missing vertices: 
+       */
+      for ( ; i < 4; i++) 
+	 p[i][0] = p[i][1] = p[i][2] = p[i][3] = 0;
+      
+      /* Transpose/swizzle into sse-friendly format.  Currently
+       * assuming that all vertex shader inputs are float[4], but this
+       * isn't true -- if the vertex shader only wants tex0.xy, we
+       * could optimize for that.
+       *
+       * To do so fully without codegen would probably require an
+       * excessive number of fetch functions, but we could at least
+       * minimize the transpose step:
+       */
+      transpose_4x4( (float *)&machine->Inputs[attr].xyzw[0].f[0], (float *)p );
    }
 }
 

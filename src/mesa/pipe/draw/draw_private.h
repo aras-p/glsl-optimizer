@@ -137,6 +137,13 @@ struct draw_vertex_shader {
 #endif
 };
 
+
+/* Internal function for vertex fetch.
+ */
+typedef void (*fetch_func)(const void *ptr, float *attrib);
+
+
+
 /**
  * Private context for the drawing module.
  */
@@ -195,6 +202,15 @@ struct draw_context
 
    /** TGSI program interpreter runtime state */
    struct tgsi_exec_machine machine;
+
+   /* Vertex fetch internal state
+    */
+   struct {
+      const ubyte *src_ptr[PIPE_ATTRIB_MAX];
+      unsigned pitch[PIPE_ATTRIB_MAX];
+      fetch_func fetch[PIPE_ATTRIB_MAX];
+      unsigned nr_attrs;
+   } vertex_fetch;
 
    /* Post-tnl vertex cache:
     */
@@ -270,6 +286,7 @@ extern void draw_vertex_shader_queue_flush_llvm( struct draw_context *draw );
 
 struct tgsi_exec_machine;
 
+extern void draw_update_vertex_fetch( struct draw_context *draw );
 extern void draw_vertex_fetch( struct draw_context *draw,
 			       struct tgsi_exec_machine *machine,
 			       const unsigned *elts,
