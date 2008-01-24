@@ -135,9 +135,9 @@ void draw_update_vertex_fetch( struct draw_context *draw )
       unsigned buf = draw->vertex_element[i].vertex_buffer_index;
       unsigned format  = draw->vertex_element[i].src_format;
 
-      draw->vertex_fetch.src_ptr[i] = (const ubyte *) (draw->user.vbuffer[buf] + 
+      draw->vertex_fetch.src_ptr[i] = (const ubyte *) draw->user.vbuffer[buf] + 
 						       draw->vertex_buffer[buf].buffer_offset + 
-						       draw->vertex_element[i].src_offset );
+						       draw->vertex_element[i].src_offset;
 
       draw->vertex_fetch.pitch[i] = draw->vertex_buffer[buf].pitch;
       draw->vertex_fetch.fetch[i] = get_fetch_func( format );
