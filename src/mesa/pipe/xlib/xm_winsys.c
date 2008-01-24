@@ -405,7 +405,7 @@ xm_surface_alloc(struct pipe_winsys *ws)
    xms->surface.winsys = ws;
 
 #ifdef GALLIUM_CELL
-   if (getenv("GALLIUM_CELL")) {
+   if (!getenv("GALLIUM_NOCELL")) {
       xms->tileSize = 32; /** probably temporary */
    }
 #endif
@@ -511,7 +511,7 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
    struct pipe_context *pipe;
    
 #ifdef GALLIUM_CELL
-   if (getenv("GALLIUM_CELL")) {
+   if (!getenv("GALLIUM_NOCELL")) {
       struct cell_winsys *cws = cell_get_winsys(pixelformat);
       pipe = cell_create_context(pws, cws);
       if (pipe)
