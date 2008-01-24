@@ -210,8 +210,8 @@ cmd_render(const struct cell_command_render *render)
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
    ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
-
-   uint i, j, vertex_size, vertex_bytes, index_bytes;
+   uint i, j, total_vertex_bytes, total_index_bytes;
+   const uint vertex_size = render->vertex_size; /* in bytes */
 
    if (Debug) {
       printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
@@ -228,36 +228,34 @@ cmd_render(const struct cell_command_render *render)
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(render->index_data);
 
-   vertex_size = render->num_attribs * 4 * sizeof(float);
-
    /* how much vertex data */
-   vertex_bytes = render->num_verts * vertex_size;
-   index_bytes = render->num_indexes * sizeof(ushort);
-   if (index_bytes < 16)
-      index_bytes = 16;
+   total_vertex_bytes = render->num_verts * vertex_size;
+   total_index_bytes = render->num_indexes * sizeof(ushort);
+   if (total_index_bytes < 16)
+      total_index_bytes = 16;
    else
-      index_bytes = (index_bytes + 15) & ~0xf; /* multiple of 16 */
+      total_index_bytes = (total_index_bytes + 15) & ~0xf; /* multiple of 16 */
 
    /*
-   printf("VBUF: indices at %p,  vertices at %p  vertex_bytes %u  ind_bytes %u\n",
-          render->index_data, render->vertex_data, vertex_bytes, index_bytes);
+   printf("VBUF: indices at %p,  vertices at %p  total_vertex_bytes %u  ind_bytes %u\n",
+          render->index_data, render->vertex_data, total_vertex_bytes, total_index_bytes);
    */
 
-   ASSERT(vertex_bytes % 16 == 0);
+   ASSERT(total_vertex_bytes % 16 == 0);
    /* get vertex data from main memory */
    mfc_get(vertex_data,  /* dest */
            (unsigned int) render->vertex_data,  /* src */
-           vertex_bytes,  /* size */
+           total_vertex_bytes,  /* size */
            TAG_VERTEX_BUFFER,
            0, /* tid */
            0  /* rid */);
 
-   ASSERT(index_bytes % 16 == 0);
+   ASSERT(total_index_bytes % 16 == 0);
 
    /* get index data from main memory */
    mfc_get(indexes,  /* dest */
            (unsigned int) render->index_data,  /* src */
-           index_bytes,
+           total_index_bytes,
            TAG_INDEX_BUFFER,
            0, /* tid */
            0  /* rid */);

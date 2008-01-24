@@ -96,12 +96,14 @@ struct cell_command_clear_surface
 
 #define CELL_MAX_VBUF_SIZE    (16 * 1024)
 #define CELL_MAX_VBUF_INDEXES 1024
-#define CELL_MAX_ATTRIBS      2 /* temporary! */
+
+
 struct cell_command_render
 {
    uint opcode;
    uint prim_type;
-   uint num_verts, num_attribs;
+   uint num_verts;
+   uint vertex_size;  /**< bytes per vertex */
    uint num_indexes;
    const void *vertex_data;
    const ushort *index_data;

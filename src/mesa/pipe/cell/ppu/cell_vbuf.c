@@ -31,7 +31,9 @@
  */
 
 
+#include "cell_batch.h"
 #include "cell_context.h"
+#include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_vbuf.h"
 #include "pipe/draw/draw_vbuf.h"
@@ -141,26 +143,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    if (cvbr->prim != PIPE_PRIM_TRIANGLES)
       return; /* only render tris for now */
 
-#if 0
-   for (i = 0; i < cell->num_spus; i++) {
-      struct cell_command_render *render = &cell_global.command[i].render;
-      render->opcode = CELL_CMD_RENDER;
-      render->prim_type = cvbr->prim;
-      render->num_verts = nr_vertices;
-      render->num_attribs = CELL_MAX_ATTRIBS; /* XXX fix */
-      render->vertex_data = vertices;
-      render->index_data = indices;
-      render->num_indexes = nr_indices;
-      render->xmin = xmin;
-      render->ymin = ymin;
-      render->xmax = xmax;
-      render->ymax = ymax;
-
-      ASSERT_ALIGN16(render->vertex_data);
-      ASSERT_ALIGN16(render->index_data);
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_RENDER);
-   }
-#else
+   /* build/insert batch RENDER command */
    {
       struct cell_command_render *render
          = (struct cell_command_render *)
@@ -168,7 +151,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->opcode = CELL_CMD_RENDER;
       render->prim_type = cvbr->prim;
       render->num_verts = nr_vertices;
-      render->num_attribs = CELL_MAX_ATTRIBS; /* XXX fix */
+      render->vertex_size = 4 * cell->vertex_info.size;
       render->vertex_data = vertices;
       render->index_data = indices;
       render->num_indexes = nr_indices;
@@ -180,7 +163,6 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       ASSERT_ALIGN16(render->vertex_data);
       ASSERT_ALIGN16(render->index_data);
    }
-#endif
 
 #if 01
    /* XXX this is temporary */
