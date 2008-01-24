@@ -73,33 +73,33 @@ emit_hw_vertex( struct i915_context *i915,
    uint count = 0;  /* for debug/sanity */
 
    for (i = 0; i < vinfo->num_attribs; i++) {
-      switch (vinfo->format[i]) {
-      case FORMAT_OMIT:
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
          /* no-op */
          break;
-      case FORMAT_1F:
+      case EMIT_1F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          count++;
          break;
-      case FORMAT_2F:
+      case EMIT_2F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          count += 2;
          break;
-      case FORMAT_3F:
+      case EMIT_3F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          OUT_BATCH( fui(vertex->data[i][2]) );
          count += 3;
          break;
-      case FORMAT_4F:
+      case EMIT_4F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          OUT_BATCH( fui(vertex->data[i][2]) );
          OUT_BATCH( fui(vertex->data[i][3]) );
          count += 4;
          break;
-      case FORMAT_4UB:
+      case EMIT_4UB:
          OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[i][2] ),
                              float_to_ubyte( vertex->data[i][1] ),
                              float_to_ubyte( vertex->data[i][0] ),

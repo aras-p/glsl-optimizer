@@ -35,18 +35,17 @@
 
 
 /**
- * Vertex attribute format
- * XXX rename to "EMIT"
+ * Vertex attribute emit modes
  */
-enum attrib_format {
-   FORMAT_OMIT,      /**< don't emit the attribute */
-   FORMAT_HEADER,    /**< The 5-byte vertex header */
-   FORMAT_1F,
-   FORMAT_1F_PSIZE,  /**< insert constant point size */
-   FORMAT_2F,
-   FORMAT_3F,
-   FORMAT_4F,
-   FORMAT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
+enum attrib_emit {
+   EMIT_OMIT,      /**< don't emit the attribute */
+   EMIT_ALL,       /**< emit whole post-xform vertex, w/ header */
+   EMIT_1F,
+   EMIT_1F_PSIZE,  /**< insert constant point size */
+   EMIT_2F,
+   EMIT_3F,
+   EMIT_4F,
+   EMIT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
 };
 
 
@@ -70,7 +69,7 @@ struct vertex_info
    uint num_attribs;
    uint hwfmt[4];      /**< hardware format info for this format */
    enum interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
-   enum attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
+   enum attrib_emit emit[PIPE_MAX_SHADER_OUTPUTS];   /**< EMIT_x */
    uint src_index[PIPE_MAX_SHADER_OUTPUTS]; /**< map to post-xform attribs */
    uint size;          /**< total vertex size in dwords */
 };
@@ -85,12 +84,12 @@ struct vertex_info
  */
 static INLINE uint
 draw_emit_vertex_attr(struct vertex_info *vinfo,
-                      enum attrib_format format, enum interp_mode interp,
+                      enum attrib_emit emit, enum interp_mode interp,
                       uint src_index)
 {
    const uint n = vinfo->num_attribs;
    assert(n < PIPE_MAX_SHADER_OUTPUTS);
-   vinfo->format[n] = format;
+   vinfo->emit[n] = emit;
    vinfo->interp_mode[n] = interp;
    vinfo->src_index[n] = src_index;
    vinfo->num_attribs++;
