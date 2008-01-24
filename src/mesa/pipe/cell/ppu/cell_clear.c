@@ -39,6 +39,7 @@
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_batch.h"
+#include "cell_flush.h"
 #include "cell_spu.h"
 
 
@@ -47,7 +48,7 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue)
 {
    struct cell_context *cell = cell_context(pipe);
-   uint i;
+   /*uint i;*/
    uint surfIndex;
 
    if (!cell->cbuf_map[0])

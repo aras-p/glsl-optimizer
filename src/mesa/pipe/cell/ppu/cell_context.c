@@ -56,7 +56,7 @@ static boolean
 cell_is_format_supported( struct pipe_context *pipe,
                           enum pipe_format format, uint type )
 {
-   struct cell_context *cell = cell_context( pipe );
+   /*struct cell_context *cell = cell_context( pipe );*/
 
    switch (type) {
    case PIPE_TEXTURE:

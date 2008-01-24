@@ -26,8 +26,8 @@
  **************************************************************************/
 
 
-#ifndef CELL_SURFACE_H
-#define CELL_SURFACE_H
+#ifndef CELL_CLEAR_H
+#define CELL_CLEAR_H
 
 
 struct pipe_context;
@@ -40,4 +40,4 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
 
 
 
-#endif /* CELL_SURFACE_H */
+#endif /* CELL_CLEAR_H */
