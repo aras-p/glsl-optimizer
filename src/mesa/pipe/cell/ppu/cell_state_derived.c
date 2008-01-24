@@ -69,10 +69,10 @@ static void calculate_vertex_layout( struct cell_context *cell )
 #endif
 
    /* always emit vertex pos */
-   draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR, src++);
+   draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_LINEAR, src++);
 
 #if 1
-   front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
+   front0 = draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src++);
 #endif
 
 #if 0
@@ -95,11 +95,11 @@ static void calculate_vertex_layout( struct cell_context *cell )
 
       case TGSI_SEMANTIC_COLOR:
          if (vs->output_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
+            front0 = draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src++);
          }
          else {
             assert(vs->output_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
+            front1 = draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src++);
          }
          break;
 
@@ -114,7 +114,7 @@ static void calculate_vertex_layout( struct cell_context *cell )
          break;
 
       case TGSI_SEMANTIC_FOG:
-         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_PERSPECTIVE, src++);
+         draw_emit_vertex_attr(vinfo, EMIT_1F, INTERP_PERSPECTIVE, src++);
          break;
 
       case TGSI_SEMANTIC_PSIZE:
@@ -126,7 +126,7 @@ static void calculate_vertex_layout( struct cell_context *cell )
 
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
-         draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE, src++);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
          break;
 
       default:
@@ -141,14 +141,14 @@ static void calculate_vertex_layout( struct cell_context *cell )
     * up 1:1 with the fragment shader inputs.
     */
    if (emitBack0) {
-      back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
+      back0 = draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src++);
    }
    if (emitBack1) {
-      back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
+      back1 = draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src++);
    }
    if (emitPsize) {
       cell->psize_slot
-         = draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT, src++);
+         = draw_emit_vertex_attr(vinfo, EMIT_1F, INTERP_CONSTANT, src++);
    }
 
    /* If the attributes have changed, tell the draw module about
