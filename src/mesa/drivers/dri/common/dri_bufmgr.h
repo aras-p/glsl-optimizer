@@ -197,9 +197,6 @@ void dri_bo_subdata(dri_bo *bo, unsigned long offset,
 void dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
 			unsigned long size, void *data);
 
-dri_bufmgr *dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
-				unsigned int fence_type_flush);
-
 void dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr);
 dri_bufmgr *dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 				 unsigned long size,
@@ -213,8 +210,6 @@ void dri_bo_fake_disable_backing_store(dri_bo *bo,
 							     void *ptr),
 				       void *ptr);
 void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
-dri_bo *dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
-				      unsigned int handle);
 
 void dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		    GLuint offset, dri_bo *target_buf);

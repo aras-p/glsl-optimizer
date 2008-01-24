@@ -35,9 +35,12 @@
  */
 
 #include <xf86drm.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include "glthread.h"
+#include <assert.h>
+
 #include "errno.h"
 #include "mtypes.h"
 #include "dri_bufmgr.h"
@@ -50,7 +53,7 @@
 
 #define DBG(...) do {					\
    if (bufmgr_ttm->bufmgr.debug)			\
-      _mesa_printf(__VA_ARGS__);			\
+      fprintf(stderr, __VA_ARGS__);			\
 } while (0)
 
 /*
@@ -150,7 +153,7 @@ static void dri_ttm_dump_validation_list(dri_bufmgr_ttm *bufmgr_ttm)
 		    bufmgr_ttm->validate_array[reloc_entry[2]].bo;
 		dri_bo_ttm *target_ttm = (dri_bo_ttm *)target_bo;
 
-		DBG("%2d: %s@0x%08x -> %s@0x%08x + 0x%08x\n",
+		DBG("%2d: %s@0x%08x -> %s@0x%08lx + 0x%08x\n",
 		    i,
 		    bo_ttm->name, reloc_entry[0],
 		    target_ttm->name, target_bo->offset,
@@ -369,7 +372,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     ttm_buf->delayed_unmap = GL_FALSE;
     ttm_buf->validate_index = -1;
 
-    DBG("bo_create: %p (%s) %db\n", &ttm_buf->bo, ttm_buf->name, size);
+    DBG("bo_create: %p (%s) %ldb\n", &ttm_buf->bo, ttm_buf->name, size);
 
     return &ttm_buf->bo;
 }
@@ -619,8 +622,8 @@ dri_ttm_fence_wait(dri_fence *fence)
 
     ret = drmFenceWait(bufmgr_ttm->fd, DRM_FENCE_FLAG_WAIT_LAZY, &fence_ttm->drm_fence, 0);
     if (ret != 0) {
-	_mesa_printf("%s:%d: Error %d waiting for fence %s.\n",
-		     __FILE__, __LINE__, ret, fence_ttm->name);
+        fprintf(stderr, "%s:%d: Error %d waiting for fence %s.\n",
+		__FILE__, __LINE__, ret, fence_ttm->name);
 	abort();
     }
 
@@ -705,8 +708,6 @@ dri_ttm_bo_process_reloc(dri_bo *bo)
 
     for (i = 0; i < nr_relocs; i++) {
 	struct dri_ttm_reloc *r = &bo_ttm->relocs[i];
-	dri_bo_ttm *target_ttm = (dri_bo_ttm *)r->target_buf;
-	uint32_t *reloc_entry;
 
 	/* Continue walking the tree depth-first. */
 	dri_ttm_bo_process_reloc(r->target_buf);
@@ -786,8 +787,8 @@ intel_update_buffer_offsets (dri_bufmgr_ttm *bufmgr_ttm)
 	}
 	/* Update the buffer offset */
 	if (rep->bo_info.offset != bo->offset) {
-	    DBG("BO %s migrated: 0x%08x -> 0x%08x\n",
-		bo_ttm->name, bo->offset, rep->bo_info.offset);
+	    DBG("BO %s migrated: 0x%08lx -> 0x%08lx\n",
+		bo_ttm->name, bo->offset, (unsigned long)rep->bo_info.offset);
 	    bo->offset = rep->bo_info.offset;
 	}
     }
