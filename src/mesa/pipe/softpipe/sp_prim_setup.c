@@ -551,7 +551,7 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 
       if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
          /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
          setup->coef[fragSlot].dadx[1] = 0.0;
          setup->coef[fragSlot].dady[1] = 0.0;
       }
@@ -806,7 +806,7 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 
       if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
          /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
          setup->coef[fragSlot].dadx[1] = 0.0;
          setup->coef[fragSlot].dady[1] = 0.0;
       }
@@ -1029,7 +1029,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 
       if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
          /* FOG.y = front/back facing  XXX fix this */
-         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
          setup->coef[fragSlot].dadx[1] = 0.0;
          setup->coef[fragSlot].dady[1] = 0.0;
       }
