@@ -36,6 +36,7 @@
 
 /**
  * Vertex attribute format
+ * XXX rename to "EMIT"
  */
 enum attrib_format {
    FORMAT_OMIT,      /**< don't emit the attribute */
@@ -54,6 +55,7 @@ enum attrib_format {
  */
 enum interp_mode {
    INTERP_NONE,      /**< never interpolate vertex header info */
+   INTERP_POS,       /**< special case for frag position */
    INTERP_CONSTANT,
    INTERP_LINEAR,
    INTERP_PERSPECTIVE

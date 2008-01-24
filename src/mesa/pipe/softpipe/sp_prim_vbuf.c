@@ -75,7 +75,7 @@ sp_vbuf_get_vertex_info(struct vbuf_render *vbr)
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    /* XXX check for state changes? */
    assert(!cvbr->softpipe->dirty );
-   return &cvbr->softpipe->vertex_info;
+   return &cvbr->softpipe->vertex_info_vbuf;
 }
 
 
@@ -140,7 +140,7 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
    struct softpipe_context *softpipe = cvbr->softpipe;
    struct draw_stage *setup = softpipe->setup;
    struct prim_header prim;
-   unsigned vertex_size = softpipe->vertex_info.size * sizeof(float);
+   unsigned vertex_size = softpipe->vertex_info_vbuf.size * sizeof(float);
    unsigned i, j;
    void *vertex_buffer = cvbr->vertex_buffer;
 

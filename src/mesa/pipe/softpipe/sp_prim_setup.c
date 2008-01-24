@@ -85,8 +85,6 @@ struct setup_stage {
    struct tgsi_interp_coef posCoef;  /* For Z, W */
    struct quad_header quad; 
 
-   uint firstFpInput;  /** Semantic type of first frag input */
-
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
       int right[2];
@@ -515,21 +513,9 @@ setup_fragcoord_coeff(struct setup_stage *setup)
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const enum interp_mode *interp;
-#define USE_INPUT_MAP 01
-#if USE_INPUT_MAP
-   const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
-#endif
+   const struct softpipe_context *softpipe = setup->softpipe;
+   const struct pipe_shader_state *fs = &softpipe->fs->shader;
    uint fragSlot;
-
-   if (setup->softpipe->vertex_info.format[0] == FORMAT_HEADER) {
-      /* skip header, pos slots */
-      interp = setup->softpipe->vertex_info.interp_mode + 2;
-   }
-   else {
-      /* skip pos slot */
-      interp = setup->softpipe->vertex_info.interp_mode + 1;
-   }
 
    /* z and w are done by linear interpolation:
     */
@@ -538,64 +524,37 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < setup->quad.nr_attrs; fragSlot++) {
-      /* which vertex output maps to this fragment input: */
-#if !USE_INPUT_MAP
-      uint vertSlot;
-      if (setup->firstFpInput == TGSI_SEMANTIC_POSITION) {
-         if (fragSlot == 0) {
-            setup_fragcoord_coeff(setup);
-            continue;
-         }
-         vertSlot = fragSlot;
-      }
-      else {
-         vertSlot = fragSlot + 1;
-      }
+   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      uint j;
 
-#else
-      uint vertSlot = fs->input_map[fragSlot];
-
-      if (vertSlot == 0) {
-         /* special case: shader is reading gl_FragCoord */
-         /* XXX with a new INTERP_POSITION token, we could just add a
-          * new case to the switch below.
-          */
+      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      case INTERP_CONSTANT:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_POS:
+         assert(fragSlot == 0);
          setup_fragcoord_coeff(setup);
+         break;
+      default:
+         assert(0);
       }
-      else {
-#endif
-         uint j;
-         switch (interp[fragSlot]) {
-         case INTERP_CONSTANT:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_LINEAR:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_PERSPECTIVE:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         default:
-            /* invalid interp mode */
-            /* assert(0); re-enable this and run demos/fogcoord.c ... */
-            ;
-         }
 
-         if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
-            /* FOG.y = front/back facing  XXX fix this */
-            setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
-            setup->coef[fragSlot].dadx[1] = 0.0;
-            setup->coef[fragSlot].dady[1] = 0.0;
-         }
-
-
-#if USE_INPUT_MAP
+      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
-#endif
    }
 }
 
@@ -797,9 +756,9 @@ line_persp_coeff(struct setup_stage *setup,
 static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const struct softpipe_context *softpipe = setup->softpipe;
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
-   unsigned fragSlot;
+   uint fragSlot;
 
    /* use setup->vmin, vmax to point to vertices */
    setup->vprovoke = prim->v[1];
@@ -819,34 +778,37 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < setup->quad.nr_attrs; fragSlot++) {
-      /* which vertex output maps to this fragment input: */
-      uint vertSlot = fs->input_map[fragSlot];
+   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      uint j;
 
-      if (vertSlot == 0) {
-         /* special case: shader is reading gl_FragCoord */
+      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      case INTERP_CONSTANT:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            line_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_POS:
+         assert(fragSlot == 0);
+         assert(0); /* XXX fix this: */
          setup_fragcoord_coeff(setup);
+         break;
+      default:
+         assert(0);
       }
-      else {
-         uint j;
-         switch (interp[vertSlot]) {
-         case INTERP_CONSTANT:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_LINEAR:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               line_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_PERSPECTIVE:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-            
-         default:
-            /* invalid interp mode */
-            assert(0);
-         }
+
+      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
    }
 }
@@ -1005,8 +967,8 @@ static void
 setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
-   const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   struct softpipe_context *softpipe = setup->softpipe;
+   const struct pipe_shader_state *fs = &softpipe->fs->shader;
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
    const float size
@@ -1040,31 +1002,36 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const_coeff(setup, &setup->posCoef, 0, 2);
    const_coeff(setup, &setup->posCoef, 0, 3);
 
-   for (fragSlot = 0; fragSlot < setup->quad.nr_attrs; fragSlot++) {
-      /* which vertex output maps to this fragment input: */
-      uint vertSlot = fs->input_map[fragSlot];
+   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      uint j;
 
-      if (vertSlot == 0) {
-         /* special case: shader is reading gl_FragCoord */
+      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      case INTERP_CONSTANT:
+         /* fall-through */
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            point_persp_coeff(setup, setup->vprovoke,
+                              &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_POS:
+         assert(fragSlot == 0);
+         assert(0); /* XXX fix this: */
          setup_fragcoord_coeff(setup);
+         break;
+      default:
+         assert(0);
       }
-      else {
-         uint j;
-         switch (interp[vertSlot]) {
-         case INTERP_CONSTANT:
-            /* fall-through */
-         case INTERP_LINEAR:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_PERSPECTIVE:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               point_persp_coeff(setup, setup->vprovoke,
-                                 &setup->coef[fragSlot], vertSlot, j);
-            break;
-         default:
-            assert(0);
-         }
+
+      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
    }
 
@@ -1200,9 +1167,7 @@ static void setup_begin( struct draw_stage *stage )
    struct softpipe_context *sp = setup->softpipe;
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
 
-   setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-
-   setup->firstFpInput = fs->input_semantic_name[0];
+   setup->quad.nr_attrs = fs->num_inputs;
 
    sp->quad.first->begin(sp->quad.first);
 }

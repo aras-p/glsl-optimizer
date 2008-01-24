@@ -89,8 +89,8 @@ struct softpipe_context {
 
    /** Vertex format */
    struct vertex_info vertex_info;
-   unsigned attr_mask;
-   unsigned nr_frag_attrs;  /**< number of active fragment attribs */
+   struct vertex_info vertex_info_vbuf;
+
    int psize_slot;
 
 #if 0

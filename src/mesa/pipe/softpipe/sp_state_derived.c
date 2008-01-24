@@ -50,9 +50,9 @@ find_vs_output(const struct pipe_shader_state *vs,
 
 
 /**
- * Determine which post-transform / pre-rasterization vertex attributes
- * we need.
- * Derived from:  fs, setup states.
+ * Determine how to map vertex program outputs to fragment program inputs.
+ * Basically, this will be used when computing the triangle interpolation
+ * coefficients from the post-transform vertex attributes.
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
@@ -61,35 +61,33 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    const enum interp_mode colorInterp
       = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &softpipe->vertex_info;
+   struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
    uint i;
    int src;
 
-   memset(vinfo, 0, sizeof(*vinfo));
-
-   softpipe->psize_slot = -1;
-
    if (softpipe->vbuf) {
-      /* softpipe's setup/rasterizer stage expects vertex to have a header */
-      draw_emit_vertex_attr(vinfo, FORMAT_HEADER, INTERP_LINEAR, 0);
+      /* if using the post-transform vertex buffer, tell draw_vbuf to
+       * simply emit the whole post-xform vertex as-is:
+       */
+      vinfo_vbuf->num_attribs = 0;
+      draw_emit_vertex_attr(vinfo_vbuf, FORMAT_HEADER, INTERP_NONE, 0);
+      for (i = 0; i < vs->num_outputs; i++) {
+         draw_emit_vertex_attr(vinfo_vbuf, FORMAT_4F, INTERP_NONE, i);
+      }
+      draw_compute_vertex_size(vinfo_vbuf);
    }
 
-   /* always emit pos for softpipe rasterization */
-   src = find_vs_output(vs, TGSI_SEMANTIC_POSITION, 0);
-   assert(src >= 0);
-   draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR, src);
-
    /*
-    * XXX I think we need to reconcile the vertex shader outputs with
-    * the fragment shader inputs here to make sure the slots line up.
-    * Might just be getting lucky so far.
-    * Or maybe do that in the state tracker?
+    * Loop over fragment shader inputs, searching for the matching output
+    * from the vertex shader.
     */
-
+   vinfo->num_attribs = 0;
    for (i = 0; i < fs->num_inputs; i++) {
       switch (fs->input_semantic_name[i]) {
-
       case TGSI_SEMANTIC_POSITION:
-         /* handled above */
+         src = find_vs_output(vs, TGSI_SEMANTIC_POSITION, 0);
+         assert(src >= 0);
+         draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_POS, src);
          break;
 
       case TGSI_SEMANTIC_COLOR:
@@ -122,16 +120,13 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       }
    }
 
-   src = find_vs_output(vs, TGSI_SEMANTIC_PSIZE, 0);
-   if (src >= 0) {
-      softpipe->psize_slot = src;
-      draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_CONSTANT, src);
+   softpipe->psize_slot = find_vs_output(vs, TGSI_SEMANTIC_PSIZE, 0);
+   if (softpipe->psize_slot >= 0) {
+      draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_CONSTANT,
+                            softpipe->psize_slot);
    }
 
-
    draw_compute_vertex_size(vinfo);
-
-   softpipe->nr_frag_attrs = fs->num_inputs;
 }
 
 
@@ -175,7 +170,9 @@ compute_cliprect(struct softpipe_context *sp)
  */
 void softpipe_update_derived( struct softpipe_context *softpipe )
 {
-   if (softpipe->dirty & (SP_NEW_RASTERIZER | SP_NEW_FS | SP_NEW_VS))
+   if (softpipe->dirty & (SP_NEW_RASTERIZER |
+                          SP_NEW_FS |
+                          SP_NEW_VS))
       calculate_vertex_layout( softpipe );
 
    if (softpipe->dirty & (SP_NEW_SCISSOR |
