@@ -172,7 +172,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
        */
-      for (slot = 1; slot < draw->vs_num_outputs; slot++) {
+      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
          vOut->data[slot][0] = dests[slot][0];
          vOut->data[slot][1] = dests[slot][1];
          vOut->data[slot][2] = dests[slot][2];

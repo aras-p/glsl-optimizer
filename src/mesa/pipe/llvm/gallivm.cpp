@@ -733,7 +733,11 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
    unsigned instno = 0;
    Function* shader = mod->getFunction("execute_shader");
    std::ostringstream stream;
-   stream << "execute_shader";
+   if (prog->type == GALLIVM_VS) {
+      stream << "vs_shader";
+   } else {
+      stream << "fs_shader";
+   }
    stream << prog->id;
    std::string func_name = stream.str();
    shader->setName(func_name.c_str());
@@ -799,6 +803,7 @@ gallivm_from_tgsi(const struct tgsi_token *tokens, enum gallivm_shader_type type
    struct gallivm_prog *gallivm =
       (struct gallivm_prog *)calloc(1, sizeof(struct gallivm_prog));
    gallivm->id = GLOBAL_ID;
+   gallivm->type = type;
    tgsi_dump(tokens, 0);
 
    llvm::Module *mod = tgsi_to_llvm(gallivm, tokens);
@@ -812,7 +817,6 @@ gallivm_from_tgsi(const struct tgsi_token *tokens, enum gallivm_shader_type type
    passes.run(*mod);
 
    gallivm->module = mod;
-   gallivm->type = type;
 
    gallivm_prog_dump(gallivm, 0);
 
@@ -966,7 +970,8 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
          const llvm::Function &func = (*itr);
          std::string name = func.getName();
          const llvm::Function *found = 0;
-         if (name.find("execute_shader") != std::string::npos ||
+         if (name.find("vs_shader") != std::string::npos ||
+             name.find("fs_shader") != std::string::npos ||
              name.find("function") != std::string::npos)
             found = &func;
          if (found) {
