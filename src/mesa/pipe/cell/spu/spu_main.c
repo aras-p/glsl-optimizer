@@ -391,6 +391,17 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
 
 
 static void
+cmd_state_vertex_info(const struct vertex_info *vinfo)
+{
+   if (Debug)
+      printf("SPU %u: VERTEX_INFO num_attribs=%u\n", spu.init.id,
+             vinfo->num_attribs);
+   memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
+}
+
+
+
+static void
 cmd_finish(void)
 {
    if (Debug)
@@ -472,7 +483,6 @@ cmd_batch(uint opcode)
    /* Tell PPU we're done copying the buffer to local store */
    release_batch_buffer(buf);
 
-
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
       case CELL_CMD_FRAMEBUFFER:
@@ -509,9 +519,12 @@ cmd_batch(uint opcode)
          pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
          break;
       case CELL_CMD_STATE_SAMPLER:
-         cmd_state_sampler((struct pipe_sampler_state *)
-                           &buffer[pos+1]);
+         cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);
          pos += (1 + sizeof(struct pipe_sampler_state) / 4);
+         break;
+      case CELL_CMD_STATE_VERTEX_INFO:
+         cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
+         pos += (1 + sizeof(struct vertex_info) / 4);
          break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);

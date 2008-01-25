@@ -30,6 +30,7 @@
 
 
 #include "pipe/cell/common.h"
+#include "pipe/draw/draw_vertex.h"
 #include "pipe/p_state.h"
 
 
@@ -59,6 +60,9 @@ struct spu_global
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+
+   struct vertex_info vertex_info;
+
    /* XXX more state to come */
 
 } ALIGN16_ATTRIB;

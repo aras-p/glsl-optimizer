@@ -42,7 +42,7 @@
  * Simplified types taken from other parts of Gallium
  */
 struct vertex_header {
-   float data[2][4];  /* pos and color */
+   float data[0][4];
 };
 
 struct prim_header {
@@ -727,40 +727,32 @@ static void tri_persp_coeff( struct setup_stage *setup,
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-#if 0
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
-   unsigned slot, j;
+#if 1
+   uint i;
 
-   /* z and w are done by linear interpolation:
-    */
-   tri_linear_coeff(setup, 0, 2);
-   tri_linear_coeff(setup, 0, 3);
-
-   /* setup interpolation for all the remaining attributes:
-    */
-   for (slot = 1; slot < setup->quad.nr_attrs; slot++) {
-      switch (interp[slot]) {
+   for (i = 0; i < spu.vertex_info.num_attribs; i++) {
+      switch (spu.vertex_info.interp_mode[i]) {
+      case INTERP_NONE:
+         break;
+      case INTERP_POS:
+         tri_linear_coeff(setup, i, 2, 3);  /* slot 0, z */
+         /* XXX interp W if PERSPECTIVE... */
+         break;
       case INTERP_CONSTANT:
-	 for (j = 0; j < NUM_CHANNELS; j++)
-	    const_coeff(setup, slot, j);
-	 break;
-      
+         /* fall-through */
       case INTERP_LINEAR:
-	 for (j = 0; j < NUM_CHANNELS; j++)
-	    tri_linear_coeff(setup, slot, j);
-	 break;
-
+         tri_linear_coeff(setup, i, 0, 4);  /* slot 1, color */
+         break;
       case INTERP_PERSPECTIVE:
-	 for (j = 0; j < NUM_CHANNELS; j++)
-	    tri_persp_coeff(setup, slot, j);
-	 break;
-
+         break;
       default:
-         /* invalid interp mode */
-         assert(0);
+         ASSERT(0);
       }
    }
 #else
+   ASSERT(spu.vertex_info.interp_mode[0] == INTERP_POS);
+   ASSERT(spu.vertex_info.interp_mode[1] == INTERP_LINEAR ||
+          spu.vertex_info.interp_mode[1] == INTERP_CONSTANT);
    tri_linear_coeff(setup, 0, 2, 3);  /* slot 0, z */
    tri_linear_coeff(setup, 1, 0, 4);  /* slot 1, color */
 #endif

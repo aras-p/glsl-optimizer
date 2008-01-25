@@ -30,6 +30,7 @@
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_vertex.h"
 #include "cell_context.h"
+#include "cell_batch.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"
 
@@ -85,6 +86,7 @@ calculate_vertex_layout( struct cell_context *cell )
    assert(src >= 0);
    draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
 
+
    /*
     * Loop over fragment shader inputs, searching for the matching output
     * from the vertex shader.
@@ -126,6 +128,9 @@ calculate_vertex_layout( struct cell_context *cell )
    }
 
    draw_compute_vertex_size(vinfo);
+
+   /* XXX only signal this if format really changes */
+   cell->dirty |= CELL_NEW_VERTEX_INFO;
 }
 
 

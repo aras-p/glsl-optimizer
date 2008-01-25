@@ -49,4 +49,10 @@ cell_emit_state(struct cell_context *cell)
       cell_batch_append(cell, cell->sampler[0],
                         sizeof(struct pipe_sampler_state));
    }
+
+   if (cell->dirty & CELL_NEW_VERTEX_INFO) {
+      uint cmd = CELL_CMD_STATE_VERTEX_INFO;
+      cell_batch_append(cell, &cmd, 4);
+      cell_batch_append(cell, &cell->vertex_info, sizeof(struct vertex_info));
+   }
 }
