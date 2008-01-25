@@ -108,6 +108,8 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #endif /* WIN32 */
 
+#define MALLOC_STRUCT(T)   (struct T *) MALLOC(sizeof(struct T))
+
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
 
