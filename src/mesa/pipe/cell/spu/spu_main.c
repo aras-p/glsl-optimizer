@@ -338,7 +338,7 @@ cmd_render(const struct cell_command_render *render)
 
 
 static void
-cmd_framebuffer(const struct cell_command_framebuffer *cmd)
+cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
    if (Debug)
       printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
@@ -348,6 +348,9 @@ cmd_framebuffer(const struct cell_command_framebuffer *cmd)
              cmd->color_start,
              cmd->color_format,
              cmd->depth_format);
+
+   ASSERT_ALIGN16(cmd->color_start);
+   ASSERT_ALIGN16(cmd->depth_start);
 
    spu.fb.color_start = cmd->color_start;
    spu.fb.depth_start = cmd->depth_start;
@@ -485,11 +488,11 @@ cmd_batch(uint opcode)
 
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
-      case CELL_CMD_FRAMEBUFFER:
+      case CELL_CMD_STATE_FRAMEBUFFER:
          {
             struct cell_command_framebuffer *fb
                = (struct cell_command_framebuffer *) &buffer[pos];
-            cmd_framebuffer(fb);
+            cmd_state_framebuffer(fb);
             pos += sizeof(*fb) / 4;
          }
          break;
@@ -581,8 +584,8 @@ main_loop(void)
             printf("SPU %u: EXIT\n", spu.init.id);
          exitFlag = 1;
          break;
-      case CELL_CMD_FRAMEBUFFER:
-         cmd_framebuffer(&cmd.fb);
+      case CELL_CMD_STATE_FRAMEBUFFER:
+         cmd_state_framebuffer(&cmd.fb);
          break;
       case CELL_CMD_CLEAR_SURFACE:
          cmd_clear_surface(&cmd.clear);

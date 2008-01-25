@@ -56,15 +56,15 @@
  */
 #define CELL_CMD_OPCODE_MASK 0xf
 
-#define CELL_CMD_EXIT          1
-#define CELL_CMD_FRAMEBUFFER   2
-#define CELL_CMD_CLEAR_SURFACE 3
-#define CELL_CMD_FINISH        4
-#define CELL_CMD_RENDER        5
-#define CELL_CMD_BATCH         6
-#define CELL_CMD_STATE_DEPTH_STENCIL 7
-#define CELL_CMD_STATE_SAMPLER       8
-#define CELL_CMD_STATE_VERTEX_INFO   9
+#define CELL_CMD_EXIT                 1
+#define CELL_CMD_CLEAR_SURFACE        2
+#define CELL_CMD_FINISH               3
+#define CELL_CMD_RENDER               4
+#define CELL_CMD_BATCH                5
+#define CELL_CMD_STATE_FRAMEBUFFER   10
+#define CELL_CMD_STATE_DEPTH_STENCIL 11
+#define CELL_CMD_STATE_SAMPLER       12
+#define CELL_CMD_STATE_VERTEX_INFO   13
 
 
 #define CELL_NUM_BATCH_BUFFERS 3

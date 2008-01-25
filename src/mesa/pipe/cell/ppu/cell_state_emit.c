@@ -36,6 +36,20 @@
 void
 cell_emit_state(struct cell_context *cell)
 {
+   if (cell->dirty & CELL_NEW_FRAMEBUFFER) {
+      struct pipe_surface *cbuf = cell->framebuffer.cbufs[0];
+      struct pipe_surface *zbuf = cell->framebuffer.zsbuf;
+      struct cell_command_framebuffer *fb
+         = cell_batch_alloc(cell, sizeof(*fb));
+      fb->opcode = CELL_CMD_STATE_FRAMEBUFFER;
+      fb->color_start = cell->cbuf_map[0];
+      fb->color_format = cbuf->format;
+      fb->depth_start = cell->zsbuf_map;
+      fb->depth_format = zbuf ? zbuf->format : PIPE_FORMAT_NONE;
+      fb->width = cell->framebuffer.cbufs[0]->width;
+      fb->height = cell->framebuffer.cbufs[0]->height;
+   }
+
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
       uint cmd = CELL_CMD_STATE_DEPTH_STENCIL;
       cell_batch_append(cell, &cmd, 4);
