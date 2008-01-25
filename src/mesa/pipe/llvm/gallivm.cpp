@@ -34,6 +34,7 @@
 #include "gallivm.h"
 
 #include "instructions.h"
+#include "loweringpass.h"
 #include "storage.h"
 
 #include "pipe/p_context.h"
@@ -95,6 +96,7 @@ using namespace llvm;
 static int GLOBAL_ID = 0;
 
 static inline void AddStandardCompilePasses(PassManager &PM) {
+   PM.add(new LoweringPass());
    PM.add(createVerifierPass());                  // Verify that input is correct
 
    PM.add(createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
