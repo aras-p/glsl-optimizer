@@ -262,7 +262,7 @@ void brw_clip_kill_thread(struct brw_clip_compile *c)
 		 c->reg.R0,
 		 0,		/* allocate */
 		 0,		/* used */
-		 0, 		/* msg len */
+		 1, 		/* msg len */
 		 0, 		/* response len */
 		 1, 		/* eot */
 		 1,		/* writes complete */
