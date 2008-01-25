@@ -48,10 +48,6 @@
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
 
-#ifndef __MSC__
-#include <unistd.h>
-#endif
-
 
 /**
  * Convenience macro (type safe).
