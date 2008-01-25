@@ -308,15 +308,11 @@ brw_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
       memset(&tex->base + 1, 0,
 	     sizeof(struct brw_texture) - sizeof(struct pipe_texture));
 
-      if (brw_miptree_layout(pipe, tex)) {
-	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64, 0, 0);
-
-         if (tex->buffer)
-            pipe->winsys->buffer_data(pipe->winsys, tex->buffer,
-                                      tex->pitch * tex->base.cpp *
-                                      tex->total_height, NULL,
-                                      PIPE_BUFFER_USAGE_PIXEL);
-      }
+      if (brw_miptree_layout(pipe, tex))
+	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,
+                                                   PIPE_BUFFER_USAGE_PIXEL,
+                                                   tex->pitch * tex->base.cpp *
+                                                   tex->total_height);
 
       if (!tex->buffer) {
 	 FREE(tex);

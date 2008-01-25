@@ -1,4 +1,4 @@
-/**************************************************************************
+ /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -93,17 +93,20 @@ struct pipe_winsys
 
    
    /**
-    * The buffer manager is modeled after the dri_bufmgr interface, which 
-    * in turn is modeled after the ARB_vertex_buffer_object extension,  
-    * but this is the subset that gallium cares about.  Remember that
-    * gallium gets to choose the interface it needs, and the window
-    * systems must then implement that interface (rather than the
+    * Buffer management. Buffer attributes are mostly fixed over its lifetime.
+    *
+    * Remember that gallium gets to choose the interface it needs, and the
+    * window systems must then implement that interface (rather than the
     * other way around...).
+    *
+    * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
+    * usage argument is only an optimization hint, not a guarantee, therefore 
+    * proper behavior must be observed in all circumstances.
     */
    struct pipe_buffer_handle *(*buffer_create)( struct pipe_winsys *sws, 
 					        unsigned alignment,
-                                                unsigned flags,
-                                                unsigned hint );
+                                                unsigned usage,
+                                                unsigned size );
 
    /** Create a buffer that wraps user-space data */
    struct pipe_buffer_handle *(*user_buffer_create)(struct pipe_winsys *sws, 
@@ -116,7 +119,7 @@ struct pipe_winsys
     */
    void *(*buffer_map)( struct pipe_winsys *sws, 
 			struct pipe_buffer_handle *buf,
-			unsigned flags );
+			unsigned usage );
    
    void (*buffer_unmap)( struct pipe_winsys *sws, 
 			 struct pipe_buffer_handle *buf );
@@ -126,44 +129,8 @@ struct pipe_winsys
                              struct pipe_buffer_handle **ptr,
                              struct pipe_buffer_handle *buf );
 
-   /** 
-    * Create the data store of a buffer and optionally initialize it.
-    * 
-    * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
-    * usage argument is only an optimization hint, not a guarantee, therefore 
-    * proper behavior must be observed in all circumstances.
-    * 
-    * Returns zero on success.
-    */
-   int (*buffer_data)(struct pipe_winsys *sws, 
-		       struct pipe_buffer_handle *buf,
-		       unsigned size, const void *data,
-		       unsigned usage);
 
-   /** 
-    * Modify some or all of the data contained in a buffer's data store.
-    * 
-    * Returns zero on success.
-    */
-   int (*buffer_subdata)(struct pipe_winsys *sws, 
-                         struct pipe_buffer_handle *buf,
-                         unsigned long offset, 
-                         unsigned long size, 
-                         const void *data);
-
-   /** 
-    * Query some or all of the data contained in a buffer's data store.
-    * 
-    * Returns zero on success.
-    */
-   int (*buffer_get_subdata)(struct pipe_winsys *sws, 
-                             struct pipe_buffer_handle *buf,
-                             unsigned long offset, 
-                             unsigned long size, 
-                             void *data);
-
-
-   /** Set ptr = buf, with reference counting */
+   /** Set ptr = fence, with reference counting */
    void (*fence_reference)( struct pipe_winsys *sws,
                             struct pipe_fence_handle **ptr,
                             struct pipe_fence_handle *fence );

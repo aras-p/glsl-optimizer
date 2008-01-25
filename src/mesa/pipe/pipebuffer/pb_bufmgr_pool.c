@@ -246,8 +246,8 @@ pool_bufmgr_create(struct buffer_manager *provider,
       goto failure;
 
    pool->map = buffer_map(pool->buffer,
-                          PIPE_BUFFER_FLAG_READ |
-                          PIPE_BUFFER_FLAG_WRITE );
+                          PIPE_BUFFER_USAGE_CPU_READ |
+                          PIPE_BUFFER_USAGE_CPU_WRITE);
    if(!pool->map)
       goto failure;
 

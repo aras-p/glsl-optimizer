@@ -165,48 +165,6 @@ xm_buffer_reference(struct pipe_winsys *pws,
    }
 }
 
-static int
-xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
-               unsigned size, const void *data, unsigned usage )
-{
-   struct xm_buffer *xm_buf = xm_bo(buf);
-   assert(!xm_buf->userBuffer);
-   if (xm_buf->size != size) {
-      if (xm_buf->data)
-         align_free(xm_buf->data);
-      /* align to 16-byte multiple for Cell */
-      xm_buf->data = align_malloc(size, 16);
-      xm_buf->size = size;
-   }
-   if (data)
-      memcpy(xm_buf->data, data, size);
-   return 0;
-}
-
-static int
-xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
-                  unsigned long offset, unsigned long size, const void *data)
-{
-   struct xm_buffer *xm_buf = xm_bo(buf);
-   GLubyte *b = (GLubyte *) xm_buf->data;
-   assert(!xm_buf->userBuffer);
-   assert(b);
-   memcpy(b + offset, data, size);
-   return 0;
-}
-
-static int
-xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
-                      unsigned long offset, unsigned long size, void *data)
-{
-   const struct xm_buffer *xm_buf = xm_bo(buf);
-   const GLubyte *b = (GLubyte *) xm_buf->data;
-   assert(!xm_buf->userBuffer);
-   assert(b);
-   memcpy(data, b + offset, size);
-   return 0;
-}
-
 
 /**
  * Display a surface that's in a tiled configuration.  That is, all the
@@ -317,11 +275,16 @@ xm_get_name(struct pipe_winsys *pws)
 static struct pipe_buffer_handle *
 xm_buffer_create(struct pipe_winsys *pws, 
                  unsigned alignment, 
-                 unsigned flags,
-                 unsigned hints)
+                 unsigned usage,
+                 unsigned size)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
    buffer->refcount = 1;
+
+   /* align to 16-byte multiple for Cell */
+   buffer->data = align_malloc(size, max(alignment, 16));
+   buffer->size = size;
+
    return pipe_bo(buffer);
 }
 
@@ -359,7 +322,6 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
                          unsigned flags)
 {
    const unsigned alignment = 64;
-   int ret;
 
    surf->width = width;
    surf->height = height;
@@ -372,19 +334,11 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
 #endif
 
    assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+   surf->buffer = winsys->buffer_create(winsys, alignment,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        surf->pitch * surf->cpp * height);
    if(!surf->buffer)
       return -1;
-
-   ret = winsys->buffer_data(winsys, 
-                             surf->buffer,
-                             surf->pitch * surf->cpp * height,
-                             NULL,
-                             0);
-   if(ret) {
-      winsys->buffer_reference(winsys, &surf->buffer, NULL);
-      return ret;
-   }
    
    return 0;
 }
@@ -454,9 +408,6 @@ xmesa_get_pipe_winsys_aub(void)
       ws->buffer_map = xm_buffer_map;
       ws->buffer_unmap = xm_buffer_unmap;
       ws->buffer_reference = xm_buffer_reference;
-      ws->buffer_data = xm_buffer_data;
-      ws->buffer_subdata = xm_buffer_subdata;
-      ws->buffer_get_subdata = xm_buffer_get_subdata;
 
       ws->surface_alloc = xm_surface_alloc;
       ws->surface_alloc_storage = xm_surface_alloc_storage;

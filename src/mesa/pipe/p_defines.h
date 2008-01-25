@@ -178,25 +178,19 @@ enum pipe_texture_target {
 
 
 /**
- * Buffer access flags
- */
-#define PIPE_BUFFER_FLAG_READ         0x1
-#define PIPE_BUFFER_FLAG_WRITE        0x2
-#define PIPE_BUFFER_FLAG_MEM_LOCAL    0x4
-#define PIPE_BUFFER_FLAG_CACHED       0x8
-#define PIPE_BUFFER_FLAG_CUSTOM       (1<<16)
-
-
-
-/**
  * Buffer usage flags
  */
-#define PIPE_BUFFER_USAGE_PIXEL    (1 << 0)
-#define PIPE_BUFFER_USAGE_VERTEX   (1 << 1)
-#define PIPE_BUFFER_USAGE_INDEX    (1 << 2)
-#define PIPE_BUFFER_USAGE_CONSTANT (1 << 3)
+#define PIPE_BUFFER_USAGE_CPU_READ  (1 << 0)
+#define PIPE_BUFFER_USAGE_CPU_WRITE (1 << 1)
+#define PIPE_BUFFER_USAGE_GPU_READ  (1 << 2)
+#define PIPE_BUFFER_USAGE_GPU_WRITE (1 << 3)
+#define PIPE_BUFFER_USAGE_PIXEL     (1 << 4)
+#define PIPE_BUFFER_USAGE_VERTEX    (1 << 5)
+#define PIPE_BUFFER_USAGE_INDEX     (1 << 6)
+#define PIPE_BUFFER_USAGE_CONSTANT  (1 << 7)
 /** Pipe driver custam usage flags should be greater or equal to this value */
-#define PIPE_BUFFER_USAGE_CUSTOM   (1 << 16)
+#define PIPE_BUFFER_USAGE_CUSTOM    (1 << 16)
+
 
 /** 
  * Flush types:

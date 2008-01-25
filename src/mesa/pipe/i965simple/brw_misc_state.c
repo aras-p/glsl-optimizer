@@ -245,7 +245,7 @@ static void upload_depthbuffer(struct brw_context *brw)
 //		(depth_surface->region->tiled << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(depth_surface->buffer,
-		PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE, 0);
+		PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE, 0);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((depth_surface->pitch - 1) << 6) |
 		((depth_surface->height - 1) << 19));
@@ -465,10 +465,10 @@ static void upload_state_base_address( struct brw_context *brw )
    BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (6 - 2));
    OUT_RELOC(brw->pool[BRW_GS_POOL].buffer,
-	     PIPE_BUFFER_FLAG_READ,
+	     PIPE_BUFFER_USAGE_GPU_READ,
 	     1); /* General state base address */
    OUT_RELOC(brw->pool[BRW_SS_POOL].buffer,
-	     PIPE_BUFFER_FLAG_READ,
+	     PIPE_BUFFER_USAGE_GPU_READ,
 	     1); /* Surface state base address */
    OUT_BATCH(1); /* Indirect object base address */
    OUT_BATCH(1); /* General state upper bound */

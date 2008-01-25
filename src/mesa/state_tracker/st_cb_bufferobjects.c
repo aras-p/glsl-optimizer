@@ -55,15 +55,12 @@
 static struct gl_buffer_object *
 st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 {
-   struct st_context *st = st_context(ctx);
    struct st_buffer_object *st_obj = CALLOC_STRUCT(st_buffer_object);
 
    if (!st_obj)
       return NULL;
 
    _mesa_initialize_buffer_object(&st_obj->Base, name, target);
-
-   st_obj->buffer = st->pipe->winsys->buffer_create( st->pipe->winsys, 32, 0, 0 );
 
    return &st_obj->Base;
 }
@@ -89,6 +86,57 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
 
 
 /**
+ * Replace data in a subrange of buffer object.  If the data range
+ * specified by size + offset extends beyond the end of the buffer or
+ * if data is NULL, no copy is performed.
+ * Called via glBufferSubDataARB().
+ */
+static void
+st_bufferobj_subdata(GLcontext *ctx,
+		     GLenum target,
+		     GLintptrARB offset,
+		     GLsizeiptrARB size,
+		     const GLvoid * data, struct gl_buffer_object *obj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *st_obj = st_buffer_object(obj);
+   char *map;
+
+   if (offset >= st_obj->size || size > (st_obj->size - offset))
+      return;
+
+   map = pipe->winsys->buffer_map(pipe->winsys, st_obj->buffer,
+                                        PIPE_BUFFER_USAGE_CPU_WRITE);
+   memcpy(map + offset, data, size);
+   pipe->winsys->buffer_unmap(pipe->winsys, st_obj->buffer);
+}
+
+
+/**
+ * Called via glGetBufferSubDataARB().
+ */
+static void
+st_bufferobj_get_subdata(GLcontext *ctx,
+                         GLenum target,
+                         GLintptrARB offset,
+                         GLsizeiptrARB size,
+                         GLvoid * data, struct gl_buffer_object *obj)
+{
+   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_buffer_object *st_obj = st_buffer_object(obj);
+   char *map;
+
+   if (offset >= st_obj->size || size > (st_obj->size - offset))
+      return;
+
+   map = pipe->winsys->buffer_map(pipe->winsys, st_obj->buffer,
+                                  PIPE_BUFFER_USAGE_CPU_READ);
+   memcpy(data, map + offset, size);
+   pipe->winsys->buffer_unmap(pipe->winsys, st_obj->buffer);
+}
+
+
+/**
  * Allocate space for and store data in a buffer object.  Any data that was
  * previously stored in the buffer object is lost.  If data is NULL,
  * memory will be allocated, but no copy will occur.
@@ -102,7 +150,8 @@ st_bufferobj_data(GLcontext *ctx,
 		  GLenum usage, 
 		  struct gl_buffer_object *obj)
 {
-   struct pipe_context *pipe = st_context(ctx)->pipe;
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
    unsigned buffer_usage;
 
@@ -124,46 +173,15 @@ st_bufferobj_data(GLcontext *ctx,
       buffer_usage = 0;
    }
 
-   pipe->winsys->buffer_data( pipe->winsys, st_obj->buffer, 
-                              size, data, 
-                              buffer_usage );
-}
+   pipe->winsys->buffer_reference( pipe->winsys, &st_obj->buffer, NULL );
 
+   st_obj->buffer = pipe->winsys->buffer_create( pipe->winsys, 32, buffer_usage,
+                                                 size );
 
-/**
- * Replace data in a subrange of buffer object.  If the data range
- * specified by size + offset extends beyond the end of the buffer or
- * if data is NULL, no copy is performed.
- * Called via glBufferSubDataARB().
- */
-static void
-st_bufferobj_subdata(GLcontext *ctx,
-		     GLenum target,
-		     GLintptrARB offset,
-		     GLsizeiptrARB size,
-		     const GLvoid * data, struct gl_buffer_object *obj)
-{
-   struct pipe_context *pipe = st_context(ctx)->pipe;
-   struct st_buffer_object *st_obj = st_buffer_object(obj);
+   st_obj->size = size;
 
-   pipe->winsys->buffer_subdata(pipe->winsys, st_obj->buffer, offset, size, data);
-}
-
-
-/**
- * Called via glGetBufferSubDataARB().
- */
-static void
-st_bufferobj_get_subdata(GLcontext *ctx,
-                         GLenum target,
-                         GLintptrARB offset,
-                         GLsizeiptrARB size,
-                         GLvoid * data, struct gl_buffer_object *obj)
-{
-   struct pipe_context *pipe = st_context(ctx)->pipe;
-   struct st_buffer_object *st_obj = st_buffer_object(obj);
-
-   pipe->winsys->buffer_get_subdata(pipe->winsys, st_obj->buffer, offset, size, data);
+   if (data)
+      st_bufferobj_subdata(ctx, target, 0, size, data, obj);
 }
 
 
@@ -180,15 +198,15 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
 
    switch (access) {
    case GL_WRITE_ONLY:
-      flags = PIPE_BUFFER_FLAG_WRITE;
+      flags = PIPE_BUFFER_USAGE_CPU_WRITE;
       break;
    case GL_READ_ONLY:
-      flags = PIPE_BUFFER_FLAG_READ;
+      flags = PIPE_BUFFER_USAGE_CPU_READ;
       break;
    case GL_READ_WRITE:
       /* fall-through */
    default:
-      flags = PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE;
+      flags = PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE;
       break;      
    }
 

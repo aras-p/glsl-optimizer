@@ -101,7 +101,7 @@ static void *aub_buffer_map(struct pipe_winsys *winsys,
 
    assert(sbo->data);
 
-   if (flags & PIPE_BUFFER_FLAG_WRITE)
+   if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
       sbo->dump_on_unmap = 1;
 
    sbo->map_count++;
@@ -147,61 +147,6 @@ aub_buffer_reference(struct pipe_winsys *winsys,
       aub_bo(buf)->refcount++;
       *ptr = buf;
    }
-}
-
-
-static int aub_buffer_data(struct pipe_winsys *winsys, 
-			      struct pipe_buffer_handle *buf,
-			      unsigned size, const void *data,
-			      unsigned usage )
-{
-   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
-   struct aub_buffer *sbo = aub_bo(buf);
-
-   /* Could reuse buffers that are not referenced in current
-    * batchbuffer.  Can't do that atm, so always reallocate:
-    */
-   if (1 || sbo->size < size) {
-      assert(iws->used + size < iws->size);
-      sbo->data = iws->pool + iws->used;
-      sbo->offset = AUB_BUF_START + iws->used;
-      iws->used += align(size, 4096);
-   }
-
-   sbo->size = size;
-
-   if (data != NULL) {
-      memcpy(sbo->data, data, size);
-
-      brw_aub_gtt_data( iws->aubfile, 
-			sbo->offset,
-			sbo->data,
-			sbo->size,
-			0,
-			0 );
-   }
-   return 0;
-}
-
-static int aub_buffer_subdata(struct pipe_winsys *winsys, 
-				 struct pipe_buffer_handle *buf,
-				 unsigned long offset, 
-				 unsigned long size, 
-				 const void *data)
-{
-   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
-   struct aub_buffer *sbo = aub_bo(buf);
-
-   assert(sbo->size > offset + size);
-   memcpy(sbo->data + offset, data, size);
-
-   brw_aub_gtt_data( iws->aubfile, 
-		     sbo->offset + offset,
-		     sbo->data + offset,
-		     size,
-		     0,
-		     0 );
-   return 0;
 }
 
 
@@ -258,29 +203,30 @@ void xmesa_display_aub( /* struct pipe_winsys *winsys, */
 
 
 
-static int aub_buffer_get_subdata(struct pipe_winsys *winsys, 
-				     struct pipe_buffer_handle *buf,
-				     unsigned long offset, 
-				     unsigned long size, 
-				     void *data)
-{
-   struct aub_buffer *sbo = aub_bo(buf);
-   assert(sbo->size >= offset + size);
-   memcpy(data, sbo->data + offset, size);
-   return 0;
-}
-
 /* Pipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
  */
 static struct pipe_buffer_handle *
 aub_buffer_create(struct pipe_winsys *winsys,
-                     unsigned alignment,
-                     unsigned flags,
-                     unsigned hint)
+                  unsigned alignment,
+                  unsigned usage,
+                  unsigned size)
 {
+   struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
    struct aub_buffer *sbo = CALLOC_STRUCT(aub_buffer);
+
    sbo->refcount = 1;
+
+   /* Could reuse buffers that are not referenced in current
+    * batchbuffer.  Can't do that atm, so always reallocate:
+    */
+   assert(iws->used + size < iws->size);
+   sbo->data = iws->pool + iws->used;
+   sbo->offset = AUB_BUF_START + iws->used;
+   iws->used += align(size, 4096);
+
+   sbo->size = size;
+
    return pipe_bo(sbo);
 }
 
@@ -288,17 +234,14 @@ aub_buffer_create(struct pipe_winsys *winsys,
 static struct pipe_buffer_handle *
 aub_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
-   struct aub_buffer *sbo = CALLOC_STRUCT(aub_buffer);
-
-   sbo->refcount = 1;
+   struct aub_buffer *sbo;
 
    /* Lets hope this is meant for upload, not as a result!  
     */
-   aub_buffer_data( winsys, 
-		    pipe_bo(sbo),
-		    bytes, 
-		    ptr,
-		    0 );
+   sbo = aub_bo(aub_buffer_create( winsys, 0, 0, 0 ));
+
+   sbo->data = ptr;
+   sbo->size = bytes;
 
    return pipe_bo(sbo);
 }
@@ -345,7 +288,6 @@ aub_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                unsigned flags)
 {
     const unsigned alignment = 64;
-    int ret;
 
     surf->width = width;
     surf->height = height;
@@ -354,19 +296,11 @@ aub_i915_surface_alloc_storage(struct pipe_winsys *winsys,
     surf->pitch = round_up(width, alignment / surf->cpp);
 
     assert(!surf->buffer);
-    surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+    surf->buffer = winsys->buffer_create(winsys, alignment,
+                                         PIPE_BUFFER_USAGE_PIXEL,
+                                         surf->pitch * surf->cpp * height);
     if(!surf->buffer)
         return -1;
-
-    ret = winsys->buffer_data(winsys,
-                              surf->buffer,
-                              surf->pitch * surf->cpp * height,
-                              NULL,
-                              0);
-    if(ret) {
-        winsys->buffer_reference(winsys, &surf->buffer, NULL);
-        return ret;
-    }
 
     return 0;
 }
@@ -418,9 +352,6 @@ xmesa_create_pipe_winsys_aub( void )
    iws->winsys.buffer_map = aub_buffer_map;
    iws->winsys.buffer_unmap = aub_buffer_unmap;
    iws->winsys.buffer_reference = aub_buffer_reference;
-   iws->winsys.buffer_data = aub_buffer_data;
-   iws->winsys.buffer_subdata = aub_buffer_subdata;
-   iws->winsys.buffer_get_subdata = aub_buffer_get_subdata;
    iws->winsys.flush_frontbuffer = aub_flush_frontbuffer;
    iws->winsys.printf = aub_printf;
    iws->winsys.get_name = aub_get_name;

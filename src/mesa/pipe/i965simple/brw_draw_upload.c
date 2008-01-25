@@ -240,7 +240,7 @@ boolean brw_upload_vertex_buffers( struct brw_context *brw )
 
    for (i = 0; i < nr_enabled; i++) {
       OUT_BATCH( vbp.vb[i].vb0.dword );
-      OUT_RELOC( vbp.vb[i].buffer,  PIPE_BUFFER_FLAG_READ,
+      OUT_RELOC( vbp.vb[i].buffer,  PIPE_BUFFER_USAGE_GPU_READ,
 		 vbp.vb[i].offset);
       OUT_BATCH( vbp.vb[i].max_index );
       OUT_BATCH( vbp.vb[i].instance_data_step_rate );
@@ -290,8 +290,8 @@ boolean brw_upload_indices( struct brw_context *brw,
 
       BEGIN_BATCH(4, 0);
       OUT_BATCH( ib.header.dword );
-      OUT_RELOC( index_buffer, PIPE_BUFFER_FLAG_READ, start);
-      OUT_RELOC( index_buffer, PIPE_BUFFER_FLAG_READ, start + count);
+      OUT_RELOC( index_buffer, PIPE_BUFFER_USAGE_GPU_READ, start);
+      OUT_RELOC( index_buffer, PIPE_BUFFER_USAGE_GPU_READ, start + count);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }

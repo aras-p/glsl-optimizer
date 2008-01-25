@@ -91,12 +91,9 @@ softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
       softpipe_texture_layout(spt);
 
-      spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
-
-      if (spt->buffer) {
-	 pipe->winsys->buffer_data(pipe->winsys, spt->buffer, spt->buffer_size,
-				   NULL, PIPE_BUFFER_USAGE_PIXEL);
-      }
+      spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                                PIPE_BUFFER_USAGE_PIXEL,
+                                                spt->buffer_size);
 
       if (!spt->buffer) {
 	 FREE(spt);

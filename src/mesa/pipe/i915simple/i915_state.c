@@ -476,7 +476,8 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
    {
       void *mapped;
       if (buf->size &&
-          (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_FLAG_READ))) {
+          (mapped = ws->buffer_map(ws, buf->buffer,
+                                   PIPE_BUFFER_USAGE_CPU_READ))) {
          memcpy(i915->current.constants[shader], mapped, buf->size);
          ws->buffer_unmap(ws, buf->buffer);
          i915->current.num_user_constants[shader]

@@ -191,29 +191,6 @@ pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
 
 
 /**
- * The default attribute buffer is basically a copy of the
- * ctx->Current.Attrib[] array.  It's used when the vertex program
- * references an attribute for which we don't have a VBO/array.
- */
-static void
-create_default_attribs_buffer(struct st_context *st)
-{
-   struct pipe_context *pipe = st->pipe;
-   /* XXX don't hardcode magic 32 here */
-   st->default_attrib_buffer = pipe->winsys->buffer_create( pipe->winsys, 32, 0, 0 );
-}
-
-
-static void
-destroy_default_attribs_buffer(struct st_context *st)
-{
-   struct pipe_context *pipe = st->pipe;
-   pipe->winsys->buffer_reference(pipe->winsys,
-                                  &st->default_attrib_buffer, NULL);
-}
-
-
-/**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
  * Basically, translate the information into the format expected by pipe.
@@ -399,10 +376,14 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    }
 
    /* XXX create one-time */
-   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
-   pipe->winsys->buffer_data(pipe->winsys, vbuf, 
-                             vertex_bytes, verts,
-                             PIPE_BUFFER_USAGE_VERTEX);
+   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                      PIPE_BUFFER_USAGE_VERTEX, vertex_bytes);
+   assert(vbuf);
+
+   memcpy(pipe->winsys->buffer_map(pipe->winsys, vbuf,
+                                   PIPE_BUFFER_USAGE_CPU_WRITE),
+          verts, vertex_bytes);
+   pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
 
    /* tell pipe about the vertex buffer */
    vbuffer.buffer = vbuf;
@@ -568,7 +549,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       /* map the attrib buffer */
       map = pipe->winsys->buffer_map(pipe->winsys,
                                      vbuffer[attr].buffer,
-                                     PIPE_BUFFER_FLAG_READ);
+                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, attr, map);
    }
 
@@ -592,7 +573,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
       map = pipe->winsys->buffer_map(pipe->winsys,
                                      index_buffer_handle,
-                                     PIPE_BUFFER_FLAG_READ);
+                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, map);
    }
    else {
@@ -604,7 +585,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    /* map constant buffers */
    mapped_constants = winsys->buffer_map(winsys,
                                st->state.constants[PIPE_SHADER_VERTEX].buffer,
-                               PIPE_BUFFER_FLAG_READ);
+                               PIPE_BUFFER_USAGE_CPU_READ);
    draw_set_mapped_constant_buffer(st->draw, mapped_constants);
 
 
@@ -640,16 +621,12 @@ void st_init_draw( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
 
-   /* actually, not used here, but elsewhere */
-   create_default_attribs_buffer(st);
-
    vbo_set_draw_func(ctx, st_draw_vbo);
 }
 
 
 void st_destroy_draw( struct st_context *st )
 {
-   destroy_default_attribs_buffer(st);
 }
 
 

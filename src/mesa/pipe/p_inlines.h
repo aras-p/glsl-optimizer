@@ -37,8 +37,8 @@ static INLINE void *
 pipe_surface_map(struct pipe_surface *surface)
 {
    return (char *)surface->winsys->buffer_map( surface->winsys, surface->buffer,
-					       PIPE_BUFFER_FLAG_WRITE |
-					       PIPE_BUFFER_FLAG_READ )
+					       PIPE_BUFFER_USAGE_CPU_WRITE |
+					       PIPE_BUFFER_USAGE_CPU_READ )
       + surface->offset;
 }
 

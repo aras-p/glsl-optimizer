@@ -164,13 +164,6 @@ struct st_context
       struct st_fragment_program *combined_prog;
    } bitmap;
 
-   /**
-    * Buffer object which stores the ctx->Current.Attrib[] values.
-    * Used for vertex array drawing when we we need an attribute for
-    * which there's no enabled array.
-    */
-   struct pipe_buffer_handle *default_attrib_buffer;
-
    struct cso_cache *cache;
 };
 

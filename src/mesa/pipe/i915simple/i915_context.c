@@ -185,7 +185,7 @@ i915_draw_elements( struct pipe_context *pipe,
          void *buf
             = pipe->winsys->buffer_map(pipe->winsys,
                                        i915->vertex_buffer[i].buffer,
-                                       PIPE_BUFFER_FLAG_READ);
+                                       PIPE_BUFFER_USAGE_CPU_READ);
          draw_set_mapped_vertex_buffer(draw, i, buf);
       }
    }
@@ -193,7 +193,7 @@ i915_draw_elements( struct pipe_context *pipe,
    if (indexBuffer) {
       void *mapped_indexes
          = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
-                                    PIPE_BUFFER_FLAG_READ);
+                                    PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {

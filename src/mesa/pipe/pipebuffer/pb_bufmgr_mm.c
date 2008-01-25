@@ -241,7 +241,8 @@ mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer,
    mm->buffer = buffer; 
 
    mm->map = buffer_map(mm->buffer, 
-                        PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE );
+                        PIPE_BUFFER_USAGE_CPU_READ |
+                        PIPE_BUFFER_USAGE_CPU_WRITE);
    if(!mm->map)
       goto failure;
 

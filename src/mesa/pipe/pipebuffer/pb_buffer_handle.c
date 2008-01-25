@@ -46,8 +46,8 @@
 static struct pipe_buffer_handle *
 buffer_handle_create(struct pipe_winsys *winsys,
                      unsigned alignment,
-                     unsigned flags,
-                     unsigned hint)
+                     unsigned usage,
+                     unsigned size)
 {
    struct pipe_buffer_handle *handle;
   
@@ -57,8 +57,8 @@ buffer_handle_create(struct pipe_winsys *winsys,
    
    handle->refcount = 1;
    handle->alignment = alignment;
-   handle->flags = flags;
-   handle->hint = hint;
+   handle->usage = usage;
+   handle->size = size;
    
    handle->buf = &null_buffer;
    
@@ -73,7 +73,7 @@ buffer_handle_create_user(struct pipe_winsys *winsys,
    struct pipe_buffer_handle *handle;
    struct pipe_buffer *buf;
    
-   handle = buffer_handle_create(winsys, 1, 0, 0);
+   handle = buffer_handle_create(winsys, 1, 0, size);
    if(!handle)
       return NULL;
    
@@ -129,46 +129,6 @@ buffer_handle_reference(struct pipe_winsys *winsys,
 }
 
 
-static int 
-buffer_handle_subdata(struct pipe_winsys *winsys, 
-                      struct pipe_buffer_handle *handle,
-                      unsigned long offset, 
-                      unsigned long size, 
-                      const void *data)
-{
-   void *map;
-   assert(handle);
-   assert(data);
-   map = buffer_handle_map(winsys, handle, PIPE_BUFFER_FLAG_WRITE);
-   if(map) {
-      memcpy((char *)map + offset, data, size);
-      buffer_handle_unmap(winsys, handle);
-      return 0;
-   }
-   return -1; 
-}
-
-
-static int  
-buffer_handle_get_subdata(struct pipe_winsys *winsys,
-                          struct pipe_buffer_handle *handle,
-                          unsigned long offset, 
-                          unsigned long size, 
-                          void *data)
-{
-   void *map;
-   assert(handle);
-   assert(data);
-   map = buffer_handle_map(winsys, handle, PIPE_BUFFER_FLAG_READ);
-   if(map) {
-      memcpy(data, (char *)map + offset, size);
-      buffer_handle_unmap(winsys, handle);
-      return 0;
-   }
-   return -1; 
-}
-
-
 void 
 buffer_handle_init_winsys(struct pipe_winsys *winsys)
 {
@@ -177,6 +137,4 @@ buffer_handle_init_winsys(struct pipe_winsys *winsys)
    winsys->buffer_map = buffer_handle_map;
    winsys->buffer_unmap = buffer_handle_unmap;
    winsys->buffer_reference = buffer_handle_reference;
-   winsys->buffer_subdata = buffer_handle_subdata;
-   winsys->buffer_get_subdata = buffer_handle_get_subdata;
 }

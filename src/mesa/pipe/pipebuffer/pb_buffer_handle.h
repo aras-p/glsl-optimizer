@@ -55,8 +55,8 @@ struct pipe_buffer_handle
 
    /** Allocation characteristics */
    unsigned alignment;
-   unsigned flags;
-   unsigned hint;
+   unsigned usage;
+   unsigned size;
    
    /** 
     * The actual buffer.

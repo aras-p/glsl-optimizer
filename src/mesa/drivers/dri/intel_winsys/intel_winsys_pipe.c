@@ -70,10 +70,10 @@ static void *intel_buffer_map(struct pipe_winsys *winsys,
 {
    unsigned drm_flags = 0;
    
-   if (flags & PIPE_BUFFER_FLAG_WRITE)
+   if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
       drm_flags |= DRM_BO_FLAG_WRITE;
 
-   if (flags & PIPE_BUFFER_FLAG_READ)
+   if (flags & PIPE_BUFFER_USAGE_CPU_READ)
       drm_flags |= DRM_BO_FLAG_READ;
 
    return driBOMap( dri_bo(buf), drm_flags, 0 );
@@ -103,50 +103,48 @@ intel_buffer_reference(struct pipe_winsys *winsys,
 }
 
 
-/* Grabs the hardware lock!
- */
-static int intel_buffer_data(struct pipe_winsys *winsys, 
-			     struct pipe_buffer_handle *buf,
-			     unsigned size, const void *data,
-			     unsigned usage )
-{
-   driBOData( dri_bo(buf), size, data, 0 );
-   return 0;
-}
-
-static int intel_buffer_subdata(struct pipe_winsys *winsys, 
-				struct pipe_buffer_handle *buf,
-				unsigned long offset, 
-				unsigned long size, 
-				const void *data)
-{
-   driBOSubData( dri_bo(buf), offset, size, data );
-   return 0;
-}
-
-static int intel_buffer_get_subdata(struct pipe_winsys *winsys, 
-				    struct pipe_buffer_handle *buf,
-				    unsigned long offset, 
-				    unsigned long size, 
-				    void *data)
-{
-   driBOGetSubData( dri_bo(buf), offset, size, data );
-   return 0;
-}
-
 /* Pipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
+ * Grabs the hardware lock!
  */
 static struct pipe_buffer_handle *
 intel_buffer_create(struct pipe_winsys *winsys, 
                     unsigned alignment, 
-                    unsigned flags, 
-                    unsigned hint )
+                    unsigned usage, 
+                    unsigned size )
 {
    struct _DriBufferObject *buffer;
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
+   unsigned flags = 0;
+
+   if (usage & (PIPE_BUFFER_USAGE_VERTEX /*| IWS_BUFFER_USAGE_LOCAL*/)) {
+      flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
+   } else {
+      flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
+   }
+
+   if (usage & PIPE_BUFFER_USAGE_GPU_READ)
+      flags |= DRM_BO_FLAG_READ;
+
+   if (usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+      flags |= DRM_BO_FLAG_WRITE;
+
+   /* drm complains if we don't set any read/write flags.
+    */
+   if ((flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE)) == 0)
+      flags |= DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE;
+
+#if 0
+   if (flags & IWS_BUFFER_USAGE_EXE)
+      flags |= DRM_BO_FLAG_EXE;
+
+   if (usage & IWS_BUFFER_USAGE_CACHED)
+      flags |= DRM_BO_FLAG_CACHED;
+#endif
+
    driGenBuffers( iws->regionPool, 
-		  "pipe buffer", 1, &buffer, alignment, flags, hint );
+		  "pipe buffer", 1, &buffer, alignment, flags, 0 );
+   driBOData( buffer, size, NULL, 0 );
    return pipe_bo(buffer);
 }
 
@@ -219,15 +217,12 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
    surf->pitch = round_up(width, alignment / surf->cpp);
 
    assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+   surf->buffer = winsys->buffer_create(winsys, alignment,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        surf->pitch * surf->cpp * height);
    if(!surf->buffer)
       return -1;
 
-   ret = winsys->buffer_data(winsys, 
-                             surf->buffer,
-                             surf->pitch * surf->cpp * height,
-                             NULL,
-                             PIPE_BUFFER_USAGE_PIXEL);
    if(ret) {
       winsys->buffer_reference(winsys, &surf->buffer, NULL);
       return ret;
@@ -285,9 +280,6 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.buffer_map = intel_buffer_map;
    iws->winsys.buffer_unmap = intel_buffer_unmap;
    iws->winsys.buffer_reference = intel_buffer_reference;
-   iws->winsys.buffer_data = intel_buffer_data;
-   iws->winsys.buffer_subdata = intel_buffer_subdata;
-   iws->winsys.buffer_get_subdata = intel_buffer_get_subdata;
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
