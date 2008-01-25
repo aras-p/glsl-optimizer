@@ -70,18 +70,31 @@ static void flatshade_begin( struct draw_stage *stage )
 
 
 /** Copy all the color attributes from 'src' vertex to 'dst' vertex */
-static INLINE void copy_colors( struct draw_stage *stage, 
-                                struct vertex_header *dst, 
+static INLINE void copy_colors( struct draw_stage *stage,
+                                struct vertex_header *dst,
                                 const struct vertex_header *src )
 {
    const struct flat_stage *flat = flat_stage(stage);
    uint i;
-
-   /* Look for constant/flat attribs and duplicate from src to dst vertex */
-   /* skip attrib[0] which is vert pos */
    for (i = 0; i < flat->num_color_attribs; i++) {
       const uint attr = flat->color_attribs[i];
-      memcpy(dst->data[attr], src->data[attr], sizeof(src->data[0]));
+      COPY_4FV(dst->data[attr], src->data[attr]);
+   }
+}
+
+
+/** Copy all the color attributes from src vertex to dst0 & dst1 vertices */
+static INLINE void copy_colors2( struct draw_stage *stage,
+                                 struct vertex_header *dst0,
+                                 struct vertex_header *dst1,
+                                 const struct vertex_header *src )
+{
+   const struct flat_stage *flat = flat_stage(stage);
+   uint i;
+   for (i = 0; i < flat->num_color_attribs; i++) {
+      const uint attr = flat->color_attribs[i];
+      COPY_4FV(dst0->data[attr], src->data[attr]);
+      COPY_4FV(dst1->data[attr], src->data[attr]);
    }
 }
 
@@ -101,8 +114,7 @@ static void flatshade_tri( struct draw_stage *stage,
    tmp.v[1] = dup_vert(stage, header->v[1], 1);
    tmp.v[2] = header->v[2];
 
-   copy_colors(stage, tmp.v[0], tmp.v[2]);
-   copy_colors(stage, tmp.v[1], tmp.v[2]);
+   copy_colors2(stage, tmp.v[0], tmp.v[1], tmp.v[2]);
    
    stage->next->tri( stage->next, &tmp );
 }

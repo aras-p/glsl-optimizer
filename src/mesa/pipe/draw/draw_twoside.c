@@ -75,6 +75,12 @@ static void twoside_begin( struct draw_stage *stage )
       }
    }
 
+   if (!twoside->attrib_back0)
+      twoside->attrib_front0 = 0;
+
+   if (!twoside->attrib_back1)
+      twoside->attrib_front1 = 0;
+
    /*
     * We'll multiply the primitive's determinant by this sign to determine
     * if the triangle is back-facing (negative).
@@ -86,28 +92,23 @@ static void twoside_begin( struct draw_stage *stage )
 }
 
 
-static INLINE void copy_attrib( unsigned attr_dst,
-			       unsigned attr_src,
-			       struct vertex_header *v )
-{
-   COPY_4FV(v->data[attr_dst], v->data[attr_src]);
-}
-
-
 /**
  * Copy back color(s) to front color(s).
  */
-static struct vertex_header *copy_bfc( struct twoside_stage *twoside, 
-				       const struct vertex_header *v,
-				       unsigned idx )
+static INLINE struct vertex_header *
+copy_bfc( struct twoside_stage *twoside, 
+          const struct vertex_header *v,
+          unsigned idx )
 {   
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
    
-   if (twoside->attrib_front0 && twoside->attrib_back0) {
-      copy_attrib(twoside->attrib_front0, twoside->attrib_back0, tmp);
+   if (twoside->attrib_back0) {
+      COPY_4FV(tmp->data[twoside->attrib_front0],
+               tmp->data[twoside->attrib_back0]);
    }
-   if (twoside->attrib_front1 && twoside->attrib_back1) {
-      copy_attrib(twoside->attrib_front1, twoside->attrib_back1, tmp);
+   if (twoside->attrib_back1) {
+      COPY_4FV(tmp->data[twoside->attrib_front1],
+               tmp->data[twoside->attrib_back1]);
    }
 
    return tmp;
