@@ -34,6 +34,9 @@
 #define DRAW_VERTEX_H
 
 
+#include "pipe/p_state.h"
+
+
 /**
  * Vertex attribute emit modes
  */
@@ -68,9 +71,9 @@ struct vertex_info
 {
    uint num_attribs;
    uint hwfmt[4];      /**< hardware format info for this format */
-   enum interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
-   enum attrib_emit emit[PIPE_MAX_SHADER_OUTPUTS];   /**< EMIT_x */
-   uint src_index[PIPE_MAX_SHADER_OUTPUTS]; /**< map to post-xform attribs */
+   enum interp_mode interp_mode[PIPE_MAX_SHADER_INPUTS];
+   enum attrib_emit emit[PIPE_MAX_SHADER_INPUTS];   /**< EMIT_x */
+   uint src_index[PIPE_MAX_SHADER_INPUTS]; /**< map to post-xform attribs */
    uint size;          /**< total vertex size in dwords */
 };
 
@@ -88,7 +91,7 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
                       uint src_index)
 {
    const uint n = vinfo->num_attribs;
-   assert(n < PIPE_MAX_SHADER_OUTPUTS);
+   assert(n < PIPE_MAX_SHADER_INPUTS);
    vinfo->emit[n] = emit;
    vinfo->interp_mode[n] = interp;
    vinfo->src_index[n] = src_index;
