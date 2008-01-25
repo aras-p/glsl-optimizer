@@ -121,7 +121,7 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
       */
 
-      pipe->winsys->buffer_reference(pipe->winsys, &spt->buffer, NULL);
+      pipe_buffer_reference(pipe->winsys, &spt->buffer, NULL);
 
       FREE(spt);
    }
@@ -144,7 +144,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
+      pipe_buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];

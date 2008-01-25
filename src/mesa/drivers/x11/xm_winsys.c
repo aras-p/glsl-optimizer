@@ -71,15 +71,15 @@ struct xm_buffer
  * buffer pointer...
  */
 static inline struct xm_buffer *
-xm_bo( struct pipe_buffer_handle *bo )
+xm_bo( struct pipe_buffer *bo )
 {
    return (struct xm_buffer *) bo;
 }
 
-static inline struct pipe_buffer_handle *
+static inline struct pipe_buffer *
 pipe_bo( struct xm_buffer *bo )
 {
-   return (struct pipe_buffer_handle *) bo;
+   return (struct pipe_buffer *) bo;
 }
 
 /* Turn a softpipe winsys into an xm/softpipe winsys:
@@ -94,7 +94,7 @@ xm_winsys(struct softpipe_winsys *sws)
 /* Most callbacks map direcly onto dri_bufmgr operations:
  */
 static void *
-xm_buffer_map(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
+xm_buffer_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
               unsigned flags)
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
@@ -103,7 +103,7 @@ xm_buffer_map(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 }
 
 static void
-xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer_handle *buf)
+xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
    xm_buf->mapped = NULL;
@@ -111,8 +111,8 @@ xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer_handle *buf)
 
 static void
 xm_buffer_reference(struct pipe_winsys *pws,
-                    struct pipe_buffer_handle **ptr,
-                    struct pipe_buffer_handle *buf)
+                    struct pipe_buffer **ptr,
+                    struct pipe_buffer *buf)
 {
    if (*ptr) {
       struct xm_buffer *oldBuf = xm_bo(*ptr);
@@ -139,7 +139,7 @@ xm_buffer_reference(struct pipe_winsys *pws,
 }
 
 static void
-xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
+xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer *buf,
                unsigned size, const void *data, unsigned usage)
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
@@ -155,7 +155,7 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 }
 
 static void
-xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
+xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer *buf,
                   unsigned long offset, unsigned long size, const void *data)
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
@@ -166,7 +166,7 @@ xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 }
 
 static void
-xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
+xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer *buf,
                       unsigned long offset, unsigned long size, void *data)
 {
    const struct xm_buffer *xm_buf = xm_bo(buf);
@@ -209,7 +209,7 @@ xm_get_name(struct pipe_winsys *pws)
 }
 
 
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 xm_buffer_create(struct pipe_winsys *pws, 
                  unsigned alignment, 
                  unsigned flags, 
@@ -224,7 +224,7 @@ xm_buffer_create(struct pipe_winsys *pws,
 /**
  * Create buffer which wraps user-space data.
  */
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);

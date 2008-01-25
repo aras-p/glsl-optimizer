@@ -40,6 +40,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/softpipe/sp_winsys.h"
 
 #ifdef GALLIUM_CELL
@@ -57,9 +58,8 @@
  */
 struct xm_buffer
 {
+   struct pipe_buffer base;
    boolean userBuffer;  /** Is this a user-space buffer? */
-   int refcount;
-   unsigned size;
    void *data;
    void *mapped;
 };
@@ -106,63 +106,44 @@ xmesa_softpipe_winsys(struct softpipe_winsys *spws)
  * buffer pointer...
  */
 static INLINE struct xm_buffer *
-xm_bo( struct pipe_buffer_handle *bo )
+xm_buffer( struct pipe_buffer *buf )
 {
-   return (struct xm_buffer *) bo;
+   return (struct xm_buffer *)buf;
 }
 
-static INLINE struct pipe_buffer_handle *
-pipe_bo( struct xm_buffer *bo )
-{
-   return (struct pipe_buffer_handle *) bo;
-}
 
 
 /* Most callbacks map direcly onto dri_bufmgr operations:
  */
 static void *
-xm_buffer_map(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
+xm_buffer_map(struct pipe_winsys *pws, struct pipe_buffer *buf,
               unsigned flags)
 {
-   struct xm_buffer *xm_buf = xm_bo(buf);
+   struct xm_buffer *xm_buf = xm_buffer(buf);
    xm_buf->mapped = xm_buf->data;
    return xm_buf->mapped;
 }
 
 static void
-xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer_handle *buf)
+xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 {
-   struct xm_buffer *xm_buf = xm_bo(buf);
+   struct xm_buffer *xm_buf = xm_buffer(buf);
    xm_buf->mapped = NULL;
 }
 
 static void
-xm_buffer_reference(struct pipe_winsys *pws,
-                    struct pipe_buffer_handle **ptr,
-                    struct pipe_buffer_handle *buf)
+xm_buffer_destroy(struct pipe_winsys *pws,
+		  struct pipe_buffer *buf)
 {
-   if (*ptr) {
-      struct xm_buffer *oldBuf = xm_bo(*ptr);
-      oldBuf->refcount--;
-      assert(oldBuf->refcount >= 0);
-      if (oldBuf->refcount == 0) {
-         if (oldBuf->data) {
-            if (!oldBuf->userBuffer)
-               align_free(oldBuf->data);
-            oldBuf->data = NULL;
-         }
-         free(oldBuf);
-      }
-      *ptr = NULL;
+   struct xm_buffer *oldBuf = xm_buffer(buf);
+
+   if (oldBuf->data) {
+      if (!oldBuf->userBuffer)
+	 align_free(oldBuf->data);
+      oldBuf->data = NULL;
    }
 
-   assert(!(*ptr));
-
-   if (buf) {
-      struct xm_buffer *newBuf = xm_bo(buf);
-      newBuf->refcount++;
-      *ptr = buf;
-   }
+   free(oldBuf);
 }
 
 
@@ -174,7 +155,7 @@ static void
 xmesa_display_surface_tiled(XMesaBuffer b, const struct pipe_surface *surf)
 {
    XImage *ximage = b->tempImage;
-   struct xm_buffer *xm_buf = xm_bo(surf->buffer);
+   struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
    const uint tilesPerRow = (surf->width + TILE_SIZE - 1) / TILE_SIZE;
    uint x, y;
 
@@ -214,7 +195,7 @@ void
 xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
 {
    XImage *ximage = b->tempImage;
-   struct xm_buffer *xm_buf = xm_bo(surf->buffer);
+   struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
    const struct xmesa_surface *xm_surf
       = xmesa_surface((struct pipe_surface *) surf);
 
@@ -272,35 +253,38 @@ xm_get_name(struct pipe_winsys *pws)
 }
 
 
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 xm_buffer_create(struct pipe_winsys *pws, 
                  unsigned alignment, 
                  unsigned usage,
                  unsigned size)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
-   buffer->refcount = 1;
+   buffer->base.refcount = 1;
+   buffer->base.alignment = alignment;
+   buffer->base.usage = usage;
+   buffer->base.size = size;
 
    /* align to 16-byte multiple for Cell */
    buffer->data = align_malloc(size, max(alignment, 16));
-   buffer->size = size;
 
-   return pipe_bo(buffer);
+   return &buffer->base;
 }
 
 
 /**
  * Create buffer which wraps user-space data.
  */
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
+   buffer->base.refcount = 1;
+   buffer->base.size = bytes;
    buffer->userBuffer = TRUE;
-   buffer->refcount = 1;
    buffer->data = ptr;
-   buffer->size = bytes;
-   return pipe_bo(buffer);
+
+   return &buffer->base;
 }
 
 
@@ -376,7 +360,7 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-	winsys->buffer_reference(winsys, &surf->buffer, NULL);
+	pipe_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -407,7 +391,7 @@ xmesa_get_pipe_winsys_aub(void)
       ws->user_buffer_create = xm_user_buffer_create;
       ws->buffer_map = xm_buffer_map;
       ws->buffer_unmap = xm_buffer_unmap;
-      ws->buffer_reference = xm_buffer_reference;
+      ws->buffer_destroy = xm_buffer_destroy;
 
       ws->surface_alloc = xm_surface_alloc;
       ws->surface_alloc_storage = xm_surface_alloc_storage;

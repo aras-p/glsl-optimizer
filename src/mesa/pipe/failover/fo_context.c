@@ -46,7 +46,7 @@ static void failover_destroy( struct pipe_context *pipe )
 
 
 static boolean failover_draw_elements( struct pipe_context *pipe,
-				       struct pipe_buffer_handle *indexBuffer,
+				       struct pipe_buffer *indexBuffer,
 				       unsigned indexSize,
 				       unsigned prim, unsigned start, unsigned count)
 {

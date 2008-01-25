@@ -37,6 +37,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -70,7 +71,7 @@ void st_upload_constants( struct st_context *st,
       _mesa_load_state_parameters(st->ctx, params);
 
       if (cbuf->buffer && cbuf->size != paramBytes)
-	 ws->buffer_reference( ws, &cbuf->buffer, NULL );
+	 pipe_buffer_reference( ws, &cbuf->buffer, NULL );
 
       if (!cbuf->buffer) {
          cbuf->buffer = ws->buffer_create(ws, 1, PIPE_BUFFER_USAGE_CONSTANT,

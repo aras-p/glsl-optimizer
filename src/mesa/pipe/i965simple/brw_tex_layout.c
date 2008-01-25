@@ -39,6 +39,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
 #include "brw_context.h"
@@ -341,7 +342,7 @@ brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe->winsys->buffer_reference(pipe->winsys, &tex->buffer, NULL);
+      pipe_buffer_reference(pipe->winsys, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])

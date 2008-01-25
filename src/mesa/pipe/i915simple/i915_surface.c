@@ -65,7 +65,7 @@ i915_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];

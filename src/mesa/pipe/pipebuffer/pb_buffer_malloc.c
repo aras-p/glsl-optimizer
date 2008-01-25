@@ -42,15 +42,15 @@
 
 struct malloc_buffer 
 {
-   struct pipe_buffer base;
+   struct pb_buffer base;
    void *data;
 };
 
 
-extern const struct pipe_buffer_vtbl malloc_buffer_vtbl;
+extern const struct pb_vtbl malloc_buffer_vtbl;
 
-static inline struct malloc_buffer *
-malloc_buffer(struct pipe_buffer *buf)
+static INLINE struct malloc_buffer *
+malloc_buffer(struct pb_buffer *buf)
 {
    assert(buf);
    assert(buf->vtbl == &malloc_buffer_vtbl);
@@ -59,14 +59,7 @@ malloc_buffer(struct pipe_buffer *buf)
 
 
 static void
-malloc_buffer_reference(struct pipe_buffer *buf)
-{
-   /* no-op */
-}
-
-
-static void
-malloc_buffer_release(struct pipe_buffer *buf)
+malloc_buffer_destroy(struct pb_buffer *buf)
 {
    free(malloc_buffer(buf)->data);
    free(buf);
@@ -74,7 +67,7 @@ malloc_buffer_release(struct pipe_buffer *buf)
 
 
 static void *
-malloc_buffer_map(struct pipe_buffer *buf, 
+malloc_buffer_map(struct pb_buffer *buf, 
                   unsigned flags)
 {
    return malloc_buffer(buf)->data;
@@ -82,15 +75,15 @@ malloc_buffer_map(struct pipe_buffer *buf,
 
 
 static void
-malloc_buffer_unmap(struct pipe_buffer *buf)
+malloc_buffer_unmap(struct pb_buffer *buf)
 {
    /* No-op */
 }
 
 
 static void
-malloc_buffer_get_base_buffer(struct pipe_buffer *buf,
-                              struct pipe_buffer **base_buf,
+malloc_buffer_get_base_buffer(struct pb_buffer *buf,
+                              struct pb_buffer **base_buf,
                               unsigned *offset)
 {
    *base_buf = buf;
@@ -98,18 +91,19 @@ malloc_buffer_get_base_buffer(struct pipe_buffer *buf,
 }
 
 
-const struct pipe_buffer_vtbl 
+const struct pb_vtbl 
 malloc_buffer_vtbl = {
-      malloc_buffer_reference,
-      malloc_buffer_release,
+      malloc_buffer_destroy,
       malloc_buffer_map,
       malloc_buffer_unmap,
       malloc_buffer_get_base_buffer
 };
 
 
-struct pipe_buffer *
-malloc_buffer_create(unsigned size) 
+struct pb_buffer *
+pb_malloc_buffer_create( unsigned alignment,
+			 unsigned usage,
+			 unsigned size ) 
 {
    struct malloc_buffer *buf;
    
@@ -121,7 +115,10 @@ malloc_buffer_create(unsigned size)
       return NULL;
    
    buf->base.vtbl = &malloc_buffer_vtbl;
-   
+   buf->base.base.alignment = alignment;
+   buf->base.base.usage = usage;
+   buf->base.base.size = size;
+
    buf->data = malloc(size);
    if(!buf->data) {
       free(buf);

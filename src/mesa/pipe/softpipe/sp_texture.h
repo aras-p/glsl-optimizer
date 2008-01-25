@@ -41,7 +41,7 @@ struct softpipe_texture
 
    /* The data is held here:
     */
-   struct pipe_buffer_handle *buffer;
+   struct pipe_buffer *buffer;
    unsigned long buffer_size;
 };
 

@@ -64,7 +64,7 @@ brw_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];

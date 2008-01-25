@@ -172,7 +172,7 @@ struct i915_texture {
 
    /* The data is held here:
     */
-   struct pipe_buffer_handle *buffer;
+   struct pipe_buffer *buffer;
 };
 
 struct i915_context
@@ -204,7 +204,7 @@ struct i915_context
    unsigned *batch_start;
 
    /** Vertex buffer */
-   struct pipe_buffer_handle *vbo;
+   struct pipe_buffer *vbo;
 
    struct i915_state current;
    unsigned hardware_dirty;

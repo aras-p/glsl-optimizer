@@ -47,7 +47,7 @@ struct brw_array_state {
 	 unsigned dword;
       } vb0;
 
-      struct pipe_buffer_handle *buffer;
+      struct pipe_buffer *buffer;
       unsigned offset;
 
       unsigned max_index;
@@ -272,7 +272,7 @@ boolean brw_upload_vertex_elements( struct brw_context *brw )
 }
 
 boolean brw_upload_indices( struct brw_context *brw,
-                            const struct pipe_buffer_handle *index_buffer,
+                            const struct pipe_buffer *index_buffer,
                             int ib_size, int start, int count)
 {
    /* Emit the indexbuffer packet:

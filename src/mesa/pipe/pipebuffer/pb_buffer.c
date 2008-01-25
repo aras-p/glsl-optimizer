@@ -34,19 +34,44 @@
 
 
 #include "pb_buffer.h"
+#include "pipe/p_winsys.h"
 
 
-void
-buffer_reference(struct pipe_buffer **dst,
-                 struct pipe_buffer *src)
+
+static void *
+pb_winsys_map(struct pipe_winsys *winsys,
+	      struct pipe_buffer *ws_buf,
+	      unsigned flags)
 {
-   if(*dst != src) {
-      if (src)
-         src->vtbl->reference(src);
-      
-      if (*dst)
-         (*dst)->vtbl->release(*dst);
-   
-      *dst = src;
-   }
+   struct pb_buffer *buf = pb_buffer(ws_buf);
+
+   return buf->vtbl->map(buf, flags);
+}
+
+static void
+pb_winsys_unmap(struct pipe_winsys *winsys,
+		struct pipe_buffer *ws_buf)
+{
+   struct pb_buffer *buf = pb_buffer(ws_buf);
+
+   buf->vtbl->unmap(buf);
+}
+
+static void
+pb_winsys_destroy(struct pipe_winsys *winsys,
+		  struct pipe_buffer *ws_buf)
+{
+   struct pb_buffer *buf = pb_buffer(ws_buf);
+
+   buf->vtbl->destroy(buf);
+}
+
+
+
+void 
+pb_init_winsys(struct pipe_winsys *winsys)
+{
+   winsys->buffer_map = pb_winsys_map;
+   winsys->buffer_unmap = pb_winsys_unmap;
+   winsys->buffer_destroy = pb_winsys_destroy;
 }

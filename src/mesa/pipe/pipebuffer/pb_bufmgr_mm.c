@@ -53,9 +53,9 @@
 #define SUPER(__derived) (&(__derived)->base)
 
 
-struct mm_buffer_manager
+struct mm_pb_manager
 {
-   struct buffer_manager base;
+   struct pb_manager base;
    
    _glthread_Mutex mutex;
    
@@ -64,31 +64,31 @@ struct mm_buffer_manager
    
    size_t align2;
    
-   struct pipe_buffer *buffer;
+   struct pb_buffer *buffer;
    void *map;
 };
 
 
-static inline struct mm_buffer_manager *
-mm_buffer_manager(struct buffer_manager *mgr)
+static inline struct mm_pb_manager *
+mm_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);
-   return (struct mm_buffer_manager *)mgr;
+   return (struct mm_pb_manager *)mgr;
 }
 
 
 struct mm_buffer
 {
-   struct pipe_buffer base;
+   struct pb_buffer base;
    
-   struct mm_buffer_manager *mgr;
+   struct mm_pb_manager *mgr;
    
    struct mem_block *block;
 };
 
 
 static inline struct mm_buffer *
-mm_buffer(struct pipe_buffer *buf)
+mm_buffer(struct pb_buffer *buf)
 {
    assert(buf);
    return (struct mm_buffer *)buf;
@@ -96,17 +96,10 @@ mm_buffer(struct pipe_buffer *buf)
 
 
 static void
-mm_buffer_reference(struct pipe_buffer *buf)
-{
-   /* No-op */
-}
-
-
-static void
-mm_buffer_release(struct pipe_buffer *buf)
+mm_buffer_destroy(struct pb_buffer *buf)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
-   struct mm_buffer_manager *mm = mm_buf->mgr;
+   struct mm_pb_manager *mm = mm_buf->mgr;
    
    _glthread_LOCK_MUTEX(mm->mutex);
    mmFreeMem(mm_buf->block);
@@ -116,50 +109,49 @@ mm_buffer_release(struct pipe_buffer *buf)
 
 
 static void *
-mm_buffer_map(struct pipe_buffer *buf,
+mm_buffer_map(struct pb_buffer *buf,
               unsigned flags)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
-   struct mm_buffer_manager *mm = mm_buf->mgr;
+   struct mm_pb_manager *mm = mm_buf->mgr;
 
    return (unsigned char *) mm->map + mm_buf->block->ofs;
 }
 
 
 static void
-mm_buffer_unmap(struct pipe_buffer *buf)
+mm_buffer_unmap(struct pb_buffer *buf)
 {
    /* No-op */
 }
 
 
 static void
-mm_buffer_get_base_buffer(struct pipe_buffer *buf,
-                          struct pipe_buffer **base_buf,
+mm_buffer_get_base_buffer(struct pb_buffer *buf,
+                          struct pb_buffer **base_buf,
                           unsigned *offset)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
-   struct mm_buffer_manager *mm = mm_buf->mgr;
-   buffer_get_base_buffer(mm->buffer, base_buf, offset);
+   struct mm_pb_manager *mm = mm_buf->mgr;
+   pb_get_base_buffer(mm->buffer, base_buf, offset);
    *offset += mm_buf->block->ofs;
 }
 
 
-static const struct pipe_buffer_vtbl 
+static const struct pb_vtbl 
 mm_buffer_vtbl = {
-      mm_buffer_reference,
-      mm_buffer_release,
+      mm_buffer_destroy,
       mm_buffer_map,
       mm_buffer_unmap,
       mm_buffer_get_base_buffer
 };
 
 
-static struct pipe_buffer *
-mm_bufmgr_create_buffer(struct buffer_manager *mgr, 
+static struct pb_buffer *
+mm_bufmgr_create_buffer(struct pb_manager *mgr, 
                         size_t size)
 {
-   struct mm_buffer_manager *mm = mm_buffer_manager(mgr);
+   struct mm_pb_manager *mm = mm_pb_manager(mgr);
    struct mm_buffer *mm_buf;
 
    _glthread_LOCK_MUTEX(mm->mutex);
@@ -200,16 +192,16 @@ mm_bufmgr_create_buffer(struct buffer_manager *mgr,
 
 
 static void
-mm_bufmgr_destroy(struct buffer_manager *mgr)
+mm_bufmgr_destroy(struct pb_manager *mgr)
 {
-   struct mm_buffer_manager *mm = mm_buffer_manager(mgr);
+   struct mm_pb_manager *mm = mm_pb_manager(mgr);
    
    _glthread_LOCK_MUTEX(mm->mutex);
 
    mmDestroy(mm->heap);
    
-   buffer_unmap(mm->buffer);
-   buffer_release(mm->buffer);
+   pb_unmap(mm->buffer);
+   pb_destroy(mm->buffer);
    
    _glthread_UNLOCK_MUTEX(mm->mutex);
    
@@ -217,16 +209,16 @@ mm_bufmgr_destroy(struct buffer_manager *mgr)
 }
 
 
-struct buffer_manager *
-mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer, 
+struct pb_manager *
+mm_bufmgr_create_from_buffer(struct pb_buffer *buffer, 
                              size_t size, size_t align2) 
 {
-   struct mm_buffer_manager *mm;
+   struct mm_pb_manager *mm;
 
    if(!buffer)
       return NULL;
    
-   mm = (struct mm_buffer_manager *)calloc(1, sizeof(*mm));
+   mm = (struct mm_pb_manager *)calloc(1, sizeof(*mm));
    if (!mm)
       return NULL;
 
@@ -240,9 +232,9 @@ mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer,
 
    mm->buffer = buffer; 
 
-   mm->map = buffer_map(mm->buffer, 
-                        PIPE_BUFFER_USAGE_CPU_READ |
-                        PIPE_BUFFER_USAGE_CPU_WRITE);
+   mm->map = pb_map(mm->buffer, 
+		    PIPE_BUFFER_USAGE_CPU_READ |
+		    PIPE_BUFFER_USAGE_CPU_WRITE);
    if(!mm->map)
       goto failure;
 
@@ -256,19 +248,19 @@ failure:
 if(mm->heap)
    mmDestroy(mm->heap);
    if(mm->map)
-      buffer_unmap(mm->buffer);
+      pb_unmap(mm->buffer);
    if(mm)
       free(mm);
    return NULL;
 }
 
 
-struct buffer_manager *
-mm_bufmgr_create(struct buffer_manager *provider, 
+struct pb_manager *
+mm_bufmgr_create(struct pb_manager *provider, 
                  size_t size, size_t align2) 
 {
-   struct pipe_buffer *buffer;
-   struct buffer_manager *mgr;
+   struct pb_buffer *buffer;
+   struct pb_manager *mgr;
 
    assert(provider);
    assert(provider->create_buffer);
@@ -278,7 +270,7 @@ mm_bufmgr_create(struct buffer_manager *provider,
    
    mgr = mm_bufmgr_create_from_buffer(buffer, size, align2);
    if (!mgr) {
-      buffer_release(buffer);
+      pb_destroy(buffer);
       return NULL;
    }
 

@@ -42,7 +42,7 @@ boolean brw_upload_vertices( struct brw_context *brw,
 			       unsigned max_index );
 
 boolean brw_upload_indices(struct brw_context *brw,
-                           const struct pipe_buffer_handle *index_buffer,
+                           const struct pipe_buffer *index_buffer,
                            int ib_size, int start, int count);
 
 boolean brw_upload_vertex_buffers( struct brw_context *brw );

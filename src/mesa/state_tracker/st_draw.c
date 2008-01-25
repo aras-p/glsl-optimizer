@@ -45,6 +45,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 
 #include "pipe/draw/draw_private.h"
 #include "pipe/draw/draw_context.h"
@@ -237,7 +238,7 @@ st_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffer[attr].buffer = NULL;
-         winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
          assert(velement.src_offset <= 2048); /* 11-bit field */
@@ -282,7 +283,7 @@ st_draw_vbo(GLcontext *ctx,
    if (ib) {
       /* indexed primitive */
       struct gl_buffer_object *bufobj = ib->obj;
-      struct pipe_buffer_handle *indexBuf = NULL;
+      struct pipe_buffer *indexBuf = NULL;
       unsigned indexSize, indexOffset, i;
 
       switch (ib->type) {
@@ -303,7 +304,7 @@ st_draw_vbo(GLcontext *ctx,
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         winsys->buffer_reference(winsys, &indexBuf, stobj->buffer);
+         pipe_buffer_reference(winsys, &indexBuf, stobj->buffer);
          indexOffset = (unsigned) ib->ptr / indexSize;
       }
       else {
@@ -321,7 +322,7 @@ st_draw_vbo(GLcontext *ctx,
                              prims[i].start + indexOffset, prims[i].count);
       }
 
-      winsys->buffer_reference(winsys, &indexBuf, NULL);
+      pipe_buffer_reference(winsys, &indexBuf, NULL);
    }
    else {
       /* non-indexed */
@@ -333,7 +334,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < vs->num_inputs; attr++) {
-      winsys->buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
+      pipe_buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
       pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
    }
@@ -358,7 +359,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    const float height = ctx->DrawBuffer->Height;
    const unsigned vertex_bytes = numVertex * numAttribs * 4 * sizeof(float);
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_buffer_handle *vbuf;
+   struct pipe_buffer *vbuf;
    struct pipe_vertex_buffer vbuffer;
    struct pipe_vertex_element velement;
    unsigned i;
@@ -404,7 +405,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    pipe->draw_arrays(pipe, prim, 0, numVertex);
 
    /* XXX: do one-time */
-   pipe->winsys->buffer_reference(pipe->winsys, &vbuf, NULL);
+   pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
 }
 
 
@@ -465,7 +466,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
-   struct pipe_buffer_handle *index_buffer_handle = 0;
+   struct pipe_buffer *index_buffer_handle = 0;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr, i;
    ubyte *mapped_constants;
@@ -513,7 +514,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffer[attr].buffer = NULL;
-         winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
@@ -605,7 +606,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       if (draw->vertex_buffer[i].buffer) {
          pipe->winsys->buffer_unmap(pipe->winsys,
                                     draw->vertex_buffer[i].buffer);
-         winsys->buffer_reference(winsys, &draw->vertex_buffer[i].buffer, NULL);
+         pipe_buffer_reference(winsys, &draw->vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }

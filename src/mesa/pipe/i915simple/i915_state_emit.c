@@ -278,7 +278,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
             OUT_BATCH(enabled);
             for (unit = 0; unit < I915_TEX_UNITS; unit++) {
                if (enabled & (1 << unit)) {
-                  struct pipe_buffer_handle *buf =
+                  struct pipe_buffer *buf =
                      i915->texture[unit]->buffer;
                   uint offset = 0;
                   assert(buf);

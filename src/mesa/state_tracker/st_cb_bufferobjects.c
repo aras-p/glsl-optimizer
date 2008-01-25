@@ -36,6 +36,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 
 
 
@@ -78,7 +79,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (st_obj->buffer) 
-      pipe->winsys->buffer_reference(pipe->winsys, &st_obj->buffer, NULL);
+      pipe_buffer_reference(pipe->winsys, &st_obj->buffer, NULL);
 
    free(st_obj);
 }
@@ -173,7 +174,7 @@ st_bufferobj_data(GLcontext *ctx,
       buffer_usage = 0;
    }
 
-   pipe->winsys->buffer_reference( pipe->winsys, &st_obj->buffer, NULL );
+   pipe_buffer_reference( pipe->winsys, &st_obj->buffer, NULL );
 
    st_obj->buffer = pipe->winsys->buffer_create( pipe->winsys, 32, buffer_usage,
                                                  size );

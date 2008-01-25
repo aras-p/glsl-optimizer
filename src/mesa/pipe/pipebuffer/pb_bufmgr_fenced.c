@@ -42,30 +42,30 @@
 #include "pb_bufmgr.h"
 
 
-struct fenced_buffer_manager
+struct fenced_pb_manager
 {
-   struct buffer_manager base;
+   struct pb_manager base;
 
-   struct buffer_manager *provider;
+   struct pb_manager *provider;
    
    struct fenced_buffer_list *fenced_list;
 };
 
 
-static inline struct fenced_buffer_manager *
-fenced_buffer_manager(struct buffer_manager *mgr)
+static inline struct fenced_pb_manager *
+fenced_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);
-   return (struct fenced_buffer_manager *)mgr;
+   return (struct fenced_pb_manager *)mgr;
 }
 
 
-static struct pipe_buffer *
-fenced_bufmgr_create_buffer(struct buffer_manager *mgr, size_t size)
+static struct pb_buffer *
+fenced_bufmgr_create_buffer(struct pb_manager *mgr, size_t size)
 {
-   struct fenced_buffer_manager *fenced_mgr = fenced_buffer_manager(mgr);
-   struct pipe_buffer *buf;
-   struct pipe_buffer *fenced_buf;
+   struct fenced_pb_manager *fenced_mgr = fenced_pb_manager(mgr);
+   struct pb_buffer *buf;
+   struct pb_buffer *fenced_buf;
 
    /* check for free buffers before allocating new ones */
    fenced_buffer_list_check_free(fenced_mgr->fenced_list, 0);
@@ -84,7 +84,7 @@ fenced_bufmgr_create_buffer(struct buffer_manager *mgr, size_t size)
    
    fenced_buf = fenced_buffer_create(fenced_mgr->fenced_list, buf);
    if(!fenced_buf) {
-      buffer_release(buf);
+      pb_destroy(buf);
    }
    
    return fenced_buf;
@@ -92,9 +92,9 @@ fenced_bufmgr_create_buffer(struct buffer_manager *mgr, size_t size)
 
 
 static void
-fenced_bufmgr_destroy(struct buffer_manager *mgr)
+fenced_bufmgr_destroy(struct pb_manager *mgr)
 {
-   struct fenced_buffer_manager *fenced_mgr = fenced_buffer_manager(mgr);
+   struct fenced_pb_manager *fenced_mgr = fenced_pb_manager(mgr);
 
    fenced_buffer_list_destroy(fenced_mgr->fenced_list);
 
@@ -104,13 +104,13 @@ fenced_bufmgr_destroy(struct buffer_manager *mgr)
 }
 
 
-struct buffer_manager *
-fenced_bufmgr_create(struct buffer_manager *provider, 
+struct pb_manager *
+fenced_bufmgr_create(struct pb_manager *provider, 
                      struct pipe_winsys *winsys) 
 {
-   struct fenced_buffer_manager *fenced_mgr;
+   struct fenced_pb_manager *fenced_mgr;
 
-   fenced_mgr = (struct fenced_buffer_manager *)calloc(1, sizeof(*fenced_mgr));
+   fenced_mgr = (struct fenced_pb_manager *)calloc(1, sizeof(*fenced_mgr));
    if (!fenced_mgr)
       return NULL;
 

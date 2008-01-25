@@ -42,6 +42,7 @@
 
 #include "pipe/draw/draw_vbuf.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
 #include "i915_context.h"
@@ -192,7 +193,7 @@ i915_vbuf_render_release_vertices( struct vbuf_render *render,
 
    assert(i915->vbo);
    winsys->buffer_unmap(winsys, i915->vbo);
-   winsys->buffer_reference(winsys, &i915->vbo, NULL);
+   pipe_buffer_reference(winsys, &i915->vbo, NULL);
 }
 
 

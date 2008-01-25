@@ -30,7 +30,7 @@
 
 struct st_context;
 struct gl_buffer_object;
-struct pipe_buffer_handle;
+struct pipe_buffer;
 
 /**
  * State_tracker vertex/pixel buffer object, derived from Mesa's
@@ -39,7 +39,7 @@ struct pipe_buffer_handle;
 struct st_buffer_object
 {
    struct gl_buffer_object Base;
-   struct pipe_buffer_handle *buffer;  
+   struct pipe_buffer *buffer;  
    GLsizeiptrARB size;
 };
 

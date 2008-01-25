@@ -38,6 +38,7 @@
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/i965simple/brw_winsys.h"
 #include "brw_aub.h"
 #include "xm_winsys_aub.h"
@@ -79,22 +80,22 @@ aub_pipe_winsys( struct pipe_winsys *winsys )
 
 
 static INLINE struct aub_buffer *
-aub_bo( struct pipe_buffer_handle *bo )
+aub_bo( struct pipe_buffer *bo )
 {
    return (struct aub_buffer *)bo;
 }
 
-static INLINE struct pipe_buffer_handle *
+static INLINE struct pipe_buffer *
 pipe_bo( struct aub_buffer *bo )
 {
-   return (struct pipe_buffer_handle *)bo;
+   return (struct pipe_buffer *)bo;
 }
 
 
 
 
 static void *aub_buffer_map(struct pipe_winsys *winsys, 
-			      struct pipe_buffer_handle *buf,
+			      struct pipe_buffer *buf,
 			      unsigned flags )
 {
    struct aub_buffer *sbo = aub_bo(buf);
@@ -109,7 +110,7 @@ static void *aub_buffer_map(struct pipe_winsys *winsys,
 }
 
 static void aub_buffer_unmap(struct pipe_winsys *winsys, 
-			       struct pipe_buffer_handle *buf)
+			       struct pipe_buffer *buf)
 {
    struct aub_pipe_winsys *iws = aub_pipe_winsys(winsys);
    struct aub_buffer *sbo = aub_bo(buf);
@@ -132,26 +133,15 @@ static void aub_buffer_unmap(struct pipe_winsys *winsys,
 
 
 static void
-aub_buffer_reference(struct pipe_winsys *winsys,
-		       struct pipe_buffer_handle **ptr,
-		       struct pipe_buffer_handle *buf)
+aub_buffer_destroy(struct pipe_winsys *winsys,
+		   struct pipe_buffer *buf)
 {
-   if (*ptr) {
-      assert(aub_bo(*ptr)->refcount != 0);
-      if (--(aub_bo(*ptr)->refcount) == 0)
-	 free(*ptr);
-      *ptr = NULL;
-   }
-
-   if (buf) {
-      aub_bo(buf)->refcount++;
-      *ptr = buf;
-   }
+   free(buf);
 }
 
 
 void xmesa_buffer_subdata_aub(struct pipe_winsys *winsys, 
-			      struct pipe_buffer_handle *buf,
+			      struct pipe_buffer *buf,
 			      unsigned long offset, 
 			      unsigned long size, 
 			      const void *data,
@@ -206,7 +196,7 @@ void xmesa_display_aub( /* struct pipe_winsys *winsys, */
 /* Pipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
  */
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 aub_buffer_create(struct pipe_winsys *winsys,
                   unsigned alignment,
                   unsigned usage,
@@ -231,7 +221,7 @@ aub_buffer_create(struct pipe_winsys *winsys,
 }
 
 
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 aub_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
    struct aub_buffer *sbo;
@@ -312,7 +302,7 @@ aub_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-         winsys->buffer_reference(winsys, &surf->buffer, NULL);
+         pipe_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -351,7 +341,7 @@ xmesa_create_pipe_winsys_aub( void )
    iws->winsys.user_buffer_create = aub_user_buffer_create;
    iws->winsys.buffer_map = aub_buffer_map;
    iws->winsys.buffer_unmap = aub_buffer_unmap;
-   iws->winsys.buffer_reference = aub_buffer_reference;
+   iws->winsys.buffer_destroy = aub_buffer_destroy;
    iws->winsys.flush_frontbuffer = aub_flush_frontbuffer;
    iws->winsys.printf = aub_printf;
    iws->winsys.get_name = aub_get_name;
@@ -439,7 +429,7 @@ static void aub_i965_batch_dword( struct brw_winsys *sws,
 }
 
 static void aub_i965_batch_reloc( struct brw_winsys *sws,
-			     struct pipe_buffer_handle *buf,
+			     struct pipe_buffer *buf,
 			     unsigned access_flags,
 			     unsigned delta )
 {
@@ -450,7 +440,7 @@ static void aub_i965_batch_reloc( struct brw_winsys *sws,
 }
 
 static unsigned aub_i965_get_buffer_offset( struct brw_winsys *sws,
-					    struct pipe_buffer_handle *buf,
+					    struct pipe_buffer *buf,
 					    unsigned access_flags )
 {
    return aub_bo(buf)->offset;
@@ -482,7 +472,7 @@ static void aub_i965_batch_flush( struct brw_winsys *sws,
 
 
 static void aub_i965_buffer_subdata_typed(struct brw_winsys *winsys, 
-					    struct pipe_buffer_handle *buf,
+					    struct pipe_buffer *buf,
 					    unsigned long offset, 
 					    unsigned long size, 
 					    const void *data,

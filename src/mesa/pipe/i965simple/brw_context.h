@@ -260,7 +260,7 @@ struct brw_texture {
 
    /* The data is held here:
     */
-   struct pipe_buffer_handle *buffer;
+   struct pipe_buffer *buffer;
 };
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -350,7 +350,7 @@ struct brw_surface_binding_table {
 struct brw_cache;
 
 struct brw_mem_pool {
-   struct pipe_buffer_handle *buffer;
+   struct pipe_buffer *buffer;
 
    unsigned size;
    unsigned offset;		/* offset of first free byte */
@@ -615,7 +615,7 @@ struct brw_context
       unsigned nr_surfaces;
 
       unsigned max_threads;
-      struct pipe_buffer_handle *scratch_buffer;
+      struct pipe_buffer *scratch_buffer;
       unsigned scratch_buffer_size;
 
       unsigned sampler_count;

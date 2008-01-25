@@ -39,9 +39,6 @@
  */
 
 
-/** Opaque type for a buffer */
-struct pipe_buffer_handle;
-
 /** Opaque type */
 struct pipe_fence_handle;
 
@@ -103,13 +100,13 @@ struct pipe_winsys
     * usage argument is only an optimization hint, not a guarantee, therefore 
     * proper behavior must be observed in all circumstances.
     */
-   struct pipe_buffer_handle *(*buffer_create)( struct pipe_winsys *sws, 
+   struct pipe_buffer *(*buffer_create)( struct pipe_winsys *sws, 
 					        unsigned alignment,
                                                 unsigned usage,
                                                 unsigned size );
 
    /** Create a buffer that wraps user-space data */
-   struct pipe_buffer_handle *(*user_buffer_create)(struct pipe_winsys *sws, 
+   struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *sws, 
                                                     void *ptr,
                                                     unsigned bytes);
 
@@ -118,16 +115,14 @@ struct pipe_winsys
     * flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE. 
     */
    void *(*buffer_map)( struct pipe_winsys *sws, 
-			struct pipe_buffer_handle *buf,
+			struct pipe_buffer *buf,
 			unsigned usage );
    
    void (*buffer_unmap)( struct pipe_winsys *sws, 
-			 struct pipe_buffer_handle *buf );
+			 struct pipe_buffer *buf );
 
-   /** Set ptr = buf, with reference counting */
-   void (*buffer_reference)( struct pipe_winsys *sws,
-                             struct pipe_buffer_handle **ptr,
-                             struct pipe_buffer_handle *buf );
+   void (*buffer_destroy)( struct pipe_winsys *sws,
+			   struct pipe_buffer *buf );
 
 
    /** Set ptr = fence, with reference counting */

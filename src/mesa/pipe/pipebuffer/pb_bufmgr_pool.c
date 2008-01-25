@@ -55,9 +55,9 @@
 #define SUPER(__derived) (&(__derived)->base)
 
 
-struct pool_buffer_manager
+struct pool_pb_manager
 {
-   struct buffer_manager base;
+   struct pb_manager base;
    
    _glthread_Mutex mutex;
    
@@ -68,26 +68,26 @@ struct pool_buffer_manager
    
    struct list_head free;
    
-   struct pipe_buffer *buffer;
+   struct pb_buffer *buffer;
    void *map;
    
    struct pool_buffer *bufs;
 };
 
 
-static inline struct pool_buffer_manager *
-pool_buffer_manager(struct buffer_manager *mgr)
+static inline struct pool_pb_manager *
+pool_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);
-   return (struct pool_buffer_manager *)mgr;
+   return (struct pool_pb_manager *)mgr;
 }
 
 
 struct pool_buffer
 {
-   struct pipe_buffer base;
+   struct pb_buffer base;
    
-   struct pool_buffer_manager *mgr;
+   struct pool_pb_manager *mgr;
    
    struct list_head head;
    
@@ -96,25 +96,19 @@ struct pool_buffer
 
 
 static inline struct pool_buffer *
-pool_buffer(struct pipe_buffer *buf)
+pool_buffer(struct pb_buffer *buf)
 {
    assert(buf);
    return (struct pool_buffer *)buf;
 }
 
 
-static void
-pool_buffer_reference(struct pipe_buffer *buf)
-{
-   /* No-op */
-}
-
 
 static void
-pool_buffer_release(struct pipe_buffer *buf)
+pool_buffer_destroy(struct pb_buffer *buf)
 {
    struct pool_buffer *pool_buf = pool_buffer(buf);
-   struct pool_buffer_manager *pool = pool_buf->mgr;
+   struct pool_pb_manager *pool = pool_buf->mgr;
    
    _glthread_LOCK_MUTEX(pool->mutex);
    LIST_ADD(&pool_buf->head, &pool->free);
@@ -124,10 +118,10 @@ pool_buffer_release(struct pipe_buffer *buf)
 
 
 static void *
-pool_buffer_map(struct pipe_buffer *buf, unsigned flags)
+pool_buffer_map(struct pb_buffer *buf, unsigned flags)
 {
    struct pool_buffer *pool_buf = pool_buffer(buf);
-   struct pool_buffer_manager *pool = pool_buf->mgr;
+   struct pool_pb_manager *pool = pool_buf->mgr;
    void *map;
 
    _glthread_LOCK_MUTEX(pool->mutex);
@@ -138,38 +132,37 @@ pool_buffer_map(struct pipe_buffer *buf, unsigned flags)
 
 
 static void
-pool_buffer_unmap(struct pipe_buffer *buf)
+pool_buffer_unmap(struct pb_buffer *buf)
 {
    /* No-op */
 }
 
 
 static void
-pool_buffer_get_base_buffer(struct pipe_buffer *buf,
-                            struct pipe_buffer **base_buf,
+pool_buffer_get_base_buffer(struct pb_buffer *buf,
+                            struct pb_buffer **base_buf,
                             unsigned *offset)
 {
    struct pool_buffer *pool_buf = pool_buffer(buf);
-   struct pool_buffer_manager *pool = pool_buf->mgr;
-   buffer_get_base_buffer(pool->buffer, base_buf, offset);
+   struct pool_pb_manager *pool = pool_buf->mgr;
+   pb_get_base_buffer(pool->buffer, base_buf, offset);
    *offset += pool_buf->start;
 }
 
 
-static const struct pipe_buffer_vtbl 
+static const struct pb_vtbl 
 pool_buffer_vtbl = {
-      pool_buffer_reference,
-      pool_buffer_release,
+      pool_buffer_destroy,
       pool_buffer_map,
       pool_buffer_unmap,
       pool_buffer_get_base_buffer
 };
 
 
-static struct pipe_buffer *
-pool_bufmgr_create_buffer(struct buffer_manager *mgr, size_t size)
+static struct pb_buffer *
+pool_bufmgr_create_buffer(struct pb_manager *mgr, size_t size)
 {
-   struct pool_buffer_manager *pool = pool_buffer_manager(mgr);
+   struct pool_pb_manager *pool = pool_pb_manager(mgr);
    struct pool_buffer *pool_buf;
    struct list_head *item;
 
@@ -201,15 +194,15 @@ pool_bufmgr_create_buffer(struct buffer_manager *mgr, size_t size)
 
 
 static void
-pool_bufmgr_destroy(struct buffer_manager *mgr)
+pool_bufmgr_destroy(struct pb_manager *mgr)
 {
-   struct pool_buffer_manager *pool = pool_buffer_manager(mgr);
+   struct pool_pb_manager *pool = pool_pb_manager(mgr);
    _glthread_LOCK_MUTEX(pool->mutex);
 
    free(pool->bufs);
    
-   buffer_unmap(pool->buffer);
-   buffer_release(pool->buffer);
+   pb_unmap(pool->buffer);
+   pb_destroy(pool->buffer);
    
    _glthread_UNLOCK_MUTEX(pool->mutex);
    
@@ -217,16 +210,16 @@ pool_bufmgr_destroy(struct buffer_manager *mgr)
 }
 
 
-struct buffer_manager *
-pool_bufmgr_create(struct buffer_manager *provider, 
+struct pb_manager *
+pool_bufmgr_create(struct pb_manager *provider, 
                    size_t numBufs, 
                    size_t bufSize) 
 {
-   struct pool_buffer_manager *pool;
+   struct pool_pb_manager *pool;
    struct pool_buffer *pool_buf;
    int i;
 
-   pool = (struct pool_buffer_manager *)calloc(1, sizeof(*pool));
+   pool = (struct pool_pb_manager *)calloc(1, sizeof(*pool));
    if (!pool)
       return NULL;
 
@@ -245,7 +238,7 @@ pool_bufmgr_create(struct buffer_manager *provider,
    if (!pool->buffer)
       goto failure;
 
-   pool->map = buffer_map(pool->buffer,
+   pool->map = pb_map(pool->buffer,
                           PIPE_BUFFER_USAGE_CPU_READ |
                           PIPE_BUFFER_USAGE_CPU_WRITE);
    if(!pool->map)
@@ -270,9 +263,9 @@ failure:
    if(pool->bufs)
       free(pool->bufs);
    if(pool->map)
-      buffer_unmap(pool->buffer);
+      pb_unmap(pool->buffer);
    if(pool->buffer)
-      buffer_release(pool->buffer);
+      pb_destroy(pool->buffer);
    if(pool)
       free(pool);
    return NULL;
