@@ -616,13 +616,21 @@ one_time_init(void)
 }
 
 
+/* In some versions of the SDK the SPE main takes 'unsigned long' as a
+ * parameter.  In others it takes 'unsigned long long'.  Use a define to
+ * select between the two.
+ */
+#ifdef SPU_MAIN_PARAM_LONG_LONG
+typedef unsigned long long main_param_t
+#else
+typedef unsigned long main_param_t
+#endif
+
 /**
  * SPE entrypoint.
- * Note: example programs declare params as 'unsigned long long' but
- * that doesn't work.
  */
 int
-main(unsigned long speid, unsigned long argp)
+main(main_param_t speid, main_param_t argp)
 {
    int tag = 0;
 
