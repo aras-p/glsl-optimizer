@@ -143,21 +143,18 @@ cell_draw_elements(struct pipe_context *pipe,
    /* draw! */
    draw_arrays(draw, mode, start, count);
 
-   /* always flush for now */
-   draw_flush(draw);
-
    /*
-    * unmap vertex/index buffers
+    * unmap vertex/index buffers - will cause draw module to flush
     */
    for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
       if (sp->vertex_buffer[i].buffer) {
-         pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
+         pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
       }
    }
    if (indexBuffer) {
-      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
+      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
    }
 
    /* Note: leave drawing surfaces mapped */

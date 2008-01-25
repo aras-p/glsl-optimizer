@@ -159,14 +159,7 @@ feedback_point( struct draw_stage *stage, struct prim_header *prim )
 
 
 static void
-feedback_end( struct draw_stage *stage )
-{
-   /* no-op */
-}
-
-
-static void
-feedback_begin( struct draw_stage *stage )
+feedback_flush( struct draw_stage *stage, unsigned flags )
 {
    /* no-op */
 }
@@ -190,11 +183,10 @@ draw_glfeedback_stage(GLcontext *ctx, struct draw_context *draw)
 
    fs->stage.draw = draw;
    fs->stage.next = NULL;
-   fs->stage.begin = feedback_begin;
    fs->stage.point = feedback_point;
    fs->stage.line = feedback_line;
    fs->stage.tri = feedback_tri;
-   fs->stage.end = feedback_end;
+   fs->stage.flush = feedback_flush;
    fs->stage.reset_stipple_counter = feedback_reset_stipple_counter;
    fs->ctx = ctx;
 
@@ -234,14 +226,7 @@ select_point( struct draw_stage *stage, struct prim_header *prim )
 
 
 static void
-select_begin( struct draw_stage *stage )
-{
-   /* no-op */
-}
-
-
-static void
-select_end( struct draw_stage *stage )
+select_flush( struct draw_stage *stage, unsigned flags )
 {
    /* no-op */
 }
@@ -264,11 +249,10 @@ draw_glselect_stage(GLcontext *ctx, struct draw_context *draw)
 
    fs->stage.draw = draw;
    fs->stage.next = NULL;
-   fs->stage.begin = select_begin;
    fs->stage.point = select_point;
    fs->stage.line = select_line;
    fs->stage.tri = select_tri;
-   fs->stage.end = select_end;
+   fs->stage.flush = select_flush;
    fs->stage.reset_stipple_counter = select_reset_stipple_counter;
    fs->ctx = ctx;
 

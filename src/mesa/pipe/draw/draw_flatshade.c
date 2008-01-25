@@ -50,25 +50,6 @@ flat_stage(struct draw_stage *stage)
 }
 
 
-static void flatshade_begin( struct draw_stage *stage )
-{
-   struct flat_stage *flat = flat_stage(stage);
-   const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
-   uint i;
-
-   /* Find which vertex shader outputs are colors, make a list */
-   flat->num_color_attribs = 0;
-   for (i = 0; i < vs->num_outputs; i++) {
-      if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
-          vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
-         flat->color_attribs[flat->num_color_attribs++] = i;
-      }
-   }
-
-   stage->next->begin( stage->next );
-}
-
-
 /** Copy all the color attributes from 'src' vertex to 'dst' vertex */
 static INLINE void copy_colors( struct draw_stage *stage,
                                 struct vertex_header *dst,
@@ -144,9 +125,46 @@ static void flatshade_point( struct draw_stage *stage,
 }
 
 
-static void flatshade_end( struct draw_stage *stage )
+static void flatshade_init_state( struct draw_stage *stage )
 {
-   stage->next->end( stage->next );
+   struct flat_stage *flat = flat_stage(stage);
+   const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
+   uint i;
+
+   /* Find which vertex shader outputs are colors, make a list */
+   flat->num_color_attribs = 0;
+   for (i = 0; i < vs->num_outputs; i++) {
+      if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+          vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+         flat->color_attribs[flat->num_color_attribs++] = i;
+      }
+   }
+
+   stage->line = flatshade_line;
+   stage->tri = flatshade_tri;
+}
+
+static void flatshade_first_tri( struct draw_stage *stage,
+				 struct prim_header *header )
+{
+   flatshade_init_state( stage );
+   stage->tri( stage, header );
+}
+
+static void flatshade_first_line( struct draw_stage *stage,
+				  struct prim_header *header )
+{
+   flatshade_init_state( stage );
+   stage->line( stage, header );
+}
+
+
+static void flatshade_flush( struct draw_stage *stage, 
+			     unsigned flags )
+{
+   stage->tri = flatshade_first_tri;
+   stage->line = flatshade_first_line;
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -174,11 +192,10 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 
    flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;
-   flatshade->stage.begin = flatshade_begin;
    flatshade->stage.point = flatshade_point;
-   flatshade->stage.line = flatshade_line;
-   flatshade->stage.tri = flatshade_tri;
-   flatshade->stage.end = flatshade_end;
+   flatshade->stage.line = flatshade_first_line;
+   flatshade->stage.tri = flatshade_first_tri;
+   flatshade->stage.flush = flatshade_flush;
    flatshade->stage.reset_stipple_counter = flatshade_reset_stipple_counter;
    flatshade->stage.destroy = flatshade_destroy;
 

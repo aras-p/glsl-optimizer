@@ -57,7 +57,7 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 
 static void draw_prim_queue_flush( struct draw_context *draw )
 {
-   struct draw_stage *first = draw->pipeline.first;
+   //   struct draw_stage *first = draw->pipeline.first;
    unsigned i;
 
    if (0)
@@ -69,27 +69,31 @@ static void draw_prim_queue_flush( struct draw_context *draw )
    if (draw->vs.queue_nr)
       draw_vertex_shader_queue_flush(draw);
 
+   /* NOTE: we cannot save draw->pipeline->first in a local var because
+    * draw->pipeline->first is often changed by the first call to tri(),
+    * line(), etc.
+    */
    switch (draw->reduced_prim) {
    case RP_TRI:
       for (i = 0; i < draw->pq.queue_nr; i++) {
 	 if (draw->pq.queue[i].reset_line_stipple)
-	    first->reset_stipple_counter( first );
+	    draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
 
-	 first->tri( first, &draw->pq.queue[i] );
+	 draw->pipeline.first->tri( draw->pipeline.first, &draw->pq.queue[i] );
       }
       break;
    case RP_LINE:
       for (i = 0; i < draw->pq.queue_nr; i++) {
 	 if (draw->pq.queue[i].reset_line_stipple)
-	    first->reset_stipple_counter( first );
+	    draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
 
-	 first->line( first, &draw->pq.queue[i] );
+	 draw->pipeline.first->line( draw->pipeline.first, &draw->pq.queue[i] );
       }
       break;
    case RP_POINT:
-      first->reset_stipple_counter( first );
+      draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
       for (i = 0; i < draw->pq.queue_nr; i++)
-	 first->point( first, &draw->pq.queue[i] );
+	 draw->pipeline.first->point( draw->pipeline.first, &draw->pq.queue[i] );
       break;
    }
 
@@ -119,7 +123,7 @@ void draw_do_flush( struct draw_context *draw,
    if ((flush & DRAW_FLUSH_DRAW) && 
        draw->drawing)
    {
-      draw->pipeline.first->end( draw->pipeline.first );
+      draw->pipeline.first->flush( draw->pipeline.first, ~0 );
       draw->drawing = FALSE;
       draw->prim = ~0;
       draw->pipeline.first = draw->pipeline.validate;
@@ -415,9 +419,6 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 {
    if (!draw->drawing) {
       draw->drawing = TRUE;
-
-      /* tell drawing pipeline we're beginning drawing */
-      draw->pipeline.first->begin( draw->pipeline.first );
    }
 
    if (draw->prim != prim) {

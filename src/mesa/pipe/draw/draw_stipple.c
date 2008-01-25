@@ -173,7 +173,8 @@ reset_stipple_counter(struct draw_stage *stage)
 
 
 static void
-stipple_begin(struct draw_stage *stage)
+stipple_first_line(struct draw_stage *stage, 
+		   struct prim_header *header)
 {
    struct stipple_stage *stipple = stipple_stage(stage);
    struct draw_context *draw = stage->draw;
@@ -181,14 +182,16 @@ stipple_begin(struct draw_stage *stage)
    stipple->pattern = draw->rasterizer->line_stipple_pattern;
    stipple->factor = draw->rasterizer->line_stipple_factor + 1;
 
-   stage->next->begin( stage->next );
+   stage->line = stipple_line;
+   stage->line( stage, header );
 }
 
 
 static void
-stipple_end(struct draw_stage *stage)
+stipple_flush(struct draw_stage *stage, unsigned flags)
 {
-   stage->next->end( stage->next );
+   stage->line = stipple_first_line;
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -224,12 +227,11 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
 
    stipple->stage.draw = draw;
    stipple->stage.next = NULL;
-   stipple->stage.begin = stipple_begin;
    stipple->stage.point = passthrough_point;
-   stipple->stage.line = stipple_line;
+   stipple->stage.line = stipple_first_line;
    stipple->stage.tri = passthrough_tri;
    stipple->stage.reset_stipple_counter = reset_stipple_counter;
-   stipple->stage.end = stipple_end;
+   stipple->stage.flush = stipple_flush;
    stipple->stage.destroy = stipple_destroy;
 
    return &stipple->stage;

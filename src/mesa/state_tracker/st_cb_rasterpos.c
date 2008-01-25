@@ -73,13 +73,7 @@ rastpos_stage( struct draw_stage *stage )
 }
 
 static void
-rastpos_begin( struct draw_stage *stage )
-{
-   /* no-op */
-}
-
-static void
-rastpos_end( struct draw_stage *stage )
+rastpos_flush( struct draw_stage *stage, unsigned flags )
 {
    /* no-op */
 }
@@ -183,11 +177,10 @@ new_draw_rastpos_stage(GLcontext *ctx, struct draw_context *draw)
 
    rs->stage.draw = draw;
    rs->stage.next = NULL;
-   rs->stage.begin = rastpos_begin;
    rs->stage.point = rastpos_point;
    rs->stage.line = rastpos_line;
    rs->stage.tri = rastpos_tri;
-   rs->stage.end = rastpos_end;
+   rs->stage.flush = rastpos_flush;
    rs->stage.destroy = rastpos_destroy;
    rs->stage.reset_stipple_counter = rastpos_reset_stipple_counter;
    rs->stage.destroy = rastpos_destroy;

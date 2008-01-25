@@ -395,7 +395,7 @@ vbuf_begin( struct draw_stage *stage )
 
 
 static void 
-vbuf_end( struct draw_stage *stage )
+vbuf_flush( struct draw_stage *stage, unsigned flags )
 {
 //   vbuf_flush_indices( stage );
    /* XXX: Overkill */
@@ -432,11 +432,10 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    struct vbuf_stage *vbuf = CALLOC_STRUCT(vbuf_stage);
 
    vbuf->stage.draw = draw;
-   vbuf->stage.begin = vbuf_begin;
    vbuf->stage.point = vbuf_first_point;
    vbuf->stage.line = vbuf_first_line;
    vbuf->stage.tri = vbuf_first_tri;
-   vbuf->stage.end = vbuf_end;
+   vbuf->stage.flush = vbuf_flush;
    vbuf->stage.reset_stipple_counter = vbuf_reset_stipple_counter;
    vbuf->stage.destroy = vbuf_destroy;
    

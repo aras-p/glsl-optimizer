@@ -180,13 +180,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 }
 
 
-
-static void setup_begin( struct draw_stage *stage )
-{
-}
-
-
-static void setup_end( struct draw_stage *stage )
+static void setup_flush( struct draw_stage *stage, unsigned flags )
 {
 }
 
@@ -210,11 +204,10 @@ struct draw_stage *i915_draw_render_stage( struct i915_context *i915 )
 
    setup->i915 = i915;
    setup->stage.draw = i915->draw;
-   setup->stage.begin = setup_begin;
    setup->stage.point = setup_point;
    setup->stage.line = setup_line;
    setup->stage.tri = setup_tri;
-   setup->stage.end = setup_end;
+   setup->stage.flush = setup_flush;
    setup->stage.reset_stipple_counter = reset_stipple_counter;
    setup->stage.destroy = render_destroy;
 

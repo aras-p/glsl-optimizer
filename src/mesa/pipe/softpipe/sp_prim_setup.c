@@ -1170,11 +1170,43 @@ static void setup_begin( struct draw_stage *stage )
    setup->quad.nr_attrs = fs->num_inputs;
 
    sp->quad.first->begin(sp->quad.first);
+
+   stage->point = setup_point;
+   stage->line = setup_line;
+   stage->tri = setup_tri;
 }
 
 
-static void setup_end( struct draw_stage *stage )
+static void setup_first_point( struct draw_stage *stage,
+			       struct prim_header *header )
 {
+   setup_begin(stage);
+   stage->point( stage, header );
+}
+
+static void setup_first_line( struct draw_stage *stage,
+			       struct prim_header *header )
+{
+   setup_begin(stage);
+   stage->line( stage, header );
+}
+
+
+static void setup_first_tri( struct draw_stage *stage,
+			       struct prim_header *header )
+{
+   setup_begin(stage);
+   stage->tri( stage, header );
+}
+
+
+
+static void setup_flush( struct draw_stage *stage,
+			 unsigned flags )
+{
+   stage->point = setup_first_point;
+   stage->line = setup_first_line;
+   stage->tri = setup_first_tri;
 }
 
 
@@ -1198,11 +1230,10 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
 
    setup->softpipe = softpipe;
    setup->stage.draw = softpipe->draw;
-   setup->stage.begin = setup_begin;
-   setup->stage.point = setup_point;
-   setup->stage.line = setup_line;
-   setup->stage.tri = setup_tri;
-   setup->stage.end = setup_end;
+   setup->stage.point = setup_first_point;
+   setup->stage.line = setup_first_line;
+   setup->stage.tri = setup_first_tri;
+   setup->stage.flush = setup_flush;
    setup->stage.reset_stipple_counter = reset_stipple_counter;
    setup->stage.destroy = render_destroy;
 

@@ -39,7 +39,7 @@
 /**
  * Rebuild the rendering pipeline.
  */
-static void validate_begin( struct draw_stage *stage )
+static struct draw_stage *validate_pipeline( struct draw_stage *stage )
 {
    struct draw_context *draw = stage->draw;
    struct draw_stage *next = draw->pipeline.rasterize;
@@ -106,7 +106,45 @@ static void validate_begin( struct draw_stage *stage )
    }
 
    draw->pipeline.first = next;
-   draw->pipeline.first->begin( draw->pipeline.first );
+   //BP draw->pipeline.first->begin( draw->pipeline.first );
+   return next;
+}
+
+
+static void validate_tri( struct draw_stage *stage, 
+			  struct prim_header *header )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->tri( pipeline, header );
+}
+
+static void validate_line( struct draw_stage *stage, 
+			   struct prim_header *header )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->line( pipeline, header );
+}
+
+static void validate_point( struct draw_stage *stage, 
+			    struct prim_header *header )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->point( pipeline, header );
+}
+
+static void validate_reset_stipple_counter( struct draw_stage *stage )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->reset_stipple_counter( pipeline );
+}
+
+static void validate_flush( struct draw_stage *stage, 
+			    unsigned flags )
+{
+   /* May need to pass a backend flush on to the rasterize stage.
+    */
+   if (stage->next)
+      stage->next->flush( stage->next, flags );
 }
 
 
@@ -124,13 +162,13 @@ struct draw_stage *draw_validate_stage( struct draw_context *draw )
    struct draw_stage *stage = CALLOC_STRUCT(draw_stage);
 
    stage->draw = draw;
+
    stage->next = NULL;
-   stage->begin = validate_begin;
-   stage->point = NULL;
-   stage->line = NULL;
-   stage->tri = NULL;
-   stage->end = NULL;
-   stage->reset_stipple_counter = NULL;
+   stage->point = validate_point;
+   stage->line = validate_line;
+   stage->tri = validate_tri;
+   stage->flush = validate_flush;
+   stage->reset_stipple_counter = validate_reset_stipple_counter;
    stage->destroy = validate_destroy;
 
    return stage;

@@ -101,8 +101,6 @@ struct draw_stage
    struct vertex_header **tmp;  /**< temp vert storage, such as for clipping */
    unsigned nr_tmps;
 
-   void (*begin)( struct draw_stage * );
-
    void (*point)( struct draw_stage *,
 		  struct prim_header * );
 
@@ -112,7 +110,8 @@ struct draw_stage
    void (*tri)( struct draw_stage *,
 		struct prim_header * );
 
-   void (*end)( struct draw_stage * );
+   void (*flush)( struct draw_stage *,
+                  unsigned flags );
 
    void (*reset_stipple_counter)( struct draw_stage * );
 

@@ -149,8 +149,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
    prim.edgeflags = 0;
    prim.pad = 0;
 
-   setup->begin( setup );
-
    switch (cvbr->prim) {
    case PIPE_PRIM_TRIANGLES:
       for (i = 0; i < nr_indices; i += 3) {
@@ -182,7 +180,7 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
       break;
    }
 
-   setup->end( setup );
+   setup->flush( setup, 0 );
 }
 
 

@@ -55,15 +55,6 @@ static INLINE struct unfilled_stage *unfilled_stage( struct draw_stage *stage )
 }
 
 
-static void unfilled_begin( struct draw_stage *stage )
-{
-   struct unfilled_stage *unfilled = unfilled_stage(stage);
-
-   unfilled->mode[0] = stage->draw->rasterizer->fill_ccw; /* front */
-   unfilled->mode[1] = stage->draw->rasterizer->fill_cw;  /* back */
-
-   stage->next->begin( stage->next );
-}
 
 static void point( struct draw_stage *stage,
 		   struct vertex_header *v0 )
@@ -142,6 +133,20 @@ static void unfilled_tri( struct draw_stage *stage,
    }   
 }
 
+
+static void unfilled_first_tri( struct draw_stage *stage, 
+				struct prim_header *header )
+{
+   struct unfilled_stage *unfilled = unfilled_stage(stage);
+
+   unfilled->mode[0] = stage->draw->rasterizer->fill_ccw; /* front */
+   unfilled->mode[1] = stage->draw->rasterizer->fill_cw;  /* back */
+
+   stage->tri = unfilled_tri;
+   stage->tri( stage, header );
+}
+
+
 static void unfilled_line( struct draw_stage *stage,
                            struct prim_header *header )
 {
@@ -156,9 +161,10 @@ static void unfilled_point( struct draw_stage *stage,
 }
 
 
-static void unfilled_end( struct draw_stage *stage )
+static void unfilled_flush( struct draw_stage *stage,
+			    unsigned flags )
 {
-   stage->next->end( stage->next );
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -187,11 +193,10 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;
    unfilled->stage.tmp = NULL;
-   unfilled->stage.begin = unfilled_begin;
    unfilled->stage.point = unfilled_point;
    unfilled->stage.line = unfilled_line;
-   unfilled->stage.tri = unfilled_tri;
-   unfilled->stage.end = unfilled_end;
+   unfilled->stage.tri = unfilled_first_tri;
+   unfilled->stage.flush = unfilled_flush;
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;
    unfilled->stage.destroy = unfilled_destroy;
 

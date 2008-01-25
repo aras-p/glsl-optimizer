@@ -50,14 +50,6 @@ static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
 }
 
 
-static void cull_begin( struct draw_stage *stage )
-{
-   struct cull_stage *cull = cull_stage(stage);
-
-   cull->winding = stage->draw->rasterizer->cull_mode;
-
-   stage->next->begin( stage->next );
-}
 
 
 static void cull_tri( struct draw_stage *stage,
@@ -90,6 +82,18 @@ static void cull_tri( struct draw_stage *stage,
    }
 }
 
+static void cull_first_tri( struct draw_stage *stage, 
+			    struct prim_header *header )
+{
+   struct cull_stage *cull = cull_stage(stage);
+
+   cull->winding = stage->draw->rasterizer->cull_mode;
+
+   stage->tri = cull_tri;
+   stage->tri( stage, header );
+}
+
+
 
 static void cull_line( struct draw_stage *stage,
 		       struct prim_header *header )
@@ -105,11 +109,11 @@ static void cull_point( struct draw_stage *stage,
 }
 
 
-static void cull_end( struct draw_stage *stage )
+static void cull_flush( struct draw_stage *stage, unsigned flags )
 {
-   stage->next->end( stage->next );
+   stage->tri = cull_first_tri;
+   stage->next->flush( stage->next, flags );
 }
-
 
 static void cull_reset_stipple_counter( struct draw_stage *stage )
 {
@@ -135,11 +139,10 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
 
    cull->stage.draw = draw;
    cull->stage.next = NULL;
-   cull->stage.begin = cull_begin;
    cull->stage.point = cull_point;
    cull->stage.line = cull_line;
-   cull->stage.tri = cull_tri;
-   cull->stage.end = cull_end;
+   cull->stage.tri = cull_first_tri;
+   cull->stage.flush = cull_flush;
    cull->stage.reset_stipple_counter = cull_reset_stipple_counter;
    cull->stage.destroy = cull_destroy;
 
