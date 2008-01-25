@@ -92,7 +92,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
    }
 
    c->reg.t          = brw_vec1_grf(i, 0);
-   c->reg.loopcount  = retype(brw_vec1_grf(i, 1), BRW_REGISTER_TYPE_UD);
+   c->reg.loopcount  = retype(brw_vec1_grf(i, 1), BRW_REGISTER_TYPE_D);
    c->reg.nr_verts   = retype(brw_vec1_grf(i, 2), BRW_REGISTER_TYPE_UD);
    c->reg.planemask  = retype(brw_vec1_grf(i, 3), BRW_REGISTER_TYPE_UD);
    c->reg.plane_equation = brw_vec4_grf(i, 4);
