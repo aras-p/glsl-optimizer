@@ -234,7 +234,7 @@ cmd_render(const struct cell_command_render *render)
    if (total_index_bytes < 16)
       total_index_bytes = 16;
    else
-      total_index_bytes = (total_index_bytes + 15) & ~0xf; /* multiple of 16 */
+      total_index_bytes = ROUNDUP16(total_index_bytes);
 
    /*
    printf("VBUF: indices at %p,  vertices at %p  total_vertex_bytes %u  ind_bytes %u\n",
@@ -457,10 +457,9 @@ cmd_batch(uint opcode)
 
    ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
 
-   size = (size + 0xf) & ~0xf;
+   size = ROUNDUP16(size);
 
-   ASSERT(size % 16 == 0);
-   ASSERT((unsigned int) spu.init.batch_buffers[buf] % 16 == 0);
+   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
 
    mfc_get(buffer,  /* dest */
            (unsigned int) spu.init.batch_buffers[buf],  /* src */

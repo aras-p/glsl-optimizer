@@ -43,6 +43,9 @@
    assert((((unsigned long) (ptr)) & 0xf) == 0);
 
 
+/** round up value to next multiple of 16 */
+#define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
+
 
 #define TILE_SIZE 32
 
