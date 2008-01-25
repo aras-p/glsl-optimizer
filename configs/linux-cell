@@ -14,7 +14,7 @@ HOST_CC = gcc
 SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
 
 
-CFLAGS = -g -W -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I$(SDK)/include -DGALLIUM_CELL
+CFLAGS = -g -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I$(SDK)/include -DGALLIUM_CELL
 
 CXXFLAGS = $(CFLAGS)
 
