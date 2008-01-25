@@ -104,6 +104,7 @@ struct cell_command_render
    uint prim_type;
    uint num_verts;
    uint vertex_size;  /**< bytes per vertex */
+   uint dummy;       /* XXX this dummy field works around a compiler bug */
    uint num_indexes;
    const void *vertex_data;
    const ushort *index_data;
