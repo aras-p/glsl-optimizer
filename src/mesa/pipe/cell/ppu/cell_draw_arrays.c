@@ -51,7 +51,7 @@ cell_map_constant_buffers(struct cell_context *sp)
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].size)
          sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
-                                                  PIPE_BUFFER_FLAG_READ);
+                                                  PIPE_BUFFER_USAGE_CPU_READ);
    }
 
    draw_set_mapped_constant_buffer(sp->draw,
@@ -123,7 +123,7 @@ cell_draw_elements(struct pipe_context *pipe,
       if (sp->vertex_buffer[i].buffer) {
          void *buf = pipe->winsys->buffer_map(pipe->winsys,
                                               sp->vertex_buffer[i].buffer,
-                                              PIPE_BUFFER_FLAG_READ);
+                                              PIPE_BUFFER_USAGE_CPU_READ);
          draw_set_mapped_vertex_buffer(draw, i, buf);
       }
    }
@@ -131,7 +131,7 @@ cell_draw_elements(struct pipe_context *pipe,
    if (indexBuffer) {
       void *mapped_indexes = pipe->winsys->buffer_map(pipe->winsys,
                                                       indexBuffer,
-                                                      PIPE_BUFFER_FLAG_READ);
+                                                      PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {
