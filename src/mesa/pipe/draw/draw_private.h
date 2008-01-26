@@ -111,7 +111,7 @@ struct draw_stage
 		struct prim_header * );
 
    void (*flush)( struct draw_stage *,
-                  unsigned flags );
+		  unsigned flags );
 
    void (*reset_stipple_counter)( struct draw_stage * );
 
@@ -191,8 +191,6 @@ struct draw_context
    boolean convert_wide_points; /**< convert wide points to tris? */
    boolean convert_wide_lines;  /**< convert side lines to tris? */
 
-   boolean drawing; /**< do we presently have something queued for drawing? */
-   unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;
 
    /** TGSI program interpreter runtime state */
@@ -278,14 +276,14 @@ extern void draw_vertex_fetch( struct draw_context *draw,
 			       unsigned count );
 
 
-#define DRAW_FLUSH_PRIM_QUEUE                0x1
-#define DRAW_FLUSH_VERTEX_CACHE_INVALIDATE   0x2
-#define DRAW_FLUSH_DRAW                      0x4
+#define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
+#define DRAW_FLUSH_PRIM_QUEUE                0x2
+#define DRAW_FLUSH_VERTEX_CACHE              0x4
+#define DRAW_FLUSH_STATE_CHANGE              0x8
+#define DRAW_FLUSH_BACKEND                   0x10
 
 
-void draw_do_flush( struct draw_context *draw,
-                    unsigned flags );
-
+void draw_do_flush( struct draw_context *draw, unsigned flags );
 
 
 

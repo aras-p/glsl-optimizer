@@ -80,7 +80,7 @@ struct draw_context *draw_create( void )
    draw->convert_wide_points = TRUE;
    draw->convert_wide_lines = TRUE;
 
-   draw->prim = ~0; /* != any of PIPE_PRIM_x */
+   draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
    draw_vertex_cache_invalidate( draw );
    draw_set_mapped_element_buffer( draw, 0, NULL );
@@ -111,8 +111,7 @@ void draw_destroy( struct draw_context *draw )
 
 void draw_flush( struct draw_context *draw )
 {
-   if (draw->drawing)
-      draw_do_flush( draw, DRAW_FLUSH_DRAW );
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 }
 
 
@@ -124,7 +123,8 @@ void draw_flush( struct draw_context *draw )
 void draw_set_rasterizer_state( struct draw_context *draw,
                                 const struct pipe_rasterizer_state *raster )
 {
-   draw_flush( draw );
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+
    draw->rasterizer = raster;
 }
 
@@ -137,7 +137,8 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage )
 {
-   draw_flush( draw );
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+
    draw->pipeline.rasterize = stage;
 }
 
@@ -148,7 +149,7 @@ void draw_set_rasterize_stage( struct draw_context *draw,
 void draw_set_clip_state( struct draw_context *draw,
                           const struct pipe_clip_state *clip )
 {
-   draw_flush( draw );
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    assert(clip->nr <= PIPE_MAX_CLIP_PLANES);
    memcpy(&draw->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
@@ -162,7 +163,7 @@ void draw_set_clip_state( struct draw_context *draw,
 void draw_set_viewport_state( struct draw_context *draw,
                               const struct pipe_viewport_state *viewport )
 {
-   draw_flush( draw );
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->viewport = *viewport; /* struct copy */
 }
 
@@ -173,8 +174,7 @@ draw_set_vertex_buffer(struct draw_context *draw,
                        unsigned attr,
                        const struct pipe_vertex_buffer *buffer)
 {
-   draw_flush( draw );
-
+   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
    assert(attr < PIPE_ATTRIB_MAX);
    draw->vertex_buffer[attr] = *buffer;
 }
@@ -185,8 +185,7 @@ draw_set_vertex_element(struct draw_context *draw,
                         unsigned attr,
                         const struct pipe_vertex_element *element)
 {
-   draw_flush( draw );
-
+   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
    assert(attr < PIPE_ATTRIB_MAX);
    draw->vertex_element[attr] = *element;
 }
@@ -199,8 +198,7 @@ void
 draw_set_mapped_vertex_buffer(struct draw_context *draw,
                               unsigned attr, const void *buffer)
 {
-   draw_flush( draw );
-
+   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
    draw->user.vbuffer[attr] = buffer;
 }
 
@@ -209,8 +207,7 @@ void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer)
 {
-   draw_flush( draw );
-
+   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
    draw->user.constants = buffer;
 }
 
@@ -222,6 +219,7 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
 void
 draw_convert_wide_points(struct draw_context *draw, boolean enable)
 {
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->convert_wide_points = enable;
 }
 
@@ -233,6 +231,7 @@ draw_convert_wide_points(struct draw_context *draw, boolean enable)
 void
 draw_convert_wide_lines(struct draw_context *draw, boolean enable)
 {
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->convert_wide_lines = enable;
 }
 

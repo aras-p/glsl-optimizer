@@ -42,10 +42,13 @@ void draw_vertex_cache_invalidate( struct draw_context *draw )
    assert(draw->pq.queue_nr == 0);
    assert(draw->vs.queue_nr == 0);
    assert(draw->vcache.referenced == 0);
-   
+   /* XXX memset() here */
+#if 0
    for (i = 0; i < Elements( draw->vcache.idx ); i++)
       draw->vcache.idx[i] = ~0;
-
+#else
+   memset(draw->vcache.idx, ~0, sizeof(draw->vcache.idx));
+#endif
 //   fprintf(stderr, "x\n");
 }
 
@@ -148,7 +151,7 @@ void draw_vertex_cache_unreference( struct draw_context *draw )
 
 
 int draw_vertex_cache_check_space( struct draw_context *draw,
-				    unsigned nr_verts )
+				   unsigned nr_verts )
 {
    if (draw->vcache.overflow + nr_verts < VCACHE_OVERFLOW) {
       /* The vs queue is sized so that this can never happen:

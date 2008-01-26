@@ -57,17 +57,14 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 
 static void draw_prim_queue_flush( struct draw_context *draw )
 {
-   //   struct draw_stage *first = draw->pipeline.first;
    unsigned i;
 
    if (0)
       fprintf(stdout,"Flushing with %d prims, %d verts\n",
              draw->pq.queue_nr, draw->vs.queue_nr);
 
-   /* Make sure all vertices are available/shaded:
-    */
-   if (draw->vs.queue_nr)
-      draw_vertex_shader_queue_flush(draw);
+   if (draw->pq.queue_nr == 0)
+      return;
 
    /* NOTE: we cannot save draw->pipeline->first in a local var because
     * draw->pipeline->first is often changed by the first call to tri(),
@@ -102,33 +99,32 @@ static void draw_prim_queue_flush( struct draw_context *draw )
 }
 
 
-void draw_do_flush( struct draw_context *draw, 
-                    unsigned flush )
+
+void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
-   if ((flush & (DRAW_FLUSH_PRIM_QUEUE |
-                 DRAW_FLUSH_VERTEX_CACHE_INVALIDATE |
-                 DRAW_FLUSH_DRAW)) && 
-        draw->pq.queue_nr)
-   {
-      draw_prim_queue_flush(draw);
-   }
+   if (0)
+      fprintf(stdout,"Flushing with %d verts, %d prims\n",
+	      draw->vs.queue_nr,
+	      draw->pq.queue_nr );
 
-   if ((flush & (DRAW_FLUSH_VERTEX_CACHE_INVALIDATE |
-                 DRAW_FLUSH_DRAW)) && 
-       draw->drawing)
-   {
-      draw_vertex_cache_invalidate(draw);
-   }
 
-   if ((flush & DRAW_FLUSH_DRAW) && 
-       draw->drawing)
-   {
-      draw->pipeline.first->flush( draw->pipeline.first, ~0 );
-      draw->drawing = FALSE;
-      draw->prim = ~0;
-      draw->pipeline.first = draw->pipeline.validate;
-   }
+   if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
+      draw_vertex_shader_queue_flush(draw);
 
+      if (flags >= DRAW_FLUSH_PRIM_QUEUE) {
+         draw_prim_queue_flush(draw);
+
+	 if (flags >= DRAW_FLUSH_VERTEX_CACHE) {
+            draw_vertex_cache_invalidate(draw);
+
+	    if (flags >= DRAW_FLUSH_STATE_CHANGE) {
+               draw->pipeline.first->flush( draw->pipeline.first, flags );
+               draw->pipeline.first = draw->pipeline.validate;
+               draw->reduced_prim = ~0;
+	    }
+	 }
+      }    
+   }
 }
 
 
@@ -143,7 +139,7 @@ static struct prim_header *get_queued_prim( struct draw_context *draw,
 {
    if (!draw_vertex_cache_check_space( draw, nr_verts )) {
 //      fprintf(stderr, "v");
-      draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE_INVALIDATE );
+      draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE );
    }
    else if (draw->pq.queue_nr == PRIM_QUEUE_LENGTH) {
 //      fprintf(stderr, "p");
@@ -251,13 +247,14 @@ static void do_quad( struct draw_context *draw,
  * Main entrypoint to draw some number of points/lines/triangles
  */
 static void
-draw_prim( struct draw_context *draw, unsigned start, unsigned count )
+draw_prim( struct draw_context *draw, 
+	   unsigned prim, unsigned start, unsigned count )
 {
    unsigned i;
 
 //   _mesa_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
 
-   switch (draw->prim) {
+   switch (prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < count; i ++) {
 	 do_point( draw,
@@ -389,21 +386,6 @@ draw_prim( struct draw_context *draw, unsigned start, unsigned count )
 }
 
 
-static void
-draw_set_prim( struct draw_context *draw, unsigned prim )
-{
-   assert(prim >= PIPE_PRIM_POINTS);
-   assert(prim <= PIPE_PRIM_POLYGON);
-
-   if (reduced_prim[prim] != draw->reduced_prim) {
-      draw_do_flush( draw, DRAW_FLUSH_PRIM_QUEUE );
-      draw->reduced_prim = reduced_prim[prim];
-   }
-
-   draw->prim = prim;
-}
-
-
 
 
 /**
@@ -417,16 +399,13 @@ void
 draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count)
 {
-   if (!draw->drawing) {
-      draw->drawing = TRUE;
-   }
-
-   if (draw->prim != prim) {
-      draw_set_prim( draw, prim );
+   if (reduced_prim[prim] != draw->reduced_prim) {
+      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+      draw->reduced_prim = reduced_prim[prim];
    }
 
    /* drawing done here: */
-   draw_prim(draw, start, count);
+   draw_prim(draw, prim, start, count);
 }
 
 

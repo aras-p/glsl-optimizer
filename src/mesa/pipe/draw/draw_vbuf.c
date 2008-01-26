@@ -387,29 +387,26 @@ vbuf_alloc_vertices( struct draw_stage *stage,
 }
 
 
-static void 
-vbuf_begin( struct draw_stage *stage )
-{
-   /* no-op, vbuffer allocated by first point/line/tri */
-}
-
 
 static void 
 vbuf_flush( struct draw_stage *stage, unsigned flags )
 {
-//   vbuf_flush_indices( stage );
-   /* XXX: Overkill */
-   vbuf_flush_vertices( stage );
-   
+   vbuf_flush_indices( stage );
+
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
    stage->tri = vbuf_first_tri;
+
+   if (flags & DRAW_FLUSH_BACKEND)
+      vbuf_flush_vertices( stage );
 }
 
 
 static void 
 vbuf_reset_stipple_counter( struct draw_stage *stage )
 {
+   /* XXX: Need to do something here for hardware with linestipple.
+    */
    (void) stage;
 }
 

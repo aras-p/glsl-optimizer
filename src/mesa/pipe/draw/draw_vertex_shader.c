@@ -271,9 +271,9 @@ void
 draw_bind_vertex_shader(struct draw_context *draw,
                         struct draw_vertex_shader *dvs)
 {
-   draw_flush(draw);
-   draw->vertex_shader = dvs;
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
+   draw->vertex_shader = dvs;
    draw->num_vs_outputs = dvs->state->num_outputs;
 
    /* specify the fragment program to interpret/execute */
