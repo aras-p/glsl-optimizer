@@ -86,15 +86,6 @@ extern struct spu_global spu;
 #define TAG_MISC              18
 
 
-/** The standard assert macro doesn't seem to work on SPUs */
-#define ASSERT(x) \
-   if (!(x)) { \
-      fprintf(stderr, "SPU %d: %s:%d: %s(): assertion %s failed.\n", \
-              spu.init.id, __FILE__, __LINE__, __FUNCTION__, #x); \
-      exit(1); \
-   }
-
-
 extern void
 wait_on_mask(unsigned tag);
 

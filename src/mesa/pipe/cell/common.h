@@ -38,6 +38,17 @@
 #include "pipe/p_format.h"
 
 
+/** The standard assert macro doesn't seem to work reliably */
+#define ASSERT(x) \
+   if (!(x)) { \
+      ubyte *p = NULL; \
+      fprintf(stderr, "%s:%d: %s(): assertion %s failed.\n", \
+              __FILE__, __LINE__, __FUNCTION__, #x);             \
+      *p = 0; \
+      exit(1); \
+   }
+
+
 /** for sanity checking */
 #define ASSERT_ALIGN16(ptr) \
    assert((((unsigned long) (ptr)) & 0xf) == 0);
