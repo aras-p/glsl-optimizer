@@ -624,9 +624,9 @@ one_time_init(void)
  * select between the two.
  */
 #ifdef SPU_MAIN_PARAM_LONG_LONG
-typedef unsigned long long main_param_t
+typedef unsigned long long main_param_t;
 #else
-typedef unsigned long main_param_t
+typedef unsigned long main_param_t;
 #endif
 
 /**
