@@ -331,9 +331,12 @@ vbuf_flush_indices( struct draw_stage *stage )
    
    vbuf->nr_indices = 0;
 
+   /* don't need to reset point/line/tri functions */
+#if 0
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
    stage->tri = vbuf_first_tri;
+#endif
 }
 
 
