@@ -31,13 +31,29 @@
 #include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_render.h"
+#include "pipe/draw/draw_context.h"
 
 
 void
 cell_flush(struct pipe_context *pipe, unsigned flags)
 {
    struct cell_context *cell = cell_context(pipe);
+
+   draw_flush( cell->draw );
+   cell_flush_int(pipe, flags);
+}
+
+
+/** internal flush */
+void
+cell_flush_int(struct pipe_context *pipe, unsigned flags)
+{
+   static boolean flushing = FALSE;  /* recursion catcher */
+   struct cell_context *cell = cell_context(pipe);
    uint i;
+
+   ASSERT(!flushing);
+   flushing = TRUE;
 
    if (flags & PIPE_FLUSH_WAIT) {
       uint *cmd = (uint *) cell_batch_alloc(cell, sizeof(uint));
@@ -60,4 +76,6 @@ cell_flush(struct pipe_context *pipe, unsigned flags)
          assert(k == CELL_CMD_FINISH);
       }
    }
+
+   flushing = FALSE;
 }

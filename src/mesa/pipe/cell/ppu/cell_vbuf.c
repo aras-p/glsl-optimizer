@@ -166,7 +166,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
 #if 01
    /* XXX this is temporary */
-   cell_flush(&cell->pipe, PIPE_FLUSH_WAIT);
+   cell_flush_int(&cell->pipe, PIPE_FLUSH_WAIT);
 #endif
 }
 
