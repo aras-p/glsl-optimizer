@@ -79,7 +79,7 @@ FETCH_ATTRIB( R8G8B8A8_UNORM,       4, CVT_8_UNORM )
 
 
 
-static fetch_func get_fetch_func( unsigned format )
+static fetch_func get_fetch_func( enum pipe_format format )
 {
    switch (format) {
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
@@ -102,6 +102,8 @@ static fetch_func get_fetch_func( unsigned format )
       return fetch_A8R8G8B8_UNORM;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       return fetch_R8G8B8A8_UNORM;
+   case 0:
+      return NULL;
    default:
       /* Lots of missing cases! */
       assert(0);
@@ -127,13 +129,17 @@ transpose_4x4( float *out, const float *in )
 			       
 void draw_update_vertex_fetch( struct draw_context *draw )
 {
-   //unsigned nr_attrs = draw->vertex_element_count;
-   unsigned nr_attrs = draw->vertex_shader->state->num_inputs;
-   unsigned i;
+   unsigned nr_attrs, i;
+
+   /* this may happend during context init */
+   if (!draw->vertex_shader)
+      return;
+
+   nr_attrs = draw->vertex_shader->state->num_inputs;
 
    for (i = 0; i < nr_attrs; i++) {
       unsigned buf = draw->vertex_element[i].vertex_buffer_index;
-      unsigned format  = draw->vertex_element[i].src_format;
+      enum pipe_format format  = draw->vertex_element[i].src_format;
 
       draw->vertex_fetch.src_ptr[i] = (const ubyte *) draw->user.vbuffer[buf] + 
 						       draw->vertex_buffer[buf].buffer_offset + 
