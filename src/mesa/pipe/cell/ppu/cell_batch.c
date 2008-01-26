@@ -34,12 +34,17 @@
 void
 cell_batch_flush(struct cell_context *cell)
 {
+   static boolean flushing = FALSE;
    uint batch = cell->cur_batch;
    const uint size = cell->batch_buffer_size[batch];
    uint spu, cmd_word;
 
+   assert(!flushing);
+
    if (size == 0)
       return;
+
+   flushing = TRUE;
 
    assert(batch < CELL_NUM_BATCH_BUFFERS);
 
@@ -86,6 +91,8 @@ cell_batch_flush(struct cell_context *cell)
 
    cell->batch_buffer_size[batch] = 0;  /* empty */
    cell->cur_batch = batch;
+
+   flushing = FALSE;
 }
 
 
