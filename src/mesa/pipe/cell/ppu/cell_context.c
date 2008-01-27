@@ -254,8 +254,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell_start_spus(cell);
 
-   for (buf = 0; buf < CELL_NUM_BATCH_BUFFERS; buf++) {
-      cell->batch_buffer_size[buf] = 0;
+   /* init command, vertex/index buffer info */
+   for (buf = 0; buf < CELL_NUM_BUFFERS; buf++) {
+      cell->buffer_size[buf] = 0;
 
       /* init batch buffer status values,
        * mark 0th buffer as used, rest as free.

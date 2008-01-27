@@ -35,6 +35,9 @@
 struct cell_context;
 
 
+extern uint
+cell_get_empty_buffer(struct cell_context *cell);
+
 extern void
 cell_batch_flush(struct cell_context *cell);
 

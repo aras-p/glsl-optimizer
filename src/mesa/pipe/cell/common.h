@@ -81,8 +81,8 @@
 #define CELL_CMD_STATE_VERTEX_INFO   13
 
 
-#define CELL_NUM_BATCH_BUFFERS 3
-#define CELL_BATCH_BUFFER_SIZE 1024  /**< 16KB would be the max */
+#define CELL_NUM_BUFFERS 4
+#define CELL_BUFFER_SIZE (4*1024)  /**< 16KB would be the max */
 
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
@@ -147,7 +147,9 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    struct cell_command *cmd;
-   ubyte *batch_buffers[CELL_NUM_BATCH_BUFFERS];
+
+   /** Buffers for command batches, vertex/index data */
+   ubyte *buffers[CELL_NUM_BUFFERS];
    uint *buffer_status;  /**< points at cell_context->buffer_status */
 } ALIGN16_ATTRIB;
 

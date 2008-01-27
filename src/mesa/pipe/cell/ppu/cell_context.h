@@ -102,12 +102,14 @@ struct cell_context
 
    uint num_spus;
 
-   uint batch_buffer_size[CELL_NUM_BATCH_BUFFERS];
-   ubyte batch_buffer[CELL_NUM_BATCH_BUFFERS][CELL_BATCH_BUFFER_SIZE] ALIGN16_ATTRIB;
-   int cur_batch;  /**< which batch buffer is being filled */
+   /** Buffers for command batches, vertex/index data */
+   uint buffer_size[CELL_NUM_BUFFERS];
+   ubyte buffer[CELL_NUM_BUFFERS][CELL_BUFFER_SIZE] ALIGN16_ATTRIB;
+
+   int cur_batch;  /**< which buffer is being filled w/ commands */
 
    /** [4] to ensure 16-byte alignment for each status word */
-   uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BATCH_BUFFERS][4] ALIGN16_ATTRIB;
+   uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BUFFERS][4] ALIGN16_ATTRIB;
 
 };
 
