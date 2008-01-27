@@ -111,6 +111,8 @@ pool_buffer_destroy(struct pb_buffer *buf)
    struct pool_buffer *pool_buf = pool_buffer(buf);
    struct pool_pb_manager *pool = pool_buf->mgr;
    
+   assert(pool_buf->base.base.refcount == 0);
+
    _glthread_LOCK_MUTEX(pool->mutex);
    LIST_ADD(&pool_buf->head, &pool->free);
    pool->numFree++;
@@ -192,7 +194,13 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    --pool->numFree;
 
    _glthread_UNLOCK_MUTEX(pool->mutex);
+   
    pool_buf = LIST_ENTRY(struct pool_buffer, item, head);
+   assert(pool_buf->base.base.refcount == 0);
+   pool_buf->base.base.refcount = 1;
+   pool_buf->base.base.alignment = desc->alignment;
+   pool_buf->base.base.usage = desc->usage;
+   
    return SUPER(pool_buf);
 }
 
@@ -206,7 +214,7 @@ pool_bufmgr_destroy(struct pb_manager *mgr)
    FREE(pool->bufs);
    
    pb_unmap(pool->buffer);
-   pb_destroy(pool->buffer);
+   pb_reference(&pool->buffer, NULL);
    
    _glthread_UNLOCK_MUTEX(pool->mutex);
    
@@ -256,6 +264,10 @@ pool_bufmgr_create(struct pb_manager *provider,
 
    pool_buf = pool->bufs;
    for (i = 0; i < numBufs; ++i) {
+      pool_buf->base.base.refcount = 0;
+      pool_buf->base.base.alignment = 0;
+      pool_buf->base.base.usage = 0;
+      pool_buf->base.base.size = bufSize;
       pool_buf->base.vtbl = &pool_buffer_vtbl;
       pool_buf->mgr = pool;
       pool_buf->start = i * bufSize;
@@ -271,7 +283,7 @@ failure:
    if(pool->map)
       pb_unmap(pool->buffer);
    if(pool->buffer)
-      pb_destroy(pool->buffer);
+      pb_reference(&pool->buffer, NULL);
    if(pool)
       FREE(pool);
    return NULL;

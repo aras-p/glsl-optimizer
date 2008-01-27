@@ -114,10 +114,11 @@ pb_malloc_buffer_create(size_t size,
    if(!buf)
       return NULL;
    
-   buf->base.vtbl = &malloc_buffer_vtbl;
+   buf->base.base.refcount = 1;
    buf->base.base.alignment = desc->alignment;
    buf->base.base.usage = desc->usage;
    buf->base.base.size = size;
+   buf->base.vtbl = &malloc_buffer_vtbl;
 
    buf->data = align_malloc(size, desc->alignment < sizeof(void*) ? sizeof(void*) : desc->alignment);
    if(!buf->data) {
