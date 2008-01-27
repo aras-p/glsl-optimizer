@@ -128,6 +128,7 @@ struct cell_command_render
    const ushort *index_data;
    float xmin, ymin, xmax, ymax;
    boolean inline_indexes;
+   boolean inline_verts;
 } ALIGN16_ATTRIB;
 
 

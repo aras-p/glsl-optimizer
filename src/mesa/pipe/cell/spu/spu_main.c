@@ -216,16 +216,21 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
    ushort index_data[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
    const uint vertex_size = render->vertex_size; /* in bytes */
+   const uint total_vertex_bytes = render->num_verts * vertex_size;
+   const ubyte *vertices;
    const ushort *indexes;
+   uint mask;
    uint i, j;
 
 
    if (Debug) {
-      printf("SPU %u: RENDER prim %u, num_vert=%u  num_ind=%u  inlined=%u\n",
+      printf("SPU %u: RENDER prim %u, num_vert=%u  num_ind=%u  "
+             "inline_vert=%u  inline_ind=%u\n",
              spu.init.id,
              render->prim_type,
              render->num_verts,
              render->num_indexes,
+             render->inline_verts,
              render->inline_indexes);
 
       /*
@@ -237,43 +242,28 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
              render->index_data, render->vertex_data);
    }
 
+   ASSERT(sizeof(*render) % 4 == 0);
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(render->index_data);
 
 
    /**
-    ** Get vertices
+    ** Get vertex, index buffers if not inlined
     **/
-   {
-      const uint total_vertex_bytes = render->num_verts * vertex_size;
-
+   if (!render->inline_verts) {
       ASSERT(total_vertex_bytes % 16 == 0);
 
-      /* get vertex data from main memory */
       mfc_get(vertex_data,  /* dest */
               (unsigned int) render->vertex_data,  /* src */
               total_vertex_bytes,  /* size */
               TAG_VERTEX_BUFFER,
               0, /* tid */
               0  /* rid */);
+
+      vertices = vertex_data;
    }
 
-
-   /**
-    ** Get indexes
-    **/
-   if (render->inline_indexes) {
-      /* indexes are right after the render command in the batch buffer */
-      ASSERT(sizeof(*render) % 4 == 0);
-      indexes = (ushort *) (render + 1);
-
-      *pos_incr = (render->num_indexes * 2 + 3) / 4;
-
-      /* wait for vertex data */
-      wait_on_mask_all(1 << TAG_VERTEX_BUFFER);
-   }
-   else {
-      /* indexes are in separate buffer */
+   if (!render->inline_indexes) {
       uint total_index_bytes;
 
       *pos_incr = 0;
@@ -293,10 +283,32 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
               TAG_INDEX_BUFFER,
               0, /* tid */
               0  /* rid */);
-
-      wait_on_mask_all((1 << TAG_VERTEX_BUFFER) |
-                       (1 << TAG_INDEX_BUFFER));
    }
+
+
+   /**
+    ** Get pointers to inlined indexes, verts, if present
+    **/
+   if (render->inline_indexes) {
+      /* indexes are right after the render command in the batch buffer */
+      indexes = (ushort *) (render + 1);
+      *pos_incr = (render->num_indexes * 2 + 3) / 4;
+
+      if (render->inline_verts) {
+         /* vertices are after indexes, if inlined */
+         vertices = (const ubyte *) (render + 1) + *pos_incr * 4;
+         *pos_incr = *pos_incr + total_vertex_bytes / 4;
+      }
+   }
+
+
+   /* wait for vertex and/or index buffers if not inlined */
+   mask = 0x0;
+   if (!render->inline_verts)
+      mask |= (1 << TAG_VERTEX_BUFFER);
+   if (!render->inline_indexes)
+      mask |= (1 << TAG_INDEX_BUFFER);
+   wait_on_mask_all(mask);
 
 
    /**
@@ -347,9 +359,9 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       for (j = 0; j < render->num_indexes; j += 3) {
          const float *v0, *v1, *v2;
 
-         v0 = (const float *) (vertex_data + indexes[j+0] * vertex_size);
-         v1 = (const float *) (vertex_data + indexes[j+1] * vertex_size);
-         v2 = (const float *) (vertex_data + indexes[j+2] * vertex_size);
+         v0 = (const float *) (vertices + indexes[j+0] * vertex_size);
+         v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
+         v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
 
          tri_draw(v0, v1, v2, tx, ty);
       }

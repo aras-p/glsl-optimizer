@@ -39,8 +39,9 @@
 #include "pipe/draw/draw_vbuf.h"
 
 
-/** Allow render indexes to be inlined after RENDER command */
-#define ALLOW_INLINING 1
+/** Allow prim indexes, verts to be inlined after RENDER command */
+#define ALLOW_INLINE_INDEXES 1
+#define ALLOW_INLINE_VERTS 1
 
 
 /**
@@ -127,8 +128,10 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u  indexes = [%u %u %u ...]\n",
           nr_indices, nr_vertices,
           indices[0], indices[1], indices[2]);
-   printf("ind space = %u,  space = %u\n",
-          nr_indices * 2, cell_batch_free_space(cell));
+   printf("ind space = %u, vert space = %u, space = %u\n",
+          nr_indices * 2,
+          nr_vertices * 4 * cell->vertex_info.size,
+          cell_batch_free_space(cell));
 #endif
 
    /* compute x/y bounding box */
@@ -151,7 +154,8 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
    /* build/insert batch RENDER command */
    {
-      const uint index_bytes = (nr_indices * 2 + 3) & ~0x3;
+      const uint index_bytes = ROUNDUP4(nr_indices * 2);
+      const uint vertex_bytes = nr_vertices * 4 * cell->vertex_info.size;
 
       struct cell_command_render *render
          = (struct cell_command_render *)
@@ -159,14 +163,8 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->opcode = CELL_CMD_RENDER;
       render->prim_type = cvbr->prim;
 
-      render->num_verts = nr_vertices;
-      render->vertex_size = 4 * cell->vertex_info.size;
-      render->vertex_data = vertices;
-      ASSERT_ALIGN16(render->vertex_data);
-
       render->num_indexes = nr_indices;
-
-      if (ALLOW_INLINING &&
+      if (ALLOW_INLINE_INDEXES &&
           index_bytes <= cell_batch_free_space(cell)) {
          /* indices inlined, right after render cmd */
          void *dst = cell_batch_alloc(cell, index_bytes);
@@ -180,6 +178,24 @@ cell_vbuf_draw(struct vbuf_render *vbr,
          render->index_data = indices;
          ASSERT_ALIGN16(render->index_data);
       }
+
+      render->vertex_size = 4 * cell->vertex_info.size;
+      render->num_verts = nr_vertices;
+      if (ALLOW_INLINE_VERTS &&
+         render->inline_indexes &&
+          vertex_bytes <= cell_batch_free_space(cell)) {
+         /* vertex data inlined, after indices */
+         void *dst = cell_batch_alloc(cell, vertex_bytes);
+         memcpy(dst, vertices, vertex_bytes);
+         render->inline_verts = TRUE;
+         render->vertex_data = NULL;
+      }
+      else {
+         render->inline_verts = FALSE;
+         render->vertex_data = vertices;
+         ASSERT_ALIGN16(render->vertex_data);
+      }
+
 
       render->xmin = xmin;
       render->ymin = ymin;
