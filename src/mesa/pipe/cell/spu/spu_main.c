@@ -473,22 +473,22 @@ cmd_finish(void)
 
 
 /**
- * Tell the PPU that this SPU has finished copying a batch buffer to
+ * Tell the PPU that this SPU has finished copying a buffer to
  * local store and that it may be reused by the PPU.
  * This is done by writting a 16-byte batch-buffer-status block back into
- * main memory (in cell_contex->buffer_status[]).
+ * main memory (in cell_context->buffer_status[]).
  */
 static void
-release_batch_buffer(uint buffer)
+release_buffer(uint buffer)
 {
    /* Evidently, using less than a 16-byte status doesn't work reliably */
    static const uint status[4] ALIGN16_ATTRIB
       = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
 
-   const uint index = 4 * (spu.init.id * CELL_NUM_BATCH_BUFFERS + buffer);
+   const uint index = 4 * (spu.init.id * CELL_NUM_BUFFERS + buffer);
    uint *dst = spu.init.buffer_status + index;
 
-   ASSERT(buffer < CELL_NUM_BATCH_BUFFERS);
+   ASSERT(buffer < CELL_NUM_BUFFERS);
 
    /*
    printf("SPU %u: Set batch status buf=%u, index %u, at %p to FREE\n",
@@ -513,24 +513,24 @@ cmd_batch(uint opcode)
 {
    const uint buf = (opcode >> 8) & 0xff;
    uint size = (opcode >> 16);
-   uint buffer[CELL_BATCH_BUFFER_SIZE / 4] ALIGN16_ATTRIB;
+   uint buffer[CELL_BUFFER_SIZE / 4] ALIGN16_ATTRIB;
    const uint usize = size / sizeof(uint);
    uint pos;
 
    if (Debug)
       printf("SPU %u: BATCH buffer %u, len %u, from %p\n",
-             spu.init.id, buf, size, spu.init.batch_buffers[buf]);
+             spu.init.id, buf, size, spu.init.buffers[buf]);
 
    ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
 
-   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
+   ASSERT_ALIGN16(spu.init.buffers[buf]);
 
    size = ROUNDUP16(size);
 
-   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
+   ASSERT_ALIGN16(spu.init.buffers[buf]);
 
    mfc_get(buffer,  /* dest */
-           (unsigned int) spu.init.batch_buffers[buf],  /* src */
+           (unsigned int) spu.init.buffers[buf],  /* src */
            size,
            TAG_BATCH_BUFFER,
            0, /* tid */
@@ -538,7 +538,7 @@ cmd_batch(uint opcode)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    /* Tell PPU we're done copying the buffer to local store */
-   release_batch_buffer(buf);
+   release_buffer(buf);
 
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
