@@ -33,21 +33,15 @@
 #include "pipe/p_util.h"
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_vertex.h"
 
 
 void draw_vertex_cache_invalidate( struct draw_context *draw )
 {
-   unsigned i;
-
    assert(draw->pq.queue_nr == 0);
    assert(draw->vs.queue_nr == 0);
    assert(draw->vcache.referenced == 0);
-   
-   for (i = 0; i < Elements( draw->vcache.idx ); i++)
-      draw->vcache.idx[i] = ~0;
 
-//   fprintf(stderr, "x\n");
+   memset(draw->vcache.idx, ~0, sizeof(draw->vcache.idx));
 }
 
 
@@ -149,7 +143,7 @@ void draw_vertex_cache_unreference( struct draw_context *draw )
 
 
 int draw_vertex_cache_check_space( struct draw_context *draw,
-				    unsigned nr_verts )
+				   unsigned nr_verts )
 {
    if (draw->vcache.overflow + nr_verts < VCACHE_OVERFLOW) {
       /* The vs queue is sized so that this can never happen:

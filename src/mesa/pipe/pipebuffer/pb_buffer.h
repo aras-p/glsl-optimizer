@@ -47,53 +47,57 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "pipe/p_compiler.h"
 
-struct pipe_buffer_vtbl;
+#include "pipe/p_state.h"
+
+struct pb_vtbl;
+
+/**
+ * Buffer description.
+ * 
+ * Used when allocating the buffer.
+ */
+struct pb_desc
+{
+   unsigned alignment;
+   unsigned usage;
+};
 
 
 /**
- * Base class for all pipe buffers.
+ * Base class for all pb_* buffers.
  */
-struct pipe_buffer 
+struct pb_buffer 
 {
+   struct pipe_buffer base;
+
    /**
     * Pointer to the virtual function table.
     *
     * Avoid accessing this table directly. Use the inline functions below 
     * instead to avoid mistakes. 
     */
-   const struct pipe_buffer_vtbl *vtbl;
+   const struct pb_vtbl *vtbl;
 };
-
 
 /**
  * Virtual function table for the buffer storage operations.
  * 
  * Note that creation is not done through this table.
  */
-struct pipe_buffer_vtbl
+struct pb_vtbl
 {
-   /**
-    * Add a reference to the buffer.
-    *
-    * This method can be a no-op for buffers that don't need reference
-    * counting.
-    */
-   void (*reference)( struct pipe_buffer *buf );
-
-   /**
-    * Release a reference to this buffer and destroy it.
-    */
-   void (*release)( struct pipe_buffer *buf );
+   void (*destroy)( struct pb_buffer *buf );
 
    /** 
     * Map the entire data store of a buffer object into the client's address.
     * flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE. 
     */
-   void *(*map)( struct pipe_buffer *buf, 
+   void *(*map)( struct pb_buffer *buf, 
                  unsigned flags );
    
-   void (*unmap)( struct pipe_buffer *buf );
+   void (*unmap)( struct pb_buffer *buf );
 
    /**
     * Get the base buffer and the offset.
@@ -106,70 +110,87 @@ struct pipe_buffer_vtbl
     * 
     * Note that this will increase the reference count of the base buffer.
     */
-   void (*get_base_buffer)( struct pipe_buffer *buf,
-                            struct pipe_buffer **base_buf,
+   void (*get_base_buffer)( struct pb_buffer *buf,
+                            struct pb_buffer **base_buf,
                             unsigned *offset );
 };
 
 
-/** *dst = src with reference counting */
-void
-buffer_reference(struct pipe_buffer **dst,
-                 struct pipe_buffer *src);
-
-
-static inline void
-buffer_release(struct pipe_buffer *buf)
-{
-   assert(buf);
-   buf->vtbl->release(buf);
-}
-
-
-static inline void *
-buffer_map(struct pipe_buffer *buf, 
-           unsigned flags)
+/* Accessor functions for pb->vtbl:
+ */
+static INLINE void *
+pb_map(struct pb_buffer *buf, 
+       unsigned flags)
 {
    assert(buf);
    return buf->vtbl->map(buf, flags);
 }
 
 
-static inline void 
-buffer_unmap(struct pipe_buffer *buf)
+static INLINE void 
+pb_unmap(struct pb_buffer *buf)
 {
    assert(buf);
    buf->vtbl->unmap(buf);
 }
 
 
-static inline void
-buffer_get_base_buffer( struct pipe_buffer *buf,
-                        struct pipe_buffer **base_buf,
-                        unsigned *offset )
+static INLINE void
+pb_get_base_buffer( struct pb_buffer *buf,
+		    struct pb_buffer **base_buf,
+		    unsigned *offset )
 {
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
 }
 
+static INLINE void 
+pb_destroy(struct pb_buffer *buf)
+{
+   assert(buf);
+   buf->vtbl->destroy(buf);
+}
 
-/** Placeholder for empty buffers. */
-extern struct pipe_buffer null_buffer;
+
 
 
 /**
- * Client buffers (also designated as user buffers) are just for convenience 
- * of the state tracker, so that it can masquerade its own data as a buffer.
+ * User buffers are special buffers that initially reference memory
+ * held by the user but which may if necessary copy that memory into
+ * device memory behind the scenes, for submission to hardware.
+ *
+ * These are particularly useful when the referenced data is never
+ * submitted to hardware at all, in the particular case of software
+ * vertex processing.
  */
-struct pipe_buffer *
-client_buffer_create(void *data);
+struct pb_buffer *
+pb_user_buffer_create(void *data, unsigned bytes);
 
 
 /**
  * Malloc-based buffer to store data that can't be used by the graphics 
  * hardware.
  */
-struct pipe_buffer *
-malloc_buffer_create(unsigned size);
+struct pb_buffer *
+pb_malloc_buffer_create(size_t size, 
+                        const struct pb_desc *desc);
 
+
+static INLINE struct pipe_buffer *
+pb_pipe_buffer( struct pb_buffer *pbuf )
+{
+   return &pbuf->base;
+}
+
+static INLINE struct pb_buffer *
+pb_buffer( struct pipe_buffer *buf )
+{
+   /* Could add a magic cookie check on debug builds.
+    */
+   return (struct pb_buffer *)buf;
+}
+
+
+void 
+pb_init_winsys(struct pipe_winsys *winsys);
 
 #endif /*PB_BUFFER_H_*/

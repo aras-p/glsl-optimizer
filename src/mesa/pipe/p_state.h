@@ -60,8 +60,21 @@
 struct pipe_surface;
 struct pipe_winsys;
 
-/* opaque type */
-struct pipe_buffer_handle;
+
+
+/**
+ * The driver will certainly subclass this to include actual memory
+ * management information.
+ */
+struct pipe_buffer {
+   unsigned alignment;
+   unsigned usage;
+   unsigned size;
+
+   /** Reference count */
+   unsigned refcount;
+};
+
 
 
 
@@ -129,7 +142,7 @@ struct pipe_clip_state {
  * Constants for vertex/fragment shaders
  */
 struct pipe_constant_buffer {
-   struct pipe_buffer_handle *buffer;
+   struct pipe_buffer *buffer;
    unsigned size;    /** in bytes */
 };
 
@@ -202,8 +215,7 @@ struct pipe_framebuffer_state
    unsigned num_cbufs;
    struct pipe_surface *cbufs[PIPE_MAX_COLOR_BUFS];
 
-   struct pipe_surface *zbuf;      /**< Z buffer */
-   struct pipe_surface *sbuf;      /**< Stencil buffer */
+   struct pipe_surface *zsbuf;      /**< Z/stencil buffer */
 };
 
 
@@ -241,7 +253,7 @@ struct pipe_sampler_state
  */
 struct pipe_surface
 {
-   struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
+   struct pipe_buffer *buffer; /**< driver private buffer handle */
    enum pipe_format format;      /**< PIPE_FORMAT_x */
    unsigned status;              /**< PIPE_SURFACE_STATUS_x */
    unsigned clear_value;         /**< may be temporary */
@@ -291,7 +303,7 @@ struct pipe_vertex_buffer
    unsigned pitch:11;    /**< stride to same attrib in next vertex, in bytes */
    unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
-   struct pipe_buffer_handle *buffer;  /**< the actual buffer */
+   struct pipe_buffer *buffer;  /**< the actual buffer */
 };
 
 

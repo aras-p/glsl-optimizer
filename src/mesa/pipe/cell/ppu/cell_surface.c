@@ -173,10 +173,6 @@ cell_surface_fill(struct pipe_context *pipe,
 void
 cell_init_surface_functions(struct cell_context *cell)
 {
-   cell->pipe.get_tile = pipe_get_tile_raw;
-   cell->pipe.put_tile = pipe_put_tile_raw;
-
-   cell->pipe.surface_data = cell_surface_data;
    cell->pipe.surface_copy = cell_surface_copy;
    cell->pipe.surface_fill = cell_surface_fill;
 }

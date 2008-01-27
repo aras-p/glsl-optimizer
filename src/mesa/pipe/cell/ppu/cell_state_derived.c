@@ -30,103 +30,96 @@
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_vertex.h"
 #include "cell_context.h"
+#include "cell_batch.h"
 #include "cell_state.h"
+#include "cell_state_emit.h"
+
+
+static int
+find_vs_output(const struct pipe_shader_state *vs,
+               uint semantic_name,
+               uint semantic_index)
+{
+   uint i;
+   for (i = 0; i < vs->num_outputs; i++) {
+      if (vs->output_semantic_name[i] == semantic_name &&
+          vs->output_semantic_index[i] == semantic_index)
+         return i;
+   }
+   return -1;
+}
 
 
 /**
- * Determine which post-transform / pre-rasterization vertex attributes
- * we need.
- * Derived from:  fs, setup states.
+ * Determine how to map vertex program outputs to fragment program inputs.
+ * Basically, this will be used when computing the triangle interpolation
+ * coefficients from the post-transform vertex attributes.
  */
-static void calculate_vertex_layout( struct cell_context *cell )
+static void
+calculate_vertex_layout( struct cell_context *cell )
 {
-#if 0
-   const struct pipe_shader_state *vs = cell->vs->state;
+   const struct pipe_shader_state *vs = &cell->vs->shader;
    const struct pipe_shader_state *fs = &cell->fs->shader;
    const enum interp_mode colorInterp
       = cell->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &cell->vertex_info;
-   boolean emitBack0 = FALSE, emitBack1 = FALSE, emitPsize = FALSE;
-   uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    uint i;
-#endif
-   const enum interp_mode colorInterp
-      = cell->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
-   struct vertex_info *vinfo = &cell->vertex_info;
-   uint front0;
-   uint src = 0;
-
-   memset(vinfo, 0, sizeof(*vinfo));
+   int src;
 
 #if 0
-   if (fs->input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
-      /* Need Z if depth test is enabled or the fragment program uses the
-       * fragment position (XYZW).
+   if (cell->vbuf) {
+      /* if using the post-transform vertex buffer, tell draw_vbuf to
+       * simply emit the whole post-xform vertex as-is:
        */
+      struct vertex_info *vinfo_vbuf = &cell->vertex_info_vbuf;
+      vinfo_vbuf->num_attribs = 0;
+      draw_emit_vertex_attr(vinfo_vbuf, EMIT_ALL, INTERP_NONE, 0);
+      vinfo_vbuf->size = 4 * vs->num_outputs + sizeof(struct vertex_header)/4;
    }
-
-   cell->psize_slot = -1;
 #endif
 
-   /* always emit vertex pos */
-   draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR, src++);
+   /* reset vinfo */
+   vinfo->num_attribs = 0;
 
-#if 1
-   front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
-#endif
+   /* we always want to emit vertex pos */
+   src = find_vs_output(vs, TGSI_SEMANTIC_POSITION, 0);
+   assert(src >= 0);
+   draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
 
-#if 0
+
    /*
-    * XXX I think we need to reconcile the vertex shader outputs with
-    * the fragment shader inputs here to make sure the slots line up.
-    * Might just be getting lucky so far.
-    * Or maybe do that in the state tracker?
+    * Loop over fragment shader inputs, searching for the matching output
+    * from the vertex shader.
     */
-
-   for (i = 0; i < vs->num_outputs; i++) {
-      switch (vs->output_semantic_name[i]) {
-
+   for (i = 0; i < fs->num_inputs; i++) {
+      switch (fs->input_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
-         /* vertex programs always emit position, but might not be
-          * needed for fragment progs.
-          */
-         /* no-op */
+         /* already done above */
          break;
 
       case TGSI_SEMANTIC_COLOR:
-         if (vs->output_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
-         }
-         else {
-            assert(vs->output_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
-         }
-         break;
-
-      case TGSI_SEMANTIC_BCOLOR:
-         if (vs->output_semantic_index[i] == 0) {
-            emitBack0 = TRUE;
-         }
-         else {
-            assert(vs->output_semantic_index[i] == 1);
-            emitBack1 = TRUE;
-         }
+         src = find_vs_output(vs, TGSI_SEMANTIC_COLOR, 
+                              fs->input_semantic_index[i]);
+         assert(src >= 0);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
          break;
 
       case TGSI_SEMANTIC_FOG:
-         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_PERSPECTIVE, src++);
-         break;
-
-      case TGSI_SEMANTIC_PSIZE:
-         /* XXX only emit if drawing points or front/back polygon mode
-          * is point mode
-          */
-         emitPsize = TRUE;
+         src = find_vs_output(vs, TGSI_SEMANTIC_FOG, 0);
+#if 1
+         if (src < 0) /* XXX temp hack, try demos/fogcoord.c with this */
+            src = 0;
+#endif
+         assert(src >= 0);
+         draw_emit_vertex_attr(vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
          break;
 
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
-         draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE, src++);
+         src = find_vs_output(vs, TGSI_SEMANTIC_GENERIC,
+                              fs->input_semantic_index[i]);
+         assert(src >= 0);
+         draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
          break;
 
       default:
@@ -134,40 +127,10 @@ static void calculate_vertex_layout( struct cell_context *cell )
       }
    }
 
-   cell->nr_frag_attrs = fs->num_inputs;
+   draw_compute_vertex_size(vinfo);
 
-   /* We want these after all other attribs since they won't get passed
-    * to the fragment shader.  All prior vertex output attribs should match
-    * up 1:1 with the fragment shader inputs.
-    */
-   if (emitBack0) {
-      back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
-   }
-   if (emitBack1) {
-      back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp, src++);
-   }
-   if (emitPsize) {
-      cell->psize_slot
-         = draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT, src++);
-   }
-
-   /* If the attributes have changed, tell the draw module about
-    * the new vertex layout.
-    */
-   /* XXX we also need to do this when the shading mode (interp modes) change: */
-#endif
-
-   if (1/*vinfo->attr_mask != cell->attr_mask*/) {
-      /*cell->attr_mask = vinfo->attr_mask;*/
-
-      draw_compute_vertex_size(vinfo);
-      draw_set_vertex_info(cell->draw, vinfo);
-
-#if 0
-      draw_set_twoside_attributes(cell->draw,
-                                  front0, back0, front1, back1);
-#endif
-   }
+   /* XXX only signal this if format really changes */
+   cell->dirty |= CELL_NEW_VERTEX_INFO;
 }
 
 
@@ -208,9 +171,12 @@ compute_cliprect(struct cell_context *sp)
 #endif
 
 
+
 void cell_update_derived( struct cell_context *cell )
 {
-   if (cell->dirty & (CELL_NEW_RASTERIZER | CELL_NEW_FS))
+   if (cell->dirty & (CELL_NEW_RASTERIZER |
+                      CELL_NEW_FS |
+                      CELL_NEW_VS))
       calculate_vertex_layout( cell );
 
 #if 0

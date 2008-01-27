@@ -125,6 +125,7 @@ osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 # Make the GL library
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU) $(LLVM_LIB)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) \
+		-linker $(CC) \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
@@ -134,12 +135,14 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB)
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)
 	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
 		$(TOP)/bin/mklib -o $(OSMESA_LIB) \
+			-linker $(CC) \
 			-major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(MESA_TINY) \
 			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 			$(OSMESA_LIB_DEPS) $(OSMESA16_OBJECTS) ; \
 	else \
 		$(TOP)/bin/mklib -o $(OSMESA_LIB) \
+			-linker $(CC) \
 			-major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(GL_TINY) \
 			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \

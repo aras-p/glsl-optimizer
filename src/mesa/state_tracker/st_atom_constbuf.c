@@ -37,6 +37,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -69,8 +70,13 @@ void st_upload_constants( struct st_context *st,
 
       _mesa_load_state_parameters(st->ctx, params);
 
-      if (!cbuf->buffer)   
-	 cbuf->buffer = ws->buffer_create(ws, 1, 0, 0);
+      if (cbuf->buffer && cbuf->size != paramBytes)
+	 pipe_buffer_reference( ws, &cbuf->buffer, NULL );
+
+      if (!cbuf->buffer) {
+         cbuf->buffer = ws->buffer_create(ws, 1, PIPE_BUFFER_USAGE_CONSTANT,
+                                          paramBytes);
+      }
 
       if (0)
       {
@@ -80,8 +86,11 @@ void st_upload_constants( struct st_context *st,
       }
 
       /* load Mesa constants into the constant buffer */
-      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues,
-                      PIPE_BUFFER_USAGE_CONSTANT);
+      if (cbuf->buffer) {
+         memcpy(ws->buffer_map(ws, cbuf->buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
+                params->ParameterValues, paramBytes);
+         ws->buffer_unmap(ws, cbuf->buffer);
+      }
 
       cbuf->size = paramBytes;
 

@@ -45,6 +45,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 
 #include "pipe/draw/draw_private.h"
 #include "pipe/draw/draw_context.h"
@@ -191,29 +192,6 @@ pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
 
 
 /**
- * The default attribute buffer is basically a copy of the
- * ctx->Current.Attrib[] array.  It's used when the vertex program
- * references an attribute for which we don't have a VBO/array.
- */
-static void
-create_default_attribs_buffer(struct st_context *st)
-{
-   struct pipe_context *pipe = st->pipe;
-   /* XXX don't hardcode magic 32 here */
-   st->default_attrib_buffer = pipe->winsys->buffer_create( pipe->winsys, 32, 0, 0 );
-}
-
-
-static void
-destroy_default_attribs_buffer(struct st_context *st)
-{
-   struct pipe_context *pipe = st->pipe;
-   pipe->winsys->buffer_reference(pipe->winsys,
-                                  &st->default_attrib_buffer, NULL);
-}
-
-
-/**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
  * Basically, translate the information into the format expected by pipe.
@@ -260,7 +238,7 @@ st_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffer[attr].buffer = NULL;
-         winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
          assert(velement.src_offset <= 2048); /* 11-bit field */
@@ -305,7 +283,7 @@ st_draw_vbo(GLcontext *ctx,
    if (ib) {
       /* indexed primitive */
       struct gl_buffer_object *bufobj = ib->obj;
-      struct pipe_buffer_handle *indexBuf = NULL;
+      struct pipe_buffer *indexBuf = NULL;
       unsigned indexSize, indexOffset, i;
 
       switch (ib->type) {
@@ -326,7 +304,7 @@ st_draw_vbo(GLcontext *ctx,
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         winsys->buffer_reference(winsys, &indexBuf, stobj->buffer);
+         pipe_buffer_reference(winsys, &indexBuf, stobj->buffer);
          indexOffset = (unsigned) ib->ptr / indexSize;
       }
       else {
@@ -344,7 +322,7 @@ st_draw_vbo(GLcontext *ctx,
                              prims[i].start + indexOffset, prims[i].count);
       }
 
-      winsys->buffer_reference(winsys, &indexBuf, NULL);
+      pipe_buffer_reference(winsys, &indexBuf, NULL);
    }
    else {
       /* non-indexed */
@@ -356,7 +334,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < vs->num_inputs; attr++) {
-      winsys->buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
+      pipe_buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
       pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
    }
@@ -381,7 +359,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    const float height = ctx->DrawBuffer->Height;
    const unsigned vertex_bytes = numVertex * numAttribs * 4 * sizeof(float);
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_buffer_handle *vbuf;
+   struct pipe_buffer *vbuf;
    struct pipe_vertex_buffer vbuffer;
    struct pipe_vertex_element velement;
    unsigned i;
@@ -399,10 +377,14 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    }
 
    /* XXX create one-time */
-   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
-   pipe->winsys->buffer_data(pipe->winsys, vbuf, 
-                             vertex_bytes, verts,
-                             PIPE_BUFFER_USAGE_VERTEX);
+   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                      PIPE_BUFFER_USAGE_VERTEX, vertex_bytes);
+   assert(vbuf);
+
+   memcpy(pipe->winsys->buffer_map(pipe->winsys, vbuf,
+                                   PIPE_BUFFER_USAGE_CPU_WRITE),
+          verts, vertex_bytes);
+   pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
 
    /* tell pipe about the vertex buffer */
    vbuffer.buffer = vbuf;
@@ -423,7 +405,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    pipe->draw_arrays(pipe, prim, 0, numVertex);
 
    /* XXX: do one-time */
-   pipe->winsys->buffer_reference(pipe->winsys, &vbuf, NULL);
+   pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
 }
 
 
@@ -434,15 +416,18 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 static void
 set_feedback_vertex_format(GLcontext *ctx)
 {
+#if 0
    struct st_context *st = ctx->st;
    struct vertex_info vinfo;
    GLuint i;
+
+   memset(&vinfo, 0, sizeof(vinfo));
 
    if (ctx->RenderMode == GL_SELECT) {
       assert(ctx->RenderMode == GL_SELECT);
       vinfo.num_attribs = 1;
       vinfo.format[0] = FORMAT_4F;
-      vinfo.interp_mode[0] = INTERP_NONE;
+      vinfo.interp_mode[0] = INTERP_LINEAR;
    }
    else {
       /* GL_FEEDBACK, or glRasterPos */
@@ -455,6 +440,7 @@ set_feedback_vertex_format(GLcontext *ctx)
    }
 
    draw_set_vertex_info(st->draw, &vinfo);
+#endif
 }
 
 
@@ -480,7 +466,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
-   struct pipe_buffer_handle *index_buffer_handle = 0;
+   struct pipe_buffer *index_buffer_handle = 0;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr, i;
    ubyte *mapped_constants;
@@ -528,7 +514,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffer[attr].buffer = NULL;
-         winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
@@ -564,7 +550,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       /* map the attrib buffer */
       map = pipe->winsys->buffer_map(pipe->winsys,
                                      vbuffer[attr].buffer,
-                                     PIPE_BUFFER_FLAG_READ);
+                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, attr, map);
    }
 
@@ -588,7 +574,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
       map = pipe->winsys->buffer_map(pipe->winsys,
                                      index_buffer_handle,
-                                     PIPE_BUFFER_FLAG_READ);
+                                     PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, map);
    }
    else {
@@ -600,7 +586,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    /* map constant buffers */
    mapped_constants = winsys->buffer_map(winsys,
                                st->state.constants[PIPE_SHADER_VERTEX].buffer,
-                               PIPE_BUFFER_FLAG_READ);
+                               PIPE_BUFFER_USAGE_CPU_READ);
    draw_set_mapped_constant_buffer(st->draw, mapped_constants);
 
 
@@ -620,7 +606,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
       if (draw->vertex_buffer[i].buffer) {
          pipe->winsys->buffer_unmap(pipe->winsys,
                                     draw->vertex_buffer[i].buffer);
-         winsys->buffer_reference(winsys, &draw->vertex_buffer[i].buffer, NULL);
+         pipe_buffer_reference(winsys, &draw->vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }
@@ -636,16 +622,12 @@ void st_init_draw( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
 
-   /* actually, not used here, but elsewhere */
-   create_default_attribs_buffer(st);
-
    vbo_set_draw_func(ctx, st_draw_vbo);
 }
 
 
 void st_destroy_draw( struct st_context *st )
 {
-   destroy_default_attribs_buffer(st);
 }
 
 

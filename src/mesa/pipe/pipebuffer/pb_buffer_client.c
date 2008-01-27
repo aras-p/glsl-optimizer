@@ -34,61 +34,55 @@
  */
 
 
+#include "pipe/p_util.h"
 #include "pb_buffer.h"
 
 
-struct client_buffer 
+struct pb_user_buffer 
 {
-   struct pipe_buffer base;
+   struct pb_buffer base;
    void *data;
 };
 
 
-extern const struct pipe_buffer_vtbl client_buffer_vtbl;
+extern const struct pb_vtbl pb_user_buffer_vtbl;
 
 
-static inline struct client_buffer *
-client_buffer(struct pipe_buffer *buf)
+static INLINE struct pb_user_buffer *
+pb_user_buffer(struct pb_buffer *buf)
 {
    assert(buf);
-   assert(buf->vtbl == &client_buffer_vtbl);
-   return (struct client_buffer *)buf;
+   assert(buf->vtbl == &pb_user_buffer_vtbl);
+   return (struct pb_user_buffer *)buf;
 }
 
 
 static void
-client_buffer_reference(struct pipe_buffer *buf)
-{
-   /* No-op */
-}
-
-
-static void
-client_buffer_release(struct pipe_buffer *buf)
+pb_user_buffer_destroy(struct pb_buffer *buf)
 {
    assert(buf);
-   free(buf);
+   FREE(buf);
 }
 
 
 static void *
-client_buffer_map(struct pipe_buffer *buf, 
+pb_user_buffer_map(struct pb_buffer *buf, 
                   unsigned flags)
 {
-   return client_buffer(buf)->data;
+   return pb_user_buffer(buf)->data;
 }
 
 
 static void
-client_buffer_unmap(struct pipe_buffer *buf)
+pb_user_buffer_unmap(struct pb_buffer *buf)
 {
    /* No-op */
 }
 
 
 static void
-client_buffer_get_base_buffer(struct pipe_buffer *buf,
-                              struct pipe_buffer **base_buf,
+pb_user_buffer_get_base_buffer(struct pb_buffer *buf,
+                              struct pb_buffer **base_buf,
                               unsigned *offset)
 {
    *base_buf = buf;
@@ -96,27 +90,25 @@ client_buffer_get_base_buffer(struct pipe_buffer *buf,
 }
 
 
-const struct pipe_buffer_vtbl 
-client_buffer_vtbl = {
-      client_buffer_reference,
-      client_buffer_release,
-      client_buffer_map,
-      client_buffer_unmap,
-      client_buffer_get_base_buffer
+const struct pb_vtbl 
+pb_user_buffer_vtbl = {
+      pb_user_buffer_destroy,
+      pb_user_buffer_map,
+      pb_user_buffer_unmap,
+      pb_user_buffer_get_base_buffer
 };
 
 
-struct pipe_buffer *
-client_buffer_create(void *data) 
+struct pb_buffer *
+pb_user_buffer_create(void *data, unsigned bytes) 
 {
-   struct client_buffer *buf;
-   
-   buf = (struct client_buffer *)malloc(sizeof(struct client_buffer));
+   struct pb_user_buffer *buf = CALLOC_STRUCT(pb_user_buffer);
+
    if(!buf)
       return NULL;
    
-   buf->base.vtbl = &client_buffer_vtbl;
-   
+   buf->base.vtbl = &pb_user_buffer_vtbl;   
+   buf->base.base.size = bytes;
    buf->data = data;
    
    return &buf->base;

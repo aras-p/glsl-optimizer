@@ -157,7 +157,7 @@ boolean softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 			     unsigned start, unsigned count);
 
 boolean softpipe_draw_elements(struct pipe_context *pipe,
-			       struct pipe_buffer_handle *indexBuffer,
+			       struct pipe_buffer *indexBuffer,
 			       unsigned indexSize,
 			       unsigned mode, unsigned start, unsigned count);
 

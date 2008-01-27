@@ -141,37 +141,43 @@ emit_vertex( struct vbuf_stage *vbuf,
 
    for (i = 0; i < vinfo->num_attribs; i++) {
       uint j = vinfo->src_index[i];
-      switch (vinfo->format[i]) {
-      case FORMAT_OMIT:
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
          /* no-op */
          break;
-      case FORMAT_1F:
+      case EMIT_ALL:
+         /* just copy the whole vertex as-is to the vbuf */
+         assert(i == 0);
+         memcpy(vbuf->vertex_ptr, vertex, vinfo->size * 4);
+         vbuf->vertex_ptr += vinfo->size;
+         return;
+      case EMIT_1F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          count++;
          break;
-      case FORMAT_1F_PSIZE:
+      case EMIT_1F_PSIZE:
          *vbuf->vertex_ptr++ = fui(vbuf->stage.draw->rasterizer->point_size);
          count++;
          break;
-      case FORMAT_2F:
+      case EMIT_2F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
          count += 2;
          break;
-      case FORMAT_3F:
+      case EMIT_3F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
          count += 3;
          break;
-      case FORMAT_4F:
+      case EMIT_4F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
          *vbuf->vertex_ptr++ = fui(vertex->data[j][3]);
          count += 4;
          break;
-      case FORMAT_4UB:
+      case EMIT_4UB:
 	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
                                         float_to_ubyte( vertex->data[j][1] ),
                                         float_to_ubyte( vertex->data[j][0] ),
@@ -381,29 +387,26 @@ vbuf_alloc_vertices( struct draw_stage *stage,
 }
 
 
-static void 
-vbuf_begin( struct draw_stage *stage )
-{
-   /* no-op, vbuffer allocated by first point/line/tri */
-}
-
 
 static void 
-vbuf_end( struct draw_stage *stage )
+vbuf_flush( struct draw_stage *stage, unsigned flags )
 {
-//   vbuf_flush_indices( stage );
-   /* XXX: Overkill */
-   vbuf_flush_vertices( stage );
-   
+   vbuf_flush_indices( stage );
+
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
    stage->tri = vbuf_first_tri;
+
+   if (flags & DRAW_FLUSH_BACKEND)
+      vbuf_flush_vertices( stage );
 }
 
 
 static void 
 vbuf_reset_stipple_counter( struct draw_stage *stage )
 {
+   /* XXX: Need to do something here for hardware with linestipple.
+    */
    (void) stage;
 }
 
@@ -426,11 +429,10 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    struct vbuf_stage *vbuf = CALLOC_STRUCT(vbuf_stage);
 
    vbuf->stage.draw = draw;
-   vbuf->stage.begin = vbuf_begin;
    vbuf->stage.point = vbuf_first_point;
    vbuf->stage.line = vbuf_first_line;
    vbuf->stage.tri = vbuf_first_tri;
-   vbuf->stage.end = vbuf_end;
+   vbuf->stage.flush = vbuf_flush;
    vbuf->stage.reset_stipple_counter = vbuf_reset_stipple_counter;
    vbuf->stage.destroy = vbuf_destroy;
    

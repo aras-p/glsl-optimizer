@@ -74,13 +74,10 @@ struct pipe_context {
 			   unsigned mode, unsigned start, unsigned count);
 
    boolean (*draw_elements)( struct pipe_context *pipe,
-			     struct pipe_buffer_handle *indexBuffer,
+			     struct pipe_buffer *indexBuffer,
 			     unsigned indexSize,
 			     unsigned mode, unsigned start, unsigned count);
 
-   /** Clear a surface to given value (no scissor; clear whole surface) */
-   void (*clear)(struct pipe_context *pipe, struct pipe_surface *ps,
-                 unsigned clearValue);
 
    /**
     * Query objects
@@ -176,33 +173,9 @@ struct pipe_context {
 			       const struct pipe_vertex_element * );
 
 
-   /** Get a surface which is a "view" into a texture */
-   struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
-                                           struct pipe_texture *texture,
-                                           unsigned face, unsigned level,
-                                           unsigned zslice);
-
-   /** Get a block of raw pixel data from a surface */
-   void (*get_tile)(struct pipe_context *pipe,
-                    struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h,
-                    void *p, int dst_stride);
-   /** Put a block of raw pixel data into a surface */
-   void (*put_tile)(struct pipe_context *pipe,
-                    struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h,
-                    const void *p, int src_stride);
-
-
    /*
     * Surface functions
     */
-   void (*surface_data)(struct pipe_context *pipe,
-			struct pipe_surface *dest,
-			unsigned destx, unsigned desty,
-			const void *src, unsigned src_stride,
-			unsigned srcx, unsigned srcy,
-			unsigned width, unsigned height);
 
    void (*surface_copy)(struct pipe_context *pipe,
 			struct pipe_surface *dest,
@@ -218,6 +191,10 @@ struct pipe_context {
 			unsigned width, unsigned height,
 			unsigned value);
 
+   void (*clear)(struct pipe_context *pipe, 
+		 struct pipe_surface *ps,
+		 unsigned clearValue);
+
 
    /*
     * Texture functions
@@ -228,6 +205,11 @@ struct pipe_context {
    void (*texture_release)(struct pipe_context *pipe,
 			   struct pipe_texture **pt);
 
+   /** Get a surface which is a "view" into a texture */
+   struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
+                                           struct pipe_texture *texture,
+                                           unsigned face, unsigned level,
+                                           unsigned zslice);
 
    /* Flush rendering:
     */

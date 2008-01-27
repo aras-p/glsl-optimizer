@@ -19,6 +19,7 @@
 #define CELL_NEW_VERTEX        0x1000
 #define CELL_NEW_VS            0x2000
 #define CELL_NEW_CONSTANTS     0x4000
+#define CELL_NEW_VERTEX_INFO   0x8000
 
 
 

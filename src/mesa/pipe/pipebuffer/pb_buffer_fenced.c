@@ -36,16 +36,20 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <unistd.h>
 
-#include "main/imports.h"
-#include "glapi/glthread.h"
 #include "linked_list.h"
 
+#include "p_compiler.h"
 #include "p_winsys.h"
+#include "p_thread.h"
+#include "p_util.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
+
+#ifndef __MSC__
+#include <unistd.h>
+#endif
 
 
 /**
@@ -72,9 +76,9 @@ struct fenced_buffer_list
  */
 struct fenced_buffer
 {
-   struct pipe_buffer base;
+   struct pb_buffer base;
    
-   struct pipe_buffer *buffer;
+   struct pb_buffer *buffer;
 
    unsigned refcount;
    struct pipe_fence_handle *fence;
@@ -84,8 +88,8 @@ struct fenced_buffer
 };
 
 
-static inline struct fenced_buffer *
-fenced_buffer(struct pipe_buffer *buf)
+static INLINE struct fenced_buffer *
+fenced_buffer(struct pb_buffer *buf)
 {
    assert(buf);
    assert(buf->vtbl == &fenced_buffer_vtbl);
@@ -93,12 +97,6 @@ fenced_buffer(struct pipe_buffer *buf)
 }
 
 
-static void
-_fenced_buffer_destroy(struct fenced_buffer *fenced_buf)
-{
-   buffer_release(fenced_buf->buffer);
-   free(fenced_buf);
-}
 
 
 static void
@@ -109,11 +107,12 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
    struct fenced_buffer *fenced_buf;   
    struct list_head *list, *prev;
    int signaled = -1;
-   int i;
 
    list = fenced_list->delayed.next;
 
    if (fenced_list->numDelayed > 3) {
+      unsigned i;
+
       for (i = 0; i < fenced_list->numDelayed; i += 3) {
          list = list->next;
       }
@@ -143,97 +142,81 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
       
       LIST_DEL(list);
       fenced_list->numDelayed--;
-      
-      _fenced_buffer_destroy(fenced_buf);
+
+      /* Do the delayed destroy:
+       */
+      pb_destroy(fenced_buf->buffer);
+      free(fenced_buf);
    }
 }
 
 
 static void
-fenced_buffer_reference(struct pipe_buffer *buf) 
+fenced_buffer_destroy(struct pb_buffer *buf)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
-   _glthread_LOCK_MUTEX(fenced_list->mutex);
-   fenced_buf->refcount++;
-   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
-}
-
-
-static void
-fenced_buffer_release(struct pipe_buffer *buf)
-{
-   struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
-   struct fenced_buffer_list *fenced_list = fenced_buf->list;
-
-   _glthread_LOCK_MUTEX(fenced_list->mutex);
-
-   fenced_buf->refcount--;
-   if(!fenced_buf->refcount) {
-      if (fenced_buf->fence) {
-         LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
-         fenced_list->numDelayed++;
-      }
-      else {
-         _fenced_buffer_destroy(fenced_buf);
-      }
-   
-      if ((fenced_list->numDelayed % fenced_list->checkDelayed) == 0)
-         _fenced_buffer_list_check_free(fenced_list, 0);
+   if (fenced_buf->fence) {
+      LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
+      fenced_list->numDelayed++;
+   }
+   else {
+      pb_destroy(fenced_buf->buffer);
+      free(fenced_buf);
    }
    
-   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+   if ((fenced_list->numDelayed % fenced_list->checkDelayed) == 0)
+      _fenced_buffer_list_check_free(fenced_list, 0);
 }
 
 
 static void *
-fenced_buffer_map(struct pipe_buffer *buf, 
+fenced_buffer_map(struct pb_buffer *buf, 
                   unsigned flags)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
-   return buffer_map(fenced_buf->buffer, flags);
+   return pb_map(fenced_buf->buffer, flags);
 }
 
 
 static void
-fenced_buffer_unmap(struct pipe_buffer *buf)
+fenced_buffer_unmap(struct pb_buffer *buf)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
-   buffer_unmap(fenced_buf->buffer);
+   pb_unmap(fenced_buf->buffer);
 }
 
 
 static void
-fenced_buffer_get_base_buffer(struct pipe_buffer *buf,
-                              struct pipe_buffer **base_buf,
+fenced_buffer_get_base_buffer(struct pb_buffer *buf,
+                              struct pb_buffer **base_buf,
                               unsigned *offset)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
-   buffer_get_base_buffer(fenced_buf->buffer, base_buf, offset);
+   pb_get_base_buffer(fenced_buf->buffer, base_buf, offset);
 }
 
 
-const struct pipe_buffer_vtbl 
+const struct pb_vtbl 
 fenced_buffer_vtbl = {
-      fenced_buffer_reference,
-      fenced_buffer_release,
+      fenced_buffer_destroy,
       fenced_buffer_map,
       fenced_buffer_unmap,
       fenced_buffer_get_base_buffer
 };
 
 
-struct pipe_buffer *
+struct pb_buffer *
 fenced_buffer_create(struct fenced_buffer_list *fenced_list, 
-                     struct pipe_buffer *buffer)
+                     struct pb_buffer *buffer)
 {
    struct fenced_buffer *buf;
    
    if(!buffer)
       return NULL;
    
-   buf = (struct fenced_buffer *)calloc(1, sizeof(struct fenced_buffer));
+   buf = CALLOC_STRUCT(fenced_buffer);
    if(!buf)
       return NULL;
    
@@ -247,20 +230,16 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
 
 
 void
-buffer_fence(struct pipe_buffer *buf,
+buffer_fence(struct pb_buffer *buf,
              struct pipe_fence_handle *fence)
 {
-   if(buf->vtbl == &fenced_buffer_vtbl) {
-      struct fenced_buffer *fenced_buf = fenced_buffer(buf);
-      struct fenced_buffer_list *fenced_list = fenced_buf->list;
-      struct pipe_winsys *winsys = fenced_list->winsys;
+   struct fenced_buffer *fenced_buf = fenced_buffer(buf);
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+   struct pipe_winsys *winsys = fenced_list->winsys;
    
-      _glthread_LOCK_MUTEX(fenced_list->mutex);
-      winsys->fence_reference(winsys, &fenced_buf->fence, fence);
-      _glthread_UNLOCK_MUTEX(fenced_list->mutex);
-   }
-   else
-      assert(0);
+   _glthread_LOCK_MUTEX(fenced_list->mutex);
+   winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
 }
 
 
@@ -269,7 +248,7 @@ fenced_buffer_list_create(struct pipe_winsys *winsys)
 {
    struct fenced_buffer_list *fenced_list;
 
-   fenced_list = (struct fenced_buffer_list *)calloc(1, sizeof(*fenced_list));
+   fenced_list = (struct fenced_buffer_list *)CALLOC(1, sizeof(*fenced_list));
    if (!fenced_list)
       return NULL;
 
@@ -307,13 +286,13 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    while (fenced_list->numDelayed) {
       _glthread_UNLOCK_MUTEX(fenced_list->mutex);
       sched_yield();
-      _fenced_buffer_list_check_free(fenced_list, GL_TRUE);
+      _fenced_buffer_list_check_free(fenced_list, 1);
       _glthread_LOCK_MUTEX(fenced_list->mutex);
    }
 
    _glthread_UNLOCK_MUTEX(fenced_list->mutex);
    
-   free(fenced_list);
+   FREE(fenced_list);
 }
 
 

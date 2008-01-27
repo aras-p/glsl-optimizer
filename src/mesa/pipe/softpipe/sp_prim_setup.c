@@ -85,8 +85,6 @@ struct setup_stage {
    struct tgsi_interp_coef posCoef;  /* For Z, W */
    struct quad_header quad; 
 
-   uint firstFpInput;  /** Semantic type of first frag input */
-
    struct {
       int left[2];   /**< [0] = row0, [1] = row1 */
       int right[2];
@@ -515,11 +513,8 @@ setup_fragcoord_coeff(struct setup_stage *setup)
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
-#define USE_INPUT_MAP 01
-#if USE_INPUT_MAP
-   const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
-#endif
+   const struct softpipe_context *softpipe = setup->softpipe;
+   const struct pipe_shader_state *fs = &softpipe->fs->shader;
    uint fragSlot;
 
    /* z and w are done by linear interpolation:
@@ -529,64 +524,37 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < setup->quad.nr_attrs; fragSlot++) {
-      /* which vertex output maps to this fragment input: */
-#if !USE_INPUT_MAP
-      uint vertSlot;
-      if (setup->firstFpInput == TGSI_SEMANTIC_POSITION) {
-         if (fragSlot == 0) {
-            setup_fragcoord_coeff(setup);
-            continue;
-         }
-         vertSlot = fragSlot;
-      }
-      else {
-         vertSlot = fragSlot + 1;
-      }
+   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      uint j;
 
-#else
-      uint vertSlot = fs->input_map[fragSlot];
-
-      if (vertSlot == 0) {
-         /* special case: shader is reading gl_FragCoord */
-         /* XXX with a new INTERP_POSITION token, we could just add a
-          * new case to the switch below.
-          */
+      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      case INTERP_CONSTANT:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_POS:
+         assert(fragSlot == 0);
          setup_fragcoord_coeff(setup);
+         break;
+      default:
+         assert(0);
       }
-      else {
-#endif
-         uint j;
-         switch (interp[vertSlot]) {
-         case INTERP_CONSTANT:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_LINEAR:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               tri_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_PERSPECTIVE:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         default:
-            /* invalid interp mode */
-            /* assert(0); re-enable this and run demos/fogcoord.c ... */
-            ;
-         }
 
-         if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
-            /* FOG.y = front/back facing  XXX fix this */
-            setup->coef[fragSlot].a0[1] = 1 - setup->quad.facing;
-            setup->coef[fragSlot].dadx[1] = 0.0;
-            setup->coef[fragSlot].dady[1] = 0.0;
-         }
-
-
-#if USE_INPUT_MAP
+      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
-#endif
    }
 }
 
@@ -788,9 +756,9 @@ line_persp_coeff(struct setup_stage *setup,
 static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const struct softpipe_context *softpipe = setup->softpipe;
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
-   unsigned fragSlot;
+   uint fragSlot;
 
    /* use setup->vmin, vmax to point to vertices */
    setup->vprovoke = prim->v[1];
@@ -810,34 +778,37 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < setup->quad.nr_attrs; fragSlot++) {
-      /* which vertex output maps to this fragment input: */
-      uint vertSlot = fs->input_map[fragSlot];
+   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      uint j;
 
-      if (vertSlot == 0) {
-         /* special case: shader is reading gl_FragCoord */
+      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      case INTERP_CONSTANT:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            line_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_POS:
+         assert(fragSlot == 0);
+         assert(0); /* XXX fix this: */
          setup_fragcoord_coeff(setup);
+         break;
+      default:
+         assert(0);
       }
-      else {
-         uint j;
-         switch (interp[vertSlot]) {
-         case INTERP_CONSTANT:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_LINEAR:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               line_linear_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_PERSPECTIVE:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-            
-         default:
-            /* invalid interp mode */
-            assert(0);
-         }
+
+      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
    }
 }
@@ -996,8 +967,8 @@ static void
 setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
-   const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   struct softpipe_context *softpipe = setup->softpipe;
+   const struct pipe_shader_state *fs = &softpipe->fs->shader;
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
    const float size
@@ -1031,31 +1002,36 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const_coeff(setup, &setup->posCoef, 0, 2);
    const_coeff(setup, &setup->posCoef, 0, 3);
 
-   for (fragSlot = 0; fragSlot < setup->quad.nr_attrs; fragSlot++) {
-      /* which vertex output maps to this fragment input: */
-      uint vertSlot = fs->input_map[fragSlot];
+   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      uint j;
 
-      if (vertSlot == 0) {
-         /* special case: shader is reading gl_FragCoord */
+      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      case INTERP_CONSTANT:
+         /* fall-through */
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            point_persp_coeff(setup, setup->vprovoke,
+                              &setup->coef[fragSlot], vertSlot, j);
+         break;
+      case INTERP_POS:
+         assert(fragSlot == 0);
+         assert(0); /* XXX fix this: */
          setup_fragcoord_coeff(setup);
+         break;
+      default:
+         assert(0);
       }
-      else {
-         uint j;
-         switch (interp[vertSlot]) {
-         case INTERP_CONSTANT:
-            /* fall-through */
-         case INTERP_LINEAR:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
-            break;
-         case INTERP_PERSPECTIVE:
-            for (j = 0; j < NUM_CHANNELS; j++)
-               point_persp_coeff(setup, setup->vprovoke,
-                                 &setup->coef[fragSlot], vertSlot, j);
-            break;
-         default:
-            assert(0);
-         }
+
+      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+         /* FOG.y = front/back facing  XXX fix this */
+         setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
+         setup->coef[fragSlot].dadx[1] = 0.0;
+         setup->coef[fragSlot].dady[1] = 0.0;
       }
    }
 
@@ -1191,16 +1167,46 @@ static void setup_begin( struct draw_stage *stage )
    struct softpipe_context *sp = setup->softpipe;
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
 
-   setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-
-   setup->firstFpInput = fs->input_semantic_name[0];
+   setup->quad.nr_attrs = fs->num_inputs;
 
    sp->quad.first->begin(sp->quad.first);
+
+   stage->point = setup_point;
+   stage->line = setup_line;
+   stage->tri = setup_tri;
 }
 
 
-static void setup_end( struct draw_stage *stage )
+static void setup_first_point( struct draw_stage *stage,
+			       struct prim_header *header )
 {
+   setup_begin(stage);
+   stage->point( stage, header );
+}
+
+static void setup_first_line( struct draw_stage *stage,
+			       struct prim_header *header )
+{
+   setup_begin(stage);
+   stage->line( stage, header );
+}
+
+
+static void setup_first_tri( struct draw_stage *stage,
+			       struct prim_header *header )
+{
+   setup_begin(stage);
+   stage->tri( stage, header );
+}
+
+
+
+static void setup_flush( struct draw_stage *stage,
+			 unsigned flags )
+{
+   stage->point = setup_first_point;
+   stage->line = setup_first_line;
+   stage->tri = setup_first_tri;
 }
 
 
@@ -1224,11 +1230,10 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
 
    setup->softpipe = softpipe;
    setup->stage.draw = softpipe->draw;
-   setup->stage.begin = setup_begin;
-   setup->stage.point = setup_point;
-   setup->stage.line = setup_line;
-   setup->stage.tri = setup_tri;
-   setup->stage.end = setup_end;
+   setup->stage.point = setup_first_point;
+   setup->stage.line = setup_first_line;
+   setup->stage.tri = setup_first_tri;
+   setup->stage.flush = setup_flush;
    setup->stage.reset_stipple_counter = reset_stipple_counter;
    setup->stage.destroy = render_destroy;
 
@@ -1236,88 +1241,4 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
    setup->quad.posCoef = &setup->posCoef;
 
    return &setup->stage;
-}
-
-
-/* Recalculate det.  This is only used in the test harness below:
- */
-static void calc_det( struct prim_header *header )
-{
-   /* Window coords: */
-   const float *v0 = header->v[0]->data[0];
-   const float *v1 = header->v[1]->data[0];
-   const float *v2 = header->v[2]->data[0];
-
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
-   const float ex = v0[0] - v2[0];
-   const float ey = v0[1] - v2[1];
-   const float fx = v1[0] - v2[0];
-   const float fy = v1[1] - v2[1];
-   
-   /* det = cross(e,f).z */
-   header->det = ex * fy - ey * fx;
-}
-
-
-
-/**
- * Render buffer of points/lines/triangles.
- * Called by vbuf code when the vertex or index buffer is filled.
- *
- * The big issue at this point is that reset_stipple doesn't make it
- * through the interface.  Probably need to split primitives at reset
- * stipple, perhaps using the ~0 index marker.
- */
-void sp_vbuf_render( struct pipe_context *pipe,
-                     unsigned primitive,
-                     const ushort *elements,
-                     unsigned nr_elements,
-                     const void *vertex_buffer,
-                     unsigned nr_vertices )
-{
-   struct softpipe_context *softpipe = softpipe_context( pipe );
-   struct setup_stage *setup = setup_stage( softpipe->setup );
-   struct prim_header prim;
-   unsigned vertex_size = setup->stage.draw->vertex_info.size * sizeof(float);
-   unsigned i, j;
-
-   prim.det = 0;
-   prim.reset_line_stipple = 0;
-   prim.edgeflags = 0;
-   prim.pad = 0;
-
-   setup->stage.begin( &setup->stage );
-
-   switch (primitive) {
-   case PIPE_PRIM_TRIANGLES:
-      for (i = 0; i < nr_elements; i += 3) {
-         for (j = 0; j < 3; j++) 
-            prim.v[j] = (struct vertex_header *)((char *)vertex_buffer + 
-                                                 elements[i+j] * vertex_size);
-         
-         calc_det(&prim);
-         setup->stage.tri( &setup->stage, &prim );
-      }
-      break;
-
-   case PIPE_PRIM_LINES:
-      for (i = 0; i < nr_elements; i += 2) {
-         for (j = 0; j < 2; j++) 
-            prim.v[j] = (struct vertex_header *)((char *)vertex_buffer + 
-                                                 elements[i+j] * vertex_size);
-         
-         setup->stage.line( &setup->stage, &prim );
-      }
-      break;
-
-   case PIPE_PRIM_POINTS:
-      for (i = 0; i < nr_elements; i++) {
-         prim.v[0] = (struct vertex_header *)((char *)vertex_buffer + 
-                                              elements[i] * vertex_size);         
-         setup->stage.point( &setup->stage, &prim );
-      }
-      break;
-   }
-
-   setup->stage.end( &setup->stage );
 }

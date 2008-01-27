@@ -50,7 +50,7 @@
  * etc.
  */
 
-struct pipe_buffer_handle;
+struct pipe_buffer;
 struct pipe_fence_handle;
 struct pipe_winsys;
 
@@ -136,7 +136,7 @@ struct brw_winsys {
     * I915_BUFFER_ACCESS_READ macros.
     */
    void (*batch_reloc)(struct brw_winsys *sws,
-                       struct pipe_buffer_handle *buf,
+                       struct pipe_buffer *buf,
                        unsigned access_flags,
                        unsigned delta);
 
@@ -159,7 +159,7 @@ struct brw_winsys {
     * simulator:
     */
    void (*buffer_subdata_typed)(struct brw_winsys *sws, 
-				struct pipe_buffer_handle *buf,
+				struct pipe_buffer *buf,
 				unsigned long offset, 
 				unsigned long size, 
 				const void *data,
@@ -170,7 +170,7 @@ struct brw_winsys {
     * of places yet:
     */
    unsigned (*get_buffer_offset)( struct brw_winsys *sws,
-				  struct pipe_buffer_handle *buf,
+				  struct pipe_buffer *buf,
 				  unsigned flags );
 
 };
@@ -193,9 +193,13 @@ static inline boolean brw_batchbuffer_data(struct brw_winsys *winsys,
    uint i;
    const unsigned *udata = (const unsigned*)(data);
    unsigned size = bytes/incr;
+
+   winsys->batch_start(winsys, size, 0);
    for (i = 0; i < size; ++i) {
       winsys->batch_dword(winsys, udata[i]);
    }
+   winsys->batch_end(winsys);
+
    return (i == size);
 }
 #endif

@@ -39,10 +39,17 @@
 /**
  * Rebuild the rendering pipeline.
  */
-static void validate_begin( struct draw_stage *stage )
+static struct draw_stage *validate_pipeline( struct draw_stage *stage )
 {
    struct draw_context *draw = stage->draw;
    struct draw_stage *next = draw->pipeline.rasterize;
+   int need_det = 0;
+   int precalc_flat = 0;
+
+   /* Set the validate's next stage to the rasterize stage, so that it
+    * can be found later if needed for flushing.
+    */
+   stage->next = next;
 
    /*
     * NOTE: we build up the pipeline in end-to-start order.
@@ -61,29 +68,38 @@ static void validate_begin( struct draw_stage *stage )
    if (draw->rasterizer->line_stipple_enable) {
       draw->pipeline.stipple->next = next;
       next = draw->pipeline.stipple;
+      precalc_flat = 1;		/* only needed for lines really */
    }
 
    if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
        draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;
       next = draw->pipeline.unfilled;
+      precalc_flat = 1;		/* only needed for triangles really */
+      need_det = 1;
    }
 	 
    if (draw->rasterizer->offset_cw ||
        draw->rasterizer->offset_ccw) {
       draw->pipeline.offset->next = next;
       next = draw->pipeline.offset;
+      need_det = 1;
    }
 
    if (draw->rasterizer->light_twoside) {
       draw->pipeline.twoside->next = next;
       next = draw->pipeline.twoside;
+      need_det = 1;
    }
 
    /* Always run the cull stage as we calculate determinant there
-    * also.  Fix this..
+    * also.  
+    *
+    * This can actually be a win as culling out the triangles can lead
+    * to less work emitting vertices, smaller vertex buffers, etc.
+    * It's difficult to say whether this will be true in general.
     */
-   {
+   if (need_det || draw->rasterizer->cull_mode) {
       draw->pipeline.cull->next = next;
       next = draw->pipeline.cull;
    }
@@ -94,19 +110,52 @@ static void validate_begin( struct draw_stage *stage )
    {
       draw->pipeline.clip->next = next;
       next = draw->pipeline.clip;
+      precalc_flat = 1;		/* XXX: FIX ME! Only needed for clipped prims */
    }
 
-   /* Do software flatshading prior to clipping.  XXX: should only do
-    * this for clipped primitives, ie it is a part of the clip
-    * routine.
-    */
-   if (draw->rasterizer->flatshade) {
+   if (draw->rasterizer->flatshade && precalc_flat) {
       draw->pipeline.flatshade->next = next;
       next = draw->pipeline.flatshade;
    }
-
+   
    draw->pipeline.first = next;
-   draw->pipeline.first->begin( draw->pipeline.first );
+   return next;
+}
+
+static void validate_tri( struct draw_stage *stage, 
+			  struct prim_header *header )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->tri( pipeline, header );
+}
+
+static void validate_line( struct draw_stage *stage, 
+			   struct prim_header *header )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->line( pipeline, header );
+}
+
+static void validate_point( struct draw_stage *stage, 
+			    struct prim_header *header )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->point( pipeline, header );
+}
+
+static void validate_reset_stipple_counter( struct draw_stage *stage )
+{
+   struct draw_stage *pipeline = validate_pipeline( stage );
+   pipeline->reset_stipple_counter( pipeline );
+}
+
+static void validate_flush( struct draw_stage *stage, 
+			    unsigned flags )
+{
+   /* May need to pass a backend flush on to the rasterize stage.
+    */
+   if (stage->next)
+      stage->next->flush( stage->next, flags );
 }
 
 
@@ -125,12 +174,11 @@ struct draw_stage *draw_validate_stage( struct draw_context *draw )
 
    stage->draw = draw;
    stage->next = NULL;
-   stage->begin = validate_begin;
-   stage->point = NULL;
-   stage->line = NULL;
-   stage->tri = NULL;
-   stage->end = NULL;
-   stage->reset_stipple_counter = NULL;
+   stage->point = validate_point;
+   stage->line = validate_line;
+   stage->tri = validate_tri;
+   stage->flush = validate_flush;
+   stage->reset_stipple_counter = validate_reset_stipple_counter;
    stage->destroy = validate_destroy;
 
    return stage;

@@ -37,8 +37,8 @@ static INLINE void *
 pipe_surface_map(struct pipe_surface *surface)
 {
    return (char *)surface->winsys->buffer_map( surface->winsys, surface->buffer,
-					       PIPE_BUFFER_FLAG_WRITE |
-					       PIPE_BUFFER_FLAG_READ )
+					       PIPE_BUFFER_USAGE_CPU_WRITE |
+					       PIPE_BUFFER_USAGE_CPU_READ )
       + surface->offset;
 }
 
@@ -56,18 +56,36 @@ pipe_surface_unmap(struct pipe_surface *surface)
 static INLINE void
 pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
-   assert(ptr);
-   if (*ptr) {
+   /* bump the refcount first */
+   if (surf) 
+      surf->refcount++;
+
+   if (*ptr /* && --(*ptr)->refcount == 0 */) {
       struct pipe_winsys *winsys = (*ptr)->winsys;
       winsys->surface_release(winsys, ptr);
       assert(!*ptr);
    }
-   if (surf) {
-      /* reference the new thing */
-      surf->refcount++;
-      *ptr = surf;
-   }
+
+   *ptr = surf;
 }
+
+
+/* XXX: thread safety issues!
+ */
+static INLINE void
+pipe_buffer_reference(struct pipe_winsys *winsys,
+		      struct pipe_buffer **ptr,
+		      struct pipe_buffer *buf)
+{
+   if (buf) 
+      buf->refcount++;
+
+   if (*ptr && --(*ptr)->refcount == 0)
+      winsys->buffer_destroy( winsys, *ptr );
+
+   *ptr = buf;
+}
+
 
 
 /**
@@ -78,15 +96,16 @@ pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
 		       struct pipe_texture *pt)
 {
    assert(ptr);
+
+   if (pt) 
+      pt->refcount++;
+
    if (*ptr) {
       pipe->texture_release(pipe, ptr);
       assert(!*ptr);
    }
-   if (pt) {
-      /* reference the new thing */
-      pt->refcount++;
-      *ptr = pt;
-   }
+
+   *ptr = pt;
 }
 
 

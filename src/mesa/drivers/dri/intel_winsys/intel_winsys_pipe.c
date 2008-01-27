@@ -43,6 +43,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 
 
@@ -65,100 +66,98 @@ intel_pipe_winsys( struct pipe_winsys *winsys )
 /* Most callbacks map direcly onto dri_bufmgr operations:
  */
 static void *intel_buffer_map(struct pipe_winsys *winsys, 
-			      struct pipe_buffer_handle *buf,
+			      struct pipe_buffer *buf,
 			      unsigned flags )
 {
    unsigned drm_flags = 0;
    
-   if (flags & PIPE_BUFFER_FLAG_WRITE)
+   if (flags & PIPE_BUFFER_USAGE_CPU_WRITE)
       drm_flags |= DRM_BO_FLAG_WRITE;
 
-   if (flags & PIPE_BUFFER_FLAG_READ)
+   if (flags & PIPE_BUFFER_USAGE_CPU_READ)
       drm_flags |= DRM_BO_FLAG_READ;
 
    return driBOMap( dri_bo(buf), drm_flags, 0 );
 }
 
 static void intel_buffer_unmap(struct pipe_winsys *winsys, 
-			       struct pipe_buffer_handle *buf)
+			       struct pipe_buffer *buf)
 {
    driBOUnmap( dri_bo(buf) );
 }
 
 
 static void
-intel_buffer_reference(struct pipe_winsys *winsys,
-		       struct pipe_buffer_handle **ptr,
-		       struct pipe_buffer_handle *buf)
+intel_buffer_destroy(struct pipe_winsys *winsys,
+		     struct pipe_buffer *buf)
 {
-   if (*ptr) {
-      driBOUnReference( dri_bo(*ptr) );
-      *ptr = NULL;
-   }
-
-   if (buf) {
-      driBOReference( dri_bo(buf) );
-      *ptr = buf;
-   }
+   driBOUnReference( dri_bo(buf) );
 }
 
-
-/* Grabs the hardware lock!
- */
-static int intel_buffer_data(struct pipe_winsys *winsys, 
-			     struct pipe_buffer_handle *buf,
-			     unsigned size, const void *data,
-			     unsigned usage )
-{
-   driBOData( dri_bo(buf), size, data, 0 );
-   return 0;
-}
-
-static int intel_buffer_subdata(struct pipe_winsys *winsys, 
-				struct pipe_buffer_handle *buf,
-				unsigned long offset, 
-				unsigned long size, 
-				const void *data)
-{
-   driBOSubData( dri_bo(buf), offset, size, data );
-   return 0;
-}
-
-static int intel_buffer_get_subdata(struct pipe_winsys *winsys, 
-				    struct pipe_buffer_handle *buf,
-				    unsigned long offset, 
-				    unsigned long size, 
-				    void *data)
-{
-   driBOGetSubData( dri_bo(buf), offset, size, data );
-   return 0;
-}
 
 /* Pipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
+ * Grabs the hardware lock!
  */
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 intel_buffer_create(struct pipe_winsys *winsys, 
                     unsigned alignment, 
-                    unsigned flags, 
-                    unsigned hint )
+                    unsigned usage, 
+                    unsigned size )
 {
-   struct _DriBufferObject *buffer;
+   struct intel_buffer *buffer = CALLOC_STRUCT( intel_buffer );
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
+   unsigned flags = 0;
+
+   buffer->base.refcount = 1;
+   buffer->base.alignment = alignment;
+   buffer->base.usage = usage;
+   buffer->base.size = size;
+
+   if (usage & (PIPE_BUFFER_USAGE_VERTEX /*| IWS_BUFFER_USAGE_LOCAL*/)) {
+      flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
+   } else {
+      flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
+   }
+
+   if (usage & PIPE_BUFFER_USAGE_GPU_READ)
+      flags |= DRM_BO_FLAG_READ;
+
+   if (usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+      flags |= DRM_BO_FLAG_WRITE;
+
+   /* drm complains if we don't set any read/write flags.
+    */
+   if ((flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE)) == 0)
+      flags |= DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE;
+
+#if 0
+   if (flags & IWS_BUFFER_USAGE_EXE)
+      flags |= DRM_BO_FLAG_EXE;
+
+   if (usage & IWS_BUFFER_USAGE_CACHED)
+      flags |= DRM_BO_FLAG_CACHED;
+#endif
+
    driGenBuffers( iws->regionPool, 
-		  "pipe buffer", 1, &buffer, alignment, flags, hint );
-   return pipe_bo(buffer);
+		  "pipe buffer", 1, &buffer->driBO, alignment, flags, 0 );
+
+   driBOData( buffer->driBO, size, NULL, 0 );
+
+   return &buffer->base;
 }
 
 
-static struct pipe_buffer_handle *
+static struct pipe_buffer *
 intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
-   struct _DriBufferObject *buffer;
+   struct intel_buffer *buffer = CALLOC_STRUCT( intel_buffer );
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
+
    driGenUserBuffer( iws->regionPool, 
-                     "pipe user buffer", &buffer, ptr, bytes);
-   return pipe_bo(buffer);
+                     "pipe user buffer", &buffer->driBO, ptr, bytes);
+
+   return &buffer->base;
 }
 
 
@@ -219,17 +218,14 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
    surf->pitch = round_up(width, alignment / surf->cpp);
 
    assert(!surf->buffer);
-   surf->buffer = winsys->buffer_create(winsys, alignment, 0, 0);
+   surf->buffer = winsys->buffer_create(winsys, alignment,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        surf->pitch * surf->cpp * height);
    if(!surf->buffer)
       return -1;
 
-   ret = winsys->buffer_data(winsys, 
-                             surf->buffer,
-                             surf->pitch * surf->cpp * height,
-                             NULL,
-                             PIPE_BUFFER_USAGE_PIXEL);
    if(ret) {
-      winsys->buffer_reference(winsys, &surf->buffer, NULL);
+      pipe_buffer_reference(winsys, &surf->buffer, NULL);
       return ret;
    }
    
@@ -244,7 +240,7 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)
-	 winsys->buffer_reference(winsys, &surf->buffer, NULL);
+	 pipe_buffer_reference(winsys, &surf->buffer, NULL);
       free(surf);
    }
    *s = NULL;
@@ -284,10 +280,7 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.user_buffer_create = intel_user_buffer_create;
    iws->winsys.buffer_map = intel_buffer_map;
    iws->winsys.buffer_unmap = intel_buffer_unmap;
-   iws->winsys.buffer_reference = intel_buffer_reference;
-   iws->winsys.buffer_data = intel_buffer_data;
-   iws->winsys.buffer_subdata = intel_buffer_subdata;
-   iws->winsys.buffer_get_subdata = intel_buffer_get_subdata;
+   iws->winsys.buffer_destroy = intel_buffer_destroy;
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;

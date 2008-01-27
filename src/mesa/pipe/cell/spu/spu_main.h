@@ -30,6 +30,7 @@
 
 
 #include "pipe/cell/common.h"
+#include "pipe/draw/draw_vertex.h"
 #include "pipe/p_state.h"
 
 
@@ -59,6 +60,9 @@ struct spu_global
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+
+   struct vertex_info vertex_info;
+
    /* XXX more state to come */
 
 } ALIGN16_ATTRIB;
@@ -80,15 +84,6 @@ extern struct spu_global spu;
 #define TAG_INDEX_BUFFER      16
 #define TAG_BATCH_BUFFER      17
 #define TAG_MISC              18
-
-
-/** The standard assert macro doesn't seem to work on SPUs */
-#define ASSERT(x) \
-   if (!(x)) { \
-      fprintf(stderr, "SPU %d: %s:%d: %s(): assertion %s failed.\n", \
-              spu.init.id, __FILE__, __LINE__, __FUNCTION__, #x); \
-      exit(1); \
-   }
 
 
 extern void

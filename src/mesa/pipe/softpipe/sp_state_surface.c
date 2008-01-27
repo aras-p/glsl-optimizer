@@ -65,17 +65,18 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    sp->framebuffer.num_cbufs = fb->num_cbufs;
 
    /* zbuf changing? */
-   if (sp->framebuffer.zbuf != fb->zbuf) {
+   if (sp->framebuffer.zsbuf != fb->zsbuf) {
       /* flush old */
-      sp_flush_tile_cache(sp, sp->zbuf_cache);
+      sp_flush_tile_cache(sp, sp->zsbuf_cache);
 
       /* assign new */
-      sp->framebuffer.zbuf = fb->zbuf;
+      sp->framebuffer.zsbuf = fb->zsbuf;
 
       /* update cache */
-      sp_tile_cache_set_surface(sp->zbuf_cache, fb->zbuf);
+      sp_tile_cache_set_surface(sp->zsbuf_cache, fb->zsbuf);
    }
 
+#if 0
    /* XXX combined depth/stencil here */
 
    /* sbuf changing? */
@@ -98,6 +99,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
          sp_tile_cache_set_surface(sp->sbuf_cache, fb->sbuf);
       }
    }
+#endif
 
    sp->dirty |= SP_NEW_FRAMEBUFFER;
 }

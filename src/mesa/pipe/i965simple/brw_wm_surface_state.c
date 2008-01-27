@@ -127,7 +127,7 @@ static unsigned translate_tex_format( enum pipe_format pipe_format )
 }
 
 static unsigned brw_buffer_offset(struct brw_context *brw,
-                                  struct pipe_buffer_handle *buffer)
+                                  struct pipe_buffer *buffer)
 {
    return brw->winsys->get_buffer_offset(brw->winsys,
                                          buffer,

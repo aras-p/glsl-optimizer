@@ -44,7 +44,8 @@
 #define OUT_RELOC( buf, flags, delta ) \
    brw->winsys->batch_reloc(brw->winsys, buf, flags, delta)
 
-#define ADVANCE_BATCH()
+#define ADVANCE_BATCH() \
+   brw->winsys->batch_end( brw->winsys )
 
 /* XXX: this is bogus - need proper handling for out-of-memory in batchbuffer.
  */

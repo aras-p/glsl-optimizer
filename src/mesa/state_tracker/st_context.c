@@ -52,6 +52,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_inlines.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/cso_cache/cso_cache.h"
 
@@ -152,7 +153,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
-         ws->buffer_reference(ws, &st->state.constants[i].buffer, NULL);
+         pipe_buffer_reference(ws, &st->state.constants[i].buffer, NULL);
       }
    }
 

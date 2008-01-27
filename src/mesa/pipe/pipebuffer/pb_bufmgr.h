@@ -53,6 +53,7 @@
 #include <stddef.h>
 
 
+struct pb_desc;
 struct pipe_buffer;
 struct pipe_winsys;
 
@@ -60,15 +61,16 @@ struct pipe_winsys;
 /** 
  * Abstract base class for all buffer managers.
  */
-struct buffer_manager
+struct pb_manager
 {
    /* XXX: we will likely need more allocation flags */
-   struct pipe_buffer *
-   (*create_buffer)( struct buffer_manager *mgr, 
-	             size_t size );
+   struct pb_buffer *
+   (*create_buffer)( struct pb_manager *mgr, 
+	             size_t size,
+	             const struct pb_desc *desc);
 
    void
-   (*destroy)( struct buffer_manager *mgr );
+   (*destroy)( struct pb_manager *mgr );
 };
 
 
@@ -80,9 +82,10 @@ struct buffer_manager
  * 
  * It is meant to manage the allocation of batch buffer pools.
  */
-struct buffer_manager *
-pool_bufmgr_create(struct buffer_manager *provider, 
-                   size_t n, size_t size);
+struct pb_manager *
+pool_bufmgr_create(struct pb_manager *provider, 
+                   size_t n, size_t size,
+                   const struct pb_desc *desc);
 
 
 /** 
@@ -92,8 +95,8 @@ pool_bufmgr_create(struct buffer_manager *provider,
  * with the size of the heap, and then using the old mm memory manager to manage
  * that heap. 
  */
-struct buffer_manager *
-mm_bufmgr_create(struct buffer_manager *provider, 
+struct pb_manager *
+mm_bufmgr_create(struct pb_manager *provider, 
                  size_t size, size_t align2);
 
 /**
@@ -101,8 +104,8 @@ mm_bufmgr_create(struct buffer_manager *provider,
  * 
  * Buffer will be release when the manager is destroyed.
  */
-struct buffer_manager *
-mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer, 
+struct pb_manager *
+mm_bufmgr_create_from_buffer(struct pb_buffer *buffer, 
                              size_t size, size_t align2);
 
 
@@ -115,8 +118,8 @@ mm_bufmgr_create_from_buffer(struct pipe_buffer *buffer,
  * NOTE: the buffer manager that provides the buffers will be destroyed
  * at the same time.
  */
-struct buffer_manager *
-fenced_bufmgr_create(struct buffer_manager *provider,
+struct pb_manager *
+fenced_bufmgr_create(struct pb_manager *provider,
                      struct pipe_winsys *winsys);
 
 

@@ -50,7 +50,7 @@
  * etc.
  */
 
-struct pipe_buffer_handle;
+struct pipe_buffer;
 struct pipe_winsys;
 
 
@@ -93,7 +93,7 @@ struct i915_winsys {
     * I915_BUFFER_ACCESS_READ macros.
     */
    void (*batch_reloc)( struct i915_winsys *sws,
-			struct pipe_buffer_handle *buf,
+			struct pipe_buffer *buf,
 			unsigned access_flags,
 			unsigned delta );
    

@@ -73,33 +73,33 @@ emit_hw_vertex( struct i915_context *i915,
    uint count = 0;  /* for debug/sanity */
 
    for (i = 0; i < vinfo->num_attribs; i++) {
-      switch (vinfo->format[i]) {
-      case FORMAT_OMIT:
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
          /* no-op */
          break;
-      case FORMAT_1F:
+      case EMIT_1F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          count++;
          break;
-      case FORMAT_2F:
+      case EMIT_2F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          count += 2;
          break;
-      case FORMAT_3F:
+      case EMIT_3F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          OUT_BATCH( fui(vertex->data[i][2]) );
          count += 3;
          break;
-      case FORMAT_4F:
+      case EMIT_4F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          OUT_BATCH( fui(vertex->data[i][2]) );
          OUT_BATCH( fui(vertex->data[i][3]) );
          count += 4;
          break;
-      case FORMAT_4UB:
+      case EMIT_4UB:
          OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[i][2] ),
                              float_to_ubyte( vertex->data[i][1] ),
                              float_to_ubyte( vertex->data[i][0] ),
@@ -180,13 +180,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 }
 
 
-
-static void setup_begin( struct draw_stage *stage )
-{
-}
-
-
-static void setup_end( struct draw_stage *stage )
+static void setup_flush( struct draw_stage *stage, unsigned flags )
 {
 }
 
@@ -210,11 +204,10 @@ struct draw_stage *i915_draw_render_stage( struct i915_context *i915 )
 
    setup->i915 = i915;
    setup->stage.draw = i915->draw;
-   setup->stage.begin = setup_begin;
    setup->stage.point = setup_point;
    setup->stage.line = setup_line;
    setup->stage.tri = setup_tri;
-   setup->stage.end = setup_end;
+   setup->stage.flush = setup_flush;
    setup->stage.reset_stipple_counter = reset_stipple_counter;
    setup->stage.destroy = render_destroy;
 

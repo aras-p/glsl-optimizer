@@ -85,7 +85,7 @@ static void intel_i915_batch_dword( struct i915_winsys *sws,
 }
 
 static void intel_i915_batch_reloc( struct i915_winsys *sws,
-			     struct pipe_buffer_handle *buf,
+			     struct pipe_buffer *buf,
 			     unsigned access_flags,
 			     unsigned delta )
 {

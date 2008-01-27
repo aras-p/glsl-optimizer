@@ -30,7 +30,7 @@
 
 struct pipe_context;
 struct pipe_winsys;
-struct pipe_buffer_handle;
+struct pipe_buffer;
 struct pipe_surface;
 
 struct pipe_winsys *
@@ -47,7 +47,7 @@ xmesa_create_i965simple( struct pipe_winsys *winsys );
 
 
 void xmesa_buffer_subdata_aub(struct pipe_winsys *winsys, 
-			      struct pipe_buffer_handle *buf,
+			      struct pipe_buffer *buf,
 			      unsigned long offset, 
 			      unsigned long size, 
 			      const void *data,

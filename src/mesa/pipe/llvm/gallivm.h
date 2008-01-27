@@ -30,8 +30,8 @@
   *   Zack Rusin zack@tungstengraphics.com
   */
 
-#ifndef LLVMTGSI_H
-#define LLVMTGSI_H
+#ifndef GALLIVM_H
+#define GALLIVM_H
 
 #if defined __cplusplus
 extern "C" {

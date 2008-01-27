@@ -201,6 +201,29 @@ st_texture_image_unmap(struct st_texture_image *stImage)
 
 
 
+/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
+ *
+ * - memcpy by span to current destination
+ * - upload data as new buffer and blit
+ *
+ * Currently always memcpy.
+ */
+static void
+st_surface_data(struct pipe_context *pipe,
+		struct pipe_surface *dst,
+		unsigned dstx, unsigned dsty,
+		const void *src, unsigned src_pitch,
+		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
+{
+   pipe_copy_rect(pipe_surface_map(dst),
+                  dst->cpp,
+                  dst->pitch,
+                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+
+   pipe_surface_unmap(dst);
+}
+
+
 /* Upload data for a particular image.
  */
 void
@@ -225,12 +248,12 @@ st_texture_image_data(struct pipe_context *pipe,
 
       dst_surface = pipe->get_tex_surface(pipe, dst, face, level, i);
 
-      pipe->surface_data(pipe, dst_surface,
-			 0, 0,                             /* dstx, dsty */
-			 srcUB,
-			 src_row_pitch,
-			 0, 0,                             /* source x, y */
-			 dst->width[level], height); /* width, height */
+      st_surface_data(pipe, dst_surface,
+		      0, 0,                             /* dstx, dsty */
+		      srcUB,
+		      src_row_pitch,
+		      0, 0,                             /* source x, y */
+		      dst->width[level], height);       /* width, height */
 
       pipe_surface_reference(&dst_surface, NULL);
 

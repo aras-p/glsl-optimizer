@@ -93,7 +93,7 @@ static void interp( const struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const unsigned nr_attrs = clip->stage.draw->vertex_info.num_attribs;
+   const unsigned nr_attrs = clip->stage.draw->num_vs_outputs;
    unsigned j;
 
    /* Vertex header.
@@ -346,15 +346,6 @@ do_clip_line( struct draw_stage *stage,
 }
 
 
-static void clip_begin( struct draw_stage *stage )
-{
-   /* should always have position, at least */
-   assert(stage->draw->vertex_info.num_attribs >= 1);
-
-   stage->next->begin( stage->next );
-}
-
-
 static void
 clip_point( struct draw_stage *stage, 
 	    struct prim_header *header )
@@ -402,10 +393,9 @@ clip_tri( struct draw_stage *stage,
    }
 }
 
-
-static void clip_end( struct draw_stage *stage )
+static void clip_flush( struct draw_stage *stage, unsigned flags )
 {
-   stage->next->end( stage->next );
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -433,11 +423,10 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
    draw_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES );
 
    clipper->stage.draw = draw;
-   clipper->stage.begin = clip_begin;
    clipper->stage.point = clip_point;
    clipper->stage.line = clip_line;
    clipper->stage.tri = clip_tri;
-   clipper->stage.end = clip_end;
+   clipper->stage.flush = clip_flush;
    clipper->stage.reset_stipple_counter = clip_reset_stipple_counter;
    clipper->stage.destroy = clip_destroy;
 

@@ -210,8 +210,8 @@ cmd_render(const struct cell_command_render *render)
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
    ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
-
-   uint i, j, vertex_size, vertex_bytes, index_bytes;
+   uint i, j, total_vertex_bytes, total_index_bytes;
+   const uint vertex_size = render->vertex_size; /* in bytes */
 
    if (Debug) {
       printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
@@ -228,36 +228,34 @@ cmd_render(const struct cell_command_render *render)
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(render->index_data);
 
-   vertex_size = render->num_attribs * 4 * sizeof(float);
-
    /* how much vertex data */
-   vertex_bytes = render->num_verts * vertex_size;
-   index_bytes = render->num_indexes * sizeof(ushort);
-   if (index_bytes < 16)
-      index_bytes = 16;
+   total_vertex_bytes = render->num_verts * vertex_size;
+   total_index_bytes = render->num_indexes * sizeof(ushort);
+   if (total_index_bytes < 16)
+      total_index_bytes = 16;
    else
-      index_bytes = (index_bytes + 15) & ~0xf; /* multiple of 16 */
+      total_index_bytes = ROUNDUP16(total_index_bytes);
 
    /*
-   printf("VBUF: indices at %p,  vertices at %p  vertex_bytes %u  ind_bytes %u\n",
-          render->index_data, render->vertex_data, vertex_bytes, index_bytes);
+   printf("VBUF: indices at %p,  vertices at %p  total_vertex_bytes %u  ind_bytes %u\n",
+          render->index_data, render->vertex_data, total_vertex_bytes, total_index_bytes);
    */
 
-   ASSERT(vertex_bytes % 16 == 0);
+   ASSERT(total_vertex_bytes % 16 == 0);
    /* get vertex data from main memory */
    mfc_get(vertex_data,  /* dest */
            (unsigned int) render->vertex_data,  /* src */
-           vertex_bytes,  /* size */
+           total_vertex_bytes,  /* size */
            TAG_VERTEX_BUFFER,
            0, /* tid */
            0  /* rid */);
 
-   ASSERT(index_bytes % 16 == 0);
+   ASSERT(total_index_bytes % 16 == 0);
 
    /* get index data from main memory */
    mfc_get(indexes,  /* dest */
            (unsigned int) render->index_data,  /* src */
-           index_bytes,
+           total_index_bytes,
            TAG_INDEX_BUFFER,
            0, /* tid */
            0  /* rid */);
@@ -340,7 +338,7 @@ cmd_render(const struct cell_command_render *render)
 
 
 static void
-cmd_framebuffer(const struct cell_command_framebuffer *cmd)
+cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 {
    if (Debug)
       printf("SPU %u: FRAMEBUFFER: %d x %d at %p, cformat 0x%x  zformat 0x%x\n",
@@ -350,6 +348,9 @@ cmd_framebuffer(const struct cell_command_framebuffer *cmd)
              cmd->color_start,
              cmd->color_format,
              cmd->depth_format);
+
+   ASSERT_ALIGN16(cmd->color_start);
+   ASSERT_ALIGN16(cmd->depth_start);
 
    spu.fb.color_start = cmd->color_start;
    spu.fb.depth_start = cmd->depth_start;
@@ -390,6 +391,17 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
 
    memcpy(&spu.sampler[0], state, sizeof(*state));
 }
+
+
+static void
+cmd_state_vertex_info(const struct vertex_info *vinfo)
+{
+   if (Debug)
+      printf("SPU %u: VERTEX_INFO num_attribs=%u\n", spu.init.id,
+             vinfo->num_attribs);
+   memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
+}
+
 
 
 static void
@@ -459,10 +471,9 @@ cmd_batch(uint opcode)
 
    ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
 
-   size = (size + 0xf) & ~0xf;
+   size = ROUNDUP16(size);
 
-   ASSERT(size % 16 == 0);
-   ASSERT((unsigned int) spu.init.batch_buffers[buf] % 16 == 0);
+   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
 
    mfc_get(buffer,  /* dest */
            (unsigned int) spu.init.batch_buffers[buf],  /* src */
@@ -475,14 +486,13 @@ cmd_batch(uint opcode)
    /* Tell PPU we're done copying the buffer to local store */
    release_batch_buffer(buf);
 
-
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
-      case CELL_CMD_FRAMEBUFFER:
+      case CELL_CMD_STATE_FRAMEBUFFER:
          {
             struct cell_command_framebuffer *fb
                = (struct cell_command_framebuffer *) &buffer[pos];
-            cmd_framebuffer(fb);
+            cmd_state_framebuffer(fb);
             pos += sizeof(*fb) / 4;
          }
          break;
@@ -512,9 +522,12 @@ cmd_batch(uint opcode)
          pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
          break;
       case CELL_CMD_STATE_SAMPLER:
-         cmd_state_sampler((struct pipe_sampler_state *)
-                           &buffer[pos+1]);
+         cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);
          pos += (1 + sizeof(struct pipe_sampler_state) / 4);
+         break;
+      case CELL_CMD_STATE_VERTEX_INFO:
+         cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
+         pos += (1 + sizeof(struct vertex_info) / 4);
          break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
@@ -571,8 +584,8 @@ main_loop(void)
             printf("SPU %u: EXIT\n", spu.init.id);
          exitFlag = 1;
          break;
-      case CELL_CMD_FRAMEBUFFER:
-         cmd_framebuffer(&cmd.fb);
+      case CELL_CMD_STATE_FRAMEBUFFER:
+         cmd_state_framebuffer(&cmd.fb);
          break;
       case CELL_CMD_CLEAR_SURFACE:
          cmd_clear_surface(&cmd.clear);
@@ -606,13 +619,21 @@ one_time_init(void)
 }
 
 
+/* In some versions of the SDK the SPE main takes 'unsigned long' as a
+ * parameter.  In others it takes 'unsigned long long'.  Use a define to
+ * select between the two.
+ */
+#ifdef SPU_MAIN_PARAM_LONG_LONG
+typedef unsigned long long main_param_t;
+#else
+typedef unsigned long main_param_t;
+#endif
+
 /**
  * SPE entrypoint.
- * Note: example programs declare params as 'unsigned long long' but
- * that doesn't work.
  */
 int
-main(unsigned long speid, unsigned long argp)
+main(main_param_t speid, main_param_t argp)
 {
    int tag = 0;
 

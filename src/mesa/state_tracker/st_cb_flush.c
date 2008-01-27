@@ -45,21 +45,32 @@
 
 void st_flush( struct st_context *st, uint pipeFlushFlags )
 {
+   FLUSH_VERTICES(st->ctx, 0);
+
+   st->pipe->flush( st->pipe, pipeFlushFlags );
+}
+
+
+static void st_gl_flush( struct st_context *st, uint pipeFlushFlags )
+{
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
    FLUSH_VERTICES(st->ctx, 0);
-
-   /* If there has been no rendering to the frontbuffer, consider
-    * short-circuiting this, or perhaps pass an "optional" flag down
-    * to the driver so that it can make the decision.
-    */
-   st->pipe->flush( st->pipe, pipeFlushFlags );
 
    if (!fb)
       return;
 
    /* XXX: temporary hack.  This flag should only be set if we do any
     * rendering to the front buffer.
+    *
+    * Further more, the scissor rectangle could be tracked to
+    * construct a dirty region of the front buffer, to avoid
+    * situations where it must be copied repeatedly.
+    *
+    * In the extreme case, some kind of timer could be set up to allow
+    * coalescing of multiple flushes to the frontbuffer, which can be
+    * quite a performance drain if there are a sufficient number of
+    * them.
     */
    st->flags.frontbuffer_dirty
       = (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT);
@@ -68,6 +79,15 @@ void st_flush( struct st_context *st, uint pipeFlushFlags )
       struct st_renderbuffer *strb
          = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
       struct pipe_surface *front_surf = strb->surface;
+
+      /* If we aren't rendering to the frontbuffer, this is a noop.
+       * This should be uncontroversial for glFlush, though people may
+       * feel more strongly about glFinish.
+       *
+       * Additionally, need to make sure that the frontbuffer_dirty
+       * flag really gets set on frontbuffer rendering.
+       */
+      st->pipe->flush( st->pipe, pipeFlushFlags );
 
       /* Hook for copying "fake" frontbuffer if necessary:
        */
@@ -81,23 +101,23 @@ void st_flush( struct st_context *st, uint pipeFlushFlags )
 /**
  * Called via ctx->Driver.Flush()
  */
-static void st_Flush(GLcontext *ctx)
+static void st_glFlush(GLcontext *ctx)
 {
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE);
+   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE);
 }
 
 
 /**
  * Called via ctx->Driver.Finish()
  */
-static void st_Finish(GLcontext *ctx)
+static void st_glFinish(GLcontext *ctx)
 {
-   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_WAIT);
+   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_WAIT);
 }
 
 
 void st_init_flush_functions(struct dd_function_table *functions)
 {
-   functions->Flush = st_Flush;
-   functions->Finish = st_Finish;
+   functions->Flush = st_glFlush;
+   functions->Finish = st_glFinish;
 }

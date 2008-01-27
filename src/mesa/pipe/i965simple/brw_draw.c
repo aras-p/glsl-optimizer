@@ -144,7 +144,7 @@ static boolean brw_emit_prim( struct brw_context *brw,
  * fallback conditions.
  */
 static boolean brw_try_draw_elements( struct pipe_context *pipe,
-				      struct pipe_buffer_handle *index_buffer,
+				      struct pipe_buffer *index_buffer,
 				      unsigned index_size,
 				      unsigned mode,
 				      unsigned start,
@@ -183,7 +183,7 @@ static boolean brw_try_draw_elements( struct pipe_context *pipe,
 
 
 static boolean brw_draw_elements( struct pipe_context *pipe,
-				  struct pipe_buffer_handle *indexBuffer,
+				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode,
 				  unsigned start,

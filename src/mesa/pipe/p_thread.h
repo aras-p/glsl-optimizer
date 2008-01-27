@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,58 +25,30 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_SPU
-#define CELL_SPU
+#ifndef P_THREAD_H
+#define P_THREAD_H
 
+#include "p_compiler.h"
 
-#include <libspe2.h>
-#include <libmisc.h>
-#include "pipe/cell/common.h"
-
-#include "cell_context.h"
-
-
-#define MAX_SPUS 8
-
-/**
- * Global vars, for now anyway.
+/*
+ * XXX: We should come up with a system-independent thread definitions.
+ * XXX: Patching glthread defs for now.
  */
-struct cell_global_info
-{
-   /**
-    * SPU/SPE handles, etc
-    */
-   spe_context_ptr_t spe_contexts[MAX_SPUS];
-   pthread_t spe_threads[MAX_SPUS];
 
-   /**
-    * Data sent to SPUs
-    */
-   struct cell_init_info inits[MAX_SPUS];
-   struct cell_command command[MAX_SPUS];
-};
+#ifndef __MSC__
 
+#include "glapi/glthread.h"
 
-extern struct cell_global_info cell_global;
+#else /* __MSC__ */
 
+typedef int _glthread_Mutex;
 
-/** This is the handle for the actual SPE code */
-extern spe_program_handle_t g3d_spu;
+#define _glthread_INIT_MUTEX( M )   ((void) (M))
+#define _glthread_LOCK_MUTEX( M )   ((void) (M))
+#define _glthread_UNLOCK_MUTEX( M ) ((void) (M))
 
+#define sched_yield() ((void) 0)
 
-extern void
-send_mbox_message(spe_context_ptr_t ctx, unsigned int msg);
+#endif /* __MSC__ */
 
-extern uint
-wait_mbox_message(spe_context_ptr_t ctx);
-
-
-extern void
-cell_start_spus(struct cell_context *cell);
-
-
-extern void
-cell_spu_exit(struct cell_context *cell);
-
-
-#endif /* CELL_SPU */
+#endif /* P_THREAD_H */

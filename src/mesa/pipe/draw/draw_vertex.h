@@ -34,20 +34,21 @@
 #define DRAW_VERTEX_H
 
 
-struct draw_context;
+#include "pipe/p_state.h"
 
 
 /**
- * Vertex attribute format
+ * Vertex attribute emit modes
  */
-enum attrib_format {
-   FORMAT_OMIT,      /**< don't emit the attribute */
-   FORMAT_1F,
-   FORMAT_1F_PSIZE,  /**< insert constant point size */
-   FORMAT_2F,
-   FORMAT_3F,
-   FORMAT_4F,
-   FORMAT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
+enum attrib_emit {
+   EMIT_OMIT,      /**< don't emit the attribute */
+   EMIT_ALL,       /**< emit whole post-xform vertex, w/ header */
+   EMIT_1F,
+   EMIT_1F_PSIZE,  /**< insert constant point size */
+   EMIT_2F,
+   EMIT_3F,
+   EMIT_4F,
+   EMIT_4UB  /**< XXX may need variations for RGBA vs BGRA, etc */
 };
 
 
@@ -56,6 +57,7 @@ enum attrib_format {
  */
 enum interp_mode {
    INTERP_NONE,      /**< never interpolate vertex header info */
+   INTERP_POS,       /**< special case for frag position */
    INTERP_CONSTANT,
    INTERP_LINEAR,
    INTERP_PERSPECTIVE
@@ -63,15 +65,15 @@ enum interp_mode {
 
 
 /**
- * Information about post-transformed vertex layout.
+ * Information about hardware/rasterization vertex layout.
  */
 struct vertex_info
 {
    uint num_attribs;
    uint hwfmt[4];      /**< hardware format info for this format */
-   enum interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
-   enum attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
-   uint src_index[PIPE_MAX_SHADER_OUTPUTS];
+   enum interp_mode interp_mode[PIPE_MAX_SHADER_INPUTS];
+   enum attrib_emit emit[PIPE_MAX_SHADER_INPUTS];   /**< EMIT_x */
+   uint src_index[PIPE_MAX_SHADER_INPUTS]; /**< map to post-xform attribs */
    uint size;          /**< total vertex size in dwords */
 };
 
@@ -85,25 +87,18 @@ struct vertex_info
  */
 static INLINE uint
 draw_emit_vertex_attr(struct vertex_info *vinfo,
-                      enum attrib_format format, enum interp_mode interp,
+                      enum attrib_emit emit, enum interp_mode interp,
                       uint src_index)
 {
    const uint n = vinfo->num_attribs;
-   assert(n < PIPE_MAX_SHADER_OUTPUTS);
-   vinfo->format[n] = format;
+   assert(n < PIPE_MAX_SHADER_INPUTS);
+   vinfo->emit[n] = emit;
    vinfo->interp_mode[n] = interp;
    vinfo->src_index[n] = src_index;
    vinfo->num_attribs++;
    return n;
 }
 
-
-extern void draw_set_vertex_info( struct draw_context *draw,
-                                  const struct vertex_info *info);
-
-extern void draw_set_twoside_attributes(struct draw_context *draw,
-                                        uint front0, uint back0,
-                                        uint front1, uint back1);
 
 extern void draw_compute_vertex_size(struct vertex_info *vinfo);
 

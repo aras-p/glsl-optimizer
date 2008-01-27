@@ -39,6 +39,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
 #include "brw_context.h"
@@ -308,15 +309,11 @@ brw_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
       memset(&tex->base + 1, 0,
 	     sizeof(struct brw_texture) - sizeof(struct pipe_texture));
 
-      if (brw_miptree_layout(pipe, tex)) {
-	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64, 0, 0);
-
-         if (tex->buffer)
-            pipe->winsys->buffer_data(pipe->winsys, tex->buffer,
-                                      tex->pitch * tex->base.cpp *
-                                      tex->total_height, NULL,
-                                      PIPE_BUFFER_USAGE_PIXEL);
-      }
+      if (brw_miptree_layout(pipe, tex))
+	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,
+                                                   PIPE_BUFFER_USAGE_PIXEL,
+                                                   tex->pitch * tex->base.cpp *
+                                                   tex->total_height);
 
       if (!tex->buffer) {
 	 FREE(tex);
@@ -345,7 +342,7 @@ brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe->winsys->buffer_reference(pipe->winsys, &tex->buffer, NULL);
+      pipe_buffer_reference(pipe->winsys, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])

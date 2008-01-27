@@ -27,6 +27,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
 #if 0
@@ -163,7 +164,7 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    assert(index == 0);
 
    /* note: reference counting */
-   ws->buffer_reference(ws,
+   pipe_buffer_reference(ws,
                         &cell->constants[shader].buffer,
                         buf->buffer);
    cell->constants[shader].size = buf->size;

@@ -217,7 +217,7 @@ static void wide_point( struct draw_stage *stage,
 
    /* point size is either per-vertex or fixed size */
    if (wide->psize_slot >= 0) {
-      half_size = header->v[0]->data[wide->psize_slot][0];
+      half_size = 0.5f * header->v[0]->data[wide->psize_slot][0];
    }
    else {
       half_size = wide->half_point_size;
@@ -262,26 +262,19 @@ static void wide_point( struct draw_stage *stage,
 }
 
 
-static void wide_begin( struct draw_stage *stage )
+static void wide_first_point( struct draw_stage *stage, 
+			      struct prim_header *header )
 {
    struct wide_stage *wide = wide_stage(stage);
    struct draw_context *draw = stage->draw;
 
    wide->half_point_size = 0.5f * draw->rasterizer->point_size;
-   wide->half_line_width = 0.5f * draw->rasterizer->line_width;
-
-   if (draw->rasterizer->line_width != 1.0) {
-      wide->stage.line = wide_line;
-   }
-   else {
-      wide->stage.line = passthrough_line;
-   }
 
    if (draw->rasterizer->point_size != 1.0) {
-      wide->stage.point = wide_point;
+      stage->point = wide_point;
    }
    else {
-      wide->stage.point = passthrough_point;
+      stage->point = passthrough_point;
    }
 
    if (draw->rasterizer->point_sprite) {
@@ -299,6 +292,7 @@ static void wide_begin( struct draw_stage *stage )
    }
 
    wide->psize_slot = -1;
+
    if (draw->rasterizer->point_size_per_vertex) {
       /* find PSIZ vertex output */
       const struct draw_vertex_shader *vs = draw->vertex_shader;
@@ -311,13 +305,35 @@ static void wide_begin( struct draw_stage *stage )
       }
    }
    
-   stage->next->begin( stage->next );
+   stage->point( stage, header );
 }
 
 
-static void wide_end( struct draw_stage *stage )
+
+static void wide_first_line( struct draw_stage *stage,
+			     struct prim_header *header )
 {
-   stage->next->end( stage->next );
+   struct wide_stage *wide = wide_stage(stage);
+   struct draw_context *draw = stage->draw;
+
+   wide->half_line_width = 0.5f * draw->rasterizer->line_width;
+
+   if (draw->rasterizer->line_width != 1.0) {
+      wide->stage.line = wide_line;
+   }
+   else {
+      wide->stage.line = passthrough_line;
+   }
+   
+   stage->line( stage, header );
+}
+
+
+static void wide_flush( struct draw_stage *stage, unsigned flags )
+{
+   stage->line = wide_first_line;
+   stage->point = wide_first_point;
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -342,11 +358,10 @@ struct draw_stage *draw_wide_stage( struct draw_context *draw )
 
    wide->stage.draw = draw;
    wide->stage.next = NULL;
-   wide->stage.begin = wide_begin;
-   wide->stage.point = wide_point;
-   wide->stage.line = wide_line;
+   wide->stage.point = wide_first_point;
+   wide->stage.line = wide_first_line;
    wide->stage.tri = passthrough_tri;
-   wide->stage.end = wide_end;
+   wide->stage.flush = wide_flush;
    wide->stage.reset_stipple_counter = draw_reset_stipple_counter;
    wide->stage.destroy = wide_destroy;
 

@@ -51,7 +51,7 @@ cell_map_constant_buffers(struct cell_context *sp)
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].size)
          sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
-                                                  PIPE_BUFFER_FLAG_READ);
+                                                  PIPE_BUFFER_USAGE_CPU_READ);
    }
 
    draw_set_mapped_constant_buffer(sp->draw,
@@ -89,7 +89,7 @@ cell_draw_arrays(struct pipe_context *pipe, unsigned mode,
  */
 boolean
 cell_draw_elements(struct pipe_context *pipe,
-                       struct pipe_buffer_handle *indexBuffer,
+                       struct pipe_buffer *indexBuffer,
                        unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {
@@ -123,7 +123,7 @@ cell_draw_elements(struct pipe_context *pipe,
       if (sp->vertex_buffer[i].buffer) {
          void *buf = pipe->winsys->buffer_map(pipe->winsys,
                                               sp->vertex_buffer[i].buffer,
-                                              PIPE_BUFFER_FLAG_READ);
+                                              PIPE_BUFFER_USAGE_CPU_READ);
          draw_set_mapped_vertex_buffer(draw, i, buf);
       }
    }
@@ -131,7 +131,7 @@ cell_draw_elements(struct pipe_context *pipe,
    if (indexBuffer) {
       void *mapped_indexes = pipe->winsys->buffer_map(pipe->winsys,
                                                       indexBuffer,
-                                                      PIPE_BUFFER_FLAG_READ);
+                                                      PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {
@@ -143,21 +143,18 @@ cell_draw_elements(struct pipe_context *pipe,
    /* draw! */
    draw_arrays(draw, mode, start, count);
 
-   /* always flush for now */
-   draw_flush(draw);
-
    /*
-    * unmap vertex/index buffers
+    * unmap vertex/index buffers - will cause draw module to flush
     */
    for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
       if (sp->vertex_buffer[i].buffer) {
-         pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
+         pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
       }
    }
    if (indexBuffer) {
-      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
+      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
    }
 
    /* Note: leave drawing surfaces mapped */

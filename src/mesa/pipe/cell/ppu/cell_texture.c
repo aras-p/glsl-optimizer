@@ -91,12 +91,9 @@ cell_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
       cell_texture_layout(spt);
 
-      spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
-
-      if (spt->buffer) {
-	 pipe->winsys->buffer_data(pipe->winsys, spt->buffer, spt->buffer_size,
-				   NULL, PIPE_BUFFER_USAGE_PIXEL);
-      }
+      spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                                PIPE_BUFFER_USAGE_PIXEL,
+                                                spt->buffer_size);
 
       if (!spt->buffer) {
 	 FREE(spt);
@@ -124,7 +121,7 @@ cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
       */
 
-      pipe->winsys->buffer_reference(pipe->winsys, &spt->buffer, NULL);
+      pipe_buffer_reference(pipe->winsys, &spt->buffer, NULL);
 
       FREE(spt);
    }
@@ -147,7 +144,7 @@ cell_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe->winsys->buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
+      pipe_buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];

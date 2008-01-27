@@ -52,16 +52,7 @@ static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 }
 
 
-static void offset_begin( struct draw_stage *stage )
-{
-   struct offset_stage *offset = offset_stage(stage);
-   float mrd = 1.0f / 65535.0f; /* XXX this depends on depthbuffer bits! */
 
-   offset->units = stage->draw->rasterizer->offset_units * mrd;
-   offset->scale = stage->draw->rasterizer->offset_scale;
-
-   stage->next->begin( stage->next );
-}
 
 
 /**
@@ -124,24 +115,39 @@ static void offset_tri( struct draw_stage *stage,
 }
 
 
+static void offset_first_tri( struct draw_stage *stage, 
+			      struct prim_header *header )
+{
+   struct offset_stage *offset = offset_stage(stage);
+   float mrd = 1.0f / 65535.0f; /* XXX this depends on depthbuffer bits! */
+
+   offset->units = stage->draw->rasterizer->offset_units * mrd;
+   offset->scale = stage->draw->rasterizer->offset_scale;
+
+   stage->tri = offset_tri;
+   stage->tri( stage, header );
+}
+
 
 static void offset_line( struct draw_stage *stage,
-		       struct prim_header *header )
+			 struct prim_header *header )
 {
    stage->next->line( stage->next, header );
 }
 
 
 static void offset_point( struct draw_stage *stage,
-			struct prim_header *header )
+			  struct prim_header *header )
 {
    stage->next->point( stage->next, header );
 }
 
 
-static void offset_end( struct draw_stage *stage )
+static void offset_flush( struct draw_stage *stage,
+			  unsigned flags )
 {
-   stage->next->end( stage->next );
+   stage->tri = offset_first_tri;
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -169,11 +175,10 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
 
    offset->stage.draw = draw;
    offset->stage.next = NULL;
-   offset->stage.begin = offset_begin;
    offset->stage.point = offset_point;
    offset->stage.line = offset_line;
-   offset->stage.tri = offset_tri;
-   offset->stage.end = offset_end;
+   offset->stage.tri = offset_first_tri;
+   offset->stage.flush = offset_flush;
    offset->stage.reset_stipple_counter = offset_reset_stipple_counter;
    offset->stage.destroy = offset_destroy;
 

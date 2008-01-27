@@ -70,7 +70,7 @@ struct fenced_buffer_list;
  * 
  * NOTE: Made public for debugging purposes.
  */
-extern const struct pipe_buffer_vtbl fenced_buffer_vtbl;
+extern const struct pb_vtbl fenced_buffer_vtbl;
 
 
 /**
@@ -98,19 +98,19 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list);
  * 
  * NOTE: this will not increase the buffer reference count.
  */
-struct pipe_buffer *
+struct pb_buffer *
 fenced_buffer_create(struct fenced_buffer_list *fenced, 
-                     struct pipe_buffer *buffer);
+                     struct pb_buffer *buffer);
 
 
 /**
  * Set a buffer's fence.
  * 
- * NOTE: Although it takes a generic pipe buffer argument, it will fail
+ * NOTE: Although it takes a generic pb_buffer argument, it will fail
  * on everything but buffers returned by fenced_buffer_create.
  */
 void
-buffer_fence(struct pipe_buffer *buf,
+buffer_fence(struct pb_buffer *buf,
              struct pipe_fence_handle *fence);
 
 

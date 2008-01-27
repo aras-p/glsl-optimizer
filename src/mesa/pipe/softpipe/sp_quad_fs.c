@@ -356,7 +356,12 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
 #ifdef MESA_LLVM
+   /* disable until ported to accept
+    * x/y and soa layout
    qss->stage.run = shade_quad_llvm;
+   */
+   softpipe->use_sse = FALSE;
+   qss->stage.run = shade_quad;
 #else
    qss->stage.run = shade_quad;
 #endif

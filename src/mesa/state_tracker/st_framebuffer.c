@@ -34,6 +34,7 @@
 #include "st_context.h"
 #include "st_cb_fbo.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_context.h"
 
 
 struct st_framebuffer *
@@ -171,7 +172,31 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
    GET_CURRENT_CONTEXT(ctx);
 
    if (ctx && ctx->DrawBuffer == &stfb->Base) {
-      st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE);
+      st_flush( ctx->st, 
+		PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_SWAPBUFFERS);
+   }
+}
+
+
+/** 
+ * Quick hack - allows the winsys to inform the driver that surface
+ * states are now undefined after a glXSwapBuffers or similar.
+ */
+void
+st_notify_swapbuffers_complete(struct st_framebuffer *stfb)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx && ctx->DrawBuffer == &stfb->Base) {
+      struct st_renderbuffer *strb;
+      int i;
+
+      for (i = 0; i < BUFFER_COUNT; i++) {
+	 if (stfb->Base.Attachment[i].Renderbuffer) {
+	    strb = st_renderbuffer(stfb->Base.Attachment[i].Renderbuffer);
+	    strb->surface->status = PIPE_SURFACE_STATUS_UNDEFINED;
+	 }
+      }
    }
 }
 

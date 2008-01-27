@@ -61,7 +61,7 @@ gallivm_builtins.cpp: llvm_builtins.c
 	clang --emit-llvm $< |llvm-as|opt -std-compile-opts|llvm2cpp -gen-contents -o=$@ -f -for=shader -funcname=createGallivmBuiltins
 
 llvm_base_shader.cpp: llvm_entry.c
-	clang --emit-llvm $< |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -o=$@ -funcname=createBaseShader
+	clang --emit-llvm $< |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -o=$@ -f -funcname=createBaseShader
 
 # Emacs tags
 tags:

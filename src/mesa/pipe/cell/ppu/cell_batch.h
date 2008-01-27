@@ -29,6 +29,8 @@
 #ifndef CELL_BATCH_H
 #define CELL_BATCH_H
 
+#include "pipe/p_compiler.h"
+
 
 struct cell_context;
 

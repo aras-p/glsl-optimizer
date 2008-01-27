@@ -29,42 +29,53 @@
  */
 
 #include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
 #include "draw_private.h"
 
 
-static void flatshade_begin( struct draw_stage *stage )
+/** subclass of draw_stage */
+struct flat_stage
 {
-   stage->next->begin( stage->next );
+   struct draw_stage stage;
+
+   uint num_color_attribs;
+   uint color_attribs[4];  /* front/back primary/secondary colors */
+};
+
+
+static INLINE struct flat_stage *
+flat_stage(struct draw_stage *stage)
+{
+   return (struct flat_stage *) stage;
 }
 
 
-
-static INLINE void copy_attr( unsigned attr,
-			      struct vertex_header *dst, 
-			      const struct vertex_header *src )
+/** Copy all the color attributes from 'src' vertex to 'dst' vertex */
+static INLINE void copy_colors( struct draw_stage *stage,
+                                struct vertex_header *dst,
+                                const struct vertex_header *src )
 {
-   if (attr) {
-      memcpy( dst->data[attr],
-	      src->data[attr],
-	      sizeof(src->data[0]) );
+   const struct flat_stage *flat = flat_stage(stage);
+   uint i;
+   for (i = 0; i < flat->num_color_attribs; i++) {
+      const uint attr = flat->color_attribs[i];
+      COPY_4FV(dst->data[attr], src->data[attr]);
    }
 }
 
 
-static INLINE void copy_colors( struct draw_stage *stage, 
-                                struct vertex_header *dst, 
-                                const struct vertex_header *src )
+/** Copy all the color attributes from src vertex to dst0 & dst1 vertices */
+static INLINE void copy_colors2( struct draw_stage *stage,
+                                 struct vertex_header *dst0,
+                                 struct vertex_header *dst1,
+                                 const struct vertex_header *src )
 {
-   const uint num_attribs = stage->draw->vertex_info.num_attribs;
-   const enum interp_mode *interp = stage->draw->vertex_info.interp_mode;
+   const struct flat_stage *flat = flat_stage(stage);
    uint i;
-
-   /* Look for constant/flat attribs and duplicate from src to dst vertex */
-   /* skip attrib[0] which is vert pos */
-   for (i = 1; i < num_attribs; i++) {
-      if (interp[i] == INTERP_CONSTANT) {
-         copy_attr( i, dst, src );
-      }
+   for (i = 0; i < flat->num_color_attribs; i++) {
+      const uint attr = flat->color_attribs[i];
+      COPY_4FV(dst0->data[attr], src->data[attr]);
+      COPY_4FV(dst1->data[attr], src->data[attr]);
    }
 }
 
@@ -84,8 +95,7 @@ static void flatshade_tri( struct draw_stage *stage,
    tmp.v[1] = dup_vert(stage, header->v[1], 1);
    tmp.v[2] = header->v[2];
 
-   copy_colors(stage, tmp.v[0], tmp.v[2]);
-   copy_colors(stage, tmp.v[1], tmp.v[2]);
+   copy_colors2(stage, tmp.v[0], tmp.v[1], tmp.v[2]);
    
    stage->next->tri( stage->next, &tmp );
 }
@@ -115,9 +125,46 @@ static void flatshade_point( struct draw_stage *stage,
 }
 
 
-static void flatshade_end( struct draw_stage *stage )
+static void flatshade_init_state( struct draw_stage *stage )
 {
-   stage->next->end( stage->next );
+   struct flat_stage *flat = flat_stage(stage);
+   const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
+   uint i;
+
+   /* Find which vertex shader outputs are colors, make a list */
+   flat->num_color_attribs = 0;
+   for (i = 0; i < vs->num_outputs; i++) {
+      if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+          vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+         flat->color_attribs[flat->num_color_attribs++] = i;
+      }
+   }
+
+   stage->line = flatshade_line;
+   stage->tri = flatshade_tri;
+}
+
+static void flatshade_first_tri( struct draw_stage *stage,
+				 struct prim_header *header )
+{
+   flatshade_init_state( stage );
+   stage->tri( stage, header );
+}
+
+static void flatshade_first_line( struct draw_stage *stage,
+				  struct prim_header *header )
+{
+   flatshade_init_state( stage );
+   stage->line( stage, header );
+}
+
+
+static void flatshade_flush( struct draw_stage *stage, 
+			     unsigned flags )
+{
+   stage->tri = flatshade_first_tri;
+   stage->line = flatshade_first_line;
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -139,21 +186,20 @@ static void flatshade_destroy( struct draw_stage *stage )
  */
 struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
-   struct draw_stage *flatshade = CALLOC_STRUCT(draw_stage);
+   struct flat_stage *flatshade = CALLOC_STRUCT(flat_stage);
 
-   draw_alloc_tmps( flatshade, 2 );
+   draw_alloc_tmps( &flatshade->stage, 2 );
 
-   flatshade->draw = draw;
-   flatshade->next = NULL;
-   flatshade->begin = flatshade_begin;
-   flatshade->point = flatshade_point;
-   flatshade->line = flatshade_line;
-   flatshade->tri = flatshade_tri;
-   flatshade->end = flatshade_end;
-   flatshade->reset_stipple_counter = flatshade_reset_stipple_counter;
-   flatshade->destroy = flatshade_destroy;
+   flatshade->stage.draw = draw;
+   flatshade->stage.next = NULL;
+   flatshade->stage.point = flatshade_point;
+   flatshade->stage.line = flatshade_first_line;
+   flatshade->stage.tri = flatshade_first_tri;
+   flatshade->stage.flush = flatshade_flush;
+   flatshade->stage.reset_stipple_counter = flatshade_reset_stipple_counter;
+   flatshade->stage.destroy = flatshade_destroy;
 
-   return flatshade;
+   return &flatshade->stage;
 }
 
 

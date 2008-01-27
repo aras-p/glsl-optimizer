@@ -76,14 +76,4 @@ sp_draw_vbuf_stage( struct draw_context *draw_context,
                     vbuf_draw_func draw );
 
 
-extern void
-sp_vbuf_render( struct pipe_context *pipe,
-                unsigned prim,
-                const ushort *elements,
-                unsigned nr_elements,
-                const void *vertex_buffer,
-                unsigned nr_vertices );
-
-
-
 #endif /* SP_PRIM_SETUP_H */

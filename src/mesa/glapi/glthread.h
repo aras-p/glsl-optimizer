@@ -259,11 +259,11 @@ typedef benaphore _glthread_Mutex;
  * THREADS not defined
  */
 
-typedef GLuint _glthread_TSD;
+typedef unsigned _glthread_TSD;
 
-typedef GLuint _glthread_Thread;
+typedef unsigned _glthread_Thread;
 
-typedef GLuint _glthread_Mutex;
+typedef unsigned _glthread_Mutex;
 
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 

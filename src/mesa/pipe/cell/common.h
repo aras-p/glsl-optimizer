@@ -38,10 +38,24 @@
 #include "pipe/p_format.h"
 
 
+/** The standard assert macro doesn't seem to work reliably */
+#define ASSERT(x) \
+   if (!(x)) { \
+      ubyte *p = NULL; \
+      fprintf(stderr, "%s:%d: %s(): assertion %s failed.\n", \
+              __FILE__, __LINE__, __FUNCTION__, #x);             \
+      *p = 0; \
+      exit(1); \
+   }
+
+
 /** for sanity checking */
 #define ASSERT_ALIGN16(ptr) \
    assert((((unsigned long) (ptr)) & 0xf) == 0);
 
+
+/** round up value to next multiple of 16 */
+#define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
 
 #define TILE_SIZE 32
@@ -53,14 +67,15 @@
  */
 #define CELL_CMD_OPCODE_MASK 0xf
 
-#define CELL_CMD_EXIT          1
-#define CELL_CMD_FRAMEBUFFER   2
-#define CELL_CMD_CLEAR_SURFACE 3
-#define CELL_CMD_FINISH        4
-#define CELL_CMD_RENDER        5
-#define CELL_CMD_BATCH         6
-#define CELL_CMD_STATE_DEPTH_STENCIL 7
-#define CELL_CMD_STATE_SAMPLER       8
+#define CELL_CMD_EXIT                 1
+#define CELL_CMD_CLEAR_SURFACE        2
+#define CELL_CMD_FINISH               3
+#define CELL_CMD_RENDER               4
+#define CELL_CMD_BATCH                5
+#define CELL_CMD_STATE_FRAMEBUFFER   10
+#define CELL_CMD_STATE_DEPTH_STENCIL 11
+#define CELL_CMD_STATE_SAMPLER       12
+#define CELL_CMD_STATE_VERTEX_INFO   13
 
 
 #define CELL_NUM_BATCH_BUFFERS 3
@@ -96,12 +111,15 @@ struct cell_command_clear_surface
 
 #define CELL_MAX_VBUF_SIZE    (16 * 1024)
 #define CELL_MAX_VBUF_INDEXES 1024
-#define CELL_MAX_ATTRIBS      2 /* temporary! */
+
+
 struct cell_command_render
 {
-   uint opcode;
-   uint prim_type;
-   uint num_verts, num_attribs;
+   uint opcode;       /**< CELL_CMD_RENDER */
+   uint prim_type;    /**< PIPE_PRIM_x */
+   uint num_verts;
+   uint vertex_size;  /**< bytes per vertex */
+   uint dummy;        /* XXX this dummy field works around a compiler bug */
    uint num_indexes;
    const void *vertex_data;
    const ushort *index_data;

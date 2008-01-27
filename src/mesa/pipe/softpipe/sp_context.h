@@ -40,6 +40,7 @@
 
 
 struct softpipe_winsys;
+struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
 struct softpipe_tile_cache;
@@ -88,8 +89,8 @@ struct softpipe_context {
 
    /** Vertex format */
    struct vertex_info vertex_info;
-   unsigned attr_mask;
-   unsigned nr_frag_attrs;  /**< number of active fragment attribs */
+   struct vertex_info vertex_info_vbuf;
+
    int psize_slot;
 
 #if 0
@@ -125,15 +126,12 @@ struct softpipe_context {
    struct draw_context *draw;
    struct draw_stage *setup;
    struct draw_stage *vbuf;
+   struct softpipe_vbuf_render *vbuf_render;
 
    uint current_cbuf;      /**< current color buffer being written to */
 
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
-   struct softpipe_tile_cache *zbuf_cache;
-   /** Stencil buffer cache, for stencil separate from Z */
-   struct softpipe_tile_cache *sbuf_cache_sep;
-   /** This either points to zbuf_cache or sbuf_cache_sep */
-   struct softpipe_tile_cache *sbuf_cache;
+   struct softpipe_tile_cache *zsbuf_cache;
 
    struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 

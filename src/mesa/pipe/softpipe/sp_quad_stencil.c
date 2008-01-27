@@ -201,12 +201,12 @@ static void
 stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct pipe_surface *ps = softpipe->framebuffer.sbuf;
+   struct pipe_surface *ps = softpipe->framebuffer.zsbuf;
    unsigned func, zFailOp, zPassOp, failOp;
    ubyte ref, wrtMask, valMask;
    ubyte stencilVals[QUAD_SIZE];
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe, softpipe->sbuf_cache, quad->x0, quad->y0);
+      = sp_get_cached_tile(softpipe, softpipe->zsbuf_cache, quad->x0, quad->y0);
    uint j;
    uint face = quad->facing;
 

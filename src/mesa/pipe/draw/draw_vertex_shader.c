@@ -38,7 +38,6 @@
 #endif
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_vertex.h"
 
 #include "x86/rtasm/x86sse.h"
 #include "pipe/llvm/gallivm.h"
@@ -176,7 +175,7 @@ run_vertex_program(struct draw_context *draw,
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
        */
-      for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
+      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
          vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
          vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
@@ -201,6 +200,10 @@ void
 draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
    unsigned i, j;
+
+   /* XXX: do this on statechange: 
+    */
+   draw_update_vertex_fetch( draw );
 
 //   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
 #ifdef MESA_LLVM
@@ -272,8 +275,10 @@ void
 draw_bind_vertex_shader(struct draw_context *draw,
                         struct draw_vertex_shader *dvs)
 {
-   draw_flush(draw);
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+
    draw->vertex_shader = dvs;
+   draw->num_vs_outputs = dvs->state->num_outputs;
 
    /* specify the fragment program to interpret/execute */
    tgsi_exec_machine_init(&draw->machine,

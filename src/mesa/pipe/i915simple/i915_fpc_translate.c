@@ -200,6 +200,9 @@ src_vector(struct i915_fp_compile *p,
       }
       break;
 
+   case TGSI_FILE_IMMEDIATE:
+      /* XXX unfinished - need to append immediates onto const buffer */
+      /* fall-through */
    case TGSI_FILE_CONSTANT:
       src = UREG(REG_TYPE_CONST, index);
       break;
@@ -928,9 +931,7 @@ i915_translate_instructions(struct i915_fp_compile *p,
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* This is a no-op.  We'll get immediates from the usual constant/
-          * uniform buffer.
-          */
+         /* XXX append the immediate to the const buffer... */
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:

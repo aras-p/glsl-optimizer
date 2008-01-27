@@ -30,12 +30,15 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_shader_tokens.h"
 #include "draw_private.h"
 
 
 struct twoside_stage {
    struct draw_stage stage;
    float sign;         /**< +1 or -1 */
+   uint attrib_front0, attrib_back0;
+   uint attrib_front1, attrib_back1;
 };
 
 
@@ -45,44 +48,25 @@ static INLINE struct twoside_stage *twoside_stage( struct draw_stage *stage )
 }
 
 
-static void twoside_begin( struct draw_stage *stage )
-{
-   struct twoside_stage *twoside = twoside_stage(stage);
-
-   /*
-    * We'll multiply the primitive's determinant by this sign to determine
-    * if the triangle is back-facing (negative).
-    * sign = -1 for CCW, +1 for CW
-    */
-   twoside->sign = (stage->draw->rasterizer->front_winding == PIPE_WINDING_CCW) ? -1.0f : 1.0f;
-
-   stage->next->begin( stage->next );
-}
-
-
-static INLINE void copy_attrib( unsigned attr_dst,
-			       unsigned attr_src,
-			       struct vertex_header *v )
-{
-   COPY_4FV(v->data[attr_dst], v->data[attr_src]);
-}
 
 
 /**
  * Copy back color(s) to front color(s).
  */
-static struct vertex_header *copy_bfc( struct twoside_stage *twoside, 
-				       const struct vertex_header *v,
-				       unsigned idx )
+static INLINE struct vertex_header *
+copy_bfc( struct twoside_stage *twoside, 
+          const struct vertex_header *v,
+          unsigned idx )
 {   
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
-   const struct draw_context *draw = twoside->stage.draw;
    
-   if (draw->attrib_front0 && draw->attrib_back0) {
-      copy_attrib(draw->attrib_front0, draw->attrib_back0, tmp);
+   if (twoside->attrib_back0) {
+      COPY_4FV(tmp->data[twoside->attrib_front0],
+               tmp->data[twoside->attrib_back0]);
    }
-   if (draw->attrib_front1 && draw->attrib_back1) {
-      copy_attrib(draw->attrib_front1, draw->attrib_back1, tmp);
+   if (twoside->attrib_back1) {
+      COPY_4FV(tmp->data[twoside->attrib_front1],
+               tmp->data[twoside->attrib_back1]);
    }
 
    return tmp;
@@ -131,10 +115,56 @@ static void twoside_point( struct draw_stage *stage,
 }
 
 
-static void twoside_end( struct draw_stage *stage )
+static void twoside_first_tri( struct draw_stage *stage, 
+			       struct prim_header *header )
 {
-   /* pass-through */
-   stage->next->end( stage->next );
+   struct twoside_stage *twoside = twoside_stage(stage);
+   const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
+   uint i;
+
+   twoside->attrib_front0 = 0;
+   twoside->attrib_front1 = 0;
+   twoside->attrib_back0 = 0;
+   twoside->attrib_back1 = 0;
+
+   /* Find which vertex shader outputs are front/back colors */
+   for (i = 0; i < vs->num_outputs; i++) {
+      if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR) {
+         if (vs->output_semantic_index[i] == 0)
+            twoside->attrib_front0 = i;
+         else
+            twoside->attrib_front1 = i;
+      }
+      if (vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+         if (vs->output_semantic_index[i] == 0)
+            twoside->attrib_back0 = i;
+         else
+            twoside->attrib_back1 = i;
+      }
+   }
+
+   if (!twoside->attrib_back0)
+      twoside->attrib_front0 = 0;
+
+   if (!twoside->attrib_back1)
+      twoside->attrib_front1 = 0;
+
+   /*
+    * We'll multiply the primitive's determinant by this sign to determine
+    * if the triangle is back-facing (negative).
+    * sign = -1 for CCW, +1 for CW
+    */
+   twoside->sign = (stage->draw->rasterizer->front_winding == PIPE_WINDING_CCW) ? -1.0f : 1.0f;
+
+   stage->tri = twoside_tri;
+   stage->tri( stage, header );
+}
+
+
+static void twoside_flush( struct draw_stage *stage, unsigned flags )
+{
+   stage->tri = twoside_first_tri;
+   stage->next->flush( stage->next, flags );
 }
 
 
@@ -162,11 +192,10 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
 
    twoside->stage.draw = draw;
    twoside->stage.next = NULL;
-   twoside->stage.begin = twoside_begin;
    twoside->stage.point = twoside_point;
    twoside->stage.line = twoside_line;
-   twoside->stage.tri = twoside_tri;
-   twoside->stage.end = twoside_end;
+   twoside->stage.tri = twoside_first_tri;
+   twoside->stage.flush = twoside_flush;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
    twoside->stage.destroy = twoside_destroy;
 

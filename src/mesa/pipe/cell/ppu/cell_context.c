@@ -56,7 +56,7 @@ static boolean
 cell_is_format_supported( struct pipe_context *pipe,
                           enum pipe_format format, uint type )
 {
-   struct cell_context *cell = cell_context( pipe );
+   /*struct cell_context *cell = cell_context( pipe );*/
 
    switch (type) {
    case PIPE_TEXTURE:
@@ -268,16 +268,5 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
       }
    }
 
-
-#if 0
-   test_spus(cell);
-#endif
-
    return &cell->pipe;
 }
-
-
-#if 0
-/** [4] to ensure 16-byte alignment for each status word */
-uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BATCH_BUFFERS][4] ALIGN16_ATTRIB;
-#endif

@@ -42,6 +42,7 @@
 
 #include "pipe/draw/draw_vbuf.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 
 #include "i915_context.h"
@@ -99,16 +100,14 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
 
    /* FIXME: handle failure */
    assert(!i915->vbo);
-   i915->vbo = winsys->buffer_create(winsys, 64, 0, 0);
-   winsys->buffer_data( winsys, i915->vbo, 
-                        size, NULL, 
-                        I915_BUFFER_USAGE_LIT_VERTEX );
+   i915->vbo = winsys->buffer_create(winsys, 64, I915_BUFFER_USAGE_LIT_VERTEX,
+                                     size);
    
    i915->dirty |= I915_NEW_VBO;
    
    return winsys->buffer_map(winsys, 
                              i915->vbo, 
-                             PIPE_BUFFER_FLAG_WRITE );
+                             PIPE_BUFFER_USAGE_CPU_WRITE);
 }
 
 
@@ -194,7 +193,7 @@ i915_vbuf_render_release_vertices( struct vbuf_render *render,
 
    assert(i915->vbo);
    winsys->buffer_unmap(winsys, i915->vbo);
-   winsys->buffer_reference(winsys, &i915->vbo, NULL);
+   pipe_buffer_reference(winsys, &i915->vbo, NULL);
 }
 
 

@@ -44,8 +44,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "draw_vertex.h"
-
 #include "x86/rtasm/x86sse.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
 
@@ -103,8 +101,6 @@ struct draw_stage
    struct vertex_header **tmp;  /**< temp vert storage, such as for clipping */
    unsigned nr_tmps;
 
-   void (*begin)( struct draw_stage * );
-
    void (*point)( struct draw_stage *,
 		  struct prim_header * );
 
@@ -114,7 +110,8 @@ struct draw_stage
    void (*tri)( struct draw_stage *,
 		struct prim_header * );
 
-   void (*end)( struct draw_stage * );
+   void (*flush)( struct draw_stage *,
+		  unsigned flags );
 
    void (*reset_stipple_counter)( struct draw_stage * );
 
@@ -139,6 +136,13 @@ struct draw_vertex_shader {
    struct gallivm_prog *llvm_prog;
 #endif
 };
+
+
+/* Internal function for vertex fetch.
+ */
+typedef void (*fetch_func)(const void *ptr, float *attrib);
+
+
 
 /**
  * Private context for the drawing module.
@@ -170,6 +174,8 @@ struct draw_context
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    const struct draw_vertex_shader *vertex_shader;
 
+   uint num_vs_outputs;  /**< convenience, from vertex_shader */
+
    /* user-space vertex data, buffers */
    struct {
       /** vertex element/index buffer (ex: glDrawElements) */
@@ -189,21 +195,22 @@ struct draw_context
    float plane[12][4];
    unsigned nr_planes;
 
-   /** Describes the layout of post-transformation vertices */
-   struct vertex_info vertex_info;
-   /** Two-sided attributes: */
-   uint attrib_front0, attrib_back0;
-   uint attrib_front1, attrib_back1;
-
    boolean convert_wide_points; /**< convert wide points to tris? */
    boolean convert_wide_lines;  /**< convert side lines to tris? */
 
-   boolean drawing; /**< do we presently have something queued for drawing? */
-   unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;
 
    /** TGSI program interpreter runtime state */
    struct tgsi_exec_machine machine;
+
+   /* Vertex fetch internal state
+    */
+   struct {
+      const ubyte *src_ptr[PIPE_ATTRIB_MAX];
+      unsigned pitch[PIPE_ATTRIB_MAX];
+      fetch_func fetch[PIPE_ATTRIB_MAX];
+      unsigned nr_attrs;
+   } vertex_fetch;
 
    /* Post-tnl vertex cache:
     */
@@ -279,20 +286,21 @@ extern void draw_vertex_shader_queue_flush_llvm( struct draw_context *draw );
 
 struct tgsi_exec_machine;
 
+extern void draw_update_vertex_fetch( struct draw_context *draw );
 extern void draw_vertex_fetch( struct draw_context *draw,
 			       struct tgsi_exec_machine *machine,
 			       const unsigned *elts,
 			       unsigned count );
 
 
-#define DRAW_FLUSH_PRIM_QUEUE                0x1
-#define DRAW_FLUSH_VERTEX_CACHE_INVALIDATE   0x2
-#define DRAW_FLUSH_DRAW                      0x4
+#define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
+#define DRAW_FLUSH_PRIM_QUEUE                0x2
+#define DRAW_FLUSH_VERTEX_CACHE              0x4
+#define DRAW_FLUSH_STATE_CHANGE              0x8
+#define DRAW_FLUSH_BACKEND                   0x10
 
 
-void draw_do_flush( struct draw_context *draw,
-                    unsigned flags );
-
+void draw_do_flush( struct draw_context *draw, unsigned flags );
 
 
 
@@ -309,7 +317,9 @@ dup_vert( struct draw_stage *stage,
 	  unsigned idx )
 {   
    struct vertex_header *tmp = stage->tmp[idx];
-   memcpy(tmp, vert, stage->draw->vertex_info.size * sizeof(float) );
+   const uint vsize = sizeof(struct vertex_header)
+      + stage->draw->num_vs_outputs * 4 * sizeof(float);
+   memcpy(tmp, vert, vsize);
    tmp->vertex_id = UNDEFINED_VERTEX_ID;
    return tmp;
 }

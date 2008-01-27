@@ -28,10 +28,12 @@
 #ifndef INTEL_WINSYS_H
 #define INTEL_WINSYS_H
 
+#include "pipe/p_state.h"
+
 struct intel_context;
 struct pipe_context;
 struct pipe_winsys;
-struct pipe_buffer_handle;
+struct pipe_buffer;
 struct _DriBufferObject;
 
 struct pipe_winsys *
@@ -49,20 +51,21 @@ intel_create_i915simple( struct intel_context *intel,
                        struct pipe_winsys *winsys );
 
 
+struct intel_buffer {
+   struct pipe_buffer base;
+   struct _DriBufferObject *driBO;
+};
 
-/* Turn the pipe opaque buffer pointer into a dri_bufmgr opaque
- * buffer pointer...
- */
-static INLINE struct _DriBufferObject *
-dri_bo( struct pipe_buffer_handle *bo )
+static INLINE struct intel_buffer *
+intel_buffer( struct pipe_buffer *buf )
 {
-   return (struct _DriBufferObject *)bo;
+   return (struct intel_buffer *)buf;
 }
 
-static INLINE struct pipe_buffer_handle *
-pipe_bo( struct _DriBufferObject *bo )
+static INLINE struct _DriBufferObject *
+dri_bo( struct pipe_buffer *buf )
 {
-   return (struct pipe_buffer_handle *)bo;
+   return intel_buffer(buf)->driBO;
 }
 
 
