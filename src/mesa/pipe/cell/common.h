@@ -54,6 +54,9 @@
    assert((((unsigned long) (ptr)) & 0xf) == 0);
 
 
+/** round up value to next multiple of 4 */
+#define ROUNDUP4(k)  (((k) + 0x3) & ~0x3)
+
 /** round up value to next multiple of 16 */
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
