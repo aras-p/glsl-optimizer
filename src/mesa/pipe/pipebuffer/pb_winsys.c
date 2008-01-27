@@ -34,10 +34,21 @@
  */
 
 
+#include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
+
 #include "pb_buffer.h"
 
 
+/**
+ * User buffers are special buffers that initially reference memory
+ * held by the user but which may if necessary copy that memory into
+ * device memory behind the scenes, for submission to hardware.
+ *
+ * These are particularly useful when the referenced data is never
+ * submitted to hardware at all, in the particular case of software
+ * vertex processing.
+ */
 struct pb_user_buffer 
 {
    struct pb_buffer base;
@@ -67,7 +78,7 @@ pb_user_buffer_destroy(struct pb_buffer *buf)
 
 static void *
 pb_user_buffer_map(struct pb_buffer *buf, 
-                  unsigned flags)
+                   unsigned flags)
 {
    return pb_user_buffer(buf)->data;
 }
@@ -82,8 +93,8 @@ pb_user_buffer_unmap(struct pb_buffer *buf)
 
 static void
 pb_user_buffer_get_base_buffer(struct pb_buffer *buf,
-                              struct pb_buffer **base_buf,
-                              unsigned *offset)
+                               struct pb_buffer **base_buf,
+                               unsigned *offset)
 {
    *base_buf = buf;
    *offset = 0;
@@ -99,17 +110,61 @@ pb_user_buffer_vtbl = {
 };
 
 
-struct pb_buffer *
-pb_user_buffer_create(void *data, unsigned bytes) 
+static struct pipe_buffer *
+pb_winsys_user_buffer_create(struct pipe_winsys *winsys,
+                             void *data, 
+                             unsigned bytes) 
 {
    struct pb_user_buffer *buf = CALLOC_STRUCT(pb_user_buffer);
 
    if(!buf)
       return NULL;
    
-   buf->base.vtbl = &pb_user_buffer_vtbl;   
+   buf->base.base.refcount = 1;
    buf->base.base.size = bytes;
+   buf->base.base.alignment = 0;
+   buf->base.base.usage = 0;
+
+   buf->base.vtbl = &pb_user_buffer_vtbl;   
    buf->data = data;
    
-   return &buf->base;
+   return &buf->base.base;
+}
+
+
+static void *
+pb_winsys_buffer_map(struct pipe_winsys *winsys,
+                     struct pipe_buffer *buf,
+                     unsigned flags)
+{
+   (void)winsys;
+   return pb_map(pb_buffer(buf), flags);
+}
+
+
+static void
+pb_winsys_buffer_unmap(struct pipe_winsys *winsys,
+                       struct pipe_buffer *buf)
+{
+   (void)winsys;
+   pb_unmap(pb_buffer(buf));
+}
+
+
+static void
+pb_winsys_buffer_destroy(struct pipe_winsys *winsys,
+                         struct pipe_buffer *buf)
+{
+   (void)winsys;
+   pb_destroy(pb_buffer(buf));
+}
+
+
+void 
+pb_init_winsys(struct pipe_winsys *winsys)
+{
+   winsys->user_buffer_create = pb_winsys_user_buffer_create;
+   winsys->buffer_map = pb_winsys_buffer_map;
+   winsys->buffer_unmap = pb_winsys_buffer_unmap;
+   winsys->buffer_destroy = pb_winsys_buffer_destroy;
 }
