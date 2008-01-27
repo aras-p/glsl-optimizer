@@ -362,6 +362,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    RADEONDRIPtr dri_priv = (RADEONDRIPtr)sPriv->pDevPriv;
    unsigned char *RADEONMMIO;
    int i;
+   int ret;
+   uint32_t temp;
 
    if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
@@ -684,6 +686,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       fprintf(stderr, "Warning, xpress200 detected.\n");
       break;
 
+   case PCI_CHIP_RS690_791E:
+      screen->chip_family = CHIP_FAMILY_RS690;
+      fprintf(stderr, "Warning, RS690 detected, 3D support is incomplete.\n");
+      break;
+
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
 	      dri_priv->deviceID);
@@ -705,7 +712,19 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->cpp = dri_priv->bpp / 8;
    screen->AGPMode = dri_priv->AGPMode;
 
-   screen->fbLocation	= ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff ) << 16;
+   ret = radeonGetParam( sPriv->fd, RADEON_PARAM_FB_LOCATION,
+                         &temp);
+   if (ret) {
+       if (screen->chip_family < CHIP_FAMILY_RS690)
+	   screen->fbLocation      = ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff) << 16;
+       else {
+           FREE( screen );
+           fprintf(stderr, "Unable to get fb location need newer drm\n");
+           return NULL;
+       }
+   } else {
+       screen->fbLocation = (temp & 0xffff) << 16;
+   }
 
    if ( sPriv->drm_version.minor >= 10 ) {
       drm_radeon_setparam_t sp;
