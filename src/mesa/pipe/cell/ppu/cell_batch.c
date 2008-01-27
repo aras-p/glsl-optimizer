@@ -96,6 +96,15 @@ cell_batch_flush(struct cell_context *cell)
 }
 
 
+uint
+cell_batch_free_space(const struct cell_context *cell)
+{
+   uint free = CELL_BATCH_BUFFER_SIZE
+      - cell->batch_buffer_size[cell->cur_batch];
+   return free;
+}
+
+
 /**
  * \param cmd  command to append
  * \param length  command size in bytes
@@ -128,6 +137,8 @@ cell_batch_alloc(struct cell_context *cell, uint bytes)
 {
    void *pos;
    uint size;
+
+   ASSERT(bytes % 4 == 0);
 
    assert(cell->cur_batch >= 0);
 
