@@ -124,6 +124,7 @@ struct cell_command_render
    const void *vertex_data;
    const ushort *index_data;
    float xmin, ymin, xmax, ymax;
+   boolean inline_indexes;
 } ALIGN16_ATTRIB;
 
 

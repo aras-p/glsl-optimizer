@@ -39,6 +39,10 @@
 #include "pipe/draw/draw_vbuf.h"
 
 
+/** Allow render indexes to be inlined after RENDER command */
+#define ALLOW_INLINING 1
+
+
 /**
  * Subclass of vbuf_render because we need a cell_context pointer in
  * a few places.
@@ -123,6 +127,8 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u  indexes = [%u %u %u ...]\n",
           nr_indices, nr_vertices,
           indices[0], indices[1], indices[2]);
+   printf("ind space = %u,  space = %u\n",
+          nr_indices * 2, cell_batch_free_space(cell));
 #endif
 
    /* compute x/y bounding box */
@@ -145,23 +151,40 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
    /* build/insert batch RENDER command */
    {
+      const uint index_bytes = (nr_indices * 2 + 3) & ~0x3;
+
       struct cell_command_render *render
          = (struct cell_command_render *)
          cell_batch_alloc(cell, sizeof(*render));
       render->opcode = CELL_CMD_RENDER;
       render->prim_type = cvbr->prim;
+
       render->num_verts = nr_vertices;
       render->vertex_size = 4 * cell->vertex_info.size;
       render->vertex_data = vertices;
-      render->index_data = indices;
+      ASSERT_ALIGN16(render->vertex_data);
+
       render->num_indexes = nr_indices;
+
+      if (ALLOW_INLINING &&
+          index_bytes <= cell_batch_free_space(cell)) {
+         /* indices inlined, right after render cmd */
+         void *dst = cell_batch_alloc(cell, index_bytes);
+         memcpy(dst, indices, nr_indices * 2);
+         render->inline_indexes = TRUE;
+         render->index_data = NULL;
+      }
+      else {
+         /* indices in separate buffer */
+         render->inline_indexes = FALSE;
+         render->index_data = indices;
+         ASSERT_ALIGN16(render->index_data);
+      }
+
       render->xmin = xmin;
       render->ymin = ymin;
       render->xmax = xmax;
       render->ymax = ymax;
-
-      ASSERT_ALIGN16(render->vertex_data);
-      ASSERT_ALIGN16(render->index_data);
    }
 
 #if 01
