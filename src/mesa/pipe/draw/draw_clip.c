@@ -33,6 +33,8 @@
 
 
 #include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
+
 #include "draw_context.h"
 #include "draw_private.h"
 
@@ -53,6 +55,12 @@
 
 struct clipper {
    struct draw_stage stage;      /**< base class */
+
+   /* Basically duplicate some of the flatshading logic here:
+    */
+   boolean flat;
+   uint num_color_attribs;
+   uint color_attribs[4];  /* front/back primary/secondary colors */
 
    float (*plane)[4];
 };
@@ -82,6 +90,17 @@ static void interp_attr( float *fdst,
    fdst[3] = LINTERP( t, fout[3], fin[3] );
 }
 
+static void copy_colors( struct draw_stage *stage,
+			 struct vertex_header *dst,
+			 const struct vertex_header *src )
+{
+   const struct clipper *clipper = clipper_stage(stage);
+   uint i;
+   for (i = 0; i < clipper->num_color_attribs; i++) {
+      const uint attr = clipper->color_attribs[i];
+      COPY_4FV(dst->data[attr], src->data[attr]);
+   }
+}
 
 
 
@@ -134,27 +153,11 @@ static void interp( const struct clipper *clip,
    }
 }
 
-#if 0   
-static INLINE void do_tri( struct draw_stage *next,
-			   struct prim_header *header )
-{
-   unsigned i;
-   for (i = 0; i < 3; i++) {
-      float *ndc = header->v[i]->data[0];
-      _mesa_printf("ndc %f %f %f\n", ndc[0], ndc[1], ndc[2]);
-      assert(ndc[0] >= -1 && ndc[0] <= 641);
-      assert(ndc[1] >= 30 && ndc[1] <= 481);
-   }
-   _mesa_printf("\n");
-   next->tri(next, header);
-}
-#endif
-
 
 static void emit_poly( struct draw_stage *stage,
 		       struct vertex_header **inlist,
 		       unsigned n,
-                       const struct prim_header *origPrim)
+		       const struct prim_header *origPrim)
 {
    struct prim_header header;
    unsigned i;
@@ -163,16 +166,16 @@ static void emit_poly( struct draw_stage *stage,
    header.det = origPrim->det;
 
    for (i = 2; i < n; i++) {
-      header.v[0] = inlist[0];
-      header.v[1] = inlist[i-1];
-      header.v[2] = inlist[i];
+      header.v[0] = inlist[i-1];
+      header.v[1] = inlist[i];
+      header.v[2] = inlist[0];	/* keep in v[2] for flatshading */
 	
       {
-	 unsigned tmp0 = header.v[0]->edgeflag;
+	 unsigned tmp1 = header.v[1]->edgeflag;
 	 unsigned tmp2 = header.v[2]->edgeflag;
 
-	 if (i != 2)   header.v[0]->edgeflag = 0;
-	 if (i != n-1) header.v[2]->edgeflag = 0;
+	 if (i != n-1) header.v[1]->edgeflag = 0;
+	 if (i != 2)   header.v[2]->edgeflag = 0;
 
          header.edgeflags = ((header.v[0]->edgeflag << 0) | 
                              (header.v[1]->edgeflag << 1) | 
@@ -180,27 +183,13 @@ static void emit_poly( struct draw_stage *stage,
 
 	 stage->next->tri( stage->next, &header );
 
-	 header.v[0]->edgeflag = tmp0;
+	 header.v[1]->edgeflag = tmp1;
 	 header.v[2]->edgeflag = tmp2;
       }
    }
 }
 
 
-#if 0
-static void emit_poly( struct draw_stage *stage )
-{
-   unsigned i;
-
-   for (i = 2; i < n; i++) {
-      header->v[0] = inlist[0];
-      header->v[1] = inlist[i-1];
-      header->v[2] = inlist[i];
-	 
-      stage->next->tri( stage->next, header );
-   }
-}
-#endif
 
 
 /* Clip a triangle against the viewport and user clip planes.
@@ -281,6 +270,18 @@ do_clip_tri( struct draw_stage *stage,
       }
    }
 
+   /* If flat-shading, copy color to new provoking vertex.
+    */
+   if (clipper->flat && inlist[0] != header->v[2]) {
+      if (1) {
+	 inlist[0] = dup_vert(stage, inlist[0], tmpnr++);
+      }
+
+      copy_colors(stage, inlist[0], header->v[2]);
+   }
+
+
+
    /* Emit the polygon as triangles to the setup stage:
     */
    if (n >= 3)
@@ -328,6 +329,10 @@ do_clip_line( struct draw_stage *stage,
 
    if (v0->clipmask) {
       interp( clipper, stage->tmp[0], t0, v0, v1 );
+
+      if (clipper->flat)
+	 copy_colors(stage, stage->tmp[0], v0);
+
       newprim.v[0] = stage->tmp[0];
    }
    else {
@@ -393,8 +398,55 @@ clip_tri( struct draw_stage *stage,
    }
 }
 
-static void clip_flush( struct draw_stage *stage, unsigned flags )
+/* Update state.  Could further delay this until we hit the first
+ * primitive that really requires clipping.
+ */
+static void 
+clip_init_state( struct draw_stage *stage )
 {
+   struct clipper *clipper = clipper_stage( stage );
+
+   clipper->flat = stage->draw->rasterizer->flatshade;
+
+   if (clipper->flat) {
+      const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
+      uint i;
+
+      clipper->num_color_attribs = 0;
+      for (i = 0; i < vs->num_outputs; i++) {
+	 if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+	     vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+	    clipper->color_attribs[clipper->num_color_attribs++] = i;
+	 }
+      }
+   }
+   
+   stage->tri = clip_tri;
+   stage->line = clip_line;
+}
+
+
+
+static void clip_first_tri( struct draw_stage *stage,
+			    struct prim_header *header )
+{
+   clip_init_state( stage );
+   stage->tri( stage, header );
+}
+
+static void clip_first_line( struct draw_stage *stage,
+			     struct prim_header *header )
+{
+   clip_init_state( stage );
+   stage->line( stage, header );
+}
+
+
+static void clip_flush( struct draw_stage *stage, 
+			     unsigned flags )
+{
+   stage->tri = clip_first_tri;
+   stage->line = clip_first_line;
    stage->next->flush( stage->next, flags );
 }
 
@@ -420,12 +472,12 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
 {
    struct clipper *clipper = CALLOC_STRUCT(clipper);
 
-   draw_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES );
+   draw_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES+1 );
 
    clipper->stage.draw = draw;
    clipper->stage.point = clip_point;
-   clipper->stage.line = clip_line;
-   clipper->stage.tri = clip_tri;
+   clipper->stage.line = clip_first_line;
+   clipper->stage.tri = clip_first_tri;
    clipper->stage.flush = clip_flush;
    clipper->stage.reset_stipple_counter = clip_reset_stipple_counter;
    clipper->stage.destroy = clip_destroy;
