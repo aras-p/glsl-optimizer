@@ -46,7 +46,7 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 	type = nv40_vbo_type(ve->src_format);
 	ncomp = nv40_vbo_ncomp(ve->src_format);
 
-	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_FLAG_READ);
+	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
 	map += vb->buffer_offset + ve->src_offset;
 
 	switch (type) {
@@ -149,7 +149,7 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 
 static boolean
 nv40_vbo_validate_state(struct nv40_context *nv40,
-			struct pipe_buffer_handle *ib, unsigned ib_format)
+			struct pipe_buffer *ib, unsigned ib_format)
 {
 	unsigned inputs;
 
@@ -297,7 +297,7 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 
 static boolean
 nv40_draw_elements_inline(struct pipe_context *pipe,
-			  struct pipe_buffer_handle *ib, unsigned ib_size,
+			  struct pipe_buffer *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
@@ -306,7 +306,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 
 	assert(nv40_vbo_validate_state(nv40, NULL, 0));
 
-	map = ws->buffer_map(ws, ib, PIPE_BUFFER_FLAG_READ);
+	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib)
 		assert(0);
 
@@ -338,7 +338,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 
 static boolean
 nv40_draw_elements_vbo(struct pipe_context *pipe,
-		       struct pipe_buffer_handle *ib, unsigned ib_size,
+		       struct pipe_buffer *ib, unsigned ib_size,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
@@ -388,7 +388,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 
 boolean
 nv40_draw_elements(struct pipe_context *pipe,
-		   struct pipe_buffer_handle *indexBuffer, unsigned indexSize,
+		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	if (indexSize != 1) {

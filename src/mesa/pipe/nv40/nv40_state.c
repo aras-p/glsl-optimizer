@@ -563,35 +563,17 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 			 NV40TCL_RT_ENABLE_COLOR3))
 		rt_enable |= NV40TCL_RT_ENABLE_MRT;
 
-	if (fb->zbuf) {
+	if (fb->zsbuf) {
 		if (colour_format) {
-			assert(w == fb->zbuf->width);
-			assert(h == fb->zbuf->height);
+			assert(w == fb->zsbuf->width);
+			assert(h == fb->zsbuf->height);
 		} else {
-			w = fb->zbuf->width;
-			h = fb->zbuf->height;
+			w = fb->zsbuf->width;
+			h = fb->zsbuf->height;
 		}
 
-		zeta_format = fb->zbuf->format;
-		zeta = fb->zbuf;
-	}
-
-	if (fb->sbuf) {
-		if (colour_format) {
-			assert(w == fb->sbuf->width);
-			assert(h == fb->sbuf->height);
-		} else {
-			w = fb->zbuf->width;
-			h = fb->zbuf->height;
-		}
-		
-		if (zeta_format) {
-			assert(fb->sbuf->format == zeta_format);
-			assert(fb->sbuf == zeta);
-		} else {
-			zeta_format = fb->sbuf->format;
-			zeta = fb->sbuf;
-		}
+		zeta_format = fb->zsbuf->format;
+		zeta = fb->zsbuf;
 	}
 
 	rt_format = NV40TCL_RT_FORMAT_TYPE_LINEAR;

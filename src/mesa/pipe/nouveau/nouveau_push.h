@@ -45,8 +45,7 @@
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
 	pc->nvws->push_reloc(pc->nvws->channel,                                \
   		 	     pc->nvws->channel->pushbuf->cur,                  \
-			     (struct nouveau_bo *)(bo),                        \
-			     (data), (flags), (vor), (tor));                   \
+			     (bo), (data), (flags), (vor), (tor));             \
 	OUT_RING(0);                                                           \
 } while(0)
 

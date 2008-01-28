@@ -73,6 +73,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	 */
 	{
 		struct pipe_surface *fb_surf;
+		struct nouveau_pipe_buffer *fb_buf;
 		struct nouveau_bo_priv *fb_bo;
 
 		fb_bo = calloc(1, sizeof(struct nouveau_bo_priv));
@@ -87,12 +88,15 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		fb_bo->base.size = fb_bo->drm.size;
 		fb_bo->base.device = nv_screen->device;
 
+		fb_buf = calloc(1, sizeof(struct nouveau_pipe_buffer));
+		fb_buf->bo = &fb_bo->base;
+
 		fb_surf = calloc(1, sizeof(struct pipe_surface));
 		fb_surf->cpp = nv_screen->front_cpp;
 		fb_surf->pitch = nv_screen->front_pitch / fb_surf->cpp;
 		fb_surf->height = nv_screen->front_height;
 		fb_surf->refcount = 1;
-		fb_surf->buffer = (void *)fb_bo;
+		fb_surf->buffer = &fb_buf->base;
 
 		nv->frontbuffer = fb_surf;
 	}

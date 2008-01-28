@@ -133,15 +133,6 @@ nv50_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 	return 0;
 }
 
-static int
-nv50_surface_data(struct nouveau_context *nv, struct pipe_surface *dst,
-		  unsigned dx, unsigned dy, const void *src, unsigned src_pitch,
-		  unsigned sx, unsigned sy, unsigned w, unsigned h)
-{
-	NOUVEAU_ERR("unimplemented!!\n");
-	return 0;
-}
-
 int
 nouveau_surface_init_nv50(struct nouveau_context *nv)
 {
@@ -164,7 +155,6 @@ nouveau_surface_init_nv50(struct nouveau_context *nv)
 	nv->surface_copy = nv50_surface_copy;
 	nv->surface_copy_done = nv50_surface_copy_done;
 	nv->surface_fill = nv50_surface_fill;
-	nv->surface_data = nv50_surface_data;
 	return 0;
 }
 

@@ -59,16 +59,13 @@ nouveau_pipe_surface_fill(struct nouveau_winsys *nvws, struct pipe_surface *dst,
 	return 0;
 }
 
-static int
-nouveau_pipe_surface_data(struct nouveau_winsys *nvws, struct pipe_surface *dst,
-			  unsigned dx, unsigned dy, const void *src,
-			  unsigned src_pitch, unsigned sx, unsigned sy,
-			  unsigned w, unsigned h)
+int
+nouveau_pipe_emit_reloc(struct nouveau_channel *chan, void *ptr,
+			struct pipe_buffer *buf, uint32_t data,
+			uint32_t flags, uint32_t vor, uint32_t tor)
 {
-	if (nvws->nv->surface_data(nvws->nv, dst, dx, dy, src, src_pitch, sx,
-				   sy, w, h))
-		return 1;
-	return 0;
+	return nouveau_pushbuf_emit_reloc(chan, ptr, nouveau_buffer(buf)->bo,
+					  data, flags, vor, tor);
 }
 
 struct pipe_context *
@@ -102,7 +99,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->res_alloc		= nouveau_resource_alloc;
 	nvws->res_free		= nouveau_resource_free;
 
-	nvws->push_reloc        = nouveau_pushbuf_emit_reloc;
+	nvws->push_reloc        = nouveau_pipe_emit_reloc;
 	nvws->push_flush	= nouveau_pushbuf_flush;
 
 	nvws->grobj_alloc	= nouveau_pipe_grobj_alloc;
@@ -117,7 +114,6 @@ nouveau_pipe_create(struct nouveau_context *nv)
 
 	nvws->surface_copy	= nouveau_pipe_surface_copy;
 	nvws->surface_fill	= nouveau_pipe_surface_fill;
-	nvws->surface_data	= nouveau_pipe_surface_data;
 
 	return hw_create(nouveau_create_pipe_winsys(nv), nvws, nv->chipset);
 }

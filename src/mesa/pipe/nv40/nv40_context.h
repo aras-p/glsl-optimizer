@@ -48,17 +48,17 @@ struct nv40_context {
 	unsigned vp_samplers;
 
 	uint32_t rt_enable;
-	struct pipe_buffer_handle *rt[4];
-	struct pipe_buffer_handle *zeta;
+	struct pipe_buffer *rt[4];
+	struct pipe_buffer *zeta;
 
 	struct {
-		struct pipe_buffer_handle *buffer;
+		struct pipe_buffer *buffer;
 		uint32_t format;
 	} tex[16];
 
 	unsigned vb_enable;
 	struct {
-		struct pipe_buffer_handle *buffer;
+		struct pipe_buffer *buffer;
 		unsigned delta;
 	} vb[16];
 
@@ -69,14 +69,14 @@ struct nv40_context {
 		struct nv40_vertex_program *active;
 
 		struct nv40_vertex_program *current;
-		struct pipe_buffer_handle *constant_buf;
+		struct pipe_buffer *constant_buf;
 	} vertprog;
 
 	struct {
 		struct nv40_fragment_program *active;
 
 		struct nv40_fragment_program *current;
-		struct pipe_buffer_handle *constant_buf;
+		struct pipe_buffer *constant_buf;
 	} fragprog;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
@@ -124,7 +124,7 @@ extern void nv40_state_tex_update(struct nv40_context *nv40);
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
 extern boolean nv40_draw_elements(struct pipe_context *pipe,
-				  struct pipe_buffer_handle *indexBuffer,
+				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);

@@ -84,7 +84,7 @@ nv40_get_tex_surface(struct pipe_context *pipe, struct pipe_texture *pt,
 	ps = ws->surface_alloc(ws);
 	if (!ps)
 		return NULL;
-	ws->buffer_reference(ws, &ps->buffer, nv40mt->buffer);
+	pipe_buffer_reference(ws, &ps->buffer, nv40mt->buffer);
 	ps->format = pt->format;
 	ps->cpp = pt->cpp;
 	ps->width = pt->width[level];
@@ -101,19 +101,6 @@ nv40_get_tex_surface(struct pipe_context *pipe, struct pipe_texture *pt,
 	}
 
 	return ps;
-}
-
-static void
-nv40_surface_data(struct pipe_context *pipe, struct pipe_surface *dest,
-		  unsigned destx, unsigned desty, const void *src,
-		  unsigned src_stride, unsigned srcx, unsigned srcy,
-		  unsigned width, unsigned height)
-{
-	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_winsys *nvws = nv40->nvws;
-
-	nvws->surface_data(nvws, dest, destx, desty, src, src_stride,
-			   srcx, srcy, width, height);
 }
 
 static void
@@ -144,9 +131,6 @@ nv40_init_surface_functions(struct nv40_context *nv40)
 {
 	nv40->pipe.is_format_supported = nv40_surface_format_supported;
 	nv40->pipe.get_tex_surface = nv40_get_tex_surface;
-	nv40->pipe.get_tile = pipe_get_tile_raw;
-	nv40->pipe.put_tile = pipe_put_tile_raw;
-	nv40->pipe.surface_data = nv40_surface_data;
 	nv40->pipe.surface_copy = nv40_surface_copy;
 	nv40->pipe.surface_fill = nv40_surface_fill;
 }

@@ -60,9 +60,9 @@
 	OUT_RING  (nv->o->handle);                                             \
 } while(0)
 
-#define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
-	nouveau_pushbuf_emit_reloc(nv->channel, nv->channel->pushbuf->cur,     \
-				   (void*)(bo), (data), (flags), (vor), (tor));\
+#define OUT_RELOC(buf,data,flags,vor,tor) do {                                 \
+	nouveau_pipe_emit_reloc(nv->channel, nv->channel->pushbuf->cur,        \
+				   buf, (data), (flags), (vor), (tor));        \
 	OUT_RING(0);                                                           \
 } while(0)
 

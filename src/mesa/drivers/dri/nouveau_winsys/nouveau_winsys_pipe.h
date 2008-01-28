@@ -5,6 +5,17 @@
 #include "pipe/p_winsys.h"
 #include "nouveau_context.h"
 
+struct nouveau_pipe_buffer {
+	struct pipe_buffer base;
+	struct nouveau_bo *bo;
+};
+
+static inline struct nouveau_pipe_buffer *
+nouveau_buffer(struct pipe_buffer *buf)
+{
+	return (struct nouveau_pipe_buffer *)buf;
+}
+
 struct nouveau_pipe_winsys {
 	struct pipe_winsys pws;
 

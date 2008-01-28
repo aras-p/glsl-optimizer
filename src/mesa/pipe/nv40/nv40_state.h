@@ -96,7 +96,7 @@ struct nv40_fragment_program {
 	struct nv40_fragment_program_data *consts;
 	unsigned nr_consts;
 
-	struct pipe_buffer_handle *buffer;
+	struct pipe_buffer *buffer;
 
 	uint32_t fp_control;
 };
@@ -134,7 +134,7 @@ struct nv40_depth_stencil_alpha_state {
 struct nv40_miptree {
 	struct pipe_texture base;
 
-	struct pipe_buffer_handle *buffer;
+	struct pipe_buffer *buffer;
 	uint total_size;
 
 	struct {

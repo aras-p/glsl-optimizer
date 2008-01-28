@@ -45,7 +45,7 @@ extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 extern boolean nv50_draw_arrays(struct pipe_context *, unsigned mode,
 				unsigned start, unsigned count);
 extern boolean nv50_draw_elements(struct pipe_context *pipe,
-				  struct pipe_buffer_handle *indexBuffer,
+				  struct pipe_buffer *indexBuffer,
 				  unsigned indexSize,
 				  unsigned mode, unsigned start,
 				  unsigned count);

@@ -54,9 +54,6 @@ struct nouveau_context {
 	void (*surface_copy_done)(struct nouveau_context *);
 	int (*surface_fill)(struct nouveau_context *, struct pipe_surface *,
 			    unsigned, unsigned, unsigned, unsigned, unsigned);
-	int (*surface_data)(struct nouveau_context *, struct pipe_surface *,
-			    unsigned, unsigned, const void *, unsigned,
-			    unsigned, unsigned, unsigned, unsigned);
 };
 
 extern GLboolean nouveau_context_create(const __GLcontextModes *,

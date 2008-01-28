@@ -727,7 +727,7 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 
 		if (nv40->vertprog.constant_buf) {
 			map = ws->buffer_map(ws, nv40->vertprog.constant_buf,
-					     PIPE_BUFFER_FLAG_READ);
+					     PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
 		for (i = 0; i < vp->nr_consts; i++) {

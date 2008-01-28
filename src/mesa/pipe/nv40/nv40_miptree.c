@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "nv40_context.h"
 
@@ -65,14 +66,13 @@ nv40_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
 	nv40_miptree_layout(nv40mt);
 
-	nv40mt->buffer = ws->buffer_create(ws, 256, 0, 0);
+	nv40mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
+					   nv40mt->total_size);
 	if (!nv40mt->buffer) {
 		free(nv40mt);
 		return;
 	}
 	
-	ws->buffer_data(ws, nv40mt->buffer, nv40mt->total_size, NULL,
-			PIPE_BUFFER_USAGE_PIXEL);
 	*pt = &nv40mt->base;
 }
 
@@ -87,7 +87,7 @@ nv40_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
 		struct nv40_miptree *nv40mt = (struct nv40_miptree *)mt;
 		int l;
 
-		ws->buffer_reference(ws, &nv40mt->buffer, NULL);
+		pipe_buffer_reference(ws, &nv40mt->buffer, NULL);
 		for (l = mt->first_level; l <= mt->last_level; l++) {
 			if (nv40mt->level[l].image_offset)
 				free(nv40mt->level[l].image_offset);

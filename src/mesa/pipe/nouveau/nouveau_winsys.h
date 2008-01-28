@@ -25,7 +25,7 @@ struct nouveau_winsys {
 	void (*res_free)(struct nouveau_resource **);
 
 	int  (*push_reloc)(struct nouveau_channel *, void *ptr,
-			   struct nouveau_bo *, uint32_t data,
+			   struct pipe_buffer *, uint32_t data,
 			   uint32_t flags, uint32_t vor, uint32_t tor);
 	int  (*push_flush)(struct nouveau_channel *, unsigned size);
 			       
@@ -47,9 +47,6 @@ struct nouveau_winsys {
 			    unsigned, unsigned, unsigned, unsigned);
 	int (*surface_fill)(struct nouveau_winsys *, struct pipe_surface *,
 			    unsigned, unsigned, unsigned, unsigned, unsigned);
-	int (*surface_data)(struct nouveau_winsys *, struct pipe_surface *,
-			    unsigned, unsigned, const void *, unsigned,
-			    unsigned, unsigned, unsigned, unsigned);
 };
 
 extern struct pipe_context *

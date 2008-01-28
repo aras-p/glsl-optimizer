@@ -769,7 +769,7 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 
 	if (fp->nr_consts) {
 		float *map = ws->buffer_map(ws, nv40->fragprog.constant_buf,
-					    PIPE_BUFFER_FLAG_READ);
+					    PIPE_BUFFER_USAGE_CPU_READ);
 		for (i = 0; i < fp->nr_consts; i++) {
 			struct nv40_fragment_program_data *fpd = &fp->consts[i];
 			uint32_t *p = &fp->insn[fpd->offset];
@@ -788,10 +788,10 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 		uint32_t *map;
 
 		if (!fp->buffer)
-			fp->buffer = ws->buffer_create(ws, 0x100, 0, 0);
-		ws->buffer_data(ws, fp->buffer, fp->insn_len * 4, NULL, 0);
-
-		map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_FLAG_WRITE);
+			fp->buffer = ws->buffer_create(ws, 0x100, 0,
+						       fp->insn_len * 4);
+		map = ws->buffer_map(ws, fp->buffer,
+				     PIPE_BUFFER_USAGE_CPU_WRITE);
 
 #if 0
 		for (i = 0; i < fp->insn_len; i++) {

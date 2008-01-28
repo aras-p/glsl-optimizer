@@ -15,7 +15,7 @@ nv50_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 
 boolean
 nv50_draw_elements(struct pipe_context *pipe,
-		   struct pipe_buffer_handle *indexBuffer, unsigned indexSize,
+		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	NOUVEAU_ERR("unimplemented\n");
