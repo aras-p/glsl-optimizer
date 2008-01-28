@@ -320,7 +320,7 @@ reshape(int width, int height)
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+  glFrustum(-1.0, 1.0, -h, h, 5.0, 200.0);
   glMatrixMode(GL_MODELVIEW);
 }
 
