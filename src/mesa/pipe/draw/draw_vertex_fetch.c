@@ -158,6 +158,14 @@ FETCH_ATTRIB( A8R8G8B8_UNORM,       4, CVT_8_UNORM )
 
 static fetch_func get_fetch_func( enum pipe_format format )
 {
+#if 0
+   {
+      char tmp[80];
+      pf_sprint_name(tmp, format);
+      _mesa_printf("%s: %s\n", __FUNCTION__, tmp);
+   }
+#endif
+
    switch (format) {
    case PIPE_FORMAT_R64_FLOAT:
       return fetch_R64_FLOAT;
@@ -317,6 +325,8 @@ void draw_update_vertex_fetch( struct draw_context *draw )
 {
    unsigned nr_attrs, i;
 
+//   _mesa_printf("%s\n", __FUNCTION__);
+   
    /* this may happend during context init */
    if (!draw->vertex_shader)
       return;

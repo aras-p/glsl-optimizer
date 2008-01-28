@@ -63,8 +63,7 @@ static void draw_prim_queue_flush( struct draw_context *draw )
       fprintf(stdout,"Flushing with %d prims, %d verts\n",
              draw->pq.queue_nr, draw->vs.queue_nr);
 
-   if (draw->pq.queue_nr == 0)
-      return;
+   assert (draw->pq.queue_nr != 0);
 
    /* NOTE: we cannot save draw->pipeline->first in a local var because
     * draw->pipeline->first is often changed by the first call to tri(),
@@ -109,10 +108,12 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
 
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
-      draw_vertex_shader_queue_flush(draw);
+      if (draw->vs.queue_nr)
+	 draw_vertex_shader_queue_flush(draw);
 
       if (flags >= DRAW_FLUSH_PRIM_QUEUE) {
-         draw_prim_queue_flush(draw);
+	 if (draw->pq.queue_nr)
+	    draw_prim_queue_flush(draw);
 
 	 if (flags >= DRAW_FLUSH_VERTEX_CACHE) {
             draw_vertex_cache_invalidate(draw);

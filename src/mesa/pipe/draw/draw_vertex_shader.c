@@ -201,6 +201,8 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
    unsigned i, j;
 
+   assert(draw->vs.queue_nr != 0);
+
    /* XXX: do this on statechange: 
     */
    draw_update_vertex_fetch( draw );
