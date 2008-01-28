@@ -65,8 +65,6 @@ struct spu_global
 
    /* XXX more state to come */
 
-   uint cur_vertex_buf;
-
 } ALIGN16_ATTRIB;
 
 
