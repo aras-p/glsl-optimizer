@@ -369,13 +369,6 @@ static boolean build_vertex_emit( struct x86_program *p )
    x86_mov(&p->func, vfESI, x86_fn_arg(&p->func, 1));
 
    
-   /* Possibly load vp0, vp1 for viewport calcs:
-    */
-   if (vf->allow_viewport_emits) {
-      sse_movups(&p->func, vp0, x86_make_disp(vfESI, get_offset(vf, &vf->vp[0])));
-      sse_movups(&p->func, vp1, x86_make_disp(vfESI, get_offset(vf, &vf->vp[4])));
-   }
-
    /* always load, needed or not:
     */
    sse_movups(&p->func, p->chan0, x86_make_disp(vfESI, get_offset(vf, &vf->chan_scale[0])));
@@ -436,30 +429,6 @@ static boolean build_vertex_emit( struct x86_program *p )
       case DRAW_EMIT_4F:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	 emit_store(p, dest, 4, temp);
-	 update_src_ptr(p, srcECX, vfESI, a);
-	 break;
-      case DRAW_EMIT_2F_VIEWPORT: 
-	 get_src_ptr(p, srcECX, vfESI, a);
-	 emit_load(p, temp, 2, x86_deref(srcECX), a->inputsize);
-	 sse_mulps(&p->func, temp, vp0);
-	 sse_addps(&p->func, temp, vp1);
-	 emit_store(p, dest, 2, temp);
-	 update_src_ptr(p, srcECX, vfESI, a);
-	 break;
-      case DRAW_EMIT_3F_VIEWPORT: 
-	 get_src_ptr(p, srcECX, vfESI, a);
-	 emit_load(p, temp, 3, x86_deref(srcECX), a->inputsize);
-	 sse_mulps(&p->func, temp, vp0);
-	 sse_addps(&p->func, temp, vp1);
-	 emit_store(p, dest, 3, temp);
-	 update_src_ptr(p, srcECX, vfESI, a);
-	 break;
-      case DRAW_EMIT_4F_VIEWPORT: 
-	 get_src_ptr(p, srcECX, vfESI, a);
-	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	 sse_mulps(&p->func, temp, vp0);
-	 sse_addps(&p->func, temp, vp1);
 	 emit_store(p, dest, 4, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
@@ -560,26 +529,6 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 sse_shufps(&p->func, temp, temp, SHUF(W,Z,Y,X));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
-	 break;
-      case DRAW_EMIT_4CHAN_4F_RGBA:
-	 switch (CHAN_TYPE) {
-	 case GL_UNSIGNED_BYTE:
-	    get_src_ptr(p, srcECX, vfESI, a);
-	    emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	    emit_pack_store_4ub(p, dest, temp);
-	    update_src_ptr(p, srcECX, vfESI, a);
-	    break;
-	 case GL_FLOAT:
-	    get_src_ptr(p, srcECX, vfESI, a);
-	    emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
-	    emit_store(p, dest, 4, temp);
-	    update_src_ptr(p, srcECX, vfESI, a);
-	    break;
-	 case GL_UNSIGNED_SHORT:
-	 default:
-	    _mesa_printf("unknown CHAN_TYPE %s\n", _mesa_lookup_enum_by_nr(CHAN_TYPE));
-	    return FALSE;
-	 }
 	 break;
       default:
 	 _mesa_printf("unknown a[%d].format %d\n", j, a->format);

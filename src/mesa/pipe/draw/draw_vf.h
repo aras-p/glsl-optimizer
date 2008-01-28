@@ -73,9 +73,6 @@ enum draw_vf_attr_format {
    DRAW_EMIT_2F,
    DRAW_EMIT_3F,
    DRAW_EMIT_4F,
-   DRAW_EMIT_2F_VIEWPORT,		/**< do viewport transform and emit */
-   DRAW_EMIT_3F_VIEWPORT,		/**< do viewport transform and emit */
-   DRAW_EMIT_4F_VIEWPORT,		/**< do viewport transform and emit */
    DRAW_EMIT_3F_XYW,			/**< for projective texture */
    DRAW_EMIT_1UB_1F,			/**< for fog coordinate */
    DRAW_EMIT_3UB_3F_RGB,		/**< for specular color */
@@ -84,7 +81,6 @@ enum draw_vf_attr_format {
    DRAW_EMIT_4UB_4F_BGRA,		/**< for color */
    DRAW_EMIT_4UB_4F_ARGB,		/**< for color */
    DRAW_EMIT_4UB_4F_ABGR,		/**< for color */
-   DRAW_EMIT_4CHAN_4F_RGBA,		/**< for swrast color */
    DRAW_EMIT_PAD,			/**< leave a hole of 'offset' bytes */
    DRAW_EMIT_MAX
 };
@@ -98,14 +94,6 @@ struct draw_vf_attr_map {
 struct draw_vertex_fetch;
 
 
-void 
-draw_vf_set_vp_matrix( struct draw_vertex_fetch *vf,
-                       const float *viewport );
-
-void 
-draw_vf_set_vp_scale_translate( struct draw_vertex_fetch *vf,
-				const float *scale,
-				const float *translate );
 
 unsigned 
 draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
@@ -135,7 +123,7 @@ draw_vf_get_attr( struct draw_vertex_fetch *vf,
 		  float *dest );
 
 struct draw_vertex_fetch *
-draw_vf_create( boolean allow_viewport_emits );
+draw_vf_create( void );
 
 void 
 draw_vf_destroy( struct draw_vertex_fetch *vf );
@@ -196,9 +184,6 @@ struct draw_vertex_fetch
 
    /* Parameters and constants for codegen:
     */
-   boolean allow_viewport_emits;
-   float vp[8];		
-   float chan_scale[4];
    float identity[4];
 
    struct draw_vf_fastpath *fastpath;
@@ -244,7 +229,6 @@ draw_vf_generate_sse_emit( struct draw_vertex_fetch *vf );
 
 struct draw_vf_format_info {
    const char *name;
-   draw_vf_extract_func extract;
    draw_vf_insert_func insert[4];
    const unsigned attrsize;
 };

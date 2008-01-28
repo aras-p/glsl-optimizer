@@ -625,7 +625,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 
    vbuf->prim = ~0;
    
-   vbuf->vf = draw_vf_create(FALSE);
+   vbuf->vf = draw_vf_create();
    if(!vbuf->vf)
       vbuf_destroy(&vbuf->stage);
    
