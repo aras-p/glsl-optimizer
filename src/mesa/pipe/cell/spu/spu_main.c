@@ -69,6 +69,32 @@ wait_on_mask_all(unsigned tagMask)
 }
 
 
+/**
+ * Tell the PPU that this SPU has finished copying a buffer to
+ * local store and that it may be reused by the PPU.
+ * This is done by writting a 16-byte batch-buffer-status block back into
+ * main memory (in cell_context->buffer_status[]).
+ */
+static void
+release_buffer(uint buffer)
+{
+   /* Evidently, using less than a 16-byte status doesn't work reliably */
+   static const uint status[4] ALIGN16_ATTRIB
+      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
+
+   const uint index = 4 * (spu.init.id * CELL_NUM_BUFFERS + buffer);
+   uint *dst = spu.init.buffer_status + index;
+
+   ASSERT(buffer < CELL_NUM_BUFFERS);
+
+   mfc_put((void *) &status,    /* src in local memory */
+           (unsigned int) dst,  /* dst in main memory */
+           sizeof(status),      /* size */
+           TAG_MISC,            /* tag is unimportant */
+           0, /* tid */
+           0  /* rid */);
+}
+
 
 /**
  * For tiles whose status is TILE_STATUS_CLEAR, write solid-filled
@@ -237,13 +263,18 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       printf("       bound: %g, %g .. %g, %g\n",
              render->xmin, render->ymin, render->xmax, render->ymax);
       */
+      /*
       printf("SPU %u: indices at %p  vertices at %p\n",
              spu.init.id,
              render->index_data, render->vertex_data);
+      */
    }
 
    ASSERT(sizeof(*render) % 4 == 0);
+#if 0
    ASSERT_ALIGN16(render->vertex_data);
+#else
+#endif
    ASSERT_ALIGN16(render->index_data);
 
 
@@ -251,10 +282,18 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
     ** Get vertex, index buffers if not inlined
     **/
    if (!render->inline_verts) {
+      void *src;
       ASSERT(total_vertex_bytes % 16 == 0);
 
+#if 0
+      src = render->vertex_data;
+#else
+      spu.cur_vertex_buf = render->vertex_buf;
+      src = spu.init.buffers[render->vertex_buf];
+#endif
+
       mfc_get(vertex_data,  /* dest */
-              (unsigned int) render->vertex_data,  /* src */
+              (unsigned int) src,
               total_vertex_bytes,  /* size */
               TAG_VERTEX_BUFFER,
               0, /* tid */
@@ -298,6 +337,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
          /* vertices are after indexes, if inlined */
          vertices = (const ubyte *) (render + 1) + *pos_incr * 4;
          *pos_incr = *pos_incr + total_vertex_bytes / 4;
+         spu.cur_vertex_buf = ~0;
       }
    }
 
@@ -310,6 +350,12 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       mask |= (1 << TAG_INDEX_BUFFER);
    wait_on_mask_all(mask);
 
+#if 0
+   if (!render->inline_verts) {
+      printf("SPU %u: release vbuf %u\n", spu.init.id, render->vertex_buf);
+      release_buffer(render->vertex_buf);
+   }
+#endif
 
    /**
     ** find tiles which intersect the prim bounding box
@@ -359,6 +405,14 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       for (j = 0; j < render->num_indexes; j += 3) {
          const float *v0, *v1, *v2;
 
+         if (indexes[j] == 0xffff) {
+            printf("index[%u] = 0xffff\n", j);
+         }
+
+         ASSERT(indexes[j] != 0xffff);
+         ASSERT(indexes[j+1] != 0xffff);
+         ASSERT(indexes[j+2] != 0xffff);
+
          v0 = (const float *) (vertices + indexes[j+0] * vertex_size);
          v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
          v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
@@ -388,6 +442,17 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    if (Debug)
       printf("SPU %u: RENDER done\n",
              spu.init.id);
+}
+
+
+static void
+cmd_release_verts(const struct cell_command_release_verts *release)
+{
+   if (Debug)
+      printf("SPU %u: RELEASE VERTS %u\n",
+             spu.init.id, spu.cur_vertex_buf);
+   ASSERT(spu.cur_vertex_buf == release->vertex_buf);
+   release_buffer(release->vertex_buf);
 }
 
 
@@ -473,38 +538,6 @@ cmd_finish(void)
 
 
 /**
- * Tell the PPU that this SPU has finished copying a buffer to
- * local store and that it may be reused by the PPU.
- * This is done by writting a 16-byte batch-buffer-status block back into
- * main memory (in cell_context->buffer_status[]).
- */
-static void
-release_buffer(uint buffer)
-{
-   /* Evidently, using less than a 16-byte status doesn't work reliably */
-   static const uint status[4] ALIGN16_ATTRIB
-      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
-
-   const uint index = 4 * (spu.init.id * CELL_NUM_BUFFERS + buffer);
-   uint *dst = spu.init.buffer_status + index;
-
-   ASSERT(buffer < CELL_NUM_BUFFERS);
-
-   /*
-   printf("SPU %u: Set batch status buf=%u, index %u, at %p to FREE\n",
-          spu.init.id, buffer, index, dst);
-   */
-
-   mfc_put((void *) &status,    /* src in local memory */
-           (unsigned int) dst,  /* dst in main memory */
-           sizeof(status),      /* size */
-           TAG_MISC,            /* tag is unimportant */
-           0, /* tid */
-           0  /* rid */);
-}
-
-
-/**
  * Execute a batch of commands
  * The opcode param encodes the location of the buffer and its size.
  */
@@ -538,6 +571,8 @@ cmd_batch(uint opcode)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    /* Tell PPU we're done copying the buffer to local store */
+   if (Debug)
+      printf("SPU %u: release batch buf %u\n", spu.init.id, buf);
    release_buffer(buf);
 
    for (pos = 0; pos < usize; /* no incr */) {
@@ -565,6 +600,15 @@ cmd_batch(uint opcode)
             uint pos_incr;
             cmd_render(render, &pos_incr);
             pos += sizeof(*render) / 4 + pos_incr;
+         }
+         break;
+      case CELL_CMD_RELEASE_VERTS:
+         {
+            struct cell_command_release_verts *release
+               = (struct cell_command_release_verts *) &buffer[pos];
+            cmd_release_verts(release);
+            ASSERT(sizeof(*release) == 8);
+            pos += sizeof(*release) / 4;
          }
          break;
       case CELL_CMD_FINISH:
