@@ -398,19 +398,19 @@ static boolean build_vertex_emit( struct x86_program *p )
        * Could be shortcircuited in specific cases:
        */
       switch (a->format) {
-      case EMIT_1F:
+      case DRAW_EMIT_1F:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 1, x86_deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 1, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_2F:
+      case DRAW_EMIT_2F:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 2, x86_deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 2, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_3F:
+      case DRAW_EMIT_3F:
 	 /* Potentially the worst case - hardcode 2+1 copying:
 	  */
 	 if (0) {
@@ -433,13 +433,13 @@ static boolean build_vertex_emit( struct x86_program *p )
 	    update_src_ptr(p, srcECX, vfESI, a);
 	 }
 	 break;
-      case EMIT_4F:
+      case DRAW_EMIT_4F:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 4, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_2F_VIEWPORT: 
+      case DRAW_EMIT_2F_VIEWPORT: 
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 2, x86_deref(srcECX), a->inputsize);
 	 sse_mulps(&p->func, temp, vp0);
@@ -447,7 +447,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 emit_store(p, dest, 2, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_3F_VIEWPORT: 
+      case DRAW_EMIT_3F_VIEWPORT: 
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 3, x86_deref(srcECX), a->inputsize);
 	 sse_mulps(&p->func, temp, vp0);
@@ -455,7 +455,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 emit_store(p, dest, 3, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_4F_VIEWPORT: 
+      case DRAW_EMIT_4F_VIEWPORT: 
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 sse_mulps(&p->func, temp, vp0);
@@ -463,7 +463,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 emit_store(p, dest, 4, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_3F_XYW:
+      case DRAW_EMIT_3F_XYW:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 sse_shufps(&p->func, temp, temp, SHUF(X,Y,W,Z));
@@ -471,7 +471,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
 
-      case EMIT_1UB_1F:	 
+      case DRAW_EMIT_1UB_1F:	 
 	 /* Test for PAD3 + 1UB:
 	  */
 	 if (j > 0 &&
@@ -488,15 +488,15 @@ static boolean build_vertex_emit( struct x86_program *p )
 	    return FALSE;
 	 }
 	 break;
-      case EMIT_3UB_3F_RGB:
-      case EMIT_3UB_3F_BGR:
+      case DRAW_EMIT_3UB_3F_RGB:
+      case DRAW_EMIT_3UB_3F_BGR:
 	 /* Test for 3UB + PAD1:
 	  */
 	 if (j == vf->attr_count - 1 ||
 	     a[1].vertoffset >= a->vertoffset + 4) {
 	    get_src_ptr(p, srcECX, vfESI, a);
 	    emit_load(p, temp, 3, x86_deref(srcECX), a->inputsize);
-	    if (a->format == EMIT_3UB_3F_BGR)
+	    if (a->format == DRAW_EMIT_3UB_3F_BGR)
 	       sse_shufps(&p->func, temp, temp, SHUF(Z,Y,X,W));
 	    emit_pack_store_4ub(p, dest, temp);
 	    update_src_ptr(p, srcECX, vfESI, a);
@@ -504,7 +504,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 /* Test for 3UB + 1UB:
 	  */
 	 else if (j < vf->attr_count - 1 &&
-		  a[1].format == EMIT_1UB_1F &&
+		  a[1].format == DRAW_EMIT_1UB_1F &&
 		  a[1].vertoffset == a->vertoffset + 3) {
 	    get_src_ptr(p, srcECX, vfESI, a);
 	    emit_load(p, temp, 3, x86_deref(srcECX), a->inputsize);
@@ -520,7 +520,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 
 	    /* Rearrange and possibly do BGR conversion:
 	     */
-	    if (a->format == EMIT_3UB_3F_BGR)
+	    if (a->format == DRAW_EMIT_3UB_3F_BGR)
 	       sse_shufps(&p->func, temp, temp, SHUF(W,Z,Y,X));
 	    else
 	       sse_shufps(&p->func, temp, temp, SHUF(Y,Z,W,X));
@@ -534,34 +534,34 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 return FALSE;	/* add this later */
 	 break;
 
-      case EMIT_4UB_4F_RGBA:
+      case DRAW_EMIT_4UB_4F_RGBA:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_4UB_4F_BGRA:
+      case DRAW_EMIT_4UB_4F_BGRA:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 sse_shufps(&p->func, temp, temp, SHUF(Z,Y,X,W));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_4UB_4F_ARGB:
+      case DRAW_EMIT_4UB_4F_ARGB:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 sse_shufps(&p->func, temp, temp, SHUF(W,X,Y,Z));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_4UB_4F_ABGR:
+      case DRAW_EMIT_4UB_4F_ABGR:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 sse_shufps(&p->func, temp, temp, SHUF(W,Z,Y,X));
 	 emit_pack_store_4ub(p, dest, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
-      case EMIT_4CHAN_4F_RGBA:
+      case DRAW_EMIT_4CHAN_4F_RGBA:
 	 switch (CHAN_TYPE) {
 	 case GL_UNSIGNED_BYTE:
 	    get_src_ptr(p, srcECX, vfESI, a);

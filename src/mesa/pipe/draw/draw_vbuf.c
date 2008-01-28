@@ -35,11 +35,14 @@
 
 
 #include <assert.h>
+#include <stddef.h>
 
-#include "pipe/draw/draw_vbuf.h"
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vertex.h"
 #include "pipe/p_util.h"
+
+#include "draw_vbuf.h"
+#include "draw_private.h"
+#include "draw_vertex.h"
+#include "draw_vf.h"
 
 
 /**
@@ -55,6 +58,8 @@ struct vbuf_stage {
    /** Vertex size in bytes */
    unsigned vertex_size;
 
+   struct draw_vertex_fetch *vf;
+   
    /* FIXME: we have no guarantee that 'unsigned' is 32bit */
 
    /** Vertices in hardware format */
@@ -121,6 +126,7 @@ static INLINE void
 emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
+#if 0
    const struct vertex_info *vinfo = vbuf->vinfo;
 
    uint i;
@@ -151,9 +157,11 @@ emit_vertex( struct vbuf_stage *vbuf,
       case EMIT_ALL:
          /* just copy the whole vertex as-is to the vbuf */
          assert(i == 0);
+         assert(j == 0);
          memcpy(vbuf->vertex_ptr, vertex, vinfo->size * 4);
          vbuf->vertex_ptr += vinfo->size;
-         return;
+         count += vinfo->size;
+         break;
       case EMIT_1F:
          *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
          count++;
@@ -192,6 +200,156 @@ emit_vertex( struct vbuf_stage *vbuf,
       }
    }
    assert(count == vinfo->size);
+#else
+   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
+      if(vertex->vertex_id < vbuf->nr_vertices)
+	 return;
+      else
+	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
+	         vertex->vertex_id, vbuf->nr_vertices);
+      return;
+   }
+      
+   vertex->vertex_id = vbuf->nr_vertices++;
+
+   draw_vf_set_data(vbuf->vf, vertex->data);
+   draw_vf_emit_vertices(vbuf->vf, 1, vbuf->vertex_ptr);
+
+   vbuf->vertex_ptr += vbuf->vertex_size/4;
+#endif
+}
+
+
+static void
+vbuf_set_vf_attributes(struct vbuf_stage *vbuf ) 
+{
+   const struct vertex_info *vinfo = vbuf->vinfo;
+   struct draw_vf_attr_map attrs[PIPE_MAX_SHADER_INPUTS];
+   uint i;
+   uint count = 0;  /* for debug/sanity */
+   unsigned nr_attrs = 0;
+   
+//   fprintf(stderr, "emit vertex %d to %p\n", 
+//           vbuf->nr_vertices, vbuf->vertex_ptr);
+
+#if 0
+   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
+      if(vertex->vertex_id < vbuf->nr_vertices)
+	 return;
+      else
+	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
+	         vertex->vertex_id, vbuf->nr_vertices);
+      return;
+   }
+#endif
+   
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      uint j = vinfo->src_index[i];
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
+         /* no-op */
+         break;
+      case EMIT_ALL: {
+         /* just copy the whole vertex as-is to the vbuf */
+	 unsigned k, s = vinfo->size;
+         assert(i == 0);
+         assert(j == 0);
+         /* copy the vertex header */
+         /* XXX: we actually don't copy the header, just pad it */
+	 attrs[nr_attrs].attrib = 0;
+	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
+	 attrs[nr_attrs].offset = offsetof(struct vertex_header, data);
+	 s -= offsetof(struct vertex_header, data)/4;
+         count += offsetof(struct vertex_header, data)/4;
+	 nr_attrs++;
+	 /* copy the vertex data */
+         for(k = 0; k < (s & ~0x3); k += 4) {
+      	    attrs[nr_attrs].attrib = k/4;
+      	    attrs[nr_attrs].format = DRAW_EMIT_4F;
+      	    attrs[nr_attrs].offset = 0;
+      	    nr_attrs++;
+            count += 4;
+         }
+         /* tail */
+         /* XXX: actually, this shouldn't be needed */
+ 	 attrs[nr_attrs].attrib = k/4;
+  	 attrs[nr_attrs].offset = 0;
+         switch(s & 0x3) {
+         case 0:
+            break;
+         case 1:
+      	    attrs[nr_attrs].format = DRAW_EMIT_1F;
+      	    nr_attrs++;
+            count += 1;
+            break;
+         case 2:
+      	    attrs[nr_attrs].format = DRAW_EMIT_2F;
+      	    nr_attrs++;
+            count += 2;
+            break;
+         case 3:
+      	    attrs[nr_attrs].format = DRAW_EMIT_3F;
+      	    nr_attrs++;
+            count += 3;
+            break;
+         }
+         break;
+      }
+      case EMIT_1F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_1F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count++;
+         break;
+      case EMIT_1F_PSIZE:
+	 /* FIXME */
+	 assert(0);
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count++;
+         break;
+      case EMIT_2F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_2F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 2;
+         break;
+      case EMIT_3F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_3F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 3;
+         break;
+      case EMIT_4F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_4F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 4;
+         break;
+      case EMIT_4UB:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_4UB_4F_BGRA;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 1;
+         break;
+      default:
+         assert(0);
+      }
+   }
+   
+   assert(count == vinfo->size);  
+   
+   draw_vf_set_vertex_attributes(vbuf->vf, 
+                                 attrs, 
+                                 nr_attrs, 
+                                 vbuf->vertex_size);
 }
 
 
@@ -269,6 +427,7 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint newprim )
 
    vbuf->vinfo = vinfo;
    vbuf->vertex_size = vertex_size;
+   vbuf_set_vf_attributes(vbuf);
    
    if (!vbuf->vertices)
       vbuf_alloc_vertices(vbuf);
@@ -423,7 +582,12 @@ static void vbuf_destroy( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   align_free( vbuf->indices );
+   if(vbuf->indices)
+      align_free( vbuf->indices );
+   
+   if(vbuf->vf)
+      draw_vf_destroy( vbuf->vf );
+
    FREE( stage );
 }
 
@@ -436,6 +600,9 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 {
    struct vbuf_stage *vbuf = CALLOC_STRUCT(vbuf_stage);
 
+   if(!vbuf)
+      return NULL;
+   
    vbuf->stage.draw = draw;
    vbuf->stage.point = vbuf_first_point;
    vbuf->stage.line = vbuf_first_line;
@@ -450,11 +617,17 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    vbuf->max_indices = render->max_indices;
    vbuf->indices = (ushort *)
       align_malloc( vbuf->max_indices * sizeof(vbuf->indices[0]), 16 );
+   if(!vbuf->indices)
+      vbuf_destroy(&vbuf->stage);
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;
 
    vbuf->prim = ~0;
+   
+   vbuf->vf = draw_vf_create(FALSE);
+   if(!vbuf->vf)
+      vbuf_destroy(&vbuf->stage);
    
    return &vbuf->stage;
 }

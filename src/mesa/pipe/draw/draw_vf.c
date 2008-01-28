@@ -162,7 +162,7 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 
    for (j = 0, i = 0; i < nr; i++) {
       const unsigned format = map[i].format;
-      if (format == EMIT_PAD) {
+      if (format == DRAW_EMIT_PAD) {
 	 if (DBG)
 	    _mesa_printf("%d: pad %d, offset %d\n", i,  
 			 map[i].offset, offset);  
@@ -260,6 +260,22 @@ void draw_vf_set_sources( struct draw_vertex_fetch *vf,
    }
 }
 
+
+/* Set attribute pointers, adjusted for start position:
+ */
+void draw_vf_set_data( struct draw_vertex_fetch *vf,
+                       float data[][4])
+{
+   struct draw_vf_attr *a = vf->attr;
+   unsigned j;
+   
+   for (j = 0; j < vf->attr_count; j++) {
+      a[j].inputstride = 0; /* XXX: one-vertex-max ATM */ 
+      a[j].inputsize = 4;
+      a[j].do_insert = a[j].insert[4 - 1]; 
+      a[j].inputptr = (uint8_t *)&data[a[j].attrib][0];
+   }
+}
 
 
 /* Emit count VB vertices to dest.  

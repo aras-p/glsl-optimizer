@@ -735,7 +735,7 @@ static void extract_1ub_1f( const struct draw_vf_attr *a, float *out, const uint
 }
 
 
-const struct draw_vf_format_info draw_vf_format_info[EMIT_MAX] = 
+const struct draw_vf_format_info draw_vf_format_info[DRAW_EMIT_MAX] = 
 {
    { "1f",
      extract_1f,
