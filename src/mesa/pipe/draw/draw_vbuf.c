@@ -50,6 +50,8 @@ struct vbuf_stage {
 
    struct vbuf_render *render;
    
+   const struct vertex_info *vinfo;
+   
    /** Vertex size in bytes */
    unsigned vertex_size;
 
@@ -84,8 +86,7 @@ vbuf_stage( struct draw_stage *stage )
 
 static void vbuf_flush_indices( struct draw_stage *stage );
 static void vbuf_flush_vertices( struct draw_stage *stage );
-static void vbuf_alloc_vertices( struct draw_stage *stage,
-                                 unsigned new_vertex_size );
+static void vbuf_alloc_vertices( struct draw_stage *stage );
 
 
 static INLINE boolean 
@@ -101,7 +102,7 @@ check_space( struct vbuf_stage *vbuf, unsigned nr )
 {
    if (vbuf->nr_vertices + nr > vbuf->max_vertices ) {
       vbuf_flush_vertices(&vbuf->stage);
-      vbuf_alloc_vertices(&vbuf->stage, vbuf->vertex_size);
+      vbuf_alloc_vertices(&vbuf->stage);
    }
 
    if (vbuf->nr_indices + nr > vbuf->max_indices )
@@ -120,10 +121,12 @@ static INLINE void
 emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
-   const struct vertex_info *vinfo = vbuf->render->get_vertex_info(vbuf->render);
+   const struct vertex_info *vinfo = vbuf->vinfo;
 
    uint i;
    uint count = 0;  /* for debug/sanity */
+   
+   assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
 
 //   fprintf(stderr, "emit vertex %d to %p\n", 
 //           vbuf->nr_vertices, vbuf->vertex_ptr);
@@ -265,8 +268,11 @@ vbuf_set_prim( struct draw_stage *stage, uint newprim )
    if (vertex_size != vbuf->vertex_size)
       vbuf_flush_vertices(stage);
 
+   vbuf->vinfo = vinfo;
+   vbuf->vertex_size = vertex_size;
+   
    if (!vbuf->vertices)
-      vbuf_alloc_vertices(stage, vertex_size);
+      vbuf_alloc_vertices(stage);
 }
 
 
@@ -364,7 +370,7 @@ vbuf_flush_vertices( struct draw_stage *stage )
                                      vbuf->vertices,
                                      vbuf->vertex_size,
                                      vbuf->nr_vertices);
-      vbuf->nr_vertices = 0;
+      vbuf->max_vertices = vbuf->nr_vertices = 0;
       vbuf->vertex_ptr = vbuf->vertices = NULL;
       
    }
@@ -372,8 +378,7 @@ vbuf_flush_vertices( struct draw_stage *stage )
    
 
 static void 
-vbuf_alloc_vertices( struct draw_stage *stage,
-		     unsigned new_vertex_size )
+vbuf_alloc_vertices( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
@@ -381,7 +386,6 @@ vbuf_alloc_vertices( struct draw_stage *stage,
    assert(!vbuf->vertices);
    
    /* Allocate a new vertex buffer */
-   vbuf->vertex_size = new_vertex_size;
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
                                                     (ushort) vbuf->vertex_size,
