@@ -62,7 +62,7 @@ fetch_##NAME(const void *ptr, float *attrib)		\
    }							\
 }
 
-#define CVT_64_FLOAT   ((double *) ptr)[i]
+#define CVT_64_FLOAT   (float) ((double *) ptr)[i]
 #define CVT_32_FLOAT   ((float *) ptr)[i]
 
 #define CVT_8_USCALED  (float) ((unsigned char *) ptr)[i]
