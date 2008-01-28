@@ -180,6 +180,10 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       if (v[1] > ymax)
          ymax = v[1];
    }
+#if 0
+   printf("PPU Bounds %g, %g .. %g, %g\n", xmin, ymin, xmax, ymax);
+   fflush(stdout);
+#endif
 
    if (cvbr->prim != PIPE_PRIM_TRIANGLES)
       return; /* only render tris for now */

@@ -200,7 +200,7 @@ tile_bounding_box(const struct cell_command_render *render,
                   uint *txmin, uint *tymin,
                   uint *box_num_tiles, uint *box_width_tiles)
 {
-#if 1
+#if 0
    /* Debug: full-window bounding box */
    uint txmax = spu.fb.width_tiles - 1;
    uint tymax = spu.fb.height_tiles - 1;
@@ -223,10 +223,21 @@ tile_bounding_box(const struct cell_command_render *render,
    *box_num_tiles = *box_width_tiles * box_height_tiles;
 #endif
 #if 0
-   printf("Render bounds: %g, %g  ...  %g, %g\n",
+   printf("SPU %u: bounds: %g, %g  ...  %g, %g\n", spu.init.id,
           render->xmin, render->ymin, render->xmax, render->ymax);
-   printf("Render tiles:  %u, %u .. %u, %u\n", *txmin, *tymin, txmax, tymax);
+   printf("SPU %u: tiles:  %u, %u .. %u, %u\n",
+           spu.init.id, *txmin, *tymin, txmax, tymax);
+   ASSERT(render->xmin <= render->xmax);
+   ASSERT(render->ymin <= render->ymax);
 #endif
+}
+
+
+/** Check if the tile at (tx,ty) belongs to this SPU */
+static INLINE boolean
+my_tile(uint tx, uint ty)
+{
+   return (spu.fb.width_tiles * ty + tx) % spu.init.num_spus == spu.init.id;
 }
 
 
@@ -295,15 +306,9 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
     ** find tiles which intersect the prim bounding box
     **/
    uint txmin, tymin, box_width_tiles, box_num_tiles;
-#if 0
    tile_bounding_box(render, &txmin, &tymin,
                      &box_num_tiles, &box_width_tiles);
-#else
-   txmin = 0;
-   tymin = 0;
-   box_num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   box_width_tiles = spu.fb.width_tiles;
-#endif
+
 
    /* make sure any pending clears have completed */
    wait_on_mask(1 << TAG_SURFACE_CLEAR); /* XXX temporary */
@@ -312,12 +317,15 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    /**
     ** loop over tiles, rendering tris
     **/
-   for (i = spu.init.id; i < box_num_tiles; i += spu.init.num_spus) {
+   for (i = 0; i < box_num_tiles; i++) {
       const uint tx = txmin + i % box_width_tiles;
       const uint ty = tymin + i / box_width_tiles;
 
       ASSERT(tx < spu.fb.width_tiles);
       ASSERT(ty < spu.fb.height_tiles);
+
+      if (!my_tile(tx, ty))
+         continue;
 
       /* Start fetching color/z tiles.  We'll wait for completion when
        * we need read/write to them later in triangle rasterization.
