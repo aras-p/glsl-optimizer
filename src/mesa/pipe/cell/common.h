@@ -75,6 +75,7 @@
 #define CELL_CMD_FINISH               3
 #define CELL_CMD_RENDER               4
 #define CELL_CMD_BATCH                5
+#define CELL_CMD_RELEASE_VERTS        6
 #define CELL_CMD_STATE_FRAMEBUFFER   10
 #define CELL_CMD_STATE_DEPTH_STENCIL 11
 #define CELL_CMD_STATE_SAMPLER       12
@@ -124,12 +125,23 @@ struct cell_command_render
    uint vertex_size;  /**< bytes per vertex */
    uint dummy;        /* XXX this dummy field works around a compiler bug */
    uint num_indexes;
+#if 0
    const void *vertex_data;
+#else
+   uint vertex_buf;  /**< which cell->buffer[] contains the vertex data */
+#endif
    const ushort *index_data;
    float xmin, ymin, xmax, ymax;
    boolean inline_indexes;
    boolean inline_verts;
 } ALIGN16_ATTRIB;
+
+
+struct cell_command_release_verts
+{
+   int opcode;         /**< CELL_CMD_RELEASE_VERTS */
+   uint vertex_buf;    /**< in [0, CELL_NUM_BUFFERS-1] */
+};
 
 
 /** XXX unions don't seem to work */
