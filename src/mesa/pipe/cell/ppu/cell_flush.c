@@ -39,6 +39,9 @@ cell_flush(struct pipe_context *pipe, unsigned flags)
 {
    struct cell_context *cell = cell_context(pipe);
 
+   if (flags & PIPE_FLUSH_SWAPBUFFERS)
+      flags |= PIPE_FLUSH_WAIT;
+
    draw_flush( cell->draw );
    cell_flush_int(pipe, flags);
 }
