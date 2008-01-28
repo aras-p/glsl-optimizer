@@ -84,9 +84,9 @@ vbuf_stage( struct draw_stage *stage )
 }
 
 
-static void vbuf_flush_indices( struct draw_stage *stage );
-static void vbuf_flush_vertices( struct draw_stage *stage );
-static void vbuf_alloc_vertices( struct draw_stage *stage );
+static void vbuf_flush_indices( struct vbuf_stage *vbuf );
+static void vbuf_flush_vertices( struct vbuf_stage *vbuf );
+static void vbuf_alloc_vertices( struct vbuf_stage *vbuf );
 
 
 static INLINE boolean 
@@ -101,12 +101,12 @@ static INLINE void
 check_space( struct vbuf_stage *vbuf, unsigned nr )
 {
    if (vbuf->nr_vertices + nr > vbuf->max_vertices ) {
-      vbuf_flush_vertices(&vbuf->stage);
-      vbuf_alloc_vertices(&vbuf->stage);
+      vbuf_flush_vertices(vbuf);
+      vbuf_alloc_vertices(vbuf);
    }
 
    if (vbuf->nr_indices + nr > vbuf->max_indices )
-      vbuf_flush_indices(&vbuf->stage);
+      vbuf_flush_indices(vbuf);
 }
 
 
@@ -249,9 +249,8 @@ vbuf_point( struct draw_stage *stage,
  * will be flushed if needed and a new one allocated.
  */
 static void
-vbuf_set_prim( struct draw_stage *stage, uint newprim )
+vbuf_set_prim( struct vbuf_stage *vbuf, uint newprim )
 {
-   struct vbuf_stage *vbuf = vbuf_stage(stage);
    const struct vertex_info *vinfo;
    unsigned vertex_size;
 
@@ -266,13 +265,13 @@ vbuf_set_prim( struct draw_stage *stage, uint newprim )
    vertex_size = vinfo->size * sizeof(float);
 
    if (vertex_size != vbuf->vertex_size)
-      vbuf_flush_vertices(stage);
+      vbuf_flush_vertices(vbuf);
 
    vbuf->vinfo = vinfo;
    vbuf->vertex_size = vertex_size;
    
    if (!vbuf->vertices)
-      vbuf_alloc_vertices(stage);
+      vbuf_alloc_vertices(vbuf);
 }
 
 
@@ -280,9 +279,11 @@ static void
 vbuf_first_tri( struct draw_stage *stage,
                 struct prim_header *prim )
 {
-   vbuf_flush_indices( stage );   
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
+   vbuf_flush_indices( vbuf );   
    stage->tri = vbuf_tri;
-   vbuf_set_prim(stage, PIPE_PRIM_TRIANGLES);
+   vbuf_set_prim(vbuf, PIPE_PRIM_TRIANGLES);
    stage->tri( stage, prim );
 }
 
@@ -291,9 +292,11 @@ static void
 vbuf_first_line( struct draw_stage *stage,
                  struct prim_header *prim )
 {
-   vbuf_flush_indices( stage );
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
+   vbuf_flush_indices( vbuf );
    stage->line = vbuf_line;
-   vbuf_set_prim(stage, PIPE_PRIM_LINES);
+   vbuf_set_prim(vbuf, PIPE_PRIM_LINES);
    stage->line( stage, prim );
 }
 
@@ -302,18 +305,18 @@ static void
 vbuf_first_point( struct draw_stage *stage,
                   struct prim_header *prim )
 {
-   vbuf_flush_indices( stage );
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
+   vbuf_flush_indices( vbuf );
    stage->point = vbuf_point;
-   vbuf_set_prim(stage, PIPE_PRIM_POINTS);
+   vbuf_set_prim(vbuf, PIPE_PRIM_POINTS);
    stage->point( stage, prim );
 }
 
 
 static void 
-vbuf_flush_indices( struct draw_stage *stage ) 
+vbuf_flush_indices( struct vbuf_stage *vbuf ) 
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
    if(!vbuf->nr_indices)
       return;
    
@@ -354,12 +357,10 @@ vbuf_flush_indices( struct draw_stage *stage )
  * we flush.
  */
 static void 
-vbuf_flush_vertices( struct draw_stage *stage )
+vbuf_flush_vertices( struct vbuf_stage *vbuf )
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
    if(vbuf->vertices) {      
-      vbuf_flush_indices(stage);
+      vbuf_flush_indices(vbuf);
       
       /* Reset temporary vertices ids */
       if(vbuf->nr_vertices)
@@ -378,10 +379,8 @@ vbuf_flush_vertices( struct draw_stage *stage )
    
 
 static void 
-vbuf_alloc_vertices( struct draw_stage *stage )
+vbuf_alloc_vertices( struct vbuf_stage *vbuf )
 {
-   struct vbuf_stage *vbuf = vbuf_stage( stage );
-
    assert(!vbuf->nr_indices);
    assert(!vbuf->vertices);
    
@@ -398,14 +397,16 @@ vbuf_alloc_vertices( struct draw_stage *stage )
 static void 
 vbuf_flush( struct draw_stage *stage, unsigned flags )
 {
-   vbuf_flush_indices( stage );
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+
+   vbuf_flush_indices( vbuf );
 
    stage->point = vbuf_first_point;
    stage->line = vbuf_first_line;
    stage->tri = vbuf_first_tri;
 
    if (flags & DRAW_FLUSH_BACKEND)
-      vbuf_flush_vertices( stage );
+      vbuf_flush_vertices( vbuf );
 }
 
 
