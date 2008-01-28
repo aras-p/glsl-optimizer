@@ -110,7 +110,7 @@ run_vertex_program(struct draw_context *draw,
    machine->Inputs = ALIGN16_ASSIGN(inputs);
    machine->Outputs = ALIGN16_ASSIGN(outputs);
 
-   draw_vertex_fetch( draw, machine, elts, count );
+   draw->vertex_fetch.fetch_func( draw, machine, elts, count );
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)
@@ -219,14 +219,18 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
       struct vertex_header *dests[4];
       unsigned elts[4];
-      int n;
+      int n = MIN2(4, draw->vs.queue_nr - i);
 
-      for (j = 0; j < 4; j++) {
+      for (j = 0; j < n; j++) {
          elts[j] = draw->vs.queue[i + j].elt;
          dests[j] = draw->vs.queue[i + j].dest;
       }
 
-      n = MIN2(4, draw->vs.queue_nr - i);
+      for ( ; j < 4; j++) {
+	 elts[j] = elts[0];
+	 dests[j] = dests[0];
+      }
+
       assert(n > 0);
       assert(n <= 4);
 
