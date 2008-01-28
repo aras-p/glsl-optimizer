@@ -48,7 +48,6 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
                    unsigned clearValue)
 {
    struct cell_context *cell = cell_context(pipe);
-   /*uint i;*/
    uint surfIndex;
 
    if (!cell->cbuf_map[0])
@@ -61,29 +60,7 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       surfIndex = 0;
    }
 
-#if 0
-   for (i = 0; i < cell->num_spus; i++) {
-#if 1
-      uint clr = clearValue;
-      if (surfIndex == 0) {
-         /* XXX debug: clear color varied per-SPU to visualize tiles */
-         if ((clr & 0xff) == 0)
-            clr |= 64 + i * 8;
-         if ((clr & 0xff00) == 0)
-            clr |= (64 + i * 8) << 8;
-         if ((clr & 0xff0000) == 0)
-            clr |= (64 + i * 8) << 16;
-         if ((clr & 0xff000000) == 0)
-            clr |= (64 + i * 8) << 24;
-      }
-      cell_global.command[i].clear.value = clr;
-#else
-      cell_global.command[i].clear.value = clearValue;
-#endif
-      cell_global.command[i].clear.surface = surfIndex;
-      send_mbox_message(cell_global.spe_contexts[i], CELL_CMD_CLEAR_SURFACE);
-   }
-#else
+
    {
       struct cell_command_clear_surface *clr
          = (struct cell_command_clear_surface *)
@@ -92,9 +69,4 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
       clr->surface = surfIndex;
       clr->value = clearValue;
    }
-#endif
-
-   /* XXX temporary */
-   cell_flush(&cell->pipe, 0x0);
-
 }
