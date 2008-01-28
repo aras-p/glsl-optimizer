@@ -1003,15 +1003,15 @@ static void build_lighting( struct tnl_program *p )
 					       STATE_POSITION); 
 	    struct ureg V = get_eye_position(p);
 	    struct ureg dist = get_temp(p);
-       struct ureg tmpPpli = get_temp(p);
+	    struct ureg tmpPpli = get_temp(p);
 
 	    VPpli = get_temp(p); 
 	    half = get_temp(p);
 
-       /* In homogeneous object coordinates
-        */
-       emit_op1(p, OPCODE_RCP, dist, 0, swizzle1(Ppli, W));
-       emit_op2(p, OPCODE_MUL, tmpPpli, 0, Ppli, dist);
+	    /* In homogeneous object coordinates
+	     */
+	    emit_op1(p, OPCODE_RCP, dist, 0, swizzle1(Ppli, W));
+	    emit_op2(p, OPCODE_MUL, tmpPpli, 0, Ppli, dist);
  
 	    /* Calulate VPpli vector
 	     */
@@ -1047,7 +1047,7 @@ static void build_lighting( struct tnl_program *p )
 	    emit_normalize_vec3(p, half, half);
 
 	    release_temp(p, dist);
-       release_temp(p, tmpPpli);
+	    release_temp(p, tmpPpli);
 	 }
 
 	 /* Calculate dot products:
