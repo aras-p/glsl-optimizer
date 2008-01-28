@@ -320,42 +320,101 @@ transpose_4x4( float *out, const float *in )
 }
 
 
-			       
-void draw_update_vertex_fetch( struct draw_context *draw )
+
+static void fetch_xyz_rgb( struct draw_context *draw,
+			   struct tgsi_exec_machine *machine,
+			   const unsigned *elts,
+			   unsigned count )
 {
-   unsigned nr_attrs, i;
+   assert(count <= 4);
 
 //   _mesa_printf("%s\n", __FUNCTION__);
-   
-   /* this may happend during context init */
-   if (!draw->vertex_shader)
-      return;
 
-   nr_attrs = draw->vertex_shader->state->num_inputs;
+   /* loop over vertex attributes (vertex shader inputs)
+    */
 
-   for (i = 0; i < nr_attrs; i++) {
-      unsigned buf = draw->vertex_element[i].vertex_buffer_index;
-      enum pipe_format format  = draw->vertex_element[i].src_format;
+   const unsigned *pitch   = draw->vertex_fetch.pitch;
+   const ubyte **src       = draw->vertex_fetch.src_ptr;
+   int i;
 
-      draw->vertex_fetch.src_ptr[i] = (const ubyte *) draw->user.vbuffer[buf] + 
-						       draw->vertex_buffer[buf].buffer_offset + 
-						       draw->vertex_element[i].src_offset;
+   for (i = 0; i < 4; i++) {
+      {
+	 const float *in = (const float *)(src[0] + elts[i] * pitch[0]);
+	 float *out = &machine->Inputs[0].xyzw[0].f[i];
+	 out[0] = in[0];
+	 out[4] = in[1];
+	 out[8] = in[2];
+ 	 out[12] = 1.0f;
+      }
 
-      draw->vertex_fetch.pitch[i] = draw->vertex_buffer[buf].pitch;
-      draw->vertex_fetch.fetch[i] = get_fetch_func( format );
+      {
+	 const float *in = (const float *)(src[1] + elts[i] * pitch[1]);
+	 float *out = &machine->Inputs[1].xyzw[0].f[i];
+	 out[0] = in[0];
+	 out[4] = in[1];
+	 out[8] = in[2];
+ 	 out[12] = 1.0f;
+      }
    }
-
-   draw->vertex_fetch.nr_attrs = nr_attrs;
 }
+
+
+
+
+static void fetch_xyz_rgb_st( struct draw_context *draw,
+			      struct tgsi_exec_machine *machine,
+			      const unsigned *elts,
+			      unsigned count )
+{
+   assert(count <= 4);
+
+   /* loop over vertex attributes (vertex shader inputs)
+    */
+
+   const unsigned *pitch   = draw->vertex_fetch.pitch;
+   const ubyte **src       = draw->vertex_fetch.src_ptr;
+   int i;
+
+   for (i = 0; i < 4; i++) {
+      {
+	 const float *in = (const float *)(src[0] + elts[i] * pitch[0]);
+	 float *out = &machine->Inputs[0].xyzw[0].f[i];
+	 out[0] = in[0];
+	 out[4] = in[1];
+	 out[8] = in[2];
+ 	 out[12] = 1.0f;
+      }
+
+      {
+	 const float *in = (const float *)(src[1] + elts[i] * pitch[1]);
+	 float *out = &machine->Inputs[1].xyzw[0].f[i];
+	 out[0] = in[0];
+	 out[4] = in[1];
+	 out[8] = in[2];
+ 	 out[12] = 1.0f;
+      }
+
+      {
+	 const float *in = (const float *)(src[2] + elts[i] * pitch[2]);
+	 float *out = &machine->Inputs[1].xyzw[0].f[i];
+	 out[0] = in[0];
+	 out[4] = in[1];
+	 out[8] = 0.0f;
+ 	 out[12] = 1.0f;
+      }
+   }
+}
+
+
 
 
 /**
  * Fetch vertex attributes for 'count' vertices.
  */
-void draw_vertex_fetch( struct draw_context *draw,
-			struct tgsi_exec_machine *machine,
-			const unsigned *elts,
-			unsigned count )
+static void generic_vertex_fetch( struct draw_context *draw,
+				  struct tgsi_exec_machine *machine,
+				  const unsigned *elts,
+				  unsigned count )
 {
    unsigned nr_attrs = draw->vertex_fetch.nr_attrs;
    unsigned attr;
@@ -402,3 +461,50 @@ void draw_vertex_fetch( struct draw_context *draw,
    }
 }
 
+
+			       
+void draw_update_vertex_fetch( struct draw_context *draw )
+{
+   unsigned nr_attrs, i;
+
+//   _mesa_printf("%s\n", __FUNCTION__);
+   
+   /* this may happend during context init */
+   if (!draw->vertex_shader)
+      return;
+
+   nr_attrs = draw->vertex_shader->state->num_inputs;
+
+   for (i = 0; i < nr_attrs; i++) {
+      unsigned buf = draw->vertex_element[i].vertex_buffer_index;
+      enum pipe_format format  = draw->vertex_element[i].src_format;
+
+      draw->vertex_fetch.src_ptr[i] = (const ubyte *) draw->user.vbuffer[buf] + 
+						       draw->vertex_buffer[buf].buffer_offset + 
+						       draw->vertex_element[i].src_offset;
+
+      draw->vertex_fetch.pitch[i] = draw->vertex_buffer[buf].pitch;
+      draw->vertex_fetch.fetch[i] = get_fetch_func( format );
+   }
+
+   draw->vertex_fetch.nr_attrs = nr_attrs;
+
+   draw->vertex_fetch.fetch_func = generic_vertex_fetch;
+
+   switch (nr_attrs) {
+   case 2:
+      if (draw->vertex_element[0].src_format == PIPE_FORMAT_R32G32B32_FLOAT &&
+	  draw->vertex_element[1].src_format == PIPE_FORMAT_R32G32B32_FLOAT)
+	 draw->vertex_fetch.fetch_func = fetch_xyz_rgb;
+      break;
+   case 3:
+      if (draw->vertex_element[0].src_format == PIPE_FORMAT_R32G32B32_FLOAT &&
+	  draw->vertex_element[1].src_format == PIPE_FORMAT_R32G32B32_FLOAT &&
+	  draw->vertex_element[1].src_format == PIPE_FORMAT_R32G32_FLOAT)
+	 draw->vertex_fetch.fetch_func = fetch_xyz_rgb_st;
+      break;
+   default:
+      break;
+   }
+
+}
