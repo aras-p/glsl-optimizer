@@ -441,9 +441,12 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
 static void
 cmd_state_vertex_info(const struct vertex_info *vinfo)
 {
-   if (Debug)
+   if (Debug) {
       printf("SPU %u: VERTEX_INFO num_attribs=%u\n", spu.init.id,
              vinfo->num_attribs);
+   }
+   ASSERT(vinfo->num_attribs >= 1);
+   ASSERT(vinfo->num_attribs <= 8);
    memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
 }
 
