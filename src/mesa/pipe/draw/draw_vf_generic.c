@@ -36,125 +36,6 @@
 #include "draw_vf.h"
 
 
-/*
- * These functions take the NDC coordinates pointed to by 'in', apply the
- * NDC->Viewport mapping and store the results at 'v'.
- */
-
-static INLINE void insert_4f_viewport_4( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = scale[1] * in[1] + trans[1];
-   out[2] = scale[2] * in[2] + trans[2];
-   out[3] = in[3];
-}
-
-static INLINE void insert_4f_viewport_3( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = scale[1] * in[1] + trans[1];
-   out[2] = scale[2] * in[2] + trans[2];
-   out[3] = 1;
-}
-
-static INLINE void insert_4f_viewport_2( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = scale[1] * in[1] + trans[1];
-   out[2] =                    trans[2];
-   out[3] = 1;
-}
-
-static INLINE void insert_4f_viewport_1( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] =                    trans[1];
-   out[2] =                    trans[2];
-   out[3] = 1;
-}
-
-static INLINE void insert_3f_viewport_3( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = scale[1] * in[1] + trans[1];
-   out[2] = scale[2] * in[2] + trans[2];
-}
-
-static INLINE void insert_3f_viewport_2( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = scale[1] * in[1] + trans[1];
-   out[2] = scale[2] * in[2] + trans[2];
-}
-
-static INLINE void insert_3f_viewport_1( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] =                    trans[1];
-   out[2] =                    trans[2];
-}
-
-static INLINE void insert_2f_viewport_2( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = scale[1] * in[1] + trans[1];
-}
-
-static INLINE void insert_2f_viewport_1( const struct draw_vf_attr *a, uint8_t *v,
-					 const float *in )
-{
-   float *out = (float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = scale[0] * in[0] + trans[0];
-   out[1] = trans[1];
-}
-
-
-/*
- * These functions do the same as above, except for the viewport mapping.
- */
 
 static INLINE void insert_4f_4( const struct draw_vf_attr *a, uint8_t *v, const float *in )
 {
@@ -276,50 +157,6 @@ static INLINE void insert_1f_1( const struct draw_vf_attr *a, uint8_t *v, const 
 static INLINE void insert_null( const struct draw_vf_attr *a, uint8_t *v, const float *in )
 {
    (void) a; (void) v; (void) in;
-}
-
-static INLINE void insert_4chan_4f_rgba_4( const struct draw_vf_attr *a, uint8_t *v, 
-					   const float *in )
-{
-   GLchan *c = (GLchan *)v;
-   (void) a;
-   UNCLAMPED_FLOAT_TO_CHAN(c[0], in[0]); 
-   UNCLAMPED_FLOAT_TO_CHAN(c[1], in[1]); 
-   UNCLAMPED_FLOAT_TO_CHAN(c[2], in[2]); 
-   UNCLAMPED_FLOAT_TO_CHAN(c[3], in[3]);
-}
-
-static INLINE void insert_4chan_4f_rgba_3( const struct draw_vf_attr *a, uint8_t *v, 
-					   const float *in )
-{
-   GLchan *c = (GLchan *)v;
-   (void) a;
-   UNCLAMPED_FLOAT_TO_CHAN(c[0], in[0]); 
-   UNCLAMPED_FLOAT_TO_CHAN(c[1], in[1]); 
-   UNCLAMPED_FLOAT_TO_CHAN(c[2], in[2]); 
-   c[3] = CHAN_MAX;
-}
-
-static INLINE void insert_4chan_4f_rgba_2( const struct draw_vf_attr *a, uint8_t *v, 
-					   const float *in )
-{
-   GLchan *c = (GLchan *)v;
-   (void) a;
-   UNCLAMPED_FLOAT_TO_CHAN(c[0], in[0]); 
-   UNCLAMPED_FLOAT_TO_CHAN(c[1], in[1]); 
-   c[2] = 0;
-   c[3] = CHAN_MAX;
-}
-
-static INLINE void insert_4chan_4f_rgba_1( const struct draw_vf_attr *a, uint8_t *v, 
-					   const float *in )
-{
-   GLchan *c = (GLchan *)v;
-   (void) a;
-   UNCLAMPED_FLOAT_TO_CHAN(c[0], in[0]); 
-   c[1] = 0;
-   c[2] = 0;
-   c[3] = CHAN_MAX;
 }
 
 static INLINE void insert_4ub_4f_rgba_4( const struct draw_vf_attr *a, uint8_t *v, 
@@ -545,291 +382,64 @@ static INLINE void insert_1ub_1f_1( const struct draw_vf_attr *a, uint8_t *v,
 }
 
 
-/***********************************************************************
- * Functions to perform the reverse operations to the above, for
- * swrast translation and clip-interpolation.
- * 
- * Currently always extracts a full 4 floats.
- */
-
-static void extract_4f_viewport( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   /* Although included for completeness, the position coordinate is
-    * usually handled differently during clipping.
-    */
-   out[0] = (in[0] - trans[0]) / scale[0];
-   out[1] = (in[1] - trans[1]) / scale[1];
-   out[2] = (in[2] - trans[2]) / scale[2];
-   out[3] = in[3];
-}
-
-static void extract_3f_viewport( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = (in[0] - trans[0]) / scale[0];
-   out[1] = (in[1] - trans[1]) / scale[1];
-   out[2] = (in[2] - trans[2]) / scale[2];
-   out[3] = 1;
-}
-
-
-static void extract_2f_viewport( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   const float *scale = a->vf->vp;
-   const float *trans = a->vf->vp + 4;
-   
-   out[0] = (in[0] - trans[0]) / scale[0];
-   out[1] = (in[1] - trans[1]) / scale[1];
-   out[2] = 0;
-   out[3] = 1;
-}
-
-
-static void extract_4f( const struct draw_vf_attr *a, float *out, const uint8_t *v  )
-{
-   const float *in = (const float *)v;
-   (void) a;
-   
-   out[0] = in[0];
-   out[1] = in[1];
-   out[2] = in[2];
-   out[3] = in[3];
-}
-
-static void extract_3f_xyw( const struct draw_vf_attr *a, float *out, const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   (void) a;
-   
-   out[0] = in[0];
-   out[1] = in[1];
-   out[2] = 0;
-   out[3] = in[2];
-}
-
-
-static void extract_3f( const struct draw_vf_attr *a, float *out, const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   (void) a;
-   
-   out[0] = in[0];
-   out[1] = in[1];
-   out[2] = in[2];
-   out[3] = 1;
-}
-
-
-static void extract_2f( const struct draw_vf_attr *a, float *out, const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   (void) a;
-   
-   out[0] = in[0];
-   out[1] = in[1];
-   out[2] = 0;
-   out[3] = 1;
-}
-
-static void extract_1f( const struct draw_vf_attr *a, float *out, const uint8_t *v )
-{
-   const float *in = (const float *)v;
-   (void) a;
-   
-   out[0] = in[0];
-   out[1] = 0;
-   out[2] = 0;
-   out[3] = 1;
-}
-
-static void extract_4chan_4f_rgba( const struct draw_vf_attr *a, float *out, 
-				   const uint8_t *v )
-{
-   GLchan *c = (GLchan *)v;
-   (void) a;
-
-   out[0] = CHAN_TO_FLOAT(c[0]);
-   out[1] = CHAN_TO_FLOAT(c[1]);
-   out[2] = CHAN_TO_FLOAT(c[2]);
-   out[3] = CHAN_TO_FLOAT(c[3]);
-}
-
-static void extract_4ub_4f_rgba( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   (void) a;
-   out[0] = UBYTE_TO_FLOAT(v[0]);
-   out[1] = UBYTE_TO_FLOAT(v[1]);
-   out[2] = UBYTE_TO_FLOAT(v[2]);
-   out[3] = UBYTE_TO_FLOAT(v[3]);
-}
-
-static void extract_4ub_4f_bgra( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   (void) a;
-   out[2] = UBYTE_TO_FLOAT(v[0]);
-   out[1] = UBYTE_TO_FLOAT(v[1]);
-   out[0] = UBYTE_TO_FLOAT(v[2]);
-   out[3] = UBYTE_TO_FLOAT(v[3]);
-}
-
-static void extract_4ub_4f_argb( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   (void) a;
-   out[3] = UBYTE_TO_FLOAT(v[0]);
-   out[0] = UBYTE_TO_FLOAT(v[1]);
-   out[1] = UBYTE_TO_FLOAT(v[2]);
-   out[2] = UBYTE_TO_FLOAT(v[3]);
-}
-
-static void extract_4ub_4f_abgr( const struct draw_vf_attr *a, float *out, 
-				 const uint8_t *v )
-{
-   (void) a;
-   out[3] = UBYTE_TO_FLOAT(v[0]);
-   out[2] = UBYTE_TO_FLOAT(v[1]);
-   out[1] = UBYTE_TO_FLOAT(v[2]);
-   out[0] = UBYTE_TO_FLOAT(v[3]);
-}
-
-static void extract_3ub_3f_rgb( const struct draw_vf_attr *a, float *out, 
-				const uint8_t *v )
-{
-   (void) a;
-   out[0] = UBYTE_TO_FLOAT(v[0]);
-   out[1] = UBYTE_TO_FLOAT(v[1]);
-   out[2] = UBYTE_TO_FLOAT(v[2]);
-   out[3] = 1;
-}
-
-static void extract_3ub_3f_bgr( const struct draw_vf_attr *a, float *out, 
-				const uint8_t *v )
-{
-   (void) a;
-   out[2] = UBYTE_TO_FLOAT(v[0]);
-   out[1] = UBYTE_TO_FLOAT(v[1]);
-   out[0] = UBYTE_TO_FLOAT(v[2]);
-   out[3] = 1;
-}
-
-static void extract_1ub_1f( const struct draw_vf_attr *a, float *out, const uint8_t *v )
-{
-   (void) a;
-   out[0] = UBYTE_TO_FLOAT(v[0]);
-   out[1] = 0;
-   out[2] = 0;
-   out[3] = 1;
-}
-
-
 const struct draw_vf_format_info draw_vf_format_info[DRAW_EMIT_MAX] = 
 {
    { "1f",
-     extract_1f,
      { insert_1f_1, insert_1f_1, insert_1f_1, insert_1f_1 },
      sizeof(float) },
 
    { "2f",
-     extract_2f,
      { insert_2f_1, insert_2f_2, insert_2f_2, insert_2f_2 },
      2 * sizeof(float) },
 
    { "3f",
-     extract_3f,
      { insert_3f_1, insert_3f_2, insert_3f_3, insert_3f_3 },
      3 * sizeof(float) },
 
    { "4f",
-     extract_4f,
      { insert_4f_1, insert_4f_2, insert_4f_3, insert_4f_4 },
      4 * sizeof(float) },
 
-   { "2f_viewport",
-     extract_2f_viewport,
-     { insert_2f_viewport_1, insert_2f_viewport_2, insert_2f_viewport_2,
-       insert_2f_viewport_2 },
-     2 * sizeof(float) },
-
-   { "3f_viewport",
-     extract_3f_viewport,
-     { insert_3f_viewport_1, insert_3f_viewport_2, insert_3f_viewport_3,
-       insert_3f_viewport_3 },
-     3 * sizeof(float) },
-
-   { "4f_viewport",
-     extract_4f_viewport,
-     { insert_4f_viewport_1, insert_4f_viewport_2, insert_4f_viewport_3,
-       insert_4f_viewport_4 }, 
-     4 * sizeof(float) },
-
    { "3f_xyw",
-     extract_3f_xyw,
      { insert_3f_xyw_err, insert_3f_xyw_err, insert_3f_xyw_err, 
        insert_3f_xyw_4 },
      3 * sizeof(float) },
 
    { "1ub_1f",
-     extract_1ub_1f,
      { insert_1ub_1f_1, insert_1ub_1f_1, insert_1ub_1f_1, insert_1ub_1f_1 },
      sizeof(uint8_t) },
 
    { "3ub_3f_rgb",
-     extract_3ub_3f_rgb,
      { insert_3ub_3f_rgb_1, insert_3ub_3f_rgb_2, insert_3ub_3f_rgb_3,
        insert_3ub_3f_rgb_3 },
      3 * sizeof(uint8_t) },
 
    { "3ub_3f_bgr",
-     extract_3ub_3f_bgr,
      { insert_3ub_3f_bgr_1, insert_3ub_3f_bgr_2, insert_3ub_3f_bgr_3,
        insert_3ub_3f_bgr_3 },
      3 * sizeof(uint8_t) },
 
    { "4ub_4f_rgba",
-     extract_4ub_4f_rgba,
      { insert_4ub_4f_rgba_1, insert_4ub_4f_rgba_2, insert_4ub_4f_rgba_3, 
        insert_4ub_4f_rgba_4 },
      4 * sizeof(uint8_t) },
 
    { "4ub_4f_bgra",
-     extract_4ub_4f_bgra,
      { insert_4ub_4f_bgra_1, insert_4ub_4f_bgra_2, insert_4ub_4f_bgra_3,
        insert_4ub_4f_bgra_4 },
      4 * sizeof(uint8_t) },
 
    { "4ub_4f_argb",
-     extract_4ub_4f_argb,
      { insert_4ub_4f_argb_1, insert_4ub_4f_argb_2, insert_4ub_4f_argb_3,
        insert_4ub_4f_argb_4 },
      4 * sizeof(uint8_t) },
 
    { "4ub_4f_abgr",
-     extract_4ub_4f_abgr,
      { insert_4ub_4f_abgr_1, insert_4ub_4f_abgr_2, insert_4ub_4f_abgr_3,
        insert_4ub_4f_abgr_4 },
      4 * sizeof(uint8_t) },
 
-   { "4chan_4f_rgba",
-     extract_4chan_4f_rgba,
-     { insert_4chan_4f_rgba_1, insert_4chan_4f_rgba_2, insert_4chan_4f_rgba_3,
-       insert_4chan_4f_rgba_4 },
-     4 * sizeof(GLchan) },
-
    { "pad",
-     NULL,
      { NULL, NULL, NULL, NULL },
      0 }
 
@@ -889,16 +499,10 @@ static void NAME( struct draw_vertex_fetch *vf,				\
 				          insert_null, NAME)
    
 
-EMIT2(insert_3f_viewport_3, insert_4ub_4f_rgba_4, emit_viewport3_rgba4)
-EMIT2(insert_3f_viewport_3, insert_4ub_4f_bgra_4, emit_viewport3_bgra4)
 EMIT2(insert_3f_3, insert_4ub_4f_rgba_4, emit_xyz3_rgba4)
 
-EMIT3(insert_4f_viewport_4, insert_4ub_4f_rgba_4, insert_2f_2, emit_viewport4_rgba4_st2)
-EMIT3(insert_4f_viewport_4, insert_4ub_4f_bgra_4, insert_2f_2,  emit_viewport4_bgra4_st2)
 EMIT3(insert_4f_4, insert_4ub_4f_rgba_4, insert_2f_2, emit_xyzw4_rgba4_st2)
 
-EMIT4(insert_4f_viewport_4, insert_4ub_4f_rgba_4, insert_2f_2, insert_2f_2, emit_viewport4_rgba4_st2_st2)
-EMIT4(insert_4f_viewport_4, insert_4ub_4f_bgra_4, insert_2f_2, insert_2f_2,  emit_viewport4_bgra4_st2_st2)
 EMIT4(insert_4f_4, insert_4ub_4f_rgba_4, insert_2f_2, insert_2f_2, emit_xyzw4_rgba4_st2_st2)
 
 
@@ -914,42 +518,26 @@ void draw_vf_generate_hardwired_emit( struct draw_vertex_fetch *vf )
     */
    switch (vf->attr_count) {
    case 2:
-      if (vf->attr[0].do_insert == insert_3f_viewport_3) {
-	 if (vf->attr[1].do_insert == insert_4ub_4f_bgra_4) 
-	    func = emit_viewport3_bgra4;
-	 else if (vf->attr[1].do_insert == insert_4ub_4f_rgba_4) 
-	    func = emit_viewport3_rgba4;
-      }
-      else if (vf->attr[0].do_insert == insert_3f_3 &&
-	       vf->attr[1].do_insert == insert_4ub_4f_rgba_4) {
+      if (vf->attr[0].do_insert == insert_3f_3 &&
+	  vf->attr[1].do_insert == insert_4ub_4f_rgba_4) {
  	 func = emit_xyz3_rgba4; 
       }
       break;
    case 3:
       if (vf->attr[2].do_insert == insert_2f_2) {
 	 if (vf->attr[1].do_insert == insert_4ub_4f_rgba_4) {
-	    if (vf->attr[0].do_insert == insert_4f_viewport_4)
-	       func = emit_viewport4_rgba4_st2;
-	    else if (vf->attr[0].do_insert == insert_4f_4) 
+	    if (vf->attr[0].do_insert == insert_4f_4) 
 	       func = emit_xyzw4_rgba4_st2;
 	 }
-	 else if (vf->attr[1].do_insert == insert_4ub_4f_bgra_4 &&
-		  vf->attr[0].do_insert == insert_4f_viewport_4)
-	    func = emit_viewport4_bgra4_st2;
       }
       break;
    case 4:
       if (vf->attr[2].do_insert == insert_2f_2 &&
 	  vf->attr[3].do_insert == insert_2f_2) {
 	 if (vf->attr[1].do_insert == insert_4ub_4f_rgba_4) {
-	    if (vf->attr[0].do_insert == insert_4f_viewport_4)
-	       func = emit_viewport4_rgba4_st2_st2;
-	    else if (vf->attr[0].do_insert == insert_4f_4) 
+	    if (vf->attr[0].do_insert == insert_4f_4) 
 	       func = emit_xyzw4_rgba4_st2_st2;
 	 }
-	 else if (vf->attr[1].do_insert == insert_4ub_4f_bgra_4 &&
-		  vf->attr[0].do_insert == insert_4f_viewport_4)
-	    func = emit_viewport4_bgra4_st2_st2;
       }
       break;
    }

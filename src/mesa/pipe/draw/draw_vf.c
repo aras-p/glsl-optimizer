@@ -177,7 +177,6 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 	 vf->attr[j].attrib = map[i].attrib;
 	 vf->attr[j].format = format;
 	 vf->attr[j].insert = draw_vf_format_info[format].insert;
-	 vf->attr[j].extract = draw_vf_format_info[format].extract;
 	 vf->attr[j].vertattrsize = draw_vf_format_info[format].attrsize;
 	 vf->attr[j].vertoffset = offset;
 	 
@@ -200,41 +199,6 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 }
 
 
-
-void draw_vf_set_vp_matrix( struct draw_vertex_fetch *vf,
-		       const float *viewport )
-{
-   assert(vf->allow_viewport_emits);
-
-   /* scale */
-   vf->vp[0] = viewport[MAT_SX];
-   vf->vp[1] = viewport[MAT_SY];
-   vf->vp[2] = viewport[MAT_SZ];
-   vf->vp[3] = 1.0;
-
-   /* translate */
-   vf->vp[4] = viewport[MAT_TX];
-   vf->vp[5] = viewport[MAT_TY];
-   vf->vp[6] = viewport[MAT_TZ];
-   vf->vp[7] = 0.0;
-}
-
-void draw_vf_set_vp_scale_translate( struct draw_vertex_fetch *vf,
-				const float *scale,
-				const float *translate )
-{
-   assert(vf->allow_viewport_emits);
-
-   vf->vp[0] = scale[0];
-   vf->vp[1] = scale[1];
-   vf->vp[2] = scale[2];
-   vf->vp[3] = scale[3];
-
-   vf->vp[4] = translate[0];
-   vf->vp[5] = translate[1];
-   vf->vp[6] = translate[2];
-   vf->vp[7] = translate[3];
-}
 
 
 /* Set attribute pointers, adjusted for start position:
@@ -288,68 +252,16 @@ void draw_vf_emit_vertices( struct draw_vertex_fetch *vf,
 }
 
 
-/* Extract a named attribute from a hardware vertex.  Will have to
- * reverse any viewport transformation, swizzling or other conversions
- * which may have been applied.
- *
- * This is mainly required for on-the-fly vertex translations to
- * swrast format.
- */
-void draw_vf_get_attr( struct draw_vertex_fetch *vf,
-		  const void *vertex,
-		  GLenum attr, 
-		  const float *dflt,
-		  float *dest )
-{
-   const struct draw_vf_attr *a = vf->attr;
-   const unsigned attr_count = vf->attr_count;
-   unsigned j;
-
-   for (j = 0; j < attr_count; j++) {
-      if (a[j].attrib == attr) {
-	 a[j].extract( &a[j], dest, (uint8_t *)vertex + a[j].vertoffset );
-	 return;
-      }
-   }
-
-   /* Else return the value from ctx->Current.
-    */
-   _mesa_memcpy( dest, dflt, 4*sizeof(float));
-}
 
 
 
-
-struct draw_vertex_fetch *draw_vf_create( boolean allow_viewport_emits )
+struct draw_vertex_fetch *draw_vf_create( void )
 {
    struct draw_vertex_fetch *vf = CALLOC_STRUCT(draw_vertex_fetch);
    unsigned i;
 
    for (i = 0; i < DRAW_VF_ATTRIB_MAX; i++)
       vf->attr[i].vf = vf;
-
-   vf->allow_viewport_emits = allow_viewport_emits;
-
-   switch(CHAN_TYPE) {
-   case GL_UNSIGNED_BYTE:
-      vf->chan_scale[0] = 255.0;
-      vf->chan_scale[1] = 255.0;
-      vf->chan_scale[2] = 255.0;
-      vf->chan_scale[3] = 255.0;
-      break;
-   case GL_UNSIGNED_SHORT:
-      vf->chan_scale[0] = 65535.0;
-      vf->chan_scale[1] = 65535.0;
-      vf->chan_scale[2] = 65535.0;
-      vf->chan_scale[3] = 65535.0;
-      break;
-   default:
-      vf->chan_scale[0] = 1.0;
-      vf->chan_scale[1] = 1.0;
-      vf->chan_scale[2] = 1.0;
-      vf->chan_scale[3] = 1.0;
-      break;
-   }
 
    vf->identity[0] = 0.0;
    vf->identity[1] = 0.0;
