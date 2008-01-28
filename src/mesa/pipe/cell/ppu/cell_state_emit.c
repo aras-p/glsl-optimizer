@@ -33,6 +33,17 @@
 
 
 
+static void
+emit_state_cmd(struct cell_context *cell, uint cmd,
+               const void *state, uint state_size)
+{
+   uint *dst = (uint *) cell_batch_alloc(cell, sizeof(uint) + state_size);
+   *dst = cmd;
+   memcpy(dst + 1, state, state_size);
+}
+
+
+
 void
 cell_emit_state(struct cell_context *cell)
 {
@@ -51,22 +62,18 @@ cell_emit_state(struct cell_context *cell)
    }
 
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
-      uint cmd = CELL_CMD_STATE_DEPTH_STENCIL;
-      cell_batch_append(cell, &cmd, 4);
-      cell_batch_append(cell, cell->depth_stencil,
-                        sizeof(struct pipe_depth_stencil_alpha_state));
+      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL,
+                     cell->depth_stencil,
+                     sizeof(struct pipe_depth_stencil_alpha_state));
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
-      uint cmd = CELL_CMD_STATE_SAMPLER;
-      cell_batch_append(cell, &cmd, 4);
-      cell_batch_append(cell, cell->sampler[0],
-                        sizeof(struct pipe_sampler_state));
+      emit_state_cmd(cell, CELL_CMD_STATE_SAMPLER,
+                     cell->sampler[0], sizeof(struct pipe_sampler_state));
    }
 
    if (cell->dirty & CELL_NEW_VERTEX_INFO) {
-      uint cmd = CELL_CMD_STATE_VERTEX_INFO;
-      cell_batch_append(cell, &cmd, 4);
-      cell_batch_append(cell, &cell->vertex_info, sizeof(struct vertex_info));
+      emit_state_cmd(cell, CELL_CMD_STATE_VERTEX_INFO,
+                     &cell->vertex_info, sizeof(struct vertex_info));
    }
 }
