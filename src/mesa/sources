@@ -175,6 +175,9 @@ DRAW_SOURCES = \
 	pipe/draw/draw_vertex_fetch.c \
 	pipe/draw/draw_vertex_shader.c \
 	pipe/draw/draw_vertex_shader_llvm.c \
+	pipe/draw/draw_vf.c \
+	pipe/draw/draw_vf_generic.c \
+	pipe/draw/draw_vf_sse.c \
 	pipe/draw/draw_wide_prims.c
 
 TGSIEXEC_SOURCES = \
