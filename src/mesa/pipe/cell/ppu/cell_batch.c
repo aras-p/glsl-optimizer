@@ -35,7 +35,7 @@
 uint
 cell_get_empty_buffer(struct cell_context *cell)
 {
-   uint buf = 0;
+   uint buf = 0, tries = 0;
 
    /* Find a buffer that's marked as free by all SPUs */
    while (1) {
@@ -50,6 +50,9 @@ cell_get_empty_buffer(struct cell_context *cell)
                for (spu = 0; spu < cell->num_spus; spu++) {
                   cell->buffer_status[spu][buf][0] = CELL_BUFFER_STATUS_USED;
                }
+               /*
+               printf("PPU: ALLOC BUFFER %u\n", buf);
+               */
                return buf;
             }
          }
@@ -60,9 +63,15 @@ cell_get_empty_buffer(struct cell_context *cell)
 
       /* try next buf */
       buf = (buf + 1) % CELL_NUM_BUFFERS;
+
+      tries++;
+      if (tries == 100) {
+         /*
+         printf("PPU WAITING for buffer...\n");
+         */
+      }
    }
 }
-
 
 
 void
@@ -120,29 +129,39 @@ cell_batch_free_space(const struct cell_context *cell)
 
 
 /**
- * \param cmd  command to append
- * \param length  command size in bytes
+ * Append data to current batch.
  */
 void
-cell_batch_append(struct cell_context *cell, const void *cmd, uint length)
+cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
 {
    uint size;
 
-   assert(length % 4 == 0);
-   assert(cell->cur_batch >= 0);
+   ASSERT(bytes % 4 == 0);
+   ASSERT(bytes <= CELL_BUFFER_SIZE);
+   ASSERT(cell->cur_batch >= 0);
+
+#ifdef ASSERT
+   {
+      uint spu;
+      for (spu = 0; spu < cell->num_spus; spu++) {
+         ASSERT(cell->buffer_status[spu][cell->cur_batch][0]
+                 == CELL_BUFFER_STATUS_USED);
+      }
+   }
+#endif
 
    size = cell->buffer_size[cell->cur_batch];
 
-   if (size + length > CELL_BUFFER_SIZE) {
+   if (size + bytes > CELL_BUFFER_SIZE) {
       cell_batch_flush(cell);
       size = 0;
    }
 
-   assert(size + length <= CELL_BUFFER_SIZE);
+   assert(size + bytes <= CELL_BUFFER_SIZE);
 
-   memcpy(cell->buffer[cell->cur_batch] + size, cmd, length);
+   memcpy(cell->buffer[cell->cur_batch] + size, data, bytes);
 
-   cell->buffer_size[cell->cur_batch] = size + length;
+   cell->buffer_size[cell->cur_batch] = size + bytes;
 }
 
 
@@ -153,8 +172,19 @@ cell_batch_alloc(struct cell_context *cell, uint bytes)
    uint size;
 
    ASSERT(bytes % 4 == 0);
+   ASSERT(bytes <= CELL_BUFFER_SIZE);
 
    assert(cell->cur_batch >= 0);
+
+#ifdef ASSERT
+   {
+      uint spu;
+      for (spu = 0; spu < cell->num_spus; spu++) {
+         ASSERT(cell->buffer_status[spu][cell->cur_batch][0]
+                 == CELL_BUFFER_STATUS_USED);
+      }
+   }
+#endif
 
    size = cell->buffer_size[cell->cur_batch];
 
