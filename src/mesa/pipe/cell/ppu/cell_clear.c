@@ -50,6 +50,10 @@ cell_clear_surface(struct pipe_context *pipe, struct pipe_surface *ps,
    struct cell_context *cell = cell_context(pipe);
    uint surfIndex;
 
+   if (cell->dirty)
+      cell_update_derived(cell);
+
+
    if (!cell->cbuf_map[0])
       cell->cbuf_map[0] = pipe_surface_map(ps);
 
