@@ -396,7 +396,7 @@ static void fetch_xyz_rgb_st( struct draw_context *draw,
 
       {
 	 const float *in = (const float *)(src[2] + elts[i] * pitch[2]);
-	 float *out = &machine->Inputs[1].xyzw[0].f[i];
+	 float *out = &machine->Inputs[2].xyzw[0].f[i];
 	 out[0] = in[0];
 	 out[4] = in[1];
 	 out[8] = 0.0f;
@@ -500,7 +500,7 @@ void draw_update_vertex_fetch( struct draw_context *draw )
    case 3:
       if (draw->vertex_element[0].src_format == PIPE_FORMAT_R32G32B32_FLOAT &&
 	  draw->vertex_element[1].src_format == PIPE_FORMAT_R32G32B32_FLOAT &&
-	  draw->vertex_element[1].src_format == PIPE_FORMAT_R32G32_FLOAT)
+	  draw->vertex_element[2].src_format == PIPE_FORMAT_R32G32_FLOAT)
 	 draw->vertex_fetch.fetch_func = fetch_xyz_rgb_st;
       break;
    default:
