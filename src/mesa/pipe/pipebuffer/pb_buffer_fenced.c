@@ -80,7 +80,6 @@ struct fenced_buffer
    
    struct pb_buffer *buffer;
 
-   unsigned refcount;
    struct pipe_fence_handle *fence;
 
    struct list_head head;
@@ -145,7 +144,7 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
 
       /* Do the delayed destroy:
        */
-      pb_destroy(fenced_buf->buffer);
+      pb_reference(&fenced_buf->buffer, NULL);
       free(fenced_buf);
    }
 }
@@ -162,7 +161,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
       fenced_list->numDelayed++;
    }
    else {
-      pb_destroy(fenced_buf->buffer);
+      pb_reference(&fenced_buf->buffer, NULL);
       free(fenced_buf);
    }
    
@@ -220,9 +219,13 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
    if(!buf)
       return NULL;
    
+   buf->base.base.refcount = 1;
+   buf->base.base.alignment = buffer->base.alignment;
+   buf->base.base.usage = buffer->base.usage;
+   buf->base.base.size = buffer->base.size;
+   
    buf->base.vtbl = &fenced_buffer_vtbl;
    buf->buffer = buffer;
-   buf->refcount = 1;
    buf->list = fenced_list;
    
    return &buf->base;

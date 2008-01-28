@@ -466,6 +466,11 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
       return NULL;
    }
 
+   mm_buf->base.base.refcount = 1;
+   mm_buf->base.base.alignment = desc->alignment;
+   mm_buf->base.base.usage = desc->usage;
+   mm_buf->base.base.size = size;
+   
    mm_buf->base.vtbl = &mm_buffer_vtbl;
    
    mm_buf->mgr = mm;
@@ -505,7 +510,7 @@ mm_bufmgr_destroy(struct pb_manager *mgr)
    mmDestroy(mm->heap);
    
    pb_unmap(mm->buffer);
-   pb_destroy(mm->buffer);
+   pb_reference(&mm->buffer, NULL);
    
    _glthread_UNLOCK_MUTEX(mm->mutex);
    
@@ -579,7 +584,7 @@ mm_bufmgr_create(struct pb_manager *provider,
    
    mgr = mm_bufmgr_create_from_buffer(buffer, size, align2);
    if (!mgr) {
-      pb_destroy(buffer);
+      pb_reference(&buffer, NULL);
       return NULL;
    }
 

@@ -54,6 +54,9 @@
    assert((((unsigned long) (ptr)) & 0xf) == 0);
 
 
+/** round up value to next multiple of 4 */
+#define ROUNDUP4(k)  (((k) + 0x3) & ~0x3)
+
 /** round up value to next multiple of 16 */
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
@@ -124,6 +127,8 @@ struct cell_command_render
    const void *vertex_data;
    const ushort *index_data;
    float xmin, ymin, xmax, ymax;
+   boolean inline_indexes;
+   boolean inline_verts;
 } ALIGN16_ATTRIB;
 
 

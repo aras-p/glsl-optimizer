@@ -48,8 +48,9 @@
 #include <stdlib.h>
 
 #include "pipe/p_compiler.h"
-
 #include "pipe/p_state.h"
+#include "pipe/p_inlines.h"
+
 
 struct pb_vtbl;
 
@@ -80,6 +81,7 @@ struct pb_buffer
     */
    const struct pb_vtbl *vtbl;
 };
+
 
 /**
  * Virtual function table for the buffer storage operations.
@@ -116,6 +118,24 @@ struct pb_vtbl
 };
 
 
+static INLINE struct pipe_buffer *
+pb_pipe_buffer( struct pb_buffer *pbuf )
+{
+   assert(pbuf);
+   return &pbuf->base;
+}
+
+
+static INLINE struct pb_buffer *
+pb_buffer( struct pipe_buffer *buf )
+{
+   assert(buf);
+   /* Could add a magic cookie check on debug builds.
+    */
+   return (struct pb_buffer *)buf;
+}
+
+
 /* Accessor functions for pb->vtbl:
  */
 static INLINE void *
@@ -143,6 +163,7 @@ pb_get_base_buffer( struct pb_buffer *buf,
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
 }
 
+
 static INLINE void 
 pb_destroy(struct pb_buffer *buf)
 {
@@ -151,19 +172,20 @@ pb_destroy(struct pb_buffer *buf)
 }
 
 
-
-
-/**
- * User buffers are special buffers that initially reference memory
- * held by the user but which may if necessary copy that memory into
- * device memory behind the scenes, for submission to hardware.
- *
- * These are particularly useful when the referenced data is never
- * submitted to hardware at all, in the particular case of software
- * vertex processing.
+/* XXX: thread safety issues!
  */
-struct pb_buffer *
-pb_user_buffer_create(void *data, unsigned bytes);
+static INLINE void
+pb_reference(struct pb_buffer **dst,
+             struct pb_buffer *src)
+{
+   if (src) 
+      src->base.refcount++;
+
+   if (*dst && --(*dst)->base.refcount == 0)
+      pb_destroy( *dst );
+
+   *dst = src;
+}
 
 
 /**
@@ -175,22 +197,8 @@ pb_malloc_buffer_create(size_t size,
                         const struct pb_desc *desc);
 
 
-static INLINE struct pipe_buffer *
-pb_pipe_buffer( struct pb_buffer *pbuf )
-{
-   return &pbuf->base;
-}
-
-static INLINE struct pb_buffer *
-pb_buffer( struct pipe_buffer *buf )
-{
-   /* Could add a magic cookie check on debug builds.
-    */
-   return (struct pb_buffer *)buf;
-}
-
-
 void 
 pb_init_winsys(struct pipe_winsys *winsys);
+
 
 #endif /*PB_BUFFER_H_*/

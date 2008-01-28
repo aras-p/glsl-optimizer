@@ -88,6 +88,7 @@ fenced_bufmgr_create_buffer(struct pb_manager *mgr,
    
    fenced_buf = fenced_buffer_create(fenced_mgr->fenced_list, buf);
    if(!fenced_buf) {
+      assert(buf->base.refcount == 1);
       pb_destroy(buf);
    }
    

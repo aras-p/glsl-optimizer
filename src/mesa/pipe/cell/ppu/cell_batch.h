@@ -38,6 +38,9 @@ struct cell_context;
 extern void
 cell_batch_flush(struct cell_context *cell);
 
+extern uint
+cell_batch_free_space(const struct cell_context *cell);
+
 extern void
 cell_batch_append(struct cell_context *cell, const void *cmd, uint length);
 

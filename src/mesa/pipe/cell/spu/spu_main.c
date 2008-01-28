@@ -204,66 +204,116 @@ tile_bounding_box(const struct cell_command_render *render,
 }
 
 
+/**
+ * Render primitives
+ * \param pos_incr  returns value indicating how may words to skip after
+ *                  this command in the batch buffer
+ */
 static void
-cmd_render(const struct cell_command_render *render)
+cmd_render(const struct cell_command_render *render, uint *pos_incr)
 {
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
-   ushort indexes[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
-   uint i, j, total_vertex_bytes, total_index_bytes;
+   ushort index_data[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
    const uint vertex_size = render->vertex_size; /* in bytes */
+   const uint total_vertex_bytes = render->num_verts * vertex_size;
+   const ubyte *vertices;
+   const ushort *indexes;
+   uint mask;
+   uint i, j;
+
 
    if (Debug) {
-      printf("SPU %u: RENDER prim %u, indices: %u, nr_vert: %u\n",
+      printf("SPU %u: RENDER prim %u, num_vert=%u  num_ind=%u  "
+             "inline_vert=%u  inline_ind=%u\n",
              spu.init.id,
              render->prim_type,
              render->num_verts,
-             render->num_indexes);
+             render->num_indexes,
+             render->inline_verts,
+             render->inline_indexes);
+
       /*
       printf("       bound: %g, %g .. %g, %g\n",
              render->xmin, render->ymin, render->xmax, render->ymax);
       */
+      printf("SPU %u: indices at %p  vertices at %p\n",
+             spu.init.id,
+             render->index_data, render->vertex_data);
    }
 
+   ASSERT(sizeof(*render) % 4 == 0);
    ASSERT_ALIGN16(render->vertex_data);
    ASSERT_ALIGN16(render->index_data);
 
-   /* how much vertex data */
-   total_vertex_bytes = render->num_verts * vertex_size;
-   total_index_bytes = render->num_indexes * sizeof(ushort);
-   if (total_index_bytes < 16)
-      total_index_bytes = 16;
-   else
-      total_index_bytes = ROUNDUP16(total_index_bytes);
 
-   /*
-   printf("VBUF: indices at %p,  vertices at %p  total_vertex_bytes %u  ind_bytes %u\n",
-          render->index_data, render->vertex_data, total_vertex_bytes, total_index_bytes);
-   */
+   /**
+    ** Get vertex, index buffers if not inlined
+    **/
+   if (!render->inline_verts) {
+      ASSERT(total_vertex_bytes % 16 == 0);
 
-   ASSERT(total_vertex_bytes % 16 == 0);
-   /* get vertex data from main memory */
-   mfc_get(vertex_data,  /* dest */
-           (unsigned int) render->vertex_data,  /* src */
-           total_vertex_bytes,  /* size */
-           TAG_VERTEX_BUFFER,
-           0, /* tid */
-           0  /* rid */);
+      mfc_get(vertex_data,  /* dest */
+              (unsigned int) render->vertex_data,  /* src */
+              total_vertex_bytes,  /* size */
+              TAG_VERTEX_BUFFER,
+              0, /* tid */
+              0  /* rid */);
 
-   ASSERT(total_index_bytes % 16 == 0);
+      vertices = vertex_data;
+   }
 
-   /* get index data from main memory */
-   mfc_get(indexes,  /* dest */
-           (unsigned int) render->index_data,  /* src */
-           total_index_bytes,
-           TAG_INDEX_BUFFER,
-           0, /* tid */
-           0  /* rid */);
+   if (!render->inline_indexes) {
+      uint total_index_bytes;
 
-   wait_on_mask_all((1 << TAG_VERTEX_BUFFER) |
-                    (1 << TAG_INDEX_BUFFER));
+      *pos_incr = 0;
 
-   /* find tiles which intersect the prim bounding box */
+      total_index_bytes = render->num_indexes * sizeof(ushort);
+      if (total_index_bytes < 16)
+         total_index_bytes = 16;
+      else
+         total_index_bytes = ROUNDUP16(total_index_bytes);
+
+      indexes = index_data;
+
+      /* get index data from main memory */
+      mfc_get(index_data,  /* dest */
+              (unsigned int) render->index_data,  /* src */
+              total_index_bytes,
+              TAG_INDEX_BUFFER,
+              0, /* tid */
+              0  /* rid */);
+   }
+
+
+   /**
+    ** Get pointers to inlined indexes, verts, if present
+    **/
+   if (render->inline_indexes) {
+      /* indexes are right after the render command in the batch buffer */
+      indexes = (ushort *) (render + 1);
+      *pos_incr = (render->num_indexes * 2 + 3) / 4;
+
+      if (render->inline_verts) {
+         /* vertices are after indexes, if inlined */
+         vertices = (const ubyte *) (render + 1) + *pos_incr * 4;
+         *pos_incr = *pos_incr + total_vertex_bytes / 4;
+      }
+   }
+
+
+   /* wait for vertex and/or index buffers if not inlined */
+   mask = 0x0;
+   if (!render->inline_verts)
+      mask |= (1 << TAG_VERTEX_BUFFER);
+   if (!render->inline_indexes)
+      mask |= (1 << TAG_INDEX_BUFFER);
+   wait_on_mask_all(mask);
+
+
+   /**
+    ** find tiles which intersect the prim bounding box
+    **/
    uint txmin, tymin, box_width_tiles, box_num_tiles;
 #if 0
    tile_bounding_box(render, &txmin, &tymin,
@@ -278,7 +328,10 @@ cmd_render(const struct cell_command_render *render)
    /* make sure any pending clears have completed */
    wait_on_mask(1 << TAG_SURFACE_CLEAR);
 
-   /* loop over tiles */
+
+   /**
+    ** loop over tiles, rendering tris
+    **/
    for (i = spu.init.id; i < box_num_tiles; i += spu.init.num_spus) {
       const uint tx = txmin + i % box_width_tiles;
       const uint ty = tymin + i / box_width_tiles;
@@ -300,14 +353,15 @@ cmd_render(const struct cell_command_render *render)
       }
 
       ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
+      ASSERT(render->num_indexes % 3 == 0);
 
       /* loop over tris */
       for (j = 0; j < render->num_indexes; j += 3) {
          const float *v0, *v1, *v2;
 
-         v0 = (const float *) (vertex_data + indexes[j+0] * vertex_size);
-         v1 = (const float *) (vertex_data + indexes[j+1] * vertex_size);
-         v2 = (const float *) (vertex_data + indexes[j+2] * vertex_size);
+         v0 = (const float *) (vertices + indexes[j+0] * vertex_size);
+         v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
+         v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
 
          tri_draw(v0, v1, v2, tx, ty);
       }
@@ -508,8 +562,9 @@ cmd_batch(uint opcode)
          {
             struct cell_command_render *render
                = (struct cell_command_render *) &buffer[pos];
-            cmd_render(render);
-            pos += sizeof(*render) / 4;
+            uint pos_incr;
+            cmd_render(render, &pos_incr);
+            pos += sizeof(*render) / 4 + pos_incr;
          }
          break;
       case CELL_CMD_FINISH:
@@ -591,7 +646,11 @@ main_loop(void)
          cmd_clear_surface(&cmd.clear);
          break;
       case CELL_CMD_RENDER:
-         cmd_render(&cmd.render);
+         {
+            uint pos_incr;
+            cmd_render(&cmd.render, &pos_incr);
+            assert(pos_incr == 0);
+         }
          break;
       case CELL_CMD_BATCH:
          cmd_batch(opcode);
