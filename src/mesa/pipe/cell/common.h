@@ -122,7 +122,7 @@ struct cell_command_render
    uint dummy;        /* XXX this dummy field works around a compiler bug */
    uint num_indexes;
    uint vertex_buf;  /**< which cell->buffer[] contains the vertex data */
-   float xmin, ymin, xmax, ymax;
+   float xmin, dummy2, ymin, xmax, ymax;  /* XXX another dummy field */
    boolean inline_verts;
 } ALIGN16_ATTRIB;
 
