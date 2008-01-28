@@ -29,8 +29,10 @@
 #define DRAW_VF_H
 
 
-#include "pipe/p_compiler.h"
 #include "math/m_vector.h"
+
+#include "pipe/p_compiler.h"
+#include "draw_vertex.h"
 
 
 enum {
@@ -67,24 +69,24 @@ enum {
 };
 
 enum draw_vf_attr_format {
-   EMIT_1F,
-   EMIT_2F,
-   EMIT_3F,
-   EMIT_4F,
-   EMIT_2F_VIEWPORT,		/**< do viewport transform and emit */
-   EMIT_3F_VIEWPORT,		/**< do viewport transform and emit */
-   EMIT_4F_VIEWPORT,		/**< do viewport transform and emit */
-   EMIT_3F_XYW,			/**< for projective texture */
-   EMIT_1UB_1F,			/**< for fog coordinate */
-   EMIT_3UB_3F_RGB,		/**< for specular color */
-   EMIT_3UB_3F_BGR,		/**< for specular color */
-   EMIT_4UB_4F_RGBA,		/**< for color */
-   EMIT_4UB_4F_BGRA,		/**< for color */
-   EMIT_4UB_4F_ARGB,		/**< for color */
-   EMIT_4UB_4F_ABGR,		/**< for color */
-   EMIT_4CHAN_4F_RGBA,		/**< for swrast color */
-   EMIT_PAD,			/**< leave a hole of 'offset' bytes */
-   EMIT_MAX
+   DRAW_EMIT_1F,
+   DRAW_EMIT_2F,
+   DRAW_EMIT_3F,
+   DRAW_EMIT_4F,
+   DRAW_EMIT_2F_VIEWPORT,		/**< do viewport transform and emit */
+   DRAW_EMIT_3F_VIEWPORT,		/**< do viewport transform and emit */
+   DRAW_EMIT_4F_VIEWPORT,		/**< do viewport transform and emit */
+   DRAW_EMIT_3F_XYW,			/**< for projective texture */
+   DRAW_EMIT_1UB_1F,			/**< for fog coordinate */
+   DRAW_EMIT_3UB_3F_RGB,		/**< for specular color */
+   DRAW_EMIT_3UB_3F_BGR,		/**< for specular color */
+   DRAW_EMIT_4UB_4F_RGBA,		/**< for color */
+   DRAW_EMIT_4UB_4F_BGRA,		/**< for color */
+   DRAW_EMIT_4UB_4F_ARGB,		/**< for color */
+   DRAW_EMIT_4UB_4F_ABGR,		/**< for color */
+   DRAW_EMIT_4CHAN_4F_RGBA,		/**< for swrast color */
+   DRAW_EMIT_PAD,			/**< leave a hole of 'offset' bytes */
+   DRAW_EMIT_MAX
 };
 
 struct draw_vf_attr_map {
@@ -115,6 +117,10 @@ void
 draw_vf_set_sources( struct draw_vertex_fetch *vf,
 		     GLvector4f * const attrib[],
 		     unsigned start ); 
+
+void 
+draw_vf_set_data( struct draw_vertex_fetch *vf,
+                  float data[][4]);
 
 void 
 draw_vf_emit_vertices( struct draw_vertex_fetch *vf,
@@ -243,7 +249,7 @@ struct draw_vf_format_info {
    const unsigned attrsize;
 };
 
-const struct draw_vf_format_info draw_vf_format_info[EMIT_MAX];
+const struct draw_vf_format_info draw_vf_format_info[DRAW_EMIT_MAX];
 
 
 #endif
