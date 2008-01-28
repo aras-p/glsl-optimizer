@@ -343,8 +343,6 @@ static boolean build_vertex_emit( struct x86_program *p )
    struct x86_reg countEBP = x86_make_reg(file_REG32, reg_BP);
    struct x86_reg vfESI = x86_make_reg(file_REG32, reg_SI);
    struct x86_reg temp = x86_make_reg(file_XMM, 0);
-   struct x86_reg vp0 = x86_make_reg(file_XMM, 1);
-   struct x86_reg vp1 = x86_make_reg(file_XMM, 2);
    uint8_t *fixup, *label;
 
    /* Push a few regs?
@@ -371,7 +369,6 @@ static boolean build_vertex_emit( struct x86_program *p )
    
    /* always load, needed or not:
     */
-   sse_movups(&p->func, p->chan0, x86_make_disp(vfESI, get_offset(vf, &vf->chan_scale[0])));
    sse_movups(&p->func, p->identity, x86_make_disp(vfESI, get_offset(vf, &vf->identity[0])));
 
    /* Note address for loop jump */
