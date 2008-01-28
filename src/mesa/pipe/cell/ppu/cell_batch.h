@@ -45,7 +45,7 @@ extern uint
 cell_batch_free_space(const struct cell_context *cell);
 
 extern void
-cell_batch_append(struct cell_context *cell, const void *cmd, uint length);
+cell_batch_append(struct cell_context *cell, const void *data, uint bytes);
 
 extern void *
 cell_batch_alloc(struct cell_context *cell, uint bytes);
