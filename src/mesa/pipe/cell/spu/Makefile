@@ -20,7 +20,11 @@ SOURCES = \
 	spu_render.c \
 	spu_texture.c \
 	spu_tile.c \
-	spu_tri.c
+	spu_tri.c \
+	spu_exec.c \
+	spu_util.c \
+	spu_vertex_fetch.c \
+	spu_vertex_shader.c
 
 SPU_OBJECTS = $(SOURCES:.c=.o) \
 
