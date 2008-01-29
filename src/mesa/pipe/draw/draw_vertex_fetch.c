@@ -326,16 +326,16 @@ static void fetch_xyz_rgb( struct draw_context *draw,
 			   const unsigned *elts,
 			   unsigned count )
 {
+   const unsigned *pitch   = draw->vertex_fetch.pitch;
+   const ubyte **src       = draw->vertex_fetch.src_ptr;
+   int i;
+
    assert(count <= 4);
 
 //   _mesa_printf("%s\n", __FUNCTION__);
 
    /* loop over vertex attributes (vertex shader inputs)
     */
-
-   const unsigned *pitch   = draw->vertex_fetch.pitch;
-   const ubyte **src       = draw->vertex_fetch.src_ptr;
-   int i;
 
    for (i = 0; i < 4; i++) {
       {
@@ -366,14 +366,14 @@ static void fetch_xyz_rgb_st( struct draw_context *draw,
 			      const unsigned *elts,
 			      unsigned count )
 {
+   const unsigned *pitch   = draw->vertex_fetch.pitch;
+   const ubyte **src       = draw->vertex_fetch.src_ptr;
+   int i;
+
    assert(count <= 4);
 
    /* loop over vertex attributes (vertex shader inputs)
     */
-
-   const unsigned *pitch   = draw->vertex_fetch.pitch;
-   const ubyte **src       = draw->vertex_fetch.src_ptr;
-   int i;
 
    for (i = 0; i < 4; i++) {
       {

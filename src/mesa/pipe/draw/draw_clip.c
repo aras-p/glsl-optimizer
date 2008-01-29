@@ -406,7 +406,7 @@ clip_init_state( struct draw_stage *stage )
 {
    struct clipper *clipper = clipper_stage( stage );
 
-   clipper->flat = stage->draw->rasterizer->flatshade;
+   clipper->flat = stage->draw->rasterizer->flatshade ? TRUE : FALSE;
 
    if (clipper->flat) {
       const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;

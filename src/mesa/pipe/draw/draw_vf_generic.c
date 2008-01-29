@@ -29,8 +29,6 @@
 
 #include <assert.h>
 
-#include "simple_list.h"
-
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 

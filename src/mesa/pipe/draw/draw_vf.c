@@ -32,7 +32,7 @@
 #include "draw_vf.h"
 
 
-#define DBG 0
+#define DRAW_VF_DBG 0
 
 
 /* TODO: remove this */
@@ -166,9 +166,10 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
    for (j = 0, i = 0; i < nr; i++) {
       const unsigned format = map[i].format;
       if (format == DRAW_EMIT_PAD) {
-	 if (DBG)
+#if (DRAW_VF_DBG)
 	    _mesa_printf("%d: pad %d, offset %d\n", i,  
 			 map[i].offset, offset);  
+#endif
 
 	 offset += map[i].offset;
 
@@ -186,10 +187,11 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 	 if(vf->attr[j].isconst)
 	    memcpy(vf->attr[j].data, &map[i].data, vf->attr[j].vertattrsize);
 	 
-	 if (DBG)
+#if (DRAW_VF_DBG)
 	    _mesa_printf("%d: %s, offset %d\n", i,  
 			 draw_vf_format_info[format].name,
 			 vf->attr[j].vertoffset);   
+#endif
 
 	 offset += draw_vf_format_info[format].attrsize;
 	 j++;
@@ -303,7 +305,7 @@ void draw_vf_destroy( struct draw_vertex_fetch *vf )
        * to unify them, but this probably won't change until this
        * module gets another overhaul.
        */
-      _mesa_exec_free((void *) fp->func);
+      //_mesa_exec_free((void *) fp->func);
       FREE(fp);
    }
    
