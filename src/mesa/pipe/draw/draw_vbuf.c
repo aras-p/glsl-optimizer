@@ -115,6 +115,70 @@ check_space( struct vbuf_stage *vbuf, unsigned nr )
 }
 
 
+#if 0
+static INLINE void
+dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
+{
+   assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
+   unsigned i, j, k;
+
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      j = vinfo->src_index[i];
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
+         fprintf(stderr, "EMIT_OMIT:");
+         break;
+      case EMIT_ALL:
+         assert(i == 0);
+         assert(j == 0);
+         fprintf(stderr, "EMIT_ALL:\t");
+         for(k = 0; k < vinfo->size*4; ++k)
+            fprintf(stderr, "%02x ", *data++);
+         break;
+      case EMIT_1F:
+         fprintf(stderr, "EMIT_1F:\t");
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_1F_PSIZE:
+         fprintf(stderr, "EMIT_1F_PSIZE:\t");
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_2F:
+         fprintf(stderr, "EMIT_2F:\t");
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_3F:
+         fprintf(stderr, "EMIT_3F:\t");
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         data += sizeof(float);
+         break;
+      case EMIT_4F:
+         fprintf(stderr, "EMIT_4F:\t");
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_4UB:
+         fprintf(stderr, "EMIT_4UB:\t");
+         fprintf(stderr, "%u ", *data++);
+         fprintf(stderr, "%u ", *data++);
+         fprintf(stderr, "%u ", *data++);
+         fprintf(stderr, "%u ", *data++);
+         break;
+      default:
+         assert(0);
+      }
+      fprintf(stderr, "\n");
+   }
+   fprintf(stderr, "\n");
+}
+#endif
+
+
 /**
  * Extract the needed fields from post-transformed vertex and emit
  * a hardware(driver) vertex.
@@ -190,7 +254,7 @@ emit_vertex( struct vbuf_stage *vbuf,
             count += 4;
             break;
          case EMIT_4UB:
-   	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
+            *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
                                            float_to_ubyte( vertex->data[j][1] ),
                                            float_to_ubyte( vertex->data[j][0] ),
                                            float_to_ubyte( vertex->data[j][3] ));
@@ -201,6 +265,20 @@ emit_vertex( struct vbuf_stage *vbuf,
          }
       }
       assert(count == vinfo->size);
+#if 0
+      {
+	 static float data[256]; 
+	 draw_vf_set_data(vbuf->vf, vertex->data);
+	 draw_vf_emit_vertices(vbuf->vf, 1, data);
+	 if(memcmp((uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size, data, vbuf->vertex_size)) {
+            fprintf(stderr, "With VF:\n");
+            dump_emitted_vertex(vbuf->vinfo, (uint8_t *)data);
+	    fprintf(stderr, "Without VF:\n");
+	    dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size);
+	    assert(0);
+	 }
+      }
+#endif
    }
    else {
       draw_vf_set_data(vbuf->vf, vertex->data);
@@ -297,11 +375,10 @@ vbuf_set_vf_attributes(struct vbuf_stage *vbuf )
          count++;
          break;
       case EMIT_1F_PSIZE:
-	 /* FIXME */
-	 assert(0);
 	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
+	 attrs[nr_attrs].format = DRAW_EMIT_1F_CONST;
 	 attrs[nr_attrs].offset = 0;
+	 attrs[nr_attrs].data.f[0] = vbuf->stage.draw->rasterizer->point_size;
 	 nr_attrs++;
          count++;
          break;
