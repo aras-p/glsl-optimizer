@@ -1122,7 +1122,7 @@ static void post_wm_emit( struct brw_wm_compile *c )
     }
 }
 
-static void brw_wm_emit_glsl(struct brw_wm_compile *c)
+static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
 
 {
 #define MAX_IFSN 32
@@ -1133,7 +1133,7 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
     struct brw_compile *p = &c->func;
     struct brw_indirect stack_index = brw_indirect(0, 0);
 
-    brw_init_compile(&c->func);
+    brw_init_compile(brw, &c->func);
     c->reg_index = 0;
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -1358,11 +1358,11 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 	c->fp->program.Base.Instructions[i].Data = NULL;
 }
 
-void brw_wm_glsl_emit(struct brw_wm_compile *c)
+void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
     brw_wm_pass_fp(c);
     c->tmp_index = 127;
-    brw_wm_emit_glsl(c);
+    brw_wm_emit_glsl(brw, c);
     c->prog_data.total_grf = c->reg_index;
     c->prog_data.total_scratch = 0;
 }

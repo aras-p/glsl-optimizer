@@ -817,14 +817,16 @@
 
 #define CMD_STATE_BASE_ADDRESS        0x6101
 #define CMD_STATE_INSN_POINTER        0x6102
-#define CMD_PIPELINE_SELECT           0x6104
+#define CMD_PIPELINE_SELECT_965       0x6104
+#define CMD_PIPELINE_SELECT_IGD       0x6904
 
 #define CMD_PIPELINED_STATE_POINTERS  0x7800
 #define CMD_BINDING_TABLE_PTRS        0x7801
 #define CMD_VERTEX_BUFFER             0x7808
 #define CMD_VERTEX_ELEMENT            0x7809
 #define CMD_INDEX_BUFFER              0x780a
-#define CMD_VF_STATISTICS             0x780b
+#define CMD_VF_STATISTICS_965         0x780b
+#define CMD_VF_STATISTICS_IGD         0x680b
 
 #define CMD_DRAW_RECT                 0x7900
 #define CMD_BLEND_CONSTANT_COLOR      0x7901
@@ -834,6 +836,7 @@
 #define CMD_POLY_STIPPLE_PATTERN      0x7907
 #define CMD_LINE_STIPPLE_PATTERN      0x7908
 #define CMD_GLOBAL_DEPTH_OFFSET_CLAMP 0x7909
+#define CMD_AA_LINE_PARAMETERS        0x790a
 
 #define CMD_PIPE_CONTROL              0x7a00
 
@@ -847,6 +850,11 @@
 #define R02_PRIM_END    0x1
 #define R02_PRIM_START  0x2
 
+#include "intel_chipset.h"
 
+#define BRW_IS_IGD(brw)     (IS_IGD((brw)->intel.intelScreen->deviceID))
+#define CMD_PIPELINE_SELECT(brw)       ((BRW_IS_IGD(brw)) ? CMD_PIPELINE_SELECT_IGD : CMD_PIPELINE_SELECT_965)
+#define CMD_VF_STATISTICS(brw)         ((BRW_IS_IGD(brw)) ? CMD_VF_STATISTICS_IGD : CMD_VF_STATISTICS_965)
+#define URB_SIZES(brw)                 ((BRW_IS_IGD(brw)) ? 384 : 256)  /* 512 bit unit */
 
 #endif

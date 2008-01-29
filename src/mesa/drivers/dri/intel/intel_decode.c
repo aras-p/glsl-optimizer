@@ -112,7 +112,7 @@ decode_mi(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 
     for (opcode = 0; opcode < sizeof(opcodes_mi) / sizeof(opcodes_mi[0]);
 	 opcode++) {
-	if ((data[0] & 0x1e000000) >> 23 == opcodes_mi[opcode].opcode) {
+	if ((data[0] & 0x1f800000) >> 23 == opcodes_mi[opcode].opcode) {
 	    unsigned int len = 1, i;
 
 	    instr_out(data, hw_offset, 0, "%s\n", opcodes_mi[opcode].name);
@@ -827,6 +827,8 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	{ 0x6101, 6, 6, "STATE_BASE_ADDRESS" },
 	{ 0x6102, 2, 2 , "STATE_SIP" },
 	{ 0x6104, 1, 1, "3DSTATE_PIPELINE_SELECT" },
+	{ 0x680b, 1, 1, "3DSTATE_VF_STATISTICS" },
+	{ 0x6904, 1, 1, "3DSTATE_PIPELINE_SELECT" },
 	{ 0x7800, 7, 7, "3DSTATE_PIPELINED_POINTERS" },
 	{ 0x7801, 6, 6, "3DSTATE_BINDING_TABLE_POINTERS" },
 	{ 0x780b, 1, 1, "3DSTATE_VF_STATISTICS" },
@@ -836,11 +838,12 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	/* 0x7809: 3DSTATE_VERTEX_ELEMENTS */
 	{ 0x7900, 4, 4, "3DSTATE_DRAWING_RECTANGLE" },
 	{ 0x7901, 5, 5, "3DSTATE_CONSTANT_COLOR" },
-	{ 0x7905, 5, 5, "3DSTATE_DEPTH_BUFFER" },
+	{ 0x7905, 5, 7, "3DSTATE_DEPTH_BUFFER" },
 	{ 0x7906, 2, 2, "3DSTATE_POLY_STIPPLE_OFFSET" },
 	{ 0x7907, 33, 33, "3DSTATE_POLY_STIPPLE_PATTERN" },
-	{ 0x7909, 2, 2, "3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP" },
 	{ 0x7908, 3, 3, "3DSTATE_LINE_STIPPLE" },
+	{ 0x7909, 2, 2, "3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP" },
+	{ 0x790a, 3, 3, "3DSTATE_AA_LINE_PARAMETERS" },
 	{ 0x7b00, 6, 6, "3DPRIMITIVE" },
     };
 

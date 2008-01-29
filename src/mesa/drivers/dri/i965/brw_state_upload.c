@@ -91,7 +91,7 @@ const struct brw_tracked_state *atoms[] =
    &brw_polygon_stipple_offset,
 
    &brw_line_stipple,
-
+   &brw_aa_line_parameters,
    /* Ordering of the commands below is documented as fixed.  
     */
 #if 0

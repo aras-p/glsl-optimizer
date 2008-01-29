@@ -230,6 +230,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    sf.sf7.sprite_point = key->point_sprite;
    sf.sf7.point_size = CLAMP(key->point_size, 1.0, 255.0) * (1<<3);
    sf.sf7.use_point_size_state = !key->point_attenuated;
+   sf.sf7.aa_line_distance_mode = 0;
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */

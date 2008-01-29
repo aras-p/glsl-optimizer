@@ -57,7 +57,7 @@ static void compile_sf_prog( struct brw_context *brw,
 
    /* Begin the compilation:
     */
-   brw_init_compile(&c.func);
+   brw_init_compile(brw, &c.func);
 
    c.key = *key;
    c.nr_attrs = brw_count_bits(c.key.attrs);

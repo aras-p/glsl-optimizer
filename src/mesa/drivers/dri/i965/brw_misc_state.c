@@ -182,15 +182,20 @@ static void upload_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
+   unsigned int len = BRW_IS_IGD(brw) ? sizeof(struct brw_depthbuffer_igd) / 4 : sizeof(struct brw_depthbuffer) / 4;
 
    if (region == NULL) {
-      BEGIN_BATCH(5, IGNORE_CLIPRECTS);
-      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
+      BEGIN_BATCH(len, IGNORE_CLIPRECTS);
+      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
 		(BRW_SURFACE_NULL << 29));
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
+
+      if (BRW_IS_IGD(brw))
+         OUT_BATCH(0);
+
       ADVANCE_BATCH();
    } else {
       unsigned int format;
@@ -210,8 +215,8 @@ static void upload_depthbuffer(struct brw_context *brw)
 	 return;
       }
 
-      BEGIN_BATCH(5, IGNORE_CLIPRECTS);
-      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (5 - 2));
+      BEGIN_BATCH(len, IGNORE_CLIPRECTS);
+      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
@@ -223,6 +228,10 @@ static void upload_depthbuffer(struct brw_context *brw)
 		((region->pitch - 1) << 6) |
 		((region->height - 1) << 19));
       OUT_BATCH(0);
+
+      if (BRW_IS_IGD(brw))
+         OUT_BATCH(0);
+
       ADVANCE_BATCH();
    }
 }
@@ -293,6 +302,33 @@ const struct brw_tracked_state brw_polygon_stipple_offset = {
       .cache = 0
    },
    .update = upload_polygon_stipple_offset
+};
+
+/**********************************************************************
+ * AA Line parameters
+ */
+static void upload_aa_line_parameters(struct brw_context *brw)
+{
+   struct brw_aa_line_parameters balp;
+   
+   if (!BRW_IS_IGD(brw))
+      return;
+
+   /* use legacy aa line coverage computation */
+   memset(&balp, 0, sizeof(balp));
+   balp.header.opcode = CMD_AA_LINE_PARAMETERS;
+   balp.header.length = sizeof(balp) / 4 - 2;
+   
+   BRW_CACHED_BATCH_STRUCT(brw, &balp);
+}
+
+const struct brw_tracked_state brw_aa_line_parameters = {
+   .dirty = {
+      .mesa = 0,
+      .brw = BRW_NEW_CONTEXT,
+      .cache = 0
+   },
+   .update = upload_aa_line_parameters
 };
 
 /***********************************************************************
@@ -377,7 +413,7 @@ static void upload_invarient_state( struct brw_context *brw )
       struct brw_pipeline_select ps;
 
       memset(&ps, 0, sizeof(ps));
-      ps.header.opcode = CMD_PIPELINE_SELECT;
+      ps.header.opcode = CMD_PIPELINE_SELECT(brw);
       ps.header.pipeline_select = 0;
       BRW_BATCH_STRUCT(brw, &ps);
    }
@@ -413,7 +449,7 @@ static void upload_invarient_state( struct brw_context *brw )
       struct brw_vf_statistics vfs;
       memset(&vfs, 0, sizeof(vfs));
 
-      vfs.opcode = CMD_VF_STATISTICS;
+      vfs.opcode = CMD_VF_STATISTICS(brw);
       if (INTEL_DEBUG & DEBUG_STATS)
 	 vfs.statistics_enable = 1; 
 

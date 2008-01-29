@@ -101,8 +101,9 @@ void brw_pop_insn_state( struct brw_compile *p )
 
 /***********************************************************************
  */
-void brw_init_compile( struct brw_compile *p )
+void brw_init_compile( struct brw_context *brw, struct brw_compile *p )
 {
+   p->brw = brw;
    p->nr_insn = 0;
    p->current = p->stack;
    memset(p->current, 0, sizeof(p->current[0]));

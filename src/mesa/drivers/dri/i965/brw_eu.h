@@ -105,6 +105,7 @@ struct brw_compile {
 
    GLuint flag_value;
    GLboolean single_program_flow;
+   struct brw_context *brw;
 };
 
 
@@ -693,7 +694,7 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value )
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
 
-void brw_init_compile( struct brw_compile *p );
+void brw_init_compile( struct brw_context *, struct brw_compile *p );
 const GLuint *brw_get_program( struct brw_compile *p, GLuint *sz );
 
 

@@ -101,6 +101,10 @@ clip_unit_create_from_key(struct brw_context *brw,
    clip.clip5.vertex_position_space = BRW_CLIP_NDCSPACE;
    clip.clip5.api_mode = BRW_CLIP_API_OGL;
    clip.clip5.clip_mode = key->clip_mode;
+
+   if (BRW_IS_IGD(brw))
+      clip.clip5.negative_w_clip_test = 1;
+
    clip.clip6.clipper_viewport_state_ptr = 0;
    clip.viewport_xmin = -1;
    clip.viewport_xmax = 1;

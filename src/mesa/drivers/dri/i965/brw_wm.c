@@ -155,7 +155,7 @@ static void do_wm_prog( struct brw_context *brw,
    c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
    if (brw_wm_is_glsl(&c->fp->program)) {
-       brw_wm_glsl_emit(c);
+       brw_wm_glsl_emit(brw, c);
    } else {
        /* Augment fragment program.  Add instructions for pre- and
 	* post-fragment-program tasks such as interpolation and fogging.
@@ -181,7 +181,7 @@ static void do_wm_prog( struct brw_context *brw,
 
        /* This is where we start emitting gen4 code:
 	*/
-       brw_init_compile(&c->func);    
+       brw_init_compile(brw, &c->func);
 
        brw_wm_pass2(c);
 

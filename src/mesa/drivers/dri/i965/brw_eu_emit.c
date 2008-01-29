@@ -318,7 +318,8 @@ static void brw_set_dp_read_message( struct brw_instruction *insn,
    insn->bits3.dp_read.end_of_thread = end_of_thread;
 }
 
-static void brw_set_sampler_message( struct brw_instruction *insn,
+static void brw_set_sampler_message(struct brw_context *brw,
+                 struct brw_instruction *insn,
 				     GLuint binding_table_index,
 				     GLuint sampler,
 				     GLuint msg_type,
@@ -328,14 +329,24 @@ static void brw_set_sampler_message( struct brw_instruction *insn,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   insn->bits3.sampler.binding_table_index = binding_table_index;
-   insn->bits3.sampler.sampler = sampler;
-   insn->bits3.sampler.msg_type = msg_type;
-   insn->bits3.sampler.return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
-   insn->bits3.sampler.response_length = response_length;
-   insn->bits3.sampler.msg_length = msg_length;
-   insn->bits3.sampler.end_of_thread = eot;
-   insn->bits3.sampler.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+   if (BRW_IS_IGD(brw)) {
+      insn->bits3.sampler_igd.binding_table_index = binding_table_index;
+      insn->bits3.sampler_igd.sampler = sampler;
+      insn->bits3.sampler_igd.msg_type = msg_type;
+      insn->bits3.sampler_igd.response_length = response_length;
+      insn->bits3.sampler_igd.msg_length = msg_length;
+      insn->bits3.sampler_igd.end_of_thread = eot;
+      insn->bits3.sampler_igd.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+   } else {
+      insn->bits3.sampler.binding_table_index = binding_table_index;
+      insn->bits3.sampler.sampler = sampler;
+      insn->bits3.sampler.msg_type = msg_type;
+      insn->bits3.sampler.return_format = BRW_SAMPLER_RETURN_FORMAT_FLOAT32;
+      insn->bits3.sampler.response_length = response_length;
+      insn->bits3.sampler.msg_length = msg_length;
+      insn->bits3.sampler.end_of_thread = eot;
+      insn->bits3.sampler.msg_target = BRW_MESSAGE_TARGET_SAMPLER;
+   }
 }
 
 
@@ -1017,7 +1028,7 @@ void brw_SAMPLE(struct brw_compile *p,
 
       brw_set_dest(insn, dest);
       brw_set_src0(insn, src0);
-      brw_set_sampler_message(insn,
+      brw_set_sampler_message(p->brw, insn,
 			      binding_table_index,
 			      sampler,
 			      msg_type,

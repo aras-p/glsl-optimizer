@@ -52,19 +52,25 @@
 #define PCI_CHIP_I965_GM                0x2A02
 #define PCI_CHIP_I965_GME               0x2A12
 
+#define PCI_CHIP_IGD_GM       0x2A42
+
 #define IS_MOBILE(devid)	(devid == PCI_CHIP_I855_GM || \
 				 devid == PCI_CHIP_I915_GM || \
 				 devid == PCI_CHIP_I945_GM || \
 				 devid == PCI_CHIP_I945_GME || \
 				 devid == PCI_CHIP_I965_GM || \
-				 devid == PCI_CHIP_I965_GME)
+				 devid == PCI_CHIP_I965_GME || \
+				 devid == PCI_CHIP_IGD_GM)
+
+#define IS_IGD(devid)  (devid == PCI_CHIP_IGD_GM)
 
 #define IS_965(devid)		(devid == PCI_CHIP_I965_G || \
 				 devid == PCI_CHIP_I965_Q || \
 				 devid == PCI_CHIP_I965_G_1 || \
 				 devid == PCI_CHIP_I965_GM || \
 				 devid == PCI_CHIP_I965_GME || \
-				 devid == PCI_CHIP_I946_GZ)
+				 devid == PCI_CHIP_I946_GZ || \
+				 IS_IGD(devid))
 
 #define IS_9XX(devid)		(devid == PCI_CHIP_I915_G || \
 				 devid == PCI_CHIP_I915_GM || \

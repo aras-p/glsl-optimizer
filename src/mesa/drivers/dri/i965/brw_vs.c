@@ -49,7 +49,7 @@ static void do_vs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    memcpy(&c.key, key, sizeof(*key));
 
-   brw_init_compile(&c.func);
+   brw_init_compile(brw, &c.func);
    c.vp = vp;
 
    c.prog_data.outputs_written = vp->program.Base.OutputsWritten;
