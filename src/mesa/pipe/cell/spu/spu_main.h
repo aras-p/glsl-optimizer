@@ -96,6 +96,7 @@ extern boolean Debug;
 #define TAG_BATCH_BUFFER      17
 #define TAG_MISC              18
 #define TAG_TEXTURE_TILE      19
+#define TAG_INSTRUCTION_FETCH 20
 
 
 

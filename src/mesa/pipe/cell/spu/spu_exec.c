@@ -50,6 +50,9 @@
  *   Brian Paul
  */
 
+#include <libmisc.h>
+#include <spu_mfcio.h>
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
@@ -57,6 +60,7 @@
 #include "pipe/tgsi/util/tgsi_parse.h"
 #include "pipe/tgsi/util/tgsi_util.h"
 #include "spu_exec.h"
+#include "spu_main.h"
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
@@ -2329,12 +2333,30 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
 
    /* execute declarations (interpolants) */
    for (i = 0; i < mach->NumDeclarations; i++) {
+      uint8_t buffer[sizeof(struct tgsi_full_declaration) + 32] ALIGN16_ATTRIB;
+      struct tgsi_full_declaration decl;
+      unsigned long decl_addr = (unsigned long) (mach->Declarations+i);
+      unsigned size = ((sizeof(decl) + (decl_addr & 0x0f) + 0x0f) & ~0x0f);
+
+      mfc_get(buffer, decl_addr & ~0x0f, size, TAG_INSTRUCTION_FETCH, 0, 0);
+      wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
+
+      memcpy(& decl, buffer + (decl_addr & 0x0f), sizeof(decl));
       exec_declaration( mach, mach->Declarations+i );
    }
 
    /* execute instructions, until pc is set to -1 */
    while (pc != -1) {
+      uint8_t buffer[sizeof(struct tgsi_full_instruction) + 32] ALIGN16_ATTRIB;
+      struct tgsi_full_instruction inst;
+      unsigned long inst_addr = (unsigned long) (mach->Instructions + pc);
+      unsigned size = ((sizeof(inst) + (inst_addr & 0x0f) + 0x0f) & ~0x0f);
+
       assert(pc < mach->NumInstructions);
+      mfc_get(buffer, inst_addr & ~0x0f, size, TAG_INSTRUCTION_FETCH, 0, 0);
+      wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
+
+      memcpy(& inst, buffer + (inst_addr & 0x0f), sizeof(inst));
       exec_instruction( mach, mach->Instructions + pc, &pc );
    }
 
