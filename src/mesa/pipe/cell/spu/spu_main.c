@@ -253,7 +253,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    /* we'll DMA into these buffers */
    ubyte vertex_data[CELL_BUFFER_SIZE] ALIGN16_ATTRIB;
    const uint vertex_size = render->vertex_size; /* in bytes */
-   const uint total_vertex_bytes = render->num_verts * vertex_size;
+   /*const*/ uint total_vertex_bytes = render->num_verts * vertex_size;
    const ubyte *vertices;
    const ushort *indexes;
    uint i, j;
@@ -289,9 +289,21 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    }
    else {
       /* Begin DMA fetch of vertex buffer */
-      void *src = spu.init.buffers[render->vertex_buf];
-      mfc_get(vertex_data,  /* dest */
-              (unsigned int) src,
+      ubyte *src = spu.init.buffers[render->vertex_buf];
+      ubyte *dest = vertex_data;
+
+      /* skip vertex data we won't use */
+#if 01
+      src += render->min_index * vertex_size;
+      dest += render->min_index * vertex_size;
+      total_vertex_bytes -= render->min_index * vertex_size;
+#endif
+      ASSERT(total_vertex_bytes % 16 == 0);
+      ASSERT_ALIGN16(dest);
+      ASSERT_ALIGN16(src);
+
+      mfc_get(dest,   /* in vertex_data[] array */
+              (unsigned int) src,  /* src in main memory */
               total_vertex_bytes,  /* size */
               TAG_VERTEX_BUFFER,
               0, /* tid */
