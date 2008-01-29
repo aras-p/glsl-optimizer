@@ -138,15 +138,22 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    struct cell_context *cell = cvbr->cell;
    float xmin, ymin, xmax, ymax;
    uint i;
-   uint nr_vertices = 0;
+   uint nr_vertices = 0, min_index = ~0;
    const void *vertices = cvbr->vertex_buffer;
    const uint vertex_size = cvbr->vertex_size;
 
    for (i = 0; i < nr_indices; i++) {
       if (indices[i] > nr_vertices)
          nr_vertices = indices[i];
+      if (indices[i] < min_index)
+         min_index = indices[i];
    }
    nr_vertices++;
+
+#if 0
+   /*if (min_index > 0)*/
+      printf("%s min_index = %u\n", __FUNCTION__, min_index);
+#endif
 
 #if 0
    printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u\n",
@@ -169,7 +176,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    /* compute x/y bounding box */
    xmin = ymin = 1e50;
    xmax = ymax = -1e50;
-   for (i = 0; i < nr_vertices; i++) {
+   for (i = min_index; i < nr_vertices; i++) {
       const float *v = (float *) ((ubyte *) vertices + i * vertex_size);
       if (v[0] < xmin)
          xmin = v[0];
@@ -204,6 +211,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->prim_type = cvbr->prim;
 
       render->num_indexes = nr_indices;
+      render->min_index = min_index;
 
       /* append indices after render command */
       memcpy(render + 1, indices, nr_indices * 2);
@@ -214,6 +222,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->vertex_size = 4 * cell->vertex_info.size;
       render->num_verts = nr_vertices;
       if (ALLOW_INLINE_VERTS &&
+          min_index == 0 &&
           vertex_bytes <= cell_batch_free_space(cell)) {
          /* vertex data inlined, after indices */
          void *dst = cell_batch_alloc(cell, vertex_bytes);

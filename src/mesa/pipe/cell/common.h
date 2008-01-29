@@ -124,6 +124,8 @@ struct cell_command_render
    uint num_indexes;
    uint vertex_buf;  /**< which cell->buffer[] contains the vertex data */
    float xmin, dummy2, ymin, xmax, ymax;  /* XXX another dummy field */
+   uint dummy3;
+   uint min_index;
    boolean inline_verts;
 } ALIGN16_ATTRIB;
 
