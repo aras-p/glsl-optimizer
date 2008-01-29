@@ -200,16 +200,35 @@ static INLINE void
 eval_coeff( struct setup_stage *setup, uint slot,
             float x, float y, float result[4][4])
 {
-   uint i;
-   const float *dadx = setup->coef[slot].dadx;
-   const float *dady = setup->coef[slot].dady;
+   switch (spu.vertex_info.interp_mode[slot]) {
+   case INTERP_CONSTANT:
+      {
+         uint i;
+         for (i = 0; i < 4; i++) {
+            result[QUAD_TOP_LEFT][i] =
+            result[QUAD_TOP_RIGHT][i] =
+            result[QUAD_BOTTOM_LEFT][i] =
+            result[QUAD_BOTTOM_RIGHT][i] = setup->coef[slot].a0[i];
+         }
+      }
+      break;
 
-   /* loop over XYZW comps */
-   for (i = 0; i < 4; i++) {
-      result[QUAD_TOP_LEFT][i] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
-      result[QUAD_TOP_RIGHT][i] = result[0][i] + dadx[i];
-      result[QUAD_BOTTOM_LEFT][i] = result[0][i] + dady[i];
-      result[QUAD_BOTTOM_RIGHT][i] = result[0][i] + dadx[i] + dady[i];
+   case INTERP_LINEAR:
+      /* fall-through, for now */
+   default:
+      {
+         uint i;
+         const float *dadx = setup->coef[slot].dadx;
+         const float *dady = setup->coef[slot].dady;
+
+         /* loop over XYZW comps */
+         for (i = 0; i < 4; i++) {
+            result[QUAD_TOP_LEFT][i] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
+            result[QUAD_TOP_RIGHT][i] = result[0][i] + dadx[i];
+            result[QUAD_BOTTOM_LEFT][i] = result[0][i] + dady[i];
+            result[QUAD_BOTTOM_RIGHT][i] = result[0][i] + dadx[i] + dady[i];
+         }
+      }
    }
 }
 
