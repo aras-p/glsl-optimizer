@@ -30,11 +30,13 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include <spu_mfcio.h>
 #include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 #include "spu_exec.h"
 #include "spu_vertex_shader.h"
+#include "spu_main.h"
 
 
 #define DRAW_DBG 0
@@ -412,15 +414,17 @@ static void fetch_xyz_rgb_st( struct spu_vs_context *draw,
 /**
  * Fetch vertex attributes for 'count' vertices.
  */
-static void generic_vertex_fetch( struct spu_vs_context *draw,
-				  struct spu_exec_machine *machine,
-				  const unsigned *elts,
-				  unsigned count )
+static void generic_vertex_fetch(struct spu_vs_context *draw,
+                                 struct spu_exec_machine *machine,
+                                 const unsigned *elts,
+                                 unsigned count)
 {
    unsigned nr_attrs = draw->vertex_fetch.nr_attrs;
    unsigned attr;
 
    assert(count <= 4);
+
+   wait_on_mask(1 << TAG_VERTEX_BUFFER);
 
 //   _mesa_printf("%s %d\n", __FUNCTION__, count);
 
@@ -441,13 +445,23 @@ static void generic_vertex_fetch( struct spu_vs_context *draw,
        * a prototype for an sse implementation, which would have
        * difficulties doing that.
        */
-      for (i = 0; i < count; i++) 
-	 fetch( src + elts[i] * pitch, p[i] );
+      for (i = 0; i < count; i++) {
+         uint8_t buffer[32 + (sizeof(float) * 4)] ALIGN16_ATTRIB;
+         const unsigned long addr = src + elts[i] * pitch;
+         const unsigned size = (sizeof(float) * 4) + (addr & 0x0f);
+
+         mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);
+         wait_on_mask(1 << TAG_VERTEX_BUFFER);
+
+         memcpy(& buffer, buffer + (addr & 0x0f), sizeof(float) * 4);
+
+         fetch(buffer, p[i]);
+      }
 
       /* Be nice and zero out any missing vertices: 
        */
       for (/* empty */; i < 4; i++) 
-	 p[i][0] = p[i][1] = p[i][2] = p[i][3] = 0;
+          p[i][0] = p[i][1] = p[i][2] = p[i][3] = 0;
       
       /* Transpose/swizzle into sse-friendly format.  Currently
        * assuming that all vertex shader inputs are float[4], but this
@@ -475,6 +489,9 @@ void spu_update_vertex_fetch( struct spu_vs_context *draw )
 
    draw->vertex_fetch.fetch_func = generic_vertex_fetch;
 
+   /* Disable the fast path because they don't use mfc_get yet.
+    */
+#if 0
    switch (draw->vertex_fetch.nr_attrs) {
    case 2:
       if (draw->vertex_fetch.format[0] == PIPE_FORMAT_R32G32B32_FLOAT &&
@@ -490,4 +507,5 @@ void spu_update_vertex_fetch( struct spu_vs_context *draw )
    default:
       break;
    }
+#endif
 }

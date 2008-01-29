@@ -32,6 +32,8 @@
   *   Ian Romanick <idr@us.ibm.com>
   */
 
+#include <spu_mfcio.h>
+
 #include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
@@ -40,9 +42,7 @@
 #include "pipe/draw/draw_private.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/cell/common.h"
-
-#define DBG_VS 0
-
+#include "spu_main.h"
 
 static INLINE unsigned
 compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
@@ -110,6 +110,12 @@ run_vertex_program(struct spu_vs_context *draw,
    for (j = 0; j < count; j++) {
       unsigned slot;
       float x, y, z, w;
+      unsigned char buffer[sizeof(struct vertex_header)
+			   + MAX_VERTEX_SIZE] ALIGN16_ATTRIB;
+      struct vertex_header *const tmpOut =
+	  (struct vertex_header *) buffer;
+      const unsigned vert_size = sizeof(struct vertex_header)
+	  + (sizeof(float) * 4 * draw->num_vs_outputs);
 
       /* Handle attr[0] (position) specially:
        *
@@ -117,14 +123,14 @@ run_vertex_program(struct spu_vs_context *draw,
        * program as a set of DP4 instructions appended to the
        * user-provided code.
        */
-      x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+      x = tmpOut->clip[0] = machine->Outputs[0].xyzw[0].f[j];
+      y = tmpOut->clip[1] = machine->Outputs[0].xyzw[1].f[j];
+      z = tmpOut->clip[2] = machine->Outputs[0].xyzw[2].f[j];
+      w = tmpOut->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
-      vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane,
+      tmpOut->clipmask = compute_clipmask(tmpOut->clip, draw->plane,
 					   draw->nr_planes);
-      vOut[j]->edgeflag = 1;
+      tmpOut->edgeflag = 1;
 
       /* divide by w */
       w = 1.0f / w;
@@ -133,35 +139,27 @@ run_vertex_program(struct spu_vs_context *draw,
       z *= w;
 
       /* Viewport mapping */
-      vOut[j]->data[0][0] = x * scale[0] + trans[0];
-      vOut[j]->data[0][1] = y * scale[1] + trans[1];
-      vOut[j]->data[0][2] = z * scale[2] + trans[2];
-      vOut[j]->data[0][3] = w;
+      tmpOut->data[0][0] = x * scale[0] + trans[0];
+      tmpOut->data[0][1] = y * scale[1] + trans[1];
+      tmpOut->data[0][2] = z * scale[2] + trans[2];
+      tmpOut->data[0][3] = w;
 
-#if DBG_VS
-      printf("output[%d]win: %f %f %f %f\n", j,
-             vOut[j]->data[0][0],
-             vOut[j]->data[0][1],
-             vOut[j]->data[0][2],
-             vOut[j]->data[0][3]);
-#endif
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
        */
       for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-         vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-         vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-         vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-         vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-#if DBG_VS
-         printf("output[%d][%d]: %f %f %f %f\n", j, slot,
-                vOut[j]->data[slot][0],
-                vOut[j]->data[slot][1],
-                vOut[j]->data[slot][2],
-                vOut[j]->data[slot][3]);
-#endif
+         tmpOut->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+         tmpOut->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+         tmpOut->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+         tmpOut->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
       }
+
+      wait_on_mask(1 << TAG_VERTEX_BUFFER);
+      mfc_put(tmpOut, vOut[j], vert_size, TAG_VERTEX_BUFFER, 0, 0);
+
    } /* loop over vertices */
+
+   wait_on_mask(1 << TAG_VERTEX_BUFFER);
 }
 
 

@@ -71,10 +71,11 @@ struct draw_context *draw_create( void )
     */
    {
       uint i;
-      char *tmp = (char*) MALLOC( Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE );
+      const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
+      char *tmp = align_malloc(Elements(draw->vcache.vertex) * size, 16);
 
       for (i = 0; i < Elements(draw->vcache.vertex); i++)
-	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
+	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * size);
    }
 
    draw->convert_wide_points = TRUE;
