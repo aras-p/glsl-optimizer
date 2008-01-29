@@ -29,6 +29,8 @@
  * Triangle rendering within a tile.
  */
 
+#include <pack_rgba8.h>
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
@@ -36,7 +38,6 @@
 #include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_tri.h"
-
 
 
 /**
@@ -252,19 +253,11 @@ eval_z( struct setup_stage *setup,
 static INLINE uint
 pack_color(const float color[4])
 {
-   uint r = (uint) (color[0] * 255.0);
-   uint g = (uint) (color[1] * 255.0);
-   uint b = (uint) (color[2] * 255.0);
-   uint a = (uint) (color[3] * 255.0);
-   r = MIN2(r, 255);
-   g = MIN2(g, 255);
-   b = MIN2(b, 255);
-   a = MIN2(a, 255);
    switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return (a << 24) | (r << 16) | (g << 8) | b;
+      return _pack_rgba8(color[3], color[0], color[1], color[2]);
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return (b << 24) | (g << 16) | (r << 8) | a;
+      return _pack_rgba8(color[2], color[1], color[0], color[3]);
    default:
       ASSERT(0);
       return 0;
