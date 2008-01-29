@@ -127,7 +127,7 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
       if (draw->vs.queue_nr)
-	 draw_vertex_shader_queue_flush(draw);
+         (*draw->shader_queue_flush)(draw);
 
       if (flags >= DRAW_FLUSH_PRIM_QUEUE) {
 	 if (draw->pq.queue_nr)

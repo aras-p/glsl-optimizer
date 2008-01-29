@@ -78,6 +78,8 @@ struct draw_context *draw_create( void )
 	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * size);
    }
 
+   draw->shader_queue_flush = draw_vertex_shader_queue_flush;
+
    draw->convert_wide_points = TRUE;
    draw->convert_wide_lines = TRUE;
 
