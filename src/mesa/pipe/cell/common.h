@@ -83,6 +83,9 @@
 #define CELL_CMD_STATE_SAMPLER       12
 #define CELL_CMD_STATE_TEXTURE       13
 #define CELL_CMD_STATE_VERTEX_INFO   14
+#define CELL_CMD_STATE_VIEWPORT      15
+#define CELL_CMD_STATE_VS_ARRAY_INFO 16
+#define CELL_CMD_VS_EXECUTE          17
 
 
 #define CELL_NUM_BUFFERS 4
@@ -113,6 +116,41 @@ struct cell_command_clear_surface
    uint opcode;
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
+} ALIGN16_ATTRIB;
+
+
+/**
+ * Array info used by the vertex shader's vertex puller.
+ */
+struct cell_array_info
+{
+    void *base;               /**< Base address of the 0th element. */
+    uint attr;                /**< Attribute that this state if for. */
+    uint pitch;               /**< Byte pitch from one entry to the next. */
+    enum pipe_format format;  /**< Pipe format of each entry. */
+} ALIGN16_ATTRIB;
+
+
+struct cell_shader_info
+{
+   unsigned processor;
+   unsigned num_outputs;
+
+   void *declarations;
+   unsigned num_declarations;
+   void *instructions;
+   unsigned num_instructions;
+   void *uniforms;
+} ALIGN16_ATTRIB;
+
+
+struct cell_command_vs
+{
+   struct cell_shader_info   shader;
+   void *elts;
+   unsigned num_elts;
+   unsigned bytes_per_elt;
+   void *vOut;
 } ALIGN16_ATTRIB;
 
 

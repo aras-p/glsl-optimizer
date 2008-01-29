@@ -36,6 +36,7 @@
 #include "spu_render.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
+#include "spu_vertex_shader.h"
 #include "pipe/cell/common.h"
 #include "pipe/p_defines.h"
 
@@ -50,6 +51,7 @@ boolean Debug = FALSE;
 
 struct spu_global spu;
 
+struct spu_vs_context draw;
 
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
@@ -264,6 +266,18 @@ cmd_state_vertex_info(const struct vertex_info *vinfo)
 }
 
 
+static void
+cmd_state_vs_array_info(const struct cell_array_info *vs_info)
+{
+   const unsigned attr = vs_info->attr;
+
+   ASSERT(attr < PIPE_ATTRIB_MAX);
+   draw.vertex_fetch.src_ptr[attr] = vs_info->base;
+   draw.vertex_fetch.pitch[attr] = vs_info->pitch;
+   draw.vertex_fetch.format[attr] = vs_info->format;
+   draw.vertex_fetch.dirty = 1;
+}
+
 
 static void
 cmd_finish(void)
@@ -373,6 +387,20 @@ cmd_batch(uint opcode)
       case CELL_CMD_STATE_VERTEX_INFO:
          cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
          pos += (1 + sizeof(struct vertex_info) / 4);
+         break;
+      case CELL_CMD_STATE_VIEWPORT:
+         (void) memcpy(& draw.viewport, &buffer[pos+1],
+                       sizeof(struct pipe_viewport_state));
+         pos += (1 + sizeof(struct pipe_viewport_state) / 4);
+         break;
+      case CELL_CMD_STATE_VS_ARRAY_INFO:
+         cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
+         pos += (1 + sizeof(struct cell_array_info) / 4);
+         break;
+      case CELL_CMD_VS_EXECUTE:
+         spu_execute_vertex_shader(&draw,
+                                   (struct cell_command_vs *) &buffer[pos+1]);
+         pos += (1 + sizeof(struct cell_command_vs) / 4);
          break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
