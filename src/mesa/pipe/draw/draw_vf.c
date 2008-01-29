@@ -174,7 +174,7 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 
       }
       else {
-	 assert(vf->lookup[map[i].attrib] == 0);
+	 assert(vf->lookup[map[i].attrib] == 0 || format == DRAW_EMIT_1F_CONST);
 	 vf->lookup[map[i].attrib] = &vf->attr[j];
 
 	 vf->attr[j].attrib = map[i].attrib;
