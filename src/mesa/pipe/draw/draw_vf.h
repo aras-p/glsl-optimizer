@@ -48,14 +48,30 @@ enum draw_vf_attr_format {
    DRAW_EMIT_4UB_4F_BGRA,		/**< for color */
    DRAW_EMIT_4UB_4F_ARGB,		/**< for color */
    DRAW_EMIT_4UB_4F_ABGR,		/**< for color */
+   DRAW_EMIT_1F_CONST,
+   DRAW_EMIT_2F_CONST,
+   DRAW_EMIT_3F_CONST,
+   DRAW_EMIT_4F_CONST,
    DRAW_EMIT_PAD,			/**< leave a hole of 'offset' bytes */
    DRAW_EMIT_MAX
 };
 
-struct draw_vf_attr_map {
+struct draw_vf_attr_map 
+{
+   /** Input attribute number */
    unsigned attrib;
+   
    enum draw_vf_attr_format format;
+   
    unsigned offset;
+   
+   /** 
+    * Constant data for DRAW_EMIT_*_CONST 
+    */
+   union {
+      uint8_t ub[4];
+      float f[4];
+   } data;
 };
 
 struct draw_vertex_fetch;
@@ -124,6 +140,9 @@ struct draw_vf_attr
    unsigned inputsize;
    unsigned inputstride;
    unsigned vertoffset;      /**< position of the attrib in the vertex struct */
+   
+   boolean isconst;              /**< read from const data below */
+   uint8_t data[16];
 
    unsigned attrib;          /**< which vertex attrib (0=position, etc) */
    unsigned vertattrsize;    /**< size of the attribute in bytes */
@@ -193,6 +212,7 @@ struct draw_vf_format_info {
    const char *name;
    draw_vf_insert_func insert[4];
    const unsigned attrsize;
+   const boolean isconst;
 };
 
 extern const struct draw_vf_format_info 

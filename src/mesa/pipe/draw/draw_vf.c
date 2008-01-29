@@ -182,6 +182,9 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 	 vf->attr[j].insert = draw_vf_format_info[format].insert;
 	 vf->attr[j].vertattrsize = draw_vf_format_info[format].attrsize;
 	 vf->attr[j].vertoffset = offset;
+	 vf->attr[j].isconst = draw_vf_format_info[format].isconst;
+	 if(vf->attr[j].isconst)
+	    memcpy(vf->attr[j].data, &map[i].data, vf->attr[j].vertattrsize);
 	 
 	 if (DBG)
 	    _mesa_printf("%d: %s, offset %d\n", i,  
@@ -240,8 +243,11 @@ void draw_vf_set_data( struct draw_vertex_fetch *vf,
    for (j = 0; j < vf->attr_count; j++) {
       a[j].inputstride = 0; /* XXX: one-vertex-max ATM */ 
       a[j].inputsize = 4;
-      a[j].do_insert = a[j].insert[4 - 1]; 
-      a[j].inputptr = (uint8_t *)&data[a[j].attrib][0];
+      a[j].do_insert = a[j].insert[4 - 1];
+      if(a[j].isconst)
+	 a[j].inputptr = a[j].data;
+      else
+	 a[j].inputptr = (uint8_t *)&data[a[j].attrib][0];
    }
 }
 

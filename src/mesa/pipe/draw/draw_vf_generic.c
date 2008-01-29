@@ -387,62 +387,78 @@ const struct draw_vf_format_info draw_vf_format_info[DRAW_EMIT_MAX] =
 {
    { "1f",
      { insert_1f_1, insert_1f_1, insert_1f_1, insert_1f_1 },
-     sizeof(float) },
+     sizeof(float), FALSE },
 
    { "2f",
      { insert_2f_1, insert_2f_2, insert_2f_2, insert_2f_2 },
-     2 * sizeof(float) },
+     2 * sizeof(float), FALSE },
 
    { "3f",
      { insert_3f_1, insert_3f_2, insert_3f_3, insert_3f_3 },
-     3 * sizeof(float) },
+     3 * sizeof(float), FALSE },
 
    { "4f",
      { insert_4f_1, insert_4f_2, insert_4f_3, insert_4f_4 },
-     4 * sizeof(float) },
+     4 * sizeof(float), FALSE },
 
    { "3f_xyw",
      { insert_3f_xyw_err, insert_3f_xyw_err, insert_3f_xyw_err, 
        insert_3f_xyw_4 },
-     3 * sizeof(float) },
+     3 * sizeof(float), FALSE },
 
    { "1ub_1f",
      { insert_1ub_1f_1, insert_1ub_1f_1, insert_1ub_1f_1, insert_1ub_1f_1 },
-     sizeof(uint8_t) },
+     sizeof(uint8_t), FALSE },
 
    { "3ub_3f_rgb",
      { insert_3ub_3f_rgb_1, insert_3ub_3f_rgb_2, insert_3ub_3f_rgb_3,
        insert_3ub_3f_rgb_3 },
-     3 * sizeof(uint8_t) },
+     3 * sizeof(uint8_t), FALSE },
 
    { "3ub_3f_bgr",
      { insert_3ub_3f_bgr_1, insert_3ub_3f_bgr_2, insert_3ub_3f_bgr_3,
        insert_3ub_3f_bgr_3 },
-     3 * sizeof(uint8_t) },
+     3 * sizeof(uint8_t), FALSE },
 
    { "4ub_4f_rgba",
      { insert_4ub_4f_rgba_1, insert_4ub_4f_rgba_2, insert_4ub_4f_rgba_3, 
        insert_4ub_4f_rgba_4 },
-     4 * sizeof(uint8_t) },
+     4 * sizeof(uint8_t), FALSE },
 
    { "4ub_4f_bgra",
      { insert_4ub_4f_bgra_1, insert_4ub_4f_bgra_2, insert_4ub_4f_bgra_3,
        insert_4ub_4f_bgra_4 },
-     4 * sizeof(uint8_t) },
+     4 * sizeof(uint8_t), FALSE },
 
    { "4ub_4f_argb",
      { insert_4ub_4f_argb_1, insert_4ub_4f_argb_2, insert_4ub_4f_argb_3,
        insert_4ub_4f_argb_4 },
-     4 * sizeof(uint8_t) },
+     4 * sizeof(uint8_t), FALSE },
 
    { "4ub_4f_abgr",
      { insert_4ub_4f_abgr_1, insert_4ub_4f_abgr_2, insert_4ub_4f_abgr_3,
        insert_4ub_4f_abgr_4 },
-     4 * sizeof(uint8_t) },
+     4 * sizeof(uint8_t), FALSE },
+
+   { "1f_const",
+     { insert_1f_1, insert_1f_1, insert_1f_1, insert_1f_1 },
+     sizeof(float), TRUE },
+   
+   { "2f_const",
+     { insert_2f_1, insert_2f_2, insert_2f_2, insert_2f_2 },
+     2 * sizeof(float), TRUE },
+   
+   { "3f_const",
+     { insert_3f_1, insert_3f_2, insert_3f_3, insert_3f_3 },
+     3 * sizeof(float), TRUE },
+   
+   { "4f_const",
+     { insert_4f_1, insert_4f_2, insert_4f_3, insert_4f_4 },
+     4 * sizeof(float), TRUE },
 
    { "pad",
      { NULL, NULL, NULL, NULL },
-     0 }
+     0, FALSE },
 
 };
 
