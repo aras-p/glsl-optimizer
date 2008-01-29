@@ -29,44 +29,11 @@
 #define DRAW_VF_H
 
 
-#include "math/m_vector.h"
-
 #include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
+
 #include "draw_vertex.h"
 
-
-enum {
-   DRAW_VF_ATTRIB_POS = 0,
-   DRAW_VF_ATTRIB_WEIGHT = 1,
-   DRAW_VF_ATTRIB_NORMAL = 2,
-   DRAW_VF_ATTRIB_COLOR0 = 3,
-   DRAW_VF_ATTRIB_COLOR1 = 4,
-   DRAW_VF_ATTRIB_FOG = 5,
-   DRAW_VF_ATTRIB_COLOR_INDEX = 6,
-   DRAW_VF_ATTRIB_EDGEFLAG = 7,
-   DRAW_VF_ATTRIB_TEX0 = 8,
-   DRAW_VF_ATTRIB_TEX1 = 9,
-   DRAW_VF_ATTRIB_TEX2 = 10,
-   DRAW_VF_ATTRIB_TEX3 = 11,
-   DRAW_VF_ATTRIB_TEX4 = 12,
-   DRAW_VF_ATTRIB_TEX5 = 13,
-   DRAW_VF_ATTRIB_TEX6 = 14,
-   DRAW_VF_ATTRIB_TEX7 = 15,
-   DRAW_VF_ATTRIB_VAR0 = 16,
-   DRAW_VF_ATTRIB_VAR1 = 17,
-   DRAW_VF_ATTRIB_VAR2 = 18,
-   DRAW_VF_ATTRIB_VAR3 = 19,
-   DRAW_VF_ATTRIB_VAR4 = 20,
-   DRAW_VF_ATTRIB_VAR5 = 21,
-   DRAW_VF_ATTRIB_VAR6 = 22,
-   DRAW_VF_ATTRIB_VAR7 = 23,
-   DRAW_VF_ATTRIB_POINTSIZE = 24,
-   DRAW_VF_ATTRIB_BFC0 = 25,
-   DRAW_VF_ATTRIB_BFC1 = 26,
-   DRAW_VF_ATTRIB_CLIP_POS = 27,
-   DRAW_VF_ATTRIB_VERTEX_HEADER = 28,
-   DRAW_VF_ATTRIB_MAX = 29
-};
 
 enum draw_vf_attr_format {
    DRAW_EMIT_1F,
@@ -101,10 +68,12 @@ draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
                                unsigned nr, 
                                unsigned vertex_stride );
 
+#if 0
 void 
 draw_vf_set_sources( struct draw_vertex_fetch *vf,
 		     GLvector4f * const attrib[],
-		     unsigned start ); 
+		     unsigned start );
+#endif
 
 void 
 draw_vf_set_data( struct draw_vertex_fetch *vf,
@@ -114,13 +83,6 @@ void
 draw_vf_emit_vertices( struct draw_vertex_fetch *vf,
 		       unsigned count,
 		       void *dest );
-
-void 
-draw_vf_get_attr( struct draw_vertex_fetch *vf,
-		  const void *vertex,
-		  GLenum attr, 
-		  const float *dflt,
-		  float *dest );
 
 struct draw_vertex_fetch *
 draw_vf_create( void );
@@ -174,11 +136,11 @@ struct draw_vf_attr
 
 struct draw_vertex_fetch
 {
-   struct draw_vf_attr attr[DRAW_VF_ATTRIB_MAX];
+   struct draw_vf_attr attr[PIPE_ATTRIB_MAX];
    unsigned attr_count;
    unsigned vertex_stride;
 
-   struct draw_vf_attr *lookup[DRAW_VF_ATTRIB_MAX];
+   struct draw_vf_attr *lookup[PIPE_ATTRIB_MAX];
    
    draw_vf_emit_func emit;
 

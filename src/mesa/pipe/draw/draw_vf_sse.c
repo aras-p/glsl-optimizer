@@ -25,14 +25,13 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "colormac.h"
+
 #include "simple_list.h"
-#include "enums.h"
 
 #include "pipe/p_compiler.h"
 
 #include "draw_vf.h"
+
 
 #if defined(USE_SSE_ASM)
 
@@ -450,7 +449,8 @@ static boolean build_vertex_emit( struct x86_program *p )
 	    update_src_ptr(p, srcECX, vfESI, a);
 	 }
 	 else {
-	    _mesa_printf("Can't emit 1ub %x %x %d\n", a->vertoffset, a[-1].vertoffset, a[-1].vertattrsize );
+	    fprintf(stderr, "Can't emit 1ub %x %x %d\n", 
+	            a->vertoffset, a[-1].vertoffset, a[-1].vertattrsize );
 	    return FALSE;
 	 }
 	 break;
@@ -495,7 +495,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	    j++;		/* NOTE: two attrs consumed */
 	 }
 	 else {
-	    _mesa_printf("Can't emit 3ub\n");
+	    fprintf(stderr, "Can't emit 3ub\n");
 	 }
 	 return FALSE;	/* add this later */
 	 break;
@@ -528,7 +528,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
       default:
-	 _mesa_printf("unknown a[%d].format %d\n", j, a->format);
+	 fprintf(stderr, "unknown a[%d].format %d\n", j, a->format);
 	 return FALSE;	/* catch any new opcodes */
       }
       
@@ -577,7 +577,7 @@ void draw_vf_generate_sse_emit( struct draw_vertex_fetch *vf )
       return;
    }
 
-   _mesa_memset(&p, 0, sizeof(p));
+   memset(&p, 0, sizeof(p));
 
    p.vf = vf;
    p.inputs_safe = 0;		/* for now */

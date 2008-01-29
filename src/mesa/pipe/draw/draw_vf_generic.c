@@ -26,12 +26,13 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "colormac.h"
+
+#include <assert.h>
+
 #include "simple_list.h"
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_util.h"
 
 #include "draw_vf.h"
 
@@ -94,7 +95,7 @@ static INLINE void insert_3f_xyw_4( const struct draw_vf_attr *a, uint8_t *v, co
 static INLINE void insert_3f_xyw_err( const struct draw_vf_attr *a, uint8_t *v, const float *in )
 {
    (void) a; (void) v; (void) in;
-   _mesa_exit(1);
+   assert(0);
 }
 
 static INLINE void insert_3f_3( const struct draw_vf_attr *a, uint8_t *v, const float *in )
