@@ -188,26 +188,34 @@ nv40_init_hwctx(struct nv40_context *nv40, int curie_class)
 	return TRUE;
 }
 
-#define GRCLASS4097_CHIPSETS 0x00000baf
-#define GRCLASS4497_CHIPSETS 0x00005450
+#define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
+#define NV4X_GRCLASS4497_CHIPSETS 0x00005450
+#define NV6X_GRCLASS4497_CHIPSETS 0x00000080
+
 struct pipe_context *
 nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 	    unsigned chipset)
 {
 	struct nv40_context *nv40;
-	int curie_class, ret;
+	int curie_class = 0, ret;
 
-	if ((chipset & 0xf0) != 0x40) {
-		NOUVEAU_ERR("Not a NV4X chipset\n");
-		return NULL;
+	switch (chipset & 0xf0) {
+	case 0x40:
+		if (NV4X_GRCLASS4097_CHIPSETS & (1 << (chipset & 0x0f)))
+			curie_class = NV40TCL;
+		else
+		if (NV4X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
+			curie_class = NV44TCL;
+		break;
+	case 0x60:
+		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
+			curie_class = NV44TCL;
+		break;
+	default:
+		break;
 	}
 
-	if (GRCLASS4097_CHIPSETS & (1 << (chipset & 0x0f))) {
-		curie_class = NV40TCL;
-	} else
-	if (GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f))) {
-		curie_class = NV44TCL;
-	} else {
+	if (!curie_class) {
 		NOUVEAU_ERR("Unknown NV4x chipset: NV%02x\n", chipset);
 		return NULL;
 	}
