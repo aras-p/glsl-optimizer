@@ -70,6 +70,7 @@ struct spu_global
 
 
 extern struct spu_global spu;
+extern boolean Debug;
 
 
 
