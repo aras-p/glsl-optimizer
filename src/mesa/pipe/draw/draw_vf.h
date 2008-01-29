@@ -195,7 +195,8 @@ struct draw_vf_format_info {
    const unsigned attrsize;
 };
 
-const struct draw_vf_format_info draw_vf_format_info[DRAW_EMIT_MAX];
+extern const struct draw_vf_format_info 
+draw_vf_format_info[DRAW_EMIT_MAX];
 
 
 #endif
