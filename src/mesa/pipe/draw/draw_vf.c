@@ -275,7 +275,7 @@ struct draw_vertex_fetch *draw_vf_create( void )
    vf->codegen_emit = NULL;
 
 #ifdef USE_SSE_ASM
-   if (!GETENV("MESA_NO_CODEGEN"))
+   if (!GETENV("GALLIUM_NO_CODEGEN"))
       vf->codegen_emit = draw_vf_generate_sse_emit;
 #endif
 
