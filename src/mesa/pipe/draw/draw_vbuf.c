@@ -127,96 +127,87 @@ emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
 #if 0
-   const struct vertex_info *vinfo = vbuf->vinfo;
-
-   uint i;
-   uint count = 0;  /* for debug/sanity */
-   
-   assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
-
-//   fprintf(stderr, "emit vertex %d to %p\n", 
-//           vbuf->nr_vertices, vbuf->vertex_ptr);
-
-   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
-      if(vertex->vertex_id < vbuf->nr_vertices)
-	 return;
-      else
-	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
-	         vertex->vertex_id, vbuf->nr_vertices);
-      return;
-   }
-      
-   vertex->vertex_id = vbuf->nr_vertices++;
-
-   for (i = 0; i < vinfo->num_attribs; i++) {
-      uint j = vinfo->src_index[i];
-      switch (vinfo->emit[i]) {
-      case EMIT_OMIT:
-         /* no-op */
-         break;
-      case EMIT_ALL:
-         /* just copy the whole vertex as-is to the vbuf */
-         assert(i == 0);
-         assert(j == 0);
-         memcpy(vbuf->vertex_ptr, vertex, vinfo->size * 4);
-         vbuf->vertex_ptr += vinfo->size;
-         count += vinfo->size;
-         break;
-      case EMIT_1F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-         count++;
-         break;
-      case EMIT_1F_PSIZE:
-         *vbuf->vertex_ptr++ = fui(vbuf->stage.draw->rasterizer->point_size);
-         count++;
-         break;
-      case EMIT_2F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
-         count += 2;
-         break;
-      case EMIT_3F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
-         count += 3;
-         break;
-      case EMIT_4F:
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
-         *vbuf->vertex_ptr++ = fui(vertex->data[j][3]);
-         count += 4;
-         break;
-      case EMIT_4UB:
-	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
-                                        float_to_ubyte( vertex->data[j][1] ),
-                                        float_to_ubyte( vertex->data[j][0] ),
-                                        float_to_ubyte( vertex->data[j][3] ));
-         count += 1;
-         break;
-      default:
-         assert(0);
-      }
-   }
-   assert(count == vinfo->size);
-#else
-   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
-      if(vertex->vertex_id < vbuf->nr_vertices)
-	 return;
-      else
-	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
-	         vertex->vertex_id, vbuf->nr_vertices);
-      return;
-   }
-      
-   vertex->vertex_id = vbuf->nr_vertices++;
-
-   draw_vf_set_data(vbuf->vf, vertex->data);
-   draw_vf_emit_vertices(vbuf->vf, 1, vbuf->vertex_ptr);
-
-   vbuf->vertex_ptr += vbuf->vertex_size/4;
+   fprintf(stderr, "emit vertex %d to %p\n", 
+           vbuf->nr_vertices, vbuf->vertex_ptr);
 #endif
+
+   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
+      if(vertex->vertex_id < vbuf->nr_vertices)
+	 return;
+      else
+	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
+	         vertex->vertex_id, vbuf->nr_vertices);
+      return;
+   }
+      
+   vertex->vertex_id = vbuf->nr_vertices++;
+
+   if(!vbuf->vf) {
+      const struct vertex_info *vinfo = vbuf->vinfo;
+      uint i;
+      uint count = 0;  /* for debug/sanity */
+      
+      assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
+
+      for (i = 0; i < vinfo->num_attribs; i++) {
+         uint j = vinfo->src_index[i];
+         switch (vinfo->emit[i]) {
+         case EMIT_OMIT:
+            /* no-op */
+            break;
+         case EMIT_ALL:
+            /* just copy the whole vertex as-is to the vbuf */
+            assert(i == 0);
+            assert(j == 0);
+            memcpy(vbuf->vertex_ptr, vertex, vinfo->size * 4);
+            vbuf->vertex_ptr += vinfo->size;
+            count += vinfo->size;
+            break;
+         case EMIT_1F:
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+            count++;
+            break;
+         case EMIT_1F_PSIZE:
+            *vbuf->vertex_ptr++ = fui(vbuf->stage.draw->rasterizer->point_size);
+            count++;
+            break;
+         case EMIT_2F:
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
+            count += 2;
+            break;
+         case EMIT_3F:
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
+            count += 3;
+            break;
+         case EMIT_4F:
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
+            *vbuf->vertex_ptr++ = fui(vertex->data[j][3]);
+            count += 4;
+            break;
+         case EMIT_4UB:
+   	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
+                                           float_to_ubyte( vertex->data[j][1] ),
+                                           float_to_ubyte( vertex->data[j][0] ),
+                                           float_to_ubyte( vertex->data[j][3] ));
+            count += 1;
+            break;
+         default:
+            assert(0);
+         }
+      }
+      assert(count == vinfo->size);
+   }
+   else {
+      draw_vf_set_data(vbuf->vf, vertex->data);
+      draw_vf_emit_vertices(vbuf->vf, 1, vbuf->vertex_ptr);
+   
+      vbuf->vertex_ptr += vbuf->vertex_size/4;
+   }
 }
 
 
@@ -228,6 +219,9 @@ vbuf_set_vf_attributes(struct vbuf_stage *vbuf )
    uint i;
    uint count = 0;  /* for debug/sanity */
    unsigned nr_attrs = 0;
+   
+   if(!vbuf->vf)
+      return;
    
 //   fprintf(stderr, "emit vertex %d to %p\n", 
 //           vbuf->nr_vertices, vbuf->vertex_ptr);
@@ -625,9 +619,8 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 
    vbuf->prim = ~0;
    
-   vbuf->vf = draw_vf_create();
-   if(!vbuf->vf)
-      vbuf_destroy(&vbuf->stage);
+   if(!GETENV("GALLIUM_NOVF"))
+      vbuf->vf = draw_vf_create();
    
    return &vbuf->stage;
 }
