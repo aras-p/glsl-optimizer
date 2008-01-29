@@ -298,6 +298,7 @@ st_draw_vbo(GLcontext *ctx,
          break;
       default:
          assert(0);
+	 return;
       }
 
       /* get/create the index buffer object */
@@ -570,6 +571,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          break;
       default:
          assert(0);
+	 return;
       }
 
       map = pipe->winsys->buffer_map(pipe->winsys,
