@@ -240,6 +240,11 @@ struct draw_context
       unsigned queue_nr;
    } vs;
 
+   /**
+    * Run the vertex shader on all vertices in the vertex queue.
+    */
+   void (*shader_queue_flush)(struct draw_context *draw);
+
    /* Prim pipeline queue:
     */
    struct {
