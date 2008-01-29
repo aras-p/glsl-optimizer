@@ -34,6 +34,7 @@
 #include <spu_mfcio.h>
 
 #include "spu_main.h"
+#include "spu_texture.h"
 #include "spu_tri.h"
 #include "spu_tile.h"
 #include "pipe/cell/common.h"
@@ -447,6 +448,17 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
 
 
 static void
+cmd_state_texture(const struct cell_command_texture *texture)
+{
+   if (Debug)
+      printf("SPU %u: TEXTURE at %p  size %u x %u\n",
+             spu.init.id, texture->start, texture->width, texture->height);
+
+   memcpy(&spu.texture, texture, sizeof(*texture));
+}
+
+
+static void
 cmd_state_vertex_info(const struct vertex_info *vinfo)
 {
    if (Debug) {
@@ -561,6 +573,10 @@ cmd_batch(uint opcode)
          cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);
          pos += (1 + sizeof(struct pipe_sampler_state) / 4);
          break;
+      case CELL_CMD_STATE_TEXTURE:
+         cmd_state_texture((struct cell_command_texture *) &buffer[pos+1]);
+         pos += (1 + sizeof(struct cell_command_texture) / 4);
+         break;
       case CELL_CMD_STATE_VERTEX_INFO:
          cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
          pos += (1 + sizeof(struct vertex_info) / 4);
@@ -656,6 +672,7 @@ one_time_init(void)
 {
    memset(tile_status, TILE_STATUS_DEFINED, sizeof(tile_status));
    memset(tile_status_z, TILE_STATUS_DEFINED, sizeof(tile_status_z));
+   invalidate_tex_cache();
 }
 
 

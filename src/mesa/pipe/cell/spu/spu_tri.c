@@ -33,6 +33,7 @@
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
 #include "spu_main.h"
+#include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_tri.h"
 
@@ -362,9 +363,24 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    /* Cell: "write" quad fragments to the tile by setting prim color */
    const int ix = x - setup->cliprect_minx;
    const int iy = y - setup->cliprect_miny;
-   float colors[4][4];
+   uint colors[4];  /* indexed by QUAD_x */
 
-   eval_coeff(setup, 1, (float) x, (float) y, colors);
+   if (spu.texture.start) {
+      float texcoords[4][4];
+      uint i;
+      eval_coeff(setup, 2, (float) x, (float) y, texcoords);
+      for (i = 0; i < 4; i++) {
+         colors[i] = sample_texture(texcoords[i]);
+      }
+   }
+   else {
+      float fcolors[4][4];
+      eval_coeff(setup, 1, (float) x, (float) y, fcolors);
+      colors[QUAD_TOP_LEFT] = pack_color(fcolors[QUAD_TOP_LEFT]);
+      colors[QUAD_TOP_RIGHT] = pack_color(fcolors[QUAD_TOP_RIGHT]);
+      colors[QUAD_BOTTOM_LEFT] = pack_color(fcolors[QUAD_BOTTOM_LEFT]);
+      colors[QUAD_BOTTOM_RIGHT] = pack_color(fcolors[QUAD_BOTTOM_RIGHT]);
+   }
 
    if (spu.depth_stencil.depth.enabled) {
       mask &= do_depth_test(setup, x, y, mask);
@@ -382,13 +398,13 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
       tile_status[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
 
       if (mask & MASK_TOP_LEFT)
-         ctile.t32[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
+         ctile.t32[iy][ix] = colors[QUAD_TOP_LEFT];
       if (mask & MASK_TOP_RIGHT)
-         ctile.t32[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
+         ctile.t32[iy][ix+1] = colors[QUAD_TOP_RIGHT];
       if (mask & MASK_BOTTOM_LEFT)
-         ctile.t32[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
+         ctile.t32[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
       if (mask & MASK_BOTTOM_RIGHT)
-         ctile.t32[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+         ctile.t32[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
    }
 #endif
 }
@@ -606,7 +622,6 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
 }
 
 
-#if 0
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
  * The value value comes from vertex->data[slot][i].
@@ -614,21 +629,20 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
  * \param slot  which attribute slot 
  * \param i  which component of the slot (0..3)
  */
-static void const_coeff( struct setup_stage *setup,
-			 unsigned slot,
-			 unsigned i )
+static void const_coeff(struct setup_stage *setup, uint slot)
 {
-   assert(slot < PIPE_MAX_SHADER_INPUTS);
-   assert(i <= 3);
+   uint i;
+   ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
 
-   setup->coef[slot].dadx[i] = 0;
-   setup->coef[slot].dady[i] = 0;
+   for (i = 0; i < 4; i++) {
+      setup->coef[slot].dadx[i] = 0;
+      setup->coef[slot].dady[i] = 0;
 
-   /* need provoking vertex info!
-    */
-   setup->coef[slot].a0[i] = setup->vprovoke->data[slot][i];
+      /* need provoking vertex info!
+       */
+      setup->coef[slot].a0[i] = setup->vprovoke->data[slot][i];
+   }
 }
-#endif
 
 
 /**
@@ -735,15 +749,17 @@ static void setup_tri_coefficients( struct setup_stage *setup )
       case INTERP_NONE:
          break;
       case INTERP_POS:
-         tri_linear_coeff(setup, i, 2, 3);  /* slot 0, z */
+         tri_linear_coeff(setup, i, 2, 3);
          /* XXX interp W if PERSPECTIVE... */
          break;
       case INTERP_CONSTANT:
-         /* fall-through */
+         const_coeff(setup, i);
+         break;
       case INTERP_LINEAR:
-         tri_linear_coeff(setup, i, 0, 4);  /* slot 1, color */
+         tri_linear_coeff(setup, i, 0, 4);
          break;
       case INTERP_PERSPECTIVE:
+         tri_linear_coeff(setup, i, 0, 4); /* XXX temporary */
          break;
       default:
          ASSERT(0);

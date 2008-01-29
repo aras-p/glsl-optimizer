@@ -79,7 +79,8 @@
 #define CELL_CMD_STATE_FRAMEBUFFER   10
 #define CELL_CMD_STATE_DEPTH_STENCIL 11
 #define CELL_CMD_STATE_SAMPLER       12
-#define CELL_CMD_STATE_VERTEX_INFO   13
+#define CELL_CMD_STATE_TEXTURE       13
+#define CELL_CMD_STATE_VERTEX_INFO   14
 
 
 #define CELL_NUM_BUFFERS 4
@@ -131,6 +132,13 @@ struct cell_command_release_verts
 {
    int opcode;         /**< CELL_CMD_RELEASE_VERTS */
    uint vertex_buf;    /**< in [0, CELL_NUM_BUFFERS-1] */
+};
+
+
+struct cell_command_texture
+{
+   void *start;         /**< Address in main memory */
+   uint width, height;
 };
 
 

@@ -163,3 +163,90 @@ cell_get_tex_surface(struct pipe_context *pipe,
    }
    return ps;
 }
+
+
+
+static void
+tile_copy_data(uint w, uint h, uint tile_size, uint *dst, const uint *src)
+{
+   const uint tile_size2 = tile_size * tile_size;
+   const uint h_t = h / tile_size, w_t = w / tile_size;
+
+   uint it, jt;  /* tile counters */
+   uint i, j;    /* intra-tile counters */
+
+   for (it = 0; it < h_t; it++) {
+      for (jt = 0; jt < w_t; jt++) {
+         /* fill in tile (i, j) */
+         uint *tdst = dst + (it * w_t + jt) * tile_size2;
+         for (i = 0; i < tile_size; i++) {
+            for (j = 0; j < tile_size; j++) {
+               const uint srci = it * tile_size + i;
+               const uint srcj = jt * tile_size + j;
+               *tdst++ = src[srci * h + srcj];
+            }
+         }
+      }
+   }
+}
+
+
+
+/**
+ * Convert linear texture image data to tiled format for SPU usage.
+ */
+static void
+cell_tile_texture(struct cell_context *cell,
+                  struct cell_texture *texture)
+{
+   uint face = 0, level = 0, zslice = 0;
+   struct pipe_surface *surf;
+   const uint w = texture->base.width[0], h = texture->base.height[0];
+   const uint *src;
+
+   /* temporary restrictions: */
+   assert(w >= TILE_SIZE);
+   assert(h >= TILE_SIZE);
+   assert(w % TILE_SIZE == 0);
+   assert(h % TILE_SIZE == 0);
+
+   surf = cell_get_tex_surface(&cell->pipe, &texture->base, face, level, zslice);
+   ASSERT(surf);
+
+   src = (const uint *) pipe_surface_map(surf);
+
+   if (texture->tiled_data) {
+      align_free(texture->tiled_data);
+   }
+   texture->tiled_data = align_malloc(w * h * 4, 16);
+
+   tile_copy_data(w, h, TILE_SIZE, texture->tiled_data, src);
+
+   pipe_surface_unmap(surf);
+
+   pipe_surface_reference(&surf, NULL);
+}
+
+
+
+void
+cell_update_texture_mapping(struct cell_context *cell)
+{
+   uint face = 0, level = 0, zslice = 0;
+
+   cell_tile_texture(cell, cell->texture[0]);
+#if 0
+   if (cell->tex_surf && cell->tex_map) {
+      pipe_surface_unmap(cell->tex_surf);
+      cell->tex_map = NULL;
+   }
+
+   /* XXX free old surface */
+
+   cell->tex_surf = cell_get_tex_surface(&cell->pipe,
+                                         &cell->texture[0]->base,
+                                         face, level, zslice);
+
+   cell->tex_map = pipe_surface_map(cell->tex_surf);
+#endif
+}

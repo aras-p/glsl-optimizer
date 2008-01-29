@@ -76,13 +76,16 @@ struct cell_context
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+   struct cell_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
 
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;
+
+   struct pipe_surface *tex_surf;
+   uint *tex_map;
 
    uint dirty;
 

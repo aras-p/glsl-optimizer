@@ -17,6 +17,7 @@ PROG_SPU_EMBED_O = $(PROG)_spu-embed.o
 
 SOURCES = \
 	spu_main.c \
+	spu_texture.c \
 	spu_tile.c \
 	spu_tri.c
 
