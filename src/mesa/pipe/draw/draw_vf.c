@@ -25,16 +25,19 @@
  *    Keith Whitwell <keithw@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "colormac.h"
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_util.h"
 
 #include "draw_vf.h"
 
+
 #define DBG 0
 
+
+/* TODO: remove this */
+extern void 
+_mesa_exec_free( void *addr );
 
 
 static boolean match_fastpath( struct draw_vertex_fetch *vf,
@@ -88,7 +91,7 @@ void draw_vf_register_fastpath( struct draw_vertex_fetch *vf,
    fastpath->match_strides = match_strides;
    fastpath->func = vf->emit;
    fastpath->attr = (struct draw_vf_attr_type *)
-      _mesa_malloc(vf->attr_count * sizeof(fastpath->attr[0]));
+      MALLOC(vf->attr_count * sizeof(fastpath->attr[0]));
 
    for (i = 0; i < vf->attr_count; i++) {
       fastpath->attr[i].format = vf->attr[i].format;
@@ -156,7 +159,7 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
    unsigned offset = 0;
    unsigned i, j;
 
-   assert(nr < DRAW_VF_ATTRIB_MAX);
+   assert(nr < PIPE_ATTRIB_MAX);
 
    memset(vf->lookup, 0, sizeof(vf->lookup));
 
@@ -200,7 +203,7 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 
 
 
-
+#if 0
 /* Set attribute pointers, adjusted for start position:
  */
 void draw_vf_set_sources( struct draw_vertex_fetch *vf,
@@ -223,6 +226,7 @@ void draw_vf_set_sources( struct draw_vertex_fetch *vf,
       a[j].inputptr = ((uint8_t *)vptr->data) + start * vptr->stride;
    }
 }
+#endif
 
 
 /* Set attribute pointers, adjusted for start position:
@@ -260,7 +264,7 @@ struct draw_vertex_fetch *draw_vf_create( void )
    struct draw_vertex_fetch *vf = CALLOC_STRUCT(draw_vertex_fetch);
    unsigned i;
 
-   for (i = 0; i < DRAW_VF_ATTRIB_MAX; i++)
+   for (i = 0; i < PIPE_ATTRIB_MAX; i++)
       vf->attr[i].vf = vf;
 
    vf->identity[0] = 0.0;
@@ -271,7 +275,7 @@ struct draw_vertex_fetch *draw_vf_create( void )
    vf->codegen_emit = NULL;
 
 #ifdef USE_SSE_ASM
-   if (!_mesa_getenv("MESA_NO_CODEGEN"))
+   if (!GETENV("MESA_NO_CODEGEN"))
       vf->codegen_emit = draw_vf_generate_sse_emit;
 #endif
 
