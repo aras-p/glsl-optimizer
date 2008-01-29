@@ -199,7 +199,7 @@ run_vertex_program(struct draw_context *draw,
 void
 draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
-   unsigned i, j;
+   unsigned i;
 
    assert(draw->vs.queue_nr != 0);
 
@@ -219,7 +219,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
       struct vertex_header *dests[4];
       unsigned elts[4];
-      int n = MIN2(4, draw->vs.queue_nr - i);
+      int j, n = MIN2(4, draw->vs.queue_nr - i);
 
       for (j = 0; j < n; j++) {
          elts[j] = draw->vs.queue[i + j].elt;
