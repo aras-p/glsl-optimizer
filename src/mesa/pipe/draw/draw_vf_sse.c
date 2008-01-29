@@ -388,18 +388,21 @@ static boolean build_vertex_emit( struct x86_program *p )
        */
       switch (a->format) {
       case DRAW_EMIT_1F:
+      case DRAW_EMIT_1F_CONST:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 1, x86_deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 1, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
       case DRAW_EMIT_2F:
+      case DRAW_EMIT_2F_CONST:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 2, x86_deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 2, temp);
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
       case DRAW_EMIT_3F:
+      case DRAW_EMIT_3F_CONST:
 	 /* Potentially the worst case - hardcode 2+1 copying:
 	  */
 	 if (0) {
@@ -423,6 +426,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 }
 	 break;
       case DRAW_EMIT_4F:
+      case DRAW_EMIT_4F_CONST:
 	 get_src_ptr(p, srcECX, vfESI, a);
 	 emit_load(p, temp, 4, x86_deref(srcECX), a->inputsize);
 	 emit_store(p, dest, 4, temp);
