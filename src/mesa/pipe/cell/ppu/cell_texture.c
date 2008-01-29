@@ -234,7 +234,8 @@ cell_update_texture_mapping(struct cell_context *cell)
 {
    uint face = 0, level = 0, zslice = 0;
 
-   cell_tile_texture(cell, cell->texture[0]);
+   if (cell->texture[0])
+      cell_tile_texture(cell, cell->texture[0]);
 #if 0
    if (cell->tex_surf && cell->tex_map) {
       pipe_surface_unmap(cell->tex_surf);

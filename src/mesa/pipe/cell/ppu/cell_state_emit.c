@@ -74,9 +74,16 @@ cell_emit_state(struct cell_context *cell)
 
    if (cell->dirty & CELL_NEW_TEXTURE) {
       struct cell_command_texture texture;
-      texture.start = cell->texture[0]->tiled_data;
-      texture.width = cell->texture[0]->base.width[0];
-      texture.height = cell->texture[0]->base.height[0];
+      if (cell->texture[0]) {
+         texture.start = cell->texture[0]->tiled_data;
+         texture.width = cell->texture[0]->base.width[0];
+         texture.height = cell->texture[0]->base.height[0];
+      }
+      else {
+         texture.start = NULL;
+         texture.width = 0;
+         texture.height = 0;
+      }
 
       emit_state_cmd(cell, CELL_CMD_STATE_TEXTURE,
                      &texture, sizeof(struct cell_command_texture));
