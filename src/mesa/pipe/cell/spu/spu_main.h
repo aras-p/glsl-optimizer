@@ -60,6 +60,7 @@ struct spu_global
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+   struct cell_command_texture texture;
 
    struct vertex_info vertex_info;
 
@@ -84,6 +85,8 @@ extern struct spu_global spu;
 #define TAG_INDEX_BUFFER      16
 #define TAG_BATCH_BUFFER      17
 #define TAG_MISC              18
+#define TAG_TEXTURE_TILE      19
+
 
 
 extern void
