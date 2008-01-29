@@ -69,28 +69,46 @@ static void draw_prim_queue_flush( struct draw_context *draw )
     * draw->pipeline->first is often changed by the first call to tri(),
     * line(), etc.
     */
-   switch (draw->reduced_prim) {
-   case RP_TRI:
-      for (i = 0; i < draw->pq.queue_nr; i++) {
-	 if (draw->pq.queue[i].reset_line_stipple)
-	    draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
-
-	 draw->pipeline.first->tri( draw->pipeline.first, &draw->pq.queue[i] );
+   if (draw->rasterizer->line_stipple_enable) {
+      switch (draw->reduced_prim) {
+      case RP_TRI:
+	 for (i = 0; i < draw->pq.queue_nr; i++) {
+	    if (draw->pq.queue[i].reset_line_stipple)
+	       draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
+	    
+	    draw->pipeline.first->tri( draw->pipeline.first, &draw->pq.queue[i] );
+	 }
+	 break;
+      case RP_LINE:
+	 for (i = 0; i < draw->pq.queue_nr; i++) {
+	    if (draw->pq.queue[i].reset_line_stipple)
+	       draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
+	    
+	    draw->pipeline.first->line( draw->pipeline.first, &draw->pq.queue[i] );
+	 }
+	 break;
+      case RP_POINT:
+	 draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
+	 for (i = 0; i < draw->pq.queue_nr; i++)
+	    draw->pipeline.first->point( draw->pipeline.first, &draw->pq.queue[i] );
+	 break;
       }
-      break;
-   case RP_LINE:
-      for (i = 0; i < draw->pq.queue_nr; i++) {
-	 if (draw->pq.queue[i].reset_line_stipple)
-	    draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
-
-	 draw->pipeline.first->line( draw->pipeline.first, &draw->pq.queue[i] );
+   }
+   else {
+      switch (draw->reduced_prim) {
+      case RP_TRI:
+	 for (i = 0; i < draw->pq.queue_nr; i++) 
+	    draw->pipeline.first->tri( draw->pipeline.first, &draw->pq.queue[i] );
+	 break;
+      case RP_LINE:
+	 for (i = 0; i < draw->pq.queue_nr; i++) 
+	    draw->pipeline.first->line( draw->pipeline.first, &draw->pq.queue[i] );
+	 break;
+      case RP_POINT:
+	 for (i = 0; i < draw->pq.queue_nr; i++)
+	    draw->pipeline.first->point( draw->pipeline.first, &draw->pq.queue[i] );
+	 break;
       }
-      break;
-   case RP_POINT:
-      draw->pipeline.first->reset_stipple_counter( draw->pipeline.first );
-      for (i = 0; i < draw->pq.queue_nr; i++)
-	 draw->pipeline.first->point( draw->pipeline.first, &draw->pq.queue[i] );
-      break;
    }
 
    draw->pq.queue_nr = 0;   
@@ -231,7 +249,7 @@ static void do_ef_triangle( struct draw_context *draw,
 }
 
 
-static void do_quad( struct draw_context *draw,
+static void do_ef_quad( struct draw_context *draw,
 		     unsigned v0,
 		     unsigned v1,
 		     unsigned v2,
@@ -243,6 +261,16 @@ static void do_quad( struct draw_context *draw,
    do_ef_triangle( draw, 0, omitEdge3, v1, v2, v3 );
 }
 
+static void do_quad( struct draw_context *draw,
+		     unsigned v0,
+		     unsigned v1,
+		     unsigned v2,
+		     unsigned v3 )
+{
+   do_triangle( draw, v0, v1, v3 );
+   do_triangle( draw, v1, v2, v3 );
+}
+
 
 /**
  * Main entrypoint to draw some number of points/lines/triangles
@@ -252,6 +280,8 @@ draw_prim( struct draw_context *draw,
 	   unsigned prim, unsigned start, unsigned count )
 {
    unsigned i;
+   boolean unfilled = (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
+		       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL);
 
 //   _mesa_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
 
@@ -289,24 +319,32 @@ draw_prim( struct draw_context *draw,
       break;
 
    case PIPE_PRIM_LINE_STRIP:
-      if (count >= 2) {
-	 for (i = 1; i < count; i++) {
-	    do_line( draw,
-		     i == 1,
-		     start + i - 1,
-		     start + i );
-	 }
+      for (i = 1; i < count; i++) {
+	 do_line( draw,
+		  i == 1,
+		  start + i - 1,
+		  start + i );
       }
       break;
 
    case PIPE_PRIM_TRIANGLES:
-      for (i = 0; i+2 < count; i += 3) {
-	 do_ef_triangle( draw,
-			 1, 
-			 ~0,
+      if (unfilled) {
+	 for (i = 0; i+2 < count; i += 3) {
+	    do_ef_triangle( draw,
+			    1, 
+			    ~0,
+			    start + i + 0,
+			    start + i + 1,
+			    start + i + 2 );
+	 }
+      } 
+      else {
+	 for (i = 0; i+2 < count; i += 3) {
+	    do_triangle( draw,
 			 start + i + 0,
 			 start + i + 1,
 			 start + i + 2 );
+	 }
       }
       break;
 
@@ -340,27 +378,49 @@ draw_prim( struct draw_context *draw,
 
 
    case PIPE_PRIM_QUADS:
-      for (i = 0; i+3 < count; i += 4) {
-	 do_quad( draw,
-		  start + i + 0,
-		  start + i + 1,
-		  start + i + 2,
-		  start + i + 3);
+      if (unfilled) {
+	 for (i = 0; i+3 < count; i += 4) {
+	    do_ef_quad( draw,
+			start + i + 0,
+			start + i + 1,
+			start + i + 2,
+			start + i + 3);
+	 }
+      }
+      else {
+	 for (i = 0; i+3 < count; i += 4) {
+	    do_quad( draw,
+		     start + i + 0,
+		     start + i + 1,
+		     start + i + 2,
+		     start + i + 3);
+	 }
       }
       break;
 
    case PIPE_PRIM_QUAD_STRIP:
-      for (i = 0; i+3 < count; i += 2) {
-	 do_quad( draw,
-		  start + i + 2,
-		  start + i + 0,
-		  start + i + 1,
-		  start + i + 3);
+      if (unfilled) {
+	 for (i = 0; i+3 < count; i += 2) {
+	    do_ef_quad( draw,
+			start + i + 2,
+			start + i + 0,
+			start + i + 1,
+			start + i + 3);
+	 }
+      }
+      else {
+	 for (i = 0; i+3 < count; i += 2) {
+	    do_quad( draw,
+		     start + i + 2,
+		     start + i + 0,
+		     start + i + 1,
+		     start + i + 3);
+	 }
       }
       break;
 
    case PIPE_PRIM_POLYGON:
-      if (count >= 3) {
+      if (unfilled) {
 	 unsigned ef_mask = (1<<2) | (1<<0);
 
 	 for (i = 0; i+2 < count; i++) {
@@ -376,6 +436,14 @@ draw_prim( struct draw_context *draw,
 			    start + 0);
 
 	    ef_mask &= ~(1<<2);
+	 }
+      }
+      else {
+	 for (i = 0; i+2 < count; i++) {
+	    do_triangle( draw,
+			 start + i + 1,
+			 start + i + 2,
+			 start + 0);
 	 }
       }
       break;
