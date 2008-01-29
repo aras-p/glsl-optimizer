@@ -399,6 +399,8 @@ mm_buffer_destroy(struct pb_buffer *buf)
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
    
+   assert(buf->base.refcount == 0);
+   
    _glthread_LOCK_MUTEX(mm->mutex);
    mmFreeMem(mm_buf->block);
    FREE(buf);

@@ -107,10 +107,9 @@ pb_malloc_buffer_create(size_t size,
 {
    struct malloc_buffer *buf;
    
-   /* TODO: accept an alignment parameter */
    /* TODO: do a single allocation */
    
-   buf = (struct malloc_buffer *)MALLOC(sizeof(struct malloc_buffer));
+   buf = CALLOC_STRUCT(malloc_buffer);
    if(!buf)
       return NULL;
    

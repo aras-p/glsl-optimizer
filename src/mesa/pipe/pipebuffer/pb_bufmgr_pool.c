@@ -258,7 +258,7 @@ pool_bufmgr_create(struct pb_manager *provider,
    if(!pool->map)
       goto failure;
 
-   pool->bufs = (struct pool_buffer *) MALLOC(numBufs * sizeof(*pool->bufs));
+   pool->bufs = (struct pool_buffer *)CALLOC(numBufs, sizeof(*pool->bufs));
    if (!pool->bufs)
       goto failure;
 
