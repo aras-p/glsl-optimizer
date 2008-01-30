@@ -61,6 +61,8 @@
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
 
+#define CELL_MAX_SPUS 6
+
 #define TILE_SIZE 32
 
 
