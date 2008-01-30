@@ -2343,7 +2343,7 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
 	 wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
 
 	 memcpy(& decl, buffer + (decl_addr & 0x0f), sizeof(decl));
-	 exec_declaration( mach, decl );
+	 exec_declaration( mach, &decl );
       }
    }
 
