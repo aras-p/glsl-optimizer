@@ -159,8 +159,6 @@ struct draw_vertex_fetch
    unsigned attr_count;
    unsigned vertex_stride;
 
-   struct draw_vf_attr *lookup[PIPE_ATTRIB_MAX];
-   
    draw_vf_emit_func emit;
 
    /* Parameters and constants for codegen:
