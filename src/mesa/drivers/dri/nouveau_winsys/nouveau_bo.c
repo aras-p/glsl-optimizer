@@ -246,29 +246,6 @@ nouveau_bo_ref(struct nouveau_device *dev, uint64_t handle,
 	return 0;
 }
 
-int
-nouveau_bo_resize(struct nouveau_bo *bo, int size)
-{
-	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
-	int ret;
-
-	if (!nvbo || nvbo->user)
-		return -EINVAL;
-
-	if (nvbo->sysmem) {
-		nvbo->sysmem = realloc(nvbo->sysmem, size);
-		if (!nvbo->sysmem)
-			return -ENOMEM;
-	} else {
-		ret = nouveau_bo_realloc_gpu(nvbo, 0, size);
-		if (ret)
-			return ret;
-	}
-
-	nvbo->base.size = size;
-	return 0;
-}
-
 void
 nouveau_bo_del(struct nouveau_bo **bo)
 {
