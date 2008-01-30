@@ -653,7 +653,12 @@ delete_framebuffer_cb(GLuint id, void *data, void *userData)
     */
    /*assert(fb->RefCount == 1);*/
    fb->RefCount = 0;
-   fb->Delete(fb);
+
+   /* NOTE: Delete should always be defined but there are two reports
+    * of it being NULL (bugs 13507, 14293).  Work-around for now.
+    */
+   if (fb->Delete)
+      fb->Delete(fb);
 }
 
 /**
