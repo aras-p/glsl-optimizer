@@ -278,7 +278,7 @@ do_depth_test(struct setup_stage *setup, int x, int y, unsigned mask)
       /* now, _really_ clear the tile */
       clear_z_tile(&ztile);
    }
-   else {
+   else if (tile_status_z[setup->ty][setup->tx] != TILE_STATUS_DIRTY) {
       /* make sure we've got the tile from main mem */
       wait_on_mask(1 << TAG_READ_TILE_Z);
    }
@@ -403,7 +403,7 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
          /* now, _really_ clear the tile */
          clear_c_tile(&ctile);
       }
-      else {
+      else if (tile_status[setup->ty][setup->tx] != TILE_STATUS_DIRTY) {
          /* make sure we've got the tile from main mem */
          wait_on_mask(1 << TAG_READ_TILE_COLOR);
       }
