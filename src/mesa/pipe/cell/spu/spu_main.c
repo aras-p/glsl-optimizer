@@ -31,7 +31,6 @@
 
 #include <stdio.h>
 #include <libmisc.h>
-#include <spu_mfcio.h>
 
 #include "spu_main.h"
 #include "spu_render.h"
@@ -50,24 +49,6 @@ helpful headers:
 boolean Debug = FALSE;
 
 struct spu_global spu;
-
-
-void
-wait_on_mask(unsigned tagMask)
-{
-   mfc_write_tag_mask( tagMask );
-   /* wait for completion of _any_ DMAs specified by tagMask */
-   mfc_read_tag_status_any();
-}
-
-
-static INLINE void
-wait_on_mask_all(unsigned tagMask)
-{
-   mfc_write_tag_mask( tagMask );
-   /* wait for completion of _any_ DMAs specified by tagMask */
-   mfc_read_tag_status_all();
-}
 
 
 /**
