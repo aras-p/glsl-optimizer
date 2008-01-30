@@ -47,9 +47,6 @@ struct vertex_header {
    float data[0][4];
 };
 
-struct prim_header {
-   struct vertex_header *v[3];
-};
 
 
 /* XXX fix this */
@@ -520,11 +517,10 @@ static void print_vertex(const struct vertex_header *v)
 }
 #endif
 
-static boolean setup_sort_vertices(const struct prim_header *prim )
+static boolean setup_sort_vertices(const struct vertex_header *v0,
+                                   const struct vertex_header *v1,
+                                   const struct vertex_header *v2)
 {
-   const struct vertex_header *v0 = prim->v[0];
-   const struct vertex_header *v1 = prim->v[1];
-   const struct vertex_header *v2 = prim->v[2];
 
 #if DEBUG_VERTS
    fprintf(stderr, "Triangle:\n");
@@ -888,21 +884,29 @@ static void subtriangle( struct edge *eleft,
 
 
 /**
- * Do setup for triangle rasterization, then render the triangle.
+ * Draw triangle into tile at (tx, ty) (tile coords)
+ * The tile data should have already been fetched.
  */
-static void
-setup_tri(struct prim_header *prim)
+void
+tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 {
-   if (!setup_sort_vertices( prim )) {
+   setup.tx = tx;
+   setup.ty = ty;
+
+   /* set clipping bounds to tile bounds */
+   setup.cliprect_minx = tx * TILE_SIZE;
+   setup.cliprect_miny = ty * TILE_SIZE;
+   setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
+   setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
+
+   if (!setup_sort_vertices((struct vertex_header *) v0,
+                            (struct vertex_header *) v1,
+                            (struct vertex_header *) v2)) {
       return; /* totally clipped */
    }
 
    setup_tri_coefficients();
    setup_tri_edges();
-
-#if 0
-   setup.quad.prim = PRIM_TRI;
-#endif
 
    setup.span.y = 0;
    setup.span.y_flags = 0;
@@ -926,32 +930,4 @@ setup_tri(struct prim_header *prim)
    }
 
    flush_spans();
-}
-
-
-
-/**
- * Draw triangle into tile at (tx, ty) (tile coords)
- * The tile data should have already been fetched.
- */
-void
-tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
-{
-   struct prim_header tri;
-   /*struct setup_stage setup;*/
-
-   tri.v[0] = (struct vertex_header *) v0;
-   tri.v[1] = (struct vertex_header *) v1;
-   tri.v[2] = (struct vertex_header *) v2;
-
-   setup.tx = tx;
-   setup.ty = ty;
-
-   /* set clipping bounds to tile bounds */
-   setup.cliprect_minx = tx * TILE_SIZE;
-   setup.cliprect_miny = ty * TILE_SIZE;
-   setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
-   setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
-
-   setup_tri(&tri);
 }
