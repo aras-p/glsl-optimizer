@@ -35,7 +35,6 @@
 
 
 #include <assert.h>
-#include <stddef.h>
 
 #include "pipe/p_util.h"
 
@@ -268,8 +267,7 @@ emit_vertex( struct vbuf_stage *vbuf,
 #if 0
       {
 	 static float data[256]; 
-	 draw_vf_set_data(vbuf->vf, vertex->data);
-	 draw_vf_emit_vertices(vbuf->vf, 1, data);
+	 draw_vf_emit_vertex(vbuf->vf, vertex, data);
 	 if(memcmp((uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size, data, vbuf->vertex_size)) {
             fprintf(stderr, "With VF:\n");
             dump_emitted_vertex(vbuf->vinfo, (uint8_t *)data);
@@ -281,146 +279,10 @@ emit_vertex( struct vbuf_stage *vbuf,
 #endif
    }
    else {
-      draw_vf_set_data(vbuf->vf, vertex->data);
-      draw_vf_emit_vertices(vbuf->vf, 1, vbuf->vertex_ptr);
+      draw_vf_emit_vertex(vbuf->vf, vertex, vbuf->vertex_ptr);
    
       vbuf->vertex_ptr += vbuf->vertex_size/4;
    }
-}
-
-
-static void
-vbuf_set_vf_attributes(struct vbuf_stage *vbuf ) 
-{
-   const struct vertex_info *vinfo = vbuf->vinfo;
-   struct draw_vf_attr_map attrs[PIPE_MAX_SHADER_INPUTS];
-   uint i;
-   uint count = 0;  /* for debug/sanity */
-   unsigned nr_attrs = 0;
-   
-   if(!vbuf->vf)
-      return;
-   
-//   fprintf(stderr, "emit vertex %d to %p\n", 
-//           vbuf->nr_vertices, vbuf->vertex_ptr);
-
-#if 0
-   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
-      if(vertex->vertex_id < vbuf->nr_vertices)
-	 return;
-      else
-	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
-	         vertex->vertex_id, vbuf->nr_vertices);
-      return;
-   }
-#endif
-   
-   for (i = 0; i < vinfo->num_attribs; i++) {
-      uint j = vinfo->src_index[i];
-      switch (vinfo->emit[i]) {
-      case EMIT_OMIT:
-         /* no-op */
-         break;
-      case EMIT_ALL: {
-         /* just copy the whole vertex as-is to the vbuf */
-	 unsigned k, s = vinfo->size;
-         assert(i == 0);
-         assert(j == 0);
-         /* copy the vertex header */
-         /* XXX: we actually don't copy the header, just pad it */
-	 attrs[nr_attrs].attrib = 0;
-	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
-	 attrs[nr_attrs].offset = offsetof(struct vertex_header, data);
-	 s -= offsetof(struct vertex_header, data)/4;
-         count += offsetof(struct vertex_header, data)/4;
-	 nr_attrs++;
-	 /* copy the vertex data */
-         for(k = 0; k < (s & ~0x3); k += 4) {
-      	    attrs[nr_attrs].attrib = k/4;
-      	    attrs[nr_attrs].format = DRAW_EMIT_4F;
-      	    attrs[nr_attrs].offset = 0;
-      	    nr_attrs++;
-            count += 4;
-         }
-         /* tail */
-         /* XXX: actually, this shouldn't be needed */
- 	 attrs[nr_attrs].attrib = k/4;
-  	 attrs[nr_attrs].offset = 0;
-         switch(s & 0x3) {
-         case 0:
-            break;
-         case 1:
-      	    attrs[nr_attrs].format = DRAW_EMIT_1F;
-      	    nr_attrs++;
-            count += 1;
-            break;
-         case 2:
-      	    attrs[nr_attrs].format = DRAW_EMIT_2F;
-      	    nr_attrs++;
-            count += 2;
-            break;
-         case 3:
-      	    attrs[nr_attrs].format = DRAW_EMIT_3F;
-      	    nr_attrs++;
-            count += 3;
-            break;
-         }
-         break;
-      }
-      case EMIT_1F:
-	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_1F;
-	 attrs[nr_attrs].offset = 0;
-	 nr_attrs++;
-         count++;
-         break;
-      case EMIT_1F_PSIZE:
-	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_1F_CONST;
-	 attrs[nr_attrs].offset = 0;
-	 attrs[nr_attrs].data.f[0] = vbuf->stage.draw->rasterizer->point_size;
-	 nr_attrs++;
-         count++;
-         break;
-      case EMIT_2F:
-	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_2F;
-	 attrs[nr_attrs].offset = 0;
-	 nr_attrs++;
-         count += 2;
-         break;
-      case EMIT_3F:
-	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_3F;
-	 attrs[nr_attrs].offset = 0;
-	 nr_attrs++;
-         count += 3;
-         break;
-      case EMIT_4F:
-	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_4F;
-	 attrs[nr_attrs].offset = 0;
-	 nr_attrs++;
-         count += 4;
-         break;
-      case EMIT_4UB:
-	 attrs[nr_attrs].attrib = j;
-	 attrs[nr_attrs].format = DRAW_EMIT_4UB_4F_BGRA;
-	 attrs[nr_attrs].offset = 0;
-	 nr_attrs++;
-         count += 1;
-         break;
-      default:
-         assert(0);
-      }
-   }
-   
-   assert(count == vinfo->size);  
-   
-   draw_vf_set_vertex_attributes(vbuf->vf, 
-                                 attrs, 
-                                 nr_attrs, 
-                                 vbuf->vertex_size);
 }
 
 
@@ -498,7 +360,10 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint newprim )
 
    vbuf->vinfo = vinfo;
    vbuf->vertex_size = vertex_size;
-   vbuf_set_vf_attributes(vbuf);
+   if(vbuf->vf)
+      draw_vf_set_vertex_info(vbuf->vf, 
+                              vbuf->vinfo,
+                              vbuf->stage.draw->rasterizer->point_size);
    
    if (!vbuf->vertices)
       vbuf_alloc_vertices(vbuf);

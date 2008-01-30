@@ -26,6 +26,8 @@
  */
 
 
+#include <stddef.h>
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 
@@ -151,10 +153,11 @@ static void choose_emit_func( struct draw_vertex_fetch *vf,
 
 
 
-unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf, 
-				 const struct draw_vf_attr_map *map,
-				 unsigned nr, 
-				 unsigned vertex_stride )
+static unsigned 
+draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf, 
+                               const struct draw_vf_attr_map *map,
+                               unsigned nr, 
+                               unsigned vertex_stride )
 {
    unsigned offset = 0;
    unsigned i, j;
@@ -202,6 +205,133 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 }
 
 
+void draw_vf_set_vertex_info( struct draw_vertex_fetch *vf, 
+                              const struct vertex_info *vinfo,
+                              float point_size )
+{
+   unsigned i, j, k;
+   struct draw_vf_attr *a = vf->attr;
+   struct draw_vf_attr_map attrs[PIPE_MAX_SHADER_INPUTS];
+   unsigned count = 0;  /* for debug/sanity */
+   unsigned nr_attrs = 0;
+   
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      j = vinfo->src_index[i];
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
+         /* no-op */
+         break;
+      case EMIT_ALL: {
+         /* just copy the whole vertex as-is to the vbuf */
+	 unsigned s = vinfo->size;
+         assert(i == 0);
+         assert(j == 0);
+         /* copy the vertex header */
+         /* XXX: we actually don't copy the header, just pad it */
+	 attrs[nr_attrs].attrib = 0;
+	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
+	 attrs[nr_attrs].offset = offsetof(struct vertex_header, data);
+	 s -= offsetof(struct vertex_header, data)/4;
+         count += offsetof(struct vertex_header, data)/4;
+	 nr_attrs++;
+	 /* copy the vertex data */
+         for(k = 0; k < (s & ~0x3); k += 4) {
+      	    attrs[nr_attrs].attrib = k/4;
+      	    attrs[nr_attrs].format = DRAW_EMIT_4F;
+      	    attrs[nr_attrs].offset = 0;
+      	    nr_attrs++;
+            count += 4;
+         }
+         /* tail */
+         /* XXX: actually, this shouldn't be needed */
+ 	 attrs[nr_attrs].attrib = k/4;
+  	 attrs[nr_attrs].offset = 0;
+         switch(s & 0x3) {
+         case 0:
+            break;
+         case 1:
+      	    attrs[nr_attrs].format = DRAW_EMIT_1F;
+      	    nr_attrs++;
+            count += 1;
+            break;
+         case 2:
+      	    attrs[nr_attrs].format = DRAW_EMIT_2F;
+      	    nr_attrs++;
+            count += 2;
+            break;
+         case 3:
+      	    attrs[nr_attrs].format = DRAW_EMIT_3F;
+      	    nr_attrs++;
+            count += 3;
+            break;
+         }
+         break;
+      }
+      case EMIT_1F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_1F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count++;
+         break;
+      case EMIT_1F_PSIZE:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_1F_CONST;
+	 attrs[nr_attrs].offset = 0;
+	 attrs[nr_attrs].data.f[0] = point_size;
+	 nr_attrs++;
+         count++;
+         break;
+      case EMIT_2F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_2F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 2;
+         break;
+      case EMIT_3F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_3F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 3;
+         break;
+      case EMIT_4F:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_4F;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 4;
+         break;
+      case EMIT_4UB:
+	 attrs[nr_attrs].attrib = j;
+	 attrs[nr_attrs].format = DRAW_EMIT_4UB_4F_BGRA;
+	 attrs[nr_attrs].offset = 0;
+	 nr_attrs++;
+         count += 1;
+         break;
+      default:
+         assert(0);
+      }
+   }
+   
+   assert(count == vinfo->size);  
+   
+   draw_vf_set_vertex_attributes(vf, 
+                                 attrs, 
+                                 nr_attrs, 
+                                 vinfo->size * sizeof(float) );
+
+   for (j = 0; j < vf->attr_count; j++) {
+      a[j].inputsize = 4;
+      a[j].do_insert = a[j].insert[4 - 1];
+      if(a[j].isconst) {
+	 a[j].inputptr = a[j].data;
+	 a[j].inputstride = 0;
+      }
+   }
+}
+
 
 #if 0
 /* Set attribute pointers, adjusted for start position:
@@ -229,36 +359,25 @@ void draw_vf_set_sources( struct draw_vertex_fetch *vf,
 #endif
 
 
-/* Set attribute pointers, adjusted for start position:
+/**
+ * Emit a vertex to dest.  
  */
-void draw_vf_set_data( struct draw_vertex_fetch *vf,
-                       float data[][4])
+void draw_vf_emit_vertex( struct draw_vertex_fetch *vf,
+                          struct vertex_header *vertex,
+                          void *dest )
 {
    struct draw_vf_attr *a = vf->attr;
    unsigned j;
    
    for (j = 0; j < vf->attr_count; j++) {
-      a[j].inputstride = 0; /* XXX: one-vertex-max ATM */ 
-      a[j].inputsize = 4;
-      a[j].do_insert = a[j].insert[4 - 1];
-      if(a[j].isconst)
-	 a[j].inputptr = a[j].data;
-      else
-	 a[j].inputptr = (uint8_t *)&data[a[j].attrib][0];
+      if(!a[j].isconst) {
+	 a[j].inputptr = (uint8_t *)&vertex->data[a[j].attrib][0];
+	 a[j].inputstride = 0; /* XXX: one-vertex-max ATM */
+      }
    }
+   
+   vf->emit( vf, 1, (uint8_t*) dest );
 }
-
-
-/* Emit count VB vertices to dest.  
- */
-void draw_vf_emit_vertices( struct draw_vertex_fetch *vf,
-		       unsigned count,
-		       void *dest )
-{
-   vf->emit( vf, count, (uint8_t*) dest );	
-}
-
-
 
 
 

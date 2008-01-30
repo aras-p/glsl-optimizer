@@ -33,6 +33,7 @@
 #include "pipe/p_state.h"
 
 #include "draw_vertex.h"
+#include "draw_private.h" // for vertex_header
 
 
 enum draw_vf_attr_format {
@@ -78,11 +79,17 @@ struct draw_vertex_fetch;
 
 
 
+#if 0
 unsigned 
 draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
                                const struct draw_vf_attr_map *map,
                                unsigned nr, 
                                unsigned vertex_stride );
+#endif
+
+void draw_vf_set_vertex_info( struct draw_vertex_fetch *vf, 
+                              const struct vertex_info *vinfo,
+                              float point_size );
 
 #if 0
 void 
@@ -92,13 +99,9 @@ draw_vf_set_sources( struct draw_vertex_fetch *vf,
 #endif
 
 void 
-draw_vf_set_data( struct draw_vertex_fetch *vf,
-                  float data[][4]);
-
-void 
-draw_vf_emit_vertices( struct draw_vertex_fetch *vf,
-		       unsigned count,
-		       void *dest );
+draw_vf_emit_vertex( struct draw_vertex_fetch *vf,
+                     struct vertex_header *vertex,
+                     void *dest );
 
 struct draw_vertex_fetch *
 draw_vf_create( void );
