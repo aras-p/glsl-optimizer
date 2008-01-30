@@ -791,12 +791,23 @@ fetch_src_file_channel(
    case TGSI_EXTSWIZZLE_Z:
    case TGSI_EXTSWIZZLE_W:
       switch( file ) {
-      case TGSI_FILE_CONSTANT:
-         chan->f[0] = mach->Consts[index->i[0]][swizzle];
-         chan->f[1] = mach->Consts[index->i[1]][swizzle];
-         chan->f[2] = mach->Consts[index->i[2]][swizzle];
-         chan->f[3] = mach->Consts[index->i[3]][swizzle];
+      case TGSI_FILE_CONSTANT: {
+         unsigned char buffer[32] ALIGN16_ATTRIB;
+         unsigned i;
+
+         for (i = 0; i < 4; i++) {
+            const float *ptr = mach->Consts[index->i[i]];
+            const uint64_t addr = (uint64_t)(uintptr_t) ptr;
+            const unsigned size = ((addr & 0x0f) == 0) ? 16 : 32;
+
+            mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);
+            wait_on_mask(1 << TAG_VERTEX_BUFFER);
+
+            (void) memcpy(& chan->f[i], &buffer[(addr & 0x0f) 
+                + (sizeof(float) * swizzle)], sizeof(float));
+         }
          break;
+      }
 
       case TGSI_FILE_INPUT:
          chan->u[0] = mach->Inputs[index->i[0]].xyzw[swizzle].u[0];
