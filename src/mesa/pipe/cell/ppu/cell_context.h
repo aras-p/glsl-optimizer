@@ -38,9 +38,6 @@
 #include "pipe/cell/common.h"
 
 
-#define CELL_MAX_SPUS 6
-
-
 struct cell_vbuf_render;
 
 struct cell_vertex_shader_state
