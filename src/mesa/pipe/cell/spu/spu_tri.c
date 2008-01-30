@@ -81,9 +81,9 @@ struct edge {
 
 struct interp_coef
 {
-   float a0[4];
-   float dadx[4];
-   float dady[4];
+   float4 a0;
+   float4 dadx;
+   float4 dady;
 };
 
 
@@ -201,36 +201,31 @@ clip_emit_quad(struct setup_stage *setup)
  * Eg: four colors will be compute.
  */
 static INLINE void
-eval_coeff(uint slot, float x, float y, float result[4][4])
+eval_coeff(uint slot, float x, float y, float4 result[4])
 {
    switch (spu.vertex_info.interp_mode[slot]) {
    case INTERP_CONSTANT:
-      {
-         uint i;
-         for (i = 0; i < 4; i++) {
-            result[QUAD_TOP_LEFT][i] =
-            result[QUAD_TOP_RIGHT][i] =
-            result[QUAD_BOTTOM_LEFT][i] =
-            result[QUAD_BOTTOM_RIGHT][i] = setup.coef[slot].a0[i];
-         }
-      }
+      result[QUAD_TOP_LEFT] =
+      result[QUAD_TOP_RIGHT] =
+      result[QUAD_BOTTOM_LEFT] =
+      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0;
       break;
 
    case INTERP_LINEAR:
       /* fall-through, for now */
    default:
       {
-         uint i;
-         const float *dadx = setup.coef[slot].dadx;
-         const float *dady = setup.coef[slot].dady;
+         register vector float dadx = setup.coef[slot].dadx.v;
+         register vector float dady = setup.coef[slot].dady.v;
+         register vector float topLeft
+            = spu_add(setup.coef[slot].a0.v,
+                      spu_add(spu_mul(spu_splats(x), dadx),
+                              spu_mul(spu_splats(y), dady)));
 
-         /* loop over XYZW comps */
-         for (i = 0; i < 4; i++) {
-            result[QUAD_TOP_LEFT][i] = setup.coef[slot].a0[i] + x * dadx[i] + y * dady[i];
-            result[QUAD_TOP_RIGHT][i] = result[0][i] + dadx[i];
-            result[QUAD_BOTTOM_LEFT][i] = result[0][i] + dady[i];
-            result[QUAD_BOTTOM_RIGHT][i] = result[0][i] + dadx[i] + dady[i];
-         }
+         result[QUAD_TOP_LEFT].v = topLeft;
+         result[QUAD_TOP_RIGHT].v = spu_add(topLeft, dadx);
+         result[QUAD_BOTTOM_LEFT].v = spu_add(topLeft, dady);
+         result[QUAD_BOTTOM_RIGHT].v = spu_add(spu_add(topLeft, dadx), dady);
       }
    }
 }
@@ -240,28 +235,46 @@ static INLINE void
 eval_z(float x, float y, float result[4])
 {
    const uint slot = 0;
-   const uint i = 2;
-   const float *dadx = setup.coef[slot].dadx;
-   const float *dady = setup.coef[slot].dady;
-
-   result[QUAD_TOP_LEFT] = setup.coef[slot].a0[i] + x * dadx[i] + y * dady[i];
-   result[QUAD_TOP_RIGHT] = result[0] + dadx[i];
-   result[QUAD_BOTTOM_LEFT] = result[0] + dady[i];
-   result[QUAD_BOTTOM_RIGHT] = result[0] + dadx[i] + dady[i];
+   const float dzdx = setup.coef[slot].dadx.f[2];
+   const float dzdy = setup.coef[slot].dady.f[2];
+   const float topLeft = setup.coef[slot].a0.f[2] + x * dzdx + y * dzdy;
+#if 1
+   result[QUAD_TOP_LEFT] = topLeft;
+   result[QUAD_TOP_RIGHT] = topLeft + dzdx;
+   result[QUAD_BOTTOM_LEFT] = topLeft + dzdy;
+   result[QUAD_BOTTOM_RIGHT] = topLeft + dzdx + dzdy;
+#else
+   /* XXX vectorize */
+   const vector float topLeftv = spu_splats(topLeft);
+   const vector float derivs
+      = (vector float) { 0.0, dzdx, dzdy, dzdx + dzdy };
+   vector float *res = (vector float *) result;
+   *res = spu_add(topLeftv, derivs);
+#endif
 }
 
 
-static INLINE uint
-pack_color(const float color[4])
+static INLINE void
+pack_colors(uint uicolors[4], const float4 fcolors[4])
 {
+   /* XXX grab the code for _pack_rgba8() and use the shuffle
+    * command to do the swizzling seen here.
+    */
    switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return _pack_rgba8(color[3], color[0], color[1], color[2]);
+      uicolors[0] = _pack_rgba8(fcolors[0].f[3], fcolors[0].f[0], fcolors[0].f[1], fcolors[0].f[2]);
+      uicolors[1] = _pack_rgba8(fcolors[1].f[3], fcolors[1].f[0], fcolors[1].f[1], fcolors[1].f[2]);
+      uicolors[2] = _pack_rgba8(fcolors[2].f[3], fcolors[2].f[0], fcolors[2].f[1], fcolors[2].f[2]);
+      uicolors[3] = _pack_rgba8(fcolors[3].f[3], fcolors[0].f[0], fcolors[3].f[1], fcolors[3].f[2]);
+      break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return _pack_rgba8(color[2], color[1], color[0], color[3]);
+      uicolors[0] = _pack_rgba8(fcolors[0].f[2], fcolors[0].f[1], fcolors[0].f[0], fcolors[0].f[3]);
+      uicolors[1] = _pack_rgba8(fcolors[1].f[2], fcolors[1].f[1], fcolors[1].f[0], fcolors[1].f[3]);
+      uicolors[2] = _pack_rgba8(fcolors[2].f[2], fcolors[2].f[1], fcolors[2].f[0], fcolors[2].f[3]);
+      uicolors[3] = _pack_rgba8(fcolors[3].f[2], fcolors[3].f[1], fcolors[3].f[0], fcolors[3].f[3]);
+      break;
    default:
       ASSERT(0);
-      return 0;
    }
 }
 
@@ -379,7 +392,7 @@ emit_quad( int x, int y, unsigned mask )
    uint colors[4];  /* indexed by QUAD_x */
 
    if (spu.texture.start) {
-      float texcoords[4][4];
+      float4 texcoords[4];
       uint i;
       eval_coeff(2, (float) x, (float) y, texcoords);
       for (i = 0; i < 4; i++) {
@@ -387,12 +400,9 @@ emit_quad( int x, int y, unsigned mask )
       }
    }
    else {
-      float fcolors[4][4];
+      float4 fcolors[4];
       eval_coeff(1, (float) x, (float) y, fcolors);
-      colors[QUAD_TOP_LEFT] = pack_color(fcolors[QUAD_TOP_LEFT]);
-      colors[QUAD_TOP_RIGHT] = pack_color(fcolors[QUAD_TOP_RIGHT]);
-      colors[QUAD_BOTTOM_LEFT] = pack_color(fcolors[QUAD_BOTTOM_LEFT]);
-      colors[QUAD_BOTTOM_RIGHT] = pack_color(fcolors[QUAD_BOTTOM_RIGHT]);
+      pack_colors(colors, fcolors);
    }
 
    if (spu.depth_stencil.depth.enabled) {
@@ -645,12 +655,12 @@ static void const_coeff(uint slot)
    ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
 
    for (i = 0; i < 4; i++) {
-      setup.coef[slot].dadx[i] = 0;
-      setup.coef[slot].dady[i] = 0;
+      setup.coef[slot].dadx.f[i] = 0;
+      setup.coef[slot].dady.f[i] = 0;
 
       /* need provoking vertex info!
        */
-      setup.coef[slot].a0[i] = setup.vprovoke->data[slot][i];
+      setup.coef[slot].a0.f[i] = setup.vprovoke->data[slot][i];
    }
 }
 
@@ -670,8 +680,8 @@ static void tri_linear_coeff( uint slot, uint firstComp, uint lastComp )
    
       ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
 
-      setup.coef[slot].dadx[i] = a * setup.oneoverarea;
-      setup.coef[slot].dady[i] = b * setup.oneoverarea;
+      setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
+      setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
 
       /* calculate a0 as the value which would be sampled for the
        * fragment at (0,0), taking into account that we want to sample at
@@ -685,17 +695,17 @@ static void tri_linear_coeff( uint slot, uint firstComp, uint lastComp )
        * to define a0 as the sample at a pixel center somewhere near vmin
        * instead - i'll switch to this later.
        */
-      setup.coef[slot].a0[i] = (setup.vmin->data[slot][i] - 
-                                 (setup.coef[slot].dadx[i] * (setup.vmin->data[0][0] - 0.5f) + 
-                                  setup.coef[slot].dady[i] * (setup.vmin->data[0][1] - 0.5f)));
+      setup.coef[slot].a0.f[i] = (setup.vmin->data[slot][i] - 
+                                 (setup.coef[slot].dadx.f[i] * (setup.vmin->data[0][0] - 0.5f) + 
+                                  setup.coef[slot].dady.f[i] * (setup.vmin->data[0][1] - 0.5f)));
    }
 
    /*
    _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
 		slot, "xyzw"[i], 
 		setup.coef[slot].a0[i],
-		setup.coef[slot].dadx[i],
-		setup.coef[slot].dady[i]);
+		setup.coef[slot].dadx.f[i],
+		setup.coef[slot].dady.f[i]);
    */
 }
 
@@ -734,11 +744,11 @@ static void tri_persp_coeff( unsigned slot,
    assert(slot < PIPE_MAX_SHADER_INPUTS);
    assert(i <= 3);
 
-   setup.coef[slot].dadx[i] = a * setup.oneoverarea;
-   setup.coef[slot].dady[i] = b * setup.oneoverarea;
-   setup.coef[slot].a0[i] = (mina - 
-			    (setup.coef[slot].dadx[i] * (setup.vmin->data[0][0] - 0.5f) + 
-			     setup.coef[slot].dady[i] * (setup.vmin->data[0][1] - 0.5f)));
+   setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
+   setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
+   setup.coef[slot].a0.f[i] = (mina - 
+			    (setup.coef[slot].dadx.f[i] * (setup.vmin->data[0][0] - 0.5f) + 
+			     setup.coef[slot].dady.f[i] * (setup.vmin->data[0][1] - 0.5f)));
 }
 #endif
 

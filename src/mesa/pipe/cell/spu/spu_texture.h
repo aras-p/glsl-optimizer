@@ -37,7 +37,7 @@ invalidate_tex_cache(void);
 
 
 extern uint
-sample_texture(const float *texcoord);
+sample_texture(float4 texcoord);
 
 
 #endif /* SPU_TEXTURE_H */

@@ -36,6 +36,13 @@
 #include "pipe/p_state.h"
 
 
+typedef union
+{
+   vector float v;
+   float f[4];
+} float4;
+
+
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
