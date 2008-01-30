@@ -2332,17 +2332,19 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
 
 
    /* execute declarations (interpolants) */
-   for (i = 0; i < mach->NumDeclarations; i++) {
-      uint8_t buffer[sizeof(struct tgsi_full_declaration) + 32] ALIGN16_ATTRIB;
-      struct tgsi_full_declaration decl;
-      unsigned long decl_addr = (unsigned long) (mach->Declarations+i);
-      unsigned size = ((sizeof(decl) + (decl_addr & 0x0f) + 0x0f) & ~0x0f);
+   if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
+      for (i = 0; i < mach->NumDeclarations; i++) {
+	 uint8_t buffer[sizeof(struct tgsi_full_declaration) + 32] ALIGN16_ATTRIB;
+	 struct tgsi_full_declaration decl;
+	 unsigned long decl_addr = (unsigned long) (mach->Declarations+i);
+	 unsigned size = ((sizeof(decl) + (decl_addr & 0x0f) + 0x0f) & ~0x0f);
 
-      mfc_get(buffer, decl_addr & ~0x0f, size, TAG_INSTRUCTION_FETCH, 0, 0);
-      wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
+	 mfc_get(buffer, decl_addr & ~0x0f, size, TAG_INSTRUCTION_FETCH, 0, 0);
+	 wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
 
-      memcpy(& decl, buffer + (decl_addr & 0x0f), sizeof(decl));
-      exec_declaration( mach, mach->Declarations+i );
+	 memcpy(& decl, buffer + (decl_addr & 0x0f), sizeof(decl));
+	 exec_declaration( mach, decl );
+      }
    }
 
    /* execute instructions, until pc is set to -1 */
@@ -2357,7 +2359,7 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
       wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
 
       memcpy(& inst, buffer + (inst_addr & 0x0f), sizeof(inst));
-      exec_instruction( mach, mach->Instructions + pc, &pc );
+      exec_instruction( mach, & inst, &pc );
    }
 
 #if 0
