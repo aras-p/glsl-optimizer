@@ -161,8 +161,6 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 
    assert(nr < PIPE_ATTRIB_MAX);
 
-   memset(vf->lookup, 0, sizeof(vf->lookup));
-
    for (j = 0, i = 0; i < nr; i++) {
       const unsigned format = map[i].format;
       if (format == DRAW_EMIT_PAD) {
@@ -175,9 +173,6 @@ unsigned draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 
       }
       else {
-	 assert(vf->lookup[map[i].attrib] == 0 || format == DRAW_EMIT_1F_CONST);
-	 vf->lookup[map[i].attrib] = &vf->attr[j];
-
 	 vf->attr[j].attrib = map[i].attrib;
 	 vf->attr[j].format = format;
 	 vf->attr[j].insert = draw_vf_format_info[format].insert;
