@@ -89,6 +89,55 @@ my_tile(uint tx, uint ty)
 
 
 /**
+ * Start fetching non-clear color/Z tiles from main memory
+ */
+static INLINE void
+get_cz_tiles(uint tx, uint ty)
+{
+   if (spu.depth_stencil.depth.enabled) {
+      if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
+         get_tile(tx, ty, &ztile, TAG_READ_TILE_Z, 1);
+      }
+   }
+
+   if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
+      get_tile(tx, ty, &ctile, TAG_READ_TILE_COLOR, 0);
+   }
+}
+
+
+/**
+ * Start putting dirty color/Z tiles back to main memory
+ */
+static INLINE void
+put_cz_tiles(uint tx, uint ty)
+{
+   if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
+      put_tile(tx, ty, &ztile, TAG_WRITE_TILE_Z, 1);
+      tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
+   }
+
+   if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
+      put_tile(tx, ty, &ctile, TAG_WRITE_TILE_COLOR, 0);
+      tile_status[ty][tx] = TILE_STATUS_DEFINED;
+   }
+}
+
+
+/**
+ * Wait for 'put' of color/z tiles to complete.
+ */
+static INLINE void
+wait_put_cz_tiles(void)
+{
+   wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
+   if (spu.depth_stencil.depth.enabled) {
+      wait_on_mask(1 << TAG_WRITE_TILE_Z);
+   }
+}
+
+
+/**
  * Render primitives
  * \param pos_incr  returns value indicating how may words to skip after
  *                  this command in the batch buffer
@@ -122,6 +171,9 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
 
    ASSERT(sizeof(*render) % 4 == 0);
    ASSERT(total_vertex_bytes % 16 == 0);
+   ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
+   ASSERT(render->num_indexes % 3 == 0);
+
 
    /* indexes are right after the render command in the batch buffer */
    indexes = (const ushort *) (render + 1);
@@ -186,21 +238,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       if (!my_tile(tx, ty))
          continue;
 
-      /* Start fetching color/z tiles.  We'll wait for completion when
-       * we need read/write to them later in triangle rasterization.
-       */
-      if (spu.depth_stencil.depth.enabled) {
-         if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
-            get_tile(tx, ty, &ztile, TAG_READ_TILE_Z, 1);
-         }
-      }
-
-      if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
-         get_tile(tx, ty, &ctile, TAG_READ_TILE_COLOR, 0);
-      }
-
-      ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
-      ASSERT(render->num_indexes % 3 == 0);
+      get_cz_tiles(tx, ty);
 
       /* loop over tris */
       for (j = 0; j < render->num_indexes; j += 3) {
@@ -214,22 +252,9 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       }
 
       /* write color/z tiles back to main framebuffer, if dirtied */
-      if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
-         put_tile(tx, ty, &ctile, TAG_WRITE_TILE_COLOR, 0);
-         tile_status[ty][tx] = TILE_STATUS_DEFINED;
-      }
-      if (spu.depth_stencil.depth.enabled) {
-         if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
-            put_tile(tx, ty, &ztile, TAG_WRITE_TILE_Z, 1);
-            tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
-         }
-      }
+      put_cz_tiles(tx, ty);
 
-      /* XXX move these... */
-      wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
-      if (spu.depth_stencil.depth.enabled) {
-         wait_on_mask(1 << TAG_WRITE_TILE_Z);
-      }
+      wait_put_cz_tiles(); /* XXX seems unnecessary... */
    }
 
    if (Debug)
