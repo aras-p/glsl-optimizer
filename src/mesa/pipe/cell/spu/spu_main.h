@@ -29,6 +29,8 @@
 #define SPU_MAIN_H
 
 
+#include <spu_mfcio.h>
+
 #include "pipe/cell/common.h"
 #include "pipe/draw/draw_vertex.h"
 #include "pipe/p_state.h"
@@ -90,8 +92,25 @@ extern boolean Debug;
 
 
 
-extern void
-wait_on_mask(unsigned tag);
+static INLINE void
+wait_on_mask(unsigned tagMask)
+{
+   mfc_write_tag_mask( tagMask );
+   /* wait for completion of _any_ DMAs specified by tagMask */
+   mfc_read_tag_status_any();
+}
+
+
+static INLINE void
+wait_on_mask_all(unsigned tagMask)
+{
+   mfc_write_tag_mask( tagMask );
+   /* wait for completion of _any_ DMAs specified by tagMask */
+   mfc_read_tag_status_all();
+}
+
+
+
 
 
 static INLINE void
