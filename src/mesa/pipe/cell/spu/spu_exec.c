@@ -52,6 +52,8 @@
 
 #include <libmisc.h>
 #include <spu_mfcio.h>
+#include <simdmath/sqrtf4.h>
+#include <simdmath/powf4.h>
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
@@ -207,6 +209,7 @@ micro_ceil(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) ceil( (double) src->f[0] );
    dst->f[1] = (float) ceil( (double) src->f[1] );
@@ -220,6 +223,7 @@ micro_cos(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) cos( (double) src->f[0] );
    dst->f[1] = (float) cos( (double) src->f[1] );
@@ -307,6 +311,7 @@ micro_exp2(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src)
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) pow( 2.0, (double) src->f[0] );
    dst->f[1] = (float) pow( 2.0, (double) src->f[1] );
@@ -342,6 +347,7 @@ micro_flr(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) floor( (double) src->f[0] );
    dst->f[1] = (float) floor( (double) src->f[1] );
@@ -355,6 +361,7 @@ micro_frc(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = src->f[0] - (float) floor( (double) src->f[0] );
    dst->f[1] = src->f[1] - (float) floor( (double) src->f[1] );
@@ -393,6 +400,7 @@ micro_lg2(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) log( (double) src->f[0] ) * 1.442695f;
    dst->f[1] = (float) log( (double) src->f[1] ) * 1.442695f;
@@ -649,12 +657,18 @@ micro_pow(
    const union spu_exec_channel *src0,
    const union spu_exec_channel *src1 )
 {
-#if 0
-   dst->f[0] = (float) pow( (double) src0->f[0], (double) src1->f[0] );
-   dst->f[1] = (float) pow( (double) src0->f[1], (double) src1->f[1] );
-   dst->f[2] = (float) pow( (double) src0->f[2], (double) src1->f[2] );
-   dst->f[3] = (float) pow( (double) src0->f[3], (double) src1->f[3] );
-#endif
+   vec_float4 s0 = (vec_float4) {
+      src0->f[0], src0->f[1], src0->f[2], src0->f[3]
+   };
+   vec_float4 s1 = (vec_float4) {
+      src1->f[0], src1->f[1], src1->f[2], src1->f[3]
+   };
+   vec_float4 d = _powf4(s0, s1);
+
+   dst->f[0] = spu_extract(d, 0);
+   dst->f[1] = spu_extract(d, 1);
+   dst->f[2] = spu_extract(d, 2);
+   dst->f[3] = spu_extract(d, 3);
 }
 
 static void
@@ -662,6 +676,7 @@ micro_rnd(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) floor( (double) (src->f[0] + 0.5f) );
    dst->f[1] = (float) floor( (double) (src->f[1] + 0.5f) );
@@ -722,6 +737,7 @@ micro_sin(
    union spu_exec_channel *dst,
    const union spu_exec_channel *src )
 {
+   ASSERT(0);
 #if 0
    dst->f[0] = (float) sin( (double) src->f[0] );
    dst->f[1] = (float) sin( (double) src->f[1] );
@@ -734,12 +750,15 @@ static void
 micro_sqrt( union spu_exec_channel *dst,
             const union spu_exec_channel *src )
 {
-#if 0
-   dst->f[0] = (float) sqrt( (double) src->f[0] );
-   dst->f[1] = (float) sqrt( (double) src->f[1] );
-   dst->f[2] = (float) sqrt( (double) src->f[2] );
-   dst->f[3] = (float) sqrt( (double) src->f[3] );
-#endif
+   vec_float4 s = (vec_float4) {
+      src->f[0], src->f[1], src->f[2], src->f[3]
+   };
+   vec_float4 d = _sqrtf4(s);
+
+   dst->f[0] = spu_extract(d, 0);
+   dst->f[1] = spu_extract(d, 1);
+   dst->f[2] = spu_extract(d, 2);
+   dst->f[3] = spu_extract(d, 3);
 }
 
 static void
