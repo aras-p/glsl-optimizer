@@ -34,6 +34,7 @@ SOURCES = \
 	cell_surface.c \
 	cell_texture.c \
 	cell_vbuf.c \
+	cell_vertex_shader.c \
 	cell_winsys.c
 
 
