@@ -723,24 +723,18 @@ static boolean setup_sort_vertices(const struct vertex_header *v0,
 
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
- * The value value comes from vertex->data[slot][i].
- * The result will be put into setup.coef[slot].a0[i].
+ * The value value comes from vertex->data[slot].
+ * The result will be put into setup.coef[slot].a0.
  * \param slot  which attribute slot 
- * \param i  which component of the slot (0..3)
  */
-static void const_coeff(uint slot)
+static INLINE void const_coeff(uint slot)
 {
-   uint i;
-   ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
-
-   for (i = 0; i < 4; i++) {
-      setup.coef[slot].dadx.f[i] = 0;
-      setup.coef[slot].dady.f[i] = 0;
-
-      /* need provoking vertex info!
-       */
-      setup.coef[slot].a0.f[i] = setup.vprovoke->data[slot][i];
-   }
+   setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].a0.f[0] = setup.vprovoke->data[slot][0];
+   setup.coef[slot].a0.f[1] = setup.vprovoke->data[slot][1];
+   setup.coef[slot].a0.f[2] = setup.vprovoke->data[slot][2];
+   setup.coef[slot].a0.f[3] = setup.vprovoke->data[slot][3];
 }
 
 
