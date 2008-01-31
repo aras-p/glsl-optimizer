@@ -95,6 +95,7 @@ typedef struct _dri_bufmgr_ttm {
 struct dri_ttm_reloc {
     dri_bo *target_buf;
     uint64_t validate_flags;
+    unsigned int pre_target_buf_handle;
 };
 
 typedef struct _dri_bo_ttm {
@@ -175,7 +176,7 @@ static void dri_ttm_dump_validation_list(dri_bufmgr_ttm *bufmgr_ttm)
  */
 static void
 intel_add_validate_buffer(dri_bo *buf,
-			  uint64_t flags)
+			  uint64_t flags, GLboolean presumed)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
@@ -233,7 +234,9 @@ intel_add_validate_buffer(dri_bo *buf,
 	req->bo_req.flags = flags;
 	req->bo_req.hint = 0;
 #ifdef DRM_BO_HINT_PRESUMED_OFFSET
-	req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
+	if (presumed)
+       req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
+
 	req->bo_req.presumed_offset = buf->offset;
 #endif
 	req->bo_req.mask = INTEL_BO_MASK;
@@ -291,6 +294,7 @@ intel_setup_reloc_list(dri_bo *bo)
 
     bo_ttm->relocs = malloc(sizeof(struct dri_ttm_reloc) *
 			    bufmgr_ttm->max_relocs);
+    memset(bo_ttm->relocs, 0, sizeof(struct dri_ttm_reloc) * bufmgr_ttm->max_relocs);
 
     if (bufmgr_ttm->cached_reloc_buf_data != NULL) {
        bo_ttm->reloc_buf_data = bufmgr_ttm->cached_reloc_buf_data;
@@ -680,6 +684,11 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
     this_reloc[2] = target_buf_ttm->drm_bo.handle; /* To be filled in at exec time */
     this_reloc[3] = 0;
 
+    if (reloc_buf_ttm->relocs[num_relocs].target_buf) {
+        dri_bo_ttm *pre_target_buf_ttm = (dri_bo_ttm *)reloc_buf_ttm->relocs[num_relocs].target_buf;
+        reloc_buf_ttm->relocs[num_relocs].pre_target_buf_handle = pre_target_buf_ttm->drm_bo.handle;
+    }
+
     reloc_buf_ttm->relocs[num_relocs].validate_flags = flags;
     reloc_buf_ttm->relocs[num_relocs].target_buf = target_buf;
     dri_bo_reference(target_buf);
@@ -708,12 +717,13 @@ dri_ttm_bo_process_reloc(dri_bo *bo)
 
     for (i = 0; i < nr_relocs; i++) {
 	struct dri_ttm_reloc *r = &bo_ttm->relocs[i];
+	dri_bo_ttm *target_buf_ttm = (dri_bo_ttm *)r->target_buf;
 
 	/* Continue walking the tree depth-first. */
 	dri_ttm_bo_process_reloc(r->target_buf);
 
 	/* Add the target to the validate list */
-	intel_add_validate_buffer(r->target_buf, r->validate_flags);
+	intel_add_validate_buffer(r->target_buf, r->validate_flags, r->pre_target_buf_handle == target_buf_ttm->drm_bo.handle);
     }
 }
 
@@ -729,7 +739,7 @@ dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
      * pointing to it.
      */
     intel_add_validate_buffer(batch_buf,
-			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
+			      DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE, GL_FALSE);
 
     *count = bufmgr_ttm->validate_count;
     return &bufmgr_ttm->validate_array[0].bo_arg;
