@@ -162,8 +162,12 @@ cell_draw_create(struct cell_context *cell)
 {
    struct draw_context *draw = draw_create();
 
-   draw->shader_queue_flush = cell_vertex_shader_queue_flush;
-   draw->driver_private = cell;
+   if (getenv("GALLIUM_CELL_VS")) {
+      /* plug in SPU-based vertex transformation code */
+      draw->shader_queue_flush = cell_vertex_shader_queue_flush;
+      draw->driver_private = cell;
+   }
+
    return draw;
 }
 
