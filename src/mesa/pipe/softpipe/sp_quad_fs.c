@@ -168,6 +168,11 @@ shade_quad(
              sizeof( quad->outputs.color ) );
    }
 
+   /*
+    * XXX the following code for updating quad->outputs.depth
+    * isn't really needed if we did early z testing.
+    */
+
    /* store result Z */
    if (qss->depthOutSlot >= 0) {
       /* output[slot] is new Z */
@@ -181,6 +186,10 @@ shade_quad(
       uint i;
       for (i = 0; i < 4; i++) {
          quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
+         /* XXX not sure the above line is always correct.  The following
+          * might be better:
+         quad->outputs.depth[i] = machine->QuadPos.xyzw[2].f[i];
+          */
       }
    }
 
