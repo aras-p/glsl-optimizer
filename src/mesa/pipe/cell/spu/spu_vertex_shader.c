@@ -112,11 +112,16 @@ run_vertex_program(struct spu_vs_context *draw,
       unsigned slot;
       float x, y, z, w;
       unsigned char buffer[sizeof(struct vertex_header)
-			   + MAX_VERTEX_SIZE] ALIGN16_ATTRIB;
+          + MAX_VERTEX_SIZE] ALIGN16_ATTRIB;
       struct vertex_header *const tmpOut =
-	  (struct vertex_header *) buffer;
-      const unsigned vert_size = sizeof(struct vertex_header)
-	  + (sizeof(float) * 4 * draw->num_vs_outputs);
+          (struct vertex_header *) buffer;
+      const unsigned vert_size = ROUNDUP16(sizeof(struct vertex_header)
+                                           + (sizeof(float) * 4 
+                                              * draw->num_vs_outputs));
+
+      mfc_get(tmpOut, vOut[j], vert_size, TAG_VERTEX_BUFFER, 0, 0);
+      wait_on_mask(1 << TAG_VERTEX_BUFFER);
+
 
       /* Handle attr[0] (position) specially:
        *
@@ -155,12 +160,8 @@ run_vertex_program(struct spu_vs_context *draw,
          tmpOut->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
       }
 
-      wait_on_mask(1 << TAG_VERTEX_BUFFER);
       mfc_put(tmpOut, vOut[j], vert_size, TAG_VERTEX_BUFFER, 0, 0);
-
    } /* loop over vertices */
-
-   wait_on_mask(1 << TAG_VERTEX_BUFFER);
 }
 
 
