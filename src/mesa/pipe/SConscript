@@ -1,0 +1,9 @@
+Import('*')
+
+#env = env.Clone()
+
+SConscript([
+	'softpipe/SConscript',
+	'i915simple/SConscript',
+	'i965simple/SConscript',
+])

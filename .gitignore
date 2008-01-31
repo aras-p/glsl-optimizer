@@ -7,3 +7,5 @@ depend
 depend.bak
 lib
 lib64
+.sconsign*
+config.py
