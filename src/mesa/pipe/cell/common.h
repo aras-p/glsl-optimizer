@@ -133,7 +133,6 @@ struct cell_array_info
 
 struct cell_shader_info
 {
-   unsigned processor;
    unsigned num_outputs;
 
    void *declarations;
@@ -147,6 +146,7 @@ struct cell_shader_info
 #define SPU_VERTS_PER_BATCH 64
 struct cell_command_vs
 {
+   uint opcode;       /**< CELL_CMD_VS_EXECUTE */
    struct cell_shader_info   shader;
    unsigned num_elts;
    unsigned elts[SPU_VERTS_PER_BATCH];
@@ -190,6 +190,7 @@ struct cell_command
    struct cell_command_framebuffer fb;
    struct cell_command_clear_surface clear;
    struct cell_command_render render;
+   struct cell_command_vs vs;
 } ALIGN16_ATTRIB;
 
 
