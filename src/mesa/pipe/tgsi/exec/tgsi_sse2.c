@@ -198,9 +198,15 @@ get_output_base( void )
 static struct x86_reg
 get_temp_base( void )
 {
+#ifdef WIN32
    return x86_make_reg(
       file_REG32,
       reg_BX );
+#else
+   return x86_make_reg(
+      file_REG32,
+      reg_SI );
+#endif
 }
 
 static struct x86_reg
