@@ -124,10 +124,10 @@ struct cell_command_clear_surface
  */
 struct cell_array_info
 {
-    void *base;               /**< Base address of the 0th element. */
-    uint attr;                /**< Attribute that this state if for. */
-    uint pitch;               /**< Byte pitch from one entry to the next. */
-    enum pipe_format format;  /**< Pipe format of each entry. */
+    uint64_t base;      /**< Base address of the 0th element. */
+    uint attr;          /**< Attribute that this state if for. */
+    uint pitch;         /**< Byte pitch from one entry to the next. */
+    uint format;        /**< Pipe format of each entry. */
 };
 
 
@@ -135,11 +135,13 @@ struct cell_shader_info
 {
    unsigned num_outputs;
 
-   void *declarations;
+   uint64_t declarations;
    unsigned num_declarations;
-   void *instructions;
+   uint64_t instructions;
    unsigned num_instructions;
-   void *uniforms;
+   uint64_t uniforms;
+   uint64_t  immediates;
+   unsigned num_immediates;
 } ALIGN16_ATTRIB;
 
 
@@ -151,6 +153,9 @@ struct cell_command_vs
    unsigned num_elts;
    unsigned elts[SPU_VERTS_PER_BATCH];
    uint64_t vOut[SPU_VERTS_PER_BATCH];
+   float plane[12][4];
+   unsigned nr_planes;
+   unsigned nr_attrs;
 } ALIGN16_ATTRIB;
 
 
