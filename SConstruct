@@ -2,6 +2,7 @@
 # Top-level SConstruct
 
 import os
+import os.path
 import sys
 
 
@@ -40,7 +41,7 @@ Help(opts.GenerateHelpText(env))
 # for debugging
 #print env.Dump()
 
-if 1:
+if 0:
 	# platform will be typically 'posix' or 'win32' 
 	platform = env['PLATFORM']
 else:
@@ -56,7 +57,7 @@ machine = env['machine']
 
 # derived options
 x86 = machine == 'x86'
-gcc = platform == 'posix'
+gcc = platform in ('posix', 'linux', 'freebsd', 'darwin')
 msvc = platform == 'win32'
 
 Export([
@@ -202,10 +203,20 @@ createConvenienceLibBuilder(env)
 #######################################################################
 # Invoke SConscripts
 
-# Put build output in a separate dir
-# TODO: make build_dir depend on platform and build type (check  
-#       http://www.scons.org/wiki/AdvancedBuildExample for an example)
-build_dir = 'build'
+# Put build output in a separate dir, which depends on the current configuration
+# See also http://www.scons.org/wiki/AdvancedBuildExample
+build_topdir = 'build'
+build_subdir = platform
+if dri:
+	build_subdir += "-dri"
+if x86:
+	build_subdir += "-x86"
+if debug:
+	build_subdir += "-debug"
+build_dir = os.path.join(build_topdir, build_subdir)
+
+# TODO: Build several variants at the same time?
+# http://www.scons.org/wiki/SimultaneousVariantBuilds
 
 SConscript(
 	'src/mesa/SConscript',
