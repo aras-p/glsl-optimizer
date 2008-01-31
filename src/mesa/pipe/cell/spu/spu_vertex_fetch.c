@@ -446,14 +446,14 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
        * difficulties doing that.
        */
       for (i = 0; i < count; i++) {
-         uint8_t buffer[32 + (sizeof(float) * 4)] ALIGN16_ATTRIB;
-         const unsigned long addr = src + elts[i] * pitch;
-         const unsigned size = (sizeof(float) * 4) + (addr & 0x0f);
+         uint8_t buffer[32] ALIGN16_ATTRIB;
+         const unsigned long addr = src + (elts[i] * pitch);
+         const unsigned size = ((addr & 0x0f) == 0) ? 16 : 32;
 
          mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);
          wait_on_mask(1 << TAG_VERTEX_BUFFER);
 
-         memcpy(& buffer, buffer + (addr & 0x0f), sizeof(float) * 4);
+         memmove(& buffer, buffer + (addr & 0x0f), 16);
 
          fetch(buffer, p[i]);
       }
