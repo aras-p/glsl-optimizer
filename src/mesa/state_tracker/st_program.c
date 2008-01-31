@@ -33,6 +33,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "shader/prog_print.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -68,6 +69,7 @@ st_translate_vertex_program(struct st_context *st,
    struct pipe_shader_state vs;
    const struct cso_vertex_shader *cso;
    GLuint attr, i;
+   GLuint num_generic = 0;
 
    memset(&vs, 0, sizeof(vs));
 
@@ -117,7 +119,7 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_ATTRIB_TEX6:
          case VERT_ATTRIB_TEX7:
             vs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs.input_semantic_index[slot] = attr - VERT_ATTRIB_TEX0;
+            vs.input_semantic_index[slot] = num_generic++;
             break;
          case VERT_ATTRIB_GENERIC0:
          case VERT_ATTRIB_GENERIC1:
@@ -129,7 +131,7 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_ATTRIB_GENERIC7:
             assert(attr < VERT_ATTRIB_MAX);
             vs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs.input_semantic_index[slot] = attr - VERT_ATTRIB_GENERIC0;
+            vs.input_semantic_index[slot] = num_generic++;
             break;
          default:
             assert(0);
@@ -143,6 +145,7 @@ st_translate_vertex_program(struct st_context *st,
       vs.output_semantic_index[i] = 0;
    }
 
+   num_generic = 0;
    /*
     * Determine number of outputs, the (default) output register
     * mapping and the semantic information for each output.
@@ -207,14 +210,14 @@ st_translate_vertex_program(struct st_context *st,
          case VERT_RESULT_TEX6:
          case VERT_RESULT_TEX7:
             vs.output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs.output_semantic_index[slot] = attr - VERT_RESULT_TEX0;
+            vs.output_semantic_index[slot] = num_generic++;
             break;
          case VERT_RESULT_VAR0:
             /* fall-through */
          default:
             assert(attr - VERT_RESULT_VAR0 < MAX_VARYING);
             vs.output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            vs.output_semantic_index[slot] = attr - VERT_RESULT_VAR0;
+            vs.output_semantic_index[slot] = num_generic++;
          }
       }
    }
@@ -258,6 +261,9 @@ st_translate_vertex_program(struct st_context *st,
    cso = st_cached_vs_state(st, &vs);
    stvp->cso = cso;
 
+   if (0)
+      _mesa_print_program(&stvp->Base.Base);
+
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0 );
 }
@@ -286,6 +292,7 @@ st_translate_fragment_program(struct st_context *st,
    GLuint attr;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
    GLuint vslot = 0;
+   GLuint num_generic = 0;
 
    memset(&fs, 0, sizeof(fs));
 
@@ -338,14 +345,14 @@ st_translate_fragment_program(struct st_context *st,
          case FRAG_ATTRIB_TEX6:
          case FRAG_ATTRIB_TEX7:
             fs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            fs.input_semantic_index[slot] = attr - FRAG_ATTRIB_TEX0;
+            fs.input_semantic_index[slot] = num_generic++;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_VAR0:
             /* fall-through */
          default:
             fs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
-            fs.input_semantic_index[slot] = attr - FRAG_ATTRIB_VAR0;
+            fs.input_semantic_index[slot] = num_generic++;
             interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
       }
@@ -414,6 +421,9 @@ st_translate_fragment_program(struct st_context *st,
 
    cso = st_cached_fs_state(st, &fs);
    stfp->fs = cso;
+
+   if (0)
+      _mesa_print_program(&stfp->Base.Base);
 
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0/*TGSI_DUMP_VERBOSE*/ );
