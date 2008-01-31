@@ -397,11 +397,6 @@ cmd_batch(uint opcode)
          cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
          pos += (1 + sizeof(struct cell_array_info) / 4);
          break;
-      case CELL_CMD_VS_EXECUTE:
-         spu_execute_vertex_shader(&draw,
-                                   (struct cell_command_vs *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct cell_command_vs) / 4);
-         break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
          ASSERT(0);
@@ -469,6 +464,9 @@ main_loop(void)
             cmd_render(&cmd.render, &pos_incr);
             assert(pos_incr == 0);
          }
+         break;
+      case CELL_CMD_VS_EXECUTE:
+         spu_execute_vertex_shader(&draw, &cmd.vs);
          break;
       case CELL_CMD_BATCH:
          cmd_batch(opcode);
