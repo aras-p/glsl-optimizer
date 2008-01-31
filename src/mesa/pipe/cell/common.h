@@ -128,7 +128,7 @@ struct cell_array_info
     uint attr;                /**< Attribute that this state if for. */
     uint pitch;               /**< Byte pitch from one entry to the next. */
     enum pipe_format format;  /**< Pipe format of each entry. */
-} ALIGN16_ATTRIB;
+};
 
 
 struct cell_shader_info
