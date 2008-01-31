@@ -226,9 +226,11 @@ find_translated_vp(struct st_context *st,
             GLint fpInAttrib = vp_out_to_fp_in(outAttr);
             if (fpInAttrib >= 0) {
                GLuint fpInSlot = stfp->input_to_slot[fpInAttrib];
-               GLuint vpOutSlot = stfp->fs->state.input_map[fpInSlot];
-               xvp->output_to_slot[outAttr] = vpOutSlot;
-               numVpOuts++;
+               if (fpInSlot != ~0) {
+                  GLuint vpOutSlot = stfp->fs->state.input_map[fpInSlot];
+                  xvp->output_to_slot[outAttr] = vpOutSlot;
+                  numVpOuts++;
+               }
             }
             else if (outAttr == VERT_RESULT_PSIZ ||
                      outAttr == VERT_RESULT_BFC0 ||
@@ -247,7 +249,7 @@ find_translated_vp(struct st_context *st,
        * We could use this info to do dead code elimination in the
        * vertex program.
        */
-      dummySlot = stfp->num_input_slots;
+      dummySlot = numVpOuts;
 
       /* Map vert program outputs that aren't used to the dummy slot */
       for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
