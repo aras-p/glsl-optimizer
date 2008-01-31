@@ -187,12 +187,22 @@ spu_bind_vertex_shader(struct spu_vs_context *draw,
 }
 
 
+unsigned char immediates[(sizeof(float) * 4 * TGSI_EXEC_NUM_IMMEDIATES) + 32]
+    ALIGN16_ATTRIB;
+
 void
 spu_execute_vertex_shader(struct spu_vs_context *draw,
-			  const struct cell_command_vs *vs)
+                          const struct cell_command_vs *vs)
 {
    unsigned i;
-   unsigned j;
+
+   const uint64_t immediate_addr = vs->shader.immediates;
+   const unsigned immediate_size = 
+       ROUNDUP16((sizeof(float) * 4 * vs->shader.num_immediates)
+                 + (immediate_addr & 0x0f));
+
+   mfc_get(immediates, immediate_addr & ~0x0f, immediate_size,
+           TAG_VERTEX_BUFFER, 0, 0);
 
    draw->machine.Instructions = (struct tgsi_full_instruction *)
        vs->shader.instructions;
@@ -202,10 +212,17 @@ spu_execute_vertex_shader(struct spu_vs_context *draw,
        vs->shader.declarations;
    draw->machine.NumDeclarations = vs->shader.num_declarations;
 
+   draw->vertex_fetch.nr_attrs = vs->nr_attrs;
+
+   wait_on_mask(1 << TAG_VERTEX_BUFFER);
+
+   (void) memcpy(& draw->machine.Imms, &immediates[immediate_addr & 0x0f],
+                 sizeof(float) * 4 * vs->shader.num_immediates);
+
    spu_bind_vertex_shader(draw, vs->shader.uniforms,
-			  NULL, -1,
-			  vs->shader.num_outputs);
-   
+                          vs->plane, vs->nr_planes,
+                          vs->shader.num_outputs);
+
    for (i = 0; i < vs->num_elts; i += 4) {
       const unsigned batch_size = MIN2(vs->num_elts - i, 4);
 
