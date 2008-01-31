@@ -55,7 +55,9 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
    if (ps == sp_tile_cache_get_surface(softpipe->zsbuf_cache)) {
       sp_tile_cache_clear(softpipe->zsbuf_cache, clearValue);
+#if TILE_CLEAR_OPTIMIZATION
       return;
+#endif
    }
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
