@@ -1,0 +1,48 @@
+Import('*')
+
+drienv = env.Clone()
+
+drienv.Replace(CPPPATH = [
+	'#src/mesa/drivers/dri/common',
+	'#include',
+	'#include/GL/internal',
+	'#src/mesa',
+	'#src/mesa/main',
+	'#src/mesa/glapi',
+	'#src/mesa/math',
+	'#src/mesa/transform',
+	'#src/mesa/shader',
+	'#src/mesa/swrast',
+	'#src/mesa/swrast_setup',
+	'#src/egl/main',
+	'#src/egl/drivers/dri',
+])
+
+drienv.ParseConfig('pkg-config --cflags --libs libdrm')
+
+COMMON_GALLIUM_SOURCES = [
+	'../common/utils.c',
+	'../common/vblank.c',
+	'../common/dri_util.c',
+	'../common/xmlconfig.c',
+]
+
+COMMON_BM_SOURCES = [
+	'../common/dri_bufmgr.c',
+	'../common/dri_drmpool.c',
+]
+
+Export([
+	'drienv',
+	'COMMON_GALLIUM_SOURCES',
+	'COMMON_BM_SOURCES',
+])
+
+# TODO: Installation
+#install: $(LIBNAME)
+#	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
+#	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
+
+SConscript([
+	'intel_winsys/SConscript',
+])
