@@ -81,7 +81,7 @@ compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
 static void
 run_vertex_program(struct spu_vs_context *draw,
                    unsigned elts[4], unsigned count,
-                   struct vertex_header *vOut[])
+                   const uint64_t *vOut)
 {
    struct spu_exec_machine *machine = &draw->machine;
    unsigned int j;
@@ -206,17 +206,7 @@ spu_execute_vertex_shader(struct spu_vs_context *draw,
    
    for (i = 0; i < vs->num_elts; i += 4) {
       const unsigned batch_size = MIN2(vs->num_elts - i, 4);
-      unsigned elts[4];
 
-      for (j = 0; j < batch_size; j++) {
-	 switch (vs->bytes_per_elt) {
-	 case 1: elts[j] = ((unsigned char *) vs->elts)[i + j]; break;
-	 case 2: elts[j] = ((unsigned short *)vs->elts)[i + j]; break;
-	 case 4: elts[j] = ((unsigned int *)  vs->elts)[i + j]; break;
-	 }
-      }
-
-      run_vertex_program(draw, elts, batch_size,
-			 (struct vertex_header (*)[]) vs->vOut);
+      run_vertex_program(draw, & vs->elts[i], batch_size, &vs->vOut[i]);
    }
 }

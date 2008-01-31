@@ -144,13 +144,13 @@ struct cell_shader_info
 } ALIGN16_ATTRIB;
 
 
+#define SPU_VERTS_PER_BATCH 64
 struct cell_command_vs
 {
    struct cell_shader_info   shader;
-   void *elts;
    unsigned num_elts;
-   unsigned bytes_per_elt;
-   void *vOut;
+   unsigned elts[SPU_VERTS_PER_BATCH];
+   uint64_t vOut[SPU_VERTS_PER_BATCH];
 } ALIGN16_ATTRIB;
 
 
