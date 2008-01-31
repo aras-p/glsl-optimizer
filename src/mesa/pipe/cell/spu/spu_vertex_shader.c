@@ -93,7 +93,8 @@ run_vertex_program(struct spu_vs_context *draw,
 
    assert(count <= 4);
 
-   /* Consts does not require 16 byte alignment. */
+   machine->Processor = TGSI_PROCESSOR_VERTEX;
+
    ASSERT_ALIGN16(draw->constants);
    machine->Consts = (float (*)[4]) draw->constants;
 
