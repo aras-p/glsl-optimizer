@@ -259,6 +259,8 @@ struct draw_context
 #ifdef MESA_LLVM
    struct gallivm_cpu_engine *engine;
 #endif
+   
+   void *driver_private;
 };
 
 
