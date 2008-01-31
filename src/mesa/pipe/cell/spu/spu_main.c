@@ -394,8 +394,8 @@ cmd_batch(uint opcode)
          pos += (1 + sizeof(struct pipe_viewport_state) / 4);
          break;
       case CELL_CMD_STATE_VS_ARRAY_INFO:
-         cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct cell_array_info) / 4);
+         cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos]);
+         pos += (sizeof(struct cell_array_info) / 4);
          break;
       default:
          printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);

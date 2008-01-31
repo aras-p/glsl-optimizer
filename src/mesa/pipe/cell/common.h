@@ -124,11 +124,12 @@ struct cell_command_clear_surface
  */
 struct cell_array_info
 {
-    uint64_t base;      /**< Base address of the 0th element. */
+    uint opcode;
+    uint base;          /**< Base address of the 0th element. */
     uint attr;          /**< Attribute that this state if for. */
     uint pitch;         /**< Byte pitch from one entry to the next. */
     uint format;        /**< Pipe format of each entry. */
-};
+} ALIGN16_ATTRIB;
 
 
 struct cell_shader_info
