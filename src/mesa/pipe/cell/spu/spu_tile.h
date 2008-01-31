@@ -42,6 +42,7 @@
 typedef union {
    ushort t16[TILE_SIZE][TILE_SIZE];
    uint   t32[TILE_SIZE][TILE_SIZE];
+   float4 f4[TILE_SIZE/2][TILE_SIZE/2];
 } tile_t;
 
 
@@ -83,9 +84,18 @@ clear_z_tile(tile_t *ztile)
                TILE_SIZE * TILE_SIZE);
    }
    else {
+      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
+#if SIMD_Z
+      union fi z;
+      z.f = 1.0;
+      memset32((uint*) ztile->t32,
+               z.i,/*spu.fb.depth_clear_value,*/
+               TILE_SIZE * TILE_SIZE);
+#else
       memset32((uint*) ztile->t32,
                spu.fb.depth_clear_value,
                TILE_SIZE * TILE_SIZE);
+#endif
    }
 }
 
