@@ -107,6 +107,9 @@ struct spu_global
    ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
    ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 
+
+   /** for converting RGBA to PIPE_FORMAT_x colors */
+   vector unsigned char color_shuffle;
 } ALIGN16_ATTRIB;
 
 

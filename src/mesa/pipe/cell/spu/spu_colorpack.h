@@ -57,4 +57,13 @@ spu_pack_B8G8R8A8(vector float rgba)
 }
 
 
+static INLINE unsigned int
+spu_pack_color_shuffle(vector float rgba, vector unsigned char shuffle)
+{
+  vector unsigned int out = spu_convtu(rgba, 32);
+  out = spu_shuffle(out, out, shuffle);
+  return spu_extract(out, 0);
+}
+
+
 #endif /* SPU_COLORPACK_H */

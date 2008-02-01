@@ -249,28 +249,6 @@ eval_z(float x, float y)
 }
 
 
-static INLINE void
-pack_colors(uint uicolors[4], const float4 fcolors[4])
-{
-   switch (spu.fb.color_format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      uicolors[0] = spu_pack_A8R8G8B8(fcolors[0].v);
-      uicolors[1] = spu_pack_A8R8G8B8(fcolors[1].v);
-      uicolors[2] = spu_pack_A8R8G8B8(fcolors[2].v);
-      uicolors[3] = spu_pack_A8R8G8B8(fcolors[3].v);
-      break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      uicolors[0] = spu_pack_B8G8R8A8(fcolors[0].v);
-      uicolors[1] = spu_pack_B8G8R8A8(fcolors[1].v);
-      uicolors[2] = spu_pack_B8G8R8A8(fcolors[2].v);
-      uicolors[3] = spu_pack_B8G8R8A8(fcolors[3].v);
-      break;
-   default:
-      ASSERT(0);
-   }
-}
-
-
 static INLINE mask_t
 do_depth_test(int x, int y, mask_t quadmask)
 {
@@ -321,21 +299,6 @@ emit_quad( int x, int y, mask_t mask )
    if (spu_extract(spu_orx(mask), 0)) {
       const int ix = x - setup.cliprect_minx;
       const int iy = y - setup.cliprect_miny;
-      uint colors[4];  /* indexed by QUAD_x */
-
-      if (spu.texture.start) {
-         float4 texcoords[4];
-         uint i;
-         eval_coeff(2, (float) x, (float) y, texcoords);
-         for (i = 0; i < 4; i++) {
-            colors[i] = sample_texture(texcoords[i]);
-         }
-      }
-      else {
-         float4 fcolors[4];
-         eval_coeff(1, (float) x, (float) y, fcolors);
-         pack_colors(colors, fcolors);
-      }
 
       if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
@@ -343,16 +306,37 @@ emit_quad( int x, int y, mask_t mask )
       }
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
 
-#if 1
-      if (spu_extract(mask, 0))
-         spu.ctile.ui[iy][ix] = colors[QUAD_TOP_LEFT];
-      if (spu_extract(mask, 1))
-         spu.ctile.ui[iy][ix+1] = colors[QUAD_TOP_RIGHT];
-      if (spu_extract(mask, 2))
-         spu.ctile.ui[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
-      if (spu_extract(mask, 3))
-         spu.ctile.ui[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
-#else
+      if (spu.texture.start) {
+         /* texture mapping */
+         float4 texcoords[4];
+         eval_coeff(2, (float) x, (float) y, texcoords);
+
+         if (spu_extract(mask, 0))
+            spu.ctile.ui[iy][ix] = sample_texture(texcoords[0]);
+         if (spu_extract(mask, 1))
+            spu.ctile.ui[iy][ix+1] = sample_texture(texcoords[1]);
+         if (spu_extract(mask, 2))
+            spu.ctile.ui[iy+1][ix] = sample_texture(texcoords[2]);
+         if (spu_extract(mask, 3))
+            spu.ctile.ui[iy+1][ix+1] = sample_texture(texcoords[3]);
+      }
+      else {
+         /* simple shading */
+         const vector unsigned char shuffle = spu.color_shuffle;
+         float4 colors[4];
+         eval_coeff(1, (float) x, (float) y, colors);
+
+         if (spu_extract(mask, 0))
+            spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0].v, shuffle);
+         if (spu_extract(mask, 1))
+            spu.ctile.ui[iy][ix+1] = spu_pack_color_shuffle(colors[1].v, shuffle);
+         if (spu_extract(mask, 2))
+            spu.ctile.ui[iy+1][ix] = spu_pack_color_shuffle(colors[2].v, shuffle);
+         if (spu_extract(mask, 3))
+            spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(colors[3].v, shuffle);
+      }
+
+#if 0
       /* SIMD_Z with swizzled color buffer (someday) */
       vector unsigned int uicolors = *((vector unsigned int *) &colors);
       spu.ctile.ui4[iy/2][ix/2] = spu_sel(spu.ctile.ui4[iy/2][ix/2], uicolors, mask);
