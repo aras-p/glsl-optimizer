@@ -447,33 +447,21 @@ main_loop(void)
               0  /* rid */);
       wait_on_mask( 1 << tag );
 
+      /*
+       * NOTE: most commands should be contained in a batch buffer
+       */
+
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
          if (Debug)
             printf("SPU %u: EXIT\n", spu.init.id);
          exitFlag = 1;
          break;
-      case CELL_CMD_STATE_FRAMEBUFFER:
-         cmd_state_framebuffer(&cmd.fb);
-         break;
-      case CELL_CMD_CLEAR_SURFACE:
-         cmd_clear_surface(&cmd.clear);
-         break;
-      case CELL_CMD_RENDER:
-         {
-            uint pos_incr;
-            cmd_render(&cmd.render, &pos_incr);
-            assert(pos_incr == 0);
-         }
-         break;
       case CELL_CMD_VS_EXECUTE:
          spu_execute_vertex_shader(&draw, &cmd.vs);
          break;
       case CELL_CMD_BATCH:
          cmd_batch(opcode);
-         break;
-      case CELL_CMD_FINISH:
-         cmd_finish();
          break;
       default:
          printf("Bad opcode!\n");
