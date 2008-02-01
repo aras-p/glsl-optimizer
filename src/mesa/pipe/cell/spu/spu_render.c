@@ -95,13 +95,15 @@ static INLINE void
 get_cz_tiles(uint tx, uint ty)
 {
    if (spu.depth_stencil.depth.enabled) {
-      if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
+      if (cur_tile_status_z != TILE_STATUS_CLEAR) {
          get_tile(tx, ty, &ztile, TAG_READ_TILE_Z, 1);
+         cur_tile_status_z = TILE_STATUS_GETTING;
       }
    }
 
-   if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
+   if (cur_tile_status_c != TILE_STATUS_CLEAR) {
       get_tile(tx, ty, &ctile, TAG_READ_TILE_COLOR, 0);
+      cur_tile_status_c = TILE_STATUS_GETTING;
    }
 }
 
@@ -112,14 +114,24 @@ get_cz_tiles(uint tx, uint ty)
 static INLINE void
 put_cz_tiles(uint tx, uint ty)
 {
-   if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
+   if (cur_tile_status_z == TILE_STATUS_DIRTY) {
+      /* tile was modified and needs to be written back */
       put_tile(tx, ty, &ztile, TAG_WRITE_TILE_Z, 1);
-      tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
+      cur_tile_status_z = TILE_STATUS_DEFINED;
+   }
+   else if (cur_tile_status_z == TILE_STATUS_GETTING) {
+      /* tile was never used */
+      cur_tile_status_z = TILE_STATUS_DEFINED;
    }
 
-   if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
+   if (cur_tile_status_c == TILE_STATUS_DIRTY) {
+      /* tile was modified and needs to be written back */
       put_tile(tx, ty, &ctile, TAG_WRITE_TILE_COLOR, 0);
-      tile_status[ty][tx] = TILE_STATUS_DEFINED;
+      cur_tile_status_c = TILE_STATUS_DEFINED;
+   }
+   else if (cur_tile_status_c == TILE_STATUS_GETTING) {
+      /* tile was never used */
+      cur_tile_status_c = TILE_STATUS_DEFINED;
    }
 }
 
@@ -238,7 +250,12 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       if (!my_tile(tx, ty))
          continue;
 
+      cur_tile_status_c = tile_status[ty][tx];
+      cur_tile_status_z = tile_status_z[ty][tx];
+
       get_cz_tiles(tx, ty);
+
+      uint drawn = 0;
 
       /* loop over tris */
       for (j = 0; j < render->num_indexes; j += 3) {
@@ -248,13 +265,18 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
          v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
          v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
 
-         tri_draw(v0, v1, v2, tx, ty);
+         drawn += tri_draw(v0, v1, v2, tx, ty);
       }
+
+      //printf("SPU %u: drew %u of %u\n", spu.init.id, drawn, render->num_indexes/3);
 
       /* write color/z tiles back to main framebuffer, if dirtied */
       put_cz_tiles(tx, ty);
 
       wait_put_cz_tiles(); /* XXX seems unnecessary... */
+
+      tile_status[ty][tx] = cur_tile_status_c;
+      tile_status_z[ty][tx] = cur_tile_status_z;
    }
 
    if (Debug)

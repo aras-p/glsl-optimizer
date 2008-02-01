@@ -299,16 +299,23 @@ do_depth_test(int x, int y, unsigned int mask)
 
    zvals.v = eval_z((float) x, (float) y);
 
-   if (tile_status_z[setup.ty][setup.tx] == TILE_STATUS_CLEAR) {
+   if (cur_tile_status_c == TILE_STATUS_CLEAR) {
+      /* now, _really_ clear the tile */
+      clear_z_tile(&ztile);
+      cur_tile_status_z = TILE_STATUS_DIRTY;
+   }
+
+#if 0
+   if (cur_tile_status_z == TILE_STATUS_CLEAR) {
       /* now, _really_ clear the tile */
       clear_z_tile(&ztile);
    }
-   else if (tile_status_z[setup.ty][setup.tx] != TILE_STATUS_DIRTY) {
+   else if (cur_tile_status_z != TILE_STATUS_DIRTY) {
       /* make sure we've got the tile from main mem */
       wait_on_mask(1 << TAG_READ_TILE_Z);
    }
-   tile_status_z[setup.ty][setup.tx] = TILE_STATUS_DIRTY;
-
+   cur_tile_status_z = TILE_STATUS_DIRTY;
+#endif
 
    if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
       zvals.v = spu_mul(zvals.v, zscale16.v);
@@ -380,6 +387,9 @@ do_depth_test(int x, int y, unsigned int mask)
       }
    }
 
+   if (mask)
+      cur_tile_status_z = TILE_STATUS_DIRTY;
+
    return mask;
 }
 
@@ -397,15 +407,15 @@ do_depth_test_simd(int x, int y, vector unsigned int quadmask)
 
    zvals.v = eval_z((float) x, (float) y);
 
-   if (tile_status_z[setup.ty][setup.tx] == TILE_STATUS_CLEAR) {
+   if (cur_tile_status_z == TILE_STATUS_CLEAR) {
       /* now, _really_ clear the tile */
       clear_z_tile(&ztile);
    }
-   else if (tile_status_z[setup.ty][setup.tx] != TILE_STATUS_DIRTY) {
+   else if (cur_tile_status_z != TILE_STATUS_DIRTY) {
       /* make sure we've got the tile from main mem */
       wait_on_mask(1 << TAG_READ_TILE_Z);
    }
-   tile_status_z[setup.ty][setup.tx] = TILE_STATUS_DIRTY;
+   cur_tile_status_z = TILE_STATUS_DIRTY;
 
    /* XXX fetch Z value sooner to hide latency here */
    zmask = spu_cmpgt(ztile.f4[ix][iy].v, zvals.v);
@@ -462,15 +472,23 @@ emit_quad( int x, int y, mask_t mask )
    if (mask)
 #endif
    {
-      if (tile_status[setup.ty][setup.tx] == TILE_STATUS_CLEAR) {
+      if (cur_tile_status_c == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
          clear_c_tile(&ctile);
       }
-      else if (tile_status[setup.ty][setup.tx] != TILE_STATUS_DIRTY) {
+
+#if 0
+      if (cur_tile_status_c == TILE_STATUS_CLEAR) {
+         /* now, _really_ clear the tile */
+         clear_c_tile(&ctile);
+         cur_tile_status_c = TILE_STATUS_DIRTY;
+      }
+      else if (cur_tile_status_c != TILE_STATUS_DIRTY) {
          /* make sure we've got the tile from main mem */
          wait_on_mask(1 << TAG_READ_TILE_COLOR);
       }
-      tile_status[setup.ty][setup.tx] = TILE_STATUS_DIRTY;
+#endif
+      cur_tile_status_c = TILE_STATUS_DIRTY;
 
 #if SIMD_Z
       if (spu_extract(mask, 0))
@@ -970,7 +988,7 @@ static void subtriangle( struct edge *eleft,
  * Draw triangle into tile at (tx, ty) (tile coords)
  * The tile data should have already been fetched.
  */
-void
+boolean
 tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 {
    setup.tx = tx;
@@ -985,7 +1003,7 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
    if (!setup_sort_vertices((struct vertex_header *) v0,
                             (struct vertex_header *) v1,
                             (struct vertex_header *) v2)) {
-      return; /* totally clipped */
+      return FALSE; /* totally clipped */
    }
 
    setup_tri_coefficients();
@@ -999,6 +1017,24 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 
    /*   init_constant_attribs( setup ); */
       
+   if (cur_tile_status_c == TILE_STATUS_GETTING) {
+      /* wait for mfc_get() to complete */
+      wait_on_mask(1 << TAG_READ_TILE_COLOR);
+      cur_tile_status_c = TILE_STATUS_CLEAN;
+   }
+
+   ASSERT(cur_tile_status_c != TILE_STATUS_DEFINED);
+
+   if (spu.depth_stencil.depth.enabled) {
+      if (cur_tile_status_z == TILE_STATUS_GETTING) {
+         /* wait for mfc_get() to complete */
+         wait_on_mask(1 << TAG_READ_TILE_Z);
+         cur_tile_status_z = TILE_STATUS_CLEAN;
+      }
+   ASSERT(cur_tile_status_z != TILE_STATUS_DEFINED);
+   }
+
+
    if (setup.oneoverarea < 0.0) {
       /* emaj on left:
        */
@@ -1013,4 +1049,6 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
    }
 
    flush_spans();
+
+   return TRUE;
 }
