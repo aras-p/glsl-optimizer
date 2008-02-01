@@ -97,10 +97,10 @@ get_tex_tile(uint i, uint j)
              spu.init.id, src, tex_tiles[pos].t32);
 #endif
 
-      ASSERT_ALIGN16(tex_tiles[pos].t32);
+      ASSERT_ALIGN16(tex_tiles[pos].ui);
       ASSERT_ALIGN16(src);
 
-      mfc_get(tex_tiles[pos].t32,  /* dest */
+      mfc_get(tex_tiles[pos].ui,  /* dest */
               (unsigned int) src,
               bytes_per_tile,      /* size */
               TAG_TEXTURE_TILE,
@@ -134,6 +134,6 @@ sample_texture(float4 texcoord)
    uint i = (uint) (texcoord.f[0] * spu.texture.width) % spu.texture.width;
    uint j = (uint) (texcoord.f[1] * spu.texture.height) % spu.texture.height;
    uint pos = get_tex_tile(i, j);
-   uint texel = tex_tiles[pos].t32[j % TILE_SIZE][i % TILE_SIZE];
+   uint texel = tex_tiles[pos].ui[j % TILE_SIZE][i % TILE_SIZE];
    return texel;
 }

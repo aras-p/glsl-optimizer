@@ -36,6 +36,7 @@
 #include "spu_render.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
+//#include "spu_test.h"
 #include "spu_vertex_shader.h"
 #include "pipe/cell/common.h"
 #include "pipe/p_defines.h"
@@ -495,6 +496,7 @@ one_time_init(void)
 }
 
 
+
 /* In some versions of the SDK the SPE main takes 'unsigned long' as a
  * parameter.  In others it takes 'unsigned long long'.  Use a define to
  * select between the two.
@@ -515,6 +517,8 @@ main(main_param_t speid, main_param_t argp)
 
    (void) speid;
 
+   ASSERT(sizeof(tile_t) == TILE_SIZE * TILE_SIZE * 4);
+
    one_time_init();
 
    if (Debug)
@@ -528,6 +532,10 @@ main(main_param_t speid, main_param_t argp)
            0  /* rid */);
    wait_on_mask( 1 << tag );
 
+#if 0
+   if (spu.init.id==0)
+      spu_test_misc();
+#endif
 
    main_loop();
 

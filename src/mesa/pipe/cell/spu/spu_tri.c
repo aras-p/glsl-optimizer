@@ -349,13 +349,13 @@ emit_quad( int x, int y, mask_t mask )
       cur_tile_status_c = TILE_STATUS_DIRTY;
 
       if (spu_extract(mask, 0))
-         ctile.t32[iy][ix] = colors[QUAD_TOP_LEFT];
+         ctile.ui[iy][ix] = colors[QUAD_TOP_LEFT];
       if (spu_extract(mask, 1))
-         ctile.t32[iy][ix+1] = colors[QUAD_TOP_RIGHT];
+         ctile.ui[iy][ix+1] = colors[QUAD_TOP_RIGHT];
       if (spu_extract(mask, 2))
-         ctile.t32[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
+         ctile.ui[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
       if (spu_extract(mask, 3))
-         ctile.t32[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
+         ctile.ui[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
 
 #if 0
       /* SIMD_Z with swizzled color buffer (someday) */
