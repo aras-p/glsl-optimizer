@@ -257,12 +257,6 @@ do_depth_test(int x, int y, mask_t quadmask)
 
    zvals.v = eval_z((float) x, (float) y);
 
-   if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
-      /* now, _really_ clear the tile */
-      clear_z_tile(&spu.ztile);
-      spu.cur_ztile_status = TILE_STATUS_DIRTY;
-   }
-
    if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
       int ix = (x - setup.cliprect_minx) / 4;
       int iy = (y - setup.cliprect_miny) / 2;
@@ -273,6 +267,10 @@ do_depth_test(int x, int y, mask_t quadmask)
       int iy = (y - setup.cliprect_miny) / 2;
       mask = spu_z32_test_less(zvals.v, &spu.ztile.ui4[iy][ix], quadmask);
    }
+
+   if (spu_extract(spu_orx(mask), 0))
+      spu.cur_ztile_status = TILE_STATUS_DIRTY;
+
    return mask;
 }
 
@@ -300,10 +298,6 @@ emit_quad( int x, int y, mask_t mask )
       const int ix = x - setup.cliprect_minx;
       const int iy = y - setup.cliprect_miny;
 
-      if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
-         /* now, _really_ clear the tile */
-         clear_c_tile(&spu.ctile);
-      }
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
 
       if (spu.texture.start) {
@@ -406,6 +400,18 @@ static void flush_spans( void )
 
    default:
       return;
+   }
+
+
+   /* _really_ clear tiles now if needed */
+   if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
+      clear_c_tile(&spu.ctile);
+      spu.cur_ctile_status = TILE_STATUS_DIRTY;
+   }
+   if (spu.depth_stencil.depth.enabled &&
+       spu.cur_ztile_status == TILE_STATUS_CLEAR) {
+      clear_z_tile(&spu.ztile);
+      spu.cur_ztile_status = TILE_STATUS_DIRTY;
    }
 
    /* XXX this loop could be moved into the above switch cases and
@@ -831,7 +837,6 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
       wait_on_mask(1 << TAG_READ_TILE_COLOR);
       spu.cur_ctile_status = TILE_STATUS_CLEAN;
    }
-
    ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
 
    if (spu.depth_stencil.depth.enabled) {
