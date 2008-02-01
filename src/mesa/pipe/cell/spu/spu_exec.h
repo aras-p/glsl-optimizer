@@ -43,6 +43,7 @@ union spu_exec_channel
    float    f[QUAD_SIZE];
    int      i[QUAD_SIZE];
    unsigned u[QUAD_SIZE];
+   qword    q;
 };
 
 /**

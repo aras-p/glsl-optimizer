@@ -52,8 +52,15 @@
 
 #include <libmisc.h>
 #include <spu_mfcio.h>
-#include <simdmath/sqrtf4.h>
+#include <simdmath/ceilf4.h>
+#include <simdmath/cosf4.h>
+#include <simdmath/divf4.h>
+#include <simdmath/floorf4.h>
+#include <simdmath/log2f4.h>
 #include <simdmath/powf4.h>
+#include <simdmath/sinf4.h>
+#include <simdmath/sqrtf4.h>
+#include <simdmath/truncf4.h>
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
@@ -157,643 +164,175 @@ spu_exec_machine_init(struct spu_exec_machine *mach,
 }
 
 
-static void
-micro_abs(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static INLINE qword
+micro_abs(qword src)
 {
-   dst->f[0] = (float) fabs( (double) src->f[0] );
-   dst->f[1] = (float) fabs( (double) src->f[1] );
-   dst->f[2] = (float) fabs( (double) src->f[2] );
-   dst->f[3] = (float) fabs( (double) src->f[3] );
+   return si_rotmi(si_shli(src, 1), -1);
 }
 
-static void
-micro_add(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
+static INLINE qword
+micro_ceil(qword src)
 {
-   dst->f[0] = src0->f[0] + src1->f[0];
-   dst->f[1] = src0->f[1] + src1->f[1];
-   dst->f[2] = src0->f[2] + src1->f[2];
-   dst->f[3] = src0->f[3] + src1->f[3];
+   return (qword) _ceilf4((vec_float4) src);
 }
 
-static void
-micro_iadd(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
+static INLINE qword
+micro_cos(qword src)
 {
-   dst->i[0] = src0->i[0] + src1->i[0];
-   dst->i[1] = src0->i[1] + src1->i[1];
-   dst->i[2] = src0->i[2] + src1->i[2];
-   dst->i[3] = src0->i[3] + src1->i[3];
+   return (qword) _cosf4((vec_float4) src);
 }
 
-static void
-micro_and(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
+static const qword br_shuf = {
+   TILE_BOTTOM_RIGHT + 0, TILE_BOTTOM_RIGHT + 1,
+   TILE_BOTTOM_RIGHT + 2, TILE_BOTTOM_RIGHT + 3,
+   TILE_BOTTOM_RIGHT + 0, TILE_BOTTOM_RIGHT + 1,
+   TILE_BOTTOM_RIGHT + 2, TILE_BOTTOM_RIGHT + 3,
+   TILE_BOTTOM_RIGHT + 0, TILE_BOTTOM_RIGHT + 1,
+   TILE_BOTTOM_RIGHT + 2, TILE_BOTTOM_RIGHT + 3,
+   TILE_BOTTOM_RIGHT + 0, TILE_BOTTOM_RIGHT + 1,
+   TILE_BOTTOM_RIGHT + 2, TILE_BOTTOM_RIGHT + 3,
+};
+
+static const qword bl_shuf = {
+   TILE_BOTTOM_LEFT + 0, TILE_BOTTOM_LEFT + 1,
+   TILE_BOTTOM_LEFT + 2, TILE_BOTTOM_LEFT + 3,
+   TILE_BOTTOM_LEFT + 0, TILE_BOTTOM_LEFT + 1,
+   TILE_BOTTOM_LEFT + 2, TILE_BOTTOM_LEFT + 3,
+   TILE_BOTTOM_LEFT + 0, TILE_BOTTOM_LEFT + 1,
+   TILE_BOTTOM_LEFT + 2, TILE_BOTTOM_LEFT + 3,
+   TILE_BOTTOM_LEFT + 0, TILE_BOTTOM_LEFT + 1,
+   TILE_BOTTOM_LEFT + 2, TILE_BOTTOM_LEFT + 3,
+};
+
+static const qword tl_shuf = {
+   TILE_TOP_LEFT + 0, TILE_TOP_LEFT + 1,
+   TILE_TOP_LEFT + 2, TILE_TOP_LEFT + 3,
+   TILE_TOP_LEFT + 0, TILE_TOP_LEFT + 1,
+   TILE_TOP_LEFT + 2, TILE_TOP_LEFT + 3,
+   TILE_TOP_LEFT + 0, TILE_TOP_LEFT + 1,
+   TILE_TOP_LEFT + 2, TILE_TOP_LEFT + 3,
+   TILE_TOP_LEFT + 0, TILE_TOP_LEFT + 1,
+   TILE_TOP_LEFT + 2, TILE_TOP_LEFT + 3,
+};
+
+static qword
+micro_ddx(qword src)
 {
-   dst->u[0] = src0->u[0] & src1->u[0];
-   dst->u[1] = src0->u[1] & src1->u[1];
-   dst->u[2] = src0->u[2] & src1->u[2];
-   dst->u[3] = src0->u[3] & src1->u[3];
+   qword bottom_right = si_shufb(src, src, br_shuf);
+   qword bottom_left = si_shufb(src, src, bl_shuf);
+
+   return si_fs(bottom_right, bottom_left);
 }
 
-static void
-micro_ceil(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_ddy(qword src)
 {
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) ceil( (double) src->f[0] );
-   dst->f[1] = (float) ceil( (double) src->f[1] );
-   dst->f[2] = (float) ceil( (double) src->f[2] );
-   dst->f[3] = (float) ceil( (double) src->f[3] );
-#endif
+   qword top_left = si_shufb(src, src, tl_shuf);
+   qword bottom_left = si_shufb(src, src, bl_shuf);
+
+   return si_fs(top_left, bottom_left);
 }
 
-static void
-micro_cos(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static INLINE qword
+micro_div(qword src0, qword src1)
 {
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) cos( (double) src->f[0] );
-   dst->f[1] = (float) cos( (double) src->f[1] );
-   dst->f[2] = (float) cos( (double) src->f[2] );
-   dst->f[3] = (float) cos( (double) src->f[3] );
-#endif
+   return (qword) _divf4((vec_float4) src0, (vec_float4) src1);
 }
 
-static void
-micro_ddx(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_flr(qword src)
 {
-   dst->f[0] =
-   dst->f[1] =
-   dst->f[2] =
-   dst->f[3] = src->f[TILE_BOTTOM_RIGHT] - src->f[TILE_BOTTOM_LEFT];
+   return (qword) _floorf4((vec_float4) src);
 }
 
-static void
-micro_ddy(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_frc(qword src)
 {
-   dst->f[0] =
-   dst->f[1] =
-   dst->f[2] =
-   dst->f[3] = src->f[TILE_TOP_LEFT] - src->f[TILE_BOTTOM_LEFT];
+   return si_fs(src, (qword) _floorf4((vec_float4) src));
 }
 
-static void
-micro_div(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
+static INLINE qword
+micro_ge(qword src0, qword src1)
 {
-   dst->f[0] = src0->f[0] / src1->f[0];
-   dst->f[1] = src0->f[1] / src1->f[1];
-   dst->f[2] = src0->f[2] / src1->f[2];
-   dst->f[3] = src0->f[3] / src1->f[3];
+   return si_or(si_fceq(src0, src1), si_fcgt(src0, src1));
 }
 
-static void
-micro_udiv(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
+static qword
+micro_lg2(qword src)
 {
-   dst->u[0] = src0->u[0] / src1->u[0];
-   dst->u[1] = src0->u[1] / src1->u[1];
-   dst->u[2] = src0->u[2] / src1->u[2];
-   dst->u[3] = src0->u[3] / src1->u[3];
+   return (qword) _log2f4((vec_float4) src);
 }
 
-static void
-micro_eq(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2,
-   const union spu_exec_channel *src3 )
+static INLINE qword
+micro_lt(qword src0, qword src1)
 {
-   dst->f[0] = src0->f[0] == src1->f[0] ? src2->f[0] : src3->f[0];
-   dst->f[1] = src0->f[1] == src1->f[1] ? src2->f[1] : src3->f[1];
-   dst->f[2] = src0->f[2] == src1->f[2] ? src2->f[2] : src3->f[2];
-   dst->f[3] = src0->f[3] == src1->f[3] ? src2->f[3] : src3->f[3];
+   const qword tmp = si_or(si_fceq(src0, src1), si_fcgt(src0, src1));
+
+   return si_xori(tmp, 0xff);
 }
 
-static void
-micro_ieq(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2,
-   const union spu_exec_channel *src3 )
+static INLINE qword
+micro_max(qword src0, qword src1)
 {
-   dst->i[0] = src0->i[0] == src1->i[0] ? src2->i[0] : src3->i[0];
-   dst->i[1] = src0->i[1] == src1->i[1] ? src2->i[1] : src3->i[1];
-   dst->i[2] = src0->i[2] == src1->i[2] ? src2->i[2] : src3->i[2];
-   dst->i[3] = src0->i[3] == src1->i[3] ? src2->i[3] : src3->i[3];
+   return si_selb(src1, src0, si_fcgt(src0, src1));
 }
 
-static void
-micro_exp2(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src)
+static INLINE qword
+micro_min(qword src0, qword src1)
 {
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) pow( 2.0, (double) src->f[0] );
-   dst->f[1] = (float) pow( 2.0, (double) src->f[1] );
-   dst->f[2] = (float) pow( 2.0, (double) src->f[2] );
-   dst->f[3] = (float) pow( 2.0, (double) src->f[3] );
-#endif
+   return si_selb(src0, src1, si_fcgt(src0, src1));
 }
 
-static void
-micro_f2it(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_neg(qword src)
 {
-   dst->i[0] = (int) src->f[0];
-   dst->i[1] = (int) src->f[1];
-   dst->i[2] = (int) src->f[2];
-   dst->i[3] = (int) src->f[3];
+   return si_xor(src, (qword) spu_splats(0x80000000));
 }
 
-static void
-micro_f2ut(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_set_sign(qword src)
 {
-   dst->u[0] = (uint) src->f[0];
-   dst->u[1] = (uint) src->f[1];
-   dst->u[2] = (uint) src->f[2];
-   dst->u[3] = (uint) src->f[3];
+   return si_or(src, (qword) spu_splats(0x80000000));
 }
 
-static void
-micro_flr(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_pow(qword src0, qword src1)
 {
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) floor( (double) src->f[0] );
-   dst->f[1] = (float) floor( (double) src->f[1] );
-   dst->f[2] = (float) floor( (double) src->f[2] );
-   dst->f[3] = (float) floor( (double) src->f[3] );
-#endif
+   return (qword) _powf4((vec_float4) src0, (vec_float4) src1);
 }
 
-static void
-micro_frc(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_rnd(qword src)
 {
-   ASSERT(0);
-#if 0
-   dst->f[0] = src->f[0] - (float) floor( (double) src->f[0] );
-   dst->f[1] = src->f[1] - (float) floor( (double) src->f[1] );
-   dst->f[2] = src->f[2] - (float) floor( (double) src->f[2] );
-   dst->f[3] = src->f[3] - (float) floor( (double) src->f[3] );
-#endif
+   const qword half = (qword) spu_splats(0.5f);
+
+   /* May be able to use _roundf4.  There may be some difference, though.
+    */
+   return (qword) _floorf4((vec_float4) si_fa(src, half));
 }
 
-static void
-micro_ge(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2,
-   const union spu_exec_channel *src3 )
+static INLINE qword
+micro_ishr(qword src0, qword src1)
 {
-   dst->f[0] = src0->f[0] >= src1->f[0] ? src2->f[0] : src3->f[0];
-   dst->f[1] = src0->f[1] >= src1->f[1] ? src2->f[1] : src3->f[1];
-   dst->f[2] = src0->f[2] >= src1->f[2] ? src2->f[2] : src3->f[2];
-   dst->f[3] = src0->f[3] >= src1->f[3] ? src2->f[3] : src3->f[3];
+   return si_rotma(src0, si_sfi(src1, 0));
 }
 
-static void
-micro_i2f(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_trunc(qword src)
 {
-   dst->f[0] = (float) src->i[0];
-   dst->f[1] = (float) src->i[1];
-   dst->f[2] = (float) src->i[2];
-   dst->f[3] = (float) src->i[3];
+   return (qword) _truncf4((vec_float4) src);
 }
 
-static void
-micro_lg2(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
+static qword
+micro_sin(qword src)
 {
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) log( (double) src->f[0] ) * 1.442695f;
-   dst->f[1] = (float) log( (double) src->f[1] ) * 1.442695f;
-   dst->f[2] = (float) log( (double) src->f[2] ) * 1.442695f;
-   dst->f[3] = (float) log( (double) src->f[3] ) * 1.442695f;
-#endif
+   return (qword) _sinf4((vec_float4) src);
 }
 
-static void
-micro_lt(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2,
-   const union spu_exec_channel *src3 )
+static INLINE qword
+micro_sqrt(qword src)
 {
-   dst->f[0] = src0->f[0] < src1->f[0] ? src2->f[0] : src3->f[0];
-   dst->f[1] = src0->f[1] < src1->f[1] ? src2->f[1] : src3->f[1];
-   dst->f[2] = src0->f[2] < src1->f[2] ? src2->f[2] : src3->f[2];
-   dst->f[3] = src0->f[3] < src1->f[3] ? src2->f[3] : src3->f[3];
-}
-
-static void
-micro_ilt(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2,
-   const union spu_exec_channel *src3 )
-{
-   dst->i[0] = src0->i[0] < src1->i[0] ? src2->i[0] : src3->i[0];
-   dst->i[1] = src0->i[1] < src1->i[1] ? src2->i[1] : src3->i[1];
-   dst->i[2] = src0->i[2] < src1->i[2] ? src2->i[2] : src3->i[2];
-   dst->i[3] = src0->i[3] < src1->i[3] ? src2->i[3] : src3->i[3];
-}
-
-static void
-micro_ult(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2,
-   const union spu_exec_channel *src3 )
-{
-   dst->u[0] = src0->u[0] < src1->u[0] ? src2->u[0] : src3->u[0];
-   dst->u[1] = src0->u[1] < src1->u[1] ? src2->u[1] : src3->u[1];
-   dst->u[2] = src0->u[2] < src1->u[2] ? src2->u[2] : src3->u[2];
-   dst->u[3] = src0->u[3] < src1->u[3] ? src2->u[3] : src3->u[3];
-}
-
-static void
-micro_max(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->f[0] = src0->f[0] > src1->f[0] ? src0->f[0] : src1->f[0];
-   dst->f[1] = src0->f[1] > src1->f[1] ? src0->f[1] : src1->f[1];
-   dst->f[2] = src0->f[2] > src1->f[2] ? src0->f[2] : src1->f[2];
-   dst->f[3] = src0->f[3] > src1->f[3] ? src0->f[3] : src1->f[3];
-}
-
-static void
-micro_imax(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->i[0] = src0->i[0] > src1->i[0] ? src0->i[0] : src1->i[0];
-   dst->i[1] = src0->i[1] > src1->i[1] ? src0->i[1] : src1->i[1];
-   dst->i[2] = src0->i[2] > src1->i[2] ? src0->i[2] : src1->i[2];
-   dst->i[3] = src0->i[3] > src1->i[3] ? src0->i[3] : src1->i[3];
-}
-
-static void
-micro_umax(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->u[0] = src0->u[0] > src1->u[0] ? src0->u[0] : src1->u[0];
-   dst->u[1] = src0->u[1] > src1->u[1] ? src0->u[1] : src1->u[1];
-   dst->u[2] = src0->u[2] > src1->u[2] ? src0->u[2] : src1->u[2];
-   dst->u[3] = src0->u[3] > src1->u[3] ? src0->u[3] : src1->u[3];
-}
-
-static void
-micro_min(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->f[0] = src0->f[0] < src1->f[0] ? src0->f[0] : src1->f[0];
-   dst->f[1] = src0->f[1] < src1->f[1] ? src0->f[1] : src1->f[1];
-   dst->f[2] = src0->f[2] < src1->f[2] ? src0->f[2] : src1->f[2];
-   dst->f[3] = src0->f[3] < src1->f[3] ? src0->f[3] : src1->f[3];
-}
-
-static void
-micro_imin(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->i[0] = src0->i[0] < src1->i[0] ? src0->i[0] : src1->i[0];
-   dst->i[1] = src0->i[1] < src1->i[1] ? src0->i[1] : src1->i[1];
-   dst->i[2] = src0->i[2] < src1->i[2] ? src0->i[2] : src1->i[2];
-   dst->i[3] = src0->i[3] < src1->i[3] ? src0->i[3] : src1->i[3];
-}
-
-static void
-micro_umin(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->u[0] = src0->u[0] < src1->u[0] ? src0->u[0] : src1->u[0];
-   dst->u[1] = src0->u[1] < src1->u[1] ? src0->u[1] : src1->u[1];
-   dst->u[2] = src0->u[2] < src1->u[2] ? src0->u[2] : src1->u[2];
-   dst->u[3] = src0->u[3] < src1->u[3] ? src0->u[3] : src1->u[3];
-}
-
-static void
-micro_umod(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->u[0] = src0->u[0] % src1->u[0];
-   dst->u[1] = src0->u[1] % src1->u[1];
-   dst->u[2] = src0->u[2] % src1->u[2];
-   dst->u[3] = src0->u[3] % src1->u[3];
-}
-
-static void
-micro_mul(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->f[0] = src0->f[0] * src1->f[0];
-   dst->f[1] = src0->f[1] * src1->f[1];
-   dst->f[2] = src0->f[2] * src1->f[2];
-   dst->f[3] = src0->f[3] * src1->f[3];
-}
-
-static void
-micro_imul(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->i[0] = src0->i[0] * src1->i[0];
-   dst->i[1] = src0->i[1] * src1->i[1];
-   dst->i[2] = src0->i[2] * src1->i[2];
-   dst->i[3] = src0->i[3] * src1->i[3];
-}
-
-static void
-micro_imul64(
-   union spu_exec_channel *dst0,
-   union spu_exec_channel *dst1,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst1->i[0] = src0->i[0] * src1->i[0];
-   dst1->i[1] = src0->i[1] * src1->i[1];
-   dst1->i[2] = src0->i[2] * src1->i[2];
-   dst1->i[3] = src0->i[3] * src1->i[3];
-   dst0->i[0] = 0;
-   dst0->i[1] = 0;
-   dst0->i[2] = 0;
-   dst0->i[3] = 0;
-}
-
-static void
-micro_umul64(
-   union spu_exec_channel *dst0,
-   union spu_exec_channel *dst1,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst1->u[0] = src0->u[0] * src1->u[0];
-   dst1->u[1] = src0->u[1] * src1->u[1];
-   dst1->u[2] = src0->u[2] * src1->u[2];
-   dst1->u[3] = src0->u[3] * src1->u[3];
-   dst0->u[0] = 0;
-   dst0->u[1] = 0;
-   dst0->u[2] = 0;
-   dst0->u[3] = 0;
-}
-
-static void
-micro_movc(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1,
-   const union spu_exec_channel *src2 )
-{
-   dst->u[0] = src0->u[0] ? src1->u[0] : src2->u[0];
-   dst->u[1] = src0->u[1] ? src1->u[1] : src2->u[1];
-   dst->u[2] = src0->u[2] ? src1->u[2] : src2->u[2];
-   dst->u[3] = src0->u[3] ? src1->u[3] : src2->u[3];
-}
-
-static void
-micro_neg(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
-{
-   dst->f[0] = -src->f[0];
-   dst->f[1] = -src->f[1];
-   dst->f[2] = -src->f[2];
-   dst->f[3] = -src->f[3];
-}
-
-static void
-micro_ineg(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
-{
-   dst->i[0] = -src->i[0];
-   dst->i[1] = -src->i[1];
-   dst->i[2] = -src->i[2];
-   dst->i[3] = -src->i[3];
-}
-
-static void
-micro_not(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
-{
-   dst->u[0] = ~src->u[0];
-   dst->u[1] = ~src->u[1];
-   dst->u[2] = ~src->u[2];
-   dst->u[3] = ~src->u[3];
-}
-
-static void
-micro_or(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->u[0] = src0->u[0] | src1->u[0];
-   dst->u[1] = src0->u[1] | src1->u[1];
-   dst->u[2] = src0->u[2] | src1->u[2];
-   dst->u[3] = src0->u[3] | src1->u[3];
-}
-
-static void
-micro_pow(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   vec_float4 s0 = (vec_float4) {
-      src0->f[0], src0->f[1], src0->f[2], src0->f[3]
-   };
-   vec_float4 s1 = (vec_float4) {
-      src1->f[0], src1->f[1], src1->f[2], src1->f[3]
-   };
-   vec_float4 d = _powf4(s0, s1);
-
-   dst->f[0] = spu_extract(d, 0);
-   dst->f[1] = spu_extract(d, 1);
-   dst->f[2] = spu_extract(d, 2);
-   dst->f[3] = spu_extract(d, 3);
-}
-
-static void
-micro_rnd(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
-{
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) floor( (double) (src->f[0] + 0.5f) );
-   dst->f[1] = (float) floor( (double) (src->f[1] + 0.5f) );
-   dst->f[2] = (float) floor( (double) (src->f[2] + 0.5f) );
-   dst->f[3] = (float) floor( (double) (src->f[3] + 0.5f) );
-#endif
-}
-
-static void
-micro_shl(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->i[0] = src0->i[0] << src1->i[0];
-   dst->i[1] = src0->i[1] << src1->i[1];
-   dst->i[2] = src0->i[2] << src1->i[2];
-   dst->i[3] = src0->i[3] << src1->i[3];
-}
-
-static void
-micro_ishr(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->i[0] = src0->i[0] >> src1->i[0];
-   dst->i[1] = src0->i[1] >> src1->i[1];
-   dst->i[2] = src0->i[2] >> src1->i[2];
-   dst->i[3] = src0->i[3] >> src1->i[3];
-}
-
-static void
-micro_trunc(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0 )
-{
-   dst->f[0] = (float) (int) src0->f[0];
-   dst->f[1] = (float) (int) src0->f[1];
-   dst->f[2] = (float) (int) src0->f[2];
-   dst->f[3] = (float) (int) src0->f[3];
-}
-
-static void
-micro_ushr(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->u[0] = src0->u[0] >> src1->u[0];
-   dst->u[1] = src0->u[1] >> src1->u[1];
-   dst->u[2] = src0->u[2] >> src1->u[2];
-   dst->u[3] = src0->u[3] >> src1->u[3];
-}
-
-static void
-micro_sin(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
-{
-   ASSERT(0);
-#if 0
-   dst->f[0] = (float) sin( (double) src->f[0] );
-   dst->f[1] = (float) sin( (double) src->f[1] );
-   dst->f[2] = (float) sin( (double) src->f[2] );
-   dst->f[3] = (float) sin( (double) src->f[3] );
-#endif
-}
-
-static void
-micro_sqrt( union spu_exec_channel *dst,
-            const union spu_exec_channel *src )
-{
-   vec_float4 s = (vec_float4) {
-      src->f[0], src->f[1], src->f[2], src->f[3]
-   };
-   vec_float4 d = _sqrtf4(s);
-
-   dst->f[0] = spu_extract(d, 0);
-   dst->f[1] = spu_extract(d, 1);
-   dst->f[2] = spu_extract(d, 2);
-   dst->f[3] = spu_extract(d, 3);
-}
-
-static void
-micro_sub(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->f[0] = src0->f[0] - src1->f[0];
-   dst->f[1] = src0->f[1] - src1->f[1];
-   dst->f[2] = src0->f[2] - src1->f[2];
-   dst->f[3] = src0->f[3] - src1->f[3];
-}
-
-static void
-micro_u2f(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src )
-{
-   dst->f[0] = (float) src->u[0];
-   dst->f[1] = (float) src->u[1];
-   dst->f[2] = (float) src->u[2];
-   dst->f[3] = (float) src->u[3];
-}
-
-static void
-micro_xor(
-   union spu_exec_channel *dst,
-   const union spu_exec_channel *src0,
-   const union spu_exec_channel *src1 )
-{
-   dst->u[0] = src0->u[0] ^ src1->u[0];
-   dst->u[1] = src0->u[1] ^ src1->u[1];
-   dst->u[2] = src0->u[2] ^ src1->u[2];
-   dst->u[3] = src0->u[3] ^ src1->u[3];
+   return (qword) _sqrtf4((vec_float4) src);
 }
 
 static void
@@ -983,16 +522,15 @@ fetch_source(
 
    switch (tgsi_util_get_full_src_register_sign_mode( reg, chan_index )) {
    case TGSI_UTIL_SIGN_CLEAR:
-      micro_abs( chan, chan );
+      chan->q = micro_abs(chan->q);
       break;
 
    case TGSI_UTIL_SIGN_SET:
-      micro_abs( chan, chan );
-      micro_neg( chan, chan );
+      chan->q = micro_set_sign(chan->q);
       break;
 
    case TGSI_UTIL_SIGN_TOGGLE:
-      micro_neg( chan, chan );
+      chan->q = micro_neg(chan->q);
       break;
 
    case TGSI_UTIL_SIGN_KEEP:
@@ -1000,7 +538,7 @@ fetch_source(
    }
 
    if (reg->SrcRegisterExtMod.Complement) {
-      micro_sub( chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], chan );
+      chan->q = si_fs(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, chan->q);
    }
 }
 
@@ -1051,8 +589,8 @@ store_dest(
 
    case TGSI_SAT_ZERO_ONE:
       /* XXX need to obey ExecMask here */
-      micro_max(dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C]);
-      micro_min(dst, dst, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C]);
+      dst->q = micro_max(chan->q, mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q);
+      dst->q = micro_min(dst->q, mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q);
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
@@ -1162,7 +700,7 @@ exec_tex(struct spu_exec_machine *mach,
       switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
       case TGSI_EXTSWIZZLE_W:
          FETCH(&r[1], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[1] );
+         r[0].q = micro_div(r[0].q, r[1].q);
          break;
 
       case TGSI_EXTSWIZZLE_ONE:
@@ -1194,9 +732,9 @@ exec_tex(struct spu_exec_machine *mach,
       switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
       case TGSI_EXTSWIZZLE_W:
          FETCH(&r[3], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[3] );
-         micro_div( &r[1], &r[1], &r[3] );
-         micro_div( &r[2], &r[2], &r[3] );
+         r[0].q = micro_div(r[0].q, r[3].q);
+         r[1].q = micro_div(r[1].q, r[3].q);
+         r[2].q = micro_div(r[2].q, r[3].q);
          break;
 
       case TGSI_EXTSWIZZLE_ONE:
@@ -1228,9 +766,9 @@ exec_tex(struct spu_exec_machine *mach,
       switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
       case TGSI_EXTSWIZZLE_W:
          FETCH(&r[3], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[3] );
-         micro_div( &r[1], &r[1], &r[3] );
-         micro_div( &r[2], &r[2], &r[3] );
+         r[0].q = micro_div(r[0].q, r[3].q);
+         r[1].q = micro_div(r[1].q, r[3].q);
+         r[2].q = micro_div(r[2].q, r[3].q);
          break;
 
       case TGSI_EXTSWIZZLE_ONE:
@@ -1389,7 +927,7 @@ exec_instruction(
    case TGSI_OPCODE_ARL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 FETCH( &r[0], 0, chan_index );
-	 micro_f2it( &r[0], &r[0] );
+         r[0].q = si_cflts(r[0].q, 0);
 	 STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1409,22 +947,27 @@ exec_instruction(
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y ) || IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
 	 FETCH( &r[0], 0, CHAN_X );
-	 if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
-	    micro_max( &r[0], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
+         if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+            r[0].q = micro_max(r[0].q, mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q);
 	    STORE( &r[0], 0, CHAN_Y );
 	 }
 
-	 if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
-	    FETCH( &r[1], 0, CHAN_Y );
-	    micro_max( &r[1], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
+         if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+            FETCH( &r[1], 0, CHAN_Y );
+            r[1].q = micro_max(r[1].q, mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q);
 
-	    FETCH( &r[2], 0, CHAN_W );
-	    micro_min( &r[2], &r[2], &mach->Temps[TEMP_128_I].xyzw[TEMP_128_C] );
-	    micro_max( &r[2], &r[2], &mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C] );
-	    micro_pow( &r[1], &r[1], &r[2] );
-	    micro_lt( &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
-	    STORE( &r[0], 0, CHAN_Z );
-	 }
+            FETCH( &r[2], 0, CHAN_W );
+            r[2].q = micro_min(r[2].q, mach->Temps[TEMP_128_I].xyzw[TEMP_128_C].q);
+            r[2].q = micro_max(r[2].q, mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].q);
+            r[1].q = micro_pow(r[1].q, r[2].q);
+
+            /* r0 = (r0 > 0.0) ? r1 : 0.0
+             */
+            r[0].q = si_fcgt(r[0].q, mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q);
+            r[0].q = si_selb(mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q, r[1].q,
+                             r[0].q);
+            STORE( &r[0], 0, CHAN_Z );
+         }
       }
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
@@ -1435,7 +978,7 @@ exec_instruction(
    case TGSI_OPCODE_RCP:
    /* TGSI_OPCODE_RECIP */
       FETCH( &r[0], 0, CHAN_X );
-      micro_div( &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &r[0] );
+      r[0].q = micro_div(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, r[0].q);
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
       }
@@ -1444,8 +987,8 @@ exec_instruction(
    case TGSI_OPCODE_RSQ:
    /* TGSI_OPCODE_RECIPSQRT */
       FETCH( &r[0], 0, CHAN_X );
-      micro_sqrt( &r[0], &r[0] );
-      micro_div( &r[0], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &r[0] );
+      r[0].q = micro_sqrt(r[0].q);
+      r[0].q = micro_div(mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q, r[0].q);
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
       }
@@ -1465,7 +1008,7 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
 
-         micro_mul( &r[0], &r[0], &r[1] );
+         r[0].q = si_fm(r[0].q, r[1].q);
 
          STORE(&r[0], 0, chan_index);
       }
@@ -1475,7 +1018,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_add( &r[0], &r[0], &r[1] );
+         r[0].q = si_fa(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1484,17 +1027,16 @@ exec_instruction(
    /* TGSI_OPCODE_DOT3 */
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
-      micro_mul( &r[0], &r[0], &r[1] );
+      r[0].q = si_fm(r[0].q, r[1].q);
 
       FETCH( &r[1], 0, CHAN_Y );
       FETCH( &r[2], 1, CHAN_Y );
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
+
 
       FETCH( &r[1], 0, CHAN_Z );
       FETCH( &r[2], 1, CHAN_Z );
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
@@ -1506,25 +1048,22 @@ exec_instruction(
        FETCH(&r[0], 0, CHAN_X);
        FETCH(&r[1], 1, CHAN_X);
 
-       micro_mul( &r[0], &r[0], &r[1] );
+      r[0].q = si_fm(r[0].q, r[1].q);
 
        FETCH(&r[1], 0, CHAN_Y);
        FETCH(&r[2], 1, CHAN_Y);
 
-       micro_mul( &r[1], &r[1], &r[2] );
-       micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
        FETCH(&r[1], 0, CHAN_Z);
        FETCH(&r[2], 1, CHAN_Z);
 
-       micro_mul( &r[1], &r[1], &r[2] );
-       micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
        FETCH(&r[1], 0, CHAN_W);
        FETCH(&r[2], 1, CHAN_W);
 
-       micro_mul( &r[1], &r[1], &r[2] );
-       micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1539,7 +1078,7 @@ exec_instruction(
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
 	 FETCH( &r[0], 0, CHAN_Y );
 	 FETCH( &r[1], 1, CHAN_Y);
-	 micro_mul( &r[0], &r[0], &r[1] );
+      r[0].q = si_fm(r[0].q, r[1].q);
 	 STORE( &r[0], 0, CHAN_Y );
       }
 
@@ -1559,8 +1098,7 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
 
-         /* XXX use micro_min()?? */
-         micro_lt( &r[0], &r[0], &r[1], &r[0], &r[1] );
+         r[0].q = micro_min(r[0].q, r[1].q);
 
          STORE(&r[0], 0, chan_index);
       }
@@ -1571,8 +1109,7 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
 
-         /* XXX use micro_max()?? */
-         micro_lt( &r[0], &r[0], &r[1], &r[1], &r[0] );
+         r[0].q = micro_max(r[0].q, r[1].q);
 
          STORE(&r[0], 0, chan_index );
       }
@@ -1583,7 +1120,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_lt( &r[0], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
+
+         r[0].q = micro_ge(r[0].q, r[1].q);
+         r[0].q = si_xori(r[0].q, 0xff);
+
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1593,7 +1133,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_ge( &r[0], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
+         r[0].q = micro_ge(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1603,9 +1143,8 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_mul( &r[0], &r[0], &r[1] );
-         FETCH( &r[1], 2, chan_index );
-         micro_add( &r[0], &r[0], &r[1] );
+         FETCH( &r[2], 2, chan_index );
+         r[0].q = si_fma(r[0].q, r[1].q, r[2].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1615,7 +1154,7 @@ exec_instruction(
          FETCH(&r[0], 0, chan_index);
          FETCH(&r[1], 1, chan_index);
 
-         micro_sub( &r[0], &r[0], &r[1] );
+         r[0].q = si_fs(r[0].q, r[1].q);
 
          STORE(&r[0], 0, chan_index);
       }
@@ -1628,9 +1167,8 @@ exec_instruction(
          FETCH(&r[1], 1, chan_index);
          FETCH(&r[2], 2, chan_index);
 
-         micro_sub( &r[1], &r[1], &r[2] );
-         micro_mul( &r[0], &r[0], &r[1] );
-         micro_add( &r[0], &r[0], &r[2] );
+         r[1].q = si_fs(r[1].q, r[2].q);
+         r[0].q = si_fma(r[0].q, r[1].q, r[2].q);
 
          STORE(&r[0], 0, chan_index);
       }
@@ -1661,7 +1199,7 @@ exec_instruction(
    /* TGSI_OPCODE_FRC */
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_frc( &r[0], &r[0] );
+         r[0].q = micro_frc(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1674,7 +1212,7 @@ exec_instruction(
    /* TGSI_OPCODE_FLR */
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_flr( &r[0], &r[0] );
+         r[0].q = micro_flr(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1682,7 +1220,7 @@ exec_instruction(
    case TGSI_OPCODE_ROUND:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_rnd( &r[0], &r[0] );
+         r[0].q = micro_rnd(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1691,7 +1229,7 @@ exec_instruction(
     /* TGSI_OPCODE_EX2 */
       FETCH(&r[0], 0, CHAN_X);
 
-      micro_pow( &r[0], &mach->Temps[TEMP_2_I].xyzw[TEMP_2_C], &r[0] );
+      r[0].q = micro_pow(mach->Temps[TEMP_2_I].xyzw[TEMP_2_C].q, r[0].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1701,7 +1239,7 @@ exec_instruction(
    case TGSI_OPCODE_LOGBASE2:
    /* TGSI_OPCODE_LG2 */
       FETCH( &r[0], 0, CHAN_X );
-      micro_lg2( &r[0], &r[0] );
+      r[0].q = micro_lg2(r[0].q);
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
       }
@@ -1712,7 +1250,7 @@ exec_instruction(
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
-      micro_pow( &r[0], &r[0], &r[1] );
+      r[0].q = micro_pow(r[0].q, r[1].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1723,35 +1261,34 @@ exec_instruction(
       /* TGSI_OPCODE_XPD */
       FETCH(&r[0], 0, CHAN_Y);
       FETCH(&r[1], 1, CHAN_Z);
-
-      micro_mul( &r[2], &r[0], &r[1] );
-
       FETCH(&r[3], 0, CHAN_Z);
       FETCH(&r[4], 1, CHAN_Y);
 
-      micro_mul( &r[5], &r[3], &r[4] );
-      micro_sub( &r[2], &r[2], &r[5] );
+      /* r2 = (r0 * r1) - (r3 * r5)
+       */
+      r[2].q = si_fm(r[3].q, r[5].q);
+      r[2].q = si_fms(r[0].q, r[1].q, r[2].q);
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
          STORE( &r[2], 0, CHAN_X );
       }
 
       FETCH(&r[2], 1, CHAN_X);
-
-      micro_mul( &r[3], &r[3], &r[2] );
-
       FETCH(&r[5], 0, CHAN_X);
 
-      micro_mul( &r[1], &r[1], &r[5] );
-      micro_sub( &r[3], &r[3], &r[1] );
+      /* r3 = (r3 * r2) - (r1 * r5)
+       */
+      r[1].q = si_fm(r[1].q, r[5].q);
+      r[3].q = si_fms(r[3].q, r[2].q, r[1].q);
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
          STORE( &r[3], 0, CHAN_Y );
       }
 
-      micro_mul( &r[5], &r[5], &r[4] );
-      micro_mul( &r[0], &r[0], &r[2] );
-      micro_sub( &r[5], &r[5], &r[0] );
+      /* r5 = (r5 * r4) - (r0 * r2)
+       */
+      r[0].q = si_fm(r[0].q, r[2].q);
+      r[5].q = si_fms(r[5].q, r[4].q, r[0].q);
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
          STORE( &r[5], 0, CHAN_Z );
@@ -1770,7 +1307,7 @@ exec_instruction(
        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
           FETCH(&r[0], 0, chan_index);
 
-          micro_abs( &r[0], &r[0] );
+          r[0].q = micro_abs(r[0].q);
 
           STORE(&r[0], 0, chan_index);
        }
@@ -1784,23 +1321,21 @@ exec_instruction(
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
-      micro_mul( &r[0], &r[0], &r[1] );
+      r[0].q = si_fm(r[0].q, r[1].q);
 
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 1, CHAN_Y);
 
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
       FETCH(&r[1], 0, CHAN_Z);
       FETCH(&r[2], 1, CHAN_Z);
 
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
       FETCH(&r[1], 1, CHAN_W);
 
-      micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fa(r[0].q, r[1].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1810,7 +1345,7 @@ exec_instruction(
    case TGSI_OPCODE_COS:
       FETCH(&r[0], 0, CHAN_X);
 
-      micro_cos( &r[0], &r[0] );
+      r[0].q = micro_cos(r[0].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1820,7 +1355,7 @@ exec_instruction(
    case TGSI_OPCODE_DDX:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_ddx( &r[0], &r[0] );
+         r[0].q = micro_ddx(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1828,7 +1363,7 @@ exec_instruction(
    case TGSI_OPCODE_DDY:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_ddy( &r[0], &r[0] );
+         r[0].q = micro_ddy(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1866,9 +1401,9 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_eq( &r[0], &r[0], &r[1],
-                   &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C],
-                   &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
+
+         r[0].q = si_fceq(r[0].q, r[1].q);
+
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1881,14 +1416,14 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_lt( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+         r[0].q = si_fcgt(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
 
    case TGSI_OPCODE_SIN:
       FETCH( &r[0], 0, CHAN_X );
-      micro_sin( &r[0], &r[0] );
+      r[0].q = micro_sin(r[0].q);
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
       }
@@ -1898,7 +1433,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_ge( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+
+         r[0].q = si_fcgt(r[0].q, r[1].q);
+         r[0].q = si_xori(r[0].q, 0xff);
+
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1907,7 +1445,10 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_eq( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+
+         r[0].q = si_fceq(r[0].q, r[1].q);
+         r[0].q = si_xori(r[0].q, 0xff);
+
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2038,7 +1579,11 @@ exec_instruction(
          FETCH(&r[1], 1, chan_index);
          FETCH(&r[2], 2, chan_index);
 
-         micro_lt( &r[0], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[1], &r[2] );
+         /* r0 = (r0 < 0.0) ? r1 : r2
+          */
+         r[3].q = si_xor(r[3].q, r[3].q);
+         r[0].q = micro_lt(r[0].q, r[3].q);
+         r[0].q = si_selb(r[1].q, r[2].q, r[0].q);
 
          STORE(&r[0], 0, chan_index);
       }
@@ -2049,11 +1594,11 @@ exec_instruction(
          FETCH( &r[0], 0, CHAN_X );
       }
       if( IS_CHANNEL_ENABLED( *inst, CHAN_X ) ) {
-         micro_cos( &r[1], &r[0] );
+         r[1].q = micro_cos(r[0].q);
          STORE( &r[1], 0, CHAN_X );
       }
       if( IS_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
-         micro_sin( &r[1], &r[0] );
+         r[1].q = micro_sin(r[0].q);
          STORE( &r[1], 0, CHAN_Y );
       }
       if( IS_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
@@ -2075,12 +1620,11 @@ exec_instruction(
    case TGSI_OPCODE_DP2:
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
-      micro_mul( &r[0], &r[0], &r[1] );
+      r[0].q = si_fm(r[0].q, r[1].q);
 
       FETCH( &r[1], 0, CHAN_Y );
       FETCH( &r[2], 1, CHAN_Y );
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      r[0].q = si_fma(r[1].q, r[2].q, r[0].q);
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
@@ -2152,7 +1696,7 @@ exec_instruction(
    case TGSI_OPCODE_CEIL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_ceil( &r[0], &r[0] );
+         r[0].q = micro_ceil(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2160,7 +1704,7 @@ exec_instruction(
    case TGSI_OPCODE_I2F:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_i2f( &r[0], &r[0] );
+         r[0].q = si_csflt(r[0].q, 0);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2168,7 +1712,7 @@ exec_instruction(
    case TGSI_OPCODE_NOT:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_not( &r[0], &r[0] );
+         r[0].q = si_xorbi(r[0].q, 0xff);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2176,7 +1720,7 @@ exec_instruction(
    case TGSI_OPCODE_TRUNC:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         micro_trunc( &r[0], &r[0] );
+         r[0].q = micro_trunc(r[0].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2185,7 +1729,9 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_shl( &r[0], &r[0], &r[1] );
+
+         r[0].q = si_shl(r[0].q, r[1].q);
+
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2194,7 +1740,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_ishr( &r[0], &r[0], &r[1] );
+         r[0].q = micro_ishr(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2203,7 +1749,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_and( &r[0], &r[0], &r[1] );
+         r[0].q = si_and(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2212,7 +1758,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_or( &r[0], &r[0], &r[1] );
+         r[0].q = si_or(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -2225,7 +1771,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_xor( &r[0], &r[0], &r[1] );
+         r[0].q = si_xor(r[0].q, r[1].q);
          STORE( &r[0], 0, chan_index );
       }
       break;
