@@ -39,18 +39,11 @@
 #include "spu_tile.h"
 #include "spu_tri.h"
 
+#include "spu_ztest.h"
 
-/*
- * If SIMD_Z=1 the Z buffer is floating point and we use vector instructions
- * to do Z testing/updating.
- */
-#define SIMD_Z 0
 
-#if SIMD_Z
+/** Masks are uint[4] vectors with each element being 0 or 0xffffffff */
 typedef vector unsigned int mask_t;
-#else
-typedef uint mask_t;
-#endif
 
 
 /**
@@ -282,20 +275,11 @@ pack_colors(uint uicolors[4], const float4 fcolors[4])
 }
 
 
-
-static unsigned int
-do_depth_test(int x, int y, unsigned int mask)
+static INLINE mask_t
+do_depth_test(int x, int y, mask_t quadmask)
 {
-   static const float4 zscale16
-      = {.f={65535.0, 65535.0, 65535.0, 65535.0}};
-   static const float4 zscale32
-      = {.f={(float)0xffffffff,
-             (float)0xffffffff,
-             (float)0xffffffff,
-             (float)0xffffffff}};
-   int ix = x - setup.cliprect_minx;
-   int iy = y - setup.cliprect_miny;
    float4 zvals;
+   mask_t mask;
 
    zvals.v = eval_z((float) x, (float) y);
 
@@ -305,126 +289,17 @@ do_depth_test(int x, int y, unsigned int mask)
       cur_tile_status_z = TILE_STATUS_DIRTY;
    }
 
-#if 0
-   if (cur_tile_status_z == TILE_STATUS_CLEAR) {
-      /* now, _really_ clear the tile */
-      clear_z_tile(&ztile);
-   }
-   else if (cur_tile_status_z != TILE_STATUS_DIRTY) {
-      /* make sure we've got the tile from main mem */
-      wait_on_mask(1 << TAG_READ_TILE_Z);
-   }
-   cur_tile_status_z = TILE_STATUS_DIRTY;
-#endif
-
    if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-      zvals.v = spu_mul(zvals.v, zscale16.v);
-      if (mask & MASK_TOP_LEFT) {
-         uint z = (uint) zvals.f[0];
-         if (z < ztile.t16[iy][ix])
-            ztile.t16[iy][ix] = z;
-         else
-            mask &= ~MASK_TOP_LEFT;
-      }
-
-      if (mask & MASK_TOP_RIGHT) {
-         uint z = (uint) zvals.f[1];
-         if (z < ztile.t16[iy][ix+1])
-            ztile.t16[iy][ix+1] = z;
-         else
-            mask &= ~MASK_TOP_RIGHT;
-      }
-
-      if (mask & MASK_BOTTOM_LEFT) {
-         uint z = (uint) zvals.f[2];
-         if (z < ztile.t16[iy+1][ix])
-            ztile.t16[iy+1][ix] = z;
-         else
-            mask &= ~MASK_BOTTOM_LEFT;
-      }
-
-      if (mask & MASK_BOTTOM_RIGHT) {
-         uint z = (uint) zvals.f[3];
-         if (z < ztile.t16[iy+1][ix+1])
-            ztile.t16[iy+1][ix+1] = z;
-         else
-            mask &= ~MASK_BOTTOM_RIGHT;
-      }
+      int ix = (x - setup.cliprect_minx) / 4;
+      int iy = (y - setup.cliprect_miny) / 2;
+      mask = spu_z16_test_less(zvals.v, &ztile.us8[iy][ix], x>>1, quadmask);
    }
    else {
-      zvals.v = spu_mul(zvals.v, zscale32.v);
-      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
-      if (mask & MASK_TOP_LEFT) {
-         uint z = (uint) zvals.f[0];
-         if (z < ztile.t32[iy][ix])
-            ztile.t32[iy][ix] = z;
-         else
-            mask &= ~MASK_TOP_LEFT;
-      }
-
-      if (mask & MASK_TOP_RIGHT) {
-         uint z = (uint) zvals.f[1];
-         if (z < ztile.t32[iy][ix+1])
-            ztile.t32[iy][ix+1] = z;
-         else
-            mask &= ~MASK_TOP_RIGHT;
-      }
-
-      if (mask & MASK_BOTTOM_LEFT) {
-         uint z = (uint) zvals.f[2];
-         if (z < ztile.t32[iy+1][ix])
-            ztile.t32[iy+1][ix] = z;
-         else
-            mask &= ~MASK_BOTTOM_LEFT;
-      }
-
-      if (mask & MASK_BOTTOM_RIGHT) {
-         uint z = (uint) zvals.f[3];
-         if (z < ztile.t32[iy+1][ix+1])
-            ztile.t32[iy+1][ix+1] = z;
-         else
-            mask &= ~MASK_BOTTOM_RIGHT;
-      }
+      int ix = (x - setup.cliprect_minx) / 2;
+      int iy = (y - setup.cliprect_miny) / 2;
+      mask = spu_z32_test_less(zvals.v, &ztile.ui4[iy][ix], quadmask);
    }
-
-   if (mask)
-      cur_tile_status_z = TILE_STATUS_DIRTY;
-
    return mask;
-}
-
-
-
-
-static vector unsigned int
-do_depth_test_simd(int x, int y, vector unsigned int quadmask)
-{
-   int ix = (x - setup.cliprect_minx) / 2;
-   int iy = (y - setup.cliprect_miny) / 2;
-   float4 zvals;
-
-   vector unsigned int zmask;
-
-   zvals.v = eval_z((float) x, (float) y);
-
-   if (cur_tile_status_z == TILE_STATUS_CLEAR) {
-      /* now, _really_ clear the tile */
-      clear_z_tile(&ztile);
-   }
-   else if (cur_tile_status_z != TILE_STATUS_DIRTY) {
-      /* make sure we've got the tile from main mem */
-      wait_on_mask(1 << TAG_READ_TILE_Z);
-   }
-   cur_tile_status_z = TILE_STATUS_DIRTY;
-
-   /* XXX fetch Z value sooner to hide latency here */
-   zmask = spu_cmpgt(ztile.f4[ix][iy].v, zvals.v);
-   zmask = spu_and(zmask, quadmask);
-
-   ztile.f4[ix][iy].v = spu_sel(ztile.f4[ix][iy].v, zvals.v, zmask);
-   //ztile.f4[ix][iy].v = spu_sel(zvals.v, ztile.f4[ix][iy].v, mask4);
-
-   return zmask;
 }
 
 
@@ -461,36 +336,18 @@ emit_quad( int x, int y, mask_t mask )
    }
 
    if (spu.depth_stencil.depth.enabled) {
-#if SIMD_Z
-      mask = do_depth_test_simd(x, y, mask);
-#else
       mask = do_depth_test(x, y, mask);
-#endif
    }
 
-#if !SIMD_Z
-   if (mask)
-#endif
-   {
-      if (cur_tile_status_c == TILE_STATUS_CLEAR) {
-         /* now, _really_ clear the tile */
-         clear_c_tile(&ctile);
-      }
+   /* If any bits in mask are set... */
+   if (spu_extract(spu_orx(mask), 0)) {
 
-#if 0
       if (cur_tile_status_c == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
          clear_c_tile(&ctile);
-         cur_tile_status_c = TILE_STATUS_DIRTY;
       }
-      else if (cur_tile_status_c != TILE_STATUS_DIRTY) {
-         /* make sure we've got the tile from main mem */
-         wait_on_mask(1 << TAG_READ_TILE_COLOR);
-      }
-#endif
       cur_tile_status_c = TILE_STATUS_DIRTY;
 
-#if SIMD_Z
       if (spu_extract(mask, 0))
          ctile.t32[iy][ix] = colors[QUAD_TOP_LEFT];
       if (spu_extract(mask, 1))
@@ -499,20 +356,11 @@ emit_quad( int x, int y, mask_t mask )
          ctile.t32[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
       if (spu_extract(mask, 3))
          ctile.t32[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
-#elif 0
+
+#if 0
       /* SIMD_Z with swizzled color buffer (someday) */
       vector float icolors = *((vector float *) &colors);
       ctile.f4[iy/2][ix/2].v = spu_sel(ctile.f4[iy/2][ix/2].v, icolors, mask);
-
-#else
-      if (mask & MASK_TOP_LEFT)
-         ctile.t32[iy][ix] = colors[QUAD_TOP_LEFT];
-      if (mask & MASK_TOP_RIGHT)
-         ctile.t32[iy][ix+1] = colors[QUAD_TOP_RIGHT];
-      if (mask & MASK_BOTTOM_LEFT)
-         ctile.t32[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
-      if (mask & MASK_BOTTOM_RIGHT)
-         ctile.t32[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
 #endif
    }
 
@@ -533,38 +381,20 @@ static INLINE int block( int x )
 /**
  * Compute mask which indicates which pixels in the 2x2 quad are actually inside
  * the triangle's bounds.
- *
- * this is pretty nasty...  may need to rework flush_spans again to
- * fix it, if possible.
+ * The mask is a uint4 vector and each element will be 0 or 0xffffffff.
  */
-static mask_t calculate_mask( int x )
+static INLINE mask_t calculate_mask( int x )
 {
-#if SIMD_Z
-   uint m0, m1, m2, m3;
-
-   m0 = (x >= setup.span.left[0] && x < setup.span.right[0]) * ~0;
-   m1 = (x+1 >= setup.span.left[0] && x+1 < setup.span.right[0]) * ~0;
-   m2 = (x >= setup.span.left[1] && x < setup.span.right[1]) * ~0;
-   m3 = (x+1 >= setup.span.left[1] && x+1 < setup.span.right[1]) * ~0;
-
-   return (vector unsigned int) {m0, m1, m2, m3};
-#else
-   unsigned mask = 0x0;
-
-   if (x >= setup.span.left[0] && x < setup.span.right[0]) 
-      mask |= MASK_TOP_LEFT;
-
-   if (x >= setup.span.left[1] && x < setup.span.right[1]) 
-      mask |= MASK_BOTTOM_LEFT;
-      
-   if (x+1 >= setup.span.left[0] && x+1 < setup.span.right[0]) 
-      mask |= MASK_TOP_RIGHT;
-
-   if (x+1 >= setup.span.left[1] && x+1 < setup.span.right[1]) 
-      mask |= MASK_BOTTOM_RIGHT;
-
+   /* This is a little tricky.
+    * Use & instead of && to avoid branches.
+    * Use negation to convert true/false to ~0/0 values.
+    */
+   mask_t mask;
+   mask = spu_insert(-((x   >= setup.span.left[0]) & (x   < setup.span.right[0])), mask, 0);
+   mask = spu_insert(-((x+1 >= setup.span.left[0]) & (x+1 < setup.span.right[0])), mask, 1);
+   mask = spu_insert(-((x   >= setup.span.left[1]) & (x   < setup.span.right[1])), mask, 2);
+   mask = spu_insert(-((x+1 >= setup.span.left[1]) & (x+1 < setup.span.right[1])), mask, 3);
    return mask;
-#endif
 }
 
 
