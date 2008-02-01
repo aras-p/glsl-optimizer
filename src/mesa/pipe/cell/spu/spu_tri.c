@@ -283,21 +283,21 @@ do_depth_test(int x, int y, mask_t quadmask)
 
    zvals.v = eval_z((float) x, (float) y);
 
-   if (cur_tile_status_c == TILE_STATUS_CLEAR) {
+   if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
       /* now, _really_ clear the tile */
-      clear_z_tile(&ztile);
-      cur_tile_status_z = TILE_STATUS_DIRTY;
+      clear_z_tile(&spu.ztile);
+      spu.cur_ztile_status = TILE_STATUS_DIRTY;
    }
 
    if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
       int ix = (x - setup.cliprect_minx) / 4;
       int iy = (y - setup.cliprect_miny) / 2;
-      mask = spu_z16_test_less(zvals.v, &ztile.us8[iy][ix], x>>1, quadmask);
+      mask = spu_z16_test_less(zvals.v, &spu.ztile.us8[iy][ix], x>>1, quadmask);
    }
    else {
       int ix = (x - setup.cliprect_minx) / 2;
       int iy = (y - setup.cliprect_miny) / 2;
-      mask = spu_z32_test_less(zvals.v, &ztile.ui4[iy][ix], quadmask);
+      mask = spu_z32_test_less(zvals.v, &spu.ztile.ui4[iy][ix], quadmask);
    }
    return mask;
 }
@@ -341,25 +341,25 @@ emit_quad( int x, int y, mask_t mask )
          pack_colors(colors, fcolors);
       }
 
-      if (cur_tile_status_c == TILE_STATUS_CLEAR) {
+      if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
-         clear_c_tile(&ctile);
+         clear_c_tile(&spu.ctile);
       }
-      cur_tile_status_c = TILE_STATUS_DIRTY;
+      spu.cur_ctile_status = TILE_STATUS_DIRTY;
 
 #if 1
       if (spu_extract(mask, 0))
-         ctile.ui[iy][ix] = colors[QUAD_TOP_LEFT];
+         spu.ctile.ui[iy][ix] = colors[QUAD_TOP_LEFT];
       if (spu_extract(mask, 1))
-         ctile.ui[iy][ix+1] = colors[QUAD_TOP_RIGHT];
+         spu.ctile.ui[iy][ix+1] = colors[QUAD_TOP_RIGHT];
       if (spu_extract(mask, 2))
-         ctile.ui[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
+         spu.ctile.ui[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
       if (spu_extract(mask, 3))
-         ctile.ui[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
+         spu.ctile.ui[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
 #else
       /* SIMD_Z with swizzled color buffer (someday) */
       vector unsigned int uicolors = *((vector unsigned int *) &colors);
-      ctile.ui4[iy/2][ix/2] = spu_sel(ctile.ui4[iy/2][ix/2], uicolors, mask);
+      spu.ctile.ui4[iy/2][ix/2] = spu_sel(spu.ctile.ui4[iy/2][ix/2], uicolors, mask);
 #endif
    }
 
@@ -846,21 +846,21 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 
    /*   init_constant_attribs( setup ); */
       
-   if (cur_tile_status_c == TILE_STATUS_GETTING) {
+   if (spu.cur_ctile_status == TILE_STATUS_GETTING) {
       /* wait for mfc_get() to complete */
       wait_on_mask(1 << TAG_READ_TILE_COLOR);
-      cur_tile_status_c = TILE_STATUS_CLEAN;
+      spu.cur_ctile_status = TILE_STATUS_CLEAN;
    }
 
-   ASSERT(cur_tile_status_c != TILE_STATUS_DEFINED);
+   ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
 
    if (spu.depth_stencil.depth.enabled) {
-      if (cur_tile_status_z == TILE_STATUS_GETTING) {
+      if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
          /* wait for mfc_get() to complete */
          wait_on_mask(1 << TAG_READ_TILE_Z);
-         cur_tile_status_z = TILE_STATUS_CLEAN;
+         spu.cur_ztile_status = TILE_STATUS_CLEAN;
       }
-   ASSERT(cur_tile_status_z != TILE_STATUS_DEFINED);
+      ASSERT(spu.cur_ztile_status != TILE_STATUS_DEFINED);
    }
 
 

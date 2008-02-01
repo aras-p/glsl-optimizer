@@ -28,16 +28,7 @@
 
 
 #include "spu_tile.h"
-
-
-
-tile_t ctile ALIGN16_ATTRIB;
-tile_t ztile ALIGN16_ATTRIB;
-
-ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-
-ubyte cur_tile_status_c, cur_tile_status_z;
+#include "spu_main.h"
 
 
 void
