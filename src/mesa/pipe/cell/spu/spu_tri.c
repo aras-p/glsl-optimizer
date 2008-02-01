@@ -277,6 +277,9 @@ do_depth_test(int x, int y, mask_t quadmask)
 
 /**
  * Emit a quad (pass to next stage).  No clipping is done.
+ * Note: about 1/5 to 1/7 of the time, mask is zero and this function
+ * should be skipped.  But adding the test for that slows things down
+ * overall.
  */
 static INLINE void
 emit_quad( int x, int y, mask_t mask )
