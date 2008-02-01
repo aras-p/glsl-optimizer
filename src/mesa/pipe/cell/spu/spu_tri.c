@@ -316,24 +316,6 @@ emit_quad( int x, int y, mask_t mask )
    setup.quad.mask = mask;
    sp->quad.first->run(sp->quad.first, &setup.quad);
 #else
-   /* Cell: "write" quad fragments to the tile by setting prim color */
-   const int ix = x - setup.cliprect_minx;
-   const int iy = y - setup.cliprect_miny;
-   uint colors[4];  /* indexed by QUAD_x */
-
-   if (spu.texture.start) {
-      float4 texcoords[4];
-      uint i;
-      eval_coeff(2, (float) x, (float) y, texcoords);
-      for (i = 0; i < 4; i++) {
-         colors[i] = sample_texture(texcoords[i]);
-      }
-   }
-   else {
-      float4 fcolors[4];
-      eval_coeff(1, (float) x, (float) y, fcolors);
-      pack_colors(colors, fcolors);
-   }
 
    if (spu.depth_stencil.depth.enabled) {
       mask = do_depth_test(x, y, mask);
@@ -341,6 +323,23 @@ emit_quad( int x, int y, mask_t mask )
 
    /* If any bits in mask are set... */
    if (spu_extract(spu_orx(mask), 0)) {
+      const int ix = x - setup.cliprect_minx;
+      const int iy = y - setup.cliprect_miny;
+      uint colors[4];  /* indexed by QUAD_x */
+
+      if (spu.texture.start) {
+         float4 texcoords[4];
+         uint i;
+         eval_coeff(2, (float) x, (float) y, texcoords);
+         for (i = 0; i < 4; i++) {
+            colors[i] = sample_texture(texcoords[i]);
+         }
+      }
+      else {
+         float4 fcolors[4];
+         eval_coeff(1, (float) x, (float) y, fcolors);
+         pack_colors(colors, fcolors);
+      }
 
       if (cur_tile_status_c == TILE_STATUS_CLEAR) {
          /* now, _really_ clear the tile */
@@ -348,6 +347,7 @@ emit_quad( int x, int y, mask_t mask )
       }
       cur_tile_status_c = TILE_STATUS_DIRTY;
 
+#if 1
       if (spu_extract(mask, 0))
          ctile.ui[iy][ix] = colors[QUAD_TOP_LEFT];
       if (spu_extract(mask, 1))
@@ -356,11 +356,10 @@ emit_quad( int x, int y, mask_t mask )
          ctile.ui[iy+1][ix] = colors[QUAD_BOTTOM_LEFT];
       if (spu_extract(mask, 3))
          ctile.ui[iy+1][ix+1] = colors[QUAD_BOTTOM_RIGHT];
-
-#if 0
+#else
       /* SIMD_Z with swizzled color buffer (someday) */
-      vector float icolors = *((vector float *) &colors);
-      ctile.f4[iy/2][ix/2].v = spu_sel(ctile.f4[iy/2][ix/2].v, icolors, mask);
+      vector unsigned int uicolors = *((vector unsigned int *) &colors);
+      ctile.ui4[iy/2][ix/2] = spu_sel(ctile.ui4[iy/2][ix/2], uicolors, mask);
 #endif
    }
 
