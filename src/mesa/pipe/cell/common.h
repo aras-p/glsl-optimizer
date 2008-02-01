@@ -105,7 +105,7 @@ struct cell_command_framebuffer
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
-} ALIGN16_ATTRIB;
+};
 
 
 /**
@@ -116,7 +116,7 @@ struct cell_command_clear_surface
    uint opcode;
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
-} ALIGN16_ATTRIB;
+};
 
 
 /**
@@ -173,7 +173,7 @@ struct cell_command_render
    uint dummy3;
    uint min_index;
    boolean inline_verts;
-} ALIGN16_ATTRIB;
+};
 
 
 struct cell_command_release_verts
@@ -191,11 +191,14 @@ struct cell_command_texture
 
 
 /** XXX unions don't seem to work */
+/* XXX this should go away; all commands should be placed in batch buffers */
 struct cell_command
 {
+#if 0
    struct cell_command_framebuffer fb;
    struct cell_command_clear_surface clear;
    struct cell_command_render render;
+#endif
    struct cell_command_vs vs;
 } ALIGN16_ATTRIB;
 
