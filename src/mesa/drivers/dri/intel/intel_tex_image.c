@@ -308,7 +308,7 @@ intelTexImage(GLcontext * ctx,
    GLint postConvWidth = width;
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
-   GLuint dstRowStride;
+   GLuint dstRowStride, srcRowStride = texImage->RowStride;
 
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
@@ -497,10 +497,10 @@ intelTexImage(GLcontext * ctx,
 	   struct intel_region *dst = intelImage->mt->region;
 	   _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
 		   0, 0,
-		   intelImage->mt->level[intelImage->level].width,
-		   intelImage->mt->level[intelImage->level].height/4,
+		   intelImage->mt->level[level].width,
+		   intelImage->mt->level[level].height/4,
 		   pixels,
-		   intelImage->base.RowStride,
+		   srcRowStride,
 		   0, 0);
        } else
 	    memcpy(texImage->Data, pixels, imageSize);
