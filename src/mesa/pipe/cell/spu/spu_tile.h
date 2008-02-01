@@ -42,7 +42,8 @@
 typedef union {
    ushort t16[TILE_SIZE][TILE_SIZE];
    uint   t32[TILE_SIZE][TILE_SIZE];
-   float4 f4[TILE_SIZE/2][TILE_SIZE/2];
+   vector unsigned short us8[TILE_SIZE/2][TILE_SIZE/4];
+   vector unsigned int ui4[TILE_SIZE/2][TILE_SIZE/2];
 } tile_t;
 
 
