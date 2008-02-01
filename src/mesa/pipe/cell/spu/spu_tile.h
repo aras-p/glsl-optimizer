@@ -40,8 +40,8 @@
 
 
 typedef union {
-   ushort t16[TILE_SIZE][TILE_SIZE];
-   uint   t32[TILE_SIZE][TILE_SIZE];
+   ushort us[TILE_SIZE][TILE_SIZE];
+   uint   ui[TILE_SIZE][TILE_SIZE];
    vector unsigned short us8[TILE_SIZE/2][TILE_SIZE/4];
    vector unsigned int ui4[TILE_SIZE/2][TILE_SIZE/2];
 } tile_t;
@@ -74,7 +74,7 @@ put_tile(uint tx, uint ty, const tile_t *tile, int tag, int zBuf);
 static INLINE void
 clear_c_tile(tile_t *ctile)
 {
-   memset32((uint*) ctile->t32,
+   memset32((uint*) ctile->ui,
             spu.fb.color_clear_value,
             TILE_SIZE * TILE_SIZE);
 }
@@ -84,23 +84,15 @@ static INLINE void
 clear_z_tile(tile_t *ztile)
 {
    if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-      memset16((ushort*) ztile->t16,
+      memset16((ushort*) ztile->us,
                spu.fb.depth_clear_value,
                TILE_SIZE * TILE_SIZE);
    }
    else {
       ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
-#if SIMD_Z
-      union fi z;
-      z.f = 1.0;
-      memset32((uint*) ztile->t32,
-               z.i,/*spu.fb.depth_clear_value,*/
-               TILE_SIZE * TILE_SIZE);
-#else
-      memset32((uint*) ztile->t32,
+      memset32((uint*) ztile->ui,
                spu.fb.depth_clear_value,
                TILE_SIZE * TILE_SIZE);
-#endif
    }
 }
 
