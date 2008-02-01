@@ -464,7 +464,7 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
    }
    
    idx = _mesa_add_unnamed_constant( paramList, values, 4, &swizzle );
-   /* XXX what about swizzle? */
+   assert(swizzle == SWIZZLE_NOOP); /* Need to handle swizzle in reg setup */
    return src_reg(PROGRAM_STATE_VAR, idx);
 }
 

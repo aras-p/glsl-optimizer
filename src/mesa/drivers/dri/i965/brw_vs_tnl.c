@@ -404,7 +404,7 @@ static struct ureg register_const4f( struct tnl_program *p,
    values[3] = s3;
    idx = _mesa_add_unnamed_constant( p->program->Base.Parameters, values, 4,
                                      &swizzle);
-   /* XXX what about swizzle? */
+   assert(swizzle == SWIZZLE_NOOP); /* Need to handle swizzle in reg setup */
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
