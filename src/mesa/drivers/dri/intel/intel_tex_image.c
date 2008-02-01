@@ -493,7 +493,17 @@ intelTexImage(GLcontext * ctx,
     * conversion and copy:
     */
    if (compressed) {
-     memcpy(texImage->Data, pixels, imageSize);
+       if (intelImage->mt) {
+	   struct intel_region *dst = intelImage->mt->region;
+	   _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
+		   0, 0,
+		   intelImage->mt->level[intelImage->level].width,
+		   intelImage->mt->level[intelImage->level].height/4,
+		   pixels,
+		   intelImage->base.RowStride,
+		   0, 0);
+       } else
+	    memcpy(texImage->Data, pixels, imageSize);
    } else if (!texImage->TexFormat->StoreImage(ctx, dims, 
 					       texImage->_BaseFormat, 
 					       texImage->TexFormat, 

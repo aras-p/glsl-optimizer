@@ -130,7 +130,7 @@ intel_region_release(struct intel_region **region)
 /*
  * XXX Move this into core Mesa?
  */
-static void
+void
 _mesa_copy_rect(GLubyte * dst,
                 GLuint cpp,
                 GLuint dst_pitch,

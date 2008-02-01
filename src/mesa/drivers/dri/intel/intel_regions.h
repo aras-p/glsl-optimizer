@@ -122,4 +122,14 @@ dri_bo *intel_region_buffer(struct intel_context *intel,
 			    struct intel_region *region,
 			    GLuint flag);
 
+void _mesa_copy_rect(GLubyte * dst,
+                GLuint cpp,
+                GLuint dst_pitch,
+                GLuint dst_x,
+                GLuint dst_y,
+                GLuint width,
+                GLuint height,
+                const GLubyte * src,
+                GLuint src_pitch, GLuint src_x, GLuint src_y);
+
 #endif
