@@ -8,6 +8,8 @@ TOP = ../../../../..
 include $(TOP)/configs/linux-cell
 
 
+OPT_FLAGS=-g
+OPT_FLAGS=-O3
 PROG = g3d
 
 PROG_SPU = $(PROG)_spu

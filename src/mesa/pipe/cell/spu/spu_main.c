@@ -31,6 +31,7 @@
 
 #include <stdio.h>
 #include <libmisc.h>
+#include <vec_literal.h>
 
 #include "spu_main.h"
 #include "spu_render.h"
@@ -217,6 +218,17 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       spu.fb.zsize = 2;
    else
       spu.fb.zsize = 0;
+
+   if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
+      spu.color_shuffle = VEC_LITERAL(vector unsigned char,
+                                      12, 0, 4, 8, 0, 0, 0, 0, 
+                                      0, 0, 0, 0, 0, 0, 0, 0);
+   else if (spu.fb.color_format == PIPE_FORMAT_B8G8R8A8_UNORM)
+      spu.color_shuffle = VEC_LITERAL(vector unsigned char,
+                                      8, 4, 0, 12, 0, 0, 0, 0, 
+                                      0, 0, 0, 0, 0, 0, 0, 0);
+   else
+      ASSERT(0);
 }
 
 
