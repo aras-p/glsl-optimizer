@@ -29,11 +29,10 @@
  * Triangle rendering within a tile.
  */
 
-#include <pack_rgba8.h>
-
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
+#include "spu_colorpack.h"
 #include "spu_main.h"
 #include "spu_texture.h"
 #include "spu_tile.h"
@@ -253,21 +252,18 @@ eval_z(float x, float y)
 static INLINE void
 pack_colors(uint uicolors[4], const float4 fcolors[4])
 {
-   /* XXX grab the code for _pack_rgba8() and use the shuffle
-    * command to do the swizzling seen here.
-    */
    switch (spu.fb.color_format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
-      uicolors[0] = _pack_rgba8(fcolors[0].f[3], fcolors[0].f[0], fcolors[0].f[1], fcolors[0].f[2]);
-      uicolors[1] = _pack_rgba8(fcolors[1].f[3], fcolors[1].f[0], fcolors[1].f[1], fcolors[1].f[2]);
-      uicolors[2] = _pack_rgba8(fcolors[2].f[3], fcolors[2].f[0], fcolors[2].f[1], fcolors[2].f[2]);
-      uicolors[3] = _pack_rgba8(fcolors[3].f[3], fcolors[0].f[0], fcolors[3].f[1], fcolors[3].f[2]);
+      uicolors[0] = spu_pack_A8R8G8B8(fcolors[0].v);
+      uicolors[1] = spu_pack_A8R8G8B8(fcolors[1].v);
+      uicolors[2] = spu_pack_A8R8G8B8(fcolors[2].v);
+      uicolors[3] = spu_pack_A8R8G8B8(fcolors[3].v);
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
-      uicolors[0] = _pack_rgba8(fcolors[0].f[2], fcolors[0].f[1], fcolors[0].f[0], fcolors[0].f[3]);
-      uicolors[1] = _pack_rgba8(fcolors[1].f[2], fcolors[1].f[1], fcolors[1].f[0], fcolors[1].f[3]);
-      uicolors[2] = _pack_rgba8(fcolors[2].f[2], fcolors[2].f[1], fcolors[2].f[0], fcolors[2].f[3]);
-      uicolors[3] = _pack_rgba8(fcolors[3].f[2], fcolors[3].f[1], fcolors[3].f[0], fcolors[3].f[3]);
+      uicolors[0] = spu_pack_B8G8R8A8(fcolors[0].v);
+      uicolors[1] = spu_pack_B8G8R8A8(fcolors[1].v);
+      uicolors[2] = spu_pack_B8G8R8A8(fcolors[2].v);
+      uicolors[3] = spu_pack_B8G8R8A8(fcolors[3].v);
       break;
    default:
       ASSERT(0);
