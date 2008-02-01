@@ -92,24 +92,24 @@ really_clear_tiles(uint surfaceIndex)
    uint i;
 
    if (surfaceIndex == 0) {
-      clear_c_tile(&ctile);
+      clear_c_tile(&spu.ctile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
          uint ty = i / spu.fb.width_tiles;
-         if (tile_status[ty][tx] == TILE_STATUS_CLEAR) {
-            put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 0);
+         if (spu.ctile_status[ty][tx] == TILE_STATUS_CLEAR) {
+            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
          }
       }
    }
    else {
-      clear_z_tile(&ztile);
+      clear_z_tile(&spu.ztile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
          uint ty = i / spu.fb.width_tiles;
-         if (tile_status_z[ty][tx] == TILE_STATUS_CLEAR)
-            put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 1);
+         if (spu.ztile_status[ty][tx] == TILE_STATUS_CLEAR)
+            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 1);
       }
    }
 
@@ -133,11 +133,11 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 #if CLEAR_OPT
    /* set all tile's status to CLEAR */
    if (clear->surface == 0) {
-      memset(tile_status, TILE_STATUS_CLEAR, sizeof(tile_status));
+      memset(spu.ctile_status, TILE_STATUS_CLEAR, sizeof(spu.ctile_status));
       spu.fb.color_clear_value = clear->value;
    }
    else {
-      memset(tile_status_z, TILE_STATUS_CLEAR, sizeof(tile_status_z));
+      memset(spu.ztile_status, TILE_STATUS_CLEAR, sizeof(spu.ztile_status));
       spu.fb.depth_clear_value = clear->value;
    }
    return;
@@ -145,11 +145,11 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
    if (clear->surface == 0) {
       spu.fb.color_clear_value = clear->value;
-      clear_c_tile(&ctile);
+      clear_c_tile(&spu.ctile);
    }
    else {
       spu.fb.depth_clear_value = clear->value;
-      clear_z_tile(&ztile);
+      clear_z_tile(&spu.ztile);
    }
 
    /*
@@ -161,9 +161,9 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
       uint tx = i % spu.fb.width_tiles;
       uint ty = i / spu.fb.width_tiles;
       if (clear->surface == 0)
-         put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 0);
+         put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
       else
-         put_tile(tx, ty, &ztile, TAG_SURFACE_CLEAR, 1);
+         put_tile(tx, ty, &spu.ztile, TAG_SURFACE_CLEAR, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
    }
 
@@ -478,8 +478,8 @@ main_loop(void)
 static void
 one_time_init(void)
 {
-   memset(tile_status, TILE_STATUS_DEFINED, sizeof(tile_status));
-   memset(tile_status_z, TILE_STATUS_DEFINED, sizeof(tile_status_z));
+   memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
+   memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
    invalidate_tex_cache();
 }
 

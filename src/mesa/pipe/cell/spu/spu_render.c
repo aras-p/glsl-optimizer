@@ -95,15 +95,15 @@ static INLINE void
 get_cz_tiles(uint tx, uint ty)
 {
    if (spu.depth_stencil.depth.enabled) {
-      if (cur_tile_status_z != TILE_STATUS_CLEAR) {
-         get_tile(tx, ty, &ztile, TAG_READ_TILE_Z, 1);
-         cur_tile_status_z = TILE_STATUS_GETTING;
+      if (spu.cur_ztile_status != TILE_STATUS_CLEAR) {
+         get_tile(tx, ty, &spu.ztile, TAG_READ_TILE_Z, 1);
+         spu.cur_ztile_status = TILE_STATUS_GETTING;
       }
    }
 
-   if (cur_tile_status_c != TILE_STATUS_CLEAR) {
-      get_tile(tx, ty, &ctile, TAG_READ_TILE_COLOR, 0);
-      cur_tile_status_c = TILE_STATUS_GETTING;
+   if (spu.cur_ctile_status != TILE_STATUS_CLEAR) {
+      get_tile(tx, ty, &spu.ctile, TAG_READ_TILE_COLOR, 0);
+      spu.cur_ctile_status = TILE_STATUS_GETTING;
    }
 }
 
@@ -114,24 +114,24 @@ get_cz_tiles(uint tx, uint ty)
 static INLINE void
 put_cz_tiles(uint tx, uint ty)
 {
-   if (cur_tile_status_z == TILE_STATUS_DIRTY) {
+   if (spu.cur_ztile_status == TILE_STATUS_DIRTY) {
       /* tile was modified and needs to be written back */
-      put_tile(tx, ty, &ztile, TAG_WRITE_TILE_Z, 1);
-      cur_tile_status_z = TILE_STATUS_DEFINED;
+      put_tile(tx, ty, &spu.ztile, TAG_WRITE_TILE_Z, 1);
+      spu.cur_ztile_status = TILE_STATUS_DEFINED;
    }
-   else if (cur_tile_status_z == TILE_STATUS_GETTING) {
+   else if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
       /* tile was never used */
-      cur_tile_status_z = TILE_STATUS_DEFINED;
+      spu.cur_ztile_status = TILE_STATUS_DEFINED;
    }
 
-   if (cur_tile_status_c == TILE_STATUS_DIRTY) {
+   if (spu.cur_ctile_status == TILE_STATUS_DIRTY) {
       /* tile was modified and needs to be written back */
-      put_tile(tx, ty, &ctile, TAG_WRITE_TILE_COLOR, 0);
-      cur_tile_status_c = TILE_STATUS_DEFINED;
+      put_tile(tx, ty, &spu.ctile, TAG_WRITE_TILE_COLOR, 0);
+      spu.cur_ctile_status = TILE_STATUS_DEFINED;
    }
-   else if (cur_tile_status_c == TILE_STATUS_GETTING) {
+   else if (spu.cur_ctile_status == TILE_STATUS_GETTING) {
       /* tile was never used */
-      cur_tile_status_c = TILE_STATUS_DEFINED;
+      spu.cur_ctile_status = TILE_STATUS_DEFINED;
    }
 }
 
@@ -250,8 +250,8 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
       if (!my_tile(tx, ty))
          continue;
 
-      cur_tile_status_c = tile_status[ty][tx];
-      cur_tile_status_z = tile_status_z[ty][tx];
+      spu.cur_ctile_status = spu.ctile_status[ty][tx];
+      spu.cur_ztile_status = spu.ztile_status[ty][tx];
 
       get_cz_tiles(tx, ty);
 
@@ -275,8 +275,8 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
 
       wait_put_cz_tiles(); /* XXX seems unnecessary... */
 
-      tile_status[ty][tx] = cur_tile_status_c;
-      tile_status_z[ty][tx] = cur_tile_status_z;
+      spu.ctile_status[ty][tx] = spu.cur_ctile_status;
+      spu.ztile_status[ty][tx] = spu.cur_ztile_status;
    }
 
    if (Debug)

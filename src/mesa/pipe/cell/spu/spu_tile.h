@@ -35,33 +35,6 @@
 #include "pipe/cell/common.h"
 
 
-#define MAX_WIDTH 1024
-#define MAX_HEIGHT 1024
-
-
-typedef union {
-   ushort us[TILE_SIZE][TILE_SIZE];
-   uint   ui[TILE_SIZE][TILE_SIZE];
-   vector unsigned short us8[TILE_SIZE/2][TILE_SIZE/4];
-   vector unsigned int ui4[TILE_SIZE/2][TILE_SIZE/2];
-} tile_t;
-
-
-extern tile_t ctile ALIGN16_ATTRIB;
-extern tile_t ztile ALIGN16_ATTRIB;
-
-
-#define TILE_STATUS_CLEAR   1
-#define TILE_STATUS_DEFINED 2  /**< defined in FB, but not in local store */
-#define TILE_STATUS_CLEAN   3  /**< in local store, but not changed */
-#define TILE_STATUS_DIRTY   4  /**< modified locally, but not put back yet */
-#define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
-
-extern ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
-
-extern ubyte cur_tile_status_c, cur_tile_status_z;
-
 
 void
 get_tile(uint tx, uint ty, tile_t *tile, int tag, int zBuf);
