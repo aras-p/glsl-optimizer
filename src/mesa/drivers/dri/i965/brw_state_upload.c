@@ -207,6 +207,8 @@ void brw_validate_state( struct brw_context *brw )
    if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
       brw_clear_batch_cache_flush(brw);
 
+   brw->intel.Fallback = 0;
+
    if (INTEL_DEBUG) {
       /* Debug version which enforces various sanity checks on the
        * state flags which are generated and checked to help ensure
@@ -224,6 +226,9 @@ void brw_validate_state( struct brw_context *brw )
 		atom->dirty.brw ||
 		atom->dirty.cache);
 	 assert(atom->update);
+
+    if (brw->intel.Fallback)
+       break;
 
 	 if (check_state(state, &atom->dirty)) {
 	    atom->update( brw );
@@ -246,10 +251,14 @@ void brw_validate_state( struct brw_context *brw )
       for (i = 0; i < Elements(atoms); i++) {	 
 	 const struct brw_tracked_state *atom = brw->state.atoms[i];
 
-	 if (check_state(state, &atom->dirty))
+    if (brw->intel.Fallback)
+       break;
+	 
+    if (check_state(state, &atom->dirty))
 	    atom->update( brw );
       }
    }
 
-   memset(state, 0, sizeof(*state));
+   if (!brw->intel.Fallback)
+      memset(state, 0, sizeof(*state));
 }
