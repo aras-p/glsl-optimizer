@@ -30,7 +30,7 @@
 #define SPU_TRI_H
 
 
-extern void
+extern boolean
 tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty);
 
 

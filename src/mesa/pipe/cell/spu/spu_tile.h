@@ -51,11 +51,15 @@ extern tile_t ztile ALIGN16_ATTRIB;
 
 
 #define TILE_STATUS_CLEAR   1
-#define TILE_STATUS_DEFINED 2  /**< defined pixel data */
-#define TILE_STATUS_DIRTY   3  /**< modified, but not put back yet */
+#define TILE_STATUS_DEFINED 2  /**< defined in FB, but not in local store */
+#define TILE_STATUS_CLEAN   3  /**< in local store, but not changed */
+#define TILE_STATUS_DIRTY   4  /**< modified locally, but not put back yet */
+#define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
 
 extern ubyte tile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
 extern ubyte tile_status_z[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+
+extern ubyte cur_tile_status_c, cur_tile_status_z;
 
 
 void
