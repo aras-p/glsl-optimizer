@@ -70,6 +70,7 @@
 #include "pipe/tgsi/util/tgsi_util.h"
 #include "spu_exec.h"
 #include "spu_main.h"
+#include "spu_vertex_shader.h"
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
@@ -144,23 +145,27 @@ spu_exec_machine_init(struct spu_exec_machine *mach,
                       struct spu_sampler *samplers,
                       unsigned processor)
 {
+   qword zero;
+   qword not_zero;
    uint i;
 
    mach->Samplers = samplers;
    mach->Processor = processor;
    mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
 
+   zero = si_xor(zero, zero);
+   not_zero = si_xori(zero, 0xff);
+
    /* Setup constants. */
-   for( i = 0; i < 4; i++ ) {
-      mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].u[i] = 0x00000000;
-      mach->Temps[TEMP_7F_I].xyzw[TEMP_7F_C].u[i] = 0x7FFFFFFF;
-      mach->Temps[TEMP_80_I].xyzw[TEMP_80_C].u[i] = 0x80000000;
-      mach->Temps[TEMP_FF_I].xyzw[TEMP_FF_C].u[i] = 0xFFFFFFFF;
-      mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].f[i] = 1.0f;
-      mach->Temps[TEMP_2_I].xyzw[TEMP_2_C].f[i] = 2.0f;
-      mach->Temps[TEMP_128_I].xyzw[TEMP_128_C].f[i] = 128.0f;
-      mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].f[i] = -128.0f;
-   }
+   mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q = zero;
+   mach->Temps[TEMP_FF_I].xyzw[TEMP_FF_C].q = not_zero;
+   mach->Temps[TEMP_7F_I].xyzw[TEMP_7F_C].q = si_shli(not_zero, -1);
+   mach->Temps[TEMP_80_I].xyzw[TEMP_80_C].q = si_shli(not_zero, 31);
+
+   mach->Temps[TEMP_1_I].xyzw[TEMP_1_C].q = (qword) spu_splats(1.0f);
+   mach->Temps[TEMP_2_I].xyzw[TEMP_2_C].q = (qword) spu_splats(2.0f);
+   mach->Temps[TEMP_128_I].xyzw[TEMP_128_C].q = (qword) spu_splats(128.0f);
+   mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].q = (qword) spu_splats(-128.0f);
 }
 
 
@@ -459,25 +464,16 @@ fetch_source(
          &index2,
          &indir_index );
 
-      index.i[0] += indir_index.i[0];
-      index.i[1] += indir_index.i[1];
-      index.i[2] += indir_index.i[2];
-      index.i[3] += indir_index.i[3];
+      index.q = si_a(index.q, indir_index.q);
    }
 
    if( reg->SrcRegister.Dimension ) {
       switch( reg->SrcRegister.File ) {
       case TGSI_FILE_INPUT:
-         index.i[0] *= 17;
-         index.i[1] *= 17;
-         index.i[2] *= 17;
-         index.i[3] *= 17;
+         index.q = si_mpyi(index.q, 17);
          break;
       case TGSI_FILE_CONSTANT:
-         index.i[0] *= 4096;
-         index.i[1] *= 4096;
-         index.i[2] *= 4096;
-         index.i[3] *= 4096;
+         index.q = si_shli(index.q, 12);
          break;
       default:
          assert( 0 );
@@ -505,10 +501,7 @@ fetch_source(
             &index2,
             &indir_index );
 
-         index.i[0] += indir_index.i[0];
-         index.i[1] += indir_index.i[1];
-         index.i[2] += indir_index.i[2];
-         index.i[3] += indir_index.i[3];
+         index.q = si_a(index.q, indir_index.q);
       }
    }
 
@@ -666,17 +659,16 @@ fetch_texel( struct spu_sampler *sampler,
              union spu_exec_channel *b,
              union spu_exec_channel *a )
 {
-   uint j;
-   float rgba[NUM_CHANNELS][QUAD_SIZE];
+   qword rgba[4];
+   qword out[4];
 
-   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, rgba);
+   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, (float *) rgba);
 
-   for (j = 0; j < 4; j++) {
-      r->f[j] = rgba[0][j];
-      g->f[j] = rgba[1][j];
-      b->f[j] = rgba[2][j];
-      a->f[j] = rgba[3][j];
-   }
+   spu_transpose_4x4(out, rgba);
+   r->q = out[0];
+   g->q = out[1];
+   b->q = out[2];
+   a->q = out[3];
 }
 
 
