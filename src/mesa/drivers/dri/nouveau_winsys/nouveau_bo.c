@@ -79,37 +79,6 @@ nouveau_mem_alloc(struct nouveau_device *dev, unsigned size, unsigned align,
 	return 0;
 }
 
-static int
-nouveau_bo_realloc_gpu(struct nouveau_bo_priv *nvbo, uint32_t flags, int size)
-{
-	int ret;
-
-	if (nvbo->drm.size && nvbo->drm.size != size) {
-		nouveau_mem_free(nvbo->base.device, &nvbo->drm, &nvbo->map);
-	}
-
-	if (size && !nvbo->drm.size) {
-		if (flags) {
-			nvbo->drm.flags = 0;
-			if (flags & NOUVEAU_BO_VRAM)
-				nvbo->drm.flags |= NOUVEAU_MEM_FB;
-			if (flags & NOUVEAU_BO_GART)
-				nvbo->drm.flags |= (NOUVEAU_MEM_AGP |
-						    NOUVEAU_MEM_PCI);
-			nvbo->drm.flags |= NOUVEAU_MEM_MAPPED;
-		}
-
-		ret = nouveau_mem_alloc(nvbo->base.device, size,
-					nvbo->drm.alignment, nvbo->drm.flags,
-					&nvbo->drm, &nvbo->map);
-		if (ret) {
-			assert(0);
-		}
-	}
-
-	return 0;
-}
-
 static void
 nouveau_bo_tmp_del(void *priv)
 {
@@ -183,26 +152,17 @@ nouveau_bo_new(struct nouveau_device *dev, uint32_t flags, int align,
 	if (!nvbo)
 		return -ENOMEM;
 	nvbo->base.device = dev;
+	nvbo->base.size = size;
+	nvbo->base.handle = bo_to_ptr(nvbo);
 	nvbo->drm.alignment = align;
+	nvbo->refcount = 1;
 
-	if (flags & NOUVEAU_BO_PIN) {
-		ret = nouveau_bo_realloc_gpu(nvbo, flags, size);
-		if (ret) {
-			free(nvbo);
-			return ret;
-		}	
-	} else {
-		nvbo->sysmem = malloc(size);
-		if (!nvbo->sysmem) {
-			free(nvbo);
-			return -ENOMEM;
-		}
+	ret = nouveau_bo_set_status(&nvbo->base, flags);
+	if (ret) {
+		free(nvbo);
+		return ret;
 	}
 
-	nvbo->base.size = size;
-	nvbo->base.offset = nvbo->drm.offset;
-	nvbo->base.handle = bo_to_ptr(nvbo);
-	nvbo->refcount = 1;
 	*bo = &nvbo->base;
 	return 0;
 }
@@ -261,8 +221,7 @@ nouveau_bo_del(struct nouveau_bo **bo)
 
 	if (nvbo->fence)
 		nouveau_fence_wait(&nvbo->fence);
-
-	nouveau_bo_realloc_gpu(nvbo, 0, 0);
+	nouveau_mem_free(nvbo->base.device, &nvbo->drm, &nvbo->map);
 	if (nvbo->sysmem && !nvbo->user)
 		free(nvbo->sysmem);
 	free(nvbo);
@@ -303,6 +262,66 @@ nouveau_bo_upload(struct nouveau_bo_priv *nvbo)
 	return 0;
 }
 
+int
+nouveau_bo_set_status(struct nouveau_bo *bo, uint32_t flags)
+{
+	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	struct drm_nouveau_mem_alloc new;
+	void *new_map = NULL, *new_sysmem = NULL;
+	unsigned new_flags = 0, ret;
+
+	assert(!bo->map);
+
+	/* Check current memtype vs requested, if they match do nothing */
+	if ((nvbo->drm.flags & NOUVEAU_MEM_FB) && (flags & NOUVEAU_BO_VRAM))
+		return 0;
+	if ((nvbo->drm.flags & NOUVEAU_MEM_AGP) && (flags & NOUVEAU_BO_GART))
+		return 0;
+	if (nvbo->drm.size == 0 && nvbo->sysmem && (flags & NOUVEAU_BO_LOCAL))
+		return 0;
+
+	memset(&new, 0x00, sizeof(new));
+
+	/* Allocate new memory */
+	if (flags & NOUVEAU_BO_VRAM)
+		new_flags |= NOUVEAU_MEM_FB;
+	else
+	if (flags & NOUVEAU_BO_GART)
+		new_flags |= (NOUVEAU_MEM_AGP | NOUVEAU_MEM_PCI);
+
+	if (new_flags) {
+		ret = nouveau_mem_alloc(bo->device, bo->size,
+					nvbo->drm.alignment, new_flags,
+					&new, &new_map);
+		if (ret)
+			return ret;
+	} else {
+		new_sysmem = malloc(bo->size);
+	}
+
+	/* Copy old -> new */
+	/*XXX: use M2MF */
+	if (nvbo->sysmem || nvbo->map) {
+		nouveau_bo_map(bo, NOUVEAU_BO_RD);
+		memcpy(new_map, bo->map, bo->size);
+		nouveau_bo_unmap(bo);
+	}
+
+	/* Free old memory */
+	if (nvbo->fence)
+		nouveau_fence_wait(&nvbo->fence);
+	nouveau_mem_free(bo->device, &nvbo->drm, &nvbo->map);
+	if (nvbo->sysmem)
+		free(nvbo->sysmem);
+
+	nvbo->drm = new;
+	nvbo->map = new_map;
+	nvbo->sysmem = new_sysmem;
+	bo->flags = flags;
+	bo->offset = nvbo->drm.offset;
+	return 0;
+}
+
 static int
 nouveau_bo_validate_user(struct nouveau_channel *chan, struct nouveau_bo *bo,
 			 struct nouveau_fence *fence, uint32_t flags)
@@ -335,18 +354,14 @@ nouveau_bo_validate_bo(struct nouveau_channel *chan, struct nouveau_bo *bo,
 		       struct nouveau_fence *fence, uint32_t flags)
 {
 	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	int ret;
 
-	if (!nvbo->drm.size) {
-		nouveau_bo_realloc_gpu(nvbo, flags, nvbo->base.size);
+	ret = nouveau_bo_set_status(bo, flags);
+	if (ret)
+		return ret;
+
+	if (nvbo->user)
 		nouveau_bo_upload(nvbo);
-		if (!nvbo->user) {
-			free(nvbo->sysmem);
-			nvbo->sysmem = NULL;
-		}
-	} else
-	if (nvbo->user) {
-		nouveau_bo_upload(nvbo);
-	}
 
 	nvbo->offset = nvbo->drm.offset;
 	if (nvbo->drm.flags & (NOUVEAU_MEM_AGP | NOUVEAU_MEM_PCI))

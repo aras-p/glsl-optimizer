@@ -274,6 +274,9 @@ nouveau_bo_user(struct nouveau_device *, void *ptr, int size,
 extern int
 nouveau_bo_ref(struct nouveau_device *, uint64_t handle, struct nouveau_bo **);
 
+extern int
+nouveau_bo_set_status(struct nouveau_bo *, uint32_t flags);
+
 extern void
 nouveau_bo_del(struct nouveau_bo **);
 
