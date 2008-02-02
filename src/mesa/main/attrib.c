@@ -1399,8 +1399,10 @@ _mesa_PopClientAttrib(void)
             adjust_buffer_object_ref_counts(&ctx->Array, -1);
 	 
             ctx->Array.ActiveTexture = data->ActiveTexture;
-	    ctx->Array.LockFirst = data->LockFirst;
-	    ctx->Array.LockCount = data->LockCount;
+	    if (data->LockCount != 0)
+	       _mesa_LockArraysEXT(data->LockFirst, data->LockCount);
+	    else
+	       _mesa_UnlockArraysEXT();
 
 	    _mesa_BindVertexArrayAPPLE( data->ArrayObj->Name );
 	    

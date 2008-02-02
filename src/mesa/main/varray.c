@@ -809,15 +809,21 @@ _mesa_LockArraysEXT(GLint first, GLsizei count)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glLockArrays %d %d\n", first, count);
 
-   if (first == 0 && count > 0 &&
-       count <= (GLint) ctx->Const.MaxArrayLockSize) {
-      ctx->Array.LockFirst = first;
-      ctx->Array.LockCount = count;
+   if (first < 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glLockArraysEXT(first)" );
+      return;
    }
-   else {
-      ctx->Array.LockFirst = 0;
-      ctx->Array.LockCount = 0;
+   if (count <= 0) {
+      _mesa_error( ctx, GL_INVALID_VALUE, "glLockArraysEXT(count)" );
+      return;
    }
+   if (ctx->Array.LockCount != 0) {
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glLockArraysEXT(reentry)" );
+      return;
+   }
+
+   ctx->Array.LockFirst = first;
+   ctx->Array.LockCount = count;
 
    ctx->NewState |= _NEW_ARRAY;
    ctx->Array.NewState |= _NEW_ARRAY_ALL;
@@ -835,6 +841,11 @@ _mesa_UnlockArraysEXT( void )
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glUnlockArrays\n");
+
+   if (ctx->Array.LockCount == 0) {
+      _mesa_error( ctx, GL_INVALID_OPERATION, "glUnlockArraysEXT(reexit)" );
+      return;
+   }
 
    ctx->Array.LockFirst = 0;
    ctx->Array.LockCount = 0;
