@@ -6,7 +6,7 @@
 
 struct spu_vs_context;
 
-typedef void (*spu_fetch_func)(const void *ptr, float *attrib);
+typedef qword (*spu_fetch_func)(const void *ptr);
 typedef void (*spu_full_fetch_func)( struct spu_vs_context *draw,
 				     struct spu_exec_machine *machine,
 				     const unsigned *elts,
@@ -38,6 +38,8 @@ struct spu_vs_context {
 };
 
 extern void spu_update_vertex_fetch(struct spu_vs_context *draw);
+
+extern void spu_transpose_4x4(qword *out, const qword *in);
 
 static INLINE void spu_vertex_fetch(struct spu_vs_context *draw,
 				    struct spu_exec_machine *machine,

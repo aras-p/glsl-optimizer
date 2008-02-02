@@ -42,6 +42,8 @@
 #define DRAW_DBG 0
 
 
+static const vec_float4 defaults = { 0.0, 0.0, 0.0, 1.0 };
+
 /**
  * Fetch a float[4] vertex attribute from memory, doing format/type
  * conversion as needed.
@@ -50,19 +52,16 @@
  * conversion, texture sampling etc.
  */
 #define FETCH_ATTRIB( NAME, SZ, CVT )			\
-static void						\
-fetch_##NAME(const void *ptr, float *attrib)		\
+static qword						\
+fetch_##NAME(const void *ptr)				\
 {							\
-   static const float defaults[4] = { 0,0,0,1 };	\
+   vec_float4 attrib = defaults;			\
    int i;						\
 							\
    for (i = 0; i < SZ; i++) {				\
-      attrib[i] = CVT;					\
+      attrib = spu_insert(CVT, attrib, i);		\
    }							\
-							\
-   for (; i < 4; i++) {					\
-      attrib[i] = defaults[i];				\
-   }							\
+   return (qword) attrib;				\
 }
 
 #define CVT_64_FLOAT   (float) ((double *) ptr)[i]
@@ -309,106 +308,59 @@ static spu_fetch_func get_fetch_func( enum pipe_format format )
 }
 
 
-static void 
-transpose_4x4( float *out, const float *in )
+void
+spu_transpose_4x4(qword *out, const qword *in)
 {
-   /* This can be achieved in 12 sse instructions, plus the final
-    * stores I guess.  This is probably a bit more than that - maybe
-    * 32 or so?
-    */
-   out[0] = in[0];  out[1] = in[4];  out[2] = in[8];   out[3] = in[12];
-   out[4] = in[1];  out[5] = in[5];  out[6] = in[9];   out[7] = in[13];
-   out[8] = in[2];  out[9] = in[6];  out[10] = in[10]; out[11] = in[14];
-   out[12] = in[3]; out[13] = in[7]; out[14] = in[11]; out[15] = in[15];
+   static const qword masks[8] = {
+      {
+         0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+      },
+      {
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+         0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
+      },
+
+      { 
+         0x04, 0x05, 0x06, 0x07, 0x14, 0x15, 0x16, 0x17,
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+      },
+      { 
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+         0x04, 0x05, 0x06, 0x07, 0x14, 0x15, 0x16, 0x17,
+      },
+
+      { 
+         0x08, 0x09, 0x0a, 0x0b, 0x18, 0x19, 0x1a, 0x1b,
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+      },
+      { 
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+         0x08, 0x09, 0x0a, 0x0b, 0x18, 0x19, 0x1a, 0x1b,
+      },
+
+      { 
+         0x0c, 0x0d, 0x0e, 0x0f, 0x1c, 0x1d, 0x1e, 0x1f,
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+      },
+      {
+         0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+         0x0c, 0x0d, 0x0e, 0x0f, 0x1c, 0x1d, 0x1e, 0x1f,
+      },
+   };
+
+   out[0] = si_shufb(in[0], in[1], masks[0]);
+   out[0] = si_or(out[0], si_shufb(in[2], in[3], masks[1]));
+
+   out[1] = si_shufb(in[0], in[1], masks[2]);
+   out[1] = si_or(out[1], si_shufb(in[2], in[3], masks[3]));
+
+   out[2] = si_shufb(in[0], in[1], masks[4]);
+   out[2] = si_or(out[2], si_shufb(in[2], in[3], masks[5]));
+
+   out[3] = si_shufb(in[0], in[1], masks[6]);
+   out[3] = si_or(out[3], si_shufb(in[2], in[3], masks[7]));
 }
-
-
-
-static void fetch_xyz_rgb( struct spu_vs_context *draw,
-			   struct spu_exec_machine *machine,
-			   const unsigned *elts,
-			   unsigned count )
-{
-   assert(count <= 4);
-
-//   _mesa_printf("%s\n", __FUNCTION__);
-
-   /* loop over vertex attributes (vertex shader inputs)
-    */
-
-   const unsigned *pitch   = draw->vertex_fetch.pitch;
-   const ubyte **src       = draw->vertex_fetch.src_ptr;
-   int i;
-
-   for (i = 0; i < 4; i++) {
-      {
-	 const float *in = (const float *)(src[0] + elts[i] * pitch[0]);
-	 float *out = &machine->Inputs[0].xyzw[0].f[i];
-	 out[0] = in[0];
-	 out[4] = in[1];
-	 out[8] = in[2];
- 	 out[12] = 1.0f;
-      }
-
-      {
-	 const float *in = (const float *)(src[1] + elts[i] * pitch[1]);
-	 float *out = &machine->Inputs[1].xyzw[0].f[i];
-	 out[0] = in[0];
-	 out[4] = in[1];
-	 out[8] = in[2];
- 	 out[12] = 1.0f;
-      }
-   }
-}
-
-
-
-
-static void fetch_xyz_rgb_st( struct spu_vs_context *draw,
-			      struct spu_exec_machine *machine,
-			      const unsigned *elts,
-			      unsigned count )
-{
-   assert(count <= 4);
-
-   /* loop over vertex attributes (vertex shader inputs)
-    */
-
-   const unsigned *pitch   = draw->vertex_fetch.pitch;
-   const ubyte **src       = draw->vertex_fetch.src_ptr;
-   int i;
-
-   for (i = 0; i < 4; i++) {
-      {
-	 const float *in = (const float *)(src[0] + elts[i] * pitch[0]);
-	 float *out = &machine->Inputs[0].xyzw[0].f[i];
-	 out[0] = in[0];
-	 out[4] = in[1];
-	 out[8] = in[2];
- 	 out[12] = 1.0f;
-      }
-
-      {
-	 const float *in = (const float *)(src[1] + elts[i] * pitch[1]);
-	 float *out = &machine->Inputs[1].xyzw[0].f[i];
-	 out[0] = in[0];
-	 out[4] = in[1];
-	 out[8] = in[2];
- 	 out[12] = 1.0f;
-      }
-
-      {
-	 const float *in = (const float *)(src[2] + elts[i] * pitch[2]);
-	 float *out = &machine->Inputs[1].xyzw[0].f[i];
-	 out[0] = in[0];
-	 out[4] = in[1];
-	 out[8] = 0.0f;
- 	 out[12] = 1.0f;
-      }
-   }
-}
-
-
 
 
 /**
@@ -435,7 +387,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
       const uint64_t src = draw->vertex_fetch.src_ptr[attr];
       const spu_fetch_func fetch = draw->vertex_fetch.fetch[attr];
       unsigned i;
-      float p[4][4];
+      qword p[4];
 
 
       /* Fetch four attributes for four vertices.  
@@ -452,17 +404,15 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
          mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);
          wait_on_mask(1 << TAG_VERTEX_BUFFER);
 
-         memmove(& buffer, buffer + (addr & 0x0f), 16);
-
-         fetch(buffer, p[i]);
+         p[i] = (*fetch)(buffer + (addr & 0x0f));
       }
 
       /* Be nice and zero out any missing vertices: 
        */
       for (/* empty */; i < 4; i++) 
-          p[i][0] = p[i][1] = p[i][2] = p[i][3] = 0;
-      
-      /* Transpose/swizzle into sse-friendly format.  Currently
+          p[i] = si_xor(p[i], p[i]);
+
+      /* Transpose/swizzle into vector-friendly format.  Currently
        * assuming that all vertex shader inputs are float[4], but this
        * isn't true -- if the vertex shader only wants tex0.xy, we
        * could optimize for that.
@@ -471,7 +421,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
        * excessive number of fetch functions, but we could at least
        * minimize the transpose step:
        */
-      transpose_4x4( (float *)&machine->Inputs[attr].xyzw[0].f[0], (float *)p );
+      spu_transpose_4x4(&machine->Inputs[attr].xyzw[0].q, p);
    }
 }
 
@@ -487,24 +437,4 @@ void spu_update_vertex_fetch( struct spu_vs_context *draw )
    }
 
    draw->vertex_fetch.fetch_func = generic_vertex_fetch;
-
-   /* Disable the fast path because they don't use mfc_get yet.
-    */
-#if 0
-   switch (draw->vertex_fetch.nr_attrs) {
-   case 2:
-      if (draw->vertex_fetch.format[0] == PIPE_FORMAT_R32G32B32_FLOAT &&
-          draw->vertex_fetch.format[1] == PIPE_FORMAT_R32G32B32_FLOAT)
-          draw->vertex_fetch.fetch_func = fetch_xyz_rgb;
-      break;
-   case 3:
-      if (draw->vertex_fetch.format[0] == PIPE_FORMAT_R32G32B32_FLOAT &&
-          draw->vertex_fetch.format[1] == PIPE_FORMAT_R32G32B32_FLOAT &&
-          draw->vertex_fetch.format[2] == PIPE_FORMAT_R32G32_FLOAT)
-          draw->vertex_fetch.fetch_func = fetch_xyz_rgb_st;
-      break;
-   default:
-      break;
-   }
-#endif
 }
