@@ -44,30 +44,6 @@
 #include "intel_buffer_objects.h"
 #include "intel_tex.h"
 
-struct brw_array_state {
-   union header_union header;
-
-   struct {
-      union {
-	 struct {
-	    GLuint pitch:11; 
-	    GLuint pad:15;
-	    GLuint access_type:1; 
-	    GLuint vb_index:5; 
-	 } bits;
-	 GLuint dword;
-      } vb0;
-   
-      dri_bo *buffer;
-      GLuint offset;
-
-      GLuint max_index;   
-      GLuint instance_data_step_rate;
-
-   } vb[BRW_VBP_MAX];
-};
-
-
 static dri_bo *array_buffer( struct intel_context *intel,
 			     const struct gl_client_array *array )
 {
