@@ -90,6 +90,7 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)pws;
 	struct nouveau_device *dev = nvpws->nv->nv_screen->device;
 	struct nouveau_pipe_buffer *nvbuf;
+	uint32_t flags = 0;
 
 	nvbuf = calloc(1, sizeof(*nvbuf));
 	if (!nvbuf)
@@ -99,7 +100,8 @@ nouveau_pipe_bo_create(struct pipe_winsys *pws, unsigned alignment,
 	nvbuf->base.usage = usage;
 	nvbuf->base.size = size;
 
-	if (nouveau_bo_new(dev, NOUVEAU_BO_LOCAL, alignment, size, &nvbuf->bo)) {
+	flags = NOUVEAU_BO_LOCAL;
+	if (nouveau_bo_new(dev, flags, alignment, size, &nvbuf->bo)) {
 		free(nvbuf);
 		return NULL;
 	}
