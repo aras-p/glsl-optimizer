@@ -227,8 +227,8 @@ void brw_validate_state( struct brw_context *brw )
 		atom->dirty.cache);
 	 assert(atom->update);
 
-    if (brw->intel.Fallback)
-       break;
+	 if (brw->intel.Fallback)
+	    break;
 
 	 if (check_state(state, &atom->dirty)) {
 	    atom->update( brw );
@@ -251,10 +251,10 @@ void brw_validate_state( struct brw_context *brw )
       for (i = 0; i < Elements(atoms); i++) {	 
 	 const struct brw_tracked_state *atom = brw->state.atoms[i];
 
-    if (brw->intel.Fallback)
-       break;
-	 
-    if (check_state(state, &atom->dirty))
+	 if (brw->intel.Fallback)
+	    break;
+
+	 if (check_state(state, &atom->dirty))
 	    atom->update( brw );
       }
    }
