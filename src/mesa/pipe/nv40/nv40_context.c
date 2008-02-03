@@ -190,7 +190,7 @@ nv40_init_hwctx(struct nv40_context *nv40, int curie_class)
 
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
-#define NV6X_GRCLASS4497_CHIPSETS 0x00000080
+#define NV6X_GRCLASS4497_CHIPSETS 0x00000088
 
 struct pipe_context *
 nv40_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
