@@ -104,7 +104,13 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	nv40->tex[unit].buffer = nv40mt->buffer;
 	nv40->tex[unit].format = txf;
 
-	BEGIN_RING(curie, NV40TCL_TEX_WRAP(unit), 6);
+	BEGIN_RING(curie, NV40TCL_TEX_OFFSET(unit), 8);
+	OUT_RELOCl(nv40->tex[unit].buffer, 0, NOUVEAU_BO_VRAM |
+		   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+	OUT_RELOCd(nv40->tex[unit].buffer, nv40->tex[unit].format,
+		   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
+		   NOUVEAU_BO_OR, NV40TCL_TEX_FORMAT_DMA0,
+		   NV40TCL_TEX_FORMAT_DMA1);
 	OUT_RING  (ps->wrap);
 	OUT_RING  (NV40TCL_TEX_ENABLE_ENABLE | ps->en |
 		   (0x00078000) /* mipmap related? */);

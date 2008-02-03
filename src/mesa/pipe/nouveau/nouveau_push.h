@@ -44,9 +44,8 @@
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
 	pc->nvws->push_reloc(pc->nvws->channel,                                \
-  		 	     pc->nvws->channel->pushbuf->cur,                  \
+  		 	     pc->nvws->channel->pushbuf->cur++,                \
 			     (bo), (data), (flags), (vor), (tor));             \
-	OUT_RING(0);                                                           \
 } while(0)
 
 /* Raw data + flags depending on FB/TT buffer */
@@ -69,6 +68,16 @@
 /* High 32-bits of offset */
 #define OUT_RELOCh(bo,delta,flags) do {                                        \
 	OUT_RELOC((bo), (delta), (flags) | NOUVEAU_BO_HIGH, 0, 0);             \
+} while(0)
+
+/* A reloc which'll recombine into a NV_DMA_METHOD packet header */
+#define OUT_RELOCm(bo, flags, obj, mthd, size) do {                            \
+	NOUVEAU_PUSH_CONTEXT(pc);                                              \
+	if (pc->nvws->channel->pushbuf->remaining < ((size) + 1))              \
+		pc->nvws->push_flush(pc->nvws->channel, ((size) + 1));         \
+	OUT_RELOCd((bo), (pc->obj->subc << 13) | ((size) << 18) | (mthd),      \
+		   (flags), 0, 0);                                             \
+	pc->nvws->channel->pushbuf->remaining -= ((size) + 1);                 \
 } while(0)
 
 #endif
