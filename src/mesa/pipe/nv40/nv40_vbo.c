@@ -391,12 +391,17 @@ nv40_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
-	if (indexSize != 1) {
-		nv40_draw_elements_vbo(pipe, indexBuffer, indexSize,
-				       mode, start, count);
-	} else {
+	struct nv40_context *nv40 = nv40_context(pipe);
+
+	/* 0x4497 doesn't support real index buffers, and there doesn't appear
+	 * to be support on any chipset for 8-bit indices.
+	 */
+	if (nv40->curie->grclass == NV44TCL || indexSize == 1) {
 		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count);
+	} else {
+		nv40_draw_elements_vbo(pipe, indexBuffer, indexSize,
+				       mode, start, count);
 	}
 
 	pipe->flush(pipe, 0);
