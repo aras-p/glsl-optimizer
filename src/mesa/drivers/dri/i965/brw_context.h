@@ -372,8 +372,16 @@ struct brw_cached_batch_item {
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
 
+   /** Size of a complete element */
    GLuint element_size;
+   /** Number of uploaded elements for this input. */
    GLuint count;
+   /** Byte stride between elements in the uploaded array */
+   GLuint stride;
+   /** Offset of the first element within the buffer object */
+   unsigned int offset;
+   /** Buffer object containing the uploaded vertex data */
+   dri_bo *bo;
 };
 
 
@@ -433,11 +441,8 @@ struct brw_context
 #define BRW_UPLOAD_INIT_SIZE (128*1024)
 
       struct {
-	 struct gl_buffer_object *vbo[BRW_NR_UPLOAD_BUFS];
-	 GLuint buf;
+	 dri_bo *bo;
 	 GLuint offset;
-	 GLuint size;
-	 GLuint wrap;
       } upload;
 
       /* Summary of size and varying of active arrays, so we can check

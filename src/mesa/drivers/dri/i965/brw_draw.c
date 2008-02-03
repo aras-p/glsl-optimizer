@@ -327,20 +327,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
    brw->no_batch_wrap = GL_FALSE;
 
-   /* Free any completed data so it doesn't clog up texture memory - we
-    * won't be referencing it again.
-    */
-   while (brw->vb.upload.wrap != brw->vb.upload.buf) {
-      ctx->Driver.BufferData(ctx,
-			     GL_ARRAY_BUFFER_ARB,
-			     BRW_UPLOAD_INIT_SIZE,
-			     NULL,
-			     GL_DYNAMIC_DRAW_ARB,
-			     brw->vb.upload.vbo[brw->vb.upload.wrap]);
-      brw->vb.upload.wrap++;
-      brw->vb.upload.wrap %= BRW_NR_UPLOAD_BUFS;
-   }
-
    UNLOCK_HARDWARE(intel);
 
    if (!retval)
@@ -418,44 +404,16 @@ void brw_draw_init( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct vbo_context *vbo = vbo_context(ctx);
-   GLuint i;
-   
+
    /* Register our drawing function: 
     */
    vbo->draw_prims = brw_draw_prims;
-
-   brw->vb.upload.size = BRW_UPLOAD_INIT_SIZE;
-
-   for (i = 0; i < BRW_NR_UPLOAD_BUFS; i++) {
-      brw->vb.upload.vbo[i] = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
-
-      ctx->Driver.BufferData(ctx,
-			     GL_ARRAY_BUFFER_ARB,
-			     BRW_UPLOAD_INIT_SIZE,
-			     NULL,
-			     GL_DYNAMIC_DRAW_ARB,
-			     brw->vb.upload.vbo[i]);
-
-      /* Set the internal VBOs to no-backing-store.  We only use them as a
-       * temporary within a brw_try_draw_prims while the lock is held.
-       */
-      if (!brw->intel.ttm) {
-	 struct intel_buffer_object *intel_bo =
-	    intel_buffer_object(brw->vb.upload.vbo[i]);
-
-	 dri_bo_fake_disable_backing_store(intel_bufferobj_buffer(&brw->intel,
-								  intel_bo,
-								  INTEL_READ),
-					   NULL, NULL);
-      }
-   }
 }
 
 void brw_draw_destroy( struct brw_context *brw )
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   GLuint i;
-   
-   for (i = 0; i < BRW_NR_UPLOAD_BUFS; i++)
-      ctx->Driver.DeleteBuffer(ctx, brw->vb.upload.vbo[i]);
+   if (brw->vb.upload.bo != NULL) {
+      dri_bo_unreference(brw->vb.upload.bo);
+      brw->vb.upload.bo = NULL;
+   }
 }

@@ -44,13 +44,6 @@
 #include "intel_buffer_objects.h"
 #include "intel_tex.h"
 
-static dri_bo *array_buffer( struct intel_context *intel,
-			     const struct gl_client_array *array )
-{
-   return intel_bufferobj_buffer(intel, intel_buffer_object(array->BufferObj),
-				 INTEL_WRITE_PART);
-}
-
 static GLuint double_types[5] = {
    0,
    BRW_SURFACEFORMAT_R64_FLOAT,
@@ -246,34 +239,40 @@ static void copy_strided_array( GLubyte *dest,
 static void wrap_buffers( struct brw_context *brw,
 			  GLuint size )
 {
-   GLcontext *ctx = &brw->intel.ctx;
-
    if (size < BRW_UPLOAD_INIT_SIZE)
       size = BRW_UPLOAD_INIT_SIZE;
 
-   brw->vb.upload.buf++;
-   brw->vb.upload.buf %= BRW_NR_UPLOAD_BUFS;
    brw->vb.upload.offset = 0;
 
-   ctx->Driver.BufferData(ctx,
-			  GL_ARRAY_BUFFER_ARB,
-			  size,
-			  NULL,
-			  GL_DYNAMIC_DRAW_ARB,
-			  brw->vb.upload.vbo[brw->vb.upload.buf]);
+   if (brw->vb.upload.bo != NULL)
+      dri_bo_unreference(brw->vb.upload.bo);
+   brw->vb.upload.bo = dri_bo_alloc(brw->intel.bufmgr, "temporary VBO",
+				    size, 1,
+				    DRM_BO_FLAG_MEM_LOCAL |
+				    DRM_BO_FLAG_CACHED |
+				    DRM_BO_FLAG_CACHED_MAPPED);
+
+   /* Set the internal VBO\ to no-backing-store.  We only use them as a
+    * temporary within a brw_try_draw_prims while the lock is held.
+    */
+   if (!brw->intel.ttm)
+      dri_bo_fake_disable_backing_store(brw->vb.upload.bo, NULL, NULL);
 }
 
 static void get_space( struct brw_context *brw,
 		       GLuint size,
-		       struct gl_buffer_object **vbo_return,
+		       dri_bo **bo_return,
 		       GLuint *offset_return )
 {
    size = ALIGN(size, 64);
-   
-   if (brw->vb.upload.offset + size > BRW_UPLOAD_INIT_SIZE)
-      wrap_buffers(brw, size);
 
-   *vbo_return = brw->vb.upload.vbo[brw->vb.upload.buf];
+   if (brw->vb.upload.bo == NULL ||
+       brw->vb.upload.offset + size > brw->vb.upload.bo->size) {
+      wrap_buffers(brw, size);
+   }
+
+   dri_bo_reference(brw->vb.upload.bo);
+   *bo_return = brw->vb.upload.bo;
    *offset_return = brw->vb.upload.offset;
 
    brw->vb.upload.offset += size;
@@ -281,87 +280,28 @@ static void get_space( struct brw_context *brw,
 
 static void
 copy_array_to_vbo_array( struct brw_context *brw,
-			 struct gl_client_array *vbo_array,
-			 const struct gl_client_array *array,
-			 GLuint element_size,
-			 GLuint count)
+			 struct brw_vertex_element *element,
+			 GLuint dst_stride)
 {
-   GLcontext *ctx = &brw->intel.ctx;
-   GLuint size = count * element_size;
-   struct gl_buffer_object *vbo;
-   GLuint offset;
-   GLuint new_stride;
+   GLuint size = element->count * dst_stride;
 
-   get_space(brw, size, &vbo, &offset);
+   get_space(brw, size, &element->bo, &element->offset);
 
-   if (array->StrideB == 0) {
-      assert(count == 1);
-      new_stride = 0;
+   if (element->glarray->StrideB == 0) {
+      assert(element->count == 1);
+      element->stride = 0;
+   } else {
+      element->stride = dst_stride;
    }
-   else 
-      new_stride = element_size;
 
-   vbo_array->Size = array->Size;
-   vbo_array->Type = array->Type;
-   vbo_array->Stride = new_stride;
-   vbo_array->StrideB = new_stride;   
-   vbo_array->Ptr = (const void *)offset;
-   vbo_array->Enabled = 1;
-   vbo_array->Normalized = array->Normalized;
-   vbo_array->_MaxElement = array->_MaxElement;	/* ? */
-   vbo_array->BufferObj = vbo;
-
-   {
-      GLubyte *map = ctx->Driver.MapBuffer(ctx,
-					   GL_ARRAY_BUFFER_ARB,
-					   GL_DYNAMIC_DRAW_ARB,
-					   vbo);
-   
-      map += offset;
-
-      copy_strided_array( map, 
-			  array->Ptr,
-			  element_size,
-			  array->StrideB,
-			  count);
-
-      ctx->Driver.UnmapBuffer(ctx, GL_ARRAY_BUFFER_ARB, vbo_array->BufferObj);
-   }
+   dri_bo_map(element->bo, GL_TRUE);
+   copy_strided_array((unsigned char *)element->bo->virtual + element->offset,
+		       element->glarray->Ptr,
+		       dst_stride,
+		       element->glarray->StrideB,
+		       element->count);
+   dri_bo_unmap(element->bo);
 }
-
-/**
- * Just a wrapper to highlight which cause of copy_array_to_vbo_array
- * is happening in the profile.
- */
-static void
-interleaved_copy_array_to_vbo_array(struct brw_context *brw,
-				    struct gl_client_array *vbo_array,
-				    const struct gl_client_array *array,
-				    GLuint element_size,
-				    GLuint count)
-{
-   copy_array_to_vbo_array(brw, vbo_array, array, element_size, count);
-}
-
-static void
-interleaved_vbo_array( struct brw_context *brw,
-		       struct gl_client_array *vbo_array,
-		       const struct gl_client_array *uploaded_array,
-		       const struct gl_client_array *array,
-		       const char *ptr)
-{
-   vbo_array->Size = array->Size;
-   vbo_array->Type = array->Type;
-   vbo_array->Stride = array->Stride;
-   vbo_array->StrideB = array->StrideB;   
-   vbo_array->Ptr = (const void *)((const char *)uploaded_array->Ptr + 
-				   ((const char *)array->Ptr - ptr));
-   vbo_array->Enabled = 1;
-   vbo_array->Normalized = array->Normalized;
-   vbo_array->_MaxElement = array->_MaxElement;	
-   vbo_array->BufferObj = uploaded_array->BufferObj;
-}
-
 
 GLboolean brw_upload_vertices( struct brw_context *brw,
 			       GLuint min_index,
@@ -371,9 +311,8 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    struct intel_context *intel = intel_context(ctx);
    GLuint tmp = brw->vs.prog_data->inputs_read; 
    GLuint i;
-   const void *ptr = NULL;
+   const unsigned char *ptr = NULL;
    GLuint interleave = 0;
-   struct gl_client_array vbo_array_temp[VERT_ATTRIB_MAX];
 
    struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint nr_enabled = 0;
@@ -385,18 +324,45 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
     */
    if (0)
       _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
-   
+
+   /* Accumulate the list of enabled arrays. */
    while (tmp) {
       GLuint i = _mesa_ffsll(tmp)-1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       tmp &= ~(1<<i);
       enabled[nr_enabled++] = input;
+   }
+
+   /* XXX: In the rare cases where this happens we fallback all
+    * the way to software rasterization, although a tnl fallback
+    * would be sufficient.  I don't know of *any* real world
+    * cases with > 17 vertex attributes enabled, so it probably
+    * isn't an issue at this point.
+    */
+   if (nr_enabled >= BRW_VEP_MAX)
+	 return GL_FALSE;
+
+   for (i = 0; i < nr_enabled; i++) {
+      struct brw_vertex_element *input = enabled[i];
 
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
       input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 
-      if (!input->glarray->BufferObj->Name) {
+      if (input->glarray->BufferObj->Name != 0) {
+	 struct intel_buffer_object *intel_buffer =
+	    intel_buffer_object(input->glarray->BufferObj);
+
+	 /* Named buffer object: Just reference its contents directly. */
+	 input->bo = intel_bufferobj_buffer(intel, intel_buffer,
+					    INTEL_READ);
+	 dri_bo_reference(input->bo);
+	 input->offset = (unsigned long)input->glarray->Ptr;
+	 input->stride = input->glarray->StrideB;
+      } else {
+	 /* Queue the buffer object up to be uploaded in the next pass,
+	  * when we've decided if we're doing interleaved or not.
+	  */
 	 if (i == 0) {
 	    /* Position array not properly enabled:
 	     */
@@ -407,8 +373,9 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 	    ptr = input->glarray->Ptr;
 	 }
 	 else if (interleave != input->glarray->StrideB ||
-		  (const char *)input->glarray->Ptr - (const char *)ptr < 0 ||
-		  (const char *)input->glarray->Ptr - (const char *)ptr > interleave) {
+		  (const unsigned char *)input->glarray->Ptr - ptr < 0 ||
+		  (const unsigned char *)input->glarray->Ptr - ptr > interleave)
+	 {
 	    interleave = 0;
 	 }
 
@@ -425,42 +392,28 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
       }
    }
 
-   /* Upload interleaved arrays if all uploads are interleaved
-    */
+   /* Handle any arrays to be uploaded. */
    if (nr_uploads > 1 && interleave && interleave <= 256) {
-      interleaved_copy_array_to_vbo_array(brw, &vbo_array_temp[0],
-					  upload[0]->glarray,
-					  interleave,
-					  upload[0]->count);
-      upload[0]->glarray = &vbo_array_temp[0];
+      /* All uploads are interleaved, so upload the arrays together as
+       * interleaved.  First, upload the contents and set up upload[0].
+       */
+      copy_array_to_vbo_array(brw, upload[0], interleave);
 
       for (i = 1; i < nr_uploads; i++) {
-	 interleaved_vbo_array(brw,
-			       &vbo_array_temp[i],
-			       upload[0]->glarray,
-			       upload[i]->glarray,
-			       ptr);
-	 upload[i]->glarray = &vbo_array_temp[i];
+	 /* Then, just point upload[i] at upload[0]'s buffer. */
+	 upload[i]->stride = interleave;
+	 upload[i]->offset = upload[0]->offset +
+	    ((const unsigned char *)upload[i]->glarray->Ptr - ptr);
+	 upload[i]->bo = upload[0]->bo;
+	 dri_bo_reference(upload[i]->bo);
       }
    }
    else {
+      /* Upload non-interleaved arrays */
       for (i = 0; i < nr_uploads; i++) {
-	 copy_array_to_vbo_array(brw, &vbo_array_temp[i],
-				 upload[i]->glarray,
-				 upload[i]->element_size,
-				 upload[i]->count);
-	 upload[i]->glarray = &vbo_array_temp[i];
+	 copy_array_to_vbo_array(brw, upload[i], upload[i]->element_size);
       }
    }
-
-   /* XXX: In the rare cases where this happens we fallback all
-    * the way to software rasterization, although a tnl fallback
-    * would be sufficient.  I don't know of *any* real world
-    * cases with > 17 vertex attributes enabled, so it probably
-    * isn't an issue at this point.
-    */
-   if (nr_enabled >= BRW_VEP_MAX)
-	 return GL_FALSE;
 
    /* Now emit VB and VEP state packets.
     *
@@ -477,12 +430,18 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 
       OUT_BATCH((i << BRW_VB0_INDEX_SHIFT) |
 		BRW_VB0_ACCESS_VERTEXDATA |
-		(input->glarray->StrideB << BRW_VB0_PITCH_SHIFT));
-      OUT_RELOC(array_buffer(intel, input->glarray),
+		(input->stride << BRW_VB0_PITCH_SHIFT));
+      OUT_RELOC(input->bo,
 		DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		(GLuint)input->glarray->Ptr);
+		input->offset);
       OUT_BATCH(max_index);
       OUT_BATCH(0); /* Instance data step rate */
+
+      /* Unreference the buffer so it can get freed, now that we won't
+       * touch it any more.
+       */
+      dri_bo_unreference(input->bo);
+      input->bo = NULL;
    }
    ADVANCE_BATCH();
 
@@ -527,6 +486,7 @@ void brw_upload_indices( struct brw_context *brw,
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    GLuint ib_size = get_size(index_buffer->type) * index_buffer->count;
+   dri_bo *bo;
    struct gl_buffer_object *bufferobj = index_buffer->obj;
    GLuint offset = (GLuint)index_buffer->ptr;
 
@@ -536,40 +496,31 @@ void brw_upload_indices( struct brw_context *brw,
      
       /* Get new bufferobj, offset:
        */
-      get_space(brw, ib_size, &bufferobj, &offset);
+      get_space(brw, ib_size, &bo, &offset);
 
       /* Straight upload
        */
-      ctx->Driver.BufferSubData( ctx,
-				 GL_ELEMENT_ARRAY_BUFFER_ARB,
-				 offset, 
-				 ib_size,
-				 index_buffer->ptr,
-				 bufferobj);
+      dri_bo_subdata(bo, offset, ib_size, index_buffer->ptr);
    } else {
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
        */
        if ((get_size(index_buffer->type) - 1) & offset) {
-           struct gl_buffer_object *vbo;
-           GLuint voffset;
            GLubyte *map = ctx->Driver.MapBuffer(ctx,
                                                 GL_ELEMENT_ARRAY_BUFFER_ARB,
                                                 GL_DYNAMIC_DRAW_ARB,
                                                 bufferobj);
            map += offset;
-           get_space(brw, ib_size, &vbo, &voffset);
-           
-           ctx->Driver.BufferSubData(ctx,
-                                     GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                     voffset,
-                                     ib_size,
-                                     map,
-                                     vbo);
-           ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
 
-           bufferobj = vbo;
-           offset = voffset;
+	   get_space(brw, ib_size, &bo, &offset);
+
+	   dri_bo_subdata(bo, offset, ib_size, map);
+
+           ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
+       } else {
+	  bo = intel_bufferobj_buffer(intel, intel_buffer_object(bufferobj),
+				      INTEL_READ);
+	  dri_bo_reference(bo);
        }
    }
 
@@ -577,9 +528,6 @@ void brw_upload_indices( struct brw_context *brw,
     */
    {
       struct brw_indexbuffer ib;
-      dri_bo *buffer = intel_bufferobj_buffer(intel,
-					      intel_buffer_object(bufferobj),
-					      INTEL_READ);
 
       memset(&ib, 0, sizeof(ib));
    
@@ -591,10 +539,12 @@ void brw_upload_indices( struct brw_context *brw,
 
       BEGIN_BATCH(4, IGNORE_CLIPRECTS);
       OUT_BATCH( ib.header.dword );
-      OUT_RELOC( buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, offset);
-      OUT_RELOC( buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+      OUT_RELOC( bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, offset);
+      OUT_RELOC( bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		 offset + ib_size);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
+
+      dri_bo_unreference(bo);
    }
 }

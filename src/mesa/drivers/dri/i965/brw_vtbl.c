@@ -110,7 +110,11 @@ static void brw_new_batch( struct intel_context *intel )
    /* Move to the end of the current upload buffer so that we'll force choosing
     * a new buffer next time.
     */
-   brw->vb.upload.offset = brw->vb.upload.vbo[brw->vb.upload.buf]->Size;
+   if (brw->vb.upload.bo != NULL) {
+      dri_bo_unreference(brw->vb.upload.bo);
+      brw->vb.upload.bo = NULL;
+      brw->vb.upload.offset = 0;
+   }
 }
 
 static void brw_note_fence( struct intel_context *intel, 
