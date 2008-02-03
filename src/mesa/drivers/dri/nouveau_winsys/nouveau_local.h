@@ -61,9 +61,8 @@
 } while(0)
 
 #define OUT_RELOC(buf,data,flags,vor,tor) do {                                 \
-	nouveau_pipe_emit_reloc(nv->channel, nv->channel->pushbuf->cur,        \
+	nouveau_pipe_emit_reloc(nv->channel, nv->channel->pushbuf->cur++,      \
 				   buf, (data), (flags), (vor), (tor));        \
-	OUT_RING(0);                                                           \
 } while(0)
 
 /* Raw data + flags depending on FB/TT buffer */

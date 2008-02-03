@@ -96,6 +96,31 @@ nouveau_pushbuf_init(struct nouveau_channel *chan)
 	return 0;
 }
 
+static uint32_t
+nouveau_pushbuf_calc_reloc(struct nouveau_bo *bo,
+			   struct nouveau_pushbuf_reloc *r)
+{
+	uint32_t push;
+
+	if (r->flags & NOUVEAU_BO_LOW) {
+		push = bo->offset + r->data;
+	} else
+	if (r->flags & NOUVEAU_BO_HIGH) {
+		push = (bo->offset + r->data) >> 32;
+	} else {
+		push = r->data;
+	}
+
+	if (r->flags & NOUVEAU_BO_OR) {
+		if (bo->flags & NOUVEAU_BO_VRAM)
+			push |= r->vor;
+		else
+			push |= r->tor;
+	}
+
+	return push;
+}
+
 /* This would be our TTM "superioctl" */
 int
 nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
@@ -133,34 +158,20 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 
 		if (bo->offset == nouveau_bo(bo)->offset &&
 		    bo->flags == nouveau_bo(bo)->flags) {
-			/*XXX: could avoid reloc in this case, except with the
-			 *     current design we'd confuse the GPU quite a bit
-			 *     if we did this.  Will fix soon.
-			 */
+			while ((r = ptr_to_pbrel(pbbo->relocs))) {
+				pbbo->relocs = r->next;
+				free(r);
+			}
+
+			nvpb->buffers = pbbo->next;
+			free(pbbo);
+			continue;
 		}
 		bo->offset = nouveau_bo(bo)->offset;
 		bo->flags = nouveau_bo(bo)->flags;
 
 		while ((r = ptr_to_pbrel(pbbo->relocs))) {
-			uint32_t push;
-
-			if (r->flags & NOUVEAU_BO_LOW) {
-				push = bo->offset + r->data;
-			} else
-			if (r->flags & NOUVEAU_BO_HIGH) {
-				push = (bo->offset + r->data) >> 32;
-			} else {
-				push = r->data;
-			}
-
-			if (r->flags & NOUVEAU_BO_OR) {
-				if (bo->flags & NOUVEAU_BO_VRAM)
-					push |= r->vor;
-				else
-					push |= r->tor;
-			}
-
-			*r->ptr = push;
+			*r->ptr = nouveau_pushbuf_calc_reloc(bo, r);
 			pbbo->relocs = r->next;
 			free(r);
 		}
@@ -241,6 +252,10 @@ nouveau_pushbuf_emit_reloc(struct nouveau_channel *chan, void *ptr,
 	r->vor = vor;
 	r->tor = tor;
 
+	if (flags & NOUVEAU_BO_DUMMY)
+		*(uint32_t *)ptr = 0;
+	else
+		*(uint32_t *)ptr = nouveau_pushbuf_calc_reloc(bo, r);
 	return 0;
 }
 

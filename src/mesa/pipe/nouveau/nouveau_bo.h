@@ -35,6 +35,7 @@
 #define NOUVEAU_BO_HIGH  (1 << 7)
 #define NOUVEAU_BO_OR    (1 << 8)
 #define NOUVEAU_BO_LOCAL (1 << 9)
+#define NOUVEAU_BO_DUMMY (1 << 31)
 
 struct nouveau_bo {
 	struct nouveau_device *device;
