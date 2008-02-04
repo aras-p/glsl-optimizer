@@ -236,7 +236,7 @@ static void
 cmd_state_blend(const struct pipe_blend_state *state)
 {
    if (Debug)
-      printf("SPU %u: BLEND: ztest %d\n",
+      printf("SPU %u: BLEND: enabled %d\n",
              spu.init.id,
              state->blend_enable);
 
