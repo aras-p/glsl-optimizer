@@ -150,6 +150,8 @@ sample_texture_bilinear(vector float texcoord)
    static const vector unsigned int offset01 = {0, 1, 0, 0};
 
    vector float tc = spu_mul(texcoord, spu.tex_size);
+   tc = spu_add(tc, spu_splats(-0.5f));  /* half texel bias */
+
    /* integer texcoords S,T: */
    vector unsigned int itc00 = spu_convtu(tc, 0);  /* convert to int */
    vector unsigned int itc01 = spu_add(itc00, offset01);
