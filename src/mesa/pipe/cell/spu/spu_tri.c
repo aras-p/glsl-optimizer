@@ -406,22 +406,44 @@ static void flush_spans( void )
    }
 
 
-   /* _really_ clear tiles now if needed */
-   if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
+   /* OK, we're very likely to need the tile data now.
+    * clear or finish waiting if needed.
+    */
+   if (spu.cur_ctile_status == TILE_STATUS_GETTING) {
+      /* wait for mfc_get() to complete */
+      //printf("SPU: %u: waiting for ctile\n", spu.init.id);
+      wait_on_mask(1 << TAG_READ_TILE_COLOR);
+      spu.cur_ctile_status = TILE_STATUS_CLEAN;
+   }
+   else if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
+      //printf("SPU %u: clearing C tile %u, %u\n", spu.init.id, setup.tx, setup.ty);
       clear_c_tile(&spu.ctile);
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
    }
-   if (spu.depth_stencil.depth.enabled &&
-       spu.cur_ztile_status == TILE_STATUS_CLEAR) {
-      clear_z_tile(&spu.ztile);
-      spu.cur_ztile_status = TILE_STATUS_DIRTY;
+   ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
+
+   if (spu.depth_stencil.depth.enabled) {
+      if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
+         /* wait for mfc_get() to complete */
+         //printf("SPU: %u: waiting for ztile\n", spu.init.id);
+         wait_on_mask(1 << TAG_READ_TILE_Z);
+         spu.cur_ztile_status = TILE_STATUS_CLEAN;
+      }
+      else if (spu.cur_ztile_status == TILE_STATUS_CLEAR) {
+         //printf("SPU %u: clearing Z tile %u, %u\n", spu.init.id, setup.tx, setup.ty);
+         clear_z_tile(&spu.ztile);
+         spu.cur_ztile_status = TILE_STATUS_DIRTY;
+      }
+      ASSERT(spu.cur_ztile_status != TILE_STATUS_DEFINED);
    }
 
    /* XXX this loop could be moved into the above switch cases and
     * calculate_mask() could be simplified a bit...
     */
    for (x = block(minleft); x <= block(maxright); x += 2) {
+#if 1
       emit_quad( x, setup.span.y, calculate_mask( x ) );
+#endif
    }
 
    setup.span.y = 0;
@@ -835,23 +857,6 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 
    /*   init_constant_attribs( setup ); */
       
-   if (spu.cur_ctile_status == TILE_STATUS_GETTING) {
-      /* wait for mfc_get() to complete */
-      wait_on_mask(1 << TAG_READ_TILE_COLOR);
-      spu.cur_ctile_status = TILE_STATUS_CLEAN;
-   }
-   ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
-
-   if (spu.depth_stencil.depth.enabled) {
-      if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
-         /* wait for mfc_get() to complete */
-         wait_on_mask(1 << TAG_READ_TILE_Z);
-         spu.cur_ztile_status = TILE_STATUS_CLEAN;
-      }
-      ASSERT(spu.cur_ztile_status != TILE_STATUS_DEFINED);
-   }
-
-
    if (setup.oneoverarea < 0.0) {
       /* emaj on left:
        */
