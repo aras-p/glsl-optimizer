@@ -110,6 +110,10 @@ struct spu_global
 
    /** for converting RGBA to PIPE_FORMAT_x colors */
    vector unsigned char color_shuffle;
+
+   vector float tex_size;
+   vector unsigned int tex_size_mask; /**< == int(size - 1) */
+
 } ALIGN16_ATTRIB;
 
 

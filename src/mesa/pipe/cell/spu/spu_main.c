@@ -263,6 +263,16 @@ cmd_state_texture(const struct cell_command_texture *texture)
              spu.init.id, texture->start, texture->width, texture->height);
 
    memcpy(&spu.texture, texture, sizeof(*texture));
+   spu.tex_size = VEC_LITERAL(vector float,
+                              spu.texture.width,
+                              spu.texture.height,
+                              0.0,
+                              0.0);
+   spu.tex_size_mask = VEC_LITERAL(vector unsigned int,
+                                   spu.texture.width - 1,
+                                   spu.texture.height - 1,
+                                   0,
+                                   0);
 }
 
 
