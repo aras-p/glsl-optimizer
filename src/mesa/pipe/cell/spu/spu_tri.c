@@ -309,13 +309,13 @@ emit_quad( int x, int y, mask_t mask )
          eval_coeff(2, (float) x, (float) y, texcoords);
 
          if (spu_extract(mask, 0))
-            spu.ctile.ui[iy][ix] = sample_texture(texcoords[0].v);
+            spu.ctile.ui[iy][ix] = spu.sample_texture(texcoords[0].v);
          if (spu_extract(mask, 1))
-            spu.ctile.ui[iy][ix+1] = sample_texture(texcoords[1].v);
+            spu.ctile.ui[iy][ix+1] = spu.sample_texture(texcoords[1].v);
          if (spu_extract(mask, 2))
-            spu.ctile.ui[iy+1][ix] = sample_texture(texcoords[2].v);
+            spu.ctile.ui[iy+1][ix] = spu.sample_texture(texcoords[2].v);
          if (spu_extract(mask, 3))
-            spu.ctile.ui[iy+1][ix+1] = sample_texture(texcoords[3].v);
+            spu.ctile.ui[iy+1][ix+1] = spu.sample_texture(texcoords[3].v);
       }
       else {
          /* simple shading */

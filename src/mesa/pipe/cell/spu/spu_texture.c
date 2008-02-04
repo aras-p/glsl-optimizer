@@ -131,7 +131,7 @@ get_tex_tile(vector unsigned int ij)
  * XXX this is extremely primitive for now.
  */
 uint
-sample_texture(vector float texcoord)
+sample_texture_nearest(vector float texcoord)
 {
    vector float tc = spu_mul(texcoord, spu.tex_size);
    vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */

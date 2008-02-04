@@ -37,7 +37,7 @@ invalidate_tex_cache(void);
 
 
 extern uint
-sample_texture(vector float texcoord);
+sample_texture_nearest(vector float texcoord);
 
 
 extern uint

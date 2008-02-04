@@ -252,6 +252,10 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
              spu.init.id);
 
    memcpy(&spu.sampler[0], state, sizeof(*state));
+   if (spu.sampler[0].min_img_filter == PIPE_TEX_FILTER_LINEAR)
+      spu.sample_texture = sample_texture_bilinear;
+   else
+      spu.sample_texture = sample_texture_nearest;
 }
 
 
