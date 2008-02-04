@@ -301,6 +301,8 @@ emit_quad( int x, int y, mask_t mask )
    if (spu_extract(spu_orx(mask), 0)) {
       const int ix = x - setup.cliprect_minx;
       const int iy = y - setup.cliprect_miny;
+      const vector unsigned char shuffle = spu.color_shuffle;
+      vector float colors[4];
 
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
 
@@ -310,34 +312,32 @@ emit_quad( int x, int y, mask_t mask )
          eval_coeff(2, (float) x, (float) y, texcoords);
 
          if (spu_extract(mask, 0))
-            spu.ctile.ui[iy][ix] = spu.sample_texture(texcoords[0]);
+            colors[0] = spu.sample_texture(texcoords[0]);
          if (spu_extract(mask, 1))
-            spu.ctile.ui[iy][ix+1] = spu.sample_texture(texcoords[1]);
+            colors[1] = spu.sample_texture(texcoords[1]);
          if (spu_extract(mask, 2))
-            spu.ctile.ui[iy+1][ix] = spu.sample_texture(texcoords[2]);
+            colors[2] = spu.sample_texture(texcoords[2]);
          if (spu_extract(mask, 3))
-            spu.ctile.ui[iy+1][ix+1] = spu.sample_texture(texcoords[3]);
+            colors[3] = spu.sample_texture(texcoords[3]);
       }
       else {
          /* simple shading */
-         const vector unsigned char shuffle = spu.color_shuffle;
-         vector float colors[4];
          eval_coeff(1, (float) x, (float) y, colors);
+      }
 
-#if 0
-         if (spu.blend.blend_enable)
-            blend_quad(ix % TILE_SIZE, iy % TILE_SIZE, colors);
+#if 1
+      if (spu.blend.blend_enable)
+         blend_quad(ix % TILE_SIZE, iy % TILE_SIZE, colors);
 #endif
 
-         if (spu_extract(mask, 0))
-            spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0], shuffle);
-         if (spu_extract(mask, 1))
-            spu.ctile.ui[iy][ix+1] = spu_pack_color_shuffle(colors[1], shuffle);
-         if (spu_extract(mask, 2))
-            spu.ctile.ui[iy+1][ix] = spu_pack_color_shuffle(colors[2], shuffle);
-         if (spu_extract(mask, 3))
-            spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(colors[3], shuffle);
-      }
+      if (spu_extract(mask, 0))
+         spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0], shuffle);
+      if (spu_extract(mask, 1))
+         spu.ctile.ui[iy][ix+1] = spu_pack_color_shuffle(colors[1], shuffle);
+      if (spu_extract(mask, 2))
+         spu.ctile.ui[iy+1][ix] = spu_pack_color_shuffle(colors[2], shuffle);
+      if (spu_extract(mask, 3))
+         spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(colors[3], shuffle);
 
 #if 0
       /* SIMD_Z with swizzled color buffer (someday) */

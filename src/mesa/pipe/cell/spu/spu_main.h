@@ -115,7 +115,7 @@ struct spu_global
    vector float tex_size;
    vector unsigned int tex_size_mask; /**< == int(size - 1) */
 
-   uint (*sample_texture)(vector float texcoord);
+   vector float (*sample_texture)(vector float texcoord);
 
 } ALIGN16_ATTRIB;
 

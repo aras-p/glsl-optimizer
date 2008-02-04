@@ -130,7 +130,7 @@ get_tex_tile(vector unsigned int ij)
  * Get texture sample at texcoord.
  * XXX this is extremely primitive for now.
  */
-uint
+vector float
 sample_texture_nearest(vector float texcoord)
 {
    vector float tc = spu_mul(texcoord, spu.tex_size);
@@ -139,11 +139,11 @@ sample_texture_nearest(vector float texcoord)
    vector unsigned int ij = spu_and(itc, TILE_SIZE-1); /* intra tile addr */
    uint pos = get_tex_tile(itc);
    uint texel = tex_tiles[pos].ui[spu_extract(ij, 1)][spu_extract(ij, 0)];
-   return texel;
+   return spu_unpack_A8R8G8B8(texel);
 }
 
 
-uint
+vector float
 sample_texture_bilinear(vector float texcoord)
 {
    static const vector unsigned int offset10 = {1, 0, 0, 0};
@@ -183,10 +183,10 @@ sample_texture_bilinear(vector float texcoord)
    }
 
    /* get texels from tiles and convert to float[4] */
-   vector float texel00 = spu_unpack_color(tex_tiles[pos00].ui[spu_extract(ij00, 1)][spu_extract(ij00, 0)]);
-   vector float texel01 = spu_unpack_color(tex_tiles[pos01].ui[spu_extract(ij01, 1)][spu_extract(ij01, 0)]);
-   vector float texel10 = spu_unpack_color(tex_tiles[pos10].ui[spu_extract(ij10, 1)][spu_extract(ij10, 0)]);
-   vector float texel11 = spu_unpack_color(tex_tiles[pos11].ui[spu_extract(ij11, 1)][spu_extract(ij11, 0)]);
+   vector float texel00 = spu_unpack_A8R8G8B8(tex_tiles[pos00].ui[spu_extract(ij00, 1)][spu_extract(ij00, 0)]);
+   vector float texel01 = spu_unpack_A8R8G8B8(tex_tiles[pos01].ui[spu_extract(ij01, 1)][spu_extract(ij01, 0)]);
+   vector float texel10 = spu_unpack_A8R8G8B8(tex_tiles[pos10].ui[spu_extract(ij10, 1)][spu_extract(ij10, 0)]);
+   vector float texel11 = spu_unpack_A8R8G8B8(tex_tiles[pos11].ui[spu_extract(ij11, 1)][spu_extract(ij11, 0)]);
 
    /* Compute weighting factors in [0,1]
     * Multiply texcoord by 1024, AND with 1023, convert back to float.
@@ -213,8 +213,5 @@ sample_texture_bilinear(vector float texcoord)
    texel_sum = spu_add(texel_sum, texel10);
    texel_sum = spu_add(texel_sum, texel11);
 
-   /* convert to uint color */
-   uint texel = spu_pack_R8G8B8A8(texel_sum);
-
-   return texel;
+   return texel_sum;
 }
