@@ -65,6 +65,10 @@ tile_bounding_box(const struct cell_command_render *render,
    *tymin = (uint) render->ymin / TILE_SIZE;
    txmax = (uint) render->xmax / TILE_SIZE;
    tymax = (uint) render->ymax / TILE_SIZE;
+   if (txmax >= spu.fb.width_tiles)
+      txmax = spu.fb.width_tiles-1;
+   if (tymax >= spu.fb.height_tiles)
+      tymax = spu.fb.height_tiles-1;
    *box_width_tiles = txmax - *txmin + 1;
    box_height_tiles = tymax - *tymin + 1;
    *box_num_tiles = *box_width_tiles * box_height_tiles;
@@ -96,12 +100,14 @@ get_cz_tiles(uint tx, uint ty)
 {
    if (spu.depth_stencil.depth.enabled) {
       if (spu.cur_ztile_status != TILE_STATUS_CLEAR) {
+         //printf("SPU %u: getting Z tile %u, %u\n", spu.init.id, tx, ty);
          get_tile(tx, ty, &spu.ztile, TAG_READ_TILE_Z, 1);
          spu.cur_ztile_status = TILE_STATUS_GETTING;
       }
    }
 
    if (spu.cur_ctile_status != TILE_STATUS_CLEAR) {
+      //printf("SPU %u: getting C tile %u, %u\n", spu.init.id, tx, ty);
       get_tile(tx, ty, &spu.ctile, TAG_READ_TILE_COLOR, 0);
       spu.cur_ctile_status = TILE_STATUS_GETTING;
    }
@@ -116,22 +122,26 @@ put_cz_tiles(uint tx, uint ty)
 {
    if (spu.cur_ztile_status == TILE_STATUS_DIRTY) {
       /* tile was modified and needs to be written back */
+      //printf("SPU %u: put dirty Z tile %u, %u\n", spu.init.id, tx, ty);
       put_tile(tx, ty, &spu.ztile, TAG_WRITE_TILE_Z, 1);
       spu.cur_ztile_status = TILE_STATUS_DEFINED;
    }
    else if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
       /* tile was never used */
       spu.cur_ztile_status = TILE_STATUS_DEFINED;
+      //printf("SPU %u: put getting Z tile %u, %u\n", spu.init.id, tx, ty);
    }
 
    if (spu.cur_ctile_status == TILE_STATUS_DIRTY) {
       /* tile was modified and needs to be written back */
+      //printf("SPU %u: put dirty C tile %u, %u\n", spu.init.id, tx, ty);
       put_tile(tx, ty, &spu.ctile, TAG_WRITE_TILE_COLOR, 0);
       spu.cur_ctile_status = TILE_STATUS_DEFINED;
    }
    else if (spu.cur_ctile_status == TILE_STATUS_GETTING) {
       /* tile was never used */
       spu.cur_ctile_status = TILE_STATUS_DEFINED;
+      //printf("SPU %u: put getting C tile %u, %u\n", spu.init.id, tx, ty);
    }
 }
 
