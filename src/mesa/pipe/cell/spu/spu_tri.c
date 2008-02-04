@@ -324,6 +324,11 @@ emit_quad( int x, int y, mask_t mask )
          vector float colors[4];
          eval_coeff(1, (float) x, (float) y, colors);
 
+#if 0
+         if (spu.blend.blend_enable)
+            blend_quad(ix % TILE_SIZE, iy % TILE_SIZE, colors);
+#endif
+
          if (spu_extract(mask, 0))
             spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0], shuffle);
          if (spu_extract(mask, 1))
