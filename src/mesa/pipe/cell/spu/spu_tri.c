@@ -45,6 +45,12 @@
 /** Masks are uint[4] vectors with each element being 0 or 0xffffffff */
 typedef vector unsigned int mask_t;
 
+typedef union
+{
+   vector float v;
+   float f[4];
+} float4;
+
 
 /**
  * Simplified types taken from other parts of Gallium

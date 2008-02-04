@@ -41,13 +41,6 @@
 #define MAX_HEIGHT 1024
 
 
-typedef union
-{
-   vector float v;
-   float f[4];
-} float4;
-
-
 typedef union {
    ushort us[TILE_SIZE][TILE_SIZE];
    uint   ui[TILE_SIZE][TILE_SIZE];
