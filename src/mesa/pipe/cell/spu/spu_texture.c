@@ -150,16 +150,17 @@ sample_texture_bilinear(vector float texcoord)
    static const vector unsigned int offset01 = {0, 1, 0, 0};
 
    vector float tc = spu_mul(texcoord, spu.tex_size);
-   /* itcST */
+   /* integer texcoords S,T: */
    vector unsigned int itc00 = spu_convtu(tc, 0);  /* convert to int */
    vector unsigned int itc01 = spu_add(itc00, offset01);
    vector unsigned int itc10 = spu_add(itc00, offset10);
    vector unsigned int itc11 = spu_add(itc10, offset01);
 
-   itc00 = spu_and(itc00, spu.tex_size_mask);        /* mask (GL_REPEAT) */
-   itc01 = spu_and(itc01, spu.tex_size_mask);        /* mask (GL_REPEAT) */
-   itc10 = spu_and(itc10, spu.tex_size_mask);        /* mask (GL_REPEAT) */
-   itc11 = spu_and(itc11, spu.tex_size_mask);        /* mask (GL_REPEAT) */
+   /* mask (GL_REPEAT) */
+   itc00 = spu_and(itc00, spu.tex_size_mask);
+   itc01 = spu_and(itc01, spu.tex_size_mask);
+   itc10 = spu_and(itc10, spu.tex_size_mask);
+   itc11 = spu_and(itc11, spu.tex_size_mask);
 
    /* intra tile addr */
    vector unsigned int ij00 = spu_and(itc00, TILE_SIZE-1);
@@ -167,11 +168,21 @@ sample_texture_bilinear(vector float texcoord)
    vector unsigned int ij10 = spu_and(itc10, TILE_SIZE-1);
    vector unsigned int ij11 = spu_and(itc11, TILE_SIZE-1);
 
+   /* get tile cache positions */
    uint pos00 = get_tex_tile(itc00);
-   uint pos01 = get_tex_tile(itc01);
-   uint pos10 = get_tex_tile(itc10);
-   uint pos11 = get_tex_tile(itc11);
+   uint pos01, pos10, pos11;
+   if ((spu_extract(ij00, 0) < TILE_SIZE-1) &&
+       (spu_extract(ij00, 1) < TILE_SIZE-1)) {
+      /* all texels are in the same tile */
+      pos01 = pos10 = pos11 = pos00;
+   }
+   else {
+      pos01 = get_tex_tile(itc01);
+      pos10 = get_tex_tile(itc10);
+      pos11 = get_tex_tile(itc11);
+   }
 
+   /* get texels from tiles and convert to float[4] */
    vector float texel00 = spu_unpack_color(tex_tiles[pos00].ui[spu_extract(ij00, 1)][spu_extract(ij00, 0)]);
    vector float texel01 = spu_unpack_color(tex_tiles[pos01].ui[spu_extract(ij01, 1)][spu_extract(ij01, 0)]);
    vector float texel10 = spu_unpack_color(tex_tiles[pos10].ui[spu_extract(ij10, 1)][spu_extract(ij10, 0)]);
