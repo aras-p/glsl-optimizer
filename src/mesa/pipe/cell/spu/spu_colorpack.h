@@ -91,4 +91,19 @@ spu_unpack_color(uint color)
 }
 
 
+static INLINE vector float
+spu_unpack_A8R8G8B8(uint color)
+{
+   vector unsigned int color_u4 = spu_splats(color);
+   color_u4 = spu_shuffle(color_u4, color_u4,
+                          VEC_LITERAL(vector unsigned char,
+                                      5, 5, 5, 5,
+                                      10, 10, 10, 10,
+                                      15, 15, 15, 15,
+                                      0, 0, 0, 0));
+
+   return spu_convtf(color_u4, 32);
+}
+
+
 #endif /* SPU_COLORPACK_H */
