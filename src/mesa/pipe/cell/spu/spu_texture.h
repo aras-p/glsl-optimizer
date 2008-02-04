@@ -40,4 +40,8 @@ extern uint
 sample_texture(vector float texcoord);
 
 
+extern uint
+sample_texture_bilinear(vector float texcoord);
+
+
 #endif /* SPU_TEXTURE_H */
