@@ -29,6 +29,7 @@
  */
 
 #include "pipe/p_util.h"
+#include "pipe/draw/draw_context.h"
 #include "cell_context.h"
 #include "cell_state.h"
 
@@ -49,6 +50,8 @@ cell_bind_blend_state(struct pipe_context *pipe, void *blend)
 {
    struct cell_context *cell = cell_context(pipe);
 
+   draw_flush(cell->draw);
+
    cell->blend = (const struct pipe_blend_state *)blend;
 
    cell->dirty |= CELL_NEW_BLEND;
@@ -67,6 +70,8 @@ cell_set_blend_color(struct pipe_context *pipe,
                      const struct pipe_blend_color *blend_color)
 {
    struct cell_context *cell = cell_context(pipe);
+
+   draw_flush(cell->draw);
 
    cell->blend_color = *blend_color;
 
@@ -92,6 +97,8 @@ cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
                                     void *depth_stencil)
 {
    struct cell_context *cell = cell_context(pipe);
+
+   draw_flush(cell->draw);
 
    cell->depth_stencil
       = (const struct pipe_depth_stencil_alpha_state *) depth_stencil;
