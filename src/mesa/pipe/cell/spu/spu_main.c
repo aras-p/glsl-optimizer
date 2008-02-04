@@ -233,6 +233,18 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 
 
 static void
+cmd_state_blend(const struct pipe_blend_state *state)
+{
+   if (Debug)
+      printf("SPU %u: BLEND: ztest %d\n",
+             spu.init.id,
+             state->blend_enable);
+
+   memcpy(&spu.blend, state, sizeof(*state));
+}
+
+
+static void
 cmd_state_depth_stencil(const struct pipe_depth_stencil_alpha_state *state)
 {
    if (Debug)
@@ -397,6 +409,11 @@ cmd_batch(uint opcode)
       case CELL_CMD_FINISH:
          cmd_finish();
          pos += 1;
+         break;
+      case CELL_CMD_STATE_BLEND:
+         cmd_state_blend((struct pipe_blend_state *)
+                                 &buffer[pos+1]);
+         pos += (1 + sizeof(struct pipe_blend_state) / 4);
          break;
       case CELL_CMD_STATE_DEPTH_STENCIL:
          cmd_state_depth_stencil((struct pipe_depth_stencil_alpha_state *)

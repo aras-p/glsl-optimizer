@@ -85,7 +85,8 @@
 #define CELL_CMD_STATE_VERTEX_INFO   14
 #define CELL_CMD_STATE_VIEWPORT      15
 #define CELL_CMD_STATE_VS_ARRAY_INFO 16
-#define CELL_CMD_VS_EXECUTE          17
+#define CELL_CMD_STATE_BLEND         17
+#define CELL_CMD_VS_EXECUTE          18
 
 
 #define CELL_NUM_BUFFERS 4
