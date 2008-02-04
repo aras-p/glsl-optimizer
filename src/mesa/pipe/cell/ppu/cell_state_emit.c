@@ -61,6 +61,12 @@ cell_emit_state(struct cell_context *cell)
       fb->height = cell->framebuffer.cbufs[0]->height;
    }
 
+   if (cell->dirty & CELL_NEW_BLEND) {
+      emit_state_cmd(cell, CELL_CMD_STATE_BLEND,
+                     cell->blend,
+                     sizeof(struct pipe_blend_state));
+   }
+
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
       emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL,
                      cell->depth_stencil,

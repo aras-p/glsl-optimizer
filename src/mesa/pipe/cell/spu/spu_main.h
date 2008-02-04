@@ -86,6 +86,7 @@ struct spu_global
    struct cell_init_info init;
 
    struct spu_framebuffer fb;
+   struct pipe_blend_state blend_stencil;
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
