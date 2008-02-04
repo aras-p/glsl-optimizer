@@ -128,12 +128,23 @@ get_tex_tile(uint i, uint j)
  * XXX this is extremely primitive for now.
  */
 uint
-sample_texture(float4 texcoord)
+sample_texture(vector float texcoord)
 {
+#if 0
    /* wrap/repeat */
-   uint i = (uint) (texcoord.f[0] * spu.texture.width) % spu.texture.width;
-   uint j = (uint) (texcoord.f[1] * spu.texture.height) % spu.texture.height;
+   uint i = (uint) (spu_extract(texcoord, 0) * spu.texture.width) % spu.texture.width;
+   uint j = (uint) (spu_extract(texcoord, 1) * spu.texture.height) % spu.texture.height;
    uint pos = get_tex_tile(i, j);
    uint texel = tex_tiles[pos].ui[j % TILE_SIZE][i % TILE_SIZE];
    return texel;
+#else
+   vector float tc = spu_mul(texcoord, spu.tex_size);
+   vector unsigned int itc = spu_convtu(tc, 0);
+   itc = spu_and(itc, spu.tex_size_mask);
+   uint i = spu_extract(itc, 0);
+   uint j = spu_extract(itc, 1);
+   uint pos = get_tex_tile(i, j);
+   uint texel = tex_tiles[pos].ui[j % TILE_SIZE][i % TILE_SIZE];
+   return texel;
+#endif
 }
