@@ -36,6 +36,17 @@
 
 
 static INLINE unsigned int
+spu_pack_R8G8B8A8(vector float rgba)
+{
+  vector unsigned int out = spu_convtu(rgba, 32);
+  out = spu_shuffle(out, out, VEC_LITERAL(vector unsigned char,
+					  0, 4, 8, 12, 0, 0, 0, 0, 
+                                          0, 0, 0, 0, 0, 0, 0, 0));
+  return spu_extract(out, 0);
+}
+
+
+static INLINE unsigned int
 spu_pack_A8R8G8B8(vector float rgba)
 {
   vector unsigned int out = spu_convtu(rgba, 32);
@@ -63,6 +74,20 @@ spu_pack_color_shuffle(vector float rgba, vector unsigned char shuffle)
   vector unsigned int out = spu_convtu(rgba, 32);
   out = spu_shuffle(out, out, shuffle);
   return spu_extract(out, 0);
+}
+
+
+static INLINE vector float
+spu_unpack_color(uint color)
+{
+   vector unsigned int color_u4 = spu_splats(color);
+   color_u4 = spu_shuffle(color_u4, color_u4,
+                          VEC_LITERAL(vector unsigned char,
+                                      0, 0, 0, 0,
+                                      5, 5, 5, 5,
+                                      10, 10, 10, 10,
+                                      15, 15, 15, 15));
+   return spu_convtf(color_u4, 32);
 }
 
 
