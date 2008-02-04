@@ -1,0 +1,43 @@
+	      CROSS-PLATFORM PORTABILITY GUIDELINES FOR GALLIUM3D 
+
+
+= General Considerations =
+
+The state tracker and winsys driver support a rather limited number of
+platforms. However, the pipe drivers are meant to run in a wide number of
+platforms. Hence the pipe drivers, the auxiliary modules, and all public
+headers in general, should stricly follow these guidelines to ensure
+
+
+= Compiler Support =
+
+* Include the p_compiler.h.
+
+* Don't use the 'inline' keyword, use the INLINE macro in p_compiler.h instead.
+
+* Cast explicitly when converting to integer types of smaller sizes.
+
+* Cast explicitly when converting between float, double and integral types.
+
+* Don't use named struct initializers.
+
+* Don't use variable number of macro arguments. Use static inline functions
+instead.
+
+
+= Standard Library =
+
+* Avoid including standard library headers. Most standard library functions are
+not available in Windows Kernel Mode. Use the appropriate p_*.h include.
+
+== Memory Allocation ==
+
+* Use MALLOC, CALLOC, FREE instead of the malloc, calloc, free functions.
+
+* Use align_pointer() function defined in p_util.h for aligning pointers in a
+portable way.
+
+== Debugging ==
+
+TODO
+
