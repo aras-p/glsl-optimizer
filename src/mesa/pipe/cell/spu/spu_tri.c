@@ -32,6 +32,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
+#include "spu_blend.h"
 #include "spu_colorpack.h"
 #include "spu_main.h"
 #include "spu_texture.h"
@@ -206,14 +207,14 @@ clip_emit_quad(struct setup_stage *setup)
  * Eg: four colors will be compute.
  */
 static INLINE void
-eval_coeff(uint slot, float x, float y, float4 result[4])
+eval_coeff(uint slot, float x, float y, vector float result[4])
 {
    switch (spu.vertex_info.interp_mode[slot]) {
    case INTERP_CONSTANT:
       result[QUAD_TOP_LEFT] =
       result[QUAD_TOP_RIGHT] =
       result[QUAD_BOTTOM_LEFT] =
-      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0;
+      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0.v;
       break;
 
    case INTERP_LINEAR:
@@ -227,10 +228,10 @@ eval_coeff(uint slot, float x, float y, float4 result[4])
                       spu_add(spu_mul(spu_splats(x), dadx),
                               spu_mul(spu_splats(y), dady)));
 
-         result[QUAD_TOP_LEFT].v = topLeft;
-         result[QUAD_TOP_RIGHT].v = spu_add(topLeft, dadx);
-         result[QUAD_BOTTOM_LEFT].v = spu_add(topLeft, dady);
-         result[QUAD_BOTTOM_RIGHT].v = spu_add(spu_add(topLeft, dadx), dady);
+         result[QUAD_TOP_LEFT] = topLeft;
+         result[QUAD_TOP_RIGHT] = spu_add(topLeft, dadx);
+         result[QUAD_BOTTOM_LEFT] = spu_add(topLeft, dady);
+         result[QUAD_BOTTOM_RIGHT] = spu_add(spu_add(topLeft, dadx), dady);
       }
    }
 }
@@ -305,32 +306,32 @@ emit_quad( int x, int y, mask_t mask )
 
       if (spu.texture.start) {
          /* texture mapping */
-         float4 texcoords[4];
+         vector float texcoords[4];
          eval_coeff(2, (float) x, (float) y, texcoords);
 
          if (spu_extract(mask, 0))
-            spu.ctile.ui[iy][ix] = spu.sample_texture(texcoords[0].v);
+            spu.ctile.ui[iy][ix] = spu.sample_texture(texcoords[0]);
          if (spu_extract(mask, 1))
-            spu.ctile.ui[iy][ix+1] = spu.sample_texture(texcoords[1].v);
+            spu.ctile.ui[iy][ix+1] = spu.sample_texture(texcoords[1]);
          if (spu_extract(mask, 2))
-            spu.ctile.ui[iy+1][ix] = spu.sample_texture(texcoords[2].v);
+            spu.ctile.ui[iy+1][ix] = spu.sample_texture(texcoords[2]);
          if (spu_extract(mask, 3))
-            spu.ctile.ui[iy+1][ix+1] = spu.sample_texture(texcoords[3].v);
+            spu.ctile.ui[iy+1][ix+1] = spu.sample_texture(texcoords[3]);
       }
       else {
          /* simple shading */
          const vector unsigned char shuffle = spu.color_shuffle;
-         float4 colors[4];
+         vector float colors[4];
          eval_coeff(1, (float) x, (float) y, colors);
 
          if (spu_extract(mask, 0))
-            spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0].v, shuffle);
+            spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0], shuffle);
          if (spu_extract(mask, 1))
-            spu.ctile.ui[iy][ix+1] = spu_pack_color_shuffle(colors[1].v, shuffle);
+            spu.ctile.ui[iy][ix+1] = spu_pack_color_shuffle(colors[1], shuffle);
          if (spu_extract(mask, 2))
-            spu.ctile.ui[iy+1][ix] = spu_pack_color_shuffle(colors[2].v, shuffle);
+            spu.ctile.ui[iy+1][ix] = spu_pack_color_shuffle(colors[2], shuffle);
          if (spu_extract(mask, 3))
-            spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(colors[3].v, shuffle);
+            spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(colors[3], shuffle);
       }
 
 #if 0
