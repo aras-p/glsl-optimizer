@@ -43,21 +43,36 @@ extern "C" {
 
 struct tgsi_token;
 
+struct gallivm_ir;
 struct gallivm_prog;
 struct gallivm_cpu_engine;
 struct tgsi_interp_coef;
 struct tgsi_sampler;
+struct tgsi_exec_vector;
 
 enum gallivm_shader_type {
    GALLIVM_VS,
    GALLIVM_FS
 };
 
-struct gallivm_prog *gallivm_from_tgsi(const struct tgsi_token *tokens, enum gallivm_shader_type type);
-void gallivm_prog_delete(struct gallivm_prog *prog);
+enum gallivm_vector_layout {
+   GALLIVM_AOS,
+   GALLIVM_SOA
+};
+
+struct gallivm_ir *gallivm_ir_new(enum gallivm_shader_type type);
+void gallivm_ir_set_layout(struct gallivm_ir *prog,
+                           enum gallivm_vector_layout layout);
+void gallivm_ir_set_components(struct gallivm_ir *prog, int num);
+void gallivm_ir_fill_from_tgsi(struct gallivm_ir *prog,
+                               const struct tgsi_token *tokens);
+void gallivm_ir_delete(struct gallivm_ir *prog);
+
+struct gallivm_prog *gallivm_ir_compile(struct gallivm_ir *ir);
+
 int gallivm_prog_exec(struct gallivm_prog *prog,
-                      float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
-                      float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
+                      struct tgsi_exec_vector       *inputs,
+                      struct tgsi_exec_vector       *dests,
                       float (*consts)[4],
                       int num_vertices,
                       int num_inputs,

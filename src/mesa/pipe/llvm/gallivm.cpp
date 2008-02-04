@@ -32,17 +32,17 @@
 #ifdef MESA_LLVM
 
 #include "gallivm.h"
+#include "gallivm_p.h"
 
 #include "instructions.h"
 #include "loweringpass.h"
 #include "storage.h"
+#include "tgsitollvm.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/tgsi/util/tgsi_parse.h"
+
 #include "pipe/tgsi/exec/tgsi_exec.h"
-#include "pipe/tgsi/util/tgsi_util.h"
-#include "pipe/tgsi/util/tgsi_build.h"
 #include "pipe/tgsi/util/tgsi_dump.h"
 
 #include <llvm/Module.h>
@@ -64,38 +64,23 @@
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Target/TargetData.h>
 #include <llvm/Bitcode/ReaderWriter.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 
 #include <sstream>
 #include <fstream>
 #include <iostream>
 
-struct gallivm_interpolate {
-   int attrib;
-   int chan;
-   int type;
-};
-
-struct gallivm_prog {
-   llvm::Module *module;
-   void *function;
-   int   num_consts;
-   int   id;
-   enum gallivm_shader_type type;
-
-   struct gallivm_interpolate interpolators[32*4]; //FIXME: this might not be enough for some shaders
-   int   num_interp;
-};
-
 struct gallivm_cpu_engine {
    llvm::ExecutionEngine *engine;
 };
 
-using namespace llvm;
-#include "llvm_base_shader.cpp"
-
 static int GLOBAL_ID = 0;
 
-static inline void AddStandardCompilePasses(PassManager &PM) {
+using namespace llvm;
+
+static inline
+void AddStandardCompilePasses(PassManager &PM)
+{
    PM.add(new LoweringPass());
    PM.add(createVerifierPass());                  // Verify that input is correct
 
@@ -152,691 +137,16 @@ static inline void AddStandardCompilePasses(PassManager &PM) {
    PM.add(createConstantMergePass());        // Merge dup global constants
 }
 
-static inline void
-add_interpolator(struct gallivm_prog *prog,
-                 struct gallivm_interpolate *interp)
-{
-   prog->interpolators[prog->num_interp] = *interp;
-   ++prog->num_interp;
-}
-
-static void
-translate_declaration(struct gallivm_prog *prog,
-                      llvm::Module *module,
-                      Storage *storage,
-                      struct tgsi_full_declaration *decl,
-                      struct tgsi_full_declaration *fd)
-{
-   if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      unsigned first, last, mask;
-      uint interp_method;
-
-      assert(decl->Declaration.Declare == TGSI_DECLARE_RANGE);
-
-      first = decl->u.DeclarationRange.First;
-      last = decl->u.DeclarationRange.Last;
-      mask = decl->Declaration.UsageMask;
-
-      /* Do not touch WPOS.xy */
-      if (first == 0) {
-         mask &= ~TGSI_WRITEMASK_XY;
-         if (mask == TGSI_WRITEMASK_NONE) {
-            first++;
-            if (first > last) {
-               return;
-            }
-         }
-      }
-
-      interp_method = decl->Interpolation.Interpolate;
-
-      if (mask == TGSI_WRITEMASK_XYZW) {
-         unsigned i, j;
-
-         for (i = first; i <= last; i++) {
-            for (j = 0; j < NUM_CHANNELS; j++) {
-               //interp( mach, i, j );
-               struct gallivm_interpolate interp;
-               interp.type = interp_method;
-               interp.attrib = i;
-               interp.chan = j;
-               add_interpolator(prog, &interp);
-            }
-         }
-      } else {
-         unsigned i, j;
-         for( j = 0; j < NUM_CHANNELS; j++ ) {
-            if( mask & (1 << j) ) {
-               for( i = first; i <= last; i++ ) {
-                  struct gallivm_interpolate interp;
-                  interp.type = interp_method;
-                  interp.attrib = i;
-                  interp.chan = j;
-                  add_interpolator(prog, &interp);
-               }
-            }
-         }
-      }
-   }
-}
-
-
-static void
-translate_immediate(Storage *storage,
-                    struct tgsi_full_immediate *imm)
-{
-   float vec[4];
-   int i;
-   for (i = 0; i < imm->Immediate.Size - 1; ++i) {
-      switch( imm->Immediate.DataType ) {
-      case TGSI_IMM_FLOAT32:
-         vec[i] = imm->u.ImmediateFloat32[i].Float;
-         break;
-      default:
-         assert( 0 );
-      }
-   }
-   storage->addImmediate(vec);
-}
-
-static inline llvm::Value *
-swizzleVector(llvm::Value *val, struct tgsi_full_src_register *src,
-              Storage *storage)
-{
-   int swizzle = 0;
-   int start = 1000;
-   const int NO_SWIZZLE = TGSI_SWIZZLE_X * 1000 + TGSI_SWIZZLE_Y * 100 +
-                          TGSI_SWIZZLE_Z * 10 + TGSI_SWIZZLE_W;
-   for (int k = 0; k < 4; ++k) {
-      swizzle += tgsi_util_get_full_src_register_extswizzle(src, k) * start;
-      start /= 10;
-   }
-   if (swizzle != NO_SWIZZLE) {
-      /*fprintf(stderr, "XXXXXXXX swizzle = %d\n", swizzle);*/
-      val = storage->shuffleVector(val, swizzle);
-   }
-   return val;
-}
-
-static void
-translate_instruction(llvm::Module *module,
-                      Storage *storage,
-                      Instructions *instr,
-                      struct tgsi_full_instruction *inst,
-                      struct tgsi_full_instruction *fi,
-                      unsigned instno)
-{
-   llvm::Value *inputs[4];
-   inputs[0] = 0;
-   inputs[1] = 0;
-   inputs[2] = 0;
-   inputs[3] = 0;
-
-   for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
-      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
-      llvm::Value *val = 0;
-      llvm::Value *indIdx = 0;
-
-      if (src->SrcRegister.Indirect) {
-         indIdx = storage->addrElement(src->SrcRegisterInd.Index);
-         indIdx = storage->extractIndex(indIdx);
-      }
-      if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
-         val = storage->constElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-         val = storage->inputElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
-         val = storage->tempElement(src->SrcRegister.Index);
-      } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
-         val = storage->outputElement(src->SrcRegister.Index, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
-         val = storage->immediateElement(src->SrcRegister.Index);
-      } else {
-         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
-         return;
-      }
-
-      inputs[i] = swizzleVector(val, src, storage);
-   }
-
-   /*if (inputs[0])
-     instr->printVector(inputs[0]);
-     if (inputs[1])
-     instr->printVector(inputs[1]);*/
-   llvm::Value *out = 0;
-   switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_ARL: {
-      out = instr->arl(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_MOV: {
-      out = inputs[0];
-   }
-      break;
-   case TGSI_OPCODE_LIT: {
-      out = instr->lit(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_RCP: {
-      out = instr->rcp(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_RSQ: {
-      out = instr->rsq(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_EXP:
-      break;
-   case TGSI_OPCODE_LOG:
-      break;
-   case TGSI_OPCODE_MUL: {
-      out = instr->mul(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_ADD: {
-      out = instr->add(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_DP3: {
-      out = instr->dp3(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_DP4: {
-      out = instr->dp4(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_DST: {
-      out = instr->dst(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_MIN: {
-      out = instr->min(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_MAX: {
-      out = instr->max(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_SLT: {
-      out = instr->slt(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_SGE: {
-      out = instr->sge(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_MAD: {
-      out = instr->madd(inputs[0], inputs[1], inputs[2]);
-   }
-      break;
-   case TGSI_OPCODE_SUB: {
-      out = instr->sub(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_LERP: {
-      out = instr->lerp(inputs[0], inputs[1], inputs[2]);
-   }
-      break;
-   case TGSI_OPCODE_CND:
-      break;
-   case TGSI_OPCODE_CND0:
-      break;
-   case TGSI_OPCODE_DOT2ADD:
-      break;
-   case TGSI_OPCODE_INDEX:
-      break;
-   case TGSI_OPCODE_NEGATE:
-      break;
-   case TGSI_OPCODE_FRAC: {
-      out = instr->frc(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_CLAMP:
-      break;
-   case TGSI_OPCODE_FLOOR: {
-      out = instr->floor(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_ROUND:
-      break;
-   case TGSI_OPCODE_EXPBASE2: {
-      out = instr->ex2(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_LOGBASE2: {
-      out = instr->lg2(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_POWER: {
-      out = instr->pow(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_CROSSPRODUCT: {
-      out = instr->cross(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_MULTIPLYMATRIX:
-      break;
-   case TGSI_OPCODE_ABS: {
-      out = instr->abs(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_RCC:
-      break;
-   case TGSI_OPCODE_DPH: {
-      out = instr->dph(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_COS: {
-      out = instr->cos(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_DDX:
-      break;
-   case TGSI_OPCODE_DDY:
-      break;
-   case TGSI_OPCODE_KILP: {
-      out = instr->kilp(inputs[0]);
-      storage->setKilElement(out);
-      return;
-   }
-      break;
-   case TGSI_OPCODE_PK2H:
-      break;
-   case TGSI_OPCODE_PK2US:
-      break;
-   case TGSI_OPCODE_PK4B:
-      break;
-   case TGSI_OPCODE_PK4UB:
-      break;
-   case TGSI_OPCODE_RFL:
-      break;
-   case TGSI_OPCODE_SEQ:
-      break;
-   case TGSI_OPCODE_SFL:
-      break;
-   case TGSI_OPCODE_SGT: {
-      out = instr->sgt(inputs[0], inputs[1]);
-   }
-      break;
-   case TGSI_OPCODE_SIN: {
-      out = instr->sin(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_SLE:
-      break;
-   case TGSI_OPCODE_SNE:
-      break;
-   case TGSI_OPCODE_STR:
-      break;
-   case TGSI_OPCODE_TEX:
-      break;
-   case TGSI_OPCODE_TXD:
-      break;
-   case TGSI_OPCODE_UP2H:
-      break;
-   case TGSI_OPCODE_UP2US:
-      break;
-   case TGSI_OPCODE_UP4B:
-      break;
-   case TGSI_OPCODE_UP4UB:
-      break;
-   case TGSI_OPCODE_X2D:
-      break;
-   case TGSI_OPCODE_ARA:
-      break;
-   case TGSI_OPCODE_ARR:
-      break;
-   case TGSI_OPCODE_BRA:
-      break;
-   case TGSI_OPCODE_CAL: {
-      instr->cal(inst->InstructionExtLabel.Label, storage->inputPtr());
-      return;
-   }
-      break;
-   case TGSI_OPCODE_RET: {
-      instr->end();
-      return;
-   }
-      break;
-   case TGSI_OPCODE_SSG:
-      break;
-   case TGSI_OPCODE_CMP: {
-      out = instr->cmp(inputs[0], inputs[1], inputs[2]);
-   }
-      break;
-   case TGSI_OPCODE_SCS: {
-      out = instr->scs(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_TXB:
-      break;
-   case TGSI_OPCODE_NRM:
-      break;
-   case TGSI_OPCODE_DIV:
-      break;
-   case TGSI_OPCODE_DP2:
-      break;
-   case TGSI_OPCODE_TXL:
-      break;
-   case TGSI_OPCODE_BRK: {
-      instr->brk();
-      return;
-   }
-      break;
-   case TGSI_OPCODE_IF: {
-      instr->ifop(inputs[0]);
-      storage->setCurrentBlock(instr->currentBlock());
-      return;  //just update the state
-   }
-      break;
-   case TGSI_OPCODE_LOOP:
-      break;
-   case TGSI_OPCODE_REP:
-      break;
-   case TGSI_OPCODE_ELSE: {
-      instr->elseop();
-      storage->setCurrentBlock(instr->currentBlock());
-      return; //only state update
-   }
-      break;
-   case TGSI_OPCODE_ENDIF: {
-      instr->endif();
-      storage->setCurrentBlock(instr->currentBlock());
-      return; //just update the state
-   }
-      break;
-   case TGSI_OPCODE_ENDLOOP:
-      break;
-   case TGSI_OPCODE_ENDREP:
-      break;
-   case TGSI_OPCODE_PUSHA:
-      break;
-   case TGSI_OPCODE_POPA:
-      break;
-   case TGSI_OPCODE_CEIL:
-      break;
-   case TGSI_OPCODE_I2F:
-      break;
-   case TGSI_OPCODE_NOT:
-      break;
-   case TGSI_OPCODE_TRUNC: {
-      out = instr->trunc(inputs[0]);
-   }
-      break;
-   case TGSI_OPCODE_SHL:
-      break;
-   case TGSI_OPCODE_SHR:
-      break;
-   case TGSI_OPCODE_AND:
-      break;
-   case TGSI_OPCODE_OR:
-      break;
-   case TGSI_OPCODE_MOD:
-      break;
-   case TGSI_OPCODE_XOR:
-      break;
-   case TGSI_OPCODE_SAD:
-      break;
-   case TGSI_OPCODE_TXF:
-      break;
-   case TGSI_OPCODE_TXQ:
-      break;
-   case TGSI_OPCODE_CONT:
-      break;
-   case TGSI_OPCODE_EMIT:
-      break;
-   case TGSI_OPCODE_ENDPRIM:
-      break;
-   case TGSI_OPCODE_BGNLOOP2: {
-      instr->beginLoop();
-      storage->setCurrentBlock(instr->currentBlock());
-      return;
-   }
-      break;
-   case TGSI_OPCODE_BGNSUB: {
-      instr->bgnSub(instno);
-      storage->setCurrentBlock(instr->currentBlock());
-      storage->pushTemps();
-      return;
-   }
-      break;
-   case TGSI_OPCODE_ENDLOOP2: {
-      instr->endLoop();
-      storage->setCurrentBlock(instr->currentBlock());
-      return;
-   }
-      break;
-   case TGSI_OPCODE_ENDSUB: {
-      instr->endSub();
-      storage->setCurrentBlock(instr->currentBlock());
-      storage->popArguments();
-      storage->popTemps();
-      return;
-   }
-      break;
-   case TGSI_OPCODE_NOISE1:
-      break;
-   case TGSI_OPCODE_NOISE2:
-      break;
-   case TGSI_OPCODE_NOISE3:
-      break;
-   case TGSI_OPCODE_NOISE4:
-      break;
-   case TGSI_OPCODE_NOP:
-      break;
-   case TGSI_OPCODE_TEXBEM:
-      break;
-   case TGSI_OPCODE_TEXBEML:
-      break;
-   case TGSI_OPCODE_TEXREG2AR:
-      break;
-   case TGSI_OPCODE_TEXM3X2PAD:
-      break;
-   case TGSI_OPCODE_TEXM3X2TEX:
-      break;
-   case TGSI_OPCODE_TEXM3X3PAD:
-      break;
-   case TGSI_OPCODE_TEXM3X3TEX:
-      break;
-   case TGSI_OPCODE_TEXM3X3SPEC:
-      break;
-   case TGSI_OPCODE_TEXM3X3VSPEC:
-      break;
-   case TGSI_OPCODE_TEXREG2GB:
-      break;
-   case TGSI_OPCODE_TEXREG2RGB:
-      break;
-   case TGSI_OPCODE_TEXDP3TEX:
-      break;
-   case TGSI_OPCODE_TEXDP3:
-      break;
-   case TGSI_OPCODE_TEXM3X3:
-      break;
-   case TGSI_OPCODE_TEXM3X2DEPTH:
-      break;
-   case TGSI_OPCODE_TEXDEPTH:
-      break;
-   case TGSI_OPCODE_BEM:
-      break;
-   case TGSI_OPCODE_M4X3:
-      break;
-   case TGSI_OPCODE_M3X4:
-      break;
-   case TGSI_OPCODE_M3X3:
-      break;
-   case TGSI_OPCODE_M3X2:
-      break;
-   case TGSI_OPCODE_NRM4:
-      break;
-   case TGSI_OPCODE_CALLNZ:
-      break;
-   case TGSI_OPCODE_IFC:
-      break;
-   case TGSI_OPCODE_BREAKC:
-      break;
-   case TGSI_OPCODE_KIL:
-      break;
-   case TGSI_OPCODE_END:
-      instr->end();
-      return;
-      break;
-   default:
-      fprintf(stderr, "ERROR: Unknown opcode %d\n",
-              inst->Instruction.Opcode);
-      assert(0);
-      break;
-   }
-
-   if (!out) {
-      fprintf(stderr, "ERROR: unsupported opcode %d\n",
-              inst->Instruction.Opcode);
-      assert(!"Unsupported opcode");
-   }
-
-   /* # not sure if we need this */
-   switch( inst->Instruction.Saturate ) {
-   case TGSI_SAT_NONE:
-      break;
-   case TGSI_SAT_ZERO_ONE:
-      /*TXT( "_SAT" );*/
-      break;
-   case TGSI_SAT_MINUS_PLUS_ONE:
-      /*TXT( "_SAT[-1,1]" );*/
-      break;
-   default:
-      assert( 0 );
-   }
-
-   /* store results  */
-   for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
-      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
-
-      if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
-         storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
-         storage->setAddrElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else {
-         fprintf(stderr, "ERROR: unsupported LLVM destination!");
-         assert(!"wrong destination");
-      }
-   }
-}
-
-static llvm::Module *
-tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
-{
-   llvm::Module *mod = createBaseShader();
-   struct tgsi_parse_context parse;
-   struct tgsi_full_instruction fi;
-   struct tgsi_full_declaration fd;
-   unsigned instno = 0;
-   Function* shader = mod->getFunction("execute_shader");
-   std::ostringstream stream;
-   if (prog->type == GALLIVM_VS) {
-      stream << "vs_shader";
-   } else {
-      stream << "fs_shader";
-   }
-   stream << prog->id;
-   std::string func_name = stream.str();
-   shader->setName(func_name.c_str());
-
-   Function::arg_iterator args = shader->arg_begin();
-   Value *ptr_INPUT = args++;
-   ptr_INPUT->setName("input");
-
-   BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
-
-   tgsi_parse_init(&parse, tokens);
-
-   fi = tgsi_default_full_instruction();
-   fd = tgsi_default_full_declaration();
-   Storage storage(label_entry, ptr_INPUT);
-   Instructions instr(mod, shader, label_entry, &storage);
-   while(!tgsi_parse_end_of_tokens(&parse)) {
-      tgsi_parse_token(&parse);
-
-      switch (parse.FullToken.Token.Type) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         translate_declaration(prog, mod, &storage,
-                               &parse.FullToken.FullDeclaration,
-                               &fd);
-         break;
-
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         translate_immediate(&storage,
-                             &parse.FullToken.FullImmediate);
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         translate_instruction(mod, &storage, &instr,
-                               &parse.FullToken.FullInstruction,
-                               &fi, instno);
-         ++instno;
-         break;
-
-      default:
-         assert(0);
-      }
-   }
-
-   tgsi_parse_free(&parse);
-
-   prog->num_consts = storage.numConsts();
-   return mod;
-}
-
-/*!
-  Translates the TGSI tokens into LLVM format. Translated representation
-  is stored in the gallivm_prog and returned.
-  After calling this function the gallivm_prog can either be used with a custom
-  code generator to generate machine code for the GPU which the code generator
-  addresses or it can be jit compiled with gallivm_cpu_jit_compile and executed
-  with gallivm_prog_exec to run the module on the CPU.
- */
-struct gallivm_prog *
-gallivm_from_tgsi(const struct tgsi_token *tokens, enum gallivm_shader_type type)
-{
-   std::cout << "Creating llvm from: " <<std::endl;
-   ++GLOBAL_ID;
-   struct gallivm_prog *gallivm =
-      (struct gallivm_prog *)calloc(1, sizeof(struct gallivm_prog));
-   gallivm->id = GLOBAL_ID;
-   gallivm->type = type;
-   tgsi_dump(tokens, 0);
-
-   llvm::Module *mod = tgsi_to_llvm(gallivm, tokens);
-   gallivm->module = mod;
-   gallivm_prog_dump(gallivm, 0);
-
-   /* Run optimization passes over it */
-   PassManager passes;
-   passes.add(new TargetData(mod));
-   AddStandardCompilePasses(passes);
-   passes.run(*mod);
-
-   gallivm->module = mod;
-
-   gallivm_prog_dump(gallivm, 0);
-
-   return gallivm;
-}
-
-
 void gallivm_prog_delete(struct gallivm_prog *prog)
 {
-   llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
-   delete mod;
+   delete prog->module;
    prog->module = 0;
    prog->function = 0;
    free(prog);
 }
 
-typedef void (*vertex_shader_runner)(float (*ainputs)[PIPE_MAX_SHADER_INPUTS][4],
-                                     float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
+typedef void (*vertex_shader_runner)(void *ainputs,
+                                     void *dests,
                                      float (*aconsts)[4],
                                      int num_vertices,
                                      int num_inputs,
@@ -850,8 +160,8 @@ typedef void (*vertex_shader_runner)(float (*ainputs)[PIPE_MAX_SHADER_INPUTS][4]
   function.
  */
 int gallivm_prog_exec(struct gallivm_prog *prog,
-                      float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
-                      float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
+                      struct tgsi_exec_vector       *inputs,
+                      struct tgsi_exec_vector       *dests,
                       float (*consts)[4],
                       int num_vertices,
                       int num_inputs,
@@ -943,18 +253,15 @@ int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                  samplers);
 }
 
-void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
+void gallivm_ir_dump(struct gallivm_ir *ir, const char *file_prefix)
 {
-   llvm::Module *mod;
-   if (!prog || !prog->module)
+   if (!ir || !ir->module)
       return;
-
-   mod = static_cast<llvm::Module*>(prog->module);
 
    if (file_prefix) {
       std::ostringstream stream;
       stream << file_prefix;
-      stream << prog->id;
+      stream << ir->id;
       stream << ".ll";
       std::string name = stream.str();
       std::ofstream out(name.c_str());
@@ -962,12 +269,12 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
          std::cerr<<"Can't open file : "<<stream.str()<<std::endl;;
          return;
       }
-      out << (*mod);
+      out << (*ir->module);
       out.close();
    } else {
-      const llvm::Module::FunctionListType &funcs = mod->getFunctionList();
+      const llvm::Module::FunctionListType &funcs = ir->module->getFunctionList();
       llvm::Module::FunctionListType::const_iterator itr;
-      std::cout<<"; ---------- Start shader "<<prog->id<<std::endl;
+      std::cout<<"; ---------- Start shader "<<ir->id<<std::endl;
       for (itr = funcs.begin(); itr != funcs.end(); ++itr) {
          const llvm::Function &func = (*itr);
          std::string name = func.getName();
@@ -980,7 +287,7 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
             std::cout<<*found<<std::endl;
          }
       }
-      std::cout<<"; ---------- End shader "<<prog->id<<std::endl;
+      std::cout<<"; ---------- End shader "<<ir->id<<std::endl;
    }
 }
 
@@ -1086,9 +393,63 @@ void gallivm_prog_inputs_interpolate(struct gallivm_prog *prog,
    }
 }
 
+
+struct gallivm_ir * gallivm_ir_new(enum gallivm_shader_type type)
+{
+   struct gallivm_ir *ir =
+      (struct gallivm_ir *)calloc(1, sizeof(struct gallivm_ir));
+   ++GLOBAL_ID;
+   ir->id   = GLOBAL_ID;
+   ir->type = type;
+
+   return ir;
+}
+
+void gallivm_ir_set_layout(struct gallivm_ir *ir,
+                           enum gallivm_vector_layout layout)
+{
+   ir->layout = layout;
+}
+
+void gallivm_ir_set_components(struct gallivm_ir *ir, int num)
+{
+   ir->num_components = num;
+}
+
+void gallivm_ir_fill_from_tgsi(struct gallivm_ir *ir,
+                               const struct tgsi_token *tokens)
+{
+   std::cout << "Creating llvm from: " <<std::endl;
+   tgsi_dump(tokens, 0);
+
+   llvm::Module *mod = tgsi_to_llvm(ir, tokens);
+   ir->module = mod;
+   gallivm_ir_dump(ir, 0);
+}
+
+void gallivm_ir_delete(struct gallivm_ir *ir)
+{
+   delete ir->module;
+   free(ir);
+}
+
+struct gallivm_prog * gallivm_ir_compile(struct gallivm_ir *ir)
+{
+   struct gallivm_prog *prog =
+      (struct gallivm_prog *)calloc(1, sizeof(struct gallivm_prog));
+   llvm::Module *mod = llvm::CloneModule(ir->module);
+   prog->num_consts = ir->num_consts;
+   memcpy(prog->interpolators, ir->interpolators, sizeof(prog->interpolators));
+   prog->num_interp = ir->num_interp;
+
+   /* Run optimization passes over it */
+   PassManager passes;
+   passes.add(new TargetData(mod));
+   AddStandardCompilePasses(passes);
+   passes.run(*mod);
+   prog->module = mod;
+
+   return prog;
+}
+
 #endif /* MESA_LLVM */
-
-
-
-
-

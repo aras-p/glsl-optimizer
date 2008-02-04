@@ -104,8 +104,8 @@ Module* createBaseShader() {
     /*isVarArg=*/false);
   
   std::vector<const Type*>FuncTy_18_args;
-  FuncTy_18_args.push_back(PointerTy_12);
-  FuncTy_18_args.push_back(PointerTy_12);
+  FuncTy_18_args.push_back(PointerTy_9);
+  FuncTy_18_args.push_back(PointerTy_9);
   FuncTy_18_args.push_back(PointerTy_7);
   FuncTy_18_args.push_back(IntegerType::get(32));
   FuncTy_18_args.push_back(IntegerType::get(32));
@@ -526,14 +526,23 @@ Module* createBaseShader() {
     BasicBlock* label_forbody_preheader_i = new BasicBlock("forbody.preheader.i",func_run_vertex_shader,0);
     BasicBlock* label_forbody_i = new BasicBlock("forbody.i",func_run_vertex_shader,0);
     BasicBlock* label_from_consts_exit = new BasicBlock("from_consts.exit",func_run_vertex_shader,0);
-    BasicBlock* label_forbody_preheader_91 = new BasicBlock("forbody.preheader",func_run_vertex_shader,0);
-    BasicBlock* label_forbody_92 = new BasicBlock("forbody",func_run_vertex_shader,0);
-    BasicBlock* label_afterfor_93 = new BasicBlock("afterfor",func_run_vertex_shader,0);
     
     // Block entry (label_entry_90)
     AllocaInst* ptr_consts = new AllocaInst(ArrayTy_20, "consts", label_entry_90);
     AllocaInst* ptr_temps = new AllocaInst(ArrayTy_22, "temps", label_entry_90);
     AllocaInst* ptr_args = new AllocaInst(StructTy_struct_ShaderInput, "args", label_entry_90);
+    std::vector<Value*> ptr_tmp_indices;
+    ptr_tmp_indices.push_back(const_int32_29);
+    ptr_tmp_indices.push_back(const_int32_29);
+    Instruction* ptr_tmp = new GetElementPtrInst(ptr_args, ptr_tmp_indices.begin(), ptr_tmp_indices.end(), "tmp", label_entry_90);
+    CastInst* ptr_conv = new BitCastInst(ptr_results, PointerTy_0, "conv", label_entry_90);
+    StoreInst* void_91 = new StoreInst(ptr_conv, ptr_tmp, false, label_entry_90);
+    std::vector<Value*> ptr_tmp2_indices;
+    ptr_tmp2_indices.push_back(const_int32_29);
+    ptr_tmp2_indices.push_back(const_int32_31);
+    Instruction* ptr_tmp2 = new GetElementPtrInst(ptr_args, ptr_tmp2_indices.begin(), ptr_tmp2_indices.end(), "tmp2", label_entry_90);
+    CastInst* ptr_conv4 = new BitCastInst(ptr_inputs, PointerTy_0, "conv4", label_entry_90);
+    StoreInst* void_92 = new StoreInst(ptr_conv4, ptr_tmp2, false, label_entry_90);
     ICmpInst* int1_cmp_i = new ICmpInst(ICmpInst::ICMP_SGT, int32_num_consts, const_int32_29, "cmp.i", label_entry_90);
     new BranchInst(label_forbody_preheader_i, label_from_consts_exit, int1_cmp_i, label_entry_90);
     
@@ -544,17 +553,17 @@ Module* createBaseShader() {
     new BranchInst(label_forbody_i, label_forbody_preheader_i);
     
     // Block forbody.i (label_forbody_i)
-    Argument* fwdref_96 = new Argument(IntegerType::get(32));
+    Argument* fwdref_95 = new Argument(IntegerType::get(32));
     PHINode* int32_i_0_reg2mem_0_i = new PHINode(IntegerType::get(32), "i.0.reg2mem.0.i", label_forbody_i);
     int32_i_0_reg2mem_0_i->reserveOperandSpace(2);
     int32_i_0_reg2mem_0_i->addIncoming(const_int32_29, label_forbody_preheader_i);
-    int32_i_0_reg2mem_0_i->addIncoming(fwdref_96, label_forbody_i);
+    int32_i_0_reg2mem_0_i->addIncoming(fwdref_95, label_forbody_i);
     
-    Argument* fwdref_97 = new Argument(VectorTy_1);
+    Argument* fwdref_96 = new Argument(VectorTy_1);
     PHINode* packed_vec_0_reg2mem_0_i = new PHINode(VectorTy_1, "vec.0.reg2mem.0.i", label_forbody_i);
     packed_vec_0_reg2mem_0_i->reserveOperandSpace(2);
     packed_vec_0_reg2mem_0_i->addIncoming(const_packed_32, label_forbody_preheader_i);
-    packed_vec_0_reg2mem_0_i->addIncoming(fwdref_97, label_forbody_i);
+    packed_vec_0_reg2mem_0_i->addIncoming(fwdref_96, label_forbody_i);
     
     std::vector<Value*> ptr_arraydecay_i_indices;
     ptr_arraydecay_i_indices.push_back(int32_i_0_reg2mem_0_i);
@@ -584,80 +593,40 @@ Module* createBaseShader() {
     ptr_arrayidx34_i_indices.push_back(const_int32_29);
     ptr_arrayidx34_i_indices.push_back(int32_i_0_reg2mem_0_i);
     Instruction* ptr_arrayidx34_i = new GetElementPtrInst(ptr_consts, ptr_arrayidx34_i_indices.begin(), ptr_arrayidx34_i_indices.end(), "arrayidx34.i", label_forbody_i);
-    StoreInst* void_98 = new StoreInst(packed_tmp31_i, ptr_arrayidx34_i, false, label_forbody_i);
-    BinaryOperator* int32_indvar_next8 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_i, const_int32_31, "indvar.next8", label_forbody_i);
-    ICmpInst* int1_exitcond9 = new ICmpInst(ICmpInst::ICMP_EQ, int32_indvar_next8, int32_tmp10_i, "exitcond9", label_forbody_i);
-    new BranchInst(label_from_consts_exit, label_forbody_i, int1_exitcond9, label_forbody_i);
+    StoreInst* void_97 = new StoreInst(packed_tmp31_i, ptr_arrayidx34_i, false, label_forbody_i);
+    BinaryOperator* int32_indvar_next_98 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_i, const_int32_31, "indvar.next", label_forbody_i);
+    ICmpInst* int1_exitcond_99 = new ICmpInst(ICmpInst::ICMP_EQ, int32_indvar_next_98, int32_tmp10_i, "exitcond", label_forbody_i);
+    new BranchInst(label_from_consts_exit, label_forbody_i, int1_exitcond_99, label_forbody_i);
     
     // Block from_consts.exit (label_from_consts_exit)
-    std::vector<Value*> ptr_tmp2_indices;
-    ptr_tmp2_indices.push_back(const_int32_29);
-    ptr_tmp2_indices.push_back(const_int32_34);
-    Instruction* ptr_tmp2 = new GetElementPtrInst(ptr_args, ptr_tmp2_indices.begin(), ptr_tmp2_indices.end(), "tmp2", label_from_consts_exit);
-    std::vector<Value*> ptr_arraydecay3_indices;
-    ptr_arraydecay3_indices.push_back(const_int32_29);
-    ptr_arraydecay3_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay3 = new GetElementPtrInst(ptr_consts, ptr_arraydecay3_indices.begin(), ptr_arraydecay3_indices.end(), "arraydecay3", label_from_consts_exit);
-    StoreInst* void_100 = new StoreInst(ptr_arraydecay3, ptr_tmp2, false, label_from_consts_exit);
-    std::vector<Value*> ptr_tmp4_indices;
-    ptr_tmp4_indices.push_back(const_int32_29);
-    ptr_tmp4_indices.push_back(const_int32_33);
-    Instruction* ptr_tmp4 = new GetElementPtrInst(ptr_args, ptr_tmp4_indices.begin(), ptr_tmp4_indices.end(), "tmp4", label_from_consts_exit);
-    std::vector<Value*> ptr_arraydecay5_indices;
-    ptr_arraydecay5_indices.push_back(const_int32_29);
-    ptr_arraydecay5_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay5 = new GetElementPtrInst(ptr_temps, ptr_arraydecay5_indices.begin(), ptr_arraydecay5_indices.end(), "arraydecay5", label_from_consts_exit);
-    StoreInst* void_101 = new StoreInst(ptr_arraydecay5, ptr_tmp4, false, label_from_consts_exit);
-    ICmpInst* int1_cmp_102 = new ICmpInst(ICmpInst::ICMP_SGT, int32_num_vertices, const_int32_29, "cmp", label_from_consts_exit);
-    new BranchInst(label_forbody_preheader_91, label_afterfor_93, int1_cmp_102, label_from_consts_exit);
+    std::vector<Value*> ptr_tmp7_indices;
+    ptr_tmp7_indices.push_back(const_int32_29);
+    ptr_tmp7_indices.push_back(const_int32_34);
+    Instruction* ptr_tmp7 = new GetElementPtrInst(ptr_args, ptr_tmp7_indices.begin(), ptr_tmp7_indices.end(), "tmp7", label_from_consts_exit);
+    std::vector<Value*> ptr_arraydecay8_indices;
+    ptr_arraydecay8_indices.push_back(const_int32_29);
+    ptr_arraydecay8_indices.push_back(const_int32_29);
+    Instruction* ptr_arraydecay8 = new GetElementPtrInst(ptr_consts, ptr_arraydecay8_indices.begin(), ptr_arraydecay8_indices.end(), "arraydecay8", label_from_consts_exit);
+    StoreInst* void_101 = new StoreInst(ptr_arraydecay8, ptr_tmp7, false, label_from_consts_exit);
+    std::vector<Value*> ptr_tmp9_indices;
+    ptr_tmp9_indices.push_back(const_int32_29);
+    ptr_tmp9_indices.push_back(const_int32_33);
+    Instruction* ptr_tmp9 = new GetElementPtrInst(ptr_args, ptr_tmp9_indices.begin(), ptr_tmp9_indices.end(), "tmp9", label_from_consts_exit);
+    std::vector<Value*> ptr_arraydecay10_indices;
+    ptr_arraydecay10_indices.push_back(const_int32_29);
+    ptr_arraydecay10_indices.push_back(const_int32_29);
+    Instruction* ptr_arraydecay10 = new GetElementPtrInst(ptr_temps, ptr_arraydecay10_indices.begin(), ptr_arraydecay10_indices.end(), "arraydecay10", label_from_consts_exit);
+    StoreInst* void_102 = new StoreInst(ptr_arraydecay10, ptr_tmp9, false, label_from_consts_exit);
+    CallInst* void_103 = new CallInst(func_execute_shader, ptr_args, "", label_from_consts_exit);
+    void_103->setCallingConv(CallingConv::C);
+    void_103->setTailCall(false);const ParamAttrsList *void_103_PAL = 0;
+    void_103->setParamAttrs(void_103_PAL);
     
-    // Block forbody.preheader (label_forbody_preheader_91)
-    std::vector<Value*> ptr_tmp8_indices;
-    ptr_tmp8_indices.push_back(const_int32_29);
-    ptr_tmp8_indices.push_back(const_int32_29);
-    Instruction* ptr_tmp8 = new GetElementPtrInst(ptr_args, ptr_tmp8_indices.begin(), ptr_tmp8_indices.end(), "tmp8", label_forbody_preheader_91);
-    std::vector<Value*> ptr_tmp12_indices;
-    ptr_tmp12_indices.push_back(const_int32_29);
-    ptr_tmp12_indices.push_back(const_int32_31);
-    Instruction* ptr_tmp12 = new GetElementPtrInst(ptr_args, ptr_tmp12_indices.begin(), ptr_tmp12_indices.end(), "tmp12", label_forbody_preheader_91);
-    BinaryOperator* int32_tmp_104 = BinaryOperator::create(Instruction::Add, int32_num_vertices, const_int32_30, "tmp", label_forbody_preheader_91);
-    ICmpInst* int1_tmp6 = new ICmpInst(ICmpInst::ICMP_SLT, int32_tmp_104, const_int32_29, "tmp6", label_forbody_preheader_91);
-    SelectInst* int32_tmp7 = new SelectInst(int1_tmp6, const_int32_31, int32_num_vertices, "tmp7", label_forbody_preheader_91);
-    new BranchInst(label_forbody_92, label_forbody_preheader_91);
-    
-    // Block forbody (label_forbody_92)
-    Argument* fwdref_107 = new Argument(IntegerType::get(32));
-    PHINode* int32_i_0_reg2mem_0_106 = new PHINode(IntegerType::get(32), "i.0.reg2mem.0", label_forbody_92);
-    int32_i_0_reg2mem_0_106->reserveOperandSpace(2);
-    int32_i_0_reg2mem_0_106->addIncoming(const_int32_29, label_forbody_preheader_91);
-    int32_i_0_reg2mem_0_106->addIncoming(fwdref_107, label_forbody_92);
-    
-    std::vector<Value*> ptr_arraydecay11_108_indices;
-    ptr_arraydecay11_108_indices.push_back(int32_i_0_reg2mem_0_106);
-    ptr_arraydecay11_108_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay11_108 = new GetElementPtrInst(ptr_results, ptr_arraydecay11_108_indices.begin(), ptr_arraydecay11_108_indices.end(), "arraydecay11", label_forbody_92);
-    StoreInst* void_109 = new StoreInst(ptr_arraydecay11_108, ptr_tmp8, false, label_forbody_92);
-    std::vector<Value*> ptr_arraydecay16_indices;
-    ptr_arraydecay16_indices.push_back(int32_i_0_reg2mem_0_106);
-    ptr_arraydecay16_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay16 = new GetElementPtrInst(ptr_inputs, ptr_arraydecay16_indices.begin(), ptr_arraydecay16_indices.end(), "arraydecay16", label_forbody_92);
-    StoreInst* void_110 = new StoreInst(ptr_arraydecay16, ptr_tmp12, false, label_forbody_92);
-    CallInst* void_111 = new CallInst(func_execute_shader, ptr_args, "", label_forbody_92);
-    void_111->setCallingConv(CallingConv::C);
-    void_111->setTailCall(false);const ParamAttrsList *void_111_PAL = 0;
-    void_111->setParamAttrs(void_111_PAL);
-    
-    BinaryOperator* int32_indvar_next_112 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_106, const_int32_31, "indvar.next", label_forbody_92);
-    ICmpInst* int1_exitcond_113 = new ICmpInst(ICmpInst::ICMP_EQ, int32_indvar_next_112, int32_tmp7, "exitcond", label_forbody_92);
-    new BranchInst(label_afterfor_93, label_forbody_92, int1_exitcond_113, label_forbody_92);
-    
-    // Block afterfor (label_afterfor_93)
-    new ReturnInst(label_afterfor_93);
+    new ReturnInst(label_from_consts_exit);
     
     // Resolve Forward References
-    fwdref_107->replaceAllUsesWith(int32_indvar_next_112); delete fwdref_107;
-    fwdref_97->replaceAllUsesWith(packed_tmp31_i); delete fwdref_97;
-    fwdref_96->replaceAllUsesWith(int32_indvar_next8); delete fwdref_96;
+    fwdref_96->replaceAllUsesWith(packed_tmp31_i); delete fwdref_96;
+    fwdref_95->replaceAllUsesWith(int32_indvar_next_98); delete fwdref_95;
     
   }
   
@@ -668,195 +637,195 @@ Module* createBaseShader() {
     float_x->setName("x");
     Value* float_y = args++;
     float_y->setName("y");
-    Value* ptr_results_116 = args++;
-    ptr_results_116->setName("results");
-    Value* ptr_inputs_117 = args++;
-    ptr_inputs_117->setName("inputs");
-    Value* int32_num_inputs_118 = args++;
-    int32_num_inputs_118->setName("num_inputs");
-    Value* ptr_aconsts_119 = args++;
-    ptr_aconsts_119->setName("aconsts");
-    Value* int32_num_consts_120 = args++;
-    int32_num_consts_120->setName("num_consts");
+    Value* ptr_results_105 = args++;
+    ptr_results_105->setName("results");
+    Value* ptr_inputs_106 = args++;
+    ptr_inputs_106->setName("inputs");
+    Value* int32_num_inputs_107 = args++;
+    int32_num_inputs_107->setName("num_inputs");
+    Value* ptr_aconsts_108 = args++;
+    ptr_aconsts_108->setName("aconsts");
+    Value* int32_num_consts_109 = args++;
+    int32_num_consts_109->setName("num_consts");
     Value* ptr_samplers = args++;
     ptr_samplers->setName("samplers");
     
-    BasicBlock* label_entry_121 = new BasicBlock("entry",func_run_fragment_shader,0);
-    BasicBlock* label_forbody_preheader_i_122 = new BasicBlock("forbody.preheader.i",func_run_fragment_shader,0);
-    BasicBlock* label_forbody_i_123 = new BasicBlock("forbody.i",func_run_fragment_shader,0);
-    BasicBlock* label_from_consts_exit_124 = new BasicBlock("from_consts.exit",func_run_fragment_shader,0);
+    BasicBlock* label_entry_110 = new BasicBlock("entry",func_run_fragment_shader,0);
+    BasicBlock* label_forbody_preheader_i_111 = new BasicBlock("forbody.preheader.i",func_run_fragment_shader,0);
+    BasicBlock* label_forbody_i_112 = new BasicBlock("forbody.i",func_run_fragment_shader,0);
+    BasicBlock* label_from_consts_exit_113 = new BasicBlock("from_consts.exit",func_run_fragment_shader,0);
     
-    // Block entry (label_entry_121)
-    AllocaInst* ptr_consts_125 = new AllocaInst(ArrayTy_20, "consts", label_entry_121);
-    AllocaInst* ptr_temps_126 = new AllocaInst(ArrayTy_22, "temps", label_entry_121);
-    AllocaInst* ptr_args_127 = new AllocaInst(StructTy_struct_ShaderInput, "args", label_entry_121);
-    std::vector<Value*> ptr_tmp_indices;
-    ptr_tmp_indices.push_back(const_int32_29);
-    ptr_tmp_indices.push_back(const_int32_35);
-    Instruction* ptr_tmp = new GetElementPtrInst(ptr_args_127, ptr_tmp_indices.begin(), ptr_tmp_indices.end(), "tmp", label_entry_121);
-    StoreInst* void_128 = new StoreInst(const_int32_29, ptr_tmp, false, label_entry_121);
-    ICmpInst* int1_cmp_i_129 = new ICmpInst(ICmpInst::ICMP_SGT, int32_num_consts_120, const_int32_29, "cmp.i", label_entry_121);
-    new BranchInst(label_forbody_preheader_i_122, label_from_consts_exit_124, int1_cmp_i_129, label_entry_121);
+    // Block entry (label_entry_110)
+    AllocaInst* ptr_consts_114 = new AllocaInst(ArrayTy_20, "consts", label_entry_110);
+    AllocaInst* ptr_temps_115 = new AllocaInst(ArrayTy_22, "temps", label_entry_110);
+    AllocaInst* ptr_args_116 = new AllocaInst(StructTy_struct_ShaderInput, "args", label_entry_110);
+    std::vector<Value*> ptr_tmp_117_indices;
+    ptr_tmp_117_indices.push_back(const_int32_29);
+    ptr_tmp_117_indices.push_back(const_int32_35);
+    Instruction* ptr_tmp_117 = new GetElementPtrInst(ptr_args_116, ptr_tmp_117_indices.begin(), ptr_tmp_117_indices.end(), "tmp", label_entry_110);
+    StoreInst* void_118 = new StoreInst(const_int32_29, ptr_tmp_117, false, label_entry_110);
+    ICmpInst* int1_cmp_i_119 = new ICmpInst(ICmpInst::ICMP_SGT, int32_num_consts_109, const_int32_29, "cmp.i", label_entry_110);
+    new BranchInst(label_forbody_preheader_i_111, label_from_consts_exit_113, int1_cmp_i_119, label_entry_110);
     
-    // Block forbody.preheader.i (label_forbody_preheader_i_122)
-    BinaryOperator* int32_tmp_i_131 = BinaryOperator::create(Instruction::Add, int32_num_consts_120, const_int32_30, "tmp.i", label_forbody_preheader_i_122);
-    ICmpInst* int1_tmp9_i_132 = new ICmpInst(ICmpInst::ICMP_SLT, int32_tmp_i_131, const_int32_29, "tmp9.i", label_forbody_preheader_i_122);
-    SelectInst* int32_tmp10_i_133 = new SelectInst(int1_tmp9_i_132, const_int32_31, int32_num_consts_120, "tmp10.i", label_forbody_preheader_i_122);
-    new BranchInst(label_forbody_i_123, label_forbody_preheader_i_122);
+    // Block forbody.preheader.i (label_forbody_preheader_i_111)
+    BinaryOperator* int32_tmp_i_121 = BinaryOperator::create(Instruction::Add, int32_num_consts_109, const_int32_30, "tmp.i", label_forbody_preheader_i_111);
+    ICmpInst* int1_tmp9_i_122 = new ICmpInst(ICmpInst::ICMP_SLT, int32_tmp_i_121, const_int32_29, "tmp9.i", label_forbody_preheader_i_111);
+    SelectInst* int32_tmp10_i_123 = new SelectInst(int1_tmp9_i_122, const_int32_31, int32_num_consts_109, "tmp10.i", label_forbody_preheader_i_111);
+    new BranchInst(label_forbody_i_112, label_forbody_preheader_i_111);
     
-    // Block forbody.i (label_forbody_i_123)
-    Argument* fwdref_136 = new Argument(IntegerType::get(32));
-    PHINode* int32_i_0_reg2mem_0_i_135 = new PHINode(IntegerType::get(32), "i.0.reg2mem.0.i", label_forbody_i_123);
-    int32_i_0_reg2mem_0_i_135->reserveOperandSpace(2);
-    int32_i_0_reg2mem_0_i_135->addIncoming(const_int32_29, label_forbody_preheader_i_122);
-    int32_i_0_reg2mem_0_i_135->addIncoming(fwdref_136, label_forbody_i_123);
+    // Block forbody.i (label_forbody_i_112)
+    Argument* fwdref_126 = new Argument(IntegerType::get(32));
+    PHINode* int32_i_0_reg2mem_0_i_125 = new PHINode(IntegerType::get(32), "i.0.reg2mem.0.i", label_forbody_i_112);
+    int32_i_0_reg2mem_0_i_125->reserveOperandSpace(2);
+    int32_i_0_reg2mem_0_i_125->addIncoming(const_int32_29, label_forbody_preheader_i_111);
+    int32_i_0_reg2mem_0_i_125->addIncoming(fwdref_126, label_forbody_i_112);
     
-    Argument* fwdref_138 = new Argument(VectorTy_1);
-    PHINode* packed_vec_0_reg2mem_0_i_137 = new PHINode(VectorTy_1, "vec.0.reg2mem.0.i", label_forbody_i_123);
-    packed_vec_0_reg2mem_0_i_137->reserveOperandSpace(2);
-    packed_vec_0_reg2mem_0_i_137->addIncoming(const_packed_32, label_forbody_preheader_i_122);
-    packed_vec_0_reg2mem_0_i_137->addIncoming(fwdref_138, label_forbody_i_123);
+    Argument* fwdref_128 = new Argument(VectorTy_1);
+    PHINode* packed_vec_0_reg2mem_0_i_127 = new PHINode(VectorTy_1, "vec.0.reg2mem.0.i", label_forbody_i_112);
+    packed_vec_0_reg2mem_0_i_127->reserveOperandSpace(2);
+    packed_vec_0_reg2mem_0_i_127->addIncoming(const_packed_32, label_forbody_preheader_i_111);
+    packed_vec_0_reg2mem_0_i_127->addIncoming(fwdref_128, label_forbody_i_112);
     
-    std::vector<Value*> ptr_arraydecay_i_139_indices;
-    ptr_arraydecay_i_139_indices.push_back(int32_i_0_reg2mem_0_i_135);
-    ptr_arraydecay_i_139_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay_i_139 = new GetElementPtrInst(ptr_aconsts_119, ptr_arraydecay_i_139_indices.begin(), ptr_arraydecay_i_139_indices.end(), "arraydecay.i", label_forbody_i_123);
-    LoadInst* float_tmp5_i_140 = new LoadInst(ptr_arraydecay_i_139, "tmp5.i", false, label_forbody_i_123);
-    InsertElementInst* packed_tmp7_i_141 = new InsertElementInst(packed_vec_0_reg2mem_0_i_137, float_tmp5_i_140, const_int32_29, "tmp7.i", label_forbody_i_123);
-    std::vector<Value*> ptr_arrayidx12_i_142_indices;
-    ptr_arrayidx12_i_142_indices.push_back(int32_i_0_reg2mem_0_i_135);
-    ptr_arrayidx12_i_142_indices.push_back(const_int32_31);
-    Instruction* ptr_arrayidx12_i_142 = new GetElementPtrInst(ptr_aconsts_119, ptr_arrayidx12_i_142_indices.begin(), ptr_arrayidx12_i_142_indices.end(), "arrayidx12.i", label_forbody_i_123);
-    LoadInst* float_tmp13_i_143 = new LoadInst(ptr_arrayidx12_i_142, "tmp13.i", false, label_forbody_i_123);
-    InsertElementInst* packed_tmp15_i_144 = new InsertElementInst(packed_tmp7_i_141, float_tmp13_i_143, const_int32_31, "tmp15.i", label_forbody_i_123);
-    std::vector<Value*> ptr_arrayidx20_i_145_indices;
-    ptr_arrayidx20_i_145_indices.push_back(int32_i_0_reg2mem_0_i_135);
-    ptr_arrayidx20_i_145_indices.push_back(const_int32_33);
-    Instruction* ptr_arrayidx20_i_145 = new GetElementPtrInst(ptr_aconsts_119, ptr_arrayidx20_i_145_indices.begin(), ptr_arrayidx20_i_145_indices.end(), "arrayidx20.i", label_forbody_i_123);
-    LoadInst* float_tmp21_i_146 = new LoadInst(ptr_arrayidx20_i_145, "tmp21.i", false, label_forbody_i_123);
-    InsertElementInst* packed_tmp23_i_147 = new InsertElementInst(packed_tmp15_i_144, float_tmp21_i_146, const_int32_33, "tmp23.i", label_forbody_i_123);
-    std::vector<Value*> ptr_arrayidx28_i_148_indices;
-    ptr_arrayidx28_i_148_indices.push_back(int32_i_0_reg2mem_0_i_135);
-    ptr_arrayidx28_i_148_indices.push_back(const_int32_34);
-    Instruction* ptr_arrayidx28_i_148 = new GetElementPtrInst(ptr_aconsts_119, ptr_arrayidx28_i_148_indices.begin(), ptr_arrayidx28_i_148_indices.end(), "arrayidx28.i", label_forbody_i_123);
-    LoadInst* float_tmp29_i_149 = new LoadInst(ptr_arrayidx28_i_148, "tmp29.i", false, label_forbody_i_123);
-    InsertElementInst* packed_tmp31_i_150 = new InsertElementInst(packed_tmp23_i_147, float_tmp29_i_149, const_int32_34, "tmp31.i", label_forbody_i_123);
-    std::vector<Value*> ptr_arrayidx34_i_151_indices;
-    ptr_arrayidx34_i_151_indices.push_back(const_int32_29);
-    ptr_arrayidx34_i_151_indices.push_back(int32_i_0_reg2mem_0_i_135);
-    Instruction* ptr_arrayidx34_i_151 = new GetElementPtrInst(ptr_consts_125, ptr_arrayidx34_i_151_indices.begin(), ptr_arrayidx34_i_151_indices.end(), "arrayidx34.i", label_forbody_i_123);
-    StoreInst* void_152 = new StoreInst(packed_tmp31_i_150, ptr_arrayidx34_i_151, false, label_forbody_i_123);
-    BinaryOperator* int32_indvar_next7 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_i_135, const_int32_31, "indvar.next7", label_forbody_i_123);
-    ICmpInst* int1_exitcond8 = new ICmpInst(ICmpInst::ICMP_EQ, int32_indvar_next7, int32_tmp10_i_133, "exitcond8", label_forbody_i_123);
-    new BranchInst(label_from_consts_exit_124, label_forbody_i_123, int1_exitcond8, label_forbody_i_123);
+    std::vector<Value*> ptr_arraydecay_i_129_indices;
+    ptr_arraydecay_i_129_indices.push_back(int32_i_0_reg2mem_0_i_125);
+    ptr_arraydecay_i_129_indices.push_back(const_int32_29);
+    Instruction* ptr_arraydecay_i_129 = new GetElementPtrInst(ptr_aconsts_108, ptr_arraydecay_i_129_indices.begin(), ptr_arraydecay_i_129_indices.end(), "arraydecay.i", label_forbody_i_112);
+    LoadInst* float_tmp5_i_130 = new LoadInst(ptr_arraydecay_i_129, "tmp5.i", false, label_forbody_i_112);
+    InsertElementInst* packed_tmp7_i_131 = new InsertElementInst(packed_vec_0_reg2mem_0_i_127, float_tmp5_i_130, const_int32_29, "tmp7.i", label_forbody_i_112);
+    std::vector<Value*> ptr_arrayidx12_i_132_indices;
+    ptr_arrayidx12_i_132_indices.push_back(int32_i_0_reg2mem_0_i_125);
+    ptr_arrayidx12_i_132_indices.push_back(const_int32_31);
+    Instruction* ptr_arrayidx12_i_132 = new GetElementPtrInst(ptr_aconsts_108, ptr_arrayidx12_i_132_indices.begin(), ptr_arrayidx12_i_132_indices.end(), "arrayidx12.i", label_forbody_i_112);
+    LoadInst* float_tmp13_i_133 = new LoadInst(ptr_arrayidx12_i_132, "tmp13.i", false, label_forbody_i_112);
+    InsertElementInst* packed_tmp15_i_134 = new InsertElementInst(packed_tmp7_i_131, float_tmp13_i_133, const_int32_31, "tmp15.i", label_forbody_i_112);
+    std::vector<Value*> ptr_arrayidx20_i_135_indices;
+    ptr_arrayidx20_i_135_indices.push_back(int32_i_0_reg2mem_0_i_125);
+    ptr_arrayidx20_i_135_indices.push_back(const_int32_33);
+    Instruction* ptr_arrayidx20_i_135 = new GetElementPtrInst(ptr_aconsts_108, ptr_arrayidx20_i_135_indices.begin(), ptr_arrayidx20_i_135_indices.end(), "arrayidx20.i", label_forbody_i_112);
+    LoadInst* float_tmp21_i_136 = new LoadInst(ptr_arrayidx20_i_135, "tmp21.i", false, label_forbody_i_112);
+    InsertElementInst* packed_tmp23_i_137 = new InsertElementInst(packed_tmp15_i_134, float_tmp21_i_136, const_int32_33, "tmp23.i", label_forbody_i_112);
+    std::vector<Value*> ptr_arrayidx28_i_138_indices;
+    ptr_arrayidx28_i_138_indices.push_back(int32_i_0_reg2mem_0_i_125);
+    ptr_arrayidx28_i_138_indices.push_back(const_int32_34);
+    Instruction* ptr_arrayidx28_i_138 = new GetElementPtrInst(ptr_aconsts_108, ptr_arrayidx28_i_138_indices.begin(), ptr_arrayidx28_i_138_indices.end(), "arrayidx28.i", label_forbody_i_112);
+    LoadInst* float_tmp29_i_139 = new LoadInst(ptr_arrayidx28_i_138, "tmp29.i", false, label_forbody_i_112);
+    InsertElementInst* packed_tmp31_i_140 = new InsertElementInst(packed_tmp23_i_137, float_tmp29_i_139, const_int32_34, "tmp31.i", label_forbody_i_112);
+    std::vector<Value*> ptr_arrayidx34_i_141_indices;
+    ptr_arrayidx34_i_141_indices.push_back(const_int32_29);
+    ptr_arrayidx34_i_141_indices.push_back(int32_i_0_reg2mem_0_i_125);
+    Instruction* ptr_arrayidx34_i_141 = new GetElementPtrInst(ptr_consts_114, ptr_arrayidx34_i_141_indices.begin(), ptr_arrayidx34_i_141_indices.end(), "arrayidx34.i", label_forbody_i_112);
+    StoreInst* void_142 = new StoreInst(packed_tmp31_i_140, ptr_arrayidx34_i_141, false, label_forbody_i_112);
+    BinaryOperator* int32_indvar_next7 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_i_125, const_int32_31, "indvar.next7", label_forbody_i_112);
+    ICmpInst* int1_exitcond8 = new ICmpInst(ICmpInst::ICMP_EQ, int32_indvar_next7, int32_tmp10_i_123, "exitcond8", label_forbody_i_112);
+    new BranchInst(label_from_consts_exit_113, label_forbody_i_112, int1_exitcond8, label_forbody_i_112);
     
-    // Block from_consts.exit (label_from_consts_exit_124)
+    // Block from_consts.exit (label_from_consts_exit_113)
     std::vector<Value*> ptr_tmp3_indices;
     ptr_tmp3_indices.push_back(const_int32_29);
     ptr_tmp3_indices.push_back(const_int32_34);
-    Instruction* ptr_tmp3 = new GetElementPtrInst(ptr_args_127, ptr_tmp3_indices.begin(), ptr_tmp3_indices.end(), "tmp3", label_from_consts_exit_124);
+    Instruction* ptr_tmp3 = new GetElementPtrInst(ptr_args_116, ptr_tmp3_indices.begin(), ptr_tmp3_indices.end(), "tmp3", label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay4_indices;
     ptr_arraydecay4_indices.push_back(const_int32_29);
     ptr_arraydecay4_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay4 = new GetElementPtrInst(ptr_consts_125, ptr_arraydecay4_indices.begin(), ptr_arraydecay4_indices.end(), "arraydecay4", label_from_consts_exit_124);
-    StoreInst* void_154 = new StoreInst(ptr_arraydecay4, ptr_tmp3, false, label_from_consts_exit_124);
+    Instruction* ptr_arraydecay4 = new GetElementPtrInst(ptr_consts_114, ptr_arraydecay4_indices.begin(), ptr_arraydecay4_indices.end(), "arraydecay4", label_from_consts_exit_113);
+    StoreInst* void_144 = new StoreInst(ptr_arraydecay4, ptr_tmp3, false, label_from_consts_exit_113);
     std::vector<Value*> ptr_tmp5_indices;
     ptr_tmp5_indices.push_back(const_int32_29);
     ptr_tmp5_indices.push_back(const_int32_33);
-    Instruction* ptr_tmp5 = new GetElementPtrInst(ptr_args_127, ptr_tmp5_indices.begin(), ptr_tmp5_indices.end(), "tmp5", label_from_consts_exit_124);
+    Instruction* ptr_tmp5 = new GetElementPtrInst(ptr_args_116, ptr_tmp5_indices.begin(), ptr_tmp5_indices.end(), "tmp5", label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay6_indices;
     ptr_arraydecay6_indices.push_back(const_int32_29);
     ptr_arraydecay6_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay6 = new GetElementPtrInst(ptr_temps_126, ptr_arraydecay6_indices.begin(), ptr_arraydecay6_indices.end(), "arraydecay6", label_from_consts_exit_124);
-    StoreInst* void_155 = new StoreInst(ptr_arraydecay6, ptr_tmp5, false, label_from_consts_exit_124);
-    std::vector<Value*> ptr_tmp8_156_indices;
-    ptr_tmp8_156_indices.push_back(const_int32_29);
-    ptr_tmp8_156_indices.push_back(const_int32_31);
-    Instruction* ptr_tmp8_156 = new GetElementPtrInst(ptr_args_127, ptr_tmp8_156_indices.begin(), ptr_tmp8_156_indices.end(), "tmp8", label_from_consts_exit_124);
-    std::vector<Value*> ptr_tmp12_157_indices;
-    ptr_tmp12_157_indices.push_back(const_int32_29);
-    ptr_tmp12_157_indices.push_back(const_int32_29);
-    Instruction* ptr_tmp12_157 = new GetElementPtrInst(ptr_args_127, ptr_tmp12_157_indices.begin(), ptr_tmp12_157_indices.end(), "tmp12", label_from_consts_exit_124);
-    std::vector<Value*> ptr_arraydecay11_158_indices;
-    ptr_arraydecay11_158_indices.push_back(const_int32_29);
-    ptr_arraydecay11_158_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay11_158 = new GetElementPtrInst(ptr_inputs_117, ptr_arraydecay11_158_indices.begin(), ptr_arraydecay11_158_indices.end(), "arraydecay11", label_from_consts_exit_124);
-    StoreInst* void_159 = new StoreInst(ptr_arraydecay11_158, ptr_tmp8_156, false, label_from_consts_exit_124);
-    std::vector<Value*> ptr_arraydecay16_160_indices;
-    ptr_arraydecay16_160_indices.push_back(const_int32_29);
-    ptr_arraydecay16_160_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay16_160 = new GetElementPtrInst(ptr_results_116, ptr_arraydecay16_160_indices.begin(), ptr_arraydecay16_160_indices.end(), "arraydecay16", label_from_consts_exit_124);
-    StoreInst* void_161 = new StoreInst(ptr_arraydecay16_160, ptr_tmp12_157, false, label_from_consts_exit_124);
-    StoreInst* void_162 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
-    CallInst* void_163 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
-    void_163->setCallingConv(CallingConv::C);
-    void_163->setTailCall(false);const ParamAttrsList *void_163_PAL = 0;
-    void_163->setParamAttrs(void_163_PAL);
+    Instruction* ptr_arraydecay6 = new GetElementPtrInst(ptr_temps_115, ptr_arraydecay6_indices.begin(), ptr_arraydecay6_indices.end(), "arraydecay6", label_from_consts_exit_113);
+    StoreInst* void_145 = new StoreInst(ptr_arraydecay6, ptr_tmp5, false, label_from_consts_exit_113);
+    std::vector<Value*> ptr_tmp8_indices;
+    ptr_tmp8_indices.push_back(const_int32_29);
+    ptr_tmp8_indices.push_back(const_int32_31);
+    Instruction* ptr_tmp8 = new GetElementPtrInst(ptr_args_116, ptr_tmp8_indices.begin(), ptr_tmp8_indices.end(), "tmp8", label_from_consts_exit_113);
+    std::vector<Value*> ptr_tmp12_indices;
+    ptr_tmp12_indices.push_back(const_int32_29);
+    ptr_tmp12_indices.push_back(const_int32_29);
+    Instruction* ptr_tmp12 = new GetElementPtrInst(ptr_args_116, ptr_tmp12_indices.begin(), ptr_tmp12_indices.end(), "tmp12", label_from_consts_exit_113);
+    std::vector<Value*> ptr_arraydecay11_146_indices;
+    ptr_arraydecay11_146_indices.push_back(const_int32_29);
+    ptr_arraydecay11_146_indices.push_back(const_int32_29);
+    Instruction* ptr_arraydecay11_146 = new GetElementPtrInst(ptr_inputs_106, ptr_arraydecay11_146_indices.begin(), ptr_arraydecay11_146_indices.end(), "arraydecay11", label_from_consts_exit_113);
+    StoreInst* void_147 = new StoreInst(ptr_arraydecay11_146, ptr_tmp8, false, label_from_consts_exit_113);
+    std::vector<Value*> ptr_arraydecay16_indices;
+    ptr_arraydecay16_indices.push_back(const_int32_29);
+    ptr_arraydecay16_indices.push_back(const_int32_29);
+    Instruction* ptr_arraydecay16 = new GetElementPtrInst(ptr_results_105, ptr_arraydecay16_indices.begin(), ptr_arraydecay16_indices.end(), "arraydecay16", label_from_consts_exit_113);
+    StoreInst* void_148 = new StoreInst(ptr_arraydecay16, ptr_tmp12, false, label_from_consts_exit_113);
+    StoreInst* void_149 = new StoreInst(const_int32_29, ptr_tmp_117, false, label_from_consts_exit_113);
+    CallInst* void_150 = new CallInst(func_execute_shader, ptr_args_116, "", label_from_consts_exit_113);
+    void_150->setCallingConv(CallingConv::C);
+    void_150->setTailCall(false);const ParamAttrsList *void_150_PAL = 0;
+    void_150->setParamAttrs(void_150_PAL);
     
-    LoadInst* int32_tmp23 = new LoadInst(ptr_tmp, "tmp23", false, label_from_consts_exit_124);
+    LoadInst* int32_tmp23 = new LoadInst(ptr_tmp_117, "tmp23", false, label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay11_1_indices;
     ptr_arraydecay11_1_indices.push_back(const_int32_31);
     ptr_arraydecay11_1_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay11_1 = new GetElementPtrInst(ptr_inputs_117, ptr_arraydecay11_1_indices.begin(), ptr_arraydecay11_1_indices.end(), "arraydecay11.1", label_from_consts_exit_124);
-    StoreInst* void_164 = new StoreInst(ptr_arraydecay11_1, ptr_tmp8_156, false, label_from_consts_exit_124);
+    Instruction* ptr_arraydecay11_1 = new GetElementPtrInst(ptr_inputs_106, ptr_arraydecay11_1_indices.begin(), ptr_arraydecay11_1_indices.end(), "arraydecay11.1", label_from_consts_exit_113);
+    StoreInst* void_151 = new StoreInst(ptr_arraydecay11_1, ptr_tmp8, false, label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay16_1_indices;
     ptr_arraydecay16_1_indices.push_back(const_int32_31);
     ptr_arraydecay16_1_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay16_1 = new GetElementPtrInst(ptr_results_116, ptr_arraydecay16_1_indices.begin(), ptr_arraydecay16_1_indices.end(), "arraydecay16.1", label_from_consts_exit_124);
-    StoreInst* void_165 = new StoreInst(ptr_arraydecay16_1, ptr_tmp12_157, false, label_from_consts_exit_124);
-    StoreInst* void_166 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
-    CallInst* void_167 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
-    void_167->setCallingConv(CallingConv::C);
-    void_167->setTailCall(false);const ParamAttrsList *void_167_PAL = 0;
-    void_167->setParamAttrs(void_167_PAL);
+    Instruction* ptr_arraydecay16_1 = new GetElementPtrInst(ptr_results_105, ptr_arraydecay16_1_indices.begin(), ptr_arraydecay16_1_indices.end(), "arraydecay16.1", label_from_consts_exit_113);
+    StoreInst* void_152 = new StoreInst(ptr_arraydecay16_1, ptr_tmp12, false, label_from_consts_exit_113);
+    StoreInst* void_153 = new StoreInst(const_int32_29, ptr_tmp_117, false, label_from_consts_exit_113);
+    CallInst* void_154 = new CallInst(func_execute_shader, ptr_args_116, "", label_from_consts_exit_113);
+    void_154->setCallingConv(CallingConv::C);
+    void_154->setTailCall(false);const ParamAttrsList *void_154_PAL = 0;
+    void_154->setParamAttrs(void_154_PAL);
     
-    LoadInst* int32_tmp23_1 = new LoadInst(ptr_tmp, "tmp23.1", false, label_from_consts_exit_124);
-    BinaryOperator* int32_shl_1 = BinaryOperator::create(Instruction::Shl, int32_tmp23_1, const_int32_31, "shl.1", label_from_consts_exit_124);
-    BinaryOperator* int32_or_1 = BinaryOperator::create(Instruction::Or, int32_shl_1, int32_tmp23, "or.1", label_from_consts_exit_124);
+    LoadInst* int32_tmp23_1 = new LoadInst(ptr_tmp_117, "tmp23.1", false, label_from_consts_exit_113);
+    BinaryOperator* int32_shl_1 = BinaryOperator::create(Instruction::Shl, int32_tmp23_1, const_int32_31, "shl.1", label_from_consts_exit_113);
+    BinaryOperator* int32_or_1 = BinaryOperator::create(Instruction::Or, int32_shl_1, int32_tmp23, "or.1", label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay11_2_indices;
     ptr_arraydecay11_2_indices.push_back(const_int32_33);
     ptr_arraydecay11_2_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay11_2 = new GetElementPtrInst(ptr_inputs_117, ptr_arraydecay11_2_indices.begin(), ptr_arraydecay11_2_indices.end(), "arraydecay11.2", label_from_consts_exit_124);
-    StoreInst* void_168 = new StoreInst(ptr_arraydecay11_2, ptr_tmp8_156, false, label_from_consts_exit_124);
+    Instruction* ptr_arraydecay11_2 = new GetElementPtrInst(ptr_inputs_106, ptr_arraydecay11_2_indices.begin(), ptr_arraydecay11_2_indices.end(), "arraydecay11.2", label_from_consts_exit_113);
+    StoreInst* void_155 = new StoreInst(ptr_arraydecay11_2, ptr_tmp8, false, label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay16_2_indices;
     ptr_arraydecay16_2_indices.push_back(const_int32_33);
     ptr_arraydecay16_2_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay16_2 = new GetElementPtrInst(ptr_results_116, ptr_arraydecay16_2_indices.begin(), ptr_arraydecay16_2_indices.end(), "arraydecay16.2", label_from_consts_exit_124);
-    StoreInst* void_169 = new StoreInst(ptr_arraydecay16_2, ptr_tmp12_157, false, label_from_consts_exit_124);
-    StoreInst* void_170 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
-    CallInst* void_171 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
-    void_171->setCallingConv(CallingConv::C);
-    void_171->setTailCall(false);const ParamAttrsList *void_171_PAL = 0;
-    void_171->setParamAttrs(void_171_PAL);
+    Instruction* ptr_arraydecay16_2 = new GetElementPtrInst(ptr_results_105, ptr_arraydecay16_2_indices.begin(), ptr_arraydecay16_2_indices.end(), "arraydecay16.2", label_from_consts_exit_113);
+    StoreInst* void_156 = new StoreInst(ptr_arraydecay16_2, ptr_tmp12, false, label_from_consts_exit_113);
+    StoreInst* void_157 = new StoreInst(const_int32_29, ptr_tmp_117, false, label_from_consts_exit_113);
+    CallInst* void_158 = new CallInst(func_execute_shader, ptr_args_116, "", label_from_consts_exit_113);
+    void_158->setCallingConv(CallingConv::C);
+    void_158->setTailCall(false);const ParamAttrsList *void_158_PAL = 0;
+    void_158->setParamAttrs(void_158_PAL);
     
-    LoadInst* int32_tmp23_2 = new LoadInst(ptr_tmp, "tmp23.2", false, label_from_consts_exit_124);
-    BinaryOperator* int32_shl_2 = BinaryOperator::create(Instruction::Shl, int32_tmp23_2, const_int32_33, "shl.2", label_from_consts_exit_124);
-    BinaryOperator* int32_or_2 = BinaryOperator::create(Instruction::Or, int32_shl_2, int32_or_1, "or.2", label_from_consts_exit_124);
+    LoadInst* int32_tmp23_2 = new LoadInst(ptr_tmp_117, "tmp23.2", false, label_from_consts_exit_113);
+    BinaryOperator* int32_shl_2 = BinaryOperator::create(Instruction::Shl, int32_tmp23_2, const_int32_33, "shl.2", label_from_consts_exit_113);
+    BinaryOperator* int32_or_2 = BinaryOperator::create(Instruction::Or, int32_shl_2, int32_or_1, "or.2", label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay11_3_indices;
     ptr_arraydecay11_3_indices.push_back(const_int32_34);
     ptr_arraydecay11_3_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay11_3 = new GetElementPtrInst(ptr_inputs_117, ptr_arraydecay11_3_indices.begin(), ptr_arraydecay11_3_indices.end(), "arraydecay11.3", label_from_consts_exit_124);
-    StoreInst* void_172 = new StoreInst(ptr_arraydecay11_3, ptr_tmp8_156, false, label_from_consts_exit_124);
+    Instruction* ptr_arraydecay11_3 = new GetElementPtrInst(ptr_inputs_106, ptr_arraydecay11_3_indices.begin(), ptr_arraydecay11_3_indices.end(), "arraydecay11.3", label_from_consts_exit_113);
+    StoreInst* void_159 = new StoreInst(ptr_arraydecay11_3, ptr_tmp8, false, label_from_consts_exit_113);
     std::vector<Value*> ptr_arraydecay16_3_indices;
     ptr_arraydecay16_3_indices.push_back(const_int32_34);
     ptr_arraydecay16_3_indices.push_back(const_int32_29);
-    Instruction* ptr_arraydecay16_3 = new GetElementPtrInst(ptr_results_116, ptr_arraydecay16_3_indices.begin(), ptr_arraydecay16_3_indices.end(), "arraydecay16.3", label_from_consts_exit_124);
-    StoreInst* void_173 = new StoreInst(ptr_arraydecay16_3, ptr_tmp12_157, false, label_from_consts_exit_124);
-    StoreInst* void_174 = new StoreInst(const_int32_29, ptr_tmp, false, label_from_consts_exit_124);
-    CallInst* void_175 = new CallInst(func_execute_shader, ptr_args_127, "", label_from_consts_exit_124);
-    void_175->setCallingConv(CallingConv::C);
-    void_175->setTailCall(false);const ParamAttrsList *void_175_PAL = 0;
-    void_175->setParamAttrs(void_175_PAL);
+    Instruction* ptr_arraydecay16_3 = new GetElementPtrInst(ptr_results_105, ptr_arraydecay16_3_indices.begin(), ptr_arraydecay16_3_indices.end(), "arraydecay16.3", label_from_consts_exit_113);
+    StoreInst* void_160 = new StoreInst(ptr_arraydecay16_3, ptr_tmp12, false, label_from_consts_exit_113);
+    StoreInst* void_161 = new StoreInst(const_int32_29, ptr_tmp_117, false, label_from_consts_exit_113);
+    CallInst* void_162 = new CallInst(func_execute_shader, ptr_args_116, "", label_from_consts_exit_113);
+    void_162->setCallingConv(CallingConv::C);
+    void_162->setTailCall(false);const ParamAttrsList *void_162_PAL = 0;
+    void_162->setParamAttrs(void_162_PAL);
     
-    LoadInst* int32_tmp23_3 = new LoadInst(ptr_tmp, "tmp23.3", false, label_from_consts_exit_124);
-    BinaryOperator* int32_shl_3 = BinaryOperator::create(Instruction::Shl, int32_tmp23_3, const_int32_34, "shl.3", label_from_consts_exit_124);
-    BinaryOperator* int32_or_3 = BinaryOperator::create(Instruction::Or, int32_shl_3, int32_or_2, "or.3", label_from_consts_exit_124);
-    BinaryOperator* int32_neg = BinaryOperator::create(Instruction::Xor, int32_or_3, const_int32_30, "neg", label_from_consts_exit_124);
-    new ReturnInst(int32_neg, label_from_consts_exit_124);
+    LoadInst* int32_tmp23_3 = new LoadInst(ptr_tmp_117, "tmp23.3", false, label_from_consts_exit_113);
+    BinaryOperator* int32_shl_3 = BinaryOperator::create(Instruction::Shl, int32_tmp23_3, const_int32_34, "shl.3", label_from_consts_exit_113);
+    BinaryOperator* int32_or_3 = BinaryOperator::create(Instruction::Or, int32_shl_3, int32_or_2, "or.3", label_from_consts_exit_113);
+    BinaryOperator* int32_neg = BinaryOperator::create(Instruction::Xor, int32_or_3, const_int32_30, "neg", label_from_consts_exit_113);
+    new ReturnInst(int32_neg, label_from_consts_exit_113);
     
     // Resolve Forward References
-    fwdref_138->replaceAllUsesWith(packed_tmp31_i_150); delete fwdref_138;
-    fwdref_136->replaceAllUsesWith(int32_indvar_next7); delete fwdref_136;
+    fwdref_128->replaceAllUsesWith(packed_tmp31_i_140); delete fwdref_128;
+    fwdref_126->replaceAllUsesWith(int32_indvar_next7); delete fwdref_126;
     
   }
   
