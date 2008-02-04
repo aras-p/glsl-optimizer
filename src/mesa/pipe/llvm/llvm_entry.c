@@ -86,8 +86,8 @@ struct ShaderInput
 
 extern void execute_shader(struct ShaderInput *input);
 
-void run_vertex_shader(float4 (*inputs)[16],
-                       float4 (*results)[16],
+void run_vertex_shader(void *inputs,
+                       void *results,
                        float (*aconsts)[4],
                        int num_vertices,
                        int num_inputs,
@@ -98,16 +98,16 @@ void run_vertex_shader(float4 (*inputs)[16],
    float4  temps[128];//MAX_PROGRAM_TEMPS
 
    struct ShaderInput args;
+   args.dests  = results;
+   args.inputs = inputs;
+
    /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
      num_vertices, num_inputs, num_attribs, num_consts);*/
    from_consts(consts, aconsts, num_consts);
    args.consts = consts;
    args.temps = temps;
-   for (int i = 0; i < num_vertices; ++i) {
-      args.dests  = results[i];
-      args.inputs = inputs[i];
-      execute_shader(&args);
-   }
+
+   execute_shader(&args);
 }
 
 

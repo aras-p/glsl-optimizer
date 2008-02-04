@@ -67,7 +67,7 @@ cell_create_fs_state(struct pipe_context *pipe,
 #endif
 
 #ifdef MESA_LLVM
-   state->llvm_prog = gallivm_from_tgsi(state->shader.tokens, GALLIVM_FS);
+   state->llvm_prog = 0;
    if (!gallivm_global_cpu_engine()) {
       gallivm_cpu_engine_create(state->llvm_prog);
    }

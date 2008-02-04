@@ -113,7 +113,16 @@ run_vertex_program(struct draw_context *draw,
    draw->vertex_fetch.fetch_func( draw, machine, elts, count );
 
    /* run shader */
-#if defined(__i386__) || defined(__386__)
+#ifdef MESA_LLVM
+   if (1) {
+   struct gallivm_prog  *prog  = draw->vertex_shader->llvm_prog;
+   gallivm_prog_exec(prog,
+                     machine->Inputs,
+                     machine->Outputs,
+                     machine->Consts,
+                     12, 12, 12);
+   } else
+#elif defined(__i386__) || defined(__386__)
    if (draw->use_sse) {
       /* SSE */
       /* cast away const */
@@ -212,13 +221,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
     */
    draw_update_vertex_fetch( draw );
 
-//   debug_printf( " q(%d) ", draw->vs.queue_nr );
-#ifdef MESA_LLVM
-   if (draw->vertex_shader->llvm_prog) {
-      draw_vertex_shader_queue_flush_llvm(draw);
-      return;
-   }
-#endif
+//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
 
    /* run vertex shader on vertex cache entries, four per invokation */
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
@@ -260,7 +263,13 @@ draw_create_vertex_shader(struct draw_context *draw,
    vs->state = shader;
 
 #ifdef MESA_LLVM
-   vs->llvm_prog = gallivm_from_tgsi(shader->tokens, GALLIVM_VS);
+   struct gallivm_ir *ir = gallivm_ir_new(GALLIVM_VS);
+   gallivm_ir_set_layout(ir, GALLIVM_SOA);
+   gallivm_ir_set_components(ir, 4);
+   gallivm_ir_fill_from_tgsi(ir, shader->tokens);
+   vs->llvm_prog = gallivm_ir_compile(ir);
+   gallivm_ir_delete(ir);
+
    draw->engine = gallivm_global_cpu_engine();
    if (!draw->engine) {
       draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);

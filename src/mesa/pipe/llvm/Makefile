@@ -9,6 +9,7 @@ GALLIVM_SOURCES = \
         gallivm.cpp  \
         instructions.cpp  \
         loweringpass.cpp \
+        tgsitollvm.cpp \
         storage.cpp
 
 INC_SOURCES = gallivm_builtins.cpp llvm_base_shader.cpp
