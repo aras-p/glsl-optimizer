@@ -2215,8 +2215,15 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLint p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
-	GLint *ip = (GLint *)ctx->Transform._ClipUserPlane[p];
+	GLint p;
+	GLint *ip;
+
+	/* no VAP UCP on non-TCL chipsets */
+	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+			return;
+
+	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
+	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
 
 	R300_STATECHANGE( rmesa, vpucp[p] );
 	rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
