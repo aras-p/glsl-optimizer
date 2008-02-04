@@ -26,6 +26,8 @@
  **************************************************************************/
 
 
+#include <vec_literal.h>
+
 #include "pipe/p_compiler.h"
 #include "spu_main.h"
 #include "spu_texture.h"
@@ -41,7 +43,7 @@
 
 static tile_t tex_tiles[CACHE_SIZE]  ALIGN16_ATTRIB;
 
-static int tex_tile_x[CACHE_SIZE], tex_tile_y[CACHE_SIZE];
+static vector unsigned int tex_tile_xy[CACHE_SIZE];
 
 
 
@@ -53,20 +55,19 @@ invalidate_tex_cache(void)
 {
    /* XXX memset? */
    uint i;
-   for (i = 0; i < CACHE_SIZE; i++)
-      tex_tile_x[i] = tex_tile_y[i] = -1;
+   for (i = 0; i < CACHE_SIZE; i++) {
+      tex_tile_xy[i] = VEC_LITERAL(vector unsigned int, ~0U, ~0U, ~0U, ~0U);
+   }
 }
 
 
 /**
- * Return the cache pos/index which corresponds to texel (i,j)
+ * Return the cache pos/index which corresponds to tile (tx,ty)
  */
 static INLINE uint
-cache_pos(uint i, uint j)
+cache_pos(vector unsigned int txty)
 {
-   uint tx = i / TILE_SIZE;
-   uint ty = j / TILE_SIZE;
-   uint pos = (tx + ty * 4) % CACHE_SIZE;
+   uint pos = (spu_extract(txty,0) + spu_extract(txty,1) * 4) % CACHE_SIZE;
    return pos;
 }
 
@@ -76,26 +77,28 @@ cache_pos(uint i, uint j)
  * in the cache.
  */
 static uint
-get_tex_tile(uint i, uint j)
+get_tex_tile(vector unsigned int ij)
 {
-   const int tx = i / TILE_SIZE;
-   const int ty = j / TILE_SIZE;
-   const uint pos = cache_pos(i, j);
+   /* tile address: tx,ty */
+   const vector unsigned int txty = spu_rlmask(ij, -5);  /* divide by 32 */
+   const uint pos = cache_pos(txty);
 
-   if (tex_tile_x[pos] != tx || tex_tile_y[pos] != ty) {
+   if ((spu_extract(tex_tile_xy[pos], 0) != spu_extract(txty, 0)) ||
+       (spu_extract(tex_tile_xy[pos], 1) != spu_extract(txty, 1))) {
+
       /* texture cache miss, fetch tile from main memory */
       const uint tiles_per_row = spu.texture.width / TILE_SIZE;
       const uint bytes_per_tile = sizeof(tile_t);
       const void *src = (const ubyte *) spu.texture.start
-         + (ty * tiles_per_row + tx) * bytes_per_tile;
+         + (spu_extract(txty,1) * tiles_per_row + spu_extract(txty,0)) * bytes_per_tile;
 
       printf("SPU %u: tex cache miss at %d, %d  pos=%u  old=%d,%d\n",
-             spu.init.id, tx, ty, pos,
-             tex_tile_x[pos], tex_tile_y[pos]);
-#if 0
-      printf("SPU %u: get tex tile from %p to %p\n",
-             spu.init.id, src, tex_tiles[pos].t32);
-#endif
+             spu.init.id,
+             spu_extract(txty,0),
+             spu_extract(txty,1),
+             pos,
+             spu_extract(tex_tile_xy[pos],0),
+             spu_extract(tex_tile_xy[pos],1));
 
       ASSERT_ALIGN16(tex_tiles[pos].ui);
       ASSERT_ALIGN16(src);
@@ -109,8 +112,7 @@ get_tex_tile(uint i, uint j)
 
       wait_on_mask(1 << TAG_TEXTURE_TILE);
 
-      tex_tile_x[pos] = tx;
-      tex_tile_y[pos] = ty;
+      tex_tile_xy[pos] = txty;
    }
    else {
 #if 0
@@ -130,21 +132,11 @@ get_tex_tile(uint i, uint j)
 uint
 sample_texture(vector float texcoord)
 {
-#if 0
-   /* wrap/repeat */
-   uint i = (uint) (spu_extract(texcoord, 0) * spu.texture.width) % spu.texture.width;
-   uint j = (uint) (spu_extract(texcoord, 1) * spu.texture.height) % spu.texture.height;
-   uint pos = get_tex_tile(i, j);
-   uint texel = tex_tiles[pos].ui[j % TILE_SIZE][i % TILE_SIZE];
-   return texel;
-#else
    vector float tc = spu_mul(texcoord, spu.tex_size);
-   vector unsigned int itc = spu_convtu(tc, 0);
-   itc = spu_and(itc, spu.tex_size_mask);
-   uint i = spu_extract(itc, 0);
-   uint j = spu_extract(itc, 1);
-   uint pos = get_tex_tile(i, j);
-   uint texel = tex_tiles[pos].ui[j % TILE_SIZE][i % TILE_SIZE];
+   vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */
+   itc = spu_and(itc, spu.tex_size_mask);        /* mask (GL_REPEAT) */
+   vector unsigned int ij = spu_and(itc, TILE_SIZE-1); /* intra tile addr */
+   uint pos = get_tex_tile(itc);
+   uint texel = tex_tiles[pos].ui[spu_extract(ij, 1)][spu_extract(ij, 0)];
    return texel;
-#endif
 }
