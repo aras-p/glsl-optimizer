@@ -68,9 +68,9 @@ spu_z16_test_less(vector float zvals, vector unsigned short *zbuf,
       /* gather lower four ushorts */
       zbuf_ui4 = spu_shuffle((vector unsigned int) *zbuf,
                              (vector unsigned int) *zbuf,
-                             VEC_LITERAL(vector unsigned char,
-                                      ZERO, ZERO,  8,  9, ZERO, ZERO, 10, 11,
-                                      ZERO, ZERO, 12, 13, ZERO, ZERO, 14, 15));
+                             ((vector unsigned char) {
+                                ZERO, ZERO,  8,  9, ZERO, ZERO, 10, 11,
+                                ZERO, ZERO, 12, 13, ZERO, ZERO, 14, 15}));
       /* mask = (zbuf_ui4 < zvals_ui4) ? ~0 : 0 */
       mask = spu_cmpgt(zbuf_ui4, zvals_ui4);
       /* mask &= inMask */
@@ -80,18 +80,18 @@ spu_z16_test_less(vector float zvals, vector unsigned short *zbuf,
       /* convert zbuffer values from uints back to ushorts, preserve lower 4 */
       *zbuf = (vector unsigned short)
          spu_shuffle(zbuf_ui4, (vector unsigned int) *zbuf,
-                     VEC_LITERAL(vector unsigned char,
-                                 16, 17, 18, 19, 20, 21, 22, 23,
-                                 2, 3, 6, 7, 10, 11, 14, 15));
+                     ((vector unsigned char) {
+                        16, 17, 18, 19, 20, 21, 22, 23,
+                        2, 3, 6, 7, 10, 11, 14, 15}));
    }
    else {
       /* convert zbuffer values from ushorts to uints */
       /* gather upper four ushorts */
       zbuf_ui4 = spu_shuffle((vector unsigned int) *zbuf,
                              (vector unsigned int) *zbuf,
-                             VEC_LITERAL(vector unsigned char,
-                                         ZERO, ZERO, 0, 1, ZERO, ZERO, 2, 3,
-                                         ZERO, ZERO, 4, 5, ZERO, ZERO, 6, 7));
+                             ((vector unsigned char) {
+                                ZERO, ZERO, 0, 1, ZERO, ZERO, 2, 3,
+                                ZERO, ZERO, 4, 5, ZERO, ZERO, 6, 7}));
       /* mask = (zbuf_ui4 < zvals_ui4) ? ~0 : 0 */
       mask = spu_cmpgt(zbuf_ui4, zvals_ui4);
       /* mask &= inMask */
@@ -101,9 +101,9 @@ spu_z16_test_less(vector float zvals, vector unsigned short *zbuf,
       /* convert zbuffer values from uints back to ushorts, preserve upper 4 */
       *zbuf = (vector unsigned short)
          spu_shuffle(zbuf_ui4, (vector unsigned int) *zbuf,
-                     VEC_LITERAL(vector unsigned char,
-                                 2, 3, 6, 7, 10, 11, 14, 15,
-                                 24, 25, 26, 27, 28, 29, 30, 31));
+                     ((vector unsigned char) {
+                        2, 3, 6, 7, 10, 11, 14, 15,
+                        24, 25, 26, 27, 28, 29, 30, 31}));
    }
    return mask;
 #undef ZERO
