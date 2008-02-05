@@ -51,7 +51,7 @@
 
 /** for sanity checking */
 #define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
+  ASSERT((((unsigned long) (ptr)) & 0xf) == 0);
 
 
 /** round up value to next multiple of 4 */
@@ -105,7 +105,7 @@
  */
 struct cell_command_framebuffer
 {
-   uint64_t opcode;
+   uint64_t opcode;     /**< CELL_CMD_FRAMEBUFFER */
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
@@ -117,7 +117,7 @@ struct cell_command_framebuffer
  */
 struct cell_command_clear_surface
 {
-   uint64_t opcode;
+   uint64_t opcode;     /**< CELL_CMD_CLEAR_SURFACE */
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
 };
@@ -128,8 +128,8 @@ struct cell_command_clear_surface
  */
 struct cell_array_info
 {
-    uint64_t base;          /**< Base address of the 0th element. */
-    uint attr;          /**< Attribute that this state if for. */
+    uint64_t base;      /**< Base address of the 0th element. */
+    uint attr;          /**< Attribute that this state is for. */
     uint pitch;         /**< Byte pitch from one entry to the next. */
     uint format;        /**< Pipe format of each entry. */
 } ALIGN16_ATTRIB;
@@ -169,11 +169,9 @@ struct cell_command_render
    uint prim_type;    /**< PIPE_PRIM_x */
    uint num_verts;
    uint vertex_size;  /**< bytes per vertex */
-   uint dummy;        /* XXX this dummy field works around a compiler bug */
    uint num_indexes;
    uint vertex_buf;  /**< which cell->buffer[] contains the vertex data */
-   float xmin, dummy2, ymin, xmax, ymax;  /* XXX another dummy field */
-   uint dummy3;
+   float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
    uint min_index;
    boolean inline_verts;
 };
