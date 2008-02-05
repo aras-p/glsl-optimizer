@@ -56,7 +56,7 @@ typedef union
  * Simplified types taken from other parts of Gallium
  */
 struct vertex_header {
-   float data[0][4];
+   vector float data[1];
 };
 
 
@@ -476,6 +476,7 @@ static void print_vertex(const struct vertex_header *v)
 }
 #endif
 
+
 static boolean setup_sort_vertices(const struct vertex_header *v0,
                                    const struct vertex_header *v1,
                                    const struct vertex_header *v2)
@@ -492,9 +493,9 @@ static boolean setup_sort_vertices(const struct vertex_header *v0,
 
    /* determine bottom to top order of vertices */
    {
-      float y0 = v0->data[0][1];
-      float y1 = v1->data[0][1];
-      float y2 = v2->data[0][1];
+      float y0 = spu_extract(v0->data[0], 1);
+      float y1 = spu_extract(v1->data[0], 1);
+      float y2 = spu_extract(v2->data[0], 1);
       if (y0 <= y1) {
 	 if (y1 <= y2) {
 	    /* y0<=y1<=y2 */
@@ -538,25 +539,25 @@ static boolean setup_sort_vertices(const struct vertex_header *v0,
    }
 
    /* Check if triangle is completely outside the tile bounds */
-   if (setup.vmin->data[0][1] > setup.cliprect_maxy)
+   if (spu_extract(setup.vmin->data[0], 1) > setup.cliprect_maxy)
       return FALSE;
-   if (setup.vmax->data[0][1] < setup.cliprect_miny)
+   if (spu_extract(setup.vmax->data[0], 1) < setup.cliprect_miny)
       return FALSE;
-   if (setup.vmin->data[0][0] < setup.cliprect_minx &&
-       setup.vmid->data[0][0] < setup.cliprect_minx &&
-       setup.vmax->data[0][0] < setup.cliprect_minx)
+   if (spu_extract(setup.vmin->data[0], 0) < setup.cliprect_minx &&
+       spu_extract(setup.vmid->data[0], 0) < setup.cliprect_minx &&
+       spu_extract(setup.vmax->data[0], 0) < setup.cliprect_minx)
       return FALSE;
-   if (setup.vmin->data[0][0] > setup.cliprect_maxx &&
-       setup.vmid->data[0][0] > setup.cliprect_maxx &&
-       setup.vmax->data[0][0] > setup.cliprect_maxx)
+   if (spu_extract(setup.vmin->data[0], 0) > setup.cliprect_maxx &&
+       spu_extract(setup.vmid->data[0], 0) > setup.cliprect_maxx &&
+       spu_extract(setup.vmax->data[0], 0) > setup.cliprect_maxx)
       return FALSE;
 
-   setup.ebot.dx = setup.vmid->data[0][0] - setup.vmin->data[0][0];
-   setup.ebot.dy = setup.vmid->data[0][1] - setup.vmin->data[0][1];
-   setup.emaj.dx = setup.vmax->data[0][0] - setup.vmin->data[0][0];
-   setup.emaj.dy = setup.vmax->data[0][1] - setup.vmin->data[0][1];
-   setup.etop.dx = setup.vmax->data[0][0] - setup.vmid->data[0][0];
-   setup.etop.dy = setup.vmax->data[0][1] - setup.vmid->data[0][1];
+   setup.ebot.dx = spu_extract(setup.vmid->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
+   setup.ebot.dy = spu_extract(setup.vmid->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
+   setup.emaj.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
+   setup.emaj.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
+   setup.etop.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmid->data[0], 0);
+   setup.etop.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmid->data[0], 1);
 
    /*
     * Compute triangle's area.  Use 1/area to compute partial
@@ -597,14 +598,12 @@ static boolean setup_sort_vertices(const struct vertex_header *v0,
  * The result will be put into setup.coef[slot].a0.
  * \param slot  which attribute slot 
  */
-static INLINE void const_coeff(uint slot)
+static INLINE void
+const_coeff(uint slot)
 {
    setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
    setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
-   setup.coef[slot].a0.f[0] = setup.vprovoke->data[slot][0];
-   setup.coef[slot].a0.f[1] = setup.vprovoke->data[slot][1];
-   setup.coef[slot].a0.f[2] = setup.vprovoke->data[slot][2];
-   setup.coef[slot].a0.f[3] = setup.vprovoke->data[slot][3];
+   setup.coef[slot].a0.v = setup.vprovoke->data[slot];
 }
 
 
@@ -612,12 +611,19 @@ static INLINE void const_coeff(uint slot)
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a triangle.
  */
-static void tri_linear_coeff( uint slot, uint firstComp, uint lastComp )
+static INLINE void
+tri_linear_coeff(uint slot, uint firstComp, uint lastComp)
 {
    uint i;
+   const float *vmin_d = (float *) &setup.vmin->data[slot];
+   const float *vmid_d = (float *) &setup.vmid->data[slot];
+   const float *vmax_d = (float *) &setup.vmax->data[slot];
+   const float x = spu_extract(setup.vmin->data[0], 0) - 0.5f;
+   const float y = spu_extract(setup.vmin->data[0], 1) - 0.5f;
+
    for (i = firstComp; i < lastComp; i++) {
-      float botda = setup.vmid->data[slot][i] - setup.vmin->data[slot][i];
-      float majda = setup.vmax->data[slot][i] - setup.vmin->data[slot][i];
+      float botda = vmid_d[i] - vmin_d[i];
+      float majda = vmax_d[i] - vmin_d[i];
       float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
       float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
    
@@ -638,9 +644,9 @@ static void tri_linear_coeff( uint slot, uint firstComp, uint lastComp )
        * to define a0 as the sample at a pixel center somewhere near vmin
        * instead - i'll switch to this later.
        */
-      setup.coef[slot].a0.f[i] = (setup.vmin->data[slot][i] - 
-                                 (setup.coef[slot].dadx.f[i] * (setup.vmin->data[0][0] - 0.5f) + 
-                                  setup.coef[slot].dady.f[i] * (setup.vmin->data[0][1] - 0.5f)));
+      setup.coef[slot].a0.f[i] = (vmin_d[i] - 
+                                 (setup.coef[slot].dadx.f[i] * x + 
+                                  setup.coef[slot].dady.f[i] * y));
    }
 
    /*
@@ -651,6 +657,37 @@ static void tri_linear_coeff( uint slot, uint firstComp, uint lastComp )
 		setup.coef[slot].dady.f[i]);
    */
 }
+
+
+/**
+ * As above, but interp setup all four vector components.
+ */
+static INLINE void
+tri_linear_coeff4(uint slot)
+{
+   const vector float vmin_d = setup.vmin->data[slot];
+   const vector float vmid_d = setup.vmid->data[slot];
+   const vector float vmax_d = setup.vmax->data[slot];
+   const vector float xxxx = spu_splats(spu_extract(setup.vmin->data[0], 0) - 0.5f);
+   const vector float yyyy = spu_splats(spu_extract(setup.vmin->data[0], 1) - 0.5f);
+
+   vector float botda = vmid_d - vmin_d;
+   vector float majda = vmax_d - vmin_d;
+
+   vector float a = spu_sub(spu_mul(spu_splats(setup.ebot.dy), majda),
+                            spu_mul(botda, spu_splats(setup.emaj.dy)));
+   vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
+                            spu_mul(majda, spu_splats(setup.ebot.dx)));
+
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneoverarea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneoverarea));
+
+   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+                         
+   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+}
+
 
 
 #if 0
@@ -710,17 +747,18 @@ static void setup_tri_coefficients(void)
       case INTERP_NONE:
          break;
       case INTERP_POS:
-         tri_linear_coeff(i, 2, 3);
+         /*tri_linear_coeff(i, 2, 3);*/
          /* XXX interp W if PERSPECTIVE... */
+         tri_linear_coeff4(i);
          break;
       case INTERP_CONSTANT:
          const_coeff(i);
          break;
       case INTERP_LINEAR:
-         tri_linear_coeff(i, 0, 4);
+         tri_linear_coeff4(i);
          break;
       case INTERP_PERSPECTIVE:
-         tri_linear_coeff(i, 0, 4); /* XXX temporary */
+         tri_linear_coeff4(i);  /* temporary */
          break;
       default:
          ASSERT(0);
@@ -738,12 +776,12 @@ static void setup_tri_coefficients(void)
 
 static void setup_tri_edges(void)
 {
-   float vmin_x = setup.vmin->data[0][0] + 0.5f;
-   float vmid_x = setup.vmid->data[0][0] + 0.5f;
+   float vmin_x = spu_extract(setup.vmin->data[0], 0) + 0.5f;
+   float vmid_x = spu_extract(setup.vmid->data[0], 0) + 0.5f;
 
-   float vmin_y = setup.vmin->data[0][1] - 0.5f;
-   float vmid_y = setup.vmid->data[0][1] - 0.5f;
-   float vmax_y = setup.vmax->data[0][1] - 0.5f;
+   float vmin_y = spu_extract(setup.vmin->data[0], 1) - 0.5f;
+   float vmid_y = spu_extract(setup.vmid->data[0], 1) - 0.5f;
+   float vmax_y = spu_extract(setup.vmax->data[0], 1) - 0.5f;
 
    setup.emaj.sy = CEILF(vmin_y);
    setup.emaj.lines = (int) CEILF(vmax_y - setup.emaj.sy);
