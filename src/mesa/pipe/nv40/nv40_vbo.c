@@ -97,13 +97,13 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 }
 
 static void
-nv40_vbo_arrays_update(struct nv40_context *nv40)
+nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
+		       unsigned ib_format)
 {
 	struct nv40_vertex_program *vp = nv40->vertprog.active;
-	uint32_t inputs, vtxfmt[16];
-	int hw, num_hw;
-
-	nv40->vb_enable = 0;
+	struct nouveau_stateobj *vtxbuf, *vtxfmt;
+	unsigned inputs, hw, num_hw;
+	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	inputs = vp->ir;
 	for (hw = 0; hw < 16 && inputs; hw++) {
@@ -114,73 +114,64 @@ nv40_vbo_arrays_update(struct nv40_context *nv40)
 	}
 	num_hw++;
 
+	vtxbuf = so_new(20, 18);
+	so_method(vtxbuf, nv40->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
+	vtxfmt = so_new(17, 0);
+	so_method(vtxfmt, nv40->curie, NV40TCL_VTXFMT(0), num_hw);
+
 	inputs = vp->ir;
 	for (hw = 0; hw < num_hw; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 
 		if (!(inputs & (1 << hw))) {
-			vtxfmt[hw] = NV40TCL_VTXFMT_TYPE_FLOAT;
+			so_data(vtxbuf, 0);
+			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
 			continue;
 		}
 
 		ve = &nv40->vtxelt[hw];
 		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
 
-		if (vb->pitch == 0) {
-			vtxfmt[hw] = NV40TCL_VTXFMT_TYPE_FLOAT;
-			if (nv40_vbo_static_attrib(nv40, hw, ve, vb) == TRUE)
-				continue;
+		if (!vb->pitch && nv40_vbo_static_attrib(nv40, hw, ve, vb)) {
+			so_data(vtxbuf, 0);
+			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
+			continue;
 		}
 
-		nv40->vb_enable |= (1 << hw);
-		nv40->vb[hw].delta = vb->buffer_offset + ve->src_offset;
-		nv40->vb[hw].buffer = vb->buffer;
-
-		vtxfmt[hw] = ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
-			      (nv40_vbo_ncomp(ve->src_format) <<
-			       NV40TCL_VTXFMT_SIZE_SHIFT) |
-			      nv40_vbo_type(ve->src_format));
+		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
+			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
+			 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
+		so_data (vtxfmt, ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
+				  (nv40_vbo_ncomp(ve->src_format) <<
+				   NV40TCL_VTXFMT_SIZE_SHIFT) |
+				  nv40_vbo_type(ve->src_format)));
 	}
 
-	BEGIN_RING(curie, NV40TCL_VTXFMT(0), num_hw);
-	OUT_RINGp (vtxfmt, num_hw);
+	if (ib) {
+		so_method(vtxbuf, nv40->curie, NV40TCL_IDXBUF_ADDRESS, 2);
+		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
+			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
+	}
+
+	so_emit(nv40->nvws, vtxfmt);
+	so_emit(nv40->nvws, vtxbuf);
+	so_ref (vtxbuf, &nv40->so_vtxbuf);
+	so_ref (NULL, &vtxfmt);
 }
 
 static boolean
 nv40_vbo_validate_state(struct nv40_context *nv40,
 			struct pipe_buffer *ib, unsigned ib_format)
 {
-	unsigned inputs;
-
 	nv40_emit_hw_state(nv40);
-
-	if (nv40->dirty & NV40_NEW_ARRAYS) {
-		nv40_vbo_arrays_update(nv40);
+	if (nv40->dirty & NV40_NEW_ARRAYS || ib) {
+		nv40_vbo_arrays_update(nv40, ib, ib_format);
 		nv40->dirty &= ~NV40_NEW_ARRAYS;
 	}
 
-	inputs = nv40->vb_enable;
-	while (inputs) {
-		unsigned a = ffs(inputs) - 1;
-
-		inputs &= ~(1 << a);
-
-		BEGIN_RING(curie, NV40TCL_VTXBUF_ADDRESS(a), 1);
-		OUT_RELOC (nv40->vb[a].buffer, nv40->vb[a].delta,
-			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_LOW |
-			   NOUVEAU_BO_OR | NOUVEAU_BO_RD, 0,
-			   NV40TCL_VTXBUF_ADDRESS_DMA1);
-	}
-
-	if (ib) {
-		BEGIN_RING(curie, NV40TCL_IDXBUF_ADDRESS, 2);
-		OUT_RELOCl(ib, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-			   NOUVEAU_BO_RD);
-		OUT_RELOCd(ib, ib_format, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
-			   NOUVEAU_BO_RD | NOUVEAU_BO_OR,
-			   0, NV40TCL_IDXBUF_FORMAT_DMA1);
-	}
+	so_emit_reloc_markers(nv40->nvws, nv40->so_vtxbuf);
 
 	BEGIN_RING(curie, 0x1710, 1);
 	OUT_RING  (0); /* vtx cache flush */

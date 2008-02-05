@@ -3,49 +3,12 @@
 
 #include "pipe/p_state.h"
 
-struct nv40_blend_state {
-	uint32_t b_enable;
-	uint32_t b_srcfunc;
-	uint32_t b_dstfunc;
-	uint32_t b_eqn;
-
-	uint32_t l_enable;
-	uint32_t l_op;
-
-	uint32_t c_mask;
-
-	uint32_t d_enable;
-};
-
 struct nv40_sampler_state {
 	uint32_t fmt;
 	uint32_t wrap;
 	uint32_t en;
 	uint32_t filt;
 	uint32_t bcol;
-};
-
-struct nv40_rasterizer_state {
-	uint32_t shade_model;
-
-	uint32_t line_width;
-	uint32_t line_smooth_en;
-	uint32_t line_stipple_en;
-	uint32_t line_stipple;
-
-	uint32_t point_size;
-
-	uint32_t poly_smooth_en;
-	uint32_t poly_stipple_en;
-	
-	uint32_t poly_mode_front;
-	uint32_t poly_mode_back;
-
-	uint32_t front_face;
-	uint32_t cull_face;
-	uint32_t cull_face_en;
-
-	uint32_t point_sprite;
 };
 
 struct nv40_vertex_program_exec {
@@ -99,36 +62,7 @@ struct nv40_fragment_program {
 	struct pipe_buffer *buffer;
 
 	uint32_t fp_control;
-};
-
-struct nv40_stencil_push {
-	uint32_t enable;
-	uint32_t wmask;
-	uint32_t func;
-	uint32_t ref;
-	uint32_t vmask;
-	uint32_t fail;
-	uint32_t zfail;
-	uint32_t zpass;
-};
-
-struct nv40_depth_stencil_alpha_state {
-	struct {
-		uint32_t func;
-		uint32_t write_enable;
-		uint32_t test_enable;
-	} depth;
-
-	struct {
-		struct nv40_stencil_push back;
-		struct nv40_stencil_push front;
-	} stencil;
-
-	struct {
-		uint32_t enabled;
-		uint32_t func;
-		uint32_t ref;
-	} alpha;
+	struct nouveau_stateobj *so;
 };
 
 struct nv40_miptree {

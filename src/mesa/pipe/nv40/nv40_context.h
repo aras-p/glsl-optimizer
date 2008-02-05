@@ -13,6 +13,7 @@
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
 	struct nv40_context *ctx = nv40
 #include "pipe/nouveau/nouveau_push.h"
+#include "pipe/nouveau/nouveau_stateobj.h"
 
 #include "nv40_state.h"
 
@@ -47,20 +48,9 @@ struct nv40_context {
 	unsigned fp_samplers;
 	unsigned vp_samplers;
 
-	uint32_t rt_enable;
-	struct pipe_buffer *rt[4];
-	struct pipe_buffer *zeta;
-
-	struct {
-		struct pipe_buffer *buffer;
-		uint32_t format;
-	} tex[16];
-
-	unsigned vb_enable;
-	struct {
-		struct pipe_buffer *buffer;
-		unsigned delta;
-	} vb[16];
+	struct nouveau_stateobj *so_framebuffer;
+	struct nouveau_stateobj *so_fragtex[16];
+	struct nouveau_stateobj *so_vtxbuf;
 
 	struct {
 		struct nouveau_resource *exec_heap;

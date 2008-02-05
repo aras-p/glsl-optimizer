@@ -59,8 +59,10 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	struct nv40_miptree *nv40mt = nv40->tex_miptree[unit];
 	struct pipe_texture *pt = &nv40mt->base;
 	struct nv40_texture_format *tf;
+	struct nouveau_stateobj *so;
 	uint32_t txf, txs, txp;
 	int swizzled = 0; /*XXX: implement in region code? */
+	unsigned tex_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
 	tf = nv40_fragtex_format(pt->format);
 	if (!tf)
@@ -101,25 +103,24 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 
 	txs = tf->swizzle;
 
-	nv40->tex[unit].buffer = nv40mt->buffer;
-	nv40->tex[unit].format = txf;
-
-	BEGIN_RING(curie, NV40TCL_TEX_OFFSET(unit), 8);
-	OUT_RELOCl(nv40->tex[unit].buffer, 0, NOUVEAU_BO_VRAM |
-		   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-	OUT_RELOCd(nv40->tex[unit].buffer, nv40->tex[unit].format,
-		   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
-		   NOUVEAU_BO_OR, NV40TCL_TEX_FORMAT_DMA0,
-		   NV40TCL_TEX_FORMAT_DMA1);
-	OUT_RING  (ps->wrap);
-	OUT_RING  (NV40TCL_TEX_ENABLE_ENABLE | ps->en |
+	so = so_new(16, 2);
+	so_method(so, nv40->curie, NV40TCL_TEX_OFFSET(unit), 8);
+	so_reloc (so, nv40mt->buffer, 0, tex_flags | NOUVEAU_BO_LOW, 0, 0);
+	so_reloc (so, nv40mt->buffer, txf, tex_flags | NOUVEAU_BO_OR,
+		  NV40TCL_TEX_FORMAT_DMA0, NV40TCL_TEX_FORMAT_DMA1);
+	so_data  (so, ps->wrap);
+	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en |
 		   (0x00078000) /* mipmap related? */);
-	OUT_RING  (txs);
-	OUT_RING  (ps->filt | 0x3fd6 /*voodoo*/);
-	OUT_RING  ((pt->width[0] << NV40TCL_TEX_SIZE0_W_SHIFT) | pt->height[0]);
-	OUT_RING  (ps->bcol);
-	BEGIN_RING(curie, NV40TCL_TEX_SIZE1(unit), 1);
-	OUT_RING  ((pt->depth[0] << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
+	so_data  (so, txs);
+	so_data  (so, ps->filt | 0x3fd6 /*voodoo*/);
+	so_data  (so, (pt->width[0] << NV40TCL_TEX_SIZE0_W_SHIFT) |
+		       pt->height[0]);
+	so_data  (so, ps->bcol);
+	so_method(so, nv40->curie, NV40TCL_TEX_SIZE1(unit), 1);
+	so_data  (so, (pt->depth[0] << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
+
+	so_emit(nv40->nvws, so);
+	so_ref (so, &nv40->so_fragtex[unit]);
 }
 
 void
@@ -133,6 +134,7 @@ nv40_fragtex_bind(struct nv40_context *nv40)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
+		so_ref(NULL, &nv40->so_fragtex[unit]);
 		BEGIN_RING(curie, NV40TCL_TEX_ENABLE(unit), 1);
 		OUT_RING  (0);
 	}
