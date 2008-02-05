@@ -106,7 +106,7 @@ void draw_destroy( struct draw_context *draw )
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    tgsi_exec_machine_free_data(&draw->machine);
-   FREE( draw->vcache.vertex[0] ); /* Frees all the vertices. */
+   align_free( draw->vcache.vertex[0] ); /* Frees all the vertices. */
    FREE( draw );
 }
 
