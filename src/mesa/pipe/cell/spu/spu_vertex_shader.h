@@ -39,8 +39,6 @@ struct spu_vs_context {
 
 extern void spu_update_vertex_fetch(struct spu_vs_context *draw);
 
-extern void spu_transpose_4x4(qword *out, const qword *in);
-
 static INLINE void spu_vertex_fetch(struct spu_vs_context *draw,
 				    struct spu_exec_machine *machine,
 				    const unsigned *elts,
