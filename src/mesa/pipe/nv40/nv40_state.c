@@ -9,59 +9,59 @@ static void *
 nv40_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
-	struct nv40_blend_state *cb;
+	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(16, 0);
 
-	cb = malloc(sizeof(struct nv40_blend_state));
+	if (cso->blend_enable) {
+		so_method(so, nv40->curie, NV40TCL_BLEND_ENABLE, 3);
+		so_data  (so, 1);
+		so_data  (so, (nvgl_blend_func(cso->alpha_src_factor) << 16) |
+			       nvgl_blend_func(cso->rgb_src_factor));
+		so_data  (so, nvgl_blend_func(cso->alpha_dst_factor) << 16 |
+			      nvgl_blend_func(cso->rgb_dst_factor));
+		so_method(so, nv40->curie, NV40TCL_BLEND_EQUATION, 1);
+		so_data  (so, nvgl_blend_eqn(cso->alpha_func) << 16 |
+			      nvgl_blend_eqn(cso->rgb_func));
+	} else {
+		so_method(so, nv40->curie, NV40TCL_BLEND_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	cb->b_enable = cso->blend_enable ? 1 : 0;
-	cb->b_srcfunc = ((nvgl_blend_func(cso->alpha_src_factor)<<16) |
-			 (nvgl_blend_func(cso->rgb_src_factor)));
-	cb->b_dstfunc = ((nvgl_blend_func(cso->alpha_dst_factor)<<16) |
-			 (nvgl_blend_func(cso->rgb_dst_factor)));
-	cb->b_eqn = ((nvgl_blend_eqn(cso->alpha_func) << 16) |
-		     (nvgl_blend_eqn(cso->rgb_func)));
+	so_method(so, nv40->curie, NV40TCL_COLOR_MASK, 1);
+	so_data  (so, (((cso->colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
+		       ((cso->colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
+		       ((cso->colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
+		       ((cso->colormask & PIPE_MASK_B) ? (0x01 <<  0) : 0)));
 
-	cb->l_enable = cso->logicop_enable ? 1 : 0;
-	cb->l_op = nvgl_logicop_func(cso->logicop_func);
+	if (cso->logicop_enable) {
+		so_method(so, nv40->curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		so_data  (so, 1);
+		so_data  (so, nvgl_logicop_func(cso->logicop_func));
+	} else {
+		so_method(so, nv40->curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	cb->c_mask = (((cso->colormask & PIPE_MASK_A) ? (0x01<<24) : 0) |
-		      ((cso->colormask & PIPE_MASK_R) ? (0x01<<16) : 0) |
-		      ((cso->colormask & PIPE_MASK_G) ? (0x01<< 8) : 0) |
-		      ((cso->colormask & PIPE_MASK_B) ? (0x01<< 0) : 0));
+	so_method(so, nv40->curie, NV40TCL_DITHER_ENABLE, 1);
+	so_data  (so, cso->dither ? 1 : 0);
 
-	cb->d_enable = cso->dither ? 1 : 0;
-
-	return (void *)cb;
+	return (void *)so;
 }
 
 static void
 nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_blend_state *cb = hwcso;
 
-	BEGIN_RING(curie, NV40TCL_DITHER_ENABLE, 1);
-	OUT_RING  (cb->d_enable);
-
-	BEGIN_RING(curie, NV40TCL_BLEND_ENABLE, 3);
-	OUT_RING  (cb->b_enable);
-	OUT_RING  (cb->b_srcfunc);
-	OUT_RING  (cb->b_dstfunc);
-	BEGIN_RING(curie, NV40TCL_BLEND_EQUATION, 1);
-	OUT_RING  (cb->b_eqn);
-
-	BEGIN_RING(curie, NV40TCL_COLOR_MASK, 1);
-	OUT_RING  (cb->c_mask);
-
-	BEGIN_RING(curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
-	OUT_RING  (cb->l_enable);
-	OUT_RING  (cb->l_op);
+	so_emit(nv40->nvws, hwcso);
 }
 
 static void
 nv40_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	struct nouveau_stateobj *so = hwcso;
+
+	so_ref(NULL, &so);
 }
 
 
@@ -261,8 +261,8 @@ static void *
 nv40_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	struct nv40_rasterizer_state *rs;
-	int i;
+	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(32, 0);
 
 	/*XXX: ignored:
 	 * 	light_twoside
@@ -272,165 +272,163 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	multisample
 	 * 	offset_units / offset_scale
 	 */
-	rs = malloc(sizeof(struct nv40_rasterizer_state));
 
-	rs->shade_model = cso->flatshade ? 0x1d00 : 0x1d01;
+	so_method(so, nv40->curie, NV40TCL_SHADE_MODEL, 1);
+	so_data  (so, cso->flatshade ? NV40TCL_SHADE_MODEL_FLAT :
+				       NV40TCL_SHADE_MODEL_SMOOTH);
 
-	rs->line_width = (unsigned char)(cso->line_width * 8.0) & 0xff;
-	rs->line_smooth_en = cso->line_smooth ? 1 : 0;
-	rs->line_stipple_en = cso->line_stipple_enable ? 1 : 0;
-	rs->line_stipple = (cso->line_stipple_pattern << 16) |
-			    cso->line_stipple_factor;
+	so_method(so, nv40->curie, NV40TCL_LINE_WIDTH, 2);
+	so_data  (so, (unsigned char)(cso->line_width * 8.0) & 0xff);
+	so_data  (so, cso->line_smooth ? 1 : 0);
+	so_method(so, nv40->curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
+	so_data  (so, cso->line_stipple_enable ? 1 : 0);
+	so_data  (so, (cso->line_stipple_pattern << 16) |
+		       cso->line_stipple_factor);
 
-	rs->point_size = *(uint32_t*)&cso->point_size;
+	so_method(so, nv40->curie, NV40TCL_POINT_SIZE, 1);
+	so_data  (so, fui(cso->point_size));
 
-	rs->poly_smooth_en = cso->poly_smooth ? 1 : 0;
-	rs->poly_stipple_en = cso->poly_stipple_enable ? 1 : 0;
-
+	so_method(so, nv40->curie, NV40TCL_POLYGON_MODE_FRONT, 6);
 	if (cso->front_winding == PIPE_WINDING_CCW) {
-		rs->front_face = NV40TCL_FRONT_FACE_CCW;
-		rs->poly_mode_front = nvgl_polygon_mode(cso->fill_ccw);
-		rs->poly_mode_back  = nvgl_polygon_mode(cso->fill_cw);
+		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
+		so_data(so, nvgl_polygon_mode(cso->fill_cw));
+		switch (cso->cull_mode) {
+		case PIPE_WINDING_CCW:
+			so_data(so, NV40TCL_CULL_FACE_FRONT);
+			break;
+		case PIPE_WINDING_CW:
+			so_data(so, NV40TCL_CULL_FACE_BACK);
+			break;
+		case PIPE_WINDING_BOTH:
+			so_data(so, NV40TCL_CULL_FACE_FRONT_AND_BACK);
+			break;
+		default:
+			so_data(so, 0);
+			break;
+		}
+		so_data(so, NV40TCL_FRONT_FACE_CCW);
 	} else {
-		rs->front_face = NV40TCL_FRONT_FACE_CW;
-		rs->poly_mode_front = nvgl_polygon_mode(cso->fill_cw);
-		rs->poly_mode_back  = nvgl_polygon_mode(cso->fill_ccw);
+		so_data(so, nvgl_polygon_mode(cso->fill_cw));
+		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
+		switch (cso->cull_mode) {
+		case PIPE_WINDING_CCW:
+			so_data(so, NV40TCL_CULL_FACE_BACK);
+			break;
+		case PIPE_WINDING_CW:
+			so_data(so, NV40TCL_CULL_FACE_FRONT);
+			break;
+		case PIPE_WINDING_BOTH:
+			so_data(so, NV40TCL_CULL_FACE_FRONT_AND_BACK);
+			break;
+		default:
+			so_data(so, 0);
+			break;
+		}
+		so_data(so, NV40TCL_FRONT_FACE_CW);
 	}
+	so_data(so, cso->poly_smooth ? 1 : 0);
+	so_data(so, cso->cull_mode != PIPE_WINDING_NONE ? 1 : 0);
 
-	switch (cso->cull_mode) {
-	case PIPE_WINDING_CCW:
-		rs->cull_face_en = 1;
-		if (cso->front_winding == PIPE_WINDING_CCW)
-			rs->cull_face    = NV40TCL_CULL_FACE_FRONT;
-		else
-			rs->cull_face    = NV40TCL_CULL_FACE_BACK;
-		break;
-	case PIPE_WINDING_CW:
-		rs->cull_face_en = 1;
-		if (cso->front_winding == PIPE_WINDING_CW)
-			rs->cull_face    = NV40TCL_CULL_FACE_FRONT;
-		else
-			rs->cull_face    = NV40TCL_CULL_FACE_BACK;
-		break;
-	case PIPE_WINDING_BOTH:
-		rs->cull_face_en = 1;
-		rs->cull_face    = NV40TCL_CULL_FACE_FRONT_AND_BACK;
-		break;
-	case PIPE_WINDING_NONE:
-	default:
-		rs->cull_face_en = 0;
-		rs->cull_face    = 0;
-		break;
-	}
+	so_method(so, nv40->curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
+	so_method(so, nv40->curie, NV40TCL_POINT_SPRITE, 1);
 	if (cso->point_sprite) {
-		rs->point_sprite = (1 << 0);
+		unsigned psctl = (1 << 0), i;
+
 		for (i = 0; i < 8; i++) {
 			if (cso->sprite_coord_mode[i] != PIPE_SPRITE_COORD_NONE)
-				rs->point_sprite |= (1 << (8 + i));
+				psctl |= (1 << (8 + i));
 		}
+
+		so_data(so, psctl);
 	} else {
-		rs->point_sprite = 0;
+		so_data(so, 0);
 	}
 
-	return (void *)rs;
+	return (void *)so;
 }
 
 static void
 nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_rasterizer_state *rs = hwcso;
 
-	BEGIN_RING(curie, NV40TCL_SHADE_MODEL, 1);
-	OUT_RING  (rs->shade_model);
-
-	BEGIN_RING(curie, NV40TCL_LINE_WIDTH, 2);
-	OUT_RING  (rs->line_width);
-	OUT_RING  (rs->line_smooth_en);
-	BEGIN_RING(curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
-	OUT_RING  (rs->line_stipple_en);
-	OUT_RING  (rs->line_stipple);
-
-	BEGIN_RING(curie, NV40TCL_POINT_SIZE, 1);
-	OUT_RING  (rs->point_size);
-
-	BEGIN_RING(curie, NV40TCL_POLYGON_MODE_FRONT, 6);
-	OUT_RING  (rs->poly_mode_front);
-	OUT_RING  (rs->poly_mode_back);
-	OUT_RING  (rs->cull_face);
-	OUT_RING  (rs->front_face);
-	OUT_RING  (rs->poly_smooth_en);
-	OUT_RING  (rs->cull_face_en);
-
-	BEGIN_RING(curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
-	OUT_RING  (rs->poly_stipple_en);
-
-	BEGIN_RING(curie, NV40TCL_POINT_SPRITE, 1);
-	OUT_RING  (rs->point_sprite);
+	so_emit(nv40->nvws, hwcso);
 }
 
 static void
 nv40_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
-}
+	struct nouveau_stateobj *so = hwcso;
 
-static void
-nv40_translate_stencil(const struct pipe_depth_stencil_alpha_state *cso,
-		       unsigned idx, struct nv40_stencil_push *hw)
-{
-	hw->enable = cso->stencil[idx].enabled ? 1 : 0;
-	hw->wmask = cso->stencil[idx].write_mask;
-	hw->func = nvgl_comparison_op(cso->stencil[idx].func);
-	hw->ref	= cso->stencil[idx].ref_value;
-	hw->vmask = cso->stencil[idx].value_mask;
-	hw->fail = nvgl_stencil_op(cso->stencil[idx].fail_op);
-	hw->zfail = nvgl_stencil_op(cso->stencil[idx].zfail_op);
-	hw->zpass = nvgl_stencil_op(cso->stencil[idx].zpass_op);
+	so_ref(NULL, &so);
 }
 
 static void *
 nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 			const struct pipe_depth_stencil_alpha_state *cso)
 {
-	struct nv40_depth_stencil_alpha_state *hw;
+	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(32, 0);
 
-	hw = malloc(sizeof(struct nv40_depth_stencil_alpha_state));
+	so_method(so, nv40->curie, NV40TCL_DEPTH_FUNC, 3);
+	so_data  (so, nvgl_comparison_op(cso->depth.func));
+	so_data  (so, cso->depth.writemask ? 1 : 0);
+	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	hw->depth.func		= nvgl_comparison_op(cso->depth.func);
-	hw->depth.write_enable	= cso->depth.writemask ? 1 : 0;
-	hw->depth.test_enable	= cso->depth.enabled ? 1 : 0;
+	so_method(so, nv40->curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	so_data  (so, cso->alpha.enabled ? 1 : 0);
+	so_data  (so, nvgl_comparison_op(cso->alpha.func));
+	so_data  (so, float_to_ubyte(cso->alpha.ref));
 
-	nv40_translate_stencil(cso, 0, &hw->stencil.front);
-	nv40_translate_stencil(cso, 1, &hw->stencil.back);
+	if (cso->stencil[0].enabled) {
+		so_method(so, nv40->curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
+		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
+		so_data  (so, cso->stencil[0].write_mask);
+		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
+		so_data  (so, cso->stencil[0].ref_value);
+		so_data  (so, cso->stencil[0].value_mask);
+		so_data  (so, nvgl_stencil_op(cso->stencil[0].fail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
+	} else {
+		so_method(so, nv40->curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	hw->alpha.enabled = cso->alpha.enabled ? 1 : 0;
-	hw->alpha.func = nvgl_comparison_op(cso->alpha.func);
-	hw->alpha.ref  = float_to_ubyte(cso->alpha.ref);
+	if (cso->stencil[1].enabled) {
+		so_method(so, nv40->curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
+		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
+		so_data  (so, cso->stencil[1].write_mask);
+		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
+		so_data  (so, cso->stencil[1].ref_value);
+		so_data  (so, cso->stencil[1].value_mask);
+		so_data  (so, nvgl_stencil_op(cso->stencil[1].fail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
+		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
+	} else {
+		so_method(so, nv40->curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
+		so_data  (so, 0);
+	}
 
-	return (void *)hw;
+	return (void *)so;
 }
 
 static void
 nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_depth_stencil_alpha_state *hw = hwcso;
 
-	BEGIN_RING(curie, NV40TCL_DEPTH_FUNC, 3);
-	OUT_RINGp ((uint32_t *)&hw->depth, 3);
-	BEGIN_RING(curie, NV40TCL_STENCIL_FRONT_ENABLE, 16);
-	OUT_RINGp ((uint32_t *)&hw->stencil.front, 8);
-	OUT_RINGp ((uint32_t *)&hw->stencil.back, 8);
-	BEGIN_RING(curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
-	OUT_RINGp ((uint32_t *)&hw->alpha.enabled, 3);
+	so_emit(nv40->nvws, hwcso);
 }
 
 static void
 nv40_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	struct nouveau_stateobj *so = hwcso;
+
+	so_ref(NULL, &so);
 }
 
 static void *
@@ -502,12 +500,16 @@ nv40_set_blend_color(struct pipe_context *pipe,
 		     const struct pipe_blend_color *bcol)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(2, 0);
 
-	BEGIN_RING(curie, NV40TCL_BLEND_COLOR, 1);
-	OUT_RING  ((float_to_ubyte(bcol->color[3]) << 24) |
-		   (float_to_ubyte(bcol->color[0]) << 16) |
-		   (float_to_ubyte(bcol->color[1]) <<  8) |
-		   (float_to_ubyte(bcol->color[2]) <<  0));
+	so_method(so, nv40->curie, NV40TCL_BLEND_COLOR, 1);
+	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |
+		       (float_to_ubyte(bcol->color[0]) << 16) |
+		       (float_to_ubyte(bcol->color[1]) <<  8) |
+		       (float_to_ubyte(bcol->color[2]) <<  0)));
+
+	so_emit(nv40->nvws, so);
+	so_ref(NULL, &so);
 }
 
 static void
@@ -540,6 +542,8 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	struct pipe_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format, w, h;
 	int i, colour_format = 0, zeta_format = 0;
+	struct nouveau_stateobj *so = so_new(64, 10);
+	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
 
 	rt_enable = 0;
 	for (i = 0; i < 4; i++) {
@@ -603,66 +607,78 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
-		nv40->rt[0] = rt[0]->buffer;
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR0, 1);
-		OUT_RELOCo(nv40->rt[0], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR0_PITCH, 2);
-		OUT_RING  (rt[0]->pitch * rt[0]->cpp);
-		OUT_RELOCl(nv40->rt[0], 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+		so_method(so, nv40->curie, NV40TCL_DMA_COLOR0, 1);
+		so_reloc (so, rt[0]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+			  nv40->nvws->channel->vram->handle,
+			  nv40->nvws->channel->gart->handle);
+		so_method(so, nv40->curie, NV40TCL_COLOR0_PITCH, 2);
+		so_data  (so, rt[0]->pitch * rt[0]->cpp);
+		so_reloc (so, rt[0]->buffer, rt[0]->offset, rt_flags |
+			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
-		nv40->rt[1] = rt[1]->buffer;
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR1, 1);
-		OUT_RELOCo(nv40->rt[1], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR1_OFFSET, 2);
-		OUT_RELOCl(nv40->rt[1], 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		OUT_RING  (rt[1]->pitch * rt[1]->cpp);
+		so_method(so, nv40->curie, NV40TCL_DMA_COLOR1, 1);
+		so_reloc (so, rt[1]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+			  nv40->nvws->channel->vram->handle,
+			  nv40->nvws->channel->gart->handle);
+		so_method(so, nv40->curie, NV40TCL_COLOR1_OFFSET, 2);
+		so_reloc (so, rt[1]->buffer, rt[1]->offset, rt_flags |
+			  NOUVEAU_BO_LOW, 0, 0);
+		so_data  (so, rt[1]->pitch * rt[1]->cpp);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
-		nv40->rt[2] = rt[2]->buffer;
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR2, 1);
-		OUT_RELOCo(nv40->rt[2], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR2_OFFSET, 1);
-		OUT_RELOCl(nv40->rt[2], 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR2_PITCH, 1);
-		OUT_RING  (rt[2]->pitch * rt[2]->cpp);
+		so_method(so, nv40->curie, NV40TCL_DMA_COLOR2, 1);
+		so_reloc (so, rt[2]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+			  nv40->nvws->channel->vram->handle,
+			  nv40->nvws->channel->gart->handle);
+		so_method(so, nv40->curie, NV40TCL_COLOR2_OFFSET, 1);
+		so_reloc (so, rt[2]->buffer, rt[2]->offset, rt_flags |
+			  NOUVEAU_BO_LOW, 0, 0);
+		so_method(so, nv40->curie, NV40TCL_COLOR2_PITCH, 1);
+		so_data  (so, rt[2]->pitch * rt[2]->cpp);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
-		nv40->rt[3] = rt[3]->buffer;
-		BEGIN_RING(curie, NV40TCL_DMA_COLOR3, 1);
-		OUT_RELOCo(nv40->rt[3], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR3_OFFSET, 1);
-		OUT_RELOCl(nv40->rt[3], 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_COLOR3_PITCH, 1);
-		OUT_RING  (rt[3]->pitch * rt[3]->cpp);
+		so_method(so, nv40->curie, NV40TCL_DMA_COLOR3, 1);
+		so_reloc (so, rt[3]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+			  nv40->nvws->channel->vram->handle,
+			  nv40->nvws->channel->gart->handle);
+		so_method(so, nv40->curie, NV40TCL_COLOR3_OFFSET, 1);
+		so_reloc (so, rt[3]->buffer, rt[3]->offset, rt_flags |
+			  NOUVEAU_BO_LOW, 0, 0);
+		so_method(so, nv40->curie, NV40TCL_COLOR3_PITCH, 1);
+		so_data  (so, rt[3]->pitch * rt[3]->cpp);
 	}
 
 	if (zeta_format) {
-		nv40->zeta = zeta->buffer;
-		BEGIN_RING(curie, NV40TCL_DMA_ZETA, 1);
-		OUT_RELOCo(nv40->zeta, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_ZETA_OFFSET, 1);
-		OUT_RELOCl(nv40->zeta, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-		BEGIN_RING(curie, NV40TCL_ZETA_PITCH, 1);
-		OUT_RING  (zeta->pitch * zeta->cpp);
+		so_method(so, nv40->curie, NV40TCL_DMA_ZETA, 1);
+		so_reloc (so, zeta->buffer, 0, rt_flags | NOUVEAU_BO_OR,
+			  nv40->nvws->channel->vram->handle,
+			  nv40->nvws->channel->gart->handle);
+		so_method(so, nv40->curie, NV40TCL_ZETA_OFFSET, 1);
+		so_reloc (so, zeta->buffer, zeta->offset, rt_flags |
+			  NOUVEAU_BO_LOW, 0, 0);
+		so_method(so, nv40->curie, NV40TCL_ZETA_PITCH, 1);
+		so_data  (so, zeta->pitch * zeta->cpp);
 	}
 
-	nv40->rt_enable = rt_enable;
-	BEGIN_RING(curie, NV40TCL_RT_ENABLE, 1);
-	OUT_RING  (rt_enable);
-	BEGIN_RING(curie, NV40TCL_RT_HORIZ, 3);
-	OUT_RING  ((w << 16) | 0);
-	OUT_RING  ((h << 16) | 0);
-	OUT_RING  (rt_format);
-	BEGIN_RING(curie, NV40TCL_VIEWPORT_HORIZ, 2);
-	OUT_RING  ((w << 16) | 0);
-	OUT_RING  ((h << 16) | 0);
-	BEGIN_RING(curie, NV40TCL_VIEWPORT_CLIP_HORIZ(0), 2);
-	OUT_RING  (((w - 1) << 16) | 0);
-	OUT_RING  (((h - 1) << 16) | 0);
+	so_method(so, nv40->curie, NV40TCL_RT_ENABLE, 1);
+	so_data  (so, rt_enable);
+	so_method(so, nv40->curie, NV40TCL_RT_HORIZ, 3);
+	so_data  (so, (w << 16) | 0);
+	so_data  (so, (h << 16) | 0);
+	so_data  (so, rt_format);
+	so_method(so, nv40->curie, NV40TCL_VIEWPORT_HORIZ, 2);
+	so_data  (so, (w << 16) | 0);
+	so_data  (so, (h << 16) | 0);
+	so_method(so, nv40->curie, NV40TCL_VIEWPORT_CLIP_HORIZ(0), 2);
+	so_data  (so, ((w - 1) << 16) | 0);
+	so_data  (so, ((h - 1) << 16) | 0);
+
+	so_emit(nv40->nvws, so);
+	so_ref (so, &nv40->so_framebuffer);
 }
 
 static void
@@ -670,9 +686,15 @@ nv40_set_polygon_stipple(struct pipe_context *pipe,
 			 const struct pipe_poly_stipple *stipple)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(33, 0);
+	unsigned i;
 
-	BEGIN_RING(curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
-	OUT_RINGp ((uint32_t *)stipple->stipple, 32);
+	so_method(so, nv40->curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
+	for (i = 0; i < 32; i++)
+		so_data(so, stipple->stipple[i]);
+
+	so_emit(nv40->nvws, so);
+	so_ref(NULL, &so);
 }
 
 static void
@@ -680,10 +702,14 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(3, 0);
 
-	BEGIN_RING(curie, NV40TCL_SCISSOR_HORIZ, 2);
-	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
-	OUT_RING  (((s->maxy - s->miny) << 16) | s->miny);
+	so_method(so, nv40->curie, NV40TCL_SCISSOR_HORIZ, 2);
+	so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
+	so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
+
+	so_emit(nv40->nvws, so);
+	so_ref(NULL, &so);
 }
 
 static void
@@ -691,16 +717,20 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 			const struct pipe_viewport_state *vpt)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_stateobj *so = so_new(9, 0);
 
-	BEGIN_RING(curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
-	OUT_RINGf (vpt->translate[0]);
-	OUT_RINGf (vpt->translate[1]);
-	OUT_RINGf (vpt->translate[2]);
-	OUT_RINGf (vpt->translate[3]);
-	OUT_RINGf (vpt->scale[0]);
-	OUT_RINGf (vpt->scale[1]);
-	OUT_RINGf (vpt->scale[2]);
-	OUT_RINGf (vpt->scale[3]);
+	so_method(so, nv40->curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
+	so_data  (so, fui(vpt->translate[0]));
+	so_data  (so, fui(vpt->translate[1]));
+	so_data  (so, fui(vpt->translate[2]));
+	so_data  (so, fui(vpt->translate[3]));
+	so_data  (so, fui(vpt->scale[0]));
+	so_data  (so, fui(vpt->scale[1]));
+	so_data  (so, fui(vpt->scale[2]));
+	so_data  (so, fui(vpt->scale[3]));
+
+	so_emit(nv40->nvws, so);
+	so_ref(NULL, &so);
 }
 
 static void

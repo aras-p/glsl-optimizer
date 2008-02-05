@@ -759,6 +759,7 @@ void
 nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 {
 	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct nouveau_stateobj *so;
 	int i;
 
 	if (!fp->translated) {
@@ -815,13 +816,16 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 		fp->on_hw = TRUE;
 	}
 
-	BEGIN_RING(curie, NV40TCL_FP_ADDRESS, 1);
-	OUT_RELOC (fp->buffer, 0, NOUVEAU_BO_VRAM |
-	           NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
-		   NOUVEAU_BO_OR, NV40TCL_FP_ADDRESS_DMA0,
-		   NV40TCL_FP_ADDRESS_DMA1);
-	BEGIN_RING(curie, NV40TCL_FP_CONTROL, 1);
-	OUT_RING  (fp->fp_control);
+	so = so_new(4, 1);
+	so_method(so, nv40->curie, NV40TCL_FP_ADDRESS, 1);
+	so_reloc (so, fp->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART |
+		  NOUVEAU_BO_RD | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
+		  NV40TCL_FP_ADDRESS_DMA0, NV40TCL_FP_ADDRESS_DMA1);
+	so_method(so, nv40->curie, NV40TCL_FP_CONTROL, 1);
+	so_data  (so, fp->fp_control);
+
+	so_emit(nv40->nvws, so);
+	so_ref(so, &fp->so);
 
 	nv40->fragprog.active = fp;
 }
