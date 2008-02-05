@@ -581,10 +581,13 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
                   GLfloat x1, GLfloat y1, const GLfloat *color,
                   GLboolean invertTex)
 {
+   GLfloat bias = ctx->st->bitmap_texcoord_bias;
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
    GLuint i;
-   GLfloat sLeft = 0.0, sRight = 1.0;
-   GLfloat tTop = invertTex, tBot = 1.0 - tTop;
+   GLfloat xBias = bias / (x1-x0);
+   GLfloat yBias = bias / (y1-y0);
+   GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
+   GLfloat tTop = invertTex - yBias, tBot = 1.0 - tTop - yBias;
 
    /* upper-left */
    verts[0][0][0] = x0;    /* attr[0].x */

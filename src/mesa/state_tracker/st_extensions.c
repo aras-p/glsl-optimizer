@@ -106,6 +106,9 @@ void st_init_limits(struct st_context *st)
 
    c->MaxTextureLodBias
       = pipe->get_paramf(pipe, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);
+
+   st->bitmap_texcoord_bias
+      = pipe->get_paramf(pipe, PIPE_CAP_BITMAP_TEXCOORD_BIAS);
 }
 
 

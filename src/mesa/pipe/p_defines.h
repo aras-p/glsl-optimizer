@@ -265,6 +265,6 @@ enum pipe_texture_target {
 #define PIPE_CAP_MAX_POINT_WIDTH_AA      17
 #define PIPE_CAP_MAX_TEXTURE_ANISOTROPY  18
 #define PIPE_CAP_MAX_TEXTURE_LOD_BIAS    19
-
+#define PIPE_CAP_BITMAP_TEXCOORD_BIAS    20
 
 #endif
