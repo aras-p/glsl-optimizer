@@ -31,7 +31,6 @@
 
 #include <stdio.h>
 #include <libmisc.h>
-#include <vec_literal.h>
 
 #include "spu_main.h"
 #include "spu_render.h"
@@ -220,13 +219,13 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       spu.fb.zsize = 0;
 
    if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
-      spu.color_shuffle = VEC_LITERAL(vector unsigned char,
-                                      12, 0, 4, 8, 0, 0, 0, 0, 
-                                      0, 0, 0, 0, 0, 0, 0, 0);
+      spu.color_shuffle = ((vector unsigned char) {
+                              12, 0, 4, 8, 0, 0, 0, 0, 
+                              0, 0, 0, 0, 0, 0, 0, 0});
    else if (spu.fb.color_format == PIPE_FORMAT_B8G8R8A8_UNORM)
-      spu.color_shuffle = VEC_LITERAL(vector unsigned char,
-                                      8, 4, 0, 12, 0, 0, 0, 0, 
-                                      0, 0, 0, 0, 0, 0, 0, 0);
+      spu.color_shuffle = ((vector unsigned char) {
+                              8, 4, 0, 12, 0, 0, 0, 0, 
+                              0, 0, 0, 0, 0, 0, 0, 0});
    else
       ASSERT(0);
 }
@@ -279,16 +278,10 @@ cmd_state_texture(const struct cell_command_texture *texture)
              spu.init.id, texture->start, texture->width, texture->height);
 
    memcpy(&spu.texture, texture, sizeof(*texture));
-   spu.tex_size = VEC_LITERAL(vector float,
-                              spu.texture.width,
-                              spu.texture.height,
-                              0.0,
-                              0.0);
-   spu.tex_size_mask = VEC_LITERAL(vector unsigned int,
-                                   spu.texture.width - 1,
-                                   spu.texture.height - 1,
-                                   0,
-                                   0);
+   spu.tex_size = (vector float)
+      { spu.texture.width, spu.texture.height, 0.0, 0.0};
+   spu.tex_size_mask = (vector unsigned int)
+      { spu.texture.width - 1, spu.texture.height - 1, 0, 0 };
 }
 
 
@@ -341,8 +334,8 @@ cmd_batch(uint opcode)
 {
    const uint buf = (opcode >> 8) & 0xff;
    uint size = (opcode >> 16);
-   uint buffer[CELL_BUFFER_SIZE / 4] ALIGN16_ATTRIB;
-   const uint usize = size / sizeof(uint);
+   uint64_t buffer[CELL_BUFFER_SIZE / 8] ALIGN16_ATTRIB;
+   const unsigned usize = size / sizeof(buffer[0]);
    uint pos;
 
    if (Debug)
@@ -377,7 +370,7 @@ cmd_batch(uint opcode)
             struct cell_command_framebuffer *fb
                = (struct cell_command_framebuffer *) &buffer[pos];
             cmd_state_framebuffer(fb);
-            pos += sizeof(*fb) / 4;
+            pos += sizeof(*fb) / 8;
          }
          break;
       case CELL_CMD_CLEAR_SURFACE:
@@ -385,7 +378,7 @@ cmd_batch(uint opcode)
             struct cell_command_clear_surface *clr
                = (struct cell_command_clear_surface *) &buffer[pos];
             cmd_clear_surface(clr);
-            pos += sizeof(*clr) / 4;
+            pos += sizeof(*clr) / 8;
          }
          break;
       case CELL_CMD_RENDER:
@@ -394,7 +387,7 @@ cmd_batch(uint opcode)
                = (struct cell_command_render *) &buffer[pos];
             uint pos_incr;
             cmd_render(render, &pos_incr);
-            pos += sizeof(*render) / 4 + pos_incr;
+            pos += sizeof(*render) / 8 + ((pos_incr + 1) / 2);
          }
          break;
       case CELL_CMD_RELEASE_VERTS:
@@ -402,8 +395,7 @@ cmd_batch(uint opcode)
             struct cell_command_release_verts *release
                = (struct cell_command_release_verts *) &buffer[pos];
             cmd_release_verts(release);
-            ASSERT(sizeof(*release) == 8);
-            pos += sizeof(*release) / 4;
+            pos += sizeof(*release) / 8;
          }
          break;
       case CELL_CMD_FINISH:
@@ -413,36 +405,36 @@ cmd_batch(uint opcode)
       case CELL_CMD_STATE_BLEND:
          cmd_state_blend((struct pipe_blend_state *)
                                  &buffer[pos+1]);
-         pos += (1 + sizeof(struct pipe_blend_state) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_blend_state)) / 8);
          break;
       case CELL_CMD_STATE_DEPTH_STENCIL:
          cmd_state_depth_stencil((struct pipe_depth_stencil_alpha_state *)
                                  &buffer[pos+1]);
-         pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_depth_stencil_alpha_state)) / 8);
          break;
       case CELL_CMD_STATE_SAMPLER:
          cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct pipe_sampler_state) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_sampler_state)) / 8);
          break;
       case CELL_CMD_STATE_TEXTURE:
          cmd_state_texture((struct cell_command_texture *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct cell_command_texture) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_command_texture)) / 8);
          break;
       case CELL_CMD_STATE_VERTEX_INFO:
          cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct vertex_info) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct vertex_info)) / 8);
          break;
       case CELL_CMD_STATE_VIEWPORT:
          (void) memcpy(& draw.viewport, &buffer[pos+1],
                        sizeof(struct pipe_viewport_state));
-         pos += (1 + sizeof(struct pipe_viewport_state) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_viewport_state)) / 8);
          break;
       case CELL_CMD_STATE_VS_ARRAY_INFO:
-         cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos]);
-         pos += (sizeof(struct cell_array_info) / 4);
+         cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
          break;
       default:
-         printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
+         printf("SPU %u: bad opcode: 0x%llx\n", spu.init.id, buffer[pos]);
          ASSERT(0);
          break;
       }

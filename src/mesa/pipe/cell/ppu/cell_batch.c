@@ -136,7 +136,7 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
 {
    uint size;
 
-   ASSERT(bytes % 4 == 0);
+   ASSERT(bytes % 8 == 0);
    ASSERT(bytes <= CELL_BUFFER_SIZE);
    ASSERT(cell->cur_batch >= 0);
 
@@ -171,7 +171,7 @@ cell_batch_alloc(struct cell_context *cell, uint bytes)
    void *pos;
    uint size;
 
-   ASSERT(bytes % 4 == 0);
+   ASSERT(bytes % 8 == 0);
    ASSERT(bytes <= CELL_BUFFER_SIZE);
 
    assert(cell->cur_batch >= 0);

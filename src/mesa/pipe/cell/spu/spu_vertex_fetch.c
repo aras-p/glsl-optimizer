@@ -431,9 +431,8 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
    /* loop over vertex attributes (vertex shader inputs)
     */
    for (attr = 0; attr < nr_attrs; attr++) {
-
-      const unsigned pitch   = draw->vertex_fetch.pitch[attr];
-      const ubyte *src = draw->vertex_fetch.src_ptr[attr];
+      const unsigned pitch = draw->vertex_fetch.pitch[attr];
+      const uint64_t src = draw->vertex_fetch.src_ptr[attr];
       const spu_fetch_func fetch = draw->vertex_fetch.fetch[attr];
       unsigned i;
       float p[4][4];
@@ -447,7 +446,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
        */
       for (i = 0; i < count; i++) {
          uint8_t buffer[32] ALIGN16_ATTRIB;
-         const unsigned long addr = src + (elts[i] * pitch);
+         const uint64_t addr = src + (elts[i] * pitch);
          const unsigned size = ((addr & 0x0f) == 0) ? 16 : 32;
 
          mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);

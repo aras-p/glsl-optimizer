@@ -37,7 +37,8 @@ static void
 emit_state_cmd(struct cell_context *cell, uint cmd,
                const void *state, uint state_size)
 {
-   uint *dst = (uint *) cell_batch_alloc(cell, sizeof(uint) + state_size);
+   uint64_t *dst = (uint64_t *) 
+       cell_batch_alloc(cell, ROUNDUP8(sizeof(uint64_t) + state_size));
    *dst = cmd;
    memcpy(dst + 1, state, state_size);
 }

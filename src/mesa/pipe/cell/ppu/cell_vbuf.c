@@ -40,7 +40,7 @@
 
 
 /** Allow vertex data to be inlined after RENDER command */
-#define ALLOW_INLINE_VERTS 1
+#define ALLOW_INLINE_VERTS 0
 
 
 /**
@@ -197,7 +197,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
    /* build/insert batch RENDER command */
    {
-      const uint index_bytes = ROUNDUP4(nr_indices * 2);
+      const uint index_bytes = ROUNDUP8(nr_indices * 2);
       const uint vertex_bytes = nr_vertices * 4 * cell->vertex_info.size;
 
       const uint batch_size = sizeof(struct cell_command_render)

@@ -59,7 +59,7 @@ cell_flush_int(struct pipe_context *pipe, unsigned flags)
    flushing = TRUE;
 
    if (flags & PIPE_FLUSH_WAIT) {
-      uint *cmd = (uint *) cell_batch_alloc(cell, sizeof(uint));
+      uint64_t *cmd = (uint64_t *) cell_batch_alloc(cell, sizeof(uint64_t));
       *cmd = CELL_CMD_FINISH;
    }
 
