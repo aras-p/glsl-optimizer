@@ -16,7 +16,7 @@ struct spu_vs_context {
    struct pipe_viewport_state viewport;
 
    struct {
-      const ubyte *src_ptr[PIPE_ATTRIB_MAX];
+      uint64_t src_ptr[PIPE_ATTRIB_MAX];
       unsigned pitch[PIPE_ATTRIB_MAX];
       enum pipe_format format[PIPE_ATTRIB_MAX];
       unsigned nr_attrs;

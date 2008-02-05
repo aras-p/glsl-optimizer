@@ -52,8 +52,8 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    struct cell_context *const cell =
        (struct cell_context *) draw->driver_private;
    struct cell_command_vs *const vs = &cell_global.command[0].vs;
-   unsigned *batch;
-   struct cell_array_info array_info;
+   uint64_t *batch;
+   struct cell_array_info *array_info;
    unsigned i, j;
 
    assert(draw->vs.queue_nr != 0);
@@ -63,17 +63,19 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    draw_update_vertex_fetch(draw);
 
    for (i = 0; i < draw->vertex_fetch.nr_attrs; i++) {
-      array_info.opcode = CELL_CMD_STATE_VS_ARRAY_INFO;
-      assert(draw->vertex_fetch.src_ptr[i] != NULL);
-      array_info.base = (uintptr_t) draw->vertex_fetch.src_ptr[i];
-      array_info.attr = i;
-      array_info.pitch = draw->vertex_fetch.pitch[i];
-      array_info.format = draw->vertex_element[i].src_format;
+      batch = cell_batch_alloc(cell, sizeof(batch[0]) + sizeof(*array_info));
 
-      cell_batch_append(cell, & array_info, sizeof(array_info));
+      batch[0] = CELL_CMD_STATE_VS_ARRAY_INFO;
+
+      array_info = (struct cell_array_info *) &batch[1];
+      assert(draw->vertex_fetch.src_ptr[i] != NULL);
+      array_info->base = (uintptr_t) draw->vertex_fetch.src_ptr[i];
+      array_info->attr = i;
+      array_info->pitch = draw->vertex_fetch.pitch[i];
+      array_info->format = draw->vertex_element[i].src_format;
    }
 
-   batch = cell_batch_alloc(cell, sizeof(unsigned)
+   batch = cell_batch_alloc(cell, sizeof(batch[0])
                             + sizeof(struct pipe_viewport_state));
    batch[0] = CELL_CMD_STATE_VIEWPORT;
    (void) memcpy(&batch[1], &draw->viewport,

@@ -57,6 +57,9 @@
 /** round up value to next multiple of 4 */
 #define ROUNDUP4(k)  (((k) + 0x3) & ~0x3)
 
+/** round up value to next multiple of 8 */
+#define ROUNDUP8(k)  (((k) + 0x7) & ~0x7)
+
 /** round up value to next multiple of 16 */
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
@@ -102,7 +105,7 @@
  */
 struct cell_command_framebuffer
 {
-   uint opcode;
+   uint64_t opcode;
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
@@ -114,7 +117,7 @@ struct cell_command_framebuffer
  */
 struct cell_command_clear_surface
 {
-   uint opcode;
+   uint64_t opcode;
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
 };
@@ -125,8 +128,7 @@ struct cell_command_clear_surface
  */
 struct cell_array_info
 {
-    uint opcode;
-    uint base;          /**< Base address of the 0th element. */
+    uint64_t base;          /**< Base address of the 0th element. */
     uint attr;          /**< Attribute that this state if for. */
     uint pitch;         /**< Byte pitch from one entry to the next. */
     uint format;        /**< Pipe format of each entry. */
@@ -150,7 +152,7 @@ struct cell_shader_info
 #define SPU_VERTS_PER_BATCH 64
 struct cell_command_vs
 {
-   uint opcode;       /**< CELL_CMD_VS_EXECUTE */
+   uint64_t opcode;       /**< CELL_CMD_VS_EXECUTE */
    struct cell_shader_info   shader;
    unsigned num_elts;
    unsigned elts[SPU_VERTS_PER_BATCH];
@@ -163,7 +165,7 @@ struct cell_command_vs
 
 struct cell_command_render
 {
-   uint opcode;       /**< CELL_CMD_RENDER */
+   uint64_t opcode;   /**< CELL_CMD_RENDER */
    uint prim_type;    /**< PIPE_PRIM_x */
    uint num_verts;
    uint vertex_size;  /**< bytes per vertex */
@@ -179,7 +181,7 @@ struct cell_command_render
 
 struct cell_command_release_verts
 {
-   int opcode;         /**< CELL_CMD_RELEASE_VERTS */
+   uint64_t opcode;         /**< CELL_CMD_RELEASE_VERTS */
    uint vertex_buf;    /**< in [0, CELL_NUM_BUFFERS-1] */
 };
 
