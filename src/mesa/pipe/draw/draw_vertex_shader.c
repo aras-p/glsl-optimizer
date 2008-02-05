@@ -116,11 +116,10 @@ run_vertex_program(struct draw_context *draw,
 #ifdef MESA_LLVM
    if (1) {
    struct gallivm_prog  *prog  = draw->vertex_shader->llvm_prog;
-   gallivm_prog_exec(prog,
-                     machine->Inputs,
-                     machine->Outputs,
-                     machine->Consts,
-                     12, 12, 12);
+   gallivm_cpu_vs_exec(prog,
+                       machine->Inputs,
+                       machine->Outputs,
+                       machine->Consts);
    } else
 #elif defined(__i386__) || defined(__386__)
    if (draw->use_sse) {

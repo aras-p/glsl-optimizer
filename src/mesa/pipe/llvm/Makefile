@@ -7,6 +7,7 @@ LIBNAME = gallivm
 
 GALLIVM_SOURCES = \
         gallivm.cpp  \
+        gallivm_cpu.cpp \
         instructions.cpp  \
         loweringpass.cpp \
         tgsitollvm.cpp \

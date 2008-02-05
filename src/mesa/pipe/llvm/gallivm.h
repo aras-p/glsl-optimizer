@@ -61,28 +61,16 @@ enum gallivm_vector_layout {
 };
 
 struct gallivm_ir *gallivm_ir_new(enum gallivm_shader_type type);
-void gallivm_ir_set_layout(struct gallivm_ir *prog,
-                           enum gallivm_vector_layout layout);
-void gallivm_ir_set_components(struct gallivm_ir *prog, int num);
-void gallivm_ir_fill_from_tgsi(struct gallivm_ir *prog,
-                               const struct tgsi_token *tokens);
-void gallivm_ir_delete(struct gallivm_ir *prog);
+void               gallivm_ir_set_layout(struct gallivm_ir *prog,
+                                         enum gallivm_vector_layout layout);
+void               gallivm_ir_set_components(struct gallivm_ir *prog, int num);
+void               gallivm_ir_fill_from_tgsi(struct gallivm_ir *prog,
+                                             const struct tgsi_token *tokens);
+void               gallivm_ir_delete(struct gallivm_ir *prog);
+
 
 struct gallivm_prog *gallivm_ir_compile(struct gallivm_ir *ir);
 
-int gallivm_prog_exec(struct gallivm_prog *prog,
-                      struct tgsi_exec_vector       *inputs,
-                      struct tgsi_exec_vector       *dests,
-                      float (*consts)[4],
-                      int num_vertices,
-                      int num_inputs,
-                      int num_attribs);
-int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
-                                 float x, float y,
-                                 float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
-                                 float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
-                                 float (*consts)[4],
-                                 struct tgsi_sampler *samplers);
 void gallivm_prog_inputs_interpolate(struct gallivm_prog *prog,
                                      float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                                      const struct tgsi_interp_coef *coefs);
@@ -91,8 +79,19 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
 
 struct gallivm_cpu_engine *gallivm_cpu_engine_create(struct gallivm_prog *prog);
 struct gallivm_cpu_engine *gallivm_global_cpu_engine();
+int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
+                        struct tgsi_exec_vector       *inputs,
+                        struct tgsi_exec_vector       *dests,
+                        float (*consts)[4]);
+int gallivm_cpu_fs_exec(struct gallivm_prog *prog,
+                        float x, float y,
+                        float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
+                        float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
+                        float (*consts)[4],
+                        struct tgsi_sampler *samplers);
 void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *ee, struct gallivm_prog *prog);
 void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *ee);
+
 
 #endif /* MESA_LLVM */
 
