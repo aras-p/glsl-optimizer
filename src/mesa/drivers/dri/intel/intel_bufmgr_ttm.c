@@ -95,6 +95,8 @@ typedef struct _dri_bufmgr_ttm {
 struct dri_ttm_reloc {
     dri_bo *target_buf;
     uint64_t validate_flags;
+    /** Offset of target_buf after last execution of this relocation entry. */
+    unsigned int last_target_offset;
 };
 
 typedef struct _dri_bo_ttm {
@@ -233,6 +235,11 @@ intel_add_validate_buffer(dri_bo *buf,
 	req->bo_req.flags = flags;
 	req->bo_req.hint = 0;
 #ifdef DRM_BO_HINT_PRESUMED_OFFSET
+	/* PRESUMED_OFFSET indicates that all relocations pointing at this
+	 * buffer have the correct offset.  If any of our relocations don't,
+	 * this flag will be cleared off the buffer later in the relocation
+	 * processing.
+	 */
 	req->bo_req.hint |= DRM_BO_HINT_PRESUMED_OFFSET;
 	req->bo_req.presumed_offset = buf->offset;
 #endif
@@ -697,6 +704,7 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 static void
 dri_ttm_bo_process_reloc(dri_bo *bo)
 {
+    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bo->bufmgr;
     dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
     unsigned int nr_relocs;
     int i;
@@ -714,6 +722,17 @@ dri_ttm_bo_process_reloc(dri_bo *bo)
 
 	/* Add the target to the validate list */
 	intel_add_validate_buffer(r->target_buf, r->validate_flags);
+
+	/* Clear the PRESUMED_OFFSET flag from the validate list entry of the
+	 * target if this buffer has a stale relocated pointer at it.
+	 */
+	if (r->last_target_offset != r->target_buf->offset) {
+	   dri_bo_ttm *target_buf_ttm = (dri_bo_ttm *)r->target_buf;
+	   struct intel_validate_entry *entry =
+	      &bufmgr_ttm->validate_array[target_buf_ttm->validate_index];
+
+	   entry->bo_arg.d.req.bo_req.flags &= ~DRM_BO_HINT_PRESUMED_OFFSET;
+	}
     }
 }
 
@@ -794,6 +813,32 @@ intel_update_buffer_offsets (dri_bufmgr_ttm *bufmgr_ttm)
     }
 }
 
+/**
+ * Update the last target offset field of relocation entries for PRESUMED_OFFSET
+ * computation.
+ */
+static void
+dri_ttm_bo_post_submit(dri_bo *bo)
+{
+    dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
+    unsigned int nr_relocs;
+    int i;
+
+    if (bo_ttm->reloc_buf_data == NULL)
+	return;
+
+    nr_relocs = bo_ttm->reloc_buf_data[0] & 0xffff;
+
+    for (i = 0; i < nr_relocs; i++) {
+	struct dri_ttm_reloc *r = &bo_ttm->relocs[i];
+
+	/* Continue walking the tree depth-first. */
+	dri_ttm_bo_post_submit(r->target_buf);
+
+	r->last_target_offset = bo->offset;
+    }
+}
+
 static void
 dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 {
@@ -801,6 +846,8 @@ dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
     int i;
 
     intel_update_buffer_offsets (bufmgr_ttm);
+
+    dri_ttm_bo_post_submit(batch_buf);
 
     if (bufmgr_ttm->bufmgr.debug)
 	dri_ttm_dump_validation_list(bufmgr_ttm);
