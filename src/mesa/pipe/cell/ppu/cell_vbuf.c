@@ -40,7 +40,7 @@
 
 
 /** Allow vertex data to be inlined after RENDER command */
-#define ALLOW_INLINE_VERTS 0
+#define ALLOW_INLINE_VERTS 1
 
 
 /**
@@ -199,9 +199,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    {
       const uint index_bytes = ROUNDUP8(nr_indices * 2);
       const uint vertex_bytes = nr_vertices * 4 * cell->vertex_info.size;
-
-      const uint batch_size = sizeof(struct cell_command_render)
-         + index_bytes;
+      const uint batch_size = sizeof(struct cell_command_render) + index_bytes;
 
       struct cell_command_render *render
          = (struct cell_command_render *)
@@ -223,9 +221,9 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->num_verts = nr_vertices;
       if (ALLOW_INLINE_VERTS &&
           min_index == 0 &&
-          vertex_bytes <= cell_batch_free_space(cell)) {
-         /* vertex data inlined, after indices */
-         void *dst = cell_batch_alloc(cell, vertex_bytes);
+          vertex_bytes + 16 <= cell_batch_free_space(cell)) {
+         /* vertex data inlined, after indices, at 16-byte boundary */
+         void *dst = cell_batch_alloc_aligned(cell, vertex_bytes, 16);
          memcpy(dst, vertices, vertex_bytes);
          render->inline_verts = TRUE;
          render->vertex_buf = ~0;
