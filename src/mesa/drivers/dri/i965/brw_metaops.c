@@ -419,7 +419,8 @@ static void meta_draw_quad(struct intel_context *intel,
 			     brw->metaops.vbo);
 
    /* Convert incoming ARGB to required RGBA */
-   color = (color >> 24) | (color << 8);
+   /* Note this color is stored as GL_UNSIGNED_BYTE */
+   color = (color & 0xff00ff00) | (((color >> 16) | (color << 16)) & 0xff00ff);
 
    ctx->Driver.BufferSubData(ctx,
 			     GL_ARRAY_BUFFER_ARB,
