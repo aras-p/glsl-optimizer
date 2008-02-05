@@ -52,6 +52,7 @@
 
 #include <libmisc.h>
 #include <spu_mfcio.h>
+#include <transpose_matrix4x4.h>
 #include <simdmath/ceilf4.h>
 #include <simdmath/cosf4.h>
 #include <simdmath/divf4.h>
@@ -664,7 +665,7 @@ fetch_texel( struct spu_sampler *sampler,
 
    sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, (float *) rgba);
 
-   spu_transpose_4x4(out, rgba);
+   _transpose_matrix4x4(out, rgba);
    r->q = out[0];
    g->q = out[1];
    b->q = out[2];
