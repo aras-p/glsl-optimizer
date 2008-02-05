@@ -171,6 +171,7 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
    ubyte vertex_data[CELL_BUFFER_SIZE] ALIGN16_ATTRIB;
    const uint vertex_size = render->vertex_size; /* in bytes */
    /*const*/ uint total_vertex_bytes = render->num_verts * vertex_size;
+   uint index_bytes;
    const ubyte *vertices;
    const ushort *indexes;
    uint i, j;
@@ -199,13 +200,16 @@ cmd_render(const struct cell_command_render *render, uint *pos_incr)
 
    /* indexes are right after the render command in the batch buffer */
    indexes = (const ushort *) (render + 1);
-   *pos_incr = (render->num_indexes * 2 + 3) / 4;
+   index_bytes = ROUNDUP8(render->num_indexes * 2);
+   *pos_incr = index_bytes / 8 + sizeof(*render) / 8;
 
 
    if (render->inline_verts) {
-      /* Vertices are right after indexes in batch buffer */
-      vertices = (const ubyte *) (render + 1) + *pos_incr * 4;
-      *pos_incr = *pos_incr + total_vertex_bytes / 4;
+      /* Vertices are after indexes in batch buffer at next 16-byte addr */
+      vertices = (const ubyte *) render + (*pos_incr * 8);
+      vertices = (const ubyte *) align_pointer((void *) vertices, 16);
+      ASSERT_ALIGN16(vertices);
+      *pos_incr = ((vertices + total_vertex_bytes) - (ubyte *) render) / 8;
    }
    else {
       /* Begin DMA fetch of vertex buffer */

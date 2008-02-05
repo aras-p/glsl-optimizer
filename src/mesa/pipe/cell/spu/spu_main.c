@@ -387,7 +387,7 @@ cmd_batch(uint opcode)
                = (struct cell_command_render *) &buffer[pos];
             uint pos_incr;
             cmd_render(render, &pos_incr);
-            pos += sizeof(*render) / 8 + ((pos_incr + 1) / 2);
+            pos += pos_incr;
          }
          break;
       case CELL_CMD_RELEASE_VERTS:
@@ -541,6 +541,7 @@ main(main_param_t speid, main_param_t argp)
    (void) speid;
 
    ASSERT(sizeof(tile_t) == TILE_SIZE * TILE_SIZE * 4);
+   ASSERT(sizeof(struct cell_command_render) % 8 == 0);
 
    one_time_init();
 
