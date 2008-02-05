@@ -157,7 +157,7 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
       size = 0;
    }
 
-   assert(size + bytes <= CELL_BUFFER_SIZE);
+   ASSERT(size + bytes <= CELL_BUFFER_SIZE);
 
    memcpy(cell->buffer[cell->cur_batch] + size, data, bytes);
 
@@ -168,13 +168,21 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes)
 void *
 cell_batch_alloc(struct cell_context *cell, uint bytes)
 {
+   return cell_batch_alloc_aligned(cell, bytes, 1);
+}
+
+
+void *
+cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
+                         uint alignment)
+{
    void *pos;
-   uint size;
+   uint size, padbytes;
 
    ASSERT(bytes % 8 == 0);
    ASSERT(bytes <= CELL_BUFFER_SIZE);
-
-   assert(cell->cur_batch >= 0);
+   ASSERT(alignment > 0);
+   ASSERT(cell->cur_batch >= 0);
 
 #ifdef ASSERT
    {
@@ -188,12 +196,18 @@ cell_batch_alloc(struct cell_context *cell, uint bytes)
 
    size = cell->buffer_size[cell->cur_batch];
 
-   if (size + bytes > CELL_BUFFER_SIZE) {
+   padbytes = (alignment - (size % alignment)) % alignment;
+
+   if (padbytes + size + bytes > CELL_BUFFER_SIZE) {
       cell_batch_flush(cell);
       size = 0;
    }
+   else {
+      size += padbytes;
+   }
 
-   assert(size + bytes <= CELL_BUFFER_SIZE);
+   ASSERT(size % alignment == 0);
+   ASSERT(size + bytes <= CELL_BUFFER_SIZE);
 
    pos = (void *) (cell->buffer[cell->cur_batch] + size);
 

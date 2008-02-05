@@ -50,5 +50,9 @@ cell_batch_append(struct cell_context *cell, const void *data, uint bytes);
 extern void *
 cell_batch_alloc(struct cell_context *cell, uint bytes);
 
+extern void *
+cell_batch_alloc_aligned(struct cell_context *cell, uint bytes,
+                         uint alignment);
+
 
 #endif /* CELL_BATCH_H */
