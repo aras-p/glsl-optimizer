@@ -400,7 +400,10 @@ intel_recreate_static(struct intel_context *intel,
       region->refcount = 1;
    }
 
-   region->cpp = intel->ctx.Visual.rgbBits / 8;
+   if (intel->ctx.Visual.rgbBits == 24)
+      region->cpp = 4;
+   else
+      region->cpp = intel->ctx.Visual.rgbBits / 8;
    region->pitch = intelScreen->pitch;
    region->height = intelScreen->height;     /* needed? */
    region->tiled = region_desc->tiled;
