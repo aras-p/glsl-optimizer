@@ -378,7 +378,10 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
 
    wait_on_mask(1 << TAG_VERTEX_BUFFER);
 
-//   _mesa_printf("%s %d\n", __FUNCTION__, count);
+#if DRAW_DBG
+   printf("SPU: %s count = %u, nr_attrs = %u\n", 
+          __FUNCTION__, count, nr_attrs);
+#endif
 
    /* loop over vertex attributes (vertex shader inputs)
     */
@@ -401,6 +404,9 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
          const uint64_t addr = src + (elts[i] * pitch);
          const unsigned size = ((addr & 0x0f) == 0) ? 16 : 32;
 
+#if DRAW_DBG
+         printf("SPU: fetching = 0x%llx\n", addr);
+#endif
          mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);
          wait_on_mask(1 << TAG_VERTEX_BUFFER);
 
