@@ -90,7 +90,10 @@ intel_region_alloc(struct intel_context *intel,
    region->refcount = 1;
 
    region->buffer = dri_bo_alloc(intel->bufmgr, "region",
-				 pitch * cpp * height, 64, DRM_BO_FLAG_MEM_TT);
+				 pitch * cpp * height, 64,
+				 DRM_BO_FLAG_MEM_LOCAL |
+				 DRM_BO_FLAG_CACHED |
+				 DRM_BO_FLAG_CACHED_MAPPED);
    return region;
 }
 
@@ -322,7 +325,10 @@ intel_region_release_pbo(struct intel_context *intel,
 
    region->buffer = dri_bo_alloc(intel->bufmgr, "region",
 				 region->pitch * region->cpp * region->height,
-				 64, DRM_BO_FLAG_MEM_TT);
+				 64,
+				 DRM_BO_FLAG_MEM_LOCAL |
+				 DRM_BO_FLAG_CACHED |
+				 DRM_BO_FLAG_CACHED_MAPPED);
 }
 
 /* Break the COW tie to the pbo.  Both the pbo and the region end up
