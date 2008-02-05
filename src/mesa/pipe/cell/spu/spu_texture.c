@@ -26,8 +26,6 @@
  **************************************************************************/
 
 
-#include <vec_literal.h>
-
 #include "pipe/p_compiler.h"
 #include "spu_main.h"
 #include "spu_texture.h"
@@ -57,7 +55,7 @@ invalidate_tex_cache(void)
    /* XXX memset? */
    uint i;
    for (i = 0; i < CACHE_SIZE; i++) {
-      tex_tile_xy[i] = VEC_LITERAL(vector unsigned int, ~0U, ~0U, ~0U, ~0U);
+      tex_tile_xy[i] = ((vector unsigned int) { ~0U, ~0U, ~0U, ~0U });
    }
 }
 
