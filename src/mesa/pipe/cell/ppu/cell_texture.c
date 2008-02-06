@@ -79,30 +79,29 @@ cell_texture_layout(struct cell_texture * spt)
 }
 
 
-void
-cell_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
+struct pipe_texture *
+cell_texture_create(struct pipe_context *pipe, const struct pipe_texture *templat)
 {
-   struct cell_texture *spt = REALLOC(*pt, sizeof(struct pipe_texture),
-					  sizeof(struct cell_texture));
+   struct cell_texture *spt = CALLOC_STRUCT(cell_texture);
+   if (!spt)
+      return NULL;
 
-   if (spt) {
-      memset(&spt->base + 1, 0,
-	     sizeof(struct cell_texture) - sizeof(struct pipe_texture));
+   spt->base = *templat;
 
-      cell_texture_layout(spt);
+   cell_texture_layout(spt);
 
-      spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                                PIPE_BUFFER_USAGE_PIXEL,
-                                                spt->buffer_size);
+   spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                             PIPE_BUFFER_USAGE_PIXEL,
+                                             spt->buffer_size);
 
-      if (!spt->buffer) {
-	 FREE(spt);
-	 spt = NULL;
-      }
+   if (!spt->buffer) {
+      FREE(spt);
+      return NULL;
    }
 
-   *pt = &spt->base;
+   return &spt->base;
 }
+
 
 void
 cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)

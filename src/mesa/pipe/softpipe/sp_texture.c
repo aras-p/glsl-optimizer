@@ -79,30 +79,29 @@ softpipe_texture_layout(struct softpipe_texture * spt)
 }
 
 
-void
-softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
+struct pipe_texture *
+softpipe_texture_create(struct pipe_context *pipe,
+                        const struct pipe_texture *templat)
 {
-   struct softpipe_texture *spt = REALLOC(*pt, sizeof(struct pipe_texture),
-					  sizeof(struct softpipe_texture));
+   struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
+   if (!spt)
+      return NULL;
 
-   if (spt) {
-      memset(&spt->base + 1, 0,
-	     sizeof(struct softpipe_texture) - sizeof(struct pipe_texture));
+   spt->base = *templat;
 
-      softpipe_texture_layout(spt);
+   softpipe_texture_layout(spt);
 
-      spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                                PIPE_BUFFER_USAGE_PIXEL,
-                                                spt->buffer_size);
-
-      if (!spt->buffer) {
-	 FREE(spt);
-	 spt = NULL;
-      }
+   spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                             PIPE_BUFFER_USAGE_PIXEL,
+                                             spt->buffer_size);
+   if (!spt->buffer) {
+      FREE(spt);
+      return NULL;
    }
 
-   *pt = &spt->base;
+   return &spt->base;
 }
+
 
 void
 softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)

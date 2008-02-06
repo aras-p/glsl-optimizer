@@ -299,15 +299,14 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
    return TRUE;
 }
 
-void
-brw_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
+
+struct pipe_texture *
+brw_texture_create(struct pipe_context *pipe, const struct pipe_texture *templat)
 {
-   struct brw_texture *tex = REALLOC(*pt, sizeof(struct pipe_texture),
-                                     sizeof(struct brw_texture));
+   struct brw_texture *tex = CALLOC_STRUCT(brw_texture);
 
    if (tex) {
-      memset(&tex->base + 1, 0,
-	     sizeof(struct brw_texture) - sizeof(struct pipe_texture));
+      tex->base = *templat;
 
       if (brw_miptree_layout(pipe, tex))
 	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,
@@ -317,11 +316,11 @@ brw_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
       if (!tex->buffer) {
 	 FREE(tex);
-	 tex = NULL;
+         return NULL;
       }
    }
 
-   *pt = &tex->base;
+   return &tex->base;
 }
 
 void
