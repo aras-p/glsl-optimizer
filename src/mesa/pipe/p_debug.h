@@ -38,6 +38,10 @@
 #ifndef P_DEBUG_H_
 #define P_DEBUG_H_
 
+
+#include <stdarg.h>
+
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -55,7 +59,11 @@ extern "C" {
 
 
 void debug_printf(const char *format, ...);
+
+void debug_vprintf(const char *format, va_list ap);
+
 void debug_assert_fail(const char *expr, const char *file, unsigned line);
+
 
 /** Assert macro */
 #ifdef DEBUG
@@ -66,7 +74,6 @@ void debug_assert_fail(const char *expr, const char *file, unsigned line);
 
 
 #ifdef assert
-#warning Standard C Library assert macro usage detected. 
 #undef assert
 #endif
 #define assert(expr) debug_assert(expr)
