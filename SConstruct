@@ -11,7 +11,7 @@ import sys
 #
 # For example, invoke scons as 
 #
-#   scons debug=1 dri=0 x86=1
+#   scons debug=1 dri=0 machine=x86
 #
 # to set configuration variables. Or you can write those options to a file
 # named config.py:
@@ -19,7 +19,7 @@ import sys
 #   # config.py
 #   debug=1
 #   dri=0
-#   x86=1
+#   machine='x86'
 # 
 # Invoke
 #
@@ -35,7 +35,9 @@ opts.Add(BoolOption('dri', 'build dri drivers', False))
 opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
                      allowed_values=('generic', 'x86', 'x86-64')))
 
-env = Environment(options = opts)
+env = Environment(
+	options = opts, 
+	ENV = os.environ)
 Help(opts.GenerateHelpText(env))
 
 # for debugging
