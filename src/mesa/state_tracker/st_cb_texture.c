@@ -30,6 +30,7 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/macros.h"
+#include "main/mipmap.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/teximage.h"
@@ -1531,6 +1532,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
    functions->CopyTexSubImage3D = st_CopyTexSubImage3D;
+   functions->GenerateMipmap = _mesa_generate_mipmap;
 
    functions->GetTexImage = st_GetTexImage;
 
