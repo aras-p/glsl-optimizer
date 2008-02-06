@@ -43,11 +43,19 @@
 #include "i915_context.h"
 #include "i915_program.h"
 
-static const GLfloat sin_quad_constants[4] = {
-   4.0,
-   -4.0,
-   2.0,
-   -1.0
+static const GLfloat sin_quad_constants[2][4] = {
+   {
+      2.0,
+      -1.0,
+      .5,
+      0.0
+   },
+   {
+      4.0,
+      -4.0,
+      1.0 / (2.0 * M_PI),
+      .2225
+   }
 };
 
 static const GLfloat sin_constants[4] = { 1.0,
@@ -341,7 +349,7 @@ upload_program(struct i915_fragment_program *p)
 
    while (1) {
       GLuint src0, src1, src2, flags;
-      GLuint tmp = 0, consts = 0;
+      GLuint tmp = 0, consts0 = 0, consts1 = 0;
 
       switch (inst->Opcode) {
       case OPCODE_ABS:
@@ -690,15 +698,16 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_SIN:
          src0 = src_vector(p, &inst->SrcReg[0], program);
          tmp = i915_get_utemp(p);
-	 consts = i915_emit_const4fv(p, sin_quad_constants);
+	 consts0 = i915_emit_const4fv(p, sin_quad_constants[0]);
+	 consts1 = i915_emit_const4fv(p, sin_quad_constants[1]);
 
 	 /* Reduce range from repeating about [-pi,pi] to [-1,1] */
          i915_emit_arith(p,
                          A0_MAD,
                          tmp, A0_DEST_CHANNEL_X, 0,
                          src0,
-			 i915_emit_const1f(p, 1.0 / (2.0 * M_PI)),
-			 i915_emit_const1f(p, .5));
+			 swizzle(consts1, Z, ZERO, ZERO, ZERO), /* 1/(2pi) */
+			 swizzle(consts0, Z, ZERO, ZERO, ZERO)); /* .5 */
 
          i915_emit_arith(p, A0_FRC, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
@@ -706,19 +715,15 @@ upload_program(struct i915_fragment_program *p)
 			 A0_MAD,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp,
-			 swizzle(consts, Z, ZERO, ZERO, ZERO), /* 2 */
-			 swizzle(consts, W, ZERO, ZERO, ZERO)); /* -1 */
+			 swizzle(consts0, X, ZERO, ZERO, ZERO), /* 2 */
+			 swizzle(consts0, Y, ZERO, ZERO, ZERO)); /* -1 */
 
-	 /* Compute sin using a quadratic.  While it has increased total
-	  * error over the range, it does give continuity that the 4-component
-	  * Taylor series lacks when repeating the range due to its
-	  * sin(PI) != 0 behavior.
+	 /* Compute sin using a quadratic and quartic.  It gives continuity
+	  * that repeating the Taylor series lacks every 2*pi, and has
+	  * reduced error.
 	  *
 	  * The idea was described at:
 	  * http://www.devmaster.net/forums/showthread.php?t=5784
-	  *
-	  * If we're concerned about the error of this approximation, we should
-	  * probably incorporate a second pass to include a x**4 factor.
 	  */
 
 	 /* tmp.y = abs(tmp.x); {x, abs(x), 0, 0} */
@@ -737,15 +742,41 @@ upload_program(struct i915_fragment_program *p)
 			 tmp,
 			 0);
 
-	 /* result = tmp.xy DP sin_quad_constants.xy */
+	 /* tmp.x = tmp.xy DP sin_quad_constants[2].xy */
          i915_emit_arith(p,
                          A0_DP3,
+                         tmp, A0_DEST_CHANNEL_X, 0,
+			 tmp,
+                         swizzle(consts1, X, Y, ZERO, ZERO),
+			 0);
+
+	 /* tmp.x now contains a first approximation (y).  Now, weight it
+	  * against tmp.y**2 to get closer.
+	  */
+	 i915_emit_arith(p,
+                         A0_MAX,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 negate(swizzle(tmp, ZERO, X, ZERO, ZERO), 0, 1, 0, 0),
+			 0);
+
+	 /* tmp.y = tmp.x * tmp.y - tmp.x; {y, y * abs(y) - y, 0, 0} */
+	 i915_emit_arith(p,
+			 A0_MAD,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 swizzle(tmp, ZERO, Y, ZERO, ZERO),
+			 negate(swizzle(tmp, ZERO, X, ZERO, ZERO), 0, 1, 0, 0));
+
+	 /* result = .2225 * tmp.y + tmp.x =.2225(y * abs(y) - y) + y= */
+	 i915_emit_arith(p,
+			 A0_MAD,
                          get_result_vector(p, inst),
                          get_result_flags(inst), 0,
-                         tmp,
-                         swizzle(i915_emit_const4fv(p, sin_quad_constants),
-				 X, Y, ZERO, ZERO),
-			 0);
+			 swizzle(consts1, W, W, W, W),
+			 swizzle(tmp, Y, Y, Y, Y),
+			 swizzle(tmp, X, X, X, X));
+
          break;
 
       case OPCODE_SLT:
