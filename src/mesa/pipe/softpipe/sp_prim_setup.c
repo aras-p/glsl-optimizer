@@ -251,9 +251,9 @@ static void print_vertex(const struct setup_stage *setup,
                          const struct vertex_header *v)
 {
    int i;
-   fprintf(stderr, "Vertex: (%p)\n", v);
+   debug_printf("Vertex: (%p)\n", v);
    for (i = 0; i < setup->quad.nr_attrs; i++) {
-      fprintf(stderr, "  %d: %f %f %f %f\n",  i, 
+      debug_printf("  %d: %f %f %f %f\n",  i, 
               v->data[i][0], v->data[i][1], v->data[i][2], v->data[i][3]);
    }
 }
@@ -267,7 +267,7 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
    const struct vertex_header *v2 = prim->v[2];
 
 #if DEBUG_VERTS
-   fprintf(stderr, "Triangle:\n");
+   debug_printf("Triangle:\n");
    print_vertex(setup, v0);
    print_vertex(setup, v1);
    print_vertex(setup, v2);
@@ -345,7 +345,7 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
 
       setup->oneoverarea = 1.0f / area;
       /*
-      _mesa_printf("%s one-over-area %f  area %f  det %f\n",
+      debug_printf("%s one-over-area %f  area %f  det %f\n",
                    __FUNCTION__, setup->oneoverarea, area, prim->det );
       */
    }
@@ -419,7 +419,7 @@ static void tri_linear_coeff( struct setup_stage *setup,
                    dady * (setup->vmin->data[0][1] - 0.5f)));
 
    /*
-   _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
+   debug_printf("attr[%d].%c: %f dx:%f dy:%f\n",
 		slot, "xyzw"[i], 
 		setup->coef[slot].a0[i],
 		setup->coef[slot].dadx[i],
@@ -453,10 +453,10 @@ static void tri_persp_coeff( struct setup_stage *setup,
    float dady = b * setup->oneoverarea;
       
    /*
-   printf("tri persp %d,%d: %f %f %f\n", vertSlot, i,
-          setup->vmin->data[vertSlot][i],
-          setup->vmid->data[vertSlot][i],
-          setup->vmax->data[vertSlot][i]
+   debug_printf("tri persp %d,%d: %f %f %f\n", vertSlot, i,
+          	setup->vmin->data[vertSlot][i],
+          	setup->vmid->data[vertSlot][i],
+       		setup->vmax->data[vertSlot][i]
           );
    */
    assert(i <= 3);
@@ -619,7 +619,7 @@ static void subtriangle( struct setup_stage *setup,
    finish_y -= sy;
 
    /*
-   _mesa_printf("%s %d %d\n", __FUNCTION__, start_y, finish_y);  
+   debug_printf("%s %d %d\n", __FUNCTION__, start_y, finish_y);  
    */
 
    for (y = start_y; y < finish_y; y++) {
@@ -671,7 +671,7 @@ static void setup_tri( struct draw_stage *stage,
    struct setup_stage *setup = setup_stage( stage );
 
    /*
-   _mesa_printf("%s\n", __FUNCTION__ );
+   debug_printf("%s\n", __FUNCTION__ );
    */
 
    setup_sort_vertices( setup, prim );
@@ -1124,7 +1124,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
          int ix, iy;
 
          /*
-         printf("(%f, %f) -> X:%d..%d Y:%d..%d\n", x, y, xmin, xmax,ymin,ymax);
+         debug_printf("(%f, %f) -> X:%d..%d Y:%d..%d\n", x, y, xmin, xmax,ymin,ymax);
          */
          for (iy = iymin; iy <= iymax; iy += 2) {
             uint rowMask = 0xf;

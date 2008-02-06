@@ -149,7 +149,7 @@ unsigned brw_upload_cache( struct brw_cache *cache,
    if (!brw_pool_alloc(cache->pool, data_size, 1 << 6, &offset)) {
       /* Should not be possible:
        */
-      printf("brw_pool_alloc failed\n");
+      debug_printf("brw_pool_alloc failed\n");
       exit(1);
    }
 
@@ -177,7 +177,7 @@ unsigned brw_upload_cache( struct brw_cache *cache,
    }
 
    if (BRW_DEBUG & DEBUG_STATE)
-      printf("upload %s: %d bytes to pool buffer %p offset %x\n",
+      debug_printf("upload %s: %d bytes to pool buffer %p offset %x\n",
              cache->name, 
 	     data_size,
              (void*)cache->pool->buffer,
@@ -416,7 +416,7 @@ void brw_clear_all_caches( struct brw_context *brw )
    int i;
 
    if (BRW_DEBUG & DEBUG_STATE)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+      debug_printf("%s\n", __FUNCTION__);
 
    for (i = 0; i < BRW_MAX_CACHE; i++)
       clear_cache(&brw->cache[i]);

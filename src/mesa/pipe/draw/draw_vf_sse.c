@@ -453,7 +453,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	    update_src_ptr(p, srcECX, vfESI, a);
 	 }
 	 else {
-	    fprintf(stderr, "Can't emit 1ub %x %x %d\n", 
+	    debug_printf("Can't emit 1ub %x %x %d\n", 
 	            a->vertoffset, a[-1].vertoffset, a[-1].vertattrsize );
 	    return FALSE;
 	 }
@@ -499,7 +499,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	    j++;		/* NOTE: two attrs consumed */
 	 }
 	 else {
-	    fprintf(stderr, "Can't emit 3ub\n");
+	    debug_printf("Can't emit 3ub\n");
 	 }
 	 return FALSE;	/* add this later */
 	 break;
@@ -532,7 +532,7 @@ static boolean build_vertex_emit( struct x86_program *p )
 	 update_src_ptr(p, srcECX, vfESI, a);
 	 break;
       default:
-	 fprintf(stderr, "unknown a[%d].format %d\n", j, a->format);
+	 debug_printf("unknown a[%d].format %d\n", j, a->format);
 	 return FALSE;	/* catch any new opcodes */
       }
       

@@ -166,7 +166,7 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][3] = w;
 
 #if DBG_VS
-      printf("output[%d]win: %f %f %f %f\n", j,
+      debug_printf("output[%d]win: %f %f %f %f\n", j,
              vOut[j]->data[0][0],
              vOut[j]->data[0][1],
              vOut[j]->data[0][2],
@@ -181,7 +181,7 @@ run_vertex_program(struct draw_context *draw,
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
 #if DBG_VS
-         printf("output[%d][%d]: %f %f %f %f\n", j, slot,
+         debug_printf("output[%d][%d]: %f %f %f %f\n", j, slot,
                 vOut[j]->data[slot][0],
                 vOut[j]->data[slot][1],
                 vOut[j]->data[slot][2],
@@ -207,7 +207,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
     */
    draw_update_vertex_fetch( draw );
 
-//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+//   debug_printf( " q(%d) ", draw->vs.queue_nr );
 #ifdef MESA_LLVM
    if (draw->vertex_shader->llvm_prog) {
       draw_vertex_shader_queue_flush_llvm(draw);

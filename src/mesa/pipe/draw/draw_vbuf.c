@@ -34,8 +34,7 @@
  */
 
 
-#include <assert.h>
-
+#include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 
 #include "draw_vbuf.h"
@@ -125,55 +124,55 @@ dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
       j = vinfo->src_index[i];
       switch (vinfo->emit[i]) {
       case EMIT_OMIT:
-         fprintf(stderr, "EMIT_OMIT:");
+         debug_printf("EMIT_OMIT:");
          break;
       case EMIT_ALL:
          assert(i == 0);
          assert(j == 0);
-         fprintf(stderr, "EMIT_ALL:\t");
+         debug_printf("EMIT_ALL:\t");
          for(k = 0; k < vinfo->size*4; ++k)
-            fprintf(stderr, "%02x ", *data++);
+            debug_printf("%02x ", *data++);
          break;
       case EMIT_1F:
-         fprintf(stderr, "EMIT_1F:\t");
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         debug_printf("EMIT_1F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
          break;
       case EMIT_1F_PSIZE:
-         fprintf(stderr, "EMIT_1F_PSIZE:\t");
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         debug_printf("EMIT_1F_PSIZE:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
          break;
       case EMIT_2F:
-         fprintf(stderr, "EMIT_2F:\t");
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         debug_printf("EMIT_2F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
          break;
       case EMIT_3F:
-         fprintf(stderr, "EMIT_3F:\t");
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         debug_printf("EMIT_3F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
          data += sizeof(float);
          break;
       case EMIT_4F:
-         fprintf(stderr, "EMIT_4F:\t");
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
-         fprintf(stderr, "%f ", *(float *)data); data += sizeof(float);
+         debug_printf("EMIT_4F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
          break;
       case EMIT_4UB:
-         fprintf(stderr, "EMIT_4UB:\t");
-         fprintf(stderr, "%u ", *data++);
-         fprintf(stderr, "%u ", *data++);
-         fprintf(stderr, "%u ", *data++);
-         fprintf(stderr, "%u ", *data++);
+         debug_printf("EMIT_4UB:\t");
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
          break;
       default:
          assert(0);
       }
-      fprintf(stderr, "\n");
+      debug_printf("\n");
    }
-   fprintf(stderr, "\n");
+   debug_printf("\n");
 }
 #endif
 
@@ -190,7 +189,7 @@ emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
 #if 0
-   fprintf(stderr, "emit vertex %d to %p\n", 
+   debug_printf("emit vertex %d to %p\n", 
            vbuf->nr_vertices, vbuf->vertex_ptr);
 #endif
 
@@ -198,7 +197,7 @@ emit_vertex( struct vbuf_stage *vbuf,
       if(vertex->vertex_id < vbuf->nr_vertices)
 	 return;
       else
-	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
+	 debug_printf("Bad vertex id 0x%04x (>= 0x%04x)\n", 
 	         vertex->vertex_id, vbuf->nr_vertices);
       return;
    }
@@ -269,9 +268,9 @@ emit_vertex( struct vbuf_stage *vbuf,
 	 static float data[256]; 
 	 draw_vf_emit_vertex(vbuf->vf, vertex, data);
 	 if(memcmp((uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size, data, vbuf->vertex_size)) {
-            fprintf(stderr, "With VF:\n");
+            debug_printf("With VF:\n");
             dump_emitted_vertex(vbuf->vinfo, (uint8_t *)data);
-	    fprintf(stderr, "Without VF:\n");
+	    debug_printf("Without VF:\n");
 	    dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size);
 	    assert(0);
 	 }

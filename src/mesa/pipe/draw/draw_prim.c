@@ -30,6 +30,8 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include "pipe/p_debug.h"
+
 #include "draw_private.h"
 #include "draw_context.h"
 
@@ -60,8 +62,8 @@ static void draw_prim_queue_flush( struct draw_context *draw )
    unsigned i;
 
    if (0)
-      fprintf(stdout,"Flushing with %d prims, %d verts\n",
-             draw->pq.queue_nr, draw->vs.queue_nr);
+      debug_printf("Flushing with %d prims, %d verts\n",
+                   draw->pq.queue_nr, draw->vs.queue_nr);
 
    assert (draw->pq.queue_nr != 0);
 
@@ -120,9 +122,9 @@ static void draw_prim_queue_flush( struct draw_context *draw )
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
    if (0)
-      fprintf(stdout,"Flushing with %d verts, %d prims\n",
-	      draw->vs.queue_nr,
-	      draw->pq.queue_nr );
+      debug_printf("Flushing with %d verts, %d prims\n",
+                   draw->vs.queue_nr,
+                   draw->pq.queue_nr );
 
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
@@ -157,11 +159,11 @@ static struct prim_header *get_queued_prim( struct draw_context *draw,
 					    unsigned nr_verts )
 {
    if (!draw_vertex_cache_check_space( draw, nr_verts )) {
-//      fprintf(stderr, "v");
+//      debug_printf("v");
       draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE );
    }
    else if (draw->pq.queue_nr == PRIM_QUEUE_LENGTH) {
-//      fprintf(stderr, "p");
+//      debug_printf("p");
       draw_do_flush( draw, DRAW_FLUSH_PRIM_QUEUE );
    }
 
@@ -283,7 +285,7 @@ draw_prim( struct draw_context *draw,
    boolean unfilled = (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
 		       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL);
 
-//   _mesa_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
+//   debug_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
 
    switch (prim) {
    case PIPE_PRIM_POINTS:

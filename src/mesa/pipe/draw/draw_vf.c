@@ -168,7 +168,7 @@ draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
       const unsigned format = map[i].format;
       if (format == DRAW_EMIT_PAD) {
 #if (DRAW_VF_DBG)
-	    _mesa_printf("%d: pad %d, offset %d\n", i,  
+	    debug_printf("%d: pad %d, offset %d\n", i,  
 			 map[i].offset, offset);  
 #endif
 
@@ -186,7 +186,7 @@ draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
 	    memcpy(vf->attr[j].data, &map[i].data, vf->attr[j].vertattrsize);
 	 
 #if (DRAW_VF_DBG)
-	    _mesa_printf("%d: %s, offset %d\n", i,  
+	    debug_printf("%d: %s, offset %d\n", i,  
 			 draw_vf_format_info[format].name,
 			 vf->attr[j].vertoffset);   
 #endif

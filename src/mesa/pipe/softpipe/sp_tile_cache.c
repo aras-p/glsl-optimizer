@@ -341,7 +341,7 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
       }
    }
 #if 0
-   printf("num cleared: %u\n", numCleared);
+   debug_printf("num cleared: %u\n", numCleared);
 #endif
 }
 
@@ -384,7 +384,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
 #endif
 
 #if 0
-   printf("flushed tiles in use: %d\n", inuse);
+   debug_printf("flushed tiles in use: %d\n", inuse);
 #endif
 }
 

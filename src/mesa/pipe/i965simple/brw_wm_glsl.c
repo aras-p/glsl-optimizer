@@ -982,7 +982,7 @@ static void brw_wm_emit_instruction( struct brw_wm_compile *c,
       break;
 
    default:
-      _mesa_printf("unsupported IR in fragment shader %d\n",
+      debug_printf("unsupported IR in fragment shader %d\n",
 		   inst->Instruction.Opcode);
    }
 #if 0

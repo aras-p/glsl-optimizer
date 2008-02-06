@@ -71,7 +71,7 @@ static int intel_translate_shadow_compare_func(unsigned func)
        return COMPAREFUNC_NEVER;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
+   debug_printf("Unknown value in %s: %x\n", __FUNCTION__, func);
    return COMPAREFUNC_NEVER;
 }
 

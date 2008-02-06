@@ -28,10 +28,9 @@
 #ifndef P_COMPILER_H
 #define P_COMPILER_H
 
-#include <assert.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 
 #if defined(_WIN32) && !defined(__WIN32__)

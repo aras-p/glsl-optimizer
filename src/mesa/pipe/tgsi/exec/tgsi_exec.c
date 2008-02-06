@@ -143,7 +143,7 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
 
    k = tgsi_parse_init( &parse, mach->Tokens );
    if (k != TGSI_PARSE_OK) {
-      fprintf(stderr, "Problem parsing!\n");
+      debug_printf("Problem parsing!\n");
       return;
    }
 
@@ -249,7 +249,7 @@ tgsi_exec_machine_init(
 
    k = tgsi_parse_init (&parse, mach->Tokens);
    if (k != TGSI_PARSE_OK) {
-      fprintf( stderr, "Problem parsing!\n" );
+      debug_printf( "Problem parsing!\n" );
       return;
    }
 
@@ -1236,7 +1236,7 @@ exec_tex(struct tgsi_exec_machine *mach,
    uint chan_index;
    float lodBias;
 
-   /*   printf("Sampler %u unit %u\n", sampler, unit); */
+   /*   debug_printf("Sampler %u unit %u\n", sampler, unit); */
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:
