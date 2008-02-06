@@ -48,7 +48,7 @@ static const GLfloat sin_quad_constants[2][4] = {
       2.0,
       -1.0,
       .5,
-      0.0
+      .75
    },
    {
       4.0,
@@ -375,52 +375,80 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_COS:
          src0 = src_vector(p, &inst->SrcReg[0], program);
          tmp = i915_get_utemp(p);
+	 consts0 = i915_emit_const4fv(p, sin_quad_constants[0]);
+	 consts1 = i915_emit_const4fv(p, sin_quad_constants[1]);
 
+	 /* Reduce range from repeating about [-pi,pi] to [-1,1] */
          i915_emit_arith(p,
-                         A0_MUL,
+                         A0_MAD,
                          tmp, A0_DEST_CHANNEL_X, 0,
-                         src0, i915_emit_const1f(p, 1.0 / (M_PI)), 0);
+                         src0,
+			 swizzle(consts1, Z, ZERO, ZERO, ZERO), /* 1/(2pi) */
+			 swizzle(consts0, W, ZERO, ZERO, ZERO)); /* .75 */
 
-         i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
+         i915_emit_arith(p, A0_FRC, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
-         /* By choosing different taylor constants, could get rid of this mul:
-          */
+	 i915_emit_arith(p,
+			 A0_MAD,
+			 tmp, A0_DEST_CHANNEL_X, 0,
+			 tmp,
+			 swizzle(consts0, X, ZERO, ZERO, ZERO), /* 2 */
+			 swizzle(consts0, Y, ZERO, ZERO, ZERO)); /* -1 */
+
+	 /* Compute COS with the same calculation used for SIN, but a
+	  * different source range has been mapped to [-1,1] this time.
+	  */
+
+	 /* tmp.y = abs(tmp.x); {x, abs(x), 0, 0} */
+	 i915_emit_arith(p,
+                         A0_MAX,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 negate(swizzle(tmp, ZERO, X, ZERO, ZERO), 0, 1, 0, 0),
+			 0);
+
+	 /* tmp.y = tmp.y * tmp.x; {x, x * abs(x), 0, 0} */
+	 i915_emit_arith(p,
+			 A0_MUL,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 tmp,
+			 0);
+
+	 /* tmp.x = tmp.xy DP sin_quad_constants[2].xy */
          i915_emit_arith(p,
-                         A0_MUL,
+                         A0_DP3,
                          tmp, A0_DEST_CHANNEL_X, 0,
-                         tmp, i915_emit_const1f(p, (M_PI)), 0);
+			 tmp,
+                         swizzle(consts1, X, Y, ZERO, ZERO),
+			 0);
 
-         /* 
-          * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
-          * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, 1
-          * t0 = MUL t0.xxz1 t0.z111    ; x^6 x^4 x^2 1
-          * result = DP4 t0, cos_constants
-          */
-         i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_XY, 0,
-                         swizzle(tmp, X, X, ONE, ONE),
-                         swizzle(tmp, X, ONE, ONE, ONE), 0);
+	 /* tmp.x now contains a first approximation (y).  Now, weight it
+	  * against tmp.y**2 to get closer.
+	  */
+	 i915_emit_arith(p,
+                         A0_MAX,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 negate(swizzle(tmp, ZERO, X, ZERO, ZERO), 0, 1, 0, 0),
+			 0);
 
-         i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_XYZ, 0,
-                         swizzle(tmp, X, Y, X, ONE),
-                         swizzle(tmp, X, X, ONE, ONE), 0);
+	 /* tmp.y = tmp.x * tmp.y - tmp.x; {y, y * abs(y) - y, 0, 0} */
+	 i915_emit_arith(p,
+			 A0_MAD,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 swizzle(tmp, ZERO, Y, ZERO, ZERO),
+			 negate(swizzle(tmp, ZERO, X, ZERO, ZERO), 0, 1, 0, 0));
 
-         i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_XYZ, 0,
-                         swizzle(tmp, X, X, Z, ONE),
-                         swizzle(tmp, Z, ONE, ONE, ONE), 0);
-
-         i915_emit_arith(p,
-                         A0_DP4,
+	 /* result = .2225 * tmp.y + tmp.x =.2225(y * abs(y) - y) + y= */
+	 i915_emit_arith(p,
+			 A0_MAD,
                          get_result_vector(p, inst),
                          get_result_flags(inst), 0,
-                         swizzle(tmp, ONE, Z, Y, X),
-                         i915_emit_const4fv(p, cos_constants), 0);
-
+			 swizzle(consts1, W, W, W, W),
+			 swizzle(tmp, Y, Y, Y, Y),
+			 swizzle(tmp, X, X, X, X));
          break;
 
       case OPCODE_DP3:
