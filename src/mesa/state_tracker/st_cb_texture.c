@@ -284,7 +284,12 @@ logbase2(int n)
 }
 
 
-/* Otherwise, store it in memory if (Border != 0) or (any dimension ==
+/**
+ * Allocate a pipe_texture object for the given st_texture_object using
+ * the given st_texture_image to guess the mipmap size/levels.
+ *
+ * [comments...]
+ * Otherwise, store it in memory if (Border != 0) or (any dimension ==
  * 1).
  *    
  * Otherwise, if max_level >= level >= min_level, create texture with
@@ -303,10 +308,11 @@ guess_and_alloc_texture(struct st_context *st,
    GLuint width = stImage->base.Width;
    GLuint height = stImage->base.Height;
    GLuint depth = stImage->base.Depth;
-   GLuint l2width, l2height, l2depth;
    GLuint i, comp_byte = 0;
 
    DBG("%s\n", __FUNCTION__);
+
+   assert(!stObj->pt);
 
    if (stImage->base.Border)
       return;
@@ -349,15 +355,15 @@ guess_and_alloc_texture(struct st_context *st,
       lastLevel = firstLevel;
    }
    else {
-      l2width = logbase2(width);
-      l2height = logbase2(height);
-      l2depth = logbase2(depth);
+      GLuint l2width = logbase2(width);
+      GLuint l2height = logbase2(height);
+      GLuint l2depth = logbase2(depth);
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
-   assert(!stObj->pt);
    if (stImage->base.IsCompressed)
       comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
+
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat),
