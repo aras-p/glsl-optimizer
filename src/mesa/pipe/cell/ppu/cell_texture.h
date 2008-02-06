@@ -60,8 +60,9 @@ cell_texture(struct pipe_texture *pt)
 
 
 
-extern void
-cell_texture_create(struct pipe_context *pipe, struct pipe_texture **pt);
+extern struct pipe_texture *
+cell_texture_create(struct pipe_context *pipe,
+                    const struct pipe_texture *templat);
 
 extern void
 cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);

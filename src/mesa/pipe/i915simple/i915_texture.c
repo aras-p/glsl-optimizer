@@ -477,17 +477,17 @@ i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
    return TRUE;
 }
 
-void
-i915_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
+
+struct pipe_texture *
+i915_texture_create(struct pipe_context *pipe,
+                    const struct pipe_texture *templat)
 {
-   struct i915_texture *tex = REALLOC(*pt, sizeof(struct pipe_texture),
-				      sizeof(struct i915_texture));
+   struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
 
    if (tex) {
       struct i915_context *i915 = i915_context(pipe);
 
-      memset(&tex->base + 1, 0,
-	     sizeof(struct i915_texture) - sizeof(struct pipe_texture));
+      tex->base = *templat;
 
       if (i915->flags.is_i945 ? i945_miptree_layout(pipe, tex) :
 	  i915_miptree_layout(pipe, tex))
@@ -498,12 +498,13 @@ i915_texture_create(struct pipe_context *pipe, struct pipe_texture **pt)
 
       if (!tex->buffer) {
 	 FREE(tex);
-	 tex = NULL;
+	 return NULL;
       }
    }
 
-   *pt = &tex->base;
+   return &tex->base;
 }
+
 
 void
 i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)

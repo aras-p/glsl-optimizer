@@ -199,8 +199,8 @@ struct pipe_context {
    /*
     * Texture functions
     */
-   void (*texture_create)(struct pipe_context *pipe,
-			  struct pipe_texture **pt);
+   struct pipe_texture * (*texture_create)(struct pipe_context *pipe,
+                                           const struct pipe_texture *templat);
 
    void (*texture_release)(struct pipe_context *pipe,
 			   struct pipe_texture **pt);
