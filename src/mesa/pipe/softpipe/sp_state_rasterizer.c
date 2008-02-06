@@ -35,12 +35,9 @@
 
 void *
 softpipe_create_rasterizer_state(struct pipe_context *pipe,
-                                 const struct pipe_rasterizer_state *setup)
+                                 const struct pipe_rasterizer_state *rast)
 {
-   struct pipe_rasterizer_state *state =
-      MALLOC( sizeof(struct pipe_rasterizer_state) );
-   memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
-   return state;
+   return mem_dup(rast, sizeof(*rast));
 }
 
 void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
