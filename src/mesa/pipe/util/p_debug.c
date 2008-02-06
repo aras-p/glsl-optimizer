@@ -53,7 +53,7 @@ void debug_printf(const char *format, ...)
 }
 
 
-static INLINE debug_abort(void) 
+static INLINE void debug_abort(void) 
 {
 #ifdef WIN32
    EngDebugBreak();
