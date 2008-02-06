@@ -39,9 +39,7 @@ void *
 cell_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
 {
-   struct pipe_blend_state *state = MALLOC(sizeof(struct pipe_blend_state));
-   memcpy(state, blend, sizeof(struct pipe_blend_state));
-   return state;
+   return mem_dup(blend, sizeof(*blend));
 }
 
 
@@ -85,10 +83,7 @@ void *
 cell_create_depth_stencil_alpha_state(struct pipe_context *pipe,
                  const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
-   struct pipe_depth_stencil_alpha_state *state =
-      MALLOC(sizeof(struct pipe_depth_stencil_alpha_state));
-   memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_alpha_state));
-   return state;
+   return mem_dup(depth_stencil, sizeof(*depth_stencil));
 }
 
 
