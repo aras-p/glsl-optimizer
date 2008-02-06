@@ -183,6 +183,20 @@ align_free(void *ptr)
 
 
 
+/**
+ * Duplicate of a block of memory
+ */
+static INLINE void *
+mem_dup(const void *src, uint size)
+{
+   void *dup = malloc(size);
+   if (dup)
+      memcpy(dup, src, size);
+   return dup;
+}
+
+
+
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
