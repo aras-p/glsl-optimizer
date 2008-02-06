@@ -100,7 +100,7 @@ negate(int reg, int x, int y, int z, int w)
 static void
 i915_use_passthrough_shader(struct i915_context *i915)
 {
-   fprintf(stderr, "**** Using i915 pass-through fragment shader\n");
+   debug_printf("**** Using i915 pass-through fragment shader\n");
 
    i915->current.program = (uint *) MALLOC(sizeof(passthrough));
    if (i915->current.program) {
@@ -119,12 +119,12 @@ i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
    va_list args;
    char buffer[1024];
 
-   fprintf(stderr, "i915_program_error: ");
+   debug_printf("i915_program_error: ");
    va_start( args, msg );  
    vsprintf( buffer, msg, args );
    va_end( args );
-   fprintf(stderr, buffer);
-   fprintf(stderr, "\n");
+   debug_printf(buffer);
+   debug_printf("\n");
 
    p->error = 1;
 }
@@ -169,7 +169,7 @@ src_vector(struct i915_fp_compile *p,
 
       switch (sem_name) {
       case TGSI_SEMANTIC_POSITION:
-         fprintf(stderr, "SKIP SEM POS\n");
+         debug_printf("SKIP SEM POS\n");
          /*
          assert(p->wpos_tex != -1);
          src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
@@ -913,7 +913,7 @@ i915_translate_instructions(struct i915_fp_compile *p,
             ind = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
             sem = parse.FullToken.FullDeclaration.Semantic.SemanticName;
             semi = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
-            /*printf("FS Input DECL [%u] sem %u\n", ind, sem);*/
+            /*debug_printf("FS Input DECL [%u] sem %u\n", ind, sem);*/
             p->input_semantic_name[ind] = sem;
             p->input_semantic_index[ind] = semi;
          }
@@ -924,7 +924,7 @@ i915_translate_instructions(struct i915_fp_compile *p,
             ind = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
             sem = parse.FullToken.FullDeclaration.Semantic.SemanticName;
             semi = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
-            /*printf("FS Output DECL [%u] sem %u\n", ind, sem);*/
+            /*debug_printf("FS Output DECL [%u] sem %u\n", ind, sem);*/
             p->output_semantic_name[ind] = sem;
             p->output_semantic_index[ind] = semi;
          }

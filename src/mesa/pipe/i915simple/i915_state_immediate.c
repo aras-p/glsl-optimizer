@@ -97,7 +97,7 @@ static void upload_S2S4(struct i915_context *i915)
       LIS2 = i915->current.vertex_info.hwfmt[1];
       LIS4 = i915->current.vertex_info.hwfmt[0];
       /*
-      printf("LIS2: 0x%x  LIS4: 0x%x\n", LIS2, LIS4);
+      debug_printf("LIS2: 0x%x  LIS4: 0x%x\n", LIS2, LIS4);
       */
       assert(LIS4); /* should never be zero? */
    }

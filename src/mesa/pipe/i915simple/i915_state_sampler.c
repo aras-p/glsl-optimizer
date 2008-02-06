@@ -169,7 +169,7 @@ translate_texture_format(enum pipe_format pipeFormat)
    case PIPE_FORMAT_S8Z24_UNORM:
       return (MAPSURF_32BIT | MT_32BIT_xL824);
    default:
-      fprintf(stderr, "i915: translate_texture_format() bad image format %x\n",
+      debug_printf("i915: translate_texture_format() bad image format %x\n",
               pipeFormat);
       assert(0);
       return 0;

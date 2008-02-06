@@ -953,7 +953,7 @@ void brw_SAMPLE(struct brw_compile *p,
    boolean need_stall = 0;
 
    if(writemask == 0) {
-/*       _mesa_printf("%s: zero writemask??\n", __FUNCTION__); */
+/*       debug_printf("%s: zero writemask??\n", __FUNCTION__); */
       return;
    }
 
@@ -985,7 +985,7 @@ void brw_SAMPLE(struct brw_compile *p,
 
       if (newmask != writemask) {
 	 need_stall = 1;
-/* 	 _mesa_printf("need stall %x %x\n", newmask , writemask); */
+/* 	 debug_printf("need stall %x %x\n", newmask , writemask); */
       }
       else {
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);

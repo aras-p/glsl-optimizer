@@ -44,10 +44,8 @@
 #define PB_BUFFER_H_
 
 
-#include <assert.h>
-#include <stdlib.h>
-
 #include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
 

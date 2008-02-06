@@ -162,7 +162,7 @@ static fetch_func get_fetch_func( enum pipe_format format )
    {
       char tmp[80];
       pf_sprint_name(tmp, format);
-      _mesa_printf("%s: %s\n", __FUNCTION__, tmp);
+      debug_printf("%s: %s\n", __FUNCTION__, tmp);
    }
 #endif
 
@@ -332,7 +332,7 @@ static void fetch_xyz_rgb( struct draw_context *draw,
 
    assert(count <= 4);
 
-//   _mesa_printf("%s\n", __FUNCTION__);
+//   debug_printf("%s\n", __FUNCTION__);
 
    /* loop over vertex attributes (vertex shader inputs)
     */
@@ -421,7 +421,7 @@ static void generic_vertex_fetch( struct draw_context *draw,
 
    assert(count <= 4);
 
-//   _mesa_printf("%s %d\n", __FUNCTION__, count);
+//   debug_printf("%s %d\n", __FUNCTION__, count);
 
    /* loop over vertex attributes (vertex shader inputs)
     */
@@ -467,7 +467,7 @@ void draw_update_vertex_fetch( struct draw_context *draw )
 {
    unsigned nr_attrs, i;
 
-//   _mesa_printf("%s\n", __FUNCTION__);
+//   debug_printf("%s\n", __FUNCTION__);
    
    /* this may happend during context init */
    if (!draw->vertex_shader)

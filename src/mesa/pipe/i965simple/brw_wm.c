@@ -57,7 +57,7 @@ static void do_wm_prog( struct brw_context *brw,
    c->pixel_w = brw_null_reg();
 
 
-   fprintf(stderr, "XXXXXXXX FP\n");
+   debug_printf("XXXXXXXX FP\n");
    
    brw_wm_glsl_emit(c);
 

@@ -58,7 +58,7 @@ static int brw_translate_compare_func(int func)
       return BRW_COMPAREFUNCTION_ALWAYS;
    }
 
-   fprintf(stderr, "Unknown value in %s: %x\n", __FUNCTION__, func);
+   debug_printf("Unknown value in %s: %x\n", __FUNCTION__, func);
    return BRW_COMPAREFUNCTION_ALWAYS;
 }
 

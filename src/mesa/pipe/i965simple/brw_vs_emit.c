@@ -1228,7 +1228,7 @@ static void process_instruction(struct brw_vs_compile *c,
    case TGSI_OPCODE_ENDSUB:
       break;
    default:
-      printf("Unsupport opcode %d in vertex shader\n", inst->Instruction.Opcode);
+      debug_printf("Unsupport opcode %d in vertex shader\n", inst->Instruction.Opcode);
       break;
    }
 

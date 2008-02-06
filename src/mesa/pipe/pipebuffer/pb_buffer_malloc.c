@@ -34,9 +34,7 @@
  */
 
 
-#include <assert.h>
-#include <stdlib.h>
-
+#include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 #include "pb_buffer.h"
 

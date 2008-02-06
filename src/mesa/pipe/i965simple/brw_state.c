@@ -225,7 +225,7 @@ static void brw_bind_vs_state(struct pipe_context *pipe, void *vs)
    brw->attribs.VertexProgram = (struct brw_vertex_program *)vs;
    brw->state.dirty.brw |= BRW_NEW_VS;
 
-   printf("YYYYYYYYYYYYY BINDING VERTEX SHADER\n");
+   debug_printf("YYYYYYYYYYYYY BINDING VERTEX SHADER\n");
 }
 
 static void brw_delete_vs_state(struct pipe_context *pipe, void *shader)

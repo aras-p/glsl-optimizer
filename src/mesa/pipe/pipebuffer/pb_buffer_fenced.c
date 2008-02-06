@@ -34,12 +34,10 @@
  */
 
 
-#include <assert.h>
-#include <stdlib.h>
-
 #include "linked_list.h"
 
 #include "p_compiler.h"
+#include "p_debug.h"
 #include "p_winsys.h"
 #include "p_thread.h"
 #include "p_util.h"

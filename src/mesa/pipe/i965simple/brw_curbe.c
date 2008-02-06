@@ -273,10 +273,10 @@ static void upload_constant_buffer(struct brw_context *brw)
 
    if (1) {
       for (i = 0; i < sz; i+=4)
-	 _mesa_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
+	 debug_printf("curbe %d.%d: %f %f %f %f\n", i/8, i&4,
 		      buf[i+0], buf[i+1], buf[i+2], buf[i+3]);
 
-      _mesa_printf("last_buf %p buf %p sz %d/%d cmp %d\n",
+      debug_printf("last_buf %p buf %p sz %d/%d cmp %d\n",
 		   brw->curbe.last_buf, buf,
 		   bufsz, brw->curbe.last_bufsz,
 		   brw->curbe.last_buf ? memcmp(buf, brw->curbe.last_buf, bufsz) : -1);
@@ -299,7 +299,7 @@ static void upload_constant_buffer(struct brw_context *brw)
 			  bufsz,
 			  1 << 6,
 			  &brw->curbe.gs_offset)) {
-	 _mesa_printf("out of GS memory for curbe\n");
+	 debug_printf("out of GS memory for curbe\n");
 	 assert(0);
 	 return;
       }

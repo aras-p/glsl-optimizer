@@ -27,9 +27,8 @@
  */
 
 
-#include <assert.h>
-
 #include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 
 #include "draw_vf.h"

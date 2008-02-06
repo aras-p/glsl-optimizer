@@ -87,7 +87,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          }
          break;
       case TGSI_SEMANTIC_FOG:
-         fprintf(stderr, "i915 fogcoord not implemented yet\n");
+         debug_printf("i915 fogcoord not implemented yet\n");
          draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_PERSPECTIVE, src++);
          break;
       default:

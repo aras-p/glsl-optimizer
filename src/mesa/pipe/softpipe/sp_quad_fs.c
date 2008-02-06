@@ -223,13 +223,13 @@ shade_quad_llvm(struct quad_stage *qs,
    inputs[2][0][1] = fy + 1.0f;
    inputs[3][0][1] = fy + 1.0f;
 #if DLLVM
-   printf("MASK = %d\n", quad->mask);
+   debug_printf("MASK = %d\n", quad->mask);
 #endif
    gallivm_prog_inputs_interpolate(llvm, inputs, quad->coef);
 #if DLLVM
    for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 2; ++j) {
-         printf("IN(%d,%d) [%f %f %f %f]\n", i, j, 
+         debug_printf("IN(%d,%d) [%f %f %f %f]\n", i, j, 
                 inputs[i][j][0], inputs[i][j][1], inputs[i][j][2], inputs[i][j][3]);
       }
    }
@@ -240,7 +240,7 @@ shade_quad_llvm(struct quad_stage *qs,
                                    softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
                                    qss->samplers);
 #if DLLVM
-   printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
+   debug_printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
           dests[0][0][0], dests[0][0][1], dests[0][0][2], dests[0][0][3], 
           dests[0][1][0], dests[0][1][1], dests[0][1][2], dests[0][1][3]);
 #endif
@@ -260,7 +260,7 @@ shade_quad_llvm(struct quad_stage *qs,
    }
 #if DLLVM
    for (int i = 0; i < QUAD_SIZE; ++i) {
-      printf("QLLVM%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
+      debug_printf("QLLVM%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
              quad->outputs.color[0][i],
              quad->outputs.color[1][i],
              quad->outputs.color[2][i],
@@ -284,7 +284,7 @@ shade_quad_llvm(struct quad_stage *qs,
       }
    }
 #if DLLVM
-   printf("D [%f, %f, %f, %f] mask = %d\n",
+   debug_printf("D [%f, %f, %f, %f] mask = %d\n",
              quad->outputs.depth[0],
              quad->outputs.depth[1],
              quad->outputs.depth[2],

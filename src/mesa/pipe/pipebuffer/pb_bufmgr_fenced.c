@@ -34,9 +34,7 @@
  */
 
 
-#include <assert.h>
-#include <stdlib.h>
-
+#include "p_debug.h"
 #include "p_util.h"
 
 #include "pb_buffer.h"

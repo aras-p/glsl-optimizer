@@ -107,7 +107,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                            ) * 3/2; /* plus 50% margin */
 
 #if 0
-   fprintf (stderr, "i915_emit_hardware_state: %d dwords, %d relocs\n", dwords, relocs);
+   debug_printf("i915_emit_hardware_state: %d dwords, %d relocs\n", dwords, relocs);
 #endif
    
    if(!BEGIN_BATCH(dwords, relocs)) {
