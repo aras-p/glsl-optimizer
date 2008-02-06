@@ -158,6 +158,7 @@ STATECACHE_SOURCES = [
 ]
 
 PIPEUTIL_SOURCES = [
+	'pipe/util/p_debug.c',
 	'pipe/util/p_tile.c',
 	'pipe/util/p_util.c',
 ]

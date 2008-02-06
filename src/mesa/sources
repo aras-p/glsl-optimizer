@@ -195,6 +195,7 @@ STATECACHE_SOURCES = \
 	pipe/cso_cache/cso_cache.c
 
 PIPEUTIL_SOURCES = \
+	pipe/util/p_debug.c \
 	pipe/util/p_tile.c \
 	pipe/util/p_util.c
 
