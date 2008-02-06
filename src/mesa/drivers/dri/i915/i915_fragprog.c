@@ -43,9 +43,13 @@
 #include "i915_context.h"
 #include "i915_program.h"
 
+static const GLfloat sin_quad_constants[4] = {
+   4.0,
+   -4.0,
+   2.0,
+   -1.0
+};
 
-
-/* 1, -1/3!, 1/5!, -1/7! */
 static const GLfloat sin_constants[4] = { 1.0,
    -1.0 / (3 * 2 * 1),
    1.0 / (5 * 4 * 3 * 2 * 1),
@@ -337,7 +341,7 @@ upload_program(struct i915_fragment_program *p)
 
    while (1) {
       GLuint src0, src1, src2, flags;
-      GLuint tmp = 0;
+      GLuint tmp = 0, consts = 0;
 
       switch (inst->Opcode) {
       case OPCODE_ABS:
@@ -686,51 +690,62 @@ upload_program(struct i915_fragment_program *p)
       case OPCODE_SIN:
          src0 = src_vector(p, &inst->SrcReg[0], program);
          tmp = i915_get_utemp(p);
+	 consts = i915_emit_const4fv(p, sin_quad_constants);
 
+	 /* Reduce range from repeating about [-pi,pi] to [-1,1] */
          i915_emit_arith(p,
-                         A0_MUL,
+                         A0_MAD,
                          tmp, A0_DEST_CHANNEL_X, 0,
-                         src0, i915_emit_const1f(p, 1.0 / (M_PI)), 0);
+                         src0,
+			 i915_emit_const1f(p, 1.0 / (2.0 * M_PI)),
+			 i915_emit_const1f(p, .5));
 
-         i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
+         i915_emit_arith(p, A0_FRC, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
-         /* By choosing different taylor constants, could get rid of this mul:
-          */
+	 i915_emit_arith(p,
+			 A0_MAD,
+			 tmp, A0_DEST_CHANNEL_X, 0,
+			 tmp,
+			 swizzle(consts, Z, ZERO, ZERO, ZERO), /* 2 */
+			 swizzle(consts, W, ZERO, ZERO, ZERO)); /* -1 */
+
+	 /* Compute sin using a quadratic.  While it has increased total
+	  * error over the range, it does give continuity that the 4-component
+	  * Taylor series lacks when repeating the range due to its
+	  * sin(PI) != 0 behavior.
+	  *
+	  * The idea was described at:
+	  * http://www.devmaster.net/forums/showthread.php?t=5784
+	  *
+	  * If we're concerned about the error of this approximation, we should
+	  * probably incorporate a second pass to include a x**4 factor.
+	  */
+
+	 /* tmp.y = abs(tmp.x); {x, abs(x), 0, 0} */
+	 i915_emit_arith(p,
+                         A0_MAX,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 negate(swizzle(tmp, ZERO, X, ZERO, ZERO), 0, 1, 0, 0),
+			 0);
+
+	 /* tmp.y = tmp.y * tmp.x; {x, x * abs(x), 0, 0} */
+	 i915_emit_arith(p,
+			 A0_MUL,
+			 tmp, A0_DEST_CHANNEL_Y, 0,
+			 swizzle(tmp, ZERO, X, ZERO, ZERO),
+			 tmp,
+			 0);
+
+	 /* result = tmp.xy DP sin_quad_constants.xy */
          i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_X, 0,
-                         tmp, i915_emit_const1f(p, (M_PI)), 0);
-
-         /* 
-          * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
-          * t0 = MUL t0.xyxy t0.xx11 ; x^4, x^3, x^2, x
-          * t1 = MUL t0.xyyw t0.yz11    ; x^7 x^5 x^3 x
-          * result = DP4 t1.wzyx, sin_constants
-          */
-         i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_XY, 0,
-                         swizzle(tmp, X, X, ONE, ONE),
-                         swizzle(tmp, X, ONE, ONE, ONE), 0);
-
-         i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_ALL, 0,
-                         swizzle(tmp, X, Y, X, Y),
-                         swizzle(tmp, X, X, ONE, ONE), 0);
-
-         i915_emit_arith(p,
-                         A0_MUL,
-                         tmp, A0_DEST_CHANNEL_ALL, 0,
-                         swizzle(tmp, X, Y, Y, W),
-                         swizzle(tmp, X, Z, ONE, ONE), 0);
-
-         i915_emit_arith(p,
-                         A0_DP4,
+                         A0_DP3,
                          get_result_vector(p, inst),
                          get_result_flags(inst), 0,
-                         swizzle(tmp, W, Z, Y, X),
-                         i915_emit_const4fv(p, sin_constants), 0);
+                         tmp,
+                         swizzle(i915_emit_const4fv(p, sin_quad_constants),
+				 X, Y, ZERO, ZERO),
+			 0);
          break;
 
       case OPCODE_SLT:
