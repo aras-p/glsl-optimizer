@@ -40,16 +40,22 @@
 #include "pipe/p_compiler.h" 
 
 
-void debug_printf(const char *format, ...)
+void debug_vprintf(const char *format, va_list ap)
 {
-   va_list ap;
-   va_start( ap, format );  
 #ifdef WIN32
    EngDebugPrint("Gallium3D: ", (PCHAR)format, ap);
 #else
    vfprintf(stderr, format, ap);
 #endif
-   va_end( ap );
+}
+
+
+void debug_printf(const char *format, ...)
+{
+   va_list ap;
+   va_start(ap, format);
+   debug_vprintf(format, ap);
+   va_end(ap);
 }
 
 
@@ -65,6 +71,6 @@ static INLINE void debug_abort(void)
 
 void debug_assert_fail(const char *expr, const char *file, unsigned line) 
 {
-   debug_printf("%s:%i: Assertion `%s' failed.");
+   debug_printf("%s:%i: Assertion `%s' failed.\n", file, line, expr);
    debug_abort();
 }
