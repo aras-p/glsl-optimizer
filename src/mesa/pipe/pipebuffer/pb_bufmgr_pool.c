@@ -170,7 +170,7 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    struct list_head *item;
 
    assert(size == pool->bufSize);
-   assert(desc->alignment % pool->bufAlign == 0);
+   assert(pool->bufAlign % desc->alignment == 0);
    
    _glthread_LOCK_MUTEX(pool->mutex);
 
