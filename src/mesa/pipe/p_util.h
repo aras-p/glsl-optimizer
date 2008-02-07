@@ -185,12 +185,12 @@ align_free(void *ptr)
 
 
 /**
- * Duplicate of a block of memory
+ * Duplicate a block of memory.
  */
 static INLINE void *
 mem_dup(const void *src, uint size)
 {
-   void *dup = malloc(size);
+   void *dup = MALLOC(size);
    if (dup)
       memcpy(dup, src, size);
    return dup;
