@@ -2254,8 +2254,7 @@ tgsi_emit_sse2(
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
-         assert(0);
-         break;
+         return 0;
 
       default:
          assert( 0 );
