@@ -44,8 +44,8 @@
  * consumers use structured keys).
  *
  * Replacement is not implemented.  Instead, when the cache gets too big, at
- * a safe point (unlock) we throw out all of the cache data let it regenerate
- * it for the next rendering operation.
+ * a safe point (unlock) we throw out all of the cache data and let it
+ * regenerate for the next rendering operation.
  *
  * The reloc_buf pointers need to be included as key data, otherwise the
  * non-unique values stuffed in the offset in key data through
@@ -447,29 +447,17 @@ void brw_init_cache( struct brw_context *brw )
 		     0);
 }
 
-
-/* When we lose hardware context, need to invalidate the surface cache
- * as these structs must be explicitly re-uploaded.  They are subject
- * to fixup by the memory manager as they contain absolute agp
- * offsets, so we need to ensure there is a fresh version of the
- * struct available to receive the fixup.
- *
- * XXX: Need to ensure that there aren't two versions of a surface or
- * bufferobj with different backing data active in the same buffer at
- * once?  Otherwise the cache could confuse them.  Maybe better not to
- * cache at all?
- * 
- * --> Isn't this the same as saying need to ensure batch is flushed
- *         before new data is uploaded to an existing buffer?  We
- *         already try to make sure of that.
- */
-static void clear_cache( struct brw_cache *cache )
+static void
+brw_clear_cache( struct brw_context *brw )
 {
    struct brw_cache_item *c, *next;
    GLuint i;
 
-   for (i = 0; i < cache->size; i++) {
-      for (c = cache->items[i]; c; c = next) {
+   if (INTEL_DEBUG & DEBUG_STATE)
+      _mesa_printf("%s\n", __FUNCTION__);
+
+   for (i = 0; i < brw->cache.size; i++) {
+      for (c = brw->cache.items[i]; c; c = next) {
 	 int j;
 
 	 next = c->next;
@@ -479,18 +467,10 @@ static void clear_cache( struct brw_cache *cache )
 	 free((void *)c->key);
 	 free(c);
       }
-      cache->items[i] = NULL;
+      brw->cache.items[i] = NULL;
    }
 
-   cache->n_items = 0;
-}
-
-void brw_clear_cache( struct brw_context *brw )
-{
-   if (INTEL_DEBUG & DEBUG_STATE)
-      _mesa_printf("%s\n", __FUNCTION__);
-
-   clear_cache(&brw->cache);
+   brw->cache.n_items = 0;
 
    if (brw->curbe.last_buf) {
       _mesa_free(brw->curbe.last_buf);
@@ -515,7 +495,7 @@ void brw_destroy_cache( struct brw_context *brw )
 {
    GLuint i;
 
-   clear_cache(&brw->cache);
+   brw_clear_cache(brw);
    for (i = 0; i < BRW_MAX_CACHE; i++)
       free(brw->cache.name[i]);
 

@@ -114,7 +114,6 @@ dri_bo *brw_search_cache( struct brw_cache *cache,
 			  dri_bo **reloc_bufs,
 			  GLuint nr_reloc_bufs,
 			  void *aux_return);
-void brw_clear_cache( struct brw_context *brw );
 void brw_state_cache_check_size( struct brw_context *brw );
 
 void brw_init_cache( struct brw_context *brw );
