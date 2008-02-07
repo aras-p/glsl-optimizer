@@ -394,7 +394,7 @@ static void upload_pipe_control(struct brw_context *brw)
 const struct brw_tracked_state brw_pipe_control = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_CONTEXT,
+      .brw = BRW_NEW_BATCH,
       .cache = 0
    },
    .update = upload_pipe_control
