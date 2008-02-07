@@ -9,3 +9,4 @@ lib
 lib64
 .sconsign*
 config.py
+build
