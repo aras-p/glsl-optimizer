@@ -121,11 +121,16 @@ run_vertex_program(struct draw_context *draw,
          = (struct draw_vertex_shader *)draw->vertex_shader;
       codegen_function func
          = (codegen_function) x86_get_func( &shader->sse2_program );
-      func(
-         machine->Inputs,
-         machine->Outputs,
-         machine->Consts,
-         machine->Temps );
+
+      if (func)
+         func(
+            machine->Inputs,
+            machine->Outputs,
+            machine->Consts,
+            machine->Temps );
+      else
+         /* interpreter */
+         tgsi_exec_machine_run( machine );
    }
    else
 #endif
@@ -269,7 +274,12 @@ draw_create_vertex_shader(struct draw_context *draw,
       struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
 
       x86_init_func( &vs->sse2_program );
-      tgsi_emit_sse2( (struct tgsi_token *) sh->tokens, &vs->sse2_program );
+      if (!tgsi_emit_sse2( (struct tgsi_token *) sh->tokens,
+                           &vs->sse2_program )) {
+         x86_release_func( (struct x86_function *) &vs->sse2_program );
+	 fprintf(stdout /*err*/,
+		 "tgsi_emit_sse2() failed, falling back to interpreter\n");
+      }
    }
 #endif
 
