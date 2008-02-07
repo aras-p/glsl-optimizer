@@ -95,19 +95,8 @@ if gcc:
 	env.Append(CFLAGS = '-fmessage-length=0')
 	env.Append(CXXFLAGS = '-fmessage-length=0')
 
-# Defines
-env.Append(CPPDEFINES = [
-	'_POSIX_SOURCE',
-	('_POSIX_C_SOURCE', '199309L'), 
-	'_SVID_SOURCE',
-	'_BSD_SOURCE', 
-	'_GNU_SOURCE',
-	
-	'PTHREADS',
-	'HAVE_ALIAS', 
-	'HAVE_POSIX_MEMALIGN',
-])
 
+# Defines
 if debug:
 	env.Append(CPPDEFINES = ['DEBUG'])
 else:
@@ -120,8 +109,6 @@ env.Append(CPPPATH = [
 	'#/src/mesa',
 	'#/src/mesa/main',
 	'#/src/mesa/pipe',
-	
-	'/usr/X11R6/include',
 ])
 
 
@@ -137,14 +124,28 @@ if x86:
 		env.Append(CFLAGS = '-m32')
 		env.Append(CXXFLAGS = '-m32')
 
-env.Append(LIBPATH = ['/usr/X11R6/lib'])
 
-env.Append(LIBS = [
-	'm',
-	'pthread',
-	'expat',
-	'dl',
-])
+# Posix
+if platform in ('posix', 'linux', 'freebsd', 'darwin'):
+	env.Append(CPPDEFINES = [
+		'_POSIX_SOURCE',
+		('_POSIX_C_SOURCE', '199309L'), 
+		'_SVID_SOURCE',
+		'_BSD_SOURCE', 
+		'_GNU_SOURCE',
+		
+		'PTHREADS',
+		'HAVE_POSIX_MEMALIGN',
+	])
+	env.Append(CPPPATH = ['/usr/X11R6/include'])
+	env.Append(LIBPATH = ['/usr/X11R6/lib'])
+	env.Append(LIBS = [
+		'm',
+		'pthread',
+		'expat',
+		'dl',
+	])
+
 
 # DRI
 if dri:
