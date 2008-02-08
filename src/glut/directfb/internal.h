@@ -62,6 +62,9 @@ typedef struct __GlutWindow_s {
      IDirectFBSurface      *surface;
      IDirectFBGL           *gl;
 
+     /* display mode */
+     GLenum                 mode;
+
      /* cursor position in fullscreen mode */
      int                    cx;
      int                    cy;

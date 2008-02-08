@@ -66,6 +66,9 @@ __glutCreateWindow( GLboolean fullscreen )
                     case 8:
                          config.pixelformat = DSPF_RGB332;
                          break;
+                    case 12:
+                         config.pixelformat = DSPF_ARGB4444;
+                         break;
                     case 15:
                          config.pixelformat = DSPF_ARGB1555;
                          break;
@@ -109,7 +112,7 @@ __glutCreateWindow( GLboolean fullscreen )
           if (joystick)
                joystick->AttachEventBuffer( joystick, events );
                
-          new->visible = GL_TRUE;        
+          new->visible = GL_TRUE;    
      }
      else {
           DFBWindowDescription dsc;
@@ -160,11 +163,12 @@ __glutCreateWindow( GLboolean fullscreen )
                                                   DWET_BUTTONDOWN | DWET_BUTTONUP |
                                                   DWET_ENTER      | DWET_LEAVE    |
                                                   DWET_MOTION     | DWET_SIZE );
-                                                  
           
           new->req.flags |= WINDOW_REQUEST_SHOW;
      }
 
+     new->mode = g_display_mode;
+     
      new->reshape    = GL_TRUE;
      new->visibility = GL_TRUE;
      new->redisplay  = GL_TRUE;
@@ -220,7 +224,8 @@ __glutHandleWindows( void )
      __GlutWindow *cur = g_stack;
      
      while (cur) {
-          __GlutWindow *next = cur->next;
+          __GlutWindow *next      = cur->next;
+          GLboolean     displayed = GL_FALSE;
           
           if (cur->window && cur->req.flags) {
                if (cur == g_current)
@@ -291,18 +296,29 @@ __glutHandleWindows( void )
                cur->surface->GetSize( cur->surface, &w, &h ); 
                __glutSetWindow( cur );
                reshape_func( w, h );
+               displayed = GL_TRUE;
           }
           
           if (cur->visibility && visibility_func) {
                g_idle = GL_FALSE;
                __glutSetWindow( cur );
                visibility_func( cur->visible ? GLUT_VISIBLE : GLUT_NOT_VISIBLE );
+               displayed = GL_TRUE;
           }
 
           if (cur->redisplay && display_func) {
                g_idle = GL_FALSE;
                __glutSetWindow( cur );
                display_func();
+               displayed = GL_TRUE;
+          }
+          
+          if (displayed && cur->window && cur->visible) {
+               if (!(cur->mode & GLUT_DOUBLE)) {
+                    cur->gl->Unlock( cur->gl );
+                    cur->surface->Flip( cur->surface, NULL, 0 );
+                    cur->gl->Lock( cur->gl );
+               }
           }
                
           cur->reshape    = GL_FALSE;
