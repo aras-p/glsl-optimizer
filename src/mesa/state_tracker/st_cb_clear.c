@@ -251,7 +251,7 @@ draw_quad(GLcontext *ctx,
       verts[i][1][3] = color[3];
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, GL_FALSE);
 }
 
 
