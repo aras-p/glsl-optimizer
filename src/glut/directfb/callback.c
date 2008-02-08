@@ -278,7 +278,7 @@ __glutGetTimeout( int *ret_msec )
      gettimeofday( &now, NULL );
      
      *ret_msec = (time->tv_sec  - now.tv_sec) * 1000 +
-                 (time->tv_usec - now.tv_usec + 500) / 1000;
+                 (time->tv_usec - now.tv_usec + 999) / 1000;
                  
      return GL_TRUE;
 }
