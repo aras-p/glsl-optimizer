@@ -42,6 +42,7 @@
 #include "state_tracker/st_cb_texture.h"
 #include "state_tracker/st_format.h"
 #include "state_tracker/st_texture.h"
+#include "state_tracker/st_gen_mipmap.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -703,13 +704,9 @@ st_TexImage(GLcontext * ctx,
       texImage->Data = NULL;
    }
 
-#if 0
-   /* GL_SGIS_generate_mipmap -- this can be accelerated now.
-    */
+#if 01
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 #endif
 }
@@ -1538,7 +1535,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
    functions->CopyTexSubImage3D = st_CopyTexSubImage3D;
-   functions->GenerateMipmap = _mesa_generate_mipmap;
+   functions->GenerateMipmap = st_generate_mipmap;
 
    functions->GetTexImage = st_GetTexImage;
 

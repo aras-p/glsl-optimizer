@@ -49,6 +49,7 @@
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_extensions.h"
+#include "st_gen_mipmap.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
@@ -96,6 +97,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 
    st_init_atoms( st );
    st_init_draw( st );
+   st_init_generate_mipmap(st);
 
    /* we want all vertex data to be placed in buffer objects */
    vbo_use_buffer_objects(ctx);
