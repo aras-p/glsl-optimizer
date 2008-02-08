@@ -114,6 +114,8 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    if (failover == NULL)
       return NULL;
 
+   failover->hw = hw;
+   failover->sw = sw;
    failover->pipe.winsys = hw->winsys;
    failover->pipe.destroy = failover_destroy;
    failover->pipe.is_format_supported = hw->is_format_supported;
