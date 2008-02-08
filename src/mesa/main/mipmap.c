@@ -234,63 +234,7 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
    assert(srcWidth == dstWidth || srcWidth == 2 * dstWidth);
    */
 
-   if (datatype == GL_UNSIGNED_SHORT && comps == 4) {
-      GLuint i, j, k;
-      const GLushort(*rowA)[4] = (const GLushort(*)[4]) srcRowA;
-      const GLushort(*rowB)[4] = (const GLushort(*)[4]) srcRowB;
-      GLushort(*dst)[4] = (GLushort(*)[4]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
-         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
-         dst[i][3] = (rowA[j][3] + rowA[k][3] + rowB[j][3] + rowB[k][3]) / 4;
-      }
-   }
-   else if (datatype == GL_UNSIGNED_SHORT && comps == 3) {
-      GLuint i, j, k;
-      const GLushort(*rowA)[3] = (const GLushort(*)[3]) srcRowA;
-      const GLushort(*rowB)[3] = (const GLushort(*)[3]) srcRowB;
-      GLushort(*dst)[3] = (GLushort(*)[3]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
-         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
-      }
-   }
-   else if (datatype == GL_UNSIGNED_SHORT && comps == 1) {
-      GLuint i, j, k;
-      const GLushort *rowA = (const GLushort *) srcRowA;
-      const GLushort *rowB = (const GLushort *) srcRowB;
-      GLushort *dst = (GLushort *) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
-      }
-   }
-   else if (datatype == GL_UNSIGNED_SHORT && comps == 2) {
-      GLuint i, j, k;
-      const GLushort(*rowA)[2] = (const GLushort(*)[2]) srcRowA;
-      const GLushort(*rowB)[2] = (const GLushort(*)[2]) srcRowB;
-      GLushort(*dst)[2] = (GLushort(*)[2]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
-      }
-   }
-   else if (datatype == GL_UNSIGNED_INT && comps == 1) {
-      GLuint i, j, k;
-      const GLuint *rowA = (const GLuint *) srcRowA;
-      const GLuint *rowB = (const GLuint *) srcRowB;
-      GLfloat *dst = (GLfloat *) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
-      }
-   }
-   else if (datatype == GL_UNSIGNED_BYTE && comps == 4) {
+   if (datatype == GL_UNSIGNED_BYTE && comps == 4) {
       GLuint i, j, k;
       const GLubyte(*rowA)[4] = (const GLubyte(*)[4]) srcRowA;
       const GLubyte(*rowB)[4] = (const GLubyte(*)[4]) srcRowB;
@@ -315,6 +259,209 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
       }
    }
+   else if (datatype == GL_UNSIGNED_BYTE && comps == 2) {
+      GLuint i, j, k;
+      const GLubyte(*rowA)[2] = (const GLubyte(*)[2]) srcRowA;
+      const GLubyte(*rowB)[2] = (const GLubyte(*)[2]) srcRowB;
+      GLubyte(*dst)[2] = (GLubyte(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) >> 2;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) >> 2;
+      }
+   }
+   else if (datatype == GL_UNSIGNED_BYTE && comps == 1) {
+      GLuint i, j, k;
+      const GLubyte *rowA = (const GLubyte *) srcRowA;
+      const GLubyte *rowB = (const GLubyte *) srcRowB;
+      GLubyte *dst = (GLubyte *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 4) {
+      GLuint i, j, k;
+      const GLushort(*rowA)[4] = (const GLushort(*)[4]) srcRowA;
+      const GLushort(*rowB)[4] = (const GLushort(*)[4]) srcRowB;
+      GLushort(*dst)[4] = (GLushort(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
+         dst[i][3] = (rowA[j][3] + rowA[k][3] + rowB[j][3] + rowB[k][3]) / 4;
+      }
+   }
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 3) {
+      GLuint i, j, k;
+      const GLushort(*rowA)[3] = (const GLushort(*)[3]) srcRowA;
+      const GLushort(*rowB)[3] = (const GLushort(*)[3]) srcRowB;
+      GLushort(*dst)[3] = (GLushort(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
+      }
+   }
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 2) {
+      GLuint i, j, k;
+      const GLushort(*rowA)[2] = (const GLushort(*)[2]) srcRowA;
+      const GLushort(*rowB)[2] = (const GLushort(*)[2]) srcRowB;
+      GLushort(*dst)[2] = (GLushort(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+      }
+   }
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 1) {
+      GLuint i, j, k;
+      const GLushort *rowA = (const GLushort *) srcRowA;
+      const GLushort *rowB = (const GLushort *) srcRowB;
+      GLushort *dst = (GLushort *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
+      }
+   }
+
+   else if (datatype == GL_FLOAT && comps == 4) {
+      GLuint i, j, k;
+      const GLfloat(*rowA)[4] = (const GLfloat(*)[4]) srcRowA;
+      const GLfloat(*rowB)[4] = (const GLfloat(*)[4]) srcRowB;
+      GLfloat(*dst)[4] = (GLfloat(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                      rowB[j][0] + rowB[k][0]) * 0.25F;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                      rowB[j][1] + rowB[k][1]) * 0.25F;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                      rowB[j][2] + rowB[k][2]) * 0.25F;
+         dst[i][3] = (rowA[j][3] + rowA[k][3] +
+                      rowB[j][3] + rowB[k][3]) * 0.25F;
+      }
+   }
+   else if (datatype == GL_FLOAT && comps == 3) {
+      GLuint i, j, k;
+      const GLfloat(*rowA)[3] = (const GLfloat(*)[3]) srcRowA;
+      const GLfloat(*rowB)[3] = (const GLfloat(*)[3]) srcRowB;
+      GLfloat(*dst)[3] = (GLfloat(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                      rowB[j][0] + rowB[k][0]) * 0.25F;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                      rowB[j][1] + rowB[k][1]) * 0.25F;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                      rowB[j][2] + rowB[k][2]) * 0.25F;
+      }
+   }
+   else if (datatype == GL_FLOAT && comps == 2) {
+      GLuint i, j, k;
+      const GLfloat(*rowA)[2] = (const GLfloat(*)[2]) srcRowA;
+      const GLfloat(*rowB)[2] = (const GLfloat(*)[2]) srcRowB;
+      GLfloat(*dst)[2] = (GLfloat(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                      rowB[j][0] + rowB[k][0]) * 0.25F;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                      rowB[j][1] + rowB[k][1]) * 0.25F;
+      }
+   }
+   else if (datatype == GL_FLOAT && comps == 1) {
+      GLuint i, j, k;
+      const GLfloat *rowA = (const GLfloat *) srcRowA;
+      const GLfloat *rowB = (const GLfloat *) srcRowB;
+      GLfloat *dst = (GLfloat *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) * 0.25F;
+      }
+   }
+
+   else if (datatype == GL_HALF_FLOAT_ARB && comps == 4) {
+      GLuint i, j, k, comp;
+      const GLhalfARB(*rowA)[4] = (const GLhalfARB(*)[4]) srcRowA;
+      const GLhalfARB(*rowB)[4] = (const GLhalfARB(*)[4]) srcRowB;
+      GLhalfARB(*dst)[4] = (GLhalfARB(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         for (comp = 0; comp < 4; comp++) {
+            GLfloat aj, ak, bj, bk;
+            aj = _mesa_half_to_float(rowA[j][comp]);
+            ak = _mesa_half_to_float(rowA[k][comp]);
+            bj = _mesa_half_to_float(rowB[j][comp]);
+            bk = _mesa_half_to_float(rowB[k][comp]);
+            dst[i][comp] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
+         }
+      }
+   }
+   else if (datatype == GL_HALF_FLOAT_ARB && comps == 3) {
+      GLuint i, j, k, comp;
+      const GLhalfARB(*rowA)[3] = (const GLhalfARB(*)[3]) srcRowA;
+      const GLhalfARB(*rowB)[3] = (const GLhalfARB(*)[3]) srcRowB;
+      GLhalfARB(*dst)[3] = (GLhalfARB(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         for (comp = 0; comp < 3; comp++) {
+            GLfloat aj, ak, bj, bk;
+            aj = _mesa_half_to_float(rowA[j][comp]);
+            ak = _mesa_half_to_float(rowA[k][comp]);
+            bj = _mesa_half_to_float(rowB[j][comp]);
+            bk = _mesa_half_to_float(rowB[k][comp]);
+            dst[i][comp] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
+         }
+      }
+   }
+   else if (datatype == GL_HALF_FLOAT_ARB && comps == 2) {
+      GLuint i, j, k, comp;
+      const GLhalfARB(*rowA)[2] = (const GLhalfARB(*)[2]) srcRowA;
+      const GLhalfARB(*rowB)[2] = (const GLhalfARB(*)[2]) srcRowB;
+      GLhalfARB(*dst)[2] = (GLhalfARB(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         for (comp = 0; comp < 2; comp++) {
+            GLfloat aj, ak, bj, bk;
+            aj = _mesa_half_to_float(rowA[j][comp]);
+            ak = _mesa_half_to_float(rowA[k][comp]);
+            bj = _mesa_half_to_float(rowB[j][comp]);
+            bk = _mesa_half_to_float(rowB[k][comp]);
+            dst[i][comp] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
+         }
+      }
+   }
+   else if (datatype == GL_HALF_FLOAT_ARB && comps == 1) {
+      GLuint i, j, k;
+      const GLhalfARB *rowA = (const GLhalfARB *) srcRowA;
+      const GLhalfARB *rowB = (const GLhalfARB *) srcRowB;
+      GLhalfARB *dst = (GLhalfARB *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         GLfloat aj, ak, bj, bk;
+         aj = _mesa_half_to_float(rowA[j]);
+         ak = _mesa_half_to_float(rowA[k]);
+         bj = _mesa_half_to_float(rowB[j]);
+         bk = _mesa_half_to_float(rowB[k]);
+         dst[i] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
+      }
+   }
+
+   else if (datatype == GL_UNSIGNED_INT && comps == 1) {
+      GLuint i, j, k;
+      const GLuint *rowA = (const GLuint *) srcRowA;
+      const GLuint *rowB = (const GLuint *) srcRowB;
+      GLfloat *dst = (GLfloat *) dstRow;
+      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
+      }
+   }
+
    else if (datatype == GL_UNSIGNED_SHORT_5_6_5 && comps == 3) {
       GLuint i, j, k;
       const GLushort *rowA = (const GLushort *) srcRowA;
@@ -400,17 +547,6 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          dst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
       }
    }
-   else if (datatype == GL_UNSIGNED_BYTE && comps == 2) {
-      GLuint i, j, k;
-      const GLubyte(*rowA)[2] = (const GLubyte(*)[2]) srcRowA;
-      const GLubyte(*rowB)[2] = (const GLubyte(*)[2]) srcRowB;
-      GLubyte(*dst)[2] = (GLubyte(*)[2]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) >> 2;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) >> 2;
-      }
-   }
    else if (datatype == GL_UNSIGNED_BYTE_3_3_2 && comps == 3) {
       GLuint i, j, k;
       const GLubyte *rowA = (const GLubyte *) srcRowA;
@@ -434,137 +570,6 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          const GLint green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
          const GLint blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
          dst[i] = (blue << 5) | (green << 2) | red;
-      }
-   }
-   else if (datatype == GL_UNSIGNED_BYTE && comps == 1) {
-      GLuint i, j, k;
-      const GLubyte *rowA = (const GLubyte *) srcRowA;
-      const GLubyte *rowB = (const GLubyte *) srcRowB;
-      GLubyte *dst = (GLubyte *) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
-      }
-   }
-   else if (datatype == GL_FLOAT && comps == 4) {
-      GLuint i, j, k;
-      const GLfloat(*rowA)[4] = (const GLfloat(*)[4]) srcRowA;
-      const GLfloat(*rowB)[4] = (const GLfloat(*)[4]) srcRowB;
-      GLfloat(*dst)[4] = (GLfloat(*)[4]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                      rowB[j][0] + rowB[k][0]) * 0.25F;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                      rowB[j][1] + rowB[k][1]) * 0.25F;
-         dst[i][2] = (rowA[j][2] + rowA[k][2] +
-                      rowB[j][2] + rowB[k][2]) * 0.25F;
-         dst[i][3] = (rowA[j][3] + rowA[k][3] +
-                      rowB[j][3] + rowB[k][3]) * 0.25F;
-      }
-   }
-   else if (datatype == GL_HALF_FLOAT_ARB && comps == 4) {
-      GLuint i, j, k, comp;
-      const GLhalfARB(*rowA)[4] = (const GLhalfARB(*)[4]) srcRowA;
-      const GLhalfARB(*rowB)[4] = (const GLhalfARB(*)[4]) srcRowB;
-      GLhalfARB(*dst)[4] = (GLhalfARB(*)[4]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         for (comp = 0; comp < 4; comp++) {
-            GLfloat aj, ak, bj, bk;
-            aj = _mesa_half_to_float(rowA[j][comp]);
-            ak = _mesa_half_to_float(rowA[k][comp]);
-            bj = _mesa_half_to_float(rowB[j][comp]);
-            bk = _mesa_half_to_float(rowB[k][comp]);
-            dst[i][comp] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
-         }
-      }
-   }
-   else if (datatype == GL_FLOAT && comps == 3) {
-      GLuint i, j, k;
-      const GLfloat(*rowA)[3] = (const GLfloat(*)[3]) srcRowA;
-      const GLfloat(*rowB)[3] = (const GLfloat(*)[3]) srcRowB;
-      GLfloat(*dst)[3] = (GLfloat(*)[3]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                      rowB[j][0] + rowB[k][0]) * 0.25F;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                      rowB[j][1] + rowB[k][1]) * 0.25F;
-         dst[i][2] = (rowA[j][2] + rowA[k][2] +
-                      rowB[j][2] + rowB[k][2]) * 0.25F;
-      }
-   }
-   else if (datatype == GL_HALF_FLOAT_ARB && comps == 3) {
-      GLuint i, j, k, comp;
-      const GLhalfARB(*rowA)[3] = (const GLhalfARB(*)[3]) srcRowA;
-      const GLhalfARB(*rowB)[3] = (const GLhalfARB(*)[3]) srcRowB;
-      GLhalfARB(*dst)[3] = (GLhalfARB(*)[3]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         for (comp = 0; comp < 3; comp++) {
-            GLfloat aj, ak, bj, bk;
-            aj = _mesa_half_to_float(rowA[j][comp]);
-            ak = _mesa_half_to_float(rowA[k][comp]);
-            bj = _mesa_half_to_float(rowB[j][comp]);
-            bk = _mesa_half_to_float(rowB[k][comp]);
-            dst[i][comp] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
-         }
-      }
-   }
-   else if (datatype == GL_FLOAT && comps == 2) {
-      GLuint i, j, k;
-      const GLfloat(*rowA)[2] = (const GLfloat(*)[2]) srcRowA;
-      const GLfloat(*rowB)[2] = (const GLfloat(*)[2]) srcRowB;
-      GLfloat(*dst)[2] = (GLfloat(*)[2]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i][0] = (rowA[j][0] + rowA[k][0] +
-                      rowB[j][0] + rowB[k][0]) * 0.25F;
-         dst[i][1] = (rowA[j][1] + rowA[k][1] +
-                      rowB[j][1] + rowB[k][1]) * 0.25F;
-      }
-   }
-   else if (datatype == GL_HALF_FLOAT_ARB && comps == 2) {
-      GLuint i, j, k, comp;
-      const GLhalfARB(*rowA)[2] = (const GLhalfARB(*)[2]) srcRowA;
-      const GLhalfARB(*rowB)[2] = (const GLhalfARB(*)[2]) srcRowB;
-      GLhalfARB(*dst)[2] = (GLhalfARB(*)[2]) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         for (comp = 0; comp < 2; comp++) {
-            GLfloat aj, ak, bj, bk;
-            aj = _mesa_half_to_float(rowA[j][comp]);
-            ak = _mesa_half_to_float(rowA[k][comp]);
-            bj = _mesa_half_to_float(rowB[j][comp]);
-            bk = _mesa_half_to_float(rowB[k][comp]);
-            dst[i][comp] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
-         }
-      }
-   }
-   else if (datatype == GL_FLOAT && comps == 1) {
-      GLuint i, j, k;
-      const GLfloat *rowA = (const GLfloat *) srcRowA;
-      const GLfloat *rowB = (const GLfloat *) srcRowB;
-      GLfloat *dst = (GLfloat *) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) * 0.25F;
-      }
-   }
-   else if (datatype == GL_HALF_FLOAT_ARB && comps == 1) {
-      GLuint i, j, k;
-      const GLhalfARB *rowA = (const GLhalfARB *) srcRowA;
-      const GLhalfARB *rowB = (const GLhalfARB *) srcRowB;
-      GLhalfARB *dst = (GLhalfARB *) dstRow;
-      for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-           i++, j += colStride, k += colStride) {
-         GLfloat aj, ak, bj, bk;
-         aj = _mesa_half_to_float(rowA[j]);
-         ak = _mesa_half_to_float(rowA[k]);
-         bj = _mesa_half_to_float(rowB[j]);
-         bk = _mesa_half_to_float(rowB[k]);
-         dst[i] = _mesa_float_to_half((aj + ak + bj + bk) * 0.25F);
       }
    }
    else {
