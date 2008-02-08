@@ -151,8 +151,7 @@ static void dri_ttm_dump_validation_list(dri_bufmgr_ttm *bufmgr_ttm)
 		uint32_t *reloc_entry = bo_ttm->reloc_buf_data +
 		    I915_RELOC_HEADER +
 		    j * I915_RELOC0_STRIDE;
-		dri_bo *target_bo =
-		    bufmgr_ttm->validate_array[reloc_entry[2]].bo;
+		dri_bo *target_bo = bo_ttm->relocs[j].target_buf;
 		dri_bo_ttm *target_ttm = (dri_bo_ttm *)target_bo;
 
 		DBG("%2d: %s@0x%08x -> %s@0x%08lx + 0x%08x\n",
