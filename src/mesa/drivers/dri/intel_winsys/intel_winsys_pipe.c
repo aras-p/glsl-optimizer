@@ -224,11 +224,6 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
    if(!surf->buffer)
       return -1;
 
-   if(ret) {
-      pipe_buffer_reference(winsys, &surf->buffer, NULL);
-      return ret;
-   }
-   
    return 0;
 }
 
