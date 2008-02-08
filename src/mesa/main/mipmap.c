@@ -234,11 +234,11 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
    assert(srcWidth == dstWidth || srcWidth == 2 * dstWidth);
    */
 
-   if (datatype == CHAN_TYPE && comps == 4) {
+   if (datatype == GL_UNSIGNED_SHORT && comps == 4) {
          GLuint i, j, k;
-         const GLchan (*rowA)[4] = (const GLchan (*)[4]) srcRowA;
-         const GLchan (*rowB)[4] = (const GLchan (*)[4]) srcRowB;
-         GLchan (*dst)[4] = (GLchan (*)[4]) dstRow;
+         const GLushort (*rowA)[4] = (const GLushort (*)[4]) srcRowA;
+         const GLushort (*rowB)[4] = (const GLushort (*)[4]) srcRowB;
+         GLushort (*dst)[4] = (GLushort (*)[4]) dstRow;
          for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
@@ -251,11 +251,11 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
                          rowB[j][3] + rowB[k][3]) / 4;
          }
    }
-   else if (datatype == CHAN_TYPE && comps == 3) {
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 3) {
          GLuint i, j, k;
-         const GLchan (*rowA)[3] = (const GLchan (*)[3]) srcRowA;
-         const GLchan (*rowB)[3] = (const GLchan (*)[3]) srcRowB;
-         GLchan (*dst)[3] = (GLchan (*)[3]) dstRow;
+         const GLushort (*rowA)[3] = (const GLushort (*)[3]) srcRowA;
+         const GLushort (*rowB)[3] = (const GLushort (*)[3]) srcRowB;
+         GLushort (*dst)[3] = (GLushort (*)[3]) dstRow;
          for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
@@ -266,21 +266,21 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
                          rowB[j][2] + rowB[k][2]) / 4;
          }
    }
-   else if (datatype == CHAN_TYPE && comps == 1) {
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 1) {
          GLuint i, j, k;
-         const GLchan *rowA = (const GLchan *) srcRowA;
-         const GLchan *rowB = (const GLchan *) srcRowB;
-         GLchan *dst = (GLchan *) dstRow;
+         const GLushort *rowA = (const GLushort *) srcRowA;
+         const GLushort *rowB = (const GLushort *) srcRowB;
+         GLushort *dst = (GLushort *) dstRow;
          for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
          }
    }
-   else if (datatype == CHAN_TYPE && comps == 2) {
+   else if (datatype == GL_UNSIGNED_SHORT && comps == 2) {
          GLuint i, j, k;
-         const GLchan (*rowA)[2] = (const GLchan (*)[2]) srcRowA;
-         const GLchan (*rowB)[2] = (const GLchan (*)[2]) srcRowB;
-         GLchan (*dst)[2] = (GLchan (*)[2]) dstRow;
+         const GLushort (*rowA)[2] = (const GLushort (*)[2]) srcRowA;
+         const GLushort (*rowB)[2] = (const GLushort (*)[2]) srcRowB;
+         GLushort (*dst)[2] = (GLushort (*)[2]) dstRow;
          for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i][0] = (rowA[j][0] + rowA[k][0] +
@@ -297,16 +297,6 @@ do_row(GLenum datatype, GLuint comps, GLint srcWidth,
          for (i = j = 0, k = k0; i < (GLuint) dstWidth;
               i++, j += colStride, k += colStride) {
             dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
-         }
-   }
-   else if (datatype == GL_UNSIGNED_SHORT && comps == 1) {
-         GLuint i, j, k;
-         const GLushort *rowA = (const GLushort *) srcRowA;
-         const GLushort *rowB = (const GLushort *) srcRowB;
-         GLushort *dst = (GLushort *) dstRow;
-         for (i = j = 0, k = k0; i < (GLuint) dstWidth;
-              i++, j += colStride, k += colStride) {
-            dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
          }
    }
    else if (datatype == GL_UNSIGNED_BYTE && comps == 4) {
