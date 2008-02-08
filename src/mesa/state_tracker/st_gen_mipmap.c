@@ -40,6 +40,7 @@
 #include "st_draw.h"
 #include "st_gen_mipmap.h"
 #include "st_program.h"
+#include "st_cb_drawpixels.h"
 #include "st_cb_texture.h"
 
 
