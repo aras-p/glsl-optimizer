@@ -2010,7 +2010,7 @@ exec_instruction(
 
    case TGSI_OPCODE_TXB:
       /* Texture lookup with lod bias */
-      /* src[0] = texcoord (src[0].w = load bias) */
+      /* src[0] = texcoord (src[0].w = LOD bias) */
       /* src[1] = sampler unit */
       exec_tex(mach, inst, TRUE);
       break;
@@ -2026,7 +2026,7 @@ exec_instruction(
 
    case TGSI_OPCODE_TXL:
       /* Texture lookup with explit LOD */
-      /* src[0] = texcoord (src[0].w = load bias) */
+      /* src[0] = texcoord (src[0].w = LOD) */
       /* src[1] = sampler unit */
       exec_tex(mach, inst, TRUE);
       break;
