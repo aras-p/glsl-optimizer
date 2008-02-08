@@ -503,10 +503,31 @@ dfbRenderbufferStorage( GLcontext *ctx, struct gl_renderbuffer *render,
           (((S[GCOMP]) & 0xf0)     ) | \
           (((S[BCOMP]) & 0xf0) >> 4) )
 #define FETCH_PIXEL(D, P) \
-   D[RCOMP] = ((*P & 0x0f00) >> 4); \
-   D[GCOMP] = ((*P & 0x00f0)     ); \
-   D[BCOMP] = ((*P & 0x000f) << 4); \
-   D[ACOMP] = ((*P & 0xf000) >> 8)
+   D[RCOMP] = ((*P & 0x0f00) >> 4) | ((*P & 0x0f00) >>  8); \
+   D[GCOMP] = ((*P & 0x00f0)     ) | ((*P & 0x00f0) >>  4); \
+   D[BCOMP] = ((*P & 0x000f) << 4) | ((*P & 0x000f)      ); \
+   D[ACOMP] = ((*P & 0xf000) >> 8) | ((*P & 0xf000) >> 12)
+
+#include "swrast/s_spantemp.h"
+
+/* RGB444 */
+#define NAME(PREFIX) PREFIX##_RGB444
+#define FORMAT GL_RGBA8
+#define RB_TYPE GLubyte
+#define SPAN_VARS \
+   IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
+#define INIT_PIXEL_PTR(P, X, Y) \
+   GLushort *P = (GLushort *) (data->video.end - (Y) * data->video.pitch + (X) * 2);
+#define INC_PIXEL_PTR(P) P += 1
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( (((S[RCOMP]) & 0xf0) << 4) | \
+          (((S[GCOMP]) & 0xf0)     ) | \
+          (((S[BCOMP]) & 0xf0) >> 4) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0x0f00) >> 4) | ((*P & 0x0f00) >> 8); \
+   D[GCOMP] = ((*P & 0x00f0)     ) | ((*P & 0x00f0) >> 4); \
+   D[BCOMP] = ((*P & 0x000f) << 4) | ((*P & 0x000f)     ); \
+   D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
@@ -557,10 +578,31 @@ dfbRenderbufferStorage( GLcontext *ctx, struct gl_renderbuffer *render,
           (((S[GCOMP]) & 0xf8) <<  2) | \
           (((S[BCOMP])       ) >>  3) )
 #define FETCH_PIXEL(D, P) \
-   D[RCOMP] = ((*P & 0x7c00) >> 7); \
-   D[GCOMP] = ((*P & 0x03e0) >> 2); \
-   D[BCOMP] = ((*P & 0x001f) << 3); \
+   D[RCOMP] = ((*P & 0x7c00) >> 7) | ((*P & 0x7c00) >> 12); \
+   D[GCOMP] = ((*P & 0x03e0) >> 2) | ((*P & 0x03e0) >>  7); \
+   D[BCOMP] = ((*P & 0x001f) << 3) | ((*P & 0x001f) <<  2); \
    D[ACOMP] = ((*P & 0x8000) ? 0xff : 0)
+
+#include "swrast/s_spantemp.h"
+
+/* RGB555 */
+#define NAME(PREFIX) PREFIX##_RGB555
+#define FORMAT GL_RGBA8
+#define RB_TYPE GLubyte
+#define SPAN_VARS \
+   IDirectFBGL_data *data = (IDirectFBGL_data*) ctx->DriverCtx;
+#define INIT_PIXEL_PTR(P, X, Y) \
+   GLushort *P = (GLushort *) (data->video.end - (Y) * data->video.pitch + (X) * 2);
+#define INC_PIXEL_PTR(P) P += 1
+#define STORE_PIXEL(P, X, Y, S) \
+   *P = ( (((S[RCOMP]) & 0xf8) <<  7) | \
+          (((S[GCOMP]) & 0xf8) <<  2) | \
+          (((S[BCOMP])       ) >>  3) )
+#define FETCH_PIXEL(D, P) \
+   D[RCOMP] = ((*P & 0x7c00) >> 7) | ((*P & 0x7c00) >> 12); \
+   D[GCOMP] = ((*P & 0x03e0) >> 2) | ((*P & 0x03e0) >>  7); \
+   D[BCOMP] = ((*P & 0x001f) << 3) | ((*P & 0x001f) <<  2); \
+   D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
 
@@ -578,9 +620,9 @@ dfbRenderbufferStorage( GLcontext *ctx, struct gl_renderbuffer *render,
           (((S[GCOMP]) & 0xfc) << 3) | \
           (((S[BCOMP])       ) >> 3) )
 #define FETCH_PIXEL(D, P) \
-   D[RCOMP] = ((*P & 0xf800) >> 8); \
-   D[GCOMP] = ((*P & 0x07e0) >> 3); \
-   D[BCOMP] = ((*P & 0x001f) << 3); \
+   D[RCOMP] = ((*P & 0xf800) >> 8) | ((*P & 0xf800) >> 13); \
+   D[GCOMP] = ((*P & 0x07e0) >> 3) | ((*P & 0x07e0) >>  9); \
+   D[BCOMP] = ((*P & 0x001f) << 3) | ((*P & 0x001f) >>  2); \
    D[ACOMP] = 0xff
 
 #include "swrast/s_spantemp.h"
@@ -706,22 +748,24 @@ directfbgl_init_visual( GLvisual              *visual,
                blueBits  = 2;
                break;
           case DSPF_ARGB4444:
+               alphaBits = 4;
+          case DSPF_RGB444:
                redBits   = 4;
                greenBits = 4;
                blueBits  = 4;
-               alphaBits = 4;
                break;
           case DSPF_ARGB2554:
+               alphaBits = 2;
                redBits   = 5;
                greenBits = 5;
                blueBits  = 4;
-               alphaBits = 2;
                break;
           case DSPF_ARGB1555:
+               alphaBits = 1;
+          case DSPF_RGB555:
                redBits   = 5;
                greenBits = 5;
                blueBits  = 5;
-               alphaBits = 1;
                break;
           case DSPF_RGB16:
                redBits   = 5;
@@ -818,6 +862,15 @@ directfbgl_create_context( GLcontext        *context,
                data->render.PutValues     = put_values_ARGB4444;
                data->render.PutMonoValues = put_mono_values_ARGB4444;
                break;
+          case DSPF_RGB444: 
+               data->render.GetRow        = get_row_RGB444;
+               data->render.GetValues     = get_values_RGB444;
+               data->render.PutRow        = put_row_RGB444;
+               data->render.PutRowRGB     = put_row_rgb_RGB444;
+               data->render.PutMonoRow    = put_mono_row_RGB444;
+               data->render.PutValues     = put_values_RGB444;
+               data->render.PutMonoValues = put_mono_values_RGB444;
+               break;
           case DSPF_ARGB2554: 
                data->render.GetRow        = get_row_ARGB2554;
                data->render.GetValues     = get_values_ARGB2554;
@@ -835,6 +888,15 @@ directfbgl_create_context( GLcontext        *context,
                data->render.PutMonoRow    = put_mono_row_ARGB1555;
                data->render.PutValues     = put_values_ARGB1555;
                data->render.PutMonoValues = put_mono_values_ARGB1555;
+               break;
+          case DSPF_RGB555:
+               data->render.GetRow        = get_row_RGB555;
+               data->render.GetValues     = get_values_RGB555;
+               data->render.PutRow        = put_row_RGB555;
+               data->render.PutRowRGB     = put_row_rgb_RGB555;
+               data->render.PutMonoRow    = put_mono_row_RGB555;
+               data->render.PutValues     = put_values_RGB555;
+               data->render.PutMonoValues = put_mono_values_RGB555;
                break;
           case DSPF_RGB16:
                data->render.GetRow        = get_row_RGB16;
