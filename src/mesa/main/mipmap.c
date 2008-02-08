@@ -842,6 +842,59 @@ make_2d_stack_mipmap(GLenum datatype, GLuint comps, GLint border,
 
 
 /**
+ * Down-sample a texture image to produce the next lower mipmap level.
+ */
+void
+_mesa_generate_mipmap_level(GLenum target,
+                            GLenum datatype, GLuint comps,
+                            GLint border,
+                            GLint srcWidth, GLint srcHeight, GLint srcDepth,
+                            const GLubyte *srcData,
+                            GLint dstWidth, GLint dstHeight, GLint dstDepth,
+                            GLubyte *dstData)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+      make_1d_mipmap(datatype, comps, border,
+                     srcWidth, srcData,
+                     dstWidth, dstData);
+      break;
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+      make_2d_mipmap(datatype, comps, border,
+                     srcWidth, srcHeight, srcData,
+                     dstWidth, dstHeight, dstData);
+      break;
+   case GL_TEXTURE_3D:
+      make_3d_mipmap(datatype, comps, border,
+                     srcWidth, srcHeight, srcDepth, srcData,
+                     dstWidth, dstHeight, dstDepth, dstData);
+      break;
+   case GL_TEXTURE_1D_ARRAY_EXT:
+      make_1d_stack_mipmap(datatype, comps, border,
+                           srcWidth, srcData,
+                           dstWidth, dstHeight, dstData);
+      break;
+   case GL_TEXTURE_2D_ARRAY_EXT:
+      make_2d_stack_mipmap(datatype, comps, border,
+                           srcWidth, srcHeight, srcData,
+                           dstWidth, dstHeight, dstDepth, dstData);
+      break;
+   case GL_TEXTURE_RECTANGLE_NV:
+      /* no mipmaps, do nothing */
+      break;
+   default:
+      _mesa_problem(NULL, "bad target in _mesa_generate_mipmap_level");
+   }
+}
+
+
+/**
  * For GL_SGIX_generate_mipmap:
  * Generate a complete set of mipmaps from texObj's base-level image.
  * Stop at texObj's MaxLevel or when we get to the 1x1 texture.
@@ -1032,48 +1085,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
          dstData = (GLubyte *) dstImage->Data;
       }
 
-      /*
-       * We use simple 2x2 averaging to compute the next mipmap level.
-       */
-      switch (target) {
-         case GL_TEXTURE_1D:
-            make_1d_mipmap(datatype, comps, border,
-                           srcWidth, srcData,
-                           dstWidth, dstData);
-            break;
-         case GL_TEXTURE_2D:
-         case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-         case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-         case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-         case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-         case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-            make_2d_mipmap(datatype, comps, border,
-                           srcWidth, srcHeight, srcData,
-                           dstWidth, dstHeight, dstData);
-            break;
-         case GL_TEXTURE_3D:
-            make_3d_mipmap(datatype, comps, border,
-                           srcWidth, srcHeight, srcDepth, srcData,
-                           dstWidth, dstHeight, dstDepth, dstData);
-            break;
-         case GL_TEXTURE_1D_ARRAY_EXT:
-            make_1d_stack_mipmap(datatype, comps, border,
-                                 srcWidth, srcData,
-                                 dstWidth, dstHeight, dstData);
-            break;
-         case GL_TEXTURE_2D_ARRAY_EXT:
-            make_2d_stack_mipmap(datatype, comps, border,
-                                 srcWidth, srcHeight, srcData,
-                                 dstWidth, dstHeight, dstDepth, dstData);
-            break;
-         case GL_TEXTURE_RECTANGLE_NV:
-            /* no mipmaps, do nothing */
-            break;
-         default:
-            _mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
-            return;
-      }
+      _mesa_generate_mipmap_level(target, datatype, comps, border,
+                                  srcWidth, srcHeight, srcDepth, srcData,
+                                  dstWidth, dstHeight, dstDepth, dstData);
 
       if (dstImage->IsCompressed) {
          GLubyte *temp;
