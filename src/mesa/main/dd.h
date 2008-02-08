@@ -330,8 +330,7 @@ struct dd_function_table {
    /**
     * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.
     */
-   void (*GenerateMipmap)(GLcontext *ctx,  GLenum target,
-                          const struct gl_texture_unit *texUnit,
+   void (*GenerateMipmap)(GLcontext *ctx, GLenum target,
                           struct gl_texture_object *texObj);
 
    /**

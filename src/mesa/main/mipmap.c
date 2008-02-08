@@ -934,7 +934,6 @@ make_2d_stack_mipmap(const struct gl_texture_format *format, GLint border,
  */
 void
 _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
-                      const struct gl_texture_unit *texUnit,
                       struct gl_texture_object *texObj)
 {
    const struct gl_texture_image *srcImage;
