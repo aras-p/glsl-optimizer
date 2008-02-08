@@ -243,4 +243,10 @@ extern const struct gl_texture_format *
 _mesa_choose_tex_format( GLcontext *ctx, GLint internalFormat,
                          GLenum format, GLenum type );
 
+
+extern void
+_mesa_format_to_type_and_comps(const struct gl_texture_format *format,
+                               GLenum *datatype, GLuint *comps);
+
+
 #endif
