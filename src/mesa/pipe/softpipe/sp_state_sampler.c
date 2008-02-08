@@ -49,6 +49,8 @@ softpipe_bind_sampler_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   draw_flush(softpipe->draw);
+
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->sampler[unit] = (struct pipe_sampler_state *)sampler;
 
