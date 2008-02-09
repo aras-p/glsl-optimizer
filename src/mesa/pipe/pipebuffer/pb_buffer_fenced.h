@@ -51,7 +51,7 @@
 #define PB_BUFFER_FENCED_H_
 
 
-#include <assert.h>
+#include "pipe/p_debug.h"
 
 
 struct pipe_winsys;

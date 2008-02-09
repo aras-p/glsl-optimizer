@@ -58,7 +58,7 @@ boolean brw_pool_alloc( struct brw_mem_pool *pool,
    size = align(size, 4);
 
    if (pool->offset + fixup + size >= pool->size) {
-      printf("%s failed\n", __FUNCTION__);
+      debug_printf("%s failed\n", __FUNCTION__);
       assert(0);
       exit(0);
    }
@@ -74,7 +74,7 @@ static
 void brw_invalidate_pool( struct brw_mem_pool *pool )
 {
    if (BRW_DEBUG & DEBUG_STATE)
-      printf("\n\n\n %s \n\n\n", __FUNCTION__);
+      debug_printf("\n\n\n %s \n\n\n", __FUNCTION__);
 
    pool->offset = 0;
 

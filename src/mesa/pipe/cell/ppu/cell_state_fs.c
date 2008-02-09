@@ -45,7 +45,7 @@ void *
 cell_create_fs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
-   struct cell_context *cell = cell_context(pipe);
+   /*struct cell_context *cell = cell_context(pipe);*/
    struct cell_fragment_shader_state *state;
 
    state = CALLOC_STRUCT(cell_fragment_shader_state);
@@ -94,8 +94,6 @@ cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 void
 cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
-   struct cell_context *cell = cell_context(pipe);
-
    struct cell_fragment_shader_state *state =
       (struct cell_fragment_shader_state *) fs;
 

@@ -31,11 +31,13 @@
 
 #include <stdio.h>
 #include <libmisc.h>
-#include <spu_mfcio.h>
 
 #include "spu_main.h"
-#include "spu_tri.h"
+#include "spu_render.h"
+#include "spu_texture.h"
 #include "spu_tile.h"
+//#include "spu_test.h"
+#include "spu_vertex_shader.h"
 #include "pipe/cell/common.h"
 #include "pipe/p_defines.h"
 
@@ -46,28 +48,37 @@ helpful headers:
 /opt/ibm/cell-sdk/prototype/sysroot/usr/include/libmisc.h
 */
 
-static boolean Debug = FALSE;
+boolean Debug = FALSE;
 
 struct spu_global spu;
 
+struct spu_vs_context draw;
 
-void
-wait_on_mask(unsigned tagMask)
-{
-   mfc_write_tag_mask( tagMask );
-   /* wait for completion of _any_ DMAs specified by tagMask */
-   mfc_read_tag_status_any();
-}
-
-
+/**
+ * Tell the PPU that this SPU has finished copying a buffer to
+ * local store and that it may be reused by the PPU.
+ * This is done by writting a 16-byte batch-buffer-status block back into
+ * main memory (in cell_context->buffer_status[]).
+ */
 static void
-wait_on_mask_all(unsigned tagMask)
+release_buffer(uint buffer)
 {
-   mfc_write_tag_mask( tagMask );
-   /* wait for completion of _any_ DMAs specified by tagMask */
-   mfc_read_tag_status_all();
-}
+   /* Evidently, using less than a 16-byte status doesn't work reliably */
+   static const uint status[4] ALIGN16_ATTRIB
+      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
 
+   const uint index = 4 * (spu.init.id * CELL_NUM_BUFFERS + buffer);
+   uint *dst = spu.init.buffer_status + index;
+
+   ASSERT(buffer < CELL_NUM_BUFFERS);
+
+   mfc_put((void *) &status,    /* src in local memory */
+           (unsigned int) dst,  /* dst in main memory */
+           sizeof(status),      /* size */
+           TAG_MISC,            /* tag is unimportant */
+           0, /* tid */
+           0  /* rid */);
+}
 
 
 /**
@@ -81,24 +92,24 @@ really_clear_tiles(uint surfaceIndex)
    uint i;
 
    if (surfaceIndex == 0) {
-      clear_c_tile(&ctile);
+      clear_c_tile(&spu.ctile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
          uint ty = i / spu.fb.width_tiles;
-         if (tile_status[ty][tx] == TILE_STATUS_CLEAR) {
-            put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 0);
+         if (spu.ctile_status[ty][tx] == TILE_STATUS_CLEAR) {
+            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
          }
       }
    }
    else {
-      clear_z_tile(&ztile);
+      clear_z_tile(&spu.ztile);
 
       for (i = spu.init.id; i < num_tiles; i += spu.init.num_spus) {
          uint tx = i % spu.fb.width_tiles;
          uint ty = i / spu.fb.width_tiles;
-         if (tile_status_z[ty][tx] == TILE_STATUS_CLEAR)
-            put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 1);
+         if (spu.ztile_status[ty][tx] == TILE_STATUS_CLEAR)
+            put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 1);
       }
    }
 
@@ -122,11 +133,11 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 #if CLEAR_OPT
    /* set all tile's status to CLEAR */
    if (clear->surface == 0) {
-      memset(tile_status, TILE_STATUS_CLEAR, sizeof(tile_status));
+      memset(spu.ctile_status, TILE_STATUS_CLEAR, sizeof(spu.ctile_status));
       spu.fb.color_clear_value = clear->value;
    }
    else {
-      memset(tile_status_z, TILE_STATUS_CLEAR, sizeof(tile_status_z));
+      memset(spu.ztile_status, TILE_STATUS_CLEAR, sizeof(spu.ztile_status));
       spu.fb.depth_clear_value = clear->value;
    }
    return;
@@ -134,11 +145,11 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 
    if (clear->surface == 0) {
       spu.fb.color_clear_value = clear->value;
-      clear_c_tile(&ctile);
+      clear_c_tile(&spu.ctile);
    }
    else {
       spu.fb.depth_clear_value = clear->value;
-      clear_z_tile(&ztile);
+      clear_z_tile(&spu.ztile);
    }
 
    /*
@@ -150,9 +161,9 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
       uint tx = i % spu.fb.width_tiles;
       uint ty = i / spu.fb.width_tiles;
       if (clear->surface == 0)
-         put_tile(tx, ty, &ctile, TAG_SURFACE_CLEAR, 0);
+         put_tile(tx, ty, &spu.ctile, TAG_SURFACE_CLEAR, 0);
       else
-         put_tile(tx, ty, &ztile, TAG_SURFACE_CLEAR, 1);
+         put_tile(tx, ty, &spu.ztile, TAG_SURFACE_CLEAR, 1);
       /* XXX we don't want this here, but it fixes bad tile results */
    }
 
@@ -165,229 +176,14 @@ cmd_clear_surface(const struct cell_command_clear_surface *clear)
 }
 
 
-/**
- * Given a rendering command's bounding box (in pixels) compute the
- * location of the corresponding screen tile bounding box.
- */
-static INLINE void
-tile_bounding_box(const struct cell_command_render *render,
-                  uint *txmin, uint *tymin,
-                  uint *box_num_tiles, uint *box_width_tiles)
-{
-#if 1
-   /* Debug: full-window bounding box */
-   uint txmax = spu.fb.width_tiles - 1;
-   uint tymax = spu.fb.height_tiles - 1;
-   *txmin = 0;
-   *tymin = 0;
-   *box_num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   *box_width_tiles = spu.fb.width_tiles;
-   (void) render;
-   (void) txmax;
-   (void) tymax;
-#else
-   uint txmax, tymax, box_height_tiles;
-
-   *txmin = (uint) render->xmin / TILE_SIZE;
-   *tymin = (uint) render->ymin / TILE_SIZE;
-   txmax = (uint) render->xmax / TILE_SIZE;
-   tymax = (uint) render->ymax / TILE_SIZE;
-   *box_width_tiles = txmax - *txmin + 1;
-   box_height_tiles = tymax - *tymin + 1;
-   *box_num_tiles = *box_width_tiles * box_height_tiles;
-#endif
-#if 0
-   printf("Render bounds: %g, %g  ...  %g, %g\n",
-          render->xmin, render->ymin, render->xmax, render->ymax);
-   printf("Render tiles:  %u, %u .. %u, %u\n", *txmin, *tymin, txmax, tymax);
-#endif
-}
-
-
-/**
- * Render primitives
- * \param pos_incr  returns value indicating how may words to skip after
- *                  this command in the batch buffer
- */
 static void
-cmd_render(const struct cell_command_render *render, uint *pos_incr)
+cmd_release_verts(const struct cell_command_release_verts *release)
 {
-   /* we'll DMA into these buffers */
-   ubyte vertex_data[CELL_MAX_VBUF_SIZE] ALIGN16_ATTRIB;
-   ushort index_data[CELL_MAX_VBUF_INDEXES] ALIGN16_ATTRIB;
-   const uint vertex_size = render->vertex_size; /* in bytes */
-   const uint total_vertex_bytes = render->num_verts * vertex_size;
-   const ubyte *vertices;
-   const ushort *indexes;
-   uint mask;
-   uint i, j;
-
-
-   if (Debug) {
-      printf("SPU %u: RENDER prim %u, num_vert=%u  num_ind=%u  "
-             "inline_vert=%u  inline_ind=%u\n",
-             spu.init.id,
-             render->prim_type,
-             render->num_verts,
-             render->num_indexes,
-             render->inline_verts,
-             render->inline_indexes);
-
-      /*
-      printf("       bound: %g, %g .. %g, %g\n",
-             render->xmin, render->ymin, render->xmax, render->ymax);
-      */
-      printf("SPU %u: indices at %p  vertices at %p\n",
-             spu.init.id,
-             render->index_data, render->vertex_data);
-   }
-
-   ASSERT(sizeof(*render) % 4 == 0);
-   ASSERT_ALIGN16(render->vertex_data);
-   ASSERT_ALIGN16(render->index_data);
-
-
-   /**
-    ** Get vertex, index buffers if not inlined
-    **/
-   if (!render->inline_verts) {
-      ASSERT(total_vertex_bytes % 16 == 0);
-
-      mfc_get(vertex_data,  /* dest */
-              (unsigned int) render->vertex_data,  /* src */
-              total_vertex_bytes,  /* size */
-              TAG_VERTEX_BUFFER,
-              0, /* tid */
-              0  /* rid */);
-
-      vertices = vertex_data;
-   }
-
-   if (!render->inline_indexes) {
-      uint total_index_bytes;
-
-      *pos_incr = 0;
-
-      total_index_bytes = render->num_indexes * sizeof(ushort);
-      if (total_index_bytes < 16)
-         total_index_bytes = 16;
-      else
-         total_index_bytes = ROUNDUP16(total_index_bytes);
-
-      indexes = index_data;
-
-      /* get index data from main memory */
-      mfc_get(index_data,  /* dest */
-              (unsigned int) render->index_data,  /* src */
-              total_index_bytes,
-              TAG_INDEX_BUFFER,
-              0, /* tid */
-              0  /* rid */);
-   }
-
-
-   /**
-    ** Get pointers to inlined indexes, verts, if present
-    **/
-   if (render->inline_indexes) {
-      /* indexes are right after the render command in the batch buffer */
-      indexes = (ushort *) (render + 1);
-      *pos_incr = (render->num_indexes * 2 + 3) / 4;
-
-      if (render->inline_verts) {
-         /* vertices are after indexes, if inlined */
-         vertices = (const ubyte *) (render + 1) + *pos_incr * 4;
-         *pos_incr = *pos_incr + total_vertex_bytes / 4;
-      }
-   }
-
-
-   /* wait for vertex and/or index buffers if not inlined */
-   mask = 0x0;
-   if (!render->inline_verts)
-      mask |= (1 << TAG_VERTEX_BUFFER);
-   if (!render->inline_indexes)
-      mask |= (1 << TAG_INDEX_BUFFER);
-   wait_on_mask_all(mask);
-
-
-   /**
-    ** find tiles which intersect the prim bounding box
-    **/
-   uint txmin, tymin, box_width_tiles, box_num_tiles;
-#if 0
-   tile_bounding_box(render, &txmin, &tymin,
-                     &box_num_tiles, &box_width_tiles);
-#else
-   txmin = 0;
-   tymin = 0;
-   box_num_tiles = spu.fb.width_tiles * spu.fb.height_tiles;
-   box_width_tiles = spu.fb.width_tiles;
-#endif
-
-   /* make sure any pending clears have completed */
-   wait_on_mask(1 << TAG_SURFACE_CLEAR);
-
-
-   /**
-    ** loop over tiles, rendering tris
-    **/
-   for (i = spu.init.id; i < box_num_tiles; i += spu.init.num_spus) {
-      const uint tx = txmin + i % box_width_tiles;
-      const uint ty = tymin + i / box_width_tiles;
-
-      ASSERT(tx < spu.fb.width_tiles);
-      ASSERT(ty < spu.fb.height_tiles);
-
-      /* Start fetching color/z tiles.  We'll wait for completion when
-       * we need read/write to them later in triangle rasterization.
-       */
-      if (spu.depth_stencil.depth.enabled) {
-         if (tile_status_z[ty][tx] != TILE_STATUS_CLEAR) {
-            get_tile(tx, ty, &ztile, TAG_READ_TILE_Z, 1);
-         }
-      }
-
-      if (tile_status[ty][tx] != TILE_STATUS_CLEAR) {
-         get_tile(tx, ty, &ctile, TAG_READ_TILE_COLOR, 0);
-      }
-
-      ASSERT(render->prim_type == PIPE_PRIM_TRIANGLES);
-      ASSERT(render->num_indexes % 3 == 0);
-
-      /* loop over tris */
-      for (j = 0; j < render->num_indexes; j += 3) {
-         const float *v0, *v1, *v2;
-
-         v0 = (const float *) (vertices + indexes[j+0] * vertex_size);
-         v1 = (const float *) (vertices + indexes[j+1] * vertex_size);
-         v2 = (const float *) (vertices + indexes[j+2] * vertex_size);
-
-         tri_draw(v0, v1, v2, tx, ty);
-      }
-
-      /* write color/z tiles back to main framebuffer, if dirtied */
-      if (tile_status[ty][tx] == TILE_STATUS_DIRTY) {
-         put_tile(tx, ty, &ctile, TAG_WRITE_TILE_COLOR, 0);
-         tile_status[ty][tx] = TILE_STATUS_DEFINED;
-      }
-      if (spu.depth_stencil.depth.enabled) {
-         if (tile_status_z[ty][tx] == TILE_STATUS_DIRTY) {
-            put_tile(tx, ty, &ztile, TAG_WRITE_TILE_Z, 1);
-            tile_status_z[ty][tx] = TILE_STATUS_DEFINED;
-         }
-      }
-
-      /* XXX move these... */
-      wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
-      if (spu.depth_stencil.depth.enabled) {
-         wait_on_mask(1 << TAG_WRITE_TILE_Z);
-      }
-   }
-
    if (Debug)
-      printf("SPU %u: RENDER done\n",
-             spu.init.id);
+      printf("SPU %u: RELEASE VERTS %u\n",
+             spu.init.id, release->vertex_buf);
+   ASSERT(release->vertex_buf != ~0U);
+   release_buffer(release->vertex_buf);
 }
 
 
@@ -421,6 +217,29 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
       spu.fb.zsize = 2;
    else
       spu.fb.zsize = 0;
+
+   if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
+      spu.color_shuffle = ((vector unsigned char) {
+                              12, 0, 4, 8, 0, 0, 0, 0, 
+                              0, 0, 0, 0, 0, 0, 0, 0});
+   else if (spu.fb.color_format == PIPE_FORMAT_B8G8R8A8_UNORM)
+      spu.color_shuffle = ((vector unsigned char) {
+                              8, 4, 0, 12, 0, 0, 0, 0, 
+                              0, 0, 0, 0, 0, 0, 0, 0});
+   else
+      ASSERT(0);
+}
+
+
+static void
+cmd_state_blend(const struct pipe_blend_state *state)
+{
+   if (Debug)
+      printf("SPU %u: BLEND: enabled %d\n",
+             spu.init.id,
+             state->blend_enable);
+
+   memcpy(&spu.blend, state, sizeof(*state));
 }
 
 
@@ -444,18 +263,52 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
              spu.init.id);
 
    memcpy(&spu.sampler[0], state, sizeof(*state));
+   if (spu.sampler[0].min_img_filter == PIPE_TEX_FILTER_LINEAR)
+      spu.sample_texture = sample_texture_bilinear;
+   else
+      spu.sample_texture = sample_texture_nearest;
+}
+
+
+static void
+cmd_state_texture(const struct cell_command_texture *texture)
+{
+   if (Debug)
+      printf("SPU %u: TEXTURE at %p  size %u x %u\n",
+             spu.init.id, texture->start, texture->width, texture->height);
+
+   memcpy(&spu.texture, texture, sizeof(*texture));
+   spu.tex_size = (vector float)
+      { spu.texture.width, spu.texture.height, 0.0, 0.0};
+   spu.tex_size_mask = (vector unsigned int)
+      { spu.texture.width - 1, spu.texture.height - 1, 0, 0 };
 }
 
 
 static void
 cmd_state_vertex_info(const struct vertex_info *vinfo)
 {
-   if (Debug)
+   if (Debug) {
       printf("SPU %u: VERTEX_INFO num_attribs=%u\n", spu.init.id,
              vinfo->num_attribs);
+   }
+   ASSERT(vinfo->num_attribs >= 1);
+   ASSERT(vinfo->num_attribs <= 8);
    memcpy(&spu.vertex_info, vinfo, sizeof(*vinfo));
 }
 
+
+static void
+cmd_state_vs_array_info(const struct cell_array_info *vs_info)
+{
+   const unsigned attr = vs_info->attr;
+
+   ASSERT(attr < PIPE_ATTRIB_MAX);
+   draw.vertex_fetch.src_ptr[attr] = vs_info->base;
+   draw.vertex_fetch.pitch[attr] = vs_info->pitch;
+   draw.vertex_fetch.format[attr] = vs_info->format;
+   draw.vertex_fetch.dirty = 1;
+}
 
 
 static void
@@ -473,38 +326,6 @@ cmd_finish(void)
 
 
 /**
- * Tell the PPU that this SPU has finished copying a batch buffer to
- * local store and that it may be reused by the PPU.
- * This is done by writting a 16-byte batch-buffer-status block back into
- * main memory (in cell_contex->buffer_status[]).
- */
-static void
-release_batch_buffer(uint buffer)
-{
-   /* Evidently, using less than a 16-byte status doesn't work reliably */
-   static const uint status[4] ALIGN16_ATTRIB
-      = {CELL_BUFFER_STATUS_FREE, 0, 0, 0};
-
-   const uint index = 4 * (spu.init.id * CELL_NUM_BATCH_BUFFERS + buffer);
-   uint *dst = spu.init.buffer_status + index;
-
-   ASSERT(buffer < CELL_NUM_BATCH_BUFFERS);
-
-   /*
-   printf("SPU %u: Set batch status buf=%u, index %u, at %p to FREE\n",
-          spu.init.id, buffer, index, dst);
-   */
-
-   mfc_put((void *) &status,    /* src in local memory */
-           (unsigned int) dst,  /* dst in main memory */
-           sizeof(status),      /* size */
-           TAG_MISC,            /* tag is unimportant */
-           0, /* tid */
-           0  /* rid */);
-}
-
-
-/**
  * Execute a batch of commands
  * The opcode param encodes the location of the buffer and its size.
  */
@@ -513,24 +334,24 @@ cmd_batch(uint opcode)
 {
    const uint buf = (opcode >> 8) & 0xff;
    uint size = (opcode >> 16);
-   uint buffer[CELL_BATCH_BUFFER_SIZE / 4] ALIGN16_ATTRIB;
-   const uint usize = size / sizeof(uint);
+   uint64_t buffer[CELL_BUFFER_SIZE / 8] ALIGN16_ATTRIB;
+   const unsigned usize = size / sizeof(buffer[0]);
    uint pos;
 
    if (Debug)
       printf("SPU %u: BATCH buffer %u, len %u, from %p\n",
-             spu.init.id, buf, size, spu.init.batch_buffers[buf]);
+             spu.init.id, buf, size, spu.init.buffers[buf]);
 
    ASSERT((opcode & CELL_CMD_OPCODE_MASK) == CELL_CMD_BATCH);
 
-   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
+   ASSERT_ALIGN16(spu.init.buffers[buf]);
 
    size = ROUNDUP16(size);
 
-   ASSERT_ALIGN16(spu.init.batch_buffers[buf]);
+   ASSERT_ALIGN16(spu.init.buffers[buf]);
 
    mfc_get(buffer,  /* dest */
-           (unsigned int) spu.init.batch_buffers[buf],  /* src */
+           (unsigned int) spu.init.buffers[buf],  /* src */
            size,
            TAG_BATCH_BUFFER,
            0, /* tid */
@@ -538,7 +359,9 @@ cmd_batch(uint opcode)
    wait_on_mask(1 << TAG_BATCH_BUFFER);
 
    /* Tell PPU we're done copying the buffer to local store */
-   release_batch_buffer(buf);
+   if (Debug)
+      printf("SPU %u: release batch buf %u\n", spu.init.id, buf);
+   release_buffer(buf);
 
    for (pos = 0; pos < usize; /* no incr */) {
       switch (buffer[pos]) {
@@ -547,7 +370,7 @@ cmd_batch(uint opcode)
             struct cell_command_framebuffer *fb
                = (struct cell_command_framebuffer *) &buffer[pos];
             cmd_state_framebuffer(fb);
-            pos += sizeof(*fb) / 4;
+            pos += sizeof(*fb) / 8;
          }
          break;
       case CELL_CMD_CLEAR_SURFACE:
@@ -555,7 +378,7 @@ cmd_batch(uint opcode)
             struct cell_command_clear_surface *clr
                = (struct cell_command_clear_surface *) &buffer[pos];
             cmd_clear_surface(clr);
-            pos += sizeof(*clr) / 4;
+            pos += sizeof(*clr) / 8;
          }
          break;
       case CELL_CMD_RENDER:
@@ -564,28 +387,54 @@ cmd_batch(uint opcode)
                = (struct cell_command_render *) &buffer[pos];
             uint pos_incr;
             cmd_render(render, &pos_incr);
-            pos += sizeof(*render) / 4 + pos_incr;
+            pos += pos_incr;
+         }
+         break;
+      case CELL_CMD_RELEASE_VERTS:
+         {
+            struct cell_command_release_verts *release
+               = (struct cell_command_release_verts *) &buffer[pos];
+            cmd_release_verts(release);
+            pos += sizeof(*release) / 8;
          }
          break;
       case CELL_CMD_FINISH:
          cmd_finish();
          pos += 1;
          break;
+      case CELL_CMD_STATE_BLEND:
+         cmd_state_blend((struct pipe_blend_state *)
+                                 &buffer[pos+1]);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_blend_state)) / 8);
+         break;
       case CELL_CMD_STATE_DEPTH_STENCIL:
          cmd_state_depth_stencil((struct pipe_depth_stencil_alpha_state *)
                                  &buffer[pos+1]);
-         pos += (1 + sizeof(struct pipe_depth_stencil_alpha_state) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_depth_stencil_alpha_state)) / 8);
          break;
       case CELL_CMD_STATE_SAMPLER:
          cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct pipe_sampler_state) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_sampler_state)) / 8);
+         break;
+      case CELL_CMD_STATE_TEXTURE:
+         cmd_state_texture((struct cell_command_texture *) &buffer[pos+1]);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_command_texture)) / 8);
          break;
       case CELL_CMD_STATE_VERTEX_INFO:
          cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);
-         pos += (1 + sizeof(struct vertex_info) / 4);
+         pos += (1 + ROUNDUP8(sizeof(struct vertex_info)) / 8);
+         break;
+      case CELL_CMD_STATE_VIEWPORT:
+         (void) memcpy(& draw.viewport, &buffer[pos+1],
+                       sizeof(struct pipe_viewport_state));
+         pos += (1 + ROUNDUP8(sizeof(struct pipe_viewport_state)) / 8);
+         break;
+      case CELL_CMD_STATE_VS_ARRAY_INFO:
+         cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
          break;
       default:
-         printf("SPU %u: bad opcode: 0x%x\n", spu.init.id, buffer[pos]);
+         printf("SPU %u: bad opcode: 0x%llx\n", spu.init.id, buffer[pos]);
          ASSERT(0);
          break;
       }
@@ -633,30 +482,21 @@ main_loop(void)
               0  /* rid */);
       wait_on_mask( 1 << tag );
 
+      /*
+       * NOTE: most commands should be contained in a batch buffer
+       */
+
       switch (opcode & CELL_CMD_OPCODE_MASK) {
       case CELL_CMD_EXIT:
          if (Debug)
             printf("SPU %u: EXIT\n", spu.init.id);
          exitFlag = 1;
          break;
-      case CELL_CMD_STATE_FRAMEBUFFER:
-         cmd_state_framebuffer(&cmd.fb);
-         break;
-      case CELL_CMD_CLEAR_SURFACE:
-         cmd_clear_surface(&cmd.clear);
-         break;
-      case CELL_CMD_RENDER:
-         {
-            uint pos_incr;
-            cmd_render(&cmd.render, &pos_incr);
-            assert(pos_incr == 0);
-         }
+      case CELL_CMD_VS_EXECUTE:
+         spu_execute_vertex_shader(&draw, &cmd.vs);
          break;
       case CELL_CMD_BATCH:
          cmd_batch(opcode);
-         break;
-      case CELL_CMD_FINISH:
-         cmd_finish();
          break;
       default:
          printf("Bad opcode!\n");
@@ -673,9 +513,11 @@ main_loop(void)
 static void
 one_time_init(void)
 {
-   memset(tile_status, TILE_STATUS_DEFINED, sizeof(tile_status));
-   memset(tile_status_z, TILE_STATUS_DEFINED, sizeof(tile_status_z));
+   memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
+   memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
+   invalidate_tex_cache();
 }
+
 
 
 /* In some versions of the SDK the SPE main takes 'unsigned long' as a
@@ -698,6 +540,9 @@ main(main_param_t speid, main_param_t argp)
 
    (void) speid;
 
+   ASSERT(sizeof(tile_t) == TILE_SIZE * TILE_SIZE * 4);
+   ASSERT(sizeof(struct cell_command_render) % 8 == 0);
+
    one_time_init();
 
    if (Debug)
@@ -711,6 +556,10 @@ main(main_param_t speid, main_param_t argp)
            0  /* rid */);
    wait_on_mask( 1 << tag );
 
+#if 0
+   if (spu.init.id==0)
+      spu_test_misc();
+#endif
 
    main_loop();
 

@@ -175,6 +175,9 @@ DRAW_SOURCES = \
 	pipe/draw/draw_vertex_fetch.c \
 	pipe/draw/draw_vertex_shader.c \
 	pipe/draw/draw_vertex_shader_llvm.c \
+	pipe/draw/draw_vf.c \
+	pipe/draw/draw_vf_generic.c \
+	pipe/draw/draw_vf_sse.c \
 	pipe/draw/draw_wide_prims.c
 
 TGSIEXEC_SOURCES = \
@@ -192,6 +195,7 @@ STATECACHE_SOURCES = \
 	pipe/cso_cache/cso_cache.c
 
 PIPEUTIL_SOURCES = \
+	pipe/util/p_debug.c \
 	pipe/util/p_tile.c \
 	pipe/util/p_util.c
 
@@ -230,6 +234,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_extensions.c \
 	state_tracker/st_format.c \
 	state_tracker/st_framebuffer.c \
+	state_tracker/st_gen_mipmap.c \
 	state_tracker/st_mesa_to_tgsi.c \
 	state_tracker/st_program.c \
 	state_tracker/st_texture.c

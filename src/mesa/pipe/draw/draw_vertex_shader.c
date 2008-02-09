@@ -110,7 +110,7 @@ run_vertex_program(struct draw_context *draw,
    machine->Inputs = ALIGN16_ASSIGN(inputs);
    machine->Outputs = ALIGN16_ASSIGN(outputs);
 
-   draw_vertex_fetch( draw, machine, elts, count );
+   draw->vertex_fetch.fetch_func( draw, machine, elts, count );
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)
@@ -121,11 +121,16 @@ run_vertex_program(struct draw_context *draw,
          = (struct draw_vertex_shader *)draw->vertex_shader;
       codegen_function func
          = (codegen_function) x86_get_func( &shader->sse2_program );
-      func(
-         machine->Inputs,
-         machine->Outputs,
-         machine->Consts,
-         machine->Temps );
+
+      if (func)
+         func(
+            machine->Inputs,
+            machine->Outputs,
+            machine->Consts,
+            machine->Temps );
+      else
+         /* interpreter */
+         tgsi_exec_machine_run( machine );
    }
    else
 #endif
@@ -166,7 +171,7 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][3] = w;
 
 #if DBG_VS
-      printf("output[%d]win: %f %f %f %f\n", j,
+      debug_printf("output[%d]win: %f %f %f %f\n", j,
              vOut[j]->data[0][0],
              vOut[j]->data[0][1],
              vOut[j]->data[0][2],
@@ -181,7 +186,7 @@ run_vertex_program(struct draw_context *draw,
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
 #if DBG_VS
-         printf("output[%d][%d]: %f %f %f %f\n", j, slot,
+         debug_printf("output[%d][%d]: %f %f %f %f\n", j, slot,
                 vOut[j]->data[slot][0],
                 vOut[j]->data[slot][1],
                 vOut[j]->data[slot][2],
@@ -199,13 +204,15 @@ run_vertex_program(struct draw_context *draw,
 void
 draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
-   unsigned i, j;
+   unsigned i;
+
+   assert(draw->vs.queue_nr != 0);
 
    /* XXX: do this on statechange: 
     */
    draw_update_vertex_fetch( draw );
 
-//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+//   debug_printf( " q(%d) ", draw->vs.queue_nr );
 #ifdef MESA_LLVM
    if (draw->vertex_shader->llvm_prog) {
       draw_vertex_shader_queue_flush_llvm(draw);
@@ -217,14 +224,18 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
       struct vertex_header *dests[4];
       unsigned elts[4];
-      int n;
+      int j, n = MIN2(4, draw->vs.queue_nr - i);
 
-      for (j = 0; j < 4; j++) {
+      for (j = 0; j < n; j++) {
          elts[j] = draw->vs.queue[i + j].elt;
          dests[j] = draw->vs.queue[i + j].dest;
       }
 
-      n = MIN2(4, draw->vs.queue_nr - i);
+      for ( ; j < 4; j++) {
+	 elts[j] = elts[0];
+	 dests[j] = dests[0];
+      }
+
       assert(n > 0);
       assert(n <= 4);
 
@@ -263,7 +274,12 @@ draw_create_vertex_shader(struct draw_context *draw,
       struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
 
       x86_init_func( &vs->sse2_program );
-      tgsi_emit_sse2( (struct tgsi_token *) sh->tokens, &vs->sse2_program );
+      if (!tgsi_emit_sse2( (struct tgsi_token *) sh->tokens,
+                           &vs->sse2_program )) {
+         x86_release_func( (struct x86_function *) &vs->sse2_program );
+	 fprintf(stdout /*err*/,
+		 "tgsi_emit_sse2() failed, falling back to interpreter\n");
+      }
    }
 #endif
 

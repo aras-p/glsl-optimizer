@@ -30,6 +30,7 @@
 #include "main/enums.h"
 #include "main/image.h"
 #include "main/macros.h"
+#include "main/mipmap.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/teximage.h"
@@ -41,6 +42,7 @@
 #include "state_tracker/st_cb_texture.h"
 #include "state_tracker/st_format.h"
 #include "state_tracker/st_texture.h"
+#include "state_tracker/st_gen_mipmap.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -76,12 +78,12 @@ struct st_texture_object
 
 
 
-
 static INLINE struct st_texture_object *
 st_texture_object(struct gl_texture_object *obj)
 {
    return (struct st_texture_object *) obj;
 }
+
 
 static INLINE struct st_texture_image *
 st_texture_image(struct gl_texture_image *img)
@@ -122,30 +124,26 @@ gl_target_to_pipe(GLenum target)
 }
 
 
+/**
+ * Return nominal bytes per texel for a compressed format, 0 for non-compressed
+ * format.
+ */
 static int
 compressed_num_bytes(GLuint mesaFormat)
 {
-   int bytes = 0;
    switch(mesaFormat) {
-     
    case MESA_FORMAT_RGB_FXT1:
    case MESA_FORMAT_RGBA_FXT1:
    case MESA_FORMAT_RGB_DXT1:
    case MESA_FORMAT_RGBA_DXT1:
-     bytes = 2;
-     break;
-     
+      return 2;
    case MESA_FORMAT_RGBA_DXT3:
    case MESA_FORMAT_RGBA_DXT5:
-     bytes = 4;
+      return 4;
    default:
-     break;
+      return 0;
    }
-   
-   return bytes;
 }
-
-
 
 
 static GLboolean
@@ -162,7 +160,6 @@ st_IsTextureResident(GLcontext * ctx, struct gl_texture_object *texObj)
 #endif
    return 1;
 }
-
 
 
 static struct gl_texture_image *
@@ -214,8 +211,6 @@ st_FreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
       texImage->Data = NULL;
    }
 }
-
-
 
 
 /* ================================================================
@@ -290,7 +285,12 @@ logbase2(int n)
 }
 
 
-/* Otherwise, store it in memory if (Border != 0) or (any dimension ==
+/**
+ * Allocate a pipe_texture object for the given st_texture_object using
+ * the given st_texture_image to guess the mipmap size/levels.
+ *
+ * [comments...]
+ * Otherwise, store it in memory if (Border != 0) or (any dimension ==
  * 1).
  *    
  * Otherwise, if max_level >= level >= min_level, create texture with
@@ -302,17 +302,18 @@ logbase2(int n)
 static void
 guess_and_alloc_texture(struct st_context *st,
 			struct st_texture_object *stObj,
-			struct st_texture_image *stImage)
+			const struct st_texture_image *stImage)
 {
    GLuint firstLevel;
    GLuint lastLevel;
    GLuint width = stImage->base.Width;
    GLuint height = stImage->base.Height;
    GLuint depth = stImage->base.Depth;
-   GLuint l2width, l2height, l2depth;
    GLuint i, comp_byte = 0;
 
    DBG("%s\n", __FUNCTION__);
+
+   assert(!stObj->pt);
 
    if (stImage->base.Border)
       return;
@@ -355,15 +356,15 @@ guess_and_alloc_texture(struct st_context *st,
       lastLevel = firstLevel;
    }
    else {
-      l2width = logbase2(width);
-      l2height = logbase2(height);
-      l2depth = logbase2(depth);
+      GLuint l2width = logbase2(width);
+      GLuint l2height = logbase2(height);
+      GLuint l2depth = logbase2(depth);
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
-   assert(!stObj->pt);
    if (stImage->base.IsCompressed)
       comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
+
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat),
@@ -487,21 +488,18 @@ try_pbo_upload(GLcontext *ctx,
 
 
 
-
-
-
-
 static void
 st_TexImage(GLcontext * ctx,
-              GLint dims,
-              GLenum target, GLint level,
-              GLint internalFormat,
-              GLint width, GLint height, GLint depth,
-              GLint border,
-              GLenum format, GLenum type, const void *pixels,
-              const struct gl_pixelstore_attrib *unpack,
-              struct gl_texture_object *texObj,
-              struct gl_texture_image *texImage, GLsizei imageSize, int compressed)
+            GLint dims,
+            GLenum target, GLint level,
+            GLint internalFormat,
+            GLint width, GLint height, GLint depth,
+            GLint border,
+            GLenum format, GLenum type, const void *pixels,
+            const struct gl_pixelstore_attrib *unpack,
+            struct gl_texture_object *texObj,
+            struct gl_texture_image *texImage,
+            GLsizei imageSize, int compressed)
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
@@ -524,7 +522,7 @@ st_TexImage(GLcontext * ctx,
 
    /* choose the texture format */
    texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
-                                                  format, type);
+                                                format, type);
 
    _mesa_set_fetch_functions(texImage, dims);
 
@@ -536,7 +534,8 @@ st_TexImage(GLcontext * ctx,
 	 ctx->Driver.CompressedTextureSize(ctx, texImage->Width,
 					   texImage->Height, texImage->Depth,
 					   texImage->TexFormat->MesaFormat);
-   } else {
+   }
+   else {
       texelBytes = texImage->TexFormat->TexelBytes;
       
       /* Minimum pitch of 32 bytes */
@@ -669,7 +668,7 @@ st_TexImage(GLcontext * ctx,
     * conversion and copy:
     */
    if (compressed) {
-     memcpy(texImage->Data, pixels, imageSize);
+      memcpy(texImage->Data, pixels, imageSize);
    }
    else {
       GLuint srcImageStride = _mesa_image_image_stride(unpack, width, height,
@@ -705,13 +704,9 @@ st_TexImage(GLcontext * ctx,
       texImage->Data = NULL;
    }
 
-#if 0
-   /* GL_SGIS_generate_mipmap -- this can be accelerated now.
-    */
+#if 01
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
 #endif
 }
@@ -1401,7 +1396,10 @@ copy_image_data_to_texture(struct st_context *st,
 }
 
 
-/*  
+/**
+ * Called during state validation.  When this function is finished,
+ * the texture object should be ready for rendering.
+ * \return GL_FALSE if a texture border is present, GL_TRUE otherwise
  */
 GLboolean
 st_finalize_texture(GLcontext *ctx,
@@ -1410,11 +1408,10 @@ st_finalize_texture(GLcontext *ctx,
 		    GLboolean *needFlush)
 {
    struct st_texture_object *stObj = st_texture_object(tObj);
+   const GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    int comp_byte = 0;
    int cpp;
-
    GLuint face, i;
-   GLuint nr_faces = 0;
    struct st_texture_image *firstImage;
 
    *needFlush = GL_FALSE;
@@ -1426,8 +1423,7 @@ st_finalize_texture(GLcontext *ctx,
    /* What levels must the texture include at a minimum?
     */
    calculate_first_last_level(stObj);
-   firstImage =
-      st_texture_image(stObj->base.Image[0][stObj->firstLevel]);
+   firstImage = st_texture_image(stObj->base.Image[0][stObj->firstLevel]);
 
    /* Fallback case:
     */
@@ -1503,7 +1499,6 @@ st_finalize_texture(GLcontext *ctx,
 
    /* Pull in any images not in the object's texture:
     */
-   nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    for (face = 0; face < nr_faces; face++) {
       for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
          struct st_texture_image *stImage =
@@ -1540,6 +1535,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
    functions->CopyTexSubImage3D = st_CopyTexSubImage3D;
+   functions->GenerateMipmap = st_generate_mipmap;
 
    functions->GetTexImage = st_GetTexImage;
 

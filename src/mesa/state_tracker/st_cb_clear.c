@@ -251,7 +251,7 @@ draw_quad(GLcontext *ctx,
       verts[i][1][3] = color[3];
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, GL_FALSE);
 }
 
 
@@ -408,7 +408,9 @@ check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
    const struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
    return  ctx->Scissor.Enabled
-      || (isDS && ctx->DrawBuffer->Visual.stencilBits > 0);
+      || (isDS && 
+	  strb->surface->status == PIPE_SURFACE_STATUS_DEFINED &&
+	  ctx->DrawBuffer->Visual.stencilBits > 0);
 }
 
 

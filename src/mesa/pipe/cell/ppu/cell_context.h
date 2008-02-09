@@ -38,9 +38,6 @@
 #include "pipe/cell/common.h"
 
 
-#define CELL_MAX_SPUS 6
-
-
 struct cell_vbuf_render;
 
 struct cell_vertex_shader_state
@@ -76,13 +73,16 @@ struct cell_context
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+   struct cell_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
 
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;
+
+   struct pipe_surface *tex_surf;
+   uint *tex_map;
 
    uint dirty;
 
@@ -102,12 +102,14 @@ struct cell_context
 
    uint num_spus;
 
-   uint batch_buffer_size[CELL_NUM_BATCH_BUFFERS];
-   ubyte batch_buffer[CELL_NUM_BATCH_BUFFERS][CELL_BATCH_BUFFER_SIZE] ALIGN16_ATTRIB;
-   int cur_batch;  /**< which batch buffer is being filled */
+   /** Buffers for command batches, vertex/index data */
+   uint buffer_size[CELL_NUM_BUFFERS];
+   ubyte buffer[CELL_NUM_BUFFERS][CELL_BUFFER_SIZE] ALIGN16_ATTRIB;
+
+   int cur_batch;  /**< which buffer is being filled w/ commands */
 
    /** [4] to ensure 16-byte alignment for each status word */
-   uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BATCH_BUFFERS][4] ALIGN16_ATTRIB;
+   uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BUFFERS][4] ALIGN16_ATTRIB;
 
 };
 
@@ -124,6 +126,8 @@ cell_context(struct pipe_context *pipe)
 extern struct pipe_context *
 cell_create_context(struct pipe_winsys *ws, struct cell_winsys *cws);
 
+extern void
+cell_vertex_shader_queue_flush(struct draw_context *draw);
 
 
 

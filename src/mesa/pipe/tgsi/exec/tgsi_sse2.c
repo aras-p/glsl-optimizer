@@ -48,28 +48,28 @@ _print_reg(
    case file_REG32:
       switch( reg.idx ) {
       case reg_AX:
-         printf( "EAX" );
+         debug_printf( "EAX" );
          break;
       case reg_CX:
-         printf( "ECX" );
+         debug_printf( "ECX" );
          break;
       case reg_DX:
-         printf( "EDX" );
+         debug_printf( "EDX" );
          break;
       case reg_BX:
-         printf( "EBX" );
+         debug_printf( "EBX" );
          break;
       case reg_SP:
-         printf( "ESP" );
+         debug_printf( "ESP" );
          break;
       case reg_BP:
-         printf( "EBP" );
+         debug_printf( "EBP" );
          break;
       case reg_SI:
-         printf( "ESI" );
+         debug_printf( "ESI" );
          break;
       case reg_DI:
-         printf( "EDI" );
+         debug_printf( "EDI" );
          break;
       }
       break;
@@ -77,7 +77,7 @@ _print_reg(
       assert( 0 );
       break;
    case file_XMM:
-      printf( "XMM%u", reg.idx );
+      debug_printf( "XMM%u", reg.idx );
       break;
    case file_x87:
       assert( 0 );
@@ -92,35 +92,35 @@ _fill(
    unsigned count = 10 - strlen( op );
 
    while( count-- ) {
-      printf( " " );
+      debug_printf( " " );
    }
 }
 
-#define DUMP_START() printf( "\nsse-dump start ----------------" )
-#define DUMP_END() printf( "\nsse-dump end ----------------\n" )
-#define DUMP( OP ) printf( "\n%s", OP )
+#define DUMP_START() debug_printf( "\nsse-dump start ----------------" )
+#define DUMP_END() debug_printf( "\nsse-dump end ----------------\n" )
+#define DUMP( OP ) debug_printf( "\n%s", OP )
 #define DUMP_I( OP, I ) do {\
-   printf( "\n%s", OP );\
+   debug_printf( "\n%s", OP );\
    _fill( OP );\
-   printf( "%u", I ); } while( 0 )
+   debug_printf( "%u", I ); } while( 0 )
 #define DUMP_R( OP, R0 ) do {\
-   printf( "\n%s", OP );\
+   debug_printf( "\n%s", OP );\
    _fill( OP );\
    _print_reg( R0 ); } while( 0 )
 #define DUMP_RR( OP, R0, R1 ) do {\
-   printf( "\n%s", OP );\
+   debug_printf( "\n%s", OP );\
    _fill( OP );\
    _print_reg( R0 );\
-   printf( ", " );\
+   debug_printf( ", " );\
    _print_reg( R1 ); } while( 0 )
 #define DUMP_RRI( OP, R0, R1, I ) do {\
-   printf( "\n%s", OP );\
+   debug_printf( "\n%s", OP );\
    _fill( OP );\
    _print_reg( R0 );\
-   printf( ", " );\
+   debug_printf( ", " );\
    _print_reg( R1 );\
-   printf( ", " );\
-   printf( "%u", I ); } while( 0 )
+   debug_printf( ", " );\
+   debug_printf( "%u", I ); } while( 0 )
 
 #else
 
@@ -198,9 +198,15 @@ get_output_base( void )
 static struct x86_reg
 get_temp_base( void )
 {
+#ifdef WIN32
    return x86_make_reg(
       file_REG32,
       reg_BX );
+#else
+   return x86_make_reg(
+      file_REG32,
+      reg_SI );
+#endif
 }
 
 static struct x86_reg
@@ -2248,8 +2254,7 @@ tgsi_emit_sse2(
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
-         assert(0);
-         break;
+         return 0;
 
       default:
          assert( 0 );

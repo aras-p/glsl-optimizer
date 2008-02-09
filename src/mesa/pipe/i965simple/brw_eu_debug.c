@@ -30,6 +30,8 @@
   */
     
 
+#include "pipe/p_debug.h"
+
 #include "brw_eu.h"
 
 void brw_print_reg( struct brw_reg hwreg )
@@ -52,7 +54,7 @@ void brw_print_reg( struct brw_reg hwreg )
       "f"
    };
 
-   _mesa_printf("%s%s", 
+   debug_printf("%s%s", 
 		hwreg.abs ? "abs/" : "",
 		hwreg.negate ? "-" : "");
      
@@ -63,17 +65,17 @@ void brw_print_reg( struct brw_reg hwreg )
        hwreg.width == BRW_WIDTH_8 &&
        hwreg.hstride == BRW_HORIZONTAL_STRIDE_1 &&
        hwreg.type == BRW_REGISTER_TYPE_F) {
-      _mesa_printf("vec%d", hwreg.nr);
+      debug_printf("vec%d", hwreg.nr);
    }
    else if (hwreg.file == BRW_GENERAL_REGISTER_FILE &&
 	    hwreg.vstride == BRW_VERTICAL_STRIDE_0 &&
 	    hwreg.width == BRW_WIDTH_1 &&
 	    hwreg.hstride == BRW_HORIZONTAL_STRIDE_0 &&
 	    hwreg.type == BRW_REGISTER_TYPE_F) {      
-      _mesa_printf("scl%d.%d", hwreg.nr, hwreg.subnr / 4);
+      debug_printf("scl%d.%d", hwreg.nr, hwreg.subnr / 4);
    }
    else {
-      _mesa_printf("%s%d.%d<%d;%d,%d>:%s", 
+      debug_printf("%s%d.%d<%d;%d,%d>:%s", 
 		   file[hwreg.file],
 		   hwreg.nr,
 		   hwreg.subnr / type_sz(hwreg.type),

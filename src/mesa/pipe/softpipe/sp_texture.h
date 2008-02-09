@@ -55,8 +55,9 @@ softpipe_texture(struct pipe_texture *pt)
 
 
 
-extern void
-softpipe_texture_create(struct pipe_context *pipe, struct pipe_texture **pt);
+extern struct pipe_texture *
+softpipe_texture_create(struct pipe_context *pipe,
+                        const struct pipe_texture *templat);
 
 extern void
 softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);

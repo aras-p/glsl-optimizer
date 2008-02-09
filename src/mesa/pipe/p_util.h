@@ -29,6 +29,7 @@
 #define P_UTIL_H
 
 #include "p_compiler.h"
+#include "p_debug.h"
 #include <math.h>
 
 
@@ -179,6 +180,20 @@ align_free(void *ptr)
    void *realAddr = *cubbyHole;
    FREE(realAddr);
 #endif /* defined(HAVE_POSIX_MEMALIGN) */
+}
+
+
+
+/**
+ * Duplicate of a block of memory
+ */
+static INLINE void *
+mem_dup(const void *src, uint size)
+{
+   void *dup = malloc(size);
+   if (dup)
+      memcpy(dup, src, size);
+   return dup;
 }
 
 
@@ -380,10 +395,6 @@ static INLINE int align(int value, int alignment)
 {
    return (value + alignment - 1) & ~(alignment - 1);
 }
-
-/* Convenient...
- */
-extern void _mesa_printf(const char *str, ...);
 
 
 /* util/p_util.c

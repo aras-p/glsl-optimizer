@@ -111,8 +111,8 @@ cell_start_spus(struct cell_context *cell)
       cell_global.inits[i].id = i;
       cell_global.inits[i].num_spus = cell->num_spus;
       cell_global.inits[i].cmd = &cell_global.command[i];
-      for (j = 0; j < CELL_NUM_BATCH_BUFFERS; j++) {
-         cell_global.inits[i].batch_buffers[j] = cell->batch_buffer[j];
+      for (j = 0; j < CELL_NUM_BUFFERS; j++) {
+         cell_global.inits[i].buffers[j] = cell->buffer[j];
       }
       cell_global.inits[i].buffer_status = &cell->buffer_status[0][0][0];
 

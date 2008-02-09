@@ -78,6 +78,11 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       precalc_flat = 1;		/* only needed for triangles really */
       need_det = 1;
    }
+
+   if (draw->rasterizer->flatshade && precalc_flat) {
+      draw->pipeline.flatshade->next = next;
+      next = draw->pipeline.flatshade;
+   }
 	 
    if (draw->rasterizer->offset_cw ||
        draw->rasterizer->offset_ccw) {
@@ -110,13 +115,8 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    {
       draw->pipeline.clip->next = next;
       next = draw->pipeline.clip;
-      precalc_flat = 1;		/* XXX: FIX ME! Only needed for clipped prims */
    }
 
-   if (draw->rasterizer->flatshade && precalc_flat) {
-      draw->pipeline.flatshade->next = next;
-      next = draw->pipeline.flatshade;
-   }
    
    draw->pipeline.first = next;
    return next;

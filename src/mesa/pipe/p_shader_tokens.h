@@ -626,7 +626,7 @@ struct tgsi_src_register_ext
 
 /*
  * If tgsi_src_register_ext::Type is TGSI_SRC_REGISTER_EXT_TYPE_SWZ,
- * it should be cast to tgsi_src_register_ext_extswz.
+ * it should be cast to tgsi_src_register_ext_swz.
  * 
  * If tgsi_src_register_ext::Type is TGSI_SRC_REGISTER_EXT_TYPE_MOD,
  * it should be cast to tgsi_src_register_ext_mod.

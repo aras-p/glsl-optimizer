@@ -27,6 +27,9 @@ static GLint T0 = 0;
 static GLint Frames = 0;
 static GLint autoexit = 0;
 static GLint win = 0;
+static GLboolean Visible = GL_TRUE;
+static GLboolean Animate = GL_TRUE;
+static GLfloat viewDist = 40.0;
 
 
 /**
@@ -179,6 +182,9 @@ draw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
+
+    glTranslatef(0.0, 0.0, -viewDist);
+
     glRotatef(view_rotx, 1.0, 0.0, 0.0);
     glRotatef(view_roty, 0.0, 1.0, 0.0);
     glRotatef(view_rotz, 0.0, 0.0, 1.0);
@@ -240,6 +246,15 @@ idle(void)
   glutPostRedisplay();
 }
 
+static void
+update_idle_func(void)
+{
+  if (Visible && Animate)
+    glutIdleFunc(idle);
+  else
+    glutIdleFunc(NULL);
+}
+
 /* change view angle, exit upon ESC */
 /* ARGSUSED1 */
 static void
@@ -252,6 +267,16 @@ key(unsigned char k, int x, int y)
   case 'Z':
     view_rotz -= 5.0;
     break;
+  case 'd':
+     viewDist += 1.0;
+     break;
+  case 'D':
+     viewDist -= 1.0;
+     break;
+  case 'a':
+     Animate = !Animate;
+     update_idle_func();
+     break;
   case 27:  /* Escape */
     cleanup();
     exit(0);
@@ -295,10 +320,8 @@ reshape(int width, int height)
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+  glFrustum(-1.0, 1.0, -h, h, 5.0, 200.0);
   glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glTranslatef(0.0, 0.0, -40.0);
 }
 
 static void
@@ -351,13 +374,12 @@ init(int argc, char *argv[])
   }
 }
 
+
 static void 
 visible(int vis)
 {
-  if (vis == GLUT_VISIBLE)
-    glutIdleFunc(idle);
-  else
-    glutIdleFunc(NULL);
+   Visible = vis;
+   update_idle_func();
 }
 
 int main(int argc, char *argv[])
@@ -375,6 +397,7 @@ int main(int argc, char *argv[])
   glutKeyboardFunc(key);
   glutSpecialFunc(special);
   glutVisibilityFunc(visible);
+  update_idle_func();
 
   glutMainLoop();
   return 0;             /* ANSI C requires main to return int. */

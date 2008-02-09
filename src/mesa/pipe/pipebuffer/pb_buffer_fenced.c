@@ -34,12 +34,10 @@
  */
 
 
-#include <assert.h>
-#include <stdlib.h>
-
 #include "linked_list.h"
 
 #include "p_compiler.h"
+#include "p_debug.h"
 #include "p_winsys.h"
 #include "p_thread.h"
 #include "p_util.h"
@@ -145,7 +143,7 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
       /* Do the delayed destroy:
        */
       pb_reference(&fenced_buf->buffer, NULL);
-      free(fenced_buf);
+      FREE(fenced_buf);
    }
 }
 
@@ -162,7 +160,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
    }
    else {
       pb_reference(&fenced_buf->buffer, NULL);
-      free(fenced_buf);
+      FREE(fenced_buf);
    }
    
    if ((fenced_list->numDelayed % fenced_list->checkDelayed) == 0)

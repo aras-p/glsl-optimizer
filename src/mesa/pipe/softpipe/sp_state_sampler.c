@@ -40,9 +40,7 @@ void *
 softpipe_create_sampler_state(struct pipe_context *pipe,
                               const struct pipe_sampler_state *sampler)
 {
-   struct pipe_sampler_state *state = MALLOC( sizeof(struct pipe_sampler_state) );
-   memcpy(state, sampler, sizeof(struct pipe_sampler_state));
-   return state;
+   return mem_dup(sampler, sizeof(*sampler));
 }
 
 void
@@ -50,6 +48,8 @@ softpipe_bind_sampler_state(struct pipe_context *pipe,
                             unsigned unit, void *sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   draw_flush(softpipe->draw);
 
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->sampler[unit] = (struct pipe_sampler_state *)sampler;

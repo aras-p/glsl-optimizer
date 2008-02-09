@@ -30,21 +30,17 @@
  */
 
 #include "pipe/p_util.h"
+#include "pipe/draw/draw_context.h"
 #include "cell_context.h"
 #include "cell_state.h"
-#if 0
 #include "cell_texture.h"
-#include "cell_tile_cache.h"
-#endif
 
 
 void *
 cell_create_sampler_state(struct pipe_context *pipe,
                           const struct pipe_sampler_state *sampler)
 {
-   struct pipe_sampler_state *state = MALLOC( sizeof(struct pipe_sampler_state) );
-   memcpy(state, sampler, sizeof(struct pipe_sampler_state));
-   return state;
+   return mem_dup(sampler, sizeof(*sampler));
 }
 
 void
@@ -52,6 +48,8 @@ cell_bind_sampler_state(struct pipe_context *pipe,
                             unsigned unit, void *sampler)
 {
    struct cell_context *cell = cell_context(pipe);
+
+   draw_flush(cell->draw);
 
    assert(unit < PIPE_MAX_SAMPLERS);
    cell->sampler[unit] = (struct pipe_sampler_state *)sampler;
@@ -76,7 +74,11 @@ cell_set_sampler_texture(struct pipe_context *pipe,
 {
    struct cell_context *cell = cell_context(pipe);
 
+   draw_flush(cell->draw);
+
    cell->texture[sampler] = texture;
+
+   cell_update_texture_mapping(cell);
 
    cell->dirty |= CELL_NEW_TEXTURE;
 }

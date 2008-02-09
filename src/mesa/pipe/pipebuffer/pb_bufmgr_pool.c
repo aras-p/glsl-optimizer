@@ -35,12 +35,10 @@
  */
 
 
-#include <assert.h>
-#include <stdlib.h>
-
 #include "linked_list.h"
 
 #include "p_compiler.h"
+#include "p_debug.h"
 #include "p_thread.h"
 #include "p_defines.h"
 #include "p_util.h"
@@ -172,13 +170,13 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
    struct list_head *item;
 
    assert(size == pool->bufSize);
-   assert(desc->alignment % pool->bufAlign == 0);
+   assert(pool->bufAlign % desc->alignment == 0);
    
    _glthread_LOCK_MUTEX(pool->mutex);
 
    if (pool->numFree == 0) {
       _glthread_UNLOCK_MUTEX(pool->mutex);
-      fprintf(stderr, "warning: out of fixed size buffer objects\n");
+      debug_printf("warning: out of fixed size buffer objects\n");
       return NULL;
    }
 
@@ -186,7 +184,7 @@ pool_bufmgr_create_buffer(struct pb_manager *mgr,
 
    if (item == &pool->free) {
       _glthread_UNLOCK_MUTEX(pool->mutex);
-      fprintf(stderr, "error: fixed size buffer pool corruption\n");
+      debug_printf("error: fixed size buffer pool corruption\n");
       return NULL;
    }
 
@@ -258,7 +256,7 @@ pool_bufmgr_create(struct pb_manager *provider,
    if(!pool->map)
       goto failure;
 
-   pool->bufs = (struct pool_buffer *) MALLOC(numBufs * sizeof(*pool->bufs));
+   pool->bufs = (struct pool_buffer *)CALLOC(numBufs, sizeof(*pool->bufs));
    if (!pool->bufs)
       goto failure;
 

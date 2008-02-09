@@ -51,15 +51,20 @@
 
 /** for sanity checking */
 #define ASSERT_ALIGN16(ptr) \
-   assert((((unsigned long) (ptr)) & 0xf) == 0);
+  ASSERT((((unsigned long) (ptr)) & 0xf) == 0);
 
 
 /** round up value to next multiple of 4 */
 #define ROUNDUP4(k)  (((k) + 0x3) & ~0x3)
 
+/** round up value to next multiple of 8 */
+#define ROUNDUP8(k)  (((k) + 0x7) & ~0x7)
+
 /** round up value to next multiple of 16 */
 #define ROUNDUP16(k)  (((k) + 0xf) & ~0xf)
 
+
+#define CELL_MAX_SPUS 6
 
 #define TILE_SIZE 32
 
@@ -68,21 +73,27 @@
  * The low byte of a mailbox word contains the command opcode.
  * Remaining higher bytes are command specific.
  */
-#define CELL_CMD_OPCODE_MASK 0xf
+#define CELL_CMD_OPCODE_MASK 0xff
 
 #define CELL_CMD_EXIT                 1
 #define CELL_CMD_CLEAR_SURFACE        2
 #define CELL_CMD_FINISH               3
 #define CELL_CMD_RENDER               4
 #define CELL_CMD_BATCH                5
+#define CELL_CMD_RELEASE_VERTS        6
 #define CELL_CMD_STATE_FRAMEBUFFER   10
 #define CELL_CMD_STATE_DEPTH_STENCIL 11
 #define CELL_CMD_STATE_SAMPLER       12
-#define CELL_CMD_STATE_VERTEX_INFO   13
+#define CELL_CMD_STATE_TEXTURE       13
+#define CELL_CMD_STATE_VERTEX_INFO   14
+#define CELL_CMD_STATE_VIEWPORT      15
+#define CELL_CMD_STATE_VS_ARRAY_INFO 16
+#define CELL_CMD_STATE_BLEND         17
+#define CELL_CMD_VS_EXECUTE          18
 
 
-#define CELL_NUM_BATCH_BUFFERS 3
-#define CELL_BATCH_BUFFER_SIZE 1024  /**< 16KB would be the max */
+#define CELL_NUM_BUFFERS 4
+#define CELL_BUFFER_SIZE (4*1024)  /**< 16KB would be the max */
 
 #define CELL_BUFFER_STATUS_FREE 10
 #define CELL_BUFFER_STATUS_USED 20
@@ -94,11 +105,11 @@
  */
 struct cell_command_framebuffer
 {
-   uint opcode;
+   uint64_t opcode;     /**< CELL_CMD_FRAMEBUFFER */
    int width, height;
    void *color_start, *depth_start;
    enum pipe_format color_format, depth_format;
-} ALIGN16_ATTRIB;
+};
 
 
 /**
@@ -106,38 +117,90 @@ struct cell_command_framebuffer
  */
 struct cell_command_clear_surface
 {
-   uint opcode;
+   uint64_t opcode;     /**< CELL_CMD_CLEAR_SURFACE */
    uint surface; /**< Temporary: 0=color, 1=Z */
    uint value;
+};
+
+
+/**
+ * Array info used by the vertex shader's vertex puller.
+ */
+struct cell_array_info
+{
+    uint64_t base;      /**< Base address of the 0th element. */
+    uint attr;          /**< Attribute that this state is for. */
+    uint pitch;         /**< Byte pitch from one entry to the next. */
+    uint format;        /**< Pipe format of each entry. */
 } ALIGN16_ATTRIB;
 
 
-#define CELL_MAX_VBUF_SIZE    (16 * 1024)
-#define CELL_MAX_VBUF_INDEXES 1024
+struct cell_shader_info
+{
+   unsigned num_outputs;
+
+   uint64_t declarations;
+   unsigned num_declarations;
+   uint64_t instructions;
+   unsigned num_instructions;
+   uint64_t uniforms;
+   uint64_t  immediates;
+   unsigned num_immediates;
+} ALIGN16_ATTRIB;
+
+
+#define SPU_VERTS_PER_BATCH 64
+struct cell_command_vs
+{
+   uint64_t opcode;       /**< CELL_CMD_VS_EXECUTE */
+   struct cell_shader_info   shader;
+   unsigned num_elts;
+   unsigned elts[SPU_VERTS_PER_BATCH];
+   uint64_t vOut[SPU_VERTS_PER_BATCH];
+   float plane[12][4];
+   unsigned nr_planes;
+   unsigned nr_attrs;
+} ALIGN16_ATTRIB;
 
 
 struct cell_command_render
 {
-   uint opcode;       /**< CELL_CMD_RENDER */
+   uint64_t opcode;   /**< CELL_CMD_RENDER */
    uint prim_type;    /**< PIPE_PRIM_x */
    uint num_verts;
    uint vertex_size;  /**< bytes per vertex */
-   uint dummy;        /* XXX this dummy field works around a compiler bug */
    uint num_indexes;
-   const void *vertex_data;
-   const ushort *index_data;
-   float xmin, ymin, xmax, ymax;
-   boolean inline_indexes;
+   uint vertex_buf;  /**< which cell->buffer[] contains the vertex data */
+   float xmin, ymin, xmax, ymax;  /* XXX another dummy field */
+   uint min_index;
    boolean inline_verts;
-} ALIGN16_ATTRIB;
+};
+
+
+struct cell_command_release_verts
+{
+   uint64_t opcode;         /**< CELL_CMD_RELEASE_VERTS */
+   uint vertex_buf;    /**< in [0, CELL_NUM_BUFFERS-1] */
+};
+
+
+struct cell_command_texture
+{
+   void *start;         /**< Address in main memory */
+   uint width, height;
+};
 
 
 /** XXX unions don't seem to work */
+/* XXX this should go away; all commands should be placed in batch buffers */
 struct cell_command
 {
+#if 0
    struct cell_command_framebuffer fb;
    struct cell_command_clear_surface clear;
    struct cell_command_render render;
+#endif
+   struct cell_command_vs vs;
 } ALIGN16_ATTRIB;
 
 
@@ -147,7 +210,9 @@ struct cell_init_info
    unsigned id;
    unsigned num_spus;
    struct cell_command *cmd;
-   ubyte *batch_buffers[CELL_NUM_BATCH_BUFFERS];
+
+   /** Buffers for command batches, vertex/index data */
+   ubyte *buffers[CELL_NUM_BUFFERS];
    uint *buffer_status;  /**< points at cell_context->buffer_status */
 } ALIGN16_ATTRIB;
 

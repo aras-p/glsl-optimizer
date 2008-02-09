@@ -29,9 +29,31 @@
 #define SPU_MAIN_H
 
 
+#include <spu_mfcio.h>
+
 #include "pipe/cell/common.h"
 #include "pipe/draw/draw_vertex.h"
 #include "pipe/p_state.h"
+
+
+
+#define MAX_WIDTH 1024
+#define MAX_HEIGHT 1024
+
+
+typedef union {
+   ushort us[TILE_SIZE][TILE_SIZE];
+   uint   ui[TILE_SIZE][TILE_SIZE];
+   vector unsigned short us8[TILE_SIZE/2][TILE_SIZE/4];
+   vector unsigned int ui4[TILE_SIZE/2][TILE_SIZE/2];
+} tile_t;
+
+
+#define TILE_STATUS_CLEAR   1
+#define TILE_STATUS_DEFINED 2  /**< defined in FB, but not in local store */
+#define TILE_STATUS_CLEAN   3  /**< in local store, but not changed */
+#define TILE_STATUS_DIRTY   4  /**< modified locally, but not put back yet */
+#define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
 
 
 struct spu_framebuffer {
@@ -57,18 +79,42 @@ struct spu_global
    struct cell_init_info init;
 
    struct spu_framebuffer fb;
+   struct pipe_blend_state blend_stencil;
    struct pipe_depth_stencil_alpha_state depth_stencil;
    struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+   struct cell_command_texture texture;
 
    struct vertex_info vertex_info;
 
    /* XXX more state to come */
 
+
+   /** current color and Z tiles */
+   tile_t ctile ALIGN16_ATTRIB;
+   tile_t ztile ALIGN16_ATTRIB;
+
+   /** Current tiles' status */
+   ubyte cur_ctile_status, cur_ztile_status;
+
+   /** Status of all tiles in framebuffer */
+   ubyte ctile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+   ubyte ztile_status[MAX_HEIGHT/TILE_SIZE][MAX_WIDTH/TILE_SIZE] ALIGN16_ATTRIB;
+
+
+   /** for converting RGBA to PIPE_FORMAT_x colors */
+   vector unsigned char color_shuffle;
+
+   vector float tex_size;
+   vector unsigned int tex_size_mask; /**< == int(size - 1) */
+
+   vector float (*sample_texture)(vector float texcoord);
+
 } ALIGN16_ATTRIB;
 
 
 extern struct spu_global spu;
+extern boolean Debug;
 
 
 
@@ -84,10 +130,30 @@ extern struct spu_global spu;
 #define TAG_INDEX_BUFFER      16
 #define TAG_BATCH_BUFFER      17
 #define TAG_MISC              18
+#define TAG_TEXTURE_TILE      19
+#define TAG_INSTRUCTION_FETCH 20
 
 
-extern void
-wait_on_mask(unsigned tag);
+
+static INLINE void
+wait_on_mask(unsigned tagMask)
+{
+   mfc_write_tag_mask( tagMask );
+   /* wait for completion of _any_ DMAs specified by tagMask */
+   mfc_read_tag_status_any();
+}
+
+
+static INLINE void
+wait_on_mask_all(unsigned tagMask)
+{
+   mfc_write_tag_mask( tagMask );
+   /* wait for completion of _any_ DMAs specified by tagMask */
+   mfc_read_tag_status_all();
+}
+
+
+
 
 
 static INLINE void

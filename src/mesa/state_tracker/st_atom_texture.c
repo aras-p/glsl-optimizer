@@ -36,7 +36,6 @@
 #include "st_atom.h"
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
-#include "pipe/p_defines.h"
 
 
 /**
@@ -46,24 +45,21 @@
 static void 
 update_textures(struct st_context *st)
 {
-   GLuint s;
-
    /* ST_NEW_FRAGMENT_PROGRAM
     */
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   GLuint unit;
 
-   for (s = 0; s < st->ctx->Const.MaxTextureCoordUnits; s++) {
-      GLuint su = fprog->Base.SamplerUnits[s];
-      
-      struct gl_texture_object *texObj
-         = st->ctx->Texture.Unit[su]._Current;
-
+   for (unit = 0; unit < st->ctx->Const.MaxTextureCoordUnits; unit++) {
+      const GLuint su = fprog->Base.SamplerUnits[unit];
+      struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
       struct pipe_texture *pt;
 
       if (texObj) {
          GLboolean flush, retval;
 
          retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+         /* XXX retval indicates whether there's a texture border */
 
          pt = st_get_texobj_texture(texObj);
       }
@@ -75,9 +71,9 @@ update_textures(struct st_context *st)
        * this table before being deleted, otherwise the pointer
        * comparison below could fail.
        */
-      if (st->state.sampler_texture[s] != pt) {
-	 st->state.sampler_texture[s] = pt;
-	 st->pipe->set_sampler_texture(st->pipe, s, pt);
+      if (st->state.sampler_texture[unit] != pt) {
+	 st->state.sampler_texture[unit] = pt;
+	 st->pipe->set_sampler_texture(st->pipe, unit, pt);
       }
    }
 }

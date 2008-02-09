@@ -355,8 +355,8 @@ make_fragment_shader_z(struct st_context *st)
  * Create a simple vertex shader that just passes through the
  * vertex position and texcoord (and optionally, color).
  */
-static struct st_vertex_program *
-make_vertex_shader(struct st_context *st, GLboolean passColor)
+struct st_vertex_program *
+st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
 {
    /* only make programs once and re-use */
    static struct st_vertex_program *progs[2] = { NULL, NULL };
@@ -572,7 +572,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][1][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, GL_FALSE);
 }
 
 
@@ -581,10 +581,13 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
                   GLfloat x1, GLfloat y1, const GLfloat *color,
                   GLboolean invertTex)
 {
+   GLfloat bias = ctx->st->bitmap_texcoord_bias;
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
    GLuint i;
-   GLfloat sLeft = 0.0, sRight = 1.0;
-   GLfloat tTop = invertTex, tBot = 1.0 - tTop;
+   GLfloat xBias = bias / (x1-x0);
+   GLfloat yBias = bias / (y1-y0);
+   GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
+   GLfloat tTop = invertTex - yBias, tBot = 1.0 - tTop - yBias;
 
    /* upper-left */
    verts[0][0][0] = x0;    /* attr[0].x */
@@ -622,7 +625,7 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][2][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3, GL_FALSE);
 }
 
 
@@ -942,7 +945,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (format == GL_DEPTH_COMPONENT) {
       ps = st->state.framebuffer.zsbuf;
       stfp = make_fragment_shader_z(ctx->st);
-      stvp = make_vertex_shader(ctx->st, GL_TRUE);
+      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else if (format == GL_STENCIL_INDEX) {
@@ -953,7 +956,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    else {
       ps = st->state.framebuffer.cbufs[0];
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = make_vertex_shader(ctx->st, GL_FALSE);
+      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
       color = NULL;
    }
 
@@ -1108,7 +1111,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct st_context *st = ctx->st;
    struct pipe_texture *pt;
 
-   stvp = make_vertex_shader(ctx->st, GL_TRUE);
+   stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
    stfp = combined_bitmap_fragment_program(ctx);
 
    st_validate_state(st);
@@ -1226,13 +1229,13 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       rbRead = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
       color = NULL;
       stfp = combined_drawpix_fragment_program(ctx);
-      stvp = make_vertex_shader(ctx->st, GL_FALSE);
+      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
    }
    else {
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
       stfp = make_fragment_shader_z(ctx->st);
-      stvp = make_vertex_shader(ctx->st, GL_TRUE);
+      stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
    }
 
    psRead = rbRead->surface;

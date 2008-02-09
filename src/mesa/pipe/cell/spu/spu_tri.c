@@ -32,22 +32,33 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
+#include "spu_blend.h"
+#include "spu_colorpack.h"
 #include "spu_main.h"
+#include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_tri.h"
 
+#include "spu_ztest.h"
+
+
+/** Masks are uint[4] vectors with each element being 0 or 0xffffffff */
+typedef vector unsigned int mask_t;
+
+typedef union
+{
+   vector float v;
+   float f[4];
+} float4;
 
 
 /**
  * Simplified types taken from other parts of Gallium
  */
 struct vertex_header {
-   float data[0][4];
+   vector float data[1];
 };
 
-struct prim_header {
-   struct vertex_header *v[3];
-};
 
 
 /* XXX fix this */
@@ -82,9 +93,9 @@ struct edge {
 
 struct interp_coef
 {
-   float a0[4];
-   float dadx[4];
-   float dady[4];
+   float4 a0;
+   float4 dadx;
+   float4 dady;
 };
 
 
@@ -133,6 +144,12 @@ struct setup_stage {
 };
 
 
+
+static struct setup_stage setup;
+
+
+
+
 #if 0
 /**
  * Basically a cast wrapper.
@@ -145,33 +162,33 @@ static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
 
 #if 0
 /**
- * Clip setup->quad against the scissor/surface bounds.
+ * Clip setup.quad against the scissor/surface bounds.
  */
 static INLINE void
 quad_clip(struct setup_stage *setup)
 {
-   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
+   const struct pipe_scissor_state *cliprect = &setup.softpipe->cliprect;
    const int minx = (int) cliprect->minx;
    const int maxx = (int) cliprect->maxx;
    const int miny = (int) cliprect->miny;
    const int maxy = (int) cliprect->maxy;
 
-   if (setup->quad.x0 >= maxx ||
-       setup->quad.y0 >= maxy ||
-       setup->quad.x0 + 1 < minx ||
-       setup->quad.y0 + 1 < miny) {
+   if (setup.quad.x0 >= maxx ||
+       setup.quad.y0 >= maxy ||
+       setup.quad.x0 + 1 < minx ||
+       setup.quad.y0 + 1 < miny) {
       /* totally clipped */
-      setup->quad.mask = 0x0;
+      setup.quad.mask = 0x0;
       return;
    }
-   if (setup->quad.x0 < minx)
-      setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup->quad.y0 < miny)
-      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-   if (setup->quad.x0 == maxx - 1)
-      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup->quad.y0 == maxy - 1)
-      setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+   if (setup.quad.x0 < minx)
+      setup.quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+   if (setup.quad.y0 < miny)
+      setup.quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+   if (setup.quad.x0 == maxx - 1)
+      setup.quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+   if (setup.quad.y0 == maxy - 1)
+      setup.quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
 }
 #endif
 
@@ -183,9 +200,9 @@ static INLINE void
 clip_emit_quad(struct setup_stage *setup)
 {
    quad_clip(setup);
-   if (setup->quad.mask) {
-      struct softpipe_context *sp = setup->softpipe;
-      sp->quad.first->run(sp->quad.first, &setup->quad);
+   if (setup.quad.mask) {
+      struct softpipe_context *sp = setup.softpipe;
+      sp->quad.first->run(sp->quad.first, &setup.quad);
    }
 }
 #endif
@@ -196,151 +213,70 @@ clip_emit_quad(struct setup_stage *setup)
  * Eg: four colors will be compute.
  */
 static INLINE void
-eval_coeff( struct setup_stage *setup, uint slot,
-            float x, float y, float result[4][4])
+eval_coeff(uint slot, float x, float y, vector float result[4])
 {
-   uint i;
-   const float *dadx = setup->coef[slot].dadx;
-   const float *dady = setup->coef[slot].dady;
+   switch (spu.vertex_info.interp_mode[slot]) {
+   case INTERP_CONSTANT:
+      result[QUAD_TOP_LEFT] =
+      result[QUAD_TOP_RIGHT] =
+      result[QUAD_BOTTOM_LEFT] =
+      result[QUAD_BOTTOM_RIGHT] = setup.coef[slot].a0.v;
+      break;
 
-   /* loop over XYZW comps */
-   for (i = 0; i < 4; i++) {
-      result[QUAD_TOP_LEFT][i] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
-      result[QUAD_TOP_RIGHT][i] = result[0][i] + dadx[i];
-      result[QUAD_BOTTOM_LEFT][i] = result[0][i] + dady[i];
-      result[QUAD_BOTTOM_RIGHT][i] = result[0][i] + dadx[i] + dady[i];
+   case INTERP_LINEAR:
+      /* fall-through, for now */
+   default:
+      {
+         register vector float dadx = setup.coef[slot].dadx.v;
+         register vector float dady = setup.coef[slot].dady.v;
+         register vector float topLeft
+            = spu_add(setup.coef[slot].a0.v,
+                      spu_add(spu_mul(spu_splats(x), dadx),
+                              spu_mul(spu_splats(y), dady)));
+
+         result[QUAD_TOP_LEFT] = topLeft;
+         result[QUAD_TOP_RIGHT] = spu_add(topLeft, dadx);
+         result[QUAD_BOTTOM_LEFT] = spu_add(topLeft, dady);
+         result[QUAD_BOTTOM_RIGHT] = spu_add(spu_add(topLeft, dadx), dady);
+      }
    }
 }
 
 
-static INLINE void
-eval_z( struct setup_stage *setup,
-        float x, float y, float result[4])
+static INLINE vector float
+eval_z(float x, float y)
 {
    const uint slot = 0;
-   const uint i = 2;
-   const float *dadx = setup->coef[slot].dadx;
-   const float *dady = setup->coef[slot].dady;
-
-   result[QUAD_TOP_LEFT] = setup->coef[slot].a0[i] + x * dadx[i] + y * dady[i];
-   result[QUAD_TOP_RIGHT] = result[0] + dadx[i];
-   result[QUAD_BOTTOM_LEFT] = result[0] + dady[i];
-   result[QUAD_BOTTOM_RIGHT] = result[0] + dadx[i] + dady[i];
+   const float dzdx = setup.coef[slot].dadx.f[2];
+   const float dzdy = setup.coef[slot].dady.f[2];
+   const float topLeft = setup.coef[slot].a0.f[2] + x * dzdx + y * dzdy;
+   const vector float topLeftv = spu_splats(topLeft);
+   const vector float derivs = (vector float) { 0.0, dzdx, dzdy, dzdx + dzdy };
+   return spu_add(topLeftv, derivs);
 }
 
 
-static INLINE uint
-pack_color(const float color[4])
+static INLINE mask_t
+do_depth_test(int x, int y, mask_t quadmask)
 {
-   uint r = (uint) (color[0] * 255.0);
-   uint g = (uint) (color[1] * 255.0);
-   uint b = (uint) (color[2] * 255.0);
-   uint a = (uint) (color[3] * 255.0);
-   r = MIN2(r, 255);
-   g = MIN2(g, 255);
-   b = MIN2(b, 255);
-   a = MIN2(a, 255);
-   switch (spu.fb.color_format) {
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return (a << 24) | (r << 16) | (g << 8) | b;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return (b << 24) | (g << 16) | (r << 8) | a;
-   default:
-      ASSERT(0);
-      return 0;
-   }
-}
+   float4 zvals;
+   mask_t mask;
 
-
-static uint
-do_depth_test(struct setup_stage *setup, int x, int y, unsigned mask)
-{
-   int ix = x - setup->cliprect_minx;
-   int iy = y - setup->cliprect_miny;
-   float zvals[4];
-
-   eval_z(setup, (float) x, (float) y, zvals);
-
-   if (tile_status_z[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
-      /* now, _really_ clear the tile */
-      clear_z_tile(&ztile);
-   }
-   else {
-      /* make sure we've got the tile from main mem */
-      wait_on_mask(1 << TAG_READ_TILE_Z);
-   }
-   tile_status_z[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
-
+   zvals.v = eval_z((float) x, (float) y);
 
    if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-      const float zscale = 65535.0;
-      if (mask & MASK_TOP_LEFT) {
-         uint z = (uint) (zvals[0] * zscale);
-         if (z < ztile.t16[iy][ix])
-            ztile.t16[iy][ix] = z;
-         else
-            mask &= ~MASK_TOP_LEFT;
-      }
-
-      if (mask & MASK_TOP_RIGHT) {
-         uint z = (uint) (zvals[1] * zscale);
-         if (z < ztile.t16[iy][ix+1])
-            ztile.t16[iy][ix+1] = z;
-         else
-            mask &= ~MASK_TOP_RIGHT;
-      }
-
-      if (mask & MASK_BOTTOM_LEFT) {
-         uint z = (uint) (zvals[2] * zscale);
-         if (z < ztile.t16[iy+1][ix])
-            ztile.t16[iy+1][ix] = z;
-         else
-            mask &= ~MASK_BOTTOM_LEFT;
-      }
-
-      if (mask & MASK_BOTTOM_RIGHT) {
-         uint z = (uint) (zvals[3] * zscale);
-         if (z < ztile.t16[iy+1][ix+1])
-            ztile.t16[iy+1][ix+1] = z;
-         else
-            mask &= ~MASK_BOTTOM_RIGHT;
-      }
+      int ix = (x - setup.cliprect_minx) / 4;
+      int iy = (y - setup.cliprect_miny) / 2;
+      mask = spu_z16_test_less(zvals.v, &spu.ztile.us8[iy][ix], x>>1, quadmask);
    }
    else {
-      const float zscale = (float) 0xffffffff;
-      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
-      if (mask & MASK_TOP_LEFT) {
-         uint z = (uint) (zvals[0] * zscale);
-         if (z < ztile.t32[iy][ix])
-            ztile.t32[iy][ix] = z;
-         else
-            mask &= ~MASK_TOP_LEFT;
-      }
-
-      if (mask & MASK_TOP_RIGHT) {
-         uint z = (uint) (zvals[1] * zscale);
-         if (z < ztile.t32[iy][ix+1])
-            ztile.t32[iy][ix+1] = z;
-         else
-            mask &= ~MASK_TOP_RIGHT;
-      }
-
-      if (mask & MASK_BOTTOM_LEFT) {
-         uint z = (uint) (zvals[2] * zscale);
-         if (z < ztile.t32[iy+1][ix])
-            ztile.t32[iy+1][ix] = z;
-         else
-            mask &= ~MASK_BOTTOM_LEFT;
-      }
-
-      if (mask & MASK_BOTTOM_RIGHT) {
-         uint z = (uint) (zvals[3] * zscale);
-         if (z < ztile.t32[iy+1][ix+1])
-            ztile.t32[iy+1][ix+1] = z;
-         else
-            mask &= ~MASK_BOTTOM_RIGHT;
-      }
+      int ix = (x - setup.cliprect_minx) / 2;
+      int iy = (y - setup.cliprect_miny) / 2;
+      mask = spu_z32_test_less(zvals.v, &spu.ztile.ui4[iy][ix], quadmask);
    }
+
+   if (spu_extract(spu_orx(mask), 0))
+      spu.cur_ztile_status = TILE_STATUS_DIRTY;
 
    return mask;
 }
@@ -348,48 +284,74 @@ do_depth_test(struct setup_stage *setup, int x, int y, unsigned mask)
 
 /**
  * Emit a quad (pass to next stage).  No clipping is done.
+ * Note: about 1/5 to 1/7 of the time, mask is zero and this function
+ * should be skipped.  But adding the test for that slows things down
+ * overall.
  */
 static INLINE void
-emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
+emit_quad( int x, int y, mask_t mask )
 {
 #if 0
-   struct softpipe_context *sp = setup->softpipe;
-   setup->quad.x0 = x;
-   setup->quad.y0 = y;
-   setup->quad.mask = mask;
-   sp->quad.first->run(sp->quad.first, &setup->quad);
+   struct softpipe_context *sp = setup.softpipe;
+   setup.quad.x0 = x;
+   setup.quad.y0 = y;
+   setup.quad.mask = mask;
+   sp->quad.first->run(sp->quad.first, &setup.quad);
 #else
-   /* Cell: "write" quad fragments to the tile by setting prim color */
-   const int ix = x - setup->cliprect_minx;
-   const int iy = y - setup->cliprect_miny;
-   float colors[4][4];
-
-   eval_coeff(setup, 1, (float) x, (float) y, colors);
 
    if (spu.depth_stencil.depth.enabled) {
-      mask &= do_depth_test(setup, x, y, mask);
+      mask = do_depth_test(x, y, mask);
    }
 
-   if (mask) {
-      if (tile_status[setup->ty][setup->tx] == TILE_STATUS_CLEAR) {
-         /* now, _really_ clear the tile */
-         clear_c_tile(&ctile);
+   /* If any bits in mask are set... */
+   if (spu_extract(spu_orx(mask), 0)) {
+      const int ix = x - setup.cliprect_minx;
+      const int iy = y - setup.cliprect_miny;
+      const vector unsigned char shuffle = spu.color_shuffle;
+      vector float colors[4];
+
+      spu.cur_ctile_status = TILE_STATUS_DIRTY;
+
+      if (spu.texture.start) {
+         /* texture mapping */
+         vector float texcoords[4];
+         eval_coeff(2, (float) x, (float) y, texcoords);
+
+         if (spu_extract(mask, 0))
+            colors[0] = spu.sample_texture(texcoords[0]);
+         if (spu_extract(mask, 1))
+            colors[1] = spu.sample_texture(texcoords[1]);
+         if (spu_extract(mask, 2))
+            colors[2] = spu.sample_texture(texcoords[2]);
+         if (spu_extract(mask, 3))
+            colors[3] = spu.sample_texture(texcoords[3]);
       }
       else {
-         /* make sure we've got the tile from main mem */
-         wait_on_mask(1 << TAG_READ_TILE_COLOR);
+         /* simple shading */
+         eval_coeff(1, (float) x, (float) y, colors);
       }
-      tile_status[setup->ty][setup->tx] = TILE_STATUS_DIRTY;
 
-      if (mask & MASK_TOP_LEFT)
-         ctile.t32[iy][ix] = pack_color(colors[QUAD_TOP_LEFT]);
-      if (mask & MASK_TOP_RIGHT)
-         ctile.t32[iy][ix+1] = pack_color(colors[QUAD_TOP_RIGHT]);
-      if (mask & MASK_BOTTOM_LEFT)
-         ctile.t32[iy+1][ix] = pack_color(colors[QUAD_BOTTOM_LEFT]);
-      if (mask & MASK_BOTTOM_RIGHT)
-         ctile.t32[iy+1][ix+1] = pack_color(colors[QUAD_BOTTOM_RIGHT]);
+#if 1
+      if (spu.blend.blend_enable)
+         blend_quad(ix % TILE_SIZE, iy % TILE_SIZE, colors);
+#endif
+
+      if (spu_extract(mask, 0))
+         spu.ctile.ui[iy][ix] = spu_pack_color_shuffle(colors[0], shuffle);
+      if (spu_extract(mask, 1))
+         spu.ctile.ui[iy][ix+1] = spu_pack_color_shuffle(colors[1], shuffle);
+      if (spu_extract(mask, 2))
+         spu.ctile.ui[iy+1][ix] = spu_pack_color_shuffle(colors[2], shuffle);
+      if (spu_extract(mask, 3))
+         spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(colors[3], shuffle);
+
+#if 0
+      /* SIMD_Z with swizzled color buffer (someday) */
+      vector unsigned int uicolors = *((vector unsigned int *) &colors);
+      spu.ctile.ui4[iy/2][ix/2] = spu_sel(spu.ctile.ui4[iy/2][ix/2], uicolors, mask);
+#endif
    }
+
 #endif
 }
 
@@ -407,26 +369,19 @@ static INLINE int block( int x )
 /**
  * Compute mask which indicates which pixels in the 2x2 quad are actually inside
  * the triangle's bounds.
- *
- * this is pretty nasty...  may need to rework flush_spans again to
- * fix it, if possible.
+ * The mask is a uint4 vector and each element will be 0 or 0xffffffff.
  */
-static unsigned calculate_mask( struct setup_stage *setup, int x )
+static INLINE mask_t calculate_mask( int x )
 {
-   unsigned mask = 0x0;
-
-   if (x >= setup->span.left[0] && x < setup->span.right[0]) 
-      mask |= MASK_TOP_LEFT;
-
-   if (x >= setup->span.left[1] && x < setup->span.right[1]) 
-      mask |= MASK_BOTTOM_LEFT;
-      
-   if (x+1 >= setup->span.left[0] && x+1 < setup->span.right[0]) 
-      mask |= MASK_TOP_RIGHT;
-
-   if (x+1 >= setup->span.left[1] && x+1 < setup->span.right[1]) 
-      mask |= MASK_BOTTOM_RIGHT;
-
+   /* This is a little tricky.
+    * Use & instead of && to avoid branches.
+    * Use negation to convert true/false to ~0/0 values.
+    */
+   mask_t mask;
+   mask = spu_insert(-((x   >= setup.span.left[0]) & (x   < setup.span.right[0])), mask, 0);
+   mask = spu_insert(-((x+1 >= setup.span.left[0]) & (x+1 < setup.span.right[0])), mask, 1);
+   mask = spu_insert(-((x   >= setup.span.left[1]) & (x   < setup.span.right[1])), mask, 2);
+   mask = spu_insert(-((x+1 >= setup.span.left[1]) & (x+1 < setup.span.right[1])), mask, 3);
    return mask;
 }
 
@@ -434,144 +389,175 @@ static unsigned calculate_mask( struct setup_stage *setup, int x )
 /**
  * Render a horizontal span of quads
  */
-static void flush_spans( struct setup_stage *setup )
+static void flush_spans( void )
 {
    int minleft, maxright;
    int x;
 
-   switch (setup->span.y_flags) {
+   switch (setup.span.y_flags) {
    case 0x3:
       /* both odd and even lines written (both quad rows) */
-      minleft = MIN2(setup->span.left[0], setup->span.left[1]);
-      maxright = MAX2(setup->span.right[0], setup->span.right[1]);
+      minleft = MIN2(setup.span.left[0], setup.span.left[1]);
+      maxright = MAX2(setup.span.right[0], setup.span.right[1]);
       break;
 
    case 0x1:
       /* only even line written (quad top row) */
-      minleft = setup->span.left[0];
-      maxright = setup->span.right[0];
+      minleft = setup.span.left[0];
+      maxright = setup.span.right[0];
       break;
 
    case 0x2:
       /* only odd line written (quad bottom row) */
-      minleft = setup->span.left[1];
-      maxright = setup->span.right[1];
+      minleft = setup.span.left[1];
+      maxright = setup.span.right[1];
       break;
 
    default:
       return;
    }
 
+
+   /* OK, we're very likely to need the tile data now.
+    * clear or finish waiting if needed.
+    */
+   if (spu.cur_ctile_status == TILE_STATUS_GETTING) {
+      /* wait for mfc_get() to complete */
+      //printf("SPU: %u: waiting for ctile\n", spu.init.id);
+      wait_on_mask(1 << TAG_READ_TILE_COLOR);
+      spu.cur_ctile_status = TILE_STATUS_CLEAN;
+   }
+   else if (spu.cur_ctile_status == TILE_STATUS_CLEAR) {
+      //printf("SPU %u: clearing C tile %u, %u\n", spu.init.id, setup.tx, setup.ty);
+      clear_c_tile(&spu.ctile);
+      spu.cur_ctile_status = TILE_STATUS_DIRTY;
+   }
+   ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
+
+   if (spu.depth_stencil.depth.enabled) {
+      if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
+         /* wait for mfc_get() to complete */
+         //printf("SPU: %u: waiting for ztile\n", spu.init.id);
+         wait_on_mask(1 << TAG_READ_TILE_Z);
+         spu.cur_ztile_status = TILE_STATUS_CLEAN;
+      }
+      else if (spu.cur_ztile_status == TILE_STATUS_CLEAR) {
+         //printf("SPU %u: clearing Z tile %u, %u\n", spu.init.id, setup.tx, setup.ty);
+         clear_z_tile(&spu.ztile);
+         spu.cur_ztile_status = TILE_STATUS_DIRTY;
+      }
+      ASSERT(spu.cur_ztile_status != TILE_STATUS_DEFINED);
+   }
+
    /* XXX this loop could be moved into the above switch cases and
     * calculate_mask() could be simplified a bit...
     */
    for (x = block(minleft); x <= block(maxright); x += 2) {
-      emit_quad( setup, x, setup->span.y, 
-                 calculate_mask( setup, x ) );
+#if 1
+      emit_quad( x, setup.span.y, calculate_mask( x ) );
+#endif
    }
 
-   setup->span.y = 0;
-   setup->span.y_flags = 0;
-   setup->span.right[0] = 0;
-   setup->span.right[1] = 0;
+   setup.span.y = 0;
+   setup.span.y_flags = 0;
+   setup.span.right[0] = 0;
+   setup.span.right[1] = 0;
 }
 
 #if DEBUG_VERTS
-static void print_vertex(const struct setup_stage *setup,
-                         const struct vertex_header *v)
+static void print_vertex(const struct vertex_header *v)
 {
    int i;
    fprintf(stderr, "Vertex: (%p)\n", v);
-   for (i = 0; i < setup->quad.nr_attrs; i++) {
+   for (i = 0; i < setup.quad.nr_attrs; i++) {
       fprintf(stderr, "  %d: %f %f %f %f\n",  i, 
               v->data[i][0], v->data[i][1], v->data[i][2], v->data[i][3]);
    }
 }
 #endif
 
-static boolean setup_sort_vertices( struct setup_stage *setup,
-				      const struct prim_header *prim )
+
+static boolean setup_sort_vertices(const struct vertex_header *v0,
+                                   const struct vertex_header *v1,
+                                   const struct vertex_header *v2)
 {
-   const struct vertex_header *v0 = prim->v[0];
-   const struct vertex_header *v1 = prim->v[1];
-   const struct vertex_header *v2 = prim->v[2];
 
 #if DEBUG_VERTS
    fprintf(stderr, "Triangle:\n");
-   print_vertex(setup, v0);
-   print_vertex(setup, v1);
-   print_vertex(setup, v2);
+   print_vertex(v0);
+   print_vertex(v1);
+   print_vertex(v2);
 #endif
 
-   setup->vprovoke = v2;
+   setup.vprovoke = v2;
 
    /* determine bottom to top order of vertices */
    {
-      float y0 = v0->data[0][1];
-      float y1 = v1->data[0][1];
-      float y2 = v2->data[0][1];
+      float y0 = spu_extract(v0->data[0], 1);
+      float y1 = spu_extract(v1->data[0], 1);
+      float y2 = spu_extract(v2->data[0], 1);
       if (y0 <= y1) {
 	 if (y1 <= y2) {
 	    /* y0<=y1<=y2 */
-	    setup->vmin = v0;   
-	    setup->vmid = v1;   
-	    setup->vmax = v2;
+	    setup.vmin = v0;   
+	    setup.vmid = v1;   
+	    setup.vmax = v2;
 	 }
 	 else if (y2 <= y0) {
 	    /* y2<=y0<=y1 */
-	    setup->vmin = v2;   
-	    setup->vmid = v0;   
-	    setup->vmax = v1;   
+	    setup.vmin = v2;   
+	    setup.vmid = v0;   
+	    setup.vmax = v1;   
 	 }
 	 else {
 	    /* y0<=y2<=y1 */
-	    setup->vmin = v0;   
-	    setup->vmid = v2;   
-	    setup->vmax = v1;  
+	    setup.vmin = v0;   
+	    setup.vmid = v2;   
+	    setup.vmax = v1;  
 	 }
       }
       else {
 	 if (y0 <= y2) {
 	    /* y1<=y0<=y2 */
-	    setup->vmin = v1;   
-	    setup->vmid = v0;   
-	    setup->vmax = v2;  
+	    setup.vmin = v1;   
+	    setup.vmid = v0;   
+	    setup.vmax = v2;  
 	 }
 	 else if (y2 <= y1) {
 	    /* y2<=y1<=y0 */
-	    setup->vmin = v2;   
-	    setup->vmid = v1;   
-	    setup->vmax = v0;  
+	    setup.vmin = v2;   
+	    setup.vmid = v1;   
+	    setup.vmax = v0;  
 	 }
 	 else {
 	    /* y1<=y2<=y0 */
-	    setup->vmin = v1;   
-	    setup->vmid = v2;   
-	    setup->vmax = v0;
+	    setup.vmin = v1;   
+	    setup.vmid = v2;   
+	    setup.vmax = v0;
 	 }
       }
    }
 
    /* Check if triangle is completely outside the tile bounds */
-   if (setup->vmin->data[0][1] > setup->cliprect_maxy)
+   if (spu_extract(setup.vmin->data[0], 1) > setup.cliprect_maxy)
       return FALSE;
-   if (setup->vmax->data[0][1] < setup->cliprect_miny)
+   if (spu_extract(setup.vmax->data[0], 1) < setup.cliprect_miny)
       return FALSE;
-   if (setup->vmin->data[0][0] < setup->cliprect_minx &&
-       setup->vmid->data[0][0] < setup->cliprect_minx &&
-       setup->vmax->data[0][0] < setup->cliprect_minx)
+   if (spu_extract(setup.vmin->data[0], 0) < setup.cliprect_minx &&
+       spu_extract(setup.vmid->data[0], 0) < setup.cliprect_minx &&
+       spu_extract(setup.vmax->data[0], 0) < setup.cliprect_minx)
       return FALSE;
-   if (setup->vmin->data[0][0] > setup->cliprect_maxx &&
-       setup->vmid->data[0][0] > setup->cliprect_maxx &&
-       setup->vmax->data[0][0] > setup->cliprect_maxx)
+   if (spu_extract(setup.vmin->data[0], 0) > setup.cliprect_maxx &&
+       spu_extract(setup.vmid->data[0], 0) > setup.cliprect_maxx &&
+       spu_extract(setup.vmax->data[0], 0) > setup.cliprect_maxx)
       return FALSE;
 
-   setup->ebot.dx = setup->vmid->data[0][0] - setup->vmin->data[0][0];
-   setup->ebot.dy = setup->vmid->data[0][1] - setup->vmin->data[0][1];
-   setup->emaj.dx = setup->vmax->data[0][0] - setup->vmin->data[0][0];
-   setup->emaj.dy = setup->vmax->data[0][1] - setup->vmin->data[0][1];
-   setup->etop.dx = setup->vmax->data[0][0] - setup->vmid->data[0][0];
-   setup->etop.dy = setup->vmax->data[0][1] - setup->vmid->data[0][1];
+   setup.ebot.dx = spu_extract(setup.vmid->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
+   setup.ebot.dy = spu_extract(setup.vmid->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
+   setup.emaj.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmin->data[0], 0);
+   setup.emaj.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmin->data[0], 1);
+   setup.etop.dx = spu_extract(setup.vmax->data[0], 0) - spu_extract(setup.vmid->data[0], 0);
+   setup.etop.dy = spu_extract(setup.vmax->data[0], 1) - spu_extract(setup.vmid->data[0], 1);
 
    /*
     * Compute triangle's area.  Use 1/area to compute partial
@@ -584,13 +570,13 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
     * use the prim->det value because its sign is correct.
     */
    {
-      const float area = (setup->emaj.dx * setup->ebot.dy - 
-			    setup->ebot.dx * setup->emaj.dy);
+      const float area = (setup.emaj.dx * setup.ebot.dy - 
+			    setup.ebot.dx * setup.emaj.dy);
 
-      setup->oneoverarea = 1.0f / area;
+      setup.oneoverarea = 1.0f / area;
       /*
       _mesa_printf("%s one-over-area %f  area %f  det %f\n",
-                   __FUNCTION__, setup->oneoverarea, area, prim->det );
+                   __FUNCTION__, setup.oneoverarea, area, prim->det );
       */
    }
 
@@ -599,56 +585,52 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
     *  - the GLSL gl_FrontFacing fragment attribute (bool)
     *  - two-sided stencil test
     */
-   setup->quad.facing = (prim->det > 0.0) ^ (setup->softpipe->rasterizer->front_winding == PIPE_WINDING_CW);
+   setup.quad.facing = (prim->det > 0.0) ^ (setup.softpipe->rasterizer->front_winding == PIPE_WINDING_CW);
 #endif
 
    return TRUE;
 }
 
 
-#if 0
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
- * The value value comes from vertex->data[slot][i].
- * The result will be put into setup->coef[slot].a0[i].
+ * The value value comes from vertex->data[slot].
+ * The result will be put into setup.coef[slot].a0.
  * \param slot  which attribute slot 
- * \param i  which component of the slot (0..3)
  */
-static void const_coeff( struct setup_stage *setup,
-			 unsigned slot,
-			 unsigned i )
+static INLINE void
+const_coeff(uint slot)
 {
-   assert(slot < PIPE_MAX_SHADER_INPUTS);
-   assert(i <= 3);
-
-   setup->coef[slot].dadx[i] = 0;
-   setup->coef[slot].dady[i] = 0;
-
-   /* need provoking vertex info!
-    */
-   setup->coef[slot].a0[i] = setup->vprovoke->data[slot][i];
+   setup.coef[slot].dadx.v = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].dady.v = (vector float) {0.0, 0.0, 0.0, 0.0};
+   setup.coef[slot].a0.v = setup.vprovoke->data[slot];
 }
-#endif
 
 
 /**
  * Compute a0, dadx and dady for a linearly interpolated coefficient,
  * for a triangle.
  */
-static void tri_linear_coeff( struct setup_stage *setup,
-                              uint slot, uint firstComp, uint lastComp )
+static INLINE void
+tri_linear_coeff(uint slot, uint firstComp, uint lastComp)
 {
    uint i;
+   const float *vmin_d = (float *) &setup.vmin->data[slot];
+   const float *vmid_d = (float *) &setup.vmid->data[slot];
+   const float *vmax_d = (float *) &setup.vmax->data[slot];
+   const float x = spu_extract(setup.vmin->data[0], 0) - 0.5f;
+   const float y = spu_extract(setup.vmin->data[0], 1) - 0.5f;
+
    for (i = firstComp; i < lastComp; i++) {
-      float botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
-      float majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
-      float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-      float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+      float botda = vmid_d[i] - vmin_d[i];
+      float majda = vmax_d[i] - vmin_d[i];
+      float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
+      float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
    
       ASSERT(slot < PIPE_MAX_SHADER_INPUTS);
 
-      setup->coef[slot].dadx[i] = a * setup->oneoverarea;
-      setup->coef[slot].dady[i] = b * setup->oneoverarea;
+      setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
+      setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
 
       /* calculate a0 as the value which would be sampled for the
        * fragment at (0,0), taking into account that we want to sample at
@@ -662,19 +644,50 @@ static void tri_linear_coeff( struct setup_stage *setup,
        * to define a0 as the sample at a pixel center somewhere near vmin
        * instead - i'll switch to this later.
        */
-      setup->coef[slot].a0[i] = (setup->vmin->data[slot][i] - 
-                                 (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5f) + 
-                                  setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5f)));
+      setup.coef[slot].a0.f[i] = (vmin_d[i] - 
+                                 (setup.coef[slot].dadx.f[i] * x + 
+                                  setup.coef[slot].dady.f[i] * y));
    }
 
    /*
    _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
 		slot, "xyzw"[i], 
-		setup->coef[slot].a0[i],
-		setup->coef[slot].dadx[i],
-		setup->coef[slot].dady[i]);
+		setup.coef[slot].a0[i],
+		setup.coef[slot].dadx.f[i],
+		setup.coef[slot].dady.f[i]);
    */
 }
+
+
+/**
+ * As above, but interp setup all four vector components.
+ */
+static INLINE void
+tri_linear_coeff4(uint slot)
+{
+   const vector float vmin_d = setup.vmin->data[slot];
+   const vector float vmid_d = setup.vmid->data[slot];
+   const vector float vmax_d = setup.vmax->data[slot];
+   const vector float xxxx = spu_splats(spu_extract(setup.vmin->data[0], 0) - 0.5f);
+   const vector float yyyy = spu_splats(spu_extract(setup.vmin->data[0], 1) - 0.5f);
+
+   vector float botda = vmid_d - vmin_d;
+   vector float majda = vmax_d - vmin_d;
+
+   vector float a = spu_sub(spu_mul(spu_splats(setup.ebot.dy), majda),
+                            spu_mul(botda, spu_splats(setup.emaj.dy)));
+   vector float b = spu_sub(spu_mul(spu_splats(setup.emaj.dx), botda),
+                            spu_mul(majda, spu_splats(setup.ebot.dx)));
+
+   setup.coef[slot].dadx.v = spu_mul(a, spu_splats(setup.oneoverarea));
+   setup.coef[slot].dady.v = spu_mul(b, spu_splats(setup.oneoverarea));
+
+   vector float tempx = spu_mul(setup.coef[slot].dadx.v, xxxx);
+   vector float tempy = spu_mul(setup.coef[slot].dady.v, yyyy);
+                         
+   setup.coef[slot].a0.v = spu_sub(vmin_d, spu_add(tempx, tempy));
+}
+
 
 
 #if 0
@@ -686,46 +699,45 @@ static void tri_linear_coeff( struct setup_stage *setup,
  * Later, when we compute the value at a particular fragment position we'll
  * divide the interpolated value by the interpolated W at that fragment.
  */
-static void tri_persp_coeff( struct setup_stage *setup,
-                             unsigned slot,
+static void tri_persp_coeff( unsigned slot,
                              unsigned i )
 {
    /* premultiply by 1/w:
     */
-   float mina = setup->vmin->data[slot][i] * setup->vmin->data[0][3];
-   float mida = setup->vmid->data[slot][i] * setup->vmid->data[0][3];
-   float maxa = setup->vmax->data[slot][i] * setup->vmax->data[0][3];
+   float mina = setup.vmin->data[slot][i] * setup.vmin->data[0][3];
+   float mida = setup.vmid->data[slot][i] * setup.vmid->data[0][3];
+   float maxa = setup.vmax->data[slot][i] * setup.vmax->data[0][3];
 
    float botda = mida - mina;
    float majda = maxa - mina;
-   float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-   float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+   float a = setup.ebot.dy * majda - botda * setup.emaj.dy;
+   float b = setup.emaj.dx * botda - majda * setup.ebot.dx;
       
    /*
    printf("tri persp %d,%d: %f %f %f\n", slot, i,
-          setup->vmin->data[slot][i],
-          setup->vmid->data[slot][i],
-          setup->vmax->data[slot][i]
+          setup.vmin->data[slot][i],
+          setup.vmid->data[slot][i],
+          setup.vmax->data[slot][i]
           );
    */
 
    assert(slot < PIPE_MAX_SHADER_INPUTS);
    assert(i <= 3);
 
-   setup->coef[slot].dadx[i] = a * setup->oneoverarea;
-   setup->coef[slot].dady[i] = b * setup->oneoverarea;
-   setup->coef[slot].a0[i] = (mina - 
-			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5f) + 
-			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5f)));
+   setup.coef[slot].dadx.f[i] = a * setup.oneoverarea;
+   setup.coef[slot].dady.f[i] = b * setup.oneoverarea;
+   setup.coef[slot].a0.f[i] = (mina - 
+			    (setup.coef[slot].dadx.f[i] * (setup.vmin->data[0][0] - 0.5f) + 
+			     setup.coef[slot].dady.f[i] * (setup.vmin->data[0][1] - 0.5f)));
 }
 #endif
 
 
 /**
- * Compute the setup->coef[] array dadx, dady, a0 values.
- * Must be called after setup->vmin,vmid,vmax,vprovoke are initialized.
+ * Compute the setup.coef[] array dadx, dady, a0 values.
+ * Must be called after setup.vmin,vmid,vmax,vprovoke are initialized.
  */
-static void setup_tri_coefficients( struct setup_stage *setup )
+static void setup_tri_coefficients(void)
 {
 #if 1
    uint i;
@@ -735,15 +747,18 @@ static void setup_tri_coefficients( struct setup_stage *setup )
       case INTERP_NONE:
          break;
       case INTERP_POS:
-         tri_linear_coeff(setup, i, 2, 3);  /* slot 0, z */
+         /*tri_linear_coeff(i, 2, 3);*/
          /* XXX interp W if PERSPECTIVE... */
+         tri_linear_coeff4(i);
          break;
       case INTERP_CONSTANT:
-         /* fall-through */
+         const_coeff(i);
+         break;
       case INTERP_LINEAR:
-         tri_linear_coeff(setup, i, 0, 4);  /* slot 1, color */
+         tri_linear_coeff4(i);
          break;
       case INTERP_PERSPECTIVE:
+         tri_linear_coeff4(i);  /* temporary */
          break;
       default:
          ASSERT(0);
@@ -753,35 +768,35 @@ static void setup_tri_coefficients( struct setup_stage *setup )
    ASSERT(spu.vertex_info.interp_mode[0] == INTERP_POS);
    ASSERT(spu.vertex_info.interp_mode[1] == INTERP_LINEAR ||
           spu.vertex_info.interp_mode[1] == INTERP_CONSTANT);
-   tri_linear_coeff(setup, 0, 2, 3);  /* slot 0, z */
-   tri_linear_coeff(setup, 1, 0, 4);  /* slot 1, color */
+   tri_linear_coeff(0, 2, 3);  /* slot 0, z */
+   tri_linear_coeff(1, 0, 4);  /* slot 1, color */
 #endif
 }
 
 
-static void setup_tri_edges( struct setup_stage *setup )
+static void setup_tri_edges(void)
 {
-   float vmin_x = setup->vmin->data[0][0] + 0.5f;
-   float vmid_x = setup->vmid->data[0][0] + 0.5f;
+   float vmin_x = spu_extract(setup.vmin->data[0], 0) + 0.5f;
+   float vmid_x = spu_extract(setup.vmid->data[0], 0) + 0.5f;
 
-   float vmin_y = setup->vmin->data[0][1] - 0.5f;
-   float vmid_y = setup->vmid->data[0][1] - 0.5f;
-   float vmax_y = setup->vmax->data[0][1] - 0.5f;
+   float vmin_y = spu_extract(setup.vmin->data[0], 1) - 0.5f;
+   float vmid_y = spu_extract(setup.vmid->data[0], 1) - 0.5f;
+   float vmax_y = spu_extract(setup.vmax->data[0], 1) - 0.5f;
 
-   setup->emaj.sy = CEILF(vmin_y);
-   setup->emaj.lines = (int) CEILF(vmax_y - setup->emaj.sy);
-   setup->emaj.dxdy = setup->emaj.dx / setup->emaj.dy;
-   setup->emaj.sx = vmin_x + (setup->emaj.sy - vmin_y) * setup->emaj.dxdy;
+   setup.emaj.sy = CEILF(vmin_y);
+   setup.emaj.lines = (int) CEILF(vmax_y - setup.emaj.sy);
+   setup.emaj.dxdy = setup.emaj.dx / setup.emaj.dy;
+   setup.emaj.sx = vmin_x + (setup.emaj.sy - vmin_y) * setup.emaj.dxdy;
 
-   setup->etop.sy = CEILF(vmid_y);
-   setup->etop.lines = (int) CEILF(vmax_y - setup->etop.sy);
-   setup->etop.dxdy = setup->etop.dx / setup->etop.dy;
-   setup->etop.sx = vmid_x + (setup->etop.sy - vmid_y) * setup->etop.dxdy;
+   setup.etop.sy = CEILF(vmid_y);
+   setup.etop.lines = (int) CEILF(vmax_y - setup.etop.sy);
+   setup.etop.dxdy = setup.etop.dx / setup.etop.dy;
+   setup.etop.sx = vmid_x + (setup.etop.sy - vmid_y) * setup.etop.dxdy;
 
-   setup->ebot.sy = CEILF(vmin_y);
-   setup->ebot.lines = (int) CEILF(vmid_y - setup->ebot.sy);
-   setup->ebot.dxdy = setup->ebot.dx / setup->ebot.dy;
-   setup->ebot.sx = vmin_x + (setup->ebot.sy - vmin_y) * setup->ebot.dxdy;
+   setup.ebot.sy = CEILF(vmin_y);
+   setup.ebot.lines = (int) CEILF(vmid_y - setup.ebot.sy);
+   setup.ebot.dxdy = setup.ebot.dx / setup.ebot.dy;
+   setup.ebot.sx = vmin_x + (setup.ebot.sy - vmin_y) * setup.ebot.dxdy;
 }
 
 
@@ -789,15 +804,14 @@ static void setup_tri_edges( struct setup_stage *setup )
  * Render the upper or lower half of a triangle.
  * Scissoring/cliprect is applied here too.
  */
-static void subtriangle( struct setup_stage *setup,
-			 struct edge *eleft,
+static void subtriangle( struct edge *eleft,
 			 struct edge *eright,
 			 unsigned lines )
 {
-   const int minx = setup->cliprect_minx;
-   const int maxx = setup->cliprect_maxx;
-   const int miny = setup->cliprect_miny;
-   const int maxy = setup->cliprect_maxy;
+   const int minx = setup.cliprect_minx;
+   const int maxx = setup.cliprect_maxx;
+   const int miny = setup.cliprect_miny;
+   const int maxy = setup.cliprect_maxy;
    int y, start_y, finish_y;
    int sy = (int)eleft->sy;
 
@@ -839,14 +853,14 @@ static void subtriangle( struct setup_stage *setup,
 
       if (left < right) {
          int _y = sy + y;
-         if (block(_y) != setup->span.y) {
-            flush_spans(setup);
-            setup->span.y = block(_y);
+         if (block(_y) != setup.span.y) {
+            flush_spans();
+            setup.span.y = block(_y);
          }
 
-         setup->span.left[_y&1] = left;
-         setup->span.right[_y&1] = right;
-         setup->span.y_flags |= 1<<(_y&1);
+         setup.span.left[_y&1] = left;
+         setup.span.right[_y&1] = right;
+         setup.span.y_flags |= 1<<(_y&1);
       }
    }
 
@@ -861,62 +875,12 @@ static void subtriangle( struct setup_stage *setup,
 
 
 /**
- * Do setup for triangle rasterization, then render the triangle.
- */
-static void
-setup_tri(struct setup_stage *setup, struct prim_header *prim)
-{
-   if (!setup_sort_vertices( setup, prim )) {
-      return; /* totally clipped */
-   }
-
-   setup_tri_coefficients( setup );
-   setup_tri_edges( setup );
-
-#if 0
-   setup->quad.prim = PRIM_TRI;
-#endif
-
-   setup->span.y = 0;
-   setup->span.y_flags = 0;
-   setup->span.right[0] = 0;
-   setup->span.right[1] = 0;
-   /*   setup->span.z_mode = tri_z_mode( setup->ctx ); */
-
-   /*   init_constant_attribs( setup ); */
-      
-   if (setup->oneoverarea < 0.0) {
-      /* emaj on left:
-       */
-      subtriangle( setup, &setup->emaj, &setup->ebot, setup->ebot.lines );
-      subtriangle( setup, &setup->emaj, &setup->etop, setup->etop.lines );
-   }
-   else {
-      /* emaj on right:
-       */
-      subtriangle( setup, &setup->ebot, &setup->emaj, setup->ebot.lines );
-      subtriangle( setup, &setup->etop, &setup->emaj, setup->etop.lines );
-   }
-
-   flush_spans( setup );
-}
-
-
-
-/**
  * Draw triangle into tile at (tx, ty) (tile coords)
  * The tile data should have already been fetched.
  */
-void
+boolean
 tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
 {
-   struct prim_header tri;
-   struct setup_stage setup;
-
-   tri.v[0] = (struct vertex_header *) v0;
-   tri.v[1] = (struct vertex_header *) v1;
-   tri.v[2] = (struct vertex_header *) v2;
-
    setup.tx = tx;
    setup.ty = ty;
 
@@ -926,5 +890,37 @@ tri_draw(const float *v0, const float *v1, const float *v2, uint tx, uint ty)
    setup.cliprect_maxx = (tx + 1) * TILE_SIZE;
    setup.cliprect_maxy = (ty + 1) * TILE_SIZE;
 
-   setup_tri(&setup, &tri);
+   if (!setup_sort_vertices((struct vertex_header *) v0,
+                            (struct vertex_header *) v1,
+                            (struct vertex_header *) v2)) {
+      return FALSE; /* totally clipped */
+   }
+
+   setup_tri_coefficients();
+   setup_tri_edges();
+
+   setup.span.y = 0;
+   setup.span.y_flags = 0;
+   setup.span.right[0] = 0;
+   setup.span.right[1] = 0;
+   /*   setup.span.z_mode = tri_z_mode( setup.ctx ); */
+
+   /*   init_constant_attribs( setup ); */
+      
+   if (setup.oneoverarea < 0.0) {
+      /* emaj on left:
+       */
+      subtriangle( &setup.emaj, &setup.ebot, setup.ebot.lines );
+      subtriangle( &setup.emaj, &setup.etop, setup.etop.lines );
+   }
+   else {
+      /* emaj on right:
+       */
+      subtriangle( &setup.ebot, &setup.emaj, setup.ebot.lines );
+      subtriangle( &setup.etop, &setup.emaj, setup.etop.lines );
+   }
+
+   flush_spans();
+
+   return TRUE;
 }

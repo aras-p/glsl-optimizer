@@ -39,8 +39,7 @@
 #include "pipe/draw/draw_vbuf.h"
 
 
-/** Allow prim indexes, verts to be inlined after RENDER command */
-#define ALLOW_INLINE_INDEXES 1
+/** Allow vertex data to be inlined after RENDER command */
 #define ALLOW_INLINE_VERTS 1
 
 
@@ -52,9 +51,10 @@ struct cell_vbuf_render
 {
    struct vbuf_render base;
    struct cell_context *cell;
-   uint prim;
-   uint vertex_size;
-   void *vertex_buffer;
+   uint prim;            /**< PIPE_PRIM_x */
+   uint vertex_size;     /**< in bytes */
+   void *vertex_buffer;  /**< just for debug, really */
+   uint vertex_buf;      /**< in [0, CELL_NUM_BUFFERS-1] */
 };
 
 
@@ -81,11 +81,43 @@ cell_vbuf_allocate_vertices(struct vbuf_render *vbr,
 {
    struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
    /*printf("Alloc verts %u * %u\n", vertex_size, nr_vertices);*/
-   assert(!cvbr->vertex_buffer);
-   cvbr->vertex_buffer = align_malloc(vertex_size * nr_vertices, 16);
+
+   assert(cvbr->vertex_buf == ~0);
+   cvbr->vertex_buf = cell_get_empty_buffer(cvbr->cell);
+   cvbr->vertex_buffer = cvbr->cell->buffer[cvbr->vertex_buf];
    cvbr->vertex_size = vertex_size;
    return cvbr->vertex_buffer;
 }
+
+
+static void
+cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices, 
+                           unsigned vertex_size, unsigned vertices_used)
+{
+   struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
+   struct cell_context *cell = cvbr->cell;
+
+   /*
+   printf("%s vertex_buf = %u  count = %u\n",
+          __FUNCTION__, cvbr->vertex_buf, vertices_used);
+   */
+
+   /* Tell SPUs they can release the vert buf */
+   if (cvbr->vertex_buf != ~0U) {
+      struct cell_command_release_verts *release
+         = (struct cell_command_release_verts *)
+         cell_batch_alloc(cell, sizeof(struct cell_command_release_verts));
+      release->opcode = CELL_CMD_RELEASE_VERTS;
+      release->vertex_buf = cvbr->vertex_buf;
+   }
+
+   cvbr->vertex_buf = ~0;
+   cell_flush_int(&cell->pipe, 0x0);
+
+   assert(vertices == cvbr->vertex_buffer);
+   cvbr->vertex_buffer = NULL;
+}
+
 
 
 static void
@@ -106,15 +138,22 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    struct cell_context *cell = cvbr->cell;
    float xmin, ymin, xmax, ymax;
    uint i;
-   uint nr_vertices = 0;
+   uint nr_vertices = 0, min_index = ~0;
    const void *vertices = cvbr->vertex_buffer;
    const uint vertex_size = cvbr->vertex_size;
 
    for (i = 0; i < nr_indices; i++) {
       if (indices[i] > nr_vertices)
          nr_vertices = indices[i];
+      if (indices[i] < min_index)
+         min_index = indices[i];
    }
    nr_vertices++;
+
+#if 0
+   /*if (min_index > 0)*/
+      printf("%s min_index = %u\n", __FUNCTION__, min_index);
+#endif
 
 #if 0
    printf("cell_vbuf_draw() nr_indices = %u nr_verts = %u\n",
@@ -137,7 +176,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
    /* compute x/y bounding box */
    xmin = ymin = 1e50;
    xmax = ymax = -1e50;
-   for (i = 0; i < nr_vertices; i++) {
+   for (i = min_index; i < nr_vertices; i++) {
       const float *v = (float *) ((ubyte *) vertices + i * vertex_size);
       if (v[0] < xmin)
          xmin = v[0];
@@ -148,54 +187,53 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       if (v[1] > ymax)
          ymax = v[1];
    }
+#if 0
+   printf("PPU Bounds %g, %g .. %g, %g\n", xmin, ymin, xmax, ymax);
+   fflush(stdout);
+#endif
 
    if (cvbr->prim != PIPE_PRIM_TRIANGLES)
       return; /* only render tris for now */
 
    /* build/insert batch RENDER command */
    {
-      const uint index_bytes = ROUNDUP4(nr_indices * 2);
+      const uint index_bytes = ROUNDUP8(nr_indices * 2);
       const uint vertex_bytes = nr_vertices * 4 * cell->vertex_info.size;
+      const uint batch_size = sizeof(struct cell_command_render) + index_bytes;
 
       struct cell_command_render *render
          = (struct cell_command_render *)
-         cell_batch_alloc(cell, sizeof(*render));
+         cell_batch_alloc(cell, batch_size);
+
       render->opcode = CELL_CMD_RENDER;
       render->prim_type = cvbr->prim;
 
       render->num_indexes = nr_indices;
-      if (ALLOW_INLINE_INDEXES &&
-          index_bytes <= cell_batch_free_space(cell)) {
-         /* indices inlined, right after render cmd */
-         void *dst = cell_batch_alloc(cell, index_bytes);
-         memcpy(dst, indices, nr_indices * 2);
-         render->inline_indexes = TRUE;
-         render->index_data = NULL;
-      }
-      else {
-         /* indices in separate buffer */
-         render->inline_indexes = FALSE;
-         render->index_data = indices;
-         ASSERT_ALIGN16(render->index_data);
-      }
+      render->min_index = min_index;
 
+      /* append indices after render command */
+      memcpy(render + 1, indices, nr_indices * 2);
+
+      /* if there's room, append vertices after the indices, else leave
+       * vertices in the original/separate buffer.
+       */
       render->vertex_size = 4 * cell->vertex_info.size;
       render->num_verts = nr_vertices;
       if (ALLOW_INLINE_VERTS &&
-         render->inline_indexes &&
-          vertex_bytes <= cell_batch_free_space(cell)) {
-         /* vertex data inlined, after indices */
-         void *dst = cell_batch_alloc(cell, vertex_bytes);
+          min_index == 0 &&
+          vertex_bytes + 16 <= cell_batch_free_space(cell)) {
+         /* vertex data inlined, after indices, at 16-byte boundary */
+         void *dst = cell_batch_alloc_aligned(cell, vertex_bytes, 16);
          memcpy(dst, vertices, vertex_bytes);
          render->inline_verts = TRUE;
-         render->vertex_data = NULL;
+         render->vertex_buf = ~0;
       }
       else {
+         /* vertex data in separate buffer */
          render->inline_verts = FALSE;
-         render->vertex_data = vertices;
-         ASSERT_ALIGN16(render->vertex_data);
+         ASSERT(cvbr->vertex_buf >= 0);
+         render->vertex_buf = cvbr->vertex_buf;
       }
-
 
       render->xmin = xmin;
       render->ymin = ymin;
@@ -203,24 +241,10 @@ cell_vbuf_draw(struct vbuf_render *vbr,
       render->ymax = ymax;
    }
 
-#if 01
-   /* XXX this is temporary */
+#if 0
+   /* helpful for debug */
    cell_flush_int(&cell->pipe, PIPE_FLUSH_WAIT);
 #endif
-}
-
-
-static void
-cell_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices, 
-                           unsigned vertex_size, unsigned vertices_used)
-{
-   struct cell_vbuf_render *cvbr = cell_vbuf_render(vbr);
-
-   /*printf("Free verts %u * %u\n", vertex_size, vertices_used);*/
-   align_free(vertices);
-
-   assert(vertices == cvbr->vertex_buffer);
-   cvbr->vertex_buffer = NULL;
 }
 
 
@@ -244,8 +268,15 @@ cell_init_vbuf(struct cell_context *cell)
 
    cell->vbuf_render = CALLOC_STRUCT(cell_vbuf_render);
 
-   cell->vbuf_render->base.max_indices = CELL_MAX_VBUF_INDEXES;
-   cell->vbuf_render->base.max_vertex_buffer_bytes = CELL_MAX_VBUF_SIZE;
+   /* The max number of indexes is what can fix into a batch buffer,
+    * minus the render and release-verts commands.
+    */
+   cell->vbuf_render->base.max_indices
+      = (CELL_BUFFER_SIZE
+         - sizeof(struct cell_command_render)
+         - sizeof(struct cell_command_release_verts))
+      / sizeof(ushort);
+   cell->vbuf_render->base.max_vertex_buffer_bytes = CELL_BUFFER_SIZE;
 
    cell->vbuf_render->base.get_vertex_info = cell_vbuf_get_vertex_info;
    cell->vbuf_render->base.allocate_vertices = cell_vbuf_allocate_vertices;
@@ -255,6 +286,9 @@ cell_init_vbuf(struct cell_context *cell)
    cell->vbuf_render->base.destroy = cell_vbuf_destroy;
 
    cell->vbuf_render->cell = cell;
+#if 1
+   cell->vbuf_render->vertex_buf = ~0;
+#endif
 
    cell->vbuf = draw_vbuf_stage(cell->draw, &cell->vbuf_render->base);
 }

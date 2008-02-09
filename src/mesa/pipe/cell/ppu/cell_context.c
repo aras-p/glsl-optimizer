@@ -39,6 +39,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/cell/common.h"
 #include "pipe/draw/draw_context.h"
+#include "pipe/draw/draw_private.h"
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
@@ -156,6 +157,19 @@ cell_destroy_context( struct pipe_context *pipe )
 }
 
 
+static struct draw_context *
+cell_draw_create(struct cell_context *cell)
+{
+   struct draw_context *draw = draw_create();
+
+   if (getenv("GALLIUM_CELL_VS")) {
+      /* plug in SPU-based vertex transformation code */
+      draw->shader_queue_flush = cell_vertex_shader_queue_flush;
+      draw->driver_private = cell;
+   }
+
+   return draw;
+}
 
 
 struct pipe_context *
@@ -242,7 +256,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell_init_surface_functions(cell);
 
-   cell->draw = draw_create();
+   cell->draw = cell_draw_create(cell);
 
    cell_init_vbuf(cell);
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
@@ -254,8 +268,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
    cell_start_spus(cell);
 
-   for (buf = 0; buf < CELL_NUM_BATCH_BUFFERS; buf++) {
-      cell->batch_buffer_size[buf] = 0;
+   /* init command, vertex/index buffer info */
+   for (buf = 0; buf < CELL_NUM_BUFFERS; buf++) {
+      cell->buffer_size[buf] = 0;
 
       /* init batch buffer status values,
        * mark 0th buffer as used, rest as free.

@@ -341,7 +341,7 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
       }
    }
 #if 0
-   printf("num cleared: %u\n", numCleared);
+   debug_printf("num cleared: %u\n", numCleared);
 #endif
 }
 
@@ -384,7 +384,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
 #endif
 
 #if 0
-   printf("flushed tiles in use: %d\n", inuse);
+   debug_printf("flushed tiles in use: %d\n", inuse);
 #endif
 }
 
@@ -415,8 +415,8 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
          /* put dirty tile back in framebuffer */
          if (tc->depth_stencil) {
             pipe_put_tile_raw(pipe, ps,
-                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                           tile->data.depth32, 0/*STRIDE*/);
+                              tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                              tile->data.depth32, 0/*STRIDE*/);
          }
          else {
             pipe_put_tile_rgba(pipe, ps,
@@ -441,9 +441,9 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
       else {
          /* get new tile data from surface */
          if (tc->depth_stencil) {
-            pipe_put_tile_raw(pipe, ps,
-                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                           tile->data.depth32, 0/*STRIDE*/);
+            pipe_get_tile_raw(pipe, ps,
+                              tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                              tile->data.depth32, 0/*STRIDE*/);
          }
          else {
             pipe_get_tile_rgba(pipe, ps,

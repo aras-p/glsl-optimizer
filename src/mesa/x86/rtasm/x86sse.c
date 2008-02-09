@@ -1137,6 +1137,7 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size )
 void x86_release_func( struct x86_function *p )
 {
    _mesa_exec_free(p->store);
+   p->store = NULL;
 }
 
 

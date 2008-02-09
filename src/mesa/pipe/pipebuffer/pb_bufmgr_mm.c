@@ -34,11 +34,10 @@
  */
 
 
-#include <assert.h>
-
 #include "linked_list.h"
 
 #include "p_defines.h"
+#include "p_debug.h"
 #include "p_thread.h"
 #include "p_util.h"
 #include "pb_buffer.h"
@@ -69,28 +68,28 @@ struct mem_block
 static void
 mmDumpMemInfo(const struct mem_block *heap)
 {
-   fprintf(stderr, "Memory heap %p:\n", (void *)heap);
+   debug_printf("Memory heap %p:\n", (void *)heap);
    if (heap == 0) {
-      fprintf(stderr, "  heap == 0\n");
+      debug_printf("  heap == 0\n");
    } else {
       const struct mem_block *p;
 
       for(p = heap->next; p != heap; p = p->next) {
-	 fprintf(stderr, "  Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
+	 debug_printf("  Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
 		 p->free ? 'F':'.',
 		 p->reserved ? 'R':'.');
       }
 
-      fprintf(stderr, "\nFree list:\n");
+      debug_printf("\nFree list:\n");
 
       for(p = heap->next_free; p != heap; p = p->next_free) {
-	 fprintf(stderr, " FREE Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
+	 debug_printf(" FREE Offset:%08x, Size:%08x, %c%c\n",p->ofs,p->size,
 		 p->free ? 'F':'.',
 		 p->reserved ? 'R':'.');
       }
 
    }
-   fprintf(stderr, "End of memory blocks\n");
+   debug_printf("End of memory blocks\n");
 }
 #endif
 
@@ -308,11 +307,11 @@ mmFreeMem(struct mem_block *b)
       return 0;
 
    if (b->free) {
-      fprintf(stderr, "block already free\n");
+      debug_printf("block already free\n");
       return -1;
    }
    if (b->reserved) {
-      fprintf(stderr, "block is reserved\n");
+      debug_printf("block is reserved\n");
       return -1;
    }
 
@@ -367,7 +366,7 @@ struct mm_pb_manager
 };
 
 
-static inline struct mm_pb_manager *
+static INLINE struct mm_pb_manager *
 mm_pb_manager(struct pb_manager *mgr)
 {
    assert(mgr);
@@ -385,7 +384,7 @@ struct mm_buffer
 };
 
 
-static inline struct mm_buffer *
+static INLINE struct mm_buffer *
 mm_buffer(struct pb_buffer *buf)
 {
    assert(buf);
@@ -398,6 +397,8 @@ mm_buffer_destroy(struct pb_buffer *buf)
 {
    struct mm_buffer *mm_buf = mm_buffer(buf);
    struct mm_pb_manager *mm = mm_buf->mgr;
+   
+   assert(buf->base.refcount == 0);
    
    _glthread_LOCK_MUTEX(mm->mutex);
    mmFreeMem(mm_buf->block);
@@ -477,7 +478,7 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    
    mm_buf->block = mmAllocMem(mm->heap, size, mm->align2, 0);
    if(!mm_buf->block) {
-      fprintf(stderr, "warning: heap full\n");
+      debug_printf("warning: heap full\n");
 #if 0
       mmDumpMemInfo(mm->heap);
 #endif

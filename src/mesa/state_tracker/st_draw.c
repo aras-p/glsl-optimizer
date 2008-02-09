@@ -298,6 +298,7 @@ st_draw_vbo(GLcontext *ctx,
          break;
       default:
          assert(0);
+	 return;
       }
 
       /* get/create the index buffer object */
@@ -353,7 +354,8 @@ st_draw_vbo(GLcontext *ctx,
 void 
 st_draw_vertices(GLcontext *ctx, unsigned prim,
                  unsigned numVertex, float *verts,
-                 unsigned numAttribs)
+                 unsigned numAttribs,
+                 GLboolean inClipCoords)
 {
    const float width = ctx->DrawBuffer->Width;
    const float height = ctx->DrawBuffer->Height;
@@ -366,14 +368,16 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 
    assert(numAttribs > 0);
 
-   /* convert to clip coords */
-   for (i = 0; i < numVertex; i++) {
-      float x = verts[i * numAttribs * 4 + 0];
-      float y = verts[i * numAttribs * 4 + 1];
-      x = x / width * 2.0 - 1.0;
-      y = y / height * 2.0 - 1.0;
-      verts[i * numAttribs * 4 + 0] = x;
-      verts[i * numAttribs * 4 + 1] = y;
+   if (!inClipCoords) {
+      /* convert to clip coords */
+      for (i = 0; i < numVertex; i++) {
+         float x = verts[i * numAttribs * 4 + 0];
+         float y = verts[i * numAttribs * 4 + 1];
+         x = x / width * 2.0 - 1.0;
+         y = y / height * 2.0 - 1.0;
+         verts[i * numAttribs * 4 + 0] = x;
+         verts[i * numAttribs * 4 + 1] = y;
+      }
    }
 
    /* XXX create one-time */
@@ -570,6 +574,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          break;
       default:
          assert(0);
+	 return;
       }
 
       map = pipe->winsys->buffer_map(pipe->winsys,

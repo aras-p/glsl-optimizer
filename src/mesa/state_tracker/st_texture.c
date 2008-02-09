@@ -59,6 +59,10 @@ target_to_target(GLenum target)
 }
 #endif
 
+
+/**
+ * Allocate a new pipe_texture object
+ */
 struct pipe_texture *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
@@ -70,7 +74,7 @@ st_texture_create(struct st_context *st,
 		  GLuint depth0,
 		  GLuint compress_byte)
 {
-   struct pipe_texture *pt = CALLOC_STRUCT(pipe_texture);
+   struct pipe_texture pt;
 
    assert(target <= PIPE_TEXTURE_CUBE);
 
@@ -78,39 +82,33 @@ st_texture_create(struct st_context *st,
        _mesa_lookup_enum_by_nr(target),
        _mesa_lookup_enum_by_nr(format), first_level, last_level);
 
-   if (!pt)
-      return NULL;
-
    assert(format);
 
-   pt->target = target;
-   pt->format = format;
-   pt->first_level = first_level;
-   pt->last_level = last_level;
-   pt->width[0] = width0;
-   pt->height[0] = height0;
-   pt->depth[0] = depth0;
-   pt->compressed = compress_byte ? 1 : 0;
-   pt->cpp = pt->compressed ? compress_byte : st_sizeof_format(format);
-   pt->refcount = 1; 
+   pt.target = target;
+   pt.format = format;
+   pt.first_level = first_level;
+   pt.last_level = last_level;
+   pt.width[0] = width0;
+   pt.height[0] = height0;
+   pt.depth[0] = depth0;
+   pt.compressed = compress_byte ? 1 : 0;
+   pt.cpp = pt.compressed ? compress_byte : st_sizeof_format(format);
+   pt.refcount = 1; 
 
-   st->pipe->texture_create(st->pipe, &pt);
-
-   return pt;
+   return st->pipe->texture_create(st->pipe, &pt);
 }
 
 
-
-
-/* Can the image be pulled into a unified mipmap texture.  This mirrors
- * the completeness test in a lot of ways.
+/**
+ * Check if a texture image be pulled into a unified mipmap texture.
+ * This mirrors the completeness test in a lot of ways.
  *
  * Not sure whether I want to pass gl_texture_image here.
  */
 GLboolean
-st_texture_match_image(struct pipe_texture *pt,
-                          struct gl_texture_image *image,
-                          GLuint face, GLuint level)
+st_texture_match_image(const struct pipe_texture *pt,
+                       const struct gl_texture_image *image,
+                       GLuint face, GLuint level)
 {
    /* Images with borders are never pulled into mipmap textures. 
     */
@@ -189,6 +187,7 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
    return pipe_surface_map(stImage->surface);
 }
 
+
 void
 st_texture_image_unmap(struct st_texture_image *stImage)
 {
@@ -201,7 +200,8 @@ st_texture_image_unmap(struct st_texture_image *stImage)
 
 
 
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
+/**
+ * Upload data to a rectangular sub-region.  Lots of choices how to do this:
  *
  * - memcpy by span to current destination
  * - upload data as new buffer and blit
@@ -261,13 +261,14 @@ st_texture_image_data(struct pipe_context *pipe,
    }
 }
 
+
 /* Copy mipmap image between textures
  */
 void
 st_texture_image_copy(struct pipe_context *pipe,
-                         struct pipe_texture *dst,
-                         GLuint face, GLuint level,
-                         struct pipe_texture *src)
+                      struct pipe_texture *dst,
+                      GLuint face, GLuint level,
+                      struct pipe_texture *src)
 {
    GLuint width = src->width[level];
    GLuint height = src->height[level];
@@ -278,6 +279,7 @@ st_texture_image_copy(struct pipe_context *pipe,
 
    if (dst->compressed)
       height /= 4;
+
    for (i = 0; i < depth; i++) {
       dst_surface = pipe->get_tex_surface(pipe, dst, face, level, i);
       src_surface = pipe->get_tex_surface(pipe, src, face, level, i);
@@ -292,5 +294,4 @@ st_texture_image_copy(struct pipe_context *pipe,
       pipe_surface_reference(&dst_surface, NULL);
       pipe_surface_reference(&src_surface, NULL);
    }
-
 }

@@ -30,6 +30,18 @@
 #include "cell_state.h"
 #include "cell_state_emit.h"
 #include "cell_batch.h"
+#include "cell_texture.h"
+
+
+static void
+emit_state_cmd(struct cell_context *cell, uint cmd,
+               const void *state, uint state_size)
+{
+   uint64_t *dst = (uint64_t *) 
+       cell_batch_alloc(cell, ROUNDUP8(sizeof(uint64_t) + state_size));
+   *dst = cmd;
+   memcpy(dst + 1, state, state_size);
+}
 
 
 
@@ -50,23 +62,42 @@ cell_emit_state(struct cell_context *cell)
       fb->height = cell->framebuffer.cbufs[0]->height;
    }
 
+   if (cell->dirty & CELL_NEW_BLEND) {
+      emit_state_cmd(cell, CELL_CMD_STATE_BLEND,
+                     cell->blend,
+                     sizeof(struct pipe_blend_state));
+   }
+
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
-      uint cmd = CELL_CMD_STATE_DEPTH_STENCIL;
-      cell_batch_append(cell, &cmd, 4);
-      cell_batch_append(cell, cell->depth_stencil,
-                        sizeof(struct pipe_depth_stencil_alpha_state));
+      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL,
+                     cell->depth_stencil,
+                     sizeof(struct pipe_depth_stencil_alpha_state));
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
-      uint cmd = CELL_CMD_STATE_SAMPLER;
-      cell_batch_append(cell, &cmd, 4);
-      cell_batch_append(cell, cell->sampler[0],
-                        sizeof(struct pipe_sampler_state));
+      emit_state_cmd(cell, CELL_CMD_STATE_SAMPLER,
+                     cell->sampler[0], sizeof(struct pipe_sampler_state));
+   }
+
+   if (cell->dirty & CELL_NEW_TEXTURE) {
+      struct cell_command_texture texture;
+      if (cell->texture[0]) {
+         texture.start = cell->texture[0]->tiled_data;
+         texture.width = cell->texture[0]->base.width[0];
+         texture.height = cell->texture[0]->base.height[0];
+      }
+      else {
+         texture.start = NULL;
+         texture.width = 0;
+         texture.height = 0;
+      }
+
+      emit_state_cmd(cell, CELL_CMD_STATE_TEXTURE,
+                     &texture, sizeof(struct cell_command_texture));
    }
 
    if (cell->dirty & CELL_NEW_VERTEX_INFO) {
-      uint cmd = CELL_CMD_STATE_VERTEX_INFO;
-      cell_batch_append(cell, &cmd, 4);
-      cell_batch_append(cell, &cell->vertex_info, sizeof(struct vertex_info));
+      emit_state_cmd(cell, CELL_CMD_STATE_VERTEX_INFO,
+                     &cell->vertex_info, sizeof(struct vertex_info));
    }
 }
