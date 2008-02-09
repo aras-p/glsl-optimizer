@@ -53,7 +53,8 @@ nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	so_emit(nv40->nvws, hwcso);
+	so_ref(hwcso, &nv40->so_blend);
+	nv40->dirty |= NV40_NEW_BLEND;
 }
 
 static void
@@ -354,7 +355,8 @@ nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	so_emit(nv40->nvws, hwcso);
+	so_ref(hwcso, &nv40->so_rast);
+	nv40->dirty |= NV40_NEW_RAST;
 }
 
 static void
@@ -420,7 +422,8 @@ nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	so_emit(nv40->nvws, hwcso);
+	so_ref(hwcso, &nv40->so_zsa);
+	nv40->dirty |= NV40_NEW_ZSA;
 }
 
 static void
@@ -508,8 +511,9 @@ nv40_set_blend_color(struct pipe_context *pipe,
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
 		       (float_to_ubyte(bcol->color[2]) <<  0)));
 
-	so_emit(nv40->nvws, so);
+	so_ref(so, &nv40->so_bcol);
 	so_ref(NULL, &so);
+	nv40->dirty |= NV40_NEW_BCOL;
 }
 
 static void
@@ -677,8 +681,9 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	so_data  (so, ((w - 1) << 16) | 0);
 	so_data  (so, ((h - 1) << 16) | 0);
 
-	so_emit(nv40->nvws, so);
-	so_ref (so, &nv40->so_framebuffer);
+	so_ref(so, &nv40->so_framebuffer);
+	so_ref(NULL, &so);
+	nv40->dirty |= NV40_NEW_FB;
 }
 
 static void
@@ -693,8 +698,9 @@ nv40_set_polygon_stipple(struct pipe_context *pipe,
 	for (i = 0; i < 32; i++)
 		so_data(so, stipple->stipple[i]);
 
-	so_emit(nv40->nvws, so);
+	so_ref(so, &nv40->so_stipple);
 	so_ref(NULL, &so);
+	nv40->dirty |= NV40_NEW_STIPPLE;
 }
 
 static void
@@ -708,8 +714,9 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 	so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
 	so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
 
-	so_emit(nv40->nvws, so);
+	so_ref(so, &nv40->so_scissor);
 	so_ref(NULL, &so);
+	nv40->dirty |= NV40_NEW_SCISSOR;
 }
 
 static void
@@ -729,8 +736,9 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 	so_data  (so, fui(vpt->scale[2]));
 	so_data  (so, fui(vpt->scale[3]));
 
-	so_emit(nv40->nvws, so);
+	so_ref(so, &nv40->so_viewport);
 	so_ref(NULL, &so);
+	nv40->dirty |= NV40_NEW_VIEWPORT;
 }
 
 static void

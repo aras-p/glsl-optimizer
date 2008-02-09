@@ -30,7 +30,7 @@ so_new(unsigned push, unsigned reloc)
 	struct nouveau_stateobj *so;
 
 	so = malloc(sizeof(struct nouveau_stateobj));
-	so->refcount = 0;
+	so->refcount = 1;
 	so->push = malloc(sizeof(unsigned) * push);
 	so->reloc = malloc(sizeof(struct nouveau_stateobj_reloc) * reloc);
 

@@ -22,9 +22,18 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-#define NV40_NEW_VERTPROG	(1 << 1)
-#define NV40_NEW_FRAGPROG	(1 << 2)
-#define NV40_NEW_ARRAYS		(1 << 3)
+#define NV40_NEW_BLEND		(1 <<  0)
+#define NV40_NEW_RAST		(1 <<  1)
+#define NV40_NEW_ZSA		(1 <<  2)
+#define NV40_NEW_SAMPLER	(1 <<  3)
+#define NV40_NEW_FB		(1 <<  4)
+#define NV40_NEW_STIPPLE	(1 <<  5)
+#define NV40_NEW_SCISSOR	(1 <<  6)
+#define NV40_NEW_VIEWPORT	(1 <<  7)
+#define NV40_NEW_BCOL		(1 <<  8)
+#define NV40_NEW_VERTPROG	(1 <<  9)
+#define NV40_NEW_FRAGPROG	(1 << 10)
+#define NV40_NEW_ARRAYS		(1 << 11)
 
 struct nv40_context {
 	struct pipe_context pipe;
@@ -51,6 +60,13 @@ struct nv40_context {
 	struct nouveau_stateobj *so_framebuffer;
 	struct nouveau_stateobj *so_fragtex[16];
 	struct nouveau_stateobj *so_vtxbuf;
+	struct nouveau_stateobj *so_blend;
+	struct nouveau_stateobj *so_rast;
+	struct nouveau_stateobj *so_zsa;
+	struct nouveau_stateobj *so_bcol;
+	struct nouveau_stateobj *so_scissor;
+	struct nouveau_stateobj *so_viewport;
+	struct nouveau_stateobj *so_stipple;
 
 	struct {
 		struct nouveau_resource *exec_heap;

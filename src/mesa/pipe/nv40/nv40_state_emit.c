@@ -25,6 +25,30 @@ nv40_state_emit_dummy_relocs(struct nv40_context *nv40)
 void
 nv40_emit_hw_state(struct nv40_context *nv40)
 {
+	if (nv40->dirty & NV40_NEW_FB)
+		so_emit(nv40->nvws, nv40->so_framebuffer);
+
+	if (nv40->dirty & NV40_NEW_BLEND)
+		so_emit(nv40->nvws, nv40->so_blend);
+
+	if (nv40->dirty & NV40_NEW_RAST)
+		so_emit(nv40->nvws, nv40->so_rast);
+
+	if (nv40->dirty & NV40_NEW_ZSA)
+		so_emit(nv40->nvws, nv40->so_zsa);
+
+	if (nv40->dirty & NV40_NEW_BCOL)
+		so_emit(nv40->nvws, nv40->so_bcol);
+
+	if (nv40->dirty & NV40_NEW_SCISSOR)
+		so_emit(nv40->nvws, nv40->so_scissor);
+
+	if (nv40->dirty & NV40_NEW_VIEWPORT)
+		so_emit(nv40->nvws, nv40->so_viewport);
+
+	if (nv40->dirty & NV40_NEW_STIPPLE)
+		so_emit(nv40->nvws, nv40->so_stipple);
+
 	if (nv40->dirty & NV40_NEW_FRAGPROG) {
 		nv40_fragprog_bind(nv40, nv40->fragprog.current);
 		/*XXX: clear NV40_NEW_FRAGPROG if no new program uploaded */
@@ -46,6 +70,7 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 	}
 
 	nv40->dirty_samplers = 0;
+	nv40->dirty = 0;
 
 	nv40_state_emit_dummy_relocs(nv40);
 }
