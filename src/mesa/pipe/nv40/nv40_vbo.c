@@ -158,6 +158,7 @@ nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
 	so_emit(nv40->nvws, vtxfmt);
 	so_emit(nv40->nvws, vtxbuf);
 	so_ref (vtxbuf, &nv40->so_vtxbuf);
+	so_ref (NULL, &vtxbuf);
 	so_ref (NULL, &vtxfmt);
 }
 
@@ -165,8 +166,10 @@ static boolean
 nv40_vbo_validate_state(struct nv40_context *nv40,
 			struct pipe_buffer *ib, unsigned ib_format)
 {
+	unsigned vdn = nv40->dirty & NV40_NEW_ARRAYS;
+
 	nv40_emit_hw_state(nv40);
-	if (nv40->dirty & NV40_NEW_ARRAYS || ib) {
+	if (vdn || ib) {
 		nv40_vbo_arrays_update(nv40, ib, ib_format);
 		nv40->dirty &= ~NV40_NEW_ARRAYS;
 	}
