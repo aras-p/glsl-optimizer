@@ -121,6 +121,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 
 	so_emit(nv40->nvws, so);
 	so_ref (so, &nv40->so_fragtex[unit]);
+	so_ref (NULL, &so);
 }
 
 void

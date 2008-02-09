@@ -826,6 +826,7 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 
 	so_emit(nv40->nvws, so);
 	so_ref(so, &fp->so);
+	so_ref(NULL, &so);
 
 	nv40->fragprog.active = fp;
 }
