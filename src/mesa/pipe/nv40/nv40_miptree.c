@@ -53,27 +53,26 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 	nv40mt->total_size = offset;
 }
 
-static void
-nv40_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
+static struct pipe_texture *
+nv40_miptree_create(struct pipe_context *pipe, const struct pipe_texture *pt)
 {
 	struct pipe_winsys *ws = pipe->winsys;
-	struct nv40_miptree *nv40mt;
+	struct nv40_miptree *mt;
 
-	nv40mt = realloc(*pt, sizeof(struct nv40_miptree));
-	if (!nv40mt)
-		return;
-	*pt = NULL;
+	mt = malloc(sizeof(struct nv40_miptree));
+	if (!mt)
+		return NULL;
+	mt->base = *pt;
+	nv40_miptree_layout(mt);
 
-	nv40_miptree_layout(nv40mt);
-
-	nv40mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
-					   nv40mt->total_size);
-	if (!nv40mt->buffer) {
-		free(nv40mt);
-		return;
+	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
+				       mt->total_size);
+	if (!mt->buffer) {
+		free(mt);
+		return NULL;
 	}
-	
-	*pt = &nv40mt->base;
+
+	return &mt->base;
 }
 
 static void

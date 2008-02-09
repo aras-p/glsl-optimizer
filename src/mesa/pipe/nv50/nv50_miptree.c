@@ -4,10 +4,11 @@
 
 #include "nv50_context.h"
 
-static void
-nv50_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
+static struct pipe_texture *
+nv50_miptree_create(struct pipe_context *pipe, const struct pipe_texture *pt)
 {
 	NOUVEAU_ERR("unimplemented\n");
+	return NULL;
 }
 
 static void
