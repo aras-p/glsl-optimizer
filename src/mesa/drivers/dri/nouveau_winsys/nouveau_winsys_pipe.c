@@ -136,6 +136,7 @@ nouveau_pipe_bo_del(struct pipe_winsys *ws, struct pipe_buffer *buf)
 	struct nouveau_pipe_buffer *nvbuf = nouveau_buffer(buf);
 
 	nouveau_bo_del(&nvbuf->bo);
+	free(nvbuf);
 }
 
 static void *
