@@ -45,9 +45,9 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 
 	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
-	if (nv40->nvws->res_alloc(nv40->query_heap, 1, NULL, &q->object))
+	if (nv40->nvws->res_alloc(nv40->hw->query_heap, 1, NULL, &q->object))
 		assert(0);
-	nv40->nvws->notifier_reset(nv40->query, q->object->start);
+	nv40->nvws->notifier_reset(nv40->hw->query, q->object->start);
 
 	BEGIN_RING(curie, NV40TCL_QUERY_RESET, 1);
 	OUT_RING  (1);
@@ -82,16 +82,17 @@ nv40_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	if (!q->ready) {
 		unsigned status;
 
-		status = nvws->notifier_status(nv40->query, q->object->start);
+		status = nvws->notifier_status(nv40->hw->query,
+					       q->object->start);
 		if (status != NV_NOTIFY_STATE_STATUS_COMPLETED) {
 			if (wait == FALSE)
 				return FALSE;
-			nvws->notifier_wait(nv40->query, q->object->start,
+			nvws->notifier_wait(nv40->hw->query, q->object->start,
 					    NV_NOTIFY_STATE_STATUS_COMPLETED,
 					    0);
 		}
 
-		q->result = nvws->notifier_retval(nv40->query,
+		q->result = nvws->notifier_retval(nv40->hw->query,
 						  q->object->start);
 		q->ready = TRUE;
 		nvws->res_free(&q->object);

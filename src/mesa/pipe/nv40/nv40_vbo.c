@@ -115,9 +115,9 @@ nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
 	num_hw++;
 
 	vtxbuf = so_new(20, 18);
-	so_method(vtxbuf, nv40->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
+	so_method(vtxbuf, nv40->hw->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
 	vtxfmt = so_new(17, 0);
-	so_method(vtxfmt, nv40->curie, NV40TCL_VTXFMT(0), num_hw);
+	so_method(vtxfmt, nv40->hw->curie, NV40TCL_VTXFMT(0), num_hw);
 
 	inputs = vp->ir;
 	for (hw = 0; hw < num_hw; hw++) {
@@ -149,7 +149,7 @@ nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
 	}
 
 	if (ib) {
-		so_method(vtxbuf, nv40->curie, NV40TCL_IDXBUF_ADDRESS, 2);
+		so_method(vtxbuf, nv40->hw->curie, NV40TCL_IDXBUF_ADDRESS, 2);
 		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
 			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
@@ -390,7 +390,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 	/* 0x4497 doesn't support real index buffers, and there doesn't appear
 	 * to be support on any chipset for 8-bit indices.
 	 */
-	if (nv40->curie->grclass == NV44TCL || indexSize == 1) {
+	if (nv40->hw->curie->grclass == NV44TCL || indexSize == 1) {
 		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count);
 	} else {
