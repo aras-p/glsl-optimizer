@@ -10,39 +10,40 @@ nv40_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nouveau_grobj *curie = nv40->hw->curie;
 	struct nouveau_stateobj *so = so_new(16, 0);
 
 	if (cso->blend_enable) {
-		so_method(so, nv40->curie, NV40TCL_BLEND_ENABLE, 3);
+		so_method(so, curie, NV40TCL_BLEND_ENABLE, 3);
 		so_data  (so, 1);
 		so_data  (so, (nvgl_blend_func(cso->alpha_src_factor) << 16) |
 			       nvgl_blend_func(cso->rgb_src_factor));
 		so_data  (so, nvgl_blend_func(cso->alpha_dst_factor) << 16 |
 			      nvgl_blend_func(cso->rgb_dst_factor));
-		so_method(so, nv40->curie, NV40TCL_BLEND_EQUATION, 1);
+		so_method(so, curie, NV40TCL_BLEND_EQUATION, 1);
 		so_data  (so, nvgl_blend_eqn(cso->alpha_func) << 16 |
 			      nvgl_blend_eqn(cso->rgb_func));
 	} else {
-		so_method(so, nv40->curie, NV40TCL_BLEND_ENABLE, 1);
+		so_method(so, curie, NV40TCL_BLEND_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, nv40->curie, NV40TCL_COLOR_MASK, 1);
+	so_method(so, curie, NV40TCL_COLOR_MASK, 1);
 	so_data  (so, (((cso->colormask & PIPE_MASK_A) ? (0x01 << 24) : 0) |
 		       ((cso->colormask & PIPE_MASK_R) ? (0x01 << 16) : 0) |
 		       ((cso->colormask & PIPE_MASK_G) ? (0x01 <<  8) : 0) |
 		       ((cso->colormask & PIPE_MASK_B) ? (0x01 <<  0) : 0)));
 
 	if (cso->logicop_enable) {
-		so_method(so, nv40->curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
+		so_method(so, curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 2);
 		so_data  (so, 1);
 		so_data  (so, nvgl_logicop_func(cso->logicop_func));
 	} else {
-		so_method(so, nv40->curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 1);
+		so_method(so, curie, NV40TCL_COLOR_LOGIC_OP_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
-	so_method(so, nv40->curie, NV40TCL_DITHER_ENABLE, 1);
+	so_method(so, curie, NV40TCL_DITHER_ENABLE, 1);
 	so_data  (so, cso->dither ? 1 : 0);
 
 	return (void *)so;
@@ -274,22 +275,22 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	 * 	offset_units / offset_scale
 	 */
 
-	so_method(so, nv40->curie, NV40TCL_SHADE_MODEL, 1);
+	so_method(so, nv40->hw->curie, NV40TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV40TCL_SHADE_MODEL_FLAT :
 				       NV40TCL_SHADE_MODEL_SMOOTH);
 
-	so_method(so, nv40->curie, NV40TCL_LINE_WIDTH, 2);
+	so_method(so, nv40->hw->curie, NV40TCL_LINE_WIDTH, 2);
 	so_data  (so, (unsigned char)(cso->line_width * 8.0) & 0xff);
 	so_data  (so, cso->line_smooth ? 1 : 0);
-	so_method(so, nv40->curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
+	so_method(so, nv40->hw->curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
 	so_data  (so, cso->line_stipple_enable ? 1 : 0);
 	so_data  (so, (cso->line_stipple_pattern << 16) |
 		       cso->line_stipple_factor);
 
-	so_method(so, nv40->curie, NV40TCL_POINT_SIZE, 1);
+	so_method(so, nv40->hw->curie, NV40TCL_POINT_SIZE, 1);
 	so_data  (so, fui(cso->point_size));
 
-	so_method(so, nv40->curie, NV40TCL_POLYGON_MODE_FRONT, 6);
+	so_method(so, nv40->hw->curie, NV40TCL_POLYGON_MODE_FRONT, 6);
 	if (cso->front_winding == PIPE_WINDING_CCW) {
 		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
 		so_data(so, nvgl_polygon_mode(cso->fill_cw));
@@ -330,10 +331,10 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	so_data(so, cso->poly_smooth ? 1 : 0);
 	so_data(so, cso->cull_mode != PIPE_WINDING_NONE ? 1 : 0);
 
-	so_method(so, nv40->curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+	so_method(so, nv40->hw->curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
-	so_method(so, nv40->curie, NV40TCL_POINT_SPRITE, 1);
+	so_method(so, nv40->hw->curie, NV40TCL_POINT_SPRITE, 1);
 	if (cso->point_sprite) {
 		unsigned psctl = (1 << 0), i;
 
@@ -374,18 +375,18 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_stateobj *so = so_new(32, 0);
 
-	so_method(so, nv40->curie, NV40TCL_DEPTH_FUNC, 3);
+	so_method(so, nv40->hw->curie, NV40TCL_DEPTH_FUNC, 3);
 	so_data  (so, nvgl_comparison_op(cso->depth.func));
 	so_data  (so, cso->depth.writemask ? 1 : 0);
 	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	so_method(so, nv40->curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	so_method(so, nv40->hw->curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
 	so_data  (so, cso->alpha.enabled ? 1 : 0);
 	so_data  (so, nvgl_comparison_op(cso->alpha.func));
 	so_data  (so, float_to_ubyte(cso->alpha.ref));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, nv40->curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
+		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[0].write_mask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
@@ -395,12 +396,12 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		so_method(so, nv40->curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, nv40->curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
+		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[1].write_mask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
@@ -410,7 +411,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		so_method(so, nv40->curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
@@ -505,7 +506,7 @@ nv40_set_blend_color(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_stateobj *so = so_new(2, 0);
 
-	so_method(so, nv40->curie, NV40TCL_BLEND_COLOR, 1);
+	so_method(so, nv40->hw->curie, NV40TCL_BLEND_COLOR, 1);
 	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
@@ -611,73 +612,73 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR0) {
-		so_method(so, nv40->curie, NV40TCL_DMA_COLOR0, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_DMA_COLOR0, 1);
 		so_reloc (so, rt[0]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
-		so_method(so, nv40->curie, NV40TCL_COLOR0_PITCH, 2);
+		so_method(so, nv40->hw->curie, NV40TCL_COLOR0_PITCH, 2);
 		so_data  (so, rt[0]->pitch * rt[0]->cpp);
 		so_reloc (so, rt[0]->buffer, rt[0]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR1) {
-		so_method(so, nv40->curie, NV40TCL_DMA_COLOR1, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_DMA_COLOR1, 1);
 		so_reloc (so, rt[1]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
-		so_method(so, nv40->curie, NV40TCL_COLOR1_OFFSET, 2);
+		so_method(so, nv40->hw->curie, NV40TCL_COLOR1_OFFSET, 2);
 		so_reloc (so, rt[1]->buffer, rt[1]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
 		so_data  (so, rt[1]->pitch * rt[1]->cpp);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR2) {
-		so_method(so, nv40->curie, NV40TCL_DMA_COLOR2, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_DMA_COLOR2, 1);
 		so_reloc (so, rt[2]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
-		so_method(so, nv40->curie, NV40TCL_COLOR2_OFFSET, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_COLOR2_OFFSET, 1);
 		so_reloc (so, rt[2]->buffer, rt[2]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_method(so, nv40->curie, NV40TCL_COLOR2_PITCH, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_COLOR2_PITCH, 1);
 		so_data  (so, rt[2]->pitch * rt[2]->cpp);
 	}
 
 	if (rt_enable & NV40TCL_RT_ENABLE_COLOR3) {
-		so_method(so, nv40->curie, NV40TCL_DMA_COLOR3, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_DMA_COLOR3, 1);
 		so_reloc (so, rt[3]->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
-		so_method(so, nv40->curie, NV40TCL_COLOR3_OFFSET, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_COLOR3_OFFSET, 1);
 		so_reloc (so, rt[3]->buffer, rt[3]->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_method(so, nv40->curie, NV40TCL_COLOR3_PITCH, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_COLOR3_PITCH, 1);
 		so_data  (so, rt[3]->pitch * rt[3]->cpp);
 	}
 
 	if (zeta_format) {
-		so_method(so, nv40->curie, NV40TCL_DMA_ZETA, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_DMA_ZETA, 1);
 		so_reloc (so, zeta->buffer, 0, rt_flags | NOUVEAU_BO_OR,
 			  nv40->nvws->channel->vram->handle,
 			  nv40->nvws->channel->gart->handle);
-		so_method(so, nv40->curie, NV40TCL_ZETA_OFFSET, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_ZETA_OFFSET, 1);
 		so_reloc (so, zeta->buffer, zeta->offset, rt_flags |
 			  NOUVEAU_BO_LOW, 0, 0);
-		so_method(so, nv40->curie, NV40TCL_ZETA_PITCH, 1);
+		so_method(so, nv40->hw->curie, NV40TCL_ZETA_PITCH, 1);
 		so_data  (so, zeta->pitch * zeta->cpp);
 	}
 
-	so_method(so, nv40->curie, NV40TCL_RT_ENABLE, 1);
+	so_method(so, nv40->hw->curie, NV40TCL_RT_ENABLE, 1);
 	so_data  (so, rt_enable);
-	so_method(so, nv40->curie, NV40TCL_RT_HORIZ, 3);
+	so_method(so, nv40->hw->curie, NV40TCL_RT_HORIZ, 3);
 	so_data  (so, (w << 16) | 0);
 	so_data  (so, (h << 16) | 0);
 	so_data  (so, rt_format);
-	so_method(so, nv40->curie, NV40TCL_VIEWPORT_HORIZ, 2);
+	so_method(so, nv40->hw->curie, NV40TCL_VIEWPORT_HORIZ, 2);
 	so_data  (so, (w << 16) | 0);
 	so_data  (so, (h << 16) | 0);
-	so_method(so, nv40->curie, NV40TCL_VIEWPORT_CLIP_HORIZ(0), 2);
+	so_method(so, nv40->hw->curie, NV40TCL_VIEWPORT_CLIP_HORIZ(0), 2);
 	so_data  (so, ((w - 1) << 16) | 0);
 	so_data  (so, ((h - 1) << 16) | 0);
 
@@ -694,7 +695,7 @@ nv40_set_polygon_stipple(struct pipe_context *pipe,
 	struct nouveau_stateobj *so = so_new(33, 0);
 	unsigned i;
 
-	so_method(so, nv40->curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
+	so_method(so, nv40->hw->curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 	for (i = 0; i < 32; i++)
 		so_data(so, stipple->stipple[i]);
 
@@ -710,7 +711,7 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_stateobj *so = so_new(3, 0);
 
-	so_method(so, nv40->curie, NV40TCL_SCISSOR_HORIZ, 2);
+	so_method(so, nv40->hw->curie, NV40TCL_SCISSOR_HORIZ, 2);
 	so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
 	so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
 
@@ -726,7 +727,7 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_stateobj *so = so_new(9, 0);
 
-	so_method(so, nv40->curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
+	so_method(so, nv40->hw->curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
 	so_data  (so, fui(vpt->translate[0]));
 	so_data  (so, fui(vpt->translate[1]));
 	so_data  (so, fui(vpt->translate[2]));

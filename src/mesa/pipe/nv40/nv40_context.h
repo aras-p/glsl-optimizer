@@ -11,7 +11,7 @@
 #include "pipe/nouveau/nouveau_gldefs.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv40_context *ctx = nv40
+	struct nv40_channel_context *ctx = nv40->hw
 #include "pipe/nouveau/nouveau_push.h"
 #include "pipe/nouveau/nouveau_stateobj.h"
 
@@ -35,19 +35,33 @@
 #define NV40_NEW_FRAGPROG	(1 << 10)
 #define NV40_NEW_ARRAYS		(1 << 11)
 
+struct nv40_channel_context {
+	struct nouveau_winsys *nvws;
+	unsigned refcount;
+
+	unsigned chipset;
+
+	/* HW graphics objects */
+	struct nouveau_grobj *curie;
+	struct nouveau_notifier *sync;
+
+	/* Query object resources */
+	struct nouveau_notifier *query;
+	struct nouveau_resource *query_heap;
+
+	/* Vtxprog resources */
+	struct nouveau_resource *vp_exec_heap;
+	struct nouveau_resource *vp_data_heap;
+};
+
 struct nv40_context {
 	struct pipe_context pipe;
 	struct nouveau_winsys *nvws;
 
+	struct nv40_channel_context *hw;
 	struct draw_context *draw;
 
 	int chipset;
-	struct nouveau_grobj *curie;
-	struct nouveau_notifier *sync;
-
-	/* query objects */
-	struct nouveau_notifier *query;
-	struct nouveau_resource *query_heap;
 
 	uint32_t dirty;
 
@@ -69,9 +83,6 @@ struct nv40_context {
 	struct nouveau_stateobj *so_stipple;
 
 	struct {
-		struct nouveau_resource *exec_heap;
-		struct nouveau_resource *data_heap;
-
 		struct nv40_vertex_program *active;
 
 		struct nv40_vertex_program *current;

@@ -648,7 +648,7 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
-		struct nouveau_resource *heap = nv40->vertprog.exec_heap;
+		struct nouveau_resource *heap = nv40->hw->vp_exec_heap;
 		uint vplen = vp->nr_insns;
 
 		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
@@ -668,7 +668,7 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 
 	/* Allocate hw vtxprog const slots */
 	if (vp->nr_consts && !vp->data) {
-		struct nouveau_resource *heap = nv40->vertprog.data_heap;
+		struct nouveau_resource *heap = nv40->hw->vp_data_heap;
 
 		if (nvws->res_alloc(heap, vp->nr_consts, vp, &vp->data)) {
 			while (heap->next && heap->size < vp->nr_consts) {
