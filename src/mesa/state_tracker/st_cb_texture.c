@@ -467,6 +467,43 @@ try_pbo_upload(GLcontext *ctx,
 }
 
 
+/**
+ * Adjust pixel unpack params and image dimensions to strip off the
+ * texture border.
+ * Gallium doesn't support texture borders.  They've seldem been used
+ * and seldom been implemented correctly anyway.
+ * \param unpackNew  returns the new pixel unpack parameters
+ */
+static void
+strip_texture_border(GLint border,
+                     GLint *width, GLint *height, GLint *depth,
+                     const struct gl_pixelstore_attrib *unpack,
+                     struct gl_pixelstore_attrib *unpackNew)
+{
+   assert(border > 0);  /* sanity check */
+
+   *unpackNew = *unpack;
+
+   if (unpackNew->RowLength == 0)
+      unpackNew->RowLength = *width;
+
+   if (depth && unpackNew->ImageHeight == 0)
+      unpackNew->ImageHeight = *height;
+
+   unpackNew->SkipPixels += border;
+   if (height)
+      unpackNew->SkipRows += border;
+   if (depth)
+      unpackNew->SkipImages += border;
+
+   assert(*width >= 3);
+   *width = *width - 2 * border;
+   if (height && *height >= 3)
+      *height = *height - 2 * border;
+   if (depth && *depth >= 3)
+      *depth = *depth - 2 * border;
+}
+
 
 static void
 st_TexImage(GLcontext * ctx,
@@ -483,14 +520,24 @@ st_TexImage(GLcontext * ctx,
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   GLint postConvWidth = width;
-   GLint postConvHeight = height;
+   GLint postConvWidth, postConvHeight;
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride;
-
+   struct gl_pixelstore_attrib unpackNB;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
+
+   /* gallium does not support texture borders, strip it off */
+   if (border) {
+      strip_texture_border(border, &width, &height, &depth,
+                           unpack, &unpackNB);
+      unpack = &unpackNB;
+      border = 0;
+   }
+
+   postConvWidth = width;
+   postConvHeight = height;
 
    stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
