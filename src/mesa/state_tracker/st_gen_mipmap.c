@@ -352,12 +352,13 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                                          PIPE_BUFFER_USAGE_CPU_WRITE)
               + dstSurf->offset;
 
-      /* XXX need to take stride/pitch info into account... */
       _mesa_generate_mipmap_level(target, datatype, comps,
                    0 /*border*/,
                    pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
+                   srcSurf->pitch * srcSurf->cpp, /* stride in bytes */
                    srcData,
                    pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
+                   dstSurf->pitch * dstSurf->cpp, /* stride in bytes */
                    dstData);
 
       ws->buffer_unmap(ws, srcSurf->buffer);
