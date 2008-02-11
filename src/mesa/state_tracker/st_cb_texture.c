@@ -379,26 +379,6 @@ guess_and_alloc_texture(struct st_context *st,
 }
 
 
-
-
-static GLuint
-target_to_face(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return ((GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-   default:
-      return 0;
-   }
-}
-
-
-
 /* There are actually quite a few combinations this will work for,
  * more than what I've listed here.
  */
@@ -512,7 +492,7 @@ st_TexImage(GLcontext * ctx,
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
-   stImage->face = target_to_face(target);
+   stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
