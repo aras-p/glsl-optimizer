@@ -46,6 +46,48 @@
 
 static const vec_float4 defaults = { 0.0, 0.0, 0.0, 1.0 };
 
+static INLINE qword
+fetch_unaligned_qword(const void *ptr)
+{
+    const int shift = (unsigned)(ptr) & 0x0f;
+    const qword x = *(qword *)(ptr);
+    const qword y = *(qword *)(ptr + 16);
+
+    return si_or((qword) spu_slqwbyte(x, shift),
+		 (qword) spu_rlmaskqwbyte(y, shift - 16));
+}
+
+static qword
+fetch_R32G32B32A32_FLOAT(const void *ptr)
+{
+    return fetch_unaligned_qword(ptr);
+}
+
+
+static qword
+fetch_R32G32B32A32_USCALED(const void *ptr)
+{
+    return si_cuflt(fetch_unaligned_qword(ptr), 0);
+}
+
+
+static qword
+fetch_R32G32B32A32_UNORM(const void *ptr)
+{
+    qword x = si_cuflt(fetch_unaligned_qword(ptr), 0);
+    vec_float4 scale = spu_splats(1.0f / 255.0f);
+    
+    return si_fm(x, (qword) scale);
+}
+
+
+static qword
+fetch_R32G32B32A32_SSCALED(const void *ptr)
+{
+    return si_csflt(fetch_unaligned_qword(ptr), 0);
+}
+
+
 /**
  * Fetch a float[4] vertex attribute from memory, doing format/type
  * conversion as needed.
@@ -90,22 +132,18 @@ FETCH_ATTRIB( R64G64B64_FLOAT,      3, CVT_64_FLOAT )
 FETCH_ATTRIB( R64G64_FLOAT,         2, CVT_64_FLOAT )
 FETCH_ATTRIB( R64_FLOAT,            1, CVT_64_FLOAT )
 
-FETCH_ATTRIB( R32G32B32A32_FLOAT,   4, CVT_32_FLOAT )
 FETCH_ATTRIB( R32G32B32_FLOAT,      3, CVT_32_FLOAT )
 FETCH_ATTRIB( R32G32_FLOAT,         2, CVT_32_FLOAT )
 FETCH_ATTRIB( R32_FLOAT,            1, CVT_32_FLOAT )
 
-FETCH_ATTRIB( R32G32B32A32_USCALED, 4, CVT_32_USCALED )
 FETCH_ATTRIB( R32G32B32_USCALED,    3, CVT_32_USCALED )
 FETCH_ATTRIB( R32G32_USCALED,       2, CVT_32_USCALED )
 FETCH_ATTRIB( R32_USCALED,          1, CVT_32_USCALED )
 
-FETCH_ATTRIB( R32G32B32A32_SSCALED, 4, CVT_32_SSCALED )
 FETCH_ATTRIB( R32G32B32_SSCALED,    3, CVT_32_SSCALED )
 FETCH_ATTRIB( R32G32_SSCALED,       2, CVT_32_SSCALED )
 FETCH_ATTRIB( R32_SSCALED,          1, CVT_32_SSCALED )
 
-FETCH_ATTRIB( R32G32B32A32_UNORM, 4, CVT_32_UNORM )
 FETCH_ATTRIB( R32G32B32_UNORM,    3, CVT_32_UNORM )
 FETCH_ATTRIB( R32G32_UNORM,       2, CVT_32_UNORM )
 FETCH_ATTRIB( R32_UNORM,          1, CVT_32_UNORM )
