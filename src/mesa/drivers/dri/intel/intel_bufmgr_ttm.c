@@ -480,8 +480,14 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	    }
 	}
 
-	if (ttm_buf->delayed_unmap)
-	   drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+	if (ttm_buf->delayed_unmap) {
+	    int ret = drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+
+	    if (ret != 0) {
+		fprintf(stderr, "%s:%d: Error unmapping buffer %s: %s.\n",
+			__FILE__, __LINE__, ttm_buf->name, strerror(-ret));
+	   }
+	}
 
 	ret = drmBOUnreference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
 	if (ret != 0) {
@@ -501,6 +507,7 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
     dri_bufmgr_ttm *bufmgr_ttm;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
     unsigned int flags;
+    int ret;
 
     bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
 
@@ -518,7 +525,13 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
 	return 0;
     }
 
-    return drmBOMap(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, 0, &buf->virtual);
+    ret = drmBOMap(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, 0, &buf->virtual);
+    if (ret != 0) {
+        fprintf(stderr, "%s:%d: Error mapping buffer %s: %s .\n",
+		__FILE__, __LINE__, ttm_buf->name, strerror(-ret));
+    }
+
+    return ret;
 }
 
 static int
@@ -526,6 +539,7 @@ dri_ttm_bo_unmap(dri_bo *buf)
 {
     dri_bufmgr_ttm *bufmgr_ttm;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
+    int ret;
 
     if (buf == NULL)
 	return 0;
@@ -546,7 +560,13 @@ dri_ttm_bo_unmap(dri_bo *buf)
 
     buf->virtual = NULL;
 
-    return drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+    ret = drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+    if (ret != 0) {
+        fprintf(stderr, "%s:%d: Error unmapping buffer %s: %s.\n",
+		__FILE__, __LINE__, ttm_buf->name, strerror(-ret));
+    }
+
+    return ret;
 }
 
 /**
@@ -628,8 +648,8 @@ dri_ttm_fence_wait(dri_fence *fence)
 
     ret = drmFenceWait(bufmgr_ttm->fd, DRM_FENCE_FLAG_WAIT_LAZY, &fence_ttm->drm_fence, 0);
     if (ret != 0) {
-        fprintf(stderr, "%s:%d: Error %d waiting for fence %s.\n",
-		__FILE__, __LINE__, ret, fence_ttm->name);
+        fprintf(stderr, "%s:%d: Error waiting for fence %s: %s.\n",
+		__FILE__, __LINE__, fence_ttm->name, strerror(-ret));
 	abort();
     }
 
