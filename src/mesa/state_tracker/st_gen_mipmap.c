@@ -273,6 +273,10 @@ st_render_mipmap(struct st_context *st,
    pipe->bind_fs_state(pipe, stfp->fs->data);
    pipe->bind_vs_state(pipe, stvp->cso->data);
 
+   /*
+    * XXX for small mipmap levels, it may be faster to use the software
+    * fallback path...
+    */
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
 
@@ -348,6 +352,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                                          PIPE_BUFFER_USAGE_CPU_WRITE)
               + dstSurf->offset;
 
+      /* XXX need to take stride/pitch info into account... */
       _mesa_generate_mipmap_level(target, datatype, comps,
                    0 /*border*/,
                    pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
