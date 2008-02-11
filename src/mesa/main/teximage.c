@@ -597,8 +597,12 @@ is_compressed_format(GLcontext *ctx, GLenum internalFormat)
 }
 
 
-static GLuint
-texture_face(GLenum target)
+/**
+ * For cube map faces, return a face index in [0,5].
+ * For other targets return 0;
+ */
+GLuint
+_mesa_tex_target_to_face(GLenum target)
 {
    if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
        target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
@@ -627,6 +631,7 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
 {
    ASSERT(tObj);
    ASSERT(texImage);
+   /* XXX simplify this with _mesa_tex_target_to_face() */
    switch (target) {
       case GL_TEXTURE_1D:
       case GL_TEXTURE_2D:
@@ -830,6 +835,7 @@ _mesa_select_tex_image(GLcontext *ctx, const struct gl_texture_object *texObj,
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) 
       return NULL;
 
+   /* XXX simplify this with _mesa_tex_target_to_face() */
    switch (target) {
       case GL_TEXTURE_1D:
       case GL_PROXY_TEXTURE_1D:
@@ -2425,7 +2431,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
-      const GLuint face = texture_face(target);
+      const GLuint face = _mesa_tex_target_to_face(target);
 
       if (texture_error_check(ctx, target, level, internalFormat,
                               format, type, 1, postConvWidth, 1, 1, border)) {
@@ -2530,7 +2536,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
-      const GLuint face = texture_face(target);
+      const GLuint face = _mesa_tex_target_to_face(target);
 
       if (texture_error_check(ctx, target, level, internalFormat,
                               format, type, 2, postConvWidth, postConvHeight,
@@ -2632,7 +2638,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
       struct gl_texture_unit *texUnit;
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
-      const GLuint face = texture_face(target);
+      const GLuint face = _mesa_tex_target_to_face(target);
 
       if (texture_error_check(ctx, target, level, (GLint) internalFormat,
                               format, type, 3, width, height, depth, border)) {
@@ -2904,7 +2910,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width;
-   const GLuint face = texture_face(target);
+   const GLuint face = _mesa_tex_target_to_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -2969,7 +2975,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width, postConvHeight = height;
-   const GLuint face = texture_face(target);
+   const GLuint face = _mesa_tex_target_to_face(target);
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
