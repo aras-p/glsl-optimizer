@@ -11,7 +11,9 @@ GALLIVM_SOURCES = \
         instructions.cpp  \
         loweringpass.cpp \
         tgsitollvm.cpp \
-        storage.cpp
+        storage.cpp \
+        storagesoa.cpp \
+        instructionssoa.cpp
 
 INC_SOURCES = gallivm_builtins.cpp llvm_base_shader.cpp
 
