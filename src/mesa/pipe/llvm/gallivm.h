@@ -61,12 +61,12 @@ enum gallivm_vector_layout {
 };
 
 struct gallivm_ir *gallivm_ir_new(enum gallivm_shader_type type);
-void               gallivm_ir_set_layout(struct gallivm_ir *prog,
+void               gallivm_ir_set_layout(struct gallivm_ir *ir,
                                          enum gallivm_vector_layout layout);
-void               gallivm_ir_set_components(struct gallivm_ir *prog, int num);
-void               gallivm_ir_fill_from_tgsi(struct gallivm_ir *prog,
+void               gallivm_ir_set_components(struct gallivm_ir *ir, int num);
+void               gallivm_ir_fill_from_tgsi(struct gallivm_ir *ir,
                                              const struct tgsi_token *tokens);
-void               gallivm_ir_delete(struct gallivm_ir *prog);
+void               gallivm_ir_delete(struct gallivm_ir *ir);
 
 
 struct gallivm_prog *gallivm_ir_compile(struct gallivm_ir *ir);
