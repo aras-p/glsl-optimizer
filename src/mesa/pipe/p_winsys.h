@@ -112,7 +112,7 @@ struct pipe_winsys
 
    /** 
     * Map the entire data store of a buffer object into the client's address.
-    * flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE. 
+    * flags is bitmask of PIPE_BUFFER_USAGE_CPU_READ/WRITE flags. 
     */
    void *(*buffer_map)( struct pipe_winsys *sws, 
 			struct pipe_buffer *buf,
