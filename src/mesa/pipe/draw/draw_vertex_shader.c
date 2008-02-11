@@ -304,7 +304,7 @@ draw_bind_vertex_shader(struct draw_context *draw,
    draw->vertex_shader = dvs;
    draw->num_vs_outputs = dvs->state->num_outputs;
 
-   /* specify the fragment program to interpret/execute */
+   /* specify the vertex program to interpret/execute */
    tgsi_exec_machine_init(&draw->machine,
                           draw->vertex_shader->state->tokens,
                           PIPE_MAX_SAMPLERS,
