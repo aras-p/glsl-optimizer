@@ -895,6 +895,51 @@ _mesa_generate_mipmap_level(GLenum target,
 
 
 /**
+ * compute next (level+1) image size
+ * \return GL_FALSE if no smaller size can be generated (eg. src is 1x1x1 size)
+ */
+static GLboolean
+next_mipmap_level_size(GLenum target, GLint border,
+                       GLint srcWidth, GLint srcHeight, GLint srcDepth,
+                       GLint *dstWidth, GLint *dstHeight, GLint *dstDepth)
+{
+   if (srcWidth - 2 * border > 1) {
+      *dstWidth = (srcWidth - 2 * border) / 2 + 2 * border;
+   }
+   else {
+      *dstWidth = srcWidth; /* can't go smaller */
+   }
+
+   if ((srcHeight - 2 * border > 1) && 
+       (target != GL_TEXTURE_1D_ARRAY_EXT)) {
+      *dstHeight = (srcHeight - 2 * border) / 2 + 2 * border;
+   }
+   else {
+      *dstHeight = srcHeight; /* can't go smaller */
+   }
+
+   if ((srcDepth - 2 * border > 1) &&
+       (target != GL_TEXTURE_2D_ARRAY_EXT)) {
+      *dstDepth = (srcDepth - 2 * border) / 2 + 2 * border;
+   }
+   else {
+      *dstDepth = srcDepth; /* can't go smaller */
+   }
+
+   if (*dstWidth == srcWidth &&
+       *dstHeight == srcHeight &&
+       *dstDepth == srcDepth) {
+      return GL_FALSE;
+   }
+   else {
+      return GL_TRUE;
+   }
+}
+
+
+
+
+/**
  * For GL_SGIX_generate_mipmap:
  * Generate a complete set of mipmaps from texObj's base-level image.
  * Stop at texObj's MaxLevel or when we get to the 1x1 texture.
@@ -982,6 +1027,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       GLint srcWidth, srcHeight, srcDepth;
       GLint dstWidth, dstHeight, dstDepth;
       GLint border, bytesPerTexel;
+      GLboolean nextLevel;
 
       /* get src image parameters */
       srcImage = _mesa_select_tex_image(ctx, texObj, target, level);
@@ -991,31 +1037,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       srcDepth = srcImage->Depth;
       border = srcImage->Border;
 
-      /* compute next (level+1) image size */
-      if (srcWidth - 2 * border > 1) {
-         dstWidth = (srcWidth - 2 * border) / 2 + 2 * border;
-      }
-      else {
-         dstWidth = srcWidth; /* can't go smaller */
-      }
-      if ((srcHeight - 2 * border > 1) && 
-          (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT)) {
-         dstHeight = (srcHeight - 2 * border) / 2 + 2 * border;
-      }
-      else {
-         dstHeight = srcHeight; /* can't go smaller */
-      }
-      if ((srcDepth - 2 * border > 1) &&
-               (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT)) {
-         dstDepth = (srcDepth - 2 * border) / 2 + 2 * border;
-      }
-      else {
-         dstDepth = srcDepth; /* can't go smaller */
-      }
-
-      if (dstWidth == srcWidth &&
-          dstHeight == srcHeight &&
-          dstDepth == srcDepth) {
+      nextLevel = next_mipmap_level_size(target, border,
+                                         srcWidth, srcHeight, srcDepth,
+                                         &dstWidth, &dstHeight, &dstDepth);
+      if (!nextLevel) {
          /* all done */
          if (srcImage->IsCompressed) {
             _mesa_free((void *) srcData);
