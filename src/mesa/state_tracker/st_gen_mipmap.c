@@ -29,11 +29,14 @@
 #include "main/imports.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
+#include "main/texformat.h"
 
 #include "shader/prog_instruction.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/cso_cache/cso_cache.h"
 
 #include "st_context.h"
@@ -239,14 +242,17 @@ draw_quad(GLcontext *ctx)
  */
 static boolean
 st_render_mipmap(struct st_context *st,
+                 GLenum target,
                  struct pipe_texture *pt,
                  uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_framebuffer_state fb;
-   const uint face = 0, zslice = 0;
+   const uint face = _mesa_tex_target_to_face(target), zslice = 0;
    const uint first_level_save = pt->first_level;
    uint dstLevel;
+
+   assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
    if (!pipe->is_format_supported(pipe, pt->format, PIPE_SURFACE)) {
@@ -307,6 +313,56 @@ st_render_mipmap(struct st_context *st,
 }
 
 
+static void
+fallback_generate_mipmap(GLcontext *ctx, GLenum target,
+                         struct gl_texture_object *texObj)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_winsys *ws = pipe->winsys;
+   struct pipe_texture *pt = st_get_texobj_texture(texObj);
+   const uint baseLevel = texObj->BaseLevel;
+   const uint lastLevel = pt->last_level;
+   const uint face = _mesa_tex_target_to_face(target), zslice = 0;
+   uint dstLevel;
+   GLenum datatype;
+   GLuint comps;
+
+   assert(target != GL_TEXTURE_3D); /* not done yet */
+
+   _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
+                                  &datatype, &comps);
+
+   for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
+      const uint srcLevel = dstLevel - 1;
+      struct pipe_surface *srcSurf, *dstSurf;
+      const ubyte *srcData;
+      ubyte *dstData;
+
+      srcSurf = pipe->get_tex_surface(pipe, pt, face, srcLevel, zslice);
+      dstSurf = pipe->get_tex_surface(pipe, pt, face, dstLevel, zslice);
+
+      srcData = (ubyte *) ws->buffer_map(ws, srcSurf->buffer,
+                                         PIPE_BUFFER_USAGE_CPU_READ)
+              + srcSurf->offset;
+      dstData = (ubyte *) ws->buffer_map(ws, dstSurf->buffer,
+                                         PIPE_BUFFER_USAGE_CPU_WRITE)
+              + dstSurf->offset;
+
+      _mesa_generate_mipmap_level(target, datatype, comps,
+                   0 /*border*/,
+                   pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
+                   srcData,
+                   pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
+                   dstData);
+
+      ws->buffer_unmap(ws, srcSurf->buffer);
+      ws->buffer_unmap(ws, dstSurf->buffer);
+
+      pipe_surface_reference(&srcSurf, NULL);
+      pipe_surface_reference(&dstSurf, NULL);
+   }
+}
+
 
 void
 st_generate_mipmap(GLcontext *ctx, GLenum target,
@@ -318,13 +374,11 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    const uint lastLevel = pt->last_level;
    uint dstLevel;
 
-   if (!st_render_mipmap(st, pt, baseLevel, lastLevel)) {
-      abort();
-      /* XXX the following won't really work at this time */
-      _mesa_generate_mipmap(ctx, target, texObj);
-      return;
+   if (!st_render_mipmap(st, target, pt, baseLevel, lastLevel)) {
+      fallback_generate_mipmap(ctx, target, texObj);
    }
 
+   /* Fill in the Mesa gl_texture_image fields */
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
       const struct gl_texture_image *srcImage
@@ -335,7 +389,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       uint dstHeight = pt->height[dstLevel];
       uint dstDepth = pt->depth[dstLevel];
       uint border = srcImage->Border;
-
 
       dstImage = _mesa_get_tex_image(ctx, texObj, target, dstLevel);
       if (!dstImage) {
@@ -359,5 +412,4 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       stImage = (struct st_texture_image *) dstImage;
       stImage->pt = pt;
    }
-
 }
