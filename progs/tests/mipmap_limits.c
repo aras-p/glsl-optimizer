@@ -131,8 +131,8 @@ static void display(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, BaseLevel);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MaxLevel);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, MinLod);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, MaxLod);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, MinLod);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, MaxLod);
 
     if (NearestFilter) {
        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
