@@ -185,7 +185,7 @@ i915_update_texture(struct i915_context *i915, uint unit,
    const struct pipe_texture *pt = &tex->base;
    uint format, pitch;
    const uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
-   const uint num_levels = pt->last_level - pt->first_level;
+   const uint num_levels = pt->last_level;
 
    assert(tex);
    assert(width);

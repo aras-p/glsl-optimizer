@@ -51,7 +51,6 @@
 static void *blend_cso = NULL;
 static void *depthstencil_cso = NULL;
 static void *rasterizer_cso = NULL;
-static void *sampler_cso = NULL;
 
 static struct st_fragment_program *stfp = NULL;
 static struct st_vertex_program *stvp = NULL;
@@ -118,7 +117,6 @@ st_init_generate_mipmap(struct st_context *st)
    struct pipe_context *pipe = st->pipe;
    struct pipe_blend_state blend;
    struct pipe_rasterizer_state rasterizer;
-   struct pipe_sampler_state sampler;
    struct pipe_depth_stencil_alpha_state depthstencil;
 
    assert(!blend_cso);
@@ -133,16 +131,6 @@ st_init_generate_mipmap(struct st_context *st)
    memset(&rasterizer, 0, sizeof(rasterizer));
    rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
 
-   memset(&sampler, 0, sizeof(sampler));
-   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.normalized_coords = 1;
-   sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-
    stfp = make_tex_fragment_program(st->ctx);
    stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
 }
@@ -156,14 +144,12 @@ st_destroy_generate_mipmpap(struct st_context *st)
    pipe->delete_blend_state(pipe, blend_cso);
    pipe->delete_depth_stencil_alpha_state(pipe, depthstencil_cso);
    pipe->delete_rasterizer_state(pipe, rasterizer_cso);
-   pipe->delete_sampler_state(pipe, sampler_cso);
 
    /* XXX free stfp, stvp */
 
    blend_cso = NULL;
    depthstencil_cso = NULL;
    rasterizer_cso = NULL;
-   sampler_cso = NULL;
 }
 
 
@@ -248,8 +234,10 @@ st_render_mipmap(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_framebuffer_state fb;
+   struct pipe_sampler_state sampler;
+   void *sampler_cso;
    const uint face = _mesa_tex_target_to_face(target), zslice = 0;
-   const uint first_level_save = pt->first_level;
+   /*const uint first_level_save = pt->first_level;*/
    uint dstLevel;
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
@@ -263,11 +251,21 @@ st_render_mipmap(struct st_context *st,
    memset(&fb, 0, sizeof(fb));
    fb.num_cbufs = 1;
 
+   /* sampler state */
+   memset(&sampler, 0, sizeof(sampler));
+   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler.normalized_coords = 1;
+
+
    /* bind CSOs */
    pipe->bind_blend_state(pipe, blend_cso);
    pipe->bind_depth_stencil_alpha_state(pipe, depthstencil_cso);
    pipe->bind_rasterizer_state(pipe, rasterizer_cso);
-   pipe->bind_sampler_state(pipe, 0, sampler_cso);
 
    /* bind shaders */
    pipe->bind_fs_state(pipe, stfp->fs->data);
@@ -286,20 +284,29 @@ st_render_mipmap(struct st_context *st,
       fb.cbufs[0] = pipe->get_tex_surface(pipe, pt, face, dstLevel, zslice);
       pipe->set_framebuffer_state(pipe, &fb);
 
+      /*
+       * Setup sampler state
+       */
+      sampler.min_lod = sampler.max_lod = srcLevel;
+      sampler_cso = pipe->create_sampler_state(pipe, &sampler);
+      pipe->bind_sampler_state(pipe, 0, sampler_cso);
+
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 
       /*
        * Setup src texture, override pt->first_level so we sample from
        * the right mipmap level.
        */
-      pt->first_level = srcLevel;
+      /*pt->first_level = srcLevel;*/
       pipe->set_sampler_texture(pipe, 0, pt);
 
       draw_quad(st->ctx);
+
+      pipe->delete_sampler_state(pipe, sampler_cso);
    }
 
    /* restore first_level */
-   pt->first_level = first_level_save;
+   /*pt->first_level = first_level_save;*/
 
    /* restore pipe state */
    if (st->state.rasterizer)

@@ -34,6 +34,8 @@
 #include "sp_state.h"
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
+#include "pipe/draw/draw_context.h"
+
 
 
 void *
@@ -72,6 +74,8 @@ softpipe_set_sampler_texture(struct pipe_context *pipe,
 			     struct pipe_texture *texture)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   draw_flush(softpipe->draw);
 
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->texture[unit] = softpipe_texture(texture);  /* ptr, not struct */

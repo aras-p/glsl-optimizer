@@ -98,9 +98,9 @@ st_texture_image_data(struct pipe_context *pipe,
  */
 extern void
 st_texture_image_copy(struct pipe_context *pipe,
-                      struct pipe_texture *dst,
-                      GLuint face, GLuint level,
-                      struct pipe_texture *src);
+                      struct pipe_texture *dst, GLuint dstLevel,
+                      struct pipe_texture *src,
+                      GLuint face);
 
 
 #endif

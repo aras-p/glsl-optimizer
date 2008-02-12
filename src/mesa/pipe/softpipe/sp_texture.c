@@ -61,7 +61,7 @@ softpipe_texture_layout(struct softpipe_texture * spt)
 
    spt->buffer_size = 0;
 
-   for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
+   for (level = 0; level <= pt->last_level; level++) {
       pt->width[level] = width;
       pt->height[level] = height;
       pt->depth[level] = depth;
@@ -138,6 +138,8 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 {
    struct softpipe_texture *spt = softpipe_texture(pt);
    struct pipe_surface *ps;
+
+   assert(level <= pt->last_level);
 
    ps = pipe->winsys->surface_alloc(pipe->winsys);
    if (ps) {

@@ -449,13 +449,11 @@ compute_lambda(struct tgsi_sampler *sampler,
    }
 
    lambda = LOG2(rho);
-
    lambda += lodbias + sampler->state->lod_bias;
    lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
 
    return lambda;
 }
-
 
 
 /**
@@ -477,7 +475,7 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
    if (sampler->state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* no mipmap selection needed */
       *imgFilter = sampler->state->mag_img_filter;
-      *level0 = *level1 = sampler->texture->first_level;
+      *level0 = *level1 = (int) sampler->state->min_lod;
    }
    else {
       float lambda;
@@ -492,7 +490,7 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
       if (lambda < 0.0) { /* XXX threshold depends on the filter */
          /* magnifying */
          *imgFilter = sampler->state->mag_img_filter;
-         *level0 = *level1 = sampler->texture->first_level;
+         *level0 = *level1 = 0;
       }
       else {
          /* minifying */
@@ -503,19 +501,13 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
             /* Nearest mipmap level */
             const int lvl = (int) (lambda + 0.5);
             *level0 =
-            *level1 = CLAMP(lvl,
-                            (int) sampler->texture->first_level,
-                            (int) sampler->texture->last_level);
+            *level1 = CLAMP(lvl, 0, (int) sampler->texture->last_level);
          }
          else {
             /* Linear interpolation between mipmap levels */
             const int lvl = (int) lambda;
-            *level0 = CLAMP(lvl,
-                            (int) sampler->texture->first_level,
-                            (int) sampler->texture->last_level);
-            *level1 = CLAMP(lvl + 1,
-                            (int) sampler->texture->first_level,
-                            (int) sampler->texture->last_level);
+            *level0 = CLAMP(lvl,     0, (int) sampler->texture->last_level);
+            *level1 = CLAMP(lvl + 1, 0, (int) sampler->texture->last_level);
             *levelBlend = FRAC(lambda);  /* blending weight between levels */
          }
       }

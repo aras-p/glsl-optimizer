@@ -154,7 +154,7 @@ void brw_update_texture_surface( struct brw_context *brw,
    /* Updated in emit_reloc */
    surf.ss1.base_addr = brw_buffer_offset( brw, tObj->buffer );
 
-   surf.ss2.mip_count = tObj->base.last_level - tObj->base.first_level;
+   surf.ss2.mip_count = tObj->base.last_level;
    surf.ss2.width = tObj->base.width[0] - 1;
    surf.ss2.height = tObj->base.height[0] - 1;
 

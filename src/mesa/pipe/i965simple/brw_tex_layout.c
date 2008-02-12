@@ -146,7 +146,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.
     */
-   if (pt->first_level != pt->last_level) {
+   if (pt->last_level > 0) {
       unsigned mip1_width;
 
       if (pt->compressed) {
@@ -168,7 +168,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
    tex->pitch = align(tex->pitch * pt->cpp, 4) / pt->cpp;
    tex->total_height = 0;
 
-   for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
+   for (level = 0; level <= pt->last_level; level++) {
       unsigned img_height;
 
       intel_miptree_set_level_info(tex, level, 1, x, y, width,
@@ -187,7 +187,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
 
       /* Layout_below: step right after second mipmap.
        */
-      if (level == pt->first_level + 1) {
+      if (level == 1) {
 	 x += align(width, align_w);
       }
       else {
@@ -234,7 +234,7 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
       pack_x_pitch = tex->pitch;
       pack_x_nr = 1;
 
-      for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
+      for (level = 0; level <= pt->last_level; level++) {
 	 unsigned nr_images = pt->target == PIPE_TEXTURE_3D ? depth : 6;
 	 int x = 0;
 	 int y = 0;

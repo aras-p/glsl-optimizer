@@ -57,14 +57,9 @@ struct st_texture_object
 {
    struct gl_texture_object base;       /* The "parent" object */
 
-   /* The texture must include at least these levels once validated:
+   /* The texture must include at levels [0..lastLevel] once validated:
     */
-   GLuint firstLevel;
    GLuint lastLevel;
-
-   /* Offset for firstLevel image:
-    */
-   GLuint textureOffset;
 
    /* On validation any active images held in main memory or in other
     * textures will be copied to this texture and the old storage freed.
@@ -585,12 +580,12 @@ st_TexImage(GLcontext * ctx,
       _mesa_align_free(texImage->Data);
    }
 
-   /* If this is the only texture image in the texture, could call
+   /* If this is the only mipmap level in the texture, could call
     * bmBufferData with NULL data to free the old block and avoid
     * waiting on any outstanding fences.
     */
    if (stObj->pt &&
-       stObj->pt->first_level == level &&
+       /*stObj->pt->first_level == level &&*/
        stObj->pt->last_level == level &&
        stObj->pt->target != PIPE_TEXTURE_CUBE &&
        !st_texture_match_image(stObj->pt, &stImage->base,
@@ -1363,13 +1358,8 @@ calculate_first_last_level(struct st_texture_object *stObj)
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
-         firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
-         firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-         lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-         lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-         lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-         lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-         lastLevel = MAX2(firstLevel, lastLevel);       /* need at least one level */
+         firstLevel = 0;
+         lastLevel = MIN2(tObj->MaxLevel - tObj->BaseLevel, baseImage->MaxLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -1380,8 +1370,6 @@ calculate_first_last_level(struct st_texture_object *stObj)
       return;
    }
 
-   /* save these values */
-   stObj->firstLevel = firstLevel;
    stObj->lastLevel = lastLevel;
 }
 
@@ -1389,15 +1377,16 @@ calculate_first_last_level(struct st_texture_object *stObj)
 static void
 copy_image_data_to_texture(struct st_context *st,
 			   struct st_texture_object *stObj,
+                           GLuint dstLevel,
 			   struct st_texture_image *stImage)
 {
    if (stImage->pt) {
       /* Copy potentially with the blitter:
        */
       st_texture_image_copy(st->pipe,
-                            stObj->pt,  /* dest texture */
-                            stImage->face, stImage->level,
-                            stImage->pt /* src texture */
+                            stObj->pt, dstLevel,  /* dest texture, level */
+                            stImage->pt, /* src texture */
+                            stImage->face
                             );
 
       st->pipe->texture_release(st->pipe, &stImage->pt);
@@ -1438,7 +1427,7 @@ st_finalize_texture(GLcontext *ctx,
    const GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    int comp_byte = 0;
    int cpp;
-   GLuint face, i;
+   GLuint face;
    struct st_texture_image *firstImage;
 
    *needFlush = GL_FALSE;
@@ -1450,7 +1439,7 @@ st_finalize_texture(GLcontext *ctx,
    /* What levels must the texture include at a minimum?
     */
    calculate_first_last_level(stObj);
-   firstImage = st_texture_image(stObj->base.Image[0][stObj->firstLevel]);
+   firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
    /* Fallback case:
     */
@@ -1469,7 +1458,6 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (firstImage->pt &&
        firstImage->pt != stObj->pt &&
-       firstImage->pt->first_level <= stObj->firstLevel &&
        firstImage->pt->last_level >= stObj->lastLevel) {
 
       if (stObj->pt)
@@ -1488,18 +1476,11 @@ st_finalize_texture(GLcontext *ctx,
 
    /* Check texture can hold all active levels.  Check texture matches
     * target, imageFormat, etc.
-    * 
-    * XXX: For some layouts (eg i945?), the test might have to be
-    * first_level == firstLevel, as the texture isn't valid except at the
-    * original start level.  Hope to get around this by
-    * programming minLod, maxLod, baseLevel into the hardware and
-    * leaving the texture alone.
     */
    if (stObj->pt &&
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
 	stObj->pt->format !=
 	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
-	stObj->pt->first_level != stObj->firstLevel ||
 	stObj->pt->last_level != stObj->lastLevel ||
 	stObj->pt->width[0] != firstImage->base.Width ||
 	stObj->pt->height[0] != firstImage->base.Height ||
@@ -1516,7 +1497,7 @@ st_finalize_texture(GLcontext *ctx,
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
                                     st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat),
-                                    stObj->firstLevel,
+                                    0, /* first level */
                                     stObj->lastLevel,
                                     firstImage->base.Width,
                                     firstImage->base.Height,
@@ -1527,14 +1508,16 @@ st_finalize_texture(GLcontext *ctx,
    /* Pull in any images not in the object's texture:
     */
    for (face = 0; face < nr_faces; face++) {
-      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
+      GLuint level;
+      for (level = 0; level <= stObj->lastLevel; level++) {
          struct st_texture_image *stImage =
-            st_texture_image(stObj->base.Image[face][i]);
+            //st_texture_image(stObj->base.Image[face][level]);
+            st_texture_image(stObj->base.Image[face][stObj->base.BaseLevel + level]);
 
          /* Need to import images in main memory or held in other textures.
           */
          if (stObj->pt != stImage->pt) {
-            copy_image_data_to_texture(ctx->st, stObj, stImage);
+            copy_image_data_to_texture(ctx->st, stObj, level, stImage);
 	    *needFlush = GL_TRUE;
          }
       }
