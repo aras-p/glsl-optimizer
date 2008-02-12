@@ -34,6 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_screen.h"
 #include "nouveau_object.h"
 #include "nouveau_span.h"
+#include "nouveau_msg.h"
 
 #include "utils.h"
 #include "context.h"
@@ -293,10 +294,14 @@ nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
  */
 __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
-	static const __DRIversion ddx_expected = { 1, 2, 0 };
+	static const __DRIversion ddx_expected = { 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
 	static const __DRIversion drm_expected = { 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
 	NOUVEAUDRIPtr dri_priv = (NOUVEAUDRIPtr)psp->pDevPriv;
+
+	WARN_ONCE("\nThis driver is not currently maintained\n\n"
+		  "Current work on 3D is in the gallium-0.1 branch of:\n"
+		  "  git://anongit.freedesktop.org/git/nouveau/mesa\n");
 
 #if NOUVEAU_DRM_HEADER_PATCHLEVEL != 10
 #error nouveau_drm.h version doesn't match expected version
