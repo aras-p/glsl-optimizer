@@ -99,36 +99,6 @@ fetch_unaligned(qword *dst, unsigned ea, unsigned size)
    }
 }
 
-static qword
-fetch_R32G32B32A32_FLOAT(const qword *qw)
-{
-    return *qw;
-}
-
-
-static qword
-fetch_R32G32B32A32_USCALED(const qword *qw)
-{
-    return si_cuflt(*qw, 0);
-}
-
-
-static qword
-fetch_R32G32B32A32_UNORM(const qword *qw)
-{
-    qword x = si_cuflt(*qw, 0);
-    vec_float4 scale = spu_splats(1.0f / 255.0f);
-    
-    return si_fm(x, (qword) scale);
-}
-
-
-static qword
-fetch_R32G32B32A32_SSCALED(const qword *qw)
-{
-    return si_csflt(*qw, 0);
-}
-
 
 #define CVT_32_FLOAT(q)    (*q)
 
@@ -285,18 +255,22 @@ FETCH_ATTRIB( R64G64B64_FLOAT,      SZ_3, CVT_64_FLOAT )
 FETCH_ATTRIB( R64G64_FLOAT,         SZ_2, CVT_64_FLOAT )
 FETCH_ATTRIB( R64_FLOAT,            SZ_1, CVT_64_FLOAT )
 
+FETCH_ATTRIB( R32G32B32A32_FLOAT,   SZ_4, CVT_32_FLOAT )
 FETCH_ATTRIB( R32G32B32_FLOAT,      SZ_3, CVT_32_FLOAT )
 FETCH_ATTRIB( R32G32_FLOAT,         SZ_2, CVT_32_FLOAT )
 FETCH_ATTRIB( R32_FLOAT,            SZ_1, CVT_32_FLOAT )
 
+FETCH_ATTRIB( R32G32B32A32_USCALED, SZ_4, CVT_32_USCALED )
 FETCH_ATTRIB( R32G32B32_USCALED,    SZ_3, CVT_32_USCALED )
 FETCH_ATTRIB( R32G32_USCALED,       SZ_2, CVT_32_USCALED )
 FETCH_ATTRIB( R32_USCALED,          SZ_1, CVT_32_USCALED )
 
+FETCH_ATTRIB( R32G32B32A32_SSCALED, SZ_4, CVT_32_SSCALED )
 FETCH_ATTRIB( R32G32B32_SSCALED,    SZ_3, CVT_32_SSCALED )
 FETCH_ATTRIB( R32G32_SSCALED,       SZ_2, CVT_32_SSCALED )
 FETCH_ATTRIB( R32_SSCALED,          SZ_1, CVT_32_SSCALED )
 
+FETCH_ATTRIB( R32G32B32A32_UNORM, SZ_4, CVT_32_UNORM )
 FETCH_ATTRIB( R32G32B32_UNORM,    SZ_3, CVT_32_UNORM )
 FETCH_ATTRIB( R32G32_UNORM,       SZ_2, CVT_32_UNORM )
 FETCH_ATTRIB( R32_UNORM,          SZ_1, CVT_32_UNORM )
