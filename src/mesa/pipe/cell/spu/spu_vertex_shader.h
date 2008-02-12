@@ -6,7 +6,7 @@
 
 struct spu_vs_context;
 
-typedef qword (*spu_fetch_func)(const void *ptr);
+typedef qword (*spu_fetch_func)(const qword *qw);
 typedef void (*spu_full_fetch_func)( struct spu_vs_context *draw,
 				     struct spu_exec_machine *machine,
 				     const unsigned *elts,
@@ -18,6 +18,7 @@ struct spu_vs_context {
    struct {
       uint64_t src_ptr[PIPE_ATTRIB_MAX];
       unsigned pitch[PIPE_ATTRIB_MAX];
+      unsigned size[PIPE_ATTRIB_MAX];
       enum pipe_format format[PIPE_ATTRIB_MAX];
       unsigned nr_attrs;
       boolean dirty;
