@@ -250,6 +250,13 @@ i915_create_sampler_state(struct pipe_context *pipe,
    if (sampler->normalized_coords)
       cso->state[1] |= SS3_NORMALIZED_COORDS;
 
+   if (0) /* XXX not tested yet */
+   {
+      int minlod = (int) (16.0 * sampler->min_lod);
+      minlod = CLAMP(minlod, 0, 16 * 11);
+      cso->state[1] |= (minlod << SS3_MIN_LOD_SHIFT);
+   }
+
    {
       ubyte r = float_to_ubyte(sampler->border_color[0]);
       ubyte g = float_to_ubyte(sampler->border_color[1]);

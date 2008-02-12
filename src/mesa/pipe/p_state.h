@@ -234,14 +234,9 @@ struct pipe_sampler_state
    unsigned compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;  /**< PIPE_FUNC_x */
    unsigned normalized_coords:1;  /**< Are coords normalized to [0,1]? */
-   float shadow_ambient; /**< shadow test fail color/intensity */
-   float min_lod;
-   float max_lod;
-   float lod_bias;
-#if 0 /* need these? */
-   int BaseLevel;     /**< min mipmap level, OpenGL 1.2 */
-   int MaxLevel;      /**< max mipmap level, OpenGL 1.2 */
-#endif
+   float shadow_ambient;          /**< shadow test fail color/intensity */
+   float lod_bias;                /**< LOD/lambda bias */
+   float min_lod, max_lod;        /**< LOD clamp range, after bias */
    float border_color[4];
    float max_anisotropy;
 };
@@ -277,8 +272,7 @@ struct pipe_texture
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
-   unsigned first_level;
-   unsigned last_level;
+   unsigned last_level;    /**< Index of last mipmap level present/defined */
 
    unsigned width[PIPE_MAX_TEXTURE_LEVELS];
    unsigned height[PIPE_MAX_TEXTURE_LEVELS];

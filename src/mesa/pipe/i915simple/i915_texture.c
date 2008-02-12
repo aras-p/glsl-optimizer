@@ -118,11 +118,11 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    tex->pitch = pt->width[0];
 
    /* May need to adjust pitch to accomodate the placement of
-    * the 2nd mipmap.  This occurs when the alignment
+    * the 2nd mipmap level.  This occurs when the alignment
     * constraints of mipmap placement push the right edge of the
-    * 2nd mipmap out past the width of its parent.
+    * 2nd mipmap level out past the width of its parent.
     */
-   if (pt->first_level != pt->last_level) {
+   if (pt->last_level > 0) {
       unsigned mip1_width = align_int(minify(pt->width[0]), align_w)
 			+ minify(minify(pt->width[0]));
 
@@ -136,7 +136,7 @@ i945_miptree_layout_2d( struct i915_texture *tex )
    tex->pitch = align_int(tex->pitch * pt->cpp, 4) / pt->cpp;
    tex->total_height = 0;
 
-   for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
+   for (level = 0; level <= pt->last_level; level++) {
       unsigned img_height;
 
       i915_miptree_set_level_info(tex, level, 1, x, y, width, height, 1);
@@ -152,9 +152,9 @@ i945_miptree_layout_2d( struct i915_texture *tex )
        */
       tex->total_height = MAX2(tex->total_height, y + img_height);
 
-      /* Layout_below: step right after second mipmap.
+      /* Layout_below: step right after second mipmap level.
        */
-      if (level == pt->first_level + 1) {
+      if (level == 1) {
 	 x += align_int(width, align_w);
       }
       else {
@@ -204,7 +204,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
          tex->pitch = ((dim * pt->cpp * 2 + 3) & ~3) / pt->cpp;
          tex->total_height = dim * 4;
 
-         for (level = pt->first_level; level <= pt->last_level; level++) {
+         for (level = 0; level <= pt->last_level; level++) {
             i915_miptree_set_level_info(tex, level, 6,
                                          0, 0,
                                          /*OLD: tex->pitch, tex->total_height,*/
@@ -219,7 +219,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
             unsigned y = initial_offsets[face][1] * dim;
             unsigned d = dim;
 
-            for (level = pt->first_level; level <= pt->last_level; level++) {
+            for (level = 0; level <= pt->last_level; level++) {
                i915_miptree_set_image_offset(tex, level, face, x, y);
                d >>= 1;
                x += step_offsets[face][0] * d;
@@ -240,7 +240,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
 
          /* XXX: hardware expects/requires 9 levels at minimum.
           */
-         for (level = pt->first_level; level <= MAX2(8, pt->last_level);
+         for (level = 0; level <= MAX2(8, pt->last_level);
               level++) {
             i915_miptree_set_level_info(tex, level, depth, 0, tex->total_height,
                                          width, height, depth);
@@ -256,7 +256,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
          /* Fixup depth image_offsets: 
           */
          depth = pt->depth[0];
-         for (level = pt->first_level; level <= pt->last_level; level++) {
+         for (level = 0; level <= pt->last_level; level++) {
             unsigned i;
             for (i = 0; i < depth; i++) 
                i915_miptree_set_image_offset(tex, level, i,
@@ -282,7 +282,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
          tex->pitch = ((pt->width[0] * pt->cpp + 3) & ~3) / pt->cpp;
          tex->total_height = 0;
 
-         for (level = pt->first_level; level <= pt->last_level; level++) {
+         for (level = 0; level <= pt->last_level; level++) {
             i915_miptree_set_level_info(tex, level, 1,
                                          0, tex->total_height,
                                          width, height, 1);
@@ -337,7 +337,7 @@ i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
 
          /* Set all the levels to effectively occupy the whole rectangular region. 
           */
-         for (level = pt->first_level; level <= pt->last_level; level++) {
+         for (level = 0; level <= pt->last_level; level++) {
             i915_miptree_set_level_info(tex, level, 6,
                                          0, 0,
                                          lvlWidth, lvlHeight, 1);
@@ -355,12 +355,12 @@ i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
                y = tex->total_height - 4;
                x = (face - 4) * 8;
             }
-            else if (dim < 4 && (face > 0 || pt->first_level > 0)) {
+            else if (dim < 4 && (face > 0)) {
                y = tex->total_height - 4;
                x = face * 8;
             }
 
-            for (level = pt->first_level; level <= pt->last_level; level++) {
+            for (level = 0; level <= pt->last_level; level++) {
                i915_miptree_set_image_offset(tex, level, face, x, y);
 
                d >>= 1;
@@ -418,7 +418,7 @@ i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
          pack_x_pitch = tex->pitch;
          pack_x_nr = 1;
 
-         for (level = pt->first_level; level <= pt->last_level; level++) {
+         for (level = 0; level <= pt->last_level; level++) {
             unsigned nr_images = pt->target == PIPE_TEXTURE_3D ? depth : 6;
             int x = 0;
             int y = 0;
