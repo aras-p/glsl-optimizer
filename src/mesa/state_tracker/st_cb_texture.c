@@ -1509,7 +1509,6 @@ st_finalize_texture(GLcontext *ctx,
       GLuint level;
       for (level = 0; level <= stObj->lastLevel; level++) {
          struct st_texture_image *stImage =
-            //st_texture_image(stObj->base.Image[face][level]);
             st_texture_image(stObj->base.Image[face][stObj->base.BaseLevel + level]);
 
          /* Need to import images in main memory or held in other textures.
