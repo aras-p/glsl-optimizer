@@ -168,10 +168,10 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stfp->serialNo++;
 
-      if (stfp->fs) {
+      if (stfp->cso) {
          /* free the TGSI code */
          // cso_delete(stfp->vs);
-         stfp->fs = NULL;
+         stfp->cso = NULL;
       }
 
       stfp->param_state = stfp->Base.Base.Parameters->StateFlags;

@@ -62,7 +62,7 @@ struct st_fragment_program
    struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
    /** Pointer to the corresponding cached shader */
-   const struct cso_fragment_shader *fs;
+   const struct cso_fragment_shader *cso;
 
    GLuint param_state;
 
