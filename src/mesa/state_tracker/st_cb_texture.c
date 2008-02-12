@@ -1514,7 +1514,7 @@ st_finalize_texture(GLcontext *ctx,
 
          /* Need to import images in main memory or held in other textures.
           */
-         if (stObj->pt != stImage->pt) {
+         if (stImage && stObj->pt != stImage->pt) {
             copy_image_data_to_texture(ctx->st, stObj, level, stImage);
 	    *needFlush = GL_TRUE;
          }
