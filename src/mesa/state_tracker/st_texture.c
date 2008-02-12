@@ -65,13 +65,11 @@ target_to_target(GLenum target)
  * width0, height0, depth0 are the dimensions of the level 0 image
  * (the highest resolution).  last_level indicates how many mipmap levels
  * to allocate storage for.  For non-mipmapped textures, this will be zero.
- * XXX first_level obsolete
  */
 struct pipe_texture *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
 		  enum pipe_format format,
-		  GLuint first_level,
 		  GLuint last_level,
 		  GLuint width0,
 		  GLuint height0,
@@ -82,9 +80,9 @@ st_texture_create(struct st_context *st,
 
    assert(target <= PIPE_TEXTURE_CUBE);
 
-   DBG("%s target %s format %s level %d..%d\n", __FUNCTION__,
+   DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(format), first_level, last_level);
+       _mesa_lookup_enum_by_nr(format), last_level);
 
    assert(format);
 
