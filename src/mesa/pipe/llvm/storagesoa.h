@@ -29,6 +29,7 @@
 #define STORAGESOA_H
 
 #include <vector>
+#include <map>
 
 namespace llvm {
    class BasicBlock;
@@ -65,7 +66,23 @@ public:
                   int mask);
    void storeAddress(int idx, const std::vector<llvm::Value*> &val,
                      int mask);
+private:
+   llvm::Value *elementPointer(llvm::Value *ptr, int index,
+                               int channel) const;
+   llvm::Value *element(llvm::Value *ptr, int index,
+                        int channel) const;
+   const char *name(const char *prefix) const;
+   llvm::ConstantInt *constantInt(int) const;
+private:
+   llvm::BasicBlock *m_block;
 
+   llvm::Value *m_input;
+   llvm::Value *m_output;
+   llvm::Value *m_consts;
+
+   mutable std::map<int, llvm::ConstantInt*> m_constInts;
+   mutable char        m_name[32];
+   mutable int         m_idx;
 };
 
 #endif

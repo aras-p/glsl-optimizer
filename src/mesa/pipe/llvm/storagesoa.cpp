@@ -45,6 +45,11 @@ StorageSoa::StorageSoa(llvm::BasicBlock *block,
                        llvm::Value *input,
                        llvm::Value *output,
                        llvm::Value *consts)
+   : m_block(block),
+     m_input(input),
+     m_output(output),
+     m_consts(consts),
+     m_idx(0)
 {
 }
 
@@ -62,6 +67,11 @@ std::vector<llvm::Value*> StorageSoa::inputElement(int idx, int swizzle,
 {
    std::vector<llvm::Value*> res(4);
 
+   res[0] = element(m_input, idx, 0);
+   res[1] = element(m_input, idx, 0);
+   res[2] = element(m_input, idx, 0);
+   res[3] = element(m_input, idx, 0);
+
    return res;
 }
 
@@ -77,6 +87,11 @@ std::vector<llvm::Value*> StorageSoa::outputElement(int idx, int swizzle,
                                                     llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
+
+   res[0] = element(m_output, idx, 0);
+   res[1] = element(m_output, idx, 0);
+   res[2] = element(m_output, idx, 0);
+   res[3] = element(m_output, idx, 0);
 
    return res;
 }
@@ -114,4 +129,48 @@ void StorageSoa::storeTemp(int idx, const std::vector<llvm::Value*> &val,
 void StorageSoa::storeAddress(int idx, const std::vector<llvm::Value*> &val,
                               int mask)
 {
+}
+
+llvm::Value * StorageSoa::elementPointer(llvm::Value *ptr, int index,
+                                         int channel) const
+{
+   std::vector<Value*> indices;
+   indices.push_back(constantInt(index));
+   indices.push_back(constantInt(0));//first element in the struct
+   indices.push_back(constantInt(channel));
+   indices.push_back(constantInt(0));//f channel
+   indices.push_back(constantInt(0));//first ptr in the f channel
+
+   GetElementPtrInst *getElem = new GetElementPtrInst(ptr,
+                                                      indices.begin(),
+                                                      indices.end(),
+                                                      name("ptr"),
+                                                      m_block);
+   return getElem;
+}
+
+llvm::Value * StorageSoa::element(llvm::Value *ptr, int index,
+                                  int channel) const
+{
+   llvm::Value *res = elementPointer(ptr, index, channel);
+   LoadInst *load = new LoadInst(res, name("element"), false, m_block);
+   //load->setAlignment(8);
+   return load;
+}
+
+const char * StorageSoa::name(const char *prefix) const
+{
+   ++m_idx;
+   snprintf(m_name, 32, "%s%d", prefix, m_idx);
+   return m_name;
+}
+
+llvm::ConstantInt * StorageSoa::constantInt(int idx) const
+{
+   if (m_constInts.find(idx) != m_constInts.end()) {
+      return m_constInts[idx];
+   }
+   ConstantInt *constInt = ConstantInt::get(APInt(32,  idx));
+   m_constInts[idx] = constInt;
+   return constInt;
 }
