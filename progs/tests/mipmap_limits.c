@@ -194,22 +194,22 @@ key(unsigned char k, int x, int y)
         MaxLevel = 10;
      break;
   case 'l':
-     LodBias -= 0.02;
+     LodBias -= 0.25;
      break;
   case 'L':
-     LodBias += 0.02;
+     LodBias += 0.25;
      break;
   case 'n':
-     MinLod -= 0.02;
+     MinLod -= 0.25;
      break;
   case 'N':
-     MinLod += 0.02;
+     MinLod += 0.25;
      break;
   case 'x':
-     MaxLod -= 0.02;
+     MaxLod -= 0.25;
      break;
   case 'X':
-     MaxLod += 0.02;
+     MaxLod += 0.25;
      break;
   case 'f':
      NearestFilter = !NearestFilter;
