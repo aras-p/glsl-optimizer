@@ -166,6 +166,15 @@ struct st_context
       struct st_fragment_program *combined_prog;
    } bitmap;
 
+   /** For gen/render mipmap feature */
+   struct {
+      void *blend_cso;
+      void *depthstencil_cso;
+      void *rasterizer_cso;
+      struct st_fragment_program *stfp;
+      struct st_vertex_program *stvp;
+   } gen_mipmap;
+
    struct cso_cache *cache;
 };
 

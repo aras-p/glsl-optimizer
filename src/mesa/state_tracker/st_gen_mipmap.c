@@ -48,15 +48,6 @@
 
 
 
-static void *blend_cso = NULL;
-static void *depthstencil_cso = NULL;
-static void *rasterizer_cso = NULL;
-
-static struct st_fragment_program *stfp = NULL;
-static struct st_vertex_program *stvp = NULL;
-
-
-
 static struct st_fragment_program *
 make_tex_fragment_program(GLcontext *ctx)
 {
@@ -119,20 +110,18 @@ st_init_generate_mipmap(struct st_context *st)
    struct pipe_rasterizer_state rasterizer;
    struct pipe_depth_stencil_alpha_state depthstencil;
 
-   assert(!blend_cso);
-
    memset(&blend, 0, sizeof(blend));
    blend.colormask = PIPE_MASK_RGBA;
-   blend_cso = pipe->create_blend_state(pipe, &blend);
+   st->gen_mipmap.blend_cso = pipe->create_blend_state(pipe, &blend);
 
    memset(&depthstencil, 0, sizeof(depthstencil));
-   depthstencil_cso = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
+   st->gen_mipmap.depthstencil_cso = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
 
    memset(&rasterizer, 0, sizeof(rasterizer));
-   rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
+   st->gen_mipmap.rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
 
-   stfp = make_tex_fragment_program(st->ctx);
-   stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+   st->gen_mipmap.stfp = make_tex_fragment_program(st->ctx);
+   st->gen_mipmap.stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
 }
 
 
@@ -141,15 +130,11 @@ st_destroy_generate_mipmpap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
-   pipe->delete_blend_state(pipe, blend_cso);
-   pipe->delete_depth_stencil_alpha_state(pipe, depthstencil_cso);
-   pipe->delete_rasterizer_state(pipe, rasterizer_cso);
+   pipe->delete_blend_state(pipe, st->gen_mipmap.blend_cso);
+   pipe->delete_depth_stencil_alpha_state(pipe, st->gen_mipmap.depthstencil_cso);
+   pipe->delete_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
 
    /* XXX free stfp, stvp */
-
-   blend_cso = NULL;
-   depthstencil_cso = NULL;
-   rasterizer_cso = NULL;
 }
 
 
@@ -263,13 +248,13 @@ st_render_mipmap(struct st_context *st,
 
 
    /* bind CSOs */
-   pipe->bind_blend_state(pipe, blend_cso);
-   pipe->bind_depth_stencil_alpha_state(pipe, depthstencil_cso);
-   pipe->bind_rasterizer_state(pipe, rasterizer_cso);
+   pipe->bind_blend_state(pipe, st->gen_mipmap.blend_cso);
+   pipe->bind_depth_stencil_alpha_state(pipe, st->gen_mipmap.depthstencil_cso);
+   pipe->bind_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
 
    /* bind shaders */
-   pipe->bind_fs_state(pipe, stfp->fs->data);
-   pipe->bind_vs_state(pipe, stvp->cso->data);
+   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->fs->data);
+   pipe->bind_vs_state(pipe, st->gen_mipmap.stvp->cso->data);
 
    /*
     * XXX for small mipmap levels, it may be faster to use the software
