@@ -158,7 +158,7 @@ find_translated_vp(struct st_context *st,
    /*
     * Translate fragment program if needed.
     */
-   if (!stfp->fs) {
+   if (!stfp->cso) {
       GLuint inAttr, numIn = 0;
 
       for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
@@ -179,7 +179,7 @@ find_translated_vp(struct st_context *st,
                                            stfp->input_to_slot,
                                            stfp->tokens,
                                            ST_MAX_SHADER_TOKENS);
-      assert(stfp->fs);
+      assert(stfp->cso);
    }
 
 
@@ -227,7 +227,7 @@ find_translated_vp(struct st_context *st,
             if (fpInAttrib >= 0) {
                GLuint fpInSlot = stfp->input_to_slot[fpInAttrib];
                if (fpInSlot != ~0) {
-                  GLuint vpOutSlot = stfp->fs->state.input_map[fpInSlot];
+                  GLuint vpOutSlot = stfp->cso->state.input_map[fpInSlot];
                   xvp->output_to_slot[outAttr] = vpOutSlot;
                   numVpOuts++;
                }
@@ -300,7 +300,7 @@ update_linkage( struct st_context *st )
    st->pipe->bind_vs_state(st->pipe, st->state.vs->cso->data);
 
    st->fp = stfp;
-   st->state.fs = stfp->fs;
+   st->state.fs = stfp->cso;
    st->pipe->bind_fs_state(st->pipe, st->state.fs->data);
 
    st->vertex_result_to_slot = xvp->output_to_slot;

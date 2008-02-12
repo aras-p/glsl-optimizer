@@ -665,7 +665,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   pipe->bind_fs_state(pipe, stfp->fs->data);
+   pipe->bind_fs_state(pipe, stfp->cso->data);
 
    /* vertex shader state: position + texcoord pass-through */
    pipe->bind_vs_state(pipe, stvp->cso->data);

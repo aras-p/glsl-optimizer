@@ -253,7 +253,7 @@ st_render_mipmap(struct st_context *st,
    pipe->bind_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
 
    /* bind shaders */
-   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->fs->data);
+   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->cso->data);
    pipe->bind_vs_state(pipe, st->gen_mipmap.stvp->cso->data);
 
    /*
