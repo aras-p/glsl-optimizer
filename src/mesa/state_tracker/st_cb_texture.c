@@ -57,14 +57,9 @@ struct st_texture_object
 {
    struct gl_texture_object base;       /* The "parent" object */
 
-   /* The texture must include at least these levels once validated:
+   /* The texture must include at levels [0..lastLevel] once validated:
     */
-   GLuint firstLevel;
    GLuint lastLevel;
-
-   /* Offset for firstLevel image:
-    */
-   GLuint textureOffset;
 
    /* On validation any active images held in main memory or in other
     * textures will be copied to this texture and the old storage freed.
@@ -368,7 +363,6 @@ guess_and_alloc_texture(struct st_context *st,
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat),
-                                 firstLevel,
                                  lastLevel,
                                  width,
                                  height,
@@ -377,26 +371,6 @@ guess_and_alloc_texture(struct st_context *st,
 
    DBG("%s - success\n", __FUNCTION__);
 }
-
-
-
-
-static GLuint
-target_to_face(GLenum target)
-{
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
-      return ((GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X);
-   default:
-      return 0;
-   }
-}
-
 
 
 /* There are actually quite a few combinations this will work for,
@@ -487,6 +461,43 @@ try_pbo_upload(GLcontext *ctx,
 }
 
 
+/**
+ * Adjust pixel unpack params and image dimensions to strip off the
+ * texture border.
+ * Gallium doesn't support texture borders.  They've seldem been used
+ * and seldom been implemented correctly anyway.
+ * \param unpackNew  returns the new pixel unpack parameters
+ */
+static void
+strip_texture_border(GLint border,
+                     GLint *width, GLint *height, GLint *depth,
+                     const struct gl_pixelstore_attrib *unpack,
+                     struct gl_pixelstore_attrib *unpackNew)
+{
+   assert(border > 0);  /* sanity check */
+
+   *unpackNew = *unpack;
+
+   if (unpackNew->RowLength == 0)
+      unpackNew->RowLength = *width;
+
+   if (depth && unpackNew->ImageHeight == 0)
+      unpackNew->ImageHeight = *height;
+
+   unpackNew->SkipPixels += border;
+   if (height)
+      unpackNew->SkipRows += border;
+   if (depth)
+      unpackNew->SkipImages += border;
+
+   assert(*width >= 3);
+   *width = *width - 2 * border;
+   if (height && *height >= 3)
+      *height = *height - 2 * border;
+   if (depth && *depth >= 3)
+      *depth = *depth - 2 * border;
+}
+
 
 static void
 st_TexImage(GLcontext * ctx,
@@ -503,16 +514,26 @@ st_TexImage(GLcontext * ctx,
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   GLint postConvWidth = width;
-   GLint postConvHeight = height;
+   GLint postConvWidth, postConvHeight;
    GLint texelBytes, sizeInBytes;
    GLuint dstRowStride;
-
+   struct gl_pixelstore_attrib unpackNB;
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
 
-   stImage->face = target_to_face(target);
+   /* gallium does not support texture borders, strip it off */
+   if (border) {
+      strip_texture_border(border, &width, &height, &depth,
+                           unpack, &unpackNB);
+      unpack = &unpackNB;
+      border = 0;
+   }
+
+   postConvWidth = width;
+   postConvHeight = height;
+
+   stImage->face = _mesa_tex_target_to_face(target);
    stImage->level = level;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
@@ -558,12 +579,12 @@ st_TexImage(GLcontext * ctx,
       _mesa_align_free(texImage->Data);
    }
 
-   /* If this is the only texture image in the texture, could call
+   /* If this is the only mipmap level in the texture, could call
     * bmBufferData with NULL data to free the old block and avoid
     * waiting on any outstanding fences.
     */
    if (stObj->pt &&
-       stObj->pt->first_level == level &&
+       /*stObj->pt->first_level == level &&*/
        stObj->pt->last_level == level &&
        stObj->pt->target != PIPE_TEXTURE_CUBE &&
        !st_texture_match_image(stObj->pt, &stImage->base,
@@ -1336,13 +1357,8 @@ calculate_first_last_level(struct st_texture_object *stObj)
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
-         firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
-         firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-         lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-         lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-         lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-         lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-         lastLevel = MAX2(firstLevel, lastLevel);       /* need at least one level */
+         firstLevel = 0;
+         lastLevel = MIN2(tObj->MaxLevel - tObj->BaseLevel, baseImage->MaxLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -1353,8 +1369,6 @@ calculate_first_last_level(struct st_texture_object *stObj)
       return;
    }
 
-   /* save these values */
-   stObj->firstLevel = firstLevel;
    stObj->lastLevel = lastLevel;
 }
 
@@ -1362,15 +1376,16 @@ calculate_first_last_level(struct st_texture_object *stObj)
 static void
 copy_image_data_to_texture(struct st_context *st,
 			   struct st_texture_object *stObj,
+                           GLuint dstLevel,
 			   struct st_texture_image *stImage)
 {
    if (stImage->pt) {
       /* Copy potentially with the blitter:
        */
       st_texture_image_copy(st->pipe,
-                            stObj->pt,  /* dest texture */
-                            stImage->face, stImage->level,
-                            stImage->pt /* src texture */
+                            stObj->pt, dstLevel,  /* dest texture, level */
+                            stImage->pt, /* src texture */
+                            stImage->face
                             );
 
       st->pipe->texture_release(st->pipe, &stImage->pt);
@@ -1411,7 +1426,7 @@ st_finalize_texture(GLcontext *ctx,
    const GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    int comp_byte = 0;
    int cpp;
-   GLuint face, i;
+   GLuint face;
    struct st_texture_image *firstImage;
 
    *needFlush = GL_FALSE;
@@ -1423,7 +1438,7 @@ st_finalize_texture(GLcontext *ctx,
    /* What levels must the texture include at a minimum?
     */
    calculate_first_last_level(stObj);
-   firstImage = st_texture_image(stObj->base.Image[0][stObj->firstLevel]);
+   firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
    /* Fallback case:
     */
@@ -1442,7 +1457,6 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (firstImage->pt &&
        firstImage->pt != stObj->pt &&
-       firstImage->pt->first_level <= stObj->firstLevel &&
        firstImage->pt->last_level >= stObj->lastLevel) {
 
       if (stObj->pt)
@@ -1461,18 +1475,11 @@ st_finalize_texture(GLcontext *ctx,
 
    /* Check texture can hold all active levels.  Check texture matches
     * target, imageFormat, etc.
-    * 
-    * XXX: For some layouts (eg i945?), the test might have to be
-    * first_level == firstLevel, as the texture isn't valid except at the
-    * original start level.  Hope to get around this by
-    * programming minLod, maxLod, baseLevel into the hardware and
-    * leaving the texture alone.
     */
    if (stObj->pt &&
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
 	stObj->pt->format !=
 	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
-	stObj->pt->first_level != stObj->firstLevel ||
 	stObj->pt->last_level != stObj->lastLevel ||
 	stObj->pt->width[0] != firstImage->base.Width ||
 	stObj->pt->height[0] != firstImage->base.Height ||
@@ -1489,7 +1496,6 @@ st_finalize_texture(GLcontext *ctx,
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
                                     st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat),
-                                    stObj->firstLevel,
                                     stObj->lastLevel,
                                     firstImage->base.Width,
                                     firstImage->base.Height,
@@ -1500,14 +1506,15 @@ st_finalize_texture(GLcontext *ctx,
    /* Pull in any images not in the object's texture:
     */
    for (face = 0; face < nr_faces; face++) {
-      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
+      GLuint level;
+      for (level = 0; level <= stObj->lastLevel; level++) {
          struct st_texture_image *stImage =
-            st_texture_image(stObj->base.Image[face][i]);
+            st_texture_image(stObj->base.Image[face][stObj->base.BaseLevel + level]);
 
          /* Need to import images in main memory or held in other textures.
           */
-         if (stObj->pt != stImage->pt) {
-            copy_image_data_to_texture(ctx->st, stObj, stImage);
+         if (stImage && stObj->pt != stImage->pt) {
+            copy_image_data_to_texture(ctx->st, stObj, level, stImage);
 	    *needFlush = GL_TRUE;
          }
       }

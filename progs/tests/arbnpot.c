@@ -113,44 +113,67 @@ static void Init( void )
    minDim = imgWidth < imgHeight ? imgWidth : imgHeight;
 
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, imgWidth, 0,
-                imgFormat, GL_UNSIGNED_BYTE, image);
-   assert(glGetError() == GL_NO_ERROR);
 
+   /*
+    * 1D Texture.  Test proxy first, if that works, test non-proxy target.
+    */
    glTexImage1D(GL_PROXY_TEXTURE_1D, 0, GL_RGB, imgWidth, 0,
                 imgFormat, GL_UNSIGNED_BYTE, image);
    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_1D, 0, GL_TEXTURE_WIDTH, &w);
-   assert(w == imgWidth);
+   assert(w == imgWidth || w == 0);
 
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0,
-                imgFormat, GL_UNSIGNED_BYTE, image);
-   assert(glGetError() == GL_NO_ERROR);
+   if (w) {
+      glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, imgWidth, 0,
+                   imgFormat, GL_UNSIGNED_BYTE, image);
+      assert(glGetError() == GL_NO_ERROR);
+   }
 
+
+   /*
+    * 2D Texture
+    */
    glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0,
                 imgFormat, GL_UNSIGNED_BYTE, image);
    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-   assert(w == imgWidth);
+   assert(w == imgWidth || w == 0);
 
-   glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, imgWidth, imgHeight, 1, 0,
-                imgFormat, GL_UNSIGNED_BYTE, image);
-   assert(glGetError() == GL_NO_ERROR);
+   if (w) {
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0,
+                   imgFormat, GL_UNSIGNED_BYTE, image);
+      assert(glGetError() == GL_NO_ERROR);
+   }
 
+
+   /*
+    * 3D Texture
+    */
    glTexImage3D(GL_PROXY_TEXTURE_3D, 0, GL_RGB, imgWidth, imgHeight, 1, 0,
                 imgFormat, GL_UNSIGNED_BYTE, image);
    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_3D, 0, GL_TEXTURE_WIDTH, &w);
-   assert(w == imgWidth);
+   assert(w == imgWidth || w == 0);
 
-   glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB,
-                minDim, minDim, 0,
-                imgFormat, GL_UNSIGNED_BYTE, image);
-   assert(glGetError() == GL_NO_ERROR);
+   if (w) {
+      glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB, imgWidth, imgHeight, 1, 0,
+                   imgFormat, GL_UNSIGNED_BYTE, image);
+      assert(glGetError() == GL_NO_ERROR);
+   }
 
+
+   /*
+    * Cube Texture
+    */
    glTexImage2D(GL_PROXY_TEXTURE_CUBE_MAP, 0, GL_RGB,
                 minDim, minDim, 0,
                 imgFormat, GL_UNSIGNED_BYTE, image);
    glGetTexLevelParameteriv(GL_PROXY_TEXTURE_CUBE_MAP, 0, GL_TEXTURE_WIDTH, &w);
-   assert(w == minDim);
+   assert(w == minDim || w == 0);
 
+   if (w) {
+      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB,
+                   minDim, minDim, 0,
+                   imgFormat, GL_UNSIGNED_BYTE, image);
+      assert(glGetError() == GL_NO_ERROR);
+   }
 
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

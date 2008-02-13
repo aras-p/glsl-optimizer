@@ -420,7 +420,7 @@ st_translate_fragment_program(struct st_context *st,
    fs.tokens = tokensOut;
 
    cso = st_cached_fs_state(st, &fs);
-   stfp->fs = cso;
+   stfp->cso = cso;
 
    if (0)
       _mesa_print_program(&stfp->Base.Base);

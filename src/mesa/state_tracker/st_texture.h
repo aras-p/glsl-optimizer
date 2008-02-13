@@ -39,7 +39,6 @@ extern struct pipe_texture *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
 		  enum pipe_format format,
-                  GLuint first_level,
                   GLuint last_level,
                   GLuint width0,
                   GLuint height0,
@@ -98,9 +97,9 @@ st_texture_image_data(struct pipe_context *pipe,
  */
 extern void
 st_texture_image_copy(struct pipe_context *pipe,
-                      struct pipe_texture *dst,
-                      GLuint face, GLuint level,
-                      struct pipe_texture *src);
+                      struct pipe_texture *dst, GLuint dstLevel,
+                      struct pipe_texture *src,
+                      GLuint face);
 
 
 #endif

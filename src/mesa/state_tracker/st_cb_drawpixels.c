@@ -471,7 +471,7 @@ make_texture(struct st_context *st,
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, 0, width, height,
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
 			  1, 0);
    if (!pt)
       return NULL;
@@ -665,7 +665,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   pipe->bind_fs_state(pipe, stfp->fs->data);
+   pipe->bind_fs_state(pipe, stfp->cso->data);
 
    /* vertex shader state: position + texcoord pass-through */
    pipe->bind_vs_state(pipe, stvp->cso->data);
@@ -1017,7 +1017,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /**
     * Create a texture.
     */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, 0, width, height,
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
 			  1, 0);
    if (!pt)
       return NULL;
@@ -1241,7 +1241,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    psRead = rbRead->surface;
    format = psRead->format;
 
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, 0, width, height,
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
 			  1, 0);
    if (!pt)
       return;

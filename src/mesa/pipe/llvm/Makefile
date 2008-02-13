@@ -7,8 +7,13 @@ LIBNAME = gallivm
 
 GALLIVM_SOURCES = \
         gallivm.cpp  \
+        gallivm_cpu.cpp \
         instructions.cpp  \
-        storage.cpp
+        loweringpass.cpp \
+        tgsitollvm.cpp \
+        storage.cpp \
+        storagesoa.cpp \
+        instructionssoa.cpp
 
 INC_SOURCES = gallivm_builtins.cpp llvm_base_shader.cpp
 

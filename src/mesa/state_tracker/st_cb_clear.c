@@ -341,7 +341,7 @@ clear_with_quad(GLcontext *ctx,
       if (!stfp) {
          stfp = make_frag_shader(st);
       }
-      pipe->bind_fs_state(pipe, stfp->fs->data);
+      pipe->bind_fs_state(pipe, stfp->cso->data);
    }
 
    /* vertex shader state: color/position pass-through */

@@ -180,20 +180,13 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    if (!strb)
       return;
 
+
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */
       df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
                                              height, format, type, 0, 0);
       dfStride = width * 4;
    }
-#if 0
-   else if (format == GL_DEPTH_COMPONENT && type == GL_FLOAT) {
-      /* write tile(row) directly into user's buffer */
-      df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
-                                             height, format, type, 0, 0);
-      dfStride = width;
-   }
-#endif
    else {
       /* write tile(row) into temp row buffer */
       df = (GLfloat *) temp;
@@ -209,22 +202,86 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       yStep = 1;
    }
 
-   /* Do a row at a time to flip image data vertically */
-   for (i = 0; i < height; i++) {
-      pipe_get_tile_rgba(pipe, strb->surface, x, y, width, 1, df);
-      y += yStep;
-      df += dfStride;
-      if (!dfStride) {
-         /* convert GLfloat to user's format/type */
-         GLvoid *dst = _mesa_image_address2d(&clippedPacking, dest, width,
-                                             height, format, type, i, 0);
+   /*
+    * Copy pixels from pipe_surface to user memory
+    */
+   {
+      /* dest of first pixel in client memory */
+      GLubyte *dst = _mesa_image_address2d(&clippedPacking, dest, width,
+                                           height, format, type, 0, 0);
+      /* dest row stride */
+      const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
+                                                     format, type);
+
+      if (strb->surface->format == PIPE_FORMAT_S8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
-            _mesa_pack_depth_span(ctx, width, dst, type,
-                                  (GLfloat *) temp, &clippedPacking);
+            for (i = 0; i < height; i++) {
+               GLuint ztemp[MAX_WIDTH], j;
+               GLfloat zfloat[MAX_WIDTH];
+               const double scale = 1.0 / ((1 << 24) - 1);
+               pipe_get_tile_raw(pipe, strb->surface, x, y,
+                                 width, 1, ztemp, 0);
+               y += yStep;
+               for (j = 0; j < width; j++) {
+                  zfloat[j] = (float) (scale * (ztemp[j] & 0xffffff));
+               }
+               _mesa_pack_depth_span(ctx, width, dst, type,
+                                     zfloat, &clippedPacking);
+               dst += dstStride;
+            }
          }
          else {
-            _mesa_pack_rgba_span_float(ctx, width, temp, format, type, dst,
-                                       &clippedPacking, transferOps);
+            /* untested, but simple: */
+            assert(format == GL_DEPTH_STENCIL_EXT);
+            for (i = 0; i < height; i++) {
+               pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, dst, 0);
+               y += yStep;
+               dst += dstStride;
+            }
+         }
+      }
+      else if (strb->surface->format == PIPE_FORMAT_Z16_UNORM) {
+         for (i = 0; i < height; i++) {
+            GLshort ztemp[MAX_WIDTH], j;
+            GLfloat zfloat[MAX_WIDTH];
+            const double scale = 1.0 / 0xffff;
+            pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, ztemp, 0);
+            y += yStep;
+            for (j = 0; j < width; j++) {
+               zfloat[j] = (float) (scale * ztemp[j]);
+            }
+            _mesa_pack_depth_span(ctx, width, dst, type,
+                                  zfloat, &clippedPacking);
+            dst += dstStride;
+         }
+      }
+      else if (strb->surface->format == PIPE_FORMAT_Z32_UNORM) {
+         for (i = 0; i < height; i++) {
+            GLuint ztemp[MAX_WIDTH], j;
+            GLfloat zfloat[MAX_WIDTH];
+            const double scale = 1.0 / 0xffffffff;
+            pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, ztemp, 0);
+            y += yStep;
+            for (j = 0; j < width; j++) {
+               zfloat[j] = (float) (scale * ztemp[j]);
+            }
+            _mesa_pack_depth_span(ctx, width, dst, type,
+                                  zfloat, &clippedPacking);
+            dst += dstStride;
+         }
+      }
+      else {
+         /* RGBA format */
+         /* Do a row at a time to flip image data vertically */
+         for (i = 0; i < height; i++) {
+            pipe_get_tile_rgba(pipe, strb->surface, x, y, width, 1, df);
+            y += yStep;
+            df += dfStride;
+            if (!dfStride) {
+               _mesa_pack_rgba_span_float(ctx, width, temp, format, type, dst,
+                                          &clippedPacking, transferOps);
+               dst += dstStride;
+            }
          }
       }
    }

@@ -29,11 +29,14 @@
 #include "main/imports.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
+#include "main/texformat.h"
 
 #include "shader/prog_instruction.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/cso_cache/cso_cache.h"
 
 #include "st_context.h"
@@ -42,16 +45,6 @@
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_texture.h"
-
-
-
-static void *blend_cso = NULL;
-static void *depthstencil_cso = NULL;
-static void *rasterizer_cso = NULL;
-static void *sampler_cso = NULL;
-
-static struct st_fragment_program *stfp = NULL;
-static struct st_vertex_program *stvp = NULL;
 
 
 
@@ -115,33 +108,20 @@ st_init_generate_mipmap(struct st_context *st)
    struct pipe_context *pipe = st->pipe;
    struct pipe_blend_state blend;
    struct pipe_rasterizer_state rasterizer;
-   struct pipe_sampler_state sampler;
    struct pipe_depth_stencil_alpha_state depthstencil;
-
-   assert(!blend_cso);
 
    memset(&blend, 0, sizeof(blend));
    blend.colormask = PIPE_MASK_RGBA;
-   blend_cso = pipe->create_blend_state(pipe, &blend);
+   st->gen_mipmap.blend_cso = pipe->create_blend_state(pipe, &blend);
 
    memset(&depthstencil, 0, sizeof(depthstencil));
-   depthstencil_cso = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
+   st->gen_mipmap.depthstencil_cso = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
 
    memset(&rasterizer, 0, sizeof(rasterizer));
-   rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
+   st->gen_mipmap.rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
 
-   memset(&sampler, 0, sizeof(sampler));
-   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.normalized_coords = 1;
-   sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-
-   stfp = make_tex_fragment_program(st->ctx);
-   stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+   st->gen_mipmap.stfp = make_tex_fragment_program(st->ctx);
+   st->gen_mipmap.stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
 }
 
 
@@ -150,17 +130,11 @@ st_destroy_generate_mipmpap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
-   pipe->delete_blend_state(pipe, blend_cso);
-   pipe->delete_depth_stencil_alpha_state(pipe, depthstencil_cso);
-   pipe->delete_rasterizer_state(pipe, rasterizer_cso);
-   pipe->delete_sampler_state(pipe, sampler_cso);
+   pipe->delete_blend_state(pipe, st->gen_mipmap.blend_cso);
+   pipe->delete_depth_stencil_alpha_state(pipe, st->gen_mipmap.depthstencil_cso);
+   pipe->delete_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
 
    /* XXX free stfp, stvp */
-
-   blend_cso = NULL;
-   depthstencil_cso = NULL;
-   rasterizer_cso = NULL;
-   sampler_cso = NULL;
 }
 
 
@@ -239,14 +213,19 @@ draw_quad(GLcontext *ctx)
  */
 static boolean
 st_render_mipmap(struct st_context *st,
+                 GLenum target,
                  struct pipe_texture *pt,
                  uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_framebuffer_state fb;
-   const uint face = 0, zslice = 0;
-   const uint first_level_save = pt->first_level;
+   struct pipe_sampler_state sampler;
+   void *sampler_cso;
+   const uint face = _mesa_tex_target_to_face(target), zslice = 0;
+   /*const uint first_level_save = pt->first_level;*/
    uint dstLevel;
+
+   assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
    if (!pipe->is_format_supported(pipe, pt->format, PIPE_SURFACE)) {
@@ -257,16 +236,30 @@ st_render_mipmap(struct st_context *st,
    memset(&fb, 0, sizeof(fb));
    fb.num_cbufs = 1;
 
+   /* sampler state */
+   memset(&sampler, 0, sizeof(sampler));
+   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler.normalized_coords = 1;
+
+
    /* bind CSOs */
-   pipe->bind_blend_state(pipe, blend_cso);
-   pipe->bind_depth_stencil_alpha_state(pipe, depthstencil_cso);
-   pipe->bind_rasterizer_state(pipe, rasterizer_cso);
-   pipe->bind_sampler_state(pipe, 0, sampler_cso);
+   pipe->bind_blend_state(pipe, st->gen_mipmap.blend_cso);
+   pipe->bind_depth_stencil_alpha_state(pipe, st->gen_mipmap.depthstencil_cso);
+   pipe->bind_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
 
    /* bind shaders */
-   pipe->bind_fs_state(pipe, stfp->fs->data);
-   pipe->bind_vs_state(pipe, stvp->cso->data);
+   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->cso->data);
+   pipe->bind_vs_state(pipe, st->gen_mipmap.stvp->cso->data);
 
+   /*
+    * XXX for small mipmap levels, it may be faster to use the software
+    * fallback path...
+    */
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
 
@@ -276,20 +269,29 @@ st_render_mipmap(struct st_context *st,
       fb.cbufs[0] = pipe->get_tex_surface(pipe, pt, face, dstLevel, zslice);
       pipe->set_framebuffer_state(pipe, &fb);
 
+      /*
+       * Setup sampler state
+       */
+      sampler.min_lod = sampler.max_lod = srcLevel;
+      sampler_cso = pipe->create_sampler_state(pipe, &sampler);
+      pipe->bind_sampler_state(pipe, 0, sampler_cso);
+
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 
       /*
        * Setup src texture, override pt->first_level so we sample from
        * the right mipmap level.
        */
-      pt->first_level = srcLevel;
+      /*pt->first_level = srcLevel;*/
       pipe->set_sampler_texture(pipe, 0, pt);
 
       draw_quad(st->ctx);
+
+      pipe->delete_sampler_state(pipe, sampler_cso);
    }
 
    /* restore first_level */
-   pt->first_level = first_level_save;
+   /*pt->first_level = first_level_save;*/
 
    /* restore pipe state */
    if (st->state.rasterizer)
@@ -307,6 +309,58 @@ st_render_mipmap(struct st_context *st,
 }
 
 
+static void
+fallback_generate_mipmap(GLcontext *ctx, GLenum target,
+                         struct gl_texture_object *texObj)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_winsys *ws = pipe->winsys;
+   struct pipe_texture *pt = st_get_texobj_texture(texObj);
+   const uint baseLevel = texObj->BaseLevel;
+   const uint lastLevel = pt->last_level;
+   const uint face = _mesa_tex_target_to_face(target), zslice = 0;
+   uint dstLevel;
+   GLenum datatype;
+   GLuint comps;
+
+   assert(target != GL_TEXTURE_3D); /* not done yet */
+
+   _mesa_format_to_type_and_comps(texObj->Image[face][baseLevel]->TexFormat,
+                                  &datatype, &comps);
+
+   for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
+      const uint srcLevel = dstLevel - 1;
+      struct pipe_surface *srcSurf, *dstSurf;
+      const ubyte *srcData;
+      ubyte *dstData;
+
+      srcSurf = pipe->get_tex_surface(pipe, pt, face, srcLevel, zslice);
+      dstSurf = pipe->get_tex_surface(pipe, pt, face, dstLevel, zslice);
+
+      srcData = (ubyte *) ws->buffer_map(ws, srcSurf->buffer,
+                                         PIPE_BUFFER_USAGE_CPU_READ)
+              + srcSurf->offset;
+      dstData = (ubyte *) ws->buffer_map(ws, dstSurf->buffer,
+                                         PIPE_BUFFER_USAGE_CPU_WRITE)
+              + dstSurf->offset;
+
+      _mesa_generate_mipmap_level(target, datatype, comps,
+                   0 /*border*/,
+                   pt->width[srcLevel], pt->height[srcLevel], pt->depth[srcLevel],
+                   srcSurf->pitch * srcSurf->cpp, /* stride in bytes */
+                   srcData,
+                   pt->width[dstLevel], pt->height[dstLevel], pt->depth[dstLevel],
+                   dstSurf->pitch * dstSurf->cpp, /* stride in bytes */
+                   dstData);
+
+      ws->buffer_unmap(ws, srcSurf->buffer);
+      ws->buffer_unmap(ws, dstSurf->buffer);
+
+      pipe_surface_reference(&srcSurf, NULL);
+      pipe_surface_reference(&dstSurf, NULL);
+   }
+}
+
 
 void
 st_generate_mipmap(GLcontext *ctx, GLenum target,
@@ -318,13 +372,11 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
    const uint lastLevel = pt->last_level;
    uint dstLevel;
 
-   if (!st_render_mipmap(st, pt, baseLevel, lastLevel)) {
-      abort();
-      /* XXX the following won't really work at this time */
-      _mesa_generate_mipmap(ctx, target, texObj);
-      return;
+   if (!st_render_mipmap(st, target, pt, baseLevel, lastLevel)) {
+      fallback_generate_mipmap(ctx, target, texObj);
    }
 
+   /* Fill in the Mesa gl_texture_image fields */
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
       const struct gl_texture_image *srcImage
@@ -335,7 +387,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       uint dstHeight = pt->height[dstLevel];
       uint dstDepth = pt->depth[dstLevel];
       uint border = srcImage->Border;
-
 
       dstImage = _mesa_get_tex_image(ctx, texObj, target, dstLevel);
       if (!dstImage) {
@@ -359,5 +410,4 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       stImage = (struct st_texture_image *) dstImage;
       stImage->pt = pt;
    }
-
 }

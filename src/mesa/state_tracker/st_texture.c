@@ -62,12 +62,14 @@ target_to_target(GLenum target)
 
 /**
  * Allocate a new pipe_texture object
+ * width0, height0, depth0 are the dimensions of the level 0 image
+ * (the highest resolution).  last_level indicates how many mipmap levels
+ * to allocate storage for.  For non-mipmapped textures, this will be zero.
  */
 struct pipe_texture *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,
 		  enum pipe_format format,
-		  GLuint first_level,
 		  GLuint last_level,
 		  GLuint width0,
 		  GLuint height0,
@@ -78,15 +80,15 @@ st_texture_create(struct st_context *st,
 
    assert(target <= PIPE_TEXTURE_CUBE);
 
-   DBG("%s target %s format %s level %d..%d\n", __FUNCTION__,
+   DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
-       _mesa_lookup_enum_by_nr(format), first_level, last_level);
+       _mesa_lookup_enum_by_nr(format), last_level);
 
    assert(format);
 
+   memset(&pt, 0, sizeof(pt));
    pt.target = target;
    pt.format = format;
-   pt.first_level = first_level;
    pt.last_level = last_level;
    pt.width[0] = width0;
    pt.height[0] = height0;
@@ -266,23 +268,36 @@ st_texture_image_data(struct pipe_context *pipe,
  */
 void
 st_texture_image_copy(struct pipe_context *pipe,
-                      struct pipe_texture *dst,
-                      GLuint face, GLuint level,
-                      struct pipe_texture *src)
+                      struct pipe_texture *dst, GLuint dstLevel,
+                      struct pipe_texture *src,
+                      GLuint face)
 {
-   GLuint width = src->width[level];
-   GLuint height = src->height[level];
-   GLuint depth = src->depth[level];
+   GLuint width = dst->width[dstLevel];
+   GLuint height = dst->height[dstLevel];
+   GLuint depth = dst->depth[dstLevel];
    struct pipe_surface *src_surface;
    struct pipe_surface *dst_surface;
    GLuint i;
 
+   /* XXX this is a hack */
    if (dst->compressed)
       height /= 4;
 
    for (i = 0; i < depth; i++) {
-      dst_surface = pipe->get_tex_surface(pipe, dst, face, level, i);
-      src_surface = pipe->get_tex_surface(pipe, src, face, level, i);
+      GLuint srcLevel;
+
+      /* find src texture level of needed size */
+      for (srcLevel = 0; srcLevel <= src->last_level; srcLevel++) {
+         if (src->width[srcLevel] == width &&
+             src->height[srcLevel] == height) {
+            break;
+         }
+      }
+      assert(src->width[srcLevel] == width);
+      assert(src->height[srcLevel] == height);
+
+      dst_surface = pipe->get_tex_surface(pipe, dst, face, dstLevel, i);
+      src_surface = pipe->get_tex_surface(pipe, src, face, srcLevel, i);
 
       pipe->surface_copy(pipe,
 			 dst_surface,
