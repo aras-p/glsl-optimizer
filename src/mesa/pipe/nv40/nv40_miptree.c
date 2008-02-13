@@ -23,7 +23,7 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 		nr_faces = 1;
 	}
 	
-	for (l = pt->first_level; l <= pt->last_level; l++) {
+	for (l = 0; l <= pt->last_level; l++) {
 		pt->width[l] = width;
 		pt->height[l] = height;
 		pt->depth[l] = depth;
@@ -44,7 +44,7 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 	}
 
 	for (f = 0; f < nr_faces; f++) {
-		for (l = pt->first_level; l <= pt->last_level; l++) {
+		for (l = 0; l <= pt->last_level; l++) {
 			nv40mt->level[l].image_offset[f] = offset;
 			offset += nv40mt->level[l].pitch * pt->height[l];
 		}
@@ -87,7 +87,7 @@ nv40_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
 		int l;
 
 		pipe_buffer_reference(ws, &nv40mt->buffer, NULL);
-		for (l = mt->first_level; l <= mt->last_level; l++) {
+		for (l = 0; l <= mt->last_level; l++) {
 			if (nv40mt->level[l].image_offset)
 				free(nv40mt->level[l].image_offset);
 		}
