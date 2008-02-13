@@ -147,7 +147,7 @@ update_samplers(struct st_context *st)
 
          sampler.lod_bias = st->ctx->Texture.Unit[su].LodBias;
 #if 1
-         sampler.min_lod = texobj->MinLod;
+         sampler.min_lod = (texobj->MinLod) < 0.0 ? 0.0 : texobj->MinLod;
          sampler.max_lod = texobj->MaxLod;
 #else
          /* min/max lod should really be as follows (untested).
