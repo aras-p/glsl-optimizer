@@ -44,7 +44,6 @@
 #include <iostream>
 
 using namespace llvm;
-#include "llvm_base_shader.cpp"
 
 static inline FunctionType *vertexShaderFunctionType()
 {
@@ -1074,7 +1073,7 @@ translate_instructionir(llvm::Module *module,
 llvm::Module *
 tgsi_to_llvm(struct gallivm_ir *ir, const struct tgsi_token *tokens)
 {
-   llvm::Module *mod = createBaseShader();
+   llvm::Module *mod = new Module("shader");
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
