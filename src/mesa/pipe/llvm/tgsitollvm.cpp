@@ -53,23 +53,23 @@ static inline FunctionType *vertexShaderFunctionType()
    // pass are castable to the following:
    // [4 x <4 x float>] inputs,
    // [4 x <4 x float>] output,
-   // [4 x [4 x float]] consts
+   // [4 x [4 x float]] consts,
+   // [4 x <4 x float>] temps
+
    std::vector<const Type*> funcArgs;
-   {
-      VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
-      ArrayType *vectorArray = ArrayType::get(vectorType, 4);
-      PointerType *vectorArrayPtr = PointerType::get(vectorArray, 0);
+   VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
+   ArrayType *vectorArray = ArrayType::get(vectorType, 4);
+   PointerType *vectorArrayPtr = PointerType::get(vectorArray, 0);
 
-      funcArgs.push_back(vectorArrayPtr);//inputs
-      funcArgs.push_back(vectorArrayPtr);//output
-   }
-   {
-      ArrayType   *floatArray     = ArrayType::get(Type::FloatTy, 4);
-      ArrayType   *constsArray    = ArrayType::get(floatArray, 4);
-      PointerType *constsArrayPtr = PointerType::get(constsArray, 0);
+   ArrayType   *floatArray     = ArrayType::get(Type::FloatTy, 4);
+   ArrayType   *constsArray    = ArrayType::get(floatArray, 4);
+   PointerType *constsArrayPtr = PointerType::get(constsArray, 0);
 
-      funcArgs.push_back(constsArrayPtr);//consts
-   }
+   funcArgs.push_back(vectorArrayPtr);//inputs
+   funcArgs.push_back(vectorArrayPtr);//output
+   funcArgs.push_back(constsArrayPtr);//consts
+   funcArgs.push_back(vectorArrayPtr);//temps
+
    FunctionType *functionType = FunctionType::get(
       /*Result=*/Type::VoidTy,
       /*Params=*/funcArgs,
@@ -1162,6 +1162,8 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
    output->setName("outputs");
    Value *consts = args++;
    consts->setName("consts");
+   Value *temps = args++;
+   temps->setName("temps");
 
    BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
 
@@ -1170,7 +1172,7 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
 
-   StorageSoa storage(label_entry, input, output, consts);
+   StorageSoa storage(label_entry, input, output, consts, temps);
    InstructionsSoa instr(mod, shader, label_entry, &storage);
 
    while(!tgsi_parse_end_of_tokens(&parse)) {

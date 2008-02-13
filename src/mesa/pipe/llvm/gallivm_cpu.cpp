@@ -177,10 +177,7 @@ struct gallivm_cpu_engine * gallivm_global_cpu_engine()
 typedef void (*vertex_shader_runner)(void *ainputs,
                                      void *dests,
                                      float (*aconsts)[4],
-                                     int num_vertices,
-                                     int num_inputs,
-                                     int num_attribs,
-                                     int num_consts);
+                                     void *temps);
 
 
 /*!
@@ -191,12 +188,13 @@ typedef void (*vertex_shader_runner)(void *ainputs,
 int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
                         struct tgsi_exec_vector       *inputs,
                         struct tgsi_exec_vector       *dests,
-                         float (*consts)[4])
+                        float (*consts)[4],
+                        struct tgsi_exec_vector       *temps)
 {
    vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
    assert(runner);
    /*FIXME*/
-   runner(inputs, dests, consts, 4, 4, 4, prog->num_consts);
+   runner(inputs, dests, consts, temps);
 
    return 0;
 }

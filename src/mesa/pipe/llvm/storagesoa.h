@@ -46,7 +46,8 @@ public:
    StorageSoa(llvm::BasicBlock *block,
               llvm::Value *input,
               llvm::Value *output,
-              llvm::Value *consts);
+              llvm::Value *consts,
+              llvm::Value *temps);
 
    void addImmediate(float *vec);
 
@@ -79,6 +80,7 @@ private:
    llvm::Value *m_input;
    llvm::Value *m_output;
    llvm::Value *m_consts;
+   llvm::Value *m_temps;
 
    mutable std::map<int, llvm::ConstantInt*> m_constInts;
    mutable char        m_name[32];

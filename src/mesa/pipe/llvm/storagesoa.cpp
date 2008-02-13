@@ -44,11 +44,13 @@ using namespace llvm;
 StorageSoa::StorageSoa(llvm::BasicBlock *block,
                        llvm::Value *input,
                        llvm::Value *output,
-                       llvm::Value *consts)
+                       llvm::Value *consts,
+                       llvm::Value *temps)
    : m_block(block),
      m_input(input),
      m_output(output),
      m_consts(consts),
+     m_temps(temps),
      m_idx(0)
 {
 }
@@ -101,6 +103,11 @@ std::vector<llvm::Value*> StorageSoa::tempElement(int idx, int swizzle,
 {
    std::vector<llvm::Value*> res(4);
 
+   res[0] = element(m_temps, idx, 0);
+   res[1] = element(m_temps, idx, 1);
+   res[2] = element(m_temps, idx, 2);
+   res[3] = element(m_temps, idx, 3);
+
    return res;
 }
 
@@ -138,6 +145,20 @@ void StorageSoa::storeOutput(int dstIdx, const std::vector<llvm::Value*> &val,
 void StorageSoa::storeTemp(int idx, const std::vector<llvm::Value*> &val,
                            int mask)
 {
+   if (mask != TGSI_WRITEMASK_XYZW) {
+      fprintf(stderr, "requires swizzle!!\n");
+      assert(0);
+   } else {
+      llvm::Value *xChannel = elementPointer(m_temps, idx, 0);
+      llvm::Value *yChannel = elementPointer(m_temps, idx, 1);
+      llvm::Value *zChannel = elementPointer(m_temps, idx, 2);
+      llvm::Value *wChannel = elementPointer(m_temps, idx, 3);
+
+      StoreInst *st = new StoreInst(val[0], xChannel, false, m_block);
+      st = new StoreInst(val[1], yChannel, false, m_block);
+      st = new StoreInst(val[2], zChannel, false, m_block);
+      st = new StoreInst(val[3], wChannel, false, m_block);
+   }
 }
 
 void StorageSoa::storeAddress(int idx, const std::vector<llvm::Value*> &val,

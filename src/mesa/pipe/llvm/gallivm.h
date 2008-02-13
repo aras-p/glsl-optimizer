@@ -82,7 +82,8 @@ struct gallivm_cpu_engine *gallivm_global_cpu_engine();
 int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
                         struct tgsi_exec_vector       *inputs,
                         struct tgsi_exec_vector       *dests,
-                        float (*consts)[4]);
+                        float (*consts)[4],
+                        struct tgsi_exec_vector       *temps);
 int gallivm_cpu_fs_exec(struct gallivm_prog *prog,
                         float x, float y,
                         float (*dests)[PIPE_MAX_SHADER_INPUTS][4],

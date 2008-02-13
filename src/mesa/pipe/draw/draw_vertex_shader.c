@@ -119,7 +119,8 @@ run_vertex_program(struct draw_context *draw,
    gallivm_cpu_vs_exec(prog,
                        machine->Inputs,
                        machine->Outputs,
-                       machine->Consts);
+                       machine->Consts,
+                       machine->Temps);
    } else
 #elif defined(__i386__) || defined(__386__)
    if (draw->use_sse) {
