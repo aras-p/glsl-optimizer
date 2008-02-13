@@ -51,8 +51,15 @@ public:
    std::vector<llvm::Value*> mul(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    void         end();
+
+private:
+   const char * name(const char *prefix) const;
 private:
    llvm::LLVMFoldingBuilder  m_builder;
+
+private:
+   mutable int  m_idx;
+   mutable char m_name[32];
 };
 
 
