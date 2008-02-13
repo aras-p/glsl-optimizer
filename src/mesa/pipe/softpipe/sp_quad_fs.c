@@ -199,6 +199,7 @@ shade_quad(
    }
 }
 
+#if 0
 #ifdef MESA_LLVM
 #define DLLVM 0
 static void
@@ -297,6 +298,7 @@ shade_quad_llvm(struct quad_stage *qs,
    }
 }
 #endif /*MESA_LLVM*/
+#endif
 
 /**
  * Per-primitive (or per-begin?) setup
