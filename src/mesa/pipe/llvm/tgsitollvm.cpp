@@ -46,6 +46,38 @@
 using namespace llvm;
 #include "llvm_base_shader.cpp"
 
+static inline FunctionType *vertexShaderFunctionType()
+{
+   //Function takes three arguments,
+   // the calling code has to make sure the types it will
+   // pass are castable to the following:
+   // [4 x <4 x float>] inputs,
+   // [4 x <4 x float>] output,
+   // [4 x [4 x float]] consts
+   std::vector<const Type*> funcArgs;
+   {
+      VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
+      ArrayType *vectorArray = ArrayType::get(vectorType, 4);
+      PointerType *vectorArrayPtr = PointerType::get(vectorArray, 0);
+
+      funcArgs.push_back(vectorArrayPtr);//inputs
+      funcArgs.push_back(vectorArrayPtr);//output
+   }
+   {
+      ArrayType   *floatArray     = ArrayType::get(Type::FloatTy, 4);
+      ArrayType   *constsArray    = ArrayType::get(floatArray, 4);
+      PointerType *constsArrayPtr = PointerType::get(constsArray, 0);
+
+      funcArgs.push_back(constsArrayPtr);//consts
+   }
+   FunctionType *functionType = FunctionType::get(
+      /*Result=*/Type::VoidTy,
+      /*Params=*/funcArgs,
+      /*isVarArg=*/false);
+
+   return functionType;
+}
+
 static inline void
 add_interpolator(struct gallivm_ir *ir,
                  struct gallivm_interpolate *interp)
@@ -1121,13 +1153,13 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
    std::string func_name = stream.str();
    Function *shader = llvm::cast<Function>(mod->getOrInsertFunction(
                                               func_name.c_str(),
-                                              (const llvm::FunctionType*)0));
+                                              vertexShaderFunctionType()));
 
    Function::arg_iterator args = shader->arg_begin();
    Value *input = args++;
-   input->setName("input");
+   input->setName("inputs");
    Value *output = args++;
-   output->setName("output");
+   output->setName("outputs");
    Value *consts = args++;
    consts->setName("consts");
 
