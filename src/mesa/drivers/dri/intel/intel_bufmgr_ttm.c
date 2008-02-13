@@ -344,7 +344,8 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     dri_bo_ttm *ttm_buf;
     unsigned int pageSize = getpagesize();
     int ret;
-    unsigned int flags, hint;
+    uint64_t flags;
+    unsigned int hint;
 
     ttm_buf = malloc(sizeof(*ttm_buf));
     if (!ttm_buf)
@@ -506,7 +507,7 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
 {
     dri_bufmgr_ttm *bufmgr_ttm;
     dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
-    unsigned int flags;
+    uint64_t flags;
     int ret;
 
     bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
