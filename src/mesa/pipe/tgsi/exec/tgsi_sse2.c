@@ -44,6 +44,9 @@ static void
 _print_reg(
    struct x86_reg reg )
 {
+   if (reg.mod != mod_REG) 
+      debug_printf( "[" );
+      
    switch( reg.file ) {
    case file_REG32:
       switch( reg.idx ) {
@@ -83,6 +86,13 @@ _print_reg(
       assert( 0 );
       break;
    }
+
+   if (reg.mod == mod_DISP8 ||
+       reg.mod == mod_DISP32)
+      debug_printf("+%d", reg.disp);
+
+   if (reg.mod != mod_REG) 
+      debug_printf( "]" );
 }
 
 static void
