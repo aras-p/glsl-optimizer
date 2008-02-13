@@ -1436,7 +1436,7 @@ emit_cmp(
    }
 }
 
-static void
+static int
 emit_instruction(
    struct x86_function *func,
    struct tgsi_full_instruction *inst )
@@ -1547,11 +1547,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_LOG:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_MUL:
@@ -1706,24 +1706,24 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CND:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_CND0:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_DOT2ADD:
    /* TGSI_OPCODE_DP2A */
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_INDEX:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_NEGATE:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_FRAC:
@@ -1736,7 +1736,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_CLAMP:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_FLOOR:
@@ -1749,7 +1749,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_ROUND:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_EXPBASE2:
@@ -1824,7 +1824,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_MULTIPLYMATRIX:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ABS:
@@ -1837,7 +1837,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_RCC:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_DPH:
@@ -1868,11 +1868,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_DDX:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_DDY:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_KIL:
@@ -1880,35 +1880,35 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_PK2H:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_PK2US:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_PK4B:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_PK4UB:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_RFL:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SEQ:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SFL:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SGT:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SIN:
@@ -1920,15 +1920,15 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_SLE:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SNE:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_STR:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_TEX:
@@ -1943,43 +1943,43 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXD:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_UP2H:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_UP2US:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_UP4B:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_UP4UB:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_X2D:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ARA:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ARR:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_BRA:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_CAL:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_RET:
@@ -1992,7 +1992,7 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_SSG:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_CMP:
@@ -2021,132 +2021,134 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TXB:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_NRM:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_DIV:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_DP2:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_TXL:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_BRK:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_IF:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_LOOP:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_REP:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ELSE:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ENDIF:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ENDLOOP:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ENDREP:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_PUSHA:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_POPA:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_CEIL:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_I2F:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_NOT:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_TRUNC:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SHL:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SHR:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_AND:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_OR:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_MOD:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_XOR:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_SAD:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_TXF:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_TXQ:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_CONT:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_EMIT:
-      assert( 0 );
+      return 0;
       break;
 
    case TGSI_OPCODE_ENDPRIM:
-      assert( 0 );
+      return 0;
       break;
 
    default:
-      assert( 0 );
+      return 0;
    }
+   
+   return 1;
 }
 
 static void
@@ -2212,6 +2214,7 @@ emit_declaration(
 
                default:
                   assert( 0 );
+		  break;
                }
             }
          }
@@ -2225,6 +2228,7 @@ tgsi_emit_sse2(
    struct x86_function *func )
 {
    struct tgsi_parse_context parse;
+   unsigned ok = 1;
 
    DUMP_START();
 
@@ -2249,7 +2253,7 @@ tgsi_emit_sse2(
 
    tgsi_parse_init( &parse, tokens );
 
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+   while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
       tgsi_parse_token( &parse );
 
       switch( parse.FullToken.Token.Type ) {
@@ -2257,17 +2261,26 @@ tgsi_emit_sse2(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         emit_instruction(
-            func,
-            &parse.FullToken.FullInstruction );
+         ok = emit_instruction(
+	    func,
+	    &parse.FullToken.FullInstruction );
+
+	 if (!ok) {
+	    debug_printf("failed to translate tgsi opcode %d\n", 
+			 parse.FullToken.FullInstruction.Instruction.Opcode );
+	 }
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
-         return 0;
+	 ok = 0;
+	 debug_printf("failed to emit immediate value\n");
+	 break;
 
       default:
          assert( 0 );
+	 ok = 0;
+	 break;
       }
    }
 
@@ -2275,7 +2288,7 @@ tgsi_emit_sse2(
 
    DUMP_END();
 
-   return 1;
+   return ok;
 }
 
 /**
