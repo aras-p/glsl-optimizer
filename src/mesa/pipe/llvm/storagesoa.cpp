@@ -81,6 +81,15 @@ std::vector<llvm::Value*> StorageSoa::constElement(int idx, int swizzle,
                                                    llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
+   llvm::Value *xChannel = elementPointer(m_consts, idx, 0);
+   llvm::Value *yChannel = elementPointer(m_consts, idx, 1);
+   llvm::Value *zChannel = elementPointer(m_consts, idx, 2);
+   llvm::Value *wChannel = elementPointer(m_consts, idx, 3);
+
+   res[0] = alignedArrayLoad(xChannel);
+   res[1] = alignedArrayLoad(yChannel);
+   res[2] = alignedArrayLoad(zChannel);
+   res[3] = alignedArrayLoad(wChannel);
 
    return res;
 }
@@ -205,4 +214,15 @@ llvm::ConstantInt * StorageSoa::constantInt(int idx) const
    ConstantInt *constInt = ConstantInt::get(APInt(32,  idx));
    m_constInts[idx] = constInt;
    return constInt;
+}
+
+llvm::Value *StorageSoa::alignedArrayLoad(llvm::Value *val)
+{
+   VectorType  *vectorType = VectorType::get(Type::FloatTy, 4);
+   PointerType *vectorPtr  = PointerType::get(vectorType, 0);
+
+   CastInst *cast = new BitCastInst(val, vectorPtr, name("toVector"), m_block);
+   LoadInst *load = new LoadInst(cast, name("alignLoad"), false, m_block);
+   load->setAlignment(8);
+   return load;
 }

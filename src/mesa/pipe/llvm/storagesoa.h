@@ -74,6 +74,8 @@ private:
                         int channel) const;
    const char *name(const char *prefix) const;
    llvm::ConstantInt *constantInt(int) const;
+   llvm::Value *alignedArrayLoad(llvm::Value *val);
+
 private:
    llvm::BasicBlock *m_block;
 
