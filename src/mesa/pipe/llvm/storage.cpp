@@ -33,6 +33,8 @@
 
 #include "storage.h"
 
+#include "gallivm_p.h"
+
 #include "pipe/p_shader_tokens.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>
@@ -82,10 +84,10 @@ llvm::Constant *Storage::shuffleMask(int vec)
    if (origVec == 0) {
       const_vec = Constant::getNullValue(m_intVecType);
    } else {
-      int x = vec / 1000; vec -= x * 1000;
-      int y = vec / 100;  vec -= y * 100;
-      int z = vec / 10;   vec -= z * 10;
-      int w = vec;
+      int x = gallivm_x_swizzle(vec);
+      int y = gallivm_y_swizzle(vec);
+      int z = gallivm_z_swizzle(vec);
+      int w = gallivm_w_swizzle(vec);
       std::vector<Constant*> elems;
       elems.push_back(constantInt(x));
       elems.push_back(constantInt(y));

@@ -119,6 +119,20 @@ llvm::Value * StorageSoa::extractIndex(llvm::Value *vec)
 void StorageSoa::storeOutput(int dstIdx, const std::vector<llvm::Value*> &val,
                              int mask)
 {
+   if (mask != TGSI_WRITEMASK_XYZW) {
+      fprintf(stderr, "requires swizzle!!\n");
+      assert(0);
+   } else {
+      llvm::Value *xChannel = elementPointer(m_output, dstIdx, 0);
+      llvm::Value *yChannel = elementPointer(m_output, dstIdx, 1);
+      llvm::Value *zChannel = elementPointer(m_output, dstIdx, 2);
+      llvm::Value *wChannel = elementPointer(m_output, dstIdx, 3);
+
+      StoreInst *st = new StoreInst(val[0], xChannel, false, m_block);
+      st = new StoreInst(val[1], yChannel, false, m_block);
+      st = new StoreInst(val[2], zChannel, false, m_block);
+      st = new StoreInst(val[3], wChannel, false, m_block);
+   }
 }
 
 void StorageSoa::storeTemp(int idx, const std::vector<llvm::Value*> &val,

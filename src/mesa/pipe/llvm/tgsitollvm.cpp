@@ -178,9 +178,8 @@ swizzleVector(llvm::Value *val, struct tgsi_full_src_register *src,
               Storage *storage)
 {
    int swizzle = swizzleInt(src);
-   const int NO_SWIZZLE = TGSI_SWIZZLE_X * 1000 + TGSI_SWIZZLE_Y * 100 +
-                          TGSI_SWIZZLE_Z * 10 + TGSI_SWIZZLE_W;
-   if (swizzle != NO_SWIZZLE) {
+
+   if (gallivm_is_swizzle(swizzle)) {
       /*fprintf(stderr, "XXXXXXXX swizzle = %d\n", swizzle);*/
       val = storage->shuffleVector(val, swizzle);
    }
@@ -1107,12 +1106,11 @@ tgsi_to_llvm(struct gallivm_ir *ir, const struct tgsi_token *tokens)
 llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
                               const struct tgsi_token *tokens)
 {
-   llvm::Module *mod = createBaseShader();
+   llvm::Module *mod = new Module("shader");
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
    unsigned instno = 0;
-   Function* shader = mod->getFunction("execute_shader");
    std::ostringstream stream;
    if (ir->type == GALLIVM_VS) {
       stream << "vs_shader";
@@ -1121,7 +1119,9 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
    }
    stream << ir->id;
    std::string func_name = stream.str();
-   shader->setName(func_name.c_str());
+   Function *shader = llvm::cast<Function>(mod->getOrInsertFunction(
+                                              func_name.c_str(),
+                                              (const llvm::FunctionType*)0));
 
    Function::arg_iterator args = shader->arg_begin();
    Value *input = args++;

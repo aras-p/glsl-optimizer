@@ -289,9 +289,9 @@ void gallivm_ir_fill_from_tgsi(struct gallivm_ir *ir,
    tgsi_dump(tokens, 0);
 
 
-   llvm::Module *irmod = tgsi_to_llvmir(ir, tokens);
+   llvm::Module *mod = tgsi_to_llvmir(ir, tokens);
 
-   llvm::Module *mod = tgsi_to_llvm(ir, tokens);
+   //llvm::Module *mod = tgsi_to_llvm(ir, tokens);
    ir->module = mod;
    gallivm_ir_dump(ir, 0);
 }
