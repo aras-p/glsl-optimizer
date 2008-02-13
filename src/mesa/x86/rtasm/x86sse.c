@@ -278,11 +278,24 @@ void x86_jmp( struct x86_function *p, unsigned char *label)
    emit_1i(p, label - x86_get_label(p) - 4);
 }
 
+#if 0
+/* This doesn't work once we start reallocating & copying the
+ * generated code on buffer fills, because the call is relative to the
+ * current pc.
+ */
 void x86_call( struct x86_function *p, void (*label)())
 {
    emit_1ub(p, 0xe8);
    emit_1i(p, cptr(label) - x86_get_label(p) - 4);
 }
+#else
+void x86_call( struct x86_function *p, struct x86_reg reg)
+{
+   emit_1ub(p, 0xff);
+   emit_modrm(p, reg, reg);
+}
+#endif
+
 
 /* michal:
  * Temporary. As I need immediate operands, and dont want to mess with the codegen,

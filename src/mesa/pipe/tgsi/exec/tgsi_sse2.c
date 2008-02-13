@@ -328,8 +328,11 @@ emit_call(
    struct x86_function  *func,
    void                 (* addr)() )
 {
+   struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
+
    DUMP_I( "CALL", addr );
-   x86_call( func, addr );
+   x86_mov_reg_imm( func, ecx, (unsigned long) addr );
+   x86_call( func, ecx );
 }
 
 static void
