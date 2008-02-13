@@ -820,7 +820,7 @@ static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86
 	 assert(0);
    }
    else if (dst.idx == 0) {
-      assert(arg.file = file_REG32);
+      assert(arg.file == file_REG32);
       emit_1ub(p, 0xd8);
       emit_modrm_noreg(p, argmem_noreg, arg);
    }
