@@ -28,6 +28,8 @@
 #ifndef INSTRUCTIONSSOA_H
 #define INSTRUCTIONSSOA_H
 
+#include <llvm/Support/LLVMBuilder.h>
+
 #include <vector>
 
 namespace llvm {
@@ -49,6 +51,8 @@ public:
    std::vector<llvm::Value*> mul(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    void         end();
+private:
+   llvm::LLVMFoldingBuilder  m_builder;
 };
 
 

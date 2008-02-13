@@ -2,6 +2,7 @@
 
 InstructionsSoa::InstructionsSoa(llvm::Module *mod, llvm::Function *func,
                                  llvm::BasicBlock *block, StorageSoa *storage)
+   : m_builder(block)
 {
 }
 
@@ -23,4 +24,5 @@ std::vector<llvm::Value*> InstructionsSoa::mul(const std::vector<llvm::Value*> i
 
 void InstructionsSoa::end()
 {
+   m_builder.CreateRetVoid();
 }

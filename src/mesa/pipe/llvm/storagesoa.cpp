@@ -150,10 +150,7 @@ llvm::Value * StorageSoa::elementPointer(llvm::Value *ptr, int index,
 {
    std::vector<Value*> indices;
    indices.push_back(constantInt(index));
-   indices.push_back(constantInt(0));//first element in the struct
    indices.push_back(constantInt(channel));
-   indices.push_back(constantInt(0));//f channel
-   indices.push_back(constantInt(0));//first ptr in the f channel
 
    GetElementPtrInst *getElem = new GetElementPtrInst(ptr,
                                                       indices.begin(),
