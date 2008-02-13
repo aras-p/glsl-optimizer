@@ -240,6 +240,8 @@ struct intel_context
 
    GLuint lastStamp;
 
+   GLboolean no_hw;
+
    /**
     * Configuration cache
     */
