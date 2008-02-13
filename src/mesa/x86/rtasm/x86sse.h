@@ -16,6 +16,7 @@ struct x86_reg {
 };
 
 struct x86_function {
+   unsigned size;
    unsigned char *store;
    unsigned char *csr;
    unsigned stack_offset;
