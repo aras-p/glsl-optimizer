@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Tungsten Graphics, inc.
+ * Copyright 2008 Tungsten Graphics, inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,6 +20,17 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+
+/**
+ * Vertex fetch/store/convert code.  This functionality is used in two places:
+ * 1. Vertex fetch/convert - to grab vertex data from incoming vertex
+ *    arrays and convert to format needed by vertex shaders.
+ * 2. Vertex store/emit - to convert simple float[][4] vertex attributes
+ *    (which is the organization used throughout the draw/prim pipeline) to
+ *    hardware-specific formats and emit into hardware vertex buffers.
+ *
  *
  * Authors:
  *    Keith Whitwell <keithw@tungstengraphics.com>
@@ -33,7 +44,7 @@
 #include "pipe/p_state.h"
 
 #include "draw_vertex.h"
-#include "draw_private.h" // for vertex_header
+#include "draw_private.h" /* for vertex_header */
 
 
 enum draw_vf_attr_format {
@@ -181,6 +192,7 @@ struct draw_vf_attr_type {
    unsigned offset;
 };
 
+/** XXX this could be moved into draw_vf.c */
 struct draw_vf_fastpath {
    unsigned vertex_stride;
    unsigned attr_count;
@@ -209,6 +221,7 @@ void
 draw_vf_generate_sse_emit( struct draw_vertex_fetch *vf );
 
 
+/** XXX this type and function could probably be moved into draw_vf.c */
 struct draw_vf_format_info {
    const char *name;
    draw_vf_insert_func insert[4];

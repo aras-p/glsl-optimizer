@@ -370,7 +370,7 @@ void draw_vf_emit_vertex( struct draw_vertex_fetch *vf,
    unsigned j;
    
    for (j = 0; j < vf->attr_count; j++) {
-      if(!a[j].isconst) {
+      if (!a[j].isconst) {
 	 a[j].inputptr = (uint8_t *)&vertex->data[a[j].attrib][0];
 	 a[j].inputstride = 0; /* XXX: one-vertex-max ATM */
       }

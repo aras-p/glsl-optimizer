@@ -25,7 +25,12 @@
  * 
  **************************************************************************/
 
-/* Author:
+/**
+ * Post-transform vertex format info.  The vertex_info struct is used by
+ * the draw_vbuf code to emit hardware-specific vertex layouts into hw
+ * vertex buffers.
+ *
+ * Author:
  *    Brian Paul
  */
 
