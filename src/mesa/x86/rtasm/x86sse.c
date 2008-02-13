@@ -14,8 +14,6 @@ static unsigned char *cptr( void (*label)() )
 
 static void do_realloc( struct x86_function *p )
 {
-   _mesa_printf("do_realloc %d %p\n", p->size, p->store);
-
    if (p->size == 0) {
       p->size = 1024;
       p->store = _mesa_exec_malloc(p->size);
