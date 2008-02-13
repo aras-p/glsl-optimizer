@@ -517,6 +517,21 @@ dri_bufmgr_fake_wait_idle(dri_bufmgr_fake *bufmgr_fake)
    _fence_wait_internal(bufmgr_fake, cookie);
 }
 
+/**
+ * Wait for execution pending on a buffer
+ */
+static void
+dri_bufmgr_fake_bo_wait_idle(dri_bo *bo)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
+   dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
+
+   if (bo_fake->block == NULL || !bo_fake->block->fenced)
+      return;
+
+   _fence_wait_internal(bufmgr_fake, bo_fake->block->fence);
+}
+
 /* Specifically ignore texture memory sharing.
  *  -- just evict everything
  *  -- and wait for idle
@@ -720,8 +735,10 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
 	    assert(bo_fake->block);
 	    bo_fake->dirty = 0;
 
-	    if (!(bo_fake->flags & BM_NO_FENCE_SUBDATA))
-	       dri_bufmgr_fake_wait_idle(bufmgr_fake);
+	    if (!(bo_fake->flags & BM_NO_FENCE_SUBDATA) &&
+		bo_fake->block->fenced) {
+	       dri_bufmgr_fake_bo_wait_idle(bo);
+	    }
 
 	    bo->virtual = bo_fake->block->virtual;
 	 }
