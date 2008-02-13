@@ -70,8 +70,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 
 	txf  = ps->fmt;
 	txf |= tf->format | 0x8000;
-	txf |= ((pt->last_level - pt->first_level + 1) <<
-		NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
+	txf |= ((pt->last_level + 1) << NV40TCL_TEX_FORMAT_MIPMAP_COUNT_SHIFT);
 
 	if (1) /* XXX */
 		txf |= NV40TCL_TEX_FORMAT_NO_BORDER;
