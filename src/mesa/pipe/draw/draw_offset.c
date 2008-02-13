@@ -159,7 +159,7 @@ static void offset_reset_stipple_counter( struct draw_stage *stage )
 
 static void offset_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -171,7 +171,7 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
 
-   draw_alloc_tmps( &offset->stage, 3 );
+   draw_alloc_temp_verts( &offset->stage, 3 );
 
    offset->stage.draw = draw;
    offset->stage.next = NULL;

@@ -176,7 +176,7 @@ static void unfilled_reset_stipple_counter( struct draw_stage *stage )
 
 static void unfilled_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -188,7 +188,7 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
 {
    struct unfilled_stage *unfilled = CALLOC_STRUCT(unfilled_stage);
 
-   draw_alloc_tmps( &unfilled->stage, 0 );
+   draw_alloc_temp_verts( &unfilled->stage, 0 );
 
    unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;

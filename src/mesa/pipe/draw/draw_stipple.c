@@ -223,7 +223,7 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
 {
    struct stipple_stage *stipple = CALLOC_STRUCT(stipple_stage);
 
-   draw_alloc_tmps( &stipple->stage, 2 );
+   draw_alloc_temp_verts( &stipple->stage, 2 );
 
    stipple->stage.draw = draw;
    stipple->stage.next = NULL;

@@ -176,7 +176,7 @@ static void twoside_reset_stipple_counter( struct draw_stage *stage )
 
 static void twoside_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -188,7 +188,7 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
 {
    struct twoside_stage *twoside = CALLOC_STRUCT(twoside_stage);
 
-   draw_alloc_tmps( &twoside->stage, 3 );
+   draw_alloc_temp_verts( &twoside->stage, 3 );
 
    twoside->stage.draw = draw;
    twoside->stage.next = NULL;

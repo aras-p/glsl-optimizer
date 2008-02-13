@@ -408,7 +408,7 @@ static void draw_reset_stipple_counter( struct draw_stage *stage )
 
 static void wide_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -417,7 +417,7 @@ struct draw_stage *draw_wide_stage( struct draw_context *draw )
 {
    struct wide_stage *wide = CALLOC_STRUCT(wide_stage);
 
-   draw_alloc_tmps( &wide->stage, 4 );
+   draw_alloc_temp_verts( &wide->stage, 4 );
 
    wide->stage.draw = draw;
    wide->stage.next = NULL;

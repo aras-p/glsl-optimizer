@@ -242,7 +242,7 @@ draw_convert_wide_lines(struct draw_context *draw, boolean enable)
 /**
  * Allocate space for temporary post-transform vertices, such as for clipping.
  */
-void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
+void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )
 {
    assert(!stage->tmp);
 
@@ -260,7 +260,7 @@ void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
 }
 
 
-void draw_free_tmps( struct draw_stage *stage )
+void draw_free_temp_verts( struct draw_stage *stage )
 {
    if (stage->tmp) {
       FREE( stage->tmp[0] );

@@ -176,7 +176,7 @@ static void flatshade_reset_stipple_counter( struct draw_stage *stage )
 
 static void flatshade_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -188,7 +188,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
    struct flat_stage *flatshade = CALLOC_STRUCT(flat_stage);
 
-   draw_alloc_tmps( &flatshade->stage, 2 );
+   draw_alloc_temp_verts( &flatshade->stage, 2 );
 
    flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;

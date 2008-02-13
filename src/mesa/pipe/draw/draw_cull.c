@@ -123,7 +123,7 @@ static void cull_reset_stipple_counter( struct draw_stage *stage )
 
 static void cull_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -135,7 +135,7 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
 {
    struct cull_stage *cull = CALLOC_STRUCT(cull_stage);
 
-   draw_alloc_tmps( &cull->stage, 0 );
+   draw_alloc_temp_verts( &cull->stage, 0 );
 
    cull->stage.draw = draw;
    cull->stage.next = NULL;

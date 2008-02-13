@@ -459,7 +459,7 @@ static void clip_reset_stipple_counter( struct draw_stage *stage )
 
 static void clip_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
@@ -472,7 +472,7 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
 {
    struct clipper *clipper = CALLOC_STRUCT(clipper);
 
-   draw_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES+1 );
+   draw_alloc_temp_verts( &clipper->stage, MAX_CLIPPED_VERTICES+1 );
 
    clipper->stage.draw = draw;
    clipper->stage.point = clip_point;
