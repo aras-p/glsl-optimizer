@@ -716,7 +716,7 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
 			assert(fpc->nr_imm < MAX_IMM);
 
-			for (i = 0; i < imm->Immediate.Size; i++)
+			for (i = 0; i < (imm->Immediate.Size - 1); i++)
 				vals[i] = imm->u.ImmediateFloat32[i].Float;
 			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
 		}
