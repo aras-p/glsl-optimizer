@@ -175,7 +175,7 @@ static void wide_line_aa(struct draw_stage *stage,
    float *pos;
    float dx = header->v[1]->data[0][0] - header->v[0]->data[0][0];
    float dy = header->v[1]->data[0][1] - header->v[0]->data[0][1];
-   const float len = sqrt(dx * dx + dy * dy);
+   const float len = (float) sqrt(dx * dx + dy * dy);
    uint i;
 
    dx = dx * half_width / len;
