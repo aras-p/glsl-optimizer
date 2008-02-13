@@ -300,6 +300,7 @@ st_texture_image_copy(struct pipe_context *pipe,
       src_surface = pipe->get_tex_surface(pipe, src, face, srcLevel, i);
 
       pipe->surface_copy(pipe,
+                         FALSE,
 			 dst_surface,
 			 0, 0, /* destX, Y */
 			 src_surface,

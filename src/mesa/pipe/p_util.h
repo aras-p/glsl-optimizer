@@ -402,7 +402,7 @@ static INLINE int align(int value, int alignment)
 extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
                            unsigned dst_x, unsigned dst_y, unsigned width,
                            unsigned height, const ubyte * src,
-                           unsigned src_pitch, unsigned src_x, unsigned src_y);
+                           int src_pitch, unsigned src_x, int src_y);
 
 
 #endif

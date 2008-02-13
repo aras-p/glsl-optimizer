@@ -40,6 +40,7 @@
  */
 static void
 sp_surface_copy(struct pipe_context *pipe,
+                unsigned do_flip,
 		struct pipe_surface *dst,
 		unsigned dstx, unsigned dsty,
 		struct pipe_surface *src,
@@ -53,8 +54,8 @@ sp_surface_copy(struct pipe_context *pipe,
                   dstx, dsty,
                   width, height,
                   pipe_surface_map(src),
-                  src->pitch,
-                  srcx, srcy);
+                  do_flip ? -src->pitch : src->pitch,
+                  srcx, do_flip ? 1 - srcy - height : srcy);
 
    pipe_surface_unmap(src);
    pipe_surface_unmap(dst);

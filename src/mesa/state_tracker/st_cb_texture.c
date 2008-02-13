@@ -1132,6 +1132,7 @@ do_copy_texsubimage(GLcontext *ctx,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_surface *dest_surface;
    uint dest_format, src_format;
+   uint do_flip = FALSE;
 
    (void) texImage;
 
@@ -1153,6 +1154,7 @@ do_copy_texsubimage(GLcontext *ctx,
 
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
       srcY = strb->Base.Height - srcY - height;
+      do_flip = TRUE;
    }
 
    src_format = strb->surface->format;
@@ -1190,6 +1192,7 @@ do_copy_texsubimage(GLcontext *ctx,
 #else
 
       pipe->surface_copy(pipe,
+                         do_flip,
 			 /* dest */
 			 dest_surface,
 			 destX, destY,

@@ -16,6 +16,7 @@ void brw_fill_blit(struct brw_context *intel,
                    short w, short h,
                    unsigned color);
 void brw_copy_blit(struct brw_context *intel,
+                   unsigned do_flip,
                    unsigned cpp,
                    short src_pitch,
                    struct pipe_buffer *src_buffer,

@@ -1229,6 +1229,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
       return;
 
    pipe->surface_copy(pipe,
+                      FALSE,
                       surf_front, x, y,  /* dest */
                       surf_back, x, y,   /* src */
                       width, height);

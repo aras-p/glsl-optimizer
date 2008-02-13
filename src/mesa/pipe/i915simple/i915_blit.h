@@ -31,6 +31,7 @@
 #include "i915_context.h"
 
 extern void i915_copy_blit(struct i915_context *i915,
+                           unsigned do_flip,
 			   unsigned cpp,
 			   short src_pitch,
 			   struct pipe_buffer *src_buffer,

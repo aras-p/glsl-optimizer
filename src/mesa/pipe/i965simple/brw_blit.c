@@ -111,6 +111,7 @@ static unsigned translate_raster_op(unsigned logicop)
 /* Copy BitBlt
  */
 void brw_copy_blit(struct brw_context *brw,
+                   unsigned do_flip,
                    unsigned cpp,
                    short src_pitch,
                    struct pipe_buffer *src_buffer,

@@ -1259,6 +1259,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (st->haveFramebufferSurfaces) {
       /* copy source framebuffer surface into mipmap/texture */
       pipe->surface_copy(pipe,
+                         FALSE,
 			 psTex, /* dest */
 			 0, 0, /* destx/y */
 			 psRead,

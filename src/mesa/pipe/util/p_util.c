@@ -47,9 +47,9 @@ pipe_copy_rect(ubyte * dst,
                unsigned width,
                unsigned height,
                const ubyte * src,
-               unsigned src_pitch,
+               int src_pitch,
                unsigned src_x, 
-               unsigned src_y)
+               int src_y)
 {
    unsigned i;
 

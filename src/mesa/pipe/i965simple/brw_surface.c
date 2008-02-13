@@ -103,6 +103,7 @@ brw_surface_data(struct pipe_context *pipe,
  */
 static void
 brw_surface_copy(struct pipe_context *pipe,
+                 unsigned do_flip,
                  struct pipe_surface *dst,
                  unsigned dstx, unsigned dsty,
                  struct pipe_surface *src,
@@ -118,14 +119,15 @@ brw_surface_copy(struct pipe_context *pipe,
                      dstx, dsty,
                      width, height,
                      pipe_surface_map(src) + src->offset,
-                     src->pitch,
-                     srcx, srcy);
+                     do_flip ? -src->pitch : src->pitch,
+                     srcx, do_flip ? 1 - srcy - height : srcy);
 
       pipe_surface_unmap(src);
       pipe_surface_unmap(dst);
    }
    else {
       brw_copy_blit(brw_context(pipe),
+                    do_flip,
                     dst->cpp,
                     (short) src->pitch, src->buffer, src->offset, FALSE,
                     (short) dst->pitch, dst->buffer, dst->offset, FALSE,
