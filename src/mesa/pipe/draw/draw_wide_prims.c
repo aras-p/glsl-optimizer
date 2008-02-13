@@ -76,7 +76,6 @@ static void passthrough_tri( struct draw_stage *stage,
 
 /**
  * Draw a wide line by drawing a quad (two triangles).
- * XXX still need line stipple.
  * XXX need to disable polygon stipple.
  */
 static void wide_line( struct draw_stage *stage,
@@ -103,11 +102,8 @@ static void wide_line( struct draw_stage *stage,
    /*
     * Draw wide line as a quad (two tris) by "stretching" the line along
     * X or Y.
-    * XXX For AA lines, the quad corners have to be computed in a
-    * more sophisticated way.
+    * We need to tweak coords in several ways to be conformant here.
     */
-
-   /* need to tweak coords in several ways to be conformant here */
 
    if (dx > dy) {
       /* x-major line */
@@ -162,6 +158,70 @@ static void wide_line( struct draw_stage *stage,
    tri.v[1] = v3;
    tri.v[2] = v1;
    stage->next->tri( stage->next, &tri );
+}
+
+
+/**
+ * Draw a wide line by drawing a quad, using geometry which will
+ * fullfill GL's antialiased line requirements.
+ */
+static void wide_line_aa(struct draw_stage *stage,
+                         struct prim_header *header)
+{
+   const struct wide_stage *wide = wide_stage(stage);
+   const float half_width = wide->half_line_width;
+   struct prim_header tri;
+   struct vertex_header *v[4];
+   float *pos;
+   float dx = header->v[1]->data[0][0] - header->v[0]->data[0][0];
+   float dy = header->v[1]->data[0][1] - header->v[0]->data[0][1];
+   const float len = sqrt(dx * dx + dy * dy);
+   uint i;
+
+   dx = dx * half_width / len;
+   dy = dy * half_width / len;
+
+   /* allocate/dup new verts */
+   for (i = 0; i < 4; i++) {
+      v[i] = dup_vert(stage, header->v[i/2], i);
+   }
+
+   /*
+    * Quad for line from v0 to v1:
+    *
+    *  1                         3
+    *  +-------------------------+
+    *  |                         |
+    *  *v0                     v1*
+    *  |                         |
+    *  +-------------------------+
+    *  0                         2
+    */
+
+   pos = v[0]->data[0];
+   pos[0] += dy;
+   pos[1] -= dx;
+
+   pos = v[1]->data[0];
+   pos[0] -= dy;
+   pos[1] += dx;
+
+   pos = v[2]->data[0];
+   pos[0] += dy;
+   pos[1] -= dx;
+
+   pos = v[3]->data[0];
+   pos[0] -= dy;
+   pos[1] += dx;
+
+   tri.det = header->det;  /* only the sign matters */
+
+   tri.v[0] = v[2];  tri.v[1] = v[1];  tri.v[2] = v[0];
+   stage->next->tri( stage->next, &tri );
+
+   tri.v[0] = v[3];  tri.v[1] = v[1];  tri.v[2] = v[2];
+   stage->next->tri( stage->next, &tri );
+
 }
 
 
@@ -319,7 +379,10 @@ static void wide_first_line( struct draw_stage *stage,
    wide->half_line_width = 0.5f * draw->rasterizer->line_width;
 
    if (draw->rasterizer->line_width != 1.0) {
-      wide->stage.line = wide_line;
+      if (draw->rasterizer->line_smooth)
+         wide->stage.line = wide_line_aa;
+      else
+         wide->stage.line = wide_line;
    }
    else {
       wide->stage.line = passthrough_line;
