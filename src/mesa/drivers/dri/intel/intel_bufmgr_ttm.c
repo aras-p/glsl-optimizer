@@ -84,8 +84,6 @@ typedef struct _dri_bufmgr_ttm {
     struct intel_validate_entry *validate_array;
     int validate_array_size;
     int validate_count;
-
-    uint32_t *cached_reloc_buf_data;
 } dri_bufmgr_ttm;
 
 /**
@@ -297,14 +295,7 @@ intel_setup_reloc_list(dri_bo *bo)
 
     bo_ttm->relocs = malloc(sizeof(struct dri_ttm_reloc) *
 			    bufmgr_ttm->max_relocs);
-
-    if (bufmgr_ttm->cached_reloc_buf_data != NULL) {
-       bo_ttm->reloc_buf_data = bufmgr_ttm->cached_reloc_buf_data;
-
-       bufmgr_ttm->cached_reloc_buf_data = NULL;
-    } else {
-       bo_ttm->reloc_buf_data = calloc(1, RELOC_BUF_SIZE(bufmgr_ttm->max_relocs));
-    }
+    bo_ttm->reloc_buf_data = calloc(1, RELOC_BUF_SIZE(bufmgr_ttm->max_relocs));
 
     /* Initialize the relocation list with the header:
      * DWORD 0: relocation count
@@ -468,17 +459,9 @@ dri_ttm_bo_unreference(dri_bo *buf)
 		 dri_bo_unreference(ttm_buf->relocs[i].target_buf);
 	    free(ttm_buf->relocs);
 
-	    if (bufmgr_ttm->cached_reloc_buf_data == NULL) {
-	       /* Cache a single relocation buffer allocation to avoid
-		* repeated create/map/unmap/destroy for batchbuffer
-		* relocations.
-		*/
-	       bufmgr_ttm->cached_reloc_buf_data = ttm_buf->reloc_buf_data;
-	    } else {
-	       /* Free the kernel BO containing relocation entries */
-	       free(ttm_buf->reloc_buf_data);
-	       ttm_buf->reloc_buf_data = NULL;
-	    }
+	    /* Free the kernel BO containing relocation entries */
+	    free(ttm_buf->reloc_buf_data);
+	    ttm_buf->reloc_buf_data = NULL;
 	}
 
 	if (ttm_buf->delayed_unmap) {
@@ -661,10 +644,6 @@ static void
 dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
-
-    if (bufmgr_ttm->cached_reloc_buf_data) {
-       free(bufmgr_ttm->cached_reloc_buf_data);
-    }
 
     free(bufmgr_ttm->validate_array);
 
@@ -903,7 +882,6 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->fd = fd;
     bufmgr_ttm->fence_type = fence_type;
     bufmgr_ttm->fence_type_flush = fence_type_flush;
-    bufmgr_ttm->cached_reloc_buf_data = NULL;
 
     /* Let's go with one relocation per every 2 dwords (but round down a bit
      * since a power of two will mean an extra page allocation for the reloc
