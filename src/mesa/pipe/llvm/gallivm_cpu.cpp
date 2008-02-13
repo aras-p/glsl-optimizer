@@ -105,10 +105,10 @@ static inline llvm::Function *func_for_shader(struct gallivm_prog *prog)
 
    switch (prog->type) {
    case GALLIVM_VS:
-      func = mod->getFunction("run_vertex_shader");
+      func = mod->getFunction("vs_shader");
       break;
    case GALLIVM_FS:
-      func = mod->getFunction("run_fragment_shader");
+      func = mod->getFunction("fs_shader");
       break;
    default:
       assert(!"Unknown shader type!");

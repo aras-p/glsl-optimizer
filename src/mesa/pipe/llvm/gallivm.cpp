@@ -318,6 +318,9 @@ struct gallivm_prog * gallivm_ir_compile(struct gallivm_ir *ir)
    passes.run(*mod);
    prog->module = mod;
 
+   std::cout << "After optimizations:"<<std::endl;
+   mod->dump();
+
    return prog;
 }
 

@@ -1149,7 +1149,7 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
    } else {
       stream << "fs_shader";
    }
-   stream << ir->id;
+   //stream << ir->id;
    std::string func_name = stream.str();
    Function *shader = llvm::cast<Function>(mod->getOrInsertFunction(
                                               func_name.c_str(),

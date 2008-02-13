@@ -68,9 +68,9 @@ std::vector<llvm::Value*> StorageSoa::inputElement(int idx, int swizzle,
    std::vector<llvm::Value*> res(4);
 
    res[0] = element(m_input, idx, 0);
-   res[1] = element(m_input, idx, 0);
-   res[2] = element(m_input, idx, 0);
-   res[3] = element(m_input, idx, 0);
+   res[1] = element(m_input, idx, 1);
+   res[2] = element(m_input, idx, 2);
+   res[3] = element(m_input, idx, 3);
 
    return res;
 }
@@ -89,9 +89,9 @@ std::vector<llvm::Value*> StorageSoa::outputElement(int idx, int swizzle,
    std::vector<llvm::Value*> res(4);
 
    res[0] = element(m_output, idx, 0);
-   res[1] = element(m_output, idx, 0);
-   res[2] = element(m_output, idx, 0);
-   res[3] = element(m_output, idx, 0);
+   res[1] = element(m_output, idx, 1);
+   res[2] = element(m_output, idx, 2);
+   res[3] = element(m_output, idx, 3);
 
    return res;
 }
