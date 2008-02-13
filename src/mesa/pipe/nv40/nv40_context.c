@@ -74,7 +74,7 @@ nv40_get_paramf(struct pipe_context *pipe, int param)
 	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
 		return 16.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-		return 4.0;
+		return 16.0;
 	case PIPE_CAP_BITMAP_TEXCOORD_BIAS:
 		return 0.0;
 	default:

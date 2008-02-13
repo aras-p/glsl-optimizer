@@ -108,10 +108,9 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	so_reloc (so, nv40mt->buffer, txf, tex_flags | NOUVEAU_BO_OR,
 		  NV40TCL_TEX_FORMAT_DMA0, NV40TCL_TEX_FORMAT_DMA1);
 	so_data  (so, ps->wrap);
-	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en |
-		   (0x00078000) /* mipmap related? */);
+	so_data  (so, NV40TCL_TEX_ENABLE_ENABLE | ps->en);
 	so_data  (so, txs);
-	so_data  (so, ps->filt | 0x3fd6 /*voodoo*/);
+	so_data  (so, ps->filt | 0x2000 /*voodoo*/);
 	so_data  (so, (pt->width[0] << NV40TCL_TEX_SIZE0_W_SHIFT) |
 		       pt->height[0]);
 	so_data  (so, ps->bcol);

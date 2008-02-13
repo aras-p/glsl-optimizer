@@ -193,6 +193,20 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 
 	ps->filt = filter;
 
+	{
+		float limit;
+
+		limit = CLAMP(cso->lod_bias, -16.0, 15.0);
+		ps->filt |= (int)(cso->lod_bias * 256.0) & 0x1fff;
+
+		limit = CLAMP(cso->max_lod, 0.0, 15.0);
+		ps->en |= (int)(limit * 256.0) << 7;
+
+		limit = CLAMP(cso->min_lod, 0.0, 15.0);
+		ps->en |= (int)(limit * 256.0) << 19;
+	}
+
+
 	if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 		switch (cso->compare_func) {
 		case PIPE_FUNC_NEVER:
