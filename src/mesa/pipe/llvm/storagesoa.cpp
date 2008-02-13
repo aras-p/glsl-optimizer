@@ -41,6 +41,7 @@
 
 using namespace llvm;
 
+
 StorageSoa::StorageSoa(llvm::BasicBlock *block,
                        llvm::Value *input,
                        llvm::Value *output,
@@ -57,6 +58,28 @@ StorageSoa::StorageSoa(llvm::BasicBlock *block,
 
 void StorageSoa::addImmediate(float *vec)
 {
+   float vals[4]; //decompose into soa
+
+   vals[0] = vec[0]; vals[1] = vec[0]; vals[2] = vec[0]; vals[3] = vec[0];
+   llvm::Value *xChannel = createConstGlobalVector(vals);
+
+   vals[0] = vec[1]; vals[1] = vec[1]; vals[2] = vec[1]; vals[3] = vec[1];
+   llvm::Value *yChannel = createConstGlobalVector(vals);
+
+
+   vals[0] = vec[2]; vals[1] = vec[2]; vals[2] = vec[2]; vals[3] = vec[2];
+   llvm::Value *zChannel = createConstGlobalVector(vals);
+
+   vals[0] = vec[3]; vals[1] = vec[3]; vals[2] = vec[3]; vals[3] = vec[3];
+   llvm::Value *wChannel = createConstGlobalVector(vals);
+
+   std::vector<llvm::Value*> res(4);
+   res[0] = xChannel;
+   res[1] = yChannel;
+   res[2] = zChannel;
+   res[3] = wChannel;
+
+   m_immediates[m_immediates.size()] = res;
 }
 
 llvm::Value *StorageSoa::addrElement(int idx) const
@@ -123,6 +146,12 @@ std::vector<llvm::Value*> StorageSoa::tempElement(int idx, int swizzle,
 std::vector<llvm::Value*> StorageSoa::immediateElement(int idx, int swizzle)
 {
    std::vector<llvm::Value*> res(4);
+   res = m_immediates[idx];
+
+   res[0] = new LoadInst(res[0], name("immx"), false, m_block);
+   res[1] = new LoadInst(res[1], name("immx"), false, m_block);
+   res[2] = new LoadInst(res[2], name("immx"), false, m_block);
+   res[3] = new LoadInst(res[3], name("immx"), false, m_block);
 
    return res;
 }
@@ -225,4 +254,40 @@ llvm::Value *StorageSoa::alignedArrayLoad(llvm::Value *val)
    LoadInst *load = new LoadInst(cast, name("alignLoad"), false, m_block);
    load->setAlignment(8);
    return load;
+}
+
+llvm::Module * StorageSoa::currentModule() const
+{
+    if (!m_block || !m_block->getParent())
+       return 0;
+
+    return m_block->getParent()->getParent();
+}
+
+llvm::Value * StorageSoa::createConstGlobalVector(float *vec)
+{
+   VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
+   GlobalVariable *immediate = new GlobalVariable(
+      /*Type=*/vectorType,
+      /*isConstant=*/true,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Initializer=*/0, // has initializer, specified below
+      /*Name=*/name("immediate"),
+      currentModule());
+
+   std::vector<Constant*> immValues;
+   ConstantFP *constx = ConstantFP::get(Type::FloatTy, APFloat(vec[0]));
+   ConstantFP *consty = ConstantFP::get(Type::FloatTy, APFloat(vec[1]));
+   ConstantFP *constz = ConstantFP::get(Type::FloatTy, APFloat(vec[2]));
+   ConstantFP *constw = ConstantFP::get(Type::FloatTy, APFloat(vec[3]));
+   immValues.push_back(constx);
+   immValues.push_back(consty);
+   immValues.push_back(constz);
+   immValues.push_back(constw);
+   Constant  *constVector = ConstantVector::get(vectorType, immValues);
+
+   // Global Variable Definitions
+   immediate->setInitializer(constVector);
+
+   return immediate;
 }

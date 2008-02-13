@@ -38,6 +38,7 @@ namespace llvm {
    class LoadInst;
    class Value;
    class VectorType;
+   class Module;
 }
 
 class StorageSoa
@@ -74,7 +75,9 @@ private:
                         int channel) const;
    const char *name(const char *prefix) const;
    llvm::ConstantInt *constantInt(int) const;
-   llvm::Value *alignedArrayLoad(llvm::Value *val);
+   llvm::Value  *alignedArrayLoad(llvm::Value *val);
+   llvm::Module *currentModule() const;
+   llvm::Value  *createConstGlobalVector(float *vec);
 
 private:
    llvm::BasicBlock *m_block;
@@ -83,6 +86,8 @@ private:
    llvm::Value *m_output;
    llvm::Value *m_consts;
    llvm::Value *m_temps;
+
+   std::map<int, std::vector<llvm::Value*> > m_immediates;
 
    mutable std::map<int, llvm::ConstantInt*> m_constInts;
    mutable char        m_name[32];
