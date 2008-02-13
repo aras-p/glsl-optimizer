@@ -12,6 +12,11 @@ std::vector<llvm::Value*> InstructionsSoa::add(const std::vector<llvm::Value*> i
 {
    std::vector<llvm::Value*> res(4);
 
+   res[0] = m_builder.CreateAdd(in1[0], in2[0], name("addx"));
+   res[1] = m_builder.CreateAdd(in1[1], in2[1], name("addy"));
+   res[2] = m_builder.CreateAdd(in1[2], in2[2], name("addz"));
+   res[3] = m_builder.CreateAdd(in1[3], in2[3], name("addw"));
+
    return res;
 }
 
@@ -20,10 +25,10 @@ std::vector<llvm::Value*> InstructionsSoa::mul(const std::vector<llvm::Value*> i
 {
    std::vector<llvm::Value*> res(4);
 
-   res[0] = m_builder.CreateMul(in1[0], in2[0], name("mul"));
-   res[1] = m_builder.CreateMul(in1[1], in2[1], name("mul"));
-   res[2] = m_builder.CreateMul(in1[2], in2[2], name("mul"));
-   res[3] = m_builder.CreateMul(in1[3], in2[3], name("mul"));
+   res[0] = m_builder.CreateMul(in1[0], in2[0], name("mulx"));
+   res[1] = m_builder.CreateMul(in1[1], in2[1], name("muly"));
+   res[2] = m_builder.CreateMul(in1[2], in2[2], name("mulz"));
+   res[3] = m_builder.CreateMul(in1[3], in2[3], name("mulw"));
 
    return res;
 }
