@@ -44,21 +44,25 @@ namespace llvm {
 class StorageSoa
 {
 public:
+   enum Argument {
+      Input,
+      Output,
+      Temp,
+      Const,
+      Immediate
+   };
+public:
    StorageSoa(llvm::BasicBlock *block,
               llvm::Value *input,
               llvm::Value *output,
               llvm::Value *consts,
               llvm::Value *temps);
 
+   std::vector<llvm::Value*> argument(Argument type, int idx, int swizzle, 
+                                      llvm::Value *indIdx =0);
    void addImmediate(float *vec);
 
    llvm::Value  * addrElement(int idx) const;
-
-   std::vector<llvm::Value*> inputElement(int idx, int swizzle, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> constElement(int idx, int swizzle, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> outputElement(int idx, int swizzle, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> tempElement(int idx, int swizzle, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> immediateElement(int idx, int swizzle);
 
    llvm::Value *extractIndex(llvm::Value *vec);
 
@@ -79,6 +83,11 @@ private:
    llvm::Module *currentModule() const;
    llvm::Value  *createConstGlobalVector(float *vec);
 
+   std::vector<llvm::Value*> inputElement(int idx, llvm::Value *indIdx =0);
+   std::vector<llvm::Value*> constElement(int idx, llvm::Value *indIdx =0);
+   std::vector<llvm::Value*> outputElement(int idx, llvm::Value *indIdx =0);
+   std::vector<llvm::Value*> tempElement(int idx, llvm::Value *indIdx =0);
+   std::vector<llvm::Value*> immediateElement(int idx);
 private:
    llvm::BasicBlock *m_block;
 

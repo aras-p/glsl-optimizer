@@ -27,6 +27,7 @@
 
 #include "storagesoa.h"
 
+#include "gallivm_p.h"
 
 #include "pipe/p_shader_tokens.h"
 #include <llvm/BasicBlock.h>
@@ -87,8 +88,7 @@ llvm::Value *StorageSoa::addrElement(int idx) const
    return 0;
 }
 
-std::vector<llvm::Value*> StorageSoa::inputElement(int idx, int swizzle,
-                                                   llvm::Value *indIdx)
+std::vector<llvm::Value*> StorageSoa::inputElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
 
@@ -100,8 +100,7 @@ std::vector<llvm::Value*> StorageSoa::inputElement(int idx, int swizzle,
    return res;
 }
 
-std::vector<llvm::Value*> StorageSoa::constElement(int idx, int swizzle,
-                                                   llvm::Value *indIdx)
+std::vector<llvm::Value*> StorageSoa::constElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
    llvm::Value *xChannel = elementPointer(m_consts, idx, 0);
@@ -117,8 +116,7 @@ std::vector<llvm::Value*> StorageSoa::constElement(int idx, int swizzle,
    return res;
 }
 
-std::vector<llvm::Value*> StorageSoa::outputElement(int idx, int swizzle,
-                                                    llvm::Value *indIdx)
+std::vector<llvm::Value*> StorageSoa::outputElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
 
@@ -130,8 +128,7 @@ std::vector<llvm::Value*> StorageSoa::outputElement(int idx, int swizzle,
    return res;
 }
 
-std::vector<llvm::Value*> StorageSoa::tempElement(int idx, int swizzle,
-                                                  llvm::Value *indIdx)
+std::vector<llvm::Value*> StorageSoa::tempElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
 
@@ -143,15 +140,15 @@ std::vector<llvm::Value*> StorageSoa::tempElement(int idx, int swizzle,
    return res;
 }
 
-std::vector<llvm::Value*> StorageSoa::immediateElement(int idx, int swizzle)
+std::vector<llvm::Value*> StorageSoa::immediateElement(int idx)
 {
    std::vector<llvm::Value*> res(4);
    res = m_immediates[idx];
 
    res[0] = new LoadInst(res[0], name("immx"), false, m_block);
-   res[1] = new LoadInst(res[1], name("immx"), false, m_block);
-   res[2] = new LoadInst(res[2], name("immx"), false, m_block);
-   res[3] = new LoadInst(res[3], name("immx"), false, m_block);
+   res[1] = new LoadInst(res[1], name("immy"), false, m_block);
+   res[2] = new LoadInst(res[2], name("immz"), false, m_block);
+   res[3] = new LoadInst(res[3], name("immw"), false, m_block);
 
    return res;
 }
@@ -290,4 +287,37 @@ llvm::Value * StorageSoa::createConstGlobalVector(float *vec)
    immediate->setInitializer(constVector);
 
    return immediate;
+}
+
+std::vector<llvm::Value*> StorageSoa::argument(Argument type, int idx, int swizzle,
+                                               llvm::Value *indIdx )
+{
+   std::vector<llvm::Value*> val(4);
+   switch(type) {
+   case Input:
+      val = inputElement(idx, indIdx);
+      break;
+   case Output:
+      val = outputElement(idx, indIdx);
+      break;
+   case Temp:
+      val = tempElement(idx, indIdx);
+      break;
+   case Const:
+      val = constElement(idx, indIdx);
+      break;
+   case Immediate:
+      val = immediateElement(idx);
+      break;
+   }
+   if (!gallivm_is_swizzle(swizzle))
+      return val;
+
+   std::vector<llvm::Value*> res(4);
+
+   res[0] = val[gallivm_x_swizzle(swizzle)];
+   res[1] = val[gallivm_y_swizzle(swizzle)];
+   res[2] = val[gallivm_z_swizzle(swizzle)];
+   res[3] = val[gallivm_w_swizzle(swizzle)];
+   return res;
 }
