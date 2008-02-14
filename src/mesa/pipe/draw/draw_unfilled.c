@@ -165,6 +165,8 @@ static void unfilled_flush( struct draw_stage *stage,
 			    unsigned flags )
 {
    stage->next->flush( stage->next, flags );
+
+   stage->tri = unfilled_first_tri;
 }
 
 
