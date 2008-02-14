@@ -523,6 +523,9 @@ static void vbuf_destroy( struct draw_stage *stage )
    if(vbuf->vf)
       draw_vf_destroy( vbuf->vf );
 
+   if (vbuf->render)
+      vbuf->render->destroy( vbuf->render );
+
    FREE( stage );
 }
 
