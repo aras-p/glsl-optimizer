@@ -1346,9 +1346,12 @@ exec_tex(struct tgsi_exec_machine *mach,
 }
 
 
-
+/**
+ * Evaluate a constant-valued coefficient at the position of the
+ * current quad.
+ */
 static void
-constant_interpolation(
+eval_constant_coef(
    struct tgsi_exec_machine *mach,
    unsigned attrib,
    unsigned chan )
@@ -1360,8 +1363,12 @@ constant_interpolation(
    }
 }
 
+/**
+ * Evaluate a linear-valued coefficient at the position of the
+ * current quad.
+ */
 static void
-linear_interpolation(
+eval_linear_coef(
    struct tgsi_exec_machine *mach,
    unsigned attrib,
    unsigned chan )
@@ -1377,8 +1384,12 @@ linear_interpolation(
    mach->Inputs[attrib].xyzw[chan].f[3] = a0 + dadx + dady;
 }
 
+/**
+ * Evaluate a perspective-valued coefficient at the position of the
+ * current quad.
+ */
 static void
-perspective_interpolation(
+eval_perspective_coef(
    struct tgsi_exec_machine *mach,
    unsigned attrib,
    unsigned chan )
@@ -1397,7 +1408,7 @@ perspective_interpolation(
 }
 
 
-typedef void (* interpolation_func)(
+typedef void (* eval_coef_func)(
    struct tgsi_exec_machine *mach,
    unsigned attrib,
    unsigned chan );
@@ -1410,7 +1421,7 @@ exec_declaration(
    if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
       if( decl->Declaration.File == TGSI_FILE_INPUT ) {
          unsigned first, last, mask;
-         interpolation_func interp;
+         eval_coef_func eval;
 
          assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
 
@@ -1420,15 +1431,15 @@ exec_declaration(
 
          switch( decl->Interpolation.Interpolate ) {
          case TGSI_INTERPOLATE_CONSTANT:
-            interp = constant_interpolation;
+            eval = eval_constant_coef;
             break;
 
          case TGSI_INTERPOLATE_LINEAR:
-            interp = linear_interpolation;
+            eval = eval_linear_coef;
             break;
 
          case TGSI_INTERPOLATE_PERSPECTIVE:
-            interp = perspective_interpolation;
+            eval = eval_perspective_coef;
             break;
 
          default:
@@ -1440,7 +1451,7 @@ exec_declaration(
 
             for( i = first; i <= last; i++ ) {
                for( j = 0; j < NUM_CHANNELS; j++ ) {
-                  interp( mach, i, j );
+                  eval( mach, i, j );
                }
             }
          }
@@ -1450,7 +1461,7 @@ exec_declaration(
             for( j = 0; j < NUM_CHANNELS; j++ ) {
                if( mask & (1 << j) ) {
                   for( i = first; i <= last; i++ ) {
-                     interp( mach, i, j );
+                     eval( mach, i, j );
                   }
                }
             }
