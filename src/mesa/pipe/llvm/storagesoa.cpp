@@ -30,6 +30,8 @@
 #include "gallivm_p.h"
 
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_debug.h"
+
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>
 #include <llvm/Value.h>
@@ -158,49 +160,6 @@ llvm::Value * StorageSoa::extractIndex(llvm::Value *vec)
    return 0;
 }
 
-void StorageSoa::storeOutput(int dstIdx, const std::vector<llvm::Value*> &val,
-                             int mask)
-{
-   if (mask != TGSI_WRITEMASK_XYZW) {
-      fprintf(stderr, "requires swizzle!!\n");
-      assert(0);
-   } else {
-      llvm::Value *xChannel = elementPointer(m_output, dstIdx, 0);
-      llvm::Value *yChannel = elementPointer(m_output, dstIdx, 1);
-      llvm::Value *zChannel = elementPointer(m_output, dstIdx, 2);
-      llvm::Value *wChannel = elementPointer(m_output, dstIdx, 3);
-
-      StoreInst *st = new StoreInst(val[0], xChannel, false, m_block);
-      st = new StoreInst(val[1], yChannel, false, m_block);
-      st = new StoreInst(val[2], zChannel, false, m_block);
-      st = new StoreInst(val[3], wChannel, false, m_block);
-   }
-}
-
-void StorageSoa::storeTemp(int idx, const std::vector<llvm::Value*> &val,
-                           int mask)
-{
-   if (mask != TGSI_WRITEMASK_XYZW) {
-      fprintf(stderr, "requires swizzle!!\n");
-      assert(0);
-   } else {
-      llvm::Value *xChannel = elementPointer(m_temps, idx, 0);
-      llvm::Value *yChannel = elementPointer(m_temps, idx, 1);
-      llvm::Value *zChannel = elementPointer(m_temps, idx, 2);
-      llvm::Value *wChannel = elementPointer(m_temps, idx, 3);
-
-      StoreInst *st = new StoreInst(val[0], xChannel, false, m_block);
-      st = new StoreInst(val[1], yChannel, false, m_block);
-      st = new StoreInst(val[2], zChannel, false, m_block);
-      st = new StoreInst(val[3], wChannel, false, m_block);
-   }
-}
-
-void StorageSoa::storeAddress(int idx, const std::vector<llvm::Value*> &val,
-                              int mask)
-{
-}
-
 llvm::Value * StorageSoa::elementPointer(llvm::Value *ptr, int index,
                                          int channel) const
 {
@@ -309,6 +268,10 @@ std::vector<llvm::Value*> StorageSoa::argument(Argument type, int idx, int swizz
    case Immediate:
       val = immediateElement(idx);
       break;
+   case Address:
+      debug_printf("Address not handled in the fetch phase!\n");
+      assert(0);
+      break;
    }
    if (!gallivm_is_swizzle(swizzle))
       return val;
@@ -320,4 +283,42 @@ std::vector<llvm::Value*> StorageSoa::argument(Argument type, int idx, int swizz
    res[2] = val[gallivm_z_swizzle(swizzle)];
    res[3] = val[gallivm_w_swizzle(swizzle)];
    return res;
+}
+
+void StorageSoa::store(Argument type, int idx, const std::vector<llvm::Value*> &val,
+                       int mask)
+{
+   llvm::Value *out = 0;
+   switch(type) {
+   case Output:
+      out = m_output;
+      break;
+   case Temp:
+      out = m_temps;
+      break;
+   case Input:
+      out = m_input;
+      break;
+   default:
+      debug_printf("Can't save output of this type: %d !\n", type);
+      assert(0);
+      break;
+   }
+
+   if ((mask & TGSI_WRITEMASK_X)) {
+      llvm::Value *xChannel = elementPointer(out, idx, 0);
+      new StoreInst(val[0], xChannel, false, m_block);
+   }
+   if ((mask & TGSI_WRITEMASK_Y)) {
+      llvm::Value *yChannel = elementPointer(out, idx, 1);
+      new StoreInst(val[1], yChannel, false, m_block);
+   }
+   if ((mask & TGSI_WRITEMASK_Z)) {
+      llvm::Value *zChannel = elementPointer(out, idx, 2);
+      new StoreInst(val[2], zChannel, false, m_block);
+   }
+   if ((mask & TGSI_WRITEMASK_W)) {
+      llvm::Value *wChannel = elementPointer(out, idx, 3);
+      new StoreInst(val[3], wChannel, false, m_block);
+   }
 }

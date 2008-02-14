@@ -49,7 +49,8 @@ public:
       Output,
       Temp,
       Const,
-      Immediate
+      Immediate,
+      Address
    };
 public:
    StorageSoa(llvm::BasicBlock *block,
@@ -58,20 +59,17 @@ public:
               llvm::Value *consts,
               llvm::Value *temps);
 
+
    std::vector<llvm::Value*> argument(Argument type, int idx, int swizzle, 
                                       llvm::Value *indIdx =0);
+   void store(Argument type, int idx, const std::vector<llvm::Value*> &val,
+              int mask);
+
    void addImmediate(float *vec);
 
    llvm::Value  * addrElement(int idx) const;
 
    llvm::Value *extractIndex(llvm::Value *vec);
-
-   void storeOutput(int dstIdx, const std::vector<llvm::Value*> &val,
-                         int mask);
-   void storeTemp(int idx, const std::vector<llvm::Value*> &val,
-                  int mask);
-   void storeAddress(int idx, const std::vector<llvm::Value*> &val,
-                     int mask);
 private:
    llvm::Value *elementPointer(llvm::Value *ptr, int index,
                                int channel) const;

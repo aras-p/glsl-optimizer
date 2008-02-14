@@ -1063,11 +1063,14 @@ translate_instructionir(llvm::Module *module,
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         storage->storeOutput(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+         storage->store(StorageSoa::Output,
+                        dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
-         storage->storeTemp(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+         storage->store(StorageSoa::Temp,
+                        dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
-         storage->storeAddress(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+         storage->store(StorageSoa::Address,
+                        dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else {
          fprintf(stderr, "ERROR: unsupported LLVM destination!");
          assert(!"wrong destination");
