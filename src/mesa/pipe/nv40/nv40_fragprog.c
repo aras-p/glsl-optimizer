@@ -710,14 +710,15 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 		{
 			struct tgsi_full_immediate *imm;
 			float vals[4];
-			int i;
 			
 			imm = &parse.FullToken.FullImmediate;
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
 			assert(fpc->nr_imm < MAX_IMM);
 
-			for (i = 0; i < (imm->Immediate.Size - 1); i++)
-				vals[i] = imm->u.ImmediateFloat32[i].Float;
+			vals[0] = imm->u.ImmediateFloat32[0].Float;
+			vals[1] = imm->u.ImmediateFloat32[1].Float;
+			vals[2] = imm->u.ImmediateFloat32[2].Float;
+			vals[3] = imm->u.ImmediateFloat32[3].Float;
 			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
 		}
 			break;
