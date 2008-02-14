@@ -50,6 +50,8 @@ softpipe_flush( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
 
+   draw_flush(softpipe->draw);
+
    /* - flush the quad pipeline
     * - flush the texture cache
     * - flush the render cache
