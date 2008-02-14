@@ -34,7 +34,6 @@
 #include "brw_util.h"
 #include "brw_wm.h"
 #include "brw_state.h"
-#include "brw_hal.h"
 
 
 GLuint brw_wm_nr_args( GLuint opcode )
@@ -120,20 +119,6 @@ GLuint brw_wm_is_scalar_result( GLuint opcode )
 }
 
 
-static void brw_wm_pass_hal (struct brw_wm_compile *c)
-{
-   static void (*hal_wm_pass) (struct brw_wm_compile *c);
-   static GLboolean hal_tried;
-   
-   if (!hal_tried)
-   {
-      hal_wm_pass = brw_hal_find_symbol ("intel_hal_wm_pass");
-      hal_tried = 1;
-   }
-   if (hal_wm_pass)
-      (*hal_wm_pass) (c);
-}
-
 static void do_wm_prog( struct brw_context *brw,
 			struct brw_fragment_program *fp, 
 			struct brw_wm_prog_key *key)
@@ -170,10 +155,6 @@ static void do_wm_prog( struct brw_context *brw,
        /* Dead code removal.
 	*/
        brw_wm_pass1(c);
-
-       /* Hal optimization
-	*/
-       brw_wm_pass_hal (c);
 
        /* Register allocation.
 	*/

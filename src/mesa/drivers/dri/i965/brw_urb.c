@@ -35,7 +35,6 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "brw_hal.h"
 
 #define VS 0
 #define GS 1
@@ -81,20 +80,6 @@ static void recalculate_urb_fence( struct brw_context *brw )
    GLuint vsize = brw->vs.prog_data->urb_entry_size;
    GLuint sfsize = brw->sf.prog_data->urb_entry_size;
 
-   static GLboolean (*hal_recalculate_urb_fence) (struct brw_context *brw);
-   static GLboolean hal_tried;
-
-   if (!hal_tried)
-   {
-      hal_recalculate_urb_fence = brw_hal_find_symbol ("intel_hal_recalculate_urb_fence");
-      hal_tried = 1;
-   }
-   if (hal_recalculate_urb_fence)
-   {
-      if ((*hal_recalculate_urb_fence) (brw))
-	 return;
-   }
-   
    if (csize < limits[CS].min_entry_size)
       csize = limits[CS].min_entry_size;
 
