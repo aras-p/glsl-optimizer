@@ -220,6 +220,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
    if (back_surf) {
       st_notify_swapbuffers(intel_fb->stfb);
       intelDisplaySurface(dPriv, back_surf, NULL);
+      st_notify_swapbuffers_complete(intel_fb->stfb);
    }
 }
 
