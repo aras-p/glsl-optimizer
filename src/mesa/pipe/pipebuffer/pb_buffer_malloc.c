@@ -110,7 +110,7 @@ pb_malloc_buffer_create(size_t size,
    buf = CALLOC_STRUCT(malloc_buffer);
    if(!buf)
       return NULL;
-   
+
    buf->base.base.refcount = 1;
    buf->base.base.alignment = desc->alignment;
    buf->base.base.usage = desc->usage;
@@ -119,7 +119,7 @@ pb_malloc_buffer_create(size_t size,
 
    buf->data = align_malloc(size, desc->alignment < sizeof(void*) ? sizeof(void*) : desc->alignment);
    if(!buf->data) {
-      FREE(buf);
+      align_free(buf);
       return NULL;
    }
 
