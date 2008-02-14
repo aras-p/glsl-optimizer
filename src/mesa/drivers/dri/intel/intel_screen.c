@@ -68,11 +68,14 @@ DRI_CONF_END;
 const GLuint __driNConfigOptions = 5;
 
 #ifdef USE_NEW_INTERFACE
-     static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
+static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
 
-     extern const struct dri_extension card_extensions[];
-     extern const struct dri_extension ttm_extensions[];
+extern const struct dri_extension card_extensions[];
+extern const struct dri_extension ttm_extensions[];
+#ifndef I915
+extern const struct dri_extension arb_oc_extensions[];
+#endif
 
 /**
  * Map all the memory regions described by the screen.
@@ -693,6 +696,9 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
     */
    driInitExtensions(NULL, card_extensions, GL_FALSE);
    driInitExtensions(NULL, ttm_extensions, GL_FALSE);
+#ifndef I915
+   driInitExtensions(NULL, arb_oc_extensions, GL_FALSE);
+#endif
 
    if (!intelInitDriver(psp))
        return NULL;

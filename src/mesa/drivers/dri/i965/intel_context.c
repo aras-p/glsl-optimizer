@@ -227,8 +227,10 @@ const struct dri_extension ttm_extensions[] = {
    {NULL, NULL}
 };
 
-const struct dri_extension arb_oc_extension = 
-    { "GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions};
+const struct dri_extension arb_oc_extensions[] = {
+   {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
+   {NULL, NULL}
+};
 
 /**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
@@ -248,7 +250,7 @@ void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
    if (intel == NULL || intel->intelScreen->drmMinor >= 8)
-      driInitSingleExtension(ctx, &arb_oc_extension);
+      driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
 }
 
 static const struct dri_debug_control debug_control[] =
