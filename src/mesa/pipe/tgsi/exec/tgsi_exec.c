@@ -158,13 +158,13 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
          if (numDeclarations == maxDeclarations) {
             declarations = REALLOC(declarations,
                                    maxDeclarations
-                                   * sizeof(struct tgsi_full_instruction),
+                                   * sizeof(struct tgsi_full_declaration),
                                    (maxDeclarations + 10)
-                                   * sizeof(struct tgsi_full_instruction));
+                                   * sizeof(struct tgsi_full_declaration));
             maxDeclarations += 10;
          }
          memcpy(declarations + numDeclarations,
-                &parse.FullToken.FullInstruction,
+                &parse.FullToken.FullDeclaration,
                 sizeof(declarations[0]));
          numDeclarations++;
          break;
