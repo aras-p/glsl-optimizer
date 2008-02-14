@@ -2169,14 +2169,6 @@ emit_declaration(
       last = decl->u.DeclarationRange.Last;
       mask = decl->Declaration.UsageMask;
 
-      /* Do not touch WPOS.xy */
-      if( first == 0 ) {
-         mask &= ~TGSI_WRITEMASK_XY;
-         if( mask == TGSI_WRITEMASK_NONE ) {
-            first++;
-         }
-      }
-
       for( i = first; i <= last; i++ ) {
          for( j = 0; j < NUM_CHANNELS; j++ ) {
             if( mask & (1 << j) ) {
