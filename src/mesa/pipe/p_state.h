@@ -253,7 +253,8 @@ struct pipe_surface
    unsigned status;              /**< PIPE_SURFACE_STATUS_x */
    unsigned clear_value;         /**< may be temporary */
    unsigned cpp;                 /**< bytes per pixel */
-   unsigned width, height;
+   unsigned width;
+   unsigned height;
    unsigned pitch;               /**< in pixels */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
@@ -272,13 +273,12 @@ struct pipe_texture
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
-   unsigned last_level;    /**< Index of last mipmap level present/defined */
-
    unsigned width[PIPE_MAX_TEXTURE_LEVELS];
    unsigned height[PIPE_MAX_TEXTURE_LEVELS];
    unsigned depth[PIPE_MAX_TEXTURE_LEVELS];
-   unsigned cpp;
 
+   unsigned cpp:8;
+   unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;
 
    /* These are also refcounted:
@@ -294,7 +294,7 @@ struct pipe_texture
  */
 struct pipe_vertex_buffer
 {
-   unsigned pitch:11;    /**< stride to same attrib in next vertex, in bytes */
+   unsigned pitch;    /**< stride to same attrib in next vertex, in bytes */
    unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_buffer *buffer;  /**< the actual buffer */
@@ -307,13 +307,13 @@ struct pipe_vertex_buffer
 struct pipe_vertex_element
 {
    /** Offset of this attribute, in bytes, from the start of the vertex */
-   unsigned src_offset:11;
+   unsigned src_offset;
 
    /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
     * this attribute live in?
     */
-   unsigned vertex_buffer_index:5;
-   unsigned nr_components:3;
+   unsigned vertex_buffer_index:8;
+   unsigned nr_components:8;
  
    enum pipe_format src_format; 	   /**< PIPE_FORMAT_* */
 };
