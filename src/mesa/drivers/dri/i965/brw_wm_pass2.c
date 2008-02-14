@@ -69,7 +69,8 @@ static void prealloc_reg(struct brw_wm_compile *c,
  */
 static void init_registers( struct brw_wm_compile *c )
 {
-   GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted;
+   struct brw_context *brw = c->func.brw;
+   GLuint inputs = (brw->vs.prog_data->outputs_written & DO_SETUP_BITS);
    GLuint nr_interp_regs = 0;
    GLuint i = 0;
    GLuint j;

@@ -43,8 +43,6 @@
 #include "brw_sf.h"
 #include "brw_state.h"
 
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
-
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
 {

@@ -688,5 +688,7 @@ brw_context( GLcontext *ctx )
    return (struct brw_context *)ctx;
 }
 
+#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
+
 #endif
 
