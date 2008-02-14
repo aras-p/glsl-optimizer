@@ -248,8 +248,8 @@ llvm::Value * StorageSoa::createConstGlobalVector(float *vec)
    return immediate;
 }
 
-std::vector<llvm::Value*> StorageSoa::argument(Argument type, int idx, int swizzle,
-                                               llvm::Value *indIdx )
+std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
+                                           llvm::Value *indIdx )
 {
    std::vector<llvm::Value*> val(4);
    switch(type) {

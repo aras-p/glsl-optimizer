@@ -60,8 +60,8 @@ public:
               llvm::Value *temps);
 
 
-   std::vector<llvm::Value*> argument(Argument type, int idx, int swizzle, 
-                                      llvm::Value *indIdx =0);
+   std::vector<llvm::Value*> load(Argument type, int idx, int swizzle, 
+                                  llvm::Value *indIdx =0);
    void store(Argument type, int idx, const std::vector<llvm::Value*> &val,
               int mask);
 

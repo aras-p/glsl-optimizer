@@ -706,20 +706,20 @@ translate_instructionir(llvm::Module *module,
          indIdx = storage->extractIndex(indIdx);
       }
       if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
-         val = storage->argument(StorageSoa::Const,
-                                 src->SrcRegister.Index, swizzle, indIdx);
+         val = storage->load(StorageSoa::Const,
+                             src->SrcRegister.Index, swizzle, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-         val = storage->argument(StorageSoa::Input,
-                                 src->SrcRegister.Index, swizzle, indIdx);
+         val = storage->load(StorageSoa::Input,
+                             src->SrcRegister.Index, swizzle, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
-         val = storage->argument(StorageSoa::Temp,
-                                 src->SrcRegister.Index, swizzle);
+         val = storage->load(StorageSoa::Temp,
+                             src->SrcRegister.Index, swizzle);
       } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
-         val = storage->argument(StorageSoa::Output,
-                                 src->SrcRegister.Index, swizzle, indIdx);
+         val = storage->load(StorageSoa::Output,
+                             src->SrcRegister.Index, swizzle, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
-         val = storage->argument(StorageSoa::Immediate,
-                                 src->SrcRegister.Index, swizzle);
+         val = storage->load(StorageSoa::Immediate,
+                             src->SrcRegister.Index, swizzle);
       } else {
          fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
          return;
