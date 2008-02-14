@@ -570,7 +570,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 		  BRW_MATH_DATA_SCALAR,
 		  BRW_MATH_PRECISION_FULL);
 
-	  if (c->key.SpriteOrigin == GL_UPPER_LEFT) {
+	  if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
 	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
 		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
 	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
@@ -589,7 +589,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
       {
 	 brw_set_predicate_control_flag_value(p, pc); 
 	 if (tex->CoordReplace) {
-	     if (c->key.SpriteOrigin == GL_UPPER_LEFT) {
+	     if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
 		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
 		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
 	     }
