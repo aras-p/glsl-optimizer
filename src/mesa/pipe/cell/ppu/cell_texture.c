@@ -61,7 +61,7 @@ cell_texture_layout(struct cell_texture * spt)
 
    spt->buffer_size = 0;
 
-   for ( level = pt->first_level ; level <= pt->last_level ; level++ ) {
+   for ( level = 0 ; level <= pt->last_level ; level++ ) {
       pt->width[level] = width;
       pt->height[level] = height;
       pt->depth[level] = depth;
