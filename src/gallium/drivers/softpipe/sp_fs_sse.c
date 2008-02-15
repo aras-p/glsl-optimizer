@@ -100,7 +100,7 @@ sp_setup_pos_vector(const struct tgsi_interp_coef *coef,
 
 
 static void
-sse_prepare( struct sp_fragment_shader *base,
+fs_sse_prepare( struct sp_fragment_shader *base,
 	      struct tgsi_exec_machine *machine,
 	      struct tgsi_sampler *samplers )
 {
@@ -113,7 +113,7 @@ sse_prepare( struct sp_fragment_shader *base,
  * TODO: process >1 quad at a time
  */
 static unsigned 
-sse_run( struct sp_fragment_shader *base,
+fs_sse_run( struct sp_fragment_shader *base,
 	 struct tgsi_exec_machine *machine,
 	 struct quad_header *quad )
 {
@@ -137,7 +137,7 @@ sse_run( struct sp_fragment_shader *base,
 
 
 static void 
-sse_delete( struct sp_fragment_shader *base )
+fs_sse_delete( struct sp_fragment_shader *base )
 {
    struct sp_sse_fragment_shader *shader = (struct sp_sse_fragment_shader *) base;
 
@@ -170,9 +170,9 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
    assert(shader->func);
 
    shader->base.shader = *templ;
-   shader->base.prepare = sse_prepare;
-   shader->base.run = sse_run;
-   shader->base.delete = sse_delete;
+   shader->base.prepare = fs_sse_prepare;
+   shader->base.run = fs_sse_run;
+   shader->base.delete = fs_sse_delete;
 
    return &shader->base;
 }
