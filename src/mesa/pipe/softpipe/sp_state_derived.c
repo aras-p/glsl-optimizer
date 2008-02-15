@@ -34,6 +34,15 @@
 #include "sp_state.h"
 
 
+/**
+ * Search vertex program's outputs to find a match for the given
+ * semantic name/index.  Return the index of the output slot.
+ *
+ * Return 0 if not found.  This will cause the fragment program to use
+ * vertex attrib 0 (position) in the cases where the fragment program
+ * attempts to use a missing vertex program output.  This is an undefined
+ * condition that users shouldn't hit anyway.
+ */
 static int
 find_vs_output(const struct pipe_shader_state *vs,
                uint semantic_name,
@@ -45,7 +54,7 @@ find_vs_output(const struct pipe_shader_state *vs,
           vs->output_semantic_index[i] == semantic_index)
          return i;
    }
-   return -1;
+   return 0;
 }
 
 
@@ -103,26 +112,17 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
          switch (fs->input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
             src = find_vs_output(vs, TGSI_SEMANTIC_POSITION, 0);
-            assert(src >= 0);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
             break;
 
          case TGSI_SEMANTIC_COLOR:
             src = find_vs_output(vs, TGSI_SEMANTIC_COLOR, 
                                  fs->input_semantic_index[i]);
-            if (src < 0)
-               src = 0;
-            assert(src >= 0);
             draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
             break;
 
          case TGSI_SEMANTIC_FOG:
             src = find_vs_output(vs, TGSI_SEMANTIC_FOG, 0);
-#if 1
-            if (src < 0) /* XXX temp hack, try demos/fogcoord.c with this */
-               src = 0;
-#endif
-            assert(src >= 0);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
             break;
 
@@ -130,7 +130,6 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
             /* this includes texcoords and varying vars */
             src = find_vs_output(vs, TGSI_SEMANTIC_GENERIC,
                                  fs->input_semantic_index[i]);
-            assert(src >= 0);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
             break;
 
@@ -140,7 +139,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
       }
 
       softpipe->psize_slot = find_vs_output(vs, TGSI_SEMANTIC_PSIZE, 0);
-      if (softpipe->psize_slot >= 0) {
+      if (softpipe->psize_slot > 0) {
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
                                softpipe->psize_slot);
       }
