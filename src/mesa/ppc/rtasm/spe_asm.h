@@ -75,32 +75,32 @@ extern void spe_release_func(struct spe_function *p);
 
 /* Memory load / store instructions
  */
-EMIT_RI10(spu_ldq,  0x034);
-EMIT_RR  (spu_lqx,  0x1c4);
-EMIT_RI16(spu_lqa,  0x061);
-EMIT_RI16(spu_lqr,  0x067);
-EMIT_RI10(spu_stqd, 0x024);
-EMIT_RR  (spu_stqx, 0x144);
-EMIT_RI16(spu_stqa, 0x041);
-EMIT_RI16(spu_stqr, 0x047);
-EMIT_RI7 (spu_cbd,  0x1f4);
-EMIT_RR  (spu_cbx,  0x1d4);
-EMIT_RI7 (spu_chd,  0x1f5);
-EMIT_RI7 (spu_chx,  0x1d5);
-EMIT_RI7 (spu_cwd,  0x1f6);
-EMIT_RI7 (spu_cwx,  0x1d6);
-EMIT_RI7 (spu_cdd,  0x1f7);
-EMIT_RI7 (spu_cdx,  0x1d7);
+EMIT_RI10(spe_ldq,  0x034);
+EMIT_RR  (spe_lqx,  0x1c4);
+EMIT_RI16(spe_lqa,  0x061);
+EMIT_RI16(spe_lqr,  0x067);
+EMIT_RI10(spe_stqd, 0x024);
+EMIT_RR  (spe_stqx, 0x144);
+EMIT_RI16(spe_stqa, 0x041);
+EMIT_RI16(spe_stqr, 0x047);
+EMIT_RI7 (spe_cbd,  0x1f4);
+EMIT_RR  (spe_cbx,  0x1d4);
+EMIT_RI7 (spe_chd,  0x1f5);
+EMIT_RI7 (spe_chx,  0x1d5);
+EMIT_RI7 (spe_cwd,  0x1f6);
+EMIT_RI7 (spe_cwx,  0x1d6);
+EMIT_RI7 (spe_cdd,  0x1f7);
+EMIT_RI7 (spe_cdx,  0x1d7);
 
 
 /* Constant formation instructions
  */
-EMIT_RI16(spu_ilh,   0x083);
-EMIT_RI16(spu_ilhu,  0x082);
-EMIT_RI16(spu_il,    0x081);
-EMIT_RI18(spu_ila,   0x021);
-EMIT_RI16(spu_iohl,  0x0c1);
-EMIT_RI16(spu_fsmbi, 0x0c5);
+EMIT_RI16(spe_ilh,   0x083);
+EMIT_RI16(spe_ilhu,  0x082);
+EMIT_RI16(spe_il,    0x081);
+EMIT_RI18(spe_ila,   0x021);
+EMIT_RI16(spe_iohl,  0x0c1);
+EMIT_RI16(spe_fsmbi, 0x0c5);
 
 
 /* Integer and logical instructions
@@ -114,22 +114,22 @@ EMIT_RI10(spe_sfhi,    0x00d);
 EMIT_RR  (spe_sf,      0x040);
 EMIT_RI10(spe_sfi,     0x00c);
 EMIT_RR  (spe_addx,    0x340);
-EMIT_RR  (spu_cg,      0x0c2);
-EMIT_RR  (spu_cgx,     0x342);
+EMIT_RR  (spe_cg,      0x0c2);
+EMIT_RR  (spe_cgx,     0x342);
 EMIT_RR  (spe_sfx,     0x341);
-EMIT_RR  (spu_bg,      0x042);
-EMIT_RR  (spu_bgx,     0x343);
-EMIT_RR  (spu_mpy,     0x3c4);
-EMIT_RR  (spu_mpyu,    0x3cc);
-EMIT_RI10(spu_mpyi,    0x074);
-EMIT_RI10(spu_mpyui,   0x075);
+EMIT_RR  (spe_bg,      0x042);
+EMIT_RR  (spe_bgx,     0x343);
+EMIT_RR  (spe_mpy,     0x3c4);
+EMIT_RR  (spe_mpyu,    0x3cc);
+EMIT_RI10(spe_mpyi,    0x074);
+EMIT_RI10(spe_mpyui,   0x075);
 EMIT_RRR (spy_mpya,    0x00c);
-EMIT_RR  (spu_mpyh,    0x3c5);
-EMIT_RR  (spu_mpys,    0x3c7);
-EMIT_RR  (spu_mpyhh,   0x3c6);
-EMIT_RR  (spu_mpyhha,  0x346);
-EMIT_RR  (spu_mpyhhu,  0x3ce);
-EMIT_RR  (spu_mpyhhau, 0x34e);
+EMIT_RR  (spe_mpyh,    0x3c5);
+EMIT_RR  (spe_mpys,    0x3c7);
+EMIT_RR  (spe_mpyhh,   0x3c6);
+EMIT_RR  (spe_mpyhha,  0x346);
+EMIT_RR  (spe_mpyhhu,  0x3ce);
+EMIT_RR  (spe_mpyhhau, 0x34e);
 EMIT_R   (spe_clz,     0x2a5);
 EMIT_R   (spe_cntb,    0x2b4);
 EMIT_R   (spe_fsmb,    0x1b6);
@@ -146,24 +146,24 @@ EMIT_R   (spe_xshw,    0x2ae);
 EMIT_R   (spe_xswd,    0x2a6);
 EMIT_RR  (spe_and,     0x0c1);
 EMIT_RR  (spe_andc,    0x2c1);
-EMIT_RI10(spu_andbi,   0x016);
-EMIT_RI10(spu_andhi,   0x015);
-EMIT_RI10(spu_andi,    0x014);
+EMIT_RI10(spe_andbi,   0x016);
+EMIT_RI10(spe_andhi,   0x015);
+EMIT_RI10(spe_andi,    0x014);
 EMIT_RR  (spe_or,      0x041);
 EMIT_RR  (spe_orc,     0x2c9);
-EMIT_RI10(spu_orbi,    0x006);
-EMIT_RI10(spu_orhi,    0x005);
-EMIT_RI10(spu_ori,     0x004);
-EMIT_R   (spu_orx,     0x1f0);
-EMIT_RR  (spu_xor,     0x241);
-EMIT_RI10(spu_xorbi,   0x026);
-EMIT_RI10(spu_xorhi,   0x025);
-EMIT_RI10(spu_xori,    0x024);
+EMIT_RI10(spe_orbi,    0x006);
+EMIT_RI10(spe_orhi,    0x005);
+EMIT_RI10(spe_ori,     0x004);
+EMIT_R   (spe_orx,     0x1f0);
+EMIT_RR  (spe_xor,     0x241);
+EMIT_RI10(spe_xorbi,   0x026);
+EMIT_RI10(spe_xorhi,   0x025);
+EMIT_RI10(spe_xori,    0x024);
 EMIT_RR  (spe_nand,    0x0c9);
 EMIT_RR  (spe_nor,     0x049);
 EMIT_RR  (spe_eqv,     0x249);
-EMIT_RRR (spy_selb,    0x008);
-EMIT_RRR (spy_shufb,   0x00b);
+EMIT_RRR (spe_selb,    0x008);
+EMIT_RRR (spe_shufb,   0x00b);
 
 
 /* Shift and rotate instructions
@@ -229,71 +229,71 @@ EMIT_RR  (spe_clgt,      0x2c0);
 EMIT_RI10(spe_clgti,     0x05c);
 EMIT_I16 (spe_br,        0x064);
 EMIT_I16 (spe_bra,       0x060);
-EMIT_RI16(spu_brsl,      0x066);
-EMIT_RI16(spu_brasl,     0x062);
-EMIT_RI16(spu_brnz,      0x042);
-EMIT_RI16(spu_brz,       0x040);
-EMIT_RI16(spu_brhnz,     0x046);
-EMIT_RI16(spu_brhz,      0x044);
+EMIT_RI16(spe_brsl,      0x066);
+EMIT_RI16(spe_brasl,     0x062);
+EMIT_RI16(spe_brnz,      0x042);
+EMIT_RI16(spe_brz,       0x040);
+EMIT_RI16(spe_brhnz,     0x046);
+EMIT_RI16(spe_brhz,      0x044);
 
-extern void spu_bi(struct spe_function *p, unsigned rA, int d, int e);
-extern void spu_iret(struct spe_function *p, unsigned rA, int d, int e);
-extern void spu_bisled(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bi(struct spe_function *p, unsigned rA, int d, int e);
+extern void spe_iret(struct spe_function *p, unsigned rA, int d, int e);
+extern void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
-extern void spu_bisl(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
-extern void spu_biz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_biz(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
-extern void spu_binz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_binz(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
-extern void spu_bihz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
-extern void spu_bihnz(struct spe_function *p, unsigned rT, unsigned rA,
+extern void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA,
     int d, int e);
 
 
 /* Floating-point instructions
  */
-EMIT_RR  (spu_fa,         0x2c4);
-EMIT_RR  (spu_dfa,        0x2cc);
-EMIT_RR  (spu_fs,         0x2c5);
-EMIT_RR  (spu_dfs,        0x2cd);
-EMIT_RR  (spu_fm,         0x2c6);
-EMIT_RR  (spu_dfm,        0x2ce);
-EMIT_RRR (spu_fma,        0x00e);
-EMIT_RR  (spu_dfma,       0x35c);
-EMIT_RRR (spu_fnms,       0x00d);
-EMIT_RR  (spu_dfnms,      0x35e);
-EMIT_RRR (spu_fms,        0x00f);
-EMIT_RR  (spu_dfms,       0x35d);
-EMIT_RR  (spu_dfnma,      0x35f);
-EMIT_R   (spu_frest,      0x1b8);
-EMIT_R   (spu_frsqest,    0x1b9);
-EMIT_RR  (spu_fi,         0x3d4);
-EMIT_RI7 (spu_csflt,      0x3da);
-EMIT_RI7 (spu_cflts,      0x3d8);
-EMIT_RI7 (spu_cuflt,      0x3db);
-EMIT_RI7 (spu_cfltu,      0x3d9);
-EMIT_R   (spu_frds,       0x3b9);
-EMIT_R   (spu_fesd,       0x3b8);
-EMIT_RR  (spu_dfceq,      0x3c3);
-EMIT_RR  (spu_dfcmeq,     0x3cb);
-EMIT_RR  (spu_dfcgt,      0x2c3);
-EMIT_RR  (spu_dfcmgt,     0x2cb);
-EMIT_RI7 (spu_dftsv,      0x3bf);
-EMIT_RR  (spu_fceq,       0x3c2);
-EMIT_RR  (spu_fcmeq,      0x3ca);
-EMIT_RR  (spu_fcgt,       0x2c2);
-EMIT_RR  (spu_fcmgt,      0x2ca);
-EMIT_R   (spu_fscrwr,     0x3ba);
-EMIT_    (spu_fscrrd,     0x398);
+EMIT_RR  (spe_fa,         0x2c4);
+EMIT_RR  (spe_dfa,        0x2cc);
+EMIT_RR  (spe_fs,         0x2c5);
+EMIT_RR  (spe_dfs,        0x2cd);
+EMIT_RR  (spe_fm,         0x2c6);
+EMIT_RR  (spe_dfm,        0x2ce);
+EMIT_RRR (spe_fma,        0x00e);
+EMIT_RR  (spe_dfma,       0x35c);
+EMIT_RRR (spe_fnms,       0x00d);
+EMIT_RR  (spe_dfnms,      0x35e);
+EMIT_RRR (spe_fms,        0x00f);
+EMIT_RR  (spe_dfms,       0x35d);
+EMIT_RR  (spe_dfnma,      0x35f);
+EMIT_R   (spe_frest,      0x1b8);
+EMIT_R   (spe_frsqest,    0x1b9);
+EMIT_RR  (spe_fi,         0x3d4);
+EMIT_RI7 (spe_csflt,      0x3da);
+EMIT_RI7 (spe_cflts,      0x3d8);
+EMIT_RI7 (spe_cuflt,      0x3db);
+EMIT_RI7 (spe_cfltu,      0x3d9);
+EMIT_R   (spe_frds,       0x3b9);
+EMIT_R   (spe_fesd,       0x3b8);
+EMIT_RR  (spe_dfceq,      0x3c3);
+EMIT_RR  (spe_dfcmeq,     0x3cb);
+EMIT_RR  (spe_dfcgt,      0x2c3);
+EMIT_RR  (spe_dfcmgt,     0x2cb);
+EMIT_RI7 (spe_dftsv,      0x3bf);
+EMIT_RR  (spe_fceq,       0x3c2);
+EMIT_RR  (spe_fcmeq,      0x3ca);
+EMIT_RR  (spe_fcgt,       0x2c2);
+EMIT_RR  (spe_fcmgt,      0x2ca);
+EMIT_R   (spe_fscrwr,     0x3ba);
+EMIT_    (spe_fscrrd,     0x398);
 
 
 /* Channel instructions
  */
-EMIT_R   (spu_rdch,       0x00d);
-EMIT_R   (spu_rdchcnt,    0x00f);
-EMIT_R   (spu_wrch,       0x10d);
+EMIT_R   (spe_rdch,       0x00d);
+EMIT_R   (spe_rdchcnt,    0x00f);
+EMIT_R   (spe_wrch,       0x10d);
 
 
 #ifdef UNDEF_EMIT_MACROS
