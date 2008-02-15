@@ -6,7 +6,8 @@
 
 struct spu_vs_context;
 
-typedef void (*spu_fetch_func)(qword *out, const qword *in);
+typedef void (*spu_fetch_func)(qword *out, const qword *in, qword defaults,
+			       const qword *shuffle_data);
 typedef void (*spu_full_fetch_func)( struct spu_vs_context *draw,
 				     struct spu_exec_machine *machine,
 				     const unsigned *elts,

@@ -59,8 +59,59 @@
 
 #define DRAW_DBG 0
 
+static const qword fetch_shuffle_data[] = {
+   /* Shuffle used by CVT_64_FLOAT
+    */
+   {
+      0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
+      0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+   },
 
-static const vec_float4 defaults = { 0.0, 0.0, 0.0, 1.0 };
+   /* Shuffle used by CVT_8_USCALED and CVT_8_SSCALED
+    */
+   {
+      0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80,
+      0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80, 0x80,
+   },
+   
+   /* Shuffle used by CVT_16_USCALED and CVT_16_SSCALED
+    */
+   {
+      0x00, 0x01, 0x80, 0x80, 0x02, 0x03, 0x80, 0x80,
+      0x04, 0x05, 0x80, 0x80, 0x06, 0x07, 0x80, 0x80,
+   },
+   
+   /* High value shuffle used by trans4x4.
+    */
+   {
+      0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
+      0x04, 0x05, 0x06, 0x07, 0x14, 0x15, 0x16, 0x17
+   },
+
+   /* Low value shuffle used by trans4x4.
+    */
+   {
+      0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B,
+      0x0C, 0x0D, 0x0E, 0x0F, 0x1C, 0x1D, 0x1E, 0x1F
+   }
+};
+
+
+static INLINE void
+trans4x4(qword row0, qword row1, qword row2, qword row3, qword *out,
+         const qword *shuffle)
+{
+   qword t1 = si_shufb(row0, row2, shuffle[3]);
+   qword t2 = si_shufb(row0, row2, shuffle[4]);
+   qword t3 = si_shufb(row1, row3, shuffle[3]);
+   qword t4 = si_shufb(row1, row3, shuffle[4]);
+
+   out[0] = si_shufb(t1, t3, shuffle[3]);
+   out[1] = si_shufb(t1, t3, shuffle[4]);
+   out[2] = si_shufb(t2, t4, shuffle[3]);
+   out[3] = si_shufb(t2, t4, shuffle[4]);
+}
+
 
 /**
  * Fetch between 1 and 32 bytes from an unaligned address
@@ -100,140 +151,117 @@ fetch_unaligned(qword *dst, unsigned ea, unsigned size)
 }
 
 
-#define CVT_32_FLOAT(q)    (*(q))
+#define CVT_32_FLOAT(q, s)    (*(q))
 
 static INLINE qword
-CVT_64_FLOAT(const qword *qw)
+CVT_64_FLOAT(const qword *qw, const qword *shuffle)
 {
-   qword shuf_first = (qword) {
-      0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
-      0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-   };
-
    qword a = si_frds(qw[0]);
    qword b = si_frds(si_rotqbyi(qw[0], 8));
    qword c = si_frds(qw[1]);
    qword d = si_frds(si_rotqbyi(qw[1], 8));
 
-   qword ab = si_shufb(a, b, shuf_first);
-   qword cd = si_shufb(c, d, si_rotqbyi(shuf_first, 8));
+   qword ab = si_shufb(a, b, shuffle[0]);
+   qword cd = si_shufb(c, d, si_rotqbyi(shuffle[0], 8));
    
    return si_or(ab, cd);
 }
 
 
 static INLINE qword
-CVT_8_USCALED(const qword *qw)
+CVT_8_USCALED(const qword *qw, const qword *shuffle)
 {
-   qword shuffle = (qword) {
-      0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80,
-      0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80, 0x80,
-   };
-
-   return si_cuflt(si_shufb(*qw, *qw, shuffle), 0);
+   return si_cuflt(si_shufb(*qw, *qw, shuffle[1]), 0);
 }
 
 
 static INLINE qword
-CVT_16_USCALED(const qword *qw)
+CVT_16_USCALED(const qword *qw, const qword *shuffle)
 {
-   qword shuffle = (qword) {
-      0x00, 0x01, 0x80, 0x80, 0x02, 0x03, 0x80, 0x80,
-      0x04, 0x05, 0x80, 0x80, 0x06, 0x07, 0x80, 0x80,
-   };
-
-   return si_cuflt(si_shufb(*qw, *qw, shuffle), 0);
+   return si_cuflt(si_shufb(*qw, *qw, shuffle[2]), 0);
 }
 
 
 static INLINE qword
-CVT_32_USCALED(const qword *qw)
+CVT_32_USCALED(const qword *qw, const qword *shuffle)
 {
+   (void) shuffle;
    return si_cuflt(*qw, 0);
 }
 
 static INLINE qword
-CVT_8_SSCALED(const qword *qw)
+CVT_8_SSCALED(const qword *qw, const qword *shuffle)
 {
-   qword shuffle = (qword) {
-      0x00, 0x80, 0x80, 0x80, 0x01, 0x80, 0x80, 0x80,
-      0x02, 0x80, 0x80, 0x80, 0x03, 0x80, 0x80, 0x80,
-   };
-
-   return si_csflt(si_shufb(*qw, *qw, shuffle), 0);
+   return si_csflt(si_shufb(*qw, *qw, shuffle[1]), 0);
 }
 
 
 static INLINE qword
-CVT_16_SSCALED(const qword *qw)
+CVT_16_SSCALED(const qword *qw, const qword *shuffle)
 {
-   qword shuffle = (qword) {
-      0x00, 0x01, 0x80, 0x80, 0x02, 0x03, 0x80, 0x80,
-      0x04, 0x05, 0x80, 0x80, 0x06, 0x07, 0x80, 0x80,
-   };
-
-   return si_csflt(si_shufb(*qw, *qw, shuffle), 0);
+   return si_csflt(si_shufb(*qw, *qw, shuffle[2]), 0);
 }
 
 
 static INLINE qword
-CVT_32_SSCALED(const qword *qw)
+CVT_32_SSCALED(const qword *qw, const qword *shuffle)
 {
+   (void) shuffle;
    return si_csflt(*qw, 0);
 }
 
 
 static INLINE qword
-CVT_8_UNORM(const qword *qw)
+CVT_8_UNORM(const qword *qw, const qword *shuffle)
 {
    const qword scale = (qword) spu_splats(1.0f / 255.0f);
-   return si_fm(CVT_8_USCALED(qw), scale);
+   return si_fm(CVT_8_USCALED(qw, shuffle), scale);
 }
 
 
 static INLINE qword
-CVT_16_UNORM(const qword *qw)
+CVT_16_UNORM(const qword *qw, const qword *shuffle)
 {
    const qword scale = (qword) spu_splats(1.0f / 65535.0f);
-   return si_fm(CVT_16_USCALED(qw), scale);
+   return si_fm(CVT_16_USCALED(qw, shuffle), scale);
 }
 
 
 static INLINE qword
-CVT_32_UNORM(const qword *qw)
+CVT_32_UNORM(const qword *qw, const qword *shuffle)
 {
    const qword scale = (qword) spu_splats(1.0f / 4294967295.0f);
-   return si_fm(CVT_32_USCALED(qw), scale);
+   return si_fm(CVT_32_USCALED(qw, shuffle), scale);
 }
 
 
 static INLINE qword
-CVT_8_SNORM(const qword *qw)
+CVT_8_SNORM(const qword *qw, const qword *shuffle)
 {
    const qword scale = (qword) spu_splats(1.0f / 127.0f);
-   return si_fm(CVT_8_SSCALED(qw), scale);
+   return si_fm(CVT_8_SSCALED(qw, shuffle), scale);
 }
 
 
 static INLINE qword
-CVT_16_SNORM(const qword *qw)
+CVT_16_SNORM(const qword *qw, const qword *shuffle)
 {
    const qword scale = (qword) spu_splats(1.0f / 32767.0f);
-   return si_fm(CVT_16_SSCALED(qw), scale);
+   return si_fm(CVT_16_SSCALED(qw, shuffle), scale);
 }
 
 
 static INLINE qword
-CVT_32_SNORM(const qword *qw)
+CVT_32_SNORM(const qword *qw, const qword *shuffle)
 {
    const qword scale = (qword) spu_splats(1.0f / 2147483647.0f);
-   return si_fm(CVT_32_SSCALED(qw), scale);
+   return si_fm(CVT_32_SSCALED(qw, shuffle), scale);
 }
 
 #define SZ_4 si_il(0U)
-#define SZ_3 si_rotqmbyi(si_il(~0), -12)
-#define SZ_2 si_rotqmbyi(si_il(~0), -8)
-#define SZ_1 si_rotqmbyi(si_il(~0), -4)
+#define SZ_3 si_fsmbi(0x000f)
+#define SZ_2 si_fsmbi(0x00ff)
+#define SZ_1 si_fsmbi(0x0fff)
 
 /**
  * Fetch a float[4] vertex attribute from memory, doing format/type
@@ -244,16 +272,18 @@ CVT_32_SNORM(const qword *qw)
  */
 #define FETCH_ATTRIB( NAME, SZ, CVT, N )			\
 static void							\
-fetch_##NAME(qword *out, const qword *in)			\
+fetch_##NAME(qword *out, const qword *in, qword defaults, \
+                const qword *shuffle)	\
 {								\
    qword tmp[4];						\
 								\
-   tmp[0] = si_selb(CVT(in + (0 * N)), (qword) defaults, SZ);	\
-   tmp[1] = si_selb(CVT(in + (1 * N)), (qword) defaults, SZ);	\
-   tmp[2] = si_selb(CVT(in + (2 * N)), (qword) defaults, SZ);	\
-   tmp[3] = si_selb(CVT(in + (3 * N)), (qword) defaults, SZ);	\
-   _transpose_matrix4x4((vec_float4 *) out, (vec_float4 *) tmp);	\
+   tmp[0] = si_selb(CVT(in + (0 * N), shuffle), defaults, SZ);		\
+   tmp[1] = si_selb(CVT(in + (1 * N), shuffle), defaults, SZ);		\
+   tmp[2] = si_selb(CVT(in + (2 * N), shuffle), defaults, SZ);		\
+   tmp[3] = si_selb(CVT(in + (3 * N), shuffle), defaults, SZ);		\
+   trans4x4(tmp[0], tmp[1], tmp[2], tmp[3], out, shuffle);		\
 }
+
 
 FETCH_ATTRIB( R64G64B64A64_FLOAT,   SZ_4, CVT_64_FLOAT, 2 )
 FETCH_ATTRIB( R64G64B64_FLOAT,      SZ_3, CVT_64_FLOAT, 2 )
@@ -582,6 +612,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
    /* loop over vertex attributes (vertex shader inputs)
     */
    for (attr = 0; attr < nr_attrs; attr++) {
+      const qword default_values = (qword)(vec_float4){ 0.0, 0.0, 0.0, 1.0 };
       const unsigned pitch = draw->vertex_fetch.pitch[attr];
       const uint64_t src = draw->vertex_fetch.src_ptr[attr];
       const spu_fetch_func fetch = draw->vertex_fetch.fetch[attr];
@@ -602,8 +633,8 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
          printf("SPU: fetching = 0x%llx\n", addr);
 #endif
 
-	 fetch_unaligned(& in[idx], addr, bytes_per_entry);
-	 idx += quads_per_entry;
+         fetch_unaligned(& in[idx], addr, bytes_per_entry);
+         idx += quads_per_entry;
       }
 
       /* Be nice and zero out any missing vertices.
@@ -613,7 +644,8 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
 
       /* Convert all 4 vertices to vectors of float.
        */
-      (*fetch)(&machine->Inputs[attr].xyzw[0].q, in);
+      (*fetch)(&machine->Inputs[attr].xyzw[0].q, in, default_values,
+               fetch_shuffle_data);
    }
 }
 
