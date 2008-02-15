@@ -2356,11 +2356,17 @@ tgsi_emit_sse2_fs(
          ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
+
+	 if (!ok) {
+	    debug_printf("failed to translate tgsi opcode %d\n", 
+			 parse.FullToken.FullInstruction.Instruction.Opcode );
+	 }
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
 	 ok = 0;
+	 debug_printf("failed to emit immediate value\n");
          break;
 
       default:
