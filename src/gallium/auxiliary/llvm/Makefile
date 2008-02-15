@@ -31,7 +31,7 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 INCLUDES = \
 	-I. \
 	-I$(TOP)/src/gallium/drivers
-	-I$(TOP)/src/gallium/aux \
+	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/include

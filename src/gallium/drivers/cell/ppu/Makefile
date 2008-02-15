@@ -43,7 +43,7 @@ OBJECTS = $(SOURCES:.c=.o) \
 INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/aux \
+	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers
 
 .c.o:
