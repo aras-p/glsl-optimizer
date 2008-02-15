@@ -48,6 +48,7 @@
 
 #include "i830_dri.h"
 
+#include "intel_chipset.h"
 #include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_span.h"
@@ -123,6 +124,9 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_I915_G:
          chipset = "Intel(R) 915G";
          break;
+      case PCI_CHIP_E7221_G:
+	 chipset = "Intel (R) E7221G (i915)";
+	 break;
       case PCI_CHIP_I915_GM:
          chipset = "Intel(R) 915GM";
          break;
