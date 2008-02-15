@@ -36,7 +36,7 @@ GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread \
 
 SPU_CC = spu-gcc
 
-SPU_CFLAGS = $(OPT_FLAGS) -W -Wall -Winline -Wmissing-prototypes -Wno-main
+SPU_CFLAGS = $(OPT_FLAGS) -W -Wall -Winline -Wmissing-prototypes -Wno-main \
 	-I. -I$(SDK)/spu/include -I$(TOP)/src/mesa/ $(INCLUDE_DIRS) \
 	-include spu_intrinsics.h
 
