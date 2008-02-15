@@ -76,24 +76,20 @@ public:
 
    llvm::ConstantInt *constantInt(int) const;
 private:
-   llvm::Value *elementPointer(llvm::Value *ptr, int index,
+   llvm::Value *elementPointer(llvm::Value *ptr, llvm::Value *indIdx,
                                int channel) const;
-   llvm::Value *element(llvm::Value *ptr, int index,
+   llvm::Value *element(llvm::Value *ptr, llvm::Value *idx,
                         int channel) const;
-   llvm::Value *indirectElementPointer(llvm::Value *ptr, llvm::Value *indIdx,
-                                       int channel) const;
-   llvm::Value *indirectElement(llvm::Value *ptr, llvm::Value *indIdx,
-                                int channel) const;
    const char *name(const char *prefix) const;
    llvm::Value  *alignedArrayLoad(llvm::Value *val);
    llvm::Module *currentModule() const;
    llvm::Constant  *createConstGlobalVector(const std::vector<float> &vec);
 
-   std::vector<llvm::Value*> inputElement(int idx, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> constElement(int idx, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> outputElement(int idx, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> tempElement(int idx, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> immediateElement(int idx, llvm::Value *indIdx =0);
+   std::vector<llvm::Value*> inputElement(llvm::Value *indIdx);
+   std::vector<llvm::Value*> constElement(llvm::Value *indIdx);
+   std::vector<llvm::Value*> outputElement(llvm::Value *indIdx);
+   std::vector<llvm::Value*> tempElement(llvm::Value *indIdx);
+   std::vector<llvm::Value*> immediateElement(llvm::Value *indIdx);
 private:
    llvm::BasicBlock *m_block;
 

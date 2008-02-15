@@ -707,7 +707,6 @@ translate_instructionir(llvm::Module *module,
 
       if (src->SrcRegister.Indirect) {
          indIdx = storage->addrElement(src->SrcRegisterInd.Index);
-         debug_printf("AAAAAAAAAAAAAAA INDIRECT %p\n", indIdx);
       }
       if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
          val = storage->load(StorageSoa::Const,

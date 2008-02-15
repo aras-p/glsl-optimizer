@@ -47,22 +47,10 @@ std::vector<llvm::Value*> InstructionsSoa::arl(const std::vector<llvm::Value*> i
    llvm::Value *x1 = m_builder.CreateExtractElement(in[0],
                                                     m_storage->constantInt(0),
                                                     name("extractX"));
-   llvm::Value *x2 = m_builder.CreateExtractElement(in[0],
-                                                    m_storage->constantInt(1),
-                                                    name("extractX"));
-   llvm::Value *x3 = m_builder.CreateExtractElement(in[0],
-                                                    m_storage->constantInt(2),
-                                                    name("extractX"));
-   llvm::Value *x4 = m_builder.CreateExtractElement(in[0],
-                                                    m_storage->constantInt(3),
-                                                    name("extractX"));
    //cast it to an unsigned int
    x1 = m_builder.CreateFPToUI(x1, IntegerType::get(32), name("x1IntCast"));
-   x2 = m_builder.CreateFPToUI(x2, IntegerType::get(32), name("x2IntCast"));
-   x3 = m_builder.CreateFPToUI(x3, IntegerType::get(32), name("x3IntCast"));
-   x4 = m_builder.CreateFPToUI(x4, IntegerType::get(32), name("x4IntCast"));
 
-   res[0] = vectorFromVals(x1, x2, x3, x4);
+   res[0] = x1;//vectorFromVals(x1, x2, x3, x4);
    //only x is valid. the others shouldn't be necessary
    /*
    res[1] = Constant::getNullValue(m_floatVecType);
