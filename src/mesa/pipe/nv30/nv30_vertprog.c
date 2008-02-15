@@ -751,7 +751,7 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 		}
 #endif
 		BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (vp->exec->start);
+		OUT_RING  (/*vp->exec->start*/0);
 		for (i = 0; i < vp->nr_insns; i++) {
 			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (vp->insns[i].data, 4);
@@ -759,10 +759,8 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	}
 
 	BEGIN_RING(rankine, NV34TCL_VP_START_FROM_ID, 1);
-	OUT_RING  (vp->exec->start);
-	BEGIN_RING(rankine, NV34TCL_VP_ATTRIB_EN, 2);
-	OUT_RING  (vp->ir);
-	OUT_RING  (vp->or);
+//	OUT_RING  (vp->exec->start);
+	OUT_RING  (0);
 
 	nv30->vertprog.active = vp;
 }

@@ -604,7 +604,7 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR0) {
 		BEGIN_RING(rankine, NV34TCL_COLOR0_PITCH, 1);
-		OUT_RING  (rt[0]->pitch * rt[0]->cpp);
+		OUT_RING  ( (rt[0]->pitch * rt[0]->cpp) | ( (zeta->pitch * zeta->cpp) << 16) );
 		nv30->rt[0] = rt[0]->buffer;
 	}
 
@@ -615,6 +615,9 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	if (zeta_format) {
+		/* XXX allocate LMA */
+/*		BEGIN_RING(rankine, NV34TCL_LMA_DEPTH_OFFSET, 1);
+		OUT_RING(0);*/
 		BEGIN_RING(rankine, NV34TCL_ZETA_PITCH, 1);
 		OUT_RING  (zeta->pitch * zeta->cpp);
 		nv30->zeta = zeta->buffer;

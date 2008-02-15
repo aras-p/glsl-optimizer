@@ -255,7 +255,7 @@ nv30_init_hwctx(struct nv30_context *nv30, int rankine_class)
 	int w=4096;
 	int h=4096;
 	int pitch=4096*4;
-	BEGIN_RING(rankine, NV34TCL_VIEWPORT_HORIZ, 5);
+	BEGIN_RING(rankine, NV34TCL_RT_HORIZ, 5);
 	OUT_RING  (w<<16);
 	OUT_RING  (h<<16);
 	OUT_RING  (0x148); /* format */
