@@ -861,7 +861,8 @@ _mesa_BindTexture( GLenum target, GLuint texName )
             newTexObj = ctx->Shared->Default2DArray;
             break;
          default:
-            ; /* Bad targets are caught above */
+            _mesa_error(ctx, GL_INVALID_ENUM, "glBindTexture(target)");
+            return;
       }
    }
    else {
@@ -939,6 +940,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          texUnit->Current2DArray = newTexObj;
          break;
       default:
+         /* Bad target should be caught above */
          _mesa_problem(ctx, "bad target in BindTexture");
          return;
    }
