@@ -29,12 +29,14 @@
 #define STORAGESOA_H
 
 #include <vector>
+#include <list>
 #include <map>
 
 namespace llvm {
    class BasicBlock;
    class Constant;
    class ConstantInt;
+   class GlobalVariable;
    class LoadInst;
    class Value;
    class VectorType;
@@ -66,20 +68,22 @@ public:
               int mask);
 
    void addImmediate(float *vec);
+   void declareImmediates();
+
+   void addAddress(int idx);
 
    llvm::Value  * addrElement(int idx) const;
 
-   llvm::Value *extractIndex(llvm::Value *vec);
+   llvm::ConstantInt *constantInt(int) const;
 private:
    llvm::Value *elementPointer(llvm::Value *ptr, int index,
                                int channel) const;
    llvm::Value *element(llvm::Value *ptr, int index,
                         int channel) const;
    const char *name(const char *prefix) const;
-   llvm::ConstantInt *constantInt(int) const;
    llvm::Value  *alignedArrayLoad(llvm::Value *val);
    llvm::Module *currentModule() const;
-   llvm::Value  *createConstGlobalVector(float *vec);
+   llvm::Constant  *createConstGlobalVector(const std::vector<float> &vec);
 
    std::vector<llvm::Value*> inputElement(int idx, llvm::Value *indIdx =0);
    std::vector<llvm::Value*> constElement(int idx, llvm::Value *indIdx =0);
@@ -93,8 +97,11 @@ private:
    llvm::Value *m_output;
    llvm::Value *m_consts;
    llvm::Value *m_temps;
+   llvm::GlobalVariable *m_immediates;
 
-   std::map<int, std::vector<llvm::Value*> > m_immediates;
+   std::map<int, llvm::Value*> m_addresses;
+
+   std::vector<std::vector<float> > m_immediatesToFlush;
 
    mutable std::map<int, llvm::ConstantInt*> m_constInts;
    mutable char        m_name[32];

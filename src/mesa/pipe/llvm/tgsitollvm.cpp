@@ -148,10 +148,14 @@ translate_declaration(struct gallivm_ir *prog,
 static void
 translate_declarationir(struct gallivm_ir *,
                       llvm::Module *,
-                      StorageSoa *,
-                      struct tgsi_full_declaration *,
+                      StorageSoa *storage,
+                      struct tgsi_full_declaration *decl,
                       struct tgsi_full_declaration *)
 {
+   if (decl->Declaration.File == TGSI_FILE_ADDRESS) {
+      int idx = decl->u.DeclarationRange.First;
+      storage->addAddress(idx);
+   }
 }
 
 static void
@@ -703,7 +707,7 @@ translate_instructionir(llvm::Module *module,
 
       if (src->SrcRegister.Indirect) {
          indIdx = storage->addrElement(src->SrcRegisterInd.Index);
-         indIdx = storage->extractIndex(indIdx);
+         debug_printf("AAAAAAAAAAAAAAA INDIRECT %p\n", indIdx);
       }
       if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
          val = storage->load(StorageSoa::Const,
@@ -713,13 +717,13 @@ translate_instructionir(llvm::Module *module,
                              src->SrcRegister.Index, swizzle, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->load(StorageSoa::Temp,
-                             src->SrcRegister.Index, swizzle);
+                             src->SrcRegister.Index, swizzle, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
          val = storage->load(StorageSoa::Output,
                              src->SrcRegister.Index, swizzle, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
          val = storage->load(StorageSoa::Immediate,
-                             src->SrcRegister.Index, swizzle);
+                             src->SrcRegister.Index, swizzle, indIdx);
       } else {
          fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
          return;
@@ -731,6 +735,7 @@ translate_instructionir(llvm::Module *module,
    std::vector<llvm::Value*> out(4);
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL: {
+      out = instr->arl(inputs[0]);
    }
       break;
    case TGSI_OPCODE_MOV: {
@@ -780,6 +785,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_MAD: {
+      out = instr->madd(inputs[0], inputs[1], inputs[2]);
    }
       break;
    case TGSI_OPCODE_SUB: {
@@ -1198,6 +1204,7 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         storage.declareImmediates();
          translate_instructionir(mod, &storage, &instr,
                                  &parse.FullToken.FullInstruction,
                                  &fi, instno);

@@ -55,39 +55,81 @@ StorageSoa::StorageSoa(llvm::BasicBlock *block,
      m_output(output),
      m_consts(consts),
      m_temps(temps),
+     m_immediates(0),
      m_idx(0)
 {
 }
 
 void StorageSoa::addImmediate(float *vec)
 {
-   float vals[4]; //decompose into soa
+   std::vector<float> vals(4);
+   vals[0] = vec[0];
+   vals[1] = vec[1];
+   vals[2] = vec[2];
+   vals[3] = vec[3];
+   m_immediatesToFlush.push_back(vals);
+}
 
-   vals[0] = vec[0]; vals[1] = vec[0]; vals[2] = vec[0]; vals[3] = vec[0];
-   llvm::Value *xChannel = createConstGlobalVector(vals);
+void StorageSoa::declareImmediates()
+{
+   if (m_immediatesToFlush.empty())
+      return;
 
-   vals[0] = vec[1]; vals[1] = vec[1]; vals[2] = vec[1]; vals[3] = vec[1];
-   llvm::Value *yChannel = createConstGlobalVector(vals);
+   VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
+   ArrayType  *vectorChannels = ArrayType::get(vectorType, 4);
+   ArrayType  *arrayType = ArrayType::get(vectorChannels, m_immediatesToFlush.size());
 
+   m_immediates = new GlobalVariable(
+      /*Type=*/arrayType,
+      /*isConstant=*/false,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Initializer=*/0, // has initializer, specified below
+      /*Name=*/name("immediates"),
+      currentModule());
 
-   vals[0] = vec[2]; vals[1] = vec[2]; vals[2] = vec[2]; vals[3] = vec[2];
-   llvm::Value *zChannel = createConstGlobalVector(vals);
+   std::vector<Constant*> arrayVals;
+   for (unsigned int i = 0; i < m_immediatesToFlush.size(); ++i) {
+      std::vector<float> vec = m_immediatesToFlush[i];
+      std::vector<float> vals(4);
+      std::vector<Constant*> channelArray;
 
-   vals[0] = vec[3]; vals[1] = vec[3]; vals[2] = vec[3]; vals[3] = vec[3];
-   llvm::Value *wChannel = createConstGlobalVector(vals);
+      vals[0] = vec[0]; vals[1] = vec[0]; vals[2] = vec[0]; vals[3] = vec[0];
+      llvm::Constant *xChannel = createConstGlobalVector(vals);
 
-   std::vector<llvm::Value*> res(4);
-   res[0] = xChannel;
-   res[1] = yChannel;
-   res[2] = zChannel;
-   res[3] = wChannel;
+      vals[0] = vec[1]; vals[1] = vec[1]; vals[2] = vec[1]; vals[3] = vec[1];
+      llvm::Constant *yChannel = createConstGlobalVector(vals);
 
-   m_immediates[m_immediates.size()] = res;
+      vals[0] = vec[2]; vals[1] = vec[2]; vals[2] = vec[2]; vals[3] = vec[2];
+      llvm::Constant *zChannel = createConstGlobalVector(vals);
+
+      vals[0] = vec[3]; vals[1] = vec[3]; vals[2] = vec[3]; vals[3] = vec[3];
+      llvm::Constant *wChannel = createConstGlobalVector(vals);
+      channelArray.push_back(xChannel);
+      channelArray.push_back(yChannel);
+      channelArray.push_back(zChannel);
+      channelArray.push_back(wChannel);
+      Constant *constChannels = ConstantArray::get(vectorChannels,
+                                                   channelArray);
+      arrayVals.push_back(constChannels);
+   }
+   Constant *constArray = ConstantArray::get(arrayType, arrayVals);
+   m_immediates->setInitializer(constArray);
+
+   m_immediatesToFlush.clear();
 }
 
 llvm::Value *StorageSoa::addrElement(int idx) const
 {
-   return 0;
+   std::map<int, llvm::Value*>::const_iterator itr = m_addresses.find(idx);
+   if (itr == m_addresses.end()) {
+      debug_printf("Trying to access invalid shader 'address'\n");
+      return 0;
+   }
+   llvm::Value * res = (*itr).second;
+
+   res = new LoadInst(res, name("addr"), false, m_block);
+
+   return res;
 }
 
 std::vector<llvm::Value*> StorageSoa::inputElement(int idx, llvm::Value *indIdx)
@@ -145,25 +187,21 @@ std::vector<llvm::Value*> StorageSoa::tempElement(int idx, llvm::Value *indIdx)
 std::vector<llvm::Value*> StorageSoa::immediateElement(int idx)
 {
    std::vector<llvm::Value*> res(4);
-   res = m_immediates[idx];
 
-   res[0] = new LoadInst(res[0], name("immx"), false, m_block);
-   res[1] = new LoadInst(res[1], name("immy"), false, m_block);
-   res[2] = new LoadInst(res[2], name("immz"), false, m_block);
-   res[3] = new LoadInst(res[3], name("immw"), false, m_block);
+   res[0] = element(m_immediates, idx, 0);
+   res[1] = element(m_immediates, idx, 1);
+   res[2] = element(m_immediates, idx, 2);
+   res[3] = element(m_immediates, idx, 3);
 
    return res;
-}
-
-llvm::Value * StorageSoa::extractIndex(llvm::Value *vec)
-{
-   return 0;
 }
 
 llvm::Value * StorageSoa::elementPointer(llvm::Value *ptr, int index,
                                          int channel) const
 {
    std::vector<Value*> indices;
+   if (m_immediates == ptr)
+      indices.push_back(constantInt(0));
    indices.push_back(constantInt(index));
    indices.push_back(constantInt(channel));
 
@@ -220,17 +258,9 @@ llvm::Module * StorageSoa::currentModule() const
     return m_block->getParent()->getParent();
 }
 
-llvm::Value * StorageSoa::createConstGlobalVector(float *vec)
+llvm::Constant * StorageSoa::createConstGlobalVector(const std::vector<float> &vec)
 {
    VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
-   GlobalVariable *immediate = new GlobalVariable(
-      /*Type=*/vectorType,
-      /*isConstant=*/true,
-      /*Linkage=*/GlobalValue::ExternalLinkage,
-      /*Initializer=*/0, // has initializer, specified below
-      /*Name=*/name("immediate"),
-      currentModule());
-
    std::vector<Constant*> immValues;
    ConstantFP *constx = ConstantFP::get(Type::FloatTy, APFloat(vec[0]));
    ConstantFP *consty = ConstantFP::get(Type::FloatTy, APFloat(vec[1]));
@@ -242,16 +272,15 @@ llvm::Value * StorageSoa::createConstGlobalVector(float *vec)
    immValues.push_back(constw);
    Constant  *constVector = ConstantVector::get(vectorType, immValues);
 
-   // Global Variable Definitions
-   immediate->setInitializer(constVector);
-
-   return immediate;
+   return constVector;
 }
 
 std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
-                                           llvm::Value *indIdx )
+                                           llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> val(4);
+   debug_printf("XXXXXXXXX indIdx = %p\n", indIdx);
+   assert(!indIdx);
    switch(type) {
    case Input:
       val = inputElement(idx, indIdx);
@@ -269,7 +298,7 @@ std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
       val = immediateElement(idx);
       break;
    case Address:
-      debug_printf("Address not handled in the fetch phase!\n");
+      debug_printf("Address not handled in the load phase!\n");
       assert(0);
       break;
    }
@@ -299,6 +328,17 @@ void StorageSoa::store(Argument type, int idx, const std::vector<llvm::Value*> &
    case Input:
       out = m_input;
       break;
+   case Address: {
+      llvm::Value *addr = m_addresses[idx];
+      if (!addr) {
+         addAddress(idx);
+         addr = m_addresses[idx];
+         assert(addr);
+      }
+      new StoreInst(val[0], addr, false, m_block);
+      return;
+      break;
+   }
    default:
       debug_printf("Can't save output of this type: %d !\n", type);
       assert(0);
@@ -321,4 +361,20 @@ void StorageSoa::store(Argument type, int idx, const std::vector<llvm::Value*> &
       llvm::Value *wChannel = elementPointer(out, idx, 3);
       new StoreInst(val[3], wChannel, false, m_block);
    }
+}
+
+void StorageSoa::addAddress(int idx)
+{
+   GlobalVariable *val = new GlobalVariable(
+      /*Type=*/IntegerType::get(32),
+      /*isConstant=*/false,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Initializer=*/0, // has initializer, specified below
+      /*Name=*/name("address"),
+      currentModule());
+   //val->setInitializer(Constant::getNullValue(IntegerType::get(32)));
+   val->setInitializer(constantInt(1));
+
+   debug_printf("adding to %d\n", idx);
+   m_addresses[idx] = val;
 }

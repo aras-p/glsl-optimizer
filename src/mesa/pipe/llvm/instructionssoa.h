@@ -46,17 +46,24 @@ public:
    InstructionsSoa(llvm::Module *mod, llvm::Function *func,
                    llvm::BasicBlock *block, StorageSoa *storage);
 
+   std::vector<llvm::Value*> arl(const std::vector<llvm::Value*> in);
+
    std::vector<llvm::Value*> add(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> madd(const std::vector<llvm::Value*> in1,
+                                  const std::vector<llvm::Value*> in2,
+                                  const std::vector<llvm::Value*> in3);
    std::vector<llvm::Value*> mul(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    void         end();
 
 private:
    const char * name(const char *prefix) const;
+   llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
+                               llvm::Value *z, llvm::Value *w);
 private:
    llvm::LLVMFoldingBuilder  m_builder;
-
+   StorageSoa *m_storage;
 private:
    mutable int  m_idx;
    mutable char m_name[32];
