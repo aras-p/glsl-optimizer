@@ -41,7 +41,7 @@ void draw_vertex_cache_invalidate( struct draw_context *draw )
    assert(draw->vs.queue_nr == 0);
    assert(draw->vcache.referenced == 0);
 
-   memset(draw->vcache.idx, ~0, sizeof(draw->vcache.idx));
+//   memset(draw->vcache.idx, ~0, sizeof(draw->vcache.idx));
 }
 
 
@@ -62,43 +62,51 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
    
    assert(slot < 32); /* so we don't exceed the bitfield size below */
 
-   /* Cache miss?
-    */
-   if (draw->vcache.idx[slot] != i) {
-
-      /* If slot is in use, use the overflow area:
+   if (draw->vcache.referenced & (1<<slot))
+   {
+      /* Cache hit?
        */
-      if (draw->vcache.referenced & (1 << slot)) {
-	 slot = VCACHE_SIZE + draw->vcache.overflow++;
+      if (draw->vcache.idx[slot].in == i) {
+//	 _mesa_printf("HIT %d %d\n", slot, i);
+	 assert(draw->vcache.idx[slot].out < draw->vs.queue_nr);
+	 return draw->vs.queue[draw->vcache.idx[slot].out].vertex;
       }
 
+      /* Otherwise a collision
+       */
+      slot = VCACHE_SIZE + draw->vcache.overflow++;
+//      _mesa_printf("XXX %d --> %d\n", i, slot);
+   }
+
+   /* Deal with the cache miss: 
+    */
+   {
+      unsigned out;
+      
       assert(slot < Elements(draw->vcache.idx));
 
-      draw->vcache.idx[slot] = i;
+//      _mesa_printf("NEW %d %d\n", slot, i);
+      draw->vcache.idx[slot].in = i;
+      draw->vcache.idx[slot].out = out = draw->vs.queue_nr++;
+      draw->vcache.referenced |= (1 << slot);
+
 
       /* Add to vertex shader queue:
        */
       assert(draw->vs.queue_nr < VS_QUEUE_LENGTH);
-      draw->vs.queue[draw->vs.queue_nr].dest = draw->vcache.vertex[slot];
-      draw->vs.queue[draw->vs.queue_nr].elt = i;
-      draw->vs.queue_nr++;
+
+      draw->vs.queue[out].elt = i;
+      draw->vs.queue[out].vertex->clipmask = 0;
+      draw->vs.queue[out].vertex->edgeflag = 1; /*XXX use user's edge flag! */
+      draw->vs.queue[out].vertex->pad = 0;
+      draw->vs.queue[out].vertex->vertex_id = UNDEFINED_VERTEX_ID;
 
       /* Need to set the vertex's edge flag here.  If we're being called
        * by do_ef_triangle(), that function needs edge flag info!
        */
-      draw->vcache.vertex[slot]->clipmask = 0;
-      draw->vcache.vertex[slot]->edgeflag = 1; /*XXX use user's edge flag! */
-      draw->vcache.vertex[slot]->pad = 0;
-      draw->vcache.vertex[slot]->vertex_id = UNDEFINED_VERTEX_ID;
+
+      return draw->vs.queue[draw->vcache.idx[slot].out].vertex;
    }
-
-
-   /* primitive flushing may have cleared the bitfield but did not
-    * clear the idx[] array values.  Set the bit now.  This fixes a
-    * bug found when drawing long triangle fans.
-    */
-   draw->vcache.referenced |= (1 << slot);
-   return draw->vcache.vertex[slot];
 }
 
 
@@ -130,8 +138,8 @@ void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw )
 {
    unsigned i;
 
-   for (i = 0; i < Elements(draw->vcache.vertex); i++)
-      draw->vcache.vertex[i]->vertex_id = UNDEFINED_VERTEX_ID;
+   for (i = 0; i < draw->vs.post_nr; i++)
+      draw->vs.queue[i].vertex->vertex_id = UNDEFINED_VERTEX_ID;
 }
 
 

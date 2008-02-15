@@ -72,10 +72,10 @@ struct draw_context *draw_create( void )
    {
       uint i;
       const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
-      char *tmp = align_malloc(Elements(draw->vcache.vertex) * size, 16);
+      char *tmp = align_malloc(Elements(draw->vs.queue) * size, 16);
 
-      for (i = 0; i < Elements(draw->vcache.vertex); i++)
-	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * size);
+      for (i = 0; i < Elements(draw->vs.queue); i++)
+	 draw->vs.queue[i].vertex = (struct vertex_header *)(tmp + i * size);
    }
 
    draw->shader_queue_flush = draw_vertex_shader_queue_flush;
@@ -108,7 +108,7 @@ void draw_destroy( struct draw_context *draw )
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    tgsi_exec_machine_free_data(&draw->machine);
-   align_free( draw->vcache.vertex[0] ); /* Frees all the vertices. */
+   align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
    FREE( draw );
 }
 

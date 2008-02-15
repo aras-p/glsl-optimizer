@@ -120,7 +120,7 @@ struct draw_stage
 };
 
 
-#define PRIM_QUEUE_LENGTH      16
+#define PRIM_QUEUE_LENGTH      32
 #define VCACHE_SIZE            32
 #define VCACHE_OVERFLOW        4
 #define VS_QUEUE_LENGTH        (VCACHE_SIZE + VCACHE_OVERFLOW + 1)	/* can never fill up */
@@ -244,8 +244,12 @@ struct draw_context
     */
    struct {
       unsigned referenced;  /**< bitfield */
-      unsigned idx[VCACHE_SIZE + VCACHE_OVERFLOW];
-      struct vertex_header *vertex[VCACHE_SIZE + VCACHE_OVERFLOW];
+
+      struct {
+	 unsigned in;		/* client array element */
+	 unsigned out;		/* index in vs queue/array */
+      } idx[VCACHE_SIZE + VCACHE_OVERFLOW];
+
       unsigned overflow;
 
       /** To find space in the vertex cache: */
@@ -258,9 +262,10 @@ struct draw_context
    struct {
       struct {
 	 unsigned elt;   /**< index into the user's vertex arrays */
-	 struct vertex_header *dest; /**< points into vcache.vertex[] array */
+	 struct vertex_header *vertex;
       } queue[VS_QUEUE_LENGTH];
       unsigned queue_nr;
+      unsigned post_nr;
    } vs;
 
    /**
