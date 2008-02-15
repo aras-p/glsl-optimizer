@@ -50,6 +50,9 @@ struct nouveau_winsys {
 };
 
 extern struct pipe_context *
+nv30_create(struct pipe_winsys *, struct nouveau_winsys *, unsigned chipset);
+
+extern struct pipe_context *
 nv40_create(struct pipe_winsys *, struct nouveau_winsys *, unsigned chipset);
 
 extern struct pipe_context *
