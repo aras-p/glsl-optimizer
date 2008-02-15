@@ -44,8 +44,8 @@
 #include "st_draw.h"
 #include "st_cb_rasterpos.h"
 #include "st_draw.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_private.h"
+#include "draw/draw_context.h"
+#include "draw/draw_private.h"
 #include "shader/prog_instruction.h"
 #include "vbo/vbo.h"
 

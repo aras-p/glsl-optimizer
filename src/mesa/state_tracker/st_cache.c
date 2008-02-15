@@ -36,8 +36,8 @@
 
 #include "pipe/p_state.h"
 
-#include "pipe/cso_cache/cso_cache.h"
-#include "pipe/cso_cache/cso_hash.h"
+#include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_hash.h"
 
 
 /* Those function will either find the state of the given template

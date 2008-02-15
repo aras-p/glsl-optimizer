@@ -45,10 +45,10 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/softpipe/sp_context.h"
-#include "pipe/softpipe/sp_clear.h"
-#include "pipe/softpipe/sp_tile_cache.h"
-#include "pipe/softpipe/sp_surface.h"
+#include "softpipe/sp_context.h"
+#include "softpipe/sp_clear.h"
+#include "softpipe/sp_tile_cache.h"
+#include "softpipe/sp_surface.h"
 #include "state_tracker/st_context.h"
 
 

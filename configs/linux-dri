@@ -54,10 +54,10 @@ USING_EGL=0
 
 # Directories
 ifeq ($(USING_EGL), 1)
-SRC_DIRS = egl glx/x11 mesa glu glut/glx glw
+SRC_DIRS = egl glx/x11 gallium mesa glu glut/glx glw
 PROGRAM_DIRS = egl
 else
-SRC_DIRS = glx/x11 mesa glu glut/glx glw
+SRC_DIRS = glx/x11 gallium mesa glu glut/glx glw
 PROGRAM_DIRS =
 endif
 
@@ -66,4 +66,4 @@ WINDOW_SYSTEM=dri
 
 # gamma are missing because they have not been converted to use the new
 # interface.
-DRI_DIRS = intel_winsys 
+DRI_DIRS = intel 

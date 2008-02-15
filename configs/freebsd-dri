@@ -36,7 +36,7 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lX11
 
 
 # Directories
-SRC_DIRS = glx/x11 mesa glu glut/glx glw
+SRC_DIRS = glx/x11 gallium mesa glu glut/glx glw
 DRIVER_DIRS = dri
 PROGRAM_DIRS = 
 WINDOW_SYSTEM=dri

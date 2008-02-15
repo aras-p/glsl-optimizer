@@ -33,7 +33,7 @@
 #ifndef ST_CACHE_H
 #define ST_CACHE_H
 
-#include "pipe/cso_cache/cso_cache.h"
+#include "cso_cache/cso_cache.h"
 
 struct pipe_blend_state;
 struct pipe_sampler_state;

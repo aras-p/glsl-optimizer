@@ -21,7 +21,7 @@ CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I$(
 CXXFLAGS = $(CFLAGS)
 
 # Omitting glw here:
-SRC_DIRS = mesa glu glut/glx
+SRC_DIRS = gallium mesa glu glut/glx
 
 
 MKDEP_OPTIONS = -fdepend -Y

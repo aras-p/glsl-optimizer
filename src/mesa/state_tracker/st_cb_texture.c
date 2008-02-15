@@ -47,7 +47,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/util/p_tile.h"
+#include "util/p_tile.h"
 
 
 #define DBG if (0) printf

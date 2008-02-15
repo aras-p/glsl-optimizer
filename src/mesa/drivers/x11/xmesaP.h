@@ -37,8 +37,8 @@
 #include "xm_image.h"
 #endif
 #include "state_tracker/st_cb_fbo.h"
-#include "pipe/softpipe/sp_context.h"
-#include "pipe/softpipe/sp_surface.h"
+#include "softpipe/sp_context.h"
+#include "softpipe/sp_surface.h"
 
 
 extern _glthread_Mutex _xmesa_lock;

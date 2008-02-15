@@ -31,9 +31,9 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/tgsi/util/tgsi_dump.h"
+#include "tgsi/util/tgsi_dump.h"
 
-#include "pipe/cso_cache/cso_cache.h"
+#include "cso_cache/cso_cache.h"
 
 #include "st_context.h"
 #include "st_debug.h"

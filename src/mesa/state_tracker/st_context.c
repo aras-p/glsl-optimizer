@@ -54,8 +54,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/cso_cache/cso_cache.h"
+#include "draw/draw_context.h"
+#include "cso_cache/cso_cache.h"
 
 
 /**
