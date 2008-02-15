@@ -64,11 +64,12 @@ do_texture_drawpixels(GLcontext * ctx,
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    intelFlush(&intel->ctx);
-   intel->vtbl.render_start(intel);
-   intel->vtbl.emit_state(intel);
 
    if (!dst)
       return GL_FALSE;
+
+   intel->vtbl.render_start(intel);
+   intel->vtbl.emit_state(intel);
 
    if (src) {
       if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
