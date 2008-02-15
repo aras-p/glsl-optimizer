@@ -212,7 +212,7 @@ passthrough_tri(struct draw_stage *stage, struct prim_header *header)
 static void 
 stipple_destroy( struct draw_stage *stage )
 {
-   draw_free_tmps( stage );
+   draw_free_temp_verts( stage );
    FREE( stage );
 }
 
