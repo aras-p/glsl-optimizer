@@ -100,7 +100,7 @@ do_memcpy(void *dest, const void *src, size_t n)
 }
 
 
-#if DO_DEBUG
+#if DO_DEBUG && !defined(__ia64__)
 
 #ifndef __x86_64__
 static unsigned
@@ -232,7 +232,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = intelIsTextureResident;
 
-#if DO_DEBUG
+#if DO_DEBUG && !defined(__ia64__)
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       functions->TextureMemCpy = timed_memcpy;
    else
