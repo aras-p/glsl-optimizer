@@ -75,7 +75,7 @@ extern void spe_release_func(struct spe_function *p);
 
 /* Memory load / store instructions
  */
-EMIT_RI10(spe_ldq,  0x034);
+EMIT_RI10(spe_lqd,  0x034);
 EMIT_RR  (spe_lqx,  0x1c4);
 EMIT_RI16(spe_lqa,  0x061);
 EMIT_RI16(spe_lqr,  0x067);
@@ -123,7 +123,7 @@ EMIT_RR  (spe_mpy,     0x3c4);
 EMIT_RR  (spe_mpyu,    0x3cc);
 EMIT_RI10(spe_mpyi,    0x074);
 EMIT_RI10(spe_mpyui,   0x075);
-EMIT_RRR (spy_mpya,    0x00c);
+EMIT_RRR (spe_mpya,    0x00c);
 EMIT_RR  (spe_mpyh,    0x3c5);
 EMIT_RR  (spe_mpys,    0x3c7);
 EMIT_RR  (spe_mpyhh,   0x3c6);

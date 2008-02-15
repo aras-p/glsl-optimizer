@@ -282,45 +282,45 @@ void spe_release_func(struct spe_function *p)
 }
 
 
-void spu_bi(struct spe_function *p, unsigned rA, int d, int e)
+void spe_bi(struct spe_function *p, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x1a8, 0, rA, (d << 5) | (e << 4));
 }
 
-void spu_iret(struct spe_function *p, unsigned rA, int d, int e)
+void spe_iret(struct spe_function *p, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x1aa, 0, rA, (d << 5) | (e << 4));
 }
 
-void spu_bisled(struct spe_function *p, unsigned rT, unsigned rA, int d,
+void spe_bisled(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x1ab, rT, rA, (d << 5) | (e << 4));
 }
 
-void spu_bisl(struct spe_function *p, unsigned rT, unsigned rA, int d,
+void spe_bisl(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x1a9, rT, rA, (d << 5) | (e << 4));
 }
 
-void spu_biz(struct spe_function *p, unsigned rT, unsigned rA, int d,
+void spe_biz(struct spe_function *p, unsigned rT, unsigned rA, int d,
 		int e)
 {
     emit_RI7(p, 0x128, rT, rA, (d << 5) | (e << 4));
 }
 
-void spu_binz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_binz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x129, rT, rA, (d << 5) | (e << 4));
 }
 
-void spu_bihz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_bihz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x12a, rT, rA, (d << 5) | (e << 4));
 }
 
-void spu_bihnz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
+void spe_bihnz(struct spe_function *p, unsigned rT, unsigned rA, int d, int e)
 {
     emit_RI7(p, 0x12b, rT, rA, (d << 5) | (e << 4));
 }
@@ -339,13 +339,13 @@ hbrr;
  */
 #if 0
 stop;
-EMIT_RR  (spu_stopd, 0x140);
-EMIT_    (spu_lnop,  0x001);
-EMIT_    (spu_nop,   0x201);
+EMIT_RR  (spe_stopd, 0x140);
+EMIT_    (spe_lnop,  0x001);
+EMIT_    (spe_nop,   0x201);
 sync;
-EMIT_    (spu_dsync, 0x003);
-EMIT_R   (spu_mfspr, 0x00c);
-EMIT_R   (spu_mtspr, 0x10c);
+EMIT_    (spe_dsync, 0x003);
+EMIT_R   (spe_mfspr, 0x00c);
+EMIT_R   (spe_mtspr, 0x10c);
 #endif
 
 #endif /* GALLIUM_CELL */
