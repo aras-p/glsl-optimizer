@@ -400,7 +400,7 @@ static void wide_flush( struct draw_stage *stage, unsigned flags )
 }
 
 
-static void draw_reset_stipple_counter( struct draw_stage *stage )
+static void wide_reset_stipple_counter( struct draw_stage *stage )
 {
    stage->next->reset_stipple_counter( stage->next );
 }
@@ -425,7 +425,7 @@ struct draw_stage *draw_wide_stage( struct draw_context *draw )
    wide->stage.line = wide_first_line;
    wide->stage.tri = passthrough_tri;
    wide->stage.flush = wide_flush;
-   wide->stage.reset_stipple_counter = draw_reset_stipple_counter;
+   wide->stage.reset_stipple_counter = wide_reset_stipple_counter;
    wide->stage.destroy = wide_destroy;
 
    return &wide->stage;
