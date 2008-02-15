@@ -33,177 +33,10 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#if defined(__i386__) || defined(__386__)
-#include "tgsi/exec/tgsi_sse2.h"
-#endif
 #include "draw_private.h"
 #include "draw_context.h"
+#include "draw_vs.h"
 
-#include "x86/rtasm/x86sse.h"
-#include "llvm/gallivm.h"
-
-
-#define DBG_VS 0
-
-
-static INLINE unsigned
-compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
-{
-   unsigned mask = 0;
-   unsigned i;
-
-   /* Do the hardwired planes first:
-    */
-   if (-clip[0] + clip[3] < 0) mask |= CLIP_RIGHT_BIT;
-   if ( clip[0] + clip[3] < 0) mask |= CLIP_LEFT_BIT;
-   if (-clip[1] + clip[3] < 0) mask |= CLIP_TOP_BIT;
-   if ( clip[1] + clip[3] < 0) mask |= CLIP_BOTTOM_BIT;
-   if (-clip[2] + clip[3] < 0) mask |= CLIP_FAR_BIT;
-   if ( clip[2] + clip[3] < 0) mask |= CLIP_NEAR_BIT;
-
-   /* Followed by any remaining ones:
-    */
-   for (i = 6; i < nr; i++) {
-      if (dot4(clip, plane[i]) < 0) 
-         mask |= (1<<i);
-   }
-
-   return mask;
-}
-
-
-typedef void (XSTDCALL *codegen_function) (
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   float (*constant)[4],
-   struct tgsi_exec_vector *temporary );
-
-
-/**
- * Transform vertices with the current vertex program/shader
- * Up to four vertices can be shaded at a time.
- * \param vbuffer  the input vertex data
- * \param elts  indexes of four input vertices
- * \param count  number of vertices to shade [1..4]
- * \param vOut  array of pointers to four output vertices
- */
-static void
-run_vertex_program(struct draw_context *draw,
-                   unsigned elts[4], unsigned count,
-                   struct vertex_header *vOut[])
-{
-   struct tgsi_exec_machine *machine = &draw->machine;
-   unsigned int j;
-
-   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
-   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
-   const float *scale = draw->viewport.scale;
-   const float *trans = draw->viewport.translate;
-
-   assert(count <= 4);
-   assert(draw->vertex_shader->state->output_semantic_name[0]
-          == TGSI_SEMANTIC_POSITION);
-
-   /* Consts does not require 16 byte alignment. */
-   machine->Consts = (float (*)[4]) draw->user.constants;
-
-   machine->Inputs = ALIGN16_ASSIGN(inputs);
-   machine->Outputs = ALIGN16_ASSIGN(outputs);
-
-   draw->vertex_fetch.fetch_func( draw, machine, elts, count );
-
-   /* run shader */
-#ifdef MESA_LLVM
-   if (1) {
-   struct gallivm_prog  *prog  = draw->vertex_shader->llvm_prog;
-   gallivm_cpu_vs_exec(prog,
-                       machine->Inputs,
-                       machine->Outputs,
-                       machine->Consts,
-                       machine->Temps);
-   } else
-#elif defined(__i386__) || defined(__386__)
-   if (draw->use_sse) {
-      /* SSE */
-      /* cast away const */
-      struct draw_vertex_shader *shader
-         = (struct draw_vertex_shader *)draw->vertex_shader;
-      codegen_function func
-         = (codegen_function) x86_get_func( &shader->sse2_program );
-
-      if (func)
-         func(
-            machine->Inputs,
-            machine->Outputs,
-            machine->Consts,
-            machine->Temps );
-      else
-         /* interpreter */
-         tgsi_exec_machine_run( machine );
-   }
-   else
-#endif
-   {
-      /* interpreter */
-      tgsi_exec_machine_run( machine );
-   }
-
-   /* store machine results */
-   for (j = 0; j < count; j++) {
-      unsigned slot;
-      float x, y, z, w;
-
-      /* Handle attr[0] (position) specially:
-       *
-       * XXX: Computing the clipmask should be done in the vertex
-       * program as a set of DP4 instructions appended to the
-       * user-provided code.
-       */
-      x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
-
-      vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
-      vOut[j]->edgeflag = 1;
-
-      /* divide by w */
-      w = 1.0f / w;
-      x *= w;
-      y *= w;
-      z *= w;
-
-      /* Viewport mapping */
-      vOut[j]->data[0][0] = x * scale[0] + trans[0];
-      vOut[j]->data[0][1] = y * scale[1] + trans[1];
-      vOut[j]->data[0][2] = z * scale[2] + trans[2];
-      vOut[j]->data[0][3] = w;
-
-#if DBG_VS
-      debug_printf("output[%d]win: %f %f %f %f\n", j,
-             vOut[j]->data[0][0],
-             vOut[j]->data[0][1],
-             vOut[j]->data[0][2],
-             vOut[j]->data[0][3]);
-#endif
-      /* Remaining attributes are packed into sequential post-transform
-       * vertex attrib slots.
-       */
-      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-         vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-         vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-         vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-         vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-#if DBG_VS
-         debug_printf("output[%d][%d]: %f %f %f %f\n", j, slot,
-                vOut[j]->data[slot][0],
-                vOut[j]->data[slot][1],
-                vOut[j]->data[slot][2],
-                vOut[j]->data[slot][3]);
-#endif
-      }
-   } /* loop over vertices */
-}
 
 
 /**
@@ -213,13 +46,14 @@ run_vertex_program(struct draw_context *draw,
 void
 draw_vertex_shader_queue_flush(struct draw_context *draw)
 {
+   struct draw_vertex_shader *shader = draw->vertex_shader;
    unsigned i;
 
    assert(draw->vs.queue_nr != 0);
 
    /* XXX: do this on statechange: 
     */
-   draw_update_vertex_fetch( draw );
+   shader->prepare( shader, draw );
 
 //   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
 
@@ -242,7 +76,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
       assert(n > 0);
       assert(n <= 4);
 
-      run_vertex_program(draw, elts, n, dests);
+      shader->run(shader, draw, elts, n, dests);
    }
 
    draw->vs.queue_nr = 0;
@@ -255,43 +89,16 @@ draw_create_vertex_shader(struct draw_context *draw,
 {
    struct draw_vertex_shader *vs;
 
-   vs = CALLOC_STRUCT( draw_vertex_shader );
-   if (vs == NULL) {
-      return NULL;
-   }
+   vs = draw_create_vs_llvm( draw, shader );
+   if (vs)
+      return vs;
 
-   vs->state = shader;
+   vs = draw_create_vs_sse( draw, shader );
+   if (vs)
+      return vs;
 
-#ifdef MESA_LLVM
-   struct gallivm_ir *ir = gallivm_ir_new(GALLIVM_VS);
-   gallivm_ir_set_layout(ir, GALLIVM_SOA);
-   gallivm_ir_set_components(ir, 4);
-   gallivm_ir_fill_from_tgsi(ir, shader->tokens);
-   vs->llvm_prog = gallivm_ir_compile(ir);
-   gallivm_ir_delete(ir);
-
-   draw->engine = gallivm_global_cpu_engine();
-   if (!draw->engine) {
-      draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);
-   }
-   else {
-      gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
-   }
-#elif defined(__i386__) || defined(__386__)
-   if (draw->use_sse) {
-      /* cast-away const */
-      struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
-
-      x86_init_func( &vs->sse2_program );
-      if (!tgsi_emit_sse2( (struct tgsi_token *) sh->tokens,
-                           &vs->sse2_program )) {
-         x86_release_func( (struct x86_function *) &vs->sse2_program );
-	 fprintf(stdout /*err*/,
-		 "tgsi_emit_sse2() failed, falling back to interpreter\n");
-      }
-   }
-#endif
-
+   vs = draw_create_vs_exec( draw, shader );
+   assert(vs);
    return vs;
 }
 
@@ -307,11 +114,7 @@ draw_bind_vertex_shader(struct draw_context *draw,
 
    tgsi_exec_machine_init(&draw->machine);
 
-   /* specify the vertex program to interpret/execute */
-   tgsi_exec_machine_bind_shader(&draw->machine,
-				 draw->vertex_shader->state->tokens,
-				 PIPE_MAX_SAMPLERS,
-				 NULL /*samplers*/ );
+   dvs->prepare( dvs, draw );
 }
 
 
@@ -319,9 +122,5 @@ void
 draw_delete_vertex_shader(struct draw_context *draw,
                           struct draw_vertex_shader *dvs)
 {
-#if defined(__i386__) || defined(__386__)
-   x86_release_func( (struct x86_function *) &dvs->sse2_program );
-#endif
-
-   FREE( dvs );
+   dvs->delete( dvs );
 }

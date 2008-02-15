@@ -128,13 +128,25 @@ struct draw_stage
  * Private version of the compiled vertex_shader
  */
 struct draw_vertex_shader {
+
+   /* This member will disappear shortly:
+    */
    const struct pipe_shader_state   *state;
-#if defined(__i386__) || defined(__386__)
-   struct x86_function              sse2_program;
-#endif
-#ifdef MESA_LLVM
-   struct gallivm_prog *llvm_prog;
-#endif
+
+   void (*prepare)( struct draw_vertex_shader *shader,
+		    struct draw_context *draw );
+
+   /* Run the shader - this interface will get cleaned up in the
+    * future:
+    */
+   void (*run)( struct draw_vertex_shader *shader,
+		struct draw_context *draw,
+		const unsigned *elts, 
+		unsigned count,
+		struct vertex_header *vOut[] );
+		    
+
+   void (*delete)( struct draw_vertex_shader * );
 };
 
 
@@ -176,7 +188,7 @@ struct draw_context
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
-   const struct draw_vertex_shader *vertex_shader;
+   struct draw_vertex_shader *vertex_shader;
 
    uint num_vs_outputs;  /**< convenience, from vertex_shader */
 
@@ -201,6 +213,7 @@ struct draw_context
 
    boolean convert_wide_points; /**< convert wide points to tris? */
    boolean convert_wide_lines;  /**< convert side lines to tris? */
+   boolean use_sse;
 
    unsigned reduced_prim;
 
@@ -255,11 +268,10 @@ struct draw_context
       unsigned queue_nr;
    } pq;
 
-   int use_sse : 1;
-#ifdef MESA_LLVM
-   struct gallivm_cpu_engine *engine;
-#endif
-   
+
+   /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
+    */
+   struct gallivm_cpu_engine *engine;   
    void *driver_private;
 };
 
@@ -290,11 +302,7 @@ extern void draw_vertex_cache_invalidate( struct draw_context *draw );
 extern void draw_vertex_cache_unreference( struct draw_context *draw );
 extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
 
-
 extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
-#ifdef MESA_LLVM
-extern void draw_vertex_shader_queue_flush_llvm( struct draw_context *draw );
-#endif
 
 struct tgsi_exec_machine;
 

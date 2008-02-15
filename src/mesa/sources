@@ -159,6 +159,9 @@ VF_SOURCES = \
 
 DRAW_SOURCES = \
 	$(TOP)/src/gallium/auxiliary/draw/draw_clip.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vs_exec.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vs_sse.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vs_llvm.c \
 	$(TOP)/src/gallium/auxiliary/draw/draw_context.c\
 	$(TOP)/src/gallium/auxiliary/draw/draw_cull.c \
 	$(TOP)/src/gallium/auxiliary/draw/draw_debug.c \

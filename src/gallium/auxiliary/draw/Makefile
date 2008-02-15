@@ -1,2 +1,2 @@
 default:
-	cd .. ; make
+	cd ../../../mesa ; make
