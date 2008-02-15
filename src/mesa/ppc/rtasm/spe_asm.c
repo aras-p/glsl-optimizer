@@ -88,6 +88,20 @@ union spe_inst_RI7 {
 
 
 /**
+ * Encode one output register with one input reg. and an 8-bit signed immed
+ */
+union spe_inst_RI8 {
+    uint32_t bits;
+    struct {
+	unsigned op:10;
+	unsigned i8:8;
+	unsigned rA:7;
+	unsigned rT:7;
+    } inst;
+};
+
+
+/**
  * Encode one output register with one input reg. and a 10-bit signed immed
  */
 union spe_inst_RI10 {
@@ -169,6 +183,20 @@ static void emit_RI7(struct spe_function *p, unsigned op, unsigned rT,
 
 
 
+static void emit_RI8(struct spe_function *p, unsigned op, unsigned rT,
+		     unsigned rA, int imm)
+{
+    union spe_inst_RI8 inst;
+    inst.inst.op = op;
+    inst.inst.i8 = imm;
+    inst.inst.rA = rA;
+    inst.inst.rT = rT;
+    *p->csr = inst.bits;
+    p->csr++;
+}
+
+
+
 static void emit_RI10(struct spe_function *p, unsigned op, unsigned rT,
 		      unsigned rA, int imm)
 {
@@ -236,6 +264,12 @@ void _name (struct spe_function *p, unsigned rT, unsigned rA, unsigned rB, unsig
 void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 { \
     emit_RI7(p, _op, rT, rA, imm); \
+}
+
+#define EMIT_RI8(_name, _op) \
+void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
+{ \
+    emit_RI8(p, _op, rT, rA, 155 - imm); \
 }
 
 #define EMIT_RI10(_name, _op) \
