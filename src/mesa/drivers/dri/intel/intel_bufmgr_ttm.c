@@ -101,6 +101,7 @@ typedef struct _dri_bo_ttm {
     dri_bo bo;
 
     int refcount;
+    unsigned int map_count;
     drmBO drm_bo;
     const char *name;
 
@@ -338,7 +339,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     uint64_t flags;
     unsigned int hint;
 
-    ttm_buf = malloc(sizeof(*ttm_buf));
+    ttm_buf = calloc(1, sizeof(*ttm_buf));
     if (!ttm_buf)
 	return NULL;
 
@@ -401,7 +402,7 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     dri_bo_ttm *ttm_buf;
     int ret;
 
-    ttm_buf = malloc(sizeof(*ttm_buf));
+    ttm_buf = calloc(1, sizeof(*ttm_buf));
     if (!ttm_buf)
 	return NULL;
 
@@ -451,6 +452,8 @@ dri_ttm_bo_unreference(dri_bo *buf)
     if (--ttm_buf->refcount == 0) {
 	int ret;
 
+	assert(ttm_buf->map_count == 0);
+
 	if (ttm_buf->reloc_buf_data) {
 	    int i;
 
@@ -499,6 +502,12 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
     if (write_enable)
 	flags |= DRM_BO_FLAG_WRITE;
 
+    /* Allow recursive mapping. Mesa may recursively map buffers with
+     * nested display loops.
+     */
+    if (ttm_buf->map_count++ != 0)
+	return 0;
+
     assert(buf->virtual == NULL);
 
     DBG("bo_map: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
@@ -526,6 +535,10 @@ dri_ttm_bo_unmap(dri_bo *buf)
     int ret;
 
     if (buf == NULL)
+	return 0;
+
+    assert(ttm_buf->map_count != 0);
+    if (--ttm_buf->map_count != 0)
 	return 0;
 
     bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;

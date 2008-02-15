@@ -712,7 +712,10 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
    if (bo_fake->is_static)
       return 0;
 
-   /* Allow recursive mapping, which is used internally in relocation. */
+   /* Allow recursive mapping.  Mesa may recursively map buffers with
+    * nested display loops, and it is used internally in bufmgr_fake
+    * for relocation.
+    */
    if (bo_fake->map_count++ != 0)
       return 0;
 
