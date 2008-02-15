@@ -71,6 +71,8 @@ nv30_get_paramf(struct pipe_context *pipe, int param)
 		return 16.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 4.0;
+	case PIPE_CAP_BITMAP_TEXCOORD_BIAS:
+		return 0.0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0.0;

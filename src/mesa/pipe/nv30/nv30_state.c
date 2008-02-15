@@ -614,12 +614,8 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 		nv30->rt[1] = rt[1]->buffer;
 	}
 
-	if (zeta_format) {
-		/* XXX allocate LMA */
-/*		BEGIN_RING(rankine, NV34TCL_LMA_DEPTH_OFFSET, 1);
-		OUT_RING(0);*/
-		BEGIN_RING(rankine, NV34TCL_ZETA_PITCH, 1);
-		OUT_RING  (zeta->pitch * zeta->cpp);
+	if (zeta_format)
+	{
 		nv30->zeta = zeta->buffer;
 	}
 

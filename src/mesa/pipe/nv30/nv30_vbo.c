@@ -241,9 +241,9 @@ nv30_draw_elements_u08(struct nv30_context *nv30, void *ib,
 	}
 
 	while (count) {
-		push = MIN2(count, 2046);
+		push = MIN2(count, 2047 * 2);
 
-		BEGIN_RING_NI(rankine, NV40TCL_VB_ELEMENT_U16, push);
+		BEGIN_RING_NI(rankine, NV40TCL_VB_ELEMENT_U16, push >> 1);
 		for (i = 0; i < push; i+=2)
 			OUT_RING((elts[i+1] << 16) | elts[i]);
 
@@ -266,9 +266,9 @@ nv30_draw_elements_u16(struct nv30_context *nv30, void *ib,
 	}
 
 	while (count) {
-		push = MIN2(count, 2046);
+		push = MIN2(count, 2047 * 2);
 
-		BEGIN_RING_NI(rankine, NV34TCL_VB_ELEMENT_U16, push);
+		BEGIN_RING_NI(rankine, NV34TCL_VB_ELEMENT_U16, push >> 1);
 		for (i = 0; i < push; i+=2)
 			OUT_RING((elts[i+1] << 16) | elts[i]);
 
