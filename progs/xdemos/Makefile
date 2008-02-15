@@ -16,6 +16,7 @@ PROGS = \
 	glxdemo \
 	glxgears \
 	glxgears_fbconfig \
+	glxgears_pixmap \
 	glxcontexts \
 	glxheads \
 	glxinfo \
