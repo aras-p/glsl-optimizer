@@ -1935,13 +1935,20 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      emit_tempf(
-         func,
-         0,
-         TGSI_EXEC_TEMP_ONE_I,
-         TGSI_EXEC_TEMP_ONE_C );
-      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( func, *inst, 0, 0, chan_index );
+      if (0) {
+	 /* Disable dummy texture code: 
+	  */
+	 emit_tempf(
+	    func,
+	    0,
+	    TGSI_EXEC_TEMP_ONE_I,
+	    TGSI_EXEC_TEMP_ONE_C );
+	 FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+	    STORE( func, *inst, 0, 0, chan_index );
+	 }
+      }
+      else {
+	 return 0;
       }
       break;
 
