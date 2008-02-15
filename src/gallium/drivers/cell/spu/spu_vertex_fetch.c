@@ -1,6 +1,7 @@
 /**************************************************************************
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * (C) Copyright IBM Corporation 2008
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,10 +29,10 @@
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Ian Romanick <idr@us.ibm.com>
   */
 
 #include <spu_mfcio.h>
-#include <transpose_matrix4x4.h>
 
 #include "pipe/p_util.h"
 #include "pipe/p_state.h"
@@ -58,6 +59,10 @@
 
 
 #define DRAW_DBG 0
+
+typedef void (*spu_fetch_func)(qword *out, const qword *in,
+			       const qword *shuffle_data);
+
 
 static const qword fetch_shuffle_data[] = {
    /* Shuffle used by CVT_64_FLOAT
@@ -95,22 +100,6 @@ static const qword fetch_shuffle_data[] = {
       0x0C, 0x0D, 0x0E, 0x0F, 0x1C, 0x1D, 0x1E, 0x1F
    }
 };
-
-
-static INLINE void
-trans4x4(qword row0, qword row1, qword row2, qword row3, qword *out,
-         const qword *shuffle)
-{
-   qword t1 = si_shufb(row0, row2, shuffle[3]);
-   qword t2 = si_shufb(row0, row2, shuffle[4]);
-   qword t3 = si_shufb(row1, row3, shuffle[3]);
-   qword t4 = si_shufb(row1, row3, shuffle[4]);
-
-   out[0] = si_shufb(t1, t3, shuffle[3]);
-   out[1] = si_shufb(t1, t3, shuffle[4]);
-   out[2] = si_shufb(t2, t4, shuffle[3]);
-   out[3] = si_shufb(t2, t4, shuffle[4]);
-}
 
 
 /**
@@ -151,446 +140,6 @@ fetch_unaligned(qword *dst, unsigned ea, unsigned size)
 }
 
 
-#define CVT_32_FLOAT(q, s)    (*(q))
-
-static INLINE qword
-CVT_64_FLOAT(const qword *qw, const qword *shuffle)
-{
-   qword a = si_frds(qw[0]);
-   qword b = si_frds(si_rotqbyi(qw[0], 8));
-   qword c = si_frds(qw[1]);
-   qword d = si_frds(si_rotqbyi(qw[1], 8));
-
-   qword ab = si_shufb(a, b, shuffle[0]);
-   qword cd = si_shufb(c, d, si_rotqbyi(shuffle[0], 8));
-   
-   return si_or(ab, cd);
-}
-
-
-static INLINE qword
-CVT_8_USCALED(const qword *qw, const qword *shuffle)
-{
-   return si_cuflt(si_shufb(*qw, *qw, shuffle[1]), 0);
-}
-
-
-static INLINE qword
-CVT_16_USCALED(const qword *qw, const qword *shuffle)
-{
-   return si_cuflt(si_shufb(*qw, *qw, shuffle[2]), 0);
-}
-
-
-static INLINE qword
-CVT_32_USCALED(const qword *qw, const qword *shuffle)
-{
-   (void) shuffle;
-   return si_cuflt(*qw, 0);
-}
-
-static INLINE qword
-CVT_8_SSCALED(const qword *qw, const qword *shuffle)
-{
-   return si_csflt(si_shufb(*qw, *qw, shuffle[1]), 0);
-}
-
-
-static INLINE qword
-CVT_16_SSCALED(const qword *qw, const qword *shuffle)
-{
-   return si_csflt(si_shufb(*qw, *qw, shuffle[2]), 0);
-}
-
-
-static INLINE qword
-CVT_32_SSCALED(const qword *qw, const qword *shuffle)
-{
-   (void) shuffle;
-   return si_csflt(*qw, 0);
-}
-
-
-static INLINE qword
-CVT_8_UNORM(const qword *qw, const qword *shuffle)
-{
-   const qword scale = (qword) spu_splats(1.0f / 255.0f);
-   return si_fm(CVT_8_USCALED(qw, shuffle), scale);
-}
-
-
-static INLINE qword
-CVT_16_UNORM(const qword *qw, const qword *shuffle)
-{
-   const qword scale = (qword) spu_splats(1.0f / 65535.0f);
-   return si_fm(CVT_16_USCALED(qw, shuffle), scale);
-}
-
-
-static INLINE qword
-CVT_32_UNORM(const qword *qw, const qword *shuffle)
-{
-   const qword scale = (qword) spu_splats(1.0f / 4294967295.0f);
-   return si_fm(CVT_32_USCALED(qw, shuffle), scale);
-}
-
-
-static INLINE qword
-CVT_8_SNORM(const qword *qw, const qword *shuffle)
-{
-   const qword scale = (qword) spu_splats(1.0f / 127.0f);
-   return si_fm(CVT_8_SSCALED(qw, shuffle), scale);
-}
-
-
-static INLINE qword
-CVT_16_SNORM(const qword *qw, const qword *shuffle)
-{
-   const qword scale = (qword) spu_splats(1.0f / 32767.0f);
-   return si_fm(CVT_16_SSCALED(qw, shuffle), scale);
-}
-
-
-static INLINE qword
-CVT_32_SNORM(const qword *qw, const qword *shuffle)
-{
-   const qword scale = (qword) spu_splats(1.0f / 2147483647.0f);
-   return si_fm(CVT_32_SSCALED(qw, shuffle), scale);
-}
-
-#define SZ_4 si_il(0U)
-#define SZ_3 si_fsmbi(0x000f)
-#define SZ_2 si_fsmbi(0x00ff)
-#define SZ_1 si_fsmbi(0x0fff)
-
-/**
- * Fetch a float[4] vertex attribute from memory, doing format/type
- * conversion as needed.
- *
- * This is probably needed/dupliocated elsewhere, eg format
- * conversion, texture sampling etc.
- */
-#define FETCH_ATTRIB( NAME, SZ, CVT, N )			\
-static void							\
-fetch_##NAME(qword *out, const qword *in, qword defaults, \
-                const qword *shuffle)	\
-{								\
-   qword tmp[4];						\
-								\
-   tmp[0] = si_selb(CVT(in + (0 * N), shuffle), defaults, SZ);		\
-   tmp[1] = si_selb(CVT(in + (1 * N), shuffle), defaults, SZ);		\
-   tmp[2] = si_selb(CVT(in + (2 * N), shuffle), defaults, SZ);		\
-   tmp[3] = si_selb(CVT(in + (3 * N), shuffle), defaults, SZ);		\
-   trans4x4(tmp[0], tmp[1], tmp[2], tmp[3], out, shuffle);		\
-}
-
-
-FETCH_ATTRIB( R64G64B64A64_FLOAT,   SZ_4, CVT_64_FLOAT, 2 )
-FETCH_ATTRIB( R64G64B64_FLOAT,      SZ_3, CVT_64_FLOAT, 2 )
-FETCH_ATTRIB( R64G64_FLOAT,         SZ_2, CVT_64_FLOAT, 2 )
-FETCH_ATTRIB( R64_FLOAT,            SZ_1, CVT_64_FLOAT, 2 )
-
-FETCH_ATTRIB( R32G32B32A32_FLOAT,   SZ_4, CVT_32_FLOAT, 1 )
-FETCH_ATTRIB( R32G32B32_FLOAT,      SZ_3, CVT_32_FLOAT, 1 )
-FETCH_ATTRIB( R32G32_FLOAT,         SZ_2, CVT_32_FLOAT, 1 )
-FETCH_ATTRIB( R32_FLOAT,            SZ_1, CVT_32_FLOAT, 1 )
-
-FETCH_ATTRIB( R32G32B32A32_USCALED, SZ_4, CVT_32_USCALED, 1 )
-FETCH_ATTRIB( R32G32B32_USCALED,    SZ_3, CVT_32_USCALED, 1 )
-FETCH_ATTRIB( R32G32_USCALED,       SZ_2, CVT_32_USCALED, 1 )
-FETCH_ATTRIB( R32_USCALED,          SZ_1, CVT_32_USCALED, 1 )
-
-FETCH_ATTRIB( R32G32B32A32_SSCALED, SZ_4, CVT_32_SSCALED, 1 )
-FETCH_ATTRIB( R32G32B32_SSCALED,    SZ_3, CVT_32_SSCALED, 1 )
-FETCH_ATTRIB( R32G32_SSCALED,       SZ_2, CVT_32_SSCALED, 1 )
-FETCH_ATTRIB( R32_SSCALED,          SZ_1, CVT_32_SSCALED, 1 )
-
-FETCH_ATTRIB( R32G32B32A32_UNORM, SZ_4, CVT_32_UNORM, 1 )
-FETCH_ATTRIB( R32G32B32_UNORM,    SZ_3, CVT_32_UNORM, 1 )
-FETCH_ATTRIB( R32G32_UNORM,       SZ_2, CVT_32_UNORM, 1 )
-FETCH_ATTRIB( R32_UNORM,          SZ_1, CVT_32_UNORM, 1 )
-
-FETCH_ATTRIB( R32G32B32A32_SNORM, SZ_4, CVT_32_SNORM, 1 )
-FETCH_ATTRIB( R32G32B32_SNORM,    SZ_3, CVT_32_SNORM, 1 )
-FETCH_ATTRIB( R32G32_SNORM,       SZ_2, CVT_32_SNORM, 1 )
-FETCH_ATTRIB( R32_SNORM,          SZ_1, CVT_32_SNORM, 1 )
-
-FETCH_ATTRIB( R16G16B16A16_USCALED, SZ_4, CVT_16_USCALED, 1 )
-FETCH_ATTRIB( R16G16B16_USCALED,    SZ_3, CVT_16_USCALED, 1 )
-FETCH_ATTRIB( R16G16_USCALED,       SZ_2, CVT_16_USCALED, 1 )
-FETCH_ATTRIB( R16_USCALED,          SZ_1, CVT_16_USCALED, 1 )
-
-FETCH_ATTRIB( R16G16B16A16_SSCALED, SZ_4, CVT_16_SSCALED, 1 )
-FETCH_ATTRIB( R16G16B16_SSCALED,    SZ_3, CVT_16_SSCALED, 1 )
-FETCH_ATTRIB( R16G16_SSCALED,       SZ_2, CVT_16_SSCALED, 1 )
-FETCH_ATTRIB( R16_SSCALED,          SZ_1, CVT_16_SSCALED, 1 )
-
-FETCH_ATTRIB( R16G16B16A16_UNORM, SZ_4, CVT_16_UNORM, 1 )
-FETCH_ATTRIB( R16G16B16_UNORM,    SZ_3, CVT_16_UNORM, 1 )
-FETCH_ATTRIB( R16G16_UNORM,       SZ_2, CVT_16_UNORM, 1 )
-FETCH_ATTRIB( R16_UNORM,          SZ_1, CVT_16_UNORM, 1 )
-
-FETCH_ATTRIB( R16G16B16A16_SNORM, SZ_4, CVT_16_SNORM, 1 )
-FETCH_ATTRIB( R16G16B16_SNORM,    SZ_3, CVT_16_SNORM, 1 )
-FETCH_ATTRIB( R16G16_SNORM,       SZ_2, CVT_16_SNORM, 1 )
-FETCH_ATTRIB( R16_SNORM,          SZ_1, CVT_16_SNORM, 1 )
-
-FETCH_ATTRIB( R8G8B8A8_USCALED,   SZ_4, CVT_8_USCALED, 1 )
-FETCH_ATTRIB( R8G8B8_USCALED,     SZ_3, CVT_8_USCALED, 1 )
-FETCH_ATTRIB( R8G8_USCALED,       SZ_2, CVT_8_USCALED, 1 )
-FETCH_ATTRIB( R8_USCALED,         SZ_1, CVT_8_USCALED, 1 )
-
-FETCH_ATTRIB( R8G8B8A8_SSCALED,  SZ_4, CVT_8_SSCALED, 1 )
-FETCH_ATTRIB( R8G8B8_SSCALED,    SZ_3, CVT_8_SSCALED, 1 )
-FETCH_ATTRIB( R8G8_SSCALED,      SZ_2, CVT_8_SSCALED, 1 )
-FETCH_ATTRIB( R8_SSCALED,        SZ_1, CVT_8_SSCALED, 1 )
-
-FETCH_ATTRIB( R8G8B8A8_UNORM,  SZ_4, CVT_8_UNORM, 1 )
-FETCH_ATTRIB( R8G8B8_UNORM,    SZ_3, CVT_8_UNORM, 1 )
-FETCH_ATTRIB( R8G8_UNORM,      SZ_2, CVT_8_UNORM, 1 )
-FETCH_ATTRIB( R8_UNORM,        SZ_1, CVT_8_UNORM, 1 )
-
-FETCH_ATTRIB( R8G8B8A8_SNORM,  SZ_4, CVT_8_SNORM, 1 )
-FETCH_ATTRIB( R8G8B8_SNORM,    SZ_3, CVT_8_SNORM, 1 )
-FETCH_ATTRIB( R8G8_SNORM,      SZ_2, CVT_8_SNORM, 1 )
-FETCH_ATTRIB( R8_SNORM,        SZ_1, CVT_8_SNORM, 1 )
-
-FETCH_ATTRIB( A8R8G8B8_UNORM,       SZ_4, CVT_8_UNORM, 1 )
-
-
-
-static spu_fetch_func get_fetch_func( enum pipe_format format )
-{
-   switch (format) {
-   case PIPE_FORMAT_R64_FLOAT:
-      return fetch_R64_FLOAT;
-   case PIPE_FORMAT_R64G64_FLOAT:
-      return fetch_R64G64_FLOAT;
-   case PIPE_FORMAT_R64G64B64_FLOAT:
-      return fetch_R64G64B64_FLOAT;
-   case PIPE_FORMAT_R64G64B64A64_FLOAT:
-      return fetch_R64G64B64A64_FLOAT;
-
-   case PIPE_FORMAT_R32_FLOAT:
-      return fetch_R32_FLOAT;
-   case PIPE_FORMAT_R32G32_FLOAT:
-      return fetch_R32G32_FLOAT;
-   case PIPE_FORMAT_R32G32B32_FLOAT:
-      return fetch_R32G32B32_FLOAT;
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
-      return fetch_R32G32B32A32_FLOAT;
-
-   case PIPE_FORMAT_R32_UNORM:
-      return fetch_R32_UNORM;
-   case PIPE_FORMAT_R32G32_UNORM:
-      return fetch_R32G32_UNORM;
-   case PIPE_FORMAT_R32G32B32_UNORM:
-      return fetch_R32G32B32_UNORM;
-   case PIPE_FORMAT_R32G32B32A32_UNORM:
-      return fetch_R32G32B32A32_UNORM;
-
-   case PIPE_FORMAT_R32_USCALED:
-      return fetch_R32_USCALED;
-   case PIPE_FORMAT_R32G32_USCALED:
-      return fetch_R32G32_USCALED;
-   case PIPE_FORMAT_R32G32B32_USCALED:
-      return fetch_R32G32B32_USCALED;
-   case PIPE_FORMAT_R32G32B32A32_USCALED:
-      return fetch_R32G32B32A32_USCALED;
-
-   case PIPE_FORMAT_R32_SNORM:
-      return fetch_R32_SNORM;
-   case PIPE_FORMAT_R32G32_SNORM:
-      return fetch_R32G32_SNORM;
-   case PIPE_FORMAT_R32G32B32_SNORM:
-      return fetch_R32G32B32_SNORM;
-   case PIPE_FORMAT_R32G32B32A32_SNORM:
-      return fetch_R32G32B32A32_SNORM;
-
-   case PIPE_FORMAT_R32_SSCALED:
-      return fetch_R32_SSCALED;
-   case PIPE_FORMAT_R32G32_SSCALED:
-      return fetch_R32G32_SSCALED;
-   case PIPE_FORMAT_R32G32B32_SSCALED:
-      return fetch_R32G32B32_SSCALED;
-   case PIPE_FORMAT_R32G32B32A32_SSCALED:
-      return fetch_R32G32B32A32_SSCALED;
-
-   case PIPE_FORMAT_R16_UNORM:
-      return fetch_R16_UNORM;
-   case PIPE_FORMAT_R16G16_UNORM:
-      return fetch_R16G16_UNORM;
-   case PIPE_FORMAT_R16G16B16_UNORM:
-      return fetch_R16G16B16_UNORM;
-   case PIPE_FORMAT_R16G16B16A16_UNORM:
-      return fetch_R16G16B16A16_UNORM;
-
-   case PIPE_FORMAT_R16_USCALED:
-      return fetch_R16_USCALED;
-   case PIPE_FORMAT_R16G16_USCALED:
-      return fetch_R16G16_USCALED;
-   case PIPE_FORMAT_R16G16B16_USCALED:
-      return fetch_R16G16B16_USCALED;
-   case PIPE_FORMAT_R16G16B16A16_USCALED:
-      return fetch_R16G16B16A16_USCALED;
-
-   case PIPE_FORMAT_R16_SNORM:
-      return fetch_R16_SNORM;
-   case PIPE_FORMAT_R16G16_SNORM:
-      return fetch_R16G16_SNORM;
-   case PIPE_FORMAT_R16G16B16_SNORM:
-      return fetch_R16G16B16_SNORM;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-      return fetch_R16G16B16A16_SNORM;
-
-   case PIPE_FORMAT_R16_SSCALED:
-      return fetch_R16_SSCALED;
-   case PIPE_FORMAT_R16G16_SSCALED:
-      return fetch_R16G16_SSCALED;
-   case PIPE_FORMAT_R16G16B16_SSCALED:
-      return fetch_R16G16B16_SSCALED;
-   case PIPE_FORMAT_R16G16B16A16_SSCALED:
-      return fetch_R16G16B16A16_SSCALED;
-
-   case PIPE_FORMAT_R8_UNORM:
-      return fetch_R8_UNORM;
-   case PIPE_FORMAT_R8G8_UNORM:
-      return fetch_R8G8_UNORM;
-   case PIPE_FORMAT_R8G8B8_UNORM:
-      return fetch_R8G8B8_UNORM;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      return fetch_R8G8B8A8_UNORM;
-
-   case PIPE_FORMAT_R8_USCALED:
-      return fetch_R8_USCALED;
-   case PIPE_FORMAT_R8G8_USCALED:
-      return fetch_R8G8_USCALED;
-   case PIPE_FORMAT_R8G8B8_USCALED:
-      return fetch_R8G8B8_USCALED;
-   case PIPE_FORMAT_R8G8B8A8_USCALED:
-      return fetch_R8G8B8A8_USCALED;
-
-   case PIPE_FORMAT_R8_SNORM:
-      return fetch_R8_SNORM;
-   case PIPE_FORMAT_R8G8_SNORM:
-      return fetch_R8G8_SNORM;
-   case PIPE_FORMAT_R8G8B8_SNORM:
-      return fetch_R8G8B8_SNORM;
-   case PIPE_FORMAT_R8G8B8A8_SNORM:
-      return fetch_R8G8B8A8_SNORM;
-
-   case PIPE_FORMAT_R8_SSCALED:
-      return fetch_R8_SSCALED;
-   case PIPE_FORMAT_R8G8_SSCALED:
-      return fetch_R8G8_SSCALED;
-   case PIPE_FORMAT_R8G8B8_SSCALED:
-      return fetch_R8G8B8_SSCALED;
-   case PIPE_FORMAT_R8G8B8A8_SSCALED:
-      return fetch_R8G8B8A8_SSCALED;
-
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return fetch_A8R8G8B8_UNORM;
-
-   case 0:
-      return NULL;		/* not sure why this is needed */
-
-   default:
-      assert(0);
-      return NULL;
-   }
-}
-
-
-static unsigned get_vertex_size( enum pipe_format format )
-{
-   switch (format) {
-   case PIPE_FORMAT_R64_FLOAT:
-      return 8;
-   case PIPE_FORMAT_R64G64_FLOAT:
-      return 2 * 8;
-   case PIPE_FORMAT_R64G64B64_FLOAT:
-      return 3 * 8;
-   case PIPE_FORMAT_R64G64B64A64_FLOAT:
-      return 4 * 8;
-
-   case PIPE_FORMAT_R32_SSCALED:
-   case PIPE_FORMAT_R32_SNORM:
-   case PIPE_FORMAT_R32_USCALED:
-   case PIPE_FORMAT_R32_UNORM:
-   case PIPE_FORMAT_R32_FLOAT:
-      return 4;
-   case PIPE_FORMAT_R32G32_SSCALED:
-   case PIPE_FORMAT_R32G32_SNORM:
-   case PIPE_FORMAT_R32G32_USCALED:
-   case PIPE_FORMAT_R32G32_UNORM:
-   case PIPE_FORMAT_R32G32_FLOAT:
-      return 2 * 4;
-   case PIPE_FORMAT_R32G32B32_SSCALED:
-   case PIPE_FORMAT_R32G32B32_SNORM:
-   case PIPE_FORMAT_R32G32B32_USCALED:
-   case PIPE_FORMAT_R32G32B32_UNORM:
-   case PIPE_FORMAT_R32G32B32_FLOAT:
-      return 3 * 4;
-   case PIPE_FORMAT_R32G32B32A32_SSCALED:
-   case PIPE_FORMAT_R32G32B32A32_SNORM:
-   case PIPE_FORMAT_R32G32B32A32_USCALED:
-   case PIPE_FORMAT_R32G32B32A32_UNORM:
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
-      return 4 * 4;
-
-   case PIPE_FORMAT_R16_SSCALED:
-   case PIPE_FORMAT_R16_SNORM:
-   case PIPE_FORMAT_R16_UNORM:
-   case PIPE_FORMAT_R16_USCALED:
-      return 2;
-   case PIPE_FORMAT_R16G16_SSCALED:
-   case PIPE_FORMAT_R16G16_SNORM:
-   case PIPE_FORMAT_R16G16_USCALED:
-   case PIPE_FORMAT_R16G16_UNORM:
-      return 2 * 2;
-   case PIPE_FORMAT_R16G16B16_SSCALED:
-   case PIPE_FORMAT_R16G16B16_SNORM:
-   case PIPE_FORMAT_R16G16B16_USCALED:
-   case PIPE_FORMAT_R16G16B16_UNORM:
-      return 3 * 2;
-   case PIPE_FORMAT_R16G16B16A16_SSCALED:
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
-   case PIPE_FORMAT_R16G16B16A16_USCALED:
-   case PIPE_FORMAT_R16G16B16A16_UNORM:
-      return 4 * 2;
-
-   case PIPE_FORMAT_R8_SSCALED:
-   case PIPE_FORMAT_R8_SNORM:
-   case PIPE_FORMAT_R8_USCALED:
-   case PIPE_FORMAT_R8_UNORM:
-      return 1;
-   case PIPE_FORMAT_R8G8_SSCALED:
-   case PIPE_FORMAT_R8G8_SNORM:
-   case PIPE_FORMAT_R8G8_USCALED:
-   case PIPE_FORMAT_R8G8_UNORM:
-      return 2 * 1;
-   case PIPE_FORMAT_R8G8B8_SSCALED:
-   case PIPE_FORMAT_R8G8B8_SNORM:
-   case PIPE_FORMAT_R8G8B8_USCALED:
-   case PIPE_FORMAT_R8G8B8_UNORM:
-      return 3 * 1;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-   case PIPE_FORMAT_R8G8B8A8_SSCALED:
-   case PIPE_FORMAT_R8G8B8A8_SNORM:
-   case PIPE_FORMAT_R8G8B8A8_USCALED:
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      return 4 * 1;
-
-   case 0:
-      return 0;		/* not sure why this is needed */
-
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-
 /**
  * Fetch vertex attributes for 'count' vertices.
  */
@@ -612,10 +161,10 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
    /* loop over vertex attributes (vertex shader inputs)
     */
    for (attr = 0; attr < nr_attrs; attr++) {
-      const qword default_values = (qword)(vec_float4){ 0.0, 0.0, 0.0, 1.0 };
       const unsigned pitch = draw->vertex_fetch.pitch[attr];
       const uint64_t src = draw->vertex_fetch.src_ptr[attr];
-      const spu_fetch_func fetch = draw->vertex_fetch.fetch[attr];
+      const spu_fetch_func fetch = (spu_fetch_func)
+	  (draw->vertex_fetch.code + draw->vertex_fetch.code_offset[attr]);
       unsigned i;
       unsigned idx;
       const unsigned bytes_per_entry = draw->vertex_fetch.size[attr];
@@ -644,8 +193,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
 
       /* Convert all 4 vertices to vectors of float.
        */
-      (*fetch)(&machine->Inputs[attr].xyzw[0].q, in, default_values,
-               fetch_shuffle_data);
+      (*fetch)(&machine->Inputs[attr].xyzw[0].q, in, fetch_shuffle_data);
    }
 }
 
@@ -661,13 +209,6 @@ void spu_update_vertex_fetch( struct spu_vs_context *draw )
       CACHELINE_CLEARVALID(i);
    }
 
-
-   for (i = 0; i < draw->vertex_fetch.nr_attrs; i++) {
-      draw->vertex_fetch.fetch[i] =
-          get_fetch_func(draw->vertex_fetch.format[i]);
-      draw->vertex_fetch.size[i] =
-          get_vertex_size(draw->vertex_fetch.format[i]);
-   }
 
    draw->vertex_fetch.fetch_func = generic_vertex_fetch;
 }

@@ -55,14 +55,32 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    uint64_t *batch;
    struct cell_array_info *array_info;
    unsigned i, j;
+   struct cell_attribute_fetch_code *cf;
 
    assert(draw->vs.queue_nr != 0);
 
    /* XXX: do this on statechange: 
     */
    draw_update_vertex_fetch(draw);
+   cell_update_vertex_fetch(draw);
+
+
+   batch = cell_batch_alloc(cell, sizeof(batch[0]) + sizeof(*cf));
+   batch[0] = CELL_CMD_STATE_ATTRIB_FETCH;
+   cf = (struct cell_attribute_fetch_code *) (&batch[1]);
+   cf->base = cell->attrib_fetch.store;
+   cf->size = ROUNDUP16((unsigned)((void *) cell->attrib_fetch.csr 
+				   - (void *) cell->attrib_fetch.store));
+
 
    for (i = 0; i < draw->vertex_fetch.nr_attrs; i++) {
+      const enum pipe_format format = draw->vertex_element[i].src_format;
+      const unsigned count = ((pf_size_x(format) != 0)
+			      + (pf_size_y(format) != 0)
+			      + (pf_size_z(format) != 0)
+			      + (pf_size_w(format) != 0));
+      const unsigned size = pf_size_x(format) * count;
+
       batch = cell_batch_alloc(cell, sizeof(batch[0]) + sizeof(*array_info));
 
       batch[0] = CELL_CMD_STATE_VS_ARRAY_INFO;
@@ -72,7 +90,8 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
       array_info->base = (uintptr_t) draw->vertex_fetch.src_ptr[i];
       array_info->attr = i;
       array_info->pitch = draw->vertex_fetch.pitch[i];
-      array_info->format = draw->vertex_element[i].src_format;
+      array_info->size = size;
+      array_info->function_offset = cell->attrib_fetch_offsets[i];
    }
 
    batch = cell_batch_alloc(cell, sizeof(batch[0])

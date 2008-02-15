@@ -6,8 +6,6 @@
 
 struct spu_vs_context;
 
-typedef void (*spu_fetch_func)(qword *out, const qword *in, qword defaults,
-			       const qword *shuffle_data);
 typedef void (*spu_full_fetch_func)( struct spu_vs_context *draw,
 				     struct spu_exec_machine *machine,
 				     const unsigned *elts,
@@ -20,12 +18,12 @@ struct spu_vs_context {
       uint64_t src_ptr[PIPE_ATTRIB_MAX];
       unsigned pitch[PIPE_ATTRIB_MAX];
       unsigned size[PIPE_ATTRIB_MAX];
-      enum pipe_format format[PIPE_ATTRIB_MAX];
+      unsigned code_offset[PIPE_ATTRIB_MAX];
       unsigned nr_attrs;
       boolean dirty;
 
-      spu_fetch_func fetch[PIPE_ATTRIB_MAX];
       spu_full_fetch_func fetch_func;
+      void *code;
    } vertex_fetch;
    
    /* Clip derived state:

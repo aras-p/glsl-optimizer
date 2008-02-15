@@ -27,10 +27,10 @@
 #include "pipe/p_context.h"
 #include "pipe/p_format.h"
 
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_private.h"
+#include "../auxiliary/draw/draw_context.h"
+#include "../auxiliary/draw/draw_private.h"
 
-#include "pipe/cell/ppu/cell_context.h"
+#include "cell_context.h"
 #include "ppc/rtasm/spe_asm.h"
 
 typedef uint64_t register_mask;
@@ -378,15 +378,6 @@ void cell_update_vertex_fetch(struct draw_context *draw)
 	  */
 	 cell->attrib_fetch_offsets[i] = 
 	     cell->attrib_fetch_offsets[function_index[i]];
-      }
-   }
-   
-   static first_time = 1;
-   if (first_time) {
-      first_time = 0;
-      const unsigned instructions = p->csr - p->store;
-      for (i = 0; i < instructions; i++) {
-	 printf("\t.long\t0x%08x\n", p->store[i]);
       }
    }
 }

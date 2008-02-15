@@ -54,6 +54,9 @@ struct spu_global spu;
 
 struct spu_vs_context draw;
 
+static unsigned char attribute_fetch_code_buffer[136 * PIPE_ATTRIB_MAX]
+    ALIGN16_ATTRIB;
+
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
  * local store and that it may be reused by the PPU.
@@ -306,7 +309,8 @@ cmd_state_vs_array_info(const struct cell_array_info *vs_info)
    ASSERT(attr < PIPE_ATTRIB_MAX);
    draw.vertex_fetch.src_ptr[attr] = vs_info->base;
    draw.vertex_fetch.pitch[attr] = vs_info->pitch;
-   draw.vertex_fetch.format[attr] = vs_info->format;
+   draw.vertex_fetch.size[attr] = vs_info->size;
+   draw.vertex_fetch.code_offset[attr] = vs_info->function_offset;
    draw.vertex_fetch.dirty = 1;
 }
 
@@ -433,6 +437,22 @@ cmd_batch(uint opcode)
          cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
          pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
          break;
+      case CELL_CMD_STATE_ATTRIB_FETCH: {
+         struct cell_attribute_fetch_code *code =
+             (struct cell_attribute_fetch_code *) &buffer[pos+1];
+
+              mfc_get(attribute_fetch_code_buffer,
+                      (unsigned int) code->base,  /* src */
+                      code->size,
+                      TAG_BATCH_BUFFER,
+                      0, /* tid */
+                      0  /* rid */);
+         wait_on_mask(1 << TAG_BATCH_BUFFER);
+
+         draw.vertex_fetch.code = attribute_fetch_code_buffer;
+         pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
+         break;
+      }
       default:
          printf("SPU %u: bad opcode: 0x%llx\n", spu.init.id, buffer[pos]);
          ASSERT(0);

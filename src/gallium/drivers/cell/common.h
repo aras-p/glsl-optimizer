@@ -90,6 +90,7 @@
 #define CELL_CMD_STATE_VS_ARRAY_INFO 16
 #define CELL_CMD_STATE_BLEND         17
 #define CELL_CMD_VS_EXECUTE          18
+#define CELL_CMD_STATE_ATTRIB_FETCH  19
 
 
 #define CELL_NUM_BUFFERS 4
@@ -128,12 +129,18 @@ struct cell_command_clear_surface
  */
 struct cell_array_info
 {
-    uint64_t base;      /**< Base address of the 0th element. */
-    uint attr;          /**< Attribute that this state is for. */
-    uint pitch;         /**< Byte pitch from one entry to the next. */
-    uint format;        /**< Pipe format of each entry. */
+   uint64_t base;      /**< Base address of the 0th element. */
+   uint attr;          /**< Attribute that this state is for. */
+   uint pitch;         /**< Byte pitch from one entry to the next. */
+   uint size;
+   uint function_offset;
 } ALIGN16_ATTRIB;
 
+
+struct cell_attribute_fetch_code {
+   uint64_t base;
+   uint size;
+};
 
 struct cell_shader_info
 {

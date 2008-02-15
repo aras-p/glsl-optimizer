@@ -36,6 +36,7 @@
 #include "draw/draw_vbuf.h"
 #include "cell_winsys.h"
 #include "cell/common.h"
+#include "ppc/rtasm/spe_asm.h"
 
 
 struct cell_vbuf_render;
@@ -111,6 +112,9 @@ struct cell_context
    /** [4] to ensure 16-byte alignment for each status word */
    uint buffer_status[CELL_MAX_SPUS][CELL_NUM_BUFFERS][4] ALIGN16_ATTRIB;
 
+
+   struct spe_function attrib_fetch;
+   unsigned attrib_fetch_offsets[PIPE_ATTRIB_MAX];
 };
 
 
