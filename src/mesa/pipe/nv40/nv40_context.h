@@ -100,7 +100,7 @@ struct nv40_context {
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
 };
 
-static inline struct nv40_context *
+static INLINE struct nv40_context *
 nv40_context(struct pipe_context *pipe)
 {
 	return (struct nv40_context *)pipe;

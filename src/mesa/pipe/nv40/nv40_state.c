@@ -112,7 +112,7 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	struct nv40_sampler_state *ps;
 	uint32_t filter = 0;
 
-	ps = malloc(sizeof(struct nv40_sampler_state));
+	ps = MALLOC(sizeof(struct nv40_sampler_state));
 
 	ps->fmt = 0;
 	if (!cso->normalized_coords)
@@ -455,7 +455,7 @@ nv40_vp_state_create(struct pipe_context *pipe,
 {
 	struct nv40_vertex_program *vp;
 
-	vp = calloc(1, sizeof(struct nv40_vertex_program));
+	vp = CALLOC(1, sizeof(struct nv40_vertex_program));
 	vp->pipe = cso;
 
 	return (void *)vp;
@@ -487,7 +487,7 @@ nv40_fp_state_create(struct pipe_context *pipe,
 {
 	struct nv40_fragment_program *fp;
 
-	fp = calloc(1, sizeof(struct nv40_fragment_program));
+	fp = CALLOC(1, sizeof(struct nv40_fragment_program));
 	fp->pipe = cso;
 
 	return (void *)fp;

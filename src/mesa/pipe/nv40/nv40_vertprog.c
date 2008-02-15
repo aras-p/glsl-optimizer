@@ -551,7 +551,7 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 	tgsi_parse_free(&p);
 
 	if (nr_imm) {
-		vpc->imm = calloc(nr_imm, sizeof(struct nv40_sreg));
+		vpc->imm = CALLOC(nr_imm, sizeof(struct nv40_sreg));
 		assert(vpc->imm);
 	}
 
@@ -565,7 +565,7 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 	struct tgsi_parse_context parse;
 	struct nv40_vpc *vpc = NULL;
 
-	vpc = calloc(1, sizeof(struct nv40_vpc));
+	vpc = CALLOC(1, sizeof(struct nv40_vpc));
 	if (!vpc)
 		return;
 	vpc->vp = vp;

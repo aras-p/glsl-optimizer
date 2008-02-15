@@ -30,7 +30,8 @@ nv40_vbo_type(uint format)
 	case PIPE_FORMAT_TYPE_UNORM:
 		return NV40TCL_VTXFMT_TYPE_UBYTE;
 	default:
-		assert(0);
+		NOUVEAU_ERR("Unknown format 0x%08x\n", format);
+		return NV40TCL_VTXFMT_TYPE_FLOAT;
 	}
 }
 
@@ -188,8 +189,13 @@ nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned nr;
+	boolean ret;
 
-	assert(nv40_vbo_validate_state(nv40, NULL, 0));
+	ret = nv40_vbo_validate_state(nv40, NULL, 0);
+	if (!ret) {
+		NOUVEAU_ERR("state validate failed\n");
+		return FALSE;
+	}
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -290,19 +296,26 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 }
 
 static boolean
-nv40_draw_elements_inline(struct pipe_context *pipe,
+nv40_draw_elements_INLINE(struct pipe_context *pipe,
 			  struct pipe_buffer *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct pipe_winsys *ws = pipe->winsys;
+	boolean ret;
 	void *map;
 
-	assert(nv40_vbo_validate_state(nv40, NULL, 0));
+	ret = nv40_vbo_validate_state(nv40, NULL, 0);
+	if (!ret) {
+		NOUVEAU_ERR("state validate failed\n");
+		return FALSE;
+	}
 
 	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
-	if (!ib)
-		assert(0);
+	if (!ib) {
+		NOUVEAU_ERR("failed mapping ib\n");
+		return FALSE;
+	}
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -318,7 +331,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 		nv40_draw_elements_u32(nv40, map, start, count);
 		break;
 	default:
-		assert(0);
+		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
 		break;
 	}
 
@@ -337,6 +350,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned nr, type;
+	boolean ret;
 
 	switch (ib_size) {
 	case 2:
@@ -346,10 +360,15 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		type = NV40TCL_IDXBUF_FORMAT_TYPE_U32;
 		break;
 	default:
-		assert(0);
+		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
+		return FALSE;
 	}
 
-	assert(nv40_vbo_validate_state(nv40, ib, type));
+	ret = nv40_vbo_validate_state(nv40, ib, type);
+	if (!ret) {
+		NOUVEAU_ERR("failed state validation\n");
+		return FALSE;
+	}
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -391,7 +410,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 	 * to be support on any chipset for 8-bit indices.
 	 */
 	if (nv40->hw->curie->grclass == NV44TCL || indexSize == 1) {
-		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
+		nv40_draw_elements_INLINE(pipe, indexBuffer, indexSize,
 					  mode, start, count);
 	} else {
 		nv40_draw_elements_vbo(pipe, indexBuffer, indexSize,

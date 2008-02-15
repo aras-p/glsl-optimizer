@@ -35,7 +35,7 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 		nv40mt->level[l].pitch = (nv40mt->level[l].pitch + 63) & ~63;
 
 		nv40mt->level[l].image_offset =
-			calloc(nr_faces, sizeof(unsigned));
+			CALLOC(nr_faces, sizeof(unsigned));
 
 		width  = MAX2(1, width  >> 1);
 		height = MAX2(1, height >> 1);
@@ -59,7 +59,7 @@ nv40_miptree_create(struct pipe_context *pipe, const struct pipe_texture *pt)
 	struct pipe_winsys *ws = pipe->winsys;
 	struct nv40_miptree *mt;
 
-	mt = malloc(sizeof(struct nv40_miptree));
+	mt = MALLOC(sizeof(struct nv40_miptree));
 	if (!mt)
 		return NULL;
 	mt->base = *pt;

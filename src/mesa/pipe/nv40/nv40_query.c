@@ -9,7 +9,7 @@ struct nv40_query {
 	uint64_t result;
 };
 
-static inline struct nv40_query *
+static INLINE struct nv40_query *
 nv40_query(struct pipe_query *pipe)
 {
 	return (struct nv40_query *)pipe;
@@ -20,7 +20,7 @@ nv40_query_create(struct pipe_context *pipe, unsigned query_type)
 {
 	struct nv40_query *q;
 
-	q = calloc(1, sizeof(struct nv40_query));
+	q = CALLOC(1, sizeof(struct nv40_query));
 	q->type = query_type;
 
 	return (struct pipe_query *)q;

@@ -1,6 +1,8 @@
 #ifndef __NOUVEAU_STATEOBJ_H__
 #define __NOUVEAU_STATEOBJ_H__
 
+#include "pipe/p_util.h"
+
 struct nouveau_stateobj_reloc {
 	struct pipe_buffer *bo;
 
@@ -24,15 +26,15 @@ struct nouveau_stateobj {
 	unsigned cur_reloc;
 };
 
-static inline struct nouveau_stateobj *
+static INLINE struct nouveau_stateobj *
 so_new(unsigned push, unsigned reloc)
 {
 	struct nouveau_stateobj *so;
 
-	so = malloc(sizeof(struct nouveau_stateobj));
+	so = MALLOC(sizeof(struct nouveau_stateobj));
 	so->refcount = 1;
-	so->push = malloc(sizeof(unsigned) * push);
-	so->reloc = malloc(sizeof(struct nouveau_stateobj_reloc) * reloc);
+	so->push = MALLOC(sizeof(unsigned) * push);
+	so->reloc = MALLOC(sizeof(struct nouveau_stateobj_reloc) * reloc);
 
 	so->cur = so->push;
 	so->cur_reloc = so->cur_packet = 0;
@@ -40,7 +42,7 @@ so_new(unsigned push, unsigned reloc)
 	return so;
 }
 
-static inline void
+static INLINE void
 so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 {
 	struct nouveau_stateobj *so;
@@ -61,14 +63,14 @@ so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 	}
 }
 
-static inline void
+static INLINE void
 so_data(struct nouveau_stateobj *so, unsigned data)
 {
 	(*so->cur++) = (data);
 	so->cur_packet += 4;
 }
 
-static inline void
+static INLINE void
 so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 	  unsigned mthd, unsigned size)
 {
@@ -76,7 +78,7 @@ so_method(struct nouveau_stateobj *so, struct nouveau_grobj *gr,
 	so_data(so, (gr->subc << 13) | (size << 18) | mthd);
 }
 
-static inline void
+static INLINE void
 so_reloc(struct nouveau_stateobj *so, struct pipe_buffer *bo,
 	 unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
@@ -92,7 +94,7 @@ so_reloc(struct nouveau_stateobj *so, struct pipe_buffer *bo,
 	so_data(so, data);
 }
 
-static inline void
+static INLINE void
 so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 {
 	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
@@ -113,7 +115,7 @@ so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 	pb->cur += nr;
 }
 
-static inline void
+static INLINE void
 so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 {
 	struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
