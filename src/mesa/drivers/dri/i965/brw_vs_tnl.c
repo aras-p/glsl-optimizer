@@ -1172,6 +1172,11 @@ static void build_fog( struct tnl_program *p )
    }
    else {
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
+      if (p->state->fog_option &&
+	  p->state->tnl_do_vertex_fog)
+	  input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
+      else
+	  input = register_input(p, VERT_ATTRIB_FOG);
    }
 
    if (p->state->fog_option &&
