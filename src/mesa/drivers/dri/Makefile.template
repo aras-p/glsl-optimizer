@@ -65,7 +65,7 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+default: symlinks depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
