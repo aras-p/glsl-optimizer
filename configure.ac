@@ -325,6 +325,17 @@ xlib|dri)
     ;;
 esac
 
+# SELinux awareness.
+AC_ARG_ENABLE(selinux, AS_HELP_STRING([--enable-selinux], [Build SELinux-aware Mesa (default: disabled)]), [MESA_SELINUX=$enableval], [MESA_SELINUX=no])
+if test "x$enable_selinux" = "xyes"; then
+    AC_CHECK_HEADER(selinux/selinux.h,,
+		    AC_MSG_ERROR([SELinux headers not found]))
+    AC_CHECK_LIB(selinux,is_selinux_enabled,,
+		 AC_MSG_ERROR([SELinux library not found]))
+    SELINUX_LIBS="-lselinux"
+    DEFINES="$DEFINES -DMESA_SELINUX"
+fi
+
 dnl
 dnl libGL configuration per driver
 dnl
@@ -339,7 +350,7 @@ xlib)
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
     fi
-    GL_LIB_DEPS="$GL_LIB_DEPS -lm -lpthread"
+    GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread"
 
     # if static, move the external libraries to the programs
     # and empty the libraries for libGL
@@ -519,7 +530,7 @@ if test "$mesa_driver" = dri; then
         AC_MSG_ERROR([Expat required for DRI.]))
 
     # put all the necessary libs together
-    DRI_LIB_DEPS="$LIBDRM_LIBS $EXPAT_LIB -lm -lpthread -ldl"
+    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread -ldl"
 fi
 AC_SUBST(DRI_DIRS)
 AC_SUBST(EXPAT_INCLUDES)
@@ -574,7 +585,7 @@ case "$mesa_driver" in
 osmesa)
     # only link librararies with osmesa if shared
     if test "$enable_static" = no; then
-        OSMESA_LIB_DEPS="-lm -lpthread"
+        OSMESA_LIB_DEPS="-lm -lpthread $SELINUX_LIBS"
     else
         OSMESA_LIB_DEPS=""
     fi
