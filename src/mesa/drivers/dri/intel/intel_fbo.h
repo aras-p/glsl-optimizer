@@ -98,7 +98,7 @@ extern void intel_fbo_init(struct intel_context *intel);
 /* XXX make inline or macro */
 extern struct intel_renderbuffer *intel_get_renderbuffer(struct gl_framebuffer
                                                          *fb,
-                                                         GLuint attIndex);
+                                                         int attIndex);
 
 extern void intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
 
