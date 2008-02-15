@@ -35,10 +35,9 @@
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
 	nv30->nvws->push_reloc(nv30->nvws->channel,                            \
-			       nv30->nvws->channel->pushbuf->cur,              \
+			       nv30->nvws->channel->pushbuf->cur++,            \
 			       (struct nouveau_bo *)(bo),                      \
 			       (data), (flags), (vor), (tor));                 \
-	OUT_RING(0);                                                           \
 } while(0)
 
 /* Raw data + flags depending on FB/TT buffer */
