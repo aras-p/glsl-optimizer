@@ -39,7 +39,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "pipe/i965simple/brw_winsys.h"
+#include "i965simple/brw_winsys.h"
 #include "brw_aub.h"
 #include "xm_winsys_aub.h"
 

@@ -31,8 +31,8 @@
 
 #include <spu_mfcio.h>
 
-#include "pipe/cell/common.h"
-#include "pipe/draw/draw_vertex.h"
+#include "cell/common.h"
+#include "draw/draw_vertex.h"
 #include "pipe/p_state.h"
 
 

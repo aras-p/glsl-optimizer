@@ -47,8 +47,8 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
 
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_private.h"
+#include "draw/draw_context.h"
 
 
 static GLuint double_types[4] = {

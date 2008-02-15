@@ -158,45 +158,45 @@ VF_SOURCES = \
 
 
 DRAW_SOURCES = \
-	pipe/draw/draw_clip.c \
-	pipe/draw/draw_context.c\
-	pipe/draw/draw_cull.c \
-	pipe/draw/draw_debug.c \
-	pipe/draw/draw_flatshade.c \
-	pipe/draw/draw_offset.c \
-	pipe/draw/draw_prim.c \
-	pipe/draw/draw_stipple.c \
-	pipe/draw/draw_twoside.c \
-	pipe/draw/draw_unfilled.c \
-	pipe/draw/draw_validate.c \
-	pipe/draw/draw_vbuf.c \
-	pipe/draw/draw_vertex.c \
-	pipe/draw/draw_vertex_cache.c \
-	pipe/draw/draw_vertex_fetch.c \
-	pipe/draw/draw_vertex_shader.c \
-	pipe/draw/draw_vf.c \
-	pipe/draw/draw_vf_generic.c \
-	pipe/draw/draw_vf_sse.c \
-	pipe/draw/draw_wide_prims.c
+	$(TOP)/src/gallium/aux/draw/draw_clip.c \
+	$(TOP)/src/gallium/aux/draw/draw_context.c\
+	$(TOP)/src/gallium/aux/draw/draw_cull.c \
+	$(TOP)/src/gallium/aux/draw/draw_debug.c \
+	$(TOP)/src/gallium/aux/draw/draw_flatshade.c \
+	$(TOP)/src/gallium/aux/draw/draw_offset.c \
+	$(TOP)/src/gallium/aux/draw/draw_prim.c \
+	$(TOP)/src/gallium/aux/draw/draw_stipple.c \
+	$(TOP)/src/gallium/aux/draw/draw_twoside.c \
+	$(TOP)/src/gallium/aux/draw/draw_unfilled.c \
+	$(TOP)/src/gallium/aux/draw/draw_validate.c \
+	$(TOP)/src/gallium/aux/draw/draw_vbuf.c \
+	$(TOP)/src/gallium/aux/draw/draw_vertex.c \
+	$(TOP)/src/gallium/aux/draw/draw_vertex_cache.c \
+	$(TOP)/src/gallium/aux/draw/draw_vertex_fetch.c \
+	$(TOP)/src/gallium/aux/draw/draw_vertex_shader.c \
+	$(TOP)/src/gallium/aux/draw/draw_vf.c \
+	$(TOP)/src/gallium/aux/draw/draw_vf_generic.c \
+	$(TOP)/src/gallium/aux/draw/draw_vf_sse.c \
+	$(TOP)/src/gallium/aux/draw/draw_wide_prims.c
 
 TGSIEXEC_SOURCES = \
-	pipe/tgsi/exec/tgsi_exec.c \
-	pipe/tgsi/exec/tgsi_sse2.c
+	$(TOP)/src/gallium/aux/tgsi/exec/tgsi_exec.c \
+	$(TOP)/src/gallium/aux/tgsi/exec/tgsi_sse2.c
 
 TGSIUTIL_SOURCES = \
-	pipe/tgsi/util/tgsi_build.c \
-	pipe/tgsi/util/tgsi_dump.c \
-	pipe/tgsi/util/tgsi_parse.c \
-	pipe/tgsi/util/tgsi_util.c
+	$(TOP)/src/gallium/aux/tgsi/util/tgsi_build.c \
+	$(TOP)/src/gallium/aux/tgsi/util/tgsi_dump.c \
+	$(TOP)/src/gallium/aux/tgsi/util/tgsi_parse.c \
+	$(TOP)/src/gallium/aux/tgsi/util/tgsi_util.c
 
 STATECACHE_SOURCES = \
-	pipe/cso_cache/cso_hash.c \
-	pipe/cso_cache/cso_cache.c
+	$(TOP)/src/gallium/aux/cso_cache/cso_hash.c \
+	$(TOP)/src/gallium/aux/cso_cache/cso_cache.c
 
 PIPEUTIL_SOURCES = \
-	pipe/util/p_debug.c \
-	pipe/util/p_tile.c \
-	pipe/util/p_util.c
+	$(TOP)/src/gallium/aux/util/p_debug.c \
+	$(TOP)/src/gallium/aux/util/p_tile.c \
+	$(TOP)/src/gallium/aux/util/p_util.c
 
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
@@ -331,13 +331,13 @@ __COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
 X11_DRIVER_SOURCES =		\
-	pipe/xlib/glxapi.c	\
-	pipe/xlib/fakeglx.c	\
-	pipe/xlib/xfonts.c	\
-	pipe/xlib/xm_api.c	\
-	pipe/xlib/xm_winsys.c	\
-	pipe/xlib/xm_winsys_aub.c	\
-	pipe/xlib/brw_aub.c
+	$(TOP)/src/gallium/winsys/xlib/glxapi.c	\
+	$(TOP)/src/gallium/winsys/xlib/fakeglx.c	\
+	$(TOP)/src/gallium/winsys/xlib/xfonts.c	\
+	$(TOP)/src/gallium/winsys/xlib/xm_api.c	\
+	$(TOP)/src/gallium/winsys/xlib/xm_winsys.c	\
+	$(TOP)/src/gallium/winsys/xlib/xm_winsys_aub.c	\
+	$(TOP)/src/gallium/winsys/xlib/brw_aub.c
 
 OSMESA_DRIVER_SOURCES = \
 	drivers/osmesa/osmesa.c
@@ -425,7 +425,10 @@ FBDEV_DRIVER_OBJECTS = $(FBDEV_DRIVER_SOURCES:.c=.o)
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
-	-I$(TOP)/src/mesa/main
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/drivers \
+	-I$(TOP)/src/gallium/aux
 
 OLD_INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/tnl \
@@ -435,4 +438,4 @@ OLD_INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/shader \
 	-I$(TOP)/src/mesa/shader/grammar \
 	-I$(TOP)/src/mesa/shader/slang \
-	-I$(TOP)/src/mesa/pipe/tgsi
+	-I$(TOP)/s$(TOP)/src/gallium/aux/tgsi

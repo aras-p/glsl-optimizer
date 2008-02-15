@@ -33,7 +33,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
-#include "pipe/draw/draw_vertex.h"
+#include "draw/draw_vertex.h"
 
 
 #define I915_TEX_UNITS 8

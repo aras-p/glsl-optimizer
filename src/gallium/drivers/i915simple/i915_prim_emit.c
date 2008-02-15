@@ -26,7 +26,7 @@
  **************************************************************************/
 
 
-#include "pipe/draw/draw_private.h"
+#include "draw/draw_private.h"
 #include "pipe/p_util.h"
 
 #include "i915_context.h"

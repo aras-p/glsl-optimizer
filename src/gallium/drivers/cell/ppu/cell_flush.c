@@ -31,7 +31,7 @@
 #include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_render.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 
 void

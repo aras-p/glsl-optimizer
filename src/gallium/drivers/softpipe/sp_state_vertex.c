@@ -33,7 +33,7 @@
 #include "sp_state.h"
 #include "sp_surface.h"
 
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 
 void

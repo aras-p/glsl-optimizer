@@ -32,7 +32,7 @@
 #include <libmisc.h>
 #include <spu_mfcio.h>
 #include "spu_main.h"
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 
 
 

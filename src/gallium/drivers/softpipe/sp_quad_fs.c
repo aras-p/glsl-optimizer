@@ -42,7 +42,7 @@
 #include "x86/rtasm/x86sse.h"
 
 #ifdef MESA_LLVM
-#include "pipe/llvm/gallivm.h"
+#include "llvm/gallivm.h"
 #endif
 
 #include "sp_context.h"

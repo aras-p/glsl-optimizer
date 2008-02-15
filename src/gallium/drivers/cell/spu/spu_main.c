@@ -38,7 +38,7 @@
 #include "spu_tile.h"
 //#include "spu_test.h"
 #include "spu_vertex_shader.h"
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 #include "pipe/p_defines.h"
 
 

@@ -70,7 +70,7 @@ static const char *i915_get_name( struct pipe_context *pipe )
       break;
    }
 
-   sprintf(buffer, "pipe/i915 (chipset: %s)", chipset);
+   sprintf(buffer, "i915 (chipset: %s)", chipset);
    return buffer;
 }
 

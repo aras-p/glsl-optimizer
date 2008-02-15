@@ -30,7 +30,9 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 ### Include directories
 INCLUDES = \
 	-I. \
-	-I$(TOP)/src/mesa/pipe \
+	-I$(TOP)/src/gallium/drivers
+	-I$(TOP)/src/gallium/aux \
+	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/include
 

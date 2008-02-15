@@ -29,7 +29,7 @@
 #include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_state.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 
 

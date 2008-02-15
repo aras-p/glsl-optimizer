@@ -42,8 +42,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "pipe/tgsi/exec/tgsi_exec.h"
-#include "pipe/tgsi/util/tgsi_dump.h"
+#include "tgsi/exec/tgsi_exec.h"
+#include "tgsi/util/tgsi_dump.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>

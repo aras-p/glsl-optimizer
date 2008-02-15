@@ -38,9 +38,9 @@
 #include "cell_spu.h"
 #include "cell_batch.h"
 
-#include "pipe/cell/common.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_private.h"
+#include "cell/common.h"
+#include "draw/draw_context.h"
+#include "draw/draw_private.h"
 
 /**
  * Run the vertex shader on all vertices in the vertex queue.

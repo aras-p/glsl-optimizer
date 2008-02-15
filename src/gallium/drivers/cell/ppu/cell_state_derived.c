@@ -27,8 +27,8 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_vertex.h"
+#include "draw/draw_context.h"
+#include "draw/draw_vertex.h"
 #include "cell_context.h"
 #include "cell_batch.h"
 #include "cell_state.h"

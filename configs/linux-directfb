@@ -22,7 +22,7 @@ ifeq ($(HAVE_X86), yes)
 endif
 
 # Directories
-SRC_DIRS     = mesa glu glut/directfb
+SRC_DIRS     = gallium mesa glu glut/directfb
 GLU_DIRS     = sgi
 DRIVER_DIRS  = directfb
 PROGRAM_DIRS = demos directfb

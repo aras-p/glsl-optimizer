@@ -29,7 +29,7 @@
  */
 
 #include "pipe/p_util.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 #include "cell_context.h"
 #include "cell_state.h"
 

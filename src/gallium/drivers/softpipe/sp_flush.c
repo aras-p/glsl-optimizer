@@ -31,7 +31,7 @@
 
 
 #include "pipe/p_defines.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 #include "sp_flush.h"
 #include "sp_context.h"
 #include "sp_surface.h"

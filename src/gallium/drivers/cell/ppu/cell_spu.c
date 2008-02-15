@@ -31,7 +31,7 @@
 #include "cell_spu.h"
 #include "pipe/p_format.h"
 #include "pipe/p_state.h"
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 
 
 /*

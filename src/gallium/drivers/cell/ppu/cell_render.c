@@ -34,7 +34,7 @@
 #include "cell_render.h"
 #include "cell_spu.h"
 #include "pipe/p_util.h"
-#include "pipe/draw/draw_private.h"
+#include "draw/draw_private.h"
 
 
 struct render_stage {

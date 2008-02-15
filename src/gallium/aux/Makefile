@@ -1,8 +1,12 @@
-TOP = ../..
+TOP = ../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = aux drivers
+ifeq ($(CONFIG_NAME), linux-llvm)
+LLVM_DIR = llvm
+endif
+
+SUBDIRS = pipebuffer $(LLVM_DIR)
 
 
 default: subdirs

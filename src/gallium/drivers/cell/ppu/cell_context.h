@@ -32,10 +32,10 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/draw/draw_vertex.h"
-#include "pipe/draw/draw_vbuf.h"
+#include "draw/draw_vertex.h"
+#include "draw/draw_vbuf.h"
 #include "cell_winsys.h"
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 
 
 struct cell_vbuf_render;

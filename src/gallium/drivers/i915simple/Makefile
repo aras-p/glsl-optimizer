@@ -32,7 +32,7 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-include ../Makefile.template
+include ../../Makefile.template
 
 symlinks:
 

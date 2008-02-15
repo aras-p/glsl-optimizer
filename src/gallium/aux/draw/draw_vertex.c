@@ -34,8 +34,8 @@
  */
 
 
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vertex.h"
+#include "draw/draw_private.h"
+#include "draw/draw_vertex.h"
 
 
 /**

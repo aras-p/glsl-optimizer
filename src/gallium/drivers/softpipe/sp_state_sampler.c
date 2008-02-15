@@ -31,14 +31,14 @@
 
 #include "pipe/p_util.h"
 
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 #include "sp_context.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 
 

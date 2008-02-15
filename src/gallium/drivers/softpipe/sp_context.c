@@ -29,7 +29,7 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"

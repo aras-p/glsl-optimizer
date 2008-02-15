@@ -1,8 +1,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_parse.h"
 //#include "tgsi_build.h"
-#include "pipe/tgsi/util/tgsi_util.h"
+#include "tgsi/util/tgsi_util.h"
 
 unsigned
 tgsi_util_get_src_register_swizzle(

@@ -31,7 +31,7 @@
 
 #include <libspe2.h>
 #include <libmisc.h>
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 
 #include "cell_context.h"
 

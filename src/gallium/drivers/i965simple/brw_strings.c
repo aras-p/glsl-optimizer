@@ -59,7 +59,7 @@ static const char *brw_get_name( struct pipe_context *pipe )
       break;
    }
 
-   sprintf(buffer, "pipe/i965 (chipset: %s)", chipset);
+   sprintf(buffer, "i965 (chipset: %s)", chipset);
    return buffer;
 }
 

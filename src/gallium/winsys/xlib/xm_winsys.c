@@ -41,11 +41,11 @@
 #include "pipe/p_context.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "pipe/softpipe/sp_winsys.h"
+#include "softpipe/sp_winsys.h"
 
 #ifdef GALLIUM_CELL
-#include "pipe/cell/ppu/cell_context.h"
-#include "pipe/cell/ppu/cell_winsys.h"
+#include "cell/ppu/cell_context.h"
+#include "cell/ppu/cell_winsys.h"
 #else
 #define TILE_SIZE 32  /* avoid compilation errors */
 #endif

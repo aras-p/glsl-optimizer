@@ -29,7 +29,7 @@
  */
 
 
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 

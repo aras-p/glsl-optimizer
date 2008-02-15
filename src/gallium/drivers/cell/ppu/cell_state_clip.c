@@ -30,7 +30,7 @@
 
 #include "cell_context.h"
 #include "cell_state.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 
 void cell_set_clip_state( struct pipe_context *pipe,

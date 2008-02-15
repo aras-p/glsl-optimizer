@@ -27,8 +27,8 @@
 
 
 #include "pipe/p_util.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_vertex.h"
+#include "draw/draw_context.h"
+#include "draw/draw_vertex.h"
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"

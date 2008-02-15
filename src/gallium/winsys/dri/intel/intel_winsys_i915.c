@@ -39,7 +39,7 @@
 #include "intel_winsys.h"
 
 #include "pipe/p_util.h"
-#include "pipe/i915simple/i915_winsys.h"
+#include "i915simple/i915_winsys.h"
 
 
 struct intel_i915_winsys {

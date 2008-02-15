@@ -34,7 +34,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
-#include "pipe/draw/draw_vertex.h"
+#include "draw/draw_vertex.h"
 
 #include "sp_quad.h"
 

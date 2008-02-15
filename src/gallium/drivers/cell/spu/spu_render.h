@@ -29,7 +29,7 @@
 #ifndef SPU_RENDER_H
 #define SPU_RENDER_H
 
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 
 extern void
 cmd_render(const struct cell_command_render *render, uint *pos_incr);

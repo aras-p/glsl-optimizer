@@ -39,9 +39,9 @@
 #include "pipe/p_shader_tokens.h"
 #include "spu_vertex_shader.h"
 #include "spu_exec.h"
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/cell/common.h"
+#include "draw/draw_private.h"
+#include "draw/draw_context.h"
+#include "cell/common.h"
 #include "spu_main.h"
 
 static INLINE unsigned

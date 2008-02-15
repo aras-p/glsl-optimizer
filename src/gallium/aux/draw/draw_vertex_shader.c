@@ -34,13 +34,13 @@
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 #if defined(__i386__) || defined(__386__)
-#include "pipe/tgsi/exec/tgsi_sse2.h"
+#include "tgsi/exec/tgsi_sse2.h"
 #endif
 #include "draw_private.h"
 #include "draw_context.h"
 
 #include "x86/rtasm/x86sse.h"
-#include "pipe/llvm/gallivm.h"
+#include "llvm/gallivm.h"
 
 
 #define DBG_VS 0

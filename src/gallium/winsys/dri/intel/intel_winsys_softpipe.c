@@ -34,7 +34,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
 #include "pipe/p_format.h"
-#include "pipe/softpipe/sp_winsys.h"
+#include "softpipe/sp_winsys.h"
 
 
 struct intel_softpipe_winsys {

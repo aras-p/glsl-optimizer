@@ -27,9 +27,9 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_vertex.h"
-#include "pipe/draw/draw_private.h"
+#include "draw/draw_context.h"
+#include "draw/draw_vertex.h"
+#include "draw/draw_private.h"
 #include "sp_context.h"
 #include "sp_state.h"
 

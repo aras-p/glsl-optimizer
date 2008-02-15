@@ -7,8 +7,8 @@ LIBNAME = i915tex_dri.so
 MINIGLX_SOURCES = server/intel_dri.c
 
 PIPE_DRIVERS = \
-	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a \
-	$(TOP)/src/mesa/pipe/i915simple/libi915simple.a
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/i915simple/libi915simple.a
 
 DRIVER_SOURCES = \
 	intel_winsys_pipe.c \
@@ -28,11 +28,11 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-DRIVER_DEFINES = -I../intel $(shell pkg-config libdrm --atleast-version=2.3.1 \
+DRIVER_DEFINES = -I$(TOP)/src/mesa/drivers/dri/intel $(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
 include ../Makefile.template
 
-intel_tex_layout.o: ../intel/intel_tex_layout.c
+intel_tex_layout.o: $(TOP)/src/mesa/drivers/dri/intel/intel_tex_layout.c
 
 symlinks:

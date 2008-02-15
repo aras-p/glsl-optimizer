@@ -32,9 +32,9 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/tgsi/util/tgsi_parse.h"
-#include "pipe/tgsi/util/tgsi_build.h"
-#include "pipe/tgsi/util/tgsi_util.h"
+#include "tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_build.h"
+#include "tgsi/util/tgsi_util.h"
 #include "st_mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"

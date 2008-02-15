@@ -39,9 +39,9 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_prim_vbuf.h"
-#include "pipe/draw/draw_context.h"
-#include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_vbuf.h"
+#include "draw/draw_context.h"
+#include "draw/draw_private.h"
+#include "draw/draw_vbuf.h"
 
 
 #define SP_MAX_VBUF_INDEXES 1024

@@ -34,7 +34,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
-#include "pipe/util/p_tile.h"
+#include "util/p_tile.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_tile_cache.h"

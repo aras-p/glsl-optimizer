@@ -15,7 +15,10 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 ### Include directories
 INCLUDES = \
 	-I. \
-	-I$(TOP)/src/mesa/pipe \
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/include/pipe \
+	-I$(TOP)/src/gallium/aux \
+	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/include \
         $(DRIVER_INCLUDES)
@@ -38,7 +41,7 @@ INCLUDES = \
 default: depend symlinks $(LIBNAME)
 
 
-$(LIBNAME): $(OBJECTS) Makefile $(TOP)/src/mesa/pipe/Makefile.template
+$(LIBNAME): $(OBJECTS) Makefile $(TOP)/src/gallium/Makefile.template
 	$(TOP)/bin/mklib -o $@ -static $(OBJECTS) $(DRIVER_LIBS)
 
 

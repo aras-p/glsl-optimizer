@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_batch.h"

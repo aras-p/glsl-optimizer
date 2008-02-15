@@ -45,7 +45,7 @@
 #include "pipe/p_defines.h"
 
 #include "x86/rtasm/x86sse.h"
-#include "pipe/tgsi/exec/tgsi_exec.h"
+#include "tgsi/exec/tgsi_exec.h"
 
 
 struct gallivm_prog;

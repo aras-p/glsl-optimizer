@@ -34,7 +34,7 @@
 #include "spu_render.h"
 #include "spu_tri.h"
 #include "spu_tile.h"
-#include "pipe/cell/common.h"
+#include "cell/common.h"
 
 
 

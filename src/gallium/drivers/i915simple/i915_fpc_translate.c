@@ -33,9 +33,9 @@
 #include "i915_fpc.h"
 
 #include "pipe/p_shader_tokens.h"
-#include "pipe/tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_parse.h"
 
-#include "pipe/draw/draw_vertex.h"
+#include "draw/draw_vertex.h"
 
 
 /**

@@ -61,6 +61,6 @@ ASM_SOURCES =
 
 DRIVER_DEFINES = -I.
 
-include ../Makefile.template
+include ../../Makefile.template
 
 symlinks:

@@ -36,7 +36,7 @@
 #include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_vbuf.h"
-#include "pipe/draw/draw_vbuf.h"
+#include "draw/draw_vbuf.h"
 
 
 /** Allow vertex data to be inlined after RENDER command */

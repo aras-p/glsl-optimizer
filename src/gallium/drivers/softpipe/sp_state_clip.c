@@ -29,7 +29,7 @@
  */
 #include "sp_context.h"
 #include "sp_state.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 
 
 void softpipe_set_clip_state( struct pipe_context *pipe,

@@ -1,8 +1,12 @@
-TOP = ../..
+TOP = ../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = aux drivers
+ifeq ($(CONFIG_NAME), linux-cell)
+CELL_DIR = cell
+endif
+
+SUBDIRS = softpipe i915simple i965simple failover pipebuffer $(CELL_DIR)
 
 
 default: subdirs

@@ -32,7 +32,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/util/p_tile.h"
+#include "util/p_tile.h"
 
 
 /*

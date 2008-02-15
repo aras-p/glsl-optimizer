@@ -4,7 +4,7 @@
 #include "brw_wm.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_parse.h"
 
 static struct brw_reg alloc_tmp(struct brw_wm_compile *c)
 {

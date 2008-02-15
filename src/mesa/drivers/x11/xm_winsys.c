@@ -38,7 +38,7 @@
 #include "main/macros.h"
 
 #include "pipe/p_winsys.h"
-#include "pipe/softpipe/sp_winsys.h"
+#include "softpipe/sp_winsys.h"
 
 
 /**

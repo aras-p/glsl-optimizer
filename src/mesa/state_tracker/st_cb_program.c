@@ -39,8 +39,8 @@
 #include "shader/programopt.h"
 #include "shader/shader_api.h"
 
-#include "pipe/cso_cache/cso_cache.h"
-#include "pipe/draw/draw_context.h"
+#include "cso_cache/cso_cache.h"
+#include "draw/draw_context.h"
 
 #include "st_context.h"
 #include "st_program.h"

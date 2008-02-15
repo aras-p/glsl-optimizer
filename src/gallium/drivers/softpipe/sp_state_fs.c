@@ -32,11 +32,11 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/draw/draw_context.h"
+#include "draw/draw_context.h"
 #include "pipe/p_shader_tokens.h"
-#include "pipe/llvm/gallivm.h"
-#include "pipe/tgsi/util/tgsi_dump.h"
-#include "pipe/tgsi/exec/tgsi_sse2.h"
+#include "llvm/gallivm.h"
+#include "tgsi/util/tgsi_dump.h"
+#include "tgsi/exec/tgsi_sse2.h"
 
 
 void *
