@@ -645,9 +645,11 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
 
 #ifdef I915
-   if (IS_915(intelScreen->deviceID)) {
-      return i915CreateContext(mesaVis, driContextPriv,
+   if (IS_9XX(intelScreen->deviceID)) {
+      if (!IS_965(intelScreen->deviceID)) {
+	 return i915CreateContext(mesaVis, driContextPriv,
 				  sharedContextPrivate);
+      }
    } else {
       return i830CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
    }
