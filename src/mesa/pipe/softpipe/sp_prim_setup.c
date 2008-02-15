@@ -499,7 +499,7 @@ setup_fragcoord_coeff(struct setup_stage *setup)
    setup->coef[0].a0[2] = setup->posCoef.a0[2];
    setup->coef[0].dadx[2] = setup->posCoef.dadx[2];
    setup->coef[0].dady[2] = setup->posCoef.dady[2];
-   /*w*/
+   /*W*/
    setup->coef[0].a0[3] = setup->posCoef.a0[3];
    setup->coef[0].dadx[3] = setup->posCoef.dadx[3];
    setup->coef[0].dady[3] = setup->posCoef.dady[3];
@@ -513,8 +513,9 @@ setup_fragcoord_coeff(struct setup_stage *setup)
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const struct softpipe_context *softpipe = setup->softpipe;
+   struct softpipe_context *softpipe = setup->softpipe;
    const struct pipe_shader_state *fs = &softpipe->fs->shader;
+   const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
 
    /* z and w are done by linear interpolation:
@@ -525,10 +526,10 @@ static void setup_tri_coefficients( struct setup_stage *setup )
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
-      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      const uint vertSlot = vinfo->src_index[fragSlot];
       uint j;
 
-      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      switch (vinfo->interp_mode[fragSlot]) {
       case INTERP_CONSTANT:
          for (j = 0; j < NUM_CHANNELS; j++)
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
@@ -756,8 +757,9 @@ line_persp_coeff(struct setup_stage *setup,
 static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
-   const struct softpipe_context *softpipe = setup->softpipe;
+   struct softpipe_context *softpipe = setup->softpipe;
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
+   const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
 
    /* use setup->vmin, vmax to point to vertices */
@@ -779,10 +781,10 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
    /* setup interpolation for all the remaining attributes:
     */
    for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
-      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      const uint vertSlot = vinfo->src_index[fragSlot];
       uint j;
 
-      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      switch (vinfo->interp_mode[fragSlot]) {
       case INTERP_CONSTANT:
          for (j = 0; j < NUM_CHANNELS; j++)
             const_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
@@ -978,6 +980,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const boolean round = (boolean) setup->softpipe->rasterizer->point_smooth;
    const float x = v0->data[0][0];  /* Note: data[0] is always position */
    const float y = v0->data[0][1];
+   const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
 
    /* For points, all interpolants are constant-valued.
@@ -1003,10 +1006,10 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const_coeff(setup, &setup->posCoef, 0, 3);
 
    for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
-      const uint vertSlot = softpipe->vertex_info.src_index[fragSlot];
+      const uint vertSlot = vinfo->src_index[fragSlot];
       uint j;
 
-      switch (softpipe->vertex_info.interp_mode[fragSlot]) {
+      switch (vinfo->interp_mode[fragSlot]) {
       case INTERP_CONSTANT:
          /* fall-through */
       case INTERP_LINEAR:

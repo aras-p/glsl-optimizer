@@ -37,6 +37,7 @@
 
 
 #include "sp_context.h"
+#include "sp_state.h"
 #include "sp_prim_vbuf.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_private.h"
@@ -73,9 +74,7 @@ static const struct vertex_info *
 sp_vbuf_get_vertex_info(struct vbuf_render *vbr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   /* XXX check for state changes? */
-   assert(!cvbr->softpipe->dirty );
-   return &cvbr->softpipe->vertex_info_vbuf;
+   return softpipe_get_vbuf_vertex_info(cvbr->softpipe);
 }
 
 
