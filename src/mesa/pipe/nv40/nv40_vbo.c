@@ -296,7 +296,7 @@ nv40_draw_elements_u32(struct nv40_context *nv40, void *ib,
 }
 
 static boolean
-nv40_draw_elements_INLINE(struct pipe_context *pipe,
+nv40_draw_elements_inline(struct pipe_context *pipe,
 			  struct pipe_buffer *ib, unsigned ib_size,
 			  unsigned mode, unsigned start, unsigned count)
 {
@@ -410,7 +410,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 	 * to be support on any chipset for 8-bit indices.
 	 */
 	if (nv40->hw->curie->grclass == NV44TCL || indexSize == 1) {
-		nv40_draw_elements_INLINE(pipe, indexBuffer, indexSize,
+		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count);
 	} else {
 		nv40_draw_elements_vbo(pipe, indexBuffer, indexSize,
