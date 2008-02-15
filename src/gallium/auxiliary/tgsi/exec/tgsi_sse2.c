@@ -2308,6 +2308,7 @@ tgsi_emit_sse2_fs(
 {
    struct tgsi_parse_context parse;
    boolean instruction_phase = FALSE;
+   unsigned ok = 1;
 
    DUMP_START();
 
@@ -2333,7 +2334,7 @@ tgsi_emit_sse2_fs(
 
    tgsi_parse_init( &parse, tokens );
 
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+   while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
       tgsi_parse_token( &parse );
 
       switch( parse.FullToken.Token.Type ) {
@@ -2352,17 +2353,18 @@ tgsi_emit_sse2_fs(
                get_output_base(),
                get_argument( 1 ) );
          }
-         emit_instruction(
+         ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
-         assert(0);
+	 ok = 0;
          break;
 
       default:
+	 ok = 0;
          assert( 0 );
       }
    }
@@ -2371,7 +2373,7 @@ tgsi_emit_sse2_fs(
 
    DUMP_END();
 
-   return 1;
+   return ok;
 }
 
 #endif /* i386 */
