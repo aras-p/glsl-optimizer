@@ -120,18 +120,41 @@
 
 
 
-static void
-tgsi_exec_prepare( struct tgsi_exec_machine *mach )
+/**
+ * Initialize machine state by expanding tokens to full instructions,
+ * allocating temporary storage, setting up constants, etc.
+ * After this, we can call tgsi_exec_machine_run() many times.
+ */
+void 
+tgsi_exec_machine_bind_shader(
+   struct tgsi_exec_machine *mach,
+   const struct tgsi_token *tokens,
+   uint numSamplers,
+   struct tgsi_sampler *samplers)
 {
-   struct tgsi_exec_labels *labels = &mach->Labels;
+   uint k;
    struct tgsi_parse_context parse;
+   struct tgsi_exec_labels *labels = &mach->Labels;
    struct tgsi_full_instruction *instructions;
    struct tgsi_full_declaration *declarations;
    uint maxInstructions = 10, numInstructions = 0;
    uint maxDeclarations = 10, numDeclarations = 0;
-   uint k;
    uint instno = 0;
 
+#if 0
+   tgsi_dump(tokens, 0);
+#endif
+
+   mach->Tokens = tokens;
+   mach->Samplers = samplers;
+
+   k = tgsi_parse_init (&parse, mach->Tokens);
+   if (k != TGSI_PARSE_OK) {
+      debug_printf( "Problem parsing!\n" );
+      return;
+   }
+
+   mach->Processor = parse.FullHeader.Processor.Processor;
    mach->ImmLimit = 0;
    labels->count = 0;
 
@@ -141,11 +164,6 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
    instructions = (struct tgsi_full_instruction *)
       MALLOC( maxInstructions * sizeof(struct tgsi_full_instruction) );
 
-   k = tgsi_parse_init( &parse, mach->Tokens );
-   if (k != TGSI_PARSE_OK) {
-      debug_printf("Problem parsing!\n");
-      return;
-   }
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       uint pointer = parse.Position;
@@ -176,7 +194,8 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
             assert( mach->ImmLimit + size / 4 <= TGSI_EXEC_NUM_IMMEDIATES );
 
             for( i = 0; i < size; i++ ) {
-               mach->Imms[mach->ImmLimit + i / 4][i % 4] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+               mach->Imms[mach->ImmLimit + i / 4][i % 4] = 
+		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
             }
             mach->ImmLimit += size / 4;
          }
@@ -224,37 +243,11 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
 }
 
 
-/**
- * Initialize machine state by expanding tokens to full instructions,
- * allocating temporary storage, setting up constants, etc.
- * After this, we can call tgsi_exec_machine_run() many times.
- */
 void
 tgsi_exec_machine_init(
-   struct tgsi_exec_machine *mach,
-   const struct tgsi_token *tokens,
-   uint numSamplers,
-   struct tgsi_sampler *samplers)
+   struct tgsi_exec_machine *mach )
 {
-   uint i, k;
-   struct tgsi_parse_context parse;
-
-#if 0
-   tgsi_dump(tokens, 0);
-#endif
-
-   mach->Tokens = tokens;
-
-   mach->Samplers = samplers;
-
-   k = tgsi_parse_init (&parse, mach->Tokens);
-   if (k != TGSI_PARSE_OK) {
-      debug_printf( "Problem parsing!\n" );
-      return;
-   }
-
-   mach->Processor = parse.FullHeader.Processor.Processor;
-   tgsi_parse_free (&parse);
+   uint i;
 
    mach->Temps = (struct tgsi_exec_vector *) tgsi_align_128bit( mach->_Temps);
    mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
@@ -270,8 +263,6 @@ tgsi_exec_machine_init(
       mach->Temps[TEMP_128_I].xyzw[TEMP_128_C].f[i] = 128.0f;
       mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].f[i] = -128.0f;
    }
-
-   tgsi_exec_prepare( mach );
 }
 
 

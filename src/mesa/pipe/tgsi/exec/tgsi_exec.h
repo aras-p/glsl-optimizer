@@ -215,12 +215,16 @@ struct tgsi_exec_machine
    struct tgsi_exec_labels Labels;
 };
 
-
 void
 tgsi_exec_machine_init(
+   struct tgsi_exec_machine *mach );
+
+
+void 
+tgsi_exec_machine_bind_shader(
    struct tgsi_exec_machine *mach,
    const struct tgsi_token *tokens,
-   unsigned numSamplers,
+   uint numSamplers,
    struct tgsi_sampler *samplers);
 
 uint

@@ -39,12 +39,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "x86/rtasm/x86sse.h"
-
-#ifdef MESA_LLVM
-#include "pipe/llvm/gallivm.h"
-#endif
-
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_headers.h"
@@ -60,9 +54,6 @@ struct quad_shade_stage
    struct tgsi_exec_machine machine;
    struct tgsi_exec_vector *inputs, *outputs;
    int colorOutSlot, depthOutSlot;
-#ifdef MESA_LLVM
-   struct gallivm_prog *llvm_prog;
-#endif
 };
 
 
@@ -73,46 +64,6 @@ quad_shade_stage(struct quad_stage *qs)
    return (struct quad_shade_stage *) qs;
 }
 
-
-/**
- * Compute quad X,Y,Z,W for the four fragments in a quad.
- * Note that we only need to "compute" X and Y for the upper-left fragment.
- * We could do less work if we're not depth testing, or there's no
- * perspective-corrected attributes, but that's seldom.
- */
-static void
-setup_pos_vector(const struct tgsi_interp_coef *coef,
-                 float x, float y,
-                 struct tgsi_exec_vector *quadpos)
-{
-   uint chan;
-   /* do X */
-   quadpos->xyzw[0].f[0] = x;
-   /* do Y */
-   quadpos->xyzw[1].f[0] = y;
-   /* do Z and W for all fragments in the quad */
-   for (chan = 2; chan < 4; chan++) {
-      const float dadx = coef->dadx[chan];
-      const float dady = coef->dady[chan];
-      const float a0 = coef->a0[chan] + dadx * x + dady * y;
-      quadpos->xyzw[chan].f[0] = a0;
-      quadpos->xyzw[chan].f[1] = a0 + dadx;
-      quadpos->xyzw[chan].f[2] = a0 + dady;
-      quadpos->xyzw[chan].f[3] = a0 + dadx + dady;
-   }
-}
-
-
-typedef void (XSTDCALL *codegen_function)(
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   float (*constant)[4],
-   struct tgsi_exec_vector *temporary,
-   const struct tgsi_interp_coef *coef
-#if 0
-   ,const struct tgsi_exec_vector *quadPos
-#endif
- );
 
 
 /**
@@ -132,30 +83,10 @@ shade_quad(
 
    machine->InterpCoefs = quad->coef;
 
-   /* Compute X, Y, Z, W vals for this quad */
-   setup_pos_vector(quad->posCoef, (float) quad->x0, (float) quad->y0, &machine->QuadPos);
-
    /* run shader */
-#if defined(__i386__) || defined(__386__)
-   if( softpipe->use_sse ) {
-      codegen_function func = (codegen_function) x86_get_func( &softpipe->fs->sse2_program );
-      func(
-         machine->Inputs,
-         machine->Outputs,
-         machine->Consts,
-         machine->Temps,
-         machine->InterpCoefs
-#if 0
-         ,machine->QuadPos
-#endif
-           );
-      quad->mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
-   }
-   else
-#endif
-   {
-      quad->mask &= tgsi_exec_machine_run( machine );
-   }
+   quad->mask &= softpipe->fs->run( softpipe->fs, 
+				    &qss->machine,
+				    quad );
 
    /* store result color */
    if (qss->colorOutSlot >= 0) {
@@ -199,107 +130,6 @@ shade_quad(
    }
 }
 
-#if 0
-#ifdef MESA_LLVM
-#define DLLVM 0
-static void
-shade_quad_llvm(struct quad_stage *qs,
-                struct quad_header *quad)
-{
-   struct quad_shade_stage *qss = quad_shade_stage(qs);
-   struct softpipe_context *softpipe = qs->softpipe;
-   float dests[4][16][4] ALIGN16_ATTRIB;
-   float inputs[4][16][4] ALIGN16_ATTRIB;
-   const float fx = (float) quad->x0;
-   const float fy = (float) quad->y0;
-   struct gallivm_prog *llvm = qss->llvm_prog;
-
-   inputs[0][0][0] = fx;
-   inputs[1][0][0] = fx + 1.0f;
-   inputs[2][0][0] = fx;
-   inputs[3][0][0] = fx + 1.0f;
-
-   inputs[0][0][1] = fy;
-   inputs[1][0][1] = fy;
-   inputs[2][0][1] = fy + 1.0f;
-   inputs[3][0][1] = fy + 1.0f;
-#if DLLVM
-   debug_printf("MASK = %d\n", quad->mask);
-#endif
-   gallivm_prog_inputs_interpolate(llvm, inputs, quad->coef);
-#if DLLVM
-   for (int i = 0; i < 4; ++i) {
-      for (int j = 0; j < 2; ++j) {
-         debug_printf("IN(%d,%d) [%f %f %f %f]\n", i, j, 
-                inputs[i][j][0], inputs[i][j][1], inputs[i][j][2], inputs[i][j][3]);
-      }
-   }
-#endif
-
-   quad->mask &=
-      gallivm_fragment_shader_exec(llvm, fx, fy, dests, inputs,
-                                   softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
-                                   qss->samplers);
-#if DLLVM
-   debug_printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
-          dests[0][0][0], dests[0][0][1], dests[0][0][2], dests[0][0][3], 
-          dests[0][1][0], dests[0][1][1], dests[0][1][2], dests[0][1][3]);
-#endif
-
-   /* store result color */
-   if (qss->colorOutSlot >= 0) {
-      unsigned i;
-      /* XXX need to handle multiple color outputs someday */
-      assert(qss->stage.softpipe->fs->shader.output_semantic_name[qss->colorOutSlot]
-             == TGSI_SEMANTIC_COLOR);
-      for (i = 0; i < QUAD_SIZE; ++i) {
-         quad->outputs.color[0][i] = dests[i][qss->colorOutSlot][0];
-         quad->outputs.color[1][i] = dests[i][qss->colorOutSlot][1];
-         quad->outputs.color[2][i] = dests[i][qss->colorOutSlot][2];
-         quad->outputs.color[3][i] = dests[i][qss->colorOutSlot][3];
-      }
-   }
-#if DLLVM
-   for (int i = 0; i < QUAD_SIZE; ++i) {
-      debug_printf("QLLVM%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
-             quad->outputs.color[0][i],
-             quad->outputs.color[1][i],
-             quad->outputs.color[2][i],
-             quad->outputs.color[3][i]);
-   }
-#endif
-
-   /* store result Z */
-   if (qss->depthOutSlot >= 0) {
-      /* output[slot] is new Z */
-      uint i;
-      for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = dests[i][0][2];
-      }
-   }
-   else {
-      /* copy input Z (which was interpolated by the executor) to output Z */
-      uint i;
-      for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = inputs[i][0][2];
-      }
-   }
-#if DLLVM
-   debug_printf("D [%f, %f, %f, %f] mask = %d\n",
-             quad->outputs.depth[0],
-             quad->outputs.depth[1],
-             quad->outputs.depth[2],
-             quad->outputs.depth[3], quad->mask);
-#endif
-
-   /* shader may cull fragments */
-   if( quad->mask ) {
-      qs->next->run( qs->next, quad );
-   }
-}
-#endif /*MESA_LLVM*/
-#endif
-
 /**
  * Per-primitive (or per-begin?) setup
  */
@@ -315,15 +145,6 @@ static void shade_begin(struct quad_stage *qs)
       qss->samplers[i].texture = &softpipe->texture[i]->base;
    }
 
-#ifdef MESA_LLVM
-   qss->llvm_prog = softpipe->fs->llvm_prog;
-#endif
-   /* XXX only do this if the fragment shader changes... */
-   tgsi_exec_machine_init(&qss->machine,
-                          softpipe->fs->shader.tokens,
-                          PIPE_MAX_SAMPLERS,
-                          qss->samplers );
-
    /* find output slots for depth, color */
    qss->colorOutSlot = -1;
    qss->depthOutSlot = -1;
@@ -337,6 +158,10 @@ static void shade_begin(struct quad_stage *qs)
          break;
       }
    }
+   
+   softpipe->fs->prepare( softpipe->fs, 
+			  &qss->machine,
+			  qss->samplers );
 
    qs->next->begin(qs->next);
 }
@@ -366,16 +191,7 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
-#ifdef MESA_LLVM
-   /* disable until ported to accept
-    * x/y and soa layout
-   qss->stage.run = shade_quad_llvm;
-   */
-   softpipe->use_sse = FALSE;
    qss->stage.run = shade_quad;
-#else
-   qss->stage.run = shade_quad;
-#endif
    qss->stage.destroy = shade_destroy;
 
    /* set TGSI sampler state that's constant */
@@ -385,6 +201,8 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
       qss->samplers[i].pipe = &softpipe->pipe;
       qss->samplers[i].cache = softpipe->tex_cache[i];
    }
+
+   tgsi_exec_machine_init( &qss->machine );
 
    return &qss->stage;
 }

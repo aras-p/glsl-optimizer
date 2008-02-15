@@ -305,11 +305,13 @@ draw_bind_vertex_shader(struct draw_context *draw,
    draw->vertex_shader = dvs;
    draw->num_vs_outputs = dvs->state->num_outputs;
 
+   tgsi_exec_machine_init(&draw->machine);
+
    /* specify the vertex program to interpret/execute */
-   tgsi_exec_machine_init(&draw->machine,
-                          draw->vertex_shader->state->tokens,
-                          PIPE_MAX_SAMPLERS,
-                          NULL /*samplers*/ );
+   tgsi_exec_machine_bind_shader(&draw->machine,
+				 draw->vertex_shader->state->tokens,
+				 PIPE_MAX_SAMPLERS,
+				 NULL /*samplers*/ );
 }
 
 

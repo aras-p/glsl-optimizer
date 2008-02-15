@@ -2186,9 +2186,9 @@ emit_declaration(
                   break;
 
                case TGSI_INTERPOLATE_LINEAR:
-                  emit_inputf( func, 0, 0, TGSI_SWIZZLE_X );
+                  emit_tempf( func, 0, 0, TGSI_SWIZZLE_X );
                   emit_coef_dadx( func, 1, i, j );
-                  emit_inputf( func, 2, 0, TGSI_SWIZZLE_Y );
+                  emit_tempf( func, 2, 0, TGSI_SWIZZLE_Y );
                   emit_coef_dady( func, 3, i, j );
                   emit_mul( func, 0, 1 );    /* x * dadx */
                   emit_coef_a0( func, 4, i, j );
@@ -2199,12 +2199,12 @@ emit_declaration(
                   break;
 
                case TGSI_INTERPOLATE_PERSPECTIVE:
-                  emit_inputf( func, 0, 0, TGSI_SWIZZLE_X );
+                  emit_tempf( func, 0, 0, TGSI_SWIZZLE_X );
                   emit_coef_dadx( func, 1, i, j );
-                  emit_inputf( func, 2, 0, TGSI_SWIZZLE_Y );
+                  emit_tempf( func, 2, 0, TGSI_SWIZZLE_Y );
                   emit_coef_dady( func, 3, i, j );
                   emit_mul( func, 0, 1 );    /* x * dadx */
-                  emit_inputf( func, 4, 0, TGSI_SWIZZLE_W );
+                  emit_tempf( func, 4, 0, TGSI_SWIZZLE_W );
                   emit_coef_a0( func, 5, i, j );
                   emit_rcp( func, 4, 4 );    /* 1.0 / w */
                   emit_mul( func, 2, 3 );    /* y * dady */

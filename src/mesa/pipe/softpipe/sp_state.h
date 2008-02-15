@@ -33,8 +33,6 @@
 
 #include "pipe/p_state.h"
 
-#include "x86/rtasm/x86sse.h"
-
 
 #define SP_NEW_VIEWPORT      0x1
 #define SP_NEW_RASTERIZER    0x2
@@ -53,27 +51,36 @@
 #define SP_NEW_QUERY         0x4000
 
 
-
-#ifdef MESA_LLVM
-struct gallivm_prog;
-#endif
-
+struct tgsi_sampler;
+struct tgsi_interp_coef;
+struct tgsi_exec_machine;
 
 
-/** Subclass of pipe_shader_state */
-struct sp_fragment_shader_state {
+/** Subclass of pipe_shader_state (though it doesn't really need to be).
+ *
+ * This is starting to look an awful lot like a quad pipeline stage...
+ */
+struct sp_fragment_shader {
    struct pipe_shader_state   shader;
-#if defined(__i386__) || defined(__386__)
-   struct x86_function        sse2_program;
-#endif
-#ifdef MESA_LLVM
-   struct gallivm_prog *llvm_prog;
-#endif
+
+   void (*prepare)( struct sp_fragment_shader *shader,
+		    struct tgsi_exec_machine *machine,
+		    struct tgsi_sampler *samplers);
+
+   /* Run the shader - this interface will get cleaned up in the
+    * future:
+    */
+   unsigned (*run)( struct sp_fragment_shader *shader,
+		    struct tgsi_exec_machine *machine,
+		    struct quad_header *quad );
+
+
+   void (*delete)( struct sp_fragment_shader * );
 };
 
 
 /** Subclass of pipe_shader_state */
-struct sp_vertex_shader_state {
+struct sp_vertex_shader {
    struct pipe_shader_state shader;
    struct draw_vertex_shader *draw_data;
 };

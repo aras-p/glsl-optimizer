@@ -44,8 +44,8 @@ struct softpipe_vbuf_render;
 struct draw_context;
 struct draw_stage;
 struct softpipe_tile_cache;
-struct sp_fragment_shader_state;
-struct sp_vertex_shader_state;
+struct sp_fragment_shader;
+struct sp_vertex_shader;
 
 
 struct softpipe_context {
@@ -59,8 +59,8 @@ struct softpipe_context {
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_alpha_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
-   const struct sp_fragment_shader_state *fs;
-   const struct sp_vertex_shader_state *vs;
+   const struct sp_fragment_shader *fs;
+   const struct sp_vertex_shader *vs;
 
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
