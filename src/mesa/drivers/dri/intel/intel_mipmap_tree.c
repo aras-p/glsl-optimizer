@@ -49,17 +49,15 @@ target_to_target(GLenum target)
    }
 }
 
-struct intel_mipmap_tree *
-intel_miptree_create(struct intel_context *intel,
-		     GLenum target,
-		     GLenum internal_format,
-		     GLuint first_level,
-		     GLuint last_level,
-		     GLuint width0,
-		     GLuint height0,
-		     GLuint depth0,
-		     GLuint cpp,
-		     GLuint compress_byte)
+static struct intel_mipmap_tree *
+intel_miptree_create_internal(struct intel_context *intel,
+			      GLenum target,
+			      GLenum internal_format,
+			      GLuint first_level,
+			      GLuint last_level,
+			      GLuint width0,
+			      GLuint height0,
+			      GLuint depth0, GLuint cpp, GLuint compress_byte)
 {
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
@@ -89,20 +87,81 @@ intel_miptree_create(struct intel_context *intel,
    ok = brw_miptree_layout(intel, mt);
 #endif
 
-   if (ok) {
-      assert (mt->pitch);
-
-      mt->region = intel_region_alloc(intel,
-                                      mt->cpp, mt->pitch, mt->total_height);
-   }
-
-   if (!mt->region) {
+   if (!ok) {
       free(mt);
       return NULL;
    }
 
    return mt;
 }
+
+struct intel_mipmap_tree *
+intel_miptree_create(struct intel_context *intel,
+		     GLenum target,
+		     GLenum internal_format,
+		     GLuint first_level,
+		     GLuint last_level,
+		     GLuint width0,
+		     GLuint height0,
+		     GLuint depth0, GLuint cpp, GLuint compress_byte)
+{
+   struct intel_mipmap_tree *mt;
+
+   mt = intel_miptree_create_internal(intel, target, internal_format,
+				      first_level, last_level, width0,
+				      height0, depth0, cpp, compress_byte);
+   if (!mt)
+      return NULL;
+
+   assert (mt->pitch);
+   mt->region = intel_region_alloc(intel,
+				   mt->cpp, mt->pitch, mt->total_height);
+
+   if (!mt->region) {
+       free(mt);
+       return NULL;
+   }
+
+   return mt;
+}
+
+struct intel_mipmap_tree *
+intel_miptree_create_for_region(struct intel_context *intel,
+				GLenum target,
+				GLenum internal_format,
+				GLuint first_level,
+				GLuint last_level,
+				struct intel_region *region,
+				GLuint depth0,
+				GLuint compress_byte)
+{
+   struct intel_mipmap_tree *mt;
+
+   mt = intel_miptree_create_internal(intel, target, internal_format,
+				      first_level, last_level,
+				      region->pitch, region->height, depth0,
+				      region->cpp, compress_byte);
+   if (!mt)
+      return mt;
+#if 0
+   if (mt->pitch != region->pitch) {
+      fprintf(stderr,
+	      "region pitch (%d) doesn't match mipmap tree pitch (%d)\n",
+	      region->pitch, mt->pitch);
+      free(mt);
+      return NULL;
+   }
+#else
+   /* The mipmap tree pitch is aligned to 64 bytes to make sure render
+    * to texture works, but we don't need that for texturing from a
+    * pixmap.  Just override it here. */
+   mt->pitch = region->pitch;
+#endif
+
+   mt->region = region;
+
+   return mt;
+ }
 
 /**
  * intel_miptree_pitch_align:

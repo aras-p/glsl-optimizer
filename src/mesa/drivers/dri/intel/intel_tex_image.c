@@ -14,6 +14,7 @@
 #include "texformat.h"
 #include "texobj.h"
 #include "texstore.h"
+#include "teximage.h"
 
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
@@ -691,4 +692,70 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
    if (offset)
       intelObj->textureOffset = offset;
+}
+
+void
+intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
+		  unsigned long handle, GLint cpp, GLuint pitch, GLuint height)
+{
+   __DRIcontextPrivate *driContext = pDRICtx->private;
+   struct intel_context *intel = driContext->driverPrivate;
+   struct intel_texture_object *intelObj;
+   struct intel_texture_image *intelImage;
+   struct intel_mipmap_tree *mt;
+   struct intel_region *region;
+   struct gl_texture_unit *texUnit;
+   struct gl_texture_object *texObj;
+   struct gl_texture_image *texImage;
+   int level = 0;
+
+   /* FIXME: type, format, internalFormat */
+   int type = GL_BGRA;
+   int format = GL_UNSIGNED_BYTE;
+   int internalFormat = (cpp == 3 ? 3 : 4);
+   cpp = 4;
+   pitch /= 4;
+
+   texUnit = &intel->ctx.Texture.Unit[intel->ctx.Texture.CurrentUnit];
+   texObj = _mesa_select_tex_object(&intel->ctx, texUnit, target);
+   intelObj = intel_texture_object(texObj);
+
+   if (!intelObj)
+      return;
+
+   region = intel_region_alloc_for_handle(intel, cpp, pitch, height,
+					  0, handle);
+
+   mt = intel_miptree_create_for_region(intel, target,
+					internalFormat,
+					0, 0, region, 1, 0);
+   if (mt == NULL)
+       return;
+
+   _mesa_lock_texture(&intel->ctx, texObj);
+
+   if (intelObj->mt)
+      intel_miptree_release(intel, &intelObj->mt);
+
+   intelObj->mt = mt;
+   texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
+   _mesa_init_teximage_fields(&intel->ctx, target, texImage,
+			      pitch, height, 1,
+			      0, internalFormat);
+
+   intelImage = intel_texture_image(texImage);
+   intelImage->face = target_to_face(target);
+   intelImage->level = level;
+   texImage->TexFormat = intelChooseTextureFormat(&intel->ctx, internalFormat,
+                                                  type, format);
+   _mesa_set_fetch_functions(texImage, 2);
+   texImage->RowStride = pitch;
+   intel_miptree_reference(&intelImage->mt, intelObj->mt);
+
+   if (!intel_miptree_match_image(intelObj->mt, &intelImage->base,
+				  intelImage->face, intelImage->level)) {
+	   fprintf(stderr, "miptree doesn't match image\n");
+   }
+
+   _mesa_unlock_texture(&intel->ctx, texObj);
 }

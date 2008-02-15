@@ -64,6 +64,7 @@ typedef struct __DRIallocateExtensionRec	__DRIallocateExtension;
 typedef struct __DRIframeTrackingExtensionRec	__DRIframeTrackingExtension;
 typedef struct __DRImediaStreamCounterExtensionRec	__DRImediaStreamCounterExtension;
 typedef struct __DRItexOffsetExtensionRec	__DRItexOffsetExtension;
+typedef struct __DRItexBufferExtensionRec	__DRItexBufferExtension;
 /*@}*/
 
 
@@ -218,6 +219,25 @@ struct __DRItexOffsetExtensionRec {
      */
     void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
 			 unsigned long long offset, GLint depth, GLuint pitch);
+};
+
+
+#define __DRI_TEX_BUFFER "DRI_TexBuffer"
+#define __DRI_TEX_BUFFER_VERSION 1
+struct __DRItexBufferExtensionRec {
+    __DRIextension base;
+
+    /**
+     * Method to override base texture image with a DRM memory manager
+     * buffer object.  The depth passed in allows e.g. to ignore the
+     * alpha channel of texture images where the non-alpha components
+     * don't occupy a whole texel.
+     *
+     * For GLX_EXT_texture_from_pixmap with AIGLX.
+     */
+    void (*setTexBuffer)(__DRIcontext *pDRICtx,
+			 GLint target, unsigned long handle,
+			 GLint cpp, GLuint pitch, GLuint height);
 };
 
 

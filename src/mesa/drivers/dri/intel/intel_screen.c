@@ -398,6 +398,11 @@ static const __DRItexOffsetExtension intelTexOffsetExtension = {
    intelSetTexOffset,
 };
 
+static const __DRItexBufferExtension intelTexBufferExtension = {
+    { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
+   intelSetTexBuffer,
+};
+
 static const __DRIextension *intelExtensions[] = {
     &driReadDrawableExtension,
     &driCopySubBufferExtension.base,
@@ -405,6 +410,7 @@ static const __DRIextension *intelExtensions[] = {
     &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
     &intelTexOffsetExtension.base,
+    &intelTexBufferExtension.base,
     NULL
 };
 
