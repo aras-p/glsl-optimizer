@@ -2,7 +2,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = aux drivers
+SUBDIRS = auxiliary drivers
 
 
 default: subdirs

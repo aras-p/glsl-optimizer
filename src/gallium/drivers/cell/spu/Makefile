@@ -34,7 +34,7 @@ SPU_ASM_OUT = $(SOURCES:.c=.s) \
 INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/aux \
+	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers
 
 

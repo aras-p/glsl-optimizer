@@ -49,7 +49,7 @@ SHARED_INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/aux \
+	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \

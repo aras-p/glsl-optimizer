@@ -158,45 +158,45 @@ VF_SOURCES = \
 
 
 DRAW_SOURCES = \
-	$(TOP)/src/gallium/aux/draw/draw_clip.c \
-	$(TOP)/src/gallium/aux/draw/draw_context.c\
-	$(TOP)/src/gallium/aux/draw/draw_cull.c \
-	$(TOP)/src/gallium/aux/draw/draw_debug.c \
-	$(TOP)/src/gallium/aux/draw/draw_flatshade.c \
-	$(TOP)/src/gallium/aux/draw/draw_offset.c \
-	$(TOP)/src/gallium/aux/draw/draw_prim.c \
-	$(TOP)/src/gallium/aux/draw/draw_stipple.c \
-	$(TOP)/src/gallium/aux/draw/draw_twoside.c \
-	$(TOP)/src/gallium/aux/draw/draw_unfilled.c \
-	$(TOP)/src/gallium/aux/draw/draw_validate.c \
-	$(TOP)/src/gallium/aux/draw/draw_vbuf.c \
-	$(TOP)/src/gallium/aux/draw/draw_vertex.c \
-	$(TOP)/src/gallium/aux/draw/draw_vertex_cache.c \
-	$(TOP)/src/gallium/aux/draw/draw_vertex_fetch.c \
-	$(TOP)/src/gallium/aux/draw/draw_vertex_shader.c \
-	$(TOP)/src/gallium/aux/draw/draw_vf.c \
-	$(TOP)/src/gallium/aux/draw/draw_vf_generic.c \
-	$(TOP)/src/gallium/aux/draw/draw_vf_sse.c \
-	$(TOP)/src/gallium/aux/draw/draw_wide_prims.c
+	$(TOP)/src/gallium/auxiliary/draw/draw_clip.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_context.c\
+	$(TOP)/src/gallium/auxiliary/draw/draw_cull.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_debug.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_flatshade.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_offset.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_prim.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_stipple.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_twoside.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_unfilled.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_validate.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vbuf.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vertex.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vertex_cache.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vertex_fetch.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vertex_shader.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vf.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vf_generic.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_vf_sse.c \
+	$(TOP)/src/gallium/auxiliary/draw/draw_wide_prims.c
 
 TGSIEXEC_SOURCES = \
-	$(TOP)/src/gallium/aux/tgsi/exec/tgsi_exec.c \
-	$(TOP)/src/gallium/aux/tgsi/exec/tgsi_sse2.c
+	$(TOP)/src/gallium/auxiliary/tgsi/exec/tgsi_exec.c \
+	$(TOP)/src/gallium/auxiliary/tgsi/exec/tgsi_sse2.c
 
 TGSIUTIL_SOURCES = \
-	$(TOP)/src/gallium/aux/tgsi/util/tgsi_build.c \
-	$(TOP)/src/gallium/aux/tgsi/util/tgsi_dump.c \
-	$(TOP)/src/gallium/aux/tgsi/util/tgsi_parse.c \
-	$(TOP)/src/gallium/aux/tgsi/util/tgsi_util.c
+	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_build.c \
+	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_dump.c \
+	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_parse.c \
+	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_util.c
 
 STATECACHE_SOURCES = \
-	$(TOP)/src/gallium/aux/cso_cache/cso_hash.c \
-	$(TOP)/src/gallium/aux/cso_cache/cso_cache.c
+	$(TOP)/src/gallium/auxiliary/cso_cache/cso_hash.c \
+	$(TOP)/src/gallium/auxiliary/cso_cache/cso_cache.c
 
 PIPEUTIL_SOURCES = \
-	$(TOP)/src/gallium/aux/util/p_debug.c \
-	$(TOP)/src/gallium/aux/util/p_tile.c \
-	$(TOP)/src/gallium/aux/util/p_util.c
+	$(TOP)/src/gallium/auxiliary/util/p_debug.c \
+	$(TOP)/src/gallium/auxiliary/util/p_tile.c \
+	$(TOP)/src/gallium/auxiliary/util/p_util.c
 
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
@@ -428,7 +428,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
-	-I$(TOP)/src/gallium/aux
+	-I$(TOP)/src/gallium/auxiliary
 
 OLD_INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/tnl \
@@ -438,4 +438,4 @@ OLD_INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/shader \
 	-I$(TOP)/src/mesa/shader/grammar \
 	-I$(TOP)/src/mesa/shader/slang \
-	-I$(TOP)/s$(TOP)/src/gallium/aux/tgsi
+	-I$(TOP)/s$(TOP)/src/gallium/auxiliary/tgsi

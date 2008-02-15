@@ -21,7 +21,7 @@ CELL_LIB_SPU = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
 endif
 
 ifeq ($(CONFIG_NAME), linux-llvm)
-LLVM_LIB = $(TOP)/src/gallium/aux/llvm/libgallivm.a
+LLVM_LIB = $(TOP)/src/gallium/auxiliary/llvm/libgallivm.a
 endif
 
 .SUFFIXES : .cpp
