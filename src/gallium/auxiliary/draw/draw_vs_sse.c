@@ -243,7 +243,7 @@ struct draw_vertex_shader *
 draw_create_vs_sse( struct draw_context *draw,
 		    const struct pipe_shader_state *templ )
 {
-   return NULL;
+   return (void *) 0;
 }
 
 
