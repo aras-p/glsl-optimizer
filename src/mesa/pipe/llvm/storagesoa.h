@@ -80,6 +80,10 @@ private:
                                int channel) const;
    llvm::Value *element(llvm::Value *ptr, int index,
                         int channel) const;
+   llvm::Value *indirectElementPointer(llvm::Value *ptr, llvm::Value *indIdx,
+                                       int channel) const;
+   llvm::Value *indirectElement(llvm::Value *ptr, llvm::Value *indIdx,
+                                int channel) const;
    const char *name(const char *prefix) const;
    llvm::Value  *alignedArrayLoad(llvm::Value *val);
    llvm::Module *currentModule() const;
@@ -89,7 +93,7 @@ private:
    std::vector<llvm::Value*> constElement(int idx, llvm::Value *indIdx =0);
    std::vector<llvm::Value*> outputElement(int idx, llvm::Value *indIdx =0);
    std::vector<llvm::Value*> tempElement(int idx, llvm::Value *indIdx =0);
-   std::vector<llvm::Value*> immediateElement(int idx);
+   std::vector<llvm::Value*> immediateElement(int idx, llvm::Value *indIdx =0);
 private:
    llvm::BasicBlock *m_block;
 

@@ -136,10 +136,17 @@ std::vector<llvm::Value*> StorageSoa::inputElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
 
-   res[0] = element(m_input, idx, 0);
-   res[1] = element(m_input, idx, 1);
-   res[2] = element(m_input, idx, 2);
-   res[3] = element(m_input, idx, 3);
+   if (!indIdx) {
+      res[0] = element(m_input, idx, 0);
+      res[1] = element(m_input, idx, 1);
+      res[2] = element(m_input, idx, 2);
+      res[3] = element(m_input, idx, 3);
+   } else {
+      res[0] = indirectElement(m_input, indIdx, 0);
+      res[1] = indirectElement(m_input, indIdx, 1);
+      res[2] = indirectElement(m_input, indIdx, 2);
+      res[3] = indirectElement(m_input, indIdx, 3);
+   }
 
    return res;
 }
@@ -147,10 +154,18 @@ std::vector<llvm::Value*> StorageSoa::inputElement(int idx, llvm::Value *indIdx)
 std::vector<llvm::Value*> StorageSoa::constElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
-   llvm::Value *xChannel = elementPointer(m_consts, idx, 0);
-   llvm::Value *yChannel = elementPointer(m_consts, idx, 1);
-   llvm::Value *zChannel = elementPointer(m_consts, idx, 2);
-   llvm::Value *wChannel = elementPointer(m_consts, idx, 3);
+   llvm::Value *xChannel, *yChannel, *zChannel, *wChannel;
+   if (!indIdx) {
+      xChannel = elementPointer(m_consts, idx, 0);
+      yChannel = elementPointer(m_consts, idx, 1);
+      zChannel = elementPointer(m_consts, idx, 2);
+      wChannel = elementPointer(m_consts, idx, 3);
+   } else {
+      xChannel = indirectElementPointer(m_consts, indIdx, 0);
+      yChannel = indirectElementPointer(m_consts, indIdx, 1);
+      zChannel = indirectElementPointer(m_consts, indIdx, 2);
+      wChannel = indirectElementPointer(m_consts, indIdx, 3);
+   }
 
    res[0] = alignedArrayLoad(xChannel);
    res[1] = alignedArrayLoad(yChannel);
@@ -164,10 +179,17 @@ std::vector<llvm::Value*> StorageSoa::outputElement(int idx, llvm::Value *indIdx
 {
    std::vector<llvm::Value*> res(4);
 
-   res[0] = element(m_output, idx, 0);
-   res[1] = element(m_output, idx, 1);
-   res[2] = element(m_output, idx, 2);
-   res[3] = element(m_output, idx, 3);
+   if (!indIdx) {
+      res[0] = element(m_output, idx, 0);
+      res[1] = element(m_output, idx, 1);
+      res[2] = element(m_output, idx, 2);
+      res[3] = element(m_output, idx, 3);
+   } else {
+      res[0] = indirectElement(m_output, indIdx, 0);
+      res[1] = indirectElement(m_output, indIdx, 1);
+      res[2] = indirectElement(m_output, indIdx, 2);
+      res[3] = indirectElement(m_output, indIdx, 3);
+   }
 
    return res;
 }
@@ -176,22 +198,36 @@ std::vector<llvm::Value*> StorageSoa::tempElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
 
-   res[0] = element(m_temps, idx, 0);
-   res[1] = element(m_temps, idx, 1);
-   res[2] = element(m_temps, idx, 2);
-   res[3] = element(m_temps, idx, 3);
+   if (!indIdx) {
+      res[0] = element(m_temps, idx, 0);
+      res[1] = element(m_temps, idx, 1);
+      res[2] = element(m_temps, idx, 2);
+      res[3] = element(m_temps, idx, 3);
+   } else {
+      res[0] = indirectElement(m_temps, indIdx, 0);
+      res[1] = indirectElement(m_temps, indIdx, 1);
+      res[2] = indirectElement(m_temps, indIdx, 2);
+      res[3] = indirectElement(m_temps, indIdx, 3);
+   }
 
    return res;
 }
 
-std::vector<llvm::Value*> StorageSoa::immediateElement(int idx)
+std::vector<llvm::Value*> StorageSoa::immediateElement(int idx, llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> res(4);
 
-   res[0] = element(m_immediates, idx, 0);
-   res[1] = element(m_immediates, idx, 1);
-   res[2] = element(m_immediates, idx, 2);
-   res[3] = element(m_immediates, idx, 3);
+   if (!indIdx) {
+      res[0] = element(m_immediates, idx, 0);
+      res[1] = element(m_immediates, idx, 1);
+      res[2] = element(m_immediates, idx, 2);
+      res[3] = element(m_immediates, idx, 3);
+   } else {
+      res[0] = indirectElement(m_immediates, indIdx, 0);
+      res[1] = indirectElement(m_immediates, indIdx, 1);
+      res[2] = indirectElement(m_immediates, indIdx, 2);
+      res[3] = indirectElement(m_immediates, indIdx, 3);
+   }
 
    return res;
 }
@@ -295,7 +331,7 @@ std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
       val = constElement(idx, indIdx);
       break;
    case Immediate:
-      val = immediateElement(idx);
+      val = immediateElement(idx, indIdx);
       break;
    case Address:
       debug_printf("Address not handled in the load phase!\n");
@@ -365,16 +401,43 @@ void StorageSoa::store(Argument type, int idx, const std::vector<llvm::Value*> &
 
 void StorageSoa::addAddress(int idx)
 {
+   VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
    GlobalVariable *val = new GlobalVariable(
-      /*Type=*/IntegerType::get(32),
+      /*Type=*/vectorType,
       /*isConstant=*/false,
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Initializer=*/0, // has initializer, specified below
       /*Name=*/name("address"),
       currentModule());
    //val->setInitializer(Constant::getNullValue(IntegerType::get(32)));
-   val->setInitializer(constantInt(1));
+   //val->setInitializer(constantInt(1));
 
    debug_printf("adding to %d\n", idx);
    m_addresses[idx] = val;
+}
+
+llvm::Value * StorageSoa::indirectElementPointer(llvm::Value *ptr, llvm::Value *indIdx,
+                                                 int channel) const
+{
+   std::vector<Value*> indices;
+   if (m_immediates == ptr)
+      indices.push_back(constantInt(0));
+   indices.push_back(indIdx);
+   indices.push_back(constantInt(channel));
+
+   GetElementPtrInst *getElem = new GetElementPtrInst(ptr,
+                                                      indices.begin(),
+                                                      indices.end(),
+                                                      name("ptr"),
+                                                      m_block);
+   return getElem;
+}
+
+llvm::Value * StorageSoa::indirectElement(llvm::Value *ptr, llvm::Value *indIdx,
+                                          int channel) const
+{
+   llvm::Value *res = indirectElementPointer(ptr, indIdx, channel);
+   LoadInst *load = new LoadInst(res, name("element"), false, m_block);
+   //load->setAlignment(8);
+   return load;
 }

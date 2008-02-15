@@ -43,14 +43,26 @@ std::vector<llvm::Value*> InstructionsSoa::arl(const std::vector<llvm::Value*> i
 {
    std::vector<llvm::Value*> res(4);
 
-   //Extract the first x (all 4 should be the same)
-   llvm::Value *x = m_builder.CreateExtractElement(in[0],
-                                                   m_storage->constantInt(0),
-                                                   name("extractX"));
+   //Extract x's
+   llvm::Value *x1 = m_builder.CreateExtractElement(in[0],
+                                                    m_storage->constantInt(0),
+                                                    name("extractX"));
+   llvm::Value *x2 = m_builder.CreateExtractElement(in[0],
+                                                    m_storage->constantInt(1),
+                                                    name("extractX"));
+   llvm::Value *x3 = m_builder.CreateExtractElement(in[0],
+                                                    m_storage->constantInt(2),
+                                                    name("extractX"));
+   llvm::Value *x4 = m_builder.CreateExtractElement(in[0],
+                                                    m_storage->constantInt(3),
+                                                    name("extractX"));
    //cast it to an unsigned int
-   x = m_builder.CreateFPToUI(x, IntegerType::get(32), name("xIntCast"));
+   x1 = m_builder.CreateFPToUI(x1, IntegerType::get(32), name("x1IntCast"));
+   x2 = m_builder.CreateFPToUI(x2, IntegerType::get(32), name("x2IntCast"));
+   x3 = m_builder.CreateFPToUI(x3, IntegerType::get(32), name("x3IntCast"));
+   x4 = m_builder.CreateFPToUI(x4, IntegerType::get(32), name("x4IntCast"));
 
-   res[0] = x;
+   res[0] = vectorFromVals(x1, x2, x3, x4);
    //only x is valid. the others shouldn't be necessary
    /*
    res[1] = Constant::getNullValue(m_floatVecType);
@@ -99,4 +111,23 @@ std::vector<llvm::Value*> InstructionsSoa::madd(const std::vector<llvm::Value*> 
 {
    std::vector<llvm::Value*> res = mul(in1, in2);
    return add(res, in3);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
+{
+   std::vector<llvm::Value*> res(4);
+   res[0] = m_builder.CreateExtractElement(vector,
+                                           m_storage->constantInt(0),
+                                           name("extract1X"));
+   res[1] = m_builder.CreateExtractElement(vector,
+                                           m_storage->constantInt(1),
+                                           name("extract2X"));
+   res[2] = m_builder.CreateExtractElement(vector,
+                                           m_storage->constantInt(2),
+                                           name("extract3X"));
+   res[3] = m_builder.CreateExtractElement(vector,
+                                           m_storage->constantInt(3),
+                                           name("extract4X"));
+
+   return res;
 }

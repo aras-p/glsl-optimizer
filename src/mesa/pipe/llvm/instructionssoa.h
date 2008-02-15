@@ -57,6 +57,7 @@ public:
                                  const std::vector<llvm::Value*> in2);
    void         end();
 
+   std::vector<llvm::Value*> extractVector(llvm::Value *vector);
 private:
    const char * name(const char *prefix) const;
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
