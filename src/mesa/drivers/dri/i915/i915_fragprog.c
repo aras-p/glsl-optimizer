@@ -107,7 +107,7 @@ src_vector(struct i915_fragment_program *p,
          break;
       case FRAG_ATTRIB_FOGC:
          src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
-         src = swizzle(src, W, W, W, W);
+         src = swizzle(src, W, ZERO, ZERO, ONE);
          break;
       case FRAG_ATTRIB_TEX0:
       case FRAG_ATTRIB_TEX1:
