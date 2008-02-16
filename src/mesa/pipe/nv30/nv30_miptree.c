@@ -35,7 +35,7 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 		nv30mt->level[l].pitch = (nv30mt->level[l].pitch + 63) & ~63;
 
 		nv30mt->level[l].image_offset =
-			calloc(nr_faces, sizeof(unsigned));
+			CALLOC(nr_faces, sizeof(unsigned));
 
 		width  = MAX2(1, width  >> 1);
 		height = MAX2(1, height >> 1);

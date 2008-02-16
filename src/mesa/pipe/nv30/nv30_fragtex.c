@@ -1,6 +1,6 @@
 #include "nv30_context.h"
 
-static inline int log2i(int i)
+static INLINE int log2i(int i)
 {
 	int r = 0;
 

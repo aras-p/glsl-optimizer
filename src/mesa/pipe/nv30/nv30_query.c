@@ -1,4 +1,5 @@
 #include "pipe/p_context.h"
+#include "pipe/p_util.h"
 
 #include "nv30_context.h"
 
@@ -20,7 +21,7 @@ nv30_query_create(struct pipe_context *pipe, unsigned query_type)
 {
 	struct nv30_query *q;
 
-	q = calloc(1, sizeof(struct nv30_query));
+	q = CALLOC(1, sizeof(struct nv30_query));
 	q->type = query_type;
 
 	return (struct pipe_query *)q;

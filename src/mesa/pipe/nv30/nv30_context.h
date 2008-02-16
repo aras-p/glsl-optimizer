@@ -83,7 +83,7 @@ struct nv30_context {
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
 };
 
-static inline struct nv30_context *
+static INLINE struct nv30_context *
 nv30_context(struct pipe_context *pipe)
 {
 	return (struct nv30_context *)pipe;

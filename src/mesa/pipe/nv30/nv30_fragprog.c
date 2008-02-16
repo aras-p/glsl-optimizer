@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/p_util.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "pipe/tgsi/util/tgsi_parse.h"
@@ -675,7 +676,7 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	struct tgsi_parse_context parse;
 	struct nv30_fpc *fpc = NULL;
 
-	fpc = calloc(1, sizeof(struct nv30_fpc));
+	fpc = CALLOC(1, sizeof(struct nv30_fpc));
 	if (!fpc)
 		return;
 	fpc->fp = fp;
@@ -716,7 +717,7 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
 			assert(fpc->nr_imm < MAX_IMM);
 
-			for (i = 0; i < imm->Immediate.Size; i++)
+			for (i = 0; i < 4; i++)
 				vals[i] = imm->u.ImmediateFloat32[i].Float;
 			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
 		}

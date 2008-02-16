@@ -420,9 +420,9 @@ nv30_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 
 	BEGIN_RING(rankine, NV34TCL_DEPTH_FUNC, 3);
 	OUT_RINGp ((uint32_t *)&hw->depth, 3);
-	BEGIN_RING(rankine, NV34TCL_STENCIL_FRONT_ENABLE, 16);
-	OUT_RINGp ((uint32_t *)&hw->stencil.front, 8);
+	BEGIN_RING(rankine, NV34TCL_STENCIL_BACK_ENABLE, 16);
 	OUT_RINGp ((uint32_t *)&hw->stencil.back, 8);
+	OUT_RINGp ((uint32_t *)&hw->stencil.front, 8);
 	BEGIN_RING(rankine, NV34TCL_ALPHA_FUNC_ENABLE, 3);
 	OUT_RINGp ((uint32_t *)&hw->alpha.enabled, 3);
 }
@@ -439,7 +439,7 @@ nv30_vp_state_create(struct pipe_context *pipe,
 {
 	struct nv30_vertex_program *vp;
 
-	vp = calloc(1, sizeof(struct nv30_vertex_program));
+	vp = CALLOC(1, sizeof(struct nv30_vertex_program));
 	vp->pipe = cso;
 
 	return (void *)vp;
@@ -471,7 +471,7 @@ nv30_fp_state_create(struct pipe_context *pipe,
 {
 	struct nv30_fragment_program *fp;
 
-	fp = calloc(1, sizeof(struct nv30_fragment_program));
+	fp = CALLOC(1, sizeof(struct nv30_fragment_program));
 	fp->pipe = cso;
 
 	return (void *)fp;

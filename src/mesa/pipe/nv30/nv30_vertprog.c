@@ -1,6 +1,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
+#include "pipe/p_util.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "pipe/tgsi/util/tgsi_parse.h"
@@ -539,7 +540,7 @@ nv30_vertprog_prepare(struct nv30_vpc *vpc)
 	tgsi_parse_free(&p);
 
 	if (nr_imm) {
-		vpc->imm = calloc(nr_imm, sizeof(struct nv30_sreg));
+		vpc->imm = CALLOC(nr_imm, sizeof(struct nv30_sreg));
 		assert(vpc->imm);
 	}
 
@@ -553,7 +554,7 @@ nv30_vertprog_translate(struct nv30_context *nv30,
 	struct tgsi_parse_context parse;
 	struct nv30_vpc *vpc = NULL;
 
-	vpc = calloc(1, sizeof(struct nv30_vpc));
+	vpc = CALLOC(1, sizeof(struct nv30_vpc));
 	if (!vpc)
 		return;
 	vpc->vp = vp;

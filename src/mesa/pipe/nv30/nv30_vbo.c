@@ -30,7 +30,8 @@ nv30_vbo_type(uint format)
 	case PIPE_FORMAT_TYPE_UNORM:
 		return NV34TCL_VERTEX_ARRAY_FORMAT_TYPE_UBYTE;
 	default:
-		assert(0);
+		NOUVEAU_ERR("Unknown format 0x%08x\n", format);
+		return NV40TCL_VTXFMT_TYPE_FLOAT;
 	}
 }
 
@@ -194,8 +195,13 @@ nv30_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	unsigned nr;
+	boolean ret;
 
-	assert(nv30_vbo_validate_state(nv30, NULL, 0));
+	ret = nv30_vbo_validate_state(nv30, NULL, 0);
+	if (!ret) {
+		NOUVEAU_ERR("state validate failed\n");
+		return FALSE;
+	}
 
 	BEGIN_RING(rankine, NV34TCL_VERTEX_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -302,13 +308,20 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct pipe_winsys *ws = pipe->winsys;
+	boolean ret;
 	void *map;
 
-	assert(nv30_vbo_validate_state(nv30, NULL, 0));
+	ret =  nv30_vbo_validate_state(nv30, NULL, 0);
+	if (!ret) {
+		NOUVEAU_ERR("state validate failed\n");
+		return FALSE;
+	}
 
 	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
-	if (!ib)
-		assert(0);
+	if (!ib) {
+		NOUVEAU_ERR("failed mapping ib\n");
+		return FALSE;
+	}
 
 	BEGIN_RING(rankine, NV34TCL_VERTEX_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -324,7 +337,7 @@ nv30_draw_elements_inline(struct pipe_context *pipe,
 		nv30_draw_elements_u32(nv30, map, start, count);
 		break;
 	default:
-		assert(0);
+		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
 		break;
 	}
 
@@ -343,6 +356,7 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	unsigned nr, type;
+	boolean ret;
 
 	switch (ib_size) {
 	case 2:
@@ -352,10 +366,15 @@ nv30_draw_elements_vbo(struct pipe_context *pipe,
 		type = NV40TCL_IDXBUF_FORMAT_TYPE_U32;
 		break;
 	default:
-		assert(0);
+		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
+		return FALSE;
 	}
 
-	assert(nv30_vbo_validate_state(nv30, ib, type));
+	ret = nv30_vbo_validate_state(nv30, ib, type);
+	if (!ret) {
+		NOUVEAU_ERR("failed state validation\n");
+		return FALSE;
+	}
 
 	BEGIN_RING(rankine, NV34TCL_VERTEX_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -391,10 +410,10 @@ nv30_draw_elements(struct pipe_context *pipe,
 		   struct pipe_buffer *indexBuffer, unsigned indexSize,
 		   unsigned mode, unsigned start, unsigned count)
 {
-	if (indexSize != 1) {
+/*	if (indexSize != 1) {
 		nv30_draw_elements_vbo(pipe, indexBuffer, indexSize,
 				       mode, start, count);
-	} else {
+	} else */{
 		nv30_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count);
 	}
