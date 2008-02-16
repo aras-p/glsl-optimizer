@@ -7,7 +7,7 @@
 
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
-#define NV6X_GRCLASS4497_CHIPSETS 0x00000080
+#define NV6X_GRCLASS4497_CHIPSETS 0x00000088
 
 static const char *
 nv40_get_name(struct pipe_context *pipe)
@@ -154,7 +154,7 @@ nv40_channel_init(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 		return NULL;
 	}
 
-	cnv40 = calloc(1, sizeof(struct nv40_channel_context));
+	cnv40 = CALLOC(1, sizeof(struct nv40_channel_context));
 	if (!cnv40)
 		return NULL;
 	cnv40->chipset = chipset;
@@ -274,7 +274,7 @@ nv40_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 {
 	struct nv40_context *nv40;
 
-	nv40 = calloc(1, sizeof(struct nv40_context));
+	nv40 = CALLOC(1, sizeof(struct nv40_context));
 	if (!nv40)
 		return NULL;
 

@@ -80,6 +80,9 @@ nouveau_pipe_create(struct nouveau_context *nv)
 		return NULL;
 
 	switch (nv->chipset & 0xf0) {
+	case 0x30:
+		hw_create = nv30_create;
+		break;
 	case 0x40:
 	case 0x60:
 		hw_create = nv40_create;

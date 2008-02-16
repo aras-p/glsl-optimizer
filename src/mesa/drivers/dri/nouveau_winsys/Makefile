@@ -8,6 +8,7 @@ MINIGLX_SOURCES =
 
 PIPE_DRIVERS = \
 	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a \
+	$(TOP)/src/mesa/pipe/nv30/libnv30.a \
 	$(TOP)/src/mesa/pipe/nv40/libnv40.a \
 	$(TOP)/src/mesa/pipe/nv50/libnv50.a
 
