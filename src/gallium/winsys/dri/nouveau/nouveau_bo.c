@@ -295,7 +295,8 @@ nouveau_bo_set_status(struct nouveau_bo *bo, uint32_t flags)
 					&new, &new_map);
 		if (ret)
 			return ret;
-	} else {
+	} else
+	if (!nvbo->user) {
 		new_sysmem = malloc(bo->size);
 	}
 
@@ -311,12 +312,13 @@ nouveau_bo_set_status(struct nouveau_bo *bo, uint32_t flags)
 	if (nvbo->fence)
 		nouveau_fence_wait(&nvbo->fence);
 	nouveau_mem_free(bo->device, &nvbo->drm, &nvbo->map);
-	if (nvbo->sysmem)
+	if (nvbo->sysmem && !nvbo->user)
 		free(nvbo->sysmem);
 
 	nvbo->drm = new;
 	nvbo->map = new_map;
-	nvbo->sysmem = new_sysmem;
+	if (!nvbo->user)
+		nvbo->sysmem = new_sysmem;
 	bo->flags = flags;
 	bo->offset = nvbo->drm.offset;
 	return 0;
@@ -333,7 +335,6 @@ nouveau_bo_validate_user(struct nouveau_channel *chan, struct nouveau_bo *bo,
 
 	if (nvchan->user_charge + bo->size > nvdev->sa.size)
 		return 1;
-	nvchan->user_charge += bo->size;
 
 	if (!(flags & NOUVEAU_BO_GART))
 		return 1;
@@ -341,6 +342,7 @@ nouveau_bo_validate_user(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	r = nouveau_bo_tmp(chan, bo->size, fence);
 	if (!r)
 		return 1;
+	nvchan->user_charge += bo->size;
 
 	memcpy(nvdev->sa_map + r->start, nvbo->sysmem, bo->size);
 
