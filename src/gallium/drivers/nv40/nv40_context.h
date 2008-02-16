@@ -54,6 +54,11 @@ struct nv40_channel_context {
 	struct nouveau_resource *vp_data_heap;
 };
 
+struct nv40_rasterizer_state {
+	struct pipe_rasterizer_state pipe;
+	struct nouveau_stateobj *so;
+};
+
 struct nv40_context {
 	struct pipe_context pipe;
 	struct nouveau_winsys *nvws;
@@ -63,7 +68,8 @@ struct nv40_context {
 
 	int chipset;
 
-	uint32_t dirty;
+	unsigned dirty;
+	unsigned hw_dirty;
 
 	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct nv40_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
@@ -71,14 +77,23 @@ struct nv40_context {
 	unsigned fp_samplers;
 	unsigned vp_samplers;
 
+	struct {
+		struct pipe_scissor_state scissor;
+	} pipe_state;
+
+	struct {
+		unsigned scissor_enabled;
+		struct nouveau_stateobj *scissor;
+	} state;
+
 	struct nouveau_stateobj *so_framebuffer;
 	struct nouveau_stateobj *so_fragtex[16];
 	struct nouveau_stateobj *so_vtxbuf;
 	struct nouveau_stateobj *so_blend;
+	struct nv40_rasterizer_state *rasterizer;
 	struct nouveau_stateobj *so_rast;
 	struct nouveau_stateobj *so_zsa;
 	struct nouveau_stateobj *so_bcol;
-	struct nouveau_stateobj *so_scissor;
 	struct nouveau_stateobj *so_viewport;
 	struct nouveau_stateobj *so_stipple;
 

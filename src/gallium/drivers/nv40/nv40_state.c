@@ -278,12 +278,12 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nv40_rasterizer_state *rsso = MALLOC(sizeof(*rsso));
 	struct nouveau_stateobj *so = so_new(32, 0);
 
 	/*XXX: ignored:
 	 * 	light_twoside
 	 * 	offset_cw/ccw -nohw
-	 * 	scissor
 	 * 	point_smooth -nohw
 	 * 	multisample
 	 * 	offset_units / offset_scale
@@ -362,24 +362,29 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 		so_data(so, 0);
 	}
 
-	return (void *)so;
+	rsso->so = so;
+	rsso->pipe = *cso;
+	return (void *)rsso;
 }
 
 static void
 nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nv40_rasterizer_state *rsso = hwcso;
 
-	so_ref(hwcso, &nv40->so_rast);
+	so_ref(rsso->so, &nv40->so_rast);
+	nv40->rasterizer = rsso;
 	nv40->dirty |= NV40_NEW_RAST;
 }
 
 static void
 nv40_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nouveau_stateobj *so = hwcso;
+	struct nv40_rasterizer_state *rsso = hwcso;
 
-	so_ref(NULL, &so);
+	so_ref(NULL, &rsso->so);
+	free(rsso);
 }
 
 static void *
@@ -723,14 +728,8 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_stateobj *so = so_new(3, 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_SCISSOR_HORIZ, 2);
-	so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
-	so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
-
-	so_ref(so, &nv40->so_scissor);
-	so_ref(NULL, &so);
+	nv40->pipe_state.scissor = *s;
 	nv40->dirty |= NV40_NEW_SCISSOR;
 }
 
