@@ -14,7 +14,7 @@ CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOUR
 
 
 # Directories
-SRC_DIRS = mesa glu
+SRC_DIRS = gallium mesa glu
 DRIVER_DIRS = osmesa
 PROGRAM_DIRS = osdemos
 

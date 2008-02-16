@@ -16,6 +16,7 @@ struct x86_reg {
 };
 
 struct x86_function {
+   unsigned size;
    unsigned char *store;
    unsigned char *csr;
    unsigned stack_offset;
@@ -118,7 +119,8 @@ void x86_fixup_fwd_jump( struct x86_function *p,
 
 void x86_jmp( struct x86_function *p, unsigned char *label );
 
-void x86_call( struct x86_function *p, void (*label)() );
+/* void x86_call( struct x86_function *p, void (*label)() ); */
+void x86_call( struct x86_function *p, struct x86_reg reg);
 
 /* michal:
  * Temporary. As I need immediate operands, and dont want to mess with the codegen,

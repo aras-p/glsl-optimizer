@@ -86,7 +86,7 @@ else
 endif
 
 # Directories
-SRC_DIRS = mesa glu glut/beos
+SRC_DIRS = gallium mesa glu glut/beos
 GLU_DIRS = sgi
 DRIVER_DIRS = beos
 PROGRAM_DIRS = beos samples redbook demos tests

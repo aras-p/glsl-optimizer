@@ -12,54 +12,72 @@ static unsigned char *cptr( void (*label)() )
 }
 
 
+static void do_realloc( struct x86_function *p )
+{
+   if (p->size == 0) {
+      p->size = 1024;
+      p->store = _mesa_exec_malloc(p->size);
+      p->csr = p->store;
+   }
+   else {
+      unsigned used = p->csr - p->store;
+      unsigned char *tmp = p->store;
+      p->size *= 2;
+      p->store = _mesa_exec_malloc(p->size);
+      memcpy(p->store, tmp, used);
+      p->csr = p->store + used;
+      _mesa_exec_free(tmp);
+   }
+}
+
 /* Emit bytes to the instruction stream:
  */
+static unsigned char *reserve( struct x86_function *p, int bytes )
+{
+   if (p->csr + bytes - p->store > p->size)
+      do_realloc(p);
+
+   {
+      unsigned char *csr = p->csr;
+      p->csr += bytes;
+      return csr;
+   }
+}
+
+
+
 static void emit_1b( struct x86_function *p, char b0 )
 {
-   *(char *)(p->csr++) = b0;
+   char *csr = (char *)reserve(p, 1);
+   *csr = b0;
 }
 
 static void emit_1i( struct x86_function *p, int i0 )
 {
-   *(int *)(p->csr) = i0;
-   p->csr += 4;
+   int *icsr = (int *)reserve(p, sizeof(i0));
+   *icsr = i0;
 }
 
-static void disassem( struct x86_function *p, const char *fn )
+static void emit_1ub( struct x86_function *p, unsigned char b0 )
 {
-#if DISASSEM && 0
-   if (fn && fn != p->fn) {
-      _mesa_printf("0x%x: %s\n", p->csr, fn);
-      p->fn = fn;
-   }
-#endif
+   unsigned char *csr = reserve(p, 1);
+   *csr++ = b0;
 }
 
-static void emit_1ub_fn( struct x86_function *p, unsigned char b0, const char *fn )
+static void emit_2ub( struct x86_function *p, unsigned char b0, unsigned char b1 )
 {
-   disassem(p, fn);
-   *(p->csr++) = b0;
+   unsigned char *csr = reserve(p, 2);
+   *csr++ = b0;
+   *csr++ = b1;
 }
 
-static void emit_2ub_fn( struct x86_function *p, unsigned char b0, unsigned char b1, const char *fn )
+static void emit_3ub( struct x86_function *p, unsigned char b0, unsigned char b1, unsigned char b2 )
 {
-   disassem(p, fn);
-   *(p->csr++) = b0;
-   *(p->csr++) = b1;
+   unsigned char *csr = reserve(p, 3);
+   *csr++ = b0;
+   *csr++ = b1;
+   *csr++ = b2;
 }
-
-static void emit_3ub_fn( struct x86_function *p, unsigned char b0, unsigned char b1, unsigned char b2, const char *fn )
-{
-   disassem(p, fn);
-   *(p->csr++) = b0;
-   *(p->csr++) = b1;
-   *(p->csr++) = b2;
-}
-
-#define emit_1ub(p, b0)         emit_1ub_fn(p, b0, __FUNCTION__)
-#define emit_2ub(p, b0, b1)     emit_2ub_fn(p, b0, b1, __FUNCTION__)
-#define emit_3ub(p, b0, b1, b2) emit_3ub_fn(p, b0, b1, b2, __FUNCTION__)
-
 
 
 /* Build a modRM byte + possible displacement.  No treatment of SIB
@@ -77,13 +95,13 @@ static void emit_modrm( struct x86_function *p,
    val |= reg.idx << 3;		/* reg field */
    val |= regmem.idx;		/* r/m field */
    
-   emit_1ub_fn(p, val, 0);
+   emit_1ub(p, val);
 
    /* Oh-oh we've stumbled into the SIB thing.
     */
    if (regmem.file == file_REG32 &&
        regmem.idx == reg_SP) {
-      emit_1ub_fn(p, 0x24, 0);		/* simplistic! */
+      emit_1ub(p, 0x24);		/* simplistic! */
    }
 
    switch (regmem.mod) {
@@ -124,14 +142,14 @@ static void emit_op_modrm( struct x86_function *p,
 {  
    switch (dst.mod) {
    case mod_REG:
-      emit_1ub_fn(p, op_dst_is_reg, 0);
+      emit_1ub(p, op_dst_is_reg);
       emit_modrm(p, dst, src);
       break;
    case mod_INDIRECT:
    case mod_DISP32:
    case mod_DISP8:
       assert(src.mod == mod_REG);
-      emit_1ub_fn(p, op_dst_is_mem, 0);
+      emit_1ub(p, op_dst_is_mem);
       emit_modrm(p, src, dst);
       break;
    default:
@@ -258,11 +276,24 @@ void x86_jmp( struct x86_function *p, unsigned char *label)
    emit_1i(p, label - x86_get_label(p) - 4);
 }
 
+#if 0
+/* This doesn't work once we start reallocating & copying the
+ * generated code on buffer fills, because the call is relative to the
+ * current pc.
+ */
 void x86_call( struct x86_function *p, void (*label)())
 {
    emit_1ub(p, 0xe8);
    emit_1i(p, cptr(label) - x86_get_label(p) - 4);
 }
+#else
+void x86_call( struct x86_function *p, struct x86_reg reg)
+{
+   emit_1ub(p, 0xff);
+   emit_modrm(p, reg, reg);
+}
+#endif
+
 
 /* michal:
  * Temporary. As I need immediate operands, and dont want to mess with the codegen,
@@ -789,7 +820,7 @@ static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86
 	 assert(0);
    }
    else if (dst.idx == 0) {
-      assert(arg.file = file_REG32);
+      assert(arg.file == file_REG32);
       emit_1ub(p, 0xd8);
       emit_modrm_noreg(p, argmem_noreg, arg);
    }
@@ -1125,11 +1156,14 @@ struct x86_reg x86_fn_arg( struct x86_function *p,
 
 void x86_init_func( struct x86_function *p )
 {
-   x86_init_func_size(p, 2048);
+   p->size = 0;
+   p->store = NULL;
+   p->csr = p->store;
 }
 
 void x86_init_func_size( struct x86_function *p, unsigned code_size )
 {
+   p->size = code_size;
    p->store = _mesa_exec_malloc(code_size);
    p->csr = p->store;
 }
@@ -1138,12 +1172,14 @@ void x86_release_func( struct x86_function *p )
 {
    _mesa_exec_free(p->store);
    p->store = NULL;
+   p->csr = NULL;
+   p->size = 0;
 }
 
 
 void (*x86_get_func( struct x86_function *p ))(void)
 {
-   if (DISASSEM)
+   if (DISASSEM && p->store)
       _mesa_printf("disassemble %p %p\n", p->store, p->csr);
    return (void (*)(void)) (unsigned long) p->store;
 }

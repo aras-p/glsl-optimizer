@@ -37,7 +37,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/cso_cache/cso_cache.h"
+#include "cso_cache/cso_cache.h"
 
 #include "st_context.h"
 #include "st_draw.h"

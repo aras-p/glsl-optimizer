@@ -60,7 +60,7 @@ GLW_SOURCES = GLwDrawA.c
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = mesa glu glut/glx glw
+SRC_DIRS = gallium mesa glu glut/glx glw
 GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:

@@ -85,7 +85,7 @@
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
-#include "pipe/softpipe/sp_context.h"
+#include "softpipe/sp_context.h"
 #include "pipe/p_defines.h"
 
 /**

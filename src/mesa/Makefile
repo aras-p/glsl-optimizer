@@ -12,16 +12,16 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
 PIPE_LIB = \
-	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a \
-	$(TOP)/src/mesa/pipe/i965simple/libi965simple.a
+	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
+	$(TOP)/src/gallium/drivers/i965simple/libi965simple.a
 
 ifeq ($(CONFIG_NAME), linux-cell)
-CELL_LIB = $(TOP)/src/mesa/pipe/cell/ppu/libcell.a
-CELL_LIB_SPU = $(TOP)/src/mesa/pipe/cell/spu/g3d_spu.a
+CELL_LIB = $(TOP)/src/gallium/drivers/cell/ppu/libcell.a
+CELL_LIB_SPU = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
 endif
 
 ifeq ($(CONFIG_NAME), linux-llvm)
-LLVM_LIB = $(TOP)/src/mesa/pipe/llvm/libgallivm.a
+LLVM_LIB = $(TOP)/src/gallium/auxiliary/llvm/libgallivm.a
 endif
 
 .SUFFIXES : .cpp
@@ -71,7 +71,7 @@ libmesa.a: $(SOLO_OBJECTS)
 	fi
 
 linux-solo: depend subdirs libmesa.a
-	cd drivers/dri ; $(MAKE)
+	cd $(TOP)/src/gallium/winsys/dri ; $(MAKE)
 
 
 #####################################################################
@@ -165,7 +165,6 @@ depend: $(ALL_SOURCES)
 subdirs:
 	@ (cd x86 ; $(MAKE))
 	@ (cd x86-64 ; $(MAKE))
-	(cd pipe ; $(MAKE))
 
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL
@@ -178,7 +177,7 @@ install: default
 		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
-		cd drivers/dri ; $(MAKE) install ; \
+		cd $(TOP)/gallium/winsys/dri ; $(MAKE) install ; \
 	fi
 
 ## NOT INSTALLED YET:
@@ -198,7 +197,6 @@ clean:
 	(cd drivers/dri && $(MAKE) clean)
 	(cd x86 && $(MAKE) clean)
 	(cd x86-64 && $(MAKE) clean)
-	(cd pipe ; $(MAKE) clean )
 
 
 include depend
