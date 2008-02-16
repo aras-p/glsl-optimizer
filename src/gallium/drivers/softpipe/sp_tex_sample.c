@@ -476,6 +476,19 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
       /* no mipmap selection needed */
       *imgFilter = sampler->state->mag_img_filter;
       *level0 = *level1 = (int) sampler->state->min_lod;
+
+      if (sampler->state->min_img_filter != sampler->state->mag_img_filter) {
+         /* non-mipmapped texture, but still need to determine if doing
+          * minification or magnification.
+          */
+         float lambda = compute_lambda(sampler, s, t, p, lodbias);
+         if (lambda < 0.5) { /* XXX this may need tweaking... */
+            *imgFilter = sampler->state->mag_img_filter;
+         }
+         else {
+            *imgFilter = sampler->state->min_img_filter;
+         }
+      }
    }
    else {
       float lambda;
