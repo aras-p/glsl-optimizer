@@ -1,0 +1,29 @@
+TOP = ../../../..
+include $(TOP)/configs/current
+
+LIBNAME = nv40
+
+DRIVER_SOURCES = \
+	nv40_clear.c \
+	nv40_context.c \
+	nv40_draw.c \
+	nv40_fragprog.c \
+	nv40_fragtex.c \
+	nv40_miptree.c \
+	nv40_query.c \
+	nv40_state.c \
+	nv40_state_emit.c \
+	nv40_surface.c \
+	nv40_vbo.c \
+	nv40_vertprog.c
+
+C_SOURCES = \
+	$(COMMON_SOURCES) \
+	$(DRIVER_SOURCES)
+
+ASM_SOURCES = 
+
+include ../../Makefile.template
+
+symlinks:
+
