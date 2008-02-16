@@ -474,7 +474,6 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
 {
    if (sampler->state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* no mipmap selection needed */
-      *imgFilter = sampler->state->mag_img_filter;
       *level0 = *level1 = (int) sampler->state->min_lod;
 
       if (sampler->state->min_img_filter != sampler->state->mag_img_filter) {
@@ -482,12 +481,15 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
           * minification or magnification.
           */
          float lambda = compute_lambda(sampler, s, t, p, lodbias);
-         if (lambda < 0.5) { /* XXX this may need tweaking... */
+         if (lambda <= 0.0) {
             *imgFilter = sampler->state->mag_img_filter;
          }
          else {
             *imgFilter = sampler->state->min_img_filter;
          }
+      }
+      else {
+         *imgFilter = sampler->state->mag_img_filter;
       }
    }
    else {
@@ -500,7 +502,7 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
          /* vertex shader */
          lambda = lodbias; /* not really a bias, but absolute LOD */
 
-      if (lambda < 0.0) { /* XXX threshold depends on the filter */
+      if (lambda <= 0.0) { /* XXX threshold depends on the filter */
          /* magnifying */
          *imgFilter = sampler->state->mag_img_filter;
          *level0 = *level1 = 0;
