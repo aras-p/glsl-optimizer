@@ -48,6 +48,7 @@ SOURCES = \
 	invert.c \
 	jkrahntest.c \
 	manytex.c \
+	minmag.c \
 	mipmap_limits.c \
 	multipal.c \
 	no_s3tc.c \
