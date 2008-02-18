@@ -795,7 +795,6 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 		nv40->pipe_state.constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	struct nouveau_stateobj *so;
-	unsigned new_program = FALSE;
 	int i;
 
 	if (fp->translated)
@@ -806,7 +805,6 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 		nv40->fallback |= NV40_FALLBACK_RAST;
 		return FALSE;
 	}
-	new_program = TRUE;
 
 	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
 	nv40_fragprog_upload(nv40, fp);
@@ -843,8 +841,12 @@ update_constants:
 			nv40_fragprog_upload(nv40, fp);
 	}
 
-	so_ref(fp->so, &nv40->state.fragprog);
-	return new_program;
+	if (fp->so != nv40->state.fragprog) {
+		so_ref(fp->so, &nv40->state.fragprog);
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 void

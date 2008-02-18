@@ -27,6 +27,7 @@ static struct nv40_state_entry *render_states[] = {
 	&nv40_state_scissor,
 	&nv40_state_stipple,
 	&nv40_state_fragprog,
+	&nv40_state_vertprog,
 	NULL
 };
 
@@ -116,7 +117,7 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 	}
 
 	if (nv40->dirty & NV40_NEW_VERTPROG) {
-		nv40_vertprog_bind(nv40, nv40->vertprog.current);
+		so_emit(nv40->nvws, nv40->state.vertprog);
 		nv40->dirty &= ~NV40_NEW_VERTPROG;
 	}
 

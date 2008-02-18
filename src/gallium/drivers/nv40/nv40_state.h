@@ -39,6 +39,7 @@ struct nv40_vertex_program {
 
 	uint32_t ir;
 	uint32_t or;
+	struct nouveau_stateobj *so;
 };
 
 struct nv40_fragment_program_data {

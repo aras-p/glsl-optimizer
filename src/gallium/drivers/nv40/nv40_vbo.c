@@ -101,7 +101,7 @@ static void
 nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
 		       unsigned ib_format)
 {
-	struct nv40_vertex_program *vp = nv40->vertprog.active;
+	struct nv40_vertex_program *vp = nv40->pipe_state.vertprog;
 	struct nouveau_stateobj *vtxbuf, *vtxfmt;
 	unsigned inputs, hw, num_hw;
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;

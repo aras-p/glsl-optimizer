@@ -75,6 +75,7 @@ struct nv40_state {
 	} stipple;
 
 	struct nouveau_stateobj *fragprog;
+	struct nouveau_stateobj *vertprog;
 };
 
 struct nv40_context {
@@ -99,6 +100,7 @@ struct nv40_context {
 		struct pipe_scissor_state scissor;
 		unsigned stipple[32];
 		struct pipe_clip_state clip;
+		struct nv40_vertex_program *vertprog;
 		struct nv40_fragment_program *fragprog;
 		struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
 	} pipe_state;
@@ -116,13 +118,6 @@ struct nv40_context {
 	struct nouveau_stateobj *so_bcol;
 	struct nouveau_stateobj *so_viewport;
 	struct nouveau_stateobj *so_stipple;
-
-	struct {
-		struct nv40_vertex_program *active;
-
-		struct nv40_vertex_program *current;
-		struct pipe_buffer *constant_buf;
-	} vertprog;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
@@ -151,10 +146,6 @@ extern void nv40_init_query_functions(struct nv40_context *nv40);
 extern struct draw_stage *nv40_draw_render_stage(struct nv40_context *nv40);
 
 /* nv40_vertprog.c */
-extern void nv40_vertprog_translate(struct nv40_context *,
-				    struct nv40_vertex_program *);
-extern void nv40_vertprog_bind(struct nv40_context *,
-			       struct nv40_vertex_program *);
 extern void nv40_vertprog_destroy(struct nv40_context *,
 				  struct nv40_vertex_program *);
 
@@ -172,6 +163,7 @@ extern struct nv40_state_entry nv40_state_clip;
 extern struct nv40_state_entry nv40_state_scissor;
 extern struct nv40_state_entry nv40_state_stipple;
 extern struct nv40_state_entry nv40_state_fragprog;
+extern struct nv40_state_entry nv40_state_vertprog;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,

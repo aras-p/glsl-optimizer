@@ -558,7 +558,7 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 	return TRUE;
 }
 
-void
+static void
 nv40_vertprog_translate(struct nv40_context *nv40,
 			struct nv40_vertex_program *vp)
 {
@@ -631,24 +631,32 @@ out_err:
 	free(vpc);
 }
 
-void
-nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
+static boolean
+nv40_vertprog_validate(struct nv40_context *nv40)
 { 
+	struct nv40_vertex_program *vp = nv40->pipe_state.vertprog;
+	struct pipe_buffer *constbuf =
+		nv40->pipe_state.constbuf[PIPE_SHADER_VERTEX];
 	struct nouveau_winsys *nvws = nv40->nvws;
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
 
 	/* Translate TGSI shader into hw bytecode */
+	if (vp->translated)
+		goto check_gpu_resources;
+
+	nv40_vertprog_translate(nv40, vp);
 	if (!vp->translated) {
-		nv40_vertprog_translate(nv40, vp);
-		if (!vp->translated)
-			assert(0);
+		nv40->fallback |= NV40_FALLBACK_TNL;
+		return FALSE;
 	}
 
+check_gpu_resources:
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
 		struct nouveau_resource *heap = nv40->hw->vp_exec_heap;
+		struct nouveau_stateobj *so;
 		uint vplen = vp->nr_insns;
 
 		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
@@ -662,6 +670,15 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 			if (nvws->res_alloc(heap, vplen, vp, &vp->exec))
 				assert(0);
 		}
+
+		so = so_new(5, 0);
+		so_method(so, nv40->hw->curie, NV40TCL_VP_START_FROM_ID, 1);
+		so_data  (so, vp->exec->start);
+		so_method(so, nv40->hw->curie, NV40TCL_VP_ATTRIB_EN, 2);
+		so_data  (so, vp->ir);
+		so_data  (so, vp->or);
+		so_ref(so, &vp->so);
+		so_ref(NULL, &so);
 
 		upload_code = TRUE;
 	}
@@ -725,8 +742,8 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 	if (vp->nr_consts) {
 		float *map = NULL;
 
-		if (nv40->vertprog.constant_buf) {
-			map = ws->buffer_map(ws, nv40->vertprog.constant_buf,
+		if (constbuf) {
+			map = ws->buffer_map(ws, constbuf,
 					     PIPE_BUFFER_USAGE_CPU_READ);
 		}
 
@@ -747,9 +764,8 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 			OUT_RINGp ((uint32_t *)vpd->value, 4);
 		}
 
-		if (map) {
-			ws->buffer_unmap(ws, nv40->vertprog.constant_buf);
-		}
+		if (constbuf)
+			ws->buffer_unmap(ws, constbuf);
 	}
 
 	/* Upload vtxprog */
@@ -770,13 +786,12 @@ nv40_vertprog_bind(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 		}
 	}
 
-	BEGIN_RING(curie, NV40TCL_VP_START_FROM_ID, 1);
-	OUT_RING  (vp->exec->start);
-	BEGIN_RING(curie, NV40TCL_VP_ATTRIB_EN, 2);
-	OUT_RING  (vp->ir);
-	OUT_RING  (vp->or);
+	if (vp->so != nv40->state.vertprog) {
+		so_ref(vp->so, &nv40->state.vertprog);
+		return TRUE;
+	}
 
-	nv40->vertprog.active = vp;
+	return FALSE;
 }
 
 void
@@ -787,4 +802,12 @@ nv40_vertprog_destroy(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 	if (vp->nr_insns)
 		free(vp->insns);
 }
+
+struct nv40_state_entry nv40_state_vertprog = {
+	.validate = nv40_vertprog_validate,
+	.dirty = {
+		.pipe = NV40_NEW_VERTPROG,
+		.hw = NV40_NEW_VERTPROG
+	}
+};
 

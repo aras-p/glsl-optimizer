@@ -491,9 +491,8 @@ static void
 nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_vertex_program *vp = hwcso;
 
-	nv40->vertprog.current = vp;
+	nv40->pipe_state.vertprog = hwcso;
 	nv40->dirty |= NV40_NEW_VERTPROG;
 }
 
@@ -573,7 +572,7 @@ nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	struct nv40_context *nv40 = nv40_context(pipe);
 
 	if (shader == PIPE_SHADER_VERTEX) {
-		nv40->vertprog.constant_buf = buf->buffer;
+		nv40->pipe_state.constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
 		nv40->dirty |= NV40_NEW_VERTPROG;
 	} else
 	if (shader == PIPE_SHADER_FRAGMENT) {
