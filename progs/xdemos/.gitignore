@@ -4,6 +4,7 @@ glxcontexts
 glxdemo
 glxgears
 glxgears_fbconfig
+glxgears_pixmap
 glxheads
 glxinfo
 glxpbdemo
