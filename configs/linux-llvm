@@ -5,7 +5,7 @@ include $(TOP)/configs/linux
 
 CONFIG_NAME = linux-llvm
 
-GALLIUM_AUXILIARY_DIRS += llvm
+GALLIUM_AUXILIARY_DIRS += gallivm
 
 OPT_FLAGS = -g -ansi -pedantic
 DEFINES += -DDEBUG -DDEBUG_MATH -DMESA_LLVM=1

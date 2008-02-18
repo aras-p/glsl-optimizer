@@ -38,10 +38,6 @@ CELL_LIB = $(TOP)/src/gallium/drivers/cell/ppu/libcell.a
 CELL_LIB_SPU = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
 endif
 
-ifeq ($(CONFIG_NAME), linux-llvm)
-LLVM_LIB = $(TOP)/src/gallium/auxiliary/llvm/libgallivm.a
-endif
-
 
 .SUFFIXES : .cpp
 
@@ -69,13 +65,13 @@ STAND_ALONE_OBJECTS = \
 	$(STAND_ALONE_DRIVER_OBJECTS)
 
 # Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(LLVM_LIB) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
 	$(TOP)/bin/mklib -o $(GL_LIB) \
 		-linker "$(CC)" \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		--start-group $(PIPE_LIB) $(LLVM_LIB) --end-group $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
+		--start-group $(PIPE_LIB) --end-group $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
 
 
 ######################################################################

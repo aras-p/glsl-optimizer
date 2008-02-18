@@ -40,7 +40,7 @@
 
 #ifdef MESA_LLVM
 
-#include "llvm/gallivm.h"
+#include "gallivm/gallivm.h"
 
 struct draw_llvm_vertex_shader {
    struct draw_vertex_shader base;
