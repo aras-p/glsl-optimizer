@@ -12,6 +12,8 @@ default: $(TOP)/configs/current
 		fi \
 	done
 
+all: default
+
 
 doxygen:
 	cd doxygen && $(MAKE)
