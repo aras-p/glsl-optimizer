@@ -59,6 +59,18 @@ struct nv40_rasterizer_state {
 	struct nouveau_stateobj *so;
 };
 
+struct nv40_state {
+	struct {
+		unsigned enabled;
+		struct nouveau_stateobj *so;
+	} scissor;
+
+	struct {
+		unsigned enabled;
+		struct nouveau_stateobj *so;
+	} stipple;
+};
+
 struct nv40_context {
 	struct pipe_context pipe;
 	struct nouveau_winsys *nvws;
@@ -79,12 +91,10 @@ struct nv40_context {
 
 	struct {
 		struct pipe_scissor_state scissor;
+		unsigned stipple[32];
 	} pipe_state;
 
-	struct {
-		unsigned scissor_enabled;
-		struct nouveau_stateobj *scissor;
-	} state;
+	struct nv40_state state;
 
 	struct nouveau_stateobj *so_framebuffer;
 	struct nouveau_stateobj *so_fragtex[16];

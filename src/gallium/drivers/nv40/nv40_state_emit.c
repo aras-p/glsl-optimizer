@@ -29,8 +29,8 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 	struct pipe_scissor_state *s = &nv40->pipe_state.scissor;
 	struct nouveau_stateobj *so;
 
-	if (nv40->state.scissor &&
-	    (rast->scissor == 0 && nv40->state.scissor_enabled == 0))
+	if (nv40->state.scissor.so &&
+	    (rast->scissor == 0 && nv40->state.scissor.enabled == 0))
 		return FALSE;
 
 	so = so_new(3, 0);
@@ -43,7 +43,38 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 		so_data  (so, 4096 << 16);
 	}
 
-	so_ref(so, &nv40->state.scissor);
+	so_ref(so, &nv40->state.scissor.so);
+	so_ref(NULL, &so);
+	return TRUE;
+}
+
+static boolean
+nv40_state_stipple_validate(struct nv40_context *nv40)
+{
+	struct pipe_rasterizer_state *rast = &nv40->rasterizer->pipe;
+	struct nouveau_grobj *curie = nv40->hw->curie;
+	struct nouveau_stateobj *so;
+
+	if (nv40->state.stipple.so && (rast->poly_stipple_enable == 0 &&
+				       nv40->state.stipple.enabled == 0))
+		return FALSE;
+
+	if (rast->poly_stipple_enable) {
+		unsigned i;
+
+		so = so_new(35, 0);
+		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+		so_data  (so, 1);
+		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
+		for (i = 0; i < 32; i++)
+			so_data(so, nv40->pipe_state.stipple[i]);
+	} else {
+		so = so_new(2, 0);
+		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+		so_data  (so, 0);
+	}
+
+	so_ref(so, &nv40->state.stipple.so);
 	so_ref(NULL, &so);
 	return TRUE;
 }
@@ -62,6 +93,13 @@ static struct nv40_state_atom states[] = {
 		.dirty = {
 			.pipe = NV40_NEW_SCISSOR | NV40_NEW_RAST,
 			.hw = NV40_NEW_SCISSOR,
+		}
+	},
+	{
+		.validate = nv40_state_stipple_validate,
+		.dirty = {
+			.pipe = NV40_NEW_STIPPLE | NV40_NEW_RAST,
+			.hw = NV40_NEW_STIPPLE,
 		}
 	}
 };
@@ -100,15 +138,17 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 		so_emit(nv40->nvws, nv40->so_bcol);
 
 	if (nv40->hw_dirty & NV40_NEW_SCISSOR) {
-		so_emit(nv40->nvws, nv40->state.scissor);
+		so_emit(nv40->nvws, nv40->state.scissor.so);
 		nv40->hw_dirty &= ~NV40_NEW_SCISSOR;
 	}
 
 	if (nv40->dirty & NV40_NEW_VIEWPORT)
 		so_emit(nv40->nvws, nv40->so_viewport);
 
-	if (nv40->dirty & NV40_NEW_STIPPLE)
-		so_emit(nv40->nvws, nv40->so_stipple);
+	if (nv40->hw_dirty & NV40_NEW_STIPPLE) {
+		so_emit(nv40->nvws, nv40->state.stipple.so);
+		nv40->hw_dirty &= ~NV40_NEW_STIPPLE;
+	}
 
 	if (nv40->dirty & NV40_NEW_FRAGPROG) {
 		nv40_fragprog_bind(nv40, nv40->fragprog.current);

@@ -711,15 +711,8 @@ nv40_set_polygon_stipple(struct pipe_context *pipe,
 			 const struct pipe_poly_stipple *stipple)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_stateobj *so = so_new(33, 0);
-	unsigned i;
 
-	so_method(so, nv40->hw->curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
-	for (i = 0; i < 32; i++)
-		so_data(so, stipple->stipple[i]);
-
-	so_ref(so, &nv40->so_stipple);
-	so_ref(NULL, &so);
+	memcpy(nv40->pipe_state.stipple, stipple->stipple, 4 * 32);
 	nv40->dirty |= NV40_NEW_STIPPLE;
 }
 
