@@ -561,6 +561,10 @@ static void
 nv40_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
 {
+	struct nv40_context *nv40 = nv40_context(pipe);
+
+	nv40->pipe_state.clip = *clip;
+	nv40->dirty |= NV40_NEW_UCP;
 }
 
 static void

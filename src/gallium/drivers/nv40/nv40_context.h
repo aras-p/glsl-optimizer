@@ -34,6 +34,9 @@
 #define NV40_NEW_VERTPROG	(1 <<  9)
 #define NV40_NEW_FRAGPROG	(1 << 10)
 #define NV40_NEW_ARRAYS		(1 << 11)
+#define NV40_NEW_UCP		(1 << 12)
+
+#define NV40_FALLBACK_TNL (1 << 0)
 
 struct nv40_channel_context {
 	struct nouveau_winsys *nvws;
@@ -92,9 +95,11 @@ struct nv40_context {
 	struct {
 		struct pipe_scissor_state scissor;
 		unsigned stipple[32];
+		struct pipe_clip_state clip;
 	} pipe_state;
 
 	struct nv40_state state;
+	unsigned fallback;
 
 	struct nouveau_stateobj *so_framebuffer;
 	struct nouveau_stateobj *so_fragtex[16];
@@ -130,6 +135,14 @@ nv40_context(struct pipe_context *pipe)
 {
 	return (struct nv40_context *)pipe;
 }
+
+struct nv40_state_entry {
+	boolean (*validate)(struct nv40_context *nv40);
+	struct {
+		unsigned pipe;
+		unsigned hw;
+	} dirty;
+};
 
 extern void nv40_init_state_functions(struct nv40_context *nv40);
 extern void nv40_init_surface_functions(struct nv40_context *nv40);

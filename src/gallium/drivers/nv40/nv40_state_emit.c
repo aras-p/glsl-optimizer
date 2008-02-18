@@ -79,15 +79,15 @@ nv40_state_stipple_validate(struct nv40_context *nv40)
 	return TRUE;
 }
 
-struct nv40_state_atom {
-	boolean (*validate)(struct nv40_context *nv40);
-	struct {
-		unsigned pipe;
-		unsigned hw;
-	} dirty;
-};
+static boolean
+nv40_state_clip_validate(struct nv40_context *nv40)
+{
+	if (nv40->pipe_state.clip.nr)
+		nv40->fallback |= NV40_FALLBACK_TNL;
+	return FALSE;
+}
 
-static struct nv40_state_atom states[] = {
+static struct nv40_state_entry states[] = {
 	{
 		.validate = nv40_state_scissor_validate,
 		.dirty = {
@@ -101,19 +101,38 @@ static struct nv40_state_atom states[] = {
 			.pipe = NV40_NEW_STIPPLE | NV40_NEW_RAST,
 			.hw = NV40_NEW_STIPPLE,
 		}
+	},
+	{
+		.validate = nv40_state_clip_validate,
+		.dirty = {
+			.pipe = NV40_NEW_UCP,
+			.hw = 0,
+		}
 	}
 };
 
 static void
 nv40_state_validate(struct nv40_context *nv40)
 {
-	unsigned i;
+	unsigned i, last_fallback;
+
+	last_fallback = nv40->fallback;
+	nv40->fallback = 0;
 
 	for (i = 0; i < sizeof(states) / sizeof(states[0]); i++) {
 		if (nv40->dirty & states[i].dirty.pipe) {
 			if (states[i].validate(nv40))
 				nv40->hw_dirty |= states[i].dirty.hw;
 		}
+	}
+
+	if (nv40->fallback & NV40_FALLBACK_TNL &&
+	    !(last_fallback & NV40_FALLBACK_TNL)) {
+		NOUVEAU_ERR("XXX: hwtnl->swtnl\n");
+	} else
+	if (last_fallback & NV40_FALLBACK_TNL &&
+	    !(nv40->fallback & NV40_FALLBACK_TNL)) {
+		NOUVEAU_ERR("XXX: swtnl->hwtnl\n");
 	}
 }
 
