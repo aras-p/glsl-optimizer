@@ -347,7 +347,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
-	so_method(so, curie, 0x0a60, 3);
+	so_method(so, curie, NV40TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
 	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
 	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
 		so_data(so, 1);
