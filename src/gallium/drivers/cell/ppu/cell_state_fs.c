@@ -32,7 +32,7 @@
 #include "draw/draw_context.h"
 #if 0
 #include "pipe/p_shader_tokens.h"
-#include "llvm/gallivm.h"
+#include "gallivm/gallivm.h"
 #include "tgsi/util/tgsi_dump.h"
 #include "tgsi/exec/tgsi_sse2.h"
 #endif
