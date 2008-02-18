@@ -125,7 +125,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 void
 nv40_fragtex_bind(struct nv40_context *nv40)
 {
-	struct nv40_fragment_program *fp = nv40->fragprog.active;
+	struct nv40_fragment_program *fp = nv40->pipe_state.fragprog;
 	unsigned samplers, unit;
 
 	samplers = nv40->fp_samplers & ~fp->samplers;

@@ -50,7 +50,6 @@ struct nv40_fragment_program {
 	const struct pipe_shader_state *pipe;
 
 	boolean translated;
-	boolean on_hw;
 	unsigned samplers;
 
 	uint32_t *insn;

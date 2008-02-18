@@ -668,7 +668,7 @@ nv40_fragprog_parse_decl_output(struct nv40_fpc *fpc,
 	return TRUE;
 }
 
-void
+static void
 nv40_fragprog_translate(struct nv40_context *nv40,
 			struct nv40_fragment_program *fp)
 {
@@ -750,72 +750,66 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 	fp->insn[fpc->inst_offset + 3] = 0x00000000;
 	
 	fp->translated = TRUE;
-	fp->on_hw = FALSE;
 out_err:
 	tgsi_parse_free(&parse);
 	free(fpc);
 }
 
-void
-nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
+static void
+nv40_fragprog_upload(struct nv40_context *nv40,
+		     struct nv40_fragment_program *fp)
 {
 	struct pipe_winsys *ws = nv40->pipe.winsys;
-	struct nouveau_stateobj *so;
+	const uint32_t le = 1;
+	uint32_t *map;
 	int i;
 
-	if (!fp->translated) {
-		nv40_fragprog_translate(nv40, fp);
-		if (!fp->translated)
-			assert(0);
-	}
-
-	if (fp->nr_consts) {
-		float *map = ws->buffer_map(ws, nv40->fragprog.constant_buf,
-					    PIPE_BUFFER_USAGE_CPU_READ);
-		for (i = 0; i < fp->nr_consts; i++) {
-			struct nv40_fragment_program_data *fpd = &fp->consts[i];
-			uint32_t *p = &fp->insn[fpd->offset];
-			uint32_t *cb = (uint32_t *)&map[fpd->index * 4];
-
-			if (!memcmp(p, cb, 4 * sizeof(float)))
-				continue;
-			memcpy(p, cb, 4 * sizeof(float));
-			fp->on_hw = 0;
-		}
-		ws->buffer_unmap(ws, nv40->fragprog.constant_buf);
-	}
-
-	if (!fp->on_hw) {
-		const uint32_t le = 1;
-		uint32_t *map;
-
-		if (!fp->buffer)
-			fp->buffer = ws->buffer_create(ws, 0x100, 0,
-						       fp->insn_len * 4);
-		map = ws->buffer_map(ws, fp->buffer,
-				     PIPE_BUFFER_USAGE_CPU_WRITE);
+	map = ws->buffer_map(ws, fp->buffer, PIPE_BUFFER_USAGE_CPU_WRITE);
 
 #if 0
-		for (i = 0; i < fp->insn_len; i++) {
-			NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
-		}
+	for (i = 0; i < fp->insn_len; i++) {
+		NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
+	}
 #endif
 
-		if ((*(const uint8_t *)&le)) {
-			for (i = 0; i < fp->insn_len; i++) {
-				map[i] = fp->insn[i];
-			}
-		} else {
-			/* Weird swapping for big-endian chips */
-			for (i = 0; i < fp->insn_len; i++) {
-				map[i] = ((fp->insn[i] & 0xffff) << 16) |
-					  ((fp->insn[i] >> 16) & 0xffff);
-			}
+	if ((*(const uint8_t *)&le)) {
+		for (i = 0; i < fp->insn_len; i++) {
+			map[i] = fp->insn[i];
 		}
-
-		ws->buffer_unmap(ws, fp->buffer);
-		fp->on_hw = TRUE;
+	} else {
+		/* Weird swapping for big-endian chips */
+		for (i = 0; i < fp->insn_len; i++) {
+			map[i] = ((fp->insn[i] & 0xffff) << 16) |
+				  ((fp->insn[i] >> 16) & 0xffff);
+		}
 	}
+
+	ws->buffer_unmap(ws, fp->buffer);
+}
+
+static boolean
+nv40_fragprog_validate(struct nv40_context *nv40)
+{
+	struct nv40_fragment_program *fp = nv40->pipe_state.fragprog;
+	struct pipe_buffer *constbuf =
+		nv40->pipe_state.constbuf[PIPE_SHADER_FRAGMENT];
+	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct nouveau_stateobj *so;
+	unsigned new_program = FALSE;
+	int i;
+
+	if (fp->translated)
+		goto update_constants;
+
+	nv40_fragprog_translate(nv40, fp);
+	if (!fp->translated) {
+		nv40->fallback |= NV40_FALLBACK_RAST;
+		return FALSE;
+	}
+	new_program = TRUE;
+
+	fp->buffer = ws->buffer_create(ws, 0x100, 0, fp->insn_len * 4);
+	nv40_fragprog_upload(nv40, fp);
 
 	so = so_new(4, 1);
 	so_method(so, nv40->hw->curie, NV40TCL_FP_ADDRESS, 1);
@@ -824,12 +818,33 @@ nv40_fragprog_bind(struct nv40_context *nv40, struct nv40_fragment_program *fp)
 		  NV40TCL_FP_ADDRESS_DMA0, NV40TCL_FP_ADDRESS_DMA1);
 	so_method(so, nv40->hw->curie, NV40TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
-
-	so_emit(nv40->nvws, so);
 	so_ref(so, &fp->so);
 	so_ref(NULL, &so);
 
-	nv40->fragprog.active = fp;
+update_constants:
+	if (fp->nr_consts) {
+		boolean new_consts = FALSE;
+		float *map;
+		
+		map = ws->buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
+		for (i = 0; i < fp->nr_consts; i++) {
+			struct nv40_fragment_program_data *fpd = &fp->consts[i];
+			uint32_t *p = &fp->insn[fpd->offset];
+			uint32_t *cb = (uint32_t *)&map[fpd->index * 4];
+
+			if (!memcmp(p, cb, 4 * sizeof(float)))
+				continue;
+			memcpy(p, cb, 4 * sizeof(float));
+			new_consts = TRUE;
+		}
+		ws->buffer_unmap(ws, constbuf);
+
+		if (new_consts)
+			nv40_fragprog_upload(nv40, fp);
+	}
+
+	so_ref(fp->so, &nv40->state.fragprog);
+	return new_program;
 }
 
 void
@@ -839,4 +854,12 @@ nv40_fragprog_destroy(struct nv40_context *nv40,
 	if (fp->insn_len)
 		free(fp->insn);
 }
+
+struct nv40_state_entry nv40_state_fragprog = {
+	.validate = nv40_fragprog_validate,
+	.dirty = {
+		.pipe = NV40_NEW_FRAGPROG,
+		.hw = NV40_NEW_FRAGPROG
+	}
+};
 

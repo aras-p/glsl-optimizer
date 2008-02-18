@@ -37,6 +37,7 @@
 #define NV40_NEW_UCP		(1 << 12)
 
 #define NV40_FALLBACK_TNL (1 << 0)
+#define NV40_FALLBACK_RAST (1 << 1)
 
 struct nv40_channel_context {
 	struct nouveau_winsys *nvws;
@@ -72,6 +73,8 @@ struct nv40_state {
 		unsigned enabled;
 		struct nouveau_stateobj *so;
 	} stipple;
+
+	struct nouveau_stateobj *fragprog;
 };
 
 struct nv40_context {
@@ -96,6 +99,8 @@ struct nv40_context {
 		struct pipe_scissor_state scissor;
 		unsigned stipple[32];
 		struct pipe_clip_state clip;
+		struct nv40_fragment_program *fragprog;
+		struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
 	} pipe_state;
 
 	struct nv40_state state;
@@ -118,13 +123,6 @@ struct nv40_context {
 		struct nv40_vertex_program *current;
 		struct pipe_buffer *constant_buf;
 	} vertprog;
-
-	struct {
-		struct nv40_fragment_program *active;
-
-		struct nv40_fragment_program *current;
-		struct pipe_buffer *constant_buf;
-	} fragprog;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
@@ -161,10 +159,6 @@ extern void nv40_vertprog_destroy(struct nv40_context *,
 				  struct nv40_vertex_program *);
 
 /* nv40_fragprog.c */
-extern void nv40_fragprog_translate(struct nv40_context *,
-				    struct nv40_fragment_program *);
-extern void nv40_fragprog_bind(struct nv40_context *,
-			       struct nv40_fragment_program *);
 extern void nv40_fragprog_destroy(struct nv40_context *,
 				  struct nv40_fragment_program *);
 
@@ -177,6 +171,7 @@ extern void nv40_state_tex_update(struct nv40_context *nv40);
 extern struct nv40_state_entry nv40_state_clip;
 extern struct nv40_state_entry nv40_state_scissor;
 extern struct nv40_state_entry nv40_state_stipple;
+extern struct nv40_state_entry nv40_state_fragprog;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
