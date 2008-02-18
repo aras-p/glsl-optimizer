@@ -1,7 +1,5 @@
 #######################################################################
-# SConscript for mesa
-#
-# TODO: Split this into per-module SConscripts 
+# SConscript for Mesa
 
 
 Import('*')
@@ -114,53 +112,6 @@ VF_SOURCES = [
 	'vf/vf.c',
 	'vf/vf_generic.c',
 	'vf/vf_sse.c',
-]
-
-DRAW_SOURCES = [
-	'pipe/draw/draw_clip.c',
-	'pipe/draw/draw_context.c',
-	'pipe/draw/draw_cull.c',
-	'pipe/draw/draw_debug.c',
-	'pipe/draw/draw_flatshade.c',
-	'pipe/draw/draw_offset.c',
-	'pipe/draw/draw_prim.c',
-	'pipe/draw/draw_stipple.c',
-	'pipe/draw/draw_twoside.c',
-	'pipe/draw/draw_unfilled.c',
-	'pipe/draw/draw_validate.c',
-	'pipe/draw/draw_vbuf.c',
-	'pipe/draw/draw_vertex.c',
-	'pipe/draw/draw_vertex_cache.c',
-	'pipe/draw/draw_vertex_fetch.c',
-	'pipe/draw/draw_vertex_shader.c',
-	'pipe/draw/draw_vertex_shader_llvm.c',
-	'pipe/draw/draw_vf.c',
-	'pipe/draw/draw_vf_generic.c',
-	'pipe/draw/draw_vf_sse.c',
-	'pipe/draw/draw_wide_prims.c',
-]
-
-TGSIEXEC_SOURCES = [
-	'pipe/tgsi/exec/tgsi_exec.c',
-	'pipe/tgsi/exec/tgsi_sse2.c',
-]
-
-TGSIUTIL_SOURCES = [
-	'pipe/tgsi/util/tgsi_build.c',
-	'pipe/tgsi/util/tgsi_dump.c',
-	'pipe/tgsi/util/tgsi_parse.c',
-	'pipe/tgsi/util/tgsi_util.c',
-]
-
-STATECACHE_SOURCES = [
-	'pipe/cso_cache/cso_hash.c',
-	'pipe/cso_cache/cso_cache.c',
-]
-
-PIPEUTIL_SOURCES = [
-	'pipe/util/p_debug.c',
-	'pipe/util/p_tile.c',
-	'pipe/util/p_util.c',
 ]
 
 STATETRACKER_SOURCES = [
@@ -311,126 +262,25 @@ else:
 	ASM_SOURCES = []
 	API_SOURCES = []
 
-
-#######################################################################
-# Driver sources
-
-
-X11_DRIVER_SOURCES = [
-	'pipe/xlib/glxapi.c',
-	'pipe/xlib/fakeglx.c',
-	'pipe/xlib/xfonts.c',
-	'pipe/xlib/xm_api.c',
-	'pipe/xlib/xm_winsys.c',
-	'pipe/xlib/xm_winsys_aub.c',
-	'pipe/xlib/brw_aub.c',
-]
-
-OSMESA_DRIVER_SOURCES = [
-	'drivers/osmesa/osmesa.c',
-]
-
-GLIDE_DRIVER_SOURCES = [
-	'drivers/glide/fxapi.c',
-	'drivers/glide/fxdd.c',
-	'drivers/glide/fxddspan.c',
-	'drivers/glide/fxddtex.c',
-	'drivers/glide/fxsetup.c',
-	'drivers/glide/fxtexman.c',
-	'drivers/glide/fxtris.c',
-	'drivers/glide/fxvb.c',
-	'drivers/glide/fxglidew.c',
-	'drivers/glide/fxg.c',
-]
-
-SVGA_DRIVER_SOURCES = [
-	'drivers/svga/svgamesa.c',
-	'drivers/svga/svgamesa8.c',
-	'drivers/svga/svgamesa15.c',
-	'drivers/svga/svgamesa16.c',
-	'drivers/svga/svgamesa24.c',
-	'drivers/svga/svgamesa32.c',
-]
-
-FBDEV_DRIVER_SOURCES = [
-	'drivers/fbdev/glfbdev.c',
-]
-
-
-### All the core C sources
-
 SOLO_SOURCES = \
 	MAIN_SOURCES + \
 	MATH_SOURCES + \
 	VBO_SOURCES + \
 	VF_SOURCES + \
-	DRAW_SOURCES + \
-	TGSIEXEC_SOURCES + \
-	TGSIUTIL_SOURCES + \
-	PIPEUTIL_SOURCES + \
-	STATECACHE_SOURCES + \
 	STATETRACKER_SOURCES + \
 	SHADER_SOURCES + \
 	ASM_SOURCES + \
 	SLANG_SOURCES
 
-CORE_SOURCES = \
-	GLAPI_SOURCES + API_SOURCES + \
-	SOLO_SOURCES
-
-ALL_SOURCES = \
-	GLAPI_SOURCES + API_SOURCES + \
-	SOLO_SOURCES + \
-	ASM_SOURCES + \
-	X11_DRIVER_SOURCES + \
-	FBDEV_DRIVER_SOURCES + \
-	OSMESA_DRIVER_SOURCES
-
-
-######################################################################
-# Gallium sources
-
-SConscript([
-	'pipe/SConscript',
-])
-
-
-######################################################################
-# libGL
+mesa = env.ConvenienceLibrary(
+	target = 'mesa',
+	source = SOLO_SOURCES,
+)
+Export('mesa')
 
 if not dri:
-	STAND_ALONE_DRIVER_SOURCES = \
-		CORE_SOURCES + \
-		X11_DRIVER_SOURCES
-	
-	Import(
-		'softpipe', 
-		'i915simple',
-		'i965simple'
+	glapi = env.ConvenienceLibrary(
+		target = 'glapi',
+		source = GLAPI_SOURCES + API_SOURCES,
 	)
-	
-	pipe_drivers = [
-		softpipe,
-		i965simple
-	]
-	
-	env.SharedLibrary(
-		target ='GL',
-		source = STAND_ALONE_DRIVER_SOURCES,
-		LIBS = [softpipe, i965simple] + env['LIBS'],
-	)
-
-
-######################################################################
-# Driver sources
-
-if dri:
-	mesa = env.ConvenienceLibrary(
-		target = 'mesa',
-		source = SOLO_SOURCES,
-	)
-	env.Prepend(LIBS = [mesa])
-
-	SConscript([
-		'drivers/dri/SConscript',
-	])
+	Export('glapi')

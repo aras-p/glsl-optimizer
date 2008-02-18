@@ -6,6 +6,9 @@ drienv.Replace(CPPPATH = [
 	'#src/mesa/drivers/dri/common',
 	'#include',
 	'#include/GL/internal',
+	'#src/gallium/include',
+	'#src/gallium/auxiliary',
+	'#src/gallium/drivers',
 	'#src/mesa',
 	'#src/mesa/main',
 	'#src/mesa/glapi',
@@ -21,15 +24,15 @@ drienv.Replace(CPPPATH = [
 drienv.ParseConfig('pkg-config --cflags --libs libdrm')
 
 COMMON_GALLIUM_SOURCES = [
-	'../common/utils.c',
-	'../common/vblank.c',
-	'../common/dri_util.c',
-	'../common/xmlconfig.c',
+	'#src/mesa/drivers/dri/common/utils.c',
+	'#src/mesa/drivers/dri/common/vblank.c',
+	'#src/mesa/drivers/dri/common/dri_util.c',
+	'#src/mesa/drivers/dri/common/xmlconfig.c',
 ]
 
 COMMON_BM_SOURCES = [
-	'../common/dri_bufmgr.c',
-	'../common/dri_drmpool.c',
+	'#src/mesa/drivers/dri/common/dri_bufmgr.c',
+	'#src/mesa/drivers/dri/common/dri_drmpool.c',
 ]
 
 Export([
@@ -44,5 +47,5 @@ Export([
 #	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
 
 SConscript([
-	'intel_winsys/SConscript',
+	'intel/SConscript',
 ])

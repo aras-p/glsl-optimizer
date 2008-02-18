@@ -1,0 +1,28 @@
+#######################################################################
+# SConscript for xlib winsys
+
+Import('*')
+
+
+sources = [
+	'glxapi.c',
+	'fakeglx.c',
+	'xfonts.c',
+	'xm_api.c',
+	'xm_winsys.c',
+	'xm_winsys_aub.c',
+	'brw_aub.c',
+]
+	
+drivers = [
+	softpipe,
+	i915simple,
+	i965simple,
+]
+
+# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
+env.SharedLibrary(
+	target ='GL',
+	source = sources,
+	LIBS = glapi + mesa + drivers + auxiliaries + env['LIBS'],
+)

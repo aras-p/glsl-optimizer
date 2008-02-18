@@ -108,7 +108,10 @@ env.Append(CPPPATH = [
 	'#/include',
 	'#/src/mesa',
 	'#/src/mesa/main',
-	'#/src/mesa/pipe',
+	'#/src/gallium/include/pipe',
+	'#/src/gallium/include',
+	'#/src/gallium/auxiliary',
+	'#/src/gallium/drivers',
 ])
 
 
@@ -222,7 +225,7 @@ build_dir = os.path.join(build_topdir, build_subdir)
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
 SConscript(
-	'src/mesa/SConscript',
+	'src/SConscript',
 	build_dir = build_dir,
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )
