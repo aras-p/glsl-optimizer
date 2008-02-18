@@ -103,8 +103,10 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 		nv40->hw_dirty &= ~NV40_NEW_STIPPLE;
 	}
 
-	if (nv40->hw_dirty & NV40_NEW_FRAGPROG)
+	if (nv40->hw_dirty & NV40_NEW_FRAGPROG) {
 		so_emit(nv40->nvws, nv40->state.fragprog);
+		nv40->hw_dirty &= ~NV40_NEW_FRAGPROG;
+	}
 
 	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
 		nv40_fragtex_bind(nv40);
@@ -116,9 +118,9 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 		nv40->dirty &= ~NV40_NEW_FRAGPROG;
 	}
 
-	if (nv40->dirty & NV40_NEW_VERTPROG) {
+	if (nv40->hw_dirty & NV40_NEW_VERTPROG) {
 		so_emit(nv40->nvws, nv40->state.vertprog);
-		nv40->dirty &= ~NV40_NEW_VERTPROG;
+		nv40->hw_dirty &= ~NV40_NEW_VERTPROG;
 	}
 
 	nv40->dirty_samplers = 0;

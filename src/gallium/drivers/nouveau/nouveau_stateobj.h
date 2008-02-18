@@ -45,22 +45,19 @@ so_new(unsigned push, unsigned reloc)
 static INLINE void
 so_ref(struct nouveau_stateobj *ref, struct nouveau_stateobj **pso)
 {
-	struct nouveau_stateobj *so;
-
-	so = *pso;
-	if (so) {
-		if (--so->refcount <= 0) {
-			free(so->push);
-			free(so->reloc);
-			free(so);
-		}
-		*pso = NULL;
-	}
+	struct nouveau_stateobj *so = *pso;
 
 	if (ref) {
 		ref->refcount++;
-		*pso = ref;
 	}
+
+	if (so && --so->refcount <= 0) {
+		free(so->push);
+		free(so->reloc);
+		free(so);
+	}
+
+	*pso = ref;
 }
 
 static INLINE void
