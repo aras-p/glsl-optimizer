@@ -2,15 +2,12 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = tgsi
+LIBNAME = util
 
 DRIVER_SOURCES = \
-	exec/tgsi_exec.c \
-	exec/tgsi_sse2.c \
-	util/tgsi_build.c \
-	util/tgsi_dump.c \
-	util/tgsi_parse.c \
-	util/tgsi_util.c
+	p_debug.c \
+	p_tile.c \
+	p_util.c
 
 C_SOURCES = \
 	$(DRIVER_SOURCES)

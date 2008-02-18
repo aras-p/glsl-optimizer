@@ -2,7 +2,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-SUBDIRS = softpipe i915simple i965simple failover
+SUBDIRS = $(GALLIUM_WINSYS_DIRS)
 
 
 default: subdirs

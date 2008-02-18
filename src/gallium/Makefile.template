@@ -20,6 +20,7 @@ INCLUDES = \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/include \
         $(DRIVER_INCLUDES)
 

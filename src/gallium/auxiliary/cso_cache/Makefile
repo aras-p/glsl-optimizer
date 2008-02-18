@@ -1,16 +1,11 @@
-
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBNAME = tgsi
+LIBNAME = cso_cache
 
 DRIVER_SOURCES = \
-	exec/tgsi_exec.c \
-	exec/tgsi_sse2.c \
-	util/tgsi_build.c \
-	util/tgsi_dump.c \
-	util/tgsi_parse.c \
-	util/tgsi_util.c
+	cso_cache.c \
+	cso_hash.c
 
 C_SOURCES = \
 	$(DRIVER_SOURCES)

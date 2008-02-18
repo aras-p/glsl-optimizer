@@ -11,19 +11,6 @@ GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
-PIPE_LIB = \
-	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
-	$(TOP)/src/gallium/drivers/i965simple/libi965simple.a
-
-ifeq ($(CONFIG_NAME), linux-cell)
-CELL_LIB = $(TOP)/src/gallium/drivers/cell/ppu/libcell.a
-CELL_LIB_SPU = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
-endif
-
-ifeq ($(CONFIG_NAME), linux-llvm)
-LLVM_LIB = $(TOP)/src/gallium/auxiliary/llvm/libgallivm.a
-endif
-
 .SUFFIXES : .cpp
 
 .c.o:
@@ -36,33 +23,14 @@ endif
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-# Figure out what to make here
-default:
-	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
-		$(MAKE) linux-solo ; \
-	elif [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		$(MAKE) osmesa-only ; \
-	elif [ "$(DRIVER_DIRS)" = "beos" ]; then \
-		$(MAKE) beos ; \
-	elif [ "$(DRIVER_DIRS)" = "directfb" ]; then \
-		$(MAKE) directfb ; \
-	elif [ "$(DRIVER_DIRS)" = "fbdev osmesa" ]; then \
-		$(MAKE) fbdev ; $(MAKE) osmesa-only ; \
-	else \
-		$(MAKE) stand-alone ; \
-	fi
+default: depend subdirs libmesa.a
+
+ifneq ($(DRIVER_DIRS),dri)
+default: libglapi.a
+endif
 
 
 ######################################################################
-# BeOS driver target
-
-beos: depend subdirs libmesa.a
-	cd drivers/beos; $(MAKE)
-
-
-######################################################################
-# Linux DRI drivers
-
 # Make archive of core object files
 libmesa.a: $(SOLO_OBJECTS)
 	@ $(TOP)/bin/mklib -o mesa -static $(SOLO_OBJECTS);
@@ -70,32 +38,8 @@ libmesa.a: $(SOLO_OBJECTS)
 		mimeset -f "$@" ; \
 	fi
 
-linux-solo: depend subdirs libmesa.a
-	cd $(TOP)/src/gallium/winsys/dri ; $(MAKE)
-
-
-#####################################################################
-# Stand-alone Mesa libGL, no built-in drivers (DirectFB)
-
-libgl-core: $(CORE_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) \
-		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
-		$(GL_LIB_DEPS)
-
-directfb: depend subdirs libgl-core
-	cd drivers/directfb ; $(MAKE)
-
-
-#####################################################################
-# fbdev Mesa driver (libGL.so)
-
-fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) \
-		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
-		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) \
-		$(COMMON_DRIVER_OBJECTS) $(GL_LIB_DEPS)
+libglapi.a: $(GLAPI_OBJECTS)
+	@ $(TOP)/bin/mklib -o glapi -static $(GLAPI_OBJECTS)
 
 
 ######################################################################
@@ -176,9 +120,6 @@ install: default
 	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
 		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
-	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
-		cd $(TOP)/gallium/winsys/dri ; $(MAKE) install ; \
-	fi
 
 ## NOT INSTALLED YET:
 ## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
@@ -192,9 +133,8 @@ tags:
 clean:
 	-rm -f */*.o
 	-rm -f */*/*.o
-	-rm -f depend depend.bak libmesa.a
+	-rm -f depend depend.bak libmesa.a libglapi.a
 	-rm -f drivers/*/*.o
-	(cd drivers/dri && $(MAKE) clean)
 	(cd x86 && $(MAKE) clean)
 	(cd x86-64 && $(MAKE) clean)
 

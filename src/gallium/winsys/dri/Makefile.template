@@ -1,7 +1,9 @@
 # -*-makefile-*-
 
-MESA_MODULES = $(TOP)/src/mesa/libmesa.a
-
+MESA_MODULES = \
+	$(TOP)/src/mesa/libmesa.a \
+	$(GALLIUM_AUXILIARIES)
+	
 COMMON_GALLIUM_SOURCES = \
         $(TOP)/src/mesa/drivers/dri/common/utils.c \
         $(TOP)/src/mesa/drivers/dri/common/vblank.c \

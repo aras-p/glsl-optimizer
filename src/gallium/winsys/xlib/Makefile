@@ -1,0 +1,113 @@
+# src/mesa/Makefile
+
+TOP = ../../../..
+include $(TOP)/configs/current
+
+
+INCLUDE_DIRS = \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/gallium/include \
+	-I$(TOP)/src/gallium/drivers \
+	-I$(TOP)/src/gallium/auxiliary
+
+X11_DRIVER_SOURCES = \
+	glxapi.c	\
+	fakeglx.c	\
+	xfonts.c	\
+	xm_api.c	\
+	xm_winsys.c	\
+	xm_winsys_aub.c	\
+	brw_aub.c
+
+
+GL_MAJOR = 1
+GL_MINOR = 5
+GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
+
+
+PIPE_LIB = \
+	$(GALLIUM_DRIVERS) \
+	$(TOP)/src/mesa/libglapi.a \
+	$(TOP)/src/mesa/libmesa.a \
+	$(GALLIUM_AUXILIARIES)
+
+ifeq ($(CONFIG_NAME), linux-cell)
+CELL_LIB = $(TOP)/src/gallium/drivers/cell/ppu/libcell.a
+CELL_LIB_SPU = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
+endif
+
+ifeq ($(CONFIG_NAME), linux-llvm)
+LLVM_LIB = $(TOP)/src/gallium/auxiliary/llvm/libgallivm.a
+endif
+
+
+.SUFFIXES : .cpp
+
+.c.o:
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
+.cpp.o:
+	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
+
+default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+
+
+######################################################################
+# Stand-alone Mesa libGL and libOSMesa
+STAND_ALONE_DRIVER_SOURCES = \
+	$(X11_DRIVER_SOURCES)
+
+STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
+
+STAND_ALONE_OBJECTS = \
+	$(STAND_ALONE_DRIVER_OBJECTS)
+
+# Make the GL library
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(LLVM_LIB) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
+	$(TOP)/bin/mklib -o $(GL_LIB) \
+		-linker "$(CC)" \
+		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
+		-install $(TOP)/$(LIB_DIR) \
+		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
+		--start-group $(PIPE_LIB) $(LLVM_LIB) --end-group $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
+
+
+######################################################################
+# Generic stuff
+
+depend: $(ALL_SOURCES)
+	@ echo "running $(MKDEP)"
+	@ rm -f depend  # workaround oops on gutsy?!?
+	@ touch depend
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+		> /dev/null 2>/dev/null
+
+
+install: default
+	$(INSTALL) -d $(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
+	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
+	fi
+
+## NOT INSTALLED YET:
+## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
+## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` $(TOP)/include/GL/*.h
+
+clean:
+	-rm -f *.o
+
+
+include depend

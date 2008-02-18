@@ -5,6 +5,9 @@ include $(TOP)/configs/default
 CONFIG_NAME = linux-cell
 
 
+GALLIUM_DRIVER_DIRS += cell
+
+
 # Compiler and flags
 CC = ppu32-gcc
 CXX = ppu32-g++
