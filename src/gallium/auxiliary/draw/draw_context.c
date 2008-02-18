@@ -103,6 +103,8 @@ void draw_destroy( struct draw_context *draw )
    draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
    draw->pipeline.cull->destroy( draw->pipeline.cull );
    draw->pipeline.validate->destroy( draw->pipeline.validate );
+   if (draw->pipeline.aaline)
+      draw->pipeline.aaline->destroy( draw->pipeline.aaline );
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    tgsi_exec_machine_free_data(&draw->machine);
@@ -236,6 +238,26 @@ draw_convert_wide_lines(struct draw_context *draw, boolean enable)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->convert_wide_lines = enable;
+}
+
+
+/**
+ * The draw module may sometimes generate vertices with extra attributes
+ * (such as texcoords for AA lines).  The driver can call this function
+ * to find those attributes.
+ */
+int
+draw_find_vs_output(struct draw_context *draw,
+                    uint semantic_name, uint semantic_index)
+{
+   /* XXX there may be more than one extra vertex attrib.
+    * For example, simulated gl_FragCoord and gl_PointCoord.
+    */
+   if (draw->extra_vp_outputs.semantic_name == semantic_name &&
+       draw->extra_vp_outputs.semantic_index == semantic_index) {
+      return draw->extra_vp_outputs.slot;
+   }
+   return 0;
 }
 
 

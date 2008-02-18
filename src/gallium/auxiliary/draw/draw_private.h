@@ -48,6 +48,7 @@
 #include "tgsi/exec/tgsi_exec.h"
 
 
+struct pipe_context;
 struct gallivm_prog;
 struct gallivm_cpu_engine;
 
@@ -179,6 +180,7 @@ struct draw_context
       struct draw_stage *offset;
       struct draw_stage *unfilled;
       struct draw_stage *stipple;
+      struct draw_stage *aaline;
       struct draw_stage *wide;
       struct draw_stage *rasterize;
    } pipeline;
@@ -212,8 +214,16 @@ struct draw_context
    unsigned nr_planes;
 
    boolean convert_wide_points; /**< convert wide points to tris? */
-   boolean convert_wide_lines;  /**< convert side lines to tris? */
+   boolean convert_wide_lines;  /**< convert wide lines to tris? */
    boolean use_sse;
+
+   /* If a prim stage introduces new vertex attributes, they'll be stored here
+    */
+   struct {
+      uint semantic_name;
+      uint semantic_index;
+      int slot;
+   } extra_vp_outputs;
 
    unsigned reduced_prim;
 

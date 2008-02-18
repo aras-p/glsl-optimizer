@@ -327,6 +327,9 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
       draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
 
+   /* enable aaline stage */
+   draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);
+
    sp_init_surface_functions(softpipe);
 
    return &softpipe->pipe;

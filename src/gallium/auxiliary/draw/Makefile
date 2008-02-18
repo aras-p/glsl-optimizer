@@ -4,6 +4,7 @@ include $(TOP)/configs/current
 LIBNAME = draw
 
 DRIVER_SOURCES = \
+	draw_aaline.c \
 	draw_clip.c \
 	draw_vs_exec.c \
 	draw_vs_sse.c \

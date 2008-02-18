@@ -10,6 +10,7 @@ DRIVER_SOURCES = \
 	util/tgsi_build.c \
 	util/tgsi_dump.c \
 	util/tgsi_parse.c \
+	util/tgsi_transform.c \
 	util/tgsi_util.c
 
 C_SOURCES = \

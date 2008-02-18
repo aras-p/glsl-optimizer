@@ -41,6 +41,7 @@
 #include "pipe/p_state.h"
 
 
+struct pipe_context;
 struct vertex_buffer;
 struct vertex_info;
 struct draw_context;
@@ -93,6 +94,20 @@ void draw_convert_wide_points(struct draw_context *draw, boolean enable);
 
 void draw_convert_wide_lines(struct draw_context *draw, boolean enable);
 
+boolean draw_use_sse(struct draw_context *draw);
+
+void
+draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
+
+
+int
+draw_find_vs_output(struct draw_context *draw,
+                    uint semantic_name, uint semantic_index);
+
+
+/*
+ * Vertex shader functions
+ */
 
 struct draw_vertex_shader *
 draw_create_vertex_shader(struct draw_context *draw,
@@ -102,7 +117,11 @@ void draw_bind_vertex_shader(struct draw_context *draw,
 void draw_delete_vertex_shader(struct draw_context *draw,
                                struct draw_vertex_shader *dvs);
 
-boolean draw_use_sse(struct draw_context *draw);
+
+
+/*
+ * Vertex data functions
+ */
 
 void draw_set_vertex_buffer(struct draw_context *draw,
 			    unsigned attr,
