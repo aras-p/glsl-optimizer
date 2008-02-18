@@ -280,31 +280,30 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_rasterizer_state *rsso = MALLOC(sizeof(*rsso));
 	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_grobj *curie = nv40->hw->curie;
 
 	/*XXX: ignored:
 	 * 	light_twoside
-	 * 	offset_cw/ccw -nohw
 	 * 	point_smooth -nohw
 	 * 	multisample
-	 * 	offset_units / offset_scale
 	 */
 
-	so_method(so, nv40->hw->curie, NV40TCL_SHADE_MODEL, 1);
+	so_method(so, curie, NV40TCL_SHADE_MODEL, 1);
 	so_data  (so, cso->flatshade ? NV40TCL_SHADE_MODEL_FLAT :
 				       NV40TCL_SHADE_MODEL_SMOOTH);
 
-	so_method(so, nv40->hw->curie, NV40TCL_LINE_WIDTH, 2);
+	so_method(so, curie, NV40TCL_LINE_WIDTH, 2);
 	so_data  (so, (unsigned char)(cso->line_width * 8.0) & 0xff);
 	so_data  (so, cso->line_smooth ? 1 : 0);
-	so_method(so, nv40->hw->curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
+	so_method(so, curie, NV40TCL_LINE_STIPPLE_ENABLE, 2);
 	so_data  (so, cso->line_stipple_enable ? 1 : 0);
 	so_data  (so, (cso->line_stipple_pattern << 16) |
 		       cso->line_stipple_factor);
 
-	so_method(so, nv40->hw->curie, NV40TCL_POINT_SIZE, 1);
+	so_method(so, curie, NV40TCL_POINT_SIZE, 1);
 	so_data  (so, fui(cso->point_size));
 
-	so_method(so, nv40->hw->curie, NV40TCL_POLYGON_MODE_FRONT, 6);
+	so_method(so, curie, NV40TCL_POLYGON_MODE_FRONT, 6);
 	if (cso->front_winding == PIPE_WINDING_CCW) {
 		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
 		so_data(so, nvgl_polygon_mode(cso->fill_cw));
@@ -345,10 +344,32 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	so_data(so, cso->poly_smooth ? 1 : 0);
 	so_data(so, cso->cull_mode != PIPE_WINDING_NONE ? 1 : 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
+	so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_POINT_SPRITE, 1);
+	so_method(so, curie, 0x0a60, 3);
+	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
+	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
+		so_data(so, 1);
+	else
+		so_data(so, 0);
+	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_LINE) ||
+	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_LINE))
+		so_data(so, 1);
+	else
+		so_data(so, 0);
+	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_FILL) ||
+	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_FILL))
+		so_data(so, 1);
+	else
+		so_data(so, 0);
+	if (cso->offset_cw || cso->offset_ccw) {
+		so_method(so, curie, NV40TCL_POLYGON_OFFSET_FACTOR, 2);
+		so_data  (so, fui(cso->offset_scale));
+		so_data  (so, fui(cso->offset_units * 2));
+	}
+
+	so_method(so, curie, NV40TCL_POINT_SPRITE, 1);
 	if (cso->point_sprite) {
 		unsigned psctl = (1 << 0), i;
 
