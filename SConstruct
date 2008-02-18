@@ -108,7 +108,6 @@ env.Append(CPPPATH = [
 	'#/include',
 	'#/src/mesa',
 	'#/src/mesa/main',
-	'#/src/gallium/include/pipe',
 	'#/src/gallium/include',
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',

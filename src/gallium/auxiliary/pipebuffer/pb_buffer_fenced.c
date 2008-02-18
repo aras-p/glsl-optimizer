@@ -36,11 +36,11 @@
 
 #include "linked_list.h"
 
-#include "p_compiler.h"
-#include "p_debug.h"
-#include "p_winsys.h"
-#include "p_thread.h"
-#include "p_util.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
+#include "pipe/p_winsys.h"
+#include "pipe/p_thread.h"
+#include "pipe/p_util.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"

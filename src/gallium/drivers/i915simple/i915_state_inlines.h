@@ -28,8 +28,8 @@
 #ifndef I915_STATE_INLINES_H
 #define I915_STATE_INLINES_H
 
-#include "p_compiler.h"
-#include "p_defines.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_defines.h"
 #include "i915_reg.h"
 
 

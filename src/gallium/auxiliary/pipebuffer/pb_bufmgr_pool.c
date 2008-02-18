@@ -37,11 +37,11 @@
 
 #include "linked_list.h"
 
-#include "p_compiler.h"
-#include "p_debug.h"
-#include "p_thread.h"
-#include "p_defines.h"
-#include "p_util.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
+#include "pipe/p_thread.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"
