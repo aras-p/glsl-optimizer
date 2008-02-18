@@ -13,6 +13,9 @@ DRIVER_SOURCES = \
 	nv40_query.c \
 	nv40_state.c \
 	nv40_state_emit.c \
+	nv40_state_clip.c \
+	nv40_state_scissor.c \
+	nv40_state_stipple.c \
 	nv40_surface.c \
 	nv40_vbo.c \
 	nv40_vertprog.c

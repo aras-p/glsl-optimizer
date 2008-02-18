@@ -23,63 +23,6 @@ nv40_state_emit_dummy_relocs(struct nv40_context *nv40)
 }
 
 static boolean
-nv40_state_scissor_validate(struct nv40_context *nv40)
-{
-	struct pipe_rasterizer_state *rast = &nv40->rasterizer->pipe;
-	struct pipe_scissor_state *s = &nv40->pipe_state.scissor;
-	struct nouveau_stateobj *so;
-
-	if (nv40->state.scissor.so &&
-	    (rast->scissor == 0 && nv40->state.scissor.enabled == 0))
-		return FALSE;
-
-	so = so_new(3, 0);
-	so_method(so, nv40->hw->curie, NV40TCL_SCISSOR_HORIZ, 2);
-	if (rast->scissor) {
-		so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
-		so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
-	} else {
-		so_data  (so, 4096 << 16);
-		so_data  (so, 4096 << 16);
-	}
-
-	so_ref(so, &nv40->state.scissor.so);
-	so_ref(NULL, &so);
-	return TRUE;
-}
-
-static boolean
-nv40_state_stipple_validate(struct nv40_context *nv40)
-{
-	struct pipe_rasterizer_state *rast = &nv40->rasterizer->pipe;
-	struct nouveau_grobj *curie = nv40->hw->curie;
-	struct nouveau_stateobj *so;
-
-	if (nv40->state.stipple.so && (rast->poly_stipple_enable == 0 &&
-				       nv40->state.stipple.enabled == 0))
-		return FALSE;
-
-	if (rast->poly_stipple_enable) {
-		unsigned i;
-
-		so = so_new(35, 0);
-		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
-		so_data  (so, 1);
-		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
-		for (i = 0; i < 32; i++)
-			so_data(so, nv40->pipe_state.stipple[i]);
-	} else {
-		so = so_new(2, 0);
-		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
-		so_data  (so, 0);
-	}
-
-	so_ref(so, &nv40->state.stipple.so);
-	so_ref(NULL, &so);
-	return TRUE;
-}
-
-static boolean
 nv40_state_clip_validate(struct nv40_context *nv40)
 {
 	if (nv40->pipe_state.clip.nr)
@@ -87,43 +30,31 @@ nv40_state_clip_validate(struct nv40_context *nv40)
 	return FALSE;
 }
 
-static struct nv40_state_entry states[] = {
-	{
-		.validate = nv40_state_scissor_validate,
-		.dirty = {
-			.pipe = NV40_NEW_SCISSOR | NV40_NEW_RAST,
-			.hw = NV40_NEW_SCISSOR,
-		}
-	},
-	{
-		.validate = nv40_state_stipple_validate,
-		.dirty = {
-			.pipe = NV40_NEW_STIPPLE | NV40_NEW_RAST,
-			.hw = NV40_NEW_STIPPLE,
-		}
-	},
-	{
-		.validate = nv40_state_clip_validate,
-		.dirty = {
-			.pipe = NV40_NEW_UCP,
-			.hw = 0,
-		}
-	}
+static struct nv40_state_entry *render_states[] = {
+	&nv40_state_clip,
+	&nv40_state_scissor,
+	&nv40_state_stipple,
+	NULL
 };
 
 static void
 nv40_state_validate(struct nv40_context *nv40)
 {
-	unsigned i, last_fallback;
+	struct nv40_state_entry **states = render_states;
+	unsigned last_fallback;
 
 	last_fallback = nv40->fallback;
 	nv40->fallback = 0;
 
-	for (i = 0; i < sizeof(states) / sizeof(states[0]); i++) {
-		if (nv40->dirty & states[i].dirty.pipe) {
-			if (states[i].validate(nv40))
-				nv40->hw_dirty |= states[i].dirty.hw;
+	while (*states) {
+		struct nv40_state_entry *e = *states;
+
+		if (nv40->dirty & e->dirty.pipe) {
+			if (e->validate(nv40))
+				nv40->hw_dirty |= e->dirty.hw;
 		}
+
+		states++;
 	}
 
 	if (nv40->fallback & NV40_FALLBACK_TNL &&

@@ -174,6 +174,9 @@ extern void nv40_fragtex_bind(struct nv40_context *);
 /* nv40_state.c and friends */
 extern void nv40_emit_hw_state(struct nv40_context *nv40);
 extern void nv40_state_tex_update(struct nv40_context *nv40);
+extern struct nv40_state_entry nv40_state_clip;
+extern struct nv40_state_entry nv40_state_scissor;
+extern struct nv40_state_entry nv40_state_stipple;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
