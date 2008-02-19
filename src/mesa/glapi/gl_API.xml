@@ -4529,15 +4529,19 @@
     </enum>
     <enum name="POINT_SIZE_MIN"                count="1"  value="0x8126">
         <size name="PointParameterfvEXT"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="POINT_SIZE_MAX"                count="1"  value="0x8127">
         <size name="PointParameterfvEXT"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="POINT_FADE_THRESHOLD_SIZE"     count="1"  value="0x8128">
         <size name="PointParameterfvEXT"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="POINT_DISTANCE_ATTENUATION"    count="3"  value="0x8129">
         <size name="PointParameterfvEXT"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="GENERATE_MIPMAP"               count="1"  value="0x8191">
         <size name="TexParameterfv"/>
