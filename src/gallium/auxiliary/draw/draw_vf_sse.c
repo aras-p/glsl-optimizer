@@ -35,8 +35,8 @@
 
 #if defined(USE_SSE_ASM)
 
+#include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"
-#include "x86/common_x86_asm.h"
 
 
 #define X    0
@@ -576,7 +576,7 @@ void draw_vf_generate_sse_emit( struct draw_vertex_fetch *vf )
 {
    struct x86_program p;   
 
-   if (!cpu_has_xmm) {
+   if (!rtasm_cpu_has_sse()) {
       vf->codegen_emit = NULL;
       return;
    }
@@ -586,7 +586,7 @@ void draw_vf_generate_sse_emit( struct draw_vertex_fetch *vf )
    p.vf = vf;
    p.inputs_safe = 0;		/* for now */
    p.outputs_safe = 1;		/* for now */
-   p.have_sse2 = cpu_has_xmm2;
+   p.have_sse2 = rtasm_cpu_has_sse2();
    p.identity = x86_make_reg(file_XMM, 6);
    p.chan0 = x86_make_reg(file_XMM, 7);
 
