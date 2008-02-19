@@ -146,16 +146,12 @@ spu_exec_machine_init(struct spu_exec_machine *mach,
                       struct spu_sampler *samplers,
                       unsigned processor)
 {
-   qword zero;
-   qword not_zero;
-   uint i;
+   const qword zero = si_il(0);
+   const qword not_zero = si_il(~0);
 
    mach->Samplers = samplers;
    mach->Processor = processor;
    mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
-
-   zero = si_xor(zero, zero);
-   not_zero = si_xori(zero, 0xff);
 
    /* Setup constants. */
    mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q = zero;
