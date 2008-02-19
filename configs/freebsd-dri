@@ -22,7 +22,7 @@ CFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) -Wmissing-prototypes -std=c99 -
 
 CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(DEFINES) -Wall -ansi -pedantic $(ASM_FLAGS) $(X11_INCLUDES) 
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 LIBDRM_CFLAGS = `pkg-config --cflags libdrm`

@@ -33,7 +33,7 @@ CFLAGS = -Wall -Wmissing-prototypes -std=c99 -ffast-math \
 CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib

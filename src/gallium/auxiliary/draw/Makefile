@@ -3,7 +3,7 @@ include $(TOP)/configs/current
 
 LIBNAME = draw
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	draw_aaline.c \
 	draw_clip.c \
 	draw_vs_exec.c \
@@ -28,11 +28,6 @@ DRIVER_SOURCES = \
 	draw_vf_generic.c \
 	draw_vf_sse.c \
 	draw_wide_prims.c
-
-C_SOURCES = \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
 
 include ../../Makefile.template
 

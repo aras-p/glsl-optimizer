@@ -33,7 +33,7 @@ CFLAGS = -Wall -Wmissing-prototypes $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
 CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 EXTRA_LIB_PATH=$(shell pkg-config --libs-only-L x11)

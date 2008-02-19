@@ -1,19 +1,13 @@
-
 TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = util
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	p_debug.c \
 	p_tile.c \
 	p_util.c \
 	u_mm.c
-
-C_SOURCES = \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
 
 include ../../Makefile.template
 
