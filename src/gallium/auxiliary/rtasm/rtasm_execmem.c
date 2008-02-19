@@ -33,6 +33,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_thread.h"
+#include "pipe/p_util.h"
 
 #include "rtasm_execmem.h"
 
@@ -118,7 +119,7 @@ rtasm_exec_free(void *addr)
  */
 
 void *
-rtasm_exec_malloc(GLuint size)
+rtasm_exec_malloc(size_t size)
 {
    return MALLOC( size );
 }
