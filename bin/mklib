@@ -624,19 +624,33 @@ case $ARCH in
 		LIBSUFFIX="dylib"
                 OPTS="${ARCHOPT} -dynamiclib -multiply_defined suppress -current_version ${MAJOR}.${MINOR}.0 -compatibility_version ${MAJOR}.${MINOR}.0 -install_name lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
             fi
-            LINKNAME="lib${LIBNAME}.${LIBSUFFIX}"
-            LIBNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
+
+            if [ ${EXPORTS} ] ; then
+                OPTS="${OPTS} -exported_symbols_list ${EXPORTS}"
+            fi 
+
+            LINKNAME="lib${LIBNAME}.${MAJOR}.${LIBSUFFIX}"
+            LINKNAME2="lib${LIBNAME}.${LIBSUFFIX}"
+            LIBNAME="lib${LIBNAME}.${MAJOR}.${MINOR}.${LIBSUFFIX}"
 
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
-	    ABI_PPC=`file $1 | grep 'object ppc'`
-	    ABI_I386=`file $1 | grep 'object i386'`
-	    if [ "${ABI_PPC}" ] ; then
-		OPTS="${OPTS} -arch ppc"
-	    fi
-	    if [ "${ABI_I386}" ] ; then
-		OPTS="${OPTS} -arch i386"
-	    fi
+            ABI_PPC=`file $1 | grep ' ppc'`
+            ABI_I386=`file $1 | grep ' i386'`
+            ABI_PPC64=`file $1 | grep ' ppc64'`
+            ABI_X86_64=`file $1 | grep ' x86_64'`
+            if [ "${ABI_PPC}" ] ; then
+                OPTS="${OPTS} -arch ppc"
+            fi
+            if [ "${ABI_I386}" ] ; then
+                OPTS="${OPTS} -arch i386"
+            fi
+            if [ "${ABI_PPC64}" ] ; then
+                OPTS="${OPTS} -arch ppc64"
+            fi
+            if [ "${ABI_X86_64}" ] ; then
+                OPTS="${OPTS} -arch x86_64"
+            fi
 
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
@@ -653,9 +667,11 @@ case $ARCH in
 	    fi
 
             echo "mklib: Making Darwin shared library: " ${LIBNAME}
+
             ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
             ln -s ${LIBNAME} ${LINKNAME}
-            FINAL_LIBS="${LIBNAME} ${LINKNAME}"
+            ln -s ${LIBNAME} ${LINKNAME2}
+            FINAL_LIBS="${LIBNAME} ${LINKNAME} ${LINKNAME2}"
         fi
         ;;
 

@@ -4,11 +4,19 @@ include $(TOP)/configs/default
 
 CONFIG_NAME = darwin
 
+DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
+	  -D_BSD_SOURCE -D_GNU_SOURCE \
+	  -DGLX_INDIRECT_RENDERING \
+	  -DPTHREADS -DGLX_ALIAS_UNSUPPORTED -DHAVE_POSIX_MEMALIGN
+
 # Compiler and flags
-CC = cc
-CXX = cc
-CFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
-CXXFLAGS = -I/usr/X11R6/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
+CC = gcc
+CXX = gcc
+CFLAGS = -I/usr/X11/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin $(DEFINES)
+CXXFLAGS = -I/usr/X11/include -O3 -fPIC -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin $(DEFINES)
+
+CFLAGS += $(RC_CFLAGS)
+CXXFLAGS += $(RC_CFLAGS)
 
 # Work around aliasing bugs - developers should comment this out
 CFLAGS += -fno-strict-aliasing
@@ -21,13 +29,12 @@ GLUT_LIB_NAME = libglut.dylib
 GLW_LIB_NAME = libGLw.dylib
 OSMESA_LIB_NAME = libOSMesa.dylib
 
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lm -lpthread
+GL_LIB_DEPS = -L/usr/X11/lib -lX11 -lXext -lm -lpthread
 OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -lGL
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -lGL
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -lGL -lGLU -L/usr/X11R6/lib -lX11 -lXmu -lXi -lXext
 GLW_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXt $(TOP)/lib/GL.dylib
-APP_LIB_DEPS = -L$(TOP)/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11R6/lib -lX11 -lXmu -lXt -lXi -lm
+APP_LIB_DEPS = -L$(TOP)/lib -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/X11/lib -lX11 -lXmu -lXt -lXi -lm
 
 # omit glw lib for now:
-SRC_DIRS = mesa glu glut/glx
-
+SRC_DIRS = glx/x11 glu glut/glx
