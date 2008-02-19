@@ -124,6 +124,9 @@ fs_sse_run( struct sp_fragment_shader *base,
 		       (float)quad->x0, (float)quad->y0, 
 		       machine->Temps);
 
+   /* init kill mask */
+   machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0] = 0x0;
+
    shader->func( machine->Inputs,
 		 machine->Outputs,
 		 machine->Consts,
