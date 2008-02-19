@@ -86,8 +86,15 @@ static void init_registers( struct brw_wm_compile *c )
 
    for (j = 0; j < FRAG_ATTRIB_MAX; j++) 
       if (inputs & (1<<j)) {
+	 /* index for vs output and ps input are not the same 
+	    in shader varying */
+	 GLuint index;
+	 if (j > FRAG_ATTRIB_VAR0)
+	     index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0) 
+	 else
+	     index = j;
 	 nr_interp_regs++;
-	 prealloc_reg(c, &c->payload.input_interp[j], i++);
+	 prealloc_reg(c, &c->payload.input_interp[index], i++);
       }
 
    assert(nr_interp_regs >= 1);
