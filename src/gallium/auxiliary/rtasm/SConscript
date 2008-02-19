@@ -3,9 +3,9 @@ Import('*')
 rtasm = env.ConvenienceLibrary(
 	target = 'rtasm',
 	source = [
-		'x86sse.c',
+		'rtasm_execmem.c',
+		'rtasm_x86sse.c',
 		'mm.c',
-		'execmem.c',
 	])
 
 auxiliaries.insert(0, rtasm)

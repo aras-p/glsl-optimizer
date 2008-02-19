@@ -31,9 +31,10 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_debug.h"
 #include "pipe/p_thread.h"
 
-#include "execmem.h"
+#include "rtasm_execmem.h"
 
 
 #if defined(__linux__)
@@ -69,7 +70,7 @@ init_heap(void)
 
 
 void *
-_mesa_exec_malloc(size_t size)
+rtasm_exec_malloc(size_t size)
 {
    struct mem_block *block = NULL;
    void *addr = NULL;
@@ -86,7 +87,7 @@ _mesa_exec_malloc(size_t size)
    if (block)
       addr = exec_mem + block->ofs;
    else 
-      debug_printf("_mesa_exec_malloc failed\n");
+      debug_printf("rtasm_exec_malloc failed\n");
    
    _glthread_UNLOCK_MUTEX(exec_mutex);
    
@@ -95,7 +96,7 @@ _mesa_exec_malloc(size_t size)
 
  
 void 
-_mesa_exec_free(void *addr)
+rtasm_exec_free(void *addr)
 {
    _glthread_LOCK_MUTEX(exec_mutex);
 
@@ -117,16 +118,16 @@ _mesa_exec_free(void *addr)
  */
 
 void *
-_mesa_exec_malloc(GLuint size)
+rtasm_exec_malloc(GLuint size)
 {
-   return _mesa_malloc( size );
+   return MALLOC( size );
 }
 
  
 void 
-_mesa_exec_free(void *addr)
+rtasm_exec_free(void *addr)
 {
-   _mesa_free(addr);
+   FREE(addr);
 }
 
 

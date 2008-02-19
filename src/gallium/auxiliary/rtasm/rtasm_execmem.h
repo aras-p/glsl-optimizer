@@ -28,18 +28,18 @@
  * \author Keith Whitwell
  */
 
-#ifndef _EXECMEM_H_
-#define _EXECMEM_H_
+#ifndef _RTASM_EXECMEM_H_
+#define _RTASM_EXECMEM_H_
 
 #include "pipe/p_compiler.h"
 
 
 extern void *
-_mesa_exec_malloc( size_t size );
+rtasm_exec_malloc( size_t size );
 
 
 extern void 
-_mesa_exec_free( void *addr );
+rtasm_exec_free( void *addr );
 
 
 #endif

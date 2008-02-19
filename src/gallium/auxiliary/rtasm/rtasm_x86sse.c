@@ -3,7 +3,8 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
 
-#include "x86sse.h"
+#include "rtasm_execmem.h"
+#include "rtasm_x86sse.h"
 
 #define DISASSEM 0
 #define X86_TWOB 0x0f
@@ -18,17 +19,17 @@ static void do_realloc( struct x86_function *p )
 {
    if (p->size == 0) {
       p->size = 1024;
-      p->store = _mesa_exec_malloc(p->size);
+      p->store = rtasm_exec_malloc(p->size);
       p->csr = p->store;
    }
    else {
       unsigned used = p->csr - p->store;
       unsigned char *tmp = p->store;
       p->size *= 2;
-      p->store = _mesa_exec_malloc(p->size);
+      p->store = rtasm_exec_malloc(p->size);
       memcpy(p->store, tmp, used);
       p->csr = p->store + used;
-      _mesa_exec_free(tmp);
+      rtasm_exec_free(tmp);
    }
 }
 
@@ -1166,13 +1167,13 @@ void x86_init_func( struct x86_function *p )
 void x86_init_func_size( struct x86_function *p, unsigned code_size )
 {
    p->size = code_size;
-   p->store = _mesa_exec_malloc(code_size);
+   p->store = rtasm_exec_malloc(code_size);
    p->csr = p->store;
 }
 
 void x86_release_func( struct x86_function *p )
 {
-   _mesa_exec_free(p->store);
+   rtasm_exec_free(p->store);
    p->store = NULL;
    p->csr = NULL;
    p->size = 0;
@@ -1182,7 +1183,7 @@ void x86_release_func( struct x86_function *p )
 void (*x86_get_func( struct x86_function *p ))(void)
 {
    if (DISASSEM && p->store)
-      _mesa_printf("disassemble %p %p\n", p->store, p->csr);
+      debug_printf("disassemble %p %p\n", p->store, p->csr);
    return (void (*)(void)) (unsigned long) p->store;
 }
 
