@@ -4,6 +4,11 @@ TOP = ../../../..
 include $(TOP)/configs/current
 
 
+GL_MAJOR = 1
+GL_MINOR = 5
+GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
+
+
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
@@ -12,7 +17,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/auxiliary
 
-X11_DRIVER_SOURCES = \
+XLIB_WINSYS_SOURCES = \
 	glxapi.c	\
 	fakeglx.c	\
 	xfonts.c	\
@@ -21,10 +26,7 @@ X11_DRIVER_SOURCES = \
 	xm_winsys_aub.c	\
 	brw_aub.c
 
-
-GL_MAJOR = 1
-GL_MINOR = 5
-GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
+XLIB_WINSYS_OBJECTS = $(XLIB_WINSYS_SOURCES:.c=.o)
 
 
 ifeq ($(CONFIG_NAME), linux-cell)
@@ -32,7 +34,7 @@ ifeq ($(CONFIG_NAME), linux-cell)
 CELL_SPU_LIB = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
 endif
 
-PIPE_LIB = \
+LIBS = \
 	$(GALLIUM_DRIVERS) \
 	$(TOP)/src/mesa/libglapi.a \
 	$(TOP)/src/mesa/libmesa.a \
@@ -48,35 +50,20 @@ PIPE_LIB = \
 .cpp.o:
 	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
 
-.S.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
 default: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 
-######################################################################
-# Stand-alone Mesa libGL and libOSMesa
-STAND_ALONE_DRIVER_SOURCES = \
-	$(X11_DRIVER_SOURCES)
-
-STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
-
-STAND_ALONE_OBJECTS = \
-	$(STAND_ALONE_DRIVER_OBJECTS)
-
-# Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB)
+# Make the libGL.so library
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(XLIB_WINSYS_OBJECTS) $(LIBS)
 	$(TOP)/bin/mklib -o $(GL_LIB) \
 		-linker "$(CC)" \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		--start-group $(PIPE_LIB) --end-group $(GL_LIB_DEPS)
+		$(MKLIB_OPTIONS) $(XLIB_WINSYS_OBJECTS) \
+		--start-group $(LIBS) --end-group $(GL_LIB_DEPS)
 
-
-######################################################################
-# Generic stuff
 
 depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
@@ -93,10 +80,6 @@ install: default
 	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
 		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
 	fi
-
-## NOT INSTALLED YET:
-## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
-## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
 
 
 # Emacs tags
