@@ -1,4 +1,4 @@
-# src/mesa/Makefile
+# src/gallium/winsys/xlib/Makefile
 
 TOP = ../../../..
 include $(TOP)/configs/current
@@ -27,16 +27,17 @@ GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
+ifeq ($(CONFIG_NAME), linux-cell)
+# The SPU code is in a separate .a file, unfortunately
+CELL_SPU_LIB = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
+endif
+
 PIPE_LIB = \
 	$(GALLIUM_DRIVERS) \
 	$(TOP)/src/mesa/libglapi.a \
 	$(TOP)/src/mesa/libmesa.a \
-	$(GALLIUM_AUXILIARIES)
-
-ifeq ($(CONFIG_NAME), linux-cell)
-CELL_LIB = $(TOP)/src/gallium/drivers/cell/ppu/libcell.a
-CELL_LIB_SPU = $(TOP)/src/gallium/drivers/cell/spu/g3d_spu.a
-endif
+	$(GALLIUM_AUXILIARIES) \
+	$(CELL_SPU_LIB) \
 
 
 .SUFFIXES : .cpp
@@ -65,13 +66,13 @@ STAND_ALONE_OBJECTS = \
 	$(STAND_ALONE_DRIVER_OBJECTS)
 
 # Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB) $(CELL_LIB) $(CELL_LIB_SPU)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(PIPE_LIB)
 	$(TOP)/bin/mklib -o $(GL_LIB) \
 		-linker "$(CC)" \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
-		--start-group $(PIPE_LIB) --end-group $(CELL_LIB) $(CELL_LIB_SPU) $(GL_LIB_DEPS)
+		--start-group $(PIPE_LIB) --end-group $(GL_LIB_DEPS)
 
 
 ######################################################################
