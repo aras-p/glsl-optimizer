@@ -90,7 +90,7 @@ static void init_registers( struct brw_wm_compile *c )
 	    in shader varying */
 	 GLuint index;
 	 if (j > FRAG_ATTRIB_VAR0)
-	     index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0) 
+	     index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
 	 else
 	     index = j;
 	 nr_interp_regs++;
