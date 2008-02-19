@@ -332,6 +332,61 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
 }
 
 
+/**
+ * For RECT textures / unnormalized texcoords
+ * Only a subset of wrap modes supported.
+ */
+static INLINE int
+nearest_texcoord_unnorm(unsigned wrapMode, float s, unsigned size)
+{
+   int i;
+   switch (wrapMode) {
+   case PIPE_TEX_WRAP_CLAMP:
+      i = ifloor(s);
+      return CLAMP(i, 0, size-1);
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      /* fall-through */
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return ifloor( CLAMP(s, 0.5F, size - 0.5F) );
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+/**
+ * For RECT textures / unnormalized texcoords.
+ * Only a subset of wrap modes supported.
+ */
+static INLINE void
+linear_texcoord_unnorm(unsigned wrapMode, float s, unsigned size,
+                       int *i0, int *i1, float *a)
+{
+   switch (wrapMode) {
+   case PIPE_TEX_WRAP_CLAMP:
+      /* Not exactly what the spec says, but it matches NVIDIA output */
+      s = CLAMP(s - 0.5F, 0.0, size - 1.0);
+      *i0 = ifloor(s);
+      *i1 = *i0 + 1;
+      break;
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      /* fall-through */
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      s = CLAMP(s, 0.5F, size - 0.5F);
+      s -= 0.5F;
+      *i0 = ifloor(s);
+      *i1 = *i0 + 1;
+      if (*i1 > size - 1)
+         *i1 = size - 1;
+      break;
+   default:
+      assert(0);
+   }
+   *a = FRAC(s);
+}
+
+
 static unsigned
 choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
 {
@@ -415,15 +470,15 @@ compute_lambda(struct tgsi_sampler *sampler,
 {
    float rho, lambda;
 
+   assert(sampler->state->normalized_coords);
+
    assert(s);
    {
       float dsdx = s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT];
       float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
       dsdx = FABSF(dsdx);
       dsdy = FABSF(dsdy);
-      rho = MAX2(dsdx, dsdy);
-      if (sampler->state->normalized_coords)
-         rho *= sampler->texture->width[0];
+      rho = MAX2(dsdx, dsdy) * sampler->texture->width[0];
    }
    if (t) {
       float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
@@ -431,9 +486,7 @@ compute_lambda(struct tgsi_sampler *sampler,
       float max;
       dtdx = FABSF(dtdx);
       dtdy = FABSF(dtdy);
-      max = MAX2(dtdx, dtdy);
-      if (sampler->state->normalized_coords)
-         max *= sampler->texture->height[0];
+      max = MAX2(dtdx, dtdy) * sampler->texture->height[0];
       rho = MAX2(rho, max);
    }
    if (p) {
@@ -442,9 +495,7 @@ compute_lambda(struct tgsi_sampler *sampler,
       float max;
       dpdx = FABSF(dpdx);
       dpdy = FABSF(dpdy);
-      max = MAX2(dpdx, dpdy);
-      if (sampler->state->normalized_coords)
-         max *= sampler->texture->depth[0];
+      max = MAX2(dpdx, dpdy) * sampler->texture->depth[0];
       rho = MAX2(rho, max);
    }
 
@@ -628,13 +679,10 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
    choose_mipmap_levels(sampler, s, t, p, lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
-   if (sampler->state->normalized_coords) {
-      width = sampler->texture->width[level0];
-      height = sampler->texture->height[level0];
-   }
-   else {
-      width = height = 1;
-   }
+   assert(sampler->state->normalized_coords);
+
+   width = sampler->texture->width[level0];
+   height = sampler->texture->height[level0];
 
    assert(width > 0);
 
@@ -765,14 +813,11 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
    choose_mipmap_levels(sampler, s, t, p, lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
-   if (sampler->state->normalized_coords) {
-      width = sampler->texture->width[level0];
-      height = sampler->texture->height[level0];
-      depth = sampler->texture->depth[level0];
-   }
-   else {
-      width = height = depth = 1;
-   }
+   assert(sampler->state->normalized_coords);
+
+   width = sampler->texture->width[level0];
+   height = sampler->texture->height[level0];
+   depth = sampler->texture->depth[level0];
 
    assert(width > 0);
    assert(height > 0);
@@ -889,6 +934,73 @@ sp_get_samples_cube(struct tgsi_sampler *sampler,
 }
 
 
+static void
+sp_get_samples_rect(struct tgsi_sampler *sampler,
+                    const float s[QUAD_SIZE],
+                    const float t[QUAD_SIZE],
+                    const float p[QUAD_SIZE],
+                    float lodbias,
+                    float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   //sp_get_samples_2d_common(sampler, s, t, p, lodbias, rgba, faces);
+   static const uint face = 0;
+   const uint compare_func = sampler->state->compare_func;
+   unsigned level0, level1, j, imgFilter;
+   int width, height;
+   float levelBlend;
+
+   choose_mipmap_levels(sampler, s, t, p, lodbias,
+                        &level0, &level1, &levelBlend, &imgFilter);
+
+   /* texture RECTS cannot be mipmapped */
+   assert(level0 == level1);
+
+   width = sampler->texture->width[level0];
+   height = sampler->texture->height[level0];
+
+   assert(width > 0);
+
+   switch (imgFilter) {
+   case PIPE_TEX_FILTER_NEAREST:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = nearest_texcoord_unnorm(sampler->state->wrap_s, s[j], width);
+         int y = nearest_texcoord_unnorm(sampler->state->wrap_t, t[j], height);
+         get_texel(sampler, face, level0, x, y, 0, rgba, j);
+         if (sampler->state->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+            shadow_compare(compare_func, rgba, p, j);
+         }
+      }
+      break;
+   case PIPE_TEX_FILTER_LINEAR:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         float tx[4][4], a, b;
+         int x0, y0, x1, y1, c;
+         linear_texcoord_unnorm(sampler->state->wrap_s, s[j], width,  &x0, &x1, &a);
+         linear_texcoord_unnorm(sampler->state->wrap_t, t[j], height, &y0, &y1, &b);
+         get_texel(sampler, face, level0, x0, y0, 0, tx, 0);
+         get_texel(sampler, face, level0, x1, y0, 0, tx, 1);
+         get_texel(sampler, face, level0, x0, y1, 0, tx, 2);
+         get_texel(sampler, face, level0, x1, y1, 0, tx, 3);
+         if (sampler->state->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+            shadow_compare(compare_func, tx, p, 0);
+            shadow_compare(compare_func, tx, p, 1);
+            shadow_compare(compare_func, tx, p, 2);
+            shadow_compare(compare_func, tx, p, 3);
+         }
+
+         for (c = 0; c < 4; c++) {
+            rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
+}
+
+
+
+
 /**
  * Called via tgsi_sampler::get_samples()
  * Use the sampler's state setting to get a filtered RGBA value
@@ -914,15 +1026,21 @@ sp_get_samples(struct tgsi_sampler *sampler,
 
    switch (sampler->texture->target) {
    case PIPE_TEXTURE_1D:
+      assert(sampler->state->normalized_coords);
       sp_get_samples_1d(sampler, s, t, p, lodbias, rgba);
       break;
    case PIPE_TEXTURE_2D:
-      sp_get_samples_2d(sampler, s, t, p, lodbias, rgba);
+      if (sampler->state->normalized_coords)
+         sp_get_samples_2d(sampler, s, t, p, lodbias, rgba);
+      else
+         sp_get_samples_rect(sampler, s, t, p, lodbias, rgba);
       break;
    case PIPE_TEXTURE_3D:
+      assert(sampler->state->normalized_coords);
       sp_get_samples_3d(sampler, s, t, p, lodbias, rgba);
       break;
    case PIPE_TEXTURE_CUBE:
+      assert(sampler->state->normalized_coords);
       sp_get_samples_cube(sampler, s, t, p, lodbias, rgba);
       break;
    default:
