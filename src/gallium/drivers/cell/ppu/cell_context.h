@@ -36,7 +36,7 @@
 #include "draw/draw_vbuf.h"
 #include "cell_winsys.h"
 #include "cell/common.h"
-#include "ppc/rtasm/spe_asm.h"
+#include "rtasm/rtasm_ppc_spe.h"
 
 
 struct cell_vbuf_render;

@@ -31,7 +31,7 @@
 #include "../auxiliary/draw/draw_private.h"
 
 #include "cell_context.h"
-#include "ppc/rtasm/spe_asm.h"
+#include "rtasm/rtasm_ppc_spe.h"
 
 typedef uint64_t register_mask;
 

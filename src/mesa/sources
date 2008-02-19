@@ -246,7 +246,6 @@ ASM_C_SOURCES =	\
 	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
 	ppc/common_ppc.c \
-	ppc/rtasm/spe_asm.c \
 	x86-64/x86-64.c
 
 X86_SOURCES =			\
