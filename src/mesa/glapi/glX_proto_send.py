@@ -554,6 +554,14 @@ generic_%u_byte( GLint rop, const void * ptr )
 		condition_list = []
 		for p in f.parameterIterateCounters():
 			condition_list.append( "%s >= 0" % (p.name) )
+			# 'counter' parameters cannot be negative
+			print "    if (%s < 0) {" % p.name
+			print "        __glXSetError(gc, GL_INVALID_VALUE);"
+			if f.return_type != 'void':
+				print "        return 0;"
+			else:
+				print "        return;"
+			print "    }"
 
 		if skip_condition:
 			condition_list.append( skip_condition )
