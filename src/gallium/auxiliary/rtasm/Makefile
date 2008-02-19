@@ -5,9 +5,8 @@ include $(TOP)/configs/current
 LIBNAME = rtasm
 
 DRIVER_SOURCES = \
-	execmem.c \
-	x86sse.c \
-	mm.c
+	rtasm_execmem.c \
+	rtasm_x86sse.c
 
 C_SOURCES = \
 	$(DRIVER_SOURCES)

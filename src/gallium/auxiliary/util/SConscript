@@ -6,6 +6,7 @@ util = env.ConvenienceLibrary(
 		'p_debug.c',
 		'p_tile.c',
 		'p_util.c',
+		'u_mm.c',
 	])
 
 auxiliaries.insert(0, util)

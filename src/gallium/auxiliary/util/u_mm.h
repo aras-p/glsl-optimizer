@@ -1,5 +1,5 @@
-/*
- * GLX Hardware Device Driver common code
+/**************************************************************************
+ *
  * Copyright (C) 1999 Wittawat Yamwong
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,17 +19,19 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+ *
+ **************************************************************************/
 
 
 /**
+ * @file
  * Memory manager code.  Primarily used by device drivers to manage texture
  * heaps, etc.
  */
 
 
-#ifndef MM_H
-#define MM_H
+#ifndef _U_MM_H_
+#define _U_MM_H_
 
 
 struct mem_block {

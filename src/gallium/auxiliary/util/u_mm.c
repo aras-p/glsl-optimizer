@@ -1,5 +1,5 @@
-/*
- * GLX Hardware Device Driver common code
+/**************************************************************************
+ *
  * Copyright (C) 1999 Wittawat Yamwong
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -20,14 +20,14 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- */
+ **************************************************************************/
 
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 #include "pipe/p_debug.h"
 
-#include "mm.h"
+#include "util/u_mm.h"
 
 
 void

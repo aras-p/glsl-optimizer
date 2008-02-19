@@ -46,7 +46,7 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
-#include "mm.h"
+#include "util/u_mm.h"
 
 #define EXEC_HEAP_SIZE (10*1024*1024)
 
