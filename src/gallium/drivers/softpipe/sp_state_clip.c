@@ -42,24 +42,16 @@ void softpipe_set_clip_state( struct pipe_context *pipe,
 }
 
 
-
-/* Called when driver state tracker notices changes to the viewport
- * matrix:
- */
 void softpipe_set_viewport_state( struct pipe_context *pipe,
                                   const struct pipe_viewport_state *viewport )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->viewport = *viewport; /* struct copy */
-   softpipe->dirty |= SP_NEW_VIEWPORT;
-
    /* pass the viewport info to the draw module */
    draw_set_viewport_state(softpipe->draw, viewport);
 
-   /* Using tnl/ and vf/ modules is temporary while getting started.
-    * Full pipe will have vertex shader, vertex fetch of its own.
-    */
+   softpipe->viewport = *viewport; /* struct copy */
+   softpipe->dirty |= SP_NEW_VIEWPORT;
 }
 
 
@@ -70,7 +62,7 @@ void softpipe_set_scissor_state( struct pipe_context *pipe,
 
    draw_flush(softpipe->draw);
 
-   memcpy( &softpipe->scissor, scissor, sizeof(*scissor) );
+   softpipe->scissor = *scissor; /* struct copy */
    softpipe->dirty |= SP_NEW_SCISSOR;
 }
 
@@ -82,6 +74,6 @@ void softpipe_set_polygon_stipple( struct pipe_context *pipe,
 
    draw_flush(softpipe->draw);
 
-   memcpy( &softpipe->poly_stipple, stipple, sizeof(*stipple) );
+   softpipe->poly_stipple = *stipple; /* struct copy */
    softpipe->dirty |= SP_NEW_STIPPLE;
 }
