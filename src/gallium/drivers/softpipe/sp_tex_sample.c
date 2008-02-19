@@ -347,7 +347,7 @@ nearest_texcoord_unnorm(unsigned wrapMode, float s, unsigned size)
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       /* fall-through */
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      return ifloor( CLAMP(s, 0.5F, size - 0.5F) );
+      return ifloor( CLAMP(s, 0.5F, (float) size - 0.5F) );
    default:
       assert(0);
       return 0;
@@ -366,14 +366,14 @@ linear_texcoord_unnorm(unsigned wrapMode, float s, unsigned size,
    switch (wrapMode) {
    case PIPE_TEX_WRAP_CLAMP:
       /* Not exactly what the spec says, but it matches NVIDIA output */
-      s = CLAMP(s - 0.5F, 0.0, size - 1.0);
+      s = CLAMP(s - 0.5F, 0.0, (float) size - 1.0);
       *i0 = ifloor(s);
       *i1 = *i0 + 1;
       break;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       /* fall-through */
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
-      s = CLAMP(s, 0.5F, size - 0.5F);
+      s = CLAMP(s, 0.5F, (float) size - 0.5F);
       s -= 0.5F;
       *i0 = ifloor(s);
       *i1 = *i0 + 1;
