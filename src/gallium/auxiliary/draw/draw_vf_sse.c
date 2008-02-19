@@ -26,9 +26,8 @@
  */
 
 
-#include "simple_list.h"
-
 #include "pipe/p_compiler.h"
+#include "util/u_simple_list.h"
 
 #include "draw_vf.h"
 

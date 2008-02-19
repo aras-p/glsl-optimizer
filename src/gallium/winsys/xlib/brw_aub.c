@@ -29,11 +29,13 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "brw_aub.h"
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
-#include "imports.h"
-//#include "intel_winsys.h"
+#include "pipe/p_util.h"
+#include "pipe/p_debug.h"
 
 
 struct brw_aubfile {
@@ -350,9 +352,9 @@ struct brw_aubfile *brw_aubfile_create( void )
 
    i++;
 
-   if (_mesa_getenv("INTEL_AUBFILE")) {
-      val = snprintf(filename, sizeof(filename), "%s%d.aub", _mesa_getenv("INTEL_AUBFILE"), i%4);
-      _mesa_printf("--> Aub file: %s\n", filename);
+   if (getenv("INTEL_AUBFILE")) {
+      val = snprintf(filename, sizeof(filename), "%s%d.aub", getenv("INTEL_AUBFILE"), i%4);
+      debug_printf("--> Aub file: %s\n", filename);
       aubfile->file = fopen(filename, "w");
    }
    else {
@@ -360,12 +362,12 @@ struct brw_aubfile *brw_aubfile_create( void )
       if (val < 0 || val > sizeof(filename)) 
 	 strcpy(filename, "default.aub");   
    
-      _mesa_printf("--> Aub file: %s\n", filename);
+      debug_printf("--> Aub file: %s\n", filename);
       aubfile->file = fopen(filename, "w");
    }
 
    if (!aubfile->file) {
-      _mesa_printf("couldn't open aubfile\n");
+      debug_printf("couldn't open aubfile\n");
       exit(1);
    }
 

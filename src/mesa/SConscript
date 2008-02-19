@@ -4,6 +4,13 @@
 
 Import('*')
 
+env = env.Clone()
+
+# Includes
+env.Append(CPPPATH = [
+	'#/src/mesa',
+	'#/src/mesa/main',
+])
 
 #######################################################################
 # Core sources

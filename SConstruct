@@ -109,8 +109,6 @@ else:
 # Includes
 env.Append(CPPPATH = [
 	'#/include',
-	'#/src/mesa',
-	'#/src/mesa/main',
 	'#/src/gallium/include',
 	'#/src/gallium/auxiliary',
 	'#/src/gallium/drivers',

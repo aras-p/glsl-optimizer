@@ -33,12 +33,11 @@
  */
 
 
-#include "linked_list.h"
-
 #include "pipe/p_defines.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_thread.h"
 #include "pipe/p_util.h"
+#include "util/u_double_list.h"
 #include "util/u_mm.h"
 #include "pb_buffer.h"
 #include "pb_bufmgr.h"

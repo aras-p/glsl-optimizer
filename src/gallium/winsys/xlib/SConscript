@@ -3,6 +3,12 @@
 
 Import('*')
 
+env = env.Clone()
+
+env.Append(CPPPATH = [
+	'#/src/mesa',
+	'#/src/mesa/main',
+])
 
 sources = [
 	'glxapi.c',

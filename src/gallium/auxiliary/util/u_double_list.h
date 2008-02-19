@@ -34,8 +34,8 @@
  * be protected using an external mutex.
  */
 
-#ifndef LINKED_LIST_H_
-#define LINKED_LIST_H_
+#ifndef _U_DOUBLE_LIST_H_
+#define _U_DOUBLE_LIST_H_
 
 
 #include <stddef.h>
@@ -88,4 +88,4 @@ struct list_head
     ((__type *)(((char *)(__item)) - offsetof(__type, __field)))
 
 
-#endif /*LINKED_LIST_H_*/
+#endif /*_U_DOUBLE_LIST_H_*/

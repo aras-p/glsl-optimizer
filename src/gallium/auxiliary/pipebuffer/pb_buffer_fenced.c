@@ -34,13 +34,12 @@
  */
 
 
-#include "linked_list.h"
-
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_thread.h"
 #include "pipe/p_util.h"
+#include "util/u_double_list.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"

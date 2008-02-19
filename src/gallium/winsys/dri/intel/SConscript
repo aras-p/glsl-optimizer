@@ -35,5 +35,5 @@ drivers = [
 env.SharedLibrary(
 	target ='i915tex_dri.so',
 	source = sources,
-	LIBS = mesa + drivers + auxiliaries + env['LIBS'],
+	LIBS = drivers + mesa + auxiliaries + env['LIBS'],
 )
