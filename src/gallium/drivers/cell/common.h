@@ -87,10 +87,12 @@
 #define CELL_CMD_STATE_TEXTURE       13
 #define CELL_CMD_STATE_VERTEX_INFO   14
 #define CELL_CMD_STATE_VIEWPORT      15
-#define CELL_CMD_STATE_VS_ARRAY_INFO 16
-#define CELL_CMD_STATE_BLEND         17
-#define CELL_CMD_VS_EXECUTE          18
-#define CELL_CMD_STATE_ATTRIB_FETCH  19
+#define CELL_CMD_STATE_UNIFORMS      16
+#define CELL_CMD_STATE_VS_ARRAY_INFO 17
+#define CELL_CMD_STATE_BIND_VS       18
+#define CELL_CMD_STATE_BLEND         19
+#define CELL_CMD_STATE_ATTRIB_FETCH  20
+#define CELL_CMD_VS_EXECUTE          21
 
 
 #define CELL_NUM_BUFFERS 4
@@ -144,14 +146,13 @@ struct cell_attribute_fetch_code {
 
 struct cell_shader_info
 {
-   unsigned num_outputs;
-
    uint64_t declarations;
-   unsigned num_declarations;
    uint64_t instructions;
-   unsigned num_instructions;
-   uint64_t uniforms;
    uint64_t  immediates;
+
+   unsigned num_outputs;
+   unsigned num_declarations;
+   unsigned num_instructions;
    unsigned num_immediates;
 } ALIGN16_ATTRIB;
 
@@ -160,10 +161,9 @@ struct cell_shader_info
 struct cell_command_vs
 {
    uint64_t opcode;       /**< CELL_CMD_VS_EXECUTE */
-   struct cell_shader_info   shader;
+   uint64_t vOut[SPU_VERTS_PER_BATCH];
    unsigned num_elts;
    unsigned elts[SPU_VERTS_PER_BATCH];
-   uint64_t vOut[SPU_VERTS_PER_BATCH];
    float plane[12][4];
    unsigned nr_planes;
    unsigned nr_attrs;

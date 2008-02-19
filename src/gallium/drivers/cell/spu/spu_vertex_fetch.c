@@ -64,7 +64,7 @@ typedef void (*spu_fetch_func)(qword *out, const qword *in,
 			       const qword *shuffle_data);
 
 
-static const qword fetch_shuffle_data[] = {
+static const qword fetch_shuffle_data[5] ALIGN16_ATTRIB = {
    /* Shuffle used by CVT_64_FLOAT
     */
    {
@@ -108,7 +108,7 @@ static const qword fetch_shuffle_data[] = {
 static INLINE void
 fetch_unaligned(qword *dst, unsigned ea, unsigned size)
 {
-   qword tmp[4];
+   qword tmp[4] ALIGN16_ATTRIB;
    const int shift = ea & 0x0f;
    const unsigned aligned_start_ea = ea & ~0x0f;
    const unsigned aligned_end_ea = (ea + size) & ~0x0f;
@@ -169,7 +169,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
       unsigned idx;
       const unsigned bytes_per_entry = draw->vertex_fetch.size[attr];
       const unsigned quads_per_entry = (bytes_per_entry + 15) / 16;
-      qword in[2 * 4];
+      qword in[2 * 4] ALIGN16_ATTRIB;
 
 
       /* Fetch four attributes for four vertices.  

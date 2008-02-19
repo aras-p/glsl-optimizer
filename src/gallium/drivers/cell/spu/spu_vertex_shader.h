@@ -1,6 +1,7 @@
 #ifndef SPU_VERTEX_SHADER_H
 #define SPU_VERTEX_SHADER_H
 
+#include "cell/common.h"
 #include "pipe/p_format.h"
 #include "spu_exec.h"
 
@@ -53,6 +54,10 @@ static INLINE void spu_vertex_fetch(struct spu_vs_context *draw,
 }
 
 struct cell_command_vs;
+
+extern void
+spu_bind_vertex_shader(struct spu_vs_context *draw,
+		       struct cell_shader_info *vs);
 
 extern void
 spu_execute_vertex_shader(struct spu_vs_context *draw,
