@@ -68,6 +68,8 @@ void softpipe_set_scissor_state( struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   draw_flush(softpipe->draw);
+
    memcpy( &softpipe->scissor, scissor, sizeof(*scissor) );
    softpipe->dirty |= SP_NEW_SCISSOR;
 }
@@ -77,6 +79,8 @@ void softpipe_set_polygon_stipple( struct pipe_context *pipe,
                                    const struct pipe_poly_stipple *stipple )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   draw_flush(softpipe->draw);
 
    memcpy( &softpipe->poly_stipple, stipple, sizeof(*stipple) );
    softpipe->dirty |= SP_NEW_STIPPLE;
