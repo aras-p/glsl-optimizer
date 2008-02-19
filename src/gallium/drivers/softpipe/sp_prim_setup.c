@@ -476,33 +476,33 @@ static void tri_persp_coeff( struct setup_stage *setup,
  * We could do a bit less work if we'd examine gl_FragCoord's swizzle mask.
  */
 static void
-setup_fragcoord_coeff(struct setup_stage *setup)
+setup_fragcoord_coeff(struct setup_stage *setup, uint slot)
 {
    /*X*/
-   setup->coef[0].a0[0] = 0;
-   setup->coef[0].dadx[0] = 1.0;
-   setup->coef[0].dady[0] = 0.0;
+   setup->coef[slot].a0[0] = 0;
+   setup->coef[slot].dadx[0] = 1.0;
+   setup->coef[slot].dady[0] = 0.0;
    /*Y*/
    if (setup->softpipe->rasterizer->origin_lower_left) {
       /* y=0=bottom */
       const int winHeight = setup->softpipe->framebuffer.cbufs[0]->height;
-      setup->coef[0].a0[1] = (float) (winHeight - 1);
-      setup->coef[0].dady[1] = -1.0;
+      setup->coef[slot].a0[1] = (float) (winHeight - 1);
+      setup->coef[slot].dady[1] = -1.0;
    }
    else {
       /* y=0=top */
-      setup->coef[0].a0[1] = 0.0;
-      setup->coef[0].dady[1] = 1.0;
+      setup->coef[slot].a0[1] = 0.0;
+      setup->coef[slot].dady[1] = 1.0;
    }
-   setup->coef[0].dadx[1] = 0.0;
+   setup->coef[slot].dadx[1] = 0.0;
    /*Z*/
-   setup->coef[0].a0[2] = setup->posCoef.a0[2];
-   setup->coef[0].dadx[2] = setup->posCoef.dadx[2];
-   setup->coef[0].dady[2] = setup->posCoef.dady[2];
+   setup->coef[slot].a0[2] = setup->posCoef.a0[2];
+   setup->coef[slot].dadx[2] = setup->posCoef.dadx[2];
+   setup->coef[slot].dady[2] = setup->posCoef.dady[2];
    /*W*/
-   setup->coef[0].a0[3] = setup->posCoef.a0[3];
-   setup->coef[0].dadx[3] = setup->posCoef.dadx[3];
-   setup->coef[0].dady[3] = setup->posCoef.dady[3];
+   setup->coef[slot].a0[3] = setup->posCoef.a0[3];
+   setup->coef[slot].dadx[3] = setup->posCoef.dadx[3];
+   setup->coef[slot].dady[3] = setup->posCoef.dady[3];
 }
 
 
@@ -543,8 +543,7 @@ static void setup_tri_coefficients( struct setup_stage *setup )
             tri_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
       case INTERP_POS:
-         assert(fragSlot == 0);
-         setup_fragcoord_coeff(setup);
+         setup_fragcoord_coeff(setup, fragSlot);
          break;
       default:
          assert(0);
@@ -798,9 +797,7 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
             line_persp_coeff(setup, &setup->coef[fragSlot], vertSlot, j);
          break;
       case INTERP_POS:
-         assert(fragSlot == 0);
-         assert(0); /* XXX fix this: */
-         setup_fragcoord_coeff(setup);
+         setup_fragcoord_coeff(setup, fragSlot);
          break;
       default:
          assert(0);
@@ -1022,9 +1019,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                               &setup->coef[fragSlot], vertSlot, j);
          break;
       case INTERP_POS:
-         assert(fragSlot == 0);
-         assert(0); /* XXX fix this: */
-         setup_fragcoord_coeff(setup);
+         setup_fragcoord_coeff(setup, fragSlot);
          break;
       default:
          assert(0);
