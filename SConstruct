@@ -32,6 +32,7 @@ import sys
 opts = Options('config.py')
 opts.Add(BoolOption('debug', 'build debug version', False))
 opts.Add(BoolOption('dri', 'build dri drivers', False))
+opts.Add(BoolOption('llvm', 'use llvm', False))
 opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
                      allowed_values=('generic', 'x86', 'x86-64')))
 
@@ -55,6 +56,7 @@ else:
 # replicate options values in local variables
 debug = env['debug']
 dri = env['dri']
+llvm = env['llvm']
 machine = env['machine']
 
 # derived options
@@ -66,6 +68,7 @@ Export([
 	'debug', 
 	'x86', 
 	'dri', 
+	'llvm',
 	'platform',
 	'gcc',
 	'msvc',
@@ -159,6 +162,14 @@ if dri:
 		'GLX_INDIRECT_RENDERING',
 	])
 
+# LLVM
+if llvm:
+	# See also http://www.scons.org/wiki/UsingPkgConfig
+	env.ParseConfig('llvm-config --cflags --ldflags --libs')
+	env.Append(CPPDEFINES = ['MESA_LLVM'])
+	env.Append(CXXFLAGS = ['-Wno-long-long'])
+	
+
 # libGL
 if 1:
 	env.Append(LIBS = [
@@ -214,6 +225,8 @@ build_topdir = 'build'
 build_subdir = platform
 if dri:
 	build_subdir += "-dri"
+if llvm:
+	build_subdir += "-llvm"
 if x86:
 	build_subdir += "-x86"
 if debug:

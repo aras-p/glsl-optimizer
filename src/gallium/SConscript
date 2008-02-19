@@ -13,9 +13,13 @@ SConscript([
 	'auxiliary/tgsi/SConscript',
 	'auxiliary/cso_cache/SConscript',
 	'auxiliary/draw/SConscript',
-	#'auxiliary/gallivm/SConscript',
 	'auxiliary/pipebuffer/SConscript',
+])
 
+if llvm:
+	SConscript(['auxiliary/gallivm/SConscript'])
+
+SConscript([
 	'drivers/softpipe/SConscript',
 	'drivers/i915simple/SConscript',
 	'drivers/i965simple/SConscript',
