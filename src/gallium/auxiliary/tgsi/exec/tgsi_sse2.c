@@ -32,7 +32,7 @@
 #include "tgsi_exec.h"
 #include "tgsi_sse2.h"
 
-#include "x86/rtasm/x86sse.h"
+#include "rtasm/rtasm_x86sse.h"
 
 #if defined(__i386__) || defined(__386__)
 

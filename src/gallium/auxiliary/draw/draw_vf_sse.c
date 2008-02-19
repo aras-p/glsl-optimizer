@@ -35,7 +35,7 @@
 
 #if defined(USE_SSE_ASM)
 
-#include "x86/rtasm/x86sse.h"
+#include "rtasm/rtasm_x86sse.h"
 #include "x86/common_x86_asm.h"
 
 

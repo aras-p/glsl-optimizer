@@ -36,7 +36,6 @@
 
 #include "mtypes.h"
 #include "pipe/p_shader_tokens.h"
-#include "x86/rtasm/x86sse.h"
 
 
 #define ST_MAX_SHADER_TOKENS 1024

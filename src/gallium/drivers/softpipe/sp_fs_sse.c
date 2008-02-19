@@ -42,7 +42,7 @@
 
 #if defined(__i386__) || defined(__386__)
 
-#include "x86/rtasm/x86sse.h"
+#include "rtasm/rtasm_x86sse.h"
 
 /* Surely this should be defined somewhere in a tgsi header:
  */
