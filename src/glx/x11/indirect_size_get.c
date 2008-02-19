@@ -595,6 +595,9 @@ __glGetBooleanv_size(GLenum e)
     case GL_MAX_ELEMENTS_VERTICES:
     case GL_MAX_ELEMENTS_INDICES:
     case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
+    case GL_POINT_SIZE_MIN:
+    case GL_POINT_SIZE_MAX:
+    case GL_POINT_FADE_THRESHOLD_SIZE:
     case GL_OCCLUSION_TEST_HP:
     case GL_OCCLUSION_TEST_RESULT_HP:
     case GL_LIGHT_MODEL_COLOR_CONTROL:
@@ -734,6 +737,7 @@ __glGetBooleanv_size(GLenum e)
     case GL_DEPTH_BOUNDS_EXT:
         return 2;
     case GL_CURRENT_NORMAL:
+    case GL_POINT_DISTANCE_ATTENUATION:
         return 3;
     case GL_CURRENT_COLOR:
     case GL_CURRENT_TEXTURE_COORDS:
