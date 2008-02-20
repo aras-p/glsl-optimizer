@@ -25,6 +25,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"
+#include "pipe/p_pointer.h"
 
 #include "rtasm_execmem.h"
 #include "rtasm_x86sse.h"
@@ -34,7 +35,7 @@
 
 static unsigned char *cptr( void (*label)() )
 {
-   return (unsigned char *)(unsigned long)label;
+   return (unsigned char *) label;
 }
 
 
@@ -46,7 +47,7 @@ static void do_realloc( struct x86_function *p )
       p->csr = p->store;
    }
    else {
-      unsigned used = p->csr - p->store;
+      uintptr_t used = pointer_to_uintptr( p->csr ) - pointer_to_uintptr( p->store );
       unsigned char *tmp = p->store;
       p->size *= 2;
       p->store = rtasm_exec_malloc(p->size);
@@ -60,7 +61,7 @@ static void do_realloc( struct x86_function *p )
  */
 static unsigned char *reserve( struct x86_function *p, int bytes )
 {
-   if (p->csr + bytes - p->store > p->size)
+   if (p->csr + bytes - p->store > (int) p->size)
       do_realloc(p);
 
    {
@@ -135,7 +136,7 @@ static void emit_modrm( struct x86_function *p,
    case mod_INDIRECT:
       break;
    case mod_DISP8:
-      emit_1b(p, regmem.disp);
+      emit_1b(p, (char) regmem.disp);
       break;
    case mod_DISP32:
       emit_1i(p, regmem.disp);
@@ -251,14 +252,14 @@ void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
 	      unsigned char *label )
 {
-   int offset = label - (x86_get_label(p) + 2);
+   intptr_t offset = pointer_to_intptr( label ) - (pointer_to_intptr( x86_get_label(p) ) + 2);
    
    if (offset <= 127 && offset >= -128) {
       emit_1ub(p, 0x70 + cc);
       emit_1b(p, (char) offset);
    }
    else {
-      offset = label - (x86_get_label(p) + 6);
+      offset = pointer_to_intptr( label ) - (pointer_to_intptr( x86_get_label(p) ) + 6);
       emit_2ub(p, 0x0f, 0x80 + cc);
       emit_1i(p, offset);
    }
@@ -293,13 +294,13 @@ unsigned char *x86_call_forward( struct x86_function *p)
 void x86_fixup_fwd_jump( struct x86_function *p,
 			 unsigned char *fixup )
 {
-   *(int *)(fixup - 4) = x86_get_label(p) - fixup;
+   *(int *)(fixup - 4) = pointer_to_intptr( x86_get_label(p) ) - pointer_to_intptr( fixup );
 }
 
 void x86_jmp( struct x86_function *p, unsigned char *label)
 {
    emit_1ub(p, 0xe9);
-   emit_1i(p, label - x86_get_label(p) - 4);
+   emit_1i(p, pointer_to_intptr( label ) - pointer_to_intptr( x86_get_label(p) ) - 4);
 }
 
 #if 0
@@ -1207,7 +1208,7 @@ void (*x86_get_func( struct x86_function *p ))(void)
 {
    if (DISASSEM && p->store)
       debug_printf("disassemble %p %p\n", p->store, p->csr);
-   return (void (*)(void)) (unsigned long) p->store;
+   return (void (*)(void)) p->store;
 }
 
 #else
