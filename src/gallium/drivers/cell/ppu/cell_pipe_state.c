@@ -242,7 +242,9 @@ cell_set_sampler_texture(struct pipe_context *pipe,
 
    draw_flush(cell->draw);
 
-   cell->texture[sampler] = cell_texture(texture);
+   pipe_texture_reference(pipe,
+                          (struct pipe_texture **) &cell->texture[sampler],
+                          texture);
 
    cell_update_texture_mapping(cell);
 
