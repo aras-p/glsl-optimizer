@@ -41,6 +41,7 @@
 #include "cell_batch.h"
 #include "cell_flush.h"
 #include "cell_spu.h"
+#include "cell_state.h"
 
 
 void
