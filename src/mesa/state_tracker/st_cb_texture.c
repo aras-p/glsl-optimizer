@@ -693,11 +693,9 @@ st_TexImage(GLcontext * ctx,
    /* flag data as dirty */
    stObj->dirtyData = GL_TRUE;
 
-#if 01
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
-#endif
 }
 
 
@@ -915,14 +913,9 @@ st_TexSubimage(GLcontext * ctx,
       }
    }
 
-#if 0
-   /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
-#endif
 
    _mesa_unmap_teximage_pbo(ctx, packing);
 
@@ -1184,17 +1177,9 @@ do_copy_texsubimage(GLcontext *ctx,
 
    pipe_surface_reference(&dest_surface, NULL);
 
-#if 0
-   /* GL_SGIS_generate_mipmap -- this can be accelerated now.
-    * XXX Add a ctx->Driver.GenerateMipmaps() function?
-    */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
-#endif
-
 }
 
 
