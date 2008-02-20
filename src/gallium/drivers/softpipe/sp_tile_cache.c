@@ -212,14 +212,15 @@ sp_tile_cache_unmap_surfaces(struct softpipe_tile_cache *tc)
  * Specify the texture to cache.
  */
 void
-sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
+sp_tile_cache_set_texture(struct pipe_context *pipe,
+                          struct softpipe_tile_cache *tc,
                           struct pipe_texture *texture)
 {
    uint i;
 
    assert(!tc->surface);
 
-   tc->texture = texture;
+   pipe_texture_reference(pipe, &tc->texture, texture);
 
    if (tc->tex_surf_map) {
       pipe_surface_unmap(tc->tex_surf);

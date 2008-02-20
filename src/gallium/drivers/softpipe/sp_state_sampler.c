@@ -84,7 +84,7 @@ softpipe_set_sampler_texture(struct pipe_context *pipe,
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->texture[unit] = softpipe_texture(texture);  /* ptr, not struct */
 
-   sp_tile_cache_set_texture(softpipe->tex_cache[unit], texture);
+   sp_tile_cache_set_texture(pipe, softpipe->tex_cache[unit], texture);
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
