@@ -199,16 +199,6 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
 
    /* state setters */
-   cell->pipe.create_fs_state = cell_create_fs_state;
-   cell->pipe.bind_fs_state   = cell_bind_fs_state;
-   cell->pipe.delete_fs_state = cell_delete_fs_state;
-
-   cell->pipe.create_vs_state = cell_create_vs_state;
-   cell->pipe.bind_vs_state   = cell_bind_vs_state;
-   cell->pipe.delete_vs_state = cell_delete_vs_state;
-
-   cell->pipe.set_constant_buffer = cell_set_constant_buffer;
-
    cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;
    cell->pipe.set_vertex_element = cell_set_vertex_element;
 
@@ -225,6 +215,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 #endif
 
    cell_init_state_functions(cell);
+   cell_init_shader_functions(cell);
    cell_init_surface_functions(cell);
    cell_init_texture_functions(cell);
 

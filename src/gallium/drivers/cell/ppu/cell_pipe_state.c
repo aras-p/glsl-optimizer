@@ -314,7 +314,6 @@ cell_init_state_functions(struct cell_context *cell)
 
    cell->pipe.set_blend_color = cell_set_blend_color;
    cell->pipe.set_clip_state = cell_set_clip_state;
-   cell->pipe.set_constant_buffer = cell_set_constant_buffer;
 
    cell->pipe.set_framebuffer_state = cell_set_framebuffer_state;
 
