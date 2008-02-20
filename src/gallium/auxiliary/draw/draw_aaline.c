@@ -140,14 +140,14 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
       aactx->colorOutput = decl->u.DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
-      if (decl->u.DeclarationRange.Last > aactx->maxSampler)
+      if ((int) decl->u.DeclarationRange.Last > aactx->maxSampler)
          aactx->maxSampler = decl->u.DeclarationRange.Last + 1;
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      if (decl->u.DeclarationRange.Last > aactx->maxInput)
+      if ((int) decl->u.DeclarationRange.Last > aactx->maxInput)
          aactx->maxInput = decl->u.DeclarationRange.Last;
-      if (decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC  &&
-          decl->Semantic.SemanticIndex > aactx->maxGeneric) {
+      if (decl->Semantic.SemanticName == TGSI_SEMANTIC_GENERIC &&
+           (int) decl->Semantic.SemanticIndex > aactx->maxGeneric) {
          aactx->maxGeneric = decl->Semantic.SemanticIndex;
       }
    }
@@ -393,7 +393,7 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       for (i = 0; i < size; i++) {
          for (j = 0; j < size; j++) {
-            uint d;
+            ubyte d;
             if (size == 1) {
                d = 255;
             }
@@ -494,12 +494,12 @@ aaline_line(struct draw_stage *stage, struct prim_header *header)
    float *pos, *tex;
    float dx = header->v[1]->data[0][0] - header->v[0]->data[0][0];
    float dy = header->v[1]->data[0][1] - header->v[0]->data[0][1];
-   float a = atan2(dy, dx);
-   float c_a = cos(a), s_a = sin(a);
+   double a = atan2(dy, dx);
+   float c_a = (float) cos(a), s_a = (float) sin(a);
    uint i;
 
    /* XXX the ends of lines aren't quite perfect yet, but probably passable */
-   dx = 0.5 * half_width;
+   dx = 0.5F * half_width;
    dy = half_width;
 
    /* allocate/dup new verts */
