@@ -49,9 +49,12 @@ cell_map_constant_buffers(struct cell_context *sp)
    struct pipe_winsys *ws = sp->pipe.winsys;
    uint i;
    for (i = 0; i < 2; i++) {
-      if (sp->constants[i].size)
+      if (sp->constants[i].size) {
          sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
                                                   PIPE_BUFFER_USAGE_CPU_READ);
+         cell_flush_buffer_range(sp, sp->mapped_constants[i], 
+                                 sp->constants[i].buffer->size);
+      }
    }
 
    draw_set_mapped_constant_buffer(sp->draw,
@@ -124,6 +127,7 @@ cell_draw_elements(struct pipe_context *pipe,
          void *buf = pipe->winsys->buffer_map(pipe->winsys,
                                               sp->vertex_buffer[i].buffer,
                                               PIPE_BUFFER_USAGE_CPU_READ);
+	 cell_flush_buffer_range(sp, buf, sp->vertex_buffer[i].buffer->size);
          draw_set_mapped_vertex_buffer(draw, i, buf);
       }
    }

@@ -462,6 +462,14 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
          break;
       }
+      case CELL_CMD_FLUSH_BUFFER_RANGE: {
+	 struct cell_buffer_range *br = (struct cell_buffer_range *)
+	     &buffer[pos+1];
+
+	 spu_dcache_mark_dirty((unsigned) br->base, br->size);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_buffer_range)) / 8);
+	 break;
+      }
       default:
          printf("SPU %u: bad opcode: 0x%llx\n", spu.init.id, buffer[pos]);
          ASSERT(0);

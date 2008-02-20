@@ -93,6 +93,7 @@
 #define CELL_CMD_STATE_BLEND         19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
 #define CELL_CMD_VS_EXECUTE          21
+#define CELL_CMD_FLUSH_BUFFER_RANGE  22
 
 
 #define CELL_NUM_BUFFERS 4
@@ -143,6 +144,13 @@ struct cell_attribute_fetch_code {
    uint64_t base;
    uint size;
 };
+
+
+struct cell_buffer_range {
+   uint64_t base;
+   unsigned size;
+};
+
 
 struct cell_shader_info
 {

@@ -40,25 +40,7 @@
 #include "spu_exec.h"
 #include "spu_vertex_shader.h"
 #include "spu_main.h"
-
-#define CACHE_NAME            attribute
-#define CACHED_TYPE           qword
-#define CACHE_TYPE            CACHE_TYPE_RO
-#define CACHE_SET_TAGID(set)  TAG_VERTEX_BUFFER
-#define CACHE_LOG2NNWAY       2
-#define CACHE_LOG2NSETS       6
-#include <cache-api.h>
-
-/* Yes folks, this is ugly.
- */
-#undef CACHE_NWAY
-#undef CACHE_NSETS
-#define CACHE_NAME            attribute
-#define CACHE_NWAY            4
-#define CACHE_NSETS           (1U << 6)
-
-
-#define DRAW_DBG 0
+#include "spu_dcache.h"
 
 typedef void (*spu_fetch_func)(qword *out, const qword *in,
 			       const qword *shuffle_data);
@@ -103,44 +85,6 @@ static const qword fetch_shuffle_data[5] ALIGN16_ATTRIB = {
 
 
 /**
- * Fetch between 1 and 32 bytes from an unaligned address
- */
-static INLINE void
-fetch_unaligned(qword *dst, unsigned ea, unsigned size)
-{
-   qword tmp[4] ALIGN16_ATTRIB;
-   const int shift = ea & 0x0f;
-   const unsigned aligned_start_ea = ea & ~0x0f;
-   const unsigned aligned_end_ea = (ea + size) & ~0x0f;
-   const unsigned num_entries = ((aligned_end_ea - aligned_start_ea) / 16) + 1;
-   unsigned i;
-
-
-   if (shift == 0) {
-      /* Data is already aligned.  Fetch directly into the destination buffer.
-       */
-      for (i = 0; i < num_entries; i++) {
-	 dst[i] = cache_rd(attribute, (ea & ~0x0f) + (i * 16));
-      }
-   } else {
-      /* Fetch data from the cache to the local buffer.
-       */
-      for (i = 0; i < num_entries; i++) {
-	 tmp[i] = cache_rd(attribute, (ea & ~0x0f) + (i * 16));
-      }
-
-
-      /* Fix the alignment of the data and write to the destination buffer.
-       */
-      for (i = 0; i < ((size + 15) / 16); i++) {
-	 dst[i] = si_or((qword) spu_slqwbyte(tmp[i], shift),
-			(qword) spu_rlmaskqwbyte(tmp[i + 1], shift - 16));
-      }
-   }
-}
-
-
-/**
  * Fetch vertex attributes for 'count' vertices.
  */
 static void generic_vertex_fetch(struct spu_vs_context *draw,
@@ -182,7 +126,7 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
          printf("SPU: fetching = 0x%llx\n", addr);
 #endif
 
-         fetch_unaligned(& in[idx], addr, bytes_per_entry);
+         spu_dcache_fetch_unaligned(& in[idx], addr, bytes_per_entry);
          idx += quads_per_entry;
       }
 
@@ -200,15 +144,5 @@ static void generic_vertex_fetch(struct spu_vs_context *draw,
 
 void spu_update_vertex_fetch( struct spu_vs_context *draw )
 {
-   unsigned i;
-
-   
-   /* Invalidate the vertex cache.
-    */
-   for (i = 0; i < (CACHE_NWAY * CACHE_NSETS); i++) {
-      CACHELINE_CLEARVALID(i);
-   }
-
-
    draw->vertex_fetch.fetch_func = generic_vertex_fetch;
 }

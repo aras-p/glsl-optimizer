@@ -82,3 +82,17 @@ cell_flush_int(struct pipe_context *pipe, unsigned flags)
 
    flushing = FALSE;
 }
+
+
+void
+cell_flush_buffer_range(struct cell_context *cell, void *ptr,
+			unsigned size)
+{
+   uint64_t batch[1 + (ROUNDUP8(sizeof(struct cell_buffer_range)) / 8)];
+   struct cell_buffer_range *br = (struct cell_buffer_range *) & batch[1];
+
+   batch[0] = CELL_CMD_FLUSH_BUFFER_RANGE;
+   br->base = (uintptr_t) ptr;
+   br->size = size;
+   cell_batch_append(cell, batch, sizeof(batch));
+}
