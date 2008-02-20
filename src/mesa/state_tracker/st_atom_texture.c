@@ -34,6 +34,7 @@
 
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_texture.h"
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
 
@@ -53,27 +54,26 @@ update_textures(struct st_context *st)
    for (unit = 0; unit < st->ctx->Const.MaxTextureCoordUnits; unit++) {
       const GLuint su = fprog->Base.SamplerUnits[unit];
       struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
-      struct pipe_texture *pt;
+      struct st_texture_object *stObj = st_texture_object(texObj);
 
       if (texObj) {
          GLboolean flush, retval;
 
          retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
          /* XXX retval indicates whether there's a texture border */
-
-         pt = st_get_texobj_texture(texObj);
-      }
-      else {
-         pt = NULL;
       }
 
       /* XXX: need to ensure that textures are unbound/removed from
        * this table before being deleted, otherwise the pointer
        * comparison below could fail.
        */
-      if (st->state.sampler_texture[unit] != pt) {
-	 st->state.sampler_texture[unit] = pt;
-	 st->pipe->set_sampler_texture(st->pipe, unit, pt);
+      if (st->state.sampler_texture[unit] != stObj ||
+          (stObj && stObj->dirtyData)) {
+         struct pipe_texture *pt = st_get_stobj_texture(stObj);
+         st->state.sampler_texture[unit] = stObj;
+         st->pipe->set_sampler_texture(st->pipe, unit, pt);
+         if (stObj)
+            stObj->dirtyData = GL_FALSE;
       }
    }
 }

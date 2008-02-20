@@ -53,45 +53,10 @@
 #define DBG if (0) printf
 
 
-struct st_texture_object
-{
-   struct gl_texture_object base;       /* The "parent" object */
-
-   /* The texture must include at levels [0..lastLevel] once validated:
-    */
-   GLuint lastLevel;
-
-   /* On validation any active images held in main memory or in other
-    * textures will be copied to this texture and the old storage freed.
-    */
-   struct pipe_texture *pt;
-
-   GLboolean imageOverride;
-   GLint depthOverride;
-   GLuint pitchOverride;
-};
-
-
-
-static INLINE struct st_texture_object *
-st_texture_object(struct gl_texture_object *obj)
-{
-   return (struct st_texture_object *) obj;
-}
-
-
 static INLINE struct st_texture_image *
 st_texture_image(struct gl_texture_image *img)
 {
    return (struct st_texture_image *) img;
-}
-
-
-struct pipe_texture *
-st_get_texobj_texture(struct gl_texture_object *texObj)
-{
-   struct st_texture_object *stObj = st_texture_object(texObj);
-   return stObj->pt;
 }
 
 
@@ -725,6 +690,9 @@ st_TexImage(GLcontext * ctx,
       texImage->Data = NULL;
    }
 
+   /* flag data as dirty */
+   stObj->dirtyData = GL_TRUE;
+
 #if 01
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
@@ -900,6 +868,7 @@ st_TexSubimage(GLcontext * ctx,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage)
 {
+   struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride;
    GLuint srcImageStride = _mesa_image_image_stride(packing, width, height,
@@ -961,6 +930,9 @@ st_TexSubimage(GLcontext * ctx,
       st_texture_image_unmap(stImage);
       texImage->Data = NULL;
    }
+
+   /* flag data as dirty */
+   stObj->dirtyData = GL_TRUE;
 }
 
 

@@ -48,6 +48,7 @@
 #include "st_cb_texture.h"
 #include "st_format.h"
 #include "st_public.h"
+#include "st_texture.h"
 
 
 

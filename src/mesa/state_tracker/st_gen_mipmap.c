@@ -43,6 +43,7 @@
 #include "st_draw.h"
 #include "st_gen_mipmap.h"
 #include "st_program.h"
+#include "st_texture.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_texture.h"
 
@@ -302,7 +303,8 @@ st_render_mipmap(struct st_context *st,
       pipe->bind_vs_state(pipe, st->state.vs->cso->data);
    if (st->state.sampler[0])
       pipe->bind_sampler_state(pipe, 0, st->state.sampler[0]->data);
-   pipe->set_sampler_texture(pipe, 0, st->state.sampler_texture[0]);
+   pipe->set_sampler_texture(pipe, 0,
+                        st_get_stobj_texture(st->state.sampler_texture[0]));
    pipe->set_viewport_state(pipe, &st->state.viewport);
 
    return TRUE;
