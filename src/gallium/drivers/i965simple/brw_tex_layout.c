@@ -351,3 +351,11 @@ brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
    }
    *pt = NULL;
 }
+
+
+void
+brw_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+{
+   /* no-op? */
+}
+

@@ -224,6 +224,7 @@ struct pipe_context *brw_create(struct pipe_winsys *pipe_winsys,
    brw->pipe.clear = brw_clear;
    brw->pipe.texture_create  = brw_texture_create;
    brw->pipe.texture_release = brw_texture_release;
+   brw->pipe.texture_update = brw_texture_update;
 
    brw_init_surface_functions(brw);
    brw_init_state_functions(brw);

@@ -302,6 +302,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    i915->pipe.texture_create = i915_texture_create;
    i915->pipe.texture_release = i915_texture_release;
+   i915->pipe.texture_update = i915_texture_update;
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;

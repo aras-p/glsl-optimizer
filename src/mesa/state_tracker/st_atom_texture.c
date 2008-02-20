@@ -67,14 +67,20 @@ update_textures(struct st_context *st)
        * this table before being deleted, otherwise the pointer
        * comparison below could fail.
        */
-      if (st->state.sampler_texture[unit] != stObj ||
-          (stObj && stObj->dirtyData)) {
+      if (st->state.sampler_texture[unit] != stObj) {
          struct pipe_texture *pt = st_get_stobj_texture(stObj);
          st->state.sampler_texture[unit] = stObj;
          st->pipe->set_sampler_texture(st->pipe, unit, pt);
-         if (stObj)
-            stObj->dirtyData = GL_FALSE;
       }
+
+      stObj = st->state.sampler_texture[unit];
+
+      if (stObj && stObj->dirtyData) {
+         struct pipe_texture *pt = st_get_stobj_texture(stObj);
+         st->pipe->texture_update(st->pipe, pt);
+         stObj->dirtyData = GL_FALSE;
+      }
+
    }
 }
 

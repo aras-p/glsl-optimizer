@@ -12,4 +12,7 @@ brw_texture_create(struct pipe_context *pipe, const struct pipe_texture *templat
 extern void
 brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
 
+extern void
+brw_texture_update(struct pipe_context *pipe, struct pipe_texture *texture);
+
 #endif

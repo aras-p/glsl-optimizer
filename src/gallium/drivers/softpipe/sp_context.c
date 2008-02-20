@@ -283,6 +283,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    /* textures */
    softpipe->pipe.texture_create = softpipe_texture_create;
    softpipe->pipe.texture_release = softpipe_texture_release;
+   softpipe->pipe.texture_update = softpipe_texture_update;
    softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 
    /*

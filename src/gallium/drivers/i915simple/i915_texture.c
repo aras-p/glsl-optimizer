@@ -534,3 +534,10 @@ i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
    }
    *pt = NULL;
 }
+
+
+void
+i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+{
+   /* no-op? */
+}

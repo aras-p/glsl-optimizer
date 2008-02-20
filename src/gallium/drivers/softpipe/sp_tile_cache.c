@@ -359,30 +359,37 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
    struct pipe_surface *ps = tc->surface;
    int inuse = 0, pos;
 
-   if (!ps || !ps->buffer)
-      return;
-
-   for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      struct softpipe_cached_tile *tile = tc->entries + pos;
-      if (tile->x >= 0) {
-         if (tc->depth_stencil) {
-            pipe_put_tile_raw(pipe, ps,
-                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                           tile->data.depth32, 0/*STRIDE*/);
+   if (ps && ps->buffer) {
+      /* caching a drawing surface */
+      for (pos = 0; pos < NUM_ENTRIES; pos++) {
+         struct softpipe_cached_tile *tile = tc->entries + pos;
+         if (tile->x >= 0) {
+            if (tc->depth_stencil) {
+               pipe_put_tile_raw(pipe, ps,
+                              tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                              tile->data.depth32, 0/*STRIDE*/);
+            }
+            else {
+               pipe_put_tile_rgba(pipe, ps,
+                                  tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                  (float *) tile->data.color);
+            }
+            tile->x = tile->y = -1;  /* mark as empty */
+            inuse++;
          }
-         else {
-            pipe_put_tile_rgba(pipe, ps,
-                               tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                               (float *) tile->data.color);
-         }
-         tile->x = tile->y = -1;  /* mark as empty */
-         inuse++;
       }
-   }
 
 #if TILE_CLEAR_OPTIMIZATION
-   sp_tile_cache_flush_clear(&softpipe->pipe, tc);
+      sp_tile_cache_flush_clear(&softpipe->pipe, tc);
 #endif
+   }
+   else if (tc->texture) {
+      /* caching a texture, mark all entries as embpy */
+      for (pos = 0; pos < NUM_ENTRIES; pos++) {
+         tc->entries[pos].x = -1;
+      }
+      tc->tex_face = -1;
+   }
 
 #if 0
    debug_printf("flushed tiles in use: %d\n", inuse);

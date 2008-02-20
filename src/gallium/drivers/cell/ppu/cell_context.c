@@ -244,6 +244,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    /* textures */
    cell->pipe.texture_create = cell_texture_create;
    cell->pipe.texture_release = cell_texture_release;
+   cell->pipe.texture_update = cell_texture_update;
    cell->pipe.get_tex_surface = cell_get_tex_surface;
 
    cell->pipe.set_sampler_texture = cell_set_sampler_texture;

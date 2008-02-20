@@ -14,4 +14,8 @@ extern void
 i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
 
 
+extern void
+i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture);
+
+
 #endif /* I915_TEXTURE_H */

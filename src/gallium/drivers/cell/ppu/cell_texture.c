@@ -128,6 +128,14 @@ cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 }
 
 
+void
+cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+{
+   /* XXX TO DO:  re-tile the texture data ... */
+
+}
+
+
 /**
  * Called via pipe->get_tex_surface()
  */

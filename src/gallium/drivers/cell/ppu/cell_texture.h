@@ -67,6 +67,9 @@ cell_texture_create(struct pipe_context *pipe,
 extern void
 cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
 
+extern void
+cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture);
+
 extern struct pipe_surface *
 cell_get_tex_surface(struct pipe_context *pipe,
                      struct pipe_texture *pt,
