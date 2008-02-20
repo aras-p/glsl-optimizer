@@ -12,10 +12,14 @@ DRIVER_SOURCES = \
 	nv40_miptree.c \
 	nv40_query.c \
 	nv40_state.c \
-	nv40_state_emit.c \
+	nv40_state_blend.c \
 	nv40_state_clip.c \
+	nv40_state_emit.c \
+	nv40_state_rasterizer.c \
 	nv40_state_scissor.c \
 	nv40_state_stipple.c \
+	nv40_state_viewport.c \
+	nv40_state_zsa.c \
 	nv40_surface.c \
 	nv40_vbo.c \
 	nv40_vertprog.c

@@ -23,12 +23,38 @@
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
 enum nv40_state_index {
-	NV40_STATE_CLIP = 1ULL,
-	NV40_STATE_SCISSOR = 2ULL,
-	NV40_STATE_STIPPLE = 3ULL,
-	NV40_STATE_FRAGPROG = 4ULL,
-	NV40_STATE_VERTPROG = 5ULL,
-	NV40_STATE_MAX = 6ULL
+	NV40_STATE_FB = 0,
+	NV40_STATE_VIEWPORT = 1,
+	NV40_STATE_BLEND = 2,
+	NV40_STATE_RAST = 3,
+	NV40_STATE_ZSA = 4,
+	NV40_STATE_BCOL = 5,
+	NV40_STATE_CLIP = 6,
+	NV40_STATE_SCISSOR = 7,
+	NV40_STATE_STIPPLE = 8,
+	NV40_STATE_FRAGPROG = 9,
+	NV40_STATE_VERTPROG = 10,
+	NV40_STATE_FRAGTEX0 = 11,
+	NV40_STATE_FRAGTEX1 = 12,
+	NV40_STATE_FRAGTEX2 = 13,
+	NV40_STATE_FRAGTEX3 = 14,
+	NV40_STATE_FRAGTEX4 = 15,
+	NV40_STATE_FRAGTEX5 = 16,
+	NV40_STATE_FRAGTEX6 = 17,
+	NV40_STATE_FRAGTEX7 = 18,
+	NV40_STATE_FRAGTEX8 = 19,
+	NV40_STATE_FRAGTEX9 = 20,
+	NV40_STATE_FRAGTEX10 = 21,
+	NV40_STATE_FRAGTEX11 = 22,
+	NV40_STATE_FRAGTEX12 = 23,
+	NV40_STATE_FRAGTEX13 = 24,
+	NV40_STATE_FRAGTEX14 = 25,
+	NV40_STATE_FRAGTEX15 = 26,
+	NV40_STATE_VERTTEX0 = 27,
+	NV40_STATE_VERTTEX1 = 28,
+	NV40_STATE_VERTTEX2 = 29,
+	NV40_STATE_VERTTEX3 = 30,
+	NV40_STATE_MAX = 31
 };
 
 #define NV40_NEW_BLEND		(1 <<  0)
@@ -75,6 +101,17 @@ struct nv40_rasterizer_state {
 	struct nouveau_stateobj *so;
 };
 
+struct nv40_zsa_state {
+	struct pipe_depth_stencil_alpha_state pipe;
+	struct nouveau_stateobj *so;
+};
+
+struct nv40_blend_state {
+	struct pipe_blend_state pipe;
+	struct nouveau_stateobj *so;
+};
+
+
 struct nv40_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
@@ -107,6 +144,11 @@ struct nv40_context {
 		struct nv40_vertex_program *vertprog;
 		struct nv40_fragment_program *fragprog;
 		struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+		struct nv40_rasterizer_state *rasterizer;
+		struct nv40_zsa_state *zsa;
+		struct nv40_blend_state *blend;
+		struct pipe_blend_color blend_colour;
+		struct pipe_viewport_state viewport;
 	} pipe_state;
 
 	struct nv40_state state;
@@ -115,13 +157,6 @@ struct nv40_context {
 	struct nouveau_stateobj *so_framebuffer;
 	struct nouveau_stateobj *so_fragtex[16];
 	struct nouveau_stateobj *so_vtxbuf;
-	struct nouveau_stateobj *so_blend;
-	struct nv40_rasterizer_state *rasterizer;
-	struct nouveau_stateobj *so_rast;
-	struct nouveau_stateobj *so_zsa;
-	struct nouveau_stateobj *so_bcol;
-	struct nouveau_stateobj *so_viewport;
-	struct nouveau_stateobj *so_stipple;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
@@ -164,10 +199,15 @@ extern void nv40_fragtex_bind(struct nv40_context *);
 extern void nv40_emit_hw_state(struct nv40_context *nv40);
 extern void nv40_state_tex_update(struct nv40_context *nv40);
 extern struct nv40_state_entry nv40_state_clip;
+extern struct nv40_state_entry nv40_state_rasterizer;
 extern struct nv40_state_entry nv40_state_scissor;
 extern struct nv40_state_entry nv40_state_stipple;
 extern struct nv40_state_entry nv40_state_fragprog;
 extern struct nv40_state_entry nv40_state_vertprog;
+extern struct nv40_state_entry nv40_state_blend;
+extern struct nv40_state_entry nv40_state_blend_colour;
+extern struct nv40_state_entry nv40_state_zsa;
+extern struct nv40_state_entry nv40_state_viewport;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,

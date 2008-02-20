@@ -11,6 +11,7 @@ nv40_blend_state_create(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_grobj *curie = nv40->hw->curie;
+	struct nv40_blend_state *bso = MALLOC(sizeof(*bso));
 	struct nouveau_stateobj *so = so_new(16, 0);
 
 	if (cso->blend_enable) {
@@ -46,7 +47,9 @@ nv40_blend_state_create(struct pipe_context *pipe,
 	so_method(so, curie, NV40TCL_DITHER_ENABLE, 1);
 	so_data  (so, cso->dither ? 1 : 0);
 
-	return (void *)so;
+	bso->so = so;
+	bso->pipe = *cso;
+	return (void *)bso;
 }
 
 static void
@@ -54,16 +57,17 @@ nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	so_ref(hwcso, &nv40->so_blend);
+	nv40->pipe_state.blend = hwcso;
 	nv40->dirty |= NV40_NEW_BLEND;
 }
 
 static void
 nv40_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nouveau_stateobj *so = hwcso;
+	struct nv40_blend_state *bso = hwcso;
 
-	so_ref(NULL, &so);
+	so_ref(NULL, &bso->so);
+	FREE(bso);
 }
 
 
@@ -260,7 +264,7 @@ nv40_sampler_state_bind(struct pipe_context *pipe, unsigned unit,
 static void
 nv40_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	FREE(hwcso);
 }
 
 static void
@@ -392,10 +396,8 @@ static void
 nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_rasterizer_state *rsso = hwcso;
 
-	so_ref(rsso->so, &nv40->so_rast);
-	nv40->rasterizer = rsso;
+	nv40->pipe_state.rasterizer = hwcso;
 	nv40->dirty |= NV40_NEW_RAST;
 }
 
@@ -405,7 +407,7 @@ nv40_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv40_rasterizer_state *rsso = hwcso;
 
 	so_ref(NULL, &rsso->so);
-	free(rsso);
+	FREE(rsso);
 }
 
 static void *
@@ -413,6 +415,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 			const struct pipe_depth_stencil_alpha_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nv40_zsa_state *zsaso = MALLOC(sizeof(*zsaso));
 	struct nouveau_stateobj *so = so_new(32, 0);
 
 	so_method(so, nv40->hw->curie, NV40TCL_DEPTH_FUNC, 3);
@@ -455,7 +458,9 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, 0);
 	}
 
-	return (void *)so;
+	zsaso->so = so;
+	zsaso->pipe = *cso;
+	return (void *)zsaso;
 }
 
 static void
@@ -463,16 +468,17 @@ nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	so_ref(hwcso, &nv40->so_zsa);
+	nv40->pipe_state.zsa = hwcso;
 	nv40->dirty |= NV40_NEW_ZSA;
 }
 
 static void
 nv40_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nouveau_stateobj *so = hwcso;
+	struct nv40_zsa_state *zsaso = hwcso;
 
-	so_ref(NULL, &so);
+	so_ref(NULL, &zsaso->so);
+	FREE(zsaso);
 }
 
 static void *
@@ -503,7 +509,7 @@ nv40_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv40_vertex_program *vp = hwcso;
 
 	nv40_vertprog_destroy(nv40, vp);
-	free(vp);
+	FREE(vp);
 }
 
 static void *
@@ -534,7 +540,7 @@ nv40_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv40_fragment_program *fp = hwcso;
 
 	nv40_fragprog_destroy(nv40, fp);
-	free(fp);
+	FREE(fp);
 }
 
 static void
@@ -542,16 +548,8 @@ nv40_set_blend_color(struct pipe_context *pipe,
 		     const struct pipe_blend_color *bcol)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_stateobj *so = so_new(2, 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_BLEND_COLOR, 1);
-	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |
-		       (float_to_ubyte(bcol->color[0]) << 16) |
-		       (float_to_ubyte(bcol->color[1]) <<  8) |
-		       (float_to_ubyte(bcol->color[2]) <<  0)));
-
-	so_ref(so, &nv40->so_bcol);
-	so_ref(NULL, &so);
+	nv40->pipe_state.blend_colour = *bcol;
 	nv40->dirty |= NV40_NEW_BCOL;
 }
 
@@ -754,20 +752,8 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 			const struct pipe_viewport_state *vpt)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_stateobj *so = so_new(9, 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
-	so_data  (so, fui(vpt->translate[0]));
-	so_data  (so, fui(vpt->translate[1]));
-	so_data  (so, fui(vpt->translate[2]));
-	so_data  (so, fui(vpt->translate[3]));
-	so_data  (so, fui(vpt->scale[0]));
-	so_data  (so, fui(vpt->scale[1]));
-	so_data  (so, fui(vpt->scale[2]));
-	so_data  (so, fui(vpt->scale[3]));
-
-	so_ref(so, &nv40->so_viewport);
-	so_ref(NULL, &so);
+	nv40->pipe_state.viewport = *vpt;
 	nv40->dirty |= NV40_NEW_VIEWPORT;
 }
 

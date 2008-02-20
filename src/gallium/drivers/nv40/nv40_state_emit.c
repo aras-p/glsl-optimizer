@@ -2,11 +2,16 @@
 #include "nv40_state.h"
 
 static struct nv40_state_entry *render_states[] = {
+	&nv40_state_rasterizer,
 	&nv40_state_clip,
 	&nv40_state_scissor,
 	&nv40_state_stipple,
 	&nv40_state_fragprog,
 	&nv40_state_vertprog,
+	&nv40_state_blend,
+	&nv40_state_blend_colour,
+	&nv40_state_zsa,
+	&nv40_state_viewport,
 	NULL
 };
 
@@ -78,21 +83,6 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 
 	if (nv40->dirty & NV40_NEW_FB)
 		so_emit(nv40->nvws, nv40->so_framebuffer);
-
-	if (nv40->dirty & NV40_NEW_BLEND)
-		so_emit(nv40->nvws, nv40->so_blend);
-
-	if (nv40->dirty & NV40_NEW_RAST)
-		so_emit(nv40->nvws, nv40->so_rast);
-
-	if (nv40->dirty & NV40_NEW_ZSA)
-		so_emit(nv40->nvws, nv40->so_zsa);
-
-	if (nv40->dirty & NV40_NEW_BCOL)
-		so_emit(nv40->nvws, nv40->so_bcol);
-
-	if (nv40->dirty & NV40_NEW_VIEWPORT)
-		so_emit(nv40->nvws, nv40->so_viewport);
 
 	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
 		nv40_fragtex_bind(nv40);
