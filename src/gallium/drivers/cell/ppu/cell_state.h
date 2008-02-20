@@ -23,42 +23,6 @@
 
 
 
-extern void
-cell_set_framebuffer_state( struct pipe_context *,
-                            const struct pipe_framebuffer_state * );
-
-
-
-extern void *
-cell_create_blend_state(struct pipe_context *, const struct pipe_blend_state *);
-extern void cell_bind_blend_state(struct pipe_context *, void *);
-extern void cell_delete_blend_state(struct pipe_context *, void *);
-
-extern void cell_set_blend_color( struct pipe_context *pipe,
-                                  const struct pipe_blend_color *blend_color );
-
-
-void *
-cell_create_sampler_state(struct pipe_context *,
-                          const struct pipe_sampler_state *);
-
-extern void
-cell_bind_sampler_state(struct pipe_context *, unsigned, void *);
-
-extern void
-cell_delete_sampler_state(struct pipe_context *, void *);
-
-
-extern void *
-cell_create_depth_stencil_alpha_state(struct pipe_context *,
-                                const struct pipe_depth_stencil_alpha_state *);
-
-extern void
-cell_bind_depth_stencil_alpha_state(struct pipe_context *, void *);
-
-extern void
-cell_delete_depth_stencil_alpha_state(struct pipe_context *, void *);
-
 
 void *cell_create_fs_state(struct pipe_context *,
                                const struct pipe_shader_state *);
@@ -69,34 +33,11 @@ void *cell_create_vs_state(struct pipe_context *,
 void cell_bind_vs_state(struct pipe_context *, void *);
 void cell_delete_vs_state(struct pipe_context *, void *);
 
-
-void *
-cell_create_rasterizer_state(struct pipe_context *,
-                             const struct pipe_rasterizer_state *);
-void cell_bind_rasterizer_state(struct pipe_context *, void *);
-void cell_delete_rasterizer_state(struct pipe_context *, void *);
-
-
-void cell_set_clip_state( struct pipe_context *,
-                          const struct pipe_clip_state * );
-
-void cell_set_constant_buffer(struct pipe_context *pipe,
-                              uint shader, uint index,
-                              const struct pipe_constant_buffer *buf);
-
-void cell_set_polygon_stipple( struct pipe_context *,
-                               const struct pipe_poly_stipple * );
-
 void
-cell_set_sampler_texture(struct pipe_context *pipe,
-                         unsigned sampler,
-                         struct pipe_texture *texture);
+cell_set_constant_buffer(struct pipe_context *pipe,
+                         uint shader, uint index,
+                         const struct pipe_constant_buffer *buf);
 
-void cell_set_scissor_state( struct pipe_context *,
-                             const struct pipe_scissor_state * );
-
-void cell_set_texture_state( struct pipe_context *,
-                             unsigned unit, struct pipe_texture * );
 
 void cell_set_vertex_element(struct pipe_context *,
                              unsigned index,
@@ -105,10 +46,6 @@ void cell_set_vertex_element(struct pipe_context *,
 void cell_set_vertex_buffer(struct pipe_context *,
                             unsigned index,
                             const struct pipe_vertex_buffer *);
-
-void cell_set_viewport_state( struct pipe_context *,
-                              const struct pipe_viewport_state * );
-
 
 void cell_update_derived( struct cell_context *softpipe );
 

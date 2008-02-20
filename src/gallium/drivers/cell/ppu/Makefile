@@ -25,14 +25,10 @@ SOURCES = \
 	cell_context.c \
 	cell_draw_arrays.c \
 	cell_flush.c \
-	cell_state_blend.c \
-	cell_state_clip.c \
 	cell_state_derived.c \
 	cell_state_emit.c \
 	cell_state_fs.c \
-	cell_state_rasterizer.c \
-	cell_state_sampler.c \
-	cell_state_surface.c \
+	cell_pipe_state.c \
 	cell_state_vertex.c \
 	cell_spu.c \
 	cell_surface.c \

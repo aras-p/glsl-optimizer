@@ -1,8 +1,8 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,47 +25,15 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_TEXTURE_H
-#define CELL_TEXTURE_H
+
+#ifndef CELL_PIPE_STATE_H
+#define CELL_PIPE_STATE_H
 
 
 struct cell_context;
-struct pipe_texture;
-
-
-/**
- * Subclass of pipe_texture
- */
-struct cell_texture
-{
-   struct pipe_texture base;
-
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_buffer *buffer;
-   unsigned long buffer_size;
-
-   void *tiled_data;  /* XXX this may be temporary */ /*ALIGN16*/
-};
-
-
-/** cast wrapper */
-static INLINE struct cell_texture *
-cell_texture(struct pipe_texture *pt)
-{
-   return (struct cell_texture *) pt;
-}
-
-
 
 extern void
-cell_update_texture_mapping(struct cell_context *cell);
+cell_init_state_functions(struct cell_context *cell);
 
 
-extern void
-cell_init_texture_functions(struct cell_context *cell);
-
-
-#endif /* CELL_TEXTURE_H */
+#endif /* CELL_PIPE_STATE_H */

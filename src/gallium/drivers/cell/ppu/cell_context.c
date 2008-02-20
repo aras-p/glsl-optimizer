@@ -48,6 +48,7 @@
 #include "cell_state.h"
 #include "cell_surface.h"
 #include "cell_spu.h"
+#include "cell_pipe_state.h"
 #include "cell_texture.h"
 #include "cell_vbuf.h"
 
@@ -198,22 +199,6 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
 
 
    /* state setters */
-   cell->pipe.create_blend_state = cell_create_blend_state;
-   cell->pipe.bind_blend_state   = cell_bind_blend_state;
-   cell->pipe.delete_blend_state = cell_delete_blend_state;
-
-   cell->pipe.create_sampler_state = cell_create_sampler_state;
-   cell->pipe.bind_sampler_state   = cell_bind_sampler_state;
-   cell->pipe.delete_sampler_state = cell_delete_sampler_state;
-
-   cell->pipe.create_depth_stencil_alpha_state = cell_create_depth_stencil_alpha_state;
-   cell->pipe.bind_depth_stencil_alpha_state   = cell_bind_depth_stencil_alpha_state;
-   cell->pipe.delete_depth_stencil_alpha_state = cell_delete_depth_stencil_alpha_state;
-
-   cell->pipe.create_rasterizer_state = cell_create_rasterizer_state;
-   cell->pipe.bind_rasterizer_state   = cell_bind_rasterizer_state;
-   cell->pipe.delete_rasterizer_state = cell_delete_rasterizer_state;
-
    cell->pipe.create_fs_state = cell_create_fs_state;
    cell->pipe.bind_fs_state   = cell_bind_fs_state;
    cell->pipe.delete_fs_state = cell_delete_fs_state;
@@ -222,15 +207,7 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.bind_vs_state   = cell_bind_vs_state;
    cell->pipe.delete_vs_state = cell_delete_vs_state;
 
-   cell->pipe.set_blend_color = cell_set_blend_color;
-   cell->pipe.set_clip_state = cell_set_clip_state;
    cell->pipe.set_constant_buffer = cell_set_constant_buffer;
-
-   cell->pipe.set_framebuffer_state = cell_set_framebuffer_state;
-
-   cell->pipe.set_polygon_stipple = cell_set_polygon_stipple;
-   cell->pipe.set_scissor_state = cell_set_scissor_state;
-   cell->pipe.set_viewport_state = cell_set_viewport_state;
 
    cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;
    cell->pipe.set_vertex_element = cell_set_vertex_element;
@@ -241,21 +218,15 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell->pipe.clear = cell_clear_surface;
    cell->pipe.flush = cell_flush;
 
-   /* textures */
-   cell->pipe.texture_create = cell_texture_create;
-   cell->pipe.texture_release = cell_texture_release;
-   cell->pipe.texture_update = cell_texture_update;
-   cell->pipe.get_tex_surface = cell_get_tex_surface;
-
-   cell->pipe.set_sampler_texture = cell_set_sampler_texture;
-
 #if 0
    cell->pipe.begin_query = cell_begin_query;
    cell->pipe.end_query = cell_end_query;
    cell->pipe.wait_query = cell_wait_query;
 #endif
 
+   cell_init_state_functions(cell);
    cell_init_surface_functions(cell);
+   cell_init_texture_functions(cell);
 
    cell->draw = cell_draw_create(cell);
 
