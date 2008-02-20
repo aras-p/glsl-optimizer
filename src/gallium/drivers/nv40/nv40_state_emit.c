@@ -2,6 +2,7 @@
 #include "nv40_state.h"
 
 static struct nv40_state_entry *render_states[] = {
+	&nv40_state_framebuffer,
 	&nv40_state_rasterizer,
 	&nv40_state_clip,
 	&nv40_state_scissor,
@@ -67,7 +68,7 @@ nv40_state_emit(struct nv40_context *nv40)
 		so_emit(nv40->nvws, nv40->hw->state[idx]);
 	}
 
-	so_emit_reloc_markers(nv40->nvws, nv40->so_framebuffer);
+	so_emit_reloc_markers(nv40->nvws, nv40->state.hw[NV40_STATE_FB]);
 	for (i = 0; i < 16; i++) {
 		if (!(nv40->fp_samplers & (1 << i)))
 			continue;
@@ -80,9 +81,6 @@ void
 nv40_emit_hw_state(struct nv40_context *nv40)
 {
 	nv40_state_validate(nv40);
-
-	if (nv40->dirty & NV40_NEW_FB)
-		so_emit(nv40->nvws, nv40->so_framebuffer);
 
 	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
 		nv40_fragtex_bind(nv40);

@@ -149,12 +149,12 @@ struct nv40_context {
 		struct nv40_blend_state *blend;
 		struct pipe_blend_color blend_colour;
 		struct pipe_viewport_state viewport;
+		struct pipe_framebuffer_state framebuffer;
 	} pipe_state;
 
 	struct nv40_state state;
 	unsigned fallback;
 
-	struct nouveau_stateobj *so_framebuffer;
 	struct nouveau_stateobj *so_fragtex[16];
 	struct nouveau_stateobj *so_vtxbuf;
 
@@ -208,6 +208,7 @@ extern struct nv40_state_entry nv40_state_blend;
 extern struct nv40_state_entry nv40_state_blend_colour;
 extern struct nv40_state_entry nv40_state_zsa;
 extern struct nv40_state_entry nv40_state_viewport;
+extern struct nv40_state_entry nv40_state_framebuffer;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
