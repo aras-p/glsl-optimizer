@@ -136,7 +136,7 @@ softpipe_texture_update(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint unit;
    for (unit = 0; unit < PIPE_MAX_SAMPLERS; unit++) {
-      if (softpipe->texture[unit] == texture) {
+      if (softpipe->texture[unit] == softpipe_texture(texture)) {
          sp_flush_tile_cache(softpipe, softpipe->tex_cache[unit]);
       }
    }
