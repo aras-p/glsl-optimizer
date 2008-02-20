@@ -1091,6 +1091,7 @@ do_copy_texsubimage(GLcontext *ctx,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
    struct st_texture_image *stImage = st_texture_image(texImage);
+   struct st_texture_object *stObj = st_texture_object(texObj);
    GLenum baseFormat = texImage->InternalFormat;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb;
@@ -1176,6 +1177,9 @@ do_copy_texsubimage(GLcontext *ctx,
    }
 
    pipe_surface_reference(&dest_surface, NULL);
+
+   /* flag data as dirty */
+   stObj->dirtyData = GL_TRUE;
 
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
