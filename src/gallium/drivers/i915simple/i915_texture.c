@@ -488,6 +488,7 @@ i915_texture_create(struct pipe_context *pipe,
       struct i915_context *i915 = i915_context(pipe);
 
       tex->base = *templat;
+      tex->base.refcount = 1;
 
       if (i915->flags.is_i945 ? i945_miptree_layout(pipe, tex) :
 	  i915_miptree_layout(pipe, tex))

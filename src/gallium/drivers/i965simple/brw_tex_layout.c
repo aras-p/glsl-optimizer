@@ -308,6 +308,7 @@ brw_texture_create(struct pipe_context *pipe,
 
    if (tex) {
       tex->base = *templat;
+      tex->base.refcount = 1;
 
       if (brw_miptree_layout(pipe, tex))
 	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,

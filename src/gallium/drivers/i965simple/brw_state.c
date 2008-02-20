@@ -327,7 +327,9 @@ static void brw_set_sampler_texture(struct pipe_context *pipe,
 {
    struct brw_context *brw = brw_context(pipe);
 
-   brw->attribs.Texture[unit] = (struct brw_texture*)texture;  /* ptr, not struct */
+   pipe_reference_texture(pipe,
+                          (struct pipe_texture **) &brw->attribs.Texture[unit],
+                          texture);
 
    brw->state.dirty.brw |= BRW_NEW_TEXTURE;
 }

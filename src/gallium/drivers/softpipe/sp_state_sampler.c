@@ -30,6 +30,7 @@
  */
 
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "draw/draw_context.h"
 
@@ -82,7 +83,7 @@ softpipe_set_sampler_texture(struct pipe_context *pipe,
    draw_flush(softpipe->draw);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   softpipe->texture[unit] = softpipe_texture(texture);  /* ptr, not struct */
+   pipe_texture_reference(pipe, &softpipe->texture[unit], texture);
 
    sp_tile_cache_set_texture(pipe, softpipe->tex_cache[unit], texture);
 

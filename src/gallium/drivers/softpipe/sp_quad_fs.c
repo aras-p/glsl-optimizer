@@ -142,7 +142,7 @@ static void shade_begin(struct quad_stage *qs)
    /* set TGSI sampler state that varies */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       qss->samplers[i].state = softpipe->sampler[i];
-      qss->samplers[i].texture = &softpipe->texture[i]->base;
+      qss->samplers[i].texture = softpipe->texture[i];
    }
 
    /* find output slots for depth, color */

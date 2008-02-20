@@ -88,6 +88,7 @@ cell_texture_create(struct pipe_context *pipe,
       return NULL;
 
    spt->base = *templat;
+   spt->base.refcount = 1;
 
    cell_texture_layout(spt);
 

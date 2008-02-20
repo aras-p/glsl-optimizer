@@ -76,7 +76,7 @@ st_texture_create(struct st_context *st,
 		  GLuint depth0,
 		  GLuint compress_byte)
 {
-   struct pipe_texture pt;
+   struct pipe_texture pt, *newtex;
 
    assert(target <= PIPE_TEXTURE_CUBE);
 
@@ -95,9 +95,12 @@ st_texture_create(struct st_context *st,
    pt.depth[0] = depth0;
    pt.compressed = compress_byte ? 1 : 0;
    pt.cpp = pt.compressed ? compress_byte : st_sizeof_format(format);
-   pt.refcount = 1; 
 
-   return st->pipe->texture_create(st->pipe, &pt);
+   newtex = st->pipe->texture_create(st->pipe, &pt);
+
+   assert(!newtex || newtex->refcount == 1);
+
+   return newtex;
 }
 
 

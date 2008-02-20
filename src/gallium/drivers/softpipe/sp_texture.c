@@ -89,6 +89,7 @@ softpipe_texture_create(struct pipe_context *pipe,
       return NULL;
 
    spt->base = *templat;
+   spt->base.refcount = 1;
 
    softpipe_texture_layout(spt);
 
@@ -99,6 +100,8 @@ softpipe_texture_create(struct pipe_context *pipe,
       FREE(spt);
       return NULL;
    }
+
+   assert(spt->base.refcount == 1);
 
    return &spt->base;
 }
@@ -136,7 +139,7 @@ softpipe_texture_update(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint unit;
    for (unit = 0; unit < PIPE_MAX_SAMPLERS; unit++) {
-      if (softpipe->texture[unit] == softpipe_texture(texture)) {
+      if (softpipe->texture[unit] == texture) {
          sp_flush_tile_cache(softpipe, softpipe->tex_cache[unit]);
       }
    }

@@ -32,6 +32,7 @@
 #include "draw/draw_context.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -505,7 +506,9 @@ static void i915_set_sampler_texture(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->texture[sampler] = (struct i915_texture*)texture;  /* ptr, not struct */
+   pipe_texture_reference(pipe,
+                          (struct pipe_texture **) &i915->texture[sampler],
+                          texture);
 
    i915->dirty |= I915_NEW_TEXTURE;
 }
