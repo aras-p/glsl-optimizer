@@ -22,6 +22,15 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
+enum nv40_state_index {
+	NV40_STATE_CLIP = 1ULL,
+	NV40_STATE_SCISSOR = 2ULL,
+	NV40_STATE_STIPPLE = 3ULL,
+	NV40_STATE_FRAGPROG = 4ULL,
+	NV40_STATE_VERTPROG = 5ULL,
+	NV40_STATE_MAX = 6ULL
+};
+
 #define NV40_NEW_BLEND		(1 <<  0)
 #define NV40_NEW_RAST		(1 <<  1)
 #define NV40_NEW_ZSA		(1 <<  2)
@@ -56,6 +65,9 @@ struct nv40_channel_context {
 	/* Vtxprog resources */
 	struct nouveau_resource *vp_exec_heap;
 	struct nouveau_resource *vp_data_heap;
+
+	/* Current 3D state of channel */
+	struct nouveau_stateobj *state[NV40_STATE_MAX];
 };
 
 struct nv40_rasterizer_state {
@@ -64,18 +76,10 @@ struct nv40_rasterizer_state {
 };
 
 struct nv40_state {
-	struct {
-		unsigned enabled;
-		struct nouveau_stateobj *so;
-	} scissor;
+	unsigned scissor_enabled;
+	unsigned stipple_enabled;
 
-	struct {
-		unsigned enabled;
-		struct nouveau_stateobj *so;
-	} stipple;
-
-	struct nouveau_stateobj *fragprog;
-	struct nouveau_stateobj *vertprog;
+	struct nouveau_stateobj *hw[NV40_STATE_MAX];
 };
 
 struct nv40_context {

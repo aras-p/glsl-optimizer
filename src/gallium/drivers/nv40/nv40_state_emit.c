@@ -1,27 +1,6 @@
 #include "nv40_context.h"
 #include "nv40_state.h"
 
-/* Emit relocs for every referenced buffer.
- *
- * This is to ensure the bufmgr has an accurate idea of how
- * the buffer is used.  These relocs appear in the push buffer as
- * NOPs, and will only be turned into state changes if a buffer
- * actually moves.
- */
-static void
-nv40_state_emit_dummy_relocs(struct nv40_context *nv40)
-{
-	unsigned i;	
-	
-	so_emit_reloc_markers(nv40->nvws, nv40->so_framebuffer);
-	for (i = 0; i < 16; i++) {
-		if (!(nv40->fp_samplers & (1 << i)))
-			continue;
-		so_emit_reloc_markers(nv40->nvws, nv40->so_fragtex[i]);
-	}
-	so_emit_reloc_markers(nv40->nvws, nv40->state.fragprog);
-}
-
 static struct nv40_state_entry *render_states[] = {
 	&nv40_state_clip,
 	&nv40_state_scissor,
@@ -45,7 +24,7 @@ nv40_state_validate(struct nv40_context *nv40)
 
 		if (nv40->dirty & e->dirty.pipe) {
 			if (e->validate(nv40))
-				nv40->hw_dirty |= e->dirty.hw;
+				nv40->hw_dirty |= (1 << e->dirty.hw);
 		}
 
 		states++;
@@ -70,6 +49,28 @@ nv40_state_validate(struct nv40_context *nv40)
 	}
 }
 
+static void
+nv40_state_emit(struct nv40_context *nv40)
+{
+	unsigned i;
+
+	while (nv40->hw_dirty) {
+		unsigned idx = ffs(nv40->hw_dirty) - 1;
+		nv40->hw_dirty &= ~(1 << idx);
+
+		so_ref (nv40->state.hw[idx], &nv40->hw->state[idx]);
+		so_emit(nv40->nvws, nv40->hw->state[idx]);
+	}
+
+	so_emit_reloc_markers(nv40->nvws, nv40->so_framebuffer);
+	for (i = 0; i < 16; i++) {
+		if (!(nv40->fp_samplers & (1 << i)))
+			continue;
+		so_emit_reloc_markers(nv40->nvws, nv40->so_fragtex[i]);
+	}
+	so_emit_reloc_markers(nv40->nvws, nv40->state.hw[NV40_STATE_FRAGPROG]);
+}
+
 void
 nv40_emit_hw_state(struct nv40_context *nv40)
 {
@@ -90,23 +91,8 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 	if (nv40->dirty & NV40_NEW_BCOL)
 		so_emit(nv40->nvws, nv40->so_bcol);
 
-	if (nv40->hw_dirty & NV40_NEW_SCISSOR) {
-		so_emit(nv40->nvws, nv40->state.scissor.so);
-		nv40->hw_dirty &= ~NV40_NEW_SCISSOR;
-	}
-
 	if (nv40->dirty & NV40_NEW_VIEWPORT)
 		so_emit(nv40->nvws, nv40->so_viewport);
-
-	if (nv40->hw_dirty & NV40_NEW_STIPPLE) {
-		so_emit(nv40->nvws, nv40->state.stipple.so);
-		nv40->hw_dirty &= ~NV40_NEW_STIPPLE;
-	}
-
-	if (nv40->hw_dirty & NV40_NEW_FRAGPROG) {
-		so_emit(nv40->nvws, nv40->state.fragprog);
-		nv40->hw_dirty &= ~NV40_NEW_FRAGPROG;
-	}
 
 	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
 		nv40_fragtex_bind(nv40);
@@ -118,14 +104,9 @@ nv40_emit_hw_state(struct nv40_context *nv40)
 		nv40->dirty &= ~NV40_NEW_FRAGPROG;
 	}
 
-	if (nv40->hw_dirty & NV40_NEW_VERTPROG) {
-		so_emit(nv40->nvws, nv40->state.vertprog);
-		nv40->hw_dirty &= ~NV40_NEW_VERTPROG;
-	}
+	nv40_state_emit(nv40);
 
 	nv40->dirty_samplers = 0;
 	nv40->dirty = 0;
-
-	nv40_state_emit_dummy_relocs(nv40);
 }
 

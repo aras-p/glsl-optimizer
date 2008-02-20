@@ -841,8 +841,8 @@ update_constants:
 			nv40_fragprog_upload(nv40, fp);
 	}
 
-	if (fp->so != nv40->state.fragprog) {
-		so_ref(fp->so, &nv40->state.fragprog);
+	if (fp->so != nv40->state.hw[NV40_STATE_FRAGPROG]) {
+		so_ref(fp->so, &nv40->state.hw[NV40_STATE_FRAGPROG]);
 		return TRUE;
 	}
 
@@ -861,7 +861,7 @@ struct nv40_state_entry nv40_state_fragprog = {
 	.validate = nv40_fragprog_validate,
 	.dirty = {
 		.pipe = NV40_NEW_FRAGPROG,
-		.hw = NV40_NEW_FRAGPROG
+		.hw = NV40_STATE_FRAGPROG
 	}
 };
 

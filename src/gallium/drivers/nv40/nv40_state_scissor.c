@@ -7,8 +7,8 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 	struct pipe_scissor_state *s = &nv40->pipe_state.scissor;
 	struct nouveau_stateobj *so;
 
-	if (nv40->state.scissor.so &&
-	    (rast->scissor == 0 && nv40->state.scissor.enabled == 0))
+	if (nv40->state.hw[NV40_STATE_SCISSOR] &&
+	    (rast->scissor == 0 && nv40->state.scissor_enabled == 0))
 		return FALSE;
 
 	so = so_new(3, 0);
@@ -21,7 +21,7 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 		so_data  (so, 4096 << 16);
 	}
 
-	so_ref(so, &nv40->state.scissor.so);
+	so_ref(so, &nv40->state.hw[NV40_STATE_SCISSOR]);
 	so_ref(NULL, &so);
 	return TRUE;
 }
@@ -30,6 +30,6 @@ struct nv40_state_entry nv40_state_scissor = {
 	.validate = nv40_state_scissor_validate,
 	.dirty = {
 		.pipe = NV40_NEW_SCISSOR | NV40_NEW_RAST,
-		.hw = NV40_NEW_SCISSOR
+		.hw = NV40_STATE_SCISSOR
 	}
 };

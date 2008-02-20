@@ -7,8 +7,8 @@ nv40_state_stipple_validate(struct nv40_context *nv40)
 	struct nouveau_grobj *curie = nv40->hw->curie;
 	struct nouveau_stateobj *so;
 
-	if (nv40->state.stipple.so && (rast->poly_stipple_enable == 0 &&
-				       nv40->state.stipple.enabled == 0))
+	if (nv40->state.hw[NV40_STATE_STIPPLE] &&
+	   (rast->poly_stipple_enable == 0 && nv40->state.stipple_enabled == 0))
 		return FALSE;
 
 	if (rast->poly_stipple_enable) {
@@ -26,7 +26,7 @@ nv40_state_stipple_validate(struct nv40_context *nv40)
 		so_data  (so, 0);
 	}
 
-	so_ref(so, &nv40->state.stipple.so);
+	so_ref(so, &nv40->state.hw[NV40_STATE_STIPPLE]);
 	so_ref(NULL, &so);
 	return TRUE;
 }
@@ -35,6 +35,6 @@ struct nv40_state_entry nv40_state_stipple = {
 	.validate = nv40_state_stipple_validate,
 	.dirty = {
 		.pipe = NV40_NEW_STIPPLE | NV40_NEW_RAST,
-		.hw = NV40_NEW_STIPPLE
+		.hw = NV40_STATE_STIPPLE,
 	}
 };

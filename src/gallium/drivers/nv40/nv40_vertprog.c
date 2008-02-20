@@ -786,8 +786,8 @@ check_gpu_resources:
 		}
 	}
 
-	if (vp->so != nv40->state.vertprog) {
-		so_ref(vp->so, &nv40->state.vertprog);
+	if (vp->so != nv40->state.hw[NV40_STATE_VERTPROG]) {
+		so_ref(vp->so, &nv40->state.hw[NV40_STATE_VERTPROG]);
 		return TRUE;
 	}
 
@@ -807,7 +807,7 @@ struct nv40_state_entry nv40_state_vertprog = {
 	.validate = nv40_vertprog_validate,
 	.dirty = {
 		.pipe = NV40_NEW_VERTPROG,
-		.hw = NV40_NEW_VERTPROG
+		.hw = NV40_STATE_VERTPROG,
 	}
 };
 
