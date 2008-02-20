@@ -302,6 +302,8 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.bind_sampler_state   = cell_bind_sampler_state;
    cell->pipe.delete_sampler_state = cell_delete_sampler_state;
 
+   cell->pipe.set_sampler_texture = cell_set_sampler_texture;
+
    cell->pipe.create_depth_stencil_alpha_state = cell_create_depth_stencil_alpha_state;
    cell->pipe.bind_depth_stencil_alpha_state   = cell_bind_depth_stencil_alpha_state;
    cell->pipe.delete_depth_stencil_alpha_state = cell_delete_depth_stencil_alpha_state;
