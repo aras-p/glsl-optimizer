@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -61,8 +61,10 @@ typedef long long          int64_t;
 typedef unsigned long long uint64_t;
 
 #if defined(_WIN64)
+typedef __int64            intptr_t;
 typedef unsigned __int64   uintptr_t;
 #else
+typedef int                intptr_t;
 typedef unsigned int       uintptr_t;
 #endif
 
