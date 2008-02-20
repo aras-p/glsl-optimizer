@@ -73,6 +73,7 @@
 #include "spu_main.h"
 #include "spu_vertex_shader.h"
 #include "spu_dcache.h"
+#include "cell/common.h"
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
@@ -1900,8 +1901,7 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
       for (i = 0; i < mach->NumDeclarations; i++) {
          union {
             struct tgsi_full_declaration decl;
-            qword buffer[2 * ((sizeof(struct tgsi_full_declaration) + 31) 
-                              / 32)];
+            qword buffer[ROUNDUP16(sizeof(struct tgsi_full_declaration)) / 16];
          } d ALIGN16_ATTRIB;
          unsigned ea = (unsigned) (mach->Declarations + pc);
 
@@ -1915,8 +1915,7 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
    while (pc != -1) {
       union {
          struct tgsi_full_instruction inst;
-         qword buffer[2 * ((sizeof(struct tgsi_full_instruction) + 31) 
-                           / 32)];
+         qword buffer[ROUNDUP16(sizeof(struct tgsi_full_instruction)) / 16];
       } i ALIGN16_ATTRIB;
       unsigned ea = (unsigned) (mach->Instructions + pc);
 

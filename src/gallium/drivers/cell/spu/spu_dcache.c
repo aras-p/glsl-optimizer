@@ -22,6 +22,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "cell/common.h"
 #include "spu_main.h"
 #include "spu_dcache.h"
 
@@ -50,8 +51,8 @@ spu_dcache_fetch_unaligned(qword *dst, unsigned ea, unsigned size)
 {
    const int shift = ea & 0x0f;
    const unsigned aligned_start_ea = ea & ~0x0f;
-   const unsigned aligned_end_ea = (ea + size) & ~0x0f;
-   const unsigned num_entries = ((aligned_end_ea - aligned_start_ea) / 16) + 1;
+   const unsigned aligned_end_ea = ROUNDUP16(ea + size);
+   const unsigned num_entries = (aligned_end_ea - aligned_start_ea) / 16;
    unsigned i;
 
 
