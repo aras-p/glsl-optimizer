@@ -137,7 +137,7 @@ struct cell_array_info
    uint pitch;         /**< Byte pitch from one entry to the next. */
    uint size;
    uint function_offset;
-} ALIGN16_ATTRIB;
+};
 
 
 struct cell_attribute_fetch_code {
@@ -162,7 +162,7 @@ struct cell_shader_info
    unsigned num_declarations;
    unsigned num_instructions;
    unsigned num_immediates;
-} ALIGN16_ATTRIB;
+};
 
 
 #define SPU_VERTS_PER_BATCH 64
@@ -175,7 +175,7 @@ struct cell_command_vs
    float plane[12][4];
    unsigned nr_planes;
    unsigned nr_attrs;
-} ALIGN16_ATTRIB;
+};
 
 
 struct cell_command_render
