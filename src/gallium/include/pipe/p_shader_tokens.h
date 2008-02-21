@@ -5,6 +5,8 @@
 extern "C" {
 #endif // defined __cplusplus
 
+#include "p_compiler.h"
+
 struct tgsi_version
 {
    unsigned MajorVersion  : 8;
