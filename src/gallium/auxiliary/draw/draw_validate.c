@@ -82,6 +82,12 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       precalc_flat = 1;		/* only needed for lines really */
    }
 
+   if (draw->rasterizer->poly_stipple_enable
+       && draw->pipeline.pstipple) {
+      draw->pipeline.pstipple->next = next;
+      next = draw->pipeline.pstipple;
+   }
+
    if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
        draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;

@@ -16,6 +16,7 @@ C_SOURCES = \
 	draw_flatshade.c \
 	draw_offset.c \
 	draw_prim.c \
+	draw_pstipple.c \
 	draw_stipple.c \
 	draw_twoside.c \
 	draw_unfilled.c \

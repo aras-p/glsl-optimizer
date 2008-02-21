@@ -102,6 +102,9 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
 void
 draw_install_aapoint_stage(struct draw_context *draw, struct pipe_context *pipe);
 
+void
+draw_install_pstipple_stage(struct draw_context *draw, struct pipe_context *pipe);
+
 
 int
 draw_find_vs_output(struct draw_context *draw,

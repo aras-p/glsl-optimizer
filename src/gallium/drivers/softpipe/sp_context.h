@@ -39,6 +39,13 @@
 #include "sp_quad.h"
 
 
+/**
+ * This is a temporary variable for testing draw-stage polygon stipple.
+ * If zero, do stipple in sp_quad_stipple.c
+ */
+#define USE_DRAW_STAGE_PSTIPPLE 1
+
+
 struct softpipe_winsys;
 struct softpipe_vbuf_render;
 struct draw_context;
