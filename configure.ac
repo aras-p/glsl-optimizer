@@ -795,7 +795,7 @@ linux*)
     ;;
 freebsd*)
     PIC_FLAGS="-fPIC"
-    case "$host_os" in
+    case "$host_cpu" in
     i*86)
         PIC_FLAGS=""
         if test "x$enable_asm" = xyes; then
