@@ -459,12 +459,6 @@ if test "$mesa_driver" = dri; then
         PROGRAM_DIRS="egl"
     fi
 
-    # default drivers
-    if test "x$DRI_DIRS" = x; then
-        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
-            savage sis tdfx trident unichrome ffb"
-    fi
-
     # Platform specific settings and drivers to build
     case "$host_os" in
     linux*)
@@ -513,6 +507,13 @@ if test "$mesa_driver" = dri; then
         fi
         ;;
     esac
+
+    # default drivers
+    if test "x$DRI_DIRS" = x; then
+        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
+            savage sis tdfx trident unichrome ffb"
+    fi
+
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
 
     # Check for expat
