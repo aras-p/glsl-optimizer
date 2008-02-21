@@ -26,6 +26,10 @@
 #include "spu_main.h"
 #include "spu_dcache.h"
 
+#define CACHELINE_LOG2SIZE    7
+#define LINE_SIZE             (1U << 7)
+#define ALIGN_MASK            (~(LINE_SIZE - 1))
+
 #define CACHE_NAME            data
 #define CACHED_TYPE           qword
 #define CACHE_TYPE            CACHE_TYPE_RO
@@ -60,7 +64,7 @@ spu_dcache_fetch_unaligned(qword *dst, unsigned ea, unsigned size)
       /* Data is already aligned.  Fetch directly into the destination buffer.
        */
       for (i = 0; i < num_entries; i++) {
-         dst[i] = cache_rd(data, (ea & ~0x0f) + (i * 16));
+         dst[i] = cache_rd(data, ea + (i * 16));
       }
    } else {
       qword tmp[2] ALIGN16_ATTRIB;
@@ -85,17 +89,23 @@ spu_dcache_fetch_unaligned(qword *dst, unsigned ea, unsigned size)
 }
 
 
+/**
+ * Notify the cache that a range of main memory may have been modified
+ */
 void
 spu_dcache_mark_dirty(unsigned ea, unsigned size)
 {
    unsigned i;
+   const unsigned aligned_start = (ea & ALIGN_MASK);
+   const unsigned aligned_end = (ea + size + (LINE_SIZE - 1)) 
+       & ALIGN_MASK;
 
-   (void) ea;
-   (void) size;
 
-   /* Invalidate the whole cache for now.
-    */
    for (i = 0; i < (CACHE_NWAY * CACHE_NSETS); i++) {
-      CACHELINE_CLEARVALID(i);
+      const unsigned entry = __cache_dir[i];
+      const unsigned addr = entry & ~0x0f;
+
+      __cache_dir[i] = ((addr >= aligned_start) && (addr < aligned_end))
+          ? (entry & ~CACHELINE_VALID) : entry;
    }
 }
