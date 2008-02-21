@@ -32,6 +32,7 @@
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_dump.h"
 
