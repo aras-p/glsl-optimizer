@@ -328,8 +328,12 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
       draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
 
-   /* enable aaline stage */
+   /* plug in AA line/point stages */
    draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);
+   draw_install_aapoint_stage(softpipe->draw, &softpipe->pipe);
+
+   /* sp_prim_setup can do wide points (don't convert to quads) */
+   draw_convert_wide_points(softpipe->draw, FALSE);
 
    sp_init_surface_functions(softpipe);
 

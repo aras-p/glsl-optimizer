@@ -180,6 +180,7 @@ struct draw_context
       struct draw_stage *offset;
       struct draw_stage *unfilled;
       struct draw_stage *stipple;
+      struct draw_stage *aapoint;
       struct draw_stage *aaline;
       struct draw_stage *wide;
       struct draw_stage *rasterize;

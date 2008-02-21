@@ -63,6 +63,11 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.aaline;
    }
 
+   if (draw->rasterizer->point_smooth && draw->pipeline.aapoint) {
+      draw->pipeline.aapoint->next = next;
+      next = draw->pipeline.aapoint;
+   }
+
    if ((draw->rasterizer->line_width != 1.0 && draw->convert_wide_lines
         && !draw->rasterizer->line_smooth) ||
        (draw->rasterizer->point_size != 1.0 && draw->convert_wide_points) ||
