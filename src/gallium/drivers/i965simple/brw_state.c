@@ -327,7 +327,7 @@ static void brw_set_sampler_texture(struct pipe_context *pipe,
 {
    struct brw_context *brw = brw_context(pipe);
 
-   pipe_reference_texture(pipe,
+   pipe_texture_reference(pipe,
                           (struct pipe_texture **) &brw->attribs.Texture[unit],
                           texture);
 
