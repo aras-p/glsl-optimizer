@@ -33,7 +33,7 @@
 #define CACHE_NAME            data
 #define CACHED_TYPE           qword
 #define CACHE_TYPE            CACHE_TYPE_RO
-#define CACHE_SET_TAGID(set)  TAG_VERTEX_BUFFER
+#define CACHE_SET_TAGID(set)  (((set) & 0x03) + TAG_DCACHE0)
 #define CACHE_LOG2NNWAY       2
 #define CACHE_LOG2NSETS       6
 #include <cache-api.h>

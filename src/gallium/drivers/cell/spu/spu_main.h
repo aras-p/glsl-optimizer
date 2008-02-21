@@ -131,7 +131,10 @@ extern boolean Debug;
 #define TAG_BATCH_BUFFER      17
 #define TAG_MISC              18
 #define TAG_TEXTURE_TILE      19
-#define TAG_INSTRUCTION_FETCH 20
+#define TAG_DCACHE0           20
+#define TAG_DCACHE1           21
+#define TAG_DCACHE2           22
+#define TAG_DCACHE3           23
 
 
 
