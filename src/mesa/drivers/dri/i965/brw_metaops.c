@@ -41,6 +41,7 @@
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 #include "intel_regions.h"
+#include "intel_buffers.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"

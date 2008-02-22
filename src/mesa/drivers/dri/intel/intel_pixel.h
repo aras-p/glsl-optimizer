@@ -60,4 +60,10 @@ void intelCopyPixels(GLcontext * ctx,
                      GLsizei width, GLsizei height,
                      GLint destx, GLint desty, GLenum type);
 
+void intelBitmap(GLcontext * ctx,
+		 GLint x, GLint y,
+		 GLsizei width, GLsizei height,
+		 const struct gl_pixelstore_attrib *unpack,
+		 const GLubyte * pixels);
+
 #endif

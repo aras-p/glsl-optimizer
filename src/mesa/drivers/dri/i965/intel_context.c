@@ -61,6 +61,7 @@
 #include "intel_decode.h"
 #include "intel_fbo.h"
 #include "intel_bufmgr_ttm.h"
+#include "intel_pixel.h"
 
 #include "drirenderbuffer.h"
 #include "i915_drm.h"
@@ -235,7 +236,7 @@ const struct dri_extension arb_oc_extensions[] = {
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
-void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+static void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
 {
    struct intel_context *intel = ctx?intel_context(ctx):NULL;
 

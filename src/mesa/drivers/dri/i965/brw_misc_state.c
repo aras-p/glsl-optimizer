@@ -295,6 +295,8 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    BRW_CACHED_BATCH_STRUCT(brw, &bpso);
 }
 
+#define _NEW_WINDOW_POS 0x40000000
+
 const struct brw_tracked_state brw_polygon_stipple_offset = {
    .dirty = {
       .mesa = _NEW_WINDOW_POS,

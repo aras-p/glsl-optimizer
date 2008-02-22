@@ -64,6 +64,7 @@ typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 #define INTEL_FALLBACK_STENCIL_BUFFER    0x8
 #define INTEL_FALLBACK_USER		 0x10
 #define INTEL_FALLBACK_RENDERMODE	 0x20
+#define INTEL_FALLBACK_TEXTURE   	 0x40
 
 extern void intelFallback(struct intel_context *intel, GLuint bit,
                           GLboolean mode);
@@ -85,6 +86,9 @@ struct intel_context
       void (*destroy) (struct intel_context * intel);
       void (*emit_state) (struct intel_context * intel);
       void (*new_batch) (struct intel_context * intel);
+      void (*emit_invarient_state) (struct intel_context * intel);
+      void (*note_fence) (struct intel_context *intel, GLuint fence);
+      void (*note_unlock) (struct intel_context *intel);
       void (*update_texture_state) (struct intel_context * intel);
 
       void (*render_start) (struct intel_context * intel);
@@ -93,13 +97,16 @@ struct intel_context
                                struct intel_region * draw_region,
                                struct intel_region * depth_region);
 
-        GLuint(*flush_cmd) (void);
+      GLuint (*flush_cmd) (void);
+      void (*emit_flush) (struct intel_context *intel, GLuint unused);
 
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);
 
-        GLboolean(*check_vertex_size) (struct intel_context * intel,
-                                       GLuint expected);
+      GLboolean (*check_vertex_size) (struct intel_context * intel,
+				      GLuint expected);
+      void (*invalidate_state) (struct intel_context *intel,
+				GLuint new_state);
 
 
       /* Metaops: 
@@ -133,6 +140,8 @@ struct intel_context
       void (*meta_no_texture) (struct intel_context * intel);
 
       void (*meta_import_pixel_state) (struct intel_context * intel);
+      void (*meta_frame_buffer_texture) (struct intel_context *intel,
+					 GLint xoff, GLint yoff);
 
       GLboolean(*meta_tex_rect_source) (struct intel_context * intel,
 					dri_bo * buffer,
@@ -169,6 +178,7 @@ struct intel_context
 
    struct intel_batchbuffer *batch;
    GLboolean no_batch_wrap;
+   unsigned batch_id;
 
    struct
    {
@@ -178,10 +188,12 @@ struct intel_context
       void (*flush) (struct intel_context *);
    } prim;
 
+   GLuint stats_wm;
    GLboolean locked;
    char *prevLockFile;
    int prevLockLine;
 
+   GLubyte clear_chan[4];
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
@@ -197,7 +209,10 @@ struct intel_context
 
    GLfloat polygon_offset_scale;        /* dependent on depth_scale, bpp */
 
+   GLboolean hw_stencil;
    GLboolean hw_stipple;
+   GLboolean depth_buffer_is_float;
+   GLboolean no_rast;
    GLboolean strict_conformance;
 
    /* State for intelvb.c and inteltris.c.
@@ -208,6 +223,7 @@ struct intel_context
    GLenum reduced_primitive;
    GLuint vertex_size;
    GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
+   struct intel_region *draw_region;
 
    /* Fallback rasterization functions 
     */
@@ -220,6 +236,7 @@ struct intel_context
    int drawX, drawY;            /**< origin of drawing area within region */
    GLuint numClipRects;         /**< cliprects for drawing */
    drm_clip_rect_t *pClipRects;
+   struct gl_texture_object *frame_buffer_texobj;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
@@ -228,14 +245,19 @@ struct intel_context
    int do_irqs;
    GLuint irqsEmitted;
 
+   GLboolean scissor;
+   drm_clip_rect_t draw_rect;
+   drm_clip_rect_t scissor_rect;
+
    drm_context_t hHWContext;
    drmLock *driHwLock;
    int driFd;
 
    __DRIdrawablePrivate *driDrawable;
+   __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen;
-   struct drm_i915_sarea *sarea;
+   volatile struct drm_i915_sarea *sarea;
 
    GLuint lastStamp;
 
@@ -249,6 +271,12 @@ struct intel_context
    /* Last seen width/height of the screen */
    int width;
    int height;
+
+   int64_t swap_ust;
+   int64_t swap_missed_ust;
+
+   GLuint swap_count;
+   GLuint swap_missed_count;
 };
 
 /* These are functions now:
@@ -287,7 +315,11 @@ do {						\
 #define INTEL_PACKCOLOR8888(r,g,b,a) \
   ((a<<24) | (r<<16) | (g<<8) | b)
 
-
+#define INTEL_PACKCOLOR(format, r,  g,  b, a)		\
+(format == DV_PF_555 ? INTEL_PACKCOLOR1555(r,g,b,a) :	\
+ (format == DV_PF_565 ? INTEL_PACKCOLOR565(r,g,b) :	\
+  (format == DV_PF_8888 ? INTEL_PACKCOLOR8888(r,g,b,a) :	\
+   0)))
 
 /* ================================================================
  * From linux kernel i386 header files, copes with odd sizes better
@@ -295,19 +327,21 @@ do {						\
  * XXX Put this in src/mesa/main/imports.h ???
  */
 #if defined(i386) || defined(__i386__)
-static INLINE void *
-__memcpy(void *to, const void *from, size_t n)
+static inline void * __memcpy(void * to, const void * from, size_t n)
 {
    int d0, d1, d2;
-   __asm__ __volatile__("rep ; movsl\n\t"
-                        "testb $2,%b4\n\t"
-                        "je 1f\n\t"
-                        "movsw\n"
-                        "1:\ttestb $1,%b4\n\t"
-                        "je 2f\n\t"
-                        "movsb\n" "2:":"=&c"(d0), "=&D"(d1), "=&S"(d2)
-                        :"0"(n / 4), "q"(n), "1"((long) to), "2"((long) from)
-                        :"memory");
+   __asm__ __volatile__(
+      "rep ; movsl\n\t"
+      "testb $2,%b4\n\t"
+      "je 1f\n\t"
+      "movsw\n"
+      "1:\ttestb $1,%b4\n\t"
+      "je 2f\n\t"
+      "movsb\n"
+      "2:"
+      : "=&c" (d0), "=&D" (d1), "=&S" (d2)
+      :"0" (n/4), "q" (n),"1" ((long) to),"2" ((long) from)
+      : "memory");
    return (to);
 }
 #else
@@ -315,16 +349,10 @@ __memcpy(void *to, const void *from, size_t n)
 #endif
 
 
-
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		1
-#if DO_DEBUG
 extern int INTEL_DEBUG;
-#else
-#define INTEL_DEBUG		0
-#endif
 
 #define DEBUG_TEXTURE	0x1
 #define DEBUG_STATE	0x2
@@ -340,9 +368,23 @@ extern int INTEL_DEBUG;
 #define DEBUG_FBO       0x800
 #define DEBUG_LOCK      0x1000
 #define DEBUG_SYNC	0x2000
+#define DEBUG_PRIMS	0x4000
+#define DEBUG_VERTS	0x8000
+#define DEBUG_DRI       0x10000
+#define DEBUG_DMA       0x20000
+#define DEBUG_SANITY    0x40000
+#define DEBUG_SLEEP     0x80000
+#define DEBUG_STATS     0x100000
+#define DEBUG_TILE      0x200000
+#define DEBUG_SINGLE_THREAD   0x400000
+#define DEBUG_WM        0x800000
+#define DEBUG_URB       0x1000000
+#define DEBUG_VS        0x2000000
 
-#define DBG(...)  do { if (INTEL_DEBUG & FILE_DEBUG_FLAG) _mesa_printf(__VA_ARGS__); } while(0)
-
+#define DBG(...) do {						\
+	if (INTEL_DEBUG & FILE_DEBUG_FLAG)			\
+		_mesa_printf(__VA_ARGS__);			\
+} while(0)
 
 #define PCI_CHIP_845_G			0x2562
 #define PCI_CHIP_I830_M			0x3577
