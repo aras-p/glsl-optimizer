@@ -134,6 +134,8 @@ extern void
 cell_vertex_shader_queue_flush(struct draw_context *draw);
 
 
+/* XXX find a better home for this */
+extern void cell_update_vertex_fetch(struct draw_context *draw);
 
 
 #endif /* CELL_CONTEXT_H */
