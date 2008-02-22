@@ -38,6 +38,8 @@
 #include "intel_tex.h"
 #include "intel_blit.h"
 #include "intel_batchbuffer.h"
+#include "intel_pixel.h"
+#include "tnl/t_pipeline.h"
 
 #include "utils.h"
 #include "api_noop.h"
@@ -91,6 +93,15 @@ static void brwInitProgFuncs( struct dd_function_table *functions )
 static void brwInitDriverFunctions( struct dd_function_table *functions )
 {
    intelInitDriverFunctions( functions );
+
+   /* CopyPixels can be accelerated even with the current memory
+    * manager:
+    */
+   if (!getenv("INTEL_NO_BLIT")) {
+      functions->CopyPixels = intelCopyPixels;
+      functions->Bitmap = intelBitmap;
+   }
+
    brwInitFragProgFuncs( functions );
    brwInitProgFuncs( functions );
 }
@@ -142,6 +153,8 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       FREE(brw);
       return GL_FALSE;
    }
+
+   TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
    ctx->Const.MaxTextureUnits = BRW_MAX_TEX_UNIT;
    ctx->Const.MaxTextureImageUnits = BRW_MAX_TEX_UNIT;

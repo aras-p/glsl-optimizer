@@ -42,6 +42,8 @@
 
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
+#include "intel_tris.h"
+#include "intel_span.h"
 
 /***************************************
  * Mesa's Driver Functions
@@ -91,6 +93,7 @@ static void
 i915InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
+   intelInitPixelFuncs(functions);
    i915InitStateFunctions(functions);
    i915InitTextureFuncs(functions);
    i915InitFragProgFuncs(functions);
@@ -98,6 +101,7 @@ i915InitDriverFunctions(struct dd_function_table *functions)
 }
 
 
+extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
 i915CreateContext(const __GLcontextModes * mesaVis,
@@ -126,6 +130,14 @@ i915CreateContext(const __GLcontextModes * mesaVis,
       FREE(i915);
       return GL_FALSE;
    }
+
+   /* Initialize swrast, tnl driver tables: */
+   intelInitSpanFuncs(ctx);
+   intelInitTriFuncs(ctx);
+
+   /* Install the customized pipeline: */
+   _tnl_destroy_pipeline(ctx);
+   _tnl_install_pipeline(ctx, intel_pipeline);
 
    ctx->Const.MaxTextureUnits = I915_TEX_UNITS;
    ctx->Const.MaxTextureImageUnits = I915_TEX_UNITS;

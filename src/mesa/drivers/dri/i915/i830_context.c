@@ -32,7 +32,11 @@
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
+#include "tnl/t_pipeline.h"
 #include "utils.h"
+#include "intel_span.h"
+#include "intel_pixel.h"
+#include "intel_tris.h"
 
 /***************************************
  * Mesa's Driver Functions
@@ -48,10 +52,12 @@ static void
 i830InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
+   intelInitPixelFuncs(functions);
    i830InitStateFuncs(functions);
    i830InitTextureFuncs(functions);
 }
 
+extern const struct tnl_pipeline_stage *intel_pipeline[];
 
 GLboolean
 i830CreateContext(const __GLcontextModes * mesaVis,
@@ -73,6 +79,14 @@ i830CreateContext(const __GLcontextModes * mesaVis,
       FREE(i830);
       return GL_FALSE;
    }
+
+   /* Initialize swrast, tnl driver tables: */
+   intelInitSpanFuncs(ctx);
+   intelInitTriFuncs(ctx);
+
+   /* Install the customized pipeline: */
+   _tnl_destroy_pipeline(ctx);
+   _tnl_install_pipeline(ctx, intel_pipeline);
 
    intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
    intel->ctx.Const.MaxTextureImageUnits = I830_TEX_UNITS;

@@ -39,6 +39,7 @@
 
 #include "tnl/t_context.h"
 #include "tnl/t_vertex.h"
+#include "tnl/t_pipeline.h"
 
 #include "intel_screen.h"
 #include "intel_context.h"
@@ -234,11 +235,28 @@ intel_run_render(GLcontext * ctx, struct tnl_pipeline_stage *stage)
    return GL_FALSE;             /* finished the pipe */
 }
 
-const struct tnl_pipeline_stage _intel_render_stage = {
+static const struct tnl_pipeline_stage _intel_render_stage = {
    "intel render",
    NULL,
    NULL,
    NULL,
    NULL,
    intel_run_render             /* run */
+};
+
+const struct tnl_pipeline_stage *intel_pipeline[] = {
+   &_tnl_vertex_transform_stage,
+   &_tnl_vertex_cull_stage,
+   &_tnl_normal_transform_stage,
+   &_tnl_lighting_stage,
+   &_tnl_fog_coordinate_stage,
+   &_tnl_texgen_stage,
+   &_tnl_texture_transform_stage,
+   &_tnl_point_attenuation_stage,
+   &_tnl_vertex_program_stage,
+#if 1
+   &_intel_render_stage,        /* ADD: unclipped rastersetup-to-dma */
+#endif
+   &_tnl_render_stage,
+   0,
 };
