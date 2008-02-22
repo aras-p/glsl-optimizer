@@ -36,16 +36,14 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+#include "cso_hash.h" /* for cso_hash_iter, as MSVC requires structures returned by value to be fully defined */
+
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
   
-struct cso_hash;
-
-struct cso_hash_iter;
-
 struct cso_cache {
    struct cso_hash *blend_hash;
    struct cso_hash *depth_stencil_hash;
