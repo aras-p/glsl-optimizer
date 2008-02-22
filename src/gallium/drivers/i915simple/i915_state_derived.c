@@ -43,7 +43,7 @@
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-   const struct pipe_shader_state *fs = i915->fs;
+   const struct pipe_shader_state *fs = &i915->fs->state;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
@@ -164,7 +164,6 @@ void i915_update_derived( struct i915_context *i915 )
       i915_update_dynamic( i915 );
 
    if (i915->dirty & I915_NEW_FS) {
-      i915_translate_fragment_program(i915);
       i915->hardware_dirty |= I915_HW_PROGRAM; /* XXX right? */
    }
 

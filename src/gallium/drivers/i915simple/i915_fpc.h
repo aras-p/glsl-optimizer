@@ -44,9 +44,16 @@
  * Program translation state
  */
 struct i915_fp_compile {
-   const struct pipe_shader_state *shader;
+   struct i915_fragment_shader *shader;  /* the shader we're compiling */
 
-   struct vertex_info *vertex_info;
+   boolean used_constants[I915_MAX_CONSTANT];
+
+   /** maps TGSI immediate index to constant slot */
+   uint num_immediates;
+   uint immediates_map[I915_MAX_CONSTANT];
+   float immediates[I915_MAX_CONSTANT][4];
+
+   boolean first_instruction;
 
    uint declarations[I915_PROGRAM_SIZE];
    uint program[I915_PROGRAM_SIZE];
@@ -56,11 +63,6 @@ struct i915_fp_compile {
 
    uint output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
    uint output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
-
-   /** points into the i915->current.constants array: */
-   float (*constants)[4];
-   uint num_constants;
-   uint constant_flags[I915_MAX_CONSTANT]; /**< status of each constant */
 
    uint *csr;            /**< Cursor, points into program. */
 
@@ -155,7 +157,9 @@ swizzle(int reg, uint x, uint y, uint z, uint w)
 /***********************************************************************
  * Public interface for the compiler
  */
-extern void i915_translate_fragment_program( struct i915_context *i915 );
+extern void
+i915_translate_fragment_program( struct i915_context *i915,
+                                 struct i915_fragment_shader *fs);
 
 
 
@@ -205,9 +209,6 @@ extern void i915_disassemble_program(const uint * program, uint sz);
 
 extern void
 i915_program_error(struct i915_fp_compile *p, const char *msg, ...);
-
-extern void
-i915_translate_fragment_program(struct i915_context *i915);
 
 
 #endif

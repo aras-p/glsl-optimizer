@@ -99,7 +99,11 @@ i915_emit_hardware_state(struct i915_context *i915 )
                              2 + I915_TEX_UNITS*3 + 
                              2 + I915_TEX_UNITS*3 +
                              2 + I915_MAX_CONSTANT*4 + 
+#if 0
                              i915->current.program_len + 
+#else
+                             i915->fs->program_len + 
+#endif
                              6 
                            ) * 3/2; /* plus 50% margin */
    const unsigned relocs = ( I915_TEX_UNITS +
@@ -325,15 +329,34 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 2 + I915_MAX_CONSTANT*4 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
    {
-      const uint nr = i915->current.num_constants[PIPE_SHADER_FRAGMENT];
-      assert(nr <= I915_MAX_CONSTANT);
-      if (nr > 0) {
-         const uint *c
-            = (const uint *) i915->current.constants[PIPE_SHADER_FRAGMENT];
+      /* Collate the user-defined constants with the fragment shader's
+       * immediates according to the constant_flags[] array.
+       */
+      const uint nr = i915->fs->num_constants;
+      if (nr) {
          uint i;
+
          OUT_BATCH( _3DSTATE_PIXEL_SHADER_CONSTANTS | (nr * 4) );
          OUT_BATCH( (1 << (nr - 1)) | ((1 << (nr - 1)) - 1) );
+
          for (i = 0; i < nr; i++) {
+            const uint *c;
+            if (i915->fs->constant_flags[i] == I915_CONSTFLAG_USER) {
+               /* grab user-defined constant */
+               c = (uint *) i915->current.constants[PIPE_SHADER_FRAGMENT][i];
+            }
+            else {
+               /* emit program constant */
+               c = (uint *) i915->fs->constants[i];
+            }
+#if 0 /* debug */
+            {
+               float *f = (float *) c;
+               printf("Const %2d: %f %f %f %f %s\n", i, f[0], f[1], f[2], f[3],
+                      (i915->fs->constant_flags[i] == I915_CONSTFLAG_USER
+                       ? "user" : "immediate"));
+            }
+#endif
             OUT_BATCH(*c++);
             OUT_BATCH(*c++);
             OUT_BATCH(*c++);
@@ -348,9 +371,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       uint i;
       /* we should always have, at least, a pass-through program */
-      assert(i915->current.program_len > 0);
-      for (i = 0; i < i915->current.program_len; i++) {
-         OUT_BATCH(i915->current.program[i]);
+      assert(i915->fs->program_len > 0);
+      for (i = 0; i < i915->fs->program_len; i++) {
+         OUT_BATCH(i915->fs->program[i]);
       }
    }
 

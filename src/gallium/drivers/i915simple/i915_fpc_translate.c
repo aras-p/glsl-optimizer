@@ -34,6 +34,7 @@
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_dump.h"
 
 #include "draw/draw_vertex.h"
 
@@ -97,19 +98,19 @@ negate(int reg, int x, int y, int z, int w)
 }
 
 
+/**
+ * In the event of a translation failure, we'll generate a simple color
+ * pass-through program.
+ */
 static void
-i915_use_passthrough_shader(struct i915_context *i915)
+i915_use_passthrough_shader(struct i915_fragment_shader *fs)
 {
-   debug_printf("**** Using i915 pass-through fragment shader\n");
-
-   i915->current.program = (uint *) MALLOC(sizeof(passthrough));
-   if (i915->current.program) {
-      memcpy(i915->current.program, passthrough, sizeof(passthrough));
-      i915->current.program_len = Elements(passthrough);
+   fs->program = (uint *) MALLOC(sizeof(passthrough));
+   if (fs->program) {
+      memcpy(fs->program, passthrough, sizeof(passthrough));
+      fs->program_len = Elements(passthrough);
    }
-
-   i915->current.num_constants[PIPE_SHADER_FRAGMENT] = 0;
-   i915->current.num_user_constants[PIPE_SHADER_FRAGMENT] = 0;
+   fs->num_constants = 0;
 }
 
 
@@ -161,9 +162,6 @@ src_vector(struct i915_fp_compile *p,
        * We also use a texture coordinate to pass wpos when possible.
        */
 
-      /* use vertex format info to map a slot number to a VF attrib */
-      assert(index < p->vertex_info->num_attribs);
-
       sem_name = p->input_semantic_name[index];
       sem_ind = p->input_semantic_index[index];
 
@@ -201,7 +199,8 @@ src_vector(struct i915_fp_compile *p,
       break;
 
    case TGSI_FILE_IMMEDIATE:
-      /* XXX unfinished - need to append immediates onto const buffer */
+      assert(index < p->num_immediates);
+      index = p->immediates_map[index];
       /* fall-through */
    case TGSI_FILE_CONSTANT:
       src = UREG(REG_TYPE_CONST, index);
@@ -896,6 +895,7 @@ static void
 i915_translate_instructions(struct i915_fp_compile *p,
                             const struct tgsi_token *tokens)
 {
+   struct i915_fragment_shader *ifs = p->shader;
    struct tgsi_parse_context parse;
 
    tgsi_parse_init( &parse, tokens );
@@ -928,13 +928,54 @@ i915_translate_instructions(struct i915_fp_compile *p,
             p->output_semantic_name[ind] = sem;
             p->output_semantic_index[ind] = semi;
          }
+         else if (parse.FullToken.FullDeclaration.Declaration.File
+                  == TGSI_FILE_CONSTANT) {
+            uint i;
+            for (i = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
+                 i <= parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
+                 i++) {
+               assert(ifs->constant_flags[i] == 0x0);
+               ifs->constant_flags[i] = I915_CONSTFLAG_USER;
+               ifs->num_constants = MAX2(ifs->num_constants, i + 1);
+            }
+         }
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* XXX append the immediate to the const buffer... */
+         {
+            const struct tgsi_full_immediate *imm
+               = &parse.FullToken.FullImmediate;
+            const uint pos = p->num_immediates++;
+            uint j;
+            for (j = 0; j < imm->Immediate.Size; j++) {
+               p->immediates[pos][j] = imm->u.ImmediateFloat32[j].Float;
+            }
+         }
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         if (p->first_instruction) {
+            /* resolve location of immediates */
+            uint i, j;
+            for (i = 0; i < p->num_immediates; i++) {
+               /* find constant slot for this immediate */
+               for (j = 0; j < I915_MAX_CONSTANT; j++) {
+                  if (ifs->constant_flags[j] == 0x0) {
+                     memcpy(ifs->constants[j],
+                            p->immediates[i],
+                            4 * sizeof(float));
+                     /*printf("immediate %d maps to const %d\n", i, j);*/
+                     ifs->constant_flags[j] = 0xf;  /* all four comps used */
+                     p->immediates_map[i] = j;
+                     ifs->num_constants = MAX2(ifs->num_constants, j + 1);
+                     break;
+                  }
+               }
+            }
+
+            p->first_instruction = FALSE;
+         }
+
          i915_translate_instruction(p, &parse.FullToken.FullInstruction);
          break;
 
@@ -950,26 +991,27 @@ i915_translate_instructions(struct i915_fp_compile *p,
 
 static struct i915_fp_compile *
 i915_init_compile(struct i915_context *i915,
-                  const struct pipe_shader_state *fs)
+                  struct i915_fragment_shader *ifs)
 {
    struct i915_fp_compile *p = CALLOC_STRUCT(i915_fp_compile);
 
-   p->shader = i915->fs;
+   p->shader = ifs;
 
-   p->vertex_info = &i915->current.vertex_info;
-
-   /* new constants found during translation get appended after the
-    * user-provided constants.
+   /* Put new constants at end of const buffer, growing downward.
+    * The problem is we don't know how many user-defined constants might
+    * be specified with pipe->set_constant_buffer().
+    * Should pre-scan the user's program to determine the highest-numbered
+    * constant referenced.
     */
-   p->constants = i915->current.constants[PIPE_SHADER_FRAGMENT];
-   p->num_constants = i915->current.num_user_constants[PIPE_SHADER_FRAGMENT];
+   ifs->num_constants = 0;
+   memset(ifs->constant_flags, 0, sizeof(ifs->constant_flags));
+
+   p->first_instruction = TRUE;
 
    p->nr_tex_indirect = 1;      /* correct? */
    p->nr_tex_insn = 0;
    p->nr_alu_insn = 0;
    p->nr_decl_insn = 0;
-
-   memset(p->constant_flags, 0, sizeof(p->constant_flags));
 
    p->csr = p->program;
    p->decl = p->declarations;
@@ -993,6 +1035,7 @@ i915_init_compile(struct i915_context *i915,
 static void
 i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 {
+   struct i915_fragment_shader *ifs = p->shader;
    unsigned long program_size = (unsigned long) (p->csr - p->program);
    unsigned long decl_size = (unsigned long) (p->decl - p->declarations);
 
@@ -1008,19 +1051,13 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
    if (p->nr_decl_insn > I915_MAX_DECL_INSN)
       i915_program_error(p, "Exceeded max DECL instructions");
 
-   /* free old program, if present */
-   if (i915->current.program) {
-      FREE(i915->current.program);
-      i915->current.program_len = 0;
-   }
-
    if (p->error) {
       p->NumNativeInstructions = 0;
       p->NumNativeAluInstructions = 0;
       p->NumNativeTexInstructions = 0;
       p->NumNativeTexIndirections = 0;
 
-      i915_use_passthrough_shader(i915);
+      i915_use_passthrough_shader(ifs);
    }
    else {
       p->NumNativeInstructions
@@ -1034,24 +1071,20 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 
       /* Copy compilation results to fragment program struct: 
        */
-      i915->current.program
+      assert(!ifs->program);
+      ifs->program
          = (uint *) MALLOC((program_size + decl_size) * sizeof(uint));
-      if (i915->current.program) {
-         i915->current.program_len = program_size + decl_size;
+      if (ifs->program) {
+         ifs->program_len = program_size + decl_size;
 
-         memcpy(i915->current.program,
+         memcpy(ifs->program,
                 p->declarations, 
                 decl_size * sizeof(uint));
 
-         memcpy(i915->current.program + decl_size, 
+         memcpy(ifs->program + decl_size, 
                 p->program, 
                 program_size * sizeof(uint));
       }
-
-      /* update number of constants */
-      i915->current.num_constants[PIPE_SHADER_FRAGMENT] = p->num_constants;
-      assert(i915->current.num_constants[PIPE_SHADER_FRAGMENT]
-             >= i915->current.num_user_constants[PIPE_SHADER_FRAGMENT]);
    }
 
    /* Release the compilation struct: 
@@ -1085,7 +1118,7 @@ i915_find_wpos_space(struct i915_fp_compile *p)
       i915_program_error(p, "No free texcoord for wpos value");
    }
 #else
-   if (p->shader->input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+   if (p->shader->state.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       /* frag shader using the fragment position input */
 #if 0
       assert(0);
@@ -1106,7 +1139,7 @@ static void
 i915_fixup_depth_write(struct i915_fp_compile *p)
 {
    /* XXX assuming pos/depth is always in output[0] */
-   if (p->shader->output_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+   if (p->shader->state.output_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       const uint depth = UREG(REG_TYPE_OD, 0);
 
       i915_emit_arith(p,
@@ -1121,12 +1154,17 @@ i915_fixup_depth_write(struct i915_fp_compile *p)
 
 
 void
-i915_translate_fragment_program( struct i915_context *i915 )
+i915_translate_fragment_program( struct i915_context *i915,
+                                 struct i915_fragment_shader *fs)
 {
-   struct i915_fp_compile *p = i915_init_compile(i915, i915->fs);
-   const struct tgsi_token *tokens = i915->fs->tokens;
+   struct i915_fp_compile *p = i915_init_compile(i915, fs);
+   const struct tgsi_token *tokens = fs->state.tokens;
 
    i915_find_wpos_space(p);
+
+#if 0
+   tgsi_dump(tokens, 0);
+#endif
 
    i915_translate_instructions(p, tokens);
    i915_fixup_depth_write(p);

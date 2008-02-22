@@ -79,6 +79,40 @@
 #define I915_MAX_CONSTANT  32
 
 
+/** See constant_flags[] below */
+#define I915_CONSTFLAG_USER 0x1f
+
+
+/**
+ * Subclass of pipe_shader_state
+ */
+struct i915_fragment_shader
+{
+   struct pipe_shader_state state;
+   uint *program;
+   uint program_len;
+
+   /**
+    * constants introduced during translation.
+    * These are placed at the end of the constant buffer and grow toward
+    * the beginning (eg: slot 31, 30 29, ...)
+    * User-provided constants start at 0.
+    * This allows both types of constants to co-exist (until there's too many)
+    * and doesn't require regenerating/changing the fragment program to
+    * shuffle constants around.
+    */
+   uint num_constants;
+   float constants[I915_MAX_CONSTANT][4];
+
+   /**
+    * Status of each constant
+    * if I915_CONSTFLAG_PARAM, the value must be taken from the corresponding
+    * slot of the user's constant buffer. (set by pipe->set_constant_buffer())
+    * Else, the bitmask indicates which components are occupied by immediates.
+    */
+   ubyte constant_flags[I915_MAX_CONSTANT];
+};
+
 
 struct i915_cache_context;
 
@@ -93,11 +127,6 @@ struct i915_state
    float constants[PIPE_SHADER_TYPES][I915_MAX_CONSTANT][4];
    /** number of constants passed in through a constant buffer */
    uint num_user_constants[PIPE_SHADER_TYPES];
-   /** user constants, plus extra constants from shader translation */
-   uint num_constants[PIPE_SHADER_TYPES];
-
-   uint *program;
-   uint program_len;
 
    /* texture sampler state */
    unsigned sampler[I915_TEX_UNITS][3];
@@ -187,7 +216,8 @@ struct i915_context
    const struct i915_sampler_state         *sampler[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
    const struct i915_rasterizer_state      *rasterizer;
-   const struct pipe_shader_state *fs;
+
+   struct i915_fragment_shader *fs;
 
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
