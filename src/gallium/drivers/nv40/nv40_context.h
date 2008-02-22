@@ -115,7 +115,9 @@ struct nv40_blend_state {
 struct nv40_state {
 	unsigned scissor_enabled;
 	unsigned stipple_enabled;
+	unsigned fp_samplers;
 
+	unsigned dirty;
 	struct nouveau_stateobj *hw[NV40_STATE_MAX];
 };
 
@@ -129,13 +131,10 @@ struct nv40_context {
 	int chipset;
 
 	unsigned dirty;
-	unsigned hw_dirty;
 
 	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct nv40_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
 	unsigned dirty_samplers;
-	unsigned fp_samplers;
-	unsigned vp_samplers;
 
 	struct {
 		struct pipe_scissor_state scissor;

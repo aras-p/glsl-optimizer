@@ -31,7 +31,7 @@ nv40_state_validate(struct nv40_context *nv40)
 
 		if (nv40->dirty & e->dirty.pipe) {
 			if (e->validate(nv40))
-				nv40->hw_dirty |= (1 << e->dirty.hw);
+				nv40->state.dirty |= (1 << e->dirty.hw);
 		}
 
 		states++;
@@ -60,24 +60,24 @@ nv40_state_validate(struct nv40_context *nv40)
 static void
 nv40_state_emit(struct nv40_context *nv40)
 {
-	unsigned i;
+	struct nv40_state *state = &nv40->state;
+	unsigned i, samplers;
 
-	while (nv40->hw_dirty) {
-		unsigned idx = ffs(nv40->hw_dirty) - 1;
-		nv40->hw_dirty &= ~(1 << idx);
+	while (state->dirty) {
+		unsigned idx = ffs(state->dirty) - 1;
 
-		so_ref (nv40->state.hw[idx], &nv40->hw->state[idx]);
+		so_ref (state->hw[idx], &nv40->hw->state[idx]);
 		so_emit(nv40->nvws, nv40->hw->state[idx]);
+		state->dirty &= ~(1 << idx);
 	}
 
-	so_emit_reloc_markers(nv40->nvws, nv40->state.hw[NV40_STATE_FB]);
-	for (i = 0; i < 16; i++) {
-		if (!(nv40->fp_samplers & (1 << i)))
-			continue;
+	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FB]);
+	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
 		so_emit_reloc_markers(nv40->nvws,
-				      nv40->state.hw[NV40_STATE_FRAGTEX0+i]);
+				      state->hw[NV40_STATE_FRAGTEX0+i]);
+		samplers &= ~(1 << i);
 	}
-	so_emit_reloc_markers(nv40->nvws, nv40->state.hw[NV40_STATE_FRAGPROG]);
+	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FRAGPROG]);
 }
 
 void

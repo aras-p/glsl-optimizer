@@ -124,10 +124,11 @@ static boolean
 nv40_fragtex_validate(struct nv40_context *nv40)
 {
 	struct nv40_fragment_program *fp = nv40->pipe_state.fragprog;
+	struct nv40_state *state = &nv40->state;
 	struct nouveau_stateobj *so;
 	unsigned samplers, unit;
 
-	samplers = nv40->fp_samplers & ~fp->samplers;
+	samplers = state->fp_samplers & ~fp->samplers;
 	while (samplers) {
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
@@ -137,7 +138,7 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 		so_data  (so, 0);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
 		so_ref(NULL, &so);
-		nv40->hw_dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
+		state->dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
 	}
 
 	samplers = nv40->dirty_samplers & fp->samplers;
@@ -148,10 +149,10 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 		so = nv40_fragtex_build(nv40, unit);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
 		so_ref(NULL, &so);
-		nv40->hw_dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
+		state->dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
 	}
 
-	nv40->fp_samplers = fp->samplers;
+	nv40->state.fp_samplers = fp->samplers;
 	return FALSE;
 }
 
