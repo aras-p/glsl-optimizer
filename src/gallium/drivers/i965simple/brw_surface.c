@@ -35,47 +35,6 @@
 #include "util/p_tile.h"
 
 
-/*
- * XXX note: same as code in sp_surface.c
- */
-static struct pipe_surface *
-brw_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
-{
-   struct brw_texture *tex = (struct brw_texture *)pt;
-   struct pipe_surface *ps;
-   unsigned offset;  /* in bytes */
-
-   offset = tex->level_offset[level];
-
-   if (pt->target == PIPE_TEXTURE_CUBE) {
-      offset += tex->image_offset[level][face] * pt->cpp;
-   }
-   else if (pt->target == PIPE_TEXTURE_3D) {
-      offset += tex->image_offset[level][zslice] * pt->cpp;
-   }
-   else {
-      assert(face == 0);
-      assert(zslice == 0);
-   }
-
-   ps = pipe->winsys->surface_alloc(pipe->winsys);
-   if (ps) {
-      assert(ps->format);
-      assert(ps->refcount);
-      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
-      ps->format = pt->format;
-      ps->cpp = pt->cpp;
-      ps->width = pt->width[level];
-      ps->height = pt->height[level];
-      ps->pitch = tex->pitch;
-      ps->offset = offset;
-   }
-   return ps;
-}
-
-
 /* Upload data to a rectangular sub-region.  Lots of choices how to do this:
  *
  * - memcpy by span to current destination
@@ -201,10 +160,10 @@ brw_surface_fill(struct pipe_context *pipe,
    }
 }
 
+
 void
 brw_init_surface_functions(struct brw_context *brw)
 {
-   brw->pipe.get_tex_surface = brw_get_tex_surface;
    brw->pipe.surface_copy  = brw_surface_copy;
    brw->pipe.surface_fill  = brw_surface_fill;
 }

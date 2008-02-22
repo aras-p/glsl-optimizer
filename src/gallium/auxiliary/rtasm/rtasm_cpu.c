@@ -1,6 +1,6 @@
 /**************************************************************************
- * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,63 +22,29 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-/* Authors:
- *  Brian Paul
- */
 
-#include "pipe/p_util.h"
-#include "draw/draw_context.h"
-#include "cell_context.h"
-#include "cell_state.h"
-#include "cell_texture.h"
+#include "rtasm_cpu.h"
 
 
-void *
-cell_create_sampler_state(struct pipe_context *pipe,
-                          const struct pipe_sampler_state *sampler)
+int rtasm_cpu_has_sse(void)
 {
-   return mem_dup(sampler, sizeof(*sampler));
+   /* FIXME: actually detect this at run-time */
+#if defined(__i386__) || defined(__386__)
+   return 1;
+#else
+   return 0;
+#endif
 }
 
-void
-cell_bind_sampler_state(struct pipe_context *pipe,
-                            unsigned unit, void *sampler)
+int rtasm_cpu_has_sse2(void) 
 {
-   struct cell_context *cell = cell_context(pipe);
-
-   draw_flush(cell->draw);
-
-   assert(unit < PIPE_MAX_SAMPLERS);
-   cell->sampler[unit] = (struct pipe_sampler_state *)sampler;
-
-   cell->dirty |= CELL_NEW_SAMPLER;
-}
-
-
-void
-cell_delete_sampler_state(struct pipe_context *pipe,
-                              void *sampler)
-{
-   FREE( sampler );
-}
-
-
-
-void
-cell_set_sampler_texture(struct pipe_context *pipe,
-                         unsigned sampler,
-                         struct pipe_texture *texture)
-{
-   struct cell_context *cell = cell_context(pipe);
-
-   draw_flush(cell->draw);
-
-   cell->texture[sampler] = texture;
-
-   cell_update_texture_mapping(cell);
-
-   cell->dirty |= CELL_NEW_TEXTURE;
+   /* FIXME: actually detect this at run-time */
+#if defined(__i386__) || defined(__386__)
+   return 1;
+#else
+   return 0;
+#endif
 }

@@ -28,12 +28,22 @@ import sys
 # to get the full list of options. See scons manpage for more info.
 #  
 
+platform_map = {
+	'linux2': 'linux',
+	'win32': 'winddk',
+}
+
+platform = platform_map.get(sys.platform, sys.platform)
+
 # TODO: auto-detect defaults
 opts = Options('config.py')
 opts.Add(BoolOption('debug', 'build debug version', False))
 opts.Add(BoolOption('dri', 'build dri drivers', False))
+opts.Add(BoolOption('llvm', 'use llvm', False))
 opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
                      allowed_values=('generic', 'x86', 'x86-64')))
+opts.Add(EnumOption('platform', 'target platform', platform,
+                     allowed_values=('linux', 'cell', 'winddk')))
 
 env = Environment(
 	options = opts, 
@@ -43,29 +53,23 @@ Help(opts.GenerateHelpText(env))
 # for debugging
 #print env.Dump()
 
-if 0:
-	# platform will be typically 'posix' or 'win32' 
-	platform = env['PLATFORM']
-else:
-	# platform will be one of 'linux', 'freebsd', 'win32', 'darwin', etc.
-	platform = sys.platform
-	if platform == 'linux2':
-		platform = 'linux' 
-
 # replicate options values in local variables
 debug = env['debug']
 dri = env['dri']
+llvm = env['llvm']
 machine = env['machine']
+platform = env['platform']
 
 # derived options
 x86 = machine == 'x86'
-gcc = platform in ('posix', 'linux', 'freebsd', 'darwin')
-msvc = platform == 'win32'
+gcc = platform in ('linux', 'freebsd', 'darwin')
+msvc = platform in ('win32', 'winddk')
 
 Export([
 	'debug', 
 	'x86', 
 	'dri', 
+	'llvm',
 	'platform',
 	'gcc',
 	'msvc',
@@ -75,10 +79,32 @@ Export([
 #######################################################################
 # Environment setup
 #
-# TODO: put the compiler specific settings in seperate files
+# TODO: put the compiler specific settings in separate files
 # TODO: auto-detect as much as possible
 
-         
+
+if platform == 'winddk':
+	import ntpath
+	escape = env['ESCAPE']
+	env.Tool('msvc')
+	if 'BASEDIR' in os.environ:
+		WINDDK = os.environ['BASEDIR']
+	else:
+		WINDDK = "C:\\WINDDK\\3790.1830"
+	# NOTE: We need this elaborate construct to get the absolute paths and
+	# forward slashes to msvc unharmed when cross compiling from posix platforms 
+	env.Append(CPPFLAGS = [
+		escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wxp')),
+		escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wdm\\wxp')),
+		escape('/I' + ntpath.join(WINDDK, 'inc\\crt')),
+	])
+	env.Append(CPPDEFINES = [
+		('i386', '1'),
+	])
+	if debug:
+		env.Append(CPPDEFINES = ['DBG'])
+	
+
 # Optimization flags
 if gcc:
 	if debug:
@@ -106,9 +132,9 @@ else:
 # Includes
 env.Append(CPPPATH = [
 	'#/include',
-	'#/src/mesa',
-	'#/src/mesa/main',
-	'#/src/mesa/pipe',
+	'#/src/gallium/include',
+	'#/src/gallium/auxiliary',
+	'#/src/gallium/drivers',
 ])
 
 
@@ -156,6 +182,14 @@ if dri:
 		'GLX_DIRECT_RENDERING',
 		'GLX_INDIRECT_RENDERING',
 	])
+
+# LLVM
+if llvm:
+	# See also http://www.scons.org/wiki/UsingPkgConfig
+	env.ParseConfig('llvm-config --cflags --ldflags --libs')
+	env.Append(CPPDEFINES = ['MESA_LLVM'])
+	env.Append(CXXFLAGS = ['-Wno-long-long'])
+	
 
 # libGL
 if 1:
@@ -212,6 +246,8 @@ build_topdir = 'build'
 build_subdir = platform
 if dri:
 	build_subdir += "-dri"
+if llvm:
+	build_subdir += "-llvm"
 if x86:
 	build_subdir += "-x86"
 if debug:
@@ -222,7 +258,7 @@ build_dir = os.path.join(build_topdir, build_subdir)
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
 SConscript(
-	'src/mesa/SConscript',
+	'src/SConscript',
 	build_dir = build_dir,
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )

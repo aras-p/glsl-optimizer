@@ -158,11 +158,14 @@ static void cso_data_rehash(struct cso_hash_data *hash, int hint)
          while (firstNode != e) {
             unsigned h = firstNode->key;
             struct cso_node *lastNode = firstNode;
+            struct cso_node *afterLastNode;
+            struct cso_node **beforeFirstNode;
+            
             while (lastNode->next != e && lastNode->next->key == h)
                lastNode = lastNode->next;
 
-            struct cso_node *afterLastNode = lastNode->next;
-            struct cso_node **beforeFirstNode = &hash->buckets[h % hash->numBuckets];
+            afterLastNode = lastNode->next;
+            beforeFirstNode = &hash->buckets[h % hash->numBuckets];
             while (*beforeFirstNode != e)
                beforeFirstNode = &(*beforeFirstNode)->next;
             lastNode->next = *beforeFirstNode;
@@ -222,10 +225,12 @@ struct cso_hash_iter cso_hash_insert(struct cso_hash *hash,
 {
    cso_data_might_grow(hash->data.d);
 
-   struct cso_node **nextNode = cso_hash_find_node(hash, key);
-   struct cso_node *node = cso_hash_create_node(hash, key, data, nextNode);
-   struct cso_hash_iter iter = {hash, node};
-   return iter;
+   {
+      struct cso_node **nextNode = cso_hash_find_node(hash, key);
+      struct cso_node *node = cso_hash_create_node(hash, key, data, nextNode);
+      struct cso_hash_iter iter = {hash, node};
+      return iter;
+   }
 }
 
 struct cso_hash * cso_hash_create(void)
@@ -290,6 +295,10 @@ static struct cso_node *cso_hash_data_next(struct cso_node *node)
       struct cso_node *e;
       struct cso_hash_data *d;
    } a;
+   int start;
+   struct cso_node **bucket;
+   int n;
+
    a.next = node->next;
    if (!a.next) {
       fprintf(stderr, "iterating beyond the last element\n");
@@ -298,9 +307,9 @@ static struct cso_node *cso_hash_data_next(struct cso_node *node)
    if (a.next->next)
       return a.next;
 
-   int start = (node->key % a.d->numBuckets) + 1;
-   struct cso_node **bucket = a.d->buckets + start;
-   int n = a.d->numBuckets - start;
+   start = (node->key % a.d->numBuckets) + 1;
+   bucket = a.d->buckets + start;
+   n = a.d->numBuckets - start;
    while (n--) {
       if (*bucket != a.e)
          return *bucket;
@@ -316,19 +325,21 @@ static struct cso_node *cso_hash_data_prev(struct cso_node *node)
       struct cso_node *e;
       struct cso_hash_data *d;
    } a;
+   int start;
+   struct cso_node *sentinel;
+   struct cso_node **bucket;
 
    a.e = node;
    while (a.e->next)
       a.e = a.e->next;
 
-   int start;
    if (node == a.e)
       start = a.d->numBuckets - 1;
    else
       start = node->key % a.d->numBuckets;
 
-   struct cso_node *sentinel = node;
-   struct cso_node **bucket = a.d->buckets + start;
+   sentinel = node;
+   bucket = a.d->buckets + start;
    while (start >= 0) {
       if (*bucket != sentinel) {
          struct cso_node *prev = *bucket;

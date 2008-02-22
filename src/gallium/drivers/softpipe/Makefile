@@ -1,10 +1,9 @@
-
 TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = softpipe
 
-DRIVER_SOURCES = \
+C_SOURCES = \
 	sp_fs_exec.c \
 	sp_fs_sse.c \
 	sp_fs_llvm.c \
@@ -40,12 +39,6 @@ DRIVER_SOURCES = \
 	sp_tex_sample.c \
 	sp_tile_cache.c \
 	sp_surface.c 
-
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES = 
 
 include ../../Makefile.template
 

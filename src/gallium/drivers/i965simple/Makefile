@@ -1,14 +1,13 @@
-
 TOP = ../../../..
 include $(TOP)/configs/current
 
 LIBNAME = i965simple
 
-DRIVER_SOURCES = \
-        brw_blit.c \
-        brw_flush.c \
-        brw_strings.c \
-        brw_surface.c \
+C_SOURCES = \
+	brw_blit.c \
+	brw_flush.c \
+	brw_strings.c \
+	brw_surface.c \
 	brw_cc.c \
 	brw_clip.c \
 	brw_clip_line.c \
@@ -31,8 +30,8 @@ DRIVER_SOURCES = \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
-        brw_shader_info.c \
-        brw_state.c \
+	brw_shader_info.c \
+	brw_state.c \
 	brw_state_batch.c \
 	brw_state_cache.c \
 	brw_state_pool.c \
@@ -50,16 +49,6 @@ DRIVER_SOURCES = \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c
-
-C_SOURCES = \
-	$(COMMON_SOURCES) \
-	$(COMMON_BM_SOURCES) \
-	$(MINIGLX_SOURCES) \
-	$(DRIVER_SOURCES)
-
-ASM_SOURCES =
-
-DRIVER_DEFINES = -I.
 
 include ../../Makefile.template
 

@@ -32,7 +32,7 @@
 #include "tgsi_exec.h"
 #include "tgsi_sse2.h"
 
-#include "x86/rtasm/x86sse.h"
+#include "rtasm/rtasm_x86sse.h"
 
 #if defined(__i386__) || defined(__386__)
 
@@ -2356,11 +2356,17 @@ tgsi_emit_sse2_fs(
          ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
+
+	 if (!ok) {
+	    debug_printf("failed to translate tgsi opcode %d\n", 
+			 parse.FullToken.FullInstruction.Instruction.Opcode );
+	 }
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
 	 ok = 0;
+	 debug_printf("failed to emit immediate value\n");
          break;
 
       default:

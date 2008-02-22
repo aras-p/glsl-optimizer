@@ -112,7 +112,9 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp_push_quad_first( sp, sp->quad.earlyz );
    }
 
+#if !USE_DRAW_STAGE_PSTIPPLE
    if (sp->rasterizer->poly_stipple_enable) {
       sp_push_quad_first( sp, sp->quad.polygon_stipple );
    }
+#endif
 }

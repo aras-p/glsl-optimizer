@@ -34,8 +34,8 @@
  */
 
 
-#include "p_debug.h"
-#include "p_util.h"
+#include "pipe/p_debug.h"
+#include "pipe/p_util.h"
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"

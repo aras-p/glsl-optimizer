@@ -1,6 +1,6 @@
 # Gallium3D Cell driver: PPU code
 
-# This makefile builds the g3dcell.a library which gets pulled into
+# This makefile builds the libcell.a library which gets pulled into
 # the main libGL.so library
 
 
@@ -8,10 +8,14 @@ TOP = ../../../../..
 include $(TOP)/configs/linux-cell
 
 
-#PROG = gl4
+# This is the "top-level" cell PPU driver code, will get pulled into libGL.so
+# by the winsys Makefile.
+CELL_LIB = ../libcell.a
 
-CELL_LIB = libcell.a
 
+# This is the SPU code.  We'd like to be able to put this into the libcell.a
+# archive with the PPU code, but nesting .a libs doesn't seem to work.
+# So, it's pulled into libGL.so in gallium/winsys/xlib/Makefile
 SPU_CODE_MODULE = ../spu/g3d_spu.a
 
 
@@ -21,14 +25,10 @@ SOURCES = \
 	cell_context.c \
 	cell_draw_arrays.c \
 	cell_flush.c \
-	cell_state_blend.c \
-	cell_state_clip.c \
 	cell_state_derived.c \
 	cell_state_emit.c \
-	cell_state_fs.c \
-	cell_state_rasterizer.c \
-	cell_state_sampler.c \
-	cell_state_surface.c \
+	cell_state_shader.c \
+	cell_pipe_state.c \
 	cell_state_vertex.c \
 	cell_spu.c \
 	cell_surface.c \
@@ -56,7 +56,7 @@ default: $(CELL_LIB)
 
 
 $(CELL_LIB): $(OBJECTS) $(SPU_CODE_MODULE)
-#	ar -ru $(CELL_LIB) $(OBJECTS) $(SPU_CODE_MODULE)
+#	ar -ru $(CELL_LIB) $(OBJECTS) $(SPU_CODE_MODULE) # doesn't work
 	ar -ru $(CELL_LIB) $(OBJECTS)
 
 #$(PROG): $(PPU_OBJECTS)

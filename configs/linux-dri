@@ -33,7 +33,7 @@ CFLAGS = -Wall -Wmissing-prototypes -std=c99 -ffast-math \
 CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 
 
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib
@@ -53,16 +53,15 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 USING_EGL=0
 
 # Directories
+SRC_DIRS := glx/x11 $(SRC_DIRS)
 ifeq ($(USING_EGL), 1)
-SRC_DIRS = egl glx/x11 gallium mesa glu glut/glx glw
+SRC_DIRS := egl $(SRC_DIRS)
 PROGRAM_DIRS = egl
-else
-SRC_DIRS = glx/x11 gallium mesa glu glut/glx glw
-PROGRAM_DIRS =
 endif
 
 DRIVER_DIRS = dri
 WINDOW_SYSTEM=dri
+GALLIUM_WINSYS_DIRS = dri
 
 # gamma are missing because they have not been converted to use the new
 # interface.

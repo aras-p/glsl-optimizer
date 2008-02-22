@@ -25,8 +25,6 @@
  * 
  **************************************************************************/
 
-//#include "imports.h"
-
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_winsys.h"

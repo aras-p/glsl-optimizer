@@ -36,9 +36,12 @@
 
 #include <xf86drm.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
-#include "imports.h"
-#include "glthread.h"
+
+#include "pipe/p_compiler.h"
+#include "pipe/p_thread.h"
+
 #include "dri_bufpool.h"
 #include "dri_bufmgr.h"
 #include "intel_batchpool.h"
@@ -196,7 +199,7 @@ pool_create(struct _DriBufferPool *pool,
    _glthread_LOCK_MUTEX(p->mutex);
 
    if (p->numFree == 0)
-      pool_checkFree(p, GL_TRUE);
+      pool_checkFree(p, TRUE);
 
    if (p->numFree == 0) {
       fprintf(stderr, "Out of fixed size buffer objects\n");
@@ -278,7 +281,7 @@ pool_map(struct _DriBufferPool *pool, void *private, unsigned flags,
       return -EBUSY;
    }
 
-   buf->mapped = GL_TRUE;
+   buf->mapped = TRUE;
    *virtual = (unsigned char *) p->virtual + buf->start;
    _glthread_UNLOCK_MUTEX(p->mutex);
    return 0;
@@ -361,7 +364,7 @@ pool_validate(struct _DriBufferPool *pool, void *private)
    BBuf *buf = (BBuf *) private;
    BPool *p = buf->parent;
    _glthread_LOCK_MUTEX(p->mutex);
-   buf->unfenced = GL_TRUE;
+   buf->unfenced = TRUE;
    _glthread_UNLOCK_MUTEX(p->mutex);
    return 0;
 }
@@ -379,7 +382,7 @@ pool_takedown(struct _DriBufferPool *pool)
    while ((p->numFree < p->numTot) && p->numDelayed) {
       _glthread_UNLOCK_MUTEX(p->mutex);
       sched_yield();
-      pool_checkFree(p, GL_TRUE);
+      pool_checkFree(p, TRUE);
       _glthread_LOCK_MUTEX(p->mutex);
    }
 

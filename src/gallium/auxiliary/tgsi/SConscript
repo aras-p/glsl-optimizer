@@ -1,0 +1,14 @@
+Import('*')
+
+tgsi = env.ConvenienceLibrary(
+	target = 'tgsi',
+	source = [
+		'exec/tgsi_exec.c',
+		'exec/tgsi_sse2.c',
+		'util/tgsi_build.c',
+		'util/tgsi_dump.c',
+		'util/tgsi_parse.c',
+		'util/tgsi_util.c',
+	])
+
+auxiliaries.insert(0, tgsi)

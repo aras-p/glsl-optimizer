@@ -29,7 +29,7 @@
 #define CELL_TEXTURE_H
 
 
-struct pipe_context;
+struct cell_context;
 struct pipe_texture;
 
 
@@ -60,21 +60,12 @@ cell_texture(struct pipe_texture *pt)
 
 
 
-extern struct pipe_texture *
-cell_texture_create(struct pipe_context *pipe,
-                    const struct pipe_texture *templat);
-
-extern void
-cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
-
-extern struct pipe_surface *
-cell_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice);
-
-
 extern void
 cell_update_texture_mapping(struct cell_context *cell);
 
 
-#endif /* CELL_TEXTURE */
+extern void
+cell_init_texture_functions(struct cell_context *cell);
+
+
+#endif /* CELL_TEXTURE_H */

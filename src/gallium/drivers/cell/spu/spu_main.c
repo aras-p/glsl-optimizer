@@ -433,9 +433,18 @@ cmd_batch(uint opcode)
                        sizeof(struct pipe_viewport_state));
          pos += (1 + ROUNDUP8(sizeof(struct pipe_viewport_state)) / 8);
          break;
+      case CELL_CMD_STATE_UNIFORMS:
+         draw.constants = (float (*)[4]) (uintptr_t) buffer[pos + 1];
+         pos += 2;
+         break;
       case CELL_CMD_STATE_VS_ARRAY_INFO:
          cmd_state_vs_array_info((struct cell_array_info *) &buffer[pos+1]);
          pos += (1 + ROUNDUP8(sizeof(struct cell_array_info)) / 8);
+         break;
+      case CELL_CMD_STATE_BIND_VS:
+         spu_bind_vertex_shader(&draw,
+                                (struct cell_shader_info *) &buffer[pos+1]);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_shader_info)) / 8);
          break;
       case CELL_CMD_STATE_ATTRIB_FETCH: {
          struct cell_attribute_fetch_code *code =
@@ -452,6 +461,14 @@ cmd_batch(uint opcode)
          draw.vertex_fetch.code = attribute_fetch_code_buffer;
          pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
          break;
+      }
+      case CELL_CMD_FLUSH_BUFFER_RANGE: {
+	 struct cell_buffer_range *br = (struct cell_buffer_range *)
+	     &buffer[pos+1];
+
+	 spu_dcache_mark_dirty((unsigned) br->base, br->size);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_buffer_range)) / 8);
+	 break;
       }
       default:
          printf("SPU %u: bad opcode: 0x%llx\n", spu.init.id, buffer[pos]);

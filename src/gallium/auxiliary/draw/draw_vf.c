@@ -30,16 +30,12 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
+#include "rtasm/rtasm_execmem.h"
 
 #include "draw_vf.h"
 
 
 #define DRAW_VF_DBG 0
-
-
-/* TODO: remove this */
-extern void 
-_mesa_exec_free( void *addr );
 
 
 static boolean match_fastpath( struct draw_vertex_fetch *vf,
@@ -414,12 +410,12 @@ void draw_vf_destroy( struct draw_vertex_fetch *vf )
       FREE(fp->attr);
 
       /* KW: At the moment, fp->func is constrained to be allocated by
-       * _mesa_exec_alloc(), as the hardwired fastpaths in
+       * rtasm_exec_alloc(), as the hardwired fastpaths in
        * t_vertex_generic.c are handled specially.  It would be nice
        * to unify them, but this probably won't change until this
        * module gets another overhaul.
        */
-      //_mesa_exec_free((void *) fp->func);
+      //rtasm_exec_free((void *) fp->func);
       FREE(fp);
    }
    

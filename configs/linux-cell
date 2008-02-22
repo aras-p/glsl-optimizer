@@ -5,6 +5,9 @@ include $(TOP)/configs/default
 CONFIG_NAME = linux-cell
 
 
+GALLIUM_DRIVER_DIRS += cell
+
+
 # Compiler and flags
 CC = ppu32-gcc
 CXX = ppu32-g++
@@ -21,7 +24,7 @@ CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I$(
 CXXFLAGS = $(CFLAGS)
 
 # Omitting glw here:
-SRC_DIRS = gallium mesa glu glut/glx
+SRC_DIRS = gallium mesa gallium/winsys glu glut/glx
 
 
 MKDEP_OPTIONS = -fdepend -Y

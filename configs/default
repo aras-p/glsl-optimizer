@@ -51,7 +51,7 @@ OSMESA_LIB_NAME = lib$(OSMESA_LIB).so
 
 
 # Optional assembly language optimization files for libGL
-ASM_SOURCES = 
+MESA_ASM_SOURCES = 
 
 # GLw widget sources (Append "GLwMDrawA.c" here and add -lXm to GLW_LIB_DEPS in
 # order to build the Motif widget too)
@@ -60,11 +60,19 @@ GLW_SOURCES = GLwDrawA.c
 
 # Directories to build
 LIB_DIR = lib
-SRC_DIRS = gallium mesa glu glut/glx glw
+SRC_DIRS = gallium mesa gallium/winsys glu glut/glx glw
 GLU_DIRS = sgi
-DRIVER_DIRS = x11 osmesa
+DRIVER_DIRS = 
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples glsl xdemos
+
+
+# Gallium directories and 
+GALLIUM_AUXILIARY_DIRS = draw cso_cache pipebuffer tgsi rtasm util
+GALLIUM_AUXILIARIES = $(foreach DIR,$(GALLIUM_AUXILIARY_DIRS),$(TOP)/src/gallium/auxiliary/$(DIR)/lib$(DIR).a)
+GALLIUM_DRIVER_DIRS = softpipe i915simple i965simple failover
+GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVER_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
+GALLIUM_WINSYS_DIRS = xlib
 
 
 # Library/program dependencies

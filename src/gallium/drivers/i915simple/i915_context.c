@@ -296,12 +296,11 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);
    i915_init_string_functions(i915);
+   i915_init_texture_functions(i915);
 
    i915->pci_id = pci_id;
    i915->flags.is_i945 = is_i945;
 
-   i915->pipe.texture_create = i915_texture_create;
-   i915->pipe.texture_release = i915_texture_release;
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;

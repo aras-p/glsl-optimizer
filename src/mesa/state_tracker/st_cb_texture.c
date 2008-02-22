@@ -53,45 +53,10 @@
 #define DBG if (0) printf
 
 
-struct st_texture_object
-{
-   struct gl_texture_object base;       /* The "parent" object */
-
-   /* The texture must include at levels [0..lastLevel] once validated:
-    */
-   GLuint lastLevel;
-
-   /* On validation any active images held in main memory or in other
-    * textures will be copied to this texture and the old storage freed.
-    */
-   struct pipe_texture *pt;
-
-   GLboolean imageOverride;
-   GLint depthOverride;
-   GLuint pitchOverride;
-};
-
-
-
-static INLINE struct st_texture_object *
-st_texture_object(struct gl_texture_object *obj)
-{
-   return (struct st_texture_object *) obj;
-}
-
-
 static INLINE struct st_texture_image *
 st_texture_image(struct gl_texture_image *img)
 {
    return (struct st_texture_image *) img;
-}
-
-
-struct pipe_texture *
-st_get_texobj_texture(struct gl_texture_object *texObj)
-{
-   struct st_texture_object *stObj = st_texture_object(texObj);
-   return stObj->pt;
 }
 
 
@@ -725,11 +690,12 @@ st_TexImage(GLcontext * ctx,
       texImage->Data = NULL;
    }
 
-#if 01
+   /* flag data as dirty */
+   stObj->dirtyData = GL_TRUE;
+
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
-#endif
 }
 
 
@@ -900,6 +866,7 @@ st_TexSubimage(GLcontext * ctx,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage)
 {
+   struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride;
    GLuint srcImageStride = _mesa_image_image_stride(packing, width, height,
@@ -946,14 +913,9 @@ st_TexSubimage(GLcontext * ctx,
       }
    }
 
-#if 0
-   /* GL_SGIS_generate_mipmap */
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
    }
-#endif
 
    _mesa_unmap_teximage_pbo(ctx, packing);
 
@@ -961,6 +923,9 @@ st_TexSubimage(GLcontext * ctx,
       st_texture_image_unmap(stImage);
       texImage->Data = NULL;
    }
+
+   /* flag data as dirty */
+   stObj->dirtyData = GL_TRUE;
 }
 
 
@@ -1126,6 +1091,7 @@ do_copy_texsubimage(GLcontext *ctx,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
    struct st_texture_image *stImage = st_texture_image(texImage);
+   struct st_texture_object *stObj = st_texture_object(texObj);
    GLenum baseFormat = texImage->InternalFormat;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb;
@@ -1212,17 +1178,12 @@ do_copy_texsubimage(GLcontext *ctx,
 
    pipe_surface_reference(&dest_surface, NULL);
 
-#if 0
-   /* GL_SGIS_generate_mipmap -- this can be accelerated now.
-    * XXX Add a ctx->Driver.GenerateMipmaps() function?
-    */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
-   }
-#endif
+   /* flag data as dirty */
+   stObj->dirtyData = GL_TRUE;
 
+   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+      ctx->Driver.GenerateMipmap(ctx, target, texObj);
+   }
 }
 
 

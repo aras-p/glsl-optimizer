@@ -72,6 +72,8 @@
 #include "spu_exec.h"
 #include "spu_main.h"
 #include "spu_vertex_shader.h"
+#include "spu_dcache.h"
+#include "cell/common.h"
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
@@ -146,16 +148,12 @@ spu_exec_machine_init(struct spu_exec_machine *mach,
                       struct spu_sampler *samplers,
                       unsigned processor)
 {
-   qword zero;
-   qword not_zero;
-   uint i;
+   const qword zero = si_il(0);
+   const qword not_zero = si_il(~0);
 
    mach->Samplers = samplers;
    mach->Processor = processor;
    mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
-
-   zero = si_xor(zero, zero);
-   not_zero = si_xori(zero, 0xff);
 
    /* Setup constants. */
    mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].q = zero;
@@ -356,19 +354,17 @@ fetch_src_file_channel(
    case TGSI_EXTSWIZZLE_W:
       switch( file ) {
       case TGSI_FILE_CONSTANT: {
-         unsigned char buffer[32] ALIGN16_ATTRIB;
          unsigned i;
 
          for (i = 0; i < 4; i++) {
             const float *ptr = mach->Consts[index->i[i]];
-            const uint64_t addr = (uint64_t)(uintptr_t) ptr;
-            const unsigned size = ((addr & 0x0f) == 0) ? 16 : 32;
+            float tmp[4];
 
-            mfc_get(buffer, addr & ~0x0f, size, TAG_VERTEX_BUFFER, 0, 0);
-            wait_on_mask(1 << TAG_VERTEX_BUFFER);
+            spu_dcache_fetch_unaligned((qword *) tmp,
+                                       (uintptr_t)(ptr + swizzle),
+                                       sizeof(float));
 
-            (void) memcpy(& chan->f[i], &buffer[(addr & 0x0f) 
-                + (sizeof(float) * swizzle)], sizeof(float));
+            chan->f[i] = tmp[0];
          }
          break;
       }
@@ -1903,32 +1899,28 @@ spu_exec_machine_run( struct spu_exec_machine *mach )
    /* execute declarations (interpolants) */
    if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
       for (i = 0; i < mach->NumDeclarations; i++) {
-	 uint8_t buffer[sizeof(struct tgsi_full_declaration) + 32] ALIGN16_ATTRIB;
-	 struct tgsi_full_declaration decl;
-	 unsigned long decl_addr = (unsigned long) (mach->Declarations+i);
-	 unsigned size = ((sizeof(decl) + (decl_addr & 0x0f) + 0x0f) & ~0x0f);
+         union {
+            struct tgsi_full_declaration decl;
+            qword buffer[ROUNDUP16(sizeof(struct tgsi_full_declaration)) / 16];
+         } d ALIGN16_ATTRIB;
+         unsigned ea = (unsigned) (mach->Declarations + pc);
 
-	 mfc_get(buffer, decl_addr & ~0x0f, size, TAG_INSTRUCTION_FETCH, 0, 0);
-	 wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
+         spu_dcache_fetch_unaligned(d.buffer, ea, sizeof(d.decl));
 
-	 memcpy(& decl, buffer + (decl_addr & 0x0f), sizeof(decl));
-	 exec_declaration( mach, &decl );
+         exec_declaration( mach, &d.decl );
       }
    }
 
    /* execute instructions, until pc is set to -1 */
    while (pc != -1) {
-      uint8_t buffer[sizeof(struct tgsi_full_instruction) + 32] ALIGN16_ATTRIB;
-      struct tgsi_full_instruction inst;
-      unsigned long inst_addr = (unsigned long) (mach->Instructions + pc);
-      unsigned size = ((sizeof(inst) + (inst_addr & 0x0f) + 0x0f) & ~0x0f);
+      union {
+         struct tgsi_full_instruction inst;
+         qword buffer[ROUNDUP16(sizeof(struct tgsi_full_instruction)) / 16];
+      } i ALIGN16_ATTRIB;
+      unsigned ea = (unsigned) (mach->Instructions + pc);
 
-      assert(pc < mach->NumInstructions);
-      mfc_get(buffer, inst_addr & ~0x0f, size, TAG_INSTRUCTION_FETCH, 0, 0);
-      wait_on_mask(1 << TAG_INSTRUCTION_FETCH);
-
-      memcpy(& inst, buffer + (inst_addr & 0x0f), sizeof(inst));
-      exec_instruction( mach, & inst, &pc );
+      spu_dcache_fetch_unaligned(i.buffer, ea, sizeof(i.inst));
+      exec_instruction( mach, & i.inst, &pc );
    }
 
 #if 0

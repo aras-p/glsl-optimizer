@@ -23,16 +23,17 @@
  */
 
 /**
- * \file spe_asm.c
+ * \file
  * Real-time assembly generation interface for Cell B.E. SPEs.
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
-#ifdef GALLIUM_CELL
-#include <inttypes.h>
-#include <imports.h>
-#include "spe_asm.h"
 
+#include "pipe/p_compiler.h"
+#include "pipe/p_util.h"
+#include "rtasm_ppc_spe.h"
+
+#ifdef GALLIUM_CELL
 /**
  * SPE instruction types
  *
@@ -296,21 +297,21 @@ void _name (struct spe_function *p, int imm) \
     emit_RI16(p, _op, 0, imm); \
 }
 
-#include "spe_asm.h"
+#include "rtasm_ppc_spe.h"
 
 
 /*
  */
 void spe_init_func(struct spe_function *p, unsigned code_size)
 {
-    p->store = _mesa_align_malloc(code_size, 16);
+    p->store = align_malloc(code_size, 16);
     p->csr = p->store;
 }
 
 
 void spe_release_func(struct spe_function *p)
 {
-    _mesa_align_free(p->store);
+    align_free(p->store);
     p->store = NULL;
     p->csr = NULL;
 }

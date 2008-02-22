@@ -1,8 +1,8 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -26,46 +26,14 @@
  **************************************************************************/
 
 
-#include "pipe/p_inlines.h"
-#include "cell_context.h"
-#include "cell_state.h"
+#ifndef CELL_PIPE_STATE_H
+#define CELL_PIPE_STATE_H
 
 
-void
-cell_set_framebuffer_state(struct pipe_context *pipe,
-                           const struct pipe_framebuffer_state *fb)
-{
-   struct cell_context *cell = cell_context(pipe);
+struct cell_context;
 
-   if (1 /*memcmp(&cell->framebuffer, fb, sizeof(*fb))*/) {
-      struct pipe_surface *csurf = fb->cbufs[0];
-      struct pipe_surface *zsurf = fb->zsbuf;
-      uint i;
+extern void
+cell_init_state_functions(struct cell_context *cell);
 
-      /* unmap old surfaces */
-      for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-         if (cell->framebuffer.cbufs[i] && cell->cbuf_map[i]) {
-            pipe_surface_unmap(cell->framebuffer.cbufs[i]);
-            cell->cbuf_map[i] = NULL;
-         }
-      }
 
-      if (cell->framebuffer.zsbuf && cell->zsbuf_map) {
-         pipe_surface_unmap(cell->framebuffer.zsbuf);
-         cell->zsbuf_map = NULL;
-      }
-
-      /* update my state */
-      cell->framebuffer = *fb;
-
-      /* map new surfaces */
-      if (csurf)
-         cell->cbuf_map[0] = pipe_surface_map(csurf);
-
-      if (zsurf)
-         cell->zsbuf_map = pipe_surface_map(zsurf);
-
-      cell->dirty |= CELL_NEW_FRAMEBUFFER;
-   }
-}
-
+#endif /* CELL_PIPE_STATE_H */

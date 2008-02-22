@@ -32,6 +32,7 @@
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_dump.h"
 
@@ -327,7 +328,9 @@ static void brw_set_sampler_texture(struct pipe_context *pipe,
 {
    struct brw_context *brw = brw_context(pipe);
 
-   brw->attribs.Texture[unit] = (struct brw_texture*)texture;  /* ptr, not struct */
+   pipe_texture_reference(pipe,
+                          (struct pipe_texture **) &brw->attribs.Texture[unit],
+                          texture);
 
    brw->state.dirty.brw |= BRW_NEW_TEXTURE;
 }

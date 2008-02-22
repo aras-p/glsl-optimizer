@@ -478,7 +478,7 @@ i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
 }
 
 
-struct pipe_texture *
+static struct pipe_texture *
 i915_texture_create(struct pipe_context *pipe,
                     const struct pipe_texture *templat)
 {
@@ -488,6 +488,7 @@ i915_texture_create(struct pipe_context *pipe,
       struct i915_context *i915 = i915_context(pipe);
 
       tex->base = *templat;
+      tex->base.refcount = 1;
 
       if (i915->flags.is_i945 ? i945_miptree_layout(pipe, tex) :
 	  i915_miptree_layout(pipe, tex))
@@ -506,7 +507,7 @@ i915_texture_create(struct pipe_context *pipe,
 }
 
 
-void
+static void
 i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 {
    if (!*pt)
@@ -533,4 +534,63 @@ i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       FREE(tex);
    }
    *pt = NULL;
+}
+
+
+static void
+i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+{
+   /* no-op? */
+}
+
+
+/*
+ * XXX note: same as code in sp_surface.c
+ */
+static struct pipe_surface *
+i915_get_tex_surface(struct pipe_context *pipe,
+                     struct pipe_texture *pt,
+                     unsigned face, unsigned level, unsigned zslice)
+{
+   struct i915_texture *tex = (struct i915_texture *)pt;
+   struct pipe_surface *ps;
+   unsigned offset;  /* in bytes */
+
+   offset = tex->level_offset[level];
+
+   if (pt->target == PIPE_TEXTURE_CUBE) {
+      offset += tex->image_offset[level][face] * pt->cpp;
+   }
+   else if (pt->target == PIPE_TEXTURE_3D) {
+      offset += tex->image_offset[level][zslice] * pt->cpp;
+   }
+   else {
+      assert(face == 0);
+      assert(zslice == 0);
+   }
+
+   ps = pipe->winsys->surface_alloc(pipe->winsys);
+   if (ps) {
+      assert(ps->refcount);
+      assert(ps->winsys);
+      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
+      ps->format = pt->format;
+      ps->cpp = pt->cpp;
+      ps->width = pt->width[level];
+      ps->height = pt->height[level];
+      ps->pitch = tex->pitch;
+      ps->offset = offset;
+   }
+   return ps;
+}
+
+
+
+void
+i915_init_texture_functions(struct i915_context *i915)
+{
+   i915->pipe.texture_create = i915_texture_create;
+   i915->pipe.texture_release = i915_texture_release;
+   i915->pipe.texture_update = i915_texture_update;
+   i915->pipe.get_tex_surface = i915_get_tex_surface;
 }

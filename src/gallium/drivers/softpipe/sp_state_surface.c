@@ -27,7 +27,7 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "p_inlines.h"
+#include "pipe/p_inlines.h"
 
 #include "sp_context.h"
 #include "sp_state.h"

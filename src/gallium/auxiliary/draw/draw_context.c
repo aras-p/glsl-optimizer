@@ -72,10 +72,10 @@ struct draw_context *draw_create( void )
    {
       uint i;
       const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
-      char *tmp = align_malloc(Elements(draw->vcache.vertex) * size, 16);
+      char *tmp = align_malloc(Elements(draw->vs.queue) * size, 16);
 
-      for (i = 0; i < Elements(draw->vcache.vertex); i++)
-	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * size);
+      for (i = 0; i < Elements(draw->vs.queue); i++)
+	 draw->vs.queue[i].vertex = (struct vertex_header *)(tmp + i * size);
    }
 
    draw->shader_queue_flush = draw_vertex_shader_queue_flush;
@@ -103,10 +103,14 @@ void draw_destroy( struct draw_context *draw )
    draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
    draw->pipeline.cull->destroy( draw->pipeline.cull );
    draw->pipeline.validate->destroy( draw->pipeline.validate );
+   if (draw->pipeline.aaline)
+      draw->pipeline.aaline->destroy( draw->pipeline.aaline );
+   if (draw->pipeline.aapoint)
+      draw->pipeline.aapoint->destroy( draw->pipeline.aapoint );
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    tgsi_exec_machine_free_data(&draw->machine);
-   align_free( draw->vcache.vertex[0] ); /* Frees all the vertices. */
+   align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
    FREE( draw );
 }
 
@@ -236,6 +240,26 @@ draw_convert_wide_lines(struct draw_context *draw, boolean enable)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->convert_wide_lines = enable;
+}
+
+
+/**
+ * The draw module may sometimes generate vertices with extra attributes
+ * (such as texcoords for AA lines).  The driver can call this function
+ * to find those attributes.
+ */
+int
+draw_find_vs_output(struct draw_context *draw,
+                    uint semantic_name, uint semantic_index)
+{
+   /* XXX there may be more than one extra vertex attrib.
+    * For example, simulated gl_FragCoord and gl_PointCoord.
+    */
+   if (draw->extra_vp_outputs.semantic_name == semantic_name &&
+       draw->extra_vp_outputs.semantic_index == semantic_index) {
+      return draw->extra_vp_outputs.slot;
+   }
+   return 0;
 }
 
 

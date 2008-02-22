@@ -1,0 +1,10 @@
+Import('*')
+
+if dri:
+	SConscript([
+		'dri/SConscript',
+	])
+else:
+	SConscript([
+		'xlib/SConscript',
+	])

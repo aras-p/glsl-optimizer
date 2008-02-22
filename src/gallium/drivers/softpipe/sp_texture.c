@@ -39,6 +39,7 @@
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_texture.h"
+#include "sp_tile_cache.h"
 
 
 /* Simple, maximally packed layout.
@@ -88,6 +89,7 @@ softpipe_texture_create(struct pipe_context *pipe,
       return NULL;
 
    spt->base = *templat;
+   spt->base.refcount = 1;
 
    softpipe_texture_layout(spt);
 
@@ -98,6 +100,8 @@ softpipe_texture_create(struct pipe_context *pipe,
       FREE(spt);
       return NULL;
    }
+
+   assert(spt->base.refcount == 1);
 
    return &spt->base;
 }
@@ -125,6 +129,20 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       FREE(spt);
    }
    *pt = NULL;
+}
+
+
+void
+softpipe_texture_update(struct pipe_context *pipe,
+                        struct pipe_texture *texture)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint unit;
+   for (unit = 0; unit < PIPE_MAX_SAMPLERS; unit++) {
+      if (softpipe->texture[unit] == texture) {
+         sp_flush_tile_cache(softpipe, softpipe->tex_cache[unit]);
+      }
+   }
 }
 
 

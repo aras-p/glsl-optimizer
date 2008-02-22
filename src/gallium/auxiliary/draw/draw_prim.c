@@ -114,6 +114,7 @@ static void draw_prim_queue_flush( struct draw_context *draw )
    }
 
    draw->pq.queue_nr = 0;   
+   draw->vs.post_nr = 0;   
    draw_vertex_cache_unreference( draw );
 }
 
@@ -121,11 +122,15 @@ static void draw_prim_queue_flush( struct draw_context *draw )
 
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
+   static boolean flushing = FALSE;
+
    if (0)
       debug_printf("Flushing with %d verts, %d prims\n",
                    draw->vs.queue_nr,
                    draw->pq.queue_nr );
 
+   if (!flushing) {
+      flushing = TRUE;
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
       if (draw->vs.queue_nr)
@@ -145,6 +150,9 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
 	    }
 	 }
       }    
+   }
+
+      flushing = FALSE;
    }
 }
 
@@ -219,6 +227,7 @@ static void do_triangle( struct draw_context *draw,
 {
    struct prim_header *prim = get_queued_prim( draw, 3 );
    
+//   _mesa_printf("tri %d %d %d\n", i0, i1, i2);
    prim->reset_line_stipple = 1;
    prim->edgeflags = ~0;
    prim->pad = 0;

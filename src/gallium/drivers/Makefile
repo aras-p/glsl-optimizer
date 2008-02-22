@@ -2,12 +2,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-ifeq ($(CONFIG_NAME), linux-cell)
-CELL_DIR = cell
-endif
-
-SUBDIRS = softpipe i915simple i965simple nv30 nv40 nv50 \
-	  failover pipebuffer $(CELL_DIR)
+SUBDIRS = $(GALLIUM_DRIVER_DIRS)
 
 
 default: subdirs

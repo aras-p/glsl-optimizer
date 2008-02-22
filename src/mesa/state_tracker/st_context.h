@@ -59,26 +59,6 @@ struct st_tracked_state {
 
 
 
-struct st_texture_image
-{
-   struct gl_texture_image base;
-
-   /* These aren't stored in gl_texture_image 
-    */
-   GLuint level;
-   GLuint face;
-
-   /* If stImage->pt != NULL, image data is stored here.
-    * Else if stImage->base.Data != NULL, image is stored there.
-    * Else there is no image data.
-    */
-   struct pipe_texture *pt;
-
-   struct pipe_surface *surface;
-};
-
-
-
 struct st_context
 {
    GLcontext *ctx;
@@ -106,7 +86,7 @@ struct st_context
       struct pipe_clip_state clip;
       struct pipe_constant_buffer constants[2];
       struct pipe_framebuffer_state framebuffer;
-      struct pipe_texture *sampler_texture[PIPE_MAX_SAMPLERS];
+      struct st_texture_object *sampler_texture[PIPE_MAX_SAMPLERS];
       struct pipe_poly_stipple poly_stipple;
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;

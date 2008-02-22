@@ -2,11 +2,7 @@ TOP = ../../..
 include $(TOP)/configs/current
 
 
-ifeq ($(CONFIG_NAME), linux-llvm)
-LLVM_DIR = llvm
-endif
-
-SUBDIRS = pipebuffer $(LLVM_DIR)
+SUBDIRS = $(GALLIUM_AUXILIARY_DIRS)
 
 
 default: subdirs

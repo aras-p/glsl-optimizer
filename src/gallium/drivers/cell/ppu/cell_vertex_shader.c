@@ -35,6 +35,7 @@
 
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
+#include "cell_flush.h"
 #include "cell_spu.h"
 #include "cell_batch.h"
 
@@ -54,6 +55,7 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    struct cell_command_vs *const vs = &cell_global.command[0].vs;
    uint64_t *batch;
    struct cell_array_info *array_info;
+   struct cell_shader_info *shader_info;
    unsigned i, j;
    struct cell_attribute_fetch_code *cf;
 
@@ -100,17 +102,17 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    (void) memcpy(&batch[1], &draw->viewport,
                  sizeof(struct pipe_viewport_state));
 
+   {
+      uint64_t uniforms = (uintptr_t) draw->user.constants;
+
+      batch = cell_batch_alloc(cell, 2 *sizeof(batch[0]));
+      batch[0] = CELL_CMD_STATE_UNIFORMS;
+      batch[1] = uniforms;
+   }
+
    cell_batch_flush(cell);
 
    vs->opcode = CELL_CMD_VS_EXECUTE;
-   vs->shader.num_outputs = draw->num_vs_outputs;
-   vs->shader.declarations = (uintptr_t) draw->machine.Declarations;
-   vs->shader.num_declarations = draw->machine.NumDeclarations;
-   vs->shader.instructions = (uintptr_t) draw->machine.Instructions;
-   vs->shader.num_instructions = draw->machine.NumInstructions;
-   vs->shader.uniforms = (uintptr_t) draw->user.constants;
-   vs->shader.immediates = (uintptr_t) draw->machine.Imms;
-   vs->shader.num_immediates = draw->machine.ImmLimit / 4;
    vs->nr_attrs = draw->vertex_fetch.nr_attrs;
 
    (void) memcpy(vs->plane, draw->plane, sizeof(draw->plane));

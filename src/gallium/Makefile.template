@@ -16,10 +16,8 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 INCLUDES = \
 	-I. \
 	-I$(TOP)/src/gallium/include \
-	-I$(TOP)/src/gallium/include/pipe \
 	-I$(TOP)/src/gallium/auxiliary \
 	-I$(TOP)/src/gallium/drivers \
-	-I$(TOP)/src/mesa \
 	-I$(TOP)/include \
         $(DRIVER_INCLUDES)
 

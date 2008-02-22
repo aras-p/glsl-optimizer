@@ -31,6 +31,8 @@
 #include "cell_state_emit.h"
 #include "cell_batch.h"
 #include "cell_texture.h"
+#include "draw/draw_context.h"
+#include "draw/draw_private.h"
 
 
 static void
@@ -99,5 +101,21 @@ cell_emit_state(struct cell_context *cell)
    if (cell->dirty & CELL_NEW_VERTEX_INFO) {
       emit_state_cmd(cell, CELL_CMD_STATE_VERTEX_INFO,
                      &cell->vertex_info, sizeof(struct vertex_info));
+   }
+   
+   if (cell->dirty & CELL_NEW_VS) {
+      const struct draw_context *const draw = cell->draw;
+      struct cell_shader_info info;
+
+      info.num_outputs = draw->num_vs_outputs;
+      info.declarations = (uintptr_t) draw->machine.Declarations;
+      info.num_declarations = draw->machine.NumDeclarations;
+      info.instructions = (uintptr_t) draw->machine.Instructions;
+      info.num_instructions = draw->machine.NumInstructions;
+      info.immediates = (uintptr_t) draw->machine.Imms;
+      info.num_immediates = draw->machine.ImmLimit / 4;
+
+      emit_state_cmd(cell, CELL_CMD_STATE_BIND_VS,
+		     & info, sizeof(info));
    }
 }

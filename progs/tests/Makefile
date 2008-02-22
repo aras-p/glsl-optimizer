@@ -62,6 +62,7 @@ SOURCES = \
 	sharedtex.c \
 	stencilwrap.c \
 	stencil_wrap.c \
+	subtex \
 	subtexrate.c \
 	tex1d.c \
 	texcompress2.c \

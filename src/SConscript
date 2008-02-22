@@ -1,0 +1,7 @@
+Import('*')
+
+SConscript([
+	'gallium/SConscript',
+	'mesa/SConscript',
+	'gallium/winsys/SConscript',
+])

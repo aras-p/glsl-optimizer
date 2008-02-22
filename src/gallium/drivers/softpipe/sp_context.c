@@ -283,6 +283,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    /* textures */
    softpipe->pipe.texture_create = softpipe_texture_create;
    softpipe->pipe.texture_release = softpipe_texture_release;
+   softpipe->pipe.texture_update = softpipe_texture_update;
    softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 
    /*
@@ -326,6 +327,18 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    else {
       draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
+
+   /* plug in AA line/point stages */
+   draw_install_aaline_stage(softpipe->draw, &softpipe->pipe);
+   draw_install_aapoint_stage(softpipe->draw, &softpipe->pipe);
+
+#if USE_DRAW_STAGE_PSTIPPLE
+   /* Do polygon stipple w/ texture map + frag prog? */
+   draw_install_pstipple_stage(softpipe->draw, &softpipe->pipe);
+#endif
+
+   /* sp_prim_setup can do wide points (don't convert to quads) */
+   draw_convert_wide_points(softpipe->draw, FALSE);
 
    sp_init_surface_functions(softpipe);
 

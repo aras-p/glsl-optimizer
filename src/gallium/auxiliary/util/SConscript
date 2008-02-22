@@ -1,0 +1,12 @@
+Import('*')
+
+util = env.ConvenienceLibrary(
+	target = 'util',
+	source = [
+		'p_debug.c',
+		'p_tile.c',
+		'p_util.c',
+		'u_mm.c',
+	])
+
+auxiliaries.insert(0, util)

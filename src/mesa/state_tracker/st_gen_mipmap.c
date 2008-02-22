@@ -43,6 +43,7 @@
 #include "st_draw.h"
 #include "st_gen_mipmap.h"
 #include "st_program.h"
+#include "st_texture.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_texture.h"
 
@@ -110,14 +111,22 @@ st_init_generate_mipmap(struct st_context *st)
    struct pipe_rasterizer_state rasterizer;
    struct pipe_depth_stencil_alpha_state depthstencil;
 
+   /* we don't use blending, but need to set valid values */
    memset(&blend, 0, sizeof(blend));
+   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    blend.colormask = PIPE_MASK_RGBA;
    st->gen_mipmap.blend_cso = pipe->create_blend_state(pipe, &blend);
 
    memset(&depthstencil, 0, sizeof(depthstencil));
    st->gen_mipmap.depthstencil_cso = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
 
+   /* Note: we're assuming zero is valid for all non-specified fields */
    memset(&rasterizer, 0, sizeof(rasterizer));
+   rasterizer.front_winding = PIPE_WINDING_CW;
+   rasterizer.cull_mode = PIPE_WINDING_NONE;
    st->gen_mipmap.rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
 
    st->gen_mipmap.stfp = make_tex_fragment_program(st->ctx);
@@ -302,7 +311,8 @@ st_render_mipmap(struct st_context *st,
       pipe->bind_vs_state(pipe, st->state.vs->cso->data);
    if (st->state.sampler[0])
       pipe->bind_sampler_state(pipe, 0, st->state.sampler[0]->data);
-   pipe->set_sampler_texture(pipe, 0, st->state.sampler_texture[0]);
+   pipe->set_sampler_texture(pipe, 0,
+                        st_get_stobj_texture(st->state.sampler_texture[0]));
    pipe->set_viewport_state(pipe, &st->state.viewport);
 
    return TRUE;

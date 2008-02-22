@@ -55,7 +55,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
     */
    shader->prepare( shader, draw );
 
-//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+//   fprintf(stderr, "%s %d\n", __FUNCTION__, draw->vs.queue_nr );
 
    /* run vertex shader on vertex cache entries, four per invokation */
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
@@ -65,12 +65,12 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
 
       for (j = 0; j < n; j++) {
          elts[j] = draw->vs.queue[i + j].elt;
-         dests[j] = draw->vs.queue[i + j].dest;
+         dests[j] = draw->vs.queue[i + j].vertex;
       }
 
       for ( ; j < 4; j++) {
 	 elts[j] = elts[0];
-	 dests[j] = dests[0];
+         dests[j] = draw->vs.queue[i + j].vertex;
       }
 
       assert(n > 0);
@@ -79,6 +79,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
       shader->run(shader, draw, elts, n, dests);
    }
 
+   draw->vs.post_nr = draw->vs.queue_nr;
    draw->vs.queue_nr = 0;
 }
 

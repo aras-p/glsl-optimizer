@@ -9,11 +9,6 @@ env.Append(CPPPATH = [
 
 #MINIGLX_SOURCES = server/intel_dri.c
 
-pipe_drivers = [
-	softpipe,
-	i915simple
-]
-
 DRIVER_SOURCES = [
 	'intel_winsys_pipe.c',
 	'intel_winsys_softpipe.c',
@@ -31,11 +26,14 @@ sources = \
 	COMMON_BM_SOURCES + \
 	DRIVER_SOURCES
 
-# DRIVER_DEFINES = -I../intel $(shell pkg-config libdrm --atleast-version=2.3.1 \
-#				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
+drivers = [
+	softpipe,
+	i915simple
+]
 
+# TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
 env.SharedLibrary(
 	target ='i915tex_dri.so',
 	source = sources,
-	LIBS = pipe_drivers + env['LIBS'],
+	LIBS = drivers + mesa + auxiliaries + env['LIBS'],
 )

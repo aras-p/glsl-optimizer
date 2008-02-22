@@ -41,7 +41,7 @@
 #include "draw_private.h"
 #include "draw_context.h"
 
-#include "x86/rtasm/x86sse.h"
+#include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_sse2.h"
 
 

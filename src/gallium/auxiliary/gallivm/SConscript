@@ -1,0 +1,16 @@
+Import('*')
+
+gallivm = env.ConvenienceLibrary(
+	target = 'gallivm',
+	source = [
+        'gallivm.cpp',
+        'gallivm_cpu.cpp',
+        'instructions.cpp',
+        'loweringpass.cpp',
+        'tgsitollvm.cpp',
+        'storage.cpp',
+        'storagesoa.cpp',
+        'instructionssoa.cpp',
+	])
+
+auxiliaries.insert(0, gallivm)

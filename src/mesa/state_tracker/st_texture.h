@@ -35,6 +35,70 @@ struct pipe_context;
 struct pipe_texture;
 
 
+struct st_texture_image
+{
+   struct gl_texture_image base;
+
+   /* These aren't stored in gl_texture_image 
+    */
+   GLuint level;
+   GLuint face;
+
+   /* If stImage->pt != NULL, image data is stored here.
+    * Else if stImage->base.Data != NULL, image is stored there.
+    * Else there is no image data.
+    */
+   struct pipe_texture *pt;
+
+   struct pipe_surface *surface;
+};
+
+
+
+struct st_texture_object
+{
+   struct gl_texture_object base;       /* The "parent" object */
+
+   /* The texture must include at levels [0..lastLevel] once validated:
+    */
+   GLuint lastLevel;
+
+   /* On validation any active images held in main memory or in other
+    * textures will be copied to this texture and the old storage freed.
+    */
+   struct pipe_texture *pt;
+
+   GLboolean imageOverride;
+   GLint depthOverride;
+   GLuint pitchOverride;
+
+   GLboolean dirtyData;
+};
+
+
+static INLINE struct st_texture_object *
+st_texture_object(struct gl_texture_object *obj)
+{
+   return (struct st_texture_object *) obj;
+}
+
+
+static INLINE struct pipe_texture *
+st_get_texobj_texture(struct gl_texture_object *texObj)
+{
+   struct st_texture_object *stObj = st_texture_object(texObj);
+   return stObj ? stObj->pt : NULL;
+}
+
+
+static INLINE struct pipe_texture *
+st_get_stobj_texture(struct st_texture_object *stObj)
+{
+   return stObj ? stObj->pt : NULL;
+}
+
+
+
 extern struct pipe_texture *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,

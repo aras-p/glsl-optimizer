@@ -32,7 +32,7 @@
 #include "draw/draw_context.h"
 #if 0
 #include "pipe/p_shader_tokens.h"
-#include "llvm/gallivm.h"
+#include "gallivm/gallivm.h"
 #include "tgsi/util/tgsi_dump.h"
 #include "tgsi/exec/tgsi_sse2.h"
 #endif
@@ -41,7 +41,7 @@
 #include "cell_state.h"
 
 
-void *
+static void *
 cell_create_fs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
@@ -80,7 +80,7 @@ cell_create_fs_state(struct pipe_context *pipe,
 }
 
 
-void
+static void
 cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct cell_context *cell = cell_context(pipe);
@@ -91,7 +91,7 @@ cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void
+static void
 cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct cell_fragment_shader_state *state =
@@ -101,7 +101,7 @@ cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 }
 
 
-void *
+static void *
 cell_create_vs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
@@ -124,7 +124,7 @@ cell_create_vs_state(struct pipe_context *pipe,
 }
 
 
-void
+static void
 cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct cell_context *cell = cell_context(pipe);
@@ -137,7 +137,7 @@ cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 }
 
 
-void
+static void
 cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct cell_context *cell = cell_context(pipe);
@@ -150,7 +150,7 @@ cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 }
 
 
-void
+static void
 cell_set_constant_buffer(struct pipe_context *pipe,
                          uint shader, uint index,
                          const struct pipe_constant_buffer *buf)
@@ -168,4 +168,19 @@ cell_set_constant_buffer(struct pipe_context *pipe,
    cell->constants[shader].size = buf->size;
 
    cell->dirty |= CELL_NEW_CONSTANTS;
+}
+
+
+void
+cell_init_shader_functions(struct cell_context *cell)
+{
+   cell->pipe.create_fs_state = cell_create_fs_state;
+   cell->pipe.bind_fs_state   = cell_bind_fs_state;
+   cell->pipe.delete_fs_state = cell_delete_fs_state;
+
+   cell->pipe.create_vs_state = cell_create_vs_state;
+   cell->pipe.bind_vs_state   = cell_bind_vs_state;
+   cell->pipe.delete_vs_state = cell_delete_vs_state;
+
+   cell->pipe.set_constant_buffer = cell_set_constant_buffer;
 }

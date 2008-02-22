@@ -23,14 +23,14 @@
  */
 
 /**
- * \file spe_asm.h
+ * \file
  * Real-time assembly generation interface for Cell B.E. SPEs.
  *
  * \author Ian Romanick <idr@us.ibm.com>
  */
 
-#ifndef SPE_ASM_H
-#define SPE_ASM_H
+#ifndef RTASM_PPC_SPE_H
+#define RTASM_PPC_SPE_H
 
 struct spe_function {
     /**
@@ -44,7 +44,7 @@ struct spe_function {
 extern void spe_init_func(struct spe_function *p, unsigned code_size);
 extern void spe_release_func(struct spe_function *p);
 
-#endif /* SPE_ASM_H */
+#endif /* RTASM_PPC_SPE_H */
 
 #ifndef EMIT_
 #define EMIT_(name, _op) \

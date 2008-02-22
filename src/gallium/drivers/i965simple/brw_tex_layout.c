@@ -300,13 +300,15 @@ static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture 
 }
 
 
-struct pipe_texture *
-brw_texture_create(struct pipe_context *pipe, const struct pipe_texture *templat)
+static struct pipe_texture *
+brw_texture_create(struct pipe_context *pipe,
+                   const struct pipe_texture *templat)
 {
    struct brw_texture *tex = CALLOC_STRUCT(brw_texture);
 
    if (tex) {
       tex->base = *templat;
+      tex->base.refcount = 1;
 
       if (brw_miptree_layout(pipe, tex))
 	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,
@@ -323,7 +325,8 @@ brw_texture_create(struct pipe_context *pipe, const struct pipe_texture *templat
    return &tex->base;
 }
 
-void
+
+static void
 brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 {
    if (!*pt)
@@ -350,4 +353,62 @@ brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       free(tex);
    }
    *pt = NULL;
+}
+
+
+static void
+brw_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+{
+   /* no-op? */
+}
+
+
+/*
+ * XXX note: same as code in sp_surface.c
+ */
+static struct pipe_surface *
+brw_get_tex_surface(struct pipe_context *pipe,
+                     struct pipe_texture *pt,
+                     unsigned face, unsigned level, unsigned zslice)
+{
+   struct brw_texture *tex = (struct brw_texture *)pt;
+   struct pipe_surface *ps;
+   unsigned offset;  /* in bytes */
+
+   offset = tex->level_offset[level];
+
+   if (pt->target == PIPE_TEXTURE_CUBE) {
+      offset += tex->image_offset[level][face] * pt->cpp;
+   }
+   else if (pt->target == PIPE_TEXTURE_3D) {
+      offset += tex->image_offset[level][zslice] * pt->cpp;
+   }
+   else {
+      assert(face == 0);
+      assert(zslice == 0);
+   }
+
+   ps = pipe->winsys->surface_alloc(pipe->winsys);
+   if (ps) {
+      assert(ps->format);
+      assert(ps->refcount);
+      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
+      ps->format = pt->format;
+      ps->cpp = pt->cpp;
+      ps->width = pt->width[level];
+      ps->height = pt->height[level];
+      ps->pitch = tex->pitch;
+      ps->offset = offset;
+   }
+   return ps;
+}
+
+
+void
+brw_init_texture_functions(struct brw_context *brw)
+{
+   brw->pipe.texture_create  = brw_texture_create;
+   brw->pipe.texture_release = brw_texture_release;
+   brw->pipe.texture_update = brw_texture_update;
+   brw->pipe.get_tex_surface = brw_get_tex_surface;
 }

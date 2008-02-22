@@ -156,51 +156,6 @@ VF_SOURCES = \
 	vf/vf_generic.c \
 	vf/vf_sse.c
 
-
-DRAW_SOURCES = \
-	$(TOP)/src/gallium/auxiliary/draw/draw_clip.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vs_exec.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vs_sse.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vs_llvm.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_context.c\
-	$(TOP)/src/gallium/auxiliary/draw/draw_cull.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_debug.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_flatshade.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_offset.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_prim.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_stipple.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_twoside.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_unfilled.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_validate.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vbuf.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vertex.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vertex_cache.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vertex_fetch.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vertex_shader.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vf.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vf_generic.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_vf_sse.c \
-	$(TOP)/src/gallium/auxiliary/draw/draw_wide_prims.c
-
-TGSIEXEC_SOURCES = \
-	$(TOP)/src/gallium/auxiliary/tgsi/exec/tgsi_exec.c \
-	$(TOP)/src/gallium/auxiliary/tgsi/exec/tgsi_sse2.c
-
-TGSIUTIL_SOURCES = \
-	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_build.c \
-	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_dump.c \
-	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_parse.c \
-	$(TOP)/src/gallium/auxiliary/tgsi/util/tgsi_util.c
-
-STATECACHE_SOURCES = \
-	$(TOP)/src/gallium/auxiliary/cso_cache/cso_hash.c \
-	$(TOP)/src/gallium/auxiliary/cso_cache/cso_cache.c
-
-PIPEUTIL_SOURCES = \
-	$(TOP)/src/gallium/auxiliary/util/p_debug.c \
-	$(TOP)/src/gallium/auxiliary/util/p_tile.c \
-	$(TOP)/src/gallium/auxiliary/util/p_util.c
-
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_blend.c \
@@ -229,7 +184,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_readpixels.c \
 	state_tracker/st_cb_strings.c \
 	state_tracker/st_cb_texture.c \
-        state_tracker/st_cache.c \
+	state_tracker/st_cache.c \
 	state_tracker/st_context.c \
 	state_tracker/st_debug.c \
 	state_tracker/st_draw.c \
@@ -291,7 +246,6 @@ ASM_C_SOURCES =	\
 	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
 	ppc/common_ppc.c \
-	ppc/rtasm/spe_asm.c \
 	x86-64/x86-64.c
 
 X86_SOURCES =			\
@@ -333,15 +287,6 @@ SPARC_API =			\
 __COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
-X11_DRIVER_SOURCES =		\
-	$(TOP)/src/gallium/winsys/xlib/glxapi.c	\
-	$(TOP)/src/gallium/winsys/xlib/fakeglx.c	\
-	$(TOP)/src/gallium/winsys/xlib/xfonts.c	\
-	$(TOP)/src/gallium/winsys/xlib/xm_api.c	\
-	$(TOP)/src/gallium/winsys/xlib/xm_winsys.c	\
-	$(TOP)/src/gallium/winsys/xlib/xm_winsys_aub.c	\
-	$(TOP)/src/gallium/winsys/xlib/brw_aub.c
-
 OSMESA_DRIVER_SOURCES = \
 	drivers/osmesa/osmesa.c
 
@@ -374,7 +319,7 @@ FBDEV_DRIVER_SOURCES =			\
 ALL_SOURCES = \
 	$(GLAPI_SOURCES)	\
 	$(SOLO_SOURCES)		\
-	$(ASM_SOURCES)		\
+	$(MESA_ASM_SOURCES)		\
 	$(COMMON_DRIVER_SOURCES)\
 	$(X11_DRIVER_SOURCES)	\
 	$(FBDEV_DRIVER_SOURCES) \
@@ -407,11 +352,11 @@ CORE_SOURCES = \
 
 SOLO_OBJECTS = \
 	$(SOLO_SOURCES:.c=.o) \
-	$(ASM_SOURCES:.S=.o)
+	$(MESA_ASM_SOURCES:.S=.o)
 
 GLAPI_OBJECTS = \
 	$(GLAPI_SOURCES:.c=.o) \
-	$(ASM_API:.S=.o)
+	$(GLAPI_ASM_SOURCES:.S=.o)
 
 CORE_OBJECTS = $(SOLO_OBJECTS) $(GLAPI_OBJECTS)
 
