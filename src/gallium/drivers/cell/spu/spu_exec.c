@@ -50,8 +50,6 @@
  *   Brian Paul
  */
 
-#include <libmisc.h>
-#include <spu_mfcio.h>
 #include <transpose_matrix4x4.h>
 #include <simdmath/ceilf4.h>
 #include <simdmath/cosf4.h>
