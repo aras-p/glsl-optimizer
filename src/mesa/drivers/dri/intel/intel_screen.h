@@ -30,7 +30,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
-#include "i830_common.h"
+#include "i915_drm.h"
 #include "xmlconfig.h"
 
 /* XXX: change name or eliminate to avoid conflict with "struct
@@ -88,7 +88,7 @@ extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
 
 extern void
 intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           drmI830Sarea * sarea);
+                           struct drm_i915_sarea * sarea);
 
 extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
 

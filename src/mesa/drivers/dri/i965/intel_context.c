@@ -49,7 +49,6 @@
 #include "intel_chipset.h"
 
 #include "i830_dri.h"
-#include "i830_common.h"
 
 #include "intel_tex.h"
 #include "intel_span.h"
@@ -325,14 +324,14 @@ static void
 intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
-	drmI830MMIO io = {
-		.read_write = MMIO_READ,
+	struct drm_i915_mmio io = {
+		.read_write = I915_MMIO_READ,
 		.reg = MMIO_REGS_PS_DEPTH_COUNT,
 		.data = &q->Result 
 	};
 	intel->stats_wm++;
 	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	drmCommandWrite(intel->driFd, DRM_I915_MMIO, &io, sizeof(io));
 }
 
 static void
@@ -340,13 +339,13 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 {
 	struct intel_context *intel = intel_context( ctx );
 	GLuint64EXT tmp;	
-	drmI830MMIO io = {
-		.read_write = MMIO_READ,
+	struct drm_i915_mmio io = {
+		.read_write = I915_MMIO_READ,
 		.reg = MMIO_REGS_PS_DEPTH_COUNT,
 		.data = &tmp
 	};
 	intelFinish(&intel->ctx);
-	drmCommandWrite(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	drmCommandWrite(intel->driFd, DRM_I915_MMIO, &io, sizeof(io));
 	q->Result = tmp - q->Result;
 	q->Ready = GL_TRUE;
 	intel->stats_wm--;
@@ -463,7 +462,7 @@ GLboolean intelInitContext( struct intel_context *intel,
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
-   volatile drmI830Sarea *saPriv = (drmI830Sarea *)
+   volatile struct drm_i915_sarea *saPriv = (struct drm_i915_sarea *)
      (((GLubyte *)sPriv->pSAREA)+intelScreen->sarea_priv_offset);
 
    if (!_mesa_initialize_context(&intel->ctx,
@@ -739,7 +738,7 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
-   volatile drmI830Sarea * sarea = intel->sarea;
+   volatile struct drm_i915_sarea * sarea = intel->sarea;
    int me = intel->hHWContext;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);

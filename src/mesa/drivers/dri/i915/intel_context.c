@@ -404,7 +404,7 @@ intelInitContext(struct intel_context *intel,
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-   drmI830Sarea *saPriv = (drmI830Sarea *)
+   struct drm_i915_sarea *saPriv = (struct drm_i915_sarea *)
       (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
    int fthrottle_mode;
 
@@ -713,7 +713,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
-   drmI830Sarea *sarea = intel->sarea;
+   struct drm_i915_sarea *sarea = intel->sarea;
    int drawable_changed = 0;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);

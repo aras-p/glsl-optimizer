@@ -212,7 +212,7 @@ intelPrintDRIInfo(intelScreenPrivate * intelScreen,
 
 
 static void
-intelPrintSAREA(const drmI830Sarea * sarea)
+intelPrintSAREA(const struct drm_i915_sarea * sarea)
 {
    fprintf(stderr, "SAREA: sarea width %d  height %d\n", sarea->width,
            sarea->height);
@@ -239,7 +239,7 @@ intelPrintSAREA(const drmI830Sarea * sarea)
  */
 void
 intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           drmI830Sarea * sarea)
+                           struct drm_i915_sarea * sarea)
 {
    intelScreen->width = sarea->width;
    intelScreen->height = sarea->height;
@@ -293,7 +293,7 @@ intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
 			  __DRIDrawableConfigEvent *event)
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   struct intel_region *region;
+   struct intel_region *region = NULL;
    struct intel_renderbuffer *rb, *depth_rb, *stencil_rb;
    struct intel_context *intel = dPriv->driContextPriv->driverPrivate;
    int cpp = intel->ctx.Visual.rgbBits / 8;
@@ -418,14 +418,14 @@ static GLboolean
 intel_get_param(__DRIscreenPrivate *psp, int param, int *value)
 {
    int ret;
-   drmI830GetParam gp;
+   struct drm_i915_getparam gp;
 
    gp.param = param;
    gp.value = value;
 
-   ret = drmCommandWriteRead(psp->fd, DRM_I830_GETPARAM, &gp, sizeof(gp));
+   ret = drmCommandWriteRead(psp->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
    if (ret) {
-      fprintf(stderr, "drmI830GetParam: %d\n", ret);
+      fprintf(stderr, "drm_i915_getparam: %d\n", ret);
       return GL_FALSE;
    }
 
@@ -436,7 +436,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
-   drmI830Sarea *sarea;
+   struct drm_i915_sarea *sarea;
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
       fprintf(stderr,
@@ -457,7 +457,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    intelScreen->driScrnPriv = sPriv;
    sPriv->private = (void *) intelScreen;
    intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
-   sarea = (drmI830Sarea *)
+   sarea = (struct drm_i915_sarea *)
       (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
 
    intelScreen->deviceID = gDRIPriv->deviceID;
@@ -479,12 +479,12 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    intelScreen->drmMinor = sPriv->drm_version.minor;
 
    /* Determine if IRQs are active? */
-   if (!intel_get_param(sPriv, I830_PARAM_IRQ_ACTIVE,
+   if (!intel_get_param(sPriv, I915_PARAM_IRQ_ACTIVE,
 			&intelScreen->irq_active))
       return GL_FALSE;
 
    /* Determine if batchbuffers are allowed */
-   if (!intel_get_param(sPriv, I830_PARAM_ALLOW_BATCHBUFFER,
+   if (!intel_get_param(sPriv, I915_PARAM_ALLOW_BATCHBUFFER,
 			&intelScreen->allow_batchbuffer))
       return GL_FALSE;
 
@@ -893,12 +893,12 @@ PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
       return GL_FALSE;
 
    /* Determine if IRQs are active? */
-   if (!intel_get_param(psp, I830_PARAM_IRQ_ACTIVE,
+   if (!intel_get_param(psp, I915_PARAM_IRQ_ACTIVE,
 			&intelScreen->irq_active))
       return GL_FALSE;
 
    /* Determine if batchbuffers are allowed */
-   if (!intel_get_param(psp, I830_PARAM_ALLOW_BATCHBUFFER,
+   if (!intel_get_param(psp, I915_PARAM_ALLOW_BATCHBUFFER,
 			&intelScreen->allow_batchbuffer))
       return GL_FALSE;
 

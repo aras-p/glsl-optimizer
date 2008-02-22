@@ -37,7 +37,7 @@
 
 #include "intel_screen.h"
 #include "intel_tex_obj.h"
-#include "i830_common.h"
+#include "i915_drm.h"
 #include "tnl/t_vertex.h"
 
 #define TAG(x) intel##x
@@ -205,7 +205,7 @@ struct intel_context
    __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen; 
-   volatile drmI830Sarea *sarea; 
+   volatile struct drm_i915_sarea *sarea; 
 
    GLuint lastStamp;
 

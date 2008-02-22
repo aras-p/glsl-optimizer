@@ -1,16 +1,15 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.h,v 1.4 2002/10/30 12:52:18 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.h,v 1.6 2003/09/28 20:15:59 alanh Exp $ */
 
 #ifndef _I830_DRI_H
 #define _I830_DRI_H
 
 #include "xf86drm.h"
-#include "i830_common.h"
 
 #define I830_MAX_DRAWABLES 256
 
 #define I830_MAJOR_VERSION 1
-#define I830_MINOR_VERSION 7
-#define I830_PATCHLEVEL 2
+#define I830_MINOR_VERSION 9
+#define I830_PATCHLEVEL 0
 
 #define I830_REG_SIZE 0x80000
 
@@ -41,7 +40,7 @@ typedef struct _I830DRIRec {
    int bitsPerPixel;
 
    int unused11[8]; /* was front/back/depth/rotated offset/pitch */
-   
+
    int unused12; /* logTextureGranularity */
    int unused13; /* textureOffset */
 

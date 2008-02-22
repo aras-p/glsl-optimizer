@@ -50,7 +50,7 @@
 int
 intelEmitIrqLocked(struct intel_context *intel)
 {
-   drmI830IrqEmit ie;
+   struct drm_i915_irq_emit ie;
    int ret, seq = 1;
 
    if (intel->no_hw)
@@ -63,9 +63,9 @@ intelEmitIrqLocked(struct intel_context *intel)
 
    ie.irq_seq = &seq;
 
-   ret = drmCommandWriteRead(intel->driFd, DRM_I830_IRQ_EMIT, &ie, sizeof(ie));
+   ret = drmCommandWriteRead(intel->driFd, DRM_I915_IRQ_EMIT, &ie, sizeof(ie));
    if (ret) {
-      fprintf(stderr, "%s: drmI830IrqEmit: %d\n", __FUNCTION__, ret);
+      fprintf(stderr, "%s: drm_i915_irq_emit: %d\n", __FUNCTION__, ret);
       exit(1);
    }
 
@@ -77,9 +77,9 @@ intelEmitIrqLocked(struct intel_context *intel)
 void
 intelWaitIrq(struct intel_context *intel, int seq)
 {
-   drm_i915_irq_wait_t iw;
+   struct drm_i915_irq_wait iw;
    int ret, lastdispatch;
-   volatile drmI830Sarea *sarea = intel->sarea;
+   volatile struct drm_i915_sarea *sarea = intel->sarea;
 
    if (intel->no_hw)
       return;
@@ -90,7 +90,7 @@ intelWaitIrq(struct intel_context *intel, int seq)
 
    do {
       lastdispatch = sarea->last_dispatch;
-      ret = drmCommandWrite(intel->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw));
+      ret = drmCommandWrite(intel->driFd, DRM_I915_IRQ_WAIT, &iw, sizeof(iw));
    } while (ret == -EAGAIN ||
 	    ret == -EINTR ||
 	    (ret == -EBUSY && lastdispatch != sarea->last_dispatch) ||
@@ -98,7 +98,7 @@ intelWaitIrq(struct intel_context *intel, int seq)
 	    (ret == 0 && sarea->last_dispatch - seq >= (1 << 24)));
 
    if (ret) {
-      fprintf(stderr, "%s: drmI830IrqWait: %d\n", __FUNCTION__, ret);
+      fprintf(stderr, "%s: drm_i915_irq_wait: %d\n", __FUNCTION__, ret);
       exit(1);
    }
 }
@@ -110,7 +110,7 @@ intel_batch_ioctl(struct intel_context *intel,
                   GLuint used,
                   GLboolean ignore_cliprects, GLboolean allow_unlock)
 {
-   drmI830BatchBuffer batch;
+   struct drm_i915_batchbuffer batch;
 
    if (intel->no_hw)
       return;
@@ -139,9 +139,9 @@ intel_batch_ioctl(struct intel_context *intel,
        batch.start,
        batch.start + batch.used * 4, batch.DR4, batch.num_cliprects);
 
-   if (drmCommandWrite(intel->driFd, DRM_I830_BATCHBUFFER, &batch,
+   if (drmCommandWrite(intel->driFd, DRM_I915_BATCHBUFFER, &batch,
                        sizeof(batch))) {
-      fprintf(stderr, "DRM_I830_BATCHBUFFER: %d\n", -errno);
+      fprintf(stderr, "DRM_I915_BATCHBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
@@ -181,7 +181,7 @@ intel_exec_ioctl(struct intel_context *intel,
 
    if (drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
                        sizeof(execbuf))) {
-      fprintf(stderr, "DRM_I830_EXECBUFFER: %d\n", -errno);
+      fprintf(stderr, "DRM_I915_EXECBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
