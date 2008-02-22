@@ -37,7 +37,14 @@
 #include "pipe/p_state.h"
 
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+  
 struct cso_hash;
+
+struct cso_hash_iter;
 
 struct cso_cache {
    struct cso_hash *blend_hash;
@@ -103,5 +110,10 @@ struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
                                              void *templ);
 void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
                       enum cso_cache_type type);
+
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

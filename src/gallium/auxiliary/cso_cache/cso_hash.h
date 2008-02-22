@@ -33,6 +33,12 @@
 #ifndef CSO_HASH_H
 #define CSO_HASH_H
 
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+   
 struct cso_hash;
 struct cso_node;
 
@@ -67,5 +73,9 @@ void *cso_hash_find_data_from_template( struct cso_hash *hash,
 				        void *templ,
 				        int size );
 
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif
