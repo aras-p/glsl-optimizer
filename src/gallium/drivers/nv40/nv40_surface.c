@@ -73,36 +73,6 @@ nv40_surface_format_supported(struct pipe_context *pipe,
 	return FALSE;
 }
 
-static struct pipe_surface *
-nv40_get_tex_surface(struct pipe_context *pipe, struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
-{
-	struct pipe_winsys *ws = pipe->winsys;
-	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
-	struct pipe_surface *ps;
-
-	ps = ws->surface_alloc(ws);
-	if (!ps)
-		return NULL;
-	pipe_buffer_reference(ws, &ps->buffer, nv40mt->buffer);
-	ps->format = pt->format;
-	ps->cpp = pt->cpp;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
-	ps->pitch = nv40mt->level[level].pitch / ps->cpp;
-
-	if (pt->target == PIPE_TEXTURE_CUBE) {
-		ps->offset = nv40mt->level[level].image_offset[face];
-	} else
-	if (pt->target == PIPE_TEXTURE_3D) {
-		ps->offset = nv40mt->level[level].image_offset[zslice];
-	} else {
-		ps->offset = nv40mt->level[level].image_offset[0];
-	}
-
-	return ps;
-}
-
 static void
 nv40_surface_copy(struct pipe_context *pipe, unsigned do_flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
@@ -131,7 +101,6 @@ void
 nv40_init_surface_functions(struct nv40_context *nv40)
 {
 	nv40->pipe.is_format_supported = nv40_surface_format_supported;
-	nv40->pipe.get_tex_surface = nv40_get_tex_surface;
 	nv40->pipe.surface_copy = nv40_surface_copy;
 	nv40->pipe.surface_fill = nv40_surface_fill;
 }
