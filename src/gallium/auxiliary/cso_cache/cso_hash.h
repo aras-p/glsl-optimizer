@@ -59,4 +59,13 @@ void     *cso_hash_iter_data(struct cso_hash_iter iter);
 struct cso_hash_iter cso_hash_iter_next(struct cso_hash_iter iter);
 struct cso_hash_iter cso_hash_iter_prev(struct cso_hash_iter iter);
 
+
+/* KW: a convenience routine: 
+ */
+void *cso_hash_find_data_from_template( struct cso_hash *hash,
+				        unsigned hash_key, 
+				        void *templ,
+				        int size );
+
+
 #endif
