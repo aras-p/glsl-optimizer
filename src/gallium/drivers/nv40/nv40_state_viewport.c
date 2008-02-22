@@ -17,7 +17,6 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 	so_data  (so, fui(vpt->scale[3]));
 
 	so_ref(so, &nv40->state.hw[NV40_STATE_VIEWPORT]);
-	so_ref(NULL, &so);
 	return TRUE;
 }
 

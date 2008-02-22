@@ -678,7 +678,6 @@ check_gpu_resources:
 		so_data  (so, vp->ir);
 		so_data  (so, vp->or);
 		so_ref(so, &vp->so);
-		so_ref(NULL, &so);
 
 		upload_code = TRUE;
 	}

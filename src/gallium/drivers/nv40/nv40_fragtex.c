@@ -137,7 +137,6 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 		so_method(so, nv40->hw->curie, NV40TCL_TEX_ENABLE(unit), 1);
 		so_data  (so, 0);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
-		so_ref(NULL, &so);
 		state->dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
 	}
 
@@ -148,7 +147,6 @@ nv40_fragtex_validate(struct nv40_context *nv40)
 
 		so = nv40_fragtex_build(nv40, unit);
 		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
-		so_ref(NULL, &so);
 		state->dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
 	}
 

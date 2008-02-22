@@ -27,7 +27,6 @@ nv40_state_stipple_validate(struct nv40_context *nv40)
 	}
 
 	so_ref(so, &nv40->state.hw[NV40_STATE_STIPPLE]);
-	so_ref(NULL, &so);
 	return TRUE;
 }
 

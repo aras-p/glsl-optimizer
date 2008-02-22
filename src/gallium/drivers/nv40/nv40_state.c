@@ -11,7 +11,7 @@ nv40_blend_state_create(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nouveau_grobj *curie = nv40->hw->curie;
-	struct nv40_blend_state *bso = MALLOC(sizeof(*bso));
+	struct nv40_blend_state *bso = CALLOC(1, sizeof(*bso));
 	struct nouveau_stateobj *so = so_new(16, 0);
 
 	if (cso->blend_enable) {
@@ -47,7 +47,7 @@ nv40_blend_state_create(struct pipe_context *pipe,
 	so_method(so, curie, NV40TCL_DITHER_ENABLE, 1);
 	so_data  (so, cso->dither ? 1 : 0);
 
-	bso->so = so;
+	so_ref(so, &bso->so);
 	bso->pipe = *cso;
 	return (void *)bso;
 }
@@ -284,7 +284,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_rasterizer_state *rsso = MALLOC(sizeof(*rsso));
+	struct nv40_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
 	struct nouveau_stateobj *so = so_new(32, 0);
 	struct nouveau_grobj *curie = nv40->hw->curie;
 
@@ -389,7 +389,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 		so_data(so, 0);
 	}
 
-	rsso->so = so;
+	so_ref(so, &rsso->so);
 	rsso->pipe = *cso;
 	return (void *)rsso;
 }
@@ -417,7 +417,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 			const struct pipe_depth_stencil_alpha_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_zsa_state *zsaso = MALLOC(sizeof(*zsaso));
+	struct nv40_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
 	struct nouveau_stateobj *so = so_new(32, 0);
 
 	so_method(so, nv40->hw->curie, NV40TCL_DEPTH_FUNC, 3);
@@ -460,7 +460,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, 0);
 	}
 
-	zsaso->so = so;
+	so_ref(so, &zsaso->so);
 	zsaso->pipe = *cso;
 	return (void *)zsaso;
 }

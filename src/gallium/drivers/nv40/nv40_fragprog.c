@@ -817,7 +817,6 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 	so_method(so, nv40->hw->curie, NV40TCL_FP_CONTROL, 1);
 	so_data  (so, fp->fp_control);
 	so_ref(so, &fp->so);
-	so_ref(NULL, &so);
 
 update_constants:
 	if (fp->nr_consts) {

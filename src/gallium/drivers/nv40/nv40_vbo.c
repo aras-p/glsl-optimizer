@@ -159,7 +159,6 @@ nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
 	so_emit(nv40->nvws, vtxfmt);
 	so_emit(nv40->nvws, vtxbuf);
 	so_ref (vtxbuf, &nv40->so_vtxbuf);
-	so_ref (NULL, &vtxbuf);
 	so_ref (NULL, &vtxfmt);
 }
 

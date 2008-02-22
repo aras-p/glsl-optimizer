@@ -143,7 +143,6 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	so_data  (so, ((h - 1) << 16) | 0);
 
 	so_ref(so, &nv40->state.hw[NV40_STATE_FB]);
-	so_ref(NULL, &so);
 	return TRUE;
 }
 
