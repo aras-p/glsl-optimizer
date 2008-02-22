@@ -52,7 +52,7 @@ nv40_fragtex_format(uint pipe_format)
 }
 
 
-static void
+static struct nouveau_stateobj *
 nv40_fragtex_build(struct nv40_context *nv40, int unit)
 {
 	struct nv40_sampler_state *ps = nv40->tex_sampler[unit];
@@ -90,7 +90,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 		break;
 	default:
 		NOUVEAU_ERR("Unknown target %d\n", pt->target);
-		return;
+		return NULL;
 	}
 
 	if (swizzled) {
@@ -117,15 +117,14 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 	so_method(so, nv40->hw->curie, NV40TCL_TEX_SIZE1(unit), 1);
 	so_data  (so, (pt->depth[0] << NV40TCL_TEX_SIZE1_DEPTH_SHIFT) | txp);
 
-	so_emit(nv40->nvws, so);
-	so_ref (so, &nv40->so_fragtex[unit]);
-	so_ref (NULL, &so);
+	return so;
 }
 
-void
-nv40_fragtex_bind(struct nv40_context *nv40)
+static boolean
+nv40_fragtex_validate(struct nv40_context *nv40)
 {
 	struct nv40_fragment_program *fp = nv40->pipe_state.fragprog;
+	struct nouveau_stateobj *so;
 	unsigned samplers, unit;
 
 	samplers = nv40->fp_samplers & ~fp->samplers;
@@ -133,9 +132,12 @@ nv40_fragtex_bind(struct nv40_context *nv40)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		so_ref(NULL, &nv40->so_fragtex[unit]);
-		BEGIN_RING(curie, NV40TCL_TEX_ENABLE(unit), 1);
-		OUT_RING  (0);
+		so = so_new(2, 0);
+		so_method(so, nv40->hw->curie, NV40TCL_TEX_ENABLE(unit), 1);
+		so_data  (so, 0);
+		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
+		so_ref(NULL, &so);
+		nv40->hw_dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
 	}
 
 	samplers = nv40->dirty_samplers & fp->samplers;
@@ -143,9 +145,21 @@ nv40_fragtex_bind(struct nv40_context *nv40)
 		unit = ffs(samplers) - 1;
 		samplers &= ~(1 << unit);
 
-		nv40_fragtex_build(nv40, unit);
+		so = nv40_fragtex_build(nv40, unit);
+		so_ref(so, &nv40->state.hw[NV40_STATE_FRAGTEX0 + unit]);
+		so_ref(NULL, &so);
+		nv40->hw_dirty |= (1 << (NV40_STATE_FRAGTEX0 + unit));
 	}
 
 	nv40->fp_samplers = fp->samplers;
+	return FALSE;
 }
+
+struct nv40_state_entry nv40_state_fragtex = {
+	.validate = nv40_fragtex_validate,
+	.dirty = {
+		.pipe = NV40_NEW_SAMPLER | NV40_NEW_FRAGPROG,
+		.hw = 0
+	}
+};
 

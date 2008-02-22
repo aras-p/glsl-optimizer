@@ -259,6 +259,7 @@ nv40_sampler_state_bind(struct pipe_context *pipe, unsigned unit,
 
 	nv40->tex_sampler[unit] = ps;
 	nv40->dirty_samplers |= (1 << unit);
+	nv40->dirty |= NV40_NEW_SAMPLER;
 }
 
 static void
@@ -275,6 +276,7 @@ nv40_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
 
 	nv40->tex_miptree[unit] = (struct nv40_miptree *)miptree;
 	nv40->dirty_samplers |= (1 << unit);
+	nv40->dirty |= NV40_NEW_SAMPLER;
 }
 
 static void *

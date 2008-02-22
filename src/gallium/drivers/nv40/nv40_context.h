@@ -155,7 +155,6 @@ struct nv40_context {
 	struct nv40_state state;
 	unsigned fallback;
 
-	struct nouveau_stateobj *so_fragtex[16];
 	struct nouveau_stateobj *so_vtxbuf;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
@@ -209,6 +208,7 @@ extern struct nv40_state_entry nv40_state_blend_colour;
 extern struct nv40_state_entry nv40_state_zsa;
 extern struct nv40_state_entry nv40_state_viewport;
 extern struct nv40_state_entry nv40_state_framebuffer;
+extern struct nv40_state_entry nv40_state_fragtex;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,

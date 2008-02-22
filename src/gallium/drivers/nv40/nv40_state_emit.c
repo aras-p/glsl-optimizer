@@ -8,6 +8,7 @@ static struct nv40_state_entry *render_states[] = {
 	&nv40_state_scissor,
 	&nv40_state_stipple,
 	&nv40_state_fragprog,
+	&nv40_state_fragtex,
 	&nv40_state_vertprog,
 	&nv40_state_blend,
 	&nv40_state_blend_colour,
@@ -35,6 +36,7 @@ nv40_state_validate(struct nv40_context *nv40)
 
 		states++;
 	}
+	nv40->dirty = 0;
 
 	if (nv40->fallback & NV40_FALLBACK_TNL &&
 	    !(last_fallback & NV40_FALLBACK_TNL)) {
@@ -72,7 +74,8 @@ nv40_state_emit(struct nv40_context *nv40)
 	for (i = 0; i < 16; i++) {
 		if (!(nv40->fp_samplers & (1 << i)))
 			continue;
-		so_emit_reloc_markers(nv40->nvws, nv40->so_fragtex[i]);
+		so_emit_reloc_markers(nv40->nvws,
+				      nv40->state.hw[NV40_STATE_FRAGTEX0+i]);
 	}
 	so_emit_reloc_markers(nv40->nvws, nv40->state.hw[NV40_STATE_FRAGPROG]);
 }
@@ -81,20 +84,11 @@ void
 nv40_emit_hw_state(struct nv40_context *nv40)
 {
 	nv40_state_validate(nv40);
-
-	if (nv40->dirty_samplers || (nv40->dirty & NV40_NEW_FRAGPROG)) {
-		nv40_fragtex_bind(nv40);
-
-		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
-		OUT_RING  (2);
-		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
-		OUT_RING  (1);
-		nv40->dirty &= ~NV40_NEW_FRAGPROG;
-	}
-
 	nv40_state_emit(nv40);
 
-	nv40->dirty_samplers = 0;
-	nv40->dirty = 0;
+	BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
+	OUT_RING  (2);
+	BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
+	OUT_RING  (1);
 }
 
