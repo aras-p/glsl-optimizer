@@ -609,7 +609,7 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 	}
 
 	if (rt_enable & NV34TCL_RT_ENABLE_COLOR1) {
-		BEGIN_RING(rankine, NV34TCL_COLOR1_PITCH, 2);
+		BEGIN_RING(rankine, NV34TCL_COLOR1_PITCH, 1);
 		OUT_RING  (rt[1]->pitch * rt[1]->cpp);
 		nv30->rt[1] = rt[1]->buffer;
 	}
