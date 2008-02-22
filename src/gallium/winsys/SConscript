@@ -4,7 +4,8 @@ if dri:
 	SConscript([
 		'dri/SConscript',
 	])
-else:
+	
+if env['x11'] and not dri and platform != 'winddk':
 	SConscript([
 		'xlib/SConscript',
 	])

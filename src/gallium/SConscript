@@ -23,7 +23,12 @@ if llvm:
 SConscript([
 	'drivers/softpipe/SConscript',
 	'drivers/i915simple/SConscript',
-	'drivers/i965simple/SConscript',
 	'drivers/failover/SConscript',
-	#'drivers/cell/SConscript',
 ])
+
+if not msvc:
+	SConscript(['drivers/i965simple/SConscript'])
+
+#if cell:
+#	SConscript(['drivers/cell/SConscript'])
+	

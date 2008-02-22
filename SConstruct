@@ -33,17 +33,37 @@ platform_map = {
 	'win32': 'winddk',
 }
 
-platform = platform_map.get(sys.platform, sys.platform)
+default_platform = platform_map.get(sys.platform, sys.platform)
+default_drivers = 'all'
+if default_platform in ('linux', 'freebsd', 'darwin'):
+	default_x11 = 'yes'
+else:
+	default_x11 = 'no'
 
 # TODO: auto-detect defaults
 opts = Options('config.py')
 opts.Add(BoolOption('debug', 'build debug version', False))
-opts.Add(BoolOption('dri', 'build dri drivers', False))
-opts.Add(BoolOption('llvm', 'use llvm', False))
 opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
                      allowed_values=('generic', 'x86', 'x86-64')))
-opts.Add(EnumOption('platform', 'target platform', platform,
+opts.Add(EnumOption('platform', 'target platform', default_platform,
                      allowed_values=('linux', 'cell', 'winddk')))
+opts.Add(ListOption('statetrackers', 'state_trackers to build', 'all',
+                     [
+                     	'mesa', 
+                     ],
+                     ))
+#opts.Add(ListOption('drivers', 'pipe drivers to build', 'all',
+#                     [
+#                     	'softpipe', 
+#                     	'failover', 
+#                     	'i915simple', 
+#                     	'i965simple', 
+#                     	'cell',
+#                     ],
+#                     ))
+opts.Add(BoolOption('llvm', 'use llvm', False))
+opts.Add(BoolOption('dri', 'build dri drivers', False))
+opts.Add(BoolOption('x11', 'build x11 driver', default_x11))
 
 env = Environment(
 	options = opts, 
@@ -114,7 +134,7 @@ if gcc:
 		env.Append(CFLAGS = '-O3 -g3')
 		env.Append(CXXFLAGS = '-O3 -g3')
 
-	env.Append(CFLAGS = '-Wall -Wmissing-prototypes -std=c99 -ffast-math -pedantic')
+	env.Append(CFLAGS = '-Wall -Wmissing-prototypes -Wno-long-long -ffast-math -pedantic')
 	env.Append(CXXFLAGS = '-Wall -pedantic')
 	
 	# Be nice to Eclipse
