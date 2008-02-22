@@ -123,7 +123,7 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
 
       for (j = 0; j < n; j++) {
          vs->elts[j] = draw->vs.queue[i + j].elt;
-         vs->vOut[j] = (uintptr_t) draw->vs.queue[i + j].dest;
+         vs->vOut[j] = (uintptr_t) draw->vs.queue[i + j].vertex;
       }
 
       for (/* empty */; j < SPU_VERTS_PER_BATCH; j++) {
