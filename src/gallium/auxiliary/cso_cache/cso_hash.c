@@ -134,7 +134,7 @@ static void cso_data_rehash(struct cso_hash_data *hash, int hint)
       hint = countBits(-hint);
       if (hint < MinNumBits)
          hint = MinNumBits;
-      hash->userNumBits = hint;
+      hash->userNumBits = (short)hint;
       while (primeForNumBits(hint) < (hash->size >> 1))
          ++hint;
    } else if (hint < MinNumBits) {
@@ -147,7 +147,7 @@ static void cso_data_rehash(struct cso_hash_data *hash, int hint)
       int oldNumBuckets = hash->numBuckets;
       int  i = 0;
 
-      hash->numBits = hint;
+      hash->numBits = (short)hint;
       hash->numBuckets = primeForNumBits(hint);
       hash->buckets = malloc(sizeof(struct cso_node*) * hash->numBuckets);
       for (i = 0; i < hash->numBuckets; ++i)
@@ -241,7 +241,7 @@ struct cso_hash * cso_hash_create(void)
    hash->data.d->buckets = 0;
    hash->data.d->size = 0;
    hash->data.d->nodeSize = sizeof(struct cso_node);
-   hash->data.d->userNumBits = MinNumBits;
+   hash->data.d->userNumBits = (short)MinNumBits;
    hash->data.d->numBits = 0;
    hash->data.d->numBuckets = 0;
 
