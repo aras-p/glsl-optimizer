@@ -28,6 +28,7 @@
 #ifndef INTEL_BATCHBUFFER_H
 #define INTEL_BATCHBUFFER_H
 
+#include "pipe/p_debug.h"
 #include "pipe/p_compiler.h"
 #include "dri_bufmgr.h"
 
