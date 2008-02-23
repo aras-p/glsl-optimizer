@@ -63,6 +63,9 @@ struct tgsi_exec_machine;
 struct sp_fragment_shader {
    struct pipe_shader_state   shader;
 
+   boolean uses_kill;
+   boolean writes_z;
+
    void (*prepare)( const struct sp_fragment_shader *shader,
 		    struct tgsi_exec_machine *machine,
 		    struct tgsi_sampler *samplers);

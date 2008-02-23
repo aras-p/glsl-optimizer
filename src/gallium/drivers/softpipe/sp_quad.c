@@ -56,11 +56,12 @@ sp_build_depth_stencil(
 void
 sp_build_quad_pipeline(struct softpipe_context *sp)
 {
-   boolean  early_depth_test =
+   boolean early_depth_test =
                sp->depth_stencil->depth.enabled &&
                sp->framebuffer.zsbuf &&
                !sp->depth_stencil->alpha.enabled &&
-               sp->fs->shader.output_semantic_name[0] != TGSI_SEMANTIC_POSITION;
+               !sp->fs->uses_kill &&
+               !sp->fs->writes_z;
 
    /* build up the pipeline in reverse order... */
 

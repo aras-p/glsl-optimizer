@@ -36,6 +36,7 @@
 #include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
 #include "tgsi/util/tgsi_dump.h"
+#include "tgsi/util/tgsi_scan.h"
 
 
 void *
@@ -44,21 +45,24 @@ softpipe_create_fs_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_fragment_shader *state;
+   struct tgsi_shader_info info;
+
+   tgsi_scan_shader(templ->tokens, &info);
 
    if (softpipe->dump_fs) 
       tgsi_dump(templ->tokens, 0);
 
    state = softpipe_create_fs_llvm( softpipe, templ );
-   if (state)
-      return state;
-   
-   state = softpipe_create_fs_sse( softpipe, templ );
-   if (state)
-      return state;
-
-   state = softpipe_create_fs_exec( softpipe, templ );
-
+   if (!state) {
+      state = softpipe_create_fs_sse( softpipe, templ );
+      if (!state) {
+         state = softpipe_create_fs_exec( softpipe, templ );
+      }
+   }
    assert(state);
+   state->uses_kill = (info.opcode_count[TGSI_OPCODE_KIL] ||
+                       info.opcode_count[TGSI_OPCODE_KILP]);
+   state->writes_z = info.writes_z;
    return state;
 }
 
