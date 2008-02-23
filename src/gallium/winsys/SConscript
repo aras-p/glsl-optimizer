@@ -5,7 +5,7 @@ if dri:
 		'dri/SConscript',
 	])
 	
-if env['x11'] and not dri and platform != 'winddk':
+if 'xlib' in env['drivers'] and not dri:
 	SConscript([
 		'xlib/SConscript',
 	])

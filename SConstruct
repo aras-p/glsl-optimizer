@@ -34,11 +34,18 @@ platform_map = {
 }
 
 default_platform = platform_map.get(sys.platform, sys.platform)
-default_drivers = 'all'
+
 if default_platform in ('linux', 'freebsd', 'darwin'):
-	default_x11 = 'yes'
+	default_statetrackers = 'mesa'
+	default_drivers = 'softpipe,failover,i915simple,i965simple'
+	default_winsys = 'xlib'
+elif default_platform in ('winddk',):
+	default_statetrackers = 'none'
+	default_drivers = 'softpipe,i915simple'
+	default_winsys = 'none'
 else:
-	default_x11 = 'no'
+	default_drivers = 'all'
+	default_winsys = 'all'
 
 # TODO: auto-detect defaults
 opts = Options('config.py')
@@ -47,23 +54,28 @@ opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
                      allowed_values=('generic', 'x86', 'x86-64')))
 opts.Add(EnumOption('platform', 'target platform', default_platform,
                      allowed_values=('linux', 'cell', 'winddk')))
-opts.Add(ListOption('statetrackers', 'state_trackers to build', 'all',
+opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetrackers,
                      [
                      	'mesa', 
                      ],
                      ))
-#opts.Add(ListOption('drivers', 'pipe drivers to build', 'all',
-#                     [
-#                     	'softpipe', 
-#                     	'failover', 
-#                     	'i915simple', 
-#                     	'i965simple', 
-#                     	'cell',
-#                     ],
-#                     ))
-opts.Add(BoolOption('llvm', 'use llvm', False))
-opts.Add(BoolOption('dri', 'build dri drivers', False))
-opts.Add(BoolOption('x11', 'build x11 driver', default_x11))
+opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
+                     [
+                     	'softpipe', 
+                     	'failover', 
+                     	'i915simple', 
+                     	'i965simple', 
+                     	'cell',
+                     ],
+                     ))
+opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
+                     [
+                     	'xlib', 
+                     	'intel',
+                     ],
+                     ))
+opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
+opts.Add(BoolOption('dri', 'build DRI drivers', 'no'))
 
 env = Environment(
 	options = opts, 
@@ -106,7 +118,7 @@ Export([
 if platform == 'winddk':
 	import ntpath
 	escape = env['ESCAPE']
-	env.Tool('msvc')
+	env.Tool('winddk', '.')
 	if 'BASEDIR' in os.environ:
 		WINDDK = os.environ['BASEDIR']
 	else:
