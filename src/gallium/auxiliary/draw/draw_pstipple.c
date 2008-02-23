@@ -133,7 +133,7 @@ pstip_transform_decl(struct tgsi_transform_context *ctx,
          pctx->maxSampler = (int) decl->u.DeclarationRange.Last;
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
-      pctx->maxInput = MAX2(pctx->maxInput, decl->u.DeclarationRange.Last);
+      pctx->maxInput = MAX2(pctx->maxInput, (int) decl->u.DeclarationRange.Last);
       if (decl->Semantic.SemanticName == TGSI_SEMANTIC_POSITION)
          pctx->wincoordInput = (int) decl->u.DeclarationRange.First;
    }
@@ -332,7 +332,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    if (transform.wincoordInput < 0) {
       pstip_fs.input_semantic_name[pstip_fs.num_inputs] = TGSI_SEMANTIC_POSITION;
-      pstip_fs.input_semantic_index[pstip_fs.num_inputs] = transform.maxInput;
+      pstip_fs.input_semantic_index[pstip_fs.num_inputs] = (ubyte)transform.maxInput;
       pstip_fs.num_inputs++;
    }
 
