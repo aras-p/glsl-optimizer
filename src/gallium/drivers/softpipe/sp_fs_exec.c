@@ -81,7 +81,7 @@ sp_setup_pos_vector(const struct tgsi_interp_coef *coef,
 
 
 static void
-exec_prepare( struct sp_fragment_shader *base,
+exec_prepare( const struct sp_fragment_shader *base,
 	      struct tgsi_exec_machine *machine,
 	      struct tgsi_sampler *samplers )
 {
@@ -98,7 +98,7 @@ exec_prepare( struct sp_fragment_shader *base,
  * interface:
  */
 static unsigned 
-exec_run( struct sp_fragment_shader *base,
+exec_run( const struct sp_fragment_shader *base,
 	  struct tgsi_exec_machine *machine,
 	  struct quad_header *quad )
 {

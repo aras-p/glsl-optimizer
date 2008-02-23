@@ -42,6 +42,14 @@
 #endif
 
 
+#if defined(__MSC__)
+
+/* Avoid 'expression is always true' warning */
+#pragma warning(disable: 4296)
+
+#endif /* __MSC__ */
+
+
 typedef unsigned int       uint;
 typedef unsigned char      ubyte;
 typedef unsigned char      boolean;
