@@ -2,7 +2,7 @@ Import('*')
 
 SConscript('gallium/SConscript')
 
-if 'mesa' in env['state_trackers']:
+if 'mesa' in env['statetrackers']:
 	SConscript('mesa/SConscript')
 
 SConscript('gallium/winsys/SConscript')
