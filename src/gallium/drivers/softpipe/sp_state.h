@@ -63,14 +63,14 @@ struct tgsi_exec_machine;
 struct sp_fragment_shader {
    struct pipe_shader_state   shader;
 
-   void (*prepare)( struct sp_fragment_shader *shader,
+   void (*prepare)( const struct sp_fragment_shader *shader,
 		    struct tgsi_exec_machine *machine,
 		    struct tgsi_sampler *samplers);
 
    /* Run the shader - this interface will get cleaned up in the
     * future:
     */
-   unsigned (*run)( struct sp_fragment_shader *shader,
+   unsigned (*run)( const struct sp_fragment_shader *shader,
 		    struct tgsi_exec_machine *machine,
 		    struct quad_header *quad );
 

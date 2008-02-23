@@ -285,7 +285,9 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    /* Wait on outstanding fences */
    while (fenced_list->numDelayed) {
       _glthread_UNLOCK_MUTEX(fenced_list->mutex);
+#ifndef __MSC__
       sched_yield();
+#endif
       _fenced_buffer_list_check_free(fenced_list, 1);
       _glthread_LOCK_MUTEX(fenced_list->mutex);
    }

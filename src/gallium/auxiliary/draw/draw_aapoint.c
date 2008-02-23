@@ -616,10 +616,10 @@ aapoint_point(struct draw_stage *stage, struct prim_header *header)
     */
 
 #if !NORMALIZE
-   k = 1.0 / radius;
-   k = 1.0 - 2.0 * k + k * k;
+   k = 1.0f / radius;
+   k = 1.0f - 2.0f * k + k * k;
 #else
-   k = 1.0 - 1.0 / radius;
+   k = 1.0f - 1.0f / radius;
 #endif
 
    /* allocate/dup new verts */
