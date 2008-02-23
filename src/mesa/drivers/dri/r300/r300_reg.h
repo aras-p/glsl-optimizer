@@ -574,6 +574,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TX_ENABLE_14                 (1 << 14)
 #       define R300_TX_ENABLE_15                 (1 << 15)
 
+#define R500_TX_FILTER_4		    0x4110
+#	define R500_TX_WEIGHT_1_SHIFT            (0)
+#	define R500_TX_WEIGHT_0_SHIFT            (11)
+#	define R500_TX_WEIGHT_PAIR               (1<<22)
+#	define R500_TX_PHASE_SHIFT               (23)
+#	define R500_TX_DIRECTION_HORIZONTAL	 (0<<27)
+#	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
+
 /* The pointsize is given in multiples of 6. The pointsize can be
  * enormous: Clear() renders a single point that fills the entire
  * framebuffer.
@@ -862,12 +870,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_TRI_PERF_3_8            (3<<15)
 #	define R300_ANISO_THRESHOLD_MASK       (7<<17)
 
+#	define R500_MACRO_SWITCH               (1<<22)
+#	define R500_BORDER_FIX                 (1<<31)
+
 #define R300_TX_SIZE_0                      0x4480
 #       define R300_TX_WIDTHMASK_SHIFT           0
 #       define R300_TX_WIDTHMASK_MASK            (2047 << 0)
 #       define R300_TX_HEIGHTMASK_SHIFT          11
 #       define R300_TX_HEIGHTMASK_MASK           (2047 << 11)
-#       define R300_TX_UNK23                     (1 << 23)
+#	define R300_TX_DEPTHMASK_SHIFT		 22
+#	define R300_TX_DEPTHMASK_MASK		 (0xf << 22)
 #       define R300_TX_MAX_MIP_LEVEL_SHIFT       26
 #       define R300_TX_MAX_MIP_LEVEL_MASK        (0xf << 26)
 #       define R300_TX_SIZE_PROJECTED            (1<<30)
@@ -878,7 +890,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	   They are given meanings as R, G, B and Alpha by the swizzle
 	   specification */
 #	define R300_TX_FORMAT_X8		    0x0
+#	define R500_TX_FORMAT_X1		    0x0 // bit set in format 2 
 #	define R300_TX_FORMAT_X16		    0x1
+#	define R500_TX_FORMAT_X1_REV		    0x0 // bit set in format 2 
 #	define R300_TX_FORMAT_Y4X4		    0x2
 #	define R300_TX_FORMAT_Y8X8		    0x3
 #	define R300_TX_FORMAT_Y16X16		    0x4
@@ -962,7 +976,18 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #	define R300_TX_FORMAT_YUV_MODE		0x00800000
 
-#define R300_TX_PITCH_0			    0x4500 /* obvious missing in gap */
+#define R300_TX_FORMAT2_0		    0x4500 /* obvious missing in gap */
+#       define R300_TX_PITCHMASK_SHIFT           0
+#       define R300_TX_PITCHMASK_MASK            (2047 << 0)
+#	define R500_TXFORMAT_MSB		 (1 << 14)
+#	define R500_TXWIDTH_BIT11	         (1 << 15)
+#	define R500_TXHEIGHT_BIT11	         (1 << 16)
+#	define R500_POW2FIX2FLT			 (1 << 17)
+#	define R500_SEL_FILTER4_TC0		 (0 << 18)
+#	define R500_SEL_FILTER4_TC1		 (1 << 18)
+#	define R500_SEL_FILTER4_TC2		 (2 << 18)
+#	define R500_SEL_FILTER4_TC3		 (3 << 18)
+
 #define R300_TX_OFFSET_0                    0x4540
 	/* BEGIN: Guess from R200 */
 #       define R300_TXO_ENDIAN_NO_SWAP           (0 << 0)
@@ -970,7 +995,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_TXO_ENDIAN_WORD_SWAP         (2 << 0)
 #       define R300_TXO_ENDIAN_HALFDW_SWAP       (3 << 0)
 #       define R300_TXO_MACRO_TILE               (1 << 2)
+#       define R300_TXO_MICRO_TILE_LINEAR        (0 << 3)
 #       define R300_TXO_MICRO_TILE               (1 << 3)
+#       define R300_TXO_MICRO_TILE_SQUARE        (2 << 3)
 #       define R300_TXO_OFFSET_MASK              0xffffffe0
 #       define R300_TXO_OFFSET_SHIFT             5
 	/* END: Guess from R200 */

@@ -480,7 +480,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	    cmdpacket0(R300_TX_FORMAT_0, 0);
 
 	ALLOC_STATE(tex.pitch, variable, mtu + 1, 0);
-	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, 0);
+	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT2_0, 0);
 
 	ALLOC_STATE(tex.offset, variable, mtu + 1, 0);
 	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] =

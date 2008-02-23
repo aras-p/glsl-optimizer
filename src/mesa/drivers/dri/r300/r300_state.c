@@ -1334,7 +1334,7 @@ static void r300SetupTextures(GLcontext * ctx)
 	r300->hw.tex.format.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(R300_TX_FORMAT_0, last_hw_tmu + 1);
 	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_PITCH_0, last_hw_tmu + 1);
+	    cmdpacket0(R300_TX_FORMAT2_0, last_hw_tmu + 1);
 	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(R300_TX_OFFSET_0, last_hw_tmu + 1);
 	r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] =
