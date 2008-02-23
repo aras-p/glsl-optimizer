@@ -149,6 +149,7 @@ spu_exec_machine_init(struct spu_exec_machine *mach,
    const qword zero = si_il(0);
    const qword not_zero = si_il(~0);
 
+   (void) numSamplers;
    mach->Samplers = samplers;
    mach->Processor = processor;
    mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
@@ -657,9 +658,10 @@ fetch_texel( struct spu_sampler *sampler,
    qword rgba[4];
    qword out[4];
 
-   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, (float *) rgba);
+   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, 
+			(float (*)[4]) rgba);
 
-   _transpose_matrix4x4(out, rgba);
+   _transpose_matrix4x4((vec_float4 *) out, (vec_float4 *) rgba);
    r->q = out[0];
    g->q = out[1];
    b->q = out[2];

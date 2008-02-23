@@ -55,7 +55,6 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    struct cell_command_vs *const vs = &cell_global.command[0].vs;
    uint64_t *batch;
    struct cell_array_info *array_info;
-   struct cell_shader_info *shader_info;
    unsigned i, j;
    struct cell_attribute_fetch_code *cf;
 
