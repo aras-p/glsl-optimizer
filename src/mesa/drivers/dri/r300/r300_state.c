@@ -1500,9 +1500,9 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		col_interp_nr++;
 	}
 
-	r300->hw.rc.cmd[1] = 0 | (in_texcoords << R300_RS_CNTL_TC_CNT_SHIFT)
-	    | (col_interp_nr << R300_RS_CNTL_CI_CNT_SHIFT)
-	    | R300_RS_CNTL_0_UNKNOWN_18;
+	r300->hw.rc.cmd[1] = 0 | ((in_texcoords << 2) << R300_IT_COUNT_SHIFT)
+	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
+	  | R300_HIRES_EN;
 
 	assert(high_rr >= 0);
 	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, high_rr + 1);

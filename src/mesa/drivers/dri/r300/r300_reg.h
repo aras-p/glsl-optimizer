@@ -582,11 +582,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_TX_DIRECTION_HORIZONTAL	 (0<<27)
 #	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
 
+#define R300_GA_TRIANGLE_STIPPLE            0x4214
 /* The pointsize is given in multiples of 6. The pointsize can be
  * enormous: Clear() renders a single point that fills the entire
  * framebuffer.
  */
-#define R300_RE_POINTSIZE                   0x421C
+#define R300_GA_POINT_SIZE                   0x421C
 #       define R300_POINTSIZE_Y_SHIFT            0
 #       define R300_POINTSIZE_Y_MASK             (0xFFFF << 0) /* GUESS */
 #       define R300_POINTSIZE_X_SHIFT            16
@@ -599,7 +600,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * VE: vertical or horizontal
  * HO & VE: no classification
  */
-#define R300_RE_LINE_CNT                      0x4234
+#define R300_GA_LINE_CNTL                     0x4234
 #       define R300_LINESIZE_SHIFT            0
 #       define R300_LINESIZE_MASK             (0xFFFF << 0) /* GUESS */
 #       define R300_LINESIZE_MAX             (R300_LINESIZE_MASK / 6)
@@ -607,17 +608,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_LINE_CNT_VE               (1 << 17)
 
 /* Some sort of scale or clamp value for texcoordless textures. */
-#define R300_RE_UNK4238                       0x4238
+#define R300_GA_LINE_STIPPLE_CONFIG           0x4238
+
+#define R500_GA_US_VECTOR_INDEX               0x4250
+#define R500_GA_US_VECTOR_DATA                0x4254
+
 
 /* Something shade related */
-#define R300_RE_SHADE                         0x4274
+#define R300_GA_ENHANCE                         0x4274
 
-#define R300_RE_SHADE_MODEL                   0x4278
+#define R300_GA_COLOR_CONTROL                   0x4278
 #	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
 #	define R300_RE_SHADE_MODEL_FLAT       0x39595
 
+#define R300_GA_SOLID_RG                   0x427c
+#define R300_GA_SOLID_BA                   0x4280
 /* Dangerous */
-#define R300_RE_POLYGON_MODE                  0x4288
+#define R300_GA_POLY_MODE                  0x4288
 #	define R300_PM_ENABLED                (1 << 0)
 #	define R300_PM_FRONT_POINT            (0 << 0)
 #	define R300_PM_BACK_POINT             (0 << 0)
@@ -626,6 +633,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_PM_BACK_LINE              (1 << 7)
 #	define R300_PM_BACK_FILL              (1 << 8)
 
+#define R300_GA_ROUND_MODE                 0x428c
 /* Fog parameters */
 #define R300_RE_FOG_SCALE                     0x4294
 #define R300_RE_FOG_START                     0x4298
@@ -663,19 +671,22 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* BEGIN: Rasterization / Interpolators - many guesses */
 
-/* 0_UNKNOWN_18 has always been set except for clear operations.
+/*
  * TC_CNT is the number of incoming texture coordinate sets (i.e. it depends
  * on the vertex program, *not* the fragment program)
  */
-#define R300_RS_CNTL_0                      0x4300
-#       define R300_RS_CNTL_TC_CNT_SHIFT         2
-#       define R300_RS_CNTL_TC_CNT_MASK          (7 << 2)
-	/* number of color interpolators used */
-#	define R300_RS_CNTL_CI_CNT_SHIFT         7
-#       define R300_RS_CNTL_0_UNKNOWN_18         (1 << 18)
-	/* Guess: RS_CNTL_1 holds the index of the highest used RS_ROUTE_n
-	   register. */
-#define R300_RS_CNTL_1                      0x4304
+#define R300_RS_COUNT                      0x4300
+#       define R300_IT_COUNT_SHIFT               0
+#       define R300_IT_COUNT_MASK                (0x7f << 0)
+#       define R300_IC_COUNT_SHIFT               7
+#       define R300_IC_COUNT_MASK                (0xf << 0)
+#       define R300_W_ADDR_SHIFT                 12
+#       define R300_W_ADDR_MASK                  (0x3f << 12)
+#       define R300_HIRES_EN                     (1<<18)
+
+#define R300_RS_INST_COUNT                0x4304
+#       define R300_RS_INST_COUNT_MASK           0xf
+#       define R300_RS_TX_OFFSET_SHIFT           5
 
 /* gap */
 

@@ -267,7 +267,7 @@ static void r300EmitClearState(GLcontext * ctx)
         }
 
 	R300_STATECHANGE(r300, ps);
-	reg_start(R300_RE_POINTSIZE, 0);
+	reg_start(R300_GA_POINT_SIZE, 0);
 	e32(((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
 	    ((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
 
@@ -279,8 +279,8 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, rc);
 	/* The second constant is needed to get glxgears display anything .. */
-	reg_start(R300_RS_CNTL_0, 1);
-	e32((1 << R300_RS_CNTL_CI_CNT_SHIFT) | R300_RS_CNTL_0_UNKNOWN_18);
+	reg_start(R300_RS_COUNT, 1);
+	e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
 	e32(0x0);
 
 	R300_STATECHANGE(r300, rr);
