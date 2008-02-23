@@ -1165,6 +1165,10 @@ static void setup_begin( struct draw_stage *stage )
    struct softpipe_context *sp = setup->softpipe;
    const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
 
+   if (sp->dirty) {
+      softpipe_update_derived(sp);
+   }
+
    setup->quad.nr_attrs = fs->num_inputs;
 
    sp->quad.first->begin(sp->quad.first);
