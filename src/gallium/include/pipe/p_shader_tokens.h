@@ -50,6 +50,8 @@ struct tgsi_token
 #define TGSI_FILE_SAMPLER     5
 #define TGSI_FILE_ADDRESS     6
 #define TGSI_FILE_IMMEDIATE   7
+#define TGSI_FILE_COUNT       8  /**< how many TGSI_FILE_ types */
+
 
 #define TGSI_DECLARE_RANGE    0
 #define TGSI_DECLARE_MASK     1
