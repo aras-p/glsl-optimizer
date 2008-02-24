@@ -5,6 +5,9 @@ env = env.Clone()
 softpipe = env.ConvenienceLibrary(
 	target = 'softpipe',
 	source = [
+		'sp_fs_exec.c',
+		'sp_fs_sse.c',
+		'sp_fs_llvm.c',
 		'sp_clear.c',
 		'sp_context.c',
 		'sp_draw_arrays.c',
