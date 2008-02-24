@@ -213,7 +213,7 @@ def generate(env):
     SCons.Tool.mslink.generate(env)
 
     # See also:
-    # - WINDDK's bin/makefile.new for more info.
+    # - WINDDK's bin/makefile.new i386mk.inc for more info.
     # - http://alter.org.ua/docs/nt_kernel/vc8_proj/
     env.Append(CPPDEFINES = [
         'WIN32', 
@@ -232,10 +232,10 @@ def generate(env):
     ])
     cflags = [
         '/GF', # Enable String Pooling
-        #'/EHsc', # Enable C++ Exceptions
+        '/GX-', # Disable C++ Exceptions
         '/Zp8', # 8bytes struct member alignment
         #'/GS-', # No Buffer Security Check
-        #'/GR-', # Disable Run-Time Type Info
+        '/GR-', # Disable Run-Time Type Info
         '/Gz', # __stdcall Calling convention
     ]
     env.Append(CFLAGS = cflags)
