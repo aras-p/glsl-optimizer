@@ -212,6 +212,48 @@ def generate(env):
 
     SCons.Tool.mslink.generate(env)
 
+    # See also:
+    # - WINDDK's bin/makefile.new for more info.
+    # - http://alter.org.ua/docs/nt_kernel/vc8_proj/
+    env.Append(CPPDEFINES = [
+        'WIN32', 
+        '_WINDOWS', 
+        ('i386', '1'), 
+        ('_X86_', '1'), 
+        'STD_CALL', 
+        ('CONDITION_HANDLING', '1'),
+        ('NT_INST', '0'), 
+        ('_NT1X_', '100'),
+        ('WINNT', '1'),
+        ('_WIN32_WINNT', '0x0500'), # minimum required OS version
+        ('WIN32_LEAN_AND_MEAN', '1'),
+        ('DEVL', '1'),
+        ('FPO', '1'),
+    ])
+    cflags = [
+        '/GF', # Enable String Pooling
+        #'/EHsc', # Enable C++ Exceptions
+        '/Zp8', # 8bytes struct member alignment
+        #'/GS-', # No Buffer Security Check
+        #'/GR-', # Disable Run-Time Type Info
+        '/Gz', # __stdcall Calling convention
+    ]
+    env.Append(CFLAGS = cflags)
+    env.Append(CXXFLAGS = cflags)
+    
+    env.Append(LINKFLAGS = [
+        '/DEBUG',
+        '/NODEFAULTLIB',
+        '/SUBSYSTEM:NATIVE',
+        '/INCREMENTAL:NO',
+        #'/DRIVER', 
+    
+        #'-subsystem:native,4.00',
+        '-base:0x10000',
+        
+        '-entry:DrvEnableDriver',
+    ])
+    
     if not env.has_key('ENV'):
         env['ENV'] = {}
     if not env['ENV'].has_key('SystemRoot'):    # required for dlls in the winsxs folders

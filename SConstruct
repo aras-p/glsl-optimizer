@@ -39,13 +39,17 @@ if default_platform in ('linux', 'freebsd', 'darwin'):
 	default_statetrackers = 'mesa'
 	default_drivers = 'softpipe,failover,i915simple,i965simple'
 	default_winsys = 'xlib'
+	default_dri = 'yes'
 elif default_platform in ('winddk',):
 	default_statetrackers = 'none'
 	default_drivers = 'softpipe,i915simple'
 	default_winsys = 'none'
+	default_dri = 'no'
 else:
 	default_drivers = 'all'
 	default_winsys = 'all'
+	default_dri = 'no'
+
 
 # TODO: auto-detect defaults
 opts = Options('config.py')
@@ -75,7 +79,7 @@ opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
                      ],
                      ))
 opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
-opts.Add(BoolOption('dri', 'build DRI drivers', 'no'))
+opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
 
 env = Environment(
 	options = opts, 
@@ -125,17 +129,23 @@ if platform == 'winddk':
 		WINDDK = "C:\\WINDDK\\3790.1830"
 	# NOTE: We need this elaborate construct to get the absolute paths and
 	# forward slashes to msvc unharmed when cross compiling from posix platforms 
-	env.Append(CPPFLAGS = [
-		escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wxp')),
-		escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wdm\\wxp')),
-		escape('/I' + ntpath.join(WINDDK, 'inc\\crt')),
-	])
-	env.Append(CPPDEFINES = [
-		('i386', '1'),
-	])
-	if debug:
-		env.Append(CPPDEFINES = ['DBG'])
+	#env.Append(CPPFLAGS = [
+	#	escape('/I' + ntpath.join(WINDDK, 'inc\\wxp')),
+	#	escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wxp')),
+	#	escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wdm\\wxp')),
+	#	escape('/I' + ntpath.join(WINDDK, 'inc\\crt')),
+	#])
 	
+	env.Append(CFLAGS = '/W3')
+	if debug:
+		env.Append(CPPDEFINES = [
+			('DBG', '1'),
+			('DEBUG', '1'),
+			('_DEBUG', '1'),
+		])
+		env.Append(CFLAGS = '/Od /Zi')
+		env.Append(CXXFLAGS = '/Od /Zi')
+			
 
 # Optimization flags
 if gcc:
@@ -224,7 +234,7 @@ if llvm:
 	
 
 # libGL
-if 1:
+if platform not in ('winddk',):
 	env.Append(LIBS = [
 		'X11',
 		'Xext',
