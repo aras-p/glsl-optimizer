@@ -132,8 +132,8 @@ void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
 
 void intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 				GLvoid *pixels,
-				const struct gl_texture_object *texObj,
-				const struct gl_texture_image *texImage);
+				struct gl_texture_object *texObj,
+				struct gl_texture_image *texImage);
 
 void intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 		       unsigned long long offset, GLint depth, GLuint pitch);

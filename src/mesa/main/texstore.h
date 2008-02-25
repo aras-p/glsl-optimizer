@@ -214,8 +214,8 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
 extern void
 _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
                               GLvoid *img,
-                              const struct gl_texture_object *texObj,
-                              const struct gl_texture_image *texImage);
+                              struct gl_texture_object *texObj,
+                              struct gl_texture_image *texImage);
 
 extern const GLvoid *
 _mesa_validate_pbo_teximage(GLcontext *ctx, GLuint dimensions,

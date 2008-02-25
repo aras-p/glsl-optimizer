@@ -445,8 +445,8 @@ struct dd_function_table {
     */
    void (*GetCompressedTexImage)(GLcontext *ctx, GLenum target, GLint level,
                                  GLvoid *img,
-                                 const struct gl_texture_object *texObj,
-                                 const struct gl_texture_image *texImage);
+                                 struct gl_texture_object *texObj,
+                                 struct gl_texture_image *texImage);
 
    /**
     * Called to query number of bytes of storage needed to store the

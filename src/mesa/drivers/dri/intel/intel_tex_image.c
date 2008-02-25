@@ -663,12 +663,11 @@ intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
 void
 intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 			   GLvoid *pixels,
-			   const struct gl_texture_object *texObj,
-			   const struct gl_texture_image *texImage)
+			   struct gl_texture_object *texObj,
+			   struct gl_texture_image *texImage)
 {
    intel_get_tex_image(ctx, target, level, 0, 0, pixels,
 		       texObj, texImage, 1);
-
 }
 
 void
