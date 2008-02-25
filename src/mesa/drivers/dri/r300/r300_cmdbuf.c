@@ -388,7 +388,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(fpt, variable, R300_FPT_CMDSIZE, 0);
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
 	ALLOC_STATE(us_out_fmt, always, 6, 0);
-	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, R500_US_OUT_FMT_C4_16);
+	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, 5);
 	ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
 	r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
 	ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
@@ -404,7 +404,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(at, always, R300_AT_CMDSIZE, 0);
 	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(FG_ALPHA_FUNC, 2);
 	ALLOC_STATE(fg_depth_src, always, 2, 0);
-	r300->hw.fg_depth_src.cmd[0] = cmdpacket0(R300_FG_DEPTH_SRC, R300_FG_DEPTH_SRC_SHADER);
+	r300->hw.fg_depth_src.cmd[0] = cmdpacket0(R300_FG_DEPTH_SRC, 1);
 	ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
 	r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	ALLOC_STATE(rb3d_cctl, always, 2, 0);
@@ -419,9 +419,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
 	r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
 	ALLOC_STATE(rb3d_dither_ctl, always, 10, 0);
-	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(R300_RB3D_DITHER_CTL, R300_RB3D_DITHER_CTL_DITHER_MODE_ROUND | R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT);
+	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(R300_RB3D_DITHER_CTL, 9);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
-	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(RB3D_AARESOLVE_CTL, RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE);
+	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(RB3D_AARESOLVE_CTL, 1);
 	ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = cmdpacket0(RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
