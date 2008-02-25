@@ -2499,21 +2499,8 @@ enum {
 
 /*\{*/
 
-#define R300_VPI_OUT_OP_EXP                     (65 << 0)
-#define R300_VPI_OUT_OP_LOG                     (66 << 0)
-	/* Used in fog computations, scalar(scalar) */
-#define R300_VPI_OUT_OP_UNK67                   (67 << 0)
-#define R300_VPI_OUT_OP_LIT                     (68 << 0)
-#define R300_VPI_OUT_OP_POW                     (69 << 0)
-#define R300_VPI_OUT_OP_RCP                     (70 << 0)
-#define R300_VPI_OUT_OP_RSQ                     (72 << 0)
-	/* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, scalar(scalar) */
-#define R300_VPI_OUT_OP_UNK73                   (73 << 0)
-#define R300_VPI_OUT_OP_EX2                     (75 << 0)
-#define R300_VPI_OUT_OP_LG2                     (76 << 0)
+/* FIXME */
 #define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
-	/* all temps, vector(scalar, vector, vector) */
-#define R300_VPI_OUT_OP_UNK129                  (129 << 0)
 
 #define R300_VPI_OUT_REG_CLASS_TEMPORARY        (0 << 8)
 #define R300_VPI_OUT_REG_CLASS_ADDR             (1 << 8)

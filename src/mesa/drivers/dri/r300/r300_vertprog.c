@@ -543,7 +543,7 @@ static GLuint *t_opcode_ex2(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_EX2, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_EXP_BASE2_FULL_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
@@ -559,7 +559,7 @@ static GLuint *t_opcode_exp(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_EXP, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_EXP_BASE2_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
@@ -631,7 +631,7 @@ static GLuint *t_opcode_lg2(struct r300_vertex_program *vp,
 	// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
 
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_LG2, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_LOG_BASE2_FULL_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
@@ -658,7 +658,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 	//LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W}
 
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_LIT, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_LIGHT_COEFF_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	/* NOTE: Users swizzling might not work. */
@@ -695,7 +695,7 @@ static GLuint *t_opcode_log(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_LOG, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_LOG_BASE2_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
@@ -823,7 +823,7 @@ static GLuint *t_opcode_pow(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_POW, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_POWER_FUNC_FF, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src_scalar(vp, &src[0]);
@@ -838,7 +838,7 @@ static GLuint *t_opcode_rcp(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_RCP, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_RECIP_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
@@ -854,7 +854,7 @@ static GLuint *t_opcode_rsq(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(R300_VPI_OUT_OP_RSQ, t_dst_index(vp, &vpi->DstReg),
+	    PVS_MATH_OPCODE(ME_RECIP_SQRT_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
