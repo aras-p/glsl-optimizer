@@ -120,21 +120,14 @@ Export([
 
 
 if platform == 'winddk':
-	import ntpath
-	escape = env['ESCAPE']
-	env.Tool('winddk', '.')
-	if 'BASEDIR' in os.environ:
-		WINDDK = os.environ['BASEDIR']
-	else:
-		WINDDK = "C:\\WINDDK\\3790.1830"
-	# NOTE: We need this elaborate construct to get the absolute paths and
-	# forward slashes to msvc unharmed when cross compiling from posix platforms 
-	#env.Append(CPPFLAGS = [
-	#	escape('/I' + ntpath.join(WINDDK, 'inc\\wxp')),
-	#	escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wxp')),
-	#	escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wdm\\wxp')),
-	#	escape('/I' + ntpath.join(WINDDK, 'inc\\crt')),
-	#])
+	env.Tool('winddk', ['.'])
+	
+	env.Append(CPPPATH = [
+		env['SDK_INC_PATH'],
+		env['DDK_INC_PATH'],
+		env['WDM_INC_PATH'],
+		env['CRT_INC_PATH'],
+	])
 	
 	env.Append(CFLAGS = '/W3')
 	if debug:
