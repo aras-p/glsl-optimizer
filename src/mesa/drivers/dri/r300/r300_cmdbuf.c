@@ -346,7 +346,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(ga_point_s0, always, 5, 0);
 	r300->hw.ga_point_s0.cmd[0] = cmdpacket0(GA_POINT_S0, 4);
 	ALLOC_STATE(ga_triangle_stipple, always, 2, 0);
-	r300->hw.ga_triangle_stipple.cmd[0] = cmdpacket0(R300_GA_TRIANGLE_STIPPLE, 1);
+	r300->hw.ga_triangle_stipple.cmd[0] = cmdpacket0(GA_TRIANGLE_STIPPLE, 1);
 	ALLOC_STATE(ps, always, R300_PS_CMDSIZE, 0);
 	r300->hw.ps.cmd[0] = cmdpacket0(R300_GA_POINT_SIZE, 1);
 	ALLOC_STATE(ga_point_minmax, always, 4, 0);

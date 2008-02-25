@@ -638,7 +638,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* T Texture Coordinate of Vertex 2 for Point texture stuffing (URC) */
 #define GA_POINT_T1                              0x420c
 
-#define R300_GA_TRIANGLE_STIPPLE            0x4214
+/* Specifies amount to shift integer position of vertex (screen space) before
+ * converting to float for triangle stipple.
+ */
+#define GA_TRIANGLE_STIPPLE            0x4214
+#	define GA_TRIANGLE_STIPPLE_X_SHIFT_SHIFT 0
+#	define GA_TRIANGLE_STIPPLE_X_SHIFT_MASK  0x0000000f
+#	define GA_TRIANGLE_STIPPLE_Y_SHIFT_SHIFT 16
+#	define GA_TRIANGLE_STIPPLE_Y_SHIFT_MASK  0x000f0000
 
 /* The pointsize is given in multiples of 6. The pointsize can be enormous:
  * Clear() renders a single point that fills the entire framebuffer.
@@ -873,9 +880,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	R300_GA_COLOR_CONTROL_RGB3_SHADING_FLAT | R300_GA_COLOR_CONTROL_ALPHA3_SHADING_GOURAUD | \
 	R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST )
 
+/* Specifies red & green components of fill color -- S312 format -- Backwards comp. */
+#define R300_GA_SOLID_RG                         0x427c
+#	define GA_SOLID_RG_COLOR_GREEN_SHIFT 0
+#	define GA_SOLID_RG_COLOR_GREEN_MASK  0x0000ffff
+#	define GA_SOLID_RG_COLOR_RED_SHIFT   16
+#	define GA_SOLID_RG_COLOR_RED_MASK    0xffff0000
+/* Specifies blue & alpha components of fill color -- S312 format -- Backwards comp. */
+#define R300_GA_SOLID_BA                         0x4280
+#	define GA_SOLID_BA_COLOR_ALPHA_SHIFT 0
+#	define GA_SOLID_BA_COLOR_ALPHA_MASK  0x0000ffff
+#	define GA_SOLID_BA_COLOR_BLUE_SHIFT  16
+#	define GA_SOLID_BA_COLOR_BLUE_MASK   0xffff0000
 
-#define R300_GA_SOLID_RG                   0x427c
-#define R300_GA_SOLID_BA                   0x4280
 /* Polygon Mode
  * Dangerous
  */
@@ -892,7 +909,18 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define GA_POLY_MODE_BACK_PTYPE_TRI    (2 << 7)
 /* reserved */
 
-#define R300_GA_ROUND_MODE                 0x428c
+/* Specifies the rouding mode for geometry & color SPFP to FP conversions. */
+#define GA_ROUND_MODE                            0x428c
+#	define GA_ROUND_MODE_GEOMETRY_ROUND_TRUNC   (0 << 0)
+#	define GA_ROUND_MODE_GEOMETRY_ROUND_NEAREST (1 << 0)
+#	define GA_ROUND_MODE_COLOR_ROUND_TRUNC      (0 << 2)
+#	define GA_ROUND_MODE_COLOR_ROUND_NEAREST    (1 << 2)
+#	define GA_ROUND_MODE_RGB_CLAMP_RGB          (0 << 4)
+#	define GA_ROUND_MODE_RGB_CLAMP_FP20         (1 << 4)
+#	define GA_ROUND_MODE_ALPHA_CLAMP_RGB        (0 << 5)
+#	define GA_ROUND_MODE_ALPHA_CLAMP_FP20       (1 << 5)
+#	define GA_ROUND_MODE_GEOMETRY_MASK_SHIFT    6
+#	define GA_ROUND_MODE_GEOMETRY_MASK_MASK     0x000003c0
 
 /* Specifies x & y offsets for vertex data after conversion to FP.
  * Offsets are in S15 format (subpixels -- 1/12 or 1/16, even in 8b
