@@ -363,17 +363,15 @@ static void r300SetEarlyZState(GLcontext * ctx)
 	R300_STATECHANGE(r300, zstencil_format);
 	switch (ctx->Visual.depthBits) {
 	case 16:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTH_FORMAT_16BIT_INT_Z;
+		r300->hw.zstencil_format.cmd[1] = ZB_FORMAR_DEPTHFORMAT_16BIT_INT_Z;
 		break;
 	case 24:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTH_FORMAT_24BIT_INT_Z;
+		r300->hw.zstencil_format.cmd[1] = ZB_FORMAR_DEPTHFORMAT_24BIT_INT_Z;
 		break;
 	default:
 		fprintf(stderr, "Error: Unsupported depth %d... exiting\n", ctx->Visual.depthBits);
 		_mesa_exit(-1);
 	}
-
-	// r300->hw.zstencil_format.cmd[1] |= R300_DEPTH_FORMAT_UNK32;
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		/* disable early Z */
@@ -822,13 +820,13 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint refmask =
 	    (((ctx->Stencil.
-	       Ref[0] & 0xff) << R300_RB3D_ZS2_STENCIL_REF_SHIFT) | ((ctx->
+	       Ref[0] & 0xff) << ZB_STENCILREFMASK_STENCILREF_SHIFT) | ((ctx->
 								      Stencil.
 								      ValueMask
 								      [0] &
 								      0xff)
 								     <<
-								     R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
+								     ZB_STENCILREFMASK_STENCILMASK_SHIFT));
 
 	GLuint flag;
 
@@ -840,9 +838,8 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 						 R300_RB3D_ZS1_BACK_FUNC_SHIFT));
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=
-	    ~((R300_RB3D_ZS2_STENCIL_MASK <<
-	       R300_RB3D_ZS2_STENCIL_REF_SHIFT) |
-	      (R300_RB3D_ZS2_STENCIL_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
+	    ~((ZB_STENCILREFMASK_STENCILREF_MASK << ZB_STENCILREFMASK_STENCILREF_SHIFT) |
+	      (ZB_STENCILREFMASK_STENCILMASK_MASK << ZB_STENCILREFMASK_STENCILMASK_SHIFT));
 
 	flag = translate_func(ctx->Stencil.Function[0]);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
@@ -862,11 +859,11 @@ static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 
 	R300_STATECHANGE(rmesa, zs);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=
-	    ~(R300_RB3D_ZS2_STENCIL_MASK <<
-	      R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT);
+	    ~(ZB_STENCILREFMASK_STENCILMASK_MASK <<
+	      ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |=
 	    (ctx->Stencil.
-	     WriteMask[0] & 0xff) << R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT;
+	     WriteMask[0] & 0xff) << ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT;
 }
 
 static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
@@ -914,10 +911,10 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 
 	rmesa->state.stencil.clear =
 	    ((GLuint) (ctx->Stencil.Clear & 0xff) |
-	     (R300_RB3D_ZS2_STENCIL_MASK <<
-	      R300_RB3D_ZS2_STENCIL_MASK_SHIFT) | ((ctx->Stencil.
+	     (ZB_STENCILREFMASK_STENCILMASK_MASK <<
+	      ZB_STENCILREFMASK_STENCILMASK_SHIFT) | ((ctx->Stencil.
 						    WriteMask[0] & 0xff) <<
-						   R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT));
+						   ZB_STENCILREFMASK_STENCILMASK_SHIFT));
 }
 
 /* =============================================================
@@ -1990,11 +1987,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	if (r300->radeon.sarea->tiling_enabled) {
 		/* XXX: Turn off when clearing buffers ? */
-		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTH_TILE_ENABLE;
+		r300->hw.zb.cmd[R300_ZB_PITCH] |= ZB_DEPTHPITCH_DEPTHMACROTILE_ENABLE;
 
 		if (ctx->Visual.depthBits == 24)
 			r300->hw.zb.cmd[R300_ZB_PITCH] |=
-			    R300_DEPTH_MICROTILE_ENABLE;
+			    ZB_DEPTHPITCH_DEPTHMICROTILE_TILED;
 	}
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
@@ -2182,12 +2179,12 @@ void r300InitState(r300ContextPtr r300)
 	switch (ctx->Visual.depthBits) {
 	case 16:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
-		depth_fmt = R300_DEPTH_FORMAT_16BIT_INT_Z;
+		depth_fmt = ZB_FORMAR_DEPTHFORMAT_16BIT_INT_Z;
 		r300->state.stencil.clear = 0x00000000;
 		break;
 	case 24:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffffff;
-		depth_fmt = R300_DEPTH_FORMAT_24BIT_INT_Z;
+		depth_fmt = ZB_FORMAR_DEPTHFORMAT_24BIT_INT_Z;
 		r300->state.stencil.clear = 0x00ff0000;
 		break;
 	default:

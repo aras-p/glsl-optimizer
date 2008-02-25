@@ -1688,19 +1688,24 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT       21
 #	define R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT       24
 
-#define R300_RB3D_ZSTENCIL_CNTL_2                   0x4F08
-#	define R300_RB3D_ZS2_STENCIL_REF_SHIFT		0
-#	define R300_RB3D_ZS2_STENCIL_MASK		0xFF
-#	define R300_RB3D_ZS2_STENCIL_MASK_SHIFT	        8
-#	define R300_RB3D_ZS2_STENCIL_WRITE_MASK_SHIFT	16
+#define ZB_STENCILREFMASK                        0x4f08
+#	define ZB_STENCILREFMASK_STENCILREF_SHIFT       0
+#	define ZB_STENCILREFMASK_STENCILREF_MASK        0x000000ff
+#	define ZB_STENCILREFMASK_STENCILMASK_SHIFT      8
+#	define ZB_STENCILREFMASK_STENCILMASK_MASK       0x0000ff00
+#	define ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT	16
+#	define ZB_STENCILREFMASK_STENCILWRITEMASK_MASK  0xffff0000
 
 /* gap */
 
-#define R300_RB3D_ZSTENCIL_FORMAT                   0x4F10
-#	define R300_DEPTH_FORMAT_16BIT_INT_Z     (0 << 0)
-#	define R300_DEPTH_FORMAT_24BIT_INT_Z     (2 << 0)
-	/* 16 bit format or some aditional bit ? */
-#	define R300_DEPTH_FORMAT_UNK32          (32 << 0)
+#define ZB_FORMAT                                   0x4f10
+#	define ZB_FORMAR_DEPTHFORMAT_16BIT_INT_Z   (0 << 0)
+#	define ZB_FORMAR_DEPTHFORMAT_16BIT_13E3    (1 << 0)
+#	define ZB_FORMAR_DEPTHFORMAT_24BIT_INT_Z   (2 << 0)
+/* reserved up to (15 << 0) */
+#	define ZB_FORMAR_INVERT_13E3_LEADING_ONES  (0 << 4)
+#	define ZB_FORMAR_INVERT_13E3_LEADING_ZEROS (1 << 4)
+#	define ZB_FORMAR_PEQ8_UNUSED               (1 << 5)
 
 #define R300_RB3D_EARLY_Z                           0x4F14
 #	define R300_EARLY_Z_DISABLE              (0 << 0)
@@ -1708,9 +1713,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-#define R300_RB3D_ZCACHE_CTLSTAT            0x4F18 /* GUESS */
-#       define R300_RB3D_ZCACHE_UNKNOWN_01  0x1
-#       define R300_RB3D_ZCACHE_UNKNOWN_03  0x3
+#define ZB_ZCACHE_CTLSTAT            0x4f18
+#       define ZB_ZCACHE_CTLSTAT_ZC_FLUSH_NO_EFFECT      (0 << 0)
+#       define ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE (1 << 0)
+#       define ZB_ZCACHE_CTLSTAT_ZC_FREE_NO_EFFECT       (0 << 1)
+#       define ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE            (1 << 1)
+#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_IDLE            (0 << 1)
+#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_BUSY            (1 << 1)
 
 #define R300_ZB_BW_CNTL                     0x4f1c
 #	define R300_HIZ_DISABLE                              (0 << 0)
@@ -1756,14 +1765,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-#define R300_RB3D_DEPTHOFFSET               0x4F20
-#define R300_RB3D_DEPTHPITCH                0x4F24
-#       define R300_DEPTHPITCH_MASK              0x00001FF8 /* GUESS */
-#       define R300_DEPTH_TILE_ENABLE            (1 << 16) /* GUESS */
-#       define R300_DEPTH_MICROTILE_ENABLE       (1 << 17) /* GUESS */
-#       define R300_DEPTH_ENDIAN_NO_SWAP         (0 << 18) /* GUESS */
-#       define R300_DEPTH_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
-#       define R300_DEPTH_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
+/* Z Buffer Address Offset.
+ * Bits 31 to 5 are used for aligned Z buffer address offset for macro tiles.
+ */
+#define ZB_DEPTHOFFSET               0x4f20
+
+/* Z Buffer Pitch and Endian Control */
+#define ZB_DEPTHPITCH                0x4f24
+#       define R300_DEPTHPITCH_MASK              0x00001FF8 /* TODO: should be (13:2) */
+#       define ZB_DEPTHPITCH_DEPTHMACROTILE_DISABLE      (0 << 16)
+#       define ZB_DEPTHPITCH_DEPTHMACROTILE_ENABLE       (1 << 16)
+#       define ZB_DEPTHPITCH_DEPTHMICROTILE_LINEAR       (0 << 17)
+#       define ZB_DEPTHPITCH_DEPTHMICROTILE_TILED        (1 << 17)
+#       define ZB_DEPTHPITCH_DEPTHMICROTILE_TILED_SQUARE (2 << 17)
+#       define ZB_DEPTHPITCH_DEPTHENDIAN_NO_SWAP         (0 << 18)
+#       define ZB_DEPTHPITCH_DEPTHENDIAN_WORD_SWAP       (1 << 18)
+#       define ZB_DEPTHPITCH_DEPTHENDIAN_DWORD_SWAP      (2 << 18)
+#       define ZB_DEPTHPITCH_DEPTHENDIAN_HALF_DWORD_SWAP (3 << 18)
 
 /* Z Buffer Clear Value */
 #define ZB_DEPTHCLEARVALUE                  0x4f28
@@ -1774,11 +1792,43 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Hierarchical Z Read Index */
 #define ZB_HIZ_RDINDEX                      0x4f48
 
+/* Hierarchical Z Data */
+#define ZB_HIZ_DWORD                        0x4f4c
+
 /* Hierarchical Z Write Index */
 #define ZB_HIZ_WRINDEX                      0x4f50
 
 /* Hierarchical Z Pitch */
 #define ZB_HIZ_PITCH                        0x4f54
+
+/* Z Buffer Z Pass Counter Data */
+#define ZB_ZPASS_DATA                       0x4f58
+
+/* Z Buffer Z Pass Counter Address */
+#define ZB_ZPASS_ADDR                       0x4f5c
+
+/* Depth buffer X and Y coordinate offset */
+#define ZB_DEPTHXY_OFFSET                   0x4f60
+#	define ZB_DEPTHX_OFFSET_SHIFT  1
+#	define ZB_DEPTHX_OFFSET_MASK   0x000007FE
+#	define ZB_DEPTHY_OFFSET_SHIFT  17
+#	define ZB_DEPTHY_OFFSET_MASK   0x07FE0000
+
+/* Sets the fifo sizes */
+#define ZB_FIFO_SIZE                        0x4fd0
+#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
+#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
+#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
+#	define ZB_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (4 << 0)
+
+/* Stencil Reference Value and Mask for backfacing quads */
+#define ZB_STENCILREFMASK_BF                0x4fd4
+#	define ZB_STENCILREFMASK_BF_STENCILREF_SHIFT       0
+#	define ZB_STENCILREFMASK_BF_STENCILREF_MASK        0x000000ff
+#	define ZB_STENCILREFMASK_BF_STENCILMASK_SHIFT      8
+#	define ZB_STENCILREFMASK_BF_STENCILMASK_MASK       0x0000ff00
+#	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_SHIFT 16
+#	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_MASK  0xffff0000
 
 /* BEGIN: Vertex program instruction set */
 

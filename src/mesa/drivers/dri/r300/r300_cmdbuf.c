@@ -429,9 +429,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	    cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
 	ALLOC_STATE(zstencil_format, always, 5, 0);
 	r300->hw.zstencil_format.cmd[0] =
-	    cmdpacket0(R300_RB3D_ZSTENCIL_FORMAT, 4);
+	    cmdpacket0(ZB_FORMAT, 4);
 	ALLOC_STATE(zb, always, R300_ZB_CMDSIZE, 0);
-	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
+	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(ZB_DEPTHOFFSET, 2);
 	ALLOC_STATE(zb_depthclearvalue, always, 2, 0);
 	r300->hw.zb_depthclearvalue.cmd[0] = cmdpacket0(ZB_DEPTHCLEARVALUE, 1);
 	ALLOC_STATE(unk4F30, always, 3, 0);
