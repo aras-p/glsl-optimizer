@@ -398,7 +398,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
 	r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
 	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, 0);
-	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_RE_FOG_STATE, 1);
+	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(FG_FOG_BLEND, 1);
 	ALLOC_STATE(fogc, always, R300_FOGC_CMDSIZE, 0);
 	r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(R300_FOG_COLOR_R, 3);
 	ALLOC_STATE(at, always, R300_AT_CMDSIZE, 0);

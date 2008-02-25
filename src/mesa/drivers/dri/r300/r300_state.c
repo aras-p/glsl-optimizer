@@ -641,8 +641,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			R300_STATECHANGE(r300, fogs);
 			r300->hw.fogs.cmd[R300_FOGS_STATE] =
 			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FOG_MODE_MASK) |
-			    R300_FOG_MODE_LINEAR;
+			     cmd[FG_FOG_BLEND] & ~FG_FOG_BLEND_FN_MASK) |
+			    FG_FOG_BLEND_FN_LINEAR;
 
 			if (ctx->Fog.Start == ctx->Fog.End) {
 				fogScale.f = -1.0;
@@ -659,8 +659,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			R300_STATECHANGE(r300, fogs);
 			r300->hw.fogs.cmd[R300_FOGS_STATE] =
 			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FOG_MODE_MASK) |
-			    R300_FOG_MODE_EXP;
+			     cmd[FG_FOG_BLEND] & ~FG_FOG_BLEND_FN_MASK) |
+			    FG_FOG_BLEND_FN_EXP;
 			fogScale.f = 0.0933 * ctx->Fog.Density;
 			fogStart.f = 0.0;
 			break;
@@ -668,8 +668,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			R300_STATECHANGE(r300, fogs);
 			r300->hw.fogs.cmd[R300_FOGS_STATE] =
 			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~R300_FOG_MODE_MASK) |
-			    R300_FOG_MODE_EXP2;
+			     cmd[FG_FOG_BLEND] & ~FG_FOG_BLEND_FN_MASK) |
+			    FG_FOG_BLEND_FN_EXP2;
 			fogScale.f = 0.3 * ctx->Fog.Density;
 			fogStart.f = 0.0;
 		default:
@@ -1681,7 +1681,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 	case GL_FOG:
 		R300_STATECHANGE(r300, fogs);
 		if (state) {
-			r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FOG_ENABLE;
+			r300->hw.fogs.cmd[FG_FOG_BLEND] |= FG_FOG_BLEND_ENABLE;
 
 			r300Fogfv(ctx, GL_FOG_MODE, NULL);
 			r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
@@ -1689,7 +1689,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 			r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
 			r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
 		} else {
-			r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FOG_ENABLE;
+			r300->hw.fogs.cmd[FG_FOG_BLEND] &= ~FG_FOG_BLEND_ENABLE;
 		}
 
 		break;

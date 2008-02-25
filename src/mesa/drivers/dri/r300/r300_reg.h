@@ -1459,14 +1459,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_FPI2_UNKNOWN_31              (1 << 31)
 /* END: Fragment program instruction set */
 
-/* Fog state and color */
-#define R300_RE_FOG_STATE                   0x4BC0
-#       define R300_FOG_DISABLE                  (0 << 0)
-#       define R300_FOG_ENABLE                   (1 << 0)
-#	define R300_FOG_MODE_LINEAR              (0 << 1)
-#	define R300_FOG_MODE_EXP                 (1 << 1)
-#	define R300_FOG_MODE_EXP2                (2 << 1)
-#	define R300_FOG_MODE_MASK                (3 << 1)
+/* Fog: Fog Blending Enable */
+#define FG_FOG_BLEND                             0x4bc0
+#       define FG_FOG_BLEND_DISABLE              (0 << 0)
+#       define FG_FOG_BLEND_ENABLE               (1 << 0)
+#	define FG_FOG_BLEND_FN_LINEAR            (0 << 1)
+#	define FG_FOG_BLEND_FN_EXP               (1 << 1)
+#	define FG_FOG_BLEND_FN_EXP2              (2 << 1)
+#	define FG_FOG_BLEND_FN_CONSTANT          (3 << 1)
+#	define FG_FOG_BLEND_FN_MASK              0x00000006
+
 #define R300_FOG_COLOR_R                    0x4BC8
 #define R300_FOG_COLOR_G                    0x4BCC
 #define R300_FOG_COLOR_B                    0x4BD0
@@ -1507,13 +1509,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define FG_ALPHA_FUNC_FP16_ENABLE               (1 << 28)
 /* gap in AMD spec */
 
-/* Where does the depth come from? */
+/* Fog: Where does the depth come from? */
 #define R300_FG_DEPTH_SRC                  0x4bd8
 #	define R300_FG_DEPTH_SRC_SCAN   (0 << 0)
 #	define R300_FG_DEPTH_SRC_SHADER (1 << 0)
 
-/* Alpha Compare Value */
-#define R300_FG_ALPHA_VALUE                0x4be0
+/* Fog: Alpha Compare Value */
+#define FG_ALPHA_VALUE                0x4be0
+#	define FG_ALPHA_VALUE_MASK 0x0000ffff
 
 /* gap */
 
