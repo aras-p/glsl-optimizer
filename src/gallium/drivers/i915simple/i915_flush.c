@@ -31,6 +31,7 @@
 
 
 #include "pipe/p_defines.h"
+#include "draw/draw_context.h"
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_batch.h"
@@ -43,6 +44,8 @@ static void i915_flush( struct pipe_context *pipe,
 			unsigned flags )
 {
    struct i915_context *i915 = i915_context(pipe);
+
+   draw_flush(i915->draw);
 
    /* Do we need to emit an MI_FLUSH command to flush the hardware
     * caches?
