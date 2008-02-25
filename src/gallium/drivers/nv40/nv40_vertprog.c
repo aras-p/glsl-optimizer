@@ -634,9 +634,9 @@ out_err:
 static boolean
 nv40_vertprog_validate(struct nv40_context *nv40)
 { 
-	struct nv40_vertex_program *vp = nv40->pipe_state.vertprog;
+	struct nv40_vertex_program *vp = nv40->vertprog;
 	struct pipe_buffer *constbuf =
-		nv40->pipe_state.constbuf[PIPE_SHADER_VERTEX];
+		nv40->constbuf[PIPE_SHADER_VERTEX];
 	struct nouveau_winsys *nvws = nv40->nvws;
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	boolean upload_code = FALSE, upload_data = FALSE;

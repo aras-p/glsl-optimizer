@@ -3,7 +3,7 @@
 static boolean
 nv40_state_blend_validate(struct nv40_context *nv40)
 {
-	so_ref(nv40->pipe_state.blend->so, &nv40->state.hw[NV40_STATE_BLEND]);
+	so_ref(nv40->blend->so, &nv40->state.hw[NV40_STATE_BLEND]);
 	return TRUE;
 }
 
@@ -19,7 +19,7 @@ static boolean
 nv40_state_blend_colour_validate(struct nv40_context *nv40)
 {
 	struct nouveau_stateobj *so = so_new(2, 0);
-	struct pipe_blend_color *bcol = &nv40->pipe_state.blend_colour;
+	struct pipe_blend_color *bcol = &nv40->blend_colour;
 
 	so_method(so, nv40->hw->curie, NV40TCL_BLEND_COLOR, 1);
 	so_data  (so, ((float_to_ubyte(bcol->color[3]) << 24) |

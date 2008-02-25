@@ -126,7 +126,7 @@ nv40_fragtex_build(struct nv40_context *nv40, int unit)
 static boolean
 nv40_fragtex_validate(struct nv40_context *nv40)
 {
-	struct nv40_fragment_program *fp = nv40->pipe_state.fragprog;
+	struct nv40_fragment_program *fp = nv40->fragprog;
 	struct nv40_state *state = &nv40->state;
 	struct nouveau_stateobj *so;
 	unsigned samplers, unit;

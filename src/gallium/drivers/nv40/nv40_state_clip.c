@@ -3,7 +3,7 @@
 static boolean
 nv40_state_clip_validate(struct nv40_context *nv40)
 {
-	if (nv40->pipe_state.clip.nr)
+	if (nv40->clip.nr)
 		nv40->fallback |= NV40_FALLBACK_TNL;
 
 	return FALSE;

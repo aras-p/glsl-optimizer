@@ -3,7 +3,7 @@
 static boolean
 nv40_state_zsa_validate(struct nv40_context *nv40)
 {
-	so_ref(nv40->pipe_state.zsa->so,
+	so_ref(nv40->zsa->so,
 	       &nv40->state.hw[NV40_STATE_ZSA]);
 	return TRUE;
 }

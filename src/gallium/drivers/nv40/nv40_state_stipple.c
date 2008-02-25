@@ -3,7 +3,7 @@
 static boolean
 nv40_state_stipple_validate(struct nv40_context *nv40)
 {
-	struct pipe_rasterizer_state *rast = &nv40->pipe_state.rasterizer->pipe;
+	struct pipe_rasterizer_state *rast = &nv40->rasterizer->pipe;
 	struct nouveau_grobj *curie = nv40->hw->curie;
 	struct nouveau_stateobj *so;
 
@@ -19,7 +19,7 @@ nv40_state_stipple_validate(struct nv40_context *nv40)
 		so_data  (so, 1);
 		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_PATTERN(0), 32);
 		for (i = 0; i < 32; i++)
-			so_data(so, nv40->pipe_state.stipple[i]);
+			so_data(so, nv40->stipple[i]);
 	} else {
 		so = so_new(2, 0);
 		so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);

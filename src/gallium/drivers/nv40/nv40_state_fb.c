@@ -3,7 +3,7 @@
 static boolean
 nv40_state_framebuffer_validate(struct nv40_context *nv40)
 {
-	struct pipe_framebuffer_state *fb = &nv40->pipe_state.framebuffer;
+	struct pipe_framebuffer_state *fb = &nv40->framebuffer;
 	struct pipe_surface *rt[4], *zeta;
 	uint32_t rt_enable, rt_format, w, h;
 	int i, colour_format = 0, zeta_format = 0;

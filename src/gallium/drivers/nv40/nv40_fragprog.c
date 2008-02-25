@@ -790,9 +790,9 @@ nv40_fragprog_upload(struct nv40_context *nv40,
 static boolean
 nv40_fragprog_validate(struct nv40_context *nv40)
 {
-	struct nv40_fragment_program *fp = nv40->pipe_state.fragprog;
+	struct nv40_fragment_program *fp = nv40->fragprog;
 	struct pipe_buffer *constbuf =
-		nv40->pipe_state.constbuf[PIPE_SHADER_FRAGMENT];
+		nv40->constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	struct nouveau_stateobj *so;
 	int i;

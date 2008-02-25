@@ -57,7 +57,7 @@ nv40_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.blend = hwcso;
+	nv40->blend = hwcso;
 	nv40->dirty |= NV40_NEW_BLEND;
 }
 
@@ -399,7 +399,7 @@ nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.rasterizer = hwcso;
+	nv40->rasterizer = hwcso;
 	nv40->dirty |= NV40_NEW_RAST;
 }
 
@@ -470,7 +470,7 @@ nv40_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.zsa = hwcso;
+	nv40->zsa = hwcso;
 	nv40->dirty |= NV40_NEW_ZSA;
 }
 
@@ -500,7 +500,7 @@ nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.vertprog = hwcso;
+	nv40->vertprog = hwcso;
 	nv40->dirty |= NV40_NEW_VERTPROG;
 }
 
@@ -531,7 +531,7 @@ nv40_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.fragprog = hwcso;
+	nv40->fragprog = hwcso;
 	nv40->dirty |= NV40_NEW_FRAGPROG;
 }
 
@@ -551,7 +551,7 @@ nv40_set_blend_color(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.blend_colour = *bcol;
+	nv40->blend_colour = *bcol;
 	nv40->dirty |= NV40_NEW_BCOL;
 }
 
@@ -561,7 +561,7 @@ nv40_set_clip_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.clip = *clip;
+	nv40->clip = *clip;
 	nv40->dirty |= NV40_NEW_UCP;
 }
 
@@ -572,11 +572,11 @@ nv40_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	struct nv40_context *nv40 = nv40_context(pipe);
 
 	if (shader == PIPE_SHADER_VERTEX) {
-		nv40->pipe_state.constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
+		nv40->constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
 		nv40->dirty |= NV40_NEW_VERTPROG;
 	} else
 	if (shader == PIPE_SHADER_FRAGMENT) {
-		nv40->pipe_state.constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
+		nv40->constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
 		nv40->dirty |= NV40_NEW_FRAGPROG;
 	}
 }
@@ -587,7 +587,7 @@ nv40_set_framebuffer_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.framebuffer = *fb;
+	nv40->framebuffer = *fb;
 	nv40->dirty |= NV40_NEW_FB;
 }
 
@@ -597,7 +597,7 @@ nv40_set_polygon_stipple(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	memcpy(nv40->pipe_state.stipple, stipple->stipple, 4 * 32);
+	memcpy(nv40->stipple, stipple->stipple, 4 * 32);
 	nv40->dirty |= NV40_NEW_STIPPLE;
 }
 
@@ -607,7 +607,7 @@ nv40_set_scissor_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.scissor = *s;
+	nv40->scissor = *s;
 	nv40->dirty |= NV40_NEW_SCISSOR;
 }
 
@@ -617,7 +617,7 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	nv40->pipe_state.viewport = *vpt;
+	nv40->viewport = *vpt;
 	nv40->dirty |= NV40_NEW_VIEWPORT;
 }
 

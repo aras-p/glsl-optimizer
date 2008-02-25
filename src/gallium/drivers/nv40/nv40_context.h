@@ -132,32 +132,29 @@ struct nv40_context {
 
 	int chipset;
 
-	unsigned dirty;
-
-	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
-	struct nv40_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
-	unsigned dirty_samplers;
-
-	struct {
-		struct pipe_scissor_state scissor;
-		unsigned stipple[32];
-		struct pipe_clip_state clip;
-		struct nv40_vertex_program *vertprog;
-		struct nv40_fragment_program *fragprog;
-		struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
-		struct nv40_rasterizer_state *rasterizer;
-		struct nv40_zsa_state *zsa;
-		struct nv40_blend_state *blend;
-		struct pipe_blend_color blend_colour;
-		struct pipe_viewport_state viewport;
-		struct pipe_framebuffer_state framebuffer;
-		struct pipe_buffer *idxbuf;
-		unsigned idxbuf_format;
-	} pipe_state;
-
+	/* HW state derived from pipe states */
 	struct nv40_state state;
 	unsigned fallback;
 
+	/* Context state */
+	unsigned dirty;
+	struct pipe_scissor_state scissor;
+	unsigned stipple[32];
+	struct pipe_clip_state clip;
+	struct nv40_vertex_program *vertprog;
+	struct nv40_fragment_program *fragprog;
+	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	struct nv40_rasterizer_state *rasterizer;
+	struct nv40_zsa_state *zsa;
+	struct nv40_blend_state *blend;
+	struct pipe_blend_color blend_colour;
+	struct pipe_viewport_state viewport;
+	struct pipe_framebuffer_state framebuffer;
+	struct pipe_buffer *idxbuf;
+	unsigned idxbuf_format;
+	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
+	struct nv40_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
+	unsigned dirty_samplers;
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
 };

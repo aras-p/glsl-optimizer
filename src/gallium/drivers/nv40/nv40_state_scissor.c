@@ -3,8 +3,8 @@
 static boolean
 nv40_state_scissor_validate(struct nv40_context *nv40)
 {
-	struct pipe_rasterizer_state *rast = &nv40->pipe_state.rasterizer->pipe;
-	struct pipe_scissor_state *s = &nv40->pipe_state.scissor;
+	struct pipe_rasterizer_state *rast = &nv40->rasterizer->pipe;
+	struct pipe_scissor_state *s = &nv40->scissor;
 	struct nouveau_stateobj *so;
 
 	if (nv40->state.hw[NV40_STATE_SCISSOR] &&

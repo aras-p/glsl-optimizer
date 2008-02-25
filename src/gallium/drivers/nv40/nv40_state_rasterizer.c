@@ -3,7 +3,7 @@
 static boolean
 nv40_state_rasterizer_validate(struct nv40_context *nv40)
 {
-	so_ref(nv40->pipe_state.rasterizer->so,
+	so_ref(nv40->rasterizer->so,
 	       &nv40->state.hw[NV40_STATE_RAST]);
 	return TRUE;
 }

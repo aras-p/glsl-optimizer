@@ -46,8 +46,8 @@ nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 	unsigned type;
 
 	if (!ib) {
-		nv40->pipe_state.idxbuf = NULL;
-		nv40->pipe_state.idxbuf_format = 0xdeadbeef;
+		nv40->idxbuf = NULL;
+		nv40->idxbuf_format = 0xdeadbeef;
 		return FALSE;
 	}
 
@@ -66,11 +66,11 @@ nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 		return FALSE;
 	}
 
-	if (ib != nv40->pipe_state.idxbuf ||
-	    type != nv40->pipe_state.idxbuf_format) {
+	if (ib != nv40->idxbuf ||
+	    type != nv40->idxbuf_format) {
 		nv40->dirty |= NV40_NEW_ARRAYS;
-		nv40->pipe_state.idxbuf = ib;
-		nv40->pipe_state.idxbuf_format = type;
+		nv40->idxbuf = ib;
+		nv40->idxbuf_format = type;
 	}
 
 	return TRUE;
@@ -348,10 +348,10 @@ nv40_draw_elements(struct pipe_context *pipe,
 static boolean
 nv40_vbo_validate(struct nv40_context *nv40)
 {
-	struct nv40_vertex_program *vp = nv40->pipe_state.vertprog;
+	struct nv40_vertex_program *vp = nv40->vertprog;
 	struct nouveau_stateobj *vtxbuf, *vtxfmt;
-	struct pipe_buffer *ib = nv40->pipe_state.idxbuf;
-	unsigned ib_format = nv40->pipe_state.idxbuf_format;
+	struct pipe_buffer *ib = nv40->idxbuf;
+	unsigned ib_format = nv40->idxbuf_format;
 	unsigned inputs, hw, num_hw;
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 
