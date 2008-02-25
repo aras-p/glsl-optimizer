@@ -1978,10 +1978,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.rb3d_dither_ctl.cmd[8] = 0;
 	r300->hw.rb3d_dither_ctl.cmd[9] = 0;
 
-	r300->hw.unk4E88.cmd[1] = 0;
+	r300->hw.rb3d_aaresolve_ctl.cmd[1] = 0;
 
-	r300->hw.unk4EA0.cmd[1] = 0x00000000;
-	r300->hw.unk4EA0.cmd[2] = 0xffffffff;
+	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[1] = 0x00000000;
+	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[2] = 0xffffffff;
 
 	r300->hw.zb.cmd[R300_ZB_OFFSET] =
 	    r300->radeon.radeonScreen->depthOffset +
@@ -1997,14 +1997,14 @@ static void r300ResetHwState(r300ContextPtr r300)
 			    R300_DEPTH_MICROTILE_ENABLE;
 	}
 
-	r300->hw.unk4F28.cmd[1] = 0;
+	r300->hw.zb_depthclearvalue.cmd[1] = 0;
 
 	r300->hw.unk4F30.cmd[1] = 0;
 	r300->hw.unk4F30.cmd[2] = 0;
 
-	r300->hw.unk4F44.cmd[1] = 0;
+	r300->hw.zb_hiz_offset.cmd[1] = 0;
 
-	r300->hw.unk4F54.cmd[1] = 0;
+	r300->hw.zb_hiz_pitch.cmd[1] = 0;
 
 	if (has_tcl) {
 		r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;

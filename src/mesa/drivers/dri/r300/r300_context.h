@@ -499,15 +499,15 @@ struct r300_hw_state {
 	struct r300_state_atom blend_color;	/* constant blend color */
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
 	struct r300_state_atom rb3d_dither_ctl;	/* (4E50) */
-	struct r300_state_atom unk4E88;	/* (4E88) */
-	struct r300_state_atom unk4EA0;	/* (4E88) I saw it only written on RV350 hardware..  */
+	struct r300_state_atom rb3d_aaresolve_ctl;	/* (4E88) */
+	struct r300_state_atom rb3d_discard_src_pixel_lte_threshold;	/* (4E88) I saw it only written on RV350 hardware..  */
 	struct r300_state_atom zs;	/* zstencil control (4F00) */
 	struct r300_state_atom zstencil_format;
 	struct r300_state_atom zb;	/* z buffer (4F20) */
-	struct r300_state_atom unk4F28;	/* (4F28) */
+	struct r300_state_atom zb_depthclearvalue;	/* (4F28) */
 	struct r300_state_atom unk4F30;	/* (4F30) */
-	struct r300_state_atom unk4F44;	/* (4F44) */
-	struct r300_state_atom unk4F54;	/* (4F54) */
+	struct r300_state_atom zb_hiz_offset;	/* (4F44) */
+	struct r300_state_atom zb_hiz_pitch;	/* (4F54) */
 
 	struct r300_state_atom vpi;	/* vp instructions */
 	struct r300_state_atom vpp;	/* vp parameters */
