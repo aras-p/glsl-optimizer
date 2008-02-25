@@ -23,6 +23,15 @@
  	 | ((out_reg_fields) << 20) 	\
   	| ( (class) << 8 ) )
 
+#define PVS_DST_MATH_INST	(1 << 6)
+
+#define PVS_MATH_OPCODE(op, out_reg_index, out_reg_fields, class) \
+   ((op)  \
+    | PVS_DST_MATH_INST \
+  	| ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT) 	\
+ 	 | ((out_reg_fields) << 20) 	\
+  	| ( (class) << 8 ) )
+
 /* according to Nikolai, the subsequent 3 DWORDs are sources, use same define for each */
 
 #define VSF_IN_CLASS_TMP	0
