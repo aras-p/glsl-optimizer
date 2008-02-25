@@ -628,7 +628,6 @@ nv40_set_vertex_buffer(struct pipe_context *pipe, unsigned index,
 	struct nv40_context *nv40 = nv40_context(pipe);
 
 	nv40->vtxbuf[index] = *vb;
-
 	nv40->dirty |= NV40_NEW_ARRAYS;
 }
 
@@ -639,7 +638,6 @@ nv40_set_vertex_element(struct pipe_context *pipe, unsigned index,
 	struct nv40_context *nv40 = nv40_context(pipe);
 
 	nv40->vtxelt[index] = *ve;
-
 	nv40->dirty |= NV40_NEW_ARRAYS;
 }
 

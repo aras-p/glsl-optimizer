@@ -40,6 +40,43 @@ nv40_vbo_type(uint format)
 }
 
 static boolean
+nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
+		    unsigned ib_size)
+{
+	unsigned type;
+
+	if (!ib) {
+		nv40->pipe_state.idxbuf = NULL;
+		nv40->pipe_state.idxbuf_format = 0xdeadbeef;
+		return FALSE;
+	}
+
+	/* No support for 8bit indices, no support at all on 0x4497 chips */
+	if (nv40->hw->curie->grclass == NV44TCL || ib_size == 1)
+		return FALSE;
+
+	switch (ib_size) {
+	case 2:
+		type = NV40TCL_IDXBUF_FORMAT_TYPE_U16;
+		break;
+	case 4:
+		type = NV40TCL_IDXBUF_FORMAT_TYPE_U32;
+		break;
+	default:
+		return FALSE;
+	}
+
+	if (ib != nv40->pipe_state.idxbuf ||
+	    type != nv40->pipe_state.idxbuf_format) {
+		nv40->dirty |= NV40_NEW_ARRAYS;
+		nv40->pipe_state.idxbuf = ib;
+		nv40->pipe_state.idxbuf_format = type;
+	}
+
+	return TRUE;
+}
+
+static boolean
 nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 		       struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
@@ -101,104 +138,15 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 	return TRUE;
 }
 
-static void
-nv40_vbo_arrays_update(struct nv40_context *nv40, struct pipe_buffer *ib,
-		       unsigned ib_format)
-{
-	struct nv40_vertex_program *vp = nv40->pipe_state.vertprog;
-	struct nouveau_stateobj *vtxbuf, *vtxfmt;
-	unsigned inputs, hw, num_hw;
-	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
-
-	inputs = vp->ir;
-	for (hw = 0; hw < 16 && inputs; hw++) {
-		if (inputs & (1 << hw)) {
-			num_hw = hw;
-			inputs &= ~(1 << hw);
-		}
-	}
-	num_hw++;
-
-	vtxbuf = so_new(20, 18);
-	so_method(vtxbuf, nv40->hw->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
-	vtxfmt = so_new(17, 0);
-	so_method(vtxfmt, nv40->hw->curie, NV40TCL_VTXFMT(0), num_hw);
-
-	inputs = vp->ir;
-	for (hw = 0; hw < num_hw; hw++) {
-		struct pipe_vertex_element *ve;
-		struct pipe_vertex_buffer *vb;
-
-		if (!(inputs & (1 << hw))) {
-			so_data(vtxbuf, 0);
-			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
-			continue;
-		}
-
-		ve = &nv40->vtxelt[hw];
-		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
-
-		if (!vb->pitch && nv40_vbo_static_attrib(nv40, hw, ve, vb)) {
-			so_data(vtxbuf, 0);
-			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
-			continue;
-		}
-
-		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
-			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
-			 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
-		so_data (vtxfmt, ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
-				  (nv40_vbo_ncomp(ve->src_format) <<
-				   NV40TCL_VTXFMT_SIZE_SHIFT) |
-				  nv40_vbo_type(ve->src_format)));
-	}
-
-	if (ib) {
-		so_method(vtxbuf, nv40->hw->curie, NV40TCL_IDXBUF_ADDRESS, 2);
-		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
-		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
-			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
-	}
-
-	so_emit(nv40->nvws, vtxfmt);
-	so_emit(nv40->nvws, vtxbuf);
-	so_ref (vtxbuf, &nv40->so_vtxbuf);
-	so_ref (NULL, &vtxfmt);
-}
-
-static boolean
-nv40_vbo_validate_state(struct nv40_context *nv40,
-			struct pipe_buffer *ib, unsigned ib_format)
-{
-	unsigned vdn = nv40->dirty & NV40_NEW_ARRAYS;
-
-	nv40_emit_hw_state(nv40);
-	if (vdn || ib) {
-		nv40_vbo_arrays_update(nv40, ib, ib_format);
-		nv40->dirty &= ~NV40_NEW_ARRAYS;
-	}
-
-	so_emit_reloc_markers(nv40->nvws, nv40->so_vtxbuf);
-
-	BEGIN_RING(curie, 0x1710, 1);
-	OUT_RING  (0); /* vtx cache flush */
-
-	return TRUE;
-}
-
 boolean
 nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 		 unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned nr;
-	boolean ret;
 
-	ret = nv40_vbo_validate_state(nv40, NULL, 0);
-	if (!ret) {
-		NOUVEAU_ERR("state validate failed\n");
-		return FALSE;
-	}
+	nv40_vbo_set_idxbuf(nv40, NULL, 0);
+	nv40_emit_hw_state(nv40);
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -305,14 +253,9 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct pipe_winsys *ws = pipe->winsys;
-	boolean ret;
 	void *map;
 
-	ret = nv40_vbo_validate_state(nv40, NULL, 0);
-	if (!ret) {
-		NOUVEAU_ERR("state validate failed\n");
-		return FALSE;
-	}
+	nv40_emit_hw_state(nv40);
 
 	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
@@ -348,30 +291,12 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 
 static boolean
 nv40_draw_elements_vbo(struct pipe_context *pipe,
-		       struct pipe_buffer *ib, unsigned ib_size,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	unsigned nr, type;
-	boolean ret;
+	unsigned nr;
 
-	switch (ib_size) {
-	case 2:
-		type = NV40TCL_IDXBUF_FORMAT_TYPE_U16;
-		break;
-	case 4:
-		type = NV40TCL_IDXBUF_FORMAT_TYPE_U32;
-		break;
-	default:
-		NOUVEAU_ERR("invalid idxbuf fmt %d\n", ib_size);
-		return FALSE;
-	}
-
-	ret = nv40_vbo_validate_state(nv40, ib, type);
-	if (!ret) {
-		NOUVEAU_ERR("failed state validation\n");
-		return FALSE;
-	}
+	nv40_emit_hw_state(nv40);
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -409,19 +334,92 @@ nv40_draw_elements(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	/* 0x4497 doesn't support real index buffers, and there doesn't appear
-	 * to be support on any chipset for 8-bit indices.
-	 */
-	if (nv40->hw->curie->grclass == NV44TCL || indexSize == 1) {
+	if (nv40_vbo_set_idxbuf(nv40, indexBuffer, indexSize)) {
+		nv40_draw_elements_vbo(pipe, mode, start, count);
+	} else {
 		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,
 					  mode, start, count);
-	} else {
-		nv40_draw_elements_vbo(pipe, indexBuffer, indexSize,
-				       mode, start, count);
 	}
 
 	pipe->flush(pipe, 0);
 	return TRUE;
 }
 
+static boolean
+nv40_vbo_validate(struct nv40_context *nv40)
+{
+	struct nv40_vertex_program *vp = nv40->pipe_state.vertprog;
+	struct nouveau_stateobj *vtxbuf, *vtxfmt;
+	struct pipe_buffer *ib = nv40->pipe_state.idxbuf;
+	unsigned ib_format = nv40->pipe_state.idxbuf_format;
+	unsigned inputs, hw, num_hw;
+	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
+
+	inputs = vp->ir;
+	for (hw = 0; hw < 16 && inputs; hw++) {
+		if (inputs & (1 << hw)) {
+			num_hw = hw;
+			inputs &= ~(1 << hw);
+		}
+	}
+	num_hw++;
+
+	vtxbuf = so_new(20, 18);
+	so_method(vtxbuf, nv40->hw->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
+	vtxfmt = so_new(17, 0);
+	so_method(vtxfmt, nv40->hw->curie, NV40TCL_VTXFMT(0), num_hw);
+
+	inputs = vp->ir;
+	for (hw = 0; hw < num_hw; hw++) {
+		struct pipe_vertex_element *ve;
+		struct pipe_vertex_buffer *vb;
+
+		if (!(inputs & (1 << hw))) {
+			so_data(vtxbuf, 0);
+			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
+			continue;
+		}
+
+		ve = &nv40->vtxelt[hw];
+		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
+
+		if (!vb->pitch && nv40_vbo_static_attrib(nv40, hw, ve, vb)) {
+			so_data(vtxbuf, 0);
+			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
+			continue;
+		}
+
+		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
+			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
+			 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
+		so_data (vtxfmt, ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
+				  (nv40_vbo_ncomp(ve->src_format) <<
+				   NV40TCL_VTXFMT_SIZE_SHIFT) |
+				  nv40_vbo_type(ve->src_format)));
+	}
+
+	if (ib) {
+		so_method(vtxbuf, nv40->hw->curie, NV40TCL_IDXBUF_ADDRESS, 2);
+		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
+		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
+			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
+	}
+
+	so_method(vtxbuf, nv40->hw->curie, 0x1710, 1);
+	so_data  (vtxbuf, 0);
+
+	so_ref(vtxbuf, &nv40->state.hw[NV40_STATE_VTXBUF]);
+	nv40->state.dirty |= (1ULL << NV40_STATE_VTXBUF);
+	so_ref(vtxfmt, &nv40->state.hw[NV40_STATE_VTXFMT]);
+	nv40->state.dirty |= (1ULL << NV40_STATE_VTXFMT);
+	return FALSE;
+}
+
+struct nv40_state_entry nv40_state_vbo = {
+	.validate = nv40_vbo_validate,
+	.dirty = {
+		.pipe = NV40_NEW_ARRAYS,
+		.hw = 0,
+	}
+};
 

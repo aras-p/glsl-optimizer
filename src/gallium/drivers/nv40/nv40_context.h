@@ -54,7 +54,9 @@ enum nv40_state_index {
 	NV40_STATE_VERTTEX1 = 28,
 	NV40_STATE_VERTTEX2 = 29,
 	NV40_STATE_VERTTEX3 = 30,
-	NV40_STATE_MAX = 31
+	NV40_STATE_VTXBUF = 31,
+	NV40_STATE_VTXFMT = 32,
+	NV40_STATE_MAX = 33
 };
 
 #define NV40_NEW_BLEND		(1 <<  0)
@@ -117,7 +119,7 @@ struct nv40_state {
 	unsigned stipple_enabled;
 	unsigned fp_samplers;
 
-	unsigned dirty;
+	uint64_t dirty;
 	struct nouveau_stateobj *hw[NV40_STATE_MAX];
 };
 
@@ -149,12 +151,12 @@ struct nv40_context {
 		struct pipe_blend_color blend_colour;
 		struct pipe_viewport_state viewport;
 		struct pipe_framebuffer_state framebuffer;
+		struct pipe_buffer *idxbuf;
+		unsigned idxbuf_format;
 	} pipe_state;
 
 	struct nv40_state state;
 	unsigned fallback;
-
-	struct nouveau_stateobj *so_vtxbuf;
 
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
@@ -208,6 +210,7 @@ extern struct nv40_state_entry nv40_state_zsa;
 extern struct nv40_state_entry nv40_state_viewport;
 extern struct nv40_state_entry nv40_state_framebuffer;
 extern struct nv40_state_entry nv40_state_fragtex;
+extern struct nv40_state_entry nv40_state_vbo;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
