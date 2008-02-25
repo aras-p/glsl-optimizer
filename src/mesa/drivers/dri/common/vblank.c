@@ -91,32 +91,6 @@ int driDrawableGetMSC32( __DRIscreenPrivate * priv,
    return ret;
 }
 
-/**
- * Get the current MSC refresh counter.
- *
- * Stores the 64-bit count of vertical refreshes since some (arbitrary)
- * point in time in \c count.  Unless the value wraps around, which it
- * may, it will never decrease.
- *
- * \warning This function is called from \c glXGetVideoSyncSGI, which expects
- * a \c count of type \c unsigned (32-bit), and \c glXGetSyncValuesOML, which 
- * expects a \c count of type \c int64_t (signed 64-bit).  The kernel ioctl 
- * currently always returns a \c sequence of type \c unsigned.
- *
- * Since this function doesn't take a drawable, it may end up getting the MSC
- * value from a pipe not associated with the caller's context, resuling in
- * undesired behavior.
- *
- * \param priv   Pointer to the DRI screen private struct.
- * \param count  Storage to hold MSC counter.
- * \return       Zero is returned on success.  A negative errno value
- *               is returned on failure.
- */
-int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count )
-{
-   return driDrawableGetMSC32(priv, NULL, count);
-}
-
 /****************************************************************************/
 /**
  * Wait for a specified refresh count.  This implements most of the

@@ -313,7 +313,6 @@ static struct __DriverAPIRec sisAPI = {
    .MakeCurrent     = sisMakeCurrent,
    .UnbindContext   = sisUnbindContext,
    .GetSwapInfo     = NULL,
-   .GetMSC          = NULL,
    .GetDrawableMSC  = NULL,
    .WaitForMSC      = NULL,
    .WaitForSBC      = NULL,

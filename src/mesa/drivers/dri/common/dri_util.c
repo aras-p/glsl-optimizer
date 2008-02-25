@@ -450,22 +450,13 @@ static void driSwapBuffers(__DRIdrawable *drawable)
 				   &rect, 1, GL_TRUE);
 }
 
-static int driDrawableGetMSC( __DRIscreen *screen, void *drawablePrivate,
+static int driDrawableGetMSC( __DRIscreen *screen, __DRIdrawable *drawable,
 			      int64_t *msc )
 {
     __DRIscreenPrivate *sPriv = screen->private;
+    __DRIdrawablePrivate *dPriv = drawable->private;
 
-    return sPriv->DriverAPI.GetDrawableMSC( sPriv, drawablePrivate, msc );
-}
-
-/**
- * Called directly from a number of higher-level GLX functions.
- */
-static int driGetMSC( __DRIscreen *screen, void *drawablePrivate, int64_t *msc )
-{
-    __DRIscreenPrivate *sPriv = screen->private;
-
-    return sPriv->DriverAPI.GetMSC( sPriv, msc );
+    return sPriv->DriverAPI.GetDrawableMSC(sPriv, dPriv, msc);
 }
 
 static int driWaitForMSC(__DRIdrawable *drawable, int64_t target_msc,
@@ -496,7 +487,6 @@ static int driWaitForMSC(__DRIdrawable *drawable, int64_t target_msc,
 
 const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
     { __DRI_MEDIA_STREAM_COUNTER, __DRI_MEDIA_STREAM_COUNTER_VERSION },
-    driGetMSC,
     driWaitForMSC,
     driDrawableGetMSC,
 };

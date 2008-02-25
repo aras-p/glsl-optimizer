@@ -184,12 +184,6 @@ struct __DriverAPIRec {
 
 
     /**
-     * Required if GLX_SGI_video_sync or GLX_OML_sync_control is
-     * supported.
-     */
-    int (*GetMSC)( __DRIscreenPrivate * priv, int64_t * count );
-
-    /**
      * These are required if GLX_OML_sync_control is supported.
      */
     /*@{*/
@@ -206,8 +200,9 @@ struct __DriverAPIRec {
 			  int x, int y, int w, int h);
 
     /**
-     * New version of GetMSC so we can pass drawable data to the low level
-     * DRM driver (e.g. pipe info).
+     * New version of GetMSC so we can pass drawable data to the low
+     * level DRM driver (e.g. pipe info).  Required if
+     * GLX_SGI_video_sync or GLX_OML_sync_control is supported.
      */
     int (*GetDrawableMSC) ( __DRIscreenPrivate * priv,
 			    __DRIdrawablePrivate *drawablePrivate,

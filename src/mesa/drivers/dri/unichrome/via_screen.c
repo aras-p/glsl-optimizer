@@ -333,7 +333,6 @@ static struct __DriverAPIRec viaAPI = {
    .MakeCurrent     = viaMakeCurrent,
    .UnbindContext   = viaUnbindContext,
    .GetSwapInfo     = getSwapInfo,
-   .GetMSC          = driGetMSC32,
    .GetDrawableMSC  = driDrawableGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,

@@ -614,7 +614,6 @@ static const struct __DriverAPIRec ffbAPI = {
    .MakeCurrent     = ffbMakeCurrent,
    .UnbindContext   = ffbUnbindContext,
    .GetSwapInfo     = NULL,
-   .GetMSC          = NULL,
    .GetDrawableMSC  = NULL,
    .WaitForMSC      = NULL,
    .WaitForSBC      = NULL,

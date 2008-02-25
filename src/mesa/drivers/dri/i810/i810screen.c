@@ -412,7 +412,6 @@ static const struct __DriverAPIRec i810API = {
    .MakeCurrent     = i810MakeCurrent,
    .UnbindContext   = i810UnbindContext,
    .GetSwapInfo     = NULL,
-   .GetMSC          = NULL,
    .GetDrawableMSC  = NULL,
    .WaitForMSC      = NULL,
    .WaitForSBC      = NULL,

@@ -950,7 +950,6 @@ static const struct __DriverAPIRec mgaAPI = {
    .MakeCurrent     = mgaMakeCurrent,
    .UnbindContext   = mgaUnbindContext,
    .GetSwapInfo     = getSwapInfo,
-   .GetMSC          = driGetMSC32,
    .GetDrawableMSC  = driDrawableGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,

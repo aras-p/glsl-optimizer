@@ -410,7 +410,6 @@ static struct __DriverAPIRec r128API = {
    .MakeCurrent     = r128MakeCurrent,
    .UnbindContext   = r128UnbindContext,
    .GetSwapInfo     = NULL,
-   .GetMSC          = driGetMSC32,
    .GetDrawableMSC  = driDrawableGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,

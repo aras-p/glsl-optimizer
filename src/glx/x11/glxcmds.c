@@ -1953,17 +1953,9 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
 	  int64_t temp; 
 	  int ret;
  
- 	  /*
- 	   * Try to use getDrawableMSC first so we get the right
- 	   * counter...
- 	   */
-	  if (psc->msc->base.version >= 2 && psc->msc->getDrawableMSC)
-	      ret = (*psc->msc->getDrawableMSC)( &psc->driScreen,
-						 pdraw->private,
-						 & temp);
-	  else
-	      ret = (*psc->msc->getMSC)( &psc->driScreen, & temp);
+	  ret = (*psc->msc->getDrawableMSC)(&psc->driScreen, pdraw, &temp);
 	  *count = (unsigned) temp;
+
 	  return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
       }
    }

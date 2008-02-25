@@ -171,15 +171,9 @@ struct __DRIframeTrackingExtensionRec {
  * Used by drivers that implement the GLX_SGI_video_sync extension.
  */
 #define __DRI_MEDIA_STREAM_COUNTER "DRI_MediaStreamCounter"
-#define __DRI_MEDIA_STREAM_COUNTER_VERSION 2
+#define __DRI_MEDIA_STREAM_COUNTER_VERSION 1
 struct __DRImediaStreamCounterExtensionRec {
     __DRIextension base;
-
-    /**
-     * Get the number of vertical refreshes since some point in time before
-     * this function was first called (i.e., system start up).
-     */
-    int (*getMSC)(__DRIscreen *screen, int64_t *msc);
 
     /**
      * Wait for the MSC to equal target_msc, or, if that has already passed,
@@ -192,15 +186,10 @@ struct __DRImediaStreamCounterExtensionRec {
 		      int64_t * msc, int64_t * sbc);
 
     /**
-     * Like the screen version of getMSC, but also takes a drawable so that
-     * the appropriate pipe's counter can be retrieved.
-     *
      * Get the number of vertical refreshes since some point in time before
      * this function was first called (i.e., system start up).
-     *
-     * \since Internal API version 2
      */
-    int (*getDrawableMSC)(__DRIscreen *screen, void *drawablePrivate,
+    int (*getDrawableMSC)(__DRIscreen *screen, __DRIdrawable *drawable,
 			  int64_t *msc);
 };
 

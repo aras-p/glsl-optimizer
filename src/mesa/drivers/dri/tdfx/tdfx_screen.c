@@ -354,7 +354,6 @@ static const struct __DriverAPIRec tdfxAPI = {
    .MakeCurrent     = tdfxMakeCurrent,
    .UnbindContext   = tdfxUnbindContext,
    .GetSwapInfo     = NULL,
-   .GetMSC          = NULL,
    .GetDrawableMSC  = NULL,
    .WaitForMSC      = NULL,
    .WaitForSBC      = NULL,
