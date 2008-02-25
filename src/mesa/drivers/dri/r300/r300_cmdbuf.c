@@ -421,7 +421,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(rb3d_dither_ctl, always, 10, 0);
 	r300->hw.rb3d_dither_ctl.cmd[0] = cmdpacket0(R300_RB3D_DITHER_CTL, R300_RB3D_DITHER_CTL_DITHER_MODE_ROUND | R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT);
 	ALLOC_STATE(rb3d_aaresolve_ctl, always, 2, 0);
-	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(R300_RB3D_AARESOLVE_CTL, R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE);
+	r300->hw.rb3d_aaresolve_ctl.cmd[0] = cmdpacket0(RB3D_AARESOLVE_CTL, RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE);
 	ALLOC_STATE(rb3d_discard_src_pixel_lte_threshold, always, 3, 0);
 	r300->hw.rb3d_discard_src_pixel_lte_threshold.cmd[0] = cmdpacket0(RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);

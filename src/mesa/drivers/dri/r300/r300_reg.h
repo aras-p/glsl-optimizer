@@ -1625,14 +1625,29 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT        (2 << 2)
 /* reserved */
 
+/* Resolve buffer destination address. The cache must be empty before changing
+ * this register if the cb is in resolve mode. Unpipelined
+ */
+#define RB3D_AARESOLVE_OFFSET        0x4e80
+#	define RB3D_AARESOLVE_OFFSET_SHIFT 5
+#	define RB3D_AARESOLVE_OFFSET_MASK 0xffffffe0 /* At least according to the calculations of Christoph Brill */
+
+/* Resolve Buffer Pitch and Tiling Control. The cache must be empty before
+ * changing this register if the cb is in resolve mode. Unpipelined
+ */
+#define RB3D_AARESOLVE_PITCH         0x4e84
+#	define RB3D_AARESOLVE_PITCH_SHIFT 1
+#	define RB3D_AARESOLVE_PITCH_MASK  0x00003ffe /* At least according to the calculations of Christoph Brill */
+
 /* Resolve Buffer Control. Unpipelined */
-#define R300_RB3D_AARESOLVE_CTL           0x4e88
-#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
-#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
-#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_10      (0 << 1)
-#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
-#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
-#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
+#define RB3D_AARESOLVE_CTL           0x4e88
+#	define RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
+#	define RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
+#	define RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_10      (0 << 1)
+#	define RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
+#	define RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
+#	define RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
+  
 
 /* Discard src pixels less than or equal to threshold. */
 #define RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
@@ -1656,7 +1671,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RB3D_Z_WRITE_ONLY        	 0x00000006
 #	define R300_RB3D_STENCIL_ENABLE		 0x00000001
 
-#define R300_RB3D_ZSTENCIL_CNTL_1                   0x4F04
+#define R300_RB3D_ZSTENCIL_CNTL_1                   0x4f04
 	/* functions */
 #	define R300_ZS_NEVER			0
 #	define R300_ZS_LESS			1
