@@ -28,6 +28,8 @@
 /* Authors:  Zack Rusin <zack@tungstengraphics.com>
  */
 
+#include "pipe/p_util.h"
+
 #include "cso_cache.h"
 #include "cso_hash.h"
 
@@ -176,7 +178,7 @@ void * cso_take_state(struct cso_cache *sc,
 
 struct cso_cache *cso_cache_create(void)
 {
-   struct cso_cache *sc = malloc(sizeof(struct cso_cache));
+   struct cso_cache *sc = MALLOC_STRUCT(cso_cache);
 
    sc->blend_hash         = cso_hash_create();
    sc->sampler_hash       = cso_hash_create();
@@ -197,5 +199,5 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_hash_delete(sc->rasterizer_hash);
    cso_hash_delete(sc->fs_hash);
    cso_hash_delete(sc->vs_hash);
-   free(sc);
+   FREE(sc);
 }
