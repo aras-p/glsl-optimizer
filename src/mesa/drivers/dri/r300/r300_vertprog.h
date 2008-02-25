@@ -17,7 +17,7 @@
     DOT, MUL, ADD, MAD, FRC, MAX, MIN, SGE, SLT, EXP, LOG, LIT, POW, RCP, RSQ, EX2,
     LG2, MAD_2 */
 
-#define MAKE_VSF_OP(op, out_reg_index, out_reg_fields, class) \
+#define PVS_VECTOR_OPCODE(op, out_reg_index, out_reg_fields, class) \
    ((op)  \
   	| ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT) 	\
  	 | ((out_reg_fields) << 20) 	\
