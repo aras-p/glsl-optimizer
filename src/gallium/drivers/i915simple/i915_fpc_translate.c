@@ -385,6 +385,26 @@ emit_simple_arith(struct i915_fp_compile *p,
                     arg3 );
 }
 
+
+/** As above, but swap the first two src regs */
+static void
+emit_simple_arith_swap2(struct i915_fp_compile *p,
+                        const struct tgsi_full_instruction *inst,
+                        uint opcode, uint numArgs)
+{
+   struct tgsi_full_instruction inst2;
+
+   assert(numArgs == 2);
+
+   /* transpose first two registers */
+   inst2 = *inst;
+   inst2.FullSrcRegisters[0] = inst->FullSrcRegisters[1];
+   inst2.FullSrcRegisters[1] = inst->FullSrcRegisters[0];
+
+   emit_simple_arith(p, &inst2, opcode, numArgs);
+}
+
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -772,6 +792,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
       emit_simple_arith(p, inst, A0_SGE, 2);
       break;
 
+   case TGSI_OPCODE_SLE:
+      /* like SGE, but swap reg0, reg1 */
+      emit_simple_arith_swap2(p, inst, A0_SGE, 2);
+      break;
+
    case TGSI_OPCODE_SIN:
       src0 = src_vector(p, &inst->FullSrcRegisters[0]);
       tmp = i915_get_utemp(p);
@@ -824,6 +849,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    case TGSI_OPCODE_SLT:
       emit_simple_arith(p, inst, A0_SLT, 2);
+      break;
+
+   case TGSI_OPCODE_SGT:
+      /* like SLT, but swap reg0, reg1 */
+      emit_simple_arith_swap2(p, inst, A0_SLT, 2);
       break;
 
    case TGSI_OPCODE_SUB:
@@ -879,6 +909,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    default:
       i915_program_error(p, "bad opcode %d", inst->Instruction.Opcode);
+      p->error = 1;
       return;
    }
 
