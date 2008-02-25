@@ -465,10 +465,10 @@ do {							\
 #define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->ui[specoffset] = spec[idx]
 
 #define LOCAL_VARS(n)							\
-   struct intel_context *intel = intel_context(ctx);				\
-   GLuint color[n], spec[n];						\
-   GLuint coloroffset = intel->coloroffset;		\
-   GLboolean specoffset = intel->specoffset;			\
+   struct intel_context *intel = intel_context(ctx);			\
+   GLuint color[n] = { 0, }, spec[n] = { 0, };				\
+   GLuint coloroffset = intel->coloroffset;				\
+   GLboolean specoffset = intel->specoffset;				\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
 
 
