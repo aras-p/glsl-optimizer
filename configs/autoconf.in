@@ -34,7 +34,7 @@ ASM_API = @ASM_API@
 MAKE = @MAKE@
 MKLIB_OPTIONS = @MKLIB_OPTIONS@
 MKDEP = @MKDEP@
-MKDEP_OPTIONS = -fdepend
+MKDEP_OPTIONS = @MKDEP_OPTIONS@
 INSTALL = $(TOP)/bin/minstall
 
 # Python and flags (generally only needed by the developers)

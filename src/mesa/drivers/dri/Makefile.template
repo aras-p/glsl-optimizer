@@ -80,7 +80,7 @@ $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
-		$(ASM_SOURCES) 2>&1 /dev/null
+		$(ASM_SOURCES)
 
 
 # Emacs tags
@@ -99,4 +99,4 @@ install: $(LIBNAME)
 	$(INSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 
-include depend
+-include depend

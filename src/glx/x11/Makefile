@@ -89,4 +89,4 @@ clean:
 	-rm -f *.o *~
 	-rm -f depend
 
-include depend
+-include depend

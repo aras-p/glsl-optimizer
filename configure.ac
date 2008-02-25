@@ -30,6 +30,15 @@ AC_PATH_PROG(MAKE, make)
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
 
+dnl Ask gcc where it's keeping its secret headers
+if test "x$GCC" = xyes; then
+    GCC_PATH=$(gcc -print-search-dirs | sed -ne 's/install: //p')
+    MKDEP_OPTIONS="-fdepend -I${GCC_PATH}include"
+else
+    MKDEP_OPTIONS=-fdepend
+fi
+AC_SUBST(MKDEP_OPTIONS)
+
 dnl Make sure the pkg-config macros are defined
 m4_ifdef([PKG_PROG_PKG_CONFIG],,[
     AC_MSG_ERROR([The pkg-config autoconf macros are not defined.

@@ -197,4 +197,4 @@ clean:
 	(cd x86-64 && $(MAKE) clean)
 
 
-include depend
+-include depend
