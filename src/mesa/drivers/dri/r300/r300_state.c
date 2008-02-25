@@ -400,34 +400,34 @@ static void r300SetAlphaState(GLcontext * ctx)
 
 	switch (ctx->Color.AlphaFunc) {
 	case GL_NEVER:
-		pp_misc |= R300_ALPHA_TEST_FAIL;
+		pp_misc |= FG_ALPHA_FUNC_NEVER;
 		break;
 	case GL_LESS:
-		pp_misc |= R300_ALPHA_TEST_LESS;
+		pp_misc |= FG_ALPHA_FUNC_LESS;
 		break;
 	case GL_EQUAL:
-		pp_misc |= R300_ALPHA_TEST_EQUAL;
+		pp_misc |= FG_ALPHA_FUNC_EQUAL;
 		break;
 	case GL_LEQUAL:
-		pp_misc |= R300_ALPHA_TEST_LEQUAL;
+		pp_misc |= FG_ALPHA_FUNC_LE;
 		break;
 	case GL_GREATER:
-		pp_misc |= R300_ALPHA_TEST_GREATER;
+		pp_misc |= FG_ALPHA_FUNC_GREATER;
 		break;
 	case GL_NOTEQUAL:
-		pp_misc |= R300_ALPHA_TEST_NEQUAL;
+		pp_misc |= FG_ALPHA_FUNC_NOTEQUAL;
 		break;
 	case GL_GEQUAL:
-		pp_misc |= R300_ALPHA_TEST_GEQUAL;
+		pp_misc |= FG_ALPHA_FUNC_GE;
 		break;
 	case GL_ALWAYS:
-		/*pp_misc |= R300_ALPHA_TEST_PASS; */
+		/*pp_misc |= FG_ALPHA_FUNC_ALWAYS; */
 		really_enabled = GL_FALSE;
 		break;
 	}
 
 	if (really_enabled) {
-		pp_misc |= R300_ALPHA_TEST_ENABLE;
+		pp_misc |= FG_ALPHA_FUNC_ENABLE;
 		pp_misc |= (refByte & R300_REF_ALPHA_MASK);
 	} else {
 		pp_misc = 0x0;

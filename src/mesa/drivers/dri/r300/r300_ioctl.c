@@ -252,7 +252,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	efloat(0.0);
 
 	R300_STATECHANGE(r300, at);
-	reg_start(R300_PP_ALPHA_TEST, 0);
+	reg_start(FG_ALPHA_FUNC, 0);
 	e32(0x0);
 
 	R300_STATECHANGE(r300, bld);

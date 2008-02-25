@@ -1473,18 +1473,39 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Constant Factor for Fog Blending */
 #define R300_FG_FOG_FACTOR                  0x4bc4
 
-#define R300_PP_ALPHA_TEST                  0x4BD4
+/* Fog: Alpha function */
+#define FG_ALPHA_FUNC                            0x4bd4
 #       define R300_REF_ALPHA_MASK               0x000000ff
-#       define R300_ALPHA_TEST_FAIL              (0 << 8)
-#       define R300_ALPHA_TEST_LESS              (1 << 8)
-#       define R300_ALPHA_TEST_LEQUAL            (3 << 8)
-#       define R300_ALPHA_TEST_EQUAL             (2 << 8)
-#       define R300_ALPHA_TEST_GEQUAL            (6 << 8)
-#       define R300_ALPHA_TEST_GREATER           (4 << 8)
-#       define R300_ALPHA_TEST_NEQUAL            (5 << 8)
-#       define R300_ALPHA_TEST_PASS              (7 << 8)
-#       define R300_ALPHA_TEST_OP_MASK           (7 << 8)
-#       define R300_ALPHA_TEST_ENABLE            (1 << 11)
+#       define FG_ALPHA_FUNC_NEVER                     (0 << 8)
+#       define FG_ALPHA_FUNC_LESS                      (1 << 8)
+#       define FG_ALPHA_FUNC_EQUAL                     (2 << 8)
+#       define FG_ALPHA_FUNC_LE                        (3 << 8)
+#       define FG_ALPHA_FUNC_GREATER                   (4 << 8)
+#       define FG_ALPHA_FUNC_NOTEQUAL                  (5 << 8)
+#       define FG_ALPHA_FUNC_GE                        (6 << 8)
+#       define FG_ALPHA_FUNC_ALWAYS                    (7 << 8)
+#       define R300_ALPHA_TEST_OP_MASK                 (7 << 8)
+#       define FG_ALPHA_FUNC_DISABLE                   (0 << 11)
+#       define FG_ALPHA_FUNC_ENABLE                    (1 << 11)
+#       define FG_ALPHA_FUNC_10BIT                     (0 << 12)
+#       define FG_ALPHA_FUNC_8BIT                      (1 << 12)
+/* gap in AMD spec */
+#       define FG_ALPHA_FUNC_MASK_DISABLE              (0 << 16)
+#       define FG_ALPHA_FUNC_MASK_ENABLE               (1 << 16)
+#       define FG_ALPHA_FUNC_CFG_2_OF_4                (0 << 17)
+#       define FG_ALPHA_FUNC_CFG_3_OF_6                (1 << 17)
+/* gap in AMD spec */
+#       define FG_ALPHA_FUNC_DITH_DISABLE              (0 << 20)
+#       define FG_ALPHA_FUNC_DITH_ENABLE               (1 << 20)
+/* gap in AMD spec */
+#       define FG_ALPHA_FUNC_OFFSET_DISABLE            (0 << 24) /* Not supported in R520. Default R300 and RV350 behaviour. */
+#       define FG_ALPHA_FUNC_OFFSET_ENABLE             (1 << 24) /* Not supported in R520 */
+#       define FG_ALPHA_FUNC_DISC_ZERO_MASK_DISABLE    (0 << 25)
+#       define FG_ALPHA_FUNC_DISC_ZERO_MASK_ENABLE     (1 << 25)
+/* gap in AMD spec */
+#       define FG_ALPHA_FUNC_FP16_DISABLE              (0 << 28)
+#       define FG_ALPHA_FUNC_FP16_ENABLE               (1 << 28)
+/* gap in AMD spec */
 
 /* Where does the depth come from? */
 #define R300_FG_DEPTH_SRC                  0x4bd8
@@ -1572,7 +1593,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_BLEND_MASK                       (63)
 #       define R300_SRC_BLEND_SHIFT                  (16)
 #       define R300_DST_BLEND_SHIFT                  (24)
+
+/* Constant color used by the blender. Pipelined through the blender.
+ * Note: For R520, this field is ignored, use RB3D_CONSTANT_COLOR_GB__BLUE,
+ * RB3D_CONSTANT_COLOR_GB__GREEN, etc. instead.
+ */
 #define R300_RB3D_BLEND_COLOR               0x4E10
+
+
 /* 3D Color Channel Mask. If all the channels used in the current color format
  * are disabled, then the cb will discard all the incoming quads. Pipelined
  * through the blender.
@@ -1594,6 +1622,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define RB3D_COLOR_CHANNEL_MASK_GREEN_MASK3 (1 << 13)
 #	define RB3D_COLOR_CHANNEL_MASK_RED_MASK3   (1 << 14)
 #	define RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK3 (1 << 15)
+
+/* Clear color that is used when the color mask is set to 00. Unpipelined.
+ * Program this register with a 32-bit value in ARGB8888 or ARGB2101010
+ * formats, ignoring the fields.
+ */
+#define RB3D_COLOR_CLEAR_VALUE                   0x4e14
 
 /* gap */
 
@@ -1654,12 +1688,27 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-/* Guess by Vladimir.
+/* Destination Color Buffer Cache Control/Status. If the cb is in e2 mode, then
+ * a flush or free will not occur upon a write to this register, but a sync
+ * will be immediately sent if one is requested. If both DC_FLUSH and DC_FREE
+ * are zero but DC_FINISH is one, then a sync will be sent immediately -- the
+ * cb will not wait for all the previous operations to complete before sending
+ * the sync. Unpipelined except when DC_FINISH and DC_FREE are both set to
+ * zero.
+ *
  * Set to 0A before 3D operations, set to 02 afterwards.
  */
-#define R300_RB3D_DSTCACHE_CTLSTAT          0x4E4C
-#       define R300_RB3D_DSTCACHE_UNKNOWN_02             0x00000002
-#       define R300_RB3D_DSTCACHE_UNKNOWN_0A             0x0000000A
+#define R300_RB3D_DSTCACHE_CTLSTAT               0x4e4c
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT         (0 << 0)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT_1       (1 << 0)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D    (2 << 0)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D_1  (3 << 0)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT          (0 << 2)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT_1        (1 << 2)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS       (2 << 2)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS_1     (3 << 2)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FINISH_NO_SIGNAL        (0 << 4)
+#	define RB3D_DSTCACHE_CTLSTAT_DC_FINISH_SIGNAL           (1 << 4)
 
 #define R300_RB3D_DITHER_CTL 0x4E50
 #	define R300_RB3D_DITHER_CTL_DITHER_MODE_TRUNCATE         (0 << 0)
@@ -1708,8 +1757,34 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_SHIFT 24
 #	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_MASK 0xff000000
 
+/* 3D ROP Control. Stalls the 2d/3d datapath until it is idle. */
+#define RB3D_ROPCNTL                             0x4e18
+/* TODO: fill in content here */
+
 /* Color Compare Flip. Stalls the 2d/3d datapath until it is idle. */
 #define RB3D_CLRCMP_FLIPE                        0x4e1c
+
+/* Sets the fifo sizes */
+#define RB3D_FIFO_SIZE                           0x4ef4
+#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
+#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
+#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
+#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (3 << 0)
+/* gap in AMD spec */
+
+/* Constant color used by the blender. Pipelined through the blender. */
+#define RB3D_CONSTANT_COLOR_AR                   0x4ef8
+#	define RB3D_CONSTANT_COLOR_AR_RED_MASK    0x0000ffff
+#	define RB3D_CONSTANT_COLOR_AR_RED_SHIFT   0
+#	define RB3D_CONSTANT_COLOR_AR_ALPHA_MASK  0xffff0000
+#	define RB3D_CONSTANT_COLOR_AR_ALPHA_SHIFT 16
+
+/* Constant color used by the blender. Pipelined through the blender. */
+#define RB3D_CONSTANT_COLOR_GB                   0x4efc
+#	define RB3D_CONSTANT_COLOR_AR_BLUE_MASK   0x0000ffff
+#	define RB3D_CONSTANT_COLOR_AR_BLUE_SHIFT  0
+#	define RB3D_CONSTANT_COLOR_AR_GREEN_MASK  0xffff0000
+#	define RB3D_CONSTANT_COLOR_AR_GREEN_SHIFT 16
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
