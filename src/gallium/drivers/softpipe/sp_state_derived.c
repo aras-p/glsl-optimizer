@@ -35,33 +35,6 @@
 
 
 /**
- * Search vertex program's outputs to find a match for the given
- * semantic name/index.  Return the index of the output slot.
- *
- * Return 0 if not found.  This will cause the fragment program to use
- * vertex attrib 0 (position) in the cases where the fragment program
- * attempts to use a missing vertex program output.  This is an undefined
- * condition that users shouldn't hit anyway.
- */
-static int
-find_vs_output(struct softpipe_context *sp,
-               const struct pipe_shader_state *vs,
-               uint semantic_name,
-               uint semantic_index)
-{
-   uint i;
-   for (i = 0; i < vs->num_outputs; i++) {
-      if (vs->output_semantic_name[i] == semantic_name &&
-          vs->output_semantic_index[i] == semantic_index)
-         return i;
-   }
-
-   /* See if the draw module is introducing a new attribute... */
-   return draw_find_vs_output(sp->draw, semantic_name, semantic_index);
-}
-
-
-/**
  * Mark the current vertex layout as "invalid".
  * We'll validate the vertex layout later, when we start to actually
  * render a point or line or tri.
@@ -114,24 +87,25 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
          int src;
          switch (fs->input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
-            src = find_vs_output(softpipe, vs, TGSI_SEMANTIC_POSITION, 0);
+            src = draw_find_vs_output(softpipe->draw,
+                                      TGSI_SEMANTIC_POSITION, 0);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_POS, src);
             break;
 
          case TGSI_SEMANTIC_COLOR:
-            src = find_vs_output(softpipe, vs, TGSI_SEMANTIC_COLOR, 
+            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_COLOR, 
                                  fs->input_semantic_index[i]);
             draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
             break;
 
          case TGSI_SEMANTIC_FOG:
-            src = find_vs_output(softpipe, vs, TGSI_SEMANTIC_FOG, 0);
+            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_FOG, 0);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
             break;
 
          case TGSI_SEMANTIC_GENERIC:
             /* this includes texcoords and varying vars */
-            src = find_vs_output(softpipe, vs, TGSI_SEMANTIC_GENERIC,
+            src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_GENERIC,
                                  fs->input_semantic_index[i]);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
             break;
@@ -141,7 +115,8 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
          }
       }
 
-      softpipe->psize_slot = find_vs_output(softpipe, vs, TGSI_SEMANTIC_PSIZE, 0);
+      softpipe->psize_slot = draw_find_vs_output(softpipe->draw,
+                                                 TGSI_SEMANTIC_PSIZE, 0);
       if (softpipe->psize_slot > 0) {
          draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_CONSTANT,
                                softpipe->psize_slot);
