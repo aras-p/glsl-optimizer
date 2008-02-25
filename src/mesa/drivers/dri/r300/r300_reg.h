@@ -627,10 +627,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
 
 /* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) */
-#define R300_GA_POINT_S0                    0x4200
+#define GA_POINT_S0                              0x4200
+
+/* T Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) */
+#define GA_POINT_T0                              0x4204
 
 /* S Texture Coordinate of Vertex 2 for Point texture stuffing (URC) */
-#define R300_GA_POINT_S1                    0x4208
+#define GA_POINT_S1                              0x4208
+
+/* T Texture Coordinate of Vertex 2 for Point texture stuffing (URC) */
+#define GA_POINT_T1                              0x420c
 
 #define R300_GA_TRIANGLE_STIPPLE            0x4214
 
@@ -870,15 +876,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define R300_GA_SOLID_RG                   0x427c
 #define R300_GA_SOLID_BA                   0x4280
-/* Dangerous */
-#define R300_GA_POLY_MODE                  0x4288
-#	define R300_PM_ENABLED                (1 << 0)
-#	define R300_PM_FRONT_POINT            (0 << 0)
-#	define R300_PM_BACK_POINT             (0 << 0)
-#	define R300_PM_FRONT_LINE             (1 << 4)
-#	define R300_PM_FRONT_FILL             (1 << 5)
-#	define R300_PM_BACK_LINE              (1 << 7)
-#	define R300_PM_BACK_FILL              (1 << 8)
+/* Polygon Mode
+ * Dangerous
+ */
+#define GA_POLY_MODE                             0x4288
+#	define GA_POLY_MODE_DISABLE           (0 << 0)
+#	define GA_POLY_MODE_DUAL              (1 << 0) /* send 2 sets of 3 polys with specified poly type */
+/* reserved */
+#	define GA_POLY_MODE_FRONT_PTYPE_POINT (0 << 4)
+#	define GA_POLY_MODE_FRONT_PTYPE_LINE  (1 << 4)
+#	define GA_POLY_MODE_FRONT_PTYPE_TRI   (2 << 4)
+/* reserved */
+#	define GA_POLY_MODE_BACK_PTYPE_POINT  (0 << 7)
+#	define GA_POLY_MODE_BACK_PTYPE_LINE   (1 << 7)
+#	define GA_POLY_MODE_BACK_PTYPE_TRI    (2 << 7)
+/* reserved */
 
 #define R300_GA_ROUND_MODE                 0x428c
 

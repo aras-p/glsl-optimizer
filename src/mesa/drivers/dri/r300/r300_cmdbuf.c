@@ -344,7 +344,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(txe, always, R300_TXE_CMDSIZE, 0);
 	r300->hw.txe.cmd[R300_TXE_CMD_0] = cmdpacket0(R300_TX_ENABLE, 1);
 	ALLOC_STATE(ga_point_s0, always, 5, 0);
-	r300->hw.ga_point_s0.cmd[0] = cmdpacket0(R300_GA_POINT_S0, 4);
+	r300->hw.ga_point_s0.cmd[0] = cmdpacket0(GA_POINT_S0, 4);
 	ALLOC_STATE(ga_triangle_stipple, always, 2, 0);
 	r300->hw.ga_triangle_stipple.cmd[0] = cmdpacket0(R300_GA_TRIANGLE_STIPPLE, 1);
 	ALLOC_STATE(ps, always, R300_PS_CMDSIZE, 0);
@@ -358,7 +358,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(shade, always, 5, 0);
 	r300->hw.shade.cmd[0] = cmdpacket0(GA_ENHANCE, 4);
 	ALLOC_STATE(polygon_mode, always, 4, 0);
-	r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_GA_POLY_MODE, 3);
+	r300->hw.polygon_mode.cmd[0] = cmdpacket0(GA_POLY_MODE, 3);
 	ALLOC_STATE(fogp, always, 3, 0);
 	r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
 	ALLOC_STATE(zbias_cntl, always, 2, 0);

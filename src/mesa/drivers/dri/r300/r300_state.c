@@ -515,29 +515,29 @@ static void r300UpdatePolygonMode(GLcontext * ctx)
 			b = ctx->Polygon.FrontMode;
 		}
 
-		hw_mode |= R300_PM_ENABLED;
+		hw_mode |= GA_POLY_MODE_DUAL;
 
 		switch (f) {
 		case GL_LINE:
-			hw_mode |= R300_PM_FRONT_LINE;
+			hw_mode |= GA_POLY_MODE_FRONT_PTYPE_LINE;
 			break;
-		case GL_POINT:	/* noop */
-			hw_mode |= R300_PM_FRONT_POINT;
+		case GL_POINT:	/* TODO: noops, find out why */
+			hw_mode |= GA_POLY_MODE_DISABLE;
 			break;
 		case GL_FILL:
-			hw_mode |= R300_PM_FRONT_FILL;
+			hw_mode |= GA_POLY_MODE_FRONT_PTYPE_TRI;
 			break;
 		}
 
 		switch (b) {
 		case GL_LINE:
-			hw_mode |= R300_PM_BACK_LINE;
+			hw_mode |= GA_POLY_MODE_BACK_PTYPE_LINE;
 			break;
-		case GL_POINT:	/* noop */
-			hw_mode |= R300_PM_BACK_POINT;
+		case GL_POINT:	/* TODO: noops, find out why */
+			hw_mode |= GA_POLY_MODE_DISABLE;
 			break;
 		case GL_FILL:
-			hw_mode |= R300_PM_BACK_FILL;
+			hw_mode |= GA_POLY_MODE_BACK_PTYPE_TRI;
 			break;
 		}
 	}
