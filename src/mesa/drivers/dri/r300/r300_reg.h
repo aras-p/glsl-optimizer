@@ -148,11 +148,37 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
+/** Vertex assembler/processor control status */
 #define R300_VAP_CNTL_STATUS              0x2140
+/* No swap at all (default) */
 #	define R300_VC_NO_SWAP                  (0 << 0)
+/* 16-bit swap: 0xAABBCCDD becomes 0xBBAADDCC */
 #	define R300_VC_16BIT_SWAP               (1 << 0)
+/* 32-bit swap: 0xAABBCCDD becomes 0xDDCCBBAA */
 #	define R300_VC_32BIT_SWAP               (2 << 0)
+/* Half-dword swap: 0xAABBCCDD becomes 0xCCDDAABB */
+#	define R300_VC_HALF_DWORD_SWAP          (3 << 0)
+/* The TCL engine will not be used (as it is logically or even physically removed) */
 #	define R300_VAP_TCL_BYPASS		(1 << 8)
+/* Read only flag if TCL engine is busy. */
+#	define R300_VAP_PVS_BUSY                (1 << 11)
+/* TODO: gap for MAX_MPS */
+/* Read only flag if the vertex store is busy. */
+#	define R300_VAP_VS_BUSY                 (1 << 24)
+/* Read only flag if the reciprocal engine is busy. */
+#	define R300_VAP_RCP_BUSY                (1 << 25)
+/* Read only flag if the viewport transform engine is busy. */
+#	define R300_VAP_VTE_BUSY                (1 << 26)
+/* Read only flag if the memory interface unit is busy. */
+#	define R300_VAP_MUI_BUSY                (1 << 27)
+/* Read only flag if the vertex cache is busy. */
+#	define R300_VAP_VC_BUSY                 (1 << 28)
+/* Read only flag if the vertex fetcher is busy. */
+#	define R300_VAP_VF_BUSY                 (1 << 29)
+/* Read only flag if the register pipeline is busy. */
+#	define R300_VAP_REGPIPE_BUSY            (1 << 30)
+/* Read only flag if the VAP engine is busy. */
+#	define R300_VAP_VAP_BUSY                (1 << 31)
 
 /* gap */
 
