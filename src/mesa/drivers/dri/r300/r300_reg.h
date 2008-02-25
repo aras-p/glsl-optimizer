@@ -2479,6 +2479,22 @@ enum {
 	ME_PRED_SET_RESTORE		= 28,
 };
 
+enum {
+	PVS_SRC_REG_TEMPORARY		= 0,	/* Intermediate Storage */
+	PVS_SRC_REG_INPUT		= 1,	/* Input Vertex Storage */
+	PVS_SRC_REG_CONSTANT		= 2,	/* Constant State Storage */
+	PVS_SRC_REG_ALT_TEMPORARY	= 3,	/* Alternate Intermediate Storage */
+};
+
+enum {
+	PVS_DST_REG_TEMPORARY		= 0,	/* Intermediate Storage */
+	PVS_DST_REG_A0			= 1,	/* Address Register Storage */
+	PVS_DST_REG_OUT			= 2,	/* Output Memory. Used for all outputs */
+	PVS_DST_REG_OUT_REPL_X		= 3,	/* Output Memory & Replicate X to all channels */
+	PVS_DST_REG_ALT_TEMPORARY	= 4,	/* Alternate Intermediate Storage */
+	PVS_DST_REG_INPUT		= 5,	/* Output Memory & Replicate X to all channels */
+};
+
 /*\}*/
 
 /*\{*/
