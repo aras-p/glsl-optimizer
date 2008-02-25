@@ -281,7 +281,9 @@ static void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
    if (intel == NULL || intel->ttm)
       driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
-   if (intel == NULL || intel->intelScreen->drmMinor >= 8)
+   if (intel == NULL || 
+       (IS_965(intel->intelScreen->deviceID) && 
+	intel->intelScreen->drmMinor >= 8))
       driInitExtensions(ctx, arb_oc_extensions, GL_FALSE);
 
    if (intel == NULL || IS_965(intel->intelScreen->deviceID))
