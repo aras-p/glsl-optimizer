@@ -714,7 +714,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_SHIFT 2
 #	define GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK  0xfffffffc
 
+/* Used to load US instructions and constants */
 #define R500_GA_US_VECTOR_INDEX               0x4250
+#	define GA_US_VECTOR_INDEX_SHIFT       0
+#	define GA_US_VECTOR_INDEX_MASK        0x000000ff
+#	define GA_US_VECTOR_INDEX_TYPE_INSTR  (0 << 16)
+#	define GA_US_VECTOR_INDEX_TYPE_CONST  (1 << 16)
+#	define GA_US_VECTOR_INDEX_CLAMP_NO    (0 << 17)
+#	define GA_US_VECTOR_INDEX_CLAMP_CONST (1 << 17)
+
+/* Data register for loading US instructions and constants */
 #define R500_GA_US_VECTOR_DATA                0x4254
 
 /* Specifies color properties and mappings of textures. */
