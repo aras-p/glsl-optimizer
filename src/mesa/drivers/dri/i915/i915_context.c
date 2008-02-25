@@ -44,6 +44,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_tris.h"
 #include "intel_span.h"
+#include "intel_pixel.h"
 
 /***************************************
  * Mesa's Driver Functions

@@ -39,6 +39,7 @@
 #include "intel_blit.h"
 #include "intel_batchbuffer.h"
 #include "intel_pixel.h"
+#include "intel_span.h"
 #include "tnl/t_pipeline.h"
 
 #include "utils.h"
