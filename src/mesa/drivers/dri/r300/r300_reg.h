@@ -622,6 +622,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_TX_DIRECTION_HORIZONTAL	 (0<<27)
 #	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
 
+/* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) */
+#define R300_GA_POINT_S0                    0x4200
+
+/* S Texture Coordinate of Vertex 2 for Point texture stuffing (URC) */
+#define R300_GA_POINT_S1                    0x4208
+
 #define R300_GA_TRIANGLE_STIPPLE            0x4214
 /* The pointsize is given in multiples of 6. The pointsize can be
  * enormous: Clear() renders a single point that fills the entire
@@ -633,6 +639,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_POINTSIZE_X_SHIFT            16
 #       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) /* GUESS */
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
+
+/* Specifies maximum and minimum point & sprite sizes for per vertex size
+ * specification. The lower part (15:0) is MIN and (31:16) is max.
+ */
+#define R300_GA_POINT_MINMAX                0x4230
+#       define R300_GA_POINT_MINMAX_MIN_SHIFT          0
+#       define R300_GA_POINT_MINMAX_MIN_MASK           (0xFFFF << 0)
+#       define R300_GA_POINT_MINMAX_MAX_SHIFT          16
+#       define R300_GA_POINT_MINMAX_MAX_MASK           (0xFFFF << 16)
 
 /* The line width is given in multiples of 6.
  * In default mode lines are classified as vertical lines.
@@ -653,13 +668,46 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_GA_US_VECTOR_INDEX               0x4250
 #define R500_GA_US_VECTOR_DATA                0x4254
 
+/* Current value of stipple accumulator. */
+#define R300_GA_LINE_STIPPLE_VALUE            0x4260
 
 /* Something shade related */
 #define R300_GA_ENHANCE                         0x4274
 
 #define R300_GA_COLOR_CONTROL                   0x4278
+/** TODO: either remove or use new definitions to "emulate" */
 #	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
+/** TODO: either remove or use new definitions to "emulate" */
 #	define R300_RE_SHADE_MODEL_FLAT       0x39595
+
+#	define R300_GA_COLOR_CONTROL_RGB0_SHADING_SOLID      (0 << 0)
+#	define R300_GA_COLOR_CONTROL_RGB0_SHADING_FLAT       (1 << 0)
+#	define R300_GA_COLOR_CONTROL_RGB0_SHADING_GOURAUD    (2 << 0)
+#	define R300_GA_COLOR_CONTROL_ALPHA0_SHADING_SOLID    (0 << 2)
+#	define R300_GA_COLOR_CONTROL_ALPHA0_SHADING_FLAT     (1 << 2)
+#	define R300_GA_COLOR_CONTROL_ALPHA0_SHADING_GOURAUD  (2 << 2)
+#	define R300_GA_COLOR_CONTROL_RGB1_SHADING_SOLID      (0 << 4)
+#	define R300_GA_COLOR_CONTROL_RGB1_SHADING_FLAT       (1 << 4)
+#	define R300_GA_COLOR_CONTROL_RGB1_SHADING_GOURAUD    (2 << 4)
+#	define R300_GA_COLOR_CONTROL_ALPHA1_SHADING_SOLID    (0 << 6)
+#	define R300_GA_COLOR_CONTROL_ALPHA1_SHADING_FLAT     (1 << 6)
+#	define R300_GA_COLOR_CONTROL_ALPHA1_SHADING_GOURAUD  (2 << 6)
+#	define R300_GA_COLOR_CONTROL_RGB2_SHADING_SOLID      (0 << 8)
+#	define R300_GA_COLOR_CONTROL_RGB2_SHADING_FLAT       (1 << 8)
+#	define R300_GA_COLOR_CONTROL_RGB2_SHADING_GOURAUD    (2 << 8)
+#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_SOLID    (0 << 10)
+#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_FLAT     (1 << 10)
+#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_GOURAUD  (2 << 10)
+#	define R300_GA_COLOR_CONTROL_RGB4_SHADING_SOLID      (0 << 12)
+#	define R300_GA_COLOR_CONTROL_RGB4_SHADING_FLAT       (1 << 12)
+#	define R300_GA_COLOR_CONTROL_RGB4_SHADING_GOURAUD    (2 << 12)
+#	define R300_GA_COLOR_CONTROL_ALPHA4_SHADING_SOLID    (0 << 14)
+#	define R300_GA_COLOR_CONTROL_ALPHA4_SHADING_FLAT     (1 << 14)
+#	define R300_GA_COLOR_CONTROL_ALPHA4_SHADING_GOURAUD  (2 << 14)
+#	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_FIRST  (0 << 16)
+#	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND (1 << 16)
+#	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_THIRD  (2 << 16)
+#	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST   (3 << 16)
 
 #define R300_GA_SOLID_RG                   0x427c
 #define R300_GA_SOLID_BA                   0x4280
@@ -707,6 +755,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_CULL_BACK                    (1 << 1)
 #       define R300_FRONT_FACE_CCW               (0 << 2)
 #       define R300_FRONT_FACE_CW                (1 << 2)
+
+/* SU Depth Scale value */
+#define R300_SU_DEPTH_SCALE                 0x42c0
+/* SU Depth Offset value */
+#define R300_SU_DEPTH_OFFSET                0x42c4
 
 
 /* BEGIN: Rasterization / Interpolators - many guesses */
@@ -800,6 +853,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #		define R300_RS_ROUTE_1_UNKNOWN11         (1 << 11)
 /* END: Rasterization / Interpolators - many guesses */
 
+/* Hierarchical Z Enable */
+#define R300_SC_HYPERZ                   0x43a4
+#	define R300_SC_HYPERZ_DISABLE     (0 << 0)
+#	define R300_SC_HYPERZ_ENABLE      (1 << 0)
+#	define R300_SC_HYPERZ_MIN         (0 << 1)
+#	define R300_SC_HYPERZ_MAX         (1 << 1)
+#	define R300_SC_HYPERZ_ADJ_256     (0 << 2)
+#	define R300_SC_HYPERZ_ADJ_128     (1 << 2)
+#	define R300_SC_HYPERZ_ADJ_64      (2 << 2)
+#	define R300_SC_HYPERZ_ADJ_32      (3 << 2)
+#	define R300_SC_HYPERZ_ADJ_16      (4 << 2)
+#	define R300_SC_HYPERZ_ADJ_8       (5 << 2)
+#	define R300_SC_HYPERZ_ADJ_4       (6 << 2)
+#	define R300_SC_HYPERZ_ADJ_2       (7 << 2)
+#	define R300_SC_HYPERZ_HZ_Z0MIN_NO (0 << 5)
+#	define R300_SC_HYPERZ_HZ_Z0MIN    (1 << 5)
+#	define R300_SC_HYPERZ_HZ_Z0MAX_NO (0 << 6)
+#	define R300_SC_HYPERZ_HZ_Z0MAX    (1 << 6)
+
+
 /* BEGIN: Scissors and cliprects */
 
 /* There are four clipping rectangles. Their corner coordinates are inclusive.
@@ -857,6 +930,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_SCISSORS_X_MASK              (0x1FFF << 0)
 #       define R300_SCISSORS_Y_SHIFT             13
 #       define R300_SCISSORS_Y_MASK              (0x1FFF << 13)
+
+/* Screen door sample mask */
+#define R300_SC_SCREENDOOR                 0x43e8
+
 /* END: Scissors and cliprects */
 
 /* BEGIN: Texture specification */
@@ -1146,6 +1223,31 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #		define R300_FPITX_OP_TXB	4
 #	define R300_FPITX_OPCODE_MASK           (7 << 15)
 
+/* Output format from the unfied shader */
+#define R500_US_OUT_FMT                     0x46A4
+#	define R500_US_OUT_FMT_C4_8         (0 << 0)
+#	define R500_US_OUT_FMT_C4_10        (1 << 0)
+#	define R500_US_OUT_FMT_C4_10_GAMMA  (2 << 0)
+#	define R500_US_OUT_FMT_C_16         (3 << 0)
+#	define R500_US_OUT_FMT_C2_16        (4 << 0)
+#	define R500_US_OUT_FMT_C4_16        (5 << 0)
+#	define R500_US_OUT_FMT_C_16_MPEG    (6 << 0)
+#	define R500_US_OUT_FMT_C2_16_MPEG   (7 << 0)
+#	define R500_US_OUT_FMT_C2_4         (8 << 0)
+#	define R500_US_OUT_FMT_C_3_3_2      (9 << 0)
+#	define R500_US_OUT_FMT_C_6_5_6      (10 << 0)
+#	define R500_US_OUT_FMT_C_11_11_10   (11 << 0)
+#	define R500_US_OUT_FMT_C_10_11_11   (12 << 0)
+#	define R500_US_OUT_FMT_C_2_10_10_10 (13 << 0)
+/* reserved */
+#	define R500_US_OUT_FMT_UNUSED       (15 << 0)
+#	define R500_US_OUT_FMT_C_16_FP      (16 << 0)
+#	define R500_US_OUT_FMT_C2_16_FP     (17 << 0)
+#	define R500_US_OUT_FMT_C4_16_FP     (18 << 0)
+#	define R500_US_OUT_FMT_C_32_FP      (19 << 0)
+#	define R500_US_OUT_FMT_C2_32_FP     (20 << 0)
+#	define R500_US_OUT_FMT_C4_32_FP     (20 << 0)
+
 /* ALU
  * The ALU instructions register blocks are enumerated according to the order
  * in which fglrx. I assume there is space for 64 instructions, since
@@ -1355,6 +1457,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Fog state and color */
 #define R300_RE_FOG_STATE                   0x4BC0
+#       define R300_FOG_DISABLE                  (0 << 0)
 #       define R300_FOG_ENABLE                   (1 << 0)
 #	define R300_FOG_MODE_LINEAR              (0 << 1)
 #	define R300_FOG_MODE_EXP                 (1 << 1)
@@ -1363,6 +1466,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_FOG_COLOR_R                    0x4BC8
 #define R300_FOG_COLOR_G                    0x4BCC
 #define R300_FOG_COLOR_B                    0x4BD0
+/* Constant Factor for Fog Blending */
+#define R300_FG_FOG_FACTOR                  0x4bc4
 
 #define R300_PP_ALPHA_TEST                  0x4BD4
 #       define R300_REF_ALPHA_MASK               0x000000ff
@@ -1377,6 +1482,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALPHA_TEST_OP_MASK           (7 << 8)
 #       define R300_ALPHA_TEST_ENABLE            (1 << 11)
 
+/* Where does the depth come from? */
+#define R300_FG_DEPTH_SRC                  0x4bd8
+#	define R300_FG_DEPTH_SRC_SCAN   (0 << 0)
+#	define R300_FG_DEPTH_SRC_SHADER (1 << 0)
+
+/* Alpha Compare Value */
+#define R300_FG_ALPHA_VALUE                0x4be0
+
 /* gap */
 
 /* Fragment program parameters in 7.16 floating point */
@@ -1389,6 +1502,29 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_PFS_PARAM_31_Y                 0x4DF4
 #define R300_PFS_PARAM_31_Z                 0x4DF8
 #define R300_PFS_PARAM_31_W                 0x4DFC
+
+/* Unpipelined. */
+#define R300_RB3D_CCTL                      0x4e00
+/* gap in AMD docs */
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES_1_BUFFER                (0 << 5)
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES_2_BUFFERS               (1 << 5)
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES_3_BUFFERS               (2 << 5)
+#	define R300_RB3D_CCTL_NUM_MULTIWRITES_4_BUFFERS               (3 << 5)
+#	define R300_RB3D_CCTL_CLRCMP_FLIPE_DISABLE                    (0 << 7)
+#	define R300_RB3D_CCTL_CLRCMP_FLIPE_ENABLE                     (1 << 7)
+/* gap in AMD docs */
+#	define R300_RB3D_CCTL_AA_COMPRESSION_DISABLE                  (0 << 9)
+#	define R300_RB3D_CCTL_AA_COMPRESSION_ENABLE                   (1 << 9)
+#	define R300_RB3D_CCTL_CMASK_DISABLE                           (0 << 10)
+#	define R300_RB3D_CCTL_CMASK_ENABLE                            (1 << 10)
+/* reserved */
+#	define R300_RB3D_CCTL_INDEPENDENT_COLOR_CHANNEL_MASK_DISABLE  (0 << 12)
+#	define R300_RB3D_CCTL_INDEPENDENT_COLOR_CHANNEL_MASK_ENABLE   (1 << 12)
+#	define R300_RB3D_CCTL_WRITE_COMPRESSION_ENABLE                (0 << 13)
+#	define R300_RB3D_CCTL_WRITE_COMPRESSION_DISABLE               (1 << 13)
+#	define R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_DISABLE  (0 << 14)
+#	define R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE   (1 << 14)
+
 
 /* Notes:
  * - AFAIK fglrx always sets BLEND_UNKNOWN when blending is used in
