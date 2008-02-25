@@ -536,16 +536,16 @@ void r300ReleaseArrays(GLcontext * ctx)
 
 void r300EmitCacheFlush(r300ContextPtr rmesa)
 {
-        int cmd_reserved = 0;
+	int cmd_reserved = 0;
 	int cmd_written = 0;
 
 	drm_radeon_cmd_header_t *cmd = NULL;
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS | RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
+	e32(RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS |
+	    RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D);
 
 	reg_start(ZB_ZCACHE_CTLSTAT, 0);
-	e32(ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
-
-
+	e32(ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE |
+	    ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE);
 }
