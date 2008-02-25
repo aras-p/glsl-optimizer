@@ -1621,6 +1621,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT        (2 << 2)
 /* reserved */
 
+/* Resolve Buffer Control. Unpipelined */
 #define R300_RB3D_AARESOLVE_CTL           0x4e88
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
@@ -1628,6 +1629,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
 #	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
+
+/* Discard src pixels less than or equal to threshold. */
+#define RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
+/* TODO: add shift and mask for this one */
+
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
@@ -1754,6 +1760,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_DEPTH_ENDIAN_NO_SWAP         (0 << 18) /* GUESS */
 #       define R300_DEPTH_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
 #       define R300_DEPTH_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
+
+/* Z Buffer Clear Value */
+#define ZB_DEPTHCLEARVALUE                  0x4f28
+
+/* Hierarchical Z Memory Offset */
+#define ZB_HIZ_OFFSET                       0x4f44
+
+/* Hierarchical Z Read Index */
+#define ZB_HIZ_RDINDEX                      0x4f48
+
+/* Hierarchical Z Write Index */
+#define ZB_HIZ_WRINDEX                      0x4f50
+
+/* Hierarchical Z Pitch */
+#define ZB_HIZ_PITCH                        0x4f54
 
 /* BEGIN: Vertex program instruction set */
 

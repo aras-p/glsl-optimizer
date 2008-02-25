@@ -423,7 +423,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(unk4E88, always, 2, 0);
 	r300->hw.unk4E88.cmd[0] = cmdpacket0(R300_RB3D_AARESOLVE_CTL, R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE);
 	ALLOC_STATE(unk4EA0, always, 3, 0);
-	r300->hw.unk4EA0.cmd[0] = cmdpacket0(0x4EA0, 2);
+	r300->hw.unk4EA0.cmd[0] = cmdpacket0(RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 2);
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
 	r300->hw.zs.cmd[R300_ZS_CMD_0] =
 	    cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
@@ -433,13 +433,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(zb, always, R300_ZB_CMDSIZE, 0);
 	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
 	ALLOC_STATE(unk4F28, always, 2, 0);
-	r300->hw.unk4F28.cmd[0] = cmdpacket0(0x4F28, 1);
+	r300->hw.unk4F28.cmd[0] = cmdpacket0(ZB_DEPTHCLEARVALUE, 1);
 	ALLOC_STATE(unk4F30, always, 3, 0);
 	r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
 	ALLOC_STATE(unk4F44, always, 2, 0);
-	r300->hw.unk4F44.cmd[0] = cmdpacket0(0x4F44, 1);
+	r300->hw.unk4F44.cmd[0] = cmdpacket0(ZB_HIZ_OFFSET, 1);
 	ALLOC_STATE(unk4F54, always, 2, 0);
-	r300->hw.unk4F54.cmd[0] = cmdpacket0(0x4F54, 1);
+	r300->hw.unk4F54.cmd[0] = cmdpacket0(ZB_HIZ_PITCH, 1);
 
 	/* VPU only on TCL */
 	if (has_tcl) {
