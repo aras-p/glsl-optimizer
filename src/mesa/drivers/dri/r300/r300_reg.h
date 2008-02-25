@@ -106,14 +106,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	/* number of vertices */
 #	define	R300_VAP_VF_CNTL__NUM_VERTICES__SHIFT           16
 
-/* BEGIN: Wild guesses */
 #define R300_VAP_OUTPUT_VTX_FMT_0           0x2090
 #       define R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT     (1<<0)
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT   (1<<1)
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT (1<<2)  /* GUESS */
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT (1<<3)  /* GUESS */
-#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT (1<<4)  /* GUESS */
-#       define R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT (1<<16) /* GUESS */
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT (1<<1)
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT (1<<2)
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT (1<<3)
+#       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT (1<<4)
+#       define R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT (1<<16)
 
 #define R300_VAP_OUTPUT_VTX_FMT_1           0x2094
 	/* each of the following is 3 bits wide, specifies number
@@ -126,7 +125,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_5_COMP_CNT_SHIFT 15
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_6_COMP_CNT_SHIFT 18
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT 21
-/* END: Wild guesses */
+#	define R300_VAP_OUTPUT_VTX_FMT_1__NOT_PRESENT  (1<<0)
+#	define R300_VAP_OUTPUT_VTX_FMT_1__1_COMPONENT  (1<<1)
+#	define R300_VAP_OUTPUT_VTX_FMT_1__2_COMPONENTS (1<<2)
+#	define R300_VAP_OUTPUT_VTX_FMT_1__3_COMPONENTS (1<<3)
+#	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS (1<<4)
 
 #define R300_SE_VTE_CNTL                  0x20b0
 #	define     R300_VPORT_X_SCALE_ENA                0x00000001

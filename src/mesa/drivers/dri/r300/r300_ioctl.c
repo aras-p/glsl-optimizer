@@ -235,7 +235,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	R300_STATECHANGE(r300, vof);
 	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
 	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
-	    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT);
+	    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT);
 	e32(0x0);		/* no textures */
 
 	R300_STATECHANGE(r300, txe);
