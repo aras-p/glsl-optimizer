@@ -67,7 +67,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern int future_hw_tcl_on;
 extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
-static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq );
 
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
@@ -312,6 +311,45 @@ static void r300BlendFuncSeparate(GLcontext * ctx,
 	r300SetBlendState(ctx);
 }
 
+static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLint p;
+	GLint *ip;
+
+	/* no VAP UCP on non-TCL chipsets */
+	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+			return;
+
+	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
+	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
+
+	R300_STATECHANGE( rmesa, vpucp[p] );
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Z] = ip[2];
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_W] = ip[3];
+}
+
+static void r300SetClipPlaneState(GLcontext * ctx, GLenum cap, GLboolean state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	GLuint p;
+
+	/* no VAP UCP on non-TCL chipsets */
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		return;
+
+	p = cap - GL_CLIP_PLANE0;
+	R300_STATECHANGE(r300, vap_clip_cntl);
+	if (state) {
+		r300->hw.vap_clip_cntl.cmd[1] |= (R300_VAP_UCP_ENABLE_0 << p);
+		r300ClipPlane(ctx, cap, NULL);
+	} else {
+		r300->hw.vap_clip_cntl.cmd[1] &= ~(R300_VAP_UCP_ENABLE_0 << p);
+	}
+}
+
 /**
  * Update our tracked culling state based on Mesa's state.
  */
@@ -349,6 +387,18 @@ static void r300UpdateCulling(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, cul);
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
+}
+
+static void r300SetPolygonOffsetState(GLcontext * ctx, GLboolean state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	R300_STATECHANGE(r300, occlusion_cntl);
+	if (state) {
+		r300->hw.occlusion_cntl.cmd[1] |= (3 << 0);
+	} else {
+		r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
+	}
 }
 
 static void r300SetEarlyZState(GLcontext * ctx)
@@ -496,6 +546,26 @@ static void r300SetDepthState(GLcontext * ctx)
 	}
 
 	r300SetEarlyZState(ctx);
+}
+
+static void r300SetStencilState(GLcontext * ctx, GLboolean state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	if (r300->state.stencil.hw_stencil) {
+		R300_STATECHANGE(r300, zs);
+		if (state) {
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
+			    R300_RB3D_STENCIL_ENABLE;
+		} else {
+			r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
+			    ~R300_RB3D_STENCIL_ENABLE;
+		}
+	} else {
+#if R200_MERGED
+		FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
+#endif
+	}
 }
 
 static void r300UpdatePolygonMode(GLcontext * ctx)
@@ -724,6 +794,24 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 		R300_STATECHANGE(r300, fogp);
 		r300->hw.fogp.cmd[R300_FOGP_SCALE] = fogScale.i;
 		r300->hw.fogp.cmd[R300_FOGP_START] = fogStart.i;
+	}
+}
+
+static void r300SetFogState(GLcontext * ctx, GLboolean state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	R300_STATECHANGE(r300, fogs);
+	if (state) {
+		r300->hw.fogs.cmd[FG_FOG_BLEND] |= FG_FOG_BLEND_ENABLE;
+
+		r300Fogfv(ctx, GL_FOG_MODE, NULL);
+		r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
+		r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
+		r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
+		r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
+	} else {
+		r300->hw.fogs.cmd[FG_FOG_BLEND] &= ~FG_FOG_BLEND_ENABLE;
 	}
 }
 
@@ -1663,107 +1751,52 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
  */
 static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	GLuint p;
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(cap),
 			state ? "GL_TRUE" : "GL_FALSE");
 
 	switch (cap) {
-		/* Fast track this one...
-		 */
 	case GL_TEXTURE_1D:
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_3D:
+		/* empty */
 		break;
-
 	case GL_FOG:
-		R300_STATECHANGE(r300, fogs);
-		if (state) {
-			r300->hw.fogs.cmd[FG_FOG_BLEND] |= FG_FOG_BLEND_ENABLE;
-
-			r300Fogfv(ctx, GL_FOG_MODE, NULL);
-			r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-			r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-			r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-			r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-		} else {
-			r300->hw.fogs.cmd[FG_FOG_BLEND] &= ~FG_FOG_BLEND_ENABLE;
-		}
-
+		r300SetFogState(ctx, state);
 		break;
-
 	case GL_ALPHA_TEST:
 		r300SetAlphaState(ctx);
 		break;
-
 	case GL_BLEND:
 	case GL_COLOR_LOGIC_OP:
 		r300SetBlendState(ctx);
 		break;
-
-		
 	case GL_CLIP_PLANE0:
 	case GL_CLIP_PLANE1:
 	case GL_CLIP_PLANE2:
 	case GL_CLIP_PLANE3:
 	case GL_CLIP_PLANE4:
 	case GL_CLIP_PLANE5:
-		/* no VAP UCP on non-TCL chipsets */
-		if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-			return;
-
-		p = cap-GL_CLIP_PLANE0;
-		R300_STATECHANGE( r300, vap_clip_cntl );
-		if (state) {
-			r300->hw.vap_clip_cntl.cmd[1] |= (R300_VAP_UCP_ENABLE_0<<p);
-			r300ClipPlane( ctx, cap, NULL );
-		}
-		else {
-			r300->hw.vap_clip_cntl.cmd[1] &= ~(R300_VAP_UCP_ENABLE_0<<p);
-		}
+		r300SetClipPlaneState(ctx, cap, state);
 		break;
 	case GL_DEPTH_TEST:
 		r300SetDepthState(ctx);
 		break;
-
 	case GL_STENCIL_TEST:
-		if (r300->state.stencil.hw_stencil) {
-			R300_STATECHANGE(r300, zs);
-			if (state) {
-				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-				    R300_RB3D_STENCIL_ENABLE;
-			} else {
-				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
-				    ~R300_RB3D_STENCIL_ENABLE;
-			}
-		} else {
-#if R200_MERGED
-			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
-#endif
-		}
+		r300SetStencilState(ctx, state);
 		break;
-
 	case GL_CULL_FACE:
 		r300UpdateCulling(ctx);
 		break;
-
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
 	case GL_POLYGON_OFFSET_FILL:
-		R300_STATECHANGE(r300, occlusion_cntl);
-		if (state) {
-			r300->hw.occlusion_cntl.cmd[1] |= (3 << 0);
-		} else {
-			r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
-		}
+		r300SetPolygonOffsetState(ctx, state);
 		break;
-
-
 	default:
 		radeonEnable(ctx, cap, state);
-		return;
+		break;
 	}
 }
 
@@ -2209,27 +2242,6 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 	(void)rmesa;
 	(void)mode;
 }
-
-static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLint p;
-	GLint *ip;
-
-	/* no VAP UCP on non-TCL chipsets */
-	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-			return;
-
-	p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
-	ip = (GLint *)ctx->Transform._ClipUserPlane[p];
-
-	R300_STATECHANGE( rmesa, vpucp[p] );
-	rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
-	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
-	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Z] = ip[2];
-	rmesa->hw.vpucp[p].cmd[R300_VPUCP_W] = ip[3];
-}
-
 
 void r300UpdateClipPlanes( GLcontext *ctx )
 {
