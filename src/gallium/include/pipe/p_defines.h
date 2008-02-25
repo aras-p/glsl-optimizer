@@ -30,6 +30,10 @@
 
 #include "p_format.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PIPE_BLENDFACTOR_ONE                 0x1
 #define PIPE_BLENDFACTOR_SRC_COLOR           0x2
 #define PIPE_BLENDFACTOR_SRC_ALPHA           0x3
@@ -266,5 +270,9 @@ enum pipe_texture_target {
 #define PIPE_CAP_MAX_TEXTURE_ANISOTROPY  18
 #define PIPE_CAP_MAX_TEXTURE_LOD_BIAS    19
 #define PIPE_CAP_BITMAP_TEXCOORD_BIAS    20
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

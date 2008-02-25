@@ -25,18 +25,23 @@
  * 
  **************************************************************************/
 
-#ifndef P_WINSYS_H
-#define P_WINSYS_H
-
-
-#include "p_format.h"
-
 /**
  * \file
  * This is the interface that Gallium3D requires any window system
  * hosting it to implement.  This is the only include file in Gallium3D
  * which is public.
  */
+
+#ifndef P_WINSYS_H
+#define P_WINSYS_H
+
+
+#include "p_format.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /** Opaque type */
@@ -156,5 +161,8 @@ struct pipe_winsys
 };
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* P_WINSYS_H */

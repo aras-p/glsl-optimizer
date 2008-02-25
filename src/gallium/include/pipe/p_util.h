@@ -34,12 +34,12 @@
 #include <math.h>
 
 
-#ifdef WIN32
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
+
+
+#ifdef WIN32
 
 void * __stdcall
 EngAllocMem(
@@ -50,10 +50,6 @@ EngAllocMem(
 void __stdcall
 EngFreeMem(
     void *Mem );
-
-#ifdef __cplusplus
-}
-#endif
 
 static INLINE void *
 MALLOC( unsigned size )
@@ -378,5 +374,9 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
                            unsigned height, const ubyte * src,
                            int src_pitch, unsigned src_x, int src_y);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

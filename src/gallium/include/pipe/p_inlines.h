@@ -33,6 +33,11 @@
 #include "p_winsys.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 static INLINE void *
 pipe_surface_map(struct pipe_surface *surface)
 {
@@ -108,5 +113,9 @@ pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
    *ptr = pt;
 }
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* P_INLINES_H */

@@ -30,6 +30,10 @@
 
 #include "p_compiler.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static INLINE intptr_t
 pointer_to_intptr( const void *p )
 {
@@ -83,5 +87,9 @@ align_pointer( const void *unaligned, uintptr_t alignment )
    uintptr_t aligned = (pointer_to_uintptr( unaligned ) + alignment - 1) & ~(alignment - 1);
    return uintptr_to_pointer( aligned );
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* P_POINTER_H */

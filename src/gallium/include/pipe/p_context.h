@@ -31,6 +31,11 @@
 #include "p_state.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+   
 struct pipe_state_cache;
 
 /* Opaque driver handles:
@@ -225,5 +230,10 @@ struct pipe_context {
    void (*flush)( struct pipe_context *pipe,
 		  unsigned flags );
 };
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PIPE_CONTEXT_H */
