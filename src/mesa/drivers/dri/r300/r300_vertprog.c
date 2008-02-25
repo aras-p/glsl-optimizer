@@ -174,11 +174,11 @@ static unsigned long t_dst_class(enum register_file file)
 
 	switch (file) {
 	case PROGRAM_TEMPORARY:
-		return VSF_OUT_CLASS_TMP;
+		return PVS_DST_REG_TEMPORARY;
 	case PROGRAM_OUTPUT:
-		return VSF_OUT_CLASS_RESULT;
+		return PVS_DST_REG_OUT;
 	case PROGRAM_ADDRESS:
-		return VSF_OUT_CLASS_ADDR;
+		return PVS_DST_REG_A0;
 		/*
 		   case PROGRAM_INPUT:
 		   case PROGRAM_LOCAL_PARAM:
@@ -580,7 +580,7 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 	inst[0] =
 	    MAKE_VSF_OP(R300_VPI_OUT_OP_FRC, *u_temp_i,
 			t_dst_mask(vpi->DstReg.WriteMask),
-			VSF_OUT_CLASS_TMP);
+			PVS_DST_REG_TEMPORARY);
 
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
@@ -994,7 +994,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 	inst[0] =
 	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, *u_temp_i,
 			t_dst_mask(vpi->DstReg.WriteMask),
-			VSF_OUT_CLASS_TMP);
+			PVS_DST_REG_TEMPORARY);
 
 	inst[1] = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// z
@@ -1149,7 +1149,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 				inst[0] =
 				    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD,
 						u_temp_i, VSF_FLAG_ALL,
-						VSF_OUT_CLASS_TMP);
+						PVS_DST_REG_TEMPORARY);
 
 				inst[1] =
 				    MAKE_VSF_SOURCE(t_src_index
@@ -1177,7 +1177,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 				inst[0] =
 				    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD,
 						u_temp_i, VSF_FLAG_ALL,
-						VSF_OUT_CLASS_TMP);
+						PVS_DST_REG_TEMPORARY);
 
 				inst[1] =
 				    MAKE_VSF_SOURCE(t_src_index
