@@ -1469,11 +1469,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define FG_FOG_BLEND_FN_CONSTANT          (3 << 1)
 #	define FG_FOG_BLEND_FN_MASK              0x00000006
 
-#define R300_FOG_COLOR_R                    0x4BC8
-#define R300_FOG_COLOR_G                    0x4BCC
-#define R300_FOG_COLOR_B                    0x4BD0
-/* Constant Factor for Fog Blending */
-#define R300_FG_FOG_FACTOR                  0x4bc4
+/* Fog: Red Component of Fog Color */
+#define FG_FOG_COLOR_R                           0x4bc8
+/* Fog: Green Component of Fog Color */
+#define FG_FOG_COLOR_G                           0x4bcc
+/* Fog: Blue Component of Fog Color */
+#define FG_FOG_COLOR_B                           0x4db0
+#	define FG_FOG_COLOR_MASK 0x000001ff
+
+/* Fog: Constant Factor for Fog Blending */
+#define FG_FOG_FACTOR                            0x4bc4
+#	define FG_FOG_FACTOR_MASK 0x000001ff
 
 /* Fog: Alpha function */
 #define FG_ALPHA_FUNC                            0x4bd4
