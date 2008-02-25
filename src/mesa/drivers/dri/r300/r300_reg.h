@@ -2499,51 +2499,6 @@ enum {
 
 /*\{*/
 
-/* Every instruction is four dwords long:
- *  DWORD 0: output and opcode
- *  DWORD 1: first argument
- *  DWORD 2: second argument
- *  DWORD 3: third argument
- *
- * Notes:
- *  - ABS r, a is implemented as MAX r, a, -a
- *  - MOV is implemented as ADD to zero
- *  - XPD is implemented as MUL + MAD
- *  - FLR is implemented as FRC + ADD
- *  - apparently, fglrx tries to schedule instructions so that there is at
- *    least one instruction between the write to a temporary and the first
- *    read from said temporary; however, violations of this scheduling are
- *    allowed
- *  - register indices seem to be unrelated with OpenGL aliasing to
- *    conventional state
- *  - only one attribute and one parameter can be loaded at a time; however,
- *    the same attribute/parameter can be used for more than one argument
- *  - the second software argument for POW is the third hardware argument
- *    (no idea why)
- *  - MAD with only temporaries as input seems to use VPI_OUT_SELECT_MAD_2
- *
- * There is some magic surrounding LIT:
- *   The single argument is replicated across all three inputs, but swizzled:
- *     First argument: xyzy
- *     Second argument: xyzx
- *     Third argument: xyzw
- *   Whenever the result is used later in the fragment program, fglrx forces
- *   x and w to be 1.0 in the input selection; I don't know whether this is
- *   strictly necessary
- */
-#define R300_VPI_OUT_OP_DOT                     (1 << 0)
-#define R300_VPI_OUT_OP_MUL                     (2 << 0)
-#define R300_VPI_OUT_OP_ADD                     (3 << 0)
-#define R300_VPI_OUT_OP_MAD                     (4 << 0)
-#define R300_VPI_OUT_OP_DST                     (5 << 0)
-#define R300_VPI_OUT_OP_FRC                     (6 << 0)
-#define R300_VPI_OUT_OP_MAX                     (7 << 0)
-#define R300_VPI_OUT_OP_MIN                     (8 << 0)
-#define R300_VPI_OUT_OP_SGE                     (9 << 0)
-#define R300_VPI_OUT_OP_SLT                     (10 << 0)
-	/* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, vector(scalar, vector) */
-#define R300_VPI_OUT_OP_UNK12                   (12 << 0)
-#define R300_VPI_OUT_OP_ARL                     (13 << 0)
 #define R300_VPI_OUT_OP_EXP                     (65 << 0)
 #define R300_VPI_OUT_OP_LOG                     (66 << 0)
 	/* Used in fog computations, scalar(scalar) */

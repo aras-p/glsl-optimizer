@@ -102,7 +102,7 @@
 #define VP_OUTMASK_ZW	(VP_OUTMASK_Z|VP_OUTMASK_W)
 
 #define VP_OUT(instr,outclass,outidx,outmask) \
-	(R300_VPI_OUT_OP_##instr |				\
+	(VE_##instr |				\
 	((outidx) << R300_VPI_OUT_REG_INDEX_SHIFT) |		\
 	VP_OUTCLASS_##outclass |				\
 	VP_OUTMASK_##outmask)
