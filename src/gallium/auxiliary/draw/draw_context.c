@@ -244,14 +244,32 @@ draw_convert_wide_lines(struct draw_context *draw, boolean enable)
 
 
 /**
- * The draw module may sometimes generate vertices with extra attributes
- * (such as texcoords for AA lines).  The driver can call this function
- * to find those attributes.
+ * Ask the draw module for the location/slot of the given vertex attribute in
+ * a post-transformed vertex.
+ *
+ * With this function, drivers that use the draw module should have no reason
+ * to track the current vertex shader.
+ *
+ * Note that the draw module may sometimes generate vertices with extra
+ * attributes (such as texcoords for AA lines).  The driver can call this
+ * function to find those attributes.
+ *
+ * Zero is returned if the attribute is not found since this is
+ * a don't care / undefined situtation.  Returning -1 would be a bit more
+ * work for the drivers.
  */
 int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index)
 {
+   const struct pipe_shader_state *vs = &draw->vertex_shader->state;
+   uint i;
+   for (i = 0; i < vs->num_outputs; i++) {
+      if (vs->output_semantic_name[i] == semantic_name &&
+          vs->output_semantic_index[i] == semantic_index)
+         return i;
+   }
+
    /* XXX there may be more than one extra vertex attrib.
     * For example, simulated gl_FragCoord and gl_PointCoord.
     */
