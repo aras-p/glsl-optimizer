@@ -1662,10 +1662,28 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.
  * Two parameter dwords:
- * 0. The first parameter appears to be always 0
- * 1. The second parameter is a standard primitive emission dword.
+ * 0. VAP_VTX_FMT: The first parameter is not written to hardware
+ * 1. VAP_VF_CTL: The second parameter is a standard primitive emission dword.
  */
 #define R300_PACKET3_3D_DRAW_VBUF           0x00002800
+
+/* Draw a primitive from immediate vertices in this packet
+ * Up to 16382 dwords:
+ * 0. VAP_VTX_FMT: The first parameter is not written to hardware
+ * 1. VAP_VF_CTL: The second parameter is a standard primitive emission dword.
+ * 2 to end: Up to 16380 dwords of vertex data.
+ */
+#define R300_PACKET3_3D_DRAW_IMMD           0x00002900
+
+/* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR and
+ * immediate vertices in this packet
+ * Up to 16382 dwords:
+ * 0. VAP_VTX_FMT: The first parameter is not written to hardware
+ * 1. VAP_VF_CTL: The second parameter is a standard primitive emission dword.
+ * 2 to end: Up to 16380 dwords of vertex data.
+ */
+#define R300_PACKET3_3D_DRAW_INDX           0x00002A00
+ 
 
 /* Specify the full set of vertex arrays as (address, stride).
  * The first parameter is the number of vertex arrays specified.
@@ -1687,8 +1705,28 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #    define R300_EB_UNK1_SHIFT                      24
 #    define R300_EB_UNK1                    (0x80<<24)
 #    define R300_EB_UNK2                        0x0810
+
+/* Same as R300_PACKET3_3D_DRAW_VBUF but without VAP_VTX_FMT */
 #define R300_PACKET3_3D_DRAW_VBUF_2         0x00003400
+/* Same as R300_PACKET3_3D_DRAW_IMMD but without VAP_VTX_FMT */
+#define R300_PACKET3_3D_DRAW_IMMD_2         0x00003500
+/* Same as R300_PACKET3_3D_DRAW_INDX but without VAP_VTX_FMT */
 #define R300_PACKET3_3D_DRAW_INDX_2         0x00003600
+
+/* Clears a portion of hierachical Z RAM 
+ * 3 dword parameters
+ * 0. START
+ * 1. COUNT: 13:0 (max is 0x3FFF)
+ * 2. CLEAR_VALUE: Value to write into HIZ RAM.
+ */
+#define R300_PACKET3_3D_CLEAR_HIZ           0x00003700
+
+/* Draws a set of primitives using vertex buffers pointed by the state data.
+ * At least 2 Parameters:
+ * 0. VAP_VF_CNTL: The first parameter is a standard primitive emission dword.
+ * 2 to end: Data or indices (see other 3D_DRAW_* packets for details)
+ */
+#define R300_PACKET3_3D_DRAW_128            0x00003900
 
 /* END: Packet 3 commands */
 
