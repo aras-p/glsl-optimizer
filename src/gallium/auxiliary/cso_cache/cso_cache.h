@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,9 +25,48 @@
  *
  **************************************************************************/
 
- /*
-  * Authors:
-  *   Zack Rusin <zack@tungstengraphics.com>
+ /**
+  * @file
+  * Constant State Object (CSO) cache.
+  * 
+  * The basic idea is that the states are created via the
+  * create_state/bind_state/delete_state semantics. The driver is expected to
+  * perform as much of the Gallium state translation to whatever its internal
+  * representation is during the create call. Gallium then has a caching
+  * mechanism where it stores the created states. When the pipeline needs an
+  * actual state change, a bind call is issued. In the bind call the driver
+  * gets its already translated representation.
+  * 
+  * Those semantics mean that the driver doesn't do the repeated translations
+  * of states on every frame, but only once, when a new state is actually
+  * created.
+  * 
+  * Even on hardware that doesn't do any kind of state cache, it makes the
+  * driver look a lot neater, plus it avoids all the redundant state
+  * translations on every frame.
+  * 
+  * Currently our constant state objects are:
+  * - alpha test
+  * - blend
+  * - depth stencil
+  * - fragment shader
+  * - rasterizer (old setup)
+  * - sampler
+  * - vertex shader
+  * 
+  * Things that are not constant state objects include:
+  * - blend_color
+  * - clip_state
+  * - clear_color_state
+  * - constant_buffer
+  * - feedback_state
+  * - framebuffer_state
+  * - polygon_stipple
+  * - scissor_state
+  * - texture_state
+  * - viewport_state
+  * 
+  * @author Zack Rusin <zack@tungstengraphics.com>
   */
 
 #ifndef CSO_CACHE_H
@@ -36,7 +75,9 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
-#include "cso_hash.h" /* for cso_hash_iter, as MSVC requires structures returned by value to be fully defined */
+/* cso_hash.h is necessary for cso_hash_iter, as MSVC requires structures 
+ * returned by value to be fully defined */
+#include "cso_hash.h" 
 
 
 #ifdef	__cplusplus
