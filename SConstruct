@@ -128,17 +128,6 @@ if platform == 'winddk':
 		env['WDM_INC_PATH'],
 		env['CRT_INC_PATH'],
 	])
-	
-	env.Append(CFLAGS = '/W3')
-	if debug:
-		env.Append(CPPDEFINES = [
-			('DBG', '1'),
-			('DEBUG', '1'),
-			('_DEBUG', '1'),
-		])
-		env.Append(CFLAGS = '/Od /Zi')
-		env.Append(CXXFLAGS = '/Od /Zi')
-			
 
 # Optimization flags
 if gcc:
@@ -156,10 +145,34 @@ if gcc:
 	env.Append(CFLAGS = '-fmessage-length=0')
 	env.Append(CXXFLAGS = '-fmessage-length=0')
 
+if msvc:
+	env.Append(CFLAGS = '/W3')
+	if debug:
+		cflags = [
+			'/Od', # disable optimizations
+			'/Oy-', # disable frame pointer omission
+			'/Zi', # enable enable debugging information
+		]
+	else:
+		cflags = [
+			'/Ox', # maximum optimizations
+			'/Os', # favor code space
+			'/Zi', # enable enable debugging information
+		]
+	env.Append(CFLAGS = cflags)
+	env.Append(CXXFLAGS = cflags)
+
 
 # Defines
 if debug:
-	env.Append(CPPDEFINES = ['DEBUG'])
+	if gcc:
+		env.Append(CPPDEFINES = ['DEBUG'])
+	if msvc:
+		env.Append(CPPDEFINES = [
+			('DBG', '1'),
+			('DEBUG', '1'),
+			('_DEBUG', '1'),
+		])
 else:
 	env.Append(CPPDEFINES = ['NDEBUG'])
 
