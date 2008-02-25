@@ -375,9 +375,13 @@ intel_miptree_image_map(struct intel_context * intel,
    if (row_stride)
       *row_stride = mt->pitch * mt->cpp;
 
-   if (image_offsets)
-      memcpy(image_offsets, mt->level[level].image_offset,
-             mt->level[level].depth * sizeof(GLuint));
+   if (image_offsets) {
+      if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
+		   memset(image_offsets, 0, mt->level[level].depth * sizeof(GLuint));
+	  else
+		   memcpy(image_offsets, mt->level[level].image_offset,
+			   mt->level[level].depth * sizeof(GLuint));
+   }
 
    return (intel_region_map(intel, mt->region) +
            intel_miptree_image_offset(mt, face, level));
