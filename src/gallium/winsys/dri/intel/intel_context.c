@@ -188,7 +188,8 @@ intelCreateContext(const __GLcontextModes * visual,
    /*
     * Pipe-related setup
     */
-   if (!getenv("INTEL_HW")) {
+   if (getenv("INTEL_SP")) {
+      /* use softpipe driver instead of hw */
       pipe = intel_create_softpipe( intel, intelScreen->winsys );
    }
    else {
