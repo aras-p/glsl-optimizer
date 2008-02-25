@@ -352,11 +352,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(ga_point_minmax, always, 4, 0);
 	r300->hw.ga_point_minmax.cmd[0] = cmdpacket0(R300_GA_POINT_MINMAX, 3);
 	ALLOC_STATE(lcntl, always, 2, 0);
-	r300->hw.lcntl.cmd[0] = cmdpacket0(R300_GA_LINE_CNTL, 1);
+	r300->hw.lcntl.cmd[0] = cmdpacket0(GA_LINE_CNTL, 1);
 	ALLOC_STATE(ga_line_stipple, always, 4, 0);
 	r300->hw.ga_line_stipple.cmd[0] = cmdpacket0(R300_GA_LINE_STIPPLE_VALUE, 3);
 	ALLOC_STATE(shade, always, 5, 0);
-	r300->hw.shade.cmd[0] = cmdpacket0(R300_GA_ENHANCE, 4);
+	r300->hw.shade.cmd[0] = cmdpacket0(GA_ENHANCE, 4);
 	ALLOC_STATE(polygon_mode, always, 4, 0);
 	r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_GA_POLY_MODE, 3);
 	ALLOC_STATE(fogp, always, 3, 0);

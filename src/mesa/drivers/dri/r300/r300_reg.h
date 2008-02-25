@@ -644,6 +644,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) /* GUESS */
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
+/* Blue fill color */
+#define GA_FILL_R                                0x4220
+
+/* Blue fill color */
+#define GA_FILL_G                                0x4224
+
+/* Blue fill color */
+#define GA_FILL_B                                0x4228
+
+/* Alpha fill color */
+#define GA_FILL_A                                0x422c
+
+
 /* Specifies maximum and minimum point & sprite sizes for per vertex size
  * specification. The lower part (15:0) is MIN and (31:16) is max.
  */
@@ -653,17 +666,29 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_GA_POINT_MINMAX_MAX_SHIFT          16
 #       define R300_GA_POINT_MINMAX_MAX_MASK           (0xFFFF << 16)
 
-/* The line width is given in multiples of 6.
+/* 1/2 width of line, in subpixels (1/12 or 1/16 only, even in 8b
+ * subprecision); (16.0) fixed format.
+ *
+ * The line width is given in multiples of 6.
  * In default mode lines are classified as vertical lines.
  * HO: horizontal
  * VE: vertical or horizontal
  * HO & VE: no classification
  */
-#define R300_GA_LINE_CNTL                     0x4234
-#       define R300_LINESIZE_SHIFT            0
-#       define R300_LINESIZE_MASK             (0xFFFF << 0) /* GUESS */
-#       define R300_LINESIZE_MAX             (R300_LINESIZE_MASK / 6)
+#define GA_LINE_CNTL                             0x4234
+#       define GA_LINE_CNTL_WIDTH_SHIFT       0
+#       define GA_LINE_CNTL_WIDTH_MASK        0x0000ffff
+#	define GA_LINE_CNTL_END_TYPE_HOR      (0 << 16)
+#	define GA_LINE_CNTL_END_TYPE_VER      (1 << 16)
+#	define GA_LINE_CNTL_END_TYPE_SQR      (2 << 16) /* horizontal or vertical depending upon slope */
+#	define GA_LINE_CNTL_END_TYPE_COMP     (3 << 16) /* Computed (perpendicular to slope) */
+#	define GA_LINE_CNTL_SORT_NO           (0 << 18)
+#	define GA_LINE_CNTL_SORT_MINX_MINY    (1 << 18)
+/** TODO: looks wrong */
+#       define R300_LINESIZE_MAX              (GA_LINE_CNTL_WIDTH_MASK / 6)
+/** TODO: looks wrong */
 #       define R300_LINE_CNT_HO               (1 << 16)
+/** TODO: looks wrong */
 #       define R300_LINE_CNT_VE               (1 << 17)
 
 /* Some sort of scale or clamp value for texcoordless textures. */
@@ -672,18 +697,120 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_GA_US_VECTOR_INDEX               0x4250
 #define R500_GA_US_VECTOR_DATA                0x4254
 
+/* Specifies color properties and mappings of textures. */
+#define GA_COLOR_CONTROL_PS3                     0x4258
+#	define TEX0_SHADING_PS3_SOLID       (0 << 0)
+#	define TEX0_SHADING_PS3_FLAT        (1 << 0)
+#	define TEX0_SHADING_PS3_GOURAUD     (2 << 0)
+#	define TEX1_SHADING_PS3_SOLID       (0 << 2)
+#	define TEX1_SHADING_PS3_FLAT        (1 << 2)
+#	define TEX1_SHADING_PS3_GOURAUD     (2 << 2)
+#	define TEX2_SHADING_PS3_SOLID       (0 << 4)
+#	define TEX2_SHADING_PS3_FLAT        (1 << 4)
+#	define TEX2_SHADING_PS3_GOURAUD     (2 << 4)
+#	define TEX3_SHADING_PS3_SOLID       (0 << 6)
+#	define TEX3_SHADING_PS3_FLAT        (1 << 6)
+#	define TEX3_SHADING_PS3_GOURAUD     (2 << 6)
+#	define TEX4_SHADING_PS3_SOLID       (0 << 8)
+#	define TEX4_SHADING_PS3_FLAT        (1 << 8)
+#	define TEX4_SHADING_PS3_GOURAUD     (2 << 8)
+#	define TEX5_SHADING_PS3_SOLID       (0 << 10)
+#	define TEX5_SHADING_PS3_FLAT        (1 << 10)
+#	define TEX5_SHADING_PS3_GOURAUD     (2 << 10)
+#	define TEX6_SHADING_PS3_SOLID       (0 << 12)
+#	define TEX6_SHADING_PS3_FLAT        (1 << 12)
+#	define TEX6_SHADING_PS3_GOURAUD     (2 << 12)
+#	define TEX7_SHADING_PS3_SOLID       (0 << 14)
+#	define TEX7_SHADING_PS3_FLAT        (1 << 14)
+#	define TEX7_SHADING_PS3_GOURAUD     (2 << 14)
+#	define TEX8_SHADING_PS3_SOLID       (0 << 16)
+#	define TEX8_SHADING_PS3_FLAT        (1 << 16)
+#	define TEX8_SHADING_PS3_GOURAUD     (2 << 16)
+#	define TEX9_SHADING_PS3_SOLID       (0 << 18)
+#	define TEX9_SHADING_PS3_FLAT        (1 << 18)
+#	define TEX9_SHADING_PS3_GOURAUD     (2 << 18)
+#	define TEX10_SHADING_PS3_SOLID      (0 << 20)
+#	define TEX10_SHADING_PS3_FLAT       (1 << 20)
+#	define TEX10_SHADING_PS3_GOURAUD    (2 << 20)
+#	define COLOR0_TEX_OVERRIDE_NO       (0 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_0    (1 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_1    (2 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_2    (3 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_3    (4 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_4    (5 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_5    (6 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_6    (7 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_7    (8 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_8_C2 (9 << 22)
+#	define COLOR0_TEX_OVERRIDE_TEX_9_C3 (10 << 22)
+#	define COLOR1_TEX_OVERRIDE_NO       (0 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_0    (1 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_1    (2 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_2    (3 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_3    (4 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_4    (5 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_5    (6 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_6    (7 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_7    (8 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_8_C2 (9 << 26)
+#	define COLOR1_TEX_OVERRIDE_TEX_9_C3 (10 << 26)
+
+/* Returns idle status of various G3D block, captured when GA_IDLE written or
+ * when hard or soft reset asserted.
+ */
+#define GA_IDLE                                  0x425c
+#	define GA_IDLE_PIPE3_Z_IDLE  (0 << 0)
+#	define GA_IDLE_PIPE2_Z_IDLE  (0 << 1)
+#	define GA_IDLE_PIPE3_CD_IDLE (0 << 2)
+#	define GA_IDLE_PIPE2_CD_IDLE (0 << 3)
+#	define GA_IDLE_PIPE3_FG_IDLE (0 << 4)
+#	define GA_IDLE_PIPE2_FG_IDLE (0 << 5)
+#	define GA_IDLE_PIPE3_US_IDLE (0 << 6)
+#	define GA_IDLE_PIPE2_US_IDLE (0 << 7)
+#	define GA_IDLE_PIPE3_SC_IDLE (0 << 8)
+#	define GA_IDLE_PIPE2_SC_IDLE (0 << 9)
+#	define GA_IDLE_PIPE3_RS_IDLE (0 << 10)
+#	define GA_IDLE_PIPE2_RS_IDLE (0 << 11)
+#	define GA_IDLE_PIPE1_Z_IDLE  (0 << 12)
+#	define GA_IDLE_PIPE0_Z_IDLE  (0 << 13)
+#	define GA_IDLE_PIPE1_CD_IDLE (0 << 14)
+#	define GA_IDLE_PIPE0_CD_IDLE (0 << 15)
+#	define GA_IDLE_PIPE1_FG_IDLE (0 << 16)
+#	define GA_IDLE_PIPE0_FG_IDLE (0 << 17)
+#	define GA_IDLE_PIPE1_US_IDLE (0 << 18)
+#	define GA_IDLE_PIPE0_US_IDLE (0 << 19)
+#	define GA_IDLE_PIPE1_SC_IDLE (0 << 20)
+#	define GA_IDLE_PIPE0_SC_IDLE (0 << 21)
+#	define GA_IDLE_PIPE1_RS_IDLE (0 << 22)
+#	define GA_IDLE_PIPE0_RS_IDLE (0 << 23)
+#	define GA_IDLE_SU_IDLE       (0 << 24)
+#	define GA_IDLE_GA_IDLE       (0 << 25)
+#	define GA_IDLE_GA_UNIT2_IDLE (0 << 26)
+
 /* Current value of stipple accumulator. */
 #define R300_GA_LINE_STIPPLE_VALUE            0x4260
 
+/* GA Input fifo high water marks */
+#define GA_FIFO_CNTL                             0x4270
+#	define GA_FIFO_CNTL_VERTEX_FIFO_MASK   0x00000007
+#	define GA_FIFO_CNTL_VERTEX_FIFO_SHIFT  0
+#	define GA_FIFO_CNTL_VERTEX_INDEX_MASK  0x00000038
+#	define GA_FIFO_CNTL_VERTEX_INDEX_SHIFT 3
+#	define GA_FIFO_CNTL_VERTEX_REG_MASK    0x00003fc0
+#	define GA_FIFO_CNTL_VERTEX_REG_SHIFT   6
+
 /* Something shade related */
-#define R300_GA_ENHANCE                         0x4274
+#define GA_ENHANCE                               0x4274
+#	define GA_ENHANCE_DEADLOCK_CNTL_NO_EFFECT   (0 << 0)
+#	define GA_ENHANCE_DEADLOCK_CNTL_PREVENT_TCL (1 << 0) /* Prevents TCL interface from deadlocking on GA side. */
+#	define GA_ENHANCE_FASTSYNC_CNTL_NO_EFFECT   (0 << 1)
+#	define GA_ENHANCE_FASTSYNC_CNTL_ENABLE      (1 << 1) /* Enables high-performance register/primitive switching. */
+#	define GA_ENHANCE_REG_READWRITE_NO_EFFECT   (0 << 2) /* R520+ only */
+#	define GA_ENHANCE_REG_READWRITE_ENABLE      (1 << 2) /* R520+ only, Enables GA support of simultaneous register reads and writes. */
+#	define GA_ENHANCE_REG_NOSTALL_NO_EFFECT     (0 << 3)
+#	define GA_ENHANCE_REG_NOSTALL_ENABLE        (1 << 3) /* Enables GA support of no-stall reads for register read back. */
 
 #define R300_GA_COLOR_CONTROL                   0x4278
-/** TODO: either remove or use new definitions to "emulate" */
-#	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
-/** TODO: either remove or use new definitions to "emulate" */
-#	define R300_RE_SHADE_MODEL_FLAT       0x39595
-
 #	define R300_GA_COLOR_CONTROL_RGB0_SHADING_SOLID      (0 << 0)
 #	define R300_GA_COLOR_CONTROL_RGB0_SHADING_FLAT       (1 << 0)
 #	define R300_GA_COLOR_CONTROL_RGB0_SHADING_GOURAUD    (2 << 0)
@@ -699,19 +826,35 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GA_COLOR_CONTROL_RGB2_SHADING_SOLID      (0 << 8)
 #	define R300_GA_COLOR_CONTROL_RGB2_SHADING_FLAT       (1 << 8)
 #	define R300_GA_COLOR_CONTROL_RGB2_SHADING_GOURAUD    (2 << 8)
-#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_SOLID    (0 << 10)
-#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_FLAT     (1 << 10)
-#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_GOURAUD  (2 << 10)
-#	define R300_GA_COLOR_CONTROL_RGB4_SHADING_SOLID      (0 << 12)
-#	define R300_GA_COLOR_CONTROL_RGB4_SHADING_FLAT       (1 << 12)
-#	define R300_GA_COLOR_CONTROL_RGB4_SHADING_GOURAUD    (2 << 12)
-#	define R300_GA_COLOR_CONTROL_ALPHA4_SHADING_SOLID    (0 << 14)
-#	define R300_GA_COLOR_CONTROL_ALPHA4_SHADING_FLAT     (1 << 14)
-#	define R300_GA_COLOR_CONTROL_ALPHA4_SHADING_GOURAUD  (2 << 14)
+#	define R300_GA_COLOR_CONTROL_ALPHA2_SHADING_SOLID    (0 << 10)
+#	define R300_GA_COLOR_CONTROL_ALPHA2_SHADING_FLAT     (1 << 10)
+#	define R300_GA_COLOR_CONTROL_ALPHA2_SHADING_GOURAUD  (2 << 10)
+#	define R300_GA_COLOR_CONTROL_RGB3_SHADING_SOLID      (0 << 12)
+#	define R300_GA_COLOR_CONTROL_RGB3_SHADING_FLAT       (1 << 12)
+#	define R300_GA_COLOR_CONTROL_RGB3_SHADING_GOURAUD    (2 << 12)
+#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_SOLID    (0 << 14)
+#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_FLAT     (1 << 14)
+#	define R300_GA_COLOR_CONTROL_ALPHA3_SHADING_GOURAUD  (2 << 14)
 #	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_FIRST  (0 << 16)
 #	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_SECOND (1 << 16)
 #	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_THIRD  (2 << 16)
 #	define R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST   (3 << 16)
+
+/** TODO: might be candidate for removal */
+#	define R300_RE_SHADE_MODEL_SMOOTH     ( \
+	R300_GA_COLOR_CONTROL_RGB0_SHADING_GOURAUD | R300_GA_COLOR_CONTROL_ALPHA0_SHADING_GOURAUD | \
+	R300_GA_COLOR_CONTROL_RGB1_SHADING_GOURAUD | R300_GA_COLOR_CONTROL_ALPHA1_SHADING_GOURAUD | \
+	R300_GA_COLOR_CONTROL_RGB2_SHADING_GOURAUD | R300_GA_COLOR_CONTROL_ALPHA2_SHADING_GOURAUD | \
+	R300_GA_COLOR_CONTROL_RGB3_SHADING_GOURAUD | R300_GA_COLOR_CONTROL_ALPHA3_SHADING_GOURAUD | \
+	R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST )
+/** TODO: might be candidate for removal, the GOURAUD stuff also looks buggy to me */
+#	define R300_RE_SHADE_MODEL_FLAT     ( \
+	R300_GA_COLOR_CONTROL_RGB0_SHADING_FLAT | R300_GA_COLOR_CONTROL_ALPHA0_SHADING_FLAT | \
+	R300_GA_COLOR_CONTROL_RGB1_SHADING_FLAT | R300_GA_COLOR_CONTROL_ALPHA1_SHADING_GOURAUD | \
+	R300_GA_COLOR_CONTROL_RGB2_SHADING_FLAT | R300_GA_COLOR_CONTROL_ALPHA2_SHADING_FLAT | \
+	R300_GA_COLOR_CONTROL_RGB3_SHADING_FLAT | R300_GA_COLOR_CONTROL_ALPHA3_SHADING_GOURAUD | \
+	R300_GA_COLOR_CONTROL_PROVOKING_VERTEX_LAST )
+
 
 #define R300_GA_SOLID_RG                   0x427c
 #define R300_GA_SOLID_BA                   0x4280
@@ -726,8 +869,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_PM_BACK_FILL              (1 << 8)
 
 #define R300_GA_ROUND_MODE                 0x428c
-/* Fog parameters */
+/* Specifies the scale to apply to fog. */
 #define R300_RE_FOG_SCALE                     0x4294
+/* Specifies the offset to apply to fog. */
 #define R300_RE_FOG_START                     0x4298
 
 /* Not sure why there are duplicate of factor and constant values.
