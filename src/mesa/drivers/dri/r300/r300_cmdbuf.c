@@ -419,9 +419,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
 	r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
 	ALLOC_STATE(unk4E50, always, 10, 0);
-	r300->hw.unk4E50.cmd[0] = cmdpacket0(0x4E50, 9);
+	r300->hw.unk4E50.cmd[0] = cmdpacket0(R300_RB3D_DITHER_CTL, R300_RB3D_DITHER_CTL_DITHER_MODE_ROUND | R300_RB3D_DITHER_CTL_ALPHA_DITHER_MODE_LUT);
 	ALLOC_STATE(unk4E88, always, 2, 0);
-	r300->hw.unk4E88.cmd[0] = cmdpacket0(0x4E88, 1);
+	r300->hw.unk4E88.cmd[0] = cmdpacket0(R300_RB3D_AARESOLVE_CTL, R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE);
 	ALLOC_STATE(unk4EA0, always, 3, 0);
 	r300->hw.unk4EA0.cmd[0] = cmdpacket0(0x4EA0, 2);
 	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
