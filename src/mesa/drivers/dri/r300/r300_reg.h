@@ -1581,30 +1581,60 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
+/* Color Compare Color. Stalls the 2d/3d datapath until it is idle. */
+#define RB3D_CLRCMP_CLR                     0x4e20
+
+/* Color Compare Mask. Stalls the 2d/3d datapath until it is idle. */
+#define RB3D_CLRCMP_MSK                     0x4e24
+
+/* Color Buffer Address Offset of multibuffer 0. Unpipelined. */
 #define R300_RB3D_COLOROFFSET0              0x4E28
 #       define R300_COLOROFFSET_MASK             0xFFFFFFF0 /* GUESS */
-#define R300_RB3D_COLOROFFSET1              0x4E2C /* GUESS */
-#define R300_RB3D_COLOROFFSET2              0x4E30 /* GUESS */
-#define R300_RB3D_COLOROFFSET3              0x4E34 /* GUESS */
+/* Color Buffer Address Offset of multibuffer 1. Unpipelined. */
+#define R300_RB3D_COLOROFFSET1              0x4E2C
+/* Color Buffer Address Offset of multibuffer 2. Unpipelined. */
+#define R300_RB3D_COLOROFFSET2              0x4E30
+/* Color Buffer Address Offset of multibuffer 3. Unpipelined. */
+#define R300_RB3D_COLOROFFSET3              0x4E34
 
-/* gap */
-
-/* Bit 16: Larger tiles
+/* Color buffer format and tiling control for all the multibuffers and the
+ * pitch of multibuffer 0 to 3. Unpipelined. The cache must be empty before any
+ * of the registers are changed.
+ *
+ * Bit 16: Larger tiles
  * Bit 17: 4x2 tiles
  * Bit 18: Extremely weird tile like, but some pixels duplicated?
  */
 #define R300_RB3D_COLORPITCH0               0x4E38
 #       define R300_COLORPITCH_MASK              0x00001FF8 /* GUESS */
-#       define R300_COLOR_TILE_ENABLE            (1 << 16) /* GUESS */
-#       define R300_COLOR_MICROTILE_ENABLE       (1 << 17) /* GUESS */
-#       define R300_COLOR_ENDIAN_NO_SWAP         (0 << 18) /* GUESS */
-#       define R300_COLOR_ENDIAN_WORD_SWAP       (1 << 18) /* GUESS */
-#       define R300_COLOR_ENDIAN_DWORD_SWAP      (2 << 18) /* GUESS */
-#       define R300_COLOR_FORMAT_RGB565          (2 << 22)
-#       define R300_COLOR_FORMAT_ARGB8888        (3 << 22)
-#define R300_RB3D_COLORPITCH1               0x4E3C /* GUESS */
-#define R300_RB3D_COLORPITCH2               0x4E40 /* GUESS */
-#define R300_RB3D_COLORPITCH3               0x4E44 /* GUESS */
+#       define R300_COLOR_TILE_DISABLE            (0 << 16)
+#       define R300_COLOR_TILE_ENABLE             (1 << 16)
+#       define R300_COLOR_MICROTILE_DISABLE       (0 << 17)
+#       define R300_COLOR_MICROTILE_ENABLE        (1 << 17)
+#       define R300_COLOR_MICROTILE_ENABLE_SQUARE (2 << 17) /* Only available in 16-bit */
+#       define R300_COLOR_ENDIAN_NO_SWAP          (0 << 19)
+#       define R300_COLOR_ENDIAN_WORD_SWAP        (1 << 19)
+#       define R300_COLOR_ENDIAN_DWORD_SWAP       (2 << 19)
+#       define R300_COLOR_ENDIAN_HALF_DWORD_SWAP  (3 << 19)
+#	define R300_COLOR_FORMAT_ARGB10101010     (0 << 21)
+#	define R300_COLOR_FORMAT_UV1010           (1 << 21)
+#	define R300_COLOR_FORMAT_CI8              (2 << 21) /* 2D only */
+#	define R300_COLOR_FORMAT_ARGB1555         (3 << 21)
+#       define R300_COLOR_FORMAT_RGB565           (4 << 21)
+#       define R300_COLOR_FORMAT_ARGB2101010      (5 << 21)
+#       define R300_COLOR_FORMAT_ARGB8888         (6 << 21)
+#       define R300_COLOR_FORMAT_ARGB32323232     (7 << 21)
+/* reserved */
+#       define R300_COLOR_FORMAT_I8               (9 << 21)
+#       define R300_COLOR_FORMAT_ARGB16161616     (10 << 21)
+#       define R300_COLOR_FORMAT_VYUY             (11 << 21)
+#       define R300_COLOR_FORMAT_YVYU             (12 << 21)
+#       define R300_COLOR_FORMAT_UV88             (13 << 21)
+#       define R300_COLOR_FORMAT_I10              (14 << 21)
+#       define R300_COLOR_FORMAT_ARGB4444         (15 << 21)
+#define R300_RB3D_COLORPITCH1               0x4E3C
+#define R300_RB3D_COLORPITCH2               0x4E40
+#define R300_RB3D_COLORPITCH3               0x4E44
 
 /* gap */
 
@@ -1651,8 +1681,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Discard src pixels less than or equal to threshold. */
 #define RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
-/* TODO: add shift and mask for this one */
+/* Discard src pixels greater than or equal to threshold. */
+#define RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD 0x4ea4
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_SHIFT 0
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_MASK 0x000000ff
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_SHIFT 8
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_MASK 0x0000ff00
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_SHIFT 16
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_MASK 0x00ff0000
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_SHIFT 24
+#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_MASK 0xff000000
 
+/* Color Compare Flip. Stalls the 2d/3d datapath until it is idle. */
+#define RB3D_CLRCMP_FLIPE                        0x4e1c
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
