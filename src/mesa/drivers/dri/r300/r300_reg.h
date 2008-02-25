@@ -2495,6 +2495,15 @@ enum {
 	PVS_DST_REG_INPUT		= 5,	/* Output Memory & Replicate X to all channels */
 };
 
+enum {
+	PVS_SRC_SELECT_X		= 0,	/* Select X Component */
+	PVS_SRC_SELECT_Y		= 1,	/* Select Y Component */
+	PVS_SRC_SELECT_Z		= 2,	/* Select Z Component */
+	PVS_SRC_SELECT_W		= 3,	/* Select W Component */
+	PVS_SRC_SELECT_FORCE_0		= 4,	/* Force Component to 0.0 */
+	PVS_SRC_SELECT_FORCE_1		= 5,	/* Force Component to 1.0 */
+};
+
 /*\}*/
 
 /*\{*/
@@ -2514,18 +2523,6 @@ enum {
 #define R300_VPI_IN_REG_INDEX_SHIFT             5
 	/* GUESS based on fglrx native limits */
 #define R300_VPI_IN_REG_INDEX_MASK              (255 << 5)
-
-/* The R300 can select components from the input register arbitrarily.
- * Use the following constants, shifted by the component shift you
- * want to select
- */
-#define R300_VPI_IN_SELECT_X    0
-#define R300_VPI_IN_SELECT_Y    1
-#define R300_VPI_IN_SELECT_Z    2
-#define R300_VPI_IN_SELECT_W    3
-#define R300_VPI_IN_SELECT_ZERO 4
-#define R300_VPI_IN_SELECT_ONE  5
-#define R300_VPI_IN_SELECT_MASK 7
 
 #define R300_VPI_IN_X_SHIFT                     13
 #define R300_VPI_IN_Y_SHIFT                     16
