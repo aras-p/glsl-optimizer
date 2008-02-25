@@ -30,8 +30,12 @@ nv40_vbo_type(uint format)
 	case PIPE_FORMAT_TYPE_UNORM:
 		return NV40TCL_VTXFMT_TYPE_UBYTE;
 	default:
-		NOUVEAU_ERR("Unknown format 0x%08x\n", format);
+	{
+		char fs[128];
+		pf_sprint_name(fs, format);
+		NOUVEAU_ERR("Unknown format %s\n", fs);
 		return NV40TCL_VTXFMT_TYPE_FLOAT;
+	}
 	}
 }
 

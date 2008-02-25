@@ -41,6 +41,7 @@ static struct nv40_texture_format *
 nv40_fragtex_format(uint pipe_format)
 {
 	struct nv40_texture_format *tf = nv40_texture_formats;
+	char fs[128];
 
 	while (tf->defined) {
 		if (tf->pipe == pipe_format)
@@ -48,6 +49,8 @@ nv40_fragtex_format(uint pipe_format)
 		tf++;
 	}
 
+	pf_sprint_name(fs, pipe_format);
+	NOUVEAU_ERR("unknown texture format %s\n", fs);
 	return NULL;
 }
 
