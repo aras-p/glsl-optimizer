@@ -1825,8 +1825,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 	    | R300_VPORT_Z_OFFSET_ENA | R300_VTX_W0_FMT;
 	r300->hw.vte.cmd[2] = 0x00000008;
 
-	r300->hw.unk2134.cmd[1] = 0x00FFFFFF;
-	r300->hw.unk2134.cmd[2] = 0x00000000;
+	r300->hw.vap_vf_max_vtx_indx.cmd[1] = 0x00FFFFFF;
+	r300->hw.vap_vf_max_vtx_indx.cmd[2] = 0x00000000;
 
 #ifdef MESA_LITTLE_ENDIAN
 	r300->hw.vap_cntl_status.cmd[1] = R300_VC_NO_SWAP;
@@ -1838,7 +1838,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	if (!has_tcl)
 		r300->hw.vap_cntl_status.cmd[1] |= R300_VAP_TCL_BYPASS;
 
-	r300->hw.unk21DC.cmd[1] = 0xAAAAAAAA;
+	r300->hw.vap_psc_sgn_norm_cntl.cmd[1] = 0xAAAAAAAA;
 
 	/* XXX: Other families? */
 	if (has_tcl) {
@@ -1851,10 +1851,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 		switch (r300->radeon.radeonScreen->chip_family) {
 		case CHIP_FAMILY_R300:
-			r300->hw.unk2288.cmd[1] = R300_2288_R300;
+			r300->hw.vap_pvs_vtx_timeout_reg.cmd[1] = R300_2288_R300;
 			break;
 		default:
-			r300->hw.unk2288.cmd[1] = R300_2288_RV350;
+			r300->hw.vap_pvs_vtx_timeout_reg.cmd[1] = R300_2288_RV350;
 			break;
 		}
 	}
@@ -1895,24 +1895,24 @@ static void r300ResetHwState(r300ContextPtr r300)
 	/* XXX: Enable anti-aliasing? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE;
 
-	r300->hw.unk4200.cmd[1] = r300PackFloat32(0.0);
-	r300->hw.unk4200.cmd[2] = r300PackFloat32(0.0);
-	r300->hw.unk4200.cmd[3] = r300PackFloat32(1.0);
-	r300->hw.unk4200.cmd[4] = r300PackFloat32(1.0);
+	r300->hw.ga_point_s0.cmd[1] = r300PackFloat32(0.0);
+	r300->hw.ga_point_s0.cmd[2] = r300PackFloat32(0.0);
+	r300->hw.ga_point_s0.cmd[3] = r300PackFloat32(1.0);
+	r300->hw.ga_point_s0.cmd[4] = r300PackFloat32(1.0);
 
-	r300->hw.unk4214.cmd[1] = 0x00050005;
+	r300->hw.ga_triangle_stipple.cmd[1] = 0x00050005;
 
 	r300PointSize(ctx, 1.0);
 
-	r300->hw.unk4230.cmd[1] = 0x18000006;
-	r300->hw.unk4230.cmd[2] = 0x00020006;
-	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
+	r300->hw.ga_point_minmax.cmd[1] = 0x18000006;
+	r300->hw.ga_point_minmax.cmd[2] = 0x00020006;
+	r300->hw.ga_point_minmax.cmd[3] = r300PackFloat32(1.0 / 192.0);
 
 	r300LineWidth(ctx, 1.0);
 
-	r300->hw.unk4260.cmd[1] = 0;
-	r300->hw.unk4260.cmd[2] = r300PackFloat32(0.0);
-	r300->hw.unk4260.cmd[3] = r300PackFloat32(1.0);
+	r300->hw.ga_line_stipple.cmd[1] = 0;
+	r300->hw.ga_line_stipple.cmd[2] = r300PackFloat32(0.0);
+	r300->hw.ga_line_stipple.cmd[3] = r300PackFloat32(1.0);
 
 	r300ShadeModel(ctx, ctx->Light.ShadeModel);
 
@@ -1926,19 +1926,19 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300Enable(ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
 	r300Enable(ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
 
-	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
-	r300->hw.unk42C0.cmd[2] = 0x00000000;
+	r300->hw.su_depth_scale.cmd[1] = 0x4B7FFFFF;
+	r300->hw.su_depth_scale.cmd[2] = 0x00000000;
 
-	r300->hw.unk43A4.cmd[1] = 0x0000001C;
-	r300->hw.unk43A4.cmd[2] = 0x2DA49525;
+	r300->hw.sc_hyperz.cmd[1] = 0x0000001C;
+	r300->hw.sc_hyperz.cmd[2] = 0x2DA49525;
 
-	r300->hw.unk43E8.cmd[1] = 0x00FFFFFF;
+	r300->hw.sc_screendoor.cmd[1] = 0x00FFFFFF;
 
-	r300->hw.unk46A4.cmd[1] = 0x00001B01;
-	r300->hw.unk46A4.cmd[2] = 0x00001B0F;
-	r300->hw.unk46A4.cmd[3] = 0x00001B0F;
-	r300->hw.unk46A4.cmd[4] = 0x00001B0F;
-	r300->hw.unk46A4.cmd[5] = 0x00000001;
+	r300->hw.us_out_fmt.cmd[1] = 0x00001B01;
+	r300->hw.us_out_fmt.cmd[2] = 0x00001B0F;
+	r300->hw.us_out_fmt.cmd[3] = 0x00001B0F;
+	r300->hw.us_out_fmt.cmd[4] = 0x00001B0F;
+	r300->hw.us_out_fmt.cmd[5] = 0x00000001;
 
 	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
 	r300Fogfv(ctx, GL_FOG_MODE, NULL);
@@ -1948,9 +1948,9 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
 	r300Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
 
-	r300->hw.unk4BD8.cmd[1] = 0;
+	r300->hw.fg_depth_src.cmd[1] = 0;
 
-	r300->hw.unk4E00.cmd[1] = 0;
+	r300->hw.rb3d_cctl.cmd[1] = 0;
 
 	r300BlendColor(ctx, ctx->Color.BlendColor);
 
@@ -1968,15 +1968,15 @@ static void r300ResetHwState(r300ContextPtr r300)
 	if (r300->radeon.sarea->tiling_enabled)
 		r300->hw.cb.cmd[R300_CB_PITCH] |= R300_COLOR_TILE_ENABLE;
 
-	r300->hw.unk4E50.cmd[1] = 0;
-	r300->hw.unk4E50.cmd[2] = 0;
-	r300->hw.unk4E50.cmd[3] = 0;
-	r300->hw.unk4E50.cmd[4] = 0;
-	r300->hw.unk4E50.cmd[5] = 0;
-	r300->hw.unk4E50.cmd[6] = 0;
-	r300->hw.unk4E50.cmd[7] = 0;
-	r300->hw.unk4E50.cmd[8] = 0;
-	r300->hw.unk4E50.cmd[9] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[1] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[2] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[3] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[4] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[5] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[6] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[7] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[8] = 0;
+	r300->hw.rb3d_dither_ctl.cmd[9] = 0;
 
 	r300->hw.unk4E88.cmd[1] = 0;
 

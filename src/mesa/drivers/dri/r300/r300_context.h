@@ -453,23 +453,23 @@ struct r300_hw_state {
 	struct r300_state_atom vap_cntl;
 	struct r300_state_atom vof;	/* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
-	struct r300_state_atom unk2134;	/* (2134) */
+	struct r300_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
 	struct r300_state_atom vap_cntl_status;
 	struct r300_state_atom vir[2];	/* vap input route (2150/21E0) */
 	struct r300_state_atom vic;	/* vap input control (2180) */
-	struct r300_state_atom unk21DC;	/* (21DC) */
+	struct r300_state_atom vap_psc_sgn_norm_cntl; /* Programmable Stream Control Signed Normalize Control (21DC) */
 	struct r300_state_atom vap_clip_cntl;
 	struct r300_state_atom vap_clip;
-	struct r300_state_atom unk2288;	/* (2288) */
+	struct r300_state_atom vap_pvs_vtx_timeout_reg;	/* Vertex timeout register (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
 	struct r300_state_atom gb_enable;	/* (4008) */
 	struct r300_state_atom gb_misc;	/* Multisampling position shifts ? (4010) */
-	struct r300_state_atom unk4200;	/* (4200) */
-	struct r300_state_atom unk4214;	/* (4214) */
+	struct r300_state_atom ga_point_s0;	/* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) (4200) */
+	struct r300_state_atom ga_triangle_stipple;	/* (4214) */
 	struct r300_state_atom ps;	/* pointsize (421C) */
-	struct r300_state_atom unk4230;	/* (4230) */
+	struct r300_state_atom ga_point_minmax;	/* (4230) */
 	struct r300_state_atom lcntl;	/* line control */
-	struct r300_state_atom unk4260;	/* (4260) */
+	struct r300_state_atom ga_line_stipple;	/* (4260) */
 	struct r300_state_atom shade;
 	struct r300_state_atom polygon_mode;
 	struct r300_state_atom fogp;	/* fog parameters (4294) */
@@ -478,27 +478,27 @@ struct r300_hw_state {
 	struct r300_state_atom zbs;	/* zbias (42A4) */
 	struct r300_state_atom occlusion_cntl;
 	struct r300_state_atom cul;	/* cull cntl (42B8) */
-	struct r300_state_atom unk42C0;	/* (42C0) */
+	struct r300_state_atom su_depth_scale;	/* (42C0) */
 	struct r300_state_atom rc;	/* rs control (4300) */
 	struct r300_state_atom ri;	/* rs interpolators (4310) */
 	struct r300_state_atom rr;	/* rs route (4330) */
-	struct r300_state_atom unk43A4;	/* (43A4) */
-	struct r300_state_atom unk43E8;	/* (43E8) */
+	struct r300_state_atom sc_hyperz;	/* (43A4) */
+	struct r300_state_atom sc_screendoor;	/* (43E8) */
 	struct r300_state_atom fp;	/* fragment program cntl + nodes (4600) */
 	struct r300_state_atom fpt;	/* texi - (4620) */
-	struct r300_state_atom unk46A4;	/* (46A4) */
+	struct r300_state_atom us_out_fmt;	/* (46A4) */
 	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
 	struct r300_state_atom fogs;	/* fog state (4BC0) */
 	struct r300_state_atom fogc;	/* fog color (4BC8) */
 	struct r300_state_atom at;	/* alpha test (4BD4) */
-	struct r300_state_atom unk4BD8;	/* (4BD8) */
+	struct r300_state_atom fg_depth_src;	/* (4BD8) */
 	struct r300_state_atom fpp;	/* 0x4C00 and following */
-	struct r300_state_atom unk4E00;	/* (4E00) */
+	struct r300_state_atom rb3d_cctl;	/* (4E00) */
 	struct r300_state_atom bld;	/* blending (4E04) */
 	struct r300_state_atom cmk;	/* colormask (4E0C) */
 	struct r300_state_atom blend_color;	/* constant blend color */
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
-	struct r300_state_atom unk4E50;	/* (4E50) */
+	struct r300_state_atom rb3d_dither_ctl;	/* (4E50) */
 	struct r300_state_atom unk4E88;	/* (4E88) */
 	struct r300_state_atom unk4EA0;	/* (4E88) I saw it only written on RV350 hardware..  */
 	struct r300_state_atom zs;	/* zstencil control (4F00) */

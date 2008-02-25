@@ -254,7 +254,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_INPUT_CNTL_TC6               0x00010000 /* GUESS */
 #       define R300_INPUT_CNTL_TC7               0x00020000 /* GUESS */
 
-
+/* Programmable Stream Control Signed Normalize Control */
 #define R300_VAP_PSC_SGN_NORM_CNTL         0x21dc
 #	define SGN_NORM_ZERO                 0
 #	define SGN_NORM_ZERO_CLAMP_MINUS_ONE 1
@@ -398,8 +398,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define R300_VAP_PVS_WAITIDLE               0x2284 /* GUESS */
 
-/* Absolutely no clue what this register is about. */
-#define R300_VAP_UNKNOWN_2288               0x2288
+/* This register is used to define the number of core clocks to wait for a
+ * vertex to be received by the VAP input controller (while the primitive
+ * path is backed up) before forcing any accumulated vertices to be submitted
+ * to the vertex processing path.
+ */
+#define VAP_PVS_VTX_TIMEOUT_REG             0x2288
 #       define R300_2288_R300                    0x00750000 /* -- nh */
 #       define R300_2288_RV350                   0x0000FFFF /* -- Vladimir */
 
