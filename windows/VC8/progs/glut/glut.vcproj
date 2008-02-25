@@ -257,7 +257,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glut\glx\glut_fbc.c"
+				RelativePath="..\..\..\..\src\glut\glx\glut_fcb.c"
 				>
 			</File>
 			<File

@@ -146,7 +146,7 @@ SOURCE=..\..\..\..\src\glut\glx\glut_ext.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\glut\glx\glut_fbc.c
+SOURCE=..\..\..\..\src\glut\glx\glut_fcb.c
 # End Source File
 # Begin Source File
 

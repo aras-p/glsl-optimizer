@@ -176,7 +176,7 @@ if exist ..\..\..\..\progs\demos copy Release\GLUT32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glut\glx\glut_ext.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glut\glx\glut_fbc.c">
+				RelativePath="..\..\..\..\src\glut\glx\glut_fcb.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glut\glx\glut_fullscrn.c">
