@@ -2402,7 +2402,86 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_SHIFT 16
 #	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_MASK  0xffff0000
 
-/* BEGIN: Vertex program instruction set */
+/**
+ * \defgroup R3XX_R5XX_PROGRAMMABLE_VERTEX_SHADER_DESCRIPTION R3XX-R5XX PROGRAMMABLE VERTEX SHADER DESCRIPTION
+ *
+ * The PVS_DST_MATH_INST is used to identify whether the instruction is a Vector
+ * Engine instruction or a Math Engine instruction.
+ */
+
+/*\{*/
+
+enum {
+	/* R3XX */
+	VECTOR_NO_OP			= 0,
+	VE_DOT_PRODUCT			= 1,
+	VE_MULTIPLY			= 2,
+	VE_ADD				= 3,
+	VE_MULTIPLY_ADD			= 4,
+	VE_DISTANCE_VECTOR		= 5,
+	VE_FRACTION			= 6,
+	VE_MAXIMUM			= 7,
+	VE_MINIMUM			= 8,
+	VE_SET_GREATER_THAN_EQUAL	= 9,
+	VE_SET_LESS_THAN		= 10,
+	VE_MULTIPLYX2_ADD		= 11,
+	VE_MULTIPLY_CLAMP		= 12,
+	VE_FLT2FIX_DX			= 13,
+	VE_FLT2FIX_DX_RND		= 14,
+	/* R5XX */
+	VE_PRED_SET_EQ_PUSH		= 15,
+	VE_PRED_SET_GT_PUSH		= 16,
+	VE_PRED_SET_GTE_PUSH		= 17,
+	VE_PRED_SET_NEQ_PUSH		= 18,
+	VE_COND_WRITE_EQ		= 19,
+	VE_COND_WRITE_GT		= 20,
+	VE_COND_WRITE_GTE		= 21,
+	VE_COND_WRITE_NEQ		= 22,
+	VE_COND_MUX_EQ			= 23,
+	VE_COND_MUX_GT			= 24,
+	VE_COND_MUX_GTE			= 25,
+	VE_SET_GREATER_THAN		= 26,
+	VE_SET_EQUAL			= 27,
+	VE_SET_NOT_EQUAL		= 28,
+};
+
+enum {
+	/* R3XX */
+	MATH_NO_OP			= 0,
+	ME_EXP_BASE2_DX			= 1,
+	ME_LOG_BASE2_DX			= 2,
+	ME_EXP_BASEE_FF			= 3,
+	ME_LIGHT_COEFF_DX		= 4,
+	ME_POWER_FUNC_FF		= 5,
+	ME_RECIP_DX			= 6,
+	ME_RECIP_FF			= 7,
+	ME_RECIP_SQRT_DX		= 8,
+	ME_RECIP_SQRT_FF		= 9,
+	ME_MULTIPLY			= 10,
+	ME_EXP_BASE2_FULL_DX		= 11,
+	ME_LOG_BASE2_FULL_DX		= 12,
+	ME_POWER_FUNC_FF_CLAMP_B	= 13,
+	ME_POWER_FUNC_FF_CLAMP_B1	= 14,
+	ME_POWER_FUNC_FF_CLAMP_01	= 15,
+	ME_SIN				= 16,
+	ME_COS				= 17,
+	/* R5XX */
+	ME_LOG_BASE2_IEEE		= 18,
+	ME_RECIP_IEEE			= 19,
+	ME_RECIP_SQRT_IEEE		= 20,
+	ME_PRED_SET_EQ			= 21,
+	ME_PRED_SET_GT			= 22,
+	ME_PRED_SET_GTE			= 23,
+	ME_PRED_SET_NEQ			= 24,
+	ME_PRED_SET_CLR			= 25,
+	ME_PRED_SET_INV			= 26,
+	ME_PRED_SET_POP			= 27,
+	ME_PRED_SET_RESTORE		= 28,
+};
+
+/*\}*/
+
+/*\{*/
 
 /* Every instruction is four dwords long:
  *  DWORD 0: output and opcode
@@ -2510,7 +2589,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VPI_IN_NEG_Y                       (1 << 26)
 #define R300_VPI_IN_NEG_Z                       (1 << 27)
 #define R300_VPI_IN_NEG_W                       (1 << 28)
-/* END: Vertex program instruction set */
+
+/*\}*/
 
 /* BEGIN: Packet 3 commands */
 
@@ -2632,3 +2712,5 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif /* _R300_REG_H */
 
 /* *INDENT-ON* */
+
+/* vim: set foldenable foldmarker=\\{,\\} foldmethod=marker : */
