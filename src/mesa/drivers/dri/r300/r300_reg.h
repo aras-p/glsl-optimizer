@@ -148,6 +148,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
+/* Maximum Vertex Indx Clamp */
+#define R300_VAP_VF_MAX_VTX_INDX         0x2134
+/* Minimum Vertex Indx Clamp */
+#define R300_VAP_VF_MIN_VTX_INDX         0x2138
+
 /** Vertex assembler/processor control status */
 #define R300_VAP_CNTL_STATUS              0x2140
 /* No swap at all (default) */
@@ -248,6 +253,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_INPUT_CNTL_TC5               0x00008000 /* GUESS */
 #       define R300_INPUT_CNTL_TC6               0x00010000 /* GUESS */
 #       define R300_INPUT_CNTL_TC7               0x00020000 /* GUESS */
+
+
+#define R300_VAP_PSC_SGN_NORM_CNTL         0x21dc
+#	define SGN_NORM_ZERO                 0
+#	define SGN_NORM_ZERO_CLAMP_MINUS_ONE 1
+#	define SGN_NORM_NO_ZERO              2
 
 /* gap */
 

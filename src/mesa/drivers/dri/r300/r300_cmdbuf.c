@@ -304,7 +304,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(vte, always, 3, 0);
 	r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE(unk2134, always, 3, 0);
-	r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
+	r300->hw.unk2134.cmd[0] = cmdpacket0(R300_VAP_VF_MAX_VTX_INDX, 2);
 	ALLOC_STATE(vap_cntl_status, always, 2, 0);
 	r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
 	ALLOC_STATE(vir[0], variable, R300_VIR_CMDSIZE, 0);
@@ -316,7 +316,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(vic, always, R300_VIC_CMDSIZE, 0);
 	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
 	ALLOC_STATE(unk21DC, always, 2, 0);
-	r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
+	r300->hw.unk21DC.cmd[0] = cmdpacket0(R300_VAP_PSC_SGN_NORM_CNTL, SGN_NORM_ZERO_CLAMP_MINUS_ONE);
 
 	if (has_tcl) {
 		ALLOC_STATE(vap_clip_cntl, always, 2, 0);

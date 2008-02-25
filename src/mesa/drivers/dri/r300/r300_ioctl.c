@@ -229,7 +229,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	    R300_VPORT_Z_OFFSET_ENA);
 	e32(0x8);
 
-	reg_start(0x21dc, 0);
+	reg_start(R300_VAP_PSC_SGN_NORM_CNTL, SGN_NORM_ZERO);
 	e32(0xaaaaaaaa);
 
 	R300_STATECHANGE(r300, vof);
