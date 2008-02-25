@@ -263,6 +263,7 @@ struct i915_context
 #define I915_NEW_TEXTURE       0x800
 #define I915_NEW_CONSTANTS     0x1000
 #define I915_NEW_VBO           0x2000
+#define I915_NEW_VS            0x4000
 
 
 /* Driver's internally generated state flags:

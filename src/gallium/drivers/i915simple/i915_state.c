@@ -474,6 +474,8 @@ static void i915_bind_vs_state(struct pipe_context *pipe, void *shader)
 
    /* just pass-through to draw module */
    draw_bind_vertex_shader(i915->draw, (struct draw_vertex_shader *) shader);
+
+   i915->dirty |= I915_NEW_VS;
 }
 
 static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
