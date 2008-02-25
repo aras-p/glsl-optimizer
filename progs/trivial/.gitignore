@@ -27,6 +27,7 @@ linestrip
 linestrip-flat-stipple
 linestrip-stipple
 linestrip-stipple-wide
+pgon-mode
 point
 point-clip
 point-param
