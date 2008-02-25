@@ -633,15 +633,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_GA_POINT_S1                    0x4208
 
 #define R300_GA_TRIANGLE_STIPPLE            0x4214
-/* The pointsize is given in multiples of 6. The pointsize can be
- * enormous: Clear() renders a single point that fills the entire
- * framebuffer.
+
+/* The pointsize is given in multiples of 6. The pointsize can be enormous:
+ * Clear() renders a single point that fills the entire framebuffer.
+ * 1/2 Height of point; fixed (16.0), subpixel format (1/12 or 1/16, even if in
+ * 8b precision).
  */
 #define R300_GA_POINT_SIZE                   0x421C
-#       define R300_POINTSIZE_Y_SHIFT            0
-#       define R300_POINTSIZE_Y_MASK             (0xFFFF << 0) /* GUESS */
-#       define R300_POINTSIZE_X_SHIFT            16
-#       define R300_POINTSIZE_X_MASK             (0xFFFF << 16) /* GUESS */
+#       define R300_POINTSIZE_Y_SHIFT         0
+#       define R300_POINTSIZE_Y_MASK          0x0000ffff
+#       define R300_POINTSIZE_X_SHIFT         16
+#       define R300_POINTSIZE_X_MASK          0xffff0000
 #       define R300_POINTSIZE_MAX             (R300_POINTSIZE_Y_MASK / 6)
 
 /* Blue fill color */
@@ -691,8 +693,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /** TODO: looks wrong */
 #       define R300_LINE_CNT_VE               (1 << 17)
 
-/* Some sort of scale or clamp value for texcoordless textures. */
-#define R300_GA_LINE_STIPPLE_CONFIG           0x4238
+/* Line Stipple configuration information. */
+#define GA_LINE_STIPPLE_CONFIG                   0x4238
+#	define GA_LINE_STIPPLE_CONFIG_LINE_RESET_NO     (0 << 0)
+#	define GA_LINE_STIPPLE_CONFIG_LINE_RESET_LINE   (1 << 0)
+#	define GA_LINE_STIPPLE_CONFIG_LINE_RESET_PACKET (2 << 0)
+#	define GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_SHIFT 2
+#	define GA_LINE_STIPPLE_CONFIG_STIPPLE_SCALE_MASK  0xfffffffc
 
 #define R500_GA_US_VECTOR_INDEX               0x4250
 #define R500_GA_US_VECTOR_DATA                0x4254
@@ -790,6 +797,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Current value of stipple accumulator. */
 #define R300_GA_LINE_STIPPLE_VALUE            0x4260
 
+/* S Texture Coordinate Value for Vertex 0 of Line (stuff textures -- i.e. AA) */
+#define GA_LINE_S0                               0x4264
+/* S Texture Coordinate Value for Vertex 1 of Lines (V2 of parallelogram -- stuff textures -- i.e. AA) */
+#define GA_LINE_S1                               0x4268
+
 /* GA Input fifo high water marks */
 #define GA_FIFO_CNTL                             0x4270
 #	define GA_FIFO_CNTL_VERTEX_FIFO_MASK   0x00000007
@@ -869,6 +881,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_PM_BACK_FILL              (1 << 8)
 
 #define R300_GA_ROUND_MODE                 0x428c
+
+/* Specifies x & y offsets for vertex data after conversion to FP.
+ * Offsets are in S15 format (subpixels -- 1/12 or 1/16, even in 8b
+ * subprecision).
+ */
+#define GA_OFFSET                                0x4290
+#	define GA_OFFSET_X_OFFSET_SHIFT 0
+#	define GA_OFFSET_X_OFFSET_MASK  0x0000ffff
+#	define GA_OFFSET_Y_OFFSET_SHIFT 16
+#	define GA_OFFSET_Y_OFFSET_MASK  0xffff0000
+
 /* Specifies the scale to apply to fog. */
 #define R300_RE_FOG_SCALE                     0x4294
 /* Specifies the offset to apply to fog. */
