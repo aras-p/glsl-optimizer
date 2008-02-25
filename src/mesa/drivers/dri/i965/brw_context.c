@@ -154,6 +154,9 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
       return GL_FALSE;
    }
 
+   /* Initialize swrast, tnl driver tables: */
+   intelInitSpanFuncs(ctx);
+
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
    ctx->Const.MaxTextureUnits = BRW_MAX_TEX_UNIT;
