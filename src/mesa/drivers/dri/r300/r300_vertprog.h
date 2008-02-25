@@ -86,10 +86,6 @@
  * Vertex program helper macros
  */
 
-/* Produce out dword */
-#define VP_OUTCLASS_TMP		R300_VPI_OUT_REG_CLASS_TEMPORARY
-#define VP_OUTCLASS_OUT		R300_VPI_OUT_REG_CLASS_RESULT
-
 #define VP_OUTMASK_X	R300_VPI_OUT_WRITE_X
 #define VP_OUTMASK_Y	R300_VPI_OUT_WRITE_Y
 #define VP_OUTMASK_Z	R300_VPI_OUT_WRITE_Z
@@ -109,17 +105,12 @@
 #define VP_OUT(instr,outclass,outidx,outmask) \
 	(VE_##instr |				\
 	((outidx) << R300_VPI_OUT_REG_INDEX_SHIFT) |		\
-	VP_OUTCLASS_##outclass |				\
+	(PVS_DST_REG_##outclass << 8) |		\
 	VP_OUTMASK_##outmask)
-
-/* Produce in dword */
-#define VP_INCLASS_TMP		R300_VPI_IN_REG_CLASS_TEMPORARY
-#define VP_INCLASS_IN		R300_VPI_IN_REG_CLASS_ATTRIBUTE
-#define VP_INCLASS_CONST	R300_VPI_IN_REG_CLASS_PARAMETER
 
 #define VP_IN(class,idx) \
 	(((idx) << R300_VPI_IN_REG_INDEX_SHIFT) |		\
-	VP_INCLASS_##class |					\
+	(PVS_SRC_REG_##class << 0) |			\
 	(R300_VPI_IN_SELECT_X << R300_VPI_IN_X_SHIFT) |		\
 	(R300_VPI_IN_SELECT_Y << R300_VPI_IN_Y_SHIFT) |		\
 	(R300_VPI_IN_SELECT_Z << R300_VPI_IN_Z_SHIFT) |		\

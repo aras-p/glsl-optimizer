@@ -2502,11 +2502,6 @@ enum {
 /* FIXME */
 #define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
 
-#define R300_VPI_OUT_REG_CLASS_TEMPORARY        (0 << 8)
-#define R300_VPI_OUT_REG_CLASS_ADDR             (1 << 8)
-#define R300_VPI_OUT_REG_CLASS_RESULT           (2 << 8)
-#define R300_VPI_OUT_REG_CLASS_MASK             (31 << 8)
-
 #define R300_VPI_OUT_REG_INDEX_SHIFT            13
 	/* GUESS based on fglrx native limits */
 #define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13)
@@ -2515,12 +2510,6 @@ enum {
 #define R300_VPI_OUT_WRITE_Y                    (1 << 21)
 #define R300_VPI_OUT_WRITE_Z                    (1 << 22)
 #define R300_VPI_OUT_WRITE_W                    (1 << 23)
-
-#define R300_VPI_IN_REG_CLASS_TEMPORARY         (0 << 0)
-#define R300_VPI_IN_REG_CLASS_ATTRIBUTE         (1 << 0)
-#define R300_VPI_IN_REG_CLASS_PARAMETER         (2 << 0)
-#define R300_VPI_IN_REG_CLASS_NONE              (9 << 0)
-#define R300_VPI_IN_REG_CLASS_MASK              (31 << 0)
 
 #define R300_VPI_IN_REG_INDEX_SHIFT             5
 	/* GUESS based on fglrx native limits */

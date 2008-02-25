@@ -327,12 +327,12 @@ static void r300EmitClearState(GLcontext * ctx)
 		R300_STATECHANGE(r300, vpi);
 		vsf_start_fragment(0x0, 8);
 		e32(VP_OUT(ADD, OUT, 0, XYZW));
-		e32(VP_IN(IN, 0));
+		e32(VP_IN(INPUT, 0));
 		e32(VP_ZERO());
 		e32(0x0);
 
 		e32(VP_OUT(ADD, OUT, 1, XYZW));
-		e32(VP_IN(IN, 1));
+		e32(VP_IN(INPUT, 1));
 		e32(VP_ZERO());
 		e32(0x0);
 	}
