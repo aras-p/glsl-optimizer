@@ -206,12 +206,6 @@ struct __DriverAPIRec {
 			  int x, int y, int w, int h);
 
     /**
-     * See corresponding field in \c __DRIscreenRec.
-     */
-    void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
-			 unsigned long long offset, GLint depth, GLuint pitch);
-
-    /**
      * New version of GetMSC so we can pass drawable data to the low level
      * DRM driver (e.g. pipe info).
      */
