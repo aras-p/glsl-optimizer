@@ -1537,6 +1537,48 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RB3D_ZCACHE_UNKNOWN_01  0x1
 #       define R300_RB3D_ZCACHE_UNKNOWN_03  0x3
 
+#define R300_ZB_BW_CNTL                     0x4f1c
+#	define R300_HIZ_DISABLE                              (0 << 0)
+#	define R300_HIZ_ENABLE                               (1 << 0)
+#	define R300_HIZ_MIN                                  (0 << 1)
+#	define R300_HIZ_MAX                                  (1 << 1)
+#	define R300_FAST_FILL_DISABLE                        (0 << 2)
+#	define R300_FAST_FILL_ENABLE                         (1 << 2)
+#	define R300_RD_COMP_DISABLE                          (0 << 3)
+#	define R300_RD_COMP_ENABLE                           (1 << 3)
+#	define R300_WR_COMP_DISABLE                          (0 << 4)
+#	define R300_WR_COMP_ENABLE                           (1 << 4)
+#	define R300_ZB_CB_CLEAR_RMW                          (0 << 5)
+#	define R300_ZB_CB_CLEAR_CACHE_LINEAR                 (1 << 5)
+#	define R300_FORCE_COMPRESSED_STENCIL_VALUE_DISABLE   (0 << 6)
+#	define R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE    (1 << 6)
+#	define R300_ZEQUAL_OPTIMIZE_ENABLE                   (0 << 7)
+#	define R300_ZEQUAL_OPTIMIZE_DISABLE                  (1 << 7)
+#	define R300_SEQUAL_OPTIMIZE_ENABLE                   (0 << 8)
+#	define R300_SEQUAL_OPTIMIZE_DISABLE                  (1 << 8)
+/* gap in AMD docs */
+#	define R300_BMASK_ENABLE                             (0 << 10)
+#	define R300_BMASK_DISABLE                            (1 << 10)
+#	define R300_HIZ_EQUAL_REJECT_DISABLE                 (0 << 11)
+#	define R300_HIZ_EQUAL_REJECT_ENABLE                  (1 << 11)
+#	define R300_HIZ_FP_EXP_BITS_DISABLE                  (0 << 12)
+#	define R300_HIZ_FP_EXP_BITS_1                        (1 << 12)
+#	define R300_HIZ_FP_EXP_BITS_2                        (2 << 12)
+#	define R300_HIZ_FP_EXP_BITS_3                        (3 << 12)
+#	define R300_HIZ_FP_EXP_BITS_4                        (4 << 12)
+#	define R300_HIZ_FP_EXP_BITS_5                        (5 << 12)
+#	define R300_HIZ_FP_INVERT_LEADING_ONES               (0 << 15)
+#	define R300_HIZ_FP_INVERT_LEADING_ZEROS              (1 << 15)
+#	define R300_TILE_OVERWRITE_RECOMPRESSION_ENABLE      (0 << 16)
+#	define R300_TILE_OVERWRITE_RECOMPRESSION_DISABLE     (1 << 16)
+#	define R300_CONTIGUOUS_6XAA_SAMPLES_ENABLE           (0 << 17)
+#	define R300_CONTIGUOUS_6XAA_SAMPLES_DISABLE          (1 << 17)
+#	define R300_PEQ_PACKING_DISABLE                      (0 << 18)
+#	define R300_PEQ_PACKING_ENABLE                       (1 << 18)
+#	define R300_COVERED_PTR_MASKING_DISABLE              (0 << 18)
+#	define R300_COVERED_PTR_MASKING_ENABLE               (1 << 18)
+
+
 /* gap */
 
 #define R300_RB3D_DEPTHOFFSET               0x4F20
