@@ -1573,11 +1573,27 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_SRC_BLEND_SHIFT                  (16)
 #       define R300_DST_BLEND_SHIFT                  (24)
 #define R300_RB3D_BLEND_COLOR               0x4E10
-#define R300_RB3D_COLORMASK                 0x4E0C
-#       define R300_COLORMASK0_B                 (1<<0)
-#       define R300_COLORMASK0_G                 (1<<1)
-#       define R300_COLORMASK0_R                 (1<<2)
-#       define R300_COLORMASK0_A                 (1<<3)
+/* 3D Color Channel Mask. If all the channels used in the current color format
+ * are disabled, then the cb will discard all the incoming quads. Pipelined
+ * through the blender.
+ */
+#define RB3D_COLOR_CHANNEL_MASK                  0x4E0C
+#	define RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0  (1 << 0)
+#	define RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0 (1 << 1)
+#	define RB3D_COLOR_CHANNEL_MASK_RED_MASK0   (1 << 2)
+#	define RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0 (1 << 3)
+#	define RB3D_COLOR_CHANNEL_MASK_BLUE_MASK1  (1 << 4)
+#	define RB3D_COLOR_CHANNEL_MASK_GREEN_MASK1 (1 << 5)
+#	define RB3D_COLOR_CHANNEL_MASK_RED_MASK1   (1 << 6)
+#	define RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK1 (1 << 7)
+#	define RB3D_COLOR_CHANNEL_MASK_BLUE_MASK2  (1 << 8)
+#	define RB3D_COLOR_CHANNEL_MASK_GREEN_MASK2 (1 << 9)
+#	define RB3D_COLOR_CHANNEL_MASK_RED_MASK2   (1 << 10)
+#	define RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK2 (1 << 11)
+#	define RB3D_COLOR_CHANNEL_MASK_BLUE_MASK3  (1 << 12)
+#	define RB3D_COLOR_CHANNEL_MASK_GREEN_MASK3 (1 << 13)
+#	define RB3D_COLOR_CHANNEL_MASK_RED_MASK3   (1 << 14)
+#	define RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK3 (1 << 15)
 
 /* gap */
 
@@ -1606,7 +1622,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Bit 18: Extremely weird tile like, but some pixels duplicated?
  */
 #define R300_RB3D_COLORPITCH0               0x4E38
-#       define R300_COLORPITCH_MASK              0x00001FF8 /* GUESS */
+#       define R300_COLORPITCH_MASK              0x00001FF8 /* GUESS, should be 13:1 */
 #       define R300_COLOR_TILE_DISABLE            (0 << 16)
 #       define R300_COLOR_TILE_ENABLE             (1 << 16)
 #       define R300_COLOR_MICROTILE_DISABLE       (0 << 17)

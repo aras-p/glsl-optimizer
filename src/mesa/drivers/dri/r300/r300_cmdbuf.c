@@ -412,7 +412,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(bld, always, R300_BLD_CMDSIZE, 0);
 	r300->hw.bld.cmd[R300_BLD_CMD_0] = cmdpacket0(R300_RB3D_CBLEND, 2);
 	ALLOC_STATE(cmk, always, R300_CMK_CMDSIZE, 0);
-	r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(R300_RB3D_COLORMASK, 1);
+	r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(RB3D_COLOR_CHANNEL_MASK, 1);
 	ALLOC_STATE(blend_color, always, 4, 0);
 	r300->hw.blend_color.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 3);
 	ALLOC_STATE(cb, always, R300_CB_CMDSIZE, 0);

@@ -106,13 +106,13 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	e32(cbpitch);
 
 	R300_STATECHANGE(r300, cmk);
-	reg_start(R300_RB3D_COLORMASK, 0);
+	reg_start(RB3D_COLOR_CHANNEL_MASK, 0);
 
 	if (flags & CLEARBUFFER_COLOR) {
-		e32((ctx->Color.ColorMask[BCOMP] ? R300_COLORMASK0_B : 0) |
-		    (ctx->Color.ColorMask[GCOMP] ? R300_COLORMASK0_G : 0) |
-		    (ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
-		    (ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0));
+		e32((ctx->Color.ColorMask[BCOMP] ? RB3D_COLOR_CHANNEL_MASK_BLUE_MASK0 : 0) |
+		    (ctx->Color.ColorMask[GCOMP] ? RB3D_COLOR_CHANNEL_MASK_GREEN_MASK0 : 0) |
+		    (ctx->Color.ColorMask[RCOMP] ? RB3D_COLOR_CHANNEL_MASK_RED_MASK0 : 0) |
+		    (ctx->Color.ColorMask[ACOMP] ? RB3D_COLOR_CHANNEL_MASK_ALPHA_MASK0 : 0));
 	} else {
 		e32(0x0);
 	}
