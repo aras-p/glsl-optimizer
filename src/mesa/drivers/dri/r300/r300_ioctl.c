@@ -51,7 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_cmdbuf.h"
 #include "r300_state.h"
-#include "r300_program.h"
+#include "r300_vertprog.h"
 #include "radeon_reg.h"
 #include "r300_emit.h"
 
