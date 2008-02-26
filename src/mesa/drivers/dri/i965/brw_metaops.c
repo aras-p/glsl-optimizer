@@ -369,6 +369,11 @@ static void meta_draw_region( struct intel_context *intel,
    brw->state.draw_region = draw_region;
    brw->state.depth_region = depth_region;
 
+   if (intel->frame_buffer_texobj != NULL)
+      brw_FrameBufferTexDestroy(brw);
+
+   brw_FrameBufferTexInit(brw, draw_region);
+
    brw->state.dirty.mesa |= _NEW_BUFFERS;
 }
 

@@ -194,8 +194,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    brw_ProgramCacheInit( ctx );
 
-   brw_FrameBufferTexInit( brw );
-
    return GL_TRUE;
 }
 

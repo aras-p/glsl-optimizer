@@ -49,11 +49,11 @@
 #include "brw_defines.h"
 
 
-void brw_FrameBufferTexInit( struct brw_context *brw )
+void brw_FrameBufferTexInit( struct brw_context *brw,
+			     struct intel_region *region )
 {
    struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &intel->ctx;
-   struct intel_region *region = intel->front_region;
    struct gl_texture_object *obj;
    struct gl_texture_image *img;
    
@@ -74,8 +74,9 @@ void brw_FrameBufferTexInit( struct brw_context *brw )
 
 void brw_FrameBufferTexDestroy( struct brw_context *brw )
 {
-   brw->intel.ctx.Driver.DeleteTexture( &brw->intel.ctx,
-					brw->intel.frame_buffer_texobj );
+   if (brw->intel.frame_buffer_texobj != NULL)
+      brw->intel.ctx.Driver.DeleteTexture( &brw->intel.ctx,
+					   brw->intel.frame_buffer_texobj );
 }
 
 /**
