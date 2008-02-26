@@ -190,9 +190,96 @@ struct cso_cache *cso_cache_create(void)
    return sc;
 }
 
+void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
+                        void (*func)(void *state, void *user_data), void *user_data)
+{
+   struct cso_hash *hash = 0;
+   struct cso_hash_iter iter;
+
+   switch (type) {
+   case CSO_BLEND:
+      hash = sc->blend_hash;
+      break;
+   case CSO_SAMPLER:
+      hash = sc->sampler_hash;
+      break;
+   case CSO_DEPTH_STENCIL_ALPHA:
+      hash = sc->depth_stencil_hash;
+      break;
+   case CSO_RASTERIZER:
+      hash = sc->rasterizer_hash;
+      break;
+   case CSO_FRAGMENT_SHADER:
+      hash = sc->fs_hash;
+      break;
+   case CSO_VERTEX_SHADER:
+      hash = sc->vs_hash;
+      break;
+   }
+
+   iter = cso_hash_first_node(hash);
+   while (!cso_hash_iter_is_null(iter)) {
+      void *state = cso_hash_iter_data(iter);
+      if (state) {
+         func(state, user_data);
+      }
+      iter = cso_hash_iter_next(iter);
+   }
+}
+
+static void delete_blend_state(void *state, void *user_data)
+{
+   struct cso_blend *cso = (struct cso_blend *)state;
+   if (cso->delete_state && cso->data != &cso->state)
+      cso->delete_state(cso->context, cso->data);
+}
+
+static void delete_depth_stencil_state(void *state, void *pipe)
+{
+   struct cso_depth_stencil_alpha *cso = (struct cso_depth_stencil_alpha *)state;
+   if (cso->delete_state && cso->data != &cso->state)
+      cso->delete_state(cso->context, cso->data);
+}
+
+static void delete_sampler_state(void *state, void *pipe)
+{
+   struct cso_sampler *cso = (struct cso_sampler *)state;
+   if (cso->delete_state && cso->data != &cso->state)
+      cso->delete_state(cso->context, cso->data);
+}
+
+static void delete_rasterizer_state(void *state, void *pipe)
+{
+   struct cso_rasterizer *cso = (struct cso_rasterizer *)state;
+   if (cso->delete_state && cso->data != &cso->state)
+      cso->delete_state(cso->context, cso->data);
+}
+
+static void delete_fs_state(void *state, void *pipe)
+{
+   struct cso_fragment_shader *cso = (struct cso_fragment_shader *)state;
+   if (cso->delete_state && cso->data != &cso->state)
+      cso->delete_state(cso->context, cso->data);
+}
+
+static void delete_vs_state(void *state, void *pipe)
+{
+   struct cso_vertex_shader *cso = (struct cso_vertex_shader *)state;
+   if (cso->delete_state && cso->data != &cso->state)
+      cso->delete_state(cso->context, cso->data);
+}
+
 void cso_cache_delete(struct cso_cache *sc)
 {
    assert(sc);
+   /* delete driver data */
+   cso_for_each_state(sc, CSO_BLEND, delete_blend_state, 0);
+   cso_for_each_state(sc, CSO_DEPTH_STENCIL_ALPHA, delete_depth_stencil_state, 0);
+   cso_for_each_state(sc, CSO_FRAGMENT_SHADER, delete_fs_state, 0);
+   cso_for_each_state(sc, CSO_VERTEX_SHADER, delete_vs_state, 0);
+   cso_for_each_state(sc, CSO_RASTERIZER, delete_rasterizer_state, 0);
+   cso_for_each_state(sc, CSO_SAMPLER, delete_sampler_state, 0);
+
    cso_hash_delete(sc->blend_hash);
    cso_hash_delete(sc->sampler_hash);
    cso_hash_delete(sc->depth_stencil_hash);
@@ -201,3 +288,4 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_hash_delete(sc->vs_hash);
    FREE(sc);
 }
+

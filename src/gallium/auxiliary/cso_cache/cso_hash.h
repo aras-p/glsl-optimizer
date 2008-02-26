@@ -38,7 +38,6 @@
 extern "C" {
 #endif
 
-   
 struct cso_hash;
 struct cso_node;
 

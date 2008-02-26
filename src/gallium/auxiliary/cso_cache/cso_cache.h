@@ -97,31 +97,43 @@ struct cso_cache {
 struct cso_blend {
    struct pipe_blend_state state;
    void   *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_depth_stencil_alpha {
    struct pipe_depth_stencil_alpha_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_rasterizer {
    struct pipe_rasterizer_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_fragment_shader {
    struct pipe_shader_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_vertex_shader {
    struct pipe_shader_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_sampler {
    struct pipe_sampler_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 
@@ -147,6 +159,8 @@ struct cso_hash_iter cso_find_state(struct cso_cache *sc,
 struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
                                              unsigned hash_key, enum cso_cache_type type,
                                              void *templ);
+void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
+                        void (*func)(void *state, void *user_data), void *user_data);
 void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
                       enum cso_cache_type type);
 
