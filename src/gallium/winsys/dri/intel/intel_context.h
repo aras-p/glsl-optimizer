@@ -30,6 +30,9 @@
 
 
 #include "drm.h"
+
+#include "pipe/p_debug.h"
+
 #include "intel_screen.h"
 #include "i915_drm.h"
 
