@@ -180,6 +180,7 @@ int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
 			       int pitch)
 {
+   GLcontext *ctx = &intel->ctx;
    if (!mt->compressed) {
       int pitch_align;
 
@@ -201,7 +202,8 @@ int intel_miptree_pitch_align (struct intel_context *intel,
        * of 1024 and sometimes 512 bytes - performance can drop by several
        * times. Go to the next multiple of the required alignment for now.
        */
-      if (!(pitch & 511))
+      if (!(pitch & 511) && 
+	 (pitch + pitch_align) < (1 << ctx->Const.MaxTextureLevels))
 	 pitch += pitch_align;
 #endif
 
