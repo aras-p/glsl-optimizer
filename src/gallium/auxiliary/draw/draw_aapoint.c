@@ -509,7 +509,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
                          (struct tgsi_token *) aapoint_fs.tokens,
                          MAX, &transform.base);
 
-#if 1 /* DEBUG */
+#if 0 /* DEBUG */
    tgsi_dump(orig_fs->tokens, 0);
    tgsi_dump(aapoint_fs.tokens, 0);
 #endif
