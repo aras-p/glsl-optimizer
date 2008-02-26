@@ -220,7 +220,6 @@ uint i915_emit_texld( struct i915_fp_compile *p,
       uint tempReg;
 
       temp = i915_get_temp(p);           /* get temp reg index */
-      printf("***** ALLOC TEMP %d\n", temp);
       tempReg = UREG(REG_TYPE_R, temp);  /* make i915 register */
 
       i915_emit_arith( p, A0_MOV,
