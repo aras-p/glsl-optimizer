@@ -155,6 +155,7 @@ intel_exec_ioctl(struct intel_context *intel,
 {
    struct drm_i915_execbuffer execbuf;
    dri_fence *fo;
+   int ret;
 
    assert(intel->locked);
    assert(used);
@@ -179,13 +180,27 @@ intel_exec_ioctl(struct intel_context *intel,
    execbuf.ops_list = (unsigned long)start; // TODO
    execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
 
-   if (drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
-                       sizeof(execbuf))) {
+   do {
+      ret = drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
+				sizeof(execbuf));
+   } while (ret == -EAGAIN);
+
+   if (ret != 0) {
       fprintf(stderr, "DRM_I915_EXECBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
 
+   if (execbuf.fence_arg.error != 0) {
+
+      /*
+       * Fence creation has failed, but the GPU has been
+       * idled by the kernel. Safe to continue.
+       */ 
+
+      *fence = NULL;
+      return;
+   }
 
    fo = intel_ttm_fence_create_from_arg(intel->bufmgr, "fence buffers",
 					&execbuf.fence_arg);
