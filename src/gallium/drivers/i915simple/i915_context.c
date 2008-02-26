@@ -298,10 +298,8 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915_init_string_functions(i915);
    i915_init_texture_functions(i915);
 
-   /* not working yet:
-   draw_install_aapoint_stage(i915->draw, &i915->pipe);
-   */
    draw_install_aaline_stage(i915->draw, &i915->pipe);
+   draw_install_aapoint_stage(i915->draw, &i915->pipe);
 
    i915->pci_id = pci_id;
    i915->flags.is_i945 = is_i945;
