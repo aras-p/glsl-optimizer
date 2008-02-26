@@ -162,8 +162,8 @@ src_vector(struct i915_fp_compile *p,
        * We also use a texture coordinate to pass wpos when possible.
        */
 
-      sem_name = p->input_semantic_name[index];
-      sem_ind = p->input_semantic_index[index];
+      sem_name = p->shader->info.input_semantic_name[index];
+      sem_ind = p->shader->info.input_semantic_index[index];
 
       switch (sem_name) {
       case TGSI_SEMANTIC_POSITION:
@@ -265,7 +265,7 @@ get_result_vector(struct i915_fp_compile *p,
    switch (dest->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
       {
-         uint sem_name = p->output_semantic_name[dest->DstRegister.Index];
+         uint sem_name = p->shader->info.output_semantic_name[dest->DstRegister.Index];
          switch (sem_name) {
          case TGSI_SEMANTIC_POSITION:
             return UREG(REG_TYPE_OD, 0);
@@ -942,28 +942,6 @@ i915_translate_instructions(struct i915_fp_compile *p,
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          if (parse.FullToken.FullDeclaration.Declaration.File
-             == TGSI_FILE_INPUT) {
-            /* save input register info for use in src_vector() */
-            uint ind, sem, semi;
-            ind = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
-            sem = parse.FullToken.FullDeclaration.Semantic.SemanticName;
-            semi = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
-            /*debug_printf("FS Input DECL [%u] sem %u\n", ind, sem);*/
-            p->input_semantic_name[ind] = sem;
-            p->input_semantic_index[ind] = semi;
-         }
-         else if (parse.FullToken.FullDeclaration.Declaration.File
-             == TGSI_FILE_OUTPUT) {
-            /* save output register info for use in get_result_vector() */
-            uint ind, sem, semi;
-            ind = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
-            sem = parse.FullToken.FullDeclaration.Semantic.SemanticName;
-            semi = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
-            /*debug_printf("FS Output DECL [%u] sem %u\n", ind, sem);*/
-            p->output_semantic_name[ind] = sem;
-            p->output_semantic_index[ind] = semi;
-         }
-         else if (parse.FullToken.FullDeclaration.Declaration.File
                   == TGSI_FILE_CONSTANT) {
             uint i;
             for (i = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
@@ -981,6 +959,7 @@ i915_translate_instructions(struct i915_fp_compile *p,
                  i <= parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
                  i++) {
                assert(i < I915_MAX_TEMPORARY);
+               /* XXX just use shader->info->file_mask[TGSI_FILE_TEMPORARY] */
                p->temp_flag |= (1 << i); /* mark temp as used */
             }
          }
@@ -1163,7 +1142,7 @@ i915_find_wpos_space(struct i915_fp_compile *p)
       i915_program_error(p, "No free texcoord for wpos value");
    }
 #else
-   if (p->shader->state.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+   if (p->shader->info.input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       /* frag shader using the fragment position input */
 #if 0
       assert(0);
@@ -1184,7 +1163,7 @@ static void
 i915_fixup_depth_write(struct i915_fp_compile *p)
 {
    /* XXX assuming pos/depth is always in output[0] */
-   if (p->shader->state.output_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+   if (p->shader->info.output_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       const uint depth = UREG(REG_TYPE_OD, 0);
 
       i915_emit_arith(p,

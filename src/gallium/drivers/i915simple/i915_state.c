@@ -429,6 +429,8 @@ i915_create_fs_state(struct pipe_context *pipe,
 
    ifs->state = *templ;
 
+   tgsi_scan_shader(templ->tokens, &ifs->info);
+
    /* The shader's compiled to i915 instructions here */
    i915_translate_fragment_program(i915, ifs);
 

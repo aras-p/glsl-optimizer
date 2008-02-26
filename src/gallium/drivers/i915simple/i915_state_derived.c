@@ -43,7 +43,7 @@
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-   const struct pipe_shader_state *fs = &i915->fs->state;
+   const struct i915_fragment_shader *fs = i915->fs;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
    boolean texCoords[8], colors[2], fog, needW;
@@ -57,18 +57,18 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    /* Determine which fragment program inputs are needed.  Setup HW vertex
     * layout below, in the HW-specific attribute order.
     */
-   for (i = 0; i < fs->num_inputs; i++) {
-      switch (fs->input_semantic_name[i]) {
+   for (i = 0; i < fs->info.num_inputs; i++) {
+      switch (fs->info.input_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          break;
       case TGSI_SEMANTIC_COLOR:
-         assert(fs->input_semantic_index[i] < 2);
-         colors[fs->input_semantic_index[i]] = TRUE;
+         assert(fs->info.input_semantic_index[i] < 2);
+         colors[fs->info.input_semantic_index[i]] = TRUE;
          break;
       case TGSI_SEMANTIC_GENERIC:
          /* usually a texcoord */
          {
-            const uint unit = fs->input_semantic_index[i];
+            const uint unit = fs->info.input_semantic_index[i];
             assert(unit < 8);
             texCoords[unit] = TRUE;
             needW = TRUE;
