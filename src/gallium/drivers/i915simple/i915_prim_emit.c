@@ -72,6 +72,8 @@ emit_hw_vertex( struct i915_context *i915,
    uint i;
    uint count = 0;  /* for debug/sanity */
 
+   assert(!i915->dirty);
+
    for (i = 0; i < vinfo->num_attribs; i++) {
       switch (vinfo->emit[i]) {
       case EMIT_OMIT:
@@ -122,16 +124,18 @@ emit_prim( struct draw_stage *stage,
 	   unsigned nr )
 {
    struct i915_context *i915 = setup_stage(stage)->i915;
-   unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
+   unsigned vertex_size;
    unsigned i;
-
-   assert(vertex_size >= 12); /* never smaller than 12 bytes */
 
    if (i915->dirty)
       i915_update_derived( i915 );
 
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
+
+   /* need to do this after validation! */
+   vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
+   assert(vertex_size >= 12); /* never smaller than 12 bytes */
 
    if (!BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 )) {
       FLUSH_BATCH();
