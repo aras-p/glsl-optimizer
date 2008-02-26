@@ -146,6 +146,13 @@ if gcc:
 	env.Append(CXXFLAGS = '-fmessage-length=0')
 
 if msvc:
+	# Force msvc 7.1 (visual studio 2003) for windows builds.
+	# Eventually a way to override this would be nice.
+	# See also http://www.scons.org/wiki/MsvsMultipleVersions
+	env["MSVS"] = {"VERSION": "7.1"}
+	env["MSVS_VERSION"] = "7.1"
+	Tool("msvc")(env)
+	
 	env.Append(CFLAGS = '/W3')
 	if debug:
 		cflags = [
