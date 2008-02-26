@@ -1,3 +1,5 @@
+import os
+
 Import('*')
 
 env = env.Clone()
@@ -20,10 +22,5 @@ SConscript([
 if llvm:
 	SConscript(['auxiliary/gallivm/SConscript'])
 
-SConscript([
-	'drivers/softpipe/SConscript',
-	'drivers/i915simple/SConscript',
-	'drivers/i965simple/SConscript',
-	'drivers/failover/SConscript',
-	#'drivers/cell/SConscript',
-])
+for driver in env['drivers']:
+	SConscript(os.path.join('drivers', driver, 'SConscript'))

@@ -33,6 +33,10 @@
 #include "p_compiler.h"
 #include "p_debug.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The PIPE_FORMAT is a 32-bit wide bitfield that encodes all the information
  * needed to uniquely describe a pixel format.
@@ -417,5 +421,9 @@ static INLINE uint pf_get_size( enum pipe_format format ) {
    assert(pf_get_bits(format) % 8 == 0);
    return pf_get_bits(format) / 8;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

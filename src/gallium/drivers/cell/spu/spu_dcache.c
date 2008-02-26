@@ -33,7 +33,7 @@
 #define CACHE_NAME            data
 #define CACHED_TYPE           qword
 #define CACHE_TYPE            CACHE_TYPE_RO
-#define CACHE_SET_TAGID(set)  TAG_VERTEX_BUFFER
+#define CACHE_SET_TAGID(set)  (((set) & 0x03) + TAG_DCACHE0)
 #define CACHE_LOG2NNWAY       2
 #define CACHE_LOG2NSETS       6
 #include <cache-api.h>
@@ -49,43 +49,57 @@
 
 /**
  * Fetch between arbitrary number of bytes from an unaligned address
+ *
+ * \param dst   Destination data buffer
+ * \param ea    Main memory effective address of source data
+ * \param size  Number of bytes to read
+ *
+ * \warning
+ * As is hinted by the type of the \c dst pointer, this function writes
+ * multiples of 16-bytes.
  */
 void
 spu_dcache_fetch_unaligned(qword *dst, unsigned ea, unsigned size)
 {
    const int shift = ea & 0x0f;
-   const unsigned aligned_start_ea = ea & ~0x0f;
-   const unsigned aligned_end_ea = ROUNDUP16(ea + size);
-   const unsigned num_entries = (aligned_end_ea - aligned_start_ea) / 16;
+   const unsigned read_size = ROUNDUP16(size + shift);
+   const unsigned last_read = ROUNDUP16(ea + size);
+   const qword *const last_write = dst + (ROUNDUP16(size) / 16);
    unsigned i;
 
 
    if (shift == 0) {
       /* Data is already aligned.  Fetch directly into the destination buffer.
        */
-      for (i = 0; i < num_entries; i++) {
-         dst[i] = cache_rd(data, ea + (i * 16));
+      for (i = 0; i < size; i += 16) {
+         *(dst++) = cache_rd(data, ea + i);
       }
    } else {
-      qword tmp[2] ALIGN16_ATTRIB;
+      qword hi;
 
 
-      tmp[0] = cache_rd(data, (ea & ~0x0f));
-      for (i = 0; i < (num_entries & ~1); i++) {
-         const unsigned curr = i & 1;
-         const unsigned next = curr ^ 1;
+      /* Please exercise extreme caution when modifying this code.  This code
+       * must not read past the end of the page containing the source data,
+       * and it must not write more than ((size + 15) / 16) qwords to the
+       * destination buffer.
+       */
+      ea &= ~0x0f;
+      hi = cache_rd(data, ea);
+      for (i = 16; i < read_size; i += 16) {
+         qword lo = cache_rd(data, ea + i);
 
-         tmp[next] = cache_rd(data, (ea & ~0x0f) + (next * 16));
-
-         dst[i] = si_or((qword) spu_slqwbyte(tmp[curr], shift),
-                        (qword) spu_rlmaskqwbyte(tmp[next], shift - 16));
+         *(dst++) = si_or((qword) spu_slqwbyte(hi, shift),
+                          (qword) spu_rlmaskqwbyte(lo, shift - 16));
+         hi = lo;
       }
 
-      if (i < num_entries) {
-         dst[i] = si_or((qword) spu_slqwbyte(tmp[(i & 1)], shift),
-                        si_il(0));
+      if (dst != last_write) {
+         *(dst++) = si_or((qword) spu_slqwbyte(hi, shift), si_il(0));
       }
    }
+   
+   ASSERT((ea + i) == last_read);
+   ASSERT(dst == last_write);
 }
 
 

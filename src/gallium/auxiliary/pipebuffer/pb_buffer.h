@@ -166,6 +166,7 @@ static INLINE void
 pb_destroy(struct pb_buffer *buf)
 {
    assert(buf);
+   assert(buf->vtbl);
    buf->vtbl->destroy(buf);
 }
 

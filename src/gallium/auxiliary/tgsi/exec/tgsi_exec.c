@@ -2455,7 +2455,7 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 
    /* execute instructions, until pc is set to -1 */
    while (pc != -1) {
-      assert(pc < mach->NumInstructions);
+      assert(pc < (int) mach->NumInstructions);
       exec_instruction( mach, mach->Instructions + pc, &pc );
    }
 

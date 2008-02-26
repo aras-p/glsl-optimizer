@@ -30,12 +30,10 @@
   *   Zack Rusin <zack@tungstengraphics.com>
   */
 
-#include "cso_hash.h"
+#include "pipe/p_debug.h"
+#include "pipe/p_util.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#include "cso_hash.h"
 
 #define MAX(a, b) ((a > b) ? (a) : (b))
 
@@ -98,7 +96,7 @@ struct cso_hash {
 
 static void *cso_data_allocate_node(struct cso_hash_data *hash)
 {
-   return malloc(hash->nodeSize);
+   return MALLOC(hash->nodeSize);
 }
 
 static void cso_data_free_node(struct cso_node *node)
@@ -107,10 +105,10 @@ static void cso_data_free_node(struct cso_node *node)
     * Need to cast value ptr to original cso type, then free the
     * driver-specific data hanging off of it.  For example:
    struct cso_sampler *csamp = (struct cso_sampler *) node->value;
-   free(csamp->data);
+   FREE(csamp->data);
    */
-   free(node->value);
-   free(node);
+   FREE(node->value);
+   FREE(node);
 }
 
 static struct cso_node *
@@ -134,7 +132,7 @@ static void cso_data_rehash(struct cso_hash_data *hash, int hint)
       hint = countBits(-hint);
       if (hint < MinNumBits)
          hint = MinNumBits;
-      hash->userNumBits = hint;
+      hash->userNumBits = (short)hint;
       while (primeForNumBits(hint) < (hash->size >> 1))
          ++hint;
    } else if (hint < MinNumBits) {
@@ -147,9 +145,9 @@ static void cso_data_rehash(struct cso_hash_data *hash, int hint)
       int oldNumBuckets = hash->numBuckets;
       int  i = 0;
 
-      hash->numBits = hint;
+      hash->numBits = (short)hint;
       hash->numBuckets = primeForNumBits(hint);
-      hash->buckets = malloc(sizeof(struct cso_node*) * hash->numBuckets);
+      hash->buckets = MALLOC(sizeof(struct cso_node*) * hash->numBuckets);
       for (i = 0; i < hash->numBuckets; ++i)
          hash->buckets[i] = e;
 
@@ -173,7 +171,7 @@ static void cso_data_rehash(struct cso_hash_data *hash, int hint)
             firstNode = afterLastNode;
          }
       }
-      free(oldBuckets);
+      FREE(oldBuckets);
    }
 }
 
@@ -235,13 +233,13 @@ struct cso_hash_iter cso_hash_insert(struct cso_hash *hash,
 
 struct cso_hash * cso_hash_create(void)
 {
-   struct cso_hash *hash = malloc(sizeof(struct cso_hash));
-   hash->data.d = malloc(sizeof(struct cso_hash_data));
+   struct cso_hash *hash = MALLOC_STRUCT(cso_hash);
+   hash->data.d = MALLOC_STRUCT(cso_hash_data);
    hash->data.d->fakeNext = 0;
    hash->data.d->buckets = 0;
    hash->data.d->size = 0;
    hash->data.d->nodeSize = sizeof(struct cso_node);
-   hash->data.d->userNumBits = MinNumBits;
+   hash->data.d->userNumBits = (short)MinNumBits;
    hash->data.d->numBits = 0;
    hash->data.d->numBuckets = 0;
 
@@ -261,9 +259,9 @@ void cso_hash_delete(struct cso_hash *hash)
          cur = next;
       }
    }
-   free(hash->data.d->buckets);
-   free(hash->data.d);
-   free(hash);
+   FREE(hash->data.d->buckets);
+   FREE(hash->data.d);
+   FREE(hash);
 }
 
 struct cso_hash_iter cso_hash_find(struct cso_hash *hash,
@@ -301,7 +299,7 @@ static struct cso_node *cso_hash_data_next(struct cso_node *node)
 
    a.next = node->next;
    if (!a.next) {
-      fprintf(stderr, "iterating beyond the last element\n");
+      debug_printf("iterating beyond the last element\n");
       return 0;
    }
    if (a.next->next)
@@ -352,7 +350,7 @@ static struct cso_node *cso_hash_data_prev(struct cso_node *node)
       --bucket;
       --start;
    }
-   fprintf(stderr, "iterating backward beyond first element\n");
+   debug_printf("iterating backward beyond first element\n");
    return a.e;
 }
 
@@ -396,4 +394,9 @@ struct cso_hash_iter cso_hash_first_node(struct cso_hash *hash)
 {
    struct cso_hash_iter iter = {hash, cso_data_first_node(hash->data.d)};
    return iter;
+}
+
+int cso_hash_size(struct cso_hash *hash)
+{
+   return hash->data.d->size;
 }

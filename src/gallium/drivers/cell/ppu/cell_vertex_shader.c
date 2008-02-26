@@ -55,7 +55,6 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    struct cell_command_vs *const vs = &cell_global.command[0].vs;
    uint64_t *batch;
    struct cell_array_info *array_info;
-   struct cell_shader_info *shader_info;
    unsigned i, j;
    struct cell_attribute_fetch_code *cf;
 
@@ -123,12 +122,12 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
 
       for (j = 0; j < n; j++) {
          vs->elts[j] = draw->vs.queue[i + j].elt;
-         vs->vOut[j] = (uintptr_t) draw->vs.queue[i + j].dest;
+         vs->vOut[j] = (uintptr_t) draw->vs.queue[i + j].vertex;
       }
 
       for (/* empty */; j < SPU_VERTS_PER_BATCH; j++) {
          vs->elts[j] = vs->elts[0];
-         vs->vOut[j] = vs->vOut[0];
+         vs->vOut[j] = (uintptr_t) draw->vs.queue[i + j].vertex;
       }
 
       vs->num_elts = n;
@@ -137,5 +136,6 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
       cell_flush_int(& cell->pipe, PIPE_FLUSH_WAIT);
    }
 
+   draw->vs.post_nr = draw->vs.queue_nr;
    draw->vs.queue_nr = 0;
 }

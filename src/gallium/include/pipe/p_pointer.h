@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,18 +25,71 @@
  * 
  **************************************************************************/
 
+#ifndef P_POINTER_H
+#define P_POINTER_H
 
-#ifndef CELL_FLUSH
-#define CELL_FLUSH
+#include "p_compiler.h"
 
-extern void
-cell_flush(struct pipe_context *pipe, unsigned flags);
-
-extern void
-cell_flush_int(struct pipe_context *pipe, unsigned flags);
-
-extern void
-cell_flush_buffer_range(struct cell_context *cell, void *ptr,
-			unsigned size);
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+static INLINE intptr_t
+pointer_to_intptr( const void *p )
+{
+   union {
+      const void *p;
+      intptr_t i;
+   } pi;
+   pi.p = p;
+   return pi.i;
+}
+
+static INLINE void *
+intptr_to_pointer( intptr_t i )
+{
+   union {
+      void *p;
+      intptr_t i;
+   } pi;
+   pi.i = i;
+   return pi.p;
+}
+
+static INLINE uintptr_t
+pointer_to_uintptr( const void *ptr )
+{
+   union {
+      const void *p;
+      uintptr_t u;
+   } pu;
+   pu.p = ptr;
+   return pu.u;
+}
+
+static INLINE void *
+uintptr_to_pointer( uintptr_t u )
+{
+   union {
+      void *p;
+      uintptr_t u;
+   } pu;
+   pu.u = u;
+   return pu.p;
+}
+
+/**
+ * Return a pointer aligned to next multiple of N bytes.
+ */
+static INLINE void *
+align_pointer( const void *unaligned, uintptr_t alignment )
+{
+   uintptr_t aligned = (pointer_to_uintptr( unaligned ) + alignment - 1) & ~(alignment - 1);
+   return uintptr_to_pointer( aligned );
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* P_POINTER_H */

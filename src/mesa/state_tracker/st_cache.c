@@ -63,6 +63,8 @@ const struct cso_blend * st_cached_blend_state(struct st_context *st,
       cso->data = st->pipe->create_blend_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
+      cso->delete_state = (cso_state_callback)st->pipe->delete_blend_state;
+      cso->context = st->pipe;
       iter = cso_insert_state(st->cache, hash_key, CSO_BLEND, cso);
    }
    return ((struct cso_blend *)cso_hash_iter_data(iter));
@@ -82,6 +84,8 @@ st_cached_sampler_state(struct st_context *st,
       cso->data = st->pipe->create_sampler_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
+      cso->delete_state = (cso_state_callback)st->pipe->delete_sampler_state;
+      cso->context = st->pipe;
       iter = cso_insert_state(st->cache, hash_key, CSO_SAMPLER, cso);
    }
    return (struct cso_sampler*)(cso_hash_iter_data(iter));
@@ -103,6 +107,8 @@ st_cached_depth_stencil_alpha_state(struct st_context *st,
       cso->data = st->pipe->create_depth_stencil_alpha_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
+      cso->delete_state = (cso_state_callback)st->pipe->delete_depth_stencil_alpha_state;
+      cso->context = st->pipe;
       iter = cso_insert_state(st->cache, hash_key, CSO_DEPTH_STENCIL_ALPHA, cso);
    }
    return (struct cso_depth_stencil_alpha*)(cso_hash_iter_data(iter));
@@ -123,6 +129,8 @@ const struct cso_rasterizer* st_cached_rasterizer_state(
       cso->data = st->pipe->create_rasterizer_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
+      cso->delete_state = (cso_state_callback)st->pipe->delete_rasterizer_state;
+      cso->context = st->pipe;
       iter = cso_insert_state(st->cache, hash_key, CSO_RASTERIZER, cso);
    }
    return (struct cso_rasterizer*)(cso_hash_iter_data(iter));
@@ -143,6 +151,8 @@ st_cached_fs_state(struct st_context *st,
       cso->data = st->pipe->create_fs_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
+      cso->delete_state = (cso_state_callback)st->pipe->delete_fs_state;
+      cso->context = st->pipe;
       iter = cso_insert_state(st->cache, hash_key, CSO_FRAGMENT_SHADER, cso);
    }
    return (struct cso_fragment_shader*)(cso_hash_iter_data(iter));
@@ -163,8 +173,9 @@ st_cached_vs_state(struct st_context *st,
       cso->data = st->pipe->create_vs_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
+      cso->delete_state = (cso_state_callback)st->pipe->delete_vs_state;
+      cso->context = st->pipe;
       iter = cso_insert_state(st->cache, hash_key, CSO_VERTEX_SHADER, cso);
    }
    return (struct cso_vertex_shader*)(cso_hash_iter_data(iter));
 }
-

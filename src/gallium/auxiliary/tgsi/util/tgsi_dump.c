@@ -299,7 +299,8 @@ static const char *TGSI_SEMANTICS[] =
    "SEMANTIC_BCOLOR",
    "SEMANTIC_FOG",
    "SEMANTIC_PSIZE",
-   "SEMANTIC_GENERIC,"
+   "SEMANTIC_GENERIC",
+   "SEMANTIC_NORMAL"
 };
 
 static const char *TGSI_SEMANTICS_SHORT[] =
@@ -310,6 +311,7 @@ static const char *TGSI_SEMANTICS_SHORT[] =
    "FOG",
    "PSIZE",
    "GENERIC",
+   "NORMAL"
 };
 
 static const char *TGSI_IMMS[] =

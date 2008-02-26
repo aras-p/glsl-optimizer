@@ -83,6 +83,12 @@ i915_vbuf_render_get_vertex_info( struct vbuf_render *render )
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
+
+   if (i915->dirty) {
+      /* make sure we have up to date vertex layout */
+      i915_update_derived( i915 );
+   }
+
    return &i915->current.vertex_info;
 }
 
@@ -143,7 +149,8 @@ i915_vbuf_render_draw( struct vbuf_render *render,
 
    assert(nr_indices);
 
-   assert((i915->dirty & ~I915_NEW_VBO) == 0);
+   /* this seems to be bogus, since we validate state right after this */
+   /*assert((i915->dirty & ~I915_NEW_VBO) == 0);*/
    
    if (i915->dirty)
       i915_update_derived( i915 );

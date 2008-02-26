@@ -38,6 +38,7 @@
 #include "i915_reg.h"
 #include "i915_state.h"
 #include "i915_state_inlines.h"
+#include "i915_fpc.h"
 
 
 /* The i915 (and related graphics cores) do not support GL_CLAMP.  The
@@ -416,25 +417,46 @@ static void i915_set_polygon_stipple( struct pipe_context *pipe,
 }
 
 
-static void * i915_create_fs_state(struct pipe_context *pipe,
-                                   const struct pipe_shader_state *templ)
+
+static void *
+i915_create_fs_state(struct pipe_context *pipe,
+                     const struct pipe_shader_state *templ)
 {
-   return 0;
+   struct i915_context *i915 = i915_context(pipe);
+   struct i915_fragment_shader *ifs = CALLOC_STRUCT(i915_fragment_shader);
+   if (!ifs)
+      return NULL;
+
+   ifs->state = *templ;
+
+   /* The shader's compiled to i915 instructions here */
+   i915_translate_fragment_program(i915, ifs);
+
+   return ifs;
 }
 
-static void i915_bind_fs_state(struct pipe_context *pipe, void *fs)
+static void
+i915_bind_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->fs = (struct pipe_shader_state *)fs;
+   i915->fs = (struct i915_fragment_shader*) shader;
 
    i915->dirty |= I915_NEW_FS;
 }
 
-static void i915_delete_fs_state(struct pipe_context *pipe, void *shader)
+static
+void i915_delete_fs_state(struct pipe_context *pipe, void *shader)
 {
-   /*do nothing*/
+   struct i915_fragment_shader *ifs = (struct i915_fragment_shader *) shader;
+
+   if (ifs->program)
+      FREE(ifs->program);
+   ifs->program_len = 0;
+
+   FREE(ifs);
 }
+
 
 static void *
 i915_create_vs_state(struct pipe_context *pipe,
@@ -452,6 +474,8 @@ static void i915_bind_vs_state(struct pipe_context *pipe, void *shader)
 
    /* just pass-through to draw module */
    draw_bind_vertex_shader(i915->draw, (struct draw_vertex_shader *) shader);
+
+   i915->dirty |= I915_NEW_VS;
 }
 
 static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)

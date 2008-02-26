@@ -1,8 +1,8 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,18 +25,33 @@
  * 
  **************************************************************************/
 
+#ifndef TGSI_SCAN_H
+#define TGSI_SCAN_H
 
-#ifndef CELL_FLUSH
-#define CELL_FLUSH
+
+#include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
+
+
+/**
+ * Shader summary info
+ */
+struct tgsi_shader_info
+{
+   uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
+   uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
+
+   uint immediate_count; /**< number of immediates declared */
+
+   uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
+
+   boolean writes_z;  /**< does fragment shader write Z value? */
+};
+
 
 extern void
-cell_flush(struct pipe_context *pipe, unsigned flags);
+tgsi_scan_shader(const struct tgsi_token *tokens,
+                 struct tgsi_shader_info *info);
 
-extern void
-cell_flush_int(struct pipe_context *pipe, unsigned flags);
 
-extern void
-cell_flush_buffer_range(struct cell_context *cell, void *ptr,
-			unsigned size);
-
-#endif
+#endif /* TGSI_SCAN_H */

@@ -45,6 +45,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    struct draw_stage *next = draw->pipeline.rasterize;
    int need_det = 0;
    int precalc_flat = 0;
+   boolean wide_lines, wide_points;
 
    /* Set the validate's next stage to the rasterize stage, so that it
     * can be found later if needed for flushing.
@@ -68,9 +69,18 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.aapoint;
    }
 
-   if ((draw->rasterizer->line_width != 1.0 && draw->convert_wide_lines
-        && !draw->rasterizer->line_smooth) ||
-       (draw->rasterizer->point_size != 1.0 && draw->convert_wide_points) ||
+   /* drawing wide lines? */
+   wide_lines = (draw->rasterizer->line_width != 1.0
+                 && draw->convert_wide_lines
+                 && !draw->rasterizer->line_smooth);
+
+   /* drawing large points? */
+   wide_points = (draw->rasterizer->point_size != 1.0
+                  && draw->convert_wide_points
+                  && !draw->pipeline.aapoint);
+   
+   if (wide_lines ||
+       wide_points ||
        draw->rasterizer->point_sprite) {
       draw->pipeline.wide->next = next;
       next = draw->pipeline.wide;

@@ -27,104 +27,111 @@
 
 
 #include "pipe/p_util.h"
+#include "pipe/p_shader_tokens.h"
 #include "draw/draw_context.h"
 #include "draw/draw_vertex.h"
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
 #include "i915_fpc.h"
-#include "pipe/p_shader_tokens.h"
+
 
 
 /**
- * Determine which post-transform / pre-rasterization vertex attributes
- * we need.
- * Derived from:  fs, setup states.
+ * Determine the hardware vertex layout.
+ * Depends on vertex/fragment shader state.
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-   const struct pipe_shader_state *fs = i915->fs;
+   const struct pipe_shader_state *fs = &i915->fs->state;
    const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
-   uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
-   boolean needW = 0;
+   boolean texCoords[8], colors[2], fog, needW;
    uint i;
-   boolean texCoords[8];
-   uint src = 0;
+   int src;
 
    memset(texCoords, 0, sizeof(texCoords));
+   colors[0] = colors[1] = fog = needW = FALSE;
    memset(&vinfo, 0, sizeof(vinfo));
 
-   /* pos */
-   draw_emit_vertex_attr(&vinfo, EMIT_3F, INTERP_LINEAR, src++);
-   /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
-
+   /* Determine which fragment program inputs are needed.  Setup HW vertex
+    * layout below, in the HW-specific attribute order.
+    */
    for (i = 0; i < fs->num_inputs; i++) {
       switch (fs->input_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          break;
       case TGSI_SEMANTIC_COLOR:
-         if (fs->input_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src++);
-            vinfo.hwfmt[0] |= S4_VFMT_COLOR;
-         }
-         else {
-            assert(fs->input_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src++);
-            vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
-         }
+         assert(fs->input_semantic_index[i] < 2);
+         colors[fs->input_semantic_index[i]] = TRUE;
          break;
       case TGSI_SEMANTIC_GENERIC:
          /* usually a texcoord */
          {
             const uint unit = fs->input_semantic_index[i];
-            uint hwtc;
+            assert(unit < 8);
             texCoords[unit] = TRUE;
-            draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
-            hwtc = TEXCOORDFMT_4D;
             needW = TRUE;
-            vinfo.hwfmt[1] |= hwtc << (unit * 4);
          }
          break;
       case TGSI_SEMANTIC_FOG:
-         debug_printf("i915 fogcoord not implemented yet\n");
-         draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_PERSPECTIVE, src++);
+         fog = TRUE;
          break;
       default:
          assert(0);
       }
-
    }
 
-   /* finish up texcoord fields */
-   for (i = 0; i < 8; i++) {
-      if (!texCoords[i]) {
-         const uint hwtc = TEXCOORDFMT_NOT_PRESENT;
-         vinfo.hwfmt[1] |= hwtc << (i* 4);
-      }
-   }
-
-   /* go back and fill in the vertex position info now that we have needW */
+   
+   /* pos */
+   src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_POSITION, 0);
    if (needW) {
+      draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZW;
       vinfo.emit[0] = EMIT_4F;
    }
    else {
+      draw_emit_vertex_attr(&vinfo, EMIT_3F, INTERP_LINEAR, src);
       vinfo.hwfmt[0] |= S4_VFMT_XYZ;
       vinfo.emit[0] = EMIT_3F;
    }
 
-   /* Additional attributes required for setup: Just twosided
-    * lighting.  Edgeflag is dealt with specially by setting bits in
-    * the vertex header.
-    */
-   if (i915->rasterizer->light_twoside) {
-      if (front0) {
-         back0 = draw_emit_vertex_attr(&vinfo, EMIT_OMIT, colorInterp, src++);
+   /* hardware point size */
+   /* XXX todo */
+
+   /* primary color */
+   if (colors[0]) {
+      src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_COLOR, 0);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
+      vinfo.hwfmt[0] |= S4_VFMT_COLOR;
+   }
+
+   /* secondary color */
+   if (colors[1]) {
+      src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_COLOR, 1);
+      draw_emit_vertex_attr(&vinfo, EMIT_4UB, colorInterp, src);
+      vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
+   }
+
+   /* fog coord, not fog blend factor */
+   if (fog) {
+      src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_FOG, 0);
+      draw_emit_vertex_attr(&vinfo, EMIT_1F, INTERP_PERSPECTIVE, src);
+      vinfo.hwfmt[0] |= S4_VFMT_FOG_PARAM;
+   }
+
+   /* texcoords */
+   for (i = 0; i < 8; i++) {
+      uint hwtc;
+      if (texCoords[i]) {
+         hwtc = TEXCOORDFMT_4D;
+         src = draw_find_vs_output(i915->draw, TGSI_SEMANTIC_GENERIC, i);
+         draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
       }
-      if (back0) {
-         back1 = draw_emit_vertex_attr(&vinfo, EMIT_OMIT, colorInterp, src++);
+      else {
+         hwtc = TEXCOORDFMT_NOT_PRESENT;
       }
+      vinfo.hwfmt[1] |= hwtc << (i * 4);
    }
 
    draw_compute_vertex_size(&vinfo);
@@ -148,7 +155,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
  */
 void i915_update_derived( struct i915_context *i915 )
 {
-   if (i915->dirty & (I915_NEW_RASTERIZER | I915_NEW_FS))
+   if (i915->dirty & (I915_NEW_RASTERIZER | I915_NEW_FS | I915_NEW_VS))
       calculate_vertex_layout( i915 );
 
    if (i915->dirty & (I915_NEW_SAMPLER | I915_NEW_TEXTURE))
@@ -164,7 +171,6 @@ void i915_update_derived( struct i915_context *i915 )
       i915_update_dynamic( i915 );
 
    if (i915->dirty & I915_NEW_FS) {
-      i915_translate_fragment_program(i915);
       i915->hardware_dirty |= I915_HW_PROGRAM; /* XXX right? */
    }
 

@@ -33,17 +33,53 @@ platform_map = {
 	'win32': 'winddk',
 }
 
-platform = platform_map.get(sys.platform, sys.platform)
+default_platform = platform_map.get(sys.platform, sys.platform)
+
+if default_platform in ('linux', 'freebsd', 'darwin'):
+	default_statetrackers = 'mesa'
+	default_drivers = 'softpipe,failover,i915simple,i965simple'
+	default_winsys = 'xlib'
+	default_dri = 'yes'
+elif default_platform in ('winddk',):
+	default_statetrackers = 'none'
+	default_drivers = 'softpipe,i915simple'
+	default_winsys = 'none'
+	default_dri = 'no'
+else:
+	default_drivers = 'all'
+	default_winsys = 'all'
+	default_dri = 'no'
+
 
 # TODO: auto-detect defaults
 opts = Options('config.py')
 opts.Add(BoolOption('debug', 'build debug version', False))
-opts.Add(BoolOption('dri', 'build dri drivers', False))
-opts.Add(BoolOption('llvm', 'use llvm', False))
 opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
                      allowed_values=('generic', 'x86', 'x86-64')))
-opts.Add(EnumOption('platform', 'target platform', platform,
+opts.Add(EnumOption('platform', 'target platform', default_platform,
                      allowed_values=('linux', 'cell', 'winddk')))
+opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetrackers,
+                     [
+                     	'mesa', 
+                     ],
+                     ))
+opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
+                     [
+                     	'softpipe', 
+                     	'failover', 
+                     	'i915simple', 
+                     	'i965simple', 
+                     	'cell',
+                     ],
+                     ))
+opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
+                     [
+                     	'xlib', 
+                     	'intel',
+                     ],
+                     ))
+opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
+opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
 
 env = Environment(
 	options = opts, 
@@ -84,26 +120,14 @@ Export([
 
 
 if platform == 'winddk':
-	import ntpath
-	escape = env['ESCAPE']
-	env.Tool('msvc')
-	if 'BASEDIR' in os.environ:
-		WINDDK = os.environ['BASEDIR']
-	else:
-		WINDDK = "C:\\WINDDK\\3790.1830"
-	# NOTE: We need this elaborate construct to get the absolute paths and
-	# forward slashes to msvc unharmed when cross compiling from posix platforms 
-	env.Append(CPPFLAGS = [
-		escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wxp')),
-		escape('/I' + ntpath.join(WINDDK, 'inc\\ddk\\wdm\\wxp')),
-		escape('/I' + ntpath.join(WINDDK, 'inc\\crt')),
-	])
-	env.Append(CPPDEFINES = [
-		('i386', '1'),
-	])
-	if debug:
-		env.Append(CPPDEFINES = ['DBG'])
+	env.Tool('winddk', ['.'])
 	
+	env.Append(CPPPATH = [
+		env['SDK_INC_PATH'],
+		env['DDK_INC_PATH'],
+		env['WDM_INC_PATH'],
+		env['CRT_INC_PATH'],
+	])
 
 # Optimization flags
 if gcc:
@@ -114,17 +138,41 @@ if gcc:
 		env.Append(CFLAGS = '-O3 -g3')
 		env.Append(CXXFLAGS = '-O3 -g3')
 
-	env.Append(CFLAGS = '-Wall -Wmissing-prototypes -std=c99 -ffast-math -pedantic')
+	env.Append(CFLAGS = '-Wall -Wmissing-prototypes -Wno-long-long -ffast-math -pedantic')
 	env.Append(CXXFLAGS = '-Wall -pedantic')
 	
 	# Be nice to Eclipse
 	env.Append(CFLAGS = '-fmessage-length=0')
 	env.Append(CXXFLAGS = '-fmessage-length=0')
 
+if msvc:
+	env.Append(CFLAGS = '/W3')
+	if debug:
+		cflags = [
+			'/Od', # disable optimizations
+			'/Oy-', # disable frame pointer omission
+			'/Zi', # enable enable debugging information
+		]
+	else:
+		cflags = [
+			'/Ox', # maximum optimizations
+			'/Os', # favor code space
+			'/Zi', # enable enable debugging information
+		]
+	env.Append(CFLAGS = cflags)
+	env.Append(CXXFLAGS = cflags)
+
 
 # Defines
 if debug:
-	env.Append(CPPDEFINES = ['DEBUG'])
+	if gcc:
+		env.Append(CPPDEFINES = ['DEBUG'])
+	if msvc:
+		env.Append(CPPDEFINES = [
+			('DBG', '1'),
+			('DEBUG', '1'),
+			('_DEBUG', '1'),
+		])
 else:
 	env.Append(CPPDEFINES = ['NDEBUG'])
 
@@ -192,7 +240,7 @@ if llvm:
 	
 
 # libGL
-if 1:
+if platform not in ('winddk',):
 	env.Append(LIBS = [
 		'X11',
 		'Xext',

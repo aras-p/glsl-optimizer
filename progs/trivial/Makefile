@@ -25,6 +25,7 @@ SOURCES = \
 	fs-tri.c \
 	line-clip.c \
 	line-cull.c \
+	line-smooth.c \
 	line-stipple-wide.c \
 	line-userclip-clip.c \
 	line-userclip-nop-clip.c \

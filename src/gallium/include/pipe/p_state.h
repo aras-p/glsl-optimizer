@@ -42,6 +42,12 @@
 #include "p_defines.h"
 #include "p_format.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Implementation limits
  */
@@ -326,4 +332,8 @@ struct pipe_vertex_element
 };
 
 
+#ifdef __cplusplus
+}
+#endif
+   
 #endif

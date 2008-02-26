@@ -3,6 +3,8 @@ Import('*')
 draw = env.ConvenienceLibrary(
 	target = 'draw',
 	source = [
+		'draw_aaline.c',
+		'draw_aapoint.c',
 		'draw_clip.c',
 		'draw_vs_exec.c',
 		'draw_vs_sse.c',
@@ -13,6 +15,7 @@ draw = env.ConvenienceLibrary(
 		'draw_flatshade.c',
 		'draw_offset.c',
 		'draw_prim.c',
+		'draw_pstipple.c',
 		'draw_stipple.c',
 		'draw_twoside.c',
 		'draw_unfilled.c',

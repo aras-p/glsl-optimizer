@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <errno.h>
+#include <stdio.h>
 #include "intel_batchbuffer.h"
 #include "intel_context.h"
 #include "intel_screen.h"

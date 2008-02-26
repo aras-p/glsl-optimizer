@@ -38,6 +38,7 @@
 #include "spu_tile.h"
 //#include "spu_test.h"
 #include "spu_vertex_shader.h"
+#include "spu_dcache.h"
 #include "cell/common.h"
 #include "pipe/p_defines.h"
 
@@ -434,7 +435,7 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct pipe_viewport_state)) / 8);
          break;
       case CELL_CMD_STATE_UNIFORMS:
-         draw.constants = (float (*)[4]) (uintptr_t) buffer[pos + 1];
+         draw.constants = (const float (*)[4]) (uintptr_t) buffer[pos + 1];
          pos += 2;
          break;
       case CELL_CMD_STATE_VS_ARRAY_INFO:
@@ -583,7 +584,7 @@ main(main_param_t speid, main_param_t argp)
    one_time_init();
 
    if (Debug)
-      printf("SPU: main() speid=%lu\n", speid);
+      printf("SPU: main() speid=%lu\n", (unsigned long) speid);
 
    mfc_get(&spu.init,  /* dest */
            (unsigned int) argp, /* src */

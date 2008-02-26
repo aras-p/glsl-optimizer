@@ -30,15 +30,16 @@
 
 #include "p_compiler.h"
 #include "p_debug.h"
+#include "p_pointer.h"
 #include <math.h>
 
 
-#ifdef WIN32
-
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
+
+
+#ifdef WIN32
 
 void * __stdcall
 EngAllocMem(
@@ -49,10 +50,6 @@ EngAllocMem(
 void __stdcall
 EngFreeMem(
     void *Mem );
-
-#ifdef __cplusplus
-}
-#endif
 
 static INLINE void *
 MALLOC( unsigned size )
@@ -113,33 +110,6 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
-
-/**
- * Return a pointer aligned to next multiple of N bytes.
- */
-static INLINE void *
-align_pointer( void *unaligned, uint alignment )
-{
-   if (sizeof(void *) == 64) {
-      union {
-         void *p;
-         uint64 u;
-      } pu;
-      pu.p = unaligned;
-      pu.u = (pu.u + alignment - 1) & ~(uint64) (alignment - 1);
-      return pu.p;
-   }
-   else {
-      /* 32-bit pointers */
-      union {
-         void *p;
-         uint u;
-      } pu;
-      pu.p = unaligned;
-      pu.u = (pu.u + alignment - 1) & ~(alignment - 1);
-      return pu.p;
-   }
-}
 
 /**
  * Return memory on given byte alignment
@@ -404,5 +374,9 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
                            unsigned height, const ubyte * src,
                            int src_pitch, unsigned src_x, int src_y);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

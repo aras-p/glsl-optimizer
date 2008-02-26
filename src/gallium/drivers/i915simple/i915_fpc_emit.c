@@ -61,8 +61,6 @@
   			   (REG_NR_MASK << UREG_NR_SHIFT))
 
 
-#define I915_CONSTFLAG_PARAM 0x1f
-
 uint
 i915_get_temp(struct i915_fp_compile *p)
 {
@@ -73,10 +71,21 @@ i915_get_temp(struct i915_fp_compile *p)
    }
 
    p->temp_flag |= 1 << (bit - 1);
-   return UREG(REG_TYPE_R, (bit - 1));
+   return bit - 1;
 }
 
 
+static void
+i915_release_temp(struct i915_fp_compile *p, int reg)
+{
+   p->temp_flag &= ~(1 << reg);
+}
+
+
+/**
+ * Get unpreserved temporary, a temp whose value is not preserved between
+ * PS program phases.
+ */
 uint
 i915_get_utemp(struct i915_fp_compile * p)
 {
@@ -185,41 +194,62 @@ i915_emit_arith(struct i915_fp_compile * p,
    return dest;
 }
 
+
+/**
+ * Emit a texture load or texkill instruction.
+ * \param dest  the dest i915 register
+ * \param destmask  the dest register writemask
+ * \param sampler  the i915 sampler register
+ * \param coord  the i915 source texcoord operand
+ * \param opcode  the instruction opcode
+ */
 uint i915_emit_texld( struct i915_fp_compile *p,
 			uint dest,
 			uint destmask,
 			uint sampler,
 			uint coord,
-			uint op )
+			uint opcode )
 {
-   uint k = UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord));
+   const uint k = UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord));
+   int temp = -1;
+
    if (coord != k) {
-      /* No real way to work around this in the general case - need to
-       * allocate and declare a new temporary register (a utemp won't
-       * do).  Will fallback for now.
+      /* texcoord is swizzled or negated.  Need to allocate a new temporary
+       * register (a utemp / unpreserved temp) won't do.
        */
-      i915_program_error(p, "Can't (yet) swizzle TEX arguments");
-      assert(0);
-      return 0;
+      uint tempReg;
+
+      temp = i915_get_temp(p);           /* get temp reg index */
+      tempReg = UREG(REG_TYPE_R, temp);  /* make i915 register */
+
+      i915_emit_arith( p, A0_MOV,
+                       tempReg, A0_DEST_CHANNEL_ALL, /* dest reg, writemask */
+                       0,                            /* saturate */
+                       coord, 0, 0 );                /* src0, src1, src2 */
+
+      /* new src texcoord is tempReg */
+      coord = tempReg;
    }
 
    /* Don't worry about saturate as we only support  
     */
    if (destmask != A0_DEST_CHANNEL_ALL) {
+      /* if not writing to XYZW... */
       uint tmp = i915_get_utemp(p);
-      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, op );
+      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, opcode );
       i915_emit_arith( p, A0_MOV, dest, destmask, 0, tmp, 0, 0 );
-      return dest;
+      /* XXX release utemp here? */
    }
    else {
       assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
       assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
 
+      /* is the sampler coord a texcoord input reg? */
       if (GET_UREG_TYPE(coord) != REG_TYPE_T) {
 	 p->nr_tex_indirect++;
       }
 
-      *(p->csr++) = (op | 
+      *(p->csr++) = (opcode | 
 		     T0_DEST( dest ) |
 		     T0_SAMPLER( sampler ));
 
@@ -227,14 +257,19 @@ uint i915_emit_texld( struct i915_fp_compile *p,
       *(p->csr++) = T2_MBZ;
 
       p->nr_tex_insn++;
-      return dest;
    }
+
+   if (temp >= 0)
+      i915_release_temp(p, temp);
+
+   return dest;
 }
 
 
 uint
 i915_emit_const1f(struct i915_fp_compile * p, float c0)
 {
+   struct i915_fragment_shader *ifs = p->shader;
    unsigned reg, idx;
 
    if (c0 == 0.0)
@@ -243,15 +278,15 @@ i915_emit_const1f(struct i915_fp_compile * p, float c0)
       return swizzle(UREG(REG_TYPE_R, 0), ONE, ONE, ONE, ONE);
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
-      if (p->constant_flags[reg] == I915_CONSTFLAG_PARAM)
+      if (ifs->constant_flags[reg] == I915_CONSTFLAG_USER)
          continue;
       for (idx = 0; idx < 4; idx++) {
-         if (!(p->constant_flags[reg] & (1 << idx)) ||
-             p->constants[reg][idx] == c0) {
-            p->constants[reg][idx] = c0;
-            p->constant_flags[reg] |= 1 << idx;
-            if (reg + 1 > p->num_constants)
-               p->num_constants = reg + 1;
+         if (!(ifs->constant_flags[reg] & (1 << idx)) ||
+             ifs->constants[reg][idx] == c0) {
+            ifs->constants[reg][idx] = c0;
+            ifs->constant_flags[reg] |= 1 << idx;
+            if (reg + 1 > ifs->num_constants)
+               ifs->num_constants = reg + 1;
             return swizzle(UREG(REG_TYPE_CONST, reg), idx, ZERO, ZERO, ONE);
          }
       }
@@ -264,6 +299,7 @@ i915_emit_const1f(struct i915_fp_compile * p, float c0)
 uint
 i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
 {
+   struct i915_fragment_shader *ifs = p->shader;
    unsigned reg, idx;
 
    if (c0 == 0.0)
@@ -277,16 +313,16 @@ i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
       return swizzle(i915_emit_const1f(p, c0), X, ONE, Z, W);
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
-      if (p->constant_flags[reg] == 0xf ||
-          p->constant_flags[reg] == I915_CONSTFLAG_PARAM)
+      if (ifs->constant_flags[reg] == 0xf ||
+          ifs->constant_flags[reg] == I915_CONSTFLAG_USER)
          continue;
       for (idx = 0; idx < 3; idx++) {
-         if (!(p->constant_flags[reg] & (3 << idx))) {
-            p->constants[reg][idx + 0] = c0;
-            p->constants[reg][idx + 1] = c1;
-            p->constant_flags[reg] |= 3 << idx;
-            if (reg + 1 > p->num_constants)
-               p->num_constants = reg + 1;
+         if (!(ifs->constant_flags[reg] & (3 << idx))) {
+            ifs->constants[reg][idx + 0] = c0;
+            ifs->constants[reg][idx + 1] = c1;
+            ifs->constant_flags[reg] |= 3 << idx;
+            if (reg + 1 > ifs->num_constants)
+               ifs->num_constants = reg + 1;
             return swizzle(UREG(REG_TYPE_CONST, reg), idx, idx + 1, ZERO, ONE);
          }
       }
@@ -302,25 +338,26 @@ uint
 i915_emit_const4f(struct i915_fp_compile * p,
                   float c0, float c1, float c2, float c3)
 {
+   struct i915_fragment_shader *ifs = p->shader;
    unsigned reg;
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
-      if (p->constant_flags[reg] == 0xf &&
-          p->constants[reg][0] == c0 &&
-          p->constants[reg][1] == c1 &&
-          p->constants[reg][2] == c2 &&
-          p->constants[reg][3] == c3) {
+      if (ifs->constant_flags[reg] == 0xf &&
+          ifs->constants[reg][0] == c0 &&
+          ifs->constants[reg][1] == c1 &&
+          ifs->constants[reg][2] == c2 &&
+          ifs->constants[reg][3] == c3) {
          return UREG(REG_TYPE_CONST, reg);
       }
-      else if (p->constant_flags[reg] == 0) {
+      else if (ifs->constant_flags[reg] == 0) {
 
-         p->constants[reg][0] = c0;
-         p->constants[reg][1] = c1;
-         p->constants[reg][2] = c2;
-         p->constants[reg][3] = c3;
-         p->constant_flags[reg] = 0xf;
-         if (reg + 1 > p->num_constants)
-            p->num_constants = reg + 1;
+         ifs->constants[reg][0] = c0;
+         ifs->constants[reg][1] = c1;
+         ifs->constants[reg][2] = c2;
+         ifs->constants[reg][3] = c3;
+         ifs->constant_flags[reg] = 0xf;
+         if (reg + 1 > ifs->num_constants)
+            ifs->num_constants = reg + 1;
          return UREG(REG_TYPE_CONST, reg);
       }
    }
@@ -335,41 +372,3 @@ i915_emit_const4fv(struct i915_fp_compile * p, const float * c)
 {
    return i915_emit_const4f(p, c[0], c[1], c[2], c[3]);
 }
-
-
-#if 00000/*UNUSED*/
-/* Reserve a slot in the constant file for a Mesa state parameter.
- * These will later need to be tracked on statechanges, but that is
- * done elsewhere.
- */
-uint
-i915_emit_param4fv(struct i915_fp_compile * p, const float * values)
-{
-   struct i915_fragment_program *fp = p->fp;
-   int i;
-
-   for (i = 0; i < fp->nr_params; i++) {
-      if (fp->param[i].values == values)
-         return UREG(REG_TYPE_CONST, fp->param[i].reg);
-   }
-
-   if (p->constants->nr_constants == I915_MAX_CONSTANT ||
-       fp->nr_params == I915_MAX_CONSTANT) {
-      i915_program_error(p, "i915_emit_param4fv: out of constants\n");
-      return 0;
-   }
-
-   {
-      int reg = p->constants->nr_constants++;
-      int i = fp->nr_params++;
-
-      assert (p->constant_flags[reg] == 0);
-      p->constant_flags[reg] = I915_CONSTFLAG_PARAM;
-
-      fp->param[i].values = values;
-      fp->param[i].reg = reg;
-
-      return UREG(REG_TYPE_CONST, reg);
-   }
-}
-#endif

@@ -192,8 +192,8 @@ mm_bufmgr_create_buffer(struct pb_manager *mgr,
    }
    
    /* Some sanity checks */
-   assert(0 <= mm_buf->block->ofs && mm_buf->block->ofs < mm->size);
-   assert(size <= mm_buf->block->size && mm_buf->block->ofs + mm_buf->block->size <= mm->size);
+   assert(0 <= (unsigned)mm_buf->block->ofs && (unsigned)mm_buf->block->ofs < mm->size);
+   assert(size <= (unsigned)mm_buf->block->size && (unsigned)mm_buf->block->ofs + (unsigned)mm_buf->block->size <= mm->size);
    
    _glthread_UNLOCK_MUTEX(mm->mutex);
    return SUPER(mm_buf);

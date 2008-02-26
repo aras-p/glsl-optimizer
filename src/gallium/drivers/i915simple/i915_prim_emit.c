@@ -72,38 +72,42 @@ emit_hw_vertex( struct i915_context *i915,
    uint i;
    uint count = 0;  /* for debug/sanity */
 
+   assert(!i915->dirty);
+
    for (i = 0; i < vinfo->num_attribs; i++) {
+      const uint j = vinfo->src_index[i];
+      const float *attrib = vertex->data[j];
       switch (vinfo->emit[i]) {
       case EMIT_OMIT:
          /* no-op */
          break;
       case EMIT_1F:
-         OUT_BATCH( fui(vertex->data[i][0]) );
+         OUT_BATCH( fui(attrib[0]) );
          count++;
          break;
       case EMIT_2F:
-         OUT_BATCH( fui(vertex->data[i][0]) );
-         OUT_BATCH( fui(vertex->data[i][1]) );
+         OUT_BATCH( fui(attrib[0]) );
+         OUT_BATCH( fui(attrib[1]) );
          count += 2;
          break;
       case EMIT_3F:
-         OUT_BATCH( fui(vertex->data[i][0]) );
-         OUT_BATCH( fui(vertex->data[i][1]) );
-         OUT_BATCH( fui(vertex->data[i][2]) );
+         OUT_BATCH( fui(attrib[0]) );
+         OUT_BATCH( fui(attrib[1]) );
+         OUT_BATCH( fui(attrib[2]) );
          count += 3;
          break;
       case EMIT_4F:
-         OUT_BATCH( fui(vertex->data[i][0]) );
-         OUT_BATCH( fui(vertex->data[i][1]) );
-         OUT_BATCH( fui(vertex->data[i][2]) );
-         OUT_BATCH( fui(vertex->data[i][3]) );
+         OUT_BATCH( fui(attrib[0]) );
+         OUT_BATCH( fui(attrib[1]) );
+         OUT_BATCH( fui(attrib[2]) );
+         OUT_BATCH( fui(attrib[3]) );
          count += 4;
          break;
       case EMIT_4UB:
-         OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[i][2] ),
-                             float_to_ubyte( vertex->data[i][1] ),
-                             float_to_ubyte( vertex->data[i][0] ),
-                             float_to_ubyte( vertex->data[i][3] )) );
+         OUT_BATCH( pack_ub4(float_to_ubyte( attrib[2] ),
+                             float_to_ubyte( attrib[1] ),
+                             float_to_ubyte( attrib[0] ),
+                             float_to_ubyte( attrib[3] )) );
          count += 1;
          break;
       default:
@@ -122,16 +126,18 @@ emit_prim( struct draw_stage *stage,
 	   unsigned nr )
 {
    struct i915_context *i915 = setup_stage(stage)->i915;
-   unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
+   unsigned vertex_size;
    unsigned i;
-
-   assert(vertex_size >= 12); /* never smaller than 12 bytes */
 
    if (i915->dirty)
       i915_update_derived( i915 );
 
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
+
+   /* need to do this after validation! */
+   vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
+   assert(vertex_size >= 12); /* never smaller than 12 bytes */
 
    if (!BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 )) {
       FLUSH_BATCH();

@@ -33,6 +33,11 @@
 #ifndef CSO_HASH_H
 #define CSO_HASH_H
 
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 struct cso_hash;
 struct cso_node;
 
@@ -42,7 +47,9 @@ struct cso_hash_iter {
 };
 
 struct cso_hash *cso_hash_create(void);
-void              cso_hash_delete(struct cso_hash *hash);
+void             cso_hash_delete(struct cso_hash *hash);
+
+int              cso_hash_size(struct cso_hash *hash);
 
 struct cso_hash_iter cso_hash_insert(struct cso_hash *hash, unsigned key,
                                      void *data);
@@ -58,5 +65,18 @@ void     *cso_hash_iter_data(struct cso_hash_iter iter);
 
 struct cso_hash_iter cso_hash_iter_next(struct cso_hash_iter iter);
 struct cso_hash_iter cso_hash_iter_prev(struct cso_hash_iter iter);
+
+
+/* KW: a convenience routine: 
+ */
+void *cso_hash_find_data_from_template( struct cso_hash *hash,
+				        unsigned hash_key, 
+				        void *templ,
+				        int size );
+
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

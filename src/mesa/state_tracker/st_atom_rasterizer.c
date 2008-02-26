@@ -30,7 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
  
-
+#include "main/macros.h"
 #include "st_context.h"
 #include "st_cache.h"
 #include "pipe/p_context.h"
@@ -227,8 +227,18 @@ static void update_raster_state( struct st_context *st )
 
    /* _NEW_LINE
     */
-   raster.line_width = ctx->Line.Width;
    raster.line_smooth = ctx->Line.SmoothFlag;
+   if (ctx->Line.SmoothFlag) {
+      raster.line_width = CLAMP(ctx->Line.Width,
+                                ctx->Const.MinLineWidthAA,
+                                ctx->Const.MaxLineWidthAA);
+   }
+   else {
+      raster.line_width = CLAMP(ctx->Line.Width,
+                                ctx->Const.MinLineWidth,
+                                ctx->Const.MaxLineWidth);
+   }
+
    raster.line_stipple_enable = ctx->Line.StippleFlag;
    raster.line_stipple_pattern = ctx->Line.StipplePattern;
    /* GL stipple factor is in [1,256], remap to [0, 255] here */

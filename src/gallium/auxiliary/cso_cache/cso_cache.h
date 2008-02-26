@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,9 +25,48 @@
  *
  **************************************************************************/
 
- /*
-  * Authors:
-  *   Zack Rusin <zack@tungstengraphics.com>
+ /**
+  * @file
+  * Constant State Object (CSO) cache.
+  *
+  * The basic idea is that the states are created via the
+  * create_state/bind_state/delete_state semantics. The driver is expected to
+  * perform as much of the Gallium state translation to whatever its internal
+  * representation is during the create call. Gallium then has a caching
+  * mechanism where it stores the created states. When the pipeline needs an
+  * actual state change, a bind call is issued. In the bind call the driver
+  * gets its already translated representation.
+  *
+  * Those semantics mean that the driver doesn't do the repeated translations
+  * of states on every frame, but only once, when a new state is actually
+  * created.
+  *
+  * Even on hardware that doesn't do any kind of state cache, it makes the
+  * driver look a lot neater, plus it avoids all the redundant state
+  * translations on every frame.
+  *
+  * Currently our constant state objects are:
+  * - alpha test
+  * - blend
+  * - depth stencil
+  * - fragment shader
+  * - rasterizer (old setup)
+  * - sampler
+  * - vertex shader
+  *
+  * Things that are not constant state objects include:
+  * - blend_color
+  * - clip_state
+  * - clear_color_state
+  * - constant_buffer
+  * - feedback_state
+  * - framebuffer_state
+  * - polygon_stipple
+  * - scissor_state
+  * - texture_state
+  * - viewport_state
+  *
+  * @author Zack Rusin <zack@tungstengraphics.com>
   */
 
 #ifndef CSO_CACHE_H
@@ -36,46 +75,57 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+/* cso_hash.h is necessary for cso_hash_iter, as MSVC requires structures
+ * returned by value to be fully defined */
+#include "cso_hash.h"
 
-struct cso_hash;
 
-struct cso_cache {
-   struct cso_hash *blend_hash;
-   struct cso_hash *depth_stencil_hash;
-   struct cso_hash *fs_hash;
-   struct cso_hash *vs_hash;
-   struct cso_hash *rasterizer_hash;
-   struct cso_hash *sampler_hash;
-};
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+struct cso_cache;
 
 struct cso_blend {
    struct pipe_blend_state state;
    void   *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_depth_stencil_alpha {
    struct pipe_depth_stencil_alpha_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_rasterizer {
    struct pipe_rasterizer_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_fragment_shader {
    struct pipe_shader_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_vertex_shader {
    struct pipe_shader_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 struct cso_sampler {
    struct pipe_sampler_state state;
    void *data;
+   void   (*delete_state)(void *, void  *);
+   void   *context;
 };
 
 
@@ -87,6 +137,8 @@ enum cso_cache_type {
    CSO_FRAGMENT_SHADER,
    CSO_VERTEX_SHADER
 };
+
+typedef void (*cso_state_callback)(void *, void *);
 
 unsigned cso_construct_key(void *item, int item_size);
 
@@ -101,7 +153,16 @@ struct cso_hash_iter cso_find_state(struct cso_cache *sc,
 struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
                                              unsigned hash_key, enum cso_cache_type type,
                                              void *templ);
+void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
+                        cso_state_callback func, void *user_data);
 void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
                       enum cso_cache_type type);
+
+void cso_set_maximum_cache_size(struct cso_cache *sc, int number);
+int cso_maximum_cache_size(const struct cso_cache *sc);
+
+#ifdef	__cplusplus
+}
+#endif
 
 #endif

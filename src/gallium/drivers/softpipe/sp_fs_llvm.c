@@ -146,7 +146,7 @@ shade_quad_llvm(struct quad_stage *qs,
 
 
 unsigned 
-run_llvm_fs( struct sp_fragment_shader *base,
+run_llvm_fs( const struct sp_fragment_shader *base,
 	     struct foo *machine )
 {
 }
