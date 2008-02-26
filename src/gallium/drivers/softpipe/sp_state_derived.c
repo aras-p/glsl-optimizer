@@ -63,7 +63,6 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
       /* compute vertex layout now */
       const struct pipe_shader_state *vs = &softpipe->vs->shader;
       const struct sp_fragment_shader *spfs = softpipe->fs;
-      const struct pipe_shader_state *fs = &softpipe->fs->shader;
       const enum interp_mode colorInterp
          = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
       uint i;
