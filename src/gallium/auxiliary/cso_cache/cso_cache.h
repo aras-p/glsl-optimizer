@@ -138,6 +138,8 @@ enum cso_cache_type {
    CSO_VERTEX_SHADER
 };
 
+typedef void (*cso_state_callback)(void *, void *);
+
 unsigned cso_construct_key(void *item, int item_size);
 
 struct cso_cache *cso_cache_create(void);
@@ -152,7 +154,7 @@ struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
                                              unsigned hash_key, enum cso_cache_type type,
                                              void *templ);
 void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
-                        void (*func)(void *state, void *user_data), void *user_data);
+                        cso_state_callback func, void *user_data);
 void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
                       enum cso_cache_type type);
 

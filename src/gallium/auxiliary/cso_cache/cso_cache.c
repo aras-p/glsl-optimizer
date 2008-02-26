@@ -203,7 +203,7 @@ struct cso_cache *cso_cache_create(void)
 }
 
 void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
-                        void (*func)(void *state, void *user_data), void *user_data)
+                        cso_state_callback func, void *user_data)
 {
    struct cso_hash *hash = 0;
    struct cso_hash_iter iter;
