@@ -395,3 +395,8 @@ struct cso_hash_iter cso_hash_first_node(struct cso_hash *hash)
    struct cso_hash_iter iter = {hash, cso_data_first_node(hash->data.d)};
    return iter;
 }
+
+int cso_hash_size(struct cso_hash *hash)
+{
+   return hash->data.d->size;
+}

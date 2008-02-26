@@ -47,7 +47,9 @@ struct cso_hash_iter {
 };
 
 struct cso_hash *cso_hash_create(void);
-void              cso_hash_delete(struct cso_hash *hash);
+void             cso_hash_delete(struct cso_hash *hash);
+
+int              cso_hash_size(struct cso_hash *hash);
 
 struct cso_hash_iter cso_hash_insert(struct cso_hash *hash, unsigned key,
                                      void *data);
