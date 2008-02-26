@@ -885,7 +885,7 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
     unsigned int *p;
     __GLcontextModes *(*initScreen)(__DRIscreen *psc);
 
-    initScreen = dlsym(NULL, __dri2DriverInitScreen);
+    initScreen = dlsym(NULL, "__dri2DriverInitScreen");
     if (initScreen == NULL)
         return NULL;
 
