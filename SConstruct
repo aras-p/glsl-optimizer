@@ -151,17 +151,17 @@ if msvc:
 		cflags = [
 			'/Od', # disable optimizations
 			'/Oy-', # disable frame pointer omission
-			'/Zi', # enable enable debugging information
 		]
 	else:
 		cflags = [
 			'/Ox', # maximum optimizations
 			'/Os', # favor code space
-			'/Zi', # enable enable debugging information
 		]
 	env.Append(CFLAGS = cflags)
 	env.Append(CXXFLAGS = cflags)
-
+	# Put debugging information in a separate .pdb file for each object file as
+	# descrived in the scons manpage
+	env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
 
 # Defines
 if debug:
