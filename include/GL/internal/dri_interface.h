@@ -266,11 +266,8 @@ extern CREATENEWSCREENFUNC __DRI_CREATE_NEW_SCREEN;
 /* DRI2 Entry point */
 
 typedef void *(__DRI2_CREATE_NEW_SCREEN_FUNC)(int scr, __DRIscreen *psc,
-    const __DRIversion * ddx_version, const __DRIversion * dri_version,
-    const __DRIversion * drm_version, int fd,
-    unsigned int sarea_handle,
-    const __DRIinterfaceMethods * interface,
-    __GLcontextModes ** driver_modes);
+    int fd, unsigned int sarea_handle,
+    const __DRIinterfaceMethods * interface, __GLcontextModes ** driver_modes);
 #define __DRI2_CREATE_NEW_SCREEN \
     __DRI_MAKE_VERSION(__dri2CreateNewScreen, __DRI_INTERFACE_VERSION)
 

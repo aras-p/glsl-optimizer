@@ -872,18 +872,15 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 
 PUBLIC void *
 __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
-			 const __DRIversion * ddx_version,
-			 const __DRIversion * dri_version,
-			 const __DRIversion * drm_version,
-			 int fd, 
-			 unsigned int sarea_handle,
-			 const __DRIinterfaceMethods * interface,
-			 __GLcontextModes ** driver_modes)
+			 int fd, unsigned int sarea_handle,
+			 const __DRIinterfaceMethods *interface,
+			 __GLcontextModes **driver_modes)
 {
     __DRIscreenPrivate *psp;
     static const __DRIextension *emptyExtensionList[] = { NULL };
     dri_interface = interface;
     unsigned int *p;
+    drmVersionPtr version;
     __GLcontextModes *(*initScreen)(__DRIscreenPrivate *psc);
 
     initScreen = dlsym(NULL, "__dri2DriverInitScreen");
@@ -896,9 +893,14 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
 
     psp->psc = psc;
 
-    psp->drm_version = *drm_version;
-    psp->ddx_version = *ddx_version;
-    psp->dri_version = *dri_version;
+    version = drmGetVersion(fd);
+    if (version) {
+	psp->drm_version.major = version->version_major;
+	psp->drm_version.minor = version->version_minor;
+	psp->drm_version.patch = version->version_patchlevel;
+	drmFreeVersion(version);
+    }
+
     psp->extensions = emptyExtensionList;
     psp->fd = fd;
     psp->myNum = scrn;

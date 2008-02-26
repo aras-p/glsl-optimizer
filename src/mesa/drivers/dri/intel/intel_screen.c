@@ -829,21 +829,10 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
  */
 PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
 {
-   static const __DRIversion ddx_expected = { 1, 9, 0 };
-   static const __DRIversion dri_expected = { 4, 0, 0 };
-   static const __DRIversion drm_expected = { 1, 5, 0 };
    intelScreenPrivate *intelScreen;
    __GLcontextModes *modes, *m;
 
    psp->DriverAPI = intelAPI;
-
-   if (!driCheckDriDdxDrmVersions2("i915",
-                                   &psp->dri_version, &dri_expected,
-                                   &psp->ddx_version, &ddx_expected,
-                                   &psp->drm_version, &drm_expected)) {
-      fprintf(stderr, "bad version voodoo\n");
-      return NULL;
-   }
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure

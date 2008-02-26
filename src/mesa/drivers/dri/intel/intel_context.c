@@ -440,16 +440,22 @@ intel_init_bufmgr(struct intel_context *intel)
 {
    intelScreenPrivate *intelScreen = intel->intelScreen;
    GLboolean ttm_disable = getenv("INTEL_NO_TTM") != NULL;
+   GLboolean ttm_supported;
 
    /* If we've got a new enough DDX that's initializing TTM and giving us
     * object handles for the shared buffers, use that.
     */
    intel->ttm = GL_FALSE;
-   if (!ttm_disable &&
-       intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
-       intel->intelScreen->drmMinor >= 11 &&
-       intel->intelScreen->front.bo_handle != -1)
-   {
+   if (intel->intelScreen->driScrnPriv->dri2.enabled)
+       ttm_supported = GL_TRUE;
+   else if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
+	    intel->intelScreen->drmMinor >= 11 &&
+	    intel->intelScreen->front.bo_handle != -1)
+       ttm_supported = GL_TRUE;
+   else
+       ttm_supported = GL_FALSE;
+
+   if (!ttm_disable && ttm_supported) {
       intel->bufmgr = intel_bufmgr_ttm_init(intel->driFd,
 					    DRM_FENCE_TYPE_EXE,
 					    DRM_FENCE_TYPE_EXE |
