@@ -69,6 +69,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
     */
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
 
+      info->num_tokens++;
+
       tgsi_parse_token( &parse );
 
       switch( parse.FullToken.Token.Type ) {
@@ -91,8 +93,26 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             for (i = fulldecl->u.DeclarationRange.First;
                  i <= fulldecl->u.DeclarationRange.Last;
                  i++) {
+
+               /* only first 32 regs will appear in this bitfield */
                info->file_mask[file] |= (1 << i);
                info->file_count[file]++;
+
+               if (file == TGSI_FILE_INPUT) {
+                  info->input_semantic_name[info->num_inputs]
+                     = fulldecl->Semantic.SemanticName;
+                  info->input_semantic_index[info->num_inputs]
+                     = fulldecl->Semantic.SemanticIndex;
+                  info->num_inputs++;
+               }
+
+               if (file == TGSI_FILE_OUTPUT) {
+                  info->output_semantic_name[info->num_outputs]
+                     = fulldecl->Semantic.SemanticName;
+                  info->output_semantic_index[info->num_outputs]
+                     = fulldecl->Semantic.SemanticIndex;
+                  info->num_outputs++;
+               }
 
                /* special case */
                if (procType == TGSI_PROCESSOR_FRAGMENT &&
