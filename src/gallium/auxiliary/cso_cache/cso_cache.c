@@ -199,7 +199,7 @@ static INLINE void delete_cso(void *state, enum cso_cache_type type)
    }
       break;
    }
-   free(state);
+   FREE(state);
 }
 
 static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
