@@ -484,17 +484,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * (or something closely related to that).
  * This bit is rather fatal at the time being due to lackings at pixel
  * shader side
+ * Specifies top of Raster pipe specific enable controls.
  */
 #define R300_GB_ENABLE	0x4008
-#	define R300_GB_POINT_STUFF_ENABLE	(1<<0)
-#	define R300_GB_LINE_STUFF_ENABLE	(1<<1)
-#	define R300_GB_TRIANGLE_STUFF_ENABLE	(1<<2)
-#	define R300_GB_STENCIL_AUTO_ENABLE	(1<<4)
-#	define R300_GB_UNK31			(1<<31)
+#	define R300_GB_POINT_STUFF_DISABLE     (0 << 0)
+#	define R300_GB_POINT_STUFF_ENABLE      (1 << 0) /* Specifies if points will have stuffed texture coordinates. */
+#	define R300_GB_LINE_STUFF_DISABLE      (0 << 1)
+#	define R300_GB_LINE_STUFF_ENABLE       (1 << 1) /* Specifies if lines will have stuffed texture coordinates. */
+#	define R300_GB_TRIANGLE_STUFF_DISABLE  (0 << 2)
+#	define R300_GB_TRIANGLE_STUFF_ENABLE   (1 << 2) /* Specifies if triangles will have stuffed texture coordinates. */
+#	define R300_GB_STENCIL_AUTO_DISABLE    (0 << 4)
+#	define R300_GB_STENCIL_AUTO_ENABLE     (1 << 4) /* Enable stencil auto inc/dec based on triangle cw/ccw, force into dzy low bit. */
+#	define R300_GB_STENCIL_AUTO_FORCE      (2 << 4) /* Force 0 into dzy low bit. */
+
 	/* each of the following is 2 bits wide */
-#define R300_GB_TEX_REPLICATE	0
-#define R300_GB_TEX_ST		1
-#define R300_GB_TEX_STR		2
+#define R300_GB_TEX_REPLICATE	0 /* Replicate VAP source texture coordinates (S,T,[R,Q]). */
+#define R300_GB_TEX_ST		1 /* Stuff with source texture coordinates (S,T). */
+#define R300_GB_TEX_STR		2 /* Stuff with source texture coordinates (S,T,R). */
 #	define R300_GB_TEX0_SOURCE_SHIFT	16
 #	define R300_GB_TEX1_SOURCE_SHIFT	18
 #	define R300_GB_TEX2_SOURCE_SHIFT	20
@@ -505,7 +511,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_TEX7_SOURCE_SHIFT	30
 
 /* MSPOS - positions for multisample antialiasing (?) */
-#define R300_GB_MSPOS0	0x4010
+#define R300_GB_MSPOS0                           0x4010
 	/* shifts - each of the fields is 4 bits */
 #	define R300_GB_MSPOS0__MS_X0_SHIFT	0
 #	define R300_GB_MSPOS0__MS_Y0_SHIFT	4
@@ -516,7 +522,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_MSPOS0__MSBD0_Y		24
 #	define R300_GB_MSPOS0__MSBD0_X		28
 
-#define R300_GB_MSPOS1	0x4014
+#define R300_GB_MSPOS1                           0x4014
 #	define R300_GB_MSPOS1__MS_X3_SHIFT	0
 #	define R300_GB_MSPOS1__MS_Y3_SHIFT	4
 #	define R300_GB_MSPOS1__MS_X4_SHIFT	8
@@ -525,31 +531,47 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_MSPOS1__MS_Y5_SHIFT	20
 #	define R300_GB_MSPOS1__MSBD1		24
 
-
-#define R300_GB_TILE_CONFIG	0x4018
-#	define R300_GB_TILE_ENABLE	(1<<0)
-#	define R300_GB_TILE_PIPE_COUNT_RV300	0
-#	define R300_GB_TILE_PIPE_COUNT_R300	(3<<1)
-#	define R300_GB_TILE_PIPE_COUNT_R420	(7<<1)
-#	define R300_GB_TILE_PIPE_COUNT_RV410	(3<<1)
-#	define R300_GB_TILE_SIZE_8		0
-#	define R300_GB_TILE_SIZE_16		(1<<4)
-#	define R300_GB_TILE_SIZE_32		(2<<4)
-#	define R300_GB_SUPER_SIZE_1		(0<<6)
-#	define R300_GB_SUPER_SIZE_2		(1<<6)
-#	define R300_GB_SUPER_SIZE_4		(2<<6)
-#	define R300_GB_SUPER_SIZE_8		(3<<6)
-#	define R300_GB_SUPER_SIZE_16		(4<<6)
-#	define R300_GB_SUPER_SIZE_32		(5<<6)
-#	define R300_GB_SUPER_SIZE_64		(6<<6)
-#	define R300_GB_SUPER_SIZE_128		(7<<6)
+/* Specifies the graphics pipeline configuration for rasterization. */
+#define R300_GB_TILE_CONFIG                      0x4018
+#	define R300_GB_TILE_DISABLE             (0 << 0)
+#	define R300_GB_TILE_ENABLE              (1 << 0)
+#	define R300_GB_TILE_PIPE_COUNT_RV300	(0 << 1) /* RV350 (1 pipe, 1 ctx) */
+#	define R300_GB_TILE_PIPE_COUNT_R300	(3 << 1) /* R300 (2 pipes, 1 ctx) */
+#	define R300_GB_TILE_PIPE_COUNT_R420_3P  (6 << 1) /* R420-3P (3 pipes, 1 ctx) */
+#	define R300_GB_TILE_PIPE_COUNT_R420	(7 << 1) /* R420 (4 pipes, 1 ctx) */
+#	define R300_GB_TILE_SIZE_8		(0 << 4)
+#	define R300_GB_TILE_SIZE_16		(1 << 4)
+#	define R300_GB_TILE_SIZE_32		(2 << 4)
+#	define R300_GB_SUPER_SIZE_1		(0 << 6)
+#	define R300_GB_SUPER_SIZE_2		(1 << 6)
+#	define R300_GB_SUPER_SIZE_4		(2 << 6)
+#	define R300_GB_SUPER_SIZE_8		(3 << 6)
+#	define R300_GB_SUPER_SIZE_16		(4 << 6)
+#	define R300_GB_SUPER_SIZE_32		(5 << 6)
+#	define R300_GB_SUPER_SIZE_64		(6 << 6)
+#	define R300_GB_SUPER_SIZE_128		(7 << 6)
 #	define R300_GB_SUPER_X_SHIFT		9	/* 3 bits wide */
 #	define R300_GB_SUPER_Y_SHIFT		12	/* 3 bits wide */
-#	define R300_GB_SUPER_TILE_A		0
-#	define R300_GB_SUPER_TILE_B		(1<<15)
-#	define R300_GB_SUBPIXEL_1_12		0
-#	define R300_GB_SUBPIXEL_1_16		(1<<16)
+#	define R300_GB_SUPER_TILE_A		(0 << 15)
+#	define R300_GB_SUPER_TILE_B		(1 << 15)
+#	define R300_GB_SUBPIXEL_1_12		(0 << 16)
+#	define R300_GB_SUBPIXEL_1_16		(1 << 16)
+#	define GB_TILE_CONFIG_QUADS_PER_RAS_4   (0 << 17)
+#	define GB_TILE_CONFIG_QUADS_PER_RAS_8   (1 << 17)
+#	define GB_TILE_CONFIG_QUADS_PER_RAS_16  (2 << 17)
+#	define GB_TILE_CONFIG_QUADS_PER_RAS_32  (3 << 17)
+#	define GB_TILE_CONFIG_BB_SCAN_INTERCEPT (0 << 19)
+#	define GB_TILE_CONFIG_BB_SCAN_BOUND_BOX (1 << 19)
+#	define GB_TILE_CONFIG_ALT_SCAN_EN_LR    (0 << 20)
+#	define GB_TILE_CONFIG_ALT_SCAN_EN_LRL   (1 << 20)
+#	define GB_TILE_CONFIG_ALT_OFFSET        (0 << 21)
+#	define GB_TILE_CONFIG_SUBPRECISION      (0 << 22)
+#	define GB_TILE_CONFIG_ALT_TILING_DEF    (0 << 23)
+#	define GB_TILE_CONFIG_ALT_TILING_3_2    (1 << 23)
+#	define GB_TILE_CONFIG_Z_EXTENDED_24_1   (0 << 24)
+#	define GB_TILE_CONFIG_Z_EXTENDED_S25_1  (1 << 24)
 
+/* Specifies the sizes of the various FIFO`s in the sc/rs/us. This register must be the first one written */
 #define R300_GB_FIFO_SIZE	0x4024
 	/* each of the following is 2 bits wide */
 #define R300_GB_FIFO_SIZE_32	0
@@ -573,25 +595,108 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_OFIFO_HIGHWATER_SHIFT	22	/* two bits only */
 #	define R300_CUBE_FIFO_HIGHWATER_COL_SHIFT	24
 
-#define R300_GB_SELECT	0x401C
-#	define R300_GB_FOG_SELECT_C0A		0
-#	define R300_GB_FOG_SELECT_C1A		1
-#	define R300_GB_FOG_SELECT_C2A		2
-#	define R300_GB_FOG_SELECT_C3A		3
-#	define R300_GB_FOG_SELECT_1_1_W	4
-#	define R300_GB_FOG_SELECT_Z		5
-#	define R300_GB_DEPTH_SELECT_Z		0
-#	define R300_GB_DEPTH_SELECT_1_1_W	(1<<3)
-#	define R300_GB_W_SELECT_1_W		0
-#	define R300_GB_W_SELECT_1		(1<<4)
+#define GB_Z_PEQ_CONFIG                          0x4028
+#	define GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_4_4    (0 << 0)
+#	define GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8    (1 << 0)
 
-#define R300_GB_AA_CONFIG		0x4020
-#	define R300_AA_DISABLE			0x00
-#	define R300_AA_ENABLE			0x01
-#	define R300_AA_SUBSAMPLES_2		0
-#	define R300_AA_SUBSAMPLES_3		(1<<1)
-#	define R300_AA_SUBSAMPLES_4		(2<<1)
-#	define R300_AA_SUBSAMPLES_6		(3<<1)
+/* Specifies various polygon specific selects (fog, depth, perspective). */
+#define R300_GB_SELECT                           0x401c
+#	define R300_GB_FOG_SELECT_C0A		(0 << 0)
+#	define R300_GB_FOG_SELECT_C1A           (1 << 0)
+#	define R300_GB_FOG_SELECT_C2A           (2 << 0)
+#	define R300_GB_FOG_SELECT_C3A           (3 << 0)
+#	define R300_GB_FOG_SELECT_1_1_W         (4 << 0)
+#	define R300_GB_FOG_SELECT_Z		(5 << 0)
+#	define R300_GB_DEPTH_SELECT_Z		(0 << 3
+#	define R300_GB_DEPTH_SELECT_1_1_W	(1 << 3)
+#	define R300_GB_W_SELECT_1_W		(0 << 4)
+#	define R300_GB_W_SELECT_1		(1 << 4)
+#	define R300_GB_FOG_STUFF_DISABLE        (0 << 5)
+#	define R300_GB_FOG_STUFF_ENABLE         (1 << 5)
+#	define R300_GB_FOG_STUFF_TEX_SHIFT      6
+#	define R300_GB_FOG_STUFF_TEX_MASK       0x000003c0
+#	define R300_GB_FOG_STUFF_COMP_SHIFT     10
+#	define R300_GB_FOG_STUFF_COMP_MASK      0x00000c00
+
+/* Specifies the graphics pipeline configuration for antialiasing. */
+#define GB_AA_CONFIG   	                         0x4020
+#	define GB_AA_CONFIG_AA_DISABLE           (0 << 0)
+#	define GB_AA_CONFIG_AA_ENABLE            (1 << 0)
+#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2  (0 << 1)
+#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3  (1 << 1)
+#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4  (2 << 1)
+#	define GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6  (3 << 1)
+
+/* Selects which of 4 pipes are active. */
+#define GB_PIPE_SELECT                           0x402c
+#	define GB_PIPE_SELECT_PIPE0_ID_SHIFT  0
+#	define GB_PIPE_SELECT_PIPE1_ID_SHIFT  2
+#	define GB_PIPE_SELECT_PIPE2_ID_SHIFT  4
+#	define GB_PIPE_SELECT_PIPE3_ID_SHIFT  6
+#	define GB_PIPE_SELECT_PIPE_MASK_SHIFT 8
+#	define GB_PIPE_SELECT_MAX_PIPE        12
+#	define GB_PIPE_SELECT_BAD_PIPES       14
+#	define GB_PIPE_SELECT_CONFIG_PIPES    18
+
+
+/* Specifies the sizes of the various FIFO`s in the sc/rs. */
+#define GB_FIFO_SIZE1                            0x4070
+/* High water mark for SC input fifo */
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_IFIFO_SHIFT 0
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_IFIFO_MASK  0x0000003f
+/* High water mark for SC input fifo (B) */
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_BFIFO_SHIFT 6
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_BFIFO_MASK  0x00000fc0
+/* High water mark for RS colors' fifo */
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_COL_SHIFT   12
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_COL_MASK    0x0003f000
+/* High water mark for RS textures' fifo */
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_TEX_SHIFT   18
+#	define GB_FIFO_SIZE1_SC_HIGHWATER_TEX_MASK    0x00fc0000
+
+/* This table specifies the source location and format for up to 16 texture
+ * addresses (i[0]:i[15]) and four colors (c[0]:c[3])
+ */
+#define RS_IP_0                                  0x4074
+#define RS_IP_1                                  0x4078
+#define RS_IP_2                                  0x407C
+#define RS_IP_3                                  0x4080
+#define RS_IP_4                                  0x4084
+#define RS_IP_5                                  0x4088
+#define RS_IP_6                                  0x408C
+#define RS_IP_7                                  0x4090
+#define RS_IP_8                                  0x4094
+#define RS_IP_9                                  0x4098
+#define RS_IP_10                                 0x409C
+#define RS_IP_11                                 0x40A0
+#define RS_IP_12                                 0x40A4
+#define RS_IP_13                                 0x40A8
+#define RS_IP_14                                 0x40AC
+#define RS_IP_15                                 0x40B0
+#	define RS_IP_TEX_PTR_S_SHIFT 0
+#	define RS_IP_TEX_PTR_S_MASK  0x0000003f
+#	define RS_IP_TEX_PTR_T_SHIFT 6
+#	define RS_IP_TEX_PTR_T_MASK  0x00000fc0
+#	define RS_IP_TEX_PTR_R_SHIFT 12
+#	define RS_IP_TEX_PTR_R_MASK  0x0003f000
+#	define RS_IP_TEX_PTR_Q_SHIFT 18
+#	define RS_IP_TEX_PTR_Q_MASK  0x00fc0000
+#	define RS_IP_COL_PTR_SHIFT   24
+#	define RS_IP_COL_PTR_MASK    0x07000000
+#	define RS_IP_COL_FMT_RGBA    (0 << 27)
+#	define RS_IP_COL_FMT_RGB0    (1 << 27)
+#	define RS_IP_COL_FMT_RGB1    (2 << 27)
+/* gap */
+#	define RS_IP_COL_FMT_000A    (4 << 27)
+#	define RS_IP_COL_FMT_0000    (5 << 27)
+#	define RS_IP_COL_FMT_0001    (6 << 27)
+/* gap */
+#	define RS_IP_COL_FMT_111A    (8 << 27)
+#	define RS_IP_COL_FMT_1110    (9 << 27)
+#	define RS_IP_COL_FMT_1111    (10 << 27)
+/* gap */
+#	define RS_IP_OFFSET_DIS      (0 << 31)
+#	define RS_IP_OFFSET_EN       (1 << 31)
 
 /* gap */
 
@@ -990,16 +1095,19 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define R300_RS_COUNT                      0x4300
 #       define R300_IT_COUNT_SHIFT               0
-#       define R300_IT_COUNT_MASK                (0x7f << 0)
+#       define R300_IT_COUNT_MASK                0x0000007f
 #       define R300_IC_COUNT_SHIFT               7
-#       define R300_IC_COUNT_MASK                (0xf << 0)
+#       define R300_IC_COUNT_MASK                0x00000780
 #       define R300_W_ADDR_SHIFT                 12
-#       define R300_W_ADDR_MASK                  (0x3f << 12)
-#       define R300_HIRES_EN                     (1<<18)
+#       define R300_W_ADDR_MASK                  0x0003f000
+#       define R300_HIRES_DIS                    (0 << 18)
+#       define R300_HIRES_EN                     (1 << 18)
 
-#define R300_RS_INST_COUNT                0x4304
-#       define R300_RS_INST_COUNT_MASK           0xf
+#define R300_RS_INST_COUNT                       0x4304
+#       define R300_RS_INST_COUNT_SHIFT          0
+#       define R300_RS_INST_COUNT_MASK           0x0000000f
 #       define R300_RS_TX_OFFSET_SHIFT           5
+#	define R300_RS_TX_OFFSET_MASK            0x000000e0
 
 /* gap */
 
@@ -1023,13 +1131,45 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_RS_INTERP_2_UNKNOWN          0x80
 #define R300_RS_INTERP_3                    0x431C
 #       define R300_RS_INTERP_3_UNKNOWN          0xC0
-#define R300_RS_INTERP_4                    0x4320
-#define R300_RS_INTERP_5                    0x4324
-#define R300_RS_INTERP_6                    0x4328
-#define R300_RS_INTERP_7                    0x432C
 #       define R300_RS_INTERP_SRC_SHIFT          2
 #       define R300_RS_INTERP_SRC_MASK           (7 << 2)
 #       define R300_RS_INTERP_USED               0x00D10000
+
+/*  */
+#define RS_INST_0                                0x4320
+#define RS_INST_1                                0x4324
+#define RS_INST_2                                0x4328
+#define RS_INST_3                                0x432c
+#define RS_INST_4                                0x4330
+#define RS_INST_5                                0x4334
+#define RS_INST_6                                0x4338
+#define RS_INST_7                                0x433c
+#define RS_INST_8                                0x4340
+#define RS_INST_9                                0x4344
+#define RS_INST_10                               0x4348
+#define RS_INST_11                               0x434c
+#define RS_INST_12                               0x4350
+#define RS_INST_13                               0x4354
+#define RS_INST_14                               0x4358
+#define RS_INST_15                               0x435c
+#	define RS_INST_TEX_ID_SHIFT    0
+#	define RS_INST_TEX_ID_MASK     0x0000000f
+#	define RS_INST_TEX_CN_NO_WRITE (0 << 4)
+#	define RS_INST_TEX_CN_WRITE    (1 << 4)
+#	define RS_INST_TEX_ADDR_SHIFT  5
+#	define RS_INST_TEX_ADDR_MASK   0x00000fe0
+#	define RS_INST_COL_ID_SHIFT    12
+#	define RS_INST_COL_ID_MASK     0x0000f000
+#	define RS_INST_COL_CN_NO_WRITE (0 << 16)
+#	define RS_INST_COL_CN_WRITE    (1 << 16)
+#	define RS_INST_COL_CN_FBUFFER  (2 << 16)
+#	define RS_INST_COL_CN_BACKFACE (3 << 16)
+#	define RS_INST_COL_ADDR_SHIFT  18
+#	define RS_INST_COL_ADDR_MASK   0x01fc0000
+#	define RS_INST_TEX_ADJ_REAL    (0 << 25)
+#	define RS_INST_TEX_ADJ_ADJ     (1 << 25)
+#	define RS_INST_W_CB_NO_WRITE   (0 << 26)
+#	define RS_INST_W_CB_WRITE      (1 << 26)
 
 /* These DWORDs control how vertex data is routed into fragment program
  * registers, after interpolators.

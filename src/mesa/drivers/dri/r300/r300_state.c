@@ -1892,7 +1892,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 	    | R300_GB_LINE_STUFF_ENABLE
-	    | R300_GB_TRIANGLE_STUFF_ENABLE /*| R300_GB_UNK31 */ ;
+	    | R300_GB_TRIANGLE_STUFF_ENABLE;
 
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
@@ -1903,12 +1903,9 @@ static void r300ResetHwState(r300ContextPtr r300)
 	switch (r300->radeon.radeonScreen->chip_family) {
 	case CHIP_FAMILY_R300:
 	case CHIP_FAMILY_R350:
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
-		    R300_GB_TILE_PIPE_COUNT_R300;
-		break;
 	case CHIP_FAMILY_RV410:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
-		    R300_GB_TILE_PIPE_COUNT_RV410;
+		    R300_GB_TILE_PIPE_COUNT_R300;
 		break;
 	case CHIP_FAMILY_R420:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
@@ -1916,7 +1913,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 		break;
 	default:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
-		    R300_GB_TILE_PIPE_COUNT_RV300;
+		    R300_GB_TILE_DISABLE; /* TODO: This disables tiling totally. I guess it happened accidentially. */
 		break;
 	}
 
@@ -1924,7 +1921,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
 
 	/* XXX: Enable anti-aliasing? */
-	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = GB_AA_CONFIG_AA_DISABLE;
 
 	r300->hw.ga_point_s0.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.ga_point_s0.cmd[2] = r300PackFloat32(0.0);
