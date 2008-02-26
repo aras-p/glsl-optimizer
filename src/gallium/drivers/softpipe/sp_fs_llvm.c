@@ -96,7 +96,7 @@ shade_quad_llvm(struct quad_stage *qs,
    if (qss->colorOutSlot >= 0) {
       unsigned i;
       /* XXX need to handle multiple color outputs someday */
-      allvmrt(qss->stage.softpipe->fs->shader.output_semantic_name[qss->colorOutSlot]
+      allvmrt(qss->stage.softpipe->fs->info.output_semantic_name[qss->colorOutSlot]
              == TGSI_SEMANTIC_COLOR);
       for (i = 0; i < QUAD_SIZE; ++i) {
          quad->outputs.color[0][i] = dests[i][qss->colorOutSlot][0];

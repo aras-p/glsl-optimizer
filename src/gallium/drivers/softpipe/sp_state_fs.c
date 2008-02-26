@@ -45,13 +45,12 @@ softpipe_create_fs_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_fragment_shader *state;
-   struct tgsi_shader_info info;
 
-   tgsi_scan_shader(templ->tokens, &info);
-
+   /* debug */
    if (softpipe->dump_fs) 
       tgsi_dump(templ->tokens, 0);
 
+   /* codegen */
    state = softpipe_create_fs_llvm( softpipe, templ );
    if (!state) {
       state = softpipe_create_fs_sse( softpipe, templ );
@@ -59,10 +58,15 @@ softpipe_create_fs_state(struct pipe_context *pipe,
          state = softpipe_create_fs_exec( softpipe, templ );
       }
    }
+
    assert(state);
-   state->uses_kill = (info.opcode_count[TGSI_OPCODE_KIL] ||
-                       info.opcode_count[TGSI_OPCODE_KILP]);
-   state->writes_z = info.writes_z;
+
+   /* get/save the summary info for this shader */
+   tgsi_scan_shader(templ->tokens, &state->info);
+
+   /* convenience field */
+   state->uses_kill = (state->info.opcode_count[TGSI_OPCODE_KIL] ||
+                       state->info.opcode_count[TGSI_OPCODE_KILP]);
    return state;
 }
 

@@ -62,6 +62,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
       const struct pipe_shader_state *vs = &softpipe->vs->shader;
+      const struct sp_fragment_shader *spfs = softpipe->fs;
       const struct pipe_shader_state *fs = &softpipe->fs->shader;
       const enum interp_mode colorInterp
          = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
@@ -83,9 +84,9 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
        * from the vertex shader.
        */
       vinfo->num_attribs = 0;
-      for (i = 0; i < fs->num_inputs; i++) {
+      for (i = 0; i < spfs->info.num_inputs; i++) {
          int src;
-         switch (fs->input_semantic_name[i]) {
+         switch (spfs->info.input_semantic_name[i]) {
          case TGSI_SEMANTIC_POSITION:
             src = draw_find_vs_output(softpipe->draw,
                                       TGSI_SEMANTIC_POSITION, 0);
@@ -94,7 +95,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 
          case TGSI_SEMANTIC_COLOR:
             src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_COLOR, 
-                                 fs->input_semantic_index[i]);
+                                 spfs->info.input_semantic_index[i]);
             draw_emit_vertex_attr(vinfo, EMIT_4F, colorInterp, src);
             break;
 
@@ -106,7 +107,7 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
          case TGSI_SEMANTIC_GENERIC:
             /* this includes texcoords and varying vars */
             src = draw_find_vs_output(softpipe->draw, TGSI_SEMANTIC_GENERIC,
-                                 fs->input_semantic_index[i]);
+                                      spfs->info.input_semantic_index[i]);
             draw_emit_vertex_attr(vinfo, EMIT_4F, INTERP_PERSPECTIVE, src);
             break;
 

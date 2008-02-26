@@ -91,7 +91,7 @@ shade_quad(
    /* store result color */
    if (qss->colorOutSlot >= 0) {
       /* XXX need to handle multiple color outputs someday */
-      assert(qss->stage.softpipe->fs->shader.output_semantic_name[qss->colorOutSlot]
+      assert(qss->stage.softpipe->fs->info.output_semantic_name[qss->colorOutSlot]
              == TGSI_SEMANTIC_COLOR);
       memcpy(
              quad->outputs.color,
@@ -149,7 +149,7 @@ static void shade_begin(struct quad_stage *qs)
    qss->colorOutSlot = -1;
    qss->depthOutSlot = -1;
    for (i = 0; i < qss->stage.softpipe->fs->shader.num_outputs; i++) {
-      switch (qss->stage.softpipe->fs->shader.output_semantic_name[i]) {
+      switch (qss->stage.softpipe->fs->info.output_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          qss->depthOutSlot = i;
          break;

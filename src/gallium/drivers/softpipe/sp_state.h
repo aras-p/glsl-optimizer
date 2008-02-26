@@ -32,6 +32,7 @@
 #define SP_STATE_H
 
 #include "pipe/p_state.h"
+#include "tgsi/util/tgsi_scan.h"
 
 
 #define SP_NEW_VIEWPORT      0x1
@@ -61,10 +62,11 @@ struct tgsi_exec_machine;
  * This is starting to look an awful lot like a quad pipeline stage...
  */
 struct sp_fragment_shader {
-   struct pipe_shader_state   shader;
+   struct pipe_shader_state shader;
+
+   struct tgsi_shader_info info;
 
    boolean uses_kill;
-   boolean writes_z;
 
    void (*prepare)( const struct sp_fragment_shader *shader,
 		    struct tgsi_exec_machine *machine,
