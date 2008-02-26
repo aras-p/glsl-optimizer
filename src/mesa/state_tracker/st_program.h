@@ -57,6 +57,9 @@ struct st_fragment_program
    GLuint input_to_slot[FRAG_ATTRIB_MAX];  /**< Maps FRAG_ATTRIB_x to slot */
    GLuint num_input_slots;
 
+   /** map FP input back to VP output */
+   GLuint input_map[PIPE_MAX_SHADER_INPUTS];
+
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 

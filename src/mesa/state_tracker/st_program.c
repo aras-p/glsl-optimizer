@@ -311,7 +311,7 @@ st_translate_fragment_program(struct st_context *st,
 
          defaultInputMapping[attr] = slot;
 
-         fs.input_map[slot] = vslot++;
+         stfp->input_map[slot] = vslot++;
 
          fs.num_inputs++;
 
