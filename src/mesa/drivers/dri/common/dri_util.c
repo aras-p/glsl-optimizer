@@ -883,6 +883,11 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     dri_interface = interface;
     unsigned int *p;
+    __GLcontextModes *(*initScreen)(__DRIscreen *psc);
+
+    initScreen = dlsym(NULL, __dri2DriverInitScreen);
+    if (initScreen == NULL)
+        return NULL;
 
     psp = _mesa_malloc(sizeof(*psp));
     if (!psp)
@@ -931,7 +936,7 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
     psc->createNewDrawable = driCreateNewDrawable;
     psc->createNewContext  = driCreateNewContext;
 
-    *driver_modes = __dri2DriverInitScreen(psp);
+    *driver_modes = initScreen(psp);
     if (*driver_modes == NULL) {
 	drmBOUnmap(psp->fd, &psp->dri2.sareaBO);
 	drmBOUnreference(psp->fd, &psp->dri2.sareaBO);
