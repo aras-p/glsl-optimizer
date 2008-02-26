@@ -27,8 +27,10 @@
 
 
 #include "main/imports.h"
+#include "main/buffers.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
+#include "main/matrix.h"
 #include "main/renderbuffer.h"
 #include "st_public.h"
 #include "st_context.h"
