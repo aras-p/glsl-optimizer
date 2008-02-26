@@ -71,10 +71,21 @@ i915_get_temp(struct i915_fp_compile *p)
    }
 
    p->temp_flag |= 1 << (bit - 1);
-   return UREG(REG_TYPE_R, (bit - 1));
+   return bit - 1;
 }
 
 
+static void
+i915_release_temp(struct i915_fp_compile *p, int reg)
+{
+   p->temp_flag &= ~(1 << reg);
+}
+
+
+/**
+ * Get unpreserved temporary, a temp whose value is not preserved between
+ * PS program phases.
+ */
 uint
 i915_get_utemp(struct i915_fp_compile * p)
 {
@@ -183,41 +194,63 @@ i915_emit_arith(struct i915_fp_compile * p,
    return dest;
 }
 
+
+/**
+ * Emit a texture load or texkill instruction.
+ * \param dest  the dest i915 register
+ * \param destmask  the dest register writemask
+ * \param sampler  the i915 sampler register
+ * \param coord  the i915 source texcoord operand
+ * \param opcode  the instruction opcode
+ */
 uint i915_emit_texld( struct i915_fp_compile *p,
 			uint dest,
 			uint destmask,
 			uint sampler,
 			uint coord,
-			uint op )
+			uint opcode )
 {
-   uint k = UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord));
+   const uint k = UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord));
+   int temp = -1;
+
    if (coord != k) {
-      /* No real way to work around this in the general case - need to
-       * allocate and declare a new temporary register (a utemp won't
-       * do).  Will fallback for now.
+      /* texcoord is swizzled or negated.  Need to allocate a new temporary
+       * register (a utemp / unpreserved temp) won't do.
        */
-      i915_program_error(p, "Can't (yet) swizzle TEX arguments");
-      assert(0);
-      return 0;
+      uint tempReg;
+
+      temp = i915_get_temp(p);           /* get temp reg index */
+      printf("***** ALLOC TEMP %d\n", temp);
+      tempReg = UREG(REG_TYPE_R, temp);  /* make i915 register */
+
+      i915_emit_arith( p, A0_MOV,
+                       tempReg, A0_DEST_CHANNEL_ALL, /* dest reg, writemask */
+                       0,                            /* saturate */
+                       coord, 0, 0 );                /* src0, src1, src2 */
+
+      /* new src texcoord is tempReg */
+      coord = tempReg;
    }
 
    /* Don't worry about saturate as we only support  
     */
    if (destmask != A0_DEST_CHANNEL_ALL) {
+      /* if not writing to XYZW... */
       uint tmp = i915_get_utemp(p);
-      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, op );
+      i915_emit_texld( p, tmp, A0_DEST_CHANNEL_ALL, sampler, coord, opcode );
       i915_emit_arith( p, A0_MOV, dest, destmask, 0, tmp, 0, 0 );
-      return dest;
+      /* XXX release utemp here? */
    }
    else {
       assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
       assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
 
+      /* is the sampler coord a texcoord input reg? */
       if (GET_UREG_TYPE(coord) != REG_TYPE_T) {
 	 p->nr_tex_indirect++;
       }
 
-      *(p->csr++) = (op | 
+      *(p->csr++) = (opcode | 
 		     T0_DEST( dest ) |
 		     T0_SAMPLER( sampler ));
 
@@ -225,8 +258,12 @@ uint i915_emit_texld( struct i915_fp_compile *p,
       *(p->csr++) = T2_MBZ;
 
       p->nr_tex_insn++;
-      return dest;
    }
+
+   if (temp >= 0)
+      i915_release_temp(p, temp);
+
+   return dest;
 }
 
 

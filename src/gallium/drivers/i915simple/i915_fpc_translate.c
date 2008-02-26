@@ -575,8 +575,12 @@ i915_translate_instruction(struct i915_fp_compile *p,
       src0 = src_vector(p, &inst->FullSrcRegisters[0]);
       tmp = i915_get_utemp(p);
 
-      i915_emit_texld(p, tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
-                      0, src0, T0_TEXKILL);
+      i915_emit_texld(p,
+                      tmp,                   /* dest reg: a dummy reg */
+                      A0_DEST_CHANNEL_ALL,   /* dest writemask */
+                      0,                     /* sampler */
+                      src0,                  /* coord*/
+                      T0_TEXKILL);           /* opcode */
       break;
 
    case TGSI_OPCODE_LG2:
@@ -970,6 +974,16 @@ i915_translate_instructions(struct i915_fp_compile *p,
                ifs->num_constants = MAX2(ifs->num_constants, i + 1);
             }
          }
+         else if (parse.FullToken.FullDeclaration.Declaration.File
+                  == TGSI_FILE_TEMPORARY) {
+            uint i;
+            for (i = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
+                 i <= parse.FullToken.FullDeclaration.u.DeclarationRange.Last;
+                 i++) {
+               assert(i < I915_MAX_TEMPORARY);
+               p->temp_flag |= (1 << i); /* mark temp as used */
+            }
+         }
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
@@ -1048,7 +1062,7 @@ i915_init_compile(struct i915_context *i915,
    p->decl = p->declarations;
    p->decl_s = 0;
    p->decl_t = 0;
-   p->temp_flag = 0xffff000;
+   p->temp_flag = ~0x0 << I915_MAX_TEMPORARY;
    p->utemp_flag = ~0x7;
 
    p->wpos_tex = -1;
