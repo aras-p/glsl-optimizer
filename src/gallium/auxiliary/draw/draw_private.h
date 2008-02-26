@@ -215,7 +215,7 @@ struct draw_context
    float plane[12][4];
    unsigned nr_planes;
 
-   boolean convert_wide_points; /**< convert wide points to tris? */
+   float wide_point_threshold; /**< convert pnts to tris if larger than this */
    boolean convert_wide_lines;  /**< convert wide lines to tris? */
    boolean use_sse;
 

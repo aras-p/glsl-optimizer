@@ -337,9 +337,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    draw_install_pstipple_stage(softpipe->draw, &softpipe->pipe);
 #endif
 
-   /* sp_prim_setup can do wide points (don't convert to quads) */
-   draw_convert_wide_points(softpipe->draw, FALSE);
-
    sp_init_surface_functions(softpipe);
 
    return &softpipe->pipe;

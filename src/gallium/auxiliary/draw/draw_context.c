@@ -80,7 +80,7 @@ struct draw_context *draw_create( void )
 
    draw->shader_queue_flush = draw_vertex_shader_queue_flush;
 
-   draw->convert_wide_points = TRUE;
+   draw->wide_point_threshold = 1000000.0; /* infinity */
    draw->convert_wide_lines = TRUE;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
@@ -220,14 +220,14 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
 
 
 /**
- * Tells the draw module whether to convert wide points (size != 1)
- * into triangles.
+ * Tells the draw module to draw points with triangles if their size
+ * is greater than this threshold.
  */
 void
-draw_convert_wide_points(struct draw_context *draw, boolean enable)
+draw_wide_point_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->convert_wide_points = enable;
+   draw->wide_point_threshold = threshold;
 }
 
 
