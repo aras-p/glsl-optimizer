@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <stdio.h>
+#include <dlfcn.h>
 
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *)-1)
@@ -883,7 +884,7 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
     static const __DRIextension *emptyExtensionList[] = { NULL };
     dri_interface = interface;
     unsigned int *p;
-    __GLcontextModes *(*initScreen)(__DRIscreen *psc);
+    __GLcontextModes *(*initScreen)(__DRIscreenPrivate *psc);
 
     initScreen = dlsym(NULL, "__dri2DriverInitScreen");
     if (initScreen == NULL)
