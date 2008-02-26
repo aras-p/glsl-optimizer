@@ -94,6 +94,10 @@ static void dump_wm_surface_state(struct brw_context *brw)
       struct brw_surface_state *surf;
       char name[20];
 
+      if (surf_bo == NULL) {
+	 fprintf(stderr, "WM SS%d: NULL\n", i);
+	 continue;
+      }
       dri_bo_map(surf_bo, GL_FALSE);
       surfoff = surf_bo->offset;
       surf = (struct brw_surface_state *)(surf_bo->virtual);
