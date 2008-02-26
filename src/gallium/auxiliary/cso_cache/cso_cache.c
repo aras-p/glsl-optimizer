@@ -33,6 +33,17 @@
 #include "cso_cache.h"
 #include "cso_hash.h"
 
+
+struct cso_cache {
+   struct cso_hash *blend_hash;
+   struct cso_hash *depth_stencil_hash;
+   struct cso_hash *fs_hash;
+   struct cso_hash *vs_hash;
+   struct cso_hash *rasterizer_hash;
+   struct cso_hash *sampler_hash;
+   int    max_size;
+};
+
 #if 1
 static unsigned hash_key(const void *key, unsigned key_size)
 {
@@ -180,6 +191,7 @@ struct cso_cache *cso_cache_create(void)
 {
    struct cso_cache *sc = MALLOC_STRUCT(cso_cache);
 
+   sc->max_size           = 4096;
    sc->blend_hash         = cso_hash_create();
    sc->sampler_hash       = cso_hash_create();
    sc->depth_stencil_hash = cso_hash_create();
@@ -287,5 +299,15 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_hash_delete(sc->fs_hash);
    cso_hash_delete(sc->vs_hash);
    FREE(sc);
+}
+
+void cso_set_maximum_cache_size(struct cso_cache *sc, int number)
+{
+   sc->max_size = number;
+}
+
+int cso_maximum_cache_size(const struct cso_cache *sc)
+{
+   return sc->max_size;
 }
 

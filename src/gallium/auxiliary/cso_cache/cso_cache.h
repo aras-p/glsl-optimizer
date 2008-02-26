@@ -28,7 +28,7 @@
  /**
   * @file
   * Constant State Object (CSO) cache.
-  * 
+  *
   * The basic idea is that the states are created via the
   * create_state/bind_state/delete_state semantics. The driver is expected to
   * perform as much of the Gallium state translation to whatever its internal
@@ -36,15 +36,15 @@
   * mechanism where it stores the created states. When the pipeline needs an
   * actual state change, a bind call is issued. In the bind call the driver
   * gets its already translated representation.
-  * 
+  *
   * Those semantics mean that the driver doesn't do the repeated translations
   * of states on every frame, but only once, when a new state is actually
   * created.
-  * 
+  *
   * Even on hardware that doesn't do any kind of state cache, it makes the
   * driver look a lot neater, plus it avoids all the redundant state
   * translations on every frame.
-  * 
+  *
   * Currently our constant state objects are:
   * - alpha test
   * - blend
@@ -53,7 +53,7 @@
   * - rasterizer (old setup)
   * - sampler
   * - vertex shader
-  * 
+  *
   * Things that are not constant state objects include:
   * - blend_color
   * - clip_state
@@ -65,7 +65,7 @@
   * - scissor_state
   * - texture_state
   * - viewport_state
-  * 
+  *
   * @author Zack Rusin <zack@tungstengraphics.com>
   */
 
@@ -75,24 +75,16 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
-/* cso_hash.h is necessary for cso_hash_iter, as MSVC requires structures 
+/* cso_hash.h is necessary for cso_hash_iter, as MSVC requires structures
  * returned by value to be fully defined */
-#include "cso_hash.h" 
+#include "cso_hash.h"
 
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-  
-struct cso_cache {
-   struct cso_hash *blend_hash;
-   struct cso_hash *depth_stencil_hash;
-   struct cso_hash *fs_hash;
-   struct cso_hash *vs_hash;
-   struct cso_hash *rasterizer_hash;
-   struct cso_hash *sampler_hash;
-};
+struct cso_cache;
 
 struct cso_blend {
    struct pipe_blend_state state;
@@ -164,6 +156,8 @@ void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
 void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
                       enum cso_cache_type type);
 
+void cso_set_maximum_cache_size(struct cso_cache *sc, int number);
+int cso_maximum_cache_size(const struct cso_cache *sc);
 
 #ifdef	__cplusplus
 }
