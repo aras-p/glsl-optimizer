@@ -218,8 +218,6 @@ struct brw_fragment_program {
    struct brw_shader_info info2;  /* XXX get rid of this */
    
    boolean UsesDepth;
-   boolean UsesKill;
-   boolean ComputesDepth;
    int id;
 };
 
