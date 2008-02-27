@@ -164,6 +164,7 @@ brw_surface_fill(struct pipe_context *pipe,
 void
 brw_init_surface_functions(struct brw_context *brw)
 {
+   (void) brw_surface_data; /* silence warning */
    brw->pipe.surface_copy  = brw_surface_copy;
    brw->pipe.surface_fill  = brw_surface_fill;
 }

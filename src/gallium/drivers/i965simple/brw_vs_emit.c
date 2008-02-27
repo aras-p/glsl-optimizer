@@ -1051,7 +1051,7 @@ static void process_instruction(struct brw_vs_compile *c,
 {
    struct brw_reg args[3], dst;
    struct brw_compile *p = &c->func;
-   struct brw_indirect stack_index = brw_indirect(0, 0);
+   /*struct brw_indirect stack_index = brw_indirect(0, 0);*/
    unsigned i;
    unsigned index;
    unsigned file;
