@@ -33,55 +33,9 @@
 /** XXX temporary screen/pipe duplication here */
 
 
-static const char *i915_get_vendor_screen( struct pipe_screen *screen )
-{
-   return "Tungsten Graphics, Inc.";
-}
-
 static const char *i915_get_vendor( struct pipe_context *pipe )
 {
-   return "Tungsten Graphics, Inc.";
-}
-
-
-static const char *i915_get_name_screen( struct pipe_screen *screen )
-{
-   struct i915_screen *i915screen = i915_screen(screen);
-   static char buffer[128];
-   const char *chipset;
-
-   switch (i915screen->pci_id) {
-   case PCI_CHIP_I915_G:
-      chipset = "915G";
-      break;
-   case PCI_CHIP_I915_GM:
-      chipset = "915GM";
-      break;
-   case PCI_CHIP_I945_G:
-      chipset = "945G";
-      break;
-   case PCI_CHIP_I945_GM:
-      chipset = "945GM";
-      break;
-   case PCI_CHIP_I945_GME:
-      chipset = "945GME";
-      break;
-   case PCI_CHIP_G33_G:
-      chipset = "G33";
-      break;
-   case PCI_CHIP_Q35_G:
-      chipset = "Q35";
-      break;
-   case PCI_CHIP_Q33_G:
-      chipset = "Q33";
-      break;
-   default:
-      chipset = "unknown";
-      break;
-   }
-
-   sprintf(buffer, "i915 (chipset: %s)", chipset);
-   return buffer;
+   return pipe->screen->get_vendor(pipe->screen);
 }
 
 
@@ -96,11 +50,4 @@ i915_init_string_functions(struct i915_context *i915)
 {
    i915->pipe.get_name = i915_get_name;
    i915->pipe.get_vendor = i915_get_vendor;
-}
-
-void
-i915_init_screen_string_functions(struct pipe_screen *screen)
-{
-   screen->get_name = i915_get_name_screen;
-   screen->get_vendor = i915_get_vendor_screen;
 }

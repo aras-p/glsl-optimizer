@@ -317,7 +317,6 @@ void i915_init_surface_functions( struct i915_context *i915 );
 void i915_init_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
-void i915_init_screen_string_functions(struct pipe_screen *screen);
 
 
 

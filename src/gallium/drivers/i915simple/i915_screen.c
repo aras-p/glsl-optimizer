@@ -133,7 +133,6 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    i915screen->screen.get_name = i915_get_name;
    i915screen->screen.get_vendor = i915_get_vendor;
 
-   i915_init_screen_string_functions(&i915screen->screen);
    i915_init_screen_texture_functions(&i915screen->screen);
 
    return &i915screen->screen;
