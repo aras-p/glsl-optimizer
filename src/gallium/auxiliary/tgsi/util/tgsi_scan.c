@@ -46,10 +46,12 @@ void
 tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info)
 {
-   uint procType;
+   uint procType, i;
    struct tgsi_parse_context parse;
 
    memset(info, 0, sizeof(*info));
+   for (i = 0; i < TGSI_FILE_COUNT; i++)
+      info->file_max[i] = -1;
 
    /**
     ** Setup to begin parsing input shader
@@ -97,6 +99,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                /* only first 32 regs will appear in this bitfield */
                info->file_mask[file] |= (1 << i);
                info->file_count[file]++;
+               info->file_max[file] = MAX2(info->file_max[file], i);
 
                if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[info->num_inputs]

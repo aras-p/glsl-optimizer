@@ -51,6 +51,7 @@ struct tgsi_shader_info
 
    uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
    uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
+   int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
 
    uint immediate_count; /**< number of immediates declared */
 
