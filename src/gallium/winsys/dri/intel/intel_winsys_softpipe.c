@@ -68,6 +68,7 @@ intel_create_softpipe( struct intel_context *intel,
                        struct pipe_winsys *winsys )
 {
    struct intel_softpipe_winsys *isws = CALLOC_STRUCT( intel_softpipe_winsys );
+   struct pipe_screen *screen = softpipe_create_screen(winsys);
    
    /* Fill in this struct with callbacks that softpipe will need to
     * communicate with the window system, buffer manager, etc. 
@@ -77,5 +78,5 @@ intel_create_softpipe( struct intel_context *intel,
 
    /* Create the softpipe context:
     */
-   return softpipe_create( winsys, &isws->sws );
+   return softpipe_create( screen, winsys, &isws->sws );
 }

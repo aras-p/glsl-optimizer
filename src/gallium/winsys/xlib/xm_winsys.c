@@ -457,7 +457,8 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 #endif
    {
       struct softpipe_winsys *spws = xmesa_get_softpipe_winsys(pixelformat);
-      pipe = softpipe_create( pws, spws );
+      struct pipe_screen *screen = softpipe_create_screen(pws);
+      pipe = softpipe_create( screen, pws, spws );
       if (pipe)
          pipe->priv = xmesa;
 

@@ -29,8 +29,12 @@
 #define SP_TEXTURE_H
 
 
+#include "pipe/p_state.h"
+
+
 struct pipe_context;
-struct pipe_texture;
+struct pipe_screen;
+struct softpipe_context;
 
 
 struct softpipe_texture
@@ -56,6 +60,10 @@ softpipe_texture(struct pipe_texture *pt)
 
 extern void
 softpipe_init_texture_funcs( struct softpipe_context *softpipe );
+
+
+extern void
+softpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 
 
 #endif /* SP_TEXTURE */
