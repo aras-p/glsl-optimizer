@@ -33,6 +33,11 @@
 #include "pipe/p_screen.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * Subclass of pipe_screen
  */
@@ -56,5 +61,9 @@ i915_screen(struct pipe_screen *pscreen)
 extern struct pipe_screen *
 i915_create_screen(struct pipe_winsys *winsys, uint pci_id);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* I915_SCREEN_H */

@@ -40,6 +40,11 @@
 #include "pipe/p_defines.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+   
 /* Pipe drivers are (meant to be!) independent of both GL and the
  * window system.  The window system provides a buffer manager and a
  * set of additional hooks for things like command buffer submission,
@@ -111,5 +116,9 @@ struct i915_winsys {
 struct pipe_context *i915_create_context( struct pipe_screen *,
                                           struct pipe_winsys *,
                                           struct i915_winsys * );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif 

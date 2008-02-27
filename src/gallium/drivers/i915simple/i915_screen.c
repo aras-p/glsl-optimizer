@@ -30,6 +30,7 @@
 #include "pipe/p_winsys.h"
 
 #include "i915_reg.h"
+#include "i915_context.h"
 #include "i915_screen.h"
 #include "i915_texture.h"
 
