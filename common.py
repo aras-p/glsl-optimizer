@@ -109,5 +109,8 @@ def make_build_dir(env):
 	if env['debug']:
 		build_subdir += "-debug"
 	build_dir = os.path.join(build_topdir, build_subdir)
+	# Place the .sconsign file on the builddir too, to avoid issues with different scons
+	# versions building the same source file
+	env.SConsignFile(os.path.join(build_dir, '.sconsign'))
 	return build_dir
 
