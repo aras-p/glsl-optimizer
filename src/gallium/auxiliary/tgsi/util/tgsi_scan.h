@@ -57,6 +57,7 @@ struct tgsi_shader_info
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
    boolean writes_z;  /**< does fragment shader write Z value? */
+   boolean uses_kill;  /**< KIL or KILP instruction used? */
 };
 
 
