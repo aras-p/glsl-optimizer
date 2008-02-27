@@ -228,6 +228,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
     * SPU stuff
     */
    cell->num_spus = 6;
+   /* XXX is this in SDK 3.0 only?
+   cell->num_spus = spe_cpu_info_get(SPE_COUNT_PHYSICAL_SPES, -1);
+   */
 
    cell_start_spus(cell);
 
