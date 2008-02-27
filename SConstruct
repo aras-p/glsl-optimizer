@@ -4,6 +4,7 @@
 import os
 import os.path
 import sys
+import platform as _platform
 
 
 #######################################################################
@@ -32,8 +33,22 @@ platform_map = {
 	'linux2': 'linux',
 	'win32': 'winddk',
 }
+default_platform = sys.platform
+default_platform = platform_map.get(default_platform, default_platform)
 
-default_platform = platform_map.get(sys.platform, sys.platform)
+machine_map = {
+	'x86': 'x86',
+	'i386': 'x86',
+	'i486': 'x86',
+	'i586': 'x86',
+	'i686': 'x86',
+	'x86_64': 'x86_64',
+}
+if 'PROCESSOR_ARCHITECTURE' in os.environ:
+	default_machine = os.environ['PROCESSOR_ARCHITECTURE']
+else:
+	default_machine = _platform.machine()
+default_machine = machine_map.get(default_machine, 'generic')
 
 if default_platform in ('linux', 'freebsd', 'darwin'):
 	default_statetrackers = 'mesa'
@@ -53,9 +68,9 @@ else:
 
 # TODO: auto-detect defaults
 opts = Options('config.py')
-opts.Add(BoolOption('debug', 'build debug version', False))
-opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
-                     allowed_values=('generic', 'x86', 'x86-64')))
+opts.Add(BoolOption('debug', 'build debug version', 'no'))
+opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
+                     allowed_values=('generic', 'x86', 'x86_64')))
 opts.Add(EnumOption('platform', 'target platform', default_platform,
                      allowed_values=('linux', 'cell', 'winddk')))
 opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetrackers,
@@ -296,8 +311,8 @@ if dri:
 	build_subdir += "-dri"
 if llvm:
 	build_subdir += "-llvm"
-if x86:
-	build_subdir += "-x86"
+if env['machine'] != 'generic':
+	build_subdir += '-' + env['machine']
 if debug:
 	build_subdir += "-debug"
 build_dir = os.path.join(build_topdir, build_subdir)
