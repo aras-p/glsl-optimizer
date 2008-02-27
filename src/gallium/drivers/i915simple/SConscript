@@ -22,7 +22,6 @@ i915simple = env.ConvenienceLibrary(
 		'i915_state_emit.c',
 		'i915_state_immediate.c',
 		'i915_state_sampler.c',
-		'i915_strings.c',
 		'i915_surface.c',
 		'i915_texture.c',
 	])

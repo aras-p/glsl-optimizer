@@ -77,30 +77,6 @@ cell_is_format_supported( struct pipe_context *pipe,
 }
 
 
-static int cell_get_param(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_param(pipe->screen, param);
-}
-
-static float cell_get_paramf(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_paramf(pipe->screen, param);
-}
-
-static const char *
-cell_get_name( struct pipe_context *pipe )
-{
-   return pipe->screen->get_name(pipe->screen);
-}
-
-static const char *
-cell_get_vendor( struct pipe_context *pipe )
-{
-   return pipe->screen->get_vendor(pipe->screen);
-}
-
-
-
 static void
 cell_destroy_context( struct pipe_context *pipe )
 {
@@ -148,11 +124,6 @@ cell_create_context(struct pipe_screen *screen,
 
    /* queries */
    cell->pipe.is_format_supported = cell_is_format_supported;
-   cell->pipe.get_name = cell_get_name;
-   cell->pipe.get_vendor = cell_get_vendor;
-   cell->pipe.get_param = cell_get_param;
-   cell->pipe.get_paramf = cell_get_paramf;
-
 
    /* state setters */
    cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;

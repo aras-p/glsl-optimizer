@@ -143,27 +143,6 @@ static void softpipe_destroy( struct pipe_context *pipe )
 }
 
 
-/* XXX these will go away shortly */
-static const char *softpipe_get_name( struct pipe_context *pipe )
-{
-   return pipe->screen->get_name(pipe->screen);
-}
-
-static const char *softpipe_get_vendor( struct pipe_context *pipe )
-{
-   return pipe->screen->get_vendor(pipe->screen);
-}
-
-static int softpipe_get_param(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_param(pipe->screen, param);
-}
-
-static float softpipe_get_paramf(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_paramf(pipe->screen, param);
-}
-
 struct pipe_context *
 softpipe_create( struct pipe_screen *screen,
                  struct pipe_winsys *pipe_winsys,
@@ -186,10 +165,6 @@ softpipe_create( struct pipe_screen *screen,
 
    /* queries */
    softpipe->pipe.is_format_supported = softpipe_is_format_supported;
-   softpipe->pipe.get_name = softpipe_get_name;
-   softpipe->pipe.get_vendor = softpipe_get_vendor;
-   softpipe->pipe.get_param = softpipe_get_param;
-   softpipe->pipe.get_paramf = softpipe_get_paramf;
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;

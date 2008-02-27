@@ -66,12 +66,15 @@ struct pipe_context {
    boolean (*is_format_supported)( struct pipe_context *pipe,
                                    enum pipe_format format, uint type );
 
+#if 0
+   /* XXX obsolete, moved into pipe_screen */
    const char *(*get_name)( struct pipe_context *pipe );
 
    const char *(*get_vendor)( struct pipe_context *pipe );
 
    int (*get_param)( struct pipe_context *pipe, int param );
    float (*get_paramf)( struct pipe_context *pipe, int param );
+#endif
 
 
    /*

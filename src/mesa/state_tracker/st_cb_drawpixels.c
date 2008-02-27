@@ -649,7 +649,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* XXX if DrawPixels image is larger than max texture size, break
     * it up into chunks.
     */
-   maxSize = 1 << (pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+   maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
    assert(width <= maxSize);
    assert(height <= maxSize);
 

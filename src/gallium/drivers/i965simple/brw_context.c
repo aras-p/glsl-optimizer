@@ -71,20 +71,6 @@ static void brw_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 }
 
 
-static int
-brw_get_param(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_param(pipe->screen, param);
-}
-
-
-static float
-brw_get_paramf(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_paramf(pipe->screen, param);
-}
-
-
 static boolean
 brw_is_format_supported( struct pipe_context *pipe,
                           enum pipe_format format, uint type )
@@ -173,15 +159,12 @@ struct pipe_context *brw_create(struct pipe_screen *screen,
 
    brw->pipe.destroy = brw_destroy;
    brw->pipe.is_format_supported = brw_is_format_supported;
-   brw->pipe.get_param = brw_get_param;
-   brw->pipe.get_paramf = brw_get_paramf;
    brw->pipe.clear = brw_clear;
 
    brw_init_surface_functions(brw);
    brw_init_texture_functions(brw);
    brw_init_state_functions(brw);
    brw_init_flush_functions(brw);
-   brw_init_string_functions(brw);
    brw_init_draw_functions( brw );
 
 

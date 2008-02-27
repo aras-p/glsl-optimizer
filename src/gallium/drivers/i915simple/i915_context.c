@@ -91,22 +91,6 @@ i915_is_format_supported( struct pipe_context *pipe,
 }
 
 
-/* XXX temporary */
-static int
-i915_get_param(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_param(pipe->screen, param);
-}
-
-
-/* XXX temporary */
-static float
-i915_get_paramf(struct pipe_context *pipe, int param)
-{
-   return pipe->screen->get_paramf(pipe->screen, param);
-}
-
-
 static void i915_destroy( struct pipe_context *pipe )
 {
    struct i915_context *i915 = i915_context( pipe );
@@ -205,8 +189,6 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
 
    i915->pipe.destroy = i915_destroy;
    i915->pipe.is_format_supported = i915_is_format_supported;
-   i915->pipe.get_param = i915_get_param;
-   i915->pipe.get_paramf = i915_get_paramf;
 
    i915->pipe.clear = i915_clear;
 
@@ -229,7 +211,6 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);
-   i915_init_string_functions(i915);
    i915_init_texture_functions(i915);
 
    draw_install_aaline_stage(i915->draw, &i915->pipe);
@@ -241,11 +222,6 @@ struct pipe_context *i915_create_context( struct pipe_screen *screen,
    /* Batch stream debugging is a bit hacked up at the moment:
     */
    i915->batch_start = NULL;
-
-   /*
-    * XXX we could plug GL selection/feedback into the drawing pipeline
-    * by specifying a different setup/render stage.
-    */
 
    return &i915->pipe;
 }

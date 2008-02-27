@@ -35,7 +35,6 @@ i965simple = env.ConvenienceLibrary(
 		'brw_state_cache.c',
 		'brw_state_pool.c',
 		'brw_state_upload.c',
-		'brw_strings.c',
 		'brw_surface.c',
 		'brw_tex_layout.c',
 		'brw_urb.c',

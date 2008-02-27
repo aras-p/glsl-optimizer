@@ -117,12 +117,15 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->hw = hw;
    failover->sw = sw;
    failover->pipe.winsys = hw->winsys;
+   failover->pipe.screen = hw->screen;
    failover->pipe.destroy = failover_destroy;
    failover->pipe.is_format_supported = hw->is_format_supported;
+#if 0
    failover->pipe.get_name = hw->get_name;
    failover->pipe.get_vendor = hw->get_vendor;
    failover->pipe.get_param = hw->get_param;
    failover->pipe.get_paramf = hw->get_paramf;
+#endif
 
    failover->pipe.draw_arrays = failover_draw_arrays;
    failover->pipe.draw_elements = failover_draw_elements;
