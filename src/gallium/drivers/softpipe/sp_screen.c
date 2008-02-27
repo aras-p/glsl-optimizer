@@ -107,6 +107,29 @@ softpipe_get_paramf(struct pipe_screen *screen, int param)
 }
 
 
+/**
+ * Query format support for creating a texture, drawing surface, etc.
+ * \param format  the format to test
+ * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
+ */
+static boolean
+softpipe_is_format_supported( struct pipe_screen *screen,
+                              enum pipe_format format, uint type )
+{
+   switch (type) {
+   case PIPE_TEXTURE:
+      /* softpipe supports all texture formats */
+      return TRUE;
+   case PIPE_SURFACE:
+      /* softpipe supports all (off-screen) surface formats */
+      return TRUE;
+   default:
+      assert(0);
+      return FALSE;
+   }
+}
+
+
 static void
 softpipe_destroy_screen( struct pipe_screen *screen )
 {
@@ -134,6 +157,7 @@ softpipe_create_screen(struct pipe_winsys *winsys)
    screen->get_vendor = softpipe_get_vendor;
    screen->get_param = softpipe_get_param;
    screen->get_paramf = softpipe_get_paramf;
+   screen->is_format_supported = softpipe_is_format_supported;
 
    softpipe_init_screen_texture_funcs(screen);
 

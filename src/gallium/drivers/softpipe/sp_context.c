@@ -48,29 +48,6 @@
 
 
 /**
- * Query format support for creating a texture, drawing surface, etc.
- * \param format  the format to test
- * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
- */
-static boolean
-softpipe_is_format_supported( struct pipe_context *pipe,
-                              enum pipe_format format, uint type )
-{
-   switch (type) {
-   case PIPE_TEXTURE:
-      /* softpipe supports all texture formats */
-      return TRUE;
-   case PIPE_SURFACE:
-      /* softpipe supports all (off-screen) surface formats */
-      return TRUE;
-   default:
-      assert(0);
-      return FALSE;
-   }
-}
-
-
-/**
  * Map any drawing surfaces which aren't already mapped
  */
 void
@@ -162,9 +139,6 @@ softpipe_create( struct pipe_screen *screen,
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.screen = screen;
    softpipe->pipe.destroy = softpipe_destroy;
-
-   /* queries */
-   softpipe->pipe.is_format_supported = softpipe_is_format_supported;
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;

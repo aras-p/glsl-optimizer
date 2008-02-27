@@ -60,24 +60,6 @@ struct pipe_context {
    void (*destroy)( struct pipe_context * );
 
    /*
-    * Queries
-    */
-   /** type is one of PIPE_SURFACE, PIPE_TEXTURE, etc. */
-   boolean (*is_format_supported)( struct pipe_context *pipe,
-                                   enum pipe_format format, uint type );
-
-#if 0
-   /* XXX obsolete, moved into pipe_screen */
-   const char *(*get_name)( struct pipe_context *pipe );
-
-   const char *(*get_vendor)( struct pipe_context *pipe );
-
-   int (*get_param)( struct pipe_context *pipe, int param );
-   float (*get_paramf)( struct pipe_context *pipe, int param );
-#endif
-
-
-   /*
     * Drawing.  
     * Return false on fallbacks (temporary??)
     */
@@ -210,6 +192,7 @@ struct pipe_context {
 
    /*
     * Texture functions
+    * XXX these are moving to pipe_screen...
     */
    struct pipe_texture * (*texture_create)(struct pipe_context *pipe,
                                            const struct pipe_texture *templat);

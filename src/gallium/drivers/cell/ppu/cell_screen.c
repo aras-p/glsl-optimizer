@@ -112,6 +112,24 @@ cell_get_paramf(struct pipe_screen *screen, int param)
 }
 
 
+static boolean
+cell_is_format_supported( struct pipe_screen *screen,
+                          enum pipe_format format, uint type )
+{
+   switch (type) {
+   case PIPE_TEXTURE:
+      /* cell supports all texture formats, XXX for now anyway */
+      return TRUE;
+   case PIPE_SURFACE:
+      /* cell supports all (off-screen) surface formats, XXX for now */
+      return TRUE;
+   default:
+      assert(0);
+      return FALSE;
+   }
+}
+
+
 static void
 cell_destroy_screen( struct pipe_screen *screen )
 {
@@ -140,6 +158,7 @@ cell_create_screen(struct pipe_winsys *winsys)
    screen->get_vendor = cell_get_vendor;
    screen->get_param = cell_get_param;
    screen->get_paramf = cell_get_paramf;
+   screen->is_format_supported = cell_is_format_supported;
 
    cell_init_screen_texture_funcs(screen);
 

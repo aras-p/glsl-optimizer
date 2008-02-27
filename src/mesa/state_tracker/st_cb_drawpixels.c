@@ -993,6 +993,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                     const GLubyte *bitmap)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_surface *surface;
    uint format = 0, cpp, comp;
    ubyte *dest;
@@ -1000,12 +1001,12 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    int row, col;
 
    /* find a texture format we know */
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
+   if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_U_I8;
       cpp = 1;
       comp = 0;
    }
-   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
+   else if (screen->is_format_supported( screen, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_A8R8G8B8_UNORM;
       cpp = 4;
       comp = 3; /* alpha channel */ /*XXX little-endian dependency */

@@ -57,26 +57,6 @@
 
 
 
-static boolean
-cell_is_format_supported( struct pipe_context *pipe,
-                          enum pipe_format format, uint type )
-{
-   /*struct cell_context *cell = cell_context( pipe );*/
-
-   switch (type) {
-   case PIPE_TEXTURE:
-      /* cell supports all texture formats, XXX for now anyway */
-      return TRUE;
-   case PIPE_SURFACE:
-      /* cell supports all (off-screen) surface formats, XXX for now */
-      return TRUE;
-   default:
-      assert(0);
-      return FALSE;
-   }
-}
-
-
 static void
 cell_destroy_context( struct pipe_context *pipe )
 {
@@ -121,9 +101,6 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.winsys = screen->winsys;
    cell->pipe.screen = screen;
    cell->pipe.destroy = cell_destroy_context;
-
-   /* queries */
-   cell->pipe.is_format_supported = cell_is_format_supported;
 
    /* state setters */
    cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;

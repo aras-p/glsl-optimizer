@@ -227,6 +227,7 @@ st_render_mipmap(struct st_context *st,
                  uint baseLevel, uint lastLevel)
 {
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
    struct pipe_sampler_state sampler;
    void *sampler_cso;
@@ -237,7 +238,7 @@ st_render_mipmap(struct st_context *st,
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
    /* check if we can render in the texture's format */
-   if (!pipe->is_format_supported(pipe, pt->format, PIPE_SURFACE)) {
+   if (!screen->is_format_supported(screen, pt->format, PIPE_SURFACE)) {
       return FALSE;
    }
 
