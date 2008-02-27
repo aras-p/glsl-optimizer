@@ -17,6 +17,7 @@ C_SOURCES = \
 	i915_state_derived.c \
 	i915_state_emit.c \
 	i915_state_sampler.c \
+	i915_screen.c \
 	i915_strings.c \
 	i915_prim_emit.c \
 	i915_prim_vbuf.c \

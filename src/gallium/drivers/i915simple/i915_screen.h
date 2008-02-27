@@ -25,19 +25,36 @@
  * 
  **************************************************************************/
 
-#ifndef I915_TEXTURE_H
-#define I915_TEXTURE_H
 
-struct i915_context;
-struct pipe_screen;
+#ifndef I915_SCREEN_H
+#define I915_SCREEN_H
 
 
-extern void
-i915_init_texture_functions(struct i915_context *i915);
+#include "pipe/p_screen.h"
 
 
-extern void
-i915_init_screen_texture_functions(struct pipe_screen *screen);
+/**
+ * Subclass of pipe_screen
+ */
+struct i915_screen
+{
+   struct pipe_screen screen;
+
+   boolean is_i945;
+   uint pci_id;
+};
 
 
-#endif /* I915_TEXTURE_H */
+/** cast wrapper */
+static INLINE struct i915_screen *
+i915_screen(struct pipe_screen *pscreen)
+{
+   return (struct i915_screen *) pscreen;
+}
+
+
+extern struct pipe_screen *
+i915_create_screen(struct pipe_winsys *winsys, uint pci_id);
+
+
+#endif /* I915_SCREEN_H */

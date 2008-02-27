@@ -52,6 +52,7 @@
 
 struct pipe_buffer;
 struct pipe_winsys;
+struct pipe_screen;
 
 
 /**
@@ -107,9 +108,8 @@ struct i915_winsys {
 #define I915_BUFFER_USAGE_LIT_VERTEX  (PIPE_BUFFER_USAGE_CUSTOM << 0)
 
 
-struct pipe_context *i915_create( struct pipe_winsys *,
-				  struct i915_winsys *,
-				  unsigned pci_id );
-
+struct pipe_context *i915_create_context( struct pipe_screen *,
+                                          struct pipe_winsys *,
+                                          struct i915_winsys * );
 
 #endif 

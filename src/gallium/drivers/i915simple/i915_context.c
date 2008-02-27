@@ -234,33 +234,11 @@ static boolean i915_draw_arrays( struct pipe_context *pipe,
 
 
 
-struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
-				  struct i915_winsys *i915_winsys,
-				  unsigned pci_id )
+struct pipe_context *i915_create_context( struct pipe_screen *screen,
+                                          struct pipe_winsys *pipe_winsys,
+                                          struct i915_winsys *i915_winsys )
 {
    struct i915_context *i915;
-   unsigned is_i945 = 0;
-
-   switch (pci_id) {
-   case PCI_CHIP_I915_G:
-   case PCI_CHIP_I915_GM:
-      break;
-
-   case PCI_CHIP_I945_G:
-   case PCI_CHIP_I945_GM:
-   case PCI_CHIP_I945_GME:
-   case PCI_CHIP_G33_G:
-   case PCI_CHIP_Q33_G:
-   case PCI_CHIP_Q35_G:
-      is_i945 = 1;
-      break;
-
-   default:
-      pipe_winsys->printf(pipe_winsys, 
-			  "%s: unknown pci id 0x%x, cannot create context\n", 
-			  __FUNCTION__, pci_id);
-      return NULL;
-   }
 
    i915 = CALLOC_STRUCT(i915_context);
    if (i915 == NULL)
@@ -268,6 +246,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    i915->winsys = i915_winsys;
    i915->pipe.winsys = pipe_winsys;
+   i915->pipe.screen = screen;
 
    i915->pipe.destroy = i915_destroy;
    i915->pipe.is_format_supported = i915_is_format_supported;
@@ -300,9 +279,6 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    draw_install_aaline_stage(i915->draw, &i915->pipe);
    draw_install_aapoint_stage(i915->draw, &i915->pipe);
-
-   i915->pci_id = pci_id;
-   i915->flags.is_i945 = is_i945;
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;

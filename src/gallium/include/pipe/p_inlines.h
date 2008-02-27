@@ -30,6 +30,7 @@
 
 #include "p_context.h"
 #include "p_defines.h"
+#include "p_screen.h"
 #include "p_winsys.h"
 
 
@@ -107,7 +108,15 @@ pipe_texture_reference(struct pipe_texture **ptr,
 
    if (*ptr) {
       struct pipe_context *pipe = (*ptr)->pipe;
-      pipe->texture_release(pipe, ptr);
+      /* XXX temporary mess here */
+      if (pipe) {
+         pipe->texture_release(pipe, ptr);
+      }
+      else {
+         struct pipe_screen *screen = (*ptr)->screen;
+         screen->texture_release(screen, ptr);
+      }
+
       assert(!*ptr);
    }
 

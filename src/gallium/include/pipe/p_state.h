@@ -63,6 +63,7 @@ extern "C" {
 
 
 /* fwd decls */
+struct pipe_screen;
 struct pipe_surface;
 struct pipe_winsys;
 
@@ -301,6 +302,7 @@ struct pipe_texture
     * XXX this'll change to a pipe_winsys (or pipe_screen)...
     */
    struct pipe_context *pipe;
+   struct pipe_screen *screen;
 };
 
 

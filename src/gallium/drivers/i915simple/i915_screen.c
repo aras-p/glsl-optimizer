@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,32 +25,29 @@
  * 
  **************************************************************************/
 
-#include "i915_context.h"
-#include "i915_screen.h"
+
+#include "pipe/p_util.h"
+#include "pipe/p_winsys.h"
+
 #include "i915_reg.h"
+#include "i915_screen.h"
+#include "i915_texture.h"
 
 
-/** XXX temporary screen/pipe duplication here */
-
-
-static const char *i915_get_vendor_screen( struct pipe_screen *screen )
-{
-   return "Tungsten Graphics, Inc.";
-}
-
-static const char *i915_get_vendor( struct pipe_context *pipe )
+static const char *
+i915_get_vendor( struct pipe_screen *pscreen )
 {
    return "Tungsten Graphics, Inc.";
 }
 
 
-static const char *i915_get_name_screen( struct pipe_screen *screen )
+static const char *
+i915_get_name( struct pipe_screen *pscreen )
 {
-   struct i915_screen *i915screen = i915_screen(screen);
    static char buffer[128];
    const char *chipset;
 
-   switch (i915screen->pci_id) {
+   switch (i915_screen(pscreen)->pci_id) {
    case PCI_CHIP_I915_G:
       chipset = "915G";
       break;
@@ -85,22 +82,58 @@ static const char *i915_get_name_screen( struct pipe_screen *screen )
 }
 
 
-static const char *i915_get_name( struct pipe_context *pipe )
+
+static void
+i915_destroy_screen( struct pipe_screen *screen )
 {
-   return pipe->screen->get_name(pipe->screen);
+   FREE(screen);
 }
 
 
-void
-i915_init_string_functions(struct i915_context *i915)
+/**
+ * Create a new i915_screen object
+ */
+struct pipe_screen *
+i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
 {
-   i915->pipe.get_name = i915_get_name;
-   i915->pipe.get_vendor = i915_get_vendor;
-}
+   struct i915_screen *i915screen = CALLOC_STRUCT(i915_screen);
 
-void
-i915_init_screen_string_functions(struct pipe_screen *screen)
-{
-   screen->get_name = i915_get_name_screen;
-   screen->get_vendor = i915_get_vendor_screen;
+   if (!i915screen)
+      return NULL;
+
+   switch (pci_id) {
+   case PCI_CHIP_I915_G:
+   case PCI_CHIP_I915_GM:
+      i915screen->is_i945 = FALSE;
+      break;
+
+   case PCI_CHIP_I945_G:
+   case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
+   case PCI_CHIP_G33_G:
+   case PCI_CHIP_Q33_G:
+   case PCI_CHIP_Q35_G:
+      i915screen->is_i945 = TRUE;
+      break;
+
+   default:
+      winsys->printf(winsys, 
+                     "%s: unknown pci id 0x%x, cannot create screen\n", 
+                     __FUNCTION__, pci_id);
+      return NULL;
+   }
+
+   i915screen->pci_id = pci_id;
+
+   i915screen->screen.winsys = winsys;
+
+   i915screen->screen.destroy = i915_destroy_screen;
+
+   i915screen->screen.get_name = i915_get_name;
+   i915screen->screen.get_vendor = i915_get_vendor;
+
+   i915_init_screen_string_functions(&i915screen->screen);
+   i915_init_screen_texture_functions(&i915screen->screen);
+
+   return &i915screen->screen;
 }

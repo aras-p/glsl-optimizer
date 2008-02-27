@@ -36,6 +36,8 @@ extern "C" {
 #endif
 
    
+struct pipe_screen;
+
 struct pipe_state_cache;
 
 /* Opaque driver handles:
@@ -51,6 +53,7 @@ struct pipe_query;
  */
 struct pipe_context {
    struct pipe_winsys *winsys;
+   struct pipe_screen *screen;
 
    void *priv;  /** context private data (for DRI for example) */
 

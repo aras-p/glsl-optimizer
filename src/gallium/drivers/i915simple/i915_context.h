@@ -245,11 +245,6 @@ struct i915_context
    unsigned hardware_dirty;
    
    unsigned debug;
-   unsigned pci_id;
-
-   struct {
-      unsigned is_i945:1;
-   } flags;
 };
 
 /* A flag for each state_tracker state object:
@@ -322,6 +317,8 @@ void i915_init_surface_functions( struct i915_context *i915 );
 void i915_init_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
+void i915_init_screen_string_functions(struct pipe_screen *screen);
+
 
 
 
