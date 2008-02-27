@@ -6,8 +6,9 @@
 #include "tgsi/util/tgsi_parse.h"
 
 
-
-
+/**
+ * XXX try to get rid of this.  See tgsi_scan_shader() and tgsi_shader_info.
+ */
 void brw_shader_info(const struct tgsi_token *tokens,
 		     struct brw_shader_info *info )
 {

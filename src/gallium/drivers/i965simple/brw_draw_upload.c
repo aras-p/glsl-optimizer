@@ -256,7 +256,7 @@ boolean brw_upload_vertex_elements( struct brw_context *brw )
    struct brw_vertex_element_packet vep;
 
    unsigned i;
-   unsigned nr_enabled = brw->attribs.VertexProgram->program.num_inputs;
+   unsigned nr_enabled = brw->attribs.VertexProgram->info.num_inputs;
 
    memset(&vep, 0, sizeof(vep));
 

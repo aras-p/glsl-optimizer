@@ -38,6 +38,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
+#include "tgsi/util/tgsi_scan.h"
+
 #include "brw_structs.h"
 #include "brw_winsys.h"
 
@@ -203,7 +205,8 @@ struct brw_shader_info {
 
 struct brw_vertex_program {
    struct pipe_shader_state program;
-   struct brw_shader_info info;
+   struct tgsi_shader_info info;
+   struct brw_shader_info info2;  /* XXX get rid of this */
    int id;
 };
 
@@ -211,7 +214,8 @@ struct brw_vertex_program {
 
 struct brw_fragment_program {
    struct pipe_shader_state program;
-   struct brw_shader_info info;
+   struct tgsi_shader_info info;
+   struct brw_shader_info info2;  /* XXX get rid of this */
    
    boolean UsesDepth;
    boolean UsesKill;

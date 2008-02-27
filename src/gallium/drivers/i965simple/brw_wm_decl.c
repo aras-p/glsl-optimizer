@@ -259,7 +259,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
    /* Then a copy of our part of the CURBE entry:
     */
    {
-      int nr_constants = c->fp->info.nr_regs[TGSI_FILE_CONSTANT];
+      int nr_constants = c->fp->info2.nr_regs[TGSI_FILE_CONSTANT];
       int index = 0;
 
       c->prog_data.max_const = 4*nr_constants;
@@ -282,7 +282,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
    /* Next we receive the plane coefficients for parameter
     * interpolation:
     */
-   for (i = 0; i < c->fp->info.nr_regs[TGSI_FILE_INPUT]; i++) {
+   for (i = 0; i < c->fp->info2.nr_regs[TGSI_FILE_INPUT]; i++) {
       c->payload_coef[i] = brw_vec8_grf(c->reg_index, 0);
       c->reg_index += 2;
    }
@@ -302,11 +302,11 @@ static void prealloc_reg(struct brw_wm_compile *c)
    /* Now allocate room for the interpolated inputs and staging
     * registers for the outputs:
     */
-   for (i = 0; i < c->fp->info.nr_regs[TGSI_FILE_INPUT]; i++) 
+   for (i = 0; i < c->fp->info2.nr_regs[TGSI_FILE_INPUT]; i++) 
       for (j = 0; j < 4; j++)
 	 c->wm_regs[TGSI_FILE_INPUT][i][j] = brw_vec8_grf( c->reg_index++, 0 );
 
-   for (i = 0; i < c->fp->info.nr_regs[TGSI_FILE_OUTPUT]; i++) 
+   for (i = 0; i < c->fp->info2.nr_regs[TGSI_FILE_OUTPUT]; i++) 
       for (j = 0; j < 4; j++)
 	 c->wm_regs[TGSI_FILE_OUTPUT][i][j] = brw_vec8_grf( c->reg_index++, 0 );
 
