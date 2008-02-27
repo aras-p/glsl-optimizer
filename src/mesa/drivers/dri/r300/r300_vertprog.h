@@ -30,13 +30,6 @@
 
 /* according to Nikolai, the subsequent 3 DWORDs are sources, use same define for each */
 
-#define VSF_IN_COMPONENT_X	0
-#define VSF_IN_COMPONENT_Y	1
-#define VSF_IN_COMPONENT_Z	2
-#define VSF_IN_COMPONENT_W	3
-#define VSF_IN_COMPONENT_ZERO	4
-#define VSF_IN_COMPONENT_ONE	5
-
 #define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate) \
 	( ((in_reg_index)<<R300_VPI_IN_REG_INDEX_SHIFT) \
 	   | ((comp_x)<<R300_VPI_IN_X_SHIFT) \

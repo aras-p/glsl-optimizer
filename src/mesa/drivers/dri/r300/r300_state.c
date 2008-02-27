@@ -1664,24 +1664,24 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 					      VSF_FLAG_ALL, PVS_DST_REG_OUT);
 			prog->program.body.i[program_end + 1] =
 			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
-					    VSF_IN_COMPONENT_X,
-					    VSF_IN_COMPONENT_Y,
-					    VSF_IN_COMPONENT_Z,
-					    VSF_IN_COMPONENT_W,
+					    PVS_SRC_SELECT_X,
+					    PVS_SRC_SELECT_Y,
+					    PVS_SRC_SELECT_Z,
+					    PVS_SRC_SELECT_W,
 					    PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 2] =
 			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
-					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_COMPONENT_ONE,
+					    PVS_SRC_SELECT_FORCE_1,
+					    PVS_SRC_SELECT_FORCE_1,
+					    PVS_SRC_SELECT_FORCE_1,
+					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 3] =
 			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
-					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_COMPONENT_ONE,
+					    PVS_SRC_SELECT_FORCE_1,
+					    PVS_SRC_SELECT_FORCE_1,
+					    PVS_SRC_SELECT_FORCE_1,
+					    PVS_SRC_SELECT_FORCE_1,
 					    /* FIXME */ 0, VSF_FLAG_NONE);
 			program_end += 4;
 		}

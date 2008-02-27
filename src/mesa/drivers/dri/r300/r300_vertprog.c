@@ -46,19 +46,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
-#if SWIZZLE_X != VSF_IN_COMPONENT_X || \
-    SWIZZLE_Y != VSF_IN_COMPONENT_Y || \
-    SWIZZLE_Z != VSF_IN_COMPONENT_Z || \
-    SWIZZLE_W != VSF_IN_COMPONENT_W || \
-    SWIZZLE_ZERO != VSF_IN_COMPONENT_ZERO || \
-    SWIZZLE_ONE != VSF_IN_COMPONENT_ONE || \
-    WRITEMASK_X != VSF_FLAG_X || \
-    WRITEMASK_Y != VSF_FLAG_Y || \
-    WRITEMASK_Z != VSF_FLAG_Z || \
-    WRITEMASK_W != VSF_FLAG_W
-#error Cannot change these!
-#endif
-
 /* TODO: Get rid of t_src_class call */
 #define CMP_SRCS(a, b) ((a.RelAddr != b.RelAddr) || (a.Index != b.Index && \
 		       ((t_src_class(a.File) == PVS_SRC_REG_CONSTANT && \
@@ -512,7 +499,7 @@ static GLuint *t_opcode_dph(struct r300_vertex_program *vp,
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-			    VSF_IN_COMPONENT_ONE, t_src_class(src[0].File),
+			    PVS_SRC_SELECT_FORCE_1, t_src_class(src[0].File),
 			    src[0].
 			    NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
@@ -594,9 +581,9 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
-	    PVS_SOURCE_OPCODE(*u_temp_i, VSF_IN_COMPONENT_X,
-			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
-			    VSF_IN_COMPONENT_W, PVS_SRC_REG_TEMPORARY,
+	    PVS_SOURCE_OPCODE(*u_temp_i, PVS_SRC_SELECT_X,
+			    PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
+			    PVS_SRC_SELECT_W, PVS_SRC_REG_TEMPORARY,
 			    /* Not 100% sure about this */
 			    (!src[0].
 			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE
@@ -664,7 +651,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 	/* NOTE: Users swizzling might not work. */
 	inst[1] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
-				  VSF_IN_COMPONENT_ZERO,	// z
+				  PVS_SRC_SELECT_FORCE_0,	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_src_class(src[0].File),
 				  src[0].
@@ -672,7 +659,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 	inst[2] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
-				  VSF_IN_COMPONENT_ZERO,	// z
+				  PVS_SRC_SELECT_FORCE_0,	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  t_src_class(src[0].File),
 				  src[0].
@@ -680,7 +667,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 	inst[3] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
-				  VSF_IN_COMPONENT_ZERO,	// z
+				  PVS_SRC_SELECT_FORCE_0,	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
 				  t_src_class(src[0].File),
 				  src[0].
@@ -1042,9 +1029,9 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 
 	inst[3] =
-	    PVS_SOURCE_OPCODE(*u_temp_i + 1, VSF_IN_COMPONENT_X,
-			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
-			    VSF_IN_COMPONENT_W, PVS_SRC_REG_TEMPORARY,
+	    PVS_SOURCE_OPCODE(*u_temp_i + 1, PVS_SRC_SELECT_X,
+			    PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
+			    PVS_SRC_SELECT_W, PVS_SRC_REG_TEMPORARY,
 			    VSF_FLAG_NONE);
 
 	return inst;
