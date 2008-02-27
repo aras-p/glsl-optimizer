@@ -148,7 +148,7 @@ static void shade_begin(struct quad_stage *qs)
    /* find output slots for depth, color */
    qss->colorOutSlot = -1;
    qss->depthOutSlot = -1;
-   for (i = 0; i < qss->stage.softpipe->fs->shader.num_outputs; i++) {
+   for (i = 0; i < qss->stage.softpipe->fs->info.num_outputs; i++) {
       switch (qss->stage.softpipe->fs->info.output_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          qss->depthOutSlot = i;
