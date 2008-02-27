@@ -189,7 +189,7 @@ intelGetString(GLcontext * ctx, GLenum name)
  * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
  * old i830-specific driver.
  */
-const struct dri_extension card_extensions[] = {
+static const struct dri_extension card_extensions[] = {
    {"GL_ARB_multisample", GL_ARB_multisample_functions},
    {"GL_ARB_multitexture", NULL},
    {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
@@ -243,22 +243,29 @@ const struct dri_extension card_extensions[] = {
    {NULL, NULL}
 };
 
-const struct dri_extension brw_extensions[] = {
+static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions},
    { "GL_ARB_shading_language_120",       GL_VERSION_2_1_functions},
    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions},
    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions},
    { "GL_ARB_fragment_shader",            NULL },
    { "GL_ARB_draw_buffers",               NULL },
-   {NULL, NULL}
+   { "GL_ARB_depth_texture",              NULL },
+   { "GL_ARB_fragment_program",           NULL },
+   { "GL_ARB_shadow",                     NULL },
+   { "GL_EXT_shadow_funcs",               NULL },
+   /* ARB extn won't work if not enabled */
+   { "GL_SGIX_depth_texture",             NULL },
+   { "GL_ARB_texture_env_crossbar",       NULL },
+   { NULL,                                NULL }
 };
 
-const struct dri_extension arb_oc_extensions[] = {
+static const struct dri_extension arb_oc_extensions[] = {
    {"GL_ARB_occlusion_query",            GL_ARB_occlusion_query_functions},
    {NULL, NULL}
 };
 
-const struct dri_extension ttm_extensions[] = {
+static const struct dri_extension ttm_extensions[] = {
    {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
    {"GL_ARB_pixel_buffer_object", NULL},
    {NULL, NULL}
@@ -268,7 +275,7 @@ const struct dri_extension ttm_extensions[] = {
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
-static void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
+void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging)
 {
    struct intel_context *intel = ctx?intel_context(ctx):NULL;
 

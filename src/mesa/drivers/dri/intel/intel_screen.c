@@ -72,12 +72,6 @@ const GLuint __driNConfigOptions = 5;
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE */
 
-extern const struct dri_extension card_extensions[];
-extern const struct dri_extension ttm_extensions[];
-#ifndef I915
-extern const struct dri_extension arb_oc_extensions[];
-#endif
-
 /**
  * Map all the memory regions described by the screen.
  * \return GL_TRUE if success, GL_FALSE if error.
@@ -803,12 +797,8 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
     *
     * Hello chicken.  Hello egg.  How are you two today?
     */
-   driInitExtensions(NULL, card_extensions, GL_FALSE);
-   driInitExtensions(NULL, ttm_extensions, GL_FALSE);
-#ifndef I915
-   driInitExtensions(NULL, arb_oc_extensions, GL_FALSE);
-#endif
-
+   intelInitExtensions(NULL, GL_TRUE);
+	   
    if (!intelInitDriver(psp))
        return NULL;
 
@@ -865,8 +855,7 @@ PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
     *
     * Hello chicken.  Hello egg.  How are you two today?
     */
-   driInitExtensions(NULL, card_extensions, GL_FALSE);
-   driInitExtensions(NULL, ttm_extensions, GL_FALSE);
+   intelInitExtensions(NULL, GL_TRUE);
 
    /* Allocate the private area */
    intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));

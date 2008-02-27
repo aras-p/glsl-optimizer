@@ -416,6 +416,7 @@ extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
+extern void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
 
 
 /* ================================================================

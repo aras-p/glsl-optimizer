@@ -52,18 +52,6 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const struct dri_extension brw_extensions[] =
-{
-    { "GL_ARB_depth_texture",              NULL },
-    { "GL_ARB_fragment_program",           NULL },
-    { "GL_ARB_shadow",                     NULL },
-    { "GL_EXT_shadow_funcs",               NULL },
-    /* ARB extn won't work if not enabled */
-    { "GL_SGIX_depth_texture",             NULL },
-    { "GL_ARB_texture_env_crossbar",       NULL },
-    { NULL,                                NULL }
-};
-
 static void brwUseProgram(GLcontext *ctx, GLuint program)
 {
         struct brw_context *brw = brw_context(ctx);
@@ -175,9 +163,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxTextureUnits = BRW_MAX_TEX_UNIT;
    
 /*    ctx->Const.MaxNativeVertexProgramTemps = 32; */
-
-
-   driInitExtensions( ctx, brw_extensions, GL_FALSE );
 
    brw_init_attribs( brw );
    brw_init_metaops( brw );
