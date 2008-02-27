@@ -12,6 +12,11 @@ env.Append(CPPPATH = [
 	'#/src/mesa/main',
 ])
 
+env.Append(CFLAGS = [
+	'-std=c99',
+])
+
+
 #######################################################################
 # Core sources
 
