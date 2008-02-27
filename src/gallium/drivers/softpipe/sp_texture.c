@@ -90,6 +90,7 @@ softpipe_texture_create(struct pipe_context *pipe,
 
    spt->base = *templat;
    spt->base.refcount = 1;
+   spt->base.pipe = pipe;
 
    softpipe_texture_layout(spt);
 

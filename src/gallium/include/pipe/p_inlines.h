@@ -97,7 +97,7 @@ pipe_buffer_reference(struct pipe_winsys *winsys,
  * \sa pipe_surface_reference
  */
 static INLINE void
-pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
+pipe_texture_reference(struct pipe_texture **ptr,
 		       struct pipe_texture *pt)
 {
    assert(ptr);
@@ -106,11 +106,23 @@ pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
       pt->refcount++;
 
    if (*ptr) {
+      struct pipe_context *pipe = (*ptr)->pipe;
       pipe->texture_release(pipe, ptr);
       assert(!*ptr);
    }
 
    *ptr = pt;
+}
+
+
+static INLINE void
+pipe_texture_release(struct pipe_texture **ptr)
+{
+   struct pipe_context *pipe;
+   assert(ptr);
+   pipe = (*ptr)->pipe;
+   pipe->texture_release(pipe, ptr);
+   *ptr = NULL;
 }
 
 

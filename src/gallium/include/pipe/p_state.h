@@ -296,6 +296,11 @@ struct pipe_texture
    /* These are also refcounted:
     */
    unsigned refcount;
+
+   /**< pipe that created the texture
+    * XXX this'll change to a pipe_winsys (or pipe_screen)...
+    */
+   struct pipe_context *pipe;
 };
 
 

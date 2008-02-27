@@ -532,8 +532,7 @@ static void i915_set_sampler_texture(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   pipe_texture_reference(pipe,
-                          (struct pipe_texture **) &i915->texture[sampler],
+   pipe_texture_reference((struct pipe_texture **) &i915->texture[sampler],
                           texture);
 
    i915->dirty |= I915_NEW_TEXTURE;

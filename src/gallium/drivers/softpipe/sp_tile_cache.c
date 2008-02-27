@@ -220,7 +220,7 @@ sp_tile_cache_set_texture(struct pipe_context *pipe,
 
    assert(!tc->surface);
 
-   pipe_texture_reference(pipe, &tc->texture, texture);
+   pipe_texture_reference(&tc->texture, texture);
 
    if (tc->tex_surf_map) {
       pipe_surface_unmap(tc->tex_surf);

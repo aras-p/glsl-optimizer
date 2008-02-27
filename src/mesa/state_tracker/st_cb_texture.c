@@ -573,7 +573,7 @@ st_TexImage(GLcontext * ctx,
        st_texture_match_image(stObj->pt, &stImage->base,
                                  stImage->face, stImage->level)) {
 
-      pipe_texture_reference(ctx->st->pipe, &stImage->pt, stObj->pt);
+      pipe_texture_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);
    }
 
@@ -1371,7 +1371,7 @@ copy_image_data_to_texture(struct st_context *st,
       stImage->base.Data = NULL;
    }
 
-   pipe_texture_reference(st->pipe, &stImage->pt, stObj->pt);
+   pipe_texture_reference(&stImage->pt, stObj->pt);
 }
 
 
@@ -1426,7 +1426,7 @@ st_finalize_texture(GLcontext *ctx,
       if (stObj->pt)
          ctx->st->pipe->texture_release(ctx->st->pipe, &stObj->pt);
 
-      pipe_texture_reference(ctx->st->pipe, &stObj->pt, firstImage->pt);
+      pipe_texture_reference(&stObj->pt, firstImage->pt);
    }
 
    if (firstImage->base.IsCompressed) {
