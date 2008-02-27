@@ -1268,7 +1268,7 @@ emit_store(
       break;
 
    case TGSI_SAT_ZERO_ONE:
-//      assert( 0 );
+      /* assert( 0 ); */
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:

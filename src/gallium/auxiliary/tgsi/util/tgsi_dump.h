@@ -3,7 +3,7 @@
 
 #if defined __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 #define TGSI_DUMP_VERBOSE       1
 #define TGSI_DUMP_NO_IGNORED    2
@@ -21,8 +21,8 @@ tgsi_dump_str(
    unsigned                flags );
 
 #if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+}
+#endif
 
-#endif // !defined TGSI_DUMP_H
+#endif /* TGSI_DUMP_H */
 

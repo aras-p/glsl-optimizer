@@ -97,7 +97,7 @@ void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *ee);
 #endif /* MESA_LLVM */
 
 #if defined __cplusplus
-} // extern "C"
+}
 #endif
 
 #endif

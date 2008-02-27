@@ -3,7 +3,7 @@
 
 #if defined __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 struct tgsi_token;
 struct x86_function;
@@ -19,8 +19,8 @@ tgsi_emit_sse2_fs(
    struct x86_function *function );
 
 #if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+}
+#endif
 
-#endif // !defined TGSI_SSE2_H
+#endif /* TGSI_SSE2_H */
 
