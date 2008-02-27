@@ -491,7 +491,6 @@ i915_texture_create_screen(struct pipe_screen *screen,
 
       tex->base = *templat;
       tex->base.refcount = 1;
-      tex->base.pipe = NULL;
       tex->base.screen = screen;
 
       if (i915screen->is_i945 ? i945_miptree_layout(tex) :
