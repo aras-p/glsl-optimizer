@@ -489,6 +489,7 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
                        struct softpipe_tile_cache *tc, int x, int y, int z,
                        int face, int level)
 {
+   struct pipe_screen *screen = pipe->screen;
    /* tile pos in framebuffer: */
    const int tile_x = x & ~(TILE_SIZE - 1);
    const int tile_y = y & ~(TILE_SIZE - 1);
@@ -514,7 +515,7 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
 	 if (tc->tex_surf_map)
             pipe_surface_unmap(tc->tex_surf);
 
-         tc->tex_surf = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
+         tc->tex_surf = screen->get_tex_surface(screen, tc->texture, face, level, z);
          tc->tex_surf_map = pipe_surface_map(tc->tex_surf);
 
          tc->tex_face = face;

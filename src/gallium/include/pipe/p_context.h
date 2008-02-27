@@ -189,30 +189,16 @@ struct pipe_context {
 		 struct pipe_surface *ps,
 		 unsigned clearValue);
 
-
-   /*
-    * Texture functions
-    * XXX these are moving to pipe_screen...
-    */
-   struct pipe_texture * (*texture_create)(struct pipe_context *pipe,
-                                           const struct pipe_texture *templat);
-
-   void (*texture_release)(struct pipe_context *pipe,
-			   struct pipe_texture **pt);
-
    /**
     * Called when texture data is changed.
     * Note: we could pass some hints about which mip levels or cube faces
     * have changed...
+    * XXX this may go away - could pass a 'write' flag to get_tex_surface()
     */
    void (*texture_update)(struct pipe_context *pipe,
                           struct pipe_texture *texture);
 
-   /** Get a surface which is a "view" into a texture */
-   struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
-                                           struct pipe_texture *texture,
-                                           unsigned face, unsigned level,
-                                           unsigned zslice);
+
 
    /* Flush rendering:
     */

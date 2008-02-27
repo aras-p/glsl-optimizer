@@ -456,6 +456,7 @@ make_texture(struct st_context *st,
 {
    GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    const struct gl_texture_format *mformat;
    struct pipe_texture *pt;
    enum pipe_format pipeFormat;
@@ -493,7 +494,7 @@ make_texture(struct st_context *st,
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
-      surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+      surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
 
       /* map texture surface */
       dest = pipe_surface_map(surface);
@@ -1031,7 +1032,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       printf("st_Bitmap (sourcing from PBO not implemented yet)\n");
    }
 
-   surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
 
    /* map texture surface */
    dest = pipe_surface_map(surface);
@@ -1207,6 +1208,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
@@ -1248,7 +1250,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!pt)
       return;
 
-   psTex = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+   psTex = screen->get_tex_surface(screen, pt, 0, 0, 0);
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       srcy = ctx->DrawBuffer->Height - srcy - height;

@@ -276,7 +276,7 @@ st_render_mipmap(struct st_context *st,
       /*
        * Setup framebuffer / dest surface
        */
-      fb.cbufs[0] = pipe->get_tex_surface(pipe, pt, face, dstLevel, zslice);
+      fb.cbufs[0] = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
       pipe->set_framebuffer_state(pipe, &fb);
 
       /*
@@ -325,6 +325,7 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                          struct gl_texture_object *texObj)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_winsys *ws = pipe->winsys;
    struct pipe_texture *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
@@ -345,8 +346,8 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       const ubyte *srcData;
       ubyte *dstData;
 
-      srcSurf = pipe->get_tex_surface(pipe, pt, face, srcLevel, zslice);
-      dstSurf = pipe->get_tex_surface(pipe, pt, face, dstLevel, zslice);
+      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice);
+      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
 
       srcData = (ubyte *) ws->buffer_map(ws, srcSurf->buffer,
                                          PIPE_BUFFER_USAGE_CPU_READ)

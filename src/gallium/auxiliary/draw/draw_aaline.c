@@ -362,6 +362,7 @@ static void
 aaline_create_texture(struct aaline_stage *aaline)
 {
    struct pipe_context *pipe = aaline->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture texTemp;
    uint level;
 
@@ -374,7 +375,7 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.depth[0] = 1;
    texTemp.cpp = 1;
 
-   aaline->texture = pipe->texture_create(pipe, &texTemp);
+   aaline->texture = screen->texture_create(screen, &texTemp);
 
    /* Fill in mipmap images.
     * Basically each level is solid opaque, except for the outermost
@@ -388,7 +389,7 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       assert(aaline->texture->width[level] == aaline->texture->height[level]);
 
-      surface = pipe->get_tex_surface(pipe, aaline->texture, 0, level, 0);
+      surface = screen->get_tex_surface(screen, aaline->texture, 0, level, 0);
       data = pipe_surface_map(surface);
 
       for (i = 0; i < size; i++) {

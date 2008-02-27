@@ -107,15 +107,9 @@ pipe_texture_reference(struct pipe_texture **ptr,
       pt->refcount++;
 
    if (*ptr) {
-      struct pipe_context *pipe = (*ptr)->pipe;
-      /* XXX temporary mess here */
-      if (pipe) {
-         pipe->texture_release(pipe, ptr);
-      }
-      else {
-         struct pipe_screen *screen = (*ptr)->screen;
-         screen->texture_release(screen, ptr);
-      }
+      struct pipe_screen *screen = (*ptr)->screen;
+      assert(screen);
+      screen->texture_release(screen, ptr);
 
       assert(!*ptr);
    }
@@ -127,10 +121,10 @@ pipe_texture_reference(struct pipe_texture **ptr,
 static INLINE void
 pipe_texture_release(struct pipe_texture **ptr)
 {
-   struct pipe_context *pipe;
+   struct pipe_screen *screen;
    assert(ptr);
-   pipe = (*ptr)->pipe;
-   pipe->texture_release(pipe, ptr);
+   screen = (*ptr)->screen;
+   screen->texture_release(screen, ptr);
    *ptr = NULL;
 }
 

@@ -299,14 +299,6 @@ static boolean brw_miptree_layout(struct brw_texture *tex)
 
 
 static struct pipe_texture *
-brw_texture_create(struct pipe_context *pipe,
-                   const struct pipe_texture *templat)
-{
-   return pipe->screen->texture_create(pipe->screen, templat);
-}
-
-
-static struct pipe_texture *
 brw_texture_create_screen(struct pipe_screen *screen,
                           const struct pipe_texture *templat)
 {
@@ -330,13 +322,6 @@ brw_texture_create_screen(struct pipe_screen *screen,
    }
 
    return &tex->base;
-}
-
-
-static void
-brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
-{
-   pipe->screen->texture_release(pipe->screen, pt);
 }
 
 
@@ -376,18 +361,6 @@ static void
 brw_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
 {
    /* no-op? */
-}
-
-
-/*
- * XXX note: same as code in sp_surface.c
- */
-static struct pipe_surface *
-brw_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
-{
-   return pipe->screen->get_tex_surface(pipe->screen, pt, face, level, zslice);
 }
 
 
@@ -433,10 +406,7 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
 void
 brw_init_texture_functions(struct brw_context *brw)
 {
-   brw->pipe.texture_create  = brw_texture_create;
-   brw->pipe.texture_release = brw_texture_release;
    brw->pipe.texture_update = brw_texture_update;
-   brw->pipe.get_tex_surface = brw_get_tex_surface;
 }
 
 

@@ -511,14 +511,6 @@ i915_texture_create_screen(struct pipe_screen *screen,
 }
 
 
-static struct pipe_texture *
-i915_texture_create(struct pipe_context *pipe,
-                    const struct pipe_texture *templat)
-{
-   return pipe->screen->texture_create(pipe->screen, templat);
-}
-
-
 static void
 i915_texture_release_screen(struct pipe_screen *screen,
                             struct pipe_texture **pt)
@@ -547,13 +539,6 @@ i915_texture_release_screen(struct pipe_screen *screen,
       FREE(tex);
    }
    *pt = NULL;
-}
-
-
-static void
-i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
-{
-   i915_texture_release_screen(pipe->screen, pt);
 }
 
 
@@ -606,24 +591,11 @@ i915_get_tex_surface_screen(struct pipe_screen *screen,
 }
 
 
-static struct pipe_surface *
-i915_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
-{
-   return i915_get_tex_surface_screen(pipe->screen, pt, face, level, zslice);
-}
-
-
 void
 i915_init_texture_functions(struct i915_context *i915)
 {
-   i915->pipe.texture_create = i915_texture_create;
-   i915->pipe.texture_release = i915_texture_release;
    i915->pipe.texture_update = i915_texture_update;
-   i915->pipe.get_tex_surface = i915_get_tex_surface;
 }
-
 
 
 void

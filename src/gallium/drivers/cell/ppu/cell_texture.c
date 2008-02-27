@@ -80,14 +80,6 @@ cell_texture_layout(struct cell_texture * spt)
 
 
 static struct pipe_texture *
-cell_texture_create(struct pipe_context *pipe,
-                    const struct pipe_texture *templat)
-{
-   return pipe->screen->texture_create(pipe->screen, templat);
-
-}
-
-static struct pipe_texture *
 cell_texture_create_screen(struct pipe_screen *screen,
                            const struct pipe_texture *templat)
 {
@@ -113,13 +105,6 @@ cell_texture_create_screen(struct pipe_screen *screen,
    }
 
    return &spt->base;
-}
-
-
-static void
-cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
-{
-   return pipe->screen->texture_release(pipe->screen, pt);
 }
 
 
@@ -154,18 +139,6 @@ cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
 {
    /* XXX TO DO:  re-tile the texture data ... */
 
-}
-
-
-/**
- * Called via pipe->get_tex_surface()
- */
-static struct pipe_surface *
-cell_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice)
-{
-   return pipe->screen->get_tex_surface(pipe->screen, pt, face, level, zslice);
 }
 
 
@@ -294,10 +267,7 @@ cell_update_texture_mapping(struct cell_context *cell)
 void
 cell_init_texture_functions(struct cell_context *cell)
 {
-   cell->pipe.texture_create = cell_texture_create;
-   cell->pipe.texture_release = cell_texture_release;
    cell->pipe.texture_update = cell_texture_update;
-   cell->pipe.get_tex_surface = cell_get_tex_surface;
 }
 
 void

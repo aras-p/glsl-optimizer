@@ -80,15 +80,6 @@ softpipe_texture_layout(struct softpipe_texture * spt)
 }
 
 
-/* XXX temporary */
-static struct pipe_texture *
-softpipe_texture_create(struct pipe_context *pipe,
-                        const struct pipe_texture *templat)
-{
-   return pipe->screen->texture_create(pipe->screen, templat);
-}
-
-
 static struct pipe_texture *
 softpipe_texture_create_screen(struct pipe_screen *screen,
                                const struct pipe_texture *templat)
@@ -119,14 +110,6 @@ softpipe_texture_create_screen(struct pipe_screen *screen,
 }
 
 
-/* XXX temporary */
-static void
-softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
-{
-   return pipe->screen->texture_release(pipe->screen, pt);
-}
-
-
 static void
 softpipe_texture_release_screen(struct pipe_screen *screen,
                                 struct pipe_texture **pt)
@@ -150,33 +133,6 @@ softpipe_texture_release_screen(struct pipe_screen *screen,
       FREE(spt);
    }
    *pt = NULL;
-}
-
-
-static void
-softpipe_texture_update(struct pipe_context *pipe,
-                        struct pipe_texture *texture)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   uint unit;
-   for (unit = 0; unit < PIPE_MAX_SAMPLERS; unit++) {
-      if (softpipe->texture[unit] == texture) {
-         sp_flush_tile_cache(softpipe, softpipe->tex_cache[unit]);
-      }
-   }
-}
-
-
-/**
- * Called via pipe->get_tex_surface()
- */
-/* XXX temporary */
-static struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice)
-{
-   return pipe->screen->get_tex_surface(pipe->screen, pt, face, level, zslice);
 }
 
 
@@ -217,14 +173,24 @@ softpipe_get_tex_surface_screen(struct pipe_screen *screen,
 }
 
 
+static void
+softpipe_texture_update(struct pipe_context *pipe,
+                        struct pipe_texture *texture)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint unit;
+   for (unit = 0; unit < PIPE_MAX_SAMPLERS; unit++) {
+      if (softpipe->texture[unit] == texture) {
+         sp_flush_tile_cache(softpipe, softpipe->tex_cache[unit]);
+      }
+   }
+}
+
 
 void
 softpipe_init_texture_funcs( struct softpipe_context *softpipe )
 {
-   softpipe->pipe.texture_create = softpipe_texture_create;
-   softpipe->pipe.texture_release = softpipe_texture_release;
    softpipe->pipe.texture_update = softpipe_texture_update;
-   softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 }
 
 
