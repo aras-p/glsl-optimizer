@@ -128,7 +128,7 @@ cell_context(struct pipe_context *pipe)
 
 
 extern struct pipe_context *
-cell_create_context(struct pipe_winsys *ws, struct cell_winsys *cws);
+cell_create_context(struct pipe_screen *screen, struct cell_winsys *cws);
 
 extern void
 cell_vertex_shader_queue_flush(struct draw_context *draw);

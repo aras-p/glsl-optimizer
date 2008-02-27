@@ -37,9 +37,12 @@
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
-#include "cell/common.h"
+#include "pipe/p_screen.h"
+
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
+
+#include "cell/common.h"
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
@@ -76,73 +79,24 @@ cell_is_format_supported( struct pipe_context *pipe,
 
 static int cell_get_param(struct pipe_context *pipe, int param)
 {
-   switch (param) {
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return 8;
-   case PIPE_CAP_NPOT_TEXTURES:
-      return 1;
-   case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 1;
-   case PIPE_CAP_GLSL:
-      return 1;
-   case PIPE_CAP_S3TC:
-      return 0;
-   case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 0;
-   case PIPE_CAP_POINT_SPRITE:
-      return 1;
-   case PIPE_CAP_MAX_RENDER_TARGETS:
-      return 1;
-   case PIPE_CAP_OCCLUSION_QUERY:
-      return 1;
-   case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 1;
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 12; /* max 2Kx2K */
-   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
-   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 12; /* max 2Kx2K */
-   default:
-      return 0;
-   }
+   return pipe->screen->get_param(pipe->screen, param);
 }
 
 static float cell_get_paramf(struct pipe_context *pipe, int param)
 {
-   switch (param) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
-      return 255.0; /* arbitrary */
-
-   case PIPE_CAP_MAX_POINT_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
-      return 255.0; /* arbitrary */
-
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 0.0;
-
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-      return 16.0; /* arbitrary */
-
-   default:
-      return 0;
-   }
+   return pipe->screen->get_paramf(pipe->screen, param);
 }
-
 
 static const char *
 cell_get_name( struct pipe_context *pipe )
 {
-   return "Cell";
+   return pipe->screen->get_name(pipe->screen);
 }
 
 static const char *
 cell_get_vendor( struct pipe_context *pipe )
 {
-   return "Tungsten Graphics, Inc.";
+   return pipe->screen->get_vendor(pipe->screen);
 }
 
 
@@ -174,7 +128,8 @@ cell_draw_create(struct cell_context *cell)
 
 
 struct pipe_context *
-cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
+cell_create_context(struct pipe_screen *screen,
+                    struct cell_winsys *cws)
 {
    struct cell_context *cell;
    uint spu, buf;
@@ -187,7 +142,8 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    memset(cell, 0, sizeof(*cell));
 
    cell->winsys = cws;
-   cell->pipe.winsys = winsys;
+   cell->pipe.winsys = screen->winsys;
+   cell->pipe.screen = screen;
    cell->pipe.destroy = cell_destroy_context;
 
    /* queries */

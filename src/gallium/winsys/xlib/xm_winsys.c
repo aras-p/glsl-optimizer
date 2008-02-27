@@ -36,6 +36,8 @@
 #include "glxheader.h"
 #include "xmesaP.h"
 
+#undef ASSERT
+
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
 #include "pipe/p_context.h"
@@ -45,6 +47,7 @@
 
 #ifdef GALLIUM_CELL
 #include "cell/ppu/cell_context.h"
+#include "cell/ppu/cell_screen.h"
 #include "cell/ppu/cell_winsys.h"
 #else
 #define TILE_SIZE 32  /* avoid compilation errors */
@@ -448,7 +451,8 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 #ifdef GALLIUM_CELL
    if (!getenv("GALLIUM_NOCELL")) {
       struct cell_winsys *cws = cell_get_winsys(pixelformat);
-      pipe = cell_create_context(pws, cws);
+      struct pipe_screen *screen = cell_create_screen(pws);
+      pipe = cell_create_context(screen, cws);
       if (pipe)
          pipe->priv = xmesa;
       return pipe;

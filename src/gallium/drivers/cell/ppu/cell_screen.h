@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,51 +25,17 @@
  * 
  **************************************************************************/
 
-#ifndef CELL_TEXTURE_H
-#define CELL_TEXTURE_H
+
+#ifndef CELL_SCREEN_H
+#define CELL_SCREEN_H
 
 
-struct cell_context;
-struct pipe_texture;
+struct pipe_screen;
+struct pipe_winsys;
 
 
-/**
- * Subclass of pipe_texture
- */
-struct cell_texture
-{
-   struct pipe_texture base;
-
-   unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
-
-   /* The data is held here:
-    */
-   struct pipe_buffer *buffer;
-   unsigned long buffer_size;
-
-   void *tiled_data;  /* XXX this may be temporary */ /*ALIGN16*/
-};
+extern struct pipe_screen *
+cell_create_screen(struct pipe_winsys *winsys);
 
 
-/** cast wrapper */
-static INLINE struct cell_texture *
-cell_texture(struct pipe_texture *pt)
-{
-   return (struct cell_texture *) pt;
-}
-
-
-
-extern void
-cell_update_texture_mapping(struct cell_context *cell);
-
-
-extern void
-cell_init_texture_functions(struct cell_context *cell);
-
-
-extern void
-cell_init_screen_texture_funcs(struct pipe_screen *screen);
-
-
-#endif /* CELL_TEXTURE_H */
+#endif /* CELL_SCREEN_H */

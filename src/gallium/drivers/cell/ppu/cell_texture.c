@@ -83,18 +83,29 @@ static struct pipe_texture *
 cell_texture_create(struct pipe_context *pipe,
                     const struct pipe_texture *templat)
 {
+   return pipe->screen->texture_create(pipe->screen, templat);
+
+}
+
+static struct pipe_texture *
+cell_texture_create_screen(struct pipe_screen *screen,
+                           const struct pipe_texture *templat)
+{
+   struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *spt = CALLOC_STRUCT(cell_texture);
    if (!spt)
       return NULL;
 
    spt->base = *templat;
    spt->base.refcount = 1;
+   spt->base.pipe = NULL;
+   spt->base.screen = screen;
 
    cell_texture_layout(spt);
 
-   spt->buffer = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                             PIPE_BUFFER_USAGE_PIXEL,
-                                             spt->buffer_size);
+   spt->buffer = ws->buffer_create(ws, 32,
+                                   PIPE_BUFFER_USAGE_PIXEL,
+                                   spt->buffer_size);
 
    if (!spt->buffer) {
       FREE(spt);
@@ -107,6 +118,14 @@ cell_texture_create(struct pipe_context *pipe,
 
 static void
 cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
+{
+   return pipe->screen->texture_release(pipe->screen, pt);
+}
+
+
+static void
+cell_texture_release_screen(struct pipe_screen *screen,
+                            struct pipe_texture **pt)
 {
    if (!*pt)
       return;
@@ -122,7 +141,7 @@ cell_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
       */
 
-      pipe_buffer_reference(pipe->winsys, &spt->buffer, NULL);
+      pipe_buffer_reference(screen->winsys, &spt->buffer, NULL);
 
       FREE(spt);
    }
@@ -146,14 +165,24 @@ cell_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_texture *pt,
                          unsigned face, unsigned level, unsigned zslice)
 {
+   return pipe->screen->get_tex_surface(pipe->screen, pt, face, level, zslice);
+}
+
+
+static struct pipe_surface *
+cell_get_tex_surface_screen(struct pipe_screen *screen,
+                            struct pipe_texture *pt,
+                            unsigned face, unsigned level, unsigned zslice)
+{
+   struct pipe_winsys *ws = screen->winsys;
    struct cell_texture *spt = cell_texture(pt);
    struct pipe_surface *ps;
 
-   ps = pipe->winsys->surface_alloc(pipe->winsys);
+   ps = ws->surface_alloc(ws);
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe_buffer_reference(pipe->winsys, &ps->buffer, spt->buffer);
+      pipe_buffer_reference(ws, &ps->buffer, spt->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
@@ -269,4 +298,12 @@ cell_init_texture_functions(struct cell_context *cell)
    cell->pipe.texture_release = cell_texture_release;
    cell->pipe.texture_update = cell_texture_update;
    cell->pipe.get_tex_surface = cell_get_tex_surface;
+}
+
+void
+cell_init_screen_texture_funcs(struct pipe_screen *screen)
+{
+   screen->texture_create = cell_texture_create_screen;
+   screen->texture_release = cell_texture_release_screen;
+   screen->get_tex_surface = cell_get_tex_surface_screen;
 }
