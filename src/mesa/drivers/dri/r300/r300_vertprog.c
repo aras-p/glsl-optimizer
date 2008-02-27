@@ -66,32 +66,32 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 			(t_src_class(a.File) == VSF_IN_CLASS_ATTR && \
 			 t_src_class(b.File) == VSF_IN_CLASS_ATTR)))) \
 
-#define ZERO_SRC_0 (MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
+#define ZERO_SRC_0 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				    t_src_class(src[0].File), VSF_FLAG_NONE) | (src[0].RelAddr << 4))
 
-#define ZERO_SRC_1 (MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
+#define ZERO_SRC_1 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]), \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				    t_src_class(src[1].File), VSF_FLAG_NONE) | (src[1].RelAddr << 4))
 
-#define ZERO_SRC_2 (MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
+#define ZERO_SRC_2 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[2]), \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
 				    t_src_class(src[2].File), VSF_FLAG_NONE) | (src[2].RelAddr << 4))
 
-#define ONE_SRC_0 (MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), \
+#define ONE_SRC_0 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), \
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    t_src_class(src[0].File), VSF_FLAG_NONE) | (src[0].RelAddr << 4))
 
-#define ONE_SRC_1 (MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), \
+#define ONE_SRC_1 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]), \
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    t_src_class(src[1].File), VSF_FLAG_NONE) | (src[1].RelAddr << 4))
 
-#define ONE_SRC_2 (MAKE_VSF_SOURCE(t_src_index(vp, &src[2]), \
+#define ONE_SRC_2 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[2]), \
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    t_src_class(src[2].File), VSF_FLAG_NONE) | (src[2].RelAddr << 4))
@@ -293,7 +293,7 @@ static unsigned long t_src(struct r300_vertex_program *vp,
 	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
 	 * which equal our VSF_FLAGS_ values, so it's safe to just pass it here.
 	 */
-	return MAKE_VSF_SOURCE(t_src_index(vp, src),
+	return PVS_SOURCE_OPCODE(t_src_index(vp, src),
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 1)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 2)),
@@ -308,7 +308,7 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp,
 	/* src->NegateBase uses the NEGATE_ flags from program_instruction.h,
 	 * which equal our VSF_FLAGS_ values, so it's safe to just pass it here.
 	 */
-	return MAKE_VSF_SOURCE(t_src_index(vp, src),
+	return PVS_SOURCE_OPCODE(t_src_index(vp, src),
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
 			       t_swizzle(GET_SWZ(src->Swizzle, 0)),
@@ -382,7 +382,7 @@ static GLuint *t_opcode_abs(struct r300_vertex_program *vp,
 
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
@@ -457,7 +457,7 @@ static GLuint *t_opcode_dp3(struct r300_vertex_program *vp,
 			t_dst_class(vpi->DstReg.File));
 
 	inst[1] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
@@ -467,7 +467,7 @@ static GLuint *t_opcode_dp3(struct r300_vertex_program *vp,
 	    (src[0].RelAddr << 4);
 
 	inst[2] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
@@ -508,7 +508,7 @@ static GLuint *t_opcode_dph(struct r300_vertex_program *vp,
 			t_dst_class(vpi->DstReg.File));
 
 	inst[1] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
@@ -594,7 +594,7 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
-	    MAKE_VSF_SOURCE(*u_temp_i, VSF_IN_COMPONENT_X,
+	    PVS_SOURCE_OPCODE(*u_temp_i, VSF_IN_COMPONENT_X,
 			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
 			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
 			    /* Not 100% sure about this */
@@ -636,7 +636,7 @@ static GLuint *t_opcode_lg2(struct r300_vertex_program *vp,
 			t_dst_class(vpi->DstReg.File));
 
 	inst[1] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
@@ -662,7 +662,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	/* NOTE: Users swizzling might not work. */
-	inst[1] = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
+	inst[1] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
 				  VSF_IN_COMPONENT_ZERO,	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
@@ -670,7 +670,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 				  src[0].
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
-	inst[2] = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
+	inst[2] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
 				  VSF_IN_COMPONENT_ZERO,	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
@@ -678,7 +678,7 @@ static GLuint *t_opcode_lit(struct r300_vertex_program *vp,
 				  src[0].
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
-	inst[3] = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
+	inst[3] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  VSF_IN_COMPONENT_ZERO,	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
@@ -918,7 +918,7 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp,
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ONE_SRC_0;
 	inst[3] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
@@ -935,7 +935,7 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp,
 
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
@@ -996,7 +996,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			PVS_DST_REG_TEMPORARY);
 
-	inst[1] = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
+	inst[1] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
@@ -1005,7 +1005,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 
-	inst[2] = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// z
+	inst[2] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),	// w
@@ -1023,7 +1023,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
-	inst[1] = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// y
+	inst[1] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 3)),	// w
@@ -1032,7 +1032,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				   NegateBase) ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 
-	inst[2] = MAKE_VSF_SOURCE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// z
+	inst[2] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 3)),	// w
@@ -1042,7 +1042,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 
 	inst[3] =
-	    MAKE_VSF_SOURCE(*u_temp_i + 1, VSF_IN_COMPONENT_X,
+	    PVS_SOURCE_OPCODE(*u_temp_i + 1, VSF_IN_COMPONENT_X,
 			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
 			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
 			    VSF_FLAG_NONE);
@@ -1152,7 +1152,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 						PVS_DST_REG_TEMPORARY);
 
 				inst[1] =
-				    MAKE_VSF_SOURCE(t_src_index
+				    PVS_SOURCE_OPCODE(t_src_index
 						    (vp, &src[2]),
 						    SWIZZLE_X, SWIZZLE_Y,
 						    SWIZZLE_Z, SWIZZLE_W,
@@ -1180,7 +1180,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 						PVS_DST_REG_TEMPORARY);
 
 				inst[1] =
-				    MAKE_VSF_SOURCE(t_src_index
+				    PVS_SOURCE_OPCODE(t_src_index
 						    (vp, &src[0]),
 						    SWIZZLE_X, SWIZZLE_Y,
 						    SWIZZLE_Z, SWIZZLE_W,

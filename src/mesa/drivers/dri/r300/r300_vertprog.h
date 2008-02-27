@@ -42,7 +42,7 @@
 #define VSF_IN_COMPONENT_ZERO	4
 #define VSF_IN_COMPONENT_ONE	5
 
-#define MAKE_VSF_SOURCE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate) \
+#define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate) \
 	( ((in_reg_index)<<R300_VPI_IN_REG_INDEX_SHIFT) \
 	   | ((comp_x)<<R300_VPI_IN_X_SHIFT) \
 	   | ((comp_y)<<R300_VPI_IN_Y_SHIFT) \
