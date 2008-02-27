@@ -37,6 +37,7 @@
 #include "tgsi/util/tgsi_parse.h"
 #include "tgsi/util/tgsi_build.h"
 
+#include "pipe/p_util.h"
 
 
 
