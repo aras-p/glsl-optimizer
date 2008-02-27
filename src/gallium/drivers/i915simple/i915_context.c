@@ -36,6 +36,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
+#include "pipe/p_screen.h"
 
 
 /**
@@ -90,65 +91,19 @@ i915_is_format_supported( struct pipe_context *pipe,
 }
 
 
+/* XXX temporary */
 static int
 i915_get_param(struct pipe_context *pipe, int param)
 {
-   switch (param) {
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return 8;
-   case PIPE_CAP_NPOT_TEXTURES:
-      return 1;
-   case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 1;
-   case PIPE_CAP_GLSL:
-      return 0;
-   case PIPE_CAP_S3TC:
-      return 0;
-   case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 0;
-   case PIPE_CAP_POINT_SPRITE:
-      return 0;
-   case PIPE_CAP_MAX_RENDER_TARGETS:
-      return 1;
-   case PIPE_CAP_OCCLUSION_QUERY:
-      return 0;
-   case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 1;
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 11; /* max 1024x1024 */
-   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
-   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 11; /* max 1024x1024 */
-   default:
-      return 0;
-   }
+   return pipe->screen->get_param(pipe->screen, param);
 }
 
 
+/* XXX temporary */
 static float
 i915_get_paramf(struct pipe_context *pipe, int param)
 {
-   switch (param) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
-      return 7.5;
-
-   case PIPE_CAP_MAX_POINT_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
-      return 255.0;
-
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 4.0;
-
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-      return 16.0;
-
-   default:
-      return 0;
-   }
+   return pipe->screen->get_paramf(pipe->screen, param);
 }
 
 

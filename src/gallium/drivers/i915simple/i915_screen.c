@@ -83,6 +83,67 @@ i915_get_name( struct pipe_screen *pscreen )
 }
 
 
+static int
+i915_get_param(struct pipe_screen *screen, int param)
+{
+   switch (param) {
+   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+      return 8;
+   case PIPE_CAP_NPOT_TEXTURES:
+      return 1;
+   case PIPE_CAP_TWO_SIDED_STENCIL:
+      return 1;
+   case PIPE_CAP_GLSL:
+      return 0;
+   case PIPE_CAP_S3TC:
+      return 0;
+   case PIPE_CAP_ANISOTROPIC_FILTER:
+      return 0;
+   case PIPE_CAP_POINT_SPRITE:
+      return 0;
+   case PIPE_CAP_MAX_RENDER_TARGETS:
+      return 1;
+   case PIPE_CAP_OCCLUSION_QUERY:
+      return 0;
+   case PIPE_CAP_TEXTURE_SHADOW_MAP:
+      return 1;
+   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
+      return 11; /* max 1024x1024 */
+   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
+      return 8;  /* max 128x128x128 */
+   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
+      return 11; /* max 1024x1024 */
+   default:
+      return 0;
+   }
+}
+
+
+static float
+i915_get_paramf(struct pipe_screen *screen, int param)
+{
+   switch (param) {
+   case PIPE_CAP_MAX_LINE_WIDTH:
+      /* fall-through */
+   case PIPE_CAP_MAX_LINE_WIDTH_AA:
+      return 7.5;
+
+   case PIPE_CAP_MAX_POINT_WIDTH:
+      /* fall-through */
+   case PIPE_CAP_MAX_POINT_WIDTH_AA:
+      return 255.0;
+
+   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+      return 4.0;
+
+   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+      return 16.0;
+
+   default:
+      return 0;
+   }
+}
+
 
 static void
 i915_destroy_screen( struct pipe_screen *screen )
@@ -132,6 +193,8 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
 
    i915screen->screen.get_name = i915_get_name;
    i915screen->screen.get_vendor = i915_get_vendor;
+   i915screen->screen.get_param = i915_get_param;
+   i915screen->screen.get_paramf = i915_get_paramf;
 
    i915_init_screen_texture_functions(&i915screen->screen);
 
