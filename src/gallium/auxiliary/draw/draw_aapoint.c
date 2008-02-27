@@ -514,9 +514,11 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    tgsi_dump(aapoint_fs.tokens, 0);
 #endif
 
+#if 1 /* XXX remove */
    aapoint_fs.input_semantic_name[aapoint_fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
    aapoint_fs.input_semantic_index[aapoint_fs.num_inputs] = transform.maxGeneric + 1;
    aapoint_fs.num_inputs++;
+#endif
 
    aapoint->fs->aapoint_fs
       = aapoint->driver_create_fs_state(aapoint->pipe, &aapoint_fs);
@@ -694,8 +696,8 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
       /* find PSIZ vertex output */
       const struct draw_vertex_shader *vs = draw->vertex_shader;
       uint i;
-      for (i = 0; i < vs->state->num_outputs; i++) {
-         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
+      for (i = 0; i < vs->info.num_outputs; i++) {
+         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
             aapoint->psize_slot = i;
             break;
          }

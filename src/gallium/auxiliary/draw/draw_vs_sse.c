@@ -119,7 +119,7 @@ vs_sse_run( struct draw_vertex_shader *base,
    const float *trans = draw->viewport.translate;
 
    assert(count <= 4);
-   assert(draw->vertex_shader->state->output_semantic_name[0]
+   assert(draw->vertex_shader->info.output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
    /* Consts does not require 16 byte alignment. */

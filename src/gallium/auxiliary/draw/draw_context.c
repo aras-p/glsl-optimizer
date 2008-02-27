@@ -262,11 +262,11 @@ int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index)
 {
-   const struct pipe_shader_state *vs = draw->vertex_shader->state;
+   const struct draw_vertex_shader *vs = draw->vertex_shader;
    uint i;
-   for (i = 0; i < vs->num_outputs; i++) {
-      if (vs->output_semantic_name[i] == semantic_name &&
-          vs->output_semantic_index[i] == semantic_index)
+   for (i = 0; i < vs->info.num_outputs; i++) {
+      if (vs->info.output_semantic_name[i] == semantic_name &&
+          vs->info.output_semantic_index[i] == semantic_index)
          return i;
    }
 

@@ -473,7 +473,7 @@ void draw_update_vertex_fetch( struct draw_context *draw )
    if (!draw->vertex_shader)
       return;
 
-   nr_attrs = draw->vertex_shader->state->num_inputs;
+   nr_attrs = draw->vertex_shader->info.num_inputs;
 
    for (i = 0; i < nr_attrs; i++) {
       unsigned buf = draw->vertex_element[i].vertex_buffer_index;

@@ -278,8 +278,8 @@ static void wide_first_point( struct draw_stage *stage,
       /* find vertex shader texcoord outputs */
       const struct draw_vertex_shader *vs = draw->vertex_shader;
       uint i, j = 0;
-      for (i = 0; i < vs->state->num_outputs; i++) {
-         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
+      for (i = 0; i < vs->info.num_outputs; i++) {
+         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
             wide->texcoord_slot[j] = i;
             wide->texcoord_mode[j] = draw->rasterizer->sprite_coord_mode[j];
             j++;
@@ -294,8 +294,8 @@ static void wide_first_point( struct draw_stage *stage,
       /* find PSIZ vertex output */
       const struct draw_vertex_shader *vs = draw->vertex_shader;
       uint i;
-      for (i = 0; i < vs->state->num_outputs; i++) {
-         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
+      for (i = 0; i < vs->info.num_outputs; i++) {
+         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
             wide->psize_slot = i;
             break;
          }

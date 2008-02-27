@@ -46,6 +46,7 @@
 
 #include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_exec.h"
+#include "tgsi/util/tgsi_scan.h"
 
 
 struct pipe_context;
@@ -133,6 +134,8 @@ struct draw_vertex_shader {
    /* This member will disappear shortly:
     */
    const struct pipe_shader_state   *state;
+
+   struct tgsi_shader_info info;
 
    void (*prepare)( struct draw_vertex_shader *shader,
 		    struct draw_context *draw );
