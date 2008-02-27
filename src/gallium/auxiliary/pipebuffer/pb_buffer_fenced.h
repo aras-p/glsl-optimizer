@@ -44,7 +44,7 @@
  * Between the handle's destruction, and the fence signalling, the buffer is 
  * stored in a fenced buffer list.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author JosÃ© Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFFER_FENCED_H_
@@ -52,6 +52,11 @@
 
 
 #include "pipe/p_debug.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 struct pipe_winsys;
@@ -113,5 +118,9 @@ void
 buffer_fence(struct pb_buffer *buf,
              struct pipe_fence_handle *fence);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*PB_BUFFER_FENCED_H_*/

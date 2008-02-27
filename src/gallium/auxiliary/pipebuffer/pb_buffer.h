@@ -37,7 +37,7 @@
  * There is no obligation of a winsys driver to use this library. And a pipe
  * driver should be completly agnostic about it.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author Josï¿½ Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFFER_H_
@@ -48,6 +48,11 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_state.h"
 #include "pipe/p_inlines.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 struct pb_vtbl;
@@ -199,5 +204,9 @@ pb_malloc_buffer_create(size_t size,
 void 
 pb_init_winsys(struct pipe_winsys *winsys);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*PB_BUFFER_H_*/
