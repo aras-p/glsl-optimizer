@@ -29,7 +29,7 @@
 #define TGSI_SCAN_H
 
 
-#include "pipe/p_util.h"
+#include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 
