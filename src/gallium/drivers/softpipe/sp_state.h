@@ -53,7 +53,6 @@
 
 
 struct tgsi_sampler;
-struct tgsi_interp_coef;
 struct tgsi_exec_machine;
 
 
