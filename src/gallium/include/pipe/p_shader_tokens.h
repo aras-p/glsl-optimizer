@@ -1,9 +1,9 @@
 #if !defined TGSI_TOKEN_H
 #define TGSI_TOKEN_H
 
-#if defined __cplusplus
+#ifdef __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 #include "p_compiler.h"
 
@@ -802,9 +802,9 @@ struct tgsi_dst_register_ext_predicate
 };
 
 
-#if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+#ifdef __cplusplus
+}
+#endif
 
-#endif // !defined TGSI_TOKEN_H
+#endif /* TGSI_TOKEN_H */
 

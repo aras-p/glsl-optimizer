@@ -28,7 +28,7 @@
 #ifndef PIPE_FORMAT_H
 #define PIPE_FORMAT_H
 
-#include <stdio.h> // for sprintf
+#include <stdio.h> /* for sprintf */
 
 #include "p_compiler.h"
 #include "p_debug.h"
