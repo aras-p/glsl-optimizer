@@ -604,6 +604,7 @@ extern int hw_tcl_on;
 struct r300_vertex_program_key {
 	GLuint InputsRead;
 	GLuint OutputsWritten;
+	GLuint OutputsAdded;
 };
 
 struct r300_vertex_program {

@@ -1292,6 +1292,19 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		}
 	}
 
+	/* Some outputs may be artificially added, to match the inputs
+	   of the fragment program. Blank the outputs here. */
+	for (i = 0; i < VERT_RESULT_MAX; i++) {
+		if (vp->key.OutputsAdded & (1 << i)) {
+			inst[0] = MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, vp->outputs[i],
+			                      VSF_FLAG_ALL, VSF_OUT_CLASS_RESULT);
+			inst[1] = ZERO_SRC_0;
+			inst[2] = ZERO_SRC_0;
+			inst[3] = ZERO_SRC_0;
+			inst += 4;
+		}
+	}
+
 	vp->program.length = (inst - vp->program.body.i);
 	if (vp->program.length >= VSF_MAX_FRAGMENT_LENGTH) {
 		vp->program.length = 0;
@@ -1486,6 +1499,15 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key
 	return vp;
 }
 
+static void add_outputs(struct r300_vertex_program_key *key, GLint vert)
+{
+	if (key->OutputsWritten & (1 << vert))
+		return;
+
+	key->OutputsWritten |= 1 << vert;
+	key->OutputsAdded |= 1 << vert;
+}
+
 void r300SelectVertexShader(r300ContextPtr r300)
 {
 	GLcontext *ctx = ctx = r300->radeon.glCtx;
@@ -1517,27 +1539,25 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
 	wanted_key.OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
 
-	wanted_key.OutputsWritten |= 1 << VERT_RESULT_HPOS;
+	add_outputs(&wanted_key, VERT_RESULT_HPOS);
 
 	if (InputsRead & FRAG_BIT_COL0) {
-		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL0;
+		add_outputs(&wanted_key, VERT_RESULT_COL0);
 	}
 
-	if ((InputsRead & FRAG_BIT_COL1)) {
-		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL1;
+	if (InputsRead & FRAG_BIT_COL1) {
+		add_outputs(&wanted_key, VERT_RESULT_COL1);
 	}
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-			wanted_key.OutputsWritten |=
-			    1 << (VERT_RESULT_TEX0 + i);
+			add_outputs(&wanted_key, VERT_RESULT_TEX0 + i);
 		}
 	}
 
 	if (vpc->mesa_program.IsPositionInvariant) {
 		/* we wan't position don't we ? */
 		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
-		wanted_key.OutputsWritten |= (1 << VERT_RESULT_HPOS);
 	}
 
 	for (vp = vpc->progs; vp; vp = vp->next)
