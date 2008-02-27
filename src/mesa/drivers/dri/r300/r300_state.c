@@ -1659,10 +1659,30 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
-			prog->program.body.i[program_end + 0] = PVS_VECTOR_OPCODE(VE_MULTIPLY, o_reg++, VSF_FLAG_ALL, PVS_DST_REG_OUT);
-			prog->program.body.i[program_end + 1] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
-			prog->program.body.i[program_end + 2] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
-			prog->program.body.i[program_end + 3] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);
+			prog->program.body.i[program_end + 0] =
+			    PVS_VECTOR_OPCODE(VE_MULTIPLY, o_reg++,
+					      VSF_FLAG_ALL, PVS_DST_REG_OUT);
+			prog->program.body.i[program_end + 1] =
+			    MAKE_VSF_SOURCE(rmesa->state.sw_tcl_inputs[i],
+					    VSF_IN_COMPONENT_X,
+					    VSF_IN_COMPONENT_Y,
+					    VSF_IN_COMPONENT_Z,
+					    VSF_IN_COMPONENT_W,
+					    VSF_IN_CLASS_ATTR, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 2] =
+			    MAKE_VSF_SOURCE(rmesa->state.sw_tcl_inputs[i],
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_CLASS_ATTR, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 3] =
+			    MAKE_VSF_SOURCE(rmesa->state.sw_tcl_inputs[i],
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_COMPONENT_ONE,
+					    VSF_IN_CLASS_NONE, VSF_FLAG_NONE);
 			program_end += 4;
 		}
 	}
