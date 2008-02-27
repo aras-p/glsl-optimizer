@@ -3,27 +3,27 @@
 
 #include "r300_reg.h"
 
-#define PVS_VECTOR_OPCODE(op, out_reg_index, out_reg_fields, class)	\
-	((op)								\
-	 | ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
-	 | ((out_reg_fields) << 20)					\
-	 | ((class) << 8))
+#define PVS_VECTOR_OPCODE(opcode, reg_index, reg_writemask, reg_class)	\
+	((opcode)							\
+	 | ((reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
+	 | ((reg_writemask) << 20)					\
+	 | ((reg_class) << 8))
 
-#define PVS_MATH_OPCODE(op, out_reg_index, out_reg_fields, class)	\
-	((op)								\
+#define PVS_MATH_OPCODE(opcode, reg_index, reg_writemask, reg_class)	\
+	((opcode)							\
 	 | (1 << 6)	/* FIXME: PVS_DST_MATH_INST */			\
-	 | ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
-	 | ((out_reg_fields) << 20)					\
-	 | ((class) << 8))
+	 | ((reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
+	 | ((reg_writemask) << 20)					\
+	 | ((reg_class) << 8))
 
-#define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate)		\
+#define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, reg_class, negate)	\
 	(((in_reg_index) << R300_VPI_IN_REG_INDEX_SHIFT)					\
 	 | ((comp_x) << R300_VPI_IN_X_SHIFT)							\
 	 | ((comp_y) << R300_VPI_IN_Y_SHIFT)							\
 	 | ((comp_z) << R300_VPI_IN_Z_SHIFT)							\
 	 | ((comp_w) << R300_VPI_IN_W_SHIFT)							\
 	 | ((negate) << 25)									\
-	 | ((class)))
+	 | ((reg_class)))
 
 #if 1
 
@@ -57,9 +57,9 @@
 	(PVS_DST_REG_##outclass << 8) |		\
 	VP_OUTMASK_##outmask)
 
-#define VP_IN(class,idx) \
-	(((idx) << R300_VPI_IN_REG_INDEX_SHIFT) |		\
-	(PVS_SRC_REG_##class << 0) |			\
+#define VP_IN(inclass,inidx) \
+	(((inidx) << R300_VPI_IN_REG_INDEX_SHIFT) |		\
+	(PVS_SRC_REG_##inclass << 0) |			\
 	(PVS_SRC_SELECT_X << R300_VPI_IN_X_SHIFT) |		\
 	(PVS_SRC_SELECT_Y << R300_VPI_IN_Y_SHIFT) |		\
 	(PVS_SRC_SELECT_Z << R300_VPI_IN_Z_SHIFT) |		\
