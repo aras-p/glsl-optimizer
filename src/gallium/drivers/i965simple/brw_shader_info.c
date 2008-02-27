@@ -7,7 +7,7 @@
 
 
 /**
- * XXX try to get rid of this.  See tgsi_scan_shader() and tgsi_shader_info.
+ * XXX this obsolete new and no longer compiled.
  */
 void brw_shader_info(const struct tgsi_token *tokens,
 		     struct brw_shader_info *info )

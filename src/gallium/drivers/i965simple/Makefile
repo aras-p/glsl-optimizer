@@ -30,7 +30,6 @@ C_SOURCES = \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
-	brw_shader_info.c \
 	brw_state.c \
 	brw_state_batch.c \
 	brw_state_cache.c \

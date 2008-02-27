@@ -259,8 +259,11 @@ static void prealloc_reg(struct brw_wm_compile *c)
    /* Then a copy of our part of the CURBE entry:
     */
    {
-      int nr_constants = c->fp->info2.nr_regs[TGSI_FILE_CONSTANT];
+      int nr_constants = c->fp->info.file_max[TGSI_FILE_CONSTANT] + 1;
       int index = 0;
+
+      /* XXX number of constants, or highest numbered constant? */
+      assert(nr_constants == c->fp->info.file_count[TGSI_FILE_CONSTANT]);
 
       c->prog_data.max_const = 4*nr_constants;
       for (i = 0; i < nr_constants; i++) {
@@ -282,7 +285,8 @@ static void prealloc_reg(struct brw_wm_compile *c)
    /* Next we receive the plane coefficients for parameter
     * interpolation:
     */
-   for (i = 0; i < c->fp->info2.nr_regs[TGSI_FILE_INPUT]; i++) {
+   assert(c->fp->info.file_max[TGSI_FILE_INPUT] == c->fp->info.num_inputs);
+   for (i = 0; i < c->fp->info.file_max[TGSI_FILE_INPUT] + 1; i++) {
       c->payload_coef[i] = brw_vec8_grf(c->reg_index, 0);
       c->reg_index += 2;
    }
@@ -302,11 +306,17 @@ static void prealloc_reg(struct brw_wm_compile *c)
    /* Now allocate room for the interpolated inputs and staging
     * registers for the outputs:
     */
-   for (i = 0; i < c->fp->info2.nr_regs[TGSI_FILE_INPUT]; i++) 
+   /* XXX do we want to loop over the _number_ of inputs/outputs or loop
+    * to the highest input/output index that's used?
+    *  Probably the same, actually.
+    */
+   assert(c->fp->info.file_max[TGSI_FILE_INPUT] + 1 == c->fp->info.num_inputs);
+   assert(c->fp->info.file_max[TGSI_FILE_OUTPUT] + 1 == c->fp->info.num_outputs);
+   for (i = 0; i < c->fp->info.file_max[TGSI_FILE_INPUT] + 1; i++) 
       for (j = 0; j < 4; j++)
 	 c->wm_regs[TGSI_FILE_INPUT][i][j] = brw_vec8_grf( c->reg_index++, 0 );
 
-   for (i = 0; i < c->fp->info2.nr_regs[TGSI_FILE_OUTPUT]; i++) 
+   for (i = 0; i < c->fp->info.file_max[TGSI_FILE_OUTPUT] + 1; i++) 
       for (j = 0; j < 4; j++)
 	 c->wm_regs[TGSI_FILE_OUTPUT][i][j] = brw_vec8_grf( c->reg_index++, 0 );
 

@@ -148,11 +148,4 @@ void brw_invalidate_pools( struct brw_context *brw );
 void brw_clear_batch_cache_flush( struct brw_context *brw );
 
 
-/* brw_shader_info.c
- */
-
-void brw_shader_info(const struct tgsi_token *tokens,
-		     struct brw_shader_info *info );
-
-
 #endif

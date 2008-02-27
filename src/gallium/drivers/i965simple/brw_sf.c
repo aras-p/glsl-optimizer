@@ -133,7 +133,7 @@ static void upload_sf_prog( struct brw_context *brw )
    key.vp_output_count = brw->vs.prog_data->outputs_written;
 
    /* BRW_NEW_FS */
-   key.fp_input_count = brw->attribs.FragmentProgram->info2.nr_regs[TGSI_FILE_INPUT];
+   key.fp_input_count = brw->attribs.FragmentProgram->info.file_max[TGSI_FILE_INPUT] + 1;
 
 
    /* BRW_NEW_REDUCED_PRIMITIVE */

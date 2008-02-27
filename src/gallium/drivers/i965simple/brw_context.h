@@ -197,31 +197,20 @@ struct brw_state_flags {
 };
 
 
-struct brw_shader_info {
-   int nr_regs[8];		/* TGSI_FILE_* */
-};
-   
-
-
 struct brw_vertex_program {
    struct pipe_shader_state program;
    struct tgsi_shader_info info;
-   struct brw_shader_info info2;  /* XXX get rid of this */
    int id;
 };
-
 
 
 struct brw_fragment_program {
    struct pipe_shader_state program;
    struct tgsi_shader_info info;
-   struct brw_shader_info info2;  /* XXX get rid of this */
    
-   boolean UsesDepth;
+   boolean UsesDepth; /* XXX add this to tgsi_shader_info? */
    int id;
 };
-
-
 
 
 struct pipe_setup_linkage {

@@ -177,8 +177,10 @@ static void * brw_create_fs_state(struct pipe_context *pipe,
 
    tgsi_scan_shader(shader->tokens, &brw_fp->info);
 
+#if 0
    brw_shader_info(shader->tokens,
 		   &brw_fp->info2);
+#endif
 
    tgsi_dump(shader->tokens, 0);
 
@@ -216,9 +218,10 @@ static void *brw_create_vs_state(struct pipe_context *pipe,
 
    tgsi_scan_shader(shader->tokens, &brw_vp->info);
 
+#if 0
    brw_shader_info(shader->tokens,
 		   &brw_vp->info2);
-
+#endif
    tgsi_dump(shader->tokens, 0);
 
    return (void *)brw_vp;
