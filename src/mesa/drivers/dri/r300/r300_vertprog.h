@@ -3,6 +3,30 @@
 
 #include "r300_reg.h"
 
+#define PVS_VECTOR_OPCODE(op, out_reg_index, out_reg_fields, class)	\
+	((op)								\
+	 | ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
+	 | ((out_reg_fields) << 20)					\
+	 | ((class) << 8))
+
+#define PVS_MATH_OPCODE(op, out_reg_index, out_reg_fields, class)	\
+	((op)								\
+	 | (1 << 6)	/* FIXME: PVS_DST_MATH_INST */			\
+	 | ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
+	 | ((out_reg_fields) << 20)					\
+	 | ((class) << 8))
+
+#define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate)		\
+	(((in_reg_index) << R300_VPI_IN_REG_INDEX_SHIFT)					\
+	 | ((comp_x) << R300_VPI_IN_X_SHIFT)							\
+	 | ((comp_y) << R300_VPI_IN_Y_SHIFT)							\
+	 | ((comp_z) << R300_VPI_IN_Z_SHIFT)							\
+	 | ((comp_w) << R300_VPI_IN_W_SHIFT)							\
+	 | ((negate) << 25)									\
+	 | ((class)))
+
+#if 1
+
 #define VSF_FLAG_X	1
 #define VSF_FLAG_Y	2
 #define VSF_FLAG_Z	4
@@ -10,39 +34,6 @@
 #define VSF_FLAG_XYZ	(VSF_FLAG_X | VSF_FLAG_Y | VSF_FLAG_Z)
 #define VSF_FLAG_ALL  0xf
 #define VSF_FLAG_NONE  0
-
-/* first DWORD of an instruction */
-
-#define PVS_VECTOR_OPCODE(op, out_reg_index, out_reg_fields, class) \
-   ((op)  \
-  	| ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT) 	\
- 	 | ((out_reg_fields) << 20) 	\
-  	| ( (class) << 8 ) )
-
-#define PVS_DST_MATH_INST	(1 << 6)
-
-#define PVS_MATH_OPCODE(op, out_reg_index, out_reg_fields, class) \
-   ((op)  \
-    | PVS_DST_MATH_INST \
-  	| ((out_reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT) 	\
- 	 | ((out_reg_fields) << 20) 	\
-  	| ( (class) << 8 ) )
-
-/* according to Nikolai, the subsequent 3 DWORDs are sources, use same define for each */
-
-#define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate) \
-	( ((in_reg_index)<<R300_VPI_IN_REG_INDEX_SHIFT) \
-	   | ((comp_x)<<R300_VPI_IN_X_SHIFT) \
-	   | ((comp_y)<<R300_VPI_IN_Y_SHIFT) \
-	   | ((comp_z)<<R300_VPI_IN_Z_SHIFT) \
-	   | ((comp_w)<<R300_VPI_IN_W_SHIFT) \
-	   | ((negate)<<25) | ((class)))
-
-#if 1
-
-/**
- * Vertex program helper macros
- */
 
 #define VP_OUTMASK_X	R300_VPI_OUT_WRITE_X
 #define VP_OUTMASK_Y	R300_VPI_OUT_WRITE_Y
