@@ -64,9 +64,6 @@ softpipe_create_fs_state(struct pipe_context *pipe,
    /* get/save the summary info for this shader */
    tgsi_scan_shader(templ->tokens, &state->info);
 
-   /* convenience field */
-   state->uses_kill = (state->info.opcode_count[TGSI_OPCODE_KIL] ||
-                       state->info.opcode_count[TGSI_OPCODE_KILP]);
    return state;
 }
 

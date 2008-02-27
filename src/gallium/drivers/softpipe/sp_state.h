@@ -66,8 +66,6 @@ struct sp_fragment_shader {
 
    struct tgsi_shader_info info;
 
-   boolean uses_kill;
-
    void (*prepare)( const struct sp_fragment_shader *shader,
 		    struct tgsi_exec_machine *machine,
 		    struct tgsi_sampler *samplers);
