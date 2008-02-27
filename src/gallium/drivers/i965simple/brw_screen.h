@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,27 +25,44 @@
  * 
  **************************************************************************/
 
-#include "brw_context.h"
-#include "brw_reg.h"
+
+#ifndef BRW_SCREEN_H
+#define BRW_SCREEN_H
+
 
 #include "pipe/p_screen.h"
 
 
-static const char *brw_get_vendor( struct pipe_context *pipe )
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/**
+ * Subclass of pipe_screen
+ */
+struct brw_screen
 {
-   return pipe->screen->get_vendor(pipe->screen);
+   struct pipe_screen screen;
+
+   uint pci_id;
+};
+
+
+/** cast wrapper */
+static INLINE struct brw_screen *
+brw_screen(struct pipe_screen *pscreen)
+{
+   return (struct brw_screen *) pscreen;
 }
 
 
-static const char *brw_get_name( struct pipe_context *pipe )
-{
-   return pipe->screen->get_name(pipe->screen);
-}
+extern struct pipe_screen *
+brw_create_screen(struct pipe_winsys *winsys, uint pci_id);
 
 
-void
-brw_init_string_functions(struct brw_context *brw)
-{
-   brw->pipe.get_name = brw_get_name;
-   brw->pipe.get_vendor = brw_get_vendor;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* BRW_SCREEN_H */

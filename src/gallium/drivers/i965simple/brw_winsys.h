@@ -53,6 +53,8 @@
 struct pipe_buffer;
 struct pipe_fence_handle;
 struct pipe_winsys;
+struct pipe_screen;
+
 
 /* The pipe driver currently understands the following chipsets:
  */
@@ -181,7 +183,7 @@ struct brw_winsys {
 #define BRW_BUFFER_USAGE_LIT_VERTEX  (PIPE_BUFFER_USAGE_CUSTOM << 0)
 
 
-struct pipe_context *brw_create(struct pipe_winsys *,
+struct pipe_context *brw_create(struct pipe_screen *,
                                 struct brw_winsys *,
                                 unsigned pci_id);
 

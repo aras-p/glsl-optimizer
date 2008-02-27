@@ -6,6 +6,7 @@ LIBNAME = i965simple
 C_SOURCES = \
 	brw_blit.c \
 	brw_flush.c \
+	brw_screen.c \
 	brw_strings.c \
 	brw_surface.c \
 	brw_cc.c \

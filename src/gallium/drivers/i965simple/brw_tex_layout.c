@@ -71,8 +71,6 @@ static unsigned minify( unsigned d )
 }
 
 
-static boolean brw_miptree_layout(struct pipe_context *, struct brw_texture *);
-
 static void intel_miptree_set_image_offset(struct brw_texture *tex,
                                            unsigned level,
                                            unsigned img,
@@ -199,7 +197,7 @@ static void i945_miptree_layout_2d(struct brw_texture *tex)
    }
 }
 
-static boolean brw_miptree_layout(struct pipe_context *pipe, struct brw_texture *tex)
+static boolean brw_miptree_layout(struct brw_texture *tex)
 {
    struct pipe_texture *pt = &tex->base;
    /* XXX: these vary depending on image format:
@@ -304,17 +302,26 @@ static struct pipe_texture *
 brw_texture_create(struct pipe_context *pipe,
                    const struct pipe_texture *templat)
 {
+   return pipe->screen->texture_create(pipe->screen, templat);
+}
+
+
+static struct pipe_texture *
+brw_texture_create_screen(struct pipe_screen *screen,
+                          const struct pipe_texture *templat)
+{
+   struct pipe_winsys *ws = screen->winsys;
    struct brw_texture *tex = CALLOC_STRUCT(brw_texture);
 
    if (tex) {
       tex->base = *templat;
       tex->base.refcount = 1;
 
-      if (brw_miptree_layout(pipe, tex))
-	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,
-                                                   PIPE_BUFFER_USAGE_PIXEL,
-                                                   tex->pitch * tex->base.cpp *
-                                                   tex->total_height);
+      if (brw_miptree_layout(tex))
+	 tex->buffer = ws->buffer_create(ws, 64,
+                                         PIPE_BUFFER_USAGE_PIXEL,
+                                         tex->pitch * tex->base.cpp *
+                                         tex->total_height);
 
       if (!tex->buffer) {
 	 FREE(tex);
@@ -329,6 +336,14 @@ brw_texture_create(struct pipe_context *pipe,
 static void
 brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 {
+   pipe->screen->texture_release(pipe->screen, pt);
+}
+
+
+static void
+brw_texture_release_screen(struct pipe_screen *screen,
+                           struct pipe_texture **pt)
+{
    if (!*pt)
       return;
 
@@ -337,6 +352,7 @@ brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
        __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
    */
    if (--(*pt)->refcount <= 0) {
+      struct pipe_winsys *ws = screen->winsys;
       struct brw_texture *tex = (struct brw_texture *)*pt;
       uint i;
 
@@ -344,7 +360,7 @@ brw_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe_buffer_reference(pipe->winsys, &tex->buffer, NULL);
+      pipe_buffer_reference(ws, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -371,6 +387,16 @@ brw_get_tex_surface(struct pipe_context *pipe,
                      struct pipe_texture *pt,
                      unsigned face, unsigned level, unsigned zslice)
 {
+   return pipe->screen->get_tex_surface(pipe->screen, pt, face, level, zslice);
+}
+
+
+static struct pipe_surface *
+brw_get_tex_surface_screen(struct pipe_screen *screen,
+                           struct pipe_texture *pt,
+                           unsigned face, unsigned level, unsigned zslice)
+{
+   struct pipe_winsys *ws = screen->winsys;
    struct brw_texture *tex = (struct brw_texture *)pt;
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
@@ -388,11 +414,11 @@ brw_get_tex_surface(struct pipe_context *pipe,
       assert(zslice == 0);
    }
 
-   ps = pipe->winsys->surface_alloc(pipe->winsys);
+   ps = ws->surface_alloc(ws);
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
@@ -412,3 +438,13 @@ brw_init_texture_functions(struct brw_context *brw)
    brw->pipe.texture_update = brw_texture_update;
    brw->pipe.get_tex_surface = brw_get_tex_surface;
 }
+
+
+void
+brw_init_screen_texture_funcs(struct pipe_screen *screen)
+{
+   screen->texture_create  = brw_texture_create_screen;
+   screen->texture_release = brw_texture_release_screen;
+   screen->get_tex_surface = brw_get_tex_surface_screen;
+}
+

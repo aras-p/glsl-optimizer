@@ -40,6 +40,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "i965simple/brw_winsys.h"
+#include "i965simple/brw_screen.h"
 #include "brw_aub.h"
 #include "xm_winsys_aub.h"
 
@@ -565,6 +566,7 @@ struct pipe_context *
 xmesa_create_i965simple( struct pipe_winsys *winsys )
 {
    struct aub_brw_winsys *iws = CALLOC_STRUCT( aub_brw_winsys );
+   struct pipe_screen *screen = brw_create_screen(winsys, 0/* XXX pci_id */);
    
    /* Fill in this struct with callbacks that i965simple will need to
     * communicate with the window system, buffer manager, etc. 
@@ -583,7 +585,7 @@ xmesa_create_i965simple( struct pipe_winsys *winsys )
 
    /* Create the i965simple context:
     */
-   return brw_create( winsys,
+   return brw_create( screen,
 		      &iws->winsys,
 		      0 );
 }
