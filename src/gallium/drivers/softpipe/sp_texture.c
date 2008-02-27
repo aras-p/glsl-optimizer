@@ -91,7 +91,6 @@ softpipe_texture_create_screen(struct pipe_screen *screen,
 
    spt->base = *templat;
    spt->base.refcount = 1;
-   spt->base.pipe = NULL;
    spt->base.screen = screen;
 
    softpipe_texture_layout(spt);
