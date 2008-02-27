@@ -107,6 +107,8 @@ struct spu_global
 
    vector float tex_size;
    vector unsigned int tex_size_mask; /**< == int(size - 1) */
+   vector unsigned int tex_size_x_mask; /**< == int(size - 1) */
+   vector unsigned int tex_size_y_mask; /**< == int(size - 1) */
 
    vector float (*sample_texture)(vector float texcoord);
 
@@ -130,7 +132,6 @@ extern boolean Debug;
 #define TAG_INDEX_BUFFER      16
 #define TAG_BATCH_BUFFER      17
 #define TAG_MISC              18
-#define TAG_TEXTURE_TILE      19
 #define TAG_DCACHE0           20
 #define TAG_DCACHE1           21
 #define TAG_DCACHE2           22
