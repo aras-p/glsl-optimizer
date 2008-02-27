@@ -973,7 +973,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                             pt, stvp, stfp, color, GL_FALSE);
-	 st->pipe->texture_release(st->pipe, &pt);
+         pipe_texture_reference(&pt, NULL);
       }
    }
    else {
@@ -1124,7 +1124,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                          pt, stvp, stfp,
                          ctx->Current.RasterColor, GL_FALSE);
 
-      st->pipe->texture_release(st->pipe, &pt);
+      pipe_texture_reference(&pt, NULL);
    }
 }
 
@@ -1282,7 +1282,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       pt, stvp, stfp, color, GL_TRUE);
 
    pipe_surface_reference(&psTex, NULL);
-   st->pipe->texture_release(st->pipe, &pt);
+   pipe_texture_reference(&pt, NULL);
 }
 
 
