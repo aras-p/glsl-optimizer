@@ -193,8 +193,8 @@ void brw_debug_batch(struct intel_context *intel)
 
    state_struct_out("SF", brw->sf.state_bo, sizeof(struct brw_sf_unit_state));
    dump_sf_viewport_state(brw);
-   brw_debug_prog("SF prog", brw->vs.prog_bo);
+   brw_debug_prog("SF prog", brw->sf.prog_bo);
 
-   state_struct_out("WM", brw->sf.state_bo, sizeof(struct brw_wm_unit_state));
-   brw_debug_prog("WM prog", brw->vs.prog_bo);
+   state_struct_out("WM", brw->wm.state_bo, sizeof(struct brw_wm_unit_state));
+   brw_debug_prog("WM prog", brw->wm.prog_bo);
 }
