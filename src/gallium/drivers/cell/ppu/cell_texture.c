@@ -210,6 +210,7 @@ static void
 cell_tile_texture(struct cell_context *cell,
                   struct cell_texture *texture)
 {
+   struct pipe_screen *screen = cell->pipe.screen;
    uint face = 0, level = 0, zslice = 0;
    struct pipe_surface *surf;
    const uint w = texture->base.width[0], h = texture->base.height[0];
@@ -221,7 +222,7 @@ cell_tile_texture(struct cell_context *cell,
    assert(w % TILE_SIZE == 0);
    assert(h % TILE_SIZE == 0);
 
-   surf = cell_get_tex_surface(&cell->pipe, &texture->base, face, level, zslice);
+   surf = screen->get_tex_surface(screen, &texture->base, face, level, zslice);
    ASSERT(surf);
 
    src = (const uint *) pipe_surface_map(surf);
