@@ -30,11 +30,6 @@
 
 /* according to Nikolai, the subsequent 3 DWORDs are sources, use same define for each */
 
-#define VSF_IN_CLASS_TMP	0
-#define VSF_IN_CLASS_ATTR	1
-#define VSF_IN_CLASS_PARAM	2
-#define VSF_IN_CLASS_NONE	9
-
 #define VSF_IN_COMPONENT_X	0
 #define VSF_IN_COMPONENT_Y	1
 #define VSF_IN_COMPONENT_Z	2

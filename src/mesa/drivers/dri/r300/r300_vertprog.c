@@ -61,10 +61,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* TODO: Get rid of t_src_class call */
 #define CMP_SRCS(a, b) ((a.RelAddr != b.RelAddr) || (a.Index != b.Index && \
-		       ((t_src_class(a.File) == VSF_IN_CLASS_PARAM && \
-			 t_src_class(b.File) == VSF_IN_CLASS_PARAM) || \
-			(t_src_class(a.File) == VSF_IN_CLASS_ATTR && \
-			 t_src_class(b.File) == VSF_IN_CLASS_ATTR)))) \
+		       ((t_src_class(a.File) == PVS_SRC_REG_CONSTANT && \
+			 t_src_class(b.File) == PVS_SRC_REG_CONSTANT) || \
+			(t_src_class(a.File) == PVS_SRC_REG_INPUT && \
+			 t_src_class(b.File) == PVS_SRC_REG_INPUT)))) \
 
 #define ZERO_SRC_0 (PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), \
 				    SWIZZLE_ZERO, SWIZZLE_ZERO, \
@@ -209,16 +209,16 @@ static unsigned long t_src_class(enum register_file file)
 
 	switch (file) {
 	case PROGRAM_TEMPORARY:
-		return VSF_IN_CLASS_TMP;
+		return PVS_SRC_REG_TEMPORARY;
 
 	case PROGRAM_INPUT:
-		return VSF_IN_CLASS_ATTR;
+		return PVS_SRC_REG_INPUT;
 
 	case PROGRAM_LOCAL_PARAM:
 	case PROGRAM_ENV_PARAM:
 	case PROGRAM_NAMED_PARAM:
 	case PROGRAM_STATE_VAR:
-		return VSF_IN_CLASS_PARAM;
+		return PVS_SRC_REG_CONSTANT;
 		/*
 		   case PROGRAM_OUTPUT:
 		   case PROGRAM_WRITE_ONLY:
@@ -596,7 +596,7 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 	inst[2] =
 	    PVS_SOURCE_OPCODE(*u_temp_i, VSF_IN_COMPONENT_X,
 			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
-			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
+			    VSF_IN_COMPONENT_W, PVS_SRC_REG_TEMPORARY,
 			    /* Not 100% sure about this */
 			    (!src[0].
 			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE
@@ -1044,7 +1044,7 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 	inst[3] =
 	    PVS_SOURCE_OPCODE(*u_temp_i + 1, VSF_IN_COMPONENT_X,
 			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
-			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
+			    VSF_IN_COMPONENT_W, PVS_SRC_REG_TEMPORARY,
 			    VSF_FLAG_NONE);
 
 	return inst;

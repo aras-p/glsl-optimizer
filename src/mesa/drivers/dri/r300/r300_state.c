@@ -1668,21 +1668,21 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 					    VSF_IN_COMPONENT_Y,
 					    VSF_IN_COMPONENT_Z,
 					    VSF_IN_COMPONENT_W,
-					    VSF_IN_CLASS_ATTR, VSF_FLAG_NONE);
+					    PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 2] =
 			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
 					    VSF_IN_COMPONENT_ONE,
 					    VSF_IN_COMPONENT_ONE,
 					    VSF_IN_COMPONENT_ONE,
 					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_CLASS_ATTR, VSF_FLAG_NONE);
+					    PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 3] =
 			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
 					    VSF_IN_COMPONENT_ONE,
 					    VSF_IN_COMPONENT_ONE,
 					    VSF_IN_COMPONENT_ONE,
 					    VSF_IN_COMPONENT_ONE,
-					    VSF_IN_CLASS_NONE, VSF_FLAG_NONE);
+					    /* FIXME */ 0, VSF_FLAG_NONE);
 			program_end += 4;
 		}
 	}
