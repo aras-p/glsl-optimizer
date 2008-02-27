@@ -54,22 +54,8 @@ softpipe_texture(struct pipe_texture *pt)
 }
 
 
-
-extern struct pipe_texture *
-softpipe_texture_create(struct pipe_context *pipe,
-                        const struct pipe_texture *templat);
-
 extern void
-softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt);
-
-extern void
-softpipe_texture_update(struct pipe_context *pipe,
-                        struct pipe_texture *texture);
-
-extern struct pipe_surface *
-softpipe_get_tex_surface(struct pipe_context *pipe,
-                         struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice);
+softpipe_init_texture_funcs( struct softpipe_context *softpipe );
 
 
 #endif /* SP_TEXTURE */

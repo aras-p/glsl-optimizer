@@ -80,7 +80,7 @@ softpipe_texture_layout(struct softpipe_texture * spt)
 }
 
 
-struct pipe_texture *
+static struct pipe_texture *
 softpipe_texture_create(struct pipe_context *pipe,
                         const struct pipe_texture *templat)
 {
@@ -108,7 +108,7 @@ softpipe_texture_create(struct pipe_context *pipe,
 }
 
 
-void
+static void
 softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 {
    if (!*pt)
@@ -133,7 +133,7 @@ softpipe_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
 }
 
 
-void
+static void
 softpipe_texture_update(struct pipe_context *pipe,
                         struct pipe_texture *texture)
 {
@@ -150,7 +150,7 @@ softpipe_texture_update(struct pipe_context *pipe,
 /**
  * Called via pipe->get_tex_surface()
  */
-struct pipe_surface *
+static struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_texture *pt,
                          unsigned face, unsigned level, unsigned zslice)
@@ -182,4 +182,15 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       }
    }
    return ps;
+}
+
+
+
+void
+softpipe_init_texture_funcs( struct softpipe_context *softpipe )
+{
+   softpipe->pipe.texture_create = softpipe_texture_create;
+   softpipe->pipe.texture_release = softpipe_texture_release;
+   softpipe->pipe.texture_update = softpipe_texture_update;
+   softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 }
