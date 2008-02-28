@@ -390,10 +390,12 @@ static GLuint *t_opcode_add(struct r300_vertex_program *vp,
 	unsigned long hw_op;
 
 #if 1
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    VE_MULTIPLY_ADD;
+	if (src[0].File == PROGRAM_TEMPORARY
+	    && src[1].File == PROGRAM_TEMPORARY) {
+		hw_op = R300_VPI_OUT_OP_MAD_2;
+	} else {
+		hw_op = VE_MULTIPLY_ADD;
+	}
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
@@ -699,11 +701,12 @@ static GLuint *t_opcode_mad(struct r300_vertex_program *vp,
 {
 	unsigned long hw_op;
 
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File == PROGRAM_TEMPORARY
-		 && src[2].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    VE_MULTIPLY_ADD;
+	if (src[0].File == PROGRAM_TEMPORARY
+	    && src[1].File == PROGRAM_TEMPORARY) {
+		hw_op = R300_VPI_OUT_OP_MAD_2;
+	} else {
+		hw_op = VE_MULTIPLY_ADD;
+	}
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
@@ -763,10 +766,12 @@ static GLuint *t_opcode_mov(struct r300_vertex_program *vp,
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
 #else
-	hw_op =
-	    (src[0].File ==
-	     PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    VE_MULTIPLY_ADD;
+	if (src[0].File == PROGRAM_TEMPORARY
+	    && src[1].File == PROGRAM_TEMPORARY) {
+		hw_op = R300_VPI_OUT_OP_MAD_2;
+	} else {
+		hw_op = VE_MULTIPLY_ADD;
+	}
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
@@ -788,10 +793,12 @@ static GLuint *t_opcode_mul(struct r300_vertex_program *vp,
 
 	// HW mul can take third arg but appears to have some other limitations.
 
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    VE_MULTIPLY_ADD;
+	if (src[0].File == PROGRAM_TEMPORARY
+	    && src[1].File == PROGRAM_TEMPORARY) {
+		hw_op = R300_VPI_OUT_OP_MAD_2;
+	} else {
+		hw_op = VE_MULTIPLY_ADD;
+	}
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
@@ -893,10 +900,12 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp,
 	//ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 
 #if 1
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    VE_MULTIPLY_ADD;
+	if (src[0].File == PROGRAM_TEMPORARY
+	    && src[1].File == PROGRAM_TEMPORARY) {
+		hw_op = R300_VPI_OUT_OP_MAD_2;
+	} else {
+		hw_op = VE_MULTIPLY_ADD;
+	}
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
@@ -952,10 +961,12 @@ static GLuint *t_opcode_swz(struct r300_vertex_program *vp,
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
 #else
-	hw_op =
-	    (src[0].File ==
-	     PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    VE_MULTIPLY_ADD;
+	if (src[0].File == PROGRAM_TEMPORARY
+	    && src[1].File == PROGRAM_TEMPORARY) {
+		hw_op = R300_VPI_OUT_OP_MAD_2;
+	} else {
+		hw_op = VE_MULTIPLY_ADD;
+	}
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
