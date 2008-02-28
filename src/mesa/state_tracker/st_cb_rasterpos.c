@@ -38,6 +38,7 @@
 
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/feedback.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -162,6 +163,10 @@ rastpos_point(struct draw_stage *stage, struct prim_header *prim)
       update_attrib(ctx, outputMapping, prim->v[0],
                     ctx->Current.RasterTexCoords[i],
                     VERT_RESULT_TEX0 + i, VERT_ATTRIB_TEX0 + i);
+   }
+
+   if (ctx->RenderMode == GL_SELECT) {
+      _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
    }
 }
 
