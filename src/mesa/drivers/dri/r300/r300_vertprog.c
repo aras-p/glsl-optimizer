@@ -87,9 +87,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 				    SWIZZLE_ONE, SWIZZLE_ONE, \
 				    t_src_class(src[2].File), VSF_FLAG_NONE) | (src[2].RelAddr << 4))
 
-/* DP4 version seems to trigger some hw peculiarity */
-//#define PREFER_DP4
-
 #define FREE_TEMPS() \
 	do { \
 		int u_temp_used = (VSF_MAX_FRAGMENT_TEMPS - 1) - u_temp_i; \
@@ -1184,6 +1181,9 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		fprintf(stderr, "%08x\n", vp->program.body.d[i]);
 #endif
 }
+
+/* DP4 version seems to trigger some hw peculiarity */
+//#define PREFER_DP4
 
 static void position_invariant(struct gl_program *prog)
 {
