@@ -420,7 +420,7 @@ intel_miptree_image_data(struct intel_context *intel,
    for (i = 0; i < depth; i++) {
       height = dst->level[level].height;
       if(dst->compressed)
-	 height /= 4;
+	 height = (height + 3) / 4;
       intel_region_data(intel,
 			dst->region,
 			dst_offset + dst_depth_offset[i] * dst->cpp, /* dst_offset */
