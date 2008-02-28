@@ -281,8 +281,6 @@ struct pipe_surface
  */
 struct pipe_texture
 { 
-   /* Effectively the key:
-    */
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 
