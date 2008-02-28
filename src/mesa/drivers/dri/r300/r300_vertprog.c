@@ -387,15 +387,6 @@ static GLuint *t_opcode_add(struct r300_vertex_program *vp,
 			    struct prog_instruction *vpi, GLuint * inst,
 			    struct prog_src_register src[3])
 {
-#if 1
-	inst[0] =
-	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	inst[1] = ONE_SRC_0;
-	inst[2] = t_src(vp, &src[0]);
-	inst[3] = t_src(vp, &src[1]);
-#else
 	inst[0] =
 	    PVS_VECTOR_OPCODE(VE_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
@@ -403,7 +394,6 @@ static GLuint *t_opcode_add(struct r300_vertex_program *vp,
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
-#endif
 
 	return inst;
 }
@@ -738,7 +728,6 @@ static GLuint *t_opcode_mov(struct r300_vertex_program *vp,
 {
 	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
 
-#if 1
 	inst[0] =
 	    PVS_VECTOR_OPCODE(VE_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
@@ -746,15 +735,6 @@ static GLuint *t_opcode_mov(struct r300_vertex_program *vp,
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
-#else
-	inst[0] =
-	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = ONE_SRC_0;
-	inst[3] = ZERO_SRC_0;
-#endif
 
 	return inst;
 }
@@ -905,7 +885,6 @@ static GLuint *t_opcode_swz(struct r300_vertex_program *vp,
 {
 	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
 
-#if 1
 	inst[0] =
 	    PVS_VECTOR_OPCODE(VE_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
@@ -913,15 +892,6 @@ static GLuint *t_opcode_swz(struct r300_vertex_program *vp,
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
-#else
-	inst[0] =
-	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	inst[1] = t_src(vp, &src[0]);
-	inst[2] = ONE_SRC_0;
-	inst[3] = ZERO_SRC_0;
-#endif
 
 	return inst;
 }
