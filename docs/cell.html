@@ -58,14 +58,33 @@ and looking for:
 </pre>
 
 
+<H2>Driver Implementation Summary</H2>
+
+<p>
+Rasterization is parallelized across the SPUs in a tiled-based manner.
+Batches of transformed triangles are sent to the SPUs (actually, pulled by from
+main memory by the SPUs).
+Each SPU loops over a set of 32x32-pixel screen tiles, rendering the triangles
+into each tile.
+Because of the limited SPU memory, framebuffer tiles are paged in/out of
+SPU local store as needed.
+Similarly, textures are tiled and brought into local store as needed.
+</p>
+
+<p>
+More recently, vertex transformation has been parallelized across the SPUs
+as well.
+</p>
+
+
 <H2>Status</H2>
 
 <p>
-As of January 2008 the driver supports smooth/flat shaded triangle rendering
-with Z testing.
+As of February 2008 the driver supports smooth/flat shaded triangle rendering
+with Z testing and simple texture mapping.
 Simple demos like gears run successfully.
-Basic texture mapping should be working within a month.
-There's still unfinished work in the PPU-to-SPU communication facilities.
+To test texture mapping, try progs/demos/texcyl (press right mouse button for
+rendering options).
 </p>
 
 
