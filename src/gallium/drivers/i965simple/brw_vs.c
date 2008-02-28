@@ -50,8 +50,8 @@ static void do_vs_prog( struct brw_context *brw,
    brw_init_compile(&c.func);
    c.vp = vp;
 
-   c.prog_data.outputs_written = vp->program.num_outputs;
-   c.prog_data.inputs_read = vp->program.num_inputs;
+   c.prog_data.outputs_written = vp->info.num_outputs;
+   c.prog_data.inputs_read = vp->info.num_inputs;
 
 #if 0
    if (c.key.copy_edgeflag) {

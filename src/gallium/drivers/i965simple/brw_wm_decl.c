@@ -292,7 +292,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
    }
 
    c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
-   c->prog_data.urb_read_length = (c->fp->program.num_inputs + 1) * 2;
+   c->prog_data.urb_read_length = (c->fp->info.num_inputs + 1) * 2;
    c->prog_data.curb_read_length = nr_curbe_regs;
 
    /* That's the end of the payload, now we can start allocating registers.

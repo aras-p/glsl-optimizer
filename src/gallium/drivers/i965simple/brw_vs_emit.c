@@ -86,7 +86,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
 
    /* Allocate input regs:
     */
-   c->nr_inputs = c->vp->program.num_inputs;
+   c->nr_inputs = c->vp->info.num_inputs;
    for (i = 0; i < c->nr_inputs; i++) {
 	 c->regs[TGSI_FILE_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
@@ -99,7 +99,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c,
    c->nr_outputs = 0;
    c->first_output = reg;
    mrf = 4;
-   for (i = 0; i < c->vp->program.num_outputs; i++) {
+   for (i = 0; i < c->vp->info.num_outputs; i++) {
       c->nr_outputs++;
 #if 0
       if (i == VERT_RESULT_HPOS) {
