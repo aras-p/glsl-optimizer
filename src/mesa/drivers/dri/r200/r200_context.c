@@ -502,7 +502,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
 
-   (*dri_interface->getUST)( & rmesa->swap_ust );
+   (*sPriv->systemTime->getUST)( & rmesa->swap_ust );
 
 
 #if DO_DEBUG

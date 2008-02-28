@@ -517,6 +517,12 @@ struct __DRIscreenPrivateRec {
      */
     const __DRIextension **extensions;
 
+    /* Extensions provided by the loader. */
+    const __DRIcontextModesExtension *contextModes;
+    const __DRIgetDrawableInfoExtension *getDrawableInfo;
+    const __DRIsystemTimeExtension *systemTime;
+    const __DRIdamageExtension *damage;
+
     struct {
 	/* Flag to indicate that this is a DRI2 screen.  Many of the above
 	 * fields will not be valid or initializaed in that case. */
@@ -525,6 +531,7 @@ struct __DRIscreenPrivateRec {
 	void *sarea;
 	__DRIEventBuffer *buffer;
 	__DRILock *lock;
+	__DRIcoreDRI2Extension *core;
     } dri2;
 
     /* The lock actually in use, old sarea or DRI2 */
@@ -554,27 +561,8 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
 extern int
 __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp);
 
-extern __DRIscreenPrivate * __driUtilCreateNewScreen( int scr, __DRIscreen *psc,
-    __GLcontextModes * modes,
-    const __DRIversion * ddx_version, const __DRIversion * dri_version,
-    const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
-    drm_sarea_t *pSAREA, int fd, int internal_api_version,
-    const struct __DriverAPIRec *driverAPI );
-
-/* Test the version of the internal GLX API.  Returns a value like strcmp. */
-extern int
-driCompareGLXAPIVersion( GLint required_version );
-
 extern float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
-
-/**
- * Pointer to the \c __DRIinterfaceMethods passed to the driver by the loader.
- * 
- * This pointer is set in the driver's \c __driCreateNewScreen function and
- * is defined in dri_util.c.
- */
-extern const __DRIinterfaceMethods * dri_interface;
 
 #endif /* _DRI_UTIL_H_ */

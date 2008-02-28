@@ -424,7 +424,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 
    rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   (*dri_interface->getUST)( & rmesa->swap_ust );
+   (*sPriv->systemTime->getUST)( & rmesa->swap_ust );
 
 
 #if DO_DEBUG

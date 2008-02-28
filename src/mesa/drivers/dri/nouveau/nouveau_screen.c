@@ -214,8 +214,9 @@ static const struct __DriverAPIRec nouveauAPI = {
 
 
 static __GLcontextModes *
-nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
-		 unsigned stencil_bits, GLboolean have_back_buffer )
+nouveauFillInModes( __DRIscreenPRiv *psp,
+		    unsigned pixel_bits, unsigned depth_bits,
+		    unsigned stencil_bits, GLboolean have_back_buffer )
 {
 	__GLcontextModes * modes;
 	__GLcontextModes * m;
@@ -248,8 +249,8 @@ nouveauFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
 	num_modes = ((pixel_bits==16) ? 1 : 2) *
 		depth_buffer_factor * back_buffer_factor * 4;
-	modes = (*dri_interface->createContextModes)(num_modes,
-						     sizeof(__GLcontextModes));
+	modes = (*psp->contextModes->createContextModes)(num_modes,
+							 sizeof(__GLcontextModes));
 	m = modes;
 
 	for (i=((pixel_bits==16)?0:1);i<((pixel_bits==16)?1:3);i++) {
@@ -342,7 +343,8 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 	if (!nouveauInitDriver(psp))
 		return NULL;
 
-	return nouveauFillInModes(dri_priv->bpp,
+	return nouveauFillInModes(psp,
+				  dri_priv->bpp,
 				  (dri_priv->bpp == 16) ? 16 : 24,
 				  (dri_priv->bpp == 16) ? 0  : 8,
 				  1);

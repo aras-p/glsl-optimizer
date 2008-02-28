@@ -55,7 +55,6 @@ typedef struct __DRIdrawableRec		__DRIdrawable;
 typedef struct __DRIdriverRec		__DRIdriver;
 typedef struct __DRIframebufferRec	__DRIframebuffer;
 typedef struct __DRIversionRec		__DRIversion;
-typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
 
 typedef struct __DRIextensionRec		__DRIextension;
 typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
@@ -244,13 +243,12 @@ struct __DRItexBufferExtensionRec {
  */
 /*@{*/
 
-#define __DRI_INTERFACE_VERSION 20070105
+#define __DRI_INTERFACE_VERSION 20080226
 
 typedef void *(CREATENEWSCREENFUNC)(int scr, __DRIscreen *psc,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
-    void * pSAREA, int fd, int internal_api_version,
-    const __DRIinterfaceMethods * interface,
+    void * pSAREA, int fd, const __DRIextension ** extensions,
     __GLcontextModes ** driver_modes);
 typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
 
@@ -267,7 +265,7 @@ extern CREATENEWSCREENFUNC __DRI_CREATE_NEW_SCREEN;
 
 typedef void *(__DRI2_CREATE_NEW_SCREEN_FUNC)(int scr, __DRIscreen *psc,
     int fd, unsigned int sarea_handle,
-    const __DRIinterfaceMethods * interface, __GLcontextModes ** driver_modes);
+    const __DRIextension **extensions, __GLcontextModes ** driver_modes);
 #define __DRI2_CREATE_NEW_SCREEN \
     __DRI_MAKE_VERSION(__dri2CreateNewScreen, __DRI_INTERFACE_VERSION)
 
@@ -301,15 +299,35 @@ struct __DRIversionRec {
     int    patch;        /**< Patch-level. */
 };
 
+/**
+ * The following extensions describe loader features that the DRI
+ * driver can make use of.  Some of these are mandatory, such as the
+ * getDrawableInfo extension for DRI and the coreDRI2 extensions for
+ * DRI2, while others are optional, and if present allow the driver to
+ * expose certain features.  The loader pass in a NULL terminated
+ * array of these extensions to the driver in the createNewScreen
+ * constructor.
+ */
 
-typedef void (*__DRIfuncPtr)(void);
+typedef struct __DRIcontextModesExtensionRec __DRIcontextModesExtension;
+typedef struct __DRIgetDrawableInfoExtensionRec __DRIgetDrawableInfoExtension;
+typedef struct __DRIsystemTimeExtensionRec __DRIsystemTimeExtension;
+typedef struct __DRIdamageExtensionRec __DRIdamageExtension;
+typedef struct __DRIcoreDRI2ExtensionRec __DRIcoreDRI2Extension;
 
-struct __DRIinterfaceMethodsRec {
+/**
+ * Memory management for __GLcontextModes
+ */
+#define __DRI_CONTEXT_MODES "DRI_ContextModes"
+#define __DRI_CONTEXT_MODES_VERSION 1
+struct __DRIcontextModesExtensionRec {
+    __DRIextension base;
+
     /**
      * Create a list of \c __GLcontextModes structures.
      */
     __GLcontextModes * (*createContextModes)(unsigned count,
-        size_t minimum_bytes_per_struct);
+					     size_t minimum_bytes_per_struct);
 
     /**
      * Destroy a list of \c __GLcontextModes structures.
@@ -318,16 +336,16 @@ struct __DRIinterfaceMethodsRec {
      * Determine if the drivers actually need to call this.
      */
     void (*destroyContextModes)( __GLcontextModes * modes );
+};
 
 
-    /**
-     * \name Client/server protocol functions.
-     *
-     * These functions implement the DRI client/server protocol for
-     * context and drawable operations.  Platforms that do not implement
-     * the wire protocol (e.g., EGL) will implement glorified no-op functions.
-     */
-    /*@{*/
+/**
+ * Callback to getDrawableInfo protocol
+ */
+#define __DRI_GET_DRAWABLE_INFO "DRI_GetDrawableInfo"
+#define __DRI_GET_DRAWABLE_INFO_VERSION 1
+struct __DRIgetDrawableInfoExtensionRec {
+    __DRIextension base;
 
     /**
      * This function is used to get information about the position, size, and
@@ -339,13 +357,16 @@ struct __DRIinterfaceMethodsRec {
         int * numClipRects, drm_clip_rect_t ** pClipRects,
         int * backX, int * backY,
         int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
-    /*@}*/
+};
 
+/**
+ * Callback to get system time for media stream counter extensions.
+ */
+#define __DRI_SYSTEM_TIME "DRI_SystemTime"
+#define __DRI_SYSTEM_TIME_VERSION 1
+struct __DRIsystemTimeExtensionRec {
+    __DRIextension base;
 
-    /**
-     * \name Timing related functions.
-     */
-    /*@{*/
     /**
      * Get the 64-bit unadjusted system time (UST).
      */
@@ -360,7 +381,15 @@ struct __DRIinterfaceMethodsRec {
      */
     GLboolean (*getMSCRate)(__DRIdrawable *draw,
 			    int32_t * numerator, int32_t * denominator);
-    /*@}*/
+};
+
+/**
+ * Damage reporting
+ */
+#define __DRI_DAMAGE "DRI_Damage"
+#define __DRI_DAMAGE_VERSION 1
+struct __DRIdamageExtensionRec {
+    __DRIextension base;
 
     /**
      * Reports areas of the given drawable which have been modified by the
@@ -380,6 +409,15 @@ struct __DRIinterfaceMethodsRec {
 			 int x, int y,
 			 drm_clip_rect_t *rects, int num_rects,
 			 GLboolean front_buffer);
+};
+
+/**
+ * DRI2 core
+ */
+#define __DRI_CORE_DRI2 "DRI_CoreDRI2"
+#define __DRI_CORE_DRI2_VERSION 1
+struct __DRIcoreDRI2ExtensionRec {
+    __DRIextension base;
 
     /**
      * Ping the windowing system to get it to reemit info for the

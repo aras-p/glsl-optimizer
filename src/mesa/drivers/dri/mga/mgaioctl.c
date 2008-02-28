@@ -417,7 +417,7 @@ void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
    GLint ret;
    GLint i;
    GLboolean   missed_target;
-
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -431,7 +431,7 @@ void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
    driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       mmesa->swap_missed_count++;
-      (void) (*dri_interface->getUST)( & mmesa->swap_missed_ust );
+      (void) (*psp->systemTime->getUST)( & mmesa->swap_missed_ust );
    }
    LOCK_HARDWARE( mmesa );
 
@@ -469,7 +469,7 @@ void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
 
    mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
    mmesa->swap_count++;
-   (void) (*dri_interface->getUST)( & mmesa->swap_ust );
+   (void) (*psp->systemTime->getUST)( & mmesa->swap_ust );
 }
 
 

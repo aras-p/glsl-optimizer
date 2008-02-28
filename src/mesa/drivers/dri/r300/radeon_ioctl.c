@@ -164,6 +164,7 @@ void radeonCopyBuffer(__DRIdrawablePrivate * dPriv,
 	GLint nbox, i, ret;
 	GLboolean missed_target;
 	int64_t ust;
+	__DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
 	assert(dPriv);
 	assert(dPriv->driContextPriv);
@@ -240,7 +241,7 @@ void radeonCopyBuffer(__DRIdrawablePrivate * dPriv,
 	    ((r300ContextPtr)radeon)->hw.all_dirty = GL_TRUE;
 
 	    radeon->swap_count++;
-	    (*dri_interface->getUST) (&ust);
+	    (*psp->systemTime->getUST) (&ust);
 	    if (missed_target) {
 		radeon->swap_missed_count++;
 		radeon->swap_missed_ust = ust - radeon->swap_ust;
@@ -257,6 +258,7 @@ void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 	radeonContextPtr radeon;
 	GLint ret;
 	GLboolean missed_target;
+	__DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
 	assert(dPriv);
 	assert(dPriv->driContextPriv);
@@ -295,7 +297,7 @@ void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 	driWaitForVBlank(dPriv, &missed_target);
 	if (missed_target) {
 		radeon->swap_missed_count++;
-		(void)(*dri_interface->getUST) (&radeon->swap_missed_ust);
+		(void)(*psp->systemTime->getUST) (&radeon->swap_missed_ust);
 	}
 	LOCK_HARDWARE(radeon);
 
@@ -309,7 +311,7 @@ void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 	}
 
 	radeon->swap_count++;
-	(void)(*dri_interface->getUST) (&radeon->swap_ust);
+	(void)(*psp->systemTime->getUST) (&radeon->swap_ust);
 
         driFlipRenderbuffers(radeon->glCtx->WinSysDrawBuffer, 
                              radeon->sarea->pfCurrentPage);

@@ -253,8 +253,9 @@ radeonGetParam(int fd, int param, void *value)
 }
 
 static __GLcontextModes *
-radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
-		 unsigned stencil_bits, GLboolean have_back_buffer )
+radeonFillInModes( __DRIscreenPrivate *psp,
+		   unsigned pixel_bits, unsigned depth_bits,
+		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __GLcontextModes * modes;
     __GLcontextModes * m;
@@ -301,7 +302,7 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     if ( ! driFillInModes( & m, fb_format, fb_type,
 			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -1082,7 +1083,8 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!radeonInitDriver(psp))
        return NULL;
 
-   return radeonFillInModes( dri_priv->bpp,
+   return radeonFillInModes( psp,
+			     dri_priv->bpp,
 			     (dri_priv->bpp == 16) ? 16 : 24,
 			     (dri_priv->bpp == 16) ? 0  : 8,
 			     (dri_priv->backOffset != dri_priv->depthOffset) );

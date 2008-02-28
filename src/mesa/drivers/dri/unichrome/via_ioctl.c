@@ -512,6 +512,7 @@ static void viaWaitIdleVBlank(  __DRIdrawablePrivate *dPriv,
 			       GLuint value )
 {
    GLboolean missed_target;
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
    VIA_FLUSH_DMA(vmesa); 
 
@@ -526,7 +527,7 @@ static void viaWaitIdleVBlank(  __DRIdrawablePrivate *dPriv,
       driWaitForVBlank( dPriv, & missed_target );
       if ( missed_target ) {
 	 vmesa->swap_missed_count++;
-	 (*dri_interface->getUST)( &vmesa->swap_missed_ust );
+	 (*psp->systemTime->getUST)( &vmesa->swap_missed_ust );
       }
    } 
    while (!viaCheckBreadcrumb(vmesa, value));	 
@@ -594,6 +595,7 @@ void viaCopyBuffer(__DRIdrawablePrivate *dPriv)
 {
    struct via_context *vmesa = 
       (struct via_context *)dPriv->driContextPriv->driverPrivate;
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
    if (VIA_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, 
@@ -629,7 +631,7 @@ void viaCopyBuffer(__DRIdrawablePrivate *dPriv)
    viaEmitBreadcrumbLocked(vmesa);
    UNLOCK_HARDWARE(vmesa);
 
-   (*dri_interface->getUST)( &vmesa->swap_ust );
+   (*psp->systemTime->getUST)( &vmesa->swap_ust );
 }
 
 
@@ -638,6 +640,7 @@ void viaPageFlip(__DRIdrawablePrivate *dPriv)
     struct via_context *vmesa = 
        (struct via_context *)dPriv->driContextPriv->driverPrivate;
     struct via_renderbuffer buffer_tmp;
+    __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
     VIA_FLUSH_DMA(vmesa);
    if (dPriv->vblFlags == VBLANK_FLAG_SYNC &&
@@ -653,7 +656,7 @@ void viaPageFlip(__DRIdrawablePrivate *dPriv)
     viaEmitBreadcrumbLocked(vmesa);
     UNLOCK_HARDWARE(vmesa);
 
-    (*dri_interface->getUST)( &vmesa->swap_ust );
+    (*psp->systemTime->getUST)( &vmesa->swap_ust );
 
 
     /* KW: FIXME: When buffers are freed, could free frontbuffer by

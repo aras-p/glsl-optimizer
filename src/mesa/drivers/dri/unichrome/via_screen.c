@@ -341,7 +341,8 @@ static struct __DriverAPIRec viaAPI = {
 
 
 static __GLcontextModes *
-viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
+viaFillInModes( __DRIscreenPrivate *psp,
+		unsigned pixel_bits, GLboolean have_back_buffer )
 {
     __GLcontextModes * modes;
     __GLcontextModes * m;
@@ -378,7 +379,7 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     if ( ! driFillInModes( & m, fb_format, fb_type,
 			   depth_bits_array, stencil_bits_array, 
@@ -444,7 +445,7 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!viaInitDriver(psp))
        return NULL;
 
-   return viaFillInModes( dri_priv->bytesPerPixel * 8, GL_TRUE );
+   return viaFillInModes( psp, dri_priv->bytesPerPixel * 8, GL_TRUE );
 
 }
 

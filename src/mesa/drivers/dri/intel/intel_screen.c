@@ -676,7 +676,8 @@ static const struct __DriverAPIRec intelAPI = {
 
 
 static __GLcontextModes *
-intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
+intelFillInModes(__DRIscreenPrivate *psp,
+		 unsigned pixel_bits, unsigned depth_bits,
                  unsigned stencil_bits, GLboolean have_back_buffer)
 {
    __GLcontextModes *modes;
@@ -728,8 +729,8 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
    }
 
    modes =
-      (*dri_interface->createContextModes) (num_modes,
-                                            sizeof(__GLcontextModes));
+      (*psp->contextModes->createContextModes) (num_modes,
+						sizeof(__GLcontextModes));
    m = modes;
    if (!driFillInModes(&m, fb_format, fb_type,
                        depth_bits_array, stencil_bits_array,
@@ -802,7 +803,7 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!intelInitDriver(psp))
        return NULL;
 
-   return intelFillInModes(dri_priv->cpp * 8,
+   return intelFillInModes(psp, dri_priv->cpp * 8,
 			   (dri_priv->cpp == 2) ? 16 : 24,
 			   (dri_priv->cpp == 2) ? 0  : 8, 1);
 }
@@ -883,10 +884,10 @@ PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
 
    psp->extensions = intelExtensions;
 
-   modes = intelFillInModes(16, 16, 0, 1);
+   modes = intelFillInModes(psp, 16, 16, 0, 1);
    for (m = modes; m->next != NULL; m = m->next)
      ;
-   m->next = intelFillInModes(32, 24, 8, 1);
+   m->next = intelFillInModes(psp, 32, 24, 8, 1);
 
    return modes;
 }

@@ -622,8 +622,9 @@ static const struct __DriverAPIRec ffbAPI = {
 
 
 static __GLcontextModes *
-ffbFillInModes( unsigned pixel_bits, unsigned depth_bits,
-		 unsigned stencil_bits, GLboolean have_back_buffer )
+ffbFillInModes( __DRIscreenPrivate *psp,
+		unsigned pixel_bits, unsigned depth_bits,
+		unsigned stencil_bits, GLboolean have_back_buffer )
 {
    __GLcontextModes * modes;
    __GLcontextModes * m;
@@ -670,7 +671,7 @@ ffbFillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-   modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
+   modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
    m = modes;
    if ( ! driFillInModes( & m, fb_format, fb_type,
 			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -726,5 +727,5 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!ffbInitDriver(psp))
        return NULL;
 
-   return ffbFillInModes( 32, 16, 0, GL_TRUE );
+   return ffbFillInModes( psp, 32, 16, 0, GL_TRUE );
 }

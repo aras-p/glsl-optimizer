@@ -177,7 +177,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			radeon->do_usleeps ? "usleeps" : "busy waits",
 			fthrottle_mode, radeon->radeonScreen->irq);
 
-	(*dri_interface->getUST) (&radeon->swap_ust);
+	(*sPriv->systemTime->getUST) (&radeon->swap_ust);
 
 	return GL_TRUE;
 }

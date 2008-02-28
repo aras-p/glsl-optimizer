@@ -426,6 +426,7 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
    GLint nbox, i, ret;
    GLboolean   missed_target;
    int64_t ust;
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -501,7 +502,7 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
        rmesa->hw.all_dirty = GL_TRUE;
 
        rmesa->swap_count++;
-       (*dri_interface->getUST)( & ust );
+       (*psp->systemTime->getUST)( & ust );
        if ( missed_target ) {
 	   rmesa->swap_missed_count++;
 	   rmesa->swap_missed_ust = ust - rmesa->swap_ust;
@@ -518,6 +519,7 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
    r200ContextPtr rmesa;
    GLint ret;
    GLboolean   missed_target;
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -556,7 +558,7 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
    driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       rmesa->swap_missed_count++;
-      (void) (*dri_interface->getUST)( & rmesa->swap_missed_ust );
+      (void) (*psp->systemTime->getUST)( & rmesa->swap_missed_ust );
    }
    LOCK_HARDWARE( rmesa );
 
@@ -570,7 +572,7 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
    }
 
    rmesa->swap_count++;
-   (void) (*dri_interface->getUST)( & rmesa->swap_ust );
+   (void) (*psp->systemTime->getUST)( & rmesa->swap_ust );
 
 #if 000
    if ( rmesa->sarea->pfCurrentPage == 1 ) {

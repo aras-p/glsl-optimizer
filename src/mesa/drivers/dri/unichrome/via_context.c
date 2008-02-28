@@ -661,7 +661,7 @@ viaCreateContext(const __GLcontextModes *visual,
     if (getenv("VIA_PAGEFLIP"))
        vmesa->allowPageFlip = 1;
 
-    (*dri_interface->getUST)( &vmesa->swap_ust );
+    (*sPriv->systemTime->getUST)( &vmesa->swap_ust );
 
 
     vmesa->regMMIOBase = (GLuint *)((unsigned long)viaScreen->reg);

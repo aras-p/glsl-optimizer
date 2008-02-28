@@ -66,7 +66,7 @@ static const GLuint __driNConfigOptions = 3;
 extern const struct dri_extension card_extensions[];
 
 static __GLcontextModes *
-sisFillInModes(int bpp)
+sisFillInModes(__DRIscreenPrivate *psp, int bpp)
 {
    __GLcontextModes *modes;
    __GLcontextModes *m;
@@ -104,7 +104,7 @@ sisFillInModes(int bpp)
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
-   modes = (*dri_interface->createContextModes)(num_modes, sizeof(__GLcontextModes));
+   modes = (*psp->contextModes->createContextModes)(num_modes, sizeof(__GLcontextModes));
    m = modes;
    if (!driFillInModes(&m, fb_format, fb_type, depth_bits_array,
 		       stencil_bits_array, depth_buffer_factor,
@@ -359,5 +359,5 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!sisInitDriver(psp))
        return NULL;
 
-   return sisFillInModes(dri_priv->bytesPerPixel * 8);
+   return sisFillInModes(psp, dri_priv->bytesPerPixel * 8);
 }

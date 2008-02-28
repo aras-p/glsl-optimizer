@@ -122,7 +122,8 @@ static __GLcontextModes *fill_in_modes( __GLcontextModes *modes,
 
 
 static __GLcontextModes *
-i810FillInModes( unsigned pixel_bits, unsigned depth_bits,
+i810FillInModes( __DRIscreenPrivate *psp,
+		 unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {    __GLcontextModes * modes;
     __GLcontextModes * m;
@@ -158,7 +159,7 @@ i810FillInModes( unsigned pixel_bits, unsigned depth_bits,
 
     num_modes = depth_buffer_factor * back_buffer_factor * 4;
 
-    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     for ( i = 0 ; i < depth_buffer_factor ; i++ ) {
 	m = fill_in_modes( m, pixel_bits,
@@ -445,5 +446,5 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!i810InitDriver(psp))
        return NULL;
 
-   return i810FillInModes(16, 16, 0, 1);
+   return i810FillInModes(psp, 16, 16, 0, 1);
 }

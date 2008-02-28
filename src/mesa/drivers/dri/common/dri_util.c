@@ -37,16 +37,6 @@
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
-/* This pointer *must* be set by the driver's __driCreateNewScreen funciton!
- */
-const __DRIinterfaceMethods * dri_interface = NULL;
-
-/**
- * This is used in a couple of places that call \c driCreateNewDrawable.
- */
-static const int empty_attribute_list[1] = { None };
-
-
 /**
  * This is just a token extension used to signal that the driver
  * supports setting a read drawable.
@@ -54,12 +44,6 @@ static const int empty_attribute_list[1] = { None };
 const __DRIextension driReadDrawableExtension = {
     __DRI_READ_DRAWABLE, __DRI_READ_DRAWABLE_VERSION
 };
-
-/**
- * Cached copy of the internal API version used by libGL and the client-side
- * DRI driver.
- */
-static int api_ver = 0;
 
 static void *driCreateNewDrawable(__DRIscreen *screen,
 				  const __GLcontextModes *modes,
@@ -253,7 +237,7 @@ static GLboolean driBindContext(__DRIcontext * ctx,
 void
 __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 {
-    __DRIscreenPrivate *psp;
+    __DRIscreenPrivate *psp = pdp->driScreenPriv;
     __DRIcontextPrivate *pcp = pdp->driContextPriv;
     
     if (!pcp 
@@ -262,15 +246,6 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 	 * ...but we must ignore it. There can be many contexts bound to a
 	 * drawable.
 	 */
-    }
-
-    psp = pdp->driScreenPriv;
-    if (!psp) {
-	/* ERROR!!! */
-       _mesa_problem(NULL, "Warning! Possible infinite loop due to bug "
-		     "in file %s, line %d\n",
-		     __FILE__, __LINE__);
-	return;
     }
 
     if (pdp->pClipRects) {
@@ -285,7 +260,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 
     DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 
-    if (! (*dri_interface->getDrawableInfo)(pdp->pdraw,
+    if (! (*psp->getDrawableInfo->getDrawableInfo)(pdp->pdraw,
 			  &pdp->index, &pdp->lastStamp,
 			  &pdp->x, &pdp->y, &pdp->w, &pdp->h,
 			  &pdp->numClipRects, &pdp->pClipRects,
@@ -328,7 +303,7 @@ __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
 	* server overwrote it and we have to reset our tail
 	* pointer. */
 	DRM_UNLOCK(psp->fd, psp->lock, pcp->hHWContext);
-	(*dri_interface->reemitDrawableInfo)(pdp->pdraw);
+	(*psp->dri2.core->reemitDrawableInfo)(pdp->pdraw);
 	DRM_LIGHT_LOCK(psp->fd, psp->lock, pcp->hHWContext);
     }
 
@@ -426,6 +401,7 @@ __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
 static void driSwapBuffers(__DRIdrawable *drawable)
 {
     __DRIdrawablePrivate *dPriv = drawable->private;
+    __DRIscreenPrivate *psp = dPriv->driScreenPriv;
     drm_clip_rect_t rect;
 
     if (!dPriv->numClipRects)
@@ -434,7 +410,7 @@ static void driSwapBuffers(__DRIdrawable *drawable)
     dPriv->swapBuffers(dPriv);
 
     /* Check that we actually have the new damage report method */
-    if (api_ver < 20070105 || dri_interface->reportDamage == NULL)
+    if (psp->damage == NULL)
 	return;
 
     /* Assume it's affecting the whole drawable for now */
@@ -447,8 +423,8 @@ static void driSwapBuffers(__DRIdrawable *drawable)
      * front buffer, so we report the damage there rather than to the backing
      * store (if any).
      */
-    (*dri_interface->reportDamage)(dPriv->pdraw, dPriv->x, dPriv->y,
-				   &rect, 1, GL_TRUE);
+    (*psp->damage->reportDamage)(dPriv->pdraw,
+				 dPriv->x, dPriv->y, &rect, 1, GL_TRUE);
 }
 
 static int driDrawableGetMSC( __DRIscreen *screen, __DRIdrawable *drawable,
@@ -767,6 +743,26 @@ static void driDestroyScreen(__DRIscreen *screen)
     }
 }
 
+static void
+setupLoaderExtensions(__DRIscreenPrivate *psp,
+		      const __DRIextension **extensions)
+{
+    int i;
+
+    for (i = 0; extensions[i]; i++) {
+	if (strcmp(extensions[i]->name, __DRI_CONTEXT_MODES) == 0)
+	    psp->contextModes = (__DRIcontextModesExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_GET_DRAWABLE_INFO) == 0)
+	    psp->getDrawableInfo = (__DRIgetDrawableInfoExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_DAMAGE) == 0)
+	    psp->damage = (__DRIdamageExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_SYSTEM_TIME) == 0)
+	    psp->systemTime = (__DRIsystemTimeExtension *) extensions[i];
+	if (strcmp(extensions[i]->name, __DRI_CORE_DRI2) == 0)
+	    psp->dri2.core = (__DRIcoreDRI2Extension *) extensions[i];
+    }
+}
+
 /**
  * This is the bootstrap function for the driver.  libGL supplies all of the
  * requisite information about the system, and the driver initializes itself.
@@ -805,21 +801,20 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 				const __DRIversion * drm_version,
 				const __DRIframebuffer * frame_buffer,
 				drmAddress pSAREA, int fd, 
-				int internal_api_version,
-				const __DRIinterfaceMethods * interface,
+				const __DRIextension ** extensions,
 				__GLcontextModes ** driver_modes )
 			     
 {
     __DRIscreenPrivate *psp;
     static const __DRIextension *emptyExtensionList[] = { NULL };
-    dri_interface = interface;
-    api_ver = internal_api_version;
 
     psp = _mesa_malloc(sizeof(*psp));
     if (!psp)
 	return NULL;
 
     psp->psc = psc;
+
+    setupLoaderExtensions(psp, extensions);
 
     /*
     ** NOT_DONE: This is used by the X server to detect when the client
@@ -873,12 +868,11 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 PUBLIC void *
 __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
 			 int fd, unsigned int sarea_handle,
-			 const __DRIinterfaceMethods *interface,
+			 const __DRIextension **extensions,
 			 __GLcontextModes **driver_modes)
 {
     __DRIscreenPrivate *psp;
     static const __DRIextension *emptyExtensionList[] = { NULL };
-    dri_interface = interface;
     unsigned int *p;
     drmVersionPtr version;
     __GLcontextModes *(*initScreen)(__DRIscreenPrivate *psc);
@@ -890,6 +884,8 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
     psp = _mesa_malloc(sizeof(*psp));
     if (!psp)
 	return NULL;
+
+    setupLoaderExtensions(psp, extensions);
 
     psp->psc = psc;
 
@@ -950,33 +946,6 @@ __DRI2_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
     return psp;
 }
 
-/**
- * Compare the current GLX API version with a driver supplied required version.
- * 
- * The minimum required version is compared with the API version exported by
- * the \c __glXGetInternalVersion function (in libGL.so).
- * 
- * \param   required_version Minimum required internal GLX API version.
- * \return  A tri-value return, as from strcmp is returned.  A value less
- *          than, equal to, or greater than zero will be returned if the
- *          internal GLX API version is less than, equal to, or greater
- *          than \c required_version.
- *
- * \sa __glXGetInternalVersion().
- */
-int driCompareGLXAPIVersion( GLint required_version )
-{
-   if ( api_ver > required_version ) {
-      return 1;
-   }
-   else if ( api_ver == required_version ) {
-      return 0;
-   }
-
-   return -1;
-}
-
-
 static int
 driFrameTracking(__DRIdrawable *drawable, GLboolean enable)
 {
@@ -992,7 +961,7 @@ driQueryFrameTracking(__DRIdrawable *drawable,
    int             status;
    int64_t         ust;
    __DRIdrawablePrivate * dpriv = drawable->private;
-
+   __DRIscreenPrivate *psp = dpriv->driScreenPriv;
 
    status = dpriv->driScreenPriv->DriverAPI.GetSwapInfo( dpriv, & sInfo );
    if ( status == 0 ) {
@@ -1000,7 +969,7 @@ driQueryFrameTracking(__DRIdrawable *drawable,
       *missedFrames = sInfo.swap_missed_count;
       *lastMissedUsage = sInfo.swap_missed_usage;
 
-      (*dri_interface->getUST)( & ust );
+      (*psp->systemTime->getUST)( & ust );
       *usage = driCalculateSwapUsage( dpriv, sInfo.swap_ust, ust );
    }
 
@@ -1049,9 +1018,9 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
    int32_t   d;
    int       interval;
    float     usage = 1.0;
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
 
-
-   if ( (*dri_interface->getMSCRate)(dPriv->pdraw, &n, &d) ) {
+   if ( (*psp->systemTime->getMSCRate)(dPriv->pdraw, &n, &d) ) {
       interval = (dPriv->swap_interval != 0) ? dPriv->swap_interval : 1;
 
 

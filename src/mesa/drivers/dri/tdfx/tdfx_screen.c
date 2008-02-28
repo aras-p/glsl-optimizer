@@ -361,7 +361,8 @@ static const struct __DriverAPIRec tdfxAPI = {
 };
 
 
-static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
+static __GLcontextModes *tdfxFillInModes(__DRIscreenPrivate *psp,
+					 unsigned pixel_bits,
 					 unsigned depth_bits,
 					 unsigned stencil_bits,
 					 GLboolean have_back_buffer)
@@ -381,7 +382,7 @@ static __GLcontextModes *tdfxFillInModes(unsigned pixel_bits,
 
 	num_modes = (depth_bits == 16) ? 32 : 16;
 
-	modes = (*dri_interface->createContextModes)(num_modes, sizeof(__GLcontextModes));
+	modes = (*psp->contextModes->createContextModes)(num_modes, sizeof(__GLcontextModes));
 	m = modes;
 
 	for (i = 0; i <= 1; i++) {
@@ -473,7 +474,8 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!tdfxInitDriver(psp))
       return NULL;
       
-   return tdfxFillInModes(bpp, (bpp == 16) ? 16 : 24,
+   return tdfxFillInModes(psp,
+			  bpp, (bpp == 16) ? 16 : 24,
 			  (bpp == 16) ? 0 : 8,
 			  (dri_priv->backOffset!=dri_priv->depthOffset));
 }

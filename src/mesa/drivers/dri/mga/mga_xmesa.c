@@ -115,7 +115,8 @@ int MGA_DEBUG = 0;
 static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
 
 static __GLcontextModes *
-mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
+mgaFillInModes( __DRIscreenPrivate *psp,
+		unsigned pixel_bits, unsigned depth_bits,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {
     __GLcontextModes * modes;
@@ -163,7 +164,7 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*dri_interface->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
+    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
     m = modes;
     if ( ! driFillInModes( & m, fb_format, fb_type,
 			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
@@ -650,7 +651,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 				    debug_control );
 #endif
 
-   (*dri_interface->getUST)( & mmesa->swap_ust );
+   (*sPriv->systemTime->getUST)( & mmesa->swap_ust );
 
    if (driQueryOptionb(&mmesa->optionCache, "no_rast")) {
       fprintf(stderr, "disabling 3D acceleration\n");
@@ -998,7 +999,8 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!mgaInitDriver(psp))
        return NULL;
 
-   return mgaFillInModes( dri_priv->cpp * 8,
+   return mgaFillInModes( psp,
+			  dri_priv->cpp * 8,
 			  (dri_priv->cpp == 2) ? 16 : 24,
 			  (dri_priv->cpp == 2) ? 0  : 8,
 			  (dri_priv->backOffset != dri_priv->depthOffset) );

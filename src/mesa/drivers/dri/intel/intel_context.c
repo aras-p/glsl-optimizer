@@ -746,6 +746,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
+   __DRIscreenPrivate *psp = driDrawPriv->driScreenPriv;
 
    if (driContextPriv) {
       struct intel_context *intel =
@@ -809,7 +810,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 		  ? driGetDefaultVBlankFlags(&intel->optionCache)
 		 : VBLANK_FLAG_NO_IRQ;
 
-	       (*dri_interface->getUST) (&intel_fb->swap_ust);
+	       (*psp->systemTime->getUST) (&intel_fb->swap_ust);
 	       driDrawableInitVBlank(driDrawPriv);
 	       intel_fb->vbl_waited = driDrawPriv->vblSeq;
 

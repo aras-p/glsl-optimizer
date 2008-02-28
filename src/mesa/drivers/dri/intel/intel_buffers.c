@@ -812,6 +812,8 @@ intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
+   __DRIscreenPrivate *psp = dPriv->driScreenPriv;
+
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       GET_CURRENT_CONTEXT(ctx);
       struct intel_context *intel;
@@ -837,7 +839,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 }
 
 	 intel_fb->swap_count++;
-	 (*dri_interface->getUST) (&ust);
+	 (*psp->systemTime->getUST) (&ust);
 	 if (missed_target) {
 	    intel_fb->swap_missed_count++;
 	    intel_fb->swap_missed_ust = ust - intel_fb->swap_ust;
