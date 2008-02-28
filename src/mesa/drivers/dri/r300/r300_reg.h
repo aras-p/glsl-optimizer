@@ -2508,9 +2508,6 @@ enum {
 
 /*\{*/
 
-/* FIXME */
-#define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
-
 #define R300_VPI_OUT_REG_INDEX_SHIFT            13
 	/* GUESS based on fglrx native limits */
 #define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13)

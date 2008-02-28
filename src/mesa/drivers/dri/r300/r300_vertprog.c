@@ -387,18 +387,9 @@ static GLuint *t_opcode_add(struct r300_vertex_program *vp,
 			    struct prog_instruction *vpi, GLuint * inst,
 			    struct prog_src_register src[3])
 {
-	unsigned long hw_op;
-
 #if 1
-	if (src[0].File == PROGRAM_TEMPORARY
-	    && src[1].File == PROGRAM_TEMPORARY) {
-		hw_op = R300_VPI_OUT_OP_MAD_2;
-	} else {
-		hw_op = VE_MULTIPLY_ADD;
-	}
-
 	inst[0] =
-	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = ONE_SRC_0;
@@ -412,7 +403,6 @@ static GLuint *t_opcode_add(struct r300_vertex_program *vp,
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
-
 #endif
 
 	return inst;
@@ -699,17 +689,8 @@ static GLuint *t_opcode_mad(struct r300_vertex_program *vp,
 			    struct prog_instruction *vpi, GLuint * inst,
 			    struct prog_src_register src[3])
 {
-	unsigned long hw_op;
-
-	if (src[0].File == PROGRAM_TEMPORARY
-	    && src[1].File == PROGRAM_TEMPORARY) {
-		hw_op = R300_VPI_OUT_OP_MAD_2;
-	} else {
-		hw_op = VE_MULTIPLY_ADD;
-	}
-
 	inst[0] =
-	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
@@ -766,15 +747,8 @@ static GLuint *t_opcode_mov(struct r300_vertex_program *vp,
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
 #else
-	if (src[0].File == PROGRAM_TEMPORARY
-	    && src[1].File == PROGRAM_TEMPORARY) {
-		hw_op = R300_VPI_OUT_OP_MAD_2;
-	} else {
-		hw_op = VE_MULTIPLY_ADD;
-	}
-
 	inst[0] =
-	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
@@ -789,19 +763,8 @@ static GLuint *t_opcode_mul(struct r300_vertex_program *vp,
 			    struct prog_instruction *vpi, GLuint * inst,
 			    struct prog_src_register src[3])
 {
-	unsigned long hw_op;
-
-	// HW mul can take third arg but appears to have some other limitations.
-
-	if (src[0].File == PROGRAM_TEMPORARY
-	    && src[1].File == PROGRAM_TEMPORARY) {
-		hw_op = R300_VPI_OUT_OP_MAD_2;
-	} else {
-		hw_op = VE_MULTIPLY_ADD;
-	}
-
 	inst[0] =
-	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
@@ -895,20 +858,10 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp,
 			    struct prog_instruction *vpi, GLuint * inst,
 			    struct prog_src_register src[3])
 {
-	unsigned long hw_op;
-
 	//ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-
 #if 1
-	if (src[0].File == PROGRAM_TEMPORARY
-	    && src[1].File == PROGRAM_TEMPORARY) {
-		hw_op = R300_VPI_OUT_OP_MAD_2;
-	} else {
-		hw_op = VE_MULTIPLY_ADD;
-	}
-
 	inst[0] =
-	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
@@ -961,15 +914,8 @@ static GLuint *t_opcode_swz(struct r300_vertex_program *vp,
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
 #else
-	if (src[0].File == PROGRAM_TEMPORARY
-	    && src[1].File == PROGRAM_TEMPORARY) {
-		hw_op = R300_VPI_OUT_OP_MAD_2;
-	} else {
-		hw_op = VE_MULTIPLY_ADD;
-	}
-
 	inst[0] =
-	    PVS_VECTOR_OPCODE(hw_op, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
@@ -986,7 +932,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 {
 	/* mul r0, r1.yzxw, r2.zxyw
 	   mad r0, -r2.yzxw, r1.zxyw, r0
-	   NOTE: might need MAD_2
 	 */
 
 	inst[0] =
