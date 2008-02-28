@@ -86,6 +86,7 @@ st_texture_create(struct st_context *st,
        _mesa_lookup_enum_by_nr(format), last_level);
 
    assert(format);
+   assert(screen->is_format_supported(screen, format, PIPE_TEXTURE));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = target;
