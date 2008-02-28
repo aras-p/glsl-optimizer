@@ -366,7 +366,6 @@ static GLuint *t_opcode_abs(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_MAXIMUM, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
 	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
@@ -406,7 +405,6 @@ static GLuint *t_opcode_arl(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_FLT2FIX_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -424,7 +422,6 @@ static GLuint *t_opcode_dp3(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_DOT_PRODUCT, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] =
 	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
@@ -434,7 +431,6 @@ static GLuint *t_opcode_dp3(struct r300_vertex_program *vp,
 			    src[0].
 			    NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
-
 	inst[2] =
 	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]),
 			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
@@ -444,7 +440,6 @@ static GLuint *t_opcode_dp3(struct r300_vertex_program *vp,
 			    src[1].
 			    NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[1].RelAddr << 4);
-
 	inst[3] = ZERO_SRC_1;
 
 	return inst;
@@ -475,7 +470,6 @@ static GLuint *t_opcode_dph(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_DOT_PRODUCT, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] =
 	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
@@ -499,7 +493,6 @@ static GLuint *t_opcode_dst(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_DISTANCE_VECTOR, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
@@ -515,7 +508,6 @@ static GLuint *t_opcode_ex2(struct r300_vertex_program *vp,
 	    PVS_MATH_OPCODE(ME_EXP_BASE2_FULL_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -531,7 +523,6 @@ static GLuint *t_opcode_exp(struct r300_vertex_program *vp,
 	    PVS_MATH_OPCODE(ME_EXP_BASE2_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -550,7 +541,6 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_FRACTION, *u_temp_i,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			PVS_DST_REG_TEMPORARY);
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -560,7 +550,6 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
 	    PVS_SOURCE_OPCODE(*u_temp_i, PVS_SRC_SELECT_X,
@@ -570,7 +559,6 @@ static GLuint *t_opcode_flr(struct r300_vertex_program *vp,
 			    (!src[0].
 			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE
 			    /*VSF_FLAG_ALL */ );
-
 	inst[3] = ZERO_SRC_0;
 	(*u_temp_i)--;
 
@@ -585,7 +573,6 @@ static GLuint *t_opcode_frc(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_FRACTION, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -603,7 +590,6 @@ static GLuint *t_opcode_lg2(struct r300_vertex_program *vp,
 	    PVS_MATH_OPCODE(ME_LOG_BASE2_FULL_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] =
 	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
@@ -667,7 +653,6 @@ static GLuint *t_opcode_log(struct r300_vertex_program *vp,
 	    PVS_MATH_OPCODE(ME_LOG_BASE2_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -698,7 +683,6 @@ static GLuint *t_opcode_max(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_MAXIMUM, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
@@ -714,7 +698,6 @@ static GLuint *t_opcode_min(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_MINIMUM, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
@@ -749,7 +732,6 @@ static GLuint *t_opcode_mul(struct r300_vertex_program *vp,
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
-
 	inst[3] = ZERO_SRC_1;
 
 	return inst;
@@ -778,7 +760,6 @@ static GLuint *t_opcode_rcp(struct r300_vertex_program *vp,
 	    PVS_MATH_OPCODE(ME_RECIP_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -794,7 +775,6 @@ static GLuint *t_opcode_rsq(struct r300_vertex_program *vp,
 	    PVS_MATH_OPCODE(ME_RECIP_SQRT_DX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src_scalar(vp, &src[0]);
 	inst[2] = ZERO_SRC_0;
 	inst[3] = ZERO_SRC_0;
@@ -810,7 +790,6 @@ static GLuint *t_opcode_sge(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_SET_GREATER_THAN_EQUAL, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
@@ -826,7 +805,6 @@ static GLuint *t_opcode_slt(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_SET_LESS_THAN, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = ZERO_SRC_1;
@@ -861,7 +839,6 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] =
 	    PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]),
@@ -908,7 +885,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, *u_temp_i,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			PVS_DST_REG_TEMPORARY);
-
 	inst[1] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
@@ -917,7 +893,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  src[0].
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
-
 	inst[2] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// y
@@ -926,7 +901,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  src[1].
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[1].RelAddr << 4);
-
 	inst[3] = ZERO_SRC_1;
 	inst += 4;
 	(*u_temp_i)--;
@@ -935,7 +909,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-
 	inst[1] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]), t_swizzle(GET_SWZ(src[1].Swizzle, 1)),	// y
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[1].Swizzle, 0)),	// x
@@ -944,7 +917,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  (!src[1].
 				   NegateBase) ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[1].RelAddr << 4);
-
 	inst[2] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[0]), t_swizzle(GET_SWZ(src[0].Swizzle, 2)),	// z
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 0)),	// x
 				  t_swizzle(GET_SWZ(src[0].Swizzle, 1)),	// y
@@ -953,7 +925,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  src[0].
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
-
 	inst[3] =
 	    PVS_SOURCE_OPCODE(*u_temp_i + 1, PVS_SRC_SELECT_X,
 			    PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
@@ -1063,7 +1034,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 				    PVS_VECTOR_OPCODE(VE_ADD,
 						u_temp_i, VSF_FLAG_ALL,
 						PVS_DST_REG_TEMPORARY);
-
 				inst[1] =
 				    PVS_SOURCE_OPCODE(t_src_index
 						    (vp, &src[2]),
@@ -1073,7 +1043,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 								File),
 						    VSF_FLAG_NONE) |
 				    (src[2].RelAddr << 4);
-
 				inst[2] = ZERO_SRC_2;
 				inst[3] = ZERO_SRC_2;
 				inst += 4;
@@ -1091,7 +1060,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 				    PVS_VECTOR_OPCODE(VE_ADD,
 						u_temp_i, VSF_FLAG_ALL,
 						PVS_DST_REG_TEMPORARY);
-
 				inst[1] =
 				    PVS_SOURCE_OPCODE(t_src_index
 						    (vp, &src[0]),
@@ -1101,7 +1069,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 								File),
 						    VSF_FLAG_NONE) |
 				    (src[0].RelAddr << 4);
-
 				inst[2] = ZERO_SRC_0;
 				inst[3] = ZERO_SRC_0;
 				inst += 4;
