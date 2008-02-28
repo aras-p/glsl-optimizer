@@ -1417,7 +1417,7 @@ static void r300SetupTextures(GLcontext * ctx)
 	}
 
 	r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
-	    cmdpacket0(R300_TX_FILTER_0, last_hw_tmu + 1);
+	    cmdpacket0(R300_TX_FILTER0_0, last_hw_tmu + 1);
 	r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(R300_TX_FILTER1_0, last_hw_tmu + 1);
 	r300->hw.tex.size.cmd[R300_TEX_CMD_0] =
@@ -1490,9 +1490,9 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	/* I'm still unsure if these are needed */
 	GLuint interp_magic[8] = {
 		0x00,
-		R300_RS_INTERP_1_UNKNOWN,
-		R300_RS_INTERP_2_UNKNOWN,
-		R300_RS_INTERP_3_UNKNOWN,
+		R300_RS_COL_PTR(1),
+		R300_RS_COL_PTR(2),
+		R300_RS_COL_PTR(3),
 		0x00,
 		0x00,
 		0x00,
@@ -1539,7 +1539,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	}
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0 | R300_RS_INTERP_USED | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0 | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
 		    | interp_magic[i];
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0;

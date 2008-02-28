@@ -657,46 +657,42 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* This table specifies the source location and format for up to 16 texture
  * addresses (i[0]:i[15]) and four colors (c[0]:c[3])
  */
-#define RS_IP_0                                  0x4074
-#define RS_IP_1                                  0x4078
-#define RS_IP_2                                  0x407C
-#define RS_IP_3                                  0x4080
-#define RS_IP_4                                  0x4084
-#define RS_IP_5                                  0x4088
-#define RS_IP_6                                  0x408C
-#define RS_IP_7                                  0x4090
-#define RS_IP_8                                  0x4094
-#define RS_IP_9                                  0x4098
-#define RS_IP_10                                 0x409C
-#define RS_IP_11                                 0x40A0
-#define RS_IP_12                                 0x40A4
-#define RS_IP_13                                 0x40A8
-#define RS_IP_14                                 0x40AC
-#define RS_IP_15                                 0x40B0
-#	define RS_IP_TEX_PTR_S_SHIFT 0
-#	define RS_IP_TEX_PTR_S_MASK  0x0000003f
-#	define RS_IP_TEX_PTR_T_SHIFT 6
-#	define RS_IP_TEX_PTR_T_MASK  0x00000fc0
-#	define RS_IP_TEX_PTR_R_SHIFT 12
-#	define RS_IP_TEX_PTR_R_MASK  0x0003f000
-#	define RS_IP_TEX_PTR_Q_SHIFT 18
-#	define RS_IP_TEX_PTR_Q_MASK  0x00fc0000
-#	define RS_IP_COL_PTR_SHIFT   24
-#	define RS_IP_COL_PTR_MASK    0x07000000
-#	define RS_IP_COL_FMT_RGBA    (0 << 27)
-#	define RS_IP_COL_FMT_RGB0    (1 << 27)
-#	define RS_IP_COL_FMT_RGB1    (2 << 27)
+#define R500_RS_IP_0					0x4074
+#define R500_RS_IP_1					0x4078
+#define R500_RS_IP_2					0x407C
+#define R500_RS_IP_3					0x4080
+#define R500_RS_IP_4					0x4084
+#define R500_RS_IP_5					0x4088
+#define R500_RS_IP_6					0x408C
+#define R500_RS_IP_7					0x4090
+#define R500_RS_IP_8					0x4094
+#define R500_RS_IP_9					0x4098
+#define R500_RS_IP_10					0x409C
+#define R500_RS_IP_11					0x40A0
+#define R500_RS_IP_12					0x40A4
+#define R500_RS_IP_13					0x40A8
+#define R500_RS_IP_14					0x40AC
+#define R500_RS_IP_15					0x40B0
+#define R500_RS_IP_TEX_PTR_S_SHIFT 			0
+#define R500_RS_IP_TEX_PTR_T_SHIFT 			6
+#define R500_RS_IP_TEX_PTR_R_SHIFT 			12
+#define R500_RS_IP_TEX_PTR_Q_SHIFT 			18
+#define R500_RS_IP_COL_PTR_SHIFT 			24
+#define R500_RS_IP_COL_FMT_SHIFT 			27
+#define R500_RS_IP_COL_FMT_RGBA 			(0 << 27)
+#define R500_RS_IP_COL_FMT_RGB0 			(1 << 27)
+#define R500_RS_IP_COL_FMT_RGB1 			(2 << 27)
 /* gap */
-#	define RS_IP_COL_FMT_000A    (4 << 27)
-#	define RS_IP_COL_FMT_0000    (5 << 27)
-#	define RS_IP_COL_FMT_0001    (6 << 27)
+#define R500_RS_IP_COL_FMT_000A 			(4 << 27)
+#define R500_RS_IP_COL_FMT_0000 			(5 << 27)
+#define R500_RS_IP_COL_FMT_0001 			(6 << 27)
 /* gap */
-#	define RS_IP_COL_FMT_111A    (8 << 27)
-#	define RS_IP_COL_FMT_1110    (9 << 27)
-#	define RS_IP_COL_FMT_1111    (10 << 27)
+#define R500_RS_IP_COL_FMT_111A 			(8 << 27)
+#define R500_RS_IP_COL_FMT_1110 			(9 << 27)
+#define R500_RS_IP_COL_FMT_1111 			(10 << 27)
 /* gap */
-#	define RS_IP_OFFSET_DIS      (0 << 31)
-#	define RS_IP_OFFSET_EN       (1 << 31)
+#define R500_RS_IP_OFFSET_DIS 				(0 << 31)
+#define R500_RS_IP_OFFSET_EN 				(1 << 31)
 
 /* gap */
 
@@ -1124,52 +1120,64 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Note: The _UNKNOWN constants are always set in their respective
  * register. I don't know if this is necessary.
  */
-#define R300_RS_INTERP_0                    0x4310
-#define R300_RS_INTERP_1                    0x4314
-#       define R300_RS_INTERP_1_UNKNOWN          0x40
-#define R300_RS_INTERP_2                    0x4318
-#       define R300_RS_INTERP_2_UNKNOWN          0x80
-#define R300_RS_INTERP_3                    0x431C
-#       define R300_RS_INTERP_3_UNKNOWN          0xC0
-#       define R300_RS_INTERP_SRC_SHIFT          2
-#       define R300_RS_INTERP_SRC_MASK           (7 << 2)
-#       define R300_RS_INTERP_USED               0x00D10000
+#define R300_RS_IP_0				        0x4310
+#define R300_RS_IP_1				        0x4314
+#define R300_RS_IP_2				        0x4318
+#define R300_RS_IP_3				        0x431C
+#       define R300_RS_INTERP_SRC_SHIFT          2 /* TODO: check for removal */
+#       define R300_RS_INTERP_SRC_MASK           (7 << 2) /* TODO: check for removal */
+#	define R300_RS_TEX_PTR(x)		        (x << 0)
+#	define R300_RS_COL_PTR(x)		        (x << 6)
+#	define R300_RS_COL_FMT(x)		        (x << 9)
+#	define R300_RS_COL_FMT_RGBA		        0
+#	define R300_RS_COL_FMT_RGB0		        2
+#	define R300_RS_COL_FMT_RGB1		        3
+#	define R300_RS_COL_FMT_000A		        4
+#	define R300_RS_COL_FMT_0000		        5
+#	define R300_RS_COL_FMT_0001		        6
+#	define R300_RS_COL_FMT_111A		        8
+#	define R300_RS_COL_FMT_1110		        9
+#	define R300_RS_COL_FMT_1111		        10
+#	define R300_RS_SEL_S(x)		                (x << 13)
+#	define R300_RS_SEL_T(x)		                (x << 16)
+#	define R300_RS_SEL_R(x)		                (x << 19)
+#	define R300_RS_SEL_Q(x)		                (x << 22)
+#	define R300_RS_SEL_C0		                0
+#	define R300_RS_SEL_C1		                1
+#	define R300_RS_SEL_C2		                2
+#	define R300_RS_SEL_C3		                3
+#	define R300_RS_SEL_K0		                4
+#	define R300_RS_SEL_K1		                5
+
 
 /*  */
-#define RS_INST_0                                0x4320
-#define RS_INST_1                                0x4324
-#define RS_INST_2                                0x4328
-#define RS_INST_3                                0x432c
-#define RS_INST_4                                0x4330
-#define RS_INST_5                                0x4334
-#define RS_INST_6                                0x4338
-#define RS_INST_7                                0x433c
-#define RS_INST_8                                0x4340
-#define RS_INST_9                                0x4344
-#define RS_INST_10                               0x4348
-#define RS_INST_11                               0x434c
-#define RS_INST_12                               0x4350
-#define RS_INST_13                               0x4354
-#define RS_INST_14                               0x4358
-#define RS_INST_15                               0x435c
-#	define RS_INST_TEX_ID_SHIFT    0
-#	define RS_INST_TEX_ID_MASK     0x0000000f
-#	define RS_INST_TEX_CN_NO_WRITE (0 << 4)
-#	define RS_INST_TEX_CN_WRITE    (1 << 4)
-#	define RS_INST_TEX_ADDR_SHIFT  5
-#	define RS_INST_TEX_ADDR_MASK   0x00000fe0
-#	define RS_INST_COL_ID_SHIFT    12
-#	define RS_INST_COL_ID_MASK     0x0000f000
-#	define RS_INST_COL_CN_NO_WRITE (0 << 16)
-#	define RS_INST_COL_CN_WRITE    (1 << 16)
-#	define RS_INST_COL_CN_FBUFFER  (2 << 16)
-#	define RS_INST_COL_CN_BACKFACE (3 << 16)
-#	define RS_INST_COL_ADDR_SHIFT  18
-#	define RS_INST_COL_ADDR_MASK   0x01fc0000
-#	define RS_INST_TEX_ADJ_REAL    (0 << 25)
-#	define RS_INST_TEX_ADJ_ADJ     (1 << 25)
-#	define RS_INST_W_CB_NO_WRITE   (0 << 26)
-#	define RS_INST_W_CB_WRITE      (1 << 26)
+#define R500_RS_INST_0					0x4320
+#define R500_RS_INST_1					0x4324
+#define R500_RS_INST_2					0x4328
+#define R500_RS_INST_3					0x432c
+#define R500_RS_INST_4					0x4330
+#define R500_RS_INST_5					0x4334
+#define R500_RS_INST_6					0x4338
+#define R500_RS_INST_7					0x433c
+#define R500_RS_INST_8					0x4340
+#define R500_RS_INST_9					0x4344
+#define R500_RS_INST_10					0x4348
+#define R500_RS_INST_11					0x434c
+#define R500_RS_INST_12					0x4350
+#define R500_RS_INST_13					0x4354
+#define R500_RS_INST_14					0x4358
+#define R500_RS_INST_15					0x435c
+#define R500_RS_INST_TEX_ID_SHIFT			0
+#define R500_RS_INST_TEX_CN_WRITE			(1 << 4)
+#define R500_RS_INST_TEX_ADDR_SHIFT			5
+#define R500_RS_INST_COL_ID_SHIFT			12
+#define R500_RS_INST_COL_CN_NO_WRITE			(0 << 16)
+#define R500_RS_INST_COL_CN_WRITE			(1 << 16)
+#define R500_RS_INST_COL_CN_WRITE_FBUFFER		(2 << 16)
+#define R500_RS_INST_COL_CN_WRITE_BACKFACE		(3 << 16)
+#define R500_RS_INST_COL_COL_ADDR_SHIFT			18
+#define R500_RS_INST_TEX_ADJ				(1 << 25)
+#define R500_RS_INST_W_CN				(1 << 26)
 
 /* These DWORDs control how vertex data is routed into fragment program
  * registers, after interpolators.
@@ -1303,27 +1311,46 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * unit. This means that e.g. the offset for texture image unit N is found in
  * register TX_OFFSET_0 + (4*N)
  */
-#define R300_TX_FILTER_0                    0x4400
+#define R300_TX_FILTER0_0                        0x4400
+#define R300_TX_FILTER0_1                        0x4404
+#define R300_TX_FILTER0_2                        0x4408
+#define R300_TX_FILTER0_3                        0x440c
+#define R300_TX_FILTER0_4                        0x4410
+#define R300_TX_FILTER0_5                        0x4414
+#define R300_TX_FILTER0_6                        0x4418
+#define R300_TX_FILTER0_7                        0x441c
+#define R300_TX_FILTER0_8                        0x4420
+#define R300_TX_FILTER0_9                        0x4424
+#define R300_TX_FILTER0_10                       0x4428
+#define R300_TX_FILTER0_11                       0x442c
+#define R300_TX_FILTER0_12                       0x4430
+#define R300_TX_FILTER0_13                       0x4434
+#define R300_TX_FILTER0_14                       0x4438
+#define R300_TX_FILTER0_15                       0x443c
 #       define R300_TX_REPEAT                    0
 #       define R300_TX_MIRRORED                  1
-#       define R300_TX_CLAMP                     4
 #       define R300_TX_CLAMP_TO_EDGE             2
+#	define R300_TX_MIRROR_ONCE_TO_EDGE       3
+#       define R300_TX_CLAMP                     4
+#	define R300_TX_MIRROR_ONCE               5
 #       define R300_TX_CLAMP_TO_BORDER           6
+#	define R300_TX_MIRROR_ONCE_TO_BORDER     7
 #       define R300_TX_WRAP_S_SHIFT              0
 #       define R300_TX_WRAP_S_MASK               (7 << 0)
 #       define R300_TX_WRAP_T_SHIFT              3
 #       define R300_TX_WRAP_T_MASK               (7 << 3)
 #       define R300_TX_WRAP_Q_SHIFT              6
 #       define R300_TX_WRAP_Q_MASK               (7 << 6)
+#	define R300_TX_MAG_FILTER_4              (0 << 9)
 #       define R300_TX_MAG_FILTER_NEAREST        (1 << 9)
 #       define R300_TX_MAG_FILTER_LINEAR         (2 << 9)
 #       define R300_TX_MAG_FILTER_MASK           (3 << 9)
 #       define R300_TX_MIN_FILTER_NEAREST        (1 << 11)
 #       define R300_TX_MIN_FILTER_LINEAR         (2 << 11)
-#	define R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST       (5  <<  11)
-#	define R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR        (9  <<  11)
-#	define R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST        (6  <<  11)
-#	define R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR         (10 <<  11)
+#	define R300_TX_MIN_FILTER_NEAREST_MIP_NEAREST       (5  <<  11) /* TODO: use spec */
+#	define R300_TX_MIN_FILTER_NEAREST_MIP_LINEAR        (9  <<  11) /* TODO: use spec */
+#	define R300_TX_MIN_FILTER_LINEAR_MIP_NEAREST        (6  <<  11) /* TODO: use spec */
+#	define R300_TX_MIN_FILTER_LINEAR_MIP_LINEAR         (10 <<  11) /* TODO: use spec */
 
 /* NOTE: NEAREST doesnt seem to exist.
  * Im not seting MAG_FILTER_MASK and (3 << 11) on for all
@@ -1492,8 +1519,41 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 32 bit chroma key */
 #define R300_TX_CHROMA_KEY_0                      0x4580
+#define R300_TX_CHROMA_KEY_1                      0x4584
+#define R300_TX_CHROMA_KEY_2                      0x4588
+#define R300_TX_CHROMA_KEY_3                      0x458c
+#define R300_TX_CHROMA_KEY_4                      0x4590
+#define R300_TX_CHROMA_KEY_5                      0x4594
+#define R300_TX_CHROMA_KEY_6                      0x4598
+#define R300_TX_CHROMA_KEY_7                      0x459c
+#define R300_TX_CHROMA_KEY_8                      0x45a0
+#define R300_TX_CHROMA_KEY_9                      0x45a4
+#define R300_TX_CHROMA_KEY_10                     0x45a8
+#define R300_TX_CHROMA_KEY_11                     0x45ac
+#define R300_TX_CHROMA_KEY_12                     0x45b0
+#define R300_TX_CHROMA_KEY_13                     0x45b4
+#define R300_TX_CHROMA_KEY_14                     0x45b8
+#define R300_TX_CHROMA_KEY_15                     0x45bc
 /* ff00ff00 == { 0, 1.0, 0, 1.0 } */
-#define R300_TX_BORDER_COLOR_0              0x45C0
+
+/* Border Color */
+#define R300_TX_BORDER_COLOR_0              0x45c0
+#define R300_TX_BORDER_COLOR_1              0x45c4
+#define R300_TX_BORDER_COLOR_2              0x45c8
+#define R300_TX_BORDER_COLOR_3              0x45cc
+#define R300_TX_BORDER_COLOR_4              0x45d0
+#define R300_TX_BORDER_COLOR_5              0x45d4
+#define R300_TX_BORDER_COLOR_6              0x45d8
+#define R300_TX_BORDER_COLOR_7              0x45dc
+#define R300_TX_BORDER_COLOR_8              0x45e0
+#define R300_TX_BORDER_COLOR_9              0x45e4
+#define R300_TX_BORDER_COLOR_10             0x45e8
+#define R300_TX_BORDER_COLOR_11             0x45ec
+#define R300_TX_BORDER_COLOR_12             0x45f0
+#define R300_TX_BORDER_COLOR_13             0x45f4
+#define R300_TX_BORDER_COLOR_14             0x45f8
+#define R300_TX_BORDER_COLOR_15             0x45fc
+
 
 /* END: Texture specification */
 

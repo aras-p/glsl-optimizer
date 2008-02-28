@@ -272,9 +272,9 @@ static void r300EmitClearState(GLcontext * ctx)
 	    ((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
 
 	R300_STATECHANGE(r300, ri);
-	reg_start(R300_RS_INTERP_0, 8);
+	reg_start(R300_RS_IP_0, 8);
 	for (i = 0; i < 8; ++i) {
-		e32(R300_RS_INTERP_USED);
+		e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
 	}
 
 	R300_STATECHANGE(r300, rc);
