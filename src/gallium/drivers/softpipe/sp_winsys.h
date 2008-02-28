@@ -46,6 +46,7 @@ struct softpipe_winsys {
 
 };
 
+struct pipe_screen;
 struct pipe_winsys;
 struct pipe_context;
 
