@@ -727,7 +727,7 @@ static GLuint *t_opcode_mul(struct r300_vertex_program *vp,
 			    struct prog_src_register src[3])
 {
 	inst[0] =
-	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
