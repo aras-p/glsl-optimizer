@@ -903,7 +903,6 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 	inst[3] = ZERO_SRC_1;
 	inst += 4;
-	(*u_temp_i)--;
 
 	inst[0] =
 	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
@@ -926,10 +925,12 @@ static GLuint *t_opcode_xpd(struct r300_vertex_program *vp,
 				  NegateBase ? VSF_FLAG_ALL :
 				  VSF_FLAG_NONE) | (src[0].RelAddr << 4);
 	inst[3] =
-	    PVS_SOURCE_OPCODE(*u_temp_i + 1, PVS_SRC_SELECT_X,
+	    PVS_SOURCE_OPCODE(*u_temp_i, PVS_SRC_SELECT_X,
 			    PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z,
 			    PVS_SRC_SELECT_W, PVS_SRC_REG_TEMPORARY,
 			    VSF_FLAG_NONE);
+
+	(*u_temp_i)--;
 
 	return inst;
 }
