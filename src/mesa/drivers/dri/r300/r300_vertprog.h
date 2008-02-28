@@ -3,6 +3,29 @@
 
 #include "r300_reg.h"
 
+#define R300_VPI_OUT_REG_INDEX_SHIFT            13
+	/* GUESS based on fglrx native limits */
+#define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13)
+
+#define R300_VPI_OUT_WRITE_X                    (1 << 20)
+#define R300_VPI_OUT_WRITE_Y                    (1 << 21)
+#define R300_VPI_OUT_WRITE_Z                    (1 << 22)
+#define R300_VPI_OUT_WRITE_W                    (1 << 23)
+
+#define R300_VPI_IN_REG_INDEX_SHIFT             5
+	/* GUESS based on fglrx native limits */
+#define R300_VPI_IN_REG_INDEX_MASK              (255 << 5)
+
+#define R300_VPI_IN_X_SHIFT                     13
+#define R300_VPI_IN_Y_SHIFT                     16
+#define R300_VPI_IN_Z_SHIFT                     19
+#define R300_VPI_IN_W_SHIFT                     22
+
+#define R300_VPI_IN_NEG_X                       (1 << 25)
+#define R300_VPI_IN_NEG_Y                       (1 << 26)
+#define R300_VPI_IN_NEG_Z                       (1 << 27)
+#define R300_VPI_IN_NEG_W                       (1 << 28)
+
 #define PVS_VECTOR_OPCODE(opcode, reg_index, reg_writemask, reg_class)	\
 	((opcode)							\
 	 | ((reg_index) << R300_VPI_OUT_REG_INDEX_SHIFT)		\
