@@ -1163,7 +1163,7 @@ static void setup_begin( struct draw_stage *stage )
 {
    struct setup_stage *setup = setup_stage(stage);
    struct softpipe_context *sp = setup->softpipe;
-   const struct sp_fragment_shader *fs = &setup->softpipe->fs;
+   const struct sp_fragment_shader *fs = setup->softpipe->fs;
 
    if (sp->dirty) {
       softpipe_update_derived(sp);
