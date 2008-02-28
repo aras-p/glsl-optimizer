@@ -1216,7 +1216,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_surface *psTex;
    struct pipe_texture *pt;
    GLfloat *color;
-   uint format;
+   enum pipe_format format;
 
    /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
