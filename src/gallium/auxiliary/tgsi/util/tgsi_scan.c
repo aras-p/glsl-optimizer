@@ -100,7 +100,7 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                /* only first 32 regs will appear in this bitfield */
                info->file_mask[file] |= (1 << i);
                info->file_count[file]++;
-               info->file_max[file] = MAX2(info->file_max[file], i);
+               info->file_max[file] = MAX2(info->file_max[file], (int)i);
 
                if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[info->num_inputs]
