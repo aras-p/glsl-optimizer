@@ -61,7 +61,6 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
 
    if (vinfo->num_attribs == 0) {
       /* compute vertex layout now */
-      const struct pipe_shader_state *vs = &softpipe->vs->shader;
       const struct sp_fragment_shader *spfs = softpipe->fs;
       const enum interp_mode colorInterp
          = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
@@ -74,7 +73,8 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
          struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
          vinfo_vbuf->num_attribs = 0;
          draw_emit_vertex_attr(vinfo_vbuf, EMIT_ALL, INTERP_NONE, 0);
-         vinfo_vbuf->size = 4 * vs->num_outputs
+         /* size in dwords or floats */
+         vinfo_vbuf->size = 4 * draw_num_vs_outputs(softpipe->draw)
                           + sizeof(struct vertex_header) / 4;
       }
 

@@ -282,6 +282,19 @@ draw_find_vs_output(struct draw_context *draw,
 
 
 /**
+ * Return number of vertex shader outputs.
+ */
+uint
+draw_num_vs_outputs(struct draw_context *draw)
+{
+   uint count = draw->vertex_shader->info.num_outputs;
+   if (draw->extra_vp_outputs.slot >= 0)
+      count++;
+   return count;
+}
+
+
+/**
  * Allocate space for temporary post-transform vertices, such as for clipping.
  */
 void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )

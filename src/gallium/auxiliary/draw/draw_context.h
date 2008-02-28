@@ -112,6 +112,10 @@ int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index);
 
+uint
+draw_num_vs_outputs(struct draw_context *draw);
+
+
 
 /*
  * Vertex shader functions
