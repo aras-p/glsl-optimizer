@@ -502,18 +502,16 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   if (!check_clear_color_with_quad( ctx, rb ))
-   {
+   if (check_clear_color_with_quad( ctx, rb )) {
+      /* masking or scissoring */
+      clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
+   }
+   else {
       struct st_renderbuffer *strb = st_renderbuffer(rb);
 
       /* clear whole buffer w/out masking */
-      GLuint clearValue
-         = color_value(strb->surface->format, ctx->Color.ClearColor);
+      uint clearValue = color_value(strb->surface->format, ctx->Color.ClearColor);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-   else {
-      /* masking or scissoring */
-      clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
    }
 }
 
@@ -521,18 +519,13 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-   /*
-   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
-   */
-
-   assert(strb->surface->format);
-
    if (check_clear_depth_with_quad(ctx, rb)) {
       /* scissoring or we have a combined depth/stencil buffer */
       clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
    }
    else {
+      struct st_renderbuffer *strb = st_renderbuffer(rb);
+
       /* simple clear of whole buffer */
       uint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
@@ -543,13 +536,13 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
    if (check_clear_stencil_with_quad(ctx, rb)) {
       /* masking or scissoring or combined depth/stencil buffer */
       clear_with_quad(ctx, GL_FALSE, GL_FALSE, GL_TRUE);
    }
    else {
+      struct st_renderbuffer *strb = st_renderbuffer(rb);
+
       /* simple clear of whole buffer */
       GLuint clearValue = ctx->Stencil.Clear;
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
@@ -560,11 +553,14 @@ clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   assert(is_depth_stencil_format(strb->surface->format));
 
    if (check_clear_depth_stencil_with_quad(ctx, rb)) {
+      /* masking or scissoring */
+      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_TRUE);
+   }
+   else {
+      struct st_renderbuffer *strb = st_renderbuffer(rb);
+
       /* clear whole buffer w/out masking */
       GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
 
@@ -580,10 +576,6 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       }  
 
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-   else {
-      /* masking or scissoring */
-      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_TRUE);
    }
 }
 
