@@ -3,6 +3,8 @@
 
 #include "r300_reg.h"
 
+/* TODO: get documentation from AMD for these... */
+
 #define R300_VPI_OUT_REG_INDEX_SHIFT            13
 	/* GUESS based on fglrx native limits */
 #define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13)
