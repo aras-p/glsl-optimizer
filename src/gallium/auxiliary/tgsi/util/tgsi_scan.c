@@ -104,17 +104,17 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
 
                if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[info->num_inputs]
-                     = fulldecl->Semantic.SemanticName;
+                     = (ubyte)fulldecl->Semantic.SemanticName;
                   info->input_semantic_index[info->num_inputs]
-                     = fulldecl->Semantic.SemanticIndex;
+                     = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_inputs++;
                }
 
                if (file == TGSI_FILE_OUTPUT) {
                   info->output_semantic_name[info->num_outputs]
-                     = fulldecl->Semantic.SemanticName;
+                     = (ubyte)fulldecl->Semantic.SemanticName;
                   info->output_semantic_index[info->num_outputs]
-                     = fulldecl->Semantic.SemanticIndex;
+                     = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_outputs++;
                }
 
