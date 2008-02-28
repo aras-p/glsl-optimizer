@@ -967,21 +967,23 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
     src0[0] = get_src_reg(c, &inst->SrcReg[0], 0, 1);
     src0[1] = get_src_reg(c, &inst->SrcReg[0], 1, 1);
 
-    /* Calc delta X,Y by subtracting origin in r1 from the pixel
-     * centers.
+    /* Calculate the pixel offset from window bottom left into destination
+     * X and Y channels.
      */
     if (mask & WRITEMASK_X) {
-	brw_MOV(p,
+	/* X' = X - origin_x */
+	brw_ADD(p,
 		dst[0],
-		retype(src0[0], BRW_REGISTER_TYPE_UW));
+		retype(src0[0], BRW_REGISTER_TYPE_W),
+		brw_imm_d(- c->key.origin_x));
     }
 
     if (mask & WRITEMASK_Y) {
-	/* TODO -- window_height - Y */
-	brw_MOV(p,
+	/* Y' = height - (Y - origin_y) = height + origin_y - Y */
+	brw_ADD(p,
 		dst[1],
-		retype(src0[1], BRW_REGISTER_TYPE_UW));
-
+		negate(retype(src0[1], BRW_REGISTER_TYPE_W)),
+		brw_imm_d(c->key.origin_y + c->key.drawable_height));
     }
 }
 

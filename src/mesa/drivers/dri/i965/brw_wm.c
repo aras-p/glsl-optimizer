@@ -292,7 +292,30 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    key->yuvtex_mask |= 1<<i;
       }
    }
-	  
+
+   /* _NEW_BUFFERS */
+   /*
+    * Include the draw buffer origin and height so that we can calculate
+    * fragment position values relative to the bottom left of the drawable,
+    * from the incoming screen origin relative position we get as part of our
+    * payload.
+    *
+    * We could avoid recompiling by including this as a constant referenced by
+    * our program, but if we were to do that it would also be nice to handle
+    * getting that constant updated at batchbuffer submit time (when we
+    * hold the lock and know where the buffer really is) rather than at emit
+    * time when we don't hold the lock and are just guessing.  We could also
+    * just avoid using this as key data if the program doesn't use
+    * fragment.position.
+    *
+    * This pretty much becomes moot with DRI2 and redirected buffers anyway,
+    * as our origins will always be zero then.
+    */
+   if (brw->intel.driDrawable != NULL) {
+      key->origin_x = brw->intel.driDrawable->x;
+      key->origin_y = brw->intel.driDrawable->y;
+      key->drawable_height = brw->intel.driDrawable->h;
+   }
 
    /* Extra info:
     */
@@ -331,6 +354,7 @@ const struct brw_tracked_state brw_wm_prog = {
 		_NEW_POLYGON |
 		_NEW_LINE |
 		_NEW_LIGHT |
+		_NEW_BUFFERS |
 		_NEW_TEXTURE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
 		BRW_NEW_WM_INPUT_DIMENSIONS |

@@ -122,26 +122,30 @@ static void emit_delta_xy(struct brw_compile *p,
    }
 }
 
-static void emit_wpos_xy(struct brw_compile *p,
-			   const struct brw_reg *dst,
-			   GLuint mask,
-			   const struct brw_reg *arg0)
+static void emit_wpos_xy(struct brw_wm_compile *c,
+			 const struct brw_reg *dst,
+			 GLuint mask,
+			 const struct brw_reg *arg0)
 {
-   /* Calc delta X,Y by subtracting origin in r1 from the pixel
-    * centers.
+   struct brw_compile *p = &c->func;
+
+   /* Calculate the pixel offset from window bottom left into destination
+    * X and Y channels.
     */
    if (mask & WRITEMASK_X) {
-      brw_MOV(p,
+      /* X' = X - origin */
+      brw_ADD(p,
 	      dst[0],
-	      retype(arg0[0], BRW_REGISTER_TYPE_UW));
+	      retype(arg0[0], BRW_REGISTER_TYPE_W),
+	      brw_imm_d(- c->key.origin_x));
    }
 
    if (mask & WRITEMASK_Y) {
-      /* TODO -- window_height - Y */
-      brw_MOV(p,
+      /* Y' = height - (Y - origin_y) = height + origin_y - Y */
+      brw_ADD(p,
 	      dst[1],
-	      negate(retype(arg0[1], BRW_REGISTER_TYPE_UW)));
-
+	      negate(retype(arg0[1], BRW_REGISTER_TYPE_W)),
+	      brw_imm_d(c->key.origin_y + c->key.drawable_height));
    }
 }
 
@@ -1114,7 +1118,7 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       case WM_WPOSXY:
-	 emit_wpos_xy(p, dst, dst_flags, args[0]);
+	 emit_wpos_xy(c, dst, dst_flags, args[0]);
 	 break;
 
       case WM_PIXELW:
