@@ -85,6 +85,27 @@ Once your account is established:
 </ol>
 
 
+<H2>Windows Users</H2>
+
+<p>
+If you're <a href="http://git.or.cz/gitwiki/WindowsInstall" target="_parent">
+using git on Windows</a> you'll want to enable automatic CR/LF conversion in
+your local copy of the repository:
+</p>
+<pre>
+   git config --global core.autocrlf true
+</pre>
+
+<p>
+This will cause git to convert all text files to CR+LF on checkout,
+and to LF on commit.
+</p>
+<p>
+Unix users don't need to set this option.
+</p>
+<br>
+
+
 <a name="developer">
 <H2>Development Branches</H2>
 
