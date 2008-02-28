@@ -32,6 +32,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * \author Oliver McFadden <z3ro.geek@gmail.com>
  *
+ * \todo A VE_MULTIPLY_ADD or VE_MULTIPLYX2_ADD opcode with all 3 source
+ * operands using unique PVS_REG_TEMPORARY vector addresses requires special
+ * handling, which is currently not implemented!
+ *
  * For a description of the vertex program instruction set see r300_reg.h.
  */
 
