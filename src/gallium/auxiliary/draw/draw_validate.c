@@ -84,6 +84,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    if (wide_lines) {
       draw->pipeline.wide_line->next = next;
       next = draw->pipeline.wide_line;
+      precalc_flat = 1;
    }
 
    if (wide_points || draw->rasterizer->point_sprite) {
