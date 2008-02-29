@@ -6,7 +6,7 @@ LIBNAME = i965simple
 C_SOURCES = \
 	brw_blit.c \
 	brw_flush.c \
-	brw_strings.c \
+	brw_screen.c \
 	brw_surface.c \
 	brw_cc.c \
 	brw_clip.c \
@@ -30,7 +30,6 @@ C_SOURCES = \
 	brw_sf.c \
 	brw_sf_emit.c \
 	brw_sf_state.c \
-	brw_shader_info.c \
 	brw_state.c \
 	brw_state_batch.c \
 	brw_state_cache.c \

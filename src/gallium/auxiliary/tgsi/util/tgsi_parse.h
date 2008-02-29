@@ -3,7 +3,7 @@
 
 #if defined __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 struct tgsi_full_version
 {
@@ -114,8 +114,8 @@ tgsi_parse_token(
    struct tgsi_parse_context *ctx );
 
 #if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+}
+#endif
 
-#endif // !defined TGSI_PARSE_H
+#endif /* TGSI_PARSE_H */
 

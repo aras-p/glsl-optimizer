@@ -664,6 +664,19 @@ static const char *TGSI_TEXTURES[] =
    "TEXTURE_SHADOWRECT"
 };
 
+static const char *TGSI_TEXTURES_SHORT[] =
+{
+   "UNKNOWN",
+   "1D",
+   "2D",
+   "3D",
+   "CUBE",
+   "RECT",
+   "SHADOW1D",
+   "SHADOW2D",
+   "SHADOWRECT"
+};
+
 static const char *TGSI_SRC_REGISTER_EXTS[] =
 {
    "SRC_REGISTER_EXT_TYPE_SWZ",
@@ -1035,6 +1048,11 @@ dump_instruction_short(
       }
 
       first_reg = FALSE;
+   }
+
+   if (inst->InstructionExtTexture.Texture != TGSI_TEXTURE_UNKNOWN) {
+      TXT( ", " );
+      ENM( inst->InstructionExtTexture.Texture, TGSI_TEXTURES_SHORT );
    }
 
    switch( inst->Instruction.Opcode ) {

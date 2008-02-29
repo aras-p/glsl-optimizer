@@ -77,6 +77,7 @@ st_texture_create(struct st_context *st,
 		  GLuint compress_byte)
 {
    struct pipe_texture pt, *newtex;
+   struct pipe_screen *screen = st->pipe->screen;
 
    assert(target <= PIPE_TEXTURE_CUBE);
 
@@ -85,6 +86,7 @@ st_texture_create(struct st_context *st,
        _mesa_lookup_enum_by_nr(format), last_level);
 
    assert(format);
+   assert(screen->is_format_supported(screen, format, PIPE_TEXTURE));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = target;
@@ -96,7 +98,7 @@ st_texture_create(struct st_context *st,
    pt.compressed = compress_byte ? 1 : 0;
    pt.cpp = pt.compressed ? compress_byte : st_sizeof_format(format);
 
-   newtex = st->pipe->texture_create(st->pipe, &pt);
+   newtex = screen->texture_create(screen, &pt);
 
    assert(!newtex || newtex->refcount == 1);
 
@@ -183,11 +185,12 @@ GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 		     GLuint zoffset)
 {
+   struct pipe_screen *screen = st->pipe->screen;
    struct pipe_texture *pt = stImage->pt;
    DBG("%s \n", __FUNCTION__);
 
-   stImage->surface = st->pipe->get_tex_surface(st->pipe, pt, stImage->face,
-						stImage->level,	zoffset);
+   stImage->surface = screen->get_tex_surface(screen, pt, stImage->face,
+                                              stImage->level, zoffset);
 
    return pipe_surface_map(stImage->surface);
 }
@@ -239,6 +242,7 @@ st_texture_image_data(struct pipe_context *pipe,
                       void *src,
                       GLuint src_row_pitch, GLuint src_image_pitch)
 {
+   struct pipe_screen *screen = pipe->screen;
    GLuint depth = dst->depth[level];
    GLuint i;
    GLuint height = 0;
@@ -251,7 +255,7 @@ st_texture_image_data(struct pipe_context *pipe,
       if(dst->compressed)
 	 height /= 4;
 
-      dst_surface = pipe->get_tex_surface(pipe, dst, face, level, i);
+      dst_surface = screen->get_tex_surface(screen, dst, face, level, i);
 
       st_surface_data(pipe, dst_surface,
 		      0, 0,                             /* dstx, dsty */
@@ -275,6 +279,7 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_texture *src,
                       GLuint face)
 {
+   struct pipe_screen *screen = pipe->screen;
    GLuint width = dst->width[dstLevel];
    GLuint height = dst->height[dstLevel];
    GLuint depth = dst->depth[dstLevel];
@@ -299,8 +304,8 @@ st_texture_image_copy(struct pipe_context *pipe,
       assert(src->width[srcLevel] == width);
       assert(src->height[srcLevel] == height);
 
-      dst_surface = pipe->get_tex_surface(pipe, dst, face, dstLevel, i);
-      src_surface = pipe->get_tex_surface(pipe, src, face, srcLevel, i);
+      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i);
+      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i);
 
       pipe->surface_copy(pipe,
                          FALSE,

@@ -48,7 +48,8 @@ struct draw_context *draw_create( void )
 #endif
 
    /* create pipeline stages */
-   draw->pipeline.wide      = draw_wide_stage( draw );
+   draw->pipeline.wide_line  = draw_wide_line_stage( draw );
+   draw->pipeline.wide_point = draw_wide_point_stage( draw );
    draw->pipeline.stipple   = draw_stipple_stage( draw );
    draw->pipeline.unfilled  = draw_unfilled_stage( draw );
    draw->pipeline.twoside   = draw_twoside_stage( draw );
@@ -80,8 +81,9 @@ struct draw_context *draw_create( void )
 
    draw->shader_queue_flush = draw_vertex_shader_queue_flush;
 
-   draw->convert_wide_points = TRUE;
-   draw->convert_wide_lines = TRUE;
+   /* these defaults are oriented toward the needs of softpipe */
+   draw->wide_point_threshold = 1000000.0; /* infinity */
+   draw->wide_line_threshold = 1.0;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -94,7 +96,8 @@ struct draw_context *draw_create( void )
 
 void draw_destroy( struct draw_context *draw )
 {
-   draw->pipeline.wide->destroy( draw->pipeline.wide );
+   draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
+   draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
    draw->pipeline.stipple->destroy( draw->pipeline.stipple );
    draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
    draw->pipeline.twoside->destroy( draw->pipeline.twoside );
@@ -220,26 +223,26 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
 
 
 /**
- * Tells the draw module whether to convert wide points (size != 1)
- * into triangles.
+ * Tells the draw module to draw points with triangles if their size
+ * is greater than this threshold.
  */
 void
-draw_convert_wide_points(struct draw_context *draw, boolean enable)
+draw_wide_point_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->convert_wide_points = enable;
+   draw->wide_point_threshold = threshold;
 }
 
 
 /**
- * Tells the draw module whether to convert wide lines (width != 1)
- * into triangles.
+ * Tells the draw module to draw lines with triangles if their width
+ * is greater than this threshold.
  */
 void
-draw_convert_wide_lines(struct draw_context *draw, boolean enable)
+draw_wide_line_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->convert_wide_lines = enable;
+   draw->wide_line_threshold = threshold;
 }
 
 
@@ -262,11 +265,11 @@ int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index)
 {
-   const struct pipe_shader_state *vs = draw->vertex_shader->state;
+   const struct draw_vertex_shader *vs = draw->vertex_shader;
    uint i;
-   for (i = 0; i < vs->num_outputs; i++) {
-      if (vs->output_semantic_name[i] == semantic_name &&
-          vs->output_semantic_index[i] == semantic_index)
+   for (i = 0; i < vs->info.num_outputs; i++) {
+      if (vs->info.output_semantic_name[i] == semantic_name &&
+          vs->info.output_semantic_index[i] == semantic_index)
          return i;
    }
 
@@ -278,6 +281,19 @@ draw_find_vs_output(struct draw_context *draw,
       return draw->extra_vp_outputs.slot;
    }
    return 0;
+}
+
+
+/**
+ * Return number of vertex shader outputs.
+ */
+uint
+draw_num_vs_outputs(struct draw_context *draw)
+{
+   uint count = draw->vertex_shader->info.num_outputs;
+   if (draw->extra_vp_outputs.slot >= 0)
+      count++;
+   return count;
 }
 
 

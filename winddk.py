@@ -1,6 +1,8 @@
-"""engine.SCons.Tool.msvc
+"""winddk
 
-Tool-specific initialization for Microsoft Visual C/C++.
+Tool-specific initialization for Microsoft Windows DDK.
+
+Based on engine.SCons.Tool.msvc.
 
 There normally shouldn't be any need to import this module directly.
 It will usually be imported through the generic SCons.Tool.Tool()
@@ -9,7 +11,8 @@ selection method.
 """
 
 #
-# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007 The SCons Foundation
+# Copyright (c) 2001-2007 The SCons Foundation
+# Copyright (c) 2008 Tungsten Graphics, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -30,8 +33,6 @@ selection method.
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-
-__revision__ = "src/engine/SCons/Tool/msvc.py 2523 2007/12/12 09:37:41 knight"
 
 import os.path
 import re

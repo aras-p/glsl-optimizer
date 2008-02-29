@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,59 +25,45 @@
  * 
  **************************************************************************/
 
-#include "i915_context.h"
-#include "i915_reg.h"
+
+#ifndef I915_SCREEN_H
+#define I915_SCREEN_H
 
 
-static const char *i915_get_vendor( struct pipe_context *pipe )
+#include "pipe/p_screen.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/**
+ * Subclass of pipe_screen
+ */
+struct i915_screen
 {
-   return "Tungsten Graphics, Inc.";
+   struct pipe_screen screen;
+
+   boolean is_i945;
+   uint pci_id;
+};
+
+
+/** cast wrapper */
+static INLINE struct i915_screen *
+i915_screen(struct pipe_screen *pscreen)
+{
+   return (struct i915_screen *) pscreen;
 }
 
 
-static const char *i915_get_name( struct pipe_context *pipe )
-{
-   static char buffer[128];
-   const char *chipset;
+extern struct pipe_screen *
+i915_create_screen(struct pipe_winsys *winsys, uint pci_id);
 
-   switch (i915_context(pipe)->pci_id) {
-   case PCI_CHIP_I915_G:
-      chipset = "915G";
-      break;
-   case PCI_CHIP_I915_GM:
-      chipset = "915GM";
-      break;
-   case PCI_CHIP_I945_G:
-      chipset = "945G";
-      break;
-   case PCI_CHIP_I945_GM:
-      chipset = "945GM";
-      break;
-   case PCI_CHIP_I945_GME:
-      chipset = "945GME";
-      break;
-   case PCI_CHIP_G33_G:
-      chipset = "G33";
-      break;
-   case PCI_CHIP_Q35_G:
-      chipset = "Q35";
-      break;
-   case PCI_CHIP_Q33_G:
-      chipset = "Q33";
-      break;
-   default:
-      chipset = "unknown";
-      break;
-   }
 
-   sprintf(buffer, "i915 (chipset: %s)", chipset);
-   return buffer;
+#ifdef __cplusplus
 }
+#endif
 
-
-void
-i915_init_string_functions(struct i915_context *i915)
-{
-   i915->pipe.get_name = i915_get_name;
-   i915->pipe.get_vendor = i915_get_vendor;
-}
+#endif /* I915_SCREEN_H */

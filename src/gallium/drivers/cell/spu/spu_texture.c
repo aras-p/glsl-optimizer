@@ -31,19 +31,7 @@
 #include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_colorpack.h"
-
-
-/**
- * Number of texture tiles to cache.
- * Note that this will probably be the largest consumer of SPU local store/
- * memory for this driver!
- */
-#define CACHE_SIZE 16
-
-static tile_t tex_tiles[CACHE_SIZE]  ALIGN16_ATTRIB;
-
-static vector unsigned int tex_tile_xy[CACHE_SIZE];
-
+#include "spu_dcache.h"
 
 
 /**
@@ -52,77 +40,59 @@ static vector unsigned int tex_tile_xy[CACHE_SIZE];
 void
 invalidate_tex_cache(void)
 {
-   /* XXX memset? */
-   uint i;
-   for (i = 0; i < CACHE_SIZE; i++) {
-      tex_tile_xy[i] = ((vector unsigned int) { ~0U, ~0U, ~0U, ~0U });
-   }
+   spu_dcache_mark_dirty((unsigned) spu.texture.start,
+                         4 * spu.texture.width * spu.texture.height);
 }
 
 
-/**
- * Return the cache pos/index which corresponds to tile (tx,ty)
- */
-static INLINE uint
-cache_pos(vector unsigned int txty)
-{
-   uint pos = (spu_extract(txty,0) + spu_extract(txty,1) * 4) % CACHE_SIZE;
-   return pos;
-}
-
-
-/**
- * Make sure the tile for texel (i,j) is present, return its position/index
- * in the cache.
- */
 static uint
-get_tex_tile(vector unsigned int ij)
+get_texel(vec_uint4 coordinate)
 {
-   /* tile address: tx,ty */
-   const vector unsigned int txty = spu_rlmask(ij, -5);  /* divide by 32 */
-   const uint pos = cache_pos(txty);
+   vec_uint4 tmp;
+   unsigned x = spu_extract(coordinate, 0);
+   unsigned y = spu_extract(coordinate, 1);
+   const unsigned tiles_per_row = spu.texture.width / TILE_SIZE;
+   unsigned tile_offset = sizeof(tile_t) * ((y / TILE_SIZE * tiles_per_row) 
+                                            + (x / TILE_SIZE));
+   unsigned texel_offset = 4 * (((y % TILE_SIZE) * TILE_SIZE)
+                                + (x % TILE_SIZE));
 
-   if ((spu_extract(tex_tile_xy[pos], 0) != spu_extract(txty, 0)) ||
-       (spu_extract(tex_tile_xy[pos], 1) != spu_extract(txty, 1))) {
-
-      /* texture cache miss, fetch tile from main memory */
-      const uint tiles_per_row = spu.texture.width / TILE_SIZE;
-      const uint bytes_per_tile = sizeof(tile_t);
-      const void *src = (const ubyte *) spu.texture.start
-         + (spu_extract(txty,1) * tiles_per_row + spu_extract(txty,0)) * bytes_per_tile;
-
-      printf("SPU %u: tex cache miss at %d, %d  pos=%u  old=%d,%d\n",
-             spu.init.id,
-             spu_extract(txty,0),
-             spu_extract(txty,1),
-             pos,
-             spu_extract(tex_tile_xy[pos],0),
-             spu_extract(tex_tile_xy[pos],1));
-
-      ASSERT_ALIGN16(tex_tiles[pos].ui);
-      ASSERT_ALIGN16(src);
-
-      mfc_get(tex_tiles[pos].ui,  /* dest */
-              (unsigned int) src,
-              bytes_per_tile,      /* size */
-              TAG_TEXTURE_TILE,
-              0, /* tid */
-              0  /* rid */);
-
-      wait_on_mask(1 << TAG_TEXTURE_TILE);
-
-      tex_tile_xy[pos] = txty;
-   }
-   else {
-#if 0
-      printf("SPU %u: tex cache HIT at %d, %d\n",
-             spu.init.id, tx, ty);
-#endif
-   }
-
-   return pos;
+   spu_dcache_fetch_unaligned((qword *) & tmp,
+                              spu.texture.start + tile_offset + texel_offset,
+                              4);
+   return spu_extract(tmp, 0);
 }
 
+
+static void
+get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
+{
+   const unsigned texture_ea = (uintptr_t) spu.texture.start;
+   vec_uint4 tile_x = spu_rlmask(x, -5);
+   vec_uint4 tile_y = spu_rlmask(y, -5);
+   const qword offset_x = si_andi((qword) x, 0x1f);
+   const qword offset_y = si_andi((qword) y, 0x1f);
+
+   const qword tiles_per_row = (qword) spu_splats(spu.texture.width / TILE_SIZE);
+   const qword tile_size = (qword) spu_splats(sizeof(tile_t));
+
+   qword tile_offset = si_mpya((qword) tile_y, tiles_per_row, (qword) tile_x);
+   tile_offset = si_mpy((qword) tile_offset, tile_size);
+
+   qword texel_offset = si_a(si_mpyui(offset_y, 32), offset_x);
+   texel_offset = si_mpyui(texel_offset, 4);
+   
+   vec_uint4 offset = (vec_uint4) si_a(tile_offset, texel_offset);
+   
+   spu_dcache_fetch_unaligned((qword *) & texels[0],
+                              texture_ea + spu_extract(offset, 0), 4);
+   spu_dcache_fetch_unaligned((qword *) & texels[1],
+                              texture_ea + spu_extract(offset, 1), 4);
+   spu_dcache_fetch_unaligned((qword *) & texels[2],
+                              texture_ea + spu_extract(offset, 2), 4);
+   spu_dcache_fetch_unaligned((qword *) & texels[3],
+                              texture_ea + spu_extract(offset, 3), 4);
+}
 
 /**
  * Get texture sample at texcoord.
@@ -134,9 +104,7 @@ sample_texture_nearest(vector float texcoord)
    vector float tc = spu_mul(texcoord, spu.tex_size);
    vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */
    itc = spu_and(itc, spu.tex_size_mask);        /* mask (GL_REPEAT) */
-   vector unsigned int ij = spu_and(itc, TILE_SIZE-1); /* intra tile addr */
-   uint pos = get_tex_tile(itc);
-   uint texel = tex_tiles[pos].ui[spu_extract(ij, 1)][spu_extract(ij, 0)];
+   uint texel = get_texel(itc);
    return spu_unpack_A8R8G8B8(texel);
 }
 
@@ -144,49 +112,33 @@ sample_texture_nearest(vector float texcoord)
 vector float
 sample_texture_bilinear(vector float texcoord)
 {
-   static const vector unsigned int offset10 = {1, 0, 0, 0};
-   static const vector unsigned int offset01 = {0, 1, 0, 0};
+   static const vec_uint4 offset_x = {0, 0, 1, 1};
+   static const vec_uint4 offset_y = {0, 1, 0, 1};
 
    vector float tc = spu_mul(texcoord, spu.tex_size);
    tc = spu_add(tc, spu_splats(-0.5f));  /* half texel bias */
 
    /* integer texcoords S,T: */
-   vector unsigned int itc00 = spu_convtu(tc, 0);  /* convert to int */
-   vector unsigned int itc01 = spu_add(itc00, offset01);
-   vector unsigned int itc10 = spu_add(itc00, offset10);
-   vector unsigned int itc11 = spu_add(itc10, offset01);
+   vec_uint4 itc = spu_convtu(tc, 0);  /* convert to int */
 
-   /* mask (GL_REPEAT) */
-   itc00 = spu_and(itc00, spu.tex_size_mask);
-   itc01 = spu_and(itc01, spu.tex_size_mask);
-   itc10 = spu_and(itc10, spu.tex_size_mask);
-   itc11 = spu_and(itc11, spu.tex_size_mask);
+   vec_uint4 texels[4];
+   
+   vec_uint4 x = spu_splats(spu_extract(itc, 0));
+   vec_uint4 y = spu_splats(spu_extract(itc, 1));
 
-   /* intra tile addr */
-   vector unsigned int ij00 = spu_and(itc00, TILE_SIZE-1);
-   vector unsigned int ij01 = spu_and(itc01, TILE_SIZE-1);
-   vector unsigned int ij10 = spu_and(itc10, TILE_SIZE-1);
-   vector unsigned int ij11 = spu_and(itc11, TILE_SIZE-1);
+   x = spu_add(x, offset_x);
+   y = spu_add(y, offset_y);
 
-   /* get tile cache positions */
-   uint pos00 = get_tex_tile(itc00);
-   uint pos01, pos10, pos11;
-   if ((spu_extract(ij00, 0) < TILE_SIZE-1) &&
-       (spu_extract(ij00, 1) < TILE_SIZE-1)) {
-      /* all texels are in the same tile */
-      pos01 = pos10 = pos11 = pos00;
-   }
-   else {
-      pos01 = get_tex_tile(itc01);
-      pos10 = get_tex_tile(itc10);
-      pos11 = get_tex_tile(itc11);
-   }
+   x = spu_and(x, spu.tex_size_x_mask);
+   y = spu_and(y, spu.tex_size_y_mask);
 
-   /* get texels from tiles and convert to float[4] */
-   vector float texel00 = spu_unpack_A8R8G8B8(tex_tiles[pos00].ui[spu_extract(ij00, 1)][spu_extract(ij00, 0)]);
-   vector float texel01 = spu_unpack_A8R8G8B8(tex_tiles[pos01].ui[spu_extract(ij01, 1)][spu_extract(ij01, 0)]);
-   vector float texel10 = spu_unpack_A8R8G8B8(tex_tiles[pos10].ui[spu_extract(ij10, 1)][spu_extract(ij10, 0)]);
-   vector float texel11 = spu_unpack_A8R8G8B8(tex_tiles[pos11].ui[spu_extract(ij11, 1)][spu_extract(ij11, 0)]);
+   get_four_texels(x, y, texels);
+
+   vector float texel00 = spu_unpack_A8R8G8B8(spu_extract(texels[0], 0));
+   vector float texel01 = spu_unpack_A8R8G8B8(spu_extract(texels[1], 0));
+   vector float texel10 = spu_unpack_A8R8G8B8(spu_extract(texels[2], 0));
+   vector float texel11 = spu_unpack_A8R8G8B8(spu_extract(texels[3], 0));
+
 
    /* Compute weighting factors in [0,1]
     * Multiply texcoord by 1024, AND with 1023, convert back to float.

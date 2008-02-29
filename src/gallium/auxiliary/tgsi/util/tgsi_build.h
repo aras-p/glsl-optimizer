@@ -3,7 +3,7 @@
 
 #if defined __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 /*
  * version
@@ -313,8 +313,8 @@ tgsi_build_dst_register_ext_modulate(
    struct tgsi_header *header );
 
 #if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+}
+#endif
 
-#endif // !defined TGSI_BUILD_H
+#endif /* TGSI_BUILD_H */
 

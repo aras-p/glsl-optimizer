@@ -286,6 +286,8 @@ cmd_state_texture(const struct cell_command_texture *texture)
       { spu.texture.width, spu.texture.height, 0.0, 0.0};
    spu.tex_size_mask = (vector unsigned int)
       { spu.texture.width - 1, spu.texture.height - 1, 0, 0 };
+   spu.tex_size_x_mask = spu_splats(spu.texture.width - 1);
+   spu.tex_size_y_mask = spu_splats(spu.texture.height - 1);
 }
 
 

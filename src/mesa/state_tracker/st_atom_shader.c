@@ -227,7 +227,7 @@ find_translated_vp(struct st_context *st,
             if (fpInAttrib >= 0) {
                GLuint fpInSlot = stfp->input_to_slot[fpInAttrib];
                if (fpInSlot != ~0) {
-                  GLuint vpOutSlot = stfp->cso->state.input_map[fpInSlot];
+                  GLuint vpOutSlot = stfp->input_map[fpInSlot];
                   xvp->output_to_slot[outAttr] = vpOutSlot;
                   numVpOuts++;
                }

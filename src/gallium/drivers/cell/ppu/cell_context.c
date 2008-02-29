@@ -37,9 +37,12 @@
 #include "pipe/p_format.h"
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
-#include "cell/common.h"
+#include "pipe/p_screen.h"
+
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
+
+#include "cell/common.h"
 #include "cell_clear.h"
 #include "cell_context.h"
 #include "cell_draw_arrays.h"
@@ -51,99 +54,6 @@
 #include "cell_pipe_state.h"
 #include "cell_texture.h"
 #include "cell_vbuf.h"
-
-
-
-static boolean
-cell_is_format_supported( struct pipe_context *pipe,
-                          enum pipe_format format, uint type )
-{
-   /*struct cell_context *cell = cell_context( pipe );*/
-
-   switch (type) {
-   case PIPE_TEXTURE:
-      /* cell supports all texture formats, XXX for now anyway */
-      return TRUE;
-   case PIPE_SURFACE:
-      /* cell supports all (off-screen) surface formats, XXX for now */
-      return TRUE;
-   default:
-      assert(0);
-      return FALSE;
-   }
-}
-
-
-static int cell_get_param(struct pipe_context *pipe, int param)
-{
-   switch (param) {
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return 8;
-   case PIPE_CAP_NPOT_TEXTURES:
-      return 1;
-   case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 1;
-   case PIPE_CAP_GLSL:
-      return 1;
-   case PIPE_CAP_S3TC:
-      return 0;
-   case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 0;
-   case PIPE_CAP_POINT_SPRITE:
-      return 1;
-   case PIPE_CAP_MAX_RENDER_TARGETS:
-      return 1;
-   case PIPE_CAP_OCCLUSION_QUERY:
-      return 1;
-   case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 1;
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 12; /* max 2Kx2K */
-   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
-   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 12; /* max 2Kx2K */
-   default:
-      return 0;
-   }
-}
-
-static float cell_get_paramf(struct pipe_context *pipe, int param)
-{
-   switch (param) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
-      return 255.0; /* arbitrary */
-
-   case PIPE_CAP_MAX_POINT_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
-      return 255.0; /* arbitrary */
-
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 0.0;
-
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-      return 16.0; /* arbitrary */
-
-   default:
-      return 0;
-   }
-}
-
-
-static const char *
-cell_get_name( struct pipe_context *pipe )
-{
-   return "Cell";
-}
-
-static const char *
-cell_get_vendor( struct pipe_context *pipe )
-{
-   return "Tungsten Graphics, Inc.";
-}
 
 
 
@@ -174,7 +84,8 @@ cell_draw_create(struct cell_context *cell)
 
 
 struct pipe_context *
-cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
+cell_create_context(struct pipe_screen *screen,
+                    struct cell_winsys *cws)
 {
    struct cell_context *cell;
    uint spu, buf;
@@ -187,16 +98,9 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    memset(cell, 0, sizeof(*cell));
 
    cell->winsys = cws;
-   cell->pipe.winsys = winsys;
+   cell->pipe.winsys = screen->winsys;
+   cell->pipe.screen = screen;
    cell->pipe.destroy = cell_destroy_context;
-
-   /* queries */
-   cell->pipe.is_format_supported = cell_is_format_supported;
-   cell->pipe.get_name = cell_get_name;
-   cell->pipe.get_vendor = cell_get_vendor;
-   cell->pipe.get_param = cell_get_param;
-   cell->pipe.get_paramf = cell_get_paramf;
-
 
    /* state setters */
    cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;
@@ -224,10 +128,17 @@ cell_create_context(struct pipe_winsys *winsys, struct cell_winsys *cws)
    cell_init_vbuf(cell);
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
 
+   /* convert all points/lines to tris for the time being */
+   draw_wide_point_threshold(cell->draw, 0.0);
+   draw_wide_line_threshold(cell->draw, 0.0);
+
    /*
     * SPU stuff
     */
    cell->num_spus = 6;
+   /* XXX is this in SDK 3.0 only?
+   cell->num_spus = spe_cpu_info_get(SPE_COUNT_PHYSICAL_SPES, -1);
+   */
 
    cell_start_spus(cell);
 

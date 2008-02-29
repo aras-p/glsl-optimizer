@@ -35,6 +35,8 @@
 
 #include "draw/draw_vertex.h"
 
+#include "tgsi/util/tgsi_scan.h"
+
 
 #define I915_TEX_UNITS 8
 
@@ -89,6 +91,9 @@
 struct i915_fragment_shader
 {
    struct pipe_shader_state state;
+
+   struct tgsi_shader_info info;
+
    uint *program;
    uint program_len;
 
@@ -240,11 +245,6 @@ struct i915_context
    unsigned hardware_dirty;
    
    unsigned debug;
-   unsigned pci_id;
-
-   struct {
-      unsigned is_i945:1;
-   } flags;
 };
 
 /* A flag for each state_tracker state object:
@@ -317,6 +317,7 @@ void i915_init_surface_functions( struct i915_context *i915 );
 void i915_init_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
+
 
 
 

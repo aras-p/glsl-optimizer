@@ -40,6 +40,7 @@
 #include "i915_context.h"
 #include "i915_texture.h"
 #include "i915_debug.h"
+#include "i915_screen.h"
 
 
 static unsigned minify( unsigned d )
@@ -187,7 +188,7 @@ static const int step_offsets[6][2] = {
 
 
 static boolean
-i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
+i915_miptree_layout(struct i915_texture * tex)
 {
    struct pipe_texture *pt = &tex->base;
    unsigned level;
@@ -311,7 +312,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
 
 
 static boolean
-i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
+i945_miptree_layout(struct i915_texture * tex)
 {
    struct pipe_texture *pt = &tex->base;
    unsigned level;
@@ -479,23 +480,25 @@ i945_miptree_layout(struct pipe_context *pipe, struct i915_texture * tex)
 
 
 static struct pipe_texture *
-i915_texture_create(struct pipe_context *pipe,
-                    const struct pipe_texture *templat)
+i915_texture_create_screen(struct pipe_screen *screen,
+                           const struct pipe_texture *templat)
 {
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
 
    if (tex) {
-      struct i915_context *i915 = i915_context(pipe);
+      struct i915_screen *i915screen = i915_screen(screen);
+      struct pipe_winsys *ws = screen->winsys;
 
       tex->base = *templat;
       tex->base.refcount = 1;
+      tex->base.screen = screen;
 
-      if (i915->flags.is_i945 ? i945_miptree_layout(pipe, tex) :
-	  i915_miptree_layout(pipe, tex))
-	 tex->buffer = pipe->winsys->buffer_create(pipe->winsys, 64,
-                                                   PIPE_BUFFER_USAGE_PIXEL,
-                                                   tex->pitch * tex->base.cpp *
-                                                   tex->total_height);
+      if (i915screen->is_i945 ? i945_miptree_layout(tex) :
+	  i915_miptree_layout(tex))
+	 tex->buffer = ws->buffer_create(ws, 64,
+                                         PIPE_BUFFER_USAGE_PIXEL,
+                                         tex->pitch * tex->base.cpp *
+                                         tex->total_height);
 
       if (!tex->buffer) {
 	 FREE(tex);
@@ -508,7 +511,8 @@ i915_texture_create(struct pipe_context *pipe,
 
 
 static void
-i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
+i915_texture_release_screen(struct pipe_screen *screen,
+                            struct pipe_texture **pt)
 {
    if (!*pt)
       return;
@@ -525,7 +529,7 @@ i915_texture_release(struct pipe_context *pipe, struct pipe_texture **pt)
       DBG("%s deleting %p\n", __FUNCTION__, (void *) tex);
       */
 
-      pipe_buffer_reference(pipe->winsys, &tex->buffer, NULL);
+      pipe_buffer_reference(screen->winsys, &tex->buffer, NULL);
 
       for (i = 0; i < PIPE_MAX_TEXTURE_LEVELS; i++)
          if (tex->image_offset[i])
@@ -548,11 +552,12 @@ i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
  * XXX note: same as code in sp_surface.c
  */
 static struct pipe_surface *
-i915_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
+i915_get_tex_surface_screen(struct pipe_screen *screen,
+                            struct pipe_texture *pt,
+                            unsigned face, unsigned level, unsigned zslice)
 {
    struct i915_texture *tex = (struct i915_texture *)pt;
+   struct pipe_winsys *ws = screen->winsys;
    struct pipe_surface *ps;
    unsigned offset;  /* in bytes */
 
@@ -569,11 +574,11 @@ i915_get_tex_surface(struct pipe_context *pipe,
       assert(zslice == 0);
    }
 
-   ps = pipe->winsys->surface_alloc(pipe->winsys);
+   ps = ws->surface_alloc(ws);
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
-      pipe_buffer_reference(pipe->winsys, &ps->buffer, tex->buffer);
+      pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
       ps->width = pt->width[level];
@@ -585,12 +590,17 @@ i915_get_tex_surface(struct pipe_context *pipe,
 }
 
 
-
 void
 i915_init_texture_functions(struct i915_context *i915)
 {
-   i915->pipe.texture_create = i915_texture_create;
-   i915->pipe.texture_release = i915_texture_release;
    i915->pipe.texture_update = i915_texture_update;
-   i915->pipe.get_tex_surface = i915_get_tex_surface;
+}
+
+
+void
+i915_init_screen_texture_functions(struct pipe_screen *screen)
+{
+   screen->texture_create = i915_texture_create_screen;
+   screen->texture_release = i915_texture_release_screen;
+   screen->get_tex_surface = i915_get_tex_surface_screen;
 }

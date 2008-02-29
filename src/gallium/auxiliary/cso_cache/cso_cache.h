@@ -88,44 +88,44 @@ struct cso_cache;
 
 struct cso_blend {
    struct pipe_blend_state state;
-   void   *data;
-   void   (*delete_state)(void *, void  *);
-   void   *context;
+   void *data;
+   void (*delete_state)(struct pipe_context *, void *);
+   struct pipe_context *context;
 };
 
 struct cso_depth_stencil_alpha {
    struct pipe_depth_stencil_alpha_state state;
    void *data;
-   void   (*delete_state)(void *, void  *);
-   void   *context;
+   void (*delete_state)(struct pipe_context *, void *);
+   struct pipe_context *context;
 };
 
 struct cso_rasterizer {
    struct pipe_rasterizer_state state;
    void *data;
-   void   (*delete_state)(void *, void  *);
-   void   *context;
+   void (*delete_state)(struct pipe_context *, void *);
+   struct pipe_context *context;
 };
 
 struct cso_fragment_shader {
    struct pipe_shader_state state;
    void *data;
-   void   (*delete_state)(void *, void  *);
-   void   *context;
+   void (*delete_state)(struct pipe_context *, void *);
+   struct pipe_context *context;
 };
 
 struct cso_vertex_shader {
    struct pipe_shader_state state;
    void *data;
-   void   (*delete_state)(void *, void  *);
-   void   *context;
+   void (*delete_state)(struct pipe_context *, void *);
+   struct pipe_context *context;
 };
 
 struct cso_sampler {
    struct pipe_sampler_state state;
    void *data;
-   void   (*delete_state)(void *, void  *);
-   void   *context;
+   void (*delete_state)(struct pipe_context *, void *);
+   struct pipe_context *context;
 };
 
 

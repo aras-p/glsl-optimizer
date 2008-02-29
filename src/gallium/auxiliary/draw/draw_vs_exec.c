@@ -103,7 +103,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
    const float *trans = draw->viewport.translate;
 
    assert(count <= 4);
-   assert(draw->vertex_shader->state->output_semantic_name[0]
+   assert(draw->vertex_shader->info.output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
    machine->Consts = (float (*)[4]) draw->user.constants;

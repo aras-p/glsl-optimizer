@@ -32,7 +32,7 @@ struct gallivm_ir {
    int num_components;
    int   num_consts;
 
-   //FIXME: this might not be enough for some shaders
+   /* FIXME: this might not be enough for some shaders */
    struct gallivm_interpolate interpolators[32*4];
    int   num_interp;
 };
@@ -46,7 +46,7 @@ struct gallivm_prog {
 
    int   num_consts;
 
-   //FIXME: this might not be enough for some shaders
+   /* FIXME: this might not be enough for some shaders */
    struct gallivm_interpolate interpolators[32*4];
    int   num_interp;
 };
@@ -104,7 +104,7 @@ static INLINE int gallivm_w_swizzle(int swizzle)
 #endif /* MESA_LLVM */
 
 #if defined __cplusplus
-} // extern "C"
+}
 #endif
 
 #endif

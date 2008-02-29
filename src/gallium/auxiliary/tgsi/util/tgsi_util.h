@@ -3,7 +3,7 @@
 
 #if defined __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 void *
 tgsi_align_128bit(
@@ -63,8 +63,8 @@ tgsi_util_set_full_src_register_sign_mode(
    unsigned sign_mode );
 
 #if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+}
+#endif
 
-#endif // !defined TGSI_UTIL_H
+#endif /* TGSI_UTIL_H */
 

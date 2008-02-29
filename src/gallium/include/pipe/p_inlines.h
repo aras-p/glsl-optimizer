@@ -30,6 +30,7 @@
 
 #include "p_context.h"
 #include "p_defines.h"
+#include "p_screen.h"
 #include "p_winsys.h"
 
 
@@ -97,7 +98,7 @@ pipe_buffer_reference(struct pipe_winsys *winsys,
  * \sa pipe_surface_reference
  */
 static INLINE void
-pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
+pipe_texture_reference(struct pipe_texture **ptr,
 		       struct pipe_texture *pt)
 {
    assert(ptr);
@@ -106,11 +107,25 @@ pipe_texture_reference(struct pipe_context *pipe, struct pipe_texture **ptr,
       pt->refcount++;
 
    if (*ptr) {
-      pipe->texture_release(pipe, ptr);
+      struct pipe_screen *screen = (*ptr)->screen;
+      assert(screen);
+      screen->texture_release(screen, ptr);
+
       assert(!*ptr);
    }
 
    *ptr = pt;
+}
+
+
+static INLINE void
+pipe_texture_release(struct pipe_texture **ptr)
+{
+   struct pipe_screen *screen;
+   assert(ptr);
+   screen = (*ptr)->screen;
+   screen->texture_release(screen, ptr);
+   *ptr = NULL;
 }
 
 

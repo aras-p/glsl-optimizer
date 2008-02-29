@@ -219,8 +219,8 @@ static void wide_point( struct draw_stage *stage,
       half_size = wide->half_point_size;
    }
 
-   left_adj = -half_size + 0.25f;
-   right_adj = half_size + 0.25f;
+   left_adj = -half_size; /* + 0.25f;*/
+   right_adj = half_size; /* + 0.25f;*/
 
    pos0[0] += left_adj;
    pos0[1] -= half_size;
@@ -266,7 +266,8 @@ static void wide_first_point( struct draw_stage *stage,
 
    wide->half_point_size = 0.5f * draw->rasterizer->point_size;
 
-   if (draw->rasterizer->point_size != 1.0) {
+   /* XXX we won't know the real size if it's computed by the vertex shader! */
+   if (draw->rasterizer->point_size > draw->wide_point_threshold) {
       stage->point = wide_point;
    }
    else {
@@ -277,8 +278,8 @@ static void wide_first_point( struct draw_stage *stage,
       /* find vertex shader texcoord outputs */
       const struct draw_vertex_shader *vs = draw->vertex_shader;
       uint i, j = 0;
-      for (i = 0; i < vs->state->num_outputs; i++) {
-         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
+      for (i = 0; i < vs->info.num_outputs; i++) {
+         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
             wide->texcoord_slot[j] = i;
             wide->texcoord_mode[j] = draw->rasterizer->sprite_coord_mode[j];
             j++;
@@ -293,8 +294,8 @@ static void wide_first_point( struct draw_stage *stage,
       /* find PSIZ vertex output */
       const struct draw_vertex_shader *vs = draw->vertex_shader;
       uint i;
-      for (i = 0; i < vs->state->num_outputs; i++) {
-         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
+      for (i = 0; i < vs->info.num_outputs; i++) {
+         if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
             wide->psize_slot = i;
             break;
          }

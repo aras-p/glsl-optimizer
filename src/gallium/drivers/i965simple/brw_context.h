@@ -38,6 +38,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
+#include "tgsi/util/tgsi_scan.h"
+
 #include "brw_structs.h"
 #include "brw_winsys.h"
 
@@ -195,31 +197,20 @@ struct brw_state_flags {
 };
 
 
-struct brw_shader_info {
-   int nr_regs[8];		/* TGSI_FILE_* */
-};
-   
-
-
 struct brw_vertex_program {
    struct pipe_shader_state program;
-   struct brw_shader_info info;
+   struct tgsi_shader_info info;
    int id;
 };
-
 
 
 struct brw_fragment_program {
    struct pipe_shader_state program;
-   struct brw_shader_info info;
+   struct tgsi_shader_info info;
    
-   boolean UsesDepth;
-   boolean UsesKill;
-   boolean ComputesDepth;
+   boolean UsesDepth; /* XXX add this to tgsi_shader_info? */
    int id;
 };
-
-
 
 
 struct pipe_setup_linkage {
@@ -502,7 +493,7 @@ struct brw_context
       /* Arrays with buffer objects to copy non-bufferobj arrays into
        * for upload:
        */
-      struct pipe_vertex_buffer *vbo_array[PIPE_ATTRIB_MAX];
+      const struct pipe_vertex_buffer *vbo_array[PIPE_ATTRIB_MAX];
 
       struct brw_vertex_element_state inputs[PIPE_ATTRIB_MAX];
 

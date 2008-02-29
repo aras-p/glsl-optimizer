@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "main/version.h"
 #include "pipe/p_context.h"
+#include "pipe/p_screen.h"
 #include "pipe/p_winsys.h"
 #include "st_context.h"
 #include "st_cb_strings.h"
@@ -45,11 +46,11 @@ static const GLubyte *
 st_get_string(GLcontext * ctx, GLenum name)
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = st->pipe->screen;
 
    switch (name) {
    case GL_VENDOR: {
-      const char *vendor = pipe->get_vendor( pipe );
+      const char *vendor = screen->get_vendor( screen );
       const char *tungsten = "Tungsten Graphics, Inc.";
 
       /* Tungsten developed the state_tracker module (and much of
@@ -68,8 +69,8 @@ st_get_string(GLcontext * ctx, GLenum name)
    case GL_RENDERER:
       snprintf(st->renderer, sizeof(st->renderer), "Gallium %s, %s on %s", 
                ST_VERSION_STRING,
-	       pipe->get_name( pipe ),
-	       pipe->winsys->get_name( pipe->winsys ));
+	       screen->get_name( screen ),
+	       screen->winsys->get_name( screen->winsys ));
 
       return (GLubyte *) st->renderer;
 

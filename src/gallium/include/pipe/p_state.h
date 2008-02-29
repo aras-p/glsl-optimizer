@@ -63,6 +63,7 @@ extern "C" {
 
 
 /* fwd decls */
+struct pipe_screen;
 struct pipe_surface;
 struct pipe_winsys;
 
@@ -160,9 +161,9 @@ struct pipe_constant_buffer
 struct pipe_shader_state
 {
    const struct tgsi_token *tokens;
+   /* XXX these are going away */
    ubyte num_inputs;
    ubyte num_outputs;
-   ubyte input_map[PIPE_MAX_SHADER_INPUTS]; /* XXX this may be temporary */
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
@@ -276,8 +277,7 @@ struct pipe_surface
 
 
 /**
- * Texture. Represents one or several texture images on one or several mipmap
- * levels.
+ * Texture object.
  */
 struct pipe_texture
 { 
@@ -297,6 +297,8 @@ struct pipe_texture
    /* These are also refcounted:
     */
    unsigned refcount;
+
+   struct pipe_screen *screen; /**< screen that this texture belongs to */
 };
 
 

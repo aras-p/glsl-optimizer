@@ -128,14 +128,14 @@ static void flatshade_point( struct draw_stage *stage,
 static void flatshade_init_state( struct draw_stage *stage )
 {
    struct flat_stage *flat = flat_stage(stage);
-   const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
+   const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
    uint i;
 
    /* Find which vertex shader outputs are colors, make a list */
    flat->num_color_attribs = 0;
-   for (i = 0; i < vs->num_outputs; i++) {
-      if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
-          vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+   for (i = 0; i < vs->info.num_outputs; i++) {
+      if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+          vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
          flat->color_attribs[flat->num_color_attribs++] = i;
       }
    }

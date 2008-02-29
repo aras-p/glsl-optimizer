@@ -330,11 +330,13 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    pstip->sampler_unit = transform.maxSampler + 1;
 
+#if 1 /* XXX remove */
    if (transform.wincoordInput < 0) {
       pstip_fs.input_semantic_name[pstip_fs.num_inputs] = TGSI_SEMANTIC_POSITION;
       pstip_fs.input_semantic_index[pstip_fs.num_inputs] = (ubyte)transform.maxInput;
       pstip_fs.num_inputs++;
    }
+#endif
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 }
@@ -348,12 +350,13 @@ pstip_update_texture(struct pstip_stage *pstip)
 {
    static const uint bit31 = 1 << 31;
    struct pipe_context *pipe = pstip->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_surface *surface;
    const uint *stipple = pstip->state.stipple->stipple;
    uint i, j;
    ubyte *data;
 
-   surface = pipe->get_tex_surface(pipe, pstip->texture, 0, 0, 0);
+   surface = screen->get_tex_surface(screen, pstip->texture, 0, 0, 0);
    data = pipe_surface_map(surface);
 
    /*
@@ -389,6 +392,7 @@ static void
 pstip_create_texture(struct pstip_stage *pstip)
 {
    struct pipe_context *pipe = pstip->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture texTemp;
 
    memset(&texTemp, 0, sizeof(texTemp));
@@ -400,7 +404,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.depth[0] = 1;
    texTemp.cpp = 1;
 
-   pstip->texture = pipe->texture_create(pipe, &texTemp);
+   pstip->texture = screen->texture_create(screen, &texTemp);
 
    //pstip_update_texture(pstip);
 }

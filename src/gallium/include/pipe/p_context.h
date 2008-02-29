@@ -36,6 +36,8 @@ extern "C" {
 #endif
 
    
+struct pipe_screen;
+
 struct pipe_state_cache;
 
 /* Opaque driver handles:
@@ -51,25 +53,11 @@ struct pipe_query;
  */
 struct pipe_context {
    struct pipe_winsys *winsys;
+   struct pipe_screen *screen;
 
    void *priv;  /** context private data (for DRI for example) */
 
    void (*destroy)( struct pipe_context * );
-
-   /*
-    * Queries
-    */
-   /** type is one of PIPE_SURFACE, PIPE_TEXTURE, etc. */
-   boolean (*is_format_supported)( struct pipe_context *pipe,
-                                   enum pipe_format format, uint type );
-
-   const char *(*get_name)( struct pipe_context *pipe );
-
-   const char *(*get_vendor)( struct pipe_context *pipe );
-
-   int (*get_param)( struct pipe_context *pipe, int param );
-   float (*get_paramf)( struct pipe_context *pipe, int param );
-
 
    /*
     * Drawing.  
@@ -201,29 +189,16 @@ struct pipe_context {
 		 struct pipe_surface *ps,
 		 unsigned clearValue);
 
-
-   /*
-    * Texture functions
-    */
-   struct pipe_texture * (*texture_create)(struct pipe_context *pipe,
-                                           const struct pipe_texture *templat);
-
-   void (*texture_release)(struct pipe_context *pipe,
-			   struct pipe_texture **pt);
-
    /**
     * Called when texture data is changed.
     * Note: we could pass some hints about which mip levels or cube faces
     * have changed...
+    * XXX this may go away - could pass a 'write' flag to get_tex_surface()
     */
    void (*texture_update)(struct pipe_context *pipe,
                           struct pipe_texture *texture);
 
-   /** Get a surface which is a "view" into a texture */
-   struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
-                                           struct pipe_texture *texture,
-                                           unsigned face, unsigned level,
-                                           unsigned zslice);
+
 
    /* Flush rendering:
     */

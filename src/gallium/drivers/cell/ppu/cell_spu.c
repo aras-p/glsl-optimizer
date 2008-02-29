@@ -97,7 +97,17 @@ static void *cell_thread_function(void *arg)
 void
 cell_start_spus(struct cell_context *cell)
 {
+   static boolean one_time_init = FALSE;
    uint i, j;
+
+
+   if (one_time_init) {
+      fprintf(stderr, "PPU: Multiple rendering contexts not yet supported "
+	      "on Cell.\n");
+      abort();
+   }
+
+   one_time_init = TRUE;
 
    assert(cell->num_spus <= MAX_SPUS);
 

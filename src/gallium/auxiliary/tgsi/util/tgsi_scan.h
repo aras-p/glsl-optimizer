@@ -29,7 +29,8 @@
 #define TGSI_SCAN_H
 
 
-#include "pipe/p_util.h"
+#include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
 #include "pipe/p_shader_tokens.h"
 
 
@@ -38,14 +39,26 @@
  */
 struct tgsi_shader_info
 {
+   uint num_tokens;
+
+   /* XXX eventually remove the corresponding fields from pipe_shader_state: */
+   ubyte num_inputs;
+   ubyte num_outputs;
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+   ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
+   ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
+
    uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
    uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
+   int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
 
    uint immediate_count; /**< number of immediates declared */
 
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
    boolean writes_z;  /**< does fragment shader write Z value? */
+   boolean uses_kill;  /**< KIL or KILP instruction used? */
 };
 
 

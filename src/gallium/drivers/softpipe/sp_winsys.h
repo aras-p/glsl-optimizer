@@ -46,12 +46,18 @@ struct softpipe_winsys {
 
 };
 
+struct pipe_screen;
 struct pipe_winsys;
 struct pipe_context;
 
 
-struct pipe_context *softpipe_create( struct pipe_winsys *,
+struct pipe_context *softpipe_create( struct pipe_screen *,
+                                      struct pipe_winsys *,
 				      struct softpipe_winsys * );
+
+
+struct pipe_screen *
+softpipe_create_screen(struct pipe_winsys *);
 
 
 #endif /* SP_WINSYS_H */

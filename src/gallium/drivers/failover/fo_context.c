@@ -117,12 +117,15 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->hw = hw;
    failover->sw = sw;
    failover->pipe.winsys = hw->winsys;
+   failover->pipe.screen = hw->screen;
    failover->pipe.destroy = failover_destroy;
+#if 0
    failover->pipe.is_format_supported = hw->is_format_supported;
    failover->pipe.get_name = hw->get_name;
    failover->pipe.get_vendor = hw->get_vendor;
    failover->pipe.get_param = hw->get_param;
    failover->pipe.get_paramf = hw->get_paramf;
+#endif
 
    failover->pipe.draw_arrays = failover_draw_arrays;
    failover->pipe.draw_elements = failover_draw_elements;
@@ -140,10 +143,12 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->pipe.surface_copy = hw->surface_copy;
    failover->pipe.surface_fill = hw->surface_fill;
 
+#if 0
    failover->pipe.texture_create = hw->texture_create;
    failover->pipe.texture_release = hw->texture_release;
-   failover->pipe.texture_update = hw->texture_update;
    failover->pipe.get_tex_surface = hw->get_tex_surface;
+#endif
+   failover->pipe.texture_update = hw->texture_update;
 
    failover->pipe.flush = hw->flush;
 

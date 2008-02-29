@@ -1268,7 +1268,7 @@ emit_store(
       break;
 
    case TGSI_SAT_ZERO_ONE:
-//      assert( 0 );
+      /* assert( 0 ); */
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
@@ -2268,7 +2268,7 @@ tgsi_emit_sse2(
 	    &parse.FullToken.FullInstruction );
 
 	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d\n", 
+	    debug_printf("failed to translate tgsi opcode %d to SSE\n", 
 			 parse.FullToken.FullInstruction.Instruction.Opcode );
 	 }
          break;
@@ -2276,7 +2276,7 @@ tgsi_emit_sse2(
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
 	 ok = 0;
-	 debug_printf("failed to emit immediate value\n");
+	 debug_printf("failed to emit immediate value to SSE\n");
 	 break;
 
       default:
@@ -2358,7 +2358,7 @@ tgsi_emit_sse2_fs(
             &parse.FullToken.FullInstruction );
 
 	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d\n", 
+	    debug_printf("failed to translate tgsi opcode %d to SSE\n", 
 			 parse.FullToken.FullInstruction.Instruction.Opcode );
 	 }
          break;
@@ -2366,7 +2366,7 @@ tgsi_emit_sse2_fs(
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          /* XXX implement this */
 	 ok = 0;
-	 debug_printf("failed to emit immediate value\n");
+	 debug_printf("failed to emit immediate value to SSE\n");
          break;
 
       default:

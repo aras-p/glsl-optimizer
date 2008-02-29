@@ -60,8 +60,8 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
                sp->depth_stencil->depth.enabled &&
                sp->framebuffer.zsbuf &&
                !sp->depth_stencil->alpha.enabled &&
-               !sp->fs->uses_kill &&
-               !sp->fs->writes_z;
+               !sp->fs->info.uses_kill &&
+               !sp->fs->info.writes_z;
 
    /* build up the pipeline in reverse order... */
 

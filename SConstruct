@@ -1,13 +1,5 @@
 #######################################################################
 # Top-level SConstruct
-
-import os
-import os.path
-import sys
-
-
-#######################################################################
-# Configuration options
 #
 # For example, invoke scons as 
 #
@@ -28,19 +20,21 @@ import sys
 # to get the full list of options. See scons manpage for more info.
 #  
 
-platform_map = {
-	'linux2': 'linux',
-	'win32': 'winddk',
-}
+import os
+import os.path
+import sys
 
-default_platform = platform_map.get(sys.platform, sys.platform)
+import common
 
-if default_platform in ('linux', 'freebsd', 'darwin'):
+#######################################################################
+# Configuration options
+
+if common.default_platform in ('linux', 'freebsd', 'darwin'):
 	default_statetrackers = 'mesa'
 	default_drivers = 'softpipe,failover,i915simple,i965simple'
 	default_winsys = 'xlib'
 	default_dri = 'yes'
-elif default_platform in ('winddk',):
+elif common.default_platform in ('winddk',):
 	default_statetrackers = 'none'
 	default_drivers = 'softpipe,i915simple'
 	default_winsys = 'none'
@@ -50,36 +44,13 @@ else:
 	default_winsys = 'all'
 	default_dri = 'no'
 
-
-# TODO: auto-detect defaults
-opts = Options('config.py')
-opts.Add(BoolOption('debug', 'build debug version', False))
-opts.Add(EnumOption('machine', 'use machine-specific assembly code', 'x86',
-                     allowed_values=('generic', 'x86', 'x86-64')))
-opts.Add(EnumOption('platform', 'target platform', default_platform,
-                     allowed_values=('linux', 'cell', 'winddk')))
+opts = common.Options()
 opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetrackers,
-                     [
-                     	'mesa', 
-                     ],
-                     ))
+                     ['mesa']))
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
-                     [
-                     	'softpipe', 
-                     	'failover', 
-                     	'i915simple', 
-                     	'i965simple', 
-                     	'cell',
-                     ],
-                     ))
+                     ['softpipe', 'failover', 'i915simple', 'i965simple', 'cell']))
 opts.Add(ListOption('winsys', 'winsys drivers to build', default_winsys,
-                     [
-                     	'xlib', 
-                     	'intel',
-                     ],
-                     ))
-opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
-opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
+                     ['xlib', 'intel'])) 
 
 env = Environment(
 	options = opts, 
@@ -151,17 +122,17 @@ if msvc:
 		cflags = [
 			'/Od', # disable optimizations
 			'/Oy-', # disable frame pointer omission
-			'/Zi', # enable enable debugging information
 		]
 	else:
 		cflags = [
 			'/Ox', # maximum optimizations
 			'/Os', # favor code space
-			'/Zi', # enable enable debugging information
 		]
 	env.Append(CFLAGS = cflags)
 	env.Append(CXXFLAGS = cflags)
-
+	# Put debugging information in a separate .pdb file for each object file as
+	# descrived in the scons manpage
+	env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
 
 # Defines
 if debug:
@@ -249,64 +220,20 @@ if platform not in ('winddk',):
 		'Xfixes',
 	])
 
+# Convenience library support
+common.createConvenienceLibBuilder(env)
+
 Export('env')
 
 
 #######################################################################
-# Convenience Library Builder
-# based on the stock StaticLibrary and SharedLibrary builders
-
-def createConvenienceLibBuilder(env):
-    """This is a utility function that creates the ConvenienceLibrary
-    Builder in an Environment if it is not there already.
-
-    If it is already there, we return the existing one.
-    """
-
-    try:
-        convenience_lib = env['BUILDERS']['ConvenienceLibrary']
-    except KeyError:
-        action_list = [ Action("$ARCOM", "$ARCOMSTR") ]
-        if env.Detect('ranlib'):
-            ranlib_action = Action("$RANLIBCOM", "$RANLIBCOMSTR")
-            action_list.append(ranlib_action)
-
-        convenience_lib = Builder(action = action_list,
-                                  emitter = '$LIBEMITTER',
-                                  prefix = '$LIBPREFIX',
-                                  suffix = '$LIBSUFFIX',
-                                  src_suffix = '$SHOBJSUFFIX',
-                                  src_builder = 'SharedObject')
-        env['BUILDERS']['ConvenienceLibrary'] = convenience_lib
-        env['BUILDERS']['Library'] = convenience_lib
-
-    return convenience_lib
-
-createConvenienceLibBuilder(env)
-
-
-#######################################################################
 # Invoke SConscripts
-
-# Put build output in a separate dir, which depends on the current configuration
-# See also http://www.scons.org/wiki/AdvancedBuildExample
-build_topdir = 'build'
-build_subdir = platform
-if dri:
-	build_subdir += "-dri"
-if llvm:
-	build_subdir += "-llvm"
-if x86:
-	build_subdir += "-x86"
-if debug:
-	build_subdir += "-debug"
-build_dir = os.path.join(build_topdir, build_subdir)
 
 # TODO: Build several variants at the same time?
 # http://www.scons.org/wiki/SimultaneousVariantBuilds
 
 SConscript(
 	'src/SConscript',
-	build_dir = build_dir,
+	build_dir = common.make_build_dir(env),
 	duplicate = 0 # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
 )

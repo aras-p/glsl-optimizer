@@ -40,6 +40,7 @@
 
 #include "pipe/p_util.h"
 #include "i915simple/i915_winsys.h"
+#include "i915simple/i915_screen.h"
 
 
 struct intel_i915_winsys {
@@ -135,6 +136,7 @@ intel_create_i915simple( struct intel_context *intel,
                          struct pipe_winsys *winsys )
 {
    struct intel_i915_winsys *iws = CALLOC_STRUCT( intel_i915_winsys );
+   struct pipe_screen *screen;
    
    /* Fill in this struct with callbacks that i915simple will need to
     * communicate with the window system, buffer manager, etc. 
@@ -146,9 +148,11 @@ intel_create_i915simple( struct intel_context *intel,
    iws->winsys.batch_finish = intel_i915_batch_finish;
    iws->intel = intel;
 
+   screen = i915_create_screen(winsys, intel->intelScreen->deviceID);
+
    /* Create the i915simple context:
     */
-   return i915_create( winsys,
-		       &iws->winsys,
-		       intel->intelScreen->deviceID );
+   return i915_create_context( screen,
+                               winsys,
+                               &iws->winsys );
 }

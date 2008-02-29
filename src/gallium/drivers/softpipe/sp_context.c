@@ -48,29 +48,6 @@
 
 
 /**
- * Query format support for creating a texture, drawing surface, etc.
- * \param format  the format to test
- * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
- */
-static boolean
-softpipe_is_format_supported( struct pipe_context *pipe,
-                              enum pipe_format format, uint type )
-{
-   switch (type) {
-   case PIPE_TEXTURE:
-      /* softpipe supports all texture formats */
-      return TRUE;
-   case PIPE_SURFACE:
-      /* softpipe supports all (off-screen) surface formats */
-      return TRUE;
-   default:
-      assert(0);
-      return FALSE;
-   }
-}
-
-
-/**
  * Map any drawing surfaces which aren't already mapped
  */
 void
@@ -143,76 +120,10 @@ static void softpipe_destroy( struct pipe_context *pipe )
 }
 
 
-static const char *softpipe_get_name( struct pipe_context *pipe )
-{
-   return "softpipe";
-}
-
-static const char *softpipe_get_vendor( struct pipe_context *pipe )
-{
-   return "Tungsten Graphics, Inc.";
-}
-
-static int softpipe_get_param(struct pipe_context *pipe, int param)
-{
-   switch (param) {
-   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return 8;
-   case PIPE_CAP_NPOT_TEXTURES:
-      return 1;
-   case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 1;
-   case PIPE_CAP_GLSL:
-      return 1;
-   case PIPE_CAP_S3TC:
-      return 0;
-   case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 0;
-   case PIPE_CAP_POINT_SPRITE:
-      return 1;
-   case PIPE_CAP_MAX_RENDER_TARGETS:
-      return 1;
-   case PIPE_CAP_OCCLUSION_QUERY:
-      return 1;
-   case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 1;
-   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-      return 12; /* max 2Kx2K */
-   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-      return 8;  /* max 128x128x128 */
-   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-      return 12; /* max 2Kx2K */
-   default:
-      return 0;
-   }
-}
-
-static float softpipe_get_paramf(struct pipe_context *pipe, int param)
-{
-   switch (param) {
-   case PIPE_CAP_MAX_LINE_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_LINE_WIDTH_AA:
-      return 255.0; /* arbitrary */
-
-   case PIPE_CAP_MAX_POINT_WIDTH:
-      /* fall-through */
-   case PIPE_CAP_MAX_POINT_WIDTH_AA:
-      return 255.0; /* arbitrary */
-
-   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 0.0;
-
-   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-      return 16.0; /* arbitrary */
-
-   default:
-      return 0;
-   }
-}
-
-struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
-				      struct softpipe_winsys *softpipe_winsys )
+struct pipe_context *
+softpipe_create( struct pipe_screen *screen,
+                 struct pipe_winsys *pipe_winsys,
+                 struct softpipe_winsys *softpipe_winsys )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
@@ -226,14 +137,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->dump_fs = GETENV( "GALLIUM_DUMP_FS" ) != NULL;
 
    softpipe->pipe.winsys = pipe_winsys;
+   softpipe->pipe.screen = screen;
    softpipe->pipe.destroy = softpipe_destroy;
-
-   /* queries */
-   softpipe->pipe.is_format_supported = softpipe_is_format_supported;
-   softpipe->pipe.get_name = softpipe_get_name;
-   softpipe->pipe.get_vendor = softpipe_get_vendor;
-   softpipe->pipe.get_param = softpipe_get_param;
-   softpipe->pipe.get_paramf = softpipe_get_paramf;
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;
@@ -279,12 +184,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.flush = softpipe_flush;
 
    softpipe_init_query_funcs( softpipe );
-
-   /* textures */
-   softpipe->pipe.texture_create = softpipe_texture_create;
-   softpipe->pipe.texture_release = softpipe_texture_release;
-   softpipe->pipe.texture_update = softpipe_texture_update;
-   softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
+   softpipe_init_texture_funcs( softpipe );
 
    /*
     * Alloc caches for accessing drawing surfaces and textures.
@@ -336,9 +236,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    /* Do polygon stipple w/ texture map + frag prog? */
    draw_install_pstipple_stage(softpipe->draw, &softpipe->pipe);
 #endif
-
-   /* sp_prim_setup can do wide points (don't convert to quads) */
-   draw_convert_wide_points(softpipe->draw, FALSE);
 
    sp_init_surface_functions(softpipe);
 

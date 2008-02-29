@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,48 +25,17 @@
  * 
  **************************************************************************/
 
-#include "brw_context.h"
-#include "brw_reg.h"
+
+#ifndef CELL_SCREEN_H
+#define CELL_SCREEN_H
 
 
-static const char *brw_get_vendor( struct pipe_context *pipe )
-{
-   return "Tungsten Graphics, Inc.";
-}
+struct pipe_screen;
+struct pipe_winsys;
 
 
-static const char *brw_get_name( struct pipe_context *pipe )
-{
-   static char buffer[128];
-   const char *chipset;
-
-   switch (brw_context(pipe)->pci_id) {
-   case PCI_CHIP_I965_Q:
-      chipset = "Intel(R) 965Q";
-      break;
-   case PCI_CHIP_I965_G:
-   case PCI_CHIP_I965_G_1:
-      chipset = "Intel(R) 965G";
-      break;
-   case PCI_CHIP_I965_GM:
-      chipset = "Intel(R) 965GM";
-      break;
-   case PCI_CHIP_I965_GME:
-      chipset = "Intel(R) 965GME/GLE";
-      break;
-   default:
-      chipset = "unknown";
-      break;
-   }
-
-   sprintf(buffer, "i965 (chipset: %s)", chipset);
-   return buffer;
-}
+extern struct pipe_screen *
+cell_create_screen(struct pipe_winsys *winsys);
 
 
-void
-brw_init_string_functions(struct brw_context *brw)
-{
-   brw->pipe.get_name = brw_get_name;
-   brw->pipe.get_vendor = brw_get_vendor;
-}
+#endif /* CELL_SCREEN_H */

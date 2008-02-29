@@ -456,6 +456,7 @@ make_texture(struct st_context *st,
 {
    GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    const struct gl_texture_format *mformat;
    struct pipe_texture *pt;
    enum pipe_format pipeFormat;
@@ -493,7 +494,7 @@ make_texture(struct st_context *st,
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
-      surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+      surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
 
       /* map texture surface */
       dest = pipe_surface_map(surface);
@@ -649,7 +650,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* XXX if DrawPixels image is larger than max texture size, break
     * it up into chunks.
     */
-   maxSize = 1 << (pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+   maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
    assert(width <= maxSize);
    assert(height <= maxSize);
 
@@ -973,7 +974,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                             pt, stvp, stfp, color, GL_FALSE);
-	 st->pipe->texture_release(st->pipe, &pt);
+         pipe_texture_reference(&pt, NULL);
       }
    }
    else {
@@ -993,6 +994,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
                     const GLubyte *bitmap)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_surface *surface;
    uint format = 0, cpp, comp;
    ubyte *dest;
@@ -1000,12 +1002,12 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    int row, col;
 
    /* find a texture format we know */
-   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
+   if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_U_I8;
       cpp = 1;
       comp = 0;
    }
-   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
+   else if (screen->is_format_supported( screen, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
       format = PIPE_FORMAT_A8R8G8B8_UNORM;
       cpp = 4;
       comp = 3; /* alpha channel */ /*XXX little-endian dependency */
@@ -1030,7 +1032,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       printf("st_Bitmap (sourcing from PBO not implemented yet)\n");
    }
 
-   surface = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
 
    /* map texture surface */
    dest = pipe_surface_map(surface);
@@ -1124,7 +1126,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                          pt, stvp, stfp,
                          ctx->Current.RasterColor, GL_FALSE);
 
-      st->pipe->texture_release(st->pipe, &pt);
+      pipe_texture_reference(&pt, NULL);
    }
 }
 
@@ -1206,6 +1208,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *rbRead;
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
@@ -1213,7 +1216,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct pipe_surface *psTex;
    struct pipe_texture *pt;
    GLfloat *color;
-   uint format;
+   enum pipe_format srcFormat, texFormat;
 
    /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
@@ -1233,6 +1236,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
    }
    else {
+      assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
       stfp = make_fragment_shader_z(ctx->st);
@@ -1240,14 +1244,43 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    psRead = rbRead->surface;
-   format = psRead->format;
+   srcFormat = psRead->format;
 
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
-			  1, 0);
+   if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE)) {
+      texFormat = srcFormat;
+   }
+   else {
+      /* srcFormat can't be used as a texture format */
+      if (type == GL_DEPTH) {
+         static const enum pipe_format zFormats[] = {
+            PIPE_FORMAT_Z16_UNORM,
+            PIPE_FORMAT_Z32_UNORM,
+            PIPE_FORMAT_S8Z24_UNORM,
+            PIPE_FORMAT_Z24S8_UNORM
+         };
+         uint i;
+         texFormat = 0;
+         for (i = 0; i < Elements(zFormats); i++) {
+            if (screen->is_format_supported(screen, zFormats[i],
+                                            PIPE_TEXTURE)) {
+               texFormat = zFormats[i];
+               break;
+            }
+         }
+         assert(texFormat); /* XXX no depth texture formats??? */
+      }
+      else {
+         /* todo */
+         assert(0);
+      }
+   }
+
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, texFormat, 0,
+                          width, height, 1, 0);
    if (!pt)
       return;
 
-   psTex = pipe->get_tex_surface(pipe, pt, 0, 0, 0);
+   psTex = screen->get_tex_surface(screen, pt, 0, 0, 0);
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       srcy = ctx->DrawBuffer->Height - srcy - height;
@@ -1257,7 +1290,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
     * front/back color buffers as surfaces (they're XImages and Pixmaps).
     * So, this var tells us if we can use surface_copy here...
     */
-   if (st->haveFramebufferSurfaces) {
+   if (st->haveFramebufferSurfaces && srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
       pipe->surface_copy(pipe,
                          FALSE,
@@ -1282,7 +1315,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
                       pt, stvp, stfp, color, GL_TRUE);
 
    pipe_surface_reference(&psTex, NULL);
-   st->pipe->texture_release(st->pipe, &pt);
+   pipe_texture_reference(&pt, NULL);
 }
 
 

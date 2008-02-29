@@ -29,6 +29,7 @@ SOURCES = \
 	cell_state_emit.c \
 	cell_state_shader.c \
 	cell_pipe_state.c \
+	cell_screen.c \
 	cell_state_vertex.c \
 	cell_spu.c \
 	cell_surface.c \

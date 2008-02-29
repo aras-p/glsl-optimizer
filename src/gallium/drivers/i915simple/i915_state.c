@@ -429,6 +429,8 @@ i915_create_fs_state(struct pipe_context *pipe,
 
    ifs->state = *templ;
 
+   tgsi_scan_shader(templ->tokens, &ifs->info);
+
    /* The shader's compiled to i915 instructions here */
    i915_translate_fragment_program(i915, ifs);
 
@@ -530,8 +532,7 @@ static void i915_set_sampler_texture(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   pipe_texture_reference(pipe,
-                          (struct pipe_texture **) &i915->texture[sampler],
+   pipe_texture_reference((struct pipe_texture **) &i915->texture[sampler],
                           texture);
 
    i915->dirty |= I915_NEW_TEXTURE;

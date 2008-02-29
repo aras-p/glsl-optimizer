@@ -43,7 +43,7 @@
  * - the fenced buffer manager, which will delay buffer destruction until the 
  * the moment the card finishing processing it. 
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.com>
+ * \author JosÃ© Fonseca <jrfonseca@tungstengraphics.com>
  */
 
 #ifndef PB_BUFMGR_H_
@@ -51,6 +51,11 @@
 
 
 #include <stddef.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 struct pb_desc;
@@ -122,5 +127,9 @@ struct pb_manager *
 fenced_bufmgr_create(struct pb_manager *provider,
                      struct pipe_winsys *winsys);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*PB_BUFMGR_H_*/

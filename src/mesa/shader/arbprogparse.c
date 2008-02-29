@@ -1576,8 +1576,9 @@ parse_attrib_binding(GLcontext * ctx, const GLubyte ** inst,
    if (err) {
       program_error(ctx, Program->Position, "Bad attribute binding");
    }
-
-   Program->Base.InputsRead |= (1 << *inputReg);
+   else {
+      Program->Base.InputsRead |= (1 << *inputReg);
+   }
 
    return err;
 }

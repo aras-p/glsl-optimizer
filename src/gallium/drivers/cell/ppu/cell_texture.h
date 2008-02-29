@@ -68,4 +68,8 @@ extern void
 cell_init_texture_functions(struct cell_context *cell);
 
 
+extern void
+cell_init_screen_texture_funcs(struct pipe_screen *screen);
+
+
 #endif /* CELL_TEXTURE_H */

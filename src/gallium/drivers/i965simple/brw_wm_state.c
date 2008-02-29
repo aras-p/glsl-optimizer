@@ -117,11 +117,11 @@ static void upload_wm_unit(struct brw_context *brw )
       if (fp->UsesDepth)
 	 wm.wm5.program_uses_depth = 1; /* as far as we can tell */
 
-      if (fp->ComputesDepth)
+      if (fp->info.writes_z)
 	 wm.wm5.program_computes_depth = 1;
 
       /* BRW_NEW_ALPHA_TEST */
-      if (fp->UsesKill ||
+      if (fp->info.uses_kill ||
 	  brw->attribs.DepthStencil->alpha.enabled)
 	 wm.wm5.program_uses_killpixel = 1;
 

@@ -37,6 +37,7 @@
 #include "tgsi/util/tgsi_parse.h"
 #include "tgsi/util/tgsi_build.h"
 
+#include "pipe/p_util.h"
 
 
 
@@ -46,10 +47,12 @@ void
 tgsi_scan_shader(const struct tgsi_token *tokens,
                  struct tgsi_shader_info *info)
 {
-   uint procType;
+   uint procType, i;
    struct tgsi_parse_context parse;
 
    memset(info, 0, sizeof(*info));
+   for (i = 0; i < TGSI_FILE_COUNT; i++)
+      info->file_max[i] = -1;
 
    /**
     ** Setup to begin parsing input shader
@@ -68,6 +71,8 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
     ** Loop over incoming program tokens/instructions
     */
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
+
+      info->num_tokens++;
 
       tgsi_parse_token( &parse );
 
@@ -91,8 +96,27 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
             for (i = fulldecl->u.DeclarationRange.First;
                  i <= fulldecl->u.DeclarationRange.Last;
                  i++) {
+
+               /* only first 32 regs will appear in this bitfield */
                info->file_mask[file] |= (1 << i);
                info->file_count[file]++;
+               info->file_max[file] = MAX2(info->file_max[file], (int)i);
+
+               if (file == TGSI_FILE_INPUT) {
+                  info->input_semantic_name[info->num_inputs]
+                     = (ubyte)fulldecl->Semantic.SemanticName;
+                  info->input_semantic_index[info->num_inputs]
+                     = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->num_inputs++;
+               }
+
+               if (file == TGSI_FILE_OUTPUT) {
+                  info->output_semantic_name[info->num_outputs]
+                     = (ubyte)fulldecl->Semantic.SemanticName;
+                  info->output_semantic_index[info->num_outputs]
+                     = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->num_outputs++;
+               }
 
                /* special case */
                if (procType == TGSI_PROCESSOR_FRAGMENT &&
@@ -112,6 +136,9 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          assert( 0 );
       }
    }
+
+   info->uses_kill = (info->opcode_count[TGSI_OPCODE_KIL] ||
+                      info->opcode_count[TGSI_OPCODE_KILP]);
 
    tgsi_parse_free (&parse);
 }

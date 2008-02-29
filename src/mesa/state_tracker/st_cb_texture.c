@@ -144,12 +144,11 @@ st_NewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
 
 static void 
 st_DeleteTextureObject(GLcontext *ctx,
-			 struct gl_texture_object *texObj)
+                       struct gl_texture_object *texObj)
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
-
    if (stObj->pt)
-      ctx->st->pipe->texture_release(ctx->st->pipe, &stObj->pt);
+      pipe_texture_release(&stObj->pt);
 
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -163,7 +162,7 @@ st_FreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
    DBG("%s\n", __FUNCTION__);
 
    if (stImage->pt) {
-      ctx->st->pipe->texture_release(ctx->st->pipe, &stImage->pt);
+      pipe_texture_release(&stImage->pt);
    }
 
    if (texImage->Data) {
@@ -537,7 +536,7 @@ st_TexImage(GLcontext * ctx,
     * Release any old malloced memory.
     */
    if (stImage->pt) {
-      ctx->st->pipe->texture_release(ctx->st->pipe, &stImage->pt);
+      pipe_texture_release(&stImage->pt);
       assert(!texImage->Data);
    }
    else if (texImage->Data) {
@@ -556,7 +555,7 @@ st_TexImage(GLcontext * ctx,
                                   stImage->face, stImage->level)) {
 
       DBG("release it\n");
-      ctx->st->pipe->texture_release(ctx->st->pipe, &stObj->pt);
+      pipe_texture_release(&stObj->pt);
       assert(!stObj->pt);
    }
 
@@ -573,7 +572,7 @@ st_TexImage(GLcontext * ctx,
        st_texture_match_image(stObj->pt, &stImage->base,
                                  stImage->face, stImage->level)) {
 
-      pipe_texture_reference(ctx->st->pipe, &stImage->pt, stObj->pt);
+      pipe_texture_reference(&stImage->pt, stObj->pt);
       assert(stImage->pt);
    }
 
@@ -1025,6 +1024,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
                           GLsizei width, GLsizei height)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    const uint face = texture_face(target);
    struct pipe_texture *pt = stImage->pt;
    struct pipe_surface *src_surf, *dest_surf;
@@ -1042,8 +1042,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    src_surf = strb->surface;
 
-   dest_surf = pipe->get_tex_surface(pipe, pt,
-                                    face, level, destZ);
+   dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ);
 
    /* buffer for one row */
    data = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
@@ -1096,6 +1095,7 @@ do_copy_texsubimage(GLcontext *ctx,
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb;
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_surface *dest_surface;
    uint dest_format, src_format;
    uint do_flip = FALSE;
@@ -1126,8 +1126,8 @@ do_copy_texsubimage(GLcontext *ctx,
    src_format = strb->surface->format;
    dest_format = stImage->pt->format;
 
-   dest_surface = pipe->get_tex_surface(pipe, stImage->pt, stImage->face,
-					stImage->level, destZ);
+   dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
+                                          stImage->level, destZ);
 
    if (src_format == dest_format &&
        ctx->_ImageTransferState == 0x0 &&
@@ -1352,7 +1352,7 @@ copy_image_data_to_texture(struct st_context *st,
                             stImage->face
                             );
 
-      st->pipe->texture_release(st->pipe, &stImage->pt);
+      pipe_texture_release(&stImage->pt);
    }
    else {
       assert(stImage->base.Data != NULL);
@@ -1371,7 +1371,7 @@ copy_image_data_to_texture(struct st_context *st,
       stImage->base.Data = NULL;
    }
 
-   pipe_texture_reference(st->pipe, &stImage->pt, stObj->pt);
+   pipe_texture_reference(&stImage->pt, stObj->pt);
 }
 
 
@@ -1408,7 +1408,7 @@ st_finalize_texture(GLcontext *ctx,
     */
    if (firstImage->base.Border) {
       if (stObj->pt) {
-         ctx->st->pipe->texture_release(ctx->st->pipe, &stObj->pt);
+         pipe_texture_release(&stObj->pt);
       }
       return GL_FALSE;
    }
@@ -1424,9 +1424,9 @@ st_finalize_texture(GLcontext *ctx,
        firstImage->pt->last_level >= stObj->lastLevel) {
 
       if (stObj->pt)
-         ctx->st->pipe->texture_release(ctx->st->pipe, &stObj->pt);
+         pipe_texture_release(&stObj->pt);
 
-      pipe_texture_reference(ctx->st->pipe, &stObj->pt, firstImage->pt);
+      pipe_texture_reference(&stObj->pt, firstImage->pt);
    }
 
    if (firstImage->base.IsCompressed) {
@@ -1450,7 +1450,7 @@ st_finalize_texture(GLcontext *ctx,
 	stObj->pt->depth[0] != firstImage->base.Depth ||
 	stObj->pt->cpp != cpp ||
 	stObj->pt->compressed != firstImage->base.IsCompressed)) {
-      ctx->st->pipe->texture_release(ctx->st->pipe, &stObj->pt);
+      pipe_texture_release(&stObj->pt);
    }
 
 

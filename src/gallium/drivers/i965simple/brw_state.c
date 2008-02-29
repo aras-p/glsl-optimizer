@@ -175,8 +175,12 @@ static void * brw_create_fs_state(struct pipe_context *pipe,
    brw_fp->program = *shader;
    brw_fp->id = brw_context(pipe)->program_id++;
 
+   tgsi_scan_shader(shader->tokens, &brw_fp->info);
+
+#if 0
    brw_shader_info(shader->tokens,
-		   &brw_fp->info);
+		   &brw_fp->info2);
+#endif
 
    tgsi_dump(shader->tokens, 0);
 
@@ -211,9 +215,13 @@ static void *brw_create_vs_state(struct pipe_context *pipe,
     */
    brw_vp->program = *shader;
    brw_vp->id = brw_context(pipe)->program_id++;
-   brw_shader_info(shader->tokens,
-		   &brw_vp->info);
 
+   tgsi_scan_shader(shader->tokens, &brw_vp->info);
+
+#if 0
+   brw_shader_info(shader->tokens,
+		   &brw_vp->info2);
+#endif
    tgsi_dump(shader->tokens, 0);
 
    return (void *)brw_vp;
@@ -328,8 +336,7 @@ static void brw_set_sampler_texture(struct pipe_context *pipe,
 {
    struct brw_context *brw = brw_context(pipe);
 
-   pipe_texture_reference(pipe,
-                          (struct pipe_texture **) &brw->attribs.Texture[unit],
+   pipe_texture_reference((struct pipe_texture **) &brw->attribs.Texture[unit],
                           texture);
 
    brw->state.dirty.brw |= BRW_NEW_TEXTURE;

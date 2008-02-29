@@ -6,8 +6,9 @@
 #include "tgsi/util/tgsi_parse.h"
 
 
-
-
+/**
+ * XXX this obsolete new and no longer compiled.
+ */
 void brw_shader_info(const struct tgsi_token *tokens,
 		     struct brw_shader_info *info )
 {

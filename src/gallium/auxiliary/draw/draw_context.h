@@ -90,9 +90,9 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );
 
-void draw_convert_wide_points(struct draw_context *draw, boolean enable);
+void draw_wide_point_threshold(struct draw_context *draw, float threshold);
 
-void draw_convert_wide_lines(struct draw_context *draw, boolean enable);
+void draw_wide_line_threshold(struct draw_context *draw, float threshold);
 
 boolean draw_use_sse(struct draw_context *draw);
 
@@ -109,6 +109,10 @@ draw_install_pstipple_stage(struct draw_context *draw, struct pipe_context *pipe
 int
 draw_find_vs_output(struct draw_context *draw,
                     uint semantic_name, uint semantic_index);
+
+uint
+draw_num_vs_outputs(struct draw_context *draw);
+
 
 
 /*

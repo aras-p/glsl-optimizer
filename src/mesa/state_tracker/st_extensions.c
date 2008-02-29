@@ -32,6 +32,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_screen.h"
 
 #include "st_context.h"
 #include "st_extensions.h"
@@ -64,19 +65,19 @@ static int clamp(int a, int min, int max)
  */
 void st_init_limits(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = st->pipe->screen;
    struct gl_constants *c = &st->ctx->Const;
 
    c->MaxTextureLevels
-      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
+      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
             MAX_TEXTURE_LEVELS);
 
    c->Max3DTextureLevels
-      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_3D_LEVELS),
+      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_3D_LEVELS),
             MAX_3D_TEXTURE_LEVELS);
 
    c->MaxCubeTextureLevels
-      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS),
+      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS),
             MAX_CUBE_TEXTURE_LEVELS);
 
    c->MaxTextureRectSize
@@ -84,31 +85,31 @@ void st_init_limits(struct st_context *st)
 
    c->MaxTextureImageUnits
       = c->MaxTextureCoordUnits
-      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
+      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
             MAX_TEXTURE_IMAGE_UNITS);
 
    c->MaxDrawBuffers
-      = clamp(pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS),
+      = clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
 
    c->MaxLineWidth
-      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_LINE_WIDTH));
+      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH));
    c->MaxLineWidthAA
-      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_LINE_WIDTH_AA));
+      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH_AA));
 
    c->MaxPointSize
-      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_POINT_WIDTH));
+      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
    c->MaxPointSizeAA
-      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_POINT_WIDTH_AA));
+      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
 
    c->MaxTextureMaxAnisotropy
-      = max(2.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
+      = max(2.0, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
 
    c->MaxTextureLodBias
-      = pipe->get_paramf(pipe, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);
+      = screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);
 
    st->bitmap_texcoord_bias
-      = pipe->get_paramf(pipe, PIPE_CAP_BITMAP_TEXCOORD_BIAS);
+      = screen->get_paramf(screen, PIPE_CAP_BITMAP_TEXCOORD_BIAS);
 }
 
 
@@ -117,7 +118,7 @@ void st_init_limits(struct st_context *st)
  */
 void st_init_extensions(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = st->pipe->screen;
    GLcontext *ctx = st->ctx;
 
    /*
@@ -163,11 +164,11 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that depend on the driver/hardware:
     */
-   if (pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS) > 0) {
+   if (screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS) > 0) {
       ctx->Extensions.ARB_draw_buffers = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_GLSL)) {
+   if (screen->get_param(screen, PIPE_CAP_GLSL)) {
       ctx->Extensions.ARB_fragment_shader = GL_TRUE;
       ctx->Extensions.ARB_vertex_shader = GL_TRUE;
       ctx->Extensions.ARB_shader_objects = GL_TRUE;
@@ -175,37 +176,37 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_shading_language_120 = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_NPOT_TEXTURES)) {
+   if (screen->get_param(screen, PIPE_CAP_NPOT_TEXTURES)) {
       ctx->Extensions.ARB_texture_non_power_of_two = GL_TRUE;
       ctx->Extensions.NV_texture_rectangle = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS) > 1) {
+   if (screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS) > 1) {
       ctx->Extensions.ARB_multitexture = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_TWO_SIDED_STENCIL)) {
+   if (screen->get_param(screen, PIPE_CAP_TWO_SIDED_STENCIL)) {
       ctx->Extensions.ATI_separate_stencil = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_S3TC)) {
+   if (screen->get_param(screen, PIPE_CAP_S3TC)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_ANISOTROPIC_FILTER)) {
+   if (screen->get_param(screen, PIPE_CAP_ANISOTROPIC_FILTER)) {
       ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_POINT_SPRITE)) {
+   if (screen->get_param(screen, PIPE_CAP_POINT_SPRITE)) {
       ctx->Extensions.ARB_point_sprite = GL_TRUE;
       ctx->Extensions.NV_point_sprite = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_OCCLUSION_QUERY)) {
+   if (screen->get_param(screen, PIPE_CAP_OCCLUSION_QUERY)) {
       ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_TEXTURE_SHADOW_MAP)) {
+   if (screen->get_param(screen, PIPE_CAP_TEXTURE_SHADOW_MAP)) {
       ctx->Extensions.ARB_depth_texture = GL_TRUE;
       ctx->Extensions.ARB_shadow = GL_TRUE;
       ctx->Extensions.EXT_shadow_funcs = GL_TRUE;

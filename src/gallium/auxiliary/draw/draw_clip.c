@@ -409,13 +409,13 @@ clip_init_state( struct draw_stage *stage )
    clipper->flat = stage->draw->rasterizer->flatshade ? TRUE : FALSE;
 
    if (clipper->flat) {
-      const struct pipe_shader_state *vs = stage->draw->vertex_shader->state;
+      const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
       uint i;
 
       clipper->num_color_attribs = 0;
-      for (i = 0; i < vs->num_outputs; i++) {
-	 if (vs->output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
-	     vs->output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
+      for (i = 0; i < vs->info.num_outputs; i++) {
+	 if (vs->info.output_semantic_name[i] == TGSI_SEMANTIC_COLOR ||
+	     vs->info.output_semantic_name[i] == TGSI_SEMANTIC_BCOLOR) {
 	    clipper->color_attribs[clipper->num_color_attribs++] = i;
 	 }
       }

@@ -46,6 +46,7 @@
 
 #include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_exec.h"
+#include "tgsi/util/tgsi_scan.h"
 
 
 struct pipe_context;
@@ -134,6 +135,8 @@ struct draw_vertex_shader {
     */
    const struct pipe_shader_state   *state;
 
+   struct tgsi_shader_info info;
+
    void (*prepare)( struct draw_vertex_shader *shader,
 		    struct draw_context *draw );
 
@@ -183,7 +186,8 @@ struct draw_context
       struct draw_stage *aapoint;
       struct draw_stage *aaline;
       struct draw_stage *pstipple;
-      struct draw_stage *wide;
+      struct draw_stage *wide_line;
+      struct draw_stage *wide_point;
       struct draw_stage *rasterize;
    } pipeline;
 
@@ -215,8 +219,8 @@ struct draw_context
    float plane[12][4];
    unsigned nr_planes;
 
-   boolean convert_wide_points; /**< convert wide points to tris? */
-   boolean convert_wide_lines;  /**< convert wide lines to tris? */
+   float wide_point_threshold; /**< convert pnts to tris if larger than this */
+   float wide_line_threshold;  /**< convert lines to tris if wider than this */
    boolean use_sse;
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
@@ -301,7 +305,8 @@ extern struct draw_stage *draw_clip_stage( struct draw_context *context );
 extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
 extern struct draw_stage *draw_cull_stage( struct draw_context *context );
 extern struct draw_stage *draw_stipple_stage( struct draw_context *context );
-extern struct draw_stage *draw_wide_stage( struct draw_context *context );
+extern struct draw_stage *draw_wide_line_stage( struct draw_context *context );
+extern struct draw_stage *draw_wide_point_stage( struct draw_context *context );
 extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 
 

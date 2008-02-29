@@ -514,7 +514,7 @@ setup_fragcoord_coeff(struct setup_stage *setup, uint slot)
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
    struct softpipe_context *softpipe = setup->softpipe;
-   const struct pipe_shader_state *fs = &softpipe->fs->shader;
+   const struct sp_fragment_shader *spfs = softpipe->fs;
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
 
@@ -525,7 +525,7 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+   for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->src_index[fragSlot];
       uint j;
 
@@ -549,7 +549,7 @@ static void setup_tri_coefficients( struct setup_stage *setup )
          assert(0);
       }
 
-      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
          /* FOG.y = front/back facing  XXX fix this */
          setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
          setup->coef[fragSlot].dadx[1] = 0.0;
@@ -757,7 +757,7 @@ static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
    struct softpipe_context *softpipe = setup->softpipe;
-   const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
+   const struct sp_fragment_shader *spfs = softpipe->fs;
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
 
@@ -779,7 +779,7 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 
    /* setup interpolation for all the remaining attributes:
     */
-   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+   for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->src_index[fragSlot];
       uint j;
 
@@ -803,7 +803,7 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
          assert(0);
       }
 
-      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
          /* FOG.y = front/back facing  XXX fix this */
          setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
          setup->coef[fragSlot].dadx[1] = 0.0;
@@ -967,7 +967,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    struct softpipe_context *softpipe = setup->softpipe;
-   const struct pipe_shader_state *fs = &softpipe->fs->shader;
+   const struct sp_fragment_shader *spfs = softpipe->fs;
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
    const float size
@@ -1002,7 +1002,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const_coeff(setup, &setup->posCoef, 0, 2);
    const_coeff(setup, &setup->posCoef, 0, 3);
 
-   for (fragSlot = 0; fragSlot < fs->num_inputs; fragSlot++) {
+   for (fragSlot = 0; fragSlot < spfs->info.num_inputs; fragSlot++) {
       const uint vertSlot = vinfo->src_index[fragSlot];
       uint j;
 
@@ -1025,7 +1025,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
          assert(0);
       }
 
-      if (fs->input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
+      if (spfs->info.input_semantic_name[fragSlot] == TGSI_SEMANTIC_FOG) {
          /* FOG.y = front/back facing  XXX fix this */
          setup->coef[fragSlot].a0[1] = 1.0f - setup->quad.facing;
          setup->coef[fragSlot].dadx[1] = 0.0;
@@ -1163,13 +1163,13 @@ static void setup_begin( struct draw_stage *stage )
 {
    struct setup_stage *setup = setup_stage(stage);
    struct softpipe_context *sp = setup->softpipe;
-   const struct pipe_shader_state *fs = &setup->softpipe->fs->shader;
+   const struct sp_fragment_shader *fs = setup->softpipe->fs;
 
    if (sp->dirty) {
       softpipe_update_derived(sp);
    }
 
-   setup->quad.nr_attrs = fs->num_inputs;
+   setup->quad.nr_attrs = fs->info.num_inputs;
 
    sp->quad.first->begin(sp->quad.first);
 

@@ -307,6 +307,7 @@ st_render_texture(GLcontext *ctx,
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt;
 
    assert(!att->Renderbuffer);
@@ -332,10 +333,10 @@ st_render_texture(GLcontext *ctx,
    rb->Height = pt->height[att->TextureLevel];
 
    /* the renderbuffer's surface is inside the texture */
-   strb->surface = pipe->get_tex_surface(pipe, pt,
-                                         att->CubeMapFace,
-                                         att->TextureLevel,
-                                         att->Zoffset);
+   strb->surface = screen->get_tex_surface(screen, pt,
+                                           att->CubeMapFace,
+                                           att->TextureLevel,
+                                           att->Zoffset);
    assert(strb->surface);
 
    init_renderbuffer_bits(strb, pt->format);

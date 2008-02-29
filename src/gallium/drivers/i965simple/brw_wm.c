@@ -94,11 +94,11 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* Build the index for table lookup
     */
    /* BRW_NEW_DEPTH_STENCIL */
-   if (fp->UsesKill ||
+   if (fp->info.uses_kill ||
        brw->attribs.DepthStencil->alpha.enabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
 
-   if (fp->ComputesDepth)
+   if (fp->info.writes_z)
       lookup |= IZ_PS_COMPUTES_DEPTH_BIT;
 
    if (brw->attribs.DepthStencil->depth.enabled)
