@@ -56,6 +56,7 @@ struct pipe_context {
    struct pipe_screen *screen;
 
    void *priv;  /** context private data (for DRI for example) */
+   void *draw;  /** private, for draw module (temporary? */
 
    void (*destroy)( struct pipe_context * );
 

@@ -559,35 +559,11 @@ draw_pstip_stage(struct draw_context *draw)
 }
 
 
-/*
- * XXX temporary? solution to mapping a pipe_context to a pstip_stage.
- */
-
-#define MAX_CONTEXTS 10
-
-static struct pipe_context *Pipe[MAX_CONTEXTS];
-static struct pstip_stage *Stage[MAX_CONTEXTS];
-static uint NumContexts;
-
-static void
-add_pstip_pipe_context(struct pipe_context *pipe, struct pstip_stage *pstip)
-{
-   assert(NumContexts < MAX_CONTEXTS);
-   Pipe[NumContexts] = pipe;
-   Stage[NumContexts] = pstip;
-   NumContexts++;
-}
-
 static struct pstip_stage *
 pstip_stage_from_pipe(struct pipe_context *pipe)
 {
-   uint i;
-   for (i = 0; i < NumContexts; i++) {
-      if (Pipe[i] == pipe)
-         return Stage[i];
-   }
-   assert(0);
-   return NULL;
+   struct draw_context *draw = (struct draw_context *) pipe->draw;
+   return pstip_stage(draw->pipeline.pstipple);
 }
 
 
@@ -686,6 +662,8 @@ draw_install_pstipple_stage(struct draw_context *draw,
 {
    struct pstip_stage *pstip;
 
+   pipe->draw = (void *) draw;
+
    /*
     * Create / install AA line drawing / prim stage
     */
@@ -716,6 +694,4 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->bind_sampler_state = pstip_bind_sampler_state;
    pipe->set_sampler_texture = pstip_set_sampler_texture;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
-
-   add_pstip_pipe_context(pipe, pstip);
 }
