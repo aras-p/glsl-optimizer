@@ -2894,54 +2894,6 @@ PUBLIC void (*glXGetProcAddress(const GLubyte *procName))( void )
 
 #ifdef GLX_DIRECT_RENDERING
 /**
- * Retrieves the verion of the internal libGL API in YYYYMMDD format.  This
- * might be used by the DRI drivers to determine how new libGL is at runtime.
- * Drivers should not call this function directly.  They should instead use
- * \c glXGetProcAddress to obtain a pointer to the function.
- * 
- * \returns An 8-digit decimal number representing the internal libGL API in
- *          YYYYMMDD format.
- * 
- * \sa glXGetProcAddress, PFNGLXGETINTERNALVERSIONPROC
- *
- * \since Internal API version 20021121.
- */
-int __glXGetInternalVersion(void)
-{
-    /* History:
-     * 20021121 - Initial version
-     * 20021128 - Added __glXWindowExists() function
-     * 20021207 - Added support for dynamic GLX extensions,
-     *            GLX_SGI_swap_control, GLX_SGI_video_sync,
-     *            GLX_OML_sync_control, and GLX_MESA_swap_control.
-     *            Never officially released.  Do NOT test against
-     *            this version.  Use 20030317 instead.
-     * 20030317 - Added support GLX_SGIX_fbconfig,
-     *            GLX_MESA_swap_frame_usage, GLX_OML_swap_method,
-     *            GLX_{ARB,SGIS}_multisample, and
-     *            GLX_SGIX_visual_select_group.
-     * 20030606 - Added support for GLX_SGI_make_current_read.
-     * 20030813 - Made support for dynamic extensions multi-head aware.
-     * 20030818 - Added support for GLX_MESA_allocate_memory in place of the
-     *            deprecated GLX_NV_vertex_array_range & GLX_MESA_agp_offset
-     *            interfaces.
-     * 20031201 - Added support for the first round of DRI interface changes.
-     *            Do NOT test against this version!  It has binary
-     *            compatibility bugs, use 20040317 instead.
-     * 20040317 - Added the 'mode' field to __DRIcontextRec.
-     * 20040415 - Added support for bindContext3 and unbindContext3.
-     * 20040602 - Add __glXGetDrawableInfo.  I though that was there
-     *            months ago. :(
-     * 20050727 - Gut all the old interfaces.  This breaks compatability with
-     *            any DRI driver built to any previous version.
-     * 20060314 - Added support for GLX_MESA_copy_sub_buffer.
-     * 20070105 - Added support for damage reporting.
-     */
-    return 20070105;
-}
-
-
-/**
  * Get the unadjusted system time (UST).  Currently, the UST is measured in
  * microseconds since Epoc.  The actual resolution of the UST may vary from
  * system to system, and the units may vary from release to release.

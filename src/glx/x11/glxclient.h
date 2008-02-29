@@ -714,9 +714,6 @@ extern char *__glXstrdup(const char *str);
 extern const char __glXGLClientVersion[];
 extern const char __glXGLClientExtensions[];
 
-/* Determine the internal API version */
-extern int __glXGetInternalVersion(void);
-
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
 

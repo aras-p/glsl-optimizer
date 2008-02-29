@@ -781,16 +781,34 @@ __glXDRIGetDrawableInfo(__DRIdrawable *drawable,
 /**
  * Table of functions exported by the loader to the driver.
  */
-static const __DRIinterfaceMethods interface_methods = {
+static const __DRIcontextModesExtension contextModesExtension = {
+    { __DRI_CONTEXT_MODES, __DRI_CONTEXT_MODES_VERSION },
     _gl_context_modes_create,
     _gl_context_modes_destroy,
+};
 
-    __glXDRIGetDrawableInfo,
-
+static const __DRIsystemTimeExtension systemTimeExtension = {
+    { __DRI_SYSTEM_TIME, __DRI_SYSTEM_TIME_VERSION },
     __glXGetUST,
     __driGetMscRateOML,
+};
 
+static const __DRIgetDrawableInfoExtension getDrawableInfoExtension = {
+    { __DRI_GET_DRAWABLE_INFO, __DRI_GET_DRAWABLE_INFO_VERSION },
+    __glXDRIGetDrawableInfo
+};
+
+static const __DRIdamageExtension damageExtension = {
+    { __DRI_DAMAGE, __DRI_DAMAGE_VERSION },
     __glXReportDamage,
+};
+
+static const __DRIextension *loader_extensions[] = {
+    &contextModesExtension.base,
+    &systemTimeExtension.base,
+    &getDrawableInfoExtension.base,
+    &damageExtension.base,
+    NULL
 };
 
 
@@ -830,8 +848,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     int   status;
     const char * err_msg;
     const char * err_extra;
-    int api_ver = __glXGetInternalVersion();
-
 
     dri_version.major = driDpy->private->driMajor;
     dri_version.minor = driDpy->private->driMinor;
@@ -945,8 +961,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 							     & framebuffer,
 							     pSAREA,
 							     fd,
-							     api_ver,
-							     & interface_methods,
+							     loader_extensions,
 							     & driver_modes );
 
 				    filter_modes(&psc->configs, driver_modes);
