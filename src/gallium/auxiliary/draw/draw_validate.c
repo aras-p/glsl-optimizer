@@ -53,8 +53,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    stage->next = next;
 
    /* drawing wide lines? */
-   wide_lines = (draw->rasterizer->line_width != 1.0
-                 && draw->convert_wide_lines
+   wide_lines = (draw->rasterizer->line_width > draw->wide_line_threshold
                  && !draw->rasterizer->line_smooth);
 
    /* drawing large points? */
@@ -82,11 +81,14 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.aapoint;
    }
 
-   if (wide_lines ||
-       wide_points ||
-       draw->rasterizer->point_sprite) {
-      draw->pipeline.wide->next = next;
-      next = draw->pipeline.wide;
+   if (wide_lines) {
+      draw->pipeline.wide_line->next = next;
+      next = draw->pipeline.wide_line;
+   }
+
+   if (wide_points || draw->rasterizer->point_sprite) {
+      draw->pipeline.wide_point->next = next;
+      next = draw->pipeline.wide_point;
    }
 
    if (draw->rasterizer->line_stipple_enable) {

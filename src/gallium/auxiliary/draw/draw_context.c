@@ -48,7 +48,8 @@ struct draw_context *draw_create( void )
 #endif
 
    /* create pipeline stages */
-   draw->pipeline.wide      = draw_wide_stage( draw );
+   draw->pipeline.wide_line  = draw_wide_line_stage( draw );
+   draw->pipeline.wide_point = draw_wide_point_stage( draw );
    draw->pipeline.stipple   = draw_stipple_stage( draw );
    draw->pipeline.unfilled  = draw_unfilled_stage( draw );
    draw->pipeline.twoside   = draw_twoside_stage( draw );
@@ -80,8 +81,9 @@ struct draw_context *draw_create( void )
 
    draw->shader_queue_flush = draw_vertex_shader_queue_flush;
 
+   /* these defaults are oriented toward the needs of softpipe */
    draw->wide_point_threshold = 1000000.0; /* infinity */
-   draw->convert_wide_lines = TRUE;
+   draw->wide_line_threshold = 1.0;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -94,7 +96,8 @@ struct draw_context *draw_create( void )
 
 void draw_destroy( struct draw_context *draw )
 {
-   draw->pipeline.wide->destroy( draw->pipeline.wide );
+   draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
+   draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
    draw->pipeline.stipple->destroy( draw->pipeline.stipple );
    draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
    draw->pipeline.twoside->destroy( draw->pipeline.twoside );
@@ -232,14 +235,14 @@ draw_wide_point_threshold(struct draw_context *draw, float threshold)
 
 
 /**
- * Tells the draw module whether to convert wide lines (width != 1)
- * into triangles.
+ * Tells the draw module to draw lines with triangles if their width
+ * is greater than this threshold.
  */
 void
-draw_convert_wide_lines(struct draw_context *draw, boolean enable)
+draw_wide_line_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->convert_wide_lines = enable;
+   draw->wide_line_threshold = threshold;
 }
 
 

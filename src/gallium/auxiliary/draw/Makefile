@@ -29,7 +29,9 @@ C_SOURCES = \
 	draw_vf.c \
 	draw_vf_generic.c \
 	draw_vf_sse.c \
-	draw_wide_prims.c
+	draw_wide_line.c \
+	draw_wide_point.c
+
 
 include ../../Makefile.template
 
