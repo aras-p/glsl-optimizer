@@ -30,6 +30,7 @@ SOURCES = \
 	bug_3050.c \
 	bug_3101.c \
 	bug_3195.c \
+	calibrate_rast.c \
 	copypixrate.c \
 	crossbar.c \
 	cva.c \
