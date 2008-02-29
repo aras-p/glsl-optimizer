@@ -5,6 +5,8 @@
 
 struct nv40_screen {
 	struct pipe_screen pipe;
+
+	struct nouveau_winsys *nvws;
 	unsigned chipset;
 };
 
@@ -13,8 +15,5 @@ nv40_screen(struct pipe_screen *screen)
 {
 	return (struct nv40_screen *)screen;
 }
-
-extern struct pipe_screen *
-nv40_screen_create(struct pipe_winsys *winsys, unsigned chipset);
 
 #endif

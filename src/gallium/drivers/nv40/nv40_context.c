@@ -196,11 +196,12 @@ nv40_destroy(struct pipe_context *pipe)
 }
 
 struct pipe_context *
-nv40_create(struct pipe_screen *pscreen, struct nouveau_winsys *nvws)
+nv40_create(struct pipe_screen *pscreen)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_context *nv40;
 	unsigned chipset = nv40_screen(pscreen)->chipset;
+	struct nouveau_winsys *nvws = nv40_screen(pscreen)->nvws;
 
 	nv40 = CALLOC(1, sizeof(struct nv40_context));
 	if (!nv40)

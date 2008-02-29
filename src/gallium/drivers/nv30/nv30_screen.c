@@ -125,7 +125,8 @@ nv30_screen_destroy(struct pipe_screen *screen)
 }
 
 struct pipe_screen *
-nv30_screen_create(struct pipe_winsys *winsys, unsigned chipset)
+nv30_screen_create(struct pipe_winsys *winsys, struct nouveau_winsys *nvws,
+		   unsigned chipset)
 {
 	struct nv30_screen *nv30screen = CALLOC_STRUCT(nv30_screen);
 
@@ -133,6 +134,7 @@ nv30_screen_create(struct pipe_winsys *winsys, unsigned chipset)
 		return NULL;
 
 	nv30screen->chipset = chipset;
+	nv30screen->nvws = nvws;
 
 	nv30screen->screen.winsys = winsys;
 

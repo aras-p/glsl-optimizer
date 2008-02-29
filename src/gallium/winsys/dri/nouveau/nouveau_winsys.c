@@ -73,9 +73,9 @@ nouveau_pipe_create(struct nouveau_context *nv)
 {
 	struct nouveau_winsys *nvws = CALLOC_STRUCT(nouveau_winsys);
 	struct pipe_screen *(*hws_create)(struct pipe_winsys *,
+					  struct nouveau_winsys *,
 					  unsigned chipset);
-	struct pipe_context *(*hw_create)(struct pipe_screen *,
-					  struct nouveau_winsys *);
+	struct pipe_context *(*hw_create)(struct pipe_screen *);
 	struct pipe_winsys *ws;
 	struct pipe_screen *pscreen;
 
@@ -126,7 +126,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->surface_fill	= nouveau_pipe_surface_fill;
 
 	ws = nouveau_create_pipe_winsys(nv);
-	pscreen = hws_create(ws, nv->chipset);
-	return hw_create(pscreen, nvws);
+	pscreen = hws_create(ws, nvws, nv->chipset);
+	return hw_create(pscreen);
 }
 
