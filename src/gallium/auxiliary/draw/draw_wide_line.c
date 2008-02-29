@@ -86,7 +86,10 @@ static void wideline_line( struct draw_stage *stage,
 
    const float dx = FABSF(pos0[0] - pos2[0]);
    const float dy = FABSF(pos0[1] - pos2[1]);
-   
+
+   /* small tweak to meet GL specification */
+   const float bias = 0.125f;
+
    /*
     * Draw wide line as a quad (two tris) by "stretching" the line along
     * X or Y.
@@ -95,10 +98,10 @@ static void wideline_line( struct draw_stage *stage,
 
    if (dx > dy) {
       /* x-major line */
-      pos0[1] = pos0[1] - half_width - 0.25f;
-      pos1[1] = pos1[1] + half_width - 0.25f;
-      pos2[1] = pos2[1] - half_width - 0.25f;
-      pos3[1] = pos3[1] + half_width - 0.25f;
+      pos0[1] = pos0[1] - half_width - bias;
+      pos1[1] = pos1[1] + half_width - bias;
+      pos2[1] = pos2[1] - half_width - bias;
+      pos3[1] = pos3[1] + half_width - bias;
       if (pos0[0] < pos2[0]) {
          /* left to right line */
          pos0[0] -= 0.5f;
@@ -116,10 +119,10 @@ static void wideline_line( struct draw_stage *stage,
    }
    else {
       /* y-major line */
-      pos0[0] = pos0[0] - half_width + 0.25f;
-      pos1[0] = pos1[0] + half_width + 0.25f;
-      pos2[0] = pos2[0] - half_width + 0.25f;
-      pos3[0] = pos3[0] + half_width + 0.25f;
+      pos0[0] = pos0[0] - half_width + bias;
+      pos1[0] = pos1[0] + half_width + bias;
+      pos2[0] = pos2[0] - half_width + bias;
+      pos3[0] = pos3[0] + half_width + bias;
       if (pos0[1] < pos2[1]) {
          /* top to bottom line */
          pos0[1] -= 0.5f;
