@@ -3,20 +3,6 @@
 
 #include "r300_reg.h"
 
-#define R300_VPI_IN_REG_INDEX_SHIFT             5
-	/* GUESS based on fglrx native limits */
-#define R300_VPI_IN_REG_INDEX_MASK              (255 << 5)
-
-#define R300_VPI_IN_X_SHIFT                     13
-#define R300_VPI_IN_Y_SHIFT                     16
-#define R300_VPI_IN_Z_SHIFT                     19
-#define R300_VPI_IN_W_SHIFT                     22
-
-#define R300_VPI_IN_NEG_X                       (1 << 25)
-#define R300_VPI_IN_NEG_Y                       (1 << 26)
-#define R300_VPI_IN_NEG_Z                       (1 << 27)
-#define R300_VPI_IN_NEG_W                       (1 << 28)
-
 #define PVS_VECTOR_OPCODE(opcode, reg_index, reg_writemask, reg_class)	\
 	 (((opcode & PVS_DST_OPCODE_MASK) << PVS_DST_OPCODE_SHIFT)	\
 	 | ((reg_index & PVS_DST_OFFSET_MASK) << PVS_DST_OFFSET_SHIFT)	\
@@ -32,13 +18,13 @@
 
 
 #define PVS_SOURCE_OPCODE(in_reg_index, comp_x, comp_y, comp_z, comp_w, reg_class, negate)	\
-	(((in_reg_index) << R300_VPI_IN_REG_INDEX_SHIFT)					\
-	 | ((comp_x) << R300_VPI_IN_X_SHIFT)							\
-	 | ((comp_y) << R300_VPI_IN_Y_SHIFT)							\
-	 | ((comp_z) << R300_VPI_IN_Z_SHIFT)							\
-	 | ((comp_w) << R300_VPI_IN_W_SHIFT)							\
-	 | ((negate) << 25)									\
-	 | ((reg_class)))
+	(((in_reg_index & PVS_SRC_OFFSET_MASK) << PVS_SRC_OFFSET_SHIFT)				\
+	 | ((comp_x & PVS_SRC_SWIZZLE_X_MASK) << PVS_SRC_SWIZZLE_X_SHIFT)			\
+	 | ((comp_y & PVS_SRC_SWIZZLE_Y_MASK) << PVS_SRC_SWIZZLE_Y_SHIFT)			\
+	 | ((comp_z & PVS_SRC_SWIZZLE_Z_MASK) << PVS_SRC_SWIZZLE_Z_SHIFT)			\
+	 | ((comp_w & PVS_SRC_SWIZZLE_W_MASK) << PVS_SRC_SWIZZLE_W_SHIFT)			\
+	 | ((negate & 0xf) << PVS_SRC_MODIFIER_X_SHIFT)	/* X Y Z W */				\
+	 | ((reg_class & PVS_SRC_REG_TYPE_MASK) << PVS_SRC_REG_TYPE_SHIFT))
 
 #if 1
 
@@ -78,25 +64,22 @@
 	VP_OUTMASK_##outmask)
 
 #define VP_IN(inclass,inidx) \
-	(((inidx) << R300_VPI_IN_REG_INDEX_SHIFT) |		\
-	(PVS_SRC_REG_##inclass << 0) |			\
-	(PVS_SRC_SELECT_X << R300_VPI_IN_X_SHIFT) |		\
-	(PVS_SRC_SELECT_Y << R300_VPI_IN_Y_SHIFT) |		\
-	(PVS_SRC_SELECT_Z << R300_VPI_IN_Z_SHIFT) |		\
-	(PVS_SRC_SELECT_W << R300_VPI_IN_W_SHIFT))
+	(((inidx & PVS_SRC_OFFSET_MASK) << PVS_SRC_OFFSET_SHIFT) |		\
+	((PVS_SRC_REG_##inclass & PVS_SRC_REG_TYPE_MASK) << PVS_SRC_REG_TYPE_SHIFT) |			\
+	((PVS_SRC_SELECT_X & PVS_SRC_SWIZZLE_X_MASK) << PVS_SRC_SWIZZLE_X_SHIFT) |	\
+	((PVS_SRC_SELECT_Y & PVS_SRC_SWIZZLE_Y_MASK) << PVS_SRC_SWIZZLE_Y_SHIFT) |	\
+	((PVS_SRC_SELECT_Z & PVS_SRC_SWIZZLE_Z_MASK) << PVS_SRC_SWIZZLE_Z_SHIFT) |	\
+	((PVS_SRC_SELECT_W & PVS_SRC_SWIZZLE_W_MASK) << PVS_SRC_SWIZZLE_W_SHIFT))
 #define VP_ZERO() \
-	((PVS_SRC_SELECT_FORCE_0 << R300_VPI_IN_X_SHIFT) |	\
-	(PVS_SRC_SELECT_FORCE_0 << R300_VPI_IN_Y_SHIFT) |	\
-	(PVS_SRC_SELECT_FORCE_0 << R300_VPI_IN_Z_SHIFT) |	\
-	(PVS_SRC_SELECT_FORCE_0 << R300_VPI_IN_W_SHIFT))
+	(((PVS_SRC_SELECT_FORCE_0 & PVS_SRC_SWIZZLE_X_MASK) << PVS_SRC_SWIZZLE_X_SHIFT) |	\
+	((PVS_SRC_SELECT_FORCE_0 & PVS_SRC_SWIZZLE_Y_MASK) << PVS_SRC_SWIZZLE_Y_SHIFT) |	\
+	((PVS_SRC_SELECT_FORCE_0 & PVS_SRC_SWIZZLE_Z_MASK) << PVS_SRC_SWIZZLE_Z_SHIFT) |	\
+	((PVS_SRC_SELECT_FORCE_0 & PVS_SRC_SWIZZLE_W_MASK) << PVS_SRC_SWIZZLE_W_SHIFT))
 #define VP_ONE() \
-	((PVS_SRC_SELECT_FORCE_1 << R300_VPI_IN_X_SHIFT) |	\
-	(PVS_SRC_SELECT_FORCE_1 << R300_VPI_IN_Y_SHIFT) |	\
-	(PVS_SRC_SELECT_FORCE_1 << R300_VPI_IN_Z_SHIFT) |	\
-	(PVS_SRC_SELECT_FORCE_1 << R300_VPI_IN_W_SHIFT))
-
-#define VP_NEG(in,comp)		((in) ^ (R300_VPI_IN_NEG_##comp))
-#define VP_NEGALL(in,comp)	VP_NEG(VP_NEG(VP_NEG(VP_NEG((in),X),Y),Z),W)
+	(((PVS_SRC_SELECT_FORCE_1 & PVS_SRC_SWIZZLE_X_MASK) << PVS_SRC_SWIZZLE_X_SHIFT) |	\
+	((PVS_SRC_SELECT_FORCE_1 & PVS_SRC_SWIZZLE_Y_MASK) << PVS_SRC_SWIZZLE_Y_SHIFT) |	\
+	((PVS_SRC_SELECT_FORCE_1 & PVS_SRC_SWIZZLE_Z_MASK) << PVS_SRC_SWIZZLE_Z_SHIFT) |	\
+	((PVS_SRC_SELECT_FORCE_1 & PVS_SRC_SWIZZLE_W_MASK) << PVS_SRC_SWIZZLE_W_SHIFT))
 
 #endif
 
