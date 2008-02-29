@@ -196,7 +196,7 @@ static void init_metaops_state( struct brw_context *brw )
 				  vp_prog, strlen(vp_prog),
 				  brw->metaops.vp);
 
-   brw->metaops.attribs.VertexProgram->Current = brw->metaops.vp;
+   brw->metaops.attribs.VertexProgram->_Current = brw->metaops.vp;
    brw->metaops.attribs.VertexProgram->_Enabled = GL_TRUE;
 
    brw->metaops.attribs.FragmentProgram->_Current = brw->metaops.fp;

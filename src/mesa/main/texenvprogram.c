@@ -1271,7 +1271,8 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
       }
    } 
    else {
-      ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
+      /* _Current pointer has been updated in update_program */
+      // ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
    }
 
    /* Tell the driver about the change.  Could define a new target for

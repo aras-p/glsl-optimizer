@@ -1589,7 +1589,7 @@ static void update_tnl_program( struct brw_context *brw )
    struct gl_vertex_program *old = brw->tnl_program;
 
    /* _NEW_PROGRAM */
-   if (brw->attribs.VertexProgram->_Enabled) 
+   if (brw->attribs.VertexProgram->_Current) 
       return;
       
    /* Grab all the relevent state and put it in a single structure:
@@ -1653,8 +1653,8 @@ static void update_active_vertprog( struct brw_context *brw )
    const struct gl_vertex_program *prev = brw->vertex_program;
 
    /* NEW_PROGRAM */
-   if (brw->attribs.VertexProgram->_Enabled) {
-      brw->vertex_program = brw->attribs.VertexProgram->Current;
+   if (brw->attribs.VertexProgram->_Current) {
+      brw->vertex_program = brw->attribs.VertexProgram->_Current;
    }
    else {
       /* BRW_NEW_TNL_PROGRAM */
