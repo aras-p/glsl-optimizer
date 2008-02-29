@@ -67,7 +67,9 @@ update_textures(struct st_context *st)
        * this table before being deleted, otherwise the pointer
        * comparison below could fail.
        */
-      if (st->state.sampler_texture[unit] != stObj) {
+      if (st->state.sampler_texture[unit] != stObj ||
+          (stObj && stObj->dirtyData)) {
+         /* should really test if the bound 'pt' is changing */
          struct pipe_texture *pt = st_get_stobj_texture(stObj);
          st->state.sampler_texture[unit] = stObj;
          st->pipe->set_sampler_texture(st->pipe, unit, pt);
