@@ -836,6 +836,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    int me = intel->hHWContext;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
+   intel->locked = 1;
 
    if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - got contended lock\n", __progname);
