@@ -33,15 +33,6 @@
 #include "pipe/p_inlines.h"
 #include "util/p_tile.h"
 
-static struct pipe_surface *
-nv50_get_tex_surface(struct pipe_context *pipe,
-                     struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
-{
-	NOUVEAU_ERR("unimplemented\n");
-	return NULL;
-}
-
 static void
 nv50_surface_copy(struct pipe_context *pipe, unsigned flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
@@ -69,7 +60,6 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
-   nv50->pipe.get_tex_surface = nv50_get_tex_surface;
    nv50->pipe.surface_copy = nv50_surface_copy;
    nv50->pipe.surface_fill = nv50_surface_fill;
 }

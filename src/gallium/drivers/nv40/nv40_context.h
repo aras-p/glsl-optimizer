@@ -178,6 +178,8 @@ extern void nv40_init_surface_functions(struct nv40_context *nv40);
 extern void nv40_init_miptree_functions(struct nv40_context *nv40);
 extern void nv40_init_query_functions(struct nv40_context *nv40);
 
+extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
+
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nv40_context *nv40);
 

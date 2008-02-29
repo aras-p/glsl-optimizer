@@ -33,76 +33,6 @@
 #include "pipe/p_inlines.h"
 #include "util/p_tile.h"
 
-static boolean
-nv30_surface_format_supported(struct pipe_context *pipe,
-			      enum pipe_format format, uint type)
-{
-	switch (type) {
-	case PIPE_SURFACE:
-		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
-		case PIPE_FORMAT_Z24S8_UNORM:
-		case PIPE_FORMAT_Z16_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-		break;
-	case PIPE_TEXTURE:
-		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_A1R5G5B5_UNORM:
-		case PIPE_FORMAT_A4R4G4B4_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
-		case PIPE_FORMAT_U_L8:
-		case PIPE_FORMAT_U_A8:
-		case PIPE_FORMAT_U_I8:
-		case PIPE_FORMAT_U_A8_L8:
-		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-		break;
-	default:
-		assert(0);
-	};
-
-	return FALSE;
-}
-
-static struct pipe_surface *
-nv30_get_tex_surface(struct pipe_context *pipe, struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
-{
-	struct pipe_winsys *ws = pipe->winsys;
-	struct nv30_miptree *nv30mt = (struct nv30_miptree *)pt;
-	struct pipe_surface *ps;
-
-	ps = ws->surface_alloc(ws);
-	if (!ps)
-		return NULL;
-	pipe_buffer_reference(ws, &ps->buffer, nv30mt->buffer);
-	ps->format = pt->format;
-	ps->cpp = pt->cpp;
-	ps->width = pt->width[level];
-	ps->height = pt->height[level];
-	ps->pitch = nv30mt->level[level].pitch / ps->cpp;
-
-	if (pt->target == PIPE_TEXTURE_CUBE) {
-		ps->offset = nv30mt->level[level].image_offset[face];
-	} else
-	if (pt->target == PIPE_TEXTURE_3D) {
-		ps->offset = nv30mt->level[level].image_offset[zslice];
-	} else {
-		ps->offset = nv30mt->level[level].image_offset[0];
-	}
-
-	return ps;
-}
-
 static void
 nv30_surface_copy(struct pipe_context *pipe, unsigned do_flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
@@ -130,8 +60,6 @@ nv30_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 void
 nv30_init_surface_functions(struct nv30_context *nv30)
 {
-	nv30->pipe.is_format_supported = nv30_surface_format_supported;
-	nv30->pipe.get_tex_surface = nv30_get_tex_surface;
 	nv30->pipe.surface_copy = nv30_surface_copy;
 	nv30->pipe.surface_fill = nv30_surface_fill;
 }

@@ -54,9 +54,9 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 }
 
 static struct pipe_texture *
-nv40_miptree_create(struct pipe_context *pipe, const struct pipe_texture *pt)
+nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_miptree *mt;
 
 	mt = MALLOC(sizeof(struct nv40_miptree));
@@ -64,6 +64,8 @@ nv40_miptree_create(struct pipe_context *pipe, const struct pipe_texture *pt)
 		return NULL;
 	mt->base = *pt;
 	mt->base.refcount = 1;
+	mt->base.screen = pscreen;
+
 	nv40_miptree_layout(mt);
 
 	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
@@ -77,9 +79,9 @@ nv40_miptree_create(struct pipe_context *pipe, const struct pipe_texture *pt)
 }
 
 static void
-nv40_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
+nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_winsys *ws = pscreen->winsys;
 	struct pipe_texture *mt = *pt;
 
 	*pt = NULL;
@@ -102,10 +104,10 @@ nv40_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt)
 }
 
 static struct pipe_surface *
-nv40_miptree_surface(struct pipe_context *pipe, struct pipe_texture *pt,
+nv40_miptree_surface(struct pipe_screen *pscreen, struct pipe_texture *pt,
                      unsigned face, unsigned level, unsigned zslice)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
 	struct pipe_surface *ps;
 
@@ -134,9 +136,14 @@ nv40_miptree_surface(struct pipe_context *pipe, struct pipe_texture *pt,
 void
 nv40_init_miptree_functions(struct nv40_context *nv40)
 {
-	nv40->pipe.texture_create = nv40_miptree_create;
-	nv40->pipe.texture_release = nv40_miptree_release;
 	nv40->pipe.texture_update = nv40_miptree_update;
-	nv40->pipe.get_tex_surface = nv40_miptree_surface;
+}
+
+void
+nv40_screen_init_miptree_functions(struct pipe_screen *pscreen)
+{
+	pscreen->texture_create = nv40_miptree_create;
+	pscreen->texture_release = nv40_miptree_release;
+	pscreen->get_tex_surface = nv40_miptree_surface;
 }
 

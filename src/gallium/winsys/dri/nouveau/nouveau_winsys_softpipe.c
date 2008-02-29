@@ -61,23 +61,25 @@ nouveau_is_format_supported(struct softpipe_winsys *sws, uint format)
 	return FALSE;
 }
 
-
-
 struct pipe_context *
 nouveau_create_softpipe(struct nouveau_context *nv)
 {
-   struct nouveau_softpipe_winsys *nvsws;
-   
-   nvsws = CALLOC_STRUCT(nouveau_softpipe_winsys);
-   
-   /* Fill in this struct with callbacks that softpipe will need to
-    * communicate with the window system, buffer manager, etc. 
-    */
-   nvsws->sws.is_format_supported = nouveau_is_format_supported;
-   nvsws->nv = nv;
+	struct nouveau_softpipe_winsys *nvsws;
+	struct pipe_screen *pscreen;
+	struct pipe_winsys *ws;
 
-   /* Create the softpipe context:
-    */
-   return softpipe_create(nouveau_create_pipe_winsys(nv), &nvsws->sws);
+	ws = nouveau_create_pipe_winsys(nv);
+	if (!ws)
+		return NULL;
+	pscreen = softpipe_create_screen(ws);
+
+	nvsws = CALLOC_STRUCT(nouveau_softpipe_winsys);
+	if (!nvsws)
+		return NULL;
+
+	nvsws->sws.is_format_supported = nouveau_is_format_supported;
+	nvsws->nv = nv;
+
+	return softpipe_create(pscreen, ws, &nvsws->sws);
 }
 

@@ -4,85 +4,7 @@
 #include "pipe/p_util.h"
 
 #include "nv50_context.h"
-
-static boolean
-nv50_is_format_supported(struct pipe_context *pipe, enum pipe_format format,
-			 uint type)
-{
-	return FALSE;
-}
-
-static const char *
-nv50_get_name(struct pipe_context *pipe)
-{
-	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", nv50->chipset);
-	return buffer;
-}
-
-static const char *
-nv50_get_vendor(struct pipe_context *pipe)
-{
-	return "nouveau";
-}
-
-static int
-nv50_get_param(struct pipe_context *pipe, int param)
-{
-	switch (param) {
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-		return 32;
-	case PIPE_CAP_NPOT_TEXTURES:
-		return 0;
-	case PIPE_CAP_TWO_SIDED_STENCIL:
-		return 1;
-	case PIPE_CAP_GLSL:
-		return 0;
-	case PIPE_CAP_S3TC:
-		return 0;
-	case PIPE_CAP_ANISOTROPIC_FILTER:
-		return 0;
-	case PIPE_CAP_POINT_SPRITE:
-		return 0;
-	case PIPE_CAP_MAX_RENDER_TARGETS:
-		return 8;
-	case PIPE_CAP_OCCLUSION_QUERY:
-		return 0;
-	case PIPE_CAP_TEXTURE_SHADOW_MAP:
-		return 0;
-	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-		return 13;
-	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-		return 10;
-	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		return 13;
-	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
-		return 0;
-	}
-}
-
-static float
-nv50_get_paramf(struct pipe_context *pipe, int param)
-{
-	switch (param) {
-	case PIPE_CAP_MAX_LINE_WIDTH:
-	case PIPE_CAP_MAX_LINE_WIDTH_AA:
-		return 10.0;
-	case PIPE_CAP_MAX_POINT_WIDTH:
-	case PIPE_CAP_MAX_POINT_WIDTH_AA:
-		return 64.0;
-	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-		return 16.0;
-	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-		return 4.0;
-	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
-		return 0.0;
-	}
-}
+#include "nv50_screen.h"
 
 static void
 nv50_flush(struct pipe_context *pipe, unsigned flags)
@@ -134,9 +56,10 @@ nv50_init_hwctx(struct nv50_context *nv50, int tesla_class)
 #define GRCLASS5097_CHIPSETS 0x00000000
 #define GRCLASS8297_CHIPSETS 0x00000010
 struct pipe_context *
-nv50_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
-	    unsigned chipset)
+nv50_create(struct pipe_screen *pscreen, struct nouveau_winsys *nvws)
 {
+	struct pipe_winsys *pipe_winsys = pscreen->winsys;
+	unsigned chipset = nv50_screen(pscreen)->chipset;
 	struct nv50_context *nv50;
 	int tesla_class, ret;
 
@@ -173,13 +96,9 @@ nv50_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 	}
 
 	nv50->pipe.winsys = pipe_winsys;
+	nv50->pipe.screen = pscreen;
 
 	nv50->pipe.destroy = nv50_destroy;
-	nv50->pipe.is_format_supported = nv50_is_format_supported;
-	nv50->pipe.get_name = nv50_get_name;
-	nv50->pipe.get_vendor = nv50_get_vendor;
-	nv50->pipe.get_param = nv50_get_param;
-	nv50->pipe.get_paramf = nv50_get_paramf;
 
 	nv50->pipe.draw_arrays = nv50_draw_arrays;
 	nv50->pipe.draw_elements = nv50_draw_elements;

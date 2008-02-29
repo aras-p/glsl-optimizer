@@ -38,6 +38,8 @@ extern void nv50_init_surface_functions(struct nv50_context *nv50);
 extern void nv50_init_state_functions(struct nv50_context *nv50);
 extern void nv50_init_query_functions(struct nv50_context *nv50);
 
+extern void nv50_screen_init_miptree_functions(struct pipe_screen *pscreen);
+
 /* nv50_draw.c */
 extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
 

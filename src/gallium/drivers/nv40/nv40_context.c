@@ -4,84 +4,11 @@
 #include "pipe/p_util.h"
 
 #include "nv40_context.h"
+#include "nv40_screen.h"
 
 #define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
 #define NV4X_GRCLASS4497_CHIPSETS 0x00005450
 #define NV6X_GRCLASS4497_CHIPSETS 0x00000088
-
-static const char *
-nv40_get_name(struct pipe_context *pipe)
-{
-	struct nv40_context *nv40 = nv40_context(pipe);
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", nv40->chipset);
-	return buffer;
-}
-
-static const char *
-nv40_get_vendor(struct pipe_context *pipe)
-{
-	return "nouveau";
-}
-
-static int
-nv40_get_param(struct pipe_context *pipe, int param)
-{
-	switch (param) {
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-		return 16;
-	case PIPE_CAP_NPOT_TEXTURES:
-		return 1;
-	case PIPE_CAP_TWO_SIDED_STENCIL:
-		return 1;
-	case PIPE_CAP_GLSL:
-		return 0;
-	case PIPE_CAP_S3TC:
-		return 0;
-	case PIPE_CAP_ANISOTROPIC_FILTER:
-		return 1;
-	case PIPE_CAP_POINT_SPRITE:
-		return 1;
-	case PIPE_CAP_MAX_RENDER_TARGETS:
-		return 4;
-	case PIPE_CAP_OCCLUSION_QUERY:
-		return 1;
-	case PIPE_CAP_TEXTURE_SHADOW_MAP:
-		return 1;
-	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-		return 13;
-	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-		return 10;
-	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		return 13;
-	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
-		return 0;
-	}
-}
-
-static float
-nv40_get_paramf(struct pipe_context *pipe, int param)
-{
-	switch (param) {
-	case PIPE_CAP_MAX_LINE_WIDTH:
-	case PIPE_CAP_MAX_LINE_WIDTH_AA:
-		return 10.0;
-	case PIPE_CAP_MAX_POINT_WIDTH:
-	case PIPE_CAP_MAX_POINT_WIDTH_AA:
-		return 64.0;
-	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-		return 16.0;
-	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-		return 16.0;
-	case PIPE_CAP_BITMAP_TEXCOORD_BIAS:
-		return 0.0;
-	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
-		return 0.0;
-	}
-}
 
 static void
 nv40_flush(struct pipe_context *pipe, unsigned flags)
@@ -269,10 +196,11 @@ nv40_destroy(struct pipe_context *pipe)
 }
 
 struct pipe_context *
-nv40_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
-	    unsigned chipset)
+nv40_create(struct pipe_screen *pscreen, struct nouveau_winsys *nvws)
 {
+	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_context *nv40;
+	unsigned chipset = nv40_screen(pscreen)->chipset;
 
 	nv40 = CALLOC(1, sizeof(struct nv40_context));
 	if (!nv40)
@@ -288,11 +216,8 @@ nv40_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 	nv40->nvws = nvws;
 
 	nv40->pipe.winsys = ws;
+	nv40->pipe.screen = pscreen;
 	nv40->pipe.destroy = nv40_destroy;
-	nv40->pipe.get_name = nv40_get_name;
-	nv40->pipe.get_vendor = nv40_get_vendor;
-	nv40->pipe.get_param = nv40_get_param;
-	nv40->pipe.get_paramf = nv40_get_paramf;
 	nv40->pipe.draw_arrays = nv40_draw_arrays;
 	nv40->pipe.draw_elements = nv40_draw_elements;
 	nv40->pipe.clear = nv40_clear;

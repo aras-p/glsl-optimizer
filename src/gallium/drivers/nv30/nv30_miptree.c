@@ -4,6 +4,7 @@
 #include "pipe/p_inlines.h"
 
 #include "nv30_context.h"
+#include "nv30_screen.h"
 
 static void
 nv30_miptree_layout(struct nv30_miptree *nv30mt)
@@ -54,9 +55,9 @@ nv30_miptree_layout(struct nv30_miptree *nv30mt)
 }
 
 static void
-nv30_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
+nv30_miptree_create(struct pipe_screen *screen, struct pipe_texture **pt)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_winsys *ws = screen->winsys;
 	struct nv30_miptree *nv30mt;
 
 	nv30mt = realloc(*pt, sizeof(struct nv30_miptree));
@@ -77,9 +78,9 @@ nv30_miptree_create(struct pipe_context *pipe, struct pipe_texture **pt)
 }
 
 static void
-nv30_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
+nv30_miptree_release(struct pipe_screen *screen, struct pipe_texture **pt)
 {
-	struct pipe_winsys *ws = pipe->winsys;
+	struct pipe_winsys *ws = screen->winsys;
 	struct pipe_texture *mt = *pt;
 
 	*pt = NULL;
@@ -96,10 +97,42 @@ nv30_miptree_release(struct pipe_context *pipe, struct pipe_texture **pt)
 	}
 }
 
-void
-nv30_init_miptree_functions(struct nv30_context *nv30)
+static struct pipe_surface *
+nv30_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
+			 unsigned face, unsigned level, unsigned zslice)
 {
-	nv30->pipe.texture_create = nv30_miptree_create;
-	nv30->pipe.texture_release = nv30_miptree_release;
+	struct pipe_winsys *ws = screen->winsys;
+	struct nv30_miptree *nv30mt = (struct nv30_miptree *)pt;
+	struct pipe_surface *ps;
+
+	ps = ws->surface_alloc(ws);
+	if (!ps)
+		return NULL;
+	pipe_buffer_reference(ws, &ps->buffer, nv30mt->buffer);
+	ps->format = pt->format;
+	ps->cpp = pt->cpp;
+	ps->width = pt->width[level];
+	ps->height = pt->height[level];
+	ps->pitch = nv30mt->level[level].pitch / ps->cpp;
+
+	if (pt->target == PIPE_TEXTURE_CUBE) {
+		ps->offset = nv30mt->level[level].image_offset[face];
+	} else
+	if (pt->target == PIPE_TEXTURE_3D) {
+		ps->offset = nv30mt->level[level].image_offset[zslice];
+	} else {
+		ps->offset = nv30mt->level[level].image_offset[0];
+	}
+
+	return ps;
+}
+void
+nv30_init_miptree_functions(struct pipe_screen *screen)
+{
+	struct nv30_screen *nv30screen = nv30_screen(screen);
+
+	nv30screen->screen.texture_create = nv30_miptree_create;
+	nv30screen->screen.texture_release = nv30_miptree_release;
+	nv30screen->screen.get_tex_surface = nv30_miptree_surface_get;
 }
 

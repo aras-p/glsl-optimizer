@@ -49,13 +49,22 @@ struct nouveau_winsys {
 			    unsigned, unsigned, unsigned, unsigned, unsigned);
 };
 
-extern struct pipe_context *
-nv30_create(struct pipe_winsys *, struct nouveau_winsys *, unsigned chipset);
+extern struct pipe_screen *
+nv30_screen_create(struct pipe_winsys *ws, unsigned chipset);
 
 extern struct pipe_context *
-nv40_create(struct pipe_winsys *, struct nouveau_winsys *, unsigned chipset);
+nv30_create(struct pipe_screen *, struct nouveau_winsys *);
+
+extern struct pipe_screen *
+nv40_screen_create(struct pipe_winsys *ws, unsigned chipset);
 
 extern struct pipe_context *
-nv50_create(struct pipe_winsys *, struct nouveau_winsys *, unsigned chipset);
+nv40_create(struct pipe_screen *, struct nouveau_winsys *);
+
+extern struct pipe_screen *
+nv50_screen_create(struct pipe_winsys *ws, unsigned chipset);
+
+extern struct pipe_context *
+nv50_create(struct pipe_screen *, struct nouveau_winsys *);
 
 #endif

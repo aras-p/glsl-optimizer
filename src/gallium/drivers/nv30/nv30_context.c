@@ -4,80 +4,7 @@
 #include "pipe/p_util.h"
 
 #include "nv30_context.h"
-
-static const char *
-nv30_get_name(struct pipe_context *pipe)
-{
-	struct nv30_context *nv30 = nv30_context(pipe);
-	static char buffer[128];
-
-	snprintf(buffer, sizeof(buffer), "NV%02X", nv30->chipset);
-	return buffer;
-}
-
-static const char *
-nv30_get_vendor(struct pipe_context *pipe)
-{
-	return "nouveau";
-}
-
-static int
-nv30_get_param(struct pipe_context *pipe, int param)
-{
-	switch (param) {
-	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-		return 16;
-	case PIPE_CAP_NPOT_TEXTURES:
-		return 0;
-	case PIPE_CAP_TWO_SIDED_STENCIL:
-		return 1;
-	case PIPE_CAP_GLSL:
-		return 0;
-	case PIPE_CAP_S3TC:
-		return 0;
-	case PIPE_CAP_ANISOTROPIC_FILTER:
-		return 1;
-	case PIPE_CAP_POINT_SPRITE:
-		return 1;
-	case PIPE_CAP_MAX_RENDER_TARGETS:
-		return 2;
-	case PIPE_CAP_OCCLUSION_QUERY:
-		return 1;
-	case PIPE_CAP_TEXTURE_SHADOW_MAP:
-		return 1;
-	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
-		return 13;
-	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
-		return 10;
-	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		return 13;
-	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
-		return 0;
-	}
-}
-
-static float
-nv30_get_paramf(struct pipe_context *pipe, int param)
-{
-	switch (param) {
-	case PIPE_CAP_MAX_LINE_WIDTH:
-	case PIPE_CAP_MAX_LINE_WIDTH_AA:
-		return 10.0;
-	case PIPE_CAP_MAX_POINT_WIDTH:
-	case PIPE_CAP_MAX_POINT_WIDTH_AA:
-		return 64.0;
-	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-		return 16.0;
-	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
-		return 4.0;
-	case PIPE_CAP_BITMAP_TEXCOORD_BIAS:
-		return 0.0;
-	default:
-		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
-		return 0.0;
-	}
-}
+#include "nv30_screen.h"
 
 static void
 nv30_flush(struct pipe_context *pipe, unsigned flags)
@@ -338,9 +265,10 @@ nv30_init_hwctx(struct nv30_context *nv30, int rankine_class)
 #define NV35TCL_CHIPSET_3X_MASK 0x000001e0
 
 struct pipe_context *
-nv30_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
-	    unsigned chipset)
+nv30_create(struct pipe_screen *screen, struct nouveau_winsys *nvws)
 {
+	struct pipe_winsys *pipe_winsys = screen->winsys;
+	unsigned chipset = nv30_screen(screen)->chipset;
 	struct nv30_context *nv30;
 	int rankine_class = 0, ret;
 
@@ -404,12 +332,9 @@ nv30_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 
 	/* Pipe context setup */
 	nv30->pipe.winsys = pipe_winsys;
+	nv30->pipe.screen = screen;
 
 	nv30->pipe.destroy = nv30_destroy;
-	nv30->pipe.get_name = nv30_get_name;
-	nv30->pipe.get_vendor = nv30_get_vendor;
-	nv30->pipe.get_param = nv30_get_param;
-	nv30->pipe.get_paramf = nv30_get_paramf;
 
 	nv30->pipe.draw_arrays = nv30_draw_arrays;
 	nv30->pipe.draw_elements = nv30_draw_elements;
@@ -420,7 +345,6 @@ nv30_create(struct pipe_winsys *pipe_winsys, struct nouveau_winsys *nvws,
 	nv30_init_query_functions(nv30);
 	nv30_init_surface_functions(nv30);
 	nv30_init_state_functions(nv30);
-	nv30_init_miptree_functions(nv30);
 
 	nv30->draw = draw_create();
 	assert(nv30->draw);

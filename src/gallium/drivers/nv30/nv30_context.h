@@ -91,7 +91,7 @@ nv30_context(struct pipe_context *pipe)
 
 extern void nv30_init_state_functions(struct nv30_context *nv30);
 extern void nv30_init_surface_functions(struct nv30_context *nv30);
-extern void nv30_init_miptree_functions(struct nv30_context *nv30);
+extern void nv30_init_miptree_functions(struct pipe_screen *screen);
 extern void nv30_init_query_functions(struct nv30_context *nv30);
 
 /* nv30_draw.c */

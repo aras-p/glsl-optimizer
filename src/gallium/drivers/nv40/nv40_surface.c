@@ -33,46 +33,6 @@
 #include "pipe/p_inlines.h"
 #include "util/p_tile.h"
 
-static boolean
-nv40_surface_format_supported(struct pipe_context *pipe,
-			      enum pipe_format format, uint type)
-{
-	switch (type) {
-	case PIPE_SURFACE:
-		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
-		case PIPE_FORMAT_Z24S8_UNORM:
-		case PIPE_FORMAT_Z16_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-		break;
-	case PIPE_TEXTURE:
-		switch (format) {
-		case PIPE_FORMAT_A8R8G8B8_UNORM:
-		case PIPE_FORMAT_A1R5G5B5_UNORM:
-		case PIPE_FORMAT_A4R4G4B4_UNORM:
-		case PIPE_FORMAT_R5G6B5_UNORM: 
-		case PIPE_FORMAT_U_L8:
-		case PIPE_FORMAT_U_A8:
-		case PIPE_FORMAT_U_I8:
-		case PIPE_FORMAT_U_A8_L8:
-		case PIPE_FORMAT_Z16_UNORM:
-		case PIPE_FORMAT_Z24S8_UNORM:
-			return TRUE;
-		default:
-			break;
-		}
-		break;
-	default:
-		assert(0);
-	};
-
-	return FALSE;
-}
-
 static void
 nv40_surface_copy(struct pipe_context *pipe, unsigned do_flip,
 		  struct pipe_surface *dest, unsigned destx, unsigned desty,
@@ -100,7 +60,6 @@ nv40_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 void
 nv40_init_surface_functions(struct nv40_context *nv40)
 {
-	nv40->pipe.is_format_supported = nv40_surface_format_supported;
 	nv40->pipe.surface_copy = nv40_surface_copy;
 	nv40->pipe.surface_fill = nv40_surface_fill;
 }

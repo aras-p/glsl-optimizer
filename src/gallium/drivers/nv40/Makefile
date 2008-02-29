@@ -11,6 +11,7 @@ DRIVER_SOURCES = \
 	nv40_fragtex.c \
 	nv40_miptree.c \
 	nv40_query.c \
+	nv40_screen.c \
 	nv40_state.c \
 	nv40_state_blend.c \
 	nv40_state_clip.c \
