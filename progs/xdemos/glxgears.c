@@ -522,7 +522,6 @@ event_loop(Display *dpy, Window win)
 
          draw();
          glXSwapBuffers(dpy, win);
-	 glFinish();
 
          frames++;
 
