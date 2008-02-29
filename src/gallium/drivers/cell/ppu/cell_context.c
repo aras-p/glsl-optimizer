@@ -128,6 +128,10 @@ cell_create_context(struct pipe_screen *screen,
    cell_init_vbuf(cell);
    draw_set_rasterize_stage(cell->draw, cell->vbuf);
 
+   /* convert all points/lines to tris for the time being */
+   draw_wide_point_threshold(cell->draw, 0.0);
+   draw_wide_line_threshold(cell->draw, 0.0);
+
    /*
     * SPU stuff
     */
