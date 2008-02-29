@@ -697,3 +697,127 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
 
    FREE(packed);
 }
+
+
+/**
+ * Get a block of Z values, converted to 32-bit range.
+ */
+void
+pipe_get_tile_z(struct pipe_context *pipe,
+                struct pipe_surface *ps,
+                uint x, uint y, uint w, uint h,
+                uint *z)
+{
+   const uint dstStride = w;
+   uint *pDest = z;
+   uint i, j;
+
+   if (pipe_clip_tile(x, y, &w, &h, ps))
+      return;
+
+   switch (ps->format) {
+   case PIPE_FORMAT_Z32_UNORM:
+      {
+         const uint *pSrc
+            = (const uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         for (i = 0; i < h; i++) {
+            memcpy(pDest, pSrc, 4 * w);
+            pDest += dstStride;
+            pSrc += ps->pitch;
+         }
+      }
+      break;
+   case PIPE_FORMAT_S8Z24_UNORM:
+      {
+         const uint *pSrc
+            = (const uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 24-bit Z to 32-bit Z */
+               pDest[j] = (pSrc[j] << 8) | (pSrc[j] & 0xff);
+            }
+            pDest += dstStride;
+            pSrc += ps->pitch;
+         }
+      }
+      break;
+   case PIPE_FORMAT_Z16_UNORM:
+      {
+         const ushort *pSrc
+            = (const ushort *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 16-bit Z to 32-bit Z */
+               pDest[j] = (pSrc[j] << 16) | pSrc[j];
+            }
+            pDest += dstStride;
+            pSrc += ps->pitch;
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
+
+   pipe_surface_unmap(ps);
+}
+
+
+void
+pipe_put_tile_z(struct pipe_context *pipe,
+                struct pipe_surface *ps,
+                uint x, uint y, uint w, uint h,
+                const uint *zSrc)
+{
+   const uint srcStride = w;
+   const uint *pSrc = zSrc;
+   uint i, j;
+
+   if (pipe_clip_tile(x, y, &w, &h, ps))
+      return;
+
+   switch (ps->format) {
+   case PIPE_FORMAT_Z32_UNORM:
+      {
+         uint *pDest = (uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         for (i = 0; i < h; i++) {
+            memcpy(pDest, pSrc, 4 * w);
+            pDest += ps->pitch;
+            pSrc += srcStride;
+         }
+      }
+      break;
+   case PIPE_FORMAT_S8Z24_UNORM:
+      {
+         uint *pDest = (uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 32-bit Z to 24-bit Z (0 stencil) */
+               pDest[j] = pSrc[j] >> 8;
+            }
+            pDest += ps->pitch;
+            pSrc += srcStride;
+         }
+      }
+      break;
+   case PIPE_FORMAT_Z16_UNORM:
+      {
+         ushort *pDest = (ushort *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               /* convert 32-bit Z to 16-bit Z */
+               pDest[j] = pSrc[j] >> 16;
+            }
+            pDest += ps->pitch;
+            pSrc += srcStride;
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
+
+   pipe_surface_unmap(ps);
+}
+
+
