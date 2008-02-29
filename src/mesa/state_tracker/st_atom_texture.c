@@ -55,6 +55,7 @@ update_textures(struct st_context *st)
       const GLuint su = fprog->Base.SamplerUnits[unit];
       struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
       struct st_texture_object *stObj = st_texture_object(texObj);
+      struct pipe_texture *pt;
 
       if (texObj) {
          GLboolean flush, retval;
@@ -67,18 +68,15 @@ update_textures(struct st_context *st)
        * this table before being deleted, otherwise the pointer
        * comparison below could fail.
        */
-      if (st->state.sampler_texture[unit] != stObj ||
-          (stObj && stObj->dirtyData)) {
-         /* should really test if the bound 'pt' is changing */
-         struct pipe_texture *pt = st_get_stobj_texture(stObj);
-         st->state.sampler_texture[unit] = stObj;
+
+      pt = st_get_stobj_texture(stObj);
+
+      if (st->state.sampler_texture[unit] != pt) {
+         st->state.sampler_texture[unit] = pt;
          st->pipe->set_sampler_texture(st->pipe, unit, pt);
       }
 
-      stObj = st->state.sampler_texture[unit];
-
       if (stObj && stObj->dirtyData) {
-         struct pipe_texture *pt = st_get_stobj_texture(stObj);
          st->pipe->texture_update(st->pipe, pt);
          stObj->dirtyData = GL_FALSE;
       }

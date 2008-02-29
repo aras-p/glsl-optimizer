@@ -727,8 +727,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
    pipe->bind_vs_state(pipe, ctx->st->state.vs->cso->data);
-   pipe->set_sampler_texture(pipe, unit,
-                st_get_stobj_texture(ctx->st->state.sampler_texture[unit]));
+   pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 }
