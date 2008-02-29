@@ -4,7 +4,7 @@ static boolean
 nv40_state_stipple_validate(struct nv40_context *nv40)
 {
 	struct pipe_rasterizer_state *rast = &nv40->rasterizer->pipe;
-	struct nouveau_grobj *curie = nv40->hw->curie;
+	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct nouveau_stateobj *so;
 
 	if (nv40->state.hw[NV40_STATE_STIPPLE] &&

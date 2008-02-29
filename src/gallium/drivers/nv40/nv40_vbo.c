@@ -52,7 +52,7 @@ nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 	}
 
 	/* No support for 8bit indices, no support at all on 0x4497 chips */
-	if (nv40->hw->curie->grclass == NV44TCL || ib_size == 1)
+	if (nv40->screen->curie->grclass == NV44TCL || ib_size == 1)
 		return FALSE;
 
 	switch (ib_size) {
@@ -365,9 +365,9 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	num_hw++;
 
 	vtxbuf = so_new(20, 18);
-	so_method(vtxbuf, nv40->hw->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
+	so_method(vtxbuf, nv40->screen->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
 	vtxfmt = so_new(17, 0);
-	so_method(vtxfmt, nv40->hw->curie, NV40TCL_VTXFMT(0), num_hw);
+	so_method(vtxfmt, nv40->screen->curie, NV40TCL_VTXFMT(0), num_hw);
 
 	inputs = vp->ir;
 	for (hw = 0; hw < num_hw; hw++) {
@@ -399,13 +399,13 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	}
 
 	if (ib) {
-		so_method(vtxbuf, nv40->hw->curie, NV40TCL_IDXBUF_ADDRESS, 2);
+		so_method(vtxbuf, nv40->screen->curie, NV40TCL_IDXBUF_ADDRESS, 2);
 		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
 			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
 	}
 
-	so_method(vtxbuf, nv40->hw->curie, 0x1710, 1);
+	so_method(vtxbuf, nv40->screen->curie, 0x1710, 1);
 	so_data  (vtxbuf, 0);
 
 	so_ref(vtxbuf, &nv40->state.hw[NV40_STATE_VTXBUF]);

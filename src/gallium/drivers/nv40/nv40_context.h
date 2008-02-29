@@ -11,7 +11,7 @@
 #include "nouveau/nouveau_gldefs.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv40_channel_context *ctx = nv40->hw
+	struct nv40_screen *ctx = nv40->screen
 #include "nouveau/nouveau_push.h"
 #include "nouveau/nouveau_stateobj.h"
 
@@ -59,6 +59,8 @@ enum nv40_state_index {
 	NV40_STATE_MAX = 33
 };
 
+#include "nv40_screen.h"
+
 #define NV40_NEW_BLEND		(1 <<  0)
 #define NV40_NEW_RAST		(1 <<  1)
 #define NV40_NEW_ZSA		(1 <<  2)
@@ -75,28 +77,6 @@ enum nv40_state_index {
 
 #define NV40_FALLBACK_TNL (1 << 0)
 #define NV40_FALLBACK_RAST (1 << 1)
-
-struct nv40_channel_context {
-	struct nouveau_winsys *nvws;
-	unsigned refcount;
-
-	unsigned chipset;
-
-	/* HW graphics objects */
-	struct nouveau_grobj *curie;
-	struct nouveau_notifier *sync;
-
-	/* Query object resources */
-	struct nouveau_notifier *query;
-	struct nouveau_resource *query_heap;
-
-	/* Vtxprog resources */
-	struct nouveau_resource *vp_exec_heap;
-	struct nouveau_resource *vp_data_heap;
-
-	/* Current 3D state of channel */
-	struct nouveau_stateobj *state[NV40_STATE_MAX];
-};
 
 struct nv40_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
@@ -125,9 +105,10 @@ struct nv40_state {
 
 struct nv40_context {
 	struct pipe_context pipe;
-	struct nouveau_winsys *nvws;
 
-	struct nv40_channel_context *hw;
+	struct nouveau_winsys *nvws;
+	struct nv40_screen *screen;
+
 	struct draw_context *draw;
 
 	int chipset;

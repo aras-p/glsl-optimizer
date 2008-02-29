@@ -6,7 +6,7 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 	struct nouveau_stateobj *so = so_new(9, 0);
 	struct pipe_viewport_state *vpt = &nv40->viewport;
 
-	so_method(so, nv40->hw->curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
+	so_method(so, nv40->screen->curie, NV40TCL_VIEWPORT_TRANSLATE_X, 8);
 	so_data  (so, fui(vpt->translate[0]));
 	so_data  (so, fui(vpt->translate[1]));
 	so_data  (so, fui(vpt->translate[2]));

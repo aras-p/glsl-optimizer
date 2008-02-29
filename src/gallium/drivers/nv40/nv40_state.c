@@ -10,7 +10,7 @@ nv40_blend_state_create(struct pipe_context *pipe,
 			const struct pipe_blend_state *cso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_grobj *curie = nv40->hw->curie;
+	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct nv40_blend_state *bso = CALLOC(1, sizeof(*bso));
 	struct nouveau_stateobj *so = so_new(16, 0);
 
@@ -286,7 +286,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_rasterizer_state *rsso = CALLOC(1, sizeof(*rsso));
 	struct nouveau_stateobj *so = so_new(32, 0);
-	struct nouveau_grobj *curie = nv40->hw->curie;
+	struct nouveau_grobj *curie = nv40->screen->curie;
 
 	/*XXX: ignored:
 	 * 	light_twoside
@@ -420,18 +420,18 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nv40_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
 	struct nouveau_stateobj *so = so_new(32, 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_DEPTH_FUNC, 3);
+	so_method(so, nv40->screen->curie, NV40TCL_DEPTH_FUNC, 3);
 	so_data  (so, nvgl_comparison_op(cso->depth.func));
 	so_data  (so, cso->depth.writemask ? 1 : 0);
 	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	so_method(so, nv40->hw->curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	so_method(so, nv40->screen->curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
 	so_data  (so, cso->alpha.enabled ? 1 : 0);
 	so_data  (so, nvgl_comparison_op(cso->alpha.func));
 	so_data  (so, float_to_ubyte(cso->alpha.ref));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
+		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[0].write_mask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
@@ -441,12 +441,12 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
+		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
+		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[1].write_mask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
@@ -456,7 +456,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		so_method(so, nv40->hw->curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
+		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
 	}
 

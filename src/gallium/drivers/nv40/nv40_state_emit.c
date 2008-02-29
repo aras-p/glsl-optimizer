@@ -67,8 +67,8 @@ nv40_state_emit(struct nv40_context *nv40)
 	while (state->dirty) {
 		unsigned idx = ffsll(state->dirty) - 1;
 
-		so_ref (state->hw[idx], &nv40->hw->state[idx]);
-		so_emit(nv40->nvws, nv40->hw->state[idx]);
+		so_ref (state->hw[idx], &nv40->screen->state[idx]);
+		so_emit(nv40->nvws, nv40->screen->state[idx]);
 		state->dirty &= ~(1ULL << idx);
 	}
 

@@ -655,7 +655,7 @@ nv40_vertprog_validate(struct nv40_context *nv40)
 check_gpu_resources:
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
-		struct nouveau_resource *heap = nv40->hw->vp_exec_heap;
+		struct nouveau_resource *heap = nv40->screen->vp_exec_heap;
 		struct nouveau_stateobj *so;
 		uint vplen = vp->nr_insns;
 
@@ -672,9 +672,9 @@ check_gpu_resources:
 		}
 
 		so = so_new(5, 0);
-		so_method(so, nv40->hw->curie, NV40TCL_VP_START_FROM_ID, 1);
+		so_method(so, nv40->screen->curie, NV40TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
-		so_method(so, nv40->hw->curie, NV40TCL_VP_ATTRIB_EN, 2);
+		so_method(so, nv40->screen->curie, NV40TCL_VP_ATTRIB_EN, 2);
 		so_data  (so, vp->ir);
 		so_data  (so, vp->or);
 		so_ref(so, &vp->so);
@@ -684,7 +684,7 @@ check_gpu_resources:
 
 	/* Allocate hw vtxprog const slots */
 	if (vp->nr_consts && !vp->data) {
-		struct nouveau_resource *heap = nv40->hw->vp_data_heap;
+		struct nouveau_resource *heap = nv40->screen->vp_data_heap;
 
 		if (nvws->res_alloc(heap, vp->nr_consts, vp, &vp->data)) {
 			while (heap->next && heap->size < vp->nr_consts) {

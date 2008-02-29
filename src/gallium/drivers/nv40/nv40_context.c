@@ -6,10 +6,6 @@
 #include "nv40_context.h"
 #include "nv40_screen.h"
 
-#define NV4X_GRCLASS4097_CHIPSETS 0x00000baf
-#define NV4X_GRCLASS4497_CHIPSETS 0x00005450
-#define NV6X_GRCLASS4497_CHIPSETS 0x00000088
-
 static void
 nv40_flush(struct pipe_context *pipe, unsigned flags)
 {
@@ -24,7 +20,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags)
 	}
 
 	if (flags & PIPE_FLUSH_WAIT) {
-		nvws->notifier_reset(nv40->hw->sync, 0);
+		nvws->notifier_reset(nv40->screen->sync, 0);
 		BEGIN_RING(curie, 0x104, 1);
 		OUT_RING  (0);
 		BEGIN_RING(curie, 0x100, 1);
@@ -34,149 +30,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags)
 	FIRE_RING();
 
 	if (flags & PIPE_FLUSH_WAIT)
-		nvws->notifier_wait(nv40->hw->sync, 0, 0, 2000);
-}
-
-static void
-nv40_channel_takedown(struct nv40_channel_context *cnv40)
-{
-	struct nouveau_winsys *nvws = cnv40->nvws;
-
-	nvws->res_free(&cnv40->vp_exec_heap);
-	nvws->res_free(&cnv40->vp_data_heap);
-	nvws->res_free(&cnv40->query_heap);
-	nvws->notifier_free(&cnv40->query);
-	nvws->notifier_free(&cnv40->sync);
-	nvws->grobj_free(&cnv40->curie);
-	free(cnv40);
-}
-
-static struct nv40_channel_context *
-nv40_channel_init(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
-		  unsigned chipset)
-{
-	struct nv40_channel_context *cnv40 = NULL;
-	struct nouveau_stateobj *so;
-	unsigned curie_class = 0;
-	int ret;
-
-	switch (chipset & 0xf0) {
-	case 0x40:
-		if (NV4X_GRCLASS4097_CHIPSETS & (1 << (chipset & 0x0f)))
-			curie_class = NV40TCL;
-		else
-		if (NV4X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
-			curie_class = NV44TCL;
-		break;
-	case 0x60:
-		if (NV6X_GRCLASS4497_CHIPSETS & (1 << (chipset & 0x0f)))
-			curie_class = NV44TCL;
-		break;
-	default:
-		break;
-	}
-
-	if (!curie_class) {
-		NOUVEAU_ERR("Unknown nv4x chipset: nv%02x\n", chipset);
-		return NULL;
-	}
-
-	cnv40 = CALLOC(1, sizeof(struct nv40_channel_context));
-	if (!cnv40)
-		return NULL;
-	cnv40->chipset = chipset;
-	cnv40->nvws = nvws;
-
-	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &cnv40->sync);
-	if (ret) {
-		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		nv40_channel_takedown(cnv40);
-		return NULL;
-	}
-
-	/* Query objects */
-	ret = nvws->notifier_alloc(nvws, 32, &cnv40->query);
-	if (ret) {
-		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
-		nv40_channel_takedown(cnv40);
-		return NULL;
-	}
-
-	ret = nvws->res_init(&cnv40->query_heap, 0, 32);
-	if (ret) {
-		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
-		nv40_channel_takedown(cnv40);
-		return NULL;
-	}
-
-	/* Vtxprog resources */
-	if (nvws->res_init(&cnv40->vp_exec_heap, 0, 512) ||
-	    nvws->res_init(&cnv40->vp_data_heap, 0, 256)) {
-		nv40_channel_takedown(cnv40);
-		return NULL;
-	}
-
-	/* 3D object */
-	ret = nvws->grobj_alloc(nvws, curie_class, &cnv40->curie);
-	if (ret) {
-		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
-		return FALSE;
-	}
-
-	/* Static curie initialisation */
-	so = so_new(128, 0);
-	so_method(so, cnv40->curie, NV40TCL_DMA_NOTIFY, 1);
-	so_data  (so, cnv40->sync->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_TEXTURE0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->gart->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_COLOR1, 1);
-	so_data  (so, nvws->channel->vram->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_COLOR0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_VTXBUF0, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->gart->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_FENCE, 2);
-	so_data  (so, 0);
-	so_data  (so, cnv40->query->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_UNK01AC, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
-	so_method(so, cnv40->curie, NV40TCL_DMA_COLOR2, 2);
-	so_data  (so, nvws->channel->vram->handle);
-	so_data  (so, nvws->channel->vram->handle);
-
-	so_method(so, cnv40->curie, 0x1ea4, 3);
-	so_data  (so, 0x00000010);
-	so_data  (so, 0x01000100);
-	so_data  (so, 0xff800006);
-
-	/* vtxprog output routing */
-	so_method(so, cnv40->curie, 0x1fc4, 1);
-	so_data  (so, 0x06144321);
-	so_method(so, cnv40->curie, 0x1fc8, 2);
-	so_data  (so, 0xedcba987);
-	so_data  (so, 0x00000021);
-	so_method(so, cnv40->curie, 0x1fd0, 1);
-	so_data  (so, 0x00171615);
-	so_method(so, cnv40->curie, 0x1fd4, 1);
-	so_data  (so, 0x001b1a19);
-
-	so_method(so, cnv40->curie, 0x1ef8, 1);
-	so_data  (so, 0x0020ffff);
-	so_method(so, cnv40->curie, 0x1d64, 1);
-	so_data  (so, 0x00d30000);
-	so_method(so, cnv40->curie, 0x1e94, 1);
-	so_data  (so, 0x00000001);
-
-	so_emit(nvws, so);
-	so_ref(NULL, &so);
-	nvws->push_flush(nvws->channel, 0);
-
-	return cnv40;
+		nvws->notifier_wait(nv40->screen->sync, 0, 0, 2000);
 }
 
 static void
@@ -186,32 +40,22 @@ nv40_destroy(struct pipe_context *pipe)
 
 	if (nv40->draw)
 		draw_destroy(nv40->draw);
-
-	if (nv40->hw) {
-		if (--nv40->hw->refcount == 0)
-			nv40_channel_takedown(nv40->hw);
-	}
-
 	free(nv40);
 }
 
 struct pipe_context *
 nv40_create(struct pipe_screen *pscreen)
 {
+	struct nv40_screen *screen = nv40_screen(pscreen);
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_context *nv40;
-	unsigned chipset = nv40_screen(pscreen)->chipset;
-	struct nouveau_winsys *nvws = nv40_screen(pscreen)->nvws;
+	unsigned chipset = screen->chipset;
+	struct nouveau_winsys *nvws = screen->nvws;
 
 	nv40 = CALLOC(1, sizeof(struct nv40_context));
 	if (!nv40)
 		return NULL;
-
-	nv40->hw = nv40_channel_init(ws, nvws, chipset);
-	if (!nv40->hw) {
-		nv40_destroy(&nv40->pipe);
-		return NULL;
-	}
+	nv40->screen = screen;
 
 	nv40->chipset = chipset;
 	nv40->nvws = nvws;

@@ -12,7 +12,7 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 		return FALSE;
 
 	so = so_new(3, 0);
-	so_method(so, nv40->hw->curie, NV40TCL_SCISSOR_HORIZ, 2);
+	so_method(so, nv40->screen->curie, NV40TCL_SCISSOR_HORIZ, 2);
 	if (rast->scissor) {
 		so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
 		so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
