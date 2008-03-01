@@ -349,7 +349,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       value[0] = ctx->Viewport.Near;                     /* near       */
       value[1] = ctx->Viewport.Far;                      /* far        */
       value[2] = ctx->Viewport.Far - ctx->Viewport.Near; /* far - near */
-      value[3] = 0;
+      value[3] = 1.0;
       return;
    case STATE_FRAGMENT_PROGRAM:
       {
