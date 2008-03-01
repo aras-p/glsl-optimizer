@@ -158,6 +158,7 @@ llvm::Function * InstructionsSoa::function(int op)
     currentModule()->getFunctionList().push_back(func);
     std::cout << "Func parent is "<<func->getParent()
               <<", cur is "<<currentModule() <<std::endl;
+    func->dump();
        //func->setParent(currentModule());
     m_functions[op] = func;
     return func;
@@ -184,8 +185,15 @@ std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> i
    std::vector<Value*> params;
 
    llvm::Value *tmp = allocaTemp();
-   params.push_back(tmp);
-
+   std::vector<Value*> indices;
+   indices.push_back(m_storage->constantInt(0));
+   indices.push_back(m_storage->constantInt(0));
+   GetElementPtrInst *getElem = new GetElementPtrInst(tmp,
+                                                      indices.begin(),
+                                                      indices.end(),
+                                                      name("allocaPtr"),
+                                                      m_builder.GetInsertBlock());
+   params.push_back(getElem);
    params.push_back(in1[0]);
    params.push_back(in1[1]);
    params.push_back(in1[2]);
@@ -194,20 +202,10 @@ std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> i
    params.push_back(in2[1]);
    params.push_back(in2[2]);
    params.push_back(in2[3]);
-   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end(),
-                                         name("dp3"));
+   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end());
    call->setCallingConv(CallingConv::C);
    call->setTailCall(false);
 
-   std::vector<Value*> indices;
-   indices.push_back(m_storage->constantInt(0));
-   indices.push_back(m_storage->constantInt(0));
-
-   GetElementPtrInst *getElem = new GetElementPtrInst(tmp,
-                                                      indices.begin(),
-                                                      indices.end(),
-                                                      name("allocaPtr"),
-                                                      m_builder.GetInsertBlock());
    indices = std::vector<Value*>();
    indices.push_back(m_storage->constantInt(0));
    GetElementPtrInst *xElemPtr =  new GetElementPtrInst(getElem,
@@ -228,10 +226,19 @@ std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> i
                                                         m_builder.GetInsertBlock());
 
    std::vector<llvm::Value*> res(4);
-   res[0] = new LoadInst(xElemPtr);
-   res[1] = new LoadInst(yElemPtr);
-   res[2] = new LoadInst(zElemPtr);
-   res[3] = new LoadInst(wElemPtr);
+   res[0] = new LoadInst(xElemPtr, name("xRes"), false, m_builder.GetInsertBlock());
+   res[1] = new LoadInst(yElemPtr, name("yRes"), false, m_builder.GetInsertBlock());
+   res[2] = new LoadInst(zElemPtr, name("zRes"), false, m_builder.GetInsertBlock());
+   res[3] = new LoadInst(wElemPtr, name("wRes"), false, m_builder.GetInsertBlock());
 
    return res;
+}
+
+llvm::Value * InstructionsSoa::allocaTemp()
+{
+   VectorType *vector   = VectorType::get(Type::FloatTy, 4);
+   ArrayType  *vecArray = ArrayType::get(vector, 4);
+   AllocaInst *alloca = new AllocaInst(vecArray, name("tmpRes"),
+                                       m_builder.GetInsertBlock());
+   return alloca;
 }
