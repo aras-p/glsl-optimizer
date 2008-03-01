@@ -144,6 +144,7 @@ std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
 void InstructionsSoa::createFunctionMap()
 {
    m_functionsMap[TGSI_OPCODE_DP3] = "dp3";
+   m_functionsMap[TGSI_OPCODE_DP4] = "dp4";
 }
 
 llvm::Function * InstructionsSoa::function(int op)
@@ -182,45 +183,42 @@ std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> i
                                                const std::vector<llvm::Value*> in2)
 {
    llvm::Function *func = function(TGSI_OPCODE_DP3);
-   std::vector<Value*> params;
+   return callBuiltin(func, in1, in2);
+}
 
-   llvm::Value *tmp = allocaTemp();
+llvm::Value * InstructionsSoa::allocaTemp()
+{
+   VectorType *vector   = VectorType::get(Type::FloatTy, 4);
+   ArrayType  *vecArray = ArrayType::get(vector, 4);
+   AllocaInst *alloca = new AllocaInst(vecArray, name("tmpRes"),
+                                       m_builder.GetInsertBlock());
+
    std::vector<Value*> indices;
    indices.push_back(m_storage->constantInt(0));
    indices.push_back(m_storage->constantInt(0));
-   GetElementPtrInst *getElem = new GetElementPtrInst(tmp,
+   GetElementPtrInst *getElem = new GetElementPtrInst(alloca,
                                                       indices.begin(),
                                                       indices.end(),
                                                       name("allocaPtr"),
                                                       m_builder.GetInsertBlock());
-   params.push_back(getElem);
-   params.push_back(in1[0]);
-   params.push_back(in1[1]);
-   params.push_back(in1[2]);
-   params.push_back(in1[3]);
-   params.push_back(in2[0]);
-   params.push_back(in2[1]);
-   params.push_back(in2[2]);
-   params.push_back(in2[3]);
-   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end());
-   call->setCallingConv(CallingConv::C);
-   call->setTailCall(false);
+   return getElem;
+}
 
-   indices = std::vector<Value*>();
-   indices.push_back(m_storage->constantInt(0));
-   GetElementPtrInst *xElemPtr =  new GetElementPtrInst(getElem,
+std::vector<llvm::Value*> InstructionsSoa::allocaToResult(llvm::Value *allocaPtr)
+{
+   GetElementPtrInst *xElemPtr =  new GetElementPtrInst(allocaPtr,
                                                         m_storage->constantInt(0),
                                                         name("xPtr"),
                                                         m_builder.GetInsertBlock());
-   GetElementPtrInst *yElemPtr =  new GetElementPtrInst(getElem,
+   GetElementPtrInst *yElemPtr =  new GetElementPtrInst(allocaPtr,
                                                         m_storage->constantInt(1),
                                                         name("yPtr"),
                                                         m_builder.GetInsertBlock());
-   GetElementPtrInst *zElemPtr =  new GetElementPtrInst(getElem,
+   GetElementPtrInst *zElemPtr =  new GetElementPtrInst(allocaPtr,
                                                         m_storage->constantInt(2),
                                                         name("zPtr"),
                                                         m_builder.GetInsertBlock());
-   GetElementPtrInst *wElemPtr =  new GetElementPtrInst(getElem,
+   GetElementPtrInst *wElemPtr =  new GetElementPtrInst(allocaPtr,
                                                         m_storage->constantInt(3),
                                                         name("wPtr"),
                                                         m_builder.GetInsertBlock());
@@ -234,11 +232,75 @@ std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> i
    return res;
 }
 
-llvm::Value * InstructionsSoa::allocaTemp()
+std::vector<llvm::Value*> InstructionsSoa::dp4(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
 {
-   VectorType *vector   = VectorType::get(Type::FloatTy, 4);
-   ArrayType  *vecArray = ArrayType::get(vector, 4);
-   AllocaInst *alloca = new AllocaInst(vecArray, name("tmpRes"),
-                                       m_builder.GetInsertBlock());
-   return alloca;
+   llvm::Function *func = function(TGSI_OPCODE_DP4);
+   return callBuiltin(func, in1, in2);
+}
+
+std::vector<Value*> InstructionsSoa::callBuiltin(llvm::Function *func, const std::vector<llvm::Value*> in1)
+{
+   std::vector<Value*> params;
+
+   llvm::Value *allocaPtr = allocaTemp();
+   params.push_back(allocaPtr);
+   params.push_back(in1[0]);
+   params.push_back(in1[1]);
+   params.push_back(in1[2]);
+   params.push_back(in1[3]);
+   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end());
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+
+   return allocaToResult(allocaPtr);
+}
+
+std::vector<Value*> InstructionsSoa::callBuiltin(llvm::Function *func, const std::vector<llvm::Value*> in1,
+                                                 const std::vector<llvm::Value*> in2)
+{
+   std::vector<Value*> params;
+
+   llvm::Value *allocaPtr = allocaTemp();
+   params.push_back(allocaPtr);
+   params.push_back(in1[0]);
+   params.push_back(in1[1]);
+   params.push_back(in1[2]);
+   params.push_back(in1[3]);
+   params.push_back(in2[0]);
+   params.push_back(in2[1]);
+   params.push_back(in2[2]);
+   params.push_back(in2[3]);
+   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end());
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+
+   return allocaToResult(allocaPtr);
+}
+
+std::vector<Value*> InstructionsSoa::callBuiltin(llvm::Function *func, const std::vector<llvm::Value*> in1,
+                                                 const std::vector<llvm::Value*> in2,
+                                                 const std::vector<llvm::Value*> in3)
+{
+   std::vector<Value*> params;
+
+   llvm::Value *allocaPtr = allocaTemp();
+   params.push_back(allocaPtr);
+   params.push_back(in1[0]);
+   params.push_back(in1[1]);
+   params.push_back(in1[2]);
+   params.push_back(in1[3]);
+   params.push_back(in2[0]);
+   params.push_back(in2[1]);
+   params.push_back(in2[2]);
+   params.push_back(in2[3]);
+   params.push_back(in3[0]);
+   params.push_back(in3[1]);
+   params.push_back(in3[2]);
+   params.push_back(in3[3]);
+   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end());
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+
+   return allocaToResult(allocaPtr);
 }

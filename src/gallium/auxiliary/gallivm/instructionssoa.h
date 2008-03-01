@@ -52,6 +52,8 @@ public:
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> dp3(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> dp4(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> madd(const std::vector<llvm::Value*> in1,
                                   const std::vector<llvm::Value*> in2,
                                   const std::vector<llvm::Value*> in3);
@@ -69,6 +71,16 @@ private:
    llvm::Function *function(int);
    llvm::Module *currentModule() const;
    llvm::Value *allocaTemp();
+   std::vector<llvm::Value*> allocaToResult(llvm::Value *allocaPtr);
+   std::vector<llvm::Value*> callBuiltin(llvm::Function *func,
+                                         const std::vector<llvm::Value*> in1);
+   std::vector<llvm::Value*> callBuiltin(llvm::Function *func,
+                                         const std::vector<llvm::Value*> in1,
+                                         const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> callBuiltin(llvm::Function *func,
+                                         const std::vector<llvm::Value*> in1,
+                                         const std::vector<llvm::Value*> in2,
+                                         const std::vector<llvm::Value*> in3);
 private:
    llvm::LLVMFoldingBuilder  m_builder;
    StorageSoa *m_storage;

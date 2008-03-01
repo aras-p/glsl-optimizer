@@ -46,6 +46,20 @@ void dp3(float4 *res,
    res[3] = dot;
 }
 
+
+void dp4(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
+         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
+{
+   float4 dot = (tmp0x * tmp1x) + (tmp0y * tmp1y) +
+                (tmp0z * tmp1z) + (tmp0w * tmp1w);
+
+   res[0] = dot;
+   res[1] = dot;
+   res[2] = dot;
+   res[3] = dot;
+}
+
 #if 0
 void yo(float4 *out, float4 *in)
 {
