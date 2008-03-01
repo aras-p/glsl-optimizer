@@ -109,7 +109,7 @@ static void widepoint_point( struct draw_stage *stage,
    const struct widepoint_stage *wide = widepoint_stage(stage);
    const boolean sprite = (boolean) stage->draw->rasterizer->point_sprite;
    float half_size;
-   float left_adj, right_adj;
+   float left_adj, right_adj, bot_adj, top_adj;
 
    struct prim_header tri;
 
@@ -124,6 +124,8 @@ static void widepoint_point( struct draw_stage *stage,
    float *pos2 = v2->data[0];
    float *pos3 = v3->data[0];
 
+   const float xbias = 0.0, ybias = -0.125;
+
    /* point size is either per-vertex or fixed size */
    if (wide->psize_slot >= 0) {
       half_size = 0.5f * header->v[0]->data[wide->psize_slot][0];
@@ -132,20 +134,22 @@ static void widepoint_point( struct draw_stage *stage,
       half_size = wide->half_point_size;
    }
 
-   left_adj = -half_size; /* + 0.25f;*/
-   right_adj = half_size; /* + 0.25f;*/
+   left_adj = -half_size + xbias;
+   right_adj = half_size + xbias;
+   bot_adj = half_size + ybias;
+   top_adj = -half_size + ybias;
 
    pos0[0] += left_adj;
-   pos0[1] -= half_size;
+   pos0[1] += top_adj;
 
    pos1[0] += left_adj;
-   pos1[1] += half_size;
+   pos1[1] += bot_adj;
 
    pos2[0] += right_adj;
-   pos2[1] -= half_size;
+   pos2[1] += top_adj;
 
    pos3[0] += right_adj;
-   pos3[1] += half_size;
+   pos3[1] += bot_adj;
 
    if (sprite) {
       static const float tex00[4] = { 0, 0, 0, 1 };

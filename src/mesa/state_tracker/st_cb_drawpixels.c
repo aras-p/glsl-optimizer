@@ -727,8 +727,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
    pipe->bind_vs_state(pipe, ctx->st->state.vs->cso->data);
-   pipe->set_sampler_texture(pipe, unit,
-                st_get_stobj_texture(ctx->st->state.sampler_texture[unit]));
+   pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 }
@@ -1299,13 +1298,20 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 			 psRead,
 			 srcx, srcy, width, height);
    }
-   else {
+   else if (type == GL_COLOR) {
       /* alternate path using get/put_tile() */
       GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
       pipe_get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
       pipe_put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
 
+      free(buf);
+   }
+   else {
+      /* GL_DEPTH */
+      GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
+      pipe_get_tile_z(pipe, psRead, srcx, srcy, width, height, buf);
+      pipe_put_tile_z(pipe, psTex, 0, 0, width, height, buf);
       free(buf);
    }
 

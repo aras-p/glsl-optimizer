@@ -101,9 +101,9 @@ static void lines( struct draw_stage *stage,
    assert(((header->edgeflags & 0x4) >> 2) == header->v[2]->edgeflag);
 #endif
 
+   if (header->edgeflags & 0x4) line( stage, v2, v0 );
    if (header->edgeflags & 0x1) line( stage, v0, v1 );
    if (header->edgeflags & 0x2) line( stage, v1, v2 );
-   if (header->edgeflags & 0x4) line( stage, v2, v0 );
 }
 
 

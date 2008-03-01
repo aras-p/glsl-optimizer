@@ -78,4 +78,18 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
+
+extern void
+pipe_get_tile_z(struct pipe_context *pipe,
+                struct pipe_surface *ps,
+                uint x, uint y, uint w, uint h,
+                uint *z);
+
+extern void
+pipe_put_tile_z(struct pipe_context *pipe,
+                struct pipe_surface *ps,
+                uint x, uint y, uint w, uint h,
+                const uint *z);
+
+
 #endif

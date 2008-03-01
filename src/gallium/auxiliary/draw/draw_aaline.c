@@ -691,35 +691,11 @@ draw_aaline_stage(struct draw_context *draw)
 }
 
 
-/*
- * XXX temporary? solution to mapping a pipe_context to a aaline_stage.
- */
-
-#define MAX_CONTEXTS 10
-
-static struct pipe_context *Pipe[MAX_CONTEXTS];
-static struct aaline_stage *Stage[MAX_CONTEXTS];
-static uint NumContexts;
-
-static void
-add_aa_pipe_context(struct pipe_context *pipe, struct aaline_stage *aa)
-{
-   assert(NumContexts < MAX_CONTEXTS);
-   Pipe[NumContexts] = pipe;
-   Stage[NumContexts] = aa;
-   NumContexts++;
-}
-
 static struct aaline_stage *
 aaline_stage_from_pipe(struct pipe_context *pipe)
 {
-   uint i;
-   for (i = 0; i < NumContexts; i++) {
-      if (Pipe[i] == pipe)
-         return Stage[i];
-   }
-   assert(0);
-   return NULL;
+   struct draw_context *draw = (struct draw_context *) pipe->draw;
+   return aaline_stage(draw->pipeline.aaline);
 }
 
 
@@ -802,6 +778,8 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 {
    struct aaline_stage *aaline;
 
+   pipe->draw = (void *) draw;
+
    /*
     * Create / install AA line drawing / prim stage
     */
@@ -830,6 +808,4 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 
    pipe->bind_sampler_state = aaline_bind_sampler_state;
    pipe->set_sampler_texture = aaline_set_sampler_texture;
-
-   add_aa_pipe_context(pipe, aaline);
 }
