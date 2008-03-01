@@ -708,25 +708,9 @@ translate_instructionir(llvm::Module *module,
       if (src->SrcRegister.Indirect) {
          indIdx = storage->addrElement(src->SrcRegisterInd.Index);
       }
-      if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
-         val = storage->load(StorageSoa::Const,
-                             src->SrcRegister.Index, swizzle, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-         val = storage->load(StorageSoa::Input,
-                             src->SrcRegister.Index, swizzle, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
-         val = storage->load(StorageSoa::Temp,
-                             src->SrcRegister.Index, swizzle, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
-         val = storage->load(StorageSoa::Output,
-                             src->SrcRegister.Index, swizzle, indIdx);
-      } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
-         val = storage->load(StorageSoa::Immediate,
-                             src->SrcRegister.Index, swizzle, indIdx);
-      } else {
-         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
-         return;
-      }
+
+      val = storage->load((enum tgsi_file_type)src->SrcRegister.File,
+                          src->SrcRegister.Index, swizzle, indIdx);
 
       inputs[i] = val;
    }
@@ -763,6 +747,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_DP3: {
+      out = instr->dp3(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_DP4: {
@@ -1067,19 +1052,8 @@ translate_instructionir(llvm::Module *module,
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
-      if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         storage->store(StorageSoa::Output,
-                        dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
-         storage->store(StorageSoa::Temp,
-                        dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
-         storage->store(StorageSoa::Address,
-                        dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
-      } else {
-         fprintf(stderr, "ERROR: unsupported LLVM destination!");
-         assert(!"wrong destination");
-      }
+      storage->store((enum tgsi_file_type)dst->DstRegister.File,
+                     dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
    }
 }
 

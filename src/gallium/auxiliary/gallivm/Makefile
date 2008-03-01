@@ -15,7 +15,7 @@ GALLIVM_SOURCES = \
         storagesoa.cpp \
         instructionssoa.cpp
 
-INC_SOURCES = gallivm_builtins.cpp
+INC_SOURCES = gallivm_builtins.cpp gallivmsoabuiltins.cpp
 
 CPP_SOURCES = \
 	$(GALLIVM_SOURCES)
@@ -65,8 +65,10 @@ depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(INC_SOURCES)
 
 
 gallivm_builtins.cpp: llvm_builtins.c
-	clang --emit-llvm $< |llvm-as|opt -std-compile-opts|llvm2cpp -gen-contents -o=$@ -f -for=shader -funcname=createGallivmBuiltins
+	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts|llvm2cpp -gen-contents -o=$@ -f -for=shader -funcname=createGallivmBuiltins
 
+gallivmsoabuiltins.cpp: soabuiltins.c
+	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts|llvm2cpp -gen-module -o=$@ -f -for=shader -funcname=createSoaBuiltins
 
 # Emacs tags
 tags:
@@ -78,6 +80,7 @@ clean:
 	-rm -f *.o */*.o *~ *.so *~ server/*.o
 	-rm -f depend depend.bak
 	-rm -f gallivm_builtins.cpp
+	-rm -f gallivmsoabuiltins.cpp
 
 symlinks:
 

@@ -42,15 +42,17 @@ struct tgsi_token
    unsigned Extended   : 1;  /* BOOL */
 };
 
-#define TGSI_FILE_NULL        0
-#define TGSI_FILE_CONSTANT    1
-#define TGSI_FILE_INPUT       2
-#define TGSI_FILE_OUTPUT      3
-#define TGSI_FILE_TEMPORARY   4
-#define TGSI_FILE_SAMPLER     5
-#define TGSI_FILE_ADDRESS     6
-#define TGSI_FILE_IMMEDIATE   7
-#define TGSI_FILE_COUNT       8  /**< how many TGSI_FILE_ types */
+enum tgsi_file_type {
+   TGSI_FILE_NULL        =0,
+   TGSI_FILE_CONSTANT    =1,
+   TGSI_FILE_INPUT       =2,
+   TGSI_FILE_OUTPUT      =3,
+   TGSI_FILE_TEMPORARY   =4,
+   TGSI_FILE_SAMPLER     =5,
+   TGSI_FILE_ADDRESS     =6,
+   TGSI_FILE_IMMEDIATE   =7,
+   TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
+};
 
 
 #define TGSI_DECLARE_RANGE    0
