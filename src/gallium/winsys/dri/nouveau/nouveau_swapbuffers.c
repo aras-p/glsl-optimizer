@@ -42,7 +42,7 @@ nouveau_copy_buffer(__DRIdrawablePrivate *dPriv, struct pipe_surface *surf,
 		nv->surface_copy(nv, dx, dy, sx, sy, w, h);
 	}
 
-	FIRE_RING();
+	FIRE_RING(nv->nvc->channel);
 	UNLOCK_HARDWARE(nv);
 
 	if (nv->last_stamp != dPriv->lastStamp) {

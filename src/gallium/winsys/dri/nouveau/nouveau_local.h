@@ -1,7 +1,10 @@
 #ifndef __NOUVEAU_LOCAL_H__
 #define __NOUVEAU_LOCAL_H__
 
+#include "pipe/p_compiler.h"
 #include <stdio.h>
+
+struct pipe_buffer;
 
 /* Debug output */
 #define NOUVEAU_MSG(fmt, args...) do {                                         \
@@ -24,66 +27,90 @@
 #define NOUVEAU_DMA_TIMEOUT 2000
 
 /* Push buffer access macros */
-#define OUT_RING(data) do {                                                    \
-	(*nv->channel->pushbuf->cur++) = (data);                               \
-} while(0)
+static INLINE void
+OUT_RING(struct nouveau_channel *chan, unsigned data)
+{
+	*(chan->pushbuf->cur++) = (data);
+}
 
-#define OUT_RINGp(src,size) do {                                               \
-	memcpy(nv->channel->pushbuf->cur, (src), (size)<<2);                   \
-	nv->channel->pushbuf->cur += (size);                                   \
-} while(0)
+static INLINE void
+OUT_RINGp(struct nouveau_channel *chan, uint32_t *data, unsigned size)
+{
+	memcpy(chan->pushbuf->cur, data, size * 4);
+	chan->pushbuf->cur += size;
+}
 
-#define OUT_RINGf(data) do {                                                   \
-	union { float v; uint32_t u; } c;                                      \
-	c.v = (data);                                                          \
-	OUT_RING(c.u);                                                         \
-} while(0)
+static INLINE void
+OUT_RINGf(struct nouveau_channel *chan, float f)
+{
+	union { uint32_t i; float f; } c;
+	c.f = f;
+	OUT_RING(chan, c.i);
+}
 
-#define FIRE_RING() do {                                                       \
-	nouveau_pushbuf_flush(nv->channel, 0);                                 \
-} while(0)
+static INLINE void
+BEGIN_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr,
+	   unsigned mthd, unsigned size)
+{
+	if (chan->pushbuf->remaining < (size + 1))
+		nouveau_pushbuf_flush(chan, (size + 1));
+	OUT_RING(chan, (gr->subc << 13) | (size << 18) | mthd);
+	chan->pushbuf->remaining -= (size + 1);
+}
 
-#define BEGIN_RING_GR(obj,mthd,size) do {                                      \
-	if (nv->channel->pushbuf->remaining < ((size) + 1))                    \
-		nouveau_pushbuf_flush(nv->channel, ((size) + 1));              \
-	OUT_RING(((obj)->subc << 13) | ((size) << 18) | (mthd));               \
-	nv->channel->pushbuf->remaining -= ((size) + 1);                       \
-} while(0)
+static INLINE void
+FIRE_RING(struct nouveau_channel *chan)
+{
+	nouveau_pushbuf_flush(chan, 0);
+}
 
-#define BEGIN_RING(obj,mthd,size) do {                                         \
-	BEGIN_RING_GR(nv->obj, (mthd), (size));                                \
-} while(0)
+static INLINE void
+BIND_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr, unsigned subc)
+{
+	gr->subc = subc;
+	BEGIN_RING(chan, gr, 0x0000, 1);
+	OUT_RING  (chan, gr->handle);
+}
 
-#define BIND_RING(o,s) do {                                                    \
-	nv->o->subc = (s);                                                     \
-	BEGIN_RING(o, 0x0000, 1);                                              \
-	OUT_RING  (nv->o->handle);                                             \
-} while(0)
-
-#define OUT_RELOC(buf,data,flags,vor,tor) do {                                 \
-	nouveau_pipe_emit_reloc(nv->channel, nv->channel->pushbuf->cur++,      \
-				   buf, (data), (flags), (vor), (tor));        \
-} while(0)
+static INLINE void
+OUT_RELOC(struct nouveau_channel *chan, struct pipe_buffer *buf,
+	  unsigned data, unsigned flags, unsigned vor, unsigned tor)
+{
+	nouveau_pipe_emit_reloc(chan, chan->pushbuf->cur++, buf,
+				data, flags, vor, tor);
+}
 
 /* Raw data + flags depending on FB/TT buffer */
-#define OUT_RELOCd(bo,data,flags,vor,tor) do {                                 \
-	OUT_RELOC((bo), (data), (flags) | NOUVEAU_BO_OR, (vor), (tor));        \
-} while(0)
+static INLINE void
+OUT_RELOCd(struct nouveau_channel *chan, struct pipe_buffer *buf,
+	   unsigned data, unsigned flags, unsigned vor, unsigned tor)
+{
+	OUT_RELOC(chan, buf, data, flags | NOUVEAU_BO_OR, vor, tor);
+}
 
 /* FB/TT object handle */
-#define OUT_RELOCo(bo,flags) do {                                              \
-	OUT_RELOC((bo), 0, (flags) | NOUVEAU_BO_OR,                            \
-		  nv->channel->vram->handle, nv->channel->gart->handle);       \
-} while(0)
+static INLINE void
+OUT_RELOCo(struct nouveau_channel *chan, struct pipe_buffer *buf,
+	   unsigned flags)
+{
+	OUT_RELOC(chan, buf, 0, flags | NOUVEAU_BO_OR,
+		  chan->vram->handle, chan->gart->handle);
+}
 
 /* Low 32-bits of offset */
-#define OUT_RELOCl(bo,delta,flags) do {                                        \
-	OUT_RELOC((bo), (delta), (flags) | NOUVEAU_BO_LOW, 0, 0);              \
-} while(0)
+static INLINE void
+OUT_RELOCl(struct nouveau_channel *chan, struct pipe_buffer *buf,
+	   unsigned delta, unsigned flags)
+{
+	OUT_RELOC(chan, buf, delta, flags | NOUVEAU_BO_LOW, 0, 0);
+}
 
 /* High 32-bits of offset */
-#define OUT_RELOCh(bo,delta,flags) do {                                        \
-	OUT_RELOC((bo), (delta), (flags) | NOUVEAU_BO_HIGH, 0, 0);             \
-} while(0)
+static INLINE void
+OUT_RELOCh(struct nouveau_channel *chan, struct pipe_buffer *buf,
+	   unsigned delta, unsigned flags)
+{
+	OUT_RELOC(chan, buf, delta, flags | NOUVEAU_BO_HIGH, 0, 0);
+}
 
 #endif

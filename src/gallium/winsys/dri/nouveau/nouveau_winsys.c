@@ -11,7 +11,7 @@ nouveau_pipe_notifier_alloc(struct nouveau_winsys *nvws, int count,
 {
 	struct nouveau_context *nv = nvws->nv;
 
-	return nouveau_notifier_alloc(nv->channel, nv->next_handle++,
+	return nouveau_notifier_alloc(nv->nvc->channel, nv->nvc->next_handle++,
 				      count, notify);
 }
 
@@ -20,17 +20,16 @@ nouveau_pipe_grobj_alloc(struct nouveau_winsys *nvws, int grclass,
 			 struct nouveau_grobj **grobj)
 {
 	struct nouveau_context *nv = nvws->nv;
+	struct nouveau_channel *chan = nv->nvc->channel;
 	int ret;
 
-	ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++,
+	ret = nouveau_grobj_alloc(chan, nv->nvc->next_handle++,
 				  grclass, grobj);
 	if (ret)
 		return ret;
 
-	(*grobj)->subc = nv->next_subchannel++;
-	assert((*grobj)->subc <= 7);
-	BEGIN_RING_GR(*grobj, 0x0000, 1);
-	OUT_RING     ((*grobj)->handle);
+	assert(nv->nvc->next_subchannel < 7);
+	BIND_RING(chan, *grobj, nv->nvc->next_subchannel++);
 	return 0;
 }
 
@@ -103,7 +102,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	}
 
 	nvws->nv		= nv;
-	nvws->channel		= nv->channel;
+	nvws->channel		= nv->nvc->channel;
 
 	nvws->res_init		= nouveau_resource_init;
 	nvws->res_alloc		= nouveau_resource_alloc;

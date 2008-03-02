@@ -13,6 +13,25 @@ struct nouveau_framebuffer {
 	struct st_framebuffer *stfb;
 };
 
+struct nouveau_channel_context {
+	unsigned chipset;
+
+	struct nouveau_channel  *channel;
+
+	struct nouveau_notifier *sync_notifier;
+
+	struct nouveau_grobj    *NvNull;
+	struct nouveau_grobj    *NvCtxSurf2D;
+	struct nouveau_grobj    *NvImageBlit;
+	struct nouveau_grobj    *NvGdiRect;
+	struct nouveau_grobj    *NvM2MF;
+	struct nouveau_grobj    *Nv2D;
+
+	uint32_t                 next_handle;
+	uint32_t                 next_subchannel;
+	uint32_t                 next_sequence;
+};
+
 struct nouveau_context {
 	struct st_context *st;
 
@@ -31,17 +50,7 @@ struct nouveau_context {
 	struct pipe_surface *frontbuffer;
 
 	/* Hardware context */
-	struct nouveau_channel  *channel;
-	struct nouveau_notifier *sync_notifier;
-	struct nouveau_grobj    *NvNull;
-	struct nouveau_grobj    *NvCtxSurf2D;
-	struct nouveau_grobj    *NvImageBlit;
-	struct nouveau_grobj    *NvGdiRect;
-	struct nouveau_grobj    *NvM2MF;
-	struct nouveau_grobj    *Nv2D;
-	uint32_t                 next_handle;
-	uint32_t                 next_subchannel;
-	uint32_t                 next_sequence;
+	struct nouveau_channel_context *nvc;
 
 	/* pipe_surface accel */
 	struct pipe_surface *surf_src, *surf_dst;
@@ -80,6 +89,10 @@ extern int __nouveau_debug;
 extern void LOCK_HARDWARE(struct nouveau_context *);
 extern void UNLOCK_HARDWARE(struct nouveau_context *);
 
+extern int
+nouveau_surface_channel_create_nv04(struct nouveau_channel_context *);
+extern int
+nouveau_surface_channel_create_nv50(struct nouveau_channel_context *);
 extern int nouveau_surface_init_nv04(struct nouveau_context *);
 extern int nouveau_surface_init_nv50(struct nouveau_context *);
 

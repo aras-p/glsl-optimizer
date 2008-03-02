@@ -21,6 +21,75 @@ static const struct dri_debug_control debug_control[] = {
 int __nouveau_debug = 0;
 #endif
 
+static void
+nouveau_channel_context_destroy(struct nouveau_channel_context *nvc)
+{
+	nouveau_grobj_free(&nvc->NvNull);
+	nouveau_grobj_free(&nvc->NvCtxSurf2D);
+	nouveau_grobj_free(&nvc->NvImageBlit);
+	nouveau_grobj_free(&nvc->NvGdiRect);
+	nouveau_grobj_free(&nvc->NvM2MF);
+	nouveau_grobj_free(&nvc->Nv2D);
+
+	nouveau_notifier_free(&nvc->sync_notifier);
+
+	nouveau_channel_free(&nvc->channel);
+
+	FREE(nvc);
+}
+
+static struct nouveau_channel_context *
+nouveau_channel_context_create(struct nouveau_device *nvdev, unsigned chipset)
+{
+	struct nouveau_channel_context *nvc;
+	int ret;
+
+	nvc = CALLOC_STRUCT(nouveau_channel_context);
+	if (!nvc)
+		return NULL;
+	nvc->chipset = chipset;
+
+	if ((ret = nouveau_channel_alloc(nvdev, 0x8003d001, 0x8003d002,
+					 &nvc->channel))) {
+		NOUVEAU_ERR("Error creating GPU channel: %d\n", ret);
+		nouveau_channel_context_destroy(nvc);
+		return NULL;
+	}
+
+	if ((ret = nouveau_grobj_alloc(nvc->channel, 0x00000000, 0x30,
+				       &nvc->NvNull))) {
+		NOUVEAU_ERR("Error creating NULL object: %d\n", ret);
+		nouveau_channel_context_destroy(nvc);
+		return NULL;
+	}
+	nvc->next_handle = 0x80000000;
+
+	if ((ret = nouveau_notifier_alloc(nvc->channel, nvc->next_handle++, 1,
+					  &nvc->sync_notifier))) {
+		NOUVEAU_ERR("Error creating channel sync notifier: %d\n", ret);
+		nouveau_channel_context_destroy(nvc);
+		return NULL;
+	}
+
+	switch (chipset) {
+	case 0x50:
+	case 0x80:
+		ret = nouveau_surface_channel_create_nv50(nvc);
+		break;
+	default:
+		ret = nouveau_surface_channel_create_nv04(nvc);
+		break;
+	}
+
+	if (ret) {
+		NOUVEAU_ERR("Error initialising surface objects: %d\n", ret);
+		nouveau_channel_context_destroy(nvc);
+		return NULL;
+	}
+
+	return nvc;
+}
+
 GLboolean
 nouveau_context_create(const __GLcontextModes *glVis,
 		       __DRIcontextPrivate *driContextPriv,
@@ -42,13 +111,6 @@ nouveau_context_create(const __GLcontextModes *glVis,
 					    NOUVEAU_GETPARAM_CHIPSET_ID,
 					    &nv->chipset))) {
 		NOUVEAU_ERR("Error determining chipset id: %d\n", ret);
-		return GL_FALSE;
-	}
-
-	if ((ret = nouveau_channel_alloc(nv_screen->device,
-					 0x8003d001, 0x8003d002,
-					 &nv->channel))) {
-		NOUVEAU_ERR("Error creating GPU channel: %d\n", ret);
 		return GL_FALSE;
 	}
 
@@ -101,16 +163,9 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		nv->frontbuffer = fb_surf;
 	}
 
-	if ((ret = nouveau_grobj_alloc(nv->channel, 0x00000000, 0x30,
-				       &nv->NvNull))) {
-		NOUVEAU_ERR("Error creating NULL object: %d\n", ret);
-		return GL_FALSE;
-	}
-	nv->next_handle = 0x80000000;
-
-	if ((ret = nouveau_notifier_alloc(nv->channel, nv->next_handle++, 1,
-					  &nv->sync_notifier))) {
-		NOUVEAU_ERR("Error creating channel sync notifier: %d\n", ret);
+	nv->nvc = nouveau_channel_context_create(&nvdev->base, nv->chipset);
+	if (!nv->nvc) {
+		NOUVEAU_ERR("Failed initialising GPU channel context\n");
 		return GL_FALSE;
 	}
 
@@ -152,9 +207,7 @@ nouveau_context_destroy(__DRIcontextPrivate *driContextPriv)
 	st_flush(nv->st, PIPE_FLUSH_WAIT);
 	st_destroy_context(nv->st);
 
-	nouveau_grobj_free(&nv->NvCtxSurf2D);
-	nouveau_grobj_free(&nv->NvImageBlit);
-	nouveau_channel_free(&nv->channel);
+	nouveau_channel_context_destroy(nv->nvc);
 
 	free(nv);
 }
