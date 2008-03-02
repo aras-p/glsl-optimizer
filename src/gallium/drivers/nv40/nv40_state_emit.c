@@ -67,7 +67,7 @@ nv40_state_emit(struct nv40_context *nv40)
 
 	if (nv40->pctx_id != screen->cur_pctx) {
 		for (i = 0; i < NV40_STATE_MAX; i++) {
-			if (screen->state[i] != state->hw[i] && state->hw[i])
+			if (state->hw[i] && screen->state[i] != state->hw[i])
 				state->dirty |= (1ULL << i);
 		}
 
@@ -84,6 +84,8 @@ nv40_state_emit(struct nv40_context *nv40)
 
 	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
+		if (!(samplers & (1 << i)))
+			continue;
 		so_emit_reloc_markers(nv40->nvws,
 				      state->hw[NV40_STATE_FRAGTEX0+i]);
 		samplers &= ~(1ULL << i);
