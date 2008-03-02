@@ -691,6 +691,7 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp, struct prog_instruct
 {
 	//ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 
+#if 0
 	inst[0] = PVS_VECTOR_OPCODE(VE_ADD,
 				    t_dst_index(vp, &vpi->DstReg),
 				    t_dst_mask(vpi->DstReg.WriteMask),
@@ -704,6 +705,21 @@ static GLuint *t_opcode_sub(struct r300_vertex_program *vp, struct prog_instruct
 				    t_src_class(src[1].File),
 				    (!src[1].NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
 	inst[3] = 0;
+#else
+	inst[0] =
+	    PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
+			      t_dst_mask(vpi->DstReg.WriteMask),
+			      t_dst_class(vpi->DstReg.File));
+	inst[1] = t_src(vp, &src[0]);
+	inst[2] = ONE_SRC_0;
+	inst[3] = PVS_SOURCE_OPCODE(t_src_index(vp, &src[1]),
+				    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
+				    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
+				    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
+				    t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
+				    t_src_class(src[1].File),
+				    (!src[1].  NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) | (src[1].RelAddr << 4);
+#endif
 
 	return inst;
 }
