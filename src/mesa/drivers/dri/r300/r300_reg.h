@@ -2480,6 +2480,12 @@ enum {
 };
 
 enum {
+	/* R3XX */
+	PVS_MACRO_OP_2CLK_MADD		= 0,
+	PVS_MACRO_OP_2CLK_M2X_ADD	= 1,
+};
+
+enum {
 	PVS_SRC_REG_TEMPORARY		= 0,	/* Intermediate Storage */
 	PVS_SRC_REG_INPUT		= 1,	/* Input Vertex Storage */
 	PVS_SRC_REG_CONSTANT		= 2,	/* Constant State Storage */

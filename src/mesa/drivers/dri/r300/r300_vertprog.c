@@ -555,10 +555,12 @@ static GLuint *t_opcode_log(struct r300_vertex_program *vp, struct prog_instruct
 
 static GLuint *t_opcode_mad(struct r300_vertex_program *vp, struct prog_instruction *vpi, GLuint * inst, struct prog_src_register src[3])
 {
-	inst[0] = PVS_VECTOR_OPCODE(VE_MULTIPLY_ADD,
-				    t_dst_index(vp, &vpi->DstReg),
-				    t_dst_mask(vpi->DstReg.WriteMask),
-				    t_dst_class(vpi->DstReg.File));
+	/* FIXME */
+	inst[0] = (((PVS_MACRO_OP_2CLK_MADD & PVS_DST_OPCODE_MASK) << PVS_DST_OPCODE_SHIFT) |
+		   ((1 & PVS_DST_MACRO_INST_MASK) << PVS_DST_MACRO_INST_SHIFT) |
+		   ((t_dst_index(vp, &vpi->DstReg) & PVS_DST_OFFSET_MASK) << PVS_DST_OFFSET_SHIFT) |
+		   ((t_dst_mask(vpi->DstReg.WriteMask) & 0xf) << PVS_DST_WE_X_SHIFT) |
+		   ((t_dst_class(vpi->DstReg.File) & PVS_DST_REG_TYPE_MASK) << PVS_DST_REG_TYPE_SHIFT));
 	inst[1] = t_src(vp, &src[0]);
 	inst[2] = t_src(vp, &src[1]);
 	inst[3] = t_src(vp, &src[2]);
