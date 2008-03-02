@@ -416,8 +416,6 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 				ai = fsrc->SrcRegister.Index;
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
-				NOUVEAU_MSG("extra src attr %d\n",
-					 fsrc->SrcRegister.Index);
 				src[i] = temp(fpc);
 				arith(fpc, 0, MOV, src[i], MASK_ALL,
 				      tgsi_src(fpc, fsrc), none, none);
