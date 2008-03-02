@@ -108,6 +108,7 @@ struct nv40_context {
 
 	struct nouveau_winsys *nvws;
 	struct nv40_screen *screen;
+	unsigned pctx_id;
 
 	struct draw_context *draw;
 

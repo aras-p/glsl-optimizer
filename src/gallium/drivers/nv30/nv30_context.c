@@ -265,7 +265,7 @@ nv30_init_hwctx(struct nv30_context *nv30, int rankine_class)
 #define NV35TCL_CHIPSET_3X_MASK 0x000001e0
 
 struct pipe_context *
-nv30_create(struct pipe_screen *screen)
+nv30_create(struct pipe_screen *screen, unsigned pctx_id)
 {
 	struct pipe_winsys *pipe_winsys = screen->winsys;
 	struct nouveau_winsys *nvws = nv30_screen(screen)->nvws;

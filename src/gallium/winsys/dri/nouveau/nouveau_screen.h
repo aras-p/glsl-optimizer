@@ -14,6 +14,8 @@ struct nouveau_screen {
 	uint32_t front_pitch;
 	uint32_t front_cpp;
 	uint32_t front_height;
+
+	void *nvc;
 };
 
 #endif

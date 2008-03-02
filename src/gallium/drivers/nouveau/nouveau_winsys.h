@@ -54,20 +54,20 @@ nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
 		   unsigned chipset);
 
 extern struct pipe_context *
-nv30_create(struct pipe_screen *);
+nv30_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
 nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
 		   unsigned chipset);
 
 extern struct pipe_context *
-nv40_create(struct pipe_screen *);
+nv40_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
 nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
 		   unsigned chipset);
 
 extern struct pipe_context *
-nv50_create(struct pipe_screen *);
+nv50_create(struct pipe_screen *, unsigned pctx_id);
 
 #endif

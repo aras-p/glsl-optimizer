@@ -14,6 +14,13 @@ struct nouveau_framebuffer {
 };
 
 struct nouveau_channel_context {
+	struct pipe_screen *pscreen;
+	int refcount;
+
+	unsigned cur_pctx;
+	unsigned nr_pctx;
+	struct pipe_context **pctx;
+
 	unsigned chipset;
 
 	struct nouveau_channel  *channel;
@@ -51,6 +58,7 @@ struct nouveau_context {
 
 	/* Hardware context */
 	struct nouveau_channel_context *nvc;
+	int pctx_id;
 
 	/* pipe_surface accel */
 	struct pipe_surface *surf_src, *surf_dst;

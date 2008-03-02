@@ -62,7 +62,17 @@ static void
 nv40_state_emit(struct nv40_context *nv40)
 {
 	struct nv40_state *state = &nv40->state;
+	struct nv40_screen *screen = nv40->screen;
 	unsigned i, samplers;
+
+	if (nv40->pctx_id != screen->cur_pctx) {
+		for (i = 0; i < NV40_STATE_MAX; i++) {
+			if (screen->state[i] != state->hw[i] && state->hw[i])
+				state->dirty |= (1ULL << i);
+		}
+
+		screen->cur_pctx = nv40->pctx_id;
+	}
 
 	while (state->dirty) {
 		unsigned idx = ffsll(state->dirty) - 1;

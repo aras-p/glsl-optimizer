@@ -4,6 +4,7 @@
 #include "utils.h"
 
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -101,7 +102,8 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	struct nouveau_device_priv *nvdev;
 	struct pipe_context *pipe = NULL;
 	struct st_context *st_share = NULL;
-	int ret;
+	struct nouveau_channel_context *nvc = NULL;
+	int i, ret;
 
 	if (sharedContextPrivate) {
 		st_share = ((struct nouveau_context *)sharedContextPrivate)->st;
@@ -163,12 +165,56 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		nv->frontbuffer = fb_surf;
 	}
 
-	nv->nvc = nouveau_channel_context_create(&nvdev->base, nv->chipset);
-	if (!nv->nvc) {
-		NOUVEAU_ERR("Failed initialising GPU channel context\n");
-		return GL_FALSE;
+	/* Attempt to share a single channel between multiple contexts from
+	 * a single process.
+	 */
+	nvc = nv_screen->nvc;
+	if (!nvc && st_share) {
+		struct nouveau_context *snv = st_share->pipe->priv;
+		if (snv) {
+			nvc = snv->nvc;
+		}
 	}
 
+	/*XXX: temporary - disable multi-context/single-channel on non-NV4x */
+	switch (nv->chipset & 0xf0) {
+	case 0x40:
+	case 0x60:
+		break;
+	default:
+		nvc = NULL;
+		break;
+	}
+
+	if (!nvc) {
+		nvc = nouveau_channel_context_create(&nvdev->base, nv->chipset);
+		if (!nvc) {
+			NOUVEAU_ERR("Failed initialising GPU context\n");
+			return GL_FALSE;
+		}
+		nv_screen->nvc = nvc;
+	}
+
+	nvc->refcount++;
+	nv->nvc = nvc;
+
+	/* Find a free slot for a pipe context, allocate a new one if needed */
+	nv->pctx_id = -1;
+	for (i = 0; i < nvc->nr_pctx; i++) {
+		if (nvc->pctx[i] == NULL) {
+			nv->pctx_id = i;
+			break;
+		}
+	}
+
+	if (nv->pctx_id < 0) {
+		nv->pctx_id = nvc->nr_pctx++;
+		nvc->pctx =
+			realloc(nvc->pctx,
+				sizeof(struct pipe_context *) * nvc->nr_pctx);
+	}
+
+	/* Create pipe */
 	if (nv->chipset < 0x50)
 		ret = nouveau_surface_init_nv04(nv);
 	else
@@ -201,13 +247,18 @@ void
 nouveau_context_destroy(__DRIcontextPrivate *driContextPriv)
 {
 	struct nouveau_context *nv = driContextPriv->driverPrivate;
+	struct nouveau_channel_context *nvc = nv->nvc;
 
 	assert(nv);
 
 	st_flush(nv->st, PIPE_FLUSH_WAIT);
 	st_destroy_context(nv->st);
 
-	nouveau_channel_context_destroy(nv->nvc);
+	if (nv->pctx_id >= 0) {
+		nvc->pctx[nv->pctx_id] = NULL;
+		if (--nvc->refcount <= 0)
+			nouveau_channel_context_destroy(nvc);
+	}
 
 	free(nv);
 }

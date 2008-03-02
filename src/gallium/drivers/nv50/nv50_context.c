@@ -56,7 +56,7 @@ nv50_init_hwctx(struct nv50_context *nv50, int tesla_class)
 #define GRCLASS5097_CHIPSETS 0x00000000
 #define GRCLASS8297_CHIPSETS 0x00000010
 struct pipe_context *
-nv50_create(struct pipe_screen *pscreen)
+nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
 	struct pipe_winsys *pipe_winsys = pscreen->winsys;
 	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
