@@ -9,34 +9,53 @@
 #include "nouveau/nouveau_pushbuf.h"
 
 static INLINE int
-nv40_vbo_ncomp(uint format)
+nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 {
-	int ncomp = 0;
+	char fs[128];
 
-	if (pf_size_x(format)) ncomp++;
-	if (pf_size_y(format)) ncomp++;
-	if (pf_size_z(format)) ncomp++;
-	if (pf_size_w(format)) ncomp++;
-
-	return ncomp;
-}
-
-static INLINE int
-nv40_vbo_type(uint format)
-{
-	switch (pf_type(format)) {
-	case PIPE_FORMAT_TYPE_FLOAT:
-		return NV40TCL_VTXFMT_TYPE_FLOAT;
-	case PIPE_FORMAT_TYPE_UNORM:
-		return NV40TCL_VTXFMT_TYPE_UBYTE;
+	switch (pipe) {
+	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_R32G32_FLOAT:
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		*fmt = NV40TCL_VTXFMT_TYPE_FLOAT;
+		break;
+	case PIPE_FORMAT_R8_UNORM:
+	case PIPE_FORMAT_R8G8_UNORM:
+	case PIPE_FORMAT_R8G8B8_UNORM:
+	case PIPE_FORMAT_R8G8B8A8_UNORM:
+		*fmt = NV40TCL_VTXFMT_TYPE_UBYTE;
+		break;
 	default:
-	{
-		char fs[128];
-		pf_sprint_name(fs, format);
+		pf_sprint_name(fs, pipe);
 		NOUVEAU_ERR("Unknown format %s\n", fs);
-		return NV40TCL_VTXFMT_TYPE_FLOAT;
+		return 1;
 	}
+
+	switch (pipe) {
+	case PIPE_FORMAT_R8_UNORM:
+	case PIPE_FORMAT_R32_FLOAT:
+		*ncomp = 1;
+		break;
+	case PIPE_FORMAT_R8G8_UNORM:
+	case PIPE_FORMAT_R32G32_FLOAT:
+		*ncomp = 2;
+		break;
+	case PIPE_FORMAT_R8G8B8_UNORM:
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+		*ncomp = 3;
+		break;
+	case PIPE_FORMAT_R8G8B8A8_UNORM:
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		*ncomp = 4;
+		break;
+	default:
+		pf_sprint_name(fs, pipe);
+		NOUVEAU_ERR("Unknown format %s\n", fs);
+		return 1;
 	}
+
+	return 0;
 }
 
 static boolean
@@ -82,11 +101,11 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 		       struct pipe_vertex_buffer *vb)
 {
 	struct pipe_winsys *ws = nv40->pipe.winsys;
-	int type, ncomp;
+	unsigned type, ncomp;
 	void *map;
 
-	type = nv40_vbo_type(ve->src_format);
-	ncomp = nv40_vbo_ncomp(ve->src_format);
+	if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp))
+		return FALSE;
 
 	map  = ws->buffer_map(ws, vb->buffer, PIPE_BUFFER_USAGE_CPU_READ);
 	map += vb->buffer_offset + ve->src_offset;
@@ -373,6 +392,7 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	for (hw = 0; hw < num_hw; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
+		unsigned type, ncomp;
 
 		if (!(inputs & (1 << hw))) {
 			so_data(vtxbuf, 0);
@@ -389,13 +409,14 @@ nv40_vbo_validate(struct nv40_context *nv40)
 			continue;
 		}
 
+		if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp))
+			assert(0);
+
 		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
 			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
 			 0, NV40TCL_VTXBUF_ADDRESS_DMA1);
 		so_data (vtxfmt, ((vb->pitch << NV40TCL_VTXFMT_STRIDE_SHIFT) |
-				  (nv40_vbo_ncomp(ve->src_format) <<
-				   NV40TCL_VTXFMT_SIZE_SHIFT) |
-				  nv40_vbo_type(ve->src_format)));
+				  (ncomp << NV40TCL_VTXFMT_SIZE_SHIFT) | type));
 	}
 
 	if (ib) {
