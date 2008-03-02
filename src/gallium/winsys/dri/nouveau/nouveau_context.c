@@ -256,8 +256,10 @@ nouveau_context_destroy(__DRIcontextPrivate *driContextPriv)
 
 	if (nv->pctx_id >= 0) {
 		nvc->pctx[nv->pctx_id] = NULL;
-		if (--nvc->refcount <= 0)
+		if (--nvc->refcount <= 0) {
 			nouveau_channel_context_destroy(nvc);
+			nv->nv_screen->nvc = NULL;
+		}
 	}
 
 	free(nv);
