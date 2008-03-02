@@ -214,7 +214,7 @@ static const struct __DriverAPIRec nouveauAPI = {
 
 
 static __GLcontextModes *
-nouveauFillInModes( __DRIscreenPRiv *psp,
+nouveauFillInModes( __DRIscreenPrivate *psp,
 		    unsigned pixel_bits, unsigned depth_bits,
 		    unsigned stencil_bits, GLboolean have_back_buffer )
 {
@@ -304,7 +304,7 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 		  "  git://anongit.freedesktop.org/git/nouveau/mesa\n");
 
 #if NOUVEAU_DRM_HEADER_PATCHLEVEL != 10
-#error nouveau_drm.h version doesn't match expected version
+#error nouveau_drm.h version does not match expected version
 #endif
 
 	if (!driCheckDriDdxDrmVersions2("nouveau",
