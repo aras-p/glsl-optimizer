@@ -2,6 +2,7 @@
 #define __NOUVEAU_LOCAL_H__
 
 #include "pipe/p_compiler.h"
+#include "nouveau_winsys_pipe.h"
 #include <stdio.h>
 
 struct pipe_buffer;
@@ -76,8 +77,9 @@ static INLINE void
 OUT_RELOC(struct nouveau_channel *chan, struct pipe_buffer *buf,
 	  unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
-	nouveau_pipe_emit_reloc(chan, chan->pushbuf->cur++, buf,
-				data, flags, vor, tor);
+	nouveau_pushbuf_emit_reloc(chan, chan->pushbuf->cur++,
+				   nouveau_buffer(buf)->bo,
+				   data, flags, vor, tor);
 }
 
 /* Raw data + flags depending on FB/TT buffer */
