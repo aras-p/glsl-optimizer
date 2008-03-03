@@ -43,11 +43,9 @@ else:
 #######################################################################
 # Common options
 
-def Options():
-	from SCons.Options import Options
+def AddOptions(opts):
 	from SCons.Options.BoolOption import BoolOption
 	from SCons.Options.EnumOption import EnumOption
-	opts = Options('config.py')
 	opts.Add(BoolOption('debug', 'build debug version', 'no'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'x86', 'x86_64')))
@@ -55,7 +53,6 @@ def Options():
 											 allowed_values=('linux', 'cell', 'winddk')))
 	opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
 	opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
-	return opts
 
 
 #######################################################################
