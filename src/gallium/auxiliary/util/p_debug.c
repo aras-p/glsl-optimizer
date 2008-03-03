@@ -43,7 +43,7 @@
 void debug_vprintf(const char *format, va_list ap)
 {
 #ifdef WIN32
-   EngDebugPrint("Gallium3D: ", (PCHAR)format, ap);
+   EngDebugPrint("", (PCHAR)format, ap);
 #else
    vfprintf(stderr, format, ap);
 #endif
