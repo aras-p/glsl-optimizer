@@ -54,7 +54,7 @@ fetch_##NAME(const void *ptr, float *attrib)		\
    int i;						\
 							\
    for (i = 0; i < SZ; i++) {				\
-      attrib[i] = CVT;					\
+      attrib[i] = CVT(i);                              \
    }							\
 							\
    for (; i < 4; i++) {					\
@@ -62,24 +62,24 @@ fetch_##NAME(const void *ptr, float *attrib)		\
    }							\
 }
 
-#define CVT_64_FLOAT   (float) ((double *) ptr)[i]
-#define CVT_32_FLOAT   ((float *) ptr)[i]
+#define CVT_64_FLOAT(i)   (float) ((double *) ptr)[i]
+#define CVT_32_FLOAT(i)   ((float *) ptr)[i]
 
-#define CVT_8_USCALED  (float) ((unsigned char *) ptr)[i]
-#define CVT_16_USCALED (float) ((unsigned short *) ptr)[i]
-#define CVT_32_USCALED (float) ((unsigned int *) ptr)[i]
+#define CVT_8_USCALED(i)  (float) ((unsigned char *) ptr)[i]
+#define CVT_16_USCALED(i) (float) ((unsigned short *) ptr)[i]
+#define CVT_32_USCALED(i) (float) ((unsigned int *) ptr)[i]
 
-#define CVT_8_SSCALED  (float) ((char *) ptr)[i]
-#define CVT_16_SSCALED (float) ((short *) ptr)[i]
-#define CVT_32_SSCALED (float) ((int *) ptr)[i]
+#define CVT_8_SSCALED(i)  (float) ((char *) ptr)[i]
+#define CVT_16_SSCALED(i) (float) ((short *) ptr)[i]
+#define CVT_32_SSCALED(i) (float) ((int *) ptr)[i]
 
-#define CVT_8_UNORM    (float) ((unsigned char *) ptr)[i] / 255.0f
-#define CVT_16_UNORM   (float) ((unsigned short *) ptr)[i] / 65535.0f
-#define CVT_32_UNORM   (float) ((unsigned int *) ptr)[i] / 4294967295.0f
+#define CVT_8_UNORM(i)    (float) ((unsigned char *) ptr)[i] / 255.0f
+#define CVT_16_UNORM(i)   (float) ((unsigned short *) ptr)[i] / 65535.0f
+#define CVT_32_UNORM(i)   (float) ((unsigned int *) ptr)[i] / 4294967295.0f
 
-#define CVT_8_SNORM    (float) ((char *) ptr)[i] / 127.0f
-#define CVT_16_SNORM   (float) ((short *) ptr)[i] / 32767.0f
-#define CVT_32_SNORM   (float) ((int *) ptr)[i] / 2147483647.0f
+#define CVT_8_SNORM(i)    (float) ((char *) ptr)[i] / 127.0f
+#define CVT_16_SNORM(i)   (float) ((short *) ptr)[i] / 32767.0f
+#define CVT_32_SNORM(i)   (float) ((int *) ptr)[i] / 2147483647.0f
 
 FETCH_ATTRIB( R64G64B64A64_FLOAT,   4, CVT_64_FLOAT )
 FETCH_ATTRIB( R64G64B64_FLOAT,      3, CVT_64_FLOAT )
@@ -154,6 +154,16 @@ FETCH_ATTRIB( R8_SNORM,        1, CVT_8_SNORM )
 FETCH_ATTRIB( A8R8G8B8_UNORM,       4, CVT_8_UNORM )
 //FETCH_ATTRIB( R8G8B8A8_UNORM,       4, CVT_8_UNORM )
 
+
+
+static void
+fetch_B8G8R8A8_UNORM(const void *ptr, float *attrib)
+{
+   attrib[2] = CVT_8_UNORM(0);
+   attrib[1] = CVT_8_UNORM(1);
+   attrib[0] = CVT_8_UNORM(2);
+   attrib[3] = CVT_8_UNORM(3);
+}
 
 
 static fetch_func get_fetch_func( enum pipe_format format )
@@ -295,6 +305,10 @@ static fetch_func get_fetch_func( enum pipe_format format )
 
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       return fetch_A8R8G8B8_UNORM;
+
+
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return fetch_B8G8R8A8_UNORM;
 
    case 0:
       return NULL;		/* not sure why this is needed */
