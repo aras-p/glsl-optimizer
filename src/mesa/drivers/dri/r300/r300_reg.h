@@ -2262,6 +2262,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define ZB_STENCILREFMASK                        0x4f08
 #	define ZB_STENCILREFMASK_STENCILREF_SHIFT       0
+#	define ZB_STENCILREFMASK_STENCIL_MASK           0xff
 #	define ZB_STENCILREFMASK_STENCILREF_MASK        0x000000ff
 #	define ZB_STENCILREFMASK_STENCILMASK_SHIFT      8
 #	define ZB_STENCILREFMASK_STENCILMASK_MASK       0x0000ff00
@@ -2290,8 +2291,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define ZB_ZCACHE_CTLSTAT_ZC_FLUSH_FLUSH_AND_FREE (1 << 0)
 #       define ZB_ZCACHE_CTLSTAT_ZC_FREE_NO_EFFECT       (0 << 1)
 #       define ZB_ZCACHE_CTLSTAT_ZC_FREE_FREE            (1 << 1)
-#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_IDLE            (0 << 1)
-#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_BUSY            (1 << 1)
+#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_IDLE            (0 << 31)
+#       define ZB_ZCACHE_CTLSTAT_ZC_BUSY_BUSY            (1 << 31)
 
 #define R300_ZB_BW_CNTL                     0x4f1c
 #	define R300_HIZ_DISABLE                              (0 << 0)
