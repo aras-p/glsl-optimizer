@@ -206,7 +206,10 @@ if llvm:
 	env.ParseConfig('llvm-config --cflags --ldflags --libs')
 	env.Append(CPPDEFINES = ['MESA_LLVM'])
 	env.Append(CXXFLAGS = ['-Wno-long-long'])
-	
+
+# Force C++ linkage
+if env['PLATFORM'] in ('posix',):
+	env['LINK'] = env['CXX']
 
 # libGL
 if platform not in ('winddk',):
