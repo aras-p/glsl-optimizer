@@ -957,7 +957,8 @@ static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 	      ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |=
 	    (ctx->Stencil.
-	     WriteMask[0] & 0xff) << ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT;
+	     WriteMask[0] & ZB_STENCILREFMASK_STENCIL_MASK) <<
+	     ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT;
 }
 
 static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
@@ -1004,11 +1005,10 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	rmesa->state.stencil.clear =
-	    ((GLuint) (ctx->Stencil.Clear & 0xff) |
-	     (ZB_STENCILREFMASK_STENCIL_MASK <<
-	      ZB_STENCILREFMASK_STENCILMASK_SHIFT) | ((ctx->Stencil.
-						    WriteMask[0] & 0xff) <<
-						   ZB_STENCILREFMASK_STENCILMASK_SHIFT));
+	    ((GLuint) (ctx->Stencil.Clear & ZB_STENCILREFMASK_STENCIL_MASK) |
+	     (ZB_STENCILREFMASK_STENCIL_MASK << ZB_STENCILREFMASK_STENCILMASK_SHIFT) |
+	     ((ctx->Stencil.WriteMask[0] & ZB_STENCILREFMASK_STENCIL_MASK) <<
+		ZB_STENCILREFMASK_STENCILMASK_SHIFT));
 }
 
 /* =============================================================
