@@ -303,7 +303,7 @@ __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
 	* server overwrote it and we have to reset our tail
 	* pointer. */
 	DRM_UNLOCK(psp->fd, psp->lock, pcp->hHWContext);
-	(*psp->dri2.core->reemitDrawableInfo)(pdp->pdraw);
+	(*psp->dri2.core->reemitDrawableInfo)(pdp->pdraw, &pdp->dri2.tail);
 	DRM_LIGHT_LOCK(psp->fd, psp->lock, pcp->hHWContext);
     }
 

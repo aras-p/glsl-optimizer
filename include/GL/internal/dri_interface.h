@@ -424,8 +424,9 @@ struct __DRIcoreDRI2ExtensionRec {
      * specified drawable in the DRI2 event buffer.
      *
      * \param draw the drawable for which to request info
+     * \param tail the new event buffer tail pointer
      */
-    void (*reemitDrawableInfo)(__DRIdrawable *draw);
+    void (*reemitDrawableInfo)(__DRIdrawable *draw, unsigned int *tail);
 
 };
 
