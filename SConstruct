@@ -55,9 +55,6 @@ env = Environment(
 	ENV = os.environ)
 Help(opts.GenerateHelpText(env))
 
-# for debugging
-#print env.Dump()
-
 # replicate options values in local variables
 debug = env['debug']
 dri = env['dri']
@@ -87,6 +84,7 @@ Export([
 # TODO: put the compiler specific settings in separate files
 # TODO: auto-detect as much as possible
 
+common.generate(env)
 
 if platform == 'winddk':
 	env.Tool('winddk', ['.'])
@@ -218,9 +216,6 @@ if platform not in ('winddk',):
 		'Xdamage',
 		'Xfixes',
 	])
-
-# Convenience library support
-common.createConvenienceLibBuilder(env)
 
 Export('env')
 
