@@ -287,8 +287,8 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 int
 __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
 {
-    __DRIDrawableConfigEvent *dc;
-    __DRIBufferAttachEvent *ba;
+    __DRIDrawableConfigEvent *dc, *last_dc;
+    __DRIBufferAttachEvent *ba, *last_ba;
     unsigned int tail, mask, *p, end, total, size, changed;
     unsigned char *data;
     size_t rect_size;
@@ -309,12 +309,14 @@ __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
 
     total = psp->dri2.buffer->head - pdp->dri2.tail;
     mask = psp->dri2.buffer->size - 1;
-    tail = pdp->dri2.tail;
     end = psp->dri2.buffer->head;
     data = psp->dri2.buffer->data;
-    changed = 0;
 
-    while (tail != end) {
+    changed = 0;
+    last_dc = NULL;
+    last_ba = NULL;
+
+    for (tail = pdp->dri2.tail; tail != end; tail += size) {
        p = (unsigned int *) (data + (tail & mask));
        size = DRI2_EVENT_SIZE(*p);
        if (size > total || (tail & mask) + size > psp->dri2.buffer->size) {
@@ -326,50 +328,92 @@ __driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
        switch (DRI2_EVENT_TYPE(*p)) {
        case DRI2_EVENT_DRAWABLE_CONFIG:
 	  dc = (__DRIDrawableConfigEvent *) p;
-
-	  if (dc->drawable != pdp->hHWDrawable)
-	     break;
-
-	  if (pdp->w != dc->width || pdp->h != dc->height)
-	     changed = 1;
-
-	  pdp->x = dc->x;
-	  pdp->y = dc->y;
-	  pdp->w = dc->width;
-	  pdp->h = dc->height;
-
-	  pdp->backX = 0;
-	  pdp->backY = 0;
-	  pdp->numBackClipRects = 1;
-	  pdp->pBackClipRects[0].x1 = 0;
-	  pdp->pBackClipRects[0].y1 = 0;
-	  pdp->pBackClipRects[0].x2 = pdp->w;
-	  pdp->pBackClipRects[0].y2 = pdp->h;
-
-	  pdp->numClipRects = dc->num_rects;
-	  _mesa_free(pdp->pClipRects);
-	  rect_size = dc->num_rects * sizeof dc->rects[0];
-	  pdp->pClipRects = _mesa_malloc(rect_size);
-	  memcpy(pdp->pClipRects, dc->rects, rect_size);
-
-	  if (changed)
-	      (*psp->DriverAPI.UpdateBuffer)(pdp, p);
+	  if (dc->drawable == pdp->hHWDrawable)
+	     last_dc = dc;
 	  break;
 
        case DRI2_EVENT_BUFFER_ATTACH:
 	  ba = (__DRIBufferAttachEvent *) p;
-
-	  if (ba->drawable != pdp->hHWDrawable)
-	     break;
-
-	  (*psp->DriverAPI.UpdateBuffer)(pdp, p);
-	  break;
-
-       default:
+	  if (ba->drawable == pdp->hHWDrawable && 
+	      ba->buffer.attachment == DRI_DRAWABLE_BUFFER_FRONT_LEFT)
+	     last_ba = ba;
 	  break;
        }
+    }
+	  
+    if (last_dc) {
+       if (pdp->w != last_dc->width || pdp->h != last_dc->height)
+	  changed = 1;
 
-       tail += size;
+       pdp->x = last_dc->x;
+       pdp->y = last_dc->y;
+       pdp->w = last_dc->width;
+       pdp->h = last_dc->height;
+
+       pdp->backX = 0;
+       pdp->backY = 0;
+       pdp->numBackClipRects = 1;
+       pdp->pBackClipRects[0].x1 = 0;
+       pdp->pBackClipRects[0].y1 = 0;
+       pdp->pBackClipRects[0].x2 = pdp->w;
+       pdp->pBackClipRects[0].y2 = pdp->h;
+
+       pdp->numClipRects = last_dc->num_rects;
+       _mesa_free(pdp->pClipRects);
+       rect_size = last_dc->num_rects * sizeof last_dc->rects[0];
+       pdp->pClipRects = _mesa_malloc(rect_size);
+       memcpy(pdp->pClipRects, last_dc->rects, rect_size);
+
+       if (changed)
+	  (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) last_dc);
+    }
+
+    /* Front buffer attachments are special, they typically mean that
+     * we're rendering to a redirected window (or a child window of a
+     * redirected window) and that it got resized.  Resizing the root
+     * window on randr events is a special case of this.  Other causes
+     * may be a window transitioning between redirected and
+     * non-redirected, or a window getting reparented between parents
+     * with different window pixmaps (eg two redirected windows).
+     * These events are special in that the X server allocates the
+     * buffer and that the buffer may be shared by other child
+     * windows.  When our window share the window pixmap with its
+     * parent, drawable config events doesn't affect the front buffer.
+     * We only care about the last such event in the buffer; in fact,
+     * older events will refer to invalid buffer objects.*/
+    if (last_ba)
+       (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) last_ba);
+
+    /* Like for buffer attachments, we only care about the most recent
+     * drawable config. */
+    if (last_dc)
+       (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) last_dc);
+
+    /* If there was a drawable config event in the buffer and it
+     * changed the size of the window, all buffer auxillary buffer
+     * attachments prior to that are invalid (as opposed to the front
+     * buffer case discussed above).  In that case we can start
+     * looking for buffer attachment after the last drawable config
+     * event.  If there is no drawable config event in this batch of
+     * events, we have to assume that the last batch might have had
+     * one and process all buffer attach events.*/
+    if (last_dc && changed)
+       tail = (unsigned char *) last_dc - data;
+    else
+       tail = pdp->dri2.tail;
+
+    for ( ; tail != end; tail += size) {
+       ba = (__DRIBufferAttachEvent *) (data + (tail & mask));
+       size = DRI2_EVENT_SIZE(ba->event_header);
+
+       if (DRI2_EVENT_TYPE(ba->event_header) != DRI2_EVENT_BUFFER_ATTACH)
+	  continue;
+       if (ba->drawable != pdp->hHWDrawable)
+	  continue;
+       if (last_ba == ba)
+	  continue;
+
+       (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) ba);
     }
 
     pdp->dri2.tail = tail;
