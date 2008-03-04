@@ -9,6 +9,9 @@ auxiliaries = []
 Export('auxiliaries')
 
 
+if llvm:
+	SConscript(['auxiliary/gallivm/SConscript'])
+
 SConscript([
 	# NOTE: order matters!
 	'auxiliary/util/SConscript',
@@ -18,9 +21,6 @@ SConscript([
 	'auxiliary/draw/SConscript',
 	'auxiliary/pipebuffer/SConscript',
 ])
-
-if llvm:
-	SConscript(['auxiliary/gallivm/SConscript'])
 
 for driver in env['drivers']:
 	SConscript(os.path.join('drivers', driver, 'SConscript'))
