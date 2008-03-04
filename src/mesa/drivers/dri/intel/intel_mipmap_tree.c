@@ -180,7 +180,10 @@ int intel_miptree_pitch_align (struct intel_context *intel,
 			       struct intel_mipmap_tree *mt,
 			       int pitch)
 {
+#ifdef I915
    GLcontext *ctx = &intel->ctx;
+#endif
+
    if (!mt->compressed) {
       int pitch_align;
 
