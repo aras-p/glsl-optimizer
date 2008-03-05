@@ -72,6 +72,28 @@ struct intel_validate_entry {
     struct drm_i915_op_arg bo_arg;
 };
 
+struct dri_ttm_bo_bucket_entry {
+   drmBO drm_bo;
+   struct dri_ttm_bo_bucket_entry *next;
+};
+
+struct dri_ttm_bo_bucket {
+   struct dri_ttm_bo_bucket_entry *head;
+   struct dri_ttm_bo_bucket_entry **tail;
+   /**
+    * Limit on the number of entries in this bucket.
+    *
+    * 0 means that this caching at this bucket size is disabled.
+    * -1 means that there is no limit to caching at this size.
+    */
+   int max_entries;
+   int num_entries;
+};
+
+/* Arbitrarily chosen, 16 means that the maximum size we'll cache for reuse
+ * is 1 << 16 pages, or 256MB.
+ */
+#define INTEL_TTM_BO_BUCKETS	16
 typedef struct _dri_bufmgr_ttm {
     dri_bufmgr bufmgr;
 
@@ -84,6 +106,9 @@ typedef struct _dri_bufmgr_ttm {
     struct intel_validate_entry *validate_array;
     int validate_array_size;
     int validate_count;
+
+    /** Array of lists of cached drmBOs of power-of-two sizes */
+    struct dri_ttm_bo_bucket cache_bucket[INTEL_TTM_BO_BUCKETS];
 } dri_bufmgr_ttm;
 
 /**
@@ -136,6 +161,41 @@ typedef struct _dri_fence_ttm
     const char *name;
     drmFence drm_fence;
 } dri_fence_ttm;
+
+static int
+logbase2(int n)
+{
+   GLint i = 1;
+   GLint log2 = 0;
+
+   while (n > i) {
+      i *= 2;
+      log2++;
+   }
+
+   return log2;
+}
+
+static struct dri_ttm_bo_bucket *
+dri_ttm_bo_bucket_for_size(dri_bufmgr_ttm *bufmgr_ttm, unsigned long size)
+{
+    int i;
+
+    /* We only do buckets in power of two increments */
+    if ((size & (size - 1)) != 0)
+	return NULL;
+
+    /* We should only see sizes rounded to pages. */
+    assert((size % 4096) == 0);
+
+    /* We always allocate in units of pages */
+    i = ffs(size / 4096) - 1;
+    if (i >= INTEL_TTM_BO_BUCKETS)
+	return NULL;
+
+    return &bufmgr_ttm->cache_bucket[i];
+}
+
 
 static void dri_ttm_dump_validation_list(dri_bufmgr_ttm *bufmgr_ttm)
 {
@@ -338,6 +398,9 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     int ret;
     uint64_t flags;
     unsigned int hint;
+    unsigned long alloc_size;
+    struct dri_ttm_bo_bucket *bucket;
+    GLboolean alloc_from_cache = GL_FALSE;
 
     ttm_buf = calloc(1, sizeof(*ttm_buf));
     if (!ttm_buf)
@@ -352,13 +415,48 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
     /* No hints we want to use. */
     hint = 0;
 
-    ret = drmBOCreate(bufmgr_ttm->fd, size, alignment / pageSize,
-		      NULL, flags, hint, &ttm_buf->drm_bo);
-    if (ret != 0) {
-	free(ttm_buf);
-	return NULL;
+    /* Round the allocated size up to a power of two number of pages. */
+    alloc_size = 1 << logbase2(size);
+    if (alloc_size < pageSize)
+	alloc_size = pageSize;
+    bucket = dri_ttm_bo_bucket_for_size(bufmgr_ttm, alloc_size);
+
+    /* If we don't have caching at this size, don't actually round the
+     * allocation up.
+     */
+    if (bucket == NULL || bucket->max_entries == 0)
+	alloc_size = size;
+
+    /* Get a buffer out of the cache if available */
+    if (bucket != NULL && bucket->num_entries > 0) {
+	struct dri_ttm_bo_bucket_entry *entry = bucket->head;
+	int busy;
+
+	/* Check if the buffer is still in flight.  If not, reuse it. */
+	ret = drmBOBusy(bufmgr_ttm->fd, &entry->drm_bo, &busy);
+	alloc_from_cache = (ret == 0 && busy == 0);
+
+	if (alloc_from_cache) {
+	    bucket->head = entry->next;
+	    if (entry->next == NULL)
+		bucket->tail = &bucket->head;
+	    bucket->num_entries--;
+
+	    ttm_buf->drm_bo = entry->drm_bo;
+	    free(entry);
+	}
     }
-    ttm_buf->bo.size = ttm_buf->drm_bo.size;
+
+    if (!alloc_from_cache) {
+	ret = drmBOCreate(bufmgr_ttm->fd, alloc_size, alignment / pageSize,
+			  NULL, flags, hint, &ttm_buf->drm_bo);
+	if (ret != 0) {
+	    free(ttm_buf);
+	    return NULL;
+	}
+    }
+
+    ttm_buf->bo.size = size;
     ttm_buf->bo.offset = ttm_buf->drm_bo.offset;
     ttm_buf->bo.virtual = NULL;
     ttm_buf->bo.bufmgr = bufmgr;
@@ -450,6 +548,7 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	return;
 
     if (--ttm_buf->refcount == 0) {
+	struct dri_ttm_bo_bucket *bucket;
 	int ret;
 
 	assert(ttm_buf->map_count == 0);
@@ -476,11 +575,32 @@ dri_ttm_bo_unreference(dri_bo *buf)
 	   }
 	}
 
-	ret = drmBOUnreference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
-	if (ret != 0) {
-	    fprintf(stderr, "drmBOUnreference failed (%s): %s\n",
-		    ttm_buf->name, strerror(-ret));
+	bucket = dri_ttm_bo_bucket_for_size(bufmgr_ttm, ttm_buf->drm_bo.size);
+	/* Put the buffer into our internal cache for reuse if we can. */
+	if (!ttm_buf->shared &&
+	    bucket != NULL &&
+	    (bucket->max_entries == -1 ||
+	     (bucket->max_entries > 0 &&
+	      bucket->num_entries < bucket->max_entries)))
+	{
+	    struct dri_ttm_bo_bucket_entry *entry;
+
+	    entry = calloc(1, sizeof(*entry));
+	    entry->drm_bo = ttm_buf->drm_bo;
+
+	    entry->next = NULL;
+	    *bucket->tail = entry;
+	    bucket->tail = &entry->next;
+	    bucket->num_entries++;
+	} else {
+	    /* Decrement the kernel refcount for the buffer. */
+	    ret = drmBOUnreference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+	    if (ret != 0) {
+	       fprintf(stderr, "drmBOUnreference failed (%s): %s\n",
+		       ttm_buf->name, strerror(-ret));
+	    }
 	}
+
 	DBG("bo_unreference final: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
 
 	free(buf);
@@ -657,8 +777,33 @@ static void
 dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
 {
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
+    int i;
 
     free(bufmgr_ttm->validate_array);
+
+    /* Free any cached buffer objects we were going to reuse */
+    for (i = 0; i < INTEL_TTM_BO_BUCKETS; i++) {
+	struct dri_ttm_bo_bucket *bucket = &bufmgr_ttm->cache_bucket[i];
+	struct dri_ttm_bo_bucket_entry *entry;
+
+	while ((entry = bucket->head) != NULL) {
+	    int ret;
+
+	    bucket->head = entry->next;
+	    if (entry->next == NULL)
+		bucket->tail = &bucket->head;
+	    bucket->num_entries--;
+
+	    /* Decrement the kernel refcount for the buffer. */
+	    ret = drmBOUnreference(bufmgr_ttm->fd, &entry->drm_bo);
+	    if (ret != 0) {
+	       fprintf(stderr, "drmBOUnreference failed: %s\n",
+		       strerror(-ret));
+	    }
+
+	    free(entry);
+	}
+    }
 
     free(bufmgr);
 }
@@ -877,6 +1022,24 @@ dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 }
 
 /**
+ * Enables unlimited caching of buffer objects for reuse.
+ *
+ * This is potentially very memory expensive, as the cache at each bucket
+ * size is only bounded by how many buffers of that size we've managed to have
+ * in flight at once.
+ */
+void
+intel_ttm_enable_bo_reuse(dri_bufmgr *bufmgr)
+{
+    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
+    int i;
+
+    for (i = 0; i < INTEL_TTM_BO_BUCKETS; i++) {
+	bufmgr_ttm->cache_bucket[i].max_entries = -1;
+    }
+}
+
+/**
  * Initializes the TTM buffer manager, which uses the kernel to allocate, map,
  * and manage map buffer objections.
  *
@@ -890,6 +1053,7 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
 		      unsigned int fence_type_flush, int batch_size)
 {
     dri_bufmgr_ttm *bufmgr_ttm;
+    int i;
 
     bufmgr_ttm = calloc(1, sizeof(*bufmgr_ttm));
     bufmgr_ttm->fd = fd;
@@ -918,6 +1082,10 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->bufmgr.process_relocs = dri_ttm_process_reloc;
     bufmgr_ttm->bufmgr.post_submit = dri_ttm_post_submit;
     bufmgr_ttm->bufmgr.debug = GL_FALSE;
+
+    /* Initialize the linked lists for BO reuse cache. */
+    for (i = 0; i < INTEL_TTM_BO_BUCKETS; i++)
+	bufmgr_ttm->cache_bucket[i].tail = &bufmgr_ttm->cache_bucket[i].head;
 
     return &bufmgr_ttm->bufmgr;
 }

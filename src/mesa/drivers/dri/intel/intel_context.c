@@ -456,6 +456,7 @@ intel_init_bufmgr(struct intel_context *intel)
        ttm_supported = GL_FALSE;
 
    if (!ttm_disable && ttm_supported) {
+      int bo_reuse_mode;
       intel->bufmgr = intel_bufmgr_ttm_init(intel->driFd,
 					    DRM_FENCE_TYPE_EXE,
 					    DRM_FENCE_TYPE_EXE |
@@ -463,6 +464,15 @@ intel_init_bufmgr(struct intel_context *intel)
 					    BATCH_SZ);
       if (intel->bufmgr != NULL)
 	 intel->ttm = GL_TRUE;
+
+      bo_reuse_mode = driQueryOptioni(&intel->optionCache, "bo_reuse");
+      switch (bo_reuse_mode) {
+      case DRI_CONF_BO_REUSE_DISABLED:
+	 break;
+      case DRI_CONF_BO_REUSE_ALL:
+	 intel_ttm_enable_bo_reuse(intel->bufmgr);
+	 break;
+      }
    }
    /* Otherwise, use the classic buffer manager. */
    if (intel->bufmgr == NULL) {
@@ -548,6 +558,9 @@ intelInitContext(struct intel_context *intel,
    intel->width = intelScreen->width;
    intel->height = intelScreen->height;
 
+   driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
+                       intel->driScreen->myNum,
+		       IS_965(intelScreen->deviceID) ? "i965" : "i915");
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
       intel->maxBatchSize = 4096;
    else
@@ -555,10 +568,6 @@ intelInitContext(struct intel_context *intel,
 
    if (!intel_init_bufmgr(intel))
       return GL_FALSE;
-
-   driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
-                       intel->driScreen->myNum,
-		       IS_965(intelScreen->deviceID) ? "i965" : "i915");
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
 

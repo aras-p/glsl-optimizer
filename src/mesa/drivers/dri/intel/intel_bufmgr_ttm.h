@@ -14,4 +14,7 @@ dri_fence *intel_ttm_fence_create_from_arg(dri_bufmgr *bufmgr, const char *name,
 dri_bufmgr *intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
 				  unsigned int fence_type_flush, int batch_size);
 
+void
+intel_ttm_enable_bo_reuse(dri_bufmgr *bufmgr);
+
 #endif

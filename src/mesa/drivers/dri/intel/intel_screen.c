@@ -56,6 +56,15 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_PERFORMANCE
       DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
       DRI_CONF_VBLANK_MODE(DRI_CONF_VBLANK_DEF_INTERVAL_0)
+      /* Options correspond to DRI_CONF_BO_REUSE_DISABLED,
+       * DRI_CONF_BO_REUSE_ALL
+       */
+      DRI_CONF_OPT_BEGIN_V(bo_reuse, enum, 0, "0:1")
+	 DRI_CONF_DESC_BEGIN(en, "Buffer object reuse")
+	    DRI_CONF_ENUM(0, "Disable buffer object reuse")
+	    DRI_CONF_ENUM(1, "Enable reuse of all sizes of buffer objects")
+	 DRI_CONF_DESC_END
+      DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE(false)
@@ -66,7 +75,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 5;
+const GLuint __driNConfigOptions = 6;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
