@@ -484,6 +484,9 @@ struct brw_context
       const struct brw_texture          *Texture[PIPE_MAX_SAMPLERS];
    } attribs;
 
+   unsigned num_samplers;
+   unsigned num_textures;
+
    struct brw_mem_pool pool[BRW_MAX_POOL];
    struct brw_cache cache[BRW_MAX_CACHE];
    struct brw_cached_batch_item *cached_batch_items;

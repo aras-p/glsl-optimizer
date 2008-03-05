@@ -284,7 +284,7 @@ st_render_mipmap(struct st_context *st,
        */
       sampler.min_lod = sampler.max_lod = srcLevel;
       sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-      pipe->bind_sampler_state(pipe, 0, sampler_cso);
+      pipe->bind_sampler_states(pipe, 1, &sampler_cso);
 
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 
@@ -293,7 +293,7 @@ st_render_mipmap(struct st_context *st,
        * the right mipmap level.
        */
       /*pt->first_level = srcLevel;*/
-      pipe->set_sampler_texture(pipe, 0, pt);
+      pipe->set_sampler_textures(pipe, 1, &pt);
 
       draw_quad(st->ctx);
 
@@ -310,9 +310,10 @@ st_render_mipmap(struct st_context *st,
       pipe->bind_fs_state(pipe, st->state.fs->data);
    if (st->state.vs)
       pipe->bind_vs_state(pipe, st->state.vs->cso->data);
-   if (st->state.sampler[0])
-      pipe->bind_sampler_state(pipe, 0, st->state.sampler[0]->data);
-   pipe->set_sampler_texture(pipe, 0, st->state.sampler_texture[0]);
+   pipe->bind_sampler_states(pipe, st->state.num_samplers,
+                             st->state.sampler);
+   pipe->set_sampler_textures(pipe, st->state.num_textures,
+                              st->state.sampler_texture);
    pipe->set_viewport_state(pipe, &st->state.viewport);
 
    return TRUE;

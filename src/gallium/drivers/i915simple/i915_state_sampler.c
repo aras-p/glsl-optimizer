@@ -106,7 +106,8 @@ void i915_update_samplers( struct i915_context *i915 )
    i915->current.sampler_enable_nr = 0;
    i915->current.sampler_enable_flags = 0x0;
 
-   for (unit = 0; unit < I915_TEX_UNITS; unit++) {
+   for (unit = 0; unit < i915->num_textures && unit < i915->num_samplers;
+        unit++) {
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->texture[unit]) {
@@ -219,7 +220,8 @@ i915_update_textures(struct i915_context *i915)
 {
    uint unit;
 
-   for (unit = 0; unit < I915_TEX_UNITS; unit++) {
+   for (unit = 0; unit < i915->num_textures && unit < i915->num_samplers;
+        unit++) {
       /* determine unit enable/disable by looking for a bound texture */
       /* could also examine the fragment program? */
       if (i915->texture[unit]) {

@@ -235,7 +235,8 @@ static void upload_wm_samplers(struct brw_context *brw)
    unsigned sampler_count = 0;
 
    /* BRW_NEW_SAMPLER */
-   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
+   for (unit = 0; unit < brw->num_textures && unit < brw->num_samplers;
+        unit++) {
       /* determine unit enable/disable by looking for a bound texture */
       if (brw->attribs.Texture[unit]) {
          const struct pipe_sampler_state *sampler = brw->attribs.Samplers[unit];

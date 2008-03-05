@@ -269,13 +269,22 @@ i915_create_sampler_state(struct pipe_context *pipe,
    return cso;
 }
 
-static void i915_bind_sampler_state(struct pipe_context *pipe,
-                                    unsigned unit, void *sampler)
+static void i915_bind_sampler_states(struct pipe_context *pipe,
+                                     unsigned num, void **sampler)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   assert(unit < PIPE_MAX_SAMPLERS);
-   i915->sampler[unit] = (const struct i915_sampler_state*)sampler;
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == i915->num_samplers &&
+       !memcmp(i915->sampler, sampler, num * sizeof(void *)))
+      return;
+
+   memcpy(i915->sampler, sampler, num * sizeof(void *));
+   memset(&i915->sampler[num], 0, (PIPE_MAX_SAMPLERS - num) * sizeof(void *));
+
+   i915->num_samplers = num;
 
    i915->dirty |= I915_NEW_SAMPLER;
 }
@@ -526,14 +535,29 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 }
 
 
-static void i915_set_sampler_texture(struct pipe_context *pipe,
-				     unsigned sampler,
-				     struct pipe_texture *texture)
+static void i915_set_sampler_textures(struct pipe_context *pipe,
+                                      unsigned num,
+                                      struct pipe_texture **texture)
 {
    struct i915_context *i915 = i915_context(pipe);
+   uint i;
 
-   pipe_texture_reference((struct pipe_texture **) &i915->texture[sampler],
-                          texture);
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == i915->num_textures &&
+       !memcmp(i915->texture, texture, num * sizeof(struct pipe_texture *)))
+      return;
+
+   for (i = 0; i < num; i++)
+      pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
+                             texture[i]);
+
+   for (i = num; i < i915->num_textures; i++)
+      pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
+                             NULL);
+
+   i915->num_textures = num;
 
    i915->dirty |= I915_NEW_TEXTURE;
 }
@@ -691,7 +715,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.delete_blend_state = i915_delete_blend_state;
 
    i915->pipe.create_sampler_state = i915_create_sampler_state;
-   i915->pipe.bind_sampler_state = i915_bind_sampler_state;
+   i915->pipe.bind_sampler_states = i915_bind_sampler_states;
    i915->pipe.delete_sampler_state = i915_delete_sampler_state;
 
    i915->pipe.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
@@ -715,7 +739,7 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
-   i915->pipe.set_sampler_texture = i915_set_sampler_texture;
+   i915->pipe.set_sampler_textures = i915_set_sampler_textures;
    i915->pipe.set_viewport_state = i915_set_viewport_state;
    i915->pipe.set_vertex_buffer = i915_set_vertex_buffer;
    i915->pipe.set_vertex_element = i915_set_vertex_element;

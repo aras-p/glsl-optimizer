@@ -100,7 +100,7 @@ struct pipe_context {
 
    void * (*create_sampler_state)(struct pipe_context *,
                                   const struct pipe_sampler_state *);
-   void   (*bind_sampler_state)(struct pipe_context *, unsigned unit, void *);
+   void   (*bind_sampler_states)(struct pipe_context *, unsigned num, void **);
    void   (*delete_sampler_state)(struct pipe_context *, void *);
 
    void * (*create_rasterizer_state)(struct pipe_context *,
@@ -148,9 +148,9 @@ struct pipe_context {
 
    /* Currently a sampler is constrained to sample from a single texture:
     */
-   void (*set_sampler_texture)( struct pipe_context *,
-				unsigned sampler,
-				struct pipe_texture * );
+   void (*set_sampler_textures)( struct pipe_context *,
+                                 unsigned num,
+                                 struct pipe_texture ** );
 
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );

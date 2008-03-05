@@ -95,12 +95,24 @@ brw_create_sampler_state(struct pipe_context *pipe,
    DUP( pipe_sampler_state, sampler );
 }
 
-static void brw_bind_sampler_state(struct pipe_context *pipe,
-                                    unsigned unit, void *sampler)
+static void brw_bind_sampler_states(struct pipe_context *pipe,
+                                    unsigned num, void **sampler)
 {
    struct brw_context *brw = brw_context(pipe);
 
-   brw->attribs.Samplers[unit] = sampler;
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == brw->num_samplers &&
+       !memcmp(brw->attribs.Samplers, sampler, num * sizeof(void *)))
+      return;
+
+   memcpy(brw->attribs.Samplers, sampler, num * sizeof(void *));
+   memset(&brw->attribs.Samplers[num], 0, (PIPE_MAX_SAMPLERS - num) *
+          sizeof(void *));
+
+   brw->num_samplers = num;
+
    brw->state.dirty.brw |= BRW_NEW_SAMPLER;
 }
 
@@ -330,14 +342,30 @@ static void brw_set_constant_buffer(struct pipe_context *pipe,
  */
 
 
-static void brw_set_sampler_texture(struct pipe_context *pipe,
-                                  unsigned unit,
-                                  struct pipe_texture *texture)
+static void brw_set_sampler_textures(struct pipe_context *pipe,
+                                     unsigned num,
+                                     struct pipe_texture **texture)
 {
    struct brw_context *brw = brw_context(pipe);
+   uint i;
 
-   pipe_texture_reference((struct pipe_texture **) &brw->attribs.Texture[unit],
-                          texture);
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == brw->num_textures &&
+       !memcmp(brw->attribs.Texture, texture, num *
+               sizeof(struct pipe_texture *)))
+      return;
+
+   for (i = 0; i < num; i++)
+      pipe_texture_reference((struct pipe_texture **) &brw->attribs.Texture[i],
+                             texture[i]);
+
+   for (i = num; i < brw->num_textures; i++)
+      pipe_texture_reference((struct pipe_texture **) &brw->attribs.Texture[i],
+                             NULL);
+
+   brw->num_textures = num;
 
    brw->state.dirty.brw |= BRW_NEW_TEXTURE;
 }
@@ -400,7 +428,7 @@ brw_init_state_functions( struct brw_context *brw )
    brw->pipe.delete_blend_state = brw_delete_blend_state;
 
    brw->pipe.create_sampler_state = brw_create_sampler_state;
-   brw->pipe.bind_sampler_state = brw_bind_sampler_state;
+   brw->pipe.bind_sampler_states = brw_bind_sampler_states;
    brw->pipe.delete_sampler_state = brw_delete_sampler_state;
 
    brw->pipe.create_depth_stencil_alpha_state = brw_create_depth_stencil_state;
@@ -427,7 +455,7 @@ brw_init_state_functions( struct brw_context *brw )
 
    brw->pipe.set_polygon_stipple = brw_set_polygon_stipple;
    brw->pipe.set_scissor_state = brw_set_scissor_state;
-   brw->pipe.set_sampler_texture = brw_set_sampler_texture;
+   brw->pipe.set_sampler_textures = brw_set_sampler_textures;
    brw->pipe.set_viewport_state = brw_set_viewport_state;
    brw->pipe.set_vertex_buffer = brw_set_vertex_buffer;
    brw->pipe.set_vertex_element = brw_set_vertex_element;

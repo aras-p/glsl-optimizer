@@ -50,18 +50,58 @@ softpipe_create_sampler_state(struct pipe_context *pipe,
    return mem_dup(sampler, sizeof(*sampler));
 }
 
+
 void
-softpipe_bind_sampler_state(struct pipe_context *pipe,
-                            unsigned unit, void *sampler)
+softpipe_bind_sampler_states(struct pipe_context *pipe,
+                             unsigned num, void **sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == softpipe->num_samplers &&
+       !memcmp(softpipe->sampler, sampler, num * sizeof(void *)))
+      return;
+
    draw_flush(softpipe->draw);
 
-   assert(unit < PIPE_MAX_SAMPLERS);
-   softpipe->sampler[unit] = (struct pipe_sampler_state *)sampler;
+   memcpy(softpipe->sampler, sampler, num * sizeof(void *));
+   memset(&softpipe->sampler[num], 0, (PIPE_MAX_SAMPLERS - num) *
+          sizeof(void *));
+
+   softpipe->num_samplers = num;
 
    softpipe->dirty |= SP_NEW_SAMPLER;
+}
+
+
+void
+softpipe_set_sampler_textures(struct pipe_context *pipe,
+                              unsigned num, struct pipe_texture **texture)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint i;
+
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == softpipe->num_textures &&
+       !memcmp(softpipe->texture, texture, num * sizeof(struct pipe_texture *)))
+      return;
+
+   draw_flush(softpipe->draw);
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+
+      pipe_texture_reference(&softpipe->texture[i], tex);
+      sp_tile_cache_set_texture(pipe, softpipe->tex_cache[i], tex);
+   }
+
+   softpipe->num_textures = num;
+
+   softpipe->dirty |= SP_NEW_TEXTURE;
 }
 
 
@@ -70,24 +110,6 @@ softpipe_delete_sampler_state(struct pipe_context *pipe,
                               void *sampler)
 {
    FREE( sampler );
-}
-
-
-void
-softpipe_set_sampler_texture(struct pipe_context *pipe,
-			     unsigned unit,
-			     struct pipe_texture *texture)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   draw_flush(softpipe->draw);
-
-   assert(unit < PIPE_MAX_SAMPLERS);
-   pipe_texture_reference(&softpipe->texture[unit], texture);
-
-   sp_tile_cache_set_texture(pipe, softpipe->tex_cache[unit], texture);
-
-   softpipe->dirty |= SP_NEW_TEXTURE;
 }
 
 

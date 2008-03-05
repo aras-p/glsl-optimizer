@@ -78,7 +78,8 @@ struct aaline_stage
 
    void *sampler_cso;
    struct pipe_texture *texture;
-   uint sampler_unit;
+   uint num_samplers;
+   uint num_textures;
 
 
    /*
@@ -98,11 +99,10 @@ struct aaline_stage
    void (*driver_bind_fs_state)(struct pipe_context *, void *);
    void (*driver_delete_fs_state)(struct pipe_context *, void *);
 
-   void (*driver_bind_sampler_state)(struct pipe_context *, unsigned, void *);
-
-   void (*driver_set_sampler_texture)(struct pipe_context *,
-                                      unsigned sampler,
-                                      struct pipe_texture *);
+   void (*driver_bind_sampler_states)(struct pipe_context *, unsigned,
+                                      void **);
+   void (*driver_set_sampler_textures)(struct pipe_context *, unsigned,
+                                       struct pipe_texture **);
 
    struct pipe_context *pipe;
 };
@@ -607,6 +607,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    auto struct aaline_stage *aaline = aaline_stage(stage);
    struct draw_context *draw = stage->draw;
    struct pipe_context *pipe = aaline->pipe;
+   uint num = MAX2(aaline->num_textures, aaline->num_samplers);
 
    assert(draw->rasterizer->line_smooth);
 
@@ -624,8 +625,11 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
     */
    bind_aaline_fragment_shader(aaline);
 
-   aaline->driver_bind_sampler_state(pipe, aaline->sampler_unit, aaline->sampler_cso);
-   aaline->driver_set_sampler_texture(pipe, aaline->sampler_unit, aaline->texture);
+   aaline->state.sampler[num] = aaline->sampler_cso;
+   aaline->state.texture[num] = aaline->texture;
+
+   aaline->driver_bind_sampler_states(pipe, num + 1, aaline->state.sampler);
+   aaline->driver_set_sampler_textures(pipe, num + 1, aaline->state.texture);
 
    /* now really draw first line */
    stage->line = aaline_line;
@@ -647,10 +651,10 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
    aaline->driver_bind_fs_state(pipe, aaline->fs->driver_fs);
 
    /* XXX restore original texture, sampler state */
-   aaline->driver_bind_sampler_state(pipe, aaline->sampler_unit,
-                                 aaline->state.sampler[aaline->sampler_unit]);
-   aaline->driver_set_sampler_texture(pipe, aaline->sampler_unit,
-                                 aaline->state.texture[aaline->sampler_unit]);
+   aaline->driver_bind_sampler_states(pipe, aaline->num_samplers,
+                                      aaline->state.sampler);
+   aaline->driver_set_sampler_textures(pipe, aaline->num_textures,
+                                       aaline->state.texture);
 
    draw->extra_vp_outputs.slot = 0;
 }
@@ -745,26 +749,28 @@ aaline_delete_fs_state(struct pipe_context *pipe, void *fs)
 
 
 static void
-aaline_bind_sampler_state(struct pipe_context *pipe,
-                          unsigned unit, void *sampler)
+aaline_bind_sampler_states(struct pipe_context *pipe,
+                           unsigned num, void **sampler)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    /* save current */
-   aaline->state.sampler[unit] = sampler;
+   memcpy(aaline->state.sampler, sampler, num * sizeof(void *));
+   aaline->num_samplers = num;
    /* pass-through */
-   aaline->driver_bind_sampler_state(aaline->pipe, unit, sampler);
+   aaline->driver_bind_sampler_states(aaline->pipe, num, sampler);
 }
 
 
 static void
-aaline_set_sampler_texture(struct pipe_context *pipe,
-                           unsigned sampler, struct pipe_texture *texture)
+aaline_set_sampler_textures(struct pipe_context *pipe,
+                            unsigned num, struct pipe_texture **texture)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    /* save current */
-   aaline->state.texture[sampler] = texture;
+   memcpy(aaline->state.texture, texture, num * sizeof(struct pipe_texture *));
+   aaline->num_textures = num;
    /* pass-through */
-   aaline->driver_set_sampler_texture(aaline->pipe, sampler, texture);
+   aaline->driver_set_sampler_textures(aaline->pipe, num, texture);
 }
 
 
@@ -798,14 +804,14 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
    aaline->driver_bind_fs_state = pipe->bind_fs_state;
    aaline->driver_delete_fs_state = pipe->delete_fs_state;
 
-   aaline->driver_bind_sampler_state = pipe->bind_sampler_state;
-   aaline->driver_set_sampler_texture = pipe->set_sampler_texture;
+   aaline->driver_bind_sampler_states = pipe->bind_sampler_states;
+   aaline->driver_set_sampler_textures = pipe->set_sampler_textures;
 
    /* override the driver's functions */
    pipe->create_fs_state = aaline_create_fs_state;
    pipe->bind_fs_state = aaline_bind_fs_state;
    pipe->delete_fs_state = aaline_delete_fs_state;
 
-   pipe->bind_sampler_state = aaline_bind_sampler_state;
-   pipe->set_sampler_texture = aaline_set_sampler_texture;
+   pipe->bind_sampler_states = aaline_bind_sampler_states;
+   pipe->set_sampler_textures = aaline_set_sampler_textures;
 }

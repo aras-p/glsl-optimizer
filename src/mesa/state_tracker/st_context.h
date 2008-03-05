@@ -76,7 +76,7 @@ struct st_context
    struct {
       const struct cso_alpha_test      *alpha_test;
       const struct cso_blend           *blend;
-      const struct cso_sampler         *sampler[PIPE_MAX_SAMPLERS];
+      void                             *sampler[PIPE_MAX_SAMPLERS];
       const struct cso_depth_stencil_alpha   *depth_stencil;
       const struct cso_rasterizer      *rasterizer;
       const struct cso_fragment_shader *fs;
@@ -90,6 +90,9 @@ struct st_context
       struct pipe_poly_stipple poly_stipple;
       struct pipe_scissor_state scissor;
       struct pipe_viewport_state viewport;
+
+      GLuint num_samplers;
+      GLuint num_textures;
    } state;
 
    struct {

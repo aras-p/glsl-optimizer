@@ -120,10 +120,11 @@ update_samplers(struct st_context *st)
    const struct st_fragment_program *fs = st->fp;
    GLuint su;
 
+   st->state.num_samplers = 0;
+
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
       struct pipe_sampler_state sampler;
-      const struct cso_sampler *cso;
 
       memset(&sampler, 0, sizeof(sampler));
 
@@ -168,17 +169,16 @@ update_samplers(struct st_context *st)
                = st_compare_func_to_pipe(texobj->CompareFunc);
          }
 
+         st->state.num_samplers = su + 1;
+
          /* XXX more sampler state here */
       }
 
-      cso = st_cached_sampler_state(st, &sampler);
-
-      if (cso != st->state.sampler[su]) {
-         /* state has changed */
-         st->state.sampler[su] = cso;
-         st->pipe->bind_sampler_state(st->pipe, su, cso->data);
-      }
+      st->state.sampler[su] = st_cached_sampler_state(st, &sampler)->data;
    }
+
+   st->pipe->bind_sampler_states(st->pipe, st->state.num_samplers,
+                                 st->state.sampler);
 }
 
 

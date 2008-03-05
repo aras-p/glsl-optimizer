@@ -81,6 +81,9 @@ struct softpipe_context {
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    unsigned dirty;
 
+   unsigned num_samplers;
+   unsigned num_textures;
+
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
     */

@@ -641,7 +641,6 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    const GLfloat *color,
                    GLboolean invertTex)
 {
-   const GLuint unit = 0;
    struct pipe_context *pipe = ctx->st->pipe;
    GLfloat x0, y0, x1, y1;
    GLuint maxSize;
@@ -684,7 +683,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.normalized_coords = 1;
       cso = st_cached_sampler_state(ctx->st, &sampler);
-      pipe->bind_sampler_state(pipe, unit, cso->data);
+      pipe->bind_sampler_states(pipe, 1, (void**)&cso->data);
    }
 
    /* viewport state: viewport matching window dims */
@@ -705,7 +704,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* texture state: */
    {
-      pipe->set_sampler_texture(pipe, unit, pt);
+      pipe->set_sampler_textures(pipe, 1, &pt);
    }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
@@ -727,8 +726,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
    pipe->bind_vs_state(pipe, ctx->st->state.vs->cso->data);
-   pipe->set_sampler_texture(pipe, unit, ctx->st->state.sampler_texture[unit]);
-   pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
+   pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
+                              ctx->st->state.sampler_texture);
+   pipe->bind_sampler_states(pipe, ctx->st->state.num_samplers,
+                             ctx->st->state.sampler);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 }
 
