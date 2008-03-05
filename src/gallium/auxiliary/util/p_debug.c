@@ -40,10 +40,28 @@
 #include "pipe/p_compiler.h" 
 
 
+#ifdef WIN32
+static INLINE void 
+rpl_EngDebugPrint(const char *format, ...)
+{
+   va_list ap;
+   va_start(ap, format);
+   EngDebugPrint("", (PCHAR)format, ap);
+   va_end(ap);
+}
+
+int rpl_vsnprintf(char *, size_t, const char *, va_list);
+#endif
+
+
 void debug_vprintf(const char *format, va_list ap)
 {
 #ifdef WIN32
-   EngDebugPrint("", (PCHAR)format, ap);
+   /* EngDebugPrint does not handle float point arguments, so we need to use
+    * our own vsnprintf implementation */
+   char buf[512 + 1];
+   rpl_vsnprintf(buf, sizeof(buf), format, ap);
+   rpl_EngDebugPrint("%s", buf);
 #else
    vfprintf(stderr, format, ap);
 #endif
