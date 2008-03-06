@@ -52,44 +52,50 @@ pipe_clip_tile(uint x, uint y, uint *w, uint *h, const struct pipe_surface *ps)
    return FALSE;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern void
+void
 pipe_get_tile_raw(struct pipe_context *pipe,
                   struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride);
 
-extern void
+void
 pipe_put_tile_raw(struct pipe_context *pipe,
                   struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride);
 
 
-extern void
+void
 pipe_get_tile_rgba(struct pipe_context *pipe,
                    struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h,
                    float *p);
 
-extern void
+void
 pipe_put_tile_rgba(struct pipe_context *pipe,
                    struct pipe_surface *ps,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
 
-extern void
+void
 pipe_get_tile_z(struct pipe_context *pipe,
                 struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 uint *z);
 
-extern void
+void
 pipe_put_tile_z(struct pipe_context *pipe,
                 struct pipe_surface *ps,
                 uint x, uint y, uint w, uint h,
                 const uint *z);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
