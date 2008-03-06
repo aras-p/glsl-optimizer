@@ -77,6 +77,7 @@ void brw_FrameBufferTexDestroy( struct brw_context *brw )
    if (brw->intel.frame_buffer_texobj != NULL)
       brw->intel.ctx.Driver.DeleteTexture( &brw->intel.ctx,
 					   brw->intel.frame_buffer_texobj );
+   brw->intel.frame_buffer_texobj = NULL;
 }
 
 /**
