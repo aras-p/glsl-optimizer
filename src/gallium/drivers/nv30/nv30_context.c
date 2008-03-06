@@ -319,7 +319,7 @@ nv30_create(struct pipe_screen *screen, unsigned pctx_id)
 	}
 
 	/* Vtxprog resources */
-	if (nvws->res_init(&nv30->vertprog.exec_heap, 0, 512) ||
+	if (nvws->res_init(&nv30->vertprog.exec_heap, 0, 256) ||
 	    nvws->res_init(&nv30->vertprog.data_heap, 0, 256)) {
 		nv30_destroy(&nv30->pipe);
 		return NULL;

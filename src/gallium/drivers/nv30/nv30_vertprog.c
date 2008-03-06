@@ -225,6 +225,18 @@ nv30_vp_arith(struct nv30_vpc *vpc, int slot, int op,
 //	hw[3] |= NV30_VP_INST_SCA_DEST_TEMP_MASK;
 //	hw[3] |= (mask << NV30_VP_INST_VEC_WRITEMASK_SHIFT);
 
+	if (dst.type == NV30SR_OUTPUT) {
+		if (slot)
+			hw[3] |= (mask << NV30_VP_INST_SDEST_WRITEMASK_SHIFT);
+		else
+			hw[3] |= (mask << NV30_VP_INST_VDEST_WRITEMASK_SHIFT);
+	} else {
+		if (slot)
+			hw[3] |= (mask << NV30_VP_INST_STEMP_WRITEMASK_SHIFT);
+		else
+			hw[3] |= (mask << NV30_VP_INST_VTEMP_WRITEMASK_SHIFT);
+	}
+
 	emit_dst(vpc, hw, slot, dst);
 	emit_src(vpc, hw, 0, s0);
 	emit_src(vpc, hw, 1, s1);
@@ -752,7 +764,7 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 		}
 #endif
 		BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
-		OUT_RING  (/*vp->exec->start*/0);
+		OUT_RING  (vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
 			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (vp->insns[i].data, 4);
@@ -760,8 +772,7 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	}
 
 	BEGIN_RING(rankine, NV34TCL_VP_START_FROM_ID, 1);
-//	OUT_RING  (vp->exec->start);
-	OUT_RING  (0);
+	OUT_RING  (vp->exec->start);
 
 	nv30->vertprog.active = vp;
 }
