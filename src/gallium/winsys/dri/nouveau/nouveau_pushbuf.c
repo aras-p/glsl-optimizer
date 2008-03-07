@@ -193,7 +193,8 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 	nouveau_fence_ref(NULL, &fence);
 
 	/* Allocate space for next push buffer */
-	assert(!nouveau_pushbuf_space(chan, min));
+	ret = nouveau_pushbuf_space(chan, min);
+	assert(!ret);
 
 	return 0;
 }
