@@ -44,11 +44,6 @@ struct __DRIdisplayPrivateRec {
     int driMajor;
     int driMinor;
     int driPatch;
-
-    /*
-    ** Array of library handles [indexed by screen number]
-    */
-    void **libraryHandles;
 };
 
 typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;

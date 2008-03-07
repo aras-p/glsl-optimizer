@@ -66,13 +66,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DEFAULT_DRIVER_DIR "/usr/X11R6/lib/modules/dri"
 #endif
 
-static __DRIdriver *Drivers = NULL;
-
-
-/*
- * printf wrappers
- */
-
 static void InfoMessageF(const char *f, ...)
 {
     va_list args;
@@ -187,22 +180,14 @@ static const char createNewScreenName[] = __DRI_CREATE_NEW_SCREEN_STRING;
  * \returns
  * A handle from \c dlopen, or \c NULL if driver file not found.
  */
-static __DRIdriver *OpenDriver(const char *driverName)
+static void *OpenDriver(const char *driverName)
 {
    void *glhandle = NULL;
    char *libPaths = NULL;
    char libDir[1000];
+   char realDriverName[200];
+   void *handle = NULL;
    int i;
-   __DRIdriver *driver;
-
-   /* First, search Drivers list to see if we've already opened this driver */
-   for (driver = Drivers; driver; driver = driver->next) {
-      if (strcmp(driver->name, driverName) == 0) {
-         /* found it, increment library refcount & return */
-         dlopen(driver->libpath, RTLD_NOW | RTLD_GLOBAL);
-         return driver;
-      }
-   }
 
    /* Attempt to make sure libGL symbols will be visible to the driver */
    glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
@@ -217,10 +202,6 @@ static __DRIdriver *OpenDriver(const char *driverName)
       libPaths = DEFAULT_DRIVER_DIR;
 
    for ( i = 0 ; ExtractDir(i, libPaths, 1000, libDir) != 0 ; i++ ) {
-      char realDriverName[200];
-      void *handle = NULL;
-
-      
       /* If TLS support is enabled, try to open the TLS version of the driver
        * binary first.  If that fails, try the non-TLS version.
        */
@@ -236,57 +217,19 @@ static __DRIdriver *OpenDriver(const char *driverName)
 	 handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
       }
 
-      if ( handle != NULL ) {
-         /* allocate __DRIdriver struct */
-         driver = (__DRIdriver *) Xmalloc(sizeof(__DRIdriver));
-         if (!driver)
-            break; /* out of memory! */
-         /* init the struct */
-         driver->name = __glXstrdup(driverName);
-         driver->libpath = __glXstrdup(realDriverName);
-         if (!driver->name || !driver->libpath) {
-            if (driver->name)
-               Xfree(driver->name);
-            if (driver->libpath)
-               Xfree(driver->libpath);
-            Xfree(driver);
-            driver = NULL;
-            break; /* out of memory! */
-         }
-
-         driver->createNewScreenFunc = (PFNCREATENEWSCREENFUNC)
-            dlsym(handle, createNewScreenName);
-
-         if ( driver->createNewScreenFunc == NULL ) {
-            /* If the driver doesn't have this symbol then something's
-             * really, really wrong.
-             */
-            ErrorMessageF("%s not defined in %s_dri.so!\n"
-			  "Your driver may be too old for this libGL.\n",
-			  createNewScreenName, driverName);
-            Xfree(driver);
-            driver = NULL;
-            dlclose(handle);
-            continue;
-         }
-         driver->handle = handle;
-         /* put at head of linked list */
-         driver->next = Drivers;
-         Drivers = driver;
-         break;
-      }
-      else {
+      if ( handle != NULL )
+	  break;
+      else
 	 ErrorMessageF("dlopen %s failed (%s)\n", realDriverName, dlerror());
-      }
    }
 
-   if (!driver)
+   if (!handle)
       ErrorMessageF("unable to load driver: %s_dri.so\n", driverName);
 
    if (glhandle)
       dlclose(glhandle);
 
-   return driver;
+   return handle;
 }
 
 
@@ -330,11 +273,12 @@ static Bool GetDriverName(Display *dpy, int scrNum, char **driverName)
  * Given a display pointer and screen number, return a __DRIdriver handle.
  * Return NULL if anything goes wrong.
  */
-__DRIdriver *driGetDriver(Display *dpy, int scrNum)
+static void *driGetDriver(Display *dpy, int scrNum)
 {
    char *driverName;
+   void *ret;
+
    if (GetDriverName(dpy, scrNum, &driverName)) {
-      __DRIdriver *ret;
       ret = OpenDriver(driverName);
       if (driverName)
      	 Xfree(driverName);
@@ -342,7 +286,6 @@ __DRIdriver *driGetDriver(Display *dpy, int scrNum)
    }
    return NULL;
 }
-
 
 /*
  * Exported function for querying the DRI driver for a given screen.
@@ -380,9 +323,9 @@ PUBLIC const char *glXGetScreenDriver (Display *dpy, int scrNum) {
  * Note: The driver remains opened after this function returns.
  */
 PUBLIC const char *glXGetDriverConfig (const char *driverName) {
-   __DRIdriver *driver = OpenDriver (driverName);
-   if (driver)
-      return dlsym (driver->handle, "__driConfigOptions");
+   void *handle = OpenDriver (driverName);
+   if (handle)
+      return dlsym (handle, "__driConfigOptions");
    else
       return NULL;
 }
@@ -562,7 +505,6 @@ static const __DRIextension *loader_extensions[] = {
     &damageExtension.base,
     NULL
 };
-
 
 
 /**
@@ -766,6 +708,11 @@ void
 driCreateScreen(__GLXscreenConfigs *psc, int screen,
 		__GLXdisplayPrivate *priv)
 {
+    PFNCREATENEWSCREENFUNC createNewScreen;
+
+    if (priv->driDisplay.private == NULL)
+	return;
+
     /* Create drawable hash */
     psc->drawHash = __glxHashCreate();
     if ( psc->drawHash == NULL )
@@ -773,22 +720,29 @@ driCreateScreen(__GLXscreenConfigs *psc, int screen,
 
     /* Initialize per screen dynamic client GLX extensions */
     psc->ext_list_first_time = GL_TRUE;
-    /* Initialize the direct rendering per screen data and functions */
-    if (priv->driDisplay.private != NULL) {
-	/* FIXME: Should it be some sort of an error if createNewScreen[i]
-	 * FIXME: is NULL?
-	 */
-	if (priv->driDisplay.createNewScreen &&
-	    priv->driDisplay.createNewScreen[screen]) {
 
-	    psc->driScreen.private =
-		CallCreateNewScreen(psc->dpy, screen, psc,
-				    & priv->driDisplay,
-				    priv->driDisplay.createNewScreen[screen] );
-	    if (psc->driScreen.private != NULL)
-		__glXScrEnableDRIExtension(psc);
-	}
-    }
+    psc->driver = driGetDriver(priv->dpy, screen);
+    createNewScreen = dlsym(psc->driver, createNewScreenName);
+    if (createNewScreenName == NULL)
+	return;
+
+    psc->driScreen.private =
+	CallCreateNewScreen(psc->dpy, screen, psc,
+			    &priv->driDisplay, createNewScreen);
+    if (psc->driScreen.private != NULL)
+	__glXScrEnableDRIExtension(psc);
+}
+
+void driDestroyScreen(__GLXscreenConfigs *psc)
+{
+    /* Free the direct rendering per screen data */
+    if (psc->driScreen.private)
+	(*psc->driScreen.destroyScreen)(&psc->driScreen);
+    psc->driScreen.private = NULL;
+    if (psc->drawHash)
+	__glxHashDestroy(psc->drawHash);
+    if (psc->driver)
+	dlclose(psc->driver);
 }
 
 /* Called from __glXFreeDisplayPrivate.
@@ -797,35 +751,8 @@ static void driDestroyDisplay(Display *dpy, void *private)
 {
     __DRIdisplayPrivate *pdpyp = (__DRIdisplayPrivate *)private;
 
-    if (pdpyp) {
-        const int numScreens = ScreenCount(dpy);
-        int i;
-        for (i = 0; i < numScreens; i++) {
-	   if (pdpyp->libraryHandles[i]) {
-	      __DRIdriver *driver, *prev;
-
-	      /* Remove driver from Drivers list */
-	      for (prev = NULL, driver = Drivers; driver;
-		   prev = driver, driver = driver->next) {
-		 if (driver->handle == pdpyp->libraryHandles[i]) {
-		    if (prev)
-		       prev->next = driver->next;
-		    else
-		       Drivers = driver->next;
-
-		    Xfree(driver->name);
-		    Xfree(driver->libpath);
-		    Xfree(driver);
-		    break;
-		 }
-	      }
-
-	      dlclose(pdpyp->libraryHandles[i]);
-	   }
-        }
-        Xfree(pdpyp->libraryHandles);
+    if (pdpyp)
 	Xfree(pdpyp);
-    }
 }
 
 
@@ -836,11 +763,9 @@ static void driDestroyDisplay(Display *dpy, void *private)
  */
 void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
 {
-    const int numScreens = ScreenCount(dpy);
     __DRIdisplayPrivate *pdpyp;
     int eventBase, errorBase;
     int major, minor, patch;
-    int scrn;
 
     /* Initialize these fields to NULL in case we fail.
      * If we don't do this we may later get segfaults trying to free random
@@ -867,38 +792,6 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     pdpyp->driPatch = patch;
 
     pdisp->destroyDisplay = driDestroyDisplay;
-
-    /* allocate array of pointers to createNewScreen funcs */
-    pdisp->createNewScreen = (PFNCREATENEWSCREENFUNC *)
-      Xmalloc(numScreens * sizeof(void *));
-    if (!pdisp->createNewScreen) {
-       Xfree(pdpyp);
-       return NULL;
-    }
-
-    /* allocate array of library handles */
-    pdpyp->libraryHandles = (void **) Xmalloc(numScreens * sizeof(void*));
-    if (!pdpyp->libraryHandles) {
-       Xfree(pdisp->createNewScreen);
-       Xfree(pdpyp);
-       return NULL;
-    }
-
-    /* dynamically discover DRI drivers for all screens, saving each
-     * driver's "__driCreateScreen" function pointer.  That's the bootstrap
-     * entrypoint for all DRI drivers.
-     */
-    for (scrn = 0; scrn < numScreens; scrn++) {
-        __DRIdriver *driver = driGetDriver(dpy, scrn);
-        if (driver) {
-           pdisp->createNewScreen[scrn] = driver->createNewScreenFunc;
-           pdpyp->libraryHandles[scrn] = driver->handle;
-        }
-        else {
-           pdisp->createNewScreen[scrn] = NULL;
-           pdpyp->libraryHandles[scrn] = NULL;
-        }
-    }
 
     return (void *)pdpyp;
 }

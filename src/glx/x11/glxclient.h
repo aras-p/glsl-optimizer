@@ -103,24 +103,6 @@ struct __DRIdisplayRec {
      * \c NULL if direct rendering is not supported on this display.
      */
     struct __DRIdisplayPrivateRec *private;
-
-    /**
-     * Array of pointers to methods to create and initialize the private DRI
-     * screen data.
-     */
-    PFNCREATENEWSCREENFUNC * createNewScreen;
-};
-
-
-/*
-** We keep a linked list of these structures, one per DRI device driver.
-*/
-struct __DRIdriverRec {
-   const char *name;
-   const char *libpath;
-   void *handle;
-   PFNCREATENEWSCREENFUNC createNewScreenFunc;
-   struct __DRIdriverRec *next;
 };
 
 /*
@@ -130,8 +112,7 @@ struct __DRIdriverRec {
 extern void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp);
 extern void driCreateScreen(__GLXscreenConfigs *psc, int screen,
 			    __GLXdisplayPrivate *priv);
-
-extern  __DRIdriver *driGetDriver(Display *dpy, int scrNum);
+extern void driDestroyScreen(__GLXscreenConfigs *psc);
 
 extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
 
@@ -458,6 +439,7 @@ struct __GLXscreenConfigsRec {
     __glxHashTable *drawHash;
     Display *dpy;
     int scr;
+    void *driver;
 
 #ifdef __DRI_COPY_SUB_BUFFER
     __DRIcopySubBufferExtension *copySubBuffer;

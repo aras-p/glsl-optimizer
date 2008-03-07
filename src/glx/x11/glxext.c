@@ -358,12 +358,7 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	Xfree((char*) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
-	/* Free the direct rendering per screen data */
-	if (psc->driScreen.private)
-	    (*psc->driScreen.destroyScreen)(&psc->driScreen);
-	psc->driScreen.private = NULL;
-	if (psc->drawHash)
-	    __glxHashDestroy(psc->drawHash);
+	driDestroyScreen(psc);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -394,10 +389,6 @@ static int __glXFreeDisplayPrivate(XExtData *extension)
 	(*priv->driDisplay.destroyDisplay)(priv->dpy,
 					   priv->driDisplay.private);
     priv->driDisplay.private = NULL;
-    if (priv->driDisplay.createNewScreen) {
-        Xfree(priv->driDisplay.createNewScreen); /* free array of ptrs */
-        priv->driDisplay.createNewScreen = NULL;
-    }
 #endif
 
     Xfree((char*) priv);
