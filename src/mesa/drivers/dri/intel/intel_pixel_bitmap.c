@@ -166,11 +166,8 @@ do_blit_bitmap( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
    GLfloat tmpColor[4];
-
-   union {
-      GLuint ui;
-      GLubyte ub[4];
-   } color;
+   GLubyte ubcolor[4];
+   GLuint color8888, color565;
 
    if (!dst)
        return GL_FALSE;
@@ -187,10 +184,13 @@ do_blit_bitmap( GLcontext *ctx,
        ADD_3V(tmpColor, tmpColor, ctx->Current.RasterSecondaryColor);
    }
 
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[0], tmpColor[2]);
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[1], tmpColor[1]);
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[2], tmpColor[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[3], tmpColor[3]);
+   UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[0], tmpColor[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[1], tmpColor[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[2], tmpColor[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(ubcolor[3], tmpColor[3]);
+
+   color8888 = INTEL_PACKCOLOR8888(ubcolor[0], ubcolor[1], ubcolor[2], ubcolor[3]);
+   color565 = INTEL_PACKCOLOR565(ubcolor[0], ubcolor[1], ubcolor[2]);
 
    /* Does zoom apply to bitmaps?
     */
@@ -289,7 +289,7 @@ do_blit_bitmap( GLcontext *ctx,
 						  dst->cpp,
 						  (GLubyte *)stipple, 
 						  sz,
-						  color.ui,
+						  (dst->cpp == 2) ? color565 : color8888,
 						  dst->pitch,
 						  dst->buffer,
 						  0,
