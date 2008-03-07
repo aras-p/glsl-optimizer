@@ -24,7 +24,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/dri/dri_glx.c,v 1.14 2003/07/16 00:54:00 dawes Exp $ */
 
 /*
  * Authors:
@@ -97,68 +96,6 @@ static void ErrorMessageF(const char *f, ...)
 
 
 /**
- * Extract the ith directory path out of a colon-separated list of paths.  No
- * more than \c dirLen characters, including the terminating \c NUL, will be
- * written to \c dir.
- *
- * \param index  Index of path to extract (starting at zero)
- * \param paths  The colon-separated list of paths
- * \param dirLen Maximum length of result to store in \c dir
- * \param dir    Buffer to hold the extracted directory path
- *
- * \returns
- * The number of characters that would have been written to \c dir had there
- * been enough room.  This does not include the terminating \c NUL.  When
- * extraction fails, zero will be returned.
- * 
- * \todo
- * It seems like this function could be rewritten to use \c strchr.
- */
-static size_t
-ExtractDir(int index, const char *paths, int dirLen, char *dir)
-{
-   int i, len;
-   const char *start, *end;
-
-   /* find ith colon */
-   start = paths;
-   i = 0;
-   while (i < index) {
-      if (*start == ':') {
-         i++;
-         start++;
-      }
-      else if (*start == 0) {
-         /* end of string and couldn't find ith colon */
-         dir[0] = 0;
-         return 0;
-      }
-      else {
-         start++;
-      }
-   }
-
-   while (*start == ':')
-      start++;
-
-   /* find next colon, or end of string */
-   end = start + 1;
-   while (*end != ':' && *end != 0) {
-      end++;
-   }
-
-   /* copy string between <start> and <end> into result string */
-   len = end - start;
-   if (len > dirLen - 1)
-      len = dirLen - 1;
-   strncpy(dir, start, len);
-   dir[len] = 0;
-
-   return( end - start );
-}
-
-
-/**
  * Versioned name of the expected \c __driCreateNewScreen function.
  * 
  * The version of the last incompatible loader/driver inteface change is
@@ -182,37 +119,43 @@ static const char createNewScreenName[] = __DRI_CREATE_NEW_SCREEN_STRING;
  */
 static void *OpenDriver(const char *driverName)
 {
-   void *glhandle = NULL;
-   char *libPaths = NULL;
-   char libDir[1000];
+   void *glhandle, *handle;
+   const char *libPaths, *p, *next;
    char realDriverName[200];
-   void *handle = NULL;
-   int i;
+   int len;
 
    /* Attempt to make sure libGL symbols will be visible to the driver */
    glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
 
+   libPaths = DEFAULT_DRIVER_DIR;
    if (geteuid() == getuid()) {
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
       libPaths = getenv("LIBGL_DRIVERS_PATH");
       if (!libPaths)
          libPaths = getenv("LIBGL_DRIVERS_DIR"); /* deprecated */
    }
-   if (!libPaths)
-      libPaths = DEFAULT_DRIVER_DIR;
 
-   for ( i = 0 ; ExtractDir(i, libPaths, 1000, libDir) != 0 ; i++ ) {
-      /* If TLS support is enabled, try to open the TLS version of the driver
-       * binary first.  If that fails, try the non-TLS version.
-       */
+   handle = NULL;
+   for (p = libPaths; *p; p = next) {
+       next = strchr(p, ':');
+       if (next == NULL) {
+	   len = strlen(p);
+	   next = p + len;
+       } else {
+	   len = next - p;
+	   next++;
+       }
+
 #ifdef GLX_USE_TLS
-      snprintf(realDriverName, 200, "%s/tls/%s_dri.so", libDir, driverName);
+      snprintf(realDriverName, sizeof realDriverName,
+	       "%.*s/tls/%s_dri.so", len, p, driverName);
       InfoMessageF("OpenDriver: trying %s\n", realDriverName);
       handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
 #endif
 
       if ( handle == NULL ) {
-	 snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
+	 snprintf(realDriverName, sizeof realDriverName,
+		  "%.*s/%s_dri.so", len, p, driverName);
 	 InfoMessageF("OpenDriver: trying %s\n", realDriverName);
 	 handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
       }
