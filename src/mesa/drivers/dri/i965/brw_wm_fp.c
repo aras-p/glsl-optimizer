@@ -649,17 +649,21 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      src_undef());
    }
    else {
+       GLboolean  swap_uv = c->key.yuvtex_swap_mask & (1<<inst->TexSrcUnit);
+
       /* 
 	 CONST C0 = { -.5, -.0625,  -.5, 1.164 }
 	 CONST C1 = { 1.596, -0.813, 2.018, -.391 }
 	 UYV     = TEX ...
 	 UYV.xyz = ADD UYV,     C0
 	 UYV.y   = MUL UYV.y,   C0.w
-	 RGB.xyz = MAD UYV.xxz, C1,   UYV.y
+ 	 if (UV swaped)
+	    RGB.xyz = MAD UYV.zzx, C1,   UYV.y
+	 else
+	    RGB.xyz = MAD UYV.xxz, C1,   UYV.y 
 	 RGB.y   = MAD UYV.z,   C1.w, RGB.y
       */
       struct prog_dst_register dst = inst->DstReg;
-      struct prog_src_register src0 = inst->SrcReg[0];
       struct prog_dst_register tmp = get_temp(c);
       struct prog_src_register tmpsrc = src_reg_from_dst(tmp);
       struct prog_src_register C0 = search_or_add_const4f( c,  -.5, -.0625, -.5, 1.164 );
@@ -673,7 +677,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      inst->SaturateMode,
 	      inst->TexSrcUnit,
 	      inst->TexSrcTarget,
-	      src0,
+	      coord,
 	      src_undef(),
 	      src_undef());
 
@@ -689,6 +693,7 @@ static void precalc_tex( struct brw_wm_compile *c,
 
       /* YUV.y   = MUL YUV.y, C0.w
        */
+
       emit_op(c,
 	      OPCODE_MUL,
 	      dst_mask(tmp, WRITEMASK_Y),
@@ -697,13 +702,18 @@ static void precalc_tex( struct brw_wm_compile *c,
 	      src_swizzle1(C0, W),
 	      src_undef());
 
-      /* RGB.xyz = MAD YUV.xxz, C1, YUV.y
+      /* 
+       * if (UV swaped)
+       *     RGB.xyz = MAD YUV.zzx, C1, YUV.y
+       * else
+       *     RGB.xyz = MAD YUV.xxz, C1, YUV.y
        */
+
       emit_op(c,
 	      OPCODE_MAD,
 	      dst_mask(dst, WRITEMASK_XYZ),
 	      0, 0, 0,
-	      src_swizzle(tmpsrc, X,X,Z,Z),
+	      swap_uv?src_swizzle(tmpsrc, Z,Z,X,X):src_swizzle(tmpsrc, X,X,Z,Z),
 	      C1,
 	      src_swizzle1(tmpsrc, Y));
 

@@ -29,7 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
              
-
+#include "main/texformat.h"
 #include "brw_context.h"
 #include "brw_util.h"
 #include "brw_wm.h"
@@ -288,8 +288,12 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    key->shadowtex_mask |= 1<<i;
 	 }
 
-	 if (t->Image[0][t->BaseLevel]->InternalFormat == GL_YCBCR_MESA)
+	 if (t->Image[0][t->BaseLevel]->InternalFormat == GL_YCBCR_MESA) {
 	    key->yuvtex_mask |= 1<<i;
+	    if (t->Image[0][t->BaseLevel]->TexFormat->MesaFormat == 
+		    MESA_FORMAT_YCBCR)
+		key->yuvtex_swap_mask |= 1<< i;
+	 }
       }
    }
 
