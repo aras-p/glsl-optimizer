@@ -231,7 +231,6 @@ static const struct dri_extension card_extensions[] = {
    {"GL_EXT_texture_env_dot3", NULL},
    {"GL_EXT_texture_filter_anisotropic", NULL},
    {"GL_EXT_texture_lod_bias", NULL},
-   {"GL_EXT_texture_sRGB", NULL},
    {"GL_3DFX_texture_compression_FXT1", NULL},
    {"GL_APPLE_client_storage", NULL},
    {"GL_MESA_pack_invert", NULL},
@@ -257,6 +256,7 @@ static const struct dri_extension brw_extensions[] = {
    /* ARB extn won't work if not enabled */
    { "GL_SGIX_depth_texture",             NULL },
    { "GL_ARB_texture_env_crossbar",       NULL },
+   { "GL_EXT_texture_sRGB",		  NULL},
    { NULL,                                NULL }
 };
 
