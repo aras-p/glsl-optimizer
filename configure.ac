@@ -30,12 +30,13 @@ AC_PATH_PROG(MAKE, make)
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
 
+MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
 if test "x$GCC" = xyes; then
-    GCC_PATH=$(gcc -print-search-dirs | sed -ne 's/install: //p')
-    MKDEP_OPTIONS="-fdepend -I${GCC_PATH}include"
-else
-    MKDEP_OPTIONS=-fdepend
+    GCC_INCLUDES=`$CC -print-file-name=include`
+    if test "x$GCC_INCLUDES" != x; then
+        MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
+    fi
 fi
 AC_SUBST(MKDEP_OPTIONS)
 
