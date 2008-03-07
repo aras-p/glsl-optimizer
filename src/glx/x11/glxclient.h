@@ -128,6 +128,8 @@ struct __DRIdriverRec {
 ** dependent methods.
 */
 extern void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp);
+extern void driCreateScreen(__GLXscreenConfigs *psc, int screen,
+			    __GLXdisplayPrivate *priv);
 
 extern  __DRIdriver *driGetDriver(Display *dpy, int scrNum);
 
