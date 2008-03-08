@@ -58,8 +58,22 @@ extern "C" {
 #endif
 
 
+/**
+ * Print debug messages.
+ *
+ * A debug message will be printed regardless of the DEBUG/NDEBUG macros.
+ *
+ * The actual channel used to output debug message is platform specific. To 
+ * avoid misformating or truncation, follow these rules of thumb:   
+ * - output whole lines
+ * - avoid outputing large strings (512 bytes is the current maximum length 
+ * that is guaranteed to be printed in all platforms)
+ */
 void debug_printf(const char *format, ...);
 
+/**
+ * @sa debug_printf 
+ */
 void debug_vprintf(const char *format, va_list ap);
 
 void debug_assert_fail(const char *expr, const char *file, unsigned line);
