@@ -265,14 +265,6 @@ __GLXcontext *__glXcurrentContext = &dummyContext;
 */
 int __glXDebug = 0;
 
-/*
-** forward prototype declarations
-*/
-int __glXCloseDisplay(Display *dpy, XExtCodes *codes);
-
-
-/************************************************************************/
-
 /* Extension required boiler plate */
 
 static char *__glXExtensionName = GLX_EXTENSION_NAME;
@@ -294,7 +286,7 @@ static /* const */ char *error_list[] = {
     "GLXBadWindow",
 };
 
-int __glXCloseDisplay(Display *dpy, XExtCodes *codes)
+static int __glXCloseDisplay(Display *dpy, XExtCodes *codes)
 {
   GLXContext gc;
 
