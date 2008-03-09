@@ -145,6 +145,7 @@ static void *OpenDriver(const char *driverName)
    /* Attempt to make sure libGL symbols will be visible to the driver */
    glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
 
+   libPaths = NULL;
    if (geteuid() == getuid()) {
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
       libPaths = getenv("LIBGL_DRIVERS_PATH");
