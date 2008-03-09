@@ -117,7 +117,7 @@ void cso_set_blend(struct cso_context *ctx,
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_blend *cso = malloc(sizeof(struct cso_blend));
+      struct cso_blend *cso = MALLOC(sizeof(struct cso_blend));
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_blend_state(ctx->pipe, &cso->state);
@@ -150,7 +150,7 @@ void cso_single_sampler(struct cso_context *ctx,
                                                           (void*)templ);
 
       if (cso_hash_iter_is_null(iter)) {
-         struct cso_sampler *cso = malloc(sizeof(struct cso_sampler));
+         struct cso_sampler *cso = MALLOC(sizeof(struct cso_sampler));
          
          cso->state = *templ;
          cso->data = ctx->pipe->create_sampler_state(ctx->pipe, &cso->state);
@@ -220,7 +220,7 @@ void cso_set_depth_stencil_alpha(struct cso_context *ctx,
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_depth_stencil_alpha *cso = malloc(sizeof(struct cso_depth_stencil_alpha));
+      struct cso_depth_stencil_alpha *cso = MALLOC(sizeof(struct cso_depth_stencil_alpha));
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_depth_stencil_alpha_state(ctx->pipe, &cso->state);
@@ -253,7 +253,7 @@ void cso_set_rasterizer(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_rasterizer *cso = malloc(sizeof(struct cso_rasterizer));
+      struct cso_rasterizer *cso = MALLOC(sizeof(struct cso_rasterizer));
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_rasterizer_state(ctx->pipe, &cso->state);
@@ -288,7 +288,7 @@ void cso_set_fragment_shader(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_fragment_shader *cso = malloc(sizeof(struct cso_fragment_shader));
+      struct cso_fragment_shader *cso = MALLOC(sizeof(struct cso_fragment_shader));
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_fs_state(ctx->pipe, &cso->state);
@@ -319,7 +319,7 @@ void cso_set_vertex_shader(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_vertex_shader *cso = malloc(sizeof(struct cso_vertex_shader));
+      struct cso_vertex_shader *cso = MALLOC(sizeof(struct cso_vertex_shader));
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_vs_state(ctx->pipe, &cso->state);
