@@ -378,8 +378,6 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    int screen = (fbconfig == NULL) ? vis->screen : fbconfig->screen;
 	    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 	    const __GLcontextModes * mode;
-	    drm_context_t hwContext;
-
 
 	    if (fbconfig == NULL) {
 		mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
@@ -400,33 +398,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		mode = fbconfig;
 	    }
 
-	    if (psc && psc->driScreen.private) {
-		__DRIcontext *shared = (shareList != NULL)
-		    ? &shareList->driContext : NULL;
-
-
-		if (!XF86DRICreateContextWithConfig(dpy, psc->scr,
-						    mode->visualID,
-						    &gc->hwContextID, &hwContext))
-		    /* gah, handle this better */
-		    return NULL;
-
-		gc->driContext.private = 
-		  (*psc->driScreen.createNewContext)( &psc->driScreen,
-						      mode, renderType,
-						      shared,
-						      hwContext,
-						      &gc->driContext );
-		if (gc->driContext.private) {
-		    gc->isDirect = GL_TRUE;
-		    gc->screen = mode->screen;
-		    gc->psc = psc;
-		    gc->mode = mode;
-		}
-		else {
-		    XF86DRIDestroyContext(dpy, psc->scr, gc->hwContextID);
-		}
-	    }
+	    psc->driCreateContext(psc, mode, gc, shareList, renderType);
 	}
 #endif
 

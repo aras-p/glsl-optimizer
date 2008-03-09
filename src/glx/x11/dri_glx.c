@@ -657,6 +657,42 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     return psp;
 }
 
+
+static void driCreateContext(__GLXscreenConfigs *psc,
+			     const __GLcontextModes *mode,
+			     GLXContext gc,
+			     GLXContext shareList, int renderType)
+{
+    drm_context_t hwContext;
+    __DRIcontext *shared;
+
+    if (psc && psc->driScreen.private) {
+	shared = (shareList != NULL) ? &shareList->driContext : NULL;
+
+	if (!XF86DRICreateContextWithConfig(psc->dpy, psc->scr,
+					    mode->visualID,
+					    &gc->hwContextID, &hwContext))
+	    /* gah, handle this better */
+	    return;
+
+	gc->driContext.private = 
+	    (*psc->driScreen.createNewContext)( &psc->driScreen,
+						mode, renderType,
+						shared,
+						hwContext,
+						&gc->driContext );
+	if (gc->driContext.private) {
+	    gc->isDirect = GL_TRUE;
+	    gc->screen = mode->screen;
+	    gc->psc = psc;
+	    gc->mode = mode;
+	}
+	else {
+	    XF86DRIDestroyContext(psc->dpy, psc->scr, gc->hwContextID);
+	}
+    }
+}
+
 static void driDestroyScreen(__GLXscreenConfigs *psc)
 {
     /* Free the direct rendering per screen data */
@@ -698,6 +734,7 @@ static void driCreateScreen(__GLXscreenConfigs *psc, int screen,
 	__glXScrEnableDRIExtension(psc);
 
     psc->driDestroyScreen = driDestroyScreen;
+    psc->driCreateContext = driCreateContext;
 }
 
 /* Called from __glXFreeDisplayPrivate.

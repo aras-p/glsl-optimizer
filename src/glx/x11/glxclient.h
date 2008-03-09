@@ -438,6 +438,11 @@ struct __GLXscreenConfigsRec {
 
     void (*driDestroyScreen)(__GLXscreenConfigs *psc);
 
+    void (*driCreateContext)(__GLXscreenConfigs *psc,
+			     const __GLcontextModes *mode,
+			     GLXContext gc,
+			     GLXContext shareList, int renderType);
+
 #ifdef __DRI_COPY_SUB_BUFFER
     __DRIcopySubBufferExtension *copySubBuffer;
 #endif
