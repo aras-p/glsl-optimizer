@@ -71,6 +71,7 @@
  */
 
 #include "glxhash.h"
+#include <X11/Xfuncproto.h>
 
 #define HASH_MAIN 0
 
@@ -137,7 +138,7 @@ static unsigned long HashHash(unsigned long key)
     return hash;
 }
 
-__glxHashTable *__glxHashCreate(void)
+_X_HIDDEN __glxHashTable *__glxHashCreate(void)
 {
     __glxHashTablePtr table;
     int          i;
@@ -154,7 +155,7 @@ __glxHashTable *__glxHashCreate(void)
     return table;
 }
 
-int __glxHashDestroy(__glxHashTable *t)
+_X_HIDDEN int __glxHashDestroy(__glxHashTable *t)
 {
     __glxHashTablePtr  table = (__glxHashTablePtr)t;
     __glxHashBucketPtr bucket;
@@ -205,7 +206,8 @@ static __glxHashBucketPtr HashFind(__glxHashTablePtr table,
     return NULL;
 }
 
-int __glxHashLookup(__glxHashTable *t, unsigned long key, void **value)
+_X_HIDDEN int __glxHashLookup(__glxHashTable *t,
+			      unsigned long key, void **value)
 {
     __glxHashTablePtr  table = (__glxHashTablePtr)t;
     __glxHashBucketPtr bucket;
@@ -218,7 +220,8 @@ int __glxHashLookup(__glxHashTable *t, unsigned long key, void **value)
     return 0;			/* Found */
 }
 
-int __glxHashInsert(__glxHashTable *t, unsigned long key, void *value)
+_X_HIDDEN int __glxHashInsert(__glxHashTable *t,
+			      unsigned long key, void *value)
 {
     __glxHashTablePtr  table = (__glxHashTablePtr)t;
     __glxHashBucketPtr bucket;
@@ -240,7 +243,7 @@ int __glxHashInsert(__glxHashTable *t, unsigned long key, void *value)
     return 0;			/* Added to table */
 }
 
-int __glxHashDelete(__glxHashTable *t, unsigned long key)
+_X_HIDDEN int __glxHashDelete(__glxHashTable *t, unsigned long key)
 {
     __glxHashTablePtr  table = (__glxHashTablePtr)t;
     unsigned long hash;
@@ -257,7 +260,8 @@ int __glxHashDelete(__glxHashTable *t, unsigned long key)
     return 0;
 }
 
-int __glxHashNext(__glxHashTable *t, unsigned long *key, void **value)
+_X_HIDDEN int __glxHashNext(__glxHashTable *t,
+			    unsigned long *key, void **value)
 {
     __glxHashTablePtr  table = (__glxHashTablePtr)t;
 
@@ -274,7 +278,8 @@ int __glxHashNext(__glxHashTable *t, unsigned long *key, void **value)
     return 0;
 }
 
-int __glxHashFirst(__glxHashTable *t, unsigned long *key, void **value)
+_X_HIDDEN int __glxHashFirst(__glxHashTable *t,
+			     unsigned long *key, void **value)
 {
     __glxHashTablePtr  table = (__glxHashTablePtr)t;
 

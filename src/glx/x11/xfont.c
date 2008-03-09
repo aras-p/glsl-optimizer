@@ -210,7 +210,7 @@ static XCharStruct *isvalid(XFontStruct *fs, int which)
   return(NULL);
 }
 
-void DRI_glXUseXFont( Font font, int first, int count, int listbase )
+_X_HIDDEN void DRI_glXUseXFont( Font font, int first, int count, int listbase )
 {
   GLXContext CC;
   Display *dpy;

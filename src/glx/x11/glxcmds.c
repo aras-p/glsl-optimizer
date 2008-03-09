@@ -474,7 +474,7 @@ PUBLIC GLXContext glXCreateContext(Display *dpy, XVisualInfo *vis,
 			False, 0);
 }
 
-void __glXFreeContext(__GLXcontext *gc)
+_X_HIDDEN void __glXFreeContext(__GLXcontext *gc)
 {
     if (gc->vendor) XFree((char *) gc->vendor);
     if (gc->renderer) XFree((char *) gc->renderer);
@@ -2138,7 +2138,7 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
 }
 
 #ifdef GLX_DIRECT_RENDERING
-GLboolean
+_X_HIDDEN GLboolean
 __driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator)
 {
 #ifdef XF86VIDMODE
@@ -2216,8 +2216,9 @@ __driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator
  *       when GLX_OML_sync_control appears in the client extension string.
  */
 
-GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
-			     int32_t * numerator, int32_t * denominator)
+_X_HIDDEN GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
+				       int32_t * numerator,
+				       int32_t * denominator)
 {
 #if defined( GLX_DIRECT_RENDERING ) && defined( XF86VIDMODE )
     __DRIdrawable *driDraw = GetDRIDrawable(dpy, drawable, NULL);
@@ -2641,7 +2642,7 @@ static void __glXReleaseTexImageEXT(Display *dpy,
  * 
  * \sa strdup
  */
-char *
+_X_HIDDEN char *
 __glXstrdup(const char *str)
 {
    char *copy;
@@ -2882,7 +2883,7 @@ PUBLIC void (*glXGetProcAddress(const GLubyte *procName))( void )
  *
  * \since Internal API version 20030317.
  */
-int __glXGetUST( int64_t * ust )
+_X_HIDDEN int __glXGetUST( int64_t * ust )
 {
     struct timeval  tv;
     

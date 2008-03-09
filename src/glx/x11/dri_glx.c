@@ -845,7 +845,7 @@ static void driDestroyDisplay(__GLXDRIdisplay *dpy)
  * This is called from __glXInitialize() when we are given a new
  * display pointer.
  */
-__GLXDRIdisplay *driCreateDisplay(Display *dpy)
+_X_HIDDEN __GLXDRIdisplay *driCreateDisplay(Display *dpy)
 {
     __GLXDRIdisplayPrivate *pdpyp;
     int eventBase, errorBase;

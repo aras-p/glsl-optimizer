@@ -149,7 +149,7 @@ static __GLapi *IndirectAPI = NULL;
 static GLboolean TSDinitialized = GL_FALSE;
 static xthread_key_t ContextTSD;
 
-__GLXcontext *__glXGetCurrentContext(void)
+_X_HIDDEN __GLXcontext *__glXGetCurrentContext(void)
 {
    if (!TSDinitialized) {
       xthread_key_create(&ContextTSD, NULL);
@@ -166,7 +166,7 @@ __GLXcontext *__glXGetCurrentContext(void)
    }
 }
 
-void __glXSetCurrentContext(__GLXcontext *c)
+_X_HIDDEN void __glXSetCurrentContext(__GLXcontext *c)
 {
    if (!TSDinitialized) {
       xthread_key_create(&ContextTSD, NULL);
@@ -177,11 +177,11 @@ void __glXSetCurrentContext(__GLXcontext *c)
 
 
 /* Used by the __glXLock() and __glXUnlock() macros */
-xmutex_rec __glXmutex;
+_X_HIDDEN xmutex_rec __glXmutex;
 
 #elif defined( PTHREADS )
 
-pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
+_X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
 # if defined( GLX_USE_TLS )
 
@@ -195,7 +195,7 @@ pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 __thread void * __glX_tls_Context __attribute__((tls_model("initial-exec")))
     = &dummyContext;
 
-void __glXSetCurrentContext( __GLXcontext * c )
+_X_HIDDEN void __glXSetCurrentContext( __GLXcontext * c )
 {
     __glX_tls_Context = (c != NULL) ? c : &dummyContext;
 }
@@ -228,13 +228,13 @@ static void init_thread_data( void )
     }
 }
 
-void __glXSetCurrentContext( __GLXcontext * c )
+_X_HIDDEN void __glXSetCurrentContext( __GLXcontext * c )
 {
     pthread_once( & once_control, init_thread_data );
     pthread_setspecific( ContextTSD, c );
 }
 
-__GLXcontext * __glXGetCurrentContext( void )
+_X_HIDDEN __GLXcontext * __glXGetCurrentContext( void )
 {
     void * v;
 
@@ -253,7 +253,7 @@ __GLXcontext * __glXGetCurrentContext( void )
 #else
 
 /* not thread safe */
-__GLXcontext *__glXcurrentContext = &dummyContext;
+_X_HIDDEN __GLXcontext *__glXcurrentContext = &dummyContext;
 
 #endif
 
@@ -262,7 +262,7 @@ __GLXcontext *__glXcurrentContext = &dummyContext;
 ** You can set this cell to 1 to force the gl drawing stuff to be
 ** one command per packet
 */
-int __glXDebug = 0;
+_X_HIDDEN int __glXDebug = 0;
 
 /* Extension required boiler plate */
 
@@ -420,7 +420,7 @@ static Bool QueryVersion(Display *dpy, int opcode, int *major, int *minor)
 }
 
 
-void 
+_X_HIDDEN void 
 __glXInitializeVisualConfigFromTags( __GLcontextModes *config, int count, 
 				     const INT32 *bp, Bool tagged_only,
 				     Bool fbconfig_style_tags )
@@ -782,7 +782,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 /*
 ** Initialize the client side extension code.
 */
-__GLXdisplayPrivate *__glXInitialize(Display* dpy)
+_X_HIDDEN __GLXdisplayPrivate *__glXInitialize(Display* dpy)
 {
     XExtDisplayInfo *info = __glXFindDisplay(dpy);
     XExtData **privList, *private, *found;
@@ -896,7 +896,7 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
 ** Setup for sending a GLX command on dpy.  Make sure the extension is
 ** initialized.  Try to avoid calling __glXInitialize as its kinda slow.
 */
-CARD8 __glXSetupForCommand(Display *dpy)
+_X_HIDDEN CARD8 __glXSetupForCommand(Display *dpy)
 {
     GLXContext gc;
     __GLXdisplayPrivate *priv;
@@ -937,7 +937,7 @@ CARD8 __glXSetupForCommand(Display *dpy)
  * Modify this function to use \c ctx->pc instead of the explicit
  * \c pc parameter.
  */
-GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
+_X_HIDDEN GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 {
     Display * const dpy = ctx->currentDpy;
 #ifdef USE_XCB
@@ -987,9 +987,9 @@ GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
  * \param data           Command data.
  * \param dataLen        Size, in bytes, of the command data.
  */
-void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber, 
-			 GLint totalRequests,
-			 const GLvoid * data, GLint dataLen)
+_X_HIDDEN void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber, 
+				   GLint totalRequests,
+				   const GLvoid * data, GLint dataLen)
 {
     Display *dpy = gc->currentDpy;
 #ifdef USE_XCB
@@ -1035,9 +1035,9 @@ void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber,
  * \param data       Command data.
  * \param dataLen    Size, in bytes, of the command data.
  */
-void __glXSendLargeCommand(__GLXcontext *ctx,
-			   const GLvoid *header, GLint headerLen,
-			   const GLvoid *data, GLint dataLen)
+_X_HIDDEN void __glXSendLargeCommand(__GLXcontext *ctx,
+				     const GLvoid *header, GLint headerLen,
+				     const GLvoid *data, GLint dataLen)
 {
     GLint maxSize;
     GLint totalRequests, requestNumber;
@@ -1201,8 +1201,8 @@ FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
  * 
  * \note This is in this file so that it can access dummyContext.
  */
-USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
-                                    GLXDrawable read, GLXContext gc)
+static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
+			       GLXDrawable read, GLXContext gc)
 {
     xGLXMakeCurrentReply reply;
     const GLXContext oldGC = __glXGetCurrentContext();
@@ -1365,7 +1365,7 @@ PUBLIC GLX_ALIAS(Bool, glXMakeContextCurrent,
 
 
 #ifdef DEBUG
-void __glXDumpDrawBuffer(__GLXcontext *ctx)
+_X_HIDDEN void __glXDumpDrawBuffer(__GLXcontext *ctx)
 {
     GLubyte *p = ctx->buf;
     GLubyte *end = ctx->pc;
