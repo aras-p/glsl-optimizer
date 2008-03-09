@@ -44,7 +44,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sarea.h"
 #include <stdio.h>
 #include <dlfcn.h>
-#include "dri_glx.h"
 #include <sys/types.h>
 #include <stdarg.h>
 #include "glcontextmodes.h"
@@ -59,6 +58,17 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RTLD_GLOBAL 0
 #endif
 
+typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
+struct __GLXDRIdisplayPrivateRec {
+    __GLXDRIdisplay base;
+
+    /*
+    ** XFree86-DRI version information
+    */
+    int driMajor;
+    int driMinor;
+    int driPatch;
+};
 
 #ifndef DEFAULT_DRIVER_DIR
 /* this is normally defined in Mesa/configs/default with DRI_DRIVER_SEARCH_PATH */
@@ -469,10 +479,10 @@ static const __DRIextension *loader_extensions[] = {
  */
 static void *
 CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
-		    __DRIdisplay * driDpy,
+		    __GLXDRIdisplayPrivate * driDpy,
 		    PFNCREATENEWSCREENFUNC createNewScreen)
 {
-    __DRIscreenPrivate *psp = NULL;
+    void *psp = NULL;
 #ifndef GLX_USE_APPLEGL
     drm_handle_t hSAREA;
     drmAddress pSAREA = MAP_FAILED;
@@ -486,9 +496,9 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     const char * err_msg;
     const char * err_extra;
 
-    dri_version.major = driDpy->private->driMajor;
-    dri_version.minor = driDpy->private->driMinor;
-    dri_version.patch = driDpy->private->driPatch;
+    dri_version.major = driDpy->driMajor;
+    dri_version.minor = driDpy->driMinor;
+    dri_version.patch = driDpy->driPatch;
 
 
     err_msg = "XF86DRIOpenConnection";
@@ -652,8 +662,9 @@ driCreateScreen(__GLXscreenConfigs *psc, int screen,
 		__GLXdisplayPrivate *priv)
 {
     PFNCREATENEWSCREENFUNC createNewScreen;
+    __GLXDRIdisplayPrivate *pdp;
 
-    if (priv->driDisplay.private == NULL)
+    if (priv->driDisplay == NULL)
 	return;
 
     /* Create drawable hash */
@@ -669,9 +680,9 @@ driCreateScreen(__GLXscreenConfigs *psc, int screen,
     if (createNewScreenName == NULL)
 	return;
 
+    pdp = (__GLXDRIdisplayPrivate *) priv->driDisplay;
     psc->driScreen.private =
-	CallCreateNewScreen(psc->dpy, screen, psc,
-			    &priv->driDisplay, createNewScreen);
+	CallCreateNewScreen(psc->dpy, screen, psc, pdp, createNewScreen);
     if (psc->driScreen.private != NULL)
 	__glXScrEnableDRIExtension(psc);
 }
@@ -690,32 +701,21 @@ void driDestroyScreen(__GLXscreenConfigs *psc)
 
 /* Called from __glXFreeDisplayPrivate.
  */
-static void driDestroyDisplay(Display *dpy, void *private)
+static void driDestroyDisplay(__GLXDRIdisplay *dpy)
 {
-    __DRIdisplayPrivate *pdpyp = (__DRIdisplayPrivate *)private;
-
-    if (pdpyp)
-	Xfree(pdpyp);
+    Xfree(dpy);
 }
-
 
 /*
  * Allocate, initialize and return a __DRIdisplayPrivate object.
  * This is called from __glXInitialize() when we are given a new
  * display pointer.
  */
-void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
+__GLXDRIdisplay *driCreateDisplay(Display *dpy)
 {
-    __DRIdisplayPrivate *pdpyp;
+    __GLXDRIdisplayPrivate *pdpyp;
     int eventBase, errorBase;
     int major, minor, patch;
-
-    /* Initialize these fields to NULL in case we fail.
-     * If we don't do this we may later get segfaults trying to free random
-     * addresses when the display is closed.
-     */
-    pdisp->private = NULL;
-    pdisp->destroyDisplay = NULL;
 
     if (!XF86DRIQueryExtension(dpy, &eventBase, &errorBase)) {
 	return NULL;
@@ -725,7 +725,7 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
 	return NULL;
     }
 
-    pdpyp = (__DRIdisplayPrivate *)Xmalloc(sizeof(__DRIdisplayPrivate));
+    pdpyp = Xmalloc(sizeof *pdpyp);
     if (!pdpyp) {
 	return NULL;
     }
@@ -734,7 +734,7 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     pdpyp->driMinor = minor;
     pdpyp->driPatch = patch;
 
-    pdisp->destroyDisplay = driDestroyDisplay;
+    pdpyp->base.destroyDisplay = driDestroyDisplay;
 
     return (void *)pdpyp;
 }

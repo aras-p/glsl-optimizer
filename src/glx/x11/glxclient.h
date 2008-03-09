@@ -92,24 +92,19 @@ typedef struct _glapi_table __GLapi;
  * Display dependent methods.  This structure is initialized during the
  * \c driCreateDisplay call.
  */
-struct __DRIdisplayRec {
+typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
+struct __GLXDRIdisplayRec {
     /**
      * Method to destroy the private DRI display data.
      */
-    void (*destroyDisplay)(Display *dpy, void *displayPrivate);
-
-    /**
-     * Opaque pointer to private per display direct rendering data.
-     * \c NULL if direct rendering is not supported on this display.
-     */
-    struct __DRIdisplayPrivateRec *private;
+    void (*destroyDisplay)(__GLXDRIdisplay *display);
 };
 
 /*
 ** Function to create and DRI display data and initialize the display
 ** dependent methods.
 */
-extern void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp);
+extern __GLXDRIdisplay *driCreateDisplay(Display *dpy);
 extern void driCreateScreen(__GLXscreenConfigs *psc, int screen,
 			    __GLXdisplayPrivate *priv);
 extern void driDestroyScreen(__GLXscreenConfigs *psc);
@@ -529,7 +524,7 @@ struct __GLXdisplayPrivateRec {
     /**
      * Per display direct rendering interface functions and data.
      */
-    __DRIdisplay driDisplay;
+    __GLXDRIdisplay *driDisplay;
 #endif
 };
 

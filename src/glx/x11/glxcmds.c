@@ -129,7 +129,7 @@ GetDRIDrawable( Display *dpy, GLXDrawable drawable, int * const scrn_num )
     unsigned   i;
     __GLXscreenConfigs *sc;
 
-    if (priv == NULL || priv->driDisplay.private == NULL)
+    if (priv == NULL || priv->driDisplay == NULL)
 	return NULL;
     
     for (i = 0; i < screen_count; i++) {

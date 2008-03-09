@@ -63,7 +63,6 @@
 #include "xf86dri.h"
 #include "xf86drm.h"
 #include "sarea.h"
-#include "dri_glx.h"
 #endif
 
 #ifdef USE_XCB
@@ -377,10 +376,9 @@ static int __glXFreeDisplayPrivate(XExtData *extension)
 
 #ifdef GLX_DIRECT_RENDERING
     /* Free the direct rendering per display data */
-    if (priv->driDisplay.private)
-	(*priv->driDisplay.destroyDisplay)(priv->dpy,
-					   priv->driDisplay.private);
-    priv->driDisplay.private = NULL;
+    if (priv->driDisplay)
+	(*priv->driDisplay->destroyDisplay)(priv->driDisplay);
+    priv->driDisplay = NULL;
 #endif
 
     Xfree((char*) priv);
@@ -864,8 +862,7 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     ** (e.g., those called in AllocAndFetchScreenConfigs).
     */
     if (getenv("LIBGL_ALWAYS_INDIRECT") == NULL) {
-        dpyPriv->driDisplay.private =
-            driCreateDisplay(dpy, &dpyPriv->driDisplay);
+        dpyPriv->driDisplay = driCreateDisplay(dpy);
     }
 #endif
 
@@ -1189,7 +1186,7 @@ FetchDRIDrawable( Display *dpy, GLXDrawable drawable, GLXContext gc)
     drm_drawable_t hwDrawable;
     void *empty_attribute_list = NULL;
 
-    if (priv == NULL || priv->driDisplay.private == NULL)
+    if (priv == NULL || priv->driDisplay == NULL)
 	return NULL;
     
     sc = &priv->screenConfigs[gc->screen];
