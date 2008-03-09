@@ -72,6 +72,9 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
 
    ctx->pipe = pipe;
 
+   /* Enable for testing: */
+   if (0) cso_set_maximum_cache_size( ctx->cache, 4 );
+
    return ctx;
 
 out:
@@ -79,20 +82,31 @@ out:
    return NULL;
 }
 
+static void cso_release_all( struct cso_context *ctx )
+{
+   if (ctx->pipe) {
+      ctx->pipe->bind_blend_state( ctx->pipe, NULL );
+      ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
+      ctx->pipe->bind_sampler_states( ctx->pipe, 0, NULL );
+      ctx->pipe->bind_depth_stencil_alpha_state( ctx->pipe, NULL );
+      ctx->pipe->bind_fs_state( ctx->pipe, NULL );
+      ctx->pipe->bind_vs_state( ctx->pipe, NULL );
+   }
+
+   if (ctx->cache) {
+      cso_cache_delete( ctx->cache );
+      ctx->cache = NULL;
+   }
+}
+
 
 void cso_destroy_context( struct cso_context *ctx )
 {
-   if (ctx == NULL)
-      return;
-   
-/*
-   if (ctx->pipe) 
-      ctx->pipe->flush( ctx->pipe, PIPE_FLUSH_UNBIND_ALL );
-*/
+   debug_printf("%s\n", __FUNCTION__);
 
-   if (ctx->cache)
-      cso_cache_delete( ctx->cache );
-   
+   if (ctx)
+      cso_release_all( ctx );
+
    FREE( ctx );
 }
 
