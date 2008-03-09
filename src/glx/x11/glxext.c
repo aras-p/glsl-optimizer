@@ -349,7 +349,7 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	Xfree((char*) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
-	driDestroyScreen(psc);
+	psc->driDestroyScreen(psc);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -772,7 +772,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	psc->scr = i;
 	psc->dpy = dpy;
 #ifdef GLX_DIRECT_RENDERING
-	driCreateScreen(psc, i, priv);
+	(*priv->driDisplay->createScreen)(psc, i, priv);
 #endif
     }
     SyncHandle();

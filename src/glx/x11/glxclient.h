@@ -98,6 +98,9 @@ struct __GLXDRIdisplayRec {
      * Method to destroy the private DRI display data.
      */
     void (*destroyDisplay)(__GLXDRIdisplay *display);
+
+    void (*createScreen)(__GLXscreenConfigs *psc, int screen,
+			 __GLXdisplayPrivate *priv);
 };
 
 /*
@@ -105,9 +108,6 @@ struct __GLXDRIdisplayRec {
 ** dependent methods.
 */
 extern __GLXDRIdisplay *driCreateDisplay(Display *dpy);
-extern void driCreateScreen(__GLXscreenConfigs *psc, int screen,
-			    __GLXdisplayPrivate *priv);
-extern void driDestroyScreen(__GLXscreenConfigs *psc);
 
 extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
 
@@ -435,6 +435,8 @@ struct __GLXscreenConfigsRec {
     Display *dpy;
     int scr;
     void *driver;
+
+    void (*driDestroyScreen)(__GLXscreenConfigs *psc);
 
 #ifdef __DRI_COPY_SUB_BUFFER
     __DRIcopySubBufferExtension *copySubBuffer;

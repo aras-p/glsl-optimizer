@@ -657,9 +657,20 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     return psp;
 }
 
-void
-driCreateScreen(__GLXscreenConfigs *psc, int screen,
-		__GLXdisplayPrivate *priv)
+static void driDestroyScreen(__GLXscreenConfigs *psc)
+{
+    /* Free the direct rendering per screen data */
+    if (psc->driScreen.private)
+	(*psc->driScreen.destroyScreen)(&psc->driScreen);
+    psc->driScreen.private = NULL;
+    if (psc->drawHash)
+	__glxHashDestroy(psc->drawHash);
+    if (psc->driver)
+	dlclose(psc->driver);
+}
+
+static void driCreateScreen(__GLXscreenConfigs *psc, int screen,
+			    __GLXdisplayPrivate *priv)
 {
     PFNCREATENEWSCREENFUNC createNewScreen;
     __GLXDRIdisplayPrivate *pdp;
@@ -685,18 +696,8 @@ driCreateScreen(__GLXscreenConfigs *psc, int screen,
 	CallCreateNewScreen(psc->dpy, screen, psc, pdp, createNewScreen);
     if (psc->driScreen.private != NULL)
 	__glXScrEnableDRIExtension(psc);
-}
 
-void driDestroyScreen(__GLXscreenConfigs *psc)
-{
-    /* Free the direct rendering per screen data */
-    if (psc->driScreen.private)
-	(*psc->driScreen.destroyScreen)(&psc->driScreen);
-    psc->driScreen.private = NULL;
-    if (psc->drawHash)
-	__glxHashDestroy(psc->drawHash);
-    if (psc->driver)
-	dlclose(psc->driver);
+    psc->driDestroyScreen = driDestroyScreen;
 }
 
 /* Called from __glXFreeDisplayPrivate.
@@ -735,6 +736,7 @@ __GLXDRIdisplay *driCreateDisplay(Display *dpy)
     pdpyp->driPatch = patch;
 
     pdpyp->base.destroyDisplay = driDestroyDisplay;
+    pdpyp->base.createScreen = driCreateScreen;
 
     return (void *)pdpyp;
 }
