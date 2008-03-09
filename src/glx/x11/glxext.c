@@ -1178,53 +1178,20 @@ static Bool SendMakeCurrentRequest(Display *dpy, CARD8 opcode,
 
 #ifdef GLX_DIRECT_RENDERING
 static __DRIdrawable *
-FetchDRIDrawable( Display *dpy, GLXDrawable drawable, GLXContext gc)
+FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
 {
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
-    __GLXdrawable *pdraw;
-    __GLXscreenConfigs *sc;
-    drm_drawable_t hwDrawable;
-    void *empty_attribute_list = NULL;
+    __GLXDRIdrawable *pdraw;
+    __GLXscreenConfigs *psc;
 
     if (priv == NULL || priv->driDisplay == NULL)
 	return NULL;
     
-    sc = &priv->screenConfigs[gc->screen];
-    if (__glxHashLookup(sc->drawHash, drawable, (void *) &pdraw) == 0)
+    psc = &priv->screenConfigs[gc->screen];
+    if (__glxHashLookup(psc->drawHash, drawable, (void *) &pdraw) == 0)
 	return &pdraw->driDrawable;
 
-    /* Allocate a new drawable */
-    pdraw = Xmalloc(sizeof(*pdraw));
-    if (!pdraw)
-	return NULL;
-
-    pdraw->drawable = drawable;
-    pdraw->psc = sc;
-
-    if (!XF86DRICreateDrawable(dpy, sc->scr, drawable, &hwDrawable))
-	return NULL;
-
-    /* Create a new drawable */
-    pdraw->driDrawable.private =
-	(*sc->__driScreen.createNewDrawable)(&sc->__driScreen,
-					     gc->mode,
-					     &pdraw->driDrawable,
-					     hwDrawable,
-					     GLX_WINDOW_BIT,
-					     empty_attribute_list);
-
-    if (!pdraw->driDrawable.private) {
-	XF86DRIDestroyDrawable(dpy, sc->scr, drawable);
-	Xfree(pdraw);
-	return NULL;
-    }
-
-    if (__glxHashInsert(sc->drawHash, drawable, pdraw)) {
-	(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
-	XF86DRIDestroyDrawable(dpy, sc->scr, drawable);
-	Xfree(pdraw);
-	return NULL;
-    }
+    pdraw = psc->driScreen->createDrawable(psc, drawable, gc);
 
     return &pdraw->driDrawable;
 }

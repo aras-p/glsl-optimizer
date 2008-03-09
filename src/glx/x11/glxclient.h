@@ -94,6 +94,7 @@ typedef struct _glapi_table __GLapi;
  */
 typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
 typedef struct __GLXDRIscreenRec __GLXDRIscreen;
+typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
 
 struct __GLXDRIdisplayRec {
     /**
@@ -112,6 +113,16 @@ struct __GLXDRIscreenRec {
     void (*createContext)(__GLXscreenConfigs *psc,
 			  const __GLcontextModes *mode,
 			  GLXContext gc, GLXContext shareList, int renderType);
+
+    __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
+					GLXDrawable drawable,
+					GLXContext gc);
+};
+
+struct __GLXDRIdrawableRec {
+    XID drawable;
+    __GLXscreenConfigs *psc;
+    __DRIdrawable driDrawable;
 };
 
 /*
@@ -540,17 +551,6 @@ struct __GLXdisplayPrivateRec {
     __GLXDRIdisplay *driDisplay;
 #endif
 };
-
-#ifdef GLX_DIRECT_RENDERING
-
-struct __GLXdrawableRec {
-    XID drawable;
-    __GLXscreenConfigs *psc;
-    __DRIdrawable driDrawable;
-};
-
-#endif
-
 
 
 void __glXFreeContext(__GLXcontext*);

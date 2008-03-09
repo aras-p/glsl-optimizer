@@ -413,8 +413,8 @@ __glXDRIGetDrawableInfo(__DRIdrawable *drawable,
 			int *backX, int *backY,
 			int *numBackClipRects, drm_clip_rect_t **pBackClipRects)
 {
-    __GLXdrawable *glxDraw =
-	containerOf(drawable, __GLXdrawable, driDrawable);
+    __GLXDRIdrawable *glxDraw =
+	containerOf(drawable, __GLXDRIdrawable, driDrawable);
     __GLXscreenConfigs *psc = glxDraw->psc;
     Display *dpy = psc->dpy;
 
@@ -693,6 +693,50 @@ static void driCreateContext(__GLXscreenConfigs *psc,
     }
 }
 
+
+static __GLXDRIdrawable *driCreateDrawable(__GLXscreenConfigs *psc,
+					   GLXDrawable drawable,
+					   GLXContext gc)
+{
+    __GLXDRIdrawable *pdraw;
+    drm_drawable_t hwDrawable;
+    void *empty_attribute_list = NULL;
+
+    pdraw = Xmalloc(sizeof(*pdraw));
+    if (!pdraw)
+	return NULL;
+
+    pdraw->drawable = drawable;
+    pdraw->psc = psc;
+
+    if (!XF86DRICreateDrawable(psc->dpy, psc->scr, drawable, &hwDrawable))
+	return NULL;
+
+    /* Create a new drawable */
+    pdraw->driDrawable.private =
+	(*psc->__driScreen.createNewDrawable)(&psc->__driScreen,
+					      gc->mode,
+					      &pdraw->driDrawable,
+					      hwDrawable,
+					      GLX_WINDOW_BIT,
+					      empty_attribute_list);
+
+    if (!pdraw->driDrawable.private) {
+	XF86DRIDestroyDrawable(psc->dpy, psc->scr, drawable);
+	Xfree(pdraw);
+	return NULL;
+    }
+
+    if (__glxHashInsert(psc->drawHash, drawable, pdraw)) {
+	(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
+	XF86DRIDestroyDrawable(psc->dpy, psc->scr, drawable);
+	Xfree(pdraw);
+	return NULL;
+    }
+
+    return pdraw;
+}
+
 static void driDestroyScreen(__GLXscreenConfigs *psc)
 {
     /* Free the direct rendering per screen data */
@@ -737,6 +781,7 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
 
     psp->destroyScreen = driDestroyScreen;
     psp->createContext = driCreateContext;
+    psp->createDrawable = driCreateDrawable;
 
     return psp;
 }

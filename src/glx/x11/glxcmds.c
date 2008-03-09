@@ -83,7 +83,7 @@ static int windowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
 static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 {
     XID draw;
-    __GLXdrawable *pdraw;
+    __GLXDRIdrawable *pdraw;
     XWindowAttributes xwa;
     int (*oldXErrorHandler)(Display *, XErrorEvent *);
 
@@ -124,7 +124,7 @@ static __DRIdrawable *
 GetDRIDrawable( Display *dpy, GLXDrawable drawable, int * const scrn_num )
 {
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
-    __GLXdrawable * const pdraw;
+    __GLXDRIdrawable * const pdraw;
     const unsigned  screen_count = ScreenCount(dpy);
     unsigned   i;
     __GLXscreenConfigs *sc;
@@ -2143,9 +2143,9 @@ __driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator
     XF86VidModeModeLine   mode_line;
     int   dot_clock;
     int   i;
-    __GLXdrawable *glxDraw;
+    __GLXDRIdrawable *glxDraw;
 
-    glxDraw = containerOf(draw, __GLXdrawable, driDrawable);
+    glxDraw = containerOf(draw, __GLXDRIdrawable, driDrawable);
     psc = glxDraw->psc;
     if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
 	XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line) ) {
