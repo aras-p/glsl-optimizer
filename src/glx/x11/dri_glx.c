@@ -145,13 +145,14 @@ static void *OpenDriver(const char *driverName)
    /* Attempt to make sure libGL symbols will be visible to the driver */
    glhandle = dlopen("libGL.so.1", RTLD_NOW | RTLD_GLOBAL);
 
-   libPaths = DEFAULT_DRIVER_DIR;
    if (geteuid() == getuid()) {
       /* don't allow setuid apps to use LIBGL_DRIVERS_PATH */
       libPaths = getenv("LIBGL_DRIVERS_PATH");
       if (!libPaths)
          libPaths = getenv("LIBGL_DRIVERS_DIR"); /* deprecated */
    }
+   if (libPaths == NULL)
+       libPaths = DEFAULT_DRIVER_DIR;
 
    handle = NULL;
    for (p = libPaths; *p; p = next) {
