@@ -367,7 +367,7 @@ __glXScrEnableDRIExtension(__GLXscreenConfigs *psc)
     __glXExtensionsCtr();
     __glXExtensionsCtrScreen(psc);
 
-    extensions = psc->driScreen.getExtensions(&psc->driScreen);
+    extensions = psc->__driScreen.getExtensions(&psc->__driScreen);
     for (i = 0; extensions[i]; i++) {
 #ifdef __DRI_COPY_SUB_BUFFER
 	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {

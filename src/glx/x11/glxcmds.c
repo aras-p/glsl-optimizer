@@ -398,7 +398,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		mode = fbconfig;
 	    }
 
-	    psc->driCreateContext(psc, mode, gc, shareList, renderType);
+	    psc->driScreen->createContext(psc, mode, gc, shareList, renderType);
 	}
 #endif
 
@@ -1307,7 +1307,7 @@ PUBLIC const char *glXQueryExtensionsString( Display *dpy, int screen )
 
 	__glXCalculateUsableExtensions(psc,
 #ifdef GLX_DIRECT_RENDERING
-				       (psc->driScreen.private != NULL),
+				       (psc->driScreen != NULL),
 #else
 				       GL_FALSE,
 #endif
@@ -1769,7 +1769,7 @@ static int __glXSwapIntervalMESA(unsigned int interval)
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
       
-      if ( (psc != NULL) && (psc->driScreen.private != NULL) ) {
+      if ( (psc != NULL) && (psc->driScreen != NULL) ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if (psc->swapControl != NULL && pdraw != NULL) {
@@ -1795,7 +1795,7 @@ static int __glXGetSwapIntervalMESA(void)
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
       
-      if ( (psc != NULL) && (psc->driScreen.private != NULL) ) {
+      if ( (psc != NULL) && (psc->driScreen != NULL) ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if (psc->swapControl != NULL && pdraw != NULL) {
@@ -1919,13 +1919,13 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
    if ( (gc != NULL) && gc->isDirect ) {
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
-      if ( psc->msc && psc->driScreen.private ) {
+      if ( psc->msc && psc->driScreen ) {
           __DRIdrawable * const pdraw = 
               GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	  int64_t temp; 
 	  int ret;
  
-	  ret = (*psc->msc->getDrawableMSC)(&psc->driScreen, pdraw, &temp);
+	  ret = (*psc->msc->getDrawableMSC)(&psc->__driScreen, pdraw, &temp);
 	  *count = (unsigned) temp;
 
 	  return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
@@ -1948,7 +1948,7 @@ static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count
    if ( (gc != NULL) && gc->isDirect ) {
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
-      if (psc->msc != NULL && psc->driScreen.private ) {
+      if (psc->msc != NULL && psc->driScreen ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 int       ret;
@@ -2358,7 +2358,7 @@ PUBLIC void *glXAllocateMemoryMESA(Display *dpy, int scrn,
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
    if (psc && psc->allocate)
-       return (*psc->allocate->allocateMemory)( &psc->driScreen, size,
+       return (*psc->allocate->allocateMemory)( &psc->__driScreen, size,
 						readFreq, writeFreq,
 						priority );
 
@@ -2381,7 +2381,7 @@ PUBLIC void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
    if (psc && psc->allocate)
-	 (*psc->allocate->freeMemory)( &psc->driScreen, pointer );
+	 (*psc->allocate->freeMemory)( &psc->__driScreen, pointer );
 
 #else
    (void) dpy;
@@ -2398,7 +2398,7 @@ PUBLIC GLuint glXGetMemoryOffsetMESA( Display *dpy, int scrn,
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
    if (psc && psc->allocate)
-       return (*psc->allocate->memoryOffset)( &psc->driScreen, pointer );
+       return (*psc->allocate->memoryOffset)( &psc->__driScreen, pointer );
 
 #else
    (void) dpy;

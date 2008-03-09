@@ -93,14 +93,25 @@ typedef struct _glapi_table __GLapi;
  * \c driCreateDisplay call.
  */
 typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
+typedef struct __GLXDRIscreenRec __GLXDRIscreen;
+
 struct __GLXDRIdisplayRec {
     /**
      * Method to destroy the private DRI display data.
      */
     void (*destroyDisplay)(__GLXDRIdisplay *display);
 
-    void (*createScreen)(__GLXscreenConfigs *psc, int screen,
-			 __GLXdisplayPrivate *priv);
+    __GLXDRIscreen *(*createScreen)(__GLXscreenConfigs *psc, int screen,
+				    __GLXdisplayPrivate *priv);
+};
+
+struct __GLXDRIscreenRec {
+
+    void (*destroyScreen)(__GLXscreenConfigs *psc);
+
+    void (*createContext)(__GLXscreenConfigs *psc,
+			  const __GLcontextModes *mode,
+			  GLXContext gc, GLXContext shareList, int renderType);
 };
 
 /*
@@ -430,18 +441,13 @@ struct __GLXscreenConfigsRec {
     /**
      * Per screen direct rendering interface functions and data.
      */
-    __DRIscreen driScreen;
+    __DRIscreen __driScreen;
     __glxHashTable *drawHash;
     Display *dpy;
     int scr;
     void *driver;
 
-    void (*driDestroyScreen)(__GLXscreenConfigs *psc);
-
-    void (*driCreateContext)(__GLXscreenConfigs *psc,
-			     const __GLcontextModes *mode,
-			     GLXContext gc,
-			     GLXContext shareList, int renderType);
+    __GLXDRIscreen *driScreen;
 
 #ifdef __DRI_COPY_SUB_BUFFER
     __DRIcopySubBufferExtension *copySubBuffer;

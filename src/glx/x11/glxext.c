@@ -349,7 +349,7 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	Xfree((char*) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
-	psc->driDestroyScreen(psc);
+	psc->driScreen->destroyScreen(psc);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -772,7 +772,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	psc->scr = i;
 	psc->dpy = dpy;
 #ifdef GLX_DIRECT_RENDERING
-	(*priv->driDisplay->createScreen)(psc, i, priv);
+	psc->driScreen = (*priv->driDisplay->createScreen)(psc, i, priv);
 #endif
     }
     SyncHandle();
@@ -1206,12 +1206,12 @@ FetchDRIDrawable( Display *dpy, GLXDrawable drawable, GLXContext gc)
 
     /* Create a new drawable */
     pdraw->driDrawable.private =
-	(*sc->driScreen.createNewDrawable)(&sc->driScreen,
-					   gc->mode,
-					   &pdraw->driDrawable,
-					   hwDrawable,
-					   GLX_WINDOW_BIT,
-					   empty_attribute_list);
+	(*sc->__driScreen.createNewDrawable)(&sc->__driScreen,
+					     gc->mode,
+					     &pdraw->driDrawable,
+					     hwDrawable,
+					     GLX_WINDOW_BIT,
+					     empty_attribute_list);
 
     if (!pdraw->driDrawable.private) {
 	XF86DRIDestroyDrawable(dpy, sc->scr, drawable);
