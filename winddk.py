@@ -64,24 +64,23 @@ def get_winddk_paths(env, version=None):
     if 'BASEDIR' in os.environ:
         WINDDKdir = os.environ['BASEDIR']
     else:
-        #WINDDKdir = "C:\\WINDDK\\3790.1830"
-        WINDDKdir = "C:/WINDDK/3790.1830"
+        WINDDKdir = "C:\\WINDDK\\3790.1830"
 
     exe_paths.append( os.path.join(WINDDKdir, 'bin') )
-    exe_paths.append( os.path.join(WINDDKdir, 'bin/x86') )
-    include_paths.append( os.path.join(WINDDKdir, 'inc/wxp') )
+    exe_paths.append( os.path.join(WINDDKdir, 'bin', 'x86') )
+    include_paths.append( os.path.join(WINDDKdir, 'inc', 'wxp') )
     lib_paths.append( os.path.join(WINDDKdir, 'lib') )
 
     target_os = 'wxp'
     target_cpu = 'i386'
     
     env['SDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc', target_os) 
-    env['CRT_INC_PATH'] = os.path.join(WINDDKdir, 'inc/crt') 
-    env['DDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc/ddk', target_os) 
-    env['WDM_INC_PATH'] = os.path.join(WINDDKdir, 'inc/ddk/wdm', target_os) 
+    env['CRT_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'crt') 
+    env['DDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'ddk', target_os) 
+    env['WDM_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'ddk', 'wdm', target_os) 
 
     env['SDK_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu) 
-    env['CRT_LIB_PATH'] = os.path.join(WINDDKdir, 'lib/crt', target_cpu) 
+    env['CRT_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', 'crt', target_cpu) 
     env['DDK_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu)
     env['WDM_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu)
                                      
@@ -201,17 +200,6 @@ def generate(env):
     env['SHOBJPREFIX']    = '$OBJPREFIX'
     env['SHOBJSUFFIX']    = '$OBJSUFFIX'
 
-    try:
-        include_path, lib_path, exe_path = get_winddk_paths(env)
-
-        # since other tools can set these, we just make sure that the
-        # relevant stuff from MSVS is in there somewhere.
-        env.PrependENVPath('INCLUDE', include_path)
-        env.PrependENVPath('LIB', lib_path)
-        env.PrependENVPath('PATH', exe_path)
-    except (SCons.Util.RegError, SCons.Errors.InternalError):
-        pass
-
     env['CFILESUFFIX'] = '.c'
     env['CXXFILESUFFIX'] = '.cc'
 
@@ -271,8 +259,18 @@ def generate(env):
     
     if not env.has_key('ENV'):
         env['ENV'] = {}
-    if not env['ENV'].has_key('SystemRoot'):    # required for dlls in the winsxs folders
-        env['ENV']['SystemRoot'] = SCons.Platform.win32.get_system_root()
+    
+    try:
+        include_path, lib_path, exe_path = get_winddk_paths(env)
+
+        # since other tools can set these, we just make sure that the
+        # relevant stuff from WINDDK is in there somewhere.
+        env.PrependENVPath('INCLUDE', include_path)
+        env.PrependENVPath('LIB', lib_path)
+        env.PrependENVPath('PATH', exe_path)
+    except (SCons.Util.RegError, SCons.Errors.InternalError):
+        pass
+
 
 def exists(env):
     return env.Detect('cl')
