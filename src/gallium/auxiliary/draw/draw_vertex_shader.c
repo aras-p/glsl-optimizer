@@ -110,13 +110,20 @@ draw_bind_vertex_shader(struct draw_context *draw,
                         struct draw_vertex_shader *dvs)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   
+   if (dvs) 
+   {
+      draw->vertex_shader = dvs;
+      draw->num_vs_outputs = dvs->info.num_outputs;
 
-   draw->vertex_shader = dvs;
-   draw->num_vs_outputs = dvs->info.num_outputs;
+      tgsi_exec_machine_init(&draw->machine);
 
-   tgsi_exec_machine_init(&draw->machine);
-
-   dvs->prepare( dvs, draw );
+      dvs->prepare( dvs, draw );
+   }
+   else {
+      draw->vertex_shader = NULL;
+      draw->num_vs_outputs = 0;
+   }
 }
 
 
