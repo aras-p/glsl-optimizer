@@ -95,6 +95,7 @@ typedef struct _glapi_table __GLapi;
 typedef struct __GLXDRIdisplayRec __GLXDRIdisplay;
 typedef struct __GLXDRIscreenRec __GLXDRIscreen;
 typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
+typedef struct __GLXDRIcontextRec __GLXDRIcontext;
 
 struct __GLXDRIdisplayRec {
     /**
@@ -110,13 +111,24 @@ struct __GLXDRIscreenRec {
 
     void (*destroyScreen)(__GLXscreenConfigs *psc);
 
-    void (*createContext)(__GLXscreenConfigs *psc,
-			  const __GLcontextModes *mode,
-			  GLXContext gc, GLXContext shareList, int renderType);
-
+    __GLXDRIcontext *(*createContext)(__GLXscreenConfigs *psc,
+				      const __GLcontextModes *mode,
+				      GLXContext gc,
+				      GLXContext shareList, int renderType);
+	
     __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
 					GLXDrawable drawable,
 					GLXContext gc);
+};
+
+struct __GLXDRIcontextRec {
+    void (*destroyContext)(__GLXDRIcontext *context, __GLXscreenConfigs *psc,
+			   Display *dpy);
+    Bool (*bindContext)(__GLXDRIcontext *context,
+			__GLXDRIdrawable *pdraw,
+			__GLXDRIdrawable *pread);
+    
+    void (*unbindContext)(__GLXDRIcontext *context);
 };
 
 struct __GLXDRIdrawableRec {
@@ -296,11 +308,6 @@ struct __GLXcontextRec {
     GLenum error;
 
     /**
-     * Whether this context does direct rendering.
-     */
-    Bool isDirect;
-
-    /**
      * \c dpy of current display for this context.  Will be \c NULL if not
      * current to any display, or if this is the "dummy context".
      */
@@ -349,15 +356,7 @@ struct __GLXcontextRec {
     const __GLcontextModes * mode;
 
 #ifdef GLX_DIRECT_RENDERING
-    /**
-     * Per context direct rendering interface functions and data.
-     */
-    __DRIcontext driContext;
-
-    /**
-     * XID for the server side drm_context_t
-     */
-    XID hwContextID;
+    __GLXDRIcontext *driContext;
 #endif
 
     /**

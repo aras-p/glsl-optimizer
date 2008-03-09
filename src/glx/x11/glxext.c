@@ -1177,7 +1177,7 @@ static Bool SendMakeCurrentRequest(Display *dpy, CARD8 opcode,
 
 
 #ifdef GLX_DIRECT_RENDERING
-static __DRIdrawable *
+static __GLXDRIdrawable *
 FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
 {
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
@@ -1189,26 +1189,9 @@ FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
     
     psc = &priv->screenConfigs[gc->screen];
     if (__glxHashLookup(psc->drawHash, drawable, (void *) &pdraw) == 0)
-	return &pdraw->driDrawable;
+	return pdraw;
 
-    pdraw = psc->driScreen->createDrawable(psc, drawable, gc);
-
-    return &pdraw->driDrawable;
-}
-
-static Bool BindContextWrapper( Display *dpy, GLXContext gc,
-				GLXDrawable draw, GLXDrawable read )
-{
-    __DRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
-    __DRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
-
-    return (*gc->driContext.bindContext)(&gc->driContext, pdraw, pread);
-}
-
-
-static Bool UnbindContextWrapper( GLXContext gc )
-{
-    return (*gc->driContext.unbindContext)(&gc->driContext);
+    return psc->driScreen->createDrawable(psc, drawable, gc);
 }
 #endif /* GLX_DIRECT_RENDERING */
 
@@ -1241,27 +1224,23 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	return GL_FALSE;
     }
 
-#ifndef GLX_DIRECT_RENDERING
-    if (gc && gc->isDirect) {
-	return GL_FALSE;
-    }
-#endif
-
     _glapi_check_multithread();
 
 #ifdef GLX_DIRECT_RENDERING
     /* Bind the direct rendering context to the drawable */
-    if (gc && gc->isDirect) {
-	bindReturnValue = (gc->driContext.private) 
-	  ? BindContextWrapper(dpy, gc, draw, read)
-	  : False;
+    if (gc && gc->driContext) {
+	__GLXDRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
+	__GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
+
+	bindReturnValue =
+	    (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
     } else
 #endif
     {
 	/* Send a glXMakeCurrent request to bind the new context. */
 	bindReturnValue = 
 	  SendMakeCurrentRequest(dpy, opcode, gc ? gc->xid : None,
-				 ((dpy != oldGC->currentDpy) || oldGC->isDirect)
+				 ((dpy != oldGC->currentDpy) || oldGC->driContext)
 				 ? None : oldGC->currentContextTag,
 				 draw, read, &reply);
     }
@@ -1271,8 +1250,8 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	return False;
     }
 
-    if ((dpy != oldGC->currentDpy || (gc && gc->isDirect)) &&
-	!oldGC->isDirect && oldGC != &dummyContext) {
+    if ((dpy != oldGC->currentDpy || (gc && gc->driContext)) &&
+	!oldGC->driContext && oldGC != &dummyContext) {
 	xGLXMakeCurrentReply dummy_reply;
 
 	/* We are either switching from one dpy to another and have to
@@ -1286,8 +1265,8 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 				      & dummy_reply);
     }
 #ifdef GLX_DIRECT_RENDERING
-    else if (oldGC->isDirect && oldGC->driContext.private) {
-	(void) UnbindContextWrapper(oldGC);
+    else if (oldGC->driContext) {
+	oldGC->driContext->unbindContext(oldGC->driContext);
     }
 #endif
 
@@ -1317,15 +1296,11 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 		 */
 #ifdef GLX_DIRECT_RENDERING
 		/* Destroy the old direct rendering context */
-		if (oldGC->isDirect) {
-		    if (oldGC->driContext.private) {
-			(*oldGC->driContext.destroyContext)
-			    (&oldGC->driContext);
-			XF86DRIDestroyContext(oldGC->createDpy,
-					      oldGC->psc->scr,
-					      gc->hwContextID);
-			oldGC->driContext.private = NULL;
-		    }
+		if (oldGC->driContext) {
+		    oldGC->driContext->destroyContext(oldGC->driContext,
+						      oldGC->psc,
+						      oldGC->createDpy);
+		    oldGC->driContext = NULL;
 		}
 #endif
 		__glXFreeContext(oldGC);
@@ -1338,7 +1313,7 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	    gc->currentDrawable = draw;
 	    gc->currentReadable = read;
 
-            if (!gc->isDirect) {
+            if (!gc->driContext) {
                if (!IndirectAPI)
                   IndirectAPI = __glXNewIndirectAPI();
                _glapi_set_dispatch(IndirectAPI);

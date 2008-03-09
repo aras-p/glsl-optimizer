@@ -59,6 +59,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 typedef struct __GLXDRIdisplayPrivateRec __GLXDRIdisplayPrivate;
+typedef struct __GLXDRIcontextPrivateRec __GLXDRIcontextPrivate;
+
 struct __GLXDRIdisplayPrivateRec {
     __GLXDRIdisplay base;
 
@@ -68,6 +70,12 @@ struct __GLXDRIdisplayPrivateRec {
     int driMajor;
     int driMinor;
     int driPatch;
+};
+
+struct __GLXDRIcontextPrivateRec {
+    __GLXDRIcontext base;
+    __DRIcontext driContext;
+    XID hwContextID;
 };
 
 #ifndef DEFAULT_DRIVER_DIR
@@ -657,40 +665,79 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     return psp;
 }
 
-
-static void driCreateContext(__GLXscreenConfigs *psc,
-			     const __GLcontextModes *mode,
-			     GLXContext gc,
-			     GLXContext shareList, int renderType)
+static void driDestroyContext(__GLXDRIcontext *context,
+			      __GLXscreenConfigs *psc, Display *dpy)
 {
+    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+			
+    (*pcp->driContext.destroyContext)(&pcp->driContext);
+
+    XF86DRIDestroyContext(psc->dpy, psc->scr, pcp->hwContextID);
+}
+
+static Bool driBindContext(__GLXDRIcontext *context,
+			   __GLXDRIdrawable *draw, __GLXDRIdrawable *read)
+{
+    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+
+    return (*pcp->driContext.bindContext)(&pcp->driContext,
+					  &draw->driDrawable,
+					  &read->driDrawable);
+}
+
+static void driUnbindContext(__GLXDRIcontext *context)
+{
+    __GLXDRIcontextPrivate *pcp = (__GLXDRIcontextPrivate *) context;
+
+    (*pcp->driContext.unbindContext)(&pcp->driContext);
+}
+
+static __GLXDRIcontext *driCreateContext(__GLXscreenConfigs *psc,
+					 const __GLcontextModes *mode,
+					 GLXContext gc,
+					 GLXContext shareList, int renderType)
+{
+    __GLXDRIcontextPrivate *pcp, *pcp_shared;
     drm_context_t hwContext;
-    __DRIcontext *shared;
+    __DRIcontext *shared = NULL;
 
     if (psc && psc->driScreen) {
-	shared = (shareList != NULL) ? &shareList->driContext : NULL;
+	if (shareList) {
+	    pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
+	    shared = &pcp_shared->driContext;
+	}
+
+	pcp = Xmalloc(sizeof *pcp);
+	if (pcp == NULL)
+	    return NULL;
 
 	if (!XF86DRICreateContextWithConfig(psc->dpy, psc->scr,
 					    mode->visualID,
-					    &gc->hwContextID, &hwContext))
-	    /* gah, handle this better */
-	    return;
+					    &pcp->hwContextID, &hwContext)) {
+	    Xfree(pcp);
+	    return NULL;
+	}
 
-	gc->driContext.private = 
-	    (*psc->__driScreen.createNewContext)( &psc->__driScreen,
-						  mode, renderType,
-						  shared,
-						  hwContext,
-						  &gc->driContext );
-	if (gc->driContext.private) {
-	    gc->isDirect = GL_TRUE;
-	    gc->screen = mode->screen;
-	    gc->psc = psc;
-	    gc->mode = mode;
+	pcp->driContext.private = 
+	    (*psc->__driScreen.createNewContext)(&psc->__driScreen,
+						 mode, renderType,
+						 shared,
+						 hwContext,
+						 &pcp->driContext);
+	if (pcp->driContext.private == NULL) {
+	    XF86DRIDestroyContext(psc->dpy, psc->scr, pcp->hwContextID);
+	    Xfree(pcp);
+	    return NULL;
 	}
-	else {
-	    XF86DRIDestroyContext(psc->dpy, psc->scr, gc->hwContextID);
-	}
+
+	pcp->base.destroyContext = driDestroyContext;
+	pcp->base.bindContext = driBindContext;
+	pcp->base.unbindContext = driUnbindContext;
+
+	return &pcp->base;
     }
+
+    return NULL;
 }
 
 
@@ -824,7 +871,7 @@ __GLXDRIdisplay *driCreateDisplay(Display *dpy)
     pdpyp->base.destroyDisplay = driDestroyDisplay;
     pdpyp->base.createScreen = driCreateScreen;
 
-    return (void *)pdpyp;
+    return &pdpyp->base;
 }
 
 #endif /* GLX_DIRECT_RENDERING */
