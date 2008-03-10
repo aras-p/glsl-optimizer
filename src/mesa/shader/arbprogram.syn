@@ -1942,10 +1942,10 @@ stateTexEnvProperty
 fragment program
     <optLegacyTexUnitNum>  ::= ""
                              | "[" <legacyTexUnitNum> "]"
-
-NOTE: <optLegaceTexUnitNum> is not optional.
 */
 optLegacyTexUnitNum
+    optLegacyTexUnitNum_1 .or .true .emit 0x00;
+optLegacyTexUnitNum_1
     lbracket_ne .and legacyTexUnitNum .and rbracket;
 
 /*
