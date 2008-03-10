@@ -81,14 +81,17 @@ void debug_printf(const char *format, ...)
 }
 
 
-static INLINE void debug_abort(void) 
+/* TODO: implement a debug_abort that calls EngBugCheckEx on WIN32 */
+
+
+static INLINE void debug_break(void) 
 {
-#ifdef WIN32
-#ifndef WINCE
-   EngDebugBreak();
-#else
+#if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
+   __asm("int3");
+#elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
    _asm {int 3};
-#endif
+#elif defined(WIN32) && !defined(WINCE)
+   EngDebugBreak();
 #else
    abort();
 #endif
@@ -98,5 +101,5 @@ static INLINE void debug_abort(void)
 void debug_assert_fail(const char *expr, const char *file, unsigned line) 
 {
    debug_printf("%s:%i: Assertion `%s' failed.\n", file, line, expr);
-   debug_abort();
+   debug_break();
 }
