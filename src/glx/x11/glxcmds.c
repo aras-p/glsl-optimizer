@@ -360,6 +360,10 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	      Bool use_glx_1_3, int renderType)
 {
     GLXContext gc;
+#ifdef GLX_DIRECT_RENDERING
+    int screen = (fbconfig == NULL) ? vis->screen : fbconfig->screen;
+    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+#endif
 
     if ( dpy == NULL )
        return NULL;
@@ -373,9 +377,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    return NULL;
 
 #ifdef GLX_DIRECT_RENDERING
-	if (allowDirect) {
-	    int screen = (fbconfig == NULL) ? vis->screen : fbconfig->screen;
-	    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+	if (allowDirect && psc->driScreen) {
 	    const __GLcontextModes * mode;
 
 	    if (fbconfig == NULL) {

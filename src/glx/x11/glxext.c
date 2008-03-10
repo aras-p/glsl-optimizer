@@ -771,7 +771,8 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	psc->scr = i;
 	psc->dpy = dpy;
 #ifdef GLX_DIRECT_RENDERING
-	psc->driScreen = (*priv->driDisplay->createScreen)(psc, i, priv);
+	if (priv->driDisplay)
+	    psc->driScreen = (*priv->driDisplay->createScreen)(psc, i, priv);
 #endif
     }
     SyncHandle();
