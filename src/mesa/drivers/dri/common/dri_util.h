@@ -559,7 +559,7 @@ extern void
 __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
 
 extern int
-__driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp);
+__driParseEvents(__DRIcontextPrivate *psp, __DRIdrawablePrivate *pdp);
 
 extern float
 driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,

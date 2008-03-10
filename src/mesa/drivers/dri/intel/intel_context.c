@@ -864,7 +864,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     */
    if (dPriv) {
       if (sPriv->dri2.enabled)
-	 drawable_changed = __driParseEvents(sPriv, dPriv);
+	drawable_changed = __driParseEvents(dPriv->driContextPriv, dPriv);
       else
 	 DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
    }

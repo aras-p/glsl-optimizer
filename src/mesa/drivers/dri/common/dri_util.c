@@ -193,8 +193,8 @@ static GLboolean driBindContext(__DRIcontext * ctx,
     */
 
     if (psp->dri2.enabled) {
-       __driParseEvents(psp, pdp);
-       __driParseEvents(psp, prp);
+       __driParseEvents(pcp, pdp);
+       __driParseEvents(pcp, prp);
     } else {
 	if (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
@@ -286,17 +286,14 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 }
 
 int
-__driParseEvents(__DRIscreenPrivate *psp, __DRIdrawablePrivate *pdp)
+__driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
 {
+    __DRIscreenPrivate *psp = pcp->driScreenPriv;
     __DRIDrawableConfigEvent *dc, *last_dc;
     __DRIBufferAttachEvent *ba, *last_ba;
     unsigned int tail, mask, *p, end, total, size, changed;
     unsigned char *data;
     size_t rect_size;
-    __DRIcontextPrivate *pcp = pdp->driContextPriv;
-
-    if (pcp == NULL)
-	return 0;
 
     /* Check for wraparound. */
     if (psp->dri2.buffer->prealloc - pdp->dri2.tail > psp->dri2.buffer->size) {
