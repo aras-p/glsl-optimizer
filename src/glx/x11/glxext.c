@@ -71,7 +71,6 @@
 #include <xcb/glx.h>
 #endif
 
-#include <assert.h>
 
 #ifdef DEBUG
 void __glXDumpDrawBuffer(__GLXcontext *ctx);
