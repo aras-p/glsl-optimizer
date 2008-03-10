@@ -23,6 +23,7 @@
 #include "intel_tex.h"
 #include "intel_ioctl.h"
 #include "intel_blit.h"
+#include "intel_fbo.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -694,26 +695,20 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 }
 
 void
-intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
-		  unsigned long handle, GLint cpp, GLuint pitch, GLuint height)
+intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *pDraw)
 {
    __DRIcontextPrivate *driContext = pDRICtx->private;
+   __DRIdrawablePrivate *dPriv = pDraw->private;
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct intel_context *intel = driContext->driverPrivate;
    struct intel_texture_object *intelObj;
    struct intel_texture_image *intelImage;
    struct intel_mipmap_tree *mt;
-   struct intel_region *region;
+   struct intel_renderbuffer *rb;
    struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   int level = 0;
-
-   /* FIXME: type, format, internalFormat */
-   int type = GL_BGRA;
-   int format = GL_UNSIGNED_BYTE;
-   int internalFormat = (cpp == 3 ? 3 : 4);
-   cpp = 4;
-   pitch /= 4;
+   int level = 0, type, format, internalFormat;
 
    texUnit = &intel->ctx.Texture.Unit[intel->ctx.Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(&intel->ctx, texUnit, target);
@@ -722,12 +717,16 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
    if (!intelObj)
       return;
 
-   region = intel_region_alloc_for_handle(intel, cpp, pitch, height,
-					  0, handle);
+   __driParseEvents(driContext, dPriv);
+
+   rb = intel_fb->color_rb[0];
+   type = GL_BGRA;
+   format = GL_UNSIGNED_BYTE;
+   internalFormat = (rb->region->cpp == 3 ? 3 : 4);
 
    mt = intel_miptree_create_for_region(intel, target,
 					internalFormat,
-					0, 0, region, 1, 0);
+					0, 0, rb->region, 1, 0);
    if (mt == NULL)
        return;
 
@@ -739,7 +738,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
    intelObj->mt = mt;
    texImage = _mesa_get_tex_image(&intel->ctx, texObj, target, level);
    _mesa_init_teximage_fields(&intel->ctx, target, texImage,
-			      pitch, height, 1,
+			      rb->region->pitch, rb->region->height, 1,
 			      0, internalFormat);
 
    intelImage = intel_texture_image(texImage);
@@ -748,7 +747,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target,
    texImage->TexFormat = intelChooseTextureFormat(&intel->ctx, internalFormat,
                                                   type, format);
    _mesa_set_fetch_functions(texImage, 2);
-   texImage->RowStride = pitch;
+   texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 
    if (!intel_miptree_match_image(intelObj->mt, &intelImage->base,

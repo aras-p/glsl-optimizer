@@ -216,16 +216,14 @@ struct __DRItexBufferExtensionRec {
     __DRIextension base;
 
     /**
-     * Method to override base texture image with a DRM memory manager
-     * buffer object.  The depth passed in allows e.g. to ignore the
-     * alpha channel of texture images where the non-alpha components
-     * don't occupy a whole texel.
+     * Method to override base texture image with the contents of a
+     * __DRIdrawable. 
      *
      * For GLX_EXT_texture_from_pixmap with AIGLX.
      */
     void (*setTexBuffer)(__DRIcontext *pDRICtx,
-			 GLint target, unsigned long handle,
-			 GLint cpp, GLuint pitch, GLuint height);
+			 GLint target,
+			 __DRIdrawable *pDraw);
 };
 
 
@@ -243,7 +241,7 @@ struct __DRItexBufferExtensionRec {
  */
 /*@{*/
 
-#define __DRI_INTERFACE_VERSION 20080226
+#define __DRI_INTERFACE_VERSION 20080310
 
 typedef void *(CREATENEWSCREENFUNC)(int scr, __DRIscreen *psc,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
