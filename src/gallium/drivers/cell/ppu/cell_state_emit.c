@@ -77,8 +77,10 @@ cell_emit_state(struct cell_context *cell)
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
-      emit_state_cmd(cell, CELL_CMD_STATE_SAMPLER,
-                     cell->sampler[0], sizeof(struct pipe_sampler_state));
+      if (cell->sampler[0]) {
+         emit_state_cmd(cell, CELL_CMD_STATE_SAMPLER,
+                        cell->sampler[0], sizeof(struct pipe_sampler_state));
+      }
    }
 
    if (cell->dirty & CELL_NEW_TEXTURE) {

@@ -210,15 +210,19 @@ cell_create_sampler_state(struct pipe_context *pipe,
 
 
 static void
-cell_bind_sampler_state(struct pipe_context *pipe,
-                            unsigned unit, void *sampler)
+cell_bind_sampler_states(struct pipe_context *pipe,
+                         unsigned num, void **samplers)
 {
    struct cell_context *cell = cell_context(pipe);
 
    draw_flush(cell->draw);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   cell->sampler[unit] = (struct pipe_sampler_state *)sampler;
+
+   memcpy(cell->sampler, samplers, num * sizeof(void *));
+   memset(&cell->sampler[num], 0, (PIPE_MAX_SAMPLERS - num) *
+          sizeof(void *));
+   cell->num_samplers = num;
 
    cell->dirty |= CELL_NEW_SAMPLER;
 }
@@ -234,16 +238,24 @@ cell_delete_sampler_state(struct pipe_context *pipe,
 
 
 static void
-cell_set_sampler_texture(struct pipe_context *pipe,
-                         unsigned sampler,
-                         struct pipe_texture *texture)
+cell_set_sampler_textures(struct pipe_context *pipe,
+                          unsigned num, struct pipe_texture **texture)
 {
    struct cell_context *cell = cell_context(pipe);
+   uint i;
+
+   /* Check for no-op */
+   if (num == cell->num_textures &&
+       !memcmp(cell->texture, texture, num * sizeof(struct pipe_texture *)))
+      return;
 
    draw_flush(cell->draw);
 
-   pipe_texture_reference((struct pipe_texture **) &cell->texture[sampler],
-                          texture);
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      struct pipe_texture *tex = i < num ? texture[i] : NULL;
+
+      pipe_texture_reference((struct pipe_texture **) &cell->texture[i], tex);
+   }
 
    cell_update_texture_mapping(cell);
 
@@ -300,10 +312,10 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.delete_blend_state = cell_delete_blend_state;
 
    cell->pipe.create_sampler_state = cell_create_sampler_state;
-   cell->pipe.bind_sampler_state   = cell_bind_sampler_state;
+   cell->pipe.bind_sampler_states = cell_bind_sampler_states;
    cell->pipe.delete_sampler_state = cell_delete_sampler_state;
 
-   cell->pipe.set_sampler_texture = cell_set_sampler_texture;
+   cell->pipe.set_sampler_textures = cell_set_sampler_textures;
 
    cell->pipe.create_depth_stencil_alpha_state = cell_create_depth_stencil_alpha_state;
    cell->pipe.bind_depth_stencil_alpha_state   = cell_bind_depth_stencil_alpha_state;
