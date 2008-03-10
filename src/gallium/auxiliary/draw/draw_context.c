@@ -34,6 +34,7 @@
 #include "pipe/p_util.h"
 #include "draw_context.h"
 #include "draw_private.h"
+#include "draw_vbuf.h"
 
 
 
@@ -114,6 +115,10 @@ void draw_destroy( struct draw_context *draw )
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    tgsi_exec_machine_free_data(&draw->machine);
    align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
+
+   if (draw->render)
+      draw->render->destroy( draw->render );
+
    FREE( draw );
 }
 
@@ -348,4 +353,11 @@ void draw_reset_vertex_ids(struct draw_context *draw)
    }
 
    draw_vertex_cache_reset_vertex_ids(draw);
+}
+
+
+void draw_set_render( struct draw_context *draw, 
+		      struct vbuf_render *render )
+{
+   draw->render = render;
 }

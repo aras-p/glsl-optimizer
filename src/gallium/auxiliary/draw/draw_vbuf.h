@@ -85,6 +85,12 @@ struct vbuf_render {
 		 const ushort *indices,
 		 uint nr_indices );
 
+   /* Draw Arrays path too.
+    */
+   void (*draw_arrays)( struct vbuf_render *,
+			unsigned start,
+			uint nr );
+
    /**
     * Called when vbuf is done with this set of vertices:
     */
