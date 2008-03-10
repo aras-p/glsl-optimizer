@@ -363,7 +363,7 @@ __driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
        memcpy(pdp->pClipRects, last_dc->rects, rect_size);
 
        if (changed)
-	  (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) last_dc);
+	  (*psp->DriverAPI.HandleDrawableConfig)(pdp, pcp, last_dc);
     }
 
     /* Front buffer attachments are special, they typically mean that
@@ -380,12 +380,12 @@ __driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
      * We only care about the last such event in the buffer; in fact,
      * older events will refer to invalid buffer objects.*/
     if (last_ba)
-       (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) last_ba);
+       (*psp->DriverAPI.HandleBufferAttach)(pdp, pcp, last_ba);
 
     /* Like for buffer attachments, we only care about the most recent
      * drawable config. */
     if (last_dc)
-       (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) last_dc);
+       (*psp->DriverAPI.HandleDrawableConfig)(pdp, pcp, last_dc);
 
     /* If there was a drawable config event in the buffer and it
      * changed the size of the window, all buffer auxillary buffer
@@ -411,7 +411,7 @@ __driParseEvents(__DRIcontextPrivate *pcp, __DRIdrawablePrivate *pdp)
        if (last_ba == ba)
 	  continue;
 
-       (*psp->DriverAPI.UpdateBuffer)(pdp, (unsigned int *) ba);
+       (*psp->DriverAPI.HandleBufferAttach)(pdp, pcp, ba);
     }
 
     pdp->dri2.tail = tail;

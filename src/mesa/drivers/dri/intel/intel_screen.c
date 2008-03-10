@@ -293,14 +293,17 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
 
 static void
 intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
+			  __DRIcontextPrivate *pcp,
 			  __DRIDrawableConfigEvent *event)
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct intel_region *region = NULL;
    struct intel_renderbuffer *rb, *depth_rb, *stencil_rb;
-   struct intel_context *intel = dPriv->driContextPriv->driverPrivate;
-   int cpp = intel->ctx.Visual.rgbBits / 8;
-   GLuint pitch = ((cpp * dPriv->w + 63) & ~63) / cpp;
+   struct intel_context *intel = pcp->driverPrivate;
+   int cpp, pitch;
+
+   cpp = intel->ctx.Visual.rgbBits / 8;
+   pitch = ((cpp * dPriv->w + 63) & ~63) / cpp;
 
    rb = intel_fb->color_rb[1];
    if (rb) {
@@ -331,12 +334,13 @@ intelHandleDrawableConfig(__DRIdrawablePrivate *dPriv,
 
 static void
 intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
+			__DRIcontextPrivate *pcp,
 			__DRIBufferAttachEvent *ba)
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct intel_renderbuffer *rb;
    struct intel_region *region;
-   struct intel_context *intel = dPriv->driContextPriv->driverPrivate;
+   struct intel_context *intel = pcp->driverPrivate;
    GLuint tiled;
 
    switch (ba->buffer.attachment) {
@@ -378,22 +382,6 @@ intelHandleBufferAttach(__DRIdrawablePrivate *dPriv,
 					  ba->buffer.handle);
 
    intel_renderbuffer_set_region(rb, region);
-}
-
-static void
-intelUpdateBuffer(__DRIdrawablePrivate *dPriv, unsigned int *event)
-{
-   switch (DRI2_EVENT_TYPE(*event)) {
-   case DRI2_EVENT_DRAWABLE_CONFIG:
-      /* flush all current regions, allocate new ones, except front buffer */
-      intelHandleDrawableConfig(dPriv, (__DRIDrawableConfigEvent *) event);
-      break;
-
-   case DRI2_EVENT_BUFFER_ATTACH:
-      /* attach buffer if different from what we have */
-      intelHandleBufferAttach(dPriv, (__DRIBufferAttachEvent *) event);
-      break;
-   }
 }
 
 static const __DRItexOffsetExtension intelTexOffsetExtension = {
@@ -680,7 +668,9 @@ static const struct __DriverAPIRec intelAPI = {
    .WaitForSBC = NULL,
    .SwapBuffersMSC = NULL,
    .CopySubBuffer = intelCopySubBuffer,
-   .UpdateBuffer = intelUpdateBuffer,
+
+   .HandleDrawableConfig = intelHandleDrawableConfig,
+   .HandleBufferAttach = intelHandleBufferAttach,
 };
 
 

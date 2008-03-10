@@ -209,8 +209,14 @@ struct __DriverAPIRec {
 			    int64_t *count);
 
     /* DRI2 Entry points */
-    void (*UpdateBuffer)(__DRIdrawablePrivate *dPriv,
-			 unsigned int *event);
+    void (*HandleDrawableConfig)(__DRIdrawablePrivate *dPriv,
+				__DRIcontextPrivate *pcp,
+				__DRIDrawableConfigEvent *event);
+
+    void (*HandleBufferAttach)(__DRIdrawablePrivate *dPriv,
+			       __DRIcontextPrivate *pcp,
+			       __DRIBufferAttachEvent *ba);
+
 };
 
 
