@@ -482,11 +482,10 @@ static void
 pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 {
    struct pstip_stage *pstip = pstip_stage(stage);
-   struct draw_context *draw = stage->draw;
    struct pipe_context *pipe = pstip->pipe;
    uint num = MAX2(pstip->num_textures, pstip->num_samplers);
 
-   assert(draw->rasterizer->poly_stipple_enable);
+   assert(stage->draw->rasterizer->poly_stipple_enable);
 
    /*
     * Bind our fragprog, sampler and texture
