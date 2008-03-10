@@ -80,21 +80,8 @@ depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile
 tags:
 	etags `find . -name \*.[ch]` `find $(TOP)/include`
 
-pcedit = sed \
-	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
-	-e 's,@LIB_DIR@,$(LIB_DIR),' \
-	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),'
-
-gl.pc: gl.pc.in
-	$(pcedit) $< > $@
-
-install: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) gl.pc
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
-	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(DESTDIR)$(INSTALL_DIR)/include/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
-	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+install: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+	make -C $(TOP)/src/mesa install-libgl
 
 # Remove .o and backup files
 clean:
