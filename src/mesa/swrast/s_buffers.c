@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -331,7 +331,8 @@ _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
 
    /* do software clearing here */
    if (buffers) {
-      if (buffers & ctx->DrawBuffer->_NumColorDrawBuffers > 0) {
+      if ((buffers & BUFFER_BITS_COLOR)
+          && (ctx->DrawBuffer->_NumColorDrawBuffers > 0)) {
          clear_color_buffers(ctx);
       }
       if (buffers & BUFFER_BIT_DEPTH) {
