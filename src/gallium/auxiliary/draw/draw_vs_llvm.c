@@ -135,25 +135,35 @@ vs_llvm_run( struct draw_vertex_shader *base,
       unsigned slot;
       float x, y, z, w;
 
-      x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+      if (!draw->rasterizer->bypass_clipping) {
+         x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
+         y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
+         z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
+         w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
-      vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
-      vOut[j]->edgeflag = 1;
-
-      /* divide by w */
-      w = 1.0f / w;
-      x *= w;
-      y *= w;
-      z *= w;
-
-      /* Viewport mapping */
-      vOut[j]->data[0][0] = x * scale[0] + trans[0];
-      vOut[j]->data[0][1] = y * scale[1] + trans[1];
-      vOut[j]->data[0][2] = z * scale[2] + trans[2];
-      vOut[j]->data[0][3] = w;
+         vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
+         vOut[j]->edgeflag = 1;
+         
+         /* divide by w */
+         w = 1.0f / w;
+         x *= w;
+         y *= w;
+         z *= w;
+         
+         /* Viewport mapping */
+         vOut[j]->data[0][0] = x * scale[0] + trans[0];
+         vOut[j]->data[0][1] = y * scale[1] + trans[1];
+         vOut[j]->data[0][2] = z * scale[2] + trans[2];
+         vOut[j]->data[0][3] = w;
+      }
+      else {
+         vOut[j]->clipmask = 0;
+         vOut[j]->edgeflag = 1;
+         vOut[j]->data[0][0] = x;
+         vOut[j]->data[0][1] = y;
+         vOut[j]->data[0][2] = z;
+         vOut[j]->data[0][3] = w;
+      }
 
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
