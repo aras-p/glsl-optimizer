@@ -49,6 +49,7 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
 				  const __GLcontextModes *modes,
                                   __DRIdrawable *pdraw,
 				  drm_drawable_t hwDrawable,
+				  unsigned int head,
                                   int renderType, const int *attrs);
 
 static void driDestroyDrawable(__DRIdrawable *drawable);
@@ -552,12 +553,12 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
 				  const __GLcontextModes *modes,
 				  __DRIdrawable *pdraw,
 				  drm_drawable_t hwDrawable,
+				  unsigned int head,
 				  int renderType,
 				  const int *attrs)
 {
     __DRIscreenPrivate *psp;
     __DRIdrawablePrivate *pdp;
-
 
     pdraw->private = NULL;
 
@@ -612,7 +613,7 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
     pdp->swapBuffers = psp->DriverAPI.SwapBuffers;
 
     if (psp->dri2.enabled) {
-	pdp->dri2.tail = 0;
+        pdp->dri2.tail = head;
 	pdp->pBackClipRects = _mesa_malloc(sizeof *pdp->pBackClipRects);
     }
 

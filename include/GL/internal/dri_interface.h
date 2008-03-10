@@ -482,6 +482,7 @@ struct __DRIscreenRec {
 			       const __GLcontextModes *modes,
 			       __DRIdrawable *pdraw,
 			       drm_drawable_t hwDrawable,
+			       unsigned int head,
 			       int renderType, const int *attrs);
 
     /**
