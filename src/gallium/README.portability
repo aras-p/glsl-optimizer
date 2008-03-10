@@ -39,5 +39,6 @@ portable way.
 
 == Debugging ==
 
-TODO
+* Use the functions/macros in p_debug.h.
 
+* Don't include assert.h, call abort, printf, etc.
