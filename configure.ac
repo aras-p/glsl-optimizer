@@ -291,7 +291,13 @@ fi
 dnl If $with_demos is yes, directories will be added as libs available
 PROGRAM_DIRS=""
 case "$with_demos" in
-no|yes) ;;
+no) ;;
+yes)
+    # If the driver isn't osmesa, we have libGL and can build xdemos
+    if test "$mesa_driver" != osmesa; then
+        PROGRAM_DIRS="xdemos"
+    fi
+    ;;
 *)
     # verify the requested demos directories exist
     demos=`IFS=,; echo $with_demos`
@@ -644,11 +650,6 @@ if test "x$enable_glu" = xyes; then
         fi
         ;;
     *)
-        # If GLU is available, we can build the xdemos
-        if test "$with_demos" = yes; then
-            PROGRAM_DIRS="$PROGRAM_DIRS xdemos"
-        fi
-
         # If static, empty GLU_LIB_DEPS and add libs for programs to link
         if test "$enable_static" = no; then
             GLU_LIB_DEPS="-lm"
