@@ -768,6 +768,7 @@ static __GLXDRIdrawable *driCreateDrawable(__GLXscreenConfigs *psc,
 					      &pdraw->driDrawable,
 					      hwDrawable,
 					      GLX_WINDOW_BIT,
+					      0,
 					      empty_attribute_list);
 
     if (!pdraw->driDrawable.private) {
