@@ -185,7 +185,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       zmask = MASK_ALL;
       break;
    default:
-      abort();
+      assert(0);
    }
 
    quad->mask &= zmask;

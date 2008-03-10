@@ -392,7 +392,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       assert(0); /* to do */
       break;
    default:
-      abort();
+      assert(0);
    }
    
    /*
@@ -464,7 +464,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       }
       break;
    default:
-      abort();
+      assert(0);
    }
    
    
@@ -716,7 +716,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       VEC4_MAX(quadColor[3], source[3], dest[3]); /* A */
       break;
    default:
-      abort();
+      assert(0);
    }
    
    /* pass blended quad to next stage */

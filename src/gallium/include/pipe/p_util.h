@@ -54,7 +54,12 @@ EngFreeMem(
 static INLINE void *
 MALLOC( unsigned size )
 {
+#ifdef WINCE
+   /* TODO: Need to abstract this */
+   return malloc( size );
+#else
    return EngAllocMem( 0, size, 'D3AG' );
+#endif
 }
 
 static INLINE void *
@@ -71,7 +76,12 @@ static INLINE void
 FREE( void *ptr )
 {
    if( ptr ) {
+#ifdef WINCE
+      /* TODO: Need to abstract this */
+      free( ptr );
+#else
       EngFreeMem( ptr );
+#endif
    }
 }
 

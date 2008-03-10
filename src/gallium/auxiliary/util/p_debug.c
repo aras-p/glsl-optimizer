@@ -57,11 +57,15 @@ int rpl_vsnprintf(char *, size_t, const char *, va_list);
 void debug_vprintf(const char *format, va_list ap)
 {
 #ifdef WIN32
+#ifndef WINCE
    /* EngDebugPrint does not handle float point arguments, so we need to use
     * our own vsnprintf implementation */
    char buf[512 + 1];
    rpl_vsnprintf(buf, sizeof(buf), format, ap);
    rpl_EngDebugPrint("%s", buf);
+#else
+   /* TODO: Implement debug print for WINCE */
+#endif
 #else
    vfprintf(stderr, format, ap);
 #endif
@@ -80,7 +84,11 @@ void debug_printf(const char *format, ...)
 static INLINE void debug_abort(void) 
 {
 #ifdef WIN32
+#ifndef WINCE
    EngDebugBreak();
+#else
+   _asm {int 3};
+#endif
 #else
    abort();
 #endif
