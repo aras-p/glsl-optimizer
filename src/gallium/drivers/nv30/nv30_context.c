@@ -133,128 +133,16 @@ nv30_init_hwctx(struct nv30_context *nv30, int rankine_class)
 	BEGIN_RING(rankine, NV34TCL_RC_ENABLE, 1);
 	OUT_RING  (0);
 
-	/* Attempt to setup a known state.. Probably missing a heap of
-	 * stuff here..
-	 */
-	BEGIN_RING(rankine, NV34TCL_STENCIL_FRONT_ENABLE, 1);
-	OUT_RING  (0);
-	BEGIN_RING(rankine, NV34TCL_STENCIL_BACK_ENABLE, 1);
-	OUT_RING  (0);
-	BEGIN_RING(rankine, NV34TCL_ALPHA_FUNC_ENABLE, 1);
-	OUT_RING  (0);
-	BEGIN_RING(rankine, NV34TCL_DEPTH_WRITE_ENABLE, 2);
-	OUT_RING  (0); /* wr disable */
-	OUT_RING  (0); /* test disable */
-	BEGIN_RING(rankine, NV34TCL_COLOR_MASK, 1);
-	OUT_RING  (0x01010101); /* TR,TR,TR,TR */
-	BEGIN_RING(rankine, NV34TCL_CULL_FACE_ENABLE, 1);
-	OUT_RING  (0);
-	BEGIN_RING(rankine, NV34TCL_BLEND_FUNC_ENABLE, 5);
-	OUT_RING  (0);				/* Blend enable */
-	OUT_RING  (0);				/* Blend src */
-	OUT_RING  (0);				/* Blend dst */
-	OUT_RING  (0x00000000);			/* Blend colour */
-	OUT_RING  (0x8006);			/* FUNC_ADD */
-	BEGIN_RING(rankine, NV34TCL_COLOR_LOGIC_OP_ENABLE, 2);
-	OUT_RING  (0);
-	OUT_RING  (0x1503 /*GL_COPY*/);
-	BEGIN_RING(rankine, NV34TCL_DITHER_ENABLE, 1);
-	OUT_RING  (1);
-	BEGIN_RING(rankine, NV34TCL_SHADE_MODEL, 1);
-	OUT_RING  (0x1d01 /*GL_SMOOTH*/);
-	BEGIN_RING(rankine, NV34TCL_POLYGON_OFFSET_FACTOR,2);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	BEGIN_RING(rankine, NV34TCL_POLYGON_MODE_FRONT, 2);
-	OUT_RING  (0x1b02 /*GL_FILL*/);
-	OUT_RING  (0x1b02 /*GL_FILL*/);
-	/* - Disable texture units
-	 * - Set fragprog to MOVR result.color, fragment.color */
-	for (i=0;i<16;i++) {
-		BEGIN_RING(rankine,
-				NV34TCL_TX_ENABLE(i), 1);
-		OUT_RING  (0);
-	}
-	/* Polygon stipple */
-	BEGIN_RING(rankine,
-			NV34TCL_POLYGON_STIPPLE_PATTERN(0), 0x20);
-	for (i=0;i<0x20;i++)
-		OUT_RING  (0xFFFFFFFF);
-
-	int w=4096;
-	int h=4096;
-	int pitch=4096*4;
-	BEGIN_RING(rankine, NV34TCL_RT_HORIZ, 5);
-	OUT_RING  (w<<16);
-	OUT_RING  (h<<16);
-	OUT_RING  (0x148); /* format */
-	OUT_RING  (pitch << 16 | pitch);
-	OUT_RING  (0x0);
-        BEGIN_RING(rankine, 0x0a00, 2);
-        OUT_RING  ((w<<16) | 0);
-        OUT_RING  ((h<<16) | 0);
-	BEGIN_RING(rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(0), 2);
-	OUT_RING  ((w-1)<<16);
-	OUT_RING  ((h-1)<<16);
-	BEGIN_RING(rankine, NV34TCL_SCISSOR_HORIZ, 2);
-	OUT_RING  (w<<16);
-	OUT_RING  (h<<16);
-	BEGIN_RING(rankine, NV34TCL_VIEWPORT_HORIZ, 2);
-	OUT_RING  (w<<16);
-	OUT_RING  (h<<16);
-
-	BEGIN_RING(rankine, NV34TCL_VIEWPORT_TRANSLATE_X, 8);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
+	BEGIN_RING(rankine, NV34TCL_DEPTH_RANGE_NEAR, 2);
 	OUT_RINGf (0.0);
 	OUT_RINGf (1.0);
-	OUT_RINGf (1.0);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-
-	BEGIN_RING(rankine, NV34TCL_MODELVIEW_MATRIX(0), 16);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (1.0);
-
-	BEGIN_RING(rankine, NV34TCL_PROJECTION_MATRIX(0), 16);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (1.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (0.0);
-	OUT_RINGf (1.0);
-
-	BEGIN_RING(rankine, NV34TCL_SCISSOR_HORIZ, 2);
-	OUT_RING  (4096<<16);
-	OUT_RING  (4096<<16);
 
 	BEGIN_RING(rankine, NV34TCL_MULTISAMPLE_CONTROL, 1);
 	OUT_RING  (0xffff0000);
+
+	/* enables use of vp rather than fixed-function somehow */
+	BEGIN_RING(rankine, 0x1e94, 1);
+	OUT_RING  (0x13);
 
 	FIRE_RING ();
 	return TRUE;

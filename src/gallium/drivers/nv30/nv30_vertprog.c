@@ -193,6 +193,11 @@ emit_dst(struct nv30_vpc *vpc, uint32_t *hw, int slot, struct nv30_sreg dst)
 
 		hw[3] |= (dst.index << NV30_VP_INST_DEST_SHIFT);
 		hw[0] |= NV30_VP_INST_VEC_DEST_TEMP_MASK | (1<<20);
+
+		/*XXX: no way this is entirely correct, someone needs to
+		 *     figure out what exactly it is.
+		 */
+		hw[3] |= 0x800;
 		break;
 	default:
 		assert(0);
