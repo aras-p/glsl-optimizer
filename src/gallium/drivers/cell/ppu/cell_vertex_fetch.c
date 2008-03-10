@@ -33,46 +33,11 @@
 #include "cell_context.h"
 #include "rtasm/rtasm_ppc_spe.h"
 
-typedef uint64_t register_mask;
-
-int allocate_available_register(register_mask *m)
-{
-   unsigned i;
-   for (i = 0; i < 64; i++) {
-      const uint64_t mask = (1ULL << i);
-
-      if ((m[0] & mask) != 0) {
-	 m[0] &= ~mask;
-	 return i;
-      }
-   }
-
-   return -1;
-}
-
-
-int allocate_register(register_mask *m, unsigned reg)
-{
-   assert((m[0] & (1ULL << reg)) != 0);
-
-   m[0] &= ~(1ULL << reg);
-   return reg;
-}
-
-
-void release_register(register_mask *m, unsigned reg)
-{
-   assert((m[0] & (1ULL << reg)) == 0);
-
-   m[0] |= (1ULL << reg);
-}
-
 
 /**
  * Emit a 4x4 matrix transpose operation
  *
  * \param p         Function that the transpose operation is to be appended to
- * \param m         Live register mask
  * \param row0      Register containing row 0 of the source matrix
  * \param row1      Register containing row 1 of the source matrix
  * \param row2      Register containing row 2 of the source matrix
@@ -91,15 +56,15 @@ void release_register(register_mask *m, unsigned reg)
  * This function requires that four temporary are available on entry.
  */
 static void
-emit_matrix_transpose(struct spe_function *p, register_mask *m,
+emit_matrix_transpose(struct spe_function *p,
 		      unsigned row0, unsigned row1, unsigned row2,
 		      unsigned row3, unsigned dest_ptr,
 		      unsigned shuf_ptr, unsigned count)
 {
-   int shuf_hi = allocate_available_register(m);
-   int shuf_lo = allocate_available_register(m);
-   int t1 = allocate_available_register(m);
-   int t2 = allocate_available_register(m);
+   int shuf_hi = spe_allocate_available_register(p);
+   int shuf_lo = spe_allocate_available_register(p);
+   int t1 = spe_allocate_available_register(p);
+   int t2 = spe_allocate_available_register(p);
    int t3;
    int t4;
    int col0;
@@ -169,19 +134,19 @@ emit_matrix_transpose(struct spe_function *p, register_mask *m,
 
    /* Release all of the temporary registers used.
     */
-   release_register(m, col0);
-   release_register(m, col1);
-   release_register(m, col2);
-   release_register(m, col3);
-   release_register(m, shuf_hi);
-   release_register(m, shuf_lo);
-   release_register(m, t2);
-   release_register(m, t4);
+   spe_release_register(p, col0);
+   spe_release_register(p, col1);
+   spe_release_register(p, col2);
+   spe_release_register(p, col3);
+   spe_release_register(p, shuf_hi);
+   spe_release_register(p, shuf_lo);
+   spe_release_register(p, t2);
+   spe_release_register(p, t4);
 }
 
 
 static void
-emit_fetch(struct spe_function *p, register_mask *m,
+emit_fetch(struct spe_function *p,
 	   unsigned in_ptr, unsigned *offset,
 	   unsigned out_ptr, unsigned shuf_ptr,
 	   enum pipe_format format)
@@ -191,11 +156,11 @@ emit_fetch(struct spe_function *p, register_mask *m,
    const unsigned type = pf_type(format);
    const unsigned bytes = pf_size_x(format);
 
-   int v0 = allocate_available_register(m);
-   int v1 = allocate_available_register(m);
-   int v2 = allocate_available_register(m);
-   int v3 = allocate_available_register(m);
-   int tmp = allocate_available_register(m);
+   int v0 = spe_allocate_available_register(p);
+   int v1 = spe_allocate_available_register(p);
+   int v2 = spe_allocate_available_register(p);
+   int v3 = spe_allocate_available_register(p);
+   int tmp = spe_allocate_available_register(p);
    int float_zero = -1;
    int float_one = -1;
    float scale_signed = 0.0;
@@ -260,19 +225,19 @@ emit_fetch(struct spe_function *p, register_mask *m,
 
 
    if (count < 4) {
-      float_one = allocate_available_register(m);
+      float_one = spe_allocate_available_register(p);
       spe_il(p, float_one, 1);
       spe_cuflt(p, float_one, float_one, 0);
       
       if (count < 3) {
-	 float_zero = allocate_available_register(m);
+	 float_zero = spe_allocate_available_register(p);
 	 spe_il(p, float_zero, 0);
       }
    }
 
-   release_register(m, tmp);
+   spe_release_register(p, tmp);
 
-   emit_matrix_transpose(p, m, v0, v1, v2, v3, out_ptr, shuf_ptr, count);
+   emit_matrix_transpose(p, v0, v1, v2, v3, out_ptr, shuf_ptr, count);
 
    switch (count) {
    case 1:
@@ -284,11 +249,11 @@ emit_fetch(struct spe_function *p, register_mask *m,
    }
 
    if (float_zero != -1) {
-      release_register(m, float_zero);
+      spe_release_register(p, float_zero);
    }
 
    if (float_one != -1) {
-      release_register(m, float_one);
+      spe_release_register(p, float_one);
    }
 }
 
@@ -297,7 +262,6 @@ void cell_update_vertex_fetch(struct draw_context *draw)
 {
    struct cell_context *const cell =
        (struct cell_context *) draw->driver_private;
-   register_mask m = ~0;
    struct spe_function *p = &cell->attrib_fetch;
    unsigned function_index[PIPE_ATTRIB_MAX];
    unsigned unique_attr_formats;
@@ -338,18 +302,11 @@ void cell_update_vertex_fetch(struct draw_context *draw)
    spe_init_func(p, 136 * unique_attr_formats);
 
 
-   /* Registers 0, 1, and 2 are reserved by the ABI.
-    */
-   allocate_register(&m, 0);
-   allocate_register(&m, 1);
-   allocate_register(&m, 2);
-
-
    /* Allocate registers for the function's input parameters.
     */
-   out_ptr = allocate_register(&m, 3);
-   in_ptr = allocate_register(&m, 4);
-   shuf_ptr = allocate_register(&m, 5);
+   out_ptr = spe_allocate_register(p, 3);
+   in_ptr = spe_allocate_register(p, 4);
+   shuf_ptr = spe_allocate_register(p, 5);
 
 
    /* Generate code for the individual attribute fetch functions.
@@ -362,7 +319,7 @@ void cell_update_vertex_fetch(struct draw_context *draw)
 						     - (void *) p->store);
 
 	 offset = 0;
-	 emit_fetch(p, & m, in_ptr, &offset, out_ptr, shuf_ptr,
+	 emit_fetch(p, in_ptr, &offset, out_ptr, shuf_ptr,
 		    draw->vertex_element[i].src_format);
 	 spe_bi(p, 0, 0, 0);
 

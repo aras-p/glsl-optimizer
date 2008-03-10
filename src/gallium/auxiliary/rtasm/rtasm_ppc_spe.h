@@ -39,10 +39,26 @@ struct spe_function {
     uint32_t *store;
     uint32_t *csr;
     const char *fn;
+
+    /**
+     * Mask of used / unused registers
+     *
+     * Each set bit corresponds to an available register.  Each cleared bit
+     * corresponds to an allocated register.
+     *
+     * \sa
+     * spe_allocate_register, spe_allocate_available_register,
+     * spe_release_register
+     */
+    uint64_t regs[2];
 };
 
 extern void spe_init_func(struct spe_function *p, unsigned code_size);
 extern void spe_release_func(struct spe_function *p);
+
+extern int spe_allocate_available_register(struct spe_function *p);
+extern int spe_allocate_register(struct spe_function *p, int reg);
+extern void spe_release_register(struct spe_function *p, int reg);
 
 #endif /* RTASM_PPC_SPE_H */
 
