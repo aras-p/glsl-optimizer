@@ -9,5 +9,6 @@ points
 readtex.c
 readtex.h
 texdemo1
-trirast
 toyball
+trirast
+twoside
