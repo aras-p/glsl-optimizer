@@ -155,7 +155,7 @@ nouveau_surface_channel_create_nv50(struct nouveau_channel_context *nvc)
 				  &nvc->Nv2D);
 	if (ret)
 		return ret;
-	BIND_RING (nvc->channel, nvc->Nv2D, 0);
+	BIND_RING (nvc->channel, nvc->Nv2D, nvc->next_subchannel++);
 	BEGIN_RING(nvc->channel, nvc->Nv2D, NV50_2D_DMA_NOTIFY, 1);
 	OUT_RING  (nvc->channel, nvc->sync_notifier->handle);
 	BEGIN_RING(nvc->channel, nvc->Nv2D, NV50_2D_DMA_IN_MEMORY0, 2);
