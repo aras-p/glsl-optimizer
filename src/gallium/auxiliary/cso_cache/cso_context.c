@@ -349,6 +349,6 @@ void cso_set_vertex_shader(struct cso_context *ctx,
 
    if (ctx->vertex_shader != handle) {
       ctx->vertex_shader = handle;
-      ctx->pipe->bind_fs_state(ctx->pipe, handle);
+      ctx->pipe->bind_vs_state(ctx->pipe, handle);
    }
 }
