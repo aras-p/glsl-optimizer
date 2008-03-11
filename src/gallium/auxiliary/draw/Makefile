@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = draw
 
 C_SOURCES = \
-	draw_passthrough.c \
 	draw_aaline.c \
 	draw_aapoint.c \
 	draw_clip.c \
