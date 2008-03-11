@@ -56,6 +56,7 @@ softpipe_bind_sampler_states(struct pipe_context *pipe,
                              unsigned num, void **sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   unsigned i;
 
    assert(num <= PIPE_MAX_SAMPLERS);
 
@@ -66,9 +67,10 @@ softpipe_bind_sampler_states(struct pipe_context *pipe,
 
    draw_flush(softpipe->draw);
 
-   memcpy(softpipe->sampler, sampler, num * sizeof(void *));
-   memset(&softpipe->sampler[num], 0, (PIPE_MAX_SAMPLERS - num) *
-          sizeof(void *));
+   for (i = 0; i < num; ++i)
+      softpipe->sampler[i] = sampler[i];
+   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
+      softpipe->sampler[i] = NULL;
 
    softpipe->num_samplers = num;
 

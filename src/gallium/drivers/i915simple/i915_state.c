@@ -273,6 +273,7 @@ static void i915_bind_sampler_states(struct pipe_context *pipe,
                                      unsigned num, void **sampler)
 {
    struct i915_context *i915 = i915_context(pipe);
+   unsigned i;
 
    assert(num <= PIPE_MAX_SAMPLERS);
 
@@ -281,8 +282,10 @@ static void i915_bind_sampler_states(struct pipe_context *pipe,
        !memcmp(i915->sampler, sampler, num * sizeof(void *)))
       return;
 
-   memcpy(i915->sampler, sampler, num * sizeof(void *));
-   memset(&i915->sampler[num], 0, (PIPE_MAX_SAMPLERS - num) * sizeof(void *));
+   for (i = 0; i < num; ++i)
+      i915->sampler[i] = sampler[i];
+   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
+      i915->sampler[i] = NULL;
 
    i915->num_samplers = num;
 

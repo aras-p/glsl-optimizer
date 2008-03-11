@@ -241,7 +241,6 @@ static void *mymemcpy(void *, void *, size_t);
 #endif	/* !HAVE_VASPRINTF */
 
 #if !HAVE_VSNPRINTF
-#include <errno.h>	/* For ERANGE and errno. */
 #include <limits.h>	/* For *_MAX. */
 #if HAVE_INTTYPES_H
 #include <inttypes.h>	/* For intmax_t (if not defined in <stdint.h>). */
@@ -444,8 +443,6 @@ static int convert(UINTMAX_T, char *, size_t, int, int);
 static UINTMAX_T cast(LDOUBLE);
 static UINTMAX_T myround(LDOUBLE);
 static LDOUBLE mypow10(int);
-
-extern int errno;
 
 int
 rpl_vsnprintf(char *str, size_t size, const char *format, va_list args)
@@ -747,7 +744,7 @@ rpl_vsnprintf(char *str, size_t size, const char *format, va_list args)
 					goto out;
 				break;
 			case 'c':
-				cvalue = va_arg(args, int);
+				cvalue = (unsigned char)va_arg(args, int);
 				OUTCHAR(str, len, size, cvalue);
 				break;
 			case 's':
@@ -844,7 +841,6 @@ out:
 		str[size - 1] = '\0';
 
 	if (overflow || len >= INT_MAX) {
-		errno = overflow ? EOVERFLOW : ERANGE;
 		return -1;
 	}
 	return (int)len;
@@ -1106,7 +1102,7 @@ again:
 	 * Factor of ten with the number of digits needed for the fractional
 	 * part.  For example, if the precision is 3, the mask will be 1000.
 	 */
-	mask = mypow10(precision);
+	mask = (UINTMAX_T)mypow10(precision);
 	/*
 	 * We "cheat" by converting the fractional part to integer by
 	 * multiplying by a factor of ten.
@@ -1358,7 +1354,7 @@ cast(LDOUBLE value)
 	if (value >= UINTMAX_MAX)
 		return UINTMAX_MAX;
 
-	result = value;
+	result = (UINTMAX_T)value;
 	/*
 	 * At least on NetBSD/sparc64 3.0.2 and 4.99.30, casting long double to
 	 * an integer type converts e.g. 1.9 to 2 instead of 1 (which violates
