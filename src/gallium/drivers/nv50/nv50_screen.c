@@ -4,6 +4,11 @@
 #include "nv50_context.h"
 #include "nv50_screen.h"
 
+#include "nouveau/nouveau_stateobj.h"
+
+#define GRCLASS5097_CHIPSETS 0x00000000
+#define GRCLASS8297_CHIPSETS 0x00000010
+
 static boolean
 nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_format format, uint type)
@@ -96,12 +101,54 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 		   unsigned chipset)
 {
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
+	struct nouveau_stateobj *so;
+	unsigned tesla_class = 0, ret;
 
 	if (!screen)
 		return NULL;
-
 	screen->chipset = chipset;
 	screen->nvws = nvws;
+
+	/* 3D object */
+	if ((chipset & 0xf0) != 0x50 && (chipset & 0xf0) != 0x80) {
+		NOUVEAU_ERR("Not a G8x chipset\n");
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
+	if (GRCLASS5097_CHIPSETS & (1 << (chipset & 0x0f))) {
+		tesla_class = 0x5097;
+	} else
+	if (GRCLASS8297_CHIPSETS & (1 << (chipset & 0x0f))) {
+		tesla_class = 0x8297;
+	} else {
+		NOUVEAU_ERR("Unknown G8x chipset: NV%02x\n", chipset);
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
+	ret = nvws->grobj_alloc(nvws, tesla_class, &screen->tesla);
+	if (ret) {
+		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
+	/* Sync notifier */
+	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	if (ret) {
+		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
+		nv50_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
+	/* Static tesla init */
+	so = so_new(128, 0);
+	so_method(so, screen->tesla, NV50TCL_DMA_NOTIFY, 1);
+	so_data  (so, screen->sync->handle);
+	so_emit(nvws, so);
+	so_ref(NULL, &so);
+	nvws->push_flush(nvws->channel, 0);
 
 	screen->pipe.winsys = ws;
 

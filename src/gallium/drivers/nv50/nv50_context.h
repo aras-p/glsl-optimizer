@@ -11,10 +11,11 @@
 #include "nouveau/nouveau_gldefs.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv50_context *ctx = nv50
+	struct nv50_screen *ctx = nv50->screen
 #include "nouveau/nouveau_push.h"
 
 #include "nv50_state.h"
+#include "nv50_screen.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
 	fprintf(stderr, "%s:%d -  "fmt, __func__, __LINE__, ##args);
@@ -23,13 +24,11 @@
 
 struct nv50_context {
 	struct pipe_context pipe;
-	struct nouveau_winsys *nvws;
+
+	struct nv50_screen *screen;
+	unsigned pctx_id;
 
 	struct draw_context *draw;
-
-	int chipset;
-	struct nouveau_grobj *tesla;
-	struct nouveau_notifier *sync;
 };
 
 

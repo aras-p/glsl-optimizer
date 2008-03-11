@@ -40,7 +40,7 @@ nv50_surface_copy(struct pipe_context *pipe, unsigned flip,
 		  unsigned width, unsigned height)
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	struct nouveau_winsys *nvws = nv50->nvws;
+	struct nouveau_winsys *nvws = nv50->screen->nvws;
 
 	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
 			   width, height);
@@ -52,7 +52,7 @@ nv50_surface_fill(struct pipe_context *pipe, struct pipe_surface *dest,
 		  unsigned height, unsigned value)
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	struct nouveau_winsys *nvws = nv50->nvws;
+	struct nouveau_winsys *nvws = nv50->screen->nvws;
 
 	nvws->surface_fill(nvws, dest, destx, desty, width, height, value);
 }

@@ -10,10 +10,11 @@ static void
 nv50_flush(struct pipe_context *pipe, unsigned flags)
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	struct nouveau_winsys *nvws = nv50->nvws;
+	struct nv50_screen *screen = nv50->screen;
+	struct nouveau_winsys *nvws = screen->nvws;
 	
 	if (flags & PIPE_FLUSH_WAIT) {
-		nvws->notifier_reset(nv50->sync, 0);
+		nvws->notifier_reset(screen->sync, 0);
 		BEGIN_RING(tesla, 0x104, 1);
 		OUT_RING  (0);
 		BEGIN_RING(tesla, 0x100, 1);
@@ -23,7 +24,7 @@ nv50_flush(struct pipe_context *pipe, unsigned flags)
 	FIRE_RING();
 
 	if (flags & PIPE_FLUSH_WAIT)
-		nvws->notifier_wait(nv50->sync, 0, 0, 2000);
+		nvws->notifier_wait(screen->sync, 0, 0, 2000);
 }
 
 static void
@@ -35,66 +36,18 @@ nv50_destroy(struct pipe_context *pipe)
 	free(nv50);
 }
 
-static boolean
-nv50_init_hwctx(struct nv50_context *nv50, int tesla_class)
-{
-	struct nouveau_winsys *nvws = nv50->nvws;
-	int ret;
-
-	if ((ret = nvws->grobj_alloc(nvws, tesla_class, &nv50->tesla))) {
-		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
-		return FALSE;
-	}
-
-	BEGIN_RING(tesla, NV50TCL_DMA_NOTIFY, 1);
-	OUT_RING  (nv50->sync->handle);
-
-	FIRE_RING ();
-	return TRUE;
-}
-
-#define GRCLASS5097_CHIPSETS 0x00000000
-#define GRCLASS8297_CHIPSETS 0x00000010
 struct pipe_context *
 nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
 	struct pipe_winsys *pipe_winsys = pscreen->winsys;
-	struct nouveau_winsys *nvws = nv50_screen(pscreen)->nvws;
-	unsigned chipset = nv50_screen(pscreen)->chipset;
+	struct nv50_screen *screen = nv50_screen(pscreen);
 	struct nv50_context *nv50;
-	int tesla_class, ret;
-
-	if ((chipset & 0xf0) != 0x50 && (chipset & 0xf0) != 0x80) {
-		NOUVEAU_ERR("Not a G8x chipset\n");
-		return NULL;
-	}
-
-	if (GRCLASS5097_CHIPSETS & (1 << (chipset & 0x0f))) {
-		tesla_class = 0x5097;
-	} else
-	if (GRCLASS8297_CHIPSETS & (1 << (chipset & 0x0f))) {
-		tesla_class = 0x8297;
-	} else {
-		NOUVEAU_ERR("Unknown G8x chipset: NV%02x\n", chipset);
-		return NULL;
-	}
 
 	nv50 = CALLOC_STRUCT(nv50_context);
 	if (!nv50)
 		return NULL;
-	nv50->chipset = chipset;
-	nv50->nvws = nvws;
-
-	if ((ret = nvws->notifier_alloc(nvws, 1, &nv50->sync))) {
-		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		free(nv50);
-		return NULL;
-	}
-
-	if (!nv50_init_hwctx(nv50, tesla_class)) {
-		free(nv50);
-		return NULL;
-	}
+	nv50->screen = screen;
+	nv50->pctx_id = pctx_id;
 
 	nv50->pipe.winsys = pipe_winsys;
 	nv50->pipe.screen = pscreen;

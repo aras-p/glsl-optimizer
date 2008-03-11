@@ -8,6 +8,11 @@ struct nv50_screen {
 
 	struct nouveau_winsys *nvws;
 	unsigned chipset;
+
+	unsigned cur_pctx;
+
+	struct nouveau_grobj *tesla;
+	struct nouveau_notifier *sync;
 };
 
 static INLINE struct nv50_screen *
