@@ -22,10 +22,16 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-#define NV50_NEW_BLEND (1 << 0)
+#define NV50_NEW_BLEND	(1 << 0)
+#define NV50_NEW_ZSA	(1 << 1)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
+	struct nouveau_stateobj *so;
+};
+
+struct nv50_zsa_stateobj {
+	struct pipe_depth_stencil_alpha_state pipe;
 	struct nouveau_stateobj *so;
 };
 
@@ -39,6 +45,7 @@ struct nv50_context {
 
 	unsigned dirty;
 	struct nv50_blend_stateobj *blend;
+	struct nv50_zsa_stateobj *zsa;
 };
 
 static INLINE struct nv50_context *

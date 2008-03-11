@@ -8,7 +8,10 @@ nv50_state_validate(struct nv50_context *nv50)
 
 	if (nv50->dirty & NV50_NEW_BLEND)
 		so_emit(nvws, nv50->blend->so);
+	if (nv50->dirty & NV50_NEW_ZSA)
+		so_emit(nvws, nv50->zsa->so);
 
+	nv50->dirty = 0;
 	return TRUE;
 }
 
