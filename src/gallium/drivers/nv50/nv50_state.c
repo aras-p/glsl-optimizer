@@ -246,6 +246,10 @@ static void
 nv50_set_blend_color(struct pipe_context *pipe,
 		     const struct pipe_blend_color *bcol)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->blend_colour = *bcol;
+	nv50->dirty |= NV50_NEW_BLEND_COLOUR;
 }
 
 static void
@@ -270,18 +274,30 @@ static void
 nv50_set_polygon_stipple(struct pipe_context *pipe,
 			 const struct pipe_poly_stipple *stipple)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->stipple = *stipple;
+	nv50->dirty |= NV50_NEW_STIPPLE;
 }
 
 static void
 nv50_set_scissor_state(struct pipe_context *pipe,
 		       const struct pipe_scissor_state *s)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->scissor = *s;
+	nv50->dirty |= NV50_NEW_SCISSOR;
 }
 
 static void
 nv50_set_viewport_state(struct pipe_context *pipe,
 			const struct pipe_viewport_state *vpt)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->viewport = *vpt;
+	nv50->dirty |= NV50_NEW_VIEWPORT;
 }
 
 static void
