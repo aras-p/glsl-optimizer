@@ -378,7 +378,7 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 {
 	const struct nv30_sreg none = nv30_sr(NV30SR_NONE, 0);
 	struct nv30_sreg src[3], dst, tmp;
-	int mask, sat, unit;
+	int mask, sat, unit = 0;
 	int ai = -1, ci = -1;
 	int i;
 

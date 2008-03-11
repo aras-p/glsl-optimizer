@@ -538,7 +538,7 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct pipe_surface *rt[4], *zeta = NULL;
-	uint32_t rt_enable, rt_format, w, h;
+	uint32_t rt_enable, rt_format, w = 0, h = 0;
 	int i, colour_format = 0, zeta_format = 0;
 
 	rt_enable = 0;
