@@ -116,8 +116,11 @@ void draw_destroy( struct draw_context *draw )
    tgsi_exec_machine_free_data(&draw->machine);
    align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
 
+   /* Not so fast -- we're just borrowing this at the moment.
+    * 
    if (draw->render)
       draw->render->destroy( draw->render );
+   */
 
    FREE( draw );
 }
