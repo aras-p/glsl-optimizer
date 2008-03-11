@@ -28,6 +28,7 @@
 #define NV50_NEW_STIPPLE	(1 << 3)
 #define NV50_NEW_SCISSOR	(1 << 4)
 #define NV50_NEW_VIEWPORT	(1 << 5)
+#define NV50_NEW_RASTERIZER	(1 << 6)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -36,6 +37,11 @@ struct nv50_blend_stateobj {
 
 struct nv50_zsa_stateobj {
 	struct pipe_depth_stencil_alpha_state pipe;
+	struct nouveau_stateobj *so;
+};
+
+struct nv50_rasterizer_stateobj {
+	struct pipe_rasterizer_state pipe;
 	struct nouveau_stateobj *so;
 };
 
@@ -50,6 +56,7 @@ struct nv50_context {
 	unsigned dirty;
 	struct nv50_blend_stateobj *blend;
 	struct nv50_zsa_stateobj *zsa;
+	struct nv50_rasterizer_stateobj *rasterizer;
 	struct pipe_blend_color blend_colour;
 	struct pipe_poly_stipple stipple;
 	struct pipe_scissor_state scissor;

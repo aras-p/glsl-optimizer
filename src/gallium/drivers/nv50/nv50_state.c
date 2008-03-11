@@ -110,17 +110,135 @@ static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
 			     const struct pipe_rasterizer_state *cso)
 {
-	return NULL;
+	struct nouveau_stateobj *so = so_new(64, 0);
+	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
+	struct nv50_rasterizer_stateobj *rso =
+		CALLOC_STRUCT(nv50_rasterizer_stateobj);
+	unsigned i;
+
+	/*XXX: ignored
+	 * 	- light_twosize
+	 * 	- point_smooth
+	 * 	- multisample
+	 * 	- point_sprite / sprite_coord_mode
+	 */
+
+	so_method(so, tesla, NV50TCL_SHADE_MODEL, 1);
+	so_data  (so, cso->flatshade ? NV50TCL_SHADE_MODEL_FLAT :
+				       NV50TCL_SHADE_MODEL_SMOOTH);
+
+	so_method(so, tesla, NV50TCL_LINE_WIDTH, 1);
+	so_data  (so, fui(cso->line_width));
+	so_method(so, tesla, NV50TCL_LINE_SMOOTH_ENABLE, 1);
+	so_data  (so, cso->line_smooth ? 1 : 0);
+	if (cso->line_stipple_enable) {
+		so_method(so, tesla, NV50TCL_LINE_STIPPLE_ENABLE, 1);
+		so_data  (so, 1);
+		so_method(so, tesla, NV50TCL_LINE_STIPPLE_PATTERN, 1);
+		so_data  (so, (cso->line_stipple_pattern << 16) |
+			       cso->line_stipple_factor);
+	} else {
+		so_method(so, tesla, NV50TCL_LINE_STIPPLE_ENABLE, 1);
+		so_data  (so, 0);
+	}
+
+	so_method(so, tesla, NV50TCL_POINT_SIZE, 1);
+	so_data  (so, fui(cso->point_size));
+
+	so_method(so, tesla, NV50TCL_POLYGON_MODE_FRONT, 3);
+	if (cso->front_winding == PIPE_WINDING_CCW) {
+		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
+		so_data(so, nvgl_polygon_mode(cso->fill_cw));
+	} else {
+		so_data(so, nvgl_polygon_mode(cso->fill_cw));
+		so_data(so, nvgl_polygon_mode(cso->fill_ccw));
+	}
+	so_data(so, cso->poly_smooth ? 1 : 0);
+
+	so_method(so, tesla, NV50TCL_CULL_FACE_ENABLE, 3);
+	so_data  (so, cso->cull_mode != PIPE_WINDING_NONE);
+	if (cso->front_winding == PIPE_WINDING_CCW) {
+		so_data(so, NV50TCL_FRONT_FACE_CCW);
+		switch (cso->cull_mode) {
+		case PIPE_WINDING_CCW:
+			so_data(so, NV50TCL_CULL_FACE_FRONT);
+			break;
+		case PIPE_WINDING_CW:
+			so_data(so, NV50TCL_CULL_FACE_BACK);
+			break;
+		case PIPE_WINDING_BOTH:
+			so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
+			break;
+		default:
+			so_data(so, NV50TCL_CULL_FACE_BACK);
+			break;
+		}
+	} else {
+		so_data(so, NV50TCL_FRONT_FACE_CW);
+		switch (cso->cull_mode) {
+		case PIPE_WINDING_CCW:
+			so_data(so, NV50TCL_CULL_FACE_BACK);
+			break;
+		case PIPE_WINDING_CW:
+			so_data(so, NV50TCL_CULL_FACE_FRONT);
+			break;
+		case PIPE_WINDING_BOTH:
+			so_data(so, NV50TCL_CULL_FACE_FRONT_AND_BACK);
+			break;
+		default:
+			so_data(so, NV50TCL_CULL_FACE_BACK);
+			break;
+		}
+	}
+
+	so_method(so, tesla, NV50TCL_POLYGON_STIPPLE_ENABLE, 1);
+	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
+
+	so_method(so, tesla, NV50TCL_POLYGON_OFFSET_POINT_ENABLE, 3);
+	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_POINT) ||
+	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_POINT))
+		so_data(so, 1);
+	else
+		so_data(so, 0);
+	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_LINE) ||
+	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_LINE))
+		so_data(so, 1);
+	else
+		so_data(so, 0);
+	if ((cso->offset_cw && cso->fill_cw == PIPE_POLYGON_MODE_FILL) ||
+	    (cso->offset_ccw && cso->fill_ccw == PIPE_POLYGON_MODE_FILL))
+		so_data(so, 1);
+	else
+		so_data(so, 0);
+
+	if (cso->offset_cw || cso->offset_ccw) {
+		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_FACTOR, 1);
+		so_data  (so, fui(cso->offset_scale));
+		so_method(so, tesla, NV50TCL_POLYGON_OFFSET_UNITS, 1);
+		so_data  (so, fui(cso->offset_units * 2));
+	}
+
+	rso->pipe = *cso;
+	so_ref(so, &rso->so);
+	return (void *)rso;
 }
 
 static void
 nv50_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->rasterizer = hwcso;
+	nv50->dirty |= NV50_NEW_RASTERIZER;
 }
 
 static void
 nv50_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 {
+	struct nv50_rasterizer_stateobj *rso = hwcso;
+
+	so_ref(NULL, &rso->so);
+	FREE(rso);
 }
 
 static void *

@@ -15,6 +15,9 @@ nv50_state_validate(struct nv50_context *nv50)
 	if (nv50->dirty & NV50_NEW_ZSA)
 		so_emit(nvws, nv50->zsa->so);
 
+	if (nv50->dirty & NV50_NEW_RASTERIZER)
+		so_emit(nvws, nv50->rasterizer->so);
+
 	if (nv50->dirty & NV50_NEW_BLEND_COLOUR) {
 		so = so_new(5, 0);
 		so_method(so, tesla, NV50TCL_BLEND_COLOR(0), 8);
