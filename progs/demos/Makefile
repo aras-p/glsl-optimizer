@@ -159,10 +159,10 @@ rain: particles.o rain.o readtex.o
 	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
 
 rain.o: rain.cxx readtex.h
-	$(CXX) -c -I../ $(CXXFLAGS) $<
+	$(CXX) -c -I$(INCDIR) $(CXXFLAGS) $<
 
 particles.o: particles.cxx
-	$(CXX) -c -I../ $(CXXFLAGS) $<
+	$(CXX) -c -I$(INCDIR) $(CXXFLAGS) $<
 
 
 viewdds: viewdds.c
