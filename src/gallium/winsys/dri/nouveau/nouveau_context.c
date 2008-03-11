@@ -72,7 +72,7 @@ nouveau_channel_context_create(struct nouveau_device *nvdev, unsigned chipset)
 		return NULL;
 	}
 
-	switch (chipset) {
+	switch (chipset & 0xf0) {
 	case 0x50:
 	case 0x80:
 		ret = nouveau_surface_channel_create_nv50(nvc);
