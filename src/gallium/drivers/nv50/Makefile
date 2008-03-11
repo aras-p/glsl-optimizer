@@ -11,6 +11,7 @@ DRIVER_SOURCES = \
 	nv50_query.c \
 	nv50_screen.c \
 	nv50_state.c \
+	nv50_state_validate.c \
 	nv50_surface.c \
 	nv50_vbo.c
 

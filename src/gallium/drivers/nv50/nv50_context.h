@@ -70,4 +70,6 @@ extern boolean nv50_draw_elements(struct pipe_context *pipe,
 extern void nv50_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 		       unsigned clearValue);
 
+extern boolean nv50_state_validate(struct nv50_context *nv50);
+
 #endif
