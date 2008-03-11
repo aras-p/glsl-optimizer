@@ -103,6 +103,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 	struct nv50_screen *screen = CALLOC_STRUCT(nv50_screen);
 	struct nouveau_stateobj *so;
 	unsigned tesla_class = 0, ret;
+	int i;
 
 	if (!screen)
 		return NULL;
@@ -146,6 +147,15 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 	so = so_new(128, 0);
 	so_method(so, screen->tesla, NV50TCL_DMA_NOTIFY, 1);
 	so_data  (so, screen->sync->handle);
+	so_method(so, screen->tesla, NV50TCL_DMA_IN_MEMORY0(0),
+		  NV50TCL_DMA_IN_MEMORY0__SIZE);
+	for (i = 0; i < NV50TCL_DMA_IN_MEMORY0__SIZE; i++)
+		so_data(so, nvws->channel->vram->handle);
+	so_method(so, screen->tesla, NV50TCL_DMA_IN_MEMORY1(0),
+		  NV50TCL_DMA_IN_MEMORY1__SIZE);
+	for (i = 0; i < NV50TCL_DMA_IN_MEMORY1__SIZE; i++)
+		so_data(so, nvws->channel->vram->handle);
+
 	so_emit(nvws, so);
 	so_ref(NULL, &so);
 	nvws->push_flush(nvws->channel, 0);

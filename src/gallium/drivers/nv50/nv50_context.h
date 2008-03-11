@@ -22,6 +22,13 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
+#define NV50_NEW_BLEND (1 << 0)
+
+struct nv50_blend_stateobj {
+	struct pipe_blend_state pipe;
+	struct nouveau_stateobj *so;
+};
+
 struct nv50_context {
 	struct pipe_context pipe;
 
@@ -29,8 +36,16 @@ struct nv50_context {
 	unsigned pctx_id;
 
 	struct draw_context *draw;
+
+	unsigned dirty;
+	struct nv50_blend_stateobj *blend;
 };
 
+static INLINE struct nv50_context *
+nv50_context(struct pipe_context *pipe)
+{
+	return (struct nv50_context *)pipe;
+}
 
 extern void nv50_init_miptree_functions(struct nv50_context *nv50);
 extern void nv50_init_surface_functions(struct nv50_context *nv50);
