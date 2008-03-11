@@ -386,6 +386,10 @@ static void
 nv50_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
+	struct nv50_context *nv50 = nv50_context(pipe);
+
+	nv50->framebuffer = *fb;
+	nv50->dirty |= NV50_NEW_FRAMEBUFFER;
 }
 
 static void

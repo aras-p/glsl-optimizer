@@ -29,6 +29,7 @@
 #define NV50_NEW_SCISSOR	(1 << 4)
 #define NV50_NEW_VIEWPORT	(1 << 5)
 #define NV50_NEW_RASTERIZER	(1 << 6)
+#define NV50_NEW_FRAMEBUFFER	(1 << 7)
 
 struct nv50_blend_stateobj {
 	struct pipe_blend_state pipe;
@@ -61,6 +62,7 @@ struct nv50_context {
 	struct pipe_poly_stipple stipple;
 	struct pipe_scissor_state scissor;
 	struct pipe_viewport_state viewport;
+	struct pipe_framebuffer_state framebuffer;
 };
 
 static INLINE struct nv50_context *
