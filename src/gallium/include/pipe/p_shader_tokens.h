@@ -655,9 +655,6 @@ struct tgsi_src_register_ext
  *
  * NegateX, NegateY, NegateZ and NegateW negate individual components of the
  * source register.
- *
- * ExtDivide specifies which component is used to divide all components of the
- * source register.
  */
 
 struct tgsi_src_register_ext_swz
@@ -671,15 +668,7 @@ struct tgsi_src_register_ext_swz
    unsigned NegateY      : 1;    /* BOOL */
    unsigned NegateZ      : 1;    /* BOOL */
    unsigned NegateW      : 1;    /* BOOL */
-
-   /*
-    * XXX: Do not use. This field has been depricated.
-    * XXX: If using in conjunction with OPCODE_TEX, please use OPCODE_TXP
-    * XXX: and, if needed, perform a swizzle on the texture coordinate.
-    */
-   unsigned ExtDivide    : 4;    /* TGSI_EXTSWIZZLE_ */
-   
-   unsigned Padding      : 3;
+   unsigned Padding      : 7;
    unsigned Extended     : 1;    /* BOOL */
 };
 

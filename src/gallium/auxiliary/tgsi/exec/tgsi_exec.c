@@ -1220,7 +1220,8 @@ fetch_texel( struct tgsi_sampler *sampler,
 static void
 exec_tex(struct tgsi_exec_machine *mach,
          const struct tgsi_full_instruction *inst,
-         boolean biasLod)
+         boolean biasLod,
+         boolean projected)
 {
    const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
    union tgsi_exec_channel r[8];
@@ -1234,17 +1235,9 @@ exec_tex(struct tgsi_exec_machine *mach,
 
       FETCH(&r[0], 0, CHAN_X);
 
-      switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
-      case TGSI_EXTSWIZZLE_W:
+      if (projected) {
          FETCH(&r[1], 0, CHAN_W);
          micro_div( &r[0], &r[0], &r[1] );
-         break;
-
-      case TGSI_EXTSWIZZLE_ONE:
-         break;
-
-      default:
-         assert (0);
       }
 
       if (biasLod) {
@@ -1266,19 +1259,11 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
 
-      switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
-      case TGSI_EXTSWIZZLE_W:
+      if (projected) {
          FETCH(&r[3], 0, CHAN_W);
          micro_div( &r[0], &r[0], &r[3] );
          micro_div( &r[1], &r[1], &r[3] );
          micro_div( &r[2], &r[2], &r[3] );
-         break;
-
-      case TGSI_EXTSWIZZLE_ONE:
-         break;
-
-      default:
-         assert (0);
       }
 
       if (biasLod) {
@@ -1300,19 +1285,11 @@ exec_tex(struct tgsi_exec_machine *mach,
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 0, CHAN_Z);
 
-      switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
-      case TGSI_EXTSWIZZLE_W:
+      if (projected) {
          FETCH(&r[3], 0, CHAN_W);
          micro_div( &r[0], &r[0], &r[3] );
          micro_div( &r[1], &r[1], &r[3] );
          micro_div( &r[2], &r[2], &r[3] );
-         break;
-
-      case TGSI_EXTSWIZZLE_ONE:
-         break;
-
-      default:
-         assert (0);
       }
 
       if (biasLod) {
@@ -2007,14 +1984,14 @@ exec_instruction(
       /* simple texture lookup */
       /* src[0] = texcoord */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, FALSE);
+      exec_tex(mach, inst, FALSE, FALSE);
       break;
 
    case TGSI_OPCODE_TXB:
       /* Texture lookup with lod bias */
       /* src[0] = texcoord (src[0].w = LOD bias) */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, TRUE);
+      exec_tex(mach, inst, TRUE, FALSE);
       break;
 
    case TGSI_OPCODE_TXD:
@@ -2030,7 +2007,14 @@ exec_instruction(
       /* Texture lookup with explit LOD */
       /* src[0] = texcoord (src[0].w = LOD) */
       /* src[1] = sampler unit */
-      exec_tex(mach, inst, TRUE);
+      exec_tex(mach, inst, TRUE, FALSE);
+      break;
+
+   case TGSI_OPCODE_TXP:
+      /* Texture lookup with projection */
+      /* src[0] = texcoord (src[0].w = projection) */
+      /* src[1] = sampler unit */
+      exec_tex(mach, inst, FALSE, TRUE);
       break;
 
    case TGSI_OPCODE_UP2H:

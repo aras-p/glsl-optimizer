@@ -229,7 +229,6 @@ tgsi_build_src_register_ext_swz(
    unsigned negate_y,
    unsigned negate_z,
    unsigned negate_w,
-   unsigned ext_divide,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );

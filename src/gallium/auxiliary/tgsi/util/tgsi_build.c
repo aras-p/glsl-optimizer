@@ -719,7 +719,6 @@ tgsi_build_full_instruction(
             reg->SrcRegisterExtSwz.NegateY,
             reg->SrcRegisterExtSwz.NegateZ,
             reg->SrcRegisterExtSwz.NegateW,
-            reg->SrcRegisterExtSwz.ExtDivide,
             prev_token,
             instruction,
             header );
@@ -1057,7 +1056,6 @@ tgsi_default_src_register_ext_swz( void )
    src_register_ext_swz.NegateY = 0;
    src_register_ext_swz.NegateZ = 0;
    src_register_ext_swz.NegateW = 0;
-   src_register_ext_swz.ExtDivide = TGSI_EXTSWIZZLE_ONE;
    src_register_ext_swz.Padding = 0;
    src_register_ext_swz.Extended = 0;
 
@@ -1084,7 +1082,6 @@ tgsi_build_src_register_ext_swz(
    unsigned negate_y,
    unsigned negate_z,
    unsigned negate_w,
-   unsigned ext_divide,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -1099,7 +1096,6 @@ tgsi_build_src_register_ext_swz(
    assert( negate_y <= 1 );
    assert( negate_z <= 1 );
    assert( negate_w <= 1 );
-   assert( ext_divide <= TGSI_EXTSWIZZLE_ONE );
 
    src_register_ext_swz = tgsi_default_src_register_ext_swz();
    src_register_ext_swz.ExtSwizzleX = ext_swizzle_x;
@@ -1110,7 +1106,6 @@ tgsi_build_src_register_ext_swz(
    src_register_ext_swz.NegateY = negate_y;
    src_register_ext_swz.NegateZ = negate_z;
    src_register_ext_swz.NegateW = negate_w;
-   src_register_ext_swz.ExtDivide = ext_divide;
 
    prev_token->Extended = 1;
    instruction_grow( instruction, header );

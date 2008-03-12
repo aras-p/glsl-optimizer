@@ -1049,11 +1049,6 @@ dump_instruction_short(
          CHR( ')' );
       }
 
-      if (src->SrcRegisterExtSwz.ExtDivide != TGSI_EXTSWIZZLE_ONE) {
-         CHR( '/' );
-         ENM( src->SrcRegisterExtSwz.ExtDivide, TGSI_EXTSWIZZLES_SHORT );
-      }
-
       first_reg = FALSE;
    }
 
@@ -1367,10 +1362,6 @@ dump_instruction_verbose(
          if( deflt || fs->SrcRegisterExtSwz.NegateW != src->SrcRegisterExtSwz.NegateW ) {
             TXT( "\nNegateW   : " );
             UID( src->SrcRegisterExtSwz.NegateW );
-         }
-         if( deflt || fs->SrcRegisterExtSwz.ExtDivide != src->SrcRegisterExtSwz.ExtDivide ) {
-            TXT( "\nExtDivide  : " );
-            ENM( src->SrcRegisterExtSwz.ExtDivide, TGSI_EXTSWIZZLES );
          }
          if( ignored ) {
             TXT( "\nPadding   : " );
