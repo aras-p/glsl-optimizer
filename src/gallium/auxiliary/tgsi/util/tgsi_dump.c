@@ -1047,6 +1047,11 @@ dump_instruction_short(
          CHR( ')' );
       }
 
+      if (src->SrcRegisterExtSwz.ExtDivide != TGSI_EXTSWIZZLE_ONE) {
+         CHR( '/' );
+         ENM( src->SrcRegisterExtSwz.ExtDivide, TGSI_EXTSWIZZLES_SHORT );
+      }
+
       first_reg = FALSE;
    }
 
