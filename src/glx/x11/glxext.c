@@ -348,7 +348,8 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	Xfree((char*) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
-	psc->driScreen->destroyScreen(psc);
+	if (psc->driScreen)
+	    psc->driScreen->destroyScreen(psc);
 #endif
     }
     XFree((char*) priv->screenConfigs);
