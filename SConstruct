@@ -113,17 +113,9 @@ if gcc:
 	env.Append(CXXFLAGS = '-fmessage-length=0')
 
 if msvc:
-	env.Append(CFLAGS = '/W3')
-	if debug:
-		cflags = [
-			'/Od', # disable optimizations
-			'/Oy-', # disable frame pointer omission
-		]
-	else:
-		cflags = [
-			'/Ox', # maximum optimizations
-			'/Os', # favor code space
-		]
+	cflags = [
+		#'/Wp64', # enable 64 bit porting warnings
+	]
 	env.Append(CFLAGS = cflags)
 	env.Append(CXXFLAGS = cflags)
 	# Put debugging information in a separate .pdb file for each object file as
@@ -132,14 +124,7 @@ if msvc:
 
 # Defines
 if debug:
-	if gcc:
-		env.Append(CPPDEFINES = ['DEBUG'])
-	if msvc:
-		env.Append(CPPDEFINES = [
-			('DBG', '1'),
-			('DEBUG', '1'),
-			('_DEBUG', '1'),
-		])
+	env.Append(CPPDEFINES = ['DEBUG'])
 else:
 	env.Append(CPPDEFINES = ['NDEBUG'])
 
@@ -216,6 +201,9 @@ if platform not in ('winddk',):
 		'Xdamage',
 		'Xfixes',
 	])
+
+# for debugging
+#print env.Dump()
 
 Export('env')
 
