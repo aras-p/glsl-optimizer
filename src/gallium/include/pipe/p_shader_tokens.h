@@ -227,6 +227,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_STR                 51
 #define TGSI_OPCODE_TEX                 52
 #define TGSI_OPCODE_TXD                 53
+#define TGSI_OPCODE_TXP                 134
 #define TGSI_OPCODE_UP2H                54
 #define TGSI_OPCODE_UP2US               55
 #define TGSI_OPCODE_UP4B                56
@@ -421,7 +422,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_KIL                 132  /* unpredicated kill */
 #define TGSI_OPCODE_END                 133  /* aka HALT */
 
-#define TGSI_OPCODE_LAST                134
+#define TGSI_OPCODE_LAST                135
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
@@ -670,7 +671,14 @@ struct tgsi_src_register_ext_swz
    unsigned NegateY      : 1;    /* BOOL */
    unsigned NegateZ      : 1;    /* BOOL */
    unsigned NegateW      : 1;    /* BOOL */
+
+   /*
+    * XXX: Do not use. This field has been depricated.
+    * XXX: If using in conjunction with OPCODE_TEX, please use OPCODE_TXP
+    * XXX: and, if needed, perform a swizzle on the texture coordinate.
+    */
    unsigned ExtDivide    : 4;    /* TGSI_EXTSWIZZLE_ */
+   
    unsigned Padding      : 3;
    unsigned Extended     : 1;    /* BOOL */
 };
