@@ -19,3 +19,7 @@ subdirs:
 clean:
 	rm -f `find . -name \*.[oa]`
 	rm -f `find . -name depend`
+
+
+# Dummy install target
+install:
