@@ -71,7 +71,7 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
 {
    /* specify the vertex program to interpret/execute */
    tgsi_exec_machine_bind_shader(&draw->machine,
-				 shader->state->tokens,
+				 shader->state.tokens,
 				 PIPE_MAX_SAMPLERS,
 				 NULL /*samplers*/ );
 
@@ -187,7 +187,7 @@ draw_create_vs_exec(struct draw_context *draw,
    if (vs == NULL) 
       return NULL;
 
-   vs->state = state;
+   vs->state = *state;
    vs->prepare = vs_exec_prepare;
    vs->run = vs_exec_run;
    vs->delete = vs_exec_delete;

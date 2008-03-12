@@ -133,7 +133,7 @@ struct draw_vertex_shader {
 
    /* This member will disappear shortly:
     */
-   const struct pipe_shader_state   *state;
+   struct pipe_shader_state   state;
 
    struct tgsi_shader_info info;
 

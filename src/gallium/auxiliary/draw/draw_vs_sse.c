@@ -221,14 +221,14 @@ draw_create_vs_sse(struct draw_context *draw,
    if (vs == NULL) 
       return NULL;
 
-   vs->base.state = templ;
+   vs->base.state = *templ;
    vs->base.prepare = vs_sse_prepare;
    vs->base.run = vs_sse_run;
    vs->base.delete = vs_sse_delete;
    
    x86_init_func( &vs->sse2_program );
 
-   if (!tgsi_emit_sse2( (struct tgsi_token *) vs->base.state->tokens,
+   if (!tgsi_emit_sse2( (struct tgsi_token *) vs->base.state.tokens,
 			&vs->sse2_program )) 
       goto fail;
       
