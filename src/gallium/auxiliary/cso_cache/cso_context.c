@@ -102,8 +102,6 @@ static void cso_release_all( struct cso_context *ctx )
 
 void cso_destroy_context( struct cso_context *ctx )
 {
-   debug_printf("%s\n", __FUNCTION__);
-
    if (ctx)
       cso_release_all( ctx );
 
