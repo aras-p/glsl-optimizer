@@ -36,8 +36,9 @@
 #include <stdlib.h>
 #endif
 
-#include "pipe/p_debug.h" 
 #include "pipe/p_compiler.h" 
+#include "pipe/p_util.h" 
+#include "pipe/p_debug.h" 
 
 
 #ifdef WIN32
@@ -97,11 +98,44 @@ static INLINE void debug_break(void)
 #endif
 }
 
+#if defined(WIN32)
+ULONG_PTR debug_config_file = 0;
+void *mapped_config_file = 0;
+
+enum {
+	eAssertAbortEn = 0x1,
+};
+
+/* Check for aborts enabled. */
+static unsigned abort_en()
+{
+	if (!mapped_config_file)
+	{
+		/* Open an 8 byte file for configuration data. */
+		mapped_config_file = EngMapFile(L"\\??\\c:\\gaDebug.cfg", 8, &debug_config_file);
+	}
+	/* An value of "0" (ascii) in the configuration file will clear the first 8 bits in the test byte. */
+	/* An value of "1" (ascii) in the configuration file will set the first bit in the test byte. */
+	/* An value of "2" (ascii) in the configuration file will set the second bit in the test byte. */
+	return ((((char *)mapped_config_file)[0]) - 0x30) & eAssertAbortEn;
+}
+#else /* WIN32 */
+static unsigned abort_en()
+{
+	return !GETENV("GALLIUM_ABORT_ON_ASSERT");
+}
+#endif
 
 void debug_assert_fail(const char *expr, const char *file, unsigned line) 
 {
    debug_printf("%s:%i: Assertion `%s' failed.\n", file, line, expr);
-   debug_break();
+   if (abort_en())
+   {
+      debug_break();
+   } else
+   {
+      debug_printf("continuing...\n");
+   }
 }
 
 
