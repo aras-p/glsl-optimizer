@@ -120,7 +120,8 @@ softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 
    softpipe->vs = (const struct sp_vertex_shader *)vs;
 
-   draw_bind_vertex_shader(softpipe->draw, softpipe->vs->draw_data);
+   draw_bind_vertex_shader(softpipe->draw,
+                           (softpipe->vs ? softpipe->vs->draw_data : NULL));
 
    softpipe->dirty |= SP_NEW_VS;
 }

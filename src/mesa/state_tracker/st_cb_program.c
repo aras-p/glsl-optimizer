@@ -168,11 +168,13 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stfp->serialNo++;
 
+#if 0
       if (stfp->cso) {
          /* free the TGSI code */
          // cso_delete(stfp->vs);
          stfp->cso = NULL;
       }
+#endif
 
       stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
 
@@ -184,13 +186,14 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stvp->serialNo++;
 
+#if 0
       if (stvp->cso) {
          /* free the CSO data */
          st->pipe->delete_vs_state(st->pipe, stvp->cso->data);
          FREE((void *) stvp->cso);
          stvp->cso = NULL;
       }
-
+#endif
       if (stvp->draw_shader) {
          draw_delete_vertex_shader(st->draw, stvp->draw_shader);
          stvp->draw_shader = NULL;

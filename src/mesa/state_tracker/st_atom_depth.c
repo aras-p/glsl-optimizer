@@ -34,10 +34,10 @@
  
 
 #include "st_context.h"
-#include "st_cache.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -93,53 +93,47 @@ gl_stencil_op_to_pipe(GLenum func)
 static void
 update_depth_stencil_alpha(struct st_context *st)
 {
-   struct pipe_depth_stencil_alpha_state depth_stencil;
-   const struct cso_depth_stencil_alpha *cso;
+   struct pipe_depth_stencil_alpha_state *dsa = &st->state.depth_stencil;
 
-   memset(&depth_stencil, 0, sizeof(depth_stencil));
+   memset(dsa, 0, sizeof(*dsa));
 
-   depth_stencil.depth.enabled = st->ctx->Depth.Test;
-   depth_stencil.depth.writemask = st->ctx->Depth.Mask;
-   depth_stencil.depth.func = st_compare_func_to_pipe(st->ctx->Depth.Func);
+   dsa->depth.enabled = st->ctx->Depth.Test;
+   dsa->depth.writemask = st->ctx->Depth.Mask;
+   dsa->depth.func = st_compare_func_to_pipe(st->ctx->Depth.Func);
 
    if (st->ctx->Query.CurrentOcclusionObject &&
        st->ctx->Query.CurrentOcclusionObject->Active)
-      depth_stencil.depth.occlusion_count = 1;
+      dsa->depth.occlusion_count = 1;
 
    if (st->ctx->Stencil.Enabled) {
-      depth_stencil.stencil[0].enabled = 1;
-      depth_stencil.stencil[0].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[0]);
-      depth_stencil.stencil[0].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[0]);
-      depth_stencil.stencil[0].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[0]);
-      depth_stencil.stencil[0].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[0]);
-      depth_stencil.stencil[0].ref_value = st->ctx->Stencil.Ref[0] & 0xff;
-      depth_stencil.stencil[0].value_mask = st->ctx->Stencil.ValueMask[0] & 0xff;
-      depth_stencil.stencil[0].write_mask = st->ctx->Stencil.WriteMask[0] & 0xff;
+      dsa->stencil[0].enabled = 1;
+      dsa->stencil[0].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[0]);
+      dsa->stencil[0].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[0]);
+      dsa->stencil[0].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[0]);
+      dsa->stencil[0].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[0]);
+      dsa->stencil[0].ref_value = st->ctx->Stencil.Ref[0] & 0xff;
+      dsa->stencil[0].value_mask = st->ctx->Stencil.ValueMask[0] & 0xff;
+      dsa->stencil[0].write_mask = st->ctx->Stencil.WriteMask[0] & 0xff;
 
       if (st->ctx->Stencil.TestTwoSide) {
-         depth_stencil.stencil[1].enabled = 1;
-         depth_stencil.stencil[1].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[1]);
-         depth_stencil.stencil[1].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[1]);
-         depth_stencil.stencil[1].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[1]);
-         depth_stencil.stencil[1].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[1]);
-         depth_stencil.stencil[1].ref_value = st->ctx->Stencil.Ref[1] & 0xff;
-         depth_stencil.stencil[1].value_mask = st->ctx->Stencil.ValueMask[1] & 0xff;
-         depth_stencil.stencil[1].write_mask = st->ctx->Stencil.WriteMask[1] & 0xff;
+         dsa->stencil[1].enabled = 1;
+         dsa->stencil[1].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[1]);
+         dsa->stencil[1].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[1]);
+         dsa->stencil[1].zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[1]);
+         dsa->stencil[1].zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[1]);
+         dsa->stencil[1].ref_value = st->ctx->Stencil.Ref[1] & 0xff;
+         dsa->stencil[1].value_mask = st->ctx->Stencil.ValueMask[1] & 0xff;
+         dsa->stencil[1].write_mask = st->ctx->Stencil.WriteMask[1] & 0xff;
       }
    }
 
    if (st->ctx->Color.AlphaEnabled) {
-      depth_stencil.alpha.enabled = 1;
-      depth_stencil.alpha.func = st_compare_func_to_pipe(st->ctx->Color.AlphaFunc);
-      depth_stencil.alpha.ref = st->ctx->Color.AlphaRef;
+      dsa->alpha.enabled = 1;
+      dsa->alpha.func = st_compare_func_to_pipe(st->ctx->Color.AlphaFunc);
+      dsa->alpha.ref = st->ctx->Color.AlphaRef;
    }
 
-   cso = st_cached_depth_stencil_alpha_state(st, &depth_stencil);
-   if (st->state.depth_stencil != cso) {
-      /* state has changed */
-      st->state.depth_stencil = cso;
-      st->pipe->bind_depth_stencil_alpha_state(st->pipe, cso->data); /* bind new state */
-   }
+   cso_set_depth_stencil_alpha(st->cso_context, dsa);
 }
 
 

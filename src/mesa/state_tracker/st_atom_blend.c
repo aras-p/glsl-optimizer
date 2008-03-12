@@ -33,11 +33,11 @@
  
 
 #include "st_context.h"
-#include "st_cache.h"
 #include "st_atom.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -155,44 +155,43 @@ translate_logicop(GLenum logicop)
 static void 
 update_blend( struct st_context *st )
 {
-   struct pipe_blend_state blend;
-   const struct cso_blend *cso;
+   struct pipe_blend_state *blend = &st->state.blend;
 
-   memset(&blend, 0, sizeof(blend));
+   memset(blend, 0, sizeof(*blend));
 
    if (st->ctx->Color.ColorLogicOpEnabled ||
        (st->ctx->Color.BlendEnabled &&
         st->ctx->Color.BlendEquationRGB == GL_LOGIC_OP)) {
       /* logicop enabled */
-      blend.logicop_enable = 1;
-      blend.logicop_func = translate_logicop(st->ctx->Color.LogicOp);
+      blend->logicop_enable = 1;
+      blend->logicop_func = translate_logicop(st->ctx->Color.LogicOp);
    }
    else if (st->ctx->Color.BlendEnabled) {
       /* blending enabled */
-      blend.blend_enable = 1;
+      blend->blend_enable = 1;
 
-      blend.rgb_func = translate_blend(st->ctx->Color.BlendEquationRGB);
+      blend->rgb_func = translate_blend(st->ctx->Color.BlendEquationRGB);
       if (st->ctx->Color.BlendEquationRGB == GL_MIN ||
           st->ctx->Color.BlendEquationRGB == GL_MAX) {
          /* Min/max are special */
-         blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend.rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
       }
       else {
-         blend.rgb_src_factor = translate_blend(st->ctx->Color.BlendSrcRGB);
-         blend.rgb_dst_factor = translate_blend(st->ctx->Color.BlendDstRGB);
+         blend->rgb_src_factor = translate_blend(st->ctx->Color.BlendSrcRGB);
+         blend->rgb_dst_factor = translate_blend(st->ctx->Color.BlendDstRGB);
       }
 
-      blend.alpha_func = translate_blend(st->ctx->Color.BlendEquationA);
+      blend->alpha_func = translate_blend(st->ctx->Color.BlendEquationA);
       if (st->ctx->Color.BlendEquationA == GL_MIN ||
           st->ctx->Color.BlendEquationA == GL_MAX) {
          /* Min/max are special */
-         blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend.alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+         blend->alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
       }
       else {
-         blend.alpha_src_factor = translate_blend(st->ctx->Color.BlendSrcA);
-         blend.alpha_dst_factor = translate_blend(st->ctx->Color.BlendDstA);
+         blend->alpha_src_factor = translate_blend(st->ctx->Color.BlendSrcA);
+         blend->alpha_dst_factor = translate_blend(st->ctx->Color.BlendDstA);
       }
    }
    else {
@@ -201,25 +200,18 @@ update_blend( struct st_context *st )
 
    /* Colormask - maybe reverse these bits? */
    if (st->ctx->Color.ColorMask[0])
-      blend.colormask |= PIPE_MASK_R;
+      blend->colormask |= PIPE_MASK_R;
    if (st->ctx->Color.ColorMask[1])
-      blend.colormask |= PIPE_MASK_G;
+      blend->colormask |= PIPE_MASK_G;
    if (st->ctx->Color.ColorMask[2])
-      blend.colormask |= PIPE_MASK_B;
+      blend->colormask |= PIPE_MASK_B;
    if (st->ctx->Color.ColorMask[3])
-      blend.colormask |= PIPE_MASK_A;
+      blend->colormask |= PIPE_MASK_A;
 
    if (st->ctx->Color.DitherFlag)
-      blend.dither = 1;
+      blend->dither = 1;
 
-   cso = st_cached_blend_state(st, &blend);
-
-   if (st->state.blend != cso) {
-      /* state has changed */
-      st->state.blend = cso;
-      /* bind new state */
-      st->pipe->bind_blend_state(st->pipe, cso->data);
-   }
+   cso_set_blend(st->cso_context, blend);
 
    if (memcmp(st->ctx->Color.BlendColor, &st->state.blend_color, 4 * sizeof(GLfloat)) != 0) {
       /* state has changed */

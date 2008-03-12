@@ -800,7 +800,8 @@ aapoint_bind_fs_state(struct pipe_context *pipe, void *fs)
    /* save current */
    aapoint->fs = aafs;
    /* pass-through */
-   aapoint->driver_bind_fs_state(aapoint->pipe, aafs->driver_fs);
+   aapoint->driver_bind_fs_state(aapoint->pipe,
+                                 (aafs ? aafs->driver_fs : NULL));
 }
 
 

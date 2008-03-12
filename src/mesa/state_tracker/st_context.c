@@ -56,6 +56,7 @@
 #include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -78,6 +79,7 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 static struct st_context *
 st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
+   uint i;
    struct st_context *st = CALLOC_STRUCT( st_context );
    
    ctx->st = st;
@@ -93,11 +95,14 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
 
-   st->cache = cso_cache_create();
+   st->cso_context = cso_create_context(pipe);
 
    st_init_atoms( st );
    st_init_draw( st );
    st_init_generate_mipmap(st);
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+      st->state.sampler_list[i] = &st->state.samplers[i];
 
    /* we want all vertex data to be placed in buffer objects */
    vbo_use_buffer_objects(ctx);
@@ -149,7 +154,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    _vbo_DestroyContext(st->ctx);
 
-   cso_cache_delete( st->cache );
+   cso_destroy_context(st->cso_context);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 

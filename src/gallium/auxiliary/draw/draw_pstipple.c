@@ -595,7 +595,8 @@ pstip_bind_fs_state(struct pipe_context *pipe, void *fs)
    /* save current */
    pstip->fs = aafs;
    /* pass-through */
-   pstip->driver_bind_fs_state(pstip->pipe, aafs->driver_fs);
+   pstip->driver_bind_fs_state(pstip->pipe,
+                               (aafs ? aafs->driver_fs : NULL));
 }
 
 

@@ -33,11 +33,11 @@
  
 
 #include "st_context.h"
-#include "st_cache.h"
 #include "st_atom.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -124,9 +124,9 @@ update_samplers(struct st_context *st)
 
    /* loop over sampler units (aka tex image units) */
    for (su = 0; su < st->ctx->Const.MaxTextureImageUnits; su++) {
-      struct pipe_sampler_state sampler;
+      struct pipe_sampler_state *sampler = st->state.samplers + su;
 
-      memset(&sampler, 0, sizeof(sampler));
+      memset(sampler, 0, sizeof(*sampler));
 
       if (fs->Base.Base.SamplersUsed & (1 << su)) {
          GLuint texUnit = fs->Base.Base.SamplerUnits[su];
@@ -135,37 +135,37 @@ update_samplers(struct st_context *st)
 
          assert(texobj);
 
-         sampler.wrap_s = gl_wrap_to_sp(texobj->WrapS);
-         sampler.wrap_t = gl_wrap_to_sp(texobj->WrapT);
-         sampler.wrap_r = gl_wrap_to_sp(texobj->WrapR);
+         sampler->wrap_s = gl_wrap_to_sp(texobj->WrapS);
+         sampler->wrap_t = gl_wrap_to_sp(texobj->WrapT);
+         sampler->wrap_r = gl_wrap_to_sp(texobj->WrapR);
 
-         sampler.min_img_filter = gl_filter_to_img_filter(texobj->MinFilter);
-         sampler.min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
-         sampler.mag_img_filter = gl_filter_to_img_filter(texobj->MagFilter);
+         sampler->min_img_filter = gl_filter_to_img_filter(texobj->MinFilter);
+         sampler->min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
+         sampler->mag_img_filter = gl_filter_to_img_filter(texobj->MagFilter);
 
          if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
-            sampler.normalized_coords = 1;
+            sampler->normalized_coords = 1;
 
-         sampler.lod_bias = st->ctx->Texture.Unit[su].LodBias;
+         sampler->lod_bias = st->ctx->Texture.Unit[su].LodBias;
 #if 1
-         sampler.min_lod = (texobj->MinLod) < 0.0 ? 0.0 : texobj->MinLod;
-         sampler.max_lod = texobj->MaxLod;
+         sampler->min_lod = (texobj->MinLod) < 0.0 ? 0.0 : texobj->MinLod;
+         sampler->max_lod = texobj->MaxLod;
 #else
          /* min/max lod should really be as follows (untested).
           * Also, calculate_first_last_level() needs to be overhauled
           * since today's hardware had real support for LOD clamping.
           */
-         sampler.min_lod = MAX2(texobj->BaseLevel, texobj->MinLod);
-         sampler.max_lod = MIN2(texobj->MaxLevel, texobj->MaxLod);
+         sampler->min_lod = MAX2(texobj->BaseLevel, texobj->MinLod);
+         sampler->max_lod = MIN2(texobj->MaxLevel, texobj->MaxLod);
 #endif
 
-	 sampler.max_anisotropy = texobj->MaxAnisotropy;
+	 sampler->max_anisotropy = texobj->MaxAnisotropy;
 
          /* only care about ARB_shadow, not SGI shadow */
          if (texobj->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
-            sampler.compare = 1;
-            sampler.compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
-            sampler.compare_func
+            sampler->compare = 1;
+            sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
+            sampler->compare_func
                = st_compare_func_to_pipe(texobj->CompareFunc);
          }
 
@@ -174,11 +174,10 @@ update_samplers(struct st_context *st)
          /* XXX more sampler state here */
       }
 
-      st->state.sampler[su] = st_cached_sampler_state(st, &sampler)->data;
+      cso_single_sampler(st->cso_context, su, sampler);
    }
 
-   st->pipe->bind_sampler_states(st->pipe, st->state.num_samplers,
-                                 st->state.sampler);
+   cso_single_sampler_done(st->cso_context);
 }
 
 

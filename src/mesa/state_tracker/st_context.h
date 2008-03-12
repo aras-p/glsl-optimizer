@@ -74,14 +74,11 @@ struct st_context
     * Other state is just parameter values.
     */
    struct {
-      const struct cso_alpha_test      *alpha_test;
-      const struct cso_blend           *blend;
-      void                             *sampler[PIPE_MAX_SAMPLERS];
-      const struct cso_depth_stencil_alpha   *depth_stencil;
-      const struct cso_rasterizer      *rasterizer;
-      const struct cso_fragment_shader *fs;
-      struct st_vertex_program   *vs;
-
+      struct pipe_blend_state               blend;
+      struct pipe_depth_stencil_alpha_state depth_stencil;
+      struct pipe_rasterizer_state          rasterizer;
+      struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
+      struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
       struct pipe_blend_color  blend_color;
       struct pipe_clip_state clip;
       struct pipe_constant_buffer constants[2];
@@ -151,6 +148,10 @@ struct st_context
 
    /** For gen/render mipmap feature */
    struct {
+      struct pipe_blend_state blend;
+      struct pipe_depth_stencil_alpha_state depthstencil;
+      struct pipe_rasterizer_state rasterizer;
+
       void *blend_cso;
       void *depthstencil_cso;
       void *rasterizer_cso;
@@ -158,7 +159,7 @@ struct st_context
       struct st_vertex_program *stvp;
    } gen_mipmap;
 
-   struct cso_cache *cache;
+   struct cso_context *cso_context;
 };
 
 

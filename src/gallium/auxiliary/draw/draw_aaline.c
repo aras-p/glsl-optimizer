@@ -733,7 +733,8 @@ aaline_bind_fs_state(struct pipe_context *pipe, void *fs)
    /* save current */
    aaline->fs = aafs;
    /* pass-through */
-   aaline->driver_bind_fs_state(aaline->pipe, aafs->driver_fs);
+   aaline->driver_bind_fs_state(aaline->pipe,
+                                (aafs ? aafs->driver_fs : NULL));
 }
 
 

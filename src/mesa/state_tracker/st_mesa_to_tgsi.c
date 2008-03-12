@@ -683,8 +683,9 @@ find_temporaries(const struct gl_program *program,
  * \param tokens  array to store translated tokens in
  * \param maxTokens  size of the tokens array
  *
+ * \return number of tokens placed in 'tokens' buffer, or zero if error
  */
-GLboolean
+GLuint
 tgsi_translate_mesa_program(
    uint procType,
    const struct gl_program *program,
@@ -918,6 +919,6 @@ tgsi_translate_mesa_program(
          maxTokens - ti );
    }
 
-   return GL_TRUE;
+   return ti;
 }
 

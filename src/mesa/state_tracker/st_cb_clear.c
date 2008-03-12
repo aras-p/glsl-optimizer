@@ -35,7 +35,6 @@
 #include "main/macros.h"
 #include "shader/prog_instruction.h"
 #include "st_atom.h"
-#include "st_cache.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_clear.h"
@@ -49,6 +48,8 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+
+#include "cso_cache/cso_context.h"
 
 
 
@@ -157,8 +158,7 @@ make_frag_shader(struct st_context *st)
    p->OutputsWritten = (1 << FRAG_RESULT_COLR);
 
    stfp = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, stfp, NULL,
-                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+   st_translate_fragment_program(st, stfp, NULL);
 
    return stfp;
 }
@@ -206,9 +206,10 @@ make_vertex_shader(struct st_context *st)
                         (1 << VERT_RESULT_HPOS));
 
    stvp = (struct st_vertex_program *) p;
-   st_translate_vertex_program(st, stvp, NULL,
-                               stvp->tokens, ST_MAX_SHADER_TOKENS);
+   st_translate_vertex_program(st, stvp, NULL);
+#if 0
    assert(stvp->cso);
+#endif
 
    return stvp;
 }
@@ -284,7 +285,6 @@ clear_with_quad(GLcontext *ctx,
    /* blend state: RGBA masking */
    {
       struct pipe_blend_state blend;
-      const struct cso_blend *cso;
       memset(&blend, 0, sizeof(blend));
       if (color) {
          if (ctx->Color.ColorMask[0])
@@ -298,14 +298,12 @@ clear_with_quad(GLcontext *ctx,
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
-      cso = st_cached_blend_state(st, &blend);
-      pipe->bind_blend_state(pipe, cso->data);
+      cso_set_blend(st->cso_context, &blend);
    }
 
    /* depth_stencil state: always pass/set to ref value */
    {
       struct pipe_depth_stencil_alpha_state depth_stencil;
-      const struct cso_depth_stencil_alpha *cso;
       memset(&depth_stencil, 0, sizeof(depth_stencil));
       if (depth) {
          depth_stencil.depth.enabled = 1;
@@ -323,14 +321,13 @@ clear_with_quad(GLcontext *ctx,
          depth_stencil.stencil[0].value_mask = 0xff;
          depth_stencil.stencil[0].write_mask = ctx->Stencil.WriteMask[0] & 0xff;
       }
-      cso = st_cached_depth_stencil_alpha_state(st, &depth_stencil);
-      pipe->bind_depth_stencil_alpha_state(pipe, cso->data);
+
+      cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);
    }
 
    /* rasterizer state: nothing */
    {
       struct pipe_rasterizer_state raster;
-      const struct cso_rasterizer *cso;
       memset(&raster, 0, sizeof(raster));
 #if 0
       /* don't do per-pixel scissor; we'll just draw a PIPE_PRIM_QUAD
@@ -339,8 +336,7 @@ clear_with_quad(GLcontext *ctx,
       if (ctx->Scissor.Enabled)
          raster.scissor = 1;
 #endif
-      cso = st_cached_rasterizer_state(st, &raster);
-      pipe->bind_rasterizer_state(pipe, cso->data);
+      cso_set_rasterizer(st->cso_context, &raster);
    }
 
    /* fragment shader state: color pass-through program */
@@ -349,7 +345,7 @@ clear_with_quad(GLcontext *ctx,
       if (!stfp) {
          stfp = make_frag_shader(st);
       }
-      pipe->bind_fs_state(pipe, stfp->cso->data);
+      pipe->bind_fs_state(pipe, stfp->driver_shader);
    }
 
    /* vertex shader state: color/position pass-through */
@@ -358,7 +354,7 @@ clear_with_quad(GLcontext *ctx,
       if (!stvp) {
          stvp = make_vertex_shader(st);
       }
-      pipe->bind_vs_state(pipe, stvp->cso->data);
+      pipe->bind_vs_state(pipe, stvp->driver_shader);
    }
 
    /* viewport state: viewport matching window dims */
@@ -380,16 +376,19 @@ clear_with_quad(GLcontext *ctx,
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
-   /* Restore pipe state */
-   pipe->bind_blend_state(pipe, st->state.blend->data);
-   pipe->bind_depth_stencil_alpha_state(pipe, st->state.depth_stencil->data);
-   pipe->bind_fs_state(pipe, st->state.fs->data);
-   pipe->bind_vs_state(pipe, st->state.vs->cso->data);
-   pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);
-   pipe->set_viewport_state(pipe, &st->state.viewport);
-   /* OR:
+#if 0
+   /* Can't depend on old state objects still existing -- may have
+    * been deleted to make room in the hash, etc.  (Should get
+    * fixed...)
+    */
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);
-   */
+#else
+   /* Restore pipe state */
+   cso_set_rasterizer(st->cso_context, &st->state.rasterizer);
+   pipe->bind_fs_state(pipe, st->fp->driver_shader);
+   pipe->bind_vs_state(pipe, st->vp->driver_shader);
+#endif
+   pipe->set_viewport_state(pipe, &st->state.viewport);
 }
 
 

@@ -41,7 +41,6 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_atom_constbuf.h"
-#include "st_cache.h"
 #include "st_draw.h"
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
@@ -58,6 +57,7 @@
 #include "pipe/p_winsys.h"
 #include "util/p_tile.h"
 #include "shader/prog_instruction.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -159,8 +159,7 @@ make_bitmap_fragment_program(GLcontext *ctx)
 
    stfp = (struct st_fragment_program *) p;
    stfp->Base.UsesKill = GL_TRUE;
-   st_translate_fragment_program(ctx->st, stfp, NULL,
-                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+   st_translate_fragment_program(ctx->st, stfp, NULL);
 
    return stfp;
 }
@@ -204,8 +203,7 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 #endif
 
       /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp, NULL,
-                                    stfp->tokens, ST_MAX_SHADER_TOKENS);
+      st_translate_fragment_program(st, stfp, NULL);
 
       /* save new program, update serial numbers */
       st->bitmap.user_prog_sn = st->fp->serialNo;
@@ -266,8 +264,7 @@ combined_drawpix_fragment_program(GLcontext *ctx)
 #endif
 
       /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp, NULL,
-                                    stfp->tokens, ST_MAX_SHADER_TOKENS);
+      st_translate_fragment_program(st, stfp, NULL);
 
       /* save new program, update serial numbers */
       st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
@@ -343,8 +340,7 @@ make_fragment_shader_z(struct st_context *st)
    p->OutputsWritten = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR);
 
    stfp = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, stfp, NULL,
-                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+   st_translate_fragment_program(st, stfp, NULL);
 
    return stfp;
 }
@@ -421,8 +417,7 @@ st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
    }
 
    stvp = (struct st_vertex_program *) p;
-   st_translate_vertex_program(st, stvp, NULL,
-                               stvp->tokens, ST_MAX_SHADER_TOKENS);
+   st_translate_vertex_program(st, stvp, NULL);
 
    progs[passColor] = stvp;
 
@@ -641,7 +636,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    const GLfloat *color,
                    GLboolean invertTex)
 {
+   struct st_context *st = ctx->st;
    struct pipe_context *pipe = ctx->st->pipe;
+   struct cso_context *cso = ctx->st->cso_context;
    GLfloat x0, y0, x1, y1;
    GLuint maxSize;
 
@@ -656,24 +653,23 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* setup state: just scissor */
    {
       struct pipe_rasterizer_state  setup;
-      const struct cso_rasterizer  *cso;
       memset(&setup, 0, sizeof(setup));
       if (ctx->Scissor.Enabled)
          setup.scissor = 1;
-      cso = st_cached_rasterizer_state(ctx->st, &setup);
-      pipe->bind_rasterizer_state(pipe, cso->data);
+
+      cso_set_rasterizer(cso, &setup);
    }
 
    /* fragment shader state: TEX lookup program */
-   pipe->bind_fs_state(pipe, stfp->cso->data);
+   pipe->bind_fs_state(pipe, stfp->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
-   pipe->bind_vs_state(pipe, stvp->cso->data);
+   pipe->bind_vs_state(pipe, stvp->driver_shader);
+
 
    /* texture sampling state: */
    {
       struct pipe_sampler_state sampler;
-      const struct cso_sampler *cso;
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_CLAMP;
       sampler.wrap_t = PIPE_TEX_WRAP_CLAMP;
@@ -682,8 +678,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.normalized_coords = 1;
-      cso = st_cached_sampler_state(ctx->st, &sampler);
-      pipe->bind_sampler_states(pipe, 1, (void**)&cso->data);
+
+      cso_single_sampler(cso, 0, &sampler);
+      cso_single_sampler_done(cso);
    }
 
    /* viewport state: viewport matching window dims */
@@ -723,14 +720,25 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       draw_quad(ctx, x0, y0, z, x1, y1, invertTex);
 
    /* restore GL state */
-   pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
-   pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
-   pipe->bind_vs_state(pipe, ctx->st->state.vs->cso->data);
    pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
                               ctx->st->state.sampler_texture);
-   pipe->bind_sampler_states(pipe, ctx->st->state.num_samplers,
-                             ctx->st->state.sampler);
+
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
+
+#if 0
+   /* Can't depend on old state objects still existing -- may have
+    * been deleted to make room in the hash, etc.  (Should get
+    * fixed...)
+    */
+   st_invalidate_state(ctx, _NEW_COLOR | _NEW_TEXTURE);
+#else
+   /* restore state */
+   pipe->bind_fs_state(pipe, st->fp->driver_shader);
+   pipe->bind_vs_state(pipe, st->vp->driver_shader);
+   cso_set_rasterizer(cso, &st->state.rasterizer);
+   cso_set_samplers(cso, PIPE_MAX_SAMPLERS,
+                 (const struct pipe_sampler_state **) st->state.sampler_list);
+#endif
 }
 
 
@@ -798,10 +806,10 @@ compatible_formats(GLenum format, GLenum type, enum pipe_format pipeFormat)
 static GLboolean
 any_fragment_ops(const struct st_context *st)
 {
-   if (st->state.depth_stencil->state.alpha.enabled ||
-       st->state.blend->state.blend_enable ||
-       st->state.blend->state.logicop_enable ||
-       st->state.depth_stencil->state.depth.enabled)
+   if (st->state.depth_stencil.alpha.enabled ||
+       st->state.depth_stencil.depth.enabled ||
+       st->state.blend.blend_enable ||
+       st->state.blend.logicop_enable)
       /* XXX more checks */
       return GL_TRUE;
    else
