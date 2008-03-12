@@ -78,7 +78,7 @@ static void fetch_xyz_rgb_st( struct draw_context *draw,
 {
    const unsigned *pitch   = draw->vertex_fetch.pitch;
    const ubyte **src       = draw->vertex_fetch.src_ptr;
-   int i;
+   unsigned i;
 
    const ubyte *xyzw = src[0] + start * pitch[0];
    const ubyte *rgba = src[1] + start * pitch[1];
