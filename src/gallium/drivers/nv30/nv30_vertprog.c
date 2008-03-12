@@ -751,6 +751,11 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 			BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING  (i + vp->data->start);
 			OUT_RINGp ((uint32_t *)vpd->value, 4);
+#if 0
+			NOUVEAU_MSG("VP const %d: %f %f %f %f\n",
+				i, vpd->value[0], vpd->value[1],
+				vpd->value[2], vpd->value[3]);
+#endif
 		}
 
 		if (map) {
@@ -762,10 +767,9 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 	if (upload_code) {
 #if 0
 		for (i = 0; i < vp->nr_insns; i++) {
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[0]);
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[1]);
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[2]);
-			NOUVEAU_MSG("VP %d: 0x%08x\n", i, vp->insns[i].data[3]);
+			NOUVEAU_MSG("VP inst %d: 0x%08x 0x%08x 0x%08x 0x%08x\n",
+				i, vp->insns[i].data[0], vp->insns[i].data[1],
+				vp->insns[i].data[2], vp->insns[i].data[3]);
 		}
 #endif
 		BEGIN_RING(rankine, NV34TCL_VP_UPLOAD_FROM_ID, 1);
