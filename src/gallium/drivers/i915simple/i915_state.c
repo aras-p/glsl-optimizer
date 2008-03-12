@@ -668,22 +668,23 @@ i915_create_rasterizer_state(struct pipe_context *pipe,
 }
 
 static void i915_bind_rasterizer_state( struct pipe_context *pipe,
-                                        void *setup )
+                                        void *raster )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->rasterizer = (struct i915_rasterizer_state *)setup;
+   i915->rasterizer = (struct i915_rasterizer_state *)raster;
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(i915->draw, i915->rasterizer->templ);
+   draw_set_rasterizer_state(i915->draw,
+                          (i915->rasterizer ? i915->rasterizer->templ : NULL));
 
    i915->dirty |= I915_NEW_RASTERIZER;
 }
 
 static void i915_delete_rasterizer_state(struct pipe_context *pipe,
-                                         void *setup)
+                                         void *raster)
 {
-   FREE(setup);
+   FREE(raster);
 }
 
 static void i915_set_vertex_buffer( struct pipe_context *pipe,
