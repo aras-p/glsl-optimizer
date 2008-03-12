@@ -176,9 +176,12 @@ update_samplers(struct st_context *st)
          st->state.num_samplers = su + 1;
 
          /* XXX more sampler state here */
-      }
 
-      cso_single_sampler(st->cso_context, su, sampler);
+         cso_single_sampler(st->cso_context, su, sampler);
+      }
+      else {
+         cso_single_sampler(st->cso_context, su, NULL);
+      }
    }
 
    cso_single_sampler_done(st->cso_context);
