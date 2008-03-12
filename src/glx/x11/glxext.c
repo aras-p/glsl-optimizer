@@ -350,6 +350,8 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 #ifdef GLX_DIRECT_RENDERING
 	if (psc->driScreen)
 	    psc->driScreen->destroyScreen(psc);
+	if (psc->drawHash)
+	    __glxHashDestroy(psc->drawHash);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -772,8 +774,15 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	psc->scr = i;
 	psc->dpy = dpy;
 #ifdef GLX_DIRECT_RENDERING
-	if (priv->driDisplay)
+	if (priv->driDisplay) {
+	    /* Create drawable hash */
+	    psc->drawHash = __glxHashCreate();
+	    if (psc->drawHash == NULL)
+		continue;
 	    psc->driScreen = (*priv->driDisplay->createScreen)(psc, i, priv);
+	    if (psc->driScreen == NULL)
+		__glxHashDestroy(psc->drawHash);
+	}
 #endif
     }
     SyncHandle();
@@ -1192,7 +1201,13 @@ FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
     if (__glxHashLookup(psc->drawHash, drawable, (void *) &pdraw) == 0)
 	return pdraw;
 
-    return psc->driScreen->createDrawable(psc, drawable, gc);
+    pdraw = psc->driScreen->createDrawable(psc, drawable, gc);
+    if (__glxHashInsert(psc->drawHash, drawable, pdraw)) {
+	(*pdraw->destroyDrawable)(pdraw);
+	return NULL;
+    }
+
+    return pdraw;
 }
 #endif /* GLX_DIRECT_RENDERING */
 

@@ -99,10 +99,8 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 	    if (!windowExistsFlag) {
 		/* Destroy the local drawable data, if the drawable no
 		   longer exists in the Xserver */
-		(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
-		XF86DRIDestroyDrawable(dpy, sc->scr, draw);
+		(*pdraw->destroyDrawable)(pdraw);
                 __glxHashDelete(sc->drawHash, draw);
-		Xfree(pdraw);
 	    }
 	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);
     }

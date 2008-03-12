@@ -132,6 +132,8 @@ struct __GLXDRIcontextRec {
 };
 
 struct __GLXDRIdrawableRec {
+    void (*destroyDrawable)(__GLXDRIdrawable *drawable);
+
     XID drawable;
     __GLXscreenConfigs *psc;
     __DRIdrawable driDrawable;

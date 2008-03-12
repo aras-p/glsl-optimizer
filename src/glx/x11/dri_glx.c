@@ -742,6 +742,14 @@ static __GLXDRIcontext *driCreateContext(__GLXscreenConfigs *psc,
     return NULL;
 }
 
+static void driDestroyDrawable(__GLXDRIdrawable *pdraw)
+{
+    __GLXscreenConfigs *psc = pdraw->psc;
+
+    (*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
+    XF86DRIDestroyDrawable(psc->dpy, psc->scr, pdraw->drawable);
+    Xfree(pdraw);
+}
 
 static __GLXDRIdrawable *driCreateDrawable(__GLXscreenConfigs *psc,
 					   GLXDrawable drawable,
@@ -777,12 +785,7 @@ static __GLXDRIdrawable *driCreateDrawable(__GLXscreenConfigs *psc,
 	return NULL;
     }
 
-    if (__glxHashInsert(psc->drawHash, drawable, pdraw)) {
-	(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
-	XF86DRIDestroyDrawable(psc->dpy, psc->scr, drawable);
-	Xfree(pdraw);
-	return NULL;
-    }
+    pdraw->destroyDrawable = driDestroyDrawable;
 
     return pdraw;
 }
@@ -793,8 +796,6 @@ static void driDestroyScreen(__GLXscreenConfigs *psc)
     if (psc->__driScreen.private)
 	(*psc->__driScreen.destroyScreen)(&psc->__driScreen);
     psc->__driScreen.private = NULL;
-    if (psc->drawHash)
-	__glxHashDestroy(psc->drawHash);
     if (psc->driver)
 	dlclose(psc->driver);
 }
@@ -808,11 +809,6 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
 
     psp = Xmalloc(sizeof *psp);
     if (psp == NULL)
-	return NULL;
-
-    /* Create drawable hash */
-    psc->drawHash = __glxHashCreate();
-    if ( psc->drawHash == NULL )
 	return NULL;
 
     /* Initialize per screen dynamic client GLX extensions */
