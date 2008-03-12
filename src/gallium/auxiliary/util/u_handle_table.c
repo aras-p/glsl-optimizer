@@ -26,6 +26,7 @@
  **************************************************************************/
 
 /**
+ * @file
  * Generic handle table implementation.
  *  
  * @author José Fonseca <jrfonseca@tungstengraphics.com>
@@ -90,6 +91,39 @@ handle_table_set_destroy(struct handle_table *ht,
 }
 
 
+/**
+ * Resize the table if necessary 
+ */
+static INLINE int
+handle_table_resize(struct handle_table *ht,
+                    unsigned minimum_size)
+{
+   unsigned new_size;
+   void **new_objects;
+
+   if(ht->size > minimum_size)
+      return ht->size;
+
+   new_size = ht->size;
+   while(!(new_size > minimum_size))
+      new_size *= 2;
+   assert(new_size);
+   
+   new_objects = (void **)REALLOC((void *)ht->objects,
+				  ht->size*sizeof(void *),
+				  new_size*sizeof(void *));
+   if(!new_objects)
+      return 0;
+   
+   memset(new_objects + ht->size, 0, (new_size - ht->size)*sizeof(void *));
+   
+   ht->size = new_size;
+   ht->objects = new_objects;
+   
+   return ht->size;
+}
+
+
 unsigned
 handle_table_add(struct handle_table *ht, 
                  void *object)
@@ -109,37 +143,46 @@ handle_table_add(struct handle_table *ht,
       ++ht->filled;
    }
   
-   /* grow the table */
-   if(ht->filled == ht->size) {
-      unsigned new_size;
-      void **new_objects;
-      
-      new_size = ht->size*2;
-      assert(new_size);
-      
-      new_objects = (void **)REALLOC((void *)ht->objects,
-                                     ht->size*sizeof(void *),
-                                     new_size*sizeof(void *));
-      if(!new_objects)
-	 return 0;
-      
-      memset(new_objects + ht->size, 0, (new_size - ht->size)*sizeof(void *));
-      
-      ht->size = new_size;
-      ht->objects = new_objects;
-   }
-
    index = ht->filled;
-   
    handle = index + 1;
    
    /* check integer overflow */
    if(!handle)
       return 0;
    
+   /* grow the table if necessary */
+   if(!handle_table_resize(ht, index))
+      return 0;
+
    assert(!ht->objects[index]);
    ht->objects[index] = object;
    ++ht->filled;
+   
+   return handle;
+}
+
+
+unsigned
+handle_table_set(struct handle_table *ht, 
+                 unsigned handle,
+                 void *object)
+{
+   unsigned index;
+   
+   assert(ht);
+   assert(handle > 0);
+   assert(handle <= ht->size);
+   if(!handle || handle > ht->size)
+      return 0;
+
+   index = handle - 1;
+
+   /* grow the table if necessary */
+   if(!handle_table_resize(ht, index))
+      return 0;
+
+   assert(!ht->objects[index]);
+   ht->objects[index] = object;
    
    return handle;
 }
