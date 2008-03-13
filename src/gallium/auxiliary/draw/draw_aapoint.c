@@ -514,7 +514,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
    tgsi_dump(aapoint_fs.tokens, 0);
 #endif
 
-#if 1 /* XXX remove */
+#if 0 /* XXX remove */
    aapoint_fs.input_semantic_name[aapoint_fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
    aapoint_fs.input_semantic_index[aapoint_fs.num_inputs] = transform.maxGeneric + 1;
    aapoint_fs.num_inputs++;

@@ -340,7 +340,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
    tgsi_dump(aaline_fs.tokens, 0);
 #endif
 
-#if 1 /* XXX remove */
+#if 0 /* XXX remove */
    aaline_fs.input_semantic_name[aaline_fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
    aaline_fs.input_semantic_index[aaline_fs.num_inputs] = transform.maxGeneric + 1;
    aaline_fs.num_inputs++;

@@ -85,6 +85,8 @@ struct st_vertex_program
    /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
    GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
 
+   GLuint num_inputs;
+
    struct pipe_shader_state state;
    struct pipe_shader_state *driver_shader;
 
