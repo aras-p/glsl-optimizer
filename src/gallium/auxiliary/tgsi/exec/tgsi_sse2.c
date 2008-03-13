@@ -1821,7 +1821,11 @@ emit_instruction(
          STORE( func, *inst, 5, 0, CHAN_Z );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) {
-         FETCH( func, *inst, 0, TGSI_EXEC_TEMP_ONE_I, TGSI_EXEC_TEMP_ONE_C );
+	 emit_tempf(
+	    func,
+	    0,
+	    TGSI_EXEC_TEMP_ONE_I,
+	    TGSI_EXEC_TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
       break;
@@ -2021,11 +2025,19 @@ emit_instruction(
          STORE( func, *inst, 0, 0, CHAN_Y );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) {
-         FETCH( func, *inst, 0, TGSI_EXEC_TEMP_00000000_I, TGSI_EXEC_TEMP_00000000_C );
+	 emit_tempf(
+	    func,
+	    0,
+	    TGSI_EXEC_TEMP_00000000_I,
+	    TGSI_EXEC_TEMP_00000000_C );
          STORE( func, *inst, 0, 0, CHAN_Z );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_W ) {
-         FETCH( func, *inst, 0, TGSI_EXEC_TEMP_ONE_I, TGSI_EXEC_TEMP_ONE_C );
+	 emit_tempf(
+	    func,
+	    0,
+	    TGSI_EXEC_TEMP_ONE_I,
+	    TGSI_EXEC_TEMP_ONE_C );
          STORE( func, *inst, 0, 0, CHAN_W );
       }
       break;
