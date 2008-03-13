@@ -54,27 +54,7 @@ cell_create_fs_state(struct pipe_context *pipe,
 
    state->shader = *templ;
 
-#if 0
-   if (cell->dump_fs) {
-      tgsi_dump(state->shader.tokens, 0);
-   }
-
-#if defined(__i386__) || defined(__386__)
-   if (cell->use_sse) {
-      x86_init_func( &state->sse2_program );
-      tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
-   }
-#endif
-
-#ifdef MESA_LLVM
-   state->llvm_prog = 0;
-   if (!gallivm_global_cpu_engine()) {
-      gallivm_cpu_engine_create(state->llvm_prog);
-   }
-   else
-      gallivm_cpu_jit_compile(gallivm_global_cpu_engine(), state->llvm_prog);
-#endif
-#endif
+   tgsi_scan_shader(templ->tokens, &state->info);
 
    return state;
 }
@@ -113,6 +93,7 @@ cell_create_vs_state(struct pipe_context *pipe,
       return NULL;
 
    state->shader = *templ;
+   tgsi_scan_shader(templ->tokens, &state->info);
 
    state->draw_data = draw_create_vertex_shader(cell->draw, &state->shader);
    if (state->draw_data == NULL) {

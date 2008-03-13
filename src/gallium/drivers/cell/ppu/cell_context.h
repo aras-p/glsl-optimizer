@@ -37,13 +37,14 @@
 #include "cell_winsys.h"
 #include "cell/common.h"
 #include "rtasm/rtasm_ppc_spe.h"
-
+#include "tgsi/util/tgsi_scan.h"
 
 struct cell_vbuf_render;
 
 struct cell_vertex_shader_state
 {
    struct pipe_shader_state shader;
+   struct tgsi_shader_info info;
    void *draw_data;
 };
 
@@ -51,6 +52,7 @@ struct cell_vertex_shader_state
 struct cell_fragment_shader_state
 {
    struct pipe_shader_state shader;
+   struct tgsi_shader_info info;
    void *data;
 };
 
