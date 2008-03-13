@@ -324,7 +324,7 @@ static const char *TGSI_IMMS_SHORT[] =
    "FLT32"
 };
 
-static const char *TGSI_OPCODES[] =
+static const char *TGSI_OPCODES[TGSI_OPCODE_LAST] =
 {
    "OPCODE_ARL",
    "OPCODE_MOV",
@@ -380,6 +380,7 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_STR",
    "OPCODE_TEX",
    "OPCODE_TXD",
+   "OPCODE_TXP",
    "OPCODE_UP2H",
    "OPCODE_UP2US",
    "OPCODE_UP4B",
@@ -433,23 +434,6 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_NOISE3",
    "OPCODE_NOISE4",
    "OPCODE_NOP",
-   "OPCODE_TEXBEM",
-   "OPCODE_TEXBEML",
-   "OPCODE_TEXREG2AR",
-   "OPCODE_TEXM3X2PAD",
-   "OPCODE_TEXM3X2TEX",
-   "OPCODE_TEXM3X3PAD",
-   "OPCODE_TEXM3X3TEX",
-   "OPCODE_TEXM3X3SPEC",
-   "OPCODE_TEXM3X3VSPEC",
-   "OPCODE_TEXREG2GB",
-   "OPCODE_TEXREG2RGB",
-   "OPCODE_TEXDP3TEX",
-   "OPCODE_TEXDP3",
-   "OPCODE_TEXM3X3",
-   "OPCODE_TEXM3X2DEPTH",
-   "OPCODE_TEXDEPTH",
-   "OPCODE_BEM",
    "OPCODE_M4X3",
    "OPCODE_M3X4",
    "OPCODE_M3X3",
@@ -459,11 +443,10 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_IFC",
    "OPCODE_BREAKC",
    "OPCODE_KIL",
-   "OPCODE_END",
-   "OPCODE_TXP"
+   "OPCODE_END"
 };
 
-static const char *TGSI_OPCODES_SHORT[] =
+static const char *TGSI_OPCODES_SHORT[TGSI_OPCODE_LAST] =
 {
    "ARL",
    "MOV",
@@ -519,6 +502,7 @@ static const char *TGSI_OPCODES_SHORT[] =
    "STR",
    "TEX",
    "TXD",
+   "TXP",
    "UP2H",
    "UP2US",
    "UP4B",
@@ -572,23 +556,6 @@ static const char *TGSI_OPCODES_SHORT[] =
    "NOISE3",
    "NOISE4",
    "NOP",
-   "TEXBEM",
-   "TEXBEML",
-   "TEXREG2AR",
-   "TEXM3X2PAD",
-   "TEXM3X2TEX",
-   "TEXM3X3PAD",
-   "TEXM3X3TEX",
-   "TEXM3X3SPEC",
-   "TEXM3X3VSPEC",
-   "TEXREG2GB",
-   "TEXREG2RGB",
-   "TEXDP3TEX",
-   "TEXDP3",
-   "TEXM3X3",
-   "TEXM3X2DEPTH",
-   "TEXDEPTH",
-   "BEM",
    "M4X3",
    "M3X4",
    "M3X3",
@@ -598,8 +565,7 @@ static const char *TGSI_OPCODES_SHORT[] =
    "IFC",
    "BREAKC",
    "KIL",
-   "END",
-   "TXP"
+   "END"
 };
 
 static const char *TGSI_SATS[] =
