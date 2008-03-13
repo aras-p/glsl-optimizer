@@ -52,7 +52,8 @@
 #include "cso_cache/cso_context.h"
 
 
-
+/* XXX for testing draw module vertex passthrough: */
+#define TEST_DRAW_PASSTHROUGH 0
 
 
 static GLuint
@@ -229,6 +230,12 @@ draw_quad(GLcontext *ctx,
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
 
+#if TEST_DRAW_PASSTHROUGH
+   /* invert Y coords (may be off by one pixel) */
+   y0 = ctx->DrawBuffer->Height - y0;
+   y1 = ctx->DrawBuffer->Height - y1;
+#endif
+
    /* positions */
    verts[0][0][0] = x0;
    verts[0][0][1] = y0;
@@ -336,6 +343,10 @@ clear_with_quad(GLcontext *ctx,
       if (ctx->Scissor.Enabled)
          raster.scissor = 1;
 #endif
+#if TEST_DRAW_PASSTHROUGH
+      raster.bypass_clipping = 1;
+      raster.bypass_vs = 1;
+#endif
       cso_set_rasterizer(st->cso_context, &raster);
    }
 
@@ -348,6 +359,7 @@ clear_with_quad(GLcontext *ctx,
       pipe->bind_fs_state(pipe, stfp->driver_shader);
    }
 
+#if !TEST_DRAW_PASSTHROUGH
    /* vertex shader state: color/position pass-through */
    {
       static struct st_vertex_program *stvp = NULL;
@@ -356,7 +368,9 @@ clear_with_quad(GLcontext *ctx,
       }
       pipe->bind_vs_state(pipe, stvp->driver_shader);
    }
+#endif
 
+#if !TEST_DRAW_PASSTHROUGH
    /* viewport state: viewport matching window dims */
    {
       const float width = ctx->DrawBuffer->Width;
@@ -372,6 +386,7 @@ clear_with_quad(GLcontext *ctx,
       vp.translate[3] = 0.0;
       pipe->set_viewport_state(pipe, &vp);
    }
+#endif
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
