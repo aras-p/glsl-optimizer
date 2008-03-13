@@ -609,11 +609,12 @@ i830_state_draw_region(struct intel_context *intel,
 
 static void
 i830_set_draw_region(struct intel_context *intel,
-                     struct intel_region *color_region,
-                     struct intel_region *depth_region)
+                     struct intel_region *color_regions[],
+                     struct intel_region *depth_region,
+		     GLuint num_regions)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
-   i830_state_draw_region(intel, &i830->state, color_region, depth_region);
+   i830_state_draw_region(intel, &i830->state, color_regions[0], depth_region);
 }
 
 #if 0

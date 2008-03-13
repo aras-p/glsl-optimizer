@@ -139,6 +139,7 @@ static void do_wm_prog( struct brw_context *brw,
    c->fp = fp;
    c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
+    brw_init_compile(brw, &c->func);
    if (brw_wm_is_glsl(&c->fp->program)) {
        brw_wm_glsl_emit(brw, c);
    } else {
@@ -159,10 +160,6 @@ static void do_wm_prog( struct brw_context *brw,
        /* Register allocation.
 	*/
        c->grf_limit = BRW_WM_MAX_GRF/2;
-
-       /* This is where we start emitting gen4 code:
-	*/
-       brw_init_compile(brw, &c->func);
 
        brw_wm_pass2(c);
 

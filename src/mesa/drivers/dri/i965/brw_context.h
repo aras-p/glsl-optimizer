@@ -240,7 +240,7 @@ struct brw_vs_ouput_sizes {
 
 
 #define BRW_MAX_TEX_UNIT 8
-#define BRW_WM_MAX_SURF BRW_MAX_TEX_UNIT + 1
+#define BRW_WM_MAX_SURF BRW_MAX_TEX_UNIT + MAX_DRAW_BUFFERS
 
 enum brw_cache_id {
    BRW_CC_VP,
@@ -425,8 +425,8 @@ struct brw_context
       struct brw_tracked_state **atoms;
       GLuint nr_atoms;
 
-
-      struct intel_region *draw_region;
+      GLuint nr_draw_regions;
+      struct intel_region *draw_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
    } state;
 
@@ -461,6 +461,7 @@ struct brw_context
       struct gl_buffer_object *vbo;
 
       struct intel_region *saved_draw_region;
+      GLuint saved_nr_draw_regions;
       struct intel_region *saved_depth_region;
 
       GLuint restore_draw_buffers[MAX_DRAW_BUFFERS];

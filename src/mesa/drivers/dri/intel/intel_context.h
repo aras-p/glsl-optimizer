@@ -94,8 +94,9 @@ struct intel_context
       void (*render_start) (struct intel_context * intel);
       void (*render_prevalidate) (struct intel_context * intel);
       void (*set_draw_region) (struct intel_context * intel,
-                               struct intel_region * draw_region,
-                               struct intel_region * depth_region);
+                               struct intel_region * draw_regions[],
+                               struct intel_region * depth_region,
+			       GLuint num_regions);
 
       GLuint (*flush_cmd) (void);
       void (*emit_flush) (struct intel_context *intel, GLuint unused);

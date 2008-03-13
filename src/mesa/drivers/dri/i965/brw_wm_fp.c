@@ -861,14 +861,28 @@ static void emit_fb_write( struct brw_wm_compile *c )
    struct prog_src_register outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
    struct prog_src_register payload_r0_depth = src_reg(PROGRAM_PAYLOAD, PAYLOAD_DEPTH);
    struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPR);
+   GLuint i;
 
-   emit_op(c,
-	   WM_FB_WRITE,
-	   dst_mask(dst_undef(),0),
-	   0, 0, 0,
-	   outcolor,
-	   payload_r0_depth,
-	   outdepth);
+   struct prog_instruction *inst;
+   struct brw_context *brw = c->func.brw;
+
+   /* inst->Sampler is not used by backend, 
+      use it for fb write target and eot */
+
+   inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+           0, 0, 0, outcolor, payload_r0_depth, outdepth);
+   inst->Sampler = (brw->state.nr_draw_regions > 1 ? 0: 1)|(0<<1);
+
+   if (brw->state.nr_draw_regions > 1) {
+       for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
+	   outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
+	   inst = emit_op(c,
+		   WM_FB_WRITE, dst_mask(dst_undef(),0), 0, 0, 0,
+		   outcolor, payload_r0_depth, outdepth);
+	   inst->Sampler = ((i == brw->state.nr_draw_regions - 1) ? 1: 0);
+	   inst->Sampler |= (i<<1);
+       }
+   }
 }
 
 

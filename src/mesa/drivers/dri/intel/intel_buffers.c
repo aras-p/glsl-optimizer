@@ -300,6 +300,7 @@ intelWindowMoved(struct intel_context *intel)
       default:
          intelSetFrontClipRects(intel);
       }
+	
    }
 
    if (!intel->intelScreen->driScrnPriv->dri2.enabled &&
@@ -894,7 +895,7 @@ void
 intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *colorRegion, *depthRegion = NULL;
+   struct intel_region *colorRegions[MAX_DRAW_BUFFERS], *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
    int front = 0;               /* drawing to front color buffer? */
 
@@ -933,14 +934,24 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /*
     * How many color buffers are we drawing into?
     */
-   if (fb->_NumColorDrawBuffers != 1) {
-      /* writing to 0 or 2 or 4 color buffers */
-      /*_mesa_debug(ctx, "Software rendering\n");*/
+   if (fb->_NumColorDrawBuffers == 0) {
+      /* writing to 0  */
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
-      colorRegion = NULL;
+      colorRegions[0] = NULL;
 
       if (fb->Name != 0)
 	 intelSetRenderbufferClipRects(intel);
+   } else if (fb->_NumColorDrawBuffers > 1) {
+       int i;
+       struct intel_renderbuffer *irb;
+       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
+
+       if (fb->Name != 0)
+           intelSetRenderbufferClipRects(intel);
+       for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+           irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
+           colorRegions[i] = (irb && irb->region) ? irb->region : NULL;
+       }
    }
    else {
       /* draw to exactly one color buffer */
@@ -958,11 +969,11 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	 /* drawing to window system buffer */
 	 if (front) {
 	    intelSetFrontClipRects(intel);
-	    colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
+	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
 	 }
 	 else {
 	    intelSetBackClipRects(intel);
-	    colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
+	    colorRegions[0]= intel_get_rb_region(fb, BUFFER_BACK_LEFT);
 	 }
       }
       else {
@@ -970,7 +981,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	 struct intel_renderbuffer *irb;
 	 intelSetRenderbufferClipRects(intel);
 	 irb = intel_renderbuffer(fb->_ColorDrawBuffers[0]);
-	 colorRegion = (irb && irb->region) ? irb->region : NULL;
+	 colorRegions[0] = (irb && irb->region) ? irb->region : NULL;
       }
    }
 
@@ -982,7 +993,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    else
       ctx->NewState |= _NEW_POLYGON;
 
-   if (!colorRegion) {
+   if (!colorRegions[0]) {
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
    }
    else {
@@ -1055,7 +1066,8 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->NewState |= _NEW_DEPTH;
    }
 
-   intel->vtbl.set_draw_region(intel, colorRegion, depthRegion);
+   intel->vtbl.set_draw_region(intel, colorRegions, depthRegion, 
+	fb->_NumColorDrawBuffers);
 
    /* update viewport since it depends on window size */
    if (ctx->Driver.Viewport) {

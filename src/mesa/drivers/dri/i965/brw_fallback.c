@@ -57,16 +57,6 @@ static GLboolean do_check_fallback(struct brw_context *brw)
       return GL_TRUE;
    }
 
-   /* _NEW_BUFFERS
-    */
-   /* We can only handle a single draw buffer at the moment, and only as the
-    * first color buffer.
-    */
-   if (fb->_NumColorDrawBuffers > 1) {
-      DBG("FALLBACK: multiple color draw buffers\n");
-      return GL_TRUE;
-   }
-
    /* _NEW_RENDERMODE
     *
     * XXX: need to save/restore RenderMode in metaops state, or

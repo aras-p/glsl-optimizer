@@ -226,13 +226,13 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
    key.depth = firstImage->Depth;
    key.tiled = intelObj->mt->region->tiled;
 
-   dri_bo_unreference(brw->wm.surf_bo[unit + 1]);
-   brw->wm.surf_bo[unit + 1] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+   dri_bo_unreference(brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS]);
+   brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
 						&key, sizeof(key),
 						&key.bo, 1,
 						NULL);
-   if (brw->wm.surf_bo[unit + 1] == NULL)
-      brw->wm.surf_bo[unit + 1] = brw_create_texture_surface(brw, &key);
+   if (brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] == NULL)
+      brw->wm.surf_bo[unit + MAX_DRAW_BUFFERS] = brw_create_texture_surface(brw, &key);
 }
 
 /**
@@ -242,7 +242,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
  */
 static void
 brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
-			  unsigned int unit)
+			  unsigned int unit, GLboolean cached)
 {
    dri_bo *region_bo = NULL;
 
@@ -253,8 +253,6 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       GLubyte color_mask[4];
       GLboolean tiled, color_blend;
    } key;
-
-   memset(&key, 0, sizeof(key));
 
    if (region != NULL) {
       region_bo = region->buffer;
@@ -276,17 +274,19 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       key.height = 1;
       key.cpp = 4;
    }
-
    memcpy(key.color_mask, brw->attribs.Color->ColorMask,
 	  sizeof(key.color_mask));
    key.color_blend = (!brw->attribs.Color->_LogicOpEnabled &&
 		      brw->attribs.Color->BlendEnabled);
 
    dri_bo_unreference(brw->wm.surf_bo[unit]);
-   brw->wm.surf_bo[unit] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
-					    &key, sizeof(key),
-					    &region_bo, 1,
-					    NULL);
+   brw->wm.surf_bo[unit] = NULL;
+   if (cached) 
+       brw->wm.surf_bo[unit] = brw_search_cache(&brw->cache, BRW_SS_SURFACE,
+	       &key, sizeof(key),
+	       &region_bo, 1,
+	       NULL);
+
    if (brw->wm.surf_bo[unit] == NULL) {
       struct brw_surface_state surf;
 
@@ -312,11 +312,10 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
 
       /* Key size will never match key size for textures, so we're safe. */
       brw->wm.surf_bo[unit] = brw_upload_cache(&brw->cache, BRW_SS_SURFACE,
-					       &key, sizeof(key),
+					      &key, sizeof(key),
 					       &region_bo, 1,
 					       &surf, sizeof(surf),
 					       NULL, NULL);
-
       if (region_bo != NULL) {
 	 dri_emit_reloc(brw->wm.surf_bo[unit],
 			DRM_BO_FLAG_MEM_TT |
@@ -345,7 +344,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
 			      NULL);
 
    if (bind_bo == NULL) {
-      GLuint data_size = brw->wm.nr_surfaces * 4;
+      GLuint data_size = brw->wm.nr_surfaces * sizeof(GLuint);
       uint32_t *data = malloc(data_size);
       int i;
 
@@ -369,7 +368,7 @@ brw_wm_get_binding_table(struct brw_context *brw)
 			   DRM_BO_FLAG_READ |
 			   DRM_BO_FLAG_WRITE,
 			   0,
-			   i * 4,
+			   i * sizeof(GLuint),
 			   brw->wm.surf_bo[i]);
 	 }
       }
@@ -385,9 +384,14 @@ static void upload_wm_surfaces(struct brw_context *brw )
    GLcontext *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    GLuint i;
+   if (brw->state.nr_draw_regions  > 1) {
+       for (i = 0; i < brw->state.nr_draw_regions; i++) 
+	   brw_update_region_surface(brw, brw->state.draw_regions[i], i, 
+		GL_FALSE);
+   }else
+       brw_update_region_surface(brw, brw->state.draw_regions[0], 0, GL_TRUE);
 
-   brw_update_region_surface(brw, brw->state.draw_region, 0);
-   brw->wm.nr_surfaces = 1;
+   brw->wm.nr_surfaces = MAX_DRAW_BUFFERS;
 
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       struct gl_texture_unit *texUnit = &brw->attribs.Texture->Unit[i];
@@ -396,16 +400,16 @@ static void upload_wm_surfaces(struct brw_context *brw )
       if(texUnit->_ReallyEnabled &&
 	 texUnit->_Current == intel->frame_buffer_texobj)
       {
-	 dri_bo_unreference(brw->wm.surf_bo[i+1]);
-	 brw->wm.surf_bo[i+1] = brw->wm.surf_bo[0];
-	 dri_bo_reference(brw->wm.surf_bo[i+1]);
-	 brw->wm.nr_surfaces = i+2;
+	 dri_bo_unreference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
+	 brw->wm.surf_bo[i+MAX_DRAW_BUFFERS] = brw->wm.surf_bo[0];
+	 dri_bo_reference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
+	 brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
       } else if (texUnit->_ReallyEnabled) {
 	 brw_update_texture_surface(ctx, i);
-	 brw->wm.nr_surfaces = i+2;
+	 brw->wm.nr_surfaces = i + MAX_DRAW_BUFFERS + 1;
       } else {
-	 dri_bo_unreference(brw->wm.surf_bo[i+1]);
-	 brw->wm.surf_bo[i+1] = NULL;
+	 dri_bo_unreference(brw->wm.surf_bo[i+MAX_DRAW_BUFFERS]);
+	 brw->wm.surf_bo[i+MAX_DRAW_BUFFERS] = NULL;
       }
    }
 

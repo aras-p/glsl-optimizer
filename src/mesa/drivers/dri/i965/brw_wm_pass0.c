@@ -348,6 +348,8 @@ static struct brw_wm_instruction *translate_insn( struct brw_wm_compile *c,
    out->saturate = (inst->SaturateMode != SATURATE_OFF);
    out->tex_unit = inst->TexSrcUnit;
    out->tex_idx = inst->TexSrcTarget;
+   out->eot = inst->Sampler & 1;
+   out->target = inst->Sampler>>1;
 
    /* Args:
     */

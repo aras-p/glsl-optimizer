@@ -362,11 +362,13 @@ static void meta_draw_region( struct intel_context *intel,
    struct brw_context *brw = brw_context(&intel->ctx);
 
    if (!brw->metaops.saved_draw_region) {
-      brw->metaops.saved_draw_region = brw->state.draw_region;
+      brw->metaops.saved_draw_region = brw->state.draw_regions[0];
+      brw->metaops.saved_nr_draw_regions = brw->state.nr_draw_regions;
       brw->metaops.saved_depth_region = brw->state.depth_region;
    }
 
-   brw->state.draw_region = draw_region;
+   brw->state.draw_regions[0] = draw_region;
+   brw->state.nr_draw_regions = 1;
    brw->state.depth_region = depth_region;
 
    if (intel->frame_buffer_texobj != NULL)
@@ -509,7 +511,8 @@ static void install_meta_state( struct intel_context *intel )
 
    /* This works without adjusting refcounts.  Fix later? 
     */
-   brw->metaops.saved_draw_region = brw->state.draw_region;
+   brw->metaops.saved_draw_region = brw->state.draw_regions[0];
+   brw->metaops.saved_nr_draw_regions = brw->state.nr_draw_regions;
    brw->metaops.saved_depth_region = brw->state.depth_region;
    brw->metaops.active = 1;
    
@@ -532,7 +535,8 @@ static void leave_meta_state( struct intel_context *intel )
 
    ctx->FragmentProgram.Current = brw->metaops.restore_fp;
 
-   brw->state.draw_region = brw->metaops.saved_draw_region;
+   brw->state.draw_regions[0] = brw->metaops.saved_draw_region;
+   brw->state.nr_draw_regions = brw->metaops.saved_nr_draw_regions;
    brw->state.depth_region = brw->metaops.saved_depth_region;
    brw->metaops.saved_draw_region = NULL;
    brw->metaops.saved_depth_region = NULL;

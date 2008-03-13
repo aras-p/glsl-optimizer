@@ -143,6 +143,8 @@ struct brw_wm_instruction {
    GLuint writemask:4;
    GLuint tex_unit:4;   /* texture unit for TEX, TXD, TXP instructions */
    GLuint tex_idx:3;    /* TEXTURE_1D,2D,3D,CUBE,RECT_INDEX source target */
+   GLuint eot:1;    	/* End of thread indicator for FB_WRITE*/
+   GLuint target:10;    /* target binding table index for FB_WRITE*/
 };
 
 

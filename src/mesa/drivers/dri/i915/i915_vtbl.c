@@ -532,11 +532,12 @@ i915_state_draw_region(struct intel_context *intel,
 
 static void
 i915_set_draw_region(struct intel_context *intel,
-                     struct intel_region *color_region,
-                     struct intel_region *depth_region)
+                     struct intel_region *color_regions[],
+                     struct intel_region *depth_region,
+		     GLuint num_regions)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
-   i915_state_draw_region(intel, &i915->state, color_region, depth_region);
+   i915_state_draw_region(intel, &i915->state, color_regions[0], depth_region);
 }
 
 

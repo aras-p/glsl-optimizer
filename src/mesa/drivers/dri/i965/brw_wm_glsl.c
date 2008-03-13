@@ -274,10 +274,11 @@ static void emit_delta_xy(struct brw_wm_compile *c,
 
 static void fire_fb_write( struct brw_wm_compile *c,
                            GLuint base_reg,
-                           GLuint nr )
+                           GLuint nr,
+                           GLuint target,
+                           GLuint eot)
 {
     struct brw_compile *p = &c->func;
-
     /* Pass through control information:
      */
     /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
@@ -294,10 +295,10 @@ static void fire_fb_write( struct brw_wm_compile *c,
 	    retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW),
 	    base_reg,
 	    retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
-	    0,              /* render surface always 0 */
+	    target,              
 	    nr,
 	    0,
-	    1);
+	    eot);
 }
 
 static void emit_fb_write(struct brw_wm_compile *c,
@@ -306,7 +307,8 @@ static void emit_fb_write(struct brw_wm_compile *c,
     struct brw_compile *p = &c->func;
     int nr = 2;
     int channel;
-    struct brw_reg src0;//, src1, src2, dst;
+    GLuint target, eot;
+    struct brw_reg src0;
 
     /* Reserve a space for AA - may not be needed:
      */
@@ -337,8 +339,9 @@ static void emit_fb_write(struct brw_wm_compile *c,
 
       nr += 2;
    }
-
-    fire_fb_write(c, 0, nr);
+    target = inst->Sampler >> 1;
+    eot = inst->Sampler & 1;
+    fire_fb_write(c, 0, nr, target, eot);
 }
 
 static void emit_pixel_w( struct brw_wm_compile *c,
@@ -1026,7 +1029,7 @@ static void emit_txb(struct brw_wm_compile *c,
 	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
 	    1,
 	    retype(payload_reg, BRW_REGISTER_TYPE_UW),
-	    inst->TexSrcUnit + 1, /* surface */
+	    inst->TexSrcUnit + MAX_DRAW_BUFFERS, /* surface */
 	    inst->TexSrcUnit,     /* sampler */
 	    inst->DstReg.WriteMask,
 	    BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS,
@@ -1088,7 +1091,7 @@ static void emit_tex(struct brw_wm_compile *c,
 	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
 	    1,
 	    retype(payload_reg, BRW_REGISTER_TYPE_UW),
-	    inst->TexSrcUnit + 1, /* surface */
+	    inst->TexSrcUnit + MAX_DRAW_BUFFERS, /* surface */
 	    inst->TexSrcUnit,     /* sampler */
 	    inst->DstReg.WriteMask,
 	    BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,
@@ -1125,7 +1128,6 @@ static void post_wm_emit( struct brw_wm_compile *c )
 }
 
 static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
-
 {
 #define MAX_IFSN 32
 #define MAX_LOOP_DEPTH 32
@@ -1135,7 +1137,6 @@ static void brw_wm_emit_glsl(struct brw_context *brw, struct brw_wm_compile *c)
     struct brw_compile *p = &c->func;
     struct brw_indirect stack_index = brw_indirect(0, 0);
 
-    brw_init_compile(brw, &c->func);
     c->reg_index = 0;
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
