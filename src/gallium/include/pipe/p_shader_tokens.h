@@ -341,7 +341,6 @@ struct tgsi_immediate_float32
 /*
  * ps_1_1
  */
-#define TGSI_OPCODE_TEXCOORD            TGSI_OPCODE_NOP
 #define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KILP
 #define TGSI_OPCODE_TEXBEM              107
 #define TGSI_OPCODE_TEXBEML             108
@@ -372,7 +371,6 @@ struct tgsi_immediate_float32
 /*
  * ps_1_4
  */
-#define TGSI_OPCODE_TEXCRD              TGSI_OPCODE_TEXCOORD
 #define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX
 #define TGSI_OPCODE_TEXDEPTH            122
 #define TGSI_OPCODE_BEM                 123
