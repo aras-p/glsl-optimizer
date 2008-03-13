@@ -544,6 +544,15 @@ clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
       /* simple clear of whole buffer */
       GLuint clearValue = ctx->Stencil.Clear;
+
+      switch (strb->surface->format) {
+      case PIPE_FORMAT_S8Z24_UNORM:
+         clearValue <<= 24;
+         break;
+      default:
+         ; /* no-op, stencil value is in least significant bits */
+      }  
+
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
