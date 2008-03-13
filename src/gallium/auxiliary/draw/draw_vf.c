@@ -265,7 +265,11 @@ void draw_vf_set_vertex_info( struct draw_vertex_fetch *vf,
       }
       case EMIT_HEADER:
          /* XXX emit new DRAW_EMIT_HEADER attribute??? */
-         count += sizeof(struct vertex_header) / 4;
+	 attrs[nr_attrs].attrib = 0;
+	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
+	 attrs[nr_attrs].offset = offsetof(struct vertex_header, data);
+         count += offsetof(struct vertex_header, data)/4;
+	 nr_attrs++;
          break;
       case EMIT_1F:
 	 attrs[nr_attrs].attrib = j;
