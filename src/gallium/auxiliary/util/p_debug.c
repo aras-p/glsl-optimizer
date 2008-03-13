@@ -109,20 +109,30 @@ enum {
 /* Check for aborts enabled. */
 static unsigned abort_en()
 {
-	if (!mapped_config_file)
-	{
-		/* Open an 8 byte file for configuration data. */
-		mapped_config_file = EngMapFile(L"\\??\\c:\\gaDebug.cfg", 8, &debug_config_file);
-	}
-	/* An value of "0" (ascii) in the configuration file will clear the first 8 bits in the test byte. */
-	/* An value of "1" (ascii) in the configuration file will set the first bit in the test byte. */
-	/* An value of "2" (ascii) in the configuration file will set the second bit in the test byte. */
-	return ((((char *)mapped_config_file)[0]) - 0x30) & eAssertAbortEn;
+   if (!mapped_config_file)
+   {
+      /* Open an 8 byte file for configuration data. */
+      mapped_config_file = EngMapFile(L"\\??\\c:\\gaDebug.cfg", 8, &debug_config_file);
+   }
+
+   /* A value of "0" (ascii) in the configuration file will clear the
+    * first 8 bits in the test byte. 
+    *
+    * A value of "1" (ascii) in the configuration file will set the
+    * first bit in the test byte. 
+    *
+    * A value of "2" (ascii) in the configuration file will set the
+    * second bit in the test byte. 
+    *
+    * Currently the only interesting values are 0 and 1, which clear
+    * and set abort-on-assert behaviour respectively.
+    */
+   return ((((char *)mapped_config_file)[0]) - 0x30) & eAssertAbortEn;
 }
 #else /* WIN32 */
 static unsigned abort_en()
 {
-	return !GETENV("GALLIUM_ABORT_ON_ASSERT");
+   return !GETENV("GALLIUM_ABORT_ON_ASSERT");
 }
 #endif
 
