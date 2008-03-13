@@ -67,6 +67,7 @@ struct pstip_stage
    struct draw_stage stage;
 
    void *sampler_cso;
+   uint sampler_unit;
    struct pipe_texture *texture;
    uint num_samplers;
    uint num_textures;
@@ -76,8 +77,8 @@ struct pstip_stage
     */
    struct pstip_fragment_shader *fs;
    struct {
-      void *sampler[PIPE_MAX_SAMPLERS];
-      struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
+      void *samplers[PIPE_MAX_SAMPLERS];
+      struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
       const struct pipe_poly_stipple *stipple;
    } state;
 
@@ -328,6 +329,8 @@ generate_pstip_fs(struct pstip_stage *pstip)
    tgsi_dump(pstip_fs.tokens, 0);
 #endif
 
+   pstip->sampler_unit = transform.maxSampler + 1;
+
 #if 1 /* XXX remove */
    if (transform.wincoordInput < 0) {
       pstip_fs.input_semantic_name[pstip_fs.num_inputs] = TGSI_SEMANTIC_POSITION;
@@ -483,17 +486,24 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 {
    struct pstip_stage *pstip = pstip_stage(stage);
    struct pipe_context *pipe = pstip->pipe;
-   uint num = MAX2(pstip->num_textures, pstip->num_samplers);
+   uint num_samplers;
+
+   /* how many samplers? */
+   /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
+   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
+   num_samplers = MAX2(num_samplers, pstip->sampler_unit + 1);
 
    assert(stage->draw->rasterizer->poly_stipple_enable);
 
-   /*
-    * Bind our fragprog, sampler and texture
-    */
+   /* bind our fragprog */
    bind_pstip_fragment_shader(pstip);
 
-   pstip->driver_bind_sampler_states(pipe, num + 1, pstip->state.sampler);
-   pstip->driver_set_sampler_textures(pipe, num + 1, pstip->state.texture);
+   /* plug in our sampler, texture */
+   pstip->state.samplers[pstip->sampler_unit] = pstip->sampler_cso;
+   pstip->state.textures[pstip->sampler_unit] = pstip->texture;
+
+   pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
+   pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
 
    /* now really draw first line */
    stage->tri = passthrough_tri;
@@ -516,9 +526,9 @@ pstip_flush(struct draw_stage *stage, unsigned flags)
 
    /* XXX restore original texture, sampler state */
    pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
-                                     pstip->state.sampler);
+                                     pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, pstip->num_textures,
-                                      pstip->state.texture);
+                                      pstip->state.textures);
 }
 
 
@@ -617,7 +627,7 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
    /* save current */
-   memcpy(pstip->state.sampler, sampler, num * sizeof(void *));
+   memcpy(pstip->state.samplers, sampler, num * sizeof(void *));
    pstip->num_samplers = num;
    /* pass-through */
    pstip->driver_bind_sampler_states(pstip->pipe, num, sampler);
@@ -630,7 +640,7 @@ pstip_set_sampler_textures(struct pipe_context *pipe,
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
    /* save current */
-   memcpy(pstip->state.texture, texture, num * sizeof(struct pipe_texture *));
+   memcpy(pstip->state.textures, texture, num * sizeof(struct pipe_texture *));
    pstip->num_textures = num;
    /* pass-through */
    pstip->driver_set_sampler_textures(pstip->pipe, num, texture);
