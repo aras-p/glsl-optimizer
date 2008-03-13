@@ -583,14 +583,13 @@ nv30_fragprog_parse_instruction(struct nv30_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], neg(src[1]), none);
 		break;
 	case TGSI_OPCODE_TEX:
-		if (finst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide ==
-				TGSI_EXTSWIZZLE_W) {
-			tex(fpc, sat, TXP, unit, dst, mask, src[0], none, none);
-		} else
-			tex(fpc, sat, TEX, unit, dst, mask, src[0], none, none);
+		tex(fpc, sat, TEX, unit, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_TXB:
 		tex(fpc, sat, TXB, unit, dst, mask, src[0], none, none);
+		break;
+	case TGSI_OPCODE_TXP:
+		tex(fpc, sat, TXP, unit, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_XPD:
 		tmp = temp(fpc);
@@ -683,7 +682,7 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	fpc->high_temp = -1;
 	fpc->num_regs = 2;
 
-	tgsi_parse_init(&parse, fp->pipe->tokens);
+	tgsi_parse_init(&parse, fp->pipe.tokens);
 
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);

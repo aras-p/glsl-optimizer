@@ -231,14 +231,15 @@ nv30_sampler_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv30_sampler_state_bind(struct pipe_context *pipe, unsigned unit,
-			void *hwcso)
+nv30_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nv30_sampler_state *ps = hwcso;
+	unsigned unit;
 
-	nv30->tex_sampler[unit] = ps;
-	nv30->dirty_samplers |= (1 << unit);
+	for (unit = 0; unit < nr; unit++) {
+		nv30->tex_sampler[unit] = sampler[unit];
+		nv30->dirty_samplers |= (1 << unit);
+	}
 }
 
 static void
@@ -248,13 +249,16 @@ nv30_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void
-nv30_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
-			 struct pipe_texture *miptree)
+nv30_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
+			 struct pipe_texture **miptree)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
+	unsigned unit;
 
-	nv30->tex_miptree[unit] = (struct nv30_miptree *)miptree;
-	nv30->dirty_samplers |= (1 << unit);
+	for (unit = 0; unit < nr; unit++) {
+		nv30->tex_miptree[unit] = (struct nv30_miptree *)miptree[unit];
+		nv30->dirty_samplers |= (1 << unit);
+	}
 }
 
 static void *
@@ -440,7 +444,7 @@ nv30_vp_state_create(struct pipe_context *pipe,
 	struct nv30_vertex_program *vp;
 
 	vp = CALLOC(1, sizeof(struct nv30_vertex_program));
-	vp->pipe = cso;
+	vp->pipe = *cso;
 
 	return (void *)vp;
 }
@@ -472,7 +476,7 @@ nv30_fp_state_create(struct pipe_context *pipe,
 	struct nv30_fragment_program *fp;
 
 	fp = CALLOC(1, sizeof(struct nv30_fragment_program));
-	fp->pipe = cso;
+	fp->pipe = *cso;
 
 	return (void *)fp;
 }
@@ -709,9 +713,9 @@ nv30_init_state_functions(struct nv30_context *nv30)
 	nv30->pipe.delete_blend_state = nv30_blend_state_delete;
 
 	nv30->pipe.create_sampler_state = nv30_sampler_state_create;
-	nv30->pipe.bind_sampler_state = nv30_sampler_state_bind;
+	nv30->pipe.bind_sampler_states = nv30_sampler_state_bind;
 	nv30->pipe.delete_sampler_state = nv30_sampler_state_delete;
-	nv30->pipe.set_sampler_texture = nv30_set_sampler_texture;
+	nv30->pipe.set_sampler_textures = nv30_set_sampler_texture;
 
 	nv30->pipe.create_rasterizer_state = nv30_rasterizer_state_create;
 	nv30->pipe.bind_rasterizer_state = nv30_rasterizer_state_bind;

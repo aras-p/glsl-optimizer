@@ -535,7 +535,7 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 	struct tgsi_parse_context p;
 	int nr_imm = 0;
 
-	tgsi_parse_init(&p, vpc->vp->pipe->tokens);
+	tgsi_parse_init(&p, vpc->vp->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
 		const union tgsi_full_token *tok = &p.FullToken;
 
@@ -576,7 +576,7 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 		return;
 	}
 
-	tgsi_parse_init(&parse, vp->pipe->tokens);
+	tgsi_parse_init(&parse, vp->pipe.tokens);
 
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);

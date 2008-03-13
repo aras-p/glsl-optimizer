@@ -1,6 +1,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "nv40_context.h"
 #include "nv40_state.h"
@@ -251,14 +252,22 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv40_sampler_state_bind(struct pipe_context *pipe, unsigned unit,
-			void *hwcso)
+nv40_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_sampler_state *ps = hwcso;
+	unsigned unit;
 
-	nv40->tex_sampler[unit] = ps;
-	nv40->dirty_samplers |= (1 << unit);
+	for (unit = 0; unit < nr; unit++) {
+		nv40->tex_sampler[unit] = sampler[unit];
+		nv40->dirty_samplers |= (1 << unit);
+	}
+
+	for (unit = nr; unit < nv40->nr_samplers; unit++) {
+		nv40->tex_sampler[unit] = NULL;
+		nv40->dirty_samplers |= (1 << unit);
+	}
+
+	nv40->nr_samplers = nr;
 	nv40->dirty |= NV40_NEW_SAMPLER;
 }
 
@@ -269,13 +278,25 @@ nv40_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void
-nv40_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
-			 struct pipe_texture *miptree)
+nv40_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
+			 struct pipe_texture **miptree)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	unsigned unit;
 
-	nv40->tex_miptree[unit] = (struct nv40_miptree *)miptree;
-	nv40->dirty_samplers |= (1 << unit);
+	for (unit = 0; unit < nr; unit++) {
+		pipe_texture_reference((struct pipe_texture **)
+				       &nv40->tex_miptree[unit], miptree[unit]);
+		nv40->dirty_samplers |= (1 << unit);
+	}
+
+	for (unit = nr; unit < nv40->nr_textures; unit++) {
+		pipe_texture_reference((struct pipe_texture **)
+				       &nv40->tex_miptree[unit], NULL);
+		nv40->dirty_samplers |= (1 << unit);
+	}
+
+	nv40->nr_textures = nr;
 	nv40->dirty |= NV40_NEW_SAMPLER;
 }
 
@@ -490,7 +511,7 @@ nv40_vp_state_create(struct pipe_context *pipe,
 	struct nv40_vertex_program *vp;
 
 	vp = CALLOC(1, sizeof(struct nv40_vertex_program));
-	vp->pipe = cso;
+	vp->pipe = *cso;
 
 	return (void *)vp;
 }
@@ -521,7 +542,7 @@ nv40_fp_state_create(struct pipe_context *pipe,
 	struct nv40_fragment_program *fp;
 
 	fp = CALLOC(1, sizeof(struct nv40_fragment_program));
-	fp->pipe = cso;
+	fp->pipe = *cso;
 
 	return (void *)fp;
 }
@@ -649,9 +670,9 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.delete_blend_state = nv40_blend_state_delete;
 
 	nv40->pipe.create_sampler_state = nv40_sampler_state_create;
-	nv40->pipe.bind_sampler_state = nv40_sampler_state_bind;
+	nv40->pipe.bind_sampler_states = nv40_sampler_state_bind;
 	nv40->pipe.delete_sampler_state = nv40_sampler_state_delete;
-	nv40->pipe.set_sampler_texture = nv40_set_sampler_texture;
+	nv40->pipe.set_sampler_textures = nv40_set_sampler_texture;
 
 	nv40->pipe.create_rasterizer_state = nv40_rasterizer_state_create;
 	nv40->pipe.bind_rasterizer_state = nv40_rasterizer_state_bind;

@@ -60,7 +60,7 @@ struct nv30_vertex_program_data {
 };
 
 struct nv30_vertex_program {
-	const struct pipe_shader_state *pipe;
+	struct pipe_shader_state pipe;
 
 	boolean translated;
 	struct nv30_vertex_program_exec *insns;
@@ -84,7 +84,7 @@ struct nv30_fragment_program_data {
 };
 
 struct nv30_fragment_program {
-	const struct pipe_shader_state *pipe;
+	struct pipe_shader_state pipe;
 
 	boolean translated;
 	boolean on_hw;

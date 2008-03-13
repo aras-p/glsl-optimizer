@@ -23,7 +23,7 @@ struct nv40_vertex_program_data {
 };
 
 struct nv40_vertex_program {
-	const struct pipe_shader_state *pipe;
+	struct pipe_shader_state pipe;
 
 	boolean translated;
 	struct nv40_vertex_program_exec *insns;
@@ -48,7 +48,7 @@ struct nv40_fragment_program_data {
 };
 
 struct nv40_fragment_program {
-	const struct pipe_shader_state *pipe;
+	struct pipe_shader_state pipe;
 
 	boolean translated;
 	unsigned samplers;

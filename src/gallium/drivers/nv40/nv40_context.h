@@ -136,6 +136,8 @@ struct nv40_context {
 	unsigned idxbuf_format;
 	struct nv40_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];
 	struct nv40_miptree *tex_miptree[PIPE_MAX_SAMPLERS];
+	unsigned nr_samplers;
+	unsigned nr_textures;
 	unsigned dirty_samplers;
 	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];

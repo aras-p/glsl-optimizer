@@ -90,8 +90,7 @@ nv50_sampler_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv50_sampler_state_bind(struct pipe_context *pipe, unsigned unit,
-			void *hwcso)
+nv50_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 {
 }
 
@@ -101,8 +100,8 @@ nv50_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 }
 
 static void
-nv50_set_sampler_texture(struct pipe_context *pipe, unsigned unit,
-			 struct pipe_texture *pt)
+nv50_set_sampler_texture(struct pipe_context *pipe, unsigned nr,
+			 struct pipe_texture **pt)
 {
 }
 
@@ -442,9 +441,9 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.delete_blend_state = nv50_blend_state_delete;
 
 	nv50->pipe.create_sampler_state = nv50_sampler_state_create;
-	nv50->pipe.bind_sampler_state = nv50_sampler_state_bind;
+	nv50->pipe.bind_sampler_states = nv50_sampler_state_bind;
 	nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
-	nv50->pipe.set_sampler_texture = nv50_set_sampler_texture;
+	nv50->pipe.set_sampler_textures = nv50_set_sampler_texture;
 
 	nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
 	nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;
