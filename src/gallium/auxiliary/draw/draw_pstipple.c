@@ -488,15 +488,15 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    struct pipe_context *pipe = pstip->pipe;
    uint num_samplers;
 
-   /* how many samplers? */
-   /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
-   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
-   num_samplers = MAX2(num_samplers, pstip->sampler_unit + 1);
-
    assert(stage->draw->rasterizer->poly_stipple_enable);
 
    /* bind our fragprog */
    bind_pstip_fragment_shader(pstip);
+
+   /* how many samplers? */
+   /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
+   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
+   num_samplers = MAX2(num_samplers, pstip->sampler_unit + 1);
 
    /* plug in our sampler, texture */
    pstip->state.samplers[pstip->sampler_unit] = pstip->sampler_cso;
