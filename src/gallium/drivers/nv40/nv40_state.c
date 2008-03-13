@@ -3,6 +3,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 
+#include "draw/draw_context.h"
+
 #include "nv40_context.h"
 #include "nv40_state.h"
 
@@ -345,7 +347,7 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 			so_data(so, NV40TCL_CULL_FACE_FRONT_AND_BACK);
 			break;
 		default:
-			so_data(so, 0);
+			so_data(so, NV40TCL_CULL_FACE_BACK);
 			break;
 		}
 		so_data(so, NV40TCL_FRONT_FACE_CCW);
@@ -363,13 +365,13 @@ nv40_rasterizer_state_create(struct pipe_context *pipe,
 			so_data(so, NV40TCL_CULL_FACE_FRONT_AND_BACK);
 			break;
 		default:
-			so_data(so, 0);
+			so_data(so, NV40TCL_CULL_FACE_BACK);
 			break;
 		}
 		so_data(so, NV40TCL_FRONT_FACE_CW);
 	}
 	so_data(so, cso->poly_smooth ? 1 : 0);
-	so_data(so, cso->cull_mode != PIPE_WINDING_NONE ? 1 : 0);
+	so_data(so, (cso->cull_mode != PIPE_WINDING_NONE) ? 1 : 0);
 
 	so_method(so, curie, NV40TCL_POLYGON_STIPPLE_ENABLE, 1);
 	so_data  (so, cso->poly_stipple_enable ? 1 : 0);
@@ -419,6 +421,9 @@ static void
 nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nv40_rasterizer_state *rsso = hwcso;
+
+	draw_set_rasterizer_state(nv40->draw, &rsso->pipe);
 
 	nv40->rasterizer = hwcso;
 	nv40->dirty |= NV40_NEW_RAST;
@@ -508,10 +513,12 @@ static void *
 nv40_vp_state_create(struct pipe_context *pipe,
 		     const struct pipe_shader_state *cso)
 {
+	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_vertex_program *vp;
 
 	vp = CALLOC(1, sizeof(struct nv40_vertex_program));
 	vp->pipe = *cso;
+	vp->draw = draw_create_vertex_shader(nv40->draw, &vp->pipe);
 
 	return (void *)vp;
 }
@@ -520,6 +527,9 @@ static void
 nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	struct nv40_vertex_program *vp = hwcso;
+
+	draw_bind_vertex_shader(nv40->draw, vp ? vp->draw : NULL);
 
 	nv40->vertprog = hwcso;
 	nv40->dirty |= NV40_NEW_VERTPROG;
@@ -531,6 +541,7 @@ nv40_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_vertex_program *vp = hwcso;
 
+	draw_delete_vertex_shader(nv40->draw, vp->draw);
 	nv40_vertprog_destroy(nv40, vp);
 	FREE(vp);
 }
@@ -543,6 +554,8 @@ nv40_fp_state_create(struct pipe_context *pipe,
 
 	fp = CALLOC(1, sizeof(struct nv40_fragment_program));
 	fp->pipe = *cso;
+
+	tgsi_scan_shader(fp->pipe.tokens, &fp->info);
 
 	return (void *)fp;
 }
@@ -581,6 +594,8 @@ nv40_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+
+	draw_set_clip_state(nv40->draw, clip);
 
 	nv40->clip = *clip;
 	nv40->dirty |= NV40_NEW_UCP;
@@ -638,6 +653,8 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
+	draw_set_viewport_state(nv40->draw, vpt);
+
 	nv40->viewport = *vpt;
 	nv40->dirty |= NV40_NEW_VIEWPORT;
 }
@@ -648,6 +665,8 @@ nv40_set_vertex_buffer(struct pipe_context *pipe, unsigned index,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
+	draw_set_vertex_buffer(nv40->draw, index, vb);
+
 	nv40->vtxbuf[index] = *vb;
 	nv40->dirty |= NV40_NEW_ARRAYS;
 }
@@ -657,6 +676,8 @@ nv40_set_vertex_element(struct pipe_context *pipe, unsigned index,
 			const struct pipe_vertex_element *ve)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+
+	draw_set_vertex_element(nv40->draw, index, ve);
 
 	nv40->vtxelt[index] = *ve;
 	nv40->dirty |= NV40_NEW_ARRAYS;

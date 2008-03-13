@@ -797,9 +797,10 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 	if (fp->translated)
 		goto update_constants;
 
+	nv40->fallback_swrast &= ~NV40_NEW_FRAGPROG;
 	nv40_fragprog_translate(nv40, fp);
 	if (!fp->translated) {
-		nv40->fallback |= NV40_FALLBACK_RAST;
+		nv40->fallback_swrast |= NV40_NEW_FRAGPROG;
 		return FALSE;
 	}
 

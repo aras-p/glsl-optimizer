@@ -2,6 +2,7 @@
 #define __NV40_STATE_H__
 
 #include "pipe/p_state.h"
+#include "tgsi/util/tgsi_scan.h"
 
 struct nv40_sampler_state {
 	uint32_t fmt;
@@ -24,6 +25,8 @@ struct nv40_vertex_program_data {
 
 struct nv40_vertex_program {
 	struct pipe_shader_state pipe;
+
+	struct draw_vertex_shader *draw;
 
 	boolean translated;
 	struct nv40_vertex_program_exec *insns;
@@ -49,6 +52,7 @@ struct nv40_fragment_program_data {
 
 struct nv40_fragment_program {
 	struct pipe_shader_state pipe;
+	struct tgsi_shader_info info;
 
 	boolean translated;
 	unsigned samplers;

@@ -3,8 +3,12 @@
 static boolean
 nv40_state_clip_validate(struct nv40_context *nv40)
 {
-	if (nv40->clip.nr)
-		nv40->fallback |= NV40_FALLBACK_TNL;
+
+	if (nv40->render_mode == HW) {
+		nv40->fallback_swtnl &= ~NV40_NEW_UCP;
+		if (nv40->clip.nr)
+			nv40->fallback_swtnl |= NV40_NEW_UCP;
+	}
 
 	return FALSE;
 }

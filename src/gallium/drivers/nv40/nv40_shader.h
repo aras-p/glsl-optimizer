@@ -476,6 +476,7 @@
 #        define NV40_FP_SWIZZLE_W                                              3
 #define NV40_FP_REG_NEGATE                                             (1 << 17)
 
+#ifndef NV40_SHADER_NO_FUCKEDNESS
 #define NV40SR_NONE	0
 #define NV40SR_OUTPUT	1
 #define NV40SR_INPUT	2
@@ -550,5 +551,6 @@ nv40_sr_scale(struct nv40_sreg src, int scale)
 	src.dst_scale = scale;
 	return src;
 }
+#endif
 
 #endif

@@ -74,8 +74,12 @@ nv40_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv40_init_state_functions(nv40);
 	nv40_init_miptree_functions(nv40);
 
+	/* Create, configure, and install fallback swtnl path */
 	nv40->draw = draw_create();
-	assert(nv40->draw);
+	draw_wide_point_threshold(nv40->draw, 9999999.0);
+	draw_wide_line_threshold(nv40->draw, 9999999.0);
+	draw_enable_line_stipple(nv40->draw, FALSE);
+	draw_enable_point_sprites(nv40->draw, FALSE);
 	draw_set_rasterize_stage(nv40->draw, nv40_draw_render_stage(nv40));
 
 	return &nv40->pipe;

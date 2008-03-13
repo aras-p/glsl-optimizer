@@ -634,21 +634,29 @@ out_err:
 static boolean
 nv40_vertprog_validate(struct nv40_context *nv40)
 { 
-	struct nv40_vertex_program *vp = nv40->vertprog;
-	struct pipe_buffer *constbuf =
-		nv40->constbuf[PIPE_SHADER_VERTEX];
 	struct nouveau_winsys *nvws = nv40->nvws;
 	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct nv40_vertex_program *vp;
+	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
 	int i;
+
+	if (nv40->render_mode == HW) {
+		vp = nv40->vertprog;
+		constbuf = nv40->constbuf[PIPE_SHADER_VERTEX];
+	} else {
+		vp = nv40->swtnl.vertprog;
+		constbuf = NULL;
+	}
 
 	/* Translate TGSI shader into hw bytecode */
 	if (vp->translated)
 		goto check_gpu_resources;
 
+	nv40->fallback_swtnl &= ~NV40_NEW_VERTPROG;
 	nv40_vertprog_translate(nv40, vp);
 	if (!vp->translated) {
-		nv40->fallback |= NV40_FALLBACK_TNL;
+		nv40->fallback_swtnl |= NV40_NEW_VERTPROG;
 		return FALSE;
 	}
 

@@ -8,6 +8,8 @@
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
 
+#define FORCE_SWTNL 0
+
 static INLINE int
 nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 {
@@ -165,7 +167,11 @@ nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	unsigned nr;
 
 	nv40_vbo_set_idxbuf(nv40, NULL, 0);
-	nv40_emit_hw_state(nv40);
+	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
+		return nv40_draw_elements_swtnl(pipe, NULL, 0,
+						mode, start, count);
+	}
+	nv40_state_emit(nv40);
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -274,7 +280,7 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 	struct pipe_winsys *ws = pipe->winsys;
 	void *map;
 
-	nv40_emit_hw_state(nv40);
+	nv40_state_emit(nv40);
 
 	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
@@ -315,7 +321,7 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	unsigned nr;
 
-	nv40_emit_hw_state(nv40);
+	nv40_state_emit(nv40);
 
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (nvgl_primitive(mode));
@@ -352,8 +358,16 @@ nv40_draw_elements(struct pipe_context *pipe,
 		   unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
+	boolean idxbuf;
 
-	if (nv40_vbo_set_idxbuf(nv40, indexBuffer, indexSize)) {
+	idxbuf = nv40_vbo_set_idxbuf(nv40, indexBuffer, indexSize);
+	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
+		return nv40_draw_elements_swtnl(pipe, NULL, 0,
+						mode, start, count);
+	}
+	nv40_state_emit(nv40);
+
+	if (idxbuf) {
 		nv40_draw_elements_vbo(pipe, mode, start, count);
 	} else {
 		nv40_draw_elements_inline(pipe, indexBuffer, indexSize,

@@ -1,5 +1,6 @@
 #include "nv40_context.h"
 #include "nv40_state.h"
+#include "draw/draw_context.h"
 
 static struct nv40_state_entry *render_states[] = {
 	&nv40_state_framebuffer,
@@ -18,15 +19,27 @@ static struct nv40_state_entry *render_states[] = {
 	NULL
 };
 
+static struct nv40_state_entry *swtnl_states[] = {
+	&nv40_state_framebuffer,
+	&nv40_state_rasterizer,
+	&nv40_state_clip,
+	&nv40_state_scissor,
+	&nv40_state_stipple,
+	&nv40_state_fragprog,
+	&nv40_state_fragtex,
+	&nv40_state_vertprog,
+	&nv40_state_blend,
+	&nv40_state_blend_colour,
+	&nv40_state_zsa,
+	&nv40_state_viewport,
+	&nv40_state_vtxfmt,
+	NULL
+};
+
 static void
-nv40_state_validate(struct nv40_context *nv40)
+nv40_state_do_validate(struct nv40_context *nv40,
+		       struct nv40_state_entry **states)
 {
-	struct nv40_state_entry **states = render_states;
-	unsigned last_fallback;
-
-	last_fallback = nv40->fallback;
-	nv40->fallback = 0;
-
 	while (*states) {
 		struct nv40_state_entry *e = *states;
 
@@ -38,32 +51,15 @@ nv40_state_validate(struct nv40_context *nv40)
 		states++;
 	}
 	nv40->dirty = 0;
-
-	if (nv40->fallback & NV40_FALLBACK_TNL &&
-	    !(last_fallback & NV40_FALLBACK_TNL)) {
-		NOUVEAU_ERR("XXX: hwtnl->swtnl\n");
-	} else
-	if (last_fallback & NV40_FALLBACK_TNL &&
-	    !(nv40->fallback & NV40_FALLBACK_TNL)) {
-		NOUVEAU_ERR("XXX: swtnl->hwtnl\n");
-	}
-
-	if (nv40->fallback & NV40_FALLBACK_RAST &&
-	    !(last_fallback & NV40_FALLBACK_RAST)) {
-		NOUVEAU_ERR("XXX: hwrast->swrast\n");
-	} else
-	if (last_fallback & NV40_FALLBACK_RAST &&
-	    !(nv40->fallback & NV40_FALLBACK_RAST)) {
-		NOUVEAU_ERR("XXX: swrast->hwrast\n");
-	}
 }
 
-static void
+void
 nv40_state_emit(struct nv40_context *nv40)
 {
 	struct nv40_state *state = &nv40->state;
 	struct nv40_screen *screen = nv40->screen;
 	unsigned i, samplers;
+	uint64 states;
 
 	if (nv40->pctx_id != screen->cur_pctx) {
 		for (i = 0; i < NV40_STATE_MAX; i++) {
@@ -74,13 +70,23 @@ nv40_state_emit(struct nv40_context *nv40)
 		screen->cur_pctx = nv40->pctx_id;
 	}
 
-	while (state->dirty) {
-		unsigned idx = ffsll(state->dirty) - 1;
-
-		so_ref (state->hw[idx], &nv40->screen->state[idx]);
-		so_emit(nv40->nvws, nv40->screen->state[idx]);
-		state->dirty &= ~(1ULL << idx);
+	for (i = 0, states = state->dirty; states; i++) {
+		if (!(states & (1ULL << i)))
+			continue;
+		so_ref (state->hw[i], &nv40->screen->state[i]);
+		so_emit(nv40->nvws, nv40->screen->state[i]);
+		states &= ~(1ULL << i);
 	}
+
+	if (state->dirty & ((1ULL << NV40_STATE_FRAGPROG) |
+			    (1ULL << NV40_STATE_FRAGTEX0))) {
+		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
+		OUT_RING  (2);
+		BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
+		OUT_RING  (1);
+	}
+
+	state->dirty = 0;
 
 	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FB]);
 	for (i = 0, samplers = state->fp_samplers; i < 16 && samplers; i++) {
@@ -91,18 +97,62 @@ nv40_state_emit(struct nv40_context *nv40)
 		samplers &= ~(1ULL << i);
 	}
 	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_FRAGPROG]);
-	so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_VTXBUF]);
+	if (state->hw[NV40_STATE_VTXBUF] && nv40->render_mode == HW)
+		so_emit_reloc_markers(nv40->nvws, state->hw[NV40_STATE_VTXBUF]);
 }
 
-void
-nv40_emit_hw_state(struct nv40_context *nv40)
+boolean
+nv40_state_validate(struct nv40_context *nv40)
 {
-	nv40_state_validate(nv40);
-	nv40_state_emit(nv40);
+	boolean was_sw = nv40->fallback_swtnl ? TRUE : FALSE;
 
-	BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
-	OUT_RING  (2);
-	BEGIN_RING(curie, NV40TCL_TEX_CACHE_CTL, 1);
-	OUT_RING  (1);
+	if (nv40->render_mode != HW) {
+		/* Don't even bother trying to go back to hw if none
+		 * of the states that caused swtnl previously have changed.
+		 */
+		if ((nv40->fallback_swtnl & nv40->dirty)
+				!= nv40->fallback_swtnl)
+			return FALSE;
+
+		/* Attempt to go to hwtnl again */
+		nv40->pipe.flush(&nv40->pipe, 0);
+		nv40->dirty |= (NV40_NEW_VIEWPORT |
+				NV40_NEW_VERTPROG |
+				NV40_NEW_ARRAYS |
+				NV40_NEW_UCP);
+		nv40->render_mode = HW;
+	}
+
+	nv40_state_do_validate(nv40, render_states);
+	if (nv40->fallback_swtnl || nv40->fallback_swrast)
+		return FALSE;
+	
+	if (was_sw)
+		NOUVEAU_ERR("swtnl->hw\n");
+
+	return TRUE;
+}
+
+boolean
+nv40_state_validate_swtnl(struct nv40_context *nv40)
+{
+	/* Setup for swtnl */
+	if (nv40->render_mode == HW) {
+		NOUVEAU_ERR("hw->swtnl 0x%08x\n", nv40->fallback_swtnl);
+		nv40->pipe.flush(&nv40->pipe, 0);
+		nv40->dirty |= (NV40_NEW_VIEWPORT |
+				NV40_NEW_VERTPROG |
+				NV40_NEW_ARRAYS |
+				NV40_NEW_UCP);
+		nv40->render_mode = SWTNL;
+	}
+
+	nv40_state_do_validate(nv40, swtnl_states);
+	if (nv40->fallback_swrast) {
+		NOUVEAU_ERR("swtnl->swrast 0x%08x\n", nv40->fallback_swrast);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 

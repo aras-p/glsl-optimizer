@@ -116,7 +116,20 @@ struct nv40_context {
 
 	/* HW state derived from pipe states */
 	struct nv40_state state;
-	unsigned fallback;
+	struct {
+		struct nv40_vertex_program *vertprog;
+
+		unsigned nr_attribs;
+		unsigned hw[PIPE_MAX_SHADER_INPUTS];
+		unsigned draw[PIPE_MAX_SHADER_INPUTS];
+		unsigned emit[PIPE_MAX_SHADER_INPUTS];
+	} swtnl;
+
+	enum {
+		HW, SWTNL, SWRAST
+	} render_mode;
+	unsigned fallback_swtnl;
+	unsigned fallback_swrast;
 
 	/* Context state */
 	unsigned dirty;
@@ -166,6 +179,10 @@ extern void nv40_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
 /* nv40_draw.c */
 extern struct draw_stage *nv40_draw_render_stage(struct nv40_context *nv40);
+extern boolean nv40_draw_elements_swtnl(struct pipe_context *pipe,
+					struct pipe_buffer *idxbuf,
+					unsigned ib_size, unsigned mode,
+					unsigned start, unsigned count);
 
 /* nv40_vertprog.c */
 extern void nv40_vertprog_destroy(struct nv40_context *,
@@ -179,8 +196,9 @@ extern void nv40_fragprog_destroy(struct nv40_context *,
 extern void nv40_fragtex_bind(struct nv40_context *);
 
 /* nv40_state.c and friends */
-extern void nv40_emit_hw_state(struct nv40_context *nv40);
-extern void nv40_state_tex_update(struct nv40_context *nv40);
+extern boolean nv40_state_validate(struct nv40_context *nv40);
+extern boolean nv40_state_validate_swtnl(struct nv40_context *nv40);
+extern void nv40_state_emit(struct nv40_context *nv40);
 extern struct nv40_state_entry nv40_state_clip;
 extern struct nv40_state_entry nv40_state_rasterizer;
 extern struct nv40_state_entry nv40_state_scissor;
@@ -194,6 +212,7 @@ extern struct nv40_state_entry nv40_state_viewport;
 extern struct nv40_state_entry nv40_state_framebuffer;
 extern struct nv40_state_entry nv40_state_fragtex;
 extern struct nv40_state_entry nv40_state_vbo;
+extern struct nv40_state_entry nv40_state_vtxfmt;
 
 /* nv40_vbo.c */
 extern boolean nv40_draw_arrays(struct pipe_context *, unsigned mode,
