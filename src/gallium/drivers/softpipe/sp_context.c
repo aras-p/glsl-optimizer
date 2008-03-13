@@ -146,7 +146,7 @@ softpipe_create( struct pipe_screen *screen,
    softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
 
    softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
-   softpipe->pipe.bind_sampler_state   = softpipe_bind_sampler_state;
+   softpipe->pipe.bind_sampler_states  = softpipe_bind_sampler_states;
    softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
 
    softpipe->pipe.create_depth_stencil_alpha_state = softpipe_create_depth_stencil_state;
@@ -171,7 +171,7 @@ softpipe_create( struct pipe_screen *screen,
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_sampler_texture = softpipe_set_sampler_texture;
+   softpipe->pipe.set_sampler_textures = softpipe_set_sampler_textures;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
    softpipe->pipe.set_vertex_buffer = softpipe_set_vertex_buffer;

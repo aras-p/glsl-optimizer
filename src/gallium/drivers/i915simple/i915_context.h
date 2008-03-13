@@ -236,6 +236,9 @@ struct i915_context
 
    unsigned dirty;
 
+   unsigned num_samplers;
+   unsigned num_textures;
+
    unsigned *batch_start;
 
    /** Vertex buffer */

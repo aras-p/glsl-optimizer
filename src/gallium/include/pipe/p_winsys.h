@@ -104,13 +104,36 @@ struct pipe_winsys
     * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
     * usage argument is only an optimization hint, not a guarantee, therefore 
     * proper behavior must be observed in all circumstances.
+    *
+    * alignment indicates the client's alignment requirements, eg for
+    * SSE instructions.
     */
    struct pipe_buffer *(*buffer_create)( struct pipe_winsys *sws, 
-					        unsigned alignment,
-                                                unsigned usage,
-                                                unsigned size );
+                                         unsigned alignment, 
+                                         unsigned usage,
+                                         unsigned size );
 
-   /** Create a buffer that wraps user-space data */
+   /** 
+    * Create a buffer that wraps user-space data.
+    *
+    * Effectively this schedules a delayed call to buffer_create
+    * followed by an upload of the data at *some point in the future*,
+    * or perhaps never.  Basically the allocate/upload is delayed
+    * until the buffer is actually passed to hardware.
+    *
+    * The intention is to provide a quick way to turn regular data
+    * into a buffer, and secondly to avoid a copy operation if that
+    * data subsequently turns out to be only accessed by the CPU.  
+    *
+    * Common example is OpenGL vertex buffers that are subsequently
+    * processed either by software TNL in the driver or by passing to
+    * hardware.
+    *
+    * XXX: What happens if the delayed call to buffer_create() fails?
+    *
+    * Note that ptr may be accessed at any time upto the time when the
+    * buffer is destroyed, so the data must not be freed before then.
+    */
    struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *sws, 
                                                     void *ptr,
                                                     unsigned bytes);

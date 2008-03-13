@@ -84,47 +84,49 @@
 extern "C" {
 #endif
 
+typedef void (*cso_state_callback)(void *ctx, void *obj);
+
 struct cso_cache;
 
 struct cso_blend {
    struct pipe_blend_state state;
    void *data;
-   void (*delete_state)(struct pipe_context *, void *);
+   cso_state_callback delete_state;
    struct pipe_context *context;
 };
 
 struct cso_depth_stencil_alpha {
    struct pipe_depth_stencil_alpha_state state;
    void *data;
-   void (*delete_state)(struct pipe_context *, void *);
+   cso_state_callback delete_state;
    struct pipe_context *context;
 };
 
 struct cso_rasterizer {
    struct pipe_rasterizer_state state;
    void *data;
-   void (*delete_state)(struct pipe_context *, void *);
+   cso_state_callback delete_state;
    struct pipe_context *context;
 };
 
 struct cso_fragment_shader {
    struct pipe_shader_state state;
    void *data;
-   void (*delete_state)(struct pipe_context *, void *);
+   cso_state_callback delete_state;
    struct pipe_context *context;
 };
 
 struct cso_vertex_shader {
    struct pipe_shader_state state;
    void *data;
-   void (*delete_state)(struct pipe_context *, void *);
+   cso_state_callback delete_state;
    struct pipe_context *context;
 };
 
 struct cso_sampler {
    struct pipe_sampler_state state;
    void *data;
-   void (*delete_state)(struct pipe_context *, void *);
+   cso_state_callback delete_state;
    struct pipe_context *context;
 };
 
@@ -137,8 +139,6 @@ enum cso_cache_type {
    CSO_FRAGMENT_SHADER,
    CSO_VERTEX_SHADER
 };
-
-typedef void (*cso_state_callback)(void *, void *);
 
 unsigned cso_construct_key(void *item, int item_size);
 

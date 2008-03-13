@@ -108,6 +108,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_enable:1;
    unsigned line_stipple_factor:8;  /**< [1..256] actually */
    unsigned line_stipple_pattern:16;
+   unsigned line_last_pixel:1;
    unsigned bypass_clipping:1;
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
 
@@ -154,7 +155,7 @@ struct pipe_clip_state
 struct pipe_constant_buffer
 {
    struct pipe_buffer *buffer;
-   unsigned size;    /** in bytes */
+   unsigned size;    /** in bytes (XXX: redundant!) */
 };
 
 
@@ -248,6 +249,7 @@ struct pipe_sampler_state
    unsigned compare_mode:1;      /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
+   unsigned prefilter:4;         /**< Wierd sampling state exposed by some api's */
    float shadow_ambient;         /**< shadow test fail color/intensity */
    float lod_bias;               /**< LOD/lambda bias */
    float min_lod, max_lod;       /**< LOD clamp range, after bias */
@@ -281,8 +283,6 @@ struct pipe_surface
  */
 struct pipe_texture
 { 
-   /* Effectively the key:
-    */
    enum pipe_texture_target target; /**< PIPE_TEXTURE_x */
    enum pipe_format format;         /**< PIPE_FORMAT_x */
 

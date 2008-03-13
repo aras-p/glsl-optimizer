@@ -138,9 +138,10 @@ static void shade_begin(struct quad_stage *qs)
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
    unsigned i;
+   unsigned num = MAX2(softpipe->num_textures, softpipe->num_samplers);
 
    /* set TGSI sampler state that varies */
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+   for (i = 0; i < num; i++) {
       qss->samplers[i].state = softpipe->sampler[i];
       qss->samplers[i].texture = softpipe->texture[i];
    }

@@ -207,8 +207,11 @@ static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type
 {
    /* if we're approach the maximum size, remove fourth of the entries
     * otherwise every subsequent call will go through the same */
-   int max_entries = (max_size > cso_hash_size(hash)) ? max_size : cso_hash_size(hash);
+   int hash_size = cso_hash_size(hash);
+   int max_entries = (max_size > hash_size) ? max_size : hash_size;
    int to_remove =  (max_size < max_entries) * max_entries/4;
+   if (hash_size > max_size)
+      to_remove += hash_size - max_size;
    while (to_remove) {
       /*remove elements until we're good */
       /*fixme: currently we pick the nodes to remove at random*/

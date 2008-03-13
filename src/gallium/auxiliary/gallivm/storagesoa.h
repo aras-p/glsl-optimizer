@@ -28,6 +28,8 @@
 #ifndef STORAGESOA_H
 #define STORAGESOA_H
 
+#include <pipe/p_shader_tokens.h>
+
 #include <vector>
 #include <list>
 #include <map>
@@ -46,15 +48,6 @@ namespace llvm {
 class StorageSoa
 {
 public:
-   enum Argument {
-      Input,
-      Output,
-      Temp,
-      Const,
-      Immediate,
-      Address
-   };
-public:
    StorageSoa(llvm::BasicBlock *block,
               llvm::Value *input,
               llvm::Value *output,
@@ -62,9 +55,9 @@ public:
               llvm::Value *temps);
 
 
-   std::vector<llvm::Value*> load(Argument type, int idx, int swizzle, 
+   std::vector<llvm::Value*> load(enum tgsi_file_type type, int idx, int swizzle, 
                                   llvm::Value *indIdx =0);
-   void store(Argument type, int idx, const std::vector<llvm::Value*> &val,
+   void store(enum tgsi_file_type type, int idx, const std::vector<llvm::Value*> &val,
               int mask);
 
    void addImmediate(float *vec);

@@ -513,10 +513,9 @@ compile_instruction(
    case OPCODE_TXP:
       /* texture lookup with divide by Q component */
       /* convert to TEX w/ special flag for division */
-      fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TXP;
       fullinst->Instruction.NumSrcRegs = 2;
       fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
-      fullinst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide = TGSI_EXTSWIZZLE_W;
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
@@ -683,8 +682,9 @@ find_temporaries(const struct gl_program *program,
  * \param tokens  array to store translated tokens in
  * \param maxTokens  size of the tokens array
  *
+ * \return number of tokens placed in 'tokens' buffer, or zero if error
  */
-GLboolean
+GLuint
 tgsi_translate_mesa_program(
    uint procType,
    const struct gl_program *program,
@@ -918,6 +918,6 @@ tgsi_translate_mesa_program(
          maxTokens - ti );
    }
 
-   return GL_TRUE;
+   return ti;
 }
 

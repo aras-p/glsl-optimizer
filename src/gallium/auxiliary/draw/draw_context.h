@@ -168,4 +168,9 @@ unsigned draw_trim_prim( unsigned mode, unsigned count );
 
 
 
+
+struct vbuf_render;
+void draw_set_render( struct draw_context *draw, 
+		      struct vbuf_render *render );
+
 #endif /* DRAW_CONTEXT_H */

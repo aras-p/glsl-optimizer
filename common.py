@@ -43,19 +43,30 @@ else:
 #######################################################################
 # Common options
 
-def Options():
-	from SCons.Options import Options
+def AddOptions(opts):
 	from SCons.Options.BoolOption import BoolOption
 	from SCons.Options.EnumOption import EnumOption
-	opts = Options('config.py')
 	opts.Add(BoolOption('debug', 'build debug version', 'no'))
+	#opts.Add(BoolOption('quiet', 'quiet command lines', 'no'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,
 											 allowed_values=('linux', 'cell', 'winddk')))
 	opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
 	opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
-	return opts
+
+
+#######################################################################
+# Quiet command lines
+#
+# See also http://www.scons.org/wiki/HidingCommandLinesInOutput
+
+def quietCommandLines(env):
+	env['CCCOMSTR'] = "Compiling $SOURCE ..."
+	env['CXXCOMSTR'] = "Compiling $SOURCE ..."
+	env['ARCOMSTR'] = "Archiving $TARGET ..."
+	env['RANLIBCOMSTR'] = ""
+	env['LINKCOMSTR'] = "Linking $TARGET ..."
 
 
 #######################################################################
@@ -113,4 +124,17 @@ def make_build_dir(env):
 	# versions building the same source file
 	env.SConsignFile(os.path.join(build_dir, '.sconsign'))
 	return build_dir
+
+
+#######################################################################
+# Common environment generation code
+
+def generate(env):
+	# FIXME: this is already too late
+	#if env.get('quiet', False):
+	#	quietCommandLines(env)
+	createConvenienceLibBuilder(env)
+
+	# for debugging
+	#print env.Dump()
 

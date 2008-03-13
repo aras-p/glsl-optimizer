@@ -94,21 +94,13 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_viewport_state( failover->sw, &failover->viewport );
 
    if (failover->dirty & FO_NEW_SAMPLER) {
-      for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-	 if (failover->dirty_sampler & (1<<i)) {
-	    failover->sw->bind_sampler_state( failover->sw, i,
-                                              failover->sampler[i]->sw_state );
-	 }
-      }
+      failover->sw->bind_sampler_states( failover->sw, failover->num_samplers,
+                                         failover->sw_sampler_state );
    }
 
    if (failover->dirty & FO_NEW_TEXTURE) {
-      for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-	 if (failover->dirty_texture & (1<<i)) {
-	    failover->sw->set_sampler_texture( failover->sw, i, 
-					     failover->texture[i] );
-	 }
-      }
+      failover->sw->set_sampler_textures( failover->sw, failover->num_textures, 
+                                          failover->texture );
    }
 
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {
@@ -132,6 +124,4 @@ failover_state_emit( struct failover_context *failover )
    failover->dirty = 0;
    failover->dirty_vertex_element = 0;
    failover->dirty_vertex_buffer = 0;
-   failover->dirty_texture = 0;
-   failover->dirty_sampler = 0;
 }

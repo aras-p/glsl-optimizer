@@ -30,6 +30,7 @@
 
 #include <llvm/Support/LLVMBuilder.h>
 
+#include <map>
 #include <vector>
 
 namespace llvm {
@@ -47,8 +48,11 @@ public:
                    llvm::BasicBlock *block, StorageSoa *storage);
 
    std::vector<llvm::Value*> arl(const std::vector<llvm::Value*> in);
-
    std::vector<llvm::Value*> add(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> dp3(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> dp4(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> madd(const std::vector<llvm::Value*> in1,
                                   const std::vector<llvm::Value*> in2,
@@ -62,9 +66,29 @@ private:
    const char * name(const char *prefix) const;
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
                                llvm::Value *z, llvm::Value *w);
+   void createFunctionMap();
+   void createBuiltins();
+   llvm::Function *function(int);
+   llvm::Module *currentModule() const;
+   llvm::Value *allocaTemp();
+   std::vector<llvm::Value*> allocaToResult(llvm::Value *allocaPtr);
+   std::vector<llvm::Value*> callBuiltin(llvm::Function *func,
+                                         const std::vector<llvm::Value*> in1);
+   std::vector<llvm::Value*> callBuiltin(llvm::Function *func,
+                                         const std::vector<llvm::Value*> in1,
+                                         const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> callBuiltin(llvm::Function *func,
+                                         const std::vector<llvm::Value*> in1,
+                                         const std::vector<llvm::Value*> in2,
+                                         const std::vector<llvm::Value*> in3);
 private:
    llvm::LLVMFoldingBuilder  m_builder;
    StorageSoa *m_storage;
+
+   std::map<int, std::string> m_functionsMap;
+   std::map<int, llvm::Function*> m_functions;
+   llvm::Module *m_builtins;
+
 private:
    mutable int  m_idx;
    mutable char m_name[32];

@@ -38,6 +38,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_context.h"
 
 #include "st_context.h"
 #include "st_draw.h"
@@ -89,8 +90,7 @@ make_tex_fragment_program(GLcontext *ctx)
 
    stfp = (struct st_fragment_program *) p;
 
-   st_translate_fragment_program(ctx->st, stfp, NULL,
-                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+   st_translate_fragment_program(ctx->st, stfp, NULL);
 
    return stfp;
 }
@@ -118,6 +118,7 @@ st_init_generate_mipmap(struct st_context *st)
    blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
    blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    blend.colormask = PIPE_MASK_RGBA;
+   st->gen_mipmap.blend = blend;
    st->gen_mipmap.blend_cso = pipe->create_blend_state(pipe, &blend);
 
    memset(&depthstencil, 0, sizeof(depthstencil));
@@ -257,14 +258,14 @@ st_render_mipmap(struct st_context *st,
    sampler.normalized_coords = 1;
 
 
-   /* bind CSOs */
-   pipe->bind_blend_state(pipe, st->gen_mipmap.blend_cso);
-   pipe->bind_depth_stencil_alpha_state(pipe, st->gen_mipmap.depthstencil_cso);
-   pipe->bind_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
+   /* bind state */
+   cso_set_blend(st->cso_context, &st->gen_mipmap.blend);
+   cso_set_depth_stencil_alpha(st->cso_context, &st->gen_mipmap.depthstencil);
+   cso_set_rasterizer(st->cso_context, &st->gen_mipmap.rasterizer);
 
    /* bind shaders */
-   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->cso->data);
-   pipe->bind_vs_state(pipe, st->gen_mipmap.stvp->cso->data);
+   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->driver_shader);
+   pipe->bind_vs_state(pipe, st->gen_mipmap.stvp->driver_shader);
 
    /*
     * XXX for small mipmap levels, it may be faster to use the software
@@ -284,7 +285,7 @@ st_render_mipmap(struct st_context *st,
        */
       sampler.min_lod = sampler.max_lod = srcLevel;
       sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-      pipe->bind_sampler_state(pipe, 0, sampler_cso);
+      pipe->bind_sampler_states(pipe, 1, &sampler_cso);
 
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 
@@ -293,7 +294,7 @@ st_render_mipmap(struct st_context *st,
        * the right mipmap level.
        */
       /*pt->first_level = srcLevel;*/
-      pipe->set_sampler_texture(pipe, 0, pt);
+      pipe->set_sampler_textures(pipe, 1, &pt);
 
       draw_quad(st->ctx);
 
@@ -304,16 +305,18 @@ st_render_mipmap(struct st_context *st,
    /*pt->first_level = first_level_save;*/
 
    /* restore pipe state */
-   if (st->state.rasterizer)
-      pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);
-   if (st->state.fs)
-      pipe->bind_fs_state(pipe, st->state.fs->data);
-   if (st->state.vs)
-      pipe->bind_vs_state(pipe, st->state.vs->cso->data);
-   if (st->state.sampler[0])
-      pipe->bind_sampler_state(pipe, 0, st->state.sampler[0]->data);
-   pipe->set_sampler_texture(pipe, 0, st->state.sampler_texture[0]);
+#if 0
+   cso_set_rasterizer(st->cso_context, &st->state.rasterizer);
+   cso_set_samplers(st->cso_context, st->state.samplers_list);
+   pipe->bind_fs_state(pipe, st->fp->shader_program);
+   pipe->bind_vs_state(pipe, st->vp->shader_program);
+   pipe->set_sampler_textures(pipe, st->state.num_textures,
+                              st->state.sampler_texture);
    pipe->set_viewport_state(pipe, &st->state.viewport);
+#else
+   /* XXX is this sufficient? */
+   st_invalidate_state(st->ctx, _NEW_COLOR | _NEW_TEXTURE);
+#endif
 
    return TRUE;
 }

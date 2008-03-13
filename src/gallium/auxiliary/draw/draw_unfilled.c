@@ -129,7 +129,7 @@ static void unfilled_tri( struct draw_stage *stage,
       points( stage, header );
       break;
    default:
-      abort();
+      assert(0);
    }   
 }
 

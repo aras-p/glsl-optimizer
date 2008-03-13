@@ -25,6 +25,16 @@
  *
  **************************************************************************/
 
+/**
+ This file provides a hash implementation that is capable of dealing
+ with collisions. It stores colliding entries in linked list. All
+ functions operating on the hash return an iterator. The iterator
+ itself points to the collision list. If there wasn't any collision
+ the list will have just one entry, otherwise client code should
+ iterate over the entries to find the exact entry among ones that
+ had the same key (e.g. memcmp could be used on the data to check
+ that)
+*/
  /*
   * Authors:
   *   Zack Rusin <zack@tungstengraphics.com>

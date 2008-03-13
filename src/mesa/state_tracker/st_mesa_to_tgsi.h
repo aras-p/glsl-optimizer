@@ -39,7 +39,7 @@ extern "C" {
 struct tgsi_token;
 struct gl_program;
 
-GLboolean
+GLuint
 tgsi_translate_mesa_program(
    uint procType,
    const struct gl_program *program,

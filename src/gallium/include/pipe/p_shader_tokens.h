@@ -42,15 +42,17 @@ struct tgsi_token
    unsigned Extended   : 1;  /* BOOL */
 };
 
-#define TGSI_FILE_NULL        0
-#define TGSI_FILE_CONSTANT    1
-#define TGSI_FILE_INPUT       2
-#define TGSI_FILE_OUTPUT      3
-#define TGSI_FILE_TEMPORARY   4
-#define TGSI_FILE_SAMPLER     5
-#define TGSI_FILE_ADDRESS     6
-#define TGSI_FILE_IMMEDIATE   7
-#define TGSI_FILE_COUNT       8  /**< how many TGSI_FILE_ types */
+enum tgsi_file_type {
+   TGSI_FILE_NULL        =0,
+   TGSI_FILE_CONSTANT    =1,
+   TGSI_FILE_INPUT       =2,
+   TGSI_FILE_OUTPUT      =3,
+   TGSI_FILE_TEMPORARY   =4,
+   TGSI_FILE_SAMPLER     =5,
+   TGSI_FILE_ADDRESS     =6,
+   TGSI_FILE_IMMEDIATE   =7,
+   TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
+};
 
 
 #define TGSI_DECLARE_RANGE    0
@@ -225,6 +227,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_STR                 51
 #define TGSI_OPCODE_TEX                 52
 #define TGSI_OPCODE_TXD                 53
+#define TGSI_OPCODE_TXP                 134
 #define TGSI_OPCODE_UP2H                54
 #define TGSI_OPCODE_UP2US               55
 #define TGSI_OPCODE_UP4B                56
@@ -339,7 +342,7 @@ struct tgsi_immediate_float32
  * ps_1_1
  */
 #define TGSI_OPCODE_TEXCOORD            TGSI_OPCODE_NOP
-#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KIL
+#define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KILP
 #define TGSI_OPCODE_TEXBEM              107
 #define TGSI_OPCODE_TEXBEML             108
 #define TGSI_OPCODE_TEXREG2AR           109
@@ -419,7 +422,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_KIL                 132  /* unpredicated kill */
 #define TGSI_OPCODE_END                 133  /* aka HALT */
 
-#define TGSI_OPCODE_LAST                134
+#define TGSI_OPCODE_LAST                135
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
@@ -652,9 +655,6 @@ struct tgsi_src_register_ext
  *
  * NegateX, NegateY, NegateZ and NegateW negate individual components of the
  * source register.
- *
- * ExtDivide specifies which component is used to divide all components of the
- * source register.
  */
 
 struct tgsi_src_register_ext_swz
@@ -668,8 +668,7 @@ struct tgsi_src_register_ext_swz
    unsigned NegateY      : 1;    /* BOOL */
    unsigned NegateZ      : 1;    /* BOOL */
    unsigned NegateW      : 1;    /* BOOL */
-   unsigned ExtDivide    : 4;    /* TGSI_EXTSWIZZLE_ */
-   unsigned Padding      : 3;
+   unsigned Padding      : 7;
    unsigned Extended     : 1;    /* BOOL */
 };
 

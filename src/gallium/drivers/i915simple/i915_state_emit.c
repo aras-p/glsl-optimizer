@@ -267,12 +267,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
       /* 2 + I915_TEX_UNITS*3 dwords, I915_TEX_UNITS relocs */
       if (i915->hardware_dirty & (I915_HW_MAP | I915_HW_SAMPLER))
       {
-	 /* XXX: we were refering to sampler state
-	  * (current.sampler_enable_nr) below, but only checking
-	  * I915_HW_MAP above.  Should probably calculate the enabled
-	  * flags separately - but there will be further rework of
-	  * state so perhaps not necessary yet.
-	  */
          const uint nr = i915->current.sampler_enable_nr;
          if (nr) {
             const uint enabled = i915->current.sampler_enable_flags;

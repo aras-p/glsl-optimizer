@@ -63,6 +63,7 @@ struct cell_context
 
    const struct pipe_blend_state *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   uint num_samplers;
    const struct pipe_depth_stencil_alpha_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    const struct cell_vertex_shader_state *vs;
@@ -75,6 +76,7 @@ struct cell_context
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct cell_texture *texture[PIPE_MAX_SAMPLERS];
+   uint num_textures;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];

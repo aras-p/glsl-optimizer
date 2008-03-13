@@ -277,7 +277,7 @@ llvm::Constant * StorageSoa::createConstGlobalVector(const std::vector<float> &v
    return constVector;
 }
 
-std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
+std::vector<llvm::Value*> StorageSoa::load(enum tgsi_file_type type, int idx, int swizzle,
                                            llvm::Value *indIdx)
 {
    std::vector<llvm::Value*> val(4);
@@ -292,23 +292,27 @@ std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
    debug_printf("XXXXXXXXX realIdx = %p, indIdx = %p\n", realIndex, indIdx);
 
    switch(type) {
-   case Input:
+   case TGSI_FILE_INPUT:
       val = inputElement(realIndex);
       break;
-   case Output:
+   case TGSI_FILE_OUTPUT:
       val = outputElement(realIndex);
       break;
-   case Temp:
+   case TGSI_FILE_TEMPORARY:
       val = tempElement(realIndex);
       break;
-   case Const:
+   case TGSI_FILE_CONSTANT:
       val = constElement(realIndex);
       break;
-   case Immediate:
+   case TGSI_FILE_IMMEDIATE:
       val = immediateElement(realIndex);
       break;
-   case Address:
+   case TGSI_FILE_ADDRESS:
       debug_printf("Address not handled in the load phase!\n");
+      assert(0);
+      break;
+   default:
+      debug_printf("Unknown load!\n");
       assert(0);
       break;
    }
@@ -324,21 +328,21 @@ std::vector<llvm::Value*> StorageSoa::load(Argument type, int idx, int swizzle,
    return res;
 }
 
-void StorageSoa::store(Argument type, int idx, const std::vector<llvm::Value*> &val,
+void StorageSoa::store(enum tgsi_file_type type, int idx, const std::vector<llvm::Value*> &val,
                        int mask)
 {
    llvm::Value *out = 0;
    switch(type) {
-   case Output:
+   case TGSI_FILE_OUTPUT:
       out = m_output;
       break;
-   case Temp:
+   case TGSI_FILE_TEMPORARY:
       out = m_temps;
       break;
-   case Input:
+   case TGSI_FILE_INPUT:
       out = m_input;
       break;
-   case Address: {
+   case TGSI_FILE_ADDRESS: {
       llvm::Value *addr = m_addresses[idx];
       if (!addr) {
          addAddress(idx);

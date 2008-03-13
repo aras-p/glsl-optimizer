@@ -306,6 +306,11 @@ void spe_init_func(struct spe_function *p, unsigned code_size)
 {
     p->store = align_malloc(code_size, 16);
     p->csr = p->store;
+    
+    /* Conservatively treat R0 - R2 and R80 - R127 as non-volatile.
+     */
+    p->regs[0] = ~7;
+    p->regs[1] = (1U << (80 - 64)) - 1;
 }
 
 
@@ -315,6 +320,48 @@ void spe_release_func(struct spe_function *p)
     p->store = NULL;
     p->csr = NULL;
 }
+
+
+int spe_allocate_available_register(struct spe_function *p)
+{
+   unsigned i;
+   for (i = 0; i < 128; i++) {
+      const uint64_t mask = (1ULL << (i % 128));
+      const unsigned idx = i / 128;
+
+      if ((p->regs[idx] & mask) != 0) {
+         p->regs[idx] &= ~mask;
+         return i;
+      }
+   }
+
+   return -1;
+}
+
+
+int spe_allocate_register(struct spe_function *p, int reg)
+{
+   const unsigned idx = reg / 128;
+   const unsigned bit = reg % 128;
+
+   assert((p->regs[idx] & (1ULL << bit)) != 0);
+
+   p->regs[idx] &= ~(1ULL << bit);
+   return reg;
+}
+
+
+void spe_release_register(struct spe_function *p, int reg)
+{
+   const unsigned idx = reg / 128;
+   const unsigned bit = reg % 128;
+
+   assert((p->regs[idx] & (1ULL << bit)) == 0);
+
+   p->regs[idx] |= (1ULL << bit);
+}
+
+
 
 
 void spe_bi(struct spe_function *p, unsigned rA, int d, int e)

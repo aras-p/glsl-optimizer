@@ -33,18 +33,16 @@ if common.default_platform in ('linux', 'freebsd', 'darwin'):
 	default_statetrackers = 'mesa'
 	default_drivers = 'softpipe,failover,i915simple,i965simple'
 	default_winsys = 'xlib'
-	default_dri = 'yes'
 elif common.default_platform in ('winddk',):
 	default_statetrackers = 'none'
 	default_drivers = 'softpipe,i915simple'
 	default_winsys = 'none'
-	default_dri = 'no'
 else:
 	default_drivers = 'all'
 	default_winsys = 'all'
-	default_dri = 'no'
 
-opts = common.Options()
+opts = Options('config.py')
+common.AddOptions(opts)
 opts.Add(ListOption('statetrackers', 'state_trackers to build', default_statetrackers,
                      ['mesa']))
 opts.Add(ListOption('drivers', 'pipe drivers to build', default_drivers,
@@ -56,9 +54,6 @@ env = Environment(
 	options = opts, 
 	ENV = os.environ)
 Help(opts.GenerateHelpText(env))
-
-# for debugging
-#print env.Dump()
 
 # replicate options values in local variables
 debug = env['debug']
@@ -89,6 +84,7 @@ Export([
 # TODO: put the compiler specific settings in separate files
 # TODO: auto-detect as much as possible
 
+common.generate(env)
 
 if platform == 'winddk':
 	env.Tool('winddk', ['.'])
@@ -117,17 +113,9 @@ if gcc:
 	env.Append(CXXFLAGS = '-fmessage-length=0')
 
 if msvc:
-	env.Append(CFLAGS = '/W3')
-	if debug:
-		cflags = [
-			'/Od', # disable optimizations
-			'/Oy-', # disable frame pointer omission
-		]
-	else:
-		cflags = [
-			'/Ox', # maximum optimizations
-			'/Os', # favor code space
-		]
+	cflags = [
+		#'/Wp64', # enable 64 bit porting warnings
+	]
 	env.Append(CFLAGS = cflags)
 	env.Append(CXXFLAGS = cflags)
 	# Put debugging information in a separate .pdb file for each object file as
@@ -136,14 +124,7 @@ if msvc:
 
 # Defines
 if debug:
-	if gcc:
-		env.Append(CPPDEFINES = ['DEBUG'])
-	if msvc:
-		env.Append(CPPDEFINES = [
-			('DBG', '1'),
-			('DEBUG', '1'),
-			('_DEBUG', '1'),
-		])
+	env.Append(CPPDEFINES = ['DEBUG'])
 else:
 	env.Append(CPPDEFINES = ['NDEBUG'])
 
@@ -208,7 +189,8 @@ if llvm:
 	env.ParseConfig('llvm-config --cflags --ldflags --libs')
 	env.Append(CPPDEFINES = ['MESA_LLVM'])
 	env.Append(CXXFLAGS = ['-Wno-long-long'])
-	
+        # Force C++ linkage
+	env['LINK'] = env['CXX']
 
 # libGL
 if platform not in ('winddk',):
@@ -220,8 +202,8 @@ if platform not in ('winddk',):
 		'Xfixes',
 	])
 
-# Convenience library support
-common.createConvenienceLibBuilder(env)
+# for debugging
+#print env.Dump()
 
 Export('env')
 

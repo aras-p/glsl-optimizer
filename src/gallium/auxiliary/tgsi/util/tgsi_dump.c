@@ -459,7 +459,8 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_IFC",
    "OPCODE_BREAKC",
    "OPCODE_KIL",
-   "OPCODE_END"
+   "OPCODE_END",
+   "OPCODE_TXP"
 };
 
 static const char *TGSI_OPCODES_SHORT[] =
@@ -597,7 +598,8 @@ static const char *TGSI_OPCODES_SHORT[] =
    "IFC",
    "BREAKC",
    "KIL",
-   "END"
+   "END",
+   "TXP"
 };
 
 static const char *TGSI_SATS[] =
@@ -1360,10 +1362,6 @@ dump_instruction_verbose(
          if( deflt || fs->SrcRegisterExtSwz.NegateW != src->SrcRegisterExtSwz.NegateW ) {
             TXT( "\nNegateW   : " );
             UID( src->SrcRegisterExtSwz.NegateW );
-         }
-         if( deflt || fs->SrcRegisterExtSwz.ExtDivide != src->SrcRegisterExtSwz.ExtDivide ) {
-            TXT( "\nExtDivide  : " );
-            ENM( src->SrcRegisterExtSwz.ExtDivide, TGSI_EXTSWIZZLES );
          }
          if( ignored ) {
             TXT( "\nPadding   : " );

@@ -71,6 +71,8 @@ static unsigned translate_img_filter( unsigned filter )
       return FILTER_NEAREST;
    case PIPE_TEX_FILTER_LINEAR:
       return FILTER_LINEAR;
+   case PIPE_TEX_FILTER_ANISO:
+      return FILTER_ANISOTROPIC;
    default:
       assert(0);
       return FILTER_NEAREST;
@@ -84,7 +86,7 @@ static unsigned translate_mip_filter( unsigned filter )
       return MIPFILTER_NONE;
    case PIPE_TEX_MIPFILTER_NEAREST:
       return MIPFILTER_NEAREST;
-   case PIPE_TEX_FILTER_LINEAR:
+   case PIPE_TEX_MIPFILTER_LINEAR:
       return MIPFILTER_LINEAR;
    default:
       assert(0);
@@ -211,16 +213,11 @@ i915_create_sampler_state(struct pipe_context *pipe,
    cso->templ = sampler;
 
    mipFilt = translate_mip_filter(sampler->min_mip_filter);
-   if (sampler->max_anisotropy > 1.0) {
-      minFilt = FILTER_ANISOTROPIC;
-      magFilt = FILTER_ANISOTROPIC;
-      if (sampler->max_anisotropy > 2.0) {
-         cso->state[0] |= SS2_MAX_ANISO_4;
-      }
-   }
-   else {
-      minFilt = translate_img_filter( sampler->min_img_filter );
-      magFilt = translate_img_filter( sampler->mag_img_filter );
+   minFilt = translate_img_filter( sampler->min_img_filter );
+   magFilt = translate_img_filter( sampler->mag_img_filter );
+   
+   if (sampler->max_anisotropy > 2.0) {
+      cso->state[0] |= SS2_MAX_ANISO_4;
    }
 
    {
@@ -269,13 +266,25 @@ i915_create_sampler_state(struct pipe_context *pipe,
    return cso;
 }
 
-static void i915_bind_sampler_state(struct pipe_context *pipe,
-                                    unsigned unit, void *sampler)
+static void i915_bind_sampler_states(struct pipe_context *pipe,
+                                     unsigned num, void **sampler)
 {
    struct i915_context *i915 = i915_context(pipe);
+   unsigned i;
 
-   assert(unit < PIPE_MAX_SAMPLERS);
-   i915->sampler[unit] = (const struct i915_sampler_state*)sampler;
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == i915->num_samplers &&
+       !memcmp(i915->sampler, sampler, num * sizeof(void *)))
+      return;
+
+   for (i = 0; i < num; ++i)
+      i915->sampler[i] = sampler[i];
+   for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
+      i915->sampler[i] = NULL;
+
+   i915->num_samplers = num;
 
    i915->dirty |= I915_NEW_SAMPLER;
 }
@@ -526,14 +535,29 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 }
 
 
-static void i915_set_sampler_texture(struct pipe_context *pipe,
-				     unsigned sampler,
-				     struct pipe_texture *texture)
+static void i915_set_sampler_textures(struct pipe_context *pipe,
+                                      unsigned num,
+                                      struct pipe_texture **texture)
 {
    struct i915_context *i915 = i915_context(pipe);
+   uint i;
 
-   pipe_texture_reference((struct pipe_texture **) &i915->texture[sampler],
-                          texture);
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == i915->num_textures &&
+       !memcmp(i915->texture, texture, num * sizeof(struct pipe_texture *)))
+      return;
+
+   for (i = 0; i < num; i++)
+      pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
+                             texture[i]);
+
+   for (i = num; i < i915->num_textures; i++)
+      pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
+                             NULL);
+
+   i915->num_textures = num;
 
    i915->dirty |= I915_NEW_TEXTURE;
 }
@@ -644,22 +668,23 @@ i915_create_rasterizer_state(struct pipe_context *pipe,
 }
 
 static void i915_bind_rasterizer_state( struct pipe_context *pipe,
-                                        void *setup )
+                                        void *raster )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->rasterizer = (struct i915_rasterizer_state *)setup;
+   i915->rasterizer = (struct i915_rasterizer_state *)raster;
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(i915->draw, i915->rasterizer->templ);
+   draw_set_rasterizer_state(i915->draw,
+                          (i915->rasterizer ? i915->rasterizer->templ : NULL));
 
    i915->dirty |= I915_NEW_RASTERIZER;
 }
 
 static void i915_delete_rasterizer_state(struct pipe_context *pipe,
-                                         void *setup)
+                                         void *raster)
 {
-   FREE(setup);
+   FREE(raster);
 }
 
 static void i915_set_vertex_buffer( struct pipe_context *pipe,
@@ -691,7 +716,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.delete_blend_state = i915_delete_blend_state;
 
    i915->pipe.create_sampler_state = i915_create_sampler_state;
-   i915->pipe.bind_sampler_state = i915_bind_sampler_state;
+   i915->pipe.bind_sampler_states = i915_bind_sampler_states;
    i915->pipe.delete_sampler_state = i915_delete_sampler_state;
 
    i915->pipe.create_depth_stencil_alpha_state = i915_create_depth_stencil_state;
@@ -715,7 +740,7 @@ i915_init_state_functions( struct i915_context *i915 )
 
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
-   i915->pipe.set_sampler_texture = i915_set_sampler_texture;
+   i915->pipe.set_sampler_textures = i915_set_sampler_textures;
    i915->pipe.set_viewport_state = i915_set_viewport_state;
    i915->pipe.set_vertex_buffer = i915_set_vertex_buffer;
    i915->pipe.set_vertex_element = i915_set_vertex_element;

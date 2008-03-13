@@ -41,6 +41,8 @@
 
 #include <stdarg.h>
 
+#include "p_compiler.h"
+
 
 #ifdef	__cplusplus
 extern "C" {
@@ -58,8 +60,22 @@ extern "C" {
 #endif
 
 
+/**
+ * Print debug messages.
+ *
+ * A debug message will be printed regardless of the DEBUG/NDEBUG macros.
+ *
+ * The actual channel used to output debug message is platform specific. To 
+ * avoid misformating or truncation, follow these rules of thumb:   
+ * - output whole lines
+ * - avoid outputing large strings (512 bytes is the current maximum length 
+ * that is guaranteed to be printed in all platforms)
+ */
 void debug_printf(const char *format, ...);
 
+/**
+ * @sa debug_printf 
+ */
 void debug_vprintf(const char *format, va_list ap);
 
 void debug_assert_fail(const char *expr, const char *file, unsigned line);
@@ -78,6 +94,68 @@ void debug_assert_fail(const char *expr, const char *file, unsigned line);
 #endif
 #define assert(expr) debug_assert(expr)
 
+
+/**
+ * Set a channel's debug mask.
+ * 
+ * uuid is just a random 32 bit integer that uniquely identifies the debugging 
+ * channel. 
+ * 
+ * @note Due to current implementation issues, make sure the lower 8 bits of 
+ * UUID are unique.
+ */
+void debug_mask_set(uint32_t uuid, uint32_t mask);
+
+
+uint32_t debug_mask_get(uint32_t uuid);
+
+
+/**
+ * Conditional debug output. 
+ * 
+ * This is just a generalization of the debug filtering mechanism used 
+ * throughout Gallium.
+ * 
+ * You use this function as:
+ * 
+ * @code
+ * #define MYDRIVER_UUID 0x12345678 // random 32 bit identifier
+ * 
+ * static inline mydriver_debug(uint32_t what, const char *format, ...)
+ * {
+ * #ifdef DEBUG
+ *    va_list ap;
+ *    va_start(ap, format);
+ *    debug_mask_vprintf(MYDRIVER_UUID, what, format, ap);
+ *    va_end(ap);
+ * #endif
+ * }
+ * 
+ * ...
+ * 
+ *    debug_mask_set(MYDRIVER_UUID, 
+ *                   MYDRIVER_DEBUG_THIS | 
+ *                   MYDRIVER_DEBUG_THAT |
+ *                   ... );
+ * 
+ * ...
+ * 
+ *    mydriver_debug(MYDRIVER_DEBUG_THIS,
+ *                   "this and this happened\n");
+ *
+ *    mydriver_debug(MYDRIVER_DEBUG_THAT,
+ *                   "that = %f\n", that);
+ * ...
+ * @endcode     
+ * 
+ * You can also define several variants of mydriver_debug, with hardcoded what. 
+ * Note that although macros with variable number of arguments would accomplish 
+ * more in less code, they are not portable. 
+ */
+void debug_mask_vprintf(uint32_t uuid, 
+                        uint32_t what, 
+                        const char *format, 
+                        va_list ap);
 
 #ifdef	__cplusplus
 }

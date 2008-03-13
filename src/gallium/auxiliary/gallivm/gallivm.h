@@ -33,6 +33,16 @@
 #ifndef GALLIVM_H
 #define GALLIVM_H
 
+/*
+  LLVM representation consists of two stages - layout independent
+  intermediate representation gallivm_ir and driver specific
+  gallivm_prog. TGSI is first being translated into gallivm_ir
+  after that driver can set number of options on gallivm_ir and
+  have it compiled into gallivm_prog. gallivm_prog can be either
+  executed (assuming there's LLVM JIT backend for the current
+  target) or machine code generation can be done (assuming there's
+  a LLVM code generator for thecurrent target)
+ */
 #if defined __cplusplus
 extern "C" {
 #endif

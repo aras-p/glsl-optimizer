@@ -60,11 +60,8 @@ struct st_fragment_program
    /** map FP input back to VP output */
    GLuint input_map[PIPE_MAX_SHADER_INPUTS];
 
-   /** The program in TGSI format */
-   struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
-
-   /** Pointer to the corresponding cached shader */
-   const struct cso_fragment_shader *cso;
+   struct pipe_shader_state state;
+   struct pipe_shader_state *driver_shader;
 
    GLuint param_state;
 
@@ -88,11 +85,8 @@ struct st_vertex_program
    /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
    GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
 
-   /** The program in TGSI format */
-   struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
-
-   /** Pointer to the corresponding cached shader */
-   const struct cso_vertex_shader *cso;
+   struct pipe_shader_state state;
+   struct pipe_shader_state *driver_shader;
 
    /** For using our private draw module (glRasterPos) */
    struct draw_vertex_shader *draw_shader;
@@ -122,16 +116,12 @@ st_vertex_program( struct gl_vertex_program *vp )
 extern const struct cso_fragment_shader *
 st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *fp,
-                              const GLuint inputMapping[],
-                              struct tgsi_token *tokens,
-                              GLuint maxTokens);
+                              const GLuint inputMapping[]);
 
 
 extern void
 st_translate_vertex_program(struct st_context *st,
                             struct st_vertex_program *vp,
-                            const GLuint vert_output_to_slot[],
-                            struct tgsi_token *tokens,
-                            GLuint maxTokens);
+                            const GLuint vert_output_to_slot[]);
 
 #endif

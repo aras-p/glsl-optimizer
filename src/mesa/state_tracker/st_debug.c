@@ -53,15 +53,15 @@ st_print_current(void)
    int i;
 
    printf("Vertex Transform Inputs:\n");
-   for (i = 0; i < st->state.vs->cso->state.num_inputs; i++) {
+   for (i = 0; i < st->vp->state.num_inputs; i++) {
       printf("  Slot %d:  VERT_ATTRIB_%d\n", i, st->vp->index_to_input[i]);
    }
 
-   tgsi_dump( st->state.vs->cso->state.tokens, 0 );
+   tgsi_dump( st->vp->state.tokens, 0 );
    if (st->vp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->vp->Base.Base.Parameters);
 
-   tgsi_dump( st->state.fs->state.tokens, 0 );
+   tgsi_dump( st->fp->state.tokens, 0 );
    if (st->fp->Base.Base.Parameters)
       _mesa_print_parameter_list(st->fp->Base.Base.Parameters);
 }

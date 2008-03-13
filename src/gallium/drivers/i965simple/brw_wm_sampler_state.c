@@ -136,6 +136,9 @@ static void brw_update_sampler_state( const struct pipe_sampler_state *pipe_samp
    case PIPE_TEX_FILTER_LINEAR:
       sampler->ss0.min_filter = BRW_MAPFILTER_LINEAR;
       break;
+   case PIPE_TEX_FILTER_ANISO:
+      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC;
+      break;
    default:
       break;
    }
@@ -155,26 +158,23 @@ static void brw_update_sampler_state( const struct pipe_sampler_state *pipe_samp
    }
    /* Set Anisotropy:
     */
-   if (pipe_sampler->max_anisotropy > 1.0) {
-      sampler->ss0.min_filter = BRW_MAPFILTER_ANISOTROPIC;
-      sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
-
-      if (pipe_sampler->max_anisotropy > 2.0) {
-	 sampler->ss3.max_aniso = MAX2((pipe_sampler->max_anisotropy - 2) / 2,
-				       BRW_ANISORATIO_16);
-      }
+   switch (pipe_sampler->mag_img_filter) {
+   case PIPE_TEX_FILTER_NEAREST:
+      sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
+      break;
+   case PIPE_TEX_FILTER_LINEAR:
+      sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
+      break;
+   case PIPE_TEX_FILTER_ANISO:
+      sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
+      break;
+   default:
+      break;
    }
-   else {
-      switch (pipe_sampler->mag_img_filter) {
-      case PIPE_TEX_FILTER_NEAREST:
-	 sampler->ss0.mag_filter = BRW_MAPFILTER_NEAREST;
-	 break;
-      case PIPE_TEX_FILTER_LINEAR:
-	 sampler->ss0.mag_filter = BRW_MAPFILTER_LINEAR;
-	 break;
-      default:
-	 break;
-      }
+
+   if (pipe_sampler->max_anisotropy > 2.0) {
+      sampler->ss3.max_aniso = MAX2((pipe_sampler->max_anisotropy - 2) / 2,
+                                    BRW_ANISORATIO_16);
    }
 
    sampler->ss1.s_wrap_mode = translate_wrap_mode(pipe_sampler->wrap_s);
@@ -235,7 +235,8 @@ static void upload_wm_samplers(struct brw_context *brw)
    unsigned sampler_count = 0;
 
    /* BRW_NEW_SAMPLER */
-   for (unit = 0; unit < BRW_MAX_TEX_UNIT; unit++) {
+   for (unit = 0; unit < brw->num_textures && unit < brw->num_samplers;
+        unit++) {
       /* determine unit enable/disable by looking for a bound texture */
       if (brw->attribs.Texture[unit]) {
          const struct pipe_sampler_state *sampler = brw->attribs.Samplers[unit];

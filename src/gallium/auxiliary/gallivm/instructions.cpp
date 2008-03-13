@@ -42,6 +42,7 @@
 #include <llvm/InstrTypes.h>
 #include <llvm/Instructions.h>
 #include <llvm/ParameterAttributes.h>
+#include <llvm/ParamAttrsList.h>
 
 #include <sstream>
 #include <fstream>
@@ -50,6 +51,15 @@
 using namespace llvm;
 
 #include "gallivm_builtins.cpp"
+
+#if 0
+
+llvm::Value *arrayFromChannels(std::vector<llvm::Value*> &vals)
+{
+   VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
+   ArrayType *vectorArray = ArrayType::get(vectorType, 4);
+}
+#endif
 
 static inline std::string createFuncName(int label)
 {

@@ -529,7 +529,8 @@ st_TexImage(GLcontext * ctx,
 	 texImage->RowStride = postConvWidth;
       }
       
-      assert(texImage->RowStride == postConvWidth);
+      /* we'll set RowStride elsewhere when the texture is a "mapped" state */
+      /*assert(texImage->RowStride == postConvWidth);*/
    }
 
    /* Release the reference to a potentially orphaned buffer.   

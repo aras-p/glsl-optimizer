@@ -133,7 +133,7 @@ struct draw_vertex_shader {
 
    /* This member will disappear shortly:
     */
-   const struct pipe_shader_state   *state;
+   struct pipe_shader_state   state;
 
    struct tgsi_shader_info info;
 
@@ -162,7 +162,13 @@ typedef void (*full_fetch_func)( struct draw_context *draw,
 				 const unsigned *elts,
 				 unsigned count );
 
+typedef void (*pt_fetch_func)( struct draw_context *draw,
+			      float *out,
+			      unsigned start,
+			       unsigned count );
 
+
+struct vbuf_render;
 
 /**
  * Private context for the drawing module.
@@ -190,6 +196,17 @@ struct draw_context
       struct draw_stage *wide_point;
       struct draw_stage *rasterize;
    } pipeline;
+
+
+   struct vbuf_render *render;
+
+   /* Support prototype passthrough path:
+    */
+   struct {
+      unsigned prim;
+      unsigned hw_vertex_size;
+   } pt;
+
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
@@ -244,6 +261,7 @@ struct draw_context
       fetch_func fetch[PIPE_ATTRIB_MAX];
       unsigned nr_attrs;
       full_fetch_func fetch_func;
+      pt_fetch_func pt_fetch;
    } vertex_fetch;
 
    /* Post-tnl vertex cache:
@@ -329,6 +347,15 @@ extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
 struct tgsi_exec_machine;
 
 extern void draw_update_vertex_fetch( struct draw_context *draw );
+
+
+/* Prototype/hack
+ */
+boolean
+draw_passthrough_arrays(struct draw_context *draw, 
+                        unsigned prim,
+                        unsigned start, 
+                        unsigned count);
 
 
 #define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */

@@ -36,7 +36,6 @@
 #include "vbo/vbo.h"
 
 #include "st_atom.h"
-#include "st_cache.h"
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
 #include "st_draw.h"
@@ -219,7 +218,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->state.vs->cso->state;
+   vs = &ctx->st->vp->state;
 
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info
@@ -481,10 +480,10 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = &ctx->st->state.vs->cso->state;
+   vs = &st->vp->state;
 
-   if (!st->state.vs->draw_shader) {
-      st->state.vs->draw_shader = draw_create_vertex_shader(draw, vs);
+   if (!st->vp->draw_shader) {
+      st->vp->draw_shader = draw_create_vertex_shader(draw, vs);
    }
 
    /*
@@ -496,8 +495,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
    assert(draw);
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
-   draw_set_rasterizer_state(draw, &st->state.rasterizer->state);
-   draw_bind_vertex_shader(draw, st->state.vs->draw_shader);
+   draw_set_rasterizer_state(draw, &st->state.rasterizer);
+   draw_bind_vertex_shader(draw, st->vp->draw_shader);
    set_feedback_vertex_format(ctx);
 
    /* loop over TGSI shader inputs to determine vertex buffer

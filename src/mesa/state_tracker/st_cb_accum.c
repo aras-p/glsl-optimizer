@@ -35,7 +35,6 @@
 #include "main/macros.h"
 
 #include "st_context.h"
-#include "st_cache.h"
 #include "st_cb_accum.h"
 #include "st_cb_fbo.h"
 #include "st_draw.h"

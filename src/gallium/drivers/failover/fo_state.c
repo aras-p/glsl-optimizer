@@ -28,6 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
+#include "pipe/p_inlines.h"
+
 #include "fo_context.h"
 
 
@@ -322,18 +324,27 @@ failover_create_sampler_state(struct pipe_context *pipe,
 }
 
 static void
-failover_bind_sampler_state(struct pipe_context *pipe,
-			   unsigned unit, void *sampler)
+failover_bind_sampler_states(struct pipe_context *pipe,
+                             unsigned num, void **sampler)
 {
    struct failover_context *failover = failover_context(pipe);
    struct fo_state *state = (struct fo_state*)sampler;
-   failover->sampler[unit] = state;
+   uint i;
+   assert(num <= PIPE_MAX_SAMPLERS);
+   /* Check for no-op */
+   if (num == failover->num_samplers &&
+       !memcmp(failover->sampler, sampler, num * sizeof(void *)))
+      return;
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      failover->sw_sampler_state[i] = i < num ? state[i].sw_state : NULL;
+      failover->hw_sampler_state[i] = i < num ? state[i].hw_state : NULL;
+   }
    failover->dirty |= FO_NEW_SAMPLER;
-   failover->dirty_sampler |= (1<<unit);
-   failover->sw->bind_sampler_state(failover->sw, unit,
-                                    state->sw_state);
-   failover->hw->bind_sampler_state(failover->hw, unit,
-                                    state->hw_state);
+   failover->num_samplers = num;
+   failover->sw->bind_sampler_states(failover->sw, num,
+                                     failover->sw_sampler_state);
+   failover->hw->bind_sampler_states(failover->hw, num,
+                                     failover->hw_sampler_state);
 }
 
 static void
@@ -351,17 +362,29 @@ failover_delete_sampler_state(struct pipe_context *pipe, void *sampler)
 
 
 static void
-failover_set_sampler_texture(struct pipe_context *pipe,
-			     unsigned unit,
-			     struct pipe_texture *texture)
+failover_set_sampler_textures(struct pipe_context *pipe,
+                              unsigned num,
+                              struct pipe_texture **texture)
 {
    struct failover_context *failover = failover_context(pipe);
+   uint i;
 
-   failover->texture[unit] = texture;
+   assert(num <= PIPE_MAX_SAMPLERS);
+
+   /* Check for no-op */
+   if (num == failover->num_textures &&
+       !memcmp(failover->texture, texture, num * sizeof(struct pipe_texture *)))
+      return;
+   for (i = 0; i < num; i++)
+      pipe_texture_reference((struct pipe_texture **) &failover->texture[i],
+                             texture[i]);
+   for (i = num; i < failover->num_textures; i++)
+      pipe_texture_reference((struct pipe_texture **) &failover->texture[i],
+                             NULL);
    failover->dirty |= FO_NEW_TEXTURE;
-   failover->dirty_texture |= (1<<unit);
-   failover->sw->set_sampler_texture( failover->sw, unit, texture );
-   failover->hw->set_sampler_texture( failover->hw, unit, texture );
+   failover->num_textures = num;
+   failover->sw->set_sampler_textures( failover->sw, num, texture );
+   failover->hw->set_sampler_textures( failover->hw, num, texture );
 }
 
 
@@ -429,7 +452,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.bind_blend_state   = failover_bind_blend_state;
    failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.create_sampler_state = failover_create_sampler_state;
-   failover->pipe.bind_sampler_state   = failover_bind_sampler_state;
+   failover->pipe.bind_sampler_states  = failover_bind_sampler_states;
    failover->pipe.delete_sampler_state = failover_delete_sampler_state;
    failover->pipe.create_depth_stencil_alpha_state = failover_create_depth_stencil_state;
    failover->pipe.bind_depth_stencil_alpha_state   = failover_bind_depth_stencil_state;
@@ -449,7 +472,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
-   failover->pipe.set_sampler_texture = failover_set_sampler_texture;
+   failover->pipe.set_sampler_textures = failover_set_sampler_textures;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
    failover->pipe.set_vertex_buffer = failover_set_vertex_buffer;
    failover->pipe.set_vertex_element = failover_set_vertex_element;

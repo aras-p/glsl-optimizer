@@ -41,7 +41,11 @@ void draw_vertex_cache_invalidate( struct draw_context *draw )
    assert(draw->vs.queue_nr == 0);
    assert(draw->vcache.referenced == 0);
 
-//   memset(draw->vcache.idx, ~0, sizeof(draw->vcache.idx));
+   /* There's an error somewhere in the vcache code that requires this
+    * memset.  The bug is exposed in q3demo demo001, but probably
+    * elsewhere as well.  Will track it down later.
+    */
+   memset(draw->vcache.idx, ~0, sizeof(draw->vcache.idx));
 }
 
 

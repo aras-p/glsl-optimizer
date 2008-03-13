@@ -131,7 +131,8 @@ cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 
    cell->vs = (const struct cell_vertex_shader_state *) vs;
 
-   draw_bind_vertex_shader(cell->draw, cell->vs->draw_data);
+   draw_bind_vertex_shader(cell->draw,
+                           (cell->vs ? cell->vs->draw_data : NULL));
 
    cell->dirty |= CELL_NEW_VS;
 }

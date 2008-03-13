@@ -43,10 +43,9 @@
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_context.h"
 
 #include "st_context.h"
-#include "st_cache.h"
 #include "st_atom.h"
 #include "st_program.h"
 #include "st_atom_shader.h"
@@ -69,9 +68,6 @@ struct translated_vertex_program
 
    /** Maps VERT_RESULT_x to slot */
    GLuint output_to_slot[VERT_RESULT_MAX];
-
-   /** The program in TGSI format */
-   struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
    /** Pointer to the translated vertex program */
    struct st_vertex_program *vp;
@@ -158,7 +154,7 @@ find_translated_vp(struct st_context *st,
    /*
     * Translate fragment program if needed.
     */
-   if (!stfp->cso) {
+   if (!stfp->state.tokens) {
       GLuint inAttr, numIn = 0;
 
       for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
@@ -175,11 +171,7 @@ find_translated_vp(struct st_context *st,
 
       assert(stfp->Base.Base.NumInstructions > 1);
 
-      (void) st_translate_fragment_program(st, stfp,
-                                           stfp->input_to_slot,
-                                           stfp->tokens,
-                                           ST_MAX_SHADER_TOKENS);
-      assert(stfp->cso);
+      st_translate_fragment_program(st, stfp, stfp->input_to_slot);
    }
 
 
@@ -261,12 +253,8 @@ find_translated_vp(struct st_context *st,
 
       assert(stvp->Base.Base.NumInstructions > 1);
 
-      st_translate_vertex_program(st, stvp,
-                                  xvp->output_to_slot,
-                                  xvp->tokens,
-                                  ST_MAX_SHADER_TOKENS);
+      st_translate_vertex_program(st, stvp, xvp->output_to_slot);
 
-      assert(stvp->cso);
       xvp->vp = stvp;
 
       /* translated VP is up to date now */
@@ -296,12 +284,10 @@ update_linkage( struct st_context *st )
    xvp = find_translated_vp(st, stvp, stfp);
 
    st->vp = stvp;
-   st->state.vs = xvp->vp;
-   st->pipe->bind_vs_state(st->pipe, st->state.vs->cso->data);
-
    st->fp = stfp;
-   st->state.fs = stfp->cso;
-   st->pipe->bind_fs_state(st->pipe, st->state.fs->data);
+
+   st->pipe->bind_vs_state(st->pipe, stvp->driver_shader);
+   st->pipe->bind_fs_state(st->pipe, stfp->driver_shader);
 
    st->vertex_result_to_slot = xvp->output_to_slot;
 }

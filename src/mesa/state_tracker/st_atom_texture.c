@@ -37,6 +37,7 @@
 #include "st_texture.h"
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
+#include "pipe/p_inlines.h"
 
 
 /**
@@ -51,6 +52,8 @@ update_textures(struct st_context *st)
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
    GLuint unit;
 
+   st->state.num_textures = 0;
+
    for (unit = 0; unit < st->ctx->Const.MaxTextureCoordUnits; unit++) {
       const GLuint su = fprog->Base.SamplerUnits[unit];
       struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
@@ -62,6 +65,8 @@ update_textures(struct st_context *st)
 
          retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
          /* XXX retval indicates whether there's a texture border */
+
+         st->state.num_textures = unit + 1;
       }
 
       /* XXX: need to ensure that textures are unbound/removed from
@@ -70,18 +75,16 @@ update_textures(struct st_context *st)
        */
 
       pt = st_get_stobj_texture(stObj);
-
-      if (st->state.sampler_texture[unit] != pt) {
-         st->state.sampler_texture[unit] = pt;
-         st->pipe->set_sampler_texture(st->pipe, unit, pt);
-      }
+      pipe_texture_reference(&st->state.sampler_texture[unit], pt);
 
       if (stObj && stObj->dirtyData) {
          st->pipe->texture_update(st->pipe, pt);
          stObj->dirtyData = GL_FALSE;
       }
-
    }
+
+   st->pipe->set_sampler_textures(st->pipe, st->state.num_textures,
+                                  st->state.sampler_texture);
 }
 
 

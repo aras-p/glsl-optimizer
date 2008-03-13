@@ -872,17 +872,15 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_TEX:
-      if (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide
-          == TGSI_EXTSWIZZLE_W) {
-         emit_tex(p, inst, T0_TEXLDP);
-      }
-      else {
-         emit_tex(p, inst, T0_TEXLD);
-      }
+      emit_tex(p, inst, T0_TEXLD);
       break;
 
    case TGSI_OPCODE_TXB:
       emit_tex(p, inst, T0_TEXLDB);
+      break;
+
+   case TGSI_OPCODE_TXP:
+      emit_tex(p, inst, T0_TEXLDP);
       break;
 
    case TGSI_OPCODE_XPD:
