@@ -15,6 +15,7 @@ C_SOURCES = \
 	draw_debug.c \
 	draw_flatshade.c \
 	draw_offset.c \
+	draw_passthrough.c \
 	draw_prim.c \
 	draw_pstipple.c \
 	draw_stipple.c \
