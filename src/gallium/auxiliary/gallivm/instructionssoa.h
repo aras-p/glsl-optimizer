@@ -28,6 +28,7 @@
 #ifndef INSTRUCTIONSSOA_H
 #define INSTRUCTIONSSOA_H
 
+#include <pipe/p_shader_tokens.h>
 #include <llvm/Support/LLVMBuilder.h>
 
 #include <map>
@@ -59,6 +60,8 @@ public:
                                   const std::vector<llvm::Value*> in3);
    std::vector<llvm::Value*> mul(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> pow(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
    void         end();
 
    std::vector<llvm::Value*> extractVector(llvm::Value *vector);
@@ -68,6 +71,7 @@ private:
                                llvm::Value *z, llvm::Value *w);
    void createFunctionMap();
    void createBuiltins();
+   void createDependencies();
    llvm::Function *function(int);
    llvm::Module *currentModule() const;
    llvm::Value *allocaTemp();
@@ -81,6 +85,7 @@ private:
                                          const std::vector<llvm::Value*> in1,
                                          const std::vector<llvm::Value*> in2,
                                          const std::vector<llvm::Value*> in3);
+   void injectFunction(llvm::Function *originalFunc, int op = TGSI_OPCODE_LAST);
 private:
    llvm::LLVMFoldingBuilder  m_builder;
    StorageSoa *m_storage;
@@ -88,6 +93,7 @@ private:
    std::map<int, std::string> m_functionsMap;
    std::map<int, llvm::Function*> m_functions;
    llvm::Module *m_builtins;
+   std::map<std::string, std::vector<std::string> > m_builtinDependencies;
 
 private:
    mutable int  m_idx;

@@ -806,6 +806,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_POWER: {
+      out = instr->pow(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_CROSSPRODUCT: {
