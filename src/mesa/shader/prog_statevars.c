@@ -181,7 +181,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
                      ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_AMBIENT+face][i];
                }
                /* [3] = material alpha */
-               value[3] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE+face][3];
+               value[3] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_AMBIENT+face][3];
                return;
             case STATE_DIFFUSE:
                for (i = 0; i < 3; i++) {
@@ -197,7 +197,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
                      ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SPECULAR+face][i];
                }
                /* [3] = material alpha */
-               value[3] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE+face][3];
+               value[3] = ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SPECULAR+face][3];
                return;
             default:
                _mesa_problem(ctx, "Invalid lightprod state in fetch_state");
