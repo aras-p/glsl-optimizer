@@ -85,6 +85,7 @@ struct draw_context *draw_create( void )
    /* these defaults are oriented toward the needs of softpipe */
    draw->wide_point_threshold = 1000000.0; /* infinity */
    draw->wide_line_threshold = 1.0;
+   draw->line_stipple = TRUE;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -251,6 +252,17 @@ draw_wide_line_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->wide_line_threshold = threshold;
+}
+
+
+/**
+ * Tells the draw module whether or not to implement line stipple.
+ */
+void
+draw_enable_line_stipple(struct draw_context *draw, boolean enable)
+{
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw->line_stipple = enable;
 }
 
 
