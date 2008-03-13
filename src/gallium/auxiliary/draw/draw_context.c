@@ -311,7 +311,7 @@ uint
 draw_num_vs_outputs(struct draw_context *draw)
 {
    uint count = draw->vertex_shader->info.num_outputs;
-   if (draw->extra_vp_outputs.slot >= 0)
+   if (draw->extra_vp_outputs.slot > 0)
       count++;
    return count;
 }
