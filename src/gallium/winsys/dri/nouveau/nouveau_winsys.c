@@ -93,6 +93,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 		break;
 	case 0x50:
 	case 0x80:
+	case 0x90:
 		hws_create = nv50_screen_create;
 		hw_create = nv50_create;
 		break;

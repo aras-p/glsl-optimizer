@@ -75,6 +75,7 @@ nouveau_channel_context_create(struct nouveau_device *nvdev, unsigned chipset)
 	switch (chipset & 0xf0) {
 	case 0x50:
 	case 0x80:
+	case 0x90:
 		ret = nouveau_surface_channel_create_nv50(nvc);
 		break;
 	default:
@@ -109,10 +110,27 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		st_share = ((struct nouveau_context *)sharedContextPrivate)->st;
 	}
 
+	/* Check for supported arch */
 	if ((ret = nouveau_device_get_param(nv_screen->device,
 					    NOUVEAU_GETPARAM_CHIPSET_ID,
 					    &nv->chipset))) {
 		NOUVEAU_ERR("Error determining chipset id: %d\n", ret);
+		return GL_FALSE;
+	}
+
+	switch (nv->chipset & 0xf0) {
+	case 0x30:
+		/* NV30 */
+	case 0x40:
+	case 0x60:
+		/* NV40 */
+	case 0x50:
+	case 0x80:
+	case 0x90:
+		/* G80 */
+		break;
+	default:
+		NOUVEAU_ERR("Unsupported chipset: NV%02x\n", nv->chipset);
 		return GL_FALSE;
 	}
 
@@ -176,10 +194,15 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		}
 	}
 
-	/*XXX: temporary - disable multi-context/single-channel on non-NV4x */
+	/*XXX: temporary - disable multi-context/single-channel on pre-NV4x */
 	switch (nv->chipset & 0xf0) {
 	case 0x40:
 	case 0x60:
+		/* NV40 class */
+	case 0x50:
+	case 0x80:
+	case 0x90:
+		/* G80 class */
 		break;
 	default:
 		nvc = NULL;
@@ -215,12 +238,17 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	/* Create pipe */
-	if (nv->chipset < 0x50)
-		ret = nouveau_surface_init_nv04(nv);
-	else
-		ret = nouveau_surface_init_nv50(nv);
-	if (ret) {
-		return GL_FALSE;
+	switch (nv->chipset & 0xf0) {
+	case 0x50:
+	case 0x80:
+	case 0x90:
+		if (nouveau_surface_init_nv50(nv))
+			return GL_FALSE;
+		break;
+	default:
+		if (nouveau_surface_init_nv04(nv))
+			return GL_FALSE;
+		break;
 	}
 
 	if (!getenv("NOUVEAU_FORCE_SOFTPIPE")) {
