@@ -183,6 +183,60 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
 }
 
 
+/**
+ * This function is hit when the draw module is working in pass-through mode.
+ * It's up to us to convert the vertex array into point/line/tri prims.
+ */
+static void
+sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
+{
+   struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+   struct softpipe_context *softpipe = cvbr->softpipe;
+   struct draw_stage *setup = softpipe->setup;
+   struct prim_header prim;
+   const void *vertex_buffer = cvbr->vertex_buffer;
+   const unsigned vertex_size = softpipe->vertex_info_vbuf.size * sizeof(float);
+   unsigned i, j;
+
+   prim.det = 0;
+   prim.reset_line_stipple = 0;
+   prim.edgeflags = 0;
+   prim.pad = 0;
+
+#define VERTEX(I) \
+   (struct vertex_header *) ((char *) vertex_buffer + (I) * vertex_size)
+
+   switch (cvbr->prim) {
+   case PIPE_PRIM_TRIANGLES:
+      assert(nr % 3 == 0);
+      for (i = 0; i < nr; i += 3) {
+         prim.v[0] = VERTEX(i + 0);
+         prim.v[1] = VERTEX(i + 1);
+         prim.v[2] = VERTEX(i + 2);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_POLYGON:
+      /* draw as tri fan */
+      for (i = 2; i < nr; i++) {
+         prim.v[0] = VERTEX(0);
+         prim.v[1] = VERTEX(i - 1);
+         prim.v[2] = VERTEX(i);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
+   default:
+      /* XXX finish remaining prim types */
+      assert(0);
+   }
+
+#undef VERTEX
+}
+
+
+
 static void
 sp_vbuf_destroy(struct vbuf_render *vbr)
 {
@@ -210,6 +264,7 @@ sp_init_vbuf(struct softpipe_context *sp)
    sp->vbuf_render->base.allocate_vertices = sp_vbuf_allocate_vertices;
    sp->vbuf_render->base.set_primitive = sp_vbuf_set_primitive;
    sp->vbuf_render->base.draw = sp_vbuf_draw;
+   sp->vbuf_render->base.draw_arrays = sp_vbuf_draw_arrays;
    sp->vbuf_render->base.release_vertices = sp_vbuf_release_vertices;
    sp->vbuf_render->base.destroy = sp_vbuf_destroy;
 
@@ -218,4 +273,6 @@ sp_init_vbuf(struct softpipe_context *sp)
    sp->vbuf = draw_vbuf_stage(sp->draw, &sp->vbuf_render->base);
 
    draw_set_rasterize_stage(sp->draw, sp->vbuf);
+
+   draw_set_render(sp->draw, &sp->vbuf_render->base);
 }
