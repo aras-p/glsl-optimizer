@@ -223,7 +223,12 @@ static void update_raster_state( struct st_context *st )
          raster->point_size_per_vertex = ctx->VertexProgram.PointSizeEnabled;
       }
    }
-
+   if (!raster->point_size_per_vertex) {
+      /* clamp size now */
+      raster->point_size = CLAMP(ctx->Point.Size,
+                                 ctx->Point.MinSize,
+                                 ctx->Point.MaxSize);
+   }
 
    /* _NEW_LINE
     */
