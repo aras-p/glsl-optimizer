@@ -1516,7 +1516,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      printf("TGSI: EXP opcode not implemented\n");
+      debug_printf("TGSI: EXP opcode not implemented\n");
       /* from ARB_v_p:
       tmp = ScalarLoad(op0);
       result.x = 2^floor(tmp);
@@ -1535,7 +1535,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_LOG:
-      printf("TGSI: LOG opcode not implemented\n");
+      debug_printf("TGSI: LOG opcode not implemented\n");
       /* from ARB_v_p:
       tmp = fabs(ScalarLoad(op0));
       result.x = floor(log2(tmp));
