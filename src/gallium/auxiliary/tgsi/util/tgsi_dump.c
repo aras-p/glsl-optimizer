@@ -1563,3 +1563,25 @@ tgsi_dump_str(
 
    *str = dump.text;
 }
+
+
+void tgsi_debug_dump( struct tgsi_token *tokens )
+{
+   char *str, *p;
+
+   tgsi_dump_str( &str, tokens, 0 );
+
+   p = str;
+   while (p != NULL)
+   {
+      char *end = strchr( p, '\n' );
+      if (end != NULL)
+      {
+         *end++ = '\0';
+      }
+      debug_printf( "%s\n", p );
+      p = end;
+   }
+
+   FREE( str );
+}
