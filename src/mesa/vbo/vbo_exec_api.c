@@ -309,23 +309,16 @@ static void vbo_exec_fixup_vertex( GLcontext *ctx,
 				   GLuint attr, GLuint sz )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   static const GLfloat id[4] = { 0, 0, 0, 1 };
    int i;
 
-   if (exec->vtx.prim_count == 0) {
-      GLfloat *current = (GLfloat *)vbo_context(ctx)->currval[attr].Ptr;
-      exec->vtx.attrptr[attr] = current;
-      memcpy(current, id, sizeof(id));
-      ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
-      return;
-   }
-   else if (sz > exec->vtx.attrsz[attr]) {
+   if (sz > exec->vtx.attrsz[attr]) {
       /* New size is larger.  Need to flush existing vertices and get
        * an enlarged vertex format.
        */
       vbo_exec_wrap_upgrade_vertex( exec, attr, sz );
    }
    else if (sz < exec->vtx.active_sz[attr]) {
+      static const GLfloat id[4] = { 0, 0, 0, 1 };
 
       /* New size is smaller - just need to fill in some
        * zeros.  Don't need to flush or wrap.
