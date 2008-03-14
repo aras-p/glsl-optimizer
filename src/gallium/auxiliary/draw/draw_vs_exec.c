@@ -166,6 +166,19 @@ vs_exec_run( struct draw_vertex_shader *shader,
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
       }
+
+#if 0 /*DEBUG*/
+      printf("Post xform vert:\n");
+      for (slot = 0; slot < draw->num_vs_outputs; slot++) {
+         printf("%d: %f %f %f %f\n", slot,
+                vOut[j]->data[slot][0],
+                vOut[j]->data[slot][1],
+                vOut[j]->data[slot][2],
+                vOut[j]->data[slot][3]);
+      }
+#endif      
+
+
    } /* loop over vertices */
 }
 
