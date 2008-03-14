@@ -38,6 +38,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xdamage.h>
 #include "glheader.h"
 #include "glxclient.h"
 #include "xf86dri.h"
@@ -379,8 +381,8 @@ static void __glXReportDamage(__DRIdrawable *driDraw,
     XserverRegion region;
     int i;
     int x_off, y_off;
-    __GLXdrawable *glxDraw =
-	containerOf(driDraw, __GLXdrawable, driDrawable);
+    __GLXDRIdrawable *glxDraw =
+	containerOf(driDraw, __GLXDRIdrawable, driDrawable);
     __GLXscreenConfigs *psc = glxDraw->psc;
     Display *dpy = psc->dpy;
     Drawable drawable;
