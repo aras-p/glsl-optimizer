@@ -516,7 +516,7 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
     * stays the same.  In that case we should only be updating the first
     * N constants, leaving any extras from shader translation alone.
     */
-   {
+   if (buf) {
       void *mapped;
       if (buf->size &&
           (mapped = ws->buffer_map(ws, buf->buffer,
