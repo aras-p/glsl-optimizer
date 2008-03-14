@@ -74,7 +74,7 @@ translate_texture_format(GLuint mesa_format)
    case MESA_FORMAT_RGBA_DXT5:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
    case MESA_FORMAT_Z24_S8:
-      return (MAPSURF_32BIT | MT_32BIT_xL824);
+      return (MAPSURF_32BIT | MT_32BIT_xI824);
    default:
       fprintf(stderr, "%s: bad image format %x\n", __FUNCTION__, mesa_format);
       abort();

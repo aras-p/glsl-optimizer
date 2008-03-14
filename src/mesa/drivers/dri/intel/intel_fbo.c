@@ -517,6 +517,53 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
    intel_draw_buffer(ctx, fb);
 }
 
+static GLboolean
+intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
+                          struct gl_texture_image *texImage)
+{
+   if (texImage->TexFormat == &_mesa_texformat_argb8888) {
+      irb->Base._ActualFormat = GL_RGBA8;
+      irb->Base._BaseFormat = GL_RGBA;
+      DBG("Render to RGBA8 texture OK\n");
+   }
+   else if (texImage->TexFormat == &_mesa_texformat_rgb565) {
+      irb->Base._ActualFormat = GL_RGB5;
+      irb->Base._BaseFormat = GL_RGB;
+      DBG("Render to RGB5 texture OK\n");
+   }
+   else if (texImage->TexFormat == &_mesa_texformat_z16) {
+      irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
+      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      DBG("Render to DEPTH16 texture OK\n");
+   } else if (texImage->TexFormat == &_mesa_texformat_z24_s8) {
+      irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
+      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
+      DBG("Render to DEPTH_STENCIL texture OK\n");
+   }
+   else {
+      DBG("Render to texture BAD FORMAT %d\n",
+	  texImage->TexFormat->MesaFormat);
+      return GL_FALSE;
+   }
+
+   irb->Base.InternalFormat = irb->Base._ActualFormat;
+   irb->Base.Width = texImage->Width;
+   irb->Base.Height = texImage->Height;
+   irb->Base.DataType = GL_UNSIGNED_BYTE;       /* FBO XXX fix */
+   irb->Base.RedBits = texImage->TexFormat->RedBits;
+   irb->Base.GreenBits = texImage->TexFormat->GreenBits;
+   irb->Base.BlueBits = texImage->TexFormat->BlueBits;
+   irb->Base.AlphaBits = texImage->TexFormat->AlphaBits;
+   irb->Base.DepthBits = texImage->TexFormat->DepthBits;
+
+   irb->Base.Delete = intel_delete_renderbuffer;
+   irb->Base.AllocStorage = intel_nop_alloc_storage;
+   intel_set_span_functions(&irb->Base);
+
+   irb->RenderToTexture = GL_TRUE;
+
+   return GL_TRUE;
+}
 
 /**
  * When glFramebufferTexture[123]D is called this function sets up the
@@ -539,43 +586,10 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
    _mesa_init_renderbuffer(&irb->Base, name);
    irb->Base.ClassID = INTEL_RB_CLASS;
 
-   if (texImage->TexFormat == &_mesa_texformat_argb8888) {
-      irb->Base._ActualFormat = GL_RGBA8;
-      irb->Base._BaseFormat = GL_RGBA;
-      DBG("Render to RGBA8 texture OK\n");
-   }
-   else if (texImage->TexFormat == &_mesa_texformat_rgb565) {
-      irb->Base._ActualFormat = GL_RGB5;
-      irb->Base._BaseFormat = GL_RGB;
-      DBG("Render to RGB5 texture OK\n");
-   }
-   else if (texImage->TexFormat == &_mesa_texformat_z16) {
-      irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      DBG("Render to DEPTH16 texture OK\n");
-   }
-   else {
-      DBG("Render to texture BAD FORMAT %d\n",
-	  texImage->TexFormat->MesaFormat);
+   if (!intel_update_wrapper(ctx, irb, texImage)) {
       _mesa_free(irb);
       return NULL;
    }
-
-   irb->Base.InternalFormat = irb->Base._ActualFormat;
-   irb->Base.Width = texImage->Width;
-   irb->Base.Height = texImage->Height;
-   irb->Base.DataType = GL_UNSIGNED_BYTE;       /* FBO XXX fix */
-   irb->Base.RedBits = texImage->TexFormat->RedBits;
-   irb->Base.GreenBits = texImage->TexFormat->GreenBits;
-   irb->Base.BlueBits = texImage->TexFormat->BlueBits;
-   irb->Base.AlphaBits = texImage->TexFormat->AlphaBits;
-   irb->Base.DepthBits = texImage->TexFormat->DepthBits;
-
-   irb->Base.Delete = intel_delete_renderbuffer;
-   irb->Base.AllocStorage = intel_nop_alloc_storage;
-   intel_set_span_functions(&irb->Base);
-
-   irb->RenderToTexture = GL_TRUE;
 
    return irb;
 }
@@ -613,6 +627,10 @@ intel_render_texture(GLcontext * ctx,
          _mesa_render_texture(ctx, fb, att);
          return;
       }
+   } if (!intel_update_wrapper(ctx, irb, newImage)) {
+       _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+       _mesa_render_texture(ctx, fb, att);
+       return;
    }
 
    DBG("Begin render texture tid %x tex=%u w=%d h=%d refcount=%d\n",
