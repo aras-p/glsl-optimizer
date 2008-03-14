@@ -239,6 +239,7 @@ struct draw_context
    float wide_point_threshold; /**< convert pnts to tris if larger than this */
    float wide_line_threshold;  /**< convert lines to tris if wider than this */
    boolean line_stipple;       /**< do line stipple? */
+   boolean point_sprite;       /**< convert points to quads for sprites? */
    boolean use_sse;
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here

@@ -96,6 +96,8 @@ void draw_wide_line_threshold(struct draw_context *draw, float threshold);
 
 void draw_enable_line_stipple(struct draw_context *draw, boolean enable);
 
+void draw_enable_point_sprites(struct draw_context *draw, boolean enable);
+
 
 boolean draw_use_sse(struct draw_context *draw);
 

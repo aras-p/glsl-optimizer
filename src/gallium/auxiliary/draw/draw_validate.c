@@ -76,6 +76,10 @@ draw_need_pipeline(const struct draw_context *draw)
    if (draw->rasterizer->offset_cw || draw->rasterizer->offset_ccw)
       return TRUE;
 
+   /* point sprites */
+   if (draw->rasterizer->point_sprite && draw->point_sprite)
+      return TRUE;
+
    /* two-side lighting */
    if (draw->rasterizer->light_twoside)
       return TRUE;
@@ -110,7 +114,9 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
                  && !draw->rasterizer->line_smooth);
 
    /* drawing large points? */
-   if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
+   if (draw->rasterizer->point_sprite && draw->point_sprite)
+      wide_points = TRUE;
+   else if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
       wide_points = FALSE;
    else if (draw->rasterizer->point_size > draw->wide_point_threshold)
       wide_points = TRUE;
