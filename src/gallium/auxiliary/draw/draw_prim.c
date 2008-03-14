@@ -121,8 +121,6 @@ static void draw_prim_queue_flush( struct draw_context *draw )
 
 static INLINE void fetch_and_store(struct draw_context *draw)
 {
-   unsigned i;
-
    /* run vertex shader on vertex cache entries, four per invokation */
 #if 0
    {
@@ -131,6 +129,8 @@ static INLINE void fetch_and_store(struct draw_context *draw)
              count * vinfo->size);
    }
 #elif 0
+   unsigned i;
+
    draw_update_vertex_fetch(draw);
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
       struct vertex_header *dests[4];

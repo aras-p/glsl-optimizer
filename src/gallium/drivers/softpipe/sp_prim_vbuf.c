@@ -196,7 +196,7 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    struct prim_header prim;
    const void *vertex_buffer = cvbr->vertex_buffer;
    const unsigned vertex_size = softpipe->vertex_info_vbuf.size * sizeof(float);
-   unsigned i, j;
+   unsigned i;
 
    prim.det = 0;
    prim.reset_line_stipple = 0;
