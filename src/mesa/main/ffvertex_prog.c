@@ -1398,12 +1398,13 @@ static void build_pointsize( struct tnl_program *p )
    /* 1 / sqrt(factor) */
    emit_op1(p, OPCODE_RSQ, ut, WRITEMASK_X, ut );
 
-#if 1
+#if 0
    /* out = pointSize / sqrt(factor) */
    emit_op2(p, OPCODE_MUL, out, WRITEMASK_X, ut, state_size);
 #else
-   /* not sure, might make sense to do clamping here,
-      but it's not done in t_vb_points neither */
+   /* this is a good place to clamp the point size since there's likely
+    * no hardware registers to clamp point size at rasterization time.
+    */
    emit_op2(p, OPCODE_MUL, ut, WRITEMASK_X, ut, state_size);
    emit_op2(p, OPCODE_MAX, ut, WRITEMASK_X, ut, swizzle1(state_size, Y));
    emit_op2(p, OPCODE_MIN, out, WRITEMASK_X, ut, swizzle1(state_size, Z));
