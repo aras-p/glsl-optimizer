@@ -175,6 +175,10 @@ handle_table_set(struct handle_table *ht,
    if(!handle || handle > ht->size)
       return 0;
 
+   assert(object);
+   if(!object)
+      return 0;
+   
    index = handle - 1;
 
    /* grow the table if necessary */
