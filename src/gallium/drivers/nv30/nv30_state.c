@@ -40,6 +40,10 @@ nv30_blend_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_blend_state *cb = hwcso;
 
+	if (!hwcso) {
+		return;
+	}
+
 	BEGIN_RING(rankine, NV34TCL_DITHER_ENABLE, 1);
 	OUT_RING  (cb->d_enable);
 
@@ -236,6 +240,10 @@ nv30_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	unsigned unit;
 
+	if (!sampler) {
+		return;
+	}
+
 	for (unit = 0; unit < nr; unit++) {
 		nv30->tex_sampler[unit] = sampler[unit];
 		nv30->dirty_samplers |= (1 << unit);
@@ -346,6 +354,10 @@ nv30_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_rasterizer_state *rs = hwcso;
 
+	if (!hwcso) {
+		return;
+	}
+
 	BEGIN_RING(rankine, NV34TCL_SHADE_MODEL, 1);
 	OUT_RING  (rs->shade_model);
 
@@ -422,6 +434,10 @@ nv30_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_depth_stencil_alpha_state *hw = hwcso;
 
+	if (!hwcso) {
+		return;
+	}
+
 	BEGIN_RING(rankine, NV34TCL_DEPTH_FUNC, 3);
 	OUT_RINGp ((uint32_t *)&hw->depth, 3);
 	BEGIN_RING(rankine, NV34TCL_STENCIL_BACK_ENABLE, 16);
@@ -455,6 +471,10 @@ nv30_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_vertex_program *vp = hwcso;
 
+	if (!hwcso) {
+		return;
+	}
+
 	nv30->vertprog.current = vp;
 	nv30->dirty |= NV30_NEW_VERTPROG;
 }
@@ -486,6 +506,10 @@ nv30_fp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nv30_fragment_program *fp = hwcso;
+
+	if (!hwcso) {
+		return;
+	}
 
 	nv30->fragprog.current = fp;
 	nv30->dirty |= NV30_NEW_FRAGPROG;
