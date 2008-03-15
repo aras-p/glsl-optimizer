@@ -818,7 +818,7 @@ static __GLXDRIscreen *driCreateScreen(__GLXscreenConfigs *psc, int screen,
 
     psc->driver = driGetDriver(priv->dpy, screen);
     createNewScreen = dlsym(psc->driver, createNewScreenName);
-    if (createNewScreenName == NULL)
+    if (createNewScreen == NULL)
 	return NULL;
 
     pdp = (__GLXDRIdisplayPrivate *) priv->driDisplay;
