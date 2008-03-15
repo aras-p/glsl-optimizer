@@ -546,7 +546,7 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 	int i, colour_format = 0, zeta_format = 0;
 
 	rt_enable = 0;
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 2; i++) {
 		if (!fb->cbufs[i])
 			continue;
 
