@@ -119,6 +119,9 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	switch (nv->chipset & 0xf0) {
+	case 0x10:
+	case 0x20:
+		/* NV10 */
 	case 0x30:
 		/* NV30 */
 	case 0x40:

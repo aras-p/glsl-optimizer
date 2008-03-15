@@ -50,6 +50,13 @@ struct nouveau_winsys {
 };
 
 extern struct pipe_screen *
+nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
+		   unsigned chipset);
+
+extern struct pipe_context *
+nv10_create(struct pipe_screen *, unsigned pctx_id);
+
+extern struct pipe_screen *
 nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
 		   unsigned chipset);
 

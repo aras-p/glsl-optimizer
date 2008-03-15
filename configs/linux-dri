@@ -65,4 +65,4 @@ GALLIUM_WINSYS_DIRS = dri
 
 # gamma are missing because they have not been converted to use the new
 # interface.
-DRI_DIRS = intel 
+DRI_DIRS = nouveau
