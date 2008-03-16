@@ -2,6 +2,7 @@
 #define __NV10_STATE_H__
 
 #include "pipe/p_state.h"
+#include "tgsi/util/tgsi_scan.h"
 
 struct nv10_blend_state {
 	uint32_t b_enable;
@@ -77,6 +78,7 @@ struct nv10_fragment_program_data {
 
 struct nv10_fragment_program {
 	const struct pipe_shader_state *pipe;
+	struct tgsi_shader_info info;
 
 	boolean translated;
 	boolean on_hw;

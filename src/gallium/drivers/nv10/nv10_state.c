@@ -10,15 +10,15 @@
 static void nv10_vertex_layout(struct pipe_context* pipe)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	const struct pipe_shader_state *fs = nv10->fragprog.current->pipe;
+	struct nv10_fragment_program *fp = nv10->fragprog.current;
 	uint32_t src = 0;
 	int i;
 	struct vertex_info vinfo;
 
 	memset(&vinfo, 0, sizeof(vinfo));
 
-	for (i = 0; i < fs->num_inputs; i++) {
-		switch (fs->input_semantic_name[i]) {
+	for (i = 0; i < fp->info.num_inputs; i++) {
+		switch (fp->info.input_semantic_name[i]) {
 			case TGSI_SEMANTIC_POSITION:
 				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
 				break;
@@ -476,6 +476,8 @@ nv10_fp_state_create(struct pipe_context *pipe,
 
 	fp = CALLOC(1, sizeof(struct nv10_fragment_program));
 	fp->pipe = cso;
+	
+	tgsi_scan_shader(cso->tokens, &fp->info);
 
 	return (void *)fp;
 }
