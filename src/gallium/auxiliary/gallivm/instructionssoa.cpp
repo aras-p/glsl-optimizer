@@ -143,8 +143,16 @@ std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
 
 void InstructionsSoa::createFunctionMap()
 {
-   m_functionsMap[TGSI_OPCODE_DP3] = "dp3";
-   m_functionsMap[TGSI_OPCODE_DP4] = "dp4";
+   m_functionsMap[TGSI_OPCODE_DP3]   = "dp3";
+   m_functionsMap[TGSI_OPCODE_DP4]   = "dp4";
+   m_functionsMap[TGSI_OPCODE_POWER] = "pow";
+}
+
+void InstructionsSoa::createDependencies()
+{
+   std::vector<std::string> powDeps(1);
+   powDeps[0] = "powf";
+   m_builtinDependencies["pow"] = powDeps;
 }
 
 llvm::Function * InstructionsSoa::function(int op)
@@ -154,15 +162,14 @@ llvm::Function * InstructionsSoa::function(int op)
 
     std::string name = m_functionsMap[op];
 
+    std::vector<std::string> deps = m_builtinDependencies[name];
+    for (unsigned int i = 0; i < deps.size(); ++i) {
+       injectFunction(m_builtins->getFunction(deps[i]));
+    }
+
     llvm::Function *originalFunc = m_builtins->getFunction(name);
-    llvm::Function *func = CloneFunction(originalFunc);
-    currentModule()->getFunctionList().push_back(func);
-    std::cout << "Func parent is "<<func->getParent()
-              <<", cur is "<<currentModule() <<std::endl;
-    func->dump();
-       //func->setParent(currentModule());
-    m_functions[op] = func;
-    return func;
+    injectFunction(originalFunc, op);
+    return m_functions[op];
 }
 
 llvm::Module * InstructionsSoa::currentModule() const
@@ -177,6 +184,7 @@ llvm::Module * InstructionsSoa::currentModule() const
 void InstructionsSoa::createBuiltins()
 {
    m_builtins = createSoaBuiltins();
+   createDependencies();
 }
 
 std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> in1,
@@ -303,4 +311,72 @@ std::vector<Value*> InstructionsSoa::callBuiltin(llvm::Function *func, const std
    call->setTailCall(false);
 
    return allocaToResult(allocaPtr);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::pow(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_POWER);
+   return callBuiltin(func, in1, in2);
+}
+
+void checkFunction(Function *func)
+{
+   for (Function::const_iterator BI = func->begin(), BE = func->end();
+        BI != BE; ++BI) {
+      const BasicBlock &BB = *BI;
+      for (BasicBlock::const_iterator II = BB.begin(), IE = BB.end();
+           II != IE; ++II) {
+         const Instruction &I = *II;
+         std::cout<< "Instr = "<<I;
+         for (unsigned op = 0, E = I.getNumOperands(); op != E; ++op) {
+            const Value *Op = I.getOperand(op);
+            std::cout<< "\top = "<<Op<<"("<<op<<")"<<std::endl;
+            //I->setOperand(op, V);
+  }
+      }
+   }
+}
+
+void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
+{
+   assert(originalFunc);
+   std::cout << "injecting function originalFunc " <<originalFunc->getName() <<std::endl;
+   if (op != TGSI_OPCODE_LAST) {
+      /* in this case it's possible the function has been already
+       * injected as part of the dependency chain, which gets
+       * injected below */
+      llvm::Function *func = currentModule()->getFunction(originalFunc->getName());
+      if (func) {
+         m_functions[op] = func;
+         return;
+      }
+   }
+   llvm::Function *func = 0;
+   if (originalFunc->isDeclaration()) {
+      std::cout << "function decleration" <<std::endl;
+      func = new Function(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
+                          originalFunc->getName(), currentModule());
+      func->setCallingConv(CallingConv::C);
+      const ParamAttrsList *pal = 0;
+      func->setParamAttrs(pal);
+      currentModule()->dump();
+   } else {
+      DenseMap<const Value*, Value *> val;
+      val[m_builtins->getFunction("powf")] = currentModule()->getFunction("powf");
+      std::cout <<" replacing "<<m_builtins->getFunction("powf")
+                <<", with " <<currentModule()->getFunction("powf")<<std::endl;
+      func = CloneFunction(originalFunc, val);
+      std::cout<<"1111-------------------------------"<<std::endl;
+      checkFunction(originalFunc);
+      std::cout<<"2222-------------------------------"<<std::endl;
+      checkFunction(func);
+      std::cout <<"XXXX = " <<val[m_builtins->getFunction("powf")]<<std::endl;
+      currentModule()->getFunctionList().push_back(func);
+      std::cout << "Func parent is "<<func->getParent()
+                <<", cur is "<<currentModule() <<std::endl;
+   }
+   if (op != TGSI_OPCODE_LAST) {
+      m_functions[op] = func;
+   }
 }

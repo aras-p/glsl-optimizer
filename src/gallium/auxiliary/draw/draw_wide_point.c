@@ -184,7 +184,8 @@ static void widepoint_first_point( struct draw_stage *stage,
    wide->half_point_size = 0.5f * draw->rasterizer->point_size;
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
-   if (draw->rasterizer->point_size > draw->wide_point_threshold) {
+   if ((draw->rasterizer->point_size > draw->wide_point_threshold) ||
+       (draw->rasterizer->point_sprite && draw->point_sprite)) {
       stage->point = widepoint_point;
    }
    else {

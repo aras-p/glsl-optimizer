@@ -178,6 +178,11 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
 
+      if (stfp->state.tokens) {
+         FREE((void *) stfp->state.tokens);
+         stfp->state.tokens = NULL;
+      }
+
       if (st->fp == stfp)
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
    }
@@ -200,6 +205,11 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
+
+      if (stvp->state.tokens) {
+         FREE((void *) stvp->state.tokens);
+         stvp->state.tokens = NULL;
+      }
 
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;

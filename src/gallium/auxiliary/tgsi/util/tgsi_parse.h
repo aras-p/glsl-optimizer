@@ -56,7 +56,7 @@ struct tgsi_full_immediate
 };
 
 #define TGSI_FULL_MAX_DST_REGISTERS 2
-#define TGSI_FULL_MAX_SRC_REGISTERS 3
+#define TGSI_FULL_MAX_SRC_REGISTERS 4 /* TXD has 4 */
 
 struct tgsi_full_instruction
 {

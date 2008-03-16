@@ -85,6 +85,8 @@ struct draw_context *draw_create( void )
    /* these defaults are oriented toward the needs of softpipe */
    draw->wide_point_threshold = 1000000.0; /* infinity */
    draw->wide_line_threshold = 1.0;
+   draw->line_stipple = TRUE;
+   draw->point_sprite = TRUE;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -255,6 +257,28 @@ draw_wide_line_threshold(struct draw_context *draw, float threshold)
 
 
 /**
+ * Tells the draw module whether or not to implement line stipple.
+ */
+void
+draw_enable_line_stipple(struct draw_context *draw, boolean enable)
+{
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw->line_stipple = enable;
+}
+
+
+/**
+ * Tells draw module whether to convert points to quads for sprite mode.
+ */
+void
+draw_enable_point_sprites(struct draw_context *draw, boolean enable)
+{
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   draw->point_sprite = enable;
+}
+
+
+/**
  * Ask the draw module for the location/slot of the given vertex attribute in
  * a post-transformed vertex.
  *
@@ -299,7 +323,7 @@ uint
 draw_num_vs_outputs(struct draw_context *draw)
 {
    uint count = draw->vertex_shader->info.num_outputs;
-   if (draw->extra_vp_outputs.slot >= 0)
+   if (draw->extra_vp_outputs.slot > 0)
       count++;
    return count;
 }

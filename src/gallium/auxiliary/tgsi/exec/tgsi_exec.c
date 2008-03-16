@@ -1516,11 +1516,41 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      assert (0);
+      debug_printf("TGSI: EXP opcode not implemented\n");
+      /* from ARB_v_p:
+      tmp = ScalarLoad(op0);
+      result.x = 2^floor(tmp);
+      result.y = tmp - floor(tmp);
+      result.z = RoughApprox2ToX(tmp);
+      result.w = 1.0;
+      */
+#if 0
+      /* something like this: */
+      FETCH( &r[0], 0, CHAN_X );
+      micro_exp2( &r[0], &r[0] );
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+	 STORE( &r[0], 0, chan_index );
+      }
+#endif
       break;
 
    case TGSI_OPCODE_LOG:
-      assert (0);
+      debug_printf("TGSI: LOG opcode not implemented\n");
+      /* from ARB_v_p:
+      tmp = fabs(ScalarLoad(op0));
+      result.x = floor(log2(tmp));
+      result.y = tmp / 2^(floor(log2(tmp)));
+      result.z = RoughApproxLog2(tmp);
+      result.w = 1.0;
+      */
+#if 0
+      /* something like this: */
+      FETCH( &r[0], 0, CHAN_X );
+      micro_lg2( &r[0], &r[0] );
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+	 STORE( &r[0], 0, chan_index );
+      }
+#endif
       break;
 
    case TGSI_OPCODE_MUL:

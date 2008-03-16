@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,51 +25,41 @@
  * 
  **************************************************************************/
 
-/* Author:
- *    Brian Paul
- */
-
-
-#include "pipe/p_defines.h"
-#include "sp_clear.h"
-#include "sp_context.h"
-#include "sp_surface.h"
-#include "sp_state.h"
-#include "sp_tile_cache.h"
-
-
 /**
- * Clear the given surface to the specified value.
- * No masking, no scissor (clear entire buffer).
+ * @file
+ * Gallium error codes.
+ * 
+ * @author José Fonseca <jrfonseca@tungstengraphics.com>
  */
-void
-softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-               unsigned clearValue)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   uint i;
 
-#if 0
-   softpipe_update_derived(softpipe); /* not needed?? */
+#ifndef P_ERROR_H_
+#define P_ERROR_H_
+
+
+#ifdef	__cplusplus
+extern "C" {
 #endif
 
-   if (ps == sp_tile_cache_get_surface(softpipe->zsbuf_cache)) {
-      sp_tile_cache_clear(softpipe->zsbuf_cache, clearValue);
-      softpipe->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_CLEAR;
-#if TILE_CLEAR_OPTIMIZATION
-      return;
-#endif
-   }
+   
+/**
+ * Gallium error codes.
+ * 
+ * - A zero value always means success.
+ * - A negative value always means failure.
+ * - The meaning of a positive value is function dependent. 
+ */
+enum pipe_error {
+   PIPE_OK = 0,
+   PIPE_ERROR = -1,    /**< Generic error */
+   PIPE_ERROR_BAD_INPUT = -2, 
+   PIPE_ERROR_OUT_OF_MEMORY = -3,
+   PIPE_ERROR_RETRY = -4
+   /* TODO */
+};
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
-      if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], clearValue);
-         softpipe->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_CLEAR;
-      }
-   }
 
-#if !TILE_CLEAR_OPTIMIZATION
-   /* non-cached surface */
-   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
-#endif
+#ifdef	__cplusplus
 }
+#endif
+
+#endif /* P_ERROR_H_ */

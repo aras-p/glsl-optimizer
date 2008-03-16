@@ -52,6 +52,9 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
       switch (vinfo->emit[i]) {
       case EMIT_OMIT:
          break;
+      case EMIT_HEADER:
+         vinfo->size += sizeof(struct vertex_header) / 4;
+         break;
       case EMIT_4UB:
          /* fall-through */
       case EMIT_1F_PSIZE:

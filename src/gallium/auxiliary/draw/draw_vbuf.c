@@ -225,6 +225,11 @@ emit_vertex( struct vbuf_stage *vbuf,
             vbuf->vertex_ptr += vinfo->size;
             count += vinfo->size;
             break;
+         case EMIT_HEADER:
+            memcpy(vbuf->vertex_ptr, vertex, sizeof(*vertex));
+            *vbuf->vertex_ptr += sizeof(*vertex) / 4;
+            count += sizeof(*vertex) / 4;
+            break;
          case EMIT_1F:
             *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
             count++;

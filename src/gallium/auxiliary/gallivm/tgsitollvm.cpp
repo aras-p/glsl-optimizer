@@ -588,40 +588,6 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_NOP:
       break;
-   case TGSI_OPCODE_TEXBEM:
-      break;
-   case TGSI_OPCODE_TEXBEML:
-      break;
-   case TGSI_OPCODE_TEXREG2AR:
-      break;
-   case TGSI_OPCODE_TEXM3X2PAD:
-      break;
-   case TGSI_OPCODE_TEXM3X2TEX:
-      break;
-   case TGSI_OPCODE_TEXM3X3PAD:
-      break;
-   case TGSI_OPCODE_TEXM3X3TEX:
-      break;
-   case TGSI_OPCODE_TEXM3X3SPEC:
-      break;
-   case TGSI_OPCODE_TEXM3X3VSPEC:
-      break;
-   case TGSI_OPCODE_TEXREG2GB:
-      break;
-   case TGSI_OPCODE_TEXREG2RGB:
-      break;
-   case TGSI_OPCODE_TEXDP3TEX:
-      break;
-   case TGSI_OPCODE_TEXDP3:
-      break;
-   case TGSI_OPCODE_TEXM3X3:
-      break;
-   case TGSI_OPCODE_TEXM3X2DEPTH:
-      break;
-   case TGSI_OPCODE_TEXDEPTH:
-      break;
-   case TGSI_OPCODE_BEM:
-      break;
    case TGSI_OPCODE_M4X3:
       break;
    case TGSI_OPCODE_M3X4:
@@ -806,6 +772,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_POWER: {
+      out = instr->pow(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_CROSSPRODUCT: {
@@ -979,40 +946,6 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_NOISE4:
       break;
    case TGSI_OPCODE_NOP:
-      break;
-   case TGSI_OPCODE_TEXBEM:
-      break;
-   case TGSI_OPCODE_TEXBEML:
-      break;
-   case TGSI_OPCODE_TEXREG2AR:
-      break;
-   case TGSI_OPCODE_TEXM3X2PAD:
-      break;
-   case TGSI_OPCODE_TEXM3X2TEX:
-      break;
-   case TGSI_OPCODE_TEXM3X3PAD:
-      break;
-   case TGSI_OPCODE_TEXM3X3TEX:
-      break;
-   case TGSI_OPCODE_TEXM3X3SPEC:
-      break;
-   case TGSI_OPCODE_TEXM3X3VSPEC:
-      break;
-   case TGSI_OPCODE_TEXREG2GB:
-      break;
-   case TGSI_OPCODE_TEXREG2RGB:
-      break;
-   case TGSI_OPCODE_TEXDP3TEX:
-      break;
-   case TGSI_OPCODE_TEXDP3:
-      break;
-   case TGSI_OPCODE_TEXM3X3:
-      break;
-   case TGSI_OPCODE_TEXM3X2DEPTH:
-      break;
-   case TGSI_OPCODE_TEXDEPTH:
-      break;
-   case TGSI_OPCODE_BEM:
       break;
    case TGSI_OPCODE_M4X3:
       break;

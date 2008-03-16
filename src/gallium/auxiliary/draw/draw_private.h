@@ -238,6 +238,8 @@ struct draw_context
 
    float wide_point_threshold; /**< convert pnts to tris if larger than this */
    float wide_line_threshold;  /**< convert lines to tris if wider than this */
+   boolean line_stipple;       /**< do line stipple? */
+   boolean point_sprite;       /**< convert points to quads for sprites? */
    boolean use_sse;
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
@@ -344,9 +346,9 @@ extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
 
 extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
 
-struct tgsi_exec_machine;
-
 extern void draw_update_vertex_fetch( struct draw_context *draw );
+
+extern boolean draw_need_pipeline(const struct draw_context *draw);
 
 
 /* Prototype/hack

@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
- * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ *
+ * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,54 +22,65 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
-/* Author:
- *    Brian Paul
+/**
+ * General purpose hash table.
+ *  
+ * @author José Fonseca <jrfonseca@tungstengraphics.com>
  */
 
+#ifndef U_HASH_TABLE_H_
+#define U_HASH_TABLE_H_
 
-#include "pipe/p_defines.h"
-#include "sp_clear.h"
-#include "sp_context.h"
-#include "sp_surface.h"
-#include "sp_state.h"
-#include "sp_tile_cache.h"
+
+#include "pipe/p_error.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+   
+/**
+ * Generic purpose hash table.
+ */
+struct hash_table;
 
 
 /**
- * Clear the given surface to the specified value.
- * No masking, no scissor (clear entire buffer).
+ * Create an hash table.
+ * 
+ * @param hash hash function
+ * @param compare should return 0 for two equal keys.
  */
+struct hash_table *
+hash_table_create(unsigned (*hash)(void *key),
+                  int (*compare)(void *key1, void *key2));
+
+
+enum pipe_error
+hash_table_set(struct hash_table *ht,
+               void *key,
+               void *value);
+
+void *
+hash_table_get(struct hash_table *ht, 
+               void *key);
+
+
 void
-softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-               unsigned clearValue)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   uint i;
+hash_table_remove(struct hash_table *ht, 
+                  void *key);
 
-#if 0
-   softpipe_update_derived(softpipe); /* not needed?? */
-#endif
 
-   if (ps == sp_tile_cache_get_surface(softpipe->zsbuf_cache)) {
-      sp_tile_cache_clear(softpipe->zsbuf_cache, clearValue);
-      softpipe->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_CLEAR;
-#if TILE_CLEAR_OPTIMIZATION
-      return;
-#endif
-   }
+void
+hash_table_destroy(struct hash_table *ht);
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
-      if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[i])) {
-         sp_tile_cache_clear(softpipe->cbuf_cache[i], clearValue);
-         softpipe->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_CLEAR;
-      }
-   }
 
-#if !TILE_CLEAR_OPTIMIZATION
-   /* non-cached surface */
-   pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
-#endif
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* U_HASH_TABLE_H_ */

@@ -227,22 +227,22 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_STR                 51
 #define TGSI_OPCODE_TEX                 52
 #define TGSI_OPCODE_TXD                 53
-#define TGSI_OPCODE_TXP                 134
-#define TGSI_OPCODE_UP2H                54
-#define TGSI_OPCODE_UP2US               55
-#define TGSI_OPCODE_UP4B                56
-#define TGSI_OPCODE_UP4UB               57
-#define TGSI_OPCODE_X2D                 58
+#define TGSI_OPCODE_TXP                 54
+#define TGSI_OPCODE_UP2H                55
+#define TGSI_OPCODE_UP2US               56
+#define TGSI_OPCODE_UP4B                57
+#define TGSI_OPCODE_UP4UB               58
+#define TGSI_OPCODE_X2D                 59
 
 /*
  * GL_NV_vertex_program2
  */
-#define TGSI_OPCODE_ARA                 59
-#define TGSI_OPCODE_ARR                 60
-#define TGSI_OPCODE_BRA                 61
-#define TGSI_OPCODE_CAL                 62
-#define TGSI_OPCODE_RET                 63
-#define TGSI_OPCODE_SSG                 64
+#define TGSI_OPCODE_ARA                 60
+#define TGSI_OPCODE_ARR                 61
+#define TGSI_OPCODE_BRA                 62
+#define TGSI_OPCODE_CAL                 63
+#define TGSI_OPCODE_RET                 64
+#define TGSI_OPCODE_SSG                 65
 
 /*
  * GL_ARB_vertex_program
@@ -253,9 +253,9 @@ struct tgsi_immediate_float32
 /*
  * GL_ARB_fragment_program
  */
-#define TGSI_OPCODE_CMP                 65
-#define TGSI_OPCODE_SCS                 66
-#define TGSI_OPCODE_TXB                 67
+#define TGSI_OPCODE_CMP                 66
+#define TGSI_OPCODE_SCS                 67
+#define TGSI_OPCODE_TXB                 68
 
 /*
  * GL_NV_fragment_program_option
@@ -265,19 +265,19 @@ struct tgsi_immediate_float32
 /*
  * GL_NV_fragment_program2
  */
-#define TGSI_OPCODE_NRM                 68
-#define TGSI_OPCODE_DIV                 69
-#define TGSI_OPCODE_DP2                 70
+#define TGSI_OPCODE_NRM                 69
+#define TGSI_OPCODE_DIV                 70
+#define TGSI_OPCODE_DP2                 71
 #define TGSI_OPCODE_DP2A                TGSI_OPCODE_DOT2ADD
-#define TGSI_OPCODE_TXL                 71
-#define TGSI_OPCODE_BRK                 72
-#define TGSI_OPCODE_IF                  73
-#define TGSI_OPCODE_LOOP                74
-#define TGSI_OPCODE_REP                 75
-#define TGSI_OPCODE_ELSE                76
-#define TGSI_OPCODE_ENDIF               77
-#define TGSI_OPCODE_ENDLOOP             78
-#define TGSI_OPCODE_ENDREP              79
+#define TGSI_OPCODE_TXL                 72
+#define TGSI_OPCODE_BRK                 73
+#define TGSI_OPCODE_IF                  74
+#define TGSI_OPCODE_LOOP                75
+#define TGSI_OPCODE_REP                 76
+#define TGSI_OPCODE_ELSE                77
+#define TGSI_OPCODE_ENDIF               78
+#define TGSI_OPCODE_ENDLOOP             79
+#define TGSI_OPCODE_ENDREP              80
 
 /*
  * GL_NV_vertex_program2_option
@@ -286,26 +286,26 @@ struct tgsi_immediate_float32
 /*
  * GL_NV_vertex_program3
  */
-#define TGSI_OPCODE_PUSHA               80
-#define TGSI_OPCODE_POPA                81
+#define TGSI_OPCODE_PUSHA               81
+#define TGSI_OPCODE_POPA                82
 
 /*
  * GL_NV_gpu_program4
  */
-#define TGSI_OPCODE_CEIL                82
-#define TGSI_OPCODE_I2F                 83
-#define TGSI_OPCODE_NOT                 84
-#define TGSI_OPCODE_TRUNC               85
-#define TGSI_OPCODE_SHL                 86
-#define TGSI_OPCODE_SHR                 87
-#define TGSI_OPCODE_AND                 88
-#define TGSI_OPCODE_OR                  89
-#define TGSI_OPCODE_MOD                 90
-#define TGSI_OPCODE_XOR                 91
-#define TGSI_OPCODE_SAD                 92
-#define TGSI_OPCODE_TXF                 93
-#define TGSI_OPCODE_TXQ                 94
-#define TGSI_OPCODE_CONT                95
+#define TGSI_OPCODE_CEIL                83
+#define TGSI_OPCODE_I2F                 84
+#define TGSI_OPCODE_NOT                 85
+#define TGSI_OPCODE_TRUNC               86
+#define TGSI_OPCODE_SHL                 87
+#define TGSI_OPCODE_SHR                 88
+#define TGSI_OPCODE_AND                 89
+#define TGSI_OPCODE_OR                  90
+#define TGSI_OPCODE_MOD                 91
+#define TGSI_OPCODE_XOR                 92
+#define TGSI_OPCODE_SAD                 93
+#define TGSI_OPCODE_TXF                 94
+#define TGSI_OPCODE_TXQ                 95
+#define TGSI_OPCODE_CONT                96
 
 /*
  * GL_NV_vertex_program4
@@ -321,72 +321,53 @@ struct tgsi_immediate_float32
  * GL_NV_geometry_program4
  */
 /* Same as GL_NV_gpu_program4 */
-#define TGSI_OPCODE_EMIT                96
-#define TGSI_OPCODE_ENDPRIM             97
+#define TGSI_OPCODE_EMIT                97
+#define TGSI_OPCODE_ENDPRIM             98
 
 /*
  * GLSL
  */
-#define TGSI_OPCODE_BGNLOOP2            98
-#define TGSI_OPCODE_BGNSUB              99
-#define TGSI_OPCODE_ENDLOOP2            100
-#define TGSI_OPCODE_ENDSUB              101
+#define TGSI_OPCODE_BGNLOOP2            99
+#define TGSI_OPCODE_BGNSUB              100
+#define TGSI_OPCODE_ENDLOOP2            101
+#define TGSI_OPCODE_ENDSUB              102
 #define TGSI_OPCODE_INT                 TGSI_OPCODE_TRUNC
-#define TGSI_OPCODE_NOISE1              102
-#define TGSI_OPCODE_NOISE2              103
-#define TGSI_OPCODE_NOISE3              104
-#define TGSI_OPCODE_NOISE4              105
-#define TGSI_OPCODE_NOP                 106
+#define TGSI_OPCODE_NOISE1              103
+#define TGSI_OPCODE_NOISE2              104
+#define TGSI_OPCODE_NOISE3              105
+#define TGSI_OPCODE_NOISE4              106
+#define TGSI_OPCODE_NOP                 107
 
 /*
  * ps_1_1
  */
-#define TGSI_OPCODE_TEXCOORD            TGSI_OPCODE_NOP
 #define TGSI_OPCODE_TEXKILL             TGSI_OPCODE_KILP
-#define TGSI_OPCODE_TEXBEM              107
-#define TGSI_OPCODE_TEXBEML             108
-#define TGSI_OPCODE_TEXREG2AR           109
-#define TGSI_OPCODE_TEXM3X2PAD          110
-#define TGSI_OPCODE_TEXM3X2TEX          111
-#define TGSI_OPCODE_TEXM3X3PAD          112
-#define TGSI_OPCODE_TEXM3X3TEX          113
-#define TGSI_OPCODE_TEXM3X3SPEC         114
-#define TGSI_OPCODE_TEXM3X3VSPEC        115
 
 /*
  * ps_1_2
  */
-#define TGSI_OPCODE_TEXREG2GB           116
-#define TGSI_OPCODE_TEXREG2RGB          117
-#define TGSI_OPCODE_TEXDP3TEX           118
-#define TGSI_OPCODE_TEXDP3              119
-#define TGSI_OPCODE_TEXM3X3             120
 /* CMP - use TGSI_OPCODE_CND0 */
 
 /*
  * ps_1_3
  */
-#define TGSI_OPCODE_TEXM3X2DEPTH        121
 /* CMP - use TGSI_OPCODE_CND0 */
 
 /*
  * ps_1_4
  */
-#define TGSI_OPCODE_TEXCRD              TGSI_OPCODE_TEXCOORD
 #define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX
-#define TGSI_OPCODE_TEXDEPTH            122
-#define TGSI_OPCODE_BEM                 123
 
 /*
  * ps_2_0
  */
 #define TGSI_OPCODE_M4X4                TGSI_OPCODE_MULTIPLYMATRIX
-#define TGSI_OPCODE_M4X3                124
-#define TGSI_OPCODE_M3X4                125
-#define TGSI_OPCODE_M3X3                126
-#define TGSI_OPCODE_M3X2                127
+#define TGSI_OPCODE_M4X3                108
+#define TGSI_OPCODE_M3X4                109
+#define TGSI_OPCODE_M3X3                110
+#define TGSI_OPCODE_M3X2                111
 #define TGSI_OPCODE_CRS                 TGSI_OPCODE_XPD
-#define TGSI_OPCODE_NRM4                128
+#define TGSI_OPCODE_NRM4                112
 #define TGSI_OPCODE_SINCOS              TGSI_OPCODE_SCS
 #define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB
 #define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A
@@ -395,10 +376,10 @@ struct tgsi_immediate_float32
  * ps_2_x
  */
 #define TGSI_OPCODE_CALL                TGSI_OPCODE_CAL
-#define TGSI_OPCODE_CALLNZ              129
-#define TGSI_OPCODE_IFC                 130
+#define TGSI_OPCODE_CALLNZ              113
+#define TGSI_OPCODE_IFC                 114
 #define TGSI_OPCODE_BREAK               TGSI_OPCODE_BRK
-#define TGSI_OPCODE_BREAKC              131
+#define TGSI_OPCODE_BREAKC              115
 #define TGSI_OPCODE_DSX                 TGSI_OPCODE_DDX
 #define TGSI_OPCODE_DSY                 TGSI_OPCODE_DDY
 #define TGSI_OPCODE_TEXLDD              TGSI_OPCODE_TXD
@@ -419,10 +400,10 @@ struct tgsi_immediate_float32
  * vs_2_x
  */
 
-#define TGSI_OPCODE_KIL                 132  /* unpredicated kill */
-#define TGSI_OPCODE_END                 133  /* aka HALT */
+#define TGSI_OPCODE_KIL                 116  /* unpredicated kill */
+#define TGSI_OPCODE_END                 117  /* aka HALT */
 
-#define TGSI_OPCODE_LAST                135
+#define TGSI_OPCODE_LAST                118
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

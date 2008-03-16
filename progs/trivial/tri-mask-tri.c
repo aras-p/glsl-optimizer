@@ -70,8 +70,11 @@ static void Key(unsigned char key, int x, int y)
 
 static void Draw(void)
 {
+   glColorMask(1,1,1,1);
+
    glClear(GL_COLOR_BUFFER_BIT); 
 
+   /* right triangle: green */
    glBegin(GL_TRIANGLES);
    glColor3f(0,1,0); 
    glVertex3f( 0.9, -0.9, -30.0);
@@ -81,6 +84,7 @@ static void Draw(void)
 
    glColorMask(1,0,1,0);
 
+   /* left triangle: white&mask: purple   middle region: white */
    glBegin(GL_TRIANGLES);
    glColor3f(1,1,1); 
    glVertex3f(-0.9, -0.9, -30.0);

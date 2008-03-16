@@ -324,20 +324,12 @@ generate_pstip_fs(struct pstip_stage *pstip)
                          (struct tgsi_token *) pstip_fs.tokens,
                          MAX, &transform.base);
 
-#if 1 /* DEBUG */
+#if 0 /* DEBUG */
    tgsi_dump(orig_fs->tokens, 0);
    tgsi_dump(pstip_fs.tokens, 0);
 #endif
 
    pstip->sampler_unit = transform.maxSampler + 1;
-
-#if 1 /* XXX remove */
-   if (transform.wincoordInput < 0) {
-      pstip_fs.input_semantic_name[pstip_fs.num_inputs] = TGSI_SEMANTIC_POSITION;
-      pstip_fs.input_semantic_index[pstip_fs.num_inputs] = (ubyte)transform.maxInput;
-      pstip_fs.num_inputs++;
-   }
-#endif
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 }
@@ -488,15 +480,15 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    struct pipe_context *pipe = pstip->pipe;
    uint num_samplers;
 
-   /* how many samplers? */
-   /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
-   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
-   num_samplers = MAX2(num_samplers, pstip->sampler_unit + 1);
-
    assert(stage->draw->rasterizer->poly_stipple_enable);
 
    /* bind our fragprog */
    bind_pstip_fragment_shader(pstip);
+
+   /* how many samplers? */
+   /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
+   num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
+   num_samplers = MAX2(num_samplers, pstip->sampler_unit + 1);
 
    /* plug in our sampler, texture */
    pstip->state.samplers[pstip->sampler_unit] = pstip->sampler_cso;

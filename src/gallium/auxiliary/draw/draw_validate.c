@@ -33,6 +33,63 @@
 #include "draw_private.h"
 
 
+/**
+ * Check if we need any special pipeline stages, or whether prims/verts
+ * can go through untouched.
+ */
+boolean
+draw_need_pipeline(const struct draw_context *draw)
+{
+   /* clipping */
+   if (!draw->rasterizer->bypass_clipping)
+      return TRUE;
+
+   /* vertex shader */
+   if (!draw->rasterizer->bypass_vs)
+      return TRUE;
+
+   /* line stipple */
+   if (draw->rasterizer->line_stipple_enable && draw->line_stipple)
+      return TRUE;
+
+   /* wide lines */
+   if (draw->rasterizer->line_width > draw->wide_line_threshold)
+      return TRUE;
+
+   /* large points */
+   if (draw->rasterizer->point_size > draw->wide_point_threshold)
+      return TRUE;
+
+   /* AA lines */
+   if (draw->rasterizer->line_smooth && draw->pipeline.aaline)
+      return TRUE;
+
+   /* AA points */
+   if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
+      return TRUE;
+
+   /* polygon stipple */
+   if (draw->rasterizer->poly_stipple_enable && draw->pipeline.pstipple)
+      return TRUE;
+
+   /* polygon offset */
+   if (draw->rasterizer->offset_cw || draw->rasterizer->offset_ccw)
+      return TRUE;
+
+   /* point sprites */
+   if (draw->rasterizer->point_sprite && draw->point_sprite)
+      return TRUE;
+
+   /* two-side lighting */
+   if (draw->rasterizer->light_twoside)
+      return TRUE;
+
+   /* polygon cull */
+   if (draw->rasterizer->cull_mode)
+      return TRUE;
+
+   return FALSE;
+}
 
 
 
@@ -57,7 +114,9 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
                  && !draw->rasterizer->line_smooth);
 
    /* drawing large points? */
-   if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
+   if (draw->rasterizer->point_sprite && draw->point_sprite)
+      wide_points = TRUE;
+   else if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
       wide_points = FALSE;
    else if (draw->rasterizer->point_size > draw->wide_point_threshold)
       wide_points = TRUE;
@@ -92,7 +151,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.wide_point;
    }
 
-   if (draw->rasterizer->line_stipple_enable) {
+   if (draw->rasterizer->line_stipple_enable && draw->line_stipple) {
       draw->pipeline.stipple->next = next;
       next = draw->pipeline.stipple;
       precalc_flat = 1;		/* only needed for lines really */

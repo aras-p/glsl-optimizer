@@ -18,3 +18,7 @@ subdirs:
 
 clean:
 	rm -f `find . -name \*.[oa]`
+
+
+# Dummy install target
+install:

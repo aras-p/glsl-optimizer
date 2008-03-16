@@ -99,7 +99,7 @@ static void *cso_data_allocate_node(struct cso_hash_data *hash)
    return MALLOC(hash->nodeSize);
 }
 
-static void cso_data_free_node(struct cso_node *node)
+static void cso_free_node(struct cso_node *node)
 {
    FREE(node);
 }
@@ -248,7 +248,7 @@ void cso_hash_delete(struct cso_hash *hash)
       struct cso_node *cur = *bucket++;
       while (cur != e_for_x) {
          struct cso_node *next = cur->next;
-         cso_data_free_node(cur);
+         cso_free_node(cur);
          cur = next;
       }
    }
@@ -367,7 +367,7 @@ void * cso_hash_take(struct cso_hash *hash,
    if (*node != hash->data.e) {
       void *t = (*node)->value;
       struct cso_node *next = (*node)->next;
-      cso_data_free_node(*node);
+      cso_free_node(*node);
       *node = next;
       --hash->data.d->size;
       cso_data_has_shrunk(hash->data.d);
@@ -392,4 +392,23 @@ struct cso_hash_iter cso_hash_first_node(struct cso_hash *hash)
 int cso_hash_size(struct cso_hash *hash)
 {
    return hash->data.d->size;
+}
+
+struct cso_hash_iter cso_hash_erase(struct cso_hash *hash, struct cso_hash_iter iter)
+{
+   struct cso_hash_iter ret = iter;
+   struct cso_node *node = iter.node;
+   struct cso_node **node_ptr;
+
+   if (node == hash->data.e)
+      return iter;
+
+   ret = cso_hash_iter_next(ret);
+   node_ptr = (struct cso_node**)(&hash->data.d->buckets[node->key % hash->data.d->numBuckets]);
+   while (*node_ptr != node)
+      node_ptr = &(*node_ptr)->next;
+   *node_ptr = node->next;
+   cso_free_node(node);
+   --hash->data.d->size;
+   return ret;
 }

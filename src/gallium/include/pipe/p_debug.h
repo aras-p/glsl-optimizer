@@ -121,7 +121,8 @@ uint32_t debug_mask_get(uint32_t uuid);
  * @code
  * #define MYDRIVER_UUID 0x12345678 // random 32 bit identifier
  * 
- * static inline mydriver_debug(uint32_t what, const char *format, ...)
+ * static void inline 
+ * mydriver_debug(uint32_t what, const char *format, ...)
  * {
  * #ifdef DEBUG
  *    va_list ap;

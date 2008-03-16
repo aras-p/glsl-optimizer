@@ -110,6 +110,7 @@ struct pipe_rasterizer_state
    unsigned line_stipple_pattern:16;
    unsigned line_last_pixel:1;
    unsigned bypass_clipping:1;
+   unsigned bypass_vs:1; /**< vertices are already fully transformed */
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
 
    float line_width;
@@ -162,13 +163,6 @@ struct pipe_constant_buffer
 struct pipe_shader_state
 {
    const struct tgsi_token *tokens;
-   /* XXX these are going away */
-   ubyte num_inputs;
-   ubyte num_outputs;
-   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
-   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-   ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
-   ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 };
 
 

@@ -1164,9 +1164,20 @@ static void setup_begin( struct draw_stage *stage )
    struct setup_stage *setup = setup_stage(stage);
    struct softpipe_context *sp = setup->softpipe;
    const struct sp_fragment_shader *fs = setup->softpipe->fs;
+   uint i;
 
    if (sp->dirty) {
       softpipe_update_derived(sp);
+   }
+
+   /* Mark surfaces as defined now */
+   for (i = 0; i < sp->framebuffer.num_cbufs; i++){
+      if (sp->framebuffer.cbufs[i]) {
+         sp->framebuffer.cbufs[i]->status = PIPE_SURFACE_STATUS_DEFINED;
+      }
+   }
+   if (sp->framebuffer.zsbuf) {
+      sp->framebuffer.zsbuf->status = PIPE_SURFACE_STATUS_DEFINED;
    }
 
    setup->quad.nr_attrs = fs->info.num_inputs;

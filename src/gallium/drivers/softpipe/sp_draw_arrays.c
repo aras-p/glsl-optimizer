@@ -62,6 +62,14 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 {
    struct pipe_winsys *ws = sp->pipe.winsys;
    uint i;
+
+   /* really need to flush all prims since the vert/frag shaders const buffers
+    * are going away now.
+    */
+   draw_flush(sp->draw);
+
+   draw_set_mapped_constant_buffer(sp->draw, NULL);
+
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].size)
          ws->buffer_unmap(ws, sp->constants[i].buffer);

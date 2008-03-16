@@ -677,6 +677,7 @@ static struct prog_instruction *
 emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
+   slang_ir_node tmpNode;
 
    assert(n->Opcode == IR_CLAMP);
    /* ch[0] = value
@@ -722,17 +723,26 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
    emit(emitInfo, n->Children[1]);
    emit(emitInfo, n->Children[2]);
 
+   /* Some GPUs don't allow reading from output registers.  So if the
+    * dest for this clamp() is an output reg, we can't use that reg for
+    * the intermediate result.  Use a temp register instead.
+    */
+   _mesa_bzero(&tmpNode, sizeof(tmpNode));
+   alloc_temp_storage(emitInfo, &tmpNode, n->Store->Size);
+
    /* tmp = max(ch[0], ch[1]) */
    inst = new_instruction(emitInfo, OPCODE_MAX);
-   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+   storage_to_dst_reg(&inst->DstReg, tmpNode.Store, n->Writemask);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
    storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
 
-   /* tmp = min(tmp, ch[2]) */
+   /* n->dest = min(tmp, ch[2]) */
    inst = new_instruction(emitInfo, OPCODE_MIN);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-   storage_to_src_reg(&inst->SrcReg[0], n->Store);
+   storage_to_src_reg(&inst->SrcReg[0], tmpNode.Store);
    storage_to_src_reg(&inst->SrcReg[1], n->Children[2]->Store);
+
+   free_temp_storage(emitInfo->vt, &tmpNode);
 
    return inst;
 }

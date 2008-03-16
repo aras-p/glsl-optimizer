@@ -66,6 +66,95 @@
 #include "draw/draw_vertex.h"
 
 
+/**
+ * General-purpose fetch from user's vertex arrays, emit to driver's
+ * vertex buffer.
+ *
+ * XXX this is totally temporary.
+ */
+static void
+fetch_store_general( struct draw_context *draw,
+                     float *out,
+                     unsigned start,
+                     unsigned count )
+{
+   const struct vertex_info *vinfo = draw->render->get_vertex_info(draw->render);
+   const unsigned nr_attrs = vinfo->num_attribs;
+   uint i, j;
+
+   const unsigned *pitch   = draw->vertex_fetch.pitch;
+   const ubyte **src       = draw->vertex_fetch.src_ptr;
+
+   for (i = start; i < count; i++) {
+      for (j = 0; j < nr_attrs; j++) {
+         const uint jj = vinfo->src_index[j];
+         const enum pipe_format srcFormat  = draw->vertex_element[jj].src_format;
+         const ubyte *from = src[jj] + i * pitch[jj];
+         float attrib[4];
+
+         switch (srcFormat) {
+         case PIPE_FORMAT_R32G32B32A32_FLOAT:
+            {
+               float *f = (float *) from;
+               attrib[0] = f[0];
+               attrib[1] = f[1];
+               attrib[2] = f[2];
+               attrib[3] = f[3];
+            }
+            break;
+         case PIPE_FORMAT_R32G32B32_FLOAT:
+            {
+               float *f = (float *) from;
+               attrib[0] = f[0];
+               attrib[1] = f[1];
+               attrib[2] = f[2];
+               attrib[3] = 1.0;
+            }
+            break;
+         case PIPE_FORMAT_R32G32_FLOAT:
+            {
+               float *f = (float *) from;
+               attrib[0] = f[0];
+               attrib[1] = f[1];
+               attrib[2] = 0.0;
+               attrib[3] = 1.0;
+            }
+            break;
+         case PIPE_FORMAT_R32_FLOAT:
+            {
+               float *f = (float *) from;
+               attrib[0] = f[0];
+               attrib[1] = 0.0;
+               attrib[2] = 0.0;
+               attrib[3] = 1.0;
+            }
+            break;
+         default:
+            abort();
+         }
+
+         /* XXX this will probably only work for softpipe */
+         switch (vinfo->emit[j]) {
+         case EMIT_HEADER:
+            memset(out, 0, sizeof(struct vertex_header));
+            out += sizeof(struct vertex_header) / 4;
+            break;
+         case EMIT_4F:
+            out[0] = attrib[0];
+            out[1] = attrib[1];
+            out[2] = attrib[2];
+            out[3] = attrib[3];
+            out += 4;
+            break;
+         default:
+            abort();
+         }
+
+      }
+   }
+}
+
+
 
 /* Example of a fetch/emit passthrough shader which could be
  * generated when bypass_clipping is enabled on a passthrough vertex
@@ -116,7 +205,6 @@ static void fetch_xyz_rgb_st( struct draw_context *draw,
    }
 }
 
-			       
 static boolean update_shader( struct draw_context *draw )
 {
    const struct vertex_info *vinfo = draw->render->get_vertex_info(draw->render);
@@ -143,11 +231,15 @@ static boolean update_shader( struct draw_context *draw )
 
    /* Just trying to figure out how this would work:
     */
-   if (nr_attrs == 3 &&
-       0 /* some other tests */)
+   if (draw->rasterizer->bypass_vs ||
+       (nr_attrs == 3 && 0 /* some other tests */))
    {
+#if 0
       draw->vertex_fetch.pt_fetch = fetch_xyz_rgb_st;
-      assert(vinfo->size == 10);
+#else
+      draw->vertex_fetch.pt_fetch = fetch_store_general;
+#endif
+      /*assert(vinfo->size == 10);*/
       return TRUE;
    }
    
@@ -175,7 +267,6 @@ static boolean set_prim( struct draw_context *draw,
 }
 
 
-
 boolean
 draw_passthrough_arrays(struct draw_context *draw, 
                         unsigned prim,
@@ -184,10 +275,13 @@ draw_passthrough_arrays(struct draw_context *draw,
 {
    float *hw_verts;
 
+   if (draw_need_pipeline(draw))
+      return FALSE;
+
    if (!set_prim(draw, prim))
       return FALSE;
 
-   if (!update_shader( draw ))
+   if (!update_shader(draw))
       return FALSE;
 
    hw_verts = draw->render->allocate_vertices( draw->render,

@@ -60,6 +60,24 @@ void dp4(float4 *res,
    res[3] = dot;
 }
 
+extern float powf(float num, float p);
+
+void pow(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
+         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
+{
+   float4 p;
+   p.x = powf(tmp0x.x, tmp1x.x);
+   p.y = powf(tmp0x.y, tmp1x.y);
+   p.z = powf(tmp0x.z, tmp1x.z);
+   p.w = powf(tmp0x.w, tmp1x.w);
+
+   res[0] = p;
+   res[1] = p;
+   res[2] = p;
+   res[3] = p;
+}
+
 #if 0
 void yo(float4 *out, float4 *in)
 {
