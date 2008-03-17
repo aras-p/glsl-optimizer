@@ -316,7 +316,9 @@ void spe_init_func(struct spe_function *p, unsigned code_size)
 
 void spe_release_func(struct spe_function *p)
 {
-    align_free(p->store);
+    if (p->store != NULL) {
+        align_free(p->store);
+    }
     p->store = NULL;
     p->csr = NULL;
 }
