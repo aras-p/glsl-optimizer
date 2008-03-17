@@ -238,14 +238,10 @@ static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
 	GLuint i;
+	uint16_t * dst16 = (uint16_t *) dst;
 
-	for (i = 0; i + 1 < nr; i += 2) {
-		dst[i >> 1] = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
-		dst[i >> 1] |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
-	}
-
-	if (nr & 1) {
-		dst[nr >> 1] = r300VAPInputRoute1Swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
+	for (i = 0; i < nr; i++) {
+		dst16[i] = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
 	}
 
 	return (nr + 1) >> 1;
