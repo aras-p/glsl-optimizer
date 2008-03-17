@@ -99,7 +99,23 @@ arb_input_attrib_string(GLint index, GLenum progType)
       "vertex.texcoord[4]",
       "vertex.texcoord[5]",
       "vertex.texcoord[6]",
-      "vertex.texcoord[7]"
+      "vertex.texcoord[7]",
+      "vertex.attrib[0]",
+      "vertex.attrib[1]",
+      "vertex.attrib[2]",
+      "vertex.attrib[3]",
+      "vertex.attrib[4]",
+      "vertex.attrib[5]",
+      "vertex.attrib[6]",
+      "vertex.attrib[7]",
+      "vertex.attrib[8]",
+      "vertex.attrib[9]",
+      "vertex.attrib[10]",
+      "vertex.attrib[11]",
+      "vertex.attrib[12]",
+      "vertex.attrib[13]",
+      "vertex.attrib[14]",
+      "vertex.attrib[15]"
    };
    const char *fragAttribs[] = {
       "fragment.position",
