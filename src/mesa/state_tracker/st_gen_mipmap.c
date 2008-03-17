@@ -282,8 +282,13 @@ st_render_mipmap(struct st_context *st,
 
       /*
        * Setup sampler state
+       * Note: we should only have to set the min/max LOD clamps to ensure
+       * we grab texels from the right mipmap level.  But some hardware
+       * has trouble with min clamping so we also setting the lod_bias to
+       * try to work around that.
        */
       sampler.min_lod = sampler.max_lod = srcLevel;
+      sampler.lod_bias = srcLevel;
       sampler_cso = pipe->create_sampler_state(pipe, &sampler);
       pipe->bind_sampler_states(pipe, 1, &sampler_cso);
 
@@ -298,6 +303,7 @@ st_render_mipmap(struct st_context *st,
 
       draw_quad(st->ctx);
 
+      pipe->flush(pipe, PIPE_FLUSH_WAIT);
       pipe->delete_sampler_state(pipe, sampler_cso);
    }
 
