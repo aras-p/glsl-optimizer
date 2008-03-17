@@ -144,7 +144,7 @@ static struct prog_dst_register dst_undef( void )
 
 static struct prog_dst_register get_temp( struct brw_wm_compile *c )
 {
-   int bit = ffs( ~c->fp_temp );
+   int bit = _mesa_ffs( ~c->fp_temp );
 
    if (!bit) {
       _mesa_printf("%s: out of temporaries\n", __FILE__);
@@ -158,7 +158,7 @@ static struct prog_dst_register get_temp( struct brw_wm_compile *c )
 
 static void release_temp( struct brw_wm_compile *c, struct prog_dst_register temp )
 {
-   c->fp_temp &= ~1<<(temp.Index + 1 - FIRST_INTERNAL_TEMP);
+   c->fp_temp &= ~(1 << (temp.Index - FIRST_INTERNAL_TEMP));
 }
 
 
