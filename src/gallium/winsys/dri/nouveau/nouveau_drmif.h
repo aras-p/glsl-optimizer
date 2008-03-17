@@ -127,6 +127,8 @@ struct nouveau_pushbuf_bo {
 struct nouveau_pushbuf_priv {
 	struct nouveau_pushbuf base;
 
+	struct nouveau_fence *fence;
+
 	unsigned nop_jump;
 	unsigned start;
 	unsigned size;
@@ -288,7 +290,7 @@ nouveau_bo_unmap(struct nouveau_bo *);
 
 extern int
 nouveau_bo_validate(struct nouveau_channel *, struct nouveau_bo *,
-		    struct nouveau_fence *fence, uint32_t flags);
+		    uint32_t flags);
 
 extern int
 nouveau_resource_init(struct nouveau_resource **heap, unsigned start,

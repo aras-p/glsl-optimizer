@@ -56,6 +56,10 @@ nouveau_pushbuf_space(struct nouveau_channel *chan, unsigned min)
 	nvpb->base.remaining = nvpb->size;
 	nvpb->base.cur = &nvchan->pushbuf[nvpb->start];
 
+	/* Create a new fence object for this "frame" */
+	nouveau_fence_ref(NULL, &nvpb->fence);
+	nouveau_fence_new(chan, &nvpb->fence);
+
 	return 0;
 }
 
@@ -128,7 +132,6 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 	struct nouveau_channel_priv *nvchan = nouveau_channel(chan);
 	struct nouveau_pushbuf_priv *nvpb = &nvchan->pb;
 	struct nouveau_pushbuf_bo *pbbo;
-	struct nouveau_fence *fence = NULL;
 	int ret;
 
 	if (nvpb->base.remaining == nvpb->size)
@@ -138,10 +141,6 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 	nvchan->dma->cur += nvpb->size;
 	nvchan->dma->free -= nvpb->size;
 	assert(nvchan->dma->cur <= nvchan->dma->max);
-
-	ret = nouveau_fence_new(chan, &fence);
-	if (ret)
-		return ret;
 
 	nvchan->dma = &nvchan->dma_bufmgr;
 	nvchan->pushbuf[nvpb->nop_jump] = 0x20000000 |
@@ -153,7 +152,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 		struct nouveau_pushbuf_reloc *r;
 		struct nouveau_bo *bo = &ptr_to_bo(pbbo->handle)->base;
 
-		ret = nouveau_bo_validate(chan, bo, fence, pbbo->flags);
+		ret = nouveau_bo_validate(chan, bo, pbbo->flags);
 		assert (ret == 0);
 
 		if (bo->offset == nouveau_bo(bo)->offset &&
@@ -188,9 +187,8 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 	nvchan->dma = &nvchan->dma_master;
 
 	/* Fence + kickoff */
-	nouveau_fence_emit(fence);
+	nouveau_fence_emit(nvpb->fence);
 	FIRE_RING_CH(chan);
-	nouveau_fence_ref(NULL, &fence);
 
 	/* Allocate space for next push buffer */
 	ret = nouveau_pushbuf_space(chan, min);

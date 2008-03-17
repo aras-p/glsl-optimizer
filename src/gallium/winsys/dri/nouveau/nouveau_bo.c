@@ -376,9 +376,10 @@ nouveau_bo_validate_bo(struct nouveau_channel *chan, struct nouveau_bo *bo,
 
 int
 nouveau_bo_validate(struct nouveau_channel *chan, struct nouveau_bo *bo,
-		    struct nouveau_fence *fence, uint32_t flags)
+		    uint32_t flags)
 {
 	struct nouveau_bo_priv *nvbo = nouveau_bo(bo);
+	struct nouveau_fence *fence = nouveau_pushbuf(chan->pushbuf)->fence;
 	int ret;
 
 	assert(bo->map == NULL);
