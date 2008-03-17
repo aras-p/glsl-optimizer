@@ -335,7 +335,7 @@ nv40_state_vtxfmt_validate(struct nv40_context *nv40)
 		emit_attrib(nv40, 5, EMIT_1F, TGSI_SEMANTIC_FOG, 0);
 	}
 
-	emit_attrib(nv40, 0, EMIT_4F, TGSI_SEMANTIC_POSITION, 0);
+	emit_attrib(nv40, 0, EMIT_3F, TGSI_SEMANTIC_POSITION, 0);
 
 	return FALSE;
 }
