@@ -113,7 +113,7 @@ intel_miptree_create(struct intel_context *intel,
    /*
     * pitch == 0 indicates the null texture
     */
-   if (!mt || mt->pitch)
+   if (!mt || !mt->pitch)
       return NULL;
 
    mt->region = intel_region_alloc(intel,
