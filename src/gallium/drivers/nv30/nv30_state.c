@@ -565,7 +565,7 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct pipe_surface *rt[4], *zeta = NULL;
+	struct pipe_surface *rt[2], *zeta = NULL;
 	uint32_t rt_enable, rt_format, w = 0, h = 0;
 	int i, colour_format = 0, zeta_format = 0;
 
@@ -667,6 +667,8 @@ nv30_set_framebuffer_state(struct pipe_context *pipe,
 	BEGIN_RING(rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(0), 2);
 	OUT_RING  (((w - 1) << 16) | 0);
 	OUT_RING  (((h - 1) << 16) | 0);
+	BEGIN_RING(rankine, NV34TCL_VIEWPORT_TX_ORIGIN, 1);
+	OUT_RING  (0);
 }
 
 static void
