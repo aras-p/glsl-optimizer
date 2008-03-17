@@ -468,6 +468,34 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	case TGSI_OPCODE_COS:
 		arith(fpc, sat, COS, dst, mask, src[0], none, none);
 		break;
+	case TGSI_OPCODE_DDX:
+		if (mask & (MASK_Z | MASK_W)) {
+			tmp = temp(fpc);
+			arith(fpc, sat, DDX, tmp, MASK_X | MASK_Y,
+			      swz(src[0], Z, W, Z, W), none, none);
+			arith(fpc, 0, MOV, tmp, MASK_Z | MASK_W,
+			      swz(tmp, X, Y, X, Y), none, none);
+			arith(fpc, sat, DDX, tmp, MASK_X | MASK_Y, src[0],
+			      none, none);
+			arith(fpc, 0, MOV, dst, mask, tmp, none, none);
+		} else {
+			arith(fpc, sat, DDX, dst, mask, src[0], none, none);
+		}
+		break;
+	case TGSI_OPCODE_DDY:
+		if (mask & (MASK_Z | MASK_W)) {
+			tmp = temp(fpc);
+			arith(fpc, sat, DDY, tmp, MASK_X | MASK_Y,
+			      swz(src[0], Z, W, Z, W), none, none);
+			arith(fpc, 0, MOV, tmp, MASK_Z | MASK_W,
+			      swz(tmp, X, Y, X, Y), none, none);
+			arith(fpc, sat, DDY, tmp, MASK_X | MASK_Y, src[0],
+			      none, none);
+			arith(fpc, 0, MOV, dst, mask, tmp, none, none);
+		} else {
+			arith(fpc, sat, DDY, dst, mask, src[0], none, none);
+		}
+		break;
 	case TGSI_OPCODE_DP3:
 		arith(fpc, sat, DP3, dst, mask, src[0], src[1], none);
 		break;
@@ -567,14 +595,32 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			      swz(src[0], X, X, X, X), none, none);
 		}
 		break;
-	case TGSI_OPCODE_SIN:
-		arith(fpc, sat, SIN, dst, mask, src[0], none, none);
+	case TGSI_OPCODE_SEQ:
+		arith(fpc, sat, SEQ, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SFL:
+		arith(fpc, sat, SFL, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SGE:
 		arith(fpc, sat, SGE, dst, mask, src[0], src[1], none);
 		break;
+	case TGSI_OPCODE_SGT:
+		arith(fpc, sat, SGT, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SIN:
+		arith(fpc, sat, SIN, dst, mask, src[0], none, none);
+		break;
+	case TGSI_OPCODE_SLE:
+		arith(fpc, sat, SLE, dst, mask, src[0], src[1], none);
+		break;
 	case TGSI_OPCODE_SLT:
 		arith(fpc, sat, SLT, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_SNE:
+		arith(fpc, sat, SNE, dst, mask, src[0], src[1], none);
+		break;
+	case TGSI_OPCODE_STR:
+		arith(fpc, sat, STR, dst, mask, src[0], src[1], none);
 		break;
 	case TGSI_OPCODE_SUB:
 		arith(fpc, sat, ADD, dst, mask, src[0], neg(src[1]), none);
