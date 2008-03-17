@@ -456,8 +456,6 @@ intelTexImage(GLcontext * ctx,
 					   format, type,
 					   pixels, unpack, "glTexImage");
    }
-   if (!pixels)
-      return;
 
    LOCK_HARDWARE(intel);
 
@@ -494,27 +492,29 @@ intelTexImage(GLcontext * ctx,
     * the blitter to copy.  Or, use the hardware to do the format
     * conversion and copy:
     */
-   if (compressed) {
-       if (intelImage->mt) {
-	   struct intel_region *dst = intelImage->mt->region;
-	   _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
-		   0, 0,
-		   intelImage->mt->level[level].width,
-		   intelImage->mt->level[level].height/4,
-		   pixels,
-		   srcRowStride,
-		   0, 0);
-       } else
-	    memcpy(texImage->Data, pixels, imageSize);
-   } else if (!texImage->TexFormat->StoreImage(ctx, dims, 
-					       texImage->_BaseFormat, 
-					       texImage->TexFormat, 
-					       texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
-					       dstRowStride,
-					       texImage->ImageOffsets,
-					       width, height, depth,
-					       format, type, pixels, unpack)) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+   if (pixels) {
+       if (compressed) {
+	   if (intelImage->mt) {
+	       struct intel_region *dst = intelImage->mt->region;
+	       _mesa_copy_rect(texImage->Data, dst->cpp, dst->pitch,
+			       0, 0,
+			       intelImage->mt->level[level].width,
+			       intelImage->mt->level[level].height/4,
+			       pixels,
+			       srcRowStride,
+			       0, 0);
+	   } else
+	       memcpy(texImage->Data, pixels, imageSize);
+       } else if (!texImage->TexFormat->StoreImage(ctx, dims, 
+						   texImage->_BaseFormat, 
+						   texImage->TexFormat, 
+						   texImage->Data, 0, 0, 0, /* dstX/Y/Zoffset */
+						   dstRowStride,
+						   texImage->ImageOffsets,
+						   width, height, depth,
+						   format, type, pixels, unpack)) {
+	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+       }
    }
 
    /* GL_SGIS_generate_mipmap */

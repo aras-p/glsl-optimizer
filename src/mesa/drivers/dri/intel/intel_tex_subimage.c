@@ -50,8 +50,8 @@ intelTexSubimage(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_texture_image *intelImage = intel_texture_image(texImage);
-   GLuint dstRowStride;
-
+   GLuint dstRowStride = 0;
+   
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        level, xoffset, yoffset, width, height);
@@ -76,6 +76,16 @@ intelTexSubimage(GLcontext * ctx,
                                                intelImage->level,
                                                &dstRowStride,
                                                texImage->ImageOffsets);
+   else {
+      if (texImage->IsCompressed) {
+         dstRowStride =
+            _mesa_compressed_row_stride(texImage->TexFormat->MesaFormat, width);
+         assert(dims != 3);
+      }
+      else {
+         dstRowStride = texImage->RowStride * texImage->TexFormat->TexelBytes;
+      }
+   }
 
    assert(dstRowStride);
 
