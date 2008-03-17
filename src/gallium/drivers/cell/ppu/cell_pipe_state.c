@@ -116,7 +116,7 @@ cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
 
    draw_flush(cell->draw);
 
-   if (cdsa->code.store == NULL) {
+   if ((cdsa != NULL) && (cdsa->code.store == NULL)) {
       cell_generate_depth_stencil_test(cdsa);
    }
 

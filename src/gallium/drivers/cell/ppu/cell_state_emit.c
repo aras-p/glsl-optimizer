@@ -74,11 +74,18 @@ cell_emit_state(struct cell_context *cell)
       struct cell_command_depth_stencil_alpha_test dsat;
       
 
-      dsat.base = (intptr_t) cell->depth_stencil->code.store;
-      dsat.size = (char *) cell->depth_stencil->code.csr
-	  - (char *) cell->depth_stencil->code.store;
-      dsat.read_depth = TRUE;
-      dsat.read_stencil = FALSE;
+      if (cell->depth_stencil != NULL) {
+	 dsat.base = (intptr_t) cell->depth_stencil->code.store;
+	 dsat.size = (char *) cell->depth_stencil->code.csr
+	     - (char *) cell->depth_stencil->code.store;
+	 dsat.read_depth = TRUE;
+	 dsat.read_stencil = FALSE;
+      } else {
+	 dsat.base = 0;
+	 dsat.size = 0;
+	 dsat.read_depth = FALSE;
+	 dsat.read_stencil = FALSE;
+      }
 
       {
 	 uint32_t *p = cell->depth_stencil->code.store;

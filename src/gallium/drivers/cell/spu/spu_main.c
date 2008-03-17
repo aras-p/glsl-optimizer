@@ -260,13 +260,22 @@ cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *stat
 
    ASSERT_ALIGN16(state->base);
 
-   mfc_get(depth_stencil_code_buffer,
-	   (unsigned int) state->base,  /* src */
-	   ROUNDUP16(state->size),
-	   TAG_BATCH_BUFFER,
-	   0, /* tid */
-	   0  /* rid */);
-   wait_on_mask(1 << TAG_BATCH_BUFFER);
+   if (state->size != 0) {
+      mfc_get(depth_stencil_code_buffer,
+	      (unsigned int) state->base,  /* src */
+	      ROUNDUP16(state->size),
+	      TAG_BATCH_BUFFER,
+	      0, /* tid */
+	      0  /* rid */);
+      wait_on_mask(1 << TAG_BATCH_BUFFER);
+   } else {
+      /* If there is no code, emit a return instruction.
+       */
+      depth_stencil_code_buffer[0] = 0x35;
+      depth_stencil_code_buffer[1] = 0x00;
+      depth_stencil_code_buffer[2] = 0x00;
+      depth_stencil_code_buffer[3] = 0x00;
+   }
 
    spu.frag_test = (frag_test_func) depth_stencil_code_buffer;
    spu.read_depth = state->read_depth;
