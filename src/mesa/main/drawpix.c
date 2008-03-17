@@ -105,8 +105,7 @@ error_check_format_type(GLcontext *ctx, GLenum format, GLenum type,
       }
       break;
    case GL_DEPTH_COMPONENT:
-      if ((drawing && !_mesa_dest_buffer_exists(ctx, format)) ||
-          (!drawing && !_mesa_source_buffer_exists(ctx, format))) {
+      if (!drawing && !_mesa_source_buffer_exists(ctx, format)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "gl%sPixels(no depth buffer)", readDraw);
          return GL_TRUE;
