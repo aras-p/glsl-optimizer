@@ -51,6 +51,7 @@ SOURCES = \
 	manytex.c \
 	minmag.c \
 	mipmap_limits.c \
+	mipmap_view.c \
 	multipal.c \
 	no_s3tc.c \
 	packedpixels.c \
@@ -157,6 +158,14 @@ invert: invert.o readtex.o
 
 invert.o: invert.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+mipmap_view: mipmap_view.o readtex.o
+	$(CC) $(CFLAGS) mipmap_view.o readtex.o $(LIBS) -o $@
+
+mipmap_view.o: mipmap_view.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
 
 readtex.o: readtex.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
