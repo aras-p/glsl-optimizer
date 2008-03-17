@@ -34,6 +34,7 @@
 
 
 #include "pipe/p_context.h"
+#include "pipe/p_debug.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_util.h"
@@ -46,6 +47,612 @@
 #include "tgsi/util/tgsi_build.h"
 #include "tgsi/util/tgsi_dump.h"
 #include "tgsi/util/tgsi_parse.h"
+
+
+
+enum dtype
+{
+   UBYTE,
+   UBYTE_3_3_2,
+   USHORT,
+   USHORT_4_4_4_4,
+   USHORT_5_6_5,
+   USHORT_1_5_5_5_REV,
+   UINT,
+   FLOAT,
+   HALF_FLOAT
+};
+
+
+typedef ushort half_float;
+
+
+#if 0
+extern half_float
+float_to_half(float f);
+
+extern float
+half_to_float(half_float h);
+#endif
+
+
+/**
+ * Average together two rows of a source image to produce a single new
+ * row in the dest image.  It's legal for the two source rows to point
+ * to the same data.  The source width must be equal to either the
+ * dest width or two times the dest width.
+ * \param datatype  GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_FLOAT, etc.
+ * \param comps  number of components per pixel (1..4)
+ */
+static void
+do_row(enum dtype datatype, uint comps, int srcWidth,
+       const void *srcRowA, const void *srcRowB,
+       int dstWidth, void *dstRow)
+{
+   const uint k0 = (srcWidth == dstWidth) ? 0 : 1;
+   const uint colStride = (srcWidth == dstWidth) ? 1 : 2;
+
+   assert(comps >= 1);
+   assert(comps <= 4);
+
+   /* This assertion is no longer valid with non-power-of-2 textures
+   assert(srcWidth == dstWidth || srcWidth == 2 * dstWidth);
+   */
+
+   if (datatype == UBYTE && comps == 4) {
+      uint i, j, k;
+      const ubyte(*rowA)[4] = (const ubyte(*)[4]) srcRowA;
+      const ubyte(*rowB)[4] = (const ubyte(*)[4]) srcRowB;
+      ubyte(*dst)[4] = (ubyte(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
+         dst[i][3] = (rowA[j][3] + rowA[k][3] + rowB[j][3] + rowB[k][3]) / 4;
+      }
+   }
+   else if (datatype == UBYTE && comps == 3) {
+      uint i, j, k;
+      const ubyte(*rowA)[3] = (const ubyte(*)[3]) srcRowA;
+      const ubyte(*rowB)[3] = (const ubyte(*)[3]) srcRowB;
+      ubyte(*dst)[3] = (ubyte(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
+      }
+   }
+   else if (datatype == UBYTE && comps == 2) {
+      uint i, j, k;
+      const ubyte(*rowA)[2] = (const ubyte(*)[2]) srcRowA;
+      const ubyte(*rowB)[2] = (const ubyte(*)[2]) srcRowB;
+      ubyte(*dst)[2] = (ubyte(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) >> 2;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) >> 2;
+      }
+   }
+   else if (datatype == UBYTE && comps == 1) {
+      uint i, j, k;
+      const ubyte *rowA = (const ubyte *) srcRowA;
+      const ubyte *rowB = (const ubyte *) srcRowB;
+      ubyte *dst = (ubyte *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) >> 2;
+      }
+   }
+
+   else if (datatype == USHORT && comps == 4) {
+      uint i, j, k;
+      const ushort(*rowA)[4] = (const ushort(*)[4]) srcRowA;
+      const ushort(*rowB)[4] = (const ushort(*)[4]) srcRowB;
+      ushort(*dst)[4] = (ushort(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
+         dst[i][3] = (rowA[j][3] + rowA[k][3] + rowB[j][3] + rowB[k][3]) / 4;
+      }
+   }
+   else if (datatype == USHORT && comps == 3) {
+      uint i, j, k;
+      const ushort(*rowA)[3] = (const ushort(*)[3]) srcRowA;
+      const ushort(*rowB)[3] = (const ushort(*)[3]) srcRowB;
+      ushort(*dst)[3] = (ushort(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] + rowB[j][2] + rowB[k][2]) / 4;
+      }
+   }
+   else if (datatype == USHORT && comps == 2) {
+      uint i, j, k;
+      const ushort(*rowA)[2] = (const ushort(*)[2]) srcRowA;
+      const ushort(*rowB)[2] = (const ushort(*)[2]) srcRowB;
+      ushort(*dst)[2] = (ushort(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] + rowB[j][0] + rowB[k][0]) / 4;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] + rowB[j][1] + rowB[k][1]) / 4;
+      }
+   }
+   else if (datatype == USHORT && comps == 1) {
+      uint i, j, k;
+      const ushort *rowA = (const ushort *) srcRowA;
+      const ushort *rowB = (const ushort *) srcRowB;
+      ushort *dst = (ushort *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) / 4;
+      }
+   }
+
+   else if (datatype == FLOAT && comps == 4) {
+      uint i, j, k;
+      const float(*rowA)[4] = (const float(*)[4]) srcRowA;
+      const float(*rowB)[4] = (const float(*)[4]) srcRowB;
+      float(*dst)[4] = (float(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                      rowB[j][0] + rowB[k][0]) * 0.25F;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                      rowB[j][1] + rowB[k][1]) * 0.25F;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                      rowB[j][2] + rowB[k][2]) * 0.25F;
+         dst[i][3] = (rowA[j][3] + rowA[k][3] +
+                      rowB[j][3] + rowB[k][3]) * 0.25F;
+      }
+   }
+   else if (datatype == FLOAT && comps == 3) {
+      uint i, j, k;
+      const float(*rowA)[3] = (const float(*)[3]) srcRowA;
+      const float(*rowB)[3] = (const float(*)[3]) srcRowB;
+      float(*dst)[3] = (float(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                      rowB[j][0] + rowB[k][0]) * 0.25F;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                      rowB[j][1] + rowB[k][1]) * 0.25F;
+         dst[i][2] = (rowA[j][2] + rowA[k][2] +
+                      rowB[j][2] + rowB[k][2]) * 0.25F;
+      }
+   }
+   else if (datatype == FLOAT && comps == 2) {
+      uint i, j, k;
+      const float(*rowA)[2] = (const float(*)[2]) srcRowA;
+      const float(*rowB)[2] = (const float(*)[2]) srcRowB;
+      float(*dst)[2] = (float(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i][0] = (rowA[j][0] + rowA[k][0] +
+                      rowB[j][0] + rowB[k][0]) * 0.25F;
+         dst[i][1] = (rowA[j][1] + rowA[k][1] +
+                      rowB[j][1] + rowB[k][1]) * 0.25F;
+      }
+   }
+   else if (datatype == FLOAT && comps == 1) {
+      uint i, j, k;
+      const float *rowA = (const float *) srcRowA;
+      const float *rowB = (const float *) srcRowB;
+      float *dst = (float *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = (rowA[j] + rowA[k] + rowB[j] + rowB[k]) * 0.25F;
+      }
+   }
+
+#if 0
+   else if (datatype == HALF_FLOAT && comps == 4) {
+      uint i, j, k, comp;
+      const half_float(*rowA)[4] = (const half_float(*)[4]) srcRowA;
+      const half_float(*rowB)[4] = (const half_float(*)[4]) srcRowB;
+      half_float(*dst)[4] = (half_float(*)[4]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         for (comp = 0; comp < 4; comp++) {
+            float aj, ak, bj, bk;
+            aj = half_to_float(rowA[j][comp]);
+            ak = half_to_float(rowA[k][comp]);
+            bj = half_to_float(rowB[j][comp]);
+            bk = half_to_float(rowB[k][comp]);
+            dst[i][comp] = float_to_half((aj + ak + bj + bk) * 0.25F);
+         }
+      }
+   }
+   else if (datatype == HALF_FLOAT && comps == 3) {
+      uint i, j, k, comp;
+      const half_float(*rowA)[3] = (const half_float(*)[3]) srcRowA;
+      const half_float(*rowB)[3] = (const half_float(*)[3]) srcRowB;
+      half_float(*dst)[3] = (half_float(*)[3]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         for (comp = 0; comp < 3; comp++) {
+            float aj, ak, bj, bk;
+            aj = half_to_float(rowA[j][comp]);
+            ak = half_to_float(rowA[k][comp]);
+            bj = half_to_float(rowB[j][comp]);
+            bk = half_to_float(rowB[k][comp]);
+            dst[i][comp] = float_to_half((aj + ak + bj + bk) * 0.25F);
+         }
+      }
+   }
+   else if (datatype == HALF_FLOAT && comps == 2) {
+      uint i, j, k, comp;
+      const half_float(*rowA)[2] = (const half_float(*)[2]) srcRowA;
+      const half_float(*rowB)[2] = (const half_float(*)[2]) srcRowB;
+      half_float(*dst)[2] = (half_float(*)[2]) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         for (comp = 0; comp < 2; comp++) {
+            float aj, ak, bj, bk;
+            aj = half_to_float(rowA[j][comp]);
+            ak = half_to_float(rowA[k][comp]);
+            bj = half_to_float(rowB[j][comp]);
+            bk = half_to_float(rowB[k][comp]);
+            dst[i][comp] = float_to_half((aj + ak + bj + bk) * 0.25F);
+         }
+      }
+   }
+   else if (datatype == HALF_FLOAT && comps == 1) {
+      uint i, j, k;
+      const half_float *rowA = (const half_float *) srcRowA;
+      const half_float *rowB = (const half_float *) srcRowB;
+      half_float *dst = (half_float *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         float aj, ak, bj, bk;
+         aj = half_to_float(rowA[j]);
+         ak = half_to_float(rowA[k]);
+         bj = half_to_float(rowB[j]);
+         bk = half_to_float(rowB[k]);
+         dst[i] = float_to_half((aj + ak + bj + bk) * 0.25F);
+      }
+   }
+#endif
+
+   else if (datatype == UINT && comps == 1) {
+      uint i, j, k;
+      const uint *rowA = (const uint *) srcRowA;
+      const uint *rowB = (const uint *) srcRowB;
+      float *dst = (float *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
+      }
+   }
+
+   else if (datatype == USHORT_5_6_5 && comps == 3) {
+      uint i, j, k;
+      const ushort *rowA = (const ushort *) srcRowA;
+      const ushort *rowB = (const ushort *) srcRowB;
+      ushort *dst = (ushort *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0x1f;
+         const int rowAr1 = rowA[k] & 0x1f;
+         const int rowBr0 = rowB[j] & 0x1f;
+         const int rowBr1 = rowB[k] & 0x1f;
+         const int rowAg0 = (rowA[j] >> 5) & 0x3f;
+         const int rowAg1 = (rowA[k] >> 5) & 0x3f;
+         const int rowBg0 = (rowB[j] >> 5) & 0x3f;
+         const int rowBg1 = (rowB[k] >> 5) & 0x3f;
+         const int rowAb0 = (rowA[j] >> 11) & 0x1f;
+         const int rowAb1 = (rowA[k] >> 11) & 0x1f;
+         const int rowBb0 = (rowB[j] >> 11) & 0x1f;
+         const int rowBb1 = (rowB[k] >> 11) & 0x1f;
+         const int red = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+         const int green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+         const int blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+         dst[i] = (blue << 11) | (green << 5) | red;
+      }
+   }
+   else if (datatype == USHORT_4_4_4_4 && comps == 4) {
+      uint i, j, k;
+      const ushort *rowA = (const ushort *) srcRowA;
+      const ushort *rowB = (const ushort *) srcRowB;
+      ushort *dst = (ushort *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0xf;
+         const int rowAr1 = rowA[k] & 0xf;
+         const int rowBr0 = rowB[j] & 0xf;
+         const int rowBr1 = rowB[k] & 0xf;
+         const int rowAg0 = (rowA[j] >> 4) & 0xf;
+         const int rowAg1 = (rowA[k] >> 4) & 0xf;
+         const int rowBg0 = (rowB[j] >> 4) & 0xf;
+         const int rowBg1 = (rowB[k] >> 4) & 0xf;
+         const int rowAb0 = (rowA[j] >> 8) & 0xf;
+         const int rowAb1 = (rowA[k] >> 8) & 0xf;
+         const int rowBb0 = (rowB[j] >> 8) & 0xf;
+         const int rowBb1 = (rowB[k] >> 8) & 0xf;
+         const int rowAa0 = (rowA[j] >> 12) & 0xf;
+         const int rowAa1 = (rowA[k] >> 12) & 0xf;
+         const int rowBa0 = (rowB[j] >> 12) & 0xf;
+         const int rowBa1 = (rowB[k] >> 12) & 0xf;
+         const int red = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+         const int green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+         const int blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+         const int alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 2;
+         dst[i] = (alpha << 12) | (blue << 8) | (green << 4) | red;
+      }
+   }
+   else if (datatype == USHORT_1_5_5_5_REV && comps == 4) {
+      uint i, j, k;
+      const ushort *rowA = (const ushort *) srcRowA;
+      const ushort *rowB = (const ushort *) srcRowB;
+      ushort *dst = (ushort *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0x1f;
+         const int rowAr1 = rowA[k] & 0x1f;
+         const int rowBr0 = rowB[j] & 0x1f;
+         const int rowBr1 = rowB[k] & 0xf;
+         const int rowAg0 = (rowA[j] >> 5) & 0x1f;
+         const int rowAg1 = (rowA[k] >> 5) & 0x1f;
+         const int rowBg0 = (rowB[j] >> 5) & 0x1f;
+         const int rowBg1 = (rowB[k] >> 5) & 0x1f;
+         const int rowAb0 = (rowA[j] >> 10) & 0x1f;
+         const int rowAb1 = (rowA[k] >> 10) & 0x1f;
+         const int rowBb0 = (rowB[j] >> 10) & 0x1f;
+         const int rowBb1 = (rowB[k] >> 10) & 0x1f;
+         const int rowAa0 = (rowA[j] >> 15) & 0x1;
+         const int rowAa1 = (rowA[k] >> 15) & 0x1;
+         const int rowBa0 = (rowB[j] >> 15) & 0x1;
+         const int rowBa1 = (rowB[k] >> 15) & 0x1;
+         const int red = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+         const int green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+         const int blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+         const int alpha = (rowAa0 + rowAa1 + rowBa0 + rowBa1) >> 2;
+         dst[i] = (alpha << 15) | (blue << 10) | (green << 5) | red;
+      }
+   }
+   else if (datatype == UBYTE_3_3_2 && comps == 3) {
+      uint i, j, k;
+      const ubyte *rowA = (const ubyte *) srcRowA;
+      const ubyte *rowB = (const ubyte *) srcRowB;
+      ubyte *dst = (ubyte *) dstRow;
+      for (i = j = 0, k = k0; i < (uint) dstWidth;
+           i++, j += colStride, k += colStride) {
+         const int rowAr0 = rowA[j] & 0x3;
+         const int rowAr1 = rowA[k] & 0x3;
+         const int rowBr0 = rowB[j] & 0x3;
+         const int rowBr1 = rowB[k] & 0x3;
+         const int rowAg0 = (rowA[j] >> 2) & 0x7;
+         const int rowAg1 = (rowA[k] >> 2) & 0x7;
+         const int rowBg0 = (rowB[j] >> 2) & 0x7;
+         const int rowBg1 = (rowB[k] >> 2) & 0x7;
+         const int rowAb0 = (rowA[j] >> 5) & 0x7;
+         const int rowAb1 = (rowA[k] >> 5) & 0x7;
+         const int rowBb0 = (rowB[j] >> 5) & 0x7;
+         const int rowBb1 = (rowB[k] >> 5) & 0x7;
+         const int red = (rowAr0 + rowAr1 + rowBr0 + rowBr1) >> 2;
+         const int green = (rowAg0 + rowAg1 + rowBg0 + rowBg1) >> 2;
+         const int blue = (rowAb0 + rowAb1 + rowBb0 + rowBb1) >> 2;
+         dst[i] = (blue << 5) | (green << 2) | red;
+      }
+   }
+   else {
+      debug_printf("bad format in do_row()");
+   }
+}
+
+
+static void
+format_to_type_comps(enum pipe_format pformat,
+                     enum dtype *datatype, uint *comps)
+{
+   switch (pformat) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      *datatype = UBYTE;
+      *comps = 4;
+      return;
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+      *datatype = USHORT_1_5_5_5_REV;
+      *comps = 4;
+      return;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      *datatype = USHORT_4_4_4_4;
+      *comps = 4;
+      return;
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      *datatype = USHORT_5_6_5;
+      *comps = 3;
+      return;
+   case PIPE_FORMAT_U_L8:
+   case PIPE_FORMAT_U_A8:
+   case PIPE_FORMAT_U_I8:
+      *datatype = UBYTE;
+      *comps = 1;
+      return;
+   case PIPE_FORMAT_U_A8_L8:
+      *datatype = UBYTE;
+      *comps = 2;
+      return;
+   default:
+      assert(0);
+   }
+}
+
+
+static void
+reduce_1d(enum pipe_format pformat,
+          int srcWidth, const ubyte *srcPtr,
+          int dstWidth, ubyte *dstPtr)
+{
+   enum dtype datatype;
+   uint comps;
+
+   format_to_type_comps(pformat, &datatype, &comps);
+
+   /* we just duplicate the input row, kind of hack, saves code */
+   do_row(datatype, comps,
+          srcWidth, srcPtr, srcPtr,
+          dstWidth, dstPtr);
+}
+
+
+/**
+ * Strides are in bytes.  If zero, it'll be computed as width * bpp.
+ */
+static void
+reduce_2d(enum pipe_format pformat,
+          int srcWidth, int srcHeight,
+          int srcRowStride, const ubyte *srcPtr,
+          int dstWidth, int dstHeight,
+          int dstRowStride, ubyte *dstPtr)
+{
+   enum dtype datatype;
+   uint comps;
+   const int bpt = pf_get_size(pformat);
+   const ubyte *srcA, *srcB;
+   ubyte *dst;
+   int row;
+
+   format_to_type_comps(pformat, &datatype, &comps);
+
+   if (!srcRowStride)
+      srcRowStride = bpt * srcWidth;
+
+   if (!dstRowStride)
+      dstRowStride = bpt * dstWidth;
+
+   /* Compute src and dst pointers */
+   srcA = srcPtr;
+   if (srcHeight > 1) 
+      srcB = srcA + srcRowStride;
+   else
+      srcB = srcA;
+   dst = dstPtr;
+
+   for (row = 0; row < dstHeight; row++) {
+      do_row(datatype, comps,
+             srcWidth, srcA, srcB,
+             dstWidth, dst);
+      srcA += 2 * srcRowStride;
+      srcB += 2 * srcRowStride;
+      dst += dstRowStride;
+   }
+}
+
+
+static void
+make_1d_mipmap(struct gen_mipmap_state *ctx,
+               struct pipe_texture *pt,
+               uint face, uint baseLevel, uint lastLevel)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_winsys *winsys = pipe->winsys;
+   const uint zslice = 0;
+   uint dstLevel;
+
+   for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
+      const uint srcLevel = dstLevel - 1;
+      struct pipe_surface *srcSurf, *dstSurf;
+      void *srcMap, *dstMap;
+      
+      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice);
+      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+
+      srcMap = ((ubyte *) winsys->buffer_map(winsys, srcSurf->buffer,
+                                            PIPE_BUFFER_USAGE_CPU_READ)
+                + srcSurf->offset);
+      dstMap = ((ubyte *) winsys->buffer_map(winsys, dstSurf->buffer,
+                                            PIPE_BUFFER_USAGE_CPU_WRITE)
+                + dstSurf->offset);
+
+      reduce_1d(pt->format,
+                srcSurf->width, srcMap,
+                dstSurf->width, dstMap);
+
+      winsys->buffer_unmap(winsys, srcSurf->buffer);
+      winsys->buffer_unmap(winsys, dstSurf->buffer);
+
+      pipe_surface_reference(&srcSurf, NULL);
+      pipe_surface_reference(&dstSurf, NULL);
+   }
+}
+
+
+static void
+make_2d_mipmap(struct gen_mipmap_state *ctx,
+               struct pipe_texture *pt,
+               uint face, uint baseLevel, uint lastLevel)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_winsys *winsys = pipe->winsys;
+   const uint zslice = 0;
+   uint dstLevel;
+   const int bpt = pf_get_size(pt->format);
+
+   for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
+      const uint srcLevel = dstLevel - 1;
+      struct pipe_surface *srcSurf, *dstSurf;
+      ubyte *srcMap, *dstMap;
+      
+      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice);
+      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+
+      srcMap = ((ubyte *) winsys->buffer_map(winsys, srcSurf->buffer,
+                                            PIPE_BUFFER_USAGE_CPU_READ)
+                + srcSurf->offset);
+      dstMap = ((ubyte *) winsys->buffer_map(winsys, dstSurf->buffer,
+                                            PIPE_BUFFER_USAGE_CPU_WRITE)
+                + dstSurf->offset);
+
+      reduce_2d(pt->format,
+                srcSurf->width, srcSurf->height,
+                srcSurf->pitch * bpt, srcMap,
+                dstSurf->width, dstSurf->height,
+                dstSurf->pitch * bpt, dstMap);
+
+      winsys->buffer_unmap(winsys, srcSurf->buffer);
+      winsys->buffer_unmap(winsys, dstSurf->buffer);
+
+      pipe_surface_reference(&srcSurf, NULL);
+      pipe_surface_reference(&dstSurf, NULL);
+   }
+}
+
+
+static void
+make_3d_mipmap(struct gen_mipmap_state *ctx,
+               struct pipe_texture *pt,
+               uint face, uint baseLevel, uint lastLevel)
+{
+}
+
+
+static void
+fallback_gen_mipmap(struct gen_mipmap_state *ctx,
+                    struct pipe_texture *pt,
+                    uint face, uint baseLevel, uint lastLevel)
+{
+   switch (pt->target) {
+   case PIPE_TEXTURE_1D:
+      make_1d_mipmap(ctx, pt, face, baseLevel, lastLevel);
+      break;
+   case PIPE_TEXTURE_2D:
+   case PIPE_TEXTURE_CUBE:
+      make_2d_mipmap(ctx, pt, face, baseLevel, lastLevel);
+      break;
+   case PIPE_TEXTURE_3D:
+      make_3d_mipmap(ctx, pt, face, baseLevel, lastLevel);
+      break;
+   default:
+      assert(0);
+   }
+}
 
 
 /**
@@ -415,9 +1022,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, pt->format, PIPE_SURFACE)) {
-#if 0
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
-#endif
       return;
    }
 
