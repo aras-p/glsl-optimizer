@@ -281,9 +281,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, mtu;
 	int has_tcl = 1;
+	int is_r500 = 0;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
+
+	if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		is_r500 = 1;
 
 	r300->hw.max_state_size = 2 + 2;	/* reserve extra space for WAIT_IDLE and tex cache flush */
 
@@ -374,10 +378,17 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.su_depth_scale.cmd[0] = cmdpacket0(R300_SU_DEPTH_SCALE, 2);
 	ALLOC_STATE(rc, always, R300_RC_CMDSIZE, 0);
 	r300->hw.rc.cmd[R300_RC_CMD_0] = cmdpacket0(R300_RS_COUNT, 2);
-	ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
-	r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_IP_0, 8);
-	ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
+	if (is_r500) {
+		ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
+		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R500_RS_IP_0, 16);
+		ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
+		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R500_RS_INST_0, 1);
+	} else {
+		ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
+		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_IP_0, 8);
+		ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
+		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
+	}
 	ALLOC_STATE(sc_hyperz, always, 3, 0);
 	r300->hw.sc_hyperz.cmd[0] = cmdpacket0(R300_SC_HYPERZ, 2);
 	ALLOC_STATE(sc_screendoor, always, 2, 0);
@@ -389,14 +400,25 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
 	ALLOC_STATE(us_out_fmt, always, 6, 0);
 	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, 5);
-	ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
-	r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
-	ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
-	r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
-	ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, 2);
-	r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
-	ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
-	r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
+
+	if (is_r500) {
+		ALLOC_STATE(r500fp, variable, R300_FPI_CMDSIZE, 0);
+		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 1);
+	}
+
+	if (0/*is_r500*/) {
+
+	}/* else*/
+	{
+		ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
+		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
+		ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
+		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
+		ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, 2);
+		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
+		ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
+		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
+	}
 	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, 0);
 	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(FG_FOG_BLEND, 1);
 	ALLOC_STATE(fogc, always, R300_FOGC_CMDSIZE, 0);
@@ -456,10 +478,18 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.vps.cmd[R300_VPS_CMD_0] =
 		    cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
 
-		for (i = 0; i < 6; i++) {
-		  ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
-		  r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
- 		    cmdvpu(R300_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+		if (is_r500) {
+			for (i = 0; i < 6; i++) {
+				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
+				r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
+					cmdvpu(R500_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+			}
+		} else {
+			for (i = 0; i < 6; i++) {
+				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
+				r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
+					cmdvpu(R300_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+			}
 		}
 	}
 
