@@ -986,7 +986,7 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
 	brw_ADD(p,
 		dst[1],
 		negate(retype(src0[1], BRW_REGISTER_TYPE_W)),
-		brw_imm_d(c->key.origin_y + c->key.drawable_height));
+		brw_imm_d(c->key.origin_y + c->key.drawable_height - 1));
     }
 }
 
