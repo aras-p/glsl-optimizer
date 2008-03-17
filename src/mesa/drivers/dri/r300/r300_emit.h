@@ -74,6 +74,18 @@ static inline uint32_t cmdvpu(int addr, int count)
 	return cmd.u;
 }
 
+static inline uint32_t cmdr500fp(int addr, int count)
+{
+	drm_r300_cmd_header_t cmd;
+
+	cmd.vpu.cmd_type = R300_CMD_R500FP;
+	cmd.vpu.count = count;
+	cmd.vpu.adrhi = ((unsigned int)addr & 0xFF00) >> 8;
+	cmd.vpu.adrlo = ((unsigned int)addr & 0x00FF);
+
+	return cmd.u;
+}
+
 static inline uint32_t cmdpacket3(int packet)
 {
 	drm_r300_cmd_header_t cmd;
