@@ -210,22 +210,18 @@ static void r300EmitVec(GLcontext * ctx, struct r300_dma_region *rvb,
 static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 				 int *inputs, GLint * tab, GLuint nr)
 {
-	GLuint i, dw;
-
+	GLushort i, w;
+	uint16_t * dst16 = (uint16_t *) dst;
+	
 	/* type, inputs, stop bit, size */
-	for (i = 0; i + 1 < nr; i += 2) {
-		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
-		dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
-		if (i + 2 == nr) {
-			dw |= (R300_VAP_INPUT_ROUTE_END << 16);
+	for (i = 0; i < nr; i++) {
+		/* make sure input is valid, would lockup the gpu */
+		assert(inputs[tab[i]] != -1);
+		w = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
+		if (i + 1 == nr) {
+			w |= R300_VAP_INPUT_ROUTE_END;
 		}
-		dst[i >> 1] = dw;
-	}
-
-	if (nr & 1) {
-		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[nr - 1]] << 8) | (attribptr[tab[nr - 1]]->size - 1);
-		dw |= R300_VAP_INPUT_ROUTE_END;
-		dst[nr >> 1] = dw;
+		dst16[i] = w;
 	}
 
 	return (nr + 1) >> 1;
