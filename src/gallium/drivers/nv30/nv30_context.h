@@ -48,7 +48,7 @@ struct nv30_context {
 	unsigned vp_samplers;
 
 	uint32_t rt_enable;
-	struct pipe_buffer *rt[4];
+	struct pipe_buffer *rt[2];
 	struct pipe_buffer *zeta;
 
 	struct {
