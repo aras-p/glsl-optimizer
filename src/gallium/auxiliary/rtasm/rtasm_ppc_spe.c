@@ -326,8 +326,8 @@ int spe_allocate_available_register(struct spe_function *p)
 {
    unsigned i;
    for (i = 0; i < 128; i++) {
-      const uint64_t mask = (1ULL << (i % 128));
-      const unsigned idx = i / 128;
+      const uint64_t mask = (1ULL << (i % 64));
+      const unsigned idx = i / 64;
 
       if ((p->regs[idx] & mask) != 0) {
          p->regs[idx] &= ~mask;
@@ -341,8 +341,8 @@ int spe_allocate_available_register(struct spe_function *p)
 
 int spe_allocate_register(struct spe_function *p, int reg)
 {
-   const unsigned idx = reg / 128;
-   const unsigned bit = reg % 128;
+   const unsigned idx = reg / 64;
+   const unsigned bit = reg % 64;
 
    assert((p->regs[idx] & (1ULL << bit)) != 0);
 
@@ -353,8 +353,8 @@ int spe_allocate_register(struct spe_function *p, int reg)
 
 void spe_release_register(struct spe_function *p, int reg)
 {
-   const unsigned idx = reg / 128;
-   const unsigned bit = reg % 128;
+   const unsigned idx = reg / 64;
+   const unsigned bit = reg % 64;
 
    assert((p->regs[idx] & (1ULL << bit)) == 0);
 
