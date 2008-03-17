@@ -252,7 +252,7 @@ st_render_mipmap(struct st_context *st,
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
    sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.normalized_coords = 1;
@@ -284,7 +284,7 @@ st_render_mipmap(struct st_context *st,
        * Setup sampler state
        * Note: we should only have to set the min/max LOD clamps to ensure
        * we grab texels from the right mipmap level.  But some hardware
-       * has trouble with min clamping so we also setting the lod_bias to
+       * has trouble with min clamping so we also set the lod_bias to
        * try to work around that.
        */
       sampler.min_lod = sampler.max_lod = srcLevel;
@@ -294,21 +294,16 @@ st_render_mipmap(struct st_context *st,
 
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 
-      /*
-       * Setup src texture, override pt->first_level so we sample from
-       * the right mipmap level.
-       */
-      /*pt->first_level = srcLevel;*/
       pipe->set_sampler_textures(pipe, 1, &pt);
 
       draw_quad(st->ctx);
 
       pipe->flush(pipe, PIPE_FLUSH_WAIT);
+
+      /*pipe->texture_update(pipe, pt);  not really needed */
+
       pipe->delete_sampler_state(pipe, sampler_cso);
    }
-
-   /* restore first_level */
-   /*pt->first_level = first_level_save;*/
 
    /* restore pipe state */
 #if 0
