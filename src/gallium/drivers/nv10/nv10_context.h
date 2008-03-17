@@ -47,11 +47,12 @@ struct nv10_context {
 	uint32_t rt_enable;
 	struct pipe_buffer *rt[4];
 	struct pipe_buffer *zeta;
+	uint32_t lma_offset;
 
 	struct {
 		struct pipe_buffer *buffer;
 		uint32_t format;
-	} tex[16];
+	} tex[2];
 
 	unsigned vb_enable;
 	struct {

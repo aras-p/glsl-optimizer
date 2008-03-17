@@ -49,21 +49,21 @@ nv10_emit_hw_state(struct nv10_context *nv10)
 		OUT_RELOCl(nv10->zeta, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		/* XXX for when we allocate LMA on nv17 */
 /*		BEGIN_RING(celsius, NV10TCL_LMA_DEPTH_OFFSET, 1);
-		OUT_RELOCl(nv10->zeta+...);*/
+		OUT_RELOCl(nv10->zeta+lma_offset);*/
 	}
 
 	/* Texture images */
 	for (i = 0; i < 2; i++) {
 		if (!(nv10->fp_samplers & (1 << i)))
 			continue;
-		BEGIN_RING(celsius, NV10TCL_TX_OFFSET(i), 2);
+		BEGIN_RING(celsius, NV10TCL_TX_OFFSET(i), 1);
 		OUT_RELOCl(nv10->tex[i].buffer, 0, NOUVEAU_BO_VRAM |
 			   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
-		// XXX
-/*		OUT_RELOCd(nv10->tex[i].buffer, nv10->tex[i].format,
+		BEGIN_RING(celsius, NV10TCL_TX_FORMAT(i), 1);
+		OUT_RELOCd(nv10->tex[i].buffer, nv10->tex[i].format,
 			   NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD |
 			   NOUVEAU_BO_OR, NV10TCL_TX_FORMAT_DMA0,
-			   NV10TCL_TX_FORMAT_DMA1);*/
+			   NV10TCL_TX_FORMAT_DMA1);
 	}
 }
 
