@@ -560,6 +560,7 @@ _mesa_ffs(int i)
          bit++;
          i >>= 1;
       }
+      bit++;
    }
    return bit;
 #else
