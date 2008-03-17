@@ -38,8 +38,7 @@
 #include "spu_texture.h"
 #include "spu_tile.h"
 #include "spu_tri.h"
-
-#include "spu_ztest.h"
+#include "spu_per_fragment_op.h"
 
 
 /** Masks are uint[4] vectors with each element being 0 or 0xffffffff */
@@ -264,16 +263,12 @@ do_depth_test(int x, int y, mask_t quadmask)
 
    zvals.v = eval_z((float) x, (float) y);
 
-   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
-      int ix = (x - setup.cliprect_minx) / 4;
-      int iy = (y - setup.cliprect_miny) / 2;
-      mask = spu_z16_test_less(zvals.v, &spu.ztile.us8[iy][ix], x>>1, quadmask);
-   }
-   else {
-      int ix = (x - setup.cliprect_minx) / 2;
-      int iy = (y - setup.cliprect_miny) / 2;
-      mask = spu_z32_test_less(zvals.v, &spu.ztile.ui4[iy][ix], quadmask);
-   }
+   mask = (mask_t) spu_do_depth_stencil(x - setup.cliprect_minx,
+					y - setup.cliprect_miny,
+					(qword) quadmask, 
+					(qword) zvals.v,
+					(qword) spu_splats((unsigned char) 0x0ffu),
+					(qword) spu_splats((unsigned int) 0x01u));
 
    if (spu_extract(spu_orx(mask), 0))
       spu.cur_ztile_status = TILE_STATUS_DIRTY;
@@ -299,7 +294,7 @@ emit_quad( int x, int y, mask_t mask )
    sp->quad.first->run(sp->quad.first, &setup.quad);
 #else
 
-   if (spu.depth_stencil.depth.enabled) {
+   if (spu.read_depth) {
       mask = do_depth_test(x, y, mask);
    }
 
@@ -434,7 +429,7 @@ static void flush_spans( void )
    }
    ASSERT(spu.cur_ctile_status != TILE_STATUS_DEFINED);
 
-   if (spu.depth_stencil.depth.enabled) {
+   if (spu.read_depth) {
       if (spu.cur_ztile_status == TILE_STATUS_GETTING) {
          /* wait for mfc_get() to complete */
          //printf("SPU: %u: waiting for ztile\n", spu.init.id);

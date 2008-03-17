@@ -71,9 +71,27 @@ cell_emit_state(struct cell_context *cell)
    }
 
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
-      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL,
-                     cell->depth_stencil,
-                     sizeof(struct pipe_depth_stencil_alpha_state));
+      struct cell_command_depth_stencil_alpha_test dsat;
+      
+
+      dsat.base = (intptr_t) cell->depth_stencil->code.store;
+      dsat.size = (char *) cell->depth_stencil->code.csr
+	  - (char *) cell->depth_stencil->code.store;
+      dsat.read_depth = TRUE;
+      dsat.read_stencil = FALSE;
+
+      {
+	 uint32_t *p = cell->depth_stencil->code.store;
+
+	 printf("\t.text\n");
+	 for (/* empty */; p < cell->depth_stencil->code.csr; p++) {
+	    printf("\t.long\t0x%04x\n", *p);
+	 }
+	 fflush(stdout);
+      }
+
+      emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL, &dsat,
+		     sizeof(dsat));
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {

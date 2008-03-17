@@ -98,7 +98,7 @@ my_tile(uint tx, uint ty)
 static INLINE void
 get_cz_tiles(uint tx, uint ty)
 {
-   if (spu.depth_stencil.depth.enabled) {
+   if (spu.read_depth) {
       if (spu.cur_ztile_status != TILE_STATUS_CLEAR) {
          //printf("SPU %u: getting Z tile %u, %u\n", spu.init.id, tx, ty);
          get_tile(tx, ty, &spu.ztile, TAG_READ_TILE_Z, 1);
@@ -153,7 +153,7 @@ static INLINE void
 wait_put_cz_tiles(void)
 {
    wait_on_mask(1 << TAG_WRITE_TILE_COLOR);
-   if (spu.depth_stencil.depth.enabled) {
+   if (spu.read_depth) {
       wait_on_mask(1 << TAG_WRITE_TILE_Z);
    }
 }
