@@ -116,7 +116,7 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
 }
 
 
-static void 
+static boolean
 i915_vbuf_render_set_primitive( struct vbuf_render *render, 
                                 unsigned prim )
 {
@@ -125,15 +125,17 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
    switch(prim) {
    case PIPE_PRIM_POINTS:
       i915_render->hwprim = PRIM3D_POINTLIST;
-      break;
+      return TRUE;
    case PIPE_PRIM_LINES:
       i915_render->hwprim = PRIM3D_LINELIST;
-      break;
+      return TRUE;
    case PIPE_PRIM_TRIANGLES:
       i915_render->hwprim = PRIM3D_TRILIST;
-      break;
+      return TRUE;
    default:
-      assert(0);
+      /* Actually, can handle a lot more just fine...  Fixme.
+       */
+      return FALSE;
    }
 }
 

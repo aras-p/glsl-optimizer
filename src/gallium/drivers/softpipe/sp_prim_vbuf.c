@@ -101,11 +101,20 @@ sp_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
 }
 
 
-static void
+static boolean
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   cvbr->prim = prim;
+   if (prim == PIPE_PRIM_TRIANGLES ||
+       prim == PIPE_PRIM_LINES ||
+       prim == PIPE_PRIM_POINTS) {
+      cvbr->prim = prim;
+      return TRUE;
+   }
+   else {
+      return FALSE;
+   }
+      
 }
 
 
