@@ -146,18 +146,7 @@ struct st_context
       struct st_fragment_program *combined_prog;
    } bitmap;
 
-   /** For gen/render mipmap feature */
-   struct {
-      struct pipe_blend_state blend;
-      struct pipe_depth_stencil_alpha_state depthstencil;
-      struct pipe_rasterizer_state rasterizer;
-
-      void *blend_cso;
-      void *depthstencil_cso;
-      void *rasterizer_cso;
-      struct st_fragment_program *stfp;
-      struct st_vertex_program *stvp;
-   } gen_mipmap;
+   struct gen_mipmap_state *gen_mipmap;
 
    struct cso_context *cso_context;
 };
