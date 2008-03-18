@@ -357,6 +357,8 @@ clear_with_quad(GLcontext *ctx,
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);
 #else
    /* Restore pipe state */
+   cso_set_blend(st->cso_context, &st->state.blend);
+   cso_set_depth_stencil_alpha(st->cso_context, &st->state.depth_stencil);
    cso_set_rasterizer(st->cso_context, &st->state.rasterizer);
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
