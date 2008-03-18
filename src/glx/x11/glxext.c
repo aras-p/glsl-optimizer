@@ -1256,7 +1256,7 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	/* Send a glXMakeCurrent request to bind the new context. */
 	bindReturnValue = 
 	  SendMakeCurrentRequest(dpy, opcode, gc ? gc->xid : None,
-				 ((dpy != oldGC->currentDpy) || oldGC->driContext)
+				 ((dpy != oldGC->currentDpy) || oldGC->isDirect)
 				 ? None : oldGC->currentContextTag,
 				 draw, read, &reply);
     }
@@ -1267,7 +1267,7 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
     }
 
     if ((dpy != oldGC->currentDpy || (gc && gc->driContext)) &&
-	!oldGC->driContext && oldGC != &dummyContext) {
+	!oldGC->isDirect && oldGC != &dummyContext) {
 	xGLXMakeCurrentReply dummy_reply;
 
 	/* We are either switching from one dpy to another and have to

@@ -313,6 +313,7 @@ GLXContext AllocateGLXContext( Display *dpy )
     gc->fillImage = __glFillImage;
     gc->pc = gc->buf;
     gc->bufEnd = gc->buf + bufSize;
+    gc->isDirect = GL_FALSE;
     if (__glXDebug) {
 	/*
 	** Set limit register so that there will be one command per packet
@@ -404,6 +405,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		gc->screen = mode->screen;
 		gc->psc = psc;
 		gc->mode = mode;
+		gc->isDirect = GL_TRUE;
 	    }
 	}
 #endif

@@ -310,6 +310,11 @@ struct __GLXcontextRec {
     GLenum error;
 
     /**
+     * Whether this context does direct rendering.
+     */
+    Bool isDirect;
+
+    /**
      * \c dpy of current display for this context.  Will be \c NULL if not
      * current to any display, or if this is the "dummy context".
      */
