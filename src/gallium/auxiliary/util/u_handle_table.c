@@ -226,9 +226,13 @@ handle_table_remove(struct handle_table *ht,
 
    index = handle - 1;
    object = ht->objects[index];
-   assert(object);
+   if(!object) {
+      /* XXX: this warning may be noisy for legitimate use -- remove later */
+      debug_warning("removing empty handle");
+      return;
+   }
    
-   if(object && ht->destroy)
+   if(ht->destroy)
       ht->destroy(object);
 
    ht->objects[index] = NULL;
