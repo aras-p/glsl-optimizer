@@ -100,6 +100,15 @@ void
 handle_table_destroy(struct handle_table *ht);
 
 
+unsigned
+handle_table_get_first_handle(struct handle_table *ht);
+
+
+unsigned
+handle_table_get_next_handle(struct handle_table *ht,
+                             unsigned handle);
+
+
 #ifdef __cplusplus
 }
 #endif

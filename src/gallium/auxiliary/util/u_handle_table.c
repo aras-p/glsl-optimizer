@@ -241,6 +241,28 @@ handle_table_remove(struct handle_table *ht,
 }
 
 
+unsigned
+handle_table_get_next_handle(struct handle_table *ht, 
+                             unsigned handle)
+{
+   unsigned index;
+   
+   for(index = handle; index < ht->size; ++index) {
+      if(!ht->objects[index])
+	 return index + 1;
+   }
+
+   return 0;
+}
+
+
+unsigned
+handle_table_get_first_handle(struct handle_table *ht)
+{
+   return handle_table_get_next_handle(ht, 0);
+}
+
+
 void
 handle_table_destroy(struct handle_table *ht)
 {
