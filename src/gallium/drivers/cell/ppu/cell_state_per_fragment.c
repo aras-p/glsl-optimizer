@@ -199,52 +199,62 @@ emit_depth_test(struct pipe_depth_stencil_alpha_state *dsa,
 
 /**
  * \note Emits a maximum of 5 instructions.
+ *
+ * \warning
+ * Since \c out and \c in might be the same register, this routine cannot
+ * generate code that uses \c out as a temporary.
  */
 static void
 emit_stencil_op(struct spe_function *f,
                 int out, int in, int mask, unsigned op, unsigned ref)
 {
    const int clamp = spe_allocate_available_register(f);
-   const int tmp = spe_allocate_available_register(f);
+   const int clamp_mask = spe_allocate_available_register(f);
+   const int result = spe_allocate_available_register(f);
 
    switch(op) {
    case PIPE_STENCIL_OP_KEEP:
       assert(0);
    case PIPE_STENCIL_OP_ZERO:
-      spe_il(f, out, 0);
+      spe_il(f, result, 0);
       break;
    case PIPE_STENCIL_OP_REPLACE:
-      spe_il(f, out, ref);
+      spe_il(f, result, ref);
       break;
    case PIPE_STENCIL_OP_INCR:
       spe_il(f, clamp, 0x0ff);
-      spe_ai(f, out, in, 1);
-      spe_cgti(f, tmp, out, clamp);
-      spe_selb(f, out, out, clamp, tmp);
+      spe_ai(f, result, in, 1);
+      spe_clgti(f, clamp_mask, result, 0x0ff);
+      spe_selb(f, result, result, clamp, clamp_mask);
       break;
    case PIPE_STENCIL_OP_DECR:
       spe_il(f, clamp, 0);
-      spe_ai(f, out, in, -1);
-      spe_cgti(f, tmp, out, clamp);
-      spe_selb(f, out, clamp, out, tmp);
+      spe_ai(f, result, in, -1);
+
+      /* If "(s-1) < 0" in signed arithemtic, then "(s-1) > MAX" in unsigned
+       * arithmetic.
+       */
+      spe_clgti(f, clamp_mask, result, 0x0ff);
+      spe_selb(f, result, result, clamp, clamp_mask);
       break;
    case PIPE_STENCIL_OP_INCR_WRAP:
-      spe_ai(f, out, in, 1);
+      spe_ai(f, result, in, 1);
       break;
    case PIPE_STENCIL_OP_DECR_WRAP:
-      spe_ai(f, out, in, -1);
+      spe_ai(f, result, in, -1);
       break;
    case PIPE_STENCIL_OP_INVERT:
-      spe_nor(f, out, in, in);
+      spe_nor(f, result, in, in);
       break;
    default:
       assert(0);
    }
 
-   spe_release_register(f, tmp);
-   spe_release_register(f, clamp);
+   spe_selb(f, out, in, result, mask);
 
-   spe_selb(f, out, in, out, mask);
+   spe_release_register(f, result);
+   spe_release_register(f, clamp_mask);
+   spe_release_register(f, clamp);
 }
 
 
@@ -261,13 +271,13 @@ emit_stencil_op(struct spe_function *f,
  * \param stencil    Register containing values from stencil buffer
  * \param depth_pass Register to store mask of fragments passing stencil test
  *                   and depth test
- * 
+ *
  * \note
  * Emits a maximum of 10 + (3 * 5) = 25 instructions.
  */
 static int
 emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
-                  unsigned face, 
+                  unsigned face,
                   struct spe_function *f,
                   int mask,
                   int depth_mask,
@@ -284,14 +294,17 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
    const unsigned ref = (dsa->stencil[face].ref_value
                          & dsa->stencil[face].value_mask);
    boolean complement = FALSE;
-   int stored = spe_allocate_available_register(f);
+   int stored;
    int tmp = spe_allocate_available_register(f);
 
 
    if ((dsa->stencil[face].func != PIPE_FUNC_NEVER)
        && (dsa->stencil[face].func != PIPE_FUNC_ALWAYS)
        && (dsa->stencil[face].value_mask != 0x0ff)) {
+      stored = spe_allocate_available_register(f);
       spe_andi(f, stored, stencil, dsa->stencil[face].value_mask);
+   } else {
+      stored = stencil;
    }
 
 
@@ -332,7 +345,9 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
       break;
    }
 
-   spe_release_register(f, stored);
+   if (stored != stencil) {
+      spe_release_register(f, stored);
+   }
    spe_release_register(f, tmp);
 
 
@@ -362,7 +377,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
    /* Conditionally emit code to update the stencil value under various
     * condititons.  Note that there is no need to generate code under the
     * following circumstances:
-    * 
+    *
     * - Stencil write mask is zero.
     * - For stencil-fail if the stencil test is ALWAYS
     * - For depth-fail if the stencil test is NEVER
@@ -425,7 +440,7 @@ emit_stencil_test(struct pipe_depth_stencil_alpha_state *dsa,
       spe_release_register(f, face_stencil);
    } else if (dsa->stencil[face].write_mask != 0x0ff) {
       int tmp = spe_allocate_available_register(f);
-      
+
       spe_il(f, tmp, dsa->stencil[face].write_mask);
       spe_selb(f, stencil_src, stencil, stencil_src, tmp);
 
@@ -492,12 +507,12 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
          if (front_stencil != back_stencil) {
             spe_selb(f, stencil, back_stencil, front_stencil, facing);
          }
-         
-         if (back_stencil != stencil) { 
+
+         if (back_stencil != stencil) {
             spe_release_register(f, back_stencil);
          }
 
-         if (front_stencil != stencil) { 
+         if (front_stencil != stencil) {
             spe_release_register(f, front_stencil);
          }
 
@@ -505,10 +520,11 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
 
          spe_release_register(f, back_depth_pass);
       } else {
-         if (front_stencil != stencil) { 
+         if (front_stencil != stencil) {
             spe_or(f, stencil, front_stencil, front_stencil);
             spe_release_register(f, front_stencil);
          }
+         spe_or(f, mask, front_depth_pass, front_depth_pass);
       }
 
       spe_release_register(f, front_depth_pass);
@@ -997,7 +1013,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
 					  blend_color->color[3],
                                           frag[3], pixel[3]);
    }
-   
+
 
    if (sF[0] == sF[3]) {
       src_factor[0] = src_factor[3];
@@ -1036,7 +1052,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
                                     frag, pixel, dst_factor);
    }
 
-   
+
 
    func[0] = b->rgb_func;
    func[1] = func[0];
