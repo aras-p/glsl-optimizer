@@ -325,7 +325,7 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
       float *dst = (float *) dstRow;
       for (i = j = 0, k = k0; i < (uint) dstWidth;
            i++, j += colStride, k += colStride) {
-         dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
+         dst[i] = (float) rowA[j] / 4 + (float) rowA[k] / 4 + (float) rowB[j] / 4 + (float) rowB[k] / 4;
       }
    }
 
@@ -1070,8 +1070,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        * has trouble with min clamping so we also set the lod_bias to
        * try to work around that.
        */
-      sampler.min_lod = sampler.max_lod = srcLevel;
-      sampler.lod_bias = srcLevel;
+      sampler.min_lod = sampler.max_lod = (float) srcLevel;
+      sampler.lod_bias = (float) srcLevel;
       sampler_cso = pipe->create_sampler_state(pipe, &sampler);
       pipe->bind_sampler_states(pipe, 1, &sampler_cso);
 
