@@ -532,12 +532,12 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
       const uint32_t *p = f->store;
       unsigned i;
 
-      printf("# alpha (%sabled)\n", 
+      printf("# alpha (%sabled)\n",
              (dsa->alpha.enabled) ? "en" : "dis");
       printf("#    func: %u\n", dsa->alpha.func);
       printf("#    ref: %.2f\n", dsa->alpha.ref);
 
-      printf("# depth (%sabled)\n", 
+      printf("# depth (%sabled)\n",
              (dsa->depth.enabled) ? "en" : "dis");
       printf("#    func: %u\n", dsa->depth.func);
 
