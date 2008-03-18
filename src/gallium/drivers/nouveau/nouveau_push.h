@@ -27,7 +27,7 @@
 #define BEGIN_RING(obj,mthd,size) do {                                         \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
 	if (pc->nvws->channel->pushbuf->remaining < ((size) + 1))              \
-		pc->nvws->push_flush(pc->nvws->channel, ((size) + 1));         \
+		pc->nvws->push_flush(pc->nvws, ((size) + 1));                  \
 	OUT_RING((pc->obj->subc << 13) | ((size) << 18) | (mthd));             \
 	pc->nvws->channel->pushbuf->remaining -= ((size) + 1);                 \
 } while(0)
@@ -38,13 +38,12 @@
 
 #define FIRE_RING() do {                                                       \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
-	pc->nvws->push_flush(pc->nvws->channel, 0);                            \
+	pc->nvws->push_flush(pc->nvws, 0);                                     \
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
-	pc->nvws->push_reloc(pc->nvws->channel,                                \
-  		 	     pc->nvws->channel->pushbuf->cur++,                \
+	pc->nvws->push_reloc(pc->nvws, pc->nvws->channel->pushbuf->cur++,      \
 			     (bo), (data), (flags), (vor), (tor));             \
 } while(0)
 

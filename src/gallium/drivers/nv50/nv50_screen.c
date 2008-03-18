@@ -171,7 +171,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 
 	so_emit(nvws, so);
 	so_ref(NULL, &so);
-	nvws->push_flush(nvws->channel, 0);
+	nvws->push_flush(nvws, 0);
 
 	screen->pipe.winsys = ws;
 

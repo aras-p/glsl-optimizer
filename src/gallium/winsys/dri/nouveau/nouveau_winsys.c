@@ -59,12 +59,19 @@ nouveau_pipe_surface_fill(struct nouveau_winsys *nvws, struct pipe_surface *dst,
 }
 
 static int
-nouveau_pipe_emit_reloc(struct nouveau_channel *chan, void *ptr,
+nouveau_pipe_push_reloc(struct nouveau_winsys *nvws, void *ptr,
 			struct pipe_buffer *buf, uint32_t data,
 			uint32_t flags, uint32_t vor, uint32_t tor)
 {
-	return nouveau_pushbuf_emit_reloc(chan, ptr, nouveau_buffer(buf)->bo,
+	return nouveau_pushbuf_emit_reloc(nvws->channel, ptr,
+					  nouveau_buffer(buf)->bo,
 					  data, flags, vor, tor);
+}
+
+static int
+nouveau_pipe_push_flush(struct nouveau_winsys *nvws, unsigned size)
+{
+	return nouveau_pushbuf_flush(nvws->channel, size);
 }
 
 struct pipe_context *
@@ -114,8 +121,8 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	nvws->res_alloc		= nouveau_resource_alloc;
 	nvws->res_free		= nouveau_resource_free;
 
-	nvws->push_reloc        = nouveau_pipe_emit_reloc;
-	nvws->push_flush	= nouveau_pushbuf_flush;
+	nvws->push_reloc        = nouveau_pipe_push_reloc;
+	nvws->push_flush	= nouveau_pipe_push_flush;
 
 	nvws->grobj_alloc	= nouveau_pipe_grobj_alloc;
 	nvws->grobj_free	= nouveau_grobj_free;

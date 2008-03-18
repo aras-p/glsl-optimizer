@@ -24,10 +24,10 @@ struct nouveau_winsys {
 			  struct nouveau_resource **);
 	void (*res_free)(struct nouveau_resource **);
 
-	int  (*push_reloc)(struct nouveau_channel *, void *ptr,
+	int  (*push_reloc)(struct nouveau_winsys *, void *ptr,
 			   struct pipe_buffer *, uint32_t data,
 			   uint32_t flags, uint32_t vor, uint32_t tor);
-	int  (*push_flush)(struct nouveau_channel *, unsigned size);
+	int  (*push_flush)(struct nouveau_winsys *, unsigned size);
 			       
 	int       (*grobj_alloc)(struct nouveau_winsys *, int grclass,
 				 struct nouveau_grobj **);
