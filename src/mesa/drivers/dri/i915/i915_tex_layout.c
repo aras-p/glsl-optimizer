@@ -287,17 +287,16 @@ i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt)
          pack_x_nr = 1;
 
          for (level = mt->first_level; level <= mt->last_level; level++) {
-            GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
             GLint x = 0;
             GLint y = 0;
             GLint q, j;
 
-            intel_miptree_set_level_info(mt, level, nr_images,
+            intel_miptree_set_level_info(mt, level, depth,
                                          0, mt->total_height,
                                          width, height, depth);
 
-            for (q = 0; q < nr_images;) {
-               for (j = 0; j < pack_x_nr && q < nr_images; j++, q++) {
+            for (q = 0; q < depth;) {
+               for (j = 0; j < pack_x_nr && q < depth; j++, q++) {
                   intel_miptree_set_image_offset(mt, level, q, x, y);
                   x += pack_x_pitch;
                }
