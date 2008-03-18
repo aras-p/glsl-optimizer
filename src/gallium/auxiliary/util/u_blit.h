@@ -34,7 +34,7 @@ struct pipe_context;
 struct pipe_surface;
 
 
-struct copy_pixels_state;
+struct blit_state;
 
 
 extern struct blit_state *
