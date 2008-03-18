@@ -43,6 +43,7 @@
 
 #include "util/u_draw_quad.h"
 #include "util/u_gen_mipmap.h"
+#include "util/u_simple_shaders.h"
 
 #include "tgsi/util/tgsi_build.h"
 #include "tgsi/util/tgsi_dump.h"
@@ -656,252 +657,6 @@ fallback_gen_mipmap(struct gen_mipmap_state *ctx,
 
 
 /**
- * Make simple fragment shader:
- *  TEX OUT[0], IN[0], SAMP[0], 2D;
- *  END;
- */
-static void
-make_fragment_shader(struct gen_mipmap_state *ctx)
-{
-   struct pipe_context *pipe = ctx->pipe;
-   uint maxTokens = 100;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-   const uint procType = TGSI_PROCESSOR_FRAGMENT;
-   uint ti = 0;
-   struct pipe_shader_state shader;
-
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
-
-   /* shader header
-    */
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( procType, header );
-
-   ti = 3;
-
-   /* declare TEX[0] input */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_INPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
-   decl.Semantic.SemanticIndex = 0;
-   /* XXX this could be linear... */
-   decl.Declaration.Interpolate = 1;
-   decl.Interpolation.Interpolate = TGSI_INTERPOLATE_PERSPECTIVE;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-
-   /* declare color[0] output */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
-   decl.Semantic.SemanticIndex = 0;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-
-   /* declare sampler */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_SAMPLER;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-
-   /* TEX instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_TEX;
-   inst.Instruction.NumDstRegs = 1;
-   inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-   inst.FullDstRegisters[0].DstRegister.Index = 0;
-   inst.Instruction.NumSrcRegs = 2;
-   inst.InstructionExtTexture.Texture = TGSI_TEXTURE_2D;
-   inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-   inst.FullSrcRegisters[0].SrcRegister.Index = 0;
-   inst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-   inst.FullSrcRegisters[1].SrcRegister.Index = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti );
-
-   /* END instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_END;
-   inst.Instruction.NumDstRegs = 0;
-   inst.Instruction.NumSrcRegs = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti );
-
-#if 0 /*debug*/
-   tgsi_dump(tokens, 0);
-#endif
-
-   shader.tokens = tokens;
-   ctx->fs = pipe->create_fs_state(pipe, &shader);
-}
-
-
-/**
- * Make simple fragment shader:
- *  MOV OUT[0], IN[0];
- *  MOV OUT[1], IN[1];
- *  END;
- *
- * XXX eliminate this when vertex passthrough-mode is more solid.
- */
-static void
-make_vertex_shader(struct gen_mipmap_state *ctx)
-{
-   struct pipe_context *pipe = ctx->pipe;
-   uint maxTokens = 100;
-   struct tgsi_token *tokens;
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_declaration decl;
-   struct tgsi_full_instruction inst;
-   const uint procType = TGSI_PROCESSOR_VERTEX;
-   uint ti = 0;
-   struct pipe_shader_state shader;
-
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
-
-   /* shader header
-    */
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( procType, header );
-
-   ti = 3;
-
-   /* declare POS input */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_INPUT;
-   /*
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_POSITION;
-   decl.Semantic.SemanticIndex = 0;
-   */
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-   /* declare TEX[0] input */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_INPUT;
-   /*
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
-   decl.Semantic.SemanticIndex = 0;
-   */
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 1;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-
-   /* declare POS output */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_POSITION;
-   decl.Semantic.SemanticIndex = 0;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 0;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-
-   /* declare TEX[0] output */
-   decl = tgsi_default_full_declaration();
-   decl.Declaration.File = TGSI_FILE_OUTPUT;
-   decl.Declaration.Semantic = 1;
-   decl.Semantic.SemanticName = TGSI_SEMANTIC_GENERIC;
-   decl.Semantic.SemanticIndex = 0;
-   decl.u.DeclarationRange.First = 
-   decl.u.DeclarationRange.Last = 1;
-   ti += tgsi_build_full_declaration(&decl,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti);
-
-   /* MOVE out[0], in[0];  # POS */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_MOV;
-   inst.Instruction.NumDstRegs = 1;
-   inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-   inst.FullDstRegisters[0].DstRegister.Index = 0;
-   inst.Instruction.NumSrcRegs = 1;
-   inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-   inst.FullSrcRegisters[0].SrcRegister.Index = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti );
-
-   /* MOVE out[1], in[1];  # TEX */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_MOV;
-   inst.Instruction.NumDstRegs = 1;
-   inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
-   inst.FullDstRegisters[0].DstRegister.Index = 1;
-   inst.Instruction.NumSrcRegs = 1;
-   inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
-   inst.FullSrcRegisters[0].SrcRegister.Index = 1;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti );
-
-   /* END instruction */
-   inst = tgsi_default_full_instruction();
-   inst.Instruction.Opcode = TGSI_OPCODE_END;
-   inst.Instruction.NumDstRegs = 0;
-   inst.Instruction.NumSrcRegs = 0;
-   ti += tgsi_build_full_instruction(&inst,
-                                     &tokens[ti],
-                                     header,
-                                     maxTokens - ti );
-
-#if 0 /*debug*/
-   tgsi_dump(tokens, 0);
-#endif
-
-   shader.tokens = tokens;
-   ctx->vs = pipe->create_vs_state(pipe, &shader);
-}
-
-
-/**
  * Create a mipmap generation context.
  * The idea is to create one of these and re-use it each time we need to
  * generate a mipmap.
@@ -953,8 +708,17 @@ util_create_gen_mipmap(struct pipe_context *pipe)
    ctx->viewport.translate[3] = 0.0;
 #endif
 
-   make_vertex_shader(ctx);
-   make_fragment_shader(ctx);
+   /* vertex shader */
+   {
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
+                                      TGSI_SEMANTIC_GENERIC };
+      const uint semantic_indexes[] = { 0, 0 };
+      ctx->vs = util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
+                                                    semantic_indexes);
+   }
+
+   /* fragment shader */
+   ctx->fs = util_make_fragment_tex_shader(pipe);
 
    return ctx;
 }
