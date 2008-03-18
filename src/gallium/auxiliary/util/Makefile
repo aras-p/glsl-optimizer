@@ -12,6 +12,7 @@ C_SOURCES = \
 	u_handle_table.c \
 	u_hash_table.c \
 	u_mm.c \
+	u_simple_shaders.c \
 	u_snprintf.c
 
 include ../../Makefile.template
