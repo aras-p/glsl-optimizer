@@ -48,61 +48,13 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "util/u_pack_color.h"
 
 #include "cso_cache/cso_context.h"
 
 
 /* XXX for testing draw module vertex passthrough: */
 #define TEST_DRAW_PASSTHROUGH 0
-
-
-static GLuint
-color_value(enum pipe_format pipeFormat, const GLfloat color[4])
-{
-   GLubyte r, g, b, a;
-
-   UNCLAMPED_FLOAT_TO_UBYTE(r, color[0]);
-   UNCLAMPED_FLOAT_TO_UBYTE(g, color[1]);
-   UNCLAMPED_FLOAT_TO_UBYTE(b, color[2]);
-   UNCLAMPED_FLOAT_TO_UBYTE(a, color[3]);
-
-   switch (pipeFormat) {
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      return (r << 24) | (g << 16) | (b << 8) | a;
-   case PIPE_FORMAT_A8R8G8B8_UNORM:
-      return (a << 24) | (r << 16) | (g << 8) | b;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return (b << 24) | (g << 16) | (r << 8) | a;
-   case PIPE_FORMAT_R5G6B5_UNORM:
-      return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
-   default:
-      assert(0);
-      return 0;
-   }
-}
- 
-
-static uint
-depth_value(enum pipe_format pipeFormat, GLfloat value)
-{
-   switch (pipeFormat) {
-   case PIPE_FORMAT_Z16_UNORM:
-      return (uint) (value * 0xffff);
-   case PIPE_FORMAT_Z32_UNORM:
-      /* special-case to avoid overflow */
-      if (value == 1.0)
-         return 0xffffffff;
-      else
-         return (uint) (value * 0xffffffff);
-   case PIPE_FORMAT_S8Z24_UNORM:
-      return (uint) (value * 0xffffff);
-   case PIPE_FORMAT_Z24S8_UNORM:
-      return ((uint) (value * 0xffffff)) << 8;
-   default:
-      assert(0);
-      return 0;
-   }
-}
 
 
 static GLboolean
@@ -518,7 +470,6 @@ check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
 
 
 
-
 static void
 clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
@@ -527,10 +478,10 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
    }
    else {
-      struct st_renderbuffer *strb = st_renderbuffer(rb);
-
       /* clear whole buffer w/out masking */
-      uint clearValue = color_value(strb->surface->format, ctx->Color.ClearColor);
+      struct st_renderbuffer *strb = st_renderbuffer(rb);
+      uint clearValue;
+      util_pack_color(ctx->Color.ClearColor, strb->surface->format, &clearValue);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
@@ -547,7 +498,7 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       struct st_renderbuffer *strb = st_renderbuffer(rb);
 
       /* simple clear of whole buffer */
-      uint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
+      uint clearValue = util_pack_z(strb->surface->format, ctx->Depth.Clear);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
@@ -591,7 +542,7 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       struct st_renderbuffer *strb = st_renderbuffer(rb);
 
       /* clear whole buffer w/out masking */
-      GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
+      GLuint clearValue = util_pack_z(strb->surface->format, ctx->Depth.Clear);
 
       switch (strb->surface->format) {
       case PIPE_FORMAT_S8Z24_UNORM:
