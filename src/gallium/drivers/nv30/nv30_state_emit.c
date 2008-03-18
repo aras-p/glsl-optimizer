@@ -60,11 +60,10 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 		OUT_RING(0);*/
 	}
 
-	/* Texture images */
+	/* Texture images, emitted in nv30_fragtex_build */
+#if 0
 	for (i = 0; i < 16; i++) {
 		if (!(nv30->fp_samplers & (1 << i)))
-			continue;
-		if (!nv30->tex[i].buffer)
 			continue;
 		BEGIN_RING(rankine, NV34TCL_TX_OFFSET(i), 2);
 		OUT_RELOCl(nv30->tex[i].buffer, 0, NOUVEAU_BO_VRAM |
@@ -74,6 +73,7 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 			   NOUVEAU_BO_OR, NV34TCL_TX_FORMAT_DMA0,
 			   NV34TCL_TX_FORMAT_DMA1);
 	}
+#endif
 
 	/* Fragment program */
 	BEGIN_RING(rankine, NV34TCL_FP_ACTIVE_PROGRAM, 1);

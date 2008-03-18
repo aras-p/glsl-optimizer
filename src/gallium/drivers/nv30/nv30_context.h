@@ -51,10 +51,10 @@ struct nv30_context {
 	struct pipe_buffer *rt[2];
 	struct pipe_buffer *zeta;
 
-	struct {
+	/*struct {
 		struct pipe_buffer *buffer;
 		uint32_t format;
-	} tex[16];
+	} tex[16];*/
 
 	unsigned vb_enable;
 	struct {
