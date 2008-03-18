@@ -77,6 +77,16 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
    case PIPE_FORMAT_Z24S8_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      qword mask = si_fsmbi(0xEEEE);
+
+      *depth = si_rotmai(si_and(*ptr, mask), -8);
+      *stencil = si_andc(*ptr, mask);
+      break;
+   }
+
+
+   case PIPE_FORMAT_S8Z24_UNORM: {
+      qword *ptr = (qword *) &buffer->ui4[iy][ix];
       qword mask = si_fsmbi(0x7777);
 
       *depth = si_and(*ptr, mask);
@@ -125,9 +135,19 @@ write_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
    case PIPE_FORMAT_Z24S8_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
+      qword mask = si_fsmbi(0xEEEE);
+
+      depth = si_shli(depth, 8);
+      *ptr = si_selb(stencil, depth, mask);
+      break;
+   }
+
+
+   case PIPE_FORMAT_S8Z24_UNORM: {
+      qword *ptr = (qword *) &buffer->ui4[iy][ix];
       qword mask = si_fsmbi(0x7777);
 
-      stencil = si_rotmai(stencil, 24);
+      stencil = si_shli(stencil, 24);
       *ptr = si_selb(stencil, depth, mask);
       break;
    }
@@ -167,11 +187,12 @@ spu_do_depth_stencil(int x, int y,
       frag_depth = si_cfltu(frag_depth, 0);
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       frag_depth = si_fm(frag_depth, (qword)spu_splats((float)(0x00ffffffu)));
       frag_depth = si_cfltu(frag_depth, 0);
       break;
    default:
-      assert(0);
+      ASSERT(0);
       break;
    }
 
