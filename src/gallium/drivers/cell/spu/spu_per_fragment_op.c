@@ -87,10 +87,9 @@ read_ds_quad(tile_t *buffer, unsigned x, unsigned y,
 
    case PIPE_FORMAT_S8Z24_UNORM: {
       qword *ptr = (qword *) &buffer->ui4[iy][ix];
-      qword mask = si_fsmbi(0x7777);
 
-      *depth = si_and(*ptr, mask);
-      *stencil = si_rotmai(si_andc(*ptr, mask), -24);
+      *depth = si_and(*ptr, si_fsmbi(0x7777));
+      *stencil = si_andi(si_roti(*ptr, 8), 0x0ff);
       break;
    }
 
