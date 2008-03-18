@@ -56,13 +56,13 @@ clear_c_tile(tile_t *ctile)
 static INLINE void
 clear_z_tile(tile_t *ztile)
 {
-   if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM) {
+   if (spu.fb.zsize == 2) {
       memset16((ushort*) ztile->us,
                spu.fb.depth_clear_value,
                TILE_SIZE * TILE_SIZE);
    }
    else {
-      ASSERT(spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM);
+      ASSERT(spu.fb.zsize != 0);
       memset32((uint*) ztile->ui,
                spu.fb.depth_clear_value,
                TILE_SIZE * TILE_SIZE);

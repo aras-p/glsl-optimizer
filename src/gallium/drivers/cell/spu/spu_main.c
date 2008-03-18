@@ -218,12 +218,18 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
    spu.fb.width_tiles = (spu.fb.width + TILE_SIZE - 1) / TILE_SIZE;
    spu.fb.height_tiles = (spu.fb.height + TILE_SIZE - 1) / TILE_SIZE;
 
-   if (spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM)
+   switch (spu.fb.depth_format) {
+   case PIPE_FORMAT_Z32_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
       spu.fb.zsize = 4;
-   else if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM)
+      break;
+   case PIPE_FORMAT_Z16_UNORM:
       spu.fb.zsize = 2;
-   else
+      break;
+   default:
       spu.fb.zsize = 0;
+      break;
+   }
 
    if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
       spu.color_shuffle = ((vector unsigned char) {
