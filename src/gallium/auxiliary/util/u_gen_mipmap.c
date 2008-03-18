@@ -50,6 +50,19 @@
 #include "tgsi/util/tgsi_parse.h"
 
 
+struct gen_mipmap_state
+{
+   struct pipe_context *pipe;
+
+   void *blend;
+   void *depthstencil;
+   void *rasterizer;
+   /*struct pipe_viewport_state viewport;*/
+   struct pipe_sampler_state *vs;
+   struct pipe_sampler_state *fs;
+};
+
+
 
 enum dtype
 {
