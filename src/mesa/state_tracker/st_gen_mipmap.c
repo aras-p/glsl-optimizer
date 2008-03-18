@@ -64,7 +64,7 @@ st_init_generate_mipmap(struct st_context *st)
 
 
 void
-st_destroy_generate_mipmpap(struct st_context *st)
+st_destroy_generate_mipmap(struct st_context *st)
 {
    util_destroy_gen_mipmap(st->gen_mipmap);
    st->gen_mipmap = NULL;
