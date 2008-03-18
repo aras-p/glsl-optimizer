@@ -64,6 +64,8 @@ nv30_emit_hw_state(struct nv30_context *nv30)
 	for (i = 0; i < 16; i++) {
 		if (!(nv30->fp_samplers & (1 << i)))
 			continue;
+		if (!nv30->tex[i].buffer)
+			continue;
 		BEGIN_RING(rankine, NV34TCL_TX_OFFSET(i), 2);
 		OUT_RELOCl(nv30->tex[i].buffer, 0, NOUVEAU_BO_VRAM |
 			   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
