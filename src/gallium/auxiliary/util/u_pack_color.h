@@ -31,7 +31,12 @@
  */
 
 
+#ifndef U_PACK_COLOR_H
+#define U_PACK_COLOR_H
+
+
 #include "pipe/p_compiler.h"
+#include "pipe/p_format.h"
 
 
 /**
@@ -123,3 +128,6 @@ util_pack_z(enum pipe_format format, double z)
       return 0;
    }
 }
+
+
+#endif /* U_PACK_COLOR_H */
