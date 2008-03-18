@@ -87,16 +87,6 @@ cell_emit_state(struct cell_context *cell)
 	 dsat.read_stencil = FALSE;
       }
 
-      {
-	 uint32_t *p = cell->depth_stencil->code.store;
-
-	 printf("\t.text\n");
-	 for (/* empty */; p < cell->depth_stencil->code.csr; p++) {
-	    printf("\t.long\t0x%04x\n", *p);
-	 }
-	 fflush(stdout);
-      }
-
       emit_state_cmd(cell, CELL_CMD_STATE_DEPTH_STENCIL, &dsat,
 		     sizeof(dsat));
    }

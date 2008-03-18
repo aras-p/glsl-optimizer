@@ -525,6 +525,45 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
    }
 
    spe_bi(f, 0, 0, 0);
+
+
+#if 0
+   {
+      const uint32_t *p = f->store;
+      unsigned i;
+
+      printf("# alpha (%sabled)\n", 
+             (dsa->alpha.enabled) ? "en" : "dis");
+      printf("#    func: %u\n", dsa->alpha.func);
+      printf("#    ref: %.2f\n", dsa->alpha.ref);
+
+      printf("# depth (%sabled)\n", 
+             (dsa->depth.enabled) ? "en" : "dis");
+      printf("#    func: %u\n", dsa->depth.func);
+
+      for (i = 0; i < 2; i++) {
+         printf("# %s stencil (%sabled)\n",
+                (i == 0) ? "front" : "back",
+                (dsa->stencil[i].enabled) ? "en" : "dis");
+
+         printf("#    func: %u\n", dsa->stencil[i].func);
+         printf("#    op (sf, zf, zp): %u %u %u\n",
+                dsa->stencil[i].fail_op,
+                dsa->stencil[i].zfail_op,
+                dsa->stencil[i].zpass_op);
+         printf("#    ref value / value mask / write mask: %02x %02x %02x\n",
+                dsa->stencil[i].ref_value,
+                dsa->stencil[i].value_mask,
+                dsa->stencil[i].write_mask);
+      }
+
+      printf("\t.text\n");
+      for (/* empty */; p < f->csr; p++) {
+         printf("\t.long\t0x%04x\n", *p);
+      }
+      fflush(stdout);
+   }
+#endif
 }
 
 
