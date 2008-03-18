@@ -149,6 +149,7 @@
 #define PCI_CHIP_RS350_7834		0x7834
 #define PCI_CHIP_RS350_7835		0x7835
 #define PCI_CHIP_RS690_791E             0x791E
+#define PCI_CHIP_RS690_791F             0x791F
 
 enum {
    CHIP_FAMILY_R100,
