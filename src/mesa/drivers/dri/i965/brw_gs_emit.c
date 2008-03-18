@@ -137,8 +137,8 @@ void brw_gs_tris( struct brw_gs_compile *c )
 void brw_gs_lines( struct brw_gs_compile *c )
 {
    brw_gs_alloc_regs(c, 2);
-   brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_LINESTRIP_CONT << 2) | R02_PRIM_START));
-   brw_gs_emit_vue(c, c->reg.vertex[1], 1, ((_3DPRIM_LINESTRIP_CONT << 2) | R02_PRIM_END));
+   brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_LINESTRIP << 2) | R02_PRIM_START));
+   brw_gs_emit_vue(c, c->reg.vertex[1], 1, ((_3DPRIM_LINESTRIP << 2) | R02_PRIM_END));
 }
 
 void brw_gs_points( struct brw_gs_compile *c )
