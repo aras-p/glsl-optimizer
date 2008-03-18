@@ -36,6 +36,7 @@
 #include "st_context.h"
 #include "st_cb_accum.h"
 #include "st_cb_bufferobjects.h"
+#include "st_cb_blit.h"
 #include "st_cb_clear.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_fbo.h"
@@ -100,6 +101,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st_init_atoms( st );
    st_init_draw( st );
    st_init_generate_mipmap(st);
+   st_init_blit(st);
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       st->state.sampler_list[i] = &st->state.samplers[i];
@@ -151,6 +153,8 @@ static void st_destroy_context_priv( struct st_context *st )
    draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );
+   st_destroy_generate_mipmap(st);
+   st_destroy_blit(st);
 
    _vbo_DestroyContext(st->ctx);
 
@@ -217,6 +221,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
 
    st_init_accum_functions(functions);
    st_init_bufferobject_functions(functions);
+   st_init_blit_functions(functions);
    st_init_clear_functions(functions);
    st_init_drawpixels_functions(functions);
    st_init_fbo_functions(functions);

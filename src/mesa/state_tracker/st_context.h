@@ -40,6 +40,9 @@ struct draw_context;
 struct draw_stage;
 struct cso_cache;
 struct cso_blend;
+struct gen_mipmap_state;
+struct blit_state;
+
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
@@ -147,6 +150,7 @@ struct st_context
    } bitmap;
 
    struct gen_mipmap_state *gen_mipmap;
+   struct blit_state *blit;
 
    struct cso_context *cso_context;
 };
