@@ -147,7 +147,8 @@ nv30_screen_create(struct pipe_winsys *winsys, struct nouveau_winsys *nvws,
 	nv30screen->screen.is_format_supported = 
 		nv30_screen_is_format_supported;
 
-	nv30_init_miptree_functions(&nv30screen->screen);
+	nv30_screen_init_miptree_functions(&nv30screen->screen);
+
 	return &nv30screen->screen;
 }
 

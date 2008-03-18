@@ -234,6 +234,7 @@ nv30_create(struct pipe_screen *screen, unsigned pctx_id)
 	nv30_init_query_functions(nv30);
 	nv30_init_surface_functions(nv30);
 	nv30_init_state_functions(nv30);
+	nv30_init_miptree_functions(nv30);
 
 	nv30->draw = draw_create();
 	assert(nv30->draw);
