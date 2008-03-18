@@ -322,10 +322,10 @@ do_row(enum dtype datatype, uint comps, int srcWidth,
       uint i, j, k;
       const uint *rowA = (const uint *) srcRowA;
       const uint *rowB = (const uint *) srcRowB;
-      float *dst = (float *) dstRow;
+      uint *dst = (uint *) dstRow;
       for (i = j = 0, k = k0; i < (uint) dstWidth;
            i++, j += colStride, k += colStride) {
-         dst[i] = (float) rowA[j] / 4 + (float) rowA[k] / 4 + (float) rowB[j] / 4 + (float) rowB[k] / 4;
+         dst[i] = rowA[j] / 4 + rowA[k] / 4 + rowB[j] / 4 + rowB[k] / 4;
       }
    }
 
