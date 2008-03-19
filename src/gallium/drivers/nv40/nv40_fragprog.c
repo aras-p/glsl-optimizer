@@ -554,6 +554,12 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	case TGSI_OPCODE_MUL:
 		arith(fpc, sat, MUL, dst, mask, src[0], src[1], none);
 		break;
+	case TGSI_OPCODE_NOISE1:
+	case TGSI_OPCODE_NOISE2:
+	case TGSI_OPCODE_NOISE3:
+	case TGSI_OPCODE_NOISE4:
+		arith(fpc, sat, SFL, dst, mask, none, none, none);
+		break;
 	case TGSI_OPCODE_POW:
 		tmp = temp(fpc);
 		arith(fpc, 0, LG2, tmp, MASK_X,
