@@ -354,8 +354,8 @@ intel_setup_reloc_list(dri_bo *bo)
     dri_bo_ttm *bo_ttm = (dri_bo_ttm *)bo;
     dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bo->bufmgr;
 
-    bo_ttm->relocs = malloc(sizeof(struct dri_ttm_reloc) *
-			    bufmgr_ttm->max_relocs);
+    bo_ttm->relocs = calloc(bufmgr_ttm->max_relocs,
+			    sizeof(struct dri_ttm_reloc));
     bo_ttm->reloc_buf_data = calloc(1, RELOC_BUF_SIZE(bufmgr_ttm->max_relocs));
 
     /* Initialize the relocation list with the header:
