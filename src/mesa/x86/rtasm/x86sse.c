@@ -1161,11 +1161,12 @@ void x86_init_func( struct x86_function *p )
    p->csr = p->store;
 }
 
-void x86_init_func_size( struct x86_function *p, unsigned code_size )
+int x86_init_func_size( struct x86_function *p, unsigned code_size )
 {
    p->size = code_size;
    p->store = _mesa_exec_malloc(code_size);
    p->csr = p->store;
+   return p->store != NULL;
 }
 
 void x86_release_func( struct x86_function *p )
