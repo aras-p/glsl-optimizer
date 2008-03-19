@@ -410,6 +410,7 @@ aaline_create_texture(struct aaline_stage *aaline)
       /* unmap */
       pipe_surface_unmap(surface);
       pipe_surface_reference(&surface, NULL);
+      pipe->texture_update(pipe, aaline->texture, 0, (1 << level));
    }
 }
 

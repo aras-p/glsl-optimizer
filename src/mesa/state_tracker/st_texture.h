@@ -71,8 +71,6 @@ struct st_texture_object
    GLboolean imageOverride;
    GLint depthOverride;
    GLuint pitchOverride;
-
-   GLboolean dirtyData;
 };
 
 

@@ -513,6 +513,8 @@ make_texture(struct st_context *st,
       /* unmap */
       pipe_surface_unmap(surface);
       pipe_surface_reference(&surface, NULL);
+      pipe->texture_update(pipe, pt, 0, 0x1);
+
       assert(success);
 
       /* restore */
@@ -1100,6 +1102,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /* Release surface */
    pipe_surface_unmap(surface);
    pipe_surface_reference(&surface, NULL);
+   pipe->texture_update(pipe, pt, 0, 0x1);
 
    pt->format = format;
 

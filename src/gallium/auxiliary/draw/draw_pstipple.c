@@ -374,7 +374,7 @@ pstip_update_texture(struct pstip_stage *pstip)
    /* unmap */
    pipe_surface_unmap(surface);
    pipe_surface_reference(&surface, NULL);
-   pipe->texture_update(pipe, pstip->texture);
+   pipe->texture_update(pipe, pstip->texture, 0, 0x1);
 }
 
 

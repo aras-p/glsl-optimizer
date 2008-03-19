@@ -872,7 +872,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       pipe->flush(pipe, PIPE_FLUSH_WAIT);
 
-      /*pipe->texture_update(pipe, pt);  not really needed */
+      /* need to signal that the texture has changed _after_ rendering to it */
+      pipe->texture_update(pipe, pt, face, (1 << dstLevel));
    }
 
    /* restore state we changed */

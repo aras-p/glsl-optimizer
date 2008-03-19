@@ -192,12 +192,10 @@ struct pipe_context {
 
    /**
     * Called when texture data is changed.
-    * Note: we could pass some hints about which mip levels or cube faces
-    * have changed...
-    * XXX this may go away - could pass a 'write' flag to get_tex_surface()
     */
    void (*texture_update)(struct pipe_context *pipe,
-                          struct pipe_texture *texture);
+                          struct pipe_texture *texture,
+                          uint face, uint dirtyLevelsMask);
 
 
 

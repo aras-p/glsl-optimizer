@@ -134,7 +134,8 @@ cell_texture_release_screen(struct pipe_screen *screen,
 
 
 static void
-cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+cell_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
+                    uint face, uint levelsMask)
 {
    /* XXX TO DO:  re-tile the texture data ... */
 

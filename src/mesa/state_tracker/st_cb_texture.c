@@ -476,6 +476,7 @@ st_TexImage(GLcontext * ctx,
             struct gl_texture_image *texImage,
             GLsizei imageSize, int compressed)
 {
+   struct pipe_context *pipe = ctx->st->pipe;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLint postConvWidth, postConvHeight;
@@ -690,8 +691,8 @@ st_TexImage(GLcontext * ctx,
       texImage->Data = NULL;
    }
 
-   /* flag data as dirty */
-   stObj->dirtyData = GL_TRUE;
+   if (stObj->pt)
+      pipe->texture_update(pipe, stObj->pt, stImage->face, (1 << level));
 
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
@@ -866,6 +867,7 @@ st_TexSubimage(GLcontext * ctx,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage)
 {
+   struct pipe_context *pipe = ctx->st->pipe;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride;
@@ -924,8 +926,7 @@ st_TexSubimage(GLcontext * ctx,
       texImage->Data = NULL;
    }
 
-   /* flag data as dirty */
-   stObj->dirtyData = GL_TRUE;
+   pipe->texture_update(pipe, stObj->pt, stImage->face, (1 << level));
 }
 
 
@@ -1179,8 +1180,7 @@ do_copy_texsubimage(GLcontext *ctx,
 
    pipe_surface_reference(&dest_surface, NULL);
 
-   /* flag data as dirty */
-   stObj->dirtyData = GL_TRUE;
+   pipe->texture_update(pipe, stObj->pt, stImage->face, (1 << level));
 
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
@@ -1481,6 +1481,7 @@ st_finalize_texture(GLcontext *ctx,
          if (stImage && stObj->pt != stImage->pt) {
             copy_image_data_to_texture(ctx->st, stObj, level, stImage);
 	    *needFlush = GL_TRUE;
+            pipe->texture_update(pipe, stObj->pt, face, (1 << level));
          }
       }
    }
