@@ -653,7 +653,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
    p.identity = x86_make_reg(file_XMM, 6);
    p.chan0 = x86_make_reg(file_XMM, 7);
 
-   if (!x86_init_func(&p.func, MAX_SSE_CODE_SIZE)) {
+   if (!x86_init_func_size(&p.func, MAX_SSE_CODE_SIZE)) {
       vtx->emit = NULL;
       return;
    }
