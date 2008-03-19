@@ -55,17 +55,10 @@ Display(void)
 
    for (bias = -1; bias < 11; bias++) {
 
-      glRasterPos2f(x, y + TexHeight + 5);
-      sprintf(str, "Texture LOD Bias = %d", bias);
-      PrintString(str);
-
-      glPushMatrix();
-      glTranslatef(x, y, 0);
-
-      glEnable(GL_TEXTURE_2D);
-
       if (ScaleQuads) {
          if (bias > 0) {
+            if (texWidth == 1 && texHeight == 1)
+               break;
             texWidth = TexWidth >> bias;
             texHeight = TexHeight >> bias;
             if (texWidth < 1)
@@ -78,6 +71,20 @@ Display(void)
       else {
          glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, bias);
       }
+
+      glRasterPos2f(x, y + TexHeight + 5);
+      if (ScaleQuads)
+         sprintf(str, "Texture Level %d: %d x %d",
+                 (bias < 0 ? 0 : bias),
+                 texWidth, texHeight);
+      else
+         sprintf(str, "Texture LOD Bias = %d", bias);
+      PrintString(str);
+
+      glPushMatrix();
+      glTranslatef(x, y, 0);
+
+      glEnable(GL_TEXTURE_2D);
 
       glBegin(GL_POLYGON);
       glTexCoord2f(0, 0);  glVertex2f(0, 0);
