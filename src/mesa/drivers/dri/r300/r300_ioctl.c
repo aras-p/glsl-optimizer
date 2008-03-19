@@ -186,9 +186,14 @@ static void r300EmitClearState(GLcontext * ctx)
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
 	int has_tcl = 1;
+	int is_r500 = 0;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
+
+        if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+                is_r500 = 1;
+
 
 	/* FIXME: the values written to R300_VAP_INPUT_ROUTE_0_0 and
 	 * R300_VAP_INPUT_ROUTE_0_1 are in fact known, however, the values are
@@ -271,49 +276,53 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
 	    ((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT));
 
-	R300_STATECHANGE(r300, ri);
-	reg_start(R300_RS_IP_0, 8);
-	for (i = 0; i < 8; ++i) {
-		e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+	if (!is_r500) {
+		R300_STATECHANGE(r300, ri);
+		reg_start(R300_RS_IP_0, 8);
+		for (i = 0; i < 8; ++i) {
+			e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
+		}
+
+		R300_STATECHANGE(r300, rc);
+		/* The second constant is needed to get glxgears display anything .. */
+		reg_start(R300_RS_COUNT, 1);
+		e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
+		e32(0x0);
+
+		R300_STATECHANGE(r300, rr);
+		reg_start(R300_RS_ROUTE_0, 0);
+		e32(R300_RS_ROUTE_0_COLOR);
 	}
 
-	R300_STATECHANGE(r300, rc);
-	/* The second constant is needed to get glxgears display anything .. */
-	reg_start(R300_RS_COUNT, 1);
-	e32((1 << R300_IC_COUNT_SHIFT) | R300_HIRES_EN);
-	e32(0x0);
+	if (!is_r500) {
+		R300_STATECHANGE(r300, fp);
+		reg_start(R300_PFS_CNTL_0, 2);
+		e32(0x0);
+		e32(0x0);
+		e32(0x0);
+		reg_start(R300_PFS_NODE_0, 3);
+		e32(0x0);
+		e32(0x0);
+		e32(0x0);
+		e32(R300_PFS_NODE_OUTPUT_COLOR);
 
-	R300_STATECHANGE(r300, rr);
-	reg_start(R300_RS_INST_0, 0);
-	e32(R300_RS_INST_COL_CN_WRITE);
+		R300_STATECHANGE(r300, fpi[0]);
+		R300_STATECHANGE(r300, fpi[1]);
+		R300_STATECHANGE(r300, fpi[2]);
+		R300_STATECHANGE(r300, fpi[3]);
 
-	R300_STATECHANGE(r300, fp);
-	reg_start(R300_PFS_CNTL_0, 2);
-	e32(0x0);
-	e32(0x0);
-	e32(0x0);
-	reg_start(R300_PFS_NODE_0, 3);
-	e32(0x0);
-	e32(0x0);
-	e32(0x0);
-	e32(R300_PFS_NODE_OUTPUT_COLOR);
+		reg_start(R300_PFS_INSTR0_0, 0);
+		e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
 
-	R300_STATECHANGE(r300, fpi[0]);
-	R300_STATECHANGE(r300, fpi[1]);
-	R300_STATECHANGE(r300, fpi[2]);
-	R300_STATECHANGE(r300, fpi[3]);
+		reg_start(R300_PFS_INSTR1_0, 0);
+		e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
 
-	reg_start(R300_PFS_INSTR0_0, 0);
-	e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
+		reg_start(R300_PFS_INSTR2_0, 0);
+		e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
 
-	reg_start(R300_PFS_INSTR1_0, 0);
-	e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
-
-	reg_start(R300_PFS_INSTR2_0, 0);
-	e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
-
-	reg_start(R300_PFS_INSTR3_0, 0);
-	e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
+		reg_start(R300_PFS_INSTR3_0, 0);
+		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
+	}
 
 	if (has_tcl) {
 		R300_STATECHANGE(r300, pvs);
