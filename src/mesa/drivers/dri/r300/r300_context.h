@@ -330,6 +330,8 @@ struct r300_state_atom {
 #define R300_RI_INTERP_7	8
 #define R300_RI_CMDSIZE		9
 
+#define R500_RI_CMDSIZE	       17
+
 #define R300_RR_CMD_0		0	/* rr is variable size (at least 1) */
 #define R300_RR_ROUTE_0		1
 #define R300_RR_ROUTE_1		2
