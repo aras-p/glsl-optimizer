@@ -223,7 +223,7 @@ st_draw_vbo(GLcontext *ctx,
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info
     */
-   for (attr = 0; attr < /*vs*/vp->num_inputs; attr++) {
+   for (attr = 0; attr < vp->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct pipe_vertex_element velement;
@@ -333,7 +333,7 @@ st_draw_vbo(GLcontext *ctx,
    }
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
-   for (attr = 0; attr < /*vs*/vp->num_inputs; attr++) {
+   for (attr = 0; attr < vp->num_inputs; attr++) {
       pipe_buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
       pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
@@ -502,7 +502,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info
     */
-   for (attr = 0; attr < /*vs*/vp->num_inputs; attr++) {
+   for (attr = 0; attr < vp->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct pipe_vertex_element velement;
