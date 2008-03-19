@@ -217,9 +217,11 @@ void cso_single_sampler_done( struct cso_context *ctx )
 {
    unsigned i; 
 
-   for (i = 0; i < 8; i++)
-      if (ctx->samplers[i] == NULL)
+   /* find highest non-null sampler */
+   for (i = PIPE_MAX_SAMPLERS; i > 0; i--) {
+      if (ctx->samplers[i - 1] != NULL)
          break;
+   }
 
    ctx->nr_samplers = i;
 
