@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,25 +22,39 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
-#ifndef ST_GEN_MIPMAP_H
-#define ST_GEN_MIPMAP_H
+#ifndef U_BLIT_H
+#define U_BLIT_H
+
+
+struct pipe_context;
+struct pipe_surface;
+
+
+struct blit_state;
+
+
+extern struct blit_state *
+util_create_blit(struct pipe_context *pipe);
 
 
 extern void
-st_init_generate_mipmap(struct st_context *st);
+util_destroy_blit(struct blit_state *ctx);
 
-
-extern void
-st_destroy_generate_mipmap(struct st_context *st);
 
 
 extern void
-st_generate_mipmap(GLcontext *ctx, GLenum target,
-                   struct gl_texture_object *texObj);
+util_blit_pixels(struct blit_state *ctx,
+                 struct pipe_surface *src,
+                 int srcX0, int srcY0,
+                 int srcX1, int srcY1,
+                 struct pipe_surface *dst,
+                 int dstX0, int dstY0,
+                 int dstX1, int dstY1,
+                 float z, uint filter);
 
 
-#endif /* ST_GEN_MIPMAP_H */
+#endif

@@ -44,15 +44,24 @@ struct cso_context *cso_create_context( struct pipe_context *pipe );
 void cso_set_blend( struct cso_context *cso,
                     const struct pipe_blend_state *blend );
 
+void cso_unset_blend(struct cso_context *cso);
+
 void cso_set_depth_stencil_alpha( struct cso_context *cso,
                                   const struct pipe_depth_stencil_alpha_state *dsa );
+
+void cso_unset_depth_stencil_alpha( struct cso_context *cso );
 
 void cso_set_rasterizer( struct cso_context *cso,
                          const struct pipe_rasterizer_state *rasterizer );
 
+void cso_unset_rasterizer( struct cso_context *cso );
+
 void cso_set_samplers( struct cso_context *cso,
                        unsigned count,
                        const struct pipe_sampler_state **states );
+
+void cso_unset_samplers( struct cso_context *cso );
+
 
 /* Alternate interface to support state trackers that like to modify
  * samplers one at a time:
@@ -72,8 +81,12 @@ void cso_single_sampler_done( struct cso_context *cso );
 void cso_set_fragment_shader( struct cso_context *cso,
                               const struct pipe_shader_state *shader );
 
+void cso_unset_fragment_shader( struct cso_context *cso );
+
 void cso_set_vertex_shader( struct cso_context *cso,
                             const struct pipe_shader_state *shader );
+
+void cso_unset_vertex_shader( struct cso_context *cso );
 
 void cso_destroy_context( struct cso_context *cso );
 

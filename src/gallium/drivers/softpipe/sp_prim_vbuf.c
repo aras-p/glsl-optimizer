@@ -101,11 +101,20 @@ sp_vbuf_release_vertices(struct vbuf_render *vbr, void *vertices,
 }
 
 
-static void
+static boolean
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
-   cvbr->prim = prim;
+   if (prim == PIPE_PRIM_TRIANGLES ||
+       prim == PIPE_PRIM_LINES ||
+       prim == PIPE_PRIM_POINTS) {
+      cvbr->prim = prim;
+      return TRUE;
+   }
+   else {
+      return FALSE;
+   }
+      
 }
 
 
@@ -207,12 +216,85 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    (struct vertex_header *) ((char *) vertex_buffer + (I) * vertex_size)
 
    switch (cvbr->prim) {
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < nr; i++) {
+         prim.v[0] = VERTEX(i);
+         setup->point( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_LINES:
+      assert(nr % 2 == 0);
+      for (i = 0; i < nr; i += 2) {
+         prim.v[0] = VERTEX(i);
+         prim.v[1] = VERTEX(i + 1);
+         setup->line( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_LINE_STRIP:
+      for (i = 1; i < nr; i++) {
+         prim.v[0] = VERTEX(i - 1);
+         prim.v[1] = VERTEX(i);
+         setup->line( setup, &prim );
+      }
+      break;
    case PIPE_PRIM_TRIANGLES:
       assert(nr % 3 == 0);
       for (i = 0; i < nr; i += 3) {
          prim.v[0] = VERTEX(i + 0);
          prim.v[1] = VERTEX(i + 1);
          prim.v[2] = VERTEX(i + 2);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      assert(nr >= 3);
+      for (i = 2; i < nr; i++) {
+         prim.v[0] = VERTEX(i - 2);
+         prim.v[1] = VERTEX(i - 1);
+         prim.v[2] = VERTEX(i);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_TRIANGLE_FAN:
+      assert(nr >= 3);
+      for (i = 2; i < nr; i++) {
+         prim.v[0] = VERTEX(0);
+         prim.v[1] = VERTEX(i - 1);
+         prim.v[2] = VERTEX(i);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_QUADS:
+      assert(nr % 4 == 0);
+      for (i = 0; i < nr; i += 4) {
+         prim.v[0] = VERTEX(i + 0);
+         prim.v[1] = VERTEX(i + 1);
+         prim.v[2] = VERTEX(i + 2);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+
+         prim.v[0] = VERTEX(i + 0);
+         prim.v[1] = VERTEX(i + 2);
+         prim.v[2] = VERTEX(i + 3);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+      }
+      break;
+   case PIPE_PRIM_QUAD_STRIP:
+      assert(nr >= 4);
+      for (i = 2; i < nr; i += 2) {
+         prim.v[0] = VERTEX(i - 2);
+         prim.v[1] = VERTEX(i);
+         prim.v[2] = VERTEX(i + 1);
+         calc_det(&prim);
+         setup->tri( setup, &prim );
+
+         prim.v[0] = VERTEX(i - 2);
+         prim.v[1] = VERTEX(i + 1);
+         prim.v[2] = VERTEX(i - 1);
          calc_det(&prim);
          setup->tri( setup, &prim );
       }

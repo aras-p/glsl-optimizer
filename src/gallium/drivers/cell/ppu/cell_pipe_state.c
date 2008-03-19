@@ -36,6 +36,7 @@
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_texture.h"
+#include "cell_state_per_fragment.h"
 
 
 
@@ -43,7 +44,12 @@ static void *
 cell_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
 {
-   return mem_dup(blend, sizeof(*blend));
+   struct cell_blend_state *cb = MALLOC(sizeof(struct cell_blend_state));
+
+   (void) memcpy(cb, blend, sizeof(*blend));
+   cb->code.store = NULL;
+
+   return cb;
 }
 
 
@@ -54,7 +60,7 @@ cell_bind_blend_state(struct pipe_context *pipe, void *blend)
 
    draw_flush(cell->draw);
 
-   cell->blend = (const struct pipe_blend_state *)blend;
+   cell->blend = (const struct cell_blend_state *)blend;
 
    cell->dirty |= CELL_NEW_BLEND;
 }
@@ -63,7 +69,10 @@ cell_bind_blend_state(struct pipe_context *pipe, void *blend)
 static void
 cell_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
-   FREE(blend);
+   struct cell_blend_state *cb = (struct cell_blend_state *) blend;
+   
+   spe_release_func(& cb->code);
+   FREE(cb);
 }
 
 
@@ -87,7 +96,13 @@ static void *
 cell_create_depth_stencil_alpha_state(struct pipe_context *pipe,
                  const struct pipe_depth_stencil_alpha_state *depth_stencil)
 {
-   return mem_dup(depth_stencil, sizeof(*depth_stencil));
+   struct cell_depth_stencil_alpha_state *cdsa =
+       MALLOC(sizeof(struct cell_depth_stencil_alpha_state));
+
+   (void) memcpy(cdsa, depth_stencil, sizeof(*depth_stencil));
+   cdsa->code.store = NULL;
+
+   return cdsa;
 }
 
 
@@ -96,12 +111,16 @@ cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
                                     void *depth_stencil)
 {
    struct cell_context *cell = cell_context(pipe);
+   struct cell_depth_stencil_alpha_state *cdsa =
+       (struct cell_depth_stencil_alpha_state *) depth_stencil;
 
    draw_flush(cell->draw);
 
-   cell->depth_stencil
-      = (const struct pipe_depth_stencil_alpha_state *) depth_stencil;
+   if ((cdsa != NULL) && (cdsa->code.store == NULL)) {
+      cell_generate_depth_stencil_test(cdsa);
+   }
 
+   cell->depth_stencil = cdsa;
    cell->dirty |= CELL_NEW_DEPTH_STENCIL;
 }
 
@@ -109,7 +128,11 @@ cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
 static void
 cell_delete_depth_stencil_alpha_state(struct pipe_context *pipe, void *depth)
 {
-   FREE(depth);
+   struct cell_depth_stencil_alpha_state *cdsa =
+       (struct cell_depth_stencil_alpha_state *) depth;
+
+   spe_release_func(& cdsa->code);
+   FREE(cdsa);
 }
 
 

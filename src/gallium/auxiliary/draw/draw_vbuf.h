@@ -74,9 +74,11 @@ struct vbuf_render {
 
    /**
     * Notify the renderer of the current primitive when it changes.
-    * Prim is restricted to TRIANGLES, LINES and POINTS.
+    * Must succeed for TRIANGLES, LINES and POINTS.  Other prims at
+    * the discretion of the driver, for the benefit of the passthrough
+    * path.
     */
-   void (*set_primitive)( struct vbuf_render *, unsigned prim );
+   boolean (*set_primitive)( struct vbuf_render *, unsigned prim );
 
    /**
     * DrawElements, note indices are ushort:

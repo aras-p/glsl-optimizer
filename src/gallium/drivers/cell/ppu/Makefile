@@ -27,6 +27,7 @@ SOURCES = \
 	cell_flush.c \
 	cell_state_derived.c \
 	cell_state_emit.c \
+	cell_state_per_fragment.c \
 	cell_state_shader.c \
 	cell_pipe_state.c \
 	cell_screen.c \

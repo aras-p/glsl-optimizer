@@ -75,6 +75,11 @@ hash_table_remove(struct hash_table *ht,
                   void *key);
 
 
+enum pipe_error
+hash_table_foreach(struct hash_table *ht,
+                   enum pipe_error (*callback)(void *key, void *value, void *data),
+                   void *data);
+
 void
 hash_table_destroy(struct hash_table *ht);
 

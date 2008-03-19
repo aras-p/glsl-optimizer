@@ -57,16 +57,37 @@ struct cell_fragment_shader_state
 };
 
 
+struct cell_blend_state {
+   struct pipe_blend_state base;
+
+   /**
+    * Generated code to perform alpha blending
+    */
+   struct spe_function code;
+};
+
+
+struct cell_depth_stencil_alpha_state {
+   struct pipe_depth_stencil_alpha_state   base;
+
+   /**
+    * Generated code to perform alpha, stencil, and depth testing on the SPE
+    */
+   struct spe_function code;
+
+};
+
+
 struct cell_context
 {
    struct pipe_context pipe;
 
    struct cell_winsys *winsys;
 
-   const struct pipe_blend_state *blend;
+   const struct cell_blend_state *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    uint num_samplers;
-   const struct pipe_depth_stencil_alpha_state   *depth_stencil;
+   const struct cell_depth_stencil_alpha_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    const struct cell_vertex_shader_state *vs;
    const struct cell_fragment_shader_state *fs;

@@ -88,14 +88,16 @@ FREE( void *ptr )
 static INLINE void *
 REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 {
-   void *new_ptr;
-   if( new_size <= old_size ) {
-      return old_ptr;
+   void *new_ptr = NULL;
+
+   if (new_size != 0) {
+      new_ptr = MALLOC( new_size );
+      
+      if( new_ptr && old_ptr ) {
+         memcpy( new_ptr, old_ptr, old_size );
+      }
    }
-   new_ptr = MALLOC( new_size );
-   if( new_ptr ) {
-      memcpy( new_ptr, old_ptr, old_size );
-   }
+
    FREE( old_ptr );
    return new_ptr;
 }

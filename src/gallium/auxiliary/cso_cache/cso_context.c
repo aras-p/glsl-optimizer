@@ -149,6 +149,12 @@ void cso_set_blend(struct cso_context *ctx,
    }
 }
 
+void cso_unset_blend(struct cso_context *ctx)
+{
+   ctx->blend = NULL;
+}
+
+
 void cso_single_sampler(struct cso_context *ctx,
                         unsigned idx,
                         const struct pipe_sampler_state *templ)
@@ -220,6 +226,15 @@ void cso_set_samplers( struct cso_context *ctx,
    cso_single_sampler_done( ctx );
 }
 
+void cso_unset_samplers( struct cso_context *ctx )
+{
+   uint i;
+   for (i = 0; i < ctx->nr_samplers; i++)
+      ctx->samplers[i] = NULL;
+}
+
+
+
 void cso_set_depth_stencil_alpha(struct cso_context *ctx,
                                  const struct pipe_depth_stencil_alpha_state *templ)
 {
@@ -250,6 +265,11 @@ void cso_set_depth_stencil_alpha(struct cso_context *ctx,
       ctx->depth_stencil = handle;
       ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, handle);
    }
+}
+
+void cso_unset_depth_stencil_alpha(struct cso_context *ctx)
+{
+   ctx->depth_stencil = NULL;
 }
 
 
@@ -285,7 +305,10 @@ void cso_set_rasterizer(struct cso_context *ctx,
    }
 }
 
-
+void cso_unset_rasterizer(struct cso_context *ctx)
+{
+   ctx->rasterizer = NULL;
+}
 
 
 
@@ -320,6 +343,12 @@ void cso_set_fragment_shader(struct cso_context *ctx,
    }
 }
 
+void cso_unset_fragment_shader(struct cso_context *ctx)
+{
+   ctx->fragment_shader = NULL;
+}
+
+
 void cso_set_vertex_shader(struct cso_context *ctx,
                            const struct pipe_shader_state *templ)
 {
@@ -349,4 +378,9 @@ void cso_set_vertex_shader(struct cso_context *ctx,
       ctx->vertex_shader = handle;
       ctx->pipe->bind_vs_state(ctx->pipe, handle);
    }
+}
+
+void cso_unset_vertex_shader(struct cso_context *ctx)
+{
+   ctx->vertex_shader = NULL;
 }

@@ -158,6 +158,16 @@ void debug_mask_vprintf(uint32_t uuid,
                         const char *format, 
                         va_list ap);
 
+
+#ifdef DEBUG
+#define debug_warning(__msg) \
+   debug_printf("%s:%i:warning: %s\n", __FILE__, __LINE__, (__msg)) 
+#else
+#define debug_warning(__msg) \
+   ((void)0) 
+#endif
+
+
 #ifdef	__cplusplus
 }
 #endif

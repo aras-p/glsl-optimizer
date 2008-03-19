@@ -187,6 +187,28 @@ hash_table_remove(struct hash_table *ht,
 }
 
 
+enum pipe_error
+hash_table_foreach(struct hash_table *ht,
+                   enum pipe_error (*callback)(void *key, void *value, void *data),
+                   void *data)
+{
+   struct cso_hash_iter iter;
+   struct hash_table_item *item;
+   enum pipe_error result;
+   
+   iter = cso_hash_first_node(ht->cso);
+   while (!cso_hash_iter_is_null(iter)) {
+      item = (struct hash_table_item *)cso_hash_iter_data(iter);
+      result = callback(item->key, item->value, data);
+      if(result != PIPE_OK)
+	 return result;
+      iter = cso_hash_iter_next(iter);
+   }
+
+   return PIPE_OK;
+}
+
+
 void
 hash_table_destroy(struct hash_table *ht)
 {
@@ -196,4 +218,3 @@ hash_table_destroy(struct hash_table *ht)
    
    FREE(ht);
 }
-

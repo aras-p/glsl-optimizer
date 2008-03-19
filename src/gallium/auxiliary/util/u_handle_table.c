@@ -226,14 +226,40 @@ handle_table_remove(struct handle_table *ht,
 
    index = handle - 1;
    object = ht->objects[index];
-   assert(object);
+   if(!object) {
+      /* XXX: this warning may be noisy for legitimate use -- remove later */
+      debug_warning("removing empty handle");
+      return;
+   }
    
-   if(object && ht->destroy)
+   if(ht->destroy)
       ht->destroy(object);
 
    ht->objects[index] = NULL;
    if(index < ht->filled)
       ht->filled = index;
+}
+
+
+unsigned
+handle_table_get_next_handle(struct handle_table *ht, 
+                             unsigned handle)
+{
+   unsigned index;
+   
+   for(index = handle; index < ht->size; ++index) {
+      if(!ht->objects[index])
+	 return index + 1;
+   }
+
+   return 0;
+}
+
+
+unsigned
+handle_table_get_first_handle(struct handle_table *ht)
+{
+   return handle_table_get_next_handle(ht, 0);
 }
 
 

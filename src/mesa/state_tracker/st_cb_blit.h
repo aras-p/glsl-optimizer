@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,22 +25,22 @@
  * 
  **************************************************************************/
 
-
-#ifndef ST_GEN_MIPMAP_H
-#define ST_GEN_MIPMAP_H
-
-
-extern void
-st_init_generate_mipmap(struct st_context *st);
+#ifndef ST_CB_BLIT_H
+#define ST_CB_BLIT_H
 
 
-extern void
-st_destroy_generate_mipmap(struct st_context *st);
+#include "st_context.h"
+
 
 
 extern void
-st_generate_mipmap(GLcontext *ctx, GLenum target,
-                   struct gl_texture_object *texObj);
+st_init_blit(struct st_context *st);
+
+extern void
+st_destroy_blit(struct st_context *st);
+
+extern void
+st_init_blit_functions(struct dd_function_table *functions);
 
 
-#endif /* ST_GEN_MIPMAP_H */
+#endif /* ST_CB_BLIT_H */

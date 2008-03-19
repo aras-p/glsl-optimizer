@@ -58,6 +58,9 @@ struct spu_vs_context draw;
 static unsigned char attribute_fetch_code_buffer[136 * PIPE_ATTRIB_MAX]
     ALIGN16_ATTRIB;
 
+static unsigned char depth_stencil_code_buffer[4 * 64]
+    ALIGN16_ATTRIB;
+
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
  * local store and that it may be reused by the PPU.
@@ -215,12 +218,19 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
    spu.fb.width_tiles = (spu.fb.width + TILE_SIZE - 1) / TILE_SIZE;
    spu.fb.height_tiles = (spu.fb.height + TILE_SIZE - 1) / TILE_SIZE;
 
-   if (spu.fb.depth_format == PIPE_FORMAT_Z32_UNORM)
+   switch (spu.fb.depth_format) {
+   case PIPE_FORMAT_Z32_UNORM:
+   case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_S8Z24_UNORM:
       spu.fb.zsize = 4;
-   else if (spu.fb.depth_format == PIPE_FORMAT_Z16_UNORM)
+      break;
+   case PIPE_FORMAT_Z16_UNORM:
       spu.fb.zsize = 2;
-   else
+      break;
+   default:
       spu.fb.zsize = 0;
+      break;
+   }
 
    if (spu.fb.color_format == PIPE_FORMAT_A8R8G8B8_UNORM)
       spu.color_shuffle = ((vector unsigned char) {
@@ -248,14 +258,35 @@ cmd_state_blend(const struct pipe_blend_state *state)
 
 
 static void
-cmd_state_depth_stencil(const struct pipe_depth_stencil_alpha_state *state)
+cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *state)
 {
    if (Debug)
       printf("SPU %u: DEPTH_STENCIL: ztest %d\n",
              spu.init.id,
-             state->depth.enabled);
+             state->read_depth);
 
-   memcpy(&spu.depth_stencil, state, sizeof(*state));
+   ASSERT_ALIGN16(state->base);
+
+   if (state->size != 0) {
+      mfc_get(depth_stencil_code_buffer,
+	      (unsigned int) state->base,  /* src */
+	      ROUNDUP16(state->size),
+	      TAG_BATCH_BUFFER,
+	      0, /* tid */
+	      0  /* rid */);
+      wait_on_mask(1 << TAG_BATCH_BUFFER);
+   } else {
+      /* If there is no code, emit a return instruction.
+       */
+      depth_stencil_code_buffer[0] = 0x35;
+      depth_stencil_code_buffer[1] = 0x00;
+      depth_stencil_code_buffer[2] = 0x00;
+      depth_stencil_code_buffer[3] = 0x00;
+   }
+
+   spu.frag_test = (frag_test_func) depth_stencil_code_buffer;
+   spu.read_depth = state->read_depth;
+   spu.read_stencil = state->read_stencil;
 }
 
 
@@ -415,9 +446,9 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct pipe_blend_state)) / 8);
          break;
       case CELL_CMD_STATE_DEPTH_STENCIL:
-         cmd_state_depth_stencil((struct pipe_depth_stencil_alpha_state *)
+         cmd_state_depth_stencil((struct cell_command_depth_stencil_alpha_test *)
                                  &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct pipe_depth_stencil_alpha_state)) / 8);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_command_depth_stencil_alpha_test)) / 8);
          break;
       case CELL_CMD_STATE_SAMPLER:
          cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);

@@ -85,14 +85,52 @@ fetch_store_general( struct draw_context *draw,
    const unsigned *pitch   = draw->vertex_fetch.pitch;
    const ubyte **src       = draw->vertex_fetch.src_ptr;
 
-   for (i = start; i < count; i++) {
+   for (i = start; i < start + count; i++) {
       for (j = 0; j < nr_attrs; j++) {
+         /* vinfo->src_index is the output of the vertex shader
+          * matching this hw-vertex component. 
+          *
+          * In passthrough, we require a 1:1 mapping between vertex
+          * shader outputs and inputs, which in turn correspond to
+          * vertex elements in the state.  So, this is the vertex
+          * element we're interested in...
+          */
          const uint jj = vinfo->src_index[j];
          const enum pipe_format srcFormat  = draw->vertex_element[jj].src_format;
          const ubyte *from = src[jj] + i * pitch[jj];
          float attrib[4];
 
+         /* Except...  When we're not.  Two cases EMIT_HEADER &
+          * EMIT_1F_PSIZE don't consume an input.  Should have some
+          * method for indicating this, or change the logic here
+          * somewhat so it doesn't matter.
+          *
+          * Just hack this up now, do something better about it later.
+          */
+         if (vinfo->emit[j] == EMIT_HEADER) {
+            memset(out, 0, sizeof(struct vertex_header));
+            out += sizeof(struct vertex_header) / 4;
+            continue;
+         }
+         else if (vinfo->emit[j] == EMIT_1F_PSIZE) {
+            out[0] = 1.0;       /* xxx */
+            out += 1;
+            continue;
+         }
+         
+
+         /* The normal fetch/emit code:
+          */
          switch (srcFormat) {
+         case PIPE_FORMAT_B8G8R8A8_UNORM:
+            {
+               ubyte *ub = (ubyte *) from;
+               attrib[0] = UBYTE_TO_FLOAT(ub[0]);
+               attrib[1] = UBYTE_TO_FLOAT(ub[1]);
+               attrib[2] = UBYTE_TO_FLOAT(ub[2]);
+               attrib[3] = UBYTE_TO_FLOAT(ub[3]);
+            }
+            break;
          case PIPE_FORMAT_R32G32B32A32_FLOAT:
             {
                float *f = (float *) from;
@@ -130,14 +168,21 @@ fetch_store_general( struct draw_context *draw,
             }
             break;
          default:
-            abort();
+            assert(0);
          }
 
-         /* XXX this will probably only work for softpipe */
+         debug_printf("attrib %d: %f %f %f %f\n", j, 
+                      attrib[0], attrib[1], attrib[2], attrib[3]);
+
          switch (vinfo->emit[j]) {
-         case EMIT_HEADER:
-            memset(out, 0, sizeof(struct vertex_header));
-            out += sizeof(struct vertex_header) / 4;
+         case EMIT_1F:
+            out[0] = attrib[0];
+            out += 1;
+            break;
+         case EMIT_2F:
+            out[0] = attrib[0];
+            out[1] = attrib[1];
+            out += 2;
             break;
          case EMIT_4F:
             out[0] = attrib[0];
@@ -147,63 +192,14 @@ fetch_store_general( struct draw_context *draw,
             out += 4;
             break;
          default:
-            abort();
+            assert(0);
          }
-
       }
+      debug_printf("\n");
    }
 }
 
 
-
-/* Example of a fetch/emit passthrough shader which could be
- * generated when bypass_clipping is enabled on a passthrough vertex
- * shader.
- */
-static void fetch_xyz_rgb_st( struct draw_context *draw,
-			      float *out,
-			      unsigned start,
-			      unsigned count )
-{
-   const unsigned *pitch   = draw->vertex_fetch.pitch;
-   const ubyte **src       = draw->vertex_fetch.src_ptr;
-   unsigned i;
-
-   const ubyte *xyzw = src[0] + start * pitch[0];
-   const ubyte *rgba = src[1] + start * pitch[1];
-   const ubyte *st = src[2] + start * pitch[2];
-
-   /* loop over vertex attributes (vertex shader inputs)
-    */
-   for (i = 0; i < count; i++) {
-      {
-	 const float *in = (const float *)xyzw; xyzw += pitch[0];
-         /* decode input, encode output.  Assume both are float[4] */
-	 out[0] = in[0];
-	 out[1] = in[1];
-	 out[2] = in[2];
-	 out[3] = in[3];
-      }
-
-      {
-	 const float *in = (const float *)rgba; rgba += pitch[1];
-         /* decode input, encode output.  Assume both are float[4] */
-	 out[4] = in[0];
-	 out[5] = in[1];
-	 out[6] = in[2];
- 	 out[7] = in[3];
-      }
-
-      {
-	 const float *in = (const float *)st; st += pitch[2];
-         /* decode input, encode output.  Assume both are float[2] */
-	 out[8] = in[0];
-	 out[9] = in[1];
-      }
-
-      out += 10;
-   }
-}
 
 static boolean update_shader( struct draw_context *draw )
 {
@@ -229,70 +225,166 @@ static boolean update_shader( struct draw_context *draw )
 
    draw->pt.hw_vertex_size = vinfo->size * 4;
 
-   /* Just trying to figure out how this would work:
-    */
-   if (draw->rasterizer->bypass_vs ||
-       (nr_attrs == 3 && 0 /* some other tests */))
-   {
-#if 0
-      draw->vertex_fetch.pt_fetch = fetch_xyz_rgb_st;
-#else
-      draw->vertex_fetch.pt_fetch = fetch_store_general;
-#endif
-      /*assert(vinfo->size == 10);*/
+   draw->vertex_fetch.pt_fetch = fetch_store_general;
+   return TRUE;
+}
+
+
+
+
+static boolean split_prim_inplace(unsigned prim, unsigned *first, unsigned *incr)
+{
+   switch (prim) {
+   case PIPE_PRIM_POINTS:
+      *first = 1;
+      *incr = 1;
       return TRUE;
+   case PIPE_PRIM_LINES:
+      *first = 2;
+      *incr = 2;
+      return TRUE;
+   case PIPE_PRIM_LINE_STRIP:
+      *first = 2;
+      *incr = 1;
+      return TRUE;
+   case PIPE_PRIM_TRIANGLES:
+      *first = 3;
+      *incr = 3;
+      return TRUE;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      *first = 3;
+      *incr = 1;
+      return TRUE;
+   case PIPE_PRIM_QUADS:
+      *first = 4;
+      *incr = 4;
+      return TRUE;
+   case PIPE_PRIM_QUAD_STRIP:
+      *first = 4;
+      *incr = 2;
+      return TRUE;
+   default:
+      *first = 0;
+      *incr = 1;		/* set to one so that count % incr works */
+      return FALSE;
    }
-   
-   return FALSE;
 }
 
 
 
 static boolean set_prim( struct draw_context *draw,
-		      unsigned prim )
+                         unsigned prim,
+                         unsigned count )
 {
    assert(!draw->user.elts);   
 
-   draw->pt.prim = prim;
-
    switch (prim) { 
    case PIPE_PRIM_LINE_LOOP:
+      if (count > 1024)
+         return FALSE;
+      return draw->render->set_primitive( draw->render, PIPE_PRIM_LINE_STRIP );
+
+   case PIPE_PRIM_TRIANGLE_FAN:
+   case PIPE_PRIM_POLYGON:
+      if (count > 1024)
+         return FALSE;
+      return draw->render->set_primitive( draw->render, prim );
+
    case PIPE_PRIM_QUADS:
    case PIPE_PRIM_QUAD_STRIP:
-      return FALSE;
+      return draw->render->set_primitive( draw->render, PIPE_PRIM_TRIANGLES );
+
    default:
-      draw->render->set_primitive( draw->render, prim );
-      return TRUE;
+      return draw->render->set_primitive( draw->render, prim );
+      break;
    }
+
+   return TRUE;
 }
 
 
-boolean
-draw_passthrough_arrays(struct draw_context *draw, 
-                        unsigned prim,
-                        unsigned start, 
-                        unsigned count)
+
+#define INDEX(i) (start + (i))
+static void pt_draw_arrays( struct draw_context *draw,
+			    unsigned start,
+			    unsigned length )
 {
-   float *hw_verts;
+   ushort *tmp = NULL;
+   unsigned i, j;
 
-   if (draw_need_pipeline(draw))
-      return FALSE;
+   switch (draw->pt.prim) {
+   case PIPE_PRIM_LINE_LOOP:
+      tmp = MALLOC( sizeof(ushort) * (length + 1) );
 
-   if (!set_prim(draw, prim))
-      return FALSE;
+      for (i = 0; i < length; i++)
+	 tmp[i] = INDEX(i);
+      tmp[length] = 0;
 
-   if (!update_shader(draw))
-      return FALSE;
+      draw->render->draw( draw->render,
+			  tmp,
+			  length+1 );
+      break;
 
-   hw_verts = draw->render->allocate_vertices( draw->render,
-                                               draw->pt.hw_vertex_size,
-                                               count );
+
+   case PIPE_PRIM_QUAD_STRIP:
+      tmp = MALLOC( sizeof(ushort) * (length / 2 * 6) );
+
+      for (j = i = 0; i + 3 < length; i += 2, j += 6) {
+	 tmp[j+0] = INDEX(i+0);
+	 tmp[j+1] = INDEX(i+1);
+	 tmp[j+2] = INDEX(i+3);
+
+	 tmp[j+3] = INDEX(i+2);
+	 tmp[j+4] = INDEX(i+0);
+	 tmp[j+5] = INDEX(i+3);
+      }
+
+      if (j)
+	 draw->render->draw( draw->render, tmp, j );
+      break;
+
+   case PIPE_PRIM_QUADS:
+      tmp = MALLOC( sizeof(int) * (length / 4 * 6) );
+
+      for (j = i = 0; i + 3 < length; i += 4, j += 6) {
+	 tmp[j+0] = INDEX(i+0);
+	 tmp[j+1] = INDEX(i+1);
+	 tmp[j+2] = INDEX(i+3);
+
+	 tmp[j+3] = INDEX(i+1);
+	 tmp[j+4] = INDEX(i+2);
+	 tmp[j+5] = INDEX(i+3);
+      }
+
+      if (j)
+	 draw->render->draw( draw->render, tmp, j );
+      break;
+
+   default:
+      draw->render->draw_arrays( draw->render,
+                                 start,
+                                 length );
+      break;
+   }
+
+   if (tmp)
+      FREE(tmp);
+}
+
+
+
+static boolean do_draw( struct draw_context *draw, 
+                        unsigned start, unsigned count )
+{
+   float *hw_verts = 
+      draw->render->allocate_vertices( draw->render,
+                                       (ushort)draw->pt.hw_vertex_size,
+                                       (ushort)count );
 
    if (!hw_verts)
       return FALSE;
 					
-   /* Single routine to fetch vertices, run shader and emit HW verts.
-    * Clipping and viewport transformation are done on hardware.
+   /* Single routine to fetch vertices and emit HW verts.
     */
    draw->vertex_fetch.pt_fetch( draw, 
 				hw_verts,
@@ -301,9 +393,9 @@ draw_passthrough_arrays(struct draw_context *draw,
    /* Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   draw->render->draw_arrays( draw->render,
-                              start,
-                              count );
+   pt_draw_arrays( draw,
+                   0,
+                   count );
    
 
    draw->render->release_vertices( draw->render, 
@@ -313,4 +405,69 @@ draw_passthrough_arrays(struct draw_context *draw,
 
    return TRUE;
 }
+
+
+boolean
+draw_passthrough_arrays(struct draw_context *draw, 
+                        unsigned prim,
+                        unsigned start, 
+                        unsigned count)
+{
+   unsigned i = 0;
+   unsigned first, incr;
+   
+   //debug_printf("%s prim %d start %d count %d\n", __FUNCTION__, prim, start, count);
+   
+   split_prim_inplace(prim, &first, &incr);
+
+   count -= (count - first) % incr; 
+
+   debug_printf("%s %d %d %d\n", __FUNCTION__, prim, start, count);
+
+   if (draw_need_pipeline(draw))
+      return FALSE;
+
+   debug_printf("%s AAA\n", __FUNCTION__);
+
+   if (!set_prim(draw, prim, count))
+      return FALSE;
+
+   /* XXX: need a single value that reflects the most recent call to
+    * driver->set_primitive:
+    */
+   draw->pt.prim = prim;
+
+   debug_printf("%s BBB\n", __FUNCTION__);
+
+   if (!update_shader(draw))
+      return FALSE;
+
+   debug_printf("%s CCC\n", __FUNCTION__);
+
+   /* Chop this up into bite-sized pieces that a driver should be able
+    * to devour -- problem is we don't have a quick way to query the
+    * driver on the maximum size for this chunk in the current state.
+    */
+   while (i + first <= count) {
+      int nr = MIN2( count - i, 1024 );
+
+      /* snap to prim boundary 
+       */
+      nr -= (nr - first) % incr; 
+
+      if (!do_draw( draw, start + i, nr )) {
+         assert(0);
+         return FALSE;
+      }
+
+      /* increment allowing for repeated vertices
+       */
+      i += nr - (first - incr);
+   }
+
+
+   debug_printf("%s DONE\n", __FUNCTION__);
+   return TRUE;
+}
+
 

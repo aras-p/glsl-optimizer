@@ -105,6 +105,16 @@
 
 
 /**
+ */
+struct cell_command_depth_stencil_alpha_test {
+   uint64_t base;               /**< Effective address of code start. */
+   unsigned size;               /**< Size in bytes of test code. */
+   unsigned read_depth;         /**< Flag: should depth be read? */
+   unsigned read_stencil;       /**< Flag: should stencil be read? */
+};
+
+
+/**
  * Tell SPUs about the framebuffer size, location
  */
 struct cell_command_framebuffer

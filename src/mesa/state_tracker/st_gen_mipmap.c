@@ -37,6 +37,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
+#include "util/u_gen_mipmap.h"
+
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_context.h"
 
@@ -49,55 +51,6 @@
 #include "st_cb_texture.h"
 
 
-
-static struct st_fragment_program *
-make_tex_fragment_program(GLcontext *ctx)
-{
-   struct st_fragment_program *stfp;
-   struct gl_program *p;
-   GLuint ic = 0;
-
-   p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
-   if (!p)
-      return NULL;
-
-   p->NumInstructions = 2;
-
-   p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
-   if (!p->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, p);
-      return NULL;
-   }
-   _mesa_init_instructions(p->Instructions, p->NumInstructions);
-
-   /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
-   p->Instructions[ic].Opcode = OPCODE_TEX;
-   p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
-   p->Instructions[ic].TexSrcUnit = 0;
-   p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
-   ic++;
-
-   /* END; */
-   p->Instructions[ic++].Opcode = OPCODE_END;
-
-   assert(ic == p->NumInstructions);
-
-   p->InputsRead = FRAG_BIT_TEX0;
-   p->OutputsWritten = (1 << FRAG_RESULT_COLR);
-
-   stfp = (struct st_fragment_program *) p;
-
-   st_translate_fragment_program(ctx->st, stfp, NULL);
-
-   return stfp;
-}
-
-
-
-
 /**
  * one-time init for generate mipmap
  * XXX Note: there may be other times we need no-op/simple state like this.
@@ -106,115 +59,16 @@ make_tex_fragment_program(GLcontext *ctx)
 void
 st_init_generate_mipmap(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_blend_state blend;
-   struct pipe_rasterizer_state rasterizer;
-   struct pipe_depth_stencil_alpha_state depthstencil;
-
-   /* we don't use blending, but need to set valid values */
-   memset(&blend, 0, sizeof(blend));
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.colormask = PIPE_MASK_RGBA;
-   st->gen_mipmap.blend = blend;
-   st->gen_mipmap.blend_cso = pipe->create_blend_state(pipe, &blend);
-
-   memset(&depthstencil, 0, sizeof(depthstencil));
-   st->gen_mipmap.depthstencil_cso = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
-
-   /* Note: we're assuming zero is valid for all non-specified fields */
-   memset(&rasterizer, 0, sizeof(rasterizer));
-   rasterizer.front_winding = PIPE_WINDING_CW;
-   rasterizer.cull_mode = PIPE_WINDING_NONE;
-   st->gen_mipmap.rasterizer_cso = pipe->create_rasterizer_state(pipe, &rasterizer);
-
-   st->gen_mipmap.stfp = make_tex_fragment_program(st->ctx);
-   st->gen_mipmap.stvp = st_make_passthrough_vertex_shader(st, GL_FALSE);
+   st->gen_mipmap = util_create_gen_mipmap(st->pipe);
 }
 
 
 void
-st_destroy_generate_mipmpap(struct st_context *st)
+st_destroy_generate_mipmap(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
-
-   pipe->delete_blend_state(pipe, st->gen_mipmap.blend_cso);
-   pipe->delete_depth_stencil_alpha_state(pipe, st->gen_mipmap.depthstencil_cso);
-   pipe->delete_rasterizer_state(pipe, st->gen_mipmap.rasterizer_cso);
-
-   /* XXX free stfp, stvp */
+   util_destroy_gen_mipmap(st->gen_mipmap);
+   st->gen_mipmap = NULL;
 }
-
-
-static void
-simple_viewport(struct pipe_context *pipe, uint width, uint height)
-{
-   struct pipe_viewport_state vp;
-
-   vp.scale[0] =  0.5 * width;
-   vp.scale[1] = -0.5 * height;
-   vp.scale[2] = 1.0;
-   vp.scale[3] = 1.0;
-   vp.translate[0] = 0.5 * width;
-   vp.translate[1] = 0.5 * height;
-   vp.translate[2] = 0.0;
-   vp.translate[3] = 0.0;
-
-   pipe->set_viewport_state(pipe, &vp);
-}
-
-
-
-/*
- * Draw simple [-1,1]x[-1,1] quad
- */
-static void
-draw_quad(GLcontext *ctx)
-{
-   GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
-   GLuint i;
-   GLfloat sLeft = 0.0, sRight = 1.0;
-   GLfloat tTop = 1.0, tBot = 0.0;
-   GLfloat x0 = -1.0, x1 = 1.0;
-   GLfloat y0 = -1.0, y1 = 1.0;
-
-   /* upper-left */
-   verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].y */
-   verts[0][1][0] = sLeft; /* attr[1].s */
-   verts[0][1][1] = tTop;  /* attr[1].t */
-
-   /* upper-right */
-   verts[1][0][0] = x1;
-   verts[1][0][1] = y0;
-   verts[1][1][0] = sRight;
-   verts[1][1][1] = tTop;
-
-   /* lower-right */
-   verts[2][0][0] = x1;
-   verts[2][0][1] = y1;
-   verts[2][1][0] = sRight;
-   verts[2][1][1] = tBot;
-
-   /* lower-left */
-   verts[3][0][0] = x0;
-   verts[3][0][1] = y1;
-   verts[3][1][0] = sLeft;
-   verts[3][1][1] = tBot;
-
-   /* same for all verts: */
-   for (i = 0; i < 4; i++) {
-      verts[i][0][2] = 0.0; /*Z*/
-      verts[i][0][3] = 1.0; /*W*/
-      verts[i][1][2] = 0.0; /*R*/
-      verts[i][1][3] = 1.0; /*Q*/
-   }
-
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, GL_TRUE);
-}
-
 
 
 /**
@@ -229,12 +83,7 @@ st_render_mipmap(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_framebuffer_state fb;
-   struct pipe_sampler_state sampler;
-   void *sampler_cso;
-   const uint face = _mesa_tex_target_to_face(target), zslice = 0;
-   /*const uint first_level_save = pt->first_level;*/
-   uint dstLevel;
+   const uint face = _mesa_tex_target_to_face(target);
 
    assert(target != GL_TEXTURE_3D); /* not done yet */
 
@@ -243,66 +92,7 @@ st_render_mipmap(struct st_context *st,
       return FALSE;
    }
 
-   /* init framebuffer state */
-   memset(&fb, 0, sizeof(fb));
-   fb.num_cbufs = 1;
-
-   /* sampler state */
-   memset(&sampler, 0, sizeof(sampler));
-   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.normalized_coords = 1;
-
-
-   /* bind state */
-   cso_set_blend(st->cso_context, &st->gen_mipmap.blend);
-   cso_set_depth_stencil_alpha(st->cso_context, &st->gen_mipmap.depthstencil);
-   cso_set_rasterizer(st->cso_context, &st->gen_mipmap.rasterizer);
-
-   /* bind shaders */
-   pipe->bind_fs_state(pipe, st->gen_mipmap.stfp->driver_shader);
-   pipe->bind_vs_state(pipe, st->gen_mipmap.stvp->driver_shader);
-
-   /*
-    * XXX for small mipmap levels, it may be faster to use the software
-    * fallback path...
-    */
-   for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
-      const uint srcLevel = dstLevel - 1;
-
-      /*
-       * Setup framebuffer / dest surface
-       */
-      fb.cbufs[0] = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
-      pipe->set_framebuffer_state(pipe, &fb);
-
-      /*
-       * Setup sampler state
-       */
-      sampler.min_lod = sampler.max_lod = srcLevel;
-      sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-      pipe->bind_sampler_states(pipe, 1, &sampler_cso);
-
-      simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
-
-      /*
-       * Setup src texture, override pt->first_level so we sample from
-       * the right mipmap level.
-       */
-      /*pt->first_level = srcLevel;*/
-      pipe->set_sampler_textures(pipe, 1, &pt);
-
-      draw_quad(st->ctx);
-
-      pipe->delete_sampler_state(pipe, sampler_cso);
-   }
-
-   /* restore first_level */
-   /*pt->first_level = first_level_save;*/
+   util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel);
 
    /* restore pipe state */
 #if 0

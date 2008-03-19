@@ -348,8 +348,6 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    struct x86_reg vp1 = x86_make_reg(file_XMM, 2);
    GLubyte *fixup, *label;
 
-   x86_init_func(&p->func);
-   
    /* Push a few regs?
     */
    x86_push(&p->func, countEBP);
@@ -641,7 +639,7 @@ void _tnl_generate_sse_emit( GLcontext *ctx )
 
    p.ctx = ctx;
    p.inputs_safe = 0;		/* for now */
-   p.outputs_safe = 1;		/* for now */
+   p.outputs_safe = 0;		/* for now */
    p.have_sse2 = cpu_has_xmm2;
    p.identity = x86_make_reg(file_XMM, 6);
    p.chan0 = x86_make_reg(file_XMM, 7);

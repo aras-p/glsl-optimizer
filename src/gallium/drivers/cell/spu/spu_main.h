@@ -56,6 +56,17 @@ typedef union {
 #define TILE_STATUS_GETTING 5  /**< mfc_get() called but not yet arrived */
 
 
+struct spu_frag_test_results {
+   qword mask;
+   qword depth;
+   qword stencil;
+};
+
+typedef struct spu_frag_test_results (*frag_test_func)(qword frag_mask,
+    qword pixel_depth, qword pixel_stencil, qword frag_depth,
+    qword frag_alpha, qword facing);
+
+
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
@@ -79,8 +90,9 @@ struct spu_global
    struct cell_init_info init;
 
    struct spu_framebuffer fb;
-   struct pipe_blend_state blend_stencil;
-   struct pipe_depth_stencil_alpha_state depth_stencil;
+   boolean read_depth;
+   boolean read_stencil;
+   frag_test_func frag_test;
    struct pipe_blend_state blend;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct cell_command_texture texture;

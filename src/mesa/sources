@@ -172,6 +172,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_texture.c \
 	state_tracker/st_atom_viewport.c \
 	state_tracker/st_cb_accum.c \
+	state_tracker/st_cb_blit.c \
 	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_flush.c \
