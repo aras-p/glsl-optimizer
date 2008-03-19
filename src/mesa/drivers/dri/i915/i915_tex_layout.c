@@ -37,22 +37,22 @@
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 static GLint initial_offsets[6][2] = {
-   {0, 0},
-   {0, 2},
-   {1, 0},
-   {1, 2},
-   {1, 1},
-   {1, 3}
+   [FACE_POS_X] = {0, 0},
+   [FACE_POS_Y] = {1, 0},
+   [FACE_POS_Z] = {1, 1},
+   [FACE_NEG_X] = {0, 2},
+   [FACE_NEG_Y] = {1, 2},
+   [FACE_NEG_Z] = {1, 3},
 };
 
 
 static GLint step_offsets[6][2] = {
-   {0, 2},
-   {0, 2},
-   {-1, 2},
-   {-1, 2},
-   {-1, 1},
-   {-1, 1}
+   [FACE_POS_X] = {0, 2},
+   [FACE_POS_Y] = {-1, 2},
+   [FACE_POS_Z] = {-1, 1},
+   [FACE_NEG_X] = {0, 2},
+   [FACE_NEG_Y] = {-1, 2},
+   [FACE_NEG_Z] = {-1, 1},
 };
 
 /**
@@ -320,11 +320,14 @@ i945_miptree_layout_cube(struct intel_context *intel,
     * or the final row of 4x4, 2x2 and 1x1 faces below this.
     */
    if (dim > 32)
-      mt->pitch = intel_miptree_pitch_align (intel, mt, dim);
+      mt->pitch = intel_miptree_pitch_align (intel, mt, dim * 2);
    else
-      mt->pitch = 14 * 8;
+      mt->pitch = intel_miptree_pitch_align (intel, mt, 14 * 8);
 
-   mt->total_height = dim * 4 + 4;
+   if (dim >= 4)
+      mt->total_height = dim * 4 + 4;
+   else
+      mt->total_height = 4;
 
    /* Set all the levels to effectively occupy the whole rectangular region. */
    for (level = mt->first_level; level <= mt->last_level; level++) {
