@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-/* Code to layout images in a mipmap tree for i915 and i945
- * respectively.
+/** @file i915_tex_layout.c
+ * Code to layout images in a mipmap tree for i830M-GM915 and G945 and beyond.
  */
 
 #include "intel_mipmap_tree.h"
@@ -55,6 +55,50 @@ static GLint step_offsets[6][2] = {
    {-1, 1}
 };
 
+/**
+ * Cube texture map layout for i830M-GM915.
+ *
+ * Hardware layout looks like:
+ *
+ * +-------+-------+
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * |  +x   |  +y   |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * +---+---+-------+
+ * |   |   |       |
+ * | +x| +y|       |
+ * |   |   |       |
+ * |   |   |       |
+ * +-+-+---+  +z   |
+ * | | |   |       |
+ * +-+-+ +z|       |
+ *   | |   |       |
+ * +-+-+---+-------+
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * |  -x   |  -y   |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * +---+---+-------+
+ * |   |   |       |
+ * | -x| -y|       |
+ * |   |   |       |
+ * |   |   |       |
+ * +-+-+---+  -z   |
+ * | | |   |       |
+ * +-+-+ -z|       |
+ *   | |   |       |
+ *   +-+---+-------+
+ *
+ */
 static void
 i915_miptree_layout_cube(struct intel_context *intel,
 			 struct intel_mipmap_tree * mt)
@@ -198,6 +242,67 @@ i915_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt)
 
    return GL_TRUE;
 }
+
+
+/**
+ * Cube texture map layout for GM945 and later.
+ *
+ * The hardware layout looks like the 830-915 layout, except for the small
+ * sizes.  A zoomed in view of the layout for 945 is:
+ *
+ * +-------+-------+
+ * |  8x8  |  8x8  |
+ * |       |       |
+ * |       |       |
+ * |  +x   |  +y   |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * +---+---+-------+
+ * |4x4|   |  8x8  |
+ * | +x|   |       |
+ * |   |   |       |
+ * |   |   |       |
+ * +---+   |  +z   |
+ * |4x4|   |       |
+ * | +y|   |       |
+ * |   |   |       |
+ * +---+   +-------+
+ *
+ * ...
+ *
+ * +-------+-------+
+ * |  8x8  |  8x8  |
+ * |       |       |
+ * |       |       |
+ * |  -x   |  -y   |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * |       |       |
+ * +---+---+-------+
+ * |4x4|   |  8x8  |
+ * | -x|   |       |
+ * |   |   |       |
+ * |   |   |       |
+ * +---+   |  -z   |
+ * |4x4|   |       |
+ * | -y|   |       |
+ * |   |   |       |
+ * +---+   +---+---+---+---+---+---+---+---+---+
+ * |4x4|   |4x4|   |2x2|   |2x2|   |2x2|   |2x2|
+ * | +z|   | -z|   | +x|   | +y|   | +z|   | -x| ...
+ * |   |   |   |   |   |   |   |   |   |   |   |
+ * +---+   +---+   +---+   +---+   +---+   +---+
+ *
+ * The bottom row continues with the remaining 2x2 then the 1x1 mip contents
+ * in order, with each of them aligned to a 4x4 block boundary.  Thus, for
+ * 32x32 cube maps and smaller, the bottom row layout is going to dictate the
+ * pitch of the tree.  For a tree with 4x4 images, the pitch is at least
+ * 14 * 8 = 112 texels, for 2x2 it is at least 12 * 8 texels, and for 1x1
+ * it is 6 * 8 texels.
+ */
 
 static void
 i945_miptree_layout_cube(struct intel_context *intel,
