@@ -348,8 +348,6 @@ static GLboolean build_vertex_emit( struct x86_program *p )
    struct x86_reg vp1 = x86_make_reg(file_XMM, 2);
    GLubyte *fixup, *label;
 
-   x86_init_func(&p->func);
-   
    /* Push a few regs?
     */
    x86_push(&p->func, countEBP);
