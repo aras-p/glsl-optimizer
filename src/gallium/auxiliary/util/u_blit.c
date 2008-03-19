@@ -254,7 +254,11 @@ util_blit_pixels(struct blit_state *ctx,
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
-   util_draw_texquad(pipe, dstX0, dstY0, dstX1, dstY1, z);
+   util_draw_texquad(pipe, 
+                     (float)dstX0, 
+                     (float)dstY0, 
+                     (float)dstX1, 
+                     (float)dstY1, z);
 
    /* restore state we changed */
    cso_restore_blend(ctx->cso);
