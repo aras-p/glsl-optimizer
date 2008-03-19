@@ -35,6 +35,7 @@
 #include "st_atom.h"
 #include "st_cb_fbo.h"
 #include "pipe/p_context.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -76,13 +77,7 @@ update_framebuffer_state( struct st_context *st )
       }
    }
 
-   /* XXX: The memcmp is insufficient for eliminating redundant state changes,
-    * but we should probably do more work here to that end.
-    */
-   if (1 /*memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0*/) {
-      st->state.framebuffer = framebuffer;
-      st->pipe->set_framebuffer_state( st->pipe, &framebuffer );
-   }
+   cso_set_framebuffer(st->cso_context, &framebuffer);
 }
 
 

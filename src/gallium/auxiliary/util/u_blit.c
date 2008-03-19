@@ -45,15 +45,18 @@
 #include "util/u_blit.h"
 #include "util/u_simple_shaders.h"
 
+#include "cso_cache/cso_context.h"
+
 
 struct blit_state
 {
    struct pipe_context *pipe;
+   struct cso_context *cso;
 
-   void *blend;
-   void *depthstencil;
-   void *rasterizer;
-   void *samplers[2];  /* one for linear, one for nearest sampling */
+   struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state depthstencil;
+   struct pipe_rasterizer_state rasterizer;
+   struct pipe_sampler_state sampler;
 
    /*struct pipe_viewport_state viewport;*/
    struct pipe_sampler_state *vs;
@@ -66,56 +69,44 @@ struct blit_state
  * Intended to be created once and re-used for many blit() calls.
  */
 struct blit_state *
-util_create_blit(struct pipe_context *pipe)
+util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 {
-   struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state depthstencil;
-   struct pipe_rasterizer_state rasterizer;
    struct blit_state *ctx;
-   struct pipe_sampler_state sampler;
 
    ctx = CALLOC_STRUCT(blit_state);
    if (!ctx)
       return NULL;
 
    ctx->pipe = pipe;
+   ctx->cso = cso;
 
-   /* we don't use blending, but need to set valid values */
-   memset(&blend, 0, sizeof(blend));
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.colormask = PIPE_MASK_RGBA;
-   ctx->blend = pipe->create_blend_state(pipe, &blend);
+   /* disabled blending/masking */
+   memset(&ctx->blend, 0, sizeof(ctx->blend));
+   ctx->blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   ctx->blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   ctx->blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   ctx->blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   ctx->blend.colormask = PIPE_MASK_RGBA;
 
-   /* depth/stencil/alpha */
-   memset(&depthstencil, 0, sizeof(depthstencil));
-   ctx->depthstencil = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
+   /* no-op depth/stencil/alpha */
+   memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
 
    /* rasterizer */
-   memset(&rasterizer, 0, sizeof(rasterizer));
-   rasterizer.front_winding = PIPE_WINDING_CW;
-   rasterizer.cull_mode = PIPE_WINDING_NONE;
-   rasterizer.bypass_clipping = 1;  /* bypasses viewport too */
-   /*rasterizer.bypass_vs = 1;*/
-   ctx->rasterizer = pipe->create_rasterizer_state(pipe, &rasterizer);
+   memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
+   ctx->rasterizer.front_winding = PIPE_WINDING_CW;
+   ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
+   ctx->rasterizer.bypass_clipping = 1;  /* bypasses viewport too */
+   /*ctx->rasterizer.bypass_vs = 1;*/
 
    /* samplers */
-   memset(&sampler, 0, sizeof(sampler));
-   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-   sampler.min_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
-   sampler.mag_img_filter = PIPE_TEX_MIPFILTER_NEAREST;
-   sampler.normalized_coords = 1;
-   ctx->samplers[0] = pipe->create_sampler_state(pipe, &sampler);
-
-   sampler.min_img_filter = PIPE_TEX_MIPFILTER_LINEAR;
-   sampler.mag_img_filter = PIPE_TEX_MIPFILTER_LINEAR;
-   ctx->samplers[1] = pipe->create_sampler_state(pipe, &sampler);
-
+   memset(&ctx->sampler, 0, sizeof(ctx->sampler));
+   ctx->sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   ctx->sampler.min_img_filter = 0; /* set later */
+   ctx->sampler.mag_img_filter = 0; /* set later */
+   ctx->sampler.normalized_coords = 1;
 
 #if 0
    /* viewport */
@@ -152,12 +143,6 @@ void
 util_destroy_blit(struct blit_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
-
-   pipe->delete_blend_state(pipe, ctx->blend);
-   pipe->delete_depth_stencil_alpha_state(pipe, ctx->depthstencil);
-   pipe->delete_rasterizer_state(pipe, ctx->rasterizer);
-   pipe->delete_sampler_state(pipe, ctx->samplers[0]);
-   pipe->delete_sampler_state(pipe, ctx->samplers[1]);
 
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_fs_state(pipe, ctx->fs);
@@ -236,17 +221,24 @@ util_blit_pixels(struct blit_state *ctx,
                       src, srcLeft, srcTop, /* src */
                       srcW, srcH);     /* size */
 
-   /* drawing dest */
-   memset(&fb, 0, sizeof(fb));
-   fb.num_cbufs = 1;
-   fb.cbufs[0] = dst;
-   pipe->set_framebuffer_state(pipe, &fb);
+   /* save state (restored below) */
+   cso_save_blend(ctx->cso);
+   cso_save_depth_stencil_alpha(ctx->cso);
+   cso_save_rasterizer(ctx->cso);
+   cso_save_samplers(ctx->cso);
+   cso_save_sampler_textures(ctx->cso);
+   cso_save_framebuffer(ctx->cso);
+
+   /* set misc state we care about */
+   cso_set_blend(ctx->cso, &ctx->blend);
+   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
 
    /* sampler */
-   if (filter == PIPE_TEX_MIPFILTER_NEAREST)
-      pipe->bind_sampler_states(pipe, 1, &ctx->samplers[0]);
-   else
-      pipe->bind_sampler_states(pipe, 1, &ctx->samplers[1]);
+   ctx->sampler.min_img_filter = filter;
+   ctx->sampler.mag_img_filter = filter;
+   cso_single_sampler(ctx->cso, 0, &ctx->sampler);
+   cso_single_sampler_done(ctx->cso);
 
    /* texture */
    pipe->set_sampler_textures(pipe, 1, &tex);
@@ -255,22 +247,25 @@ util_blit_pixels(struct blit_state *ctx,
    pipe->bind_fs_state(pipe, ctx->fs);
    pipe->bind_vs_state(pipe, ctx->vs);
 
-   /* misc state */
-   pipe->bind_blend_state(pipe, ctx->blend);
-   pipe->bind_depth_stencil_alpha_state(pipe, ctx->depthstencil);
-   pipe->bind_rasterizer_state(pipe, ctx->rasterizer);
+   /* drawing dest */
+   memset(&fb, 0, sizeof(fb));
+   fb.num_cbufs = 1;
+   fb.cbufs[0] = dst;
+   cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
    util_draw_texquad(pipe, dstX0, dstY0, dstX1, dstY1, z);
 
-   /* unbind */
-   pipe->set_sampler_textures(pipe, 0, NULL);
-   pipe->bind_sampler_states(pipe, 0, NULL);
+   /* restore state we changed */
+   cso_restore_blend(ctx->cso);
+   cso_restore_depth_stencil_alpha(ctx->cso);
+   cso_restore_rasterizer(ctx->cso);
+   cso_restore_samplers(ctx->cso);
+   cso_restore_sampler_textures(ctx->cso);
+   cso_restore_framebuffer(ctx->cso);
 
-   /* free stuff */
+   /* free the texture */
    pipe_surface_reference(&texSurf, NULL);
    screen->texture_release(screen, &tex);
-
-   /* Note: caller must restore pipe/gallium state at this time */
 }
 

@@ -39,6 +39,7 @@
 #include "pipe/p_defines.h"
 #include "cso_cache/cso_context.h"
 
+#include "main/macros.h"
 
 /**
  * Convert GLenum blend tokens to pipe tokens.
@@ -213,13 +214,10 @@ update_blend( struct st_context *st )
 
    cso_set_blend(st->cso_context, blend);
 
-   if (memcmp(st->ctx->Color.BlendColor, &st->state.blend_color, 4 * sizeof(GLfloat)) != 0) {
-      /* state has changed */
-      st->state.blend_color.color[0] = st->ctx->Color.BlendColor[0];
-      st->state.blend_color.color[1] = st->ctx->Color.BlendColor[1];
-      st->state.blend_color.color[2] = st->ctx->Color.BlendColor[2];
-      st->state.blend_color.color[3] = st->ctx->Color.BlendColor[3];
-      st->pipe->set_blend_color(st->pipe, (struct pipe_blend_color *) st->ctx->Color.BlendColor);
+   {
+      struct pipe_blend_color bc;
+      COPY_4FV(bc.color, st->ctx->Color.BlendColor);
+      cso_set_blend_color(st->cso_context, &bc);
    }
 }
 

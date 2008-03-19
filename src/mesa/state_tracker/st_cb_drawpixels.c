@@ -650,6 +650,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    assert(width <= maxSize);
    assert(height <= maxSize);
 
+   cso_save_rasterizer(cso);
+   cso_save_viewport(cso);
+
    /* setup state: just scissor */
    {
       struct pipe_rasterizer_state  setup;
@@ -696,7 +699,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       vp.translate[1] = 0.5 * height;
       vp.translate[2] = 0.0;
       vp.translate[3] = 0.0;
-      pipe->set_viewport_state(pipe, &vp);
+      cso_set_viewport(cso, &vp);
    }
 
    /* texture state: */
@@ -719,26 +722,18 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    else
       draw_quad(ctx, x0, y0, z, x1, y1, invertTex);
 
-   /* restore GL state */
-   pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
-                              ctx->st->state.sampler_texture);
-
-   pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
-
-#if 0
-   /* Can't depend on old state objects still existing -- may have
-    * been deleted to make room in the hash, etc.  (Should get
-    * fixed...)
-    */
-   st_invalidate_state(ctx, _NEW_COLOR | _NEW_TEXTURE);
-#else
    /* restore state */
+   cso_restore_rasterizer(cso);
+   cso_restore_viewport(cso);
+   /* shaders don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
+
    cso_set_rasterizer(cso, &st->state.rasterizer);
    cso_set_samplers(cso, PIPE_MAX_SAMPLERS,
                  (const struct pipe_sampler_state **) st->state.sampler_list);
-#endif
+   pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
+                              ctx->st->state.sampler_texture);
 }
 
 

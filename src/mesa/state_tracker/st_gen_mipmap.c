@@ -59,7 +59,7 @@
 void
 st_init_generate_mipmap(struct st_context *st)
 {
-   st->gen_mipmap = util_create_gen_mipmap(st->pipe);
+   st->gen_mipmap = util_create_gen_mipmap(st->pipe, st->cso_context);
 }
 
 
@@ -94,19 +94,11 @@ st_render_mipmap(struct st_context *st,
 
    util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel);
 
-   /* restore pipe state */
-#if 0
-   cso_set_rasterizer(st->cso_context, &st->state.rasterizer);
-   cso_set_samplers(st->cso_context, st->state.samplers_list);
-   pipe->bind_fs_state(pipe, st->fp->shader_program);
-   pipe->bind_vs_state(pipe, st->vp->shader_program);
-   pipe->set_sampler_textures(pipe, st->state.num_textures,
-                              st->state.sampler_texture);
-   pipe->set_viewport_state(pipe, &st->state.viewport);
-#else
-   /* XXX is this sufficient? */
-   st_invalidate_state(st->ctx, _NEW_COLOR | _NEW_TEXTURE);
-#endif
+   /* shaders don't go through CSO yet */
+   if (st->fp)
+      pipe->bind_fs_state(pipe, st->fp->driver_shader);
+   if (st->vp)
+      pipe->bind_vs_state(pipe, st->vp->driver_shader);
 
    return TRUE;
 }

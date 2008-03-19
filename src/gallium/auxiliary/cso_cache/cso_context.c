@@ -52,11 +52,27 @@ struct cso_context {
    void *samplers[PIPE_MAX_SAMPLERS];
    unsigned nr_samplers;
 
-   void *blend;
-   void *depth_stencil;
-   void *rasterizer;
-   void *fragment_shader;
-   void *vertex_shader;
+   void *samplers_saved[PIPE_MAX_SAMPLERS];
+   unsigned nr_samplers_saved;
+
+   struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+   uint nr_textures;
+
+   struct pipe_texture *textures_saved[PIPE_MAX_SAMPLERS];
+   uint nr_textures_saved;
+
+   /** Current and saved state.
+    * The saved state is used as a 1-deep stack.
+    */
+   void *blend, *blend_saved;
+   void *depth_stencil, *depth_stencil_saved;
+   void *rasterizer, *rasterizer_saved;
+   void *fragment_shader, *fragment_shader_saved;
+   void *vertex_shader, *vertex_shader_saved;
+
+   struct pipe_framebuffer_state fb, fb_saved;
+   struct pipe_viewport_state vp, vp_saved;
+   struct pipe_blend_color blend_color;
 };
 
 
@@ -149,10 +165,21 @@ void cso_set_blend(struct cso_context *ctx,
    }
 }
 
-void cso_unset_blend(struct cso_context *ctx)
+void cso_save_blend(struct cso_context *ctx)
 {
-   ctx->blend = NULL;
+   assert(!ctx->blend_saved);
+   ctx->blend_saved = ctx->blend;
 }
+
+void cso_restore_blend(struct cso_context *ctx)
+{
+   if (ctx->blend != ctx->blend_saved) {
+      ctx->blend = ctx->blend_saved;
+      ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend_saved);
+   }
+   ctx->blend_saved = NULL;
+}
+
 
 
 void cso_single_sampler(struct cso_context *ctx,
@@ -226,12 +253,47 @@ void cso_set_samplers( struct cso_context *ctx,
    cso_single_sampler_done( ctx );
 }
 
-void cso_unset_samplers( struct cso_context *ctx )
+void cso_save_samplers(struct cso_context *ctx)
+{
+   ctx->nr_samplers_saved = ctx->nr_samplers;
+   memcpy(ctx->samplers_saved, ctx->samplers, sizeof(ctx->samplers));
+}
+
+void cso_restore_samplers(struct cso_context *ctx)
+{
+   cso_set_samplers(ctx, ctx->nr_samplers_saved,
+                    (const struct pipe_sampler_state **) ctx->samplers_saved);
+}
+
+
+void cso_set_sampler_textures( struct cso_context *ctx,
+                               uint count,
+                               struct pipe_texture **textures )
 {
    uint i;
-   for (i = 0; i < ctx->nr_samplers; i++)
-      ctx->samplers[i] = NULL;
+
+   ctx->nr_textures = count;
+
+   for (i = 0; i < count; i++)
+      ctx->textures[i] = textures[i];
+   for ( ; i < PIPE_MAX_SAMPLERS; i++)
+      ctx->textures[i] = NULL;
+
+   ctx->pipe->set_sampler_textures(ctx->pipe, count, textures);
 }
+
+void cso_save_sampler_textures( struct cso_context *ctx )
+{
+   ctx->nr_textures_saved = ctx->nr_textures;
+   memcpy(ctx->textures_saved, ctx->textures, sizeof(ctx->textures));
+}
+
+void cso_restore_sampler_textures( struct cso_context *ctx )
+{
+   cso_set_sampler_textures(ctx, ctx->nr_textures_saved, ctx->textures_saved);
+   ctx->nr_textures_saved = 0;
+}
+
 
 
 
@@ -267,15 +329,25 @@ void cso_set_depth_stencil_alpha(struct cso_context *ctx,
    }
 }
 
-void cso_unset_depth_stencil_alpha(struct cso_context *ctx)
+void cso_save_depth_stencil_alpha(struct cso_context *ctx)
 {
-   ctx->depth_stencil = NULL;
+   assert(!ctx->depth_stencil_saved);
+   ctx->depth_stencil_saved = ctx->depth_stencil;
+}
+
+void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
+{
+   if (ctx->depth_stencil != ctx->depth_stencil_saved) {
+      ctx->depth_stencil = ctx->depth_stencil_saved;
+      ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, ctx->depth_stencil_saved);
+   }
+   ctx->depth_stencil_saved = NULL;
 }
 
 
 
 void cso_set_rasterizer(struct cso_context *ctx,
-                              const struct pipe_rasterizer_state *templ)
+                        const struct pipe_rasterizer_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ,
                                          sizeof(struct pipe_rasterizer_state));
@@ -305,11 +377,20 @@ void cso_set_rasterizer(struct cso_context *ctx,
    }
 }
 
-void cso_unset_rasterizer(struct cso_context *ctx)
+void cso_save_rasterizer(struct cso_context *ctx)
 {
-   ctx->rasterizer = NULL;
+   assert(!ctx->rasterizer_saved);
+   ctx->rasterizer_saved = ctx->rasterizer;
 }
 
+void cso_restore_rasterizer(struct cso_context *ctx)
+{
+   if (ctx->rasterizer != ctx->rasterizer_saved) {
+      ctx->rasterizer = ctx->rasterizer_saved;
+      ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rasterizer_saved);
+   }
+   ctx->rasterizer_saved = NULL;
+}
 
 
 void cso_set_fragment_shader(struct cso_context *ctx,
@@ -343,10 +424,22 @@ void cso_set_fragment_shader(struct cso_context *ctx,
    }
 }
 
-void cso_unset_fragment_shader(struct cso_context *ctx)
+void cso_save_fragment_shader(struct cso_context *ctx)
 {
-   ctx->fragment_shader = NULL;
+   assert(!ctx->fragment_shader_saved);
+   ctx->fragment_shader_saved = ctx->fragment_shader;
 }
+
+void cso_restore_fragment_shader(struct cso_context *ctx)
+{
+   assert(ctx->fragment_shader_saved);
+   if (ctx->fragment_shader_saved != ctx->fragment_shader) {
+      ctx->pipe->bind_fs_state(ctx->pipe, ctx->fragment_shader_saved);
+      ctx->fragment_shader = ctx->fragment_shader_saved;
+   }
+   ctx->fragment_shader_saved = NULL;
+}
+
 
 
 void cso_set_vertex_shader(struct cso_context *ctx,
@@ -380,7 +473,78 @@ void cso_set_vertex_shader(struct cso_context *ctx,
    }
 }
 
-void cso_unset_vertex_shader(struct cso_context *ctx)
+void cso_save_vertex_shader(struct cso_context *ctx)
 {
-   ctx->vertex_shader = NULL;
+   assert(!ctx->vertex_shader_saved);
+   ctx->vertex_shader_saved = ctx->vertex_shader;
+}
+
+void cso_restore_vertex_shader(struct cso_context *ctx)
+{
+   assert(ctx->vertex_shader_saved);
+   if (ctx->vertex_shader_saved != ctx->vertex_shader) {
+      ctx->pipe->bind_fs_state(ctx->pipe, ctx->vertex_shader_saved);
+      ctx->vertex_shader = ctx->vertex_shader_saved;
+   }
+   ctx->vertex_shader_saved = NULL;
+}
+
+
+
+void cso_set_framebuffer(struct cso_context *ctx,
+                         const struct pipe_framebuffer_state *fb)
+{
+   if (memcmp(&ctx->fb, fb, sizeof(*fb))) {
+      ctx->fb = *fb;
+      ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
+   }
+}
+
+void cso_save_framebuffer(struct cso_context *ctx)
+{
+   ctx->fb_saved = ctx->fb;
+}
+
+void cso_restore_framebuffer(struct cso_context *ctx)
+{
+   if (memcmp(&ctx->fb, &ctx->fb_saved, sizeof(ctx->fb))) {
+      ctx->fb = ctx->fb_saved;
+      ctx->pipe->set_framebuffer_state(ctx->pipe, &ctx->fb);
+   }
+}
+
+
+void cso_set_viewport(struct cso_context *ctx,
+                      const struct pipe_viewport_state *vp)
+{
+   if (memcmp(&ctx->vp, vp, sizeof(*vp))) {
+      ctx->vp = *vp;
+      ctx->pipe->set_viewport_state(ctx->pipe, vp);
+   }
+}
+
+void cso_save_viewport(struct cso_context *ctx)
+{
+   ctx->vp_saved = ctx->vp;
+}
+
+
+void cso_restore_viewport(struct cso_context *ctx)
+{
+   if (memcmp(&ctx->vp, &ctx->vp_saved, sizeof(ctx->vp))) {
+      ctx->vp = ctx->vp_saved;
+      ctx->pipe->set_viewport_state(ctx->pipe, &ctx->vp);
+   }
+}
+
+
+
+
+void cso_set_blend_color(struct cso_context *ctx,
+                         const struct pipe_blend_color *bc)
+{
+   if (memcmp(&ctx->blend_color, bc, sizeof(ctx->blend_color))) {
+      ctx->blend_color = *bc;
+      ctx->pipe->set_blend_color(ctx->pipe, bc);
+   }
 }

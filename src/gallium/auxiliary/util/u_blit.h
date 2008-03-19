@@ -30,15 +30,16 @@
 #define U_BLIT_H
 
 
+
 struct pipe_context;
 struct pipe_surface;
+struct cso_context;
 
 
 struct blit_state;
 
-
 extern struct blit_state *
-util_create_blit(struct pipe_context *pipe);
+util_create_blit(struct pipe_context *pipe, struct cso_context *cso);
 
 
 extern void
