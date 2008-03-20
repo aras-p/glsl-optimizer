@@ -1661,10 +1661,10 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	  
 	  //		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0 | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
 	  
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = (0 << R500_TEX_PTR_S_SHIFT) | 
-			(1 << R500_TEX_PTR_T_SHIFT) |
-			(2 << R500_TEX_PTR_R_SHIFT) | 
-			(3 << R500_TEX_PTR_Q_SHIFT) |
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = (0 << R500_RS_IP_TEX_PTR_S_SHIFT) | 
+			(1 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+			(2 << R500_RS_IP_TEX_PTR_R_SHIFT) | 
+			(3 << R500_RS_IP_TEX_PTR_Q_SHIFT) |
 			(in_texcoords << 0) | interp_magic[i];
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0;
@@ -1702,7 +1702,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
 			//			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11 | R300_RS_ROUTE_1_COLOR1 | (fp_reg++ << R300_RS_ROUTE_1_COLOR1_DEST_SHIFT);
-			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITER300_RS_ROUTE_1_UNKNOWN11 |  (fp_reg++ << R500_RS_INST_COL_COL_ADDR_SHIFT);
+			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITE |  (fp_reg++ << R500_RS_INST_COL_COL_ADDR_SHIFT);
 			InputsRead &= ~FRAG_BIT_COL1;
 			if (high_rr < 1)
 				high_rr = 1;
