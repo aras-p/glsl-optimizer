@@ -165,9 +165,17 @@ clear_with_quad(GLcontext *ctx,
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
    const GLfloat x0 = ctx->DrawBuffer->_Xmin;
-   const GLfloat y0 = ctx->DrawBuffer->_Ymin;
    const GLfloat x1 = ctx->DrawBuffer->_Xmax;
-   const GLfloat y1 = ctx->DrawBuffer->_Ymax;
+   GLfloat y0, y1;
+
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+      y0 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+      y1 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin;
+   }
+   else {
+      y0 = ctx->DrawBuffer->_Ymin;
+      y1 = ctx->DrawBuffer->_Ymax;
+   }
 
    /*
    printf("%s %s%s%s %f,%f %f,%f\n", __FUNCTION__, 
