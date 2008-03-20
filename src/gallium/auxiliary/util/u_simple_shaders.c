@@ -68,7 +68,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
    uint ti, i;
    struct pipe_shader_state shader;
 
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
+   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
@@ -173,7 +173,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    uint ti;
    struct pipe_shader_state shader;
 
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
+   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
