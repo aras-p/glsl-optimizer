@@ -171,8 +171,8 @@ softpipe_get_vbuf_vertex_info(struct softpipe_context *softpipe)
 static void
 compute_cliprect(struct softpipe_context *sp)
 {
-   uint surfWidth = sp->fb_width;
-   uint surfHeight = sp->fb_height;
+   uint surfWidth = sp->framebuffer.width;
+   uint surfHeight = sp->framebuffer.height;
 
    if (sp->rasterizer->scissor) {
       /* clip to scissor rect */
