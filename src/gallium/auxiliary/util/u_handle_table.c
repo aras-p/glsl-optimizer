@@ -171,8 +171,7 @@ handle_table_set(struct handle_table *ht,
    
    assert(ht);
    assert(handle > 0);
-   assert(handle <= ht->size);
-   if(!handle || handle > ht->size)
+   if(!handle)
       return 0;
 
    assert(object);
