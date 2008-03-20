@@ -61,6 +61,9 @@ struct blit_state
    /*struct pipe_viewport_state viewport;*/
    struct pipe_sampler_state *vs;
    struct pipe_sampler_state *fs;
+
+   struct pipe_buffer *vbuf;  /**< quad vertices */
+   float vertices[4][2][4];   /**< vertex/texcoords for quad */
 };
 
 
@@ -72,6 +75,7 @@ struct blit_state *
 util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
 {
    struct blit_state *ctx;
+   uint i;
 
    ctx = CALLOC_STRUCT(blit_state);
    if (!ctx)
@@ -132,6 +136,24 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe);
 
+   ctx->vbuf = pipe->winsys->buffer_create(pipe->winsys,
+                                           32,
+                                           PIPE_BUFFER_USAGE_VERTEX,
+                                           sizeof(ctx->vertices));
+   if (!ctx->vbuf) {
+      FREE(ctx);
+      ctx->pipe->delete_fs_state(ctx->pipe, ctx->fs);
+      ctx->pipe->delete_vs_state(ctx->pipe, ctx->vs);
+      return NULL;
+   }
+
+   /* init vertex data that doesn't change */
+   for (i = 0; i < 4; i++) {
+      ctx->vertices[i][0][3] = 1.0f; /* w */
+      ctx->vertices[i][1][2] = 0.0f; /* r */
+      ctx->vertices[i][1][3] = 1.0f; /* q */
+   }
+
    return ctx;
 }
 
@@ -147,7 +169,52 @@ util_destroy_blit(struct blit_state *ctx)
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_fs_state(pipe, ctx->fs);
 
+   pipe->winsys->buffer_destroy(pipe->winsys, ctx->vbuf);
+
    FREE(ctx);
+}
+
+
+/**
+ * Setup vertex data for the textured quad we'll draw.
+ * Note: y=0=top
+ */
+static void
+setup_vertex_data(struct blit_state *ctx,
+                  float x0, float y0, float x1, float y1, float z)
+{
+   void *buf;
+
+   ctx->vertices[0][0][0] = x0;
+   ctx->vertices[0][0][1] = y0;
+   ctx->vertices[0][0][2] = z;
+   ctx->vertices[0][1][0] = 0.0f; /*s*/
+   ctx->vertices[0][1][1] = 0.0f; /*t*/
+
+   ctx->vertices[1][0][0] = x1;
+   ctx->vertices[1][0][1] = y0;
+   ctx->vertices[1][0][2] = z;
+   ctx->vertices[1][1][0] = 1.0f; /*s*/
+   ctx->vertices[1][1][1] = 0.0f; /*t*/
+
+   ctx->vertices[2][0][0] = x1;
+   ctx->vertices[2][0][1] = y1;
+   ctx->vertices[2][0][2] = z;
+   ctx->vertices[2][1][0] = 1.0f;
+   ctx->vertices[2][1][1] = 1.0f;
+
+   ctx->vertices[3][0][0] = x0;
+   ctx->vertices[3][0][1] = y1;
+   ctx->vertices[3][0][2] = z;
+   ctx->vertices[3][1][0] = 0.0f;
+   ctx->vertices[3][1][1] = 1.0f;
+
+   buf = ctx->pipe->winsys->buffer_map(ctx->pipe->winsys, ctx->vbuf,
+                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
+
+   ctx->pipe->winsys->buffer_unmap(ctx->pipe->winsys, ctx->vbuf);
 }
 
 
@@ -254,11 +321,14 @@ util_blit_pixels(struct blit_state *ctx,
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
-   util_draw_texquad(pipe, 
-                     (float)dstX0, 
-                     (float)dstY0, 
-                     (float)dstX1, 
-                     (float)dstY1, z);
+   setup_vertex_data(ctx,
+                     (float) dstX0, (float) dstY0, 
+                     (float) dstX1, (float) dstY1, z);
+
+   util_draw_vertex_buffer(ctx->pipe, ctx->vbuf,
+                           PIPE_PRIM_TRIANGLE_FAN,
+                           4,  /* verts */
+                           2); /* attribs/vert */
 
    /* restore state we changed */
    cso_restore_blend(ctx->cso);
