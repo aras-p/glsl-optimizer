@@ -281,7 +281,7 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe)
    uint ti;
    struct pipe_shader_state shader;
 
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
+   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
