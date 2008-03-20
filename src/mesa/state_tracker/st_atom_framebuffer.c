@@ -52,6 +52,9 @@ update_framebuffer_state( struct st_context *st )
 
    memset(framebuffer, 0, sizeof(*framebuffer));
 
+   framebuffer->width = fb->Width;
+   framebuffer->height = fb->Height;
+
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
