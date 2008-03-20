@@ -1436,39 +1436,42 @@ static void r300SetupTextures(GLcontext * ctx)
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
-	R300_STATECHANGE(r300, fpt);
 
-	for (i = 0; i < fp->tex.length; i++) {
-		int unit;
-		int opcode;
-		unsigned long val;
+        if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
+		R300_STATECHANGE(r300, fpt);
 
-		unit = fp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
-		unit &= 15;
-
-		val = fp->tex.inst[i];
-		val &= ~R300_FPITX_IMAGE_MASK;
-
-		opcode =
-		    (val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
-		if (opcode == R300_FPITX_OP_KIL) {
-			r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
-		} else {
-			if (tmu_mappings[unit] >= 0) {
-				val |=
-				    tmu_mappings[unit] <<
-				    R300_FPITX_IMAGE_SHIFT;
+		for (i = 0; i < fp->tex.length; i++) {
+			int unit;
+			int opcode;
+			unsigned long val;
+			
+			unit = fp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
+			unit &= 15;
+			
+			val = fp->tex.inst[i];
+			val &= ~R300_FPITX_IMAGE_MASK;
+			
+			opcode =
+				(val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
+			if (opcode == R300_FPITX_OP_KIL) {
 				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
 			} else {
-				// We get here when the corresponding texture image is incomplete
-				// (e.g. incomplete mipmaps etc.)
-				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+				if (tmu_mappings[unit] >= 0) {
+					val |=
+						tmu_mappings[unit] <<
+						R300_FPITX_IMAGE_SHIFT;
+					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+				} else {
+					// We get here when the corresponding texture image is incomplete
+					// (e.g. incomplete mipmaps etc.)
+					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+				}
 			}
 		}
+		
+		r300->hw.fpt.cmd[R300_FPT_CMD_0] =
+			cmdpacket0(R300_PFS_TEXI_0, fp->tex.length);
 	}
-
-	r300->hw.fpt.cmd[R300_FPT_CMD_0] =
-	    cmdpacket0(R300_PFS_TEXI_0, fp->tex.length);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n",
