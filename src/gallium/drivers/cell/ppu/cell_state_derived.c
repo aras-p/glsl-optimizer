@@ -141,17 +141,8 @@ calculate_vertex_layout( struct cell_context *cell )
 static void
 compute_cliprect(struct cell_context *sp)
 {
-   unsigned surfWidth, surfHeight;
-
-   if (sp->framebuffer.num_cbufs > 0) {
-      surfWidth = sp->framebuffer.cbufs[0]->width;
-      surfHeight = sp->framebuffer.cbufs[0]->height;
-   }
-   else {
-      /* no surface? */
-      surfWidth = sp->scissor.maxx;
-      surfHeight = sp->scissor.maxy;
-   }
+   uint surfWidth = sp->framebuffer.width;
+   uint surfHeight = sp->framebuffer.height;
 
    if (sp->rasterizer->scissor) {
       /* clip to scissor rect */

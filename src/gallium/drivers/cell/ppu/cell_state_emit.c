@@ -60,8 +60,8 @@ cell_emit_state(struct cell_context *cell)
       fb->color_format = cbuf->format;
       fb->depth_start = cell->zsbuf_map;
       fb->depth_format = zbuf ? zbuf->format : PIPE_FORMAT_NONE;
-      fb->width = cell->framebuffer.cbufs[0]->width;
-      fb->height = cell->framebuffer.cbufs[0]->height;
+      fb->width = cell->framebuffer.width;
+      fb->height = cell->framebuffer.height;
    }
 
    if (cell->dirty & CELL_NEW_BLEND) {
