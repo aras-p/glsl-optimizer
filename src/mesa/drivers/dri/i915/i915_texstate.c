@@ -38,7 +38,7 @@
 
 
 static GLuint
-translate_texture_format(GLuint mesa_format)
+translate_texture_format(GLuint mesa_format, GLenum DepthMode)
 {
    switch (mesa_format) {
    case MESA_FORMAT_L8:
@@ -65,7 +65,7 @@ translate_texture_format(GLuint mesa_format)
    case MESA_FORMAT_RGBA_FXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
    case MESA_FORMAT_Z16:
-      return (MAPSURF_16BIT | MT_16BIT_L16);
+      return (MAPSURF_16BIT | (DepthMode==GL_ALPHA?MT_16BIT_A16:MT_16BIT_L16));
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGB_DXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT1);
@@ -166,7 +166,8 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 								 0, intelObj->
 								 firstLevel);
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat);
+      format = translate_texture_format(firstImage->TexFormat->MesaFormat, 
+		tObj->DepthMode);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
    }
 
