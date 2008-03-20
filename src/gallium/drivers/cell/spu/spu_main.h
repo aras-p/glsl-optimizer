@@ -67,6 +67,18 @@ typedef struct spu_frag_test_results (*frag_test_func)(qword frag_mask,
     qword frag_alpha, qword facing);
 
 
+struct spu_blend_results {
+   qword r;
+   qword g;
+   qword b;
+   qword a;
+};
+
+typedef struct spu_blend_results (*blend_func)(
+    qword frag_r, qword frag_g, qword frag_b, qword frag_a,
+    qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
+    qword frag_mask);
+
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
@@ -93,7 +105,10 @@ struct spu_global
    boolean read_depth;
    boolean read_stencil;
    frag_test_func frag_test;
-   struct pipe_blend_state blend;
+   
+   boolean read_fb;
+   blend_func blend;
+
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct cell_command_texture texture;
 

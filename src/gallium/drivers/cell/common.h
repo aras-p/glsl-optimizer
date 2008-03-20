@@ -115,6 +115,16 @@ struct cell_command_depth_stencil_alpha_test {
 
 
 /**
+ * Upload code to perform framebuffer blend operation
+ */
+struct cell_command_blend {
+   uint64_t base;               /**< Effective address of code start. */
+   unsigned size;               /**< Size in bytes of test code. */
+   unsigned read_fb;            /**< Flag: should framebuffer be read? */
+};
+
+
+/**
  * Tell SPUs about the framebuffer size, location
  */
 struct cell_command_framebuffer

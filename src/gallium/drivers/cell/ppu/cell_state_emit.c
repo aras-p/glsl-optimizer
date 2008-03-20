@@ -65,9 +65,20 @@ cell_emit_state(struct cell_context *cell)
    }
 
    if (cell->dirty & CELL_NEW_BLEND) {
-      emit_state_cmd(cell, CELL_CMD_STATE_BLEND,
-                     cell->blend,
-                     sizeof(struct pipe_blend_state));
+      struct cell_command_blend blend;
+
+      if (cell->blend != NULL) {
+         blend.base = (intptr_t) cell->blend->code.store;
+         blend.size = (char *) cell->blend->code.csr
+             - (char *) cell->blend->code.store;
+         blend.read_fb = TRUE;
+      } else {
+         blend.base = 0;
+         blend.size = 0;
+         blend.read_fb = FALSE;
+      }
+
+      emit_state_cmd(cell, CELL_CMD_STATE_BLEND, &blend, sizeof(blend));
    }
 
    if (cell->dirty & CELL_NEW_DEPTH_STENCIL) {
