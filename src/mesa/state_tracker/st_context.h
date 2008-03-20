@@ -82,7 +82,6 @@ struct st_context
       struct pipe_rasterizer_state          rasterizer;
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
       struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
-      struct pipe_blend_color  blend_color;
       struct pipe_clip_state clip;
       struct pipe_constant_buffer constants[2];
       struct pipe_framebuffer_state framebuffer;

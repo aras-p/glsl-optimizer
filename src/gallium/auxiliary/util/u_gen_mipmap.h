@@ -31,11 +31,15 @@
 #include "pipe/p_state.h"
 
 
+struct pipe_context;
+struct pipe_texture;
+struct cso_context;
+
 struct gen_mipmap_state;
 
 
 extern struct gen_mipmap_state *
-util_create_gen_mipmap(struct pipe_context *pipe);
+util_create_gen_mipmap(struct pipe_context *pipe, struct cso_context *cso);
 
 
 extern void

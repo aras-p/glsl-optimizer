@@ -29,9 +29,9 @@
 #include "context.h"
 #include "colormac.h"
 #include "st_context.h"
-#include "pipe/p_context.h"
 #include "st_atom.h"
-
+#include "pipe/p_context.h"
+#include "cso_cache/cso_context.h"
 
 /**
  * Update the viewport transformation matrix.  Depends on:
@@ -65,22 +65,18 @@ update_viewport( struct st_context *st )
       GLfloat half_width = ctx->Viewport.Width / 2.0;
       GLfloat half_height = ctx->Viewport.Height / 2.0;
       GLfloat half_depth = (ctx->Viewport.Far - ctx->Viewport.Near) / 2.0;
-      struct pipe_viewport_state vp;
       
-      vp.scale[0] = half_width;
-      vp.scale[1] = half_height * yScale;
-      vp.scale[2] = half_depth;
-      vp.scale[3] = 1.0;
+      st->state.viewport.scale[0] = half_width;
+      st->state.viewport.scale[1] = half_height * yScale;
+      st->state.viewport.scale[2] = half_depth;
+      st->state.viewport.scale[3] = 1.0;
 
-      vp.translate[0] = half_width + x;
-      vp.translate[1] = (half_height + y) * yScale + yBias;
-      vp.translate[2] = half_depth + z;
-      vp.translate[3] = 0.0;
+      st->state.viewport.translate[0] = half_width + x;
+      st->state.viewport.translate[1] = (half_height + y) * yScale + yBias;
+      st->state.viewport.translate[2] = half_depth + z;
+      st->state.viewport.translate[3] = 0.0;
 
-      if (memcmp(&vp, &st->state.viewport, sizeof(vp)) != 0) {
-	 st->state.viewport = vp;
-	 st->pipe->set_viewport_state(st->pipe, &vp);
-      }
+      cso_set_viewport(st->cso_context, &st->state.viewport);
    }
 }
 

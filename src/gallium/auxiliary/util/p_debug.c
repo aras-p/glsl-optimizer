@@ -52,6 +52,9 @@ rpl_EngDebugPrint(const char *format, ...)
 }
 
 int rpl_vsnprintf(char *, size_t, const char *, va_list);
+int rpl_snprintf(char *str, size_t size, const char *format, ...);
+#define vsnprintf rpl_vsnprintf
+#define snprintf rpl_snprintf
 #endif
 
 
@@ -180,4 +183,60 @@ void debug_mask_vprintf(uint32_t uuid, uint32_t what, const char *format, va_lis
    uint32_t mask = debug_mask_get(uuid);
    if(mask & what)
       debug_vprintf(format, ap);
+}
+
+
+const char *
+debug_dump_enum(const struct debug_named_value *names, 
+                unsigned long value)
+{
+   static char rest[256];
+   
+   while(names->name) {
+      if(names->value == value)
+	 return names->name;
+      ++names;
+   }
+
+   snprintf(rest, sizeof(rest), "0x%08x", value);
+   return rest;
+}
+
+
+const char *
+debug_dump_flags(const struct debug_named_value *names, 
+                 unsigned long value)
+{
+   static char output[4096];
+   static char rest[256];
+   int first = 1;
+
+   output[0] = '\0';
+
+   while(names->name) {
+      if((names->value & value) == names->value) {
+	 if (!first)
+	    strncat(output, "|", sizeof(output));
+	 else
+	    first = 0;
+	 strncat(output, names->name, sizeof(output));
+	 value &= ~names->value;
+      }
+      ++names;
+   }
+   
+   if (value) {
+      if (!first)
+	 strncat(output, "|", sizeof(output));
+      else
+	 first = 0;
+      
+      snprintf(rest, sizeof(rest), "0x%08x", value);
+      strncat(output, rest, sizeof(output));
+   }
+   
+   if(first)
+      return "0";
+   
+   return output;
 }

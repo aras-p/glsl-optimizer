@@ -248,7 +248,7 @@ handle_table_get_next_handle(struct handle_table *ht,
    unsigned index;
    
    for(index = handle; index < ht->size; ++index) {
-      if(!ht->objects[index])
+      if(ht->objects[index])
 	 return index + 1;
    }
 

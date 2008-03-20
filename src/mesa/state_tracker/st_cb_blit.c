@@ -52,7 +52,7 @@
 void
 st_init_blit(struct st_context *st)
 {
-   st->blit = util_create_blit(st->pipe);
+   st->blit = util_create_blit(st->pipe, st->cso_context);
 }
 
 
@@ -98,22 +98,9 @@ st_BlitFramebuffer(GLcontext *ctx,
 
    }
 
-#if 0
-   /* XXX is this sufficient? */
-   st_invalidate_state(ctx, _NEW_COLOR | _NEW_TEXTURE);
-#else
-   /* need to "unset" cso state because we went behind the back of the cso
-    * tracker.  Without unset, the _set_ calls would be no-ops.
-    */
-   cso_unset_blend(st->cso_context);
-   cso_unset_depth_stencil_alpha(st->cso_context);
-   cso_unset_rasterizer(st->cso_context);
-   cso_set_blend(st->cso_context, &st->state.blend);
-   cso_set_depth_stencil_alpha(st->cso_context, &st->state.depth_stencil);
-   cso_set_rasterizer(st->cso_context, &st->state.rasterizer);
+   /* shaders don't go through CSO yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
-#endif
 }
 
 

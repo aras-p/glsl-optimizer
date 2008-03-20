@@ -247,10 +247,19 @@ clear_with_quad(GLcontext *ctx,
 	  x1, y1);
    */
 
+   cso_save_blend(st->cso_context);
+   cso_save_depth_stencil_alpha(st->cso_context);
+   cso_save_rasterizer(st->cso_context);
+   cso_save_viewport(st->cso_context);
+
    /* blend state: RGBA masking */
    {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
+      blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
       if (color) {
          if (ctx->Color.ColorMask[0])
             blend.colormask |= PIPE_MASK_R;
@@ -294,13 +303,6 @@ clear_with_quad(GLcontext *ctx,
    {
       struct pipe_rasterizer_state raster;
       memset(&raster, 0, sizeof(raster));
-#if 0
-      /* don't do per-pixel scissor; we'll just draw a PIPE_PRIM_QUAD
-       * that matches the scissor bounds.
-       */
-      if (ctx->Scissor.Enabled)
-         raster.scissor = 1;
-#endif
 #if TEST_DRAW_PASSTHROUGH
       raster.bypass_clipping = 1;
       raster.bypass_vs = 1;
@@ -342,28 +344,21 @@ clear_with_quad(GLcontext *ctx,
       vp.translate[1] = 0.5 * height;
       vp.translate[2] = 0.0;
       vp.translate[3] = 0.0;
-      pipe->set_viewport_state(pipe, &vp);
+      cso_set_viewport(st->cso_context, &vp);
    }
 #endif
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
-#if 0
-   /* Can't depend on old state objects still existing -- may have
-    * been deleted to make room in the hash, etc.  (Should get
-    * fixed...)
-    */
-   st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);
-#else
    /* Restore pipe state */
-   cso_set_blend(st->cso_context, &st->state.blend);
-   cso_set_depth_stencil_alpha(st->cso_context, &st->state.depth_stencil);
-   cso_set_rasterizer(st->cso_context, &st->state.rasterizer);
+   cso_restore_blend(st->cso_context);
+   cso_restore_depth_stencil_alpha(st->cso_context);
+   cso_restore_rasterizer(st->cso_context);
+   cso_restore_viewport(st->cso_context);
+   /* these don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
-#endif
-   pipe->set_viewport_state(pipe, &st->state.viewport);
 }
 
 

@@ -156,6 +156,7 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    if (tc->surface_map) {
       /*assert(tc->surface != ps);*/
       pipe_surface_unmap(tc->surface);
+      tc->surface_map = NULL;
    }
 
    pipe_surface_reference(&tc->surface, ps);

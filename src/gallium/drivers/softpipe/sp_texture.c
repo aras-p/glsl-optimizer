@@ -174,7 +174,8 @@ softpipe_get_tex_surface_screen(struct pipe_screen *screen,
 
 static void
 softpipe_texture_update(struct pipe_context *pipe,
-                        struct pipe_texture *texture)
+                        struct pipe_texture *texture,
+                        uint face, uint levelsMask)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint unit;

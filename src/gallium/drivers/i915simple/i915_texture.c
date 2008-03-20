@@ -542,7 +542,8 @@ i915_texture_release_screen(struct pipe_screen *screen,
 
 
 static void
-i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture)
+i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
+                    uint face, uint levelsMask)
 {
    /* no-op? */
 }

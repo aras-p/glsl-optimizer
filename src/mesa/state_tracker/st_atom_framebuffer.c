@@ -35,6 +35,7 @@
 #include "st_atom.h"
 #include "st_cb_fbo.h"
 #include "pipe/p_context.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -44,45 +45,39 @@
 static void
 update_framebuffer_state( struct st_context *st )
 {
-   struct pipe_framebuffer_state framebuffer;
+   struct pipe_framebuffer_state *framebuffer = &st->state.framebuffer;
    struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb;
    GLuint i;
 
-   memset(&framebuffer, 0, sizeof(framebuffer));
+   memset(framebuffer, 0, sizeof(*framebuffer));
 
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
-   framebuffer.num_cbufs = fb->_NumColorDrawBuffers[0];
-   for (i = 0; i < framebuffer.num_cbufs; i++) {
+   framebuffer->num_cbufs = fb->_NumColorDrawBuffers[0];
+   for (i = 0; i < framebuffer->num_cbufs; i++) {
       strb = st_renderbuffer(fb->_ColorDrawBuffers[0][i]);
       assert(strb->surface);
-      framebuffer.cbufs[i] = strb->surface;
+      framebuffer->cbufs[i] = strb->surface;
    }
 
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
    if (strb) {
       strb = st_renderbuffer(strb->Base.Wrapped);
       assert(strb->surface);
-      framebuffer.zsbuf = strb->surface;
+      framebuffer->zsbuf = strb->surface;
    }
    else {
       strb = st_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
       if (strb) {
          strb = st_renderbuffer(strb->Base.Wrapped);
          assert(strb->surface);
-         framebuffer.zsbuf = strb->surface;
+         framebuffer->zsbuf = strb->surface;
       }
    }
 
-   /* XXX: The memcmp is insufficient for eliminating redundant state changes,
-    * but we should probably do more work here to that end.
-    */
-   if (1 /*memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0*/) {
-      st->state.framebuffer = framebuffer;
-      st->pipe->set_framebuffer_state( st->pipe, &framebuffer );
-   }
+   cso_set_framebuffer(st->cso_context, framebuffer);
 }
 
 

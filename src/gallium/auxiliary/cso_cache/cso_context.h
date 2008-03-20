@@ -41,27 +41,36 @@ struct cso_context;
 
 struct cso_context *cso_create_context( struct pipe_context *pipe );
 
+void cso_destroy_context( struct cso_context *cso );
+
+
+
 void cso_set_blend( struct cso_context *cso,
                     const struct pipe_blend_state *blend );
+void cso_save_blend(struct cso_context *cso);
+void cso_restore_blend(struct cso_context *cso);
 
-void cso_unset_blend(struct cso_context *cso);
+
 
 void cso_set_depth_stencil_alpha( struct cso_context *cso,
                                   const struct pipe_depth_stencil_alpha_state *dsa );
+void cso_save_depth_stencil_alpha(struct cso_context *cso);
+void cso_restore_depth_stencil_alpha(struct cso_context *cso);
 
-void cso_unset_depth_stencil_alpha( struct cso_context *cso );
+
 
 void cso_set_rasterizer( struct cso_context *cso,
                          const struct pipe_rasterizer_state *rasterizer );
+void cso_save_rasterizer(struct cso_context *cso);
+void cso_restore_rasterizer(struct cso_context *cso);
 
-void cso_unset_rasterizer( struct cso_context *cso );
+
 
 void cso_set_samplers( struct cso_context *cso,
                        unsigned count,
                        const struct pipe_sampler_state **states );
-
-void cso_unset_samplers( struct cso_context *cso );
-
+void cso_save_samplers(struct cso_context *cso);
+void cso_restore_samplers(struct cso_context *cso);
 
 /* Alternate interface to support state trackers that like to modify
  * samplers one at a time:
@@ -73,6 +82,15 @@ void cso_single_sampler( struct cso_context *cso,
 void cso_single_sampler_done( struct cso_context *cso );
 
 
+
+void cso_set_sampler_textures( struct cso_context *cso,
+                               uint count,
+                               struct pipe_texture **textures );
+void cso_save_sampler_textures( struct cso_context *cso );
+void cso_restore_sampler_textures( struct cso_context *cso );
+
+
+
 /* These aren't really sensible -- most of the time the api provides
  * object semantics for shaders anyway, and the cases where it doesn't
  * (eg mesa's internall-generated texenv programs), it will be up to
@@ -80,15 +98,32 @@ void cso_single_sampler_done( struct cso_context *cso );
  */
 void cso_set_fragment_shader( struct cso_context *cso,
                               const struct pipe_shader_state *shader );
+void cso_save_fragment_shader(struct cso_context *cso);
+void cso_restore_fragment_shader(struct cso_context *cso);
 
-void cso_unset_fragment_shader( struct cso_context *cso );
+
 
 void cso_set_vertex_shader( struct cso_context *cso,
                             const struct pipe_shader_state *shader );
+void cso_save_vertex_shader(struct cso_context *cso);
+void cso_restore_vertex_shader(struct cso_context *cso);
 
-void cso_unset_vertex_shader( struct cso_context *cso );
 
-void cso_destroy_context( struct cso_context *cso );
+
+void cso_set_framebuffer(struct cso_context *cso,
+                         const struct pipe_framebuffer_state *fb);
+void cso_save_framebuffer(struct cso_context *cso);
+void cso_restore_framebuffer(struct cso_context *cso);
+
+
+void cso_set_viewport(struct cso_context *cso,
+                      const struct pipe_viewport_state *vp);
+void cso_save_viewport(struct cso_context *cso);
+void cso_restore_viewport(struct cso_context *cso);
+
+
+void cso_set_blend_color(struct cso_context *cso,
+                         const struct pipe_blend_color *bc);
 
 
 #ifdef	__cplusplus

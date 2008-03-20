@@ -168,6 +168,55 @@ void debug_mask_vprintf(uint32_t uuid,
 #endif
 
 
+/**
+ * Used by debug_dump_enum and debug_dump_flags to describe symbols.
+ */
+struct debug_named_value
+{
+   const char *name;
+   unsigned long value;
+};
+
+
+/**
+ * Some C pre-processor magic to simplify creating named values.
+ * 
+ * Example:
+ * @code
+ * static const debug_named_value my_names[] = {
+ *    DEBUG_NAMED_VALUE(MY_ENUM_VALUE_X),
+ *    DEBUG_NAMED_VALUE(MY_ENUM_VALUE_Y),
+ *    DEBUG_NAMED_VALUE(MY_ENUM_VALUE_Z),
+ *    DEBUG_NAMED_VALUE_END
+ * };
+ * 
+ *    ...
+ *    debug_printf("%s = %s\n", 
+ *                 name,
+ *                 debug_dump_enum(my_names, my_value));
+ *    ...
+ * @endcode
+ */
+#define DEBUG_NAMED_VALUE(__symbol) {#__symbol, (unsigned long)__symbol} 
+#define DEBUG_NAMED_VALUE_END {NULL, 0} 
+
+
+/**
+ * Convert a enum value to a string.
+ */
+const char *
+debug_dump_enum(const struct debug_named_value *names, 
+                unsigned long value);
+
+
+/**
+ * Convert binary flags value to a string.
+ */
+const char *
+debug_dump_flags(const struct debug_named_value *names, 
+                 unsigned long value);
+
+
 #ifdef	__cplusplus
 }
 #endif

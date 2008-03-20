@@ -49,14 +49,18 @@
 #include "tgsi/util/tgsi_dump.h"
 #include "tgsi/util/tgsi_parse.h"
 
+#include "cso_cache/cso_context.h"
+
 
 struct gen_mipmap_state
 {
    struct pipe_context *pipe;
+   struct cso_context *cso;
 
-   void *blend;
-   void *depthstencil;
-   void *rasterizer;
+   struct pipe_blend_state blend;
+   struct pipe_depth_stencil_alpha_state depthstencil;
+   struct pipe_rasterizer_state rasterizer;
+   struct pipe_sampler_state sampler;
    /*struct pipe_viewport_state viewport;*/
    struct pipe_sampler_state *vs;
    struct pipe_sampler_state *fs;
@@ -675,11 +679,9 @@ fallback_gen_mipmap(struct gen_mipmap_state *ctx,
  * generate a mipmap.
  */
 struct gen_mipmap_state *
-util_create_gen_mipmap(struct pipe_context *pipe)
+util_create_gen_mipmap(struct pipe_context *pipe,
+                       struct cso_context *cso)
 {
-   struct pipe_blend_state blend;
-   struct pipe_depth_stencil_alpha_state depthstencil;
-   struct pipe_rasterizer_state rasterizer;
    struct gen_mipmap_state *ctx;
 
    ctx = CALLOC_STRUCT(gen_mipmap_state);
@@ -687,27 +689,36 @@ util_create_gen_mipmap(struct pipe_context *pipe)
       return NULL;
 
    ctx->pipe = pipe;
+   ctx->cso = cso;
 
-   /* we don't use blending, but need to set valid values */
-   memset(&blend, 0, sizeof(blend));
-   blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.colormask = PIPE_MASK_RGBA;
-   ctx->blend = pipe->create_blend_state(pipe, &blend);
+   /* disabled blending/masking */
+   memset(&ctx->blend, 0, sizeof(ctx->blend));
+   ctx->blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   ctx->blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   ctx->blend.rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   ctx->blend.alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   ctx->blend.colormask = PIPE_MASK_RGBA;
 
-   /* depth/stencil/alpha */
-   memset(&depthstencil, 0, sizeof(depthstencil));
-   ctx->depthstencil = pipe->create_depth_stencil_alpha_state(pipe, &depthstencil);
+   /* no-op depth/stencil/alpha */
+   memset(&ctx->depthstencil, 0, sizeof(ctx->depthstencil));
 
    /* rasterizer */
-   memset(&rasterizer, 0, sizeof(rasterizer));
-   rasterizer.front_winding = PIPE_WINDING_CW;
-   rasterizer.cull_mode = PIPE_WINDING_NONE;
-   rasterizer.bypass_clipping = 1;  /* bypasses viewport too */
-   //rasterizer.bypass_vs = 1;
-   ctx->rasterizer = pipe->create_rasterizer_state(pipe, &rasterizer);
+   memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
+   ctx->rasterizer.front_winding = PIPE_WINDING_CW;
+   ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
+   ctx->rasterizer.bypass_clipping = 1;  /* bypasses viewport too */
+   /*ctx->rasterizer.bypass_vs = 1;*/
+
+   /* sampler state */
+   memset(&ctx->sampler, 0, sizeof(ctx->sampler));
+   ctx->sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
+   ctx->sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
+   ctx->sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
+   ctx->sampler.normalized_coords = 1;
+
 
 #if 0
    /* viewport */
@@ -745,9 +756,6 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
 
-   pipe->delete_blend_state(pipe, ctx->blend);
-   pipe->delete_depth_stencil_alpha_state(pipe, ctx->depthstencil);
-   pipe->delete_rasterizer_state(pipe, ctx->rasterizer);
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_fs_state(pipe, ctx->fs);
 
@@ -792,8 +800,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_framebuffer_state fb;
-   struct pipe_sampler_state sampler;
-   void *sampler_cso;
    uint dstLevel;
    uint zslice = 0;
 
@@ -803,29 +809,28 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       return;
    }
 
-   /* init framebuffer state */
-   memset(&fb, 0, sizeof(fb));
-   fb.num_cbufs = 1;
-
-   /* sampler state */
-   memset(&sampler, 0, sizeof(sampler));
-   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
-   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
-   sampler.normalized_coords = 1;
+   /* save state (restored below) */
+   cso_save_blend(ctx->cso);
+   cso_save_depth_stencil_alpha(ctx->cso);
+   cso_save_rasterizer(ctx->cso);
+   cso_save_samplers(ctx->cso);
+   cso_save_sampler_textures(ctx->cso);
+   cso_save_framebuffer(ctx->cso);
 
    /* bind our state */
-   pipe->bind_blend_state(pipe, ctx->blend);
-   pipe->bind_depth_stencil_alpha_state(pipe, ctx->depthstencil);
-   pipe->bind_rasterizer_state(pipe, ctx->rasterizer);
+   cso_set_blend(ctx->cso, &ctx->blend);
+   cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
+   cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+
    pipe->bind_vs_state(pipe, ctx->vs);
    pipe->bind_fs_state(pipe, ctx->fs);
 #if 0
    pipe->set_viewport_state(pipe, &ctx->viewport);
 #endif
+
+   /* init framebuffer state */
+   memset(&fb, 0, sizeof(fb));
+   fb.num_cbufs = 1;
 
    /*
     * XXX for small mipmap levels, it may be faster to use the software
@@ -838,7 +843,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        * Setup framebuffer / dest surface
        */
       fb.cbufs[0] = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
-      pipe->set_framebuffer_state(pipe, &fb);
+      cso_set_framebuffer(ctx->cso, &fb);
 
       /*
        * Setup sampler state
@@ -847,11 +852,10 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        * has trouble with min clamping so we also set the lod_bias to
        * try to work around that.
        */
-      sampler.min_lod = sampler.max_lod = (float) srcLevel;
-      sampler.lod_bias = (float) srcLevel;
-      sampler_cso = pipe->create_sampler_state(pipe, &sampler);
-      pipe->bind_sampler_states(pipe, 1, &sampler_cso);
-
+      ctx->sampler.min_lod = ctx->sampler.max_lod = (float) srcLevel;
+      ctx->sampler.lod_bias = (float) srcLevel;
+      cso_single_sampler(ctx->cso, 0, &ctx->sampler);
+      cso_single_sampler_done(ctx->cso);
 #if 0
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 #endif
@@ -868,10 +872,15 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       pipe->flush(pipe, PIPE_FLUSH_WAIT);
 
-      /*pipe->texture_update(pipe, pt);  not really needed */
-
-      pipe->delete_sampler_state(pipe, sampler_cso);
+      /* need to signal that the texture has changed _after_ rendering to it */
+      pipe->texture_update(pipe, pt, face, (1 << dstLevel));
    }
 
-   /* Note: caller must restore pipe/gallium state at this time */
+   /* restore state we changed */
+   cso_restore_blend(ctx->cso);
+   cso_restore_depth_stencil_alpha(ctx->cso);
+   cso_restore_rasterizer(ctx->cso);
+   cso_restore_samplers(ctx->cso);
+   cso_restore_sampler_textures(ctx->cso);
+   cso_restore_framebuffer(ctx->cso);
 }

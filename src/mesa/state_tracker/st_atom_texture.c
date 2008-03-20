@@ -76,11 +76,6 @@ update_textures(struct st_context *st)
 
       pt = st_get_stobj_texture(stObj);
       pipe_texture_reference(&st->state.sampler_texture[unit], pt);
-
-      if (stObj && stObj->dirtyData) {
-         st->pipe->texture_update(st->pipe, pt);
-         stObj->dirtyData = GL_FALSE;
-      }
    }
 
    st->pipe->set_sampler_textures(st->pipe, st->state.num_textures,

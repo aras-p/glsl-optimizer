@@ -25,7 +25,7 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
       int y0, y1;
       uint stipple0, stipple1;
       if (softpipe->rasterizer->origin_lower_left) {
-         y0 = softpipe->framebuffer.cbufs[0]->height - 1 - quad->y0;
+         y0 = softpipe->fb_height - 1 - quad->y0;
          y1 = y0 - 1;
       }
       else {
