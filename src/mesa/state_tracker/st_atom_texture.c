@@ -64,7 +64,10 @@ update_textures(struct st_context *st)
          GLboolean flush, retval;
 
          retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
-         /* XXX retval indicates whether there's a texture border */
+         if (!retval) {
+            /* out of mem */
+            continue;
+         }
 
          st->state.num_textures = unit + 1;
       }
