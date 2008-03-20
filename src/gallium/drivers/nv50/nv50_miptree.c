@@ -35,7 +35,8 @@ nv50_screen_init_miptree_functions(struct pipe_screen *pscreen)
 }
 
 static void
-nv50_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt)
+nv50_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt,
+		    uint face, uint levels)
 {
 }
 

@@ -99,7 +99,8 @@ nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 }
 
 static void
-nv40_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt)
+nv40_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt,
+		    uint face, uint levels)
 {
 }
 
