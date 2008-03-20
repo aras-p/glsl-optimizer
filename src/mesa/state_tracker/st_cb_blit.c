@@ -85,11 +85,14 @@ st_BlitFramebuffer(GLcontext *ctx,
       struct pipe_surface *srcSurf = srcRb->surface;
       struct pipe_surface *dstSurf = dstRb->surface;
 
-      srcY0 = srcRb->Base.Height - srcY0;
-      srcY1 = srcRb->Base.Height - srcY1;
+      if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+         /* invert Y */
+         srcY0 = srcRb->Base.Height - srcY0;
+         srcY1 = srcRb->Base.Height - srcY1;
 
-      dstY0 = dstRb->Base.Height - dstY0;
-      dstY1 = dstRb->Base.Height - dstY1;
+         dstY0 = dstRb->Base.Height - dstY0;
+         dstY1 = dstRb->Base.Height - dstY1;
+      }
 
       util_blit_pixels(st->blit,
                        srcSurf, srcX0, srcY0, srcX1, srcY1,
