@@ -73,6 +73,14 @@ extern "C" {
  */
 void debug_printf(const char *format, ...);
 
+
+/* Dump a blob in hex to the same place that debug_printf sends its
+ * messages:
+ */
+void debug_print_blob( const char *name,
+                       const void *blob,
+                       unsigned size );
+
 /**
  * @sa debug_printf 
  */

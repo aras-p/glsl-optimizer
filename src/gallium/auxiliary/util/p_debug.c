@@ -85,6 +85,22 @@ void debug_printf(const char *format, ...)
 }
 
 
+void debug_print_blob( const char *name,
+                       const void *blob,
+                       unsigned size )
+{
+   const unsigned *ublob = (const unsigned *)blob;
+   unsigned i;
+
+   debug_printf("%s (%d dwords%s)\n", name, size/4,
+                size%4 ? "... plus a few bytes" : "");
+
+   for (i = 0; i < size/4; i++) {
+      debug_printf("%d:\t%08x\n", i, ublob[i]);
+   }
+}
+
+
 /* TODO: implement a debug_abort that calls EngBugCheckEx on WIN32 */
 
 
@@ -240,3 +256,5 @@ debug_dump_flags(const struct debug_named_value *names,
    
    return output;
 }
+
+
