@@ -29,9 +29,25 @@
 #define U_DRAWQUAD_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+extern void 
+util_draw_vertex_buffer(struct pipe_context *pipe,
+                        struct pipe_buffer *vbuf,
+                        uint num_attribs, uint num_verts, uint prim_type);
+
+
 extern void 
 util_draw_texquad(struct pipe_context *pipe,
                   float x0, float y0, float x1, float y1, float z);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
