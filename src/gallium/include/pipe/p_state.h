@@ -220,6 +220,8 @@ struct pipe_blend_color
 
 struct pipe_framebuffer_state
 {
+   unsigned width, height;
+
    /** multiple colorbuffers for multiple render targets */
    unsigned num_cbufs;
    struct pipe_surface *cbufs[PIPE_MAX_COLOR_BUFS];
