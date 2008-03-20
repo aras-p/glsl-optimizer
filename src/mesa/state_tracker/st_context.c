@@ -35,8 +35,9 @@
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
-#include "st_cb_bufferobjects.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_blit.h"
+#include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_fbo.h"
@@ -154,6 +155,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
+   st_destroy_bitmap(st);
    st_destroy_blit(st);
    st_destroy_clear(st);
 
@@ -221,8 +223,9 @@ void st_init_driver_functions(struct dd_function_table *functions)
    _mesa_init_glsl_driver_functions(functions);
 
    st_init_accum_functions(functions);
-   st_init_bufferobject_functions(functions);
+   st_init_bitmap_functions(functions);
    st_init_blit_functions(functions);
+   st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
    st_init_drawpixels_functions(functions);
    st_init_fbo_functions(functions);

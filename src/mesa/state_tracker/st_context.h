@@ -147,6 +147,9 @@ struct st_context
       struct st_fragment_program *program;  /**< bitmap tex/kil program */
       GLuint user_prog_sn;  /**< user fragment program serial no. */
       struct st_fragment_program *combined_prog;
+      void *vs;
+      float vertices[4][3][4];  /**< vertex pos + color + texcoord */
+      struct pipe_buffer *vbuf;
    } bitmap;
 
    /** for glClear */
