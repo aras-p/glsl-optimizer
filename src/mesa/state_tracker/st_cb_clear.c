@@ -50,24 +50,32 @@
 #include "pipe/p_winsys.h"
 #include "util/u_pack_color.h"
 #include "util/u_simple_shaders.h"
+#include "util/u_draw_quad.h"
 
 #include "cso_cache/cso_context.h"
 
 
 /* XXX for testing draw module vertex passthrough: */
+/* XXX this hack is broken now */
 #define TEST_DRAW_PASSTHROUGH 0
 
 
 void
 st_destroy_clear(struct st_context *st)
 {
+   struct pipe_context *pipe = st->pipe;
+
    if (st->clear.fs) {
-      st->pipe->delete_fs_state(st->pipe, st->clear.fs);
+      pipe->delete_fs_state(pipe, st->clear.fs);
       st->clear.fs = NULL;
    }
    if (st->clear.vs) {
-      st->pipe->delete_vs_state(st->pipe, st->clear.vs);
+      pipe->delete_vs_state(pipe, st->clear.vs);
       st->clear.vs = NULL;
+   }
+   if (st->clear.vbuf) {
+      pipe->winsys->buffer_destroy(pipe->winsys, st->clear.vbuf);
+      st->clear.vbuf = NULL;
    }
 }
 
@@ -96,45 +104,51 @@ draw_quad(GLcontext *ctx,
           float x0, float y0, float x1, float y1, GLfloat z,
           const GLfloat color[4])
 {
-   GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
    GLuint i;
+   void *buf;
 
-#if TEST_DRAW_PASSTHROUGH
-   /* invert Y coords (may be off by one pixel) */
-   y0 = ctx->DrawBuffer->Height - y0;
-   y1 = ctx->DrawBuffer->Height - y1;
-#endif
+   if (!st->clear.vbuf) {
+      st->clear.vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                                   PIPE_BUFFER_USAGE_VERTEX,
+                                                   sizeof(st->clear.vertices));
+   }
 
    /* positions */
-   verts[0][0][0] = x0;
-   verts[0][0][1] = y0;
+   st->clear.vertices[0][0][0] = x0;
+   st->clear.vertices[0][0][1] = y0;
 
-   verts[1][0][0] = x1;
-   verts[1][0][1] = y0;
+   st->clear.vertices[1][0][0] = x1;
+   st->clear.vertices[1][0][1] = y0;
 
-   verts[2][0][0] = x1;
-   verts[2][0][1] = y1;
+   st->clear.vertices[2][0][0] = x1;
+   st->clear.vertices[2][0][1] = y1;
 
-   verts[3][0][0] = x0;
-   verts[3][0][1] = y1;
+   st->clear.vertices[3][0][0] = x0;
+   st->clear.vertices[3][0][1] = y1;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
-      verts[i][0][2] = z;
-      verts[i][0][3] = 1.0;
-      verts[i][1][0] = color[0];
-      verts[i][1][1] = color[1];
-      verts[i][1][2] = color[2];
-      verts[i][1][3] = color[3];
+      st->clear.vertices[i][0][2] = z;
+      st->clear.vertices[i][0][3] = 1.0;
+      st->clear.vertices[i][1][0] = color[0];
+      st->clear.vertices[i][1][1] = color[1];
+      st->clear.vertices[i][1][2] = color[2];
+      st->clear.vertices[i][1][3] = color[3];
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_POLYGON, 4, (float *) verts, 2,
-#if TEST_DRAW_PASSTHROUGH
-                    GL_TRUE
-#else
-                    GL_FALSE
-#endif
-                    );
+   /* put vertex data into vbuf */
+   buf = pipe->winsys->buffer_map(pipe->winsys, st->clear.vbuf,
+                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+   memcpy(buf, st->clear.vertices, sizeof(st->clear.vertices));
+   pipe->winsys->buffer_unmap(pipe->winsys, st->clear.vbuf);
+
+   /* draw */
+   util_draw_vertex_buffer(pipe, st->clear.vbuf,
+                           PIPE_PRIM_TRIANGLE_FAN,
+                           4,  /* verts */
+                           2); /* attribs/vert */
 }
 
 
@@ -216,12 +230,12 @@ clear_with_quad(GLcontext *ctx,
       cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);
    }
 
-   /* rasterizer state: nothing */
+   /* rasterizer state: bypass clipping */
    {
       struct pipe_rasterizer_state raster;
       memset(&raster, 0, sizeof(raster));
-#if TEST_DRAW_PASSTHROUGH
       raster.bypass_clipping = 1;
+#if TEST_DRAW_PASSTHROUGH
       raster.bypass_vs = 1;
 #endif
       cso_set_rasterizer(st->cso_context, &raster);

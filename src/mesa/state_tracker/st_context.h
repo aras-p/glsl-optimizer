@@ -153,6 +153,8 @@ struct st_context
    struct {
       void *vs;
       void *fs;
+      float vertices[4][2][4];  /**< vertex pos + color */
+      struct pipe_buffer *vbuf;
    } clear;
 
    struct gen_mipmap_state *gen_mipmap;
