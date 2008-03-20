@@ -155,6 +155,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_draw( st );
    st_destroy_generate_mipmap(st);
    st_destroy_blit(st);
+   st_destroy_clear(st);
 
    _vbo_DestroyContext(st->ctx);
 

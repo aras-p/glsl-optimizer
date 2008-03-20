@@ -49,12 +49,27 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "util/u_pack_color.h"
+#include "util/u_simple_shaders.h"
 
 #include "cso_cache/cso_context.h"
 
 
 /* XXX for testing draw module vertex passthrough: */
 #define TEST_DRAW_PASSTHROUGH 0
+
+
+void
+st_destroy_clear(struct st_context *st)
+{
+   if (st->clear.fs) {
+      st->pipe->delete_fs_state(st->pipe, st->clear.fs);
+      st->clear.fs = NULL;
+   }
+   if (st->clear.vs) {
+      st->pipe->delete_vs_state(st->pipe, st->clear.vs);
+      st->clear.vs = NULL;
+   }
+}
 
 
 static GLboolean
@@ -67,104 +82,6 @@ is_depth_stencil_format(enum pipe_format pipeFormat)
    default:
       return GL_FALSE;
    }
-}
-
-
-
-/**
- * Create a simple fragment shader that just passes through the fragment color.
- */
-static struct st_fragment_program *
-make_frag_shader(struct st_context *st)
-{
-   GLcontext *ctx = st->ctx;
-   struct st_fragment_program *stfp;
-   struct gl_program *p;
-   GLuint interpMode[16];
-   GLuint i;
-
-   /* XXX temporary */
-   for (i = 0; i < 16; i++)
-      interpMode[i] = TGSI_INTERPOLATE_LINEAR;
-
-   p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
-   if (!p)
-      return NULL;
-
-   p->NumInstructions = 2;
-   p->Instructions = _mesa_alloc_instructions(2);
-   if (!p->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, p);
-      return NULL;
-   }
-   _mesa_init_instructions(p->Instructions, 2);
-   /* MOV result.color, fragment.color; */
-   p->Instructions[0].Opcode = OPCODE_MOV;
-   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[0].DstReg.Index = FRAG_RESULT_COLR;
-   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[0].SrcReg[0].Index = FRAG_ATTRIB_COL0;
-   /* END; */
-   p->Instructions[1].Opcode = OPCODE_END;
-
-   p->InputsRead = FRAG_BIT_COL0;
-   p->OutputsWritten = (1 << FRAG_RESULT_COLR);
-
-   stfp = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, stfp, NULL);
-
-   return stfp;
-}
-
-
-/**
- * Create a simple vertex shader that just passes through the
- * vertex position and color.
- */
-static struct st_vertex_program *
-make_vertex_shader(struct st_context *st)
-{
-   GLcontext *ctx = st->ctx;
-   struct st_vertex_program *stvp;
-   struct gl_program *p;
-
-   p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
-   if (!p)
-      return NULL;
-
-   p->NumInstructions = 3;
-   p->Instructions = _mesa_alloc_instructions(3);
-   if (!p->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, p);
-      return NULL;
-   }
-   _mesa_init_instructions(p->Instructions, 3);
-   /* MOV result.pos, vertex.pos; */
-   p->Instructions[0].Opcode = OPCODE_MOV;
-   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[0].DstReg.Index = VERT_RESULT_HPOS;
-   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[0].SrcReg[0].Index = VERT_ATTRIB_POS;
-   /* MOV result.color, vertex.color; */
-   p->Instructions[1].Opcode = OPCODE_MOV;
-   p->Instructions[1].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[1].DstReg.Index = VERT_RESULT_COL0;
-   p->Instructions[1].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[1].SrcReg[0].Index = VERT_ATTRIB_COLOR0;
-   /* END; */
-   p->Instructions[2].Opcode = OPCODE_END;
-
-   p->InputsRead = VERT_BIT_POS | VERT_BIT_COLOR0;
-   p->OutputsWritten = ((1 << VERT_RESULT_COL0) |
-                        (1 << VERT_RESULT_HPOS));
-
-   stvp = (struct st_vertex_program *) p;
-   st_translate_vertex_program(st, stvp, NULL);
-#if 0
-   assert(stvp->cso);
-#endif
-
-   return stvp;
 }
 
 
@@ -311,23 +228,23 @@ clear_with_quad(GLcontext *ctx,
    }
 
    /* fragment shader state: color pass-through program */
-   {
-      static struct st_fragment_program *stfp = NULL;
-      if (!stfp) {
-         stfp = make_frag_shader(st);
-      }
-      pipe->bind_fs_state(pipe, stfp->driver_shader);
+   if (!st->clear.fs) {
+      st->clear.fs = util_make_fragment_passthrough_shader(pipe);
    }
+   pipe->bind_fs_state(pipe, st->clear.fs);
+
 
 #if !TEST_DRAW_PASSTHROUGH
    /* vertex shader state: color/position pass-through */
-   {
-      static struct st_vertex_program *stvp = NULL;
-      if (!stvp) {
-         stvp = make_vertex_shader(st);
-      }
-      pipe->bind_vs_state(pipe, stvp->driver_shader);
+   if (!st->clear.vs) {
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
+                                      TGSI_SEMANTIC_COLOR };
+      const uint semantic_indexes[] = { 0, 0 };
+      st->clear.vs = util_make_vertex_passthrough_shader(pipe, 2,
+                                                         semantic_names,
+                                                         semantic_indexes);
    }
+   pipe->bind_vs_state(pipe, st->clear.vs);
 #endif
 
 #if !TEST_DRAW_PASSTHROUGH

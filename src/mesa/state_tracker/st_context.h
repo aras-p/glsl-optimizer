@@ -142,11 +142,18 @@ struct st_context
       GLuint combined_prog_sn;
    } pixel_xfer;
 
+   /** for glBitmap */
    struct {
       struct st_fragment_program *program;  /**< bitmap tex/kil program */
       GLuint user_prog_sn;  /**< user fragment program serial no. */
       struct st_fragment_program *combined_prog;
    } bitmap;
+
+   /** for glClear */
+   struct {
+      void *vs;
+      void *fs;
+   } clear;
 
    struct gen_mipmap_state *gen_mipmap;
    struct blit_state *blit;
