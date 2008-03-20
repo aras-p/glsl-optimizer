@@ -751,7 +751,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->vbuf = pipe->winsys->buffer_create(pipe->winsys,
                                            32,
                                            PIPE_BUFFER_USAGE_VERTEX,
-                                           4 * 2 * 4 * sizeof(float));
+                                           sizeof(ctx->vertices));
    if (!ctx->vbuf) {
       FREE(ctx);
       return NULL;
