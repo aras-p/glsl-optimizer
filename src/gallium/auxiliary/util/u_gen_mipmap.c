@@ -901,6 +901,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        * Setup framebuffer / dest surface
        */
       fb.cbufs[0] = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+      fb.width = pt->width[dstLevel];
+      fb.height = pt->height[dstLevel];
       cso_set_framebuffer(ctx->cso, &fb);
 
       /*
