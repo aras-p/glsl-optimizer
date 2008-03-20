@@ -257,6 +257,8 @@ brw_update_region_surface(struct brw_context *brw, struct intel_region *region,
       GLboolean tiled, color_blend;
    } key;
 
+   memset(&key, 0, sizeof(key));
+
    if (region != NULL) {
       region_bo = region->buffer;
 
