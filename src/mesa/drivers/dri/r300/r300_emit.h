@@ -178,6 +178,19 @@ static inline uint32_t cmdpacify(void)
 		cmd[0].i = cmdvpu((dest), _n/4);			\
 	} while (0);
 
+#define r500fp_start_fragment(dest, length)				\
+	do {								\
+		int _n;							\
+		_n = (length);						\
+		cmd = (drm_radeon_cmd_header_t*)			\
+			r300AllocCmdBuf(rmesa,				\
+					(_n+1),				\
+					__FUNCTION__);			\
+		cmd_reserved = _n+1;					\
+		cmd_written =1;						\
+		cmd[0].i = cmdr500fp((dest), _n/6);			\
+	} while (0);
+
 #define start_packet3(packet, count)					\
 	{								\
 		int _n;							\
