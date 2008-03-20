@@ -399,10 +399,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (is_r500) {
 		ALLOC_STATE(r500fp, variable, R300_FPI_CMDSIZE, 0);
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0);
-	}
-
-	if (is_r500) {
-
 	} else {
 		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
 		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_PFS_CNTL_0, 3);
