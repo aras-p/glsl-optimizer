@@ -84,16 +84,15 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    /* declare inputs */
    for (i = 0; i < num_attribs; i++) {
-
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_INPUT;
-      /*
+
       decl.Declaration.Semantic = 1;
-      decl.Semantic.SemanticName = TGSI_SEMANTIC_POSITION;
-      decl.Semantic.SemanticIndex = 0;
-      */
+      decl.Semantic.SemanticName = semantic_names[i];
+      decl.Semantic.SemanticIndex = semantic_indexes[i];
+
       decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = 0;
+      decl.u.DeclarationRange.Last = i;
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
@@ -102,19 +101,17 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    /* declare outputs */
    for (i = 0; i < num_attribs; i++) {
-
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_OUTPUT;
       decl.Declaration.Semantic = 1;
       decl.Semantic.SemanticName = semantic_names[i];
       decl.Semantic.SemanticIndex = semantic_indexes[i];
       decl.u.DeclarationRange.First = 
-         decl.u.DeclarationRange.Last = 0;
+         decl.u.DeclarationRange.Last = i;
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
                                         maxTokens - ti);
-
    }
 
    /* emit MOV instructions */
