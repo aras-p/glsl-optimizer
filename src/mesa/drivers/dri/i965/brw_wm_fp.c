@@ -863,25 +863,31 @@ static void emit_fb_write( struct brw_wm_compile *c )
    struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPR);
    GLuint i;
 
-   struct prog_instruction *inst;
+   struct prog_instruction *inst, *last_inst;
    struct brw_context *brw = c->func.brw;
 
    /* inst->Sampler is not used by backend, 
       use it for fb write target and eot */
 
-   inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-           0, 0, 0, outcolor, payload_r0_depth, outdepth);
-   inst->Sampler = (brw->state.nr_draw_regions > 1 ? 0: 1)|(0<<1);
-
    if (brw->state.nr_draw_regions > 1) {
        for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
 	   outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
-	   inst = emit_op(c,
+	   last_inst = inst = emit_op(c,
 		   WM_FB_WRITE, dst_mask(dst_undef(),0), 0, 0, 0,
 		   outcolor, payload_r0_depth, outdepth);
-	   inst->Sampler = ((i == brw->state.nr_draw_regions - 1) ? 1: 0);
-	   inst->Sampler |= (i<<1);
+	   inst->Sampler = (i<<1);
+	   if (c->fp_fragcolor_emitted) {
+	       outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+	       last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+		       0, 0, 0, outcolor, payload_r0_depth, outdepth);
+	       inst->Sampler = (i<<1);
+	   }
        }
+       last_inst->Sampler |= 1; //eot
+   }else {
+       inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+	       0, 0, 0, outcolor, payload_r0_depth, outdepth);
+       inst->Sampler = 1|(0<<1);
    }
 }
 
@@ -908,7 +914,15 @@ static void validate_src_regs( struct brw_wm_compile *c,
    }
 }
 	 
-
+static void validate_dst_regs( struct brw_wm_compile *c,
+			       const struct prog_instruction *inst )
+{
+   if (inst->DstReg.File == PROGRAM_OUTPUT) {
+       GLuint idx = inst->DstReg.Index;
+       if (idx == FRAG_RESULT_COLR)
+	   c->fp_fragcolor_emitted = 1;
+   }
+}
 
 static void print_insns( const struct prog_instruction *insn,
 			 GLuint nr )
@@ -953,12 +967,16 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 
    for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
       const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
+      validate_src_regs(c, inst);
+      validate_dst_regs(c, inst);
+   }
+   for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
+      const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
       struct prog_instruction *out;
 
       /* Check for INPUT values, emit INTERP instructions where
        * necessary:
        */
-      validate_src_regs(c, inst);
 
 
       switch (inst->Opcode) {
