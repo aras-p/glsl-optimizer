@@ -64,21 +64,6 @@ static unsigned char depth_stencil_code_buffer[4 * 64]
 static unsigned char fb_blend_code_buffer[4 * 64]
     ALIGN16_ATTRIB;
 
-static struct spu_blend_results
-default_blend(qword frag_r, qword frag_g, qword frag_b, qword frag_a,
-              qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
-              qword frag_mask)
-{
-   struct spu_blend_results result;
-
-   result.r = si_selb(pixel_r, frag_r, frag_mask);
-   result.g = si_selb(pixel_g, frag_g, frag_mask);
-   result.b = si_selb(pixel_b, frag_b, frag_mask);
-   result.a = si_selb(pixel_a, frag_a, frag_mask);
-
-   return result;
-}
-
 
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
@@ -285,9 +270,6 @@ cmd_state_blend(const struct cell_command_blend *state)
       spu.blend = (blend_func) fb_blend_code_buffer;
       spu.read_fb = state->read_fb;
    } else {
-      /* If there is no code, use the default;
-       */
-      spu.blend = default_blend;
       spu.read_fb = FALSE;
    }
 }
@@ -622,9 +604,6 @@ one_time_init(void)
    memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
    memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
    invalidate_tex_cache();
-
-   spu.blend = default_blend;
-   spu.read_fb = FALSE;
 }
 
 
