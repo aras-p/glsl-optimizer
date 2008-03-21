@@ -155,7 +155,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
-   ctx->Extensions.EXT_texture_sRGB = GL_TRUE; /* XXX temp */
 
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
@@ -214,4 +213,8 @@ void st_init_extensions(struct st_context *st)
       /*ctx->Extensions.ARB_shadow_ambient = GL_TRUE;*/
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
+                                   PIPE_TEXTURE)) {
+      ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+   }
 }
