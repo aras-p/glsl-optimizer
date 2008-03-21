@@ -75,12 +75,12 @@ static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
  * Format types for RGBAZS layout.
  */
 #define PIPE_FORMAT_TYPE_UNKNOWN 0
-#define PIPE_FORMAT_TYPE_FLOAT   1
-#define PIPE_FORMAT_TYPE_UNORM   2
-#define PIPE_FORMAT_TYPE_SNORM   3
-#define PIPE_FORMAT_TYPE_USCALED 4
-#define PIPE_FORMAT_TYPE_SSCALED 5
-#define PIPE_FORMAT_TYPE_SRGB    6
+#define PIPE_FORMAT_TYPE_FLOAT   1  /**< 16/32/64-bit/channel formats */
+#define PIPE_FORMAT_TYPE_UNORM   2  /**< uints, normalized to [0,1] */
+#define PIPE_FORMAT_TYPE_SNORM   3  /**< ints, normalized to [-1,1] */
+#define PIPE_FORMAT_TYPE_USCALED 4  /**< uints, not normalized */
+#define PIPE_FORMAT_TYPE_SSCALED 5  /**< ints, not normalized */
+#define PIPE_FORMAT_TYPE_SRGB    6  /**< sRGB colorspace */
 
 
 /**
