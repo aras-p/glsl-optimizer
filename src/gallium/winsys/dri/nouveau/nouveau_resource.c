@@ -88,6 +88,22 @@ nouveau_resource_free(struct nouveau_resource **res)
 	if (!res || !*res)
 		return;
 	r = *res;
+	*res = NULL;
+
+	r->in_use = 0;
+
+	if (r->next && !r->next->in_use) {
+		struct nouveau_resource *new = r->next;
+
+		new->prev = r->prev;
+		if (r->prev)
+			r->prev->next = new;
+		new->size += r->size;
+		new->start = r->start;
+
+		free(r);
+		r = new;
+	}
 
 	if (r->prev && !r->prev->in_use) {
 		r->prev->next = r->next;
@@ -95,17 +111,6 @@ nouveau_resource_free(struct nouveau_resource **res)
 			r->next->prev = r->prev;
 		r->prev->size += r->size;
 		free(r);
-	} else
-	if (r->next && !r->next->in_use) {
-		r->next->prev = r->prev;
-		if (r->prev)
-			r->prev->next = r->next;
-		r->next->size += r->size;
-		r->next->start = r->start;
-		free(r);
-	} else {
-		r->in_use = 0;
 	}
-
-	*res = NULL;
+	
 }
