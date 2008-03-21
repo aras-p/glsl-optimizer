@@ -43,6 +43,11 @@ if test "x$GCC" = xyes; then
 fi
 AC_SUBST(MKDEP_OPTIONS)
 
+dnl Check to see if dlopen is in default libraries (like Solaris, which
+dnl has it in libc), or if libdl is needed to get it.
+AC_CHECK_FUNC([dlopen], [],
+	AC_CHECK_LIB([dl], [dlopen], DLOPEN_LIBS="-ldl"))
+
 dnl Make sure the pkg-config macros are defined
 m4_ifdef([PKG_PROG_PKG_CONFIG],,[
     AC_MSG_ERROR([The pkg-config autoconf macros are not defined.
@@ -399,7 +404,7 @@ dri)
     fi
 
     # need DRM libs, -lpthread, etc.
-    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread -ldl"
+    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
@@ -550,7 +555,7 @@ if test "$mesa_driver" = dri; then
         AC_MSG_ERROR([Expat required for DRI.]))
 
     # put all the necessary libs together
-    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread -ldl"
+    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
 fi
 AC_SUBST(DRI_DIRS)
 AC_SUBST(EXPAT_INCLUDES)
