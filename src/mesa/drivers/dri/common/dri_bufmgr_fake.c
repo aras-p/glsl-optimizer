@@ -231,7 +231,7 @@ alloc_block(dri_bo *bo)
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
    dri_bufmgr_fake *bufmgr_fake= (dri_bufmgr_fake *)bo->bufmgr;
    struct block *block = (struct block *)calloc(sizeof *block, 1);
-   unsigned int align_log2 = ffs(bo_fake->alignment);
+   unsigned int align_log2 = _mesa_ffs(bo_fake->alignment);
    GLuint sz;
 
    if (!block)
@@ -660,10 +660,12 @@ dri_fake_bo_unreference(dri_bo *bo)
 
       for (i = 0; i < bo_fake->nr_relocs; i++)
 	 dri_bo_unreference(bo_fake->relocs[i].target_buf);
-      free(bo_fake->relocs);
 
+      DBG("drm_bo_unreference: free buf %d %s\n", bo_fake->id, bo_fake->name);
+
+      free(bo_fake->relocs);
       free(bo);
-      DBG("drm_bo_unreference: free %s\n", bo_fake->name);
+
       return;
    }
 }
@@ -924,6 +926,8 @@ dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
    dri_bo_fake *reloc_fake = (dri_bo_fake *)reloc_buf;
    int i;
 
+   assert(reloc_buf);
+   assert(target_buf);
    if (reloc_fake->relocs == NULL) {
       reloc_fake->relocs = malloc(sizeof(struct fake_buffer_reloc) *
 				  MAX_RELOCS);
