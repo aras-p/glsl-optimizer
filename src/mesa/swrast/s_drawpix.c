@@ -834,8 +834,7 @@ _swrast_DrawPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   pixels = _mesa_validate_and_map_drawpix_pbo(ctx, x, y, width, height,
-                                               format, type, unpack, pixels);
+   pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
    if (!pixels)
       return;
 

@@ -57,11 +57,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    ASSERT(ctx->RenderMode == GL_RENDER);
 
-   bitmap = _mesa_validate_and_map_bitmap_pbo(ctx, width, height,
-                                              unpack, bitmap);
-   if (!bitmap) {
-      return NULL;
-   }
+   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   if (!bitmap)
+      return;
 
    RENDER_START(swrast,ctx);
 

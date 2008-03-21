@@ -24,6 +24,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "bufferobj.h"
 #include "context.h"
 #include "drawpix.h"
 #include "feedback.h"
@@ -183,6 +184,23 @@ _mesa_DrawPixels( GLsizei width, GLsizei height,
       /* Round, to satisfy conformance tests (matches SGI's OpenGL) */
       GLint x = IROUND(ctx->Current.RasterPos[0]);
       GLint y = IROUND(ctx->Current.RasterPos[1]);
+
+      if (ctx->Unpack.BufferObj->Name) {
+         /* unpack from PBO */
+         if (!_mesa_validate_pbo_access(2, &ctx->Unpack, width, height, 1,
+                                        format, type, pixels)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawPixels(invalid PBO access)");
+            return;
+         }
+         if (ctx->Unpack.BufferObj->Pointer) {
+            /* buffer is mapped - that's an error */
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glDrawPixels(PBO is mapped)");
+            return;
+         }
+      }
+
       ctx->Driver.DrawPixels(ctx, x, y, width, height, format, type,
 			     &ctx->Unpack, pixels);
    }
@@ -303,6 +321,21 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   if (ctx->Pack.BufferObj->Name) {
+      if (!_mesa_validate_pbo_access(2, &ctx->Pack, width, height, 1,
+                                     format, type, pixels)) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadPixels(invalid PBO access)");
+         return;
+      }
+
+      if (ctx->Pack.BufferObj->Pointer) {
+         /* buffer is mapped - that's an error */
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
+         return;
+      }
+   }
+
    ctx->Driver.ReadPixels(ctx, x, y, width, height,
 			  format, type, &ctx->Pack, pixels);
 }
@@ -346,6 +379,23 @@ _mesa_Bitmap( GLsizei width, GLsizei height,
       /* Truncate, to satisfy conformance tests (matches SGI's OpenGL). */
       GLint x = IFLOOR(ctx->Current.RasterPos[0] - xorig);
       GLint y = IFLOOR(ctx->Current.RasterPos[1] - yorig);
+
+      if (ctx->Unpack.BufferObj->Name) {
+         /* unpack from PBO */
+         if (!_mesa_validate_pbo_access(2, &ctx->Unpack, width, height, 1,
+                                        GL_COLOR_INDEX, GL_BITMAP,
+                                        (GLvoid *) bitmap)) {
+            _mesa_error(ctx, GL_INVALID_OPERATION,
+                        "glBitmap(invalid PBO access)");
+            return;
+         }
+         if (ctx->Unpack.BufferObj->Pointer) {
+            /* buffer is mapped - that's an error */
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
+            return;
+         }
+      }
+
       ctx->Driver.Bitmap( ctx, x, y, width, height, &ctx->Unpack, bitmap );
    }
 #if _HAVE_FULL_GL

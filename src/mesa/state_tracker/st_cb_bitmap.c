@@ -225,8 +225,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    }
 
    /* PBO source... */
-   bitmap = _mesa_validate_and_map_bitmap_pbo(ctx, width, height,
-                                              unpack, bitmap);
+   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
    if (!bitmap) {
       return NULL;
    }

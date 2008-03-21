@@ -155,9 +155,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
-   dest = _mesa_validate_and_map_readpix_pbo(ctx, x, y, width, height,
-                                             format, type,
-                                             &clippedPacking, dest);
+   dest = _mesa_map_readpix_pbo(ctx, &clippedPacking, dest);
    if (!dest)
       return;
 

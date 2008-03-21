@@ -572,9 +572,7 @@ _swrast_ReadPixels( GLcontext *ctx,
       goto end;
    }
 
-   pixels = _mesa_validate_and_map_readpix_pbo(ctx, x, y, width, height,
-                                               format, type,
-                                               &clippedPacking, pixels);
+   pixels = _mesa_map_readpix_pbo(ctx, &clippedPacking, pixels);
    if (!pixels)
       return;
 
