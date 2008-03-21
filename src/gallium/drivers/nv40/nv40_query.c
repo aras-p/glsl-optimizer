@@ -45,6 +45,15 @@ nv40_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 
 	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
+	/* Happens when end_query() is called, then another begin_query()
+	 * without querying the result in-between.  For now we'll wait for
+	 * the existing query to notify completion, but it could be better.
+	 */
+	if (q->object) {
+		uint64 tmp;
+		pipe->get_query_result(pipe, pq, 1, &tmp);
+	}
+
 	if (nv40->nvws->res_alloc(nv40->screen->query_heap, 1, NULL, &q->object))
 		assert(0);
 	nv40->nvws->notifier_reset(nv40->screen->query, q->object->start);
