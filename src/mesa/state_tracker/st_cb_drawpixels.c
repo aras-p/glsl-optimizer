@@ -32,6 +32,7 @@
 
 #include "main/imports.h"
 #include "main/image.h"
+#include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/texformat.h"
 #include "shader/program.h"
@@ -334,16 +335,17 @@ make_texture(struct st_context *st,
    assert(pipeFormat);
    cpp = st_sizeof_format(pipeFormat);
 
-   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
-			  1, 0);
-   if (!pt)
+   pixels = _mesa_validate_and_map_drawpix_pbo(ctx, width, height,
+                                               format, type,
+                                               unpack, pixels);
+   if (!pixels)
       return NULL;
 
-   if (unpack->BufferObj && unpack->BufferObj->Name) {
-      /*
-      pt->region = buffer_object_region(unpack->BufferObj);
-      */
-      printf("st_DrawPixels (sourcing from PBO not implemented yet)\n");
+   pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
+			  1, 0);
+   if (!pt) {
+      _mesa_unmap_drapix_pbo(ctx, unpack);
+      return NULL;
    }
 
    {
@@ -387,6 +389,8 @@ make_texture(struct st_context *st,
       /* restore */
       ctx->_ImageTransferState = imageTransferStateSave;
    }
+
+   _mesa_unmap_drapix_pbo(ctx, unpack);
 
    return pt;
 }
@@ -836,9 +840,9 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    bufferFormat = ps->format;
 
-   if (any_fragment_ops(st) ||
+   if (1/*any_fragment_ops(st) ||
        any_pixel_transfer_ops(st) ||
-       !compatible_formats(format, type, ps->format)) {
+       !compatible_formats(format, type, ps->format)*/) {
       /* textured quad */
       struct pipe_texture *pt
          = make_texture(ctx->st, width, height, format, type, unpack, pixels);

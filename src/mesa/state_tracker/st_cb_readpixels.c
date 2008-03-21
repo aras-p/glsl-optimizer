@@ -34,6 +34,7 @@
 
 
 #include "main/imports.h"
+#include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/image.h"
 
@@ -126,7 +127,6 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 }
 
 
-
 /**
  * Do glReadPixels by getting rows from the framebuffer surface with
  * get_tile().  Convert to requested format/type with Mesa image routines.
@@ -155,17 +155,14 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   dest = _mesa_validate_and_map_readpix_pbo(ctx, x, y, width, height,
+                                             format, type,
+                                             &clippedPacking, dest);
+   if (!dest)
+      return;
+
    /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
-
-   if (pack->BufferObj && pack->BufferObj->Name) {
-      /* reading into a PBO */
-
-   }
-   else {
-      /* reading into user memory/buffer */
-
-   }
 
    if (format == GL_STENCIL_INDEX) {
       st_read_stencil_pixels(ctx, x, y, width, height, type, pack, dest);
@@ -285,6 +282,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          }
       }
    }
+
+   _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
 }
 
 
