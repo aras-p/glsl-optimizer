@@ -369,8 +369,13 @@ nouveau_bo_validate_bo(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	int ret;
 
 	ret = nouveau_bo_set_status(bo, flags);
-	if (ret)
-		return ret;
+	if (ret) {
+		nouveau_fence_flush(chan);
+
+		ret = nouveau_bo_set_status(bo, flags);
+		if (ret)
+			return ret;
+	}
 
 	if (nvbo->user)
 		nouveau_bo_upload(nvbo);
