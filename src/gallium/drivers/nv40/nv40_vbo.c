@@ -423,8 +423,12 @@ nv40_vbo_validate(struct nv40_context *nv40)
 			continue;
 		}
 
-		if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp))
-			assert(0);
+		if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp)) {
+			nv40->fallback_swtnl |= NV40_NEW_ARRAYS;
+			so_ref(NULL, &vtxbuf);
+			so_ref(NULL, &vtxfmt);
+			return FALSE;
+		}
 
 		so_reloc(vtxbuf, vb->buffer, vb->buffer_offset + ve->src_offset,
 			 vb_flags | NOUVEAU_BO_LOW | NOUVEAU_BO_OR,
