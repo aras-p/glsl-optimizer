@@ -13,10 +13,7 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	unsigned h = fb->height;
 
 	rt_enable = 0;
-	for (i = 0; i < 4; i++) {
-		if (!fb->cbufs[i])
-			continue;
-
+	for (i = 0; i < fb->num_cbufs; i++) {
 		if (colour_format) {
 			assert(colour_format == fb->cbufs[i]->format);
 		} else {
