@@ -28,6 +28,12 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 	case PIPE_FORMAT_R8G8B8A8_UNORM:
 		*fmt = NV40TCL_VTXFMT_TYPE_UBYTE;
 		break;
+	case PIPE_FORMAT_R16_SSCALED:
+	case PIPE_FORMAT_R16G16_SSCALED:
+	case PIPE_FORMAT_R16G16B16_SSCALED:
+	case PIPE_FORMAT_R16G16B16A16_SSCALED:
+		*fmt = 5;
+		break;
 	default:
 		pf_sprint_name(fs, pipe);
 		NOUVEAU_ERR("Unknown format %s\n", fs);
@@ -37,18 +43,22 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 	switch (pipe) {
 	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_R16_SSCALED:
 		*ncomp = 1;
 		break;
 	case PIPE_FORMAT_R8G8_UNORM:
 	case PIPE_FORMAT_R32G32_FLOAT:
+	case PIPE_FORMAT_R16G16_SSCALED:
 		*ncomp = 2;
 		break;
 	case PIPE_FORMAT_R8G8B8_UNORM:
 	case PIPE_FORMAT_R32G32B32_FLOAT:
+	case PIPE_FORMAT_R16G16B16_SSCALED:
 		*ncomp = 3;
 		break;
 	case PIPE_FORMAT_R8G8B8A8_UNORM:
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 		*ncomp = 4;
 		break;
 	default:
