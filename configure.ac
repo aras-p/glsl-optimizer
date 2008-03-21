@@ -26,7 +26,10 @@ dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-AC_PATH_PROG(MAKE, make)
+AC_PATH_PROG(MAKE, gmake, [not_found])
+if test "x$MAKE" = "xnot_found"; then
+	AC_PATH_PROG(MAKE, make)
+fi
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
 
@@ -64,11 +67,11 @@ AC_SUBST(X11_INCLUDES)
 dnl Compiler macros
 DEFINES=""
 AC_SUBST(DEFINES)
-if test "x$GCC" = xyes; then
-    DEFINES="-D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
-fi
 case "$host_os" in
 linux*)
+if test "x$GCC" = xyes; then
+    DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
+fi
     DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS -DHAVE_POSIX_MEMALIGN"
     ;;
 esac
