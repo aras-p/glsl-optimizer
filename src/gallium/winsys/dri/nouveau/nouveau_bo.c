@@ -206,6 +206,18 @@ nouveau_bo_ref(struct nouveau_device *dev, uint64_t handle,
 	return 0;
 }
 
+static void
+nouveau_bo_del_cb(void *priv)
+{
+	struct nouveau_bo_priv *nvbo = priv;
+
+	nouveau_fence_ref(NULL, &nvbo->fence);
+	nouveau_mem_free(nvbo->base.device, &nvbo->drm, &nvbo->map);
+	if (nvbo->sysmem && !nvbo->user)
+		free(nvbo->sysmem);
+	free(nvbo);
+}
+
 void
 nouveau_bo_del(struct nouveau_bo **bo)
 {
@@ -220,11 +232,9 @@ nouveau_bo_del(struct nouveau_bo **bo)
 		return;
 
 	if (nvbo->fence)
-		nouveau_fence_wait(&nvbo->fence);
-	nouveau_mem_free(nvbo->base.device, &nvbo->drm, &nvbo->map);
-	if (nvbo->sysmem && !nvbo->user)
-		free(nvbo->sysmem);
-	free(nvbo);
+		nouveau_fence_signal_cb(nvbo->fence, nouveau_bo_del_cb, nvbo);
+	else
+		nouveau_bo_del_cb(nvbo);
 }
 
 int
