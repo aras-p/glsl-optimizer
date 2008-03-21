@@ -74,14 +74,16 @@ static inline uint32_t cmdvpu(int addr, int count)
 	return cmd.u;
 }
 
-static inline uint32_t cmdr500fp(int addr, int count)
+static inline uint32_t cmdr500fp(int addr, int count, int type, int clamp)
 {
 	drm_r300_cmd_header_t cmd;
 
-	cmd.vpu.cmd_type = R300_CMD_R500FP;
-	cmd.vpu.count = count;
-	cmd.vpu.adrhi = ((unsigned int)addr & 0xFF00) >> 8;
-	cmd.vpu.adrlo = ((unsigned int)addr & 0x00FF);
+	cmd.r500fp.cmd_type = R300_CMD_R500FP;
+	cmd.r500fp.count = count;
+	cmd.r500fp.adrhi_flags = ((unsigned int)addr & 0x100) >> 8;
+	cmd.r500fp.adrhi_flags |= type ? R500FP_CONSTANT_TYPE : 0;
+	cmd.r500fp.adrhi_flags |= clamp ? R500FP_CONSTANT_CLAMP : 0;
+	cmd.r500fp.adrlo = ((unsigned int)addr & 0x00FF);
 
 	return cmd.u;
 }
@@ -188,7 +190,7 @@ static inline uint32_t cmdpacify(void)
 					__FUNCTION__);			\
 		cmd_reserved = _n+1;					\
 		cmd_written =1;						\
-		cmd[0].i = cmdr500fp((dest), _n/6);			\
+		cmd[0].i = cmdr500fp((dest), _n/6, 0, 0);		\
 	} while (0);
 
 #define start_packet3(packet, count)					\
