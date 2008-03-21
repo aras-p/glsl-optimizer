@@ -223,6 +223,10 @@ static void emit_pinterp( struct brw_compile *p,
       if (mask & (1<<i)) {
 	 brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
 	 brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+      }
+   }
+   for(i = 0; i < 4; i++ ) {
+      if (mask & (1<<i)) {
 	 brw_MUL(p, dst[i], dst[i], w[3]);
       }
    }
