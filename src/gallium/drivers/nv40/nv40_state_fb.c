@@ -128,6 +128,8 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 	so_method(so, nv40->screen->curie, NV40TCL_VIEWPORT_CLIP_HORIZ(0), 2);
 	so_data  (so, ((w - 1) << 16) | 0);
 	so_data  (so, ((h - 1) << 16) | 0);
+	so_method(so, nv40->screen->curie, 0x1d88, 1);
+	so_data  (so, (1 << 12) | h);
 
 	so_ref(so, &nv40->state.hw[NV40_STATE_FB]);
 	return TRUE;
