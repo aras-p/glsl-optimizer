@@ -236,6 +236,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 
 	if (!nv40_state_validate_swtnl(nv40))
 		return FALSE;
+	nv40->dirty &= ~(1ULL << NV40_STATE_VTXBUF);
 	nv40_state_emit(nv40);
 
 	for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
