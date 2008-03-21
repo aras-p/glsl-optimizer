@@ -38,13 +38,14 @@ extern "C" {
 #endif
 
 /**
- * The PIPE_FORMAT is a 32-bit wide bitfield that encodes all the information
- * needed to uniquely describe a pixel format.
+ * The pipe_format enum is a 32-bit wide bitfield that encodes all the
+ * information needed to uniquely describe a pixel format.
  */
 
 /**
- * Possible format layouts -- occupy first 2 bits. The interpretation of
- * the remaining 30 bits depends on a particual format layout.
+ * Possible format layouts are encoded in the first 2 bits.
+ * The interpretation of the remaining 30 bits depends on a particular
+ * format layout.
  */
 #define PIPE_FORMAT_LAYOUT_RGBAZS   0
 #define PIPE_FORMAT_LAYOUT_YCBCR    1
@@ -286,6 +287,7 @@ enum pipe_format {
 
 
 /**
+ * Unsigned 8-bit stencil format.
  * XXX should remove this, but S8_UNORM is a poor name
  */
 #define PIPE_FORMAT_U_S8                  PIPE_FORMAT_S8_UNORM
@@ -294,11 +296,12 @@ enum pipe_format {
 /**
  * Builds pipe format name from format token.
  */
-static INLINE char *pf_sprint_name( char *str, uint format )
+static INLINE char *pf_sprint_name( char *str, enum pipe_format format )
 {
    strcpy( str, "PIPE_FORMAT_" );
    switch (pf_layout( format )) {
-   case PIPE_FORMAT_LAYOUT_RGBAZS: {
+   case PIPE_FORMAT_LAYOUT_RGBAZS:
+      {
          pipe_format_rgbazs_t rgbazs = (pipe_format_rgbazs_t) format;
          uint                 i;
          uint                 scale = 1 << (pf_exp8( rgbazs ) * 3);
@@ -362,7 +365,8 @@ static INLINE char *pf_sprint_name( char *str, uint format )
          }
       }
       break;
-   case PIPE_FORMAT_LAYOUT_YCBCR: {
+   case PIPE_FORMAT_LAYOUT_YCBCR:
+      {
          pipe_format_ycbcr_t  ycbcr = (pipe_format_ycbcr_t) format;
 
          strcat( str, "YCBCR" );
@@ -375,6 +379,10 @@ static INLINE char *pf_sprint_name( char *str, uint format )
    return str;
 }
 
+/**
+ * Return bits for a particular component.
+ * \param comp  component index, starting at 0
+ */
 static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
 {
    uint size;
@@ -397,6 +405,9 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
    return size << (pf_exp8(format) * 3);
 }
 
+/**
+ * Return total bits needed for the pixel format.
+ */
 static INLINE uint pf_get_bits( enum pipe_format format )
 {
    if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
@@ -417,7 +428,11 @@ static INLINE uint pf_get_bits( enum pipe_format format )
    }
 }
 
-static INLINE uint pf_get_size( enum pipe_format format ) {
+/**
+ * Return bytes per pixel for the given format.
+ */
+static INLINE uint pf_get_size( enum pipe_format format )
+{
    assert(pf_get_bits(format) % 8 == 0);
    return pf_get_bits(format) / 8;
 }
