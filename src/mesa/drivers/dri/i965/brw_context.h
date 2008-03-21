@@ -146,12 +146,12 @@ struct brw_context;
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
    GLuint mesa;
-   /** State update flags signalled by brw_state_cache.c searches */
-   GLuint cache;
    /**
     * State update flags signalled as the result of brw_tracked_state updates
     */
    GLuint brw;
+   /** State update flags signalled by brw_state_cache.c searches */
+   GLuint cache;
 };
 
 struct brw_vertex_program {
