@@ -69,6 +69,7 @@ struct pipe_screen {
 
    float (*get_paramf)( struct pipe_screen *, int param );
 
+   /**< type is one of PIPE_TEXTURE, PIPE_SURFACE */
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format, 
                                    uint type );
