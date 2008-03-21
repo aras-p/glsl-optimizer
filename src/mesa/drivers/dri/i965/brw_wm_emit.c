@@ -504,6 +504,9 @@ static void emit_dp3( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
@@ -521,6 +524,9 @@ static void emit_dp4( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
@@ -539,6 +545,9 @@ static void emit_dph( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
@@ -582,6 +591,9 @@ static void emit_math1( struct brw_compile *p,
 			GLuint mask,
 			const struct brw_reg *arg0 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    //assert((mask & WRITEMASK_XYZW) == WRITEMASK_X ||
    //	  function == BRW_MATH_FUNCTION_SINCOS);
    
@@ -606,6 +618,9 @@ static void emit_math2( struct brw_compile *p,
 			const struct brw_reg *arg0,
 			const struct brw_reg *arg1)
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_push_insn_state(p);
