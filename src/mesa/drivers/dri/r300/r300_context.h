@@ -490,6 +490,7 @@ struct r300_hw_state {
 	struct r300_state_atom fpt;	/* texi - (4620) */
 	struct r300_state_atom us_out_fmt;	/* (46A4) */
 	struct r300_state_atom r500fp;	/* r500 fp instructions */
+	struct r300_state_atom r500fp_const;	/* r500 fp constants */
 	struct r300_state_atom fpi[4];	/* fp instructions (46C0/47C0/48C0/49C0) */
 	struct r300_state_atom fogs;	/* fog state (4BC0) */
 	struct r300_state_atom fogc;	/* fog color (4BC8) */
