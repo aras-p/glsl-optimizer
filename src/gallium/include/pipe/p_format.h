@@ -49,6 +49,8 @@ extern "C" {
  */
 #define PIPE_FORMAT_LAYOUT_RGBAZS   0
 #define PIPE_FORMAT_LAYOUT_YCBCR    1
+#define PIPE_FORMAT_LAYOUT_DXT      2  /**< XXX temporary? */
+
 
 static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
 {
@@ -199,6 +201,20 @@ static INLINE uint pf_rev(pipe_format_ycbcr_t f)
    return (f >> 2) & 0x1;
 }
 
+
+/**
+  * Compresssed format layouts (this will probably change)
+  */
+#define _PIPE_FORMAT_DXT( LEVEL, RSIZE, GSIZE, BSIZE, ASIZE ) \
+   ((PIPE_FORMAT_LAYOUT_DXT << 0) | \
+    ((LEVEL) << 2) | \
+    ((RSIZE) << 5) | \
+    ((GSIZE) << 8) | \
+    ((BSIZE) << 11) | \
+    ((ASIZE) << 14) )
+
+
+
 /**
  * Texture/surface image formats (preliminary)
  */
@@ -289,7 +305,13 @@ enum pipe_format {
    PIPE_FORMAT_L8_SRGB               = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRR1, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
    PIPE_FORMAT_A8_L8_SRGB            = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
    PIPE_FORMAT_R8G8B8_SRGB           = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGB0, 1, 1, 1, 0, PIPE_FORMAT_TYPE_SRGB ),
-   PIPE_FORMAT_R8G8B8A8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB )
+   PIPE_FORMAT_R8G8B8A8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+
+   /* compressed formats */
+   PIPE_FORMAT_DXT1_RGB              = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 0 ),
+   PIPE_FORMAT_DXT1_RGBA             = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 8 ),
+   PIPE_FORMAT_DXT3_RGBA             = _PIPE_FORMAT_DXT( 3, 8, 8, 8, 8 ),
+   PIPE_FORMAT_DXT5_RGBA             = _PIPE_FORMAT_DXT( 5, 8, 8, 8, 8 )
 };
 
 
