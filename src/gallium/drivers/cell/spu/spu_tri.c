@@ -261,6 +261,9 @@ do_depth_test(int x, int y, mask_t quadmask)
    float4 zvals;
    mask_t mask;
 
+   if (spu.fb.depth_format == PIPE_FORMAT_NONE)
+      return quadmask;
+
    zvals.v = eval_z((float) x, (float) y);
 
    mask = (mask_t) spu_do_depth_stencil(x - setup.cliprect_minx,
