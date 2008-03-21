@@ -77,6 +77,7 @@ struct spu_blend_results {
 typedef struct spu_blend_results (*blend_func)(
     qword frag_r, qword frag_g, qword frag_b, qword frag_a,
     qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
+    qword const_r, qword const_g, qword const_b, qword const_a,
     qword frag_mask);
 
 struct spu_framebuffer {
@@ -108,6 +109,7 @@ struct spu_global
    
    boolean read_fb;
    blend_func blend;
+   qword const_blend_color[4] ALIGN16_ATTRIB;
 
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct cell_command_texture texture;

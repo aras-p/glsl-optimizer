@@ -63,7 +63,7 @@ cell_bind_blend_state(struct pipe_context *pipe, void *state)
    draw_flush(cell->draw);
 
    if ((blend != NULL) && (blend->code.store == NULL)) {
-      cell_generate_alpha_blend(blend, &cell->blend_color);
+      cell_generate_alpha_blend(blend);
    }
 
    cell->blend = blend;

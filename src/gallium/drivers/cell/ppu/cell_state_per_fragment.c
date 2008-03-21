@@ -588,18 +588,12 @@ cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa)
  */
 static int
 emit_alpha_factor_calculation(struct spe_function *f,
-                              unsigned factor, float const_alpha,
-                              int src_alpha, int dst_alpha)
+                              unsigned factor,
+                              int src_alpha, int dst_alpha, int const_alpha)
 {
-   union {
-      float f;
-      unsigned u;
-   } alpha;
    int factor_reg;
    int tmp;
 
-
-   alpha.f = const_alpha;
 
    switch (factor) {
    case PIPE_BLENDFACTOR_ONE:
@@ -621,13 +615,17 @@ emit_alpha_factor_calculation(struct spe_function *f,
       break;
 
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
-      const_alpha = 1.0 - const_alpha;
-      /* FALLTHROUGH */
-   case PIPE_BLENDFACTOR_CONST_ALPHA:
       factor_reg = spe_allocate_available_register(f);
 
-      spe_il(f, factor_reg, alpha.u & 0x0ffff);
-      spe_ilh(f, factor_reg, alpha.u >> 16);
+      tmp = spe_allocate_available_register(f);
+      spe_il(f, tmp, 1);
+      spe_cuflt(f, tmp, tmp, 0);
+      spe_fs(f, factor_reg, tmp, const_alpha);
+      spe_release_register(f, tmp);
+      break;
+
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+      factor_reg = const_alpha;
       break;
 
    case PIPE_BLENDFACTOR_ZERO:
@@ -674,23 +672,14 @@ emit_alpha_factor_calculation(struct spe_function *f,
 static void
 emit_color_factor_calculation(struct spe_function *f,
                               unsigned sF, unsigned mask,
-                              const struct pipe_blend_color *blend_color,
                               const int *src,
                               const int *dst,
+                              const int *const_color,
                               int *factor)
 {
-   union {
-      float f[4];
-      unsigned u[4];
-   } color;
    int tmp;
    unsigned i;
 
-
-   color.f[0] = blend_color->color[0];
-   color.f[1] = blend_color->color[1];
-   color.f[2] = blend_color->color[2];
-   color.f[3] = blend_color->color[3];
 
    factor[0] = -1;
    factor[1] = -1;
@@ -748,29 +737,40 @@ emit_color_factor_calculation(struct spe_function *f,
       break;
 
    case PIPE_BLENDFACTOR_INV_CONST_COLOR:
-      color.f[0] = 1.0 - color.f[0];
-      color.f[1] = 1.0 - color.f[1];
-      color.f[2] = 1.0 - color.f[2];
-      /* FALLTHROUGH */
-   case PIPE_BLENDFACTOR_CONST_COLOR:
+      tmp = spe_allocate_available_register(f);
+      spe_il(f, tmp, 1);
+      spe_cuflt(f, tmp, tmp, 0);
+
       for (i = 0; i < 3; i++) {
          factor[i] = spe_allocate_available_register(f);
 
-         spe_il(f, factor[i], color.u[i] & 0x0ffff);
-         spe_ilh(f, factor[i], color.u[i] >> 16);
+         spe_fs(f, factor[i], tmp, const_color[i]);
+      }
+      spe_release_register(f, tmp);
+      break;
+
+   case PIPE_BLENDFACTOR_CONST_COLOR:
+      for (i = 0; i < 3; i++) {
+         factor[i] = const_color[i];
       }
       break;
 
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
-      color.f[3] = 1.0 - color.f[3];
-      /* FALLTHROUGH */
-   case PIPE_BLENDFACTOR_CONST_ALPHA:
       factor[0] = spe_allocate_available_register(f);
       factor[1] = factor[0];
       factor[2] = factor[0];
 
-      spe_il(f, factor[0], color.u[3] & 0x0ffff);
-      spe_ilh(f, factor[0], color.u[3] >> 16);
+      tmp = spe_allocate_available_register(f);
+      spe_il(f, tmp, 1);
+      spe_cuflt(f, tmp, tmp, 0);
+      spe_fs(f, factor[0], tmp, const_color[3]);
+      spe_release_register(f, tmp);
+      break;
+
+   case PIPE_BLENDFACTOR_CONST_ALPHA:
+      factor[0] = const_color[3];
+      factor[1] = factor[0];
+      factor[2] = factor[0];
       break;
 
    case PIPE_BLENDFACTOR_ZERO:
@@ -945,8 +945,7 @@ emit_blend_calculation(struct spe_function *f,
  * Generate code to perform alpha blending on the SPE
  */
 void
-cell_generate_alpha_blend(struct cell_blend_state *cb,
-                          const struct pipe_blend_color *blend_color)
+cell_generate_alpha_blend(struct cell_blend_state *cb)
 {
    struct pipe_blend_state *const b = &cb->base;
    struct spe_function *const f = &cb->code;
@@ -972,7 +971,13 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
       spe_allocate_register(f, 9),
       spe_allocate_register(f, 10),
    };
-   const int mask = spe_allocate_register(f, 11);
+   const int const_color[4] = {
+      spe_allocate_register(f, 11),
+      spe_allocate_register(f, 12),
+      spe_allocate_register(f, 13),
+      spe_allocate_register(f, 14),
+   };
+   const int mask = spe_allocate_register(f, 15);
    unsigned func[4];
    unsigned sF[4];
    unsigned dF[4];
@@ -1053,8 +1058,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
     * the alpha factor, calculate the alpha factor.
     */
    if (((b->colormask & 8) != 0) && need_alpha_factor) {
-      src_factor[3] = emit_alpha_factor_calculation(f, sF[3],
-                                                    blend_color->color[3],
+      src_factor[3] = emit_alpha_factor_calculation(f, sF[3], const_color[3],
                                                     frag[3], pixel[3]);
 
       /* If the alpha destination blend factor is the same as the alpha source
@@ -1062,8 +1066,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
        */
       dst_factor[3] = (dF[3] == sF[3])
           ? src_factor[3]
-          : emit_alpha_factor_calculation(f, dF[3],
-                                          blend_color->color[3],
+          : emit_alpha_factor_calculation(f, dF[3], const_color[3],
                                           frag[3], pixel[3]);
    }
 
@@ -1080,8 +1083,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
       emit_color_factor_calculation(f,
                                     b->rgb_src_factor,
                                     b->colormask,
-                                    blend_color,
-                                    frag, pixel, src_factor);
+                                    frag, pixel, const_color, src_factor);
    }
 
 
@@ -1101,8 +1103,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
       emit_color_factor_calculation(f,
                                     b->rgb_dst_factor,
                                     b->colormask,
-                                    blend_color,
-                                    frag, pixel, dst_factor);
+                                    frag, pixel, const_color, dst_factor);
    }
 
 

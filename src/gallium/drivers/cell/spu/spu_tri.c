@@ -356,6 +356,8 @@ emit_quad( int x, int y, mask_t mask )
       const struct spu_blend_results result =
           (*spu.blend)(soa_frag[0], soa_frag[1], soa_frag[2], soa_frag[3],
                        soa_pix[0], soa_pix[1], soa_pix[2], soa_pix[3],
+                       spu.const_blend_color[0], spu.const_blend_color[1],
+                       spu.const_blend_color[2], spu.const_blend_color[3],
                        (qword) mask);
 
 
