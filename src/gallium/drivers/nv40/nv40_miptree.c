@@ -12,7 +12,7 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 	boolean swizzled = FALSE;
 	uint width = pt->width[0], height = pt->height[0], depth = pt->depth[0];
 	uint offset = 0;
-	int nr_faces, l, f;
+	int nr_faces, l, f, pitch;
 
 	if (pt->target == PIPE_TEXTURE_CUBE) {
 		nr_faces = 6;
@@ -22,18 +22,18 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 	} else {
 		nr_faces = 1;
 	}
-	
+
+	pitch = pt->width[0];
 	for (l = 0; l <= pt->last_level; l++) {
 		pt->width[l] = width;
 		pt->height[l] = height;
 		pt->depth[l] = depth;
 
 		if (swizzled)
-			nv40mt->level[l].pitch = pt->width[l] * pt->cpp;
-		else
-			nv40mt->level[l].pitch = pt->width[0] * pt->cpp;
-		nv40mt->level[l].pitch = (nv40mt->level[l].pitch + 63) & ~63;
+			pitch = pt->width[l];
+		pitch = (pitch + 63) & ~63;
 
+		nv40mt->level[l].pitch = pitch * pt->cpp;
 		nv40mt->level[l].image_offset =
 			CALLOC(nr_faces, sizeof(unsigned));
 
@@ -49,6 +49,7 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 			offset += nv40mt->level[l].pitch * pt->height[l];
 		}
 	}
+	NOUVEAU_ERR("\n");
 
 	nv40mt->total_size = offset;
 }
