@@ -49,7 +49,6 @@ nv40_miptree_layout(struct nv40_miptree *nv40mt)
 			offset += nv40mt->level[l].pitch * pt->height[l];
 		}
 	}
-	NOUVEAU_ERR("\n");
 
 	nv40mt->total_size = offset;
 }
