@@ -570,31 +570,17 @@ _mesa_validate_pbo_access(GLuint dimensions,
  * If not sourcing from a PBO, just return the bitmap pointer.
  * This is a helper function for (some) drivers.
  * Return NULL if error.
- * If non-null return, must call validate_and_map_bitmap_pbo() when done.
+ * If non-null return, must call _mesa_unmap_bitmap_pbo() when done.
  */
 const GLubyte *
-_mesa_validate_and_map_bitmap_pbo(GLcontext *ctx,
-                                  GLsizei width, GLsizei height,
-                                  const struct gl_pixelstore_attrib *unpack,
-                                  const GLubyte *bitmap)
+_mesa_map_bitmap_pbo(GLcontext *ctx,
+                     const struct gl_pixelstore_attrib *unpack,
+                     const GLubyte *bitmap)
 {
    const GLubyte *buf;
 
    if (unpack->BufferObj->Name) {
       /* unpack from PBO */
-      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                     GL_COLOR_INDEX, GL_BITMAP,
-                                     (GLvoid *) bitmap)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
-         return NULL;
-      }
-
-      if (unpack->BufferObj->Pointer) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
-         return NULL;
-      }
-
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                                               GL_READ_ONLY_ARB,
                                               unpack->BufferObj);
@@ -613,7 +599,7 @@ _mesa_validate_and_map_bitmap_pbo(GLcontext *ctx,
 
 
 /**
- * Counterpart to validate_and_map_bitmap_pbo()
+ * Counterpart to _mesa_map_bitmap_pbo()
  * This is a helper function for (some) drivers.
  */
 void
@@ -628,33 +614,17 @@ _mesa_unmap_bitmap_pbo(GLcontext *ctx,
 
 
 /**
- * \sa _mesa_validate_and_map_bitmap_pbo
+ * \sa _mesa_map_bitmap_pbo
  */
 const GLvoid *
-_mesa_validate_and_map_drawpix_pbo(GLcontext *ctx,
-                                   GLsizei width, GLsizei height,
-                                   GLenum format, GLenum type,
-                                   const struct gl_pixelstore_attrib *unpack,
-                                   const GLvoid *pixels)
+_mesa_map_drawpix_pbo(GLcontext *ctx,
+                      const struct gl_pixelstore_attrib *unpack,
+                      const GLvoid *pixels)
 {
    const GLvoid *buf;
 
    if (unpack->BufferObj->Name) {
       /* unpack from PBO */
-
-      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                     format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glDrawPixels(invalid PBO access)");
-         return NULL;
-      }
-
-      if (unpack->BufferObj->Pointer) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels(PBO is mapped)");
-         return NULL;
-      }
-
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                                               GL_READ_ONLY_ARB,
                                               unpack->BufferObj);
@@ -687,36 +657,19 @@ _mesa_unmap_drapix_pbo(GLcontext *ctx,
 
 
 /**
- * When doing glReadPixels into a PBO, this function will check for errors
- * and map the buffer.
+ * If PBO is bound, map the buffer, return dest pointer in mapped buffer.
  * Call _mesa_unmap_readpix_pbo() when finished
  * \return NULL if error
  */
 void *
-_mesa_validate_and_map_readpix_pbo(GLcontext *ctx,
-                                   GLint x, GLint y,
-                                   GLsizei width, GLsizei height,
-                                   GLenum format, GLenum type,
-                                   const struct gl_pixelstore_attrib *pack,
-                                   GLvoid *dest)
+_mesa_map_readpix_pbo(GLcontext *ctx,
+                      const struct gl_pixelstore_attrib *pack,
+                      GLvoid *dest)
 {
    void *buf;
 
    if (pack->BufferObj->Name) {
       /* pack into PBO */
-      if (!_mesa_validate_pbo_access(2, pack, width, height, 1,
-                                     format, type, dest)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(invalid PBO access)");
-         return NULL;
-      }
-
-      if (pack->BufferObj->Pointer) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
-         return NULL;
-      }
-
       buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
                                               GL_WRITE_ONLY_ARB,
                                               pack->BufferObj);
@@ -735,7 +688,7 @@ _mesa_validate_and_map_readpix_pbo(GLcontext *ctx,
 
 
 /**
- * Counterpart to validate_and_map_readpix_pbo()
+ * Counterpart to _mesa_map_readpix_pbo()
  */
 void
 _mesa_unmap_readpix_pbo(GLcontext *ctx,
@@ -745,6 +698,7 @@ _mesa_unmap_readpix_pbo(GLcontext *ctx,
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT, pack->BufferObj);
    }
 }
+
 
 
 /**

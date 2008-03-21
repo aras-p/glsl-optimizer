@@ -574,11 +574,9 @@ _swrast_ReadPixels( GLcontext *ctx,
       return;
    }
 
-    pixels = _mesa_validate_and_map_readpix_pbo(ctx, x, y, width, height,
-                                                format, type,
-                                                &clippedPacking, pixels);
-    if (!pixels)
-       return;
+   pixels = _mesa_map_readpix_pbo(ctx, &clippedPacking, pixels);
+   if (!pixels)
+      return;
   
    switch (format) {
       case GL_COLOR_INDEX:
