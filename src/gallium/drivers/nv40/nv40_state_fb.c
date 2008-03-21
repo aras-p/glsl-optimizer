@@ -5,10 +5,12 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 {
 	struct pipe_framebuffer_state *fb = &nv40->framebuffer;
 	struct pipe_surface *rt[4], *zeta;
-	uint32_t rt_enable, rt_format, w, h;
+	uint32_t rt_enable, rt_format;
 	int i, colour_format = 0, zeta_format = 0;
 	struct nouveau_stateobj *so = so_new(64, 10);
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
+	unsigned w = fb->width;
+	unsigned h = fb->height;
 
 	rt_enable = 0;
 	for (i = 0; i < 4; i++) {
@@ -16,12 +18,8 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 			continue;
 
 		if (colour_format) {
-			assert(w == fb->cbufs[i]->width);
-			assert(h == fb->cbufs[i]->height);
 			assert(colour_format == fb->cbufs[i]->format);
 		} else {
-			w = fb->cbufs[i]->width;
-			h = fb->cbufs[i]->height;
 			colour_format = fb->cbufs[i]->format;
 			rt_enable |= (NV40TCL_RT_ENABLE_COLOR0 << i);
 			rt[i] = fb->cbufs[i];
@@ -33,14 +31,6 @@ nv40_state_framebuffer_validate(struct nv40_context *nv40)
 		rt_enable |= NV40TCL_RT_ENABLE_MRT;
 
 	if (fb->zsbuf) {
-		if (colour_format) {
-			assert(w == fb->zsbuf->width);
-			assert(h == fb->zsbuf->height);
-		} else {
-			w = fb->zsbuf->width;
-			h = fb->zsbuf->height;
-		}
-
 		zeta_format = fb->zsbuf->format;
 		zeta = fb->zsbuf;
 	}
