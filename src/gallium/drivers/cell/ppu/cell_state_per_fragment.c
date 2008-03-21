@@ -72,8 +72,8 @@ emit_alpha_test(struct pipe_depth_stencil_alpha_state *dsa,
       int tmp_a = spe_allocate_available_register(f);
       int tmp_b = spe_allocate_available_register(f);
       union {
-	 float f;
-	 unsigned u;
+         float f;
+         unsigned u;
       } ref_val;
       boolean complement = FALSE;
 
@@ -84,42 +84,42 @@ emit_alpha_test(struct pipe_depth_stencil_alpha_state *dsa,
 
       switch (dsa->alpha.func) {
       case PIPE_FUNC_NOTEQUAL:
-	 complement = TRUE;
-	 /* FALLTHROUGH */
+         complement = TRUE;
+         /* FALLTHROUGH */
 
       case PIPE_FUNC_EQUAL:
-	 spe_fceq(f, tmp_a, ref, alphas);
-	 break;
+         spe_fceq(f, tmp_a, ref, alphas);
+         break;
 
       case PIPE_FUNC_LEQUAL:
-	 complement = TRUE;
-	 /* FALLTHROUGH */
+         complement = TRUE;
+         /* FALLTHROUGH */
 
       case PIPE_FUNC_GREATER:
-	 spe_fcgt(f, tmp_a, ref, alphas);
-	 break;
+         spe_fcgt(f, tmp_a, ref, alphas);
+         break;
 
       case PIPE_FUNC_LESS:
-	 complement = TRUE;
-	 /* FALLTHROUGH */
+         complement = TRUE;
+         /* FALLTHROUGH */
 
       case PIPE_FUNC_GEQUAL:
-	 spe_fcgt(f, tmp_a, ref, alphas);
-	 spe_fceq(f, tmp_b, ref, alphas);
-	 spe_or(f, tmp_a, tmp_b, tmp_a);
-	 break;
+         spe_fcgt(f, tmp_a, ref, alphas);
+         spe_fceq(f, tmp_b, ref, alphas);
+         spe_or(f, tmp_a, tmp_b, tmp_a);
+         break;
 
       case PIPE_FUNC_ALWAYS:
       case PIPE_FUNC_NEVER:
       default:
-	 assert(0);
-	 break;
+         assert(0);
+         break;
       }
 
       if (complement) {
-	 spe_andc(f, mask, mask, tmp_a);
+         spe_andc(f, mask, mask, tmp_a);
       } else {
-	 spe_and(f, mask, mask, tmp_a);
+         spe_and(f, mask, mask, tmp_a);
       }
 
       spe_release_register(f, ref);
@@ -674,7 +674,7 @@ emit_alpha_factor_calculation(struct spe_function *f,
 static void
 emit_color_factor_calculation(struct spe_function *f,
                               unsigned sF, unsigned mask,
-			      const struct pipe_blend_color *blend_color,
+                              const struct pipe_blend_color *blend_color,
                               const int *src,
                               const int *dst,
                               int *factor)
@@ -754,10 +754,10 @@ emit_color_factor_calculation(struct spe_function *f,
       /* FALLTHROUGH */
    case PIPE_BLENDFACTOR_CONST_COLOR:
       for (i = 0; i < 3; i++) {
-	 factor[i] = spe_allocate_available_register(f);
+         factor[i] = spe_allocate_available_register(f);
 
-	 spe_il(f, factor[i], color.u[i] & 0x0ffff);
-	 spe_ilh(f, factor[i], color.u[i] >> 16);
+         spe_il(f, factor[i], color.u[i] & 0x0ffff);
+         spe_ilh(f, factor[i], color.u[i] >> 16);
       }
       break;
 
@@ -946,7 +946,7 @@ emit_blend_calculation(struct spe_function *f,
  */
 void
 cell_generate_alpha_blend(struct cell_blend_state *cb,
-			  const struct pipe_blend_color *blend_color)
+                          const struct pipe_blend_color *blend_color)
 {
    struct pipe_blend_state *const b = &cb->base;
    struct spe_function *const f = &cb->code;
@@ -1054,7 +1054,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
     */
    if (((b->colormask & 8) != 0) && need_alpha_factor) {
       src_factor[3] = emit_alpha_factor_calculation(f, sF[3],
-						    blend_color->color[3],
+                                                    blend_color->color[3],
                                                     frag[3], pixel[3]);
 
       /* If the alpha destination blend factor is the same as the alpha source
@@ -1063,7 +1063,7 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
       dst_factor[3] = (dF[3] == sF[3])
           ? src_factor[3]
           : emit_alpha_factor_calculation(f, dF[3],
-					  blend_color->color[3],
+                                          blend_color->color[3],
                                           frag[3], pixel[3]);
    }
 
