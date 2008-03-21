@@ -172,14 +172,13 @@ nouveau_fence_flush(struct nouveau_channel *chan)
 		nvfence = nouveau_fence(nvchan->fence_head);
 		if (nvfence->sequence > sequence)
 			break;
-
 		nouveau_fence_del_unsignalled(&nvfence->base);
 		nvfence->signalled = 1;
 
 		if (nvfence->signal_cb) {
 			struct nouveau_fence *fence = NULL;
 
-			nouveau_fence_ref(nvchan->fence_head, &fence);
+			nouveau_fence_ref(&nvfence->base, &fence);
 
 			while (nvfence->signal_cb) {
 				struct nouveau_fence_cb *cb;
