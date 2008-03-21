@@ -812,7 +812,6 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 }
 
 
-
 /**
  * Execute software-based glDrawPixels.
  * By time we get here, all error checking will have been done.
@@ -835,25 +834,10 @@ _swrast_DrawPixels( GLcontext *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-   if (unpack->BufferObj->Name) {
-      /* unpack from PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                     format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glDrawPixels(invalid PBO access)");
-         goto end;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              unpack->BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels(PBO is mapped)");
-         goto end;
-      }
-      pixels = ADD_POINTERS(buf, pixels);
-   }
+   pixels = _mesa_validate_and_map_drawpix_pbo(ctx, x, y, width, height,
+                                               format, type, unpack, pixels);
+   if (!pixels)
+      return;
 
    switch (format) {
    case GL_STENCIL_INDEX:
@@ -894,11 +878,7 @@ end:
 
    RENDER_FINISH(swrast,ctx);
 
-   if (unpack->BufferObj->Name) {
-      /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
+   _mesa_unmap_drapix_pbo(ctx, unpack);
 }
 
 
