@@ -1,8 +1,8 @@
 /**************************************************************************
  * 
- * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -26,12 +26,16 @@
  **************************************************************************/
 
 
-#ifndef SPU_BLEND_H
-#define SPU_BLEND_H
+#ifndef ST_CB_BITMAP_H
+#define ST_CB_BITMAP_H
 
 
 extern void
-blend_quad(uint itx, uint ity, vector float colors[4]);
+st_init_bitmap_functions(struct dd_function_table *functions);
 
 
-#endif /* SPU_BLEND_H */
+extern void
+st_destroy_bitmap(struct st_context *st);
+
+
+#endif /* ST_CB_BITMAP_H */

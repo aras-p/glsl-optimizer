@@ -34,15 +34,51 @@
 
 
 /**
+ * Draw a simple vertex buffer / primitive.
+ * Limited to float[4] vertex attribs, tightly packed.
+ */
+void 
+util_draw_vertex_buffer(struct pipe_context *pipe,
+                        struct pipe_buffer *vbuf,
+                        uint prim_type,
+                        uint num_verts,
+                        uint num_attribs)
+{
+   struct pipe_vertex_buffer vbuffer;
+   struct pipe_vertex_element velement;
+   uint i;
+
+   /* tell pipe about the vertex buffer */
+   vbuffer.buffer = vbuf;
+   vbuffer.pitch = num_attribs * 4 * sizeof(float);  /* vertex size */
+   vbuffer.buffer_offset = 0;
+   pipe->set_vertex_buffer(pipe, 0, &vbuffer);
+
+   /* tell pipe about the vertex attributes */
+   for (i = 0; i < num_attribs; i++) {
+      velement.src_offset = i * 4 * sizeof(float);
+      velement.vertex_buffer_index = 0;
+      velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velement.nr_components = 4;
+      pipe->set_vertex_element(pipe, i, &velement);
+   }
+
+   /* draw */
+   pipe->draw_arrays(pipe, prim_type, 0, num_verts);
+}
+
+
+
+/**
  * Draw screen-aligned textured quad.
+ * Note: this function allocs/destroys a vertex buffer and isn't especially
+ * efficient.
  */
 void 
 util_draw_texquad(struct pipe_context *pipe,
                   float x0, float y0, float x1, float y1, float z)
 {
    struct pipe_buffer *vbuf;
-   struct pipe_vertex_buffer vbuffer;
-   struct pipe_vertex_element velement;
    uint numAttribs = 2, vertexBytes, i, j;
    float *v;
 
@@ -89,24 +125,7 @@ util_draw_texquad(struct pipe_context *pipe,
 
    pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
 
-   /* tell pipe about the vertex buffer */
-   vbuffer.buffer = vbuf;
-   vbuffer.pitch = numAttribs * 4 * sizeof(float);  /* vertex size */
-   vbuffer.buffer_offset = 0;
-   pipe->set_vertex_buffer(pipe, 0, &vbuffer);
+   util_draw_vertex_buffer(pipe, vbuf, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 
-   /* tell pipe about the vertex attributes */
-   for (i = 0; i < numAttribs; i++) {
-      velement.src_offset = i * 4 * sizeof(float);
-      velement.vertex_buffer_index = 0;
-      velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velement.nr_components = 4;
-      pipe->set_vertex_element(pipe, i, &velement);
-   }
-
-   /* draw */
-   pipe->draw_arrays(pipe, PIPE_PRIM_TRIANGLE_FAN, 0, 4);
-
-   /* XXX: do one-time */
    pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
 }

@@ -50,9 +50,10 @@ st_print_current(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    struct st_context *st = ctx->st;
-   int i;
 
 #if 0
+   int i;
+
    printf("Vertex Transform Inputs:\n");
    for (i = 0; i < st->vp->state.num_inputs; i++) {
       printf("  Slot %d:  VERT_ATTRIB_%d\n", i, st->vp->index_to_input[i]);

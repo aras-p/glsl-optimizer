@@ -36,6 +36,11 @@
 struct pipe_context;
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 extern void *
 util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     uint num_attribs,
@@ -47,6 +52,13 @@ extern void *
 util_make_fragment_tex_shader(struct pipe_context *pipe);
 
 
+extern void *
+util_make_fragment_passthrough_shader(struct pipe_context *pipe);
+
+
+#ifdef __cplusplus
+}
 #endif
 
 
+#endif

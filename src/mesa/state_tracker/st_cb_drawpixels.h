@@ -30,10 +30,6 @@
 #define ST_CB_DRAWPIXELS_H
 
 
-extern struct st_vertex_program *
-st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor);
-
-
 extern void st_init_drawpixels_functions(struct dd_function_table *functions);
 
 

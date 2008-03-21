@@ -669,7 +669,7 @@ emit_alpha_factor_calculation(struct spe_function *f,
 
 
 /**
- * \note Emits a maximum of 5 instructions
+ * \note Emits a maximum of 6 instructions
  */
 static void
 emit_color_factor_calculation(struct spe_function *f,
@@ -864,7 +864,11 @@ emit_blend_calculation(struct spe_function *f,
             spe_il(f, src, 0);
          } else if (dF == PIPE_BLENDFACTOR_ONE) {
             spe_or(f, src, dst, dst);
+         } else {
+            spe_fm(f, src, dst, dst_factor);
          }
+      } else if (dF == PIPE_BLENDFACTOR_ZERO) {
+         spe_fm(f, src, src, src_factor);
       } else {
          spe_fm(f, tmp, dst, dst_factor);
          spe_fma(f, src, src, src_factor, tmp);
@@ -884,7 +888,11 @@ emit_blend_calculation(struct spe_function *f,
          } else if (dF == PIPE_BLENDFACTOR_ONE) {
             spe_il(f, tmp, 0);
             spe_fs(f, src, tmp, dst);
+         } else {
+            spe_fm(f, src, dst, dst_factor);
          }
+      } else if (dF == PIPE_BLENDFACTOR_ZERO) {
+         spe_fm(f, src, src, src_factor);
       } else {
          spe_fm(f, tmp, dst, dst_factor);
          spe_fms(f, src, src, src_factor, tmp);
@@ -904,7 +912,11 @@ emit_blend_calculation(struct spe_function *f,
             spe_il(f, src, 0);
          } else if (dF == PIPE_BLENDFACTOR_ONE) {
             spe_or(f, src, dst, dst);
+         } else {
+            spe_fm(f, src, dst, dst_factor);
          }
+      } else if (dF == PIPE_BLENDFACTOR_ZERO) {
+         spe_fm(f, src, src, src_factor);
       } else {
          spe_fm(f, tmp, src, src_factor);
          spe_fms(f, src, src, dst_factor, tmp);
@@ -913,12 +925,12 @@ emit_blend_calculation(struct spe_function *f,
 
    case PIPE_BLEND_MIN:
       spe_cgt(f, tmp, src, dst);
-      spe_selb(f, src, dst, src, tmp);
+      spe_selb(f, src, src, dst, tmp);
       break;
 
    case PIPE_BLEND_MAX:
       spe_cgt(f, tmp, src, dst);
-      spe_selb(f, src, src, dst, tmp);
+      spe_selb(f, src, dst, src, tmp);
       break;
 
    default:
@@ -940,9 +952,9 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
    struct spe_function *const f = &cb->code;
 
    /* This code generates a maximum of 3 (source alpha factor)
-    * + 3 (destination alpha factor) + (3 * 5) (source color factor)
-    * + (3 * 5) (destination color factor) + (4 * 2) (blend equation)
-    * + 4 (fragment mask) + 1 (return) = 49 instlructions.  Round up to 64 to
+    * + 3 (destination alpha factor) + (3 * 6) (source color factor)
+    * + (3 * 6) (destination color factor) + (4 * 2) (blend equation)
+    * + 4 (fragment mask) + 1 (return) = 55 instlructions.  Round up to 64 to
     * make it a happy power-of-two.
     */
    spe_init_func(f, 4 * 64);
@@ -984,16 +996,57 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
        && (b->alpha_func != PIPE_BLEND_MAX);
 
 
-   sF[0] = b->rgb_src_factor;
-   sF[1] = sF[0];
-   sF[2] = sF[0];
-   sF[3] = (b->alpha_src_factor == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE)
-       ? PIPE_BLENDFACTOR_ONE : b->alpha_src_factor;
+   if (b->blend_enable) {
+      sF[0] = b->rgb_src_factor;
+      sF[1] = sF[0];
+      sF[2] = sF[0];
+      switch (b->alpha_src_factor & 0x0f) {
+      case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
+         sF[3] = PIPE_BLENDFACTOR_ONE;
+         break;
+      case PIPE_BLENDFACTOR_SRC_COLOR:
+      case PIPE_BLENDFACTOR_DST_COLOR:
+      case PIPE_BLENDFACTOR_CONST_COLOR:
+      case PIPE_BLENDFACTOR_SRC1_COLOR:
+         sF[3] = b->alpha_src_factor + 1;
+         break;
+      default:
+         sF[3] = b->alpha_src_factor;
+      }
 
-   dF[0] = b->rgb_dst_factor;
-   dF[1] = dF[0];
-   dF[2] = dF[0];
-   dF[3] = b->rgb_dst_factor;
+      dF[0] = b->rgb_dst_factor;
+      dF[1] = dF[0];
+      dF[2] = dF[0];
+      switch (b->alpha_dst_factor & 0x0f) {
+      case PIPE_BLENDFACTOR_SRC_COLOR:
+      case PIPE_BLENDFACTOR_DST_COLOR:
+      case PIPE_BLENDFACTOR_CONST_COLOR:
+      case PIPE_BLENDFACTOR_SRC1_COLOR:
+         dF[3] = b->alpha_dst_factor + 1;
+         break;
+      default:
+         dF[3] = b->alpha_dst_factor;
+      }
+
+      func[0] = b->rgb_func;
+      func[1] = func[0];
+      func[2] = func[0];
+      func[3] = b->alpha_func;
+   } else {
+      sF[0] = PIPE_BLENDFACTOR_ONE;
+      sF[1] = PIPE_BLENDFACTOR_ONE;
+      sF[2] = PIPE_BLENDFACTOR_ONE;
+      sF[3] = PIPE_BLENDFACTOR_ONE;
+      dF[0] = PIPE_BLENDFACTOR_ZERO;
+      dF[1] = PIPE_BLENDFACTOR_ZERO;
+      dF[2] = PIPE_BLENDFACTOR_ZERO;
+      dF[3] = PIPE_BLENDFACTOR_ZERO;
+
+      func[0] = PIPE_BLEND_ADD;
+      func[1] = PIPE_BLEND_ADD;
+      func[2] = PIPE_BLEND_ADD;
+      func[3] = PIPE_BLEND_ADD;
+   }
 
 
    /* If alpha writing is enabled and the alpha blend mode requires use of
@@ -1054,11 +1107,6 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
 
 
 
-   func[0] = b->rgb_func;
-   func[1] = func[0];
-   func[2] = func[0];
-   func[3] = b->alpha_func;
-
    for (i = 0; i < 4; ++i) {
       if ((b->colormask & (1U << i)) != 0) {
          emit_blend_calculation(f,
@@ -1072,4 +1120,28 @@ cell_generate_alpha_blend(struct cell_blend_state *cb,
    }
 
    spe_bi(f, 0, 0, 0);
+
+#if 0
+   {
+      const uint32_t *p = f->store;
+
+      printf("# %u instructions\n", f->csr - f->store);
+      printf("# blend (%sabled)\n",
+             (cb->base.blend_enable) ? "en" : "dis");
+      printf("#    RGB func / sf / df: %u %u %u\n",
+             cb->base.rgb_func,
+             cb->base.rgb_src_factor,
+             cb->base.rgb_dst_factor);
+      printf("#    ALP func / sf / df: %u %u %u\n",
+             cb->base.alpha_func,
+             cb->base.alpha_src_factor,
+             cb->base.alpha_dst_factor);
+
+      printf("\t.text\n");
+      for (/* empty */; p < f->csr; p++) {
+         printf("\t.long\t0x%04x\n", *p);
+      }
+      fflush(stdout);
+   }
+#endif
 }

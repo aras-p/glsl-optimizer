@@ -68,7 +68,7 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
    uint ti, i;
    struct pipe_shader_state shader;
 
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
+   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
@@ -84,16 +84,15 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    /* declare inputs */
    for (i = 0; i < num_attribs; i++) {
-
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_INPUT;
-      /*
+
       decl.Declaration.Semantic = 1;
-      decl.Semantic.SemanticName = TGSI_SEMANTIC_POSITION;
-      decl.Semantic.SemanticIndex = 0;
-      */
+      decl.Semantic.SemanticName = semantic_names[i];
+      decl.Semantic.SemanticIndex = semantic_indexes[i];
+
       decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = 0;
+      decl.u.DeclarationRange.Last = i;
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
@@ -102,19 +101,17 @@ util_make_vertex_passthrough_shader(struct pipe_context *pipe,
 
    /* declare outputs */
    for (i = 0; i < num_attribs; i++) {
-
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_OUTPUT;
       decl.Declaration.Semantic = 1;
       decl.Semantic.SemanticName = semantic_names[i];
       decl.Semantic.SemanticIndex = semantic_indexes[i];
       decl.u.DeclarationRange.First = 
-         decl.u.DeclarationRange.Last = 0;
+         decl.u.DeclarationRange.Last = i;
       ti += tgsi_build_full_declaration(&decl,
                                         &tokens[ti],
                                         header,
                                         maxTokens - ti);
-
    }
 
    /* emit MOV instructions */
@@ -173,7 +170,7 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
    uint ti;
    struct pipe_shader_state shader;
 
-   tokens = (struct tgsi_token *) malloc(maxTokens * sizeof(tokens[0]));
+   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
 
    /* shader header
     */
@@ -252,6 +249,101 @@ util_make_fragment_tex_shader(struct pipe_context *pipe)
                                      &tokens[ti],
                                      header,
                                      maxTokens - ti );
+
+#if 0 /*debug*/
+   tgsi_dump(tokens, 0);
+#endif
+
+   shader.tokens = tokens;
+   return pipe->create_fs_state(pipe, &shader);
+}
+
+
+
+
+
+/**
+ * Make simple fragment color pass-through shader.
+ */
+void *
+util_make_fragment_passthrough_shader(struct pipe_context *pipe)
+{
+   uint maxTokens = 40;
+   struct tgsi_token *tokens;
+   struct tgsi_header *header;
+   struct tgsi_processor *processor;
+   struct tgsi_full_declaration decl;
+   struct tgsi_full_instruction inst;
+   const uint procType = TGSI_PROCESSOR_FRAGMENT;
+   uint ti;
+   struct pipe_shader_state shader;
+
+   tokens = (struct tgsi_token *) MALLOC(maxTokens * sizeof(tokens[0]));
+
+   /* shader header
+    */
+   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
+
+   header = (struct tgsi_header *) &tokens[1];
+   *header = tgsi_build_header();
+
+   processor = (struct tgsi_processor *) &tokens[2];
+   *processor = tgsi_build_processor( procType, header );
+
+   ti = 3;
+
+   /* declare input */
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_INPUT;
+   decl.Declaration.Semantic = 1;
+   decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
+   decl.Semantic.SemanticIndex = 0;
+   decl.u.DeclarationRange.First = 
+      decl.u.DeclarationRange.Last = 0;
+   ti += tgsi_build_full_declaration(&decl,
+                                     &tokens[ti],
+                                     header,
+                                     maxTokens - ti);
+
+   /* declare output */
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_OUTPUT;
+   decl.Declaration.Semantic = 1;
+   decl.Semantic.SemanticName = TGSI_SEMANTIC_COLOR;
+   decl.Semantic.SemanticIndex = 0;
+   decl.u.DeclarationRange.First = 
+      decl.u.DeclarationRange.Last = 0;
+   ti += tgsi_build_full_declaration(&decl,
+                                     &tokens[ti],
+                                     header,
+                                     maxTokens - ti);
+
+
+   /* MOVE out[0], in[0]; */
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = TGSI_OPCODE_MOV;
+   inst.Instruction.NumDstRegs = 1;
+   inst.FullDstRegisters[0].DstRegister.File = TGSI_FILE_OUTPUT;
+   inst.FullDstRegisters[0].DstRegister.Index = 0;
+   inst.Instruction.NumSrcRegs = 1;
+   inst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
+   inst.FullSrcRegisters[0].SrcRegister.Index = 0;
+   ti += tgsi_build_full_instruction(&inst,
+                                     &tokens[ti],
+                                     header,
+                                     maxTokens - ti );
+
+   /* END instruction */
+   inst = tgsi_default_full_instruction();
+   inst.Instruction.Opcode = TGSI_OPCODE_END;
+   inst.Instruction.NumDstRegs = 0;
+   inst.Instruction.NumSrcRegs = 0;
+   ti += tgsi_build_full_instruction(&inst,
+                                     &tokens[ti],
+                                     header,
+                                     maxTokens - ti );
+
+   assert(ti < maxTokens);
 
 #if 0 /*debug*/
    tgsi_dump(tokens, 0);

@@ -56,6 +56,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "util/p_tile.h"
+#include "util/u_draw_quad.h"
 #include "shader/prog_instruction.h"
 #include "cso_cache/cso_context.h"
 
@@ -82,140 +83,6 @@ is_passthrough_program(const struct gl_fragment_program *prog)
       }
    }
    return GL_FALSE;
-}
-
-
-/**
- * Make fragment program for glBitmap:
- *   Sample the texture and kill the fragment if the bit is 0.
- * This program will be combined with the user's fragment program.
- */
-static struct st_fragment_program *
-make_bitmap_fragment_program(GLcontext *ctx)
-{
-   struct st_fragment_program *stfp;
-   struct gl_program *p;
-   GLuint ic = 0;
-
-   p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
-   if (!p)
-      return NULL;
-
-   p->NumInstructions = 5;
-
-   p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
-   if (!p->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, p);
-      return NULL;
-   }
-   _mesa_init_instructions(p->Instructions, p->NumInstructions);
-
-   /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
-   p->Instructions[ic].Opcode = OPCODE_TEX;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
-   p->Instructions[ic].TexSrcUnit = 0;
-   p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
-   ic++;
-
-   /* SWZ tmp0.x, tmp0.x, 1111; # tmp0.x = 1.0 */
-   p->Instructions[ic].Opcode = OPCODE_SWZ;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].DstReg.WriteMask = WRITEMASK_X;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].Swizzle
-      = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
-   ic++;
-
-   /* SUB tmp0, tmp0.wwww, tmp0.xxxx;  #  tmp0.w -= 1 */
-   p->Instructions[ic].Opcode = OPCODE_SUB;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-   p->Instructions[ic].SrcReg[1].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[1].Index = 0;
-   p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
-   ic++;
-
-   /* KIL if tmp0 < 0 */
-   p->Instructions[ic].Opcode = OPCODE_KIL;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   ic++;
-
-   /* END; */
-   p->Instructions[ic++].Opcode = OPCODE_END;
-
-   assert(ic == p->NumInstructions);
-
-   p->InputsRead = FRAG_BIT_TEX0;
-   p->OutputsWritten = 0x0;
-
-   stfp = (struct st_fragment_program *) p;
-   stfp->Base.UsesKill = GL_TRUE;
-   st_translate_fragment_program(ctx->st, stfp, NULL);
-
-   return stfp;
-}
-
-
-/**
- * Combine basic bitmap fragment program with the user-defined program.
- */
-static struct st_fragment_program *
-combined_bitmap_fragment_program(GLcontext *ctx)
-{
-   struct st_context *st = ctx->st;
-   struct st_fragment_program *stfp;
-
-   if (!st->bitmap.program) {
-      /* create the basic bitmap fragment program */
-      st->bitmap.program = make_bitmap_fragment_program(ctx);
-   }
-
-   if (st->bitmap.user_prog_sn == st->fp->serialNo) {
-      /* re-use */
-      stfp = st->bitmap.combined_prog;
-   }
-   else {
-      /* Concatenate the bitmap program with the current user-defined program.
-       */
-      stfp = (struct st_fragment_program *)
-         _mesa_combine_programs(ctx,
-                                &st->bitmap.program->Base.Base,
-                                &st->fp->Base.Base);
-
-#if 0
-      {
-         struct gl_program *p = &stfp->Base.Base;
-         printf("Combined bitmap program:\n");
-         _mesa_print_program(p);
-         printf("InputsRead: 0x%x\n", p->InputsRead);
-         printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
-         _mesa_print_parameter_list(p->Parameters);
-      }
-#endif
-
-      /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp, NULL);
-
-      /* save new program, update serial numbers */
-      st->bitmap.user_prog_sn = st->fp->serialNo;
-      st->bitmap.combined_prog = stfp;
-   }
-
-   /* Ideally we'd have updated the pipe constants during the normal
-    * st/atom mechanism.  But we can't since this is specific to glBitmap.
-    */
-   st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
-
-   return stfp;
 }
 
 
@@ -351,7 +218,7 @@ make_fragment_shader_z(struct st_context *st)
  * Create a simple vertex shader that just passes through the
  * vertex position and texcoord (and optionally, color).
  */
-struct st_vertex_program *
+static struct st_vertex_program *
 st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
 {
    /* only make programs once and re-use */
@@ -655,14 +522,14 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
 
-   /* setup state: just scissor */
+   /* rasterizer state: just scissor */
    {
-      struct pipe_rasterizer_state  setup;
-      memset(&setup, 0, sizeof(setup));
+      struct pipe_rasterizer_state rasterizer;
+      memset(&rasterizer, 0, sizeof(rasterizer));
       if (ctx->Scissor.Enabled)
-         setup.scissor = 1;
+         rasterizer.scissor = 1;
 
-      cso_set_rasterizer(cso, &setup);
+      cso_set_rasterizer(cso, &rasterizer);
    }
 
    /* fragment shader state: TEX lookup program */
@@ -990,153 +857,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
 
 
-/**
- * Create a texture which represents a bitmap image.
- */
-static struct pipe_texture *
-make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
-                    const struct gl_pixelstore_attrib *unpack,
-                    const GLubyte *bitmap)
-{
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *surface;
-   uint format = 0, cpp, comp;
-   ubyte *dest;
-   struct pipe_texture *pt;
-   int row, col;
-
-   /* find a texture format we know */
-   if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
-      format = PIPE_FORMAT_U_I8;
-      cpp = 1;
-      comp = 0;
-   }
-   else if (screen->is_format_supported( screen, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
-      format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      cpp = 4;
-      comp = 3; /* alpha channel */ /*XXX little-endian dependency */
-   }
-   else {
-      /* XXX support more formats */
-      assert( 0 );
-   }
-
-   /**
-    * Create a texture.
-    */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
-			  1, 0);
-   if (!pt)
-      return NULL;
-
-   if (unpack->BufferObj && unpack->BufferObj->Name) {
-      /*
-      pt->region = buffer_object_region(unpack->BufferObj);
-      */
-      printf("st_Bitmap (sourcing from PBO not implemented yet)\n");
-   }
-
-   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
-
-   /* map texture surface */
-   dest = pipe_surface_map(surface);
-
-   /* Put image into texture surface.
-    * Note that the image is actually going to be upside down in
-    * the texture.  We deal with that with texcoords.
-    */
-
-   for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-      ubyte *destRow = dest + row * surface->pitch * cpp;
-
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            /* set texel to 255 if bit is set */
-            destRow[comp] = (*src & mask) ? 255 : 0;
-            destRow += cpp;
-
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            /* set texel to 255 if bit is set */
-            destRow[comp] =(*src & mask) ? 255 : 0;
-            destRow += cpp;
-
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
-
-   } /* row */
-
-   /* Release surface */
-   pipe_surface_unmap(surface);
-   pipe_surface_reference(&surface, NULL);
-   pipe->texture_update(pipe, pt, 0, 0x1);
-
-   pt->format = format;
-
-   return pt;
-}
-
-
-
-static void
-st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
-          const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
-{
-   struct st_fragment_program *stfp;
-   struct st_vertex_program *stvp;
-   struct st_context *st = ctx->st;
-   struct pipe_texture *pt;
-
-   stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
-   stfp = combined_bitmap_fragment_program(ctx);
-
-   st_validate_state(st);
-
-   pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
-   if (pt) {
-      draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                         width, height, 1.0, 1.0,
-                         pt, stvp, stfp,
-                         ctx->Current.RasterColor, GL_FALSE);
-
-      pipe_texture_reference(&pt, NULL);
-   }
-}
-
-
 static void
 copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
@@ -1337,5 +1057,4 @@ void st_init_drawpixels_functions(struct dd_function_table *functions)
 {
    functions->DrawPixels = st_DrawPixels;
    functions->CopyPixels = st_CopyPixels;
-   functions->Bitmap = st_Bitmap;
 }

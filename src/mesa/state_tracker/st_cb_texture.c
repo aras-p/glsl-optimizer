@@ -564,7 +564,8 @@ st_TexImage(GLcontext * ctx,
    if (!stObj->pt) {
       guess_and_alloc_texture(ctx->st, stObj, stImage);
       if (!stObj->pt) {
-	 DBG("guess_and_alloc_texture: failed\n");
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+         return;
       }
    }
 
@@ -1379,7 +1380,7 @@ copy_image_data_to_texture(struct st_context *st,
 /**
  * Called during state validation.  When this function is finished,
  * the texture object should be ready for rendering.
- * \return GL_FALSE if a texture border is present, GL_TRUE otherwise
+ * \return GL_TRUE for success, GL_FALSE for failure (out of mem)
  */
 GLboolean
 st_finalize_texture(GLcontext *ctx,
@@ -1405,6 +1406,7 @@ st_finalize_texture(GLcontext *ctx,
    calculate_first_last_level(stObj);
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
+#if 0
    /* Fallback case:
     */
    if (firstImage->base.Border) {
@@ -1413,7 +1415,7 @@ st_finalize_texture(GLcontext *ctx,
       }
       return GL_FALSE;
    }
-
+#endif
 
    /* If both firstImage and stObj point to a texture which can contain
     * all active images, favour firstImage.  Note that because of the
@@ -1466,6 +1468,10 @@ st_finalize_texture(GLcontext *ctx,
                                     firstImage->base.Height,
                                     firstImage->base.Depth,
                                     comp_byte);
+      if (!stObj->pt) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+         return GL_FALSE;
+      }
    }
 
    /* Pull in any images not in the object's texture:
@@ -1485,7 +1491,6 @@ st_finalize_texture(GLcontext *ctx,
          }
       }
    }
-
 
    return GL_TRUE;
 }

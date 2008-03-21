@@ -48,9 +48,6 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    struct softpipe_context *sp = softpipe_context(pipe);
    uint i;
 
-   /* updated below */
-   sp->fb_width = sp->fb_height = 0;
-
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       /* check if changing cbuf */
       if (sp->framebuffer.cbufs[i] != fb->cbufs[i]) {
@@ -62,10 +59,6 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
 
          /* update cache */
          sp_tile_cache_set_surface(sp->cbuf_cache[i], fb->cbufs[i]);
-      }
-      if (fb->cbufs[i]) {
-         sp->fb_width = fb->cbufs[i]->width;
-         sp->fb_height = fb->cbufs[i]->height;
       }
    }
 
@@ -81,11 +74,6 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
 
       /* update cache */
       sp_tile_cache_set_surface(sp->zsbuf_cache, fb->zsbuf);
-
-      if (!sp->fb_width && fb->zsbuf) {
-         sp->fb_width = fb->zsbuf->width;
-         sp->fb_height = fb->zsbuf->height;
-      }
    }
 
 #if 0
@@ -113,9 +101,8 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    }
 #endif
 
+   sp->framebuffer.width = fb->width;
+   sp->framebuffer.height = fb->height;
+
    sp->dirty |= SP_NEW_FRAMEBUFFER;
 }
-
-
-
-

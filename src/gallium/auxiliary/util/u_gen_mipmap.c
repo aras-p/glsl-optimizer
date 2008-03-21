@@ -64,6 +64,9 @@ struct gen_mipmap_state
    /*struct pipe_viewport_state viewport;*/
    struct pipe_sampler_state *vs;
    struct pipe_sampler_state *fs;
+
+   struct pipe_buffer *vbuf;  /**< quad vertices */
+   float vertices[4][2][4];   /**< vertex/texcoords for quad */
 };
 
 
@@ -683,6 +686,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
                        struct cso_context *cso)
 {
    struct gen_mipmap_state *ctx;
+   uint i;
 
    ctx = CALLOC_STRUCT(gen_mipmap_state);
    if (!ctx)
@@ -744,8 +748,60 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe);
 
+   ctx->vbuf = pipe->winsys->buffer_create(pipe->winsys,
+                                           32,
+                                           PIPE_BUFFER_USAGE_VERTEX,
+                                           sizeof(ctx->vertices));
+   if (!ctx->vbuf) {
+      FREE(ctx);
+      return NULL;
+   }
+
+   /* vertex data that doesn't change */
+   for (i = 0; i < 4; i++) {
+      ctx->vertices[i][0][2] = 0.0f; /* z */
+      ctx->vertices[i][0][3] = 1.0f; /* w */
+      ctx->vertices[i][1][2] = 0.0f; /* r */
+      ctx->vertices[i][1][3] = 1.0f; /* q */
+   }
+
    return ctx;
 }
+
+
+static void
+set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
+{
+   void *buf;
+
+   ctx->vertices[0][0][0] = 0.0f; /*x*/
+   ctx->vertices[0][0][1] = 0.0f; /*y*/
+   ctx->vertices[0][1][0] = 0.0f; /*s*/
+   ctx->vertices[0][1][1] = 0.0f; /*t*/
+
+   ctx->vertices[1][0][0] = width; /*x*/
+   ctx->vertices[1][0][1] = 0.0f;  /*y*/
+   ctx->vertices[1][1][0] = 1.0f; /*s*/
+   ctx->vertices[1][1][1] = 0.0f; /*t*/
+
+   ctx->vertices[2][0][0] = width;
+   ctx->vertices[2][0][1] = height;
+   ctx->vertices[2][1][0] = 1.0f;
+   ctx->vertices[2][1][1] = 1.0f;
+
+   ctx->vertices[3][0][0] = 0.0f;
+   ctx->vertices[3][0][1] = height;
+   ctx->vertices[3][1][0] = 0.0f;
+   ctx->vertices[3][1][1] = 1.0f;
+
+   buf = ctx->pipe->winsys->buffer_map(ctx->pipe->winsys, ctx->vbuf,
+                                       PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   memcpy(buf, ctx->vertices, sizeof(ctx->vertices));
+
+   ctx->pipe->winsys->buffer_unmap(ctx->pipe->winsys, ctx->vbuf);
+}
+
 
 
 /**
@@ -758,6 +814,8 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_fs_state(pipe, ctx->fs);
+
+   pipe->winsys->buffer_destroy(pipe->winsys, ctx->vbuf);
 
    FREE(ctx);
 }
@@ -843,6 +901,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        * Setup framebuffer / dest surface
        */
       fb.cbufs[0] = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+      fb.width = pt->width[dstLevel];
+      fb.height = pt->height[dstLevel];
       cso_set_framebuffer(ctx->cso, &fb);
 
       /*
@@ -863,12 +923,13 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       pipe->set_sampler_textures(pipe, 1, &pt);
 
       /* quad coords in window coords (bypassing clipping, viewport mapping) */
-      util_draw_texquad(pipe,
-                        0.0F, 0.0F, /* x0, y0 */
-                        (float) pt->width[dstLevel], /* x1 */
-                        (float) pt->height[dstLevel], /* y1 */
-                        0.0F);  /* z */
-
+      set_vertex_data(ctx,
+                      (float) pt->width[dstLevel],
+                      (float) pt->height[dstLevel]);
+      util_draw_vertex_buffer(ctx->pipe, ctx->vbuf,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              4,  /* verts */
+                              2); /* attribs/vert */
 
       pipe->flush(pipe, PIPE_FLUSH_WAIT);
 

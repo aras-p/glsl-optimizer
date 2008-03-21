@@ -54,14 +54,19 @@ cell_create_blend_state(struct pipe_context *pipe,
 
 
 static void
-cell_bind_blend_state(struct pipe_context *pipe, void *blend)
+cell_bind_blend_state(struct pipe_context *pipe, void *state)
 {
    struct cell_context *cell = cell_context(pipe);
+   struct cell_blend_state *blend = (struct cell_blend_state *) state;
+
 
    draw_flush(cell->draw);
 
-   cell->blend = (const struct cell_blend_state *)blend;
+   if ((blend != NULL) && (blend->code.store == NULL)) {
+      cell_generate_alpha_blend(blend, &cell->blend_color);
+   }
 
+   cell->blend = blend;
    cell->dirty |= CELL_NEW_BLEND;
 }
 
@@ -70,7 +75,7 @@ static void
 cell_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
    struct cell_blend_state *cb = (struct cell_blend_state *) blend;
-   
+
    spe_release_func(& cb->code);
    FREE(cb);
 }

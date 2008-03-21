@@ -61,6 +61,25 @@ static unsigned char attribute_fetch_code_buffer[136 * PIPE_ATTRIB_MAX]
 static unsigned char depth_stencil_code_buffer[4 * 64]
     ALIGN16_ATTRIB;
 
+static unsigned char fb_blend_code_buffer[4 * 64]
+    ALIGN16_ATTRIB;
+
+static struct spu_blend_results
+default_blend(qword frag_r, qword frag_g, qword frag_b, qword frag_a,
+              qword pixel_r, qword pixel_g, qword pixel_b, qword pixel_a,
+              qword frag_mask)
+{
+   struct spu_blend_results result;
+
+   result.r = si_selb(pixel_r, frag_r, frag_mask);
+   result.g = si_selb(pixel_g, frag_g, frag_mask);
+   result.b = si_selb(pixel_b, frag_b, frag_mask);
+   result.a = si_selb(pixel_a, frag_a, frag_mask);
+
+   return result;
+}
+
+
 /**
  * Tell the PPU that this SPU has finished copying a buffer to
  * local store and that it may be reused by the PPU.
@@ -246,14 +265,31 @@ cmd_state_framebuffer(const struct cell_command_framebuffer *cmd)
 
 
 static void
-cmd_state_blend(const struct pipe_blend_state *state)
+cmd_state_blend(const struct cell_command_blend *state)
 {
    if (Debug)
       printf("SPU %u: BLEND: enabled %d\n",
              spu.init.id,
-             state->blend_enable);
+             (state->size != 0));
 
-   memcpy(&spu.blend, state, sizeof(*state));
+   ASSERT_ALIGN16(state->base);
+
+   if (state->size != 0) {
+      mfc_get(fb_blend_code_buffer,
+              (unsigned int) state->base,  /* src */
+              ROUNDUP16(state->size),
+              TAG_BATCH_BUFFER,
+              0, /* tid */
+              0  /* rid */);
+      wait_on_mask(1 << TAG_BATCH_BUFFER);
+      spu.blend = (blend_func) fb_blend_code_buffer;
+      spu.read_fb = state->read_fb;
+   } else {
+      /* If there is no code, use the default;
+       */
+      spu.blend = default_blend;
+      spu.read_fb = FALSE;
+   }
 }
 
 
@@ -441,9 +477,8 @@ cmd_batch(uint opcode)
          pos += 1;
          break;
       case CELL_CMD_STATE_BLEND:
-         cmd_state_blend((struct pipe_blend_state *)
-                                 &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct pipe_blend_state)) / 8);
+         cmd_state_blend((struct cell_command_blend *) &buffer[pos+1]);
+         pos += (1 + ROUNDUP8(sizeof(struct cell_command_blend)) / 8);
          break;
       case CELL_CMD_STATE_DEPTH_STENCIL:
          cmd_state_depth_stencil((struct cell_command_depth_stencil_alpha_test *)
@@ -587,6 +622,9 @@ one_time_init(void)
    memset(spu.ctile_status, TILE_STATUS_DEFINED, sizeof(spu.ctile_status));
    memset(spu.ztile_status, TILE_STATUS_DEFINED, sizeof(spu.ztile_status));
    invalidate_tex_cache();
+
+   spu.blend = default_blend;
+   spu.read_fb = FALSE;
 }
 
 
