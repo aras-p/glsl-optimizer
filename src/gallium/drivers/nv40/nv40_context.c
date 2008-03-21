@@ -40,7 +40,7 @@ nv40_destroy(struct pipe_context *pipe)
 
 	if (nv40->draw)
 		draw_destroy(nv40->draw);
-	free(nv40);
+	FREE(nv40);
 }
 
 struct pipe_context *

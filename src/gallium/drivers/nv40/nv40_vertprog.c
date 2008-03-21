@@ -572,7 +572,7 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 	vpc->high_temp = -1;
 
 	if (!nv40_vertprog_prepare(vpc)) {
-		free(vpc);
+		FREE(vpc);
 		return;
 	}
 
@@ -628,7 +628,7 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 	vp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
-	free(vpc);
+	FREE(vpc);
 }
 
 static boolean
@@ -805,9 +805,9 @@ void
 nv40_vertprog_destroy(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 {
 	if (vp->nr_consts)
-		free(vp->consts);
+		FREE(vp->consts);
 	if (vp->nr_insns)
-		free(vp->insns);
+		FREE(vp->insns);
 }
 
 struct nv40_state_entry nv40_state_vertprog = {

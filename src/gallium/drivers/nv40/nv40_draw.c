@@ -158,7 +158,7 @@ nv40_render_reset_stipple_counter(struct draw_stage *draw)
 static void
 nv40_render_destroy(struct draw_stage *draw)
 {
-	free(draw);
+	FREE(draw);
 }
 
 static INLINE void

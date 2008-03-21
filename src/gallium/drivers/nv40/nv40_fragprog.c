@@ -801,7 +801,7 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 	fp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
-	free(fpc);
+	FREE(fpc);
 }
 
 static void
@@ -903,7 +903,7 @@ nv40_fragprog_destroy(struct nv40_context *nv40,
 		      struct nv40_fragment_program *fp)
 {
 	if (fp->insn_len)
-		free(fp->insn);
+		FREE(fp->insn);
 }
 
 struct nv40_state_entry nv40_state_fragprog = {

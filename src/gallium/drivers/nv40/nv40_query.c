@@ -34,7 +34,7 @@ nv40_query_destroy(struct pipe_context *pipe, struct pipe_query *pq)
 
 	if (q->object)
 		nv40->nvws->res_free(&q->object);
-	free(q);
+	FREE(q);
 }
 
 static void

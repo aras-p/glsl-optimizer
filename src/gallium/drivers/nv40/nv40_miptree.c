@@ -72,7 +72,7 @@ nv40_miptree_create(struct pipe_screen *pscreen, const struct pipe_texture *pt)
 	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
 				       mt->total_size);
 	if (!mt->buffer) {
-		free(mt);
+		FREE(mt);
 		return NULL;
 	}
 
@@ -93,9 +93,9 @@ nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 		pipe_buffer_reference(ws, &nv40mt->buffer, NULL);
 		for (l = 0; l <= mt->last_level; l++) {
 			if (nv40mt->level[l].image_offset)
-				free(nv40mt->level[l].image_offset);
+				FREE(nv40mt->level[l].image_offset);
 		}
-		free(nv40mt);
+		FREE(nv40mt);
 	}
 }
 
