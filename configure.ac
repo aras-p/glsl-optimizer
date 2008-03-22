@@ -26,9 +26,10 @@ dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-AC_PATH_PROG(MAKE, gmake, [not_found])
-if test "x$MAKE" = "xnot_found"; then
-	AC_PATH_PROG(MAKE, make)
+AC_PATH_PROG(GMAKE, gmake, [not_found])
+AC_PATH_PROG(MAKE, make)
+if test "x$GMAKE" != "xnot_found"; then
+	MAKE="$GMAKE"
 fi
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
