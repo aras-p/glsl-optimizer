@@ -242,6 +242,7 @@ void r300EmitState(r300ContextPtr r300)
 
 #define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
+#define r500fp_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->r500fp.count)
 
 static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
 {
@@ -259,6 +260,20 @@ static int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
 {
 	int cnt;
 	cnt = vpu_count(atom->cmd);
+	return cnt ? (cnt * 4) + 1 : 0;
+}
+
+static int check_r500fp(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = r500fp_count(atom->cmd);
+	return cnt ? (cnt * 6) + 1 : 0;
+}
+
+static int check_r500fp_const(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = r500fp_count(atom->cmd);
 	return cnt ? (cnt * 4) + 1 : 0;
 }
 
@@ -397,9 +412,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, 5);
 
 	if (is_r500) {
-		ALLOC_STATE(r500fp, variable, R300_FPI_CMDSIZE, 0);
+		ALLOC_STATE(r500fp, r500fp, R300_FPI_CMDSIZE, 0);
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 0, 0);
-		ALLOC_STATE(r500fp_const, variable, R300_FPI_CMDSIZE, 0);
+		ALLOC_STATE(r500fp_const, r500fp_const, R300_FPP_CMDSIZE, 0);
 		r300->hw.r500fp_const.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 1, 0);
 	} else {
 		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
@@ -416,6 +431,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
 		ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
 		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
+		ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
+		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	}
 	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, 0);
 	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(FG_FOG_BLEND, 1);
@@ -425,8 +442,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(FG_ALPHA_FUNC, 2);
 	ALLOC_STATE(fg_depth_src, always, 2, 0);
 	r300->hw.fg_depth_src.cmd[0] = cmdpacket0(R300_FG_DEPTH_SRC, 1);
-	ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
-	r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	ALLOC_STATE(rb3d_cctl, always, 2, 0);
 	r300->hw.rb3d_cctl.cmd[0] = cmdpacket0(R300_RB3D_CCTL, 1);
 	ALLOC_STATE(bld, always, R300_BLD_CMDSIZE, 0);
