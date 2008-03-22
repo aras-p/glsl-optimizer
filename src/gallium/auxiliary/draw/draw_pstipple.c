@@ -534,6 +534,12 @@ pstip_reset_stipple_counter(struct draw_stage *stage)
 static void
 pstip_destroy(struct draw_stage *stage)
 {
+   struct pstip_stage *pstip = pstip_stage(stage);
+
+   pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
+
+   pipe_texture_release(&pstip->texture);
+
    draw_free_temp_verts( stage );
    FREE( stage );
 }

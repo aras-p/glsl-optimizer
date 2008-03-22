@@ -665,7 +665,14 @@ aaline_reset_stipple_counter(struct draw_stage *stage)
 static void
 aaline_destroy(struct draw_stage *stage)
 {
+   struct aaline_stage *aaline = aaline_stage(stage);
+
+   aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
+
+   pipe_texture_release(&aaline->texture);
+
    draw_free_temp_verts( stage );
+
    FREE( stage );
 }
 
