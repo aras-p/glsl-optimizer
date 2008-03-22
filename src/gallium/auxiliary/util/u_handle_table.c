@@ -170,7 +170,7 @@ handle_table_set(struct handle_table *ht,
    unsigned index;
    
    assert(ht);
-   assert(handle > 0);
+   assert(handle);
    if(!handle)
       return 0;
 
@@ -184,7 +184,9 @@ handle_table_set(struct handle_table *ht,
    if(!handle_table_resize(ht, index))
       return 0;
 
-   assert(!ht->objects[index]);
+   if(ht->objects[index] && ht->destroy)
+      ht->destroy(ht->objects[index]);
+      
    ht->objects[index] = object;
    
    return handle;
@@ -198,13 +200,11 @@ handle_table_get(struct handle_table *ht,
    void *object;
    
    assert(ht);
-   assert(handle > 0);
-   assert(handle <= ht->size);
+   assert(handle);
    if(!handle || handle > ht->size)
       return NULL;
 
    object = ht->objects[handle - 1];
-   assert(object);
    
    return object;
 }
@@ -218,18 +218,14 @@ handle_table_remove(struct handle_table *ht,
    unsigned index;
    
    assert(ht);
-   assert(handle > 0);
-   assert(handle <= ht->size);
+   assert(handle);
    if(!handle || handle > ht->size)
       return;
 
    index = handle - 1;
    object = ht->objects[index];
-   if(!object) {
-      /* XXX: this warning may be noisy for legitimate use -- remove later */
-      debug_warning("removing empty handle");
+   if(!object)
       return;
-   }
    
    if(ht->destroy)
       ht->destroy(object);
