@@ -2296,6 +2296,20 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	}
 }
 
+#define bump_r500fp_count(ptr, new_count)   do{\
+	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
+	int _nc=(new_count)/6; \
+	assert(_nc < 256); \
+	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
+} while(0)
+
+#define bump_r500fp_const_count(ptr, new_count)   do{\
+	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
+	int _nc=(new_count)/4; \
+	assert(_nc < 256); \
+	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
+} while(0)
+
 static void r500SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
@@ -2368,6 +2382,16 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 		R500_ALU_RGBA_B_SWIZ_0 |
 		R500_ALU_RGBA_A_SWIZ_0;
 
+	bump_r500fp_count(rmesa->hw.r500fp.cmd, 12);
+
+	R300_STATECHANGE(rmesa, r500fp_const);
+	for (i = 0; i < fp->const_nr; i++) {
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(fp->constant[i][0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(fp->constant[i][1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(fp->constant[i][2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(fp->constant[i][3]);
+	}
+	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->const_nr * 4);
 
 }
 
