@@ -2325,7 +2325,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	/* emit the standard zero shader */
 	R300_STATECHANGE(rmesa, r500fp);
 	i = 1;
-	rmesa->hw.r500fp.cmd[i++] = 0x7807;
+	rmesa->hw.r500fp.cmd[i++] = 0x7808;
 	rmesa->hw.r500fp.cmd[i++] = R500_TEX_ID(0) | R500_TEX_INST_LD | R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
 	rmesa->hw.r500fp.cmd[i++] = R500_TEX_SRC_ADDR(0) |  R500_TEX_SRC_S_SWIZ_R |
 		R500_TEX_SRC_T_SWIZ_G |
