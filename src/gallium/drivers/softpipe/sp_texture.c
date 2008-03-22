@@ -81,8 +81,8 @@ softpipe_texture_layout(struct softpipe_texture * spt)
 
 
 static struct pipe_texture *
-softpipe_texture_create_screen(struct pipe_screen *screen,
-                               const struct pipe_texture *templat)
+softpipe_texture_create(struct pipe_screen *screen,
+                        const struct pipe_texture *templat)
 {
    struct pipe_winsys *ws = screen->winsys;
    struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
@@ -110,8 +110,8 @@ softpipe_texture_create_screen(struct pipe_screen *screen,
 
 
 static void
-softpipe_texture_release_screen(struct pipe_screen *screen,
-                                struct pipe_texture **pt)
+softpipe_texture_release(struct pipe_screen *screen,
+                         struct pipe_texture **pt)
 {
    if (!*pt)
       return;
@@ -136,9 +136,9 @@ softpipe_texture_release_screen(struct pipe_screen *screen,
 
 
 static struct pipe_surface *
-softpipe_get_tex_surface_screen(struct pipe_screen *screen,
-                                struct pipe_texture *pt,
-                                unsigned face, unsigned level, unsigned zslice)
+softpipe_get_tex_surface(struct pipe_screen *screen,
+                         struct pipe_texture *pt,
+                         unsigned face, unsigned level, unsigned zslice)
 {
    struct pipe_winsys *ws = screen->winsys;
    struct softpipe_texture *spt = softpipe_texture(pt);
@@ -197,7 +197,7 @@ softpipe_init_texture_funcs( struct softpipe_context *softpipe )
 void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
-   screen->texture_create = softpipe_texture_create_screen;
-   screen->texture_release = softpipe_texture_release_screen;
-   screen->get_tex_surface = softpipe_get_tex_surface_screen;
+   screen->texture_create = softpipe_texture_create;
+   screen->texture_release = softpipe_texture_release;
+   screen->get_tex_surface = softpipe_get_tex_surface;
 }
