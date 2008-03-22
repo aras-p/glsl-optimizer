@@ -132,25 +132,33 @@ static void st_delete_program( GLcontext *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
-         st_remove_vertex_program(st, stvp);
+
          if (stvp->driver_shader) {
             pipe->delete_vs_state(pipe, stvp->driver_shader);
             stvp->driver_shader = NULL;
+         }
+
+         if (stvp->state.tokens) {
+            FREE((void *) stvp->state.tokens);
+            stvp->state.tokens = NULL;
          }
       }
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       {
-         struct st_fragment_program *stfp
-            = (struct st_fragment_program *) prog;
-         st_remove_fragment_program(st, stfp);
+         struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
+
          if (stfp->driver_shader) {
             pipe->delete_fs_state(pipe, stfp->driver_shader);
             stfp->driver_shader = NULL;
          }
+         
+         if (stfp->state.tokens) {
+            FREE((void *) stfp->state.tokens);
+            stfp->state.tokens = NULL;
+         }
 
-         assert(!stfp->vertex_programs);
-
+         st_free_translated_vertex_programs(st, stfp->vertex_programs);
       }
       break;
    default:
@@ -186,12 +194,12 @@ static void st_program_string_notify( GLcontext *ctx,
          stfp->driver_shader = NULL;
       }
 
-      stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
-
       if (stfp->state.tokens) {
          FREE((void *) stfp->state.tokens);
          stfp->state.tokens = NULL;
       }
+
+      stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
 
       if (st->fp == stfp)
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
@@ -211,12 +219,12 @@ static void st_program_string_notify( GLcontext *ctx,
          stvp->draw_shader = NULL;
       }
 
-      stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
-
       if (stvp->state.tokens) {
          FREE((void *) stvp->state.tokens);
          stvp->state.tokens = NULL;
       }
+
+      stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
 
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
