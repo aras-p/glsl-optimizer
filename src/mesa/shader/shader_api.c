@@ -79,7 +79,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
          /* to prevent a double-free in the next call */
          shProg->VertexProgram->Base.Parameters = NULL;
       }
-      _mesa_delete_program(ctx, &shProg->VertexProgram->Base);
+      ctx->Driver.DeleteProgram(ctx, &shProg->VertexProgram->Base);
       shProg->VertexProgram = NULL;
    }
 
@@ -88,7 +88,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
          /* to prevent a double-free in the next call */
          shProg->FragmentProgram->Base.Parameters = NULL;
       }
-      _mesa_delete_program(ctx, &shProg->FragmentProgram->Base);
+      ctx->Driver.DeleteProgram(ctx, &shProg->FragmentProgram->Base);
       shProg->FragmentProgram = NULL;
    }
 
@@ -246,7 +246,7 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
       _mesa_free(sh->InfoLog);
    for (i = 0; i < sh->NumPrograms; i++) {
       assert(sh->Programs[i]);
-      _mesa_delete_program(ctx, sh->Programs[i]);
+      ctx->Driver.DeleteProgram(ctx, sh->Programs[i]);
    }
    if (sh->Programs)
       _mesa_free(sh->Programs);
