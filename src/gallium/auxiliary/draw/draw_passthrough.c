@@ -125,9 +125,9 @@ fetch_store_general( struct draw_context *draw,
          case PIPE_FORMAT_B8G8R8A8_UNORM:
             {
                ubyte *ub = (ubyte *) from;
-               attrib[0] = UBYTE_TO_FLOAT(ub[0]);
+               attrib[2] = UBYTE_TO_FLOAT(ub[0]);
                attrib[1] = UBYTE_TO_FLOAT(ub[1]);
-               attrib[2] = UBYTE_TO_FLOAT(ub[2]);
+               attrib[0] = UBYTE_TO_FLOAT(ub[2]);
                attrib[3] = UBYTE_TO_FLOAT(ub[3]);
             }
             break;

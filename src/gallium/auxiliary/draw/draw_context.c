@@ -37,10 +37,11 @@
 #include "draw_vbuf.h"
 
 
-
 struct draw_context *draw_create( void )
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
+   if (draw == NULL)
+      goto fail;
 
 #if defined(__i386__) || defined(__386__)
    draw->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
@@ -61,6 +62,19 @@ struct draw_context *draw_create( void )
    draw->pipeline.validate  = draw_validate_stage( draw );
    draw->pipeline.first     = draw->pipeline.validate;
 
+   if (!draw->pipeline.wide_line ||
+       !draw->pipeline.wide_point ||
+       !draw->pipeline.stipple ||
+       !draw->pipeline.unfilled ||
+       !draw->pipeline.twoside ||
+       !draw->pipeline.offset ||
+       !draw->pipeline.clip ||
+       !draw->pipeline.flatshade ||
+       !draw->pipeline.cull ||
+       !draw->pipeline.validate)
+      goto fail;
+
+
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[2],  0, -1,  0, 1 );
@@ -75,6 +89,8 @@ struct draw_context *draw_create( void )
       uint i;
       const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
       char *tmp = align_malloc(Elements(draw->vs.queue) * size, 16);
+      if (!tmp)
+         goto fail;
 
       for (i = 0; i < Elements(draw->vs.queue); i++)
 	 draw->vs.queue[i].vertex = (struct vertex_header *)(tmp + i * size);
@@ -93,22 +109,42 @@ struct draw_context *draw_create( void )
    draw_vertex_cache_invalidate( draw );
    draw_set_mapped_element_buffer( draw, 0, NULL );
 
+   if (!draw_pt_init( draw ))
+      goto fail;
+
    return draw;
+
+fail:
+   draw_destroy( draw );   
+   return NULL;
 }
 
 
 void draw_destroy( struct draw_context *draw )
 {
-   draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
-   draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
-   draw->pipeline.stipple->destroy( draw->pipeline.stipple );
-   draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
-   draw->pipeline.twoside->destroy( draw->pipeline.twoside );
-   draw->pipeline.offset->destroy( draw->pipeline.offset );
-   draw->pipeline.clip->destroy( draw->pipeline.clip );
-   draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
-   draw->pipeline.cull->destroy( draw->pipeline.cull );
-   draw->pipeline.validate->destroy( draw->pipeline.validate );
+   if (!draw)
+      return;
+
+   if (draw->pipeline.wide_line)
+      draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
+   if (draw->pipeline.wide_point)
+      draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
+   if (draw->pipeline.stipple)
+      draw->pipeline.stipple->destroy( draw->pipeline.stipple );
+   if (draw->pipeline.unfilled)
+      draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
+   if (draw->pipeline.twoside)
+      draw->pipeline.twoside->destroy( draw->pipeline.twoside );
+   if (draw->pipeline.offset)
+      draw->pipeline.offset->destroy( draw->pipeline.offset );
+   if (draw->pipeline.clip)
+      draw->pipeline.clip->destroy( draw->pipeline.clip );
+   if (draw->pipeline.flatshade)
+      draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
+   if (draw->pipeline.cull)
+      draw->pipeline.cull->destroy( draw->pipeline.cull );
+   if (draw->pipeline.validate)
+      draw->pipeline.validate->destroy( draw->pipeline.validate );
    if (draw->pipeline.aaline)
       draw->pipeline.aaline->destroy( draw->pipeline.aaline );
    if (draw->pipeline.aapoint)
@@ -117,14 +153,19 @@ void draw_destroy( struct draw_context *draw )
       draw->pipeline.pstipple->destroy( draw->pipeline.pstipple );
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
+
    tgsi_exec_machine_free_data(&draw->machine);
-   align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
+   
+   if (draw->vs.queue[0].vertex)
+      align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
    if (draw->render)
       draw->render->destroy( draw->render );
    */
+
+   draw_pt_destroy( draw );
 
    FREE( draw );
 }
