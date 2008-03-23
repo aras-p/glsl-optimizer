@@ -41,6 +41,7 @@ struct nv40_fpc {
 	uint colour_id;
 
 	unsigned inst_offset;
+	unsigned have_const;
 
 	struct {
 		int pipe;
@@ -113,7 +114,11 @@ emit_src(struct nv40_fpc *fpc, int pos, struct nv40_sreg src)
 		sr |= (src.index << NV40_FP_REG_SRC_SHIFT);
 		break;
 	case NV40SR_CONST:
-		grow_insns(fpc, 4);
+		if (!fpc->have_const) {
+			grow_insns(fpc, 4);
+			fpc->have_const = 1;
+		}
+
 		hw = &fp->insn[fpc->inst_offset];
 		if (fpc->consts[src.index].pipe >= 0) {
 			struct nv40_fragment_program_data *fpd;
@@ -190,6 +195,7 @@ nv40_fp_arith(struct nv40_fpc *fpc, int sat, int op,
 	uint32_t *hw;
 
 	fpc->inst_offset = fp->insn_len;
+	fpc->have_const = 0;
 	grow_insns(fpc, 4);
 	hw = &fp->insn[fpc->inst_offset];
 	memset(hw, 0, sizeof(uint32_t) * 4);
