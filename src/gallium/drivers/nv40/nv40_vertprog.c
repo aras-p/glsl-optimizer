@@ -42,10 +42,11 @@ struct nv40_vpc {
 
 	struct nv40_vertex_program_exec *vpi;
 
-	unsigned output_map[PIPE_MAX_SHADER_OUTPUTS];
-
-	int high_temp;
-	int temp_temp_count;
+	unsigned r_temps;
+	unsigned r_temps_discard;
+	struct nv40_sreg r_result[PIPE_MAX_SHADER_OUTPUTS];
+	struct nv40_sreg *r_address;
+	struct nv40_sreg *r_temp;
 
 	struct nv40_sreg *imm;
 	unsigned nr_imm;
@@ -54,11 +55,24 @@ struct nv40_vpc {
 static struct nv40_sreg
 temp(struct nv40_vpc *vpc)
 {
-	int idx;
+	int idx = ffs(~vpc->r_temps) - 1;
 
-	idx  = vpc->temp_temp_count++;
-	idx += vpc->high_temp + 1;
+	if (idx < 0) {
+		NOUVEAU_ERR("out of temps!!\n");
+		assert(0);
+		return nv40_sr(NV40SR_TEMP, 0);
+	}
+
+	vpc->r_temps |= (1 << idx);
+	vpc->r_temps_discard |= (1 << idx);
 	return nv40_sr(NV40SR_TEMP, idx);
+}
+
+static INLINE void
+release_temps(struct nv40_vpc *vpc)
+{
+	vpc->r_temps &= ~vpc->r_temps_discard;
+	vpc->r_temps_discard = 0;
 }
 
 static struct nv40_sreg
@@ -257,9 +271,7 @@ tgsi_src(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 		src = vpc->imm[fsrc->SrcRegister.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		if (vpc->high_temp < fsrc->SrcRegister.Index)
-			vpc->high_temp = fsrc->SrcRegister.Index;
-		src = nv40_sr(NV40SR_TEMP, fsrc->SrcRegister.Index);
+		src = vpc->r_temp[fsrc->SrcRegister.Index];
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -281,14 +293,13 @@ tgsi_dst(struct nv40_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
 
 	switch (fdst->DstRegister.File) {
 	case TGSI_FILE_OUTPUT:
-		dst = nv40_sr(NV40SR_OUTPUT,
-			      vpc->output_map[fdst->DstRegister.Index]);
-
+		dst = vpc->r_result[fdst->DstRegister.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		dst = nv40_sr(NV40SR_TEMP, fdst->DstRegister.Index);
-		if (vpc->high_temp < dst.index)
-			vpc->high_temp = dst.index;
+		dst = vpc->r_temp[fdst->DstRegister.Index];
+		break;
+	case TGSI_FILE_ADDRESS:
+		dst = vpc->r_address[fdst->DstRegister.Index];
 		break;
 	default:
 		NOUVEAU_ERR("bad dst file\n");
@@ -323,7 +334,6 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
 		return TRUE;
 
-	vpc->temp_temp_count = 0;
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
@@ -471,6 +481,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 		return FALSE;
 	}
 
+	release_temps(vpc);
 	return TRUE;
 }
 
@@ -478,6 +489,7 @@ static boolean
 nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 				const struct tgsi_full_declaration *fdec)
 {
+	unsigned idx = fdec->u.DeclarationRange.First;
 	int hw;
 
 	switch (fdec->Semantic.SemanticName) {
@@ -525,7 +537,7 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 		return FALSE;
 	}
 
-	vpc->output_map[fdec->u.DeclarationRange.First] = hw;
+	vpc->r_result[idx] = nv40_sr(NV40SR_OUTPUT, hw);
 	return TRUE;
 }
 
@@ -533,7 +545,7 @@ static boolean
 nv40_vertprog_prepare(struct nv40_vpc *vpc)
 {
 	struct tgsi_parse_context p;
-	int nr_imm = 0;
+	int high_temp = -1, high_addr = -1, nr_imm = 0, i;
 
 	tgsi_parse_init(&p, vpc->vp->pipe.tokens);
 	while (!tgsi_parse_end_of_tokens(&p)) {
@@ -544,6 +556,48 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 			nr_imm++;
 			break;
+		case TGSI_TOKEN_TYPE_DECLARATION:
+		{
+			const struct tgsi_full_declaration *fdec;
+
+			fdec = &p.FullToken.FullDeclaration;
+			switch (fdec->Declaration.File) {
+			case TGSI_FILE_TEMPORARY:
+				if (fdec->u.DeclarationRange.Last > high_temp) {
+					high_temp =
+						fdec->u.DeclarationRange.Last;
+				}
+				break;
+#if 0 /* this would be nice.. except gallium doesn't track it */
+			case TGSI_FILE_ADDRESS:
+				if (fdec->u.DeclarationRange.Last > high_addr) {
+					high_addr =
+						fdec->u.DeclarationRange.Last;
+				}
+				break;
+#endif
+			default:
+				break;
+			}
+		}
+			break;
+#if 1 /* yay, parse instructions looking for address regs instead */
+		case TGSI_TOKEN_TYPE_INSTRUCTION:
+		{
+			const struct tgsi_full_instruction *finst;
+			const struct tgsi_full_dst_register *fdst;
+
+			finst = &p.FullToken.FullInstruction;
+			fdst = &finst->FullDstRegisters[0];
+
+			if (fdst->DstRegister.File == TGSI_FILE_ADDRESS) {
+				if (fdst->DstRegister.Index > high_addr)
+					high_addr = fdst->DstRegister.Index;
+			}
+		
+		}
+			break;
+#endif
 		default:
 			break;
 		}
@@ -555,6 +609,19 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 		assert(vpc->imm);
 	}
 
+	if (++high_temp) {
+		vpc->r_temp = CALLOC(high_temp, sizeof(struct nv40_sreg));
+		for (i = 0; i < high_temp; i++)
+			vpc->r_temp[i] = temp(vpc);
+	}
+
+	if (++high_addr) {
+		vpc->r_address = CALLOC(high_addr, sizeof(struct nv40_sreg));
+		for (i = 0; i < high_addr; i++)
+			vpc->r_address[i] = temp(vpc);
+	}
+
+	vpc->r_temps_discard = 0;
 	return TRUE;
 }
 
@@ -569,7 +636,6 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 	if (!vpc)
 		return;
 	vpc->vp = vp;
-	vpc->high_temp = -1;
 
 	if (!nv40_vertprog_prepare(vpc)) {
 		FREE(vpc);
