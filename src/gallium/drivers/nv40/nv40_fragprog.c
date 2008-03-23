@@ -58,7 +58,7 @@ temp(struct nv40_fpc *fpc)
 	int idx;
 
 	idx  = fpc->temp_temp_count++;
-	idx += fpc->high_temp + 1;
+	idx += fpc->high_temp + 2;
 	return nv40_sr(NV40SR_TEMP, idx);
 }
 
@@ -817,7 +817,9 @@ nv40_fragprog_upload(struct nv40_context *nv40,
 
 #if 0
 	for (i = 0; i < fp->insn_len; i++) {
+		fflush(stdout); fflush(stderr);
 		NOUVEAU_ERR("%d 0x%08x\n", i, fp->insn[i]);
+		fflush(stdout); fflush(stderr);
 	}
 #endif
 
