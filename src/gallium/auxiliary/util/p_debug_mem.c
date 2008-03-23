@@ -165,7 +165,7 @@ debug_memory_report(void)
       hdr = LIST_ENTRY(struct debug_memory_header, entry, head);
       ptr = (void *)((char *)hdr + sizeof(*hdr));
       if(hdr->no >= start_no)
-	 debug_printf("%s:%u:%s: %u byte st %p not freed\n",
+	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
 		      hdr->file, hdr->line, hdr->function,
 		      hdr->size, ptr);
    }
