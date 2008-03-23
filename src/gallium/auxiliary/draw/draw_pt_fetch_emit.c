@@ -135,30 +135,24 @@ static void fetch_R32_FLOAT( const void *from,
    attrib[3] = 1.0;
 }
 
-static void fetch_HEADER( const void *from,
-                          float *attrib )
-{
-   attrib[0] = 0;
-}
 
-
-static void emit_1F( const float *attrib,
-                     float **out )
+static void emit_R32_FLOAT( const float *attrib,
+                            float **out )
 {
    (*out)[0] = attrib[0];
    (*out) += 1;
 }
 
-static void emit_2F( const float *attrib,
-                     float **out )
+static void emit_R32G32_FLOAT( const float *attrib,
+                               float **out )
 {
    (*out)[0] = attrib[0];
    (*out)[1] = attrib[1];
    (*out) += 2;
 }
 
-static void emit_3F( const float *attrib,
-                     float **out )
+static void emit_R32G32B32_FLOAT( const float *attrib,
+                                  float **out )
 {
    (*out)[0] = attrib[0];
    (*out)[1] = attrib[1];
@@ -166,8 +160,8 @@ static void emit_3F( const float *attrib,
    (*out) += 3;
 }
 
-static void emit_4F( const float *attrib,
-                     float **out )
+static void emit_R32G32B32A32_FLOAT( const float *attrib,
+                                     float **out )
 {
    (*out)[0] = attrib[0];
    (*out)[1] = attrib[1];
@@ -211,6 +205,7 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
 
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
 {
+   static const float zero = 0;
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    const struct vertex_info *vinfo = draw->render->get_vertex_info(draw->render);
@@ -251,28 +246,28 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
          
       switch (vinfo->emit[i]) {
       case EMIT_4F:
-         feme->fetch[i].emit = emit_4F;
+         feme->fetch[i].emit = emit_R32G32B32A32_FLOAT;
          break;
       case EMIT_3F:
-         feme->fetch[i].emit = emit_3F;
+         feme->fetch[i].emit = emit_R32G32B32_FLOAT;
          break;
       case EMIT_2F:
-         feme->fetch[i].emit = emit_2F;
+         feme->fetch[i].emit = emit_R32G32_FLOAT;
          break;
       case EMIT_1F:
-         feme->fetch[i].emit = emit_1F;
+         feme->fetch[i].emit = emit_R32_FLOAT;
          break;
       case EMIT_HEADER:
-         feme->fetch[i].ptr = NULL;
+         feme->fetch[i].ptr = (const ubyte *)&zero;
          feme->fetch[i].pitch = 0;
-         feme->fetch[i].fetch = fetch_HEADER;
-         feme->fetch[i].emit = emit_1F;
+         feme->fetch[i].fetch = fetch_R32_FLOAT;
+         feme->fetch[i].emit = emit_R32_FLOAT;
          break;
       case EMIT_1F_PSIZE:
          feme->fetch[i].ptr = (const ubyte *)&feme->draw->rasterizer->point_size;
          feme->fetch[i].pitch = 0;
          feme->fetch[i].fetch = fetch_R32_FLOAT;
-         feme->fetch[i].emit = emit_1F;
+         feme->fetch[i].emit = emit_R32_FLOAT;
       default:
          assert(0);
          feme->fetch[i].emit = NULL;
