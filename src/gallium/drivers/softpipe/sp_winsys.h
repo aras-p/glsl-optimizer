@@ -37,6 +37,12 @@
 
 #include "pipe/p_compiler.h" /* for boolean */
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 enum pipe_format;
 
 struct softpipe_winsys {
@@ -59,5 +65,9 @@ struct pipe_context *softpipe_create( struct pipe_screen *,
 struct pipe_screen *
 softpipe_create_screen(struct pipe_winsys *);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SP_WINSYS_H */
