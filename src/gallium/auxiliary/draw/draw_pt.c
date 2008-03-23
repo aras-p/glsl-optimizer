@@ -114,7 +114,7 @@ draw_pt_arrays(struct draw_context *draw,
       middle = draw->pt.middle.fetch_shade_cliptest_pipeline;
    }
 #else
-   if (cliptest /*|| pipeline*/ || shading)
+   if (cliptest || pipeline || shading)
       return FALSE;
 
    middle = draw->pt.middle.fetch_emit;
