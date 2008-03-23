@@ -34,20 +34,14 @@
 
 
 /**
- * Check if we need any special pipeline stages, or whether prims/verts
- * can go through untouched.
+ * Check if we need any special pipeline stages, or whether
+ * prims/verts can go through untouched.  Don't test for bypass
+ * clipping or vs modes, this function is just about the primitive
+ * pipeline stages.
  */
 boolean
 draw_need_pipeline(const struct draw_context *draw)
 {
-   /* clipping */
-   if (!draw->rasterizer->bypass_clipping)
-      return TRUE;
-
-   /* vertex shader */
-   if (!draw->rasterizer->bypass_vs)
-      return TRUE;
-
    /* line stipple */
    if (draw->rasterizer->line_stipple_enable && draw->line_stipple)
       return TRUE;
@@ -72,6 +66,11 @@ draw_need_pipeline(const struct draw_context *draw)
    if (draw->rasterizer->poly_stipple_enable && draw->pipeline.pstipple)
       return TRUE;
 
+   /* unfilled polygons */
+   if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
+       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL)
+      return TRUE;
+
    /* polygon offset */
    if (draw->rasterizer->offset_cw || draw->rasterizer->offset_ccw)
       return TRUE;
@@ -84,9 +83,14 @@ draw_need_pipeline(const struct draw_context *draw)
    if (draw->rasterizer->light_twoside)
       return TRUE;
 
-   /* polygon cull */
+   /* polygon cull - this is difficult - hardware can cull just fine
+    * most of the time (though sometimes CULL_NEITHER is unsupported.
+    * 
+    * Generally this isn't a reason to require the pipeline, though.
+    *
    if (draw->rasterizer->cull_mode)
       return TRUE;
+    */
 
    return FALSE;
 }
