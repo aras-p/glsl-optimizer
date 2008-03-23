@@ -33,12 +33,12 @@ struct nv40_fpc {
 
 	uint attrib_map[PIPE_MAX_SHADER_INPUTS];
 
-	int high_temp;
-	int temp_temp_count;
-	int num_regs;
+	unsigned r_temps;
+	unsigned r_temps_discard;
+	struct nv40_sreg r_result[PIPE_MAX_SHADER_OUTPUTS];
+	struct nv40_sreg *r_temp;
 
-	uint depth_id;
-	uint colour_id;
+	int num_regs;
 
 	unsigned inst_offset;
 	unsigned have_const;
@@ -56,11 +56,24 @@ struct nv40_fpc {
 static INLINE struct nv40_sreg
 temp(struct nv40_fpc *fpc)
 {
-	int idx;
+	int idx = ffs(~fpc->r_temps) - 1;
 
-	idx  = fpc->temp_temp_count++;
-	idx += fpc->high_temp + 2;
+	if (idx < 0) {
+		NOUVEAU_ERR("out of temps!!\n");
+		assert(0);
+		return nv40_sr(NV40SR_TEMP, 0);
+	}
+
+	fpc->r_temps |= (1 << idx);
+	fpc->r_temps_discard |= (1 << idx);
 	return nv40_sr(NV40SR_TEMP, idx);
+}
+
+static INLINE void
+release_temps(struct nv40_fpc *fpc)
+{
+	fpc->r_temps &= ~fpc->r_temps_discard;
+	fpc->r_temps_discard = 0;
 }
 
 static INLINE struct nv40_sreg
@@ -254,18 +267,11 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 		src = fpc->imm[fsrc->SrcRegister.Index];
 		break;
 	case TGSI_FILE_TEMPORARY:
-		src = nv40_sr(NV40SR_TEMP, fsrc->SrcRegister.Index + 1);
-		if (fpc->high_temp < src.index)
-			fpc->high_temp = src.index;
+		src = fpc->r_temp[fsrc->SrcRegister.Index];
 		break;
-	/* This is clearly insane, but gallium hands us shaders like this.
-	 * Luckily fragprog results are just temp regs..
-	 */
+	/* NV40 fragprog result regs are just temps, so this is simple */
 	case TGSI_FILE_OUTPUT:
-		if (fsrc->SrcRegister.Index == fpc->colour_id)
-			return nv40_sr(NV40SR_OUTPUT, 0);
-		else
-			return nv40_sr(NV40SR_OUTPUT, 1);
+		src = fpc->r_result[fsrc->SrcRegister.Index];
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -283,20 +289,11 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 
 static INLINE struct nv40_sreg
 tgsi_dst(struct nv40_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
-	int idx;
-
 	switch (fdst->DstRegister.File) {
 	case TGSI_FILE_OUTPUT:
-		if (fdst->DstRegister.Index == fpc->colour_id)
-			return nv40_sr(NV40SR_OUTPUT, 0);
-		else
-			return nv40_sr(NV40SR_OUTPUT, 1);
-		break;
+		return fpc->r_result[fdst->DstRegister.Index];
 	case TGSI_FILE_TEMPORARY:
-		idx = fdst->DstRegister.Index + 1;
-		if (fpc->high_temp < idx)
-			fpc->high_temp = idx;
-		return nv40_sr(NV40SR_TEMP, idx);
+		return fpc->r_temp[fdst->DstRegister.Index];
 	case TGSI_FILE_NULL:
 		return nv40_sr(NV40SR_NONE, 0);
 	default:
@@ -390,7 +387,6 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
 		return TRUE;
 
-	fpc->temp_temp_count = 0;
 	for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
 		const struct tgsi_full_src_register *fsrc;
 
@@ -670,6 +666,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		return FALSE;
 	}
 
+	release_temps(fpc);
 	return TRUE;
 }
 
@@ -719,19 +716,106 @@ static boolean
 nv40_fragprog_parse_decl_output(struct nv40_fpc *fpc,
 				const struct tgsi_full_declaration *fdec)
 {
+	unsigned idx = fdec->u.DeclarationRange.First;
+	unsigned hw;
+
 	switch (fdec->Semantic.SemanticName) {
 	case TGSI_SEMANTIC_POSITION:
-		fpc->depth_id = fdec->u.DeclarationRange.First;
+		hw = 1;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		fpc->colour_id = fdec->u.DeclarationRange.First;
+		switch (idx) {
+		case 0: hw = 0; break;
+		case 1: hw = 2; break;
+		case 2: hw = 3; break;
+		case 3: hw = 4; break;
+		default:
+			NOUVEAU_ERR("bad rcol index\n");
+			return FALSE;
+		}
 		break;
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
 		return FALSE;
 	}
 
+	fpc->r_result[idx] = nv40_sr(NV40SR_OUTPUT, hw);
+	fpc->r_temps |= (1 << hw);
 	return TRUE;
+}
+
+static boolean
+nv40_fragprog_prepare(struct nv40_fpc *fpc)
+{
+	struct tgsi_parse_context p;
+	int high_temp = -1, i;
+
+	tgsi_parse_init(&p, fpc->fp->pipe.tokens);
+	while (!tgsi_parse_end_of_tokens(&p)) {
+		const union tgsi_full_token *tok = &p.FullToken;
+
+		tgsi_parse_token(&p);
+		switch(tok->Token.Type) {
+		case TGSI_TOKEN_TYPE_DECLARATION:
+		{
+			const struct tgsi_full_declaration *fdec;
+			fdec = &p.FullToken.FullDeclaration;
+			switch (fdec->Declaration.File) {
+			case TGSI_FILE_INPUT:
+				if (!nv40_fragprog_parse_decl_attrib(fpc, fdec))
+					goto out_err;
+				break;
+			case TGSI_FILE_OUTPUT:
+				if (!nv40_fragprog_parse_decl_output(fpc, fdec))
+					goto out_err;
+				break;
+			case TGSI_FILE_TEMPORARY:
+				if (fdec->u.DeclarationRange.Last > high_temp) {
+					high_temp =
+						fdec->u.DeclarationRange.Last;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+			break;
+		case TGSI_TOKEN_TYPE_IMMEDIATE:
+		{
+			struct tgsi_full_immediate *imm;
+			float vals[4];
+			
+			imm = &p.FullToken.FullImmediate;
+			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
+			assert(fpc->nr_imm < MAX_IMM);
+
+			vals[0] = imm->u.ImmediateFloat32[0].Float;
+			vals[1] = imm->u.ImmediateFloat32[1].Float;
+			vals[2] = imm->u.ImmediateFloat32[2].Float;
+			vals[3] = imm->u.ImmediateFloat32[3].Float;
+			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
+		}
+			break;
+		default:
+			break;
+		}
+	}
+	tgsi_parse_free(&p);
+
+	if (++high_temp) {
+		fpc->r_temp = CALLOC(high_temp, sizeof(struct nv40_sreg));
+		for (i = 0; i < high_temp; i++)
+			fpc->r_temp[i] = temp(fpc);
+		fpc->r_temps_discard = 0;
+	}
+
+	return TRUE;
+
+out_err:
+	if (fpc->r_temp)
+		FREE(fpc->r_temp);
+	tgsi_parse_free(&p);
+	return FALSE;
 }
 
 static void
@@ -745,8 +829,12 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 	if (!fpc)
 		return;
 	fpc->fp = fp;
-	fpc->high_temp = -1;
 	fpc->num_regs = 2;
+
+	if (!nv40_fragprog_prepare(fpc)) {
+		FREE(fpc);
+		return;
+	}
 
 	tgsi_parse_init(&parse, fp->pipe.tokens);
 
@@ -754,40 +842,6 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 		tgsi_parse_token(&parse);
 
 		switch (parse.FullToken.Token.Type) {
-		case TGSI_TOKEN_TYPE_DECLARATION:
-		{
-			const struct tgsi_full_declaration *fdec;
-			fdec = &parse.FullToken.FullDeclaration;
-			switch (fdec->Declaration.File) {
-			case TGSI_FILE_INPUT:
-				if (!nv40_fragprog_parse_decl_attrib(fpc, fdec))
-					goto out_err;
-				break;
-			case TGSI_FILE_OUTPUT:
-				if (!nv40_fragprog_parse_decl_output(fpc, fdec))
-					goto out_err;
-				break;
-			default:
-				break;
-			}
-		}
-			break;
-		case TGSI_TOKEN_TYPE_IMMEDIATE:
-		{
-			struct tgsi_full_immediate *imm;
-			float vals[4];
-			
-			imm = &parse.FullToken.FullImmediate;
-			assert(imm->Immediate.DataType == TGSI_IMM_FLOAT32);
-			assert(fpc->nr_imm < MAX_IMM);
-
-			vals[0] = imm->u.ImmediateFloat32[0].Float;
-			vals[1] = imm->u.ImmediateFloat32[1].Float;
-			vals[2] = imm->u.ImmediateFloat32[2].Float;
-			vals[3] = imm->u.ImmediateFloat32[3].Float;
-			fpc->imm[fpc->nr_imm++] = constant(fpc, -1, vals);
-		}
-			break;
 		case TGSI_TOKEN_TYPE_INSTRUCTION:
 		{
 			const struct tgsi_full_instruction *finst;
@@ -818,6 +872,8 @@ nv40_fragprog_translate(struct nv40_context *nv40,
 	fp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
+	if (fpc->r_temp)
+		FREE(fpc->r_temp);
 	FREE(fpc);
 }
 
