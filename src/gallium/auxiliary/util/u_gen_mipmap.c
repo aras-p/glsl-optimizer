@@ -719,7 +719,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
-   ctx->sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
    ctx->sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    ctx->sampler.normalized_coords = 1;
 
@@ -849,11 +848,12 @@ simple_viewport(struct pipe_context *pipe, uint width, uint height)
  * \param face  which cube face to generate mipmaps for (0 for non-cube maps)
  * \param baseLevel  the first mipmap level to use as a src
  * \param lastLevel  the last mipmap level to generate
+ * \param filter  the minification filter used to generate mipmap levels with
  */
 void
-util_gen_mipmap(struct gen_mipmap_state *ctx,
-                struct pipe_texture *pt,
-                uint face, uint baseLevel, uint lastLevel)
+util_gen_mipmap_filter(struct gen_mipmap_state *ctx,
+                       struct pipe_texture *pt,
+                       uint face, uint baseLevel, uint lastLevel, uint filter)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
@@ -914,6 +914,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        */
       ctx->sampler.min_lod = ctx->sampler.max_lod = (float) srcLevel;
       ctx->sampler.lod_bias = (float) srcLevel;
+      ctx->sampler.min_img_filter = filter;
       cso_single_sampler(ctx->cso, 0, &ctx->sampler);
       cso_single_sampler_done(ctx->cso);
 #if 0
@@ -944,4 +945,22 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_samplers(ctx->cso);
    cso_restore_sampler_textures(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
+}
+
+
+/**
+ * Generate mipmap images with a linear minification filter.
+ * See util_gen_mipmap_filter for more info.
+ *
+ * \param pt  the texture to generate mipmap levels for
+ * \param face  which cube face to generate mipmaps for (0 for non-cube maps)
+ * \param baseLevel  the first mipmap level to use as a src
+ * \param lastLevel  the last mipmap level to generate
+ */
+void
+util_gen_mipmap(struct gen_mipmap_state *ctx,
+                struct pipe_texture *pt,
+                uint face, uint baseLevel, uint lastLevel)
+{
+   util_gen_mipmap_filter( ctx, pt, face, baseLevel, lastLevel, PIPE_TEX_FILTER_LINEAR );
 }

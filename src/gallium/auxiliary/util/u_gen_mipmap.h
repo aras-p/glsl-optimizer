@@ -52,5 +52,10 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
                 struct pipe_texture *pt,
                 uint face, uint baseLevel, uint lastLevel);
 
+extern void
+util_gen_mipmap_filter(struct gen_mipmap_state *ctx,
+                       struct pipe_texture *pt,
+                       uint face, uint baseLevel, uint lastLevel, uint filter);
+
 
 #endif
