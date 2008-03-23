@@ -225,6 +225,29 @@ debug_dump_flags(const struct debug_named_value *names,
                  unsigned long value);
 
 
+void *
+debug_malloc(const char *file, unsigned line, const char *function,
+             size_t size);
+
+void
+debug_free(const char *file, unsigned line, const char *function,
+           void *ptr);
+
+void *
+debug_calloc(const char *file, unsigned line, const char *function,
+             size_t count, size_t size );
+
+void *
+debug_realloc(const char *file, unsigned line, const char *function,
+              void *old_ptr, size_t old_size, size_t new_size );
+
+void 
+debug_memory_reset(void);
+
+void 
+debug_memory_report(void);
+
+
 #ifdef	__cplusplus
 }
 #endif

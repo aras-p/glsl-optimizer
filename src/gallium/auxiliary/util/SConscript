@@ -4,6 +4,7 @@ util = env.ConvenienceLibrary(
 	target = 'util',
 	source = [
 		'p_debug.c',
+		'p_debug_mem.c',
 		'p_tile.c',
 		'p_util.c',
 		'u_blit.c',
