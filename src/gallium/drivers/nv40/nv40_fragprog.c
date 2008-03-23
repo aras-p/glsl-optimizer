@@ -384,7 +384,7 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
 	struct nv40_sreg src[3], dst, tmp;
 	int mask, sat, unit;
-	int ai = -1, ci = -1;
+	int ai = -1, ci = -1, ii = -1;
 	int i;
 
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
@@ -428,9 +428,20 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 			}
 			break;
 		case TGSI_FILE_CONSTANT:
-		case TGSI_FILE_IMMEDIATE:
-			if (ci == -1 || ci == fsrc->SrcRegister.Index) {
+			if ((ci == -1 && ii == -1) ||
+			    ci == fsrc->SrcRegister.Index) {
 				ci = fsrc->SrcRegister.Index;
+				src[i] = tgsi_src(fpc, fsrc);
+			} else {
+				src[i] = temp(fpc);
+				arith(fpc, 0, MOV, src[i], MASK_ALL,
+				      tgsi_src(fpc, fsrc), none, none);
+			}
+			break;
+		case TGSI_FILE_IMMEDIATE:
+			if ((ci == -1 && ii == -1) ||
+			    ii == fsrc->SrcRegister.Index) {
+				ii = fsrc->SrcRegister.Index;
 				src[i] = tgsi_src(fpc, fsrc);
 			} else {
 				src[i] = temp(fpc);
