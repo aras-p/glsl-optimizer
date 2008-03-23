@@ -32,6 +32,7 @@
 
 #include "main/imports.h"
 #include "main/image.h"
+#include "main/bufferobj.h"
 #include "main/macros.h"
 #include "main/texformat.h"
 #include "shader/program.h"
@@ -191,7 +192,6 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 }
 
 
-
 /**
  * Create a texture which represents a bitmap image.
  */
@@ -224,19 +224,20 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       assert( 0 );
    }
 
+   /* PBO source... */
+   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   if (!bitmap) {
+      return NULL;
+   }
+
    /**
-    * Create a texture.
+    * Create texture to hold bitmap pattern.
     */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
 			  1, 0);
-   if (!pt)
+   if (!pt) {
+      _mesa_unmap_bitmap_pbo(ctx, unpack);
       return NULL;
-
-   if (unpack->BufferObj && unpack->BufferObj->Name) {
-      /*
-      pt->region = buffer_object_region(unpack->BufferObj);
-      */
-      printf("st_Bitmap (sourcing from PBO not implemented yet)\n");
    }
 
    surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
@@ -300,6 +301,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       }
 
    } /* row */
+
+   _mesa_unmap_bitmap_pbo(ctx, unpack);
 
    /* Release surface */
    pipe_surface_unmap(surface);

@@ -260,6 +260,16 @@ st_translate_vertex_program(struct st_context *st,
       outputMapping = defaultOutputMapping;
    }
 
+   /* free old shader state, if any */
+   if (stvp->state.tokens) {
+      FREE((void *) stvp->state.tokens);
+      stvp->state.tokens = NULL;
+   }
+   if (stvp->driver_shader) {
+      pipe->delete_vs_state(pipe, stvp->driver_shader);
+      stvp->driver_shader = NULL;
+   }
+
    /* XXX: fix static allocation of tokens:
     */
    num_tokens = tgsi_translate_mesa_program( TGSI_PROCESSOR_VERTEX,

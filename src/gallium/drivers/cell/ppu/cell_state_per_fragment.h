@@ -29,7 +29,6 @@ extern void
 cell_generate_depth_stencil_test(struct cell_depth_stencil_alpha_state *cdsa);
 
 extern void
-cell_generate_alpha_blend(struct cell_blend_state *cb,
-			  const struct pipe_blend_color *blend_color);
+cell_generate_alpha_blend(struct cell_blend_state *cb);
 
 #endif /* CELL_STATE_PER_FRAGMENT_H */

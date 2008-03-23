@@ -31,10 +31,8 @@
 
 
 extern void
-st_remove_vertex_program(struct st_context *, struct st_vertex_program *);
-
-extern void
-st_remove_fragment_program(struct st_context *, struct st_fragment_program *);
+st_free_translated_vertex_programs(struct st_context *st,
+                                   struct translated_vertex_program *xvp);
 
 
 #endif /* ST_ATOM_SHADER_H */

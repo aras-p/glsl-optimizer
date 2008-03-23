@@ -38,16 +38,19 @@ extern "C" {
 #endif
 
 /**
- * The PIPE_FORMAT is a 32-bit wide bitfield that encodes all the information
- * needed to uniquely describe a pixel format.
+ * The pipe_format enum is a 32-bit wide bitfield that encodes all the
+ * information needed to uniquely describe a pixel format.
  */
 
 /**
- * Possible format layouts -- occupy first 2 bits. The interpretation of
- * the remaining 30 bits depends on a particual format layout.
+ * Possible format layouts are encoded in the first 2 bits.
+ * The interpretation of the remaining 30 bits depends on a particular
+ * format layout.
  */
 #define PIPE_FORMAT_LAYOUT_RGBAZS   0
 #define PIPE_FORMAT_LAYOUT_YCBCR    1
+#define PIPE_FORMAT_LAYOUT_DXT      2  /**< XXX temporary? */
+
 
 static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
 {
@@ -74,11 +77,13 @@ static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
  * Format types for RGBAZS layout.
  */
 #define PIPE_FORMAT_TYPE_UNKNOWN 0
-#define PIPE_FORMAT_TYPE_FLOAT   1
-#define PIPE_FORMAT_TYPE_UNORM   2
-#define PIPE_FORMAT_TYPE_SNORM   3
-#define PIPE_FORMAT_TYPE_USCALED 4
-#define PIPE_FORMAT_TYPE_SSCALED 5
+#define PIPE_FORMAT_TYPE_FLOAT   1  /**< 16/32/64-bit/channel formats */
+#define PIPE_FORMAT_TYPE_UNORM   2  /**< uints, normalized to [0,1] */
+#define PIPE_FORMAT_TYPE_SNORM   3  /**< ints, normalized to [-1,1] */
+#define PIPE_FORMAT_TYPE_USCALED 4  /**< uints, not normalized */
+#define PIPE_FORMAT_TYPE_SSCALED 5  /**< ints, not normalized */
+#define PIPE_FORMAT_TYPE_SRGB    6  /**< sRGB colorspace */
+
 
 /**
  * Because the destination vector is assumed to be RGBA FLOAT, we
@@ -196,6 +201,20 @@ static INLINE uint pf_rev(pipe_format_ycbcr_t f)
    return (f >> 2) & 0x1;
 }
 
+
+/**
+  * Compresssed format layouts (this will probably change)
+  */
+#define _PIPE_FORMAT_DXT( LEVEL, RSIZE, GSIZE, BSIZE, ASIZE ) \
+   ((PIPE_FORMAT_LAYOUT_DXT << 0) | \
+    ((LEVEL) << 2) | \
+    ((RSIZE) << 5) | \
+    ((GSIZE) << 8) | \
+    ((BSIZE) << 11) | \
+    ((ASIZE) << 14) )
+
+
+
 /**
  * Texture/surface image formats (preliminary)
  */
@@ -281,11 +300,23 @@ enum pipe_format {
    PIPE_FORMAT_R8_SSCALED            = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_R000, 1, 0, 0, 0, PIPE_FORMAT_TYPE_SSCALED ),
    PIPE_FORMAT_R8G8_SSCALED          = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RG00, 1, 1, 0, 0, PIPE_FORMAT_TYPE_SSCALED ),
    PIPE_FORMAT_R8G8B8_SSCALED        = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGB0, 1, 1, 1, 0, PIPE_FORMAT_TYPE_SSCALED ),
-   PIPE_FORMAT_R8G8B8A8_SSCALED      = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SSCALED )
+   PIPE_FORMAT_R8G8B8A8_SSCALED      = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SSCALED ),
+   /* sRGB formats */
+   PIPE_FORMAT_L8_SRGB               = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRR1, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_A8_L8_SRGB            = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_R8G8B8_SRGB           = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGB0, 1, 1, 1, 0, PIPE_FORMAT_TYPE_SRGB ),
+   PIPE_FORMAT_R8G8B8A8_SRGB         = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RGBA, 1, 1, 1, 1, PIPE_FORMAT_TYPE_SRGB ),
+
+   /* compressed formats */
+   PIPE_FORMAT_DXT1_RGB              = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 0 ),
+   PIPE_FORMAT_DXT1_RGBA             = _PIPE_FORMAT_DXT( 1, 8, 8, 8, 8 ),
+   PIPE_FORMAT_DXT3_RGBA             = _PIPE_FORMAT_DXT( 3, 8, 8, 8, 8 ),
+   PIPE_FORMAT_DXT5_RGBA             = _PIPE_FORMAT_DXT( 5, 8, 8, 8, 8 )
 };
 
 
 /**
+ * Unsigned 8-bit stencil format.
  * XXX should remove this, but S8_UNORM is a poor name
  */
 #define PIPE_FORMAT_U_S8                  PIPE_FORMAT_S8_UNORM
@@ -294,11 +325,12 @@ enum pipe_format {
 /**
  * Builds pipe format name from format token.
  */
-static INLINE char *pf_sprint_name( char *str, uint format )
+static INLINE char *pf_sprint_name( char *str, enum pipe_format format )
 {
    strcpy( str, "PIPE_FORMAT_" );
    switch (pf_layout( format )) {
-   case PIPE_FORMAT_LAYOUT_RGBAZS: {
+   case PIPE_FORMAT_LAYOUT_RGBAZS:
+      {
          pipe_format_rgbazs_t rgbazs = (pipe_format_rgbazs_t) format;
          uint                 i;
          uint                 scale = 1 << (pf_exp8( rgbazs ) * 3);
@@ -362,7 +394,8 @@ static INLINE char *pf_sprint_name( char *str, uint format )
          }
       }
       break;
-   case PIPE_FORMAT_LAYOUT_YCBCR: {
+   case PIPE_FORMAT_LAYOUT_YCBCR:
+      {
          pipe_format_ycbcr_t  ycbcr = (pipe_format_ycbcr_t) format;
 
          strcat( str, "YCBCR" );
@@ -375,6 +408,10 @@ static INLINE char *pf_sprint_name( char *str, uint format )
    return str;
 }
 
+/**
+ * Return bits for a particular component.
+ * \param comp  component index, starting at 0
+ */
 static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
 {
    uint size;
@@ -397,6 +434,9 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
    return size << (pf_exp8(format) * 3);
 }
 
+/**
+ * Return total bits needed for the pixel format.
+ */
 static INLINE uint pf_get_bits( enum pipe_format format )
 {
    if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
@@ -417,7 +457,11 @@ static INLINE uint pf_get_bits( enum pipe_format format )
    }
 }
 
-static INLINE uint pf_get_size( enum pipe_format format ) {
+/**
+ * Return bytes per pixel for the given format.
+ */
+static INLINE uint pf_get_size( enum pipe_format format )
+{
    assert(pf_get_bits(format) % 8 == 0);
    return pf_get_bits(format) / 8;
 }

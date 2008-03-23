@@ -66,7 +66,8 @@ void st_upload_constants( struct st_context *st,
       /* Update our own dependency flags.  This works because this
        * function will also be called whenever the program changes.
        */
-      st->constants.tracked_state[id].dirty.mesa = params->StateFlags;
+      st->constants.tracked_state[id].dirty.mesa =
+         (params->StateFlags | _NEW_PROGRAM);
 
       _mesa_load_state_parameters(st->ctx, params);
 
@@ -115,7 +116,7 @@ static void update_vs_constants(struct st_context *st )
 const struct st_tracked_state st_update_vs_constants = {
    .name = "st_update_vs_constants",
    .dirty = {
-      .mesa  = 0, 
+      .mesa  = 0,  /* set dynamically above */
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs_constants
@@ -134,7 +135,7 @@ static void update_fs_constants(struct st_context *st )
 const struct st_tracked_state st_update_fs_constants = {
    .name = "st_update_fs_constants",
    .dirty = {
-      .mesa  = 0, 
+      .mesa  = 0,  /* set dynamically above */
       .st   = ST_NEW_FRAGMENT_PROGRAM,
    },
    .update = update_fs_constants

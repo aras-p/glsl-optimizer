@@ -78,34 +78,6 @@ struct translated_vertex_program
 
 
 /**
- * Free data hanging off the st vert prog.
- */
-void
-st_remove_vertex_program(struct st_context *st, struct st_vertex_program *stvp)
-{
-   /* no-op, for now? */
-}
-
-
-/**
- * Free data hanging off the st frag prog.
- */
-void
-st_remove_fragment_program(struct st_context *st,
-                          struct st_fragment_program *stfp)
-{
-   struct translated_vertex_program *xvp, *next;
-
-   for (xvp = stfp->vertex_programs; xvp; xvp = next) {
-      next = xvp->next;
-      /* XXX free xvp->vs */
-      free(xvp);
-   }
-}
-
-
-
-/**
  * Given a vertex program output attribute, return the corresponding
  * fragment program input attribute.
  * \return -1 for vertex outputs that have no corresponding fragment input
@@ -263,6 +235,21 @@ find_translated_vp(struct st_context *st,
 
    return xvp;
 }
+
+
+void
+st_free_translated_vertex_programs(struct st_context *st,
+                                   struct translated_vertex_program *xvp)
+{
+   struct translated_vertex_program *next;
+
+   while (xvp) {
+      next = xvp->next;
+      free(xvp);
+      xvp = next;
+   }
+}
+
 
 
 static void

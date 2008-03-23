@@ -572,25 +572,9 @@ _swrast_ReadPixels( GLcontext *ctx,
       goto end;
    }
 
-   if (clippedPacking.BufferObj->Name) {
-      /* pack into PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, &clippedPacking, width, height, 1,
-                                     format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glReadPixels(invalid PBO access)");
-         goto end;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                                              GL_WRITE_ONLY_ARB,
-                                              clippedPacking.BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels(PBO is mapped)");
-         goto end;
-      }
-      pixels = ADD_POINTERS(buf, pixels);
-   }
+   pixels = _mesa_map_readpix_pbo(ctx, &clippedPacking, pixels);
+   if (!pixels)
+      return;
 
    switch (format) {
       case GL_COLOR_INDEX:
@@ -632,9 +616,5 @@ _swrast_ReadPixels( GLcontext *ctx,
 end:
    RENDER_FINISH(swrast, ctx);
 
-   if (clippedPacking.BufferObj->Name) {
-      /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,
-                              clippedPacking.BufferObj);
-   }
+   _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
 }

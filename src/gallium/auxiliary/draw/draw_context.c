@@ -113,6 +113,8 @@ void draw_destroy( struct draw_context *draw )
       draw->pipeline.aaline->destroy( draw->pipeline.aaline );
    if (draw->pipeline.aapoint)
       draw->pipeline.aapoint->destroy( draw->pipeline.aapoint );
+   if (draw->pipeline.pstipple)
+      draw->pipeline.pstipple->destroy( draw->pipeline.pstipple );
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
    tgsi_exec_machine_free_data(&draw->machine);

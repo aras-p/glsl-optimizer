@@ -206,6 +206,12 @@ i915_update_texture(struct i915_context *i915, uint unit,
        | format
        | MS3_USE_FENCE_REGS);
 
+   /*
+    * XXX sampler->max_lod should be used to program the MAX_LOD field below.
+    * Also, when min_filter != mag_filter and there's just one mipmap level,
+    * set max_lod = 1 to make sure i915 chooses between min/mag filtering.
+    */
+
    /* MS4 state */
    state[1] =
       ((((pitch / 4) - 1) << MS4_PITCH_SHIFT)

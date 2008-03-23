@@ -155,7 +155,6 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
-   ctx->Extensions.EXT_texture_sRGB = GL_TRUE; /* XXX temp */
 
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
@@ -190,10 +189,6 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ATI_separate_stencil = GL_TRUE;
    }
 
-   if (screen->get_param(screen, PIPE_CAP_S3TC)) {
-      ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
-   }
-
    if (screen->get_param(screen, PIPE_CAP_ANISOTROPIC_FILTER)) {
       ctx->Extensions.EXT_texture_filter_anisotropic = GL_TRUE;
    }
@@ -212,6 +207,16 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_shadow = GL_TRUE;
       ctx->Extensions.EXT_shadow_funcs = GL_TRUE;
       /*ctx->Extensions.ARB_shadow_ambient = GL_TRUE;*/
+   }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
+                                   PIPE_TEXTURE)) {
+      ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+   }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
+                                   PIPE_TEXTURE)) {
+      ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
 
 }

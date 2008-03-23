@@ -1,5 +1,5 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /* Authors:
@@ -47,7 +47,7 @@ cell_create_blend_state(struct pipe_context *pipe,
    struct cell_blend_state *cb = MALLOC(sizeof(struct cell_blend_state));
 
    (void) memcpy(cb, blend, sizeof(*blend));
-   cb->code.store = NULL;
+   cell_generate_alpha_blend(cb);
 
    return cb;
 }
@@ -57,16 +57,10 @@ static void
 cell_bind_blend_state(struct pipe_context *pipe, void *state)
 {
    struct cell_context *cell = cell_context(pipe);
-   struct cell_blend_state *blend = (struct cell_blend_state *) state;
-
 
    draw_flush(cell->draw);
 
-   if ((blend != NULL) && (blend->code.store == NULL)) {
-      cell_generate_alpha_blend(blend, &cell->blend_color);
-   }
-
-   cell->blend = blend;
+   cell->blend = (struct cell_blend_state *) state;
    cell->dirty |= CELL_NEW_BLEND;
 }
 
@@ -105,7 +99,7 @@ cell_create_depth_stencil_alpha_state(struct pipe_context *pipe,
        MALLOC(sizeof(struct cell_depth_stencil_alpha_state));
 
    (void) memcpy(cdsa, depth_stencil, sizeof(*depth_stencil));
-   cdsa->code.store = NULL;
+   cell_generate_depth_stencil_test(cdsa);
 
    return cdsa;
 }
@@ -116,16 +110,11 @@ cell_bind_depth_stencil_alpha_state(struct pipe_context *pipe,
                                     void *depth_stencil)
 {
    struct cell_context *cell = cell_context(pipe);
-   struct cell_depth_stencil_alpha_state *cdsa =
-       (struct cell_depth_stencil_alpha_state *) depth_stencil;
 
    draw_flush(cell->draw);
 
-   if ((cdsa != NULL) && (cdsa->code.store == NULL)) {
-      cell_generate_depth_stencil_test(cdsa);
-   }
-
-   cell->depth_stencil = cdsa;
+   cell->depth_stencil =
+       (struct cell_depth_stencil_alpha_state *) depth_stencil;
    cell->dirty |= CELL_NEW_DEPTH_STENCIL;
 }
 
@@ -362,4 +351,3 @@ cell_init_state_functions(struct cell_context *cell)
    cell->pipe.set_scissor_state = cell_set_scissor_state;
    cell->pipe.set_viewport_state = cell_set_viewport_state;
 }
-
