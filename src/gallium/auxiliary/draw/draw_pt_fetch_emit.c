@@ -76,13 +76,105 @@ struct fetch_emit_middle_end {
    struct {
       const ubyte *ptr;
       unsigned pitch;
-      enum pipe_format src_format;
-      unsigned dst_format;
+      void (*fetch)( const void *from, float *attrib);
+      void (*emit)( const float *attrib, float **out );
    } fetch[PIPE_ATTRIB_MAX];
    
    unsigned nr_fetch;
    unsigned hw_vertex_size;
 };
+
+
+static void fetch_B8G8R8A8_UNORM( const void *from,
+                                  float *attrib )
+{
+   ubyte *ub = (ubyte *) from;
+   attrib[2] = UBYTE_TO_FLOAT(ub[0]);
+   attrib[1] = UBYTE_TO_FLOAT(ub[1]);
+   attrib[0] = UBYTE_TO_FLOAT(ub[2]);
+   attrib[3] = UBYTE_TO_FLOAT(ub[3]);
+}
+
+static void fetch_R32G32B32A32_FLOAT( const void *from,
+                                  float *attrib )
+{
+   float *f = (float *) from;
+   attrib[0] = f[0];
+   attrib[1] = f[1];
+   attrib[2] = f[2];
+   attrib[3] = f[3];
+}
+
+static void fetch_R32G32B32_FLOAT( const void *from,
+                                   float *attrib )
+{
+   float *f = (float *) from;
+   attrib[0] = f[0];
+   attrib[1] = f[1];
+   attrib[2] = f[2];
+   attrib[3] = 1.0;
+}
+
+static void fetch_R32G32_FLOAT( const void *from,
+                                float *attrib )
+{
+   float *f = (float *) from;
+   attrib[0] = f[0];
+   attrib[1] = f[1];
+   attrib[2] = 0.0;
+   attrib[3] = 1.0;
+}
+
+static void fetch_R32_FLOAT( const void *from,
+                             float *attrib )
+{
+   float *f = (float *) from;
+   attrib[0] = f[0];
+   attrib[1] = 0.0;
+   attrib[2] = 0.0;
+   attrib[3] = 1.0;
+}
+
+static void fetch_HEADER( const void *from,
+                          float *attrib )
+{
+   attrib[0] = 0;
+}
+
+
+static void emit_1F( const float *attrib,
+                     float **out )
+{
+   (*out)[0] = attrib[0];
+   (*out) += 1;
+}
+
+static void emit_2F( const float *attrib,
+                     float **out )
+{
+   (*out)[0] = attrib[0];
+   (*out)[1] = attrib[1];
+   (*out) += 2;
+}
+
+static void emit_3F( const float *attrib,
+                     float **out )
+{
+   (*out)[0] = attrib[0];
+   (*out)[1] = attrib[1];
+   (*out)[2] = attrib[2];
+   (*out) += 3;
+}
+
+static void emit_4F( const float *attrib,
+                     float **out )
+{
+   (*out)[0] = attrib[0];
+   (*out)[1] = attrib[1];
+   (*out)[2] = attrib[2];
+   (*out)[3] = attrib[3];
+   (*out) += 4;
+}
 
 
 /**
@@ -109,81 +201,8 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
          const ubyte *from = (feme->fetch[j].ptr +
                               feme->fetch[j].pitch * elt);
          
-         /* The normal fetch/emit code:
-          */
-         switch (feme->fetch[j].src_format) {
-         case PIPE_FORMAT_B8G8R8A8_UNORM:
-         {
-            ubyte *ub = (ubyte *) from;
-            attrib[2] = UBYTE_TO_FLOAT(ub[0]);
-            attrib[1] = UBYTE_TO_FLOAT(ub[1]);
-            attrib[0] = UBYTE_TO_FLOAT(ub[2]);
-            attrib[3] = UBYTE_TO_FLOAT(ub[3]);
-         }
-         break;
-         case PIPE_FORMAT_R32G32B32A32_FLOAT:
-         {
-            float *f = (float *) from;
-            attrib[0] = f[0];
-            attrib[1] = f[1];
-            attrib[2] = f[2];
-            attrib[3] = f[3];
-         }
-         break;
-         case PIPE_FORMAT_R32G32B32_FLOAT:
-         {
-            float *f = (float *) from;
-            attrib[0] = f[0];
-            attrib[1] = f[1];
-            attrib[2] = f[2];
-            attrib[3] = 1.0;
-         }
-         break;
-         case PIPE_FORMAT_R32G32_FLOAT:
-         {
-            float *f = (float *) from;
-            attrib[0] = f[0];
-            attrib[1] = f[1];
-            attrib[2] = 0.0;
-            attrib[3] = 1.0;
-         }
-         break;
-         case PIPE_FORMAT_R32_FLOAT:
-         {
-            float *f = (float *) from;
-            attrib[0] = f[0];
-            attrib[1] = 0.0;
-            attrib[2] = 0.0;
-            attrib[3] = 1.0;
-         }
-         break;
-         default:
-            assert(0);
-         }
-
-         if (0) debug_printf("attrib %d: %f %f %f %f\n", j, 
-                             attrib[0], attrib[1], attrib[2], attrib[3]);
-
-         switch (feme->fetch[j].dst_format) {
-         case EMIT_1F:
-            out[0] = attrib[0];
-            out += 1;
-            break;
-         case EMIT_2F:
-            out[0] = attrib[0];
-            out[1] = attrib[1];
-            out += 2;
-            break;
-         case EMIT_4F:
-            out[0] = attrib[0];
-            out[1] = attrib[1];
-            out[2] = attrib[2];
-            out[3] = attrib[3];
-            out += 4;
-            break;
-         default:
-            assert(0);
-         }
+         feme->fetch[j].fetch( from, attrib );
+         feme->fetch[j].emit( attrib, &out );
       }
    }
 }
@@ -199,43 +218,67 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
    unsigned i;
 
    for (i = 0; i < nr_attrs; i++) {
-      enum pipe_format src_format;
-      unsigned dst_format;
-      const void *src_ptr;
-      unsigned pitch;
-
-      if (vinfo->emit[i] == EMIT_HEADER) {
-         static const unsigned zero = 0;
-         src_ptr = &zero;
-         src_format = PIPE_FORMAT_R32_FLOAT;
-         pitch = 0;
-         dst_format = EMIT_1F;
-      }
-      else if (vinfo->emit[i] == EMIT_1F_PSIZE) {
-         src_ptr = &feme->draw->rasterizer->point_size;
-         src_format = PIPE_FORMAT_R32_FLOAT;
-         pitch = 0;
-         dst_format = EMIT_1F;
-      }
-      else {
-         unsigned src_element = vinfo->src_index[i];
-         unsigned src_buffer = draw->vertex_element[src_element].vertex_buffer_index;
+      unsigned src_element = vinfo->src_index[i];
+      unsigned src_buffer = draw->vertex_element[src_element].vertex_buffer_index;
          
-         src_ptr = ((const ubyte *)draw->user.vbuffer[src_buffer] + 
-                    draw->vertex_buffer[src_buffer].buffer_offset + 
-                    draw->vertex_element[src_element].src_offset);
+      feme->fetch[i].ptr = ((const ubyte *)draw->user.vbuffer[src_buffer] + 
+                            draw->vertex_buffer[src_buffer].buffer_offset + 
+                            draw->vertex_element[src_element].src_offset);
 
-         src_format = draw->vertex_element[src_element].src_format;      
-         pitch = draw->vertex_buffer[src_buffer].pitch;
-         dst_format = vinfo->emit[i];
+      feme->fetch[i].pitch = draw->vertex_buffer[src_buffer].pitch;
+         
+      switch (draw->vertex_element[src_element].src_format) {
+      case PIPE_FORMAT_B8G8R8A8_UNORM:
+         feme->fetch[i].fetch = fetch_B8G8R8A8_UNORM;
+         break;
+      case PIPE_FORMAT_R32G32B32A32_FLOAT:
+         feme->fetch[i].fetch = fetch_R32G32B32A32_FLOAT;
+         break;
+      case PIPE_FORMAT_R32G32B32_FLOAT:
+         feme->fetch[i].fetch = fetch_R32G32B32_FLOAT;
+         break;
+      case PIPE_FORMAT_R32G32_FLOAT:
+         feme->fetch[i].fetch = fetch_R32G32_FLOAT;
+         break;
+      case PIPE_FORMAT_R32_FLOAT:
+         feme->fetch[i].fetch = fetch_R32_FLOAT;
+         break;
+      default:
+         assert(0);
+         feme->fetch[i].fetch = NULL;
+         break;
       }
-
-      feme->fetch[i].src_format = src_format;
-      feme->fetch[i].ptr = src_ptr;
-      feme->fetch[i].pitch = pitch;
-      feme->fetch[i].dst_format = dst_format;
+         
+      switch (vinfo->emit[i]) {
+      case EMIT_4F:
+         feme->fetch[i].emit = emit_4F;
+         break;
+      case EMIT_3F:
+         feme->fetch[i].emit = emit_3F;
+         break;
+      case EMIT_2F:
+         feme->fetch[i].emit = emit_2F;
+         break;
+      case EMIT_1F:
+         feme->fetch[i].emit = emit_1F;
+         break;
+      case EMIT_HEADER:
+         feme->fetch[i].ptr = NULL;
+         feme->fetch[i].pitch = 0;
+         feme->fetch[i].fetch = fetch_HEADER;
+         feme->fetch[i].emit = emit_1F;
+         break;
+      case EMIT_1F_PSIZE:
+         feme->fetch[i].ptr = (const ubyte *)&feme->draw->rasterizer->point_size;
+         feme->fetch[i].pitch = 0;
+         feme->fetch[i].fetch = fetch_R32_FLOAT;
+         feme->fetch[i].emit = emit_1F;
+      default:
+         assert(0);
+         feme->fetch[i].emit = NULL;
+         break;
+      }
    }
-
 
    feme->nr_fetch = nr_attrs;
    feme->hw_vertex_size = vinfo->size * 4;
