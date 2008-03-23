@@ -30,10 +30,10 @@ nv40_texture_formats[] = {
 	_(U_A8_L8       , A8L8    ,   S1,   S1,   S1,   S1, X, X, X, Y),
 	_(Z16_UNORM     , Z16     ,   S1,   S1,   S1,  ONE, X, X, X, X),
 	_(Z24S8_UNORM   , Z24     ,   S1,   S1,   S1,  ONE, X, X, X, X),
-//	_(RGB_DXT1      , 0x86,   S1,   S1,   S1,  ONE, X, Y, Z, W, 0x00, 0x00),
-//	_(RGBA_DXT1     , 0x86,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
-//	_(RGBA_DXT3     , 0x87,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
-//	_(RGBA_DXT5     , 0x88,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
+	_(DXT1_RGB      , DXT1    ,   S1,   S1,   S1,  ONE, X, Y, Z, W),
+	_(DXT1_RGBA     , DXT1    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(DXT3_RGBA     , DXT3    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
+	_(DXT5_RGBA     , DXT5    ,   S1,   S1,   S1,   S1, X, Y, Z, W),
 	{},
 };
 
