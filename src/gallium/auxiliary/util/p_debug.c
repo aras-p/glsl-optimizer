@@ -168,40 +168,6 @@ void debug_assert_fail(const char *expr, const char *file, unsigned line)
 }
 
 
-#define DEBUG_MASK_TABLE_SIZE 256
-
-
-/**
- * Mask hash table.
- * 
- * For now we just take the lower bits of the key, and do no attempt to solve
- * collisions. Use a proper hash table when we have dozens of drivers. 
- */
-static uint32_t debug_mask_table[DEBUG_MASK_TABLE_SIZE];
-
-
-void debug_mask_set(uint32_t uuid, uint32_t mask) 
-{
-   unsigned hash = uuid & (DEBUG_MASK_TABLE_SIZE - 1);
-   debug_mask_table[hash] = mask;
-}
-
-
-uint32_t debug_mask_get(uint32_t uuid)
-{
-   unsigned hash = uuid & (DEBUG_MASK_TABLE_SIZE - 1);
-   return debug_mask_table[hash];
-}
-
-
-void debug_mask_vprintf(uint32_t uuid, uint32_t what, const char *format, va_list ap)
-{
-   uint32_t mask = debug_mask_get(uuid);
-   if(mask & what)
-      debug_vprintf(format, ap);
-}
-
-
 const char *
 debug_dump_enum(const struct debug_named_value *names, 
                 unsigned long value)
