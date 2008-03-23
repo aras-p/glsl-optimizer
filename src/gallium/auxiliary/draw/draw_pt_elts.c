@@ -37,22 +37,22 @@
  * the start value into a pointer.  
  */
 
-static ushort elt_uint( const void *elts, ushort idx )
+static unsigned elt_uint( const void *elts, unsigned idx )
 {
    return *(((const uint *)elts) + idx);
 }
 
-static ushort elt_ushort( const void *elts, ushort idx )
+static unsigned elt_ushort( const void *elts, unsigned idx )
 {
    return *(((const ushort *)elts) + idx);
 }
 
-static ushort elt_ubyte( const void *elts, ushort idx )
+static unsigned elt_ubyte( const void *elts, unsigned idx )
 {
    return *(((const ubyte *)elts) + idx);
 }
 
-static ushort elt_vert( const void *elts, ushort idx )
+static unsigned elt_vert( const void *elts, unsigned idx )
 {
    return (const ubyte *)elts - (const ubyte *)NULL + idx;
 }

@@ -45,7 +45,7 @@
 struct vcache_frontend {
    struct draw_pt_front_end base;
 
-   ushort in[CACHE_MAX];
+   unsigned in[CACHE_MAX];
    ushort out[CACHE_MAX];
 
    ushort draw_elts[DRAW_MAX];
@@ -74,13 +74,14 @@ static void vcache_flush( struct vcache_frontend *vcache )
    }
 #endif
 
-   if (vcache->draw_count)
+   if (vcache->draw_count) {
       vcache->middle->run( vcache->middle,
                            vcache->output_prim,
                            vcache->fetch_elts,
                            vcache->fetch_count,
                            vcache->draw_elts,
                            vcache->draw_count );
+   }
 
    memset(vcache->in, ~0, sizeof(vcache->in));
    vcache->fetch_count = 0;
@@ -100,9 +101,7 @@ static void vcache_check_flush( struct vcache_frontend *vcache )
 static void vcache_elt( struct vcache_frontend *vcache,
                         unsigned felt )
 {
-   // ushort felt = elt(draw, i);
-
-   ushort idx = felt % CACHE_MAX;
+   unsigned idx = felt % CACHE_MAX;
 
    if (vcache->in[idx] != felt) {
       assert(vcache->fetch_count < FETCH_MAX);

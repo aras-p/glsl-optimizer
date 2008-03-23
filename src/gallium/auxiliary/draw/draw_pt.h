@@ -35,7 +35,7 @@
 
 #include "pipe/p_compiler.h"
 
-typedef ushort (*pt_elt_func)( const void *elts, ushort idx );
+typedef unsigned (*pt_elt_func)( const void *elts, unsigned idx );
 
 
 /* The "front end" - prepare sets of fetch, draw elements for the
