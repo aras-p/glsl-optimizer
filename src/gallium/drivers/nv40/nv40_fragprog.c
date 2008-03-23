@@ -724,7 +724,7 @@ nv40_fragprog_parse_decl_output(struct nv40_fpc *fpc,
 		hw = 1;
 		break;
 	case TGSI_SEMANTIC_COLOR:
-		switch (idx) {
+		switch (fdec->Semantic.SemanticIndex) {
 		case 0: hw = 0; break;
 		case 1: hw = 2; break;
 		case 2: hw = 3; break;
