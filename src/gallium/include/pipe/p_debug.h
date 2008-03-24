@@ -256,6 +256,33 @@ debug_dump_flags(const struct debug_named_value *names,
                  unsigned long value);
 
 
+/**
+ * Get option.
+ * 
+ * It is an alias for getenv on Linux. 
+ * 
+ * On Windows it reads C:\gallium.cfg, which is a text file with CR+LF line 
+ * endings with one option per line as
+ *  
+ *   NAME=value
+ * 
+ * This file must be terminated with an extra empty line.
+ */
+const char *
+debug_get_option(const char *name, const char *dfault);
+
+boolean
+debug_get_bool_option(const char *name, boolean dfault);
+
+long
+debug_get_unsigned_option(const char *name, long dfault);
+
+unsigned long
+debug_get_flags_option(const char *name, 
+                       const struct debug_named_value *flags,
+                       unsigned long dfault);
+
+
 void *
 debug_malloc(const char *file, unsigned line, const char *function,
              size_t size);

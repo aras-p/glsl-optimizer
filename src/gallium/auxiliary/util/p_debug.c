@@ -107,6 +107,150 @@ void _debug_break(void)
 #endif
 }
 
+
+#ifdef WIN32
+static const char *
+find(const char *start, const char *end, char c) 
+{
+   const char *p;
+   for(p = start; !end || p != end; ++p) {
+      if(*p == c)
+	 return p;
+      if(*p < 32)
+	 break;
+   }
+   return NULL;
+}
+
+static int 
+compare(const char *start, const char *end, const char *s)
+{
+   const char *p, *q;
+   for(p = start, q = s; p != end && *q != '\0'; ++p, ++q) {
+      if(*p != *q)
+	 return 0;
+   }
+   return p == end && *q == '\0';
+}
+
+static void 
+copy(char *dst, const char *start, const char *end, size_t n) 
+{
+   const char *p;
+   char *q;
+   for(p = start, q = dst, n = n - 1; p != end && n; ++p, ++q, --n)
+      *q = *p;
+   *q = '\0';
+}
+#endif
+
+
+const char *
+debug_get_option(const char *name, const char *dfault)
+{
+   const char *result;
+#ifdef WIN32
+   ULONG_PTR iFile = 0;
+   const void *pMap = NULL;
+   const char *sol, *eol, *sep;
+   static char output[1024];
+   
+   pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
+   if(!pMap)
+      result = dfault;
+   else {
+      sol = (const char *)pMap;
+      while(1) {
+	 /* TODO: handle LF line endings */
+	 eol = find(sol, NULL, '\r');
+	 if(!eol || eol == sol)
+	    break;
+	 sep = find(sol, eol, '=');
+	 if(!sep)
+	    break;
+	 if(compare(sol, sep, name)) {
+	    copy(output, sep + 1, eol, sizeof(output));
+	    result = output;
+	    break;
+	 }
+	 sol = eol + 2;
+      }
+      EngUnmapFile(iFile);
+   }
+#else
+   
+   result = getenv(name);
+   if(!result)
+      result = dfault;
+#endif
+      
+   if(result)
+      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result);
+   else
+      debug_printf("%s: %s = (null)\n", __FUNCTION__, name);
+   
+   return result;
+}
+
+boolean
+debug_get_bool_option(const char *name, boolean dfault)
+{
+   const char *str = debug_get_option(name, NULL);
+   boolean result;
+   
+   if(str == NULL)
+      result = dfault;
+   else if(!strcmp(str, "no"))
+      result = FALSE;
+   else if(!strcmp(str, "0"))
+      result = FALSE;
+   else if(!strcmp(str, "f"))
+      result = FALSE;
+   else if(!strcmp(str, "false"))
+      result = FALSE;
+   else
+      result = TRUE;
+
+   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? "TRUE" : "FALSE");
+   
+   return result;
+}
+
+
+long
+debug_get_num_option(const char *name, long dfault)
+{
+   /* FIXME */
+   return dfault;
+}
+
+
+unsigned long
+debug_get_flags_option(const char *name, 
+                       const struct debug_named_value *flags,
+                       unsigned long dfault)
+{
+   unsigned long result;
+   const char *str;
+   
+   str = debug_get_option(name, NULL);
+   if(!str)
+      result = dfault;
+   else {
+      result = 0;
+      while( flags->name ) {
+	 if (!strcmp(str, "all") || strstr(str, flags->name ))
+	    result |= flags->value;
+	 ++flags;
+      }
+   }
+
+   debug_printf("%s: %s = 0x%lx\n", __FUNCTION__, name, result);
+
+   return result;
+}
+
+
 #if defined(WIN32)
 ULONG_PTR debug_config_file = 0;
 void *mapped_config_file = 0;
