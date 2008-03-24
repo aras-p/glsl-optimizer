@@ -38,6 +38,8 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 
+#include "tgsi/util/tgsi_parse.h"
+
 
 static INLINE unsigned
 compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
@@ -187,6 +189,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
 static void
 vs_exec_delete( struct draw_vertex_shader *dvs )
 {
+   FREE((void*) dvs->state.tokens);
    FREE( dvs );
 }
 
@@ -196,11 +199,13 @@ draw_create_vs_exec(struct draw_context *draw,
 		    const struct pipe_shader_state *state)
 {
    struct draw_vertex_shader *vs = CALLOC_STRUCT( draw_vertex_shader );
+   uint nt = tgsi_num_tokens(state->tokens);
 
    if (vs == NULL) 
       return NULL;
 
-   vs->state = *state;
+   /* we make a private copy of the tokens */
+   vs->state.tokens = mem_dup(state->tokens, nt * sizeof(state->tokens[0]));
    vs->prepare = vs_exec_prepare;
    vs->run = vs_exec_run;
    vs->delete = vs_exec_delete;

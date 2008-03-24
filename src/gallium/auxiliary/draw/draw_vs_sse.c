@@ -43,6 +43,7 @@
 
 #include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_sse2.h"
+#include "tgsi/util/tgsi_parse.h"
 
 
 typedef void (XSTDCALL *codegen_function) (
@@ -204,6 +205,7 @@ vs_sse_delete( struct draw_vertex_shader *base )
    
    x86_release_func( &shader->sse2_program );
 
+   FREE( (void*) shader->base.state.tokens );
    FREE( shader );
 }
 
@@ -213,6 +215,7 @@ draw_create_vs_sse(struct draw_context *draw,
                           const struct pipe_shader_state *templ)
 {
    struct draw_sse_vertex_shader *vs;
+   uint nt = tgsi_num_tokens(templ->tokens);
 
    if (!draw->use_sse) 
       return NULL;
@@ -221,7 +224,8 @@ draw_create_vs_sse(struct draw_context *draw,
    if (vs == NULL) 
       return NULL;
 
-   vs->base.state = *templ;
+   /* we make a private copy of the tokens */
+   vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
    vs->base.prepare = vs_sse_prepare;
    vs->base.run = vs_sse_run;
    vs->base.delete = vs_sse_delete;

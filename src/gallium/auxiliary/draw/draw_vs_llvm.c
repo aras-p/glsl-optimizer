@@ -38,6 +38,8 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 
+#include "tgsi/util/tgsi_parse.h"
+
 #ifdef MESA_LLVM
 
 #include "gallivm/gallivm.h"
@@ -186,6 +188,7 @@ vs_llvm_delete( struct draw_vertex_shader *base )
    /* Do something to free compiled shader:
     */
 
+   FREE( (void*) shader->base.state.tokens );
    FREE( shader );
 }
 
@@ -197,12 +200,14 @@ draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ)
 {
    struct draw_llvm_vertex_shader *vs;
+   uint nt = tgsi_num_tokens(templ->tokens);
 
    vs = CALLOC_STRUCT( draw_llvm_vertex_shader );
    if (vs == NULL) 
       return NULL;
 
-   vs->base.state = templ;
+   /* we make a private copy of the tokens */
+   vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
    vs->base.prepare = vs_llvm_prepare;
    vs->base.run = vs_llvm_run;
    vs->base.delete = vs_llvm_delete;
