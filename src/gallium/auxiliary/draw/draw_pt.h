@@ -37,6 +37,8 @@
 
 typedef unsigned (*pt_elt_func)( const void *elts, unsigned idx );
 
+struct draw_pt_middle_end;
+struct draw_context;
 
 /* The "front end" - prepare sets of fetch, draw elements for the
  * middle end.
