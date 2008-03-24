@@ -107,10 +107,10 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
    void *new_ptr = NULL;
 
    if (new_size != 0) {
+      unsigned copy_size = old_size < new_size ? old_size : new_size;
       new_ptr = MALLOC( new_size );
-      
-      if( new_ptr && old_ptr ) {
-         memcpy( new_ptr, old_ptr, old_size );
+      if (new_ptr && old_ptr && copy_size) {
+         memcpy( new_ptr, old_ptr, copy_size );
       }
    }
 
