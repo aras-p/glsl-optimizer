@@ -44,6 +44,7 @@
 #include "st_atom_constbuf.h"
 #include "st_program.h"
 #include "st_cb_bitmap.h"
+#include "st_cb_program.h"
 #include "st_mesa_to_tgsi.h"
 #include "st_texture.h"
 #include "pipe/p_context.h"
@@ -407,7 +408,6 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    cso_save_rasterizer(cso);
    cso_save_samplers(cso);
-   //cso_save_viewport(cso);
 
    /* rasterizer state: just scissor */
    {
@@ -458,11 +458,9 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_samplers(cso);
-   //cso_restore_viewport(cso);
    /* shaders don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
-
    pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
                               ctx->st->state.sampler_texture);
 }
@@ -514,7 +512,13 @@ st_destroy_bitmap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
-   /* XXX free frag shader state */
+   if (st->bitmap.combined_prog) {
+      st_delete_program(st->ctx, &st->bitmap.combined_prog->Base.Base);
+   }
+
+   if (st->bitmap.program) {
+      st_delete_program(st->ctx, &st->bitmap.program->Base.Base);
+   }
 
    if (st->bitmap.vs) {
       pipe->delete_vs_state(pipe, st->bitmap.vs);
