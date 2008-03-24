@@ -60,10 +60,21 @@ extern "C" {
 #endif
 
 
+void _debug_vprintf(const char *format, va_list ap);
+   
+
+static void INLINE 
+_debug_printf(const char *format, ...)
+{
+   va_list ap;
+   va_start(ap, format);
+   _debug_vprintf(format, ap);
+   va_end(ap);
+}
+
+
 /**
  * Print debug messages.
- *
- * A debug message will be printed regardless of the DEBUG/NDEBUG macros.
  *
  * The actual channel used to output debug message is platform specific. To 
  * avoid misformating or truncation, follow these rules of thumb:   
@@ -71,44 +82,128 @@ extern "C" {
  * - avoid outputing large strings (512 bytes is the current maximum length 
  * that is guaranteed to be printed in all platforms)
  */
-void debug_printf(const char *format, ...);
+static void INLINE 
+debug_printf(const char *format, ...)
+{
+#ifdef DEBUG
+   va_list ap;
+   va_start(ap, format);
+   _debug_vprintf(format, ap);
+   va_end(ap);
+#endif
+}
 
 
-/* Dump a blob in hex to the same place that debug_printf sends its
- * messages:
+#ifdef DEBUG
+#define debug_vprintf(_format, _ap) _debug_vprintf(_format, _ap)
+#else
+#define debug_vprintf(_format, _ap) ((void)0)
+#endif
+
+
+/**
+ * Dump a blob in hex to the same place that debug_printf sends its
+ * messages.
  */
+#ifdef DEBUG
 void debug_print_blob( const char *name,
                        const void *blob,
                        unsigned size );
+#else
+#define debug_print_blob(_name, _blob, _size) ((void)0)
+#endif
+
+
+void _debug_break(void);
+
 
 /**
- * @sa debug_printf 
+ * Hard-coded breakpoint.
  */
-void debug_vprintf(const char *format, va_list ap);
-
-void debug_assert_fail(const char *expr, const char *file, unsigned line);
-
-
-/** Assert macro */
 #ifdef DEBUG
-#define debug_assert(expr) ((expr) ? (void)0 : debug_assert_fail(#expr, __FILE__, __LINE__))
+#if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
+#define debug_break() __asm("int3")
+#elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
+#define debug_break()  _asm {int 3}
+#else
+#define debug_break() _debug_break()
+#endif
+#else /* !DEBUG */
+#define debug_break() ((void)0)
+#endif /* !DEBUG */
+
+
+void _debug_assert_fail(const char *expr, 
+                        const char *file, 
+                        unsigned line, 
+                        const char *function);
+
+
+/** 
+ * Assert macro
+ * 
+ * Do not expect that the assert call terminates -- errors must be handled 
+ * regardless of assert behavior.
+ */
+#ifdef DEBUG
+#define debug_assert(expr) ((expr) ? (void)0 : _debug_assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
 #else
 #define debug_assert(expr) ((void)0)
 #endif
 
 
+/** Override standard assert macro */
 #ifdef assert
 #undef assert
 #endif
 #define assert(expr) debug_assert(expr)
 
 
+/**
+ * Output the current function name.
+ */
+#ifdef DEBUG
+#define debug_checkpoint() \
+   _debug_printf("%s\n", __FUNCTION__)
+#else
+#define debug_checkpoint() \
+   ((void)0) 
+#endif
+
+
+/**
+ * Output the full source code position.
+ */
+#ifdef DEBUG
+#define debug_checkpoint_full() \
+   debug_printf("%s:%u:%s", __FILE__, __LINE__, __FUNCTION__) 
+#else
+#define debug_checkpoint_full() \
+   ((void)0) 
+#endif
+
+
+/**
+ * Output a warning message. Muted on release version.
+ */
 #ifdef DEBUG
 #define debug_warning(__msg) \
-   debug_printf("%s:%i:warning: %s\n", __FILE__, __LINE__, (__msg)) 
+   _debug_printf("%s:%u:%s: warning: %s\n", __FILE__, __LINE__, __FUNCTION__, (__msg))
 #else
 #define debug_warning(__msg) \
    ((void)0) 
+#endif
+
+
+/**
+ * Output an error message. Not muted on release version.
+ */
+#ifdef DEBUG
+#define debug_error(__msg) \
+   _debug_printf("%s:%u:%s: error: %s\n", __FILE__, __LINE__, __FUNCTION__, (__msg)) 
+#else
+#define debug_error(__msg) \
+   _debug_printf("error: %s\n", __msg))
 #endif
 
 

@@ -58,7 +58,7 @@ int rpl_snprintf(char *str, size_t size, const char *format, ...);
 #endif
 
 
-void debug_vprintf(const char *format, va_list ap)
+void _debug_vprintf(const char *format, va_list ap)
 {
 #ifdef WIN32
 #ifndef WINCE
@@ -76,15 +76,7 @@ void debug_vprintf(const char *format, va_list ap)
 }
 
 
-void debug_printf(const char *format, ...)
-{
-   va_list ap;
-   va_start(ap, format);
-   debug_vprintf(format, ap);
-   va_end(ap);
-}
-
-
+#ifdef DEBUG
 void debug_print_blob( const char *name,
                        const void *blob,
                        unsigned size )
@@ -99,12 +91,10 @@ void debug_print_blob( const char *name,
       debug_printf("%d:\t%08x\n", i, ublob[i]);
    }
 }
+#endif
 
 
-/* TODO: implement a debug_abort that calls EngBugCheckEx on WIN32 */
-
-
-static INLINE void debug_break(void) 
+void _debug_break(void) 
 {
 #if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
    __asm("int3");
@@ -155,15 +145,18 @@ static unsigned abort_en()
 }
 #endif
 
-void debug_assert_fail(const char *expr, const char *file, unsigned line) 
+void _debug_assert_fail(const char *expr, 
+                        const char *file, 
+                        unsigned line, 
+                        const char *function) 
 {
-   debug_printf("%s:%i: Assertion `%s' failed.\n", file, line, expr);
+   _debug_printf("%s:%u:%s: Assertion `%s' failed.\n", file, line, function, expr);
    if (abort_en())
    {
       debug_break();
    } else
    {
-      debug_printf("continuing...\n");
+      _debug_printf("continuing...\n");
    }
 }
 
@@ -180,7 +173,7 @@ debug_dump_enum(const struct debug_named_value *names,
       ++names;
    }
 
-   snprintf(rest, sizeof(rest), "0x%08x", value);
+   snprintf(rest, sizeof(rest), "0x%08lx", value);
    return rest;
 }
 
@@ -213,7 +206,7 @@ debug_dump_flags(const struct debug_named_value *names,
       else
 	 first = 0;
       
-      snprintf(rest, sizeof(rest), "0x%08x", value);
+      snprintf(rest, sizeof(rest), "0x%08lx", value);
       strncat(output, rest, sizeof(output));
    }
    
