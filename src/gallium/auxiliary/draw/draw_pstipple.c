@@ -398,6 +398,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.cpp = 1;
 
    pstip->texture = screen->texture_create(screen, &texTemp);
+   assert(pstip->texture->refcount == 1);
 
    //pstip_update_texture(pstip);
 }
@@ -492,7 +493,8 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 
    /* plug in our sampler, texture */
    pstip->state.samplers[pstip->sampler_unit] = pstip->sampler_cso;
-   pstip->state.textures[pstip->sampler_unit] = pstip->texture;
+   pipe_texture_reference(&pstip->state.textures[pstip->sampler_unit],
+                          pstip->texture);
 
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
@@ -624,6 +626,7 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
                           unsigned num, void **sampler)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
+
    /* save current */
    memcpy(pstip->state.samplers, sampler, num * sizeof(void *));
    pstip->num_samplers = num;
@@ -637,9 +640,14 @@ pstip_set_sampler_textures(struct pipe_context *pipe,
                            unsigned num, struct pipe_texture **texture)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
+   uint i;
+
    /* save current */
-   memcpy(pstip->state.textures, texture, num * sizeof(struct pipe_texture *));
+   for (i = 0; i < num; i++) {
+      pipe_texture_reference(&pstip->state.textures[i], texture[i]);
+   }
    pstip->num_textures = num;
+
    /* pass-through */
    pstip->driver_set_sampler_textures(pstip->pipe, num, texture);
 }
