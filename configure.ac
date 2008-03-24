@@ -26,11 +26,7 @@ dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-AC_PATH_PROG(GMAKE, gmake, [not_found])
-AC_PATH_PROG(MAKE, make)
-if test "x$GMAKE" != "xnot_found"; then
-	MAKE="$GMAKE"
-fi
+AC_CHECK_PROGS(MAKE, [gmake make])
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
 
@@ -903,5 +899,5 @@ echo "        CXXFLAGS:        $cxxflags"
 echo "        Macros:          $defines"
 
 echo ""
-echo "        Run 'make' to build Mesa"
+echo "        Run '${MAKE-make}' to build Mesa"
 echo ""
