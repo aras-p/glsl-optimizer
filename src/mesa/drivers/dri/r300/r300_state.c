@@ -1660,8 +1660,12 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
 			prog->program.body.i[program_end + 0] =
-			    PVS_VECTOR_OPCODE(VE_MULTIPLY, o_reg++,
-					      VSF_FLAG_ALL, PVS_DST_REG_OUT);
+			    PVS_OPCODE(VE_MULTIPLY,
+				       GL_FALSE,
+				       GL_FALSE,
+				       o_reg++,
+				       VSF_FLAG_ALL,
+				       PVS_DST_REG_OUT);
 			prog->program.body.i[program_end + 1] =
 			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
 					    PVS_SRC_SELECT_X,
