@@ -947,15 +947,3 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_sampler_textures(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
 }
-
-
-/**
- * XXX remove this
- */
-void
-util_gen_mipmap_filter(struct gen_mipmap_state *ctx,
-                       struct pipe_texture *pt,
-                       uint face, uint baseLevel, uint lastLevel, uint filter)
-{
-   util_gen_mipmap_filter( ctx, pt, face, baseLevel, lastLevel, filter );
-}
