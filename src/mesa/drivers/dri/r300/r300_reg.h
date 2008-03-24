@@ -1890,7 +1890,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Fog: Green Component of Fog Color */
 #define FG_FOG_COLOR_G                           0x4bcc
 /* Fog: Blue Component of Fog Color */
-#define FG_FOG_COLOR_B                           0x4db0
+#define FG_FOG_COLOR_B                           0x4bd0
 #	define FG_FOG_COLOR_MASK 0x000001ff
 
 /* Fog: Constant Factor for Fog Blending */
