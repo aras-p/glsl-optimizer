@@ -113,6 +113,10 @@ void
 tgsi_parse_token(
    struct tgsi_parse_context *ctx );
 
+unsigned
+tgsi_num_tokens(const struct tgsi_token *tokens);
+
+
 #if defined __cplusplus
 }
 #endif
