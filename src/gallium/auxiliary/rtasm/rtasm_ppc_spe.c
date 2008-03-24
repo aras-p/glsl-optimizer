@@ -267,10 +267,10 @@ void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
     emit_RI7(p, _op, rT, rA, imm); \
 }
 
-#define EMIT_RI8(_name, _op) \
+#define EMIT_RI8(_name, _op, bias) \
 void _name (struct spe_function *p, unsigned rT, unsigned rA, int imm) \
 { \
-    emit_RI8(p, _op, rT, rA, 155 - imm); \
+    emit_RI8(p, _op, rT, rA, bias - imm); \
 }
 
 #define EMIT_RI10(_name, _op) \
