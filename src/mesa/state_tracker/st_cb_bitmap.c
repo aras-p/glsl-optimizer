@@ -406,6 +406,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    assert(height <= maxSize);
 
    cso_save_rasterizer(cso);
+   cso_save_samplers(cso);
    //cso_save_viewport(cso);
 
    /* rasterizer state: just scissor */
