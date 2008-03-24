@@ -890,6 +890,10 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    memset(&fb, 0, sizeof(fb));
    fb.num_cbufs = 1;
 
+   /* set min/mag to same filter for faster sw speed */
+   ctx->sampler.mag_img_filter = filter;
+   ctx->sampler.min_img_filter = filter;
+
    /*
     * XXX for small mipmap levels, it may be faster to use the software
     * fallback path...
@@ -914,8 +918,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
        */
       ctx->sampler.min_lod = ctx->sampler.max_lod = (float) srcLevel;
       ctx->sampler.lod_bias = (float) srcLevel;
-      ctx->sampler.mag_img_filter = filter;
-      ctx->sampler.min_img_filter = filter;
       cso_single_sampler(ctx->cso, 0, &ctx->sampler);
       cso_single_sampler_done(ctx->cso);
 #if 0
