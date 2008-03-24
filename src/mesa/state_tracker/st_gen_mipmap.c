@@ -92,7 +92,8 @@ st_render_mipmap(struct st_context *st,
       return FALSE;
    }
 
-   util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel);
+   util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel,
+                   PIPE_TEX_FILTER_LINEAR);
 
    /* shaders don't go through CSO yet */
    if (st->fp)
