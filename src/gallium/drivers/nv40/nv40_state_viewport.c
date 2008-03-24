@@ -5,8 +5,20 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 {
 	struct nouveau_stateobj *so = so_new(11, 0);
 	struct pipe_viewport_state *vpt = &nv40->viewport;
+	unsigned bypass;
 
-	if (nv40->render_mode == HW) {
+	if (nv40->render_mode == HW && !nv40->rasterizer->pipe.bypass_clipping)
+		bypass = 0;
+	else
+		bypass = 1;
+
+	if (nv40->state.hw[NV40_STATE_VIEWPORT] &&
+	    (bypass || !(nv40->dirty & NV40_NEW_VIEWPORT)) &&
+	    nv40->state.viewport_bypass == bypass)
+		return FALSE;
+	nv40->state.viewport_bypass = bypass;
+
+	if (!bypass) {
 		so_method(so, nv40->screen->curie,
 			  NV40TCL_VIEWPORT_TRANSLATE_X, 8);
 		so_data  (so, fui(vpt->translate[0]));
@@ -48,7 +60,7 @@ nv40_state_viewport_validate(struct nv40_context *nv40)
 struct nv40_state_entry nv40_state_viewport = {
 	.validate = nv40_state_viewport_validate,
 	.dirty = {
-		.pipe = NV40_NEW_VIEWPORT,
+		.pipe = NV40_NEW_VIEWPORT | NV40_NEW_RAST,
 		.hw = NV40_STATE_VIEWPORT
 	}
 };
