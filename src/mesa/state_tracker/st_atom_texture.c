@@ -56,28 +56,27 @@ update_textures(struct st_context *st)
 
    for (unit = 0; unit < st->ctx->Const.MaxTextureCoordUnits; unit++) {
       const GLuint su = fprog->Base.SamplerUnits[unit];
-      struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
-      struct st_texture_object *stObj = st_texture_object(texObj);
-      struct pipe_texture *pt;
+      struct pipe_texture *pt = NULL;
 
-      if (texObj) {
-         GLboolean flush, retval;
+      if (fprog->Base.SamplersUsed & (1 << su)) {
+         struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
+         struct st_texture_object *stObj = st_texture_object(texObj);
 
-         retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
-         if (!retval) {
-            /* out of mem */
-            continue;
+         if (texObj) {
+            GLboolean flush, retval;
+
+            retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+            if (!retval) {
+               /* out of mem */
+               continue;
+            }
+
+            st->state.num_textures = unit + 1;
          }
 
-         st->state.num_textures = unit + 1;
+         pt = st_get_stobj_texture(stObj);
       }
 
-      /* XXX: need to ensure that textures are unbound/removed from
-       * this table before being deleted, otherwise the pointer
-       * comparison below could fail.
-       */
-
-      pt = st_get_stobj_texture(stObj);
       pipe_texture_reference(&st->state.sampler_texture[unit], pt);
    }
 
