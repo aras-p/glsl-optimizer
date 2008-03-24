@@ -30,8 +30,8 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "draw/draw_pt.h"
 #include "draw/draw_private.h"
+#include "draw/draw_pt.h"
 
 /* Neat get_elt func that also works for varrays drawing by encoding
  * the start value into a pointer.  
