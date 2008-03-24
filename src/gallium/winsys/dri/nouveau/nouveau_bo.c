@@ -88,6 +88,26 @@ nouveau_bo_tmp_del(void *priv)
 	nouveau_resource_free(&r);
 }
 
+static unsigned
+nouveau_bo_tmp_max(struct nouveau_device_priv *nvdev)
+{
+	struct nouveau_resource *r = nvdev->sa_heap;
+	unsigned max = 0;
+
+	while (r) {
+		if (r->in_use && !nouveau_fence(r->priv)->emitted) {
+			r = r->next;
+			continue;
+		}
+
+		if (max < r->size)
+			max = r->size;
+		r = r->next;
+	}
+
+	return max;
+}
+
 static struct nouveau_resource *
 nouveau_bo_tmp(struct nouveau_channel *chan, unsigned size,
 	       struct nouveau_fence *fence)
@@ -103,6 +123,11 @@ nouveau_bo_tmp(struct nouveau_channel *chan, unsigned size,
 	assert(ref);
 
 	while (nouveau_resource_alloc(nvdev->sa_heap, size, ref, &r)) {
+		if (nouveau_bo_tmp_max(nvdev) < size) {
+			nouveau_fence_ref(NULL, &ref);
+			return NULL;
+		}
+
 		nouveau_fence_flush(chan);
 	}
 	nouveau_fence_signal_cb(ref, nouveau_bo_tmp_del, r);
