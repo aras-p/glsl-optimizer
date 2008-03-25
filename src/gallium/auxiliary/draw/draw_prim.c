@@ -170,10 +170,7 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
       if (draw->vs.queue_nr) {
-         if (draw->rasterizer->bypass_vs)
-            fetch_and_store(draw);
-         else
-            (*draw->shader_queue_flush)(draw);
+         (*draw->shader_queue_flush)(draw);
       }
 
       if (flags >= DRAW_FLUSH_PRIM_QUEUE) {
