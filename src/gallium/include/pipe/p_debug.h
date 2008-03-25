@@ -63,7 +63,7 @@ extern "C" {
 void _debug_vprintf(const char *format, va_list ap);
    
 
-static void INLINE 
+static INLINE void
 _debug_printf(const char *format, ...)
 {
    va_list ap;
@@ -82,7 +82,7 @@ _debug_printf(const char *format, ...)
  * - avoid outputing large strings (512 bytes is the current maximum length 
  * that is guaranteed to be printed in all platforms)
  */
-static void INLINE 
+static INLINE void
 debug_printf(const char *format, ...)
 {
 #ifdef DEBUG
@@ -133,6 +133,9 @@ void _debug_break(void);
 #endif /* !DEBUG */
 
 
+long
+debug_get_num_option(const char *name, long dfault);
+
 void _debug_assert_fail(const char *expr, 
                         const char *file, 
                         unsigned line, 
@@ -176,7 +179,7 @@ void _debug_assert_fail(const char *expr,
  */
 #ifdef DEBUG
 #define debug_checkpoint_full() \
-   debug_printf("%s:%u:%s", __FILE__, __LINE__, __FUNCTION__) 
+   _debug_printf("%s:%u:%s", __FILE__, __LINE__, __FUNCTION__) 
 #else
 #define debug_checkpoint_full() \
    ((void)0) 

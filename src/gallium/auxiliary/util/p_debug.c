@@ -260,7 +260,7 @@ enum {
 };
 
 /* Check for aborts enabled. */
-static unsigned abort_en()
+static unsigned abort_en(void)
 {
    if (!mapped_config_file)
    {
@@ -283,7 +283,7 @@ static unsigned abort_en()
    return ((((char *)mapped_config_file)[0]) - 0x30) & eAssertAbortEn;
 }
 #else /* WIN32 */
-static unsigned abort_en()
+static unsigned abort_en(void)
 {
    return !GETENV("GALLIUM_ABORT_ON_ASSERT");
 }
