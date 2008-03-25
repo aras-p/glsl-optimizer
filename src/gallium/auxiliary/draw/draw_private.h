@@ -364,7 +364,8 @@ extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
 
 extern void draw_update_vertex_fetch( struct draw_context *draw );
 
-extern boolean draw_need_pipeline(const struct draw_context *draw);
+extern boolean draw_need_pipeline(const struct draw_context *draw,
+                                  unsigned prim );
 
 
 /* Passthrough mode (second attempt):
