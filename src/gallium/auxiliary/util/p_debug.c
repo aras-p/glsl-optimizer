@@ -155,10 +155,12 @@ debug_get_option(const char *name, const char *dfault)
    const char *sol, *eol, *sep;
    static char output[1024];
    
+   result = dfault;
+   /* XXX: this creates the file if it does not exists, so it must either be
+    * disabled on release versions, or put in a less conspicuous place.
+    */
    pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
-   if(!pMap)
-      result = dfault;
-   else {
+   if(pMap) {
       sol = (const char *)pMap;
       while(1) {
 	 /* TODO: handle LF line endings */
@@ -184,10 +186,7 @@ debug_get_option(const char *name, const char *dfault)
       result = dfault;
 #endif
       
-   if(result)
-      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result);
-   else
-      debug_printf("%s: %s = (null)\n", __FUNCTION__, name);
+   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? result : "(null)");
    
    return result;
 }
