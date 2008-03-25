@@ -95,6 +95,14 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 
    st->draw = draw_create(); /* for selection/feedback */
 
+   /* Disable draw options that might convert points/lines to tris, etc.
+    * as that would foul-up feedback/selection mode.
+    */
+   draw_wide_line_threshold(st->draw, 1000.0f);
+   draw_wide_point_threshold(st->draw, 1000.0f);
+   draw_enable_line_stipple(st->draw, FALSE);
+   draw_enable_point_sprites(st->draw, FALSE);
+
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
 
