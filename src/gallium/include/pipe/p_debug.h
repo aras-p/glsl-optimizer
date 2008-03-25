@@ -191,7 +191,7 @@ void _debug_assert_fail(const char *expr,
  */
 #ifdef DEBUG
 #define debug_warning(__msg) \
-   _debug_printf("%s:%u:%s: warning: %s\n", __FILE__, __LINE__, __FUNCTION__, (__msg))
+   _debug_printf("%s:%u:%s: warning: %s\n", __FILE__, __LINE__, __FUNCTION__, __msg)
 #else
 #define debug_warning(__msg) \
    ((void)0) 
@@ -203,10 +203,10 @@ void _debug_assert_fail(const char *expr,
  */
 #ifdef DEBUG
 #define debug_error(__msg) \
-   _debug_printf("%s:%u:%s: error: %s\n", __FILE__, __LINE__, __FUNCTION__, (__msg)) 
+   _debug_printf("%s:%u:%s: error: %s\n", __FILE__, __LINE__, __FUNCTION__, __msg) 
 #else
 #define debug_error(__msg) \
-   _debug_printf("error: %s\n", __msg))
+   _debug_printf("error: %s\n", __msg)
 #endif
 
 
