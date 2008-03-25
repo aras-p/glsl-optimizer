@@ -108,7 +108,6 @@ nouveau_fence_flush(struct nouveau_channel *);
 
 struct nouveau_pushbuf_reloc {
 	uint64_t next;
-	uint64_t handle;
 	uint32_t *ptr;
 	uint32_t flags;
 	uint32_t data;

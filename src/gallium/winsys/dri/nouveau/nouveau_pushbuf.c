@@ -157,11 +157,13 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 
 		if (bo->offset == nouveau_bo(bo)->offset &&
 		    bo->flags == nouveau_bo(bo)->flags) {
+
 			while ((r = ptr_to_pbrel(pbbo->relocs))) {
 				pbbo->relocs = r->next;
 				free(r);
 			}
 
+			nouveau_bo_del(&bo);
 			nvpb->buffers = pbbo->next;
 			free(pbbo);
 			continue;
@@ -175,6 +177,7 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 			free(r);
 		}
 
+		nouveau_bo_del(&bo);
 		nvpb->buffers = pbbo->next;
 		free(pbbo);
 	}
@@ -202,6 +205,7 @@ nouveau_pushbuf_emit_buffer(struct nouveau_channel *chan, struct nouveau_bo *bo)
 {
 	struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(chan->pushbuf);
 	struct nouveau_pushbuf_bo *pbbo = ptr_to_pbbo(nvpb->buffers);
+	struct nouveau_bo *ref = NULL;
 
 	while (pbbo) {
 		if (pbbo->handle == bo->handle)
@@ -214,7 +218,8 @@ nouveau_pushbuf_emit_buffer(struct nouveau_channel *chan, struct nouveau_bo *bo)
 	nvpb->buffers = pbbo_to_ptr(pbbo);
 	nvpb->nr_buffers++;
 
-	pbbo->handle = bo_to_ptr(bo);
+	nouveau_bo_ref(bo->device, bo->handle, &ref);
+	pbbo->handle = bo_to_ptr(ref);
 	pbbo->flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART;
 	pbbo->relocs = 0;
 	pbbo->nr_relocs = 0;
@@ -244,7 +249,6 @@ nouveau_pushbuf_emit_reloc(struct nouveau_channel *chan, void *ptr,
 	pbbo->flags |= (flags & NOUVEAU_BO_RDWR);
 	pbbo->flags &= (flags | NOUVEAU_BO_RDWR);
 
-	r->handle = bo_to_ptr(r);
 	r->ptr = ptr;
 	r->flags = flags;
 	r->data = data;
