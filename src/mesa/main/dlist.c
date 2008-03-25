@@ -5578,6 +5578,27 @@ save_VertexAttrib4fvARB(GLuint index, const GLfloat * v)
 }
 
 
+/* GL_ARB_shader_objects, GL_ARB_vertex/fragment_shader */
+
+static void GLAPIENTRY
+exec_BindAttribLocationARB(GLuint program, GLuint index, const GLchar *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   CALL_BindAttribLocationARB(ctx->Exec, (program, index, name));
+}
+
+static GLint GLAPIENTRY
+exec_GetAttribLocationARB(GLuint program, const GLchar *name)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   FLUSH_VERTICES(ctx, 0);
+   return CALL_GetAttribLocationARB(ctx->Exec, (program, name));
+}
+/* XXX more shader functions needed here */
+
+
+
 #if FEATURE_EXT_framebuffer_blit
 static void GLAPIENTRY
 save_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -8110,6 +8131,11 @@ _mesa_init_dlist_table(struct _glapi_table *table)
 #if FEATURE_EXT_framebuffer_blit
    SET_BlitFramebufferEXT(table, save_BlitFramebufferEXT);
 #endif
+
+   /* ARB 30/31/32. GL_ARB_shader_objects, GL_ARB_vertex/fragment_shader */
+   SET_BindAttribLocationARB(table, exec_BindAttribLocationARB);
+   SET_GetAttribLocationARB(table, exec_GetAttribLocationARB);
+   /* XXX additional functions need to be implemented here! */
 
    /* 299. GL_EXT_blend_equation_separate */
    SET_BlendEquationSeparateEXT(table, save_BlendEquationSeparateEXT);
