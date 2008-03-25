@@ -523,6 +523,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
+   cso_save_samplers(cso);
 
    /* rasterizer state: just scissor */
    {
@@ -596,13 +597,11 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
+   cso_restore_samplers(cso);
    /* shaders don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
 
-   cso_set_rasterizer(cso, &st->state.rasterizer);
-   cso_set_samplers(cso, PIPE_MAX_SAMPLERS,
-                 (const struct pipe_sampler_state **) st->state.sampler_list);
    pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
                               ctx->st->state.sampler_texture);
 }

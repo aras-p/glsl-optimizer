@@ -39,6 +39,22 @@ extern "C" {
 #endif
 
 
+#if defined(WIN32) && defined(DEBUG) /* memory debugging */
+
+#include "p_debug.h"
+
+#define MALLOC( _size ) \
+   debug_malloc( __FILE__, __LINE__, __FUNCTION__, _size )
+#define CALLOC( _count, _size ) \
+   debug_calloc(__FILE__, __LINE__, __FUNCTION__, _count, _size )
+#define FREE( _ptr ) \
+   debug_free( __FILE__, __LINE__, __FUNCTION__,  _ptr )
+#define REALLOC( _ptr, _old_size, _size ) \
+   debug_realloc( __FILE__, __LINE__, __FUNCTION__,  _ptr, _old_size, _size )
+#define GETENV( X ) NULL
+
+#else
+   
 #ifdef WIN32
 
 void * __stdcall
@@ -91,10 +107,10 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
    void *new_ptr = NULL;
 
    if (new_size != 0) {
+      unsigned copy_size = old_size < new_size ? old_size : new_size;
       new_ptr = MALLOC( new_size );
-      
-      if( new_ptr && old_ptr ) {
-         memcpy( new_ptr, old_ptr, old_size );
+      if (new_ptr && old_ptr && copy_size) {
+         memcpy( new_ptr, old_ptr, copy_size );
       }
    }
 
@@ -104,7 +120,7 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define GETENV( X )  NULL
 
-#else /* WIN32 */
+#else /* !WIN32 */
 
 #define MALLOC( SIZE )  malloc( SIZE )
 
@@ -116,7 +132,8 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define GETENV( X )  getenv( X )
 
-#endif /* WIN32 */
+#endif /* !WIN32 */
+#endif /* !DEBUG */
 
 #define MALLOC_STRUCT(T)   (struct T *) MALLOC(sizeof(struct T))
 
@@ -184,7 +201,7 @@ mem_dup(const void *src, uint size)
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
-#define Elements(x) sizeof(x)/sizeof(*(x))
+#define Elements(x) (sizeof(x)/sizeof((x)[0]))
 #define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
 
 /**

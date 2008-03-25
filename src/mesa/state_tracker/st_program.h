@@ -97,10 +97,6 @@ struct st_vertex_program
 };
 
 
-extern void
-st_init_program_functions(struct dd_function_table *functions);
-
-
 static inline struct st_fragment_program *
 st_fragment_program( struct gl_fragment_program *fp )
 {

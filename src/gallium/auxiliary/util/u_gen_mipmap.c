@@ -719,8 +719,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
-   ctx->sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
-   ctx->sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    ctx->sampler.normalized_coords = 1;
 
 
@@ -774,23 +772,23 @@ set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
 {
    void *buf;
 
-   ctx->vertices[0][0][0] = 0.0f; /*x*/
-   ctx->vertices[0][0][1] = 0.0f; /*y*/
+   ctx->vertices[0][0][0] = -0.5f; /*x*/
+   ctx->vertices[0][0][1] = -0.5f; /*y*/
    ctx->vertices[0][1][0] = 0.0f; /*s*/
    ctx->vertices[0][1][1] = 0.0f; /*t*/
 
-   ctx->vertices[1][0][0] = width; /*x*/
-   ctx->vertices[1][0][1] = 0.0f;  /*y*/
+   ctx->vertices[1][0][0] = width - 0.5f; /*x*/
+   ctx->vertices[1][0][1] = -0.5f;  /*y*/
    ctx->vertices[1][1][0] = 1.0f; /*s*/
    ctx->vertices[1][1][1] = 0.0f; /*t*/
 
-   ctx->vertices[2][0][0] = width;
-   ctx->vertices[2][0][1] = height;
+   ctx->vertices[2][0][0] = width - 0.5f;
+   ctx->vertices[2][0][1] = height - 0.5f;
    ctx->vertices[2][1][0] = 1.0f;
    ctx->vertices[2][1][1] = 1.0f;
 
-   ctx->vertices[3][0][0] = 0.0f;
-   ctx->vertices[3][0][1] = height;
+   ctx->vertices[3][0][0] = -0.5f;
+   ctx->vertices[3][0][1] = height - 0.5f;
    ctx->vertices[3][1][0] = 0.0f;
    ctx->vertices[3][1][1] = 1.0f;
 
@@ -849,11 +847,13 @@ simple_viewport(struct pipe_context *pipe, uint width, uint height)
  * \param face  which cube face to generate mipmaps for (0 for non-cube maps)
  * \param baseLevel  the first mipmap level to use as a src
  * \param lastLevel  the last mipmap level to generate
+ * \param filter  the minification filter used to generate mipmap levels with
+ * \param filter  one of PIPE_TEX_FILTER_LINEAR, PIPE_TEX_FILTER_NEAREST
  */
 void
 util_gen_mipmap(struct gen_mipmap_state *ctx,
                 struct pipe_texture *pt,
-                uint face, uint baseLevel, uint lastLevel)
+                uint face, uint baseLevel, uint lastLevel, uint filter)
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
@@ -889,6 +889,10 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    /* init framebuffer state */
    memset(&fb, 0, sizeof(fb));
    fb.num_cbufs = 1;
+
+   /* set min/mag to same filter for faster sw speed */
+   ctx->sampler.mag_img_filter = filter;
+   ctx->sampler.min_img_filter = filter;
 
    /*
     * XXX for small mipmap levels, it may be faster to use the software

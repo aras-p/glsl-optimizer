@@ -50,7 +50,6 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx);
 extern void
 util_gen_mipmap(struct gen_mipmap_state *ctx,
                 struct pipe_texture *pt,
-                uint face, uint baseLevel, uint lastLevel);
-
+                uint face, uint baseLevel, uint lastLevel, uint filter);
 
 #endif

@@ -60,10 +60,21 @@ extern "C" {
 #endif
 
 
+void _debug_vprintf(const char *format, va_list ap);
+   
+
+static INLINE void
+_debug_printf(const char *format, ...)
+{
+   va_list ap;
+   va_start(ap, format);
+   _debug_vprintf(format, ap);
+   va_end(ap);
+}
+
+
 /**
  * Print debug messages.
- *
- * A debug message will be printed regardless of the DEBUG/NDEBUG macros.
  *
  * The actual channel used to output debug message is platform specific. To 
  * avoid misformating or truncation, follow these rules of thumb:   
@@ -71,32 +82,80 @@ extern "C" {
  * - avoid outputing large strings (512 bytes is the current maximum length 
  * that is guaranteed to be printed in all platforms)
  */
-void debug_printf(const char *format, ...);
+static INLINE void
+debug_printf(const char *format, ...)
+{
+#ifdef DEBUG
+   va_list ap;
+   va_start(ap, format);
+   _debug_vprintf(format, ap);
+   va_end(ap);
+#endif
+}
 
 
-/* Dump a blob in hex to the same place that debug_printf sends its
- * messages:
+#ifdef DEBUG
+#define debug_vprintf(_format, _ap) _debug_vprintf(_format, _ap)
+#else
+#define debug_vprintf(_format, _ap) ((void)0)
+#endif
+
+
+/**
+ * Dump a blob in hex to the same place that debug_printf sends its
+ * messages.
  */
+#ifdef DEBUG
 void debug_print_blob( const char *name,
                        const void *blob,
                        unsigned size );
+#else
+#define debug_print_blob(_name, _blob, _size) ((void)0)
+#endif
+
+
+void _debug_break(void);
+
 
 /**
- * @sa debug_printf 
+ * Hard-coded breakpoint.
  */
-void debug_vprintf(const char *format, va_list ap);
-
-void debug_assert_fail(const char *expr, const char *file, unsigned line);
-
-
-/** Assert macro */
 #ifdef DEBUG
-#define debug_assert(expr) ((expr) ? (void)0 : debug_assert_fail(#expr, __FILE__, __LINE__))
+#if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
+#define debug_break() __asm("int3")
+#elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
+#define debug_break()  _asm {int 3}
+#else
+#define debug_break() _debug_break()
+#endif
+#else /* !DEBUG */
+#define debug_break() ((void)0)
+#endif /* !DEBUG */
+
+
+long
+debug_get_num_option(const char *name, long dfault);
+
+void _debug_assert_fail(const char *expr, 
+                        const char *file, 
+                        unsigned line, 
+                        const char *function);
+
+
+/** 
+ * Assert macro
+ * 
+ * Do not expect that the assert call terminates -- errors must be handled 
+ * regardless of assert behavior.
+ */
+#ifdef DEBUG
+#define debug_assert(expr) ((expr) ? (void)0 : _debug_assert_fail(#expr, __FILE__, __LINE__, __FUNCTION__))
 #else
 #define debug_assert(expr) ((void)0)
 #endif
 
 
+/** Override standard assert macro */
 #ifdef assert
 #undef assert
 #endif
@@ -104,75 +163,50 @@ void debug_assert_fail(const char *expr, const char *file, unsigned line);
 
 
 /**
- * Set a channel's debug mask.
- * 
- * uuid is just a random 32 bit integer that uniquely identifies the debugging 
- * channel. 
- * 
- * @note Due to current implementation issues, make sure the lower 8 bits of 
- * UUID are unique.
+ * Output the current function name.
  */
-void debug_mask_set(uint32_t uuid, uint32_t mask);
-
-
-uint32_t debug_mask_get(uint32_t uuid);
+#ifdef DEBUG
+#define debug_checkpoint() \
+   _debug_printf("%s\n", __FUNCTION__)
+#else
+#define debug_checkpoint() \
+   ((void)0) 
+#endif
 
 
 /**
- * Conditional debug output. 
- * 
- * This is just a generalization of the debug filtering mechanism used 
- * throughout Gallium.
- * 
- * You use this function as:
- * 
- * @code
- * #define MYDRIVER_UUID 0x12345678 // random 32 bit identifier
- * 
- * static void inline 
- * mydriver_debug(uint32_t what, const char *format, ...)
- * {
- * #ifdef DEBUG
- *    va_list ap;
- *    va_start(ap, format);
- *    debug_mask_vprintf(MYDRIVER_UUID, what, format, ap);
- *    va_end(ap);
- * #endif
- * }
- * 
- * ...
- * 
- *    debug_mask_set(MYDRIVER_UUID, 
- *                   MYDRIVER_DEBUG_THIS | 
- *                   MYDRIVER_DEBUG_THAT |
- *                   ... );
- * 
- * ...
- * 
- *    mydriver_debug(MYDRIVER_DEBUG_THIS,
- *                   "this and this happened\n");
- *
- *    mydriver_debug(MYDRIVER_DEBUG_THAT,
- *                   "that = %f\n", that);
- * ...
- * @endcode     
- * 
- * You can also define several variants of mydriver_debug, with hardcoded what. 
- * Note that although macros with variable number of arguments would accomplish 
- * more in less code, they are not portable. 
+ * Output the full source code position.
  */
-void debug_mask_vprintf(uint32_t uuid, 
-                        uint32_t what, 
-                        const char *format, 
-                        va_list ap);
+#ifdef DEBUG
+#define debug_checkpoint_full() \
+   _debug_printf("%s:%u:%s", __FILE__, __LINE__, __FUNCTION__) 
+#else
+#define debug_checkpoint_full() \
+   ((void)0) 
+#endif
 
 
+/**
+ * Output a warning message. Muted on release version.
+ */
 #ifdef DEBUG
 #define debug_warning(__msg) \
-   debug_printf("%s:%i:warning: %s\n", __FILE__, __LINE__, (__msg)) 
+   _debug_printf("%s:%u:%s: warning: %s\n", __FILE__, __LINE__, __FUNCTION__, (__msg))
 #else
 #define debug_warning(__msg) \
    ((void)0) 
+#endif
+
+
+/**
+ * Output an error message. Not muted on release version.
+ */
+#ifdef DEBUG
+#define debug_error(__msg) \
+   _debug_printf("%s:%u:%s: error: %s\n", __FILE__, __LINE__, __FUNCTION__, (__msg)) 
+#else
+#define debug_error(__msg) \
+   _debug_printf("error: %s\n", __msg))
 #endif
 
 
@@ -223,6 +257,56 @@ debug_dump_enum(const struct debug_named_value *names,
 const char *
 debug_dump_flags(const struct debug_named_value *names, 
                  unsigned long value);
+
+
+/**
+ * Get option.
+ * 
+ * It is an alias for getenv on Linux. 
+ * 
+ * On Windows it reads C:\gallium.cfg, which is a text file with CR+LF line 
+ * endings with one option per line as
+ *  
+ *   NAME=value
+ * 
+ * This file must be terminated with an extra empty line.
+ */
+const char *
+debug_get_option(const char *name, const char *dfault);
+
+boolean
+debug_get_bool_option(const char *name, boolean dfault);
+
+long
+debug_get_unsigned_option(const char *name, long dfault);
+
+unsigned long
+debug_get_flags_option(const char *name, 
+                       const struct debug_named_value *flags,
+                       unsigned long dfault);
+
+
+void *
+debug_malloc(const char *file, unsigned line, const char *function,
+             size_t size);
+
+void
+debug_free(const char *file, unsigned line, const char *function,
+           void *ptr);
+
+void *
+debug_calloc(const char *file, unsigned line, const char *function,
+             size_t count, size_t size );
+
+void *
+debug_realloc(const char *file, unsigned line, const char *function,
+              void *old_ptr, size_t old_size, size_t new_size );
+
+void 
+debug_memory_reset(void);
+
+void 
+debug_memory_report(void);
 
 
 #ifdef	__cplusplus

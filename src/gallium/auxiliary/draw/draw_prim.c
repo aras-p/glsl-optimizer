@@ -526,7 +526,7 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 
    /* drawing done here: */
    if (!draw->rasterizer->bypass_vs ||
-       !draw_passthrough_arrays(draw, prim, start, count)) {
+       !draw_pt_arrays(draw, prim, start, count)) {
       /* we have to run the whole pipeline */
       draw_prim(draw, prim, start, count);
    }

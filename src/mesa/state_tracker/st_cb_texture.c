@@ -265,19 +265,17 @@ guess_and_alloc_texture(struct st_context *st,
 {
    GLuint firstLevel;
    GLuint lastLevel;
-   GLuint width = stImage->base.Width;
-   GLuint height = stImage->base.Height;
-   GLuint depth = stImage->base.Depth;
+   GLuint width = stImage->base.Width2;  /* size w/out border */
+   GLuint height = stImage->base.Height2;
+   GLuint depth = stImage->base.Depth2;
    GLuint i, comp_byte = 0;
 
    DBG("%s\n", __FUNCTION__);
 
    assert(!stObj->pt);
 
-   if (stImage->base.Border)
-      return;
-
-   if (stImage->level > stObj->base.BaseLevel &&
+   if (stObj->pt &&
+       stImage->level > stObj->base.BaseLevel &&
        (stImage->base.Width == 1 ||
         (stObj->base.Target != GL_TEXTURE_1D &&
          stImage->base.Height == 1) ||
@@ -297,7 +295,8 @@ guess_and_alloc_texture(struct st_context *st,
    /* Figure out image dimensions at start level. 
     */
    for (i = stImage->level; i > firstLevel; i--) {
-      width <<= 1;
+      if (width != 1)
+         width <<= 1;
       if (height != 1)
          height <<= 1;
       if (depth != 1)
@@ -1448,9 +1447,9 @@ st_finalize_texture(GLcontext *ctx,
 	stObj->pt->format !=
 	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
 	stObj->pt->last_level != stObj->lastLevel ||
-	stObj->pt->width[0] != firstImage->base.Width ||
-	stObj->pt->height[0] != firstImage->base.Height ||
-	stObj->pt->depth[0] != firstImage->base.Depth ||
+	stObj->pt->width[0] != firstImage->base.Width2 ||
+	stObj->pt->height[0] != firstImage->base.Height2 ||
+	stObj->pt->depth[0] != firstImage->base.Depth2 ||
 	stObj->pt->cpp != cpp ||
 	stObj->pt->compressed != firstImage->base.IsCompressed)) {
       pipe_texture_release(&stObj->pt);
@@ -1464,9 +1463,9 @@ st_finalize_texture(GLcontext *ctx,
                                     gl_target_to_pipe(stObj->base.Target),
                                     st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat),
                                     stObj->lastLevel,
-                                    firstImage->base.Width,
-                                    firstImage->base.Height,
-                                    firstImage->base.Depth,
+                                    firstImage->base.Width2,
+                                    firstImage->base.Height2,
+                                    firstImage->base.Depth2,
                                     comp_byte);
       if (!stObj->pt) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");

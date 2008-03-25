@@ -42,6 +42,7 @@
 #include "st_cb_drawpixels.h"
 #include "st_cb_fbo.h"
 #include "st_cb_feedback.h"
+#include "st_cb_program.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_rasterpos.h"
 #include "st_cb_readpixels.h"

@@ -58,7 +58,7 @@ int rpl_snprintf(char *str, size_t size, const char *format, ...);
 #endif
 
 
-void debug_vprintf(const char *format, va_list ap)
+void _debug_vprintf(const char *format, va_list ap)
 {
 #ifdef WIN32
 #ifndef WINCE
@@ -76,15 +76,7 @@ void debug_vprintf(const char *format, va_list ap)
 }
 
 
-void debug_printf(const char *format, ...)
-{
-   va_list ap;
-   va_start(ap, format);
-   debug_vprintf(format, ap);
-   va_end(ap);
-}
-
-
+#ifdef DEBUG
 void debug_print_blob( const char *name,
                        const void *blob,
                        unsigned size )
@@ -99,12 +91,10 @@ void debug_print_blob( const char *name,
       debug_printf("%d:\t%08x\n", i, ublob[i]);
    }
 }
+#endif
 
 
-/* TODO: implement a debug_abort that calls EngBugCheckEx on WIN32 */
-
-
-static INLINE void debug_break(void) 
+void _debug_break(void) 
 {
 #if (defined(__i386__) || defined(__386__)) && defined(__GNUC__)
    __asm("int3");
@@ -117,6 +107,150 @@ static INLINE void debug_break(void)
 #endif
 }
 
+
+#ifdef WIN32
+static const char *
+find(const char *start, const char *end, char c) 
+{
+   const char *p;
+   for(p = start; !end || p != end; ++p) {
+      if(*p == c)
+	 return p;
+      if(*p < 32)
+	 break;
+   }
+   return NULL;
+}
+
+static int 
+compare(const char *start, const char *end, const char *s)
+{
+   const char *p, *q;
+   for(p = start, q = s; p != end && *q != '\0'; ++p, ++q) {
+      if(*p != *q)
+	 return 0;
+   }
+   return p == end && *q == '\0';
+}
+
+static void 
+copy(char *dst, const char *start, const char *end, size_t n) 
+{
+   const char *p;
+   char *q;
+   for(p = start, q = dst, n = n - 1; p != end && n; ++p, ++q, --n)
+      *q = *p;
+   *q = '\0';
+}
+#endif
+
+
+const char *
+debug_get_option(const char *name, const char *dfault)
+{
+   const char *result;
+#ifdef WIN32
+   ULONG_PTR iFile = 0;
+   const void *pMap = NULL;
+   const char *sol, *eol, *sep;
+   static char output[1024];
+   
+   pMap = EngMapFile(L"\\??\\c:\\gallium.cfg", 0, &iFile);
+   if(!pMap)
+      result = dfault;
+   else {
+      sol = (const char *)pMap;
+      while(1) {
+	 /* TODO: handle LF line endings */
+	 eol = find(sol, NULL, '\r');
+	 if(!eol || eol == sol)
+	    break;
+	 sep = find(sol, eol, '=');
+	 if(!sep)
+	    break;
+	 if(compare(sol, sep, name)) {
+	    copy(output, sep + 1, eol, sizeof(output));
+	    result = output;
+	    break;
+	 }
+	 sol = eol + 2;
+      }
+      EngUnmapFile(iFile);
+   }
+#else
+   
+   result = getenv(name);
+   if(!result)
+      result = dfault;
+#endif
+      
+   if(result)
+      debug_printf("%s: %s = %s\n", __FUNCTION__, name, result);
+   else
+      debug_printf("%s: %s = (null)\n", __FUNCTION__, name);
+   
+   return result;
+}
+
+boolean
+debug_get_bool_option(const char *name, boolean dfault)
+{
+   const char *str = debug_get_option(name, NULL);
+   boolean result;
+   
+   if(str == NULL)
+      result = dfault;
+   else if(!strcmp(str, "no"))
+      result = FALSE;
+   else if(!strcmp(str, "0"))
+      result = FALSE;
+   else if(!strcmp(str, "f"))
+      result = FALSE;
+   else if(!strcmp(str, "false"))
+      result = FALSE;
+   else
+      result = TRUE;
+
+   debug_printf("%s: %s = %s\n", __FUNCTION__, name, result ? "TRUE" : "FALSE");
+   
+   return result;
+}
+
+
+long
+debug_get_num_option(const char *name, long dfault)
+{
+   /* FIXME */
+   return dfault;
+}
+
+
+unsigned long
+debug_get_flags_option(const char *name, 
+                       const struct debug_named_value *flags,
+                       unsigned long dfault)
+{
+   unsigned long result;
+   const char *str;
+   
+   str = debug_get_option(name, NULL);
+   if(!str)
+      result = dfault;
+   else {
+      result = 0;
+      while( flags->name ) {
+	 if (!strcmp(str, "all") || strstr(str, flags->name ))
+	    result |= flags->value;
+	 ++flags;
+      }
+   }
+
+   debug_printf("%s: %s = 0x%lx\n", __FUNCTION__, name, result);
+
+   return result;
+}
+
+
 #if defined(WIN32)
 ULONG_PTR debug_config_file = 0;
 void *mapped_config_file = 0;
@@ -126,7 +260,7 @@ enum {
 };
 
 /* Check for aborts enabled. */
-static unsigned abort_en()
+static unsigned abort_en(void)
 {
    if (!mapped_config_file)
    {
@@ -149,56 +283,25 @@ static unsigned abort_en()
    return ((((char *)mapped_config_file)[0]) - 0x30) & eAssertAbortEn;
 }
 #else /* WIN32 */
-static unsigned abort_en()
+static unsigned abort_en(void)
 {
    return !GETENV("GALLIUM_ABORT_ON_ASSERT");
 }
 #endif
 
-void debug_assert_fail(const char *expr, const char *file, unsigned line) 
+void _debug_assert_fail(const char *expr, 
+                        const char *file, 
+                        unsigned line, 
+                        const char *function) 
 {
-   debug_printf("%s:%i: Assertion `%s' failed.\n", file, line, expr);
+   _debug_printf("%s:%u:%s: Assertion `%s' failed.\n", file, line, function, expr);
    if (abort_en())
    {
       debug_break();
    } else
    {
-      debug_printf("continuing...\n");
+      _debug_printf("continuing...\n");
    }
-}
-
-
-#define DEBUG_MASK_TABLE_SIZE 256
-
-
-/**
- * Mask hash table.
- * 
- * For now we just take the lower bits of the key, and do no attempt to solve
- * collisions. Use a proper hash table when we have dozens of drivers. 
- */
-static uint32_t debug_mask_table[DEBUG_MASK_TABLE_SIZE];
-
-
-void debug_mask_set(uint32_t uuid, uint32_t mask) 
-{
-   unsigned hash = uuid & (DEBUG_MASK_TABLE_SIZE - 1);
-   debug_mask_table[hash] = mask;
-}
-
-
-uint32_t debug_mask_get(uint32_t uuid)
-{
-   unsigned hash = uuid & (DEBUG_MASK_TABLE_SIZE - 1);
-   return debug_mask_table[hash];
-}
-
-
-void debug_mask_vprintf(uint32_t uuid, uint32_t what, const char *format, va_list ap)
-{
-   uint32_t mask = debug_mask_get(uuid);
-   if(mask & what)
-      debug_vprintf(format, ap);
 }
 
 
@@ -214,7 +317,7 @@ debug_dump_enum(const struct debug_named_value *names,
       ++names;
    }
 
-   snprintf(rest, sizeof(rest), "0x%08x", value);
+   snprintf(rest, sizeof(rest), "0x%08lx", value);
    return rest;
 }
 
@@ -247,7 +350,7 @@ debug_dump_flags(const struct debug_named_value *names,
       else
 	 first = 0;
       
-      snprintf(rest, sizeof(rest), "0x%08x", value);
+      snprintf(rest, sizeof(rest), "0x%08lx", value);
       strncat(output, rest, sizeof(output));
    }
    

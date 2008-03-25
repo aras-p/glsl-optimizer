@@ -29,6 +29,7 @@
  */
 
 #include "pipe/p_util.h"
+#include "pipe/p_debug.h"
 
 #include "cso_cache.h"
 #include "cso_hash.h"
@@ -131,75 +132,77 @@ static int _cso_size_for_type(enum cso_cache_type type)
 static void delete_blend_state(void *state, void *data)
 {
    struct cso_blend *cso = (struct cso_blend *)state;
-   if (cso->delete_state && cso->data != &cso->state)
+   if (cso->delete_state)
       cso->delete_state(cso->context, cso->data);
+   FREE(state);
 }
 
 static void delete_depth_stencil_state(void *state, void *data)
 {
    struct cso_depth_stencil_alpha *cso = (struct cso_depth_stencil_alpha *)state;
-   if (cso->delete_state && cso->data != &cso->state)
+   if (cso->delete_state)
       cso->delete_state(cso->context, cso->data);
+   FREE(state);
 }
 
 static void delete_sampler_state(void *state, void *data)
 {
    struct cso_sampler *cso = (struct cso_sampler *)state;
-   if (cso->delete_state && cso->data != &cso->state)
+   if (cso->delete_state)
       cso->delete_state(cso->context, cso->data);
+   FREE(state);
 }
 
 static void delete_rasterizer_state(void *state, void *data)
 {
    struct cso_rasterizer *cso = (struct cso_rasterizer *)state;
-   if (cso->delete_state && cso->data != &cso->state)
+   if (cso->delete_state)
       cso->delete_state(cso->context, cso->data);
+   FREE(state);
 }
 
 static void delete_fs_state(void *state, void *data)
 {
    struct cso_fragment_shader *cso = (struct cso_fragment_shader *)state;
-   if (cso->delete_state && cso->data != &cso->state)
+   if (cso->delete_state)
       cso->delete_state(cso->context, cso->data);
+   FREE(state);
 }
 
 static void delete_vs_state(void *state, void *data)
 {
    struct cso_vertex_shader *cso = (struct cso_vertex_shader *)state;
-   if (cso->delete_state && cso->data != &cso->state)
+   if (cso->delete_state)
       cso->delete_state(cso->context, cso->data);
+   FREE(state);
 }
 
 
 static INLINE void delete_cso(void *state, enum cso_cache_type type)
 {
    switch (type) {
-   case CSO_BLEND: {
+   case CSO_BLEND:
       delete_blend_state(state, 0);
-   }
       break;
-   case CSO_SAMPLER: {
+   case CSO_SAMPLER:
       delete_sampler_state(state, 0);
-   }
       break;
-   case CSO_DEPTH_STENCIL_ALPHA: {
+   case CSO_DEPTH_STENCIL_ALPHA:
       delete_depth_stencil_state(state, 0);
-   }
       break;
-   case CSO_RASTERIZER: {
+   case CSO_RASTERIZER:
       delete_rasterizer_state(state, 0);
-   }
       break;
-   case CSO_FRAGMENT_SHADER: {
+   case CSO_FRAGMENT_SHADER:
       delete_fs_state(state, 0);
-   }
       break;
-   case CSO_VERTEX_SHADER: {
+   case CSO_VERTEX_SHADER:
       delete_vs_state(state, 0);
-   }
       break;
+   default:
+      assert(0);
+      FREE(state);
    }
-   FREE(state);
 }
 
 static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,

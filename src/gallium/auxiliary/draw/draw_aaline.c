@@ -621,7 +621,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    bind_aaline_fragment_shader(aaline);
 
    aaline->state.sampler[num] = aaline->sampler_cso;
-   aaline->state.texture[num] = aaline->texture;
+   pipe_texture_reference(&aaline->state.texture[num], aaline->texture);
 
    aaline->driver_bind_sampler_states(pipe, num + 1, aaline->state.sampler);
    aaline->driver_set_sampler_textures(pipe, num + 1, aaline->state.texture);
@@ -769,9 +769,14 @@ aaline_set_sampler_textures(struct pipe_context *pipe,
                             unsigned num, struct pipe_texture **texture)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
+   uint i;
+
    /* save current */
-   memcpy(aaline->state.texture, texture, num * sizeof(struct pipe_texture *));
+   for (i = 0; i < num; i++) {
+      pipe_texture_reference(&aaline->state.texture[i], texture[i]);
+   }
    aaline->num_textures = num;
+
    /* pass-through */
    aaline->driver_set_sampler_textures(aaline->pipe, num, texture);
 }

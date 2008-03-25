@@ -53,6 +53,9 @@ struct pipe_context;
 struct gallivm_prog;
 struct gallivm_cpu_engine;
 
+struct draw_pt_middle_end;
+struct draw_pt_front_end;
+
 /**
  * Basic vertex info.
  * Carry some useful information around with the vertices in the prim pipe.  
@@ -203,8 +206,21 @@ struct draw_context
    /* Support prototype passthrough path:
     */
    struct {
-      unsigned prim;
-      unsigned hw_vertex_size;
+      unsigned prim;           /* XXX: to be removed */
+      unsigned hw_vertex_size; /* XXX: to be removed */
+
+      struct {
+         struct draw_pt_middle_end *fetch_emit;
+         struct draw_pt_middle_end *fetch_shade_emit;
+         struct draw_pt_middle_end *fetch_shade_cliptest_pipeline_or_emit;
+      } middle;
+
+      struct {
+         struct draw_pt_front_end *noop;
+         struct draw_pt_front_end *split_arrays;
+         struct draw_pt_front_end *vcache;
+      } front;
+
    } pt;
 
 
@@ -351,7 +367,18 @@ extern void draw_update_vertex_fetch( struct draw_context *draw );
 extern boolean draw_need_pipeline(const struct draw_context *draw);
 
 
-/* Prototype/hack
+/* Passthrough mode (second attempt):
+ */
+boolean draw_pt_init( struct draw_context *draw );
+void draw_pt_destroy( struct draw_context *draw );
+boolean draw_pt_arrays( struct draw_context *draw,
+                        unsigned prim,
+                        unsigned start,
+                        unsigned count );
+
+
+
+/* Prototype/hack (DEPRECATED)
  */
 boolean
 draw_passthrough_arrays(struct draw_context *draw, 

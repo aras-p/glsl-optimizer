@@ -45,6 +45,7 @@
 #include "st_context.h"
 #include "st_program.h"
 #include "st_atom_shader.h"
+#include "st_cb_program.h"
 
 
 static GLuint SerialNo = 1;
@@ -122,8 +123,8 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 }
 
 
-static void st_delete_program( GLcontext *ctx,
-			       struct gl_program *prog )
+void
+st_delete_program(GLcontext *ctx, struct gl_program *prog)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
