@@ -114,6 +114,12 @@ combined_drawpix_fragment_program(GLcontext *ctx)
             _mesa_clone_program(ctx, &st->pixel_xfer.program->Base.Base);
       }
       else {
+#if 0
+         printf("Base program:\n");
+         _mesa_print_program(&st->fp->Base.Base);
+         printf("DrawPix program:\n");
+         _mesa_print_program(&st->pixel_xfer.program->Base.Base);
+#endif
          stfp = (struct st_fragment_program *)
             _mesa_combine_programs(ctx,
                                    &st->pixel_xfer.program->Base.Base,
