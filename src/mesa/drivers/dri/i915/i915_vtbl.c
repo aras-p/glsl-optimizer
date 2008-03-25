@@ -572,6 +572,12 @@ i915_assert_not_dirty( struct intel_context *intel )
    assert(!dirty);
 }
 
+static void
+i915_note_unlock( struct intel_context *intel )
+{
+    /* nothing */
+}
+
 
 void
 i915InitVtbl(struct i915_context *i915)
@@ -587,4 +593,5 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.flush_cmd = i915_flush_cmd;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
+   i915->intel.vtbl.note_unlock = i915_note_unlock; 
 }

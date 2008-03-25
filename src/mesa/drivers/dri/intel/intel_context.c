@@ -993,6 +993,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
  */
 void UNLOCK_HARDWARE( struct intel_context *intel )
 {
+   intel->vtbl.note_unlock( intel );
    intel->locked = 0;
 
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);

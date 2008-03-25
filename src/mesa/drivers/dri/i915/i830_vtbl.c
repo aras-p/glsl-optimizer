@@ -666,6 +666,11 @@ i830_assert_not_dirty( struct intel_context *intel )
    assert(!get_dirty(state));
 }
 
+static void
+i830_note_unlock( struct intel_context *intel )
+{
+    /* nothing */
+}
 
 void
 i830InitVtbl(struct i830_context *i830)
@@ -681,4 +686,5 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.render_start = i830_render_start;
    i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;
+   i830->intel.vtbl.note_unlock = i830_note_unlock; 
 }
