@@ -112,6 +112,7 @@ struct pipe_rasterizer_state
    unsigned bypass_clipping:1;
    unsigned bypass_vs:1; /**< vertices are already fully transformed */
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
+   unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
