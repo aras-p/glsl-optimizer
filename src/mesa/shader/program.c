@@ -426,12 +426,18 @@ replace_registers(struct prog_instruction *inst, GLuint numInst,
 {
    GLuint i, j;
    for (i = 0; i < numInst; i++) {
+      /* src regs */
       for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
          if (inst[i].SrcReg[j].File == oldFile &&
              inst[i].SrcReg[j].Index == oldIndex) {
             inst[i].SrcReg[j].File = newFile;
             inst[i].SrcReg[j].Index = newIndex;
          }
+      }
+      /* dst reg */
+      if (inst[i].DstReg.File == oldFile && inst[i].DstReg.Index == oldIndex) {
+         inst[i].DstReg.File = newFile;
+         inst[i].DstReg.Index = newIndex;
       }
    }
 }
@@ -504,12 +510,25 @@ _mesa_combine_programs(GLcontext *ctx,
 
       newFprog->UsesKill = fprogA->UsesKill || fprogB->UsesKill;
 
-      /* connect color outputs/inputs */
+      /* Connect color outputs of fprogA to color inputs of fprogB, via a
+       * new temporary register.
+       */
       if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
           (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {
+         GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
+         if (!tempReg) {
+            _mesa_problem(ctx, "No free temp regs found in "
+                          "_mesa_combine_programs(), using 31");
+            tempReg = 31;
+         }
+         /* replace writes to result.color[0] with tempReg */
+         replace_registers(newInst, lenA,
+                           PROGRAM_OUTPUT, FRAG_RESULT_COLR,
+                           PROGRAM_TEMPORARY, tempReg);
+         /* replace reads from input.color[0] with tempReg */
          replace_registers(newInst + lenA, lenB,
                            PROGRAM_INPUT, FRAG_ATTRIB_COL0,
-                           PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+                           PROGRAM_TEMPORARY, tempReg);
       }
 
       inputsB = progB->InputsRead;
