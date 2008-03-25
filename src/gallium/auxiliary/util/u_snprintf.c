@@ -783,19 +783,19 @@ rpl_vsnprintf(char *str, size_t size, const char *format, va_list args)
 				switch (cflags) {
 				case PRINT_C_CHAR:
 					charptr = va_arg(args, signed char *);
-					*charptr = len;
+					*charptr = (signed char)len;
 					break;
 				case PRINT_C_SHORT:
 					shortptr = va_arg(args, short int *);
-					*shortptr = len;
+					*shortptr = (short int)len;
 					break;
 				case PRINT_C_LONG:
 					longptr = va_arg(args, long int *);
-					*longptr = len;
+					*longptr = (long int)len;
 					break;
 				case PRINT_C_LLONG:
 					llongptr = va_arg(args, LLONG *);
-					*llongptr = len;
+					*llongptr = (LLONG)len;
 					break;
 				case PRINT_C_SIZE:
 					/*

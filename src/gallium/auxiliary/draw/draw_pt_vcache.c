@@ -107,7 +107,7 @@ static void vcache_elt( struct vcache_frontend *vcache,
       assert(vcache->fetch_count < FETCH_MAX);
 
       vcache->in[idx] = felt;
-      vcache->out[idx] = vcache->fetch_count;
+      vcache->out[idx] = (ushort)vcache->fetch_count;
       vcache->fetch_elts[vcache->fetch_count++] = felt;
    }
 
