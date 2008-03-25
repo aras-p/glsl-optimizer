@@ -314,7 +314,11 @@ static fetch_func get_fetch_func( enum pipe_format format )
       return NULL;		/* not sure why this is needed */
 
    default:
-      assert(0);
+      /* This can get hit because draw-state-validation is too eager,
+         and can jump in here validating stuff before the state tracker has set
+         up everything.
+      */
+      /* assert(0); */
       return NULL;
    }
 }
