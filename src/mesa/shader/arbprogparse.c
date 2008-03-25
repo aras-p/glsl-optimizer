@@ -35,6 +35,7 @@
 #include "shader/grammar/grammar_mesa.h"
 #include "arbprogparse.h"
 #include "program.h"
+#include "programopt.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
 #include "context.h"
@@ -3928,6 +3929,16 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    if (program->Base.Parameters)
       _mesa_free_parameter_list(program->Base.Parameters);
    program->Base.Parameters    = ap.Base.Parameters;
+
+   /* Append fog instructions now if the program has "OPTION ARB_fog_exp"
+    * or similar.  We used to leave this up to drivers, but it appears
+    * there's no hardware that wants to do fog in a discrete stage separate
+    * from the fragment shader.
+    */
+   if (program->FogOption != GL_NONE) {
+      _mesa_append_fog_code(ctx, program);
+      program->FogOption = GL_NONE;
+   }
 
 #if DEBUG_FP
    _mesa_printf("____________Fragment program %u ________\n", program->Base.ID);
