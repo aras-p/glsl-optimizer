@@ -168,12 +168,10 @@ static void upload_clip_prog( struct brw_context *brw )
 	       offset_front = 0;
 	       break;
 	    case GL_LINE:
-	       key.do_unfilled = 1;
 	       fill_front = CLIP_LINE;
 	       offset_front = brw->attribs.Polygon->OffsetLine;
 	       break;
 	    case GL_POINT:
-	       key.do_unfilled = 1;
 	       fill_front = CLIP_POINT;
 	       offset_front = brw->attribs.Polygon->OffsetPoint;
 	       break;
@@ -188,26 +186,23 @@ static void upload_clip_prog( struct brw_context *brw )
 	       offset_back = 0;
 	       break;
 	    case GL_LINE:
-	       key.do_unfilled = 1;
 	       fill_back = CLIP_LINE;
 	       offset_back = brw->attribs.Polygon->OffsetLine;
 	       break;
 	    case GL_POINT:
-	       key.do_unfilled = 1;
 	       fill_back = CLIP_POINT;
 	       offset_back = brw->attribs.Polygon->OffsetPoint;
 	       break;
 	    }
 	 }
 
-    if (brw->attribs.Polygon->BackMode != GL_FILL ||
-        brw->attribs.Polygon->FrontMode != GL_FILL)
-        key.do_unfilled = 1;
+	 if (brw->attribs.Polygon->BackMode != GL_FILL ||
+	     brw->attribs.Polygon->FrontMode != GL_FILL) {
+	    key.do_unfilled = 1;
 
-	 /* Most cases the fixed function units will handle.  Cases where
-	  * one or more polygon faces are unfilled will require help:
-	  */
-	 if (key.do_unfilled) {
+	    /* Most cases the fixed function units will handle.  Cases where
+	     * one or more polygon faces are unfilled will require help:
+	     */
 	    key.clip_mode = BRW_CLIPMODE_CLIP_NON_REJECTED;
 
 	    if (offset_back || offset_front) {
