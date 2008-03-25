@@ -56,6 +56,7 @@ struct pstip_fragment_shader
    struct pipe_shader_state state;
    void *driver_fs;
    void *pstip_fs;
+   uint sampler_unit;
 };
 
 
@@ -67,7 +68,6 @@ struct pstip_stage
    struct draw_stage stage;
 
    void *sampler_cso;
-   uint sampler_unit;
    struct pipe_texture *texture;
    uint num_samplers;
    uint num_textures;
@@ -329,7 +329,7 @@ generate_pstip_fs(struct pstip_stage *pstip)
    tgsi_dump(pstip_fs.tokens, 0);
 #endif
 
-   pstip->sampler_unit = transform.maxSampler + 1;
+   pstip->fs->sampler_unit = transform.maxSampler + 1;
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 }
@@ -489,12 +489,14 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
    num_samplers = MAX2(pstip->num_textures, pstip->num_samplers);
-   num_samplers = MAX2(num_samplers, pstip->sampler_unit + 1);
+   num_samplers = MAX2(num_samplers, pstip->fs->sampler_unit + 1);
 
    /* plug in our sampler, texture */
-   pstip->state.samplers[pstip->sampler_unit] = pstip->sampler_cso;
-   pipe_texture_reference(&pstip->state.textures[pstip->sampler_unit],
+   pstip->state.samplers[pstip->fs->sampler_unit] = pstip->sampler_cso;
+   pipe_texture_reference(&pstip->state.textures[pstip->fs->sampler_unit],
                           pstip->texture);
+
+   assert(num_samplers <= PIPE_MAX_SAMPLERS);
 
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
@@ -626,9 +628,14 @@ pstip_bind_sampler_states(struct pipe_context *pipe,
                           unsigned num, void **sampler)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
+   uint i;
 
    /* save current */
    memcpy(pstip->state.samplers, sampler, num * sizeof(void *));
+   for (i = num; i < PIPE_MAX_SAMPLERS; i++) {
+      pstip->state.samplers[i] = NULL;
+   }
+
    pstip->num_samplers = num;
    /* pass-through */
    pstip->driver_bind_sampler_states(pstip->pipe, num, sampler);
@@ -646,6 +653,10 @@ pstip_set_sampler_textures(struct pipe_context *pipe,
    for (i = 0; i < num; i++) {
       pipe_texture_reference(&pstip->state.textures[i], texture[i]);
    }
+   for (; i < PIPE_MAX_SAMPLERS; i++) {
+      pipe_texture_reference(&pstip->state.textures[i], NULL);
+   }
+
    pstip->num_textures = num;
 
    /* pass-through */
