@@ -19,7 +19,9 @@ OPT_FLAGS = -g
 SDK = /opt/ibm/cell-sdk/prototype/sysroot/usr
 
 
-CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec -I. -I$(SDK)/include -DGALLIUM_CELL
+CFLAGS = $(OPT_FLAGS) -Wall -Winline -fPIC -m32 -mabi=altivec -maltivec \
+	-I. -I$(SDK)/include \
+	-DGALLIUM_CELL -DUSE_XSHM
 
 CXXFLAGS = $(CFLAGS)
 
