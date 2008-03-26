@@ -62,6 +62,7 @@ struct aaline_fragment_shader
    void *aapoint_fs; /* not yet */
    void *sprite_fs; /* not yet */
    uint sampler_unit;
+   int generic_attrib;  /**< texcoord/generic used for texture */
 };
 
 
@@ -336,7 +337,7 @@ static void
 generate_aaline_fs(struct aaline_stage *aaline)
 {
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
-   struct draw_context *draw = aaline->stage.draw;
+   //struct draw_context *draw = aaline->stage.draw;
    struct pipe_shader_state aaline_fs;
    struct aa_transform_context transform;
 
@@ -369,11 +370,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
    aaline->fs->aaline_fs
       = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
 
-   /* advertise the extra post-transform vertex attributes which will have
-    * the texcoords.
-    */
-   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_vp_outputs.semantic_index = transform.maxGeneric + 1;
+   aaline->fs->generic_attrib = transform.maxGeneric + 1;
 }
 
 
@@ -637,14 +634,19 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    else
       aaline->half_line_width = 0.5f * draw->rasterizer->line_width;
 
-   aaline->tex_slot = draw->num_vs_outputs;
-   assert(aaline->tex_slot > 0); /* output[0] is vertex pos */
-   draw->extra_vp_outputs.slot = aaline->tex_slot;
-
    /*
-    * Bind our fragprog, sampler and texture
+    * Bind (generate) our fragprog, sampler and texture
     */
    bind_aaline_fragment_shader(aaline);
+
+   /* update vertex attrib info */
+   aaline->tex_slot = draw->num_vs_outputs;
+   assert(aaline->tex_slot > 0); /* output[0] is vertex pos */
+
+   /* advertise the extra post-transformed vertex attribute */
+   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
+   draw->extra_vp_outputs.semantic_index = aaline->fs->generic_attrib;
+   draw->extra_vp_outputs.slot = aaline->tex_slot;
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
