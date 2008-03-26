@@ -104,11 +104,15 @@ static int host_byte_order( void )
  *          1 = shared XImage support available
  *          2 = shared Pixmap support available also
  */
-static int check_for_xshm( XMesaDisplay *display )
+int xmesa_check_for_xshm( XMesaDisplay *display )
 {
 #if defined(USE_XSHM) && !defined(XFree86Server)
    int major, minor, ignore;
    Bool pixmaps;
+
+   if (getenv("MESA_NOSHM")) {
+      return 0;
+   }
 
    if (XQueryExtension( display, "MIT-SHM", &ignore, &ignore, &ignore )) {
       if (XShmQueryVersion( display, &major, &minor, &pixmaps )==True) {
@@ -528,7 +532,7 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
       /* Setup for single/double buffering */
       if (v->mesa_visual.doubleBufferMode) {
          /* Double buffered */
-         b->shm = check_for_xshm( v->display );
+         b->shm = xmesa_check_for_xshm( v->display );
       }
 
       /* X11 graphics context */
@@ -770,13 +774,16 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    pf = choose_pixel_format(v);
    assert(pf);
 
+   c->xm_visual = v;
+   c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
+
    if (!getenv("XM_AUB")) {
       xmesa_mode = XMESA_SOFTPIPE;
       pipe = xmesa_create_pipe_context( c, pf );
    }
    else {
       xmesa_mode = XMESA_AUB;
-      pipe = xmesa_create_i965simple( xmesa_get_pipe_winsys_aub() );
+      pipe = xmesa_create_i965simple(xmesa_get_pipe_winsys_aub(v));
    }
 
    c->st = st_create_context(pipe, &v->mesa_visual,
@@ -800,9 +807,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 #endif
 
    /* finish up xmesa context initializations */
-   c->xm_visual = v;
-   c->xm_buffer = NULL;   /* set later by XMesaMakeCurrent */
-
    c->st->haveFramebufferSurfaces = GL_TRUE;
 
    return c;

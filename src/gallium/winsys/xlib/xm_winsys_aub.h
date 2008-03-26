@@ -62,6 +62,7 @@ void xmesa_commands_aub(struct pipe_winsys *winsys,
 void xmesa_display_aub( /* struct pipe_winsys *winsys, */
    struct pipe_surface *surface );
 
-struct pipe_winsys *xmesa_get_pipe_winsys_aub(void);
+extern struct pipe_winsys *
+xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis);
 
 #endif
