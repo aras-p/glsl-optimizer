@@ -1660,28 +1660,28 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
 			prog->program.body.i[program_end + 0] =
-			    PVS_OPCODE(VE_MULTIPLY,
+			    PVS_OP_DST_OPERAND(VE_MULTIPLY,
 				       GL_FALSE,
 				       GL_FALSE,
 				       o_reg++,
 				       VSF_FLAG_ALL,
 				       PVS_DST_REG_OUT);
 			prog->program.body.i[program_end + 1] =
-			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
+			    PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i],
 					    PVS_SRC_SELECT_X,
 					    PVS_SRC_SELECT_Y,
 					    PVS_SRC_SELECT_Z,
 					    PVS_SRC_SELECT_W,
 					    PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 2] =
-			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
+			    PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i],
 					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 3] =
-			    PVS_SOURCE_OPCODE(rmesa->state.sw_tcl_inputs[i],
+			    PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i],
 					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_SELECT_FORCE_1,
 					    PVS_SRC_SELECT_FORCE_1,
