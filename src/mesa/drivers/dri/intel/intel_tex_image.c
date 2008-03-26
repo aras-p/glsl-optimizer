@@ -360,7 +360,8 @@ intelTexImage(GLcontext * ctx,
       assert(!texImage->Data);
    }
    else if (texImage->Data) {
-      _mesa_align_free(texImage->Data);
+      _mesa_free_texmemory(texImage->Data);
+      texImage->Data = NULL;
    }
 
    /* If this is the only texture image in the tree, could call
@@ -481,7 +482,7 @@ intelTexImage(GLcontext * ctx,
          sizeInBytes = depth * dstRowStride * postConvHeight;
       }
 
-      texImage->Data = malloc(sizeInBytes);
+      texImage->Data = _mesa_alloc_texmemory(sizeInBytes);
    }
 
    DBG("Upload image %dx%dx%d row_len %d "
