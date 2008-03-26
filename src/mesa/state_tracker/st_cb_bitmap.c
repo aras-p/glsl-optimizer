@@ -475,6 +475,8 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct st_context *st = ctx->st;
    struct pipe_texture *pt;
 
+   st_validate_state(st);
+
    stfp = combined_bitmap_fragment_program(ctx);
 
    if (!st->bitmap.vs) {
