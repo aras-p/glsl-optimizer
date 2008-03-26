@@ -85,7 +85,7 @@ static GLuint hash_key( const void *key, GLuint key_size,
    }
 
    /* Include the BO pointers as key data as well */
-   ikey = (void *)reloc_bufs;
+   ikey = (GLuint *)reloc_bufs;
    key_size = nr_reloc_bufs * sizeof(dri_bo *);
    for (i = 0; i < key_size/4; i++) {
       hash ^= ikey[i];
@@ -102,6 +102,9 @@ static void
 update_cache_last(struct brw_cache *cache, enum brw_cache_id cache_id,
 		  dri_bo *bo)
 {
+   if (bo == cache->last_bo[cache_id])
+      return; /* no change */
+
    dri_bo_unreference(cache->last_bo[cache_id]);
    cache->last_bo[cache_id] = bo;
    dri_bo_reference(cache->last_bo[cache_id]);
@@ -255,7 +258,7 @@ brw_upload_cache( struct brw_cache *cache,
    if (INTEL_DEBUG & DEBUG_STATE)
       _mesa_printf("upload %s: %d bytes to cache id %d\n",
 		   cache->name[cache_id],
-		   data_size);
+		   data_size, cache_id);
 
    /* Copy data to the buffer */
    dri_bo_subdata(bo, 0, data_size, data);
@@ -282,6 +285,7 @@ brw_cache_data_sz(struct brw_cache *cache,
    item = search_cache(cache, cache_id, hash, data, data_size,
 		       reloc_bufs, nr_reloc_bufs);
    if (item) {
+      update_cache_last(cache, cache_id, item->bo);
       dri_bo_reference(item->bo);
       return item->bo;
    }
