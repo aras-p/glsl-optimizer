@@ -630,9 +630,9 @@ xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
       ws->base.surface_alloc_storage = xm_surface_alloc_storage;
       ws->base.surface_release = xm_surface_release;
 
-      ws->fence_reference = xm_fence_reference;
-      ws->fence_signalled = xm_fence_signalled;
-      ws->fence_finish = xm_fence_finish;
+      ws->base.fence_reference = xm_fence_reference;
+      ws->base.fence_signalled = xm_fence_signalled;
+      ws->base.fence_finish = xm_fence_finish;
 
       ws->base.flush_frontbuffer = xm_flush_frontbuffer;
       ws->base.printf = xm_printf;
