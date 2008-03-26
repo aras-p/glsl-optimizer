@@ -1,6 +1,7 @@
 /**************************************************************************
 
-Copyright (C) 2005 Aapo Tahkola.
+Copyright (C) 2005  Aapo Tahkola <aet@rasterburn.org>
+Copyright (C) 2008  Oliver McFadden <z3ro.geek@gmail.com>
 
 All Rights Reserved.
 
@@ -25,19 +26,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/**
- * \file
- *
- * \author Aapo Tahkola <aet@rasterburn.org>
- *
- * \author Oliver McFadden <z3ro.geek@gmail.com>
- *
- * \todo A VE_MULTIPLY_ADD or VE_MULTIPLYX2_ADD opcode with all 3 source
- * operands using unique PVS_REG_TEMPORARY vector addresses requires special
- * handling, which is currently not implemented!
- *
- * For a description of the vertex program instruction set see r300_reg.h.
- */
+/* Radeon R5xx Acceleration, Revision 1.2 */
 
 #include "main/glheader.h"
 #include "main/macros.h"
