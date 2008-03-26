@@ -494,17 +494,20 @@ static void precalc_dst( struct brw_wm_compile *c,
 
 
    if (dst.WriteMask & WRITEMASK_XZ) {
+      struct prog_instruction *swz;
       GLuint z = GET_SWZ(src0.Swizzle, Z);
 
       /* dst.xz = swz src0.1zzz
        */
-      emit_op(c,
-	      OPCODE_SWZ,
-	      dst_mask(dst, WRITEMASK_XZ),
-	      inst->SaturateMode, 0, 0,
-	      src_swizzle(src0, SWIZZLE_ONE, z, z, z),
-	      src_undef(),
-	      src_undef());
+      swz = emit_op(c,
+		    OPCODE_SWZ,
+		    dst_mask(dst, WRITEMASK_XZ),
+		    inst->SaturateMode, 0, 0,
+		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
+		    src_undef(),
+		    src_undef());
+      /* Avoid letting negation flag of src0 affect our 1 constant. */
+      swz->SrcReg[0].NegateBase &= ~NEGATE_X;
    }
    if (dst.WriteMask & WRITEMASK_W) {
       /* dst.w = mov src1.w
@@ -527,15 +530,19 @@ static void precalc_lit( struct brw_wm_compile *c,
    struct prog_dst_register dst = inst->DstReg;
    
    if (dst.WriteMask & WRITEMASK_XW) {
+      struct prog_instruction *swz;
+
       /* dst.xw = swz src0.1111
        */
-      emit_op(c,
-	      OPCODE_SWZ,
-	      dst_mask(dst, WRITEMASK_XW),
-	      0, 0, 0,
-	      src_swizzle1(src0, SWIZZLE_ONE),
-	      src_undef(),
-	      src_undef());
+      swz = emit_op(c,
+		    OPCODE_SWZ,
+		    dst_mask(dst, WRITEMASK_XW),
+		    0, 0, 0,
+		    src_swizzle1(src0, SWIZZLE_ONE),
+		    src_undef(),
+		    src_undef());
+      /* Avoid letting the negation flag of src0 affect our 1 constant. */
+      swz->SrcReg[0].NegateBase = 0;
    }
 
 
