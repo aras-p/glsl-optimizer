@@ -70,7 +70,7 @@ i915_fill_blit(struct i915_context *i915,
 
 
    if (!BEGIN_BATCH(6, 1)) {
-      FLUSH_BATCH();
+      FLUSH_BATCH(NULL);
       assert(BEGIN_BATCH(6, 1));
    }
    OUT_BATCH(CMD);
@@ -145,7 +145,7 @@ i915_copy_blit( struct i915_context *i915,
 
 
    if (!BEGIN_BATCH(8, 2)) {
-      FLUSH_BATCH();
+      FLUSH_BATCH(NULL);
       assert(BEGIN_BATCH(8, 2));
    }
    OUT_BATCH(CMD);

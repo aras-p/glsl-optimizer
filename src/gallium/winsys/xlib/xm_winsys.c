@@ -570,6 +570,33 @@ xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 }
 
 
+/*
+ * Fence functions - basically nothing to do, as we don't create any actual
+ * fence objects.
+ */
+
+static void
+xm_fence_reference(struct pipe_winsys *sws, struct pipe_fence_handle **ptr,
+                   struct pipe_fence_handle *fence)
+{
+}
+
+
+static int
+xm_fence_signalled(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
+                   unsigned flag)
+{
+   return 0;
+}
+
+
+static int
+xm_fence_finish(struct pipe_winsys *sws, struct pipe_fence_handle *fence,
+                unsigned flag)
+{
+   return 0;
+}
+
 
 /**
  * Return pointer to a pipe_winsys object.
@@ -602,6 +629,10 @@ xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
       ws->base.surface_alloc = xm_surface_alloc;
       ws->base.surface_alloc_storage = xm_surface_alloc_storage;
       ws->base.surface_release = xm_surface_release;
+
+      ws->fence_reference = xm_fence_reference;
+      ws->fence_signalled = xm_fence_signalled;
+      ws->fence_finish = xm_fence_finish;
 
       ws->base.flush_frontbuffer = xm_flush_frontbuffer;
       ws->base.printf = xm_printf;

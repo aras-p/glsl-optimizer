@@ -214,7 +214,7 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
 
    /* make sure color bufs aren't cached */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    switch (op) {
    case GL_ADD:

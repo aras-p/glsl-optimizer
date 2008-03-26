@@ -115,7 +115,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 #endif
    
    if(!BEGIN_BATCH(dwords, relocs)) {
-      FLUSH_BATCH();
+      FLUSH_BATCH(NULL);
       assert(BEGIN_BATCH(dwords, relocs));
    }
 

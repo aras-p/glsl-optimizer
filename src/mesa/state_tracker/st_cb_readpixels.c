@@ -160,7 +160,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
 
    /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    if (format == GL_STENCIL_INDEX) {
       st_read_stencil_pixels(ctx, x, y, width, height, type, pack, dest);

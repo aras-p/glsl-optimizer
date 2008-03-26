@@ -133,7 +133,7 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
       vs->num_elts = n;
       send_mbox_message(cell_global.spe_contexts[0], CELL_CMD_VS_EXECUTE);
 
-      cell_flush_int(& cell->pipe, PIPE_FLUSH_WAIT);
+      cell_flush_int(& cell->pipe, CELL_FLUSH_WAIT);
    }
 
    draw->vs.post_nr = draw->vs.queue_nr;

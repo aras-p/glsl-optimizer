@@ -37,7 +37,7 @@ extern "C" {
 
    
 struct pipe_screen;
-
+struct pipe_fence_handle;
 struct pipe_state_cache;
 
 /* Opaque driver handles:
@@ -202,7 +202,8 @@ struct pipe_context {
    /* Flush rendering:
     */
    void (*flush)( struct pipe_context *pipe,
-		  unsigned flags );
+                  unsigned flags,
+                  struct pipe_fence_handle **fence );
 };
 
 

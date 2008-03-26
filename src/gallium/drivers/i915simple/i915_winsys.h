@@ -56,6 +56,7 @@ extern "C" {
  */
 
 struct pipe_buffer;
+struct pipe_fence_handle;
 struct pipe_winsys;
 struct pipe_screen;
 
@@ -103,8 +104,8 @@ struct i915_winsys {
 			unsigned access_flags,
 			unsigned delta );
    
-   void (*batch_flush)( struct i915_winsys *sws );
-   void (*batch_finish)( struct i915_winsys *sws );
+   void (*batch_flush)( struct i915_winsys *sws,
+                        struct pipe_fence_handle **fence );
 };
 
 #define I915_BUFFER_ACCESS_WRITE   0x1 

@@ -228,7 +228,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
    assert(intel);               /* should never be null */
    if (intel) {
-      st_flush(intel->st, PIPE_FLUSH_WAIT);
+      st_finish(intel->st);
 
       intel_batchbuffer_free(intel->batch);
 
@@ -256,7 +256,7 @@ GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
    struct intel_context *intel = intel_context(driContextPriv);
-   st_flush(intel->st, 0x0);
+   st_flush(intel->st, PIPE_FLUSH_RENDER_CACHE, NULL);
    /* XXX make_current(NULL)? */
    return GL_TRUE;
 }

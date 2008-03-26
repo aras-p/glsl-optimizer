@@ -36,14 +36,11 @@
 #include "brw_batch.h"
 
 
-/**
- * In future we may want a fence-like interface instead of finish.
- */
 static void brw_flush( struct pipe_context *pipe,
-			unsigned flags )
+                       unsigned flags,
+                       struct pipe_fence_handle **fence )
 {
    struct brw_context *brw = brw_context(pipe);
-   struct pipe_fence_handle *fence;
 
    /* Do we need to emit an MI_FLUSH command to flush the hardware
     * caches?
@@ -65,11 +62,7 @@ static void brw_flush( struct pipe_context *pipe,
 
    /* If there are no flags, just flush pending commands to hardware:
     */
-   FLUSH_BATCH( &fence );
-
-   if (flags & PIPE_FLUSH_WAIT) {
-//      brw->winsys->wait_fence(brw->winsys, fence);
-   }
+   FLUSH_BATCH( fence );
 }
 
 
