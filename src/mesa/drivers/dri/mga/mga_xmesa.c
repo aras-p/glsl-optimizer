@@ -112,20 +112,18 @@ static const GLuint __driNConfigOptions = 6;
 int MGA_DEBUG = 0;
 #endif
 
-static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
-
-static __GLcontextModes *
+static const __DRIconfig **
 mgaFillInModes( __DRIscreenPrivate *psp,
 		unsigned pixel_bits, unsigned depth_bits,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {
-    __GLcontextModes * modes;
+    __DRIconfig **configs;
     __GLcontextModes * m;
-    unsigned num_modes;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
     GLenum fb_type;
+    int i;
 
     /* GLX_SWAP_COPY_OML is only supported because the MGA driver doesn't
      * support pageflipping at all.
@@ -153,8 +151,6 @@ mgaFillInModes( __DRIscreenPrivate *psp,
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
-    num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
     if ( pixel_bits == 16 ) {
         fb_format = GL_RGB;
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -164,39 +160,29 @@ mgaFillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
-    m = modes;
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_TRUE_COLOR ) ) {
+    configs = driCreateConfigs(fb_format, fb_type,
+			       depth_bits_array, stencil_bits_array,
+			       depth_buffer_factor,
+			       back_buffer_modes, back_buffer_factor);
+    if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
 	return NULL;
     }
 
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_DIRECT_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-    }
+   /* Mark the visual as slow if there are "fake" stencil bits.
+    */
+   for (i = 0; configs[i]; i++) {
+      m = &configs[i]->modes;
+      if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
+         m->visualRating = GLX_SLOW_CONFIG;
+      }
+   }
 
-    /* Mark the visual as slow if there are "fake" stencil bits.
-     */
-    for ( m = modes ; m != NULL ; m = m->next ) {
-	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
-	    m->visualRating = GLX_SLOW_CONFIG;
-	}
-    }
-
-    return modes;
+   return (const __DRIconfig **) configs;
 }
 
-
-static const __DRIextension *mgaExtensions[] = {
+const __DRIextension *mgaScreenExtensions[] = {
     &driReadDrawableExtension,
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
@@ -243,7 +229,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   sPriv->extensions = mgaExtensions;
+   sPriv->extensions = mgaScreenExtensions;
 
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {
@@ -941,23 +927,6 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
 }
 
 
-static const struct __DriverAPIRec mgaAPI = {
-   .DestroyScreen   = mgaDestroyScreen,
-   .CreateContext   = mgaCreateContext,
-   .DestroyContext  = mgaDestroyContext,
-   .CreateBuffer    = mgaCreateBuffer,
-   .DestroyBuffer   = mgaDestroyBuffer,
-   .SwapBuffers     = mgaSwapBuffers,
-   .MakeCurrent     = mgaMakeCurrent,
-   .UnbindContext   = mgaUnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
-};
-
-
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * 
@@ -965,14 +934,13 @@ static const struct __DriverAPIRec mgaAPI = {
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **mgaInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { 1, 2, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 3, 0, 0 };
    MGADRIPtr dri_priv = (MGADRIPtr) psp->pDevPriv;
 
-   psp->DriverAPI = mgaAPI;
    if ( ! driCheckDriDdxDrmVersions2( "MGA",
 				      &psp->dri_version, & dri_expected,
 				      &psp->ddx_version, & ddx_expected,
@@ -1032,3 +1000,20 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 
    return 0;
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = mgaInitScreen,
+   .DestroyScreen   = mgaDestroyScreen,
+   .CreateContext   = mgaCreateContext,
+   .DestroyContext  = mgaDestroyContext,
+   .CreateBuffer    = mgaCreateBuffer,
+   .DestroyBuffer   = mgaDestroyBuffer,
+   .SwapBuffers     = mgaSwapBuffers,
+   .MakeCurrent     = mgaMakeCurrent,
+   .UnbindContext   = mgaUnbindContext,
+   .GetSwapInfo     = getSwapInfo,
+   .GetDrawableMSC  = driDrawableGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
+};

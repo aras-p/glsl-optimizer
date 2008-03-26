@@ -343,31 +343,14 @@ tdfxSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
    }
 }
 
-
-static const struct __DriverAPIRec tdfxAPI = {
-   .DestroyScreen   = tdfxDestroyScreen,
-   .CreateContext   = tdfxCreateContext,
-   .DestroyContext  = tdfxDestroyContext,
-   .CreateBuffer    = tdfxCreateBuffer,
-   .DestroyBuffer   = tdfxDestroyBuffer,
-   .SwapBuffers     = tdfxSwapBuffers,
-   .MakeCurrent     = tdfxMakeCurrent,
-   .UnbindContext   = tdfxUnbindContext,
-   .GetSwapInfo     = NULL,
-   .GetDrawableMSC  = NULL,
-   .WaitForMSC      = NULL,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
-};
-
-
-static __GLcontextModes *tdfxFillInModes(__DRIscreenPrivate *psp,
-					 unsigned pixel_bits,
-					 unsigned depth_bits,
-					 unsigned stencil_bits,
-					 GLboolean have_back_buffer)
+static const __DRIconfig **
+tdfxFillInModes(__DRIscreenPrivate *psp,
+		unsigned pixel_bits,
+		unsigned depth_bits,
+		unsigned stencil_bits,
+		GLboolean have_back_buffer)
 {
-	__GLcontextModes *modes;
+	__DRIconfig **configs, **c;
 	__GLcontextModes *m;
 	unsigned num_modes;
 	unsigned vis[2] = { GLX_TRUE_COLOR, GLX_DIRECT_COLOR };
@@ -382,14 +365,16 @@ static __GLcontextModes *tdfxFillInModes(__DRIscreenPrivate *psp,
 
 	num_modes = (depth_bits == 16) ? 32 : 16;
 
-	modes = (*psp->contextModes->createContextModes)(num_modes, sizeof(__GLcontextModes));
-	m = modes;
+	configs = _mesa_malloc(num_modes * sizeof *configs);
+	c = configs;
 
 	for (i = 0; i <= 1; i++) {
 	    for (db = 0; db <= 1; db++) {
 		for (depth = 0; depth <= 1; depth++) {
 		    for (accum = 0; accum <= 1; accum++) {
 			for (stencil = 0; stencil <= !deep; stencil++) {
+			    *c = _mesa_malloc(sizeof **c);
+			    m = &(*c++)->modes;
 			    if (deep) stencil = depth;
 			    m->redBits		= deep ? 8 : 5;
 			    m->greenBits	= deep ? 8 : 6;
@@ -419,7 +404,6 @@ static __GLcontextModes *tdfxFillInModes(__DRIscreenPrivate *psp,
 			    m->visualRating	= ((stencil && !deep) || accum)
 			    			  ? GLX_SLOW_CONFIG
 						  : GLX_NONE;
-			    m = m->next;
 			    if (deep) stencil = 0;
 			}
 		    }
@@ -427,7 +411,7 @@ static __GLcontextModes *tdfxFillInModes(__DRIscreenPrivate *psp,
 	    }
 	}
 
-	return modes;
+	return (const __DRIconfig **) configs;
 }
 
 /**
@@ -437,7 +421,8 @@ static __GLcontextModes *tdfxFillInModes(__DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+tdfxInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { 1, 1, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -455,8 +440,6 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
-
-   psp->DriverAPI = tdfxAPI;
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -479,3 +462,20 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 			  (bpp == 16) ? 0 : 8,
 			  (dri_priv->backOffset!=dri_priv->depthOffset));
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = tdfxInitScreen,
+   .DestroyScreen   = tdfxDestroyScreen,
+   .CreateContext   = tdfxCreateContext,
+   .DestroyContext  = tdfxDestroyContext,
+   .CreateBuffer    = tdfxCreateBuffer,
+   .DestroyBuffer   = tdfxDestroyBuffer,
+   .SwapBuffers     = tdfxSwapBuffers,
+   .MakeCurrent     = tdfxMakeCurrent,
+   .UnbindContext   = tdfxUnbindContext,
+   .GetSwapInfo     = NULL,
+   .GetDrawableMSC  = NULL,
+   .WaitForMSC      = NULL,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
+};

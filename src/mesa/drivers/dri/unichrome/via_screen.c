@@ -64,8 +64,6 @@ static const GLuint __driNConfigOptions = 3;
 
 extern const struct dri_extension card_extensions[];
 
-static int getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
-
 static drmBufMapPtr via_create_empty_buffers(void)
 {
     drmBufMapPtr retval;
@@ -321,32 +319,11 @@ viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
    _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
-
-
-static struct __DriverAPIRec viaAPI = {
-   .DestroyScreen   = viaDestroyScreen,
-   .CreateContext   = viaCreateContext,
-   .DestroyContext  = viaDestroyContext,
-   .CreateBuffer    = viaCreateBuffer,
-   .DestroyBuffer   = viaDestroyBuffer,
-   .SwapBuffers     = viaSwapBuffers,
-   .MakeCurrent     = viaMakeCurrent,
-   .UnbindContext   = viaUnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
-};
-
-
-static __GLcontextModes *
+static const __DRIconfig **
 viaFillInModes( __DRIscreenPrivate *psp,
 		unsigned pixel_bits, GLboolean have_back_buffer )
 {
-    __GLcontextModes * modes;
-    __GLcontextModes * m;
-    unsigned num_modes;
+    __DRIconfig **configs;
     const unsigned back_buffer_factor = (have_back_buffer) ? 2 : 1;
     GLenum fb_format;
     GLenum fb_type;
@@ -367,9 +344,6 @@ viaFillInModes( __DRIscreenPrivate *psp,
     static const u_int8_t stencil_bits_array[4] = { 0,  0,  8,  0 };
     const unsigned depth_buffer_factor = 3;
 
-
-    num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
     if ( pixel_bits == 16 ) {
         fb_format = GL_RGB;
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -379,29 +353,17 @@ viaFillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
-    m = modes;
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, 
-			   depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_TRUE_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
+    configs = driCreateConfigs(fb_format, fb_type,
+			       depth_bits_array, stencil_bits_array,
+			       depth_buffer_factor, back_buffer_modes,
+			       back_buffer_factor);
+    if (configs == NULL) {
+	fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+		__LINE__);
 	return NULL;
     }
 
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, 
-			   depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_DIRECT_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-    }
-
-    return modes;
+    return (const __DRIconfig **) configs;
 }
 
 
@@ -412,7 +374,8 @@ viaFillInModes( __DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+viaInitScreen(__DRIscreenPrivate *psp)
 {
    static const __DRIversion ddx_expected = { VIA_DRIDDX_VERSION_MAJOR,
                                               VIA_DRIDDX_VERSION_MINOR,
@@ -427,8 +390,6 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected) )
       return NULL;
-
-   psp->DriverAPI = viaAPI;
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -475,3 +436,20 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 
    return 0;
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = viaInitScreen,
+   .DestroyScreen   = viaDestroyScreen,
+   .CreateContext   = viaCreateContext,
+   .DestroyContext  = viaDestroyContext,
+   .CreateBuffer    = viaCreateBuffer,
+   .DestroyBuffer   = viaDestroyBuffer,
+   .SwapBuffers     = viaSwapBuffers,
+   .MakeCurrent     = viaMakeCurrent,
+   .UnbindContext   = viaUnbindContext,
+   .GetSwapInfo     = getSwapInfo,
+   .GetDrawableMSC  = driDrawableGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
+};

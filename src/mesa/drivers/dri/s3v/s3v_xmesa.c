@@ -17,8 +17,8 @@
 
 /* #define DEBUG(str) printf str */
 
-static GLboolean 
-s3vInitDriver(__DRIscreenPrivate *sPriv)
+static const __DRIconfig **
+s3vInitScreen(__DRIscreen *sPriv)
 {
     sPriv->private = (void *) s3vCreateScreen( sPriv );
 
@@ -27,7 +27,7 @@ s3vInitDriver(__DRIscreenPrivate *sPriv)
 	return GL_FALSE;
     }
 
-    return GL_TRUE;
+   return NULL;
 }
 
 static void 
@@ -327,36 +327,14 @@ s3vUnbindContext( __DRIcontextPrivate *driContextPriv )
    return GL_TRUE;
 }
 
-
-static struct __DriverAPIRec s3vAPI = {
-   s3vDestroyScreen,
-   s3vCreateContext,
-   s3vDestroyContext,
-   s3vCreateBuffer,
-   s3vDestroyBuffer,
-   s3vSwapBuffers,
-   s3vMakeCurrent,
-   s3vUnbindContext,
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen	   = s3vInitScreen,
+   .DestroyScreen  = s3vDestroyScreen,
+   .CreateContext  = s3vCreateContext,
+   .DestroyContext = s3vDestroyContext,
+   .CreateBuffer   = s3vCreateBuffer,
+   .DestroyBuffer  = s3vDestroyBuffer,
+   .SwapBuffers	   = s3vSwapBuffers,
+   .MakeCurrent	   = s3vMakeCurrent,
+   .UnbindContext  = s3vUnbindContext,
 };
-
-
-#if 0
-/*
- * This is the bootstrap function for the driver.
- * The __driCreateScreen name is the symbol that libGL.so fetches.
- * Return:  pointer to a __DRIscreenPrivate.
- */
-void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
-                        int numConfigs, __GLXvisualConfig *config)
-{
-   __DRIscreenPrivate *psp=NULL;
-
-   DEBUG(("__driCreateScreen: psp = %p\n", psp));
-   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &s3vAPI);
-   DEBUG(("__driCreateScreen: psp = %p\n", psp));
-   if (!s3vInitDriver(psp))
-       return NULLL
-
-   return (void *) psp;
-}
-#endif

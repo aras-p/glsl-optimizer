@@ -392,6 +392,7 @@ dri)
 
     # Check for libdrm
     PKG_CHECK_MODULES(LIBDRM, libdrm)
+    PKG_CHECK_MODULES(DRI2PROTO, dri2proto)
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then

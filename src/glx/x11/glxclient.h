@@ -59,7 +59,6 @@
 #include "GL/glxproto.h"
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
-#include "glxextensions.h"
 #include "glxhash.h"
 #if defined( USE_XTHREADS )
 # include <X11/Xthreads.h>
@@ -97,6 +96,8 @@ typedef struct __GLXDRIscreenRec __GLXDRIscreen;
 typedef struct __GLXDRIdrawableRec __GLXDRIdrawable;
 typedef struct __GLXDRIcontextRec __GLXDRIcontext;
 
+#include "glxextensions.h"
+
 struct __GLXDRIdisplayRec {
     /**
      * Method to destroy the private DRI display data.
@@ -117,8 +118,9 @@ struct __GLXDRIscreenRec {
 				      GLXContext shareList, int renderType);
 	
     __GLXDRIdrawable *(*createDrawable)(__GLXscreenConfigs *psc,
-					GLXDrawable drawable,
-					GLXContext gc);
+					XID drawable,
+					GLXDrawable glxDrawable,
+					const __GLcontextModes *modes);
 };
 
 struct __GLXDRIcontextRec {
@@ -134,9 +136,11 @@ struct __GLXDRIcontextRec {
 struct __GLXDRIdrawableRec {
     void (*destroyDrawable)(__GLXDRIdrawable *drawable);
 
+    XID xDrawable;
     XID drawable;
     __GLXscreenConfigs *psc;
-    __DRIdrawable driDrawable;
+    __DRIdrawable *driDrawable;
+    GLenum textureTarget;
 };
 
 /*
@@ -144,6 +148,7 @@ struct __GLXDRIdrawableRec {
 ** dependent methods.
 */
 extern __GLXDRIdisplay *driCreateDisplay(Display *dpy);
+extern __GLXDRIdisplay *dri2CreateDisplay(Display *dpy);
 
 extern void DRI_glXUseXFont( Font font, int first, int count, int listbase );
 
@@ -364,6 +369,7 @@ struct __GLXcontextRec {
 
 #ifdef GLX_DIRECT_RENDERING
     __GLXDRIcontext *driContext;
+    __DRIcontext *__driContext;
 #endif
 
     /**
@@ -458,32 +464,38 @@ struct __GLXscreenConfigsRec {
     /**
      * Per screen direct rendering interface functions and data.
      */
-    __DRIscreen __driScreen;
+    __DRIscreen *__driScreen;
+    const __DRIcoreExtension *core;
+    const __DRIlegacyExtension *legacy;
     __glxHashTable *drawHash;
     Display *dpy;
-    int scr;
+    int scr, fd;
     void *driver;
 
     __GLXDRIscreen *driScreen;
 
 #ifdef __DRI_COPY_SUB_BUFFER
-    __DRIcopySubBufferExtension *copySubBuffer;
+    const __DRIcopySubBufferExtension *copySubBuffer;
 #endif
 
 #ifdef __DRI_SWAP_CONTROL
-    __DRIswapControlExtension *swapControl;
+    const __DRIswapControlExtension *swapControl;
 #endif
 
 #ifdef __DRI_ALLOCATE
-    __DRIallocateExtension *allocate;
+    const __DRIallocateExtension *allocate;
 #endif
 
 #ifdef __DRI_FRAME_TRACKING
-    __DRIframeTrackingExtension *frameTracking;
+    const __DRIframeTrackingExtension *frameTracking;
 #endif
 
 #ifdef __DRI_MEDIA_STREAM_COUNTER
-    __DRImediaStreamCounterExtension *msc;
+    const __DRImediaStreamCounterExtension *msc;
+#endif
+
+#ifdef __DRI_TEX_BUFFER
+    const __DRItexBufferExtension *texBuffer;
 #endif
 
 #endif
@@ -555,6 +567,7 @@ struct __GLXdisplayPrivateRec {
      * Per display direct rendering interface functions and data.
      */
     __GLXDRIdisplay *driDisplay;
+    __GLXDRIdisplay *dri2Display;
 #endif
 };
 
@@ -720,7 +733,8 @@ extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 
 #ifdef GLX_DIRECT_RENDERING
 GLboolean
-__driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator);
+__driGetMscRateOML(__DRIdrawable *draw,
+		   int32_t *numerator, int32_t *denominator, void *private);
 #endif
 
 #endif /* !__GLX_client_h__ */

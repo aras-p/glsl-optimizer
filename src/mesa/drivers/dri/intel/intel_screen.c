@@ -394,7 +394,7 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
    intelSetTexBuffer,
 };
 
-static const __DRIextension *intelExtensions[] = {
+static const __DRIextension *intelScreenExtensions[] = {
     &driReadDrawableExtension,
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
@@ -479,7 +479,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 			&intelScreen->allow_batchbuffer))
       return GL_FALSE;
 
-   sPriv->extensions = intelExtensions;
+   sPriv->extensions = intelScreenExtensions;
 
    return GL_TRUE;
 }
@@ -653,39 +653,18 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 }
 
 
-static const struct __DriverAPIRec intelAPI = {
-   .DestroyScreen = intelDestroyScreen,
-   .CreateContext = intelCreateContext,
-   .DestroyContext = intelDestroyContext,
-   .CreateBuffer = intelCreateBuffer,
-   .DestroyBuffer = intelDestroyBuffer,
-   .SwapBuffers = intelSwapBuffers,
-   .MakeCurrent = intelMakeCurrent,
-   .UnbindContext = intelUnbindContext,
-   .GetSwapInfo = intelGetSwapInfo,
-   .GetDrawableMSC = driDrawableGetMSC32,
-   .WaitForMSC = driWaitForMSC32,
-   .WaitForSBC = NULL,
-   .SwapBuffersMSC = NULL,
-   .CopySubBuffer = intelCopySubBuffer,
-
-   .HandleDrawableConfig = intelHandleDrawableConfig,
-   .HandleBufferAttach = intelHandleBufferAttach,
-};
-
-
-static __GLcontextModes *
+static __DRIconfig **
 intelFillInModes(__DRIscreenPrivate *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
                  unsigned stencil_bits, GLboolean have_back_buffer)
 {
-   __GLcontextModes *modes;
+   __DRIconfig **configs;
    __GLcontextModes *m;
-   unsigned num_modes;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    GLenum fb_format;
    GLenum fb_type;
+   int i;
 
    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
     * support pageflipping at all.
@@ -696,7 +675,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
 
    u_int8_t depth_bits_array[3];
    u_int8_t stencil_bits_array[3];
-
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
@@ -716,8 +694,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor = (have_back_buffer) ? 3 : 1;
 
-   num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
    if (pixel_bits == 16) {
       fb_format = GL_RGB;
       fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -727,36 +703,26 @@ intelFillInModes(__DRIscreenPrivate *psp,
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
-   modes =
-      (*psp->contextModes->createContextModes) (num_modes,
-						sizeof(__GLcontextModes));
-   m = modes;
-   if (!driFillInModes(&m, fb_format, fb_type,
-                       depth_bits_array, stencil_bits_array,
-                       depth_buffer_factor, back_buffer_modes,
-                       back_buffer_factor, GLX_TRUE_COLOR)) {
-      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
-              __LINE__);
-      return NULL;
-   }
-   if (!driFillInModes(&m, fb_format, fb_type,
-                       depth_bits_array, stencil_bits_array,
-                       depth_buffer_factor, back_buffer_modes,
-                       back_buffer_factor, GLX_DIRECT_COLOR)) {
-      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+   configs = driCreateConfigs(fb_format, fb_type,
+			      depth_bits_array, stencil_bits_array,
+			      depth_buffer_factor, back_buffer_modes,
+			      back_buffer_factor);
+   if (configs == NULL) {
+    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
    }
 
    /* Mark the visual as slow if there are "fake" stencil bits.
     */
-   for (m = modes; m != NULL; m = m->next) {
+   for (i = 0; configs[i]; i++) {
+      m = &configs[i]->modes;
       if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
          m->visualRating = GLX_SLOW_CONFIG;
       }
    }
 
-   return modes;
+   return configs;
 }
 
 
@@ -767,7 +733,7 @@ intelFillInModes(__DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
 {
 #ifdef I915
    static const __DRIversion ddx_expected = { 1, 5, 0 };
@@ -777,8 +743,6 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 5, 0 };
    I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
-
-   psp->DriverAPI = intelAPI;
 
    if (!driCheckDriDdxDrmVersions2("i915",
                                    &psp->dri_version, &dri_expected,
@@ -802,9 +766,12 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
    if (!intelInitDriver(psp))
        return NULL;
 
-   return intelFillInModes(psp, dri_priv->cpp * 8,
-			   (dri_priv->cpp == 2) ? 16 : 24,
-			   (dri_priv->cpp == 2) ? 0  : 8, 1);
+   psp->extensions = intelScreenExtensions;
+
+   return (const __DRIconfig **)
+       intelFillInModes(psp, dri_priv->cpp * 8,
+			(dri_priv->cpp == 2) ? 16 : 24,
+			(dri_priv->cpp == 2) ? 0  : 8, 1);
 }
 
 struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
@@ -827,12 +794,10 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
  * 
  * \return the __GLcontextModes supported by this driver
  */
-PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
+static const
+__DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
 {
    intelScreenPrivate *intelScreen;
-   __GLcontextModes *modes, *m;
-
-   psp->DriverAPI = intelAPI;
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -881,12 +846,28 @@ PUBLIC __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp)
       return GL_FALSE;
    }
 
-   psp->extensions = intelExtensions;
+   psp->extensions = intelScreenExtensions;
 
-   modes = intelFillInModes(psp, 16, 16, 0, 1);
-   for (m = modes; m->next != NULL; m = m->next)
-     ;
-   m->next = intelFillInModes(psp, 32, 24, 8, 1);
-
-   return modes;
+   return driConcatConfigs(intelFillInModes(psp, 16, 16, 0, 1),
+			   intelFillInModes(psp, 32, 24, 8, 1));
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen		 = intelInitScreen,
+   .DestroyScreen	 = intelDestroyScreen,
+   .CreateContext	 = intelCreateContext,
+   .DestroyContext	 = intelDestroyContext,
+   .CreateBuffer	 = intelCreateBuffer,
+   .DestroyBuffer	 = intelDestroyBuffer,
+   .SwapBuffers		 = intelSwapBuffers,
+   .MakeCurrent		 = intelMakeCurrent,
+   .UnbindContext	 = intelUnbindContext,
+   .GetSwapInfo		 = intelGetSwapInfo,
+   .GetDrawableMSC	 = driDrawableGetMSC32,
+   .WaitForMSC		 = driWaitForMSC32,
+   .CopySubBuffer	 = intelCopySubBuffer,
+
+   .InitScreen2		 = intelInitScreen2,
+   .HandleDrawableConfig = intelHandleDrawableConfig,
+   .HandleBufferAttach	 = intelHandleBufferAttach,
+};

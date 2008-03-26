@@ -56,6 +56,9 @@ typedef struct __DRIBufferAttachEvent __DRIBufferAttachEvent;
 struct __DRILock {
     unsigned int block_header;
     drm_hw_lock_t lock;
+
+    /* We use this with DRM_CAS to allocate lock IDs for the real lock.*/
+    unsigned int next_id;
 };
 
 struct __DRIEventBuffer {
@@ -113,7 +116,7 @@ struct __DRIDrawableBuffer {
 
 struct __DRIDrawableConfigEvent {
     unsigned int		event_header;
-    drm_drawable_t		drawable;
+    unsigned int		drawable;
     short			x;
     short			y;
     unsigned int		width;
@@ -124,7 +127,7 @@ struct __DRIDrawableConfigEvent {
 
 struct __DRIBufferAttachEvent {
     unsigned int	event_header;
-    drm_drawable_t	drawable;
+    unsigned int	drawable;
     __DRIDrawableBuffer	buffer;
 };
 

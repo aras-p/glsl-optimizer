@@ -676,8 +676,7 @@ void
 intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 		  unsigned long long offset, GLint depth, GLuint pitch)
 {
-   struct intel_context *intel = (struct intel_context*)
-      ((__DRIcontextPrivate*)pDRICtx->private)->driverPrivate;
+   struct intel_context *intel = pDRICtx->driverPrivate;
    struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
 
@@ -696,12 +695,10 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 }
 
 void
-intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *pDraw)
+intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *dPriv)
 {
-   __DRIcontextPrivate *driContext = pDRICtx->private;
-   __DRIdrawablePrivate *dPriv = pDraw->private;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   struct intel_context *intel = driContext->driverPrivate;
+   struct intel_context *intel = pDRICtx->driverPrivate;
    struct intel_texture_object *intelObj;
    struct intel_texture_image *intelImage;
    struct intel_mipmap_tree *mt;
@@ -718,7 +715,7 @@ intelSetTexBuffer(__DRIcontext *pDRICtx, GLint target, __DRIdrawable *pDraw)
    if (!intelObj)
       return;
 
-   __driParseEvents(driContext, dPriv);
+   __driParseEvents(pDRICtx, dPriv);
 
    rb = intel_fb->color_rb[0];
    type = GL_BGRA;

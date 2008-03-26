@@ -195,44 +195,13 @@ nouveauGetSwapInfo(__DRIdrawablePrivate *dpriv, __DRIswapInfo *sInfo)
 	return -1;
 }
 
-static const struct __DriverAPIRec nouveauAPI = {
-	.DestroyScreen   = nouveauDestroyScreen,
-	.CreateContext   = nouveauCreateContext,
-	.DestroyContext  = nouveauDestroyContext,
-	.CreateBuffer    = nouveauCreateBuffer,
-	.DestroyBuffer   = nouveauDestroyBuffer,
-	.SwapBuffers     = nouveauSwapBuffers,
-	.MakeCurrent     = nouveauMakeCurrent,
-	.UnbindContext   = nouveauUnbindContext,
-	.GetSwapInfo     = nouveauGetSwapInfo,
-	.GetDrawableMSC  = driDrawableGetMSC32,
-	.WaitForMSC      = driWaitForMSC32,
-	.WaitForSBC      = NULL,
-	.SwapBuffersMSC  = NULL,
-	.CopySubBuffer   = nouveauCopySubBuffer
-};
-
-
-static __GLcontextModes *
+static __DRIconfig **
 nouveauFillInModes( __DRIscreenPrivate *psp,
 		    unsigned pixel_bits, unsigned depth_bits,
 		    unsigned stencil_bits, GLboolean have_back_buffer )
 {
-	__GLcontextModes * modes;
-	__GLcontextModes * m;
-	unsigned num_modes;
 	unsigned depth_buffer_factor;
 	unsigned back_buffer_factor;
-	int i;
-
-	static const struct {
-		GLenum format;
-		GLenum type;
-	} fb_format_array[] = {
-		{ GL_RGB , GL_UNSIGNED_SHORT_5_6_5     },
-		{ GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV },
-		{ GL_BGR , GL_UNSIGNED_INT_8_8_8_8_REV },
-	};
 
 	/* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
 	 * support pageflipping at all.
@@ -247,41 +216,22 @@ nouveauFillInModes( __DRIscreenPrivate *psp,
 	depth_buffer_factor = 4;
 	back_buffer_factor  = (have_back_buffer) ? 3 : 1;
 
-	num_modes = ((pixel_bits==16) ? 1 : 2) *
-		depth_buffer_factor * back_buffer_factor * 4;
-	modes = (*psp->contextModes->createContextModes)(num_modes,
-							 sizeof(__GLcontextModes));
-	m = modes;
-
-	for (i=((pixel_bits==16)?0:1);i<((pixel_bits==16)?1:3);i++) {
-		if (!driFillInModes(&m, fb_format_array[i].format,
-					fb_format_array[i].type,
-					depth_bits_array,
-					stencil_bits_array,
-					depth_buffer_factor,
-					back_buffer_modes,
-					back_buffer_factor,
-					GLX_TRUE_COLOR)) {
-		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-				__func__, __LINE__ );
-		return NULL;
-		}
-
-		if (!driFillInModes(&m, fb_format_array[i].format,
-					fb_format_array[i].type,
-					depth_bits_array,
-					stencil_bits_array,
-					depth_buffer_factor,
-					back_buffer_modes,
-					back_buffer_factor,
-					GLX_DIRECT_COLOR)) {
-		fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-				__func__, __LINE__ );
-		return NULL;
-		}
-	}
-
-	return modes;
+	if (pixel_bits == 16)
+	    return driCreateConfigs(GL_RGB,
+				    GL_UNSIGNED_SHORT_5_6_5,
+				    depth_bits_array,
+				    stencil_bits_array,
+				    depth_buffer_factor,
+				    back_buffer_modes,
+				    back_buffer_factor);
+	else
+	    return driCreateConfigs(GL_RGBA,
+				    GL_UNSIGNED_INT_8_8_8_8_REV,
+				    depth_bits_array,
+				    stencil_bits_array,
+				    depth_buffer_factor,
+				    back_buffer_modes,
+				    back_buffer_factor);
 }
 
 
@@ -292,7 +242,8 @@ nouveauFillInModes( __DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+nouveauInitScreen(__DRIscreenPrivate *psp)
 {
 	static const __DRIversion ddx_expected = { 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -321,8 +272,6 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 		return NULL;
 	}
 
-	psp->DriverAPI = nouveauAPI;
-
 	/* Calling driInitExtensions here, with a NULL context
 	 * pointer, does not actually enable the extensions.  It just
 	 * makes sure that all the dispatch offsets for all the
@@ -343,10 +292,34 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 	if (!nouveauInitDriver(psp))
 		return NULL;
 
-	return nouveauFillInModes(psp,
-				  dri_priv->bpp,
-				  (dri_priv->bpp == 16) ? 16 : 24,
-				  (dri_priv->bpp == 16) ? 0  : 8,
-				  1);
+	return (const __DRIconfig **)
+	    nouveauFillInModes(psp,
+			       dri_priv->bpp,
+			       (dri_priv->bpp == 16) ? 16 : 24,
+			       (dri_priv->bpp == 16) ? 0  : 8,
+			       1);
 }
 
+const struct __DriverAPIRec driDriverAPI = {
+	.InitScreen      = nouveauInitScreen,
+	.DestroyScreen   = nouveauDestroyScreen,
+	.CreateContext   = nouveauCreateContext,
+	.DestroyContext  = nouveauDestroyContext,
+	.CreateBuffer    = nouveauCreateBuffer,
+	.DestroyBuffer   = nouveauDestroyBuffer,
+	.SwapBuffers     = nouveauSwapBuffers,
+	.MakeCurrent     = nouveauMakeCurrent,
+	.UnbindContext   = nouveauUnbindContext,
+	.GetSwapInfo     = nouveauGetSwapInfo,
+	.GetDrawableMSC  = driDrawableGetMSC32,
+	.WaitForMSC      = driWaitForMSC32,
+	.WaitForSBC      = NULL,
+	.SwapBuffersMSC  = NULL,
+	.CopySubBuffer   = nouveauCopySubBuffer
+};
+
+const __DRIextension *__driDriverExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
+    NULL
+};

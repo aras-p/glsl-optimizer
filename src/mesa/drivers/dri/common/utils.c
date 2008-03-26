@@ -467,8 +467,6 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
    return GL_TRUE;
 }
 
-
-
 /**
  * Creates a set of \c __GLcontextModes that a driver will expose.
  * 
@@ -536,13 +534,11 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
  * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
  */
-GLboolean
-driFillInModes( __GLcontextModes ** ptr_to_modes,
-		GLenum fb_format, GLenum fb_type,
-		const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
-		unsigned num_depth_stencil_bits,
-		const GLenum * db_modes, unsigned num_db_modes,
-		int visType )
+__DRIconfig **
+driCreateConfigs(GLenum fb_format, GLenum fb_type,
+		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		 unsigned num_depth_stencil_bits,
+		 const GLenum * db_modes, unsigned num_db_modes)
 {
    static const u_int8_t bits_table[3][4] = {
      /* R  G  B  A */
@@ -606,16 +602,18 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
    const u_int8_t  * bits;
    const u_int32_t * masks;
    const int index = fb_type & 0x07;
-   __GLcontextModes * modes = *ptr_to_modes;
+   __DRIconfig **configs, **c;
+   __GLcontextModes *modes;
    unsigned i;
    unsigned j;
    unsigned k;
-
+   unsigned num_modes;
+   unsigned num_accum_bits = 2;
 
    if ( bytes_per_pixel[ index ] == 0 ) {
       fprintf( stderr, "[%s:%u] Framebuffer type 0x%04x has 0 bytes per pixel.\n",
 	       __FUNCTION__, __LINE__, fb_type );
-      return GL_FALSE;
+      return NULL;
    }
 
 
@@ -653,14 +651,23 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
       default:
          fprintf( stderr, "[%s:%u] Framebuffer format 0x%04x is not GL_RGB, GL_RGBA, GL_BGR, or GL_BGRA.\n",
 	       __FUNCTION__, __LINE__, fb_format );
-         return GL_FALSE;
+         return NULL;
    }
 
+   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits;
+   configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
+   if (configs == NULL)
+       return NULL;
 
+    c = configs;
     for ( k = 0 ; k < num_depth_stencil_bits ; k++ ) {
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
-	    for ( j = 0 ; j < 2 ; j++ ) {
+	    for ( j = 0 ; j < num_accum_bits ; j++ ) {
+		*c = _mesa_malloc (sizeof **c);
+		modes = &(*c)->modes;
+		c++;
 
+		memset(modes, 0, sizeof *modes);
 		modes->redBits   = bits[0];
 		modes->greenBits = bits[1];
 		modes->blueBits  = bits[2];
@@ -681,7 +688,13 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 		modes->stencilBits = stencil_bits[k];
 		modes->depthBits = depth_bits[k];
 
-		modes->visualType = visType;
+		modes->transparentPixel = GLX_NONE;
+		modes->transparentRed = GLX_DONT_CARE;
+		modes->transparentGreen = GLX_DONT_CARE;
+		modes->transparentBlue = GLX_DONT_CARE;
+		modes->transparentAlpha = GLX_DONT_CARE;
+		modes->transparentIndex = GLX_DONT_CARE;
+		modes->visualType = GLX_DONT_CARE;
 		modes->renderType = GLX_RGBA_BIT;
 		modes->drawableType = GLX_WINDOW_BIT;
 		modes->rgbMode = GL_TRUE;
@@ -700,12 +713,36 @@ driFillInModes( __GLcontextModes ** ptr_to_modes,
 					   modes->accumAlphaBits) > 0);
 		modes->haveDepthBuffer = (modes->depthBits > 0);
 		modes->haveStencilBuffer = (modes->stencilBits > 0);
-
-		modes = modes->next;
 	    }
 	}
     }
+    *c = NULL;
 
-    *ptr_to_modes = modes;
-    return GL_TRUE;
+    return configs;
+}
+
+const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b)
+{
+    const __DRIconfig **all;
+    int i, j, index;
+
+    i = 0;
+    while (a[i] != NULL)
+	i++;
+    j = 0;
+    while (b[j] != NULL)
+	j++;
+   
+    all = _mesa_malloc((i + j + 1) * sizeof *all);
+    index = 0;
+    for (i = 0; a[i] != NULL; i++)
+	all[index++] = a[i];
+    for (j = 0; b[j] != NULL; j++)
+	all[index++] = b[j];
+    all[index++] = NULL;
+
+    _mesa_free(a);
+    _mesa_free(b);
+
+    return all;
 }

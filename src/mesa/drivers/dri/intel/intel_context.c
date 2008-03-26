@@ -848,7 +848,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
    volatile struct drm_i915_sarea *sarea = intel->sarea;
-   int drawable_changed = 0;
    int me = intel->hHWContext;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
@@ -862,12 +861,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * NOTE: This releases and regains the hw lock, so all state
     * checking must be done *after* this call:
     */
-   if (dPriv) {
-      if (sPriv->dri2.enabled)
-	drawable_changed = __driParseEvents(dPriv->driContextPriv, dPriv);
-      else
-	 DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
-   }
+   if (dPriv)
+       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
    if (sarea && sarea->ctxOwner != me) {
       if (INTEL_DEBUG & DEBUG_BUFMGR) {
@@ -892,48 +887,43 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 		 sarea->ctxOwner, intel->hHWContext);
    }
 
-   if (!sPriv->dri2.enabled) {
-      if (sarea->width != intel->width || sarea->height != intel->height) {
-	 int numClipRects = intel->numClipRects;
+   if (sarea->width != intel->width || sarea->height != intel->height) {
+       int numClipRects = intel->numClipRects;
 
-	 /*
-	  * FIXME: Really only need to do this when drawing to a
-	  * common back- or front buffer.
-	  */
+       /*
+	* FIXME: Really only need to do this when drawing to a
+	* common back- or front buffer.
+	*/
 
-	 /*
-	  * This will essentially drop the outstanding batchbuffer on
-	  * the floor.
-	  */
-	 intel->numClipRects = 0;
+       /*
+	* This will essentially drop the outstanding batchbuffer on
+	* the floor.
+	*/
+       intel->numClipRects = 0;
 
-	 if (intel->Fallback)
-	    _swrast_flush(&intel->ctx);
+       if (intel->Fallback)
+	   _swrast_flush(&intel->ctx);
 
-	 if (!IS_965(intel->intelScreen->deviceID))
-	    INTEL_FIREVERTICES(intel);
+       if (!IS_965(intel->intelScreen->deviceID))
+	   INTEL_FIREVERTICES(intel);
 
-	 if (intel->batch->map != intel->batch->ptr)
-	    intel_batchbuffer_flush(intel->batch);
+       if (intel->batch->map != intel->batch->ptr)
+	   intel_batchbuffer_flush(intel->batch);
 
-	 intel->numClipRects = numClipRects;
+       intel->numClipRects = numClipRects;
 
-	 /* force window update */
-	 intel->lastStamp = 0;
+       /* force window update */
+       intel->lastStamp = 0;
 
-	 intel->width = sarea->width;
-	 intel->height = sarea->height;
-      }
+       intel->width = sarea->width;
+       intel->height = sarea->height;
+   }
 
-      /* Drawable changed?
-       */
-      if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-	 intelWindowMoved(intel);
-	 intel->lastStamp = dPriv->lastStamp;
-      }
-   } else if (drawable_changed) {
-     intelWindowMoved(intel);                                                 
-     intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+   /* Drawable changed?
+    */
+   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
+       intelWindowMoved(intel);
+       intel->lastStamp = dPriv->lastStamp;
    }
 }
 
@@ -944,13 +934,15 @@ _glthread_DECLARE_STATIC_MUTEX(lockMutex);
  */
 void LOCK_HARDWARE( struct intel_context *intel )
 {
-    __DRIdrawablePrivate *dPriv = intel->driDrawable;
+    __DRIdrawable *dPriv = intel->driDrawable;
+    __DRIscreen *sPriv = intel->driScreen;
     char __ret = 0;
     struct intel_framebuffer *intel_fb = NULL;
     struct intel_renderbuffer *intel_rb = NULL;
 
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
+    intel->locked = 1;
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
@@ -980,10 +972,18 @@ void LOCK_HARDWARE( struct intel_context *intel )
     DRM_CAS(intel->driHwLock, intel->hHWContext,
         (DRM_LOCK_HELD|intel->hHWContext), __ret);
 
-    if (__ret)
+    if (sPriv->dri2.enabled) {
+	if (__ret)
+	    drmGetLock(intel->driFd, intel->hHWContext, 0);
+	if (__driParseEvents(dPriv->driContextPriv, dPriv)) {
+	    intelWindowMoved(intel);
+	    intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+	}
+    } else if (__ret) {
         intelContendedLock( intel, 0 );
+    }
 
-    intel->locked = 1;
+
     if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - locked\n", __progname);
 }

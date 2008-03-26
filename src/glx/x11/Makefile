@@ -32,7 +32,9 @@ SOURCES = \
 	  glx_texture_compression.c \
 	  dri_glx.c \
 	  XF86dri.c \
-	  glxhash.c
+	  glxhash.c \
+	  dri2_glx.c \
+	  dri2.c
 
 include $(TOP)/src/mesa/sources
 
@@ -48,6 +50,7 @@ INCLUDES = -I. \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
 	$(LIBDRM_CFLAGS) \
+	$(DRI2PROTO_CFLAGS) \
 	$(X11_INCLUDES)
 
 

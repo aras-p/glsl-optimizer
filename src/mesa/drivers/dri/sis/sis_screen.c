@@ -65,12 +65,10 @@ static const GLuint __driNConfigOptions = 3;
 
 extern const struct dri_extension card_extensions[];
 
-static __GLcontextModes *
+static const __DRIconfig **
 sisFillInModes(__DRIscreenPrivate *psp, int bpp)
 {
-   __GLcontextModes *modes;
-   __GLcontextModes *m;
-   unsigned num_modes;
+   __DRIconfig **configs;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    GLenum fb_format;
@@ -93,9 +91,6 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
    depth_buffer_factor = 4;
    back_buffer_factor = 2;
 
-   /* Last 4 is for GLX_TRUE_COLOR & GLX_DIRECT_COLOR, with/without accum */
-   num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
    if (bpp == 16) {
       fb_format = GL_RGB;
       fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -104,25 +99,15 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
       fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
    }
 
-   modes = (*psp->contextModes->createContextModes)(num_modes, sizeof(__GLcontextModes));
-   m = modes;
-   if (!driFillInModes(&m, fb_format, fb_type, depth_bits_array,
-		       stencil_bits_array, depth_buffer_factor,
-		       back_buffer_modes, back_buffer_factor,
-		       GLX_TRUE_COLOR)) {
+   configs = driCreateConfigs(fb_format, fb_type, depth_bits_array,
+			      stencil_bits_array, depth_buffer_factor,
+			      back_buffer_modes, back_buffer_factor);
+   if (configs == NULL) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__, __LINE__);
       return NULL;
    }
 
-   if (!driFillInModes(&m, fb_format, fb_type, depth_bits_array,
-		       stencil_bits_array, depth_buffer_factor,
-		       back_buffer_modes, back_buffer_factor,
-		       GLX_DIRECT_COLOR)) {
-      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__, __LINE__);
-      return NULL;
-   }
-
-   return modes;
+   return (const __DRIconfig **) configs;
 }
 
 
@@ -288,22 +273,52 @@ sisSwapBuffers(__DRIdrawablePrivate *dPriv)
 }
 
 
-/* Initialize the driver specific screen private data.
+/**
+ * This is the driver specific part of the createNewScreen entry point.
+ * 
+ * \todo maybe fold this into intelInitDriver
+ *
+ * \return the __GLcontextModes supported by this driver
  */
-static GLboolean
-sisInitDriver( __DRIscreenPrivate *sPriv )
+static const __DRIconfig **
+sisInitScreen(__DRIscreenPrivate *psp)
 {
-   sPriv->private = (void *) sisCreateScreen( sPriv );
+   static const __DRIversion ddx_expected = {0, 8, 0};
+   static const __DRIversion dri_expected = {4, 0, 0};
+   static const __DRIversion drm_expected = {1, 0, 0};
+   static const char *driver_name = "SiS";
+   SISDRIPtr dri_priv = (SISDRIPtr)psp->pDevPriv;
 
-   if ( !sPriv->private ) {
-      sisDestroyScreen( sPriv );
-      return GL_FALSE;
+   if (!driCheckDriDdxDrmVersions2(driver_name,
+				   &psp->dri_version, &dri_expected,
+				   &psp->ddx_version, &ddx_expected,
+				   &psp->drm_version, &drm_expected))
+      return NULL;
+
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create is
+    * called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
+
+   psp->private = sisCreateScreen(psp);
+
+   if (!psp->private) {
+      sisDestroyScreen(psp);
+      return NULL;
    }
 
-   return GL_TRUE;
+   return sisFillInModes(psp, dri_priv->bytesPerPixel * 8);
 }
 
-static struct __DriverAPIRec sisAPI = {
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = sisInitScreen,
    .DestroyScreen   = sisDestroyScreen,
    .CreateContext   = sisCreateContext,
    .DestroyContext  = sisDestroyContext,
@@ -319,45 +334,3 @@ static struct __DriverAPIRec sisAPI = {
    .SwapBuffersMSC  = NULL
 
 };
-
-
-/**
- * This is the driver specific part of the createNewScreen entry point.
- * 
- * \todo maybe fold this into intelInitDriver
- *
- * \return the __GLcontextModes supported by this driver
- */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
-{
-   static const __DRIversion ddx_expected = {0, 8, 0};
-   static const __DRIversion dri_expected = {4, 0, 0};
-   static const __DRIversion drm_expected = {1, 0, 0};
-   static const char *driver_name = "SiS";
-   SISDRIPtr dri_priv = (SISDRIPtr)psp->pDevPriv;
-
-   if (!driCheckDriDdxDrmVersions2(driver_name,
-				   &psp->dri_version, &dri_expected,
-				   &psp->ddx_version, &ddx_expected,
-				   &psp->drm_version, &drm_expected))
-      return NULL;
-
-   psp->DriverAPI = sisAPI;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-
-   if (!sisInitDriver(psp))
-       return NULL;
-
-   return sisFillInModes(psp, dri_priv->bytesPerPixel * 8);
-}

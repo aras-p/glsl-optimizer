@@ -252,18 +252,18 @@ radeonGetParam(int fd, int param, void *value)
   return ret;
 }
 
-static __GLcontextModes *
+static const __DRIconfig **
 radeonFillInModes( __DRIscreenPrivate *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
-    __GLcontextModes * modes;
-    __GLcontextModes * m;
-    unsigned num_modes;
+    __DRIconfig **configs;
+    __GLcontextModes *m;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
     GLenum fb_type;
+    int i;
 
     /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
      * enough to add support.  Basically, if a context is created with an
@@ -291,8 +291,6 @@ radeonFillInModes( __DRIscreenPrivate *psp,
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
-    num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
     if ( pixel_bits == 16 ) {
         fb_format = GL_RGB;
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -302,21 +300,11 @@ radeonFillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
-    m = modes;
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_TRUE_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-    }
-
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_DIRECT_COLOR ) ) {
+    configs = driCreateConfigs(fb_format, fb_type,
+			       depth_bits_array, stencil_bits_array,
+			       depth_buffer_factor,
+			       back_buffer_modes, back_buffer_factor);
+    if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
 	return NULL;
@@ -324,13 +312,14 @@ radeonFillInModes( __DRIscreenPrivate *psp,
 
     /* Mark the visual as slow if there are "fake" stencil bits.
      */
-    for ( m = modes ; m != NULL ; m = m->next ) {
-	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+    for (i = 0; configs[i]; i++) {
+	m = &configs[i]->modes;
+	if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
 	    m->visualRating = GLX_SLOW_CONFIG;
 	}
     }
 
-    return modes;
+    return (const __DRIconfig **) configs;
 }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
@@ -989,43 +978,6 @@ static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
 
 #endif
 
-#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
-static struct __DriverAPIRec radeonAPI = {
-   .DestroyScreen   = radeonDestroyScreen,
-   .CreateContext   = radeonCreateContext,
-   .DestroyContext  = radeonDestroyContext,
-   .CreateBuffer    = radeonCreateBuffer,
-   .DestroyBuffer   = radeonDestroyBuffer,
-   .SwapBuffers     = radeonSwapBuffers,
-   .MakeCurrent     = radeonMakeCurrent,
-   .UnbindContext   = radeonUnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL,
-   .CopySubBuffer   = radeonCopySubBuffer,
-};
-#else
-static const struct __DriverAPIRec r200API = {
-   .DestroyScreen   = radeonDestroyScreen,
-   .CreateContext   = r200CreateContext,
-   .DestroyContext  = r200DestroyContext,
-   .CreateBuffer    = radeonCreateBuffer,
-   .DestroyBuffer   = radeonDestroyBuffer,
-   .SwapBuffers     = r200SwapBuffers,
-   .MakeCurrent     = r200MakeCurrent,
-   .UnbindContext   = r200UnbindContext,
-   .GetSwapInfo     = getSwapInfo,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL,
-   .CopySubBuffer   = r200CopySubBuffer,
-};
-#endif
-
-
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * 
@@ -1033,7 +985,8 @@ static const struct __DriverAPIRec r200API = {
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+radeonInitScreen(__DRIscreenPrivate *psp)
 {
 #if !RADEON_COMMON
    static const char *driver_name = "Radeon";
@@ -1059,11 +1012,6 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 				      &psp->drm_version, & drm_expected ) ) {
       return NULL;
    }
-#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
-   psp->DriverAPI = radeonAPI;
-#elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-   psp->DriverAPI = r200API;
-#endif
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -1124,3 +1072,41 @@ getSwapInfo( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo )
 
    return 0;
 }
+
+#if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = radeonInitScreen,
+   .DestroyScreen   = radeonDestroyScreen,
+   .CreateContext   = radeonCreateContext,
+   .DestroyContext  = radeonDestroyContext,
+   .CreateBuffer    = radeonCreateBuffer,
+   .DestroyBuffer   = radeonDestroyBuffer,
+   .SwapBuffers     = radeonSwapBuffers,
+   .MakeCurrent     = radeonMakeCurrent,
+   .UnbindContext   = radeonUnbindContext,
+   .GetSwapInfo     = getSwapInfo,
+   .GetDrawableMSC  = driDrawableGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL,
+   .CopySubBuffer   = radeonCopySubBuffer,
+};
+#else
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = radeonInitScreen,
+   .DestroyScreen   = radeonDestroyScreen,
+   .CreateContext   = r200CreateContext,
+   .DestroyContext  = r200DestroyContext,
+   .CreateBuffer    = radeonCreateBuffer,
+   .DestroyBuffer   = radeonDestroyBuffer,
+   .SwapBuffers     = r200SwapBuffers,
+   .MakeCurrent     = r200MakeCurrent,
+   .UnbindContext   = r200UnbindContext,
+   .GetSwapInfo     = getSwapInfo,
+   .GetDrawableMSC  = driDrawableGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL,
+   .CopySubBuffer   = r200CopySubBuffer,
+};
+#endif

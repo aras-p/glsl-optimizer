@@ -59,27 +59,19 @@
 
 #define GLX_BAD_CONTEXT                    5
 
-typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;
-typedef struct __DRIscreenPrivateRec   __DRIscreenPrivate;
-typedef struct __DRIcontextPrivateRec  __DRIcontextPrivate;
-typedef struct __DRIdrawablePrivateRec __DRIdrawablePrivate;
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
 typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
-
-/**
- * Driver specific entry point.  Implemented by the driver.  Called
- * from the top level createNewScreen entry point to initialize the
- * __DRIscreenPrivate struct.
- */
-extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
-
-/** Ditto for DRI2 capable drivers. */
-extern __GLcontextModes *__dri2DriverInitScreen(__DRIscreenPrivate *psp);
+/* Typedefs to avoid rewriting the world. */
+typedef struct __DRIscreenRec	__DRIscreenPrivate;
+typedef struct __DRIdrawableRec	__DRIdrawablePrivate;
+typedef struct __DRIcontextRec	__DRIcontextPrivate;
 
 /**
  * Extensions.
  */
+extern const __DRIlegacyExtension driLegacyExtension;
+extern const __DRIcoreExtension driCoreExtension;
 extern const __DRIextension driReadDrawableExtension;
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;
@@ -100,7 +92,7 @@ extern const __DRImediaStreamCounterExtension driMediaStreamCounterExtension;
 /**
  * Utility macro to validate the drawable information.
  *
- * See __DRIdrawablePrivate::pStamp and __DRIdrawablePrivate::lastStamp.
+ * See __DRIdrawable::pStamp and __DRIdrawable::lastStamp.
  */
 #define DRI_VALIDATE_DRAWABLE_INFO(psp, pdp)                            \
 do {                                                                    \
@@ -129,74 +121,76 @@ do {                                                                    \
  * this structure.
  */
 struct __DriverAPIRec {
+    const __DRIconfig **(*InitScreen) (__DRIscreen * priv);
+
     /**
      * Screen destruction callback
      */
-    void (*DestroyScreen)(__DRIscreenPrivate *driScrnPriv);
+    void (*DestroyScreen)(__DRIscreen *driScrnPriv);
 
     /**
      * Context creation callback
      */	    	    
     GLboolean (*CreateContext)(const __GLcontextModes *glVis,
-                               __DRIcontextPrivate *driContextPriv,
+                               __DRIcontext *driContextPriv,
                                void *sharedContextPrivate);
 
     /**
      * Context destruction callback
      */
-    void (*DestroyContext)(__DRIcontextPrivate *driContextPriv);
+    void (*DestroyContext)(__DRIcontext *driContextPriv);
 
     /**
      * Buffer (drawable) creation callback
      */
-    GLboolean (*CreateBuffer)(__DRIscreenPrivate *driScrnPriv,
-                              __DRIdrawablePrivate *driDrawPriv,
+    GLboolean (*CreateBuffer)(__DRIscreen *driScrnPriv,
+                              __DRIdrawable *driDrawPriv,
                               const __GLcontextModes *glVis,
                               GLboolean pixmapBuffer);
     
     /**
      * Buffer (drawable) destruction callback
      */
-    void (*DestroyBuffer)(__DRIdrawablePrivate *driDrawPriv);
+    void (*DestroyBuffer)(__DRIdrawable *driDrawPriv);
 
     /**
      * Buffer swapping callback 
      */
-    void (*SwapBuffers)(__DRIdrawablePrivate *driDrawPriv);
+    void (*SwapBuffers)(__DRIdrawable *driDrawPriv);
 
     /**
      * Context activation callback
      */
-    GLboolean (*MakeCurrent)(__DRIcontextPrivate *driContextPriv,
-                             __DRIdrawablePrivate *driDrawPriv,
-                             __DRIdrawablePrivate *driReadPriv);
+    GLboolean (*MakeCurrent)(__DRIcontext *driContextPriv,
+                             __DRIdrawable *driDrawPriv,
+                             __DRIdrawable *driReadPriv);
 
     /**
      * Context unbinding callback
      */
-    GLboolean (*UnbindContext)(__DRIcontextPrivate *driContextPriv);
+    GLboolean (*UnbindContext)(__DRIcontext *driContextPriv);
   
     /**
      * Retrieves statistics about buffer swap operations.  Required if
      * GLX_OML_sync_control or GLX_MESA_swap_frame_usage is supported.
      */
-    int (*GetSwapInfo)( __DRIdrawablePrivate *dPriv, __DRIswapInfo * sInfo );
+    int (*GetSwapInfo)( __DRIdrawable *dPriv, __DRIswapInfo * sInfo );
 
 
     /**
      * These are required if GLX_OML_sync_control is supported.
      */
     /*@{*/
-    int (*WaitForMSC)( __DRIdrawablePrivate *priv, int64_t target_msc, 
+    int (*WaitForMSC)( __DRIdrawable *priv, int64_t target_msc, 
 		       int64_t divisor, int64_t remainder,
 		       int64_t * msc );
-    int (*WaitForSBC)( __DRIdrawablePrivate *priv, int64_t target_sbc,
+    int (*WaitForSBC)( __DRIdrawable *priv, int64_t target_sbc,
 		       int64_t * msc, int64_t * sbc );
 
-    int64_t (*SwapBuffersMSC)( __DRIdrawablePrivate *priv, int64_t target_msc,
+    int64_t (*SwapBuffersMSC)( __DRIdrawable *priv, int64_t target_msc,
 			       int64_t divisor, int64_t remainder );
     /*@}*/
-    void (*CopySubBuffer)(__DRIdrawablePrivate *driDrawPriv,
+    void (*CopySubBuffer)(__DRIdrawable *driDrawPriv,
 			  int x, int y, int w, int h);
 
     /**
@@ -204,20 +198,25 @@ struct __DriverAPIRec {
      * level DRM driver (e.g. pipe info).  Required if
      * GLX_SGI_video_sync or GLX_OML_sync_control is supported.
      */
-    int (*GetDrawableMSC) ( __DRIscreenPrivate * priv,
-			    __DRIdrawablePrivate *drawablePrivate,
+    int (*GetDrawableMSC) ( __DRIscreen * priv,
+			    __DRIdrawable *drawablePrivate,
 			    int64_t *count);
 
+
+
     /* DRI2 Entry points */
-    void (*HandleDrawableConfig)(__DRIdrawablePrivate *dPriv,
-				__DRIcontextPrivate *pcp,
+    const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
+    void (*HandleDrawableConfig)(__DRIdrawable *dPriv,
+				__DRIcontext *pcp,
 				__DRIDrawableConfigEvent *event);
 
-    void (*HandleBufferAttach)(__DRIdrawablePrivate *dPriv,
-			       __DRIcontextPrivate *pcp,
+    void (*HandleBufferAttach)(__DRIdrawable *dPriv,
+			       __DRIcontext *pcp,
 			       __DRIBufferAttachEvent *ba);
 
 };
+
+extern const struct __DriverAPIRec driDriverAPI;
 
 
 struct __DRIswapInfoRec {
@@ -254,7 +253,7 @@ struct __DRIswapInfoRec {
 /**
  * Per-drawable private DRI driver information.
  */
-struct __DRIdrawablePrivateRec {
+struct __DRIdrawableRec {
     /**
      * Kernel drawable handle
      */
@@ -268,9 +267,10 @@ struct __DRIdrawablePrivateRec {
     void *driverPrivate;
 
     /**
-     * X's drawable ID associated with this private drawable.
+     * Private data from the loader.  We just hold on to it and pass
+     * it back when calling into loader provided functions.
      */
-    __DRIdrawable *pdraw;
+    void *loaderPrivate;
 
     /**
      * Reference count for number of context's currently bound to this
@@ -295,7 +295,7 @@ struct __DRIdrawablePrivateRec {
     /**
      * Last value of the stamp.
      *
-     * If this differs from the value stored at __DRIdrawablePrivate::pStamp,
+     * If this differs from the value stored at __DRIdrawable::pStamp,
      * then the drawable information has been modified by the X server, and the
      * drawable information (below) should be retrieved from the X server.
      */
@@ -357,17 +357,12 @@ struct __DRIdrawablePrivateRec {
     /**
      * Pointer to context to which this drawable is currently bound.
      */
-    __DRIcontextPrivate *driContextPriv;
+    __DRIcontext *driContextPriv;
 
     /**
      * Pointer to screen on which this drawable was created.
      */
-    __DRIscreenPrivate *driScreenPriv;
-
-    /**
-     * Called via glXSwapBuffers().
-     */
-    void (*swapBuffers)( __DRIdrawablePrivate *dPriv );
+    __DRIscreen *driScreenPriv;
 
     /**
      * Controls swap interval as used by GLX_SGI_swap_control and
@@ -376,13 +371,14 @@ struct __DRIdrawablePrivateRec {
     unsigned int swap_interval;
     struct {
 	unsigned int tail;
+	unsigned int drawable_id;
     } dri2;
 };
 
 /**
  * Per-context private driver information.
  */
-struct __DRIcontextPrivateRec {
+struct __DRIcontextRec {
     /**
      * Kernel context handle used to access the device lock.
      */
@@ -401,23 +397,23 @@ struct __DRIcontextPrivateRec {
     /**
      * Pointer to drawable currently bound to this context for drawing.
      */
-    __DRIdrawablePrivate *driDrawablePriv;
+    __DRIdrawable *driDrawablePriv;
 
     /**
      * Pointer to drawable currently bound to this context for reading.
      */
-    __DRIdrawablePrivate *driReadablePriv;
+    __DRIdrawable *driReadablePriv;
 
     /**
      * Pointer to screen on which this context was created.
      */
-    __DRIscreenPrivate *driScreenPriv;
+    __DRIscreen *driScreenPriv;
 };
 
 /**
  * Per-screen private driver information.
  */
-struct __DRIscreenPrivateRec {
+struct __DRIscreenRec {
     /**
      * Current screen's number
      */
@@ -428,6 +424,7 @@ struct __DRIscreenPrivateRec {
      */
     struct __DriverAPIRec DriverAPI;
 
+    const __DRIextension **extensions;
     /**
      * DDX / 2D driver version information.
      */
@@ -504,7 +501,7 @@ struct __DRIscreenPrivateRec {
      * context is created when the first "real" context is created on this
      * screen.
      */
-    __DRIcontextPrivate dummyContextPriv;
+    __DRIcontext dummyContextPriv;
 
     /**
      * Device-dependent private information (not stored in the SAREA).
@@ -518,13 +515,7 @@ struct __DRIscreenPrivateRec {
      */
     __DRIscreen *psc;
 
-    /**
-     * Extensions provided by this driver.
-     */
-    const __DRIextension **extensions;
-
     /* Extensions provided by the loader. */
-    const __DRIcontextModesExtension *contextModes;
     const __DRIgetDrawableInfoExtension *getDrawableInfo;
     const __DRIsystemTimeExtension *systemTime;
     const __DRIdamageExtension *damage;
@@ -537,13 +528,16 @@ struct __DRIscreenPrivateRec {
 	void *sarea;
 	__DRIEventBuffer *buffer;
 	__DRILock *lock;
-	__DRIcoreDRI2Extension *core;
+	__DRIloaderExtension *loader;
     } dri2;
 
     /* The lock actually in use, old sarea or DRI2 */
     drmLock *lock;
 };
 
+struct __DRIconfigRec {
+    __GLcontextModes modes;
+};
 
 /**
  * Used to store a version which includes a major range instead of a single
@@ -562,13 +556,13 @@ __driUtilMessage(const char *f, ...);
 
 
 extern void
-__driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
+__driUtilUpdateDrawableInfo(__DRIdrawable *pdp);
 
 extern int
-__driParseEvents(__DRIcontextPrivate *psp, __DRIdrawablePrivate *pdp);
+__driParseEvents(__DRIcontext *psp, __DRIdrawable *pdp);
 
 extern float
-driCalculateSwapUsage( __DRIdrawablePrivate *dPriv,
+driCalculateSwapUsage( __DRIdrawable *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
 
 #endif /* _DRI_UTIL_H_ */

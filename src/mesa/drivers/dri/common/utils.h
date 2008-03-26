@@ -112,10 +112,12 @@ extern GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
 					   GLint *x, GLint *y,
 					   GLsizei *width, GLsizei *height );
 
-extern GLboolean driFillInModes( __GLcontextModes ** modes,
-    GLenum fb_format, GLenum fb_type,
-    const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
-    unsigned num_depth_stencil_bits,
-    const GLenum * db_modes, unsigned num_db_modes, int visType );
+extern __DRIconfig **
+driCreateConfigs(GLenum fb_format, GLenum fb_type,
+		 const u_int8_t * depth_bits, const u_int8_t * stencil_bits,
+		 unsigned num_depth_stencil_bits,
+		 const GLenum * db_modes, unsigned num_db_modes);
+
+const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b);
 
 #endif /* DRI_DEBUG_H */

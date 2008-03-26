@@ -604,35 +604,18 @@ void ffbXMesaUpdateState(ffbContextPtr fmesa)
 	}
 }
 
-static const struct __DriverAPIRec ffbAPI = {
-   .DestroyScreen   = ffbDestroyScreen,
-   .CreateContext   = ffbCreateContext,
-   .DestroyContext  = ffbDestroyContext,
-   .CreateBuffer    = ffbCreateBuffer,
-   .DestroyBuffer   = ffbDestroyBuffer,
-   .SwapBuffers     = ffbSwapBuffers,
-   .MakeCurrent     = ffbMakeCurrent,
-   .UnbindContext   = ffbUnbindContext,
-   .GetSwapInfo     = NULL,
-   .GetDrawableMSC  = NULL,
-   .WaitForMSC      = NULL,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
-};
-
-
-static __GLcontextModes *
+static const __DRIconfig **
 ffbFillInModes( __DRIscreenPrivate *psp,
 		unsigned pixel_bits, unsigned depth_bits,
 		unsigned stencil_bits, GLboolean have_back_buffer )
 {
-   __GLcontextModes * modes;
-   __GLcontextModes * m;
-   unsigned num_modes;
+   __DRIconfig **configs;
+   __GLcontextModes *m;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
    GLenum fb_format;
    GLenum fb_type;
+   int i;
 
    /* GLX_SWAP_COPY_OML is only supported because the FFB driver doesn't
     * support pageflipping at all.
@@ -643,7 +626,6 @@ ffbFillInModes( __DRIscreenPrivate *psp,
 
    u_int8_t depth_bits_array[3];
    u_int8_t stencil_bits_array[3];
-
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
@@ -660,8 +642,6 @@ ffbFillInModes( __DRIscreenPrivate *psp,
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor  = (have_back_buffer) ? 3 : 1;
 
-   num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
     if ( pixel_bits == 16 ) {
         fb_format = GL_RGB;
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -671,35 +651,26 @@ ffbFillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-   modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
-   m = modes;
-   if ( ! driFillInModes( & m, fb_format, fb_type,
-			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			  back_buffer_modes, back_buffer_factor,
-			  GLX_TRUE_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
+   configs = driCreateConfigs(fb_format, fb_type,
+			      depth_bits_array, stencil_bits_array,
+			      depth_buffer_factor, back_buffer_modes,
+			      back_buffer_factor);
+   if (configs == NULL) {
+    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
    }
-   if ( ! driFillInModes( & m, fb_format, fb_type,
-			  depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			  back_buffer_modes, back_buffer_factor,
-			  GLX_DIRECT_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-   }
-
 
    /* Mark the visual as slow if there are "fake" stencil bits.
     */
-   for ( m = modes ; m != NULL ; m = m->next ) {
-      if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
-	 m->visualRating = GLX_SLOW_CONFIG;
+   for (i = 0; configs[i]; i++) {
+      m = &configs[i]->modes;
+      if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
+         m->visualRating = GLX_SLOW_CONFIG;
       }
    }
 
-   return modes;
+   return (const __DRIconfig **) configs;
 }
 
 
@@ -710,7 +681,8 @@ ffbFillInModes( __DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+ffbInitScreen(__DRIscreen *psp)
 {
    static const __DRIversion ddx_expected = { 0, 1, 1 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -722,10 +694,25 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
 
-   psp->DriverAPI = ffbAPI;
-
    if (!ffbInitDriver(psp))
        return NULL;
 
    return ffbFillInModes( psp, 32, 16, 0, GL_TRUE );
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = ffbInitScreen,
+   .DestroyScreen   = ffbDestroyScreen,
+   .CreateContext   = ffbCreateContext,
+   .DestroyContext  = ffbDestroyContext,
+   .CreateBuffer    = ffbCreateBuffer,
+   .DestroyBuffer   = ffbDestroyBuffer,
+   .SwapBuffers     = ffbSwapBuffers,
+   .MakeCurrent     = ffbMakeCurrent,
+   .UnbindContext   = ffbUnbindContext,
+   .GetSwapInfo     = NULL,
+   .GetDrawableMSC  = NULL,
+   .WaitForMSC      = NULL,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
+};

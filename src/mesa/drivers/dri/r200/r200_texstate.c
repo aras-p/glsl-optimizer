@@ -979,9 +979,7 @@ static GLboolean r200UpdateTextureEnv( GLcontext *ctx, int unit, int slot, GLuin
 void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 		      unsigned long long offset, GLint depth, GLuint pitch)
 {
-	r200ContextPtr rmesa =
-	    (r200ContextPtr) ((__DRIcontextPrivate *) pDRICtx->private)->
-	    driverPrivate;
+	r200ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->glCtx, texname);
 	r200TexObjPtr t;

@@ -168,11 +168,11 @@ static const struct tnl_pipeline_stage *savage_pipeline[] = {
 };
 
 
-static const __DRIextension *savageExtensions[] = {
+PUBLIC const __DRIextension *savageScreenExtensions[] = {
+    &driCoreExtension.base,
+    &driLegacyExtension.base,
     &driReadDrawableExtension,
 };
-
-/* this is first function called in dirver*/
 
 static GLboolean
 savageInitDriver(__DRIscreenPrivate *sPriv)
@@ -266,7 +266,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
    driParseOptionInfo (&savageScreen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
 
-   sPriv->extensions = savageExtensions;
+   sPriv->extensions = savageScreenExtensions;
 
 #if 0
    savageDDFastPathInit();
@@ -292,34 +292,6 @@ savageDestroyScreen(__DRIscreenPrivate *sPriv)
    Xfree(savageScreen);
    sPriv->private = NULL;
 }
-
-#if 0
-GLvisual *XMesaCreateVisual(Display *dpy,
-                            __DRIscreenPrivate *driScrnPriv,
-                            const XVisualInfo *visinfo,
-                            const __GLXvisualConfig *config)
-{
-   /* Drivers may change the args to _mesa_create_visual() in order to
-    * setup special visuals.
-    */
-   return _mesa_create_visual( config->rgba,
-                               config->doubleBuffer,
-                               config->stereo,
-                               _mesa_bitcount(visinfo->red_mask),
-                               _mesa_bitcount(visinfo->green_mask),
-                               _mesa_bitcount(visinfo->blue_mask),
-                               config->alphaSize,
-                               0, /* index bits */
-                               config->depthSize,
-                               config->stencilSize,
-                               config->accumRedSize,
-                               config->accumGreenSize,
-                               config->accumBlueSize,
-                               config->accumAlphaSize,
-                               0 /* num samples */ );
-}
-#endif
-
 
 static GLboolean
 savageCreateContext( const __GLcontextModes *mesaVis,
@@ -915,32 +887,18 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
    }
 }
 
-
-
-static const struct __DriverAPIRec savageAPI = {
-   savageDestroyScreen,
-   savageCreateContext,
-   savageDestroyContext,
-   savageCreateBuffer,
-   savageDestroyBuffer,
-   savageSwapBuffers,
-   savageMakeCurrent,
-   savageUnbindContext
-};
-
-
-static __GLcontextModes *
+static const  __DRIconfig **
 savageFillInModes( __DRIscreenPrivate *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
 		   unsigned stencil_bits, GLboolean have_back_buffer )
 {
-    __GLcontextModes * modes;
+    __DRIconfig **configs;
     __GLcontextModes * m;
-    unsigned num_modes;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
     GLenum fb_type;
+    int i;
 
     /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
      * enough to add support.  Basically, if a context is created with an
@@ -971,8 +929,6 @@ savageFillInModes( __DRIscreenPrivate *psp,
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
-    num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
     if ( pixel_bits == 16 ) {
         fb_format = GL_RGB;
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -982,21 +938,11 @@ savageFillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
-    m = modes;
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_TRUE_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-    }
-
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_DIRECT_COLOR ) ) {
+    configs = driCreateConfigs(fb_format, fb_type,
+			       depth_bits_array, stencil_bits_array,
+			       depth_buffer_factor,
+			       back_buffer_modes, back_buffer_factor);
+    if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
 	return NULL;
@@ -1004,13 +950,14 @@ savageFillInModes( __DRIscreenPrivate *psp,
 
     /* Mark the visual as slow if there are "fake" stencil bits.
      */
-    for ( m = modes ; m != NULL ; m = m->next ) {
-	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
+    for (i = 0; configs[i]; i++) {
+	m = &configs[i]->modes;
+	if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
 	    m->visualRating = GLX_SLOW_CONFIG;
 	}
     }
 
-    return modes;
+    return (const __DRIconfig **) configs;
 }
 
 
@@ -1021,7 +968,8 @@ savageFillInModes( __DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+savageInitScreen(__DRIscreenPrivate *psp)
 {
    static const __DRIversion ddx_expected = { 2, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
@@ -1033,8 +981,6 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
-
-   psp->DriverAPI = savageAPI;
 
    /* Calling driInitExtensions here, with a NULL context pointer,
     * does not actually enable the extensions.  It just makes sure
@@ -1057,3 +1003,15 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 			     (dri_priv->cpp == 2) ? 0  : 8,
 			     (dri_priv->backOffset != dri_priv->depthOffset) );
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   savageInitScreen, 
+   savageDestroyScreen,
+   savageCreateContext,
+   savageDestroyContext,
+   savageCreateBuffer,
+   savageDestroyBuffer,
+   savageSwapBuffers,
+   savageMakeCurrent,
+   savageUnbindContext
+};

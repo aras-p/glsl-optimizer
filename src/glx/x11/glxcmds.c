@@ -109,6 +109,9 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
     XSetErrorHandler(oldXErrorHandler);
 }
 
+extern __GLXDRIdrawable *
+GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int * const scrn_num);
+
 /**
  * Get the __DRIdrawable for the drawable associated with a GLXContext
  * 
@@ -118,24 +121,27 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
  * \returns  A pointer to the context's __DRIdrawable on success, or NULL if
  *           the drawable is not associated with a direct-rendering context.
  */
-static __DRIdrawable *
-GetDRIDrawable( Display *dpy, GLXDrawable drawable, int * const scrn_num )
+_X_HIDDEN __GLXDRIdrawable *
+GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int * const scrn_num)
 {
-    __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
-    __GLXDRIdrawable * const pdraw;
+    __GLXdisplayPrivate *priv = __glXInitialize(dpy);
+    __GLXDRIdrawable *pdraw;
     const unsigned  screen_count = ScreenCount(dpy);
     unsigned   i;
-    __GLXscreenConfigs *sc;
+    __GLXscreenConfigs *psc;
 
-    if (priv == NULL || priv->driDisplay == NULL)
+    if (priv == NULL)
 	return NULL;
     
     for (i = 0; i < screen_count; i++) {
-	sc = &priv->screenConfigs[i];
-	if (__glxHashLookup(sc->drawHash, drawable, (void *) &pdraw) == 0) {
+	psc = &priv->screenConfigs[i];
+	if (psc->drawHash == NULL)
+	    continue;
+
+	if (__glxHashLookup(psc->drawHash, drawable, (void *) &pdraw) == 0) {
 	    if (scrn_num != NULL)
 		*scrn_num = i;
-	    return &pdraw->driDrawable;
+	    return pdraw;
 	}
     }
 
@@ -837,10 +843,10 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     GLXContextTag tag;
     CARD8 opcode;
 #ifdef GLX_DIRECT_RENDERING
-    __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, NULL );
+    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
-    if ( pdraw != NULL ) {
-	(*pdraw->swapBuffers)(pdraw);
+    if (pdraw != NULL) {
+	(*pdraw->psc->core->swapBuffers)(pdraw->driDrawable);
 	return;
     }
 #endif
@@ -1721,11 +1727,11 @@ static int __glXSwapIntervalSGI(int interval)
    if (gc->driContext) {
        __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							     gc->screen );
-       __DRIdrawable * const pdraw = GetDRIDrawable( gc->currentDpy,
-						     gc->currentDrawable,
-						     NULL );
+       __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(gc->currentDpy,
+						   gc->currentDrawable,
+						   NULL);
        if (psc->swapControl != NULL && pdraw != NULL) {
-	   psc->swapControl->setSwapInterval(pdraw, interval);
+	   psc->swapControl->setSwapInterval(pdraw->driDrawable, interval);
 	   return 0;
        }
        else {
@@ -1775,10 +1781,10 @@ static int __glXSwapIntervalMESA(unsigned int interval)
 							    gc->screen );
       
       if ( (psc != NULL) && (psc->driScreen != NULL) ) {
-	 __DRIdrawable * const pdraw = 
-	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+	 __GLXDRIdrawable *pdraw = 
+	     GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if (psc->swapControl != NULL && pdraw != NULL) {
-	    psc->swapControl->setSwapInterval(pdraw, interval);
+	    psc->swapControl->setSwapInterval(pdraw->driDrawable, interval);
 	    return 0;
 	 }
       }
@@ -1801,10 +1807,10 @@ static int __glXGetSwapIntervalMESA(void)
 							    gc->screen );
       
       if ( (psc != NULL) && (psc->driScreen != NULL) ) {
-	 __DRIdrawable * const pdraw = 
-	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+	 __GLXDRIdrawable *pdraw = 
+	     GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 if (psc->swapControl != NULL && pdraw != NULL) {
-	    return psc->swapControl->getSwapInterval(pdraw);
+	    return psc->swapControl->getSwapInterval(pdraw->driDrawable);
 	 }
       }
    }
@@ -1823,11 +1829,11 @@ static GLint __glXBeginFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
    int   status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
    int screen;
-   __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
    if (pdraw != NULL && psc->frameTracking != NULL)
-       status = psc->frameTracking->frameTracking(pdraw, GL_TRUE);
+       status = psc->frameTracking->frameTracking(pdraw->driDrawable, GL_TRUE);
 #else
    (void) dpy;
    (void) drawable;
@@ -1841,11 +1847,12 @@ static GLint __glXEndFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
    int   status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
    int screen;
-   __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
-   __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, & screen);
+   __GLXscreenConfigs *psc = GetGLXScreenConfigs(dpy, screen);
 
    if (pdraw != NULL && psc->frameTracking != NULL)
-       status = psc->frameTracking->frameTracking(pdraw, GL_FALSE);
+       status = psc->frameTracking->frameTracking(pdraw->driDrawable,
+						  GL_FALSE);
 #else
    (void) dpy;
    (void) drawable;
@@ -1860,14 +1867,15 @@ static GLint __glXGetFrameUsageMESA(Display *dpy, GLXDrawable drawable,
    int   status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
    int screen;
-   __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
+   __GLXDRIdrawable * const pdraw = GetGLXDRIDrawable(dpy, drawable, & screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
    if (pdraw != NULL && psc->frameTracking != NULL) {
        int64_t sbc, missedFrames;
        float   lastMissedUsage;
 
-       status = psc->frameTracking->queryFrameTracking(pdraw, &sbc,
+       status = psc->frameTracking->queryFrameTracking(pdraw->driDrawable,
+						       &sbc,
 						       &missedFrames,
 						       &lastMissedUsage,
 						       usage);
@@ -1888,13 +1896,14 @@ static GLint __glXQueryFrameTrackingMESA(Display *dpy, GLXDrawable drawable,
    int   status = GLX_BAD_CONTEXT;
 #ifdef __DRI_FRAME_TRACKING
    int screen;
-   __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, & screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
    if (pdraw != NULL && psc->frameTracking != NULL) {
       float   usage;
 
-      status = psc->frameTracking->queryFrameTracking(pdraw, sbc, missedFrames,
+      status = psc->frameTracking->queryFrameTracking(pdraw->driDrawable,
+						      sbc, missedFrames,
 						      lastMissedUsage, &usage);
    }
 #else
@@ -1925,12 +1934,13 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
       if ( psc->msc && psc->driScreen ) {
-          __DRIdrawable * const pdraw = 
-              GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+          __GLXDRIdrawable *pdraw = 
+              GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	  int64_t temp; 
 	  int ret;
  
-	  ret = (*psc->msc->getDrawableMSC)(&psc->__driScreen, pdraw, &temp);
+	  ret = (*psc->msc->getDrawableMSC)(psc->__driScreen,
+					    pdraw->driDrawable, &temp);
 	  *count = (unsigned) temp;
 
 	  return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
@@ -1954,14 +1964,14 @@ static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
       if (psc->msc != NULL && psc->driScreen ) {
-	 __DRIdrawable * const pdraw = 
-	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+	 __GLXDRIdrawable *pdraw = 
+	     GetGLXDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
 	 int       ret;
 	 int64_t   msc;
 	 int64_t   sbc;
 
-	 ret = (*psc->msc->waitForMSC)(pdraw, 0, divisor, remainder, &msc,
-				       &sbc);
+	 ret = (*psc->msc->waitForMSC)(pdraw->driDrawable, 0,
+				       divisor, remainder, &msc, &sbc);
 	 *count = (unsigned) msc;
 	 return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
       }
@@ -2120,13 +2130,13 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
 
     if ( priv != NULL ) {
 	int   i;
-	__DRIdrawable * const pdraw = GetDRIDrawable( dpy, drawable, & i );
+	__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &i);
 	__GLXscreenConfigs * const psc = &priv->screenConfigs[i];
 
 	assert( (pdraw == NULL) || (i != -1) );
 	return ( (pdraw && psc->sbc && psc->msc)
-		 && ((*psc->msc->getMSC)(&psc->driScreen, msc) == 0)
-		 && ((*psc->sbc->getSBC)(pdraw, sbc) == 0)
+		 && ((*psc->msc->getMSC)(psc->driScreen, msc) == 0)
+		 && ((*psc->sbc->getSBC)(pdraw->driDrawable, sbc) == 0)
 		 && (__glXGetUST(ust) == 0) );
     }
 #else
@@ -2141,16 +2151,16 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
 
 #ifdef GLX_DIRECT_RENDERING
 _X_HIDDEN GLboolean
-__driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator)
+__driGetMscRateOML(__DRIdrawable *draw,
+		   int32_t *numerator, int32_t *denominator, void *private)
 {
 #ifdef XF86VIDMODE
     __GLXscreenConfigs *psc;
     XF86VidModeModeLine   mode_line;
     int   dot_clock;
     int   i;
-    __GLXDRIdrawable *glxDraw;
+    __GLXDRIdrawable *glxDraw = private;
 
-    glxDraw = containerOf(draw, __GLXDRIdrawable, driDrawable);
     psc = glxDraw->psc;
     if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
 	XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line) ) {
@@ -2223,12 +2233,12 @@ _X_HIDDEN GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 				       int32_t * denominator)
 {
 #if defined( GLX_DIRECT_RENDERING ) && defined( XF86VIDMODE )
-    __DRIdrawable *driDraw = GetDRIDrawable(dpy, drawable, NULL);
+    __GLXDRIdrawable *draw = GetGLXDRIDrawable(dpy, drawable, NULL);
 
-    if (driDraw == NULL)
+    if (draw == NULL)
 	return False;
 
-    return __driGetMscRateOML(driDraw, numerator, denominator);
+    return __driGetMscRateOML(draw->driDrawable, numerator, denominator, draw);
 #else
    (void) dpy;
    (void) drawable;
@@ -2245,7 +2255,7 @@ static int64_t __glXSwapBuffersMscOML(Display *dpy, GLXDrawable drawable,
 {
 #ifdef __DRI_SWAP_BUFFER_COUNTER
    int screen;
-   __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
 
    /* The OML_sync_control spec says these should "generate a GLX_BAD_VALUE
@@ -2259,7 +2269,7 @@ static int64_t __glXSwapBuffersMscOML(Display *dpy, GLXDrawable drawable,
       return -1;
 
    if (pdraw != NULL && psc->counters != NULL)
-      return (*psc->sbc->swapBuffersMSC)(pdraw, target_msc,
+      return (*psc->sbc->swapBuffersMSC)(pdraw->driDrawable, target_msc,
 					 divisor, remainder);
 
 #else
@@ -2280,7 +2290,7 @@ static Bool __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
 {
 #ifdef __DRI_MEDIA_STREAM_COUNTER
    int screen;
-   __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
    int  ret;
 
@@ -2293,7 +2303,7 @@ static Bool __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
       return False;
 
    if (pdraw != NULL && psc->msc != NULL) {
-      ret = (*psc->msc->waitForMSC)(pdraw, target_msc,
+      ret = (*psc->msc->waitForMSC)(pdraw->driDrawable, target_msc,
 				    divisor, remainder, msc, sbc);
 
       /* __glXGetUST returns zero on success and non-zero on failure.
@@ -2321,7 +2331,7 @@ static Bool __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
 {
 #ifdef __DRI_SWAP_BUFFER_COUNTER
    int screen;
-   __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
+   __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
    int  ret;
 
@@ -2332,7 +2342,7 @@ static Bool __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
       return False;
 
    if (pdraw != NULL && psc->sbc != NULL) {
-      ret = (*psc->sbc->waitForSBC)(pdraw, target_sbc, msc, sbc);
+      ret = (*psc->sbc->waitForSBC)(pdraw->driDrawable, target_sbc, msc, sbc);
 
       /* __glXGetUST returns zero on success and non-zero on failure.
        * This function returns True on success and False on failure.
@@ -2364,9 +2374,8 @@ PUBLIC void *glXAllocateMemoryMESA(Display *dpy, int scrn,
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
    if (psc && psc->allocate)
-       return (*psc->allocate->allocateMemory)( &psc->__driScreen, size,
-						readFreq, writeFreq,
-						priority );
+       return (*psc->allocate->allocateMemory)(psc->__driScreen, size,
+					       readFreq, writeFreq, priority);
 
 #else
    (void) dpy;
@@ -2387,7 +2396,7 @@ PUBLIC void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
    if (psc && psc->allocate)
-	 (*psc->allocate->freeMemory)( &psc->__driScreen, pointer );
+	 (*psc->allocate->freeMemory)(psc->__driScreen, pointer);
 
 #else
    (void) dpy;
@@ -2404,7 +2413,7 @@ PUBLIC GLuint glXGetMemoryOffsetMESA( Display *dpy, int scrn,
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
    if (psc && psc->allocate)
-       return (*psc->allocate->memoryOffset)( &psc->__driScreen, pointer );
+       return (*psc->allocate->memoryOffset)(psc->__driScreen, pointer);
 
 #else
    (void) dpy;
@@ -2480,11 +2489,12 @@ static void __glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
 
 #ifdef __DRI_COPY_SUB_BUFFER
     int screen;
-    __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
+    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, &screen);
     if ( pdraw != NULL ) {
 	__GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
 	if (psc->copySubBuffer != NULL) {
-	    (*psc->copySubBuffer->copySubBuffer)(pdraw, x, y, width, height);
+	    (*psc->copySubBuffer->copySubBuffer)(pdraw->driDrawable,
+						 x, y, width, height);
 	}
 
 	return;
@@ -2560,8 +2570,16 @@ static void __glXBindTexImageEXT(Display *dpy,
     }
  
 #ifdef GLX_DIRECT_RENDERING
-    if (gc->driContext)
+    if (gc->driContext) {
+	__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+
+	if (pdraw != NULL)
+	    (*pdraw->psc->texBuffer->setTexBuffer)(gc->__driContext,
+						   pdraw->textureTarget,
+						   pdraw->driDrawable);
+
 	return;
+    }
 #endif
 
     opcode = __glXSetupForCommand(dpy);

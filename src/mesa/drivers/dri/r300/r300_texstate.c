@@ -569,9 +569,7 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 		      unsigned long long offset, GLint depth, GLuint pitch)
 {
-	r300ContextPtr rmesa =
-	    (r300ContextPtr) ((__DRIcontextPrivate *) pDRICtx->private)->
-	    driverPrivate;
+	r300ContextPtr rmesa = pDRICtx->driverPrivate;
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	r300TexObjPtr t;
