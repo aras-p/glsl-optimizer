@@ -92,8 +92,9 @@
 #define CELL_CMD_STATE_BIND_VS       18
 #define CELL_CMD_STATE_BLEND         19
 #define CELL_CMD_STATE_ATTRIB_FETCH  20
-#define CELL_CMD_VS_EXECUTE          21
-#define CELL_CMD_FLUSH_BUFFER_RANGE  22
+#define CELL_CMD_STATE_LOGICOP       21
+#define CELL_CMD_VS_EXECUTE          22
+#define CELL_CMD_FLUSH_BUFFER_RANGE  23
 
 
 #define CELL_NUM_BUFFERS 4
@@ -121,6 +122,12 @@ struct cell_command_blend {
    uint64_t base;               /**< Effective address of code start. */
    unsigned size;               /**< Size in bytes of test code. */
    unsigned read_fb;            /**< Flag: should framebuffer be read? */
+};
+
+
+struct cell_command_logicop {
+   uint64_t base;               /**< Effective address of code start. */
+   unsigned size;               /**< Size in bytes of test code. */
 };
 
 

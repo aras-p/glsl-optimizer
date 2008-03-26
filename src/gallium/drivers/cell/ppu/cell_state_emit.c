@@ -50,6 +50,23 @@ emit_state_cmd(struct cell_context *cell, uint cmd,
 void
 cell_emit_state(struct cell_context *cell)
 {
+   if (cell->dirty & (CELL_NEW_FRAMEBUFFER | CELL_NEW_BLEND)) {
+      struct cell_command_logicop logicop;
+
+      if (cell->logic_op.store != NULL) {
+	 spe_release_func(& cell->logic_op);
+      }
+
+      cell_generate_logic_op(& cell->logic_op,
+			     & cell->blend->base,
+			     cell->framebuffer.cbufs[0]);
+
+      logicop.base = (intptr_t) cell->logic_op.store;
+      logicop.size = 64 * 4;
+      emit_state_cmd(cell, CELL_CMD_STATE_LOGICOP, &logicop,
+		     sizeof(logicop));
+   }
+
    if (cell->dirty & CELL_NEW_FRAMEBUFFER) {
       struct pipe_surface *cbuf = cell->framebuffer.cbufs[0];
       struct pipe_surface *zbuf = cell->framebuffer.zsbuf;

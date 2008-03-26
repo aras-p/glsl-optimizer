@@ -92,6 +92,8 @@ struct cell_context
    const struct cell_vertex_shader_state *vs;
    const struct cell_fragment_shader_state *fs;
 
+   struct spe_function logic_op;
+
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[2];
