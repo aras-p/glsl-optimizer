@@ -249,8 +249,13 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
             (SS2_SHADOW_ENABLE |
              intel_translate_shadow_compare_func(tObj->CompareFunc));
 
-         minFilt = FILTER_4X4_FLAT;
-         magFilt = FILTER_4X4_FLAT;
+	 if (tObj->Target == GL_TEXTURE_1D) { 
+		 minFilt = FILTER_NEAREST;
+		 magFilt = FILTER_NEAREST;
+	 } else {
+         	minFilt = FILTER_4X4_FLAT;
+         	magFilt = FILTER_4X4_FLAT;
+	 }
       }
 
       state[I915_TEXREG_SS2] |= ((minFilt << SS2_MIN_FILTER_SHIFT) |
