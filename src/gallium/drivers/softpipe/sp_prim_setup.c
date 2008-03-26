@@ -44,6 +44,7 @@
 #include "pipe/p_shader_tokens.h"
 
 #define DEBUG_VERTS 0
+#define DEBUG_FRAGS 0
 
 /**
  * Triangle edge info
@@ -92,6 +93,11 @@ struct setup_stage {
       unsigned y_flags;
       unsigned mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
+
+#if DEBUG_FRAGS
+   uint numFragsEmitted;  /**< per primitive */
+   uint numFragsWritten;  /**< per primitive */
+#endif
 };
 
 
@@ -160,7 +166,20 @@ emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
    setup->quad.x0 = x;
    setup->quad.y0 = y;
    setup->quad.mask = mask;
+#if DEBUG_FRAGS
+   if (mask & 1) setup->numFragsEmitted++;
+   if (mask & 2) setup->numFragsEmitted++;
+   if (mask & 4) setup->numFragsEmitted++;
+   if (mask & 8) setup->numFragsEmitted++;
+#endif
    sp->quad.first->run(sp->quad.first, &setup->quad);
+#if DEBUG_FRAGS
+   mask = setup->quad.mask;
+   if (mask & 1) setup->numFragsWritten++;
+   if (mask & 2) setup->numFragsWritten++;
+   if (mask & 4) setup->numFragsWritten++;
+   if (mask & 8) setup->numFragsWritten++;
+#endif
 }
 
 
@@ -674,6 +693,11 @@ static void setup_tri( struct draw_stage *stage,
    debug_printf("%s\n", __FUNCTION__ );
    */
 
+#if DEBUG_FRAGS
+   setup->numFragsEmitted = 0;
+   setup->numFragsWritten = 0;
+#endif
+
    setup_sort_vertices( setup, prim );
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
@@ -702,6 +726,12 @@ static void setup_tri( struct draw_stage *stage,
    }
 
    flush_spans( setup );
+
+#if DEBUG_FRAGS
+   printf("Tri: %u frags emitted, %u written\n",
+          setup->numFragsEmitted,
+          setup->numFragsWritten);
+#endif
 }
 
 
