@@ -3983,7 +3983,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    ASSERT(target == GL_VERTEX_PROGRAM_ARB);
 
    if (!_mesa_parse_arb_program(ctx, target, (const GLubyte*) str, len, &ap)) {
-      /* Error in the program. Just return. */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramString(bad program)");
       return;
    }
 
