@@ -39,31 +39,28 @@ extern "C" {
 struct pipe_screen;
 struct pipe_fence_handle;
 struct pipe_state_cache;
-
-/* Opaque driver handles:
- */
 struct pipe_query;
+
 
 /**
  * Gallium rendering context.  Basically:
  *  - state setting functions
  *  - VBO drawing functions
  *  - surface functions
- *  - device queries
  */
 struct pipe_context {
    struct pipe_winsys *winsys;
    struct pipe_screen *screen;
 
-   void *priv;  /** context private data (for DRI for example) */
-   void *draw;  /** private, for draw module (temporary? */
+   void *priv;  /**< context private data (for DRI for example) */
+   void *draw;  /**< private, for draw module (temporary?) */
 
    void (*destroy)( struct pipe_context * );
 
-   /*
-    * Drawing.  
-    * Return false on fallbacks (temporary??)
+   /**
+    * VBO drawing (return false on fallbacks (temporary??))
     */
+   /*@{*/
    boolean (*draw_arrays)( struct pipe_context *pipe,
 			   unsigned mode, unsigned start, unsigned count);
 
@@ -71,11 +68,13 @@ struct pipe_context {
 			     struct pipe_buffer *indexBuffer,
 			     unsigned indexSize,
 			     unsigned mode, unsigned start, unsigned count);
+   /*@}*/
 
 
    /**
     * Query objects
     */
+   /*@{*/
    struct pipe_query *(*create_query)( struct pipe_context *pipe,
                                               unsigned query_type );
 
@@ -89,10 +88,12 @@ struct pipe_context {
                                struct pipe_query *q,
                                boolean wait,
                                uint64 *result);
+   /*@}*/
 
-   /*
-    * State functions
+   /**
+    * State functions (create/bind/destroy state objects)
     */
+   /*@{*/
    void * (*create_blend_state)(struct pipe_context *,
                                 const struct pipe_blend_state *);
    void   (*bind_blend_state)(struct pipe_context *, void *);
@@ -122,10 +123,12 @@ struct pipe_context {
                              const struct pipe_shader_state *);
    void   (*bind_vs_state)(struct pipe_context *, void *);
    void   (*delete_vs_state)(struct pipe_context *, void *);
+   /*@}*/
 
-   /* The following look more properties than states.
-    * maybe combine a few of them into states or pass them
-    * in the bind calls to the state */
+   /**
+    * Parameter-like state (or properties)
+    */
+   /*@{*/
    void (*set_blend_color)( struct pipe_context *,
                             const struct pipe_blend_color * );
 
@@ -145,19 +148,13 @@ struct pipe_context {
    void (*set_scissor_state)( struct pipe_context *,
                               const struct pipe_scissor_state * );
 
-
-   /* Currently a sampler is constrained to sample from a single texture:
-    */
-   void (*set_sampler_textures)( struct pipe_context *,
-                                 unsigned num,
-                                 struct pipe_texture ** );
-
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
 
-   /*
-    * Vertex arrays
-    */
+   void (*set_sampler_textures)( struct pipe_context *,
+                                 unsigned num_textures,
+                                 struct pipe_texture ** );
+
    void (*set_vertex_buffer)( struct pipe_context *,
                               unsigned index,
                               const struct pipe_vertex_buffer * );
@@ -165,12 +162,13 @@ struct pipe_context {
    void (*set_vertex_element)( struct pipe_context *,
 			       unsigned index,
 			       const struct pipe_vertex_element * );
+   /*@}*/
 
 
-   /*
+   /**
     * Surface functions
     */
-
+   /*@{*/
    void (*surface_copy)(struct pipe_context *pipe,
                         unsigned do_flip,	/*<< flip surface contents vertically */
 			struct pipe_surface *dest,
@@ -189,18 +187,16 @@ struct pipe_context {
    void (*clear)(struct pipe_context *pipe, 
 		 struct pipe_surface *ps,
 		 unsigned clearValue);
+   /*@}*/
 
-   /**
-    * Called when texture data is changed.
-    */
+
+   /** Called when texture data is changed */
    void (*texture_update)(struct pipe_context *pipe,
                           struct pipe_texture *texture,
                           uint face, uint dirtyLevelsMask);
 
 
-
-   /* Flush rendering:
-    */
+   /** Flush rendering (flags = bitmask of PIPE_FLUSH_x tokens) */
    void (*flush)( struct pipe_context *pipe,
                   unsigned flags,
                   struct pipe_fence_handle **fence );
