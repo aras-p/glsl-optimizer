@@ -48,6 +48,7 @@ SOURCES = \
 	interleave.c \
 	invert.c \
 	jkrahntest.c \
+	lineclip.c \
 	manytex.c \
 	minmag.c \
 	mipmap_limits.c \
@@ -73,6 +74,7 @@ SOURCES = \
 	texobjshare.c \
 	texrect.c \
 	texwrap.c \
+	unfilledclip.c \
 	vao-01.c \
 	vao-02.c \
 	vparray.c \
