@@ -90,6 +90,8 @@ debug_printf(const char *format, ...)
    va_start(ap, format);
    _debug_vprintf(format, ap);
    va_end(ap);
+#else
+   (void) format; /* silence warning */
 #endif
 }
 
