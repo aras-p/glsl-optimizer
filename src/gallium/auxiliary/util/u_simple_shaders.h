@@ -34,6 +34,7 @@
 
 
 struct pipe_context;
+struct pipe_shader_state;
 
 
 #ifdef __cplusplus
@@ -45,15 +46,18 @@ extern void *
 util_make_vertex_passthrough_shader(struct pipe_context *pipe,
                                     uint num_attribs,
                                     const uint *semantic_names,
-                                    const uint *semantic_indexes);
+                                    const uint *semantic_indexes,
+                                    struct pipe_shader_state *shader);
 
 
 extern void *
-util_make_fragment_tex_shader(struct pipe_context *pipe);
+util_make_fragment_tex_shader(struct pipe_context *pipe,
+                              struct pipe_shader_state *shader);
 
 
 extern void *
-util_make_fragment_passthrough_shader(struct pipe_context *pipe);
+util_make_fragment_passthrough_shader(struct pipe_context *pipe,
+                                      struct pipe_shader_state *shader);
 
 
 #ifdef __cplusplus
