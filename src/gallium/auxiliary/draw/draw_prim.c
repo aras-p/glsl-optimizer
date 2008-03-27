@@ -158,15 +158,15 @@ static INLINE void fetch_and_store(struct draw_context *draw)
 
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
-   static boolean flushing = FALSE;
-
    if (0)
       debug_printf("Flushing with %d verts, %d prims\n",
                    draw->vs.queue_nr,
                    draw->pq.queue_nr );
 
-   if (!flushing) {
-      flushing = TRUE;
+   if (draw->flushing)
+      return;
+
+   draw->flushing = TRUE;
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
       if (draw->vs.queue_nr) {
@@ -189,8 +189,7 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
       }    
    }
 
-      flushing = FALSE;
-   }
+   draw->flushing = FALSE;
 }
 
 

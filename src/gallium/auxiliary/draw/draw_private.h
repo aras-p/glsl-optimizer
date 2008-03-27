@@ -223,6 +223,7 @@ struct draw_context
 
    } pt;
 
+   boolean flushing;
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
