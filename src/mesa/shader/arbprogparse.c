@@ -2598,7 +2598,7 @@ parse_fp_vector_src_reg(GLcontext * ctx, const GLubyte ** inst,
    GLboolean isRelOffset;
 
    /* Grab the sign */
-   negate = (parse_sign (inst) == -1) ? 0xf : 0x0;
+   negate = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
    if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &isRelOffset))
@@ -2655,7 +2655,7 @@ parse_fp_scalar_src_reg (GLcontext * ctx, const GLubyte ** inst,
    GLboolean IsRelOffset;
 
    /* Grab the sign */
-   Negate = (parse_sign (inst) == -1) ? 0x1 : 0x0;
+   Negate = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
    if (parse_src_reg (ctx, inst, vc_head, Program, &File, &Index, &IsRelOffset))
@@ -3143,7 +3143,7 @@ parse_vp_vector_src_reg(GLcontext * ctx, const GLubyte ** inst,
    GLboolean isRelOffset;
 
    /* Grab the sign */
-   negateMask = (parse_sign (inst) == -1) ? 0xf : 0x0;
+   negateMask = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
    if (parse_src_reg (ctx, inst, vc_head, program, &file, &index, &isRelOffset))
@@ -3170,12 +3170,12 @@ parse_vp_scalar_src_reg (GLcontext * ctx, const GLubyte ** inst,
 {
    enum register_file File;
    GLint Index;
-   GLubyte Negate;
+   GLubyte negateMask;
    GLubyte Swizzle[4];
    GLboolean IsRelOffset;
 
    /* Grab the sign */
-   Negate = (parse_sign (inst) == -1) ? 0x1 : 0x0;
+   negateMask = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
    if (parse_src_reg (ctx, inst, vc_head, Program, &File, &Index, &IsRelOffset))
@@ -3187,7 +3187,7 @@ parse_vp_scalar_src_reg (GLcontext * ctx, const GLubyte ** inst,
    reg->File = File;
    reg->Index = Index;
    reg->Swizzle = (Swizzle[0] << 0);
-   reg->NegateBase = Negate;
+   reg->NegateBase = negateMask;
    reg->RelAddr = IsRelOffset;
    return 0;
 }
