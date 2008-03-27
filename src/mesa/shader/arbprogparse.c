@@ -3815,11 +3815,11 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
          int line, col;
          char *s;
          fprintf(stderr, "program: %s\n", (char *) strz);
-         fprintf(stderr, "Error Pos: %d\n", ctx->program.ErrorPos);
-         s = (char *) _mesa_find_line_column(strz, strz+ctx->program.ErrorPos,
+         fprintf(stderr, "Error Pos: %d\n", ctx->Program.ErrorPos);
+         s = (char *) _mesa_find_line_column(strz, strz+ctx->Program.ErrorPos,
                                              &line, &col);
          fprintf(stderr, "line %d col %d: %s\n", line, col, s);
-      } while (0)
+      } while (0);
 #endif
 
       _mesa_free(strz);
