@@ -147,6 +147,7 @@ struct st_context
       struct st_fragment_program *program;  /**< bitmap tex/kil program */
       GLuint user_prog_sn;  /**< user fragment program serial no. */
       struct st_fragment_program *combined_prog;
+      struct pipe_shader_state vert_shader;
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
       struct pipe_buffer *vbuf;
@@ -154,6 +155,8 @@ struct st_context
 
    /** for glClear */
    struct {
+      struct pipe_shader_state vert_shader;
+      struct pipe_shader_state frag_shader;
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */

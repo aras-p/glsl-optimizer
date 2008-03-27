@@ -487,13 +487,15 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const uint semantic_indexes[] = { 0, 0, 0 };
       st->bitmap.vs = util_make_vertex_passthrough_shader(st->pipe, 3,
                                                           semantic_names,
-                                                          semantic_indexes);
+                                                          semantic_indexes,
+                                                          &st->bitmap.vert_shader);
    }
 
    st_validate_state(st);
 
    pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
    if (pt) {
+      assert(pt->target == PIPE_TEXTURE_2D);
       draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
                        width, height,
                        pt, stfp);
