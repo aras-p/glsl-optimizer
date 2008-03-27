@@ -1860,12 +1860,14 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
          break;
 
       case PARAM_CONSTANT:
+         /* parsing something like {1.0, 2.0, 3.0, 4.0} */
          parse_constant (inst, const_values, Program, use);
          idx = _mesa_add_named_constant(Program->Base.Parameters,
                                         (char *) param_var->name,
                                         const_values, 4);
          if (param_var->param_binding_begin == ~0U)
             param_var->param_binding_begin = idx;
+         param_var->param_binding_type = PROGRAM_CONSTANT;
          param_var->param_binding_length++;
          Program->Base.NumParameters++;
          break;
