@@ -1767,7 +1767,7 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
 {
    GLint idx;
    GLuint err = 0;
-   gl_state_index state_tokens[STATE_LENGTH];
+   gl_state_index state_tokens[STATE_LENGTH] = {0, 0, 0, 0, 0};
    GLfloat const_values[4];
 
    switch (*(*inst)++) {
