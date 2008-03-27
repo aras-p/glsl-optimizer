@@ -158,7 +158,7 @@ draw_vf_set_vertex_attributes( struct draw_vertex_fetch *vf,
    unsigned offset = 0;
    unsigned i, j;
 
-   assert(nr < PIPE_ATTRIB_MAX);
+   assert(nr < PIPE_MAX_ATTRIBS);
 
    for (j = 0, i = 0; i < nr; i++) {
       const unsigned format = map[i].format;
@@ -390,7 +390,7 @@ struct draw_vertex_fetch *draw_vf_create( void )
    struct draw_vertex_fetch *vf = CALLOC_STRUCT(draw_vertex_fetch);
    unsigned i;
 
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++)
+   for (i = 0; i < PIPE_MAX_ATTRIBS; i++)
       vf->attr[i].vf = vf;
 
    vf->identity[0] = 0.0;

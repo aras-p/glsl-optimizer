@@ -433,17 +433,17 @@ struct brw_cached_batch_item {
 
 
 
-/* Protect against a future where PIPE_ATTRIB_MAX > 32.  Wouldn't life
+/* Protect against a future where PIPE_MAX_ATTRIBS > 32.  Wouldn't life
  * be easier if C allowed arrays of packed elements?
  */
-#define ATTRIB_BIT_DWORDS  ((PIPE_ATTRIB_MAX+31)/32)
+#define ATTRIB_BIT_DWORDS  ((PIPE_MAX_ATTRIBS+31)/32)
 
 
 
 
 struct brw_vertex_info {
-   unsigned varying;  /* varying:1[PIPE_ATTRIB_MAX] */
-   unsigned sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[PIPE_ATTRIB_MAX] */
+   unsigned varying;  /* varying:1[PIPE_MAX_ATTRIBS] */
+   unsigned sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[PIPE_MAX_ATTRIBS] */
 };
 
 
@@ -496,9 +496,9 @@ struct brw_context
       /* Arrays with buffer objects to copy non-bufferobj arrays into
        * for upload:
        */
-      const struct pipe_vertex_buffer *vbo_array[PIPE_ATTRIB_MAX];
+      const struct pipe_vertex_buffer *vbo_array[PIPE_MAX_ATTRIBS];
 
-      struct brw_vertex_element_state inputs[PIPE_ATTRIB_MAX];
+      struct brw_vertex_element_state inputs[PIPE_MAX_ATTRIBS];
 
 #define BRW_NR_UPLOAD_BUFS 17
 #define BRW_UPLOAD_INIT_SIZE (128*1024)

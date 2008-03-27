@@ -123,7 +123,7 @@ cell_draw_elements(struct pipe_context *pipe,
    /*
     * Map vertex buffers
     */
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (sp->vertex_buffer[i].buffer) {
          void *buf = pipe->winsys->buffer_map(pipe->winsys,
                                               sp->vertex_buffer[i].buffer,
@@ -151,7 +151,7 @@ cell_draw_elements(struct pipe_context *pipe,
    /*
     * unmap vertex/index buffers - will cause draw module to flush
     */
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (sp->vertex_buffer[i].buffer) {
          draw_set_mapped_vertex_buffer(draw, i, NULL);
          pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);

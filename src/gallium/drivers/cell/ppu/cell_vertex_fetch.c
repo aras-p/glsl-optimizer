@@ -263,7 +263,7 @@ void cell_update_vertex_fetch(struct draw_context *draw)
    struct cell_context *const cell =
        (struct cell_context *) draw->driver_private;
    struct spe_function *p = &cell->attrib_fetch;
-   unsigned function_index[PIPE_ATTRIB_MAX];
+   unsigned function_index[PIPE_MAX_ATTRIBS];
    unsigned unique_attr_formats;
    int out_ptr;
    int in_ptr;

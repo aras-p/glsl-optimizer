@@ -104,7 +104,7 @@ failover_state_emit( struct failover_context *failover )
    }
 
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {
-      for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 	 if (failover->dirty_vertex_buffer & (1<<i)) {
 	    failover->sw->set_vertex_buffer( failover->sw, i, 
 					     &failover->vertex_buffer[i] );
@@ -113,7 +113,7 @@ failover_state_emit( struct failover_context *failover )
    }
 
    if (failover->dirty & FO_NEW_VERTEX_ELEMENT) {
-      for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 	 if (failover->dirty_vertex_element & (1<<i)) {
 	    failover->sw->set_vertex_element( failover->sw, i, 
 					      &failover->vertex_element[i] );

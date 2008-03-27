@@ -41,7 +41,7 @@ cell_set_vertex_element(struct pipe_context *pipe,
                             const struct pipe_vertex_element *attrib)
 {
    struct cell_context *cell = cell_context(pipe);
-   assert(index < PIPE_ATTRIB_MAX);
+   assert(index < PIPE_MAX_ATTRIBS);
    cell->vertex_element[index] = *attrib; /* struct copy */
    cell->dirty |= CELL_NEW_VERTEX;
 
@@ -55,7 +55,7 @@ cell_set_vertex_buffer(struct pipe_context *pipe,
                            const struct pipe_vertex_buffer *buffer)
 {
    struct cell_context *cell = cell_context(pipe);
-   assert(index < PIPE_ATTRIB_MAX);
+   assert(index < PIPE_MAX_ATTRIBS);
    cell->vertex_buffer[index] = *buffer; /* struct copy */
    cell->dirty |= CELL_NEW_VERTEX;
 

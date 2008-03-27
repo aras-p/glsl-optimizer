@@ -107,8 +107,8 @@ vs_llvm_run( struct draw_vertex_shader *base,
    struct tgsi_exec_machine *machine = &draw->machine;
    unsigned int j;
 
-   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
-   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
+   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
+   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 

@@ -55,7 +55,7 @@ struct spu_global spu;
 
 struct spu_vs_context draw;
 
-static unsigned char attribute_fetch_code_buffer[136 * PIPE_ATTRIB_MAX]
+static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
     ALIGN16_ATTRIB;
 
 static unsigned char depth_stencil_code_buffer[4 * 64]
@@ -361,7 +361,7 @@ cmd_state_vs_array_info(const struct cell_array_info *vs_info)
 {
    const unsigned attr = vs_info->attr;
 
-   ASSERT(attr < PIPE_ATTRIB_MAX);
+   ASSERT(attr < PIPE_MAX_ATTRIBS);
    draw.vertex_fetch.src_ptr[attr] = vs_info->base;
    draw.vertex_fetch.pitch[attr] = vs_info->pitch;
    draw.vertex_fetch.size[attr] = vs_info->size;

@@ -84,8 +84,8 @@ struct failover_context {
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
-   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    void *sw_sampler_state[PIPE_MAX_SAMPLERS];
    void *hw_sampler_state[PIPE_MAX_SAMPLERS];

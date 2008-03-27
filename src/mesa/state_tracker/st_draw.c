@@ -606,7 +606,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    /*
     * unmap vertex/index buffers
     */
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->vertex_buffer[i].buffer) {
          pipe->winsys->buffer_unmap(pipe->winsys,
                                     draw->vertex_buffer[i].buffer);

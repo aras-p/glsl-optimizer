@@ -185,8 +185,8 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
    uint i;
 
    /* allocate storage for program inputs/outputs, aligned to 16 bytes */
-   qss->inputs = MALLOC(PIPE_ATTRIB_MAX * sizeof(*qss->inputs) + 16);
-   qss->outputs = MALLOC(PIPE_ATTRIB_MAX * sizeof(*qss->outputs) + 16);
+   qss->inputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->inputs) + 16);
+   qss->outputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->outputs) + 16);
    qss->machine.Inputs = align16(qss->inputs);
    qss->machine.Outputs = align16(qss->outputs);
 

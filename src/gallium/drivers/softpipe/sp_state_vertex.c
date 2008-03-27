@@ -42,7 +42,7 @@ softpipe_set_vertex_element(struct pipe_context *pipe,
                             const struct pipe_vertex_element *attrib)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   assert(index < PIPE_ATTRIB_MAX);
+   assert(index < PIPE_MAX_ATTRIBS);
    softpipe->vertex_element[index] = *attrib; /* struct copy */
    softpipe->dirty |= SP_NEW_VERTEX;
 
@@ -56,7 +56,7 @@ softpipe_set_vertex_buffer(struct pipe_context *pipe,
                            const struct pipe_vertex_buffer *buffer)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   assert(index < PIPE_ATTRIB_MAX);
+   assert(index < PIPE_MAX_ATTRIBS);
    softpipe->vertex_buffer[index] = *buffer; /* struct copy */
    softpipe->dirty |= SP_NEW_VERTEX;
 

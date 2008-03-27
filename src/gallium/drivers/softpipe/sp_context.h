@@ -77,8 +77,8 @@ struct softpipe_context {
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
-   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
    unsigned dirty;
 
    unsigned num_samplers;
@@ -92,7 +92,7 @@ struct softpipe_context {
    /*
     * Mapped vertex buffers
     */
-   ubyte *mapped_vbuffer[PIPE_ATTRIB_MAX];
+   ubyte *mapped_vbuffer[PIPE_MAX_ATTRIBS];
    
    /** Mapped constant buffers */
    void *mapped_constants[PIPE_SHADER_TYPES];

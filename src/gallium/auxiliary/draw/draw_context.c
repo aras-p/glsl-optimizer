@@ -238,7 +238,7 @@ draw_set_vertex_buffer(struct draw_context *draw,
                        const struct pipe_vertex_buffer *buffer)
 {
    draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-   assert(attr < PIPE_ATTRIB_MAX);
+   assert(attr < PIPE_MAX_ATTRIBS);
    draw->vertex_buffer[attr] = *buffer;
 }
 
@@ -249,7 +249,7 @@ draw_set_vertex_element(struct draw_context *draw,
                         const struct pipe_vertex_element *element)
 {
    draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-   assert(attr < PIPE_ATTRIB_MAX);
+   assert(attr < PIPE_MAX_ATTRIBS);
    draw->vertex_element[attr] = *element;
 }
 

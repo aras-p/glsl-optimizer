@@ -292,7 +292,7 @@ static void brw_set_vertex_element(struct pipe_context *pipe,
    /* flush ? */
    struct brw_context *brw = brw_context(pipe);
 
-   assert(index < PIPE_ATTRIB_MAX);
+   assert(index < PIPE_MAX_ATTRIBS);
    struct brw_vertex_element_state el;
    memset(&el, 0, sizeof(el));
 

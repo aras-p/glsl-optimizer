@@ -86,8 +86,8 @@ run_vertex_program(struct spu_vs_context *draw,
    struct spu_exec_machine *machine = &draw->machine;
    unsigned int j;
 
-   ALIGN16_DECL(struct spu_exec_vector, inputs, PIPE_ATTRIB_MAX);
-   ALIGN16_DECL(struct spu_exec_vector, outputs, PIPE_ATTRIB_MAX);
+   ALIGN16_DECL(struct spu_exec_vector, inputs, PIPE_MAX_ATTRIBS);
+   ALIGN16_DECL(struct spu_exec_vector, outputs, PIPE_MAX_ATTRIBS);
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
