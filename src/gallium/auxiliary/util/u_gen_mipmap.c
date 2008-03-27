@@ -61,9 +61,9 @@ struct gen_mipmap_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
-   /*struct pipe_viewport_state viewport;*/
-   struct pipe_sampler_state *vs;
-   struct pipe_sampler_state *fs;
+
+   void *vs;
+   void *fs;
 
    struct pipe_buffer *vbuf;  /**< quad vertices */
    float vertices[4][2][4];   /**< vertex/texcoords for quad */
