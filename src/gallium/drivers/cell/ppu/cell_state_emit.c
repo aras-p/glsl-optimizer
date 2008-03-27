@@ -29,6 +29,7 @@
 #include "cell_context.h"
 #include "cell_state.h"
 #include "cell_state_emit.h"
+#include "cell_state_per_fragment.h"
 #include "cell_batch.h"
 #include "cell_texture.h"
 #include "draw/draw_context.h"
