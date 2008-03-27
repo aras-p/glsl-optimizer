@@ -69,7 +69,7 @@ cell_vertex_shader_queue_flush(struct draw_context *draw)
    batch = cell_batch_alloc(cell, sizeof(batch[0]) + sizeof(*cf));
    batch[0] = CELL_CMD_STATE_ATTRIB_FETCH;
    cf = (struct cell_attribute_fetch_code *) (&batch[1]);
-   cf->base = cell->attrib_fetch.store;
+   cf->base = (uint64_t) cell->attrib_fetch.store;
    cf->size = ROUNDUP16((unsigned)((void *) cell->attrib_fetch.csr 
 				   - (void *) cell->attrib_fetch.store));
 
