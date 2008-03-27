@@ -1227,10 +1227,10 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
 	    state_tokens[1] = coord;
 
             /* EYE or OBJECT */
-            type = *(*inst++);
+            type = *(*inst)++;
 
             /* 0 - s, 1 - t, 2 - r, 3 - q */
-            coord = *(*inst++);
+            coord = *(*inst)++;
 
             if (type == TEX_GEN_EYE) {
                switch (coord) {
@@ -1246,6 +1246,9 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
                   case COMPONENT_W:
                      state_tokens[2] = STATE_TEXGEN_EYE_Q;
                      break;
+                  default:
+                     _mesa_problem(ctx, "bad texgen component in "
+                                   "parse_state_single_item()");
                }
             }
             else {
@@ -1262,6 +1265,9 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
                   case COMPONENT_W:
                      state_tokens[2] = STATE_TEXGEN_OBJECT_Q;
                      break;
+                  default:
+                     _mesa_problem(ctx, "bad texgen component in "
+                                   "parse_state_single_item()");
                }
             }
          }
@@ -1284,7 +1290,7 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
          break;
 
       case STATE_POINT:
-         switch (*(*inst++)) {
+         switch (*(*inst)++) {
             case POINT_SIZE:
                state_tokens[0] = STATE_POINT_SIZE;
                break;
@@ -2455,8 +2461,9 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                Program->Position = parse_position (inst);
 
                if (!found) {
-                  program_error(ctx, Program->Position,
-                                "2: Undefined variable"); /* src->name */
+                  char s[1000];
+                  sprintf(s, "Undefined variable: %s", src->name);
+                  program_error(ctx, Program->Position, s);
                   return 1;
                }
 
