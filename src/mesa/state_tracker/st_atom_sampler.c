@@ -167,7 +167,6 @@ update_samplers(struct st_context *st)
 
          /* only care about ARB_shadow, not SGI shadow */
          if (texobj->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
-            sampler->compare = 1;
             sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
             sampler->compare_func
                = st_compare_func_to_pipe(texobj->CompareFunc);

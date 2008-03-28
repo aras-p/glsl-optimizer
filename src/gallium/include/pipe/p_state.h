@@ -243,7 +243,6 @@ struct pipe_sampler_state
    unsigned min_img_filter:2;    /**< PIPE_TEX_FILTER_x */
    unsigned min_mip_filter:2;    /**< PIPE_TEX_MIPFILTER_x */
    unsigned mag_img_filter:2;    /**< PIPE_TEX_FILTER_x */
-   unsigned compare:1;           /**< shadow/depth compare enabled? */
    unsigned compare_mode:1;      /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */
