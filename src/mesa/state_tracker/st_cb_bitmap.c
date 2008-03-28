@@ -65,7 +65,7 @@
  * A wide, short buffer is used to target the common case of a series
  * of glBitmap calls being used to draw text.
  */
-static GLboolean UseBitmapCache = 0*GL_TRUE;
+static GLboolean UseBitmapCache = GL_TRUE;
 
 
 #define BITMAP_CACHE_WIDTH  512
