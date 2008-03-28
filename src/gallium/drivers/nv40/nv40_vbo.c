@@ -7,6 +7,7 @@
 
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_pushbuf.h"
+#include "nouveau/nouveau_util.h"
 
 #define FORCE_SWTNL 0
 
@@ -170,44 +171,60 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 }
 
 boolean
-nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
-		 unsigned count)
+nv40_draw_arrays(struct pipe_context *pipe,
+		 unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	unsigned nr;
+	struct nouveau_channel *chan = nv40->nvws->channel;
+	unsigned restart;
 
 	nv40_vbo_set_idxbuf(nv40, NULL, 0);
 	if (FORCE_SWTNL || !nv40_state_validate(nv40)) {
 		return nv40_draw_elements_swtnl(pipe, NULL, 0,
 						mode, start, count);
 	}
-	nv40_state_emit(nv40);
 
-	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-	OUT_RING  (nvgl_primitive(mode));
+	while (count) {
+		unsigned vc, nr;
 
-	nr = (count & 0xff);
-	if (nr) {
-		BEGIN_RING(curie, NV40TCL_VB_VERTEX_BATCH, 1);
-		OUT_RING  (((nr - 1) << 24) | start);
-		start += nr;
-	}
+		nv40_state_emit(nv40);
 
-	nr = count >> 8;
-	while (nr) {
-		unsigned push = nr > 2047 ? 2047 : nr;
-
-		nr -= push;
-
-		BEGIN_RING_NI(curie, NV40TCL_VB_VERTEX_BATCH, push);
-		while (push--) {
-			OUT_RING(((0x100 - 1) << 24) | start);
-			start += 0x100;
+		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 256,
+					mode, start, count, &restart);
+		if (!vc) {
+			FIRE_RING(NULL);
+			continue;
 		}
-	}
 
-	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-	OUT_RING  (0);
+		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (nvgl_primitive(mode));
+
+		nr = (vc & 0xff);
+		if (nr) {
+			BEGIN_RING(curie, NV40TCL_VB_VERTEX_BATCH, 1);
+			OUT_RING  (((nr - 1) << 24) | start);
+			start += nr;
+		}
+
+		nr = vc >> 8;
+		while (nr) {
+			unsigned push = nr > 2047 ? 2047 : nr;
+
+			nr -= push;
+
+			BEGIN_RING_NI(curie, NV40TCL_VB_VERTEX_BATCH, push);
+			while (push--) {
+				OUT_RING(((0x100 - 1) << 24) | start);
+				start += 0x100;
+			}
+		}
+
+		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (0);
+
+		count -= vc;
+		start = restart;
+	}
 
 	pipe->flush(pipe, 0, NULL);
 	return TRUE;
@@ -329,35 +346,50 @@ nv40_draw_elements_vbo(struct pipe_context *pipe,
 		       unsigned mode, unsigned start, unsigned count)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	unsigned nr;
+	struct nouveau_channel *chan = nv40->nvws->channel;
+	unsigned restart;
 
-	nv40_state_emit(nv40);
+	while (count) {
+		unsigned nr, vc;
 
-	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-	OUT_RING  (nvgl_primitive(mode));
+		nv40_state_emit(nv40);
 
-	nr = (count & 0xff);
-	if (nr) {
-		BEGIN_RING(curie, NV40TCL_VB_INDEX_BATCH, 1);
-		OUT_RING  (((nr - 1) << 24) | start);
-		start += nr;
-	}
-
-	nr = count >> 8;
-	while (nr) {
-		unsigned push = nr > 2047 ? 2047 : nr;
-
-		nr -= push;
-
-		BEGIN_RING_NI(curie, NV40TCL_VB_INDEX_BATCH, push);
-		while (push--) {
-			OUT_RING(((0x100 - 1) << 24) | start);
-			start += 0x100;
+		vc = nouveau_vbuf_split(chan->pushbuf->remaining, 6, 256,
+					mode, start, count, &restart);
+		if (!vc) {
+			FIRE_RING(NULL);
+			continue;
 		}
-	}
+		
+		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (nvgl_primitive(mode));
 
-	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
-	OUT_RING  (0);
+		nr = (vc & 0xff);
+		if (nr) {
+			BEGIN_RING(curie, NV40TCL_VB_INDEX_BATCH, 1);
+			OUT_RING  (((nr - 1) << 24) | start);
+			start += nr;
+		}
+
+		nr = vc >> 8;
+		while (nr) {
+			unsigned push = nr > 2047 ? 2047 : nr;
+
+			nr -= push;
+
+			BEGIN_RING_NI(curie, NV40TCL_VB_INDEX_BATCH, push);
+			while (push--) {
+				OUT_RING(((0x100 - 1) << 24) | start);
+				start += 0x100;
+			}
+		}
+
+		BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
+		OUT_RING  (0);
+
+		count -= vc;
+		start = restart;
+	}
 
 	return TRUE;
 }
