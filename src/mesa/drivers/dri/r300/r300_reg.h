@@ -1182,25 +1182,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* These DWORDs control how vertex data is routed into fragment program
  * registers, after interpolators.
  */
-#define R300_RS_ROUTE_0                     0x4330
-#define R300_RS_ROUTE_1                     0x4334
-#define R300_RS_ROUTE_2                     0x4338
-#define R300_RS_ROUTE_3                     0x433C /* GUESS */
-#define R300_RS_ROUTE_4                     0x4340 /* GUESS */
-#define R300_RS_ROUTE_5                     0x4344 /* GUESS */
-#define R300_RS_ROUTE_6                     0x4348 /* GUESS */
-#define R300_RS_ROUTE_7                     0x434C /* GUESS */
-#       define R300_RS_ROUTE_SOURCE_INTERP_0     0
-#       define R300_RS_ROUTE_SOURCE_INTERP_1     1
-#       define R300_RS_ROUTE_SOURCE_INTERP_2     2
-#       define R300_RS_ROUTE_SOURCE_INTERP_3     3
-#       define R300_RS_ROUTE_SOURCE_INTERP_4     4
-#       define R300_RS_ROUTE_SOURCE_INTERP_5     5 /* GUESS */
-#       define R300_RS_ROUTE_SOURCE_INTERP_6     6 /* GUESS */
-#       define R300_RS_ROUTE_SOURCE_INTERP_7     7 /* GUESS */
-#       define R300_RS_ROUTE_ENABLE              (1 << 3) /* GUESS */
-#       define R300_RS_ROUTE_DEST_SHIFT          6
-#       define R300_RS_ROUTE_DEST_MASK           (31 << 6) /* GUESS */
+#define R300_RS_INST_0                     0x4330
+#define R300_RS_INST_1                     0x4334
+#define R300_RS_INST_2                     0x4338
+#define R300_RS_INST_3                     0x433C /* GUESS */
+#define R300_RS_INST_4                     0x4340 /* GUESS */
+#define R300_RS_INST_5                     0x4344 /* GUESS */
+#define R300_RS_INST_6                     0x4348 /* GUESS */
+#define R300_RS_INST_7                     0x434C /* GUESS */
+#	define R300_RS_INST_TEX_ID(x)  		((x) << 0)
+#	define R300_RS_INST_TEX_CN_WRITE 	(1 << 3)
+#	define R300_RS_INST_TEX_ADDR_SHIFT 	6
+#	define R300_RS_INST_COL_ID(x)		((x) << 11)
+#	define R300_RS_INST_COL_ADDR_SHIFT	17
+#	define R300_RS_INST_TEX_ADJ		(1 << 22)
+#	define R300_RS_COL_BIAS_UNUSED_SHIFT    23
 
 /* Special handling for color: When the fragment program uses color,
  * the ROUTE_0_COLOR bit is set and ROUTE_0_COLOR_DEST contains the

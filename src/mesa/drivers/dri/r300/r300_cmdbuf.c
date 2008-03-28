@@ -377,7 +377,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
 	r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_IP_0, 8);
 	ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, 1);
 	ALLOC_STATE(sc_hyperz, always, 3, 0);
 	r300->hw.sc_hyperz.cmd[0] = cmdpacket0(R300_SC_HYPERZ, 2);
 	ALLOC_STATE(sc_screendoor, always, 2, 0);
