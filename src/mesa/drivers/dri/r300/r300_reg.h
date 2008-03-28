@@ -1175,7 +1175,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_INST_COL_CN_WRITE			(1 << 16)
 #define R500_RS_INST_COL_CN_WRITE_FBUFFER		(2 << 16)
 #define R500_RS_INST_COL_CN_WRITE_BACKFACE		(3 << 16)
-#define R500_RS_INST_COL_COL_ADDR_SHIFT			18
+#define R500_RS_INST_COL_ADDR_SHIFT			18
 #define R500_RS_INST_TEX_ADJ				(1 << 25)
 #define R500_RS_INST_W_CN				(1 << 26)
 
@@ -1194,27 +1194,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RS_INST_TEX_CN_WRITE 	(1 << 3)
 #	define R300_RS_INST_TEX_ADDR_SHIFT 	6
 #	define R300_RS_INST_COL_ID(x)		((x) << 11)
+#	define R300_RS_INST_COL_CN_WRITE	(1 << 14)
 #	define R300_RS_INST_COL_ADDR_SHIFT	17
 #	define R300_RS_INST_TEX_ADJ		(1 << 22)
 #	define R300_RS_COL_BIAS_UNUSED_SHIFT    23
 
-/* Special handling for color: When the fragment program uses color,
- * the ROUTE_0_COLOR bit is set and ROUTE_0_COLOR_DEST contains the
- * color register index.
- *
- * Apperently you may set the R300_RS_ROUTE_0_COLOR bit, but not provide any
- * R300_RS_ROUTE_0_COLOR_DEST value; this setup is used for clearing the state.
- * See r300_ioctl.c:r300EmitClearState. I'm not sure if this setup is strictly
- * correct or not. - Oliver.
- */
-#       define R300_RS_ROUTE_0_COLOR             (1 << 14)
-#       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  17
-#       define R300_RS_ROUTE_0_COLOR_DEST_MASK   (31 << 17) /* GUESS */
-/* As above, but for secondary color */
-#		define R300_RS_ROUTE_1_COLOR1            (1 << 14)
-#		define R300_RS_ROUTE_1_COLOR1_DEST_SHIFT 17
-#		define R300_RS_ROUTE_1_COLOR1_DEST_MASK  (31 << 17)
-#		define R300_RS_ROUTE_1_UNKNOWN11         (1 << 11)
 /* END: Rasterization / Interpolators - many guesses */
 
 /* Hierarchical Z Enable */

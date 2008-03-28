@@ -285,7 +285,7 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, rr);
 	reg_start(R300_RS_INST_0, 0);
-	e32(R300_RS_ROUTE_0_COLOR);
+	e32(R300_RS_INST_COL_CN_WRITE);
 
 	R300_STATECHANGE(r300, fp);
 	reg_start(R300_PFS_CNTL_0, 2);
