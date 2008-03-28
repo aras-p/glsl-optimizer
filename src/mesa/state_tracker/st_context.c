@@ -109,6 +109,7 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
    st->cso_context = cso_create_context(pipe);
 
    st_init_atoms( st );
+   st_init_bitmap(st);
    st_init_draw( st );
    st_init_generate_mipmap(st);
    st_init_blit(st);

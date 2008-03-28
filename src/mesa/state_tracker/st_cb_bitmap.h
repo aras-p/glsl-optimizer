@@ -33,9 +33,14 @@
 extern void
 st_init_bitmap_functions(struct dd_function_table *functions);
 
+extern void
+st_init_bitmap(struct st_context *st);
 
 extern void
 st_destroy_bitmap(struct st_context *st);
+
+extern void
+st_flush_bitmap_cache(struct st_context *st);
 
 
 #endif /* ST_CB_BITMAP_H */

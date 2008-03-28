@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "main/context.h"
 #include "st_context.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_flush.h"
 #include "st_cb_fbo.h"
 #include "st_public.h"
@@ -47,6 +48,8 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence )
 {
    FLUSH_VERTICES(st->ctx, 0);
+
+   st_flush_bitmap_cache(st);
 
    st->pipe->flush( st->pipe, pipeFlushFlags, fence );
 }

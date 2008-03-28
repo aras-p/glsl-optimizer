@@ -32,6 +32,7 @@
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cb_bitmap.h"
 #include "st_program.h"
 
        
@@ -146,6 +147,8 @@ void st_validate_state( struct st_context *st )
 {
    struct st_state_flags *state = &st->dirty;
    GLuint i;
+
+   st_flush_bitmap_cache(st);
 
    check_program_state( st );
 
