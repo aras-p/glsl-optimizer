@@ -511,6 +511,14 @@ initialize_visual_and_buffer(XMesaVisual v, XMesaBuffer b,
 	 return GL_FALSE;
       }
       v->mesa_visual.indexBits = 0;
+
+      if (v->BitsPerPixel == 32) {
+         /* We use XImages for all front/back buffers.  If an X Window or
+          * X Pixmap is 32bpp, there's no guarantee that the alpha channel
+          * will be preserved.  For XImages we're in luck.
+          */
+         v->mesa_visual.alphaBits = 8;
+      }
    }
 
    /*
