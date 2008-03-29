@@ -53,8 +53,6 @@
 void
 failover_state_emit( struct failover_context *failover )
 {
-   unsigned i;
-
    if (failover->dirty & FO_NEW_BLEND)
       failover->sw->bind_blend_state( failover->sw,
                                       failover->blend->sw_state );
@@ -104,24 +102,16 @@ failover_state_emit( struct failover_context *failover )
    }
 
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {
-      for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-	 if (failover->dirty_vertex_buffer & (1<<i)) {
-	    failover->sw->set_vertex_buffer( failover->sw, i, 
-					     &failover->vertex_buffer[i] );
-	 }
-      }
+      failover->sw->set_vertex_buffers( failover->sw,
+                                        failover->num_vertex_buffers,
+                                        failover->vertex_buffers );
    }
 
    if (failover->dirty & FO_NEW_VERTEX_ELEMENT) {
-      for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-	 if (failover->dirty_vertex_element & (1<<i)) {
-	    failover->sw->set_vertex_element( failover->sw, i, 
-					      &failover->vertex_element[i] );
-	 }
-      }
+      failover->sw->set_vertex_elements( failover->sw,
+                                         failover->num_vertex_elements,
+                                         failover->vertex_elements );
    }
 
    failover->dirty = 0;
-   failover->dirty_vertex_element = 0;
-   failover->dirty_vertex_buffer = 0;
 }

@@ -151,13 +151,13 @@ void softpipe_set_sampler_textures( struct pipe_context *,
 void softpipe_set_viewport_state( struct pipe_context *,
                                   const struct pipe_viewport_state * );
 
-void softpipe_set_vertex_element(struct pipe_context *,
-                                 unsigned index,
-                                 const struct pipe_vertex_element *);
+void softpipe_set_vertex_elements(struct pipe_context *,
+                                  unsigned count,
+                                  const struct pipe_vertex_element *);
 
-void softpipe_set_vertex_buffer(struct pipe_context *,
-                                unsigned index,
-                                const struct pipe_vertex_buffer *);
+void softpipe_set_vertex_buffers(struct pipe_context *,
+                                 unsigned count,
+                                 const struct pipe_vertex_buffer *);
 
 
 void softpipe_update_derived( struct softpipe_context *softpipe );

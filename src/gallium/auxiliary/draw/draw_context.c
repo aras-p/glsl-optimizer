@@ -233,24 +233,28 @@ void draw_set_viewport_state( struct draw_context *draw,
 
 
 void
-draw_set_vertex_buffer(struct draw_context *draw,
-                       unsigned attr,
-                       const struct pipe_vertex_buffer *buffer)
+draw_set_vertex_buffers(struct draw_context *draw,
+                        unsigned count,
+                        const struct pipe_vertex_buffer *buffers)
 {
+   assert(count <= PIPE_MAX_ATTRIBS);
+
    draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-   assert(attr < PIPE_MAX_ATTRIBS);
-   draw->vertex_buffer[attr] = *buffer;
+
+   memcpy(draw->vertex_buffer, buffers, count * sizeof(buffers[0]));
 }
 
 
 void
-draw_set_vertex_element(struct draw_context *draw,
-                        unsigned attr,
-                        const struct pipe_vertex_element *element)
+draw_set_vertex_elements(struct draw_context *draw,
+                         unsigned count,
+                         const struct pipe_vertex_element *elements)
 {
+   assert(count <= PIPE_MAX_ATTRIBS);
+
    draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-   assert(attr < PIPE_MAX_ATTRIBS);
-   draw->vertex_element[attr] = *element;
+
+   memcpy(draw->vertex_element, elements, count * sizeof(elements[0]));
 }
 
 

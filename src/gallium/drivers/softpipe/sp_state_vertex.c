@@ -37,28 +37,35 @@
 
 
 void
-softpipe_set_vertex_element(struct pipe_context *pipe,
-                            unsigned index,
-                            const struct pipe_vertex_element *attrib)
+softpipe_set_vertex_elements(struct pipe_context *pipe,
+                             unsigned count,
+                             const struct pipe_vertex_element *attribs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   assert(index < PIPE_MAX_ATTRIBS);
-   softpipe->vertex_element[index] = *attrib; /* struct copy */
+
+   assert(count <= PIPE_MAX_ATTRIBS);
+
+   memcpy(softpipe->vertex_element, attribs,
+          count * sizeof(struct pipe_vertex_element));
+
    softpipe->dirty |= SP_NEW_VERTEX;
 
-   draw_set_vertex_element(softpipe->draw, index, attrib);
+   draw_set_vertex_elements(softpipe->draw, count, attribs);
 }
 
 
 void
-softpipe_set_vertex_buffer(struct pipe_context *pipe,
-                           unsigned index,
-                           const struct pipe_vertex_buffer *buffer)
+softpipe_set_vertex_buffers(struct pipe_context *pipe,
+                            unsigned count,
+                            const struct pipe_vertex_buffer *buffers)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   assert(index < PIPE_MAX_ATTRIBS);
-   softpipe->vertex_buffer[index] = *buffer; /* struct copy */
+
+   assert(count <= PIPE_MAX_ATTRIBS);
+
+   memcpy(softpipe->vertex_buffer, buffers, count * sizeof(buffers[0]));
+
    softpipe->dirty |= SP_NEW_VERTEX;
 
-   draw_set_vertex_buffer(softpipe->draw, index, buffer);
+   draw_set_vertex_buffers(softpipe->draw, count, buffers);
 }

@@ -138,13 +138,13 @@ void draw_delete_vertex_shader(struct draw_context *draw,
  * Vertex data functions
  */
 
-void draw_set_vertex_buffer(struct draw_context *draw,
-			    unsigned attr,
-			    const struct pipe_vertex_buffer *buffer);
+void draw_set_vertex_buffers(struct draw_context *draw,
+                             unsigned count,
+                             const struct pipe_vertex_buffer *buffers);
 
-void draw_set_vertex_element(struct draw_context *draw,
-			     unsigned attr,
-			     const struct pipe_vertex_element *element);
+void draw_set_vertex_elements(struct draw_context *draw,
+			      unsigned count,
+                              const struct pipe_vertex_element *elements);
 
 void draw_set_mapped_element_buffer( struct draw_context *draw,
                                      unsigned eltSize, void *elements );

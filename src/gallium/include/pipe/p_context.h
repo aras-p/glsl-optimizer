@@ -155,13 +155,13 @@ struct pipe_context {
                                  unsigned num_textures,
                                  struct pipe_texture ** );
 
-   void (*set_vertex_buffer)( struct pipe_context *,
-                              unsigned index,
-                              const struct pipe_vertex_buffer * );
+   void (*set_vertex_buffers)( struct pipe_context *,
+                               unsigned num_buffers,
+                               const struct pipe_vertex_buffer * );
 
-   void (*set_vertex_element)( struct pipe_context *,
-			       unsigned index,
-			       const struct pipe_vertex_element * );
+   void (*set_vertex_elements)( struct pipe_context *,
+                                unsigned num_elements,
+                                const struct pipe_vertex_element * );
    /*@}*/
 
 

@@ -48,13 +48,13 @@
 #define CELL_NEW_VERTEX_INFO   0x8000
 
 
-void cell_set_vertex_element(struct pipe_context *,
-                             unsigned index,
-                             const struct pipe_vertex_element *);
+void cell_set_vertex_elements(struct pipe_context *,
+                              unsigned count,
+                              const struct pipe_vertex_element *);
 
-void cell_set_vertex_buffer(struct pipe_context *,
-                            unsigned index,
-                            const struct pipe_vertex_buffer *);
+void cell_set_vertex_buffers(struct pipe_context *,
+                             unsigned count,
+                             const struct pipe_vertex_buffer *);
 
 void cell_update_derived( struct cell_context *softpipe );
 

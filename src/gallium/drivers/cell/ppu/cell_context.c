@@ -103,8 +103,8 @@ cell_create_context(struct pipe_screen *screen,
    cell->pipe.destroy = cell_destroy_context;
 
    /* state setters */
-   cell->pipe.set_vertex_buffer = cell_set_vertex_buffer;
-   cell->pipe.set_vertex_element = cell_set_vertex_element;
+   cell->pipe.set_vertex_buffers = cell_set_vertex_buffers;
+   cell->pipe.set_vertex_elements = cell_set_vertex_elements;
 
    cell->pipe.draw_arrays = cell_draw_arrays;
    cell->pipe.draw_elements = cell_draw_elements;

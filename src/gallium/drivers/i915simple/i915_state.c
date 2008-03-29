@@ -687,23 +687,24 @@ static void i915_delete_rasterizer_state(struct pipe_context *pipe,
    FREE(raster);
 }
 
-static void i915_set_vertex_buffer( struct pipe_context *pipe,
-                                    unsigned index,
-                                    const struct pipe_vertex_buffer *buffer )
+static void i915_set_vertex_buffers(struct pipe_context *pipe,
+                                    unsigned count,
+                                    const struct pipe_vertex_buffer *buffers)
 {
    struct i915_context *i915 = i915_context(pipe);
-   i915->vertex_buffer[index] = *buffer;
+
+   memcpy(i915->vertex_buffer, buffers, count * sizeof(buffers[0]));
    /* pass-through to draw module */
-   draw_set_vertex_buffer(i915->draw, index, buffer);
+   draw_set_vertex_buffers(i915->draw, count, buffers);
 }
 
-static void i915_set_vertex_element( struct pipe_context *pipe,
-                                     unsigned index,
-                                     const struct pipe_vertex_element *element)
+static void i915_set_vertex_elements(struct pipe_context *pipe,
+                                     unsigned count,
+                                     const struct pipe_vertex_element *elements)
 {
    struct i915_context *i915 = i915_context(pipe);
    /* pass-through to draw module */
-   draw_set_vertex_element(i915->draw, index, element);
+   draw_set_vertex_elements(i915->draw, count, elements);
 }
 
 
@@ -742,6 +743,6 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_scissor_state = i915_set_scissor_state;
    i915->pipe.set_sampler_textures = i915_set_sampler_textures;
    i915->pipe.set_viewport_state = i915_set_viewport_state;
-   i915->pipe.set_vertex_buffer = i915_set_vertex_buffer;
-   i915->pipe.set_vertex_element = i915_set_vertex_element;
+   i915->pipe.set_vertex_buffers = i915_set_vertex_buffers;
+   i915->pipe.set_vertex_elements = i915_set_vertex_elements;
 }

@@ -45,23 +45,25 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
                         uint num_attribs)
 {
    struct pipe_vertex_buffer vbuffer;
-   struct pipe_vertex_element velement;
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    uint i;
+
+   assert(num_attribs <= PIPE_MAX_ATTRIBS);
 
    /* tell pipe about the vertex buffer */
    vbuffer.buffer = vbuf;
    vbuffer.pitch = num_attribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = 0;
-   pipe->set_vertex_buffer(pipe, 0, &vbuffer);
+   pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
    /* tell pipe about the vertex attributes */
    for (i = 0; i < num_attribs; i++) {
-      velement.src_offset = i * 4 * sizeof(float);
-      velement.vertex_buffer_index = 0;
-      velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velement.nr_components = 4;
-      pipe->set_vertex_element(pipe, i, &velement);
+      velements[i].src_offset = i * 4 * sizeof(float);
+      velements[i].vertex_buffer_index = 0;
+      velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velements[i].nr_components = 4;
    }
+   pipe->set_vertex_elements(pipe, num_attribs, velements);
 
    /* draw */
    pipe->draw_arrays(pipe, prim_type, 0, num_verts);
