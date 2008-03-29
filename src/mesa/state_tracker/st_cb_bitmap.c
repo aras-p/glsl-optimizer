@@ -73,12 +73,14 @@ static GLboolean UseBitmapCache = GL_TRUE;
 
 struct bitmap_cache
 {
-   /** An I8 texture image: */
-   GLubyte buffer[BITMAP_CACHE_HEIGHT][BITMAP_CACHE_WIDTH];
-   GLboolean empty;
    /** Window pos to render the cached image */
    GLint xpos, ypos;
+   /** Bounds of region used in window coords */
+   GLint xmin, ymin, xmax, ymax;
    struct pipe_texture *texture;
+   GLboolean empty;
+   /** An I8 texture image: */
+   GLubyte buffer[BITMAP_CACHE_HEIGHT][BITMAP_CACHE_WIDTH];
 };
 
 
@@ -493,6 +495,18 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 }
 
 
+static void
+reset_cache(struct st_context *st)
+{
+   memset(st->bitmap.cache->buffer, 0, sizeof(st->bitmap.cache->buffer));
+   st->bitmap.cache->empty = GL_TRUE;
+
+   st->bitmap.cache->xmin = 1000000;
+   st->bitmap.cache->xmax = -1000000;
+   st->bitmap.cache->ymin = 1000000;
+   st->bitmap.cache->ymax = -1000000;
+}
+
 
 static void
 init_bitmap_cache(struct st_context *st)
@@ -523,7 +537,7 @@ init_bitmap_cache(struct st_context *st)
       return;
    }
 
-   st->bitmap.cache->empty = GL_TRUE;
+   reset_cache(st);
 }
 
 
@@ -534,29 +548,37 @@ void
 st_flush_bitmap_cache(struct st_context *st)
 {
    if (!st->bitmap.cache->empty) {
+      struct bitmap_cache *cache = st->bitmap.cache;
       struct pipe_context *pipe = st->pipe;
       struct pipe_screen *screen = pipe->screen;
       struct pipe_surface *surf;
       void *dest;
 
+      assert(cache->xmin <= cache->xmax);
+      /*
+      printf("flush size %d x %d  at %d, %d\n",
+             cache->xmax - cache->xmin,
+             cache->ymax - cache->ymin,
+             cache->xpos, cache->ypos);
+      */
+
       /* update the texture map image */
-      surf = screen->get_tex_surface(screen, st->bitmap.cache->texture, 0, 0, 0);
+      surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
       dest = pipe_surface_map(surf);
-      memcpy(dest, st->bitmap.cache->buffer, sizeof(st->bitmap.cache->buffer));
+      memcpy(dest, cache->buffer, sizeof(cache->buffer));
       pipe_surface_unmap(surf);
       pipe_surface_reference(&surf, NULL);
 
-      pipe->texture_update(pipe, st->bitmap.cache->texture, 0, 0x1);
+      pipe->texture_update(pipe, cache->texture, 0, 0x1);
 
       draw_bitmap_quad(st->ctx,
-                       st->bitmap.cache->xpos,
-                       st->bitmap.cache->ypos,
+                       cache->xpos,
+                       cache->ypos,
                        st->ctx->Current.RasterPos[2],
                        BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
-                       st->bitmap.cache->texture);
+                       cache->texture);
 
-      memset(st->bitmap.cache->buffer, 0, sizeof(st->bitmap.cache->buffer));
-      st->bitmap.cache->empty = GL_TRUE;
+      reset_cache(st);
    }
 }
 
@@ -571,6 +593,7 @@ accum_bitmap(struct st_context *st,
              const struct gl_pixelstore_attrib *unpack,
              const GLubyte *bitmap )
 {
+   struct bitmap_cache *cache = st->bitmap.cache;
    int row, col;
    int px = -999, py;
 
@@ -578,9 +601,9 @@ accum_bitmap(struct st_context *st,
        height > BITMAP_CACHE_HEIGHT)
       return GL_FALSE; /* too big to cache */
 
-   if (!st->bitmap.cache->empty) {
-      px = x - st->bitmap.cache->xpos;  /* pos in buffer */
-      py = y - st->bitmap.cache->ypos;
+   if (!cache->empty) {
+      px = x - cache->xpos;  /* pos in buffer */
+      py = y - cache->ypos;
       if (px < 0 || px + width > BITMAP_CACHE_WIDTH ||
           py < 0 || py + height > BITMAP_CACHE_HEIGHT) {
          /* This bitmap would extend beyond cache bounds,
@@ -590,20 +613,29 @@ accum_bitmap(struct st_context *st,
       }
    }
 
-   if (st->bitmap.cache->empty) {
+   if (cache->empty) {
       /* Initialize.  Center bitmap vertically in the buffer. */
       px = 0;
       py = (BITMAP_CACHE_HEIGHT - height) / 2;
-      st->bitmap.cache->xpos = x;
-      st->bitmap.cache->ypos = y - py;
-      st->bitmap.cache->empty = GL_FALSE;
+      cache->xpos = x;
+      cache->ypos = y - py;
+      cache->empty = GL_FALSE;
    }
 
    assert(px != -999);
 
+   if (x < cache->xmin)
+      cache->xmin = x;
+   if (y < cache->ymin)
+      cache->ymin = y;
+   if (x + width > cache->xmax)
+      cache->xmax = x + width;
+   if (y + height > cache->ymax)
+      cache->ymax = y + height;
+
    /* XXX try to combine this code with code in make_bitmap_texture() */
 #define SET_PIXEL(COL, ROW) \
-   st->bitmap.cache->buffer[py + (ROW)][px + (COL)] = 0xff;
+   cache->buffer[py + (ROW)][px + (COL)] = 0xff;
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
