@@ -1659,10 +1659,10 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
-			prog->program.body.i[program_end + 0] = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
-			prog->program.body.i[program_end + 1] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
-			prog->program.body.i[program_end + 2] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
-			prog->program.body.i[program_end + 3] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);
+			prog->program.body.i[program_end + 0] = PVS_OP_DST_OPERAND(VE_MULTIPLY, GL_FALSE, GL_FALSE, o_reg++, VSF_FLAG_ALL, PVS_DST_REG_OUT);
+			prog->program.body.i[program_end + 1] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_X, PVS_SRC_SELECT_Y, PVS_SRC_SELECT_Z, PVS_SRC_SELECT_W, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 2] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
+			prog->program.body.i[program_end + 3] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			program_end += 4;
 		}
 	}

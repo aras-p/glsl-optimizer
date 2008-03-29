@@ -2383,115 +2383,189 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_SHIFT 16
 #	define ZB_STENCILREFMASK_BF_STENCILWRITEMASK_MASK  0xffff0000
 
-/* BEGIN: Vertex program instruction set */
-
-/* Every instruction is four dwords long:
- *  DWORD 0: output and opcode
- *  DWORD 1: first argument
- *  DWORD 2: second argument
- *  DWORD 3: third argument
+/**
+ * \defgroup R3XX_R5XX_PROGRAMMABLE_VERTEX_SHADER_DESCRIPTION R3XX-R5XX PROGRAMMABLE VERTEX SHADER DESCRIPTION
  *
- * Notes:
- *  - ABS r, a is implemented as MAX r, a, -a
- *  - MOV is implemented as ADD to zero
- *  - XPD is implemented as MUL + MAD
- *  - FLR is implemented as FRC + ADD
- *  - apparently, fglrx tries to schedule instructions so that there is at
- *    least one instruction between the write to a temporary and the first
- *    read from said temporary; however, violations of this scheduling are
- *    allowed
- *  - register indices seem to be unrelated with OpenGL aliasing to
- *    conventional state
- *  - only one attribute and one parameter can be loaded at a time; however,
- *    the same attribute/parameter can be used for more than one argument
- *  - the second software argument for POW is the third hardware argument
- *    (no idea why)
- *  - MAD with only temporaries as input seems to use VPI_OUT_SELECT_MAD_2
- *
- * There is some magic surrounding LIT:
- *   The single argument is replicated across all three inputs, but swizzled:
- *     First argument: xyzy
- *     Second argument: xyzx
- *     Third argument: xyzw
- *   Whenever the result is used later in the fragment program, fglrx forces
- *   x and w to be 1.0 in the input selection; I don't know whether this is
- *   strictly necessary
+ * The PVS_DST_MATH_INST is used to identify whether the instruction is a Vector
+ * Engine instruction or a Math Engine instruction.
  */
-#define R300_VPI_OUT_OP_DOT                     (1 << 0)
-#define R300_VPI_OUT_OP_MUL                     (2 << 0)
-#define R300_VPI_OUT_OP_ADD                     (3 << 0)
-#define R300_VPI_OUT_OP_MAD                     (4 << 0)
-#define R300_VPI_OUT_OP_DST                     (5 << 0)
-#define R300_VPI_OUT_OP_FRC                     (6 << 0)
-#define R300_VPI_OUT_OP_MAX                     (7 << 0)
-#define R300_VPI_OUT_OP_MIN                     (8 << 0)
-#define R300_VPI_OUT_OP_SGE                     (9 << 0)
-#define R300_VPI_OUT_OP_SLT                     (10 << 0)
-	/* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, vector(scalar, vector) */
-#define R300_VPI_OUT_OP_UNK12                   (12 << 0)
-#define R300_VPI_OUT_OP_ARL                     (13 << 0)
-#define R300_VPI_OUT_OP_EXP                     (65 << 0)
-#define R300_VPI_OUT_OP_LOG                     (66 << 0)
-	/* Used in fog computations, scalar(scalar) */
-#define R300_VPI_OUT_OP_UNK67                   (67 << 0)
-#define R300_VPI_OUT_OP_LIT                     (68 << 0)
-#define R300_VPI_OUT_OP_POW                     (69 << 0)
-#define R300_VPI_OUT_OP_RCP                     (70 << 0)
-#define R300_VPI_OUT_OP_RSQ                     (72 << 0)
-	/* Used in GL_POINT_DISTANCE_ATTENUATION_ARB, scalar(scalar) */
-#define R300_VPI_OUT_OP_UNK73                   (73 << 0)
-#define R300_VPI_OUT_OP_EX2                     (75 << 0)
-#define R300_VPI_OUT_OP_LG2                     (76 << 0)
-#define R300_VPI_OUT_OP_MAD_2                   (128 << 0)
-	/* all temps, vector(scalar, vector, vector) */
-#define R300_VPI_OUT_OP_UNK129                  (129 << 0)
 
-#define R300_VPI_OUT_REG_CLASS_TEMPORARY        (0 << 8)
-#define R300_VPI_OUT_REG_CLASS_ADDR             (1 << 8)
-#define R300_VPI_OUT_REG_CLASS_RESULT           (2 << 8)
-#define R300_VPI_OUT_REG_CLASS_MASK             (31 << 8)
+/*\{*/
 
-#define R300_VPI_OUT_REG_INDEX_SHIFT            13
-	/* GUESS based on fglrx native limits */
-#define R300_VPI_OUT_REG_INDEX_MASK             (31 << 13)
+enum {
+	/* R3XX */
+	VECTOR_NO_OP			= 0,
+	VE_DOT_PRODUCT			= 1,
+	VE_MULTIPLY			= 2,
+	VE_ADD				= 3,
+	VE_MULTIPLY_ADD			= 4,
+	VE_DISTANCE_VECTOR		= 5,
+	VE_FRACTION			= 6,
+	VE_MAXIMUM			= 7,
+	VE_MINIMUM			= 8,
+	VE_SET_GREATER_THAN_EQUAL	= 9,
+	VE_SET_LESS_THAN		= 10,
+	VE_MULTIPLYX2_ADD		= 11,
+	VE_MULTIPLY_CLAMP		= 12,
+	VE_FLT2FIX_DX			= 13,
+	VE_FLT2FIX_DX_RND		= 14,
+	/* R5XX */
+	VE_PRED_SET_EQ_PUSH		= 15,
+	VE_PRED_SET_GT_PUSH		= 16,
+	VE_PRED_SET_GTE_PUSH		= 17,
+	VE_PRED_SET_NEQ_PUSH		= 18,
+	VE_COND_WRITE_EQ		= 19,
+	VE_COND_WRITE_GT		= 20,
+	VE_COND_WRITE_GTE		= 21,
+	VE_COND_WRITE_NEQ		= 22,
+	VE_COND_MUX_EQ			= 23,
+	VE_COND_MUX_GT			= 24,
+	VE_COND_MUX_GTE			= 25,
+	VE_SET_GREATER_THAN		= 26,
+	VE_SET_EQUAL			= 27,
+	VE_SET_NOT_EQUAL		= 28,
+};
 
-#define R300_VPI_OUT_WRITE_X                    (1 << 20)
-#define R300_VPI_OUT_WRITE_Y                    (1 << 21)
-#define R300_VPI_OUT_WRITE_Z                    (1 << 22)
-#define R300_VPI_OUT_WRITE_W                    (1 << 23)
+enum {
+	/* R3XX */
+	MATH_NO_OP			= 0,
+	ME_EXP_BASE2_DX			= 1,
+	ME_LOG_BASE2_DX			= 2,
+	ME_EXP_BASEE_FF			= 3,
+	ME_LIGHT_COEFF_DX		= 4,
+	ME_POWER_FUNC_FF		= 5,
+	ME_RECIP_DX			= 6,
+	ME_RECIP_FF			= 7,
+	ME_RECIP_SQRT_DX		= 8,
+	ME_RECIP_SQRT_FF		= 9,
+	ME_MULTIPLY			= 10,
+	ME_EXP_BASE2_FULL_DX		= 11,
+	ME_LOG_BASE2_FULL_DX		= 12,
+	ME_POWER_FUNC_FF_CLAMP_B	= 13,
+	ME_POWER_FUNC_FF_CLAMP_B1	= 14,
+	ME_POWER_FUNC_FF_CLAMP_01	= 15,
+	ME_SIN				= 16,
+	ME_COS				= 17,
+	/* R5XX */
+	ME_LOG_BASE2_IEEE		= 18,
+	ME_RECIP_IEEE			= 19,
+	ME_RECIP_SQRT_IEEE		= 20,
+	ME_PRED_SET_EQ			= 21,
+	ME_PRED_SET_GT			= 22,
+	ME_PRED_SET_GTE			= 23,
+	ME_PRED_SET_NEQ			= 24,
+	ME_PRED_SET_CLR			= 25,
+	ME_PRED_SET_INV			= 26,
+	ME_PRED_SET_POP			= 27,
+	ME_PRED_SET_RESTORE		= 28,
+};
 
-#define R300_VPI_IN_REG_CLASS_TEMPORARY         (0 << 0)
-#define R300_VPI_IN_REG_CLASS_ATTRIBUTE         (1 << 0)
-#define R300_VPI_IN_REG_CLASS_PARAMETER         (2 << 0)
-#define R300_VPI_IN_REG_CLASS_NONE              (9 << 0)
-#define R300_VPI_IN_REG_CLASS_MASK              (31 << 0)
+enum {
+	/* R3XX */
+	PVS_MACRO_OP_2CLK_MADD		= 0,
+	PVS_MACRO_OP_2CLK_M2X_ADD	= 1,
+};
 
-#define R300_VPI_IN_REG_INDEX_SHIFT             5
-	/* GUESS based on fglrx native limits */
-#define R300_VPI_IN_REG_INDEX_MASK              (255 << 5)
+enum {
+	PVS_SRC_REG_TEMPORARY		= 0,	/* Intermediate Storage */
+	PVS_SRC_REG_INPUT		= 1,	/* Input Vertex Storage */
+	PVS_SRC_REG_CONSTANT		= 2,	/* Constant State Storage */
+	PVS_SRC_REG_ALT_TEMPORARY	= 3,	/* Alternate Intermediate Storage */
+};
 
-/* The R300 can select components from the input register arbitrarily.
- * Use the following constants, shifted by the component shift you
- * want to select
- */
-#define R300_VPI_IN_SELECT_X    0
-#define R300_VPI_IN_SELECT_Y    1
-#define R300_VPI_IN_SELECT_Z    2
-#define R300_VPI_IN_SELECT_W    3
-#define R300_VPI_IN_SELECT_ZERO 4
-#define R300_VPI_IN_SELECT_ONE  5
-#define R300_VPI_IN_SELECT_MASK 7
+enum {
+	PVS_DST_REG_TEMPORARY		= 0,	/* Intermediate Storage */
+	PVS_DST_REG_A0			= 1,	/* Address Register Storage */
+	PVS_DST_REG_OUT			= 2,	/* Output Memory. Used for all outputs */
+	PVS_DST_REG_OUT_REPL_X		= 3,	/* Output Memory & Replicate X to all channels */
+	PVS_DST_REG_ALT_TEMPORARY	= 4,	/* Alternate Intermediate Storage */
+	PVS_DST_REG_INPUT		= 5,	/* Output Memory & Replicate X to all channels */
+};
 
-#define R300_VPI_IN_X_SHIFT                     13
-#define R300_VPI_IN_Y_SHIFT                     16
-#define R300_VPI_IN_Z_SHIFT                     19
-#define R300_VPI_IN_W_SHIFT                     22
+enum {
+	PVS_SRC_SELECT_X		= 0,	/* Select X Component */
+	PVS_SRC_SELECT_Y		= 1,	/* Select Y Component */
+	PVS_SRC_SELECT_Z		= 2,	/* Select Z Component */
+	PVS_SRC_SELECT_W		= 3,	/* Select W Component */
+	PVS_SRC_SELECT_FORCE_0		= 4,	/* Force Component to 0.0 */
+	PVS_SRC_SELECT_FORCE_1		= 5,	/* Force Component to 1.0 */
+};
 
-#define R300_VPI_IN_NEG_X                       (1 << 25)
-#define R300_VPI_IN_NEG_Y                       (1 << 26)
-#define R300_VPI_IN_NEG_Z                       (1 << 27)
-#define R300_VPI_IN_NEG_W                       (1 << 28)
-/* END: Vertex program instruction set */
+/* PVS Opcode & Destination Operand Description */
+
+enum {
+	PVS_DST_OPCODE_MASK		= 0x3f,
+	PVS_DST_OPCODE_SHIFT		= 0,
+	PVS_DST_MATH_INST_MASK		= 0x1,
+	PVS_DST_MATH_INST_SHIFT		= 6,
+	PVS_DST_MACRO_INST_MASK		= 0x1,
+	PVS_DST_MACRO_INST_SHIFT	= 7,
+	PVS_DST_REG_TYPE_MASK		= 0xf,
+	PVS_DST_REG_TYPE_SHIFT		= 8,
+	PVS_DST_ADDR_MODE_1_MASK	= 0x1,
+	PVS_DST_ADDR_MODE_1_SHIFT	= 12,
+	PVS_DST_OFFSET_MASK		= 0x7f,
+	PVS_DST_OFFSET_SHIFT		= 13,
+	PVS_DST_WE_X_MASK		= 0x1,
+	PVS_DST_WE_X_SHIFT		= 20,
+	PVS_DST_WE_Y_MASK		= 0x1,
+	PVS_DST_WE_Y_SHIFT		= 21,
+	PVS_DST_WE_Z_MASK		= 0x1,
+	PVS_DST_WE_Z_SHIFT		= 22,
+	PVS_DST_WE_W_MASK		= 0x1,
+	PVS_DST_WE_W_SHIFT		= 23,
+	PVS_DST_VE_SAT_MASK		= 0x1,
+	PVS_DST_VE_SAT_SHIFT		= 24,
+	PVS_DST_ME_SAT_MASK		= 0x1,
+	PVS_DST_ME_SAT_SHIFT		= 25,
+	PVS_DST_PRED_ENABLE_MASK	= 0x1,
+	PVS_DST_PRED_ENABLE_SHIFT	= 26,
+	PVS_DST_PRED_SENSE_MASK		= 0x1,
+	PVS_DST_PRED_SENSE_SHIFT	= 27,
+	PVS_DST_DUAL_MATH_OP_MASK	= 0x3,
+	PVS_DST_DUAL_MATH_OP_SHIFT	= 27,
+	PVS_DST_ADDR_SEL_MASK		= 0x3,
+	PVS_DST_ADDR_SEL_SHIFT		= 29,
+	PVS_DST_ADDR_MODE_0_MASK	= 0x1,
+	PVS_DST_ADDR_MODE_0_SHIFT	= 31,
+};
+
+/* PVS Source Operand Description */
+
+enum {
+	PVS_SRC_REG_TYPE_MASK		= 0x3,
+	PVS_SRC_REG_TYPE_SHIFT		= 0,
+	SPARE_0_MASK			= 0x1,
+	SPARE_0_SHIFT			= 2,
+	PVS_SRC_ABS_XYZW_MASK		= 0x1,
+	PVS_SRC_ABS_XYZW_SHIFT		= 3,
+	PVS_SRC_ADDR_MODE_0_MASK	= 0x1,
+	PVS_SRC_ADDR_MODE_0_SHIFT	= 4,
+	PVS_SRC_OFFSET_MASK		= 0xff,
+	PVS_SRC_OFFSET_SHIFT		= 5,
+	PVS_SRC_SWIZZLE_X_MASK		= 0x7,
+	PVS_SRC_SWIZZLE_X_SHIFT		= 13,
+	PVS_SRC_SWIZZLE_Y_MASK		= 0x7,
+	PVS_SRC_SWIZZLE_Y_SHIFT		= 16,
+	PVS_SRC_SWIZZLE_Z_MASK		= 0x7,
+	PVS_SRC_SWIZZLE_Z_SHIFT		= 19,
+	PVS_SRC_SWIZZLE_W_MASK		= 0x7,
+	PVS_SRC_SWIZZLE_W_SHIFT		= 22,
+	PVS_SRC_MODIFIER_X_MASK		= 0x1,
+	PVS_SRC_MODIFIER_X_SHIFT	= 25,
+	PVS_SRC_MODIFIER_Y_MASK		= 0x1,
+	PVS_SRC_MODIFIER_Y_SHIFT	= 26,
+	PVS_SRC_MODIFIER_Z_MASK		= 0x1,
+	PVS_SRC_MODIFIER_Z_SHIFT	= 27,
+	PVS_SRC_MODIFIER_W_MASK		= 0x1,
+	PVS_SRC_MODIFIER_W_SHIFT	= 28,
+	PVS_SRC_ADDR_SEL_MASK		= 0x3,
+	PVS_SRC_ADDR_SEL_SHIFT		= 29,
+	PVS_SRC_ADDR_MODE_1_MASK	= 0x0,
+	PVS_SRC_ADDR_MODE_1_SHIFT	= 32,
+};
+
+/*\}*/
 
 /* BEGIN: Packet 3 commands */
 
@@ -2613,3 +2687,5 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif /* _R300_REG_H */
 
 /* *INDENT-ON* */
+
+/* vim: set foldenable foldmarker=\\{,\\} foldmethod=marker : */
