@@ -351,7 +351,7 @@ setup_bitmap_vertex_data(struct st_context *st,
    const GLboolean invert = (st_fb_orientation(fb) == Y_0_TOP);
    const GLfloat x0 = x;
    const GLfloat x1 = x + width;
-   const GLfloat y0 = invert ? (fb->Height - y - height) : y;
+   const GLfloat y0 = invert ? ((int) fb->Height - y - height) : y;
    const GLfloat y1 = invert ? (y0 + height) : y + height;
    const GLfloat bias = st->bitmap_texcoord_bias;
    const GLfloat xBias = bias / (x1-x0);
