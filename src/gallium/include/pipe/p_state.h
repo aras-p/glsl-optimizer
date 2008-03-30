@@ -51,10 +51,11 @@ extern "C" {
 /**
  * Implementation limits
  */
-#define PIPE_MAX_SAMPLERS     8
+#define PIPE_MAX_SAMPLERS     16
 #define PIPE_MAX_CLIP_PLANES  6
 #define PIPE_MAX_CONSTANT    32
-#define PIPE_ATTRIB_MAX      32
+#define PIPE_MAX_ATTRIBS     32
+#define PIPE_ATTRIB_MAX      32 /* XXX obsolete - remove */
 #define PIPE_MAX_COLOR_BUFS   8
 #define PIPE_MAX_TEXTURE_LEVELS  16
 #define PIPE_MAX_FEEDBACK_ATTRIBS 16
@@ -112,6 +113,7 @@ struct pipe_rasterizer_state
    unsigned bypass_clipping:1;
    unsigned bypass_vs:1; /**< vertices are already fully transformed */
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
+   unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
@@ -241,7 +243,6 @@ struct pipe_sampler_state
    unsigned min_img_filter:2;    /**< PIPE_TEX_FILTER_x */
    unsigned min_mip_filter:2;    /**< PIPE_TEX_MIPFILTER_x */
    unsigned mag_img_filter:2;    /**< PIPE_TEX_FILTER_x */
-   unsigned compare:1;           /**< shadow/depth compare enabled? */
    unsigned compare_mode:1;      /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;      /**< PIPE_FUNC_x */
    unsigned normalized_coords:1; /**< Are coords normalized to [0,1]? */

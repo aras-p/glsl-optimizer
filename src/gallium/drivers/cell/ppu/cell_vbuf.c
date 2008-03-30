@@ -243,7 +243,7 @@ cell_vbuf_draw(struct vbuf_render *vbr,
 
 #if 0
    /* helpful for debug */
-   cell_flush_int(&cell->pipe, PIPE_FLUSH_WAIT);
+   cell_flush_int(&cell->pipe, CELL_FLUSH_WAIT);
 #endif
 }
 

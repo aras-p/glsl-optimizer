@@ -251,7 +251,7 @@ clear_with_quad(GLcontext *ctx,
 
    /* fragment shader state: color pass-through program */
    if (!st->clear.fs) {
-      st->clear.fs = util_make_fragment_passthrough_shader(pipe);
+      st->clear.fs = util_make_fragment_passthrough_shader(pipe, &st->clear.frag_shader);
    }
    pipe->bind_fs_state(pipe, st->clear.fs);
 
@@ -264,7 +264,8 @@ clear_with_quad(GLcontext *ctx,
       const uint semantic_indexes[] = { 0, 0 };
       st->clear.vs = util_make_vertex_passthrough_shader(pipe, 2,
                                                          semantic_names,
-                                                         semantic_indexes);
+                                                         semantic_indexes,
+                                                         &st->clear.vert_shader);
    }
    pipe->bind_vs_state(pipe, st->clear.vs);
 #endif

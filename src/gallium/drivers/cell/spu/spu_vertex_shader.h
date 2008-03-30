@@ -16,10 +16,10 @@ struct spu_vs_context {
    struct pipe_viewport_state viewport;
 
    struct {
-      uint64_t src_ptr[PIPE_ATTRIB_MAX];
-      unsigned pitch[PIPE_ATTRIB_MAX];
-      unsigned size[PIPE_ATTRIB_MAX];
-      unsigned code_offset[PIPE_ATTRIB_MAX];
+      uint64_t src_ptr[PIPE_MAX_ATTRIBS];
+      unsigned pitch[PIPE_MAX_ATTRIBS];
+      unsigned size[PIPE_MAX_ATTRIBS];
+      unsigned code_offset[PIPE_MAX_ATTRIBS];
       unsigned nr_attrs;
       boolean dirty;
 

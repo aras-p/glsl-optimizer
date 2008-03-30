@@ -116,7 +116,7 @@ struct brw_clip_compile {
    unsigned last_mrf;
 
    unsigned header_position_offset;
-   unsigned offset[PIPE_ATTRIB_MAX];
+   unsigned offset[PIPE_MAX_ATTRIBS];
 };
 
 #define ATTR_SIZE  (4*4)

@@ -161,7 +161,7 @@ i915_vbuf_render_draw( struct vbuf_render *render,
       i915_emit_hardware_state( i915 );
 
    if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
-      FLUSH_BATCH();
+      FLUSH_BATCH(NULL);
 
       /* Make sure state is re-emitted after a flush: 
        */

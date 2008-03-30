@@ -112,7 +112,8 @@ struct pstip_transform_context {
    uint tempsUsed;  /**< bitmask */
    int wincoordInput;
    int maxInput;
-   int maxSampler;  /**< max sampler index found */
+   uint samplersUsed;  /**< bitfield of samplers used */
+   int freeSampler;  /** an available sampler for the pstipple */
    int texTemp;  /**< temp registers */
    int numImmed;
    boolean firstInstruction;
@@ -130,8 +131,11 @@ pstip_transform_decl(struct tgsi_transform_context *ctx,
    struct pstip_transform_context *pctx = (struct pstip_transform_context *) ctx;
 
    if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
-      if ((int) decl->u.DeclarationRange.Last > pctx->maxSampler)
-         pctx->maxSampler = (int) decl->u.DeclarationRange.Last;
+      uint i;
+      for (i = decl->u.DeclarationRange.First;
+           i <= decl->u.DeclarationRange.Last; i++) {
+         pctx->samplersUsed |= 1 << i;
+      }
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
       pctx->maxInput = MAX2(pctx->maxInput, (int) decl->u.DeclarationRange.Last);
@@ -160,6 +164,21 @@ pstip_transform_immed(struct tgsi_transform_context *ctx,
 
 
 /**
+ * Find the lowest zero bit in the given word, or -1 if bitfield is all ones.
+ */
+static int
+free_bit(uint bitfield)
+{
+   int i;
+   for (i = 0; i < 32; i++) {
+      if ((bitfield & (1 << i)) == 0)
+         return i;
+   }
+   return -1;
+}
+
+
+/**
  * TGSI instruction transform callback.
  * Replace writes to result.color w/ a temp reg.
  * Upon END instruction, insert texture sampling code for antialiasing.
@@ -177,7 +196,11 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       struct tgsi_full_instruction newInst;
       uint i;
       int wincoordInput;
-      const int sampler = pctx->maxSampler + 1;
+
+      /* find free sampler */
+      pctx->freeSampler = free_bit(pctx->samplersUsed);
+      if (pctx->freeSampler >= PIPE_MAX_SAMPLERS)
+         pctx->freeSampler = PIPE_MAX_SAMPLERS - 1;
 
       if (pctx->wincoordInput < 0)
          wincoordInput = pctx->maxInput + 1;
@@ -214,7 +237,7 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_SAMPLER;
       decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = sampler;
+      decl.u.DeclarationRange.Last = pctx->freeSampler;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
@@ -274,7 +297,7 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
       newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_TEMPORARY;
       newInst.FullSrcRegisters[0].SrcRegister.Index = pctx->texTemp;
       newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = sampler;
+      newInst.FullSrcRegisters[1].SrcRegister.Index = pctx->freeSampler;
       ctx->emit_instruction(ctx, &newInst);
 
       /* KILP texTemp;   # if texTemp < 0, KILL fragment */
@@ -313,7 +336,6 @@ generate_pstip_fs(struct pstip_stage *pstip)
    memset(&transform, 0, sizeof(transform));
    transform.wincoordInput = -1;
    transform.maxInput = -1;
-   transform.maxSampler = -1;
    transform.texTemp = -1;
    transform.firstInstruction = TRUE;
    transform.base.transform_instruction = pstip_transform_inst;
@@ -329,7 +351,8 @@ generate_pstip_fs(struct pstip_stage *pstip)
    tgsi_dump(pstip_fs.tokens, 0);
 #endif
 
-   pstip->fs->sampler_unit = transform.maxSampler + 1;
+   pstip->fs->sampler_unit = transform.freeSampler;
+   assert(pstip->fs->sampler_unit < PIPE_MAX_SAMPLERS);
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
 }
@@ -399,8 +422,6 @@ pstip_create_texture(struct pstip_stage *pstip)
 
    pstip->texture = screen->texture_create(screen, &texTemp);
    assert(pstip->texture->refcount == 1);
-
-   //pstip_update_texture(pstip);
 }
 
 

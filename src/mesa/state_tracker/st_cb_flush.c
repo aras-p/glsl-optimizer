@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "main/context.h"
 #include "st_context.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_flush.h"
 #include "st_cb_fbo.h"
 #include "st_public.h"
@@ -43,19 +44,23 @@
 #include "pipe/p_winsys.h"
 
 
-void st_flush( struct st_context *st, uint pipeFlushFlags )
+void st_flush( struct st_context *st, uint pipeFlushFlags,
+               struct pipe_fence_handle **fence )
 {
    FLUSH_VERTICES(st->ctx, 0);
 
-   st->pipe->flush( st->pipe, pipeFlushFlags );
+   st_flush_bitmap_cache(st);
+
+   st->pipe->flush( st->pipe, pipeFlushFlags, fence );
 }
 
 
-static void st_gl_flush( struct st_context *st, uint pipeFlushFlags )
+static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
+                         struct pipe_fence_handle **fence )
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
-   FLUSH_VERTICES(st->ctx, 0);
+   st_flush( st, pipeFlushFlags, fence );
 
    if (!fb)
       return;
@@ -80,15 +85,6 @@ static void st_gl_flush( struct st_context *st, uint pipeFlushFlags )
          = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
       struct pipe_surface *front_surf = strb->surface;
 
-      /* If we aren't rendering to the frontbuffer, this is a noop.
-       * This should be uncontroversial for glFlush, though people may
-       * feel more strongly about glFinish.
-       *
-       * Additionally, need to make sure that the frontbuffer_dirty
-       * flag really gets set on frontbuffer rendering.
-       */
-      st->pipe->flush( st->pipe, pipeFlushFlags );
-
       /* Hook for copying "fake" frontbuffer if necessary:
        */
       st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
@@ -103,7 +99,18 @@ static void st_gl_flush( struct st_context *st, uint pipeFlushFlags )
  */
 static void st_glFlush(GLcontext *ctx)
 {
-   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE);
+   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+}
+
+
+void st_finish( struct st_context *st )
+{
+   struct pipe_fence_handle *fence;
+
+   st_gl_flush(st, PIPE_FLUSH_RENDER_CACHE, &fence);
+
+   st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
+   st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);
 }
 
 
@@ -112,7 +119,7 @@ static void st_glFlush(GLcontext *ctx)
  */
 static void st_glFinish(GLcontext *ctx)
 {
-   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_WAIT);
+   st_finish( ctx->st );
 }
 
 

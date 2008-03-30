@@ -158,22 +158,19 @@ static INLINE void fetch_and_store(struct draw_context *draw)
 
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
-   static boolean flushing = FALSE;
-
    if (0)
       debug_printf("Flushing with %d verts, %d prims\n",
                    draw->vs.queue_nr,
                    draw->pq.queue_nr );
 
-   if (!flushing) {
-      flushing = TRUE;
+   if (draw->flushing)
+      return;
+
+   draw->flushing = TRUE;
 
    if (flags >= DRAW_FLUSH_SHADER_QUEUE) {
       if (draw->vs.queue_nr) {
-         if (draw->rasterizer->bypass_vs)
-            fetch_and_store(draw);
-         else
-            (*draw->shader_queue_flush)(draw);
+         (*draw->shader_queue_flush)(draw);
       }
 
       if (flags >= DRAW_FLUSH_PRIM_QUEUE) {
@@ -192,8 +189,7 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
       }    
    }
 
-      flushing = FALSE;
-   }
+   draw->flushing = FALSE;
 }
 
 
@@ -333,6 +329,8 @@ draw_prim( struct draw_context *draw,
    unsigned i;
    boolean unfilled = (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
 		       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL);
+   boolean flatfirst =
+      (draw->rasterizer->flatshade & draw->rasterizer->flatshade_first) ? TRUE : FALSE;
 
 //   debug_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
 
@@ -345,11 +343,21 @@ draw_prim( struct draw_context *draw,
       break;
 
    case PIPE_PRIM_LINES:
-      for (i = 0; i+1 < count; i += 2) {
-	 do_line( draw, 
-		  TRUE,
-		  start + i + 0,
-		  start + i + 1);
+      if (flatfirst) {
+         for (i = 0; i+1 < count; i += 2) {
+            do_line( draw, 
+               TRUE,
+               start + i + 1,
+               start + i + 0);
+         }
+      }
+      else {
+         for (i = 0; i+1 < count; i += 2) {
+            do_line( draw, 
+               TRUE,
+               start + i + 0,
+               start + i + 1);
+         }
       }
       break;
 
@@ -370,60 +378,120 @@ draw_prim( struct draw_context *draw,
       break;
 
    case PIPE_PRIM_LINE_STRIP:
-      for (i = 1; i < count; i++) {
-	 do_line( draw,
-		  i == 1,
-		  start + i - 1,
-		  start + i );
+      if (flatfirst) {
+         for (i = 1; i < count; i++) {
+            do_line( draw,
+               i == 1,
+               start + i,
+               start + i - 1 );
+         }
+      }
+      else {
+         for (i = 1; i < count; i++) {
+            do_line( draw,
+               i == 1,
+               start + i - 1,
+               start + i );
+         }
       }
       break;
 
    case PIPE_PRIM_TRIANGLES:
-      if (unfilled) {
-	 for (i = 0; i+2 < count; i += 3) {
-	    do_ef_triangle( draw,
-			    1, 
-			    ~0,
-			    start + i + 0,
-			    start + i + 1,
-			    start + i + 2 );
-	 }
-      } 
+      if (flatfirst) {
+         if (unfilled) {
+            for (i = 0; i+2 < count; i += 3) {
+               do_ef_triangle( draw,
+                  1, 
+                  ~0,
+                  start + i + 1,
+                  start + i + 2,
+                  start + i + 0 );
+            }
+         } 
+         else {
+            for (i = 0; i+2 < count; i += 3) {
+               do_triangle( draw,
+                  start + i + 1,
+                  start + i + 2,
+                  start + i + 0 );
+            }
+         }
+      }
       else {
-	 for (i = 0; i+2 < count; i += 3) {
-	    do_triangle( draw,
-			 start + i + 0,
-			 start + i + 1,
-			 start + i + 2 );
-	 }
+         if (unfilled) {
+            for (i = 0; i+2 < count; i += 3) {
+               do_ef_triangle( draw,
+                  1, 
+                  ~0,
+                  start + i + 0,
+                  start + i + 1,
+                  start + i + 2 );
+            }
+         } 
+         else {
+            for (i = 0; i+2 < count; i += 3) {
+               do_triangle( draw,
+                  start + i + 0,
+                  start + i + 1,
+                  start + i + 2 );
+            }
+         }
       }
       break;
 
    case PIPE_PRIM_TRIANGLE_STRIP:
-      for (i = 0; i+2 < count; i++) {
-	 if (i & 1) {
-	    do_triangle( draw,
-			 start + i + 1,
-			 start + i + 0,
-			 start + i + 2 );
-	 }
-	 else {
-	    do_triangle( draw,
-			 start + i + 0,
-			 start + i + 1,
-			 start + i + 2 );
-	 }
+      if (flatfirst) {
+         for (i = 0; i+2 < count; i++) {
+            if (i & 1) {
+               do_triangle( draw,
+                  start + i + 2,
+                  start + i + 1,
+                  start + i + 0 );
+            }
+            else {
+               do_triangle( draw,
+                  start + i + 1,
+                  start + i + 2,
+                  start + i + 0 );
+            }
+         }
+      }
+      else {
+         for (i = 0; i+2 < count; i++) {
+            if (i & 1) {
+               do_triangle( draw,
+                  start + i + 1,
+                  start + i + 0,
+                  start + i + 2 );
+            }
+            else {
+               do_triangle( draw,
+                  start + i + 0,
+                  start + i + 1,
+                  start + i + 2 );
+            }
+         }
       }
       break;
 
    case PIPE_PRIM_TRIANGLE_FAN:
       if (count >= 3) {
-	 for (i = 0; i+2 < count; i++) {
-	    do_triangle( draw,
-			 start + 0,
-			 start + i + 1,
-			 start + i + 2 );
-	 }
+         if (flatfirst) {
+            for (i = 0; i+2 < count; i++) {
+               do_triangle( draw,
+                  start + i + 2,
+                  start + 0,
+                  start + i + 1 );
+            }
+         }
+         else {
+            for (i = 0; i+2 < count; i++) {
+               do_triangle( draw,
+                  start + 0,
+                  start + i + 1,
+                  start + i + 2 );
+            }
+         }
       }
       break;
 

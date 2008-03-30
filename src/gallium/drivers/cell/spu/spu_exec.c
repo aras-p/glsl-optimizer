@@ -1453,7 +1453,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TXP:
-      /* Texture lookup with projection
+      /* Texture lookup with projection */
       /* src[0] = texcoord (src[0].w = projection) */
       /* src[1] = sampler unit */
       exec_tex(mach, inst, TRUE, TRUE);

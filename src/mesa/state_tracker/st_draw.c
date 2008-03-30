@@ -210,6 +210,7 @@ st_draw_vbo(GLcontext *ctx,
    const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr;
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);
@@ -226,7 +227,6 @@ st_draw_vbo(GLcontext *ctx,
    for (attr = 0; attr < vp->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
-      struct pipe_vertex_element velement;
 
       if (bufobj && bufobj->Name) {
          /* Attribute data is in a VBO.
@@ -239,8 +239,8 @@ st_draw_vbo(GLcontext *ctx,
          vbuffer[attr].buffer = NULL;
          pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
-         velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
-         assert(velement.src_offset <= 2048); /* 11-bit field */
+         velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
+         assert(velements[attr].src_offset <= 2048); /* 11-bit field */
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
@@ -259,23 +259,23 @@ st_draw_vbo(GLcontext *ctx,
                                          (void *) arrays[mesaAttr]->Ptr,
                                          bytes);
          vbuffer[attr].buffer_offset = 0;
-         velement.src_offset = 0;
+         velements[attr].src_offset = 0;
       }
 
       /* common-case setup */
       vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
       vbuffer[attr].max_index = max_index;
-      velement.vertex_buffer_index = attr;
-      velement.nr_components = arrays[mesaAttr]->Size;
-      velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
-                                               arrays[mesaAttr]->Size,
-                                               arrays[mesaAttr]->Normalized);
-      assert(velement.src_format);
-
-      /* tell pipe about this attribute */
-      pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
-      pipe->set_vertex_element(pipe, attr, &velement);
+      velements[attr].vertex_buffer_index = attr;
+      velements[attr].nr_components = arrays[mesaAttr]->Size;
+      velements[attr].src_format
+         = pipe_vertex_format(arrays[mesaAttr]->Type,
+                              arrays[mesaAttr]->Size,
+                              arrays[mesaAttr]->Normalized);
+      assert(velements[attr].src_format);
    }
+
+   pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
+   pipe->set_vertex_elements(pipe, vp->num_inputs, velements);
 
 
    /* do actual drawing */
@@ -336,8 +336,8 @@ st_draw_vbo(GLcontext *ctx,
    for (attr = 0; attr < vp->num_inputs; attr++) {
       pipe_buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
-      pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
    }
+   pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
 }
 
 
@@ -362,7 +362,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_buffer *vbuf;
    struct pipe_vertex_buffer vbuffer;
-   struct pipe_vertex_element velement;
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned i;
 
    assert(numAttribs > 0);
@@ -393,16 +393,16 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    vbuffer.buffer = vbuf;
    vbuffer.pitch = numAttribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = 0;
-   pipe->set_vertex_buffer(pipe, 0, &vbuffer);
+   pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
    /* tell pipe about the vertex attributes */
    for (i = 0; i < numAttribs; i++) {
-      velement.src_offset = i * 4 * sizeof(GLfloat);
-      velement.vertex_buffer_index = 0;
-      velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velement.nr_components = 4;
-      pipe->set_vertex_element(pipe, i, &velement);
+      velements[i].src_offset = i * 4 * sizeof(GLfloat);
+      velements[i].vertex_buffer_index = 0;
+      velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velements[i].nr_components = 4;
    }
+   pipe->set_vertex_elements(pipe, numAttribs, velements);
 
    /* draw */
    pipe->draw_arrays(pipe, prim, 0, numVertex);
@@ -470,7 +470,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
    struct pipe_buffer *index_buffer_handle = 0;
-   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+   struct pipe_vertex_buffer vbuffers[PIPE_MAX_SHADER_INPUTS];
+   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    GLuint attr, i;
    ubyte *mapped_constants;
 
@@ -505,7 +506,6 @@ st_feedback_draw_vbo(GLcontext *ctx,
    for (attr = 0; attr < vp->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
-      struct pipe_vertex_element velement;
       void *map;
 
       if (bufobj && bufobj->Name) {
@@ -516,10 +516,10 @@ st_feedback_draw_vbo(GLcontext *ctx,
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          assert(stobj->buffer);
 
-         vbuffer[attr].buffer = NULL;
-         pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
-         vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
-         velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
+         vbuffers[attr].buffer = NULL;
+         pipe_buffer_reference(winsys, &vbuffers[attr].buffer, stobj->buffer);
+         vbuffers[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
+         velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
@@ -528,34 +528,38 @@ st_feedback_draw_vbo(GLcontext *ctx,
                        * (max_index + 1));
 
          /* wrap user data */
-         vbuffer[attr].buffer
+         vbuffers[attr].buffer
             = winsys->user_buffer_create(winsys,
                                          (void *) arrays[mesaAttr]->Ptr,
                                          bytes);
-         vbuffer[attr].buffer_offset = 0;
-         velement.src_offset = 0;
+         vbuffers[attr].buffer_offset = 0;
+         velements[attr].src_offset = 0;
       }
 
       /* common-case setup */
-      vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
-      vbuffer[attr].max_index = max_index;
-      velement.vertex_buffer_index = attr;
-      velement.nr_components = arrays[mesaAttr]->Size;
-      velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
+      vbuffers[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+      vbuffers[attr].max_index = max_index;
+      velements[attr].vertex_buffer_index = attr;
+      velements[attr].nr_components = arrays[mesaAttr]->Size;
+      velements[attr].src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
                                                arrays[mesaAttr]->Size,
                                                arrays[mesaAttr]->Normalized);
-      assert(velement.src_format);
+      assert(velements[attr].src_format);
 
       /* tell draw about this attribute */
+#if 0
       draw_set_vertex_buffer(draw, attr, &vbuffer[attr]);
-      draw_set_vertex_element(draw, attr, &velement);
+#endif
 
       /* map the attrib buffer */
       map = pipe->winsys->buffer_map(pipe->winsys,
-                                     vbuffer[attr].buffer,
+                                     vbuffers[attr].buffer,
                                      PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, attr, map);
    }
+
+   draw_set_vertex_buffers(draw, vp->num_inputs, vbuffers);
+   draw_set_vertex_elements(draw, vp->num_inputs, velements);
 
    if (ib) {
       unsigned indexSize;
@@ -606,7 +610,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    /*
     * unmap vertex/index buffers
     */
-   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->vertex_buffer[i].buffer) {
          pipe->winsys->buffer_unmap(pipe->winsys,
                                     draw->vertex_buffer[i].buffer);

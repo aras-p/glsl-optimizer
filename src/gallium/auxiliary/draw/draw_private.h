@@ -223,12 +223,13 @@ struct draw_context
 
    } pt;
 
+   boolean flushing;
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
-   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
    struct draw_vertex_shader *vertex_shader;
 
    uint num_vs_outputs;  /**< convenience, from vertex_shader */
@@ -241,7 +242,7 @@ struct draw_context
       unsigned eltSize;
 
       /** vertex arrays */
-      const void *vbuffer[PIPE_ATTRIB_MAX];
+      const void *vbuffer[PIPE_MAX_ATTRIBS];
 
       /** constant buffer (for vertex shader) */
       const void *constants;
@@ -274,9 +275,9 @@ struct draw_context
    /* Vertex fetch internal state
     */
    struct {
-      const ubyte *src_ptr[PIPE_ATTRIB_MAX];
-      unsigned pitch[PIPE_ATTRIB_MAX];
-      fetch_func fetch[PIPE_ATTRIB_MAX];
+      const ubyte *src_ptr[PIPE_MAX_ATTRIBS];
+      unsigned pitch[PIPE_MAX_ATTRIBS];
+      fetch_func fetch[PIPE_MAX_ATTRIBS];
       unsigned nr_attrs;
       full_fetch_func fetch_func;
       pt_fetch_func pt_fetch;
@@ -364,7 +365,8 @@ extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
 
 extern void draw_update_vertex_fetch( struct draw_context *draw );
 
-extern boolean draw_need_pipeline(const struct draw_context *draw);
+extern boolean draw_need_pipeline(const struct draw_context *draw,
+                                  unsigned prim );
 
 
 /* Passthrough mode (second attempt):

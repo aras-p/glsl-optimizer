@@ -55,7 +55,7 @@ draw_pt_arrays(struct draw_context *draw,
                unsigned start, 
                unsigned count)
 {
-   const boolean pipeline = draw_need_pipeline(draw);
+   const boolean pipeline = draw_need_pipeline(draw, prim);
    const boolean cliptest = !draw->rasterizer->bypass_clipping;
    const boolean shading  = !draw->rasterizer->bypass_vs;
    struct draw_pt_front_end *frontend = NULL;

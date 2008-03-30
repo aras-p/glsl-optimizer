@@ -76,7 +76,7 @@ extern void spe_release_register(struct spe_function *p, int reg);
 #define EMIT_RI7(_name, _op) \
     extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
 			   int imm)
-#define EMIT_RI8(_name, _op) \
+#define EMIT_RI8(_name, _op, bias) \
     extern void _name (struct spe_function *p, unsigned rT, unsigned rA, \
 			   int imm)
 #define EMIT_RI10(_name, _op) \
@@ -289,10 +289,10 @@ EMIT_RR  (spe_dfnma,      0x35f);
 EMIT_R   (spe_frest,      0x1b8);
 EMIT_R   (spe_frsqest,    0x1b9);
 EMIT_RR  (spe_fi,         0x3d4);
-EMIT_RI8 (spe_csflt,      0x1da);
-EMIT_RI8 (spe_cflts,      0x1d8);
-EMIT_RI8 (spe_cuflt,      0x1db);
-EMIT_RI8 (spe_cfltu,      0x1d9);
+EMIT_RI8 (spe_csflt,      0x1da, 155);
+EMIT_RI8 (spe_cflts,      0x1d8, 173);
+EMIT_RI8 (spe_cuflt,      0x1db, 155);
+EMIT_RI8 (spe_cfltu,      0x1d9, 173);
 EMIT_R   (spe_frds,       0x3b9);
 EMIT_R   (spe_fesd,       0x3b8);
 EMIT_RR  (spe_dfceq,      0x3c3);

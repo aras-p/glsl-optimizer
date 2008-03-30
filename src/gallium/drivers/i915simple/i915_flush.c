@@ -37,11 +37,9 @@
 #include "i915_batch.h"
 
 
-/**
- * In future we may want a fence-like interface instead of finish.
- */
 static void i915_flush( struct pipe_context *pipe,
-			unsigned flags )
+                        unsigned flags,
+                        struct pipe_fence_handle **fence )
 {
    struct i915_context *i915 = i915_context(pipe);
 
@@ -60,7 +58,7 @@ static void i915_flush( struct pipe_context *pipe,
 	 flush |= FLUSH_MAP_CACHE;
 
       if (!BEGIN_BATCH(1, 0)) {
-	 FLUSH_BATCH();
+	 FLUSH_BATCH(NULL);
 	 assert(BEGIN_BATCH(1, 0));
       }
       OUT_BATCH( flush );
@@ -69,11 +67,7 @@ static void i915_flush( struct pipe_context *pipe,
 
    /* If there are no flags, just flush pending commands to hardware:
     */
-   FLUSH_BATCH();
-
-   if (flags & PIPE_FLUSH_WAIT) {
-      i915->winsys->batch_finish(i915->winsys);
-   }
+   FLUSH_BATCH(fence);
 }
 
 

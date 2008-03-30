@@ -29,7 +29,9 @@
 #define SP_FLUSH_H
 
 struct pipe_context;
+struct pipe_fence_handle;
 
-void softpipe_flush(struct pipe_context *pipe, unsigned flags );
+void softpipe_flush(struct pipe_context *pipe, unsigned flags,
+                    struct pipe_fence_handle **fence);
 
 #endif

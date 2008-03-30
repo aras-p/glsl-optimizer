@@ -58,9 +58,10 @@ struct blit_state
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
 
-   /*struct pipe_viewport_state viewport;*/
-   struct pipe_sampler_state *vs;
-   struct pipe_sampler_state *fs;
+   struct pipe_shader_state vert_shader;
+   struct pipe_shader_state frag_shader;
+   void *vs;
+   void *fs;
 
    struct pipe_buffer *vbuf;  /**< quad vertices */
    float vertices[4][2][4];   /**< vertex/texcoords for quad */
@@ -130,11 +131,12 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
                                       TGSI_SEMANTIC_GENERIC };
       const uint semantic_indexes[] = { 0, 0 };
       ctx->vs = util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
-                                                    semantic_indexes);
+                                                    semantic_indexes,
+                                                    &ctx->vert_shader);
    }
 
    /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe);
+   ctx->fs = util_make_fragment_tex_shader(pipe, &ctx->frag_shader);
 
    ctx->vbuf = pipe->winsys->buffer_create(pipe->winsys,
                                            32,
@@ -168,6 +170,9 @@ util_destroy_blit(struct blit_state *ctx)
 
    pipe->delete_vs_state(pipe, ctx->vs);
    pipe->delete_fs_state(pipe, ctx->fs);
+
+   FREE((void*) ctx->vert_shader.tokens);
+   FREE((void*) ctx->frag_shader.tokens);
 
    pipe->winsys->buffer_destroy(pipe->winsys, ctx->vbuf);
 

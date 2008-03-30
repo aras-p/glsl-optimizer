@@ -36,28 +36,34 @@
 
 
 void
-cell_set_vertex_element(struct pipe_context *pipe,
-                            unsigned index,
-                            const struct pipe_vertex_element *attrib)
+cell_set_vertex_elements(struct pipe_context *pipe,
+                         unsigned count,
+                         const struct pipe_vertex_element *elements)
 {
    struct cell_context *cell = cell_context(pipe);
-   assert(index < PIPE_ATTRIB_MAX);
-   cell->vertex_element[index] = *attrib; /* struct copy */
+
+   assert(count <= PIPE_MAX_ATTRIBS);
+
+   memcpy(cell->vertex_element, elements, count * sizeof(elements[0]));
+
    cell->dirty |= CELL_NEW_VERTEX;
 
-   draw_set_vertex_element(cell->draw, index, attrib);
+   draw_set_vertex_elements(cell->draw, count, elements);
 }
 
 
 void
-cell_set_vertex_buffer(struct pipe_context *pipe,
-                           unsigned index,
-                           const struct pipe_vertex_buffer *buffer)
+cell_set_vertex_buffers(struct pipe_context *pipe,
+                        unsigned count,
+                        const struct pipe_vertex_buffer *buffers)
 {
    struct cell_context *cell = cell_context(pipe);
-   assert(index < PIPE_ATTRIB_MAX);
-   cell->vertex_buffer[index] = *buffer; /* struct copy */
+
+   assert(count <= PIPE_MAX_ATTRIBS);
+
+   memcpy(cell->vertex_buffer, buffers, count * sizeof(buffers[0]));
+
    cell->dirty |= CELL_NEW_VERTEX;
 
-   draw_set_vertex_buffer(cell->draw, index, buffer);
+   draw_set_vertex_buffers(cell->draw, count, buffers);
 }

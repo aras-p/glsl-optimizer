@@ -169,7 +169,7 @@ struct draw_vf_attr
 
 struct draw_vertex_fetch
 {
-   struct draw_vf_attr attr[PIPE_ATTRIB_MAX];
+   struct draw_vf_attr attr[PIPE_MAX_ATTRIBS];
    unsigned attr_count;
    unsigned vertex_stride;
 

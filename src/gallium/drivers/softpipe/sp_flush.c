@@ -40,13 +40,10 @@
 #include "sp_winsys.h"
 
 
-/* There will be actual work to do here.  In future we may want a
- * fence-like interface instead of finish, and perhaps flush will take
- * flags to indicate what type of flush is required.
- */
 void
 softpipe_flush( struct pipe_context *pipe,
-		unsigned flags )
+		unsigned flags,
+                struct pipe_fence_handle **fence )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
@@ -72,5 +69,8 @@ softpipe_flush( struct pipe_context *pipe,
     * to unmap surfaces when flushing.
     */
    softpipe_unmap_surfaces(softpipe);
+
+   if (fence)
+      *fence = NULL;
 }
 

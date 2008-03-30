@@ -305,7 +305,6 @@ emit_quad( int x, int y, mask_t mask )
    if (spu_extract(spu_orx(mask), 0)) {
       const int ix = x - setup.cliprect_minx;
       const int iy = y - setup.cliprect_miny;
-      const vector unsigned char shuffle = spu.color_shuffle;
       vector float colors[4];
 
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
@@ -330,45 +329,53 @@ emit_quad( int x, int y, mask_t mask )
       }
 
 
-      /* Read the current framebuffer values.
-       *
-       * Ignore read_fb for now.  In the future we can use this to avoid
-       * reading the framebuffer if read_fb is false and the fragment mask is
-       * all 0xffffffff.  This is the common case, so it is probably worth
-       * the effort.  We'll have to profile to determine whether or not the
-       * extra conditional branches hurt overall performance.
+      /* Convert fragment data from AoS to SoA format.
        */
-      vec_float4 aos_pix[4] = {
-         spu_unpack_A8R8G8B8(spu.ctile.ui[iy+0][ix+0]),
-         spu_unpack_A8R8G8B8(spu.ctile.ui[iy+0][ix+1]),
-         spu_unpack_A8R8G8B8(spu.ctile.ui[iy+1][ix+0]),
-         spu_unpack_A8R8G8B8(spu.ctile.ui[iy+1][ix+1]),
+      qword soa_frag[4];
+      _transpose_matrix4x4((vec_float4 *) soa_frag, colors);
+
+      /* Read the current framebuffer values.
+       */
+      const qword pix[4] = {
+         (qword) spu_splats(spu.ctile.ui[iy+0][ix+0]),
+         (qword) spu_splats(spu.ctile.ui[iy+0][ix+1]),
+         (qword) spu_splats(spu.ctile.ui[iy+1][ix+0]),
+         (qword) spu_splats(spu.ctile.ui[iy+1][ix+1]),
       };
 
       qword soa_pix[4];
-      qword soa_frag[4];
 
-      /* Convert pixel and fragment data from AoS to SoA format.
-       */
-      _transpose_matrix4x4((vec_float4 *) soa_pix, aos_pix);
-      _transpose_matrix4x4((vec_float4 *) soa_frag, colors);
+      if (spu.read_fb) {
+         /* Convert pixel data from AoS to SoA format.
+          */
+         vec_float4 aos_pix[4] = {
+            spu_unpack_A8R8G8B8(spu.ctile.ui[iy+0][ix+0]),
+            spu_unpack_A8R8G8B8(spu.ctile.ui[iy+0][ix+1]),
+            spu_unpack_A8R8G8B8(spu.ctile.ui[iy+1][ix+0]),
+            spu_unpack_A8R8G8B8(spu.ctile.ui[iy+1][ix+1]),
+         };
 
-      const struct spu_blend_results result =
+         _transpose_matrix4x4((vec_float4 *) soa_pix, aos_pix);
+      }
+
+
+      struct spu_blend_results result =
           (*spu.blend)(soa_frag[0], soa_frag[1], soa_frag[2], soa_frag[3],
                        soa_pix[0], soa_pix[1], soa_pix[2], soa_pix[3],
                        spu.const_blend_color[0], spu.const_blend_color[1],
-                       spu.const_blend_color[2], spu.const_blend_color[3],
-                       (qword) mask);
+                       spu.const_blend_color[2], spu.const_blend_color[3]);
 
 
       /* Convert final pixel data from SoA to AoS format.
        */
-      _transpose_matrix4x4(aos_pix, (const vec_float4 *) &result);
+      result = (*spu.logicop)(pix[0], pix[1], pix[2], pix[3],
+                              result.r, result.g, result.b, result.a,
+                              (qword) mask);
 
-      spu.ctile.ui[iy+0][ix+0] = spu_pack_color_shuffle(aos_pix[0], shuffle);
-      spu.ctile.ui[iy+0][ix+1] = spu_pack_color_shuffle(aos_pix[1], shuffle);
-      spu.ctile.ui[iy+1][ix+0] = spu_pack_color_shuffle(aos_pix[2], shuffle);
-      spu.ctile.ui[iy+1][ix+1] = spu_pack_color_shuffle(aos_pix[3], shuffle);
+      spu.ctile.ui[iy+0][ix+0] = spu_extract((vec_uint4) result.r, 0);
+      spu.ctile.ui[iy+0][ix+1] = spu_extract((vec_uint4) result.g, 0);
+      spu.ctile.ui[iy+1][ix+0] = spu_extract((vec_uint4) result.b, 0);
+      spu.ctile.ui[iy+1][ix+1] = spu_extract((vec_uint4) result.a, 0);
    }
 #endif
 }

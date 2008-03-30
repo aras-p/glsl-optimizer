@@ -92,6 +92,8 @@ struct cell_context
    const struct cell_vertex_shader_state *vs;
    const struct cell_fragment_shader_state *fs;
 
+   struct spe_function logic_op;
+
    struct pipe_blend_color blend_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[2];
@@ -101,8 +103,8 @@ struct cell_context
    struct cell_texture *texture[PIPE_MAX_SAMPLERS];
    uint num_textures;
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
-   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
 
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;
@@ -139,7 +141,7 @@ struct cell_context
 
 
    struct spe_function attrib_fetch;
-   unsigned attrib_fetch_offsets[PIPE_ATTRIB_MAX];
+   unsigned attrib_fetch_offsets[PIPE_MAX_ATTRIBS];
 };
 
 

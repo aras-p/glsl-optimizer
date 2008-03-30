@@ -29,8 +29,11 @@
 #ifndef CELL_FLUSH
 #define CELL_FLUSH
 
+#define CELL_FLUSH_WAIT 0x80000000
+
 extern void
-cell_flush(struct pipe_context *pipe, unsigned flags);
+cell_flush(struct pipe_context *pipe, unsigned flags,
+           struct pipe_fence_handle **fence);
 
 extern void
 cell_flush_int(struct pipe_context *pipe, unsigned flags);

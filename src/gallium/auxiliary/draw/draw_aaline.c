@@ -61,6 +61,8 @@ struct aaline_fragment_shader
    void *aaline_fs;
    void *aapoint_fs; /* not yet */
    void *sprite_fs; /* not yet */
+   uint sampler_unit;
+   int generic_attrib;  /**< texcoord/generic used for texture */
 };
 
 
@@ -117,7 +119,8 @@ struct aa_transform_context {
    struct tgsi_transform_context base;
    uint tempsUsed;  /**< bitmask */
    int colorOutput; /**< which output is the primary color */
-   int maxSampler;  /**< max sampler index found */
+   uint samplersUsed;  /**< bitfield of samplers used */
+   int freeSampler;  /** an available sampler for the pstipple */
    int maxInput, maxGeneric;  /**< max input index found */
    int colorTemp, texTemp;  /**< temp registers */
    boolean firstInstruction;
@@ -140,8 +143,11 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
       aactx->colorOutput = decl->u.DeclarationRange.First;
    }
    else if (decl->Declaration.File == TGSI_FILE_SAMPLER) {
-      if ((int) decl->u.DeclarationRange.Last > aactx->maxSampler)
-         aactx->maxSampler = decl->u.DeclarationRange.Last + 1;
+      uint i;
+      for (i = decl->u.DeclarationRange.First;
+           i <= decl->u.DeclarationRange.Last; i++) {
+         aactx->samplersUsed |= 1 << i;
+      }
    }
    else if (decl->Declaration.File == TGSI_FILE_INPUT) {
       if ((int) decl->u.DeclarationRange.Last > aactx->maxInput)
@@ -164,6 +170,21 @@ aa_transform_decl(struct tgsi_transform_context *ctx,
 
 
 /**
+ * Find the lowest zero bit in the given word, or -1 if bitfield is all ones.
+ */
+static int
+free_bit(uint bitfield)
+{
+   int i;
+   for (i = 0; i < 32; i++) {
+      if ((bitfield & (1 << i)) == 0)
+         return i;
+   }
+   return -1;
+}
+
+
+/**
  * TGSI instruction transform callback.
  * Replace writes to result.color w/ a temp reg.
  * Upon END instruction, insert texture sampling code for antialiasing.
@@ -179,6 +200,11 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
 
       struct tgsi_full_declaration decl;
       uint i;
+
+      /* find free sampler */
+      aactx->freeSampler = free_bit(aactx->samplersUsed);
+      if (aactx->freeSampler >= PIPE_MAX_SAMPLERS)
+         aactx->freeSampler = PIPE_MAX_SAMPLERS - 1;
 
       /* find two free temp regs */
       for (i = 0; i < 32; i++) {
@@ -212,7 +238,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       decl = tgsi_default_full_declaration();
       decl.Declaration.File = TGSI_FILE_SAMPLER;
       decl.u.DeclarationRange.First = 
-      decl.u.DeclarationRange.Last = aactx->maxSampler + 1;
+      decl.u.DeclarationRange.Last = aactx->freeSampler;
       ctx->emit_declaration(ctx, &decl);
 
       /* declare new temp regs */
@@ -246,7 +272,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
       newInst.FullSrcRegisters[0].SrcRegister.File = TGSI_FILE_INPUT;
       newInst.FullSrcRegisters[0].SrcRegister.Index = aactx->maxInput + 1;
       newInst.FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      newInst.FullSrcRegisters[1].SrcRegister.Index = aactx->maxSampler + 1;
+      newInst.FullSrcRegisters[1].SrcRegister.Index = aactx->freeSampler;
 
       ctx->emit_instruction(ctx, &newInst);
 
@@ -311,7 +337,7 @@ static void
 generate_aaline_fs(struct aaline_stage *aaline)
 {
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
-   struct draw_context *draw = aaline->stage.draw;
+   //struct draw_context *draw = aaline->stage.draw;
    struct pipe_shader_state aaline_fs;
    struct aa_transform_context transform;
 
@@ -322,7 +348,6 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    memset(&transform, 0, sizeof(transform));
    transform.colorOutput = -1;
-   transform.maxSampler = -1;
    transform.maxInput = -1;
    transform.maxGeneric = -1;
    transform.colorTemp = -1;
@@ -340,14 +365,12 @@ generate_aaline_fs(struct aaline_stage *aaline)
    tgsi_dump(aaline_fs.tokens, 0);
 #endif
 
+   aaline->fs->sampler_unit = transform.freeSampler;
+
    aaline->fs->aaline_fs
       = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
 
-   /* advertise the extra post-transform vertex attributes which will have
-    * the texcoords.
-    */
-   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_vp_outputs.semantic_index = transform.maxGeneric + 1;
+   aaline->fs->generic_attrib = transform.maxGeneric + 1;
 }
 
 
@@ -602,7 +625,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    auto struct aaline_stage *aaline = aaline_stage(stage);
    struct draw_context *draw = stage->draw;
    struct pipe_context *pipe = aaline->pipe;
-   uint num = MAX2(aaline->num_textures, aaline->num_samplers);
+   uint num_samplers;
 
    assert(draw->rasterizer->line_smooth);
 
@@ -611,20 +634,31 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    else
       aaline->half_line_width = 0.5f * draw->rasterizer->line_width;
 
-   aaline->tex_slot = draw->num_vs_outputs;
-   assert(aaline->tex_slot > 0); /* output[0] is vertex pos */
-   draw->extra_vp_outputs.slot = aaline->tex_slot;
-
    /*
-    * Bind our fragprog, sampler and texture
+    * Bind (generate) our fragprog, sampler and texture
     */
    bind_aaline_fragment_shader(aaline);
 
-   aaline->state.sampler[num] = aaline->sampler_cso;
-   pipe_texture_reference(&aaline->state.texture[num], aaline->texture);
+   /* update vertex attrib info */
+   aaline->tex_slot = draw->num_vs_outputs;
+   assert(aaline->tex_slot > 0); /* output[0] is vertex pos */
 
-   aaline->driver_bind_sampler_states(pipe, num + 1, aaline->state.sampler);
-   aaline->driver_set_sampler_textures(pipe, num + 1, aaline->state.texture);
+   /* advertise the extra post-transformed vertex attribute */
+   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
+   draw->extra_vp_outputs.semantic_index = aaline->fs->generic_attrib;
+   draw->extra_vp_outputs.slot = aaline->tex_slot;
+
+   /* how many samplers? */
+   /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
+   num_samplers = MAX2(aaline->num_textures, aaline->num_samplers);
+   num_samplers = MAX2(num_samplers, aaline->fs->sampler_unit + 1);
+
+   aaline->state.sampler[aaline->fs->sampler_unit] = aaline->sampler_cso;
+   pipe_texture_reference(&aaline->state.texture[aaline->fs->sampler_unit],
+                          aaline->texture);
+
+   aaline->driver_bind_sampler_states(pipe, num_samplers, aaline->state.sampler);
+   aaline->driver_set_sampler_textures(pipe, num_samplers, aaline->state.texture);
 
    /* now really draw first line */
    stage->line = aaline_line;

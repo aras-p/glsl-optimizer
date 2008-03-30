@@ -232,7 +232,7 @@ struct i915_context
    struct pipe_scissor_state scissor;
    struct i915_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
 
    unsigned dirty;
 

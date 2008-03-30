@@ -277,45 +277,49 @@ static void brw_set_viewport_state( struct pipe_context *pipe,
 }
 
 
-static void brw_set_vertex_buffer( struct pipe_context *pipe,
-				   unsigned index,
-				   const struct pipe_vertex_buffer *buffer )
+static void brw_set_vertex_buffers(struct pipe_context *pipe,
+				   unsigned count,
+				   const struct pipe_vertex_buffer *buffers)
 {
    struct brw_context *brw = brw_context(pipe);
-   brw->vb.vbo_array[index] = buffer;
+   memcpy(brw->vb.vbo_array, buffers, count * sizeof(buffers[0]));
 }
 
-static void brw_set_vertex_element(struct pipe_context *pipe,
-                                   unsigned index,
-                                   const struct pipe_vertex_element *element)
+static void brw_set_vertex_elements(struct pipe_context *pipe,
+                                    unsigned count,
+                                    const struct pipe_vertex_element *elements)
 {
    /* flush ? */
    struct brw_context *brw = brw_context(pipe);
+   uint i;
 
-   assert(index < PIPE_ATTRIB_MAX);
-   struct brw_vertex_element_state el;
-   memset(&el, 0, sizeof(el));
+   assert(count <= PIPE_MAX_ATTRIBS);
 
-   el.ve0.src_offset = element->src_offset;
-   el.ve0.src_format = brw_translate_surface_format(element->src_format);
-   el.ve0.valid = 1;
-   el.ve0.vertex_buffer_index = element->vertex_buffer_index;
+   for (i = 0; i < count; i++) {
+      struct brw_vertex_element_state el;
+      memset(&el, 0, sizeof(el));
 
-   el.ve1.dst_offset   = index * 4;
+      el.ve0.src_offset = elements[i].src_offset;
+      el.ve0.src_format = brw_translate_surface_format(elements[i].src_format);
+      el.ve0.valid = 1;
+      el.ve0.vertex_buffer_index = elements[i].vertex_buffer_index;
 
-   el.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_SRC;
-   el.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_SRC;
-   el.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_SRC;
-   el.ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_SRC;
+      el.ve1.dst_offset   = i * 4;
 
-   switch (element->nr_components) {
-   case 1: el.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_0;
-   case 2: el.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_0;
-   case 3: el.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_1_FLT;
-      break;
+      el.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_SRC;
+      el.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_SRC;
+      el.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_SRC;
+      el.ve1.vfcomponent0 = BRW_VFCOMPONENT_STORE_SRC;
+
+      switch (elements[i].nr_components) {
+      case 1: el.ve1.vfcomponent1 = BRW_VFCOMPONENT_STORE_0;
+      case 2: el.ve1.vfcomponent2 = BRW_VFCOMPONENT_STORE_0;
+      case 3: el.ve1.vfcomponent3 = BRW_VFCOMPONENT_STORE_1_FLT;
+         break;
+      }
+
+      brw->vb.inputs[i] = el;
    }
-
-   brw->vb.inputs[index] = el;
 }
 
 
@@ -457,6 +461,6 @@ brw_init_state_functions( struct brw_context *brw )
    brw->pipe.set_scissor_state = brw_set_scissor_state;
    brw->pipe.set_sampler_textures = brw_set_sampler_textures;
    brw->pipe.set_viewport_state = brw_set_viewport_state;
-   brw->pipe.set_vertex_buffer = brw_set_vertex_buffer;
-   brw->pipe.set_vertex_element = brw_set_vertex_element;
+   brw->pipe.set_vertex_buffers = brw_set_vertex_buffers;
+   brw->pipe.set_vertex_elements = brw_set_vertex_elements;
 }

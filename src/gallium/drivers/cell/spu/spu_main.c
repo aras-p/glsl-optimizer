@@ -55,13 +55,16 @@ struct spu_global spu;
 
 struct spu_vs_context draw;
 
-static unsigned char attribute_fetch_code_buffer[136 * PIPE_ATTRIB_MAX]
+static unsigned char attribute_fetch_code_buffer[136 * PIPE_MAX_ATTRIBS]
     ALIGN16_ATTRIB;
 
 static unsigned char depth_stencil_code_buffer[4 * 64]
     ALIGN16_ATTRIB;
 
 static unsigned char fb_blend_code_buffer[4 * 64]
+    ALIGN16_ATTRIB;
+
+static unsigned char logicop_code_buffer[4 * 64]
     ALIGN16_ATTRIB;
 
 
@@ -358,7 +361,7 @@ cmd_state_vs_array_info(const struct cell_array_info *vs_info)
 {
    const unsigned attr = vs_info->attr;
 
-   ASSERT(attr < PIPE_ATTRIB_MAX);
+   ASSERT(attr < PIPE_MAX_ATTRIBS);
    draw.vertex_fetch.src_ptr[attr] = vs_info->base;
    draw.vertex_fetch.pitch[attr] = vs_info->pitch;
    draw.vertex_fetch.size[attr] = vs_info->size;
@@ -511,6 +514,22 @@ cmd_batch(uint opcode)
 
          draw.vertex_fetch.code = attribute_fetch_code_buffer;
          pos += (1 + ROUNDUP8(sizeof(struct cell_attribute_fetch_code)) / 8);
+         break;
+      }
+      case CELL_CMD_STATE_LOGICOP: {
+         struct cell_command_logicop *code =
+             (struct cell_command_logicop *) &buffer[pos+1];
+
+              mfc_get(logicop_code_buffer,
+                      (unsigned int) code->base,  /* src */
+                      code->size,
+                      TAG_BATCH_BUFFER,
+                      0, /* tid */
+                      0  /* rid */);
+         wait_on_mask(1 << TAG_BATCH_BUFFER);
+
+	 spu.logicop = (logicop_func) logicop_code_buffer;
+         pos += (1 + ROUNDUP8(sizeof(struct cell_command_logicop)) / 8);
          break;
       }
       case CELL_CMD_FLUSH_BUFFER_RANGE: {

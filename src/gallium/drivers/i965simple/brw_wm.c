@@ -161,8 +161,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
       if (unit) {
 
-	 if (unit->compare &&
-             unit->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+	 if (unit->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
 	    key->shadowtex_mask |= 1<<i;
 	 }
 	 if (t->Image[0][t->BaseLevel]->InternalFormat == GL_YCBCR_MESA)

@@ -424,7 +424,7 @@ draw_passthrough_arrays(struct draw_context *draw,
 
    debug_printf("%s %d %d %d\n", __FUNCTION__, prim, start, count);
 
-   if (draw_need_pipeline(draw))
+   if (draw_need_pipeline(draw, prim))
       return FALSE;
 
    debug_printf("%s AAA\n", __FUNCTION__);

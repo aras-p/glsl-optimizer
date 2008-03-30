@@ -35,12 +35,19 @@
 
 
 void
-cell_flush(struct pipe_context *pipe, unsigned flags)
+cell_flush(struct pipe_context *pipe, unsigned flags,
+           struct pipe_fence_handle **fence)
 {
    struct cell_context *cell = cell_context(pipe);
 
+   if (fence) {
+      *fence = NULL;
+      /* XXX: Implement real fencing */
+      flags |= CELL_FLUSH_WAIT;
+   }
+
    if (flags & PIPE_FLUSH_SWAPBUFFERS)
-      flags |= PIPE_FLUSH_WAIT;
+      flags |= CELL_FLUSH_WAIT;
 
    draw_flush( cell->draw );
    cell_flush_int(pipe, flags);
@@ -58,7 +65,7 @@ cell_flush_int(struct pipe_context *pipe, unsigned flags)
    ASSERT(!flushing);
    flushing = TRUE;
 
-   if (flags & PIPE_FLUSH_WAIT) {
+   if (flags & CELL_FLUSH_WAIT) {
       uint64_t *cmd = (uint64_t *) cell_batch_alloc(cell, sizeof(uint64_t));
       *cmd = CELL_CMD_FINISH;
    }
@@ -72,7 +79,7 @@ cell_flush_int(struct pipe_context *pipe, unsigned flags)
    }
 #endif
 
-   if (flags & PIPE_FLUSH_WAIT) {
+   if (flags & CELL_FLUSH_WAIT) {
       /* Wait for ack */
       for (i = 0; i < cell->num_spus; i++) {
          uint k = wait_mbox_message(cell_global.spe_contexts[i]);

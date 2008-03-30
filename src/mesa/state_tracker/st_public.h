@@ -45,6 +45,7 @@
 struct st_context;
 struct st_framebuffer;
 struct pipe_context;
+struct pipe_fence_handle;
 struct pipe_surface;
 
 
@@ -78,7 +79,9 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read);
 
-void st_flush( struct st_context *st, uint pipeFlushFlags );
+void st_flush( struct st_context *st, uint pipeFlushFlags,
+               struct pipe_fence_handle **fence );
+void st_finish( struct st_context *st );
 
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
 void st_notify_swapbuffers_complete(struct st_framebuffer *stfb);

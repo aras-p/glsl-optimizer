@@ -114,6 +114,12 @@ combined_drawpix_fragment_program(GLcontext *ctx)
             _mesa_clone_program(ctx, &st->pixel_xfer.program->Base.Base);
       }
       else {
+#if 0
+         printf("Base program:\n");
+         _mesa_print_program(&st->fp->Base.Base);
+         printf("DrawPix program:\n");
+         _mesa_print_program(&st->pixel_xfer.program->Base.Base);
+#endif
          stfp = (struct st_fragment_program *)
             _mesa_combine_programs(ctx,
                                    &st->pixel_xfer.program->Base.Base,
@@ -731,7 +737,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint skipPixels;
    ubyte *stmap;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* map the stencil buffer */
    stmap = pipe_surface_map(ps);
@@ -946,7 +952,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    enum pipe_format srcFormat, texFormat;
 
    /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    st_validate_state(st);
 

@@ -173,4 +173,7 @@ xmesa_buffer_height(XMesaBuffer b)
 extern void
 xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf);
 
+extern int
+xmesa_check_for_xshm(XMesaDisplay *display);
+
 #endif

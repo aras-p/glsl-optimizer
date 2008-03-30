@@ -78,7 +78,7 @@ struct fetch_emit_middle_end {
       unsigned pitch;
       void (*fetch)( const void *from, float *attrib);
       void (*emit)( const float *attrib, float **out );
-   } fetch[PIPE_ATTRIB_MAX];
+   } fetch[PIPE_MAX_ATTRIBS];
    
    unsigned nr_fetch;
    unsigned hw_vertex_size;

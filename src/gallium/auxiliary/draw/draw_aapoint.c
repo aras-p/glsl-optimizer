@@ -68,6 +68,7 @@ struct aapoint_fragment_shader
    struct pipe_shader_state state;
    void *driver_fs;   /**< the regular shader */
    void *aapoint_fs;  /**< the aa point-augmented shader */
+   int generic_attrib; /**< The generic input attrib/texcoord we'll use */
 };
 
 
@@ -486,7 +487,6 @@ static void
 generate_aapoint_fs(struct aapoint_stage *aapoint)
 {
    const struct pipe_shader_state *orig_fs = &aapoint->fs->state;
-   struct draw_context *draw = aapoint->stage.draw;
    struct pipe_shader_state aapoint_fs;
    struct aa_transform_context transform;
 
@@ -510,18 +510,16 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
                          MAX, &transform.base);
 
 #if 0 /* DEBUG */
+   printf("draw_aapoint, orig shader:\n");
    tgsi_dump(orig_fs->tokens, 0);
+   printf("draw_aapoint, new shader:\n");
    tgsi_dump(aapoint_fs.tokens, 0);
 #endif
 
    aapoint->fs->aapoint_fs
       = aapoint->driver_create_fs_state(aapoint->pipe, &aapoint_fs);
 
-   /* advertise the extra post-transform vertex attributes which will have
-    * the texcoords.
-    */
-   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
-   draw->extra_vp_outputs.semantic_index = transform.maxGeneric + 1;
+   aapoint->fs->generic_attrib = transform.maxGeneric + 1;
 }
 
 
@@ -675,14 +673,18 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
    else
       aapoint->radius = 0.5f * draw->rasterizer->point_size;
 
-   aapoint->tex_slot = draw->num_vs_outputs;
-   assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
-   draw->extra_vp_outputs.slot = aapoint->tex_slot;
-
    /*
-    * Bind our fragprog.
+    * Bind (generate) our fragprog.
     */
    bind_aapoint_fragment_shader(aapoint);
+
+   /* update vertex attrib info */
+   aapoint->tex_slot = draw->num_vs_outputs;
+   assert(aapoint->tex_slot > 0); /* output[0] is vertex pos */
+
+   draw->extra_vp_outputs.semantic_name = TGSI_SEMANTIC_GENERIC;
+   draw->extra_vp_outputs.semantic_index = aapoint->fs->generic_attrib;
+   draw->extra_vp_outputs.slot = aapoint->tex_slot;
 
    /* find psize slot in post-transform vertex */
    aapoint->psize_slot = -1;

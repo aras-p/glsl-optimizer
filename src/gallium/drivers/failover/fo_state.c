@@ -402,32 +402,35 @@ failover_set_viewport_state( struct pipe_context *pipe,
 
 
 static void
-failover_set_vertex_buffer(struct pipe_context *pipe,
-			   unsigned unit,
-                           const struct pipe_vertex_buffer *vertex_buffer)
+failover_set_vertex_buffers(struct pipe_context *pipe,
+                            unsigned count,
+                            const struct pipe_vertex_buffer *vertex_buffers)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->vertex_buffer[unit] = *vertex_buffer;
+   memcpy(failover->vertex_buffers, vertex_buffers,
+          count * sizeof(vertex_buffers[0]));
    failover->dirty |= FO_NEW_VERTEX_BUFFER;
-   failover->dirty_vertex_buffer |= (1<<unit);
-   failover->sw->set_vertex_buffer( failover->sw, unit, vertex_buffer );
-   failover->hw->set_vertex_buffer( failover->hw, unit, vertex_buffer );
+   failover->num_vertex_buffers = count;
+   failover->sw->set_vertex_buffers( failover->sw, count, vertex_buffers );
+   failover->hw->set_vertex_buffers( failover->hw, count, vertex_buffers );
 }
 
 
 static void
-failover_set_vertex_element(struct pipe_context *pipe,
-			    unsigned unit,
-			    const struct pipe_vertex_element *vertex_element)
+failover_set_vertex_elements(struct pipe_context *pipe,
+                             unsigned count,
+                             const struct pipe_vertex_element *vertex_elements)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->vertex_element[unit] = *vertex_element;
+   memcpy(failover->vertex_elements, vertex_elements,
+          count * sizeof(vertex_elements[0]));
+
    failover->dirty |= FO_NEW_VERTEX_ELEMENT;
-   failover->dirty_vertex_element |= (1<<unit);
-   failover->sw->set_vertex_element( failover->sw, unit, vertex_element );
-   failover->hw->set_vertex_element( failover->hw, unit, vertex_element );
+   failover->num_vertex_elements = count;
+   failover->sw->set_vertex_elements( failover->sw, count, vertex_elements );
+   failover->hw->set_vertex_elements( failover->hw, count, vertex_elements );
 }
 
 void
@@ -474,7 +477,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_scissor_state = failover_set_scissor_state;
    failover->pipe.set_sampler_textures = failover_set_sampler_textures;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
-   failover->pipe.set_vertex_buffer = failover_set_vertex_buffer;
-   failover->pipe.set_vertex_element = failover_set_vertex_element;
+   failover->pipe.set_vertex_buffers = failover_set_vertex_buffers;
+   failover->pipe.set_vertex_elements = failover_set_vertex_elements;
    failover->pipe.set_constant_buffer = failover_set_constant_buffer;
 }

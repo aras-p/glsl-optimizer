@@ -113,15 +113,18 @@ shade_quad(
       }
    }
    else {
-      /* copy input Z (which was interpolated by the executor) to output Z */
-      uint i;
-      for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
-         /* XXX not sure the above line is always correct.  The following
-          * might be better:
-         quad->outputs.depth[i] = machine->QuadPos.xyzw[2].f[i];
-          */
-      }
+      /* compute Z values now, as in the quad earlyz stage */
+      /* XXX we should really only do this if the earlyz stage is not used */
+      const float fx = (float) quad->x0;
+      const float fy = (float) quad->y0;
+      const float dzdx = quad->posCoef->dadx[2];
+      const float dzdy = quad->posCoef->dady[2];
+      const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
+
+      quad->outputs.depth[0] = z0;
+      quad->outputs.depth[1] = z0 + dzdx;
+      quad->outputs.depth[2] = z0 + dzdy;
+      quad->outputs.depth[3] = z0 + dzdx + dzdy;
    }
 
    /* shader may cull fragments */
@@ -185,8 +188,8 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
    uint i;
 
    /* allocate storage for program inputs/outputs, aligned to 16 bytes */
-   qss->inputs = MALLOC(PIPE_ATTRIB_MAX * sizeof(*qss->inputs) + 16);
-   qss->outputs = MALLOC(PIPE_ATTRIB_MAX * sizeof(*qss->outputs) + 16);
+   qss->inputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->inputs) + 16);
+   qss->outputs = MALLOC(PIPE_MAX_ATTRIBS * sizeof(*qss->outputs) + 16);
    qss->machine.Inputs = align16(qss->inputs);
    qss->machine.Outputs = align16(qss->outputs);
 

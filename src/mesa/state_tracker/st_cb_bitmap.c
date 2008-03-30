@@ -60,6 +60,33 @@
 
 
 /**
+ * The bitmap cache attempts to accumulate multiple glBitmap calls in a
+ * buffer which is then rendered en mass upon a flush, state change, etc.
+ * A wide, short buffer is used to target the common case of a series
+ * of glBitmap calls being used to draw text.
+ */
+static GLboolean UseBitmapCache = GL_TRUE;
+
+
+#define BITMAP_CACHE_WIDTH  512
+#define BITMAP_CACHE_HEIGHT 32
+
+struct bitmap_cache
+{
+   /** Window pos to render the cached image */
+   GLint xpos, ypos;
+   /** Bounds of region used in window coords */
+   GLint xmin, ymin, xmax, ymax;
+   struct pipe_texture *texture;
+   GLboolean empty;
+   /** An I8 texture image: */
+   GLubyte buffer[BITMAP_CACHE_HEIGHT][BITMAP_CACHE_WIDTH];
+};
+
+
+
+
+/**
  * Make fragment program for glBitmap:
  *   Sample the texture and kill the fragment if the bit is 0.
  * This program will be combined with the user's fragment program.
@@ -326,7 +353,7 @@ setup_bitmap_vertex_data(struct st_context *st,
    const GLboolean invert = (st_fb_orientation(fb) == Y_0_TOP);
    const GLfloat x0 = x;
    const GLfloat x1 = x + width;
-   const GLfloat y0 = invert ? (fb->Height - y - height) : y;
+   const GLfloat y0 = invert ? ((int) fb->Height - y - height) : y;
    const GLfloat y1 = invert ? (y0 + height) : y + height;
    const GLfloat bias = st->bitmap_texcoord_bias;
    const GLfloat xBias = bias / (x1-x0);
@@ -390,16 +417,18 @@ setup_bitmap_vertex_data(struct st_context *st,
 static void
 draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                  GLsizei width, GLsizei height,
-                 struct pipe_texture *pt,
-                 struct st_fragment_program *stfp)
+                 struct pipe_texture *pt)
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = ctx->st->pipe;
    struct cso_context *cso = ctx->st->cso_context;
+   struct st_fragment_program *stfp;
    GLuint maxSize;
 
+   stfp = combined_bitmap_fragment_program(ctx);
+
    /* limit checks */
-   /* XXX if DrawPixels image is larger than max texture size, break
+   /* XXX if the bitmap is larger than the max texture size, break
     * it up into chunks.
     */
    maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
@@ -466,16 +495,215 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 }
 
 
+static void
+reset_cache(struct st_context *st)
+{
+   memset(st->bitmap.cache->buffer, 0, sizeof(st->bitmap.cache->buffer));
+   st->bitmap.cache->empty = GL_TRUE;
 
+   st->bitmap.cache->xmin = 1000000;
+   st->bitmap.cache->xmax = -1000000;
+   st->bitmap.cache->ymin = 1000000;
+   st->bitmap.cache->ymax = -1000000;
+}
+
+
+static void
+init_bitmap_cache(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   enum pipe_format format;
+
+   st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
+   if (!st->bitmap.cache)
+      return;
+
+   /* find a usable texture format */
+   if (screen->is_format_supported(screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE)) {
+      format = PIPE_FORMAT_U_I8;
+   }
+   else {
+      /* XXX support more formats */
+      assert(0);
+   }
+
+   st->bitmap.cache->texture
+      = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
+                          BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT, 1, 0);
+   if (!st->bitmap.cache->texture) {
+      FREE(st->bitmap.cache);
+      st->bitmap.cache = NULL;
+      return;
+   }
+
+   reset_cache(st);
+}
+
+
+/**
+ * If there's anything in the bitmap cache, draw/flush it now.
+ */
+void
+st_flush_bitmap_cache(struct st_context *st)
+{
+   if (!st->bitmap.cache->empty) {
+      struct bitmap_cache *cache = st->bitmap.cache;
+      struct pipe_context *pipe = st->pipe;
+      struct pipe_screen *screen = pipe->screen;
+      struct pipe_surface *surf;
+      void *dest;
+
+      assert(cache->xmin <= cache->xmax);
+      /*
+      printf("flush size %d x %d  at %d, %d\n",
+             cache->xmax - cache->xmin,
+             cache->ymax - cache->ymin,
+             cache->xpos, cache->ypos);
+      */
+
+      /* update the texture map image */
+      surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
+      dest = pipe_surface_map(surf);
+      memcpy(dest, cache->buffer, sizeof(cache->buffer));
+      pipe_surface_unmap(surf);
+      pipe_surface_reference(&surf, NULL);
+
+      pipe->texture_update(pipe, cache->texture, 0, 0x1);
+
+      draw_bitmap_quad(st->ctx,
+                       cache->xpos,
+                       cache->ypos,
+                       st->ctx->Current.RasterPos[2],
+                       BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
+                       cache->texture);
+
+      reset_cache(st);
+   }
+}
+
+
+/**
+ * Try to accumulate this glBitmap call in the bitmap cache.
+ * \return  GL_TRUE for success, GL_FALSE if bitmap is too large, etc.
+ */
+static GLboolean
+accum_bitmap(struct st_context *st,
+             GLint x, GLint y, GLsizei width, GLsizei height,
+             const struct gl_pixelstore_attrib *unpack,
+             const GLubyte *bitmap )
+{
+   struct bitmap_cache *cache = st->bitmap.cache;
+   int row, col;
+   int px = -999, py;
+
+   if (width > BITMAP_CACHE_WIDTH ||
+       height > BITMAP_CACHE_HEIGHT)
+      return GL_FALSE; /* too big to cache */
+
+   if (!cache->empty) {
+      px = x - cache->xpos;  /* pos in buffer */
+      py = y - cache->ypos;
+      if (px < 0 || px + width > BITMAP_CACHE_WIDTH ||
+          py < 0 || py + height > BITMAP_CACHE_HEIGHT) {
+         /* This bitmap would extend beyond cache bounds,
+          * so flush and continue.
+          */
+         st_flush_bitmap_cache(st);
+      }
+   }
+
+   if (cache->empty) {
+      /* Initialize.  Center bitmap vertically in the buffer. */
+      px = 0;
+      py = (BITMAP_CACHE_HEIGHT - height) / 2;
+      cache->xpos = x;
+      cache->ypos = y - py;
+      cache->empty = GL_FALSE;
+   }
+
+   assert(px != -999);
+
+   if (x < cache->xmin)
+      cache->xmin = x;
+   if (y < cache->ymin)
+      cache->ymin = y;
+   if (x + width > cache->xmax)
+      cache->xmax = x + width;
+   if (y + height > cache->ymax)
+      cache->ymax = y + height;
+
+   /* XXX try to combine this code with code in make_bitmap_texture() */
+#define SET_PIXEL(COL, ROW) \
+   cache->buffer[py + (ROW)][px + (COL)] = 0xff;
+
+   for (row = 0; row < height; row++) {
+      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
+
+      if (unpack->LsbFirst) {
+         /* Lsb first */
+         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
+
+            if (mask == 128U) {
+               src++;
+               mask = 1U;
+            }
+            else {
+               mask = mask << 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 1)
+            src++;
+      }
+      else {
+         /* Msb first */
+         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
+
+            if (mask == 1U) {
+               src++;
+               mask = 128U;
+            }
+            else {
+               mask = mask >> 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 128)
+            src++;
+      }
+
+   } /* row */
+
+   return GL_TRUE; /* accumulated */
+}
+
+
+
+/**
+ * Called via ctx->Driver.Bitmap()
+ */
 static void
 st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
-   struct st_fragment_program *stfp;
    struct st_context *st = ctx->st;
    struct pipe_texture *pt;
 
-   stfp = combined_bitmap_fragment_program(ctx);
+   st_validate_state(st);
 
    if (!st->bitmap.vs) {
       /* create pass-through vertex shader now */
@@ -485,28 +713,40 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const uint semantic_indexes[] = { 0, 0, 0 };
       st->bitmap.vs = util_make_vertex_passthrough_shader(st->pipe, 3,
                                                           semantic_names,
-                                                          semantic_indexes);
+                                                          semantic_indexes,
+                                                          &st->bitmap.vert_shader);
    }
 
-   st_validate_state(st);
+   if (UseBitmapCache && accum_bitmap(st, x, y, width, height, unpack, bitmap))
+      return;
 
    pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
    if (pt) {
+      assert(pt->target == PIPE_TEXTURE_2D);
       draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                       width, height,
-                       pt, stfp);
+                       width, height, pt);
       pipe_texture_reference(&pt, NULL);
    }
 }
 
 
-
-void st_init_bitmap_functions(struct dd_function_table *functions)
+/** Per-context init */
+void
+st_init_bitmap_functions(struct dd_function_table *functions)
 {
    functions->Bitmap = st_Bitmap;
 }
 
 
+/** Per-context init */
+void
+st_init_bitmap(struct st_context *st)
+{
+   init_bitmap_cache(st);
+}
+
+
+/** Per-context tear-down */
 void
 st_destroy_bitmap(struct st_context *st)
 {
@@ -524,9 +764,15 @@ st_destroy_bitmap(struct st_context *st)
       pipe->delete_vs_state(pipe, st->bitmap.vs);
       st->bitmap.vs = NULL;
    }
+
    if (st->bitmap.vbuf) {
       pipe->winsys->buffer_destroy(pipe->winsys, st->bitmap.vbuf);
       st->bitmap.vbuf = NULL;
    }
-}
 
+   if (st->bitmap.cache) {
+      pipe_texture_release(&st->bitmap.cache->texture);
+      FREE(st->bitmap.cache);
+      st->bitmap.cache = NULL;
+   }
+}

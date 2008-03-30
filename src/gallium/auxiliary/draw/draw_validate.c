@@ -32,6 +32,22 @@
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 
+static boolean points( unsigned prim )
+{
+   return (prim == PIPE_PRIM_POINTS);
+}
+
+static boolean lines( unsigned prim )
+{
+   return (prim == PIPE_PRIM_LINES ||
+           prim == PIPE_PRIM_LINE_STRIP ||
+           prim == PIPE_PRIM_LINE_LOOP);
+}
+
+static boolean triangles( unsigned prim )
+{
+   return prim >= PIPE_PRIM_TRIANGLES;
+}
 
 /**
  * Check if we need any special pipeline stages, or whether
@@ -40,48 +56,63 @@
  * pipeline stages.
  */
 boolean
-draw_need_pipeline(const struct draw_context *draw)
+draw_need_pipeline(const struct draw_context *draw, 
+                   unsigned int prim )
 {
-   /* line stipple */
-   if (draw->rasterizer->line_stipple_enable && draw->line_stipple)
-      return TRUE;
+   /* Don't have to worry about triangles turning into lines/points
+    * and triggering the pipeline, because we have to trigger the
+    * pipeline *anyway* if unfilled mode is active.
+    */
+   if (lines(prim)) 
+   {
+      /* line stipple */
+      if (draw->rasterizer->line_stipple_enable && draw->line_stipple)
+         return TRUE;
 
-   /* wide lines */
-   if (draw->rasterizer->line_width > draw->wide_line_threshold)
-      return TRUE;
+      /* wide lines */
+      if (draw->rasterizer->line_width > draw->wide_line_threshold)
+         return TRUE;
 
-   /* large points */
-   if (draw->rasterizer->point_size > draw->wide_point_threshold)
-      return TRUE;
+      /* AA lines */
+      if (draw->rasterizer->line_smooth && draw->pipeline.aaline)
+         return TRUE;
+   }
 
-   /* AA lines */
-   if (draw->rasterizer->line_smooth && draw->pipeline.aaline)
-      return TRUE;
+   if (points(prim))
+   {
+      /* large points */
+      if (draw->rasterizer->point_size > draw->wide_point_threshold)
+         return TRUE;
 
-   /* AA points */
-   if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
-      return TRUE;
+      /* AA points */
+      if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
+         return TRUE;
 
-   /* polygon stipple */
-   if (draw->rasterizer->poly_stipple_enable && draw->pipeline.pstipple)
-      return TRUE;
+      /* point sprites */
+      if (draw->rasterizer->point_sprite && draw->point_sprite)
+         return TRUE;
+   }
 
-   /* unfilled polygons */
-   if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL)
-      return TRUE;
 
-   /* polygon offset */
-   if (draw->rasterizer->offset_cw || draw->rasterizer->offset_ccw)
-      return TRUE;
+   if (triangles(prim)) 
+   {
+      /* polygon stipple */
+      if (draw->rasterizer->poly_stipple_enable && draw->pipeline.pstipple)
+         return TRUE;
 
-   /* point sprites */
-   if (draw->rasterizer->point_sprite && draw->point_sprite)
-      return TRUE;
+      /* unfilled polygons */
+      if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
+          draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL)
+         return TRUE;
+      
+      /* polygon offset */
+      if (draw->rasterizer->offset_cw || draw->rasterizer->offset_ccw)
+         return TRUE;
 
-   /* two-side lighting */
-   if (draw->rasterizer->light_twoside)
-      return TRUE;
+      /* two-side lighting */
+      if (draw->rasterizer->light_twoside)
+         return TRUE;
+   }
 
    /* polygon cull - this is difficult - hardware can cull just fine
     * most of the time (though sometimes CULL_NEITHER is unsupported.

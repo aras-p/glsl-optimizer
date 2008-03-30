@@ -51,7 +51,6 @@ extern "C" {
    debug_free( __FILE__, __LINE__, __FUNCTION__,  _ptr )
 #define REALLOC( _ptr, _old_size, _size ) \
    debug_realloc( __FILE__, __LINE__, __FUNCTION__,  _ptr, _old_size, _size )
-#define GETENV( X ) NULL
 
 #else
    
@@ -118,8 +117,6 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
    return new_ptr;
 }
 
-#define GETENV( X )  NULL
-
 #else /* !WIN32 */
 
 #define MALLOC( SIZE )  malloc( SIZE )
@@ -130,14 +127,14 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define REALLOC( OLDPTR, OLDSIZE, NEWSIZE )  realloc( OLDPTR, NEWSIZE )
 
-#define GETENV( X )  getenv( X )
-
 #endif /* !WIN32 */
 #endif /* !DEBUG */
 
 #define MALLOC_STRUCT(T)   (struct T *) MALLOC(sizeof(struct T))
 
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
+
+#define GETENV( X ) debug_get_option( X, NULL )
 
 
 /**

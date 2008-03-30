@@ -271,6 +271,10 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_U_I8;
    case MESA_FORMAT_Z16:
       return PIPE_FORMAT_Z16_UNORM;
+   case MESA_FORMAT_Z32:
+      return PIPE_FORMAT_Z32_UNORM;
+   case MESA_FORMAT_Z24_S8:
+      return PIPE_FORMAT_Z24S8_UNORM;
    default:
       assert(0);
       return 0;
@@ -281,7 +285,7 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
  * Find an RGBA format supported by the context/winsys.
  */
 static GLuint
-default_rgba_format(struct pipe_context *pipe, uint type)
+default_rgba_format(struct pipe_screen *screen, uint type)
 {
    static const enum pipe_format colorFormats[] = {
       PIPE_FORMAT_A8R8G8B8_UNORM,
@@ -289,7 +293,6 @@ default_rgba_format(struct pipe_context *pipe, uint type)
       PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM
    };
-   struct pipe_screen *screen = pipe->screen;
    uint i;
    for (i = 0; i < Elements(colorFormats); i++) {
       if (screen->is_format_supported( screen, colorFormats[i], type )) {
@@ -304,9 +307,8 @@ default_rgba_format(struct pipe_context *pipe, uint type)
  * Search list of formats for first RGBA format with >8 bits/channel.
  */
 static GLuint
-default_deep_rgba_format(struct pipe_context *pipe, uint type)
+default_deep_rgba_format(struct pipe_screen *screen, uint type)
 {
-   struct pipe_screen *screen = pipe->screen;
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, type)) {
       return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
@@ -318,7 +320,7 @@ default_deep_rgba_format(struct pipe_context *pipe, uint type)
  * Find an Z format supported by the context/winsys.
  */
 static GLuint
-default_depth_format(struct pipe_context *pipe, uint type)
+default_depth_format(struct pipe_screen *screen, uint type)
 {
    static const enum pipe_format zFormats[] = {
       PIPE_FORMAT_Z16_UNORM,
@@ -326,7 +328,6 @@ default_depth_format(struct pipe_context *pipe, uint type)
       PIPE_FORMAT_S8Z24_UNORM,
       PIPE_FORMAT_Z24S8_UNORM
    };
-   struct pipe_screen *screen = pipe->screen;
    uint i;
    for (i = 0; i < Elements(zFormats); i++) {
       if (screen->is_format_supported( screen, zFormats[i], type )) {
@@ -338,15 +339,16 @@ default_depth_format(struct pipe_context *pipe, uint type)
 
 
 /**
- * Choose the PIPE_FORMAT_ to use for user-created renderbuffers.
- *
- * \return PIPE_FORMAT_NONE if error/problem.
+ * Given an OpenGL internalFormat value for a texture or surface, return
+ * the best matching PIPE_FORMAT_x, or PIPE_FORMAT_NONE if there's no match.
  */
-enum pipe_format
-st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
+static enum pipe_format
+choose_format(struct pipe_context *pipe, GLint internalFormat, uint surfType)
 {
    struct pipe_screen *screen = pipe->screen;
-   uint surfType = PIPE_SURFACE;
+
+   assert(surfType == PIPE_SURFACE ||
+          surfType == PIPE_TEXTURE);
 
    switch (internalFormat) {
    case 4:
@@ -358,26 +360,26 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
    case GL_RGBA16:
-      return default_deep_rgba_format( pipe, surfType );
+      return default_deep_rgba_format( screen, surfType );
 
    case GL_RGBA4:
    case GL_RGBA2:
       if (screen->is_format_supported( screen, PIPE_FORMAT_A4R4G4B4_UNORM, surfType ))
          return PIPE_FORMAT_A4R4G4B4_UNORM;
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
    case GL_RGB5_A1:
       if (screen->is_format_supported( screen, PIPE_FORMAT_A1R5G5B5_UNORM, surfType ))
          return PIPE_FORMAT_A1R5G5B5_UNORM;
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
    case GL_RGB5:
    case GL_RGB4:
@@ -386,7 +388,7 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
          return PIPE_FORMAT_A1R5G5B5_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_R5G6B5_UNORM, surfType ))
          return PIPE_FORMAT_R5G6B5_UNORM;
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -396,7 +398,7 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
    case GL_COMPRESSED_ALPHA:
       if (screen->is_format_supported( screen, PIPE_FORMAT_U_A8, surfType ))
          return PIPE_FORMAT_U_A8;
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
    case 1:
    case GL_LUMINANCE:
@@ -406,8 +408,8 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
       if (screen->is_format_supported( screen, PIPE_FORMAT_U_L8, surfType ))
-         return PIPE_FORMAT_U_A8;
-      return default_rgba_format( pipe, surfType );
+         return PIPE_FORMAT_U_L8;
+      return default_rgba_format( screen, surfType );
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -420,7 +422,7 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
    case GL_COMPRESSED_LUMINANCE_ALPHA:
       if (screen->is_format_supported( screen, PIPE_FORMAT_U_A8_L8, surfType ))
          return PIPE_FORMAT_U_A8_L8;
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -430,32 +432,32 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
    case GL_COMPRESSED_INTENSITY:
       if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, surfType ))
          return PIPE_FORMAT_U_I8;
-      return default_rgba_format( pipe, surfType );
+      return default_rgba_format( screen, surfType );
 
-#if 0
-   /* not supported for renderbuffers */
    case GL_YCBCR_MESA:
       return PIPE_FORMAT_NONE;
-   case GL_COMPRESSED_RGB_FXT1_3DFX:
-      return &_mesa_texformat_rgb_fxt1;
-   case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      return &_mesa_texformat_rgba_fxt1;
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgb_dxt1;
+      return PIPE_FORMAT_DXT1_RGB;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgba_dxt1;
+      return PIPE_FORMAT_DXT1_RGBA;
 
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      return &_mesa_texformat_rgba_dxt3;
+      return PIPE_FORMAT_DXT3_RGBA;
 
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return &_mesa_texformat_rgba_dxt5;
+      return PIPE_FORMAT_DXT5_RGBA;
+
+#if 0
+   case GL_COMPRESSED_RGB_FXT1_3DFX:
+      return PIPE_FORMAT_RGB_FXT1;
+   case GL_COMPRESSED_RGBA_FXT1_3DFX:
+      return PIPE_FORMAT_RGB_FXT1;
 #endif
 
    case GL_DEPTH_COMPONENT16:
@@ -473,7 +475,7 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
          return PIPE_FORMAT_Z32_UNORM;
       /* fall-through */
    case GL_DEPTH_COMPONENT:
-      return default_depth_format( pipe, surfType );
+      return default_depth_format( screen, surfType );
 
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
@@ -502,155 +504,79 @@ st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
 }
 
 
-
-/* It works out that this function is fine for all the supported
- * hardware.  However, there is still a need to map the formats onto
- * hardware descriptors.
+/**
+ * Called by FBO code to choose a PIPE_FORMAT_ for drawing surfaces.
  */
-/* Note that the i915 can actually support many more formats than
- * these if we take the step of simply swizzling the colors
- * immediately after sampling...
- */
-const struct gl_texture_format *
-st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
-                       GLenum format, GLenum type)
+enum pipe_format
+st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
 {
-#if 0
-   struct intel_context *intel = intel_context(ctx);
-   const GLboolean do32bpt = (intel->intelScreen->front.cpp == 4);
-#else
-   const GLboolean do32bpt = 1;
-#endif
+   return choose_format(pipe, internalFormat, PIPE_SURFACE);
+}
 
-   (void) ctx;
 
-   switch (internalFormat) {
-   case 4:
-   case GL_RGBA:
-   case GL_COMPRESSED_RGBA:
-      if (format == GL_BGRA) {
-         if (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) {
-            return &_mesa_texformat_argb8888;
-         }
-         else if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
-            return &_mesa_texformat_argb4444;
-         }
-         else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
-            return &_mesa_texformat_argb1555;
-         }
-      }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
-
-   case 3:
-   case GL_RGB:
-   case GL_COMPRESSED_RGB:
-      if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-         return &_mesa_texformat_rgb565;
-      }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
-
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
-
-   case GL_RGBA4:
-   case GL_RGBA2:
-      return &_mesa_texformat_argb4444;
-
-   case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
-
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
+static const struct gl_texture_format *
+translate_gallium_format_to_mesa_format(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
       return &_mesa_texformat_argb8888;
-
-   case GL_RGB5:
-   case GL_RGB4:
-   case GL_R3_G3_B2:
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+      return &_mesa_texformat_argb1555;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      return &_mesa_texformat_argb4444;
+   case PIPE_FORMAT_R5G6B5_UNORM:
       return &_mesa_texformat_rgb565;
-
-   case GL_ALPHA:
-   case GL_ALPHA4:
-   case GL_ALPHA8:
-   case GL_ALPHA12:
-   case GL_ALPHA16:
-   case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_a8;
-
-   case 1:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE4:
-   case GL_LUMINANCE8:
-   case GL_LUMINANCE12:
-   case GL_LUMINANCE16:
-   case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_l8;
-
-   case 2:
-   case GL_LUMINANCE_ALPHA:
-   case GL_LUMINANCE4_ALPHA4:
-   case GL_LUMINANCE6_ALPHA2:
-   case GL_LUMINANCE8_ALPHA8:
-   case GL_LUMINANCE12_ALPHA4:
-   case GL_LUMINANCE12_ALPHA12:
-   case GL_LUMINANCE16_ALPHA16:
-   case GL_COMPRESSED_LUMINANCE_ALPHA:
+   case PIPE_FORMAT_U_A8_L8:
       return &_mesa_texformat_al88;
-
-   case GL_INTENSITY:
-   case GL_INTENSITY4:
-   case GL_INTENSITY8:
-   case GL_INTENSITY12:
-   case GL_INTENSITY16:
-   case GL_COMPRESSED_INTENSITY:
+   case PIPE_FORMAT_U_A8:
+      return &_mesa_texformat_a8;
+   case PIPE_FORMAT_U_L8:
+      return &_mesa_texformat_l8;
+   case PIPE_FORMAT_U_I8:
       return &_mesa_texformat_i8;
-
-   case GL_YCBCR_MESA:
-      if (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
-      else
-         return &_mesa_texformat_ycbcr_rev;
-
-   case GL_COMPRESSED_RGB_FXT1_3DFX:
-      return &_mesa_texformat_rgb_fxt1;
-   case GL_COMPRESSED_RGBA_FXT1_3DFX:
-      return &_mesa_texformat_rgba_fxt1;
-
-   case GL_RGB_S3TC:
-   case GL_RGB4_S3TC:
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgb_dxt1;
-
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-      return &_mesa_texformat_rgba_dxt1;
-
-   case GL_RGBA_S3TC:
-   case GL_RGBA4_S3TC:
-   case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-      return &_mesa_texformat_rgba_dxt3;
-
-   case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-      return &_mesa_texformat_rgba_dxt5;
-
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_COMPONENT16:
-   case GL_DEPTH_COMPONENT24:
-   case GL_DEPTH_COMPONENT32:
+   case PIPE_FORMAT_Z16_UNORM:
       return &_mesa_texformat_z16;
-
-   case GL_DEPTH_STENCIL_EXT:
-   case GL_DEPTH24_STENCIL8_EXT:
+   case PIPE_FORMAT_Z32_UNORM:
+      return &_mesa_texformat_z32;
+   case PIPE_FORMAT_S8Z24_UNORM:
+      /* XXX fallthrough OK? */
+   case PIPE_FORMAT_Z24S8_UNORM:
       return &_mesa_texformat_z24_s8;
-
+   case PIPE_FORMAT_YCBCR:
+      return &_mesa_texformat_ycbcr;
+   case PIPE_FORMAT_YCBCR_REV:
+      return &_mesa_texformat_ycbcr_rev;
+   case PIPE_FORMAT_DXT1_RGB:
+      return &_mesa_texformat_rgb_dxt1;
+   case PIPE_FORMAT_DXT1_RGBA:
+      return &_mesa_texformat_rgba_dxt1;
+   case PIPE_FORMAT_DXT3_RGBA:
+      return &_mesa_texformat_rgba_dxt3;
+   case PIPE_FORMAT_DXT5_RGBA:
+      return &_mesa_texformat_rgba_dxt5;
+   /* XXX add additional cases */
    default:
-      fprintf(stderr, "unexpected texture format %s in %s\n",
-              _mesa_lookup_enum_by_nr(internalFormat), __FUNCTION__);
+      assert(0);
       return NULL;
    }
+}
 
-   return NULL;                 /* never get here */
+
+/**
+ * Called via ctx->Driver.chooseTextureFormat().
+ */
+const struct gl_texture_format *
+st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
+                       GLenum format, GLenum type)
+{
+   enum pipe_format pFormat;
+
+   (void) format;
+   (void) type;
+
+   pFormat = choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE);
+   if (pFormat == PIPE_FORMAT_NONE)
+      return NULL;
+
+   return translate_gallium_format_to_mesa_format(pFormat);
 }

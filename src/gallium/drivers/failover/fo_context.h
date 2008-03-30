@@ -84,15 +84,16 @@ struct failover_context {
    struct pipe_scissor_state scissor;
    struct pipe_texture *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
-   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+   struct pipe_vertex_element vertex_elements[PIPE_MAX_ATTRIBS];
+
+   uint num_vertex_buffers;
+   uint num_vertex_elements;
 
    void *sw_sampler_state[PIPE_MAX_SAMPLERS];
    void *hw_sampler_state[PIPE_MAX_SAMPLERS];
 
    unsigned dirty;
-   unsigned dirty_vertex_buffer;
-   unsigned dirty_vertex_element;
 
    unsigned num_samplers;
    unsigned num_textures;

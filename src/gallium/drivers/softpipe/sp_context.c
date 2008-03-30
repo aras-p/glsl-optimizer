@@ -174,8 +174,8 @@ softpipe_create( struct pipe_screen *screen,
    softpipe->pipe.set_sampler_textures = softpipe_set_sampler_textures;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 
-   softpipe->pipe.set_vertex_buffer = softpipe_set_vertex_buffer;
-   softpipe->pipe.set_vertex_element = softpipe_set_vertex_element;
+   softpipe->pipe.set_vertex_buffers = softpipe_set_vertex_buffers;
+   softpipe->pipe.set_vertex_elements = softpipe_set_vertex_elements;
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;

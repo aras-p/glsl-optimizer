@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,7 @@
 #include "shader/grammar/grammar_mesa.h"
 #include "arbprogparse.h"
 #include "program.h"
+#include "programopt.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
 #include "context.h"
@@ -633,6 +634,41 @@ program_error(GLcontext *ctx, GLint position, const char *descrip)
 }
 
 
+/**
+ * As above, but with an extra string parameter for more info.
+ */
+static void
+program_error2(GLcontext *ctx, GLint position, const char *descrip,
+               const char *var)
+{
+   if (descrip) {
+      const char *prefix = "glProgramString(", *suffix = ")";
+      char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
+                                        _mesa_strlen(": ") +
+                                        _mesa_strlen(var) +
+                                        _mesa_strlen(prefix) +
+                                        _mesa_strlen(suffix) + 1);
+      if (str) {
+         _mesa_sprintf(str, "%s%s: %s%s", prefix, descrip, var, suffix);
+         _mesa_error(ctx, GL_INVALID_OPERATION, str);
+         _mesa_free(str);
+      }
+   }
+   {
+      char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
+                                        _mesa_strlen(": ") +
+                                        _mesa_strlen(var) + 1);
+      if (str) {
+         _mesa_sprintf(str, "%s: %s", descrip, var);
+      }
+      _mesa_set_program_error(ctx, position, str);
+      if (str) {
+         _mesa_free(str);
+      }
+   }
+}
+
+
 
 /**
  * constructs an integer from 4 GLubytes in LE format
@@ -1226,10 +1262,10 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
 	    state_tokens[1] = coord;
 
             /* EYE or OBJECT */
-            type = *(*inst++);
+            type = *(*inst)++;
 
             /* 0 - s, 1 - t, 2 - r, 3 - q */
-            coord = *(*inst++);
+            coord = *(*inst)++;
 
             if (type == TEX_GEN_EYE) {
                switch (coord) {
@@ -1245,6 +1281,9 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
                   case COMPONENT_W:
                      state_tokens[2] = STATE_TEXGEN_EYE_Q;
                      break;
+                  default:
+                     _mesa_problem(ctx, "bad texgen component in "
+                                   "parse_state_single_item()");
                }
             }
             else {
@@ -1261,6 +1300,9 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
                   case COMPONENT_W:
                      state_tokens[2] = STATE_TEXGEN_OBJECT_Q;
                      break;
+                  default:
+                     _mesa_problem(ctx, "bad texgen component in "
+                                   "parse_state_single_item()");
                }
             }
          }
@@ -1283,7 +1325,7 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
          break;
 
       case STATE_POINT:
-         switch (*(*inst++)) {
+         switch (*(*inst)++) {
             case POINT_SIZE:
                state_tokens[0] = STATE_POINT_SIZE;
                break;
@@ -1685,18 +1727,14 @@ parse_attrib (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head
               struct arb_program *Program)
 {
    GLuint found;
-   char *error_msg;
    struct var_cache *attrib_var;
 
    attrib_var = parse_string (inst, vc_head, Program, &found);
    Program->Position = parse_position (inst);
    if (found) {
-      error_msg = (char *)
-         _mesa_malloc (_mesa_strlen ((char *) attrib_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
-                     attrib_var->name);
-      program_error(ctx, Program->Position, error_msg);
-      _mesa_free (error_msg);
+      program_error2(ctx, Program->Position,
+                     "Duplicate variable declaration",
+                     (char *) attrib_var->name);
       return 1;
    }
 
@@ -1729,7 +1767,7 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
 {
    GLint idx;
    GLuint err = 0;
-   gl_state_index state_tokens[STATE_LENGTH];
+   gl_state_index state_tokens[STATE_LENGTH] = {0, 0, 0, 0, 0};
    GLfloat const_values[4];
 
    switch (*(*inst)++) {
@@ -1876,12 +1914,9 @@ parse_param (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
    Program->Position = parse_position (inst);
 
    if (found) {
-      char *error_msg = (char *)
-         _mesa_malloc (_mesa_strlen ((char *) param_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
-                     param_var->name);
-      program_error (ctx, Program->Position, error_msg);
-      _mesa_free (error_msg);
+      program_error2(ctx, Program->Position,
+                     "Duplicate variable declaration",
+                     (char *) param_var->name);
       return 1;
    }
 
@@ -1976,12 +2011,9 @@ parse_temp (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
       temp_var = parse_string (inst, vc_head, Program, &found);
       Program->Position = parse_position (inst);
       if (found) {
-         char *error_msg = (char *)
-            _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-         _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
-                        temp_var->name);
-         program_error(ctx, Program->Position, error_msg);
-         _mesa_free (error_msg);
+         program_error2(ctx, Program->Position,
+                        "Duplicate variable declaration",
+                        (char *) temp_var->name);
          return 1;
       }
 
@@ -2022,12 +2054,9 @@ parse_output (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head
    output_var = parse_string (inst, vc_head, Program, &found);
    Program->Position = parse_position (inst);
    if (found) {
-      char *error_msg = (char *)
-         _mesa_malloc (_mesa_strlen ((char *) output_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
-                     output_var->name);
-      program_error (ctx, Program->Position, error_msg);
-      _mesa_free (error_msg);
+      program_error2(ctx, Program->Position,
+                     "Duplicate variable declaration",
+                     (char *) output_var->name);
       return 1;
    }
 
@@ -2053,12 +2082,9 @@ parse_alias (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
    Program->Position = parse_position (inst);
 
    if (found) {
-      char *error_msg = (char *)
-         _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-      _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
-                     temp_var->name);
-      program_error(ctx, Program->Position, error_msg);
-      _mesa_free (error_msg);
+      program_error2(ctx, Program->Position,
+                    "Duplicate variable declaration",
+                     (char *) temp_var->name);
       return 1;
    }
 
@@ -2068,12 +2094,9 @@ parse_alias (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
 
    if (!found)
    {
-      char *error_msg = (char *)
-         _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-      _mesa_sprintf (error_msg, "Alias value %s is not defined",
-                     temp_var->alias_binding->name);
-      program_error (ctx, Program->Position, error_msg);
-      _mesa_free (error_msg);
+      program_error2(ctx, Program->Position,
+                     "Undefined alias value",
+                     (char *) temp_var->alias_binding->name);
       return 1;
    }
 
@@ -2096,12 +2119,9 @@ parse_address (GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_hea
       temp_var = parse_string (inst, vc_head, Program, &found);
       Program->Position = parse_position (inst);
       if (found) {
-         char *error_msg = (char *)
-            _mesa_malloc (_mesa_strlen ((char *) temp_var->name) + 40);
-         _mesa_sprintf (error_msg, "Duplicate Variable Declaration: %s",
-                        temp_var->name);
-         program_error (ctx, Program->Position, error_msg);
-         _mesa_free (error_msg);
+         program_error2(ctx, Program->Position,
+                        "Duplicate variable declaration",
+                        (char *) temp_var->name);
          return 1;
       }
 
@@ -2454,8 +2474,9 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
                Program->Position = parse_position (inst);
 
                if (!found) {
-                  program_error(ctx, Program->Position,
-                                "2: Undefined variable"); /* src->name */
+                  program_error2(ctx, Program->Position,
+                                 "Undefined variable",
+                                 (char *) src->name);
                   return 1;
                }
 
@@ -2562,23 +2583,24 @@ parse_src_reg (GLcontext * ctx, const GLubyte ** inst,
    return 0;
 }
 
+
 /**
- * Parse fragment program vector source register.
+ * Parse vertex/fragment program vector source register.
  */
 static GLuint
-parse_fp_vector_src_reg(GLcontext * ctx, const GLubyte ** inst,
-                        struct var_cache **vc_head,
-                        struct arb_program *program,
-                        struct prog_src_register *reg)
+parse_vector_src_reg(GLcontext *ctx, const GLubyte **inst,
+                     struct var_cache **vc_head,
+                     struct arb_program *program,
+                     struct prog_src_register *reg)
 {
    enum register_file file;
    GLint index;
-   GLboolean negate;
+   GLubyte negateMask;
    GLubyte swizzle[4];
    GLboolean isRelOffset;
 
    /* Grab the sign */
-   negate = (parse_sign (inst) == -1) ? 0xf : 0x0;
+   negateMask = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
 
    /* And the src reg */
    if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &isRelOffset))
@@ -2589,66 +2611,66 @@ parse_fp_vector_src_reg(GLcontext * ctx, const GLubyte ** inst,
 
    reg->File = file;
    reg->Index = index;
-   reg->NegateBase = negate;
    reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
+   reg->NegateBase = negateMask;
+   reg->RelAddr = isRelOffset;
    return 0;
 }
 
 
 /**
- * Parse fragment program destination register.
+ * Parse vertex/fragment program scalar source register.
+ */
+static GLuint
+parse_scalar_src_reg(GLcontext *ctx, const GLubyte **inst,
+                     struct var_cache **vc_head,
+                     struct arb_program *program,
+                     struct prog_src_register *reg)
+{
+   enum register_file file;
+   GLint index;
+   GLubyte negateMask;
+   GLubyte swizzle[4];
+   GLboolean isRelOffset;
+
+   /* Grab the sign */
+   negateMask = (parse_sign (inst) == -1) ? NEGATE_XYZW : NEGATE_NONE;
+
+   /* And the src reg */
+   if (parse_src_reg(ctx, inst, vc_head, program, &file, &index, &isRelOffset))
+      return 1;
+
+   /* finally, the swizzle */
+   parse_swizzle_mask(inst, swizzle, 1);
+
+   reg->File = file;
+   reg->Index = index;
+   reg->Swizzle = (swizzle[0] << 0);
+   reg->NegateBase = negateMask;
+   reg->RelAddr = isRelOffset;
+   return 0;
+}
+
+
+/**
+ * Parse vertex/fragment program destination register.
  * \return 1 if error, 0 if no error.
  */
 static GLuint 
-parse_fp_dst_reg(GLcontext * ctx, const GLubyte ** inst,
-		 struct var_cache **vc_head, struct arb_program *Program,
-		 struct prog_dst_register *reg )
+parse_dst_reg(GLcontext * ctx, const GLubyte ** inst,
+              struct var_cache **vc_head, struct arb_program *program,
+              struct prog_dst_register *reg )
 {
    GLint mask;
    GLuint idx;
    enum register_file file;
 
-   if (parse_masked_dst_reg (ctx, inst, vc_head, Program, &file, &idx, &mask))
+   if (parse_masked_dst_reg (ctx, inst, vc_head, program, &file, &idx, &mask))
       return 1;
 
    reg->File = file;
    reg->Index = idx;
    reg->WriteMask = mask;
-   return 0;
-}
-
-
-/**
- * Parse fragment program scalar src register.
- * \return 1 if error, 0 if no error.
- */
-static GLuint
-parse_fp_scalar_src_reg (GLcontext * ctx, const GLubyte ** inst,
-			 struct var_cache **vc_head,
-                         struct arb_program *Program,
-			 struct prog_src_register *reg )
-{
-   enum register_file File;
-   GLint Index;
-   GLubyte Negate;
-   GLubyte Swizzle[4];
-   GLboolean IsRelOffset;
-
-   /* Grab the sign */
-   Negate = (parse_sign (inst) == -1) ? 0x1 : 0x0;
-
-   /* And the src reg */
-   if (parse_src_reg (ctx, inst, vc_head, Program, &File, &Index, &IsRelOffset))
-      return 1;
-
-   /* finally, the swizzle */
-   parse_swizzle_mask(inst, Swizzle, 1);
-
-   reg->File = File;
-   reg->Index = Index;
-   reg->NegateBase = Negate;
-   reg->Swizzle = (Swizzle[0] << 0);
-
    return 0;
 }
 
@@ -2729,10 +2751,10 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
 
-         if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
+         if (parse_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
          break;
 
@@ -2782,10 +2804,10 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
 
-         if (parse_fp_scalar_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
+         if (parse_scalar_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
          break;
 
@@ -2798,11 +2820,11 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_fp_dst_reg(ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg(ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
 
          for (a = 0; a < 2; a++) {
-	    if (parse_fp_scalar_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[a]))
+	    if (parse_scalar_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[a]))
                return 1;
          }
          break;
@@ -2883,10 +2905,10 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
          for (a = 0; a < 2; a++) {
-	    if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[a]))
+	    if (parse_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[a]))
 	       return 1;
          }
          break;
@@ -2912,11 +2934,11 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
 
          for (a = 0; a < 3; a++) {
-	    if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[a]))
+	    if (parse_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[a]))
 	       return 1;
          }
          break;
@@ -2929,7 +2951,7 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                fp->Opcode = OPCODE_SWZ;
                break;
          }
-         if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
 
 	 {
@@ -2972,10 +2994,10 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_fp_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
+         if (parse_dst_reg (ctx, inst, vc_head, Program, &fp->DstReg))
             return 1;
 
-	 if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
+	 if (parse_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
 
          /* texImageUnit */
@@ -3047,7 +3069,7 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 
       case OP_TEX_KIL:
          Program->UsesKill = 1;
-	 if (parse_fp_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
+	 if (parse_vector_src_reg(ctx, inst, vc_head, Program, &fp->SrcReg[0]))
             return 1;
          fp->Opcode = OPCODE_KIL;
          break;
@@ -3059,23 +3081,6 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
    return 0;
 }
 
-static GLuint 
-parse_vp_dst_reg(GLcontext * ctx, const GLubyte ** inst,
-		 struct var_cache **vc_head, struct arb_program *Program,
-		 struct prog_dst_register *reg )
-{
-   GLint mask;
-   GLuint idx;
-   enum register_file file;
-
-   if (parse_masked_dst_reg(ctx, inst, vc_head, Program, &file, &idx, &mask))
-      return 1;
-
-   reg->File = file;
-   reg->Index = idx;
-   reg->WriteMask = mask;
-   return 0;
-}
 
 /**
  * Handle the parsing out of a masked address register
@@ -3104,71 +3109,6 @@ parse_vp_address_reg (GLcontext * ctx, const GLubyte ** inst,
 
    /* Writemask of .x is implied */
    reg->WriteMask = 0x1;
-   return 0;
-}
-
-/**
- * Parse vertex program vector source register.
- */
-static GLuint
-parse_vp_vector_src_reg(GLcontext * ctx, const GLubyte ** inst,
-                        struct var_cache **vc_head,
-                        struct arb_program *program,
-                        struct prog_src_register *reg )
-{
-   enum register_file file;
-   GLint index;
-   GLubyte negateMask;
-   GLubyte swizzle[4];
-   GLboolean isRelOffset;
-
-   /* Grab the sign */
-   negateMask = (parse_sign (inst) == -1) ? 0xf : 0x0;
-
-   /* And the src reg */
-   if (parse_src_reg (ctx, inst, vc_head, program, &file, &index, &isRelOffset))
-      return 1;
-
-   /* finally, the swizzle */
-   parse_swizzle_mask(inst, swizzle, 4);
-
-   reg->File = file;
-   reg->Index = index;
-   reg->Swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-                                swizzle[2], swizzle[3]);
-   reg->NegateBase = negateMask;
-   reg->RelAddr = isRelOffset;
-   return 0;
-}
-
-
-static GLuint
-parse_vp_scalar_src_reg (GLcontext * ctx, const GLubyte ** inst,
-			 struct var_cache **vc_head,
-                         struct arb_program *Program,
-			 struct prog_src_register *reg )
-{
-   enum register_file File;
-   GLint Index;
-   GLubyte Negate;
-   GLubyte Swizzle[4];
-   GLboolean IsRelOffset;
-
-   /* Grab the sign */
-   Negate = (parse_sign (inst) == -1) ? 0x1 : 0x0;
-
-   /* And the src reg */
-   if (parse_src_reg (ctx, inst, vc_head, Program, &File, &Index, &IsRelOffset))
-      return 1;
-
-   /* finally, the swizzle */
-   parse_swizzle_mask(inst, Swizzle, 1);
-
-   reg->File = File;
-   reg->Index = Index;
-   reg->Swizzle = (Swizzle[0] << 0);
-   reg->NegateBase = Negate;
-   reg->RelAddr = IsRelOffset;
    return 0;
 }
 
@@ -3209,7 +3149,7 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
          vp->DstReg.File = PROGRAM_ADDRESS;
 
          /* Get a scalar src register */
-	 if (parse_vp_scalar_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[0]))
+	 if (parse_scalar_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[0]))
             return 1;
 
          break;
@@ -3233,10 +3173,10 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
+         if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
             return 1;
 
-         if (parse_vp_vector_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[0]))
+         if (parse_vector_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[0]))
             return 1;
          break;
 
@@ -3261,10 +3201,10 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
                vp->Opcode = OPCODE_RSQ;
                break;
          }
-         if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
+         if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
             return 1;
 
-	 if (parse_vp_scalar_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[0]))
+	 if (parse_scalar_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[0]))
             return 1;
          break;
 
@@ -3274,11 +3214,11 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
                vp->Opcode = OPCODE_POW;
                break;
          }
-         if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
+         if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
             return 1;
 
          for (a = 0; a < 2; a++) {
-	    if (parse_vp_scalar_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[a]))
+	    if (parse_scalar_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[a]))
                return 1;
          }
          break;
@@ -3322,11 +3262,11 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
                vp->Opcode = OPCODE_XPD;
                break;
          }
-         if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
+         if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
             return 1;
 
          for (a = 0; a < 2; a++) {
-	    if (parse_vp_vector_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[a]))
+	    if (parse_vector_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[a]))
                return 1;
          }
          break;
@@ -3338,11 +3278,11 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
                break;
          }
 
-         if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
+         if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
             return 1;
 
          for (a = 0; a < 3; a++) {
-	    if (parse_vp_vector_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[a]))
+	    if (parse_vector_src_reg(ctx, inst, vc_head, Program, &vp->SrcReg[a]))
                return 1;
          }
          break;
@@ -3360,7 +3300,7 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
             enum register_file file;
 	    GLint index;
 
-	    if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
+	    if (parse_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
 	       return 1;
 
 	    if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &relAddr))
@@ -3794,11 +3734,11 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
          int line, col;
          char *s;
          fprintf(stderr, "program: %s\n", (char *) strz);
-         fprintf(stderr, "Error Pos: %d\n", ctx->program.ErrorPos);
-         s = (char *) _mesa_find_line_column(strz, strz+ctx->program.ErrorPos,
+         fprintf(stderr, "Error Pos: %d\n", ctx->Program.ErrorPos);
+         s = (char *) _mesa_find_line_column(strz, strz+ctx->Program.ErrorPos,
                                              &line, &col);
          fprintf(stderr, "line %d col %d: %s\n", line, col, s);
-      } while (0)
+      } while (0);
 #endif
 
       _mesa_free(strz);
@@ -3929,6 +3869,16 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
       _mesa_free_parameter_list(program->Base.Parameters);
    program->Base.Parameters    = ap.Base.Parameters;
 
+   /* Append fog instructions now if the program has "OPTION ARB_fog_exp"
+    * or similar.  We used to leave this up to drivers, but it appears
+    * there's no hardware that wants to do fog in a discrete stage separate
+    * from the fragment shader.
+    */
+   if (program->FogOption != GL_NONE) {
+      _mesa_append_fog_code(ctx, program);
+      program->FogOption = GL_NONE;
+   }
+
 #if DEBUG_FP
    _mesa_printf("____________Fragment program %u ________\n", program->Base.ID);
    _mesa_print_program(&program->Base);
@@ -3952,7 +3902,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    ASSERT(target == GL_VERTEX_PROGRAM_ARB);
 
    if (!_mesa_parse_arb_program(ctx, target, (const GLubyte*) str, len, &ap)) {
-      /* Error in the program. Just return. */
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glProgramString(bad program)");
       return;
    }
 

@@ -105,7 +105,7 @@ update_depth_stencil_alpha(struct st_context *st)
        st->ctx->Query.CurrentOcclusionObject->Active)
       dsa->depth.occlusion_count = 1;
 
-   if (st->ctx->Stencil.Enabled) {
+   if (st->ctx->Stencil.Enabled && st->ctx->Visual.stencilBits > 0) {
       dsa->stencil[0].enabled = 1;
       dsa->stencil[0].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[0]);
       dsa->stencil[0].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[0]);
@@ -124,6 +124,9 @@ update_depth_stencil_alpha(struct st_context *st)
          dsa->stencil[1].ref_value = st->ctx->Stencil.Ref[1] & 0xff;
          dsa->stencil[1].value_mask = st->ctx->Stencil.ValueMask[1] & 0xff;
          dsa->stencil[1].write_mask = st->ctx->Stencil.WriteMask[1] & 0xff;
+      }
+      else {
+         dsa->stencil[1] = dsa->stencil[0];
       }
    }
 

@@ -69,7 +69,7 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
 					start, 
 					count )) {
 
-	 failover->hw->flush( failover->hw, ~0 );
+	 failover->hw->flush( failover->hw, ~0, NULL );
 	 failover->mode = FO_SW;
       }
    }
@@ -92,7 +92,7 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
        * intervening flush.  Unlikely to be much performance impact to
        * this:
        */
-      failover->sw->flush( failover->sw, ~0 );
+      failover->sw->flush( failover->sw, ~0, NULL );
    }
 
    return TRUE;
