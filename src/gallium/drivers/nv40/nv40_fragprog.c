@@ -919,6 +919,7 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 		nv40->constbuf[PIPE_SHADER_FRAGMENT];
 	struct pipe_winsys *ws = nv40->pipe.winsys;
 	struct nouveau_stateobj *so;
+	boolean new_consts = FALSE;
 	int i;
 
 	if (fp->translated)
@@ -945,7 +946,6 @@ nv40_fragprog_validate(struct nv40_context *nv40)
 
 update_constants:
 	if (fp->nr_consts) {
-		boolean new_consts = FALSE;
 		float *map;
 		
 		map = ws->buffer_map(ws, constbuf, PIPE_BUFFER_USAGE_CPU_READ);
@@ -965,7 +965,7 @@ update_constants:
 			nv40_fragprog_upload(nv40, fp);
 	}
 
-	if (fp->so != nv40->state.hw[NV40_STATE_FRAGPROG]) {
+	if (new_consts || fp->so != nv40->state.hw[NV40_STATE_FRAGPROG]) {
 		so_ref(fp->so, &nv40->state.hw[NV40_STATE_FRAGPROG]);
 		return TRUE;
 	}
