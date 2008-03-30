@@ -40,7 +40,7 @@ nv30_draw_reset_stipple_counter(struct draw_stage *draw)
 static void
 nv30_draw_destroy(struct draw_stage *draw)
 {
-	free(draw);
+	FREE(draw);
 }
 
 struct draw_stage *

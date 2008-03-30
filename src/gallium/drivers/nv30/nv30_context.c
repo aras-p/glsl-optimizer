@@ -41,7 +41,7 @@ nv30_destroy(struct pipe_context *pipe)
 
 	nvws->grobj_free(&nv30->rankine);
 
-	free(nv30);
+	FREE(nv30);
 }
 
 static boolean

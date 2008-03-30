@@ -486,7 +486,7 @@ nv30_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv30_vertex_program *vp = hwcso;
 
 	nv30_vertprog_destroy(nv30, vp);
-	free(vp);
+	FREE(vp);
 }
 
 static void *
@@ -522,7 +522,7 @@ nv30_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv30_fragment_program *fp = hwcso;
 
 	nv30_fragprog_destroy(nv30, fp);
-	free(fp);
+	FREE(fp);
 }
 
 static void

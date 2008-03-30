@@ -753,7 +753,7 @@ nv30_fragprog_translate(struct nv30_context *nv30,
 	fp->on_hw = FALSE;
 out_err:
 	tgsi_parse_free(&parse);
-	free(fpc);
+	FREE(fpc);
 }
 
 void
@@ -829,6 +829,6 @@ nv30_fragprog_destroy(struct nv30_context *nv30,
 		      struct nv30_fragment_program *fp)
 {
 	if (fp->insn_len)
-		free(fp->insn);
+		FREE(fp->insn);
 }
 

@@ -578,7 +578,7 @@ nv30_vertprog_translate(struct nv30_context *nv30,
 	vpc->high_temp = -1;
 
 	if (!nv30_vertprog_prepare(vpc)) {
-		free(vpc);
+		FREE(vpc);
 		return;
 	}
 
@@ -634,7 +634,7 @@ nv30_vertprog_translate(struct nv30_context *nv30,
 	vp->translated = TRUE;
 out_err:
 	tgsi_parse_free(&parse);
-	free(vpc);
+	FREE(vpc);
 }
 
 void
@@ -790,8 +790,8 @@ void
 nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 {
 	if (vp->nr_consts)
-		free(vp->consts);
+		FREE(vp->consts);
 	if (vp->nr_insns)
-		free(vp->insns);
+		FREE(vp->insns);
 }
 
