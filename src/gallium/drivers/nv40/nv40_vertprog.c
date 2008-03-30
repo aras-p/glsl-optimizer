@@ -425,7 +425,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 
 	struct {
 		struct nv40_sreg dst;
-		unsigned c, m;
+		unsigned m;
 	} clip;
 
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
@@ -503,14 +503,13 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 
 	/* If writing to clip distance regs, need to modify instruction to
 	 * change which component is written to.  On NV40 the clip regs
-	 * are the unused components (yzw) of FOGC/PSZ
+	 * are the unused components (yzw) of FOGC/PSZ.
 	 */
 	clip.dst = none;
 	if (dst.type == NV40SR_OUTPUT &&
 	    dst.index >= NV40_VP_INST_DEST_CLIP(0) &&
 	    dst.index <= NV40_VP_INST_DEST_CLIP(5)) {
 		unsigned n = dst.index - NV40_VP_INST_DEST_CLIP(0);
-		unsigned c[] = { SWZ_Y, SWZ_Z, SWZ_W, SWZ_Y, SWZ_Z, SWZ_W };
 		unsigned m[] =
 			{ MASK_Y, MASK_Z, MASK_W, MASK_Y, MASK_Z, MASK_W };
 
@@ -524,7 +523,6 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 		case TGSI_OPCODE_LOG:
 		case TGSI_OPCODE_XPD:
 			clip.dst = dst;
-			clip.c = c[n];
 			clip.m = m[n];
 			dst = temp(vpc);
 			break;
@@ -537,10 +535,8 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 			mask = m[n];
 			break;
 		default:
-			for (i = 0; i < finst->Instruction.NumSrcRegs; i++) {
-				src[i] = nv40_sr_swz(src[i],
-						     c[n], c[n], c[n], c[n]);
-			}
+			for (i = 0; i < finst->Instruction.NumSrcRegs; i++)
+				src[i] = swz(src[i], X, X, X, X);
 			mask = m[n];
 			break;
 		}
@@ -645,8 +641,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 
 	if (clip.dst.type != NV40SR_NONE) {
 		arith(vpc, 0, OP_MOV, clip.dst, clip.m,
-		      nv40_sr_swz(dst, clip.c, clip.c, clip.c, clip.c),
-		      none, none);
+		      swz(dst, X, X, X, X), none, none);
 	}
 
 	release_temps(vpc);
