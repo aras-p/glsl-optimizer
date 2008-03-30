@@ -328,7 +328,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	struct nv40_sreg src[3], dst, tmp;
 	struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
 	int mask;
-	int ai = -1, ci = -1;
+	int ai = -1, ci = -1, ii = -1;
 	int i;
 
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
@@ -358,13 +358,21 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 				      tgsi_src(vpc, fsrc), none, none);
 			}
 			break;
-		/*XXX: index comparison is broken now that consts come from
-		 *     two different register files.
-		 */
 		case TGSI_FILE_CONSTANT:
-		case TGSI_FILE_IMMEDIATE:
-			if (ci == -1 || ci == fsrc->SrcRegister.Index) {
+			if ((ci == -1 && ii == -1) ||
+			    ci == fsrc->SrcRegister.Index) {
 				ci = fsrc->SrcRegister.Index;
+				src[i] = tgsi_src(vpc, fsrc);
+			} else {
+				src[i] = temp(vpc);
+				arith(vpc, 0, OP_MOV, src[i], MASK_ALL,
+				      tgsi_src(vpc, fsrc), none, none);
+			}
+			break;
+		case TGSI_FILE_IMMEDIATE:
+			if ((ci == -1 && ii == -1) ||
+			    ii == fsrc->SrcRegister.Index) {
+				ii = fsrc->SrcRegister.Index;
 				src[i] = tgsi_src(vpc, fsrc);
 			} else {
 				src[i] = temp(vpc);
