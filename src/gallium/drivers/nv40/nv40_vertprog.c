@@ -4,13 +4,13 @@
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_util.h"
 
 #include "nv40_context.h"
 #include "nv40_state.h"
 
 /* TODO (at least...):
  *  1. Indexed consts  + ARL
- *  2. Arb. swz/negation
  *  3. NV_vp11, NV_vp2, NV_vp3 features
  *       - extra arith opcodes
  *       - branching
@@ -322,6 +322,66 @@ tgsi_mask(uint tgsi)
 }
 
 static boolean
+src_native_swz(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc,
+	       struct nv40_sreg *src)
+{
+	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
+	struct nv40_sreg tgsi = tgsi_src(vpc, fsrc);
+	uint mask = 0, zero_mask = 0, one_mask = 0, neg_mask = 0;
+	uint neg[4] = { fsrc->SrcRegisterExtSwz.NegateX,
+			fsrc->SrcRegisterExtSwz.NegateY,
+			fsrc->SrcRegisterExtSwz.NegateZ,
+			fsrc->SrcRegisterExtSwz.NegateW };
+	uint c;
+
+	for (c = 0; c < 4; c++) {
+		switch (tgsi_util_get_full_src_register_extswizzle(fsrc, c)) {
+		case TGSI_EXTSWIZZLE_X:
+		case TGSI_EXTSWIZZLE_Y:
+		case TGSI_EXTSWIZZLE_Z:
+		case TGSI_EXTSWIZZLE_W:
+			mask |= tgsi_mask(1 << c);
+			break;
+		case TGSI_EXTSWIZZLE_ZERO:
+			zero_mask |= tgsi_mask(1 << c);
+			tgsi.swz[c] = SWZ_X;
+			break;
+		case TGSI_EXTSWIZZLE_ONE:
+			one_mask |= tgsi_mask(1 << c);
+			tgsi.swz[c] = SWZ_X;
+			break;
+		default:
+			assert(0);
+		}
+
+		if (!tgsi.negate && neg[c])
+			neg_mask |= tgsi_mask(1 << c);
+	}
+
+	if (mask == MASK_ALL && !neg_mask)
+		return TRUE;
+
+	*src = temp(vpc);
+
+	if (mask)
+		arith(vpc, 0, OP_MOV, *src, mask, tgsi, none, none);
+
+	if (zero_mask)
+		arith(vpc, 0, OP_SFL, *src, zero_mask, *src, none, none);
+
+	if (one_mask)
+		arith(vpc, 0, OP_STR, *src, one_mask, *src, none, none);
+
+	if (neg_mask) {
+		struct nv40_sreg one = temp(vpc);
+		arith(vpc, 0, OP_STR, one, neg_mask, one, none, none);
+		arith(vpc, 0, OP_MUL, *src, neg_mask, *src, neg(one), none);
+	}
+
+	return FALSE;
+}
+
+static boolean
 nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 				const struct tgsi_full_instruction *finst)
 {
@@ -347,6 +407,18 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 		const struct tgsi_full_src_register *fsrc;
 
 		fsrc = &finst->FullSrcRegisters[i];
+
+		switch (fsrc->SrcRegister.File) {
+		case TGSI_FILE_INPUT:
+		case TGSI_FILE_CONSTANT:
+		case TGSI_FILE_TEMPORARY:
+			if (!src_native_swz(vpc, fsrc, &src[i]))
+				continue;
+			break;
+		default:
+			break;
+		}
+
 		switch (fsrc->SrcRegister.File) {
 		case TGSI_FILE_INPUT:
 			if (ai == -1 || ai == fsrc->SrcRegister.Index) {
