@@ -42,6 +42,7 @@ struct nv40_vertex_program {
 
 	uint32_t ir;
 	uint32_t or;
+	uint32_t clip_ctrl;
 	struct nouveau_stateobj *so;
 };
 
