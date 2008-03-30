@@ -89,7 +89,7 @@ nv40_render_prim(struct draw_stage *stage, struct prim_header *prim,
 			NOUVEAU_ERR("AIII, missed flush\n");
 			assert(0);
 		}
-		FIRE_RING();
+		FIRE_RING(NULL);
 		nv40_state_emit(nv40);
 	}
 
@@ -275,7 +275,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 		ws->buffer_unmap(ws, nv40->constbuf[PIPE_SHADER_VERTEX]);
 
 	draw_flush(nv40->draw);
-	pipe->flush(pipe, 0);
+	pipe->flush(pipe, 0, NULL);
 
 	return TRUE;
 }

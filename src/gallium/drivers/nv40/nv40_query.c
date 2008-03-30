@@ -75,7 +75,7 @@ nv40_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 	BEGIN_RING(curie, NV40TCL_QUERY_GET, 1);
 	OUT_RING  ((0x01 << NV40TCL_QUERY_GET_UNK24_SHIFT) |
 		   ((q->object->start * 32) << NV40TCL_QUERY_GET_OFFSET_SHIFT));
-	FIRE_RING();
+	FIRE_RING(NULL);
 }
 
 static boolean

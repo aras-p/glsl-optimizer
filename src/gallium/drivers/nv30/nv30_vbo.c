@@ -229,7 +229,7 @@ nv30_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	BEGIN_RING(rankine, NV34TCL_VERTEX_BEGIN_END, 1);
 	OUT_RING  (0);
 
-	pipe->flush(pipe, 0);
+	pipe->flush(pipe, 0, NULL);
 	return TRUE;
 }
 
@@ -418,7 +418,7 @@ nv30_draw_elements(struct pipe_context *pipe,
 					  mode, start, count);
 	}
 
-	pipe->flush(pipe, 0);
+	pipe->flush(pipe, 0, NULL);
 	return TRUE;
 }
 

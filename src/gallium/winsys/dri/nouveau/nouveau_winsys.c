@@ -69,8 +69,18 @@ nouveau_pipe_push_reloc(struct nouveau_winsys *nvws, void *ptr,
 }
 
 static int
-nouveau_pipe_push_flush(struct nouveau_winsys *nvws, unsigned size)
+nouveau_pipe_push_flush(struct nouveau_winsys *nvws, unsigned size,
+			struct pipe_fence_handle **fence)
 {
+	if (fence) {
+		struct nouveau_pushbuf *pb = nvws->channel->pushbuf;
+		struct nouveau_pushbuf_priv *nvpb = nouveau_pushbuf(pb);
+		struct nouveau_fence *ref = NULL;
+
+		nouveau_fence_ref(nvpb->fence, &ref);
+		*fence = (struct pipe_fence_handle *)ref;
+	}
+
 	return nouveau_pushbuf_flush(nvws->channel, size);
 }
 

@@ -7,10 +7,10 @@
 #include "nv10_screen.h"
 
 static void
-nv10_flush(struct pipe_context *pipe, unsigned flags)
+nv10_flush(struct pipe_context *pipe, unsigned flags,
+	   struct pipe_fence_handle **fence)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nouveau_winsys *nvws = nv10->nvws;
 
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(celsius, 0x1fd8, 1);
@@ -19,18 +19,7 @@ nv10_flush(struct pipe_context *pipe, unsigned flags)
 		OUT_RING  (1);
 	}
 
-	if (flags & PIPE_FLUSH_WAIT) {
-		nvws->notifier_reset(nv10->sync, 0);
-		BEGIN_RING(celsius, 0x104, 1);
-		OUT_RING  (0);
-		BEGIN_RING(celsius, 0x100, 1);
-		OUT_RING  (0);
-	}
-
-	FIRE_RING();
-
-	if (flags & PIPE_FLUSH_WAIT)
-		nvws->notifier_wait(nv10->sync, 0, 0, 2000);
+	FIRE_RING(fence);
 }
 
 static void
@@ -253,7 +242,7 @@ nv10_init_hwctx(struct nv10_context *nv10, int celsius_class)
 	OUT_RING  (1);
 
 
-	FIRE_RING ();
+	FIRE_RING (NULL);
 	return TRUE;
 }
 

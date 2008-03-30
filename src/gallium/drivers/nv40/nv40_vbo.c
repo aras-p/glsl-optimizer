@@ -209,7 +209,7 @@ nv40_draw_arrays(struct pipe_context *pipe, unsigned mode, unsigned start,
 	BEGIN_RING(curie, NV40TCL_BEGIN_END, 1);
 	OUT_RING  (0);
 
-	pipe->flush(pipe, 0);
+	pipe->flush(pipe, 0, NULL);
 	return TRUE;
 }
 
@@ -384,7 +384,7 @@ nv40_draw_elements(struct pipe_context *pipe,
 					  mode, start, count);
 	}
 
-	pipe->flush(pipe, 0);
+	pipe->flush(pipe, 0, NULL);
 	return TRUE;
 }
 

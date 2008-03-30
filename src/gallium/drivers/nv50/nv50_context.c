@@ -7,24 +7,12 @@
 #include "nv50_screen.h"
 
 static void
-nv50_flush(struct pipe_context *pipe, unsigned flags)
+nv50_flush(struct pipe_context *pipe, unsigned flags,
+	   struct pipe_fence_handle **fence)
 {
 	struct nv50_context *nv50 = (struct nv50_context *)pipe;
-	struct nv50_screen *screen = nv50->screen;
-	struct nouveau_winsys *nvws = screen->nvws;
 	
-	if (flags & PIPE_FLUSH_WAIT) {
-		nvws->notifier_reset(screen->sync, 0);
-		BEGIN_RING(tesla, 0x104, 1);
-		OUT_RING  (0);
-		BEGIN_RING(tesla, 0x100, 1);
-		OUT_RING  (0);
-	}
-
-	FIRE_RING();
-
-	if (flags & PIPE_FLUSH_WAIT)
-		nvws->notifier_wait(screen->sync, 0, 0, 2000);
+	FIRE_RING(fence);
 }
 
 static void

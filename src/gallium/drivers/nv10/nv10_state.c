@@ -633,24 +633,22 @@ nv10_set_viewport_state(struct pipe_context *pipe,
 }
 
 static void
-nv10_set_vertex_buffer(struct pipe_context *pipe, unsigned index,
-		       const struct pipe_vertex_buffer *vb)
+nv10_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
+			const struct pipe_vertex_buffer *vb)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
-	nv10->vtxbuf[index] = *vb;
-
+	memcpy(nv10->vtxbuf, vb, sizeof(*vb) * count);
 	nv10->dirty |= NV10_NEW_ARRAYS;
 }
 
 static void
-nv10_set_vertex_element(struct pipe_context *pipe, unsigned index,
-			const struct pipe_vertex_element *ve)
+nv10_set_vertex_elements(struct pipe_context *pipe, unsigned count,
+			 const struct pipe_vertex_element *ve)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
-	nv10->vtxelt[index] = *ve;
-
+	memcpy(nv10->vtxelt, ve, sizeof(*ve) * count);
 	nv10->dirty |= NV10_NEW_ARRAYS;
 }
 
@@ -693,7 +691,7 @@ nv10_init_state_functions(struct nv10_context *nv10)
 	nv10->pipe.set_scissor_state = nv10_set_scissor_state;
 	nv10->pipe.set_viewport_state = nv10_set_viewport_state;
 
-	nv10->pipe.set_vertex_buffer = nv10_set_vertex_buffer;
-	nv10->pipe.set_vertex_element = nv10_set_vertex_element;
+	nv10->pipe.set_vertex_buffers = nv10_set_vertex_buffers;
+	nv10->pipe.set_vertex_elements = nv10_set_vertex_elements;
 }
 

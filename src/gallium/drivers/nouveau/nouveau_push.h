@@ -27,7 +27,7 @@
 #define BEGIN_RING(obj,mthd,size) do {                                         \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
 	if (pc->nvws->channel->pushbuf->remaining < ((size) + 1))              \
-		pc->nvws->push_flush(pc->nvws, ((size) + 1));                  \
+		pc->nvws->push_flush(pc->nvws, ((size) + 1), NULL);            \
 	OUT_RING((pc->obj->subc << 13) | ((size) << 18) | (mthd));             \
 	pc->nvws->channel->pushbuf->remaining -= ((size) + 1);                 \
 } while(0)
@@ -36,9 +36,9 @@
 	BEGIN_RING(obj, (mthd) | 0x40000000, (size));                          \
 } while(0)
 
-#define FIRE_RING() do {                                                       \
+#define FIRE_RING(fence) do {                                                  \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
-	pc->nvws->push_flush(pc->nvws, 0);                                     \
+	pc->nvws->push_flush(pc->nvws, 0, fence);                              \
 } while(0)
 
 #define OUT_RELOC(bo,data,flags,vor,tor) do {                                  \
@@ -73,7 +73,7 @@
 #define OUT_RELOCm(bo, flags, obj, mthd, size) do {                            \
 	NOUVEAU_PUSH_CONTEXT(pc);                                              \
 	if (pc->nvws->channel->pushbuf->remaining < ((size) + 1))              \
-		pc->nvws->push_flush(pc->nvws->channel, ((size) + 1));         \
+		pc->nvws->push_flush(pc->nvws->channel, ((size) + 1), NULL);   \
 	OUT_RELOCd((bo), (pc->obj->subc << 13) | ((size) << 18) | (mthd),      \
 		   (flags), 0, 0);                                             \
 	pc->nvws->channel->pushbuf->remaining -= ((size) + 1);                 \

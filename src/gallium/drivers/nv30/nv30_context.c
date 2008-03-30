@@ -7,10 +7,10 @@
 #include "nv30_screen.h"
 
 static void
-nv30_flush(struct pipe_context *pipe, unsigned flags)
+nv30_flush(struct pipe_context *pipe, unsigned flags,
+	   struct pipe_fence_handle **fence)
 {
 	struct nv30_context *nv30 = nv30_context(pipe);
-	struct nouveau_winsys *nvws = nv30->nvws;
 	
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(rankine, 0x1fd8, 1);
@@ -19,18 +19,7 @@ nv30_flush(struct pipe_context *pipe, unsigned flags)
 		OUT_RING  (1);
 	}
 
-	if (flags & PIPE_FLUSH_WAIT) {
-		nvws->notifier_reset(nv30->sync, 0);
-		BEGIN_RING(rankine, 0x104, 1);
-		OUT_RING  (0);
-		BEGIN_RING(rankine, 0x100, 1);
-		OUT_RING  (0);
-	}
-
-	FIRE_RING();
-
-	if (flags & PIPE_FLUSH_WAIT)
-		nvws->notifier_wait(nv30->sync, 0, 0, 2000);
+	FIRE_RING(fence);
 }
 
 static void
@@ -144,7 +133,7 @@ nv30_init_hwctx(struct nv30_context *nv30, int rankine_class)
 	BEGIN_RING(rankine, 0x1e94, 1);
 	OUT_RING  (0x13);
 
-	FIRE_RING ();
+	FIRE_RING (NULL);
 	return TRUE;
 }
 

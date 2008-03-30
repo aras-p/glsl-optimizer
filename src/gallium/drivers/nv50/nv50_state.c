@@ -422,14 +422,14 @@ nv50_set_viewport_state(struct pipe_context *pipe,
 }
 
 static void
-nv50_set_vertex_buffer(struct pipe_context *pipe, unsigned index,
-		       const struct pipe_vertex_buffer *vb)
+nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
+			const struct pipe_vertex_buffer *vb)
 {
 }
 
 static void
-nv50_set_vertex_element(struct pipe_context *pipe, unsigned index,
-			const struct pipe_vertex_element *ve)
+nv50_set_vertex_elements(struct pipe_context *pipe, unsigned count,
+			 const struct pipe_vertex_element *ve)
 {
 }
 
@@ -472,7 +472,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 	nv50->pipe.set_scissor_state = nv50_set_scissor_state;
 	nv50->pipe.set_viewport_state = nv50_set_viewport_state;
 
-	nv50->pipe.set_vertex_buffer = nv50_set_vertex_buffer;
-	nv50->pipe.set_vertex_element = nv50_set_vertex_element;
+	nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
+	nv50->pipe.set_vertex_elements = nv50_set_vertex_elements;
 }
 

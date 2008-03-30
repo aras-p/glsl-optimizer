@@ -123,7 +123,7 @@ nv40_state_validate(struct nv40_context *nv40)
 			return FALSE;
 
 		/* Attempt to go to hwtnl again */
-		nv40->pipe.flush(&nv40->pipe, 0);
+		nv40->pipe.flush(&nv40->pipe, 0, NULL);
 		nv40->dirty |= (NV40_NEW_VIEWPORT |
 				NV40_NEW_VERTPROG |
 				NV40_NEW_ARRAYS |
@@ -147,7 +147,7 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 	/* Setup for swtnl */
 	if (nv40->render_mode == HW) {
 		NOUVEAU_ERR("hw->swtnl 0x%08x\n", nv40->fallback_swtnl);
-		nv40->pipe.flush(&nv40->pipe, 0);
+		nv40->pipe.flush(&nv40->pipe, 0, NULL);
 		nv40->dirty |= (NV40_NEW_VIEWPORT |
 				NV40_NEW_VERTPROG |
 				NV40_NEW_ARRAYS |

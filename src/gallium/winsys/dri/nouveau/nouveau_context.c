@@ -282,7 +282,7 @@ nouveau_context_destroy(__DRIcontextPrivate *driContextPriv)
 
 	assert(nv);
 
-	st_flush(nv->st, PIPE_FLUSH_WAIT);
+	st_finish(nv->st);
 	st_destroy_context(nv->st);
 
 	if (nv->pctx_id >= 0) {
@@ -337,7 +337,7 @@ nouveau_context_unbind(__DRIcontextPrivate *driContextPriv)
 	struct nouveau_context *nv = driContextPriv->driverPrivate;
 	(void)nv;
 
-	st_flush(nv->st, 0);
+	st_flush(nv->st, 0, NULL);
 	return GL_TRUE;
 }
 

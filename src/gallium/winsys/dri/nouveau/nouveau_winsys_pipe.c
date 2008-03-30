@@ -164,6 +164,44 @@ nouveau_pipe_bo_unmap(struct pipe_winsys *pws, struct pipe_buffer *buf)
 	nouveau_bo_unmap(nvbuf->bo);
 }
 
+static INLINE struct nouveau_fence *
+nouveau_pipe_fence(struct pipe_fence_handle *pfence)
+{
+	return (struct nouveau_fence *)pfence;
+}
+
+static void
+nouveau_pipe_fence_reference(struct pipe_winsys *ws,
+			     struct pipe_fence_handle **ptr,
+			     struct pipe_fence_handle *pfence)
+{
+	nouveau_fence_ref((void *)pfence, (void *)ptr);
+}
+
+static int
+nouveau_pipe_fence_signalled(struct pipe_winsys *ws,
+			     struct pipe_fence_handle *pfence, unsigned flag)
+{
+	struct nouveau_pipe_winsys *nvpws = (struct nouveau_pipe_winsys *)ws;
+	struct nouveau_fence *fence = nouveau_pipe_fence(pfence);
+
+	if (nouveau_fence(fence)->signalled == 0)
+		nouveau_fence_flush(nvpws->nv->nvc->channel);
+
+	return !nouveau_fence(fence)->signalled;
+}
+
+static int
+nouveau_pipe_fence_finish(struct pipe_winsys *ws,
+			  struct pipe_fence_handle *pfence, unsigned flag)
+{
+	struct nouveau_fence *fence = nouveau_pipe_fence(pfence);
+	struct nouveau_fence *ref = NULL;
+
+	nouveau_fence_ref(fence, &ref);
+	return nouveau_fence_wait(&ref);
+}
+
 struct pipe_winsys *
 nouveau_create_pipe_winsys(struct nouveau_context *nv)
 {
@@ -188,6 +226,10 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 	pws->user_buffer_create = nouveau_pipe_bo_user_create;
 	pws->buffer_map = nouveau_pipe_bo_map;
 	pws->buffer_unmap = nouveau_pipe_bo_unmap;
+
+	pws->fence_reference = nouveau_pipe_fence_reference;
+	pws->fence_signalled = nouveau_pipe_fence_signalled;
+	pws->fence_finish = nouveau_pipe_fence_finish;
 
 	pws->get_name = nouveau_get_name;
 

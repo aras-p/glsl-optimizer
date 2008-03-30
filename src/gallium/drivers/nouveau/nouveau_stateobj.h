@@ -99,7 +99,7 @@ so_emit(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 
 	nr = so->cur - so->push;
 	if (pb->remaining < nr)
-		nvws->push_flush(nvws, nr);
+		nvws->push_flush(nvws, nr, NULL);
 	pb->remaining -= nr;
 
 	memcpy(pb->cur, so->push, nr * 4);
@@ -120,7 +120,7 @@ so_emit_reloc_markers(struct nouveau_winsys *nvws, struct nouveau_stateobj *so)
 
 	i = so->cur_reloc << 1;
 	if (nvws->channel->pushbuf->remaining < i)
-		nvws->push_flush(nvws, i);
+		nvws->push_flush(nvws, i, NULL);
 	nvws->channel->pushbuf->remaining -= i;
 
 	for (i = 0; i < so->cur_reloc; i++) {

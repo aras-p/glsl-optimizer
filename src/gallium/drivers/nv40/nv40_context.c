@@ -7,10 +7,10 @@
 #include "nv40_screen.h"
 
 static void
-nv40_flush(struct pipe_context *pipe, unsigned flags)
+nv40_flush(struct pipe_context *pipe, unsigned flags,
+	   struct pipe_fence_handle **fence)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nouveau_winsys *nvws = nv40->nvws;
 	
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(curie, 0x1fd8, 1);
@@ -19,18 +19,7 @@ nv40_flush(struct pipe_context *pipe, unsigned flags)
 		OUT_RING  (1);
 	}
 
-	if (flags & PIPE_FLUSH_WAIT) {
-		nvws->notifier_reset(nv40->screen->sync, 0);
-		BEGIN_RING(curie, 0x104, 1);
-		OUT_RING  (0);
-		BEGIN_RING(curie, 0x100, 1);
-		OUT_RING  (0);
-	}
-
-	FIRE_RING();
-
-	if (flags & PIPE_FLUSH_WAIT)
-		nvws->notifier_wait(nv40->screen->sync, 0, 0, 2000);
+	FIRE_RING(fence);
 }
 
 static void
