@@ -842,9 +842,10 @@ static GLuint *r300TranslateOpcodeSUB(struct r300_vertex_program *vp,
 	inst[3] = 0;
 #else
 	inst[0] =
-	    PVS_OP_DST_OPERAND(VE_MULTIPLY_ADD, t_dst_index(vp, &vpi->DstReg),
+	    PVS_OP_DST_OPERAND(VE_MULTIPLY_ADD,
 			       GL_FALSE,
 			       GL_FALSE,
+			       t_dst_index(vp, &vpi->DstReg),
 			       t_dst_mask(vpi->DstReg.WriteMask),
 			       t_dst_class(vpi->DstReg.File));
 	inst[1] = t_src(vp, &src[0]);
