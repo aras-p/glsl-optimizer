@@ -10,10 +10,11 @@ nv40_state_scissor_validate(struct nv40_context *nv40)
 	if (nv40->state.hw[NV40_STATE_SCISSOR] &&
 	    (rast->scissor == 0 && nv40->state.scissor_enabled == 0))
 		return FALSE;
+	nv40->state.scissor_enabled = rast->scissor;
 
 	so = so_new(3, 0);
 	so_method(so, nv40->screen->curie, NV40TCL_SCISSOR_HORIZ, 2);
-	if (rast->scissor) {
+	if (nv40->state.scissor_enabled) {
 		so_data  (so, ((s->maxx - s->minx) << 16) | s->minx);
 		so_data  (so, ((s->maxy - s->miny) << 16) | s->miny);
 	} else {
