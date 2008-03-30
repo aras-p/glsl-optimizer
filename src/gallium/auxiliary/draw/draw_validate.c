@@ -76,6 +76,10 @@ draw_need_pipeline(const struct draw_context *draw,
       /* AA lines */
       if (draw->rasterizer->line_smooth && draw->pipeline.aaline)
          return TRUE;
+
+      /* first-vertex driven flatshading */
+      if (draw->rasterizer->flatshade && draw->rasterizer->flatshade_first)
+         return TRUE;
    }
 
    if (points(prim))
@@ -111,6 +115,10 @@ draw_need_pipeline(const struct draw_context *draw,
 
       /* two-side lighting */
       if (draw->rasterizer->light_twoside)
+         return TRUE;
+
+      /* first-vertex driven flatshading */
+      if (draw->rasterizer->flatshade && draw->rasterizer->flatshade_first)
          return TRUE;
    }
 

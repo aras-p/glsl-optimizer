@@ -36,6 +36,9 @@
 #include "draw/draw_pt.h"
 
 
+/* XXX: Shouldn't those two functions below use the '>' operator???
+ */
+
 static boolean too_many_verts( struct draw_context *draw,
                                unsigned verts )
 {
