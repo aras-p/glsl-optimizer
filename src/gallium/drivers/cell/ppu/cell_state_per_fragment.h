@@ -32,7 +32,8 @@ extern void
 cell_generate_alpha_blend(struct cell_blend_state *cb);
 
 extern void
-cell_generate_logic_op(struct spe_function *f, struct pipe_blend_state *blend,
-    struct pipe_surface *surf);
+cell_generate_logic_op(struct spe_function *f,
+                       const struct pipe_blend_state *blend,
+                       struct pipe_surface *surf);
 
 #endif /* CELL_STATE_PER_FRAGMENT_H */

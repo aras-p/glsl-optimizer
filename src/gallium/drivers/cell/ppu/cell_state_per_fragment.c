@@ -1167,7 +1167,8 @@ int PC_OFFSET(const struct spe_function *f, const void *d)
  * Only two framebuffer formats are supported at this time.
  */
 void
-cell_generate_logic_op(struct spe_function *f, struct pipe_blend_state *blend,
+cell_generate_logic_op(struct spe_function *f,
+                       const struct pipe_blend_state *blend,
                        struct pipe_surface *surf)
 {
    const unsigned logic_op = (blend->logicop_enable)
