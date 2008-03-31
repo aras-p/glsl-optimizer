@@ -444,6 +444,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    cso_save_rasterizer(cso);
    cso_save_samplers(cso);
+   cso_save_sampler_textures(cso);
    cso_save_viewport(cso);
 
    /* rasterizer state: just scissor */
@@ -493,12 +494,11 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_samplers(cso);
+   cso_restore_sampler_textures(cso);
    cso_restore_viewport(cso);
    /* shaders don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
-   pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
-                              ctx->st->state.sampler_texture);
 }
 
 
