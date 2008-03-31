@@ -111,7 +111,8 @@ struct pipe_rasterizer_state
    unsigned line_stipple_pattern:16;
    unsigned line_last_pixel:1;
    unsigned bypass_clipping:1;
-   unsigned bypass_vs:1; /**< vertices are already fully transformed */
+   unsigned bypass_vs:1; /**< Skip the vertex shader.  Note that the shader is
+                            still needed though, to indicate inputs/outputs */
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
    unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
 
