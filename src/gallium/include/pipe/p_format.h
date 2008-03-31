@@ -439,7 +439,8 @@ static INLINE uint pf_get_component_bits( enum pipe_format format, uint comp )
  */
 static INLINE uint pf_get_bits( enum pipe_format format )
 {
-   if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
+   switch (pf_layout(format)) {
+   case PIPE_FORMAT_LAYOUT_RGBAZS:
       return
          pf_get_component_bits( format, PIPE_FORMAT_COMP_R ) +
          pf_get_component_bits( format, PIPE_FORMAT_COMP_G ) +
@@ -447,11 +448,11 @@ static INLINE uint pf_get_bits( enum pipe_format format )
          pf_get_component_bits( format, PIPE_FORMAT_COMP_A ) +
          pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
          pf_get_component_bits( format, PIPE_FORMAT_COMP_S );
-   }
-   else {
-      assert( pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR );
-
-      /* TODO */
+   case PIPE_FORMAT_LAYOUT_YCBCR:
+      assert( format == PIPE_FORMAT_YCBCR || format == PIPE_FORMAT_YCBCR_REV );
+      /* return effective bits per pixel */
+      return 16; 
+   default:
       assert( 0 );
       return 0;
    }
