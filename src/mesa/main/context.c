@@ -444,7 +444,6 @@ alloc_shared_state( GLcontext *ctx )
    ss->ArrayObjects = _mesa_NewHashTable();
 
 #if FEATURE_ARB_shader_objects
-   ss->ShaderProgramObjects = _mesa_NewHashTable();
    ss->ShaderObjects = _mesa_NewHashTable();
 #endif
 
@@ -524,8 +523,6 @@ cleanup:
       _mesa_DeleteHashTable (ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
-   if (ss->ShaderProgramObjects)
-      _mesa_DeleteHashTable (ss->ShaderProgramObjects);
    if (ss->ShaderObjects)
       _mesa_DeleteHashTable (ss->ShaderObjects);
 #endif
@@ -634,17 +631,14 @@ delete_shader_cb(GLuint id, void *data, void *userData)
 {
    GLcontext *ctx = (GLcontext *) userData;
    struct gl_shader *sh = (struct gl_shader *) data;
-   assert(sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER);
-   _mesa_free_shader(ctx, sh);
-}
-
-static void
-delete_shader_program_cb(GLuint id, void *data, void *userData)
-{
-   GLcontext *ctx = (GLcontext *) userData;
-   struct gl_shader_program *shProg = (struct gl_shader_program *) data;
-   assert(shProg->Type == GL_SHADER_PROGRAM_MESA);
-   _mesa_free_shader_program(ctx, shProg);
+   if (sh->Type == GL_FRAGMENT_SHADER || sh->Type == GL_VERTEX_SHADER) {
+      _mesa_free_shader(ctx, sh);
+   }
+   else {
+      struct gl_shader_program *shProg = (struct gl_shader_program *) data;
+      ASSERT(shProg->Type == GL_SHADER_PROGRAM_MESA);
+      _mesa_free_shader_program(ctx, shProg);
+   }
 }
 
 /**
@@ -727,8 +721,6 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
-   _mesa_HashDeleteAll(ss->ShaderProgramObjects, delete_shader_program_cb, ctx);
-   _mesa_DeleteHashTable(ss->ShaderProgramObjects);
    _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
    _mesa_DeleteHashTable(ss->ShaderObjects);
 #endif
