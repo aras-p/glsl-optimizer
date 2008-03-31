@@ -761,8 +761,9 @@ st_init_bitmap(struct st_context *st)
    sampler->mag_img_filter = PIPE_TEX_FILTER_NEAREST;
    sampler->normalized_coords = 1;
 
-   /* init scissor state once */
+   /* init baseline rasterizer state once */
    memset(&st->bitmap.rasterizer, 0, sizeof(st->bitmap.rasterizer));
+   st->bitmap.rasterizer.bypass_vs = 1;
 
    init_bitmap_cache(st);
 }
