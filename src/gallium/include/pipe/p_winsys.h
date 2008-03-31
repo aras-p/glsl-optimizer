@@ -73,10 +73,6 @@ struct pipe_winsys
                               struct pipe_surface *surf,
                               void *context_private );
 
-   /** Debug output */
-   void (*printf)( struct pipe_winsys *sws,
-		   const char *, ... );	
-
 
    /** allocate a new surface (no context dependency) */
    struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws);

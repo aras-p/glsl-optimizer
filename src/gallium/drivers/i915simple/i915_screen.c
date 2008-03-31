@@ -226,9 +226,8 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
       break;
 
    default:
-      winsys->printf(winsys, 
-                     "%s: unknown pci id 0x%x, cannot create screen\n", 
-                     __FUNCTION__, pci_id);
+      debug_printf("%s: unknown pci id 0x%x, cannot create screen\n", 
+                   __FUNCTION__, pci_id);
       return NULL;
    }
 

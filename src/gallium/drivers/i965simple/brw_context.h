@@ -183,12 +183,12 @@ extern int BRW_DEBUG;
 #define DEBUG_MIPTREE	0x800000
 
 #define DBG(...) do {						\
-	if (BRW_DEBUG & FILE_DEBUG_FLAG)			\
-	       brw->pipe.winsys->printf(brw->pipe.winsys, __VA_ARGS__);			\
+   if (BRW_DEBUG & FILE_DEBUG_FLAG)				\
+      debug_printf(__VA_ARGS__);				\
 } while(0)
 
 #define PRINT(...) do {						\
-	       brw->pipe.winsys->printf(brw->pipe.winsys, __VA_ARGS__);			\
+   debug_printf(brw->pipe.winsys, __VA_ARGS__);			\
 } while(0)
 
 struct brw_state_flags {
