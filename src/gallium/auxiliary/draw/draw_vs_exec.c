@@ -110,13 +110,20 @@ vs_exec_run( struct draw_vertex_shader *shader,
 
    machine->Consts = (float (*)[4]) draw->user.constants;
    machine->Inputs = ALIGN16_ASSIGN(inputs);
-   machine->Outputs = ALIGN16_ASSIGN(outputs);
+   if (draw->rasterizer->bypass_vs) {
+      /* outputs are just the inputs */
+      machine->Outputs = machine->Inputs;
+   }
+   else {
+      machine->Outputs = ALIGN16_ASSIGN(outputs);
+   }
 
    draw->vertex_fetch.fetch_func( draw, machine, elts, count );
 
-   /* run interpreter */
-   tgsi_exec_machine_run( machine );
-
+   if (!draw->rasterizer->bypass_vs) {
+      /* run interpreter */
+      tgsi_exec_machine_run( machine );
+   }
 
    /* store machine results */
    for (j = 0; j < count; j++) {
@@ -136,8 +143,13 @@ vs_exec_run( struct draw_vertex_shader *shader,
 
       if (!draw->rasterizer->bypass_clipping) {
          vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
-         vOut[j]->edgeflag = 1;
+      }
+      else {
+         vOut[j]->clipmask = 0;
+      }
+      vOut[j]->edgeflag = 1;
 
+      if (!draw->identity_viewport) {
          /* divide by w */
          w = 1.0f / w;
          x *= w;
@@ -151,8 +163,6 @@ vs_exec_run( struct draw_vertex_shader *shader,
          vOut[j]->data[0][3] = w;
       }
       else {
-         vOut[j]->clipmask = 0;
-         vOut[j]->edgeflag = 1;
          vOut[j]->data[0][0] = x;
          vOut[j]->data[0][1] = y;
          vOut[j]->data[0][2] = z;

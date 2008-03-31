@@ -126,7 +126,13 @@ vs_sse_run( struct draw_vertex_shader *base,
    /* Consts does not require 16 byte alignment. */
    machine->Consts = (float (*)[4]) draw->user.constants;
    machine->Inputs = ALIGN16_ASSIGN(inputs);
-   machine->Outputs = ALIGN16_ASSIGN(outputs);
+   if (draw->rasterizer->bypass_vs) {
+      /* outputs are just the inputs */
+      machine->Outputs = machine->Inputs;
+   }
+   else {
+      machine->Outputs = ALIGN16_ASSIGN(outputs);
+   }
 
 
    /* Fetch vertices.  This may at some point be integrated into the
@@ -137,13 +143,14 @@ vs_sse_run( struct draw_vertex_shader *base,
    draw->vertex_fetch.fetch_func( draw, machine, elts, count );
 
 
-   /* run compiled shader
-    */   
-   shader->func(
-      machine->Inputs,
-      machine->Outputs,
-      machine->Consts,
-      machine->Temps );
+   if (!draw->rasterizer->bypass_vs) {
+      /* run compiled shader
+       */   
+      shader->func(machine->Inputs,
+                   machine->Outputs,
+                   machine->Consts,
+                   machine->Temps );
+   }
 
 
    /* XXX: Computing the clipmask and emitting results should be done
@@ -161,8 +168,13 @@ vs_sse_run( struct draw_vertex_shader *base,
 
       if (!draw->rasterizer->bypass_clipping) {
          vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
-         vOut[j]->edgeflag = 1;
+      }
+      else {
+         vOut[j]->clipmask = 0;
+      }
+      vOut[j]->edgeflag = 1;
 
+      if (!draw->identity_viewport) {
          /* divide by w */
          w = 1.0f / w;
          x *= w;
@@ -176,8 +188,6 @@ vs_sse_run( struct draw_vertex_shader *base,
          vOut[j]->data[0][3] = w;
       }
       else {
-         vOut[j]->clipmask = 0;
-         vOut[j]->edgeflag = 1;
          vOut[j]->data[0][0] = x;
          vOut[j]->data[0][1] = y;
          vOut[j]->data[0][2] = z;
