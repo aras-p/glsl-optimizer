@@ -60,6 +60,19 @@
 
 
 /**
+ * glBitmaps are drawn as textured quads.  The user's bitmap pattern
+ * is stored in a texture image.  An alpha8 texture format is used.
+ * The fragment shader samples a bit (texel) from the texture, then
+ * discards the fragment if the bit is off.
+ *
+ * Note that we actually store the inverse image of the bitmap to
+ * simplify the fragment program.  An "on" bit gets stored as texel=0x0
+ * and an "off" bit is stored as texel=0xff.  Then we kill the
+ * fragment if the negated texel value is less than zero.
+ */
+
+
+/**
  * The bitmap cache attempts to accumulate multiple glBitmap calls in a
  * buffer which is then rendered en mass upon a flush, state change, etc.
  * A wide, short buffer is used to target the common case of a series
@@ -102,7 +115,7 @@ make_bitmap_fragment_program(GLcontext *ctx)
    if (!p)
       return NULL;
 
-   p->NumInstructions = 5;
+   p->NumInstructions = 3;
 
    p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
    if (!p->Instructions) {
@@ -121,33 +134,11 @@ make_bitmap_fragment_program(GLcontext *ctx)
    p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
 
-   /* SWZ tmp0.x, tmp0.x, 1111; # tmp0.x = 1.0 */
-   p->Instructions[ic].Opcode = OPCODE_SWZ;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].DstReg.WriteMask = WRITEMASK_X;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].Swizzle
-      = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
-   ic++;
-
-   /* SUB tmp0, tmp0.wwww, tmp0.xxxx;  #  tmp0.w -= 1 */
-   p->Instructions[ic].Opcode = OPCODE_SUB;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-   p->Instructions[ic].SrcReg[1].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[1].Index = 0;
-   p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
-   ic++;
-
-   /* KIL if tmp0 < 0 */
+   /* KIL if -tmp0 < 0 # texel=0 -> keep / texel=0 -> discard */
    p->Instructions[ic].Opcode = OPCODE_KIL;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
    p->Instructions[ic].SrcReg[0].Index = 0;
+   p->Instructions[ic].SrcReg[0].NegateBase = NEGATE_XYZW;
    ic++;
 
    /* END; */
@@ -289,7 +280,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] = (*src & mask) ? 255 : 0;
+            destRow[comp] = (*src & mask) ? 0x0 : 0xff;
             destRow += cpp;
 
             if (mask == 128U) {
@@ -311,7 +302,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] =(*src & mask) ? 255 : 0;
+            destRow[comp] =(*src & mask) ? 0x0 : 0xff;
             destRow += cpp;
 
             if (mask == 1U) {
@@ -505,7 +496,7 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 static void
 reset_cache(struct st_context *st)
 {
-   memset(st->bitmap.cache->buffer, 0, sizeof(st->bitmap.cache->buffer));
+   memset(st->bitmap.cache->buffer, 0xff, sizeof(st->bitmap.cache->buffer));
    st->bitmap.cache->empty = GL_TRUE;
 
    st->bitmap.cache->xmin = 1000000;
@@ -642,7 +633,7 @@ accum_bitmap(struct st_context *st,
 
    /* XXX try to combine this code with code in make_bitmap_texture() */
 #define SET_PIXEL(COL, ROW) \
-   cache->buffer[py + (ROW)][px + (COL)] = 0xff;
+   cache->buffer[py + (ROW)][px + (COL)] = 0x0;
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
