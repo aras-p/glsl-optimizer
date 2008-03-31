@@ -66,6 +66,8 @@
 
 #define CELL_MAX_SPUS 6
 
+#define CELL_MAX_SAMPLERS 4
+
 #define TILE_SIZE 32
 
 
@@ -228,8 +230,10 @@ struct cell_command_release_verts
 
 struct cell_command_texture
 {
-   void *start;         /**< Address in main memory */
-   uint width, height;
+   struct {
+      void *start;         /**< Address in main memory */
+      ushort width, height;
+   } texture[CELL_MAX_SAMPLERS];
 };
 
 

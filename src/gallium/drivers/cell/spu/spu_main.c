@@ -329,17 +329,26 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
 static void
 cmd_state_texture(const struct cell_command_texture *texture)
 {
-   if (Debug)
-      printf("SPU %u: TEXTURE at %p  size %u x %u\n",
-             spu.init.id, texture->start, texture->width, texture->height);
+   uint i;
+
+   if (1||Debug) {
+      printf("SPU %u: TEXTURE\n", spu.init.id);
+      for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
+         printf("  %d: at %p  size %u x %u\n", i, texture->texture[i].start,
+                texture->texture[i].width, texture->texture[i].height);
+      }
+   }
 
    memcpy(&spu.texture, texture, sizeof(*texture));
-   spu.tex_size = (vector float)
-      { spu.texture.width, spu.texture.height, 0.0, 0.0};
-   spu.tex_size_mask = (vector unsigned int)
-      { spu.texture.width - 1, spu.texture.height - 1, 0, 0 };
-   spu.tex_size_x_mask = spu_splats(spu.texture.width - 1);
-   spu.tex_size_y_mask = spu_splats(spu.texture.height - 1);
+   for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
+      const uint width = texture->texture[i].width;
+      const uint height = texture->texture[i].height;
+      spu.tex_size[i] = (vector float) { width, height, 0.0, 0.0};
+      spu.tex_size_mask[i] = (vector unsigned int)
+         { width - 1, height - 1, 0, 0 };
+      spu.tex_size_x_mask[i] = spu_splats(width - 1);
+      spu.tex_size_y_mask[i] = spu_splats(height - 1);
+   }
 }
 
 

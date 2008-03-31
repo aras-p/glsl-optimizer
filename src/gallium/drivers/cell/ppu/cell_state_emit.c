@@ -129,17 +129,15 @@ cell_emit_state(struct cell_context *cell)
 
    if (cell->dirty & CELL_NEW_TEXTURE) {
       struct cell_command_texture texture;
-      if (cell->texture[0]) {
-         texture.start = cell->texture[0]->tiled_data;
-         texture.width = cell->texture[0]->base.width[0];
-         texture.height = cell->texture[0]->base.height[0];
+      uint i;
+      memset(&texture, 0, sizeof(texture));
+      for (i = 0;i < CELL_MAX_SAMPLERS; i++) {
+         if (cell->texture[i]) {
+            texture.texture[i].start = cell->texture[i]->tiled_data;
+            texture.texture[i].width = cell->texture[i]->base.width[0];
+            texture.texture[i].height = cell->texture[i]->base.height[0];
+         }
       }
-      else {
-         texture.start = NULL;
-         texture.width = 0;
-         texture.height = 0;
-      }
-
       emit_state_cmd(cell, CELL_CMD_STATE_TEXTURE,
                      &texture, sizeof(struct cell_command_texture));
    }

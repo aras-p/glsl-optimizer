@@ -141,10 +141,10 @@ struct spu_global
    /** for converting RGBA to PIPE_FORMAT_x colors */
    vector unsigned char color_shuffle;
 
-   vector float tex_size;
-   vector unsigned int tex_size_mask; /**< == int(size - 1) */
-   vector unsigned int tex_size_x_mask; /**< == int(size - 1) */
-   vector unsigned int tex_size_y_mask; /**< == int(size - 1) */
+   vector float tex_size[CELL_MAX_SAMPLERS];
+   vector unsigned int tex_size_mask[CELL_MAX_SAMPLERS]; /**< == int(size - 1) */
+   vector unsigned int tex_size_x_mask[CELL_MAX_SAMPLERS]; /**< == int(size - 1) */
+   vector unsigned int tex_size_y_mask[CELL_MAX_SAMPLERS]; /**< == int(size - 1) */
 
    vector float (*sample_texture)(vector float texcoord);
 

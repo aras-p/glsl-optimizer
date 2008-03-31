@@ -40,25 +40,29 @@
 void
 invalidate_tex_cache(void)
 {
-   spu_dcache_mark_dirty((unsigned) spu.texture.start,
-                         4 * spu.texture.width * spu.texture.height);
+   uint unit = 0;
+   uint bytes = 4 * spu.texture.texture[unit].width
+      * spu.texture.texture[unit].height;
+
+   spu_dcache_mark_dirty((unsigned) spu.texture.texture[unit].start, bytes);
 }
 
 
 static uint
 get_texel(vec_uint4 coordinate)
 {
+   const uint unit = 0;
    vec_uint4 tmp;
    unsigned x = spu_extract(coordinate, 0);
    unsigned y = spu_extract(coordinate, 1);
-   const unsigned tiles_per_row = spu.texture.width / TILE_SIZE;
+   const unsigned tiles_per_row = spu.texture.texture[unit].width / TILE_SIZE;
    unsigned tile_offset = sizeof(tile_t) * ((y / TILE_SIZE * tiles_per_row) 
                                             + (x / TILE_SIZE));
    unsigned texel_offset = 4 * (((y % TILE_SIZE) * TILE_SIZE)
                                 + (x % TILE_SIZE));
 
    spu_dcache_fetch_unaligned((qword *) & tmp,
-                              spu.texture.start + tile_offset + texel_offset,
+                              spu.texture.texture[unit].start + tile_offset + texel_offset,
                               4);
    return spu_extract(tmp, 0);
 }
@@ -67,13 +71,14 @@ get_texel(vec_uint4 coordinate)
 static void
 get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 {
-   const unsigned texture_ea = (uintptr_t) spu.texture.start;
+   const uint unit = 0;
+   const unsigned texture_ea = (uintptr_t) spu.texture.texture[unit].start;
    vec_uint4 tile_x = spu_rlmask(x, -5);
    vec_uint4 tile_y = spu_rlmask(y, -5);
    const qword offset_x = si_andi((qword) x, 0x1f);
    const qword offset_y = si_andi((qword) y, 0x1f);
 
-   const qword tiles_per_row = (qword) spu_splats(spu.texture.width / TILE_SIZE);
+   const qword tiles_per_row = (qword) spu_splats(spu.texture.texture[unit].width / TILE_SIZE);
    const qword tile_size = (qword) spu_splats(sizeof(tile_t));
 
    qword tile_offset = si_mpya((qword) tile_y, tiles_per_row, (qword) tile_x);
@@ -101,9 +106,10 @@ get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 vector float
 sample_texture_nearest(vector float texcoord)
 {
-   vector float tc = spu_mul(texcoord, spu.tex_size);
+   const uint unit = 0;
+   vector float tc = spu_mul(texcoord, spu.tex_size[unit]);
    vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */
-   itc = spu_and(itc, spu.tex_size_mask);        /* mask (GL_REPEAT) */
+   itc = spu_and(itc, spu.tex_size_mask[unit]);        /* mask (GL_REPEAT) */
    uint texel = get_texel(itc);
    return spu_unpack_A8R8G8B8(texel);
 }
@@ -112,10 +118,11 @@ sample_texture_nearest(vector float texcoord)
 vector float
 sample_texture_bilinear(vector float texcoord)
 {
+   const uint unit = 0;
    static const vec_uint4 offset_x = {0, 0, 1, 1};
    static const vec_uint4 offset_y = {0, 1, 0, 1};
 
-   vector float tc = spu_mul(texcoord, spu.tex_size);
+   vector float tc = spu_mul(texcoord, spu.tex_size[unit]);
    tc = spu_add(tc, spu_splats(-0.5f));  /* half texel bias */
 
    /* integer texcoords S,T: */
@@ -129,8 +136,8 @@ sample_texture_bilinear(vector float texcoord)
    x = spu_add(x, offset_x);
    y = spu_add(y, offset_y);
 
-   x = spu_and(x, spu.tex_size_x_mask);
-   y = spu_and(y, spu.tex_size_y_mask);
+   x = spu_and(x, spu.tex_size_x_mask[unit]);
+   y = spu_and(y, spu.tex_size_y_mask[unit]);
 
    get_four_texels(x, y, texels);
 
