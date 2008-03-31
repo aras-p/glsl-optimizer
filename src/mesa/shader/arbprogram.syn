@@ -2643,14 +2643,14 @@ white_char
     ' ' .or '\t' .or '\n' .or '\r';
 
 comment_block
-    '#' .and .loop comment_char .and new_line;
+    '#' .and .loop comment_char .and optional_new_line;
 
 /* All ASCII characters except '\r', '\n' and '\0' */
 comment_char
     '\x0E'-'\xFF' .or '\x01'-'\x09' .or '\x0B'-'\x0C';
 
-new_line
-    '\n' .or crlf .or '\0';
+optional_new_line
+    '\n' .or crlf .or .true;
 
 crlf
     '\r' .and '\n';
