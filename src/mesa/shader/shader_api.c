@@ -127,6 +127,8 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    for (i = 0; i < shProg->NumShaders; i++) {
       _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
    }
+   shProg->NumShaders = 0;
+
    if (shProg->Shaders) {
       _mesa_free(shProg->Shaders);
       shProg->Shaders = NULL;
