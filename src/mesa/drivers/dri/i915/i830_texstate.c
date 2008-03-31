@@ -114,10 +114,12 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 {
    GLcontext *ctx = &intel->ctx;
    struct i830_context *i830 = i830_context(ctx);
-   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
+   struct gl_texture_unit *tUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *tObj = tUnit->_Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage;
    GLuint *state = i830->state.Tex[unit], format, pitch;
+   GLint lodbias;
 
    memset(state, 0, sizeof(state));
 
@@ -243,8 +245,14 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
          }
       }
 
-      state[I830_TEXREG_TM0S3] = i830->lodbias_tm0s3[unit];
-
+      lodbias = (int) ((tUnit->LodBias + tObj->LodBias) * 16.0);
+      if (lodbias < -64)
+          lodbias = -64;
+      if (lodbias > 63)
+          lodbias = 63;
+      
+      state[I830_TEXREG_TM0S3] = ((lodbias << TM0S3_LOD_BIAS_SHIFT) & 
+                                  TM0S3_LOD_BIAS_MASK);
 #if 0
       /* YUV conversion:
        */
