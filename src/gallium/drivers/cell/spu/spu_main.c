@@ -333,7 +333,7 @@ cmd_state_texture(const struct cell_command_texture *texture)
    const uint width = texture->width;
    const uint height = texture->height;
 
-   if (1||Debug) {
+   if (Debug) {
       printf("SPU %u: TEXTURE [%u] at %p  size %u x %u\n", spu.init.id,
              texture->unit, texture->start,
              texture->width, texture->height);
