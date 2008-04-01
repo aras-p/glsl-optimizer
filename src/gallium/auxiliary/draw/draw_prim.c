@@ -119,43 +119,6 @@ static void draw_prim_queue_flush( struct draw_context *draw )
    draw_vertex_cache_unreference( draw );
 }
 
-static INLINE void fetch_and_store(struct draw_context *draw)
-{
-   /* run vertex shader on vertex cache entries, four per invokation */
-#if 0
-   {
-      const struct vertex_info *vinfo = draw->render->get_vertex_info(draw->render);
-      memcpy(draw->vs.queue[0].vertex, draw->vs.queue[i + j].elt,
-             count * vinfo->size);
-   }
-#elif 0
-   unsigned i;
-
-   draw_update_vertex_fetch(draw);
-   for (i = 0; i < draw->vs.queue_nr; i += 4) {
-      struct vertex_header *dests[4];
-      unsigned elts[4];
-      struct tgsi_exec_machine *machine = &draw->machine;
-      int j, n = MIN2(4, draw->vs.queue_nr - i);
-
-      for (j = 0; j < n; j++) {
-         elts[j] = draw->vs.queue[i + j].elt;
-         dests[j] = draw->vs.queue[i + j].vertex;
-      }
-
-      for ( ; j < 4; j++) {
-	 elts[j] = elts[0];
-         dests[j] = draw->vs.queue[i + j].vertex;
-      }
-      //fetch directly into dests
-      draw->vertex_fetch.fetch_func(draw, machine, dests, count);
-   }
-#endif
-
-   draw->vs.post_nr = draw->vs.queue_nr;
-   draw->vs.queue_nr = 0;
-}
-
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
    if (0)
