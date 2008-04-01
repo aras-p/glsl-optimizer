@@ -167,6 +167,10 @@ draw_pt_arrays(struct draw_context *draw,
    frontend = draw->pt.front.vcache;
 #endif   
 
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
    frontend->prepare( frontend, middle );
 
    frontend->run( frontend,
