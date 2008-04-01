@@ -168,6 +168,12 @@ vs_sse_run( struct draw_vertex_shader *base,
 
       if (!draw->rasterizer->bypass_clipping) {
          vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
+
+         /* divide by w */
+         w = 1.0f / w;
+         x *= w;
+         y *= w;
+         z *= w;
       }
       else {
          vOut[j]->clipmask = 0;
@@ -175,12 +181,6 @@ vs_sse_run( struct draw_vertex_shader *base,
       vOut[j]->edgeflag = 1;
 
       if (!draw->identity_viewport) {
-         /* divide by w */
-         w = 1.0f / w;
-         x *= w;
-         y *= w;
-         z *= w;
-         
          /* Viewport mapping */
          vOut[j]->data[0][0] = x * scale[0] + trans[0];
          vOut[j]->data[0][1] = y * scale[1] + trans[1];
