@@ -83,7 +83,8 @@ void st_init_limits(struct st_context *st)
    c->MaxTextureRectSize
       = min(1 << (c->MaxTextureLevels - 1), MAX_TEXTURE_RECT_SIZE);
 
-   c->MaxTextureImageUnits
+   c->MaxTextureUnits
+      = c->MaxTextureImageUnits
       = c->MaxTextureCoordUnits
       = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
             MAX_TEXTURE_IMAGE_UNITS);
