@@ -85,6 +85,8 @@ typedef struct spu_blend_results (*logicop_func)(
     qword frag_mask);
 
 
+typedef vector float (*sample_texture_func)(uint unit, vector float texcoord);
+
 struct spu_framebuffer {
    void *color_start;              /**< addr of color surface in main memory */
    void *depth_start;              /**< addr of depth surface in main memory */
@@ -152,7 +154,7 @@ struct spu_global
    /** for converting RGBA to PIPE_FORMAT_x colors */
    vector unsigned char color_shuffle;
 
-   vector float (*sample_texture)(uint unit, vector float texcoord);
+   sample_texture_func sample_texture[CELL_MAX_SAMPLERS];
 
 } ALIGN16_ATTRIB;
 

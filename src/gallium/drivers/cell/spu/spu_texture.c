@@ -68,9 +68,8 @@ get_texel(uint unit, vec_uint4 coordinate)
 
 
 static void
-get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
+get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 {
-   const uint unit = 0;
    const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
    vec_uint4 tile_x = spu_rlmask(x, -5);
    vec_uint4 tile_y = spu_rlmask(y, -5);
@@ -136,7 +135,7 @@ sample_texture_bilinear(uint unit, vector float texcoord)
    x = spu_and(x, spu.texture[unit].tex_size_x_mask);
    y = spu_and(y, spu.texture[unit].tex_size_y_mask);
 
-   get_four_texels(x, y, texels);
+   get_four_texels(unit, x, y, texels);
 
    vector float texel00 = spu_unpack_A8R8G8B8(spu_extract(texels[0], 0));
    vector float texel01 = spu_unpack_A8R8G8B8(spu_extract(texels[1], 0));

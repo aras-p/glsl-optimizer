@@ -319,10 +319,10 @@ cmd_state_sampler(const struct cell_command_sampler *sampler)
              spu.init.id, sampler->unit);
 
    spu.sampler[sampler->unit] = sampler->state;
-   if (spu.sampler[0].min_img_filter == PIPE_TEX_FILTER_LINEAR)
-      spu.sample_texture = sample_texture_bilinear;
+   if (spu.sampler[sampler->unit].min_img_filter == PIPE_TEX_FILTER_LINEAR)
+      spu.sample_texture[sampler->unit] = sample_texture_bilinear;
    else
-      spu.sample_texture = sample_texture_nearest;
+      spu.sample_texture[sampler->unit] = sample_texture_nearest;
 }
 
 
