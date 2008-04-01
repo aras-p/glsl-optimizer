@@ -61,7 +61,7 @@ RunTest(GLenum shading, GLuint numTextures, GLenum texFilter)
 {
    const GLdouble minPeriod = 2.0;
    GLdouble t0, t1;
-   GLdouble texels, rate;
+   GLdouble pixels, rate;
    GLint i, iters;
 
    glActiveTexture(GL_TEXTURE0);
@@ -104,9 +104,9 @@ RunTest(GLenum shading, GLuint numTextures, GLenum texFilter)
 
    glutSwapBuffers();
 
-   texels = iters * (Width - 10) * (Height - 10);
-   rate = texels / (t1 - t0);
-   rate /= 1000000.0;  /* megatexels/second */
+   pixels = (double) iters * (Width - 10) * (Height - 10);
+   rate = pixels / (t1 - t0);
+   rate /= 1000000.0;  /* megapixels/second */
 
    printf("%s ", shading == GL_FLAT ? "GL_FLAT" : "GL_SMOOTH");
    printf("Textures=%u ", numTextures);
