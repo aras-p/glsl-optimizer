@@ -1226,6 +1226,8 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       _mesa_enable_1_3_extensions(&(osmesa->mesa));
       _mesa_enable_1_4_extensions(&(osmesa->mesa));
       _mesa_enable_1_5_extensions(&(osmesa->mesa));
+      _mesa_enable_2_0_extensions(&(osmesa->mesa));
+      _mesa_enable_2_1_extensions(&(osmesa->mesa));
 
       osmesa->gl_buffer = _mesa_create_framebuffer(osmesa->gl_visual);
       if (!osmesa->gl_buffer) {

@@ -790,6 +790,11 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    }
 
    _mesa_enable_sw_extensions(glctx);
+   _mesa_enable_1_3_extensions(glctx);
+   _mesa_enable_1_4_extensions(glctx);
+   _mesa_enable_1_5_extensions(glctx);
+   _mesa_enable_2_0_extensions(glctx);
+   _mesa_enable_2_1_extensions(glctx);
 
    return ctx;
 }
