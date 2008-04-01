@@ -110,7 +110,7 @@ const void *draw_pt_elt_ptr( struct draw_context *draw,
 
 /* Implementations:
  */
-struct draw_pt_front_end *draw_pt_vcache( void );
+struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw );
 
 

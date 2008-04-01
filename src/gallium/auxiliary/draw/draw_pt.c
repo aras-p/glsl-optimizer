@@ -191,7 +191,7 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_emit)
       return FALSE;
 
-   draw->pt.front.vcache = draw_pt_vcache();
+   draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
       return FALSE;
 
