@@ -30,6 +30,7 @@
 #include "i915_winsys.h"
 #include "i915_debug.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_debug.h"
 
 
 static void
@@ -39,11 +40,9 @@ PRINTF(
                         ... )
 {
    va_list  args;
-   char     buffer[256];
 
    va_start( args, fmt );
-   vsprintf( buffer, fmt, args );
-   stream->winsys->printf( stream->winsys, buffer );
+   debug_vprintf( fmt, args );
    va_end( args );
 }
 
@@ -200,14 +199,12 @@ BITS(
                         ... )
 {
    va_list  args;
-   char     buffer[256];
    unsigned himask = ~0UL >> (31 - (hi));
 
    PRINTF(stream, "\t\t ");
 
    va_start( args, fmt );
-   vsprintf( buffer, fmt, args );
-   stream->winsys->printf( stream->winsys, buffer );
+   debug_vprintf( fmt, args );
    va_end( args );
 
    PRINTF(stream, ": 0x%x\n", ((dw) & himask) >> (lo));
@@ -231,13 +228,11 @@ FLAG(
 {
    if (((dw) >> (bit)) & 1) {
       va_list  args;
-      char     buffer[256];
 
       PRINTF(stream, "\t\t ");
 
       va_start( args, fmt );
-      vsprintf( buffer, fmt, args );
-      stream->winsys->printf( stream->winsys, buffer );
+      debug_vprintf( fmt, args );
       va_end( args );
 
       PRINTF(stream, "\n");
@@ -877,11 +872,11 @@ i915_dump_batchbuffer( struct i915_context *i915 )
    stream.winsys = i915->pipe.winsys;
 
    if (!start || !end) {
-      stream.winsys->printf( stream.winsys, "\n\nBATCH: ???\n");
+      debug_printf( "\n\nBATCH: ???\n");
       return;
    }
    
-   stream.winsys->printf( stream.winsys, "\n\nBATCH: (%d)\n", bytes / 4);
+   debug_printf( "\n\nBATCH: (%d)\n", bytes / 4);
 
    while (!done &&
 	  stream.offset < bytes)
@@ -893,7 +888,7 @@ i915_dump_batchbuffer( struct i915_context *i915 )
 	     stream.offset >= 0);
    }
 
-   stream.winsys->printf( stream.winsys, "END-BATCH\n\n\n");
+   debug_printf( "END-BATCH\n\n\n");
 }
 
 

@@ -312,13 +312,13 @@ cmd_state_depth_stencil(const struct cell_command_depth_stencil_alpha_test *stat
 
 
 static void
-cmd_state_sampler(const struct pipe_sampler_state *state)
+cmd_state_sampler(const struct cell_command_sampler *sampler)
 {
    if (Debug)
-      printf("SPU %u: SAMPLER\n",
-             spu.init.id);
+      printf("SPU %u: SAMPLER [%u]\n",
+             spu.init.id, sampler->unit);
 
-   memcpy(&spu.sampler[0], state, sizeof(*state));
+   spu.sampler[sampler->unit] = sampler->state;
    if (spu.sampler[0].min_img_filter == PIPE_TEX_FILTER_LINEAR)
       spu.sample_texture = sample_texture_bilinear;
    else
@@ -329,17 +329,25 @@ cmd_state_sampler(const struct pipe_sampler_state *state)
 static void
 cmd_state_texture(const struct cell_command_texture *texture)
 {
-   if (Debug)
-      printf("SPU %u: TEXTURE at %p  size %u x %u\n",
-             spu.init.id, texture->start, texture->width, texture->height);
+   const uint unit = texture->unit;
+   const uint width = texture->width;
+   const uint height = texture->height;
 
-   memcpy(&spu.texture, texture, sizeof(*texture));
-   spu.tex_size = (vector float)
-      { spu.texture.width, spu.texture.height, 0.0, 0.0};
-   spu.tex_size_mask = (vector unsigned int)
-      { spu.texture.width - 1, spu.texture.height - 1, 0, 0 };
-   spu.tex_size_x_mask = spu_splats(spu.texture.width - 1);
-   spu.tex_size_y_mask = spu_splats(spu.texture.height - 1);
+   if (Debug) {
+      printf("SPU %u: TEXTURE [%u] at %p  size %u x %u\n", spu.init.id,
+             texture->unit, texture->start,
+             texture->width, texture->height);
+   }
+
+   spu.texture[unit].start = texture->start;
+   spu.texture[unit].width = width;
+   spu.texture[unit].height = height;
+
+   spu.texture[unit].tex_size = (vector float) { width, height, 0.0, 0.0};
+   spu.texture[unit].tex_size_mask = (vector unsigned int)
+         { width - 1, height - 1, 0, 0 };
+   spu.texture[unit].tex_size_x_mask = spu_splats(width - 1);
+   spu.texture[unit].tex_size_y_mask = spu_splats(height - 1);
 }
 
 
@@ -471,12 +479,20 @@ cmd_batch(uint opcode)
          pos += (1 + ROUNDUP8(sizeof(struct cell_command_depth_stencil_alpha_test)) / 8);
          break;
       case CELL_CMD_STATE_SAMPLER:
-         cmd_state_sampler((struct pipe_sampler_state *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct pipe_sampler_state)) / 8);
+         {
+            struct cell_command_sampler *sampler
+               = (struct cell_command_sampler *) &buffer[pos];
+            cmd_state_sampler(sampler);
+            pos += sizeof(*sampler) / 8;
+         }
          break;
       case CELL_CMD_STATE_TEXTURE:
-         cmd_state_texture((struct cell_command_texture *) &buffer[pos+1]);
-         pos += (1 + ROUNDUP8(sizeof(struct cell_command_texture)) / 8);
+         {
+            struct cell_command_texture *texture
+               = (struct cell_command_texture *) &buffer[pos];
+            cmd_state_texture(texture);
+            pos += sizeof(*texture) / 8;
+         }
          break;
       case CELL_CMD_STATE_VERTEX_INFO:
          cmd_state_vertex_info((struct vertex_info *) &buffer[pos+1]);

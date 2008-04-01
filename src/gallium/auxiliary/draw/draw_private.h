@@ -232,6 +232,8 @@ struct draw_context
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
    struct draw_vertex_shader *vertex_shader;
 
+   boolean identity_viewport;
+
    uint num_vs_outputs;  /**< convenience, from vertex_shader */
 
    /* user-space vertex data, buffers */

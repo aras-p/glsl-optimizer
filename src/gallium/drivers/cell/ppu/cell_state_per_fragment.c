@@ -1164,10 +1164,11 @@ int PC_OFFSET(const struct spe_function *f, const void *d)
  * masking.
  *
  * \bug
- * This routine is hard-coded to only work with ARGB8 data.
+ * Only two framebuffer formats are supported at this time.
  */
 void
-cell_generate_logic_op(struct spe_function *f, struct pipe_blend_state *blend,
+cell_generate_logic_op(struct spe_function *f,
+                       const struct pipe_blend_state *blend,
                        struct pipe_surface *surf)
 {
    const unsigned logic_op = (blend->logicop_enable)
@@ -1235,15 +1236,31 @@ cell_generate_logic_op(struct spe_function *f, struct pipe_blend_state *blend,
 
    /* Convert fragment colors to framebuffer format in AoS layout.
     */
-   data[0] = 0x00010203;
-   data[1] = 0x10111213;
-   data[2] = 0x04050607;
-   data[3] = 0x14151617;
-
-   data[4] = 0x0c000408;
-   data[5] = 0x80808080;
-   data[6] = 0x80808080;
-   data[7] = 0x80808080;
+   switch (surf->format) {
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      data[0] = 0x00010203;
+      data[1] = 0x10111213;
+      data[2] = 0x04050607;
+      data[3] = 0x14151617;
+      data[4] = 0x0c000408;
+      data[5] = 0x80808080;
+      data[6] = 0x80808080;
+      data[7] = 0x80808080;
+      break;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      data[0] = 0x03020100;
+      data[1] = 0x13121110;
+      data[2] = 0x07060504;
+      data[3] = 0x17161514;
+      data[4] = 0x0804000c;
+      data[5] = 0x80808080;
+      data[6] = 0x80808080;
+      data[7] = 0x80808080;
+      break;
+   default:
+      fprintf(stderr, "CELL: Bad pixel format in cell_generate_logic_op()");
+      ASSERT(0);
+   }
 
    spe_ilh(f, tmp[0], 0x0808);
    spe_lqr(f, shuf_xpose_hi, PC_OFFSET(f, data+0));

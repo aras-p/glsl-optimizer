@@ -83,11 +83,9 @@ I915_DBG(
 {
    if ((i915)->debug & FILE_DEBUG_FLAG) {
       va_list  args;
-      char     buffer[256];
 
       va_start( args, fmt );
-      vsprintf( buffer, fmt, args );
-      i915->pipe.winsys->printf( i915->pipe.winsys, buffer );
+      debug_vprintf( fmt, args );
       va_end( args );
    }
 }

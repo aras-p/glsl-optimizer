@@ -121,37 +121,51 @@ vs_llvm_run( struct draw_vertex_shader *base,
    machine->Consts = (float (*)[4]) draw->user.constants;
 
    machine->Inputs = ALIGN16_ASSIGN(inputs);
-   machine->Outputs = ALIGN16_ASSIGN(outputs);
+   if (draw->rasterizer->bypass_vs) {
+      /* outputs are just the inputs */
+      machine->Outputs = machine->Inputs;
+   }
+   else {
+      machine->Outputs = ALIGN16_ASSIGN(outputs);
+   }
+
 
    draw->vertex_fetch.fetch_func( draw, machine, elts, count );
 
-   /* run shader */
-   gallivm_cpu_vs_exec(shader->llvm_prog,
-                       machine->Inputs,
-                       machine->Outputs,
-                       machine->Consts,
-                       machine->Temps);
+   if (!draw->rasterizer->bypass_vs) {
+      /* run shader */
+      gallivm_cpu_vs_exec(shader->llvm_prog,
+                          machine->Inputs,
+                          machine->Outputs,
+                          machine->Consts,
+                          machine->Temps);
+   }
 
    /* store machine results */
    for (j = 0; j < count; j++) {
       unsigned slot;
       float x, y, z, w;
 
-      if (!draw->rasterizer->bypass_clipping) {
-         x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-         y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-         z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-         w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+      x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
+      y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
+      z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
+      w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
+      if (!draw->rasterizer->bypass_clipping) {
          vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
-         vOut[j]->edgeflag = 1;
-         
+
          /* divide by w */
          w = 1.0f / w;
          x *= w;
          y *= w;
-         z *= w;
+         z *= w;         
+      }
+      else {
+         vOut[j]->clipmask = 0;
+      }
+      vOut[j]->edgeflag = 1;
          
+      if (!draw->identity_viewport) {
          /* Viewport mapping */
          vOut[j]->data[0][0] = x * scale[0] + trans[0];
          vOut[j]->data[0][1] = y * scale[1] + trans[1];
@@ -159,8 +173,6 @@ vs_llvm_run( struct draw_vertex_shader *base,
          vOut[j]->data[0][3] = w;
       }
       else {
-         vOut[j]->clipmask = 0;
-         vOut[j]->edgeflag = 1;
          vOut[j]->data[0][0] = x;
          vOut[j]->data[0][1] = y;
          vOut[j]->data[0][2] = z;

@@ -55,11 +55,11 @@ cell_get_param(struct pipe_screen *screen, int param)
 {
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return 8;
+      return PIPE_MAX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
-      return 1;
+      return 0;
    case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 1;
+      return 0;
    case PIPE_CAP_GLSL:
       return 1;
    case PIPE_CAP_S3TC:
@@ -67,13 +67,13 @@ cell_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_ANISOTROPIC_FILTER:
       return 0;
    case PIPE_CAP_POINT_SPRITE:
-      return 1;
+      return 0;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 1;
    case PIPE_CAP_OCCLUSION_QUERY:
-      return 1;
+      return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 1;
+      return 0;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return 12; /* max 2Kx2K */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
@@ -118,8 +118,12 @@ cell_is_format_supported( struct pipe_screen *screen,
 {
    switch (type) {
    case PIPE_TEXTURE:
-      /* cell supports all texture formats, XXX for now anyway */
-      return TRUE;
+      /* cell supports most texture formats, XXX for now anyway */
+      if (format == PIPE_FORMAT_DXT5_RGBA ||
+          format == PIPE_FORMAT_R8G8B8A8_SRGB)
+         return FALSE;
+      else
+         return TRUE;
    case PIPE_SURFACE:
       /* cell supports all (off-screen) surface formats, XXX for now */
       return TRUE;

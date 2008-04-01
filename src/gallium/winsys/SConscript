@@ -1,6 +1,6 @@
 Import('*')
 
-if dri:
+if 'intel' in env['winsys'] and dri:
 	SConscript([
 		'dri/SConscript',
 	])

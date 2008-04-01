@@ -39,11 +39,9 @@ PRINTF(
                         ... )
 {
    va_list  args;
-   char     buffer[256];
 
    va_start( args, fmt );
-   vsprintf( buffer, fmt, args );
-   stream->winsys->printf( stream->winsys, buffer );
+   debug_vprintf( fmt, args );
    va_end( args );
 }
 

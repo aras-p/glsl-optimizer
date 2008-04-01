@@ -228,6 +228,14 @@ void draw_set_viewport_state( struct draw_context *draw,
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
    draw->viewport = *viewport; /* struct copy */
+   draw->identity_viewport = (viewport->scale[0] == 1.0f &&
+                              viewport->scale[1] == 1.0f &&
+                              viewport->scale[2] == 1.0f &&
+                              viewport->scale[3] == 1.0f &&
+                              viewport->translate[0] == 0.0f &&
+                              viewport->translate[1] == 0.0f &&
+                              viewport->translate[2] == 0.0f &&
+                              viewport->translate[3] == 0.0f);
 }
 
 

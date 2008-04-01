@@ -84,8 +84,25 @@ static INLINE void copy_colors2( struct draw_stage *stage,
  * Flatshade tri.  Required for clipping and when unfilled tris are
  * active, otherwise handled by hardware.
  */
-static void flatshade_tri( struct draw_stage *stage,
-			   struct prim_header *header )
+static void flatshade_tri_0( struct draw_stage *stage,
+                             struct prim_header *header )
+{
+   struct prim_header tmp;
+
+   tmp.det = header->det;
+   tmp.edgeflags = header->edgeflags;
+   tmp.v[0] = header->v[0];
+   tmp.v[1] = dup_vert(stage, header->v[1], 0);
+   tmp.v[2] = dup_vert(stage, header->v[2], 1);
+
+   copy_colors2(stage, tmp.v[1], tmp.v[2], tmp.v[0]);
+   
+   stage->next->tri( stage->next, &tmp );
+}
+
+
+static void flatshade_tri_2( struct draw_stage *stage,
+                             struct prim_header *header )
 {
    struct prim_header tmp;
 
@@ -101,11 +118,27 @@ static void flatshade_tri( struct draw_stage *stage,
 }
 
 
+
+
+
 /**
  * Flatshade line.  Required for clipping.
  */
-static void flatshade_line( struct draw_stage *stage,
-			    struct prim_header *header )
+static void flatshade_line_0( struct draw_stage *stage,
+                              struct prim_header *header )
+{
+   struct prim_header tmp;
+
+   tmp.v[0] = header->v[0];
+   tmp.v[1] = dup_vert(stage, header->v[1], 0);
+
+   copy_colors(stage, tmp.v[1], tmp.v[0]);
+   
+   stage->next->line( stage->next, &tmp );
+}
+
+static void flatshade_line_1( struct draw_stage *stage,
+                              struct prim_header *header )
 {
    struct prim_header tmp;
 
@@ -118,6 +151,8 @@ static void flatshade_line( struct draw_stage *stage,
 }
 
 
+/* Flatshade point -- passthrough.
+ */
 static void flatshade_point( struct draw_stage *stage,
                              struct prim_header *header )
 {
@@ -140,8 +175,16 @@ static void flatshade_init_state( struct draw_stage *stage )
       }
    }
 
-   stage->line = flatshade_line;
-   stage->tri = flatshade_tri;
+   /* Choose flatshade routine according to provoking vertex:
+    */
+   if (stage->draw->rasterizer->flatshade_first) {
+      stage->line = flatshade_line_0;
+      stage->tri = flatshade_tri_0;
+   }
+   else {
+      stage->line = flatshade_line_1;
+      stage->tri = flatshade_tri_2;
+   }
 }
 
 static void flatshade_first_tri( struct draw_stage *stage,

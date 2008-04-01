@@ -60,6 +60,19 @@
 
 
 /**
+ * glBitmaps are drawn as textured quads.  The user's bitmap pattern
+ * is stored in a texture image.  An alpha8 texture format is used.
+ * The fragment shader samples a bit (texel) from the texture, then
+ * discards the fragment if the bit is off.
+ *
+ * Note that we actually store the inverse image of the bitmap to
+ * simplify the fragment program.  An "on" bit gets stored as texel=0x0
+ * and an "off" bit is stored as texel=0xff.  Then we kill the
+ * fragment if the negated texel value is less than zero.
+ */
+
+
+/**
  * The bitmap cache attempts to accumulate multiple glBitmap calls in a
  * buffer which is then rendered en mass upon a flush, state change, etc.
  * A wide, short buffer is used to target the common case of a series
@@ -102,7 +115,7 @@ make_bitmap_fragment_program(GLcontext *ctx)
    if (!p)
       return NULL;
 
-   p->NumInstructions = 5;
+   p->NumInstructions = 3;
 
    p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
    if (!p->Instructions) {
@@ -121,33 +134,11 @@ make_bitmap_fragment_program(GLcontext *ctx)
    p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
 
-   /* SWZ tmp0.x, tmp0.x, 1111; # tmp0.x = 1.0 */
-   p->Instructions[ic].Opcode = OPCODE_SWZ;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].DstReg.WriteMask = WRITEMASK_X;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].Swizzle
-      = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
-   ic++;
-
-   /* SUB tmp0, tmp0.wwww, tmp0.xxxx;  #  tmp0.w -= 1 */
-   p->Instructions[ic].Opcode = OPCODE_SUB;
-   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].DstReg.Index = 0;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[0].Index = 0;
-   p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-   p->Instructions[ic].SrcReg[1].File = PROGRAM_TEMPORARY;
-   p->Instructions[ic].SrcReg[1].Index = 0;
-   p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
-   ic++;
-
-   /* KIL if tmp0 < 0 */
+   /* KIL if -tmp0 < 0 # texel=0 -> keep / texel=0 -> discard */
    p->Instructions[ic].Opcode = OPCODE_KIL;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
    p->Instructions[ic].SrcReg[0].Index = 0;
+   p->Instructions[ic].SrcReg[0].NegateBase = NEGATE_XYZW;
    ic++;
 
    /* END; */
@@ -289,7 +280,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] = (*src & mask) ? 255 : 0;
+            destRow[comp] = (*src & mask) ? 0x0 : 0xff;
             destRow += cpp;
 
             if (mask == 128U) {
@@ -311,7 +302,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] =(*src & mask) ? 255 : 0;
+            destRow[comp] =(*src & mask) ? 0x0 : 0xff;
             destRow += cpp;
 
             if (mask == 1U) {
@@ -350,16 +341,21 @@ setup_bitmap_vertex_data(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
-   const GLboolean invert = (st_fb_orientation(fb) == Y_0_TOP);
+   const GLfloat fb_width = fb->Width;
+   const GLfloat fb_height = fb->Height;
    const GLfloat x0 = x;
    const GLfloat x1 = x + width;
-   const GLfloat y0 = invert ? ((int) fb->Height - y - height) : y;
-   const GLfloat y1 = invert ? (y0 + height) : y + height;
+   const GLfloat y0 = y;
+   const GLfloat y1 = y + height;
    const GLfloat bias = st->bitmap_texcoord_bias;
    const GLfloat xBias = bias / (x1-x0);
    const GLfloat yBias = bias / (y1-y0);
    const GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
-   const GLfloat tTop = 1.0 - yBias, tBot = 1.0 - tTop - yBias;
+   const GLfloat tTop = yBias, tBot = 1.0 - tTop - yBias;
+   const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
+   const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
+   const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
+   const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
    GLuint i;
    void *buf;
 
@@ -369,24 +365,26 @@ setup_bitmap_vertex_data(struct st_context *st,
                                                    sizeof(st->bitmap.vertices));
    }
 
-   /* positions, texcoords */
-   st->bitmap.vertices[0][0][0] = x0;
-   st->bitmap.vertices[0][0][1] = y0;
+   /* Positions are in clip coords since we need to do clipping in case
+    * the bitmap quad goes beyond the window bounds.
+    */
+   st->bitmap.vertices[0][0][0] = clip_x0;
+   st->bitmap.vertices[0][0][1] = clip_y0;
    st->bitmap.vertices[0][2][0] = sLeft;
    st->bitmap.vertices[0][2][1] = tTop;
 
-   st->bitmap.vertices[1][0][0] = x1;
-   st->bitmap.vertices[1][0][1] = y0;
+   st->bitmap.vertices[1][0][0] = clip_x1;
+   st->bitmap.vertices[1][0][1] = clip_y0;
    st->bitmap.vertices[1][2][0] = sRight;
    st->bitmap.vertices[1][2][1] = tTop;
    
-   st->bitmap.vertices[2][0][0] = x1;
-   st->bitmap.vertices[2][0][1] = y1;
+   st->bitmap.vertices[2][0][0] = clip_x1;
+   st->bitmap.vertices[2][0][1] = clip_y1;
    st->bitmap.vertices[2][2][0] = sRight;
    st->bitmap.vertices[2][2][1] = tBot;
    
-   st->bitmap.vertices[3][0][0] = x0;
-   st->bitmap.vertices[3][0][1] = y1;
+   st->bitmap.vertices[3][0][0] = clip_x0;
+   st->bitmap.vertices[3][0][1] = clip_y1;
    st->bitmap.vertices[3][2][0] = sLeft;
    st->bitmap.vertices[3][2][1] = tBot;
    
@@ -437,17 +435,12 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    cso_save_rasterizer(cso);
    cso_save_samplers(cso);
+   cso_save_sampler_textures(cso);
+   cso_save_viewport(cso);
 
    /* rasterizer state: just scissor */
-   {
-      struct pipe_rasterizer_state rasterizer;
-      memset(&rasterizer, 0, sizeof(rasterizer));
-      if (ctx->Scissor.Enabled)
-         rasterizer.scissor = 1;
-      rasterizer.bypass_clipping = 1;
-
-      cso_set_rasterizer(cso, &rasterizer);
-   }
+   st->bitmap.rasterizer.scissor = ctx->Scissor.Enabled;
+   cso_set_rasterizer(cso, &st->bitmap.rasterizer);
 
    /* fragment shader state: TEX lookup program */
    pipe->bind_fs_state(pipe, stfp->driver_shader);
@@ -456,21 +449,26 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_vs_state(pipe, st->bitmap.vs);
 
    /* sampler / texture state */
+   cso_single_sampler(cso, 0, &st->bitmap.sampler);
+   cso_single_sampler_done(cso);
+   pipe->set_sampler_textures(pipe, 1, &pt);
+
+   /* viewport state: viewport matching window dims */
    {
-      struct pipe_sampler_state sampler;
-      memset(&sampler, 0, sizeof(sampler));
-      sampler.wrap_s = PIPE_TEX_WRAP_CLAMP;
-      sampler.wrap_t = PIPE_TEX_WRAP_CLAMP;
-      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP;
-      sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-      sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.normalized_coords = 1;
-
-      cso_single_sampler(cso, 0, &sampler);
-      cso_single_sampler_done(cso);
-
-      pipe->set_sampler_textures(pipe, 1, &pt);
+      const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
+      const GLboolean invert = (st_fb_orientation(fb) == Y_0_TOP);
+      const float width = fb->Width;
+      const float height = fb->Height;
+      struct pipe_viewport_state vp;
+      vp.scale[0] =  0.5 * width;
+      vp.scale[1] = height * (invert ? -0.5 : 0.5);
+      vp.scale[2] = 1.0;
+      vp.scale[3] = 1.0;
+      vp.translate[0] = 0.5 * width;
+      vp.translate[1] = 0.5 * height;
+      vp.translate[2] = 0.0;
+      vp.translate[3] = 0.0;
+      cso_set_viewport(cso, &vp);
    }
 
    /* draw textured quad */
@@ -487,18 +485,18 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_samplers(cso);
+   cso_restore_sampler_textures(cso);
+   cso_restore_viewport(cso);
    /* shaders don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
-   pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
-                              ctx->st->state.sampler_texture);
 }
 
 
 static void
 reset_cache(struct st_context *st)
 {
-   memset(st->bitmap.cache->buffer, 0, sizeof(st->bitmap.cache->buffer));
+   memset(st->bitmap.cache->buffer, 0xff, sizeof(st->bitmap.cache->buffer));
    st->bitmap.cache->empty = GL_TRUE;
 
    st->bitmap.cache->xmin = 1000000;
@@ -635,7 +633,7 @@ accum_bitmap(struct st_context *st,
 
    /* XXX try to combine this code with code in make_bitmap_texture() */
 #define SET_PIXEL(COL, ROW) \
-   cache->buffer[py + (ROW)][px + (COL)] = 0xff;
+   cache->buffer[py + (ROW)][px + (COL)] = 0x0;
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
@@ -742,6 +740,22 @@ st_init_bitmap_functions(struct dd_function_table *functions)
 void
 st_init_bitmap(struct st_context *st)
 {
+   struct pipe_sampler_state *sampler = &st->bitmap.sampler;
+
+   /* init sampler state once */
+   memset(sampler, 0, sizeof(*sampler));
+   sampler->wrap_s = PIPE_TEX_WRAP_CLAMP;
+   sampler->wrap_t = PIPE_TEX_WRAP_CLAMP;
+   sampler->wrap_r = PIPE_TEX_WRAP_CLAMP;
+   sampler->min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler->min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler->mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler->normalized_coords = 1;
+
+   /* init baseline rasterizer state once */
+   memset(&st->bitmap.rasterizer, 0, sizeof(st->bitmap.rasterizer));
+   st->bitmap.rasterizer.bypass_vs = 1;
+
    init_bitmap_cache(st);
 }
 
