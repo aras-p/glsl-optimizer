@@ -186,15 +186,17 @@ tile_copy_data(uint w, uint h, uint tile_size, uint *dst, const uint *src)
    uint it, jt;  /* tile counters */
    uint i, j;    /* intra-tile counters */
 
+   /* loop over dest tiles */
    for (it = 0; it < h_t; it++) {
       for (jt = 0; jt < w_t; jt++) {
-         /* fill in tile (i, j) */
+         /* start of dest tile: */
          uint *tdst = dst + (it * w_t + jt) * tile_size2;
+         /* loop over texels in the tile */
          for (i = 0; i < tile_size; i++) {
             for (j = 0; j < tile_size; j++) {
                const uint srci = it * tile_size + i;
                const uint srcj = jt * tile_size + j;
-               *tdst++ = src[srci * h + srcj];
+               *tdst++ = src[srci * w + srcj];
             }
          }
       }
