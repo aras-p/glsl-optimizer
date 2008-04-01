@@ -49,9 +49,8 @@ invalidate_tex_cache(void)
 
 
 static uint
-get_texel(vec_uint4 coordinate)
+get_texel(uint unit, vec_uint4 coordinate)
 {
-   const uint unit = 0;
    vec_uint4 tmp;
    unsigned x = spu_extract(coordinate, 0);
    unsigned y = spu_extract(coordinate, 1);
@@ -109,7 +108,7 @@ sample_texture_nearest(uint unit, vector float texcoord)
    vector float tc = spu_mul(texcoord, spu.texture[unit].tex_size);
    vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */
    itc = spu_and(itc, spu.texture[unit].tex_size_mask); /* mask (GL_REPEAT) */
-   uint texel = get_texel(itc);
+   uint texel = get_texel(unit, itc);
    return spu_unpack_A8R8G8B8(texel);
 }
 
