@@ -629,6 +629,8 @@ main_loop(void)
 
    if (Debug)
       printf("SPU %u: Exit main loop\n", spu.init.id);
+
+   spu_dcache_report();
 }
 
 

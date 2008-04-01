@@ -36,6 +36,7 @@
 #define CACHE_SET_TAGID(set)  (((set) & 0x03) + TAG_DCACHE0)
 #define CACHE_LOG2NNWAY       2
 #define CACHE_LOG2NSETS       6
+/*#define CACHE_STATS           1*/
 #include <cache-api.h>
 
 /* Yes folks, this is ugly.
@@ -123,3 +124,20 @@ spu_dcache_mark_dirty(unsigned ea, unsigned size)
           ? (entry & ~CACHELINE_VALID) : entry;
    }
 }
+
+
+/**
+ * Print cache utilization report
+ */
+void
+spu_dcache_report(void)
+{
+#ifdef CACHE_STATS
+   if (spu.init.id == 0) {
+      printf("SPU 0: Texture cache report:\n");
+      cache_pr_stats(data);
+   }
+#endif
+}
+
+
