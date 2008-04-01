@@ -100,6 +100,17 @@ struct spu_framebuffer {
 } ALIGN16_ATTRIB;
 
 
+struct spu_texture
+{
+   void *start;
+   uint width, height;
+   vector float tex_size;
+   vector unsigned int tex_size_mask; /**< == int(size - 1) */
+   vector unsigned int tex_size_x_mask; /**< == int(size - 1) */
+   vector unsigned int tex_size_y_mask; /**< == int(size - 1) */
+} ALIGN16_ATTRIB;
+
+
 /**
  * All SPU global/context state will be in singleton object of this type:
  */
@@ -119,7 +130,7 @@ struct spu_global
    logicop_func logicop;
 
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
-   struct cell_command_texture texture;
+   struct spu_texture texture[PIPE_MAX_SAMPLERS];
 
    struct vertex_info vertex_info;
 
@@ -140,11 +151,6 @@ struct spu_global
 
    /** for converting RGBA to PIPE_FORMAT_x colors */
    vector unsigned char color_shuffle;
-
-   vector float tex_size[CELL_MAX_SAMPLERS];
-   vector unsigned int tex_size_mask[CELL_MAX_SAMPLERS]; /**< == int(size - 1) */
-   vector unsigned int tex_size_x_mask[CELL_MAX_SAMPLERS]; /**< == int(size - 1) */
-   vector unsigned int tex_size_y_mask[CELL_MAX_SAMPLERS]; /**< == int(size - 1) */
 
    vector float (*sample_texture)(vector float texcoord);
 

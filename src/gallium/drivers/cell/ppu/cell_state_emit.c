@@ -121,25 +121,36 @@ cell_emit_state(struct cell_context *cell)
    }
 
    if (cell->dirty & CELL_NEW_SAMPLER) {
-      if (cell->sampler[0]) {
-         emit_state_cmd(cell, CELL_CMD_STATE_SAMPLER,
-                        cell->sampler[0], sizeof(struct pipe_sampler_state));
+      uint i;
+      for (i = 0; i < CELL_MAX_SAMPLERS; i++) {
+         if (cell->sampler[i]) {
+            struct cell_command_sampler *sampler
+               = cell_batch_alloc(cell, sizeof(*sampler));
+            sampler->opcode = CELL_CMD_STATE_SAMPLER;
+            sampler->unit = i;
+            sampler->state = *cell->sampler[i];
+         }
       }
    }
 
    if (cell->dirty & CELL_NEW_TEXTURE) {
-      struct cell_command_texture texture;
       uint i;
-      memset(&texture, 0, sizeof(texture));
       for (i = 0;i < CELL_MAX_SAMPLERS; i++) {
+         struct cell_command_texture *texture
+            =  cell_batch_alloc(cell, sizeof(*texture));
+         texture->opcode = CELL_CMD_STATE_TEXTURE;
+         texture->unit = i;
          if (cell->texture[i]) {
-            texture.texture[i].start = cell->texture[i]->tiled_data;
-            texture.texture[i].width = cell->texture[i]->base.width[0];
-            texture.texture[i].height = cell->texture[i]->base.height[0];
+            texture->start = cell->texture[i]->tiled_data;
+            texture->width = cell->texture[i]->base.width[0];
+            texture->height = cell->texture[i]->base.height[0];
+         }
+         else {
+            texture->start = NULL;
+            texture->width = 1;
+            texture->height = 1;
          }
       }
-      emit_state_cmd(cell, CELL_CMD_STATE_TEXTURE,
-                     &texture, sizeof(struct cell_command_texture));
    }
 
    if (cell->dirty & CELL_NEW_VERTEX_INFO) {

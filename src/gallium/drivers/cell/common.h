@@ -36,6 +36,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 #include "pipe/p_format.h"
+#include "pipe/p_state.h"
 
 
 /** The standard assert macro doesn't seem to work reliably */
@@ -228,12 +229,20 @@ struct cell_command_release_verts
 };
 
 
+struct cell_command_sampler
+{
+   uint64_t opcode;         /**< CELL_CMD_STATE_SAMPLER */
+   uint unit;
+   struct pipe_sampler_state state;
+};
+
+
 struct cell_command_texture
 {
-   struct {
-      void *start;         /**< Address in main memory */
-      ushort width, height;
-   } texture[CELL_MAX_SAMPLERS];
+   uint64_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
+   uint unit;
+   void *start;         /**< Address in main memory */
+   ushort width, height;
 };
 
 
