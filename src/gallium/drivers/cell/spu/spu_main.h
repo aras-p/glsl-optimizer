@@ -152,7 +152,7 @@ struct spu_global
    /** for converting RGBA to PIPE_FORMAT_x colors */
    vector unsigned char color_shuffle;
 
-   vector float (*sample_texture)(vector float texcoord);
+   vector float (*sample_texture)(uint unit, vector float texcoord);
 
 } ALIGN16_ATTRIB;
 

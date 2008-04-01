@@ -104,9 +104,8 @@ get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
  * XXX this is extremely primitive for now.
  */
 vector float
-sample_texture_nearest(vector float texcoord)
+sample_texture_nearest(uint unit, vector float texcoord)
 {
-   const uint unit = 0;
    vector float tc = spu_mul(texcoord, spu.texture[unit].tex_size);
    vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */
    itc = spu_and(itc, spu.texture[unit].tex_size_mask); /* mask (GL_REPEAT) */
@@ -116,9 +115,8 @@ sample_texture_nearest(vector float texcoord)
 
 
 vector float
-sample_texture_bilinear(vector float texcoord)
+sample_texture_bilinear(uint unit, vector float texcoord)
 {
-   const uint unit = 0;
    static const vec_uint4 offset_x = {0, 0, 1, 1};
    static const vec_uint4 offset_y = {0, 1, 0, 1};
 

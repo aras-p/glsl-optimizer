@@ -311,17 +311,43 @@ emit_quad( int x, int y, mask_t mask )
 
       if (spu.texture[0].start) {
          /* texture mapping */
+         const uint unit = 0;
          vector float texcoords[4];
          eval_coeff(2, (float) x, (float) y, texcoords);
 
          if (spu_extract(mask, 0))
-            colors[0] = spu.sample_texture(texcoords[0]);
+            colors[0] = spu.sample_texture(unit, texcoords[0]);
          if (spu_extract(mask, 1))
-            colors[1] = spu.sample_texture(texcoords[1]);
+            colors[1] = spu.sample_texture(unit, texcoords[1]);
          if (spu_extract(mask, 2))
-            colors[2] = spu.sample_texture(texcoords[2]);
+            colors[2] = spu.sample_texture(unit, texcoords[2]);
          if (spu_extract(mask, 3))
-            colors[3] = spu.sample_texture(texcoords[3]);
+            colors[3] = spu.sample_texture(unit, texcoords[3]);
+
+
+         if (spu.texture[1].start) {
+            /* multi-texture mapping */
+            const uint unit = 1;
+            vector float colors1[4];
+
+            eval_coeff(3, (float) x, (float) y, texcoords);
+
+            if (spu_extract(mask, 0))
+               colors1[0] = spu.sample_texture(unit, texcoords[0]);
+            if (spu_extract(mask, 1))
+               colors1[1] = spu.sample_texture(unit, texcoords[1]);
+            if (spu_extract(mask, 2))
+               colors1[2] = spu.sample_texture(unit, texcoords[2]);
+            if (spu_extract(mask, 3))
+               colors1[3] = spu.sample_texture(unit, texcoords[3]);
+
+            /* hack: modulate first texture by second */
+            colors[0] = spu_mul(colors[0], colors1[0]);
+            colors[1] = spu_mul(colors[1], colors1[1]);
+            colors[2] = spu_mul(colors[2], colors1[2]);
+            colors[3] = spu_mul(colors[3], colors1[3]);
+         }
+
       }
       else {
          /* simple shading */
