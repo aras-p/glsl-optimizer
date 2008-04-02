@@ -39,6 +39,8 @@ struct nv10_rasterizer_state {
 	uint32_t cull_face_en;
 
 	uint32_t point_sprite;
+
+	const struct pipe_rasterizer_state *templ;
 };
 
 struct nv10_vertex_program_exec {

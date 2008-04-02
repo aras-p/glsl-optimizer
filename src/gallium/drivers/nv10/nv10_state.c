@@ -282,6 +282,8 @@ nv10_rasterizer_state_create(struct pipe_context *pipe,
 	 */
 	rs = malloc(sizeof(struct nv10_rasterizer_state));
 
+	rs->templ = cso;
+	
 	rs->shade_model = cso->flatshade ? 0x1d00 : 0x1d01;
 
 	rs->line_width = (unsigned char)(cso->line_width * 8.0) & 0xff;
@@ -346,6 +348,8 @@ nv10_rasterizer_state_bind(struct pipe_context *pipe, void *rast)
 	struct nv10_context *nv10 = nv10_context(pipe);
 
 	nv10->rast = (struct nv10_rasterizer_state*)rast;
+
+	draw_set_rasterizer_state(nv10->draw, (nv10->rast ? nv10->rast->templ : NULL));
 
 	nv10->dirty |= NV10_NEW_RAST;
 }
