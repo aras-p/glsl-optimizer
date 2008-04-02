@@ -59,6 +59,8 @@ struct vcache_frontend {
    const void *elt_ptr;
 
    struct draw_pt_middle_end *middle;
+
+   unsigned input_prim;
    unsigned output_prim;
 };
 
@@ -77,7 +79,6 @@ static void vcache_flush( struct vcache_frontend *vcache )
 
    if (vcache->draw_count) {
       vcache->middle->run( vcache->middle,
-                           vcache->output_prim,
                            vcache->fetch_elts,
                            vcache->fetch_count,
                            vcache->draw_elts,
@@ -173,7 +174,6 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 
 
 static void vcache_run_pv2( struct draw_pt_front_end *frontend, 
-                            unsigned prim,
                             pt_elt_func get_elt,
                             const void *elts,
                             unsigned count )
@@ -185,9 +185,8 @@ static void vcache_run_pv2( struct draw_pt_front_end *frontend,
     */
    vcache->elt_func = get_elt;
    vcache->elt_ptr = elts;
-   vcache->output_prim = reduced_prim[prim];
 
-   switch (prim) {
+   switch (vcache->input_prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < count; i ++) {
          vcache_point( vcache,
@@ -304,7 +303,6 @@ static void vcache_run_pv2( struct draw_pt_front_end *frontend,
 
 
 static void vcache_run_pv0( struct draw_pt_front_end *frontend, 
-                            unsigned prim,
                             pt_elt_func get_elt,
                             const void *elts,
                             unsigned count )
@@ -316,9 +314,8 @@ static void vcache_run_pv0( struct draw_pt_front_end *frontend,
     */
    vcache->elt_func = get_elt;
    vcache->elt_ptr = elts;
-   vcache->output_prim = reduced_prim[prim];
 
-   switch (prim) {
+   switch (vcache->input_prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < count; i ++) {
          vcache_point( vcache,
@@ -389,6 +386,7 @@ static void vcache_run_pv0( struct draw_pt_front_end *frontend,
 }
 
 static void vcache_prepare( struct draw_pt_front_end *frontend,
+                            unsigned prim,
                             struct draw_pt_middle_end *middle )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
@@ -398,8 +396,11 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    else
       vcache->base.run = vcache_run_pv2;
    
+   vcache->input_prim = prim;
+   vcache->output_prim = reduced_prim[prim];
+
    vcache->middle = middle;
-   middle->prepare( middle );
+   middle->prepare( middle, vcache->output_prim );
 }
 
 

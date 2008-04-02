@@ -53,10 +53,10 @@ struct draw_context;
  */
 struct draw_pt_front_end {
    void (*prepare)( struct draw_pt_front_end *,
+                    unsigned prim,
                     struct draw_pt_middle_end * );
 
    void (*run)( struct draw_pt_front_end *,
-                unsigned prim,
                 pt_elt_func elt_func,
                 const void *elt_ptr,
                 unsigned count );
@@ -79,10 +79,10 @@ struct draw_pt_front_end {
  * Currenly only using the passthrough version.
  */
 struct draw_pt_middle_end {
-   void (*prepare)( struct draw_pt_middle_end * );
+   void (*prepare)( struct draw_pt_middle_end *,
+                    unsigned prim );
 
    void (*run)( struct draw_pt_middle_end *,
-                unsigned prim,
                 const unsigned *fetch_elts,
                 unsigned fetch_count,
                 const ushort *draw_elts,

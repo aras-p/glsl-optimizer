@@ -171,10 +171,9 @@ draw_pt_arrays(struct draw_context *draw,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   frontend->prepare( frontend, middle );
+   frontend->prepare( frontend, prim, middle );
 
    frontend->run( frontend,
-                  prim,
                   draw_pt_elt_func( draw ),
                   draw_pt_elt_ptr( draw, start ),
                   count );

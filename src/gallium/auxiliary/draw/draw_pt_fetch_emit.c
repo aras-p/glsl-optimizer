@@ -203,16 +203,29 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
 
 
 
-static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
+static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
+                                unsigned prim )
 {
    static const float zero = 0;
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
-   const struct vertex_info *vinfo = draw->render->get_vertex_info(draw->render);
-   unsigned nr_attrs = vinfo->num_attribs;
+   const struct vertex_info *vinfo;
    unsigned i;
+   boolean ok;
 
-   for (i = 0; i < nr_attrs; i++) {
+
+   ok = draw->render->set_primitive( draw->render, 
+                                     prim );
+   if (!ok) {
+      assert(0);
+      return;
+   }
+   
+   /* Must do this after set_primitive() above:
+    */
+   vinfo = draw->render->get_vertex_info(draw->render);
+
+   for (i = 0; i < vinfo->num_attribs; i++) {
       unsigned src_element = vinfo->src_index[i];
       unsigned src_buffer = draw->vertex_element[src_element].vertex_buffer_index;
          
@@ -275,7 +288,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
       }
    }
 
-   feme->nr_fetch = nr_attrs;
+   feme->nr_fetch = vinfo->num_attribs;
    feme->hw_vertex_size = vinfo->size * 4;
 }
 
@@ -284,7 +297,6 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
 
 
 static void fetch_emit_run( struct draw_pt_middle_end *middle,
-                            unsigned prim,
                             const unsigned *fetch_elts,
                             unsigned fetch_count,
                             const ushort *draw_elts,
@@ -293,16 +305,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    void *hw_verts;
-   boolean ok;
    
-   ok = draw->render->set_primitive( draw->render, 
-                                     prim );
-   if (!ok) {
-      assert(0);
-      return;
-   }
-   
-
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->hw_vertex_size,
                                                (ushort)fetch_count );
