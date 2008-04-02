@@ -375,8 +375,6 @@ nv40_draw_elements_inline(struct pipe_context *pipe,
 	struct pipe_winsys *ws = pipe->winsys;
 	void *map;
 
-	nv40_state_emit(nv40);
-
 	map = ws->buffer_map(ws, ib, PIPE_BUFFER_USAGE_CPU_READ);
 	if (!ib) {
 		NOUVEAU_ERR("failed mapping ib\n");
@@ -468,7 +466,6 @@ nv40_draw_elements(struct pipe_context *pipe,
 		return nv40_draw_elements_swtnl(pipe, NULL, 0,
 						mode, start, count);
 	}
-	nv40_state_emit(nv40);
 
 	if (idxbuf) {
 		nv40_draw_elements_vbo(pipe, mode, start, count);
