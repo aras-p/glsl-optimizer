@@ -713,6 +713,15 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 					   modes->accumAlphaBits) > 0);
 		modes->haveDepthBuffer = (modes->depthBits > 0);
 		modes->haveStencilBuffer = (modes->stencilBits > 0);
+
+		modes->bindToTextureRgb = GL_TRUE;
+		modes->bindToTextureRgba = GL_TRUE;
+		modes->bindToMipmapTexture = GL_FALSE;
+		modes->bindToTextureTargets = modes->rgbMode ?
+		    __DRI_ATTRIB_TEXTURE_1D_BIT |
+		    __DRI_ATTRIB_TEXTURE_2D_BIT |
+		    __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
+		    0;
 	    }
 	}
     }

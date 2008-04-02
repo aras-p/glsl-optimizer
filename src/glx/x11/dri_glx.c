@@ -508,11 +508,11 @@ static const struct { unsigned int attrib, offset; } attribMap[] = {
     __ATTRIB(__DRI_ATTRIB_OPTIMAL_PBUFFER_HEIGHT,	optimalPbufferHeight),
 #if 0
     __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			swapMethod),
+#endif
     __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB,		bindToTextureRgb),
     __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGBA,		bindToTextureRgba),
     __ATTRIB(__DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE,	bindToMipmapTexture),
     __ATTRIB(__DRI_ATTRIB_YINVERTED,			yInverted),
-#endif
 };
 
 #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
@@ -564,8 +564,6 @@ driConfigEqual(const __DRIcoreExtension *core,
 		return GL_FALSE;
 	    break;
 
-#if 0
-	/* The X server doesn't send these, so ignore them for now. */
 	case __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS:
 	    glxValue = 0;
 	    if (value & __DRI_ATTRIB_TEXTURE_1D_BIT)
@@ -577,7 +575,6 @@ driConfigEqual(const __DRIcoreExtension *core,
 	    if (glxValue != modes->bindToTextureTargets)
 		return GL_FALSE;
 	    break;	
-#endif
 
 	default:
 	    if (!scalarEqual(modes, attrib, value))

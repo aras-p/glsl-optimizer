@@ -1006,6 +1006,7 @@ static const struct { unsigned int attrib, offset; } attribMap[] = {
     __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGB,		bindToTextureRgb),
     __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_RGBA,		bindToTextureRgba),
     __ATTRIB(__DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE,	bindToMipmapTexture),
+    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS,	bindToTextureTargets),
     __ATTRIB(__DRI_ATTRIB_YINVERTED,			yInverted),
 
     /* The struct field doesn't matter here, these are handled by the
@@ -1013,7 +1014,6 @@ static const struct { unsigned int attrib, offset; } attribMap[] = {
      * so the iterator includes them though.*/
     __ATTRIB(__DRI_ATTRIB_RENDER_TYPE,			level),
     __ATTRIB(__DRI_ATTRIB_CONFIG_CAVEAT,		level),
-    __ATTRIB(__DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS,	level),
     __ATTRIB(__DRI_ATTRIB_SWAP_METHOD,			level)
 };
 
@@ -1037,15 +1037,6 @@ driGetConfigAttribIndex(const __DRIconfig *config,
 	    *value = __DRI_ATTRIB_SLOW_BIT;
 	else
 	    *value = 0;
-	break;
-    case __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS:
-	*value = 0;
-	if (config->modes.bindToTextureTargets & GLX_TEXTURE_1D_BIT_EXT)
-	    *value |= __DRI_ATTRIB_TEXTURE_1D_BIT;
-	if (config->modes.bindToTextureTargets & GLX_TEXTURE_2D_BIT_EXT)
-	    *value |= __DRI_ATTRIB_TEXTURE_2D_BIT;
-	if (config->modes.bindToTextureTargets & GLX_TEXTURE_RECTANGLE_BIT_EXT)
-	    *value |= __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT;
 	break;
     case __DRI_ATTRIB_SWAP_METHOD:
 	break;
