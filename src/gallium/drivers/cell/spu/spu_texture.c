@@ -51,22 +51,25 @@ invalidate_tex_cache(void)
 static uint
 get_texel(uint unit, vec_uint4 coordinate)
 {
+   const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
+   ushort x = spu_extract(coordinate, 0);
+   ushort y = spu_extract(coordinate, 1);
+   unsigned tile_offset = sizeof(tile_t)
+      * ((y / TILE_SIZE * spu.texture[unit].tiles_per_row) + (x / TILE_SIZE));
+   ushort texel_offset = (ushort) 4
+      * (ushort) (((ushort) (y % TILE_SIZE) * (ushort) TILE_SIZE) + (x % TILE_SIZE));
    vec_uint4 tmp;
-   unsigned x = spu_extract(coordinate, 0);
-   unsigned y = spu_extract(coordinate, 1);
-   const unsigned tiles_per_row = spu.texture[unit].width / TILE_SIZE;
-   unsigned tile_offset = sizeof(tile_t) * ((y / TILE_SIZE * tiles_per_row) 
-                                            + (x / TILE_SIZE));
-   unsigned texel_offset = 4 * (((y % TILE_SIZE) * TILE_SIZE)
-                                + (x % TILE_SIZE));
 
    spu_dcache_fetch_unaligned((qword *) & tmp,
-                              spu.texture[unit].start + tile_offset + texel_offset,
+                              texture_ea + tile_offset + texel_offset,
                               4);
    return spu_extract(tmp, 0);
 }
 
 
+/**
+ * Get four texels from locations (x[0], y[0]), (x[1], y[1]) ...
+ */
 static void
 get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 {
@@ -76,7 +79,7 @@ get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
    const qword offset_x = si_andi((qword) x, 0x1f);
    const qword offset_y = si_andi((qword) y, 0x1f);
 
-   const qword tiles_per_row = (qword) spu_splats(spu.texture[unit].width / TILE_SIZE);
+   const qword tiles_per_row = (qword) spu_splats(spu.texture[unit].tiles_per_row);
    const qword tile_size = (qword) spu_splats(sizeof(tile_t));
 
    qword tile_offset = si_mpya((qword) tile_y, tiles_per_row, (qword) tile_x);
@@ -96,6 +99,7 @@ get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
    spu_dcache_fetch_unaligned((qword *) & texels[3],
                               texture_ea + spu_extract(offset, 3), 4);
 }
+
 
 /**
  * Get texture sample at texcoord.
@@ -126,17 +130,25 @@ sample_texture_bilinear(uint unit, vector float texcoord)
 
    vec_uint4 texels[4];
    
+   /* setup texcoords for quad:
+    *  +-----+-----+
+    *  |x0,y0|x1,y1|
+    *  +-----+-----+
+    *  |x2,y2|x3,y3|
+    *  +-----+-----+
+    */
    vec_uint4 x = spu_splats(spu_extract(itc, 0));
    vec_uint4 y = spu_splats(spu_extract(itc, 1));
-
    x = spu_add(x, offset_x);
    y = spu_add(y, offset_y);
 
+   /* GL_REPEAT wrap mode: */
    x = spu_and(x, spu.texture[unit].tex_size_x_mask);
    y = spu_and(y, spu.texture[unit].tex_size_y_mask);
 
    get_four_texels(unit, x, y, texels);
 
+   /* integer A8R8G8B8 to float texel conversion */
    vector float texel00 = spu_unpack_A8R8G8B8(spu_extract(texels[0], 0));
    vector float texel01 = spu_unpack_A8R8G8B8(spu_extract(texels[1], 0));
    vector float texel10 = spu_unpack_A8R8G8B8(spu_extract(texels[2], 0));

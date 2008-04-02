@@ -105,7 +105,8 @@ struct spu_framebuffer {
 struct spu_texture
 {
    void *start;
-   uint width, height;
+   ushort width, height;
+   ushort tiles_per_row;
    vector float tex_size;
    vector unsigned int tex_size_mask; /**< == int(size - 1) */
    vector unsigned int tex_size_x_mask; /**< == int(size - 1) */
