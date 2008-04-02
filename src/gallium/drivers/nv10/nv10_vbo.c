@@ -18,6 +18,8 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	struct draw_context *draw = nv10->draw;
 	unsigned i;
 
+	nv10_emit_hw_state(nv10);
+
 	/*
 	 * Map vertex buffers
 	 */

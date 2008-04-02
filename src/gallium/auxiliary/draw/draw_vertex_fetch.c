@@ -508,6 +508,7 @@ void draw_update_vertex_fetch( struct draw_context *draw )
    draw->vertex_fetch.nr_attrs = nr_attrs;
 
    draw->vertex_fetch.fetch_func = generic_vertex_fetch;
+	printf("pouet vertex fetch %x\n",draw->vertex_fetch.fetch_func);
 
    switch (nr_attrs) {
    case 2:
@@ -524,5 +525,6 @@ void draw_update_vertex_fetch( struct draw_context *draw )
    default:
       break;
    }
+	printf("pouet vertex fetch %x\n",draw->vertex_fetch.fetch_func);
 
 }

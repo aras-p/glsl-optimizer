@@ -72,6 +72,7 @@ nv10_fragtex_format(uint pipe_format)
 static void
 nv10_fragtex_build(struct nv10_context *nv10, int unit)
 {
+#if 0
 	struct nv10_sampler_state *ps = nv10->tex_sampler[unit];
 	struct nv10_miptree *nv10mt = nv10->tex_miptree[unit];
 	struct pipe_texture *pt = &nv10mt->base;
@@ -115,11 +116,13 @@ nv10_fragtex_build(struct nv10_context *nv10, int unit)
 	OUT_RING  (ps->filt | 0x2000 /* magic */);
 	OUT_RING  ((pt->width[0] << 16) | pt->height[0]);
 	OUT_RING  (ps->bcol);
+#endif
 }
 
 void
 nv10_fragtex_bind(struct nv10_context *nv10)
 {
+#if 0
 	struct nv10_fragment_program *fp = nv10->fragprog.active;
 	unsigned samplers, unit;
 
@@ -141,5 +144,6 @@ nv10_fragtex_bind(struct nv10_context *nv10)
 	}
 
 	nv10->fp_samplers = fp->samplers;
+#endif
 }
 

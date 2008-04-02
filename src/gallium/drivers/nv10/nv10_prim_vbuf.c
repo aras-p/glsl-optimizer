@@ -94,6 +94,9 @@ nv10_vbuf_render_get_vertex_info( struct vbuf_render *render )
 {
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
+
+	nv10_emit_hw_state(nv10);
+
 	return &nv10->vertex_info;
 }
 
@@ -111,7 +114,7 @@ nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
 	assert(!nv10_render->buffer);
 	nv10_render->buffer = winsys->buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
 
-	nv10->dirty |= NV10_NEW_ARRAYS;
+	nv10->dirty |= NV10_NEW_VTXARRAYS;
 
 	return winsys->buffer_map(winsys, 
 			nv10_render->buffer, 
@@ -136,6 +139,8 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 	struct nv10_vbuf_render *nv10_render = nv10_vbuf_render(render);
 	struct nv10_context *nv10 = nv10_render->nv10;
 	int push, i;
+
+	nv10_emit_hw_state(nv10);
 
 	BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_OFFSET_POS, 1);
 	OUT_RELOCl(nv10_render->buffer, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD);

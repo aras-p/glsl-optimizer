@@ -21,17 +21,16 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-#define NV10_NEW_VERTPROG	(1 << 1)
-#define NV10_NEW_FRAGPROG	(1 << 2)
-#define NV10_NEW_ARRAYS		(1 << 3)
-#define NV10_NEW_VTXFMT		(1 << 4)
-#define NV10_NEW_BLEND		(1 << 5)
-#define NV10_NEW_BLENDCOL	(1 << 6)
-#define NV10_NEW_RAST 		(1 << 7)
-#define NV10_NEW_DSA  		(1 << 8)
-#define NV10_NEW_VIEWPORT	(1 << 9)
-#define NV10_NEW_SCISSOR	(1 << 9)
-#define NV10_NEW_FRAMEBUFFER	(1 << 10)
+#define NV10_NEW_VERTPROG	(1 << 0)
+#define NV10_NEW_FRAGPROG	(1 << 1)
+#define NV10_NEW_VTXARRAYS	(1 << 2)
+#define NV10_NEW_BLEND		(1 << 3)
+#define NV10_NEW_BLENDCOL	(1 << 4)
+#define NV10_NEW_RAST 		(1 << 5)
+#define NV10_NEW_DSA  		(1 << 6)
+#define NV10_NEW_VIEWPORT	(1 << 7)
+#define NV10_NEW_SCISSOR	(1 << 8)
+#define NV10_NEW_FRAMEBUFFER	(1 << 9)
 
 #include "nv10_screen.h"
 

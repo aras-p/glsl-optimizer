@@ -154,6 +154,35 @@ static void nv10_state_emit_framebuffer(struct nv10_context* nv10)
 	OUT_RING  (((h - 1) << 16) | 0);
 }
 
+static void nv10_vertex_layout(struct nv10_context *nv10)
+{
+	struct nv10_fragment_program *fp = nv10->fragprog.current;
+	uint32_t src = 0;
+	int i;
+	struct vertex_info vinfo;
+
+	memset(&vinfo, 0, sizeof(vinfo));
+
+	for (i = 0; i < fp->info.num_inputs; i++) {
+		switch (fp->info.input_semantic_name[i]) {
+			case TGSI_SEMANTIC_POSITION:
+				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
+				break;
+			case TGSI_SEMANTIC_COLOR:
+				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
+				break;
+			default:
+			case TGSI_SEMANTIC_GENERIC:
+				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
+				break;
+			case TGSI_SEMANTIC_FOG:
+				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
+				break;
+		}
+	}
+	draw_compute_vertex_size(&vinfo);
+}
+
 void
 nv10_emit_hw_state(struct nv10_context *nv10)
 {
@@ -176,13 +205,9 @@ nv10_emit_hw_state(struct nv10_context *nv10)
 		nv10->dirty &= ~NV10_NEW_FRAGPROG;
 	}
 
-	if (nv10->dirty & NV10_NEW_ARRAYS) {
-		nv10->dirty &= ~NV10_NEW_ARRAYS;
-		// array state will be put here once it's not emitted at each frame
-	}
-
-	if (nv10->dirty & NV10_NEW_VTXFMT) {
-		nv10->dirty &= ~NV10_NEW_VTXFMT;
+	if (nv10->dirty & NV10_NEW_VTXARRAYS) {
+		nv10->dirty &= ~NV10_NEW_VTXARRAYS;
+		nv10_vertex_layout(nv10);
 		nv10_vtxbuf_bind(nv10);
 	}
 

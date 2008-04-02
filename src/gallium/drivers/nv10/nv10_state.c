@@ -1,3 +1,4 @@
+#include "draw/draw_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
@@ -6,38 +7,6 @@
 
 #include "nv10_context.h"
 #include "nv10_state.h"
-
-static void nv10_vertex_layout(struct pipe_context* pipe)
-{
-	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_fragment_program *fp = nv10->fragprog.current;
-	uint32_t src = 0;
-	int i;
-	struct vertex_info vinfo;
-
-	memset(&vinfo, 0, sizeof(vinfo));
-
-	for (i = 0; i < fp->info.num_inputs; i++) {
-		switch (fp->info.input_semantic_name[i]) {
-			case TGSI_SEMANTIC_POSITION:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
-				break;
-			case TGSI_SEMANTIC_COLOR:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_LINEAR, src++);
-				break;
-			default:
-			case TGSI_SEMANTIC_GENERIC:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
-				break;
-			case TGSI_SEMANTIC_FOG:
-				draw_emit_vertex_attr(&vinfo, EMIT_4F, INTERP_PERSPECTIVE, src++);
-				break;
-		}
-	}
-	draw_compute_vertex_size(&vinfo);
-
-	nv10->dirty |= NV10_NEW_VTXFMT;
-}
 
 static void *
 nv10_blend_state_create(struct pipe_context *pipe,
@@ -406,34 +375,29 @@ nv10_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 
 static void *
 nv10_vp_state_create(struct pipe_context *pipe,
-		     const struct pipe_shader_state *cso)
+		     const struct pipe_shader_state *templ)
 {
-	struct nv10_vertex_program *vp;
+	struct nv10_context *nv10 = nv10_context(pipe);
 
-	vp = CALLOC(1, sizeof(struct nv10_vertex_program));
-	vp->pipe = cso;
-
-	return (void *)vp;
+	return draw_create_vertex_shader(nv10->draw, templ);
 }
 
 static void
-nv10_vp_state_bind(struct pipe_context *pipe, void *hwcso)
+nv10_vp_state_bind(struct pipe_context *pipe, void *shader)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_vertex_program *vp = hwcso;
 
-	nv10->vertprog.current = vp;
+	draw_bind_vertex_shader(nv10->draw, (struct draw_vertex_shader *) shader);
+
 	nv10->dirty |= NV10_NEW_VERTPROG;
 }
 
 static void
-nv10_vp_state_delete(struct pipe_context *pipe, void *hwcso)
+nv10_vp_state_delete(struct pipe_context *pipe, void *shader)
 {
-	//struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_vertex_program *vp = hwcso;
+	struct nv10_context *nv10 = nv10_context(pipe);
 
-	//nv10_vertprog_destroy(nv10, vp);
-	FREE(vp);
+	draw_delete_vertex_shader(nv10->draw, (struct draw_vertex_shader *) shader);
 }
 
 static void *
@@ -550,7 +514,7 @@ nv10_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 	struct nv10_context *nv10 = nv10_context(pipe);
 
 	memcpy(nv10->vtxbuf, vb, sizeof(*vb) * count);
-	nv10->dirty |= NV10_NEW_ARRAYS;
+	nv10->dirty |= NV10_NEW_VTXARRAYS;
 }
 
 static void
@@ -560,7 +524,7 @@ nv10_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 	struct nv10_context *nv10 = nv10_context(pipe);
 
 	memcpy(nv10->vtxelt, ve, sizeof(*ve) * count);
-	nv10->dirty |= NV10_NEW_ARRAYS;
+	nv10->dirty |= NV10_NEW_VTXARRAYS;
 }
 
 void
