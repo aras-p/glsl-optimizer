@@ -144,6 +144,8 @@ nv40_state_validate(struct nv40_context *nv40)
 boolean
 nv40_state_validate_swtnl(struct nv40_context *nv40)
 {
+	struct draw_context *draw = nv40->draw;
+
 	/* Setup for swtnl */
 	if (nv40->render_mode == HW) {
 		NOUVEAU_ERR("hw->swtnl 0x%08x\n", nv40->fallback_swtnl);
@@ -155,12 +157,30 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 		nv40->render_mode = SWTNL;
 	}
 
+	if (nv40->draw_dirty & NV40_NEW_VERTPROG)
+		draw_bind_vertex_shader(draw, nv40->vertprog->draw);
+
+	if (nv40->draw_dirty & NV40_NEW_RAST)
+		draw_set_rasterizer_state(draw, &nv40->rasterizer->pipe);
+
+	if (nv40->draw_dirty & NV40_NEW_UCP)
+		draw_set_clip_state(draw, &nv40->clip);
+
+	if (nv40->draw_dirty & NV40_NEW_VIEWPORT)
+		draw_set_viewport_state(draw, &nv40->viewport);
+
+	if (nv40->draw_dirty & NV40_NEW_ARRAYS) {
+		draw_set_vertex_buffers(draw, nv40->vtxbuf_nr, nv40->vtxbuf);
+		draw_set_vertex_elements(draw, nv40->vtxelt_nr, nv40->vtxelt);	
+	}
+
 	nv40_state_do_validate(nv40, swtnl_states);
 	if (nv40->fallback_swrast) {
 		NOUVEAU_ERR("swtnl->swrast 0x%08x\n", nv40->fallback_swrast);
 		return FALSE;
 	}
 
+	nv40->draw_dirty = 0;
 	return TRUE;
 }
 

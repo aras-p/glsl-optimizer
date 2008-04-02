@@ -133,7 +133,7 @@ struct nv40_context {
 	unsigned fallback_swrast;
 
 	/* Context state */
-	unsigned dirty;
+	unsigned dirty, draw_dirty;
 	struct pipe_scissor_state scissor;
 	unsigned stipple[32];
 	struct pipe_clip_state clip;
@@ -153,8 +153,10 @@ struct nv40_context {
 	unsigned nr_samplers;
 	unsigned nr_textures;
 	unsigned dirty_samplers;
-	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
+	struct pipe_vertex_buffer vtxbuf[PIPE_ATTRIB_MAX];
+	unsigned vtxbuf_nr;
 	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
+	unsigned vtxelt_nr;
 };
 
 static INLINE struct nv40_context *
