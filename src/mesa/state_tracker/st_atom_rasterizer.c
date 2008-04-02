@@ -198,6 +198,10 @@ static void update_raster_state( struct st_context *st )
    /* _NEW_POINT
     */
    raster->point_size = ctx->Point.Size;
+
+   raster->point_size_min = 0;    /* temporary, will go away */
+   raster->point_size_max = 1000; /* temporary, will go away */
+
    raster->point_smooth = ctx->Point.SmoothFlag;
    raster->point_sprite = ctx->Point.PointSprite;
    for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {

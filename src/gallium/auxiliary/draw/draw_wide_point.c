@@ -38,6 +38,8 @@ struct widepoint_stage {
    struct draw_stage stage;
 
    float half_point_size;
+   float point_size_min;
+   float point_size_max;
 
    uint texcoord_slot[PIPE_MAX_SHADER_OUTPUTS];
    uint texcoord_mode[PIPE_MAX_SHADER_OUTPUTS];
@@ -128,7 +130,15 @@ static void widepoint_point( struct draw_stage *stage,
 
    /* point size is either per-vertex or fixed size */
    if (wide->psize_slot >= 0) {
-      half_size = 0.5f * header->v[0]->data[wide->psize_slot][0];
+      half_size = header->v[0]->data[wide->psize_slot][0];
+
+      /* XXX: temporary -- do this in the vertex shader??
+       */
+      half_size = CLAMP(half_size,
+                        wide->point_size_min,
+                        wide->point_size_max);
+      
+      half_size *= 0.5f; 
    }
    else {
       half_size = wide->half_point_size;
@@ -182,6 +192,8 @@ static void widepoint_first_point( struct draw_stage *stage,
    struct draw_context *draw = stage->draw;
 
    wide->half_point_size = 0.5f * draw->rasterizer->point_size;
+   wide->point_size_min = draw->rasterizer->point_size_min;
+   wide->point_size_max = draw->rasterizer->point_size_max;
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
    if ((draw->rasterizer->point_size > draw->wide_point_threshold) ||

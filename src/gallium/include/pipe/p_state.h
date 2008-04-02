@@ -118,6 +118,8 @@ struct pipe_rasterizer_state
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
+   float point_size_min;        /* XXX - temporary, will go away */
+   float point_size_max;        /* XXX - temporary, will go away */
    float offset_units;
    float offset_scale;
    ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */
