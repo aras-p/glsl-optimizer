@@ -56,7 +56,8 @@ enum nv40_state_index {
 	NV40_STATE_VERTTEX3 = 30,
 	NV40_STATE_VTXBUF = 31,
 	NV40_STATE_VTXFMT = 32,
-	NV40_STATE_MAX = 33
+	NV40_STATE_VTXATTR = 33,
+	NV40_STATE_MAX = 34
 };
 
 #include "nv40_screen.h"

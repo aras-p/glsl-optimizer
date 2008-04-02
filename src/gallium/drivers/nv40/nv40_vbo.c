@@ -109,11 +109,12 @@ nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 }
 
 static boolean
-nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
-		       struct pipe_vertex_element *ve,
+nv40_vbo_static_attrib(struct nv40_context *nv40, struct nouveau_stateobj *so,
+		       int attrib, struct pipe_vertex_element *ve,
 		       struct pipe_vertex_buffer *vb)
 {
 	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct nouveau_grobj *curie = nv40->screen->curie;
 	unsigned type, ncomp;
 	void *map;
 
@@ -128,31 +129,28 @@ nv40_vbo_static_attrib(struct nv40_context *nv40, int attrib,
 	{
 		float *v = map;
 
-		BEGIN_RING(curie, NV40TCL_VTX_ATTR_4F_X(attrib), 4);
 		switch (ncomp) {
 		case 4:
-			OUT_RINGf(v[0]);
-			OUT_RINGf(v[1]);
-			OUT_RINGf(v[2]);
-			OUT_RINGf(v[3]);
+			so_method(so, curie, NV40TCL_VTX_ATTR_4F_X(attrib), 4);
+			so_data  (so, fui(v[0]));
+			so_data  (so, fui(v[1]));
+			so_data  (so, fui(v[2]));
+			so_data  (so, fui(v[3]));
 			break;
 		case 3:
-			OUT_RINGf(v[0]);
-			OUT_RINGf(v[1]);
-			OUT_RINGf(v[2]);
-			OUT_RINGf(1.0);
+			so_method(so, curie, NV40TCL_VTX_ATTR_3F_X(attrib), 3);
+			so_data  (so, fui(v[0]));
+			so_data  (so, fui(v[1]));
+			so_data  (so, fui(v[2]));
 			break;
 		case 2:
-			OUT_RINGf(v[0]);
-			OUT_RINGf(v[1]);
-			OUT_RINGf(0.0);
-			OUT_RINGf(1.0);
+			so_method(so, curie, NV40TCL_VTX_ATTR_2F_X(attrib), 2);
+			so_data  (so, fui(v[0]));
+			so_data  (so, fui(v[1]));
 			break;
 		case 1:
-			OUT_RINGf(v[0]);
-			OUT_RINGf(0.0);
-			OUT_RINGf(0.0);
-			OUT_RINGf(1.0);
+			so_method(so, curie, 0x1e40 + (attrib * 4), 1);
+			so_data  (so, fui(v[0]));
 			break;
 		default:
 			ws->buffer_unmap(ws, vb->buffer);
@@ -487,7 +485,8 @@ static boolean
 nv40_vbo_validate(struct nv40_context *nv40)
 {
 	struct nv40_vertex_program *vp = nv40->vertprog;
-	struct nouveau_stateobj *vtxbuf, *vtxfmt;
+	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
+	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct pipe_buffer *ib = nv40->idxbuf;
 	unsigned ib_format = nv40->idxbuf_format;
 	unsigned inputs, hw, num_hw;
@@ -503,9 +502,9 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	num_hw++;
 
 	vtxbuf = so_new(20, 18);
-	so_method(vtxbuf, nv40->screen->curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
+	so_method(vtxbuf, curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
 	vtxfmt = so_new(17, 0);
-	so_method(vtxfmt, nv40->screen->curie, NV40TCL_VTXFMT(0), num_hw);
+	so_method(vtxfmt, curie, NV40TCL_VTXFMT(0), num_hw);
 
 	inputs = vp->ir;
 	for (hw = 0; hw < num_hw; hw++) {
@@ -522,10 +521,15 @@ nv40_vbo_validate(struct nv40_context *nv40)
 		ve = &nv40->vtxelt[hw];
 		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
 
-		if (!vb->pitch && nv40_vbo_static_attrib(nv40, hw, ve, vb)) {
-			so_data(vtxbuf, 0);
-			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
-			continue;
+		if (!vb->pitch) {
+			if (!sattr)
+				sattr = so_new(16 * 5, 0);
+
+			if (nv40_vbo_static_attrib(nv40, sattr, hw, ve, vb)) {
+				so_data(vtxbuf, 0);
+				so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
+				continue;
+			}
 		}
 
 		if (nv40_vbo_format_to_hw(ve->src_format, &type, &ncomp)) {
@@ -543,19 +547,21 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	}
 
 	if (ib) {
-		so_method(vtxbuf, nv40->screen->curie, NV40TCL_IDXBUF_ADDRESS, 2);
+		so_method(vtxbuf, curie, NV40TCL_IDXBUF_ADDRESS, 2);
 		so_reloc (vtxbuf, ib, 0, vb_flags | NOUVEAU_BO_LOW, 0, 0);
 		so_reloc (vtxbuf, ib, ib_format, vb_flags | NOUVEAU_BO_OR,
 			  0, NV40TCL_IDXBUF_FORMAT_DMA1);
 	}
 
-	so_method(vtxbuf, nv40->screen->curie, 0x1710, 1);
+	so_method(vtxbuf, curie, 0x1710, 1);
 	so_data  (vtxbuf, 0);
 
 	so_ref(vtxbuf, &nv40->state.hw[NV40_STATE_VTXBUF]);
 	nv40->state.dirty |= (1ULL << NV40_STATE_VTXBUF);
 	so_ref(vtxfmt, &nv40->state.hw[NV40_STATE_VTXFMT]);
 	nv40->state.dirty |= (1ULL << NV40_STATE_VTXFMT);
+	so_ref(sattr, &nv40->state.hw[NV40_STATE_VTXATTR]);
+	nv40->state.dirty |= (1ULL << NV40_STATE_VTXATTR);
 	return FALSE;
 }
 

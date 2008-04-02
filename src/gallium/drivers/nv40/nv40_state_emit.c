@@ -82,7 +82,8 @@ nv40_state_emit(struct nv40_context *nv40)
 		if (!(states & (1ULL << i)))
 			continue;
 		so_ref (state->hw[i], &nv40->screen->state[i]);
-		so_emit(nv40->nvws, nv40->screen->state[i]);
+		if (state->hw[i])
+			so_emit(nv40->nvws, nv40->screen->state[i]);
 		states &= ~(1ULL << i);
 	}
 
