@@ -35,9 +35,9 @@
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include <X11/extensions/dri2proto.h>
 #include "glheader.h"
 #include "xf86drm.h"
-#include "dri2proto.h"
 #include "dri2.h"
 
 static char dri2ExtensionName[] = DRI2_NAME;
