@@ -281,6 +281,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
          feme->fetch[i].pitch = 0;
          feme->fetch[i].fetch = fetch_R32_FLOAT;
          feme->fetch[i].emit = emit_R32_FLOAT;
+         break;
       default:
          assert(0);
          feme->fetch[i].emit = NULL;
