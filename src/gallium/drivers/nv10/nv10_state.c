@@ -35,6 +35,8 @@ static void nv10_vertex_layout(struct pipe_context* pipe)
 		}
 	}
 	draw_compute_vertex_size(&vinfo);
+
+	nv10->dirty |= NV10_NEW_VTXFMT;
 }
 
 static void *
@@ -62,27 +64,19 @@ nv10_blend_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_blend_state_bind(struct pipe_context *pipe, void *hwcso)
+nv10_blend_state_bind(struct pipe_context *pipe, void *blend)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_blend_state *cb = hwcso;
 
-	BEGIN_RING(celsius, NV10TCL_DITHER_ENABLE, 1);
-	OUT_RING  (cb->d_enable);
+	nv10->blend = (struct nv10_blend_state*)blend;
 
-	BEGIN_RING(celsius, NV10TCL_BLEND_FUNC_ENABLE, 3);
-	OUT_RING  (cb->b_enable);
-	OUT_RING  (cb->b_srcfunc);
-	OUT_RING  (cb->b_dstfunc);
-
-	BEGIN_RING(celsius, NV10TCL_COLOR_MASK, 1);
-	OUT_RING  (cb->c_mask);
+	nv10->dirty |= NV10_NEW_BLEND;
 }
 
 static void
 nv10_blend_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	FREE(hwcso);
 }
 
 
@@ -255,7 +249,7 @@ nv10_sampler_state_bind(struct pipe_context *pipe, unsigned nr, void **sampler)
 static void
 nv10_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	FREE(hwcso);
 }
 
 static void
@@ -347,43 +341,19 @@ nv10_rasterizer_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
+nv10_rasterizer_state_bind(struct pipe_context *pipe, void *rast)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_rasterizer_state *rs = hwcso;
 
-	BEGIN_RING(celsius, NV10TCL_SHADE_MODEL, 2);
-	OUT_RING  (rs->shade_model);
-	OUT_RING  (rs->line_width);
+	nv10->rast = (struct nv10_rasterizer_state*)rast;
 
-
-	BEGIN_RING(celsius, NV10TCL_POINT_SIZE, 1);
-	OUT_RING  (rs->point_size);
-
-	BEGIN_RING(celsius, NV10TCL_POLYGON_MODE_FRONT, 2);
-	OUT_RING  (rs->poly_mode_front);
-	OUT_RING  (rs->poly_mode_back);
-
-
-	BEGIN_RING(celsius, NV10TCL_CULL_FACE, 2);
-	OUT_RING  (rs->cull_face);
-	OUT_RING  (rs->front_face);
-
-	BEGIN_RING(celsius, NV10TCL_LINE_SMOOTH_ENABLE, 2);
-	OUT_RING  (rs->line_smooth_en);
-	OUT_RING  (rs->poly_smooth_en);
-
-	BEGIN_RING(celsius, NV10TCL_CULL_FACE_ENABLE, 1);
-	OUT_RING  (rs->cull_face_en);
-
-/*	BEGIN_RING(celsius, NV10TCL_POINT_SPRITE, 1);
-	OUT_RING  (rs->point_sprite);*/
+	nv10->dirty |= NV10_NEW_RAST;
 }
 
 static void
 nv10_rasterizer_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	FREE(hwcso);
 }
 
 static void *
@@ -415,25 +385,19 @@ nv10_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 }
 
 static void
-nv10_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *hwcso)
+nv10_depth_stencil_alpha_state_bind(struct pipe_context *pipe, void *dsa)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nv10_depth_stencil_alpha_state *hw = hwcso;
 
-	BEGIN_RING(celsius, NV10TCL_DEPTH_FUNC, 3);
-	OUT_RINGp ((uint32_t *)&hw->depth, 3);
-	BEGIN_RING(celsius, NV10TCL_STENCIL_ENABLE, 1);
-	OUT_RING (hw->stencil.enable);
-	BEGIN_RING(celsius, NV10TCL_STENCIL_MASK, 7);
-	OUT_RINGp ((uint32_t *)&(hw->stencil.wmask), 7);
-	BEGIN_RING(celsius, NV10TCL_ALPHA_FUNC_ENABLE, 3);
-	OUT_RINGp ((uint32_t *)&hw->alpha.enabled, 3);
+	nv10->dsa = (struct nv10_depth_stencil_alpha_state*)dsa;
+
+	nv10->dirty |= NV10_NEW_DSA;
 }
 
 static void
 nv10_depth_stencil_alpha_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	free(hwcso);
+	FREE(hwcso);
 }
 
 static void *
@@ -461,11 +425,11 @@ nv10_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 static void
 nv10_vp_state_delete(struct pipe_context *pipe, void *hwcso)
 {
-	struct nv10_context *nv10 = nv10_context(pipe);
+	//struct nv10_context *nv10 = nv10_context(pipe);
 	struct nv10_vertex_program *vp = hwcso;
 
 	//nv10_vertprog_destroy(nv10, vp);
-	free(vp);
+	FREE(vp);
 }
 
 static void *
@@ -499,7 +463,7 @@ nv10_fp_state_delete(struct pipe_context *pipe, void *hwcso)
 	struct nv10_fragment_program *fp = hwcso;
 
 	nv10_fragprog_destroy(nv10, fp);
-	free(fp);
+	FREE(fp);
 }
 
 static void
@@ -508,11 +472,9 @@ nv10_set_blend_color(struct pipe_context *pipe,
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
-	BEGIN_RING(celsius, NV10TCL_BLEND_COLOR, 1);
-	OUT_RING  ((float_to_ubyte(bcol->color[3]) << 24) |
-		   (float_to_ubyte(bcol->color[0]) << 16) |
-		   (float_to_ubyte(bcol->color[1]) <<  8) |
-		   (float_to_ubyte(bcol->color[2]) <<  0));
+	nv10->blend_color = (struct pipe_blend_color*)bcol;
+
+	nv10->dirty |= NV10_NEW_BLENDCOL;
 }
 
 static void
@@ -542,58 +504,10 @@ nv10_set_framebuffer_state(struct pipe_context *pipe,
 			   const struct pipe_framebuffer_state *fb)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct pipe_surface *rt, *zeta;
-	uint32_t rt_format, w, h;
-	int i, colour_format = 0, zeta_format = 0;
 
-	w = fb->cbufs[0]->width;
-	h = fb->cbufs[0]->height;
-	colour_format = fb->cbufs[0]->format;
-	rt = fb->cbufs[0];
+	nv10->framebuffer = (struct pipe_framebuffer_state*)fb;
 
-	if (fb->zsbuf) {
-		if (colour_format) {
-			assert(w == fb->zsbuf->width);
-			assert(h == fb->zsbuf->height);
-		} else {
-			w = fb->zsbuf->width;
-			h = fb->zsbuf->height;
-		}
-
-		zeta_format = fb->zsbuf->format;
-		zeta = fb->zsbuf;
-	}
-
-	rt_format = NV10TCL_RT_FORMAT_TYPE_LINEAR;
-
-	switch (colour_format) {
-	case PIPE_FORMAT_A8R8G8B8_UNORM:
-	case 0:
-		rt_format |= NV10TCL_RT_FORMAT_COLOR_A8R8G8B8;
-		break;
-	case PIPE_FORMAT_R5G6B5_UNORM:
-		rt_format |= NV10TCL_RT_FORMAT_COLOR_R5G6B5;
-		break;
-	default:
-		assert(0);
-	}
-
-	BEGIN_RING(celsius, NV10TCL_RT_PITCH, 1);
-	OUT_RING  ( (rt->pitch * rt->cpp) | ( (zeta->pitch * zeta->cpp) << 16) );
-	nv10->rt[0] = rt->buffer;
-
-	if (zeta_format)
-	{
-		nv10->zeta = zeta->buffer;
-	}
-
-	BEGIN_RING(celsius, NV10TCL_RT_HORIZ, 3);
-	OUT_RING  ((w << 16) | 0);
-	OUT_RING  ((h << 16) | 0);
-	OUT_RING  (rt_format);
-	BEGIN_RING(celsius, NV10TCL_VIEWPORT_CLIP_HORIZ(0), 2);
-	OUT_RING  (((w - 1) << 16) | 0);
-	OUT_RING  (((h - 1) << 16) | 0);
+	nv10->dirty |= NV10_NEW_FRAMEBUFFER;
 }
 
 static void
@@ -609,10 +523,9 @@ nv10_set_scissor_state(struct pipe_context *pipe,
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
-	// XXX
-/*	BEGIN_RING(celsius, NV10TCL_SCISSOR_HORIZ, 2);
-	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
-	OUT_RING  (((s->maxy - s->miny) << 16) | s->miny);*/
+	nv10->scissor = (struct pipe_scissor_state*)s;
+
+	nv10->dirty |= NV10_NEW_SCISSOR;
 }
 
 static void
@@ -621,15 +534,9 @@ nv10_set_viewport_state(struct pipe_context *pipe,
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
-/*	OUT_RINGf (vpt->translate[0]);
-	OUT_RINGf (vpt->translate[1]);
-	OUT_RINGf (vpt->translate[2]);
-	OUT_RINGf (vpt->translate[3]);*/
-	BEGIN_RING(celsius, NV10TCL_VIEWPORT_SCALE_X, 4);
-	OUT_RINGf (vpt->scale[0]);
-	OUT_RINGf (vpt->scale[1]);
-	OUT_RINGf (vpt->scale[2]);
-	OUT_RINGf (vpt->scale[3]);
+	nv10->viewport = (struct pipe_viewport_state*)vpt;
+
+	nv10->dirty |= NV10_NEW_VIEWPORT;
 }
 
 static void

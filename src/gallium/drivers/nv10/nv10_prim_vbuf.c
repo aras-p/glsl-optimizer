@@ -67,6 +67,17 @@ struct nv10_vbuf_render {
 };
 
 
+void nv10_vtxbuf_bind( struct nv10_context* nv10 )
+{
+	int i;
+	for(i = 0; i < 8; i++) {
+		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_OFFSET(i), 1);
+		OUT_RING(0/*nv10->vtxbuf*/);
+		BEGIN_RING(celsius, NV10TCL_VERTEX_ARRAY_ATTRIB_FORMAT(i) ,1);
+		OUT_RING(0/*XXX*/);
+	}
+}
+
 /**
  * Basically a cast wrapper.
  */
@@ -100,7 +111,7 @@ nv10_vbuf_render_allocate_vertices( struct vbuf_render *render,
 	assert(!nv10_render->buffer);
 	nv10_render->buffer = winsys->buffer_create(winsys, 64, PIPE_BUFFER_USAGE_VERTEX, size);
 
-	nv10->dirty |= NV10_NEW_VBO;
+	nv10->dirty |= NV10_NEW_ARRAYS;
 
 	return winsys->buffer_map(winsys, 
 			nv10_render->buffer, 
@@ -139,8 +150,8 @@ nv10_vbuf_render_draw( struct vbuf_render *render,
 	}
 
 	while (nr_indices) {
-		// XXX too big ?
-		push = MIN2(nr_indices, 2047 * 2);
+		// XXX too big/small ? check the size
+		push = MIN2(nr_indices, 1200 * 2);
 
 		BEGIN_RING_NI(celsius, NV10TCL_VB_ELEMENT_U16, push >> 1);
 		for (i = 0; i < push; i+=2)

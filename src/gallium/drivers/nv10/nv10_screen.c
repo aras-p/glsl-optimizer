@@ -116,35 +116,71 @@ nv10_screen_is_format_supported(struct pipe_screen *screen,
 }
 
 static void
-nv10_screen_destroy(struct pipe_screen *screen)
+nv10_screen_destroy(struct pipe_screen *pscreen)
 {
-	FREE(screen);
+	struct nv10_screen *screen = nv10_screen(pscreen);
+	struct nouveau_winsys *nvws = screen->nvws;
+
+	nvws->notifier_free(&screen->sync);
+	nvws->grobj_free(&screen->celsius);
+
+	FREE(pscreen);
 }
 
 struct pipe_screen *
-nv10_screen_create(struct pipe_winsys *winsys, struct nouveau_winsys *nvws,
+nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 		   unsigned chipset)
 {
-	struct nv10_screen *nv10screen = CALLOC_STRUCT(nv10_screen);
+	struct nv10_screen *screen = CALLOC_STRUCT(nv10_screen);
+	unsigned celsius_class;
+	int ret;
 
-	if (!nv10screen)
+	if (!screen)
 		return NULL;
+	screen->chipset = chipset;
+	screen->nvws = nvws;
 
-	nv10screen->chipset = chipset;
-	nv10screen->nvws = nvws;
+	/* 3D object */
+	if (chipset>=0x20)
+		celsius_class=NV11TCL;
+	else if (chipset>=0x17)
+		celsius_class=NV17TCL;
+	else if (chipset>=0x11)
+		celsius_class=NV11TCL;
+	else
+		celsius_class=NV10TCL;
 
-	nv10screen->screen.winsys = winsys;
+	if (!celsius_class) {
+		NOUVEAU_ERR("Unknown nv1x chipset: nv%02x\n", chipset);
+		return NULL;
+	}
 
-	nv10screen->screen.destroy = nv10_screen_destroy;
+	ret = nvws->grobj_alloc(nvws, celsius_class, &screen->celsius);
+	if (ret) {
+		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
+		return FALSE;
+	}
 
-	nv10screen->screen.get_name = nv10_screen_get_name;
-	nv10screen->screen.get_vendor = nv10_screen_get_vendor;
-	nv10screen->screen.get_param = nv10_screen_get_param;
-	nv10screen->screen.get_paramf = nv10_screen_get_paramf;
-	nv10screen->screen.is_format_supported = 
-		nv10_screen_is_format_supported;
+	/* Notifier for sync purposes */
+	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	if (ret) {
+		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
+		nv10_screen_destroy(&screen->pipe);
+		return NULL;
+	}
 
-	nv10_init_miptree_functions(&nv10screen->screen);
-	return &nv10screen->screen;
+	screen->pipe.winsys = ws;
+	screen->pipe.destroy = nv10_screen_destroy;
+
+	screen->pipe.get_name = nv10_screen_get_name;
+	screen->pipe.get_vendor = nv10_screen_get_vendor;
+	screen->pipe.get_param = nv10_screen_get_param;
+	screen->pipe.get_paramf = nv10_screen_get_paramf;
+
+	screen->pipe.is_format_supported = nv10_screen_is_format_supported;
+
+	nv10_screen_init_miptree_functions(&screen->pipe);
+
+	return &screen->pipe;
 }
 

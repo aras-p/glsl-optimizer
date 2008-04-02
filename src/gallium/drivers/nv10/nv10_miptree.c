@@ -69,7 +69,7 @@ nv10_miptree_create(struct pipe_screen *screen, struct pipe_texture *pt)
 	mt->buffer = ws->buffer_create(ws, 256, PIPE_BUFFER_USAGE_PIXEL,
 					   mt->total_size);
 	if (!mt->buffer) {
-		free(mt);
+		FREE(mt);
 		return NULL;
 	}
 	
@@ -90,11 +90,18 @@ nv10_miptree_release(struct pipe_screen *screen, struct pipe_texture **pt)
 		pipe_buffer_reference(ws, &nv10mt->buffer, NULL);
 		for (l = 0; l <= mt->last_level; l++) {
 			if (nv10mt->level[l].image_offset)
-				free(nv10mt->level[l].image_offset);
+				FREE(nv10mt->level[l].image_offset);
 		}
-		free(nv10mt);
+		FREE(nv10mt);
 	}
 }
+
+static void
+nv10_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt,
+		    uint face, uint levels)
+{
+}
+
 
 static struct pipe_surface *
 nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
@@ -122,13 +129,16 @@ nv10_miptree_surface_get(struct pipe_screen *screen, struct pipe_texture *pt,
 
 	return ps;
 }
-void
-nv10_init_miptree_functions(struct pipe_screen *screen)
-{
-	struct nv10_screen *nv10screen = nv10_screen(screen);
 
-	nv10screen->screen.texture_create = nv10_miptree_create;
-	nv10screen->screen.texture_release = nv10_miptree_release;
-	nv10screen->screen.get_tex_surface = nv10_miptree_surface_get;
+void nv10_init_miptree_functions(struct nv10_context *nv10)
+{
+	nv10->pipe.texture_update = nv10_miptree_update;
+}
+
+void nv10_screen_init_miptree_functions(struct pipe_screen *pscreen)
+{
+	pscreen->texture_create = nv10_miptree_create;
+	pscreen->texture_release = nv10_miptree_release;
+	pscreen->get_tex_surface = nv10_miptree_surface_get;
 }
 

@@ -1,14 +1,174 @@
+#include "pipe/p_util.h"
+
 #include "nv10_context.h"
 #include "nv10_state.h"
+
+static void nv10_state_emit_blend(struct nv10_context* nv10)
+{
+	struct nv10_blend_state *b = nv10->blend;
+
+	BEGIN_RING(celsius, NV10TCL_DITHER_ENABLE, 1);
+	OUT_RING  (b->d_enable);
+
+	BEGIN_RING(celsius, NV10TCL_BLEND_FUNC_ENABLE, 3);
+	OUT_RING  (b->b_enable);
+	OUT_RING  (b->b_srcfunc);
+	OUT_RING  (b->b_dstfunc);
+
+	BEGIN_RING(celsius, NV10TCL_COLOR_MASK, 1);
+	OUT_RING  (b->c_mask);
+}
+
+static void nv10_state_emit_blend_color(struct nv10_context* nv10)
+{
+	struct pipe_blend_color *c = nv10->blend_color;
+
+	BEGIN_RING(celsius, NV10TCL_BLEND_COLOR, 1);
+	OUT_RING  ((float_to_ubyte(c->color[3]) << 24)|
+		   (float_to_ubyte(c->color[0]) << 16)|
+		   (float_to_ubyte(c->color[1]) << 8) |
+		   (float_to_ubyte(c->color[2]) << 0));
+}
+
+static void nv10_state_emit_rast(struct nv10_context* nv10)
+{
+	struct nv10_rasterizer_state *r = nv10->rast;
+
+	BEGIN_RING(celsius, NV10TCL_SHADE_MODEL, 2);
+	OUT_RING  (r->shade_model);
+	OUT_RING  (r->line_width);
+
+
+	BEGIN_RING(celsius, NV10TCL_POINT_SIZE, 1);
+	OUT_RING  (r->point_size);
+
+	BEGIN_RING(celsius, NV10TCL_POLYGON_MODE_FRONT, 2);
+	OUT_RING  (r->poly_mode_front);
+	OUT_RING  (r->poly_mode_back);
+
+
+	BEGIN_RING(celsius, NV10TCL_CULL_FACE, 2);
+	OUT_RING  (r->cull_face);
+	OUT_RING  (r->front_face);
+
+	BEGIN_RING(celsius, NV10TCL_LINE_SMOOTH_ENABLE, 2);
+	OUT_RING  (r->line_smooth_en);
+	OUT_RING  (r->poly_smooth_en);
+
+	BEGIN_RING(celsius, NV10TCL_CULL_FACE_ENABLE, 1);
+	OUT_RING  (r->cull_face_en);
+}
+
+static void nv10_state_emit_dsa(struct nv10_context* nv10)
+{
+	struct nv10_depth_stencil_alpha_state *d = nv10->dsa;
+
+	BEGIN_RING(celsius, NV10TCL_DEPTH_FUNC, 3);
+	OUT_RINGp ((uint32_t *)&d->depth, 3);
+	BEGIN_RING(celsius, NV10TCL_STENCIL_ENABLE, 1);
+	OUT_RING (d->stencil.enable);
+	BEGIN_RING(celsius, NV10TCL_STENCIL_MASK, 7);
+	OUT_RINGp ((uint32_t *)&(d->stencil.wmask), 7);
+	BEGIN_RING(celsius, NV10TCL_ALPHA_FUNC_ENABLE, 3);
+	OUT_RINGp ((uint32_t *)&d->alpha.enabled, 3);
+}
+
+static void nv10_state_emit_viewport(struct nv10_context* nv10)
+{
+	struct pipe_viewport_state *vpt = nv10->viewport;
+
+/*	OUT_RINGf (vpt->translate[0]);
+	OUT_RINGf (vpt->translate[1]);
+	OUT_RINGf (vpt->translate[2]);
+	OUT_RINGf (vpt->translate[3]);*/
+	BEGIN_RING(celsius, NV10TCL_VIEWPORT_SCALE_X, 4);
+	OUT_RINGf (vpt->scale[0]);
+	OUT_RINGf (vpt->scale[1]);
+	OUT_RINGf (vpt->scale[2]);
+	OUT_RINGf (vpt->scale[3]);
+}
+
+static void nv10_state_emit_scissor(struct nv10_context* nv10)
+{
+	// XXX this is so not working
+/*	struct pipe_scissor_state *s = nv10->scissor;
+	BEGIN_RING(celsius, NV10TCL_SCISSOR_HORIZ, 2);
+	OUT_RING  (((s->maxx - s->minx) << 16) | s->minx);
+	OUT_RING  (((s->maxy - s->miny) << 16) | s->miny);*/
+}
+
+static void nv10_state_emit_framebuffer(struct nv10_context* nv10)
+{
+	struct pipe_framebuffer_state* fb = nv10->framebuffer;
+	struct pipe_surface *rt, *zeta;
+	uint32_t rt_format, w, h;
+	int colour_format = 0, zeta_format = 0;
+
+	w = fb->cbufs[0]->width;
+	h = fb->cbufs[0]->height;
+	colour_format = fb->cbufs[0]->format;
+	rt = fb->cbufs[0];
+
+	if (fb->zsbuf) {
+		if (colour_format) {
+			assert(w == fb->zsbuf->width);
+			assert(h == fb->zsbuf->height);
+		} else {
+			w = fb->zsbuf->width;
+			h = fb->zsbuf->height;
+		}
+
+		zeta_format = fb->zsbuf->format;
+		zeta = fb->zsbuf;
+	}
+
+	rt_format = NV10TCL_RT_FORMAT_TYPE_LINEAR;
+
+	switch (colour_format) {
+	case PIPE_FORMAT_A8R8G8B8_UNORM:
+	case 0:
+		rt_format |= NV10TCL_RT_FORMAT_COLOR_A8R8G8B8;
+		break;
+	case PIPE_FORMAT_R5G6B5_UNORM:
+		rt_format |= NV10TCL_RT_FORMAT_COLOR_R5G6B5;
+		break;
+	default:
+		assert(0);
+	}
+
+	BEGIN_RING(celsius, NV10TCL_RT_PITCH, 1);
+	OUT_RING  ( (rt->pitch * rt->cpp) | ( (zeta->pitch * zeta->cpp) << 16) );
+	nv10->rt[0] = rt->buffer;
+
+	if (zeta_format)
+	{
+		nv10->zeta = zeta->buffer;
+	}
+
+	BEGIN_RING(celsius, NV10TCL_RT_HORIZ, 3);
+	OUT_RING  ((w << 16) | 0);
+	OUT_RING  ((h << 16) | 0);
+	OUT_RING  (rt_format);
+	BEGIN_RING(celsius, NV10TCL_VIEWPORT_CLIP_HORIZ(0), 2);
+	OUT_RING  (((w - 1) << 16) | 0);
+	OUT_RING  (((h - 1) << 16) | 0);
+}
 
 void
 nv10_emit_hw_state(struct nv10_context *nv10)
 {
 	int i;
 
+	if (nv10->dirty & NV10_NEW_VERTPROG) {
+		//nv10_vertprog_bind(nv10, nv10->vertprog.current);
+		nv10->dirty &= ~NV10_NEW_VERTPROG;
+	}
+
 	if (nv10->dirty & NV10_NEW_FRAGPROG) {
 		nv10_fragprog_bind(nv10, nv10->fragprog.current);
 		/*XXX: clear NV10_NEW_FRAGPROG if no new program uploaded */
+		nv10->dirty_samplers |= (1<<10);
+		nv10->dirty_samplers = 0;
 	}
 
 	if (nv10->dirty_samplers || (nv10->dirty & NV10_NEW_FRAGPROG)) {
@@ -16,16 +176,50 @@ nv10_emit_hw_state(struct nv10_context *nv10)
 		nv10->dirty &= ~NV10_NEW_FRAGPROG;
 	}
 
-	if (nv10->dirty & NV10_NEW_VERTPROG) {
-		//nv10_vertprog_bind(nv10, nv10->vertprog.current);
-		nv10->dirty &= ~NV10_NEW_VERTPROG;
+	if (nv10->dirty & NV10_NEW_ARRAYS) {
+		nv10->dirty &= ~NV10_NEW_ARRAYS;
+		// array state will be put here once it's not emitted at each frame
 	}
 
-	if (nv10->dirty & NV10_NEW_VBO) {
-		
+	if (nv10->dirty & NV10_NEW_VTXFMT) {
+		nv10->dirty &= ~NV10_NEW_VTXFMT;
+		nv10_vtxbuf_bind(nv10);
 	}
 
-	nv10->dirty_samplers = 0;
+	if (nv10->dirty & NV10_NEW_BLEND) {
+		nv10->dirty &= ~NV10_NEW_BLEND;
+		nv10_state_emit_blend(nv10);
+	}
+
+	if (nv10->dirty & NV10_NEW_BLENDCOL) {
+		nv10->dirty &= ~NV10_NEW_BLENDCOL;
+		nv10_state_emit_blend_color(nv10);
+	}
+
+	if (nv10->dirty & NV10_NEW_RAST) {
+		nv10->dirty &= ~NV10_NEW_RAST;
+		nv10_state_emit_rast(nv10);
+	}
+
+	if (nv10->dirty & NV10_NEW_DSA) {
+		nv10->dirty &= ~NV10_NEW_DSA;
+		nv10_state_emit_dsa(nv10);
+	}
+
+ 	if (nv10->dirty & NV10_NEW_VIEWPORT) {
+		nv10->dirty &= ~NV10_NEW_VIEWPORT;
+		nv10_state_emit_viewport(nv10);
+	}
+
+ 	if (nv10->dirty & NV10_NEW_SCISSOR) {
+		nv10->dirty &= ~NV10_NEW_SCISSOR;
+		nv10_state_emit_scissor(nv10);
+	}
+
+ 	if (nv10->dirty & NV10_NEW_FRAMEBUFFER) {
+		nv10->dirty &= ~NV10_NEW_FRAMEBUFFER;
+		nv10_state_emit_framebuffer(nv10);
+	}
 
 	/* Emit relocs for every referenced buffer.
 	 * This is to ensure the bufmgr has an accurate idea of how
@@ -48,9 +242,15 @@ nv10_emit_hw_state(struct nv10_context *nv10)
 		BEGIN_RING(celsius, NV10TCL_ZETA_OFFSET, 1);
 		OUT_RELOCl(nv10->zeta, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 		/* XXX for when we allocate LMA on nv17 */
-/*		BEGIN_RING(celsius, NV10TCL_LMA_DEPTH_OFFSET, 1);
-		OUT_RELOCl(nv10->zeta+lma_offset);*/
+/*		BEGIN_RING(celsius, NV10TCL_LMA_DEPTH_BUFFER_OFFSET, 1);
+		OUT_RELOCl(nv10->zeta + lma_offset);*/
 	}
+
+	/* Vertex buffer */
+	BEGIN_RING(celsius, NV10TCL_DMA_VTXBUF0, 1);
+	OUT_RELOCo(nv10->rt[0], NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	BEGIN_RING(celsius, NV10TCL_COLOR_OFFSET, 1);
+	OUT_RELOCl(nv10->rt[0], 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	/* Texture images */
 	for (i = 0; i < 2; i++) {

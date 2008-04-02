@@ -11,7 +11,7 @@
 #include "nouveau/nouveau_gldefs.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv10_context *ctx = nv10
+	struct nv10_screen *ctx = nv10->screen
 #include "nouveau/nouveau_push.h"
 
 #include "nv10_state.h"
@@ -24,17 +24,27 @@
 #define NV10_NEW_VERTPROG	(1 << 1)
 #define NV10_NEW_FRAGPROG	(1 << 2)
 #define NV10_NEW_ARRAYS		(1 << 3)
-#define NV10_NEW_VBO		(1 << 4)
+#define NV10_NEW_VTXFMT		(1 << 4)
+#define NV10_NEW_BLEND		(1 << 5)
+#define NV10_NEW_BLENDCOL	(1 << 6)
+#define NV10_NEW_RAST 		(1 << 7)
+#define NV10_NEW_DSA  		(1 << 8)
+#define NV10_NEW_VIEWPORT	(1 << 9)
+#define NV10_NEW_SCISSOR	(1 << 9)
+#define NV10_NEW_FRAMEBUFFER	(1 << 10)
+
+#include "nv10_screen.h"
 
 struct nv10_context {
 	struct pipe_context pipe;
+
 	struct nouveau_winsys *nvws;
+	struct nv10_screen *screen;
+	unsigned pctx_id;
 
 	struct draw_context *draw;
 
 	int chipset;
-	struct nouveau_grobj *celsius;
-	struct nouveau_notifier *sync;
 
 	uint32_t dirty;
 
@@ -48,6 +58,14 @@ struct nv10_context {
 	struct pipe_buffer *rt[4];
 	struct pipe_buffer *zeta;
 	uint32_t lma_offset;
+
+	struct nv10_blend_state *blend;
+	struct pipe_blend_color *blend_color;
+	struct nv10_rasterizer_state *rast;
+	struct nv10_depth_stencil_alpha_state *dsa;
+	struct pipe_viewport_state *viewport;
+	struct pipe_scissor_state *scissor;
+	struct pipe_framebuffer_state *framebuffer;
 
 	struct {
 		struct pipe_buffer *buffer;
@@ -91,7 +109,9 @@ nv10_context(struct pipe_context *pipe)
 
 extern void nv10_init_state_functions(struct nv10_context *nv10);
 extern void nv10_init_surface_functions(struct nv10_context *nv10);
-extern void nv10_init_miptree_functions(struct pipe_screen *screen);
+extern void nv10_init_miptree_functions(struct nv10_context *nv10);
+
+extern void nv10_screen_init_miptree_functions(struct pipe_screen *pscreen);
 
 /* nv10_clear.c */
 extern void nv10_clear(struct pipe_context *pipe, struct pipe_surface *ps,
@@ -111,6 +131,7 @@ extern void nv10_fragtex_bind(struct nv10_context *);
 
 /* nv10_prim_vbuf.c */
 struct draw_stage *nv10_draw_vbuf_stage( struct nv10_context *nv10 );
+extern void nv10_vtxbuf_bind(struct nv10_context* nv10);
 
 /* nv10_state.c and friends */
 extern void nv10_emit_hw_state(struct nv10_context *nv10);

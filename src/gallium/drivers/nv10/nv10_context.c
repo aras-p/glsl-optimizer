@@ -12,13 +12,6 @@ nv10_flush(struct pipe_context *pipe, unsigned flags,
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
-	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-		BEGIN_RING(celsius, 0x1fd8, 1);
-		OUT_RING  (2);
-		BEGIN_RING(celsius, 0x1fd8, 1);
-		OUT_RING  (1);
-	}
-
 	FIRE_RING(fence);
 }
 
@@ -26,36 +19,21 @@ static void
 nv10_destroy(struct pipe_context *pipe)
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
-	struct nouveau_winsys *nvws = nv10->nvws;
 
 	if (nv10->draw)
 		draw_destroy(nv10->draw);
 
-	nvws->res_free(&nv10->vertprog.exec_heap);
-	nvws->res_free(&nv10->vertprog.data_heap);
-
-	nvws->notifier_free(&nv10->sync);
-
-	nvws->grobj_free(&nv10->celsius);
-
-	free(nv10);
+	FREE(nv10);
 }
 
-static boolean
-nv10_init_hwctx(struct nv10_context *nv10, int celsius_class)
+static void nv10_init_hwctx(struct nv10_context *nv10)
 {
-	struct nouveau_winsys *nvws = nv10->nvws;
-	int ret;
+	struct nv10_screen *screen = nv10->screen;
+	struct nouveau_winsys *nvws = screen->nvws;
 	int i;
 
-	ret = nvws->grobj_alloc(nvws, celsius_class, &nv10->celsius);
-	if (ret) {
-		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
-		return FALSE;
-	}
-
 	BEGIN_RING(celsius, NV10TCL_DMA_NOTIFY, 1);
-	OUT_RING  (nv10->sync->handle);
+	OUT_RING  (screen->sync->handle);
 	BEGIN_RING(celsius, NV10TCL_DMA_IN_MEMORY0, 2);
 	OUT_RING  (nvws->channel->vram->handle);
 	OUT_RING  (nvws->channel->gart->handle);
@@ -90,7 +68,7 @@ nv10_init_hwctx(struct nv10_context *nv10, int celsius_class)
 	BEGIN_RING(celsius, NV10TCL_NOP, 1);
 	OUT_RING  (0);
 
-	if (celsius_class != NV10TCL) {
+	if (nv10->screen->celsius->grclass != NV10TCL) {
 		/* For nv11, nv17 */
 		BEGIN_RING(celsius, 0x120, 3);
 		OUT_RING  (0);
@@ -243,71 +221,43 @@ nv10_init_hwctx(struct nv10_context *nv10, int celsius_class)
 
 
 	FIRE_RING (NULL);
-	return TRUE;
 }
 
 struct pipe_context *
-nv10_create(struct pipe_screen *screen, unsigned pctx_id)
+nv10_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
-	struct pipe_winsys *pipe_winsys = screen->winsys;
-	struct nouveau_winsys *nvws = nv10_screen(screen)->nvws;
-	unsigned chipset = nv10_screen(screen)->chipset;
+	struct nv10_screen *screen = nv10_screen(pscreen);
+	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv10_context *nv10;
-	int celsius_class = 0, ret;
+	unsigned chipset = screen->chipset;
+	struct nouveau_winsys *nvws = screen->nvws;
 
-	if (chipset>=0x20)
-		celsius_class=NV11TCL;
-	else if (chipset>=0x17)
-		celsius_class=NV17TCL;
-	else if (chipset>=0x11)
-		celsius_class=NV11TCL;
-	else
-		celsius_class=NV10TCL;
-
-	nv10 = CALLOC_STRUCT(nv10_context);
+	nv10 = CALLOC(1, sizeof(struct nv10_context));
 	if (!nv10)
 		return NULL;
+	nv10->screen = screen;
+	nv10->pctx_id = pctx_id;
+
 	nv10->chipset = chipset;
 	nv10->nvws = nvws;
 
-	/* Notifier for sync purposes */
-	ret = nvws->notifier_alloc(nvws, 1, &nv10->sync);
-	if (ret) {
-		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
-		nv10_destroy(&nv10->pipe);
-		return NULL;
-	}
-
-	/* Vtxprog resources */
-	if (nvws->res_init(&nv10->vertprog.exec_heap, 0, 512) ||
-	    nvws->res_init(&nv10->vertprog.data_heap, 0, 256)) {
-		nv10_destroy(&nv10->pipe);
-		return NULL;
-	}
-
-	/* Static celsius initialisation */
-	if (!nv10_init_hwctx(nv10, celsius_class)) {
-		nv10_destroy(&nv10->pipe);
-		return NULL;
-	}
-
-	/* Pipe context setup */
-	nv10->pipe.winsys = pipe_winsys;
-
+	nv10->pipe.winsys = ws;
+	nv10->pipe.screen = pscreen;
 	nv10->pipe.destroy = nv10_destroy;
-
 	nv10->pipe.draw_arrays = nv10_draw_arrays;
 	nv10->pipe.draw_elements = nv10_draw_elements;
 	nv10->pipe.clear = nv10_clear;
-
 	nv10->pipe.flush = nv10_flush;
 
 	nv10_init_surface_functions(nv10);
 	nv10_init_state_functions(nv10);
+	nv10_init_miptree_functions(nv10);
 
 	nv10->draw = draw_create();
 	assert(nv10->draw);
 	draw_set_rasterize_stage(nv10->draw, nv10_draw_vbuf_stage(nv10));
+
+	nv10_init_hwctx(nv10);
 
 	return &nv10->pipe;
 }
