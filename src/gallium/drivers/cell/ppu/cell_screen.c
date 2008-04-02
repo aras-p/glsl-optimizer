@@ -31,6 +31,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 
+#include "cell/common.h"
 #include "cell_screen.h"
 #include "cell_texture.h"
 #include "cell_winsys.h"
@@ -55,7 +56,7 @@ cell_get_param(struct pipe_screen *screen, int param)
 {
    switch (param) {
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
-      return PIPE_MAX_SAMPLERS;
+      return CELL_MAX_SAMPLERS;
    case PIPE_CAP_NPOT_TEXTURES:
       return 0;
    case PIPE_CAP_TWO_SIDED_STENCIL:

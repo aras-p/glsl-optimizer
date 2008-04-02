@@ -31,4 +31,7 @@ spu_dcache_fetch_unaligned(qword *dst, unsigned ea, unsigned size);
 extern void
 spu_dcache_mark_dirty(unsigned ea, unsigned size);
 
+extern void
+spu_dcache_report(void);
+
 #endif /* SPU_DCACHE_H */

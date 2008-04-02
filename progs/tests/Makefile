@@ -40,6 +40,7 @@ SOURCES = \
 	fbotest1.c \
 	fbotest2.c \
 	fbotexture.c \
+	fillrate.c \
 	fog.c \
 	fogcoord.c \
 	fptest1.c \
@@ -163,6 +164,13 @@ mipmap_view: mipmap_view.o readtex.o
 	$(CC) $(CFLAGS) mipmap_view.o readtex.o $(LIBS) -o $@
 
 mipmap_view.o: mipmap_view.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+
+fillrate: fillrate.o readtex.o
+	$(CC) $(CFLAGS) fillrate.o readtex.o $(LIBS) -o $@
+
+fillrate.o: fillrate.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 

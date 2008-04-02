@@ -49,9 +49,8 @@ invalidate_tex_cache(void)
 
 
 static uint
-get_texel(vec_uint4 coordinate)
+get_texel(uint unit, vec_uint4 coordinate)
 {
-   const uint unit = 0;
    vec_uint4 tmp;
    unsigned x = spu_extract(coordinate, 0);
    unsigned y = spu_extract(coordinate, 1);
@@ -69,9 +68,8 @@ get_texel(vec_uint4 coordinate)
 
 
 static void
-get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
+get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 {
-   const uint unit = 0;
    const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
    vec_uint4 tile_x = spu_rlmask(x, -5);
    vec_uint4 tile_y = spu_rlmask(y, -5);
@@ -104,21 +102,19 @@ get_four_texels(vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
  * XXX this is extremely primitive for now.
  */
 vector float
-sample_texture_nearest(vector float texcoord)
+sample_texture_nearest(uint unit, vector float texcoord)
 {
-   const uint unit = 0;
    vector float tc = spu_mul(texcoord, spu.texture[unit].tex_size);
    vector unsigned int itc = spu_convtu(tc, 0);  /* convert to int */
    itc = spu_and(itc, spu.texture[unit].tex_size_mask); /* mask (GL_REPEAT) */
-   uint texel = get_texel(itc);
+   uint texel = get_texel(unit, itc);
    return spu_unpack_A8R8G8B8(texel);
 }
 
 
 vector float
-sample_texture_bilinear(vector float texcoord)
+sample_texture_bilinear(uint unit, vector float texcoord)
 {
-   const uint unit = 0;
    static const vec_uint4 offset_x = {0, 0, 1, 1};
    static const vec_uint4 offset_y = {0, 1, 0, 1};
 
@@ -139,7 +135,7 @@ sample_texture_bilinear(vector float texcoord)
    x = spu_and(x, spu.texture[unit].tex_size_x_mask);
    y = spu_and(y, spu.texture[unit].tex_size_y_mask);
 
-   get_four_texels(x, y, texels);
+   get_four_texels(unit, x, y, texels);
 
    vector float texel00 = spu_unpack_A8R8G8B8(spu_extract(texels[0], 0));
    vector float texel01 = spu_unpack_A8R8G8B8(spu_extract(texels[1], 0));

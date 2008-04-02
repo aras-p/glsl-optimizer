@@ -34,6 +34,7 @@
 #include "main/imports.h"
 #include "main/mtypes.h"
 #include "shader/prog_print.h"
+#include "shader/programopt.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -94,6 +95,9 @@ st_translate_vertex_program(struct st_context *st,
    uint vs_num_outputs = 0;
 
    memset(&vs, 0, sizeof(vs));
+
+   if (stvp->Base.IsPositionInvariant)
+      _mesa_insert_mvp_code(st->ctx, &stvp->Base);
 
    /*
     * Determine number of inputs, the mappings between VERT_ATTRIB_x

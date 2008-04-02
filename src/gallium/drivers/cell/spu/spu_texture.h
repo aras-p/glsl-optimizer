@@ -37,11 +37,11 @@ invalidate_tex_cache(void);
 
 
 extern vector float
-sample_texture_nearest(vector float texcoord);
+sample_texture_nearest(uint unit, vector float texcoord);
 
 
 extern vector float
-sample_texture_bilinear(vector float texcoord);
+sample_texture_bilinear(uint unit, vector float texcoord);
 
 
 #endif /* SPU_TEXTURE_H */
