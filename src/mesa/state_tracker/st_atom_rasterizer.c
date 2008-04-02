@@ -261,6 +261,8 @@ static void update_raster_state( struct st_context *st )
    if (ctx->Scissor.Enabled)
       raster->scissor = 1;
 
+   raster->gl_rasterization_rules = 1;
+
    cso_set_rasterizer(st->cso_context, raster);
 }
 
