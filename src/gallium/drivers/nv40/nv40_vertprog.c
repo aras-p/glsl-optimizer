@@ -37,6 +37,8 @@
 #define neg(s) nv40_sr_neg((s))
 #define abs(s) nv40_sr_abs((s))
 
+#define NV40_VP_INST_DEST_CLIP(n) ((~0 - 6) + (n))
+
 struct nv40_vpc {
 	struct nv40_vertex_program *vp;
 
@@ -200,6 +202,36 @@ emit_dst(struct nv40_vpc *vpc, uint32_t *hw, int slot, struct nv40_sreg dst)
 		case NV40_VP_INST_DEST_TC(5): vp->or |= (1 << 19); break;
 		case NV40_VP_INST_DEST_TC(6): vp->or |= (1 << 20); break;
 		case NV40_VP_INST_DEST_TC(7): vp->or |= (1 << 21); break;
+		case NV40_VP_INST_DEST_CLIP(0):
+			vp->or |= (1 << 6);
+			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE0;
+			dst.index = NV40_VP_INST_DEST_FOGC;
+			break;
+		case NV40_VP_INST_DEST_CLIP(1):
+			vp->or |= (1 << 7);
+			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE1;
+			dst.index = NV40_VP_INST_DEST_FOGC;
+			break;
+		case NV40_VP_INST_DEST_CLIP(2):
+			vp->or |= (1 << 8);
+			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE2;
+			dst.index = NV40_VP_INST_DEST_FOGC;
+			break;
+		case NV40_VP_INST_DEST_CLIP(3):
+			vp->or |= (1 << 9);
+			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE3;
+			dst.index = NV40_VP_INST_DEST_PSZ;
+			break;
+		case NV40_VP_INST_DEST_CLIP(4):
+			vp->or |= (1 << 10);
+			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE4;
+			dst.index = NV40_VP_INST_DEST_PSZ;
+			break;
+		case NV40_VP_INST_DEST_CLIP(5):
+			vp->or |= (1 << 11);
+			vp->clip_ctrl |= NV40TCL_CLIP_PLANE_ENABLE_PLANE5;
+			dst.index = NV40_VP_INST_DEST_PSZ;
+			break;
 		default:
 			break;
 		}
@@ -391,6 +423,11 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	int ai = -1, ci = -1, ii = -1;
 	int i;
 
+	struct {
+		struct nv40_sreg dst;
+		unsigned m;
+	} clip;
+
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
 		return TRUE;
 
@@ -463,6 +500,47 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 
 	dst  = tgsi_dst(vpc, &finst->FullDstRegisters[0]);
 	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
+
+	/* If writing to clip distance regs, need to modify instruction to
+	 * change which component is written to.  On NV40 the clip regs
+	 * are the unused components (yzw) of FOGC/PSZ.
+	 */
+	clip.dst = none;
+	if (dst.type == NV40SR_OUTPUT &&
+	    dst.index >= NV40_VP_INST_DEST_CLIP(0) &&
+	    dst.index <= NV40_VP_INST_DEST_CLIP(5)) {
+		unsigned n = dst.index - NV40_VP_INST_DEST_CLIP(0);
+		unsigned m[] =
+			{ MASK_Y, MASK_Z, MASK_W, MASK_Y, MASK_Z, MASK_W };
+
+		/* Some instructions we can get away with swizzling and/or
+		 * changing the writemask.  Others, we'll use a temp reg.
+		 */
+		switch (finst->Instruction.Opcode) {
+		case TGSI_OPCODE_DST:
+		case TGSI_OPCODE_EXP:
+		case TGSI_OPCODE_LIT:
+		case TGSI_OPCODE_LOG:
+		case TGSI_OPCODE_XPD:
+			clip.dst = dst;
+			clip.m = m[n];
+			dst = temp(vpc);
+			break;
+		case TGSI_OPCODE_DP3:
+		case TGSI_OPCODE_DP4:
+		case TGSI_OPCODE_DPH:
+		case TGSI_OPCODE_POW:
+		case TGSI_OPCODE_RCP:
+		case TGSI_OPCODE_RSQ:
+			mask = m[n];
+			break;
+		default:
+			for (i = 0; i < finst->Instruction.NumSrcRegs; i++)
+				src[i] = swz(src[i], X, X, X, X);
+			mask = m[n];
+			break;
+		}
+	}
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
@@ -561,6 +639,11 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 		return FALSE;
 	}
 
+	if (clip.dst.type != NV40SR_NONE) {
+		arith(vpc, 0, OP_MOV, clip.dst, clip.m,
+		      swz(dst, X, X, X, X), none, none);
+	}
+
 	release_temps(vpc);
 	return TRUE;
 }
@@ -612,6 +695,15 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 			return FALSE;
 		}
 		break;
+#if 0
+	case TGSI_SEMANTIC_CLIP:
+		if (fdec->Semantic.SemanticIndex >= 6) {
+			NOUVEAU_ERR("bad clip distance index\n");
+			return FALSE;
+		}
+		hw = NV40_VP_INST_DEST_CLIP(fdec->Semantic.SemanticIndex);
+		break;
+#endif
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
 		return FALSE;
@@ -782,6 +874,7 @@ nv40_vertprog_validate(struct nv40_context *nv40)
 { 
 	struct nouveau_winsys *nvws = nv40->nvws;
 	struct pipe_winsys *ws = nv40->pipe.winsys;
+	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct nv40_vertex_program *vp;
 	struct pipe_buffer *constbuf;
 	boolean upload_code = FALSE, upload_data = FALSE;
@@ -825,12 +918,14 @@ check_gpu_resources:
 				assert(0);
 		}
 
-		so = so_new(5, 0);
-		so_method(so, nv40->screen->curie, NV40TCL_VP_START_FROM_ID, 1);
+		so = so_new(7, 0);
+		so_method(so, curie, NV40TCL_VP_START_FROM_ID, 1);
 		so_data  (so, vp->exec->start);
-		so_method(so, nv40->screen->curie, NV40TCL_VP_ATTRIB_EN, 2);
+		so_method(so, curie, NV40TCL_VP_ATTRIB_EN, 2);
 		so_data  (so, vp->ir);
 		so_data  (so, vp->or);
+		so_method(so, curie,  NV40TCL_CLIP_PLANE_ENABLE, 1);
+		so_data  (so, vp->clip_ctrl);
 		so_ref(so, &vp->so);
 
 		upload_code = TRUE;

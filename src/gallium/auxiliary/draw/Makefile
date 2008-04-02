@@ -15,7 +15,6 @@ C_SOURCES = \
 	draw_debug.c \
 	draw_flatshade.c \
 	draw_offset.c \
-	draw_passthrough.c \
 	draw_pt.c \
 	draw_pt_vcache.c \
 	draw_pt_fetch_emit.c \

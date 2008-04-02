@@ -36,6 +36,7 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 #include "pipe/p_format.h"
+#include "pipe/p_state.h"
 
 
 /** The standard assert macro doesn't seem to work reliably */
@@ -65,6 +66,8 @@
 
 
 #define CELL_MAX_SPUS 6
+
+#define CELL_MAX_SAMPLERS 4
 
 #define TILE_SIZE 32
 
@@ -109,7 +112,7 @@
  */
 struct cell_command_depth_stencil_alpha_test {
    uint64_t base;               /**< Effective address of code start. */
-   unsigned size;               /**< Size in bytes of test code. */
+   unsigned size;               /**< Size in bytes of SPE code. */
    unsigned read_depth;         /**< Flag: should depth be read? */
    unsigned read_stencil;       /**< Flag: should stencil be read? */
 };
@@ -120,14 +123,14 @@ struct cell_command_depth_stencil_alpha_test {
  */
 struct cell_command_blend {
    uint64_t base;               /**< Effective address of code start. */
-   unsigned size;               /**< Size in bytes of test code. */
+   unsigned size;               /**< Size in bytes of SPE code. */
    unsigned read_fb;            /**< Flag: should framebuffer be read? */
 };
 
 
 struct cell_command_logicop {
    uint64_t base;               /**< Effective address of code start. */
-   unsigned size;               /**< Size in bytes of test code. */
+   unsigned size;               /**< Size in bytes of SPE code. */
 };
 
 
@@ -226,10 +229,20 @@ struct cell_command_release_verts
 };
 
 
+struct cell_command_sampler
+{
+   uint64_t opcode;         /**< CELL_CMD_STATE_SAMPLER */
+   uint unit;
+   struct pipe_sampler_state state;
+};
+
+
 struct cell_command_texture
 {
+   uint64_t opcode;     /**< CELL_CMD_STATE_TEXTURE */
+   uint unit;
    void *start;         /**< Address in main memory */
-   uint width, height;
+   ushort width, height;
 };
 
 

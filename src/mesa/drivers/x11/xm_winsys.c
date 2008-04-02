@@ -193,15 +193,6 @@ xm_wait_idle(struct pipe_winsys *pws)
    /* no-op */
 }
 
-static void
-xm_printf(struct pipe_winsys *pws, const char *fmtString, ...)
-{
-   va_list args;
-   va_start( args, fmtString );  
-   vfprintf(stderr, fmtString, args);
-   va_end( args );
-}
-
 static const char *
 xm_get_name(struct pipe_winsys *pws)
 {
@@ -353,7 +344,6 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
 
    xws->winsys.flush_frontbuffer = xm_flush_frontbuffer;
    xws->winsys.wait_idle = xm_wait_idle;
-   xws->winsys.printf = xm_printf;
    xws->winsys.get_name = xm_get_name;
    xws->xmesa = xmesa;
 

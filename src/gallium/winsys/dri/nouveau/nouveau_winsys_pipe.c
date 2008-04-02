@@ -20,15 +20,6 @@ nouveau_flush_frontbuffer(struct pipe_winsys *pws, struct pipe_surface *surf,
 	nouveau_copy_buffer(dPriv, surf, NULL);
 }
 
-static void
-nouveau_printf(struct pipe_winsys *pws, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-}
-
 static const char *
 nouveau_get_name(struct pipe_winsys *pws)
 {
@@ -215,7 +206,6 @@ nouveau_create_pipe_winsys(struct nouveau_context *nv)
 	pws = &nvpws->pws;
 
 	pws->flush_frontbuffer = nouveau_flush_frontbuffer;
-	pws->printf = nouveau_printf;
 
 	pws->surface_alloc = nouveau_surface_alloc;
 	pws->surface_alloc_storage = nouveau_surface_alloc_storage;

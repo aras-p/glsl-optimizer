@@ -77,9 +77,8 @@ struct pipe_context *brw_create(struct pipe_screen *screen,
 {
    struct brw_context *brw;
 
-   screen->winsys->printf(screen->winsys,
-                          "%s: creating brw_context with pci id 0x%x\n",
-                          __FUNCTION__, pci_id);
+   debug_printf("%s: creating brw_context with pci id 0x%x\n",
+                __FUNCTION__, pci_id);
 
    brw = CALLOC_STRUCT(brw_context);
    if (brw == NULL)

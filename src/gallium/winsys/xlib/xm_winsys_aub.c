@@ -311,15 +311,6 @@ aub_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 
 
 
-static void
-aub_printf( struct pipe_winsys *winsys, const char *fmtString, ... )
-{
-   va_list args;
-   va_start( args, fmtString );  
-   vfprintf(stderr, fmtString, args);
-   va_end( args );
-}
-
 static const char *
 aub_get_name( struct pipe_winsys *winsys )
 {
@@ -344,7 +335,6 @@ xmesa_create_pipe_winsys_aub( void )
    iws->winsys.buffer_unmap = aub_buffer_unmap;
    iws->winsys.buffer_destroy = aub_buffer_destroy;
    iws->winsys.flush_frontbuffer = aub_flush_frontbuffer;
-   iws->winsys.printf = aub_printf;
    iws->winsys.get_name = aub_get_name;
 
    iws->winsys.surface_alloc = aub_i915_surface_alloc;

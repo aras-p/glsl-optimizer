@@ -303,16 +303,6 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
 
 
 
-static void
-xm_printf(struct pipe_winsys *pws, const char *fmtString, ...)
-{
-   va_list args;
-   va_start( args, fmtString );  
-   vfprintf(stderr, fmtString, args);
-   va_end( args );
-}
-
-
 static const char *
 xm_get_name(struct pipe_winsys *pws)
 {
@@ -635,7 +625,6 @@ xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
       ws->base.fence_finish = xm_fence_finish;
 
       ws->base.flush_frontbuffer = xm_flush_frontbuffer;
-      ws->base.printf = xm_printf;
       ws->base.get_name = xm_get_name;
    }
 

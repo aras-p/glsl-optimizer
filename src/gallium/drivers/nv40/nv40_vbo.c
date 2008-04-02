@@ -32,7 +32,7 @@ nv40_vbo_format_to_hw(enum pipe_format pipe, unsigned *fmt, unsigned *ncomp)
 	case PIPE_FORMAT_R16G16_SSCALED:
 	case PIPE_FORMAT_R16G16B16_SSCALED:
 	case PIPE_FORMAT_R16G16B16A16_SSCALED:
-		*fmt = 5;
+		*fmt = NV40TCL_VTXFMT_TYPE_USHORT;
 		break;
 	default:
 		pf_sprint_name(fs, pipe);

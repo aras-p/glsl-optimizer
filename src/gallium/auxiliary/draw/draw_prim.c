@@ -343,21 +343,11 @@ draw_prim( struct draw_context *draw,
       break;
 
    case PIPE_PRIM_LINES:
-      if (flatfirst) {
-         for (i = 0; i+1 < count; i += 2) {
-            do_line( draw, 
-               TRUE,
-               start + i + 1,
-               start + i + 0);
-         }
-      }
-      else {
-         for (i = 0; i+1 < count; i += 2) {
-            do_line( draw, 
-               TRUE,
-               start + i + 0,
-               start + i + 1);
-         }
+      for (i = 0; i+1 < count; i += 2) {
+         do_line( draw, 
+                  TRUE,
+                  start + i + 0,
+                  start + i + 1);
       }
       break;
 
@@ -378,63 +368,31 @@ draw_prim( struct draw_context *draw,
       break;
 
    case PIPE_PRIM_LINE_STRIP:
-      if (flatfirst) {
-         for (i = 1; i < count; i++) {
-            do_line( draw,
-               i == 1,
-               start + i,
-               start + i - 1 );
-         }
-      }
-      else {
-         for (i = 1; i < count; i++) {
-            do_line( draw,
-               i == 1,
-               start + i - 1,
-               start + i );
-         }
+      for (i = 1; i < count; i++) {
+         do_line( draw,
+                  i == 1,
+                  start + i - 1,
+                  start + i );
       }
       break;
 
    case PIPE_PRIM_TRIANGLES:
-      if (flatfirst) {
-         if (unfilled) {
-            for (i = 0; i+2 < count; i += 3) {
-               do_ef_triangle( draw,
-                  1, 
-                  ~0,
-                  start + i + 1,
-                  start + i + 2,
-                  start + i + 0 );
-            }
-         } 
-         else {
-            for (i = 0; i+2 < count; i += 3) {
-               do_triangle( draw,
-                  start + i + 1,
-                  start + i + 2,
-                  start + i + 0 );
-            }
+      if (unfilled) {
+         for (i = 0; i+2 < count; i += 3) {
+            do_ef_triangle( draw,
+                            1, 
+                            ~0,
+                            start + i + 0,
+                            start + i + 1,
+                            start + i + 2 );
          }
-      }
+      } 
       else {
-         if (unfilled) {
-            for (i = 0; i+2 < count; i += 3) {
-               do_ef_triangle( draw,
-                  1, 
-                  ~0,
-                  start + i + 0,
-                  start + i + 1,
-                  start + i + 2 );
-            }
-         } 
-         else {
-            for (i = 0; i+2 < count; i += 3) {
-               do_triangle( draw,
-                  start + i + 0,
-                  start + i + 1,
-                  start + i + 2 );
-            }
+         for (i = 0; i+2 < count; i += 3) {
+            do_triangle( draw,
+                         start + i + 0,
+                         start + i + 1,
+                         start + i + 2 );
          }
       }
       break;
@@ -444,15 +402,15 @@ draw_prim( struct draw_context *draw,
          for (i = 0; i+2 < count; i++) {
             if (i & 1) {
                do_triangle( draw,
+                  start + i + 0,
                   start + i + 2,
-                  start + i + 1,
-                  start + i + 0 );
+                  start + i + 1 );
             }
             else {
                do_triangle( draw,
+                  start + i + 0,
                   start + i + 1,
-                  start + i + 2,
-                  start + i + 0 );
+                  start + i + 2 );
             }
          }
       }
@@ -479,9 +437,9 @@ draw_prim( struct draw_context *draw,
          if (flatfirst) {
             for (i = 0; i+2 < count; i++) {
                do_triangle( draw,
+                  start + i + 1,
                   start + i + 2,
-                  start + 0,
-                  start + i + 1 );
+                  start + 0 );
             }
          }
          else {
@@ -593,8 +551,7 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    }
 
    /* drawing done here: */
-   if (!draw->rasterizer->bypass_vs ||
-       !draw_pt_arrays(draw, prim, start, count)) {
+   if (!draw_pt_arrays(draw, prim, start, count)) {
       /* we have to run the whole pipeline */
       draw_prim(draw, prim, start, count);
    }

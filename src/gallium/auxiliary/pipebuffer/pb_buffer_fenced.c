@@ -29,8 +29,8 @@
  * \file
  * Implementation of fenced buffers.
  * 
- * \author José Fonseca <jrfonseca-at-tungstengraphics-dot-com>
- * \author Thomas Hellström <thomas-at-tungstengraphics-dot-com>
+ * \author JosÃ© Fonseca <jrfonseca-at-tungstengraphics-dot-com>
+ * \author Thomas HellstrÃ¶m <thomas-at-tungstengraphics-dot-com>
  */
 
 
@@ -44,7 +44,7 @@
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
 
-#ifndef __MSC__
+#ifndef WIN32
 #include <unistd.h>
 #endif
 
@@ -93,8 +93,6 @@ fenced_buffer(struct pb_buffer *buf)
 }
 
 
-
-
 static void
 _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list, 
                                int wait)
@@ -105,15 +103,6 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
    int signaled = -1;
 
    list = fenced_list->delayed.next;
-
-   if (fenced_list->numDelayed > 3) {
-      unsigned i;
-
-      for (i = 0; i < fenced_list->numDelayed; i += 3) {
-         list = list->next;
-      }
-   }
-
    prev = list->prev;
    for (; list != &fenced_list->delayed; list = prev, prev = list->prev) {
 
@@ -128,11 +117,17 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
          }
       }
 
-      if (signaled != 0)
+      if (signaled != 0) {
+#if 0
 	 /* XXX: we are assuming that buffers are freed in the same order they 
 	  * are fenced which may not always be true... 
 	  */
          break;
+#else
+         signaled = -1;
+	 continue;
+#endif
+      }
 
       winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
       
@@ -154,8 +149,16 @@ fenced_buffer_destroy(struct pb_buffer *buf)
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
    if (fenced_buf->fence) {
-      LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
-      fenced_list->numDelayed++;
+      struct pipe_winsys *winsys = fenced_list->winsys;
+      if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0) { 
+	 LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
+	 fenced_list->numDelayed++;
+      }
+      else {
+	 winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
+	 pb_reference(&fenced_buf->buffer, NULL);
+	 FREE(fenced_buf);
+      }
    }
    else {
       pb_reference(&fenced_buf->buffer, NULL);
@@ -285,7 +288,7 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    /* Wait on outstanding fences */
    while (fenced_list->numDelayed) {
       _glthread_UNLOCK_MUTEX(fenced_list->mutex);
-#ifndef __MSC__
+#ifndef WIN32
       sched_yield();
 #endif
       _fenced_buffer_list_check_free(fenced_list, 1);

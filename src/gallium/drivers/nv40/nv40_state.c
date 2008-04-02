@@ -423,10 +423,9 @@ nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_rasterizer_state *rsso = hwcso;
 
-	draw_set_rasterizer_state(nv40->draw, &rsso->pipe);
-
 	nv40->rasterizer = hwcso;
 	nv40->dirty |= NV40_NEW_RAST;
+	nv40->draw_dirty |= NV40_NEW_RAST;
 }
 
 static void
@@ -445,19 +444,20 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_zsa_state *zsaso = CALLOC(1, sizeof(*zsaso));
 	struct nouveau_stateobj *so = so_new(32, 0);
+	struct nouveau_grobj *curie = nv40->screen->curie;
 
-	so_method(so, nv40->screen->curie, NV40TCL_DEPTH_FUNC, 3);
+	so_method(so, curie, NV40TCL_DEPTH_FUNC, 3);
 	so_data  (so, nvgl_comparison_op(cso->depth.func));
 	so_data  (so, cso->depth.writemask ? 1 : 0);
 	so_data  (so, cso->depth.enabled ? 1 : 0);
 
-	so_method(so, nv40->screen->curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
+	so_method(so, curie, NV40TCL_ALPHA_TEST_ENABLE, 3);
 	so_data  (so, cso->alpha.enabled ? 1 : 0);
 	so_data  (so, nvgl_comparison_op(cso->alpha.func));
 	so_data  (so, float_to_ubyte(cso->alpha.ref));
 
 	if (cso->stencil[0].enabled) {
-		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
+		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 8);
 		so_data  (so, cso->stencil[0].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[0].write_mask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[0].func));
@@ -467,12 +467,12 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
 	} else {
-		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
+		so_method(so, curie, NV40TCL_STENCIL_FRONT_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
 	if (cso->stencil[1].enabled) {
-		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
+		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 8);
 		so_data  (so, cso->stencil[1].enabled ? 1 : 0);
 		so_data  (so, cso->stencil[1].write_mask);
 		so_data  (so, nvgl_comparison_op(cso->stencil[1].func));
@@ -482,7 +482,7 @@ nv40_depth_stencil_alpha_state_create(struct pipe_context *pipe,
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zfail_op));
 		so_data  (so, nvgl_stencil_op(cso->stencil[1].zpass_op));
 	} else {
-		so_method(so, nv40->screen->curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
+		so_method(so, curie, NV40TCL_STENCIL_BACK_ENABLE, 1);
 		so_data  (so, 0);
 	}
 
@@ -529,10 +529,9 @@ nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 	struct nv40_context *nv40 = nv40_context(pipe);
 	struct nv40_vertex_program *vp = hwcso;
 
-	draw_bind_vertex_shader(nv40->draw, vp ? vp->draw : NULL);
-
 	nv40->vertprog = hwcso;
 	nv40->dirty |= NV40_NEW_VERTPROG;
+	nv40->draw_dirty |= NV40_NEW_VERTPROG;
 }
 
 static void
@@ -595,10 +594,9 @@ nv40_set_clip_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	draw_set_clip_state(nv40->draw, clip);
-
 	nv40->clip = *clip;
 	nv40->dirty |= NV40_NEW_UCP;
+	nv40->draw_dirty |= NV40_NEW_UCP;
 }
 
 static void
@@ -653,10 +651,9 @@ nv40_set_viewport_state(struct pipe_context *pipe,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	draw_set_viewport_state(nv40->draw, vpt);
-
 	nv40->viewport = *vpt;
 	nv40->dirty |= NV40_NEW_VIEWPORT;
+	nv40->draw_dirty |= NV40_NEW_VIEWPORT;
 }
 
 static void
@@ -665,10 +662,11 @@ nv40_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	draw_set_vertex_buffers(nv40->draw, count, vb);
-
 	memcpy(nv40->vtxbuf, vb, sizeof(*vb) * count);
+	nv40->vtxbuf_nr = count;
+
 	nv40->dirty |= NV40_NEW_ARRAYS;
+	nv40->draw_dirty |= NV40_NEW_ARRAYS;
 }
 
 static void
@@ -677,10 +675,11 @@ nv40_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
 
-	draw_set_vertex_elements(nv40->draw, count, ve);
-
 	memcpy(nv40->vtxelt, ve, sizeof(*ve) * count);
+	nv40->vtxelt_nr = count;
+
 	nv40->dirty |= NV40_NEW_ARRAYS;
+	nv40->draw_dirty |= NV40_NEW_ARRAYS;
 }
 
 void

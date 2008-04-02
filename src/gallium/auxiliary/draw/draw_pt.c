@@ -36,6 +36,9 @@
 #include "draw/draw_pt.h"
 
 
+/* XXX: Shouldn't those two functions below use the '>' operator???
+ */
+
 static boolean too_many_verts( struct draw_context *draw,
                                unsigned verts )
 {
@@ -164,6 +167,10 @@ draw_pt_arrays(struct draw_context *draw,
    frontend = draw->pt.front.vcache;
 #endif   
 
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
    frontend->prepare( frontend, middle );
 
    frontend->run( frontend,
@@ -184,7 +191,7 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_emit)
       return FALSE;
 
-   draw->pt.front.vcache = draw_pt_vcache();
+   draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
       return FALSE;
 

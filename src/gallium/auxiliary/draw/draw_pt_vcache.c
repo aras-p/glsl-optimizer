@@ -44,6 +44,7 @@
 
 struct vcache_frontend {
    struct draw_pt_front_end base;
+   struct draw_context *draw;
 
    unsigned in[CACHE_MAX];
    ushort out[CACHE_MAX];
@@ -157,14 +158,6 @@ static void vcache_quad( struct vcache_frontend *vcache,
 }
 
 
-static void vcache_prepare( struct draw_pt_front_end *frontend,
-                            struct draw_pt_middle_end *middle )
-{
-   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
-   vcache->middle = middle;
-   middle->prepare( middle );
-}
-
 static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
    PIPE_PRIM_POINTS,
    PIPE_PRIM_LINES,
@@ -179,11 +172,11 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 };
 
 
-static void vcache_run( struct draw_pt_front_end *frontend, 
-                         unsigned prim,
-                         pt_elt_func get_elt,
-                         const void *elts,
-                         unsigned count )
+static void vcache_run_pv2( struct draw_pt_front_end *frontend, 
+                            unsigned prim,
+                            pt_elt_func get_elt,
+                            const void *elts,
+                            unsigned count )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
    unsigned i;
@@ -309,6 +302,109 @@ static void vcache_run( struct draw_pt_front_end *frontend,
    vcache_flush( vcache );
 }
 
+
+static void vcache_run_pv0( struct draw_pt_front_end *frontend, 
+                            unsigned prim,
+                            pt_elt_func get_elt,
+                            const void *elts,
+                            unsigned count )
+{
+   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
+   unsigned i;
+   
+   /* These are for validation only:
+    */
+   vcache->elt_func = get_elt;
+   vcache->elt_ptr = elts;
+   vcache->output_prim = reduced_prim[prim];
+
+   switch (prim) {
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < count; i ++) {
+         vcache_point( vcache,
+                       get_elt(elts, i) );
+      }
+      break;
+
+   case PIPE_PRIM_LINES:
+      for (i = 0; i+1 < count; i += 2) {
+         vcache_line( vcache, 
+                      TRUE,
+                      get_elt(elts, i + 0),
+                      get_elt(elts, i + 1));
+      }
+      break;
+
+   case PIPE_PRIM_LINE_STRIP:
+      for (i = 1; i < count; i++) {
+         vcache_line( vcache,
+                      i == 1,
+                      get_elt(elts, i - 1),
+                      get_elt(elts, i) );
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLES:
+      for (i = 0; i+2 < count; i += 3) {
+         vcache_triangle( vcache,
+                          get_elt(elts, i + 0),
+                          get_elt(elts, i + 1),
+                          get_elt(elts, i + 2) );
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      for (i = 0; i+2 < count; i++) {
+         if (i & 1) {
+            vcache_triangle( vcache,
+                             get_elt(elts, i + 0),
+                             get_elt(elts, i + 2),
+                             get_elt(elts, i + 1) );
+         }
+         else {
+            vcache_triangle( vcache,
+                             get_elt(elts, i + 0),
+                             get_elt(elts, i + 1),
+                             get_elt(elts, i + 2) );
+         }
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLE_FAN:
+      for (i = 0; i+2 < count; i++) {
+         vcache_triangle( vcache,
+                          get_elt(elts, i + 1),
+                          get_elt(elts, i + 2),
+                          get_elt(elts, 0) );
+      }
+      break;
+
+
+   default:
+      assert(0);
+      break;
+   }
+   
+   vcache_flush( vcache );
+}
+
+static void vcache_prepare( struct draw_pt_front_end *frontend,
+                            struct draw_pt_middle_end *middle )
+{
+   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
+
+   if (vcache->draw->rasterizer->flatshade_first)
+      vcache->base.run = vcache_run_pv0;
+   else
+      vcache->base.run = vcache_run_pv2;
+   
+   vcache->middle = middle;
+   middle->prepare( middle );
+}
+
+
+
+
 static void vcache_finish( struct draw_pt_front_end *frontend )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
@@ -322,14 +418,15 @@ static void vcache_destroy( struct draw_pt_front_end *frontend )
 }
 
 
-struct draw_pt_front_end *draw_pt_vcache( void )
+struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw )
 {
    struct vcache_frontend *vcache = CALLOC_STRUCT( vcache_frontend );
  
    vcache->base.prepare = vcache_prepare;
-   vcache->base.run     = vcache_run;
+   vcache->base.run     = NULL;
    vcache->base.finish  = vcache_finish;
    vcache->base.destroy = vcache_destroy;
+   vcache->draw = draw;
    
    memset(vcache->in, ~0, sizeof(vcache->in));
   

@@ -105,7 +105,7 @@ static void st_glFlush(GLcontext *ctx)
 
 void st_finish( struct st_context *st )
 {
-   struct pipe_fence_handle *fence;
+   struct pipe_fence_handle *fence = NULL;
 
    st_gl_flush(st, PIPE_FLUSH_RENDER_CACHE, &fence);
 

@@ -243,15 +243,6 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 
 
 
-static void
-intel_printf( struct pipe_winsys *winsys, const char *fmtString, ... )
-{
-   va_list args;
-   va_start( args, fmtString );  
-   vfprintf(stderr, fmtString, args);
-   va_end( args );
-}
-
 static const char *
 intel_get_name( struct pipe_winsys *winsys )
 {
@@ -277,7 +268,6 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.buffer_unmap = intel_buffer_unmap;
    iws->winsys.buffer_destroy = intel_buffer_destroy;
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
-   iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
    iws->winsys.surface_alloc = intel_i915_surface_alloc;
    iws->winsys.surface_alloc_storage = intel_i915_surface_alloc_storage;

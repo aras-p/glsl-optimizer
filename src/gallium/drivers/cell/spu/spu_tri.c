@@ -309,7 +309,7 @@ emit_quad( int x, int y, mask_t mask )
 
       spu.cur_ctile_status = TILE_STATUS_DIRTY;
 
-      if (spu.texture.start) {
+      if (spu.texture[0].start) {
          /* texture mapping */
          vector float texcoords[4];
          eval_coeff(2, (float) x, (float) y, texcoords);

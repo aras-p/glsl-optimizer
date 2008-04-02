@@ -530,14 +530,13 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_rasterizer(cso);
    cso_save_viewport(cso);
    cso_save_samplers(cso);
+   cso_save_sampler_textures(cso);
 
    /* rasterizer state: just scissor */
    {
       struct pipe_rasterizer_state rasterizer;
       memset(&rasterizer, 0, sizeof(rasterizer));
-      if (ctx->Scissor.Enabled)
-         rasterizer.scissor = 1;
-
+      rasterizer.scissor = ctx->Scissor.Enabled;
       cso_set_rasterizer(cso, &rasterizer);
    }
 
@@ -581,9 +580,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* texture state: */
-   {
-      pipe->set_sampler_textures(pipe, 1, &pt);
-   }
+   pipe->set_sampler_textures(pipe, 1, &pt);
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
     * Recall that these coords are transformed by the current
@@ -604,12 +601,11 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
    cso_restore_samplers(cso);
+   cso_restore_sampler_textures(cso);
+
    /* shaders don't go through cso yet */
    pipe->bind_fs_state(pipe, st->fp->driver_shader);
    pipe->bind_vs_state(pipe, st->vp->driver_shader);
-
-   pipe->set_sampler_textures(pipe, ctx->st->state.num_textures,
-                              ctx->st->state.sampler_texture);
 }
 
 
