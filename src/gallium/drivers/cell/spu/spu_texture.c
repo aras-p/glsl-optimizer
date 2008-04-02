@@ -48,9 +48,16 @@ invalidate_tex_cache(void)
 }
 
 
+/**
+ * XXX look into getting texels for all four pixels in a quad at once.
+ */
 static uint
 get_texel(uint unit, vec_uint4 coordinate)
 {
+   /*
+    * XXX we could do the "/ TILE_SIZE" and "% TILE_SIZE" operations as
+    * SIMD since X and Y are already in a SIMD register.
+    */
    const unsigned texture_ea = (uintptr_t) spu.texture[unit].start;
    ushort x = spu_extract(coordinate, 0);
    ushort y = spu_extract(coordinate, 1);
@@ -69,6 +76,16 @@ get_texel(uint unit, vec_uint4 coordinate)
 
 /**
  * Get four texels from locations (x[0], y[0]), (x[1], y[1]) ...
+ *
+ * NOTE: in the typical case of bilinear filtering, the four texels
+ * are in a 2x2 group so we could get by with just two dcache fetches
+ * (two side-by-side texels per fetch).  But when bilinear filtering
+ * wraps around a texture edge, we'll probably need code like we have
+ * now.
+ * FURTHERMORE: since we're rasterizing a quad of 2x2 pixels at a time,
+ * it's quite likely that the four pixels in a quad will need some of the
+ * same texels.  So look into doing texture fetches for four pixels at
+ * a time.
  */
 static void
 get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
@@ -103,7 +120,6 @@ get_four_texels(uint unit, vec_uint4 x, vec_uint4 y, vec_uint4 *texels)
 
 /**
  * Get texture sample at texcoord.
- * XXX this is extremely primitive for now.
  */
 vector float
 sample_texture_nearest(uint unit, vector float texcoord)
