@@ -43,18 +43,13 @@
 
 #ifdef WIN32
 static INLINE void 
-rpl_EngDebugPrint(const char *format, ...)
+_EngDebugPrint(const char *format, ...)
 {
    va_list ap;
    va_start(ap, format);
    EngDebugPrint("", (PCHAR)format, ap);
    va_end(ap);
 }
-
-int rpl_vsnprintf(char *, size_t, const char *, va_list);
-int rpl_snprintf(char *str, size_t size, const char *format, ...);
-#define vsnprintf rpl_vsnprintf
-#define snprintf rpl_snprintf
 #endif
 
 
@@ -65,8 +60,8 @@ void _debug_vprintf(const char *format, va_list ap)
    /* EngDebugPrint does not handle float point arguments, so we need to use
     * our own vsnprintf implementation */
    char buf[512 + 1];
-   rpl_vsnprintf(buf, sizeof(buf), format, ap);
-   rpl_EngDebugPrint("%s", buf);
+   vsnprintf(buf, sizeof(buf), format, ap);
+   _EngDebugPrint("%s", buf);
 #else
    /* TODO: Implement debug print for WINCE */
 #endif
