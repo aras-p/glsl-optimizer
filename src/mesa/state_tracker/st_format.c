@@ -189,15 +189,14 @@ st_get_format_info(enum pipe_format format, struct pipe_format_info *pinfo)
          pinfo->base_format = GL_RGBA;
       }
    }
+   else if (pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR) {
+      pinfo->base_format = GL_YCBCR_MESA;
+      pinfo->datatype = GL_UNSIGNED_SHORT;
+      pinfo->size = 2; /* two bytes per "texel" */
+   }
    else {
-      pipe_format_ycbcr_t info;
-
-      assert( pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR );
-
-      info = format;
-
-      /* TODO */
-      assert( 0 );
+      /* compressed format? */
+      assert(0);
    }
 
 #if 0
@@ -275,6 +274,8 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_Z32_UNORM;
    case MESA_FORMAT_Z24_S8:
       return PIPE_FORMAT_Z24S8_UNORM;
+   case MESA_FORMAT_YCBCR:
+      return PIPE_FORMAT_YCBCR;
    default:
       assert(0);
       return 0;
@@ -435,6 +436,14 @@ choose_format(struct pipe_context *pipe, GLint internalFormat, uint surfType)
       return default_rgba_format( screen, surfType );
 
    case GL_YCBCR_MESA:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR,
+                                      PIPE_TEXTURE)) {
+         return PIPE_FORMAT_YCBCR;
+      }
+      if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV,
+                                      PIPE_TEXTURE)) {
+         return PIPE_FORMAT_YCBCR_REV;
+      }
       return PIPE_FORMAT_NONE;
 
    case GL_RGB_S3TC:

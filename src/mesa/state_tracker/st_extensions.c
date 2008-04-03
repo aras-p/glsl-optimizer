@@ -220,4 +220,9 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, PIPE_TEXTURE) ||
+       screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, PIPE_TEXTURE)) {
+      ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
+   }
+
 }
