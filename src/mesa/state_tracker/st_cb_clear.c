@@ -55,11 +55,6 @@
 #include "cso_cache/cso_context.h"
 
 
-/* XXX for testing draw module vertex passthrough: */
-/* XXX this hack is broken now */
-#define TEST_DRAW_PASSTHROUGH 0
-
-
 void
 st_destroy_clear(struct st_context *st)
 {
@@ -243,9 +238,6 @@ clear_with_quad(GLcontext *ctx,
       struct pipe_rasterizer_state raster;
       memset(&raster, 0, sizeof(raster));
       raster.bypass_clipping = 1;
-#if TEST_DRAW_PASSTHROUGH
-      raster.bypass_vs = 1;
-#endif
       cso_set_rasterizer(st->cso_context, &raster);
    }
 
@@ -256,7 +248,6 @@ clear_with_quad(GLcontext *ctx,
    pipe->bind_fs_state(pipe, st->clear.fs);
 
 
-#if !TEST_DRAW_PASSTHROUGH
    /* vertex shader state: color/position pass-through */
    if (!st->clear.vs) {
       const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
@@ -268,9 +259,7 @@ clear_with_quad(GLcontext *ctx,
                                                          &st->clear.vert_shader);
    }
    pipe->bind_vs_state(pipe, st->clear.vs);
-#endif
 
-#if !TEST_DRAW_PASSTHROUGH
    /* viewport state: identity since we're drawing in window coords */
    {
       struct pipe_viewport_state vp;
@@ -284,7 +273,6 @@ clear_with_quad(GLcontext *ctx,
       vp.translate[3] = 0.0;
       cso_set_viewport(st->cso_context, &vp);
    }
-#endif
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
