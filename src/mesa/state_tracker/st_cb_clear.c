@@ -62,6 +62,7 @@ st_init_clear(struct st_context *st)
 
    /* rasterizer state: bypass clipping */
    memset(&st->clear.raster, 0, sizeof(st->clear.raster));
+   st->clear.raster.gl_rasterization_rules = 1;
    st->clear.raster.bypass_clipping = 1;
 
    /* viewport state: identity since we're drawing in window coords */
