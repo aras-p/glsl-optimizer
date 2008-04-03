@@ -181,7 +181,7 @@ struct pipe_depth_stencil_alpha_state
       unsigned occlusion_count:1; /**< do occlusion counting? */
    } depth;
    struct {
-      unsigned enabled:1;
+      unsigned enabled:1;  /**< stencil[0]: stencil enabled, stencil[1]: two-side enabled */
       unsigned func:3;     /**< PIPE_FUNC_x */
       unsigned fail_op:3;  /**< PIPE_STENCIL_OP_x */
       unsigned zpass_op:3; /**< PIPE_STENCIL_OP_x */

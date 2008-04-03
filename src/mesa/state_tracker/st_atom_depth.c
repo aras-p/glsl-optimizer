@@ -115,7 +115,7 @@ update_depth_stencil_alpha(struct st_context *st)
       dsa->stencil[0].value_mask = st->ctx->Stencil.ValueMask[0] & 0xff;
       dsa->stencil[0].write_mask = st->ctx->Stencil.WriteMask[0] & 0xff;
 
-      if (st->ctx->Stencil.TestTwoSide) {
+      if (st->ctx->Stencil._TestTwoSide) {
          dsa->stencil[1].enabled = 1;
          dsa->stencil[1].func = st_compare_func_to_pipe(st->ctx->Stencil.Function[1]);
          dsa->stencil[1].fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[1]);
@@ -127,6 +127,7 @@ update_depth_stencil_alpha(struct st_context *st)
       }
       else {
          dsa->stencil[1] = dsa->stencil[0];
+         dsa->stencil[1].enabled = 0;
       }
    }
 
