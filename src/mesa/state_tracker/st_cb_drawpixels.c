@@ -536,6 +536,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    {
       struct pipe_rasterizer_state rasterizer;
       memset(&rasterizer, 0, sizeof(rasterizer));
+      rasterizer.gl_rasterization_rules = 1;
       rasterizer.scissor = ctx->Scissor.Enabled;
       cso_set_rasterizer(cso, &rasterizer);
    }
