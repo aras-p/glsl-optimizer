@@ -73,7 +73,6 @@ draw_pt_arrays(struct draw_context *draw,
     */
 
 
-#if 0
    if (!cliptest && !pipeline && !shading) {
       /* This is the 'passthrough' path:
        */
@@ -81,6 +80,14 @@ draw_pt_arrays(struct draw_context *draw,
        */
       middle = draw->pt.middle.fetch_emit;
    }
+   else if (!cliptest && !shading) {
+      /* This is the 'passthrough' path targetting the pipeline backend.
+       */
+      /* Fetch user verts, emit pipeline verts, run pipeline:
+       */
+      middle = draw->pt.middle.fetch_pipeline;
+   }
+#if 0
    else if (!cliptest && !pipeline) {
       /* Fetch user verts, run vertex shader, emit hw verts:
        */
@@ -117,10 +124,9 @@ draw_pt_arrays(struct draw_context *draw,
       middle = draw->pt.middle.fetch_shade_cliptest_pipeline;
    }
 #else
-   if (cliptest || pipeline || shading)
+   else {
       return FALSE;
-
-   middle = draw->pt.middle.fetch_emit;
+   }
 #endif
 
 
@@ -190,6 +196,10 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_emit)
       return FALSE;
 
+   draw->pt.middle.fetch_pipeline = draw_pt_fetch_pipeline( draw );
+   if (!draw->pt.middle.fetch_pipeline)
+      return FALSE;
+
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
       return FALSE;
@@ -203,6 +213,11 @@ void draw_pt_destroy( struct draw_context *draw )
    if (draw->pt.middle.fetch_emit) {
       draw->pt.middle.fetch_emit->destroy( draw->pt.middle.fetch_emit );
       draw->pt.middle.fetch_emit = NULL;
+   }
+
+   if (draw->pt.middle.fetch_pipeline) {
+      draw->pt.middle.fetch_pipeline->destroy( draw->pt.middle.fetch_pipeline );
+      draw->pt.middle.fetch_pipeline = NULL;
    }
 
    if (draw->pt.front.vcache) {

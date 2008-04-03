@@ -166,7 +166,7 @@ fetch_B8G8R8A8_UNORM(const void *ptr, float *attrib)
 }
 
 
-static fetch_func get_fetch_func( enum pipe_format format )
+fetch_func draw_get_fetch_func( enum pipe_format format )
 {
 #if 0
    {
@@ -502,7 +502,7 @@ void draw_update_vertex_fetch( struct draw_context *draw )
 						       draw->vertex_element[i].src_offset;
 
       draw->vertex_fetch.pitch[i] = draw->vertex_buffer[buf].pitch;
-      draw->vertex_fetch.fetch[i] = get_fetch_func( format );
+      draw->vertex_fetch.fetch[i] = draw_get_fetch_func( format );
    }
 
    draw->vertex_fetch.nr_attrs = nr_attrs;

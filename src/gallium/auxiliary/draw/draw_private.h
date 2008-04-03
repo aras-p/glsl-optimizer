@@ -160,6 +160,11 @@ struct draw_vertex_shader {
 /* Internal function for vertex fetch.
  */
 typedef void (*fetch_func)(const void *ptr, float *attrib);
+
+fetch_func draw_get_fetch_func( enum pipe_format format );
+
+
+
 typedef void (*full_fetch_func)( struct draw_context *draw,
 				 struct tgsi_exec_machine *machine,
 				 const unsigned *elts,
@@ -211,6 +216,7 @@ struct draw_context
 
       struct {
          struct draw_pt_middle_end *fetch_emit;
+         struct draw_pt_middle_end *fetch_pipeline;
          struct draw_pt_middle_end *fetch_shade_emit;
          struct draw_pt_middle_end *fetch_shade_cliptest_pipeline_or_emit;
       } middle;

@@ -85,45 +85,6 @@ struct fetch_emit_middle_end {
 };
 
 
-static void fetch_B8G8R8A8_UNORM( const void *from,
-                                  float *attrib )
-{
-   ubyte *ub = (ubyte *) from;
-   attrib[2] = UBYTE_TO_FLOAT(ub[0]);
-   attrib[1] = UBYTE_TO_FLOAT(ub[1]);
-   attrib[0] = UBYTE_TO_FLOAT(ub[2]);
-   attrib[3] = UBYTE_TO_FLOAT(ub[3]);
-}
-
-static void fetch_R32G32B32A32_FLOAT( const void *from,
-                                  float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = f[1];
-   attrib[2] = f[2];
-   attrib[3] = f[3];
-}
-
-static void fetch_R32G32B32_FLOAT( const void *from,
-                                   float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = f[1];
-   attrib[2] = f[2];
-   attrib[3] = 1.0;
-}
-
-static void fetch_R32G32_FLOAT( const void *from,
-                                float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = f[1];
-   attrib[2] = 0.0;
-   attrib[3] = 1.0;
-}
 
 static void fetch_R32_FLOAT( const void *from,
                              float *attrib )
@@ -235,28 +196,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
 
       feme->fetch[i].pitch = draw->vertex_buffer[src_buffer].pitch;
          
-      switch (draw->vertex_element[src_element].src_format) {
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
-         feme->fetch[i].fetch = fetch_B8G8R8A8_UNORM;
-         break;
-      case PIPE_FORMAT_R32G32B32A32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32G32B32A32_FLOAT;
-         break;
-      case PIPE_FORMAT_R32G32B32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32G32B32_FLOAT;
-         break;
-      case PIPE_FORMAT_R32G32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32G32_FLOAT;
-         break;
-      case PIPE_FORMAT_R32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32_FLOAT;
-         break;
-      default:
-         assert(0);
-         feme->fetch[i].fetch = NULL;
-         break;
-      }
-         
+      feme->fetch[i].fetch = draw_get_fetch_func(draw->vertex_element[src_element].src_format);
+
+
       switch (vinfo->emit[i]) {
       case EMIT_4F:
          feme->fetch[i].emit = emit_R32G32B32A32_FLOAT;
