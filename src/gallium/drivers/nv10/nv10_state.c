@@ -449,6 +449,9 @@ static void
 nv10_set_clip_state(struct pipe_context *pipe,
 		    const struct pipe_clip_state *clip)
 {
+	struct nv10_context *nv10 = nv10_context(pipe);
+
+	draw_set_clip_state(nv10->draw, clip);
 }
 
 static void
@@ -458,11 +461,11 @@ nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 	struct nv10_context *nv10 = nv10_context(pipe);
 
 	if (shader == PIPE_SHADER_VERTEX) {
-		nv10->vertprog.constant_buf = buf->buffer;
+		nv10->constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
 		nv10->dirty |= NV10_NEW_VERTPROG;
 	} else
 	if (shader == PIPE_SHADER_FRAGMENT) {
-		nv10->fragprog.constant_buf = buf->buffer;
+		nv10->constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
 		nv10->dirty |= NV10_NEW_FRAGPROG;
 	}
 }
@@ -504,6 +507,8 @@ nv10_set_viewport_state(struct pipe_context *pipe,
 
 	nv10->viewport = (struct pipe_viewport_state*)vpt;
 
+	draw_set_viewport_state(nv10->draw, &nv10->viewport);
+
 	nv10->dirty |= NV10_NEW_VIEWPORT;
 }
 
@@ -515,6 +520,8 @@ nv10_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 
 	memcpy(nv10->vtxbuf, vb, sizeof(*vb) * count);
 	nv10->dirty |= NV10_NEW_VTXARRAYS;
+
+	draw_set_vertex_buffers(nv10->draw, count, vb);
 }
 
 static void
@@ -525,6 +532,8 @@ nv10_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 
 	memcpy(nv10->vtxelt, ve, sizeof(*ve) * count);
 	nv10->dirty |= NV10_NEW_VTXARRAYS;
+
+	draw_set_vertex_elements(nv10->draw, count, ve);
 }
 
 void

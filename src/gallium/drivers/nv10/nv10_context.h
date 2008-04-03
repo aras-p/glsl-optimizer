@@ -65,6 +65,8 @@ struct nv10_context {
 	struct pipe_viewport_state *viewport;
 	struct pipe_scissor_state *scissor;
 	struct pipe_framebuffer_state *framebuffer;
+	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	struct vertex_info vertex_info;
 
 	struct {
 		struct pipe_buffer *buffer;
@@ -77,8 +79,7 @@ struct nv10_context {
 		unsigned delta;
 	} vb[16];
 
-	struct vertex_info vertex_info;
-	struct {
+/*	struct {
 	
 		struct nouveau_resource *exec_heap;
 		struct nouveau_resource *data_heap;
@@ -86,9 +87,8 @@ struct nv10_context {
 		struct nv10_vertex_program *active;
 
 		struct nv10_vertex_program *current;
-		struct pipe_buffer *constant_buf;
 	} vertprog;
-
+*/
 	struct {
 		struct nv10_fragment_program *active;
 

@@ -44,6 +44,8 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 		draw_set_mapped_element_buffer(draw, 0, NULL);
 	}
 
+	draw_set_mapped_constant_buffer(draw, nv10->constbuf[PIPE_SHADER_VERTEX]);
+
 	/* draw! */
 	draw_arrays(nv10->draw, prim, start, count);
 
