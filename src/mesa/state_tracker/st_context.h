@@ -161,6 +161,8 @@ struct st_context
    struct {
       struct pipe_shader_state vert_shader;
       struct pipe_shader_state frag_shader;
+      struct pipe_rasterizer_state raster;
+      struct pipe_viewport_state viewport;
       void *vs;
       void *fs;
       float vertices[4][2][4];  /**< vertex pos + color */

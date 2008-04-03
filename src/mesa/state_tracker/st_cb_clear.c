@@ -56,6 +56,42 @@
 
 
 void
+st_init_clear(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+
+   /* rasterizer state: bypass clipping */
+   memset(&st->clear.raster, 0, sizeof(st->clear.raster));
+   st->clear.raster.bypass_clipping = 1;
+
+   /* viewport state: identity since we're drawing in window coords */
+   st->clear.viewport.scale[0] = 1.0;
+   st->clear.viewport.scale[1] = 1.0;
+   st->clear.viewport.scale[2] = 1.0;
+   st->clear.viewport.scale[3] = 1.0;
+   st->clear.viewport.translate[0] = 0.0;
+   st->clear.viewport.translate[1] = 0.0;
+   st->clear.viewport.translate[2] = 0.0;
+   st->clear.viewport.translate[3] = 0.0;
+
+   /* fragment shader state: color pass-through program */
+   st->clear.fs =
+      util_make_fragment_passthrough_shader(pipe, &st->clear.frag_shader);
+
+   /* vertex shader state: color/position pass-through */
+   {
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
+                                      TGSI_SEMANTIC_COLOR };
+      const uint semantic_indexes[] = { 0, 0 };
+      st->clear.vs = util_make_vertex_passthrough_shader(pipe, 2,
+                                                         semantic_names,
+                                                         semantic_indexes,
+                                                         &st->clear.vert_shader);
+   }
+}
+
+
+void
 st_destroy_clear(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
@@ -233,46 +269,11 @@ clear_with_quad(GLcontext *ctx,
       cso_set_depth_stencil_alpha(st->cso_context, &depth_stencil);
    }
 
-   /* rasterizer state: bypass clipping */
-   {
-      struct pipe_rasterizer_state raster;
-      memset(&raster, 0, sizeof(raster));
-      raster.bypass_clipping = 1;
-      cso_set_rasterizer(st->cso_context, &raster);
-   }
+   cso_set_rasterizer(st->cso_context, &st->clear.raster);
+   cso_set_viewport(st->cso_context, &st->clear.viewport);
 
-   /* fragment shader state: color pass-through program */
-   if (!st->clear.fs) {
-      st->clear.fs = util_make_fragment_passthrough_shader(pipe, &st->clear.frag_shader);
-   }
    pipe->bind_fs_state(pipe, st->clear.fs);
-
-
-   /* vertex shader state: color/position pass-through */
-   if (!st->clear.vs) {
-      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-                                      TGSI_SEMANTIC_COLOR };
-      const uint semantic_indexes[] = { 0, 0 };
-      st->clear.vs = util_make_vertex_passthrough_shader(pipe, 2,
-                                                         semantic_names,
-                                                         semantic_indexes,
-                                                         &st->clear.vert_shader);
-   }
    pipe->bind_vs_state(pipe, st->clear.vs);
-
-   /* viewport state: identity since we're drawing in window coords */
-   {
-      struct pipe_viewport_state vp;
-      vp.scale[0] = 1.0;
-      vp.scale[1] = 1.0;
-      vp.scale[2] = 1.0;
-      vp.scale[3] = 1.0;
-      vp.translate[0] = 0.0;
-      vp.translate[1] = 0.0;
-      vp.translate[2] = 0.0;
-      vp.translate[3] = 0.0;
-      cso_set_viewport(st->cso_context, &vp);
-   }
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);

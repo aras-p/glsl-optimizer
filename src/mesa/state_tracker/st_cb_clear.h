@@ -31,6 +31,10 @@
 
 
 extern void
+st_init_clear(struct st_context *st);
+
+
+extern void
 st_destroy_clear(struct st_context *st);
 
 
