@@ -141,7 +141,7 @@ static void nv10_state_emit_framebuffer(struct nv10_context* nv10)
 		OUT_RING  ( (rt->pitch * rt->cpp) | ( (zeta->pitch * zeta->cpp) << 16) );
 	} else {
 		BEGIN_RING(celsius, NV10TCL_RT_PITCH, 1);
-		OUT_RING  ( (rt->pitch * rt->cpp) );
+		OUT_RING  ( (rt->pitch * rt->cpp) | ( (rt->pitch * rt->cpp) << 16) );
 	}
 
 	nv10->rt[0] = rt->buffer;
