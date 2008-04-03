@@ -271,17 +271,15 @@ clear_with_quad(GLcontext *ctx,
 #endif
 
 #if !TEST_DRAW_PASSTHROUGH
-   /* viewport state: viewport matching window dims */
+   /* viewport state: identity since we're drawing in window coords */
    {
-      const float width = ctx->DrawBuffer->Width;
-      const float height = ctx->DrawBuffer->Height;
       struct pipe_viewport_state vp;
-      vp.scale[0] =  0.5 * width;
-      vp.scale[1] = -0.5 * height;
+      vp.scale[0] = 1.0;
+      vp.scale[1] = 1.0;
       vp.scale[2] = 1.0;
       vp.scale[3] = 1.0;
-      vp.translate[0] = 0.5 * width;
-      vp.translate[1] = 0.5 * height;
+      vp.translate[0] = 0.0;
+      vp.translate[1] = 0.0;
       vp.translate[2] = 0.0;
       vp.translate[3] = 0.0;
       cso_set_viewport(st->cso_context, &vp);
