@@ -60,6 +60,8 @@ static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
+   st_flush_bitmap_cache(st);
+
    FLUSH_VERTICES(st->ctx, 0);
 
    if (!fb)
