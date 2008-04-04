@@ -587,6 +587,8 @@ ycbcr_get_tile_rgba(ushort *src,
          const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
          const ubyte y1 = (t1 >> 8) & 0xff;  /* luminance */
          ubyte cb, cr;
+         float r, g, b;
+
          if (rev) {
             cb = t1 & 0xff;         /* chroma U */
             cr = t0 & 0xff;         /* chroma V */
@@ -595,12 +597,11 @@ ycbcr_get_tile_rgba(ushort *src,
             cb = t0 & 0xff;         /* chroma U */
             cr = t1 & 0xff;         /* chroma V */
          }
-         float r, g, b;
 
          /* even pixel: y0,cr,cb */
-         r = 1.164 * (y0-16) + 1.596 * (cr-128);
-         g = 1.164 * (y0-16) - 0.813 * (cr-128) - 0.391 * (cb-128);
-         b = 1.164 * (y0-16) + 2.018 * (cb-128);
+         r = 1.164f * (y0-16) + 1.596f * (cr-128);
+         g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
+         b = 1.164f * (y0-16) + 2.018f * (cb-128);
          pRow[0] = r * scale;
          pRow[1] = g * scale;
          pRow[2] = b * scale;
@@ -608,9 +609,9 @@ ycbcr_get_tile_rgba(ushort *src,
          pRow += 4;
 
          /* odd pixel: use y1,cr,cb */
-         r = 1.164 * (y1-16) + 1.596 * (cr-128);
-         g = 1.164 * (y1-16) - 0.813 * (cr-128) - 0.391 * (cb-128);
-         b = 1.164 * (y1-16) + 2.018 * (cb-128);
+         r = 1.164f * (y1-16) + 1.596f * (cr-128);
+         g = 1.164f * (y1-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
+         b = 1.164f * (y1-16) + 2.018f * (cb-128);
          pRow[0] = r * scale;
          pRow[1] = g * scale;
          pRow[2] = b * scale;
