@@ -137,6 +137,8 @@ nouveau_pushbuf_flush(struct nouveau_channel *chan, unsigned min)
 	if (nvpb->base.remaining == nvpb->size)
 		return 0;
 
+	nouveau_fence_flush(chan);
+
 	nvpb->size -= nvpb->base.remaining;
 	nvchan->dma->cur += nvpb->size;
 	nvchan->dma->free -= nvpb->size;

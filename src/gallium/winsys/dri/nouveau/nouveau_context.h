@@ -56,6 +56,11 @@ struct nouveau_context {
 	struct nouveau_screen *nv_screen;
 	struct pipe_surface *frontbuffer;
 
+	struct {
+		int hw_vertex_buffer;
+		int hw_index_buffer;
+	} cap;
+
 	/* Hardware context */
 	struct nouveau_channel_context *nvc;
 	int pctx_id;

@@ -27,6 +27,8 @@ nv40_screen_get_vendor(struct pipe_screen *pscreen)
 static int
 nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 {
+	struct nv40_screen *screen = nv40_screen(pscreen);
+
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
 		return 16;
@@ -54,6 +56,12 @@ nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 		return 10;
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return 13;
+	case NOUVEAU_CAP_HW_VTXBUF:
+		return 1;
+	case NOUVEAU_CAP_HW_IDXBUF:
+		if (screen->curie->grclass == NV40TCL)
+			return 1;
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;

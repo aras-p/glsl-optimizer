@@ -7,6 +7,7 @@
 #include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
+#include "pipe/p_screen.h"
 
 #include "nouveau_context.h"
 #include "nouveau_dri.h"
@@ -133,7 +134,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		/* G80 */
 		break;
 	default:
-		NOUVEAU_ERR("Unsupported chipset: NV%02x\n", nv->chipset);
+		NOUVEAU_ERR("Unsupported chipset: NV%02x\n", (int)nv->chipset);
 		return GL_FALSE;
 	}
 
@@ -255,9 +256,17 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	if (!getenv("NOUVEAU_FORCE_SOFTPIPE")) {
+		struct pipe_screen *pscreen;
+
 		pipe = nouveau_pipe_create(nv);
 		if (!pipe)
 			NOUVEAU_ERR("Couldn't create hw pipe\n");
+		pscreen = nvc->pscreen;
+
+		nv->cap.hw_vertex_buffer =
+			pscreen->get_param(pscreen, NOUVEAU_CAP_HW_VTXBUF);
+		nv->cap.hw_index_buffer =
+			pscreen->get_param(pscreen, NOUVEAU_CAP_HW_IDXBUF);
 	}
 
 	if (!pipe) {

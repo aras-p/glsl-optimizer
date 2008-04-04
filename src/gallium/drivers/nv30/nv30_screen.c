@@ -50,6 +50,9 @@ nv30_screen_get_param(struct pipe_screen *screen, int param)
 		return 10;
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
 		return 13;
+	case NOUVEAU_CAP_HW_VTXBUF:
+	case NOUVEAU_CAP_HW_IDXBUF:
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
