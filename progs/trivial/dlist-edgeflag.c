@@ -93,12 +93,14 @@ static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
 
+   glPushMatrix();
    glColor3f(0,.9,0); 
    glCallList(list);
 
    glRotatef(45,0,0,1);
    glColor3f(1,0,1); 
    glCallList(list);
+   glPopMatrix();
 
    glFlush();
 
