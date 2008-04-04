@@ -85,45 +85,6 @@ struct fetch_emit_middle_end {
 };
 
 
-static void fetch_B8G8R8A8_UNORM( const void *from,
-                                  float *attrib )
-{
-   ubyte *ub = (ubyte *) from;
-   attrib[2] = UBYTE_TO_FLOAT(ub[0]);
-   attrib[1] = UBYTE_TO_FLOAT(ub[1]);
-   attrib[0] = UBYTE_TO_FLOAT(ub[2]);
-   attrib[3] = UBYTE_TO_FLOAT(ub[3]);
-}
-
-static void fetch_R32G32B32A32_FLOAT( const void *from,
-                                  float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = f[1];
-   attrib[2] = f[2];
-   attrib[3] = f[3];
-}
-
-static void fetch_R32G32B32_FLOAT( const void *from,
-                                   float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = f[1];
-   attrib[2] = f[2];
-   attrib[3] = 1.0;
-}
-
-static void fetch_R32G32_FLOAT( const void *from,
-                                float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = f[1];
-   attrib[2] = 0.0;
-   attrib[3] = 1.0;
-}
 
 static void fetch_R32_FLOAT( const void *from,
                              float *attrib )
@@ -203,16 +164,29 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
 
 
 
-static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
+static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
+                                unsigned prim )
 {
    static const float zero = 0;
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
-   const struct vertex_info *vinfo = draw->render->get_vertex_info(draw->render);
-   unsigned nr_attrs = vinfo->num_attribs;
+   const struct vertex_info *vinfo;
    unsigned i;
+   boolean ok;
 
-   for (i = 0; i < nr_attrs; i++) {
+
+   ok = draw->render->set_primitive( draw->render, 
+                                     prim );
+   if (!ok) {
+      assert(0);
+      return;
+   }
+   
+   /* Must do this after set_primitive() above:
+    */
+   vinfo = draw->render->get_vertex_info(draw->render);
+
+   for (i = 0; i < vinfo->num_attribs; i++) {
       unsigned src_element = vinfo->src_index[i];
       unsigned src_buffer = draw->vertex_element[src_element].vertex_buffer_index;
          
@@ -222,28 +196,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
 
       feme->fetch[i].pitch = draw->vertex_buffer[src_buffer].pitch;
          
-      switch (draw->vertex_element[src_element].src_format) {
-      case PIPE_FORMAT_B8G8R8A8_UNORM:
-         feme->fetch[i].fetch = fetch_B8G8R8A8_UNORM;
-         break;
-      case PIPE_FORMAT_R32G32B32A32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32G32B32A32_FLOAT;
-         break;
-      case PIPE_FORMAT_R32G32B32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32G32B32_FLOAT;
-         break;
-      case PIPE_FORMAT_R32G32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32G32_FLOAT;
-         break;
-      case PIPE_FORMAT_R32_FLOAT:
-         feme->fetch[i].fetch = fetch_R32_FLOAT;
-         break;
-      default:
-         assert(0);
-         feme->fetch[i].fetch = NULL;
-         break;
-      }
-         
+      feme->fetch[i].fetch = draw_get_fetch_func(draw->vertex_element[src_element].src_format);
+
+
       switch (vinfo->emit[i]) {
       case EMIT_4F:
          feme->fetch[i].emit = emit_R32G32B32A32_FLOAT;
@@ -268,6 +223,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
          feme->fetch[i].pitch = 0;
          feme->fetch[i].fetch = fetch_R32_FLOAT;
          feme->fetch[i].emit = emit_R32_FLOAT;
+         break;
       default:
          assert(0);
          feme->fetch[i].emit = NULL;
@@ -275,7 +231,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
       }
    }
 
-   feme->nr_fetch = nr_attrs;
+   feme->nr_fetch = vinfo->num_attribs;
    feme->hw_vertex_size = vinfo->size * 4;
 }
 
@@ -284,7 +240,6 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle )
 
 
 static void fetch_emit_run( struct draw_pt_middle_end *middle,
-                            unsigned prim,
                             const unsigned *fetch_elts,
                             unsigned fetch_count,
                             const ushort *draw_elts,
@@ -293,16 +248,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    void *hw_verts;
-   boolean ok;
    
-   ok = draw->render->set_primitive( draw->render, 
-                                     prim );
-   if (!ok) {
-      assert(0);
-      return;
-   }
-   
-
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->hw_vertex_size,
                                                (ushort)fetch_count );

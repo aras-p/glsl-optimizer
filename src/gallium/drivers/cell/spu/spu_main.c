@@ -343,6 +343,8 @@ cmd_state_texture(const struct cell_command_texture *texture)
    spu.texture[unit].width = width;
    spu.texture[unit].height = height;
 
+   spu.texture[unit].tiles_per_row = width / TILE_SIZE;
+
    spu.texture[unit].tex_size = (vector float) { width, height, 0.0, 0.0};
    spu.texture[unit].tex_size_mask = (vector unsigned int)
          { width - 1, height - 1, 0, 0 };

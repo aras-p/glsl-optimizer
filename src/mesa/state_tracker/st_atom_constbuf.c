@@ -71,13 +71,12 @@ void st_upload_constants( struct st_context *st,
 
       _mesa_load_state_parameters(st->ctx, params);
 
-      if (cbuf->buffer && cbuf->size != paramBytes)
-	 pipe_buffer_reference( ws, &cbuf->buffer, NULL );
-
-      if (!cbuf->buffer) {
-         cbuf->buffer = ws->buffer_create(ws, 1, PIPE_BUFFER_USAGE_CONSTANT,
-                                          paramBytes);
-      }
+      /* We always need to get a new buffer, to keep the drivers simple and
+       * avoid gratuitous rendering synchronization.
+       */
+      pipe_buffer_reference( ws, &cbuf->buffer, NULL );
+      cbuf->buffer = ws->buffer_create( ws, 1, PIPE_BUFFER_USAGE_CONSTANT,
+					paramBytes );
 
       if (0)
       {

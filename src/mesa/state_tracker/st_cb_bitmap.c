@@ -754,6 +754,7 @@ st_init_bitmap(struct st_context *st)
 
    /* init baseline rasterizer state once */
    memset(&st->bitmap.rasterizer, 0, sizeof(st->bitmap.rasterizer));
+   st->bitmap.rasterizer.gl_rasterization_rules = 1;
    st->bitmap.rasterizer.bypass_vs = 1;
 
    init_bitmap_cache(st);

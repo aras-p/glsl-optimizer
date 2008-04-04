@@ -38,6 +38,11 @@ struct widepoint_stage {
    struct draw_stage stage;
 
    float half_point_size;
+   float point_size_min;
+   float point_size_max;
+
+   float xbias;
+   float ybias;
 
    uint texcoord_slot[PIPE_MAX_SHADER_OUTPUTS];
    uint texcoord_mode[PIPE_MAX_SHADER_OUTPUTS];
@@ -124,20 +129,26 @@ static void widepoint_point( struct draw_stage *stage,
    float *pos2 = v2->data[0];
    float *pos3 = v3->data[0];
 
-   const float xbias = 0.0, ybias = -0.125;
-
    /* point size is either per-vertex or fixed size */
    if (wide->psize_slot >= 0) {
-      half_size = 0.5f * header->v[0]->data[wide->psize_slot][0];
+      half_size = header->v[0]->data[wide->psize_slot][0];
+
+      /* XXX: temporary -- do this in the vertex shader??
+       */
+      half_size = CLAMP(half_size,
+                        wide->point_size_min,
+                        wide->point_size_max);
+      
+      half_size *= 0.5f; 
    }
    else {
       half_size = wide->half_point_size;
    }
 
-   left_adj = -half_size + xbias;
-   right_adj = half_size + xbias;
-   bot_adj = half_size + ybias;
-   top_adj = -half_size + ybias;
+   left_adj = -half_size + wide->xbias;
+   right_adj = half_size + wide->xbias;
+   bot_adj = half_size + wide->ybias;
+   top_adj = -half_size + wide->ybias;
 
    pos0[0] += left_adj;
    pos0[1] += top_adj;
@@ -182,6 +193,14 @@ static void widepoint_first_point( struct draw_stage *stage,
    struct draw_context *draw = stage->draw;
 
    wide->half_point_size = 0.5f * draw->rasterizer->point_size;
+   wide->point_size_min = draw->rasterizer->point_size_min;
+   wide->point_size_max = draw->rasterizer->point_size_max;
+   wide->xbias = 0.0;
+   wide->ybias = 0.0;
+
+   if (draw->rasterizer->gl_rasterization_rules) {
+      wide->ybias = -0.125;
+   }
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
    if ((draw->rasterizer->point_size > draw->wide_point_threshold) ||

@@ -43,6 +43,7 @@
 #include "pipe/p_inlines.h"
 #include "util/p_tile.h"
 #include "st_context.h"
+#include "st_cb_bitmap.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_fbo.h"
 #include "st_format.h"
@@ -158,6 +159,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    dest = _mesa_map_readpix_pbo(ctx, &clippedPacking, dest);
    if (!dest)
       return;
+
+   st_flush_bitmap_cache(ctx->st);
 
    /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);

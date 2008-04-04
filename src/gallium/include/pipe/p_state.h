@@ -115,9 +115,12 @@ struct pipe_rasterizer_state
                             still needed though, to indicate inputs/outputs */
    unsigned origin_lower_left:1;  /**< Is (0,0) the lower-left corner? */
    unsigned flatshade_first:1;   /**< take color attribute from the first vertex of a primitive */
+   unsigned gl_rasterization_rules:1; /**< enable tweaks for GL rasterization?  */
 
    float line_width;
    float point_size;           /**< used when no per-vertex size */
+   float point_size_min;        /* XXX - temporary, will go away */
+   float point_size_max;        /* XXX - temporary, will go away */
    float offset_units;
    float offset_scale;
    ubyte sprite_coord_mode[PIPE_MAX_SHADER_OUTPUTS]; /**< PIPE_SPRITE_COORD_ */

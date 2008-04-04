@@ -560,6 +560,70 @@ z24s8_get_tile_rgba(unsigned *src,
 }
 
 
+/*** PIPE_FORMAT_YCBCR / PIPE_FORMAT_YCBCR_REV ***/
+
+/**
+ * Convert YCbCr (or YCrCb) to RGBA.
+ */
+static void
+ycbcr_get_tile_rgba(ushort *src,
+                    unsigned w, unsigned h,
+                    float *p,
+                    unsigned dst_stride,
+                    boolean rev)
+{
+   const float scale = 1.0f / 255.0f;
+   unsigned i, j;
+
+   /* we're assuming we're being asked for an even number of texels */
+   assert((w & 1) == 0);
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      /* do two texels at a time */
+      for (j = 0; j < w; j += 2, src += 2) {
+         const ushort t0 = src[0];
+         const ushort t1 = src[1];
+         const ubyte y0 = (t0 >> 8) & 0xff;  /* luminance */
+         const ubyte y1 = (t1 >> 8) & 0xff;  /* luminance */
+         ubyte cb, cr;
+         float r, g, b;
+
+         if (rev) {
+            cb = t1 & 0xff;         /* chroma U */
+            cr = t0 & 0xff;         /* chroma V */
+         }
+         else {
+            cb = t0 & 0xff;         /* chroma U */
+            cr = t1 & 0xff;         /* chroma V */
+         }
+
+         /* even pixel: y0,cr,cb */
+         r = 1.164f * (y0-16) + 1.596f * (cr-128);
+         g = 1.164f * (y0-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
+         b = 1.164f * (y0-16) + 2.018f * (cb-128);
+         pRow[0] = r * scale;
+         pRow[1] = g * scale;
+         pRow[2] = b * scale;
+         pRow[3] = 1.0f;
+         pRow += 4;
+
+         /* odd pixel: use y1,cr,cb */
+         r = 1.164f * (y1-16) + 1.596f * (cr-128);
+         g = 1.164f * (y1-16) - 0.813f * (cr-128) - 0.391f * (cb-128);
+         b = 1.164f * (y1-16) + 2.018f * (cb-128);
+         pRow[0] = r * scale;
+         pRow[1] = g * scale;
+         pRow[2] = b * scale;
+         pRow[3] = 1.0f;
+         pRow += 4;
+
+      }
+      p += dst_stride;
+   }
+}
+
+
 void
 pipe_get_tile_rgba(struct pipe_context *pipe,
                    struct pipe_surface *ps,
@@ -621,6 +685,14 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
       z24s8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
+      break;
+   case PIPE_FORMAT_YCBCR:
+      assert((x & 1) == 0);
+      ycbcr_get_tile_rgba((ushort *) packed, w, h, p, dst_stride, FALSE);
+      break;
+   case PIPE_FORMAT_YCBCR_REV:
+      assert((x & 1) == 0);
+      ycbcr_get_tile_rgba((ushort *) packed, w, h, p, dst_stride, TRUE);
       break;
    default:
       assert(0);

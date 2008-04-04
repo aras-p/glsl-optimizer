@@ -22,8 +22,6 @@ sources = [
 	
 drivers = [
 	softpipe,
-	i915simple,
-	i965simple,
 ]
 
 # TODO: write a wrapper function http://www.scons.org/wiki/WrapperFunctions
