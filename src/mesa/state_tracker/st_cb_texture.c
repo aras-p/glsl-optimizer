@@ -1519,6 +1519,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    /* compressed texture functions */
    functions->CompressedTexImage2D = st_CompressedTexImage2D;
    functions->GetCompressedTexImage = st_GetCompressedTexImage;
+   functions->CompressedTextureSize = _mesa_compressed_texture_size;
 
    functions->NewTextureObject = st_NewTextureObject;
    functions->NewTextureImage = st_NewTextureImage;
