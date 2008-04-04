@@ -32,6 +32,8 @@ nouveau_channel_context_destroy(struct nouveau_channel_context *nvc)
 	nouveau_grobj_free(&nvc->NvGdiRect);
 	nouveau_grobj_free(&nvc->NvM2MF);
 	nouveau_grobj_free(&nvc->Nv2D);
+	nouveau_grobj_free(&nvc->NvSwzSurf);
+	nouveau_grobj_free(&nvc->NvSIFM);
 
 	nouveau_notifier_free(&nvc->sync_notifier);
 

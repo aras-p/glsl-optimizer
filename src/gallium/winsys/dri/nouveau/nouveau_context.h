@@ -27,11 +27,16 @@ struct nouveau_channel_context {
 
 	struct nouveau_notifier *sync_notifier;
 
+	/* Common */
 	struct nouveau_grobj    *NvNull;
+	struct nouveau_grobj    *NvM2MF;
+	/* NV04-NV40 */
 	struct nouveau_grobj    *NvCtxSurf2D;
+	struct nouveau_grobj	*NvSwzSurf;
 	struct nouveau_grobj    *NvImageBlit;
 	struct nouveau_grobj    *NvGdiRect;
-	struct nouveau_grobj    *NvM2MF;
+	struct nouveau_grobj	*NvSIFM;
+	/* G80 */
 	struct nouveau_grobj    *Nv2D;
 
 	uint32_t                 next_handle;

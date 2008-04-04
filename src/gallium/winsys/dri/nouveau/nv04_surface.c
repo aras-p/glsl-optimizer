@@ -237,6 +237,54 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 		   NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT, 1);
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
+	switch (nvc->chipset & 0xf0) {
+	case 0x00:
+	case 0x10:
+		class = NV04_SWIZZLED_SURFACE;
+		break;
+	case 0x20:
+		class = NV20_SWIZZLED_SURFACE;
+		break;
+	case 0x30:
+		class = NV30_SWIZZLED_SURFACE;
+		break;
+	case 0x40:
+	case 0x60:
+		class = NV40_SWIZZLED_SURFACE;
+		break;
+	default:
+		/* Famous last words: this really can't happen.. */
+		assert(0);
+		break;
+	}
+
+	ret = nouveau_grobj_alloc(chan, nvc->next_handle++, class,
+				  &nvc->NvSwzSurf);
+	if (ret) {
+		NOUVEAU_ERR("Error creating swizzled surface: %d\n", ret);
+		return 1;
+	}
+
+	BIND_RING (chan, nvc->NvSwzSurf, nvc->next_subchannel++);
+
+	if (nvc->chipset < 0x10) {
+		class = NV04_SCALED_IMAGE_FROM_MEMORY;
+	} else
+	if (nvc->chipset < 0x40) {
+		class = NV10_SCALED_IMAGE_FROM_MEMORY;
+	} else {
+		class = NV40_SCALED_IMAGE_FROM_MEMORY;
+	}
+
+	ret = nouveau_grobj_alloc(chan, nvc->next_handle++, class,
+				  &nvc->NvSIFM);
+	if (ret) {
+		NOUVEAU_ERR("Error creating scaled image object: %d\n", ret);
+		return 1;
+	}
+
+	BIND_RING (chan, nvc->NvSIFM, nvc->next_subchannel++);
+
 	return 0;
 }
 
