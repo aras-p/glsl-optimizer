@@ -129,7 +129,13 @@ static void emit_R32G32B32A32_FLOAT( const float *attrib,
 static void emit_header( const float *attrib,
                          float **out )
 {
-   (*out)[0] = 0;
+   struct vertex_header *header = (struct vertex_header *) (*out);
+
+   header->clipmask = 0;
+   header->edgeflag = 1;
+   header->pad = 0;
+   header->vertex_id = UNDEFINED_VERTEX_ID;
+
    (*out)[1] = 0;
    (*out)[2] = 0;
    (*out)[3] = 0;
@@ -231,99 +237,6 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
 
 
-/**
- * Add a point to the primitive queue.
- * \param i0  index into user's vertex arrays
- */
-static void do_point( struct draw_context *draw,
-		      const char *v0 )
-{
-   struct prim_header prim;
-   
-   prim.reset_line_stipple = 0;
-   prim.edgeflags = 1;
-   prim.pad = 0;
-   prim.v[0] = (struct vertex_header *)v0;
-
-   draw->pipeline.first->point( draw->pipeline.first, &prim );
-}
-
-
-/**
- * Add a line to the primitive queue.
- * \param i0  index into user's vertex arrays
- * \param i1  index into user's vertex arrays
- */
-static void do_line( struct draw_context *draw,
-		     const char *v0,
-		     const char *v1 )
-{
-   struct prim_header prim;
-   
-   prim.reset_line_stipple = 1; /* fixme */
-   prim.edgeflags = 1;
-   prim.pad = 0;
-   prim.v[0] = (struct vertex_header *)v0;
-   prim.v[1] = (struct vertex_header *)v1;
-
-   draw->pipeline.first->line( draw->pipeline.first, &prim );
-}
-
-/**
- * Add a triangle to the primitive queue.
- */
-static void do_triangle( struct draw_context *draw,
-			 char *v0,
-			 char *v1,
-			 char *v2 )
-{
-   struct prim_header prim;
-   
-//   _mesa_printf("tri %d %d %d\n", i0, i1, i2);
-   prim.reset_line_stipple = 1;
-   prim.edgeflags = ~0;
-   prim.pad = 0;
-   prim.v[0] = (struct vertex_header *)v0;
-   prim.v[1] = (struct vertex_header *)v1;
-   prim.v[2] = (struct vertex_header *)v2;
-
-   draw->pipeline.first->tri( draw->pipeline.first, &prim );
-}
-
-
-static void run_pipeline( struct fetch_pipeline_middle_end *fpme,
-                          char *verts,
-                          const ushort *elts,
-                          unsigned count )
-{
-   struct draw_context *draw = fpme->draw;
-   unsigned stride = fpme->pipeline_vertex_size;
-   unsigned i;
-   
-   switch (fpme->prim) {
-   case PIPE_PRIM_POINTS:
-      for (i = 0; i < count; i++) 
-         do_point( draw, 
-                   verts + stride * elts[i] );
-      break;
-   case PIPE_PRIM_LINES:
-      for (i = 0; i+1 < count; i += 2) 
-         do_line( draw, 
-                  verts + stride * elts[i+0],
-                  verts + stride * elts[i+1]);
-      break;
-   case PIPE_PRIM_TRIANGLES:
-      for (i = 0; i+2 < count; i += 3)
-         do_triangle( draw, 
-                      verts + stride * elts[i+0],
-                      verts + stride * elts[i+1],
-                      verts + stride * elts[i+2]);
-      break;
-   }
-}
-
-
-
 
 static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                             const unsigned *fetch_elts,
@@ -351,10 +264,15 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                         fetch_count );
 
    
-   run_pipeline( fpme,
-                 pipeline_verts,
-                 draw_elts,
-                 draw_count );
+   /* Run the pipeline
+    */
+   draw_pt_run_pipeline( fpme->draw,
+                         fpme->prim,
+                         pipeline_verts,
+                         fpme->pipeline_vertex_size,
+                         fetch_count,
+                         draw_elts,
+                         draw_count );
                  
 
    /* Done -- that was easy, wasn't it: 

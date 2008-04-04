@@ -227,6 +227,12 @@ struct draw_context
          struct draw_pt_front_end *vcache;
       } front;
 
+      struct {
+         char *verts;
+         unsigned vertex_stride;
+         unsigned vertex_count;
+      } pipeline;
+
    } pt;
 
    boolean flushing;
@@ -386,6 +392,14 @@ boolean draw_pt_arrays( struct draw_context *draw,
                         unsigned start,
                         unsigned count );
 
+void draw_pt_reset_vertex_ids( struct draw_context *draw );
+void draw_pt_run_pipeline( struct draw_context *draw,
+                           unsigned prim,
+                           char *verts,
+                           unsigned vertex_stride,
+                           unsigned vertex_count,
+                           const ushort *elts,
+                           unsigned count );
 
 
 /* Prototype/hack (DEPRECATED)

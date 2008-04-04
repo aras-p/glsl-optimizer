@@ -434,7 +434,8 @@ void draw_reset_vertex_ids(struct draw_context *draw)
       stage = stage->next;
    }
 
-   draw_vertex_cache_reset_vertex_ids(draw);
+   draw_vertex_cache_reset_vertex_ids(draw); /* going away soon */
+   draw_pt_reset_vertex_ids(draw);
 }
 
 
