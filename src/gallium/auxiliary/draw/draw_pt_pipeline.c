@@ -86,12 +86,14 @@ static void do_triangle( struct draw_context *draw,
    struct prim_header prim;
    
 //   _mesa_printf("tri %d %d %d\n", i0, i1, i2);
-   prim.reset_line_stipple = 1;
-   prim.edgeflags = ~0;
-   prim.pad = 0;
    prim.v[0] = (struct vertex_header *)v0;
    prim.v[1] = (struct vertex_header *)v1;
    prim.v[2] = (struct vertex_header *)v2;
+   prim.reset_line_stipple = 1;
+   prim.edgeflags = ((prim.v[0]->edgeflag)      |
+                     (prim.v[1]->edgeflag << 1) |
+                     (prim.v[2]->edgeflag << 2));
+   prim.pad = 0;
 
    draw->pipeline.first->tri( draw->pipeline.first, &prim );
 }

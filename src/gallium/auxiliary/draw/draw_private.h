@@ -250,6 +250,8 @@ struct draw_context
 
    /* user-space vertex data, buffers */
    struct {
+      const unsigned *edgeflag;
+
       /** vertex element/index buffer (ex: glDrawElements) */
       const void *elts;
       /** bytes per index (0, 1, 2 or 4) */
@@ -402,15 +404,6 @@ void draw_pt_run_pipeline( struct draw_context *draw,
                            unsigned count );
 
 
-/* Prototype/hack (DEPRECATED)
- */
-boolean
-draw_passthrough_arrays(struct draw_context *draw, 
-                        unsigned prim,
-                        unsigned start, 
-                        unsigned count);
-
-
 #define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
 #define DRAW_FLUSH_PRIM_QUEUE                0x2
 #define DRAW_FLUSH_VERTEX_CACHE              0x4
@@ -420,6 +413,8 @@ draw_passthrough_arrays(struct draw_context *draw,
 
 void draw_do_flush( struct draw_context *draw, unsigned flags );
 
+boolean draw_get_edgeflag( struct draw_context *draw,
+                           unsigned idx );
 
 
 /**

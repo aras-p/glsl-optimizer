@@ -57,6 +57,14 @@ struct pipe_context {
 
    void (*destroy)( struct pipe_context * );
 
+   
+   /* Possible interface for setting edgeflags.  These aren't really
+    * vertex elements, so don't fit there.
+    */
+   void (*set_edgeflags)( struct pipe_context *,
+                          const unsigned *bitfield );
+
+
    /**
     * VBO drawing (return false on fallbacks (temporary??))
     */

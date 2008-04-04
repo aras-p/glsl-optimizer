@@ -101,7 +101,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 
       draw->vs.queue[out].elt = i;
       draw->vs.queue[out].vertex->clipmask = 0;
-      draw->vs.queue[out].vertex->edgeflag = 1; /*XXX use user's edge flag! */
+      draw->vs.queue[out].vertex->edgeflag = draw_get_edgeflag(draw, i);
       draw->vs.queue[out].vertex->pad = 0;
       draw->vs.queue[out].vertex->vertex_id = UNDEFINED_VERTEX_ID;
 

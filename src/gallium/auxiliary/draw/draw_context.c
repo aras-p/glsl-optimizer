@@ -444,3 +444,19 @@ void draw_set_render( struct draw_context *draw,
 {
    draw->render = render;
 }
+
+void draw_set_edgeflags( struct draw_context *draw,
+                         const unsigned *edgeflag )
+{
+   draw->user.edgeflag = edgeflag;
+}
+
+
+boolean draw_get_edgeflag( struct draw_context *draw,
+                           unsigned idx )
+{
+   if (draw->user.edgeflag)
+      return (draw->user.edgeflag[idx/32] & (1 << (idx%32))) != 0;
+   else
+      return 1;
+}

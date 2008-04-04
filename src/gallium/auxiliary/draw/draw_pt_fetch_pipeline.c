@@ -72,6 +72,8 @@ struct fetch_pipeline_middle_end {
    struct draw_pt_middle_end base;
    struct draw_context *draw;
 
+   void (*header)( const unsigned *edgeflag, unsigned count, float **out);
+
    struct {
       const ubyte *ptr;
       unsigned pitch;
@@ -83,12 +85,6 @@ struct fetch_pipeline_middle_end {
    unsigned pipeline_vertex_size;
    unsigned prim;
 };
-
-
-static void fetch_NULL( const void *from,
-                        float *attrib )
-{
-}
 
 
 
@@ -126,8 +122,9 @@ static void emit_R32G32B32A32_FLOAT( const float *attrib,
    (*out) += 4;
 }
 
-static void emit_header( const float *attrib,
-                         float **out )
+static void header( const unsigned *edgeflag,
+                    unsigned idx,
+                    float **out )
 {
    struct vertex_header *header = (struct vertex_header *) (*out);
 
@@ -143,6 +140,26 @@ static void emit_header( const float *attrib,
    (*out) += 5;
 }
 
+
+static void header_ef( const unsigned *edgeflag,
+                       unsigned idx,
+                       float **out )
+{
+   struct vertex_header *header = (struct vertex_header *) (*out);
+
+   header->clipmask = 0;
+   header->edgeflag = (edgeflag[idx/32] & (1 << (idx%32))) != 0;
+   header->pad = 0;
+   header->vertex_id = UNDEFINED_VERTEX_ID;
+
+   (*out)[1] = 0;
+   (*out)[2] = 0;
+   (*out)[3] = 0;
+   (*out)[3] = 1;
+   (*out) += 5;
+}
+
+
 /**
  * General-purpose fetch from user's vertex arrays, emit to driver's
  * vertex buffer.
@@ -155,12 +172,15 @@ fetch_store_general( struct fetch_pipeline_middle_end *fpme,
                      const unsigned *fetch_elts,
                      unsigned count )
 {
+   const unsigned *edgeflag = fpme->draw->user.edgeflag;
    float *out = (float *)out_ptr;
    uint i, j;
 
    for (i = 0; i < count; i++) {
       unsigned elt = fetch_elts[i];
       
+      fpme->header( edgeflag, i, &out );
+
       for (j = 0; j < fpme->nr_fetch; j++) {
          float attrib[4];
          const ubyte *from = (fpme->fetch[j].ptr +
@@ -200,12 +220,11 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    /* Emit the vertex header and empty clipspace coord field:
     */
-   {
-      fpme->fetch[nr].ptr = NULL;
-      fpme->fetch[nr].pitch = 0;
-      fpme->fetch[nr].fetch = fetch_NULL;
-      fpme->fetch[nr].emit = emit_header;
-      nr++;
+   if (draw->user.edgeflag) {
+      fpme->header = header_ef;
+   }
+   else {
+      fpme->header = header;
    }
    
 
@@ -232,7 +251,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    }
 
    fpme->nr_fetch = nr;
-   fpme->pipeline_vertex_size = (5 + (nr-1) * 4) * sizeof(float);
+   fpme->pipeline_vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
 }
 
 
