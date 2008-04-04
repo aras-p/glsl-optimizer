@@ -60,7 +60,7 @@ static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
-   st_flush( st, pipeFlushFlags, fence );
+   FLUSH_VERTICES(st->ctx, 0);
 
    if (!fb)
       return;
@@ -84,6 +84,15 @@ static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
       struct st_renderbuffer *strb
          = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
       struct pipe_surface *front_surf = strb->surface;
+
+      /* If we aren't rendering to the frontbuffer, this is a noop.
+       * This should be uncontroversial for glFlush, though people may
+       * feel more strongly about glFinish.
+       *
+       * Additionally, need to make sure that the frontbuffer_dirty
+       * flag really gets set on frontbuffer rendering.
+       */
+      st->pipe->flush( st->pipe, pipeFlushFlags, fence );
 
       /* Hook for copying "fake" frontbuffer if necessary:
        */
