@@ -75,6 +75,7 @@ static boolean
 nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 		    unsigned ib_size)
 {
+	struct pipe_screen *pscreen = &nv40->screen->pipe;
 	unsigned type;
 
 	if (!ib) {
@@ -83,8 +84,7 @@ nv40_vbo_set_idxbuf(struct nv40_context *nv40, struct pipe_buffer *ib,
 		return FALSE;
 	}
 
-	/* No support for 8bit indices, no support at all on 0x4497 chips */
-	if (nv40->screen->curie->grclass == NV44TCL || ib_size == 1)
+	if (!pscreen->get_param(pscreen, NOUVEAU_CAP_HW_IDXBUF) || ib_size == 1)
 		return FALSE;
 
 	switch (ib_size) {
