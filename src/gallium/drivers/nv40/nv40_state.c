@@ -421,7 +421,6 @@ static void
 nv40_rasterizer_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_rasterizer_state *rsso = hwcso;
 
 	nv40->rasterizer = hwcso;
 	nv40->dirty |= NV40_NEW_RAST;
@@ -527,7 +526,6 @@ static void
 nv40_vp_state_bind(struct pipe_context *pipe, void *hwcso)
 {
 	struct nv40_context *nv40 = nv40_context(pipe);
-	struct nv40_vertex_program *vp = hwcso;
 
 	nv40->vertprog = hwcso;
 	nv40->dirty |= NV40_NEW_VERTPROG;
