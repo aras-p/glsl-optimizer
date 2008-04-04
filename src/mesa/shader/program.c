@@ -361,6 +361,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
                            prog->NumInstructions);
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
+   clone->SamplersUsed = prog->SamplersUsed;
    memcpy(clone->TexturesUsed, prog->TexturesUsed, sizeof(prog->TexturesUsed));
 
    if (prog->Parameters)
@@ -537,6 +538,7 @@ _mesa_combine_programs(GLcontext *ctx,
       }
       newProg->InputsRead = progA->InputsRead | inputsB;
       newProg->OutputsWritten = progB->OutputsWritten;
+      newProg->SamplersUsed = progA->SamplersUsed | progB->SamplersUsed;
    }
    else {
       /* vertex program */

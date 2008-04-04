@@ -148,6 +148,7 @@ make_bitmap_fragment_program(GLcontext *ctx)
 
    p->InputsRead = FRAG_BIT_TEX0;
    p->OutputsWritten = 0x0;
+   p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    stfp = (struct st_fragment_program *) p;
    stfp->Base.UsesKill = GL_TRUE;
