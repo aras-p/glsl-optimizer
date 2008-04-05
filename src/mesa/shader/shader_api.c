@@ -43,6 +43,7 @@
 #include "prog_parameter.h"
 #include "prog_print.h"
 #include "prog_statevars.h"
+#include "prog_uniform.h"
 #include "shader/shader_api.h"
 #include "shader/slang/slang_compile.h"
 #include "shader/slang/slang_link.h"
@@ -75,25 +76,25 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
                                 struct gl_shader_program *shProg)
 {
    if (shProg->VertexProgram) {
-      if (shProg->VertexProgram->Base.Parameters == shProg->Uniforms) {
-         /* to prevent a double-free in the next call */
-         shProg->VertexProgram->Base.Parameters = NULL;
-      }
+      /* Set ptr to NULL since the param list is shared with the
+       * original/unlinked program.
+       */
+      shProg->VertexProgram->Base.Parameters = NULL;
       ctx->Driver.DeleteProgram(ctx, &shProg->VertexProgram->Base);
       shProg->VertexProgram = NULL;
    }
 
    if (shProg->FragmentProgram) {
-      if (shProg->FragmentProgram->Base.Parameters == shProg->Uniforms) {
-         /* to prevent a double-free in the next call */
-         shProg->FragmentProgram->Base.Parameters = NULL;
-      }
+      /* Set ptr to NULL since the param list is shared with the
+       * original/unlinked program.
+       */
+      shProg->FragmentProgram->Base.Parameters = NULL;
       ctx->Driver.DeleteProgram(ctx, &shProg->FragmentProgram->Base);
       shProg->FragmentProgram = NULL;
    }
 
    if (shProg->Uniforms) {
-      _mesa_free_parameter_list(shProg->Uniforms);
+      _mesa_free_uniform_list(shProg->Uniforms);
       shProg->Uniforms = NULL;
    }
 
@@ -673,39 +674,43 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   struct gl_shader_program *shProg
+   const struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   GLuint ind, j;
+   const struct gl_program *prog;
+   GLint progPos;
 
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
       return;
    }
 
-   if (!shProg->Uniforms || index >= shProg->Uniforms->NumParameters) {
+   if (!shProg->Uniforms || index >= shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
       return;
    }
 
-   ind = 0;
-   for (j = 0; j < shProg->Uniforms->NumParameters; j++) {
-      if (shProg->Uniforms->Parameters[j].Type == PROGRAM_UNIFORM ||
-          shProg->Uniforms->Parameters[j].Type == PROGRAM_SAMPLER) {
-         if (ind == index) {
-            /* found it */
-            copy_string(nameOut, maxLength, length,
-                        shProg->Uniforms->Parameters[j].Name);
-            if (size)
-               *size = shProg->Uniforms->Parameters[j].Size;
-            if (type)
-               *type = shProg->Uniforms->Parameters[j].DataType;
-            return;
-         }
-         ind++;
+   progPos = shProg->Uniforms->Uniforms[index].VertPos;
+   if (progPos >= 0) {
+      prog = &shProg->VertexProgram->Base;
+   }
+   else {
+      progPos = shProg->Uniforms->Uniforms[index].FragPos;
+      if (progPos >= 0) {
+         prog = &shProg->FragmentProgram->Base;
       }
    }
 
-   _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
+   if (!prog || progPos < 0)
+      return; /* should never happen */
+
+   if (nameOut)
+      copy_string(nameOut, maxLength, length,
+                  prog->Parameters->Parameters[progPos].Name);
+   if (size)
+      *size = prog->Parameters->Parameters[progPos].Size;
+
+   if (type)
+      *type = prog->Parameters->Parameters[progPos].DataType;
 }
 
 
@@ -792,14 +797,10 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
                                              PROGRAM_INPUT) + 1;
       break;
    case GL_ACTIVE_UNIFORMS:
-      *params
-         = _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_UNIFORM)
-         + _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_SAMPLER);
+      *params = shProg->Uniforms ? shProg->Uniforms->NumUniforms : 0;
       break;
    case GL_ACTIVE_UNIFORM_MAX_LENGTH:
-      *params = MAX2(
-             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_UNIFORM),
-             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_SAMPLER));
+      *params = _mesa_longest_uniform_name(shProg->Uniforms);
       if (*params > 0)
          (*params)++;  /* add one for terminating zero */
       break;
@@ -896,10 +897,23 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    if (shProg) {
-      GLint i;
-      if (location >= 0 && location < shProg->Uniforms->NumParameters) {
-         for (i = 0; i < shProg->Uniforms->Parameters[location].Size; i++) {
-            params[i] = shProg->Uniforms->ParameterValues[location][i];
+      if (location < shProg->Uniforms->NumUniforms) {
+         GLint progPos, i;
+         const struct gl_program *prog;
+
+         progPos = shProg->Uniforms->Uniforms[location].VertPos;
+         if (progPos >= 0) {
+            prog = &shProg->VertexProgram->Base;
+         }
+         else {
+            progPos = shProg->Uniforms->Uniforms[location].FragPos;
+            if (progPos >= 0) {
+               prog = &shProg->FragmentProgram->Base;
+            }
+         }
+
+         for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
+            params[i] = prog->Parameters->ParameterValues[progPos][i];
          }
       }
       else {
@@ -920,23 +934,10 @@ _mesa_get_uniform_location(GLcontext *ctx, GLuint program, const GLchar *name)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   if (shProg) {
-      GLuint loc;
-      for (loc = 0; loc < shProg->Uniforms->NumParameters; loc++) {
-         const struct gl_program_parameter *u
-            = shProg->Uniforms->Parameters + loc;
-         /* XXX this is a temporary simplification / short-cut.
-          * We need to handle things like "e.c[0].b" as seen in the
-          * GLSL orange book, page 189.
-          */
-         if ((u->Type == PROGRAM_UNIFORM ||
-              u->Type == PROGRAM_SAMPLER) && !strcmp(u->Name, name)) {
-            return loc;
-         }
-      }
-   }
-   return -1;
+   if (!shProg)
+      return -1;
 
+   return _mesa_lookup_uniform(shProg->Uniforms, name);
 }
 
 
@@ -1068,6 +1069,78 @@ update_textures_used(struct gl_program *prog)
 
 
 /**
+ * Set the value of a program's uniform variable.
+ * \param program  the program whose uniform to update
+ * \param location  the location/index of the uniform
+ * \param type  the datatype of the uniform
+ * \param count  the number of uniforms to set
+ * \param elems  number of elements per uniform
+ * \param values  the new values
+ */
+static void
+set_program_uniform(GLcontext *ctx, struct gl_program *program, GLint location,
+                    GLenum type, GLint count, GLint elems, const void *values)
+{
+   if (program->Parameters->Parameters[location].Type == PROGRAM_SAMPLER) {
+      /* This controls which texture unit which is used by a sampler */
+      GLuint texUnit, sampler;
+
+      /* data type for setting samplers must be int */
+      if (type != GL_INT || count != 1) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUniform(only glUniform1i can be used "
+                     "to set sampler uniforms)");
+         return;
+      }
+
+      sampler = (GLuint) program->Parameters->ParameterValues[location][0];
+      texUnit = ((GLuint *) values)[0];
+
+      /* check that the sampler (tex unit index) is legal */
+      if (texUnit >= ctx->Const.MaxTextureImageUnits) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glUniform1(invalid sampler/tex unit index)");
+         return;
+      }
+
+      /* This maps a sampler to a texture unit: */
+      program->SamplerUnits[sampler] = texUnit;
+      update_textures_used(program);
+
+      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+   }
+   else {
+      /* ordinary uniform variable */
+      GLint k, i;
+
+      if (count * elems > program->Parameters->Parameters[location].Size) {
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
+         return;
+      }
+
+      for (k = 0; k < count; k++) {
+         GLfloat *uniformVal = program->Parameters->ParameterValues[location + k];
+         if (type == GL_INT ||
+             type == GL_INT_VEC2 ||
+             type == GL_INT_VEC3 ||
+             type == GL_INT_VEC4) {
+            const GLint *iValues = ((const GLint *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = (GLfloat) iValues[i];
+            }
+         }
+         else {
+            const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = fValues[i];
+            }
+         }
+      }
+   }
+}
+
+
+/**
  * Called via ctx->Driver.Uniform().
  */
 static void
@@ -1075,19 +1148,17 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   GLint elems, i, k;
+   GLint elems;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
       return;
    }
 
-   if (location < 0 || location >= (GLint) shProg->Uniforms->NumParameters) {
+   if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
       return;
    }
-
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    if (count < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(count < 0)");
@@ -1116,63 +1187,54 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   if (count * elems > shProg->Uniforms->Parameters[location].Size) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
-      return;
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
+   /* A uniform var may be used by both a vertex shader and a fragment
+    * shader.  We may need to update one or both shader's uniform here:
+    */
+   if (shProg->VertexProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
+      if (loc >= 0) {
+         set_program_uniform(ctx, &shProg->VertexProgram->Base,
+                             loc, type, count, elems, values);
+      }
    }
 
-   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
-      /* This controls which texture unit which is used by a sampler */
-      GLuint texUnit, sampler;
-
-      /* data type for setting samplers must be int */
-      if (type != GL_INT || count != 1) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glUniform(only glUniform1i can be used "
-                     "to set sampler uniforms)");
-         return;
+   if (shProg->FragmentProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
+      if (loc >= 0) {
+         set_program_uniform(ctx, &shProg->FragmentProgram->Base,
+                             loc, type, count, elems, values);
       }
+   }
+}
 
-      sampler = (GLuint) shProg->Uniforms->ParameterValues[location][0];
-      texUnit = ((GLuint *) values)[0];
 
-      /* check that the sampler (tex unit index) is legal */
-      if (texUnit >= ctx->Const.MaxTextureImageUnits) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glUniform1(invalid sampler/tex unit index)");
-         return;
+static void
+set_program_uniform_matrix(GLcontext *ctx, struct gl_program *program,
+                           GLuint location, GLuint rows, GLuint cols,
+                           GLboolean transpose, const GLfloat *values)
+{
+   /*
+    * Note: the _columns_ of a matrix are stored in program registers, not
+    * the rows.
+    */
+   /* XXXX need to test 3x3 and 2x2 matrices... */
+   if (transpose) {
+      GLuint row, col;
+      for (col = 0; col < cols; col++) {
+         GLfloat *v = program->Parameters->ParameterValues[location + col];
+         for (row = 0; row < rows; row++) {
+            v[row] = values[row * cols + col];
+         }
       }
-
-      if (shProg->VertexProgram) {
-         shProg->VertexProgram->Base.SamplerUnits[sampler] = texUnit;
-         update_textures_used(&shProg->VertexProgram->Base);
-      }
-      if (shProg->FragmentProgram) {
-         shProg->FragmentProgram->Base.SamplerUnits[sampler] = texUnit;
-         update_textures_used(&shProg->FragmentProgram->Base);
-      }
-
-
-      FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    }
    else {
-      /* ordinary uniform variable */
-      for (k = 0; k < count; k++) {
-         GLfloat *uniformVal = shProg->Uniforms->ParameterValues[location + k];
-         if (type == GL_INT ||
-             type == GL_INT_VEC2 ||
-             type == GL_INT_VEC3 ||
-             type == GL_INT_VEC4) {
-            const GLint *iValues = ((const GLint *) values) + k * elems;
-            for (i = 0; i < elems; i++) {
-               uniformVal[i] = (GLfloat) iValues[i];
-            }
-         }
-         else {
-            const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
-            for (i = 0; i < elems; i++) {
-               uniformVal[i] = fValues[i];
-            }
+      GLuint row, col;
+      for (col = 0; col < cols; col++) {
+         GLfloat *v = program->Parameters->ParameterValues[location + col];
+         for (row = 0; row < rows; row++) {
+            v[row] = values[col * rows + row];
          }
       }
    }
@@ -1193,7 +1255,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
          "glUniformMatrix(program not linked)");
       return;
    }
-   if (location < 0 || location >= shProg->Uniforms->NumParameters) {
+   if (location < 0 || location >= shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
       return;
    }
@@ -1204,27 +1266,19 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   /*
-    * Note: the _columns_ of a matrix are stored in program registers, not
-    * the rows.
-    */
-   /* XXXX need to test 3x3 and 2x2 matrices... */
-   if (transpose) {
-      GLuint row, col;
-      for (col = 0; col < cols; col++) {
-         GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
-         for (row = 0; row < rows; row++) {
-            v[row] = values[row * cols + col];
-         }
+   if (shProg->VertexProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].VertPos;
+      if (loc >= 0) {
+         set_program_uniform_matrix(ctx, &shProg->VertexProgram->Base,
+                                    loc, rows, cols, transpose, values);
       }
    }
-   else {
-      GLuint row, col;
-      for (col = 0; col < cols; col++) {
-         GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
-         for (row = 0; row < rows; row++) {
-            v[row] = values[col * rows + row];
-         }
+
+   if (shProg->FragmentProgram) {
+      GLint loc = shProg->Uniforms->Uniforms[location].FragPos;
+      if (loc >= 0) {
+         set_program_uniform_matrix(ctx, &shProg->FragmentProgram->Base,
+                                    loc, rows, cols, transpose, values);
       }
    }
 }

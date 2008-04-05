@@ -213,6 +213,7 @@ SHADER_SOURCES = \
 	shader/prog_parameter.c \
 	shader/prog_print.c \
 	shader/prog_statevars.c \
+	shader/prog_uniform.c \
 	shader/programopt.c \
 	shader/shader_api.c \
 
