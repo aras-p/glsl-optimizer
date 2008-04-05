@@ -184,10 +184,10 @@ static void emit_poly( struct draw_stage *stage,
          if (0) {
             const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
             uint j, k;
-            printf("Clipped tri:\n");
+            debug_printf("Clipped tri:\n");
             for (j = 0; j < 3; j++) {
                for (k = 0; k < vs->info.num_outputs; k++) {
-                  printf("  Vert %d: Attr %d:  %f %f %f %f\n", j, k,
+                  debug_printf("  Vert %d: Attr %d:  %f %f %f %f\n", j, k,
                          header.v[j]->data[k][0],
                          header.v[j]->data[k][1],
                          header.v[j]->data[k][2],
