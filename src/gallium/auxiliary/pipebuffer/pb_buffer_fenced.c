@@ -150,7 +150,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
 
    if (fenced_buf->fence) {
       struct pipe_winsys *winsys = fenced_list->winsys;
-      if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0) { 
+      if(winsys->fence_signalled(winsys, fenced_buf->fence, 0) != 0) { 
 	 LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
 	 fenced_list->numDelayed++;
       }
