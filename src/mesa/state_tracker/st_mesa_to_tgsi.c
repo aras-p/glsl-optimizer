@@ -833,8 +833,7 @@ tgsi_translate_mesa_program(
         i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
          struct tgsi_full_immediate fullimm
-            = make_immediate(program->Parameters->ParameterValues[i],
-                             program->Parameters->Parameters[i].Size);
+            = make_immediate(program->Parameters->ParameterValues[i], 4);
          ti += tgsi_build_full_immediate(&fullimm,
                                          &tokens[ti],
                                          header,
