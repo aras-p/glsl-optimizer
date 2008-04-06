@@ -85,7 +85,6 @@ static void do_triangle( struct draw_context *draw,
 {
    struct prim_header prim;
    
-//   _mesa_printf("tri %d %d %d\n", i0, i1, i2);
    prim.v[0] = (struct vertex_header *)v0;
    prim.v[1] = (struct vertex_header *)v1;
    prim.v[2] = (struct vertex_header *)v2;
@@ -95,6 +94,11 @@ static void do_triangle( struct draw_context *draw,
                      (prim.v[2]->edgeflag << 2));
    prim.pad = 0;
 
+   if (0) debug_printf("tri ef: %d %d %d\n", 
+                       prim.v[0]->edgeflag,
+                       prim.v[1]->edgeflag,
+                       prim.v[2]->edgeflag);
+   
    draw->pipeline.first->tri( draw->pipeline.first, &prim );
 }
 

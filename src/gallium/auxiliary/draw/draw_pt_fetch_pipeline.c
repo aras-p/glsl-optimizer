@@ -72,7 +72,7 @@ struct fetch_pipeline_middle_end {
    struct draw_pt_middle_end base;
    struct draw_context *draw;
 
-   void (*header)( const unsigned *edgeflag, unsigned count, float **out);
+   void (*header)( unsigned idx, float **out);
 
    struct {
       const ubyte *ptr;
@@ -122,8 +122,7 @@ static void emit_R32G32B32A32_FLOAT( const float *attrib,
    (*out) += 4;
 }
 
-static void header( const unsigned *edgeflag,
-                    unsigned idx,
+static void header( unsigned idx,
                     float **out )
 {
    struct vertex_header *header = (struct vertex_header *) (*out);
@@ -141,14 +140,15 @@ static void header( const unsigned *edgeflag,
 }
 
 
-static void header_ef( const unsigned *edgeflag,
-                       unsigned idx,
+static void header_ef( unsigned idx,
                        float **out )
 {
    struct vertex_header *header = (struct vertex_header *) (*out);
 
+   /* XXX: need a reset_stipple flag in the vertex header too? 
+    */
    header->clipmask = 0;
-   header->edgeflag = (edgeflag[idx/32] & (1 << (idx%32))) != 0;
+   header->edgeflag = (idx & DRAW_PT_EDGEFLAG) != 0;
    header->pad = 0;
    header->vertex_id = UNDEFINED_VERTEX_ID;
 
@@ -172,14 +172,14 @@ fetch_store_general( struct fetch_pipeline_middle_end *fpme,
                      const unsigned *fetch_elts,
                      unsigned count )
 {
-   const unsigned *edgeflag = fpme->draw->user.edgeflag;
    float *out = (float *)out_ptr;
    uint i, j;
 
    for (i = 0; i < count; i++) {
       unsigned elt = fetch_elts[i];
       
-      fpme->header( edgeflag, i, &out );
+      fpme->header( elt, &out );
+      elt &= ~DRAW_PT_FLAG_MASK;
 
       for (j = 0; j < fpme->nr_fetch; j++) {
          float attrib[4];
