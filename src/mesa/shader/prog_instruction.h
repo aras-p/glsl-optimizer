@@ -439,6 +439,9 @@ extern struct prog_instruction *
 _mesa_copy_instructions(struct prog_instruction *dest,
                         const struct prog_instruction *src, GLuint n);
 
+extern void
+_mesa_free_instructions(struct prog_instruction *inst, GLuint count);
+
 extern GLuint
 _mesa_num_inst_src_regs(gl_inst_opcode opcode);
 
