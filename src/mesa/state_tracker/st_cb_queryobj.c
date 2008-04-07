@@ -90,11 +90,7 @@ st_DeleteQuery(GLcontext *ctx, struct gl_query_object *q)
    FREE(stq);
 }
 
-/**
- * Do glReadPixels by getting rows from the framebuffer surface with
- * get_tile().  Convert to requested format/type with Mesa image routines.
- * Image transfer ops are done in software too.
- */
+
 static void
 st_BeginQuery(GLcontext *ctx, struct gl_query_object *q)
 {
