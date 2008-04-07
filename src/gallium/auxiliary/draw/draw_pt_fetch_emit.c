@@ -149,7 +149,7 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
    uint i, j;
 
    for (i = 0; i < count; i++) {
-      unsigned elt = fetch_elts[i];
+      unsigned elt = fetch_elts[i] & ~DRAW_PT_FLAG_MASK;
       
       for (j = 0; j < feme->nr_fetch; j++) {
          float attrib[4];
