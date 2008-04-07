@@ -547,36 +547,38 @@ void
 st_flush_bitmap_cache(struct st_context *st)
 {
    if (!st->bitmap.cache->empty) {
-      struct bitmap_cache *cache = st->bitmap.cache;
-      struct pipe_context *pipe = st->pipe;
-      struct pipe_screen *screen = pipe->screen;
-      struct pipe_surface *surf;
-      void *dest;
+      if (st->ctx->DrawBuffer) {
+         struct bitmap_cache *cache = st->bitmap.cache;
+         struct pipe_context *pipe = st->pipe;
+         struct pipe_screen *screen = pipe->screen;
+         struct pipe_surface *surf;
+         void *dest;
 
-      assert(cache->xmin <= cache->xmax);
-      /*
-      printf("flush size %d x %d  at %d, %d\n",
-             cache->xmax - cache->xmin,
-             cache->ymax - cache->ymin,
-             cache->xpos, cache->ypos);
-      */
+         assert(cache->xmin <= cache->xmax);
+         /*
+         printf("flush size %d x %d  at %d, %d\n",
+                cache->xmax - cache->xmin,
+                cache->ymax - cache->ymin,
+                cache->xpos, cache->ypos);
+         */
 
-      /* update the texture map image */
-      surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
-      dest = pipe_surface_map(surf);
-      memcpy(dest, cache->buffer, sizeof(cache->buffer));
-      pipe_surface_unmap(surf);
-      pipe_surface_reference(&surf, NULL);
+         /* update the texture map image */
+         surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
+         dest = pipe_surface_map(surf);
+         memcpy(dest, cache->buffer, sizeof(cache->buffer));
+         pipe_surface_unmap(surf);
+         pipe_surface_reference(&surf, NULL);
 
-      pipe->texture_update(pipe, cache->texture, 0, 0x1);
+         pipe->texture_update(pipe, cache->texture, 0, 0x1);
 
-      draw_bitmap_quad(st->ctx,
-                       cache->xpos,
-                       cache->ypos,
-                       st->ctx->Current.RasterPos[2],
-                       BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
-                       cache->texture);
+         draw_bitmap_quad(st->ctx,
+                          cache->xpos,
+                          cache->ypos,
+                          st->ctx->Current.RasterPos[2],
+                          BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
+                          cache->texture);
 
+      }
       reset_cache(st);
    }
 }
