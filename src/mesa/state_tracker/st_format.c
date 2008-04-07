@@ -321,7 +321,10 @@ default_deep_rgba_format(struct pipe_screen *screen, uint type)
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, type)) {
       return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
-   return PIPE_FORMAT_NONE;
+   if (type == PIPE_TEXTURE)
+      return default_rgba_format(screen, type);
+   else
+      return PIPE_FORMAT_NONE;
 }
 
 
