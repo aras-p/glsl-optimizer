@@ -107,7 +107,7 @@ st_create_framebuffer( const __GLcontextModes *visual,
       if (visual->accumRedBits > 0) {
          /* 16-bit/channel accum */
          struct gl_renderbuffer *accumRb
-            = st_new_renderbuffer_fb(PIPE_FORMAT_R16G16B16A16_SNORM);
+            = st_new_renderbuffer_fb(DEFAULT_ACCUM_PIPE_FORMAT);
          _mesa_add_renderbuffer(&stfb->Base, BUFFER_ACCUM, accumRb);
       }
 

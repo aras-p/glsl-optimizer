@@ -127,14 +127,37 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                                              pipeFormat,
                                              flags);
    if (ret || !strb->surface->buffer) {
-      return GL_FALSE; /* out of memory, try s/w buffer? */
+      if (pipeFormat == DEFAULT_ACCUM_PIPE_FORMAT) {
+         /* Accum buffer.  Try a different surface format.  Since accum
+          * buffers are s/w only for now, the surface pixel format doesn't
+          * really matter, only that the buffer is large enough.
+          */
+         int sz, mult;
+         enum pipe_format accum_format;
+
+         /* allocate a buffer of (typically) double height to get 64bpp */
+         accum_format = st_choose_renderbuffer_format(pipe, GL_RGBA);
+         sz = pf_get_size(accum_format);
+         mult = pf_get_size(DEFAULT_ACCUM_PIPE_FORMAT) / sz;
+
+         ret = pipe->winsys->surface_alloc_storage(pipe->winsys,
+                                                   strb->surface,
+                                                   width, height * mult,
+                                                   accum_format, flags);
+         if (ret)
+            return GL_FALSE; /* we've _really_ failed */
+
+      }
+      else {
+         return GL_FALSE; /* out of memory, try s/w buffer? */
+      }
    }
 
    ASSERT(strb->surface->buffer);
    ASSERT(strb->surface->format);
    ASSERT(strb->surface->cpp);
    ASSERT(strb->surface->width == width);
-   ASSERT(strb->surface->height == height);
+   /*ASSERT(strb->surface->height == height);*/
    ASSERT(strb->surface->pitch);
 
    strb->Base.Width  = width;
@@ -252,7 +275,7 @@ st_new_renderbuffer_fb(enum pipe_format format)
       strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
       strb->Base._BaseFormat = GL_STENCIL_INDEX;
       break;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
+   case DEFAULT_ACCUM_PIPE_FORMAT: /*PIPE_FORMAT_R16G16B16A16_SNORM*/
       strb->Base.InternalFormat = GL_RGBA16;
       strb->Base._BaseFormat = GL_RGBA;
       break;
