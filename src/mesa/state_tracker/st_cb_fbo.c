@@ -80,6 +80,8 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
 
 /**
  * gl_renderbuffer::AllocStorage()
+ * This is called to allocate the original drawing surface, and
+ * during window resize.
  */
 static GLboolean
 st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
@@ -90,8 +92,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format pipeFormat;
    GLbitfield flags = 0x0; /* XXX needed? */
+   int ret;
 
    if (!strb->surface) {
+      /* first time surface creation */
       strb->surface = pipe->winsys->surface_alloc(pipe->winsys);
       assert(strb->surface);
       assert(strb->surface->refcount);
@@ -99,10 +103,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       if (!strb->surface)
          return GL_FALSE;
    }
-
-   if (strb->surface->buffer)
-      pipe_buffer_reference(pipe->winsys, &strb->surface->buffer,
-			    NULL);
+   else if (strb->surface->buffer) {
+      /* release/discard the old surface buffer */
+      pipe_buffer_reference(pipe->winsys, &strb->surface->buffer, NULL);
+   }
 
    /* Determine surface format here */
    if (strb->format != PIPE_FORMAT_NONE) {
@@ -116,14 +120,15 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    init_renderbuffer_bits(strb, pipeFormat);
 
-   pipe->winsys->surface_alloc_storage(pipe->winsys,
-                                       strb->surface,
-                                       width,
-                                       height,
-                                       pipeFormat,
-                                       flags);
-   if (!strb->surface->buffer)
+   ret = pipe->winsys->surface_alloc_storage(pipe->winsys,
+                                             strb->surface,
+                                             width,
+                                             height,
+                                             pipeFormat,
+                                             flags);
+   if (ret || !strb->surface->buffer) {
       return GL_FALSE; /* out of memory, try s/w buffer? */
+   }
 
    ASSERT(strb->surface->buffer);
    ASSERT(strb->surface->format);
