@@ -210,18 +210,23 @@ static void r300EmitVec(GLcontext * ctx, struct r300_dma_region *rvb,
 static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 				 int *inputs, GLint * tab, GLuint nr)
 {
-	GLushort i, w;
-	uint16_t * dst16 = (uint16_t *) dst;
-	
+	GLuint i, dw;
+
 	/* type, inputs, stop bit, size */
-	for (i = 0; i < nr; i++) {
+	for (i = 0; i < nr; i += 2) {
 		/* make sure input is valid, would lockup the gpu */
 		assert(inputs[tab[i]] != -1);
-		w = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
+		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
 		if (i + 1 == nr) {
-			w |= R300_VAP_INPUT_ROUTE_END;
+			dw |= R300_VAP_INPUT_ROUTE_END;
+		} else {
+			assert(inputs[tab[i + 1]] != -1);
+			dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
+			if (i + 2 == nr) {
+				dw |= (R300_VAP_INPUT_ROUTE_END << 16);
+			}
 		}
-		dst16[i] = w;
+		dst[i >> 1] = dw;
 	}
 
 	return (nr + 1) >> 1;
@@ -237,11 +242,14 @@ static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 
 GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
-	GLuint i;
-	uint16_t * dst16 = (uint16_t *) dst;
+	GLuint i, dw;
 
-	for (i = 0; i < nr; i++) {
-		dst16[i] = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+	for (i = 0; i < nr; i += 2) {
+		dw = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+		if (i + 1 < nr) {
+			dw |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
+		}
+		dst[i >> 1] = dw;
 	}
 
 	return (nr + 1) >> 1;
