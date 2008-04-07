@@ -31,8 +31,8 @@
 
 #include <stdlib.h>
 #include <xf86drm.h>
-#include "dri_bufpool.h"
-#include "dri_bufmgr.h"
+//#include "dri_bufpool.h"
+//#include "dri_bufmgr.h"
 
 #include "intel_context.h"
 #include "intel_winsys.h"
@@ -50,6 +50,7 @@
 struct intel_pipe_winsys {
    struct pipe_winsys winsys;
    struct _DriBufferPool *regionPool;
+   struct _DriFreeSlabManager *fMan;
 };
 
 
@@ -142,7 +143,7 @@ intel_buffer_create(struct pipe_winsys *winsys,
    driGenBuffers( iws->regionPool, 
 		  "pipe buffer", 1, &buffer->driBO, alignment, flags, 0 );
 
-   driBOData( buffer->driBO, size, NULL, 0 );
+   driBOData( buffer->driBO, size, NULL, iws->regionPool, 0 );
 
    return &buffer->base;
 }
@@ -155,7 +156,7 @@ intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
 
    driGenUserBuffer( iws->regionPool, 
-                     "pipe user buffer", &buffer->driBO, ptr, bytes);
+                     "pipe user buffer", &buffer->driBO, ptr, bytes );
 
    return &buffer->base;
 }
@@ -209,7 +210,7 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                  unsigned flags)
 {
    const unsigned alignment = 64;
-   int ret;
+   //int ret;
 
    surf->width = width;
    surf->height = height;
@@ -249,9 +250,37 @@ intel_get_name( struct pipe_winsys *winsys )
    return "Intel/DRI/ttm";
 }
 
+static void
+intel_fence_reference( struct pipe_winsys *sws,
+                       struct pipe_fence_handle **ptr,
+                       struct pipe_fence_handle *fence )
+{
+   if (*ptr)
+      driFenceUnReference((struct _DriFenceObject **)ptr);
+
+   if (fence)
+      *ptr = (struct pipe_fence_handle *)driFenceReference((struct _DriFenceObject *)fence);
+}
+
+static int
+intel_fence_signalled( struct pipe_winsys *sws,
+                       struct pipe_fence_handle *fence,
+                       unsigned flag )
+{
+   return driFenceSignaled((struct _DriFenceObject *)fence, flag);
+}
+
+static int
+intel_fence_finish( struct pipe_winsys *sws,
+                    struct pipe_fence_handle *fence,
+                    unsigned flag )
+{
+   /* JB: Lets allways lazy wait */
+   return driFenceFinish((struct _DriFenceObject *)fence, flag, 1);
+}
 
 struct pipe_winsys *
-intel_create_pipe_winsys( int fd )
+intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
 {
    struct intel_pipe_winsys *iws = CALLOC_STRUCT( intel_pipe_winsys );
    
@@ -273,8 +302,20 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.surface_alloc_storage = intel_i915_surface_alloc_storage;
    iws->winsys.surface_release = intel_i915_surface_release;
 
+   iws->winsys.fence_reference = intel_fence_reference;
+   iws->winsys.fence_signalled = intel_fence_signalled;
+   iws->winsys.fence_finish = intel_fence_finish;
+
    if (fd)
-      iws->regionPool = driDRMPoolInit(fd);
+      iws->regionPool = driSlabPoolInit(fd,
+			DRM_BO_FLAG_READ |
+			DRM_BO_FLAG_WRITE |
+			DRM_BO_FLAG_MEM_TT,
+			DRM_BO_FLAG_READ |
+			DRM_BO_FLAG_WRITE |
+			DRM_BO_FLAG_MEM_TT,
+			64, 6, 16, 4096, 0,
+			fMan);
 
    return &iws->winsys;
 }

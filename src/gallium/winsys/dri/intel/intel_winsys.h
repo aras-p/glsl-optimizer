@@ -37,7 +37,7 @@ struct pipe_buffer;
 struct _DriBufferObject;
 
 struct pipe_winsys *
-intel_create_pipe_winsys( int fd );
+intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan );
 
 void
 intel_destroy_pipe_winsys( struct pipe_winsys *winsys );

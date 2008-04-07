@@ -19,11 +19,14 @@ DRIVER_SOURCES = \
 	intel_context.c \
 	intel_lock.c \
 	intel_screen.c \
-	intel_batchpool.c
+	ws_dri_bufmgr.c \
+	ws_dri_drmpool.c \
+	ws_dri_fencemgr.c \
+	ws_dri_mallocpool.c \
+	ws_dri_slabpool.c
 
 C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \
-	$(COMMON_BM_SOURCES) \
 	$(DRIVER_SOURCES)
 
 ASM_SOURCES = 

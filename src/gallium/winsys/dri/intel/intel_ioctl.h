@@ -25,13 +25,16 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_BATCHPOOL_H
-#define INTEL_BATCHPOOL_H
+#ifndef INTEL_IOCTL_H
+#define INTEL_IOCTL_H
 
-extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
-                                               unsigned long bufSize,
-                                               unsigned numBufs,
-                                               unsigned checkDelayed);
+#include "intel_context.h"
 
+void intelWaitIrq(struct intel_context *intel, int seq);
+int intelEmitIrqLocked(struct intel_context *intel);
 
-#endif /* INTEL_BATCHPOOL_H */
+void intel_batch_ioctl(struct intel_context *intel,
+                       GLuint start_offset,
+                       GLuint used,
+                       GLboolean ignore_cliprects, GLboolean allow_unlock);
+#endif

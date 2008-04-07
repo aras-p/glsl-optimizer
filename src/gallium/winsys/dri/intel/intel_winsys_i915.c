@@ -31,8 +31,8 @@
 
 #include <stdlib.h>
 #include <xf86drm.h>
-#include "dri_bufpool.h"
-#include "dri_bufmgr.h"
+#include "ws_dri_bufpool.h"
+#include "ws_dri_bufmgr.h"
 
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
@@ -106,10 +106,18 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
       mask |= DRM_BO_FLAG_READ;
    }
 
-   intel_batchbuffer_emit_reloc( intel->batch, 
+#if 0 /* JB old */
+   intel_batchbuffer_emit_reloc( intel->batch,
 				 dri_bo( buf ),
-				 flags, mask, 
+				 flags, mask,
 				 delta );
+#else /* new */
+   intel_offset_relocation( intel->batch,
+				delta,
+				dri_bo( buf ),
+				flags,
+				mask );
+#endif
 }
 
 
@@ -126,8 +134,18 @@ static void intel_i915_batch_flush( struct i915_winsys *sws,
 
    fu.dri = intel_batchbuffer_flush( intel->batch );
 
-   if (fu.dri)
-      iws->pws->fence_reference(iws->pws, fence, fu.pipe);
+   if (!fu.dri && fence) {
+      *fence = NULL;
+      return;
+   }
+
+   if (fu.dri) {
+      if (fence)
+	 *fence = fu.pipe;
+      else
+	 iws->pws->fence_reference(iws->pws, &fu.dri, NULL);
+   }
+
 
 //   if (0) intel_i915_batch_wait_idle( sws );
 }
