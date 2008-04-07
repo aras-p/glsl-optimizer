@@ -1402,7 +1402,6 @@ dump_gen(
 
    CHR( '\n' );
    ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES_SHORT );
-   CHR( ' ' );
    UID( parse.FullVersion.Version.MajorVersion );
    CHR( '.' );
    UID( parse.FullVersion.Version.MinorVersion );
