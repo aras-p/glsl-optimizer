@@ -287,16 +287,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
    if (prog->String)
       _mesa_free(prog->String);
 
-   if (prog->Instructions) {
-      GLuint i;
-      for (i = 0; i < prog->NumInstructions; i++) {
-         if (prog->Instructions[i].Data)
-            _mesa_free(prog->Instructions[i].Data);
-         if (prog->Instructions[i].Comment)
-            _mesa_free((char *) prog->Instructions[i].Comment);
-      }
-      _mesa_free(prog->Instructions);
-   }
+   _mesa_free_instructions(prog->Instructions, prog->NumInstructions);
 
    if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
@@ -414,6 +405,55 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    return clone;
 }
 
+
+/**
+ * Insert 'count' NOP instructions at 'start' in the given program.
+ * Adjust branch targets accordingly.
+ */
+GLboolean
+_mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count)
+{
+   const GLuint origLen = prog->NumInstructions;
+   const GLuint newLen = origLen + count;
+   struct prog_instruction *newInst;
+   GLuint i;
+
+   /* adjust branches */
+   for (i = 0; i < prog->NumInstructions; i++) {
+      struct prog_instruction *inst = prog->Instructions + i;
+      if (inst->BranchTarget > 0) {
+         if (inst->BranchTarget >= start) {
+            inst->BranchTarget += count;
+         }
+      }
+   }
+
+   /* Alloc storage for new instructions */
+   newInst = _mesa_alloc_instructions(newLen);
+   if (!newInst) {
+      return GL_FALSE;
+   }
+
+   /* Copy 'start' instructions into new instruction buffer */
+   _mesa_copy_instructions(newInst, prog->Instructions, start);
+
+   /* init the new instructions */
+   _mesa_init_instructions(newInst + start, count);
+
+   /* Copy the remaining/tail instructions to new inst buffer */
+   _mesa_copy_instructions(newInst + start + count,
+                           prog->Instructions + start,
+                           origLen - start);
+
+   /* free old instructions */
+   _mesa_free_instructions(prog->Instructions, origLen);
+
+   /* install new instructions */
+   prog->Instructions = newInst;
+   prog->NumInstructions = newLen;
+
+   return GL_TRUE;
+}
 
 
 /**

@@ -87,6 +87,8 @@ _mesa_lookup_program(GLcontext *ctx, GLuint id);
 extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
 
+extern  GLboolean
+_mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count);
 
 extern struct gl_program *
 _mesa_combine_programs(GLcontext *ctx,
