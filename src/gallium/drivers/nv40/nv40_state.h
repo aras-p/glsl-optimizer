@@ -29,6 +29,9 @@ struct nv40_vertex_program {
 	struct draw_vertex_shader *draw;
 
 	boolean translated;
+
+	struct pipe_clip_state ucp;
+
 	struct nv40_vertex_program_exec *insns;
 	unsigned nr_insns;
 	struct nv40_vertex_program_data *consts;

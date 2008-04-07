@@ -76,9 +76,6 @@ enum nv40_state_index {
 #define NV40_NEW_ARRAYS		(1 << 11)
 #define NV40_NEW_UCP		(1 << 12)
 
-#define NV40_FALLBACK_TNL (1 << 0)
-#define NV40_FALLBACK_RAST (1 << 1)
-
 struct nv40_rasterizer_state {
 	struct pipe_rasterizer_state pipe;
 	struct nouveau_stateobj *so;
@@ -203,7 +200,6 @@ extern void nv40_fragtex_bind(struct nv40_context *);
 extern boolean nv40_state_validate(struct nv40_context *nv40);
 extern boolean nv40_state_validate_swtnl(struct nv40_context *nv40);
 extern void nv40_state_emit(struct nv40_context *nv40);
-extern struct nv40_state_entry nv40_state_clip;
 extern struct nv40_state_entry nv40_state_rasterizer;
 extern struct nv40_state_entry nv40_state_scissor;
 extern struct nv40_state_entry nv40_state_stipple;

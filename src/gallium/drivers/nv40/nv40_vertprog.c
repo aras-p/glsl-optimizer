@@ -52,6 +52,8 @@ struct nv40_vpc {
 
 	struct nv40_sreg *imm;
 	unsigned nr_imm;
+
+	unsigned hpos_idx;
 };
 
 static struct nv40_sreg
@@ -423,11 +425,6 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 	int ai = -1, ci = -1, ii = -1;
 	int i;
 
-	struct {
-		struct nv40_sreg dst;
-		unsigned m;
-	} clip;
-
 	if (finst->Instruction.Opcode == TGSI_OPCODE_END)
 		return TRUE;
 
@@ -500,47 +497,6 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 
 	dst  = tgsi_dst(vpc, &finst->FullDstRegisters[0]);
 	mask = tgsi_mask(finst->FullDstRegisters[0].DstRegister.WriteMask);
-
-	/* If writing to clip distance regs, need to modify instruction to
-	 * change which component is written to.  On NV40 the clip regs
-	 * are the unused components (yzw) of FOGC/PSZ.
-	 */
-	clip.dst = none;
-	if (dst.type == NV40SR_OUTPUT &&
-	    dst.index >= NV40_VP_INST_DEST_CLIP(0) &&
-	    dst.index <= NV40_VP_INST_DEST_CLIP(5)) {
-		unsigned n = dst.index - NV40_VP_INST_DEST_CLIP(0);
-		unsigned m[] =
-			{ MASK_Y, MASK_Z, MASK_W, MASK_Y, MASK_Z, MASK_W };
-
-		/* Some instructions we can get away with swizzling and/or
-		 * changing the writemask.  Others, we'll use a temp reg.
-		 */
-		switch (finst->Instruction.Opcode) {
-		case TGSI_OPCODE_DST:
-		case TGSI_OPCODE_EXP:
-		case TGSI_OPCODE_LIT:
-		case TGSI_OPCODE_LOG:
-		case TGSI_OPCODE_XPD:
-			clip.dst = dst;
-			clip.m = m[n];
-			dst = temp(vpc);
-			break;
-		case TGSI_OPCODE_DP3:
-		case TGSI_OPCODE_DP4:
-		case TGSI_OPCODE_DPH:
-		case TGSI_OPCODE_POW:
-		case TGSI_OPCODE_RCP:
-		case TGSI_OPCODE_RSQ:
-			mask = m[n];
-			break;
-		default:
-			for (i = 0; i < finst->Instruction.NumSrcRegs; i++)
-				src[i] = swz(src[i], X, X, X, X);
-			mask = m[n];
-			break;
-		}
-	}
 
 	switch (finst->Instruction.Opcode) {
 	case TGSI_OPCODE_ABS:
@@ -639,11 +595,6 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 		return FALSE;
 	}
 
-	if (clip.dst.type != NV40SR_NONE) {
-		arith(vpc, 0, OP_MOV, clip.dst, clip.m,
-		      swz(dst, X, X, X, X), none, none);
-	}
-
 	release_temps(vpc);
 	return TRUE;
 }
@@ -658,6 +609,7 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 	switch (fdec->Semantic.SemanticName) {
 	case TGSI_SEMANTIC_POSITION:
 		hw = NV40_VP_INST_DEST_POS;
+		vpc->hpos_idx = idx;
 		break;
 	case TGSI_SEMANTIC_COLOR:
 		if (fdec->Semantic.SemanticIndex == 0) {
@@ -695,15 +647,6 @@ nv40_vertprog_parse_decl_output(struct nv40_vpc *vpc,
 			return FALSE;
 		}
 		break;
-#if 0
-	case TGSI_SEMANTIC_CLIP:
-		if (fdec->Semantic.SemanticIndex >= 6) {
-			NOUVEAU_ERR("bad clip distance index\n");
-			return FALSE;
-		}
-		hw = NV40_VP_INST_DEST_CLIP(fdec->Semantic.SemanticIndex);
-		break;
-#endif
 	default:
 		NOUVEAU_ERR("bad output semantic\n");
 		return FALSE;
@@ -748,6 +691,10 @@ nv40_vertprog_prepare(struct nv40_vpc *vpc)
 				}
 				break;
 #endif
+			case TGSI_FILE_OUTPUT:
+				if (!nv40_vertprog_parse_decl_output(vpc, fdec))
+					return FALSE;
+				break;
 			default:
 				break;
 			}
@@ -803,6 +750,8 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 {
 	struct tgsi_parse_context parse;
 	struct nv40_vpc *vpc = NULL;
+	struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
+	int i;
 
 	vpc = CALLOC(1, sizeof(struct nv40_vpc));
 	if (!vpc)
@@ -814,26 +763,21 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 		return;
 	}
 
+	/* Redirect post-transform vertex position to a temp if user clip
+	 * planes are enabled.  We need to append code the the vtxprog
+	 * to handle clip planes later.
+	 */
+	if (vp->ucp.nr)  {
+		vpc->r_result[vpc->hpos_idx] = temp(vpc);
+		vpc->r_temps_discard = 0;
+	}
+
 	tgsi_parse_init(&parse, vp->pipe.tokens);
 
 	while (!tgsi_parse_end_of_tokens(&parse)) {
 		tgsi_parse_token(&parse);
 
 		switch (parse.FullToken.Token.Type) {
-		case TGSI_TOKEN_TYPE_DECLARATION:
-		{
-			const struct tgsi_full_declaration *fdec;
-			fdec = &parse.FullToken.FullDeclaration;
-			switch (fdec->Declaration.File) {
-			case TGSI_FILE_OUTPUT:
-				if (!nv40_vertprog_parse_decl_output(vpc, fdec))
-					goto out_err;
-				break;
-			default:
-				break;
-			}
-		}
-			break;
 		case TGSI_TOKEN_TYPE_IMMEDIATE:
 		{
 			const struct tgsi_full_immediate *imm;
@@ -862,6 +806,39 @@ nv40_vertprog_translate(struct nv40_context *nv40,
 		}
 	}
 
+	/* Write out HPOS if it was redirected to a temp earlier */
+	if (vpc->r_result[vpc->hpos_idx].type != NV40SR_OUTPUT) {
+		struct nv40_sreg hpos = nv40_sr(NV40SR_OUTPUT,
+						NV40_VP_INST_DEST_POS);
+		struct nv40_sreg htmp = vpc->r_result[vpc->hpos_idx];
+
+		arith(vpc, 0, OP_MOV, hpos, MASK_ALL, htmp, none, none);
+	}
+
+	/* Insert code to handle user clip planes */
+	for (i = 0; i < vp->ucp.nr; i++) {
+		struct nv40_sreg cdst = nv40_sr(NV40SR_OUTPUT,
+						NV40_VP_INST_DEST_CLIP(i));
+		struct nv40_sreg ceqn = constant(vpc, -1,
+						 nv40->clip.ucp[i][0],
+						 nv40->clip.ucp[i][1],
+						 nv40->clip.ucp[i][2],
+						 nv40->clip.ucp[i][3]);
+		struct nv40_sreg htmp = vpc->r_result[vpc->hpos_idx];
+		unsigned mask;
+
+		switch (i) {
+		case 0: case 3: mask = MASK_Y; break;
+		case 1: case 4: mask = MASK_Z; break;
+		case 2: case 5: mask = MASK_W; break;
+		default:
+			NOUVEAU_ERR("invalid clip dist #%d\n", i);
+			goto out_err;
+		}
+
+		arith(vpc, 0, OP_DP4, cdst, mask, htmp, ceqn, none);
+	}
+
 	vp->insns[vp->nr_insns - 1].data[3] |= NV40_VP_INST_LAST;
 	vp->translated = TRUE;
 out_err:
@@ -883,6 +860,12 @@ nv40_vertprog_validate(struct nv40_context *nv40)
 	if (nv40->render_mode == HW) {
 		vp = nv40->vertprog;
 		constbuf = nv40->constbuf[PIPE_SHADER_VERTEX];
+
+		if ((nv40->dirty & NV40_NEW_UCP) ||
+		    memcmp(&nv40->clip, &vp->ucp, sizeof(vp->ucp))) {
+			nv40_vertprog_destroy(nv40, vp);
+			memcpy(&vp->ucp, &nv40->clip, sizeof(vp->ucp));
+		}
 	} else {
 		vp = nv40->swtnl.vertprog;
 		constbuf = NULL;
@@ -1045,16 +1028,36 @@ check_gpu_resources:
 void
 nv40_vertprog_destroy(struct nv40_context *nv40, struct nv40_vertex_program *vp)
 {
-	if (vp->nr_consts)
-		FREE(vp->consts);
-	if (vp->nr_insns)
+	struct nouveau_winsys *nvws = nv40->screen->nvws;
+
+	vp->translated = FALSE;
+
+	if (vp->nr_insns) {
 		FREE(vp->insns);
+		vp->insns = NULL;
+		vp->nr_insns = 0;
+	}
+
+	if (vp->nr_consts) {
+		FREE(vp->consts);
+		vp->consts = NULL;
+		vp->nr_consts = 0;
+	}
+
+	nvws->res_free(&vp->exec);
+	vp->exec_start = 0;
+	nvws->res_free(&vp->data);
+	vp->data_start = 0;
+	vp->data_start_min = 0;
+
+	vp->ir = vp->or = vp->clip_ctrl = 0;
+	so_ref(NULL, &vp->so);
 }
 
 struct nv40_state_entry nv40_state_vertprog = {
 	.validate = nv40_vertprog_validate,
 	.dirty = {
-		.pipe = NV40_NEW_VERTPROG,
+		.pipe = NV40_NEW_VERTPROG | NV40_NEW_UCP,
 		.hw = NV40_STATE_VERTPROG,
 	}
 };

@@ -5,7 +5,6 @@
 static struct nv40_state_entry *render_states[] = {
 	&nv40_state_framebuffer,
 	&nv40_state_rasterizer,
-	&nv40_state_clip,
 	&nv40_state_scissor,
 	&nv40_state_stipple,
 	&nv40_state_fragprog,
@@ -22,7 +21,6 @@ static struct nv40_state_entry *render_states[] = {
 static struct nv40_state_entry *swtnl_states[] = {
 	&nv40_state_framebuffer,
 	&nv40_state_rasterizer,
-	&nv40_state_clip,
 	&nv40_state_scissor,
 	&nv40_state_stipple,
 	&nv40_state_fragprog,
@@ -127,8 +125,7 @@ nv40_state_validate(struct nv40_context *nv40)
 		nv40->pipe.flush(&nv40->pipe, 0, NULL);
 		nv40->dirty |= (NV40_NEW_VIEWPORT |
 				NV40_NEW_VERTPROG |
-				NV40_NEW_ARRAYS |
-				NV40_NEW_UCP);
+				NV40_NEW_ARRAYS);
 		nv40->render_mode = HW;
 	}
 
@@ -153,8 +150,7 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 		nv40->pipe.flush(&nv40->pipe, 0, NULL);
 		nv40->dirty |= (NV40_NEW_VIEWPORT |
 				NV40_NEW_VERTPROG |
-				NV40_NEW_ARRAYS |
-				NV40_NEW_UCP);
+				NV40_NEW_ARRAYS);
 		nv40->render_mode = SWTNL;
 	}
 
