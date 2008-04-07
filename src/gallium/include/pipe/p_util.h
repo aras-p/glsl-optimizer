@@ -207,7 +207,10 @@ mem_dup(const void *src, uint size)
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
 
+/* JB stop warnings */
+#ifndef Elements
 #define Elements(x) (sizeof(x)/sizeof((x)[0]))
+#endif
 #define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
 
 /**
