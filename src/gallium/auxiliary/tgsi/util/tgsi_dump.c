@@ -746,17 +746,19 @@ dump_declaration_short(
       }
    }
 
-   if( decl->Declaration.Interpolate ) {
-      TXT( ", " );
-      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
-   }
-
-   if( decl->Declaration.Semantic ) {
+   if (decl->Declaration.Semantic) {
       TXT( ", " );
       ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS_SHORT );
-      CHR( '[' );
-      UID( decl->Semantic.SemanticIndex );
-      CHR( ']' );
+      if (decl->Semantic.SemanticIndex != 0) {
+         CHR( '[' );
+         UID( decl->Semantic.SemanticIndex );
+         CHR( ']' );
+      }
+   }
+
+   if (decl->Declaration.Interpolate) {
+      TXT( ", " );
+      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
    }
 }
 
