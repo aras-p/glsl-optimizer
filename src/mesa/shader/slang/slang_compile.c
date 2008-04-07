@@ -31,6 +31,8 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "shader/program.h"
+#include "shader/programopt.h"
+#include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
 #include "shader/grammar/grammar_mesa.h"
 #include "slang_codegen.h"
@@ -2185,6 +2187,19 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    _slang_delete_mempool((slang_mempool *) ctx->Shader.MemPool);
    ctx->Shader.MemPool = NULL;
+
+   if (shader->Type == GL_VERTEX_SHADER) {
+      /* remove any reads of varying (output) registers */
+#if 0
+      printf("Pre-remove output reads:\n");
+      _mesa_print_program(shader->Programs[0]);
+#endif
+      _mesa_remove_varying_reads(shader->Programs[0]);
+#if 0
+      printf("Post-remove output reads:\n");
+      _mesa_print_program(shader->Programs[0]);
+#endif
+   }
 
    return success;
 }
