@@ -27,6 +27,7 @@ C_SOURCES = \
 	sp_quad_stencil.c \
 	sp_quad_stipple.c \
 	sp_screen.c \
+        sp_setup.c \
 	sp_state_blend.c \
 	sp_state_clip.c \
 	sp_state_derived.c \

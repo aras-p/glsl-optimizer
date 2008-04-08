@@ -212,12 +212,6 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       case EMIT_1F:
          feme->fetch[i].emit = emit_R32_FLOAT;
          break;
-      case EMIT_HEADER:
-         feme->fetch[i].ptr = (const ubyte *)&zero;
-         feme->fetch[i].pitch = 0;
-         feme->fetch[i].fetch = fetch_R32_FLOAT;
-         feme->fetch[i].emit = emit_R32_FLOAT;
-         break;
       case EMIT_1F_PSIZE:
          feme->fetch[i].ptr = (const ubyte *)&feme->draw->rasterizer->point_size;
          feme->fetch[i].pitch = 0;

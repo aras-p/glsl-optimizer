@@ -47,8 +47,6 @@
  */
 enum attrib_emit {
    EMIT_OMIT,      /**< don't emit the attribute */
-   EMIT_ALL,       /**< emit whole post-xform vertex, w/ header */
-   EMIT_HEADER,    /**< emit vertex_header struct (XXX temp?) */
    EMIT_1F,
    EMIT_1F_PSIZE,  /**< insert constant point size */
    EMIT_2F,

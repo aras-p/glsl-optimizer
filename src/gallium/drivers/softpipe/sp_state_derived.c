@@ -71,25 +71,16 @@ softpipe_get_vertex_info(struct softpipe_context *softpipe)
           * simply emit the whole post-xform vertex as-is:
           */
          struct vertex_info *vinfo_vbuf = &softpipe->vertex_info_vbuf;
-#if 0
-         vinfo_vbuf->num_attribs = 0;
-         /* special-case to allow memcpy of whole vertex */
-         draw_emit_vertex_attr(vinfo_vbuf, EMIT_ALL, INTERP_NONE, 0);
-         /* size in dwords or floats */
-         vinfo_vbuf->size = 4 * draw_num_vs_outputs(softpipe->draw)
-                          + sizeof(struct vertex_header) / 4;
-#else
-         /* for pass-through mode, we need a more explicit list of attribs */
          const uint num = draw_num_vs_outputs(softpipe->draw);
          uint i;
 
+         /* No longer any need to try and emit draw vertex_header info.
+          */
          vinfo_vbuf->num_attribs = 0;
-         draw_emit_vertex_attr(vinfo_vbuf, EMIT_HEADER, INTERP_NONE, 0);
          for (i = 0; i < num; i++) {
             draw_emit_vertex_attr(vinfo_vbuf, EMIT_4F, INTERP_PERSPECTIVE, i);
          }
          draw_compute_vertex_size(vinfo_vbuf);
-#endif
       }
 
       /*

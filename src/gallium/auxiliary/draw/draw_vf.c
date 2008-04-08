@@ -205,7 +205,7 @@ void draw_vf_set_vertex_info( struct draw_vertex_fetch *vf,
                               const struct vertex_info *vinfo,
                               float point_size )
 {
-   unsigned i, j, k;
+   unsigned i, j;
    struct draw_vf_attr *a = vf->attr;
    struct draw_vf_attr_map attrs[PIPE_MAX_SHADER_INPUTS];
    unsigned count = 0;  /* for debug/sanity */
@@ -216,60 +216,6 @@ void draw_vf_set_vertex_info( struct draw_vertex_fetch *vf,
       switch (vinfo->emit[i]) {
       case EMIT_OMIT:
          /* no-op */
-         break;
-      case EMIT_ALL: {
-         /* just copy the whole vertex as-is to the vbuf */
-	 unsigned s = vinfo->size;
-         assert(i == 0);
-         assert(j == 0);
-         /* copy the vertex header */
-         /* XXX: we actually don't copy the header, just pad it */
-	 attrs[nr_attrs].attrib = 0;
-	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
-	 attrs[nr_attrs].offset = offsetof(struct vertex_header, data);
-	 s -= offsetof(struct vertex_header, data)/4;
-         count += offsetof(struct vertex_header, data)/4;
-	 nr_attrs++;
-	 /* copy the vertex data */
-         for(k = 0; k < (s & ~0x3); k += 4) {
-      	    attrs[nr_attrs].attrib = k/4;
-      	    attrs[nr_attrs].format = DRAW_EMIT_4F;
-      	    attrs[nr_attrs].offset = 0;
-      	    nr_attrs++;
-            count += 4;
-         }
-         /* tail */
-         /* XXX: actually, this shouldn't be needed */
- 	 attrs[nr_attrs].attrib = k/4;
-  	 attrs[nr_attrs].offset = 0;
-         switch(s & 0x3) {
-         case 0:
-            break;
-         case 1:
-      	    attrs[nr_attrs].format = DRAW_EMIT_1F;
-      	    nr_attrs++;
-            count += 1;
-            break;
-         case 2:
-      	    attrs[nr_attrs].format = DRAW_EMIT_2F;
-      	    nr_attrs++;
-            count += 2;
-            break;
-         case 3:
-      	    attrs[nr_attrs].format = DRAW_EMIT_3F;
-      	    nr_attrs++;
-            count += 3;
-            break;
-         }
-         break;
-      }
-      case EMIT_HEADER:
-         /* XXX emit new DRAW_EMIT_HEADER attribute??? */
-	 attrs[nr_attrs].attrib = 0;
-	 attrs[nr_attrs].format = DRAW_EMIT_PAD;
-	 attrs[nr_attrs].offset = offsetof(struct vertex_header, data);
-         count += offsetof(struct vertex_header, data)/4;
-	 nr_attrs++;
          break;
       case EMIT_1F:
 	 attrs[nr_attrs].attrib = j;

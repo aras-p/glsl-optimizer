@@ -126,13 +126,6 @@ dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
       case EMIT_OMIT:
          debug_printf("EMIT_OMIT:");
          break;
-      case EMIT_ALL:
-         assert(i == 0);
-         assert(j == 0);
-         debug_printf("EMIT_ALL:\t");
-         for(k = 0; k < vinfo->size*4; ++k)
-            debug_printf("%02x ", *data++);
-         break;
       case EMIT_1F:
          debug_printf("EMIT_1F:\t");
          debug_printf("%f ", *(float *)data); data += sizeof(float);
@@ -216,19 +209,6 @@ emit_vertex( struct vbuf_stage *vbuf,
          switch (vinfo->emit[i]) {
          case EMIT_OMIT:
             /* no-op */
-            break;
-         case EMIT_ALL:
-            /* just copy the whole vertex as-is to the vbuf */
-            assert(i == 0);
-            assert(j == 0);
-            memcpy(vbuf->vertex_ptr, vertex, vinfo->size * 4);
-            vbuf->vertex_ptr += vinfo->size;
-            count += vinfo->size;
-            break;
-         case EMIT_HEADER:
-            memcpy(vbuf->vertex_ptr, vertex, sizeof(*vertex));
-            *vbuf->vertex_ptr += sizeof(*vertex) / 4;
-            count += sizeof(*vertex) / 4;
             break;
          case EMIT_1F:
             *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
