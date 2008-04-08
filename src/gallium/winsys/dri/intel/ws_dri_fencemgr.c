@@ -23,6 +23,7 @@ struct _DriFenceMgr {
     _glthread_Mutex mutex;
     int refCount;
     drmMMListHead *heads;
+    int num_fences;
 };
 
 struct _DriFenceObject {
@@ -68,6 +69,7 @@ driFenceMgrCreate(const struct _DriFenceMgrCreateInfo *info)
   _glthread_LOCK_MUTEX(tmp->mutex);
   tmp->refCount = 1;
   tmp->info = *info;
+  tmp->num_fences = 0;
   tmp->heads = calloc(tmp->info.num_classes, sizeof(*tmp->heads));
   if (!tmp->heads)
       goto out_err;
@@ -114,9 +116,11 @@ driFenceUnReferenceLocked(struct _DriFenceObject **pFence)
 	DRMLISTDELINIT(&fence->head);
 	if (fence->private)
 	    mgr->info.unreference(mgr, &fence->private);
+    --mgr->num_fences;
 	fence->mgr = NULL;
 	--mgr->refCount;
 	free(fence);
+
     }
 }
 
@@ -297,6 +301,7 @@ struct _DriFenceObject
     DRMLISTADDTAIL(&fence->head, &mgr->heads[fence_class]);
     fence->mgr = mgr;
     ++mgr->refCount;
+    ++mgr->num_fences;
     _glthread_UNLOCK_MUTEX(mgr->mutex);
     fence->fence_class = fence_class;
     fence->fence_type = fence_type;
