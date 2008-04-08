@@ -97,6 +97,7 @@ _fenced_buffer_add(struct fenced_buffer *fenced_buf)
 {
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
+   assert(fenced_buf->base.base.refcount);
    assert(fenced_buf->fence);
    assert(!fenced_buf->head.prev);
    assert(!fenced_buf->head.next);
@@ -128,7 +129,6 @@ _fenced_buffer_remove(struct fenced_buffer *fenced_buf)
 
    assert(fenced_buf->fence);
    
-   assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
    winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
    
    assert(fenced_buf->head.prev);
@@ -174,6 +174,9 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
 	    break;
 	 prev_fence = fenced_buf->fence;
       }
+      else {
+	 assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
+      }
 
       _fenced_buffer_remove(fenced_buf);
 
@@ -199,6 +202,7 @@ fenced_buffer_destroy(struct pb_buffer *buf)
 	 prev = curr->prev;
 	 do {
 	    fenced_buf = LIST_ENTRY(struct fenced_buffer, curr, head);
+	    assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
 	    _fenced_buffer_remove(fenced_buf);
 	    curr = prev;
 	    prev = curr->prev;
