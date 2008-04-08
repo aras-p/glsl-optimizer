@@ -786,14 +786,16 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 							     & driver_configs,
 							     psc);
 
-				    psc->configs =
-					driConvertConfigs(psc->core,
-							  psc->configs,
-							  driver_configs);
-				    psc->visuals =
-					driConvertConfigs(psc->core,
-							  psc->visuals,
-							  driver_configs);
+				    if (psp) {
+					psc->configs =
+					    driConvertConfigs(psc->core,
+							      psc->configs,
+							      driver_configs);
+					psc->visuals =
+					    driConvertConfigs(psc->core,
+							      psc->visuals,
+							      driver_configs);
+				    }
 				}
 			    }
 			}
