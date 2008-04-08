@@ -113,10 +113,10 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
 				 delta );
 #else /* new */
    intel_offset_relocation( intel->batch,
-				delta,
-				dri_bo( buf ),
-				flags,
-				mask );
+			    delta,
+			    dri_bo( buf ),
+			    flags,
+			    mask );
 #endif
 }
 
@@ -132,9 +132,13 @@ static void intel_i915_batch_flush( struct i915_winsys *sws,
       struct pipe_fence_handle *pipe;
    } fu;
 
+   if (fence)
+      assert(!*fence);
+
    fu.dri = intel_batchbuffer_flush( intel->batch );
 
-   if (!fu.dri && fence) {
+   if (!fu.dri) {
+      assert(0);
       *fence = NULL;
       return;
    }
@@ -143,11 +147,9 @@ static void intel_i915_batch_flush( struct i915_winsys *sws,
       if (fence)
 	 *fence = fu.pipe;
       else
-	 iws->pws->fence_reference(iws->pws, &fu.dri, NULL);
+         driFenceUnReference(&fu.dri);
    }
 
-
-//   if (0) intel_i915_batch_wait_idle( sws );
 }
 
 

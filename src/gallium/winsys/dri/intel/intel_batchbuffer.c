@@ -386,8 +386,10 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    GLboolean was_locked = intel->locked;
    struct _DriFenceObject *fence;
 
-   if (used == 0)
+   if (used == 0) {
+      driFenceReference(batch->last_fence);
       return batch->last_fence;
+   }
 
    /* Add the MI_BATCH_BUFFER_END.  Always add an MI_FLUSH - this is a
     * performance drain that we would like to avoid.
