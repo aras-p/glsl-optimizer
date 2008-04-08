@@ -124,7 +124,6 @@ struct softpipe_context {
       struct quad_stage *depth_test;
       struct quad_stage *occlusion;
       struct quad_stage *coverage;
-      struct quad_stage *bufloop;
       struct quad_stage *blend;
       struct quad_stage *colormask;
       struct quad_stage *output;
