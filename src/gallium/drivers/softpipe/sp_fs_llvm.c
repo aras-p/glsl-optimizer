@@ -99,19 +99,19 @@ shade_quad_llvm(struct quad_stage *qs,
       allvmrt(qss->stage.softpipe->fs->info.output_semantic_name[qss->colorOutSlot]
              == TGSI_SEMANTIC_COLOR);
       for (i = 0; i < QUAD_SIZE; ++i) {
-         quad->outputs.color[0][i] = dests[i][qss->colorOutSlot][0];
-         quad->outputs.color[1][i] = dests[i][qss->colorOutSlot][1];
-         quad->outputs.color[2][i] = dests[i][qss->colorOutSlot][2];
-         quad->outputs.color[3][i] = dests[i][qss->colorOutSlot][3];
+         quad->outputs.color[0][0][i] = dests[i][qss->colorOutSlot][0];
+         quad->outputs.color[0][1][i] = dests[i][qss->colorOutSlot][1];
+         quad->outputs.color[0][2][i] = dests[i][qss->colorOutSlot][2];
+         quad->outputs.color[0][3][i] = dests[i][qss->colorOutSlot][3];
       }
    }
 #if DLLVM
    for (int i = 0; i < QUAD_SIZE; ++i) {
       debug_printf("QLLVM%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
-             quad->outputs.color[0][i],
-             quad->outputs.color[1][i],
-             quad->outputs.color[2][i],
-             quad->outputs.color[3][i]);
+             quad->outputs.color[0][0][i],
+             quad->outputs.color[0][1][i],
+             quad->outputs.color[0][2][i],
+             quad->outputs.color[0][3][i]);
    }
 #endif
 

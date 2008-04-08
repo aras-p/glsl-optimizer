@@ -13,7 +13,7 @@ static void
 cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   float tmp[4][QUAD_SIZE];
+   float tmp[PIPE_MAX_COLOR_BUFS][4][QUAD_SIZE];
    unsigned i;
 
    assert(sizeof(quad->outputs.color) == sizeof(tmp));
@@ -30,7 +30,9 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       /* set current cbuffer */
+#if 0 /* obsolete & going away */
       softpipe->current_cbuf = i;
+#endif
 
       /* pass blended quad to next stage */
       qs->next->run(qs->next, quad);

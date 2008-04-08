@@ -138,8 +138,6 @@ struct softpipe_context {
    struct draw_stage *vbuf;
    struct softpipe_vbuf_render *vbuf_render;
 
-   uint current_cbuf;      /**< current color buffer being written to */
-
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    struct softpipe_tile_cache *zsbuf_cache;
 

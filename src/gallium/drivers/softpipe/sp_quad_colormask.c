@@ -47,38 +47,43 @@ static void
 colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   float dest[4][QUAD_SIZE];
-   struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe,
-                           softpipe->cbuf_cache[softpipe->current_cbuf],
-                           quad->x0, quad->y0);
-   float (*quadColor)[4] = quad->outputs.color;
-   uint i, j;
+   uint cbuf;
 
-   /* get/swizzle dest colors */
-   for (j = 0; j < QUAD_SIZE; j++) {
-      int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
-      int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
-      for (i = 0; i < 4; i++) {
-         dest[i][j] = tile->data.color[y][x][i];
+   /* loop over colorbuffer outputs */
+   for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
+      float dest[4][QUAD_SIZE];
+      struct softpipe_cached_tile *tile
+         = sp_get_cached_tile(softpipe,
+                              softpipe->cbuf_cache[cbuf],
+                              quad->x0, quad->y0);
+      float (*quadColor)[4] = quad->outputs.color[cbuf];
+      uint i, j;
+
+      /* get/swizzle dest colors */
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
+         int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+         for (i = 0; i < 4; i++) {
+            dest[i][j] = tile->data.color[y][x][i];
+         }
       }
+
+      /* R */
+      if (!(softpipe->blend->colormask & PIPE_MASK_R))
+          COPY_4V(quadColor[0], dest[0]);
+
+      /* G */
+      if (!(softpipe->blend->colormask & PIPE_MASK_G))
+          COPY_4V(quadColor[1], dest[1]);
+
+      /* B */
+      if (!(softpipe->blend->colormask & PIPE_MASK_B))
+          COPY_4V(quadColor[2], dest[2]);
+
+      /* A */
+      if (!(softpipe->blend->colormask & PIPE_MASK_A))
+          COPY_4V(quadColor[3], dest[3]);
    }
-
-   /* R */
-   if (!(softpipe->blend->colormask & PIPE_MASK_R))
-       COPY_4V(quadColor[0], dest[0]);
-
-   /* G */
-   if (!(softpipe->blend->colormask & PIPE_MASK_G))
-       COPY_4V(quadColor[1], dest[1]);
-
-   /* B */
-   if (!(softpipe->blend->colormask & PIPE_MASK_B))
-       COPY_4V(quadColor[2], dest[2]);
-
-   /* A */
-   if (!(softpipe->blend->colormask & PIPE_MASK_A))
-       COPY_4V(quadColor[3], dest[3]);
 
    /* pass quad to next stage */
    qs->next->run(qs->next, quad);
