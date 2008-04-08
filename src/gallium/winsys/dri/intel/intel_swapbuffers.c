@@ -180,7 +180,6 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
       if (intel->first_swap_fence)
 	 driFenceUnReference(&intel->first_swap_fence);
       intel->first_swap_fence = intel_batchbuffer_flush(intel->batch);
-      driFenceReference(intel->first_swap_fence);
    }
 
    UNLOCK_HARDWARE(intel);
