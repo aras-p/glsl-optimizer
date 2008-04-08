@@ -520,13 +520,13 @@ static const struct { unsigned int attrib, offset; } attribMap[] = {
 static int
 scalarEqual(__GLcontextModes *mode, unsigned int attrib, unsigned int value)
 {
-    unsigned int driValue;
+    unsigned int glxValue;
     int i;
 
     for (i = 0; i < ARRAY_SIZE(attribMap); i++)
 	if (attribMap[i].attrib == attrib) {
-	    driValue = *(unsigned int *) ((char *) mode + attribMap[i].offset);
-	    return driValue == value;
+	    glxValue = *(unsigned int *) ((char *) mode + attribMap[i].offset);
+	    return glxValue == GLX_DONT_CARE || glxValue == value;
 	}
 
     return GL_TRUE; /* Is a non-existing attribute equal to value? */
@@ -572,7 +572,8 @@ driConfigEqual(const __DRIcoreExtension *core,
 		glxValue |= GLX_TEXTURE_2D_BIT_EXT;
 	    if (value & __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT)
 		glxValue |= GLX_TEXTURE_RECTANGLE_BIT_EXT;
-	    if (glxValue != modes->bindToTextureTargets)
+	    if (modes->bindToTextureTargets != GLX_DONT_CARE &&
+		glxValue != modes->bindToTextureTargets)
 		return GL_FALSE;
 	    break;	
 

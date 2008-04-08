@@ -415,7 +415,7 @@ _gl_context_modes_create( unsigned count, size_t minimum_size )
       (*next)->bindToTextureRgb = GLX_DONT_CARE;
       (*next)->bindToTextureRgba = GLX_DONT_CARE;
       (*next)->bindToMipmapTexture = GLX_DONT_CARE;
-      (*next)->bindToTextureTargets = 0;
+      (*next)->bindToTextureTargets = GLX_DONT_CARE;
       (*next)->yInverted = GLX_DONT_CARE;
 
       next = & ((*next)->next);
