@@ -53,6 +53,8 @@ _glthread_DECLARE_STATIC_MUTEX(bmMutex);
 _glthread_DECLARE_STATIC_COND(bmCond);
 
 static int kernelReaders = 0;
+static int num_buffers = 0;
+static int num_user_buffers = 0;
 
 static drmBO *drmBOListBuf(void *iterator)
 {
@@ -441,6 +443,10 @@ driBOUnReference(struct _DriBufferObject *buf)
 	 else
 	    buf->pool->destroy(buf->pool, buf->private);
       }
+      if (buf->userBuffer)
+	 num_user_buffers--;
+      else
+	 num_buffers--;
       free(buf);
    } else 
      _glthread_UNLOCK_MUTEX(buf->mutex);
@@ -633,6 +639,7 @@ driGenBuffers(struct _DriBufferPool *pool,
    flags = (flags) ? flags : DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_MEM_VRAM |
       DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE;
 
+   ++num_buffers;
 
    assert(pool);
 
@@ -664,7 +671,9 @@ driGenUserBuffer(struct _DriBufferPool *pool,
 {
    const unsigned alignment = 1, flags = 0, hint = 0;
 
+   --num_buffers; /* JB: is inced in GenBuffes */
    driGenBuffers(pool, name, 1, buffers, alignment, flags, hint);
+   ++num_user_buffers;
 
    (*buffers)->userBuffer = 1;
    (*buffers)->userData = ptr;
