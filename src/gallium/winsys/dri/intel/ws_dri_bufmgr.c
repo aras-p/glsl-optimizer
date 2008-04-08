@@ -431,7 +431,6 @@ driBOUnReference(struct _DriBufferObject *buf)
    if (!buf)
       return;
 
-
    _glthread_LOCK_MUTEX(buf->mutex);
    tmp = --buf->refCount;
    if (!tmp) {

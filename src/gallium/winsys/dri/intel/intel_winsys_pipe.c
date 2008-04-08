@@ -156,7 +156,9 @@ intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
 
    driGenUserBuffer( iws->regionPool, 
-                     "pipe user buffer", &buffer->driBO, ptr, bytes );
+		     "pipe user buffer", &buffer->driBO, ptr, bytes );
+
+   buffer->base.refcount = 1;
 
    return &buffer->base;
 }
