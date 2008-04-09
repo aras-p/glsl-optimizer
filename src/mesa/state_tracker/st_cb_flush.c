@@ -102,23 +102,16 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
 }
 
 
-static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
-                         struct pipe_fence_handle **fence )
-{
-   st_flush_bitmap_cache(st);
-
-   FLUSH_VERTICES(st->ctx, 0);
-
-   flush_front_buffer(st, pipeFlushFlags, fence);
-}
-
-
 /**
  * Called via ctx->Driver.Flush()
  */
 static void st_glFlush(GLcontext *ctx)
 {
-   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   st_flush_bitmap_cache(ctx->st);
+
+   FLUSH_VERTICES(ctx, 0);
+
+   flush_front_buffer(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 }
 
 
