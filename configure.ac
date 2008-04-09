@@ -510,7 +510,7 @@ if test "$mesa_driver" = dri; then
             ;;
         esac
         ;;
-    freebsd*)
+    freebsd* | dragonfly*)
         DEFINES="$DEFINES -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
@@ -810,7 +810,7 @@ linux*)
         ;;
     esac
     ;;
-freebsd*)
+freebsd* | dragonfly*)
     PIC_FLAGS="-fPIC"
     case "$host_cpu" in
     i*86)
