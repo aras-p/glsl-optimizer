@@ -44,25 +44,11 @@
 #include "pipe/p_winsys.h"
 
 
-void st_flush( struct st_context *st, uint pipeFlushFlags,
-               struct pipe_fence_handle **fence )
-{
-   FLUSH_VERTICES(st->ctx, 0);
-
-   st_flush_bitmap_cache(st);
-
-   st->pipe->flush( st->pipe, pipeFlushFlags, fence );
-}
-
-
-static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
-                         struct pipe_fence_handle **fence )
+static void
+flush_front_buffer(struct st_context *st, uint pipeFlushFlags,
+                   struct pipe_fence_handle **fence)
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
-
-   st_flush_bitmap_cache(st);
-
-   FLUSH_VERTICES(st->ctx, 0);
 
    if (!fb)
       return;
@@ -102,6 +88,28 @@ static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
                                            st->pipe->priv );
       st->flags.frontbuffer_dirty = 0;
    }
+}
+
+
+void st_flush( struct st_context *st, uint pipeFlushFlags,
+               struct pipe_fence_handle **fence )
+{
+   FLUSH_VERTICES(st->ctx, 0);
+
+   st_flush_bitmap_cache(st);
+
+   st->pipe->flush( st->pipe, pipeFlushFlags, fence );
+}
+
+
+static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
+                         struct pipe_fence_handle **fence )
+{
+   st_flush_bitmap_cache(st);
+
+   FLUSH_VERTICES(st->ctx, 0);
+
+   flush_front_buffer(st, pipeFlushFlags, fence);
 }
 
 
