@@ -102,6 +102,18 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
 }
 
 
+void st_finish( struct st_context *st )
+{
+   struct pipe_fence_handle *fence = NULL;
+
+   st_flush(st, PIPE_FLUSH_RENDER_CACHE, &fence);
+
+   st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
+   st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);
+}
+
+
+
 /**
  * Called via ctx->Driver.Flush()
  */
@@ -112,17 +124,6 @@ static void st_glFlush(GLcontext *ctx)
    FLUSH_VERTICES(ctx, 0);
 
    flush_front_buffer(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-}
-
-
-void st_finish( struct st_context *st )
-{
-   struct pipe_fence_handle *fence = NULL;
-
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE, &fence);
-
-   st->pipe->winsys->fence_finish(st->pipe->winsys, fence, 0);
-   st->pipe->winsys->fence_reference(st->pipe->winsys, &fence, NULL);
 }
 
 
