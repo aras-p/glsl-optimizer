@@ -83,6 +83,8 @@ struct softpipe_context {
 
    unsigned num_samplers;
    unsigned num_textures;
+   unsigned num_vertex_elements;
+   unsigned num_vertex_buffers;
 
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
