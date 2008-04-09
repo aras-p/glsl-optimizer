@@ -44,14 +44,13 @@
 #include "pipe/p_winsys.h"
 
 
-static void
-flush_front_buffer(struct st_context *st, uint pipeFlushFlags,
-                   struct pipe_fence_handle **fence)
+static GLboolean
+is_front_buffer_dirty(struct st_context *st)
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
    if (!fb)
-      return;
+      return GL_FALSE;
 
    /* XXX: temporary hack.  This flag should only be set if we do any
     * rendering to the front buffer.
@@ -68,26 +67,26 @@ flush_front_buffer(struct st_context *st, uint pipeFlushFlags,
    st->flags.frontbuffer_dirty
       = (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT);
 
-   if (st->flags.frontbuffer_dirty) {
-      struct st_renderbuffer *strb
-         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-      struct pipe_surface *front_surf = strb->surface;
+   return st->flags.frontbuffer_dirty;
+}
 
-      /* If we aren't rendering to the frontbuffer, this is a noop.
-       * This should be uncontroversial for glFlush, though people may
-       * feel more strongly about glFinish.
-       *
-       * Additionally, need to make sure that the frontbuffer_dirty
-       * flag really gets set on frontbuffer rendering.
-       */
-      st->pipe->flush( st->pipe, pipeFlushFlags, fence );
 
-      /* Hook for copying "fake" frontbuffer if necessary:
-       */
-      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
-                                           st->pipe->priv );
-      st->flags.frontbuffer_dirty = 0;
-   }
+/**
+ * Tell the winsys to display the front color buffer on-screen.
+ */
+static void
+display_front_buffer(struct st_context *st)
+{
+   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct st_renderbuffer *strb
+      = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+   struct pipe_surface *front_surf = strb->surface;
+
+   /* Hook for copying "fake" frontbuffer if necessary:
+    */
+   st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
+                                        st->pipe->priv );
+   st->flags.frontbuffer_dirty = 0;
 }
 
 
@@ -102,6 +101,9 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
 }
 
 
+/**
+ * Flush, and wait for completion.
+ */
 void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
@@ -119,11 +121,15 @@ void st_finish( struct st_context *st )
  */
 static void st_glFlush(GLcontext *ctx)
 {
-   st_flush_bitmap_cache(ctx->st);
+   struct st_context *st = ctx->st;
 
-   FLUSH_VERTICES(ctx, 0);
-
-   flush_front_buffer(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   if (is_front_buffer_dirty(st)) {
+      st_finish(st);
+      display_front_buffer(st);
+   }
+   else {
+      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   }
 }
 
 
@@ -132,9 +138,13 @@ static void st_glFlush(GLcontext *ctx)
  */
 static void st_glFinish(GLcontext *ctx)
 {
-   st_finish( ctx->st );
+   struct st_context *st = ctx->st;
 
-   flush_front_buffer(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   st_finish(st);
+
+   if (is_front_buffer_dirty(st)) {
+      display_front_buffer(st);
+   }
 }
 
 
