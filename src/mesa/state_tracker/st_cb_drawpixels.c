@@ -1017,11 +1017,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       srcy = ctx->DrawBuffer->Height - srcy - height;
    }
 
-   /* For some drivers (like Xlib) it's not possible to treat the
-    * front/back color buffers as surfaces (they're XImages and Pixmaps).
-    * So, this var tells us if we can use surface_copy here...
-    */
-   if (st->haveFramebufferSurfaces && srcFormat == texFormat) {
+   if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
       pipe->surface_copy(pipe,
                          FALSE,

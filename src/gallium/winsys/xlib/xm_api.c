@@ -814,9 +814,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx->Const.CheckArrayBounds = GL_TRUE;
 #endif
 
-   /* finish up xmesa context initializations */
-   c->st->haveFramebufferSurfaces = GL_TRUE;
-
    return c;
 }
 

@@ -111,12 +111,6 @@ struct st_context
    char vendor[100];
    char renderer[100];
 
-   /** Can we access the front/back color buffers as pipe_surfaces?
-    * We can't with the Xlib driver...
-    * This is a hack that should be fixed someday.
-    */
-   GLboolean haveFramebufferSurfaces;
-
    /* State to be validated:
     */
    struct st_tracked_state **atoms;
