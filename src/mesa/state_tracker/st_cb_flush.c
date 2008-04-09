@@ -132,6 +132,8 @@ void st_finish( struct st_context *st )
 static void st_glFinish(GLcontext *ctx)
 {
    st_finish( ctx->st );
+
+   flush_front_buffer(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 }
 
 
