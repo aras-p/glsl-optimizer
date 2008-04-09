@@ -239,9 +239,7 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 	nv40->state.dirty &= ~(1ULL << NV40_STATE_VTXBUF);
 	nv40_state_emit(nv40);
 
-	for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
-		if (!nv40->vtxbuf[i].buffer)
-			continue;
+	for (i = 0; i < nv40->vtxbuf_nr; i++) {
 		map = ws->buffer_map(ws, nv40->vtxbuf[i].buffer,
 				     PIPE_BUFFER_USAGE_CPU_READ);
 		draw_set_mapped_vertex_buffer(nv40->draw, i, map);
@@ -262,11 +260,8 @@ nv40_draw_elements_swtnl(struct pipe_context *pipe,
 
 	draw_arrays(nv40->draw, mode, start, count);
 
-	for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
-		if (!nv40->vtxbuf[i].buffer)
-			continue;
+	for (i = 0; i < nv40->vtxbuf_nr; i++)
 		ws->buffer_unmap(ws, nv40->vtxbuf[i].buffer);
-	}
 
 	if (idxbuf)
 		ws->buffer_unmap(ws, idxbuf);

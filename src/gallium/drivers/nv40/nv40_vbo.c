@@ -481,39 +481,22 @@ nv40_draw_elements(struct pipe_context *pipe,
 static boolean
 nv40_vbo_validate(struct nv40_context *nv40)
 {
-	struct nv40_vertex_program *vp = nv40->vertprog;
 	struct nouveau_stateobj *vtxbuf, *vtxfmt, *sattr = NULL;
 	struct nouveau_grobj *curie = nv40->screen->curie;
 	struct pipe_buffer *ib = nv40->idxbuf;
 	unsigned ib_format = nv40->idxbuf_format;
-	unsigned inputs, hw, num_hw;
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
-
-	inputs = vp->ir;
-	for (hw = 0; hw < 16 && inputs; hw++) {
-		if (inputs & (1 << hw)) {
-			num_hw = hw;
-			inputs &= ~(1 << hw);
-		}
-	}
-	num_hw++;
+	int hw;
 
 	vtxbuf = so_new(20, 18);
-	so_method(vtxbuf, curie, NV40TCL_VTXBUF_ADDRESS(0), num_hw);
+	so_method(vtxbuf, curie, NV40TCL_VTXBUF_ADDRESS(0), nv40->vtxelt_nr);
 	vtxfmt = so_new(17, 0);
-	so_method(vtxfmt, curie, NV40TCL_VTXFMT(0), num_hw);
+	so_method(vtxfmt, curie, NV40TCL_VTXFMT(0), nv40->vtxelt_nr);
 
-	inputs = vp->ir;
-	for (hw = 0; hw < num_hw; hw++) {
+	for (hw = 0; hw < nv40->vtxelt_nr; hw++) {
 		struct pipe_vertex_element *ve;
 		struct pipe_vertex_buffer *vb;
 		unsigned type, ncomp;
-
-		if (!(inputs & (1 << hw))) {
-			so_data(vtxbuf, 0);
-			so_data(vtxfmt, NV40TCL_VTXFMT_TYPE_FLOAT);
-			continue;
-		}
 
 		ve = &nv40->vtxelt[hw];
 		vb = &nv40->vtxbuf[ve->vertex_buffer_index];
