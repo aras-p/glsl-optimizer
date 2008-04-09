@@ -238,6 +238,8 @@ struct i915_context
 
    unsigned num_samplers;
    unsigned num_textures;
+   unsigned num_vertex_elements;
+   unsigned num_vertex_buffers;
 
    unsigned *batch_start;
 
