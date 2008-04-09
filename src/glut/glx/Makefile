@@ -126,6 +126,6 @@ depend: $(SOURCES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
 	@ $(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(SOURCES) \
-		> /dev/null 
+		$(X11_INCLUDES) > /dev/null 
 
 include depend
