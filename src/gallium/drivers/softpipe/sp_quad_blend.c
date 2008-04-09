@@ -561,7 +561,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       case PIPE_BLENDFACTOR_INV_DST_ALPHA:
          {
             float inv_comp[4];
-            VEC4_SUB(inv_comp, one, quadColor[3]); /* A */
+            VEC4_SUB(inv_comp, one, dest[3]); /* A */
             VEC4_MUL(dest[0], inv_comp, dest[0]); /* R */
             VEC4_MUL(dest[1], inv_comp, dest[1]); /* G */
             VEC4_MUL(dest[2], inv_comp, dest[2]); /* B */
