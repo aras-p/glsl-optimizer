@@ -47,19 +47,18 @@
 static void 
 update_textures(struct st_context *st)
 {
-   /* ST_NEW_FRAGMENT_PROGRAM
-    */
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
-   GLuint unit;
+   GLuint su;
 
    st->state.num_textures = 0;
 
-   for (unit = 0; unit < st->ctx->Const.MaxTextureCoordUnits; unit++) {
-      const GLuint su = fprog->Base.SamplerUnits[unit];
+   for (su = 0; su < st->ctx->Const.MaxTextureCoordUnits; su++) {
       struct pipe_texture *pt = NULL;
 
       if (fprog->Base.SamplersUsed & (1 << su)) {
-         struct gl_texture_object *texObj = st->ctx->Texture.Unit[su]._Current;
+         const GLuint texUnit = fprog->Base.SamplerUnits[su];
+         struct gl_texture_object *texObj
+            = st->ctx->Texture.Unit[texUnit]._Current;
          struct st_texture_object *stObj = st_texture_object(texObj);
 
          if (texObj) {
@@ -71,13 +70,13 @@ update_textures(struct st_context *st)
                continue;
             }
 
-            st->state.num_textures = unit + 1;
+            st->state.num_textures = su + 1;
          }
 
          pt = st_get_stobj_texture(stObj);
       }
 
-      pipe_texture_reference(&st->state.sampler_texture[unit], pt);
+      pipe_texture_reference(&st->state.sampler_texture[su], pt);
    }
 
    st->pipe->set_sampler_textures(st->pipe, st->state.num_textures,

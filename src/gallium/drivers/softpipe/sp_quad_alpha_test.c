@@ -16,7 +16,8 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_context *softpipe = qs->softpipe;
    const float ref = softpipe->depth_stencil->alpha.ref;
    unsigned passMask = 0x0, j;
-   const float *aaaa = quad->outputs.color[3];
+   const uint cbuf = 0; /* only output[0].alpha is tested */
+   const float *aaaa = quad->outputs.color[cbuf][3];
 
    switch (softpipe->depth_stencil->alpha.func) {
    case PIPE_FUNC_NEVER:
@@ -25,7 +26,7 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
    case PIPE_FUNC_LESS:
       /*
        * If mask were an array [4] we could do this SIMD-style:
-       * passMask = (quad->outputs.color[3] <= vec4(ref));
+       * passMask = (quad->outputs.color[0][3] <= vec4(ref));
        */
       for (j = 0; j < QUAD_SIZE; j++) {
          if (aaaa[j] < ref) {

@@ -56,54 +56,123 @@
  */
 
 
+/**
+ * Wrapper for pipe_get_tile_rgba().  Do format/cpp override to make the
+ * tile util function think the surface is 16bit/channel, even if it's not.
+ * See also: st_renderbuffer_alloc_storage()
+ */
+static void
+acc_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *acc_ps,
+                  uint x, uint y, uint w, uint h, float *p)
+{
+   const enum pipe_format f = acc_ps->format;
+   const int cpp = acc_ps->cpp;
+
+   acc_ps->format = DEFAULT_ACCUM_PIPE_FORMAT;
+   acc_ps->cpp = 8;
+
+   pipe_get_tile_rgba(pipe, acc_ps, x, y, w, h, p);
+
+   acc_ps->format = f;
+   acc_ps->cpp = cpp;
+}
+
+
+/**
+ * Wrapper for pipe_put_tile_rgba().  Do format/cpp override to make the
+ * tile util function think the surface is 16bit/channel, even if it's not.
+ * See also: st_renderbuffer_alloc_storage()
+ */
+static void
+acc_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *acc_ps,
+                  uint x, uint y, uint w, uint h, const float *p)
+{
+   enum pipe_format f = acc_ps->format;
+   const int cpp = acc_ps->cpp;
+
+   acc_ps->format = DEFAULT_ACCUM_PIPE_FORMAT;
+   acc_ps->cpp = 8;
+
+   pipe_put_tile_rgba(pipe, acc_ps, x, y, w, h, p);
+
+   acc_ps->format = f;
+   acc_ps->cpp = cpp;
+}
+
+
+
 void
 st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
    struct pipe_surface *acc_ps = acc_strb->surface;
    const GLint xpos = ctx->DrawBuffer->_Xmin;
    const GLint ypos = ctx->DrawBuffer->_Ymin;
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
-   const GLfloat r = ctx->Accum.ClearColor[0];
-   const GLfloat g = ctx->Accum.ClearColor[1];
-   const GLfloat b = ctx->Accum.ClearColor[2];
-   const GLfloat a = ctx->Accum.ClearColor[3];
-   GLfloat *accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-   int i;
+   GLvoid *map;
 
-   for (i = 0; i < width * height; i++) {
-      accBuf[i*4+0] = r;
-      accBuf[i*4+1] = g;
-      accBuf[i*4+2] = b;
-      accBuf[i*4+3] = a;
+   map = pipe_surface_map(acc_ps);
+
+   /* note acc_strb->format might not equal acc_ps->format */
+   switch (acc_strb->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         GLshort r = FLOAT_TO_SHORT(ctx->Accum.ClearColor[0]);
+         GLshort g = FLOAT_TO_SHORT(ctx->Accum.ClearColor[1]);
+         GLshort b = FLOAT_TO_SHORT(ctx->Accum.ClearColor[2]);
+         GLshort a = FLOAT_TO_SHORT(ctx->Accum.ClearColor[3]);
+         int i, j;
+         for (i = 0; i < height; i++) {
+            GLshort *dst = ((GLshort *) map
+                            + ((ypos + i) * acc_ps->pitch + xpos) * 4);
+            for (j = 0; j < width; j++) {
+               dst[0] = r;
+               dst[1] = g;
+               dst[2] = b;
+               dst[3] = a;
+               dst += 4;
+            }
+         }
+      }
+      break;
+   default:
+      _mesa_problem(ctx, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_surface_unmap(acc_ps);
 }
 
 
 /** For ADD/MULT */
 static void
-accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
+accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
           GLint xpos, GLint ypos, GLint width, GLint height,
-          struct pipe_surface *acc_ps)
+          struct st_renderbuffer *acc_strb)
 {
-   GLfloat *accBuf;
-   GLint i;
+   struct pipe_surface *acc_ps = acc_strb->surface;
+   GLvoid *map;
 
-   accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+   map = pipe_surface_map(acc_ps);
 
-   pipe_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
-
-   for (i = 0; i < 4 * width * height; i++) {
-      accBuf[i] = accBuf[i] * scale + bias;
+   /* note acc_strb->format might not equal acc_ps->format */
+   switch (acc_strb->format) {
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      {
+         int i, j;
+         for (i = 0; i < height; i++) {
+            GLshort *acc = ((GLshort *) map
+                            + ((ypos + i) * acc_ps->pitch + xpos) * 4);
+            for (j = 0; j < width * 4; j++) {
+               float val = SHORT_TO_FLOAT(acc[j]) * scale + bias;
+               acc[j] = FLOAT_TO_SHORT(val);
+            }
+         }
+      }
+      break;
+   default:
+      _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
-
-   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
-
-   free(accBuf);
 }
 
 
@@ -120,13 +189,13 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
    pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, colorBuf);
-   pipe_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   acc_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
       accBuf[i] = accBuf[i] + colorBuf[i] * value;
    }
 
-   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   acc_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
 
    free(colorBuf);
    free(accBuf);
@@ -150,7 +219,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
       buf[i] = buf[i] * value;
    }
 
-   pipe_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, buf);
+   acc_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, buf);
 
    free(buf);
 }
@@ -169,7 +238,7 @@ accum_return(GLcontext *ctx, GLfloat value,
 
    abuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
+   acc_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
       cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
@@ -219,12 +288,12 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    switch (op) {
    case GL_ADD:
       if (value != 0.0F) {
-         accum_mad(pipe, 1.0, value, xpos, ypos, width, height, acc_ps);
+         accum_mad(ctx, 1.0, value, xpos, ypos, width, height, acc_strb);
       }
       break;
    case GL_MULT:
       if (value != 1.0F) {
-         accum_mad(pipe, value, 0.0, xpos, ypos, width, height, acc_ps);
+         accum_mad(ctx, value, 0.0, xpos, ypos, width, height, acc_strb);
       }
       break;
    case GL_ACCUM:

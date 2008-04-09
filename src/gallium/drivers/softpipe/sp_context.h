@@ -83,6 +83,8 @@ struct softpipe_context {
 
    unsigned num_samplers;
    unsigned num_textures;
+   unsigned num_vertex_elements;
+   unsigned num_vertex_buffers;
 
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
@@ -124,7 +126,6 @@ struct softpipe_context {
       struct quad_stage *depth_test;
       struct quad_stage *occlusion;
       struct quad_stage *coverage;
-      struct quad_stage *bufloop;
       struct quad_stage *blend;
       struct quad_stage *colormask;
       struct quad_stage *output;
@@ -137,8 +138,6 @@ struct softpipe_context {
    struct draw_stage *setup;
    struct draw_stage *vbuf;
    struct softpipe_vbuf_render *vbuf_render;
-
-   uint current_cbuf;      /**< current color buffer being written to */
 
    struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
    struct softpipe_tile_cache *zsbuf_cache;

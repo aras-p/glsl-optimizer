@@ -17,7 +17,6 @@ C_SOURCES = \
 	sp_quad.c \
 	sp_quad_alpha_test.c \
 	sp_quad_blend.c \
-	sp_quad_bufloop.c \
 	sp_quad_colormask.c \
 	sp_quad_coverage.c \
 	sp_quad_depth_test.c \

@@ -65,14 +65,12 @@ i915_draw_elements( struct pipe_context *pipe,
    /*
     * Map vertex buffers
     */
-   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      if (i915->vertex_buffer[i].buffer) {
-         void *buf
-            = pipe->winsys->buffer_map(pipe->winsys,
-                                       i915->vertex_buffer[i].buffer,
-                                       PIPE_BUFFER_USAGE_CPU_READ);
-         draw_set_mapped_vertex_buffer(draw, i, buf);
-      }
+   for (i = 0; i < i915->num_vertex_buffers; i++) {
+      void *buf
+         = pipe->winsys->buffer_map(pipe->winsys,
+                                    i915->vertex_buffer[i].buffer,
+                                    PIPE_BUFFER_USAGE_CPU_READ);
+      draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
@@ -96,11 +94,9 @@ i915_draw_elements( struct pipe_context *pipe,
    /*
     * unmap vertex/index buffers
     */
-   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      if (i915->vertex_buffer[i].buffer) {
-         pipe->winsys->buffer_unmap(pipe->winsys, i915->vertex_buffer[i].buffer);
-         draw_set_mapped_vertex_buffer(draw, i, NULL);
-      }
+   for (i = 0; i < i915->num_vertex_buffers; i++) {
+      pipe->winsys->buffer_unmap(pipe->winsys, i915->vertex_buffer[i].buffer);
+      draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
    if (indexBuffer) {
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);

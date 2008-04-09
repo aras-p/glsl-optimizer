@@ -62,7 +62,6 @@ struct fenced_buffer_list
    struct pipe_winsys *winsys;
    
    size_t numDelayed;
-   size_t checkDelayed;
    
    struct list_head delayed;
 };
@@ -93,51 +92,96 @@ fenced_buffer(struct pb_buffer *buf)
 }
 
 
+static INLINE void
+_fenced_buffer_add(struct fenced_buffer *fenced_buf)
+{
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+
+   assert(fenced_buf->base.base.refcount);
+   assert(fenced_buf->fence);
+   assert(!fenced_buf->head.prev);
+   assert(!fenced_buf->head.next);
+   LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
+   ++fenced_list->numDelayed;
+}
+
+
+/**
+ * Actually destroy the buffer.
+ */
+static INLINE void
+_fenced_buffer_destroy(struct fenced_buffer *fenced_buf)
+{
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+
+   assert(!fenced_buf->base.base.refcount);
+   assert(!fenced_buf->fence);
+   pb_reference(&fenced_buf->buffer, NULL);
+   FREE(fenced_buf);
+}
+
+
+static INLINE void
+_fenced_buffer_remove(struct fenced_buffer *fenced_buf)
+{
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+   struct pipe_winsys *winsys = fenced_list->winsys;
+
+   assert(fenced_buf->fence);
+   
+   winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
+   
+   assert(fenced_buf->head.prev);
+   assert(fenced_buf->head.next);
+   LIST_DEL(&fenced_buf->head);
+#ifdef DEBUG
+   fenced_buf->head.prev = NULL;
+   fenced_buf->head.next = NULL;
+#endif
+   
+   assert(fenced_list->numDelayed);
+   --fenced_list->numDelayed;
+   
+   if(!fenced_buf->base.base.refcount)
+      _fenced_buffer_destroy(fenced_buf);
+}
+
+
+/**
+ * Free as many fenced buffers from the list head as possible. 
+ */
 static void
 _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list, 
                                int wait)
 {
    struct pipe_winsys *winsys = fenced_list->winsys;
-   struct fenced_buffer *fenced_buf;   
-   struct list_head *list, *prev;
-   int signaled = -1;
+   struct list_head *curr, *next;
+   struct fenced_buffer *fenced_buf;
+   struct pipe_fence_handle *prev_fence = NULL;
 
-   list = fenced_list->delayed.next;
-   prev = list->prev;
-   for (; list != &fenced_list->delayed; list = prev, prev = list->prev) {
+   curr = fenced_list->delayed.next;
+   next = curr->next;
+   while(curr != &fenced_list->delayed) {
+      fenced_buf = LIST_ENTRY(struct fenced_buffer, curr, head);
 
-      fenced_buf = LIST_ENTRY(struct fenced_buffer, list, head);
-
-      if (signaled != 0) {
-         if (wait) {
-            signaled = winsys->fence_finish(winsys, fenced_buf->fence, 0);
-         }
-         else {
-            signaled = winsys->fence_signalled(winsys, fenced_buf->fence, 0);
-         }
+      if(fenced_buf->fence != prev_fence) {
+	 int signaled;
+	 if (wait)
+	    signaled = winsys->fence_finish(winsys, fenced_buf->fence, 0);
+	 else
+	    signaled = winsys->fence_signalled(winsys, fenced_buf->fence, 0);
+	 if (signaled != 0)
+	    break;
+	 prev_fence = fenced_buf->fence;
+      }
+      else {
+	 assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
       }
 
-      if (signaled != 0) {
-#if 0
-	 /* XXX: we are assuming that buffers are freed in the same order they 
-	  * are fenced which may not always be true... 
-	  */
-         break;
-#else
-         signaled = -1;
-	 continue;
-#endif
-      }
+      _fenced_buffer_remove(fenced_buf);
 
-      winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
-      
-      LIST_DEL(list);
-      fenced_list->numDelayed--;
-
-      /* Do the delayed destroy:
-       */
-      pb_reference(&fenced_buf->buffer, NULL);
-      FREE(fenced_buf);
+      curr = next; 
+      next = curr->next;
    }
 }
 
@@ -148,25 +192,30 @@ fenced_buffer_destroy(struct pb_buffer *buf)
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
+   _glthread_LOCK_MUTEX(fenced_list->mutex);
+   assert(fenced_buf->base.base.refcount == 0);
    if (fenced_buf->fence) {
       struct pipe_winsys *winsys = fenced_list->winsys;
-      if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0) { 
-	 LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
-	 fenced_list->numDelayed++;
-      }
+      if(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0) {
+	 struct list_head *curr, *prev;
+	 curr = &fenced_buf->head;
+	 prev = curr->prev;
+	 do {
+	    fenced_buf = LIST_ENTRY(struct fenced_buffer, curr, head);
+	    assert(winsys->fence_signalled(winsys, fenced_buf->fence, 0) == 0);
+	    _fenced_buffer_remove(fenced_buf);
+	    curr = prev;
+	    prev = curr->prev;
+	 } while (curr != &fenced_list->delayed);
+      }	  
       else {
-	 winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
-	 pb_reference(&fenced_buf->buffer, NULL);
-	 FREE(fenced_buf);
+	 /* delay destruction */
       }
    }
    else {
-      pb_reference(&fenced_buf->buffer, NULL);
-      FREE(fenced_buf);
+      _fenced_buffer_destroy(fenced_buf);
    }
-   
-   if ((fenced_list->numDelayed % fenced_list->checkDelayed) == 0)
-      _fenced_buffer_list_check_free(fenced_list, 0);
+   _glthread_UNLOCK_MUTEX(fenced_list->mutex);
 }
 
 
@@ -241,7 +290,11 @@ buffer_fence(struct pb_buffer *buf,
    struct pipe_winsys *winsys = fenced_list->winsys;
    
    _glthread_LOCK_MUTEX(fenced_list->mutex);
+   if (fenced_buf->fence)
+      _fenced_buffer_remove(fenced_buf);
    winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+   if (fenced_buf->fence)
+      _fenced_buffer_add(fenced_buf);
    _glthread_UNLOCK_MUTEX(fenced_list->mutex);
 }
 
@@ -261,9 +314,6 @@ fenced_buffer_list_create(struct pipe_winsys *winsys)
 
    fenced_list->numDelayed = 0;
    
-   /* TODO: don't hard code this */ 
-   fenced_list->checkDelayed = 5;
-
    _glthread_INIT_MUTEX(fenced_list->mutex);
 
    return fenced_list;

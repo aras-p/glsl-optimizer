@@ -227,6 +227,12 @@ struct draw_context
          struct draw_pt_front_end *vcache;
       } front;
 
+      struct {
+         char *verts;
+         unsigned vertex_stride;
+         unsigned vertex_count;
+      } pipeline;
+
    } pt;
 
    boolean flushing;
@@ -244,6 +250,8 @@ struct draw_context
 
    /* user-space vertex data, buffers */
    struct {
+      const unsigned *edgeflag;
+
       /** vertex element/index buffer (ex: glDrawElements) */
       const void *elts;
       /** bytes per index (0, 1, 2 or 4) */
@@ -386,15 +394,14 @@ boolean draw_pt_arrays( struct draw_context *draw,
                         unsigned start,
                         unsigned count );
 
-
-
-/* Prototype/hack (DEPRECATED)
- */
-boolean
-draw_passthrough_arrays(struct draw_context *draw, 
-                        unsigned prim,
-                        unsigned start, 
-                        unsigned count);
+void draw_pt_reset_vertex_ids( struct draw_context *draw );
+void draw_pt_run_pipeline( struct draw_context *draw,
+                           unsigned prim,
+                           char *verts,
+                           unsigned vertex_stride,
+                           unsigned vertex_count,
+                           const ushort *elts,
+                           unsigned count );
 
 
 #define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
@@ -406,6 +413,8 @@ draw_passthrough_arrays(struct draw_context *draw,
 
 void draw_do_flush( struct draw_context *draw, unsigned flags );
 
+boolean draw_get_edgeflag( struct draw_context *draw,
+                           unsigned idx );
 
 
 /**

@@ -32,6 +32,7 @@
 #include "p_debug.h"
 #include "p_pointer.h"
 #include <math.h>
+#include <stdarg.h>
 
 
 #ifdef __cplusplus
@@ -135,6 +136,14 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 #define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
 #define GETENV( X ) debug_get_option( X, NULL )
+
+
+#ifdef WIN32
+int rpl_vsnprintf(char *, size_t, const char *, va_list);
+int rpl_snprintf(char *str, size_t size, const char *format, ...);
+#define vsnprintf rpl_vsnprintf
+#define snprintf rpl_snprintf
+#endif
 
 
 /**

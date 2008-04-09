@@ -818,6 +818,9 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 #if FEATURE_EXT_framebuffer_object
    SET_FramebufferTextureLayerEXT(exec, _mesa_FramebufferTextureLayerEXT);
 #endif
+
+   /* GL_ATI_separate_stencil */
+   SET_StencilFuncSeparateATI(exec, _mesa_StencilFuncSeparateATI);
 }
 
 

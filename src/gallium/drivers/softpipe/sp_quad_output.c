@@ -34,31 +34,36 @@
 
 
 /**
- * Write quad to framebuffer, taking mask into account.
- *
- * Note that surfaces support only full quad reads and writes.
+ * Last step of quad processing: write quad colors to the framebuffer,
+ * taking mask into account.
  */
 static void
 output_quad(struct quad_stage *qs, struct quad_header *quad)
 {
-   struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe,
-                           softpipe->cbuf_cache[softpipe->current_cbuf],
-                           quad->x0, quad->y0);
    /* in-tile pos: */
    const int itx = quad->x0 % TILE_SIZE;
    const int ity = quad->y0 % TILE_SIZE;
-   float (*quadColor)[4] = quad->outputs.color;
-   int i, j;
 
-   /* get/swizzle dest colors */
-   for (j = 0; j < QUAD_SIZE; j++) {
-      if (quad->mask & (1 << j)) {
-         int x = itx + (j & 1);
-         int y = ity + (j >> 1);
-         for (i = 0; i < 4; i++) { /* loop over color chans */
-            tile->data.color[y][x][i] = quadColor[i][j];
+   struct softpipe_context *softpipe = qs->softpipe;
+   uint cbuf;
+
+   /* loop over colorbuffer outputs */
+   for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
+      struct softpipe_cached_tile *tile
+         = sp_get_cached_tile(softpipe,
+                              softpipe->cbuf_cache[cbuf],
+                              quad->x0, quad->y0);
+      float (*quadColor)[4] = quad->outputs.color[cbuf];
+      int i, j;
+
+      /* get/swizzle dest colors */
+      for (j = 0; j < QUAD_SIZE; j++) {
+         if (quad->mask & (1 << j)) {
+            int x = itx + (j & 1);
+            int y = ity + (j >> 1);
+            for (i = 0; i < 4; i++) { /* loop over color chans */
+               tile->data.color[y][x][i] = quadColor[i][j];
+            }
          }
       }
    }

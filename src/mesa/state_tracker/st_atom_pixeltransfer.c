@@ -130,6 +130,7 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
    ic++;
    fp->Base.InputsRead = (1 << FRAG_ATTRIB_TEX0);
    fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLR);
+   fp->Base.SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    /* MAD colorTemp, colorTemp, scale, bias; */
    if (key->scaleAndBias) {

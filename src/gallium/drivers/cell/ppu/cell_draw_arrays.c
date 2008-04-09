@@ -123,14 +123,12 @@ cell_draw_elements(struct pipe_context *pipe,
    /*
     * Map vertex buffers
     */
-   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      if (sp->vertex_buffer[i].buffer) {
-         void *buf = pipe->winsys->buffer_map(pipe->winsys,
-                                              sp->vertex_buffer[i].buffer,
-                                              PIPE_BUFFER_USAGE_CPU_READ);
-	 cell_flush_buffer_range(sp, buf, sp->vertex_buffer[i].buffer->size);
-         draw_set_mapped_vertex_buffer(draw, i, buf);
-      }
+   for (i = 0; i < sp->num_vertex_buffers; i++) {
+      void *buf = pipe->winsys->buffer_map(pipe->winsys,
+                                           sp->vertex_buffer[i].buffer,
+                                           PIPE_BUFFER_USAGE_CPU_READ);
+      cell_flush_buffer_range(sp, buf, sp->vertex_buffer[i].buffer->size);
+      draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
@@ -151,11 +149,9 @@ cell_draw_elements(struct pipe_context *pipe,
    /*
     * unmap vertex/index buffers - will cause draw module to flush
     */
-   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      if (sp->vertex_buffer[i].buffer) {
-         draw_set_mapped_vertex_buffer(draw, i, NULL);
-         pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
-      }
+   for (i = 0; i < sp->num_vertex_buffers; i++) {
+      draw_set_mapped_vertex_buffer(draw, i, NULL);
+      pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
    }
    if (indexBuffer) {
       draw_set_mapped_element_buffer(draw, 0, NULL);

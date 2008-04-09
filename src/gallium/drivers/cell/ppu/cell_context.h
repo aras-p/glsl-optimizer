@@ -104,7 +104,9 @@ struct cell_context
    uint num_textures;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   uint num_vertex_buffers;
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+   uint num_vertex_elements;
 
    ubyte *cbuf_map[PIPE_MAX_COLOR_BUFS];
    ubyte *zsbuf_map;

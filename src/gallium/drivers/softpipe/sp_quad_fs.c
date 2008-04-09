@@ -88,21 +88,63 @@ shade_quad(
 				    &qss->machine,
 				    quad );
 
-   /* store result color */
-   if (qss->colorOutSlot >= 0) {
-      /* XXX need to handle multiple color outputs someday */
-      assert(qss->stage.softpipe->fs->info.output_semantic_name[qss->colorOutSlot]
-             == TGSI_SEMANTIC_COLOR);
-      memcpy(
-             quad->outputs.color,
-             &machine->Outputs[qss->colorOutSlot].xyzw[0].f[0],
-             sizeof( quad->outputs.color ) );
+#if 0 /* XXX multi color outputs - untested */
+   /* store outputs */
+   boolean z_written = FALSE;
+   {
+      const ubyte *sem_name = softpipe->fs->info.output_semantic_name;
+      const ubyte *sem_index = softpipe->fs->info.output_semantic_index;
+      const uint n = qss->stage.softpipe->fs->info.num_outputs;
+      uint i;
+      for (i = 0; i < n; i++) {
+         switch (sem_name[i]) {
+         case TGSI_SEMANTIC_COLOR:
+            {
+               uint cbuf = sem_index[i];
+               memcpy(quad->outputs.color[cbuf],
+                      &machine->Outputs[i].xyzw[0].f[0],
+                      sizeof(quad->outputs.color[0]) );
+            }
+            break;
+         case TGSI_SEMANTIC_POSITION:
+            {
+               uint j;
+               for (j = 0; j < 4; j++) {
+                  quad->outputs.depth[j] = machine->Outputs[0].xyzw[2].f[j];
+               }
+               z_written = TRUE;
+            }
+            break;
+         }
+      }
    }
 
-   /*
-    * XXX the following code for updating quad->outputs.depth
-    * isn't really needed if we did early z testing.
-    */
+   if (!z_written) {
+      /* compute Z values now, as in the quad earlyz stage */
+      /* XXX we should really only do this if the earlyz stage is not used */
+      const float fx = (float) quad->x0;
+      const float fy = (float) quad->y0;
+      const float dzdx = quad->posCoef->dadx[2];
+      const float dzdy = quad->posCoef->dady[2];
+      const float z0 = quad->posCoef->a0[2] + dzdx * fx + dzdy * fy;
+
+      quad->outputs.depth[0] = z0;
+      quad->outputs.depth[1] = z0 + dzdx;
+      quad->outputs.depth[2] = z0 + dzdy;
+      quad->outputs.depth[3] = z0 + dzdx + dzdy;
+   }
+#endif
+
+   /* store result color(s) */
+   if (qss->colorOutSlot >= 0) {
+      /* XXX need to handle multiple color outputs someday */
+      assert(softpipe->fs->info.output_semantic_name[qss->colorOutSlot]
+             == TGSI_SEMANTIC_COLOR);
+      memcpy(
+             quad->outputs.color[0],
+             &machine->Outputs[qss->colorOutSlot].xyzw[0].f[0],
+             sizeof( quad->outputs.color[0] ) );
+   }
 
    /* store result Z */
    if (qss->depthOutSlot >= 0) {

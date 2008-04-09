@@ -98,7 +98,6 @@ static void softpipe_destroy( struct pipe_context *pipe )
    softpipe->quad.stencil_test->destroy( softpipe->quad.stencil_test );
    softpipe->quad.occlusion->destroy( softpipe->quad.occlusion );
    softpipe->quad.coverage->destroy( softpipe->quad.coverage );
-   softpipe->quad.bufloop->destroy( softpipe->quad.bufloop );
    softpipe->quad.blend->destroy( softpipe->quad.blend );
    softpipe->quad.colormask->destroy( softpipe->quad.colormask );
    softpipe->quad.output->destroy( softpipe->quad.output );
@@ -207,7 +206,6 @@ softpipe_create( struct pipe_screen *screen,
    softpipe->quad.stencil_test = sp_quad_stencil_test_stage(softpipe);
    softpipe->quad.occlusion = sp_quad_occlusion_stage(softpipe);
    softpipe->quad.coverage = sp_quad_coverage_stage(softpipe);
-   softpipe->quad.bufloop = sp_quad_bufloop_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);

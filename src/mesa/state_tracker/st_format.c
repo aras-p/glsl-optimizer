@@ -276,6 +276,14 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_Z24S8_UNORM;
    case MESA_FORMAT_YCBCR:
       return PIPE_FORMAT_YCBCR;
+   case MESA_FORMAT_RGB_DXT1:
+      return PIPE_FORMAT_DXT1_RGB;
+   case MESA_FORMAT_RGBA_DXT1:
+      return PIPE_FORMAT_DXT1_RGBA;
+   case MESA_FORMAT_RGBA_DXT3:
+      return PIPE_FORMAT_DXT3_RGBA;
+   case MESA_FORMAT_RGBA_DXT5:
+      return PIPE_FORMAT_DXT5_RGBA;
    default:
       assert(0);
       return 0;
@@ -313,7 +321,10 @@ default_deep_rgba_format(struct pipe_screen *screen, uint type)
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, type)) {
       return PIPE_FORMAT_R16G16B16A16_SNORM;
    }
-   return PIPE_FORMAT_NONE;
+   if (type == PIPE_TEXTURE)
+      return default_rgba_format(screen, type);
+   else
+      return PIPE_FORMAT_NONE;
 }
 
 

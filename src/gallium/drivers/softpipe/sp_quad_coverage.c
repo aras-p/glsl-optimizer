@@ -50,12 +50,17 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
    if ((softpipe->rasterizer->poly_smooth && quad->prim == PRIM_TRI) ||
        (softpipe->rasterizer->line_smooth && quad->prim == PRIM_LINE) ||
        (softpipe->rasterizer->point_smooth && quad->prim == PRIM_POINT)) {
-      float (*quadColor)[4] = quad->outputs.color;
-      unsigned j;
-      for (j = 0; j < QUAD_SIZE; j++) {
-         assert(quad->coverage[j] >= 0.0);
-         assert(quad->coverage[j] <= 1.0);
+      uint cbuf;
+
+      /* loop over colorbuffer outputs */
+      for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
+         float (*quadColor)[4] = quad->outputs.color[cbuf];
+         unsigned j;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            assert(quad->coverage[j] >= 0.0);
+            assert(quad->coverage[j] <= 1.0);
          quadColor[3][j] *= quad->coverage[j];
+         }
       }
    }
 

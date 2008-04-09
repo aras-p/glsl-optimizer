@@ -80,6 +80,8 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
 
 /**
  * gl_renderbuffer::AllocStorage()
+ * This is called to allocate the original drawing surface, and
+ * during window resize.
  */
 static GLboolean
 st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
@@ -90,8 +92,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format pipeFormat;
    GLbitfield flags = 0x0; /* XXX needed? */
+   int ret;
 
    if (!strb->surface) {
+      /* first time surface creation */
       strb->surface = pipe->winsys->surface_alloc(pipe->winsys);
       assert(strb->surface);
       assert(strb->surface->refcount);
@@ -99,10 +103,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       if (!strb->surface)
          return GL_FALSE;
    }
-
-   if (strb->surface->buffer)
-      pipe_buffer_reference(pipe->winsys, &strb->surface->buffer,
-			    NULL);
+   else if (strb->surface->buffer) {
+      /* release/discard the old surface buffer */
+      pipe_buffer_reference(pipe->winsys, &strb->surface->buffer, NULL);
+   }
 
    /* Determine surface format here */
    if (strb->format != PIPE_FORMAT_NONE) {
@@ -116,20 +120,44 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    init_renderbuffer_bits(strb, pipeFormat);
 
-   pipe->winsys->surface_alloc_storage(pipe->winsys,
-                                       strb->surface,
-                                       width,
-                                       height,
-                                       pipeFormat,
-                                       flags);
-   if (!strb->surface->buffer)
-      return GL_FALSE; /* out of memory, try s/w buffer? */
+   ret = pipe->winsys->surface_alloc_storage(pipe->winsys,
+                                             strb->surface,
+                                             width,
+                                             height,
+                                             pipeFormat,
+                                             flags);
+   if (ret || !strb->surface->buffer) {
+      if (pipeFormat == DEFAULT_ACCUM_PIPE_FORMAT) {
+         /* Accum buffer.  Try a different surface format.  Since accum
+          * buffers are s/w only for now, the surface pixel format doesn't
+          * really matter, only that the buffer is large enough.
+          */
+         int sz, mult;
+         enum pipe_format accum_format;
+
+         /* allocate a buffer of (typically) double height to get 64bpp */
+         accum_format = st_choose_renderbuffer_format(pipe, GL_RGBA);
+         sz = pf_get_size(accum_format);
+         mult = pf_get_size(DEFAULT_ACCUM_PIPE_FORMAT) / sz;
+
+         ret = pipe->winsys->surface_alloc_storage(pipe->winsys,
+                                                   strb->surface,
+                                                   width, height * mult,
+                                                   accum_format, flags);
+         if (ret)
+            return GL_FALSE; /* we've _really_ failed */
+
+      }
+      else {
+         return GL_FALSE; /* out of memory, try s/w buffer? */
+      }
+   }
 
    ASSERT(strb->surface->buffer);
    ASSERT(strb->surface->format);
    ASSERT(strb->surface->cpp);
    ASSERT(strb->surface->width == width);
-   ASSERT(strb->surface->height == height);
+   /*ASSERT(strb->surface->height == height);*/
    ASSERT(strb->surface->pitch);
 
    strb->Base.Width  = width;
@@ -247,7 +275,7 @@ st_new_renderbuffer_fb(enum pipe_format format)
       strb->Base.InternalFormat = GL_STENCIL_INDEX8_EXT;
       strb->Base._BaseFormat = GL_STENCIL_INDEX;
       break;
-   case PIPE_FORMAT_R16G16B16A16_SNORM:
+   case DEFAULT_ACCUM_PIPE_FORMAT: /*PIPE_FORMAT_R16G16B16A16_SNORM*/
       strb->Base.InternalFormat = GL_RGBA16;
       strb->Base._BaseFormat = GL_RGBA;
       break;

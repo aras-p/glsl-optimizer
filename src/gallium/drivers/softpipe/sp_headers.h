@@ -31,6 +31,7 @@
 #ifndef SP_HEADERS_H
 #define SP_HEADERS_H
 
+#include "pipe/p_state.h"
 #include "tgsi/exec/tgsi_exec.h"
 
 #define PRIM_POINT 1
@@ -66,7 +67,8 @@ struct quad_header {
    unsigned prim:2;     /**< PRIM_POINT, LINE, TRI */
 
    struct {
-      float color[NUM_CHANNELS][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */
+      /** colors in SOA format (rrrr, gggg, bbbb, aaaa) */
+      float color[PIPE_MAX_COLOR_BUFS][NUM_CHANNELS][QUAD_SIZE];
       float depth[QUAD_SIZE];
    } outputs;
 

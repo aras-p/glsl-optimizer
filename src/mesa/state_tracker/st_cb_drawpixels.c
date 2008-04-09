@@ -212,6 +212,7 @@ make_fragment_shader_z(struct st_context *st)
 
    p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
    p->OutputsWritten = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR);
+   p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
    stfp = (struct st_fragment_program *) p;
    st_translate_fragment_program(st, stfp, NULL);

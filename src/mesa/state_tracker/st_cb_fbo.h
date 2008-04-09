@@ -30,6 +30,9 @@
 #define ST_CB_FBO_H
 
 
+#define DEFAULT_ACCUM_PIPE_FORMAT PIPE_FORMAT_R16G16B16A16_SNORM
+
+
 
 /**
  * Derived renderbuffer class.  Just need to add a pointer to the

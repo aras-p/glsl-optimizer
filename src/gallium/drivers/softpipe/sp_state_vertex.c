@@ -47,6 +47,7 @@ softpipe_set_vertex_elements(struct pipe_context *pipe,
 
    memcpy(softpipe->vertex_element, attribs,
           count * sizeof(struct pipe_vertex_element));
+   softpipe->num_vertex_elements = count;
 
    softpipe->dirty |= SP_NEW_VERTEX;
 
@@ -64,6 +65,7 @@ softpipe_set_vertex_buffers(struct pipe_context *pipe,
    assert(count <= PIPE_MAX_ATTRIBS);
 
    memcpy(softpipe->vertex_buffer, buffers, count * sizeof(buffers[0]));
+   softpipe->num_vertex_buffers = count;
 
    softpipe->dirty |= SP_NEW_VERTEX;
 

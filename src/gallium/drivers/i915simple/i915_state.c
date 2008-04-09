@@ -694,6 +694,8 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
 
    memcpy(i915->vertex_buffer, buffers, count * sizeof(buffers[0]));
+   i915->num_vertex_buffers = count;
+
    /* pass-through to draw module */
    draw_set_vertex_buffers(i915->draw, count, buffers);
 }
@@ -703,6 +705,7 @@ static void i915_set_vertex_elements(struct pipe_context *pipe,
                                      const struct pipe_vertex_element *elements)
 {
    struct i915_context *i915 = i915_context(pipe);
+   i915->num_vertex_elements = count;
    /* pass-through to draw module */
    draw_set_vertex_elements(i915->draw, count, elements);
 }

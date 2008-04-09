@@ -76,15 +76,6 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp_push_quad_first( sp, sp->quad.blend );
    }
 
-   if (sp->framebuffer.num_cbufs == 1) {
-      /* the usual case: write to exactly one colorbuf */
-      sp->current_cbuf = 0;
-   }
-   else {
-      /* insert bufloop stage */
-      sp_push_quad_first( sp, sp->quad.bufloop );
-   }
-
    if (sp->depth_stencil->depth.occlusion_count) {
       sp_push_quad_first( sp, sp->quad.occlusion );
    }

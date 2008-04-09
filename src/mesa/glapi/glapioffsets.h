@@ -801,11 +801,12 @@
 #define _gloffset_RenderbufferStorageEXT 766
 #define _gloffset_BlitFramebufferEXT 767
 #define _gloffset_FramebufferTextureLayerEXT 768
-#define _gloffset_ProgramEnvParameters4fvEXT 769
-#define _gloffset_ProgramLocalParameters4fvEXT 770
-#define _gloffset_GetQueryObjecti64vEXT 771
-#define _gloffset_GetQueryObjectui64vEXT 772
-#define _gloffset_FIRST_DYNAMIC 773
+#define _gloffset_StencilFuncSeparateATI 769
+#define _gloffset_ProgramEnvParameters4fvEXT 770
+#define _gloffset_ProgramLocalParameters4fvEXT 771
+#define _gloffset_GetQueryObjecti64vEXT 772
+#define _gloffset_GetQueryObjectui64vEXT 773
+#define _gloffset_FIRST_DYNAMIC 774
 
 #else
 
@@ -1170,6 +1171,7 @@
 #define _gloffset_RenderbufferStorageEXT driDispatchRemapTable[RenderbufferStorageEXT_remap_index]
 #define _gloffset_BlitFramebufferEXT driDispatchRemapTable[BlitFramebufferEXT_remap_index]
 #define _gloffset_FramebufferTextureLayerEXT driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index]
+#define _gloffset_StencilFuncSeparateATI driDispatchRemapTable[StencilFuncSeparateATI_remap_index]
 #define _gloffset_ProgramEnvParameters4fvEXT driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index]
 #define _gloffset_ProgramLocalParameters4fvEXT driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index]
 #define _gloffset_GetQueryObjecti64vEXT driDispatchRemapTable[GetQueryObjecti64vEXT_remap_index]

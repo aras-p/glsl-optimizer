@@ -304,11 +304,11 @@ void *
 debug_realloc(const char *file, unsigned line, const char *function,
               void *old_ptr, size_t old_size, size_t new_size );
 
-void 
-debug_memory_reset(void);
+unsigned long
+debug_memory_begin(void);
 
 void 
-debug_memory_report(void);
+debug_memory_end(unsigned long beginning);
 
 
 #ifdef	__cplusplus

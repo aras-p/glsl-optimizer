@@ -155,6 +155,9 @@ void draw_set_mapped_vertex_buffer(struct draw_context *draw,
 void draw_set_mapped_constant_buffer(struct draw_context *draw,
                                      const void *buffer);
 
+void draw_set_edgeflags( struct draw_context *draw,
+                         const unsigned *edgeflag );
+
 
 /***********************************************************************
  * draw_prim.c 
