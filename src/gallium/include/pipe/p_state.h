@@ -55,7 +55,6 @@ extern "C" {
 #define PIPE_MAX_CLIP_PLANES  6
 #define PIPE_MAX_CONSTANT    32
 #define PIPE_MAX_ATTRIBS     32
-#define PIPE_ATTRIB_MAX      32 /* XXX obsolete - remove */
 #define PIPE_MAX_COLOR_BUFS   8
 #define PIPE_MAX_TEXTURE_LEVELS  16
 #define PIPE_MAX_FEEDBACK_ATTRIBS 16
