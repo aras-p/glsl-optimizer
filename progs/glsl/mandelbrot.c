@@ -154,8 +154,6 @@ SpecialKey(int key, int x, int y)
 static void
 Init(void)
 {
-   GLint i;
-
    if (!ShadersSupported())
       exit(1);
 
@@ -167,28 +165,7 @@ Init(void)
 
    glUseProgram_func(program);
 
-   for (i = 0; Uniforms[i].name; i++) {
-      Uniforms[i].location
-         = glGetUniformLocation_func(program, Uniforms[i].name);
-      printf("Uniform %s location: %d\n", Uniforms[i].name,
-             Uniforms[i].location);
-      switch (Uniforms[i].size) {
-      case 1:
-         glUniform1fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 2:
-         glUniform2fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 3:
-         glUniform3fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 4:
-         glUniform4fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      default:
-         abort();
-      }
-   }
+   InitUniforms(program, Uniforms);
 
    uZoom = glGetUniformLocation_func(program, "Zoom");
    uXcenter = glGetUniformLocation_func(program, "Xcenter");
