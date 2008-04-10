@@ -269,7 +269,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       }
       else if (strb->surface->format == PIPE_FORMAT_Z16_UNORM) {
          for (i = 0; i < height; i++) {
-            GLshort ztemp[MAX_WIDTH], j;
+            GLushort ztemp[MAX_WIDTH], j;
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffff;
             pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, ztemp, 0);
