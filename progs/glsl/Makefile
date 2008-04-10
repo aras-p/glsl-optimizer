@@ -151,3 +151,4 @@ clean:
 	-rm -f $(PROGS)
 	-rm -f *.o *~
 	-rm -f extfuncs.h
+	-rm -f shaderutil.*
