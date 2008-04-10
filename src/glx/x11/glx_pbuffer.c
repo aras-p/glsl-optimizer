@@ -164,6 +164,33 @@ DestroyPbuffer( Display * dpy, GLXDrawable drawable )
 }
 
 
+#ifdef GLX_DIRECT_RENDERING
+extern __GLXDRIdrawable *
+GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int * const scrn_num);
+
+static GLenum
+determineTextureTarget(const int *attribs, int numAttribs)
+{
+    GLenum target = 0;
+    int i;
+
+    for (i = 0; i < numAttribs; i++) {
+	if (attribs[2 * i] == GLX_TEXTURE_TARGET_EXT) {
+	    switch (attribs[2 * i + 1]) {
+	    case GLX_TEXTURE_2D_EXT:
+		target = GL_TEXTURE_2D;
+		break;
+	    case GLX_TEXTURE_RECTANGLE_EXT:
+		target = GL_TEXTURE_RECTANGLE_ARB;
+		break;
+	    }
+	}
+    }
+ 
+    return target;
+}
+#endif
+
 /**
  * Get a drawable's attribute.
  *
@@ -261,6 +288,16 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 	       }
 	   }
 
+#ifdef GLX_DIRECT_RENDERING
+	   {
+		__GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable, NULL);
+
+		if (pdraw != NULL && !pdraw->textureTarget)
+		    pdraw->textureTarget = determineTextureTarget(data,
+								  num_attributes);
+	   }
+#endif
+
 	   Xfree( data );
        }
    }
@@ -270,33 +307,6 @@ GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
 
    return 0;
 }
-
-#ifdef GLX_DIRECT_RENDERING
-extern __GLXDRIdrawable *
-GetGLXDRIDrawable(Display *dpy, GLXDrawable drawable, int * const scrn_num);
-
-static GLenum
-determineTextureTarget(const int *attribs, int numAttribs)
-{
-    GLenum target = 0;
-    int i;
-
-    for (i = 0; i < numAttribs; i++) {
-	if (attribs[2 * i] == GLX_TEXTURE_TARGET_EXT) {
-	    switch (attribs[2 * i + 1]) {
-	    case GLX_TEXTURE_2D_EXT:
-		target = GL_TEXTURE_2D;
-		break;
-	    case GLX_TEXTURE_RECTANGLE_EXT:
-		target = GL_TEXTURE_RECTANGLE_ARB;
-		break;
-	    }
-	}
-    }
- 
-    return target;
-}
-#endif
 
 /**
  * Create a non-pbuffer GLX drawable.
