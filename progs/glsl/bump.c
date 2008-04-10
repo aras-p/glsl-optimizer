@@ -13,6 +13,7 @@
 #include <GL/glu.h>
 #include <GL/glext.h>
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 
 static char *FragProgFile = "CH11-bumpmap.frag.txt";
@@ -24,20 +25,13 @@ static GLuint vertShader;
 static GLuint program;
 
 
-struct uniform_info {
-   const char *name;
-   GLuint size;
-   GLint location;
-   GLfloat value[4];
-};
-
 static struct uniform_info Uniforms[] = {
-   { "LightPosition",       3, -1, { 0.57737, 0.57735, 0.57735, 0.0 } },
-   { "SurfaceColor",        3, -1, { 0.8, 0.8, 0.2, 0 } },
-   { "BumpDensity",         1, -1, { 10.0, 0, 0, 0 } },
-   { "BumpSize",            1, -1, { 0.125, 0, 0, 0 } },
-   { "SpecularFactor",      1, -1, { 0.5, 0, 0, 0 } },
-   { NULL, 0, 0, { 0, 0, 0, 0 } }
+   { "LightPosition",    3, GL_FLOAT, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
+   { "SurfaceColor",     3, GL_FLOAT, { 0.8, 0.8, 0.2, 0 }, -1 },
+   { "BumpDensity",      1, GL_FLOAT, { 10.0, 0, 0, 0 }, -1 },
+   { "BumpSize",         1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
+   { "SpecularFactor",   1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
+   END_OF_UNIFORMS
 };
 
 static GLint win = 0;
@@ -232,100 +226,18 @@ SpecialKey(int key, int x, int y)
 }
 
 
-
-static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "bump: problem compiling shader: %s\n", log);
-      exit(1);
-   }
-   else {
-      printf("Shader compiled OK\n");
-   }
-}
-
-
-/**
- * Read a shader from a file.
- */
-static void
-ReadShader(GLuint shader, const char *filename)
-{
-   const int max = 100*1000;
-   int n;
-   char *buffer = (char*) malloc(max);
-   FILE *f = fopen(filename, "r");
-   if (!f) {
-      fprintf(stderr, "bump: Unable to open shader file %s\n", filename);
-      exit(1);
-   }
-
-   n = fread(buffer, 1, max, f);
-   printf("bump: read %d bytes from shader file %s\n", n, filename);
-   if (n > 0) {
-      buffer[n] = 0;
-      LoadAndCompileShader(shader, buffer);
-   }
-
-   fclose(f);
-   free(buffer);
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-   else {
-      fprintf(stderr, "Link success!\n");
-   }
-}
-
-
 static void
 Init(void)
 {
-   const char *version;
-   GLint i;
-
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("Warning: this program expects OpenGL 2.0\n");
-      /*exit(1);*/
-   }
-   printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
+   if (!ShadersSupported())
+      exit(1);
 
    GetExtensionFuncs();
 
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
-   ReadShader(vertShader, VertProgFile);
+   vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertProgFile);
+   fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
+   program = LinkShaders(vertShader, fragShader);
 
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-   ReadShader(fragShader, FragProgFile);
-
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
-   glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
-   CheckLink(program);
    glUseProgram_func(program);
 
    assert(glIsProgram_func(program));
@@ -336,28 +248,7 @@ Init(void)
 
    CheckError(__LINE__);
 
-   for (i = 0; Uniforms[i].name; i++) {
-      Uniforms[i].location
-         = glGetUniformLocation_func(program, Uniforms[i].name);
-      printf("Uniform %s location: %d\n", Uniforms[i].name,
-             Uniforms[i].location);
-      switch (Uniforms[i].size) {
-      case 1:
-         glUniform1fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 2:
-         glUniform2fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 3:
-         glUniform3fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 4:
-         glUniform4fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      default:
-         abort();
-      }
-   }
+   InitUniforms(program, Uniforms);
 
    CheckError(__LINE__);
 

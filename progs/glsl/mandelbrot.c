@@ -13,6 +13,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 
 static char *FragProgFile = "CH18-mandel.frag.txt";
@@ -24,28 +25,21 @@ static GLuint vertShader;
 static GLuint program;
 
 
-struct uniform_info {
-   const char *name;
-   GLuint size;
-   GLint location;
-   GLfloat value[4];
-};
-
 static struct uniform_info Uniforms[] = {
    /* vert */
-   { "LightPosition",        3, -1, { 0.1, 0.1, 9.0, 0} },
-   { "SpecularContribution", 1, -1, { 0.5, 0, 0, 0 } },
-   { "DiffuseContribution",  1, -1, { 0.5, 0, 0, 0 } },
-   { "Shininess",            1, -1, { 20.0, 0, 0, 0 } },
+   { "LightPosition",        3, GL_FLOAT, { 0.1, 0.1, 9.0, 0}, -1 },
+   { "SpecularContribution", 1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
+   { "DiffuseContribution",  1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
+   { "Shininess",            1, GL_FLOAT, { 20.0, 0, 0, 0 }, -1 },
    /* frag */
-   { "MaxIterations",        1, -1, { 12, 0, 0, 0 } },
-   { "Zoom",                 1, -1, { 0.125, 0, 0, 0 } },
-   { "Xcenter",              1, -1, { -1.5, 0, 0, 0 } },
-   { "Ycenter",              1, -1, { .005, 0, 0, 0 } },
-   { "InnerColor",           3, -1, { 1, 0, 0, 0 } },
-   { "OuterColor1",          3, -1, { 0, 1, 0, 0 } },
-   { "OuterColor2",          3, -1, { 0, 0, 1, 0 } },
-   { NULL, 0, 0, { 0, 0, 0, 0 } }
+   { "MaxIterations",        1, GL_FLOAT, { 12, 0, 0, 0 }, -1 },
+   { "Zoom",                 1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
+   { "Xcenter",              1, GL_FLOAT, { -1.5, 0, 0, 0 }, -1 },
+   { "Ycenter",              1, GL_FLOAT, { .005, 0, 0, 0 }, -1 },
+   { "InnerColor",           3, GL_FLOAT, { 1, 0, 0, 0 }, -1 },
+   { "OuterColor1",          3, GL_FLOAT, { 0, 1, 0, 0 }, -1 },
+   { "OuterColor2",          3, GL_FLOAT, { 0, 0, 1, 0 }, -1 },
+   END_OF_UNIFORMS
 };
 
 static GLint win = 0;
@@ -157,99 +151,20 @@ SpecialKey(int key, int x, int y)
 }
 
 
-
-static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "mandelbrot: problem compiling shader: %s\n", log);
-      exit(1);
-   }
-   else {
-      printf("Shader compiled OK\n");
-   }
-}
-
-
-/**
- * Read a shader from a file.
- */
-static void
-ReadShader(GLuint shader, const char *filename)
-{
-   const int max = 100*1000;
-   int n;
-   char *buffer = (char*) malloc(max);
-   FILE *f = fopen(filename, "r");
-   if (!f) {
-      fprintf(stderr, "mandelbrot: Unable to open shader file %s\n", filename);
-      exit(1);
-   }
-
-   n = fread(buffer, 1, max, f);
-   printf("mandelbrot: read %d bytes from shader file %s\n", n, filename);
-   if (n > 0) {
-      buffer[n] = 0;
-      LoadAndCompileShader(shader, buffer);
-   }
-
-   fclose(f);
-   free(buffer);
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-   else {
-      fprintf(stderr, "Link success!\n");
-   }
-}
-
-
 static void
 Init(void)
 {
-   const char *version;
    GLint i;
 
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("Warning: this program expects OpenGL 2.0\n");
-      /*exit(1);*/
-   }
+   if (!ShadersSupported())
+      exit(1);
 
    GetExtensionFuncs();
 
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
-   ReadShader(vertShader, VertProgFile);
+   vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertProgFile);
+   fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
+   program = LinkShaders(vertShader, fragShader);
 
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-   ReadShader(fragShader, FragProgFile);
-
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
-   glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
-   CheckLink(program);
    glUseProgram_func(program);
 
    for (i = 0; Uniforms[i].name; i++) {

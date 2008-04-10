@@ -45,6 +45,7 @@ default: $(PROGS)
 extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 	cp $< .
 
+
 readtex.c: $(TOP)/progs/util/readtex.c
 	cp $< .
 
@@ -54,23 +55,96 @@ readtex.h: $(TOP)/progs/util/readtex.h
 readtex.o: readtex.c readtex.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
 
-bitmap.c: extfuncs.h
 
-brick.c: extfuncs.h
+shaderutil.c: $(TOP)/progs/util/shaderutil.c
+	cp $< .
 
-bump.c: extfuncs.h
+shaderutil.h: $(TOP)/progs/util/shaderutil.h
+	cp $< .
 
-mandelbrot.c: extfuncs.h
+shaderutil.o: shaderutil.c shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) shaderutil.c
 
-points.c: extfuncs.h
 
-toyball.c: extfuncs.h
 
-texdemo1: texdemo1.o readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) texdemo1.o readtex.o $(LIBS) -o $@
+bitmap.o: bitmap.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) bitmap.c
 
-texdemo1.o: texdemo1.c readtex.h extfuncs.h
+bitmap: bitmap.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) bitmap.o shaderutil.o $(LIBS) -o $@
+
+
+brick.o: brick.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) brick.c
+
+brick: brick.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) brick.o shaderutil.o $(LIBS) -o $@
+
+
+bump.o: bump.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) bump.c
+
+bump: bump.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) bump.o shaderutil.o $(LIBS) -o $@
+
+
+deriv.o: deriv.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) deriv.c
+
+deriv: deriv.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) deriv.o shaderutil.o $(LIBS) -o $@
+
+
+mandelbrot.o: mandelbrot.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) mandelbrot.c
+
+mandelbrot: mandelbrot.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) mandelbrot.o shaderutil.o $(LIBS) -o $@
+
+
+noise.o: noise.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) noise.c
+
+noise: noise.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) noise.o shaderutil.o $(LIBS) -o $@
+
+
+points.o: points.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) points.c
+
+points: points.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) points.o shaderutil.o $(LIBS) -o $@
+
+
+texdemo1.o: texdemo1.c readtex.h extfuncs.h shaderutil.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) texdemo1.c
+
+texdemo1: texdemo1.o readtex.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) texdemo1.o readtex.o shaderutil.o $(LIBS) -o $@
+
+
+toyball.o: toyball.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) toyball.c
+
+toyball: toyball.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) toyball.o shaderutil.o $(LIBS) -o $@
+
+
+twoside.o: twoside.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) twoside.c
+
+twoside: twoside.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) twoside.o shaderutil.o $(LIBS) -o $@
+
+
+trirast.o: trirast.c extfuncs.h shaderutil.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) trirast.c
+
+trirast: trirast.o shaderutil.o
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) trirast.o shaderutil.o $(LIBS) -o $@
+
+
+
 
 
 clean:

@@ -14,6 +14,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 
 static GLuint FragShader;
@@ -182,40 +183,6 @@ SpecialKey(int key, int x, int y)
 
 
 static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "fslight: problem compiling shader:\n%s\n", log);
-      exit(1);
-   }
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-}
-
-
-static void
 Init(void)
 {
    /* Fragment shader: compute distance of fragment from center of point
@@ -254,28 +221,16 @@ Init(void)
       "   gl_TexCoord[0] = gl_MultiTexCoord0; \n"
       "   gl_FrontColor = gl_Color; \n"
       "}\n";
-   const char *version;
 
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("This program requires OpenGL 2.x, found %s\n", version);
+   if (!ShadersSupported())
       exit(1);
-   }
-   printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
 
    GetExtensionFuncs();
 
-   FragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-   LoadAndCompileShader(FragShader, fragShaderText);
+   VertShader = CompileShaderText(GL_VERTEX_SHADER, vertShaderText);
+   FragShader = CompileShaderText(GL_FRAGMENT_SHADER, fragShaderText);
+   Program = LinkShaders(VertShader, FragShader);
 
-   VertShader = glCreateShader_func(GL_VERTEX_SHADER);
-   LoadAndCompileShader(VertShader, vertShaderText);
-
-   Program = glCreateProgram_func();
-   glAttachShader_func(Program, FragShader);
-   glAttachShader_func(Program, VertShader);
-   glLinkProgram_func(Program);
-   CheckLink(Program);
    glUseProgram_func(Program);
 
    uViewportInv = glGetUniformLocation_func(Program, "viewportInv");

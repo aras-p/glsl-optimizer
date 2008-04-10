@@ -31,6 +31,7 @@
 #include "GL/glut.h"
 #include "readtex.h"
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 static const char *Demo = "texdemo1";
 
@@ -50,36 +51,17 @@ static GLfloat EyeDist = 10;
 static GLboolean Anim = GL_TRUE;
 
 
-struct uniform_info {
-   const char *name;
-   GLuint size;
-   GLint location;
-   GLenum type;  /**< GL_FLOAT or GL_INT */
-   GLfloat value[4];
-};
-
 static struct uniform_info ReflectUniforms[] = {
-   { "cubeTex",  1, -1, GL_INT, { 0, 0, 0, 0 } },
-   { "lightPos", 3, -1, GL_FLOAT, { 10, 10, 20, 0 } },
-   { NULL, 0, 0, 0, { 0, 0, 0, 0 } }
+   { "cubeTex",  1, GL_INT, { 0, 0, 0, 0 }, -1 },
+   { "lightPos", 3, GL_FLOAT, { 10, 10, 20, 0 }, -1 },
+   END_OF_UNIFORMS
 };
 
 static struct uniform_info SimpleUniforms[] = {
-   { "tex2d",    1, -1, GL_INT,   { 1, 0, 0, 0 } },
-   { "lightPos", 3, -1, GL_FLOAT, { 10, 10, 20, 0 } },
-   { NULL, 0, 0, 0, { 0, 0, 0, 0 } }
+   { "tex2d",    1, GL_INT,   { 1, 0, 0, 0 }, -1 },
+   { "lightPos", 3, GL_FLOAT, { 10, 10, 20, 0 }, -1 },
+   END_OF_UNIFORMS
 };
-
-
-static void
-CheckError(int line)
-{
-   GLenum err = glGetError();
-   if (err) {
-      printf("GL Error %s (0x%x) at line %d\n",
-             gluErrorString(err), (int) err, line);
-   }
-}
 
 
 static void
@@ -386,132 +368,19 @@ InitTextures(GLboolean useImageFiles)
 }
 
 
-static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "%s: problem compiling shader: %s\n", Demo, log);
-      exit(1);
-   }
-   else {
-      printf("Shader compiled OK\n");
-   }
-}
-
-
-/**
- * Read a shader from a file.
- */
-static void
-ReadShader(GLuint shader, const char *filename)
-{
-   const int max = 100*1000;
-   int n;
-   char *buffer = (char*) malloc(max);
-   FILE *f = fopen(filename, "r");
-   if (!f) {
-      fprintf(stderr, "%s: Unable to open shader file %s\n", Demo, filename);
-      exit(1);
-   }
-
-   n = fread(buffer, 1, max, f);
-   printf("%s: read %d bytes from shader file %s\n", Demo, n, filename);
-   if (n > 0) {
-      buffer[n] = 0;
-      LoadAndCompileShader(shader, buffer);
-   }
-
-   fclose(f);
-   free(buffer);
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-   else {
-      fprintf(stderr, "Link success!\n");
-   }
-}
-
-
 static GLuint
 CreateProgram(const char *vertProgFile, const char *fragProgFile,
               struct uniform_info *uniforms)
 {
-   GLuint fragShader = 0, vertShader = 0, program = 0;
-   GLint i;
+   GLuint fragShader, vertShader, program;
 
-   program = glCreateProgram_func();
-   if (vertProgFile) {
-      vertShader = glCreateShader_func(GL_VERTEX_SHADER);
-      ReadShader(vertShader, vertProgFile);
-      glAttachShader_func(program, vertShader);
-   }
-
-   if (fragProgFile) {
-      fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-      ReadShader(fragShader, fragProgFile);
-      glAttachShader_func(program, fragShader);
-   }
-
-   glLinkProgram_func(program);
-   CheckLink(program);
+   vertShader = CompileShaderFile(GL_VERTEX_SHADER, vertProgFile);
+   fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, fragProgFile);
+   program = LinkShaders(vertShader, fragShader);
 
    glUseProgram_func(program);
 
-   assert(glIsProgram_func(program));
-   assert(glIsShader_func(fragShader));
-   assert(glIsShader_func(vertShader));
-
-   CheckError(__LINE__);
-   for (i = 0; uniforms[i].name; i++) {
-      uniforms[i].location
-         = glGetUniformLocation_func(program, uniforms[i].name);
-      printf("Uniform %s location: %d\n", uniforms[i].name,
-             uniforms[i].location);
-
-      switch (uniforms[i].size) {
-      case 1:
-         if (uniforms[i].type == GL_INT)
-            glUniform1i_func(uniforms[i].location,
-                             (GLint) uniforms[i].value[0]);
-         else
-            glUniform1fv_func(uniforms[i].location, 1, uniforms[i].value);
-         break;
-      case 2:
-         glUniform2fv_func(uniforms[i].location, 1, uniforms[i].value);
-         break;
-      case 3:
-         glUniform3fv_func(uniforms[i].location, 1, uniforms[i].value);
-         break;
-      case 4:
-         glUniform4fv_func(uniforms[i].location, 1, uniforms[i].value);
-         break;
-      default:
-         abort();
-      }
-   }
-
-   CheckError(__LINE__);
+   InitUniforms(program, uniforms);
 
    return program;
 }
