@@ -44,30 +44,10 @@
 #include "pipe/p_winsys.h"
 
 
-static GLboolean
+static INLINE GLboolean
 is_front_buffer_dirty(struct st_context *st)
 {
-   GLframebuffer *fb = st->ctx->DrawBuffer;
-
-   if (!fb)
-      return GL_FALSE;
-
-   /* XXX: temporary hack.  This flag should only be set if we do any
-    * rendering to the front buffer.
-    *
-    * Further more, the scissor rectangle could be tracked to
-    * construct a dirty region of the front buffer, to avoid
-    * situations where it must be copied repeatedly.
-    *
-    * In the extreme case, some kind of timer could be set up to allow
-    * coalescing of multiple flushes to the frontbuffer, which can be
-    * quite a performance drain if there are a sufficient number of
-    * them.
-    */
-   st->flags.frontbuffer_dirty
-      = (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT);
-
-   return st->flags.frontbuffer_dirty;
+   return st->frontbuffer_status == FRONT_STATUS_DIRTY;
 }
 
 
@@ -86,7 +66,8 @@ display_front_buffer(struct st_context *st)
     */
    st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
                                         st->pipe->priv );
-   st->flags.frontbuffer_dirty = 0;
+
+   st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
 }
 
 

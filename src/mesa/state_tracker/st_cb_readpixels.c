@@ -129,6 +129,34 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
 
 /**
+ * Return renderbuffer to use for reading color pixels for glRead/CopyPixel
+ * commands.
+ * Special care is needed for the front buffer.
+ */
+struct st_renderbuffer *
+st_get_color_read_renderbuffer(GLcontext *ctx)
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct st_renderbuffer *strb =
+      st_renderbuffer(fb->_ColorReadBuffer);
+   struct st_renderbuffer *front = 
+      st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+
+   if (strb == front
+       && ctx->st->frontbuffer_status == FRONT_STATUS_COPY_OF_BACK) {
+      /* reading from front color buffer, which is a logical copy of the
+       * back color buffer.
+       */
+      struct st_renderbuffer *back = 
+         st_renderbuffer(fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+      strb = back;
+   }
+
+   return strb;
+}
+
+
+/**
  * Do glReadPixels by getting rows from the framebuffer surface with
  * get_tile().  Convert to requested format/type with Mesa image routines.
  * Image transfer ops are done in software too.
@@ -173,11 +201,12 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       strb = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
    }
    else {
-      strb = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+      /* Read color buffer */
+      strb = st_get_color_read_renderbuffer(ctx);
    }
+
    if (!strb)
       return;
-
 
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */

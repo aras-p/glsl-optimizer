@@ -961,7 +961,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (type == GL_COLOR) {
-      rbRead = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+      rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
       stfp = combined_drawpix_fragment_program(ctx);
       stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
