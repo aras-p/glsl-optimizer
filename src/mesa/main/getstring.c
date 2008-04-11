@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -81,6 +81,7 @@ _mesa_GetString( GLenum name )
       case GL_RENDERER:
           return (const GLubyte *) renderer;
       case GL_VERSION:
+         /* tests for 1.3: */
          if (ctx->Extensions.ARB_multisample &&
              ctx->Extensions.ARB_multitexture &&
              ctx->Extensions.ARB_texture_border_clamp &&
@@ -89,6 +90,7 @@ _mesa_GetString( GLenum name )
              ctx->Extensions.EXT_texture_env_add &&
              ctx->Extensions.ARB_texture_env_combine &&
              ctx->Extensions.ARB_texture_env_dot3) {
+            /* tests for 1.4: */
             if (ctx->Extensions.ARB_depth_texture &&
                 ctx->Extensions.ARB_shadow &&
                 ctx->Extensions.ARB_texture_env_crossbar &&
@@ -105,9 +107,11 @@ _mesa_GetString( GLenum name )
                 ctx->Extensions.EXT_stencil_wrap &&
                 ctx->Extensions.EXT_texture_lod_bias &&
                 ctx->Extensions.SGIS_generate_mipmap) {
+               /* tests for 1.5: */
                if (ctx->Extensions.ARB_occlusion_query &&
                    ctx->Extensions.ARB_vertex_buffer_object &&
                    ctx->Extensions.EXT_shadow_funcs) {
+                  /* tests for 2.0: */
                   if (ctx->Extensions.ARB_draw_buffers &&
                       ctx->Extensions.ARB_point_sprite &&
                       ctx->Extensions.ARB_shader_objects &&
@@ -115,6 +119,7 @@ _mesa_GetString( GLenum name )
                       ctx->Extensions.ARB_fragment_shader &&
                       ctx->Extensions.ARB_texture_non_power_of_two &&
                       ctx->Extensions.EXT_blend_equation_separate) {
+                     /* tests for 2.1: */
                      if (ctx->Extensions.ARB_shading_language_120 &&
                          ctx->Extensions.EXT_pixel_buffer_object &&
                          ctx->Extensions.EXT_texture_sRGB) {
