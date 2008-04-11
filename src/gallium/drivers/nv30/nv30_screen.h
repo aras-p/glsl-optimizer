@@ -4,10 +4,25 @@
 #include "pipe/p_screen.h"
 
 struct nv30_screen {
-	struct pipe_screen screen;
+	struct pipe_screen pipe;
 
 	struct nouveau_winsys *nvws;
 	unsigned chipset;
+
+	/* HW graphics objects */
+	struct nouveau_grobj *rankine;
+	struct nouveau_notifier *sync;
+
+	/* Query object resources */
+	struct nouveau_notifier *query;
+	struct nouveau_resource *query_heap;
+
+	/* Vtxprog resources */
+	struct nouveau_resource *vp_exec_heap;
+	struct nouveau_resource *vp_data_heap;
+
+	/* Current 3D state of channel */
+	struct nouveau_stateobj *state[NV30_STATE_MAX];
 };
 
 static INLINE struct nv30_screen *

@@ -1,5 +1,4 @@
 #include "pipe/p_context.h"
-#include "pipe/p_util.h"
 
 #include "nv30_context.h"
 
@@ -10,7 +9,7 @@ struct nv30_query {
 	uint64_t result;
 };
 
-static inline struct nv30_query *
+static INLINE struct nv30_query *
 nv30_query(struct pipe_query *pipe)
 {
 	return (struct nv30_query *)pipe;
@@ -46,9 +45,18 @@ nv30_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 
 	assert(q->type == PIPE_QUERY_OCCLUSION_COUNTER);
 
-	if (nv30->nvws->res_alloc(nv30->query_heap, 1, NULL, &q->object))
+	/* Happens when end_query() is called, then another begin_query()
+	 * without querying the result in-between.  For now we'll wait for
+	 * the existing query to notify completion, but it could be better.
+	 */
+	if (q->object) {
+		uint64 tmp;
+		pipe->get_query_result(pipe, pq, 1, &tmp);
+	}
+
+	if (nv30->nvws->res_alloc(nv30->screen->query_heap, 1, NULL, &q->object))
 		assert(0);
-	nv30->nvws->notifier_reset(nv30->query, q->object->start);
+	nv30->nvws->notifier_reset(nv30->screen->query, q->object->start);
 
 	BEGIN_RING(rankine, NV34TCL_QUERY_RESET, 1);
 	OUT_RING  (1);
@@ -83,16 +91,17 @@ nv30_query_result(struct pipe_context *pipe, struct pipe_query *pq,
 	if (!q->ready) {
 		unsigned status;
 
-		status = nvws->notifier_status(nv30->query, q->object->start);
+		status = nvws->notifier_status(nv30->screen->query,
+					       q->object->start);
 		if (status != NV_NOTIFY_STATE_STATUS_COMPLETED) {
 			if (wait == FALSE)
 				return FALSE;
-			nvws->notifier_wait(nv30->query, q->object->start,
+			nvws->notifier_wait(nv30->screen->query, q->object->start,
 					    NV_NOTIFY_STATE_STATUS_COMPLETED,
 					    0);
 		}
 
-		q->result = nvws->notifier_retval(nv30->query,
+		q->result = nvws->notifier_retval(nv30->screen->query,
 						  q->object->start);
 		q->ready = TRUE;
 		nvws->res_free(&q->object);

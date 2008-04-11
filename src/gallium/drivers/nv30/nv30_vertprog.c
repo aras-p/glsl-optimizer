@@ -1,7 +1,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "pipe/p_util.h"
 
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_parse.h"
@@ -654,7 +653,7 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 
 	/* Allocate hw vtxprog exec slots */
 	if (!vp->exec) {
-		struct nouveau_resource *heap = nv30->vertprog.exec_heap;
+		struct nouveau_resource *heap = nv30->screen->vp_exec_heap;
 		uint vplen = vp->nr_insns;
 
 		if (nvws->res_alloc(heap, vplen, vp, &vp->exec)) {
@@ -674,7 +673,7 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 
 	/* Allocate hw vtxprog const slots */
 	if (vp->nr_consts && !vp->data) {
-		struct nouveau_resource *heap = nv30->vertprog.data_heap;
+		struct nouveau_resource *heap = nv30->screen->vp_data_heap;
 
 		if (nvws->res_alloc(heap, vp->nr_consts, vp, &vp->data)) {
 			while (heap->next && heap->size < vp->nr_consts) {
@@ -789,9 +788,29 @@ nv30_vertprog_bind(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 void
 nv30_vertprog_destroy(struct nv30_context *nv30, struct nv30_vertex_program *vp)
 {
-	if (vp->nr_consts)
-		FREE(vp->consts);
-	if (vp->nr_insns)
+	struct nouveau_winsys *nvws = nv30->screen->nvws;
+
+	vp->translated = FALSE;
+
+	if (vp->nr_insns) {
 		FREE(vp->insns);
+		vp->insns = NULL;
+		vp->nr_insns = 0;
+	}
+
+	if (vp->nr_consts) {
+		FREE(vp->consts);
+		vp->consts = NULL;
+		vp->nr_consts = 0;
+	}
+
+	nvws->res_free(&vp->exec);
+	vp->exec_start = 0;
+	nvws->res_free(&vp->data);
+	vp->data_start = 0;
+	vp->data_start_min = 0;
+
+	/* vp->ir = vp->or = vp->clip_ctrl = 0;
+	so_ref(NULL, &vp->so); */
 }
 

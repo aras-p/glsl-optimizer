@@ -4,24 +4,28 @@
 #include "nv30_context.h"
 #include "nv30_screen.h"
 
+#define NV30TCL_CHIPSET_3X_MASK 0x00000003
+#define NV34TCL_CHIPSET_3X_MASK 0x00000010
+#define NV35TCL_CHIPSET_3X_MASK 0x000001e0
+
 static const char *
-nv30_screen_get_name(struct pipe_screen *screen)
+nv30_screen_get_name(struct pipe_screen *pscreen)
 {
-	struct nv30_screen *nv30screen = nv30_screen(screen);
+	struct nv30_screen *screen = nv30_screen(pscreen);
 	static char buffer[128];
 
-	snprintf(buffer, sizeof(buffer), "NV%02X", nv30screen->chipset);
+	snprintf(buffer, sizeof(buffer), "NV%02X", screen->chipset);
 	return buffer;
 }
 
 static const char *
-nv30_screen_get_vendor(struct pipe_screen *screen)
+nv30_screen_get_vendor(struct pipe_screen *pscreen)
 {
 	return "nouveau";
 }
 
 static int
-nv30_screen_get_param(struct pipe_screen *screen, int param)
+nv30_screen_get_param(struct pipe_screen *pscreen, int param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -60,7 +64,7 @@ nv30_screen_get_param(struct pipe_screen *screen, int param)
 }
 
 static float
-nv30_screen_get_paramf(struct pipe_screen *screen, int param)
+nv30_screen_get_paramf(struct pipe_screen *pscreen, int param)
 {
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:
@@ -82,8 +86,8 @@ nv30_screen_get_paramf(struct pipe_screen *screen, int param)
 }
 
 static boolean
-nv30_screen_is_format_supported(struct pipe_screen *screen,
-				enum pipe_format format, uint type)
+nv30_screen_surface_format_supported(struct pipe_screen *pscreen,
+				     enum pipe_format format, uint type)
 {
 	switch (type) {
 	case PIPE_SURFACE:
@@ -122,36 +126,184 @@ nv30_screen_is_format_supported(struct pipe_screen *screen,
 }
 
 static void
-nv30_screen_destroy(struct pipe_screen *screen)
+nv30_screen_destroy(struct pipe_screen *pscreen)
 {
-	FREE(screen);
+	struct nv30_screen *screen = nv30_screen(pscreen);
+	struct nouveau_winsys *nvws = screen->nvws;
+
+	nvws->res_free(&screen->vp_exec_heap);
+	nvws->res_free(&screen->vp_data_heap);
+	nvws->res_free(&screen->query_heap);
+	nvws->notifier_free(&screen->query);
+	nvws->notifier_free(&screen->sync);
+	nvws->grobj_free(&screen->rankine);
+
+	FREE(pscreen);
 }
 
 struct pipe_screen *
-nv30_screen_create(struct pipe_winsys *winsys, struct nouveau_winsys *nvws,
+nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
 		   unsigned chipset)
 {
-	struct nv30_screen *nv30screen = CALLOC_STRUCT(nv30_screen);
+	struct nv30_screen *screen = CALLOC_STRUCT(nv30_screen);
+	struct nouveau_stateobj *so;
+	unsigned rankine_class = 0;
+	int ret, i;
 
-	if (!nv30screen)
+	if (!screen)
 		return NULL;
+	screen->chipset = chipset;
+	screen->nvws = nvws;
 
-	nv30screen->chipset = chipset;
-	nv30screen->nvws = nvws;
+	/* 3D object */
+	switch (chipset & 0xf0) {
+	case 0x30:
+		if (NV30TCL_CHIPSET_3X_MASK & (1 << (chipset & 0x0f)))
+			rankine_class = 0x0397;
+		else
+		if (NV34TCL_CHIPSET_3X_MASK & (1 << (chipset & 0x0f)))
+			rankine_class = 0x0697;
+		else
+		if (NV35TCL_CHIPSET_3X_MASK & (1 << (chipset & 0x0f)))
+			rankine_class = 0x0497;
+		break;
+	default:
+		break;
+	}
 
-	nv30screen->screen.winsys = winsys;
+	if (!rankine_class) {
+		NOUVEAU_ERR("Unknown nv3x chipset: nv%02x\n", chipset);
+		return NULL;
+	}
 
-	nv30screen->screen.destroy = nv30_screen_destroy;
+	ret = nvws->grobj_alloc(nvws, rankine_class, &screen->rankine);
+	if (ret) {
+		NOUVEAU_ERR("Error creating 3D object: %d\n", ret);
+		return FALSE;
+	}
 
-	nv30screen->screen.get_name = nv30_screen_get_name;
-	nv30screen->screen.get_vendor = nv30_screen_get_vendor;
-	nv30screen->screen.get_param = nv30_screen_get_param;
-	nv30screen->screen.get_paramf = nv30_screen_get_paramf;
-	nv30screen->screen.is_format_supported = 
-		nv30_screen_is_format_supported;
+	/* Notifier for sync purposes */
+	ret = nvws->notifier_alloc(nvws, 1, &screen->sync);
+	if (ret) {
+		NOUVEAU_ERR("Error creating notifier object: %d\n", ret);
+		nv30_screen_destroy(&screen->pipe);
+		return NULL;
+	}
 
-	nv30_screen_init_miptree_functions(&nv30screen->screen);
+	/* Query objects */
+	ret = nvws->notifier_alloc(nvws, 32, &screen->query);
+	if (ret) {
+		NOUVEAU_ERR("Error initialising query objects: %d\n", ret);
+		nv30_screen_destroy(&screen->pipe);
+		return NULL;
+	}
 
-	return &nv30screen->screen;
+	ret = nvws->res_init(&screen->query_heap, 0, 32);
+	if (ret) {
+		NOUVEAU_ERR("Error initialising query object heap: %d\n", ret);
+		nv30_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
+	/* Vtxprog resources */
+	if (nvws->res_init(&screen->vp_exec_heap, 0, 256) ||
+	    nvws->res_init(&screen->vp_data_heap, 0, 256)) {
+		nv30_screen_destroy(&screen->pipe);
+		return NULL;
+	}
+
+	/* Static rankine initialisation */
+	so = so_new(128, 0);
+	so_method(so, screen->rankine, NV34TCL_DMA_NOTIFY, 1);
+	so_data  (so, screen->sync->handle);
+	so_method(so, screen->rankine, NV34TCL_DMA_TEXTURE0, 2);
+	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, nvws->channel->gart->handle);
+	so_method(so, screen->rankine, NV34TCL_DMA_COLOR1, 1);
+	so_data  (so, nvws->channel->vram->handle);
+	so_method(so, screen->rankine, NV34TCL_DMA_COLOR0, 2);
+	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, nvws->channel->vram->handle);
+	so_method(so, screen->rankine, NV34TCL_DMA_VTXBUF0, 2);
+	so_data  (so, nvws->channel->vram->handle);
+	so_data  (so, nvws->channel->gart->handle);
+/*	so_method(so, screen->rankine, NV34TCL_DMA_FENCE, 2);
+	so_data  (so, 0);
+	so_data  (so, screen->query->handle);*/
+	so_method(so, screen->rankine, NV34TCL_DMA_IN_MEMORY7, 1);
+	so_data  (so, nvws->channel->vram->handle);
+	so_method(so, screen->rankine, NV34TCL_DMA_IN_MEMORY8, 1);
+	so_data  (so, nvws->channel->vram->handle);
+
+	for (i=1; i<8; i++) {
+		so_method(so, screen->rankine, NV34TCL_VIEWPORT_CLIP_HORIZ(i), 1);
+		so_data  (so, 0);
+		so_method(so, screen->rankine, NV34TCL_VIEWPORT_CLIP_VERT(i), 1);
+		so_data  (so, 0);
+	}
+
+	so_method(so, screen->rankine, 0x220, 1);
+	so_data  (so, 1);
+
+	so_method(so, screen->rankine, 0x03b0, 1);
+	so_data  (so, 0x00100000);
+	so_method(so, screen->rankine, 0x1454, 1);
+	so_data  (so, 0);
+	so_method(so, screen->rankine, 0x1d80, 1);
+	so_data  (so, 3);
+	so_method(so, screen->rankine, 0x1450, 1);
+	so_data  (so, 0x00030004);
+	
+	/* NEW */
+	so_method(so, screen->rankine, 0x1e98, 1);
+	so_data  (so, 0);
+	so_method(so, screen->rankine, 0x17e0, 3);
+	so_data  (so, fui(0.0));
+	so_data  (so, fui(0.0));
+	so_data  (so, fui(1.0));
+	so_method(so, screen->rankine, 0x1f80, 16);
+	for (i=0; i<16; i++) {
+		so_data  (so, (i==8) ? 0x0000ffff : 0);
+	}
+
+	so_method(so, screen->rankine, 0x120, 3);
+	so_data  (so, 0);
+	so_data  (so, 1);
+	so_data  (so, 2);
+
+	so_method(so, screen->rankine, 0x1d88, 1);
+	so_data  (so, 0x00001200);
+
+	so_method(so, screen->rankine, NV34TCL_RC_ENABLE, 1);
+	so_data  (so, 0);
+
+	so_method(so, screen->rankine, NV34TCL_DEPTH_RANGE_NEAR, 2);
+	so_data  (so, fui(0.0));
+	so_data  (so, fui(1.0));
+
+	so_method(so, screen->rankine, NV34TCL_MULTISAMPLE_CONTROL, 1);
+	so_data  (so, 0xffff0000);
+
+	/* enables use of vp rather than fixed-function somehow */
+	so_method(so, screen->rankine, 0x1e94, 1);
+	so_data  (so, 0x13);
+
+	so_emit(nvws, so);
+	so_ref(NULL, &so);
+	nvws->push_flush(nvws, 0, NULL);
+
+	screen->pipe.winsys = ws;
+	screen->pipe.destroy = nv30_screen_destroy;
+
+	screen->pipe.get_name = nv30_screen_get_name;
+	screen->pipe.get_vendor = nv30_screen_get_vendor;
+	screen->pipe.get_param = nv30_screen_get_param;
+	screen->pipe.get_paramf = nv30_screen_get_paramf;
+
+	screen->pipe.is_format_supported = nv30_screen_surface_format_supported;
+
+	nv30_screen_init_miptree_functions(&screen->pipe);
+
+	return &screen->pipe;
 }
 

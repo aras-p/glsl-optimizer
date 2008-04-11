@@ -11,8 +11,9 @@
 #include "nouveau/nouveau_gldefs.h"
 
 #define NOUVEAU_PUSH_CONTEXT(ctx)                                              \
-	struct nv30_context *ctx = nv30
+	struct nv30_screen *ctx = nv30->screen
 #include "nouveau/nouveau_push.h"
+#include "nouveau/nouveau_stateobj.h"
 
 #include "nv30_state.h"
 
@@ -21,23 +22,70 @@
 #define NOUVEAU_MSG(fmt, args...) \
 	fprintf(stderr, "nouveau: "fmt, ##args);
 
-#define NV30_NEW_VERTPROG	(1 << 1)
-#define NV30_NEW_FRAGPROG	(1 << 2)
-#define NV30_NEW_ARRAYS		(1 << 3)
+enum nv30_state_index {
+	NV30_STATE_FB = 0,
+	NV30_STATE_VIEWPORT = 1,
+	NV30_STATE_BLEND = 2,
+	NV30_STATE_RAST = 3,
+	NV30_STATE_ZSA = 4,
+	NV30_STATE_BCOL = 5,
+	NV30_STATE_CLIP = 6,
+	NV30_STATE_SCISSOR = 7,
+	NV30_STATE_STIPPLE = 8,
+	NV30_STATE_FRAGPROG = 9,
+	NV30_STATE_VERTPROG = 10,
+	NV30_STATE_FRAGTEX0 = 11,
+	NV30_STATE_FRAGTEX1 = 12,
+	NV30_STATE_FRAGTEX2 = 13,
+	NV30_STATE_FRAGTEX3 = 14,
+	NV30_STATE_FRAGTEX4 = 15,
+	NV30_STATE_FRAGTEX5 = 16,
+	NV30_STATE_FRAGTEX6 = 17,
+	NV30_STATE_FRAGTEX7 = 18,
+	NV30_STATE_FRAGTEX8 = 19,
+	NV30_STATE_FRAGTEX9 = 20,
+	NV30_STATE_FRAGTEX10 = 21,
+	NV30_STATE_FRAGTEX11 = 22,
+	NV30_STATE_FRAGTEX12 = 23,
+	NV30_STATE_FRAGTEX13 = 24,
+	NV30_STATE_FRAGTEX14 = 25,
+	NV30_STATE_FRAGTEX15 = 26,
+	NV30_STATE_VERTTEX0 = 27,
+	NV30_STATE_VERTTEX1 = 28,
+	NV30_STATE_VERTTEX2 = 29,
+	NV30_STATE_VERTTEX3 = 30,
+	NV30_STATE_VTXBUF = 31,
+	NV30_STATE_VTXFMT = 32,
+	NV30_STATE_VTXATTR = 33,
+	NV30_STATE_MAX = 34
+};
+
+#include "nv30_screen.h"
+
+#define NV30_NEW_BLEND		(1 <<  0)
+#define NV30_NEW_RAST		(1 <<  1)
+#define NV30_NEW_ZSA		(1 <<  2)
+#define NV30_NEW_SAMPLER	(1 <<  3)
+#define NV30_NEW_FB		(1 <<  4)
+#define NV30_NEW_STIPPLE	(1 <<  5)
+#define NV30_NEW_SCISSOR	(1 <<  6)
+#define NV30_NEW_VIEWPORT	(1 <<  7)
+#define NV30_NEW_BCOL		(1 <<  8)
+#define NV30_NEW_VERTPROG	(1 <<  9)
+#define NV30_NEW_FRAGPROG	(1 << 10)
+#define NV30_NEW_ARRAYS		(1 << 11)
+#define NV30_NEW_UCP		(1 << 12)
 
 struct nv30_context {
 	struct pipe_context pipe;
+
 	struct nouveau_winsys *nvws;
+	struct nv30_screen *screen;
+	unsigned pctx_id;
 
 	struct draw_context *draw;
 
 	int chipset;
-	struct nouveau_grobj *rankine;
-	struct nouveau_notifier *sync;
-
-	/* query objects */
-	struct nouveau_notifier *query;
-	struct nouveau_resource *query_heap;
 
 	uint32_t dirty;
 
@@ -63,9 +111,6 @@ struct nv30_context {
 	} vb[16];
 
 	struct {
-		struct nouveau_resource *exec_heap;
-		struct nouveau_resource *data_heap;
-
 		struct nv30_vertex_program *active;
 
 		struct nv30_vertex_program *current;
