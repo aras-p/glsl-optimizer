@@ -50,13 +50,15 @@ typedef void (XSTDCALL *codegen_function) (
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
    float (*constant)[4],
-   struct tgsi_exec_vector *temporary );
+   struct tgsi_exec_vector *temporary,
+   float (*immediates)[4] );
 
 
 struct draw_sse_vertex_shader {
    struct draw_vertex_shader base;
    struct x86_function sse2_program;
    codegen_function func;
+   float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
 };
 
 
@@ -149,7 +151,8 @@ vs_sse_run( struct draw_vertex_shader *base,
       shader->func(machine->Inputs,
                    machine->Outputs,
                    machine->Consts,
-                   machine->Temps );
+                   machine->Temps,
+                   shader->immediates);
    }
 
 
@@ -243,7 +246,7 @@ draw_create_vs_sse(struct draw_context *draw,
    x86_init_func( &vs->sse2_program );
 
    if (!tgsi_emit_sse2( (struct tgsi_token *) vs->base.state.tokens,
-			&vs->sse2_program )) 
+			&vs->sse2_program, vs->immediates )) 
       goto fail;
       
    vs->func = (codegen_function) x86_get_func( &vs->sse2_program );

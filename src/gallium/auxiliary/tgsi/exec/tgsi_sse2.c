@@ -2316,10 +2316,12 @@ emit_declaration(
 unsigned
 tgsi_emit_sse2(
    struct tgsi_token *tokens,
-   struct x86_function *func )
+   struct x86_function *func,
+   float (*immediates)[4] )
 {
    struct tgsi_parse_context parse;
    unsigned ok = 1;
+   uint num_immediates = 0;
 
    DUMP_START();
 
@@ -2341,6 +2343,10 @@ tgsi_emit_sse2(
       func,
       get_temp_base(),
       get_argument( 3 ) );
+   emit_mov(
+      func,
+      get_immediate_base(),
+      get_argument( 4 ) );
 
    tgsi_parse_init( &parse, tokens );
 
@@ -2363,9 +2369,18 @@ tgsi_emit_sse2(
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* XXX implement this */
-	 ok = 0;
-	 debug_printf("failed to emit immediate value to SSE\n");
+         /* simply copy the immediate values into the next immediates[] slot */
+         {
+            const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
+            uint i;
+            assert(size <= 4);
+            assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
+            for( i = 0; i < size; i++ ) {
+               immediates[num_immediates][i] =
+		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+            }
+            num_immediates++;
+         }
 	 break;
 
       default:
