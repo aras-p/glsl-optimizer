@@ -225,6 +225,15 @@ get_coef_base( void )
    return get_output_base();
 }
 
+static struct x86_reg
+get_immediate_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
+      reg_DI );
+}
+
+
 /**
  * Data access helpers.
  */
@@ -236,6 +245,16 @@ get_argument(
    return x86_make_disp(
       x86_make_reg( file_REG32, reg_SP ),
       (index + 1) * 4 );
+}
+
+static struct x86_reg
+get_immediate(
+   unsigned vec,
+   unsigned chan )
+{
+   return x86_make_disp(
+      get_immediate_base(),
+      (vec * 4 + chan) * 4 );
 }
 
 static struct x86_reg
@@ -571,6 +590,25 @@ emit_const(
       make_xmm( xmm ),
       SHUF( 0, 0, 0, 0 ) );
 }
+
+static void
+emit_immediate(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   emit_movss(
+      func,
+      make_xmm( xmm ),
+      get_immediate( vec, chan ) );
+   emit_shufps(
+      func,
+      make_xmm( xmm ),
+      make_xmm( xmm ),
+      SHUF( 0, 0, 0, 0 ) );
+}
+
 
 /**
  * Copy a shader input to xmm register
@@ -1185,6 +1223,14 @@ emit_fetch(
       switch( reg->SrcRegister.File ) {
       case TGSI_FILE_CONSTANT:
          emit_const(
+            func,
+            xmm,
+            reg->SrcRegister.Index,
+            swizzle );
+         break;
+
+      case TGSI_FILE_IMMEDIATE:
+         emit_immediate(
             func,
             xmm,
             reg->SrcRegister.Index,
@@ -2343,15 +2389,21 @@ tgsi_emit_sse2(
  * DECLARATION and INSTRUCTION phase.
  * GP register holding the output argument is aliased with the coeff argument,
  * as outputs are not needed in the DECLARATION phase.
+ *
+ * \param tokens  the TGSI input shader
+ * \param func  the output SSE code/function
+ * \param immediates  buffer to place immediates, later passed to SSE func
  */
 unsigned
 tgsi_emit_sse2_fs(
    struct tgsi_token *tokens,
-   struct x86_function *func )
+   struct x86_function *func,
+   float (*immediates)[4])
 {
    struct tgsi_parse_context parse;
    boolean instruction_phase = FALSE;
    unsigned ok = 1;
+   uint num_immediates = 0;
 
    DUMP_START();
 
@@ -2362,6 +2414,7 @@ tgsi_emit_sse2_fs(
       func,
       get_input_base(),
       get_argument( 0 ) );
+   /* skipping outputs argument here */
    emit_mov(
       func,
       get_const_base(),
@@ -2374,6 +2427,10 @@ tgsi_emit_sse2_fs(
       func,
       get_coef_base(),
       get_argument( 4 ) );
+   emit_mov(
+      func,
+      get_immediate_base(),
+      get_argument( 5 ) );
 
    tgsi_parse_init( &parse, tokens );
 
@@ -2407,9 +2464,26 @@ tgsi_emit_sse2_fs(
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* XXX implement this */
-	 ok = 0;
-	 debug_printf("failed to emit immediate value to SSE\n");
+         /* simply copy the immediate values into the next immediates[] slot */
+         {
+            const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
+            uint i;
+            assert(size <= 4);
+            assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
+            for( i = 0; i < size; i++ ) {
+               immediates[num_immediates][i] =
+		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+            }
+#if 0
+            debug_printf("SSE FS immediate[%d] = %f %f %f %f\n",
+                   num_immediates,
+                   immediates[num_immediates][0],
+                   immediates[num_immediates][1],
+                   immediates[num_immediates][2],
+                   immediates[num_immediates][3]);
+#endif
+            num_immediates++;
+         }
          break;
 
       default:
