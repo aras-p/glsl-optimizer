@@ -9,4 +9,5 @@ nv30_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 	   unsigned clearValue)
 {
 	pipe->surface_fill(pipe, ps, 0, 0, ps->width, ps->height, clearValue);
+	ps->status = PIPE_SURFACE_STATUS_CLEAR;
 }
