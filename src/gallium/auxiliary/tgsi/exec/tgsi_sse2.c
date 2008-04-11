@@ -2020,7 +2020,7 @@ emit_instruction(
          STORE( func, *inst, 0, 0, CHAN_X );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
-         FETCH( func, *inst, 0, 0, CHAN_Y );
+         FETCH( func, *inst, 0, 0, CHAN_X );
          emit_sin( func, 0 );
          STORE( func, *inst, 0, 0, CHAN_Y );
       }
