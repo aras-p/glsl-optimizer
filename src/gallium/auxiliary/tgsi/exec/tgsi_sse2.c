@@ -548,6 +548,12 @@ emit_xorps(
  * Data fetch helpers.
  */
 
+/**
+ * Copy a shader constant to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the src const buffer index
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
 static void
 emit_const(
    struct x86_function *func,
@@ -566,6 +572,12 @@ emit_const(
       SHUF( 0, 0, 0, 0 ) );
 }
 
+/**
+ * Copy a shader input to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the src input attrib
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
 static void
 emit_inputf(
    struct x86_function *func,
@@ -579,6 +591,12 @@ emit_inputf(
       get_input( vec, chan ) );
 }
 
+/**
+ * Store an xmm register to a shader output
+ * \param xmm  the source xmm register
+ * \param vec  the dest output attrib
+ * \param chan  src dest channel to store (X, Y, Z or W)
+ */
 static void
 emit_output(
    struct x86_function *func,
@@ -592,6 +610,12 @@ emit_output(
       make_xmm( xmm ) );
 }
 
+/**
+ * Copy a shader temporary to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the src temp register
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
 static void
 emit_tempf(
    struct x86_function *func,
@@ -605,6 +629,13 @@ emit_tempf(
       get_temp( vec, chan ) );
 }
 
+/**
+ * Load an xmm register with an input attrib coefficient (a0, dadx or dady)
+ * \param xmm  the destination xmm register
+ * \param vec  the src input/attribute coefficient index
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ * \param member  0=a0, 1=dadx, 2=dady
+ */
 static void
 emit_coef(
    struct x86_function *func,
