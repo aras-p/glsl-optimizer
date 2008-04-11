@@ -84,6 +84,7 @@ SOURCES = \
 	vpwarpmesh.c \
 	yuvrect.c \
 	yuvsquare.c \
+	zcomp.c \
 	zdrawpix.c \
 	zreaddraw.c
 
