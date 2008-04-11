@@ -42,8 +42,20 @@ nv30_surface_copy(struct pipe_context *pipe, unsigned do_flip,
 	struct nv30_context *nv30 = nv30_context(pipe);
 	struct nouveau_winsys *nvws = nv30->nvws;
 
-	nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
-			   width, height);
+	if (do_flip) {
+		/*XXX: This dodgyness will do for now for correctness.  But,
+		 *     need to investigate whether the 2D engine is able to
+		 *     manage a flip (perhaps SIFM?), if not, use the 3D engine
+		 */
+		desty += height;
+		while (height--) {
+			nvws->surface_copy(nvws, dest, destx, desty--, src,
+					   srcx, srcy++, width, 1);
+		}
+	} else {
+		nvws->surface_copy(nvws, dest, destx, desty, src, srcx, srcy,
+				   width, height);
+	}
 }
 
 static void
