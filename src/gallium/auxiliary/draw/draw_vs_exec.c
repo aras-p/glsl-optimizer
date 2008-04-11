@@ -64,7 +64,7 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
  * \param count  number of vertices to shade [1..4]
  * \param vOut  array of pointers to four output vertices
  */
-static void
+static boolean
 vs_exec_run( struct draw_vertex_shader *shader,
 	     struct draw_context *draw,
 	     const unsigned *elts, 
@@ -73,6 +73,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
 {
    struct tgsi_exec_machine *machine = &draw->machine;
    unsigned int i, j;
+   unsigned int clipped = 0;
 
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
    ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
@@ -120,6 +121,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
          if (!draw->rasterizer->bypass_clipping) {
             vOut[i + j]->clipmask = compute_clipmask(vOut[i + j]->clip, draw->plane,
                                                      draw->nr_planes);
+            clipped += vOut[i + j]->clipmask;
 
             /* divide by w */
             w = 1.0f / w;
@@ -168,6 +170,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
 #endif
       } /* loop over vertices */
    }
+   return clipped != 0;
 }
 
 

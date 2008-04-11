@@ -148,12 +148,12 @@ struct draw_vertex_shader {
    /* Run the shader - this interface will get cleaned up in the
     * future:
     */
-   void (*run)( struct draw_vertex_shader *shader,
-		struct draw_context *draw,
-		const unsigned *elts, 
-		unsigned count,
-		struct vertex_header *vOut[] );
-		    
+   boolean (*run)( struct draw_vertex_shader *shader,
+                   struct draw_context *draw,
+                   const unsigned *elts,
+                   unsigned count,
+                   struct vertex_header *vOut[] );
+
 
    void (*delete)( struct draw_vertex_shader * );
 };
