@@ -114,6 +114,26 @@ typedef pthread_mutex_t _glthread_Mutex;
 #define _glthread_UNLOCK_MUTEX(name) \
    (void) pthread_mutex_unlock(&(name))
 
+typedef pthread_cond_t _glthread_Cond;
+
+#define _glthread_DECLARE_STATIC_COND(name) \
+   static _glthread_Cond name = PTHREAD_COND_INITIALIZER
+
+#define _glthread_INIT_COND(cond)			\
+   pthread_cond_init(&(cond), NULL)
+
+#define _glthread_DESTROY_COND(name) \
+   pthread_cond_destroy(&(name))
+
+#define _glthread_COND_WAIT(cond, mutex) \
+  pthread_cond_wait(&(cond), &(mutex))
+
+#define _glthread_COND_SIGNAL(cond) \
+  pthread_cond_signal(&(cond))
+
+#define _glthread_COND_BROADCAST(cond) \
+  pthread_cond_broadcast(&(cond))
+
 #endif /* PTHREADS */
 
 
@@ -272,6 +292,20 @@ typedef unsigned _glthread_Mutex;
 #define _glthread_LOCK_MUTEX(name)  (void) name
 
 #define _glthread_UNLOCK_MUTEX(name)  (void) name
+
+typedef unsigned _glthread_Cond;
+
+#define _glthread_DECLARE_STATIC_COND(name) static _glthread_Cond name = 0
+
+#define _glthread_INIT_COND(name)  (void) name
+
+#define _glthread_DESTROY_COND(name)  (void) name
+
+#define _glthread_COND_WAIT(name, mutex)  (void) name
+
+#define _glthread_COND_SIGNAL(name)  (void) name
+
+#define _glthread_COND_BROADCAST(name)  (void) name
 
 #endif /* THREADS */
 
