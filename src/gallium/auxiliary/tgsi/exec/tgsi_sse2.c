@@ -2313,104 +2313,25 @@ emit_declaration(
    }
 }
 
-unsigned
-tgsi_emit_sse2(
-   struct tgsi_token *tokens,
-   struct x86_function *func,
-   float (*immediates)[4] )
-{
-   struct tgsi_parse_context parse;
-   unsigned ok = 1;
-   uint num_immediates = 0;
-
-   DUMP_START();
-
-   func->csr = func->store;
-
-   emit_mov(
-      func,
-      get_input_base(),
-      get_argument( 0 ) );
-   emit_mov(
-      func,
-      get_output_base(),
-      get_argument( 1 ) );
-   emit_mov(
-      func,
-      get_const_base(),
-      get_argument( 2 ) );
-   emit_mov(
-      func,
-      get_temp_base(),
-      get_argument( 3 ) );
-   emit_mov(
-      func,
-      get_immediate_base(),
-      get_argument( 4 ) );
-
-   tgsi_parse_init( &parse, tokens );
-
-   while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
-      tgsi_parse_token( &parse );
-
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         ok = emit_instruction(
-	    func,
-	    &parse.FullToken.FullInstruction );
-
-	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d to SSE\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode );
-	 }
-         break;
-
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* simply copy the immediate values into the next immediates[] slot */
-         {
-            const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
-            uint i;
-            assert(size <= 4);
-            assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
-            for( i = 0; i < size; i++ ) {
-               immediates[num_immediates][i] =
-		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
-            }
-            num_immediates++;
-         }
-	 break;
-
-      default:
-         assert( 0 );
-	 ok = 0;
-	 break;
-      }
-   }
-
-   tgsi_parse_free( &parse );
-
-   DUMP_END();
-
-   return ok;
-}
 
 /**
- * Fragment shaders are responsible for interpolating shader inputs. Because on
- * x86 we have only 4 GP registers, and here we have 5 shader arguments (input,
- * output, const, temp and coef), the code is split into two phases --
- * DECLARATION and INSTRUCTION phase.
- * GP register holding the output argument is aliased with the coeff argument,
- * as outputs are not needed in the DECLARATION phase.
+ * Translate a TGSI vertex/fragment shader to SSE2 code.
+ * Slightly different things are done for vertex vs. fragment shaders.
+ *
+ * Note that fragment shaders are responsible for interpolating shader
+ * inputs. Because on x86 we have only 4 GP registers, and here we
+ * have 5 shader arguments (input, output, const, temp and coef), the
+ * code is split into two phases -- DECLARATION and INSTRUCTION phase.
+ * GP register holding the output argument is aliased with the coeff
+ * argument, as outputs are not needed in the DECLARATION phase.
  *
  * \param tokens  the TGSI input shader
  * \param func  the output SSE code/function
  * \param immediates  buffer to place immediates, later passed to SSE func
+ * \param return  1 for success, 0 if translation failed
  */
 unsigned
-tgsi_emit_sse2_fs(
+tgsi_emit_sse2(
    struct tgsi_token *tokens,
    struct x86_function *func,
    float (*immediates)[4])
@@ -2424,50 +2345,84 @@ tgsi_emit_sse2_fs(
 
    func->csr = func->store;
 
-   /* DECLARATION phase, do not load output argument. */
-   emit_mov(
-      func,
-      get_input_base(),
-      get_argument( 0 ) );
-   /* skipping outputs argument here */
-   emit_mov(
-      func,
-      get_const_base(),
-      get_argument( 2 ) );
-   emit_mov(
-      func,
-      get_temp_base(),
-      get_argument( 3 ) );
-   emit_mov(
-      func,
-      get_coef_base(),
-      get_argument( 4 ) );
-   emit_mov(
-      func,
-      get_immediate_base(),
-      get_argument( 5 ) );
-
    tgsi_parse_init( &parse, tokens );
+
+   /*
+    * Different function args for vertex/fragment shaders:
+    */
+   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+      /* DECLARATION phase, do not load output argument. */
+      emit_mov(
+         func,
+         get_input_base(),
+         get_argument( 0 ) );
+      /* skipping outputs argument here */
+      emit_mov(
+         func,
+         get_const_base(),
+         get_argument( 2 ) );
+      emit_mov(
+         func,
+         get_temp_base(),
+         get_argument( 3 ) );
+      emit_mov(
+         func,
+         get_coef_base(),
+         get_argument( 4 ) );
+      emit_mov(
+         func,
+         get_immediate_base(),
+         get_argument( 5 ) );
+   }
+   else {
+      assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
+
+      emit_mov(
+         func,
+         get_input_base(),
+         get_argument( 0 ) );
+      emit_mov(
+         func,
+         get_output_base(),
+         get_argument( 1 ) );
+      emit_mov(
+         func,
+         get_const_base(),
+         get_argument( 2 ) );
+      emit_mov(
+         func,
+         get_temp_base(),
+         get_argument( 3 ) );
+      emit_mov(
+         func,
+         get_immediate_base(),
+         get_argument( 4 ) );
+   }
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
       tgsi_parse_token( &parse );
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         emit_declaration(
-            func,
-            &parse.FullToken.FullDeclaration );
+         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+            emit_declaration(
+               func,
+               &parse.FullToken.FullDeclaration );
+         }
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if( !instruction_phase ) {
-            /* INSTRUCTION phase, overwrite coeff with output. */
-            instruction_phase = TRUE;
-            emit_mov(
-               func,
-               get_output_base(),
-               get_argument( 1 ) );
+         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+            if( !instruction_phase ) {
+               /* INSTRUCTION phase, overwrite coeff with output. */
+               instruction_phase = TRUE;
+               emit_mov(
+                  func,
+                  get_output_base(),
+                  get_argument( 1 ) );
+            }
          }
+
          ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
