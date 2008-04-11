@@ -71,6 +71,8 @@ ShowDepthBuffer( GLsizei winWidth, GLsizei winHeight,
    glPushMatrix();
    glLoadIdentity();
 
+   glViewport(0, 0, winWidth, winHeight);
+
    glDisable(GL_STENCIL_TEST);
    glDisable(GL_DEPTH_TEST);
    glRasterPos2f(0, 0);
@@ -119,6 +121,8 @@ ShowAlphaBuffer( GLsizei winWidth, GLsizei winHeight )
    glMatrixMode(GL_MODELVIEW);
    glPushMatrix();
    glLoadIdentity();
+
+   glViewport(0, 0, winWidth, winHeight);
 
    glDisable(GL_STENCIL_TEST);
    glDisable(GL_DEPTH_TEST);
@@ -169,6 +173,8 @@ ShowStencilBuffer( GLsizei winWidth, GLsizei winHeight,
    glMatrixMode(GL_MODELVIEW);
    glPushMatrix();
    glLoadIdentity();
+
+   glViewport(0, 0, winWidth, winHeight);
 
    glDisable(GL_STENCIL_TEST);
    glDisable(GL_DEPTH_TEST);
