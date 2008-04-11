@@ -84,6 +84,7 @@ SOURCES = \
 	vpwarpmesh.c \
 	yuvrect.c \
 	yuvsquare.c \
+	zdrawpix.c \
 	zreaddraw.c
 
 PROGS = $(SOURCES:%.c=%)
