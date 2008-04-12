@@ -40,6 +40,7 @@
 
 #include "tgsi/util/tgsi_parse.h"
 
+#define MAX_TGSI_VERTICES 4
 
 static void
 vs_exec_prepare( struct draw_vertex_shader *shader,
@@ -71,14 +72,13 @@ vs_exec_run( struct draw_vertex_shader *shader,
 	     struct vertex_header *vOut[] )
 {
    struct tgsi_exec_machine *machine = &draw->machine;
-   unsigned int j;
+   unsigned int i, j;
 
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
    ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
-   assert(count <= 4);
    assert(draw->vertex_shader->info.output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
@@ -92,80 +92,82 @@ vs_exec_run( struct draw_vertex_shader *shader,
       machine->Outputs = ALIGN16_ASSIGN(outputs);
    }
 
-   draw->vertex_fetch.fetch_func( draw, machine, elts, count );
+   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
+      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+      draw->vertex_fetch.fetch_func( draw, machine, &elts[i], max_vertices );
 
-   if (!draw->rasterizer->bypass_vs) {
-      /* run interpreter */
-      tgsi_exec_machine_run( machine );
-   }
-
-   /* store machine results */
-   for (j = 0; j < count; j++) {
-      unsigned slot;
-      float x, y, z, w;
-
-      /* Handle attr[0] (position) specially:
-       *
-       * XXX: Computing the clipmask should be done in the vertex
-       * program as a set of DP4 instructions appended to the
-       * user-provided code.
-       */
-      x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
-
-      if (!draw->rasterizer->bypass_clipping) {
-         vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
-
-         /* divide by w */
-         w = 1.0f / w;
-         x *= w;
-         y *= w;
-         z *= w;         
-      }
-      else {
-         vOut[j]->clipmask = 0;
-      }
-      vOut[j]->edgeflag = 1;
-
-      if (!draw->identity_viewport) {
-         /* Viewport mapping */
-         vOut[j]->data[0][0] = x * scale[0] + trans[0];
-         vOut[j]->data[0][1] = y * scale[1] + trans[1];
-         vOut[j]->data[0][2] = z * scale[2] + trans[2];
-         vOut[j]->data[0][3] = w;
-      }
-      else {
-         vOut[j]->data[0][0] = x;
-         vOut[j]->data[0][1] = y;
-         vOut[j]->data[0][2] = z;
-         vOut[j]->data[0][3] = w;
+      if (!draw->rasterizer->bypass_vs) {
+         /* run interpreter */
+         tgsi_exec_machine_run( machine );
       }
 
-      /* Remaining attributes are packed into sequential post-transform
-       * vertex attrib slots.
-       */
-      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-         vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-         vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-         vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-         vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-      }
+      /* store machine results */
+      for (j = 0; j < max_vertices; j++) {
+         unsigned slot;
+         float x, y, z, w;
+
+         /* Handle attr[0] (position) specially:
+          *
+          * XXX: Computing the clipmask should be done in the vertex
+          * program as a set of DP4 instructions appended to the
+          * user-provided code.
+          */
+         x = vOut[i + j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
+         y = vOut[i + j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
+         z = vOut[i + j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
+         w = vOut[i + j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+
+         if (!draw->rasterizer->bypass_clipping) {
+            vOut[i + j]->clipmask = compute_clipmask(vOut[i + j]->clip, draw->plane,
+                                                     draw->nr_planes);
+
+            /* divide by w */
+            w = 1.0f / w;
+            x *= w;
+            y *= w;
+            z *= w;
+         }
+         else {
+            vOut[i + j]->clipmask = 0;
+         }
+         vOut[i + j]->edgeflag = 1;
+
+         if (!draw->identity_viewport) {
+            /* Viewport mapping */
+            vOut[i + j]->data[0][0] = x * scale[0] + trans[0];
+            vOut[i + j]->data[0][1] = y * scale[1] + trans[1];
+            vOut[i + j]->data[0][2] = z * scale[2] + trans[2];
+            vOut[i + j]->data[0][3] = w;
+         }
+         else {
+            vOut[i + j]->data[0][0] = x;
+            vOut[i + j]->data[0][1] = y;
+            vOut[i + j]->data[0][2] = z;
+            vOut[i + j]->data[0][3] = w;
+         }
+
+         /* Remaining attributes are packed into sequential post-transform
+          * vertex attrib slots.
+          */
+         for (slot = 1; slot < draw->num_vs_outputs; slot++) {
+            vOut[i + j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+            vOut[i + j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+            vOut[i + j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+            vOut[i + j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+         }
 
 #if 0 /*DEBUG*/
-      printf("Post xform vert:\n");
-      for (slot = 0; slot < draw->num_vs_outputs; slot++) {
-         printf("%d: %f %f %f %f\n", slot,
-                vOut[j]->data[slot][0],
-                vOut[j]->data[slot][1],
-                vOut[j]->data[slot][2],
-                vOut[j]->data[slot][3]);
-      }
-#endif      
-
-
-   } /* loop over vertices */
+         printf("%d) Post xform vert:\n", i + j);
+         for (slot = 0; slot < draw->num_vs_outputs; slot++) {
+            printf("\t%d: %f %f %f %f\n", slot,
+                   vOut[i + j]->data[slot][0],
+                   vOut[i + j]->data[slot][1],
+                   vOut[i + j]->data[slot][2],
+                   vOut[i + j]->data[slot][3]);
+         }
+#endif
+      } /* loop over vertices */
+   }
 }
 
 

@@ -56,6 +56,8 @@ struct gallivm_cpu_engine;
 struct draw_pt_middle_end;
 struct draw_pt_front_end;
 
+#define MAX_SHADER_VERTICES 128
+
 /**
  * Basic vertex info.
  * Carry some useful information around with the vertices in the prim pipe.  

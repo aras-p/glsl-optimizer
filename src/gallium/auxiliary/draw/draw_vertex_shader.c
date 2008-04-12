@@ -37,8 +37,6 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 
-#define MAX_SHADER_VERTICES 4
-
 /**
  * Run the vertex shader on all vertices in the vertex queue.
  * Called by the draw module when the vertx cache needs to be flushed.
@@ -61,7 +59,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
    for (i = 0; i < draw->vs.queue_nr; i += MAX_SHADER_VERTICES) {
       struct vertex_header *dests[MAX_SHADER_VERTICES];
       unsigned elts[MAX_SHADER_VERTICES];
-      int j, n = MIN2(MAX_SHADER_VERTICES,  - i);
+      int j, n = MIN2(MAX_SHADER_VERTICES, draw->vs.queue_nr  - i);
 
       for (j = 0; j < n; j++) {
          elts[j] = draw->vs.queue[i + j].elt;
