@@ -968,18 +968,18 @@ dump_instruction_short(
       }
       CHR( ' ' );
 
-      if( src->SrcRegisterExtMod.Complement ) {
-         TXT( "(1 - " );
-      }
-      if( src->SrcRegisterExtMod.Negate  ) {
-         CHR( '-' );
-      }
-      if( src->SrcRegisterExtMod.Absolute ) {
+      if (src->SrcRegisterExtMod.Negate)
+         TXT( "-(" );
+      if (src->SrcRegisterExtMod.Absolute)
          CHR( '|' );
-      }
-      if( src->SrcRegister.Negate ) {
+      if (src->SrcRegisterExtMod.Scale2X)
+         TXT( "2*(" );
+      if (src->SrcRegisterExtMod.Bias)
+         CHR( '(' );
+      if (src->SrcRegisterExtMod.Complement)
+         TXT( "1-(" );
+      if (src->SrcRegister.Negate)
          CHR( '-' );
-      }
 
       ENM( src->SrcRegister.File, TGSI_FILES_SHORT );
 
@@ -987,35 +987,37 @@ dump_instruction_short(
       SID( src->SrcRegister.Index );
       CHR( ']' );
 
-      if (src->SrcRegister.Extended) {
-         if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-             src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-             src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-             src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-            CHR( '.' );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
-         }
-      }
-      else if( src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-               src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-               src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-               src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ) {
+      if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
+          src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
+          src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
+          src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
          ENM( src->SrcRegister.SwizzleX, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleY, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleZ, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleW, TGSI_SWIZZLES_SHORT );
       }
+      if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
+          src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
+          src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
+          src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
+         CHR( '.' );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
+      }
 
-      if( src->SrcRegisterExtMod.Absolute ) {
-         CHR( '|' );
-      }
-      if( src->SrcRegisterExtMod.Complement ) {
+      if (src->SrcRegisterExtMod.Complement)
          CHR( ')' );
-      }
+      if (src->SrcRegisterExtMod.Bias)
+         TXT( ")-.5" );
+      if (src->SrcRegisterExtMod.Scale2X)
+         CHR( ')' );
+      if (src->SrcRegisterExtMod.Absolute)
+         CHR( '|' );
+      if (src->SrcRegisterExtMod.Negate)
+         CHR( ')' );
 
       first_reg = FALSE;
    }
