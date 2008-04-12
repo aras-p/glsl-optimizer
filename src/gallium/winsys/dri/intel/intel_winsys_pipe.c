@@ -93,6 +93,7 @@ intel_buffer_destroy(struct pipe_winsys *winsys,
 		     struct pipe_buffer *buf)
 {
    driBOUnReference( dri_bo(buf) );
+   FREE(buf);
 }
 
 
