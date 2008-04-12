@@ -745,9 +745,16 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 	 goto next;
 
       case OPCODE_MAD:
+	 /* only 2 read ports into temp memory thus may need the macro op MAD_2
+	    instead (requiring 2 clocks) if all inputs are in temp memory
+	    (and, only if they actually reference 3 distinct temps) */
 	 hw_op=(src[0].File == PROGRAM_TEMPORARY &&
 	    src[1].File == PROGRAM_TEMPORARY &&
-	    src[2].File == PROGRAM_TEMPORARY) ? R200_VPI_OUT_OP_MAD_2 : R200_VPI_OUT_OP_MAD;
+	    src[2].File == PROGRAM_TEMPORARY &&
+	    (((src[0].RelAddr << 8) | src[0].Index) != ((src[1].RelAddr << 8) | src[1].Index)) &&
+	    (((src[0].RelAddr << 8) | src[0].Index) != ((src[2].RelAddr << 8) | src[2].Index)) &&
+	    (((src[1].RelAddr << 8) | src[1].Index) != ((src[2].RelAddr << 8) | src[2].Index))) ?
+	    R200_VPI_OUT_OP_MAD_2 : R200_VPI_OUT_OP_MAD;
 
 	 o_inst->op = MAKE_VSF_OP(hw_op, t_dst(&dst),
 	    t_dst_mask(dst.WriteMask));
@@ -875,8 +882,11 @@ else {
       case OPCODE_XPD:
 	 /* mul r0, r1.yzxw, r2.zxyw
 	    mad r0, -r2.yzxw, r1.zxyw, r0
-	    NOTE: might need MAD_2
 	  */
+	 hw_op=(src[0].File == PROGRAM_TEMPORARY &&
+	    src[1].File == PROGRAM_TEMPORARY &&
+	    (((src[0].RelAddr << 8) | src[0].Index) != ((src[1].RelAddr << 8) | src[1].Index))) ?
+	    R200_VPI_OUT_OP_MAD_2 : R200_VPI_OUT_OP_MAD;
 
 	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_MUL,
 	    (u_temp_i << R200_VPI_OUT_REG_INDEX_SHIFT) | R200_VSF_OUT_CLASS_TMP,
@@ -902,7 +912,7 @@ else {
 	 o_inst++;
 	 u_temp_i--;
 
-	 o_inst->op = MAKE_VSF_OP(R200_VPI_OUT_OP_MAD, t_dst(&dst),
+	 o_inst->op = MAKE_VSF_OP(hw_op, t_dst(&dst),
 		t_dst_mask(dst.WriteMask));
 
 	 o_inst->src0 = MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
