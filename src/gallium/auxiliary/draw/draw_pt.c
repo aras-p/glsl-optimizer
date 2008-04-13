@@ -38,19 +38,23 @@
 
 /* XXX: Shouldn't those two functions below use the '>' operator???
  */
-
-static boolean too_many_verts( struct draw_context *draw,
-                               unsigned verts )
-{
-   return verts < 1024;
-}
-
 static boolean too_many_elts( struct draw_context *draw,
                               unsigned elts )
 {
-   return elts < (16 * 1024);
+   return elts > (8 * 1024);
 }
 
+static INLINE unsigned reduced_prim(unsigned prim)
+{
+   /*FIXME*/
+   return prim;
+}
+
+static INLINE boolean good_prim(unsigned prim)
+{
+   /*FIXME*/
+   return FALSE;
+}
 
 boolean
 draw_pt_arrays(struct draw_context *draw, 
@@ -64,6 +68,9 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_front_end *frontend = NULL;
    struct draw_pt_middle_end *middle = NULL;
 
+   if (!draw->render)
+      return FALSE;
+   /*debug_printf("XXXXXXXXXX needs_pipeline = %d\n", pipeline);*/
 
    /* Overall we do:
     *     - frontend -- prepare fetch_elts, draw_elts - eg vcache
@@ -87,7 +94,6 @@ draw_pt_arrays(struct draw_context *draw,
        */
       middle = draw->pt.middle.fetch_pipeline;
    }
-#if 0
    else if (!cliptest && !pipeline) {
       /* Fetch user verts, run vertex shader, emit hw verts:
        */
@@ -111,23 +117,15 @@ draw_pt_arrays(struct draw_context *draw,
        */
       middle = draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit;
    }
-   else if (!cliptest) {
-      /* Fetch user verts, run vertex shader, run pipeline:
-       */
-      middle = draw->pt.middle.fetch_shade_pipeline;
-   }
    else {
       /* This is what we're currently always doing:
        */
-      /* Fetch user verts, run vertex shader, cliptest, run pipeline:
+      /* Fetch user verts, run vertex shader, cliptest, run pipeline
+       * or
+       * Fetch user verts, run vertex shader, run pipeline
        */
-      middle = draw->pt.middle.fetch_shade_cliptest_pipeline;
+      middle = draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit;
    }
-#else
-   else {
-      return FALSE;
-   }
-#endif
 
 
    /* If !pipeline, need to make sure we respect the driver's limited
@@ -143,7 +141,7 @@ draw_pt_arrays(struct draw_context *draw,
          frontend = draw->pt.front.vcache;
          hw_prim = reduced_prim(prim);
       }
-      
+#if 0
       if (too_many_verts(nr_verts)) {
          /* if (is_verts(draw) && can_split(prim)) {
             draw = draw_arrays_split;
@@ -153,6 +151,7 @@ draw_pt_arrays(struct draw_context *draw,
             hw_prim = reduced_prim(prim);
          }
       }
+#endif
 
       if (too_many_elts(count)) {
 
@@ -166,7 +165,7 @@ draw_pt_arrays(struct draw_context *draw,
       }
 
       if (!good_prim(hw_prim)) {
-         draw = draw->pt.front.vcache;
+         frontend = draw->pt.front.vcache;
       }
    }
 #else
@@ -200,6 +199,11 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_pipeline)
       return FALSE;
 
+   draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit =
+      draw_pt_fetch_pipeline_or_emit( draw );
+   if (!draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit)
+      return FALSE;
+
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
       return FALSE;
@@ -218,6 +222,12 @@ void draw_pt_destroy( struct draw_context *draw )
    if (draw->pt.middle.fetch_pipeline) {
       draw->pt.middle.fetch_pipeline->destroy( draw->pt.middle.fetch_pipeline );
       draw->pt.middle.fetch_pipeline = NULL;
+   }
+
+   if (draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit) {
+      draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit->destroy(
+         draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit );
+      draw->pt.middle.fetch_shade_cliptest_pipeline_or_emit = NULL;
    }
 
    if (draw->pt.front.vcache) {
