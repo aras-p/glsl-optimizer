@@ -114,6 +114,15 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
                              size_t size, size_t align2);
 
 
+struct pb_manager *
+pb_slab_manager_create(struct pb_manager *provider, 
+                       const struct pb_desc *desc,
+                       size_t smallestSize,
+                       size_t numSizes,
+                       size_t desiredNumBuffers,
+                       size_t maxSlabSize,
+                       size_t pageAlignment);
+                       
 /** 
  * Fenced buffer manager.
  *
