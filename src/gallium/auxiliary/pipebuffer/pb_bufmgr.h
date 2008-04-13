@@ -80,7 +80,7 @@ struct pb_manager
 
 
 /** 
- * Static buffer pool manager.
+ * Static buffer pool sub-allocator.
  * 
  * Manages the allocation of equally sized buffers. It does so by allocating
  * a single big buffer and divide it equally sized buffers. 
@@ -94,7 +94,7 @@ pool_bufmgr_create(struct pb_manager *provider,
 
 
 /** 
- * Wraper around the old memory manager.
+ * Static sub-allocator based the old memory manager.
  * 
  * It managers buffers of different sizes. It does so by allocating a buffer
  * with the size of the heap, and then using the old mm memory manager to manage
@@ -114,6 +114,9 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
                              size_t size, size_t align2);
 
 
+/**
+ * Slab sub-allocator.
+ */
 struct pb_manager *
 pb_slab_manager_create(struct pb_manager *provider, 
                        const struct pb_desc *desc,
@@ -122,7 +125,18 @@ pb_slab_manager_create(struct pb_manager *provider,
                        size_t desiredNumBuffers,
                        size_t maxSlabSize,
                        size_t pageAlignment);
-                       
+
+
+/** 
+ * Time-based buffer cache.
+ *
+ * This manager keeps a cache of destroyed buffers during a time interval. 
+ */
+struct pb_manager *
+pb_cache_manager_create(struct pb_manager *provider, 
+                     	unsigned usecs); 
+
+
 /** 
  * Fenced buffer manager.
  *
