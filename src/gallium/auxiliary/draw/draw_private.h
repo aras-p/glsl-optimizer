@@ -152,7 +152,7 @@ struct draw_vertex_shader {
                    struct draw_context *draw,
                    const unsigned *elts,
                    unsigned count,
-                   struct vertex_header *vOut[] );
+                   void *out );
 
 
    void (*delete)( struct draw_vertex_shader * );
@@ -321,10 +321,8 @@ struct draw_context
    /* Vertex shader queue:
     */
    struct {
-      struct {
-	 unsigned elt;   /**< index into the user's vertex arrays */
-	 struct vertex_header *vertex;
-      } queue[VS_QUEUE_LENGTH];
+      unsigned elts[VS_QUEUE_LENGTH];   /**< index into the user's vertex arrays */
+      char *vertex_cache;
       unsigned queue_nr;
       unsigned post_nr;
    } vs;
@@ -448,6 +446,13 @@ dot4(const float *a, const float *b)
                    a[3]*b[3]);
 
    return result;
+}
+
+static INLINE struct vertex_header *
+draw_header_from_block(char *block, int num)
+{
+   static const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
+   return (struct vertex_header*)(block + num * size);
 }
 
 #endif /* DRAW_PRIVATE_H */

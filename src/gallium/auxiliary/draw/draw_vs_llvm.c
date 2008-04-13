@@ -72,7 +72,7 @@ vs_llvm_run( struct draw_vertex_shader *base,
 	     struct draw_context *draw,
 	     const unsigned *elts,
 	     unsigned count,
-	     struct vertex_header *vOut[] )
+	     void *vOut )
 {
    struct draw_llvm_vertex_shader *shader =
       (struct draw_llvm_vertex_shader *)base;

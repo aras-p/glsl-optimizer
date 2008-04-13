@@ -69,7 +69,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
 	     struct draw_context *draw,
 	     const unsigned *elts, 
 	     unsigned count,
-	     struct vertex_header *vOut[] )
+	     void *vOut )
 {
    struct tgsi_exec_machine *machine = &draw->machine;
    unsigned int i, j;
@@ -106,6 +106,8 @@ vs_exec_run( struct draw_vertex_shader *shader,
       for (j = 0; j < max_vertices; j++) {
          unsigned slot;
          float x, y, z, w;
+         struct vertex_header *out =
+            draw_header_from_block(vOut, i + j);
 
          /* Handle attr[0] (position) specially:
           *
@@ -113,15 +115,15 @@ vs_exec_run( struct draw_vertex_shader *shader,
           * program as a set of DP4 instructions appended to the
           * user-provided code.
           */
-         x = vOut[i + j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-         y = vOut[i + j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-         z = vOut[i + j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-         w = vOut[i + j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+         x = out->clip[0] = machine->Outputs[0].xyzw[0].f[j];
+         y = out->clip[1] = machine->Outputs[0].xyzw[1].f[j];
+         z = out->clip[2] = machine->Outputs[0].xyzw[2].f[j];
+         w = out->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
          if (!draw->rasterizer->bypass_clipping) {
-            vOut[i + j]->clipmask = compute_clipmask(vOut[i + j]->clip, draw->plane,
-                                                     draw->nr_planes);
-            clipped += vOut[i + j]->clipmask;
+            out->clipmask = compute_clipmask(out->clip, draw->plane,
+                                             draw->nr_planes);
+            clipped += out->clipmask;
 
             /* divide by w */
             w = 1.0f / w;
@@ -130,42 +132,42 @@ vs_exec_run( struct draw_vertex_shader *shader,
             z *= w;
          }
          else {
-            vOut[i + j]->clipmask = 0;
+            out->clipmask = 0;
          }
-         vOut[i + j]->edgeflag = 1;
+         out->edgeflag = 1;
 
          if (!draw->identity_viewport) {
             /* Viewport mapping */
-            vOut[i + j]->data[0][0] = x * scale[0] + trans[0];
-            vOut[i + j]->data[0][1] = y * scale[1] + trans[1];
-            vOut[i + j]->data[0][2] = z * scale[2] + trans[2];
-            vOut[i + j]->data[0][3] = w;
+            out->data[0][0] = x * scale[0] + trans[0];
+            out->data[0][1] = y * scale[1] + trans[1];
+            out->data[0][2] = z * scale[2] + trans[2];
+            out->data[0][3] = w;
          }
          else {
-            vOut[i + j]->data[0][0] = x;
-            vOut[i + j]->data[0][1] = y;
-            vOut[i + j]->data[0][2] = z;
-            vOut[i + j]->data[0][3] = w;
+            out->data[0][0] = x;
+            out->data[0][1] = y;
+            out->data[0][2] = z;
+            out->data[0][3] = w;
          }
 
          /* Remaining attributes are packed into sequential post-transform
           * vertex attrib slots.
           */
          for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-            vOut[i + j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-            vOut[i + j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-            vOut[i + j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-            vOut[i + j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+            out->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+            out->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+            out->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+            out->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
          }
 
 #if 0 /*DEBUG*/
          printf("%d) Post xform vert:\n", i + j);
          for (slot = 0; slot < draw->num_vs_outputs; slot++) {
             printf("\t%d: %f %f %f %f\n", slot,
-                   vOut[i + j]->data[slot][0],
-                   vOut[i + j]->data[slot][1],
-                   vOut[i + j]->data[slot][2],
-                   vOut[i + j]->data[slot][3]);
+                   out->data[slot][0],
+                   out->data[slot][1],
+                   out->data[slot][2],
+                   out->data[slot][3]);
          }
 #endif
       } /* loop over vertices */

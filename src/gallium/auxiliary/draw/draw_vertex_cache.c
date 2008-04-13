@@ -71,25 +71,27 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       /* Cache hit?
        */
       if (draw->vcache.idx[slot].in == i) {
-//	 _mesa_printf("HIT %d %d\n", slot, i);
+	 /*debug_printf("HIT %d %d\n", slot, i);*/
 	 assert(draw->vcache.idx[slot].out < draw->vs.queue_nr);
-	 return draw->vs.queue[draw->vcache.idx[slot].out].vertex;
+	 return draw_header_from_block(draw->vs.vertex_cache,
+                                       draw->vcache.idx[slot].out);
       }
 
       /* Otherwise a collision
        */
       slot = VCACHE_SIZE + draw->vcache.overflow++;
-//      _mesa_printf("XXX %d --> %d\n", i, slot);
+      /*debug_printf("XXX %d --> %d\n", i, slot);*/
    }
 
    /* Deal with the cache miss: 
     */
    {
       unsigned out;
-      
+      struct vertex_header *header;
+
       assert(slot < Elements(draw->vcache.idx));
 
-//      _mesa_printf("NEW %d %d\n", slot, i);
+      /*debug_printf("NEW %d %d\n", slot, i);*/
       draw->vcache.idx[slot].in = i;
       draw->vcache.idx[slot].out = out = draw->vs.queue_nr++;
       draw->vcache.referenced |= (1 << slot);
@@ -99,17 +101,19 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
        */
       assert(draw->vs.queue_nr < VS_QUEUE_LENGTH);
 
-      draw->vs.queue[out].elt = i;
-      draw->vs.queue[out].vertex->clipmask = 0;
-      draw->vs.queue[out].vertex->edgeflag = draw_get_edgeflag(draw, i);
-      draw->vs.queue[out].vertex->pad = 0;
-      draw->vs.queue[out].vertex->vertex_id = UNDEFINED_VERTEX_ID;
+      header = draw_header_from_block(draw->vs.vertex_cache, out);
+      draw->vs.elts[out] = i;
+      header->clipmask = 0;
+      header->edgeflag = draw_get_edgeflag(draw, i);
+      header->pad = 0;
+      header->vertex_id = UNDEFINED_VERTEX_ID;
 
       /* Need to set the vertex's edge flag here.  If we're being called
        * by do_ef_triangle(), that function needs edge flag info!
        */
 
-      return draw->vs.queue[draw->vcache.idx[slot].out].vertex;
+      return draw_header_from_block(draw->vs.vertex_cache,
+                                    draw->vcache.idx[slot].out);
    }
 }
 
@@ -142,8 +146,11 @@ void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw )
 {
    unsigned i;
 
-   for (i = 0; i < draw->vs.post_nr; i++)
-      draw->vs.queue[i].vertex->vertex_id = UNDEFINED_VERTEX_ID;
+   for (i = 0; i < draw->vs.post_nr; i++) {
+      struct vertex_header * header =
+         draw_header_from_block(draw->vs.vertex_cache, i);
+      header->vertex_id = UNDEFINED_VERTEX_ID;
+   }
 }
 
 

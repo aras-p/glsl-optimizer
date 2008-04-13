@@ -86,14 +86,12 @@ struct draw_context *draw_create( void )
    /* Statically allocate maximum sized vertices for the cache - could be cleverer...
     */
    {
-      uint i;
       const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
-      char *tmp = align_malloc(Elements(draw->vs.queue) * size, 16);
+      char *tmp = align_malloc(VS_QUEUE_LENGTH * size, 16);
       if (!tmp)
          goto fail;
 
-      for (i = 0; i < Elements(draw->vs.queue); i++)
-	 draw->vs.queue[i].vertex = (struct vertex_header *)(tmp + i * size);
+      draw->vs.vertex_cache = tmp;
    }
 
    draw->shader_queue_flush = draw_vertex_shader_queue_flush;
@@ -156,8 +154,8 @@ void draw_destroy( struct draw_context *draw )
 
    tgsi_exec_machine_free_data(&draw->machine);
    
-   if (draw->vs.queue[0].vertex)
-      align_free( draw->vs.queue[0].vertex ); /* Frees all the vertices. */
+   if (draw->vs.vertex_cache)
+      align_free( draw->vs.vertex_cache ); /* Frees all the vertices. */
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
