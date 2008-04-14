@@ -128,7 +128,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 
    fpme->nr_fetch = nr;
    //fpme->pipeline_vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
-   fpme->pipeline_vertex_size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
+   fpme->pipeline_vertex_size = MAX_VERTEX_ALLOCATION;
    fpme->hw_vertex_size = vinfo->size * 4;
 }
 

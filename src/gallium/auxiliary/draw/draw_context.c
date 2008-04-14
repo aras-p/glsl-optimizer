@@ -88,8 +88,7 @@ struct draw_context *draw_create( void )
    /* Statically allocate maximum sized vertices for the cache - could be cleverer...
     */
    {
-      const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
-      char *tmp = align_malloc(VS_QUEUE_LENGTH * size, 16);
+      char *tmp = align_malloc(VS_QUEUE_LENGTH * MAX_VERTEX_ALLOCATION, 16);
       if (!tmp)
          goto fail;
 
