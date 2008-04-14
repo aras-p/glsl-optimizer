@@ -105,6 +105,8 @@ struct softpipe_context {
 
    int psize_slot;
 
+   unsigned reduced_api_prim;  /**< PIPE_PRIM_POINTS, _LINES or _TRIANGLES */
+
 #if 0
    /* Stipple derived state:
     */

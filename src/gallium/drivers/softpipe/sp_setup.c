@@ -1254,7 +1254,16 @@ void setup_prepare( struct setup_context *setup )
       sp->quad.first->begin(sp->quad.first);
    }
 
-   setup->winding = sp->rasterizer->cull_mode;
+   if (sp->reduced_api_prim == PIPE_PRIM_TRIANGLES &&
+       sp->rasterizer->fill_cw == PIPE_POLYGON_MODE_FILL &&
+       sp->rasterizer->fill_ccw == PIPE_POLYGON_MODE_FILL) {
+      /* we'll do culling */
+      setup->winding = sp->rasterizer->cull_mode;
+   }
+   else {
+      /* 'draw' will do culling */
+      setup->winding = PIPE_WINDING_NONE;
+   }
 }
 
 
