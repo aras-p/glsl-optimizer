@@ -128,9 +128,6 @@ draw_vf_destroy( struct draw_vertex_fetch *vf );
 
 struct draw_vf_attr;
 
-typedef void (*draw_vf_extract_func)( const struct draw_vf_attr *a, 
-				      float *out, 
-				      const uint8_t *v );
 
 typedef void (*draw_vf_insert_func)( const struct draw_vf_attr *a, 
 				     uint8_t *v, 
@@ -164,7 +161,6 @@ struct draw_vf_attr
    uint8_t *inputptr;
    const draw_vf_insert_func *insert;
    draw_vf_insert_func do_insert;
-   draw_vf_extract_func extract;
 };
 
 struct draw_vertex_fetch
