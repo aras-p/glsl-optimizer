@@ -157,7 +157,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    /* Shade
     */
    shader->prepare(shader, draw);
-   if (shader->run(shader, draw, fetch_elts, fetch_count, pipeline_verts)) {
+   if (shader->run(shader, draw, fetch_elts, fetch_count, pipeline_verts,
+                   fpme->pipeline_vertex_size)) {
       /* Run the pipeline */
       draw_pt_run_pipeline( fpme->draw,
                             fpme->prim,

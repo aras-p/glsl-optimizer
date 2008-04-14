@@ -83,7 +83,8 @@ vs_sse_run( struct draw_vertex_shader *base,
 	    struct draw_context *draw, 
 	    const unsigned *elts, 
 	    unsigned count,
-	    void *vOut )
+	    void *vOut,
+            unsigned vertex_size )
 {
    struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
    struct tgsi_exec_machine *machine = &draw->machine;
@@ -136,7 +137,7 @@ vs_sse_run( struct draw_vertex_shader *base,
          unsigned slot;
          float x, y, z, w;
          struct vertex_header *out =
-            draw_header_from_block(vOut, i + j);
+            draw_header_from_block(vOut, vertex_size, i + j);
 
          x = out->clip[0] = machine->Outputs[0].xyzw[0].f[j];
          y = out->clip[1] = machine->Outputs[0].xyzw[1].f[j];

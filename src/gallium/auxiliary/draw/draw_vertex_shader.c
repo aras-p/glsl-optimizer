@@ -60,7 +60,8 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
       unsigned elts[MAX_SHADER_VERTICES];
       int j, n = MIN2(MAX_SHADER_VERTICES, draw->vs.queue_nr  - i);
       struct vertex_header *dests =
-         draw_header_from_block(draw->vs.vertex_cache, i);
+         draw_header_from_block(draw->vs.vertex_cache,
+                                MAX_VERTEX_ALLOCATION, i);
 
       for (j = 0; j < n; j++) {
          elts[j] = draw->vs.elts[i + j];
@@ -73,7 +74,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
       assert(n > 0);
       assert(n <= MAX_SHADER_VERTICES);
 
-      shader->run(shader, draw, elts, n, dests);
+      shader->run(shader, draw, elts, n, dests, MAX_VERTEX_ALLOCATION);
    }
 
    draw->vs.post_nr = draw->vs.queue_nr;

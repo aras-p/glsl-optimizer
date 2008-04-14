@@ -78,6 +78,7 @@ struct vertex_header {
 
 /* XXX This is too large */
 #define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
+#define MAX_VERTEX_ALLOCATION ((MAX_VERTEX_SIZE + 0x0f) & ~0x0f)
 
 
 
@@ -152,7 +153,8 @@ struct draw_vertex_shader {
                    struct draw_context *draw,
                    const unsigned *elts,
                    unsigned count,
-                   void *out );
+                   void *out,
+                   unsigned vertex_size);
 
 
    void (*delete)( struct draw_vertex_shader * );
@@ -450,9 +452,8 @@ dot4(const float *a, const float *b)
 }
 
 static INLINE struct vertex_header *
-draw_header_from_block(char *block, int num)
+draw_header_from_block(char *block, int size, int num)
 {
-   static const unsigned size = (MAX_VERTEX_SIZE + 0x0f) & ~0x0f;
    return (struct vertex_header*)(block + num * size);
 }
 

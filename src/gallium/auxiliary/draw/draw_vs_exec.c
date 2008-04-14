@@ -69,7 +69,8 @@ vs_exec_run( struct draw_vertex_shader *shader,
 	     struct draw_context *draw,
 	     const unsigned *elts, 
 	     unsigned count,
-	     void *vOut )
+	     void *vOut,
+             unsigned vertex_size)
 {
    struct tgsi_exec_machine *machine = &draw->machine;
    unsigned int i, j;
@@ -107,7 +108,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
          unsigned slot;
          float x, y, z, w;
          struct vertex_header *out =
-            draw_header_from_block(vOut, i + j);
+            draw_header_from_block(vOut, vertex_size, i + j);
 
          /* Handle attr[0] (position) specially:
           *

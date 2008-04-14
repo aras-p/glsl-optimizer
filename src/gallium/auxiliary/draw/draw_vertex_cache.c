@@ -74,6 +74,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 	 /*debug_printf("HIT %d %d\n", slot, i);*/
 	 assert(draw->vcache.idx[slot].out < draw->vs.queue_nr);
 	 return draw_header_from_block(draw->vs.vertex_cache,
+                                       MAX_VERTEX_ALLOCATION,
                                        draw->vcache.idx[slot].out);
       }
 
@@ -101,7 +102,8 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
        */
       assert(draw->vs.queue_nr < VS_QUEUE_LENGTH);
 
-      header = draw_header_from_block(draw->vs.vertex_cache, out);
+      header = draw_header_from_block(draw->vs.vertex_cache, MAX_VERTEX_ALLOCATION,
+                                      out);
       draw->vs.elts[out] = i;
       header->clipmask = 0;
       header->edgeflag = draw_get_edgeflag(draw, i);
@@ -113,6 +115,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
        */
 
       return draw_header_from_block(draw->vs.vertex_cache,
+                                    MAX_VERTEX_ALLOCATION,
                                     draw->vcache.idx[slot].out);
    }
 }
@@ -148,7 +151,8 @@ void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw )
 
    for (i = 0; i < draw->vs.post_nr; i++) {
       struct vertex_header * header =
-         draw_header_from_block(draw->vs.vertex_cache, i);
+         draw_header_from_block(draw->vs.vertex_cache,
+                                MAX_VERTEX_ALLOCATION, i);
       header->vertex_id = UNDEFINED_VERTEX_ID;
    }
 }
