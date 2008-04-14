@@ -135,6 +135,7 @@ vs_exec_run( struct draw_vertex_shader *shader,
             out->clipmask = 0;
          }
          out->edgeflag = 1;
+	 out->vertex_id = UNDEFINED_VERTEX_ID;
 
          if (!draw->identity_viewport) {
             /* Viewport mapping */

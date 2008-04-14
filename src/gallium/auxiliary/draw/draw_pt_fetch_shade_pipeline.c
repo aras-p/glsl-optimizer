@@ -159,15 +159,6 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
       return;
    }
 
-   /*FIXME: this init phase should go away */
-   for (i = 0; i < fetch_count; ++i) {
-      struct vertex_header *header =
-         (struct vertex_header*)(pipeline_verts + (fpme->pipeline_vertex_size * i));
-      header->clipmask = 0;
-      header->edgeflag = draw_get_edgeflag(draw, i);
-      header->pad = 0;
-      header->vertex_id = UNDEFINED_VERTEX_ID;
-   }
 
    /* Shade
     */

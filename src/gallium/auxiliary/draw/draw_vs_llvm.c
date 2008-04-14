@@ -140,6 +140,7 @@ vs_llvm_run( struct draw_vertex_shader *base,
          vOut[j]->clipmask = 0;
       }
       vOut[j]->edgeflag = 1;
+      vOut[j]->vertex_id = UNDEFINED_VERTEX_ID;
 
       if (!draw->identity_viewport) {
          /* Viewport mapping */
