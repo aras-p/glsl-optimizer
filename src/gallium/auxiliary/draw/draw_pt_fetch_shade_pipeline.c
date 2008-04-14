@@ -177,6 +177,10 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
       void *hw_verts;
       float *out;
 
+      /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+       */
+      draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
       hw_verts = draw->render->allocate_vertices(draw->render,
                                                  (ushort)fpme->hw_vertex_size,
                                                  (ushort)fetch_count);

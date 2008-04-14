@@ -243,6 +243,10 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = feme->draw;
    void *hw_verts;
    
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->hw_vertex_size,
                                                (ushort)fetch_count );
