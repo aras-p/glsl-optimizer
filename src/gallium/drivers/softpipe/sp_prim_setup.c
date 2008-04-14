@@ -71,7 +71,6 @@ do_tri(struct draw_stage *stage, struct prim_header *prim)
    struct setup_stage *setup = setup_stage( stage );
 
    setup_tri( setup->setup,
-              prim->det,
               prim->v[0]->data,
               prim->v[1]->data,
               prim->v[2]->data );

@@ -30,11 +30,11 @@
 struct setup_context;
 struct softpipe_context;
 
-void setup_tri( struct setup_context *setup,
-                float det,
-                const float (*v0)[4],
-                const float (*v1)[4],
-                const float (*v2)[4] );
+void 
+setup_tri( struct setup_context *setup,
+	   const float (*v0)[4],
+	   const float (*v1)[4],
+	   const float (*v2)[4] );
 
 void
 setup_line(struct setup_context *setup,

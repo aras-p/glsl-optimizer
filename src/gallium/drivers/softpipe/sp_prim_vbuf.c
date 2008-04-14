@@ -119,25 +119,6 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 }
 
 
-/**
- * Recalculate prim's determinant.  This is needed as we don't have
- * get this information through the vbuf_render interface & we must
- * calculate it here.
- */
-static float
-calc_det( const float (*v0)[4],
-          const float (*v1)[4],
-          const float (*v2)[4] )
-{
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
-   const float ex = v0[0][0] - v2[0][0];
-   const float ey = v0[0][1] - v2[0][1];
-   const float fx = v1[0][0] - v2[0][0];
-   const float fy = v1[0][1] - v2[0][1];
-
-   /* det = cross(e,f).z */
-   return ex * fy - ey * fx;
-}
 
 
 static void
@@ -169,7 +150,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
                              indices[i+j] * vertex_size);
 
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2]);
@@ -254,7 +234,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i + 1);
          v[2] = VERTEX(i + 2);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -267,7 +246,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i - 1);
          v[2] = VERTEX(i);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -280,7 +258,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i - 1);
          v[2] = VERTEX(i);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -293,7 +270,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i + 1);
          v[2] = VERTEX(i + 2);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -302,7 +278,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i + 2);
          v[2] = VERTEX(i + 3);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -315,7 +290,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i);
          v[2] = VERTEX(i + 1);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -324,7 +298,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i + 1);
          v[2] = VERTEX(i - 1);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );
@@ -337,7 +310,6 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
          v[1] = VERTEX(i - 1);
          v[2] = VERTEX(i);
          setup_tri( setup_ctx,
-                    calc_det(v[0], v[1], v[2]),
                     v[0],
                     v[1],
                     v[2] );

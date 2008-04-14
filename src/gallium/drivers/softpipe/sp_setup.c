@@ -696,14 +696,36 @@ static void subtriangle( struct setup_context *setup,
 
 
 /**
+ * Recalculate prim's determinant.  This is needed as we don't have
+ * get this information through the vbuf_render interface & we must
+ * calculate it here.
+ */
+static float
+calc_det( const float (*v0)[4],
+          const float (*v1)[4],
+          const float (*v2)[4] )
+{
+   /* edge vectors e = v0 - v2, f = v1 - v2 */
+   const float ex = v0[0][0] - v2[0][0];
+   const float ey = v0[0][1] - v2[0][1];
+   const float fx = v1[0][0] - v2[0][0];
+   const float fy = v1[0][1] - v2[0][1];
+
+   /* det = cross(e,f).z */
+   return ex * fy - ey * fx;
+}
+
+
+/**
  * Do setup for triangle rasterization, then render the triangle.
  */
 void setup_tri( struct setup_context *setup,
-                float det,
                 const float (*v0)[4],
                 const float (*v1)[4],
                 const float (*v2)[4] )
 {
+   float det = calc_det(v0, v1, v2);
+
    /*
    debug_printf("%s\n", __FUNCTION__ );
    */
@@ -712,6 +734,8 @@ void setup_tri( struct setup_context *setup,
    setup->numFragsEmitted = 0;
    setup->numFragsWritten = 0;
 #endif
+
+
 
    if (cull_tri( setup, det ))
       return;
