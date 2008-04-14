@@ -35,6 +35,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "pipe/p_error.h"
 #include "pipe/p_debug.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_thread.h"
@@ -53,6 +54,13 @@
  * Convenience macro (type safe).
  */
 #define SUPER(__derived) (&(__derived)->base)
+
+#define PIPE_BUFFER_USAGE_CPU_READ_WRITE \
+   ( PIPE_BUFFER_USAGE_CPU_READ | PIPE_BUFFER_USAGE_CPU_WRITE )
+#define PIPE_BUFFER_USAGE_GPU_READ_WRITE \
+   ( PIPE_BUFFER_USAGE_GPU_READ | PIPE_BUFFER_USAGE_GPU_WRITE )
+#define PIPE_BUFFER_USAGE_WRITE \
+   ( PIPE_BUFFER_USAGE_CPU_WRITE | PIPE_BUFFER_USAGE_GPU_WRITE )
 
 
 struct fenced_buffer_list
@@ -76,6 +84,15 @@ struct fenced_buffer
    
    struct pb_buffer *buffer;
 
+   /* FIXME: protect access with mutex */
+
+   /**
+    * A bitmask of PIPE_BUFFER_USAGE_CPU/GPU_READ/WRITE describing the current
+    * buffer usage.
+    */
+   unsigned flags;
+
+   unsigned mapcount;
    struct pipe_fence_handle *fence;
 
    struct list_head head;
@@ -98,7 +115,9 @@ _fenced_buffer_add(struct fenced_buffer *fenced_buf)
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
 
    assert(fenced_buf->base.base.refcount);
+   assert(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE);
    assert(fenced_buf->fence);
+
    assert(!fenced_buf->head.prev);
    assert(!fenced_buf->head.next);
    LIST_ADDTAIL(&fenced_buf->head, &fenced_list->delayed);
@@ -130,6 +149,7 @@ _fenced_buffer_remove(struct fenced_buffer *fenced_buf)
    assert(fenced_buf->fence);
    
    winsys->fence_reference(winsys, &fenced_buf->fence, NULL);
+   fenced_buf->flags &= ~PIPE_BUFFER_USAGE_GPU_READ_WRITE;
    
    assert(fenced_buf->head.prev);
    assert(fenced_buf->head.next);
@@ -186,6 +206,34 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
 }
 
 
+/**
+ * Serialize writes, but allow concurrent reads.
+ */
+static INLINE enum pipe_error
+fenced_buffer_serialize(struct fenced_buffer *fenced_buf, unsigned flags)
+{
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+   struct pipe_winsys *winsys = fenced_list->winsys;
+
+   if(((fenced_buf->flags | flags) & PIPE_BUFFER_USAGE_WRITE) == 0)
+      return PIPE_OK;
+
+   if(fenced_buf->mapcount) {
+      /* FIXME */
+      debug_warning("attemp to write concurrently to buffer");
+      return PIPE_ERROR_RETRY;
+   }
+
+   if(fenced_buf->fence) {
+      if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0)
+	 return PIPE_ERROR_RETRY; 
+      _fenced_buffer_remove(fenced_buf);
+   }
+
+   return PIPE_OK;
+}
+
+
 static void
 fenced_buffer_destroy(struct pb_buffer *buf)
 {
@@ -223,16 +271,30 @@ static void *
 fenced_buffer_map(struct pb_buffer *buf, 
                   unsigned flags)
 {
-   struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
-   return pb_map(fenced_buf->buffer, flags);
+   struct fenced_buffer *fenced_buf = fenced_buffer(buf);
+   void *map;
+   assert((flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE) == 0);
+   
+   if(fenced_buffer_serialize(fenced_buf, flags) != PIPE_OK)
+      return NULL;
+   
+   map = pb_map(fenced_buf->buffer, flags);
+   if(map)
+      ++fenced_buf->mapcount;
+   fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+   return map;
 }
 
 
 static void
 fenced_buffer_unmap(struct pb_buffer *buf)
 {
-   struct fenced_buffer *fenced_buf = fenced_buffer(buf);   
+   struct fenced_buffer *fenced_buf = fenced_buffer(buf);
+   assert(fenced_buf->mapcount);
    pb_unmap(fenced_buf->buffer);
+   --fenced_buf->mapcount;
+   if(!fenced_buf->mapcount)
+      fenced_buf->flags &= ~PIPE_BUFFER_USAGE_CPU_READ_WRITE;
 }
 
 
@@ -288,13 +350,22 @@ buffer_fence(struct pb_buffer *buf,
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
    struct pipe_winsys *winsys = fenced_list->winsys;
+   /* FIXME: receive this as a parameter */
+   unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
+   
+   if(fenced_buffer_serialize(fenced_buf, flags) != PIPE_OK) {
+      /* FIXME: propagate error */
+      (void)0;
+   }
    
    _glthread_LOCK_MUTEX(fenced_list->mutex);
    if (fenced_buf->fence)
       _fenced_buffer_remove(fenced_buf);
-   winsys->fence_reference(winsys, &fenced_buf->fence, fence);
-   if (fenced_buf->fence)
+   if (fence) {
+      winsys->fence_reference(winsys, &fenced_buf->fence, fence);
+      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
       _fenced_buffer_add(fenced_buf);
+   }
    _glthread_UNLOCK_MUTEX(fenced_list->mutex);
 }
 
