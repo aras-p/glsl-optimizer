@@ -144,15 +144,9 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vertex_shader;
    char *pipeline_verts;
-   unsigned i;
 
-   //debug_printf("fc = %d, VS = %d\n", fetch_count, VS_QUEUE_LENGTH);
-   if (fetch_count < VS_QUEUE_LENGTH) {
-      pipeline_verts = draw->vs.vertex_cache;
-   } else {
-      pipeline_verts = MALLOC(fpme->pipeline_vertex_size *
-                              fetch_count);
-   }
+   pipeline_verts = MALLOC(fpme->pipeline_vertex_size *
+			   fetch_count);
 
    if (!pipeline_verts) {
       assert(0);
@@ -216,8 +210,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    }
 
 
-   if (pipeline_verts != draw->vs.vertex_cache)
-      FREE(pipeline_verts);
+   FREE(pipeline_verts);
 }
 
 
