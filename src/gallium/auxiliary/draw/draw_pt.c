@@ -79,6 +79,9 @@ draw_pt_arrays(struct draw_context *draw,
     *     - backend  -- the vbuf_render provided by the driver.
     */
 
+   if (shading && !draw->use_pt_shaders)
+      return FALSE;
+
 
    if (!cliptest && !pipeline && !shading) {
       /* This is the 'passthrough' path:

@@ -49,6 +49,8 @@ struct draw_context *draw_create( void )
    draw->use_sse = FALSE;
 #endif
 
+   draw->use_pt_shaders = GETENV( "GALLIUM_PT_SHADERS" ) != NULL;
+
    /* create pipeline stages */
    draw->pipeline.wide_line  = draw_wide_line_stage( draw );
    draw->pipeline.wide_point = draw_wide_point_stage( draw );
