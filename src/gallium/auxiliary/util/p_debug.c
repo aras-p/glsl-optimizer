@@ -39,6 +39,7 @@
 #include "pipe/p_compiler.h" 
 #include "pipe/p_util.h" 
 #include "pipe/p_debug.h" 
+#include "util/u_string.h" 
 
 
 #ifdef WIN32
@@ -60,7 +61,7 @@ void _debug_vprintf(const char *format, va_list ap)
    /* EngDebugPrint does not handle float point arguments, so we need to use
     * our own vsnprintf implementation */
    char buf[512 + 1];
-   vsnprintf(buf, sizeof(buf), format, ap);
+   util_vsnprintf(buf, sizeof(buf), format, ap);
    _EngDebugPrint("%s", buf);
 #else
    /* TODO: Implement debug print for WINCE */
@@ -311,7 +312,7 @@ debug_dump_enum(const struct debug_named_value *names,
       ++names;
    }
 
-   snprintf(rest, sizeof(rest), "0x%08lx", value);
+   util_snprintf(rest, sizeof(rest), "0x%08lx", value);
    return rest;
 }
 
@@ -344,7 +345,7 @@ debug_dump_flags(const struct debug_named_value *names,
       else
 	 first = 0;
       
-      snprintf(rest, sizeof(rest), "0x%08lx", value);
+      util_snprintf(rest, sizeof(rest), "0x%08lx", value);
       strncat(output, rest, sizeof(output));
    }
    

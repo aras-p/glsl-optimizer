@@ -28,6 +28,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
+#include "util/u_string.h"
 
 #include "brw_context.h"
 #include "brw_screen.h"
@@ -66,7 +67,7 @@ brw_get_name( struct pipe_screen *screen )
       break;
    }
 
-   sprintf(buffer, "i965 (chipset: %s)", chipset);
+   util_snprintf(buffer, sizeof(buffer), "i965 (chipset: %s)", chipset);
    return buffer;
 }
 

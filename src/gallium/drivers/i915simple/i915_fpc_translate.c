@@ -33,6 +33,7 @@
 #include "i915_fpc.h"
 
 #include "pipe/p_shader_tokens.h"
+#include "util/u_string.h"
 #include "tgsi/util/tgsi_parse.h"
 #include "tgsi/util/tgsi_dump.h"
 
@@ -122,7 +123,7 @@ i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
 
    debug_printf("i915_program_error: ");
    va_start( args, msg );  
-   vsprintf( buffer, msg, args );
+   util_vsnprintf( buffer, sizeof(buffer), msg, args );
    va_end( args );
    debug_printf(buffer);
    debug_printf("\n");

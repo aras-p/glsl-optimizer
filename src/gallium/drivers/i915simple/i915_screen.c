@@ -28,6 +28,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
+#include "util/u_string.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
@@ -78,7 +79,7 @@ i915_get_name( struct pipe_screen *pscreen )
       break;
    }
 
-   sprintf(buffer, "i915 (chipset: %s)", chipset);
+   util_snprintf(buffer, sizeof(buffer), "i915 (chipset: %s)", chipset);
    return buffer;
 }
 

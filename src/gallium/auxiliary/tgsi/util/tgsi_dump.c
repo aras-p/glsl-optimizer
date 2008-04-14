@@ -30,6 +30,7 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_string.h"
 #include "tgsi_dump.h"
 #include "tgsi_parse.h"
 #include "tgsi_build.h"
@@ -147,7 +148,7 @@ gen_dump_uix(
 {
    char  str[36];
 
-   sprintf( str, "0x%x", ui );
+   util_snprintf( str, sizeof(str), "0x%x", ui );
    gen_dump_str( dump, str );
 }
 
@@ -158,7 +159,7 @@ gen_dump_uid(
 {
    char  str[16];
 
-   sprintf( str, "%u", ui );
+   util_snprintf( str, sizeof(str), "%u", ui );
    gen_dump_str( dump, str );
 }
 
@@ -169,7 +170,7 @@ gen_dump_sid(
 {
    char  str[16];
 
-   sprintf( str, "%d", si );
+   util_snprintf( str, sizeof(str), "%d", si );
    gen_dump_str( dump, str );
 }
 
@@ -180,7 +181,7 @@ gen_dump_flt(
 {
    char  str[48];
 
-   sprintf( str, "%10.4f", flt );
+   util_snprintf( str, sizeof(str), "%10.4f", flt );
    gen_dump_str( dump, str );
 }
 

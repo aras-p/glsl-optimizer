@@ -166,8 +166,8 @@
 #include <config.h>
 #else
 #ifdef WIN32
-#define vsnprintf rpl_vsnprintf
-#define snprintf rpl_snprintf
+#define vsnprintf util_vsnprintf
+#define snprintf util_snprintf
 #define HAVE_VSNPRINTF 0
 #define HAVE_SNPRINTF 0
 #define HAVE_VASPRINTF 1 /* not needed */
@@ -445,7 +445,7 @@ static UINTMAX_T myround(LDOUBLE);
 static LDOUBLE mypow10(int);
 
 int
-rpl_vsnprintf(char *str, size_t size, const char *format, va_list args)
+util_vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
 	LDOUBLE fvalue;
 	INTMAX_T value;
@@ -1404,7 +1404,7 @@ mymemcpy(void *dst, void *src, size_t len)
 #endif	/* NEED_MYMEMCPY */
 
 int
-rpl_vasprintf(char **ret, const char *format, va_list ap)
+util_vasprintf(char **ret, const char *format, va_list ap)
 {
 	size_t size;
 	int len;
@@ -1422,10 +1422,10 @@ rpl_vasprintf(char **ret, const char *format, va_list ap)
 #if !HAVE_SNPRINTF
 #if HAVE_STDARG_H
 int
-rpl_snprintf(char *str, size_t size, const char *format, ...)
+util_snprintf(char *str, size_t size, const char *format, ...)
 #else
 int
-rpl_snprintf(va_alist) va_dcl
+util_snprintf(va_alist) va_dcl
 #endif	/* HAVE_STDARG_H */
 {
 #if !HAVE_STDARG_H
@@ -1449,10 +1449,10 @@ rpl_snprintf(va_alist) va_dcl
 #if !HAVE_ASPRINTF
 #if HAVE_STDARG_H
 int
-rpl_asprintf(char **ret, const char *format, ...)
+util_asprintf(char **ret, const char *format, ...)
 #else
 int
-rpl_asprintf(va_alist) va_dcl
+util_asprintf(va_alist) va_dcl
 #endif	/* HAVE_STDARG_H */
 {
 #if !HAVE_STDARG_H
