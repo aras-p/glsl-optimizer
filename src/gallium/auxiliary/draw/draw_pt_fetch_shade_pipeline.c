@@ -49,6 +49,7 @@ struct fetch_pipeline_middle_end {
    unsigned prim;
 };
 
+#if 0
 static void emit_R32_FLOAT( const float *attrib,
                             float **out )
 {
@@ -72,7 +73,7 @@ static void emit_R32G32B32_FLOAT( const float *attrib,
    (*out)[2] = attrib[2];
    (*out) += 3;
 }
-
+#endif
 static void emit_R32G32B32A32_FLOAT( const float *attrib,
                                      float **out )
 {

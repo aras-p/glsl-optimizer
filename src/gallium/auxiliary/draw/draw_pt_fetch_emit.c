@@ -145,7 +145,6 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
                      unsigned count )
 {
    float *out = (float *)out_ptr;
-   struct vbuf_render *render = feme->draw->render;
    uint i, j;
 
    for (i = 0; i < count; i++) {
@@ -167,7 +166,6 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                 unsigned prim )
 {
-   static const float zero = 0;
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    const struct vertex_info *vinfo;

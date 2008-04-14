@@ -36,13 +36,13 @@
 #include "draw/draw_pt.h"
 
 
-/* XXX: Shouldn't those two functions below use the '>' operator???
- */
+#if 0
 static boolean too_many_elts( struct draw_context *draw,
                               unsigned elts )
 {
    return elts > (8 * 1024);
 }
+#endif
 
 static INLINE unsigned reduced_prim(unsigned prim)
 {
