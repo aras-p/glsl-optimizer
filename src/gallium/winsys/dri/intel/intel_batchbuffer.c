@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #include "intel_batchbuffer.h"
-#include "intel_ioctl.h"
+#include "intel_context.h"
 #include <errno.h>
 
 #if 0
