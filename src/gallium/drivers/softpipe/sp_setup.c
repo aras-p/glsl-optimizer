@@ -97,30 +97,34 @@ struct setup_context {
    uint numFragsEmitted;  /**< per primitive */
    uint numFragsWritten;  /**< per primitive */
 #endif
+
+   unsigned winding;		/* which winding to cull */
 };
 
 
 
 
 
-/**
- * Recalculate prim's determinant.
- * XXX is this needed?
- */
-static INLINE float
-calc_det( const float (*v0)[4],
-          const float (*v1)[4],
-          const float (*v2)[4] )
+static boolean cull_tri( struct setup_context *setup,
+		      float det )
 {
-   /* edge vectors e = v0 - v2, f = v1 - v2 */
-   const float ex = v0[0][0] - v2[0][0];
-   const float ey = v0[0][1] - v2[0][1];
-   const float fx = v1[0][0] - v2[0][0];
-   const float fy = v1[0][1] - v2[0][1];
+   if (det != 0) 
+   {   
+      /* if (det < 0 then Z points toward camera and triangle is 
+       * counter-clockwise winding.
+       */
+      unsigned winding = (det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
+      
+      if ((winding & setup->winding) == 0) 
+	 return FALSE;
+   }
 
-   /* det = cross(e,f).z */
-   return ex * fy - ey * fx;
+   /* Culled:
+    */
+   return TRUE;
 }
+
+
 
 /**
  * Clip setup->quad against the scissor/surface bounds.
@@ -709,8 +713,10 @@ void setup_tri( struct setup_context *setup,
    setup->numFragsWritten = 0;
 #endif
 
-   setup_sort_vertices( setup, calc_det(v0, v1, v2),
-                        v0, v1, v2 );
+   if (cull_tri( setup, det ))
+      return;
+
+   setup_sort_vertices( setup, det, v0, v1, v2 );
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
@@ -1223,6 +1229,8 @@ void setup_prepare( struct setup_context *setup )
       setup->quad.nr_attrs = fs->info.num_inputs;
       sp->quad.first->begin(sp->quad.first);
    }
+
+   setup->winding = sp->rasterizer->cull_mode;
 }
 
 

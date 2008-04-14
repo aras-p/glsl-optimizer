@@ -120,8 +120,9 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 
 
 /**
- * Recalculate prim's determinant.
- * XXX is this needed?
+ * Recalculate prim's determinant.  This is needed as we don't have
+ * get this information through the vbuf_render interface & we must
+ * calculate it here.
  */
 static float
 calc_det( const float (*v0)[4],
@@ -144,12 +145,21 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   struct draw_stage *setup = softpipe->setup;
    unsigned vertex_size = softpipe->vertex_info_vbuf.size * sizeof(float);
    unsigned i, j;
    void *vertex_buffer = cvbr->vertex_buffer;
    cptrf4 v[3];
-   struct setup_context *setup_ctx = sp_draw_setup_context(setup);
+
+   /* XXX: break this dependency - make setup_context live under
+    * softpipe, rename the old "setup" draw stage to something else.
+    */
+   struct draw_stage *setup = softpipe->setup;
+   struct setup_context *setup_ctx = sp_draw_setup_context(softpipe->setup);
+   
+   /* XXX: call this from allocate_vertices: 
+    */
+   setup_prepare( setup_ctx );
+
 
    switch (cvbr->prim) {
    case PIPE_PRIM_TRIANGLES:
@@ -189,6 +199,9 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
       break;
    }
 
+   /* XXX: why are we calling this???  If we had to call something, it
+    * would be a function in sp_setup.c:
+    */
    sp_draw_flush( setup );
 }
 
