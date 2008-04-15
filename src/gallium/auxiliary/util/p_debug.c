@@ -59,10 +59,15 @@ void _debug_vprintf(const char *format, va_list ap)
 #ifdef WIN32
 #ifndef WINCE
    /* EngDebugPrint does not handle float point arguments, so we need to use
-    * our own vsnprintf implementation */
-   char buf[512 + 1];
-   util_vsnprintf(buf, sizeof(buf), format, ap);
-   _EngDebugPrint("%s", buf);
+    * our own vsnprintf implementation. It is also very slow, so buffer until
+    * we find a newline. */
+   static char buf[512 + 1] = {'\0'};
+   size_t len = strlen(buf);
+   int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
+   if(ret > (int)(sizeof(buf) - len - 1) || strchr(buf + len, '\n')) {
+      _EngDebugPrint("%s", buf);
+      buf[0] = '\0';
+   }
 #else
    /* TODO: Implement debug print for WINCE */
 #endif
