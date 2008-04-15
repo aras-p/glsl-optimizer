@@ -54,8 +54,17 @@ struct translate_element
 };
 
 
+struct translate_key {
+   unsigned output_stride;
+   unsigned nr_elements;
+   struct translate_element element[PIPE_MAX_ATTRIBS];
+};
+
+
 struct translate {
-   void (*destroy)( struct translate * );
+   struct translate_key key;
+
+   void (*release)( struct translate * );
 
    void (*set_buffer)( struct translate *,
 		       unsigned i,
@@ -66,17 +75,30 @@ struct translate {
 		     const unsigned *elts,
 		     unsigned count,
 		     void *output_buffer);
+
+   void (*run)( struct translate *,
+		unsigned start,
+		unsigned count,
+		void *output_buffer);
 };
 
 
 
-struct translate *translate_sse2_create( unsigned output_stride,
-					 const struct translate_element *elements,
-					 unsigned nr_elements );
+#if 0
+struct translate_context *translate_context_create( void );
+void translate_context_destroy( struct translate_context * );
 
-struct translate *translate_generic_create( unsigned output_stride,
-					    const struct translate_element *elements,
-					    unsigned nr_elements );
+struct translate *translate_lookup_or_create( struct translate_context *tctx,
+					      const struct translate_key *key );
+#endif
+
+
+/*******************************************************************************
+ *  Private:
+ */
+struct translate *translate_sse2_create( const struct translate_key *key );
+
+struct translate *translate_generic_create( const struct translate_key *key );
 
 
 #endif

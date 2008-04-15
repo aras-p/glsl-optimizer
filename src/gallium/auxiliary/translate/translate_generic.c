@@ -59,7 +59,6 @@ struct translate_generic {
    } attrib[PIPE_MAX_ATTRIBS];
 
    unsigned nr_attrib;
-   unsigned output_stride;
 };
 
 
@@ -571,7 +570,42 @@ static void generic_run_elts( struct translate *translate,
 	 tg->attrib[attr].emit( data, dst );
       }
       
-      vert += tg->output_stride;
+      vert += tg->translate.key.output_stride;
+   }
+}
+
+
+
+static void generic_run( struct translate *translate,
+			 unsigned start,
+			 unsigned count,
+			 void *output_buffer )
+{
+   struct translate_generic *tg = translate_generic(translate);
+   char *vert = output_buffer;
+   unsigned nr_attrs = tg->nr_attrib;
+   unsigned attr;
+   unsigned i;
+
+   /* loop over vertex attributes (vertex shader inputs)
+    */
+   for (i = 0; i < count; i++) {
+      unsigned elt = start + i;
+
+      for (attr = 0; attr < nr_attrs; attr++) {
+	 float data[4];
+
+	 const char *src = (tg->attrib[attr].input_ptr + 
+			    tg->attrib[attr].input_stride * elt);
+
+	 char *dst = (vert + 
+		      tg->attrib[attr].output_offset);
+
+	 tg->attrib[attr].fetch( src, data );
+	 tg->attrib[attr].emit( data, dst );
+      }
+      
+      vert += tg->translate.key.output_stride;
    }
 }
 
@@ -595,14 +629,14 @@ static void generic_set_buffer( struct translate *translate,
 }
 
 
-static void generic_destroy( struct translate *translate )
+static void generic_release( struct translate *translate )
 {
+   /* Refcount?
+    */
    FREE(translate);
 }
 
-struct translate *translate_generic_create( unsigned output_stride,
-					    const struct translate_element *elements,
-					    unsigned nr_elements )
+struct translate *translate_generic_create( const struct translate_key *key )
 {
    struct translate_generic *tg = CALLOC_STRUCT(translate_generic);
    unsigned i;
@@ -610,20 +644,24 @@ struct translate *translate_generic_create( unsigned output_stride,
    if (tg == NULL)
       return NULL;
 
-   tg->translate.destroy = generic_destroy;
+   tg->translate.key = *key;
+   tg->translate.release = generic_release;
    tg->translate.set_buffer = generic_set_buffer;
    tg->translate.run_elts = generic_run_elts;
+   tg->translate.run = generic_run;
 
-   for (i = 0; i < nr_elements; i++) {
-      tg->attrib[i].fetch = get_fetch_func(elements[i].input_format);
-      tg->attrib[i].buffer = elements[i].input_buffer;
-      tg->attrib[i].input_offset = elements[i].input_offset;
+   for (i = 0; i < key->nr_elements; i++) {
 
-      tg->attrib[i].emit = get_emit_func(elements[i].output_format);
-      tg->attrib[i].output_offset = elements[i].output_offset;
+      tg->attrib[i].fetch = get_fetch_func(key->element[i].input_format);
+      tg->attrib[i].buffer = key->element[i].input_buffer;
+      tg->attrib[i].input_offset = key->element[i].input_offset;
+
+      tg->attrib[i].emit = get_emit_func(key->element[i].output_format);
+      tg->attrib[i].output_offset = key->element[i].output_offset;
+
    }
 
-   tg->nr_attrib = nr_elements;
+   tg->nr_attrib = key->nr_elements;
 
 
    return &tg->translate;

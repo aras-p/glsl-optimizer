@@ -31,76 +31,19 @@
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
+#include "translate/translate.h"
+
 
 struct fetch_pipeline_middle_end {
    struct draw_pt_middle_end base;
    struct draw_context *draw;
 
-   const ubyte *input_buf[2];
-
-   struct {
-      const ubyte **input_buf;
-      unsigned input_offset;
-      unsigned output_offset;
-
-      void (*emit)( const float *attrib, void *ptr );
-   } translate[PIPE_MAX_ATTRIBS];
-   unsigned nr_translate;
+   struct translate *translate;
 
    unsigned pipeline_vertex_size;
-   unsigned hw_vertex_size;
    unsigned prim;
 };
 
-
-static void emit_NULL( const float *attrib,
-		       void *ptr )
-{
-}
-
-static void emit_R32_FLOAT( const float *attrib,
-                            void *ptr )
-{
-   float *out = (float *)ptr;
-   out[0] = attrib[0];
-}
-
-static void emit_R32G32_FLOAT( const float *attrib,
-                               void *ptr )
-{
-   float *out = (float *)ptr;
-   out[0] = attrib[0];
-   out[1] = attrib[1];
-}
-
-static void emit_R32G32B32_FLOAT( const float *attrib,
-                                  void *ptr )
-{
-   float *out = (float *)ptr;
-   out[0] = attrib[0];
-   out[1] = attrib[1];
-   out[2] = attrib[2];
-}
-
-static void emit_R32G32B32A32_FLOAT( const float *attrib,
-                                     void *ptr )
-{
-   float *out = (float *)ptr;
-   out[0] = attrib[0];
-   out[1] = attrib[1];
-   out[2] = attrib[2];
-   out[3] = attrib[3];
-}
-
-static void
-emit_B8G8R8A8_UNORM( const float *attrib, void *ptr)
-{
-   ubyte *out = (ubyte *)ptr;
-   out[2] = float_to_ubyte(attrib[0]);
-   out[1] = float_to_ubyte(attrib[1]);
-   out[0] = float_to_ubyte(attrib[2]);
-   out[3] = float_to_ubyte(attrib[3]);
-}
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim )
@@ -111,6 +54,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    boolean ok;
    const struct vertex_info *vinfo;
    unsigned dst_offset;
+   struct translate_key hw_key;
 
    fpme->prim = prim;
 
@@ -132,6 +76,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    for (i = 0; i < vinfo->num_attribs; i++) {
       unsigned emit_sz = 0;
       unsigned src_buffer = 0;
+      unsigned output_format;
       unsigned src_offset = (sizeof(struct vertex_header) + 
 			     vinfo->src_index[i] * 4 * sizeof(float) );
 
@@ -139,49 +84,64 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
          
       switch (vinfo->emit[i]) {
       case EMIT_4F:
-         fpme->translate[i].emit = emit_R32G32B32A32_FLOAT;
+         output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 	 emit_sz = 4 * sizeof(float);
          break;
       case EMIT_3F:
-         fpme->translate[i].emit = emit_R32G32B32_FLOAT;
+         output_format = PIPE_FORMAT_R32G32B32_FLOAT;
 	 emit_sz = 3 * sizeof(float);
          break;
       case EMIT_2F:
-         fpme->translate[i].emit = emit_R32G32_FLOAT;
+         output_format = PIPE_FORMAT_R32G32_FLOAT;
 	 emit_sz = 2 * sizeof(float);
          break;
       case EMIT_1F:
-         fpme->translate[i].emit = emit_R32_FLOAT;
+         output_format = PIPE_FORMAT_R32_FLOAT;
 	 emit_sz = 1 * sizeof(float);
          break;
       case EMIT_1F_PSIZE:
-         fpme->translate[i].emit = emit_R32_FLOAT;
+         output_format = PIPE_FORMAT_R32_FLOAT;
 	 emit_sz = 1 * sizeof(float);
          src_buffer = 1;
 	 src_offset = 0;
          break;
       case EMIT_4UB:
-         fpme->translate[i].emit = emit_B8G8R8A8_UNORM;
+         output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	 emit_sz = 4 * sizeof(ubyte);
       default:
          assert(0);
-         fpme->translate[i].emit = emit_NULL;
+         output_format = PIPE_FORMAT_NONE;
 	 emit_sz = 0;
          break;
       }
+      
+      hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      hw_key.element[i].input_buffer = src_buffer;
+      hw_key.element[i].input_offset = src_offset;
+      hw_key.element[i].output_format = output_format;
+      hw_key.element[i].output_offset = dst_offset;
 
-      fpme->translate[i].input_buf = &fpme->input_buf[src_buffer];
-      fpme->translate[i].input_offset = src_offset;
-      fpme->translate[i].output_offset = dst_offset;
       dst_offset += emit_sz;
    }
 
-   fpme->nr_translate = vinfo->num_attribs;
-   fpme->hw_vertex_size = vinfo->size * 4;
+   hw_key.nr_elements = vinfo->num_attribs;
+   hw_key.output_stride = vinfo->size * 4;
+
+   /* Don't bother with caching at this stage:
+    */
+   if (!fpme->translate ||
+       memcmp(&fpme->translate->key, &hw_key, sizeof(hw_key)) != 0) 
+   {
+      if (fpme->translate)
+	 fpme->translate->release(fpme->translate);
+
+      fpme->translate = translate_generic_create( &hw_key );
+   }
+
+
 
    //fpme->pipeline_vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
    fpme->pipeline_vertex_size = MAX_VERTEX_ALLOCATION;
-   fpme->hw_vertex_size = vinfo->size * 4;
 }
 
 
@@ -221,46 +181,34 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                             draw_elts,
                             draw_count );
    } else {
-      unsigned i, j;
+      struct translate *translate = fpme->translate;
       void *hw_verts;
-      char *out_buf;
 
       /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
        */
       draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
       hw_verts = draw->render->allocate_vertices(draw->render,
-                                                 (ushort)fpme->hw_vertex_size,
+                                                 (ushort)fpme->translate->key.output_stride,
                                                  (ushort)fetch_count);
       if (!hw_verts) {
          assert(0);
          return;
       }
 
-      out_buf = (char *)hw_verts;
-      fpme->input_buf[0] = (const ubyte *)pipeline_verts;
-      fpme->input_buf[1] = (const ubyte *)&fpme->draw->rasterizer->point_size;
+      translate->set_buffer(translate, 
+			    0, 
+			    pipeline_verts,
+			    fpme->pipeline_vertex_size );
 
-      for (i = 0; i < fetch_count; i++) {
+      translate->set_buffer(translate, 
+			    1, 
+			    &fpme->draw->rasterizer->point_size,
+			    0);
 
-         for (j = 0; j < fpme->nr_translate; j++) {
-
-            const float *attrib = (const float *)( (*fpme->translate[j].input_buf) + 
-						   fpme->translate[j].input_offset );
-
-	    char *dest = out_buf + fpme->translate[j].output_offset;
-
-	    if (0)
-	       debug_printf("emiting [%f, %f, %f, %f]\n",
-			    attrib[0], attrib[1],
-			    attrib[2], attrib[3]);
-
-            fpme->translate[j].emit(attrib, dest);
-         }
-
-	 fpme->input_buf[0] += fpme->pipeline_vertex_size;
-	 out_buf += fpme->hw_vertex_size;
-      }
+      translate->run( translate,
+		      0, fetch_count,
+		      hw_verts );
 
       draw->render->draw(draw->render,
                          draw_elts,
@@ -268,7 +216,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 
       draw->render->release_vertices(draw->render,
                                      hw_verts,
-                                     fpme->hw_vertex_size,
+                                     fpme->translate->key.output_stride,
                                      fetch_count);
    }
 
