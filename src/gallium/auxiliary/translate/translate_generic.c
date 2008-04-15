@@ -231,10 +231,10 @@ static void
 emit_B8G8R8A8_UNORM( const float *attrib, void *ptr)
 {
    ubyte *out = (ubyte *)ptr;
-   out[2] = TO_8_UNORM(out[0]);
-   out[1] = TO_8_UNORM(out[1]);
-   out[0] = TO_8_UNORM(out[2]);
-   out[3] = TO_8_UNORM(out[3]);
+   out[2] = TO_8_UNORM(attrib[0]);
+   out[1] = TO_8_UNORM(attrib[1]);
+   out[0] = TO_8_UNORM(attrib[2]);
+   out[3] = TO_8_UNORM(attrib[3]);
 }
 
 static void 
