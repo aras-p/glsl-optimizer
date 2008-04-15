@@ -92,6 +92,16 @@ static void emit_R32G32B32A32_FLOAT( const float *attrib,
    out[3] = attrib[3];
 }
 
+static void
+emit_B8G8R8A8_UNORM( const float *attrib, void *ptr)
+{
+   ubyte *out = (ubyte *)ptr;
+   out[2] = float_to_ubyte(attrib[0]);
+   out[1] = float_to_ubyte(attrib[1]);
+   out[0] = float_to_ubyte(attrib[2]);
+   out[3] = float_to_ubyte(attrib[3]);
+}
+
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim )
 {
@@ -150,6 +160,9 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
          src_buffer = 1;
 	 src_offset = 0;
          break;
+      case EMIT_4UB:
+         fpme->translate[i].emit = emit_B8G8R8A8_UNORM;
+	 emit_sz = 4 * sizeof(ubyte);
       default:
          assert(0);
          fpme->translate[i].emit = emit_NULL;
@@ -232,10 +245,10 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 
          for (j = 0; j < fpme->nr_translate; j++) {
 
-            const float *attrib = (const float *)( (*fpme->translate[i].input_buf) + 
-						   fpme->translate[i].input_offset );
+            const float *attrib = (const float *)( (*fpme->translate[j].input_buf) + 
+						   fpme->translate[j].input_offset );
 
-	    char *dest = out_buf + fpme->translate[i].output_offset;
+	    char *dest = out_buf + fpme->translate[j].output_offset;
 
             /*debug_printf("emiting [%f, %f, %f, %f]\n",
                          attrib[0], attrib[1],
