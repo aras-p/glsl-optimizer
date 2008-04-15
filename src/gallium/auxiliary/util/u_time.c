@@ -133,7 +133,7 @@ util_time_timeout(const struct util_time *start,
 
 
 #ifdef WIN32
-void util_time_usleep(unsigned usecs)
+void util_time_sleep(unsigned usecs)
 {
    LONGLONG start, curr, end;
    

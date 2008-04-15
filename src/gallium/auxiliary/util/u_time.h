@@ -87,7 +87,7 @@ util_time_timeout(const struct util_time *start,
 #ifndef WIN32
 #define util_time_sleep usleep
 #else
-int 
+void
 util_time_sleep(unsigned usecs);
 #endif
 
