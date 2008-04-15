@@ -48,7 +48,7 @@ update_framebuffer_state( struct st_context *st )
    struct pipe_framebuffer_state *framebuffer = &st->state.framebuffer;
    struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb;
-   GLuint i;
+   GLuint i, j;
 
    memset(framebuffer, 0, sizeof(*framebuffer));
 
@@ -58,11 +58,14 @@ update_framebuffer_state( struct st_context *st )
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
-   framebuffer->num_cbufs = fb->_NumColorDrawBuffers[0];
-   for (i = 0; i < framebuffer->num_cbufs; i++) {
-      strb = st_renderbuffer(fb->_ColorDrawBuffers[0][i]);
-      assert(strb->surface);
-      framebuffer->cbufs[i] = strb->surface;
+   framebuffer->num_cbufs = 0;
+   for (j = 0; j < MAX_DRAW_BUFFERS; j++) {
+      for (i = 0; i < fb->_NumColorDrawBuffers[j]; i++) {
+         strb = st_renderbuffer(fb->_ColorDrawBuffers[j][i]);
+         assert(strb->surface);
+         framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
+         framebuffer->num_cbufs++;
+      }
    }
 
    strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
