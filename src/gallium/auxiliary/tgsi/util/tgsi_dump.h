@@ -14,16 +14,6 @@ tgsi_dump(
    const struct tgsi_token *tokens,
    unsigned                flags );
 
-void
-tgsi_dump_str(
-   char                    **str,
-   const struct tgsi_token *tokens,
-   unsigned                flags );
-
-/* Dump to debug_printf()
- */
-void tgsi_debug_dump( struct tgsi_token *tokens );
-
 #if defined __cplusplus
 }
 #endif

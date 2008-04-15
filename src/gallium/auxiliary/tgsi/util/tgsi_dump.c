@@ -25,8 +25,6 @@
  * 
  **************************************************************************/
 
-#include <stdio.h> 
-
 #include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
@@ -35,196 +33,28 @@
 #include "tgsi_parse.h"
 #include "tgsi_build.h"
 
-struct gen_dump
-{
-   unsigned tabs;
-   void  (* write)(
-               struct gen_dump   *dump,
-               const void        *data,
-               unsigned          size );
-};
-
-struct text_dump
-{
-   struct gen_dump   base;
-   char              *text;
-   unsigned          length;
-   unsigned          capacity;
-};
-
 static void
-_text_dump_write(
-   struct gen_dump   *dump,
-   const void        *data,
-   unsigned          size )
-{
-   struct text_dump  *td = (struct text_dump *) dump;
-   unsigned          new_length = td->length + size;
-
-   if( new_length >= td->capacity ) {
-      unsigned new_capacity = td->capacity;
-
-      do {
-         if( new_capacity == 0 ) {
-            new_capacity = 256;
-         }
-         else {
-            new_capacity *= 2;
-         }
-      } while( new_length >= new_capacity );
-      td->text = (char *) REALLOC(
-         td->text,
-         td->capacity,
-         new_capacity );
-      td->capacity = new_capacity;
-   }
-   memcpy(
-      &td->text[td->length],
-      data,
-      size );
-   td->length = new_length;
-   td->text[td->length] = '\0';
-}
-
-struct file_dump
-{
-   struct gen_dump   base;
-   FILE              *file;
-};
-
-static void
-_file_dump_write(
-   struct gen_dump   *dump,
-   const void        *data,
-   unsigned          size )
-{
-   struct file_dump  *fd = (struct file_dump *) dump;
-
-#if 0
-   fwrite( data, 1, size, fd->file );
-#else
-   {
-      unsigned i;
-
-      for (i = 0; i < size; i++ ) {
-         fprintf( fd->file, "%c", ((const char *) data)[i] );
-      }
-   }
-#endif
-}
-
-static void
-gen_dump_str(
-   struct gen_dump   *dump,
-   const char        *str )
-{
-   unsigned i;
-   size_t   len = strlen( str );
-
-   for (i = 0; i < len; i++) {
-      dump->write( dump, &str[i], 1 );
-      if (str[i] == '\n') {
-         unsigned i;
-
-         for (i = 0; i < dump->tabs; i++) {
-            dump->write( dump, "    ", 4 );
-         }
-      }
-   }
-}
-
-static void
-gen_dump_chr(
-   struct gen_dump   *dump,
-   const char        chr )
-{
-   dump->write( dump, &chr, 1 );
-}
-
-static void
-gen_dump_uix(
-   struct gen_dump   *dump,
-   const unsigned    ui )
-{
-   char  str[36];
-
-   util_snprintf( str, sizeof(str), "0x%x", ui );
-   gen_dump_str( dump, str );
-}
-
-static void
-gen_dump_uid(
-   struct gen_dump   *dump,
-   const unsigned    ui )
-{
-   char  str[16];
-
-   util_snprintf( str, sizeof(str), "%u", ui );
-   gen_dump_str( dump, str );
-}
-
-static void
-gen_dump_sid(
-   struct gen_dump   *dump,
-   const int         si )
-{
-   char  str[16];
-
-   util_snprintf( str, sizeof(str), "%d", si );
-   gen_dump_str( dump, str );
-}
-
-static void
-gen_dump_flt(
-   struct gen_dump   *dump,
-   const float       flt )
-{
-   char  str[48];
-
-   util_snprintf( str, sizeof(str), "%10.4f", flt );
-   gen_dump_str( dump, str );
-}
-
-static void
-gen_dump_enum(
-   struct gen_dump   *dump,
+dump_enum(
    const unsigned    e,
    const char        **enums,
    const unsigned    enums_count )
 {
    if (e >= enums_count) {
-      gen_dump_uid( dump, e );
+      debug_printf( "%u", e );
    }
    else {
-      gen_dump_str( dump, enums[e] );
+      debug_printf( "%s", enums[e] );
    }
 }
 
-static void
-gen_dump_tab(
-   struct gen_dump   *dump )
-{
-   ++dump->tabs;
-}
-
-static void
-gen_dump_untab(
-   struct gen_dump   *dump )
-{
-   assert( dump->tabs > 0 );
-
-   --dump->tabs;
-}
-
-#define TXT(S)          gen_dump_str( dump, S )
-#define CHR(C)          gen_dump_chr( dump, C )
-#define UIX(I)          gen_dump_uix( dump, I )
-#define UID(I)          gen_dump_uid( dump, I )
-#define SID(I)          gen_dump_sid( dump, I )
-#define FLT(F)          gen_dump_flt( dump, F )
-#define TAB()           gen_dump_tab( dump )
-#define UNT()           gen_dump_untab( dump )
-#define ENM(E,ENUMS)    gen_dump_enum( dump, E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
+#define EOL()           debug_printf( "\n" )
+#define TXT(S)          debug_printf( "%s", S )
+#define CHR(C)          debug_printf( "%c", C )
+#define UIX(I)          debug_printf( "0x%x", I )
+#define UID(I)          debug_printf( "%u", I )
+#define SID(I)          debug_printf( "%d", I )
+#define FLT(F)          debug_printf( "%10.4f", F )
+#define ENM(E,ENUMS)    dump_enum( E, ENUMS, sizeof( ENUMS ) / sizeof( *ENUMS ) )
 
 static const char *TGSI_PROCESSOR_TYPES[] =
 {
@@ -711,7 +541,6 @@ static const char *TGSI_MODULATES[] =
 
 static void
 dump_declaration_short(
-   struct gen_dump               *dump,
    struct tgsi_full_declaration  *decl )
 {
    TXT( "\nDCL " );
@@ -765,7 +594,6 @@ dump_declaration_short(
 
 static void
 dump_declaration_verbose(
-   struct gen_dump               *dump,
    struct tgsi_full_declaration  *decl,
    unsigned                      ignored,
    unsigned                      deflt,
@@ -803,7 +631,7 @@ dump_declaration_verbose(
       UIX( decl->Declaration.Padding );
    }
 
-   CHR( '\n' );
+   EOL();
    switch( decl->Declaration.Declare ) {
    case TGSI_DECLARE_RANGE:
       TXT( "\nFirst: " );
@@ -822,7 +650,7 @@ dump_declaration_verbose(
    }
 
    if( decl->Declaration.Interpolate ) {
-      CHR( '\n' );
+      EOL();
       TXT( "\nInterpolate: " );
       ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES );
       if( ignored ) {
@@ -832,7 +660,7 @@ dump_declaration_verbose(
    }
 
    if( decl->Declaration.Semantic ) {
-      CHR( '\n' );
+      EOL();
       TXT( "\nSemanticName : " );
       ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS );
       TXT( "\nSemanticIndex: " );
@@ -846,7 +674,6 @@ dump_declaration_verbose(
 
 static void
 dump_immediate_short(
-   struct gen_dump            *dump,
    struct tgsi_full_immediate *imm )
 {
    unsigned i;
@@ -874,7 +701,6 @@ dump_immediate_short(
 
 static void
 dump_immediate_verbose(
-   struct gen_dump            *dump,
    struct tgsi_full_immediate *imm,
    unsigned                   ignored )
 {
@@ -888,7 +714,7 @@ dump_immediate_verbose(
    }
 
    for( i = 0; i < imm->Immediate.Size - 1; i++ ) {
-      CHR( '\n' );
+      EOL();
       switch( imm->Immediate.DataType ) {
       case TGSI_IMM_FLOAT32:
          TXT( "\nFloat: " );
@@ -903,14 +729,13 @@ dump_immediate_verbose(
 
 static void
 dump_instruction_short(
-   struct gen_dump               *dump,
    struct tgsi_full_instruction  *inst,
    unsigned                      instno )
 {
    unsigned i;
    boolean  first_reg = TRUE;
 
-   CHR( '\n' );
+   EOL();
    UID( instno );
    CHR( ':' );
    ENM( inst->Instruction.Opcode, TGSI_OPCODES_SHORT );
@@ -1042,7 +867,6 @@ dump_instruction_short(
 
 static void
 dump_instruction_verbose(
-   struct gen_dump               *dump,
    struct tgsi_full_instruction  *inst,
    unsigned                      ignored,
    unsigned                      deflt,
@@ -1070,7 +894,7 @@ dump_instruction_verbose(
    }
 
    if( deflt || tgsi_compare_instruction_ext_nv( inst->InstructionExtNv, fi->InstructionExtNv ) ) {
-      CHR( '\n' );
+      EOL();
       TXT( "\nType          : " );
       ENM( inst->InstructionExtNv.Type, TGSI_INSTRUCTION_EXTS );
       if( deflt || fi->InstructionExtNv.Precision != inst->InstructionExtNv.Precision ) {
@@ -1124,7 +948,7 @@ dump_instruction_verbose(
    }
 
    if( deflt || tgsi_compare_instruction_ext_label( inst->InstructionExtLabel, fi->InstructionExtLabel ) ) {
-      CHR( '\n' );
+      EOL();
       TXT( "\nType    : " );
       ENM( inst->InstructionExtLabel.Type, TGSI_INSTRUCTION_EXTS );
       if( deflt || fi->InstructionExtLabel.Label != inst->InstructionExtLabel.Label ) {
@@ -1142,7 +966,7 @@ dump_instruction_verbose(
    }
 
    if( deflt || tgsi_compare_instruction_ext_texture( inst->InstructionExtTexture, fi->InstructionExtTexture ) ) {
-      CHR( '\n' );
+      EOL();
       TXT( "\nType    : " );
       ENM( inst->InstructionExtTexture.Type, TGSI_INSTRUCTION_EXTS );
       if( deflt || fi->InstructionExtTexture.Texture != inst->InstructionExtTexture.Texture ) {
@@ -1163,7 +987,7 @@ dump_instruction_verbose(
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
       struct tgsi_full_dst_register *fd = &fi->FullDstRegisters[i];
 
-      CHR( '\n' );
+      EOL();
       TXT( "\nFile     : " );
       ENM( dst->DstRegister.File, TGSI_FILES );
       if( deflt || fd->DstRegister.WriteMask != dst->DstRegister.WriteMask ) {
@@ -1194,7 +1018,7 @@ dump_instruction_verbose(
       }
 
       if( deflt || tgsi_compare_dst_register_ext_concode( dst->DstRegisterExtConcode, fd->DstRegisterExtConcode ) ) {
-         CHR( '\n' );
+         EOL();
          TXT( "\nType        : " );
          ENM( dst->DstRegisterExtConcode.Type, TGSI_DST_REGISTER_EXTS );
          if( deflt || fd->DstRegisterExtConcode.CondMask != dst->DstRegisterExtConcode.CondMask ) {
@@ -1232,7 +1056,7 @@ dump_instruction_verbose(
       }
 
       if( deflt || tgsi_compare_dst_register_ext_modulate( dst->DstRegisterExtModulate, fd->DstRegisterExtModulate ) ) {
-         CHR( '\n' );
+         EOL();
          TXT( "\nType    : " );
          ENM( dst->DstRegisterExtModulate.Type, TGSI_DST_REGISTER_EXTS );
          if( deflt || fd->DstRegisterExtModulate.Modulate != dst->DstRegisterExtModulate.Modulate ) {
@@ -1254,7 +1078,7 @@ dump_instruction_verbose(
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
       struct tgsi_full_src_register *fs = &fi->FullSrcRegisters[i];
 
-      CHR( '\n' );
+      EOL();
       TXT( "\nFile     : ");
       ENM( src->SrcRegister.File, TGSI_FILES );
       if( deflt || fs->SrcRegister.SwizzleX != src->SrcRegister.SwizzleX ) {
@@ -1299,7 +1123,7 @@ dump_instruction_verbose(
       }
 
       if( deflt || tgsi_compare_src_register_ext_swz( src->SrcRegisterExtSwz, fs->SrcRegisterExtSwz ) ) {
-         CHR( '\n' );
+         EOL();
          TXT( "\nType       : " );
          ENM( src->SrcRegisterExtSwz.Type, TGSI_SRC_REGISTER_EXTS );
          if( deflt || fs->SrcRegisterExtSwz.ExtSwizzleX != src->SrcRegisterExtSwz.ExtSwizzleX ) {
@@ -1345,7 +1169,7 @@ dump_instruction_verbose(
       }
 
       if( deflt || tgsi_compare_src_register_ext_mod( src->SrcRegisterExtMod, fs->SrcRegisterExtMod ) ) {
-         CHR( '\n' );
+         EOL();
          TXT( "\nType     : " );
          ENM( src->SrcRegisterExtMod.Type, TGSI_SRC_REGISTER_EXTS );
          if( deflt || fs->SrcRegisterExtMod.Complement != src->SrcRegisterExtMod.Complement ) {
@@ -1380,9 +1204,8 @@ dump_instruction_verbose(
    }
 }
 
-static void
-dump_gen(
-   struct gen_dump         *dump,
+void
+tgsi_dump(
    const struct tgsi_token *tokens,
    unsigned                flags )
 {
@@ -1394,16 +1217,16 @@ dump_gen(
    unsigned deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
    unsigned instno = 0;
 
-   dump->tabs = 0;
-
-   /* sanity check */
+   /* sanity checks */
    assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_CONT], "OPCODE_CONT") == 0);
+   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "OPCODE_END") == 0);
+   assert(strcmp(TGSI_OPCODES_SHORT[TGSI_OPCODE_END], "END") == 0);
 
    tgsi_parse_init( &parse, tokens );
 
    TXT( "tgsi-dump begin -----------------" );
 
-   CHR( '\n' );
+   EOL();
    ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES_SHORT );
    UID( parse.FullVersion.Version.MajorVersion );
    CHR( '.' );
@@ -1414,7 +1237,7 @@ dump_gen(
       UID( parse.FullVersion.Version.MajorVersion );
       TXT( "\nMinorVersion: " );
       UID( parse.FullVersion.Version.MinorVersion );
-      CHR( '\n' );
+      EOL();
 
       TXT( "\nHeaderSize: " );
       UID( parse.FullHeader.Header.HeaderSize );
@@ -1422,7 +1245,7 @@ dump_gen(
       UID( parse.FullHeader.Header.BodySize );
       TXT( "\nProcessor : " );
       ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES );
-      CHR( '\n' );
+      EOL();
    }
 
    fi = tgsi_default_full_instruction();
@@ -1434,19 +1257,16 @@ dump_gen(
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          dump_declaration_short(
-            dump,
             &parse.FullToken.FullDeclaration );
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          dump_immediate_short(
-            dump,
             &parse.FullToken.FullImmediate );
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          dump_instruction_short(
-            dump,
             &parse.FullToken.FullInstruction,
             instno );
          instno++;
@@ -1471,7 +1291,6 @@ dump_gen(
          switch( parse.FullToken.Token.Type ) {
          case TGSI_TOKEN_TYPE_DECLARATION:
             dump_declaration_verbose(
-               dump,
                &parse.FullToken.FullDeclaration,
                ignored,
                deflt,
@@ -1480,14 +1299,12 @@ dump_gen(
 
          case TGSI_TOKEN_TYPE_IMMEDIATE:
             dump_immediate_verbose(
-               dump,
                &parse.FullToken.FullImmediate,
                ignored );
             break;
 
          case TGSI_TOKEN_TYPE_INSTRUCTION:
             dump_instruction_verbose(
-               dump,
                &parse.FullToken.FullInstruction,
                ignored,
                deflt,
@@ -1498,94 +1315,11 @@ dump_gen(
             assert( 0 );
          }
 
-         CHR( '\n' );
+         EOL();
       }
    }
 
    TXT( "\ntgsi-dump end -------------------\n" );
 
    tgsi_parse_free( &parse );
-}
-
-
-static void
-sanity_checks(void)
-{
-   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_END], "OPCODE_END") == 0);
-   assert(strcmp(TGSI_OPCODES_SHORT[TGSI_OPCODE_END], "END") == 0);
-}
-
-
-void
-tgsi_dump(
-   const struct tgsi_token *tokens,
-   unsigned                flags )
-{
-   struct file_dump  dump;
-
-   sanity_checks();
-
-   dump.base.write = _file_dump_write;
-#if 0
-   {
-      static unsigned   counter = 0;
-      char              buffer[64];
-      sprintf( buffer, "tgsi-dump-%.4u.txt", counter++ );
-      dump.file = fopen( buffer, "wt" );
-   }
-#else
-   dump.file = stderr;
-#endif
-
-   dump_gen(
-      &dump.base,
-      tokens,
-      flags );
-
-#if 0
-   fclose( dump.file );
-#endif
-}
-
-void
-tgsi_dump_str(
-   char                    **str,
-   const struct tgsi_token *tokens,
-   unsigned                flags )
-{
-   struct text_dump  dump;
-
-   dump.base.write = _text_dump_write;
-   dump.text = NULL;
-   dump.length = 0;
-   dump.capacity = 0;
-
-   dump_gen(
-      &dump.base,
-      tokens,
-      flags );
-
-   *str = dump.text;
-}
-
-
-void tgsi_debug_dump( struct tgsi_token *tokens )
-{
-   char *str, *p;
-
-   tgsi_dump_str( &str, tokens, 0 );
-
-   p = str;
-   while (p != NULL)
-   {
-      char *end = strchr( p, '\n' );
-      if (end != NULL)
-      {
-         *end++ = '\0';
-      }
-      debug_printf( "%s\n", p );
-      p = end;
-   }
-
-   FREE( str );
 }
