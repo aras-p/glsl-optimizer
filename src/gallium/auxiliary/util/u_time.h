@@ -77,9 +77,9 @@ util_time_diff(const struct util_time *t1,
                const struct util_time *t2);
 
 /**
- * Returns zero when the timeout expires, non zero otherwise.
+ * Returns non-zero when the timeout expires.
  */
-int 
+boolean 
 util_time_timeout(const struct util_time *start, 
                   const struct util_time *end,
                   const struct util_time *curr);

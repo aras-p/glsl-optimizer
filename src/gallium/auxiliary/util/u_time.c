@@ -120,15 +120,15 @@ util_time_compare(const struct util_time *t1,
 }
 
 
-int 
+boolean 
 util_time_timeout(const struct util_time *start, 
                   const struct util_time *end,
                   const struct util_time *curr) 
 {
    if(util_time_compare(start, end) <= 0)
-      return util_time_compare(start, curr) <= 0 && util_time_compare(curr, end) < 0;
+      return !(util_time_compare(start, curr) <= 0 && util_time_compare(curr, end) < 0);
    else
-      return util_time_compare(start, curr) <= 0 || util_time_compare(curr, end) < 0;
+      return !(util_time_compare(start, curr) <= 0 || util_time_compare(curr, end) < 0);
 }
 
 
