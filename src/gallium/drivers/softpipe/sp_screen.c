@@ -68,7 +68,7 @@ softpipe_get_param(struct pipe_screen *screen, int param)
    case PIPE_CAP_POINT_SPRITE:
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
-      return 1;
+      return PIPE_MAX_COLOR_BUFS;
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
