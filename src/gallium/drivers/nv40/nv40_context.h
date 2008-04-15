@@ -151,9 +151,9 @@ struct nv40_context {
 	unsigned nr_samplers;
 	unsigned nr_textures;
 	unsigned dirty_samplers;
-	struct pipe_vertex_buffer vtxbuf[PIPE_ATTRIB_MAX];
+	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
 	unsigned vtxbuf_nr;
-	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
+	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 	unsigned vtxelt_nr;
 };
 

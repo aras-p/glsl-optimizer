@@ -23,7 +23,7 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	/*
 	 * Map vertex buffers
 	 */
-	for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 		if (nv10->vtxbuf[i].buffer) {
 			void *buf
 				= pipe->winsys->buffer_map(pipe->winsys,
@@ -52,7 +52,7 @@ boolean nv10_draw_elements( struct pipe_context *pipe,
 	/*
 	 * unmap vertex/index buffers
 	 */
-	for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
 		if (nv10->vtxbuf[i].buffer) {
 			pipe->winsys->buffer_unmap(pipe->winsys, nv10->vtxbuf[i].buffer);
 			draw_set_mapped_vertex_buffer(draw, i, NULL);

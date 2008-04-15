@@ -96,8 +96,8 @@ struct nv10_context {
 		struct pipe_buffer *constant_buf;
 	} fragprog;
 
-	struct pipe_vertex_buffer  vtxbuf[PIPE_ATTRIB_MAX];
-	struct pipe_vertex_element vtxelt[PIPE_ATTRIB_MAX];
+	struct pipe_vertex_buffer  vtxbuf[PIPE_MAX_ATTRIBS];
+	struct pipe_vertex_element vtxelt[PIPE_MAX_ATTRIBS];
 };
 
 static INLINE struct nv10_context *
