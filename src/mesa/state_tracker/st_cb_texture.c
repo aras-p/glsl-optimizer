@@ -41,6 +41,7 @@
 #include "state_tracker/st_cb_fbo.h"
 #include "state_tracker/st_cb_texture.h"
 #include "state_tracker/st_format.h"
+#include "state_tracker/st_public.h"
 #include "state_tracker/st_texture.h"
 #include "state_tracker/st_gen_mipmap.h"
 
@@ -1032,6 +1033,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
    struct pipe_surface *src_surf, *dest_surf;
    GLfloat *data;
    GLint row, yStep;
+
+   st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    /* determine bottom-to-top vs. top-to-bottom order */
    if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {

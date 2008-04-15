@@ -767,12 +767,14 @@ tgsi_translate_mesa_program(
          switch (outputSemanticName[i]) {
          case TGSI_SEMANTIC_POSITION:
             fulldecl = make_output_decl(i,
-                                        TGSI_SEMANTIC_POSITION, 0, /* Z / Depth */
+                                        TGSI_SEMANTIC_POSITION, /* Z / Depth */
+                                        outputSemanticIndex[i],
                                         TGSI_WRITEMASK_Z );
             break;
          case TGSI_SEMANTIC_COLOR:
             fulldecl = make_output_decl(i,
-                                        TGSI_SEMANTIC_COLOR, 0,
+                                        TGSI_SEMANTIC_COLOR,
+                                        outputSemanticIndex[i],
                                         TGSI_WRITEMASK_XYZW );
             break;
          default:

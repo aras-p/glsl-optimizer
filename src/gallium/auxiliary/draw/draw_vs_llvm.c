@@ -50,33 +50,6 @@ struct draw_llvm_vertex_shader {
 };
 
 
-static INLINE unsigned
-compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
-{
-   unsigned mask = 0;
-   unsigned i;
-
-   /* Do the hardwired planes first:
-    */
-   if (-clip[0] + clip[3] < 0) mask |= CLIP_RIGHT_BIT;
-   if ( clip[0] + clip[3] < 0) mask |= CLIP_LEFT_BIT;
-   if (-clip[1] + clip[3] < 0) mask |= CLIP_TOP_BIT;
-   if ( clip[1] + clip[3] < 0) mask |= CLIP_BOTTOM_BIT;
-   if (-clip[2] + clip[3] < 0) mask |= CLIP_FAR_BIT;
-   if ( clip[2] + clip[3] < 0) mask |= CLIP_NEAR_BIT;
-
-   /* Followed by any remaining ones:
-    */
-   for (i = 6; i < nr; i++) {
-      if (dot4(clip, plane[i]) < 0) 
-         mask |= (1<<i);
-   }
-
-   return mask;
-}
-
-
-
 static void
 vs_llvm_prepare( struct draw_vertex_shader *base,
 		 struct draw_context *draw )
@@ -94,18 +67,19 @@ vs_llvm_prepare( struct draw_vertex_shader *base,
  * \param count  number of vertices to shade [1..4]
  * \param vOut  array of pointers to four output vertices
  */
-static void
+static boolean
 vs_llvm_run( struct draw_vertex_shader *base,
-	     struct draw_context *draw, 
-	     const unsigned *elts, 
+	     struct draw_context *draw,
+	     const unsigned *elts,
 	     unsigned count,
-	     struct vertex_header *vOut[] )
+	     void *vOut )
 {
-   struct draw_llvm_vertex_shader *shader = 
+   struct draw_llvm_vertex_shader *shader =
       (struct draw_llvm_vertex_shader *)base;
 
    struct tgsi_exec_machine *machine = &draw->machine;
    unsigned int j;
+   unsigned int clipped = 0;
 
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
    ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
@@ -152,19 +126,22 @@ vs_llvm_run( struct draw_vertex_shader *base,
       w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
       if (!draw->rasterizer->bypass_clipping) {
-         vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
+         vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane,
+                                              draw->nr_planes);
+         clipped += vOut[j]->clipmask;
 
          /* divide by w */
          w = 1.0f / w;
          x *= w;
          y *= w;
-         z *= w;         
+         z *= w;
       }
       else {
          vOut[j]->clipmask = 0;
       }
       vOut[j]->edgeflag = 1;
-         
+      vOut[j]->vertex_id = UNDEFINED_VERTEX_ID;
+
       if (!draw->identity_viewport) {
          /* Viewport mapping */
          vOut[j]->data[0][0] = x * scale[0] + trans[0];
@@ -189,6 +166,7 @@ vs_llvm_run( struct draw_vertex_shader *base,
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
       }
    } /* loop over vertices */
+   return clipped != 0;
 }
 
 static void

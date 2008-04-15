@@ -78,6 +78,20 @@ softpipe_unmap_constant_buffers(struct softpipe_context *sp)
 }
 
 
+static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
+   PIPE_PRIM_POINTS,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES
+};
+
+
 boolean
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
@@ -115,6 +129,7 @@ softpipe_draw_elements(struct pipe_context *pipe,
       assert(0);
 #endif
 
+   sp->reduced_api_prim = reduced_prim[mode];
 
    if (sp->dirty)
       softpipe_update_derived( sp );

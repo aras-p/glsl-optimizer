@@ -128,8 +128,6 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 
    st->ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 
-   st->haveFramebufferSurfaces = GL_TRUE;
-
    st->pixel_xfer.cache = _mesa_new_program_cache();
 
    /* GL limits and extensions */

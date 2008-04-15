@@ -28,7 +28,7 @@
 #ifndef PIPE_FORMAT_H
 #define PIPE_FORMAT_H
 
-#include <stdio.h> /* for sprintf */
+#include "util/u_string.h"
 
 #include "p_compiler.h"
 #include "p_debug.h"
@@ -367,7 +367,7 @@ static INLINE char *pf_sprint_name( char *str, enum pipe_format format )
                strcat( str, "S" );
                break;
             }
-            sprintf( &str[strlen( str )], "%u", size * scale );
+            util_snprintf( &str[strlen( str )], 32, "%u", size * scale );
          }
          if (i != 0) {
             strcat( str, "_" );

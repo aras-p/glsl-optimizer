@@ -45,6 +45,11 @@ struct blit_state;
 struct bitmap_cache;
 
 
+#define FRONT_STATUS_UNDEFINED    0
+#define FRONT_STATUS_DIRTY        1
+#define FRONT_STATUS_COPY_OF_BACK 2
+
+
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
@@ -104,18 +109,10 @@ struct st_context
       struct gl_fragment_program *fragment_program;
    } cb;
 
-   struct {
-      GLuint frontbuffer_dirty:1;
-   } flags;
+   GLuint frontbuffer_status;  /**< one of FRONT_STATUS_ */
 
    char vendor[100];
    char renderer[100];
-
-   /** Can we access the front/back color buffers as pipe_surfaces?
-    * We can't with the Xlib driver...
-    * This is a hack that should be fixed someday.
-    */
-   GLboolean haveFramebufferSurfaces;
 
    /* State to be validated:
     */

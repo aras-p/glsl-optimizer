@@ -138,14 +138,6 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 #define GETENV( X ) debug_get_option( X, NULL )
 
 
-#ifdef WIN32
-int rpl_vsnprintf(char *, size_t, const char *, va_list);
-int rpl_snprintf(char *str, size_t size, const char *format, ...);
-#define vsnprintf rpl_vsnprintf
-#define snprintf rpl_snprintf
-#endif
-
-
 /**
  * Return memory on given byte alignment
  */

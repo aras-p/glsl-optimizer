@@ -69,6 +69,12 @@ typedef void (*vbuf_draw_func)( struct pipe_context *pipe,
 extern struct draw_stage *
 sp_draw_render_stage( struct softpipe_context *softpipe );
 
+extern struct setup_context *
+sp_draw_setup_context( struct draw_stage * );
+
+extern void
+sp_draw_flush( struct draw_stage * );
+
 
 extern struct draw_stage *
 sp_draw_vbuf_stage( struct draw_context *draw_context,

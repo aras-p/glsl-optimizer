@@ -30,6 +30,7 @@
 #include "pipe/p_debug.h"
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
+#include "util/u_string.h"
 #include "tgsi_dump.h"
 #include "tgsi_parse.h"
 #include "tgsi_build.h"
@@ -147,7 +148,7 @@ gen_dump_uix(
 {
    char  str[36];
 
-   sprintf( str, "0x%x", ui );
+   util_snprintf( str, sizeof(str), "0x%x", ui );
    gen_dump_str( dump, str );
 }
 
@@ -158,7 +159,7 @@ gen_dump_uid(
 {
    char  str[16];
 
-   sprintf( str, "%u", ui );
+   util_snprintf( str, sizeof(str), "%u", ui );
    gen_dump_str( dump, str );
 }
 
@@ -169,7 +170,7 @@ gen_dump_sid(
 {
    char  str[16];
 
-   sprintf( str, "%d", si );
+   util_snprintf( str, sizeof(str), "%d", si );
    gen_dump_str( dump, str );
 }
 
@@ -180,7 +181,7 @@ gen_dump_flt(
 {
    char  str[48];
 
-   sprintf( str, "%10.4f", flt );
+   util_snprintf( str, sizeof(str), "%10.4f", flt );
    gen_dump_str( dump, str );
 }
 
@@ -746,17 +747,19 @@ dump_declaration_short(
       }
    }
 
-   if( decl->Declaration.Interpolate ) {
-      TXT( ", " );
-      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
-   }
-
-   if( decl->Declaration.Semantic ) {
+   if (decl->Declaration.Semantic) {
       TXT( ", " );
       ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS_SHORT );
-      CHR( '[' );
-      UID( decl->Semantic.SemanticIndex );
-      CHR( ']' );
+      if (decl->Semantic.SemanticIndex != 0) {
+         CHR( '[' );
+         UID( decl->Semantic.SemanticIndex );
+         CHR( ']' );
+      }
+   }
+
+   if (decl->Declaration.Interpolate) {
+      TXT( ", " );
+      ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
    }
 }
 
@@ -966,18 +969,18 @@ dump_instruction_short(
       }
       CHR( ' ' );
 
-      if( src->SrcRegisterExtMod.Complement ) {
-         TXT( "(1 - " );
-      }
-      if( src->SrcRegisterExtMod.Negate  ) {
-         CHR( '-' );
-      }
-      if( src->SrcRegisterExtMod.Absolute ) {
+      if (src->SrcRegisterExtMod.Negate)
+         TXT( "-(" );
+      if (src->SrcRegisterExtMod.Absolute)
          CHR( '|' );
-      }
-      if( src->SrcRegister.Negate ) {
+      if (src->SrcRegisterExtMod.Scale2X)
+         TXT( "2*(" );
+      if (src->SrcRegisterExtMod.Bias)
+         CHR( '(' );
+      if (src->SrcRegisterExtMod.Complement)
+         TXT( "1-(" );
+      if (src->SrcRegister.Negate)
          CHR( '-' );
-      }
 
       ENM( src->SrcRegister.File, TGSI_FILES_SHORT );
 
@@ -985,35 +988,37 @@ dump_instruction_short(
       SID( src->SrcRegister.Index );
       CHR( ']' );
 
-      if (src->SrcRegister.Extended) {
-         if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-             src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-             src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-             src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-            CHR( '.' );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
-            ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
-         }
-      }
-      else if( src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-               src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-               src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-               src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ) {
+      if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
+          src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
+          src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
+          src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
          CHR( '.' );
          ENM( src->SrcRegister.SwizzleX, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleY, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleZ, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleW, TGSI_SWIZZLES_SHORT );
       }
+      if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
+          src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
+          src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
+          src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
+         CHR( '.' );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
+      }
 
-      if( src->SrcRegisterExtMod.Absolute ) {
-         CHR( '|' );
-      }
-      if( src->SrcRegisterExtMod.Complement ) {
+      if (src->SrcRegisterExtMod.Complement)
          CHR( ')' );
-      }
+      if (src->SrcRegisterExtMod.Bias)
+         TXT( ")-.5" );
+      if (src->SrcRegisterExtMod.Scale2X)
+         CHR( ')' );
+      if (src->SrcRegisterExtMod.Absolute)
+         CHR( '|' );
+      if (src->SrcRegisterExtMod.Negate)
+         CHR( ')' );
 
       first_reg = FALSE;
    }
@@ -1400,7 +1405,6 @@ dump_gen(
 
    CHR( '\n' );
    ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES_SHORT );
-   CHR( ' ' );
    UID( parse.FullVersion.Version.MajorVersion );
    CHR( '.' );
    UID( parse.FullVersion.Version.MinorVersion );

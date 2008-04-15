@@ -51,7 +51,8 @@ typedef void (XSTDCALL *codegen_function)(
    struct tgsi_exec_vector *output,
    float (*constant)[4],
    struct tgsi_exec_vector *temporary,
-   const struct tgsi_interp_coef *coef
+   const struct tgsi_interp_coef *coef,
+   float (*immediates)[4]
    //, const struct tgsi_exec_vector *quadPos
  );
 
@@ -60,6 +61,7 @@ struct sp_sse_fragment_shader {
    struct sp_fragment_shader base;
    struct x86_function             sse2_program;
    codegen_function func;
+   float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
 };
 
 
@@ -96,7 +98,8 @@ fs_sse_run( struct sp_fragment_shader *base,
 		 machine->Outputs,
 		 machine->Consts,
 		 machine->Temps,
-		 machine->InterpCoefs
+		 machine->InterpCoefs,
+                 shader->immediates
 		 //	 , &machine->QuadPos
       );
 
@@ -129,7 +132,8 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
 
    x86_init_func( &shader->sse2_program );
    
-   if (!tgsi_emit_sse2_fs( templ->tokens, &shader->sse2_program )) {
+   if (!tgsi_emit_sse2( templ->tokens, &shader->sse2_program,
+                        shader->immediates)) {
       FREE(shader);
       return NULL;
    }

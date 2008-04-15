@@ -87,7 +87,7 @@ struct fetch_pipeline_middle_end {
 };
 
 
-
+#if 0
 static void emit_R32_FLOAT( const float *attrib,
                             float **out )
 {
@@ -111,7 +111,7 @@ static void emit_R32G32B32_FLOAT( const float *attrib,
    (*out)[2] = attrib[2];
    (*out) += 3;
 }
-
+#endif
 static void emit_R32G32B32A32_FLOAT( const float *attrib,
                                      float **out )
 {
@@ -211,7 +211,6 @@ fetch_store_general( struct fetch_pipeline_middle_end *fpme,
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
                                     unsigned prim )
 {
-   static const float zero = 0;
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    unsigned i, nr = 0;
@@ -264,7 +263,6 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
                             unsigned draw_count )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
-   struct draw_context *draw = fpme->draw;
    char *pipeline_verts;
    
    pipeline_verts = MALLOC( fpme->pipeline_vertex_size * 

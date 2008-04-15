@@ -225,6 +225,15 @@ get_coef_base( void )
    return get_output_base();
 }
 
+static struct x86_reg
+get_immediate_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
+      reg_DI );
+}
+
+
 /**
  * Data access helpers.
  */
@@ -236,6 +245,16 @@ get_argument(
    return x86_make_disp(
       x86_make_reg( file_REG32, reg_SP ),
       (index + 1) * 4 );
+}
+
+static struct x86_reg
+get_immediate(
+   unsigned vec,
+   unsigned chan )
+{
+   return x86_make_disp(
+      get_immediate_base(),
+      (vec * 4 + chan) * 4 );
 }
 
 static struct x86_reg
@@ -548,6 +567,12 @@ emit_xorps(
  * Data fetch helpers.
  */
 
+/**
+ * Copy a shader constant to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the src const buffer index
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
 static void
 emit_const(
    struct x86_function *func,
@@ -567,6 +592,31 @@ emit_const(
 }
 
 static void
+emit_immediate(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   emit_movss(
+      func,
+      make_xmm( xmm ),
+      get_immediate( vec, chan ) );
+   emit_shufps(
+      func,
+      make_xmm( xmm ),
+      make_xmm( xmm ),
+      SHUF( 0, 0, 0, 0 ) );
+}
+
+
+/**
+ * Copy a shader input to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the src input attrib
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
+static void
 emit_inputf(
    struct x86_function *func,
    unsigned xmm,
@@ -579,6 +629,12 @@ emit_inputf(
       get_input( vec, chan ) );
 }
 
+/**
+ * Store an xmm register to a shader output
+ * \param xmm  the source xmm register
+ * \param vec  the dest output attrib
+ * \param chan  src dest channel to store (X, Y, Z or W)
+ */
 static void
 emit_output(
    struct x86_function *func,
@@ -592,6 +648,12 @@ emit_output(
       make_xmm( xmm ) );
 }
 
+/**
+ * Copy a shader temporary to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the src temp register
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
 static void
 emit_tempf(
    struct x86_function *func,
@@ -605,6 +667,13 @@ emit_tempf(
       get_temp( vec, chan ) );
 }
 
+/**
+ * Load an xmm register with an input attrib coefficient (a0, dadx or dady)
+ * \param xmm  the destination xmm register
+ * \param vec  the src input/attribute coefficient index
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ * \param member  0=a0, 1=dadx, 2=dady
+ */
 static void
 emit_coef(
    struct x86_function *func,
@@ -1154,6 +1223,14 @@ emit_fetch(
       switch( reg->SrcRegister.File ) {
       case TGSI_FILE_CONSTANT:
          emit_const(
+            func,
+            xmm,
+            reg->SrcRegister.Index,
+            swizzle );
+         break;
+
+      case TGSI_FILE_IMMEDIATE:
+         emit_immediate(
             func,
             xmm,
             reg->SrcRegister.Index,
@@ -2020,7 +2097,7 @@ emit_instruction(
          STORE( func, *inst, 0, 0, CHAN_X );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) {
-         FETCH( func, *inst, 0, 0, CHAN_Y );
+         FETCH( func, *inst, 0, 0, CHAN_X );
          emit_sin( func, 0 );
          STORE( func, *inst, 0, 0, CHAN_Y );
       }
@@ -2236,135 +2313,116 @@ emit_declaration(
    }
 }
 
+
+/**
+ * Translate a TGSI vertex/fragment shader to SSE2 code.
+ * Slightly different things are done for vertex vs. fragment shaders.
+ *
+ * Note that fragment shaders are responsible for interpolating shader
+ * inputs. Because on x86 we have only 4 GP registers, and here we
+ * have 5 shader arguments (input, output, const, temp and coef), the
+ * code is split into two phases -- DECLARATION and INSTRUCTION phase.
+ * GP register holding the output argument is aliased with the coeff
+ * argument, as outputs are not needed in the DECLARATION phase.
+ *
+ * \param tokens  the TGSI input shader
+ * \param func  the output SSE code/function
+ * \param immediates  buffer to place immediates, later passed to SSE func
+ * \param return  1 for success, 0 if translation failed
+ */
 unsigned
 tgsi_emit_sse2(
    struct tgsi_token *tokens,
-   struct x86_function *func )
-{
-   struct tgsi_parse_context parse;
-   unsigned ok = 1;
-
-   DUMP_START();
-
-   func->csr = func->store;
-
-   emit_mov(
-      func,
-      get_input_base(),
-      get_argument( 0 ) );
-   emit_mov(
-      func,
-      get_output_base(),
-      get_argument( 1 ) );
-   emit_mov(
-      func,
-      get_const_base(),
-      get_argument( 2 ) );
-   emit_mov(
-      func,
-      get_temp_base(),
-      get_argument( 3 ) );
-
-   tgsi_parse_init( &parse, tokens );
-
-   while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
-      tgsi_parse_token( &parse );
-
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         ok = emit_instruction(
-	    func,
-	    &parse.FullToken.FullInstruction );
-
-	 if (!ok) {
-	    debug_printf("failed to translate tgsi opcode %d to SSE\n", 
-			 parse.FullToken.FullInstruction.Instruction.Opcode );
-	 }
-         break;
-
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* XXX implement this */
-	 ok = 0;
-	 debug_printf("failed to emit immediate value to SSE\n");
-	 break;
-
-      default:
-         assert( 0 );
-	 ok = 0;
-	 break;
-      }
-   }
-
-   tgsi_parse_free( &parse );
-
-   DUMP_END();
-
-   return ok;
-}
-
-/**
- * Fragment shaders are responsible for interpolating shader inputs. Because on
- * x86 we have only 4 GP registers, and here we have 5 shader arguments (input,
- * output, const, temp and coef), the code is split into two phases --
- * DECLARATION and INSTRUCTION phase.
- * GP register holding the output argument is aliased with the coeff argument,
- * as outputs are not needed in the DECLARATION phase.
- */
-unsigned
-tgsi_emit_sse2_fs(
-   struct tgsi_token *tokens,
-   struct x86_function *func )
+   struct x86_function *func,
+   float (*immediates)[4])
 {
    struct tgsi_parse_context parse;
    boolean instruction_phase = FALSE;
    unsigned ok = 1;
+   uint num_immediates = 0;
 
    DUMP_START();
 
    func->csr = func->store;
 
-   /* DECLARATION phase, do not load output argument. */
-   emit_mov(
-      func,
-      get_input_base(),
-      get_argument( 0 ) );
-   emit_mov(
-      func,
-      get_const_base(),
-      get_argument( 2 ) );
-   emit_mov(
-      func,
-      get_temp_base(),
-      get_argument( 3 ) );
-   emit_mov(
-      func,
-      get_coef_base(),
-      get_argument( 4 ) );
-
    tgsi_parse_init( &parse, tokens );
+
+   /*
+    * Different function args for vertex/fragment shaders:
+    */
+   if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+      /* DECLARATION phase, do not load output argument. */
+      emit_mov(
+         func,
+         get_input_base(),
+         get_argument( 0 ) );
+      /* skipping outputs argument here */
+      emit_mov(
+         func,
+         get_const_base(),
+         get_argument( 2 ) );
+      emit_mov(
+         func,
+         get_temp_base(),
+         get_argument( 3 ) );
+      emit_mov(
+         func,
+         get_coef_base(),
+         get_argument( 4 ) );
+      emit_mov(
+         func,
+         get_immediate_base(),
+         get_argument( 5 ) );
+   }
+   else {
+      assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
+
+      emit_mov(
+         func,
+         get_input_base(),
+         get_argument( 0 ) );
+      emit_mov(
+         func,
+         get_output_base(),
+         get_argument( 1 ) );
+      emit_mov(
+         func,
+         get_const_base(),
+         get_argument( 2 ) );
+      emit_mov(
+         func,
+         get_temp_base(),
+         get_argument( 3 ) );
+      emit_mov(
+         func,
+         get_immediate_base(),
+         get_argument( 4 ) );
+   }
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
       tgsi_parse_token( &parse );
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         emit_declaration(
-            func,
-            &parse.FullToken.FullDeclaration );
+         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+            emit_declaration(
+               func,
+               &parse.FullToken.FullDeclaration );
+         }
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if( !instruction_phase ) {
-            /* INSTRUCTION phase, overwrite coeff with output. */
-            instruction_phase = TRUE;
-            emit_mov(
-               func,
-               get_output_base(),
-               get_argument( 1 ) );
+         if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_FRAGMENT) {
+            if( !instruction_phase ) {
+               /* INSTRUCTION phase, overwrite coeff with output. */
+               instruction_phase = TRUE;
+               emit_mov(
+                  func,
+                  get_output_base(),
+                  get_argument( 1 ) );
+            }
          }
+
          ok = emit_instruction(
             func,
             &parse.FullToken.FullInstruction );
@@ -2376,9 +2434,26 @@ tgsi_emit_sse2_fs(
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         /* XXX implement this */
-	 ok = 0;
-	 debug_printf("failed to emit immediate value to SSE\n");
+         /* simply copy the immediate values into the next immediates[] slot */
+         {
+            const uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
+            uint i;
+            assert(size <= 4);
+            assert(num_immediates < TGSI_EXEC_NUM_IMMEDIATES);
+            for( i = 0; i < size; i++ ) {
+               immediates[num_immediates][i] =
+		  parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+            }
+#if 0
+            debug_printf("SSE FS immediate[%d] = %f %f %f %f\n",
+                   num_immediates,
+                   immediates[num_immediates][0],
+                   immediates[num_immediates][1],
+                   immediates[num_immediates][2],
+                   immediates[num_immediates][3]);
+#endif
+            num_immediates++;
+         }
          break;
 
       default:

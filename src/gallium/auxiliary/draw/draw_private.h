@@ -56,6 +56,8 @@ struct gallivm_cpu_engine;
 struct draw_pt_middle_end;
 struct draw_pt_front_end;
 
+#define MAX_SHADER_VERTICES 128
+
 /**
  * Basic vertex info.
  * Carry some useful information around with the vertices in the prim pipe.  
@@ -76,6 +78,7 @@ struct vertex_header {
 
 /* XXX This is too large */
 #define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
+#define MAX_VERTEX_ALLOCATION ((MAX_VERTEX_SIZE + 0x0f) & ~0x0f)
 
 
 
@@ -146,12 +149,13 @@ struct draw_vertex_shader {
    /* Run the shader - this interface will get cleaned up in the
     * future:
     */
-   void (*run)( struct draw_vertex_shader *shader,
-		struct draw_context *draw,
-		const unsigned *elts, 
-		unsigned count,
-		struct vertex_header *vOut[] );
-		    
+   boolean (*run)( struct draw_vertex_shader *shader,
+                   struct draw_context *draw,
+                   const unsigned *elts,
+                   unsigned count,
+                   void *out,
+                   unsigned vertex_size);
+
 
    void (*delete)( struct draw_vertex_shader * );
 };
@@ -274,6 +278,7 @@ struct draw_context
    boolean line_stipple;       /**< do line stipple? */
    boolean point_sprite;       /**< convert points to quads for sprites? */
    boolean use_sse;
+   boolean use_pt_shaders;	/* temporary flag to switch on pt shader paths */
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */
@@ -319,10 +324,8 @@ struct draw_context
    /* Vertex shader queue:
     */
    struct {
-      struct {
-	 unsigned elt;   /**< index into the user's vertex arrays */
-	 struct vertex_header *vertex;
-      } queue[VS_QUEUE_LENGTH];
+      unsigned elts[VS_QUEUE_LENGTH];   /**< index into the user's vertex arrays */
+      char *vertex_cache;
       unsigned queue_nr;
       unsigned post_nr;
    } vs;
@@ -446,6 +449,12 @@ dot4(const float *a, const float *b)
                    a[3]*b[3]);
 
    return result;
+}
+
+static INLINE struct vertex_header *
+draw_header_from_block(char *block, int size, int num)
+{
+   return (struct vertex_header*)(block + num * size);
 }
 
 #endif /* DRAW_PRIVATE_H */

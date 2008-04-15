@@ -19,6 +19,7 @@ C_SOURCES = \
 	draw_pt_vcache.c \
 	draw_pt_fetch_emit.c \
 	draw_pt_fetch_pipeline.c \
+	draw_pt_fetch_shade_pipeline.c \
 	draw_pt_pipeline.c \
 	draw_pt_elts.c \
 	draw_prim.c \

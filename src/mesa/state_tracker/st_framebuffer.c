@@ -188,6 +188,7 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
       st_flush( ctx->st, 
 		PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_SWAPBUFFERS,
                 NULL );
+      ctx->st->frontbuffer_status = FRONT_STATUS_COPY_OF_BACK;
    }
 }
 

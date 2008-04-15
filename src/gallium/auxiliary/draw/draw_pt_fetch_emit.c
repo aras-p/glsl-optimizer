@@ -145,7 +145,6 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
                      unsigned count )
 {
    float *out = (float *)out_ptr;
-   struct vbuf_render *render = feme->draw->render;
    uint i, j;
 
    for (i = 0; i < count; i++) {
@@ -167,7 +166,6 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
                                 unsigned prim )
 {
-   static const float zero = 0;
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    const struct vertex_info *vinfo;
@@ -212,12 +210,6 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       case EMIT_1F:
          feme->fetch[i].emit = emit_R32_FLOAT;
          break;
-      case EMIT_HEADER:
-         feme->fetch[i].ptr = (const ubyte *)&zero;
-         feme->fetch[i].pitch = 0;
-         feme->fetch[i].fetch = fetch_R32_FLOAT;
-         feme->fetch[i].emit = emit_R32_FLOAT;
-         break;
       case EMIT_1F_PSIZE:
          feme->fetch[i].ptr = (const ubyte *)&feme->draw->rasterizer->point_size;
          feme->fetch[i].pitch = 0;
@@ -249,6 +241,10 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = feme->draw;
    void *hw_verts;
    
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->hw_vertex_size,
                                                (ushort)fetch_count );

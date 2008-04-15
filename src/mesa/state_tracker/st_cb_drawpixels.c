@@ -961,7 +961,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (type == GL_COLOR) {
-      rbRead = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+      rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
       stfp = combined_drawpix_fragment_program(ctx);
       stvp = st_make_passthrough_vertex_shader(ctx->st, GL_FALSE);
@@ -1017,11 +1017,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       srcy = ctx->DrawBuffer->Height - srcy - height;
    }
 
-   /* For some drivers (like Xlib) it's not possible to treat the
-    * front/back color buffers as surfaces (they're XImages and Pixmaps).
-    * So, this var tells us if we can use surface_copy here...
-    */
-   if (st->haveFramebufferSurfaces && srcFormat == texFormat) {
+   if (srcFormat == texFormat) {
       /* copy source framebuffer surface into mipmap/texture */
       pipe->surface_copy(pipe,
                          FALSE,

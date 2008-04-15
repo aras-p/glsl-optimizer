@@ -37,8 +37,6 @@
 #include "draw_context.h"
 #include "draw_vs.h"
 
-
-
 /**
  * Run the vertex shader on all vertices in the vertex queue.
  * Called by the draw module when the vertx cache needs to be flushed.
@@ -58,25 +56,25 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
 //   fprintf(stderr, "%s %d\n", __FUNCTION__, draw->vs.queue_nr );
 
    /* run vertex shader on vertex cache entries, four per invokation */
-   for (i = 0; i < draw->vs.queue_nr; i += 4) {
-      struct vertex_header *dests[4];
-      unsigned elts[4];
-      int j, n = MIN2(4, draw->vs.queue_nr - i);
+   for (i = 0; i < draw->vs.queue_nr; i += MAX_SHADER_VERTICES) {
+      unsigned elts[MAX_SHADER_VERTICES];
+      int j, n = MIN2(MAX_SHADER_VERTICES, draw->vs.queue_nr  - i);
+      struct vertex_header *dests =
+         draw_header_from_block(draw->vs.vertex_cache,
+                                MAX_VERTEX_ALLOCATION, i);
 
       for (j = 0; j < n; j++) {
-         elts[j] = draw->vs.queue[i + j].elt;
-         dests[j] = draw->vs.queue[i + j].vertex;
+         elts[j] = draw->vs.elts[i + j];
       }
 
-      for ( ; j < 4; j++) {
+      for ( ; j < MAX_SHADER_VERTICES; j++) {
 	 elts[j] = elts[0];
-         dests[j] = draw->vs.queue[i + j].vertex;
       }
 
       assert(n > 0);
-      assert(n <= 4);
+      assert(n <= MAX_SHADER_VERTICES);
 
-      shader->run(shader, draw, elts, n, dests);
+      shader->run(shader, draw, elts, n, dests, MAX_VERTEX_ALLOCATION);
    }
 
    draw->vs.post_nr = draw->vs.queue_nr;

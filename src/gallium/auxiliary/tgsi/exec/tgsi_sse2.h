@@ -11,12 +11,9 @@ struct x86_function;
 unsigned
 tgsi_emit_sse2(
    struct tgsi_token *tokens,
-   struct x86_function *function );
-
-unsigned
-tgsi_emit_sse2_fs(
-   struct tgsi_token *tokens,
-   struct x86_function *function );
+   struct x86_function *function,
+   float (*immediates)[4]
+ );
 
 #if defined __cplusplus
 }

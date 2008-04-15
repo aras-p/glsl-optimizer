@@ -44,6 +44,33 @@
 #include "pipe/p_winsys.h"
 
 
+static INLINE GLboolean
+is_front_buffer_dirty(struct st_context *st)
+{
+   return st->frontbuffer_status == FRONT_STATUS_DIRTY;
+}
+
+
+/**
+ * Tell the winsys to display the front color buffer on-screen.
+ */
+static void
+display_front_buffer(struct st_context *st)
+{
+   GLframebuffer *fb = st->ctx->DrawBuffer;
+   struct st_renderbuffer *strb
+      = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+   struct pipe_surface *front_surf = strb->surface;
+
+   /* Hook for copying "fake" frontbuffer if necessary:
+    */
+   st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
+                                        st->pipe->priv );
+
+   st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
+}
+
+
 void st_flush( struct st_context *st, uint pipeFlushFlags,
                struct pipe_fence_handle **fence )
 {
@@ -55,65 +82,9 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
 }
 
 
-static void st_gl_flush( struct st_context *st, uint pipeFlushFlags,
-                         struct pipe_fence_handle **fence )
-{
-   GLframebuffer *fb = st->ctx->DrawBuffer;
-
-   st_flush_bitmap_cache(st);
-
-   FLUSH_VERTICES(st->ctx, 0);
-
-   if (!fb)
-      return;
-
-   /* XXX: temporary hack.  This flag should only be set if we do any
-    * rendering to the front buffer.
-    *
-    * Further more, the scissor rectangle could be tracked to
-    * construct a dirty region of the front buffer, to avoid
-    * situations where it must be copied repeatedly.
-    *
-    * In the extreme case, some kind of timer could be set up to allow
-    * coalescing of multiple flushes to the frontbuffer, which can be
-    * quite a performance drain if there are a sufficient number of
-    * them.
-    */
-   st->flags.frontbuffer_dirty
-      = (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT);
-
-   if (st->flags.frontbuffer_dirty) {
-      struct st_renderbuffer *strb
-         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-      struct pipe_surface *front_surf = strb->surface;
-
-      /* If we aren't rendering to the frontbuffer, this is a noop.
-       * This should be uncontroversial for glFlush, though people may
-       * feel more strongly about glFinish.
-       *
-       * Additionally, need to make sure that the frontbuffer_dirty
-       * flag really gets set on frontbuffer rendering.
-       */
-      st->pipe->flush( st->pipe, pipeFlushFlags, fence );
-
-      /* Hook for copying "fake" frontbuffer if necessary:
-       */
-      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
-                                           st->pipe->priv );
-      st->flags.frontbuffer_dirty = 0;
-   }
-}
-
-
 /**
- * Called via ctx->Driver.Flush()
+ * Flush, and wait for completion.
  */
-static void st_glFlush(GLcontext *ctx)
-{
-   st_gl_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-}
-
-
 void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
@@ -125,12 +96,36 @@ void st_finish( struct st_context *st )
 }
 
 
+
+/**
+ * Called via ctx->Driver.Flush()
+ */
+static void st_glFlush(GLcontext *ctx)
+{
+   struct st_context *st = ctx->st;
+
+   if (is_front_buffer_dirty(st)) {
+      st_finish(st);
+      display_front_buffer(st);
+   }
+   else {
+      st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
+   }
+}
+
+
 /**
  * Called via ctx->Driver.Finish()
  */
 static void st_glFinish(GLcontext *ctx)
 {
-   st_finish( ctx->st );
+   struct st_context *st = ctx->st;
+
+   st_finish(st);
+
+   if (is_front_buffer_dirty(st)) {
+      display_front_buffer(st);
+   }
 }
 
 

@@ -80,6 +80,7 @@ struct pipe_winsys
    /**
     * Allocate storage for a pipe_surface.
     * Returns 0 if succeeds.
+    * XXX: flags is unused and will be removed someday.
     */
    int (*surface_alloc_storage)(struct pipe_winsys *ws,
                                 struct pipe_surface *surf,

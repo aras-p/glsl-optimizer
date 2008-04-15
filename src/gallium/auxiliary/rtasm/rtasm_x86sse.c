@@ -317,7 +317,7 @@ void x86_call( struct x86_function *p, void (*label)())
 void x86_call( struct x86_function *p, struct x86_reg reg)
 {
    emit_1ub(p, 0xff);
-   emit_modrm(p, reg, reg);
+   emit_modrm_noreg(p, 2, reg);
 }
 #endif
 

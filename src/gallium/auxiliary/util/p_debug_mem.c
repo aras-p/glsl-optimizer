@@ -73,6 +73,25 @@ static struct list_head list = { &list, &list };
 static unsigned long last_no = 0;
 
 
+static INLINE struct debug_memory_header *
+header_from_data(void *data)
+{
+   if(data)
+      return (struct debug_memory_header *)((char *)data - sizeof(struct debug_memory_header));
+   else
+      return NULL;
+}
+
+static INLINE void *
+data_from_header(struct debug_memory_header *hdr)
+{
+   if(hdr)
+      return (void *)((char *)hdr + sizeof(struct debug_memory_header));
+   else
+      return NULL;
+}
+
+
 void *
 debug_malloc(const char *file, unsigned line, const char *function,
              size_t size) 
@@ -92,7 +111,7 @@ debug_malloc(const char *file, unsigned line, const char *function,
 
    LIST_ADDTAIL(&hdr->head, &list);
    
-   return (void *)((char *)hdr + sizeof(*hdr));
+   return data_from_header(hdr);
 }
 
 void
@@ -104,7 +123,7 @@ debug_free(const char *file, unsigned line, const char *function,
    if(!ptr)
       return;
    
-   hdr = (struct debug_memory_header *)((char *)ptr - sizeof(*hdr));
+   hdr = header_from_data(ptr);
    if(hdr->magic != DEBUG_MEMORY_MAGIC) {
       debug_printf("%s:%u:%s: freeing bad or corrupted memory %p\n",
                    file, line, function,
@@ -133,16 +152,46 @@ void *
 debug_realloc(const char *file, unsigned line, const char *function,
               void *old_ptr, size_t old_size, size_t new_size )
 {
-   void *new_ptr = NULL;
-
-   if (new_size != 0) {
-      new_ptr = debug_malloc( file, line, function, new_size );
-      
-      if( new_ptr && old_ptr )
-         memcpy( new_ptr, old_ptr, old_size );
+   struct debug_memory_header *old_hdr, *new_hdr;
+   void *new_ptr;
+   
+   if(!old_ptr)
+      return debug_malloc( file, line, function, new_size );
+   
+   if(!new_size) {
+      debug_free( file, line, function, old_ptr );
+      return NULL;
    }
+   
+   old_hdr = header_from_data(old_ptr);
+   if(old_hdr->magic != DEBUG_MEMORY_MAGIC) {
+      debug_printf("%s:%u:%s: reallocating bad or corrupted memory %p\n",
+                   file, line, function,
+                   old_ptr);
+      debug_assert(0);
+      return NULL;
+   }
+   
+   /* alloc new */
+   new_hdr = real_malloc(sizeof(*new_hdr) + new_size);
+   if(!new_hdr)
+      return NULL;
+   new_hdr->no = old_hdr->no;
+   new_hdr->file = old_hdr->file;
+   new_hdr->line = old_hdr->line;
+   new_hdr->function = old_hdr->function;
+   new_hdr->size = new_size;
+   new_hdr->magic = DEBUG_MEMORY_MAGIC;
+   LIST_REPLACE(&old_hdr->head, &new_hdr->head);
+   
+   /* copy data */
+   new_ptr = data_from_header(new_hdr);
+   memcpy( new_ptr, old_ptr, old_size < new_size ? old_size : new_size );
 
-   debug_free( file, line, function, old_ptr );
+   /* free old */
+   old_hdr->magic = 0;
+   real_free(old_hdr);
+
    return new_ptr;
 }
 
@@ -162,7 +211,7 @@ debug_memory_end(unsigned long start_no)
       struct debug_memory_header *hdr;
       void *ptr;
       hdr = LIST_ENTRY(struct debug_memory_header, entry, head);
-      ptr = (void *)((char *)hdr + sizeof(*hdr));
+      ptr = data_from_header(hdr);
       if(start_no <= hdr->no && hdr->no < last_no ||
 	 last_no < start_no && (hdr->no < last_no || start_no <= hdr->no))
 	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",

@@ -70,6 +70,14 @@ struct list_head
     (__list)->prev = (__item);			\
   } while(0)
 
+#define LIST_REPLACE(__from, __to)		\
+  do {						\
+    (__to)->prev = (__from)->prev;		\
+    (__to)->next = (__from)->next;		\
+    (__from)->next->prev = (__to);		\
+    (__from)->prev->next = (__to);		\
+  } while (0)
+
 #define LIST_DEL(__item)			\
   do {						\
     (__item)->prev->next = (__item)->next;	\

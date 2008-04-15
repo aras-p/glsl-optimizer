@@ -29,6 +29,9 @@
 #ifndef ST_CB_READPIXELS_H
 #define ST_CB_READPIXELS_H
 
+extern struct st_renderbuffer *
+st_get_color_read_renderbuffer(GLcontext *ctx);
+
 extern void
 st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                        GLsizei width, GLsizei height, GLenum type,
