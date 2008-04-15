@@ -70,19 +70,24 @@ struct pb_slab
    size_t numBuffers;
    size_t numFree;
    struct pb_slab_buffer *buffers;
-   struct pb_slab_size_header *header;
+   struct pb_slab_manager *mgr;
    
    struct pb_buffer *bo;
-   size_t pageAlignment;
    void *virtual;   
 };
 
-struct pb_slab_size_header 
+struct pb_slab_manager 
 {
+   struct pb_manager base;
+   
+   struct pb_manager *provider;
+   size_t bufSize;
+   size_t slabSize;
+   struct pb_desc desc;
+
    struct list_head slabs;
    struct list_head freeSlabs;
-   struct pb_slab_manager *pool;
-   size_t bufSize;
+   
    _glthread_Mutex mutex;
 };
 
@@ -90,19 +95,18 @@ struct pb_slab_size_header
  * The data of this structure remains constant after
  * initialization and thus needs no mutex protection.
  */
-struct pb_slab_manager 
+struct pb_slab_range_manager 
 {
    struct pb_manager base;
 
-   struct pb_desc desc;
-   size_t *bucketSizes;
-   size_t numBuckets;
-   size_t pageSize;
    struct pb_manager *provider;
-   unsigned pageAlignment;
-   unsigned maxSlabSize;
-   unsigned desiredNumBuffers;
-   struct pb_slab_size_header *headers;
+   size_t minBufSize;
+   size_t maxBufSize;
+   struct pb_desc desc;
+   
+   unsigned numBuckets;
+   size_t *bucketSizes;
+   struct pb_manager **buckets;
 };
 
 
@@ -122,8 +126,16 @@ pb_slab_manager(struct pb_manager *mgr)
 }
 
 
+static INLINE struct pb_slab_range_manager *
+pb_slab_range_manager(struct pb_manager *mgr)
+{
+   assert(mgr);
+   return (struct pb_slab_range_manager *)mgr;
+}
+
+
 /**
- * Delete a buffer from the slab header delayed list and put
+ * Delete a buffer from the slab delayed list and put
  * it on the slab FREE list.
  */
 static void
@@ -131,10 +143,10 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
 {
    struct pb_slab_buffer *buf = pb_slab_buffer(_buf);
    struct pb_slab *slab = buf->slab;
-   struct pb_slab_size_header *header = slab->header;
+   struct pb_slab_manager *mgr = slab->mgr;
    struct list_head *list = &buf->head;
 
-   _glthread_LOCK_MUTEX(header->mutex);
+   _glthread_LOCK_MUTEX(mgr->mutex);
    
    assert(buf->base.base.refcount == 0);
    
@@ -145,21 +157,21 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
    slab->numFree++;
 
    if (slab->head.next == &slab->head)
-      LIST_ADDTAIL(&slab->head, &header->slabs);
+      LIST_ADDTAIL(&slab->head, &mgr->slabs);
 
    if (slab->numFree == slab->numBuffers) {
       list = &slab->head;
       LIST_DEL(list);
-      LIST_ADDTAIL(list, &header->freeSlabs);
+      LIST_ADDTAIL(list, &mgr->freeSlabs);
    }
 
-   if (header->slabs.next == &header->slabs || slab->numFree
+   if (mgr->slabs.next == &mgr->slabs || slab->numFree
 	 != slab->numBuffers) {
 
       struct list_head *next;
 
-      for (list = header->freeSlabs.next, next = list->next; list
-	    != &header->freeSlabs; list = next, next = list->next) {
+      for (list = mgr->freeSlabs.next, next = list->next; list
+	    != &mgr->freeSlabs; list = next, next = list->next) {
 
 	 slab = LIST_ENTRY(struct pb_slab, list, head);
 
@@ -170,7 +182,7 @@ pb_slab_buffer_destroy(struct pb_buffer *_buf)
       }
    }
    
-   _glthread_UNLOCK_MUTEX(header->mutex);
+   _glthread_UNLOCK_MUTEX(mgr->mutex);
 }
 
 
@@ -217,15 +229,13 @@ pb_slab_buffer_vtbl = {
 
 
 static enum pipe_error
-pb_slab_create(struct pb_slab_size_header *header)
+pb_slab_create(struct pb_slab_manager *mgr)
 {
-   struct pb_slab_manager *pool = header->pool;
-   size_t size = header->bufSize * pool->desiredNumBuffers;
    struct pb_slab *slab;
    struct pb_slab_buffer *buf;
-   size_t numBuffers;
-   int ret;
+   unsigned numBuffers;
    unsigned i;
+   enum pipe_error ret;
 
    slab = CALLOC_STRUCT(pb_slab);
    if (!slab)
@@ -236,22 +246,23 @@ pb_slab_create(struct pb_slab_size_header *header)
     * to efficiently reuse slabs.
     */
 
-   size = (size <= pool->maxSlabSize) ? size : pool->maxSlabSize;
-   size = (size + pool->pageSize - 1) & ~(pool->pageSize - 1);
-
-   slab->bo = pool->provider->create_buffer(pool->provider, size, &pool->desc);
-   if(!slab->bo)
+   slab->bo = mgr->provider->create_buffer(mgr->provider, mgr->slabSize, &mgr->desc);
+   if(!slab->bo) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out_err0;
+   }
 
    slab->virtual = pb_map(slab->bo, 
-			 PIPE_BUFFER_USAGE_CPU_READ |
-			 PIPE_BUFFER_USAGE_CPU_WRITE);
-   if(!slab->virtual)
+                          PIPE_BUFFER_USAGE_CPU_READ |
+                          PIPE_BUFFER_USAGE_CPU_WRITE);
+   if(!slab->virtual) {
+      ret = PIPE_ERROR_OUT_OF_MEMORY;
       goto out_err1;
+   }
 
    pb_unmap(slab->bo);
 
-   numBuffers = slab->bo->base.size / header->bufSize;
+   numBuffers = slab->bo->base.size / mgr->bufSize;
 
    slab->buffers = CALLOC(numBuffers, sizeof(*slab->buffers));
    if (!slab->buffers) {
@@ -263,17 +274,17 @@ pb_slab_create(struct pb_slab_size_header *header)
    LIST_INITHEAD(&slab->freeBuffers);
    slab->numBuffers = numBuffers;
    slab->numFree = 0;
-   slab->header = header;
+   slab->mgr = mgr;
 
    buf = slab->buffers;
    for (i=0; i < numBuffers; ++i) {
       buf->base.base.refcount = 0;
-      buf->base.base.size = header->bufSize;
+      buf->base.base.size = mgr->bufSize;
       buf->base.base.alignment = 0;
       buf->base.base.usage = 0;
       buf->base.vtbl = &pb_slab_buffer_vtbl;
       buf->slab = slab;
-      buf->start = i* header->bufSize;
+      buf->start = i* mgr->bufSize;
       buf->mapCount = 0;
       _glthread_INIT_COND(buf->event);
       LIST_ADDTAIL(&buf->head, &slab->freeBuffers);
@@ -281,7 +292,7 @@ pb_slab_create(struct pb_slab_size_header *header)
       buf++;
    }
 
-   LIST_ADDTAIL(&slab->head, &header->slabs);
+   LIST_ADDTAIL(&slab->head, &mgr->slabs);
 
    return PIPE_OK;
 
@@ -293,51 +304,55 @@ out_err0:
 }
 
 
+static int
+check_alignment(size_t requested, size_t provided)
+{
+   return requested <= provided && (provided % requested) == 0;
+}
+
+
 static struct pb_buffer *
-pb_slab_manager_create_buffer(struct pb_manager *_pool,
+pb_slab_manager_create_buffer(struct pb_manager *_mgr,
                               size_t size,
                               const struct pb_desc *desc)
 {
-   struct pb_slab_manager *pool = pb_slab_manager(_pool);
-   struct pb_slab_size_header *header;
-   unsigned i;
+   struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
    static struct pb_slab_buffer *buf;
    struct pb_slab *slab;
    struct list_head *list;
    int count = DRI_SLABPOOL_ALLOC_RETRIES;
 
-   /*
-    * FIXME: Check for compatibility.
-    */
+   /* check size */
+   assert(size == mgr->bufSize);
+   if(size != mgr->bufSize)
+      return NULL;
+   
+   /* check if we can provide the requested alignment */
+   assert(check_alignment(desc->alignment, mgr->desc.alignment));
+   if(!check_alignment(desc->alignment, mgr->desc.alignment))
+      return NULL;
+   assert(check_alignment(desc->alignment, mgr->bufSize));
+   if(!check_alignment(desc->alignment, mgr->bufSize))
+      return NULL;
 
-   header = pool->headers;
-   for (i=0; i<pool->numBuckets; ++i) {
-      if (header->bufSize >= size)
+   /* XXX: check for compatible buffer usage too? */
+   
+   _glthread_LOCK_MUTEX(mgr->mutex);
+   while (mgr->slabs.next == &mgr->slabs && count > 0) {
+      if (mgr->slabs.next != &mgr->slabs)
 	 break;
-      header++;
-   }
 
-   if (i >= pool->numBuckets)
-      /* Fall back to allocate a buffer object directly from the provider. */
-      return pool->provider->create_buffer(pool->provider, size, desc);
-
-
-   _glthread_LOCK_MUTEX(header->mutex);
-   while (header->slabs.next == &header->slabs && count > 0) {
-      if (header->slabs.next != &header->slabs)
-	 break;
-
-      _glthread_UNLOCK_MUTEX(header->mutex);
+      _glthread_UNLOCK_MUTEX(mgr->mutex);
       if (count != DRI_SLABPOOL_ALLOC_RETRIES)
 	 util_time_sleep(1);
-      _glthread_LOCK_MUTEX(header->mutex);
-      (void) pb_slab_create(header);
+      _glthread_LOCK_MUTEX(mgr->mutex);
+      (void) pb_slab_create(mgr);
       count--;
    }
 
-   list = header->slabs.next;
-   if (list == &header->slabs) {
-      _glthread_UNLOCK_MUTEX(header->mutex);
+   list = mgr->slabs.next;
+   if (list == &mgr->slabs) {
+      _glthread_UNLOCK_MUTEX(mgr->mutex);
       return NULL;
    }
    slab = LIST_ENTRY(struct pb_slab, list, head);
@@ -347,83 +362,141 @@ pb_slab_manager_create_buffer(struct pb_manager *_pool,
    list = slab->freeBuffers.next;
    LIST_DELINIT(list);
 
-   _glthread_UNLOCK_MUTEX(header->mutex);
+   _glthread_UNLOCK_MUTEX(mgr->mutex);
    buf = LIST_ENTRY(struct pb_slab_buffer, list, head);
+   
    ++buf->base.base.refcount;
+   buf->base.base.alignment = desc->alignment;
+   buf->base.base.usage = desc->usage;
+   
    return &buf->base;
 }
 
 
 static void
-pb_slab_manager_destroy(struct pb_manager *_pool)
+pb_slab_manager_destroy(struct pb_manager *_mgr)
 {
-   struct pb_slab_manager *pool = pb_slab_manager(_pool);
+   struct pb_slab_manager *mgr = pb_slab_manager(_mgr);
 
-   FREE(pool->headers);
-   FREE(pool->bucketSizes);
-   FREE(pool);
+   /* TODO: cleanup all allocated buffers */
+   FREE(mgr);
 }
 
 
 struct pb_manager *
-pb_slab_manager_create(struct pb_manager *provider, 
-                       const struct pb_desc *desc,
-                       size_t smallestSize,
-                       size_t numSizes,
-                       size_t desiredNumBuffers,
-                       size_t maxSlabSize,
-                       size_t pageAlignment)
+pb_slab_manager_create(struct pb_manager *provider,
+                       size_t bufSize,
+                       size_t slabSize,
+                       const struct pb_desc *desc)
 {
-   struct pb_slab_manager *pool;
-   size_t i;
+   struct pb_slab_manager *mgr;
 
-   pool = CALLOC_STRUCT(pb_slab_manager);
-   if (!pool)
-      goto out_err0;
+   mgr = CALLOC_STRUCT(pb_slab_manager);
+   if (!mgr)
+      return NULL;
 
-   pool->bucketSizes = CALLOC(numSizes, sizeof(*pool->bucketSizes));
-   if (!pool->bucketSizes)
-      goto out_err1;
+   mgr->base.destroy = pb_slab_manager_destroy;
+   mgr->base.create_buffer = pb_slab_manager_create_buffer;
 
-   pool->headers = CALLOC(numSizes, sizeof(*pool->headers));
-   if (!pool->headers)
-      goto out_err2;
+   mgr->provider = provider;
+   mgr->bufSize = bufSize;
+   mgr->slabSize = slabSize;
+   mgr->desc = *desc;
 
-   pool->desc = *desc;
-   pool->numBuckets = numSizes;
-#ifdef WIN32
-   pool->pageSize = 4096;
-#else
-   pool->pageSize = getpagesize();
-#endif
-   pool->provider = provider;
-   pool->pageAlignment = pageAlignment;
-   pool->maxSlabSize = maxSlabSize;
-   pool->desiredNumBuffers = desiredNumBuffers;
+   LIST_INITHEAD(&mgr->slabs);
+   LIST_INITHEAD(&mgr->freeSlabs);
+   
+   _glthread_INIT_MUTEX(mgr->mutex);
 
-   for (i=0; i<pool->numBuckets; ++i) {
-      struct pb_slab_size_header *header = &pool->headers[i];
-      
-      pool->bucketSizes[i] = (smallestSize << i);
-      
-      _glthread_INIT_MUTEX(header->mutex);
+   return &mgr->base;
+}
 
-      LIST_INITHEAD(&header->slabs);
-      LIST_INITHEAD(&header->freeSlabs);
 
-      header->pool = pool;
-      header->bufSize = (smallestSize << i);
+static struct pb_buffer *
+pb_slab_range_manager_create_buffer(struct pb_manager *_mgr,
+                                    size_t size,
+                                    const struct pb_desc *desc)
+{
+   struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
+   size_t bufSize;
+   unsigned i;
+
+   bufSize = mgr->minBufSize;
+   for (i = 0; i < mgr->numBuckets; ++i) {
+      if(bufSize >= size)
+	 return mgr->buckets[i]->create_buffer(mgr->buckets[i], size, desc);
+      bufSize *= 2;
    }
 
-   pool->base.destroy = pb_slab_manager_destroy;
-   pool->base.create_buffer = pb_slab_manager_create_buffer;
+   /* Fall back to allocate a buffer object directly from the provider. */
+   return mgr->provider->create_buffer(mgr->provider, size, desc);
+}
 
-   return &pool->base;
+
+static void
+pb_slab_range_manager_destroy(struct pb_manager *_mgr)
+{
+   struct pb_slab_range_manager *mgr = pb_slab_range_manager(_mgr);
+   unsigned i;
+   
+   for (i = 0; i < mgr->numBuckets; ++i)
+      mgr->buckets[i]->destroy(mgr->buckets[i]);
+   FREE(mgr->buckets);
+   FREE(mgr->bucketSizes);
+   FREE(mgr);
+}
+
+
+struct pb_manager *
+pb_slab_range_manager_create(struct pb_manager *provider,
+                             size_t minBufSize,
+                             size_t maxBufSize,
+                             size_t slabSize,
+                             const struct pb_desc *desc)
+{
+   struct pb_slab_range_manager *mgr;
+   size_t bufSize;
+   unsigned i;
+
+   mgr = CALLOC_STRUCT(pb_slab_range_manager);
+   if (!mgr)
+      goto out_err0;
+
+   mgr->base.destroy = pb_slab_range_manager_destroy;
+   mgr->base.create_buffer = pb_slab_range_manager_create_buffer;
+
+   mgr->provider = provider;
+   mgr->minBufSize = minBufSize;
+   mgr->maxBufSize = maxBufSize;
+
+   mgr->numBuckets = 1;
+   bufSize = minBufSize;
+   while(bufSize < maxBufSize) {
+      bufSize *= 2;
+      ++mgr->numBuckets;
+   }
+   
+   mgr->buckets = CALLOC(mgr->numBuckets, sizeof(*mgr->buckets));
+   if (!mgr->buckets)
+      goto out_err1;
+
+   bufSize = minBufSize;
+   for (i = 0; i < mgr->numBuckets; ++i) {
+      mgr->buckets[i] = pb_slab_manager_create(provider, bufSize, slabSize, desc);
+      if(!mgr->buckets[i])
+	 goto out_err2;
+      bufSize *= 2;
+   }
+
+   return &mgr->base;
 
 out_err2: 
-   FREE(pool->bucketSizes);
+   for (i = 0; i < mgr->numBuckets; ++i)
+      if(mgr->buckets[i])
+	    mgr->buckets[i]->destroy(mgr->buckets[i]);
+   FREE(mgr->buckets);
 out_err1: 
-   FREE(pool);
+   FREE(mgr);
 out_err0:
    return NULL;
 }
