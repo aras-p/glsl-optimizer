@@ -250,14 +250,16 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 
 	    char *dest = out_buf + fpme->translate[j].output_offset;
 
-            /*debug_printf("emiting [%f, %f, %f, %f]\n",
-                         attrib[0], attrib[1],
-                         attrib[2], attrib[3]);*/
+	    if (0)
+	       debug_printf("emiting [%f, %f, %f, %f]\n",
+			    attrib[0], attrib[1],
+			    attrib[2], attrib[3]);
 
             fpme->translate[j].emit(attrib, dest);
          }
 
 	 fpme->input_buf[0] += fpme->pipeline_vertex_size;
+	 out_buf += fpme->hw_vertex_size;
       }
 
       draw->render->draw(draw->render,
