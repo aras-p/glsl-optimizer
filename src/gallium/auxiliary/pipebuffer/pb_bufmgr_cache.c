@@ -136,7 +136,7 @@ _pb_cache_buffer_list_check_free(struct pb_cache_manager *mgr)
    while(curr != &mgr->delayed) {
       buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
 
-      if(util_time_timeout(&buf->start, &buf->end, &now) != 0)
+      if(!util_time_timeout(&buf->start, &buf->end, &now))
 	 break;
 	 
       _pb_cache_buffer_destroy(buf);
@@ -202,6 +202,24 @@ pb_cache_buffer_vtbl = {
 };
 
 
+static INLINE boolean
+pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,  
+                          size_t size,
+                          const struct pb_desc *desc)
+{
+   /* TODO: be more lenient with size */
+   if(buf->base.base.size != size)
+      return FALSE;
+   
+   if(!pb_check_alignment(desc->alignment, buf->base.base.alignment))
+      return FALSE;
+   
+   /* XXX: check usage too? */
+   
+   return TRUE;
+}
+
+
 static struct pb_buffer *
 pb_cache_manager_create_buffer(struct pb_manager *_mgr, 
                                size_t size,
@@ -209,29 +227,45 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
 {
    struct pb_cache_manager *mgr = pb_cache_manager(_mgr);
    struct pb_cache_buffer *buf;
+   struct pb_cache_buffer *curr_buf;
    struct list_head *curr, *next;
    struct util_time now;
    
-   util_time_get(&now);
+   _glthread_LOCK_MUTEX(mgr->mutex);
+
+   buf = NULL;
    curr = mgr->delayed.next;
    next = curr->next;
+   
+   /* search in the expired buffers, freeing them in the process */
+   util_time_get(&now);
    while(curr != &mgr->delayed) {
-      buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
-
-      if(buf->base.base.size == size &&
-	 buf->base.base.alignment >= desc->alignment &&
-	 (buf->base.base.alignment % desc->alignment) == 0 &&
-	 /* buf->base.base.usage == usage */ 1) {
-	 ++buf->base.base.refcount;
-	 return &buf->base;
-      }
-      
-      if(util_time_timeout(&buf->start, &buf->end, &now) != 0)
-	 _pb_cache_buffer_destroy(buf);
-
+      curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
+      if(!buf && pb_cache_is_buffer_compat(curr_buf, size, desc))
+	 buf = curr_buf;
+      else if(util_time_timeout(&curr_buf->start, &curr_buf->end, &now))
+	 _pb_cache_buffer_destroy(curr_buf);
       curr = next; 
       next = curr->next;
    }
+
+   /* keep searching in the hot buffers */
+   while(!buf && curr != &mgr->delayed) {
+      curr_buf = LIST_ENTRY(struct pb_cache_buffer, curr, head);
+      if(pb_cache_is_buffer_compat(curr_buf, size, desc))
+	 buf = curr_buf;
+      curr = next; 
+      next = curr->next;
+   }
+   
+   if(buf) {
+      LIST_DEL(&buf->head);
+      _glthread_UNLOCK_MUTEX(mgr->mutex);
+      ++buf->base.base.refcount;
+      return &buf->base;
+   }
+   
+   _glthread_UNLOCK_MUTEX(mgr->mutex);
 
    buf = CALLOC_STRUCT(pb_cache_buffer);
    if(!buf)
@@ -242,6 +276,11 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
       FREE(buf);
       return NULL;
    }
+   
+   assert(buf->buffer->base.refcount >= 1);
+   assert(pb_check_alignment(desc->alignment, buf->buffer->base.alignment));
+   assert((buf->buffer->base.usage & desc->usage) == desc->usage);
+   assert(buf->buffer->base.size >= size);
    
    buf->base.base.refcount = 1;
    buf->base.base.alignment = buf->buffer->base.alignment;

@@ -304,13 +304,6 @@ out_err0:
 }
 
 
-static int
-check_alignment(size_t requested, size_t provided)
-{
-   return requested <= provided && (provided % requested) == 0;
-}
-
-
 static struct pb_buffer *
 pb_slab_manager_create_buffer(struct pb_manager *_mgr,
                               size_t size,
@@ -328,11 +321,11 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
       return NULL;
    
    /* check if we can provide the requested alignment */
-   assert(check_alignment(desc->alignment, mgr->desc.alignment));
-   if(!check_alignment(desc->alignment, mgr->desc.alignment))
+   assert(pb_check_alignment(desc->alignment, mgr->desc.alignment));
+   if(!pb_check_alignment(desc->alignment, mgr->desc.alignment))
       return NULL;
-   assert(check_alignment(desc->alignment, mgr->bufSize));
-   if(!check_alignment(desc->alignment, mgr->bufSize))
+   assert(pb_check_alignment(desc->alignment, mgr->bufSize));
+   if(!pb_check_alignment(desc->alignment, mgr->bufSize))
       return NULL;
 
    /* XXX: check for compatible buffer usage too? */

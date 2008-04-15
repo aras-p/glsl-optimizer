@@ -193,6 +193,17 @@ pb_reference(struct pb_buffer **dst,
 
 
 /**
+ * Utility function to check whether a requested alignment is consistent with
+ * the provided alignment or not.
+ */
+static INLINE int
+pb_check_alignment(size_t requested, size_t provided)
+{
+   return requested <= provided && (provided % requested) == 0;
+}
+
+
+/**
  * Malloc-based buffer to store data that can't be used by the graphics 
  * hardware.
  */
