@@ -111,6 +111,10 @@ void st_init_limits(struct st_context *st)
 
    st->bitmap_texcoord_bias
       = screen->get_paramf(screen, PIPE_CAP_BITMAP_TEXCOORD_BIAS);
+
+   c->MaxDrawBuffers
+      = CLAMP(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
+              1, MAX_DRAW_BUFFERS);
 }
 
 
