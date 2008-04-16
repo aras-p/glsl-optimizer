@@ -113,12 +113,12 @@ check_space( struct vbuf_stage *vbuf, unsigned nr )
 }
 
 
-#if 0
+#if 1
 static INLINE void
 dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
 {
-   assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
-   unsigned i, j, k;
+//   assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
+   unsigned i, j;
 
    for (i = 0; i < vinfo->num_attribs; i++) {
       j = vinfo->src_index[i];
@@ -264,6 +264,8 @@ emit_vertex( struct vbuf_stage *vbuf,
    }
    else {
       draw_vf_emit_vertex(vbuf->vf, vertex, vbuf->vertex_ptr);
+
+      if (0) dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
    
       vbuf->vertex_ptr += vbuf->vertex_size/4;
    }
