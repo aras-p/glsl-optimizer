@@ -50,6 +50,7 @@ struct state_key
 {
    GLuint scaleAndBias:1;
    GLuint colorMatrix:1;
+   GLuint colorMatrixPostScaleBias:1;
 
 #if 0
    GLfloat Maps[3][256][4];
@@ -80,6 +81,9 @@ is_identity(const GLfloat m[16])
 static void
 make_state_key(GLcontext *ctx,  struct state_key *key)
 {
+   static const GLfloat zero[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+   static const GLfloat one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
    memset(key, 0, sizeof(*key));
 
    if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
@@ -92,8 +96,12 @@ make_state_key(GLcontext *ctx,  struct state_key *key)
    if (!is_identity(ctx->ColorMatrixStack.Top->m)) {
       key->colorMatrix = 1;
    }
-}
 
+   if (!TEST_EQ_4V(ctx->Pixel.PostColorMatrixScale, one) ||
+       !TEST_EQ_4V(ctx->Pixel.PostColorMatrixBias, zero)) {
+      key->colorMatrixPostScaleBias = 1;
+   }
+}
 
 
 
@@ -182,63 +190,86 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
       GLint row3_p = _mesa_add_state_reference(params, row3_state);
       const GLuint temp = 1;
 
-      /* MOV temp, colorTemp; */
-      _mesa_init_instructions(inst + ic, 1);
-      inst[ic].Opcode = OPCODE_MOV;
-      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = temp;
-      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = colorTemp;
-      ic++;
-
       /* XXX reimplement in terms of MUL/MAD (see t_vp_build.c) */
 
-      /* DP4 colorTemp.x, temp, matrow0; */
+      /* DP4 temp.x, colorTemp, matrow0; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
       inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = colorTemp;
+      inst[ic].DstReg.Index = temp;
       inst[ic].DstReg.WriteMask = WRITEMASK_X;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = temp;
+      inst[ic].SrcReg[0].Index = colorTemp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row0_p;
       ic++;
 
-      /* DP4 colorTemp.y, temp, matrow1; */
+      /* DP4 temp.y, colorTemp, matrow1; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
       inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = colorTemp;
+      inst[ic].DstReg.Index = temp;
       inst[ic].DstReg.WriteMask = WRITEMASK_Y;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = temp;
+      inst[ic].SrcReg[0].Index = colorTemp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row1_p;
       ic++;
 
-      /* DP4 colorTemp.z, temp, matrow2; */
+      /* DP4 temp.z, colorTemp, matrow2; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
       inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index = colorTemp;
+      inst[ic].DstReg.Index = temp;
       inst[ic].DstReg.WriteMask = WRITEMASK_Z;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = temp;
+      inst[ic].SrcReg[0].Index = colorTemp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row2_p;
       ic++;
 
-      /* DP4 colorTemp.w, temp, matrow3; */
+      /* DP4 temp.w, colorTemp, matrow3; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
       inst[ic].DstReg.File = PROGRAM_TEMPORARY;
-      inst[ic].DstReg.Index =colorTemp;
+      inst[ic].DstReg.Index = temp;
       inst[ic].DstReg.WriteMask = WRITEMASK_W;
       inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst[ic].SrcReg[0].Index = temp;
+      inst[ic].SrcReg[0].Index = colorTemp;
       inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = row3_p;
+      ic++;
+
+      /* MOV colorTemp, temp; */
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_MOV;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = colorTemp;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = temp;
+      ic++;
+   }
+
+   if (key->colorMatrixPostScaleBias) {
+      static const gl_state_index scale_state[STATE_LENGTH] =
+         { STATE_INTERNAL, STATE_PT_SCALE, 0, 0, 0 };
+      static const gl_state_index bias_state[STATE_LENGTH] =
+         { STATE_INTERNAL, STATE_PT_BIAS, 0, 0, 0 };
+      GLint scale_param, bias_param;
+
+      scale_param = _mesa_add_state_reference(params, scale_state);
+      bias_param = _mesa_add_state_reference(params, bias_state);
+
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_MAD;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = colorTemp;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = colorTemp;
+      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
+      inst[ic].SrcReg[1].Index = scale_param;
+      inst[ic].SrcReg[2].File = PROGRAM_STATE_VAR;
+      inst[ic].SrcReg[2].Index = bias_param;
       ic++;
    }
 
