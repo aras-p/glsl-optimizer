@@ -54,10 +54,9 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_middle_end *middle = NULL;
    unsigned opt = 0;
 
-   if (!draw->render)
-      return FALSE;
-   /*debug_printf("XXXXXXXXXX needs_pipeline = %d\n", pipeline);*/
-
+   if (!draw->render) {
+      opt |= PT_PIPELINE;
+   }
 
    if (draw_need_pipeline(draw, prim)) {
       opt |= PT_PIPELINE;

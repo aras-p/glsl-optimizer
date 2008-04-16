@@ -61,86 +61,87 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    fpme->prim = prim;
    fpme->opt = opt;
 
-   ok = draw->render->set_primitive(draw->render, prim);
-   if (!ok) {
-      assert(0);
-      return;
-   }
+   if (!(opt & PT_PIPELINE)) {
+      ok = draw->render->set_primitive(draw->render, prim);
+      if (!ok) {
+	 assert(0);
+	 return;
+      }
 
-   /* Must do this after set_primitive() above:
-    */
-   vinfo = draw->render->get_vertex_info(draw->render);
+      /* Must do this after set_primitive() above:
+       */
+      vinfo = draw->render->get_vertex_info(draw->render);
 
 
-   /* In passthrough mode, need to translate from vertex shader
-    * outputs to hw vertices.
-    */
-   dst_offset = 0;
-   for (i = 0; i < vinfo->num_attribs; i++) {
-      unsigned emit_sz = 0;
-      unsigned src_buffer = 0;
-      unsigned output_format;
-      unsigned src_offset = (sizeof(struct vertex_header) + 
-			     vinfo->src_index[i] * 4 * sizeof(float) );
+      /* In passthrough mode, need to translate from vertex shader
+       * outputs to hw vertices.
+       */
+      dst_offset = 0;
+      for (i = 0; i < vinfo->num_attribs; i++) {
+	 unsigned emit_sz = 0;
+	 unsigned src_buffer = 0;
+	 unsigned output_format;
+	 unsigned src_offset = (sizeof(struct vertex_header) + 
+				vinfo->src_index[i] * 4 * sizeof(float) );
 
 
          
-      switch (vinfo->emit[i]) {
-      case EMIT_4F:
-         output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-	 emit_sz = 4 * sizeof(float);
-         break;
-      case EMIT_3F:
-         output_format = PIPE_FORMAT_R32G32B32_FLOAT;
-	 emit_sz = 3 * sizeof(float);
-         break;
-      case EMIT_2F:
-         output_format = PIPE_FORMAT_R32G32_FLOAT;
-	 emit_sz = 2 * sizeof(float);
-         break;
-      case EMIT_1F:
-         output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
-         break;
-      case EMIT_1F_PSIZE:
-         output_format = PIPE_FORMAT_R32_FLOAT;
-	 emit_sz = 1 * sizeof(float);
-         src_buffer = 1;
-	 src_offset = 0;
-         break;
-      case EMIT_4UB:
-         output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
-	 emit_sz = 4 * sizeof(ubyte);
-      default:
-         assert(0);
-         output_format = PIPE_FORMAT_NONE;
-	 emit_sz = 0;
-         break;
-      }
+	 switch (vinfo->emit[i]) {
+	 case EMIT_4F:
+	    output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+	    emit_sz = 4 * sizeof(float);
+	    break;
+	 case EMIT_3F:
+	    output_format = PIPE_FORMAT_R32G32B32_FLOAT;
+	    emit_sz = 3 * sizeof(float);
+	    break;
+	 case EMIT_2F:
+	    output_format = PIPE_FORMAT_R32G32_FLOAT;
+	    emit_sz = 2 * sizeof(float);
+	    break;
+	 case EMIT_1F:
+	    output_format = PIPE_FORMAT_R32_FLOAT;
+	    emit_sz = 1 * sizeof(float);
+	    break;
+	 case EMIT_1F_PSIZE:
+	    output_format = PIPE_FORMAT_R32_FLOAT;
+	    emit_sz = 1 * sizeof(float);
+	    src_buffer = 1;
+	    src_offset = 0;
+	    break;
+	 case EMIT_4UB:
+	    output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+	    emit_sz = 4 * sizeof(ubyte);
+	 default:
+	    assert(0);
+	    output_format = PIPE_FORMAT_NONE;
+	    emit_sz = 0;
+	    break;
+	 }
       
-      hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      hw_key.element[i].input_buffer = src_buffer;
-      hw_key.element[i].input_offset = src_offset;
-      hw_key.element[i].output_format = output_format;
-      hw_key.element[i].output_offset = dst_offset;
+	 hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+	 hw_key.element[i].input_buffer = src_buffer;
+	 hw_key.element[i].input_offset = src_offset;
+	 hw_key.element[i].output_format = output_format;
+	 hw_key.element[i].output_offset = dst_offset;
 
-      dst_offset += emit_sz;
+	 dst_offset += emit_sz;
+      }
+
+      hw_key.nr_elements = vinfo->num_attribs;
+      hw_key.output_stride = vinfo->size * 4;
+
+      /* Don't bother with caching at this stage:
+       */
+      if (!fpme->translate ||
+	  memcmp(&fpme->translate->key, &hw_key, sizeof(hw_key)) != 0) 
+      {
+	 if (fpme->translate)
+	    fpme->translate->release(fpme->translate);
+
+	 fpme->translate = translate_generic_create( &hw_key );
+      }
    }
-
-   hw_key.nr_elements = vinfo->num_attribs;
-   hw_key.output_stride = vinfo->size * 4;
-
-   /* Don't bother with caching at this stage:
-    */
-   if (!fpme->translate ||
-       memcmp(&fpme->translate->key, &hw_key, sizeof(hw_key)) != 0) 
-   {
-      if (fpme->translate)
-	 fpme->translate->release(fpme->translate);
-
-      fpme->translate = translate_generic_create( &hw_key );
-   }
-
 
 
    //fpme->pipeline_vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
