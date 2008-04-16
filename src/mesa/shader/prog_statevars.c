@@ -450,6 +450,12 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          value[2] = ctx->Pixel.BlueBias;
          value[3] = ctx->Pixel.AlphaBias;
          break;
+      case STATE_PCM_SCALE:
+         COPY_4V(value, ctx->Pixel.PostColorMatrixScale);
+         break;
+      case STATE_PCM_BIAS:
+         COPY_4V(value, ctx->Pixel.PostColorMatrixBias);
+         break;
       default:
          /* unknown state indexes are silently ignored
           *  should be handled by the driver.
@@ -696,6 +702,12 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_PT_BIAS:
       append(dst, "PTbias");
+      break;
+   case STATE_PCM_SCALE:
+      append(dst, "PCMscale");
+      break;
+   case STATE_PCM_BIAS:
+      append(dst, "PCMbias");
       break;
    default:
       ;
