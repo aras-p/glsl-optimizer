@@ -64,7 +64,8 @@ struct draw_context;
 struct draw_pt_front_end {
    void (*prepare)( struct draw_pt_front_end *,
                     unsigned prim,
-                    struct draw_pt_middle_end * );
+                    struct draw_pt_middle_end *,
+		    unsigned opt );
 
    void (*run)( struct draw_pt_front_end *,
                 pt_elt_func elt_func,
@@ -90,7 +91,8 @@ struct draw_pt_front_end {
  */
 struct draw_pt_middle_end {
    void (*prepare)( struct draw_pt_middle_end *,
-                    unsigned prim );
+                    unsigned prim,
+		    unsigned opt );
 
    void (*run)( struct draw_pt_middle_end *,
                 const unsigned *fetch_elts,

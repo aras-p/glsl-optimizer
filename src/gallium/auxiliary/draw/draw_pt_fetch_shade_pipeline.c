@@ -42,11 +42,13 @@ struct fetch_pipeline_middle_end {
 
    unsigned pipeline_vertex_size;
    unsigned prim;
+   unsigned opt;
 };
 
 
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
-                                    unsigned prim )
+                                    unsigned prim,
+				    unsigned opt )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
@@ -57,6 +59,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct translate_key hw_key;
 
    fpme->prim = prim;
+   fpme->opt = opt;
 
    ok = draw->render->set_primitive(draw->render, prim);
    if (!ok) {
@@ -157,6 +160,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vertex_shader;
    char *pipeline_verts;
+   unsigned pipeline = PT_PIPELINE;
 
    pipeline_verts = MALLOC(fpme->pipeline_vertex_size *
 			   fetch_count);
@@ -170,9 +174,17 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    /* Shade
     */
    shader->prepare(shader, draw);
+
    if (shader->run(shader, draw, fetch_elts, fetch_count, pipeline_verts,
-                   fpme->pipeline_vertex_size)) {
-      /* Run the pipeline */
+		   fpme->pipeline_vertex_size))
+   {
+      pipeline |= PT_CLIPTEST;
+   }
+
+
+   /* Do we need to run the pipeline?
+    */
+   if (fpme->opt & pipeline) {
       draw_pt_run_pipeline( fpme->draw,
                             fpme->prim,
                             pipeline_verts,

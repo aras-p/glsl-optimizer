@@ -209,7 +209,8 @@ fetch_store_general( struct fetch_pipeline_middle_end *fpme,
  *
  */
 static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
-                                    unsigned prim )
+                                    unsigned prim,
+				    unsigned opt )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;

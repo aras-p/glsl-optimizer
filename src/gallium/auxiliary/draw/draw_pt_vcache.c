@@ -448,7 +448,8 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 
 static void vcache_prepare( struct draw_pt_front_end *frontend,
                             unsigned prim,
-                            struct draw_pt_middle_end *middle )
+                            struct draw_pt_middle_end *middle,
+			    unsigned opt )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
 
@@ -464,7 +465,7 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    vcache->output_prim = reduced_prim[prim];
 
    vcache->middle = middle;
-   middle->prepare( middle, vcache->output_prim );
+   middle->prepare( middle, vcache->output_prim, opt );
 }
 
 

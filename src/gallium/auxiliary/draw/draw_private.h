@@ -182,6 +182,12 @@ typedef void (*pt_fetch_func)( struct draw_context *draw,
 
 struct vbuf_render;
 
+
+#define PT_SHADE      0x1
+#define PT_CLIPTEST   0x2
+#define PT_PIPELINE   0x4
+#define PT_MAX_MIDDLE 0x8
+
 /**
  * Private context for the drawing module.
  */
@@ -219,15 +225,10 @@ struct draw_context
       unsigned hw_vertex_size; /* XXX: to be removed */
 
       struct {
-         struct draw_pt_middle_end *fetch_emit;
-         struct draw_pt_middle_end *fetch_pipeline;
-         struct draw_pt_middle_end *fetch_shade_emit;
-         struct draw_pt_middle_end *fetch_shade_cliptest_pipeline_or_emit;
+         struct draw_pt_middle_end *opt[PT_MAX_MIDDLE];
       } middle;
 
       struct {
-         struct draw_pt_front_end *noop;
-         struct draw_pt_front_end *split_arrays;
          struct draw_pt_front_end *vcache;
       } front;
 

@@ -164,7 +164,8 @@ fetch_store_general( struct fetch_emit_middle_end *feme,
 
 
 static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
-                                unsigned prim )
+                                unsigned prim,
+				unsigned opt )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
