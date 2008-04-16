@@ -1,6 +1,6 @@
 Import('*')
 
-cso_cache = env.ConvenienceLibrary(
+translate = env.ConvenienceLibrary(
 	target = 'translate',
 	source = [
 		'translate_generic.c',

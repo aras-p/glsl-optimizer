@@ -18,6 +18,7 @@ SConscript([
 	'auxiliary/rtasm/SConscript',
 	'auxiliary/tgsi/SConscript',
 	'auxiliary/cso_cache/SConscript',
+	'auxiliary/translate/SConscript',
 	'auxiliary/draw/SConscript',
 	'auxiliary/pipebuffer/SConscript',
 ])
