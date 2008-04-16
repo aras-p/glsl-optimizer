@@ -156,7 +156,7 @@ struct _dri_bufmgr {
     * \param target Buffer whose offset should be written into the relocation
     *	     entry.
     */
-   void (*emit_reloc)(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
+   int (*emit_reloc)(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		      GLuint offset, dri_bo *target);
 
    /**
@@ -176,6 +176,7 @@ struct _dri_bufmgr {
 
    void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
 
+   int (*check_aperture_space)(dri_bo *bo);
    GLboolean debug; /**< Enables verbose debugging printouts */
 };
 
@@ -211,9 +212,11 @@ void dri_bo_fake_disable_backing_store(dri_bo *bo,
 				       void *ptr);
 void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 
-void dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
-		    GLuint offset, dri_bo *target_buf);
+int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
+		   GLuint offset, dri_bo *target_buf);
 void *dri_process_relocs(dri_bo *batch_buf, uint32_t *count);
 void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
+int dri_bufmgr_check_aperture_space(dri_bo *bo);
+
 #endif

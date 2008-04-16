@@ -124,6 +124,9 @@ static void brwProgramStringNotify( GLcontext *ctx,
       struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
       if (p == vp)
 	 brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+      if (p->program.IsPositionInvariant) {
+	 _mesa_insert_mvp_code(ctx, &p->program);
+      }
       p->id = brw->program_id++;      
       p->param_state = p->program.Base.Parameters->StateFlags;
 

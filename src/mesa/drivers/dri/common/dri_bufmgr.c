@@ -142,10 +142,10 @@ dri_bufmgr_destroy(dri_bufmgr *bufmgr)
 }
 
 
-void dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
+int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		    GLuint offset, dri_bo *target_buf)
 {
-   reloc_buf->bufmgr->emit_reloc(reloc_buf, flags, delta, offset, target_buf);
+   return reloc_buf->bufmgr->emit_reloc(reloc_buf, flags, delta, offset, target_buf);
 }
 
 void *dri_process_relocs(dri_bo *batch_buf, GLuint *count)
@@ -162,4 +162,10 @@ void
 dri_bufmgr_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug)
 {
    bufmgr->debug = enable_debug;
+}
+
+int
+dri_bufmgr_check_aperture_space(dri_bo *bo)
+{
+    return bo->bufmgr->check_aperture_space(bo);
 }

@@ -13,6 +13,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 
 static char *FragProgFile = "CH11-toyball.frag.txt";
@@ -24,30 +25,23 @@ static GLuint vertShader;
 static GLuint program;
 
 
-struct uniform_info {
-   const char *name;
-   GLuint size;
-   GLint location;
-   GLfloat value[4];
-};
-
 static struct uniform_info Uniforms[] = {
-   { "LightDir",       4, -1, { 0.57737, 0.57735, 0.57735, 0.0 } },
-   { "HVector",        4, -1, { 0.32506, 0.32506, 0.88808, 0.0 } },
-   { "BallCenter",     4, -1, { 0.0, 0.0, 0.0, 1.0 } },
-   { "SpecularColor",  4, -1, { 0.4, 0.4, 0.4, 60.0 } },
-   { "Red",            4, -1, { 0.6, 0.0, 0.0, 1.0 } },
-   { "Blue",           4, -1, { 0.0, 0.3, 0.6, 1.0 } },
-   { "Yellow",         4, -1, { 0.6, 0.5, 0.0, 1.0 } },
-   { "HalfSpace0",     4, -1, { 1.0, 0.0, 0.0, 0.2 } },
-   { "HalfSpace1",     4, -1, { 0.309016994, 0.951056516, 0.0, 0.2 } },
-   { "HalfSpace2",     4, -1, { -0.809016994, 0.587785252, 0.0, 0.2 } },
-   { "HalfSpace3",     4, -1, { -0.809016994, -0.587785252, 0.0, 0.2 } },
-   { "HalfSpace4",     4, -1, { 0.309116994, -0.951056516, 0.0, 0.2 } },
-   { "InOrOutInit",    1, -1, { -3.0, 0, 0, 0 } },
-   { "StripeWidth",    1, -1, {  0.3, 0, 0, 0 } },
-   { "FWidth",         1, -1, { 0.005, 0, 0, 0 } },
-   { NULL, 0, 0, { 0, 0, 0, 0 } }
+   { "LightDir",       4, GL_FLOAT, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
+   { "HVector",        4, GL_FLOAT, { 0.32506, 0.32506, 0.88808, 0.0 }, -1 },
+   { "BallCenter",     4, GL_FLOAT, { 0.0, 0.0, 0.0, 1.0 }, -1 },
+   { "SpecularColor",  4, GL_FLOAT, { 0.4, 0.4, 0.4, 60.0 }, -1 },
+   { "Red",         4, GL_FLOAT, { 0.6, 0.0, 0.0, 1.0 }, -1 },
+   { "Blue",        4, GL_FLOAT, { 0.0, 0.3, 0.6, 1.0 }, -1 },
+   { "Yellow",      4, GL_FLOAT, { 0.6, 0.5, 0.0, 1.0 }, -1 },
+   { "HalfSpace0",  4, GL_FLOAT, { 1.0, 0.0, 0.0, 0.2 }, -1 },
+   { "HalfSpace1",  4, GL_FLOAT, { 0.309016994, 0.951056516, 0.0, 0.2 }, -1 },
+   { "HalfSpace2",  4, GL_FLOAT, { -0.809016994, 0.587785252, 0.0, 0.2 }, -1 },
+   { "HalfSpace3",  4, GL_FLOAT, { -0.809016994, -0.587785252, 0.0, 0.2 }, -1 },
+   { "HalfSpace4",  4, GL_FLOAT, { 0.309116994, -0.951056516, 0.0, 0.2 }, -1 },
+   { "InOrOutInit", 1, GL_FLOAT, { -3.0, 0, 0, 0 }, -1 },
+   { "StripeWidth", 1, GL_FLOAT, {  0.3, 0, 0, 0 }, -1 },
+   { "FWidth",      1, GL_FLOAT, { 0.005, 0, 0, 0 }, -1 },
+   END_OF_UNIFORMS
 };
 
 static GLint win = 0;
@@ -172,127 +166,20 @@ SpecialKey(int key, int x, int y)
 
 
 static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "toyball: problem compiling shader: %s\n", log);
-      exit(1);
-   }
-   else {
-      printf("Shader compiled OK\n");
-   }
-}
-
-
-/**
- * Read a shader from a file.
- */
-static void
-ReadShader(GLuint shader, const char *filename)
-{
-   const int max = 100*1000;
-   int n;
-   char *buffer = (char*) malloc(max);
-   FILE *f = fopen(filename, "r");
-   if (!f) {
-      fprintf(stderr, "toyball: Unable to open shader file %s\n", filename);
-      exit(1);
-   }
-
-   n = fread(buffer, 1, max, f);
-   printf("toyball: read %d bytes from shader file %s\n", n, filename);
-   if (n > 0) {
-      buffer[n] = 0;
-      LoadAndCompileShader(shader, buffer);
-   }
-
-   fclose(f);
-   free(buffer);
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-   else {
-      fprintf(stderr, "Link success!\n");
-   }
-}
-
-
-static void
 Init(void)
 {
-   const char *version;
-   GLint i;
-
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("Warning: this program expects OpenGL 2.0\n");
-      /*exit(1);*/
-   }
-   printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
+   if (!ShadersSupported())
+      exit(1);
 
    GetExtensionFuncs();
 
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
-   ReadShader(vertShader, VertProgFile);
+   vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertProgFile);
+   fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
+   program = LinkShaders(vertShader, fragShader);
 
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-   ReadShader(fragShader, FragProgFile);
-
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
-   glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
-   CheckLink(program);
    glUseProgram_func(program);
 
-   assert(glIsProgram_func(program));
-   assert(glIsShader_func(fragShader));
-   assert(glIsShader_func(vertShader));
-
-
-   for (i = 0; Uniforms[i].name; i++) {
-      Uniforms[i].location
-         = glGetUniformLocation_func(program, Uniforms[i].name);
-      printf("Uniform %s location: %d\n", Uniforms[i].name,
-             Uniforms[i].location);
-      switch (Uniforms[i].size) {
-      case 1:
-         glUniform1fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 2:
-         glUniform2fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 3:
-         glUniform3fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 4:
-         glUniform4fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      default:
-         abort();
-      }
-   }
+   InitUniforms(program, Uniforms);
 
    assert(glGetError() == 0);
 

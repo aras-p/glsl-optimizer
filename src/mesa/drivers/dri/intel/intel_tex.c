@@ -1,5 +1,6 @@
 #include "swrast/swrast.h"
 #include "texobj.h"
+#include "teximage.h"
 #include "mipmap.h"
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
@@ -71,7 +72,7 @@ intelFreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
    }
 
    if (texImage->Data) {
-      free(texImage->Data);
+      _mesa_free_texmemory(texImage->Data);
       texImage->Data = NULL;
    }
 }

@@ -107,6 +107,9 @@ do
 	-L*)
 	    DEPS="$DEPS $1"
 	    ;;
+	-Wl*)
+            DEPS="$DEPS $1"
+            ;;
 	-pthread)
 	    # this is a special case (see bugzilla 10876)
 	    DEPS="$DEPS $1"
@@ -198,7 +201,7 @@ fi
 #
 case $ARCH in
 
-    'Linux' | 'OpenBSD' | 'GNU' | GNU/*)
+    'Linux' | 'OpenBSD' | 'DragonFly' | 'GNU' | GNU/*)
 	# we assume gcc
 
 	if [ "x$LINK" = "x" ] ; then

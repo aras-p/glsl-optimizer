@@ -43,6 +43,8 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 
+#include "glapi.h"
+
 static void
 i915_render_prevalidate(struct intel_context *intel)
 {
@@ -295,7 +297,9 @@ i915_emit_state(struct intel_context *intel)
    struct i915_context *i915 = i915_context(&intel->ctx);
    struct i915_hw_state *state = i915->current;
    int i;
+   int ret, count;
    GLuint dirty;
+   GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
 
    /* We don't hold the lock at this point, so want to make sure that
@@ -311,7 +315,37 @@ i915_emit_state(struct intel_context *intel)
     */
    intel_batchbuffer_require_space(intel->batch, get_state_size(state) + 8,
 				   LOOP_CLIPRECTS);
+   count = 0;
+ again:
+   dirty = get_dirty(state);
 
+   ret = 0;
+   if (dirty & I915_UPLOAD_BUFFERS) {
+     ret |= dri_bufmgr_check_aperture_space(state->draw_region->buffer);
+     ret |= dri_bufmgr_check_aperture_space(state->depth_region->buffer);
+   }
+
+   if (dirty & I915_UPLOAD_TEX_ALL) {
+     for (i = 0; i < I915_TEX_UNITS; i++)
+       if (dirty & I915_UPLOAD_TEX(i)) {
+	   if (state->tex_buffer[i]) {
+	       ret |= dri_bufmgr_check_aperture_space(state->tex_buffer[i]);
+	   }
+       }
+   }
+   if (ret) {
+       if (count == 0) {
+	   count++;
+	   intel_batchbuffer_flush(intel->batch);
+	   goto again;
+       } else {
+	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "i915 emit state");
+	   assert(0);
+       }
+   }
+
+   /* work out list of buffers to emit */
+   
    /* Do this here as we may have flushed the batchbuffer above,
     * causing more state to be dirty!
     */
@@ -572,6 +606,12 @@ i915_assert_not_dirty( struct intel_context *intel )
    assert(!dirty);
 }
 
+static void
+i915_note_unlock( struct intel_context *intel )
+{
+    /* nothing */
+}
+
 
 void
 i915InitVtbl(struct i915_context *i915)
@@ -587,4 +627,5 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.flush_cmd = i915_flush_cmd;
    i915->intel.vtbl.assert_not_dirty = i915_assert_not_dirty;
+   i915->intel.vtbl.note_unlock = i915_note_unlock; 
 }

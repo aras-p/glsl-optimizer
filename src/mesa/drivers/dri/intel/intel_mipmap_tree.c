@@ -326,7 +326,7 @@ intel_miptree_set_image_offset(struct intel_mipmap_tree *mt,
 
    assert(img < mt->level[level].nr_images);
 
-   mt->level[level].image_offset[img] = (x + y * mt->pitch);
+   mt->level[level].image_offset[img] = (x + y * mt->pitch) * mt->cpp;
 
    DBG("%s level %d img %d pos %d,%d image_offset %x\n",
        __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
@@ -357,7 +357,7 @@ intel_miptree_image_offset(struct intel_mipmap_tree *mt,
 {
    if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
       return (mt->level[level].level_offset +
-	      mt->level[level].image_offset[face] * mt->cpp);
+	      mt->level[level].image_offset[face]);
    else
       return mt->level[level].level_offset;
 }
@@ -368,6 +368,8 @@ intel_miptree_image_offset(struct intel_mipmap_tree *mt,
  * Map a teximage in a mipmap tree.
  * \param row_stride  returns row stride in bytes
  * \param image_stride  returns image stride in bytes (for 3D textures).
+ * \param image_offsets pointer to array of pixel offsets from the returned
+ *	  pointer to each depth image
  * \return address of mapping
  */
 GLubyte *
@@ -382,12 +384,16 @@ intel_miptree_image_map(struct intel_context * intel,
    if (row_stride)
       *row_stride = mt->pitch * mt->cpp;
 
-   if (image_offsets) {
-      if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
-		   memset(image_offsets, 0, mt->level[level].depth * sizeof(GLuint));
-	  else
-		   memcpy(image_offsets, mt->level[level].image_offset,
-			   mt->level[level].depth * sizeof(GLuint));
+   if (mt->target == GL_TEXTURE_3D) {
+      int i;
+
+      for (i = 0; i < mt->level[level].depth; i++)
+	 image_offsets[i] = mt->level[level].image_offset[i] / mt->cpp;
+   } else {
+      assert(mt->level[level].depth == 1);
+      assert(mt->target == GL_TEXTURE_CUBE_MAP ||
+	     mt->level[level].image_offset[0] == 0);
+      image_offsets[0] = 0;
    }
 
    return (intel_region_map(intel, mt->region) +

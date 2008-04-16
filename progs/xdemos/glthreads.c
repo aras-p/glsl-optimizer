@@ -505,7 +505,7 @@ main(int argc, char *argv[])
    for (i = 0; i < numThreads; i++) {
       pthread_create(&WinThreads[i].Thread, NULL, thread_function,
                      (void*) &WinThreads[i]);
-      printf("glthreads: Created thread %p\n", WinThreads[i].Thread);
+      printf("glthreads: Created thread %p\n", (void *) WinThreads[i].Thread);
    }
 
    if (MultiDisplays)

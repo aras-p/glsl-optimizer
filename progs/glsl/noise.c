@@ -12,6 +12,7 @@
 #include <GL/glut.h>
 #include <GL/glext.h>
 #include "extfuncs.h"
+#include "shaderutil.h"
 
 
 static const char *VertShaderText =
@@ -34,18 +35,11 @@ static const char *FragShaderText =
    "}\n";
 
 
-struct uniform_info {
-   const char *name;
-   GLuint size;
-   GLint location;
-   GLfloat value[4];
-};
-
 static struct uniform_info Uniforms[] = {
-   { "Scale",          4, -1, { 0.5, 0.4, 0.0, 0} },
-   { "Bias",           4, -1, { 0.5, 0.3, 0.0, 0} },
-   { "Slice",          1, -1, { 0.5, 0, 0, 0} },
-   { NULL, 0, 0, { 0, 0, 0, 0 } }
+   { "Scale",    4, GL_FLOAT, { 0.5, 0.4, 0.0, 0}, -1 },
+   { "Bias",     4, GL_FLOAT, { 0.5, 0.3, 0.0, 0}, -1 },
+   { "Slice",    1, GL_FLOAT, { 0.5, 0, 0, 0}, -1 },
+   END_OF_UNIFORMS
 };
 
 /* program/shader objects */
@@ -175,94 +169,20 @@ SpecialKey(int key, int x, int y)
 
 
 static void
-LoadAndCompileShader(GLuint shader, const char *text)
-{
-   GLint stat;
-
-   glShaderSource_func(shader, 1, (const GLchar **) &text, NULL);
-
-   glCompileShader_func(shader);
-
-   glGetShaderiv_func(shader, GL_COMPILE_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "noise: problem compiling shader: %s\n", log);
-      exit(1);
-   }
-   else {
-      printf("Shader compiled OK\n");
-   }
-}
-
-
-static void
-CheckLink(GLuint prog)
-{
-   GLint stat;
-   glGetProgramiv_func(prog, GL_LINK_STATUS, &stat);
-   if (!stat) {
-      GLchar log[1000];
-      GLsizei len;
-      glGetProgramInfoLog_func(prog, 1000, &len, log);
-      fprintf(stderr, "Linker error:\n%s\n", log);
-   }
-   else {
-      fprintf(stderr, "Link success!\n");
-   }
-}
-
-
-static void
 Init(void)
 {
-   const char *version;
-   GLint i;
-
-   version = (const char *) glGetString(GL_VERSION);
-   if (version[0] != '2' || version[1] != '.') {
-      printf("Warning: this program expects OpenGL 2.0\n");
-      /*exit(1);*/
-   }
+   if (!ShadersSupported())
+      exit(1);
 
    GetExtensionFuncs();
 
-   vertShader = glCreateShader_func(GL_VERTEX_SHADER);
-   LoadAndCompileShader(vertShader, VertShaderText);
+   vertShader = CompileShaderText(GL_VERTEX_SHADER, VertShaderText);
+   fragShader = CompileShaderText(GL_FRAGMENT_SHADER, FragShaderText);
+   program = LinkShaders(vertShader, fragShader);
 
-   fragShader = glCreateShader_func(GL_FRAGMENT_SHADER);
-   LoadAndCompileShader(fragShader, FragShaderText);
-
-   program = glCreateProgram_func();
-   glAttachShader_func(program, fragShader);
-   glAttachShader_func(program, vertShader);
-   glLinkProgram_func(program);
-   CheckLink(program);
    glUseProgram_func(program);
 
-   for (i = 0; Uniforms[i].name; i++) {
-      Uniforms[i].location
-         = glGetUniformLocation_func(program, Uniforms[i].name);
-      printf("Uniform %s location: %d\n", Uniforms[i].name,
-             Uniforms[i].location);
-      switch (Uniforms[i].size) {
-      case 1:
-         glUniform1fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 2:
-         glUniform2fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 3:
-         glUniform3fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      case 4:
-         glUniform4fv_func(Uniforms[i].location, 1, Uniforms[i].value);
-         break;
-      default:
-         abort();
-      }
-   }
+   InitUniforms(program, Uniforms);
 
    assert(glGetError() == 0);
 

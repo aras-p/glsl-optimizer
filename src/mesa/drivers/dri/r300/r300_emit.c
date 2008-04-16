@@ -213,19 +213,20 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	GLuint i, dw;
 
 	/* type, inputs, stop bit, size */
-	for (i = 0; i + 1 < nr; i += 2) {
+	for (i = 0; i < nr; i += 2) {
+		/* make sure input is valid, would lockup the gpu */
+		assert(inputs[tab[i]] != -1);
 		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
-		dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
-		if (i + 2 == nr) {
-			dw |= (R300_VAP_INPUT_ROUTE_END << 16);
+		if (i + 1 == nr) {
+			dw |= R300_VAP_INPUT_ROUTE_END;
+		} else {
+			assert(inputs[tab[i + 1]] != -1);
+			dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
+			if (i + 2 == nr) {
+				dw |= (R300_VAP_INPUT_ROUTE_END << 16);
+			}
 		}
 		dst[i >> 1] = dw;
-	}
-
-	if (nr & 1) {
-		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[nr - 1]] << 8) | (attribptr[tab[nr - 1]]->size - 1);
-		dw |= R300_VAP_INPUT_ROUTE_END;
-		dst[nr >> 1] = dw;
 	}
 
 	return (nr + 1) >> 1;
@@ -241,15 +242,14 @@ static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 
 GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
-	GLuint i;
+	GLuint i, dw;
 
-	for (i = 0; i + 1 < nr; i += 2) {
-		dst[i >> 1] = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
-		dst[i >> 1] |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
-	}
-
-	if (nr & 1) {
-		dst[nr >> 1] = r300VAPInputRoute1Swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
+	for (i = 0; i < nr; i += 2) {
+		dw = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+		if (i + 1 < nr) {
+			dw |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
+		}
+		dst[i >> 1] = dw;
 	}
 
 	return (nr + 1) >> 1;

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,25 +57,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    ASSERT(ctx->RenderMode == GL_RENDER);
 
-   if (unpack->BufferObj->Name) {
-      /* unpack from PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                     GL_COLOR_INDEX, GL_BITMAP,
-                                     (GLvoid *) bitmap)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              unpack->BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
-         return;
-      }
-      bitmap = ADD_POINTERS(buf, bitmap);
-   }
+   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   if (!bitmap)
+      return;
 
    RENDER_START(swrast,ctx);
 
@@ -150,11 +134,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
 
    RENDER_FINISH(swrast,ctx);
 
-   if (unpack->BufferObj->Name) {
-      /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
+   _mesa_unmap_bitmap_pbo(ctx, unpack);
 }
 
 

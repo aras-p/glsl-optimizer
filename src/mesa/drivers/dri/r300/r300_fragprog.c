@@ -736,6 +736,7 @@ static GLuint t_src(struct r300_fragment_program *fp,
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
+	case PROGRAM_CONSTANT:
 		r = emit_const4fv(fp,
 				  fp->mesa_program.Base.Parameters->
 				  ParameterValues[fpsrc.Index]);

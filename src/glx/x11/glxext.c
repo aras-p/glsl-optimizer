@@ -107,9 +107,6 @@ static int _mesa_sparc_needs_init = 1;
 #define INIT_MESA_SPARC
 #endif
 
-static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
-    GLXDrawable read, GLXContext gc);
-
 /*
 ** We setup some dummy structures here so that the API can be used
 ** even if no context is current.
@@ -348,10 +345,10 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	Xfree((char*) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
-	if (psc->driScreen)
+	if (psc->driScreen) {
 	    psc->driScreen->destroyScreen(psc);
-	if (psc->drawHash)
 	    __glxHashDestroy(psc->drawHash);
+	}
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -381,6 +378,9 @@ static int __glXFreeDisplayPrivate(XExtData *extension)
     if (priv->driDisplay)
 	(*priv->driDisplay->destroyDisplay)(priv->driDisplay);
     priv->driDisplay = NULL;
+    if (priv->dri2Display)
+	(*priv->dri2Display->destroyDisplay)(priv->dri2Display);
+    priv->dri2Display = NULL;
 #endif
 
     Xfree((char*) priv);
@@ -774,14 +774,16 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	psc->scr = i;
 	psc->dpy = dpy;
 #ifdef GLX_DIRECT_RENDERING
-	if (priv->driDisplay) {
-	    /* Create drawable hash */
-	    psc->drawHash = __glxHashCreate();
-	    if (psc->drawHash == NULL)
-		continue;
+	psc->drawHash = __glxHashCreate();
+	if (psc->drawHash == NULL)
+	    continue;
+	if (priv->dri2Display)
+	    psc->driScreen = (*priv->dri2Display->createScreen)(psc, i, priv);
+	if (psc->driScreen == NULL && priv->driDisplay)
 	    psc->driScreen = (*priv->driDisplay->createScreen)(psc, i, priv);
-	    if (psc->driScreen == NULL)
-		__glxHashDestroy(psc->drawHash);
+	if (psc->driScreen == NULL) {
+	    __glxHashDestroy(psc->drawHash);
+	    psc->drawHash = NULL;
 	}
 #endif
     }
@@ -872,7 +874,8 @@ _X_HIDDEN __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     ** (e.g., those called in AllocAndFetchScreenConfigs).
     */
     if (getenv("LIBGL_ALWAYS_INDIRECT") == NULL) {
-        dpyPriv->driDisplay = driCreateDisplay(dpy);
+        dpyPriv->dri2Display = dri2CreateDisplay(dpy);
+	dpyPriv->driDisplay = driCreateDisplay(dpy);
     }
 #endif
 
@@ -1188,21 +1191,35 @@ static Bool SendMakeCurrentRequest(Display *dpy, CARD8 opcode,
 
 #ifdef GLX_DIRECT_RENDERING
 static __GLXDRIdrawable *
-FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
+FetchDRIDrawable(Display *dpy,
+		 GLXDrawable glxDrawable, GLXContext gc, Bool pre13)
 {
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
     __GLXDRIdrawable *pdraw;
     __GLXscreenConfigs *psc;
+    XID drawable;
 
-    if (priv == NULL || priv->driDisplay == NULL)
+    if (priv == NULL)
 	return NULL;
     
     psc = &priv->screenConfigs[gc->screen];
-    if (__glxHashLookup(psc->drawHash, drawable, (void *) &pdraw) == 0)
+    if (psc->drawHash == NULL)
+	return NULL;
+
+    if (__glxHashLookup(psc->drawHash, glxDrawable, (void *) &pdraw) == 0)
 	return pdraw;
 
-    pdraw = psc->driScreen->createDrawable(psc, drawable, gc);
-    if (__glxHashInsert(psc->drawHash, drawable, pdraw)) {
+    /* If this is glXMakeCurrent (pre GLX 1.3) we allow creating the
+     * GLX drawable on the fly.  Otherwise we pass None as the X
+     * drawable */
+    if (pre13)
+	drawable = glxDrawable;
+    else
+	drawable = None;
+
+    pdraw = psc->driScreen->createDrawable(psc, drawable,
+					   glxDrawable, gc->mode);
+    if (__glxHashInsert(psc->drawHash, glxDrawable, pdraw)) {
 	(*pdraw->destroyDrawable)(pdraw);
 	return NULL;
     }
@@ -1218,7 +1235,8 @@ FetchDRIDrawable(Display *dpy, GLXDrawable drawable, GLXContext gc)
  * \note This is in this file so that it can access dummyContext.
  */
 static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
-			       GLXDrawable read, GLXContext gc)
+			       GLXDrawable read, GLXContext gc,
+			       Bool pre13)
 {
     xGLXMakeCurrentReply reply;
     const GLXContext oldGC = __glXGetCurrentContext();
@@ -1245,8 +1263,8 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 #ifdef GLX_DIRECT_RENDERING
     /* Bind the direct rendering context to the drawable */
     if (gc && gc->driContext) {
-	__GLXDRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
-	__GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
+	__GLXDRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc, pre13);
+	__GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc, pre13);
 
 	bindReturnValue =
 	    (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
@@ -1256,7 +1274,7 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 	/* Send a glXMakeCurrent request to bind the new context. */
 	bindReturnValue = 
 	  SendMakeCurrentRequest(dpy, opcode, gc ? gc->xid : None,
-				 ((dpy != oldGC->currentDpy) || oldGC->driContext)
+				 ((dpy != oldGC->currentDpy) || oldGC->isDirect)
 				 ? None : oldGC->currentContextTag,
 				 draw, read, &reply);
     }
@@ -1267,7 +1285,7 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
     }
 
     if ((dpy != oldGC->currentDpy || (gc && gc->driContext)) &&
-	!oldGC->driContext && oldGC != &dummyContext) {
+	!oldGC->isDirect && oldGC != &dummyContext) {
 	xGLXMakeCurrentReply dummy_reply;
 
 	/* We are either switching from one dpy to another and have to
@@ -1368,16 +1386,16 @@ static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 
 PUBLIC Bool glXMakeCurrent(Display *dpy, GLXDrawable draw, GLXContext gc)
 {
-    return MakeContextCurrent( dpy, draw, draw, gc );
+    return MakeContextCurrent(dpy, draw, draw, gc, True);
 }
 
 PUBLIC GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
 	  (Display *dpy, GLXDrawable d, GLXDrawable r, GLXContext ctx),
-	  (dpy, d, r, ctx), MakeContextCurrent)
+	  (dpy, d, r, ctx, False), MakeContextCurrent)
 
 PUBLIC GLX_ALIAS(Bool, glXMakeContextCurrent,
 	  (Display *dpy, GLXDrawable d, GLXDrawable r, GLXContext ctx),
-	  (dpy, d, r, ctx), MakeContextCurrent)
+	  (dpy, d, r, ctx, False), MakeContextCurrent)
 
 
 #ifdef DEBUG

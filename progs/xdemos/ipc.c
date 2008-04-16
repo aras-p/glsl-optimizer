@@ -27,12 +27,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include "ipc.h"
 

@@ -38,6 +38,7 @@ getproclist.h
 interleave
 invert
 jkrahntest
+lineclip
 manytex
 mipmap_limits
 multipal
@@ -66,6 +67,7 @@ texline
 texobjshare
 texrect
 texwrap
+unfilledclip
 vao-01
 vao-02
 vparray

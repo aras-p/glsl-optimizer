@@ -74,5 +74,7 @@ i915TexEnv(GLcontext * ctx, GLenum target,
 void
 i915InitTextureFuncs(struct dd_function_table *functions)
 {
+/*
    functions->TexEnv = i915TexEnv;
+*/
 }

@@ -417,18 +417,6 @@ tridentInitDriver(__DRIscreenPrivate *sPriv)
     return GL_TRUE;
 }
 
-static struct __DriverAPIRec tridentAPI = {
-   tridentDestroyScreen,
-   tridentCreateContext,
-   tridentDestroyContext,
-   tridentCreateBuffer,
-   tridentDestroyBuffer,
-   tridentSwapBuffers,
-   tridentMakeCurrent,
-   tridentUnbindContext,
-};
-
-
 /**
  * This is the driver specific part of the createNewScreen entry point.
  * 
@@ -436,7 +424,7 @@ static struct __DriverAPIRec tridentAPI = {
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+const __DRIconfig **tridentInitScreen(__DRIscreenPrivate *psp)
 {
    static const __DRIversion ddx_expected = { 4, 0, 0 };
    static const __DRIversion dri_expected = { 3, 1, 0 };
@@ -447,8 +435,6 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
-
-   psp->DriverAPI = tridentAPI;
 
    if (!tridentInitDriver(psp))
 	return NULL;
@@ -462,3 +448,15 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 
    return NULL;
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   tridentInitScreen,
+   tridentDestroyScreen,
+   tridentCreateContext,
+   tridentDestroyContext,
+   tridentCreateBuffer,
+   tridentDestroyBuffer,
+   tridentSwapBuffers,
+   tridentMakeCurrent,
+   tridentUnbindContext,
+};

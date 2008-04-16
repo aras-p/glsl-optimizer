@@ -47,9 +47,9 @@
 #include "stencil.h"
 #include "texobj.h"
 #include "texstate.h"
+#include "varray.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
-
 
 /**
  * Special struct for saving/restoring texture state (GL_TEXTURE_BIT)

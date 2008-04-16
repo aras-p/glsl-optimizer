@@ -2202,8 +2202,8 @@ struct gl_shared_state
 #endif
 
 #if FEATURE_ARB_shader_objects
+   /** Table of both gl_shader and gl_shader_program objects */
    struct _mesa_HashTable *ShaderObjects;
-   struct _mesa_HashTable *ShaderProgramObjects;
 #endif
 
 #if FEATURE_EXT_framebuffer_object

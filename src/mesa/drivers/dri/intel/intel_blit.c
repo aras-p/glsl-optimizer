@@ -54,6 +54,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen;
+   int ret;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -123,6 +124,15 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       }
 #endif
 
+   again:
+      ret = dri_bufmgr_check_aperture_space(dst->buffer);
+      ret |= dri_bufmgr_check_aperture_space(src->buffer);
+      
+      if (ret) {
+	intel_batchbuffer_flush(intel->batch);
+	goto again;
+      }
+      
       for (i = 0; i < nbox; i++, pbox++) {
 	 drm_clip_rect_t box = *pbox;
 

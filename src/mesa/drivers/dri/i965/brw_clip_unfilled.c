@@ -220,8 +220,8 @@ static void apply_one_offset( struct brw_clip_compile *c,
 			  struct brw_indirect vert )
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg pos = deref_4f(vert, c->offset[VERT_RESULT_HPOS]);
-   struct brw_reg z = get_element(pos, 2);
+   struct brw_reg z = deref_1f(vert, c->header_position_offset +
+			       2 * type_sz(BRW_REGISTER_TYPE_F));
 
    brw_ADD(p, z, z, vec1(c->reg.offset));
 }

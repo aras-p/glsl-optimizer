@@ -89,6 +89,7 @@ get_register_pointer(const struct prog_src_register *source,
       else {
          const struct gl_program_parameter_list *params;
          ASSERT(source->File == PROGRAM_LOCAL_PARAM ||
+                source->File == PROGRAM_CONSTANT ||
                 source->File == PROGRAM_STATE_VAR);
          params = machine->CurProgram->Parameters;
          if (reg < 0 || reg >= params->NumParameters)

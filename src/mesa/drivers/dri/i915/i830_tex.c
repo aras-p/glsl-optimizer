@@ -96,5 +96,7 @@ i830TexEnv(GLcontext * ctx, GLenum target,
 void
 i830InitTextureFuncs(struct dd_function_table *functions)
 {
+/*
    functions->TexEnv = i830TexEnv;
+*/
 }

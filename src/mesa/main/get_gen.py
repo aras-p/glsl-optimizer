@@ -983,6 +983,11 @@ StateVars = [
 	  ["ctx->Const.MaxRenderbufferSize"], "",
 	  ["EXT_framebuffer_object"] ),
 
+	# GL_EXT_framebuffer_blit
+	# NOTE: GL_DRAW_FRAMEBUFFER_BINDING_EXT == GL_FRAMEBUFFER_BINDING_EXT
+	( "GL_READ_FRAMEBUFFER_BINDING_EXT", GLint, ["ctx->ReadBuffer->Name"], "",
+	  ["EXT_framebuffer_blit"] ),
+
 	# GL_ARB_fragment_shader
 	( "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB", GLint,
 	  ["ctx->Const.FragmentProgram.MaxUniformComponents"], "",

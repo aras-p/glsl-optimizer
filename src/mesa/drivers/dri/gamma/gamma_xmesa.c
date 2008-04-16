@@ -238,7 +238,7 @@ gammaUnbindContext( __DRIcontextPrivate *driContextPriv )
    return GL_TRUE;
 }
 
-static struct __DriverAPIRec gammaAPI = {
+const struct __DriverAPIRec driDriverAPI = {
    gammaInitDriver,
    gammaDestroyScreen,
    gammaCreateContext,

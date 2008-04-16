@@ -1,5 +1,6 @@
 /*
  * Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
+ * Copyright 2007-2008 Red Hat, Inc.
  * (C) Copyright IBM Corporation 2004
  * All Rights Reserved.
  *
@@ -33,12 +34,12 @@
  * 
  * \author Kevin E. Martin <kevin@precisioninsight.com>
  * \author Ian Romanick <idr@us.ibm.com>
+ * \author Kristian Høgsberg <krh@redhat.com>
  */
 
 #ifndef DRI_INTERFACE_H
 #define DRI_INTERFACE_H
 
-#include <GL/internal/glcore.h>
 #include <drm.h>
 
 /**
@@ -52,10 +53,11 @@ typedef struct __DRIdisplayRec		__DRIdisplay;
 typedef struct __DRIscreenRec		__DRIscreen;
 typedef struct __DRIcontextRec		__DRIcontext;
 typedef struct __DRIdrawableRec		__DRIdrawable;
-typedef struct __DRIdriverRec		__DRIdriver;
+typedef struct __DRIconfigRec		__DRIconfig;
 typedef struct __DRIframebufferRec	__DRIframebuffer;
 typedef struct __DRIversionRec		__DRIversion;
 
+typedef struct __DRIcoreExtensionRec		__DRIcoreExtension;
 typedef struct __DRIextensionRec		__DRIextension;
 typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
 typedef struct __DRIswapControlExtensionRec	__DRIswapControlExtension;
@@ -64,16 +66,13 @@ typedef struct __DRIframeTrackingExtensionRec	__DRIframeTrackingExtension;
 typedef struct __DRImediaStreamCounterExtensionRec	__DRImediaStreamCounterExtension;
 typedef struct __DRItexOffsetExtensionRec	__DRItexOffsetExtension;
 typedef struct __DRItexBufferExtensionRec	__DRItexBufferExtension;
+typedef struct __DRIlegacyExtensionRec		__DRIlegacyExtension;
 /*@}*/
 
 
 /**
  * Extension struct.  Drivers 'inherit' from this struct by embedding
- * it as the first element in the extension struct.  The
- * __DRIscreen::getExtensions entry point will return a list of these
- * structs and the loader can use the extensions it knows about by
- * casting it to a more specific extension and optionally advertising
- * the GLX extension.  See below for examples.
+ * it as the first element in the extension struct.
  *
  * We never break API in for a DRI extension.  If we need to change
  * the way things work in a non-backwards compatible manner, we
@@ -94,6 +93,14 @@ struct __DRIextensionRec {
     const char *name;
     int version;
 };
+
+/**
+ * The first set of extension are the screen extensions, returned by
+ * __DRIcore::getExtensions().  This entry point will return a list of
+ * extensions and the loader can use the ones it knows about by
+ * casting them to more specific extensions and advertising any GLX
+ * extensions the DRI extensions enables.
+ */
 
 /**
  * Used by drivers to indicate support for setting the read drawable.
@@ -228,52 +235,6 @@ struct __DRItexBufferExtensionRec {
 
 
 /**
- * Macros for building symbol and strings.  Standard CPP two step...
- */
-
-#define __DRI_REAL_STRINGIFY(x) # x
-#define __DRI_STRINGIFY(x) __DRI_REAL_STRINGIFY(x)
-#define __DRI_REAL_MAKE_VERSION(name, version) name ## _ ## version
-#define __DRI_MAKE_VERSION(name, version) __DRI_REAL_MAKE_VERSION(name, version)
-
-/**
- * \name Functions and data provided by the driver.
- */
-/*@{*/
-
-#define __DRI_INTERFACE_VERSION 20080310
-
-typedef void *(CREATENEWSCREENFUNC)(int scr, __DRIscreen *psc,
-    const __DRIversion * ddx_version, const __DRIversion * dri_version,
-    const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
-    void * pSAREA, int fd, const __DRIextension ** extensions,
-    __GLcontextModes ** driver_modes);
-typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
-
-#define __DRI_CREATE_NEW_SCREEN \
-    __DRI_MAKE_VERSION(__driCreateNewScreen, __DRI_INTERFACE_VERSION)
-
-#define __DRI_CREATE_NEW_SCREEN_STRING \
-    __DRI_STRINGIFY(__DRI_CREATE_NEW_SCREEN)
-
-extern CREATENEWSCREENFUNC __DRI_CREATE_NEW_SCREEN;
-
-
-/* DRI2 Entry point */
-
-typedef void *(__DRI2_CREATE_NEW_SCREEN_FUNC)(int scr, __DRIscreen *psc,
-    int fd, unsigned int sarea_handle,
-    const __DRIextension **extensions, __GLcontextModes ** driver_modes);
-#define __DRI2_CREATE_NEW_SCREEN \
-    __DRI_MAKE_VERSION(__dri2CreateNewScreen, __DRI_INTERFACE_VERSION)
-
-#define __DRI2_CREATE_NEW_SCREEN_STRING \
-    __DRI_STRINGIFY(__DRI2_CREATE_NEW_SCREEN)
-
-extern __DRI2_CREATE_NEW_SCREEN_FUNC __DRI2_CREATE_NEW_SCREEN;
-
-
-/**
  * XML document describing the configuration options supported by the
  * driver.
  */
@@ -281,60 +242,20 @@ extern const char __driConfigOptions[];
 
 /*@}*/
 
-
-/**
- * Stored version of some component (i.e., server-side DRI module, kernel-side
- * DRM, etc.).
- * 
- * \todo
- * There are several data structures that explicitly store a major version,
- * minor version, and patch level.  These structures should be modified to
- * have a \c __DRIversionRec instead.
- */
-struct __DRIversionRec {
-    int    major;        /**< Major version number. */
-    int    minor;        /**< Minor version number. */
-    int    patch;        /**< Patch-level. */
-};
-
 /**
  * The following extensions describe loader features that the DRI
  * driver can make use of.  Some of these are mandatory, such as the
- * getDrawableInfo extension for DRI and the coreDRI2 extensions for
+ * getDrawableInfo extension for DRI and the DRI Loader extensions for
  * DRI2, while others are optional, and if present allow the driver to
  * expose certain features.  The loader pass in a NULL terminated
  * array of these extensions to the driver in the createNewScreen
  * constructor.
  */
 
-typedef struct __DRIcontextModesExtensionRec __DRIcontextModesExtension;
 typedef struct __DRIgetDrawableInfoExtensionRec __DRIgetDrawableInfoExtension;
 typedef struct __DRIsystemTimeExtensionRec __DRIsystemTimeExtension;
 typedef struct __DRIdamageExtensionRec __DRIdamageExtension;
-typedef struct __DRIcoreDRI2ExtensionRec __DRIcoreDRI2Extension;
-
-/**
- * Memory management for __GLcontextModes
- */
-#define __DRI_CONTEXT_MODES "DRI_ContextModes"
-#define __DRI_CONTEXT_MODES_VERSION 1
-struct __DRIcontextModesExtensionRec {
-    __DRIextension base;
-
-    /**
-     * Create a list of \c __GLcontextModes structures.
-     */
-    __GLcontextModes * (*createContextModes)(unsigned count,
-					     size_t minimum_bytes_per_struct);
-
-    /**
-     * Destroy a list of \c __GLcontextModes structures.
-     *
-     * \todo
-     * Determine if the drivers actually need to call this.
-     */
-    void (*destroyContextModes)( __GLcontextModes * modes );
-};
+typedef struct __DRIloaderExtensionRec __DRIloaderExtension;
 
 
 /**
@@ -354,7 +275,8 @@ struct __DRIgetDrawableInfoExtensionRec {
         int * x, int * y, int * width, int * height,
         int * numClipRects, drm_clip_rect_t ** pClipRects,
         int * backX, int * backY,
-        int * numBackClipRects, drm_clip_rect_t ** pBackClipRects );
+	int * numBackClipRects, drm_clip_rect_t ** pBackClipRects,
+	void *loaderPrivate);
 };
 
 /**
@@ -378,7 +300,8 @@ struct __DRIsystemTimeExtensionRec {
      * the frame refresh rate of the display.
      */
     GLboolean (*getMSCRate)(__DRIdrawable *draw,
-			    int32_t * numerator, int32_t * denominator);
+			    int32_t * numerator, int32_t * denominator,
+			    void *loaderPrivate);
 };
 
 /**
@@ -402,19 +325,22 @@ struct __DRIdamageExtensionRec {
      * \param front_buffer boolean flag for whether the drawing to the
      * 	      drawable was actually done directly to the front buffer (instead
      *	      of backing storage, for example)
+     * \param loaderPrivate the data passed in at createNewDrawable time
      */
     void (*reportDamage)(__DRIdrawable *draw,
 			 int x, int y,
 			 drm_clip_rect_t *rects, int num_rects,
-			 GLboolean front_buffer);
+			 GLboolean front_buffer,
+			 void *loaderPrivate);
 };
 
 /**
- * DRI2 core
+ * DRI2 Loader extension.  This extension describes the basic
+ * functionality the loader needs to provide for the DRI driver.
  */
-#define __DRI_CORE_DRI2 "DRI_CoreDRI2"
-#define __DRI_CORE_DRI2_VERSION 1
-struct __DRIcoreDRI2ExtensionRec {
+#define __DRI_LOADER "DRI_Loader"
+#define __DRI_LOADER_VERSION 1
+struct __DRIloaderExtensionRec {
     __DRIextension base;
 
     /**
@@ -424,11 +350,162 @@ struct __DRIcoreDRI2ExtensionRec {
      * \param draw the drawable for which to request info
      * \param tail the new event buffer tail pointer
      */
-    void (*reemitDrawableInfo)(__DRIdrawable *draw, unsigned int *tail);
+    void (*reemitDrawableInfo)(__DRIdrawable *draw, unsigned int *tail,
+			       void *loaderPrivate);
 
+    void (*postDamage)(__DRIdrawable *draw, struct drm_clip_rect *rects,
+		       int num_rects, void *loaderPrivate);
 };
 
-   
+/**
+ * The remaining extensions describe driver extensions, immediately
+ * available interfaces provided by the driver.  To start using the
+ * driver, dlsym() for the __DRI_DRIVER_EXTENSIONS symbol and look for
+ * the extension you need in the array.
+ */
+#define __DRI_DRIVER_EXTENSIONS "__driDriverExtensions"
+
+/**
+ * Tokens for __DRIconfig attribs.  A number of attributes defined by
+ * GLX or EGL standards are not in the table, as they must be provided
+ * by the loader.  For example, FBConfig ID or visual ID, drawable type.
+ */
+
+#define __DRI_ATTRIB_BUFFER_SIZE		 1
+#define __DRI_ATTRIB_LEVEL			 2
+#define __DRI_ATTRIB_RED_SIZE			 3
+#define __DRI_ATTRIB_GREEN_SIZE			 4
+#define __DRI_ATTRIB_BLUE_SIZE			 5
+#define __DRI_ATTRIB_LUMINANCE_SIZE		 6
+#define __DRI_ATTRIB_ALPHA_SIZE			 7
+#define __DRI_ATTRIB_ALPHA_MASK_SIZE		 8
+#define __DRI_ATTRIB_DEPTH_SIZE			 9
+#define __DRI_ATTRIB_STENCIL_SIZE		10
+#define __DRI_ATTRIB_ACCUM_RED_SIZE		11
+#define __DRI_ATTRIB_ACCUM_GREEN_SIZE		12
+#define __DRI_ATTRIB_ACCUM_BLUE_SIZE		13
+#define __DRI_ATTRIB_ACCUM_ALPHA_SIZE		14
+#define __DRI_ATTRIB_SAMPLE_BUFFERS		15
+#define __DRI_ATTRIB_SAMPLES			16
+#define __DRI_ATTRIB_RENDER_TYPE		17
+#define __DRI_ATTRIB_CONFIG_CAVEAT		18
+#define __DRI_ATTRIB_CONFORMANT			19
+#define __DRI_ATTRIB_DOUBLE_BUFFER		20
+#define __DRI_ATTRIB_STEREO			21
+#define __DRI_ATTRIB_AUX_BUFFERS		22
+#define __DRI_ATTRIB_TRANSPARENT_TYPE		23
+#define __DRI_ATTRIB_TRANSPARENT_INDEX_VALUE	24
+#define __DRI_ATTRIB_TRANSPARENT_RED_VALUE	25
+#define __DRI_ATTRIB_TRANSPARENT_GREEN_VALUE	26
+#define __DRI_ATTRIB_TRANSPARENT_BLUE_VALUE	27
+#define __DRI_ATTRIB_TRANSPARENT_ALPHA_VALUE	28
+#define __DRI_ATTRIB_FLOAT_MODE			29
+#define __DRI_ATTRIB_RED_MASK			30
+#define __DRI_ATTRIB_GREEN_MASK			31
+#define __DRI_ATTRIB_BLUE_MASK			32
+#define __DRI_ATTRIB_ALPHA_MASK			33
+#define __DRI_ATTRIB_MAX_PBUFFER_WIDTH		34
+#define __DRI_ATTRIB_MAX_PBUFFER_HEIGHT		35
+#define __DRI_ATTRIB_MAX_PBUFFER_PIXELS		36
+#define __DRI_ATTRIB_OPTIMAL_PBUFFER_WIDTH	37
+#define __DRI_ATTRIB_OPTIMAL_PBUFFER_HEIGHT	38
+#define __DRI_ATTRIB_VISUAL_SELECT_GROUP	39
+#define __DRI_ATTRIB_SWAP_METHOD		40
+#define __DRI_ATTRIB_MAX_SWAP_INTERVAL		41
+#define __DRI_ATTRIB_MIN_SWAP_INTERVAL		42
+#define __DRI_ATTRIB_BIND_TO_TEXTURE_RGB	43
+#define __DRI_ATTRIB_BIND_TO_TEXTURE_RGBA	44
+#define __DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE	45
+#define __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS	46
+#define __DRI_ATTRIB_YINVERTED			47
+
+/* __DRI_ATTRIB_RENDER_TYPE */
+#define __DRI_ATTRIB_RGBA_BIT			0x01	
+#define __DRI_ATTRIB_COLOR_INDEX_BIT		0x02
+#define __DRI_ATTRIB_LUMINANCE_BIT		0x04
+
+/* __DRI_ATTRIB_CONFIG_CAVEAT */
+#define __DRI_ATTRIB_SLOW_BIT			0x01
+#define __DRI_ATTRIB_NON_CONFORMANT_CONFIG	0x02
+
+/* __DRI_ATTRIB_TRANSPARENT_TYPE */
+#define __DRI_ATTRIB_TRANSPARENT_RGB		0x00
+#define __DRI_ATTRIB_TRANSPARENT_INDEX		0x01
+
+/* __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS	 */
+#define __DRI_ATTRIB_TEXTURE_1D_BIT		0x01
+#define __DRI_ATTRIB_TEXTURE_2D_BIT		0x02
+#define __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT	0x04
+
+/**
+ * This extension defines the core DRI functionality.
+ */
+#define __DRI_CORE "DRI_Core"
+#define __DRI_CORE_VERSION 1
+
+struct __DRIcoreExtensionRec {
+    __DRIextension base;
+
+    __DRIscreen *(*createNewScreen)(int screen, int fd,
+				    unsigned int sarea_handle,
+				    const __DRIextension **extensions,
+				    const __DRIconfig ***driverConfigs,
+				    void *loaderPrivate);
+
+    void (*destroyScreen)(__DRIscreen *screen);
+
+    const __DRIextension **(*getExtensions)(__DRIscreen *screen);
+
+    int (*getConfigAttrib)(const __DRIconfig *config,
+			   unsigned int attrib,
+			   unsigned int *value);
+
+    int (*indexConfigAttrib)(const __DRIconfig *config, int index,
+			     unsigned int *attrib, unsigned int *value);
+
+    __DRIdrawable *(*createNewDrawable)(__DRIscreen *screen,
+					const __DRIconfig *config,
+					unsigned int drawable_id,
+					unsigned int head,
+					void *loaderPrivate);
+
+    void (*destroyDrawable)(__DRIdrawable *drawable);
+
+    void (*swapBuffers)(__DRIdrawable *drawable);
+
+    __DRIcontext *(*createNewContext)(__DRIscreen *screen,
+				      const __DRIconfig *config,
+				      __DRIcontext *shared,
+				      void *loaderPrivate);
+
+    int (*copyContext)(__DRIcontext *dest,
+		       __DRIcontext *src,
+		       unsigned long mask);
+
+    void (*destroyContext)(__DRIcontext *context);
+
+    int (*bindContext)(__DRIcontext *ctx,
+		       __DRIdrawable *pdraw,
+		       __DRIdrawable *pread);
+
+    int (*unbindContext)(__DRIcontext *ctx);
+};
+
+/**
+ * Stored version of some component (i.e., server-side DRI module, kernel-side
+ * DRM, etc.).
+ * 
+ * \todo
+ * There are several data structures that explicitly store a major version,
+ * minor version, and patch level.  These structures should be modified to
+ * have a \c __DRIversionRec instead.
+ */
+struct __DRIversionRec {
+    int    major;        /**< Major version number. */
+    int    minor;        /**< Minor version number. */
+    int    patch;        /**< Patch-level. */
+};
+
 /**
  * Framebuffer information record.  Used by libGL to communicate information
  * about the framebuffer to the driver's \c __driCreateNewScreen function.
@@ -458,108 +535,38 @@ struct __DRIframebufferRec {
 
 
 /**
- * Screen dependent methods.  This structure is initialized during the
- * \c __DRIdisplayRec::createScreen call.
+ * This extension provides alternative screen, drawable and context
+ * constructors for legacy DRI functionality.  This is used in
+ * conjunction with the core extension.
  */
-struct __DRIscreenRec {
-    /**
-     * Method to destroy the private DRI screen data.
-     */
-    void (*destroyScreen)(__DRIscreen *screen);
+#define __DRI_LEGACY "DRI_Legacy"
+#define __DRI_LEGACY_VERSION 1
 
-    /**
-     * Method to get screen extensions.
-     */
-    const __DRIextension **(*getExtensions)(__DRIscreen *screen);
+struct __DRIlegacyExtensionRec {
+    __DRIextension base;
 
-    /**
-     * Method to create the private DRI drawable data and initialize the
-     * drawable dependent methods.
-     */
-    void *(*createNewDrawable)(__DRIscreen *screen,
-			       const __GLcontextModes *modes,
-			       __DRIdrawable *pdraw,
-			       drm_drawable_t hwDrawable,
-			       unsigned int head,
-			       int renderType, const int *attrs);
+    __DRIscreen *(*createNewScreen)(int screen,
+				    const __DRIversion *ddx_version,
+				    const __DRIversion *dri_version,
+				    const __DRIversion *drm_version,
+				    const __DRIframebuffer *frame_buffer,
+				    void *pSAREA, int fd, 
+				    const __DRIextension **extensions,
+				    const __DRIconfig ***driver_configs,
+				    void *loaderPrivate);
 
-    /**
-     * Opaque pointer to private per screen direct rendering data.  \c NULL
-     * if direct rendering is not supported on this screen.  Never
-     * dereferenced in libGL.
-     */
-    void *private;
+    __DRIdrawable *(*createNewDrawable)(__DRIscreen *screen,
+					const __DRIconfig *config,
+					drm_drawable_t hwDrawable,
+					int renderType, const int *attrs,
+					void *loaderPrivate);
 
-    /**
-     * Method to create the private DRI context data and initialize the
-     * context dependent methods.
-     *
-     * \since Internal API version 20031201.
-     */
-    void * (*createNewContext)(__DRIscreen *screen,
-			       const __GLcontextModes *modes,
-			       int render_type,
-			       __DRIcontext *shared,
-			       drm_context_t hwContext, __DRIcontext *pctx);
-};
-
-/**
- * Context dependent methods.  This structure is initialized during the
- * \c __DRIscreenRec::createContext call.
- */
-struct __DRIcontextRec {
-    /**
-     * Method to destroy the private DRI context data.
-     */
-    void (*destroyContext)(__DRIcontext *context);
-
-    /**
-     * Opaque pointer to private per context direct rendering data.
-     * \c NULL if direct rendering is not supported on the display or
-     * screen used to create this context.  Never dereferenced in libGL.
-     */
-    void *private;
-
-    /**
-     * Method to bind a DRI drawable to a DRI graphics context.
-     *
-     * \since Internal API version 20050727.
-     */
-    GLboolean (*bindContext)(__DRIcontext *ctx,
-			     __DRIdrawable *pdraw,
-			     __DRIdrawable *pread);
-
-    /**
-     * Method to unbind a DRI drawable from a DRI graphics context.
-     *
-     * \since Internal API version 20050727.
-     */
-    GLboolean (*unbindContext)(__DRIcontext *ctx);
-};
-
-/**
- * Drawable dependent methods.  This structure is initialized during the
- * \c __DRIscreenRec::createDrawable call.  \c createDrawable is not called
- * by libGL at this time.  It's currently used via the dri_util.c utility code
- * instead.
- */
-struct __DRIdrawableRec {
-    /**
-     * Method to destroy the private DRI drawable data.
-     */
-    void (*destroyDrawable)(__DRIdrawable *drawable);
-
-    /**
-     * Method to swap the front and back buffers.
-     */
-    void (*swapBuffers)(__DRIdrawable *drawable);
-
-    /**
-     * Opaque pointer to private per drawable direct rendering data.
-     * \c NULL if direct rendering is not supported on the display or
-     * screen used to create this drawable.  Never dereferenced in libGL.
-     */
-    void *private;
+    __DRIcontext *(*createNewContext)(__DRIscreen *screen,
+				      const __DRIconfig *config,
+				      int render_type,
+				      __DRIcontext *shared,
+				      drm_context_t hwContext,
+				      void *loaderPrivate);
 };
 
 #endif

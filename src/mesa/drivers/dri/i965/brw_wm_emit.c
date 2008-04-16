@@ -137,7 +137,7 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
       brw_ADD(p,
 	      dst[0],
 	      retype(arg0[0], BRW_REGISTER_TYPE_W),
-	      brw_imm_d(- c->key.origin_x));
+	      brw_imm_d(0 - c->key.origin_x));
    }
 
    if (mask & WRITEMASK_Y) {
@@ -223,6 +223,10 @@ static void emit_pinterp( struct brw_compile *p,
       if (mask & (1<<i)) {
 	 brw_LINE(p, brw_null_reg(), interp[i], deltas[0]);
 	 brw_MAC(p, dst[i], suboffset(interp[i],1), deltas[1]);
+      }
+   }
+   for(i = 0; i < 4; i++ ) {
+      if (mask & (1<<i)) {
 	 brw_MUL(p, dst[i], dst[i], w[3]);
       }
    }
@@ -500,6 +504,9 @@ static void emit_dp3( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
@@ -517,6 +524,9 @@ static void emit_dp4( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
@@ -535,6 +545,9 @@ static void emit_dph( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_MUL(p, brw_null_reg(), arg0[0], arg1[0]);
@@ -578,6 +591,9 @@ static void emit_math1( struct brw_compile *p,
 			GLuint mask,
 			const struct brw_reg *arg0 )
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    //assert((mask & WRITEMASK_XYZW) == WRITEMASK_X ||
    //	  function == BRW_MATH_FUNCTION_SINCOS);
    
@@ -602,6 +618,9 @@ static void emit_math2( struct brw_compile *p,
 			const struct brw_reg *arg0,
 			const struct brw_reg *arg1)
 {
+   if (!(mask & WRITEMASK_XYZW))
+      return; /* Do not emit dead code*/
+
    assert((mask & WRITEMASK_XYZW) == WRITEMASK_X);
 
    brw_push_insn_state(p);

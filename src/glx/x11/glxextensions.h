@@ -235,10 +235,6 @@ extern const char * __glXGetClientExtensions( void );
 extern void __glXCalculateUsableExtensions( struct __GLXscreenConfigsRec *psc,
     GLboolean display_is_direct_capable, int server_minor_version );
 
-#ifdef GLX_DIRECT_RENDERING
-extern void __glXScrEnableDRIExtension( struct __GLXscreenConfigsRec *psc );
-#endif
-
 extern void __glXCalculateUsableGLExtensions( struct __GLXcontextRec * gc,
     const char * server_string, int major_version, int minor_version );
 extern void __glXGetGLVersion( int * major_version, int * minor_version );
@@ -247,6 +243,8 @@ extern char * __glXGetClientGLExtensionString( void );
 extern GLboolean __glExtensionBitIsEnabled( const struct __GLXcontextRec * gc, 
     unsigned bit );
 
+extern void
+__glXEnableDirectExtension(__GLXscreenConfigs *psc, const char *name);
 
 /* Source-level backwards compatibility with old drivers. They won't
  * find the respective functions, though. 

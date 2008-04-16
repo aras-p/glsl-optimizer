@@ -26,7 +26,7 @@ dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-AC_PATH_PROG(MAKE, make)
+AC_CHECK_PROGS(MAKE, [gmake make])
 AC_PATH_PROG(MKDEP, makedepend)
 AC_PATH_PROG(SED, sed)
 
@@ -39,6 +39,11 @@ if test "x$GCC" = xyes; then
     fi
 fi
 AC_SUBST(MKDEP_OPTIONS)
+
+dnl Check to see if dlopen is in default libraries (like Solaris, which
+dnl has it in libc), or if libdl is needed to get it.
+AC_CHECK_FUNC([dlopen], [],
+	AC_CHECK_LIB([dl], [dlopen], DLOPEN_LIBS="-ldl"))
 
 dnl Make sure the pkg-config macros are defined
 m4_ifdef([PKG_PROG_PKG_CONFIG],,[
@@ -64,11 +69,11 @@ AC_SUBST(X11_INCLUDES)
 dnl Compiler macros
 DEFINES=""
 AC_SUBST(DEFINES)
-if test "x$GCC" = xyes; then
-    DEFINES="-D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
-fi
 case "$host_os" in
 linux*)
+if test "x$GCC" = xyes; then
+    DEFINES="$DEFINES -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE"
+fi
     DEFINES="$DEFINES -D_SVID_SOURCE -D_GNU_SOURCE -DPTHREADS -DHAVE_POSIX_MEMALIGN"
     ;;
 esac
@@ -383,6 +388,7 @@ dri)
 
     # Check for libdrm
     PKG_CHECK_MODULES(LIBDRM, libdrm)
+    PKG_CHECK_MODULES(DRI2PROTO, dri2proto >= 1.1)
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
@@ -396,7 +402,7 @@ dri)
     fi
 
     # need DRM libs, -lpthread, etc.
-    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread -ldl"
+    GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
@@ -504,7 +510,7 @@ if test "$mesa_driver" = dri; then
             ;;
         esac
         ;;
-    freebsd*)
+    freebsd* | dragonfly*)
         DEFINES="$DEFINES -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
@@ -547,7 +553,7 @@ if test "$mesa_driver" = dri; then
         AC_MSG_ERROR([Expat required for DRI.]))
 
     # put all the necessary libs together
-    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread -ldl"
+    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
 fi
 AC_SUBST(DRI_DIRS)
 AC_SUBST(EXPAT_INCLUDES)
@@ -804,7 +810,7 @@ linux*)
         ;;
     esac
     ;;
-freebsd*)
+freebsd* | dragonfly*)
     PIC_FLAGS="-fPIC"
     case "$host_cpu" in
     i*86)
@@ -893,5 +899,5 @@ echo "        CXXFLAGS:        $cxxflags"
 echo "        Macros:          $defines"
 
 echo ""
-echo "        Run 'make' to build Mesa"
+echo "        Run '${MAKE-make}' to build Mesa"
 echo ""

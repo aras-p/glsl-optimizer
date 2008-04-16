@@ -38,7 +38,7 @@
 
 
 static GLuint
-translate_texture_format(GLuint mesa_format)
+translate_texture_format(GLuint mesa_format, GLenum DepthMode)
 {
    switch (mesa_format) {
    case MESA_FORMAT_L8:
@@ -65,7 +65,7 @@ translate_texture_format(GLuint mesa_format)
    case MESA_FORMAT_RGBA_FXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
    case MESA_FORMAT_Z16:
-      return (MAPSURF_16BIT | MT_16BIT_L16);
+      return (MAPSURF_16BIT | (DepthMode==GL_ALPHA?MT_16BIT_A16:MT_16BIT_L16));
    case MESA_FORMAT_RGBA_DXT1:
    case MESA_FORMAT_RGB_DXT1:
       return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT1);
@@ -119,10 +119,12 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 {
    GLcontext *ctx = &intel->ctx;
    struct i915_context *i915 = i915_context(ctx);
-   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
+   struct gl_texture_unit *tUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *tObj = tUnit->_Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage;
    GLuint *state = i915->state.Tex[unit], format, pitch;
+   GLint lodbias;
 
    memset(state, 0, sizeof(state));
 
@@ -166,7 +168,8 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 								 0, intelObj->
 								 firstLevel);
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat);
+      format = translate_texture_format(firstImage->TexFormat->MesaFormat, 
+		tObj->DepthMode);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
    }
 
@@ -231,7 +234,13 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
          }
       }
 
-      state[I915_TEXREG_SS2] = i915->lodbias_ss2[unit];
+      lodbias = (int) ((tUnit->LodBias + tObj->LodBias) * 16.0);
+      if (lodbias < -256)
+          lodbias = -256;
+      if (lodbias > 255)
+          lodbias = 255;
+      state[I915_TEXREG_SS2] = ((lodbias << SS2_LOD_BIAS_SHIFT) & 
+                                SS2_LOD_BIAS_MASK);
 
       /* YUV conversion:
        */
@@ -248,8 +257,13 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
             (SS2_SHADOW_ENABLE |
              intel_translate_shadow_compare_func(tObj->CompareFunc));
 
-         minFilt = FILTER_4X4_FLAT;
-         magFilt = FILTER_4X4_FLAT;
+	 if (tObj->Target == GL_TEXTURE_1D) { 
+		 minFilt = FILTER_NEAREST;
+		 magFilt = FILTER_NEAREST;
+	 } else {
+         	minFilt = FILTER_4X4_FLAT;
+         	magFilt = FILTER_4X4_FLAT;
+	 }
       }
 
       state[I915_TEXREG_SS2] |= ((minFilt << SS2_MIN_FILTER_SHIFT) |

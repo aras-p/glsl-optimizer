@@ -79,7 +79,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
          /* to prevent a double-free in the next call */
          shProg->VertexProgram->Base.Parameters = NULL;
       }
-      _mesa_delete_program(ctx, &shProg->VertexProgram->Base);
+      ctx->Driver.DeleteProgram(ctx, &shProg->VertexProgram->Base);
       shProg->VertexProgram = NULL;
    }
 
@@ -88,7 +88,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
          /* to prevent a double-free in the next call */
          shProg->FragmentProgram->Base.Parameters = NULL;
       }
-      _mesa_delete_program(ctx, &shProg->FragmentProgram->Base);
+      ctx->Driver.DeleteProgram(ctx, &shProg->FragmentProgram->Base);
       shProg->FragmentProgram = NULL;
    }
 
@@ -127,6 +127,8 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    for (i = 0; i < shProg->NumShaders; i++) {
       _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
    }
+   shProg->NumShaders = 0;
+
    if (shProg->Shaders) {
       _mesa_free(shProg->Shaders);
       shProg->Shaders = NULL;
@@ -178,7 +180,7 @@ _mesa_reference_shader_program(GLcontext *ctx,
       deleteFlag = (old->RefCount == 0);
 
       if (deleteFlag) {
-         _mesa_HashRemove(ctx->Shared->ShaderProgramObjects, old->Name);
+         _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
          _mesa_free_shader_program(ctx, old);
       }
 
@@ -204,7 +206,7 @@ _mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
    struct gl_shader_program *shProg;
    if (name) {
       shProg = (struct gl_shader_program *)
-         _mesa_HashLookup(ctx->Shared->ShaderProgramObjects, name);
+         _mesa_HashLookup(ctx->Shared->ShaderObjects, name);
       /* Note that both gl_shader and gl_shader_program objects are kept
        * in the same hash table.  Check the object's type to be sure it's
        * what we're expecting.
@@ -246,7 +248,7 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
       _mesa_free(sh->InfoLog);
    for (i = 0; i < sh->NumPrograms; i++) {
       assert(sh->Programs[i]);
-      _mesa_delete_program(ctx, sh->Programs[i]);
+      ctx->Driver.DeleteProgram(ctx, sh->Programs[i]);
    }
    if (sh->Programs)
       _mesa_free(sh->Programs);
@@ -536,10 +538,10 @@ _mesa_create_program(GLcontext *ctx)
    GLuint name;
    struct gl_shader_program *shProg;
 
-   name = _mesa_HashFindFreeKeyBlock(ctx->Shared->ShaderProgramObjects, 1);
+   name = _mesa_HashFindFreeKeyBlock(ctx->Shared->ShaderObjects, 1);
    shProg = _mesa_new_shader_program(ctx, name);
 
-   _mesa_HashInsert(ctx->Shared->ShaderProgramObjects, name, shProg);
+   _mesa_HashInsert(ctx->Shared->ShaderObjects, name, shProg);
 
    assert(shProg->RefCount == 1);
 

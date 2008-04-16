@@ -333,14 +333,14 @@ struct r300_state_atom {
 #define R500_RI_CMDSIZE	       17
 
 #define R300_RR_CMD_0		0	/* rr is variable size (at least 1) */
-#define R300_RR_ROUTE_0		1
-#define R300_RR_ROUTE_1		2
-#define R300_RR_ROUTE_2		3
-#define R300_RR_ROUTE_3		4
-#define R300_RR_ROUTE_4		5
-#define R300_RR_ROUTE_5		6
-#define R300_RR_ROUTE_6		7
-#define R300_RR_ROUTE_7		8
+#define R300_RR_INST_0		1
+#define R300_RR_INST_1		2
+#define R300_RR_INST_2		3
+#define R300_RR_INST_3		4
+#define R300_RR_INST_4		5
+#define R300_RR_INST_5		6
+#define R300_RR_INST_6		7
+#define R300_RR_INST_7		8
 #define R300_RR_CMDSIZE		9
 
 #define R300_FP_CMD_0		0

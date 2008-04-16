@@ -356,71 +356,15 @@ __glXProcessServerString( const struct extension_info * ext,
    }
 }
 
-#ifdef GLX_DIRECT_RENDERING
-
 void
-__glXScrEnableDRIExtension(__GLXscreenConfigs *psc)
+__glXEnableDirectExtension(__GLXscreenConfigs *psc, const char *name)
 {
-    const __DRIextension **extensions;
-    int i;
-
     __glXExtensionsCtr();
     __glXExtensionsCtrScreen(psc);
 
-    extensions = psc->__driScreen.getExtensions(&psc->__driScreen);
-    for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
-	    SET_BIT(psc->direct_support, MESA_copy_sub_buffer_bit);
-	}
-#endif
-
-#ifdef __DRI_SWAP_CONTROL
-	if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
-	    psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-	    SET_BIT(psc->direct_support, SGI_swap_control_bit);
-	    SET_BIT(psc->direct_support, MESA_swap_control_bit);
-	}
-#endif
-
-#ifdef __DRI_ALLOCATE
-	if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-	    psc->allocate = (__DRIallocateExtension *) extensions[i];
-	    SET_BIT(psc->direct_support, MESA_allocate_memory_bit);
-	}
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-	if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-	    psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-	    SET_BIT(psc->direct_support, MESA_swap_frame_usage_bit);
-	}
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-	if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
-	    psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
-	    SET_BIT(psc->direct_support, SGI_video_sync_bit);
-	}
-#endif
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-	/* No driver supports this at this time and the extension is
-	 * not defined in dri_interface.h.  Will enable
-	 * GLX_OML_sync_control if implemented. */
-#endif
-
-#ifdef __DRI_READ_DRAWABLE
-	if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-	    SET_BIT(psc->direct_support, SGI_make_current_read_bit);
-	}
-#endif
-	/* Ignore unknown extensions */
-    }
+    set_glx_extension(known_glx_extensions,
+		      name, strlen(name), GL_TRUE, psc->direct_support);
 }
-
-#endif
 
 /**
  * Initialize global extension support tables.

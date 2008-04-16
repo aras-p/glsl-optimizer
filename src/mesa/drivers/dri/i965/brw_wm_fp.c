@@ -144,7 +144,7 @@ static struct prog_dst_register dst_undef( void )
 
 static struct prog_dst_register get_temp( struct brw_wm_compile *c )
 {
-   int bit = ffs( ~c->fp_temp );
+   int bit = _mesa_ffs( ~c->fp_temp );
 
    if (!bit) {
       _mesa_printf("%s: out of temporaries\n", __FILE__);
@@ -158,7 +158,7 @@ static struct prog_dst_register get_temp( struct brw_wm_compile *c )
 
 static void release_temp( struct brw_wm_compile *c, struct prog_dst_register temp )
 {
-   c->fp_temp &= ~1<<(temp.Index + 1 - FIRST_INTERNAL_TEMP);
+   c->fp_temp &= ~(1 << (temp.Index - FIRST_INTERNAL_TEMP));
 }
 
 
@@ -494,17 +494,20 @@ static void precalc_dst( struct brw_wm_compile *c,
 
 
    if (dst.WriteMask & WRITEMASK_XZ) {
+      struct prog_instruction *swz;
       GLuint z = GET_SWZ(src0.Swizzle, Z);
 
       /* dst.xz = swz src0.1zzz
        */
-      emit_op(c,
-	      OPCODE_SWZ,
-	      dst_mask(dst, WRITEMASK_XZ),
-	      inst->SaturateMode, 0, 0,
-	      src_swizzle(src0, SWIZZLE_ONE, z, z, z),
-	      src_undef(),
-	      src_undef());
+      swz = emit_op(c,
+		    OPCODE_SWZ,
+		    dst_mask(dst, WRITEMASK_XZ),
+		    inst->SaturateMode, 0, 0,
+		    src_swizzle(src0, SWIZZLE_ONE, z, z, z),
+		    src_undef(),
+		    src_undef());
+      /* Avoid letting negation flag of src0 affect our 1 constant. */
+      swz->SrcReg[0].NegateBase &= ~NEGATE_X;
    }
    if (dst.WriteMask & WRITEMASK_W) {
       /* dst.w = mov src1.w
@@ -527,15 +530,19 @@ static void precalc_lit( struct brw_wm_compile *c,
    struct prog_dst_register dst = inst->DstReg;
    
    if (dst.WriteMask & WRITEMASK_XW) {
+      struct prog_instruction *swz;
+
       /* dst.xw = swz src0.1111
        */
-      emit_op(c,
-	      OPCODE_SWZ,
-	      dst_mask(dst, WRITEMASK_XW),
-	      0, 0, 0,
-	      src_swizzle1(src0, SWIZZLE_ONE),
-	      src_undef(),
-	      src_undef());
+      swz = emit_op(c,
+		    OPCODE_SWZ,
+		    dst_mask(dst, WRITEMASK_XW),
+		    0, 0, 0,
+		    src_swizzle1(src0, SWIZZLE_ONE),
+		    src_undef(),
+		    src_undef());
+      /* Avoid letting the negation flag of src0 affect our 1 constant. */
+      swz->SrcReg[0].NegateBase = 0;
    }
 
 
@@ -863,25 +870,31 @@ static void emit_fb_write( struct brw_wm_compile *c )
    struct prog_src_register outdepth = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DEPR);
    GLuint i;
 
-   struct prog_instruction *inst;
+   struct prog_instruction *inst, *last_inst;
    struct brw_context *brw = c->func.brw;
 
    /* inst->Sampler is not used by backend, 
       use it for fb write target and eot */
 
-   inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
-           0, 0, 0, outcolor, payload_r0_depth, outdepth);
-   inst->Sampler = (brw->state.nr_draw_regions > 1 ? 0: 1)|(0<<1);
-
    if (brw->state.nr_draw_regions > 1) {
        for (i = 0 ; i < brw->state.nr_draw_regions; i++) {
 	   outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_DATA0 + i);
-	   inst = emit_op(c,
+	   last_inst = inst = emit_op(c,
 		   WM_FB_WRITE, dst_mask(dst_undef(),0), 0, 0, 0,
 		   outcolor, payload_r0_depth, outdepth);
-	   inst->Sampler = ((i == brw->state.nr_draw_regions - 1) ? 1: 0);
-	   inst->Sampler |= (i<<1);
+	   inst->Sampler = (i<<1);
+	   if (c->fp_fragcolor_emitted) {
+	       outcolor = src_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+	       last_inst = inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+		       0, 0, 0, outcolor, payload_r0_depth, outdepth);
+	       inst->Sampler = (i<<1);
+	   }
        }
+       last_inst->Sampler |= 1; //eot
+   }else {
+       inst = emit_op(c, WM_FB_WRITE, dst_mask(dst_undef(),0),
+	       0, 0, 0, outcolor, payload_r0_depth, outdepth);
+       inst->Sampler = 1|(0<<1);
    }
 }
 
@@ -908,7 +921,15 @@ static void validate_src_regs( struct brw_wm_compile *c,
    }
 }
 	 
-
+static void validate_dst_regs( struct brw_wm_compile *c,
+			       const struct prog_instruction *inst )
+{
+   if (inst->DstReg.File == PROGRAM_OUTPUT) {
+       GLuint idx = inst->DstReg.Index;
+       if (idx == FRAG_RESULT_COLR)
+	   c->fp_fragcolor_emitted = 1;
+   }
+}
 
 static void print_insns( const struct prog_instruction *insn,
 			 GLuint nr )
@@ -953,12 +974,16 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 
    for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
       const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
+      validate_src_regs(c, inst);
+      validate_dst_regs(c, inst);
+   }
+   for (insn = 0; insn < fp->program.Base.NumInstructions; insn++) {
+      const struct prog_instruction *inst = &fp->program.Base.Instructions[insn];
       struct prog_instruction *out;
 
       /* Check for INPUT values, emit INTERP instructions where
        * necessary:
        */
-      validate_src_regs(c, inst);
 
 
       switch (inst->Opcode) {

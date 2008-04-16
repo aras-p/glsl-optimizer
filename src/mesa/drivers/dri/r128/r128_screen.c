@@ -399,37 +399,18 @@ r128InitDriver( __DRIscreenPrivate *sPriv )
    return GL_TRUE;
 }
 
-
-static struct __DriverAPIRec r128API = {
-   .DestroyScreen   = r128DestroyScreen,
-   .CreateContext   = r128CreateContext,
-   .DestroyContext  = r128DestroyContext,
-   .CreateBuffer    = r128CreateBuffer,
-   .DestroyBuffer   = r128DestroyBuffer,
-   .SwapBuffers     = r128SwapBuffers,
-   .MakeCurrent     = r128MakeCurrent,
-   .UnbindContext   = r128UnbindContext,
-   .GetSwapInfo     = NULL,
-   .GetDrawableMSC  = driDrawableGetMSC32,
-   .WaitForMSC      = driWaitForMSC32,
-   .WaitForSBC      = NULL,
-   .SwapBuffersMSC  = NULL
-
-};
-
-
-static __GLcontextModes *
+static const __DRIconfig **
 r128FillInModes( __DRIscreenPrivate *psp,
 		 unsigned pixel_bits, unsigned depth_bits,
 		 unsigned stencil_bits, GLboolean have_back_buffer )
 {
-    __GLcontextModes * modes;
+    __DRIconfig **configs;
     __GLcontextModes * m;
-    unsigned num_modes;
     unsigned depth_buffer_factor;
     unsigned back_buffer_factor;
     GLenum fb_format;
     GLenum fb_type;
+    int i;
 
     /* Right now GLX_SWAP_COPY_OML isn't supported, but it would be easy
      * enough to add support.  Basically, if a context is created with an
@@ -457,8 +438,6 @@ r128FillInModes( __DRIscreenPrivate *psp,
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
-    num_modes = depth_buffer_factor * back_buffer_factor * 4;
-
     if ( pixel_bits == 16 ) {
         fb_format = GL_RGB;
         fb_type = GL_UNSIGNED_SHORT_5_6_5;
@@ -468,35 +447,26 @@ r128FillInModes( __DRIscreenPrivate *psp,
         fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
     }
 
-    modes = (*psp->contextModes->createContextModes)( num_modes, sizeof( __GLcontextModes ) );
-    m = modes;
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_TRUE_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-    }
+   configs = driCreateConfigs(fb_format, fb_type,
+			      depth_bits_array, stencil_bits_array,
+			      depth_buffer_factor, back_buffer_modes,
+			      back_buffer_factor);
+   if (configs == NULL) {
+    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
+   }
 
-    if ( ! driFillInModes( & m, fb_format, fb_type,
-			   depth_bits_array, stencil_bits_array, depth_buffer_factor,
-			   back_buffer_modes, back_buffer_factor,
-			   GLX_DIRECT_COLOR ) ) {
-	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
-		 __func__, __LINE__ );
-	return NULL;
-    }
+   /* Mark the visual as slow if there are "fake" stencil bits.
+    */
+   for (i = 0; configs[i]; i++) {
+      m = &configs[i]->modes;
+      if ((m->stencilBits != 0) && (m->stencilBits != stencil_bits)) {
+         m->visualRating = GLX_SLOW_CONFIG;
+      }
+   }
 
-    /* Mark the visual as slow if there are "fake" stencil bits.
-     */
-    for ( m = modes ; m != NULL ; m = m->next ) {
-	if ( (m->stencilBits != 0) && (m->stencilBits != stencil_bits) ) {
-	    m->visualRating = GLX_SLOW_CONFIG;
-	}
-    }
-
-    return modes;
+   return (const __DRIconfig **) configs;
 }
 
 
@@ -507,14 +477,14 @@ r128FillInModes( __DRIscreenPrivate *psp,
  *
  * \return the __GLcontextModes supported by this driver
  */
-__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
+static const __DRIconfig **
+r128InitScreen(__DRIscreenPrivate *psp)
 {
    static const __DRIversion ddx_expected = { 4, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 2, 0 };
    R128DRIPtr dri_priv = (R128DRIPtr) psp->pDevPriv;
 
-   psp->DriverAPI = r128API;
    if ( ! driCheckDriDdxDrmVersions2( "Rage128",
 				      &psp->dri_version, & dri_expected,
 				      &psp->ddx_version, & ddx_expected,
@@ -542,3 +512,20 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 			   (dri_priv->bpp == 16) ? 0  : 8,
 			   (dri_priv->backOffset != dri_priv->depthOffset) );
 }
+
+const struct __DriverAPIRec driDriverAPI = {
+   .InitScreen      = r128InitScreen,
+   .DestroyScreen   = r128DestroyScreen,
+   .CreateContext   = r128CreateContext,
+   .DestroyContext  = r128DestroyContext,
+   .CreateBuffer    = r128CreateBuffer,
+   .DestroyBuffer   = r128DestroyBuffer,
+   .SwapBuffers     = r128SwapBuffers,
+   .MakeCurrent     = r128MakeCurrent,
+   .UnbindContext   = r128UnbindContext,
+   .GetSwapInfo     = NULL,
+   .GetDrawableMSC  = driDrawableGetMSC32,
+   .WaitForMSC      = driWaitForMSC32,
+   .WaitForSBC      = NULL,
+   .SwapBuffersMSC  = NULL
+};

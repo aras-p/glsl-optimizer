@@ -401,7 +401,7 @@ struct sis_context
 #define MMIO_READ(reg) *(volatile GLint *)(smesa->IOBase + (reg))
 #define MMIO_READf(reg) *(volatile GLfloat *)(smesa->IOBase + (reg))
 
-#if defined(__i386__) || defined(__amd64__)
+#if defined(__i386__) || defined(__x86_64__)
 #define MMIO_WMB()	__asm __volatile("" : : : "memory")
 #elif defined(__ia64__)
 #define MMIO_WMB()	__asm __volatile("mf" : : : "memory")
