@@ -40,6 +40,45 @@
 
 
 /**
+ * Pack ubyte R,G,B,A into dest pixel.
+ */
+static INLINE void
+util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
+                   enum pipe_format format, void *dest)
+{
+   switch (format) {
+   case PIPE_FORMAT_R8G8B8A8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (r << 24) | (g << 16) | (b << 8) | a;
+      }
+      return;
+   case PIPE_FORMAT_A8R8G8B8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (a << 24) | (r << 16) | (g << 8) | b;
+      }
+      return;
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (b << 24) | (g << 16) | (r << 8) | a;
+      }
+      return;
+   case PIPE_FORMAT_R5G6B5_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+      }
+      return;
+   /* XXX lots more cases to add */
+   default:
+      debug_printf("gallium: unhandled format in util_pack_color_ub()");
+   }
+}
+ 
+
+/**
  * Note rgba outside [0,1] will be clamped for int pixel formats.
  */
 static INLINE void
