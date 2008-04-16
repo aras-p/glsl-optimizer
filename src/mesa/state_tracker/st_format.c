@@ -354,8 +354,9 @@ default_depth_format(struct pipe_screen *screen, uint type)
  * Given an OpenGL internalFormat value for a texture or surface, return
  * the best matching PIPE_FORMAT_x, or PIPE_FORMAT_NONE if there's no match.
  */
-static enum pipe_format
-choose_format(struct pipe_context *pipe, GLint internalFormat, uint surfType)
+enum pipe_format
+st_choose_format(struct pipe_context *pipe, GLint internalFormat,
+                 uint surfType)
 {
    struct pipe_screen *screen = pipe->screen;
 
@@ -530,7 +531,7 @@ choose_format(struct pipe_context *pipe, GLint internalFormat, uint surfType)
 enum pipe_format
 st_choose_renderbuffer_format(struct pipe_context *pipe, GLint internalFormat)
 {
-   return choose_format(pipe, internalFormat, PIPE_SURFACE);
+   return st_choose_format(pipe, internalFormat, PIPE_SURFACE);
 }
 
 
@@ -594,7 +595,7 @@ st_ChooseTextureFormat(GLcontext *ctx, GLint internalFormat,
    (void) format;
    (void) type;
 
-   pFormat = choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE);
+   pFormat = st_choose_format(ctx->st->pipe, internalFormat, PIPE_TEXTURE);
    if (pFormat == PIPE_FORMAT_NONE)
       return NULL;
 
