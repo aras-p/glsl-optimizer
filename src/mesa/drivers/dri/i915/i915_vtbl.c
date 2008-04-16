@@ -43,6 +43,8 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 
+#include "glapi.h"
+
 static void
 i915_render_prevalidate(struct intel_context *intel)
 {
@@ -297,6 +299,7 @@ i915_emit_state(struct intel_context *intel)
    int i;
    int ret, count;
    GLuint dirty;
+   GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
 
    /* We don't hold the lock at this point, so want to make sure that

@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include "glapi.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -418,8 +419,9 @@ i830_emit_state(struct intel_context *intel)
 {
    struct i830_context *i830 = i830_context(&intel->ctx);
    struct i830_hw_state *state = i830->current;
-   int i;
+   int i, ret, count;
    GLuint dirty;
+   GET_CURRENT_CONTEXT(ctx);
    BATCH_LOCALS;
 
    /* We don't hold the lock at this point, so want to make sure that
@@ -435,6 +437,34 @@ i830_emit_state(struct intel_context *intel)
     */
    intel_batchbuffer_require_space(intel->batch, get_state_size(state) + 8,
 				   LOOP_CLIPRECTS);
+   count = 0;
+ again:
+   dirty = get_dirty(state);
+
+   ret = 0;
+   if (dirty & I830_UPLOAD_BUFFERS) {
+     ret |= dri_bufmgr_check_aperture_space(state->draw_region->buffer);
+     ret |= dri_bufmgr_check_aperture_space(state->depth_region->buffer);
+   }
+   
+   for (i = 0; i < I830_TEX_UNITS; i++)
+     if (dirty & I830_UPLOAD_TEX(i)) {
+	if (state->tex_buffer[i]) {
+	  ret |= dri_bufmgr_check_aperture_space(state->tex_buffer[i]);
+	}
+     }
+
+   if (ret) {
+       if (count == 0) {
+	   count++;
+	   intel_batchbuffer_flush(intel->batch);
+	   goto again;
+       } else {
+	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "i830 emit state");
+	   assert(0);
+       }
+   }
+
 
    /* Do this here as we may have flushed the batchbuffer above,
     * causing more state to be dirty!
