@@ -138,6 +138,8 @@ struct st_context
       GLuint user_prog_sn;  /**< user fragment program serial no. */
       struct st_fragment_program *combined_prog;
       GLuint combined_prog_sn;
+      struct pipe_texture *pixelmap_texture;
+      boolean pixelmap_enabled;  /**< use the pixelmap texture? */
    } pixel_xfer;
 
    /** for glBitmap */

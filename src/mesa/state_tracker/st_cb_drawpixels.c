@@ -562,6 +562,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.normalized_coords = 1;
 
       cso_single_sampler(cso, 0, &sampler);
+      if (st->pixel_xfer.pixelmap_enabled) {
+         cso_single_sampler(cso, 1, &sampler);
+      }
       cso_single_sampler_done(cso);
    }
 
@@ -582,7 +585,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* texture state: */
-   pipe->set_sampler_textures(pipe, 1, &pt);
+   if (st->pixel_xfer.pixelmap_enabled) {
+      struct pipe_texture *textures[2];
+      textures[0] = pt;
+      textures[1] = st->pixel_xfer.pixelmap_texture;
+      pipe->set_sampler_textures(pipe, 2, textures);
+   }
+   else {
+      pipe->set_sampler_textures(pipe, 1, &pt);
+   }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
     * Recall that these coords are transformed by the current
