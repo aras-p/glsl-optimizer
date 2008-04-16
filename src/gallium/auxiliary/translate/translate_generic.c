@@ -78,8 +78,8 @@ static struct translate_generic *translate_generic( struct translate *translate 
 static void						\
 fetch_##NAME(const void *ptr, float *attrib)		\
 {							\
-   const float defaults[4] = { 0,0,0,1 };	\
-   int i;						\
+   const float defaults[4] = { 0.0f,0.0f,0.0f,1.0f };	\
+   unsigned i;						\
 							\
    for (i = 0; i < SZ; i++) {				\
       attrib[i] = FROM(i);				\
@@ -121,24 +121,24 @@ emit_##NAME(const float *attrib, void *ptr)		\
 #define FROM_16_SNORM(i)   ((float) ((short *) ptr)[i] / 32767.0f)
 #define FROM_32_SNORM(i)   ((float) ((int *) ptr)[i] / 2147483647.0f)
 
-#define TO_64_FLOAT(f)   ((double) f)
-#define TO_32_FLOAT(f)   (f)
+#define TO_64_FLOAT(x)   ((double) x)
+#define TO_32_FLOAT(x)   (x)
 
-#define TO_8_USCALED(f)  ((unsigned char) f)
-#define TO_16_USCALED(f) ((unsigned short) f)
-#define TO_32_USCALED(f) ((unsigned int) f)
+#define TO_8_USCALED(x)  ((unsigned char) x)
+#define TO_16_USCALED(x) ((unsigned short) x)
+#define TO_32_USCALED(x) ((unsigned int) x)
 
-#define TO_8_SSCALED(f)  ((char) f)
-#define TO_16_SSCALED(f) ((short) f)
-#define TO_32_SSCALED(f) ((int) f)
+#define TO_8_SSCALED(x)  ((char) x)
+#define TO_16_SSCALED(x) ((short) x)
+#define TO_32_SSCALED(x) ((int) x)
 
-#define TO_8_UNORM(f)    ((unsigned char) (f * 255.0f))
-#define TO_16_UNORM(f)   ((unsigned short) (f * 65535.0f))
-#define TO_32_UNORM(f)   ((unsigned int) (f * 4294967295.0f))
+#define TO_8_UNORM(x)    ((unsigned char) (x * 255.0f))
+#define TO_16_UNORM(x)   ((unsigned short) (x * 65535.0f))
+#define TO_32_UNORM(x)   ((unsigned int) (x * 4294967295.0f))
 
-#define TO_8_SNORM(f)    ((char) (f * 127.0f))
-#define TO_16_SNORM(f)   ((short) (f * 32767.0f))
-#define TO_32_SNORM(f)   ((int) (f * 2147483647.0f))
+#define TO_8_SNORM(x)    ((char) (x * 127.0f))
+#define TO_16_SNORM(x)   ((short) (x * 32767.0f))
+#define TO_32_SNORM(x)   ((int) (x * 2147483647.0f))
 
 
 
