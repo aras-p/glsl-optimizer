@@ -817,7 +817,7 @@ dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
  * the relocation entry write when the buffer hasn't moved from the
  * last known offset in target_buf.
  */
-static void
+static int
 dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		   GLuint offset, dri_bo *target_buf)
 {
@@ -851,6 +851,7 @@ dri_ttm_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
     reloc_buf_ttm->reloc_buf_data[0]++; /* Increment relocation count */
     /* Check wraparound */
     assert(reloc_buf_ttm->reloc_buf_data[0] != 0);
+    return 0;
 }
 
 /**
@@ -1039,6 +1040,15 @@ intel_ttm_enable_bo_reuse(dri_bufmgr *bufmgr)
     }
 }
 
+/*
+ *
+ */
+static int
+dri_ttm_check_aperture_space(dri_bo *bo)
+{
+    return 0;
+}
+
 /**
  * Initializes the TTM buffer manager, which uses the kernel to allocate, map,
  * and manage map buffer objections.
@@ -1082,7 +1092,7 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
     bufmgr_ttm->bufmgr.process_relocs = dri_ttm_process_reloc;
     bufmgr_ttm->bufmgr.post_submit = dri_ttm_post_submit;
     bufmgr_ttm->bufmgr.debug = GL_FALSE;
-
+    bufmgr_ttm->bufmgr.check_aperture_space = dri_ttm_check_aperture_space;
     /* Initialize the linked lists for BO reuse cache. */
     for (i = 0; i < INTEL_TTM_BO_BUCKETS; i++)
 	bufmgr_ttm->cache_bucket[i].tail = &bufmgr_ttm->cache_bucket[i].head;

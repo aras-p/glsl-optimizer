@@ -87,6 +87,10 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
    batch->cliprect_mode = IGNORE_CLIPRECTS;
+
+   /* account batchbuffer in aperture */
+   dri_bufmgr_check_aperture_space(batch->buf);
+
 }
 
 struct intel_batchbuffer *
@@ -264,7 +268,11 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              dri_bo *buffer,
                              GLuint flags, GLuint delta)
 {
-   dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
+   int ret;
+   int count = 0;
+
+   ret = dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
+
    /*
     * Using the old buffer offset, write in what the right data would be, in case
     * the buffer doesn't move and we can short-circuit the relocation processing
