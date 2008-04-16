@@ -1644,7 +1644,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
 
-	r300->hw.rr.cmd[R300_RR_ROUTE_1] = 0;
+	r300->hw.rr.cmd[R300_RR_INST_1] = 0;
 
 	if (InputsRead & FRAG_BIT_WPOS) {
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
@@ -1670,10 +1670,10 @@ static void r500SetupRSUnit(GLcontext * ctx)
 			(3 << R500_RS_IP_TEX_PTR_Q_SHIFT) |
 			(in_texcoords << 0) | interp_magic[i];
 
-		r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0;
+		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
 			//assert(r300->state.texture.tc_count != 0);
-			r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] |= R500_RS_INST_TEX_CN_WRITE | i	/* source INTERP */
+			r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] |= R500_RS_INST_TEX_CN_WRITE | i	/* source INTERP */
 			    | (fp_reg << R500_RS_INST_TEX_ADDR_SHIFT);
 			high_rr = fp_reg;
 
@@ -1694,7 +1694,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
 			//			r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0 | R300_RS_ROUTE_0_COLOR | (fp_reg++ << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
-			r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_COL_ADDR_SHIFT);
+			r300->hw.rr.cmd[R300_RR_INST_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
 			InputsRead &= ~FRAG_BIT_COL0;
 			col_interp_nr++;
 		} else {
@@ -1705,7 +1705,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
 			//			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11 | R300_RS_ROUTE_1_COLOR1 | (fp_reg++ << R300_RS_ROUTE_1_COLOR1_DEST_SHIFT);
-			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITE |  (fp_reg++ << R500_RS_INST_COL_COL_ADDR_SHIFT);
+			r300->hw.rr.cmd[R300_RR_INST_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITE |  (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
 			InputsRead &= ~FRAG_BIT_COL1;
 			if (high_rr < 1)
 				high_rr = 1;
@@ -1717,7 +1717,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	/* Need at least one. This might still lock as the values are undefined... */
 	if (in_texcoords == 0 && col_interp_nr == 0) {
-		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_COL_ADDR_SHIFT);
+		r300->hw.rr.cmd[R300_RR_INST_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
 		col_interp_nr++;
 	}
 
@@ -1726,7 +1726,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	  | R300_HIRES_EN;
 
 	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, high_rr + 1);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, high_rr + 1);
 	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
 
 	if (InputsRead)
