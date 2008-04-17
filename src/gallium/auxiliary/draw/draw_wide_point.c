@@ -199,7 +199,7 @@ static void widepoint_first_point( struct draw_stage *stage,
    wide->ybias = 0.0;
 
    if (draw->rasterizer->gl_rasterization_rules) {
-      wide->ybias = -0.125;
+      wide->xbias = 0.125;
    }
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
