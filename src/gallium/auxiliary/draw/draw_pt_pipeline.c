@@ -36,11 +36,6 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 
-
-/**
- * Add a point to the primitive queue.
- * \param i0  index into user's vertex arrays
- */
 static void do_point( struct draw_context *draw,
 		      const char *v0 )
 {
@@ -55,11 +50,6 @@ static void do_point( struct draw_context *draw,
 }
 
 
-/**
- * Add a line to the primitive queue.
- * \param i0  index into user's vertex arrays
- * \param i1  index into user's vertex arrays
- */
 static void do_line( struct draw_context *draw,
 		     const char *v0,
 		     const char *v1 )
@@ -75,9 +65,7 @@ static void do_line( struct draw_context *draw,
    draw->pipeline.first->line( draw->pipeline.first, &prim );
 }
 
-/**
- * Add a triangle to the primitive queue.
- */
+
 static void do_triangle( struct draw_context *draw,
 			 char *v0,
 			 char *v1,
