@@ -185,6 +185,11 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
     */
    vinfo = draw->render->get_vertex_info(draw->render);
 
+
+   /* This is unique as it transforms straight from API vertex
+    * information to HW vertices.  All other cases go through our
+    * intermediate float[4] format.
+    */
    for (i = 0; i < vinfo->num_attribs; i++) {
       unsigned src_element = vinfo->src_index[i];
       unsigned src_buffer = draw->vertex_element[src_element].vertex_buffer_index;
