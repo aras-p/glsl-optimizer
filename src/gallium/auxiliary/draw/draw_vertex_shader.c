@@ -95,10 +95,8 @@ draw_create_vertex_shader(struct draw_context *draw,
          vs = draw_create_vs_exec( draw, shader );
       }
    }
+
    assert(vs);
-
-   tgsi_scan_shader(shader->tokens, &vs->info);
-
    return vs;
 }
 
@@ -113,9 +111,6 @@ draw_bind_vertex_shader(struct draw_context *draw,
    {
       draw->vertex_shader = dvs;
       draw->num_vs_outputs = dvs->info.num_outputs;
-
-      tgsi_exec_machine_init(&draw->machine);
-
       dvs->prepare( dvs, draw );
    }
    else {

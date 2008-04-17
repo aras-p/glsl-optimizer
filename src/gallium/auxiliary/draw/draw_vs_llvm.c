@@ -88,8 +88,7 @@ vs_llvm_run( struct draw_vertex_shader *base,
 
 
    assert(count <= 4);
-   assert(draw->vertex_shader->state->output_semantic_name[0]
-          == TGSI_SEMANTIC_POSITION);
+   assert(base->state->output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
 
    /* Consts does not require 16 byte alignment. */
    machine->Consts = (float (*)[4]) draw->user.constants;
@@ -169,6 +168,65 @@ vs_llvm_run( struct draw_vertex_shader *base,
    return clipped != 0;
 }
 
+
+
+
+static void
+vs_llvm_run_linear( struct draw_vertex_shader *base,
+		   const float (*input)[4],
+		   float (*output)[4],
+		   const float (*constants)[4],
+		   unsigned count,
+		   unsigned input_stride,
+		   unsigned output_stride )
+{
+   struct draw_llvm_vertex_shader *shader =
+      (struct draw_llvm_vertex_shader *)base;
+
+   struct tgsi_exec_machine *machine = &draw->machine;
+   unsigned int j;
+
+
+   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
+      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+
+      /* Swizzle inputs.  
+       */
+      for (j = 0; j < max_vertices; j++) {
+	 for (slot = 0; slot < draw->num_vs_inputs; slot++) {
+	    machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
+	    machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
+	    machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
+	    machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
+	 }
+      } 
+
+      /* run shader */
+      gallivm_cpu_vs_exec(shader->llvm_prog,
+                          machine->Inputs,
+                          machine->Outputs,
+			  (float (*)[4]) constants,
+                          machine->Temps);
+
+
+      /* Unswizzle all output results
+       */
+      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
+         output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+         output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+         output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+         output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+      }
+
+      /* Advance input, output pointers: 
+       */
+      input = (const float (*)[4])((const char *)input + input_stride);
+      output = (float (*)[4])((char *)output + output_stride);
+   } 
+}
+
+
+
 static void
 vs_llvm_delete( struct draw_vertex_shader *base )
 {
@@ -198,8 +256,12 @@ draw_create_vs_llvm(struct draw_context *draw,
 
    /* we make a private copy of the tokens */
    vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
+
+   tgsi_scan_shader(shader->tokens, &vs->base.info);
+
    vs->base.prepare = vs_llvm_prepare;
    vs->base.run = vs_llvm_run;
+   vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
 
    {

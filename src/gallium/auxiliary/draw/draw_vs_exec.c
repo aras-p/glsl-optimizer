@@ -40,8 +40,20 @@
 
 #include "tgsi/util/tgsi_parse.h"
 
-#define MAX_TGSI_VERTICES 4
 
+struct exec_vertex_shader {
+   struct draw_vertex_shader base;
+   struct tgsi_exec_machine *machine;
+};
+
+static struct exec_vertex_shader *exec_vertex_shader( struct draw_vertex_shader *vs )
+{
+   return (struct exec_vertex_shader *)vs;
+}
+
+
+/* Not required for run_linear.
+ */
 static void
 vs_exec_prepare( struct draw_vertex_shader *shader,
 		 struct draw_context *draw )
@@ -81,10 +93,9 @@ vs_exec_run( struct draw_vertex_shader *shader,
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
-   assert(draw->vertex_shader->info.output_semantic_name[0]
-          == TGSI_SEMANTIC_POSITION);
+   assert(shader->info.output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
 
-   machine->Consts = (float (*)[4]) draw->user.constants;
+   machine->Consts = (const float (*)[4]) draw->user.constants;
    machine->Inputs = ALIGN16_ASSIGN(inputs);
    if (draw->rasterizer->bypass_vs) {
       /* outputs are just the inputs */
@@ -179,6 +190,64 @@ vs_exec_run( struct draw_vertex_shader *shader,
 
 
 
+/* Simplified vertex shader interface for the pt paths.  Given the
+ * complexity of code-generating all the above operations together,
+ * it's time to try doing all the other stuff separately.
+ */
+static void
+vs_exec_run_linear( struct draw_vertex_shader *shader,
+		    const float (*input)[4],
+		    float (*output)[4],
+		    const float (*constants)[4],
+		    unsigned count,
+		    unsigned input_stride,
+		    unsigned output_stride )
+{
+   struct exec_vertex_shader *evs = exec_vertex_shader(shader);
+   struct tgsi_exec_machine *machine = evs->machine;
+   unsigned int i, j;
+   unsigned slot;
+
+   machine->Consts = constants;
+
+   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
+      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+
+      /* Swizzle inputs.  
+       */
+      for (j = 0; j < max_vertices; j++) {
+         for (slot = 0; slot < shader->info.num_inputs; slot++) {
+            machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
+            machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
+            machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
+            machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
+         }
+      } 
+
+      /* run interpreter */
+      tgsi_exec_machine_run( machine );
+
+      /* Unswizzle all output results.  
+       */
+      for (j = 0; j < max_vertices; j++) {
+         for (slot = 0; slot < shader->info.num_outputs; slot++) {
+            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+         }
+      } 
+
+      /* Advance input, output pointers: 
+       */
+      input = (const float (*)[4])((const char *)input + input_stride);
+      output = (float (*)[4])((char *)output + output_stride);
+   }
+}
+
+
+
+
 static void
 vs_exec_delete( struct draw_vertex_shader *dvs )
 {
@@ -191,17 +260,23 @@ struct draw_vertex_shader *
 draw_create_vs_exec(struct draw_context *draw,
 		    const struct pipe_shader_state *state)
 {
-   struct draw_vertex_shader *vs = CALLOC_STRUCT( draw_vertex_shader );
+   struct exec_vertex_shader *vs = CALLOC_STRUCT( exec_vertex_shader );
    uint nt = tgsi_num_tokens(state->tokens);
 
    if (vs == NULL) 
       return NULL;
 
    /* we make a private copy of the tokens */
-   vs->state.tokens = mem_dup(state->tokens, nt * sizeof(state->tokens[0]));
-   vs->prepare = vs_exec_prepare;
-   vs->run = vs_exec_run;
-   vs->delete = vs_exec_delete;
+   vs->base.state.tokens = mem_dup(state->tokens, nt * sizeof(state->tokens[0]));
+   tgsi_scan_shader(state->tokens, &vs->base.info);
 
-   return vs;
+
+   vs->base.prepare = vs_exec_prepare;
+   vs->base.run = vs_exec_run;
+   vs->base.run_linear = vs_exec_run_linear;
+   vs->base.delete = vs_exec_delete;
+   vs->machine = &draw->machine;
+
+
+   return &vs->base;
 }

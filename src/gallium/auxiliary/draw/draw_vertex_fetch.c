@@ -32,7 +32,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "draw_private.h"
+#include "draw_vs.h"
 #include "draw_context.h"
 
 

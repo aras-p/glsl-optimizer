@@ -55,6 +55,7 @@ struct gallivm_cpu_engine;
 
 struct draw_pt_middle_end;
 struct draw_pt_front_end;
+struct draw_vertex_shader;
 
 #define MAX_SHADER_VERTICES 128
 
@@ -132,33 +133,6 @@ struct draw_stage
 #define VCACHE_OVERFLOW        4
 #define VS_QUEUE_LENGTH        (VCACHE_SIZE + VCACHE_OVERFLOW + 1)	/* can never fill up */
 
-/**
- * Private version of the compiled vertex_shader
- */
-struct draw_vertex_shader {
-
-   /* This member will disappear shortly:
-    */
-   struct pipe_shader_state   state;
-
-   struct tgsi_shader_info info;
-
-   void (*prepare)( struct draw_vertex_shader *shader,
-		    struct draw_context *draw );
-
-   /* Run the shader - this interface will get cleaned up in the
-    * future:
-    */
-   boolean (*run)( struct draw_vertex_shader *shader,
-                   struct draw_context *draw,
-                   const unsigned *elts,
-                   unsigned count,
-                   void *out,
-                   unsigned vertex_size);
-
-
-   void (*delete)( struct draw_vertex_shader * );
-};
 
 
 /* Internal function for vertex fetch.

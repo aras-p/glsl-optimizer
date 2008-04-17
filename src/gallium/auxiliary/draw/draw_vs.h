@@ -35,9 +35,45 @@
 #include "draw_private.h"
 
 
-struct draw_vertex_shader;
 struct draw_context;
 struct pipe_shader_state;
+
+/**
+ * Private version of the compiled vertex_shader
+ */
+struct draw_vertex_shader {
+
+   /* This member will disappear shortly:
+    */
+   struct pipe_shader_state   state;
+
+   struct tgsi_shader_info info;
+
+   void (*prepare)( struct draw_vertex_shader *shader,
+		    struct draw_context *draw );
+
+   /* Run the shader - this interface will get cleaned up in the
+    * future:
+    */
+   boolean (*run)( struct draw_vertex_shader *shader,
+                   struct draw_context *draw,
+                   const unsigned *elts,
+                   unsigned count,
+                   void *out,
+                   unsigned vertex_size);
+
+   void (*run_linear)( struct draw_vertex_shader *shader,
+		       const float (*input)[4],
+		       float (*output)[4],
+		       const float (*constants)[4],
+		       unsigned count,
+		       unsigned input_stride,
+		       unsigned output_stride );
+
+
+   void (*delete)( struct draw_vertex_shader * );
+};
+
 
 struct draw_vertex_shader *
 draw_create_vs_exec(struct draw_context *draw,
@@ -79,5 +115,7 @@ compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
    return mask;
 }
 
+#define MAX_TGSI_VERTICES 4
+   
 
 #endif

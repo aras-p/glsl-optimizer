@@ -32,9 +32,9 @@
 
 #include "pipe/p_util.h"
 #include "draw/draw_context.h"
-#include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_vs.h"
 
 /* The simplest 'middle end' in the new vertex code.  
  * 

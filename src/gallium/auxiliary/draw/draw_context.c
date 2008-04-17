@@ -33,8 +33,8 @@
 
 #include "pipe/p_util.h"
 #include "draw_context.h"
-#include "draw_private.h"
 #include "draw_vbuf.h"
+#include "draw_vs.h"
 
 
 struct draw_context *draw_create( void )
@@ -107,6 +107,8 @@ struct draw_context *draw_create( void )
 
    draw_vertex_cache_invalidate( draw );
    draw_set_mapped_element_buffer( draw, 0, NULL );
+
+   tgsi_exec_machine_init(&draw->machine);
 
    if (!draw_pt_init( draw ))
       goto fail;
@@ -460,3 +462,16 @@ boolean draw_get_edgeflag( struct draw_context *draw,
    else
       return 1;
 }
+
+
+#if 0
+/* Crufty init function.  Fix me.
+ */
+boolean draw_init_machine( struct draw_context *draw )
+{
+   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
+   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
+   machine->Inputs = ALIGN16_ASSIGN(inputs);
+   machine->Outputs = ALIGN16_ASSIGN(outputs);
+}
+#endif

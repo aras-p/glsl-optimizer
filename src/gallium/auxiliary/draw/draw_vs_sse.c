@@ -58,7 +58,11 @@ typedef void (XSTDCALL *codegen_function) (
 struct draw_sse_vertex_shader {
    struct draw_vertex_shader base;
    struct x86_function sse2_program;
+
    codegen_function func;
+   
+   struct tgsi_exec_machine *machine;
+
    float immediates[TGSI_EXEC_NUM_IMMEDIATES][4];
 };
 
@@ -96,11 +100,10 @@ vs_sse_run( struct draw_vertex_shader *base,
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
-   assert(draw->vertex_shader->info.output_semantic_name[0]
-          == TGSI_SEMANTIC_POSITION);
+   assert(base->info.output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
 
    /* Consts does not require 16 byte alignment. */
-   machine->Consts = (float (*)[4]) draw->user.constants;
+   machine->Consts = (const float (*)[4]) draw->user.constants;
    machine->Inputs = ALIGN16_ASSIGN(inputs);
    if (draw->rasterizer->bypass_vs) {
       /* outputs are just the inputs */
@@ -124,7 +127,7 @@ vs_sse_run( struct draw_vertex_shader *base,
           */
          shader->func(machine->Inputs,
                       machine->Outputs,
-                      machine->Consts,
+                      (float (*)[4])machine->Consts,
                       machine->Temps,
                       shader->immediates);
       }
@@ -200,6 +203,67 @@ vs_sse_run( struct draw_vertex_shader *base,
 }
 
 
+/* Simplified vertex shader interface for the pt paths.  Given the
+ * complexity of code-generating all the above operations together,
+ * it's time to try doing all the other stuff separately.
+ */
+static void
+vs_sse_run_linear( struct draw_vertex_shader *base,
+		   const float (*input)[4],
+		   float (*output)[4],
+		   const float (*constants)[4],
+		   unsigned count,
+		   unsigned input_stride,
+		   unsigned output_stride )
+{
+   struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
+   struct tgsi_exec_machine *machine = shader->machine;
+   unsigned int i, j;
+   unsigned slot;
+
+   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
+      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+
+      /* Swizzle inputs.  
+       */
+      for (j = 0; j < max_vertices; j++) {
+         for (slot = 0; slot < base->info.num_inputs; slot++) {
+            machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
+            machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
+            machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
+            machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
+         }
+      } 
+
+      /* run compiled shader
+       */
+      shader->func(machine->Inputs,
+		   machine->Outputs,
+		   (float (*)[4])constants,
+		   machine->Temps,
+		   shader->immediates);
+
+
+      /* Unswizzle all output results.  
+       */
+      for (j = 0; j < max_vertices; j++) {
+         for (slot = 0; slot < base->info.num_outputs; slot++) {
+            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+         }
+      } 
+
+      /* Advance input, output pointers: 
+       */
+      input = (const float (*)[4])((const char *)input + input_stride);
+      output = (float (*)[4])((char *)output + output_stride);
+   }
+}
+
+
+
 
 static void
 vs_sse_delete( struct draw_vertex_shader *base )
@@ -229,8 +293,12 @@ draw_create_vs_sse(struct draw_context *draw,
 
    /* we make a private copy of the tokens */
    vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
+
+   tgsi_scan_shader(templ->tokens, &vs->base.info);
+
    vs->base.prepare = vs_sse_prepare;
    vs->base.run = vs_sse_run;
+   vs->base.run_linear = vs_sse_run_linear;
    vs->base.delete = vs_sse_delete;
    
    x86_init_func( &vs->sse2_program );
