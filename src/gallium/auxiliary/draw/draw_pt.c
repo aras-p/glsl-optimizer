@@ -74,11 +74,11 @@ draw_pt_arrays(struct draw_context *draw,
    }
 
 
-   if (draw->pt.middle.opt[opt] == NULL) {
-      opt = PT_PIPELINE | PT_CLIPTEST | PT_SHADE;
+   middle = draw->pt.middle.opt[opt];
+   if (middle == NULL) {
+      middle = draw->pt.middle.opt[PT_PIPELINE | PT_CLIPTEST | PT_SHADE];
    }
 
-   middle = draw->pt.middle.opt[opt];
    assert(middle);
 
    /* May create a short-circuited version of this for small primitives:
