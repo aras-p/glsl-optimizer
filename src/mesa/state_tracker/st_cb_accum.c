@@ -173,6 +173,8 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
    default:
       _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
+
+   pipe_surface_unmap(acc_ps);
 }
 
 
