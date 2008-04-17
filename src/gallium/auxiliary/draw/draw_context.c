@@ -249,6 +249,7 @@ draw_set_vertex_buffers(struct draw_context *draw,
    draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
 
    memcpy(draw->vertex_buffer, buffers, count * sizeof(buffers[0]));
+   draw->nr_vertex_buffers = count;
 }
 
 

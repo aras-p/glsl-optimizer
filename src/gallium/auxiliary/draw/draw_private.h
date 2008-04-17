@@ -245,7 +245,10 @@ struct draw_context
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;
+
    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+   unsigned nr_vertex_buffers;
+
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
    struct draw_vertex_shader *vertex_shader;
 
