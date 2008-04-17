@@ -112,6 +112,7 @@ struct draw_pt_middle_end {
  * mode...  
  */
 struct vbuf_render;
+struct vertex_header;
 
 
 /* Helper functions.
@@ -132,25 +133,25 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *d
  */
 void draw_pt_run_pipeline( struct draw_context *draw,
                            unsigned prim,
-                           char *verts,
-                           unsigned vertex_stride,
+                           struct vertex_header *verts,
                            unsigned vertex_count,
+                           unsigned vertex_stride,
                            const ushort *elts,
                            unsigned count );
 
 
-/* HW vertex emit:
+/*******************************************************************************
+ * HW vertex emit:
  */
 struct pt_emit;
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
-			   unsigned prim,
-			   unsigned opt );
+			   unsigned prim );
 
 void draw_pt_emit( struct pt_emit *emit,
-		   char *verts,
-		   unsigned stride,
+		   const float (*vertex_data)[4],
 		   unsigned vertex_count,
+		   unsigned stride,
 		   const ushort *elts,
 		   unsigned count );
 
@@ -159,6 +160,42 @@ void draw_pt_emit_destroy( struct pt_emit *emit );
 struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
 
 
+/*******************************************************************************
+ * API vertex fetch:
+ */
+
+struct pt_fetch;
+void draw_pt_fetch_prepare( struct pt_fetch *fetch,
+			    boolean emit_header,
+			    unsigned vertex_size );
+
+void draw_pt_fetch_run( struct pt_fetch *fetch,
+			const unsigned *elts,
+			unsigned count,
+			char *verts );
+
+void draw_pt_fetch_destroy( struct pt_fetch *fetch );
+
+struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw );
+
+/*******************************************************************************
+ * Post-VS: cliptest, rhw, viewport
+ */
+struct pt_post_vs;
+
+boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
+			     struct vertex_header *pipeline_verts,
+			     unsigned stride,
+			     unsigned count );
+
+void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
+			      boolean bypass_clipping,
+			      boolean identity_viewport,
+			      boolean opengl );
+
+struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
+
+void draw_pt_post_vs_destroy( struct pt_post_vs *pvs );
 
 
 #endif

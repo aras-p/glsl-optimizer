@@ -110,6 +110,12 @@ struct draw_context *draw_create( void )
 
    tgsi_exec_machine_init(&draw->machine);
 
+   /* FIXME: give this machine thing a proper constructor:
+    */
+   draw->machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+   draw->machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+
+
    if (!draw_pt_init( draw ))
       goto fail;
 
@@ -155,8 +161,13 @@ void draw_destroy( struct draw_context *draw )
    if (draw->pipeline.rasterize)
       draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
 
+   if (draw->machine.Inputs)
+      align_free(draw->machine.Inputs);
+   if (draw->machine.Outputs)
+      align_free(draw->machine.Outputs);
    tgsi_exec_machine_free_data(&draw->machine);
-   
+
+
    if (draw->vs.vertex_cache)
       align_free( draw->vs.vertex_cache ); /* Frees all the vertices. */
 
@@ -265,6 +276,7 @@ draw_set_vertex_elements(struct draw_context *draw,
    draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
 
    memcpy(draw->vertex_element, elements, count * sizeof(elements[0]));
+   draw->nr_vertex_elements = count;
 }
 
 
@@ -463,15 +475,3 @@ boolean draw_get_edgeflag( struct draw_context *draw,
       return 1;
 }
 
-
-#if 0
-/* Crufty init function.  Fix me.
- */
-boolean draw_init_machine( struct draw_context *draw )
-{
-   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
-   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
-   machine->Inputs = ALIGN16_ASSIGN(inputs);
-   machine->Outputs = ALIGN16_ASSIGN(outputs);
-}
-#endif

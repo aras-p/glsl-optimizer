@@ -117,12 +117,13 @@ void draw_pt_reset_vertex_ids( struct draw_context *draw )
  */
 void draw_pt_run_pipeline( struct draw_context *draw,
                            unsigned prim,
-                           char *verts,
-                           unsigned stride,
+                           struct vertex_header *pipeline_verts,
                            unsigned vertex_count,
+                           unsigned stride,
                            const ushort *elts,
                            unsigned count )
 {
+   char *verts = (char *)pipeline_verts;
    unsigned i;
 
    draw->pt.pipeline.verts = verts;

@@ -91,12 +91,10 @@ vs_sse_run( struct draw_vertex_shader *base,
             unsigned vertex_size )
 {
    struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
-   struct tgsi_exec_machine *machine = &draw->machine;
+   struct tgsi_exec_machine *machine = shader->machine;
    unsigned int i, j;
    unsigned int clipped = 0;
-
-   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
-   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
+   struct tgsi_exec_vector *outputs = 0;
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
@@ -104,13 +102,13 @@ vs_sse_run( struct draw_vertex_shader *base,
 
    /* Consts does not require 16 byte alignment. */
    machine->Consts = (const float (*)[4]) draw->user.constants;
-   machine->Inputs = ALIGN16_ASSIGN(inputs);
+
    if (draw->rasterizer->bypass_vs) {
       /* outputs are just the inputs */
-      machine->Outputs = machine->Inputs;
+      outputs = machine->Inputs;
    }
    else {
-      machine->Outputs = ALIGN16_ASSIGN(outputs);
+      outputs = machine->Outputs;
    }
 
    for (i = 0; i < count; i += SSE_MAX_VERTICES) {
@@ -142,10 +140,10 @@ vs_sse_run( struct draw_vertex_shader *base,
          struct vertex_header *out =
             draw_header_from_block(vOut, vertex_size, i + j);
 
-         x = out->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-         y = out->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-         z = out->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-         w = out->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+         x = out->clip[0] = outputs[0].xyzw[0].f[j];
+         y = out->clip[1] = outputs[0].xyzw[1].f[j];
+         z = out->clip[2] = outputs[0].xyzw[2].f[j];
+         w = out->clip[3] = outputs[0].xyzw[3].f[j];
 
          if (!draw->rasterizer->bypass_clipping) {
             out->clipmask = compute_clipmask(out->clip, draw->plane,
@@ -182,10 +180,10 @@ vs_sse_run( struct draw_vertex_shader *base,
           * vertex attrib slots.
           */
          for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-            out->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-            out->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-            out->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-            out->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+            out->data[slot][0] = outputs[slot].xyzw[0].f[j];
+            out->data[slot][1] = outputs[slot].xyzw[1].f[j];
+            out->data[slot][2] = outputs[slot].xyzw[2].f[j];
+            out->data[slot][3] = outputs[slot].xyzw[3].f[j];
          }
 #if 0 /*DEBUG*/
          printf("%d) Post xform vert:\n", i + j);
@@ -233,6 +231,8 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
             machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
             machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
          }
+
+	 input = (const float (*)[4])((const char *)input + input_stride);
       } 
 
       /* run compiled shader
@@ -253,12 +253,9 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
             output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
             output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
          }
-      } 
 
-      /* Advance input, output pointers: 
-       */
-      input = (const float (*)[4])((const char *)input + input_stride);
-      output = (float (*)[4])((char *)output + output_stride);
+	 output = (float (*)[4])((char *)output + output_stride);
+      } 
    }
 }
 
@@ -300,6 +297,7 @@ draw_create_vs_sse(struct draw_context *draw,
    vs->base.run = vs_sse_run;
    vs->base.run_linear = vs_sse_run_linear;
    vs->base.delete = vs_sse_delete;
+   vs->machine = &draw->machine;
    
    x86_init_func( &vs->sse2_program );
 

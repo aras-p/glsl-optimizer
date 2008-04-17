@@ -38,16 +38,11 @@ struct pt_emit {
    struct draw_context *draw;
 
    struct translate *translate;
-
-   unsigned pipeline_vertex_size;
-   unsigned prim;
-   unsigned opt;
 };
 
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
-			   unsigned prim,
-			   unsigned opt )
+			   unsigned prim )
 {
    struct draw_context *draw = emit->draw;
    const struct vertex_info *vinfo;
@@ -75,8 +70,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       unsigned emit_sz = 0;
       unsigned src_buffer = 0;
       unsigned output_format;
-      unsigned src_offset = (sizeof(struct vertex_header) + 
-			     vinfo->src_index[i] * 4 * sizeof(float) );
+      unsigned src_offset = (vinfo->src_index[i] * 4 * sizeof(float) );
 
 
          
@@ -139,9 +133,9 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
 
 void draw_pt_emit( struct pt_emit *emit,
-		   char *verts,
-		   unsigned stride,
+		   const float (*vertex_data)[4],
 		   unsigned vertex_count,
+		   unsigned stride,
 		   const ushort *elts,
 		   unsigned count )
 {
@@ -164,7 +158,7 @@ void draw_pt_emit( struct pt_emit *emit,
 
    translate->set_buffer(translate, 
 			 0, 
-			 verts,
+			 vertex_data,
 			 stride );
 
    translate->set_buffer(translate, 

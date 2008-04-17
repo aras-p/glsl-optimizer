@@ -58,8 +58,10 @@ static void
 vs_exec_prepare( struct draw_vertex_shader *shader,
 		 struct draw_context *draw )
 {
+   struct exec_vertex_shader *evs = exec_vertex_shader(shader);
+
    /* specify the vertex program to interpret/execute */
-   tgsi_exec_machine_bind_shader(&draw->machine,
+   tgsi_exec_machine_bind_shader(evs->machine,
 				 shader->state.tokens,
 				 PIPE_MAX_SAMPLERS,
 				 NULL /*samplers*/ );
@@ -84,30 +86,44 @@ vs_exec_run( struct draw_vertex_shader *shader,
 	     void *vOut,
              unsigned vertex_size)
 {
-   struct tgsi_exec_machine *machine = &draw->machine;
+   struct exec_vertex_shader *evs = exec_vertex_shader(shader);
+   struct tgsi_exec_machine *machine = evs->machine;
    unsigned int i, j;
    unsigned int clipped = 0;
-
-   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_MAX_ATTRIBS);
-   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_MAX_ATTRIBS);
+   struct tgsi_exec_vector *outputs = 0;
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
    assert(shader->info.output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
 
    machine->Consts = (const float (*)[4]) draw->user.constants;
-   machine->Inputs = ALIGN16_ASSIGN(inputs);
+
    if (draw->rasterizer->bypass_vs) {
       /* outputs are just the inputs */
-      machine->Outputs = machine->Inputs;
+      outputs = machine->Inputs;
    }
    else {
-      machine->Outputs = ALIGN16_ASSIGN(outputs);
+      outputs = machine->Outputs;
    }
 
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
       draw->vertex_fetch.fetch_func( draw, machine, &elts[i], max_vertices );
+
+#if 0
+      for (j = 0; j < max_vertices; j++) {
+	 unsigned slot;
+	 debug_printf("%d) Input vert:\n", i + j);
+	 for (slot = 0; slot < shader->info.num_inputs; slot++) {
+	    debug_printf("\t%d: %f %f %f %f\n", slot,
+			 machine->Inputs[slot].xyzw[0].f[j],
+			 machine->Inputs[slot].xyzw[1].f[j],
+			 machine->Inputs[slot].xyzw[2].f[j],
+			 machine->Inputs[slot].xyzw[3].f[j]);
+	 }
+      }
+#endif
+
 
       if (!draw->rasterizer->bypass_vs) {
          /* run interpreter */
@@ -127,10 +143,10 @@ vs_exec_run( struct draw_vertex_shader *shader,
           * program as a set of DP4 instructions appended to the
           * user-provided code.
           */
-         x = out->clip[0] = machine->Outputs[0].xyzw[0].f[j];
-         y = out->clip[1] = machine->Outputs[0].xyzw[1].f[j];
-         z = out->clip[2] = machine->Outputs[0].xyzw[2].f[j];
-         w = out->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+         x = out->clip[0] = outputs[0].xyzw[0].f[j];
+         y = out->clip[1] = outputs[0].xyzw[1].f[j];
+         z = out->clip[2] = outputs[0].xyzw[2].f[j];
+         w = out->clip[3] = outputs[0].xyzw[3].f[j];
 
          if (!draw->rasterizer->bypass_clipping) {
             out->clipmask = compute_clipmask(out->clip, draw->plane,
@@ -156,7 +172,8 @@ vs_exec_run( struct draw_vertex_shader *shader,
             out->data[0][2] = z * scale[2] + trans[2];
             out->data[0][3] = w;
          }
-         else {
+         else 
+	 {
             out->data[0][0] = x;
             out->data[0][1] = y;
             out->data[0][2] = z;
@@ -167,10 +184,10 @@ vs_exec_run( struct draw_vertex_shader *shader,
           * vertex attrib slots.
           */
          for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-            out->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-            out->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-            out->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-            out->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+            out->data[slot][0] = outputs[slot].xyzw[0].f[j];
+            out->data[slot][1] = outputs[slot].xyzw[1].f[j];
+            out->data[slot][2] = outputs[slot].xyzw[2].f[j];
+            out->data[slot][3] = outputs[slot].xyzw[3].f[j];
          }
 
 #if 0 /*DEBUG*/
@@ -216,12 +233,25 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
       /* Swizzle inputs.  
        */
       for (j = 0; j < max_vertices; j++) {
+#if 0
+         debug_printf("%d) Input vert:\n", i + j);
+         for (slot = 0; slot < shader->info.num_inputs; slot++) {
+            debug_printf("\t%d: %f %f %f %f\n", slot,
+			 input[slot][0],
+			 input[slot][1],
+			 input[slot][2],
+			 input[slot][3]);
+         }
+#endif
+
          for (slot = 0; slot < shader->info.num_inputs; slot++) {
             machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
             machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
             machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
             machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
          }
+
+	 input = (const float (*)[4])((const char *)input + input_stride);
       } 
 
       /* run interpreter */
@@ -235,13 +265,23 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
             output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
             output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
             output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+
          }
+
+#if 0
+	 debug_printf("%d) Post xform vert:\n", i + j);
+	 for (slot = 0; slot < shader->info.num_outputs; slot++) {
+	    debug_printf("\t%d: %f %f %f %f\n", slot,
+			 output[slot][0],
+			 output[slot][1],
+			 output[slot][2],
+			 output[slot][3]);
+         }
+#endif
+
+	 output = (float (*)[4])((char *)output + output_stride);
       } 
 
-      /* Advance input, output pointers: 
-       */
-      input = (const float (*)[4])((const char *)input + input_stride);
-      output = (float (*)[4])((char *)output + output_stride);
    }
 }
 

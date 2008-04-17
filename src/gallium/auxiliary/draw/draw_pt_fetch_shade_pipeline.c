@@ -39,8 +39,11 @@ struct fetch_pipeline_middle_end {
    struct draw_context *draw;
 
    struct pt_emit *emit;
+   struct pt_fetch *fetch;
+   struct pt_post_vs *post_vs;
 
-   unsigned pipeline_vertex_size;
+   unsigned vertex_data_offset;
+   unsigned vertex_size;
    unsigned prim;
    unsigned opt;
 };
@@ -51,15 +54,43 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 				    unsigned opt )
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
+   struct draw_context *draw = fpme->draw;
+   struct draw_vertex_shader *vs = draw->vertex_shader;
+   unsigned nr = MAX2( vs->info.num_inputs,
+		       vs->info.num_outputs );
 
    fpme->prim = prim;
    fpme->opt = opt;
 
-   if (!(opt & PT_PIPELINE)) 
-      draw_pt_emit_prepare( fpme->emit, prim, opt );
+   /* Always leave room for the vertex header whether we need it or
+    * not.  It's hard to get rid of it in particular because of the
+    * viewport code in draw_pt_post_vs.c.  
+    */
+   fpme->vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
 
-   //fpme->pipeline_vertex_size = sizeof(struct vertex_header) + nr * 4 * sizeof(float);
-   fpme->pipeline_vertex_size = MAX_VERTEX_ALLOCATION;
+   
+
+   draw_pt_fetch_prepare( fpme->fetch, 
+			  (opt & (PT_CLIPTEST | PT_PIPELINE)) != 0,
+			  fpme->vertex_size );
+
+   /* XXX: it's not really gl rasterization rules we care about here,
+    * but gl vs dx9 clip spaces.
+    */
+   draw_pt_post_vs_prepare( fpme->post_vs,
+			    draw->rasterizer->bypass_clipping,
+			    draw->identity_viewport,
+			    draw->rasterizer->gl_rasterization_rules );
+			    
+
+   if (!(opt & PT_PIPELINE)) 
+      draw_pt_emit_prepare( fpme->emit, 
+			    prim );
+
+   /* No need to prepare the shader.
+    */
+   vs->prepare(vs, draw);
+
 }
 
 
@@ -74,44 +105,63 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vertex_shader;
-   char *pipeline_verts;
-   unsigned pipeline = PT_PIPELINE;
+   unsigned opt = fpme->opt;
 
-   pipeline_verts = MALLOC(fpme->pipeline_vertex_size *
-			   fetch_count);
+   struct vertex_header *pipeline_verts = 
+      (struct vertex_header *)MALLOC(fpme->vertex_size * fetch_count);
 
    if (!pipeline_verts) {
       assert(0);
       return;
    }
 
-
-   /* Shade
+   /* Fetch into our vertex buffer
     */
-   shader->prepare(shader, draw);
+   draw_pt_fetch_run( fpme->fetch,
+		      fetch_elts, 
+		      fetch_count,
+		      (char *)pipeline_verts );
 
-   if (shader->run(shader, draw, fetch_elts, fetch_count, pipeline_verts,
-		   fpme->pipeline_vertex_size))
+   /* Run the shader, note that this overwrites the data[] parts of
+    * the pipeline verts.  If there is no shader, ie a bypass shader,
+    * then the inputs == outputs, and are already in the correct
+    * place.
+    */
+   if (opt & PT_SHADE)
    {
-      pipeline |= PT_CLIPTEST;
+      shader->run_linear(shader, 
+			 (const float (*)[4])pipeline_verts->data,
+			 (      float (*)[4])pipeline_verts->data,
+			 (const float (*)[4])draw->user.constants,
+			 fetch_count,
+			 fpme->vertex_size,
+			 fpme->vertex_size);
    }
 
+   if (draw_pt_post_vs_run( fpme->post_vs,
+			    pipeline_verts,
+			    fetch_count,
+			    fpme->vertex_size ))
+   {
+      opt |= PT_PIPELINE;
+   }
 
    /* Do we need to run the pipeline?
     */
-   if (fpme->opt & pipeline) {
+   if (opt & PT_PIPELINE) {
       draw_pt_run_pipeline( fpme->draw,
                             fpme->prim,
                             pipeline_verts,
-                            fpme->pipeline_vertex_size,
                             fetch_count,
+                            fpme->vertex_size,
                             draw_elts,
                             draw_count );
-   } else {
+   } 
+   else {
       draw_pt_emit( fpme->emit,
-		    pipeline_verts,
-		    fpme->pipeline_vertex_size,
+		    (const float (*)[4])pipeline_verts->data,
 		    fetch_count,
+		    fpme->vertex_size,
 		    draw_elts,
 		    draw_count );
    }
@@ -129,6 +179,17 @@ static void fetch_pipeline_finish( struct draw_pt_middle_end *middle )
 
 static void fetch_pipeline_destroy( struct draw_pt_middle_end *middle )
 {
+   struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
+
+   if (fpme->fetch)
+      draw_pt_fetch_destroy( fpme->fetch );
+
+   if (fpme->emit)
+      draw_pt_emit_destroy( fpme->emit );
+
+   if (fpme->post_vs)
+      draw_pt_post_vs_destroy( fpme->post_vs );
+
    FREE(middle);
 }
 
@@ -145,6 +206,14 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit( struct draw_context *
    fpme->base.destroy = fetch_pipeline_destroy;
 
    fpme->draw = draw;
+
+   fpme->fetch = draw_pt_fetch_create( draw );
+   if (!fpme->fetch)
+      goto fail;
+
+   fpme->post_vs = draw_pt_post_vs_create( draw );
+   if (!fpme->post_vs)
+      goto fail;
 
    fpme->emit = draw_pt_emit_create( draw );
    if (!fpme->emit) 

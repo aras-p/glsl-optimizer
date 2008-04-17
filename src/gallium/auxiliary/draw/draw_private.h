@@ -224,6 +224,8 @@ struct draw_context
    unsigned nr_vertex_buffers;
 
    struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+   unsigned nr_vertex_elements;
+
    struct draw_vertex_shader *vertex_shader;
 
    boolean identity_viewport;

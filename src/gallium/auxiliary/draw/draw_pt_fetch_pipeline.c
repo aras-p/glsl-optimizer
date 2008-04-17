@@ -286,9 +286,9 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
     */
    draw_pt_run_pipeline( fpme->draw,
                          fpme->prim,
-                         pipeline_verts,
-                         fpme->pipeline_vertex_size,
+                         (struct vertex_header *)pipeline_verts,
                          fetch_count,
+                         fpme->pipeline_vertex_size,
                          draw_elts,
                          draw_count );
                  
