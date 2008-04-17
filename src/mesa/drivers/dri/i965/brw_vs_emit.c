@@ -867,7 +867,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      if (!c->key.know_w_is_one) {
+      if (!BRW_IS_IGD(p->brw) && !c->key.know_w_is_one) {
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,

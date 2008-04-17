@@ -148,10 +148,12 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    brw_clip_init_clipmask(c);
 
    /* -ve rhw workaround */
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
-   brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2),
-		   brw_imm_ud(1<<20));
-   brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(0x3f));
+   if (!BRW_IS_IGD(p->brw)) {
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+      brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2),
+              brw_imm_ud(1<<20));
+      brw_OR(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(0x3f));
+   }
 
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 

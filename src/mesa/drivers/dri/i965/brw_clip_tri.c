@@ -536,14 +536,16 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
-   brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
-		   brw_imm_ud(1<<20));
-   neg_rhw = brw_IF(p, BRW_EXECUTE_1); 
-   {
-	   brw_clip_test(c);
+   if (!BRW_IS_IGD(p->brw)) {
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+      brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
+              brw_imm_ud(1<<20));
+      neg_rhw = brw_IF(p, BRW_EXECUTE_1); 
+      {
+         brw_clip_test(c);
+      }
+      brw_ENDIF(p, neg_rhw);
    }
-   brw_ENDIF(p, neg_rhw);
    /* Can't push into do_clip_tri because with polygon (or quad)
     * flatshading, need to apply the flatshade here because we don't
     * respect the PV when converting to trifan for emit:
