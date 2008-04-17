@@ -215,6 +215,7 @@ static unsigned long t_src_class(enum register_file file)
    case PROGRAM_LOCAL_PARAM:
    case PROGRAM_ENV_PARAM:
    case PROGRAM_NAMED_PARAM:
+   case PROGRAM_CONSTANT:
    case PROGRAM_STATE_VAR:
       return VSF_IN_CLASS_PARAM;
    /*
