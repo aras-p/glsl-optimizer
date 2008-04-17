@@ -128,4 +128,37 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
 
 
+/* More helpers:
+ */
+void draw_pt_run_pipeline( struct draw_context *draw,
+                           unsigned prim,
+                           char *verts,
+                           unsigned vertex_stride,
+                           unsigned vertex_count,
+                           const ushort *elts,
+                           unsigned count );
+
+
+/* HW vertex emit:
+ */
+struct pt_emit;
+
+void draw_pt_emit_prepare( struct pt_emit *emit,
+			   unsigned prim,
+			   unsigned opt );
+
+void draw_pt_emit( struct pt_emit *emit,
+		   char *verts,
+		   unsigned stride,
+		   unsigned vertex_count,
+		   const ushort *elts,
+		   unsigned count );
+
+void draw_pt_emit_destroy( struct pt_emit *emit );
+
+struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
+
+
+
+
 #endif

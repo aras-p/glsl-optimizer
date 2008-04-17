@@ -376,14 +376,6 @@ boolean draw_pt_arrays( struct draw_context *draw,
                         unsigned count );
 
 void draw_pt_reset_vertex_ids( struct draw_context *draw );
-void draw_pt_run_pipeline( struct draw_context *draw,
-                           unsigned prim,
-                           char *verts,
-                           unsigned vertex_stride,
-                           unsigned vertex_count,
-                           const ushort *elts,
-                           unsigned count );
-
 
 #define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
 #define DRAW_FLUSH_PRIM_QUEUE                0x2

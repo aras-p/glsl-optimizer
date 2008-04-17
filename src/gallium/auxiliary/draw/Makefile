@@ -21,6 +21,7 @@ C_SOURCES = \
 	draw_pt_fetch_pipeline.c \
 	draw_pt_fetch_shade_pipeline.c \
 	draw_pt_pipeline.c \
+	draw_pt_emit.c \
 	draw_pt_elts.c \
 	draw_prim.c \
 	draw_pstipple.c \
