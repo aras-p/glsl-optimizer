@@ -16,6 +16,7 @@ draw = env.ConvenienceLibrary(
 		'draw_offset.c',
 		'draw_pt.c',
 		'draw_pt_vcache.c',
+		'draw_pt_emit.c',
 		'draw_pt_fetch_emit.c',
 		'draw_pt_fetch_pipeline.c',
 		'draw_pt_fetch_shade_pipeline.c',
