@@ -46,7 +46,7 @@
 
 /* Partition the CURBE between the various users of constant values:
  */
-static void calculate_curbe_offsets( struct brw_context *brw )
+static int calculate_curbe_offsets( struct brw_context *brw )
 {
    /* CACHE_NEW_WM_PROG */
    GLuint nr_fp_regs = (brw->wm.prog_data->nr_params + 15) / 16;
@@ -117,6 +117,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
 
       brw->state.dirty.brw |= BRW_NEW_CURBE_OFFSETS;
    }
+   return 0;
 }
 
 
@@ -126,7 +127,7 @@ const struct brw_tracked_state brw_curbe_offsets = {
       .brw  = BRW_NEW_VERTEX_PROGRAM,
       .cache = CACHE_NEW_WM_PROG
    },
-   .update = calculate_curbe_offsets
+   .prepare = calculate_curbe_offsets
 };
 
 
@@ -182,9 +183,8 @@ static GLfloat fixed_plane[6][4] = {
  * cache mechanism, but maybe would benefit from a comparison against
  * the current uploaded set of constants.
  */
-static void upload_constant_buffer(struct brw_context *brw)
+static int prepare_constant_buffer(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_vertex_program *vp = (struct brw_vertex_program *)brw->vertex_program;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)brw->fragment_program;
@@ -201,10 +201,6 @@ static void upload_constant_buffer(struct brw_context *brw)
    brw->curbe.tracked_state.dirty.mesa |= fp->param_state;
 
    if (sz == 0) {
-      BEGIN_BATCH(2, IGNORE_CLIPRECTS);
-      OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
 
       if (brw->curbe.last_buf) {
 	 free(brw->curbe.last_buf);
@@ -212,7 +208,7 @@ static void upload_constant_buffer(struct brw_context *brw)
 	 brw->curbe.last_bufsz  = 0;
       }
        
-      return;
+      return 0;
    }
 
    buf = (GLfloat *)malloc(bufsz);
@@ -326,6 +322,7 @@ static void upload_constant_buffer(struct brw_context *brw)
       dri_bo_subdata(brw->curbe.curbe_bo, brw->curbe.curbe_offset, bufsz, buf);
    }
 
+
    /* Because this provokes an action (ie copy the constants into the
     * URB), it shouldn't be shortcircuited if identical to the
     * previous time - because eg. the urb destination may have
@@ -339,10 +336,26 @@ static void upload_constant_buffer(struct brw_context *brw)
     * flushes as necessary when doublebuffering of CURBEs isn't
     * possible.
     */
+
+   /* check aperture space for this bo */
+   return dri_bufmgr_check_aperture_space(brw->curbe.curbe_bo);
+}
+
+
+static void emit_constant_buffer(struct brw_context *brw)
+{
+   struct intel_context *intel = &brw->intel;
+   GLuint sz = brw->curbe.total_size;
+
    BEGIN_BATCH(2, IGNORE_CLIPRECTS);
-   OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
-   OUT_RELOC(brw->curbe.curbe_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-	     (sz - 1) + brw->curbe.curbe_offset);
+   if (sz == 0) {
+      OUT_BATCH((CMD_CONST_BUFFER << 16) | (2 - 2));
+      OUT_BATCH(0);
+   } else {
+      OUT_BATCH((CMD_CONST_BUFFER << 16) | (1 << 8) | (2 - 2));
+      OUT_RELOC(brw->curbe.curbe_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		(sz - 1) + brw->curbe.curbe_offset);
+   }
    ADVANCE_BATCH();
 }
 
@@ -363,6 +376,7 @@ const struct brw_tracked_state brw_constant_buffer = {
 	       BRW_NEW_BATCH),
       .cache = (CACHE_NEW_WM_PROG) 
    },
-   .update = upload_constant_buffer,
+   .prepare = prepare_constant_buffer,
+   .emit = emit_constant_buffer,
 };
 

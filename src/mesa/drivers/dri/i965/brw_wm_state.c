@@ -227,12 +227,12 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 }
 
 
-static void upload_wm_unit( struct brw_context *brw )
+static int upload_wm_unit( struct brw_context *brw )
 {
    struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_key key;
    dri_bo *reloc_bufs[3];
-
+   int ret = 0, i;
    wm_unit_populate_key(brw, &key);
 
    /* Allocate the necessary scratch space if we haven't already.  Don't
@@ -267,6 +267,12 @@ static void upload_wm_unit( struct brw_context *brw )
    if (brw->wm.state_bo == NULL) {
       brw->wm.state_bo = wm_unit_create_from_key(brw, &key, reloc_bufs);
    }
+
+   for (i = 0; i < 3; i++)
+     if (reloc_bufs[i])
+       ret |= dri_bufmgr_check_aperture_space(reloc_bufs[i]);
+   ret |= dri_bufmgr_check_aperture_space(brw->wm.state_bo);
+   return ret;
 }
 
 const struct brw_tracked_state brw_wm_unit = {
@@ -284,6 +290,6 @@ const struct brw_tracked_state brw_wm_unit = {
 		CACHE_NEW_WM_PROG | 
 		CACHE_NEW_SAMPLER)
    },
-   .update = upload_wm_unit,
+   .prepare = upload_wm_unit,
 };
 

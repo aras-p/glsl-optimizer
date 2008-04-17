@@ -83,7 +83,7 @@ static void do_vs_prog( struct brw_context *brw,
 }
 
 
-static void brw_upload_vs_prog( struct brw_context *brw )
+static int brw_upload_vs_prog( struct brw_context *brw )
 {
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
@@ -115,6 +115,7 @@ static void brw_upload_vs_prog( struct brw_context *brw )
 				      &brw->vs.prog_data);
    if (brw->vs.prog_bo == NULL)
       do_vs_prog(brw, vp, &key);
+   return dri_bufmgr_check_aperture_space(brw->vs.prog_bo);
 }
 
 
@@ -126,5 +127,5 @@ const struct brw_tracked_state brw_vs_prog = {
       .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_METAOPS,
       .cache = 0
    },
-   .update = brw_upload_vs_prog
+   .prepare = brw_upload_vs_prog
 };

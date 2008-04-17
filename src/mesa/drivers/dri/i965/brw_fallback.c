@@ -93,9 +93,10 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    return GL_FALSE;
 }
 
-static void check_fallback(struct brw_context *brw)
+static int check_fallback(struct brw_context *brw)
 {
    brw->intel.Fallback = do_check_fallback(brw);
+   return 0;
 }
 
 const struct brw_tracked_state brw_check_fallback = {
@@ -104,7 +105,7 @@ const struct brw_tracked_state brw_check_fallback = {
       .brw  = BRW_NEW_METAOPS,
       .cache = 0
    },
-   .update = check_fallback
+   .prepare = check_fallback
 };
 
 

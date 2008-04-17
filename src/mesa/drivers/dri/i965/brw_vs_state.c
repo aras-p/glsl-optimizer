@@ -124,7 +124,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
    return bo;
 }
 
-static void upload_vs_unit( struct brw_context *brw )
+static int prepare_vs_unit( struct brw_context *brw )
 {
    struct brw_vs_unit_key key;
 
@@ -138,6 +138,7 @@ static void upload_vs_unit( struct brw_context *brw )
    if (brw->vs.state_bo == NULL) {
       brw->vs.state_bo = vs_unit_create_from_key(brw, &key);
    }
+   return dri_bufmgr_check_aperture_space(brw->vs.state_bo);
 }
 
 const struct brw_tracked_state brw_vs_unit = {
@@ -147,5 +148,5 @@ const struct brw_tracked_state brw_vs_unit = {
 		BRW_NEW_URB_FENCE),
       .cache = CACHE_NEW_VS_PROG
    },
-   .update = upload_vs_unit,
+   .prepare = prepare_vs_unit,
 };

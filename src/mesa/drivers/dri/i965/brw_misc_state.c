@@ -68,7 +68,7 @@ const struct brw_tracked_state brw_blend_constant_color = {
       .brw = 0,
       .cache = 0
    },
-   .update = upload_blend_constant_color
+   .emit = upload_blend_constant_color
 };
 
 /**
@@ -98,7 +98,7 @@ const struct brw_tracked_state brw_binding_table_pointers = {
       .brw = BRW_NEW_BATCH,
       .cache = CACHE_NEW_SURF_BIND,
    },
-   .update = upload_binding_table_pointers,
+   .emit = upload_binding_table_pointers,
 };
 
 
@@ -145,7 +145,7 @@ const struct brw_tracked_state brw_pipelined_state_pointers = {
 		CACHE_NEW_WM_UNIT | 
 		CACHE_NEW_CC_UNIT)
    },
-   .update = upload_pipelined_state_pointers
+   .emit = upload_pipelined_state_pointers
 };
 #endif
 
@@ -169,7 +169,7 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
 		CACHE_NEW_WM_UNIT | 
 		CACHE_NEW_CC_UNIT)
    },
-   .update = upload_psp_urb_cbs,
+   .emit = upload_psp_urb_cbs,
 };
 
 /**
@@ -178,7 +178,17 @@ const struct brw_tracked_state brw_psp_urb_cbs = {
  * We have to do this per state validation as we need to emit the relocation
  * in the batch buffer.
  */
-static void upload_depthbuffer(struct brw_context *brw)
+
+static int prepare_depthbuffer(struct brw_context *brw)
+{
+   struct intel_region *region = brw->state.depth_region;
+
+   if (region->buffer)
+      return 0;
+   return dri_bufmgr_check_aperture_space(region->buffer);
+}
+
+static void emit_depthbuffer(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct intel_region *region = brw->state.depth_region;
@@ -242,7 +252,8 @@ const struct brw_tracked_state brw_depthbuffer = {
       .brw = BRW_NEW_DEPTH_BUFFER | BRW_NEW_BATCH,
       .cache = 0,
    },
-   .update = upload_depthbuffer,
+   .prepare = prepare_depthbuffer,
+   .emit = emit_depthbuffer,
 };
 
 
@@ -272,7 +283,7 @@ const struct brw_tracked_state brw_polygon_stipple = {
       .brw = 0,
       .cache = 0
    },
-   .update = upload_polygon_stipple
+   .emit = upload_polygon_stipple
 };
 
 
@@ -303,7 +314,7 @@ const struct brw_tracked_state brw_polygon_stipple_offset = {
       .brw = 0,
       .cache = 0
    },
-   .update = upload_polygon_stipple_offset
+   .emit = upload_polygon_stipple_offset
 };
 
 /**********************************************************************
@@ -330,7 +341,7 @@ const struct brw_tracked_state brw_aa_line_parameters = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .update = upload_aa_line_parameters
+   .emit = upload_aa_line_parameters
 };
 
 /***********************************************************************
@@ -365,7 +376,7 @@ const struct brw_tracked_state brw_line_stipple = {
       .brw = 0,
       .cache = 0
    },
-   .update = upload_line_stipple
+   .emit = upload_line_stipple
 };
 
 
@@ -399,7 +410,7 @@ const struct brw_tracked_state brw_pipe_control = {
       .brw = BRW_NEW_BATCH,
       .cache = 0
    },
-   .update = upload_pipe_control
+   .emit = upload_pipe_control
 };
 
 
@@ -465,7 +476,7 @@ const struct brw_tracked_state brw_invarient_state = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .update = upload_invarient_state
+   .emit = upload_invarient_state
 };
 
 /**
@@ -499,5 +510,5 @@ const struct brw_tracked_state brw_state_base_address = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0,
    },
-   .update = upload_state_base_address
+   .emit = upload_state_base_address
 };

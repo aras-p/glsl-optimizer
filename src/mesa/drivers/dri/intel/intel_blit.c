@@ -275,8 +275,16 @@ intelEmitCopyBlit(struct intel_context *intel,
    GLuint CMD, BR13;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
+   int ret;
    BATCH_LOCALS;
 
+ again:
+   ret = dri_bufmgr_check_aperture_space(dst_buffer);
+   ret |= dri_bufmgr_check_aperture_space(src_buffer);
+   if (ret) {
+     intel_batchbuffer_flush(intel->batch);
+     goto again;
+   }
 
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,

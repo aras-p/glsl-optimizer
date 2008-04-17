@@ -173,10 +173,10 @@ static void xor_states( struct brw_state_flags *result,
 /***********************************************************************
  * Emit all state:
  */
-void brw_validate_state( struct brw_context *brw )
+int brw_validate_state( struct brw_context *brw )
 {
    struct brw_state_flags *state = &brw->state.dirty;
-   GLuint i;
+   GLuint i, ret, count;
 
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
@@ -202,12 +202,33 @@ void brw_validate_state( struct brw_context *brw )
    if (state->mesa == 0 &&
        state->cache == 0 &&
        state->brw == 0)
-      return;
+      return 0;
 
    if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
       brw_clear_batch_cache_flush(brw);
 
    brw->intel.Fallback = 0;
+
+   count = 0;
+
+   /* do prepare stage for all atoms */
+   for (i = 0; i < Elements(atoms); i++) {
+      const struct brw_tracked_state *atom = brw->state.atoms[i];
+
+      if (brw->intel.Fallback)
+         break;
+
+      if (check_state(state, &atom->dirty)) {
+         if (atom->prepare) {
+            ret = atom->prepare(brw);
+            if (ret)
+               return ret;
+        }
+      }
+   }
+
+   if (brw->intel.Fallback)
+      return 0;
 
    if (INTEL_DEBUG) {
       /* Debug version which enforces various sanity checks on the
@@ -225,15 +246,13 @@ void brw_validate_state( struct brw_context *brw )
 	 assert(atom->dirty.mesa ||
 		atom->dirty.brw ||
 		atom->dirty.cache);
-	 assert(atom->update);
 
 	 if (brw->intel.Fallback)
 	    break;
 
 	 if (check_state(state, &atom->dirty)) {
-	    atom->update( brw );
-	    
-/* 	    emit_foo(brw); */
+	    if (atom->emit)
+	       atom->emit( brw );
 	 }
 
 	 accumulate_state(&examined, &atom->dirty);
@@ -254,11 +273,14 @@ void brw_validate_state( struct brw_context *brw )
 	 if (brw->intel.Fallback)
 	    break;
 
-	 if (check_state(state, &atom->dirty))
-	    atom->update( brw );
+	 if (check_state(state, &atom->dirty)) {
+	    if (atom->emit)
+	       atom->emit( brw );
+	 }
       }
    }
 
    if (!brw->intel.Fallback)
       memset(state, 0, sizeof(*state));
+   return 0;
 }

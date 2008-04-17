@@ -332,7 +332,8 @@ struct brw_state_pointers {
  */
 struct brw_tracked_state {
    struct brw_state_flags dirty;
-   void (*update)( struct brw_context *brw );
+   int (*prepare)( struct brw_context *brw );
+   void (*emit)( struct brw_context *brw );
 };
 
 /* Flags for brw->state.cache.
@@ -640,7 +641,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 /*======================================================================
  * brw_state.c
  */
-void brw_validate_state( struct brw_context *brw );
+int brw_validate_state( struct brw_context *brw );
 void brw_init_state( struct brw_context *brw );
 void brw_destroy_state( struct brw_context *brw );
 

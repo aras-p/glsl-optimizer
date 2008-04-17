@@ -166,7 +166,7 @@ static GLuint get_input_size(struct brw_context *brw,
 /* Calculate sizes of vertex program outputs.  Size is the largest
  * component index which might vary from [0,0,0,1]
  */
-static void calc_wm_input_sizes( struct brw_context *brw )
+static int calc_wm_input_sizes( struct brw_context *brw )
 {
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp = 
@@ -210,6 +210,7 @@ static void calc_wm_input_sizes( struct brw_context *brw )
       memcpy(brw->wm.input_size_masks, t.size_masks, sizeof(t.size_masks));
       brw->state.dirty.brw |= BRW_NEW_WM_INPUT_DIMENSIONS;
    }
+   return 0;
 }
 
 const struct brw_tracked_state brw_wm_input_sizes = {
@@ -218,6 +219,6 @@ const struct brw_tracked_state brw_wm_input_sizes = {
       .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_INPUT_DIMENSIONS,
       .cache = 0
    },
-   .update = calc_wm_input_sizes
+   .prepare = calc_wm_input_sizes
 };
 

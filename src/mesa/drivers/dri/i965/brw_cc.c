@@ -37,7 +37,7 @@
 #include "macros.h"
 #include "enums.h"
 
-static void upload_cc_vp( struct brw_context *brw )
+static int upload_cc_vp( struct brw_context *brw )
 {
    struct brw_cc_viewport ccv;
 
@@ -48,6 +48,7 @@ static void upload_cc_vp( struct brw_context *brw )
 
    dri_bo_unreference(brw->cc.vp_bo);
    brw->cc.vp_bo = brw_cache_data( &brw->cache, BRW_CC_VP, &ccv, NULL, 0 );
+   return dri_bufmgr_check_aperture_space(brw->cc.vp_bo);
 }
 
 const struct brw_tracked_state brw_cc_vp = {
@@ -56,7 +57,7 @@ const struct brw_tracked_state brw_cc_vp = {
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .update = upload_cc_vp
+   .prepare = upload_cc_vp
 };
 
 struct brw_cc_unit_key {
@@ -264,7 +265,7 @@ cc_unit_create_from_key(struct brw_context *brw, struct brw_cc_unit_key *key)
    return bo;
 }
 
-static void upload_cc_unit( struct brw_context *brw )
+static int prepare_cc_unit( struct brw_context *brw )
 {
    struct brw_cc_unit_key key;
 
@@ -278,6 +279,7 @@ static void upload_cc_unit( struct brw_context *brw )
 
    if (brw->cc.state_bo == NULL)
       brw->cc.state_bo = cc_unit_create_from_key(brw, &key);
+   return dri_bufmgr_check_aperture_space(brw->cc.state_bo);
 }
 
 const struct brw_tracked_state brw_cc_unit = {
@@ -286,7 +288,7 @@ const struct brw_tracked_state brw_cc_unit = {
       .brw = 0,
       .cache = CACHE_NEW_CC_VP
    },
-   .update = upload_cc_unit,
+   .prepare = prepare_cc_unit,
 };
 
 

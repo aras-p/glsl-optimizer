@@ -325,7 +325,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 }
 
 
-static void brw_upload_wm_prog( struct brw_context *brw )
+static int brw_prepare_wm_prog( struct brw_context *brw )
 {
    struct brw_wm_prog_key key;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)
@@ -342,6 +342,8 @@ static void brw_upload_wm_prog( struct brw_context *brw )
 				      &brw->wm.prog_data);
    if (brw->wm.prog_bo == NULL)
       do_wm_prog(brw, fp, &key);
+
+   return dri_bufmgr_check_aperture_space(brw->wm.prog_bo);
 }
 
 
@@ -362,6 +364,6 @@ const struct brw_tracked_state brw_wm_prog = {
 		BRW_NEW_REDUCED_PRIMITIVE),
       .cache = 0
    },
-   .update = brw_upload_wm_prog
+   .prepare = brw_prepare_wm_prog
 };
 

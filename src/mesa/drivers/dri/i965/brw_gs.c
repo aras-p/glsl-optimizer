@@ -162,7 +162,7 @@ static void populate_key( struct brw_context *brw,
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void upload_gs_prog( struct brw_context *brw )
+static int prepare_gs_prog( struct brw_context *brw )
 {
    struct brw_gs_prog_key key;
 
@@ -184,6 +184,8 @@ static void upload_gs_prog( struct brw_context *brw )
       if (brw->gs.prog_bo == NULL)
 	 compile_gs_prog( brw, &key );
    }
+
+   return dri_bufmgr_check_aperture_space(brw->gs.prog_bo);
 }
 
 
@@ -193,5 +195,5 @@ const struct brw_tracked_state brw_gs_prog = {
       .brw   = BRW_NEW_PRIMITIVE,
       .cache = CACHE_NEW_VS_PROG
    },
-   .update = upload_gs_prog
+   .prepare = prepare_gs_prog
 };

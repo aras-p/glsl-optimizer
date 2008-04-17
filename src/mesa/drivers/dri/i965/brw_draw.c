@@ -83,8 +83,9 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
  * programs be immune to the active primitive (ie. cope with all
  * possibilities).  That may not be realistic however.
  */
-static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
+static GLuint brw_set_prim(struct brw_context *brw, GLenum prim, GLboolean *need_flush)
 {
+   int ret;
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s\n", _mesa_lookup_enum_by_nr(prim));
    
@@ -105,7 +106,9 @@ static GLuint brw_set_prim(struct brw_context *brw, GLenum prim)
 	 brw->state.dirty.brw |= BRW_NEW_REDUCED_PRIMITIVE;
       }
 
-      brw_validate_state(brw);
+      ret = brw_validate_state(brw);
+      if (ret)
+         *need_flush = GL_TRUE;
    }
 
    return hw_prim[prim];
@@ -128,6 +131,7 @@ static void brw_emit_prim( struct brw_context *brw,
 
 {
    struct brw_3d_primitive prim_packet;
+   GLboolean need_flush = GL_FALSE;
 
    if (INTEL_DEBUG & DEBUG_PRIMS)
       _mesa_printf("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode), 
@@ -136,7 +140,7 @@ static void brw_emit_prim( struct brw_context *brw,
    prim_packet.header.opcode = CMD_3D_PRIM;
    prim_packet.header.length = sizeof(prim_packet)/4 - 2;
    prim_packet.header.pad = 0;
-   prim_packet.header.topology = brw_set_prim(brw, prim->mode);
+   prim_packet.header.topology = brw_set_prim(brw, prim->mode, &need_flush);
    prim_packet.header.indexed = prim->indexed;
 
    prim_packet.verts_per_instance = trim(prim->mode, prim->count);
@@ -149,6 +153,8 @@ static void brw_emit_prim( struct brw_context *brw,
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
 			      sizeof(prim_packet), LOOP_CLIPRECTS);
    }
+
+   assert(need_flush == GL_FALSE);
 }
 
 static void brw_merge_inputs( struct brw_context *brw,
@@ -251,8 +257,10 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
-   GLuint i;
-
+   GLuint i, ret;
+   GLuint ib_offset;
+   dri_bo *ib_bo;
+   GLboolean force_flush = GL_FALSE;
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
@@ -284,20 +292,49 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
+   flush:
+      if (force_flush)
+         brw->no_batch_wrap = GL_FALSE;
+
       if (intel->batch->ptr - intel->batch->map > intel->batch->size * 3 / 4
 	/* brw_emit_prim may change the cliprect_mode to LOOP_CLIPRECTS */
-	|| intel->batch->cliprect_mode != LOOP_CLIPRECTS) 
+	  || intel->batch->cliprect_mode != LOOP_CLIPRECTS || (force_flush == GL_TRUE))
 	      intel_batchbuffer_flush(intel->batch);
 
+      force_flush = GL_FALSE;
       brw->no_batch_wrap = GL_TRUE;
 
       /* Set the first primitive early, ahead of validate_state:
        */
-      brw_set_prim(brw, prim[0].mode);
+      brw_set_prim(brw, prim[0].mode, &force_flush);
 
       /* XXX:  Need to separate validate and upload of state.  
        */
-      brw_validate_state( brw );
+      ret = brw_validate_state( brw );
+      if (ret) {
+         force_flush = GL_TRUE;
+         goto flush;
+      }
+
+      /* need to account for index buffer and vertex buffer */
+      if (ib) {
+         ret = brw_prepare_indices( brw, ib , &ib_bo, &ib_offset);
+         if (ret) {
+            force_flush = GL_TRUE;
+            goto flush;
+         }
+      }
+
+      ret = brw_prepare_vertices( brw, min_index, max_index);
+      if (ret < 0)
+         goto out;
+
+      if (ret > 0) {
+         force_flush = GL_TRUE;
+         goto flush;
+      }
+
+
 
       /* Various fallback checks:
        */
@@ -310,11 +347,9 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
       /* Upload index, vertex data: 
        */
       if (ib)
-	 brw_upload_indices( brw, ib );
+	brw_emit_indices( brw, ib, ib_bo, ib_offset);
 
-      if (!brw_upload_vertices( brw, min_index, max_index)) {
-	 goto out;
-      }
+      brw_emit_vertices( brw, min_index, max_index);
 
       for (i = 0; i < nr_prims; i++) {
 	 brw_emit_prim(brw, &prim[i]);

@@ -238,7 +238,7 @@ alloc_block(dri_bo *bo)
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
    dri_bufmgr_fake *bufmgr_fake= (dri_bufmgr_fake *)bo->bufmgr;
    struct block *block = (struct block *)calloc(sizeof *block, 1);
-   unsigned int align_log2 = _mesa_ffs(bo_fake->alignment);
+   unsigned int align_log2 = _mesa_ffs(bo_fake->alignment) - 1;
    GLuint sz;
 
    if (!block)
@@ -272,16 +272,16 @@ alloc_block(dri_bo *bo)
 static void free_block(dri_bufmgr_fake *bufmgr_fake, struct block *block)
 {
    dri_bo_fake *bo_fake;
-   DBG("free block %p\n", block);
+   DBG("free block %p %08x %d %d\n", block, block->mem->ofs, block->on_hardware, block->fenced);
 
    if (!block)
       return;
 
    bo_fake = (dri_bo_fake *)block->bo;
-   if (bo_fake->card_dirty == GL_TRUE) {
-      memcpy(bo_fake->backing_store, block->virtual, block->bo->size);
-      bo_fake->card_dirty = GL_FALSE;
-      bo_fake->dirty = GL_TRUE;
+   if (!(bo_fake->flags & BM_NO_BACKING_STORE) && (bo_fake->card_dirty == 1)) {
+     memcpy(bo_fake->backing_store, block->virtual, block->bo->size);
+     bo_fake->card_dirty = 1;
+     bo_fake->dirty = 1;
    }
 
    if (block->on_hardware) {
@@ -427,6 +427,8 @@ static int clear_fenced(dri_bufmgr_fake *bufmgr_fake,
 	 /* Blocks are ordered by fence, so if one fails, all from
 	  * here will fail also:
 	  */
+	DBG("fence not passed: offset %x sz %x %d %d \n",
+	    block->mem->ofs, block->mem->size, block->fence, bufmgr_fake->last_fence);
 	 break;
       }
    }
@@ -440,8 +442,8 @@ static void fence_blocks(dri_bufmgr_fake *bufmgr_fake, unsigned fence)
    struct block *block, *tmp;
 
    foreach_s (block, tmp, &bufmgr_fake->on_hardware) {
-      DBG("Fence block %p (sz 0x%x buf %p) with fence %d\n", block,
-	  block->mem->size, block->bo, fence);
+      DBG("Fence block %p (sz 0x%x ofs %x buf %p) with fence %d\n", block,
+	  block->mem->size, block->mem->ofs, block->bo, fence);
       block->fence = fence;
 
       block->on_hardware = 0;
@@ -815,8 +817,8 @@ dri_fake_kick_all(dri_bufmgr_fake *bufmgr_fake)
       free_block(bufmgr_fake, block);
       bo_fake->block = NULL;
       bo_fake->validated = GL_FALSE;
-      bo_fake->dirty = GL_TRUE;
-      block->bo->offset = -1;
+      if (!(bo_fake->flags & BM_NO_BACKING_STORE))
+         bo_fake->dirty = 1;
    }
 }
 
@@ -875,16 +877,18 @@ dri_fake_bo_validate(dri_bo *bo, uint64_t flags)
        */
       dri_bufmgr_fake_wait_idle(bufmgr_fake);
 
-      /* we may never have mapped this BO so it might not have any backing store */
-      /* if this happens it should be rare, but 0 the card memory in any case */
+      /* we may never have mapped this BO so it might not have any backing
+       * store if this happens it should be rare, but 0 the card memory
+       * in any case */
       if (bo_fake->backing_store)
-          memcpy(bo_fake->block->virtual, bo_fake->backing_store, bo->size);
+         memcpy(bo_fake->block->virtual, bo_fake->backing_store, bo->size);
       else
-	  memset(bo_fake->block->virtual, 0, bo->size);
+         memset(bo_fake->block->virtual, 0, bo->size);
 
       bo_fake->dirty = 0;
    }
 
+   bo_fake->block->fenced = 0;
    bo_fake->block->on_hardware = 1;
    move_to_tail(&bufmgr_fake->on_hardware, bo_fake->block);
 
@@ -970,16 +974,12 @@ dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
    struct fake_buffer_reloc *r;
    dri_bo_fake *reloc_fake = (dri_bo_fake *)reloc_buf;
    dri_bo_fake *target_fake = (dri_bo_fake *)target_buf;
-   int ret, i;
+   int i;
 
    assert(reloc_buf);
    assert(target_buf);
 
-   if (!target_fake->is_static && !target_fake->size_accounted) {
-       ret = dri_fake_check_aperture_space(target_buf);
-       if (ret)
-	   return ret;
-   }
+   assert(target_fake->is_static || target_fake->size_accounted);
 
    if (reloc_fake->relocs == NULL) {
       reloc_fake->relocs = malloc(sizeof(struct fake_buffer_reloc) *
@@ -1060,12 +1060,12 @@ dri_fake_reloc_and_validate_buffer(dri_bo *bo)
 
       /* Validate the target buffer if that hasn't been done. */
       if (!target_fake->validated) {
-	 ret = dri_fake_reloc_and_validate_buffer(r->target_buf);
-	 if (ret != 0) {
-	    if (bo->virtual != NULL)
-	       dri_bo_unmap(bo);
-	    return ret;
-	 }
+         ret = dri_fake_reloc_and_validate_buffer(r->target_buf);
+         if (ret != 0) {
+            if (bo->virtual != NULL)
+                dri_bo_unmap(bo);
+            return ret;
+         }
       }
 
       /* Calculate the value of the relocation entry. */
@@ -1087,9 +1087,9 @@ dri_fake_reloc_and_validate_buffer(dri_bo *bo)
    if (bo_fake->validate_flags & DRM_BO_FLAG_WRITE) {
       if (!(bo_fake->flags & (BM_NO_BACKING_STORE|BM_PINNED))) {
          if (bo_fake->backing_store == 0)
-	    alloc_backing_store(bo);
+            alloc_backing_store(bo);
 
-	 bo_fake->card_dirty = GL_TRUE;
+         bo_fake->card_dirty = 1;
       }
       bufmgr_fake->performed_rendering = GL_TRUE;
    }
@@ -1116,12 +1116,14 @@ dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
    ret = dri_fake_reloc_and_validate_buffer(batch_buf);
    if (bufmgr_fake->fail == 1) {
       if (retry_count == 0) {
-	  retry_count++;
-	  dri_fake_kick_all(bufmgr_fake);
-	  bufmgr_fake->fail = 0;
-	  goto restart;
-      }
+         retry_count++;
+         dri_fake_kick_all(bufmgr_fake);
+         bufmgr_fake->fail = 0;
+         goto restart;
+      } else /* dump out the memory here */
+         mmDumpMemInfo(bufmgr_fake->heap);
    }
+
    assert(ret == 0);
 
    *count_p = 0; /* junk */
@@ -1186,13 +1188,13 @@ dri_fake_check_aperture_space(dri_bo *bo)
       return 0;
 
    if (bufmgr_fake->current_total_size + sz > bufmgr_fake->size) {
-      DBG("check_space: bo %d %d overflowed bufmgr\n", bo_fake->id, sz);
+     DBG("check_space: %s bo %d %d overflowed bufmgr size %d\n", bo_fake->name, bo_fake->id, sz, bufmgr_fake->size);
       return -1;
    }
 
    bufmgr_fake->current_total_size += sz;
    bo_fake->size_accounted = 1;
-   DBG("check_space: bo %d %d %d\n", bo_fake->id, bo->size, bufmgr_fake->current_total_size);
+   DBG("drm_check_space: buf %d, %s %d %d\n", bo_fake->id, bo_fake->name, bo->size, bufmgr_fake->current_total_size);
    return 0;
 }
 
