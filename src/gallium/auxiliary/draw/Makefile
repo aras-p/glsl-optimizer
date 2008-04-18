@@ -24,7 +24,6 @@ C_SOURCES = \
 	draw_pt_emit.c \
 	draw_pt_pipeline.c \
 	draw_pt_elts.c \
-	draw_prim.c \
 	draw_pstipple.c \
 	draw_stipple.c \
 	draw_twoside.c \

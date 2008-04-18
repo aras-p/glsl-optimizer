@@ -497,27 +497,4 @@ draw_prim( struct draw_context *draw,
 
 
 
-/**
- * Draw vertex arrays
- * This is the main entrypoint into the drawing module.
- * \param prim  one of PIPE_PRIM_x
- * \param start  index of first vertex to draw
- * \param count  number of vertices to draw
- */
-void
-draw_arrays(struct draw_context *draw, unsigned prim,
-            unsigned start, unsigned count)
-{
-   if (reduced_prim[prim] != draw->reduced_prim) {
-      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-      draw->reduced_prim = reduced_prim[prim];
-   }
-
-   /* drawing done here: */
-   if (!draw_pt_arrays(draw, prim, start, count)) {
-      /* we have to run the whole pipeline */
-      draw_prim(draw, prim, start, count);
-   }
-}
-
 

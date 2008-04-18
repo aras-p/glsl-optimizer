@@ -128,3 +128,58 @@ void draw_pt_destroy( struct draw_context *draw )
       draw->pt.front.vcache = NULL;
    }
 }
+
+
+
+static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
+   PIPE_PRIM_POINTS,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES,
+   PIPE_PRIM_TRIANGLES
+};
+
+
+/**
+ * Draw vertex arrays
+ * This is the main entrypoint into the drawing module.
+ * \param prim  one of PIPE_PRIM_x
+ * \param start  index of first vertex to draw
+ * \param count  number of vertices to draw
+ */
+void
+draw_arrays(struct draw_context *draw, unsigned prim,
+            unsigned start, unsigned count)
+{
+   if (reduced_prim[prim] != draw->reduced_prim) {
+      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+      draw->reduced_prim = reduced_prim[prim];
+   }
+
+   /* drawing done here: */
+   draw_pt_arrays(draw, prim, start, count);
+}
+
+
+/* Revamp me please:
+ */
+void draw_do_flush( struct draw_context *draw, unsigned flags )
+{
+   if (!draw->flushing) 
+   {
+      draw->flushing = TRUE;
+
+      if (flags >= DRAW_FLUSH_STATE_CHANGE) {
+	 draw->pipeline.first->flush( draw->pipeline.first, flags );
+	 draw->pipeline.first = draw->pipeline.validate;
+	 draw->reduced_prim = ~0;
+      }
+      
+      draw->flushing = FALSE;
+   }
+}

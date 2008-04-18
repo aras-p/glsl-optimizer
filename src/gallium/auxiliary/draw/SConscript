@@ -11,7 +11,6 @@ draw = env.ConvenienceLibrary(
 		'draw_debug.c',
 		'draw_flatshade.c',
 		'draw_offset.c',
-		'draw_prim.c',
 		'draw_pstipple.c',
 		'draw_pt.c',
 		'draw_pt_elts.c',
