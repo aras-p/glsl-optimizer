@@ -7,6 +7,7 @@ C_SOURCES = \
 	draw_aaline.c \
 	draw_aapoint.c \
 	draw_clip.c \
+	draw_vs.c \
 	draw_vs_exec.c \
 	draw_vs_sse.c \
 	draw_vs_llvm.c \
@@ -30,7 +31,6 @@ C_SOURCES = \
 	draw_validate.c \
 	draw_vbuf.c \
 	draw_vertex.c \
-	draw_vertex_shader.c \
 	draw_wide_line.c \
 	draw_wide_point.c
 
