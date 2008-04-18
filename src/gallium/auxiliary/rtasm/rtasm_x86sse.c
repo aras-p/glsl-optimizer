@@ -422,10 +422,19 @@ void x86_add( struct x86_function *p,
 void x86_mul( struct x86_function *p,
 	       struct x86_reg src )
 {
-//   assert (src.file == file_REG32 && src.mod == mod_REG);
    emit_1ub(p, 0xf7);
    emit_modrm_noreg(p, 4, src );
 }
+
+
+void x86_imul( struct x86_function *p,
+	       struct x86_reg dst,
+	       struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0xAF);
+   emit_modrm(p, dst, src);
+}
+
 
 void x86_sub( struct x86_function *p,
 	       struct x86_reg dst,
