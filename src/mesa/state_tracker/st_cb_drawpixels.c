@@ -882,7 +882,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
    struct pipe_surface *psRead = rbRead->surface;
    struct pipe_surface *psDraw = rbDraw->surface;
-   ubyte *readMap, *drawMap;
+   ubyte *drawMap;
    ubyte *buffer;
    int i;
 
@@ -892,13 +892,12 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   /* map the stencil buffers */
-   readMap = pipe_surface_map(psRead);
-   drawMap = pipe_surface_map(psDraw);
-
    /* this will do stencil pixel transfer ops */
    st_read_stencil_pixels(ctx, srcx, srcy, width, height, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
+
+   /* map the stencil buffer */
+   drawMap = pipe_surface_map(psDraw);
 
    /* draw */
    /* XXX PixelZoom not handled yet */
@@ -937,8 +936,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    free(buffer);
 
-   /* unmap the stencil buffers */
-   pipe_surface_unmap(psRead);
+   /* unmap the stencil buffer */
    pipe_surface_unmap(psDraw);
 }
 
