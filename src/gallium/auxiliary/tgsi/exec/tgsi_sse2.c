@@ -1598,20 +1598,25 @@ emit_instruction(
             STORE( func, *inst, 0, 0, CHAN_Y );
          }
          if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
+            /* XMM[1] = SrcReg[0].yyyy */
             FETCH( func, *inst, 1, 0, CHAN_Y );
+            /* XMM[1] = max(XMM[1], 0) */
             emit_maxps(
                func,
                make_xmm( 1 ),
                get_temp(
                   TGSI_EXEC_TEMP_00000000_I,
                   TGSI_EXEC_TEMP_00000000_C ) );
+            /* XMM[2] = SrcReg[0].wwww */
             FETCH( func, *inst, 2, 0, CHAN_W );
+            /* XMM[2] = min(XMM[2], 128.0) */
             emit_minps(
                func,
                make_xmm( 2 ),
                get_temp(
                   TGSI_EXEC_TEMP_128_I,
                   TGSI_EXEC_TEMP_128_C ) );
+            /* XMM[2] = max(XMM[2], -128.0) */
             emit_maxps(
                func,
                make_xmm( 2 ),
