@@ -32,7 +32,7 @@
 #include <GL/glxproto.h>
 #include "glxextensions.h"
 #include "indirect_vertex_array.h"
-#include "indirect_va_private.h"
+#include "indirect_vertex_array_priv.h"
 
 #define __GLX_PAD(n) (((n)+3) & ~3)
 

@@ -17,6 +17,7 @@ SOURCES = \
 	  indirect_init.c \
 	  indirect_size.c \
 	  indirect_window_pos.c \
+	  indirect_texture_compression.c \
 	  indirect_transpose_matrix.c \
 	  indirect_vertex_array.c \
 	  indirect_vertex_program.c \
@@ -30,7 +31,6 @@ SOURCES = \
 	  xfont.c \
 	  glx_pbuffer.c \
 	  glx_query.c \
-	  glx_texture_compression.c \
 	  dri_glx.c \
 	  XF86dri.c \
 	  glxhash.c \
