@@ -258,7 +258,6 @@ struct draw_context
    boolean line_stipple;       /**< do line stipple? */
    boolean point_sprite;       /**< convert points to quads for sprites? */
    boolean use_sse;
-   boolean use_pt_shaders;	/* temporary flag to switch on pt shader paths */
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */

@@ -68,9 +68,6 @@ draw_pt_arrays(struct draw_context *draw,
 
    if (!draw->rasterizer->bypass_vs) {
       opt |= PT_SHADE;
-
-      if (!draw->use_pt_shaders)
-	 return FALSE;
    }
 
 
