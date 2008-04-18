@@ -31,7 +31,6 @@ C_SOURCES = \
 	draw_validate.c \
 	draw_vbuf.c \
 	draw_vertex.c \
-	draw_vertex_cache.c \
 	draw_vertex_fetch.c \
 	draw_vertex_shader.c \
 	draw_wide_line.c \

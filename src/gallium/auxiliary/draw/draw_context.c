@@ -103,7 +103,6 @@ struct draw_context *draw_create( void )
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
-   draw_vertex_cache_invalidate( draw );
    draw_set_mapped_element_buffer( draw, 0, NULL );
 
    tgsi_exec_machine_init(&draw->machine);
@@ -446,7 +445,6 @@ void draw_reset_vertex_ids(struct draw_context *draw)
       stage = stage->next;
    }
 
-   draw_vertex_cache_reset_vertex_ids(draw); /* going away soon */
    draw_pt_reset_vertex_ids(draw);
 }
 
@@ -473,3 +471,21 @@ boolean draw_get_edgeflag( struct draw_context *draw,
       return 1;
 }
 
+
+/**
+ * Tell the drawing context about the index/element buffer to use
+ * (ala glDrawElements)
+ * If no element buffer is to be used (i.e. glDrawArrays) then this
+ * should be called with eltSize=0 and elements=NULL.
+ *
+ * \param draw  the drawing context
+ * \param eltSize  size of each element (1, 2 or 4 bytes)
+ * \param elements  the element buffer ptr
+ */
+void
+draw_set_mapped_element_buffer( struct draw_context *draw,
+                                unsigned eltSize, void *elements )
+{
+   draw->user.elts = elements;
+   draw->user.eltSize = eltSize;
+}
