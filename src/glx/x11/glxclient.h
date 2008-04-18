@@ -160,8 +160,6 @@ extern const char *glXGetScreenDriver (Display *dpy, int scrNum);
 
 extern const char *glXGetDriverConfig (const char *driverName);
 
-extern Bool __glXWindowExists(Display *dpy, GLXDrawable draw);
-
 #endif
 
 /************************************************************************/
@@ -572,8 +570,6 @@ struct __GLXdisplayPrivateRec {
 };
 
 
-void __glXFreeContext(__GLXcontext*);
-
 extern GLubyte *__glXFlushRenderBuffer(__GLXcontext*, GLubyte*);
 
 extern void __glXSendLargeChunk(__GLXcontext *gc, GLint requestNumber, 
@@ -615,6 +611,10 @@ extern __GLXcontext *__glXcurrentContext;
 #define __glXSetCurrentContext(gc)	__glXcurrentContext = gc
 
 #endif /* defined( USE_XTHREADS ) || defined( PTHREADS ) */
+
+extern void __glXSetCurrentContextNull(void);
+
+extern void __glXFreeContext(__GLXcontext*);
 
 
 /*

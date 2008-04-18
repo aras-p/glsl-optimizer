@@ -33,20 +33,15 @@
 #ifdef GLX_DIRECT_RENDERING
 
 #include <unistd.h>
-#include <X11/Xlibint.h>
-#include <X11/extensions/Xext.h>
-#include <X11/extensions/extutil.h>
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xdamage.h>
 #include "glheader.h"
 #include "glxclient.h"
+#include "glcontextmodes.h"
 #include "xf86dri.h"
 #include "sarea.h"
-#include <stdio.h>
 #include <dlfcn.h>
 #include <sys/types.h>
-#include <stdarg.h>
-#include "glcontextmodes.h"
 #include <sys/mman.h>
 #include "xf86drm.h"
 #include "dri2.h"

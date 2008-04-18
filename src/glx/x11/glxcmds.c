@@ -39,22 +39,17 @@
  * Client-side GLX interface.
  */
 
-#include <inttypes.h>
 #include "glxclient.h"
-#include <X11/extensions/extutil.h>
-#include <X11/extensions/Xext.h>
-#include <assert.h>
-#include <string.h>
 #include "glapi.h"
-#ifdef GLX_DIRECT_RENDERING
-#include "indirect_init.h"
-#include <X11/extensions/xf86vmode.h>
-#include "xf86dri.h"
-#endif
 #include "glxextensions.h"
 #include "glcontextmodes.h"
 #include "glheader.h"
+
+#ifdef GLX_DIRECT_RENDERING
 #include <sys/time.h>
+#include <X11/extensions/xf86vmode.h>
+#include "xf86dri.h"
+#endif
 
 static const char __glXGLXClientVendorName[] = "SGI";
 static const char __glXGLXClientVersion[] = "1.4";

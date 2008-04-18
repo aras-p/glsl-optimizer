@@ -10,6 +10,7 @@ SOURCES = \
 	  compsize.c \
 	  eval.c \
 	  glxcmds.c \
+	  glxcurrent.c \
 	  glxext.c \
 	  glxextensions.c \
 	  indirect.c \
