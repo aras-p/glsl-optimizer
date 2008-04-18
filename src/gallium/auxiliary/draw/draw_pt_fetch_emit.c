@@ -36,6 +36,7 @@
 #include "draw/draw_vbuf.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
+#include "translate/translate.h"
 
 /* The simplest 'middle end' in the new vertex code.  
  * 
@@ -72,94 +73,15 @@
 struct fetch_emit_middle_end {
    struct draw_pt_middle_end base;
    struct draw_context *draw;
-
-   struct {
-      const ubyte *ptr;
-      unsigned pitch;
-      void (*fetch)( const void *from, float *attrib);
-      void (*emit)( const float *attrib, float **out );
-   } fetch[PIPE_MAX_ATTRIBS];
    
-   unsigned nr_fetch;
-   unsigned hw_vertex_size;
+   struct translate *translate;
+
+   /* Cache point size somewhere it's address won't change:
+    */
+   float point_size;
+
 };
 
-
-
-static void fetch_R32_FLOAT( const void *from,
-                             float *attrib )
-{
-   float *f = (float *) from;
-   attrib[0] = f[0];
-   attrib[1] = 0.0;
-   attrib[2] = 0.0;
-   attrib[3] = 1.0;
-}
-
-
-static void emit_R32_FLOAT( const float *attrib,
-                            float **out )
-{
-   (*out)[0] = attrib[0];
-   (*out) += 1;
-}
-
-static void emit_R32G32_FLOAT( const float *attrib,
-                               float **out )
-{
-   (*out)[0] = attrib[0];
-   (*out)[1] = attrib[1];
-   (*out) += 2;
-}
-
-static void emit_R32G32B32_FLOAT( const float *attrib,
-                                  float **out )
-{
-   (*out)[0] = attrib[0];
-   (*out)[1] = attrib[1];
-   (*out)[2] = attrib[2];
-   (*out) += 3;
-}
-
-static void emit_R32G32B32A32_FLOAT( const float *attrib,
-                                     float **out )
-{
-   (*out)[0] = attrib[0];
-   (*out)[1] = attrib[1];
-   (*out)[2] = attrib[2];
-   (*out)[3] = attrib[3];
-   (*out) += 4;
-}
-
-
-/**
- * General-purpose fetch from user's vertex arrays, emit to driver's
- * vertex buffer.
- *
- * XXX this is totally temporary.
- */
-static void
-fetch_store_general( struct fetch_emit_middle_end *feme,
-                     void *out_ptr,
-                     const unsigned *fetch_elts,
-                     unsigned count )
-{
-   float *out = (float *)out_ptr;
-   uint i, j;
-
-   for (i = 0; i < count; i++) {
-      unsigned elt = fetch_elts[i] & ~DRAW_PT_FLAG_MASK;
-      
-      for (j = 0; j < feme->nr_fetch; j++) {
-         float attrib[4];
-         const ubyte *from = (feme->fetch[j].ptr +
-                              feme->fetch[j].pitch * elt);
-         
-         feme->fetch[j].fetch( from, attrib );
-         feme->fetch[j].emit( attrib, &out );
-      }
-   }
-}
 
 
 
@@ -170,8 +92,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
    const struct vertex_info *vinfo;
-   unsigned i;
+   unsigned i, dst_offset;
    boolean ok;
+   struct translate_key key;
 
 
    ok = draw->render->set_primitive( draw->render, 
@@ -186,51 +109,82 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    vinfo = draw->render->get_vertex_info(draw->render);
 
 
-   /* This is unique as it transforms straight from API vertex
-    * information to HW vertices.  All other cases go through our
-    * intermediate float[4] format.
+
+   /* Transform from API vertices to HW vertices, skipping the
+    * pipeline_vertex intermediate step.
     */
+   dst_offset = 0;
+   memset(&key, 0, sizeof(key));
+
    for (i = 0; i < vinfo->num_attribs; i++) {
-      unsigned src_element = vinfo->src_index[i];
-      unsigned src_buffer = draw->vertex_element[src_element].vertex_buffer_index;
-         
-      feme->fetch[i].ptr = ((const ubyte *)draw->user.vbuffer[src_buffer] + 
-                            draw->vertex_buffer[src_buffer].buffer_offset + 
-                            draw->vertex_element[src_element].src_offset);
+      const struct pipe_vertex_element *src = &draw->vertex_element[vinfo->src_index[i]];
 
-      feme->fetch[i].pitch = draw->vertex_buffer[src_buffer].pitch;
-         
-      feme->fetch[i].fetch = draw_get_fetch_func(draw->vertex_element[src_element].src_format);
-
+      unsigned emit_sz = 0;
+      unsigned input_format = src->src_format;
+      unsigned input_buffer = src->vertex_buffer_index;
+      unsigned input_offset = src->src_offset;
+      unsigned output_format;
 
       switch (vinfo->emit[i]) {
       case EMIT_4F:
-         feme->fetch[i].emit = emit_R32G32B32A32_FLOAT;
+	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+	 emit_sz = 4 * sizeof(float);
          break;
       case EMIT_3F:
-         feme->fetch[i].emit = emit_R32G32B32_FLOAT;
+	 output_format = PIPE_FORMAT_R32G32B32_FLOAT;
+	 emit_sz = 3 * sizeof(float);
          break;
       case EMIT_2F:
-         feme->fetch[i].emit = emit_R32G32_FLOAT;
+	 output_format = PIPE_FORMAT_R32G32_FLOAT;
+	 emit_sz = 2 * sizeof(float);
          break;
       case EMIT_1F:
-         feme->fetch[i].emit = emit_R32_FLOAT;
+	 output_format = PIPE_FORMAT_R32_FLOAT;
+	 emit_sz = 1 * sizeof(float);
          break;
       case EMIT_1F_PSIZE:
-         feme->fetch[i].ptr = (const ubyte *)&feme->draw->rasterizer->point_size;
-         feme->fetch[i].pitch = 0;
-         feme->fetch[i].fetch = fetch_R32_FLOAT;
-         feme->fetch[i].emit = emit_R32_FLOAT;
+	 input_format = PIPE_FORMAT_R32_FLOAT;
+	 input_buffer = draw->nr_vertex_buffers;
+	 input_offset = 0;
+	 output_format = PIPE_FORMAT_R32_FLOAT;
+	 emit_sz = 1 * sizeof(float);
          break;
       default:
          assert(0);
-         feme->fetch[i].emit = NULL;
-         break;
+	 output_format = PIPE_FORMAT_NONE;
+	 emit_sz = 0;
+	 continue;
       }
+
+      key.element[i].input_format = input_format;
+      key.element[i].input_buffer = input_buffer;
+      key.element[i].input_offset = input_offset;
+      key.element[i].output_format = output_format;
+      key.element[i].output_offset = dst_offset;
+      
+      dst_offset += emit_sz;
    }
 
-   feme->nr_fetch = vinfo->num_attribs;
-   feme->hw_vertex_size = vinfo->size * 4;
+   key.nr_elements = vinfo->num_attribs;
+   key.output_stride = vinfo->size * 4;
+
+   /* Don't bother with caching at this stage:
+    */
+   if (!feme->translate ||
+       memcmp(&feme->translate->key, &key, sizeof(key)) != 0) 
+   {
+      if (feme->translate)
+	 feme->translate->release(feme->translate);
+
+      feme->translate = translate_create( &key );
+
+      feme->translate->set_buffer(feme->translate, 
+				  draw->nr_vertex_buffers, 
+				  &feme->point_size,
+				  0);
+   }
+   
+   feme->point_size = draw->rasterizer->point_size;
 }
 
 
@@ -252,7 +206,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
    hw_verts = draw->render->allocate_vertices( draw->render,
-                                               (ushort)feme->hw_vertex_size,
+                                               (ushort)feme->translate->key.output_stride,
                                                (ushort)fetch_count );
    if (!hw_verts) {
       assert(0);
@@ -262,10 +216,10 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 					
    /* Single routine to fetch vertices and emit HW verts.
     */
-   fetch_store_general( feme, 
-                        hw_verts,
-                        fetch_elts,
-                        fetch_count );
+   feme->translate->run_elts( feme->translate, 
+			      fetch_elts,
+			      fetch_count,
+			      hw_verts );
 
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.
@@ -278,7 +232,7 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
     */
    draw->render->release_vertices( draw->render, 
                                    hw_verts, 
-                                   feme->hw_vertex_size, 
+                                   feme->translate->key.output_stride, 
                                    fetch_count );
 
 }

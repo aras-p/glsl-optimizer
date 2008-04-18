@@ -439,8 +439,8 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
-                                                    (ushort) vbuf->vertex_size,
-                                                    (ushort) vbuf->max_vertices);
+							     (ushort) vbuf->vertex_size,
+							     (ushort) vbuf->max_vertices);
    vbuf->vertex_ptr = vbuf->vertices;
 }
 
