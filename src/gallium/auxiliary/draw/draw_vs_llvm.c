@@ -60,113 +60,6 @@ vs_llvm_prepare( struct draw_vertex_shader *base,
 
 
 
-/**
- * Transform vertices with the current vertex program/shader
- * Up to four vertices can be shaded at a time.
- * \param vbuffer  the input vertex data
- * \param elts  indexes of four input vertices
- * \param count  number of vertices to shade [1..4]
- * \param vOut  array of pointers to four output vertices
- */
-static boolean
-vs_llvm_run( struct draw_vertex_shader *base,
-	     struct draw_context *draw,
-	     const unsigned *elts,
-	     unsigned count,
-	     void *vOut )
-{
-   struct draw_llvm_vertex_shader *shader =
-      (struct draw_llvm_vertex_shader *)base;
-
-   struct tgsi_exec_machine *machine = shader->machine;
-   unsigned int j;
-   unsigned int clipped = 0;
-   const float *scale = draw->viewport.scale;
-   const float *trans = draw->viewport.translate;
-
-
-   assert(count <= 4);
-   assert(base->state->output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
-
-   /* Consts does not require 16 byte alignment. */
-   machine->Consts = (float (*)[4]) draw->user.constants;
-
-   if (draw->rasterizer->bypass_vs) {
-      /* outputs are just the inputs */
-      outputs = machine->Inputs;
-   }
-   else {
-      outputs = machine->Outputs;
-   }
-
-
-   draw->vertex_fetch.fetch_func( draw, machine, elts, count );
-
-   if (!draw->rasterizer->bypass_vs) {
-      /* run shader */
-      gallivm_cpu_vs_exec(shader->llvm_prog,
-                          machine->Inputs,
-                          machine->Outputs,
-                          machine->Consts,
-                          machine->Temps);
-   }
-
-   /* store machine results */
-   for (j = 0; j < count; j++) {
-      unsigned slot;
-      float x, y, z, w;
-
-      x = vOut[j]->clip[0] = outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = outputs[0].xyzw[3].f[j];
-
-      if (!draw->rasterizer->bypass_clipping) {
-         vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane,
-                                              draw->nr_planes);
-         clipped += vOut[j]->clipmask;
-
-         /* divide by w */
-         w = 1.0f / w;
-         x *= w;
-         y *= w;
-         z *= w;
-      }
-      else {
-         vOut[j]->clipmask = 0;
-      }
-      vOut[j]->edgeflag = 1;
-      vOut[j]->vertex_id = UNDEFINED_VERTEX_ID;
-
-      if (!draw->identity_viewport) {
-         /* Viewport mapping */
-         vOut[j]->data[0][0] = x * scale[0] + trans[0];
-         vOut[j]->data[0][1] = y * scale[1] + trans[1];
-         vOut[j]->data[0][2] = z * scale[2] + trans[2];
-         vOut[j]->data[0][3] = w;
-      }
-      else {
-         vOut[j]->data[0][0] = x;
-         vOut[j]->data[0][1] = y;
-         vOut[j]->data[0][2] = z;
-         vOut[j]->data[0][3] = w;
-      }
-
-      /* Remaining attributes are packed into sequential post-transform
-       * vertex attrib slots.
-       */
-      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-         vOut[j]->data[slot][0] = outputs[slot].xyzw[0].f[j];
-         vOut[j]->data[slot][1] = outputs[slot].xyzw[1].f[j];
-         vOut[j]->data[slot][2] = outputs[slot].xyzw[2].f[j];
-         vOut[j]->data[slot][3] = outputs[slot].xyzw[3].f[j];
-      }
-   } /* loop over vertices */
-   return clipped != 0;
-}
-
-
-
 
 static void
 vs_llvm_run_linear( struct draw_vertex_shader *base,
@@ -256,7 +149,6 @@ draw_create_vs_llvm(struct draw_context *draw,
    tgsi_scan_shader(shader->tokens, &vs->base.info);
 
    vs->base.prepare = vs_llvm_prepare;
-   vs->base.run = vs_llvm_run;
    vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
    vs->machine = &draw->machine;

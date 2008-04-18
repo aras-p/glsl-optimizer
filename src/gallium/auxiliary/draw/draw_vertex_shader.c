@@ -74,7 +74,7 @@ draw_vertex_shader_queue_flush(struct draw_context *draw)
       assert(n > 0);
       assert(n <= MAX_SHADER_VERTICES);
 
-      shader->run(shader, draw, elts, n, dests, MAX_VERTEX_ALLOCATION);
+//      shader->run(shader, draw, elts, n, dests, MAX_VERTEX_ALLOCATION);
    }
 
    draw->vs.post_nr = draw->vs.queue_nr;

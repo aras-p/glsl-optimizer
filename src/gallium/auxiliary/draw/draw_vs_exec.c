@@ -66,144 +66,8 @@ vs_exec_prepare( struct draw_vertex_shader *shader,
 				 PIPE_MAX_SAMPLERS,
 				 NULL /*samplers*/ );
 
-   draw_update_vertex_fetch( draw );
 }
 
-
-/**
- * Transform vertices with the current vertex program/shader
- * Up to four vertices can be shaded at a time.
- * \param vbuffer  the input vertex data
- * \param elts  indexes of four input vertices
- * \param count  number of vertices to shade [1..4]
- * \param vOut  array of pointers to four output vertices
- */
-static boolean
-vs_exec_run( struct draw_vertex_shader *shader,
-	     struct draw_context *draw,
-	     const unsigned *elts, 
-	     unsigned count,
-	     void *vOut,
-             unsigned vertex_size)
-{
-   struct exec_vertex_shader *evs = exec_vertex_shader(shader);
-   struct tgsi_exec_machine *machine = evs->machine;
-   unsigned int i, j;
-   unsigned int clipped = 0;
-   struct tgsi_exec_vector *outputs = 0;
-   const float *scale = draw->viewport.scale;
-   const float *trans = draw->viewport.translate;
-
-   assert(shader->info.output_semantic_name[0] == TGSI_SEMANTIC_POSITION);
-
-   machine->Consts = (const float (*)[4]) draw->user.constants;
-
-   if (draw->rasterizer->bypass_vs) {
-      /* outputs are just the inputs */
-      outputs = machine->Inputs;
-   }
-   else {
-      outputs = machine->Outputs;
-   }
-
-   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
-      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
-      draw->vertex_fetch.fetch_func( draw, machine, &elts[i], max_vertices );
-
-#if 0
-      for (j = 0; j < max_vertices; j++) {
-	 unsigned slot;
-	 debug_printf("%d) Input vert:\n", i + j);
-	 for (slot = 0; slot < shader->info.num_inputs; slot++) {
-	    debug_printf("\t%d: %f %f %f %f\n", slot,
-			 machine->Inputs[slot].xyzw[0].f[j],
-			 machine->Inputs[slot].xyzw[1].f[j],
-			 machine->Inputs[slot].xyzw[2].f[j],
-			 machine->Inputs[slot].xyzw[3].f[j]);
-	 }
-      }
-#endif
-
-
-      if (!draw->rasterizer->bypass_vs) {
-         /* run interpreter */
-         tgsi_exec_machine_run( machine );
-      }
-
-      /* store machine results */
-      for (j = 0; j < max_vertices; j++) {
-         unsigned slot;
-         float x, y, z, w;
-         struct vertex_header *out =
-            draw_header_from_block(vOut, vertex_size, i + j);
-
-         /* Handle attr[0] (position) specially:
-          *
-          * XXX: Computing the clipmask should be done in the vertex
-          * program as a set of DP4 instructions appended to the
-          * user-provided code.
-          */
-         x = out->clip[0] = outputs[0].xyzw[0].f[j];
-         y = out->clip[1] = outputs[0].xyzw[1].f[j];
-         z = out->clip[2] = outputs[0].xyzw[2].f[j];
-         w = out->clip[3] = outputs[0].xyzw[3].f[j];
-
-         if (!draw->rasterizer->bypass_clipping) {
-            out->clipmask = compute_clipmask(out->clip, draw->plane,
-                                             draw->nr_planes);
-            clipped += out->clipmask;
-
-            /* divide by w */
-            w = 1.0f / w;
-            x *= w;
-            y *= w;
-            z *= w;
-         }
-         else {
-            out->clipmask = 0;
-         }
-         out->edgeflag = 1;
-	 out->vertex_id = UNDEFINED_VERTEX_ID;
-
-         if (!draw->identity_viewport) {
-            /* Viewport mapping */
-            out->data[0][0] = x * scale[0] + trans[0];
-            out->data[0][1] = y * scale[1] + trans[1];
-            out->data[0][2] = z * scale[2] + trans[2];
-            out->data[0][3] = w;
-         }
-         else 
-	 {
-            out->data[0][0] = x;
-            out->data[0][1] = y;
-            out->data[0][2] = z;
-            out->data[0][3] = w;
-         }
-
-         /* Remaining attributes are packed into sequential post-transform
-          * vertex attrib slots.
-          */
-         for (slot = 1; slot < draw->num_vs_outputs; slot++) {
-            out->data[slot][0] = outputs[slot].xyzw[0].f[j];
-            out->data[slot][1] = outputs[slot].xyzw[1].f[j];
-            out->data[slot][2] = outputs[slot].xyzw[2].f[j];
-            out->data[slot][3] = outputs[slot].xyzw[3].f[j];
-         }
-
-#if 0 /*DEBUG*/
-         printf("%d) Post xform vert:\n", i + j);
-         for (slot = 0; slot < draw->num_vs_outputs; slot++) {
-            printf("\t%d: %f %f %f %f\n", slot,
-                   out->data[slot][0],
-                   out->data[slot][1],
-                   out->data[slot][2],
-                   out->data[slot][3]);
-         }
-#endif
-      } /* loop over vertices */
-   }
-   return clipped != 0;
-}
 
 
 
@@ -312,7 +176,6 @@ draw_create_vs_exec(struct draw_context *draw,
 
 
    vs->base.prepare = vs_exec_prepare;
-   vs->base.run = vs_exec_run;
    vs->base.run_linear = vs_exec_run_linear;
    vs->base.delete = vs_exec_delete;
    vs->machine = &draw->machine;

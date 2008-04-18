@@ -55,13 +55,6 @@ struct draw_vertex_shader {
    /* Run the shader - this interface will get cleaned up in the
     * future:
     */
-   boolean (*run)( struct draw_vertex_shader *shader,
-                   struct draw_context *draw,
-                   const unsigned *elts,
-                   unsigned count,
-                   void *out,
-                   unsigned vertex_size);
-
    void (*run_linear)( struct draw_vertex_shader *shader,
 		       const float (*input)[4],
 		       float (*output)[4],
