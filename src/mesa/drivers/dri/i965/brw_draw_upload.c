@@ -418,9 +418,11 @@ int brw_prepare_vertices( struct brw_context *brw,
       }
    }
 
-   ret = dri_bufmgr_check_aperture_space(brw->vb.upload.bo);
-   if (ret)
-     return 1;
+   if (brw->vb.upload.bo) {
+     ret = dri_bufmgr_check_aperture_space(brw->vb.upload.bo);
+     if (ret)
+       return 1;
+   }
 
    return 0;
 }
