@@ -406,7 +406,7 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       /* clear whole buffer w/out masking */
       struct st_renderbuffer *strb = st_renderbuffer(rb);
       uint clearValue;
-      util_pack_color(ctx->Color.ClearColor, strb->surface->format, &clearValue);
+      util_pack_color(ctx->Color.ClearColor, PIPE_FORMAT_A8R8G8B8_UNORM, &clearValue);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
