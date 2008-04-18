@@ -195,9 +195,6 @@ struct draw_context
    /* Support prototype passthrough path:
     */
    struct {
-      unsigned prim;           /* XXX: to be removed */
-      unsigned hw_vertex_size; /* XXX: to be removed */
-
       struct {
          struct draw_pt_middle_end *opt[PT_MAX_MIDDLE];
       } middle;
@@ -272,54 +269,6 @@ struct draw_context
    /** TGSI program interpreter runtime state */
    struct tgsi_exec_machine machine;
 
-   /* Vertex fetch internal state
-    */
-   struct {
-      const ubyte *src_ptr[PIPE_MAX_ATTRIBS];
-      unsigned pitch[PIPE_MAX_ATTRIBS];
-      fetch_func fetch[PIPE_MAX_ATTRIBS];
-      unsigned nr_attrs;
-      full_fetch_func fetch_func;
-      pt_fetch_func pt_fetch;
-   } vertex_fetch;
-
-   /* Post-tnl vertex cache:
-    */
-   struct {
-      unsigned referenced;  /**< bitfield */
-
-      struct {
-	 unsigned in;		/* client array element */
-	 unsigned out;		/* index in vs queue/array */
-      } idx[VCACHE_SIZE + VCACHE_OVERFLOW];
-
-      unsigned overflow;
-
-      /** To find space in the vertex cache: */
-      struct vertex_header *(*get_vertex)( struct draw_context *draw,
-                                           unsigned i );
-   } vcache;
-
-   /* Vertex shader queue:
-    */
-   struct {
-      unsigned elts[VS_QUEUE_LENGTH];   /**< index into the user's vertex arrays */
-      char *vertex_cache;
-      unsigned queue_nr;
-      unsigned post_nr;
-   } vs;
-
-   /* Prim pipeline queue:
-    */
-   struct {
-      /* Need to queue up primitives until their vertices have been
-       * transformed by a vs queue flush.
-       */
-      struct prim_header queue[PRIM_QUEUE_LENGTH];
-      unsigned queue_nr;
-   } pq;
-
-
    /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
     */
    struct gallivm_cpu_engine *engine;   
@@ -372,9 +321,6 @@ boolean draw_pt_arrays( struct draw_context *draw,
 
 void draw_pt_reset_vertex_ids( struct draw_context *draw );
 
-#define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
-#define DRAW_FLUSH_PRIM_QUEUE                0x2
-#define DRAW_FLUSH_VERTEX_CACHE              0x4
 #define DRAW_FLUSH_STATE_CHANGE              0x8
 #define DRAW_FLUSH_BACKEND                   0x10
 
@@ -416,10 +362,5 @@ dot4(const float *a, const float *b)
    return result;
 }
 
-static INLINE struct vertex_header *
-draw_header_from_block(char *block, int size, int num)
-{
-   return (struct vertex_header*)(block + num * size);
-}
 
 #endif /* DRAW_PRIVATE_H */

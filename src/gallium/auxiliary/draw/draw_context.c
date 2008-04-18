@@ -83,16 +83,6 @@ struct draw_context *draw_create( void )
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
 
-   /* Statically allocate maximum sized vertices for the cache - could be cleverer...
-    */
-   {
-      char *tmp = align_malloc(VS_QUEUE_LENGTH * MAX_VERTEX_ALLOCATION, 16);
-      if (!tmp)
-         goto fail;
-
-      draw->vs.vertex_cache = tmp;
-   }
-
    /* these defaults are oriented toward the needs of softpipe */
    draw->wide_point_threshold = 1000000.0; /* infinity */
    draw->wide_line_threshold = 1.0;
@@ -161,10 +151,6 @@ void draw_destroy( struct draw_context *draw )
    if (draw->machine.Outputs)
       align_free(draw->machine.Outputs);
    tgsi_exec_machine_free_data(&draw->machine);
-
-
-   if (draw->vs.vertex_cache)
-      align_free( draw->vs.vertex_cache ); /* Frees all the vertices. */
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -254,8 +240,6 @@ draw_set_vertex_buffers(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-
    memcpy(draw->vertex_buffer, buffers, count * sizeof(buffers[0]));
    draw->nr_vertex_buffers = count;
 }
@@ -267,8 +251,6 @@ draw_set_vertex_elements(struct draw_context *draw,
                          const struct pipe_vertex_element *elements)
 {
    assert(count <= PIPE_MAX_ATTRIBS);
-
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
 
    memcpy(draw->vertex_element, elements, count * sizeof(elements[0]));
    draw->nr_vertex_elements = count;
@@ -282,7 +264,6 @@ void
 draw_set_mapped_vertex_buffer(struct draw_context *draw,
                               unsigned attr, const void *buffer)
 {
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
    draw->user.vbuffer[attr] = buffer;
 }
 
@@ -291,7 +272,6 @@ void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer)
 {
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
    draw->user.constants = buffer;
 }
 
