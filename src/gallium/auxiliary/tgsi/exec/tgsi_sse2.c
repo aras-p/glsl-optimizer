@@ -36,6 +36,8 @@
 
 #if defined(__i386__) || defined(__386__)
 
+#define HIGH_PRECISION 1  /* for 1/sqrt() */
+
 #define DUMP_SSE  0
 
 #if DUMP_SSE
@@ -1137,16 +1139,44 @@ emit_rcp (
       make_xmm( xmm_src ) );
 }
 
+#if HIGH_PRECISION
+static void XSTDCALL
+rsqrt4f(
+   float *store )
+{
+#ifdef WIN32
+   store[0] = 1.0F / (float) sqrt( (double) store[0] );
+   store[1] = 1.0F / (float) sqrt( (double) store[1] );
+   store[2] = 1.0F / (float) sqrt( (double) store[2] );
+   store[3] = 1.0F / (float) sqrt( (double) store[3] );
+#else
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = 1.0F / sqrt( store[X + 0] );
+   store[X + 1] = 1.0F / sqrt( store[X + 1] );
+   store[X + 2] = 1.0F / sqrt( store[X + 2] );
+   store[X + 3] = 1.0F / sqrt( store[X + 3] );
+#endif
+}
+#endif
+
 static void
 emit_rsqrt(
    struct x86_function *func,
    unsigned xmm_dst,
    unsigned xmm_src )
 {
+#if HIGH_PRECISION
+   emit_func_call_dst_src(
+      func,
+      xmm_dst,
+      xmm_src,
+      rsqrt4f );
+#else
    emit_rsqrtps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
+#endif
 }
 
 static void
