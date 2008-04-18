@@ -165,7 +165,7 @@ static void populate_key( struct brw_context *brw,
 static int prepare_gs_prog( struct brw_context *brw )
 {
    struct brw_gs_prog_key key;
-
+   int ret = 0;
    /* Populate the key:
     */
    populate_key(brw, &key);
@@ -183,9 +183,11 @@ static int prepare_gs_prog( struct brw_context *brw )
 					 &brw->gs.prog_data);
       if (brw->gs.prog_bo == NULL)
 	 compile_gs_prog( brw, &key );
+
+      ret |= dri_bufmgr_check_aperture_space(brw->gs.prog_bo);
    }
 
-   return dri_bufmgr_check_aperture_space(brw->gs.prog_bo);
+   return ret;
 }
 
 
