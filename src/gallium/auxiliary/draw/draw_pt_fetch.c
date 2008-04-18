@@ -119,7 +119,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       if (fetch->translate)
 	 fetch->translate->release(fetch->translate);
 
-      fetch->translate = translate_generic_create( &key );
+      fetch->translate = translate_create( &key );
 
       if (emit_header) {
 	 static struct vertex_header vh = { 0, 0, 0, 0xffff };

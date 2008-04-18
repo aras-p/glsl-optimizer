@@ -42,6 +42,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_format.h"
+#include "pipe/p_state.h"
 
 struct translate_element 
 {
@@ -91,6 +92,9 @@ void translate_context_destroy( struct translate_context * );
 struct translate *translate_lookup_or_create( struct translate_context *tctx,
 					      const struct translate_key *key );
 #endif
+
+
+struct translate *translate_create( const struct translate_key *key );
 
 
 /*******************************************************************************

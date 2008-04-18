@@ -127,7 +127,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       if (emit->translate)
 	 emit->translate->release(emit->translate);
 
-      emit->translate = translate_generic_create( &hw_key );
+      emit->translate = translate_create( &hw_key );
    }
 }
 
