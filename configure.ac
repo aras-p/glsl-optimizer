@@ -237,11 +237,26 @@ dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
 dnl More later: directfb, fbdev, ...
 dnl
+default_driver="xlib"
+
+case "$host_os" in
+linux*)
+    case "$host_cpu" in
+    i*86|x86_64|powerpc*) default_driver="dri";;
+    esac
+    ;;
+freebsd* | dragonfly*)
+    case "$host_cpu" in
+    i*86|x86_64) default_driver="dri";;
+    esac
+    ;;
+esac
+
 AC_ARG_WITH(driver,
     [AS_HELP_STRING([--with-driver=DRIVER],
-        [driver for Mesa: xlib,dri,osmesa @<:@default=xlib@:>@])],
+        [driver for Mesa: xlib,dri,osmesa @<:@default=dri when available, or xlib@:>@])],
     mesa_driver="$withval",
-    mesa_driver="xlib")
+    mesa_driver="$default_driver")
 dnl Check for valid option
 case "x$mesa_driver" in
 xxlib|xdri|xosmesa)
