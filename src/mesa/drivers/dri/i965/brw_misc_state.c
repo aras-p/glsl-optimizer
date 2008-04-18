@@ -183,7 +183,7 @@ static int prepare_depthbuffer(struct brw_context *brw)
 {
    struct intel_region *region = brw->state.depth_region;
 
-   if (region->buffer)
+   if (!region || !region->buffer)
       return 0;
    return dri_bufmgr_check_aperture_space(region->buffer);
 }
