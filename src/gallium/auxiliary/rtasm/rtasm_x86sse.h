@@ -165,6 +165,7 @@ void mmx_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg sr
 
 void sse2_cvtps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_cvttps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_cvtdq2ps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packsswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -202,6 +203,7 @@ void sse_rsqrtss( struct x86_function *p, struct x86_reg dst, struct x86_reg src
 void sse_shufps( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0,
                  unsigned char shuf );
 void sse_pmovmskb( struct x86_function *p, struct x86_reg dest, struct x86_reg src );
+void sse2_punpcklbw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
 void x86_add( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_and( struct x86_function *p, struct x86_reg dst, struct x86_reg src );

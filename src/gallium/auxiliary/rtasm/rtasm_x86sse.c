@@ -33,11 +33,6 @@
 #define DISASSEM 0
 #define X86_TWOB 0x0f
 
-static unsigned char *cptr( void (*label)() )
-{
-   return (unsigned char *) label;
-}
-
 
 static void do_realloc( struct x86_function *p )
 {
@@ -304,6 +299,11 @@ void x86_jmp( struct x86_function *p, unsigned char *label)
 }
 
 #if 0
+static unsigned char *cptr( void (*label)() )
+{
+   return (unsigned char *) label;
+}
+
 /* This doesn't work once we start reallocating & copying the
  * generated code on buffer fills, because the call is relative to the
  * current pc.
@@ -417,11 +417,14 @@ void x86_add( struct x86_function *p,
    emit_op_modrm(p, 0x03, 0x01, dst, src );
 }
 
+/* Calculate EAX * src, results in EDX:EAX.
+ */
 void x86_mul( struct x86_function *p,
 	       struct x86_reg src )
 {
-   assert (src.file == file_REG32 && src.mod == mod_REG);
-   emit_op_modrm(p, 0xf7, 0, x86_make_reg (file_REG32, reg_SP), src );
+//   assert (src.file == file_REG32 && src.mod == mod_REG);
+   emit_1ub(p, 0xf7);
+   emit_modrm_noreg(p, 4, src );
 }
 
 void x86_sub( struct x86_function *p,
@@ -646,6 +649,14 @@ void sse_cvtps2pi( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
+void sse2_cvtdq2ps( struct x86_function *p,
+		   struct x86_reg dst,
+		   struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x5b);
+   emit_modrm( p, dst, src );
+}
+
 
 /* Shufps can also be used to implement a reduced swizzle when dest ==
  * arg0.
@@ -734,6 +745,15 @@ void sse2_packuswb( struct x86_function *p,
    emit_3ub(p, 0x66, X86_TWOB, 0x67);
    emit_modrm( p, dst, src );
 }
+
+void sse2_punpcklbw( struct x86_function *p,
+		    struct x86_reg dst,
+		    struct x86_reg src )
+{
+   emit_3ub(p, 0x66, X86_TWOB, 0x60);
+   emit_modrm( p, dst, src );
+}
+
 
 void sse2_rcpps( struct x86_function *p,
                  struct x86_reg dst,
