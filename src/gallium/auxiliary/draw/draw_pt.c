@@ -106,10 +106,6 @@ boolean draw_pt_init( struct draw_context *draw )
       return FALSE;
 
    draw->pt.middle.opt[0] = draw_pt_fetch_emit( draw );
-   draw->pt.middle.opt[PT_PIPELINE] = draw_pt_fetch_pipeline( draw );
-//   draw->pt.middle.opt[PT_SHADE] = draw_pt_shade_emit( draw );
-//   draw->pt.middle.opt[PT_SHADE | PT_PIPELINE] = draw_pt_shade_pipeline( draw );
-//   draw->pt.middle.opt[PT_SHADE | PT_CLIPTEST] = draw_pt_shade_clip_either( draw );
    draw->pt.middle.opt[PT_SHADE | PT_CLIPTEST | PT_PIPELINE] = 
       draw_pt_fetch_pipeline_or_emit( draw );
 
