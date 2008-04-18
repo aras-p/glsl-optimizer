@@ -315,7 +315,7 @@ int brw_prepare_vertices( struct brw_context *brw,
    GLuint i;
    const unsigned char *ptr = NULL;
    GLuint interleave = 0;
-   int ret;
+   int ret = 0;
 
    struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
    GLuint nr_enabled = 0;
@@ -362,6 +362,8 @@ int brw_prepare_vertices( struct brw_context *brw,
 	 dri_bo_reference(input->bo);
 	 input->offset = (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
+
+	 ret |= dri_bufmgr_check_aperture_space(input->bo);
       } else {
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
@@ -419,10 +421,12 @@ int brw_prepare_vertices( struct brw_context *brw,
    }
 
    if (brw->vb.upload.bo) {
-     ret = dri_bufmgr_check_aperture_space(brw->vb.upload.bo);
-     if (ret)
-       return 1;
+     ret |= dri_bufmgr_check_aperture_space(brw->vb.upload.bo);
    }
+
+   if (ret)
+     return 1;
+
 
    return 0;
 }
