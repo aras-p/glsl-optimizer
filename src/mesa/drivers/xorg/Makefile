@@ -32,6 +32,9 @@ C_SOURCES =		\
 MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
 C_SOURCES += ../common/driverfuncs.c
+ifeq ("${DRIVER_DIRS}", "dri")
+C_SOURCES += ../dri/common/utils.c
+endif
 
 OBJECTS = $(C_SOURCES:.c=.o)
 
@@ -44,6 +47,12 @@ INCLUDES = \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
 	`pkg-config --cflags xorg-server`
+
+ifeq ("${DRIVER_DIRS}", "dri")
+INCLUDES += \
+	-I$(TOP)/src/mesa/drivers/dri/common \
+	`pkg-config --cflags libdrm`
+endif
 
 # undef 'USE_XSHM' to make it explicit that 'XFree86Server' takes precedence
 DRIVER_DEFINES = -UUSE_XSHM -DXFree86Server
