@@ -12,7 +12,6 @@ C_SOURCES = \
 	draw_vs_llvm.c \
 	draw_context.c\
 	draw_cull.c \
-	draw_debug.c \
 	draw_flatshade.c \
 	draw_offset.c \
 	draw_pt.c \

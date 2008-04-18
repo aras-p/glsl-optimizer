@@ -8,7 +8,6 @@ draw = env.ConvenienceLibrary(
 		'draw_clip.c',
 		'draw_context.c',
 		'draw_cull.c',
-		'draw_debug.c',
 		'draw_flatshade.c',
 		'draw_offset.c',
 		'draw_pstipple.c',
