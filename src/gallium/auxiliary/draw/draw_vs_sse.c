@@ -71,7 +71,6 @@ static void
 vs_sse_prepare( struct draw_vertex_shader *base,
 		struct draw_context *draw )
 {
-   draw_update_vertex_fetch( draw );
 }
 
 
