@@ -128,31 +128,6 @@ struct draw_stage
 };
 
 
-#define PRIM_QUEUE_LENGTH      32
-#define VCACHE_SIZE            32
-#define VCACHE_OVERFLOW        4
-#define VS_QUEUE_LENGTH        (VCACHE_SIZE + VCACHE_OVERFLOW + 1)	/* can never fill up */
-
-
-
-/* Internal function for vertex fetch.
- */
-typedef void (*fetch_func)(const void *ptr, float *attrib);
-
-fetch_func draw_get_fetch_func( enum pipe_format format );
-
-
-
-typedef void (*full_fetch_func)( struct draw_context *draw,
-				 struct tgsi_exec_machine *machine,
-				 const unsigned *elts,
-				 unsigned count );
-
-typedef void (*pt_fetch_func)( struct draw_context *draw,
-			      float *out,
-			      unsigned start,
-			       unsigned count );
-
 
 struct vbuf_render;
 
