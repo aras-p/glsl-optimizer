@@ -62,8 +62,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    vinfo = draw->render->get_vertex_info(draw->render);
 
 
-   /* In passthrough mode, need to translate from vertex shader
-    * outputs to hw vertices.
+   /* Translate from pipeline vertices to hw vertices.
     */
    dst_offset = 0;
    for (i = 0; i < vinfo->num_attribs; i++) {

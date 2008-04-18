@@ -35,9 +35,6 @@ C_SOURCES = \
 	draw_vertex_cache.c \
 	draw_vertex_fetch.c \
 	draw_vertex_shader.c \
-	draw_vf.c \
-	draw_vf_generic.c \
-	draw_vf_sse.c \
 	draw_wide_line.c \
 	draw_wide_point.c
 
