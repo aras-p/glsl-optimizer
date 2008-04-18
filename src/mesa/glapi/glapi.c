@@ -50,6 +50,10 @@
 
 
 
+#ifdef HAVE_DIX_CONFIG_H
+#include <dix-config.h>
+#endif
+
 #include "glheader.h"
 #include "glapi.h"
 #include "glapioffsets.h"

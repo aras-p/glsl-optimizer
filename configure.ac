@@ -387,6 +387,7 @@ xlib)
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
     fi
     GL_LIB_DEPS="$GL_LIB_DEPS $SELINUX_LIBS -lm -lpthread"
+    GLCORE_LIB_DEPS=""
 
     # if static, move the external libraries to the programs
     # and empty the libraries for libGL
@@ -418,13 +419,16 @@ dri)
 
     # need DRM libs, -lpthread, etc.
     GL_LIB_DEPS="$GL_LIB_DEPS $LIBDRM_LIBS -lm -lpthread $DLOPEN_LIBS"
+    GLCORE_LIB_DEPS="-lm -lpthread $DLOPEN_LIBS"
     ;;
 osmesa)
     # No libGL for osmesa
     GL_LIB_DEPS=""
+    GLCORE_LIB_DEPS=""
     ;;
 esac
 AC_SUBST(GL_LIB_DEPS)
+AC_SUBST(GLCORE_LIB_DEPS)
 
 dnl
 dnl More X11 setup

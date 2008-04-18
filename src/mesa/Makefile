@@ -103,9 +103,11 @@ OSMESA16_OBJECTS = \
 	$(OSMESA_DRIVER_OBJECTS)
 
 
-stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+stand-alone: depend subdirs libmesa.a \
+	$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
-osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
+osmesa-only: depend subdirs \
+	$(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
