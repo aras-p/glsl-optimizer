@@ -4,14 +4,21 @@ include $(TOP)/configs/current
 LIBNAME = draw
 
 C_SOURCES = \
-	draw_aaline.c \
-	draw_aapoint.c \
-	draw_clip.c \
-	draw_context.c\
-	draw_cull.c \
-	draw_flatshade.c \
-	draw_offset.c \
-	draw_pstipple.c \
+	draw_context.c \
+	draw_pipe_aaline.c \
+	draw_pipe_aapoint.c \
+	draw_pipe_clip.c \
+	draw_pipe_cull.c \
+	draw_pipe_flatshade.c \
+	draw_pipe_offset.c \
+	draw_pipe_pstipple.c \
+	draw_pipe_stipple.c \
+	draw_pipe_twoside.c \
+	draw_pipe_unfilled.c \
+	draw_pipe_validate.c \
+	draw_pipe_vbuf.c \
+	draw_pipe_wide_line.c \
+	draw_pipe_wide_point.c \
 	draw_pt.c \
 	draw_pt_elts.c \
 	draw_pt_emit.c \
@@ -21,18 +28,11 @@ C_SOURCES = \
 	draw_pt_pipeline.c \
 	draw_pt_post_vs.c \
 	draw_pt_vcache.c \
-	draw_stipple.c \
-	draw_twoside.c \
-	draw_unfilled.c \
-	draw_validate.c \
-	draw_vbuf.c \
 	draw_vertex.c \
 	draw_vs.c \
 	draw_vs_exec.c \
 	draw_vs_llvm.c \
-	draw_vs_sse.c \
-	draw_wide_line.c \
-	draw_wide_point.c
+	draw_vs_sse.c 
 
 
 include ../../Makefile.template
