@@ -309,11 +309,6 @@ struct draw_context
       unsigned post_nr;
    } vs;
 
-   /**
-    * Run the vertex shader on all vertices in the vertex queue.
-    */
-   void (*shader_queue_flush)(struct draw_context *draw);
-
    /* Prim pipeline queue:
     */
    struct {
@@ -359,7 +354,6 @@ extern void draw_vertex_cache_invalidate( struct draw_context *draw );
 extern void draw_vertex_cache_unreference( struct draw_context *draw );
 extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
 
-extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
 
 extern void draw_update_vertex_fetch( struct draw_context *draw );
 

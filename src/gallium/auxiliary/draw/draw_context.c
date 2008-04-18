@@ -93,8 +93,6 @@ struct draw_context *draw_create( void )
       draw->vs.vertex_cache = tmp;
    }
 
-   draw->shader_queue_flush = draw_vertex_shader_queue_flush;
-
    /* these defaults are oriented toward the needs of softpipe */
    draw->wide_point_threshold = 1000000.0; /* infinity */
    draw->wide_line_threshold = 1.0;
