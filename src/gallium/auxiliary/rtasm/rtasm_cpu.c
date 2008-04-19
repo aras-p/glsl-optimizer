@@ -32,7 +32,7 @@
 int rtasm_cpu_has_sse(void)
 {
    /* FIXME: actually detect this at run-time */
-#if defined(__i386__) || defined(__386__)
+#if defined(__i386__) || defined(__386__) || defined(i386)
    return 1;
 #else
    return 0;
@@ -42,7 +42,7 @@ int rtasm_cpu_has_sse(void)
 int rtasm_cpu_has_sse2(void) 
 {
    /* FIXME: actually detect this at run-time */
-#if defined(__i386__) || defined(__386__)
+#if defined(__i386__) || defined(__386__) || defined(i386)
    return 1;
 #else
    return 0;
