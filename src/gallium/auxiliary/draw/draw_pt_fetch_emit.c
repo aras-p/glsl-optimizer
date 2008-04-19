@@ -75,6 +75,7 @@ struct fetch_emit_middle_end {
    struct draw_context *draw;
    
    struct translate *translate;
+   const struct vertex_info *vinfo;
 
    /* Cache point size somewhere it's address won't change:
     */
@@ -106,9 +107,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    
    /* Must do this after set_primitive() above:
     */
-   vinfo = draw->render->get_vertex_info(draw->render);
-
-
+   vinfo = feme->vinfo = draw->render->get_vertex_info(draw->render);
+   
+   
 
    /* Transform from API vertices to HW vertices, skipping the
     * pipeline_vertex intermediate step.
@@ -228,6 +229,15 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 			      fetch_elts,
 			      fetch_count,
 			      hw_verts );
+
+   if (0) {
+      unsigned i;
+      for (i = 0; i < fetch_count; i++) {
+         debug_printf("\n\nvertex %d:\n", i);
+         draw_dump_emitted_vertex( feme->vinfo, 
+                                   (const uint8_t *)hw_verts + feme->vinfo->size * 4 * i );
+      }
+   }
 
    /* XXX: Draw arrays path to avoid re-emitting index list again and
     * again.

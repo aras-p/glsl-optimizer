@@ -73,3 +73,57 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
       }
    }
 }
+
+
+void
+draw_dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
+{
+   unsigned i, j;
+
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      j = vinfo->src_index[i];
+      switch (vinfo->emit[i]) {
+      case EMIT_OMIT:
+         debug_printf("EMIT_OMIT:");
+         break;
+      case EMIT_1F:
+         debug_printf("EMIT_1F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_1F_PSIZE:
+         debug_printf("EMIT_1F_PSIZE:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_2F:
+         debug_printf("EMIT_2F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_3F:
+         debug_printf("EMIT_3F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         data += sizeof(float);
+         break;
+      case EMIT_4F:
+         debug_printf("EMIT_4F:\t");
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         debug_printf("%f ", *(float *)data); data += sizeof(float);
+         break;
+      case EMIT_4UB:
+         debug_printf("EMIT_4UB:\t");
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         debug_printf("%u ", *data++);
+         break;
+      default:
+         assert(0);
+      }
+      debug_printf("\n");
+   }
+   debug_printf("\n");
+}
