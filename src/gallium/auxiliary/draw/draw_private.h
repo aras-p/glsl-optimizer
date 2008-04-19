@@ -128,6 +128,11 @@ struct draw_context
       boolean line_stipple;       /**< do line stipple? */
       boolean point_sprite;       /**< convert points to quads for sprites? */
 
+      /* Temporary storage while the pipeline is being run:
+       */
+      char *verts;
+      unsigned vertex_stride;
+      unsigned vertex_count;
    } pipeline;
 
 
@@ -144,13 +149,6 @@ struct draw_context
       struct {
          struct draw_pt_front_end *vcache;
       } front;
-
-      struct {
-         char *verts;
-         unsigned vertex_stride;
-         unsigned vertex_count;
-      } pipeline;
-
    } pt;
 
    boolean flushing;
@@ -235,9 +233,21 @@ void draw_pt_reset_vertex_ids( struct draw_context *draw );
 boolean draw_pipeline_init( struct draw_context *draw );
 void draw_pipeline_destroy( struct draw_context *draw );
 
+void draw_pipeline_run( struct draw_context *draw,
+                        unsigned prim,
+                        struct vertex_header *vertices,
+                        unsigned vertex_count,
+                        unsigned stride,
+                        const ushort *elts,
+                        unsigned count );
+
 boolean draw_need_pipeline(const struct draw_context *draw,
                            unsigned prim );
 
+
+/*******************************************************************************
+ * Flushing 
+ */
 
 #define DRAW_FLUSH_STATE_CHANGE              0x8
 #define DRAW_FLUSH_BACKEND                   0x10

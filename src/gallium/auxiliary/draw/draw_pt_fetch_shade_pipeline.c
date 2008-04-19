@@ -148,13 +148,13 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    /* Do we need to run the pipeline?
     */
    if (opt & PT_PIPELINE) {
-      draw_pt_run_pipeline( fpme->draw,
-                            fpme->prim,
-                            pipeline_verts,
-                            fetch_count,
-                            fpme->vertex_size,
-                            draw_elts,
-                            draw_count );
+      draw_pipeline_run( fpme->draw,
+                         fpme->prim,
+                         pipeline_verts,
+                         fetch_count,
+                         fpme->vertex_size,
+                         draw_elts,
+                         draw_count );
    } 
    else {
       draw_pt_emit( fpme->emit,

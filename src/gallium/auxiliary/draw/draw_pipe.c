@@ -35,6 +35,7 @@
 #include "draw/draw_pipe.h"
 
 
+
 boolean draw_pipeline_init( struct draw_context *draw )
 {
    /* create pipeline stages */
@@ -142,6 +143,60 @@ void draw_free_temp_verts( struct draw_stage *stage )
    }
 }
 
+
+
+static void do_point( struct draw_context *draw,
+		      const char *v0 )
+{
+   struct prim_header prim;
+   
+   prim.reset_line_stipple = 0;
+   prim.edgeflags = 1;
+   prim.pad = 0;
+   prim.v[0] = (struct vertex_header *)v0;
+
+   draw->pipeline.first->point( draw->pipeline.first, &prim );
+}
+
+
+static void do_line( struct draw_context *draw,
+		     const char *v0,
+		     const char *v1 )
+{
+   struct prim_header prim;
+   
+   prim.reset_line_stipple = 1; /* fixme */
+   prim.edgeflags = 1;
+   prim.pad = 0;
+   prim.v[0] = (struct vertex_header *)v0;
+   prim.v[1] = (struct vertex_header *)v1;
+
+   draw->pipeline.first->line( draw->pipeline.first, &prim );
+}
+
+
+static void do_triangle( struct draw_context *draw,
+			 char *v0,
+			 char *v1,
+			 char *v2 )
+{
+   struct prim_header prim;
+   
+   prim.v[0] = (struct vertex_header *)v0;
+   prim.v[1] = (struct vertex_header *)v1;
+   prim.v[2] = (struct vertex_header *)v2;
+   prim.reset_line_stipple = 1;
+   prim.edgeflags = ((prim.v[0]->edgeflag)      |
+                     (prim.v[1]->edgeflag << 1) |
+                     (prim.v[2]->edgeflag << 2));
+   prim.pad = 0;
+
+   draw->pipeline.first->tri( draw->pipeline.first, &prim );
+}
+
+
+/* Reset vertex ids.  This is basically a type of flush.
+ */
 void draw_reset_vertex_ids(struct draw_context *draw)
 {
    struct draw_stage *stage = draw->pipeline.first;
@@ -155,7 +210,67 @@ void draw_reset_vertex_ids(struct draw_context *draw)
       stage = stage->next;
    }
 
-   draw_pt_reset_vertex_ids(draw);
+   if (draw->pipeline.verts)
+   {
+      unsigned i;
+      char *verts = draw->pipeline.verts;
+      unsigned stride = draw->pipeline.vertex_stride;
+
+      for (i = 0; i < draw->pipeline.vertex_count; i++) {
+         ((struct vertex_header *)verts)->vertex_id = UNDEFINED_VERTEX_ID;
+         verts += stride;
+      }
+   }
 }
 
+
+/* Code to run the pipeline on a fairly arbitary collection of vertices.
+ *
+ * Vertex headers must be pre-initialized with the
+ * UNDEFINED_VERTEX_ID, this code will cause that id to become
+ * overwritten, so it may have to be reset if there is the intention
+ * to reuse the vertices.
+ *
+ * This code provides a callback to reset the vertex id's which the
+ * draw_vbuf.c code uses when it has to perform a flush.
+ */
+void draw_pipeline_run( struct draw_context *draw,
+                        unsigned prim,
+                        struct vertex_header *vertices,
+                        unsigned vertex_count,
+                        unsigned stride,
+                        const ushort *elts,
+                        unsigned count )
+{
+   char *verts = (char *)vertices;
+   unsigned i;
+
+   draw->pipeline.verts = verts;
+   draw->pipeline.vertex_stride = stride;
+   draw->pipeline.vertex_count = vertex_count;
+   
+   switch (prim) {
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < count; i++) 
+         do_point( draw, 
+                   verts + stride * elts[i] );
+      break;
+   case PIPE_PRIM_LINES:
+      for (i = 0; i+1 < count; i += 2) 
+         do_line( draw, 
+                  verts + stride * elts[i+0],
+                  verts + stride * elts[i+1]);
+      break;
+   case PIPE_PRIM_TRIANGLES:
+      for (i = 0; i+2 < count; i += 3)
+         do_triangle( draw, 
+                      verts + stride * elts[i+0],
+                      verts + stride * elts[i+1],
+                      verts + stride * elts[i+2]);
+      break;
+   }
+   
+   draw->pipeline.verts = NULL;
+   draw->pipeline.vertex_count = 0;
+}
 
