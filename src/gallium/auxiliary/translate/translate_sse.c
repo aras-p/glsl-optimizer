@@ -145,7 +145,7 @@ static struct x86_reg get_inv_255( struct translate_sse *p )
       p->inv_255[0] =
 	 p->inv_255[1] =
 	 p->inv_255[2] =
-	 p->inv_255[3] = 1.0 / 255.0f;
+	 p->inv_255[3] = 1.0f / 255.0f;
 
       sse_movups(p->func, reg, 
 		 x86_make_disp(translateESI, 
@@ -575,15 +575,13 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (p == NULL) 
       goto fail;
 
-   if (!rtasm_cpu_has_sse() || !rtasm_cpu_has_sse2())
-      goto fail;
-
-
-   p->translate.key = *key;
    p->translate.release = translate_sse_release;
    p->translate.set_buffer = translate_sse_set_buffer;
    p->translate.run_elts = translate_sse_run_elts;
    p->translate.run = translate_sse_run;
+
+   if (!rtasm_cpu_has_sse() || !rtasm_cpu_has_sse2())
+      goto fail;
 
    if (!build_vertex_emit(p, &p->linear_func, TRUE))
       goto fail;
@@ -591,6 +589,7 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (!build_vertex_emit(p, &p->elt_func, FALSE))
       goto fail;
 
+   p->translate.key = *key;
    p->gen_run = (run_func)x86_get_func(&p->linear_func);
    p->gen_run_elts = (run_elts_func)x86_get_func(&p->elt_func);
 
@@ -598,7 +597,7 @@ struct translate *translate_sse2_create( const struct translate_key *key )
 
  fail:
    if (p)
-      p->translate.release( &p->translate );
+      translate_sse_release( &p->translate );
 
    return NULL;
 }

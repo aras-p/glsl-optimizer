@@ -567,8 +567,14 @@ static void generic_run_elts( struct translate *translate,
 		      tg->attrib[attr].output_offset);
 
 	 tg->attrib[attr].fetch( src, data );
+
+         debug_printf("vert %d/%d attr %d: %f %f %f %f\n",
+                      i, elt, attr, data[0], data[1], data[2], data[3]);
+
+
 	 tg->attrib[attr].emit( data, dst );
       }
+      debug_printf("\n");
       
       vert += tg->translate.key.output_stride;
    }
@@ -602,8 +608,13 @@ static void generic_run( struct translate *translate,
 		      tg->attrib[attr].output_offset);
 
 	 tg->attrib[attr].fetch( src, data );
+
+         debug_printf("vert %d attr %d: %f %f %f %f\n",
+                      i, attr, data[0], data[1], data[2], data[3]);
+
 	 tg->attrib[attr].emit( data, dst );
       }
+      debug_printf("\n");
       
       vert += tg->translate.key.output_stride;
    }
