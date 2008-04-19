@@ -5,6 +5,7 @@ LIBNAME = draw
 
 C_SOURCES = \
 	draw_context.c \
+	draw_pipe.c \
 	draw_pipe_aaline.c \
 	draw_pipe_aapoint.c \
 	draw_pipe_clip.c \

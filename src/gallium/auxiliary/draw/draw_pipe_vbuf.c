@@ -40,6 +40,7 @@
 #include "draw_vbuf.h"
 #include "draw_private.h"
 #include "draw_vertex.h"
+#include "draw_pipe.h"
 #include "translate/translate.h"
 
 

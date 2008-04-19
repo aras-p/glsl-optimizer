@@ -26,7 +26,7 @@
  **************************************************************************/
 
 
-#include "draw/draw_private.h"
+#include "draw/draw_pipe.h"
 #include "pipe/p_util.h"
 
 #include "i915_context.h"
@@ -78,9 +78,6 @@ emit_hw_vertex( struct i915_context *i915,
       const uint j = vinfo->src_index[i];
       const float *attrib = vertex->data[j];
       switch (vinfo->emit[i]) {
-      case EMIT_OMIT:
-         /* no-op */
-         break;
       case EMIT_1F:
          OUT_BATCH( fui(attrib[0]) );
          count++;

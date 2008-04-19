@@ -35,6 +35,7 @@
 #include "draw/draw_private.h"
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
+#include "draw/draw_pipe.h"
 
 static void do_point( struct draw_context *draw,
 		      const char *v0 )

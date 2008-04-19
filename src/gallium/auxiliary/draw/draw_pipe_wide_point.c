@@ -32,6 +32,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw_vs.h"
+#include "draw_pipe.h"
 
 
 struct widepoint_stage {
@@ -203,8 +204,8 @@ static void widepoint_first_point( struct draw_stage *stage,
    }
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
-   if ((draw->rasterizer->point_size > draw->wide_point_threshold) ||
-       (draw->rasterizer->point_sprite && draw->point_sprite)) {
+   if ((draw->rasterizer->point_size > draw->pipeline.wide_point_threshold) ||
+       (draw->rasterizer->point_sprite && draw->pipeline.point_sprite)) {
       stage->point = widepoint_point;
    }
    else {

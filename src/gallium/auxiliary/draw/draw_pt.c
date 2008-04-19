@@ -165,21 +165,3 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    draw_pt_arrays(draw, prim, start, count);
 }
 
-
-/* Revamp me please:
- */
-void draw_do_flush( struct draw_context *draw, unsigned flags )
-{
-   if (!draw->flushing) 
-   {
-      draw->flushing = TRUE;
-
-      if (flags >= DRAW_FLUSH_STATE_CHANGE) {
-	 draw->pipeline.first->flush( draw->pipeline.first, flags );
-	 draw->pipeline.first = draw->pipeline.validate;
-	 draw->reduced_prim = ~0;
-      }
-      
-      draw->flushing = FALSE;
-   }
-}

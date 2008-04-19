@@ -72,6 +72,4 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
          assert(0);
       }
    }
-
-   assert(vinfo->size * 4 <= MAX_VERTEX_SIZE);
 }

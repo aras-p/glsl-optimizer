@@ -31,6 +31,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
+#include "draw_pipe.h"
 
 static boolean points( unsigned prim )
 {
@@ -66,11 +67,11 @@ draw_need_pipeline(const struct draw_context *draw,
    if (lines(prim)) 
    {
       /* line stipple */
-      if (draw->rasterizer->line_stipple_enable && draw->line_stipple)
+      if (draw->rasterizer->line_stipple_enable && draw->pipeline.line_stipple)
          return TRUE;
 
       /* wide lines */
-      if (draw->rasterizer->line_width > draw->wide_line_threshold)
+      if (draw->rasterizer->line_width > draw->pipeline.wide_line_threshold)
          return TRUE;
 
       /* AA lines */
@@ -81,7 +82,7 @@ draw_need_pipeline(const struct draw_context *draw,
    if (points(prim))
    {
       /* large points */
-      if (draw->rasterizer->point_size > draw->wide_point_threshold)
+      if (draw->rasterizer->point_size > draw->pipeline.wide_point_threshold)
          return TRUE;
 
       /* AA points */
@@ -89,7 +90,7 @@ draw_need_pipeline(const struct draw_context *draw,
          return TRUE;
 
       /* point sprites */
-      if (draw->rasterizer->point_sprite && draw->point_sprite)
+      if (draw->rasterizer->point_sprite && draw->pipeline.point_sprite)
          return TRUE;
    }
 
@@ -145,15 +146,15 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    stage->next = next;
 
    /* drawing wide lines? */
-   wide_lines = (draw->rasterizer->line_width > draw->wide_line_threshold
+   wide_lines = (draw->rasterizer->line_width > draw->pipeline.wide_line_threshold
                  && !draw->rasterizer->line_smooth);
 
    /* drawing large points? */
-   if (draw->rasterizer->point_sprite && draw->point_sprite)
+   if (draw->rasterizer->point_sprite && draw->pipeline.point_sprite)
       wide_points = TRUE;
    else if (draw->rasterizer->point_smooth && draw->pipeline.aapoint)
       wide_points = FALSE;
-   else if (draw->rasterizer->point_size > draw->wide_point_threshold)
+   else if (draw->rasterizer->point_size > draw->pipeline.wide_point_threshold)
       wide_points = TRUE;
    else
       wide_points = FALSE;
@@ -186,7 +187,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
       next = draw->pipeline.wide_point;
    }
 
-   if (draw->rasterizer->line_stipple_enable && draw->line_stipple) {
+   if (draw->rasterizer->line_stipple_enable && draw->pipeline.line_stipple) {
       draw->pipeline.stipple->next = next;
       next = draw->pipeline.stipple;
       precalc_flat = 1;		/* only needed for lines really */

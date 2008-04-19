@@ -36,6 +36,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
+#include "draw_pipe.h"
 
 
 struct unfilled_stage {

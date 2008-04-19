@@ -51,12 +51,11 @@
 struct pipe_context;
 struct gallivm_prog;
 struct gallivm_cpu_engine;
-
-struct draw_pt_middle_end;
-struct draw_pt_front_end;
 struct draw_vertex_shader;
+struct draw_context;
+struct draw_stage;
+struct vbuf_render;
 
-#define MAX_SHADER_VERTICES 128
 
 /**
  * Basic vertex info.
@@ -70,16 +69,13 @@ struct vertex_header {
 
    float clip[4];
 
-   float data[][4];		/* Note variable size */
+   /* This will probably become float (*data)[4] soon:
+    */
+   float data[][4];
 };
 
 /* NOTE: It should match vertex_id size above */
 #define UNDEFINED_VERTEX_ID 0xffff
-
-/* XXX This is too large */
-#define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
-#define MAX_VERTEX_ALLOCATION ((MAX_VERTEX_SIZE + 0x0f) & ~0x0f)
-
 
 
 /**
@@ -94,41 +90,6 @@ struct prim_header {
 };
 
 
-
-struct draw_context;
-
-/**
- * Base class for all primitive drawing stages.
- */
-struct draw_stage
-{
-   struct draw_context *draw;   /**< parent context */
-
-   struct draw_stage *next;     /**< next stage in pipeline */
-
-   struct vertex_header **tmp;  /**< temp vert storage, such as for clipping */
-   unsigned nr_tmps;
-
-   void (*point)( struct draw_stage *,
-		  struct prim_header * );
-
-   void (*line)( struct draw_stage *,
-		 struct prim_header * );
-
-   void (*tri)( struct draw_stage *,
-		struct prim_header * );
-
-   void (*flush)( struct draw_stage *,
-		  unsigned flags );
-
-   void (*reset_stipple_counter)( struct draw_stage * );
-
-   void (*destroy)( struct draw_stage * );
-};
-
-
-
-struct vbuf_render;
 
 
 #define PT_SHADE      0x1
@@ -161,6 +122,12 @@ struct draw_context
       struct draw_stage *wide_line;
       struct draw_stage *wide_point;
       struct draw_stage *rasterize;
+
+      float wide_point_threshold; /**< convert pnts to tris if larger than this */
+      float wide_line_threshold;  /**< convert lines to tris if wider than this */
+      boolean line_stipple;       /**< do line stipple? */
+      boolean point_sprite;       /**< convert points to quads for sprites? */
+
    } pipeline;
 
 
@@ -225,10 +192,6 @@ struct draw_context
    float plane[12][4];
    unsigned nr_planes;
 
-   float wide_point_threshold; /**< convert pnts to tris if larger than this */
-   float wide_line_threshold;  /**< convert lines to tris if wider than this */
-   boolean line_stipple;       /**< do line stipple? */
-   boolean point_sprite;       /**< convert points to quads for sprites? */
    boolean use_sse;
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
@@ -252,44 +215,29 @@ struct draw_context
 
 
 
-extern struct draw_stage *draw_unfilled_stage( struct draw_context *context );
-extern struct draw_stage *draw_twoside_stage( struct draw_context *context );
-extern struct draw_stage *draw_offset_stage( struct draw_context *context );
-extern struct draw_stage *draw_clip_stage( struct draw_context *context );
-extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
-extern struct draw_stage *draw_cull_stage( struct draw_context *context );
-extern struct draw_stage *draw_stipple_stage( struct draw_context *context );
-extern struct draw_stage *draw_wide_line_stage( struct draw_context *context );
-extern struct draw_stage *draw_wide_point_stage( struct draw_context *context );
-extern struct draw_stage *draw_validate_stage( struct draw_context *context );
-
-
-extern void draw_free_temp_verts( struct draw_stage *stage );
-
-extern void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr );
 
 extern void draw_reset_vertex_ids( struct draw_context *draw );
 
 
-extern int draw_vertex_cache_check_space( struct draw_context *draw, 
-					  unsigned nr_verts );
 
-extern void draw_vertex_cache_invalidate( struct draw_context *draw );
-extern void draw_vertex_cache_unreference( struct draw_context *draw );
-extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
-
-
-extern void draw_update_vertex_fetch( struct draw_context *draw );
-
-extern boolean draw_need_pipeline(const struct draw_context *draw,
-                                  unsigned prim );
-
-
-/* Passthrough mode (second attempt):
+/*******************************************************************************
+ * Vertex processing (was passthrough) code:
  */
 boolean draw_pt_init( struct draw_context *draw );
 void draw_pt_destroy( struct draw_context *draw );
 void draw_pt_reset_vertex_ids( struct draw_context *draw );
+
+
+/*******************************************************************************
+ * Primitive processing (pipelnie) code: 
+ */
+
+boolean draw_pipeline_init( struct draw_context *draw );
+void draw_pipeline_destroy( struct draw_context *draw );
+
+boolean draw_need_pipeline(const struct draw_context *draw,
+                           unsigned prim );
+
 
 #define DRAW_FLUSH_STATE_CHANGE              0x8
 #define DRAW_FLUSH_BACKEND                   0x10
@@ -301,36 +249,6 @@ boolean draw_get_edgeflag( struct draw_context *draw,
                            unsigned idx );
 
 
-/**
- * Get a writeable copy of a vertex.
- * \param stage  drawing stage info
- * \param vert  the vertex to copy (source)
- * \param idx  index into stage's tmp[] array to put the copy (dest)
- * \return  pointer to the copied vertex
- */
-static INLINE struct vertex_header *
-dup_vert( struct draw_stage *stage,
-	  const struct vertex_header *vert,
-	  unsigned idx )
-{   
-   struct vertex_header *tmp = stage->tmp[idx];
-   const uint vsize = sizeof(struct vertex_header)
-      + stage->draw->num_vs_outputs * 4 * sizeof(float);
-   memcpy(tmp, vert, vsize);
-   tmp->vertex_id = UNDEFINED_VERTEX_ID;
-   return tmp;
-}
-
-static INLINE float
-dot4(const float *a, const float *b)
-{
-   float result = (a[0]*b[0] +
-                   a[1]*b[1] +
-                   a[2]*b[2] +
-                   a[3]*b[3]);
-
-   return result;
-}
 
 
 #endif /* DRAW_PRIVATE_H */

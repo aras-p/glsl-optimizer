@@ -43,6 +43,7 @@
 
 #include "draw_context.h"
 #include "draw_private.h"
+#include "draw_pipe.h"
 
 
 /**

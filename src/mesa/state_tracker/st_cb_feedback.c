@@ -56,7 +56,7 @@
 #include "cso_cache/cso_cache.h"
 
 #include "draw/draw_context.h"
-#include "draw/draw_private.h"
+#include "draw/draw_pipe.h"
 
 
 /**

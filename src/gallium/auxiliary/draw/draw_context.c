@@ -35,6 +35,8 @@
 #include "draw_context.h"
 #include "draw_vbuf.h"
 #include "draw_vs.h"
+#include "draw_pt.h"
+#include "draw_pipe.h"
 
 
 struct draw_context *draw_create( void )
@@ -49,32 +51,6 @@ struct draw_context *draw_create( void )
    draw->use_sse = FALSE;
 #endif
 
-   /* create pipeline stages */
-   draw->pipeline.wide_line  = draw_wide_line_stage( draw );
-   draw->pipeline.wide_point = draw_wide_point_stage( draw );
-   draw->pipeline.stipple   = draw_stipple_stage( draw );
-   draw->pipeline.unfilled  = draw_unfilled_stage( draw );
-   draw->pipeline.twoside   = draw_twoside_stage( draw );
-   draw->pipeline.offset    = draw_offset_stage( draw );
-   draw->pipeline.clip      = draw_clip_stage( draw );
-   draw->pipeline.flatshade = draw_flatshade_stage( draw );
-   draw->pipeline.cull      = draw_cull_stage( draw );
-   draw->pipeline.validate  = draw_validate_stage( draw );
-   draw->pipeline.first     = draw->pipeline.validate;
-
-   if (!draw->pipeline.wide_line ||
-       !draw->pipeline.wide_point ||
-       !draw->pipeline.stipple ||
-       !draw->pipeline.unfilled ||
-       !draw->pipeline.twoside ||
-       !draw->pipeline.offset ||
-       !draw->pipeline.clip ||
-       !draw->pipeline.flatshade ||
-       !draw->pipeline.cull ||
-       !draw->pipeline.validate)
-      goto fail;
-
-
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[2],  0, -1,  0, 1 );
@@ -83,11 +59,6 @@ struct draw_context *draw_create( void )
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
 
-   /* these defaults are oriented toward the needs of softpipe */
-   draw->wide_point_threshold = 1000000.0; /* infinity */
-   draw->wide_line_threshold = 1.0;
-   draw->line_stipple = TRUE;
-   draw->point_sprite = TRUE;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
@@ -100,6 +71,8 @@ struct draw_context *draw_create( void )
    draw->machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
    draw->machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
 
+   if (!draw_pipeline_init( draw ))
+      goto fail;
 
    if (!draw_pt_init( draw ))
       goto fail;
@@ -117,39 +90,13 @@ void draw_destroy( struct draw_context *draw )
    if (!draw)
       return;
 
-   if (draw->pipeline.wide_line)
-      draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
-   if (draw->pipeline.wide_point)
-      draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
-   if (draw->pipeline.stipple)
-      draw->pipeline.stipple->destroy( draw->pipeline.stipple );
-   if (draw->pipeline.unfilled)
-      draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
-   if (draw->pipeline.twoside)
-      draw->pipeline.twoside->destroy( draw->pipeline.twoside );
-   if (draw->pipeline.offset)
-      draw->pipeline.offset->destroy( draw->pipeline.offset );
-   if (draw->pipeline.clip)
-      draw->pipeline.clip->destroy( draw->pipeline.clip );
-   if (draw->pipeline.flatshade)
-      draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
-   if (draw->pipeline.cull)
-      draw->pipeline.cull->destroy( draw->pipeline.cull );
-   if (draw->pipeline.validate)
-      draw->pipeline.validate->destroy( draw->pipeline.validate );
-   if (draw->pipeline.aaline)
-      draw->pipeline.aaline->destroy( draw->pipeline.aaline );
-   if (draw->pipeline.aapoint)
-      draw->pipeline.aapoint->destroy( draw->pipeline.aapoint );
-   if (draw->pipeline.pstipple)
-      draw->pipeline.pstipple->destroy( draw->pipeline.pstipple );
-   if (draw->pipeline.rasterize)
-      draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
 
    if (draw->machine.Inputs)
       align_free(draw->machine.Inputs);
+
    if (draw->machine.Outputs)
       align_free(draw->machine.Outputs);
+
    tgsi_exec_machine_free_data(&draw->machine);
 
    /* Not so fast -- we're just borrowing this at the moment.
@@ -158,6 +105,7 @@ void draw_destroy( struct draw_context *draw )
       draw->render->destroy( draw->render );
    */
 
+   draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
 
    FREE( draw );
@@ -284,7 +232,7 @@ void
 draw_wide_point_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->wide_point_threshold = threshold;
+   draw->pipeline.wide_point_threshold = threshold;
 }
 
 
@@ -296,7 +244,7 @@ void
 draw_wide_line_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->wide_line_threshold = threshold;
+   draw->pipeline.wide_line_threshold = threshold;
 }
 
 
@@ -307,7 +255,7 @@ void
 draw_enable_line_stipple(struct draw_context *draw, boolean enable)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->line_stipple = enable;
+   draw->pipeline.line_stipple = enable;
 }
 
 
@@ -318,7 +266,7 @@ void
 draw_enable_point_sprites(struct draw_context *draw, boolean enable)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->point_sprite = enable;
+   draw->pipeline.point_sprite = enable;
 }
 
 
@@ -373,57 +321,10 @@ draw_num_vs_outputs(struct draw_context *draw)
 }
 
 
-/**
- * Allocate space for temporary post-transform vertices, such as for clipping.
- */
-void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )
-{
-   assert(!stage->tmp);
-
-   stage->nr_tmps = nr;
-
-   if (nr) {
-      ubyte *store = (ubyte *) MALLOC( MAX_VERTEX_SIZE * nr );
-      unsigned i;
-
-      stage->tmp = (struct vertex_header **) MALLOC( sizeof(struct vertex_header *) * nr );
-      
-      for (i = 0; i < nr; i++)
-	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
-   }
-}
-
-
-void draw_free_temp_verts( struct draw_stage *stage )
-{
-   if (stage->tmp) {
-      FREE( stage->tmp[0] );
-      FREE( stage->tmp );
-      stage->tmp = NULL;
-   }
-}
-
 
 boolean draw_use_sse(struct draw_context *draw)
 {
    return (boolean) draw->use_sse;
-}
-
-
-void draw_reset_vertex_ids(struct draw_context *draw)
-{
-   struct draw_stage *stage = draw->pipeline.first;
-   
-   while (stage) {
-      unsigned i;
-
-      for (i = 0; i < stage->nr_tmps; i++)
-	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
-
-      stage = stage->next;
-   }
-
-   draw_pt_reset_vertex_ids(draw);
 }
 
 
@@ -466,4 +367,24 @@ draw_set_mapped_element_buffer( struct draw_context *draw,
 {
    draw->user.elts = elements;
    draw->user.eltSize = eltSize;
+}
+
+
+ 
+/* Revamp me please:
+ */
+void draw_do_flush( struct draw_context *draw, unsigned flags )
+{
+   if (!draw->flushing) 
+   {
+      draw->flushing = TRUE;
+
+      if (flags >= DRAW_FLUSH_STATE_CHANGE) {
+	 draw->pipeline.first->flush( draw->pipeline.first, flags );
+	 draw->pipeline.first = draw->pipeline.validate;
+	 draw->reduced_prim = ~0; /* is reduced_prim needed any more? */
+      }
+      
+      draw->flushing = FALSE;
+   }
 }

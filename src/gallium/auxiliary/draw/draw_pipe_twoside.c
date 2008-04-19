@@ -32,7 +32,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw_vs.h"
-
+#include "draw_pipe.h"
 
 struct twoside_stage {
    struct draw_stage stage;

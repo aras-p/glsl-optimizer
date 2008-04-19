@@ -35,8 +35,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 
-#include "draw_context.h"
 #include "draw_vs.h"
+#include "draw_pipe.h"
 
 
 #ifndef IS_NEGATIVE
@@ -204,7 +204,14 @@ static void emit_poly( struct draw_stage *stage,
    }
 }
 
-
+static INLINE float
+dot4(const float *a, const float *b)
+{
+   return (a[0]*b[0] +
+           a[1]*b[1] +
+           a[2]*b[2] +
+           a[3]*b[3]);
+}
 
 
 /* Clip a triangle against the viewport and user clip planes.

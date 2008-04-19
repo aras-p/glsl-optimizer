@@ -31,6 +31,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw_vs.h"
+#include "draw_pipe.h"
 
 
 /** subclass of draw_stage */

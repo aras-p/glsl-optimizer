@@ -49,6 +49,7 @@
 
 #include "draw_context.h"
 #include "draw_vs.h"
+#include "draw_pipe.h"
 
 
 /*
