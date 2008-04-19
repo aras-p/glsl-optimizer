@@ -81,33 +81,6 @@ draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ);
 
 
-/* Should be part of the generated shader:
- */
-static INLINE unsigned
-compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
-{
-   unsigned mask = 0x0;
-   unsigned i;
-
-   /* Do the hardwired planes first:
-    */
-   if (-clip[0] + clip[3] < 0) mask |= CLIP_RIGHT_BIT;
-   if ( clip[0] + clip[3] < 0) mask |= CLIP_LEFT_BIT;
-   if (-clip[1] + clip[3] < 0) mask |= CLIP_TOP_BIT;
-   if ( clip[1] + clip[3] < 0) mask |= CLIP_BOTTOM_BIT;
-   if (-clip[2] + clip[3] < 0) mask |= CLIP_FAR_BIT;
-   if ( clip[2] + clip[3] < 0) mask |= CLIP_NEAR_BIT;
-
-   /* Followed by any remaining ones:
-    */
-   for (i = 6; i < nr; i++) {
-      if (dot4(clip, plane[i]) < 0) 
-         mask |= (1<<i);
-   }
-
-   return mask;
-}
-
 #define MAX_TGSI_VERTICES 4
    
 
