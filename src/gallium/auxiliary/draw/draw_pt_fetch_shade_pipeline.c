@@ -56,8 +56,12 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *vs = draw->vertex_shader;
+
+   /* Add one to num_outputs because the pipeline occasionally tags on
+    * an additional texcoord, eg for AA lines.
+    */
    unsigned nr = MAX2( vs->info.num_inputs,
-		       vs->info.num_outputs );
+		       vs->info.num_outputs + 1 );
 
    fpme->prim = prim;
    fpme->opt = opt;
