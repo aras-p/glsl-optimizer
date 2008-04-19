@@ -149,6 +149,29 @@ struct draw_context
       struct {
          struct draw_pt_front_end *vcache;
       } front;
+
+      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      unsigned nr_vertex_buffers;
+
+      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+      unsigned nr_vertex_elements;
+
+      /* user-space vertex data, buffers */
+      struct {
+         const unsigned *edgeflag;
+
+         /** vertex element/index buffer (ex: glDrawElements) */
+         const void *elts;
+         /** bytes per index (0, 1, 2 or 4) */
+         unsigned eltSize;
+         
+         /** vertex arrays */
+         const void *vbuffer[PIPE_MAX_ATTRIBS];
+         
+         /** constant buffer (for vertex shader) */
+         const void *constants;
+      } user;
+
    } pt;
 
    boolean flushing;
@@ -157,33 +180,12 @@ struct draw_context
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;
 
-   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   unsigned nr_vertex_buffers;
-
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
-   unsigned nr_vertex_elements;
-
    struct draw_vertex_shader *vertex_shader;
 
    boolean identity_viewport;
 
    uint num_vs_outputs;  /**< convenience, from vertex_shader */
 
-   /* user-space vertex data, buffers */
-   struct {
-      const unsigned *edgeflag;
-
-      /** vertex element/index buffer (ex: glDrawElements) */
-      const void *elts;
-      /** bytes per index (0, 1, 2 or 4) */
-      unsigned eltSize;
-
-      /** vertex arrays */
-      const void *vbuffer[PIPE_MAX_ATTRIBS];
-
-      /** constant buffer (for vertex shader) */
-      const void *constants;
-   } user;
 
    /* Clip derived state:
     */
@@ -256,9 +258,6 @@ boolean draw_need_pipeline(const struct draw_context *draw,
 
 
 void draw_do_flush( struct draw_context *draw, unsigned flags );
-
-boolean draw_get_edgeflag( struct draw_context *draw,
-                           unsigned idx );
 
 
 

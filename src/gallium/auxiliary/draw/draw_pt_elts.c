@@ -59,7 +59,7 @@ static unsigned elt_vert( const void *elts, unsigned idx )
 
 pt_elt_func draw_pt_elt_func( struct draw_context *draw )
 {
-   switch (draw->user.eltSize) {
+   switch (draw->pt.user.eltSize) {
    case 0: return elt_vert;
    case 1: return elt_ubyte;
    case 2: return elt_ushort; 
@@ -71,9 +71,9 @@ pt_elt_func draw_pt_elt_func( struct draw_context *draw )
 const void *draw_pt_elt_ptr( struct draw_context *draw,
                              unsigned start )
 {
-   const char *elts = draw->user.elts;
+   const char *elts = draw->pt.user.elts;
 
-   switch (draw->user.eltSize) {
+   switch (draw->pt.user.eltSize) {
    case 0: 
       return (const void *)(((const ubyte *)NULL) + start);
    case 1: 

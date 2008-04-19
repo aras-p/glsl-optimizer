@@ -62,8 +62,6 @@ struct draw_context *draw_create( void )
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
-   draw_set_mapped_element_buffer( draw, 0, NULL );
-
    tgsi_exec_machine_init(&draw->machine);
 
    /* FIXME: give this machine thing a proper constructor:
@@ -188,8 +186,8 @@ draw_set_vertex_buffers(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   memcpy(draw->vertex_buffer, buffers, count * sizeof(buffers[0]));
-   draw->nr_vertex_buffers = count;
+   memcpy(draw->pt.vertex_buffer, buffers, count * sizeof(buffers[0]));
+   draw->pt.nr_vertex_buffers = count;
 }
 
 
@@ -200,8 +198,8 @@ draw_set_vertex_elements(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   memcpy(draw->vertex_element, elements, count * sizeof(elements[0]));
-   draw->nr_vertex_elements = count;
+   memcpy(draw->pt.vertex_element, elements, count * sizeof(elements[0]));
+   draw->pt.nr_vertex_elements = count;
 }
 
 
@@ -212,7 +210,7 @@ void
 draw_set_mapped_vertex_buffer(struct draw_context *draw,
                               unsigned attr, const void *buffer)
 {
-   draw->user.vbuffer[attr] = buffer;
+   draw->pt.user.vbuffer[attr] = buffer;
 }
 
 
@@ -220,7 +218,7 @@ void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer)
 {
-   draw->user.constants = buffer;
+   draw->pt.user.constants = buffer;
 }
 
 
@@ -337,18 +335,10 @@ void draw_set_render( struct draw_context *draw,
 void draw_set_edgeflags( struct draw_context *draw,
                          const unsigned *edgeflag )
 {
-   draw->user.edgeflag = edgeflag;
+   draw->pt.user.edgeflag = edgeflag;
 }
 
 
-boolean draw_get_edgeflag( struct draw_context *draw,
-                           unsigned idx )
-{
-   if (draw->user.edgeflag)
-      return (draw->user.edgeflag[idx/32] & (1 << (idx%32))) != 0;
-   else
-      return 1;
-}
 
 
 /**
@@ -365,8 +355,8 @@ void
 draw_set_mapped_element_buffer( struct draw_context *draw,
                                 unsigned eltSize, void *elements )
 {
-   draw->user.elts = elements;
-   draw->user.eltSize = eltSize;
+   draw->pt.user.elts = elements;
+   draw->pt.user.eltSize = eltSize;
 }
 
 

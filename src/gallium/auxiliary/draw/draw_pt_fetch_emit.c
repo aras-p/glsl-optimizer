@@ -117,7 +117,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    memset(&key, 0, sizeof(key));
 
    for (i = 0; i < vinfo->num_attribs; i++) {
-      const struct pipe_vertex_element *src = &draw->vertex_element[vinfo->src_index[i]];
+      const struct pipe_vertex_element *src = &draw->pt.vertex_element[vinfo->src_index[i]];
 
       unsigned emit_sz = 0;
       unsigned input_format = src->src_format;
@@ -144,7 +144,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
          break;
       case EMIT_1F_PSIZE:
 	 input_format = PIPE_FORMAT_R32_FLOAT;
-	 input_buffer = draw->nr_vertex_buffers;
+	 input_buffer = draw->pt.nr_vertex_buffers;
 	 input_offset = 0;
 	 output_format = PIPE_FORMAT_R32_FLOAT;
 	 emit_sz = 1 * sizeof(float);
@@ -179,7 +179,7 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
       feme->translate = translate_create( &key );
 
       feme->translate->set_buffer(feme->translate, 
-				  draw->nr_vertex_buffers, 
+				  draw->pt.nr_vertex_buffers, 
 				  &feme->point_size,
 				  0);
    }

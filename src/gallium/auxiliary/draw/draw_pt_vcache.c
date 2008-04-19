@@ -106,7 +106,7 @@ static unsigned add_edgeflag( struct vcache_frontend *vcache,
                               unsigned idx, 
                               unsigned mask )
 {
-   if (mask && draw_get_edgeflag(vcache->draw, idx)) 
+   if (mask && draw_pt_get_edgeflag(vcache->draw, idx)) 
       return idx | DRAW_PT_EDGEFLAG;
    else
       return idx;

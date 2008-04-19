@@ -141,13 +141,8 @@ struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *d
 
 /* More helpers:
  */
-void draw_pt_run_pipeline( struct draw_context *draw,
-                           unsigned prim,
-                           struct vertex_header *verts,
-                           unsigned vertex_count,
-                           unsigned vertex_stride,
-                           const ushort *elts,
-                           unsigned count );
+boolean draw_pt_get_edgeflag( struct draw_context *draw,
+                              unsigned idx );
 
 
 /*******************************************************************************

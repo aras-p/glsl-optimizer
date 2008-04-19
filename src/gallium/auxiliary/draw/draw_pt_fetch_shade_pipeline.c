@@ -135,7 +135,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
       shader->run_linear(shader, 
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
-			 (const float (*)[4])draw->user.constants,
+			 (const float (*)[4])draw->pt.user.constants,
 			 fetch_count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);

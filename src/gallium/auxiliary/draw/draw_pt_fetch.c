@@ -76,7 +76,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       /* Need to set header->vertex_id = 0xffff somehow.
        */
       key.element[nr].input_format = PIPE_FORMAT_R32_FLOAT;
-      key.element[nr].input_buffer = draw->nr_vertex_buffers;
+      key.element[nr].input_buffer = draw->pt.nr_vertex_buffers;
       key.element[nr].input_offset = 0;
       key.element[nr].output_format = PIPE_FORMAT_R32_FLOAT;
       key.element[nr].output_offset = dst_offset;
@@ -90,10 +90,10 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    }
       
 
-   for (i = 0; i < draw->nr_vertex_elements; i++) {
-      key.element[nr].input_format = draw->vertex_element[i].src_format;
-      key.element[nr].input_buffer = draw->vertex_element[i].vertex_buffer_index;
-      key.element[nr].input_offset = draw->vertex_element[i].src_offset;
+   for (i = 0; i < draw->pt.nr_vertex_elements; i++) {
+      key.element[nr].input_format = draw->pt.vertex_element[i].src_format;
+      key.element[nr].input_buffer = draw->pt.vertex_element[i].vertex_buffer_index;
+      key.element[nr].input_offset = draw->pt.vertex_element[i].src_offset;
       key.element[nr].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       key.element[nr].output_offset = dst_offset;
 
@@ -120,7 +120,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
       {
 	 static struct vertex_header vh = { 0, 0, 0, 0xffff };
 	 fetch->translate->set_buffer(fetch->translate, 
-				      draw->nr_vertex_buffers, 
+				      draw->pt.nr_vertex_buffers, 
 				      &vh,
 				      0);
       }
@@ -139,12 +139,12 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
    struct translate *translate = fetch->translate;
    unsigned i;
 
-   for (i = 0; i < draw->nr_vertex_buffers; i++) {
+   for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
       translate->set_buffer(translate, 
 			    i, 
-			    ((char *)draw->user.vbuffer[i] + 
-			     draw->vertex_buffer[i].buffer_offset),
-			    draw->vertex_buffer[i].pitch );
+			    ((char *)draw->pt.user.vbuffer[i] + 
+			     draw->pt.vertex_buffer[i].buffer_offset),
+			    draw->pt.vertex_buffer[i].pitch );
    }
 
    translate->run_elts( translate,
