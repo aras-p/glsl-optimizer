@@ -45,15 +45,21 @@
 #define W    3
 
 
-typedef void (*run_func)( struct translate *translate,
-			  unsigned start,
-			  unsigned count,
-			  void *output_buffer );
+#ifdef WIN32
+#define RTASM __cdecl
+#else
+#define RTASM
+#endif
 
-typedef void (*run_elts_func)( struct translate *translate,
-			       const unsigned *elts,
-			       unsigned count,
-			       void *output_buffer );
+typedef void (RTASM *run_func)( struct translate *translate,
+                                unsigned start,
+                                unsigned count,
+                                void *output_buffer );
+
+typedef void (RTASM *run_elts_func)( struct translate *translate,
+                                     const unsigned *elts,
+                                     unsigned count,
+                                     void *output_buffer );
 
 
 
@@ -212,17 +218,17 @@ static void emit_load_R8G8B8A8_UNORM( struct translate_sse *p,
    /* Load and unpack twice:
     */
    sse_movss(p->func, data, src);
-   sse2_punpcklbw(p->func, src, get_identity(p));
-   sse2_punpcklbw(p->func, src, get_identity(p));
+   sse2_punpcklbw(p->func, data, get_identity(p));
+   sse2_punpcklbw(p->func, data, get_identity(p));
 
    /* Convert to float:
     */
-   sse2_cvtdq2ps(p->func, src, src);
+   sse2_cvtdq2ps(p->func, data, data);
 
 
    /* Scale by 1/255.0
     */
-   sse_mulps(p->func, src, get_inv_255(p));
+   sse_mulps(p->func, data, get_inv_255(p));
 }
 
 
@@ -551,7 +557,6 @@ static void translate_sse_run_elts( struct translate *translate,
 		    elts,
 		    count,
 		    output_buffer );
-
 }
 
 static void translate_sse_run( struct translate *translate,
@@ -570,18 +575,20 @@ static void translate_sse_run( struct translate *translate,
 
 struct translate *translate_sse2_create( const struct translate_key *key )
 {
-   struct translate_sse *p = CALLOC_STRUCT( translate_sse );
+   struct translate_sse *p = NULL;
 
+   if (!rtasm_cpu_has_sse() || !rtasm_cpu_has_sse2())
+      goto fail;
+
+   p = CALLOC_STRUCT( translate_sse );
    if (p == NULL) 
       goto fail;
 
+   p->translate.key = *key;
    p->translate.release = translate_sse_release;
    p->translate.set_buffer = translate_sse_set_buffer;
    p->translate.run_elts = translate_sse_run_elts;
    p->translate.run = translate_sse_run;
-
-   if (!rtasm_cpu_has_sse() || !rtasm_cpu_has_sse2())
-      goto fail;
 
    if (!build_vertex_emit(p, &p->linear_func, TRUE))
       goto fail;
@@ -589,7 +596,6 @@ struct translate *translate_sse2_create( const struct translate_key *key )
    if (!build_vertex_emit(p, &p->elt_func, FALSE))
       goto fail;
 
-   p->translate.key = *key;
    p->gen_run = (run_func)x86_get_func(&p->linear_func);
    p->gen_run_elts = (run_elts_func)x86_get_func(&p->elt_func);
 
