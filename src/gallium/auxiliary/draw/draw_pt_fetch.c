@@ -54,7 +54,6 @@ struct pt_fetch {
  *
  */
 void draw_pt_fetch_prepare( struct pt_fetch *fetch,
-			    boolean emit_header,
 			    unsigned vertex_size )
 {
    struct draw_context *draw = fetch->draw;
@@ -66,16 +65,13 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 
    memset(&key, 0, sizeof(key));
 
-   /* If PT_SHADE is not set, then we are creating post-shader
-    * vertices, meaning that we need to emit/leave space for a vertex
-    * header.
+   /* Always emit/leave space for a vertex header.
     *
     * It's worth considering whether the vertex headers should contain
     * a pointer to the 'data', rather than having it inline.
     * Something to look at after we've fully switched over to the pt
     * paths.
     */
-   if (emit_header)
    {
       /* Need to set header->vertex_id = 0xffff somehow.
        */
@@ -121,7 +117,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 
       fetch->translate = translate_create( &key );
 
-      if (emit_header) {
+      {
 	 static struct vertex_header vh = { 0, 0, 0, 0xffff };
 	 fetch->translate->set_buffer(fetch->translate, 
 				      draw->nr_vertex_buffers, 

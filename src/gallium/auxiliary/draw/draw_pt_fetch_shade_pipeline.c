@@ -71,7 +71,6 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
    
 
    draw_pt_fetch_prepare( fpme->fetch, 
-			  (opt & (PT_CLIPTEST | PT_PIPELINE)) != 0,
 			  fpme->vertex_size );
 
    /* XXX: it's not really gl rasterization rules we care about here,
