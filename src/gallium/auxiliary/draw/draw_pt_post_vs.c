@@ -52,12 +52,12 @@ compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
 
    /* Do the hardwired planes first:
     */
-   if (-clip[0] + clip[3] < 0) mask |= CLIP_RIGHT_BIT;
-   if ( clip[0] + clip[3] < 0) mask |= CLIP_LEFT_BIT;
-   if (-clip[1] + clip[3] < 0) mask |= CLIP_TOP_BIT;
-   if ( clip[1] + clip[3] < 0) mask |= CLIP_BOTTOM_BIT;
-   if (-clip[2] + clip[3] < 0) mask |= CLIP_FAR_BIT;
-   if ( clip[2] + clip[3] < 0) mask |= CLIP_NEAR_BIT;
+   if (-clip[0] + clip[3] < 0) mask |= (1<<0);
+   if ( clip[0] + clip[3] < 0) mask |= (1<<1);
+   if (-clip[1] + clip[3] < 0) mask |= (1<<2);
+   if ( clip[1] + clip[3] < 0) mask |= (1<<3);
+   if ( clip[2] + clip[3] < 0) mask |= (1<<4); /* match mesa clipplane numbering - for now */
+   if (-clip[2] + clip[3] < 0) mask |= (1<<5); /* match mesa clipplane numbering - for now */
 
    /* Followed by any remaining ones:
     */

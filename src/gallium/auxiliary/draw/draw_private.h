@@ -44,7 +44,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_exec.h"
 #include "tgsi/util/tgsi_scan.h"
 
@@ -171,7 +170,8 @@ struct draw_context
     */
    struct {
       struct {
-         struct draw_pt_middle_end *opt[PT_MAX_MIDDLE];
+         struct draw_pt_middle_end *fetch_emit;
+         struct draw_pt_middle_end *general;
       } middle;
 
       struct {
@@ -289,11 +289,6 @@ extern boolean draw_need_pipeline(const struct draw_context *draw,
  */
 boolean draw_pt_init( struct draw_context *draw );
 void draw_pt_destroy( struct draw_context *draw );
-boolean draw_pt_arrays( struct draw_context *draw,
-                        unsigned prim,
-                        unsigned start,
-                        unsigned count );
-
 void draw_pt_reset_vertex_ids( struct draw_context *draw );
 
 #define DRAW_FLUSH_STATE_CHANGE              0x8

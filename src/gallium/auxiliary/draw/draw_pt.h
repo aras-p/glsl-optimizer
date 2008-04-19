@@ -50,6 +50,12 @@ struct draw_context;
 #define DRAW_PT_FLAG_MASK     (3<<30)
 
 
+#define PT_SHADE      0x1
+#define PT_CLIPTEST   0x2
+#define PT_PIPELINE   0x4
+#define PT_MAX_MIDDLE 0x8
+
+
 /* The "front end" - prepare sets of fetch, draw elements for the
  * middle end.
  *

@@ -44,7 +44,7 @@
  *     - pipeline -- the prim pipeline: clipping, wide lines, etc 
  *     - backend  -- the vbuf_render provided by the driver.
  */
-boolean
+static boolean
 draw_pt_arrays(struct draw_context *draw, 
                unsigned prim,
                unsigned start, 
@@ -70,18 +70,15 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_SHADE;
    }
 
+   if (opt)
+      middle = draw->pt.middle.general;
+   else
+      middle = draw->pt.middle.fetch_emit;
 
-   middle = draw->pt.middle.opt[opt];
-   if (middle == NULL) {
-      middle = draw->pt.middle.opt[PT_PIPELINE | PT_CLIPTEST | PT_SHADE];
-   }
-
-   assert(middle);
 
    /* May create a short-circuited version of this for small primitives:
     */
    frontend = draw->pt.front.vcache;
-
 
    frontend->prepare( frontend, prim, middle, opt );
 
@@ -102,11 +99,12 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.front.vcache)
       return FALSE;
 
-   draw->pt.middle.opt[0] = draw_pt_fetch_emit( draw );
-   draw->pt.middle.opt[PT_SHADE | PT_CLIPTEST | PT_PIPELINE] = 
-      draw_pt_fetch_pipeline_or_emit( draw );
+   draw->pt.middle.fetch_emit = draw_pt_fetch_emit( draw );
+   if (!draw->pt.middle.fetch_emit)
+      return FALSE;
 
-   if (!draw->pt.middle.opt[PT_SHADE | PT_CLIPTEST | PT_PIPELINE])
+   draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit( draw );
+   if (!draw->pt.middle.general)
       return FALSE;
 
    return TRUE;
@@ -115,13 +113,15 @@ boolean draw_pt_init( struct draw_context *draw )
 
 void draw_pt_destroy( struct draw_context *draw )
 {
-   int i;
+   if (draw->pt.middle.general) {
+      draw->pt.middle.general->destroy( draw->pt.middle.general );
+      draw->pt.middle.general = NULL;
+   }
 
-   for (i = 0; i < PT_MAX_MIDDLE; i++)
-      if (draw->pt.middle.opt[i]) {
-	 draw->pt.middle.opt[i]->destroy( draw->pt.middle.opt[i] );
-	 draw->pt.middle.opt[i] = NULL;
-      }
+   if (draw->pt.middle.fetch_emit) {
+      draw->pt.middle.fetch_emit->destroy( draw->pt.middle.fetch_emit );
+      draw->pt.middle.fetch_emit = NULL;
+   }
 
    if (draw->pt.front.vcache) {
       draw->pt.front.vcache->destroy( draw->pt.front.vcache );
