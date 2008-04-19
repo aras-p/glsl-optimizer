@@ -81,9 +81,9 @@ extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 
 
 extern void draw_free_temp_verts( struct draw_stage *stage );
-
 extern void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr );
 
+extern void draw_reset_vertex_ids( struct draw_context *draw );
 
 
 

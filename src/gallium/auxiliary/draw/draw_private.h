@@ -214,7 +214,6 @@ struct draw_context
 
 
 
-extern void draw_reset_vertex_ids( struct draw_context *draw );
 
 
 

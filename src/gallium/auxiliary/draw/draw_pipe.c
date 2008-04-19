@@ -196,6 +196,8 @@ static void do_triangle( struct draw_context *draw,
 
 
 /* Reset vertex ids.  This is basically a type of flush.
+ *
+ * Called only from draw_pipe_vbuf.c
  */
 void draw_reset_vertex_ids(struct draw_context *draw)
 {
