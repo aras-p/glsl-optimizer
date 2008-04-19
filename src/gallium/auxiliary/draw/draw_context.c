@@ -379,11 +379,9 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
    {
       draw->flushing = TRUE;
 
-      if (flags >= DRAW_FLUSH_STATE_CHANGE) {
-	 draw->pipeline.first->flush( draw->pipeline.first, flags );
-	 draw->pipeline.first = draw->pipeline.validate;
-	 draw->reduced_prim = ~0; /* is reduced_prim needed any more? */
-      }
+      draw_pipeline_flush( draw, flags );
+
+      draw->reduced_prim = ~0; /* is reduced_prim needed any more? */
       
       draw->flushing = FALSE;
    }

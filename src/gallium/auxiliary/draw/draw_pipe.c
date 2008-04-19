@@ -274,3 +274,11 @@ void draw_pipeline_run( struct draw_context *draw,
    draw->pipeline.vertex_count = 0;
 }
 
+
+
+void draw_pipeline_flush( struct draw_context *draw, 
+                          unsigned flags )
+{
+   draw->pipeline.first->flush( draw->pipeline.first, flags );
+   draw->pipeline.first = draw->pipeline.validate;
+}

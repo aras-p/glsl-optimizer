@@ -227,7 +227,7 @@ void draw_pt_reset_vertex_ids( struct draw_context *draw );
 
 
 /*******************************************************************************
- * Primitive processing (pipelnie) code: 
+ * Primitive processing (pipeline) code: 
  */
 
 boolean draw_pipeline_init( struct draw_context *draw );
@@ -240,6 +240,9 @@ void draw_pipeline_run( struct draw_context *draw,
                         unsigned stride,
                         const ushort *elts,
                         unsigned count );
+
+void draw_pipeline_flush( struct draw_context *draw, 
+                          unsigned flags );
 
 boolean draw_need_pipeline(const struct draw_context *draw,
                            unsigned prim );
