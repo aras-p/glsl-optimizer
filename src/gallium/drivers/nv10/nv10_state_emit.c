@@ -63,29 +63,34 @@ static void nv10_state_emit_dsa(struct nv10_context* nv10)
 {
 	struct nv10_depth_stencil_alpha_state *d = nv10->dsa;
 
-	BEGIN_RING(celsius, NV10TCL_DEPTH_FUNC, 3);
-	OUT_RINGp ((uint32_t *)&d->depth, 3);
+	BEGIN_RING(celsius, NV10TCL_DEPTH_FUNC, 1);
+	OUT_RING (d->depth.func);
+
+	BEGIN_RING(celsius, NV10TCL_DEPTH_WRITE_ENABLE, 1);
+	OUT_RING (d->depth.write_enable);
+
+	BEGIN_RING(celsius, NV10TCL_DEPTH_TEST_ENABLE, 1);
+	OUT_RING (d->depth.test_enable);
+
+#if 0
 	BEGIN_RING(celsius, NV10TCL_STENCIL_ENABLE, 1);
 	OUT_RING (d->stencil.enable);
 	BEGIN_RING(celsius, NV10TCL_STENCIL_MASK, 7);
 	OUT_RINGp ((uint32_t *)&(d->stencil.wmask), 7);
-	BEGIN_RING(celsius, NV10TCL_ALPHA_FUNC_ENABLE, 3);
-	OUT_RINGp ((uint32_t *)&d->alpha.enabled, 3);
+#endif
+
+	BEGIN_RING(celsius, NV10TCL_ALPHA_FUNC_ENABLE, 1);
+	OUT_RING (d->alpha.enabled);
+
+	BEGIN_RING(celsius, NV10TCL_ALPHA_FUNC_FUNC, 1);
+	OUT_RING (d->alpha.func);
+
+	BEGIN_RING(celsius, NV10TCL_ALPHA_FUNC_REF, 1);
+	OUT_RING (d->alpha.ref);
 }
 
 static void nv10_state_emit_viewport(struct nv10_context* nv10)
 {
-	struct pipe_viewport_state *vpt = nv10->viewport;
-
-/*	OUT_RINGf (vpt->translate[0]);
-	OUT_RINGf (vpt->translate[1]);
-	OUT_RINGf (vpt->translate[2]);
-	OUT_RINGf (vpt->translate[3]);*/
-	BEGIN_RING(celsius, NV10TCL_VIEWPORT_SCALE_X, 4);
-	OUT_RINGf (vpt->scale[0]);
-	OUT_RINGf (vpt->scale[1]);
-	OUT_RINGf (vpt->scale[2]);
-	OUT_RINGf (vpt->scale[3]);
 }
 
 static void nv10_state_emit_scissor(struct nv10_context* nv10)
@@ -100,7 +105,7 @@ static void nv10_state_emit_scissor(struct nv10_context* nv10)
 static void nv10_state_emit_framebuffer(struct nv10_context* nv10)
 {
 	struct pipe_framebuffer_state* fb = nv10->framebuffer;
-	struct pipe_surface *rt, *zeta;
+	struct pipe_surface *rt, *zeta = NULL;
 	uint32_t rt_format, w, h;
 	int colour_format = 0, zeta_format = 0;
 

@@ -205,8 +205,8 @@ nv10_vbuf_render_create( struct nv10_context *nv10 )
 
 	nv10_render->nv10 = nv10;
 
-	nv10_render->base.max_vertex_buffer_bytes = 1024*1024;
-	nv10_render->base.max_indices = 64*1024;
+	nv10_render->base.max_vertex_buffer_bytes = 16*1024;
+	nv10_render->base.max_indices = 1024;
 	nv10_render->base.get_vertex_info = nv10_vbuf_render_get_vertex_info;
 	nv10_render->base.allocate_vertices = nv10_vbuf_render_allocate_vertices;
 	nv10_render->base.set_primitive = nv10_vbuf_render_set_primitive;

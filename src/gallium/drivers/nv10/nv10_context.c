@@ -12,6 +12,8 @@ nv10_flush(struct pipe_context *pipe, unsigned flags,
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
 
+	draw_flush(nv10->draw);
+
 	FIRE_RING(fence);
 }
 
@@ -31,6 +33,7 @@ static void nv10_init_hwctx(struct nv10_context *nv10)
 	struct nv10_screen *screen = nv10->screen;
 	struct nouveau_winsys *nvws = screen->nvws;
 	int i;
+	float projectionmatrix[16];
 
 	BEGIN_RING(celsius, NV10TCL_DMA_NOTIFY, 1);
 	OUT_RING  (screen->sync->handle);
@@ -93,13 +96,21 @@ static void nv10_init_hwctx(struct nv10_context *nv10)
 	BEGIN_RING(celsius, NV10TCL_TX_ENABLE(0), 2);
 	OUT_RING  (0);
 	OUT_RING  (0);
-	BEGIN_RING(celsius, NV10TCL_RC_OUT_ALPHA(0), 6);
+
+	BEGIN_RING(celsius, NV10TCL_RC_IN_ALPHA(0), 12);
+	OUT_RING  (0x30141010);
+	OUT_RING  (0);
+	OUT_RING  (0x20040000);
+	OUT_RING  (0);
+	OUT_RING  (0);
+	OUT_RING  (0);
 	OUT_RING  (0x00000c00);
 	OUT_RING  (0);
 	OUT_RING  (0x00000c00);
 	OUT_RING  (0x18000000);
-	OUT_RING  (0x300c0000);
-	OUT_RING  (0x00001c80);
+	OUT_RING  (0x300e0300);
+	OUT_RING  (0x0c091c80);
+
 	BEGIN_RING(celsius, NV10TCL_BLEND_FUNC_ENABLE, 1);
 	OUT_RING  (0);
 	BEGIN_RING(celsius, NV10TCL_DITHER_ENABLE, 2);
@@ -219,6 +230,25 @@ static void nv10_init_hwctx(struct nv10_context *nv10)
 	BEGIN_RING(celsius, NV10TCL_EDGEFLAG_ENABLE, 1);
 	OUT_RING  (1);
 
+	memset(projectionmatrix, 0, sizeof(projectionmatrix));
+	BEGIN_RING(celsius, NV10TCL_PROJECTION_MATRIX(0), 16);
+	projectionmatrix[0*4+0] = 1.0;
+	projectionmatrix[1*4+1] = 1.0;
+	projectionmatrix[2*4+2] = 1.0;
+	projectionmatrix[3*4+3] = 1.0;
+	for (i=0;i<16;i++) {
+		OUT_RINGf  (projectionmatrix[i]);
+	}
+
+	BEGIN_RING(celsius, NV10TCL_DEPTH_RANGE_NEAR, 2);
+	OUT_RING  (0.0);
+	OUT_RINGf  (16777216.0);
+
+	BEGIN_RING(celsius, NV10TCL_VIEWPORT_SCALE_X, 4);
+	OUT_RINGf  (-2048.0);
+	OUT_RINGf  (-2048.0);
+	OUT_RINGf  (16777215.0 * 0.5);
+	OUT_RING  (0);
 
 	FIRE_RING (NULL);
 }

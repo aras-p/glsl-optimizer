@@ -65,7 +65,10 @@ struct nv10_context {
 	struct pipe_viewport_state *viewport;
 	struct pipe_scissor_state *scissor;
 	struct pipe_framebuffer_state *framebuffer;
-	struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+
+	//struct pipe_buffer *constbuf[PIPE_SHADER_TYPES];
+	float *constbuf[PIPE_SHADER_TYPES][32][4];
+
 	struct vertex_info vertex_info;
 
 	struct {

@@ -459,14 +459,18 @@ nv10_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 			 const struct pipe_constant_buffer *buf )
 {
 	struct nv10_context *nv10 = nv10_context(pipe);
+	struct pipe_winsys *ws = pipe->winsys;
 
-	if (shader == PIPE_SHADER_VERTEX) {
-		nv10->constbuf[PIPE_SHADER_VERTEX] = buf->buffer;
-		nv10->dirty |= NV10_NEW_VERTPROG;
-	} else
-	if (shader == PIPE_SHADER_FRAGMENT) {
-		nv10->constbuf[PIPE_SHADER_FRAGMENT] = buf->buffer;
-		nv10->dirty |= NV10_NEW_FRAGPROG;
+	assert(shader < PIPE_SHADER_TYPES);
+	assert(index == 0);
+
+	if (buf) {
+		void *mapped;
+		if (buf->size && (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_USAGE_CPU_READ)))
+		{
+			memcpy(nv10->constbuf[shader], mapped, buf->size);
+			ws->buffer_unmap(ws, buf->buffer);
+		}
 	}
 }
 
@@ -507,7 +511,7 @@ nv10_set_viewport_state(struct pipe_context *pipe,
 
 	nv10->viewport = (struct pipe_viewport_state*)vpt;
 
-	draw_set_viewport_state(nv10->draw, &nv10->viewport);
+	draw_set_viewport_state(nv10->draw, nv10->viewport);
 
 	nv10->dirty |= NV10_NEW_VIEWPORT;
 }
