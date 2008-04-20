@@ -161,8 +161,8 @@ static void nv10_state_emit_framebuffer(struct nv10_context* nv10)
 	OUT_RING  ((h << 16) | 0);
 	OUT_RING  (rt_format);
 	BEGIN_RING(celsius, NV10TCL_VIEWPORT_CLIP_HORIZ(0), 2);
-	OUT_RING  (((w - 1) << 16) | 0);
-	OUT_RING  (((h - 1) << 16) | 0);
+	OUT_RING  (((w - 1) << 16) | 0 | 0x08000800);
+	OUT_RING  (((h - 1) << 16) | 0 | 0x08000800);
 }
 
 static void nv10_vertex_layout(struct nv10_context *nv10)
