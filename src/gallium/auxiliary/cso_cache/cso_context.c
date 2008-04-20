@@ -25,16 +25,19 @@
  *
  **************************************************************************/
 
- /* Wrap the cso cache & hash mechanisms in a simplified
+ /**
+  * @file
+  * 
+  * Wrap the cso cache & hash mechanisms in a simplified
   * pipe-driver-specific interface.
   *
-  * Authors:
-  *   Zack Rusin <zack@tungstengraphics.com>
-  *   Keith Whitwell <keith@tungstengraphics.com>
+  * @author Zack Rusin <zack@tungstengraphics.com>
+  * @author Keith Whitwell <keith@tungstengraphics.com>
   */
 
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 
 #include "cso_cache/cso_context.h"
 #include "cso_cache/cso_cache.h"
@@ -277,23 +280,39 @@ void cso_set_sampler_textures( struct cso_context *ctx,
    ctx->nr_textures = count;
 
    for (i = 0; i < count; i++)
-      ctx->textures[i] = textures[i];
+      pipe_texture_reference(&ctx->textures[i], textures[i]);
    for ( ; i < PIPE_MAX_SAMPLERS; i++)
-      ctx->textures[i] = NULL;
+      pipe_texture_reference(&ctx->textures[i], NULL);
 
    ctx->pipe->set_sampler_textures(ctx->pipe, count, textures);
 }
 
 void cso_save_sampler_textures( struct cso_context *ctx )
 {
+   uint i;
+   
    ctx->nr_textures_saved = ctx->nr_textures;
-   memcpy(ctx->textures_saved, ctx->textures, sizeof(ctx->textures));
+   for (i = 0; i < ctx->nr_textures; i++) {
+      assert(!ctx->textures_saved[i]);
+      pipe_texture_reference(&ctx->textures_saved[i], ctx->textures[i]);
+   }
 }
 
 void cso_restore_sampler_textures( struct cso_context *ctx )
 {
-   cso_set_sampler_textures(ctx, ctx->nr_textures_saved, ctx->textures_saved);
-   ctx->nr_textures_saved = 0;
+   uint i;
+
+   ctx->nr_textures = ctx->nr_textures_saved;
+
+   for (i = 0; i < ctx->nr_textures; i++) {
+      pipe_texture_reference(&ctx->textures[i], NULL);
+      ctx->textures[i] = ctx->textures_saved[i];
+      ctx->textures_saved[i] = NULL;
+   }
+   for ( ; i < PIPE_MAX_SAMPLERS; i++)
+      pipe_texture_reference(&ctx->textures[i], NULL);
+
+   ctx->pipe->set_sampler_textures(ctx->pipe, ctx->nr_textures, ctx->textures);
 }
 
 
