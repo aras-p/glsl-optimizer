@@ -725,7 +725,7 @@ draw_aaline_stage(struct draw_context *draw)
    if (aaline == NULL)
       return NULL;
 
-   if (draw_alloc_temp_verts( &aaline->stage, 8 ))
+   if (!draw_alloc_temp_verts( &aaline->stage, 8 ))
       goto fail;
 
    aaline->stage.draw = draw;

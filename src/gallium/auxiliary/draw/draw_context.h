@@ -76,7 +76,7 @@ void draw_enable_point_sprites(struct draw_context *draw, boolean enable);
 boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
 
-void
+boolean
 draw_install_aapoint_stage(struct draw_context *draw, struct pipe_context *pipe);
 
 void

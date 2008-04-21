@@ -484,7 +484,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
  * Generate the frag shader we'll use for drawing AA lines.
  * This will be the user's shader plus some texture/modulate instructions.
  */
-static void
+static boolean
 generate_aapoint_fs(struct aapoint_stage *aapoint)
 {
    const struct pipe_shader_state *orig_fs = &aapoint->fs->state;
@@ -495,6 +495,8 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
    aapoint_fs = *orig_fs; /* copy to init */
    aapoint_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   if (aapoint_fs.tokens == NULL)
+      return FALSE;
 
    memset(&transform, 0, sizeof(transform));
    transform.colorOutput = -1;
@@ -519,8 +521,12 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
    aapoint->fs->aapoint_fs
       = aapoint->driver_create_fs_state(aapoint->pipe, &aapoint_fs);
+   if (aapoint->fs->aapoint_fs == NULL)
+      return FALSE;
 
    aapoint->fs->generic_attrib = transform.maxGeneric + 1;
+
+   return TRUE;
 }
 
 
@@ -528,13 +534,15 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
  * When we're about to draw our first AA line in a batch, this function is
  * called to tell the driver to bind our modified fragment shader.
  */
-static void
+static boolean
 bind_aapoint_fragment_shader(struct aapoint_stage *aapoint)
 {
-   if (!aapoint->fs->aapoint_fs) {
-      generate_aapoint_fs(aapoint);
-   }
+   if (!aapoint->fs->aapoint_fs &&
+       !generate_aapoint_fs(aapoint))
+      return FALSE;
+
    aapoint->driver_bind_fs_state(aapoint->pipe, aapoint->fs->aapoint_fs);
+   return TRUE;
 }
 
 
@@ -731,8 +739,11 @@ static struct aapoint_stage *
 draw_aapoint_stage(struct draw_context *draw)
 {
    struct aapoint_stage *aapoint = CALLOC_STRUCT(aapoint_stage);
+   if (aapoint == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &aapoint->stage, 4 );
+   if (!draw_alloc_temp_verts( &aapoint->stage, 4 ))
+      goto fail;
 
    aapoint->stage.draw = draw;
    aapoint->stage.next = NULL;
@@ -744,6 +755,13 @@ draw_aapoint_stage(struct draw_context *draw)
    aapoint->stage.destroy = aapoint_destroy;
 
    return aapoint;
+
+ fail:
+   if (aapoint)
+      aapoint_destroy(&aapoint->stage);
+
+   return NULL;
+
 }
 
 
@@ -806,20 +824,19 @@ aapoint_delete_fs_state(struct pipe_context *pipe, void *fs)
  * into the draw module's pipeline.  This will not be used if the
  * hardware has native support for AA points.
  */
-void
+boolean
 draw_install_aapoint_stage(struct draw_context *draw,
                            struct pipe_context *pipe)
 {
    struct aapoint_stage *aapoint;
 
-   pipe->draw = (void *) draw;
 
    /*
     * Create / install AA point drawing / prim stage
     */
    aapoint = draw_aapoint_stage( draw );
-   assert(aapoint);
-   draw->pipeline.aapoint = &aapoint->stage;
+   if (aapoint == NULL)
+      goto fail;
 
    aapoint->pipe = pipe;
 
@@ -832,4 +849,13 @@ draw_install_aapoint_stage(struct draw_context *draw,
    pipe->create_fs_state = aapoint_create_fs_state;
    pipe->bind_fs_state = aapoint_bind_fs_state;
    pipe->delete_fs_state = aapoint_delete_fs_state;
+
+   pipe->draw = (void *) draw;
+   draw->pipeline.aapoint = &aapoint->stage;
+
+ fail:
+   if (aapoint)
+      aapoint->stage.destroy( &aapoint->stage );
+
+   return FALSE;
 }
