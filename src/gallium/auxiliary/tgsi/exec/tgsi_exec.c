@@ -287,10 +287,10 @@ micro_abs(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) fabs( (double) src->f[0] );
-   dst->f[1] = (float) fabs( (double) src->f[1] );
-   dst->f[2] = (float) fabs( (double) src->f[2] );
-   dst->f[3] = (float) fabs( (double) src->f[3] );
+   dst->f[0] = fabsf( src->f[0] );
+   dst->f[1] = fabsf( src->f[1] );
+   dst->f[2] = fabsf( src->f[2] );
+   dst->f[3] = fabsf( src->f[3] );
 }
 
 static void
@@ -334,10 +334,10 @@ micro_ceil(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) ceil( (double) src->f[0] );
-   dst->f[1] = (float) ceil( (double) src->f[1] );
-   dst->f[2] = (float) ceil( (double) src->f[2] );
-   dst->f[3] = (float) ceil( (double) src->f[3] );
+   dst->f[0] = ceilf( src->f[0] );
+   dst->f[1] = ceilf( src->f[1] );
+   dst->f[2] = ceilf( src->f[2] );
+   dst->f[3] = ceilf( src->f[3] );
 }
 
 static void
@@ -345,10 +345,10 @@ micro_cos(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) cos( (double) src->f[0] );
-   dst->f[1] = (float) cos( (double) src->f[1] );
-   dst->f[2] = (float) cos( (double) src->f[2] );
-   dst->f[3] = (float) cos( (double) src->f[3] );
+   dst->f[0] = cosf( src->f[0] );
+   dst->f[1] = cosf( src->f[1] );
+   dst->f[2] = cosf( src->f[2] );
+   dst->f[3] = cosf( src->f[3] );
 }
 
 static void
@@ -430,10 +430,10 @@ micro_exp2(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src)
 {
-   dst->f[0] = (float) pow( 2.0, (double) src->f[0] );
-   dst->f[1] = (float) pow( 2.0, (double) src->f[1] );
-   dst->f[2] = (float) pow( 2.0, (double) src->f[2] );
-   dst->f[3] = (float) pow( 2.0, (double) src->f[3] );
+   dst->f[0] = powf( 2.0f, src->f[0] );
+   dst->f[1] = powf( 2.0f, src->f[1] );
+   dst->f[2] = powf( 2.0f, src->f[2] );
+   dst->f[3] = powf( 2.0f, src->f[3] );
 }
 
 static void
@@ -463,10 +463,10 @@ micro_flr(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) floor( (double) src->f[0] );
-   dst->f[1] = (float) floor( (double) src->f[1] );
-   dst->f[2] = (float) floor( (double) src->f[2] );
-   dst->f[3] = (float) floor( (double) src->f[3] );
+   dst->f[0] = floorf( src->f[0] );
+   dst->f[1] = floorf( src->f[1] );
+   dst->f[2] = floorf( src->f[2] );
+   dst->f[3] = floorf( src->f[3] );
 }
 
 static void
@@ -474,10 +474,10 @@ micro_frc(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = src->f[0] - (float) floor( (double) src->f[0] );
-   dst->f[1] = src->f[1] - (float) floor( (double) src->f[1] );
-   dst->f[2] = src->f[2] - (float) floor( (double) src->f[2] );
-   dst->f[3] = src->f[3] - (float) floor( (double) src->f[3] );
+   dst->f[0] = src->f[0] - floorf( src->f[0] );
+   dst->f[1] = src->f[1] - floorf( src->f[1] );
+   dst->f[2] = src->f[2] - floorf( src->f[2] );
+   dst->f[3] = src->f[3] - floorf( src->f[3] );
 }
 
 static void
@@ -510,10 +510,10 @@ micro_lg2(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) log( (double) src->f[0] ) * 1.442695f;
-   dst->f[1] = (float) log( (double) src->f[1] ) * 1.442695f;
-   dst->f[2] = (float) log( (double) src->f[2] ) * 1.442695f;
-   dst->f[3] = (float) log( (double) src->f[3] ) * 1.442695f;
+   dst->f[0] = logf( src->f[0] ) * 1.442695f;
+   dst->f[1] = logf( src->f[1] ) * 1.442695f;
+   dst->f[2] = logf( src->f[2] ) * 1.442695f;
+   dst->f[3] = logf( src->f[3] ) * 1.442695f;
 }
 
 static void
@@ -764,10 +764,10 @@ micro_pow(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
-   dst->f[0] = (float) pow( (double) src0->f[0], (double) src1->f[0] );
-   dst->f[1] = (float) pow( (double) src0->f[1], (double) src1->f[1] );
-   dst->f[2] = (float) pow( (double) src0->f[2], (double) src1->f[2] );
-   dst->f[3] = (float) pow( (double) src0->f[3], (double) src1->f[3] );
+   dst->f[0] = powf( src0->f[0], src1->f[0] );
+   dst->f[1] = powf( src0->f[1], src1->f[1] );
+   dst->f[2] = powf( src0->f[2], src1->f[2] );
+   dst->f[3] = powf( src0->f[3], src1->f[3] );
 }
 
 static void
@@ -775,10 +775,10 @@ micro_rnd(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) floor( (double) (src->f[0] + 0.5f) );
-   dst->f[1] = (float) floor( (double) (src->f[1] + 0.5f) );
-   dst->f[2] = (float) floor( (double) (src->f[2] + 0.5f) );
-   dst->f[3] = (float) floor( (double) (src->f[3] + 0.5f) );
+   dst->f[0] = floorf( src->f[0] + 0.5f );
+   dst->f[1] = floorf( src->f[1] + 0.5f );
+   dst->f[2] = floorf( src->f[2] + 0.5f );
+   dst->f[3] = floorf( src->f[3] + 0.5f );
 }
 
 static void
@@ -833,20 +833,20 @@ micro_sin(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) sin( (double) src->f[0] );
-   dst->f[1] = (float) sin( (double) src->f[1] );
-   dst->f[2] = (float) sin( (double) src->f[2] );
-   dst->f[3] = (float) sin( (double) src->f[3] );
+   dst->f[0] = sinf( src->f[0] );
+   dst->f[1] = sinf( src->f[1] );
+   dst->f[2] = sinf( src->f[2] );
+   dst->f[3] = sinf( src->f[3] );
 }
 
 static void
 micro_sqrt( union tgsi_exec_channel *dst,
             const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (float) sqrt( (double) src->f[0] );
-   dst->f[1] = (float) sqrt( (double) src->f[1] );
-   dst->f[2] = (float) sqrt( (double) src->f[2] );
-   dst->f[3] = (float) sqrt( (double) src->f[3] );
+   dst->f[0] = sqrtf( src->f[0] );
+   dst->f[1] = sqrtf( src->f[1] );
+   dst->f[2] = sqrtf( src->f[2] );
+   dst->f[3] = sqrtf( src->f[3] );
 }
 
 static void
