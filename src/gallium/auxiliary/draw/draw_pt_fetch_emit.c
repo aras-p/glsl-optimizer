@@ -264,6 +264,11 @@ static void fetch_emit_finish( struct draw_pt_middle_end *middle )
 
 static void fetch_emit_destroy( struct draw_pt_middle_end *middle )
 {
+   struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
+
+   if (feme->translate)
+      feme->translate->release( feme->translate );
+   
    FREE(middle);
 }
 

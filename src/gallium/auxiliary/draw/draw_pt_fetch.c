@@ -166,6 +166,9 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch )
 {
+   if (fetch->translate)
+      fetch->translate->release( fetch->translate );
+
    FREE(fetch);
 }
 
