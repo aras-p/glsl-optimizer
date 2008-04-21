@@ -432,6 +432,9 @@ void cso_set_fragment_shader_handle(struct cso_context *ctx,
 }
 
 
+/* Not really working:
+ */
+#if 0
 void cso_set_fragment_shader(struct cso_context *ctx,
                              const struct pipe_shader_state *templ)
 {
@@ -465,6 +468,7 @@ void cso_set_fragment_shader(struct cso_context *ctx,
 
    cso_set_fragment_shader_handle( ctx, handle );
 }
+#endif
 
 void cso_save_fragment_shader(struct cso_context *ctx)
 {
@@ -493,7 +497,9 @@ void cso_set_vertex_shader_handle(struct cso_context *ctx,
 }
 
 
-
+/* Not really working:
+ */
+#if 0
 void cso_set_vertex_shader(struct cso_context *ctx,
                            const struct pipe_shader_state *templ)
 {
@@ -522,6 +528,7 @@ void cso_set_vertex_shader(struct cso_context *ctx,
 
    cso_set_vertex_shader_handle( ctx, handle );
 }
+#endif
 
 
 
