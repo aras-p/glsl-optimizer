@@ -146,7 +146,10 @@ _fill(
 
 static void do_realloc( struct x86_function *p )
 {
-   if (p->size == 0) {
+   if (p->store == p->error_overflow) {
+      p->csr = p->store;
+   }
+   else if (p->size == 0) {
       p->size = 1024;
       p->store = rtasm_exec_malloc(p->size);
       p->csr = p->store;
@@ -156,9 +159,21 @@ static void do_realloc( struct x86_function *p )
       unsigned char *tmp = p->store;
       p->size *= 2;
       p->store = rtasm_exec_malloc(p->size);
-      memcpy(p->store, tmp, used);
-      p->csr = p->store + used;
+
+      if (p->store) {
+         memcpy(p->store, tmp, used);
+         p->csr = p->store + used;
+      }
+      else {
+         p->csr = p->store;
+      }
+
       rtasm_exec_free(tmp);
+   }
+
+   if (p->store == NULL) {
+      p->store = p->csr = p->error_overflow;
+      p->size = 4;
    }
 }
 
@@ -1440,12 +1455,17 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size )
 {
    p->size = code_size;
    p->store = rtasm_exec_malloc(code_size);
+   if (p->store == NULL) {
+      p->store = p->error_overflow;
+   }
    p->csr = p->store;
 }
 
 void x86_release_func( struct x86_function *p )
 {
-   rtasm_exec_free(p->store);
+   if (p->store && p->store != p->error_overflow)
+      rtasm_exec_free(p->store);
+
    p->store = NULL;
    p->csr = NULL;
    p->size = 0;
@@ -1456,7 +1476,11 @@ void (*x86_get_func( struct x86_function *p ))(void)
 {
    if (DISASSEM && p->store)
       debug_printf("disassemble %p %p\n", p->store, p->csr);
-   return (void (*)(void)) p->store;
+
+   if (p->store == p->error_overflow)
+      return (void (*)(void)) NULL;
+   else
+      return (void (*)(void)) p->store;
 }
 
 #else

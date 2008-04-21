@@ -43,6 +43,7 @@ struct x86_function {
    unsigned char *csr;
    unsigned stack_offset;
    int need_emms;
+   unsigned char error_overflow[4];
    const char *fn;
 };
 
