@@ -77,69 +77,60 @@ _print_reg(
       debug_printf( "]" );
 }
 
-static void
-_fill(
-   const char  *op )
-{
-   unsigned count = 10 - strlen( op );
 
-   while( count-- ) {
-      debug_printf( " " );
-   }
-}
+#define DUMP_START() debug_printf( "\n" )
+#define DUMP_END() debug_printf( "\n" )
 
-#define DUMP_START() debug_printf( "\nsse-dump start ----------------" )
-#define DUMP_END() debug_printf( "\nsse-dump end ----------------\n" )
-#define DUMP( OP ) debug_printf( "\n%s", OP )
+#define DUMP() do {                             \
+   const char *foo = __FUNCTION__;              \
+   while (*foo && *foo != '_')                  \
+      foo++;                                    \
+   if  (*foo)                                   \
+      foo++;                                    \
+   debug_printf( "\n% 15s ", foo );             \
+} while (0)
 
-#define DUMP_I( OP, I ) do {                    \
-   debug_printf( "\n%s", OP );                  \
-   _fill( OP );                                 \
+#define DUMP_I( I ) do {                        \
+   DUMP();                                      \
    debug_printf( "%u", I );                     \
 } while( 0 )
 
-#define DUMP_R( OP, R0 ) do {                   \
-   debug_printf( "\n%s", OP );                  \
-   _fill( OP );                                 \
+#define DUMP_R( R0 ) do {                       \
+   DUMP();                                      \
    _print_reg( R0 );                            \
 } while( 0 )
 
-#define DUMP_RR( OP, R0, R1 ) do {              \
-   debug_printf( "\n%s", OP );                  \
-   _fill( OP );                                 \
+#define DUMP_RR( R0, R1 ) do {                  \
+   DUMP();                                      \
    _print_reg( R0 );                            \
    debug_printf( ", " );                        \
    _print_reg( R1 );                            \
 } while( 0 )
 
-#define DUMP_RI( OP, R0, I ) do {               \
-   debug_printf( "\n%s", OP );                  \
-   _fill( OP );                                 \
+#define DUMP_RI( R0, I ) do {                   \
+   DUMP();                                      \
    _print_reg( R0 );                            \
-   debug_printf( ", " );                        \
-   debug_printf( "%u", I );                     \
+   debug_printf( ", %u", I );                   \
 } while( 0 )
 
-#define DUMP_RRI( OP, R0, R1, I ) do {          \
-   debug_printf( "\n%s", OP );                  \
-   _fill( OP );                                 \
+#define DUMP_RRI( R0, R1, I ) do {              \
+   DUMP();                                      \
    _print_reg( R0 );                            \
    debug_printf( ", " );                        \
    _print_reg( R1 );                            \
-   debug_printf( ", " );                        \
-   debug_printf( "%u", I );                     \
+   debug_printf( ", %u", I );                   \
 } while( 0 )
 
 #else
 
 #define DUMP_START()
 #define DUMP_END()
-#define DUMP( OP )
-#define DUMP_I( OP, I )
-#define DUMP_R( OP, R0 )
-#define DUMP_RR( OP, R0, R1 )
-#define DUMP_RI( OP, R0, I )
-#define DUMP_RRI( OP, R0, R1, I )
+#define DUMP( )
+#define DUMP_I( I )
+#define DUMP_R( R0 )
+#define DUMP_RR( R0, R1 )
+#define DUMP_RI( R0, I )
+#define DUMP_RRI( R0, R1, I )
 
 #endif
 
@@ -173,7 +164,7 @@ static void do_realloc( struct x86_function *p )
 
    if (p->store == NULL) {
       p->store = p->csr = p->error_overflow;
-      p->size = 4;
+      p->size = sizeof(p->error_overflow);
    }
 }
 
@@ -397,7 +388,7 @@ unsigned char *x86_jcc_forward( struct x86_function *p,
 
 unsigned char *x86_jmp_forward( struct x86_function *p)
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_1ub(p, 0xe9);
    emit_1i(p, 0);
    return x86_get_label(p);
@@ -405,7 +396,7 @@ unsigned char *x86_jmp_forward( struct x86_function *p)
 
 unsigned char *x86_call_forward( struct x86_function *p)
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
 
    emit_1ub(p, 0xe8);
    emit_1i(p, 0);
@@ -422,7 +413,7 @@ void x86_fixup_fwd_jump( struct x86_function *p,
 
 void x86_jmp( struct x86_function *p, unsigned char *label)
 {
-   DUMP_I( __FUNCTION__, label );
+   DUMP_I( label );
    emit_1ub(p, 0xe9);
    emit_1i(p, pointer_to_intptr( label ) - pointer_to_intptr( x86_get_label(p) ) - 4);
 }
@@ -439,14 +430,14 @@ static unsigned char *cptr( void (*label)() )
  */
 void x86_call( struct x86_function *p, void (*label)())
 {
-   DUMP_I( __FUNCTION__, label );
+   DUMP_I( label );
    emit_1ub(p, 0xe8);
    emit_1i(p, cptr(label) - x86_get_label(p) - 4);
 }
 #else
 void x86_call( struct x86_function *p, struct x86_reg reg)
 {
-   DUMP_R( __FUNCTION__, reg );
+   DUMP_R( reg );
    emit_1ub(p, 0xff);
    emit_modrm_noreg(p, 2, reg);
 }
@@ -459,7 +450,7 @@ void x86_call( struct x86_function *p, struct x86_reg reg)
  */
 void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm )
 {
-   DUMP_RI( __FUNCTION__, dst, imm );
+   DUMP_RI( dst, imm );
    assert(dst.mod == mod_REG);
    emit_1ub(p, 0xb8 + dst.idx);
    emit_1i(p, imm);
@@ -468,7 +459,7 @@ void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm )
 void x86_push( struct x86_function *p,
 	       struct x86_reg reg )
 {
-   DUMP_R( __FUNCTION__, reg );
+   DUMP_R( reg );
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x50 + reg.idx);
    p->stack_offset += 4;
@@ -477,7 +468,7 @@ void x86_push( struct x86_function *p,
 void x86_pop( struct x86_function *p,
 	      struct x86_reg reg )
 {
-   DUMP_R( __FUNCTION__, reg );
+   DUMP_R( reg );
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x58 + reg.idx);
    p->stack_offset -= 4;
@@ -486,7 +477,7 @@ void x86_pop( struct x86_function *p,
 void x86_inc( struct x86_function *p,
 	      struct x86_reg reg )
 {
-   DUMP_R( __FUNCTION__, reg );
+   DUMP_R( reg );
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x40 + reg.idx);
 }
@@ -494,20 +485,20 @@ void x86_inc( struct x86_function *p,
 void x86_dec( struct x86_function *p,
 	      struct x86_reg reg )
 {
-   DUMP_R( __FUNCTION__, reg );
+   DUMP_R( reg );
    assert(reg.mod == mod_REG);
    emit_1ub(p, 0x48 + reg.idx);
 }
 
 void x86_ret( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_1ub(p, 0xc3);
 }
 
 void x86_sahf( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_1ub(p, 0x9e);
 }
 
@@ -515,7 +506,7 @@ void x86_mov( struct x86_function *p,
 	      struct x86_reg dst,
 	      struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm( p, 0x8b, 0x89, dst, src );
 }
 
@@ -523,7 +514,7 @@ void x86_xor( struct x86_function *p,
 	      struct x86_reg dst,
 	      struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm( p, 0x33, 0x31, dst, src );
 }
 
@@ -531,7 +522,7 @@ void x86_cmp( struct x86_function *p,
 	      struct x86_reg dst,
 	      struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm( p, 0x3b, 0x39, dst, src );
 }
 
@@ -539,7 +530,7 @@ void x86_lea( struct x86_function *p,
 	      struct x86_reg dst,
 	      struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_1ub(p, 0x8d);
    emit_modrm( p, dst, src );
 }
@@ -548,7 +539,7 @@ void x86_test( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_1ub(p, 0x85);
    emit_modrm( p, dst, src );
 }
@@ -557,7 +548,7 @@ void x86_add( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm(p, 0x03, 0x01, dst, src );
 }
 
@@ -566,7 +557,7 @@ void x86_add( struct x86_function *p,
 void x86_mul( struct x86_function *p,
 	       struct x86_reg src )
 {
-   DUMP_R( __FUNCTION__,  src );
+   DUMP_R(  src );
    emit_1ub(p, 0xf7);
    emit_modrm_noreg(p, 4, src );
 }
@@ -576,7 +567,7 @@ void x86_imul( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0xAF);
    emit_modrm(p, dst, src);
 }
@@ -586,7 +577,7 @@ void x86_sub( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm(p, 0x2b, 0x29, dst, src );
 }
 
@@ -594,7 +585,7 @@ void x86_or( struct x86_function *p,
              struct x86_reg dst,
              struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm( p, 0x0b, 0x09, dst, src );
 }
 
@@ -602,7 +593,7 @@ void x86_and( struct x86_function *p,
               struct x86_reg dst,
               struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_op_modrm( p, 0x23, 0x21, dst, src );
 }
 
@@ -617,7 +608,7 @@ void sse_movss( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, 0xF3, X86_TWOB);
    emit_op_modrm( p, 0x10, 0x11, dst, src );
 }
@@ -626,7 +617,7 @@ void sse_movaps( struct x86_function *p,
 		 struct x86_reg dst,
 		 struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_1ub(p, X86_TWOB);
    emit_op_modrm( p, 0x28, 0x29, dst, src );
 }
@@ -635,7 +626,7 @@ void sse_movups( struct x86_function *p,
 		 struct x86_reg dst,
 		 struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_1ub(p, X86_TWOB);
    emit_op_modrm( p, 0x10, 0x11, dst, src );
 }
@@ -644,7 +635,7 @@ void sse_movhps( struct x86_function *p,
 		 struct x86_reg dst,
 		 struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.mod != mod_REG || src.mod != mod_REG);
    emit_1ub(p, X86_TWOB);
    emit_op_modrm( p, 0x16, 0x17, dst, src ); /* cf movlhps */
@@ -654,7 +645,7 @@ void sse_movlps( struct x86_function *p,
 		 struct x86_reg dst,
 		 struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.mod != mod_REG || src.mod != mod_REG);
    emit_1ub(p, X86_TWOB);
    emit_op_modrm( p, 0x12, 0x13, dst, src ); /* cf movhlps */
@@ -664,7 +655,7 @@ void sse_maxps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x5F);
    emit_modrm( p, dst, src );
 }
@@ -673,7 +664,7 @@ void sse_maxss( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0xF3, X86_TWOB, 0x5F);
    emit_modrm( p, dst, src );
 }
@@ -682,7 +673,7 @@ void sse_divss( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0xF3, X86_TWOB, 0x5E);
    emit_modrm( p, dst, src );
 }
@@ -691,7 +682,7 @@ void sse_minps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x5D);
    emit_modrm( p, dst, src );
 }
@@ -700,7 +691,7 @@ void sse_subps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x5C);
    emit_modrm( p, dst, src );
 }
@@ -709,7 +700,7 @@ void sse_mulps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x59);
    emit_modrm( p, dst, src );
 }
@@ -718,7 +709,7 @@ void sse_mulss( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0xF3, X86_TWOB, 0x59);
    emit_modrm( p, dst, src );
 }
@@ -727,7 +718,7 @@ void sse_addps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x58);
    emit_modrm( p, dst, src );
 }
@@ -736,7 +727,7 @@ void sse_addss( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0xF3, X86_TWOB, 0x58);
    emit_modrm( p, dst, src );
 }
@@ -745,7 +736,7 @@ void sse_andnps( struct x86_function *p,
                  struct x86_reg dst,
                  struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x55);
    emit_modrm( p, dst, src );
 }
@@ -754,7 +745,7 @@ void sse_andps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x54);
    emit_modrm( p, dst, src );
 }
@@ -763,7 +754,7 @@ void sse_rsqrtps( struct x86_function *p,
                   struct x86_reg dst,
                   struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x52);
    emit_modrm( p, dst, src );
 }
@@ -772,7 +763,7 @@ void sse_rsqrtss( struct x86_function *p,
 		  struct x86_reg dst,
 		  struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0xF3, X86_TWOB, 0x52);
    emit_modrm( p, dst, src );
 
@@ -782,7 +773,7 @@ void sse_movhlps( struct x86_function *p,
 		  struct x86_reg dst,
 		  struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.mod == mod_REG && src.mod == mod_REG);
    emit_2ub(p, X86_TWOB, 0x12);
    emit_modrm( p, dst, src );
@@ -792,7 +783,7 @@ void sse_movlhps( struct x86_function *p,
 		  struct x86_reg dst,
 		  struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.mod == mod_REG && src.mod == mod_REG);
    emit_2ub(p, X86_TWOB, 0x16);
    emit_modrm( p, dst, src );
@@ -802,7 +793,7 @@ void sse_orps( struct x86_function *p,
                struct x86_reg dst,
                struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x56);
    emit_modrm( p, dst, src );
 }
@@ -811,7 +802,7 @@ void sse_xorps( struct x86_function *p,
                 struct x86_reg dst,
                 struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x57);
    emit_modrm( p, dst, src );
 }
@@ -820,7 +811,7 @@ void sse_cvtps2pi( struct x86_function *p,
 		   struct x86_reg dst,
 		   struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.file == file_MMX && 
 	  (src.file == file_XMM || src.mod != mod_REG));
 
@@ -834,7 +825,7 @@ void sse2_cvtdq2ps( struct x86_function *p,
 		   struct x86_reg dst,
 		   struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x5b);
    emit_modrm( p, dst, src );
 }
@@ -848,7 +839,7 @@ void sse_shufps( struct x86_function *p,
 		 struct x86_reg src,
 		 unsigned char shuf) 
 {
-   DUMP_RRI( __FUNCTION__, dst, src, shuf );
+   DUMP_RRI( dst, src, shuf );
    emit_2ub(p, X86_TWOB, 0xC6);
    emit_modrm(p, dst, src);
    emit_1ub(p, shuf); 
@@ -859,7 +850,7 @@ void sse_cmpps( struct x86_function *p,
 		struct x86_reg src,
 		unsigned char cc) 
 {
-   DUMP_RRI( "CMPPS", dst, src, cc );
+   DUMP_RRI( dst, src, cc );
    emit_2ub(p, X86_TWOB, 0xC2);
    emit_modrm(p, dst, src);
    emit_1ub(p, cc); 
@@ -869,7 +860,7 @@ void sse_pmovmskb( struct x86_function *p,
                    struct x86_reg dst,
                    struct x86_reg src)
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0xD7);
    emit_modrm(p, dst, src);
 }
@@ -886,7 +877,7 @@ void sse2_pshufd( struct x86_function *p,
 		  struct x86_reg src,
 		  unsigned char shuf) 
 {
-   DUMP_RRI( __FUNCTION__, dst, src, shuf );
+   DUMP_RRI( dst, src, shuf );
    emit_3ub(p, 0x66, X86_TWOB, 0x70);
    emit_modrm(p, dst, src);
    emit_1ub(p, shuf); 
@@ -896,7 +887,7 @@ void sse2_cvttps2dq( struct x86_function *p,
                      struct x86_reg dst,
                      struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub( p, 0xF3, X86_TWOB, 0x5B );
    emit_modrm( p, dst, src );
 }
@@ -905,7 +896,7 @@ void sse2_cvtps2dq( struct x86_function *p,
 		    struct x86_reg dst,
 		    struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0x5B);
    emit_modrm( p, dst, src );
 }
@@ -914,7 +905,7 @@ void sse2_packssdw( struct x86_function *p,
 		    struct x86_reg dst,
 		    struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0x6B);
    emit_modrm( p, dst, src );
 }
@@ -923,7 +914,7 @@ void sse2_packsswb( struct x86_function *p,
 		    struct x86_reg dst,
 		    struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0x63);
    emit_modrm( p, dst, src );
 }
@@ -932,7 +923,7 @@ void sse2_packuswb( struct x86_function *p,
 		    struct x86_reg dst,
 		    struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0x67);
    emit_modrm( p, dst, src );
 }
@@ -941,7 +932,7 @@ void sse2_punpcklbw( struct x86_function *p,
 		    struct x86_reg dst,
 		    struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0x66, X86_TWOB, 0x60);
    emit_modrm( p, dst, src );
 }
@@ -951,7 +942,7 @@ void sse2_rcpps( struct x86_function *p,
                  struct x86_reg dst,
                  struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, X86_TWOB, 0x53);
    emit_modrm( p, dst, src );
 }
@@ -960,7 +951,7 @@ void sse2_rcpss( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_3ub(p, 0xF3, X86_TWOB, 0x53);
    emit_modrm( p, dst, src );
 }
@@ -969,7 +960,7 @@ void sse2_movd( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    emit_2ub(p, 0x66, X86_TWOB);
    emit_op_modrm( p, 0x6e, 0x7e, dst, src );
 }
@@ -982,35 +973,35 @@ void sse2_movd( struct x86_function *p,
  */
 void x87_fist( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    emit_1ub(p, 0xdb);
    emit_modrm_noreg(p, 2, dst);
 }
 
 void x87_fistp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    emit_1ub(p, 0xdb);
    emit_modrm_noreg(p, 3, dst);
 }
 
 void x87_fild( struct x86_function *p, struct x86_reg arg )
 {
-   DUMP_R( __FUNCTION__, arg );
+   DUMP_R( arg );
    emit_1ub(p, 0xdf);
    emit_modrm_noreg(p, 0, arg);
 }
 
 void x87_fldz( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xee);
 }
 
 
 void x87_fldcw( struct x86_function *p, struct x86_reg arg )
 {
-   DUMP_R( __FUNCTION__, arg );
+   DUMP_R( arg );
    assert(arg.file == file_REG32);
    assert(arg.mod != mod_REG);
    emit_1ub(p, 0xd9);
@@ -1019,31 +1010,31 @@ void x87_fldcw( struct x86_function *p, struct x86_reg arg )
 
 void x87_fld1( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xe8);
 }
 
 void x87_fldl2e( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xea);
 }
 
 void x87_fldln2( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xed);
 }
 
 void x87_fwait( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_1ub(p, 0x9b);
 }
 
 void x87_fnclex( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xdb, 0xe2);
 }
 
@@ -1082,7 +1073,7 @@ static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86
 
 void x87_fmul( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    x87_arith_op(p, dst, src, 
 		0xd8, 0xc8,
 		0xdc, 0xc8,
@@ -1091,7 +1082,7 @@ void x87_fmul( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 
 void x87_fsub( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    x87_arith_op(p, dst, src, 
 		0xd8, 0xe0,
 		0xdc, 0xe8,
@@ -1100,7 +1091,7 @@ void x87_fsub( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 
 void x87_fsubr( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    x87_arith_op(p, dst, src, 
 		0xd8, 0xe8,
 		0xdc, 0xe0,
@@ -1109,7 +1100,7 @@ void x87_fsubr( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 
 void x87_fadd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    x87_arith_op(p, dst, src, 
 		0xd8, 0xc0,
 		0xdc, 0xc0,
@@ -1118,7 +1109,7 @@ void x87_fadd( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 
 void x87_fdiv( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    x87_arith_op(p, dst, src, 
 		0xd8, 0xf0,
 		0xdc, 0xf8,
@@ -1127,7 +1118,7 @@ void x87_fdiv( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 
 void x87_fdivr( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    x87_arith_op(p, dst, src, 
 		0xd8, 0xf8,
 		0xdc, 0xf0,
@@ -1136,7 +1127,7 @@ void x87_fdivr( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 
 void x87_fmulp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_x87);
    assert(dst.idx >= 1);
    emit_2ub(p, 0xde, 0xc8+dst.idx);
@@ -1144,7 +1135,7 @@ void x87_fmulp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fsubp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_x87);
    assert(dst.idx >= 1);
    emit_2ub(p, 0xde, 0xe8+dst.idx);
@@ -1152,7 +1143,7 @@ void x87_fsubp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fsubrp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_x87);
    assert(dst.idx >= 1);
    emit_2ub(p, 0xde, 0xe0+dst.idx);
@@ -1160,7 +1151,7 @@ void x87_fsubrp( struct x86_function *p, struct x86_reg dst )
 
 void x87_faddp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_x87);
    assert(dst.idx >= 1);
    emit_2ub(p, 0xde, 0xc0+dst.idx);
@@ -1168,7 +1159,7 @@ void x87_faddp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fdivp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_x87);
    assert(dst.idx >= 1);
    emit_2ub(p, 0xde, 0xf8+dst.idx);
@@ -1176,7 +1167,7 @@ void x87_fdivp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fdivrp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_x87);
    assert(dst.idx >= 1);
    emit_2ub(p, 0xde, 0xf0+dst.idx);
@@ -1184,83 +1175,83 @@ void x87_fdivrp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fucom( struct x86_function *p, struct x86_reg arg )
 {
-   DUMP_R( __FUNCTION__, arg );
+   DUMP_R( arg );
    assert(arg.file == file_x87);
    emit_2ub(p, 0xdd, 0xe0+arg.idx);
 }
 
 void x87_fucomp( struct x86_function *p, struct x86_reg arg )
 {
-   DUMP_R( __FUNCTION__, arg );
+   DUMP_R( arg );
    assert(arg.file == file_x87);
    emit_2ub(p, 0xdd, 0xe8+arg.idx);
 }
 
 void x87_fucompp( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xda, 0xe9);
 }
 
 void x87_fxch( struct x86_function *p, struct x86_reg arg )
 {
-   DUMP_R( __FUNCTION__, arg );
+   DUMP_R( arg );
    assert(arg.file == file_x87);
    emit_2ub(p, 0xd9, 0xc8+arg.idx);
 }
 
 void x87_fabs( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xe1);
 }
 
 void x87_fchs( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xe0);
 }
 
 void x87_fcos( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xff);
 }
 
 
 void x87_fprndint( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xfc);
 }
 
 void x87_fscale( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xfd);
 }
 
 void x87_fsin( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xfe);
 }
 
 void x87_fsincos( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xfb);
 }
 
 void x87_fsqrt( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xfa);
 }
 
 void x87_fxtract( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xf4);
 }
 
@@ -1270,7 +1261,7 @@ void x87_fxtract( struct x86_function *p )
  */
 void x87_f2xm1( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xf0);
 }
 
@@ -1279,7 +1270,7 @@ void x87_f2xm1( struct x86_function *p )
  */
 void x87_fyl2x( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xf1);
 }
 
@@ -1290,14 +1281,14 @@ void x87_fyl2x( struct x86_function *p )
  */
 void x87_fyl2xp1( struct x86_function *p )
 {
-   DUMP( __FUNCTION__ );
+   DUMP();
    emit_2ub(p, 0xd9, 0xf9);
 }
 
 
 void x87_fld( struct x86_function *p, struct x86_reg arg )
 {
-   DUMP_R( __FUNCTION__, arg );
+   DUMP_R( arg );
    if (arg.file == file_x87) 
       emit_2ub(p, 0xd9, 0xc0 + arg.idx);
    else {
@@ -1308,7 +1299,7 @@ void x87_fld( struct x86_function *p, struct x86_reg arg )
 
 void x87_fst( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    if (dst.file == file_x87) 
       emit_2ub(p, 0xdd, 0xd0 + dst.idx);
    else {
@@ -1319,7 +1310,7 @@ void x87_fst( struct x86_function *p, struct x86_reg dst )
 
 void x87_fstp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    if (dst.file == file_x87) 
       emit_2ub(p, 0xdd, 0xd8 + dst.idx);
    else {
@@ -1330,7 +1321,7 @@ void x87_fstp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fcom( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    if (dst.file == file_x87) 
       emit_2ub(p, 0xd8, 0xd0 + dst.idx);
    else {
@@ -1341,7 +1332,7 @@ void x87_fcom( struct x86_function *p, struct x86_reg dst )
 
 void x87_fcomp( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    if (dst.file == file_x87) 
       emit_2ub(p, 0xd8, 0xd8 + dst.idx);
    else {
@@ -1353,7 +1344,7 @@ void x87_fcomp( struct x86_function *p, struct x86_reg dst )
 
 void x87_fnstsw( struct x86_function *p, struct x86_reg dst )
 {
-   DUMP_R( __FUNCTION__, dst );
+   DUMP_R( dst );
    assert(dst.file == file_REG32);
 
    if (dst.idx == reg_AX &&
@@ -1383,7 +1374,7 @@ void mmx_packssdw( struct x86_function *p,
 		   struct x86_reg dst,
 		   struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.file == file_MMX && 
 	  (src.file == file_MMX || src.mod != mod_REG));
 
@@ -1397,7 +1388,7 @@ void mmx_packuswb( struct x86_function *p,
 		   struct x86_reg dst,
 		   struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    assert(dst.file == file_MMX && 
 	  (src.file == file_MMX || src.mod != mod_REG));
 
@@ -1411,7 +1402,7 @@ void mmx_movd( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    p->need_emms = 1;
    emit_1ub(p, X86_TWOB);
    emit_op_modrm( p, 0x6e, 0x7e, dst, src );
@@ -1421,7 +1412,7 @@ void mmx_movq( struct x86_function *p,
 	       struct x86_reg dst,
 	       struct x86_reg src )
 {
-   DUMP_RR( __FUNCTION__, dst, src );
+   DUMP_RR( dst, src );
    p->need_emms = 1;
    emit_1ub(p, X86_TWOB);
    emit_op_modrm( p, 0x6f, 0x7f, dst, src );
@@ -1449,6 +1440,7 @@ void x86_init_func( struct x86_function *p )
    p->size = 0;
    p->store = NULL;
    p->csr = p->store;
+   DUMP_START();
 }
 
 void x86_init_func_size( struct x86_function *p, unsigned code_size )
@@ -1459,6 +1451,7 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size )
       p->store = p->error_overflow;
    }
    p->csr = p->store;
+   DUMP_START();
 }
 
 void x86_release_func( struct x86_function *p )
@@ -1474,6 +1467,7 @@ void x86_release_func( struct x86_function *p )
 
 void (*x86_get_func( struct x86_function *p ))(void)
 {
+   DUMP_END();
    if (DISASSEM && p->store)
       debug_printf("disassemble %p %p\n", p->store, p->csr);
 
