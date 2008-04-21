@@ -364,6 +364,7 @@ void x86_jcc( struct x86_function *p,
 	      unsigned char *label )
 {
    intptr_t offset = pointer_to_intptr( label ) - (pointer_to_intptr( x86_get_label(p) ) + 2);
+   DUMP_I(cc);
    
    if (offset <= 127 && offset >= -128) {
       emit_1ub(p, 0x70 + cc);
@@ -381,6 +382,7 @@ void x86_jcc( struct x86_function *p,
 unsigned char *x86_jcc_forward( struct x86_function *p,
 			  enum x86_cc cc )
 {
+   DUMP_I(cc);
    emit_2ub(p, 0x0f, 0x80 + cc);
    emit_1i(p, 0);
    return x86_get_label(p);
@@ -1365,6 +1367,7 @@ void x87_fnstsw( struct x86_function *p, struct x86_reg dst )
 
 void mmx_emms( struct x86_function *p )
 {
+   DUMP();
    assert(p->need_emms);
    emit_2ub(p, 0x0f, 0x77);
    p->need_emms = 0;
