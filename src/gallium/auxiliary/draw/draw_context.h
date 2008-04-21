@@ -79,7 +79,7 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
 boolean
 draw_install_aapoint_stage(struct draw_context *draw, struct pipe_context *pipe);
 
-void
+boolean
 draw_install_pstipple_stage(struct draw_context *draw, struct pipe_context *pipe);
 
 

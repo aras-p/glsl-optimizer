@@ -493,8 +493,11 @@ static void clip_destroy( struct draw_stage *stage )
 struct draw_stage *draw_clip_stage( struct draw_context *draw )
 {
    struct clipper *clipper = CALLOC_STRUCT(clipper);
+   if (clipper == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &clipper->stage, MAX_CLIPPED_VERTICES+1 );
+   if (!draw_alloc_temp_verts( &clipper->stage, MAX_CLIPPED_VERTICES+1 ))
+      goto fail;
 
    clipper->stage.draw = draw;
    clipper->stage.point = clip_point;
@@ -507,4 +510,10 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
    clipper->plane = draw->plane;
 
    return &clipper->stage;
+
+ fail:
+   if (clipper)
+      clipper->stage.destroy( &clipper->stage );
+
+   return NULL;
 }

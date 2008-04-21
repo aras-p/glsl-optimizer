@@ -443,8 +443,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
                                     struct vbuf_render *render )
 {
    struct vbuf_stage *vbuf = CALLOC_STRUCT(vbuf_stage);
-
-   if(!vbuf)
+   if (vbuf == NULL)
       goto fail;
    
    vbuf->stage.draw = draw;
@@ -461,7 +460,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    vbuf->indices = (ushort *) align_malloc( vbuf->max_indices * 
 					    sizeof(vbuf->indices[0]), 
 					    16 );
-   if(!vbuf->indices)
+   if (!vbuf->indices)
       goto fail;
    
    vbuf->vertices = NULL;

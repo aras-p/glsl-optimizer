@@ -224,8 +224,11 @@ static void flatshade_destroy( struct draw_stage *stage )
 struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
    struct flat_stage *flatshade = CALLOC_STRUCT(flat_stage);
+   if (flatshade == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &flatshade->stage, 2 );
+   if (!draw_alloc_temp_verts( &flatshade->stage, 2 ))
+      goto fail;
 
    flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;
@@ -237,6 +240,12 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    flatshade->stage.destroy = flatshade_destroy;
 
    return &flatshade->stage;
+
+ fail:
+   if (flatshade)
+      flatshade->stage.destroy( &flatshade->stage );
+
+   return NULL;
 }
 
 

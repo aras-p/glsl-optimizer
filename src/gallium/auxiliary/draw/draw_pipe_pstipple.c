@@ -686,7 +686,7 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
  * into the draw module's pipeline.  This will not be used if the
  * hardware has native support for AA lines.
  */
-void
+boolean
 draw_install_pstipple_stage(struct draw_context *draw,
                             struct pipe_context *pipe)
 {
@@ -698,7 +698,9 @@ draw_install_pstipple_stage(struct draw_context *draw,
     * Create / install AA line drawing / prim stage
     */
    pstip = draw_pstip_stage( draw );
-   assert(pstip);
+   if (pstip == NULL)
+      goto fail;
+
    draw->pipeline.pstipple = &pstip->stage;
 
    pstip->pipe = pipe;
@@ -724,4 +726,12 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->bind_sampler_states = pstip_bind_sampler_states;
    pipe->set_sampler_textures = pstip_set_sampler_textures;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
+
+   return TRUE;
+
+ fail:
+   if (pstip)
+      pstip->stage.destroy( &pstip->stage );
+
+   return FALSE;
 }

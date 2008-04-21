@@ -487,6 +487,8 @@ static void vcache_destroy( struct draw_pt_front_end *frontend )
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw )
 {
    struct vcache_frontend *vcache = CALLOC_STRUCT( vcache_frontend );
+   if (vcache == NULL)
+      return NULL;
  
    vcache->base.prepare = vcache_prepare;
    vcache->base.run     = NULL;

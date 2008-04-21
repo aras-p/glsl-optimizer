@@ -249,8 +249,11 @@ static void widepoint_destroy( struct draw_stage *stage )
 struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
 {
    struct widepoint_stage *wide = CALLOC_STRUCT(widepoint_stage);
+   if (wide == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &wide->stage, 4 );
+   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
+      goto fail;
 
    wide->stage.draw = draw;
    wide->stage.next = NULL;
@@ -262,4 +265,10 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
    wide->stage.destroy = widepoint_destroy;
 
    return &wide->stage;
+
+ fail:
+   if (wide)
+      wide->stage.destroy( &wide->stage );
+   
+   return NULL;
 }

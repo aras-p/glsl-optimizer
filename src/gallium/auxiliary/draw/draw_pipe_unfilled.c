@@ -177,8 +177,11 @@ static void unfilled_destroy( struct draw_stage *stage )
 struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
 {
    struct unfilled_stage *unfilled = CALLOC_STRUCT(unfilled_stage);
+   if (unfilled == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &unfilled->stage, 0 );
+   if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
+      goto fail;
 
    unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;
@@ -191,4 +194,10 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.destroy = unfilled_destroy;
 
    return &unfilled->stage;
+
+ fail:
+   if (unfilled)
+      unfilled->stage.destroy( &unfilled->stage );
+
+   return NULL;
 }

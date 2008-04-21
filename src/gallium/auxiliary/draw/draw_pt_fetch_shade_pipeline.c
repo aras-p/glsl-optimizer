@@ -114,6 +114,8 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
       (struct vertex_header *)MALLOC(fpme->vertex_size * fetch_count);
 
    if (!pipeline_verts) {
+      /* Not much we can do here - just skip the rendering.
+       */
       assert(0);
       return;
    }

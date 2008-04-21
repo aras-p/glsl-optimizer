@@ -172,8 +172,11 @@ static void twoside_destroy( struct draw_stage *stage )
 struct draw_stage *draw_twoside_stage( struct draw_context *draw )
 {
    struct twoside_stage *twoside = CALLOC_STRUCT(twoside_stage);
+   if (twoside == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &twoside->stage, 3 );
+   if (!draw_alloc_temp_verts( &twoside->stage, 3 ))
+      goto fail;
 
    twoside->stage.draw = draw;
    twoside->stage.next = NULL;
@@ -185,4 +188,10 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    twoside->stage.destroy = twoside_destroy;
 
    return &twoside->stage;
+
+ fail:
+   if (twoside)
+      twoside->stage.destroy( &twoside->stage );
+
+   return NULL;
 }

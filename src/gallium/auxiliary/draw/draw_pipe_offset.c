@@ -158,6 +158,8 @@ static void offset_destroy( struct draw_stage *stage )
 struct draw_stage *draw_offset_stage( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
+   if (offset == NULL)
+      goto fail;
 
    draw_alloc_temp_verts( &offset->stage, 3 );
 
@@ -171,4 +173,10 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
    offset->stage.destroy = offset_destroy;
 
    return &offset->stage;
+
+ fail:
+   if (offset)
+      offset->stage.destroy( &offset->stage );
+
+   return NULL;
 }

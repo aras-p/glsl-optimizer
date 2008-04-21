@@ -120,8 +120,11 @@ static void cull_destroy( struct draw_stage *stage )
 struct draw_stage *draw_cull_stage( struct draw_context *draw )
 {
    struct cull_stage *cull = CALLOC_STRUCT(cull_stage);
+   if (cull == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &cull->stage, 0 );
+   if (!draw_alloc_temp_verts( &cull->stage, 0 ))
+      goto fail;
 
    cull->stage.draw = draw;
    cull->stage.next = NULL;
@@ -133,4 +136,10 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
    cull->stage.destroy = cull_destroy;
 
    return &cull->stage;
+
+ fail:
+   if (cull)
+      cull->stage.destroy( &cull->stage );
+
+   return NULL;
 }

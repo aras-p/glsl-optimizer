@@ -271,6 +271,8 @@ static void fetch_emit_destroy( struct draw_pt_middle_end *middle )
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw )
 {
    struct fetch_emit_middle_end *fetch_emit = CALLOC_STRUCT( fetch_emit_middle_end );
+   if (fetch_emit == NULL)
+      return NULL;
  
    fetch_emit->base.prepare = fetch_emit_prepare;
    fetch_emit->base.run     = fetch_emit_run;

@@ -783,13 +783,13 @@ aapoint_create_fs_state(struct pipe_context *pipe,
 {
    struct aapoint_stage *aapoint = aapoint_stage_from_pipe(pipe);
    struct aapoint_fragment_shader *aafs = CALLOC_STRUCT(aapoint_fragment_shader);
+   if (aafs == NULL) 
+      return NULL;
 
-   if (aafs) {
-      aafs->state = *fs;
+   aafs->state = *fs;
 
-      /* pass-through */
-      aafs->driver_fs = aapoint->driver_create_fs_state(aapoint->pipe, fs);
-   }
+   /* pass-through */
+   aafs->driver_fs = aapoint->driver_create_fs_state(aapoint->pipe, fs);
 
    return aafs;
 }
@@ -830,6 +830,7 @@ draw_install_aapoint_stage(struct draw_context *draw,
 {
    struct aapoint_stage *aapoint;
 
+   pipe->draw = (void *) draw;
 
    /*
     * Create / install AA point drawing / prim stage
@@ -850,8 +851,9 @@ draw_install_aapoint_stage(struct draw_context *draw,
    pipe->bind_fs_state = aapoint_bind_fs_state;
    pipe->delete_fs_state = aapoint_delete_fs_state;
 
-   pipe->draw = (void *) draw;
    draw->pipeline.aapoint = &aapoint->stage;
+
+   return TRUE;
 
  fail:
    if (aapoint)

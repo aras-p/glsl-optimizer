@@ -765,13 +765,13 @@ aaline_create_fs_state(struct pipe_context *pipe,
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = CALLOC_STRUCT(aaline_fragment_shader);
+   if (aafs == NULL)
+      return NULL;
 
-   if (aafs) {
-      aafs->state = *fs;
+   aafs->state = *fs;
 
-      /* pass-through */
-      aafs->driver_fs = aaline->driver_create_fs_state(aaline->pipe, fs);
-   }
+   /* pass-through */
+   aafs->driver_fs = aaline->driver_create_fs_state(aaline->pipe, fs);
 
    return aafs;
 }
