@@ -422,6 +422,16 @@ void cso_restore_rasterizer(struct cso_context *ctx)
 }
 
 
+void cso_set_fragment_shader_handle(struct cso_context *ctx,
+                                  void *handle )
+{
+   if (ctx->fragment_shader != handle) {
+      ctx->fragment_shader = handle;
+      ctx->pipe->bind_fs_state(ctx->pipe, handle);
+   }
+}
+
+
 void cso_set_fragment_shader(struct cso_context *ctx,
                              const struct pipe_shader_state *templ)
 {
@@ -453,10 +463,7 @@ void cso_set_fragment_shader(struct cso_context *ctx,
       handle = ((struct cso_fragment_shader *)cso_hash_iter_data(iter))->data;
    }
 
-   if (ctx->fragment_shader != handle) {
-      ctx->fragment_shader = handle;
-      ctx->pipe->bind_fs_state(ctx->pipe, handle);
-   }
+   cso_set_fragment_shader_handle( ctx, handle );
 }
 
 void cso_save_fragment_shader(struct cso_context *ctx)
@@ -473,6 +480,16 @@ void cso_restore_fragment_shader(struct cso_context *ctx)
       ctx->fragment_shader = ctx->fragment_shader_saved;
    }
    ctx->fragment_shader_saved = NULL;
+}
+
+
+void cso_set_vertex_shader_handle(struct cso_context *ctx,
+                                  void *handle )
+{
+   if (ctx->vertex_shader != handle) {
+      ctx->vertex_shader = handle;
+      ctx->pipe->bind_vs_state(ctx->pipe, handle);
+   }
 }
 
 
@@ -503,11 +520,10 @@ void cso_set_vertex_shader(struct cso_context *ctx,
       handle = ((struct cso_vertex_shader *)cso_hash_iter_data(iter))->data;
    }
 
-   if (ctx->vertex_shader != handle) {
-      ctx->vertex_shader = handle;
-      ctx->pipe->bind_vs_state(ctx->pipe, handle);
-   }
+   cso_set_vertex_shader_handle( ctx, handle );
 }
+
+
 
 void cso_save_vertex_shader(struct cso_context *ctx)
 {
