@@ -880,16 +880,18 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_samplers(ctx->cso);
    cso_save_sampler_textures(ctx->cso);
    cso_save_framebuffer(ctx->cso);
+   cso_save_fragment_shader(ctx->cso);
+   cso_save_vertex_shader(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
 
-   pipe->bind_vs_state(pipe, ctx->vs);
-   pipe->bind_fs_state(pipe, ctx->fs);
+   cso_set_fragment_shader(ctx->cso, ctx->fs);
+   cso_set_vertex_shader(ctx->cso, ctx->vs);
 #if 0
-   pipe->set_viewport_state(pipe, &ctx->viewport);
+   cso_set_viewport(ctx->cso, &ctx->viewport);
 #endif
 
    /* init framebuffer state */
@@ -930,7 +932,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
 #endif
 
-      pipe->set_sampler_textures(pipe, 1, &pt);
+      cso_set_sampler_textures(ctx->cso, 1, &pt);
 
       /* quad coords in window coords (bypassing clipping, viewport mapping) */
       set_vertex_data(ctx,
@@ -954,4 +956,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_samplers(ctx->cso);
    cso_restore_sampler_textures(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
+   cso_restore_fragment_shader(ctx->cso);
+   cso_restore_vertex_shader(ctx->cso);
 }

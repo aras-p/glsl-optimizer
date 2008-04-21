@@ -300,6 +300,8 @@ util_blit_pixels(struct blit_state *ctx,
    cso_save_samplers(ctx->cso);
    cso_save_sampler_textures(ctx->cso);
    cso_save_framebuffer(ctx->cso);
+   cso_save_fragment_shader(ctx->cso);
+   cso_save_vertex_shader(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
@@ -313,11 +315,11 @@ util_blit_pixels(struct blit_state *ctx,
    cso_single_sampler_done(ctx->cso);
 
    /* texture */
-   pipe->set_sampler_textures(pipe, 1, &tex);
+   cso_set_sampler_textures(ctx->cso, 1, &tex);
 
    /* shaders */
-   pipe->bind_fs_state(pipe, ctx->fs);
-   pipe->bind_vs_state(pipe, ctx->vs);
+   cso_set_fragment_shader(ctx->cso, ctx->fs);
+   cso_set_vertex_shader(ctx->cso, ctx->vs);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
@@ -344,6 +346,8 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_samplers(ctx->cso);
    cso_restore_sampler_textures(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
+   cso_restore_fragment_shader(ctx->cso);
+   cso_restore_vertex_shader(ctx->cso);
 
    /* free the texture */
    pipe_surface_reference(&texSurf, NULL);
