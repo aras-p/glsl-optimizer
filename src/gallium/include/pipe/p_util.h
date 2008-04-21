@@ -405,6 +405,8 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
 
 #ifdef WIN32
 
+#if !defined(_INC_MATH) || !defined(__cplusplus)
+
 static INLINE float cosf( float f ) 
 {
    return (float) cos( (double) f );
@@ -444,7 +446,7 @@ static INLINE float logf( float f )
 {
    return (float) cos( (double) f );
 }
-
+#endif  /* _INC_MATH */
 #endif
 
 
