@@ -641,6 +641,7 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
     */
    if (!bind_aaline_fragment_shader(aaline)) {
       stage->line = draw_pipe_passthrough_line;
+      stage->line(stage, header);
       return;
    }
 
