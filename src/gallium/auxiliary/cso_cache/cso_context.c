@@ -159,6 +159,11 @@ enum pipe_error cso_set_blend(struct cso_context *ctx,
       cso->context = ctx->pipe;
 
       iter = cso_insert_state(ctx->cache, hash_key, CSO_BLEND, cso);
+      if (cso_hash_iter_is_null(iter)) {
+         FREE(cso);
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
+
       handle = cso->data;
    }
    else {
@@ -212,6 +217,11 @@ enum pipe_error cso_single_sampler(struct cso_context *ctx,
          cso->context = ctx->pipe;
 
          iter = cso_insert_state(ctx->cache, hash_key, CSO_SAMPLER, cso);
+         if (cso_hash_iter_is_null(iter)) {
+            FREE(cso);
+            return PIPE_ERROR_OUT_OF_MEMORY;
+         }
+
          handle = cso->data;
       }
       else {
@@ -362,7 +372,12 @@ enum pipe_error cso_set_depth_stencil_alpha(struct cso_context *ctx,
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_depth_stencil_alpha_state;
       cso->context = ctx->pipe;
 
-      cso_insert_state(ctx->cache, hash_key, CSO_DEPTH_STENCIL_ALPHA, cso);
+      iter = cso_insert_state(ctx->cache, hash_key, CSO_DEPTH_STENCIL_ALPHA, cso);
+      if (cso_hash_iter_is_null(iter)) {
+         FREE(cso);
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
+
       handle = cso->data;
    }
    else {
@@ -413,7 +428,12 @@ enum pipe_error cso_set_rasterizer(struct cso_context *ctx,
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_rasterizer_state;
       cso->context = ctx->pipe;
 
-      cso_insert_state(ctx->cache, hash_key, CSO_RASTERIZER, cso);
+      iter = cso_insert_state(ctx->cache, hash_key, CSO_RASTERIZER, cso);
+      if (cso_hash_iter_is_null(iter)) {
+         FREE(cso);
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
+
       handle = cso->data;
    }
    else {
@@ -442,8 +462,6 @@ void cso_restore_rasterizer(struct cso_context *ctx)
    ctx->rasterizer_saved = NULL;
 }
 
-
-<<<<<<< HEAD:src/gallium/auxiliary/cso_cache/cso_context.c
 void cso_set_fragment_shader_handle(struct cso_context *ctx,
                                   void *handle )
 {
@@ -484,6 +502,11 @@ enum pipe_error cso_set_fragment_shader(struct cso_context *ctx,
       cso->context = ctx->pipe;
 
       iter = cso_insert_state(ctx->cache, hash_key, CSO_FRAGMENT_SHADER, cso);
+      if (cso_hash_iter_is_null(iter)) {
+         FREE(cso);
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
+
       handle = cso->data;
    }
    else {
@@ -547,6 +570,11 @@ enum pipe_error cso_set_vertex_shader(struct cso_context *ctx,
       cso->context = ctx->pipe;
 
       iter = cso_insert_state(ctx->cache, hash_key, CSO_VERTEX_SHADER, cso);
+      if (cso_hash_iter_is_null(iter)) {
+         FREE(cso);
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      }
+
       handle = cso->data;
    }
    else {
