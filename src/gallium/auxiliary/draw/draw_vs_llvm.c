@@ -103,15 +103,16 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
 
       /* Unswizzle all output results
        */
-      for (slot = 1; slot < base->info.num_inputs; slot++) {
-         output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-         output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-         output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-         output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-
-	 output = (float (*)[4])((char *)output + output_stride);
+      for (j = 0; j < max_vertices; j++) {
+         for (slot = 0; slot < base->info.num_outputs; slot++) {
+            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+         }
+         output = (float (*)[4])((char *)output + output_stride);
       }
-   } 
+   }
 }
 
 
