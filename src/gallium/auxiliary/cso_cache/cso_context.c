@@ -139,8 +139,8 @@ void cso_destroy_context( struct cso_context *ctx )
  * the data member of the cso to be the template itself.
  */
 
-void cso_set_blend(struct cso_context *ctx,
-                   const struct pipe_blend_state *templ)
+enum pipe_error cso_set_blend(struct cso_context *ctx,
+                              const struct pipe_blend_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_blend_state));
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
@@ -149,8 +149,9 @@ void cso_set_blend(struct cso_context *ctx,
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
-      /* FIXME: handle OOM */
       struct cso_blend *cso = MALLOC(sizeof(struct cso_blend));
+      if (!cso)
+         return PIPE_ERROR_OUT_OF_MEMORY;
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_blend_state(ctx->pipe, &cso->state);
@@ -168,6 +169,7 @@ void cso_set_blend(struct cso_context *ctx,
       ctx->blend = handle;
       ctx->pipe->bind_blend_state(ctx->pipe, handle);
    }
+   return PIPE_OK;
 }
 
 void cso_save_blend(struct cso_context *ctx)
@@ -187,12 +189,12 @@ void cso_restore_blend(struct cso_context *ctx)
 
 
 
-void cso_single_sampler(struct cso_context *ctx,
-                        unsigned idx,
-                        const struct pipe_sampler_state *templ)
+enum pipe_error cso_single_sampler(struct cso_context *ctx,
+                                   unsigned idx,
+                                   const struct pipe_sampler_state *templ)
 {
    void *handle = NULL;
-   
+
    if (templ != NULL) {
       unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_sampler_state));
       struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
@@ -200,9 +202,10 @@ void cso_single_sampler(struct cso_context *ctx,
                                                           (void*)templ);
 
       if (cso_hash_iter_is_null(iter)) {
-	 /* FIXME: handle OOM */
          struct cso_sampler *cso = MALLOC(sizeof(struct cso_sampler));
-         
+         if (!cso)
+            return PIPE_ERROR_OUT_OF_MEMORY;
+
          cso->state = *templ;
          cso->data = ctx->pipe->create_sampler_state(ctx->pipe, &cso->state);
          cso->delete_state = (cso_state_callback)ctx->pipe->delete_sampler_state;
@@ -217,11 +220,12 @@ void cso_single_sampler(struct cso_context *ctx,
    }
 
    ctx->samplers[idx] = handle;
+   return PIPE_OK;
 }
 
 void cso_single_sampler_done( struct cso_context *ctx )
 {
-   unsigned i; 
+   unsigned i;
 
    /* find highest non-null sampler */
    for (i = PIPE_MAX_SAMPLERS; i > 0; i--) {
@@ -232,8 +236,8 @@ void cso_single_sampler_done( struct cso_context *ctx )
    ctx->nr_samplers = i;
 
    if (ctx->hw.nr_samplers != ctx->nr_samplers ||
-       memcmp(ctx->hw.samplers, 
-              ctx->samplers, 
+       memcmp(ctx->hw.samplers,
+              ctx->samplers,
               ctx->nr_samplers * sizeof(void *)) != 0) 
    {
       memcpy(ctx->hw.samplers, ctx->samplers, ctx->nr_samplers * sizeof(void *));
@@ -243,22 +247,36 @@ void cso_single_sampler_done( struct cso_context *ctx )
    }
 }
 
-void cso_set_samplers( struct cso_context *ctx,
-                       unsigned nr,
-                       const struct pipe_sampler_state **templates )
+/*
+ * If the function encouters any errors it will return the
+ * last one. Done to always try to set as many samplers
+ * as possible.
+ */
+enum pipe_error cso_set_samplers( struct cso_context *ctx,
+                                  unsigned nr,
+                                  const struct pipe_sampler_state **templates )
 {
    unsigned i;
-   
+   enum pipe_error temp, error = PIPE_OK;
+
    /* TODO: fastpath
     */
 
-   for (i = 0; i < nr; i++)
-      cso_single_sampler( ctx, i, templates[i] );
+   for (i = 0; i < nr; i++) {
+      temp = cso_single_sampler( ctx, i, templates[i] );
+      if (temp != PIPE_OK)
+         error = temp;
+   }
 
-   for ( ; i < ctx->nr_samplers; i++)
-      cso_single_sampler( ctx, i, NULL );
-   
+   for ( ; i < ctx->nr_samplers; i++) {
+      temp = cso_single_sampler( ctx, i, NULL );
+      if (temp != PIPE_OK)
+         error = temp;
+   }
+
    cso_single_sampler_done( ctx );
+
+   return error;
 }
 
 void cso_save_samplers(struct cso_context *ctx)
@@ -294,7 +312,7 @@ void cso_set_sampler_textures( struct cso_context *ctx,
 void cso_save_sampler_textures( struct cso_context *ctx )
 {
    uint i;
-   
+
    ctx->nr_textures_saved = ctx->nr_textures;
    for (i = 0; i < ctx->nr_textures; i++) {
       assert(!ctx->textures_saved[i]);
@@ -323,9 +341,8 @@ void cso_restore_sampler_textures( struct cso_context *ctx )
 
 
 
-
-void cso_set_depth_stencil_alpha(struct cso_context *ctx,
-                                 const struct pipe_depth_stencil_alpha_state *templ)
+enum pipe_error cso_set_depth_stencil_alpha(struct cso_context *ctx,
+                                            const struct pipe_depth_stencil_alpha_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ,
                                          sizeof(struct pipe_depth_stencil_alpha_state));
@@ -336,8 +353,9 @@ void cso_set_depth_stencil_alpha(struct cso_context *ctx,
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
-      /* FIXME: handle OOM */
       struct cso_depth_stencil_alpha *cso = MALLOC(sizeof(struct cso_depth_stencil_alpha));
+      if (!cso)
+         return PIPE_ERROR_OUT_OF_MEMORY;
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_depth_stencil_alpha_state(ctx->pipe, &cso->state);
@@ -355,6 +373,7 @@ void cso_set_depth_stencil_alpha(struct cso_context *ctx,
       ctx->depth_stencil = handle;
       ctx->pipe->bind_depth_stencil_alpha_state(ctx->pipe, handle);
    }
+   return PIPE_OK;
 }
 
 void cso_save_depth_stencil_alpha(struct cso_context *ctx)
@@ -374,8 +393,8 @@ void cso_restore_depth_stencil_alpha(struct cso_context *ctx)
 
 
 
-void cso_set_rasterizer(struct cso_context *ctx,
-                        const struct pipe_rasterizer_state *templ)
+enum pipe_error cso_set_rasterizer(struct cso_context *ctx,
+                                   const struct pipe_rasterizer_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ,
                                          sizeof(struct pipe_rasterizer_state));
@@ -385,8 +404,9 @@ void cso_set_rasterizer(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      /* FIXME: handle OOM */
       struct cso_rasterizer *cso = MALLOC(sizeof(struct cso_rasterizer));
+      if (!cso)
+         return PIPE_ERROR_OUT_OF_MEMORY;
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_rasterizer_state(ctx->pipe, &cso->state);
@@ -404,6 +424,7 @@ void cso_set_rasterizer(struct cso_context *ctx,
       ctx->rasterizer = handle;
       ctx->pipe->bind_rasterizer_state(ctx->pipe, handle);
    }
+   return PIPE_OK;
 }
 
 void cso_save_rasterizer(struct cso_context *ctx)
@@ -422,6 +443,7 @@ void cso_restore_rasterizer(struct cso_context *ctx)
 }
 
 
+<<<<<<< HEAD:src/gallium/auxiliary/cso_cache/cso_context.c
 void cso_set_fragment_shader_handle(struct cso_context *ctx,
                                   void *handle )
 {
@@ -435,8 +457,8 @@ void cso_set_fragment_shader_handle(struct cso_context *ctx,
 /* Not really working:
  */
 #if 0
-void cso_set_fragment_shader(struct cso_context *ctx,
-                             const struct pipe_shader_state *templ)
+enum pipe_error cso_set_fragment_shader(struct cso_context *ctx,
+                                        const struct pipe_shader_state *templ)
 {
    const struct tgsi_token *tokens = templ->tokens;
    unsigned num_tokens = tgsi_num_tokens(tokens);
@@ -449,9 +471,11 @@ void cso_set_fragment_shader(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      /* FIXME: handle OOM */
       struct cso_fragment_shader *cso = MALLOC(sizeof(struct cso_fragment_shader) + tokens_size);
       struct tgsi_token *cso_tokens = (struct tgsi_token *)((char *)cso + sizeof(*cso));
+
+      if (!cso)
+         return PIPE_ERROR_OUT_OF_MEMORY;
 
       memcpy(cso_tokens, tokens, tokens_size);
       cso->state.tokens = cso_tokens;
@@ -467,6 +491,7 @@ void cso_set_fragment_shader(struct cso_context *ctx,
    }
 
    cso_set_fragment_shader_handle( ctx, handle );
+   return PIPE_OK;
 }
 #endif
 
@@ -500,8 +525,8 @@ void cso_set_vertex_shader_handle(struct cso_context *ctx,
 /* Not really working:
  */
 #if 0
-void cso_set_vertex_shader(struct cso_context *ctx,
-                           const struct pipe_shader_state *templ)
+enum pipe_error cso_set_vertex_shader(struct cso_context *ctx,
+                                      const struct pipe_shader_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ,
                                          sizeof(struct pipe_shader_state));
@@ -511,8 +536,10 @@ void cso_set_vertex_shader(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      /* FIXME: handle OOM */
       struct cso_vertex_shader *cso = MALLOC(sizeof(struct cso_vertex_shader));
+
+      if (!cso)
+         return PIPE_ERROR_OUT_OF_MEMORY;
 
       cso->state = *templ;
       cso->data = ctx->pipe->create_vs_state(ctx->pipe, &cso->state);
@@ -527,6 +554,7 @@ void cso_set_vertex_shader(struct cso_context *ctx,
    }
 
    cso_set_vertex_shader_handle( ctx, handle );
+   return PIPE_OK;
 }
 #endif
 
