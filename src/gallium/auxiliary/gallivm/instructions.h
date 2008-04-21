@@ -36,7 +36,7 @@
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>
 #include <llvm/Value.h>
-#include <llvm/Support/LLVMBuilder.h>
+#include <llvm/Support/IRBuilder.h>
 
 #include <map>
 #include <stack>
@@ -125,7 +125,7 @@ private:
    llvm::Module             *m_mod;
    llvm::Function           *m_func;
    char                      m_name[32];
-   llvm::LLVMFoldingBuilder  m_builder;
+   llvm::IRBuilder           m_builder;
    int                       m_idx;
 
    llvm::VectorType *m_floatVecType;

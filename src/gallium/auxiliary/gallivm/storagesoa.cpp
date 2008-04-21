@@ -207,11 +207,11 @@ llvm::Value * StorageSoa::elementPointer(llvm::Value *ptr, llvm::Value *index,
    indices.push_back(index);
    indices.push_back(constantInt(channel));
 
-   GetElementPtrInst *getElem = new GetElementPtrInst(ptr,
-                                                      indices.begin(),
-                                                      indices.end(),
-                                                      name("ptr"),
-                                                      m_block);
+   GetElementPtrInst *getElem = GetElementPtrInst::Create(ptr,
+                                                          indices.begin(),
+                                                          indices.end(),
+                                                          name("ptr"),
+                                                          m_block);
    return getElem;
 }
 

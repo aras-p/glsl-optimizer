@@ -38,6 +38,7 @@
 #include <llvm/Instructions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/ParameterAttributes.h>
+//#include <llvm/ParamAttrsList.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 
@@ -237,32 +238,32 @@ llvm::Value * InstructionsSoa::allocaTemp()
    std::vector<Value*> indices;
    indices.push_back(m_storage->constantInt(0));
    indices.push_back(m_storage->constantInt(0));
-   GetElementPtrInst *getElem = new GetElementPtrInst(alloca,
-                                                      indices.begin(),
-                                                      indices.end(),
-                                                      name("allocaPtr"),
-                                                      m_builder.GetInsertBlock());
+   GetElementPtrInst *getElem = GetElementPtrInst::Create(alloca,
+                                                          indices.begin(),
+                                                          indices.end(),
+                                                          name("allocaPtr"),
+                                                          m_builder.GetInsertBlock());
    return getElem;
 }
 
 std::vector<llvm::Value*> InstructionsSoa::allocaToResult(llvm::Value *allocaPtr)
 {
-   GetElementPtrInst *xElemPtr =  new GetElementPtrInst(allocaPtr,
-                                                        m_storage->constantInt(0),
-                                                        name("xPtr"),
-                                                        m_builder.GetInsertBlock());
-   GetElementPtrInst *yElemPtr =  new GetElementPtrInst(allocaPtr,
-                                                        m_storage->constantInt(1),
-                                                        name("yPtr"),
-                                                        m_builder.GetInsertBlock());
-   GetElementPtrInst *zElemPtr =  new GetElementPtrInst(allocaPtr,
-                                                        m_storage->constantInt(2),
-                                                        name("zPtr"),
-                                                        m_builder.GetInsertBlock());
-   GetElementPtrInst *wElemPtr =  new GetElementPtrInst(allocaPtr,
-                                                        m_storage->constantInt(3),
-                                                        name("wPtr"),
-                                                        m_builder.GetInsertBlock());
+   GetElementPtrInst *xElemPtr =  GetElementPtrInst::Create(allocaPtr,
+                                                            m_storage->constantInt(0),
+                                                            name("xPtr"),
+                                                            m_builder.GetInsertBlock());
+   GetElementPtrInst *yElemPtr =  GetElementPtrInst::Create(allocaPtr,
+                                                            m_storage->constantInt(1),
+                                                            name("yPtr"),
+                                                            m_builder.GetInsertBlock());
+   GetElementPtrInst *zElemPtr =  GetElementPtrInst::Create(allocaPtr,
+                                                            m_storage->constantInt(2),
+                                                            name("zPtr"),
+                                                            m_builder.GetInsertBlock());
+   GetElementPtrInst *wElemPtr =  GetElementPtrInst::Create(allocaPtr,
+                                                            m_storage->constantInt(3),
+                                                            name("wPtr"),
+                                                            m_builder.GetInsertBlock());
 
    std::vector<llvm::Value*> res(4);
    res[0] = new LoadInst(xElemPtr, name("xRes"), false, m_builder.GetInsertBlock());
@@ -388,10 +389,10 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
    llvm::Function *func = 0;
    if (originalFunc->isDeclaration()) {
       std::cout << "function decleration" <<std::endl;
-      func = new Function(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
-                          originalFunc->getName(), currentModule());
+      func = Function::Create(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
+                              originalFunc->getName(), currentModule());
       func->setCallingConv(CallingConv::C);
-      const ParamAttrsList *pal = 0;
+      const PAListPtr pal;
       func->setParamAttrs(pal);
       currentModule()->dump();
    } else {
