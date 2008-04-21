@@ -73,16 +73,17 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
       (struct draw_llvm_vertex_shader *)base;
 
    struct tgsi_exec_machine *machine = shader->machine;
-   unsigned int j;
+   unsigned int i, j;
+   unsigned slot;
 
 
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
 
-      /* Swizzle inputs.  
+      /* Swizzle inputs.
        */
       for (j = 0; j < max_vertices; j++) {
-	 for (slot = 0; slot < draw->num_vs_inputs; slot++) {
+	 for (slot = 0; slot < base->info.num_inputs; slot++) {
 	    machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
 	    machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
 	    machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
@@ -102,7 +103,7 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
 
       /* Unswizzle all output results
        */
-      for (slot = 1; slot < draw->num_vs_outputs; slot++) {
+      for (slot = 1; slot < base->info.num_inputs; slot++) {
          output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
          output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
          output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
@@ -145,7 +146,7 @@ draw_create_vs_llvm(struct draw_context *draw,
    /* we make a private copy of the tokens */
    vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
 
-   tgsi_scan_shader(shader->tokens, &vs->base.info);
+   tgsi_scan_shader(vs->base.state.tokens, &vs->base.info);
 
    vs->base.prepare = vs_llvm_prepare;
    vs->base.run_linear = vs_llvm_run_linear;
@@ -156,7 +157,7 @@ draw_create_vs_llvm(struct draw_context *draw,
       struct gallivm_ir *ir = gallivm_ir_new(GALLIVM_VS);
       gallivm_ir_set_layout(ir, GALLIVM_SOA);
       gallivm_ir_set_components(ir, 4);
-      gallivm_ir_fill_from_tgsi(ir, vs->base.state->tokens);
+      gallivm_ir_fill_from_tgsi(ir, vs->base.state.tokens);
       vs->llvm_prog = gallivm_ir_compile(ir);
       gallivm_ir_delete(ir);
    }

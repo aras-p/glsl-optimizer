@@ -30,7 +30,7 @@
   * Authors:
   *   Zack Rusin zack@tungstengraphics.com
   */
-typedef __attribute__(( ocu_vector_type(4) )) float float4;
+typedef __attribute__(( ext_vector_type(4) )) float float4;
 
 extern float powf(float a, float b);
 

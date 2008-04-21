@@ -31,7 +31,7 @@
   * Authors:
   *   Zack Rusin zack@tungstengraphics.com
   */
-typedef __attribute__(( ocu_vector_type(4) )) float float4;
+typedef __attribute__(( ext_vector_type(4) )) float float4;
 
 void dp3(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,

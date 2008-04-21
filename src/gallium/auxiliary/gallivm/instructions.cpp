@@ -35,6 +35,8 @@
 
 #include "storage.h"
 
+#include "pipe/p_util.h"
+
 #include <llvm/CallingConv.h>
 #include <llvm/Constants.h>
 #include <llvm/DerivedTypes.h>
@@ -42,7 +44,8 @@
 #include <llvm/InstrTypes.h>
 #include <llvm/Instructions.h>
 #include <llvm/ParameterAttributes.h>
-#include <llvm/ParamAttrsList.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 
 #include <sstream>
 #include <fstream>
@@ -53,7 +56,6 @@ using namespace llvm;
 #include "gallivm_builtins.cpp"
 
 #if 0
-
 llvm::Value *arrayFromChannels(std::vector<llvm::Value*> &vals)
 {
    VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
@@ -84,7 +86,10 @@ Instructions::Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicB
    m_llvmLit  = 0;
    m_fmtPtr = 0;
 
-   createGallivmBuiltins(m_mod);
+   MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
+      (const char*)&llvm_builtins_data[0],
+      (const char*)&llvm_builtins_data[Elements(llvm_builtins_data)-1]);
+   m_mod = ParseBitcodeFile(buffer);
 }
 
 llvm::Value * Instructions::add(llvm::Value *in1, llvm::Value *in2)

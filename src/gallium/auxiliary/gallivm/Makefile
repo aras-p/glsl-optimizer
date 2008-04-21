@@ -65,10 +65,14 @@ depend: $(C_SOURCES) $(CPP_SOURCES) $(ASM_SOURCES) $(INC_SOURCES)
 
 
 gallivm_builtins.cpp: llvm_builtins.c
-	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts|llvm2cpp -gen-contents -o=$@ -f -for=shader -funcname=createGallivmBuiltins
+	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts > temp.bin
+	(echo "static const unsigned char llvm_builtins_data[] = {"; od -txC temp.bin | sed -e "s/^[0-9]*//" -e s"/ \([0-9a-f][0-9a-f]\)/0x\1,/g" -e"\$$d" | sed -e"\$$s/,$$/};/") >$@
+	rm temp.bin
 
 gallivmsoabuiltins.cpp: soabuiltins.c
-	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts|llvm2cpp -gen-module -o=$@ -f -for=shader -funcname=createSoaBuiltins
+	clang --emit-llvm < $< |llvm-as|opt -std-compile-opts > temp.bin
+	(echo "static const unsigned char soabuiltins_data[] = {"; od -txC temp.bin | sed -e "s/^[0-9]*//" -e s"/ \([0-9a-f][0-9a-f]\)/0x\1,/g" -e"\$$d" | sed -e"\$$s/,$$/};/") >$@
+	rm temp.bin
 
 # Emacs tags
 tags:
