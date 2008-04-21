@@ -99,21 +99,6 @@ static void twoside_tri( struct draw_stage *stage,
 }
 
 
-static void twoside_line( struct draw_stage *stage,
-		       struct prim_header *header )
-{
-   /* pass-through */
-   stage->next->line( stage->next, header );
-}
-
-
-static void twoside_point( struct draw_stage *stage,
-			struct prim_header *header )
-{
-   /* pass-through */
-   stage->next->point( stage->next, header );
-}
-
 
 static void twoside_first_tri( struct draw_stage *stage, 
 			       struct prim_header *header )
@@ -192,8 +177,8 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
 
    twoside->stage.draw = draw;
    twoside->stage.next = NULL;
-   twoside->stage.point = twoside_point;
-   twoside->stage.line = twoside_line;
+   twoside->stage.point = draw_pipe_passthrough_point;
+   twoside->stage.line = draw_pipe_passthrough_line;
    twoside->stage.tri = twoside_first_tri;
    twoside->stage.flush = twoside_flush;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;

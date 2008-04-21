@@ -473,25 +473,6 @@ pstip_stage( struct draw_stage *stage )
 }
 
 
-static void
-passthrough_point(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->point(stage->next, header);
-}
-
-
-static void
-passthrough_line(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->line(stage->next, header);
-}
-
-
-static void
-passthrough_tri(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 
@@ -523,7 +504,7 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
 
    /* now really draw first line */
-   stage->tri = passthrough_tri;
+   stage->tri = draw_pipe_passthrough_tri;
    stage->tri(stage, header);
 }
 
@@ -579,8 +560,8 @@ draw_pstip_stage(struct draw_context *draw)
 
    pstip->stage.draw = draw;
    pstip->stage.next = NULL;
-   pstip->stage.point = passthrough_point;
-   pstip->stage.line = passthrough_line;
+   pstip->stage.point = draw_pipe_passthrough_point;
+   pstip->stage.line = draw_pipe_passthrough_line;
    pstip->stage.tri = pstip_first_tri;
    pstip->stage.flush = pstip_flush;
    pstip->stage.reset_stipple_counter = pstip_reset_stipple_counter;

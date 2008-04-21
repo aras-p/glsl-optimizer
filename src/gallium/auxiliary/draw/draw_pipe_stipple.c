@@ -195,18 +195,6 @@ stipple_flush(struct draw_stage *stage, unsigned flags)
 }
 
 
-static void
-passthrough_point(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->point( stage->next, header );
-}
-
-
-static void
-passthrough_tri(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 static void 
@@ -228,9 +216,9 @@ struct draw_stage *draw_stipple_stage( struct draw_context *draw )
 
    stipple->stage.draw = draw;
    stipple->stage.next = NULL;
-   stipple->stage.point = passthrough_point;
+   stipple->stage.point = draw_pipe_passthrough_point;
    stipple->stage.line = stipple_first_line;
-   stipple->stage.tri = passthrough_tri;
+   stipple->stage.tri = draw_pipe_passthrough_tri;
    stipple->stage.reset_stipple_counter = reset_stipple_counter;
    stipple->stage.flush = stipple_flush;
    stipple->stage.destroy = stipple_destroy;

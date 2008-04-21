@@ -16,6 +16,7 @@ C_SOURCES = \
 	draw_pipe_stipple.c \
 	draw_pipe_twoside.c \
 	draw_pipe_unfilled.c \
+	draw_pipe_util.c \
 	draw_pipe_validate.c \
 	draw_pipe_vbuf.c \
 	draw_pipe_wide_line.c \

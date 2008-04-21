@@ -152,13 +152,6 @@ static void flatshade_line_1( struct draw_stage *stage,
 }
 
 
-/* Flatshade point -- passthrough.
- */
-static void flatshade_point( struct draw_stage *stage,
-                             struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
 
 
 static void flatshade_init_state( struct draw_stage *stage )
@@ -236,7 +229,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 
    flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;
-   flatshade->stage.point = flatshade_point;
+   flatshade->stage.point = draw_pipe_passthrough_point;
    flatshade->stage.line = flatshade_first_line;
    flatshade->stage.tri = flatshade_first_tri;
    flatshade->stage.flush = flatshade_flush;

@@ -129,18 +129,6 @@ static void offset_first_tri( struct draw_stage *stage,
 }
 
 
-static void offset_line( struct draw_stage *stage,
-			 struct prim_header *header )
-{
-   stage->next->line( stage->next, header );
-}
-
-
-static void offset_point( struct draw_stage *stage,
-			  struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
 
 
 static void offset_flush( struct draw_stage *stage,
@@ -175,8 +163,8 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
 
    offset->stage.draw = draw;
    offset->stage.next = NULL;
-   offset->stage.point = offset_point;
-   offset->stage.line = offset_line;
+   offset->stage.point = draw_pipe_passthrough_point;
+   offset->stage.line = draw_pipe_passthrough_line;
    offset->stage.tri = offset_first_tri;
    offset->stage.flush = offset_flush;
    offset->stage.reset_stipple_counter = offset_reset_stipple_counter;

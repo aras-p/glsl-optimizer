@@ -61,23 +61,6 @@ widepoint_stage( struct draw_stage *stage )
 }
 
 
-static void passthrough_point( struct draw_stage *stage,
-                             struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
-
-static void widepoint_line( struct draw_stage *stage,
-                            struct prim_header *header )
-{
-   stage->next->line(stage->next, header);
-}
-
-static void widepoint_tri( struct draw_stage *stage,
-                           struct prim_header *header )
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 /**
@@ -209,7 +192,7 @@ static void widepoint_first_point( struct draw_stage *stage,
       stage->point = widepoint_point;
    }
    else {
-      stage->point = passthrough_point;
+      stage->point = draw_pipe_passthrough_point;
    }
 
    if (draw->rasterizer->point_sprite) {
@@ -272,8 +255,8 @@ struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
    wide->stage.draw = draw;
    wide->stage.next = NULL;
    wide->stage.point = widepoint_first_point;
-   wide->stage.line = widepoint_line;
-   wide->stage.tri = widepoint_tri;
+   wide->stage.line = draw_pipe_passthrough_line;
+   wide->stage.tri = draw_pipe_passthrough_tri;
    wide->stage.flush = widepoint_flush;
    wide->stage.reset_stipple_counter = widepoint_reset_stipple_counter;
    wide->stage.destroy = widepoint_destroy;

@@ -334,7 +334,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
  * Generate the frag shader we'll use for drawing AA lines.
  * This will be the user's shader plus some texture/modulate instructions.
  */
-static void
+static boolean
 generate_aaline_fs(struct aaline_stage *aaline)
 {
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
@@ -346,6 +346,8 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline_fs = *orig_fs; /* copy to init */
    aaline_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   if (aaline_fs.tokens == NULL)
+      return FALSE;
 
    memset(&transform, 0, sizeof(transform));
    transform.colorOutput = -1;
@@ -372,6 +374,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
       = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
 
    aaline->fs->generic_attrib = transform.maxGeneric + 1;
+   return TRUE;
 }
 
 
@@ -469,13 +472,15 @@ aaline_create_sampler(struct aaline_stage *aaline)
  * When we're about to draw our first AA line in a batch, this function is
  * called to tell the driver to bind our modified fragment shader.
  */
-static void
+static boolean
 bind_aaline_fragment_shader(struct aaline_stage *aaline)
 {
-   if (!aaline->fs->aaline_fs) {
-      generate_aaline_fs(aaline);
-   }
+   if (!aaline->fs->aaline_fs && 
+       !generate_aaline_fs(aaline))
+      return FALSE;
+
    aaline->driver_bind_fs_state(aaline->pipe, aaline->fs->aaline_fs);
+   return TRUE;
 }
 
 
@@ -484,20 +489,6 @@ static INLINE struct aaline_stage *
 aaline_stage( struct draw_stage *stage )
 {
    return (struct aaline_stage *) stage;
-}
-
-
-static void
-passthrough_point(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->point(stage->next, header);
-}
-
-
-static void
-passthrough_tri(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->tri(stage->next, header);
 }
 
 
@@ -638,7 +629,10 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    /*
     * Bind (generate) our fragprog, sampler and texture
     */
-   bind_aaline_fragment_shader(aaline);
+   if (!bind_aaline_fragment_shader(aaline)) {
+      stage->line = draw_pipe_passthrough_line;
+      return;
+   }
 
    /* update vertex attrib info */
    aaline->tex_slot = draw->num_vs_outputs;
@@ -721,9 +715,9 @@ draw_aaline_stage(struct draw_context *draw)
 
    aaline->stage.draw = draw;
    aaline->stage.next = NULL;
-   aaline->stage.point = passthrough_point;
+   aaline->stage.point = draw_pipe_passthrough_point;
    aaline->stage.line = aaline_first_line;
-   aaline->stage.tri = passthrough_tri;
+   aaline->stage.tri = draw_pipe_passthrough_tri;
    aaline->stage.flush = aaline_flush;
    aaline->stage.reset_stipple_counter = aaline_reset_stipple_counter;
    aaline->stage.destroy = aaline_destroy;

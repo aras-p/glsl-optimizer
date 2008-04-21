@@ -108,40 +108,6 @@ void draw_pipeline_destroy( struct draw_context *draw )
 
 
 
-/* This is only used for temporary verts.
- */
-#define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
-
-
-/**
- * Allocate space for temporary post-transform vertices, such as for clipping.
- */
-void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )
-{
-   assert(!stage->tmp);
-
-   stage->nr_tmps = nr;
-
-   if (nr) {
-      ubyte *store = (ubyte *) MALLOC( MAX_VERTEX_SIZE * nr );
-      unsigned i;
-
-      stage->tmp = (struct vertex_header **) MALLOC( sizeof(struct vertex_header *) * nr );
-      
-      for (i = 0; i < nr; i++)
-	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
-   }
-}
-
-
-void draw_free_temp_verts( struct draw_stage *stage )
-{
-   if (stage->tmp) {
-      FREE( stage->tmp[0] );
-      FREE( stage->tmp );
-      stage->tmp = NULL;
-   }
-}
 
 
 
@@ -195,35 +161,6 @@ static void do_triangle( struct draw_context *draw,
 }
 
 
-/* Reset vertex ids.  This is basically a type of flush.
- *
- * Called only from draw_pipe_vbuf.c
- */
-void draw_reset_vertex_ids(struct draw_context *draw)
-{
-   struct draw_stage *stage = draw->pipeline.first;
-   
-   while (stage) {
-      unsigned i;
-
-      for (i = 0; i < stage->nr_tmps; i++)
-	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
-
-      stage = stage->next;
-   }
-
-   if (draw->pipeline.verts)
-   {
-      unsigned i;
-      char *verts = draw->pipeline.verts;
-      unsigned stride = draw->pipeline.vertex_stride;
-
-      for (i = 0; i < draw->pipeline.vertex_count; i++) {
-         ((struct vertex_header *)verts)->vertex_id = UNDEFINED_VERTEX_ID;
-         verts += stride;
-      }
-   }
-}
 
 
 /* Code to run the pipeline on a fairly arbitary collection of vertices.

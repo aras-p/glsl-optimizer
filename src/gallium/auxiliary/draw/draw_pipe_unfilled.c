@@ -148,19 +148,6 @@ static void unfilled_first_tri( struct draw_stage *stage,
 }
 
 
-static void unfilled_line( struct draw_stage *stage,
-                           struct prim_header *header )
-{
-   stage->next->line( stage->next, header );
-}
-
-
-static void unfilled_point( struct draw_stage *stage,
-                            struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
-
 
 static void unfilled_flush( struct draw_stage *stage,
 			    unsigned flags )
@@ -196,8 +183,8 @@ struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
    unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;
    unfilled->stage.tmp = NULL;
-   unfilled->stage.point = unfilled_point;
-   unfilled->stage.line = unfilled_line;
+   unfilled->stage.point = draw_pipe_passthrough_point;
+   unfilled->stage.line = draw_pipe_passthrough_line;
    unfilled->stage.tri = unfilled_first_tri;
    unfilled->stage.flush = unfilled_flush;
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;

@@ -546,18 +546,6 @@ aapoint_stage( struct draw_stage *stage )
 }
 
 
-static void
-passthrough_line(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->line(stage->next, header);
-}
-
-
-static void
-passthrough_tri(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 /**
@@ -749,8 +737,8 @@ draw_aapoint_stage(struct draw_context *draw)
    aapoint->stage.draw = draw;
    aapoint->stage.next = NULL;
    aapoint->stage.point = aapoint_first_point;
-   aapoint->stage.line = passthrough_line;
-   aapoint->stage.tri = passthrough_tri;
+   aapoint->stage.line = draw_pipe_passthrough_line;
+   aapoint->stage.tri = draw_pipe_passthrough_tri;
    aapoint->stage.flush = aapoint_flush;
    aapoint->stage.reset_stipple_counter = aapoint_reset_stipple_counter;
    aapoint->stage.destroy = aapoint_destroy;
