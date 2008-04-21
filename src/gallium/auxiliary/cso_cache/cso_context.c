@@ -266,8 +266,9 @@ void cso_save_samplers(struct cso_context *ctx)
 
 void cso_restore_samplers(struct cso_context *ctx)
 {
-   cso_set_samplers(ctx, ctx->nr_samplers_saved,
-                    (const struct pipe_sampler_state **) ctx->samplers_saved);
+   ctx->nr_samplers = ctx->nr_samplers_saved;
+   memcpy(ctx->samplers, ctx->samplers_saved, sizeof(ctx->samplers));
+   cso_single_sampler_done( ctx );
 }
 
 
@@ -313,6 +314,8 @@ void cso_restore_sampler_textures( struct cso_context *ctx )
       pipe_texture_reference(&ctx->textures[i], NULL);
 
    ctx->pipe->set_sampler_textures(ctx->pipe, ctx->nr_textures, ctx->textures);
+
+   ctx->nr_textures_saved = 0;
 }
 
 
