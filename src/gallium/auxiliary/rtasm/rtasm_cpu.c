@@ -32,7 +32,16 @@
 
 static boolean rtasm_sse_enabled(void)
 {
-   return !debug_get_bool_option("GALLIUM_NOSSE", FALSE);
+   static boolean firsttime = 1;
+   static boolean enabled;
+   
+   /* This gets called quite often at the moment:
+    */
+   if (firsttime) {
+      enabled =  !debug_get_bool_option("GALLIUM_NOSSE", FALSE);
+      firsttime = FALSE;
+   }
+   return enabled;
 }
 
 int rtasm_cpu_has_sse(void)
