@@ -597,7 +597,12 @@ struct translate *translate_sse2_create( const struct translate_key *key )
       goto fail;
 
    p->gen_run = (run_func)x86_get_func(&p->linear_func);
+   if (p->gen_run == NULL)
+      goto fail;
+
    p->gen_run_elts = (run_elts_func)x86_get_func(&p->elt_func);
+   if (p->gen_run_elts == NULL)
+      goto fail;
 
    return &p->translate;
 
