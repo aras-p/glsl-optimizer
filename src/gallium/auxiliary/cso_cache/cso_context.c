@@ -303,9 +303,9 @@ void cso_restore_samplers(struct cso_context *ctx)
 }
 
 
-void cso_set_sampler_textures( struct cso_context *ctx,
-                               uint count,
-                               struct pipe_texture **textures )
+enum pipe_error cso_set_sampler_textures( struct cso_context *ctx,
+                                          uint count,
+                                          struct pipe_texture **textures )
 {
    uint i;
 
@@ -317,6 +317,8 @@ void cso_set_sampler_textures( struct cso_context *ctx,
       pipe_texture_reference(&ctx->textures[i], NULL);
 
    ctx->pipe->set_sampler_textures(ctx->pipe, count, textures);
+
+   return PIPE_OK;
 }
 
 void cso_save_sampler_textures( struct cso_context *ctx )
@@ -462,13 +464,14 @@ void cso_restore_rasterizer(struct cso_context *ctx)
    ctx->rasterizer_saved = NULL;
 }
 
-void cso_set_fragment_shader_handle(struct cso_context *ctx,
-                                  void *handle )
+enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
+                                               void *handle )
 {
    if (ctx->fragment_shader != handle) {
       ctx->fragment_shader = handle;
       ctx->pipe->bind_fs_state(ctx->pipe, handle);
    }
+   return PIPE_OK;
 }
 
 
@@ -513,8 +516,7 @@ enum pipe_error cso_set_fragment_shader(struct cso_context *ctx,
       handle = ((struct cso_fragment_shader *)cso_hash_iter_data(iter))->data;
    }
 
-   cso_set_fragment_shader_handle( ctx, handle );
-   return PIPE_OK;
+   return cso_set_fragment_shader_handle( ctx, handle );
 }
 #endif
 
@@ -535,13 +537,14 @@ void cso_restore_fragment_shader(struct cso_context *ctx)
 }
 
 
-void cso_set_vertex_shader_handle(struct cso_context *ctx,
-                                  void *handle )
+enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
+                                             void *handle )
 {
    if (ctx->vertex_shader != handle) {
       ctx->vertex_shader = handle;
       ctx->pipe->bind_vs_state(ctx->pipe, handle);
    }
+   return PIPE_OK;
 }
 
 
@@ -581,8 +584,7 @@ enum pipe_error cso_set_vertex_shader(struct cso_context *ctx,
       handle = ((struct cso_vertex_shader *)cso_hash_iter_data(iter))->data;
    }
 
-   cso_set_vertex_shader_handle( ctx, handle );
-   return PIPE_OK;
+   return cso_set_vertex_shader_handle( ctx, handle );
 }
 #endif
 
@@ -606,14 +608,15 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 
 
 
-void cso_set_framebuffer(struct cso_context *ctx,
-                         const struct pipe_framebuffer_state *fb)
+enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
+                                    const struct pipe_framebuffer_state *fb)
 {
    /* XXX this memcmp() fails to detect buffer size changes */
    if (1/*memcmp(&ctx->fb, fb, sizeof(*fb))*/) {
       ctx->fb = *fb;
       ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
    }
+   return PIPE_OK;
 }
 
 void cso_save_framebuffer(struct cso_context *ctx)
@@ -630,13 +633,14 @@ void cso_restore_framebuffer(struct cso_context *ctx)
 }
 
 
-void cso_set_viewport(struct cso_context *ctx,
-                      const struct pipe_viewport_state *vp)
+enum pipe_error cso_set_viewport(struct cso_context *ctx,
+                                 const struct pipe_viewport_state *vp)
 {
    if (memcmp(&ctx->vp, vp, sizeof(*vp))) {
       ctx->vp = *vp;
       ctx->pipe->set_viewport_state(ctx->pipe, vp);
    }
+   return PIPE_OK;
 }
 
 void cso_save_viewport(struct cso_context *ctx)
@@ -656,11 +660,12 @@ void cso_restore_viewport(struct cso_context *ctx)
 
 
 
-void cso_set_blend_color(struct cso_context *ctx,
-                         const struct pipe_blend_color *bc)
+enum pipe_error cso_set_blend_color(struct cso_context *ctx,
+                                    const struct pipe_blend_color *bc)
 {
    if (memcmp(&ctx->blend_color, bc, sizeof(ctx->blend_color))) {
       ctx->blend_color = *bc;
       ctx->pipe->set_blend_color(ctx->pipe, bc);
    }
+   return PIPE_OK;
 }
