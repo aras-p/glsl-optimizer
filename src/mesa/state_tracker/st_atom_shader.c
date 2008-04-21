@@ -273,8 +273,8 @@ update_linkage( struct st_context *st )
    st->vp = stvp;
    st->fp = stfp;
 
-   cso_set_vertex_shader(st->cso_context, stvp->driver_shader);
-   cso_set_fragment_shader(st->cso_context, stfp->driver_shader);
+   cso_set_vertex_shader_handle(st->cso_context, stvp->driver_shader);
+   cso_set_fragment_shader_handle(st->cso_context, stfp->driver_shader);
 
    st->vertex_result_to_slot = xvp->output_to_slot;
 }

@@ -888,8 +888,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
 
-   cso_set_fragment_shader(ctx->cso, ctx->fs);
-   cso_set_vertex_shader(ctx->cso, ctx->vs);
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
+   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 #if 0
    cso_set_viewport(ctx->cso, &ctx->viewport);
 #endif

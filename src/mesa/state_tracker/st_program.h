@@ -61,7 +61,7 @@ struct st_fragment_program
    GLuint input_map[PIPE_MAX_SHADER_INPUTS];
 
    struct pipe_shader_state state;
-   struct pipe_shader_state *driver_shader;
+   void *driver_shader;
 
    GLuint param_state;
 
@@ -88,7 +88,7 @@ struct st_vertex_program
    GLuint num_inputs;
 
    struct pipe_shader_state state;
-   struct pipe_shader_state *driver_shader;
+   void *driver_shader;
 
    /** For using our private draw module (glRasterPos) */
    struct draw_vertex_shader *draw_shader;

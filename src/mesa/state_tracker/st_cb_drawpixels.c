@@ -545,10 +545,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   cso_set_fragment_shader(cso, stfp->driver_shader);
+   cso_set_fragment_shader_handle(cso, stfp->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
-   cso_set_vertex_shader(cso, stvp->driver_shader);
+   cso_set_vertex_shader_handle(cso, stvp->driver_shader);
 
 
    /* texture sampling state: */

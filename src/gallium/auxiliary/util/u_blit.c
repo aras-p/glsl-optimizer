@@ -318,8 +318,8 @@ util_blit_pixels(struct blit_state *ctx,
    cso_set_sampler_textures(ctx->cso, 1, &tex);
 
    /* shaders */
-   cso_set_fragment_shader(ctx->cso, ctx->fs);
-   cso_set_vertex_shader(ctx->cso, ctx->vs);
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
+   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));

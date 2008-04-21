@@ -274,8 +274,8 @@ clear_with_quad(GLcontext *ctx,
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
    cso_set_viewport(st->cso_context, &st->clear.viewport);
 
-   cso_set_fragment_shader(st->cso_context, st->clear.fs);
-   cso_set_vertex_shader(st->cso_context, st->clear.vs);
+   cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
+   cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
