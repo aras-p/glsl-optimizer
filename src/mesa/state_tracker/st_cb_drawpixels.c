@@ -532,6 +532,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_viewport(cso);
    cso_save_samplers(cso);
    cso_save_sampler_textures(cso);
+   cso_save_fragment_shader(cso);
+   cso_save_vertex_shader(cso);
 
    /* rasterizer state: just scissor */
    {
@@ -543,10 +545,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   pipe->bind_fs_state(pipe, stfp->driver_shader);
+   cso_set_fragment_shader(cso, stfp->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
-   pipe->bind_vs_state(pipe, stvp->driver_shader);
+   cso_set_vertex_shader(cso, stvp->driver_shader);
 
 
    /* texture sampling state: */
@@ -615,10 +617,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_viewport(cso);
    cso_restore_samplers(cso);
    cso_restore_sampler_textures(cso);
-
-   /* shaders don't go through cso yet */
-   pipe->bind_fs_state(pipe, st->fp->driver_shader);
-   pipe->bind_vs_state(pipe, st->vp->driver_shader);
+   cso_restore_fragment_shader(cso);
+   cso_restore_vertex_shader(cso);
 }
 
 

@@ -438,16 +438,18 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_samplers(cso);
    cso_save_sampler_textures(cso);
    cso_save_viewport(cso);
+   cso_save_fragment_shader(cso);
+   cso_save_vertex_shader(cso);
 
    /* rasterizer state: just scissor */
    st->bitmap.rasterizer.scissor = ctx->Scissor.Enabled;
    cso_set_rasterizer(cso, &st->bitmap.rasterizer);
 
    /* fragment shader state: TEX lookup program */
-   pipe->bind_fs_state(pipe, stfp->driver_shader);
+   cso_set_fragment_shader(cso, stfp->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
-   pipe->bind_vs_state(pipe, st->bitmap.vs);
+   cso_set_vertex_shader(cso, st->bitmap.vs);
 
    /* sampler / texture state */
    cso_single_sampler(cso, 0, &st->bitmap.sampler);
@@ -488,9 +490,8 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_samplers(cso);
    cso_restore_sampler_textures(cso);
    cso_restore_viewport(cso);
-   /* shaders don't go through cso yet */
-   pipe->bind_fs_state(pipe, st->fp->driver_shader);
-   pipe->bind_vs_state(pipe, st->vp->driver_shader);
+   cso_save_fragment_shader(cso);
+   cso_save_vertex_shader(cso);
 }
 
 
