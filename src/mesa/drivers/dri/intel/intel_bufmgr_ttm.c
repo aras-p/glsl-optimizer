@@ -889,7 +889,7 @@ dri_ttm_bo_process_reloc(dri_bo *bo)
 	   struct intel_validate_entry *entry =
 	      &bufmgr_ttm->validate_array[target_buf_ttm->validate_index];
 
-	   entry->bo_arg.d.req.bo_req.flags &= ~DRM_BO_HINT_PRESUMED_OFFSET;
+	   entry->bo_arg.d.req.bo_req.hint &= ~DRM_BO_HINT_PRESUMED_OFFSET;
 	}
     }
 }
