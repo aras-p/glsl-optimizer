@@ -338,7 +338,6 @@ static boolean
 generate_aaline_fs(struct aaline_stage *aaline)
 {
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
-   //struct draw_context *draw = aaline->stage.draw;
    struct pipe_shader_state aaline_fs;
    struct aa_transform_context transform;
 
@@ -372,6 +371,8 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline->fs->aaline_fs
       = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
+   if (aaline->fs->aaline_fs == NULL)
+      return FALSE;
 
    aaline->fs->generic_attrib = transform.maxGeneric + 1;
    return TRUE;
@@ -381,7 +382,7 @@ generate_aaline_fs(struct aaline_stage *aaline)
 /**
  * Create the texture map we'll use for antialiasing the lines.
  */
-static void
+static boolean
 aaline_create_texture(struct aaline_stage *aaline)
 {
    struct pipe_context *pipe = aaline->pipe;
@@ -399,6 +400,8 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.cpp = 1;
 
    aaline->texture = screen->texture_create(screen, &texTemp);
+   if (!aaline->texture)
+      return FALSE;
 
    /* Fill in mipmap images.
     * Basically each level is solid opaque, except for the outermost
@@ -414,6 +417,8 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       surface = screen->get_tex_surface(screen, aaline->texture, 0, level, 0);
       data = pipe_surface_map(surface);
+      if (data == NULL)
+         return FALSE;
 
       for (i = 0; i < size; i++) {
          for (j = 0; j < size; j++) {
@@ -439,6 +444,7 @@ aaline_create_texture(struct aaline_stage *aaline)
       pipe_surface_reference(&surface, NULL);
       pipe->texture_update(pipe, aaline->texture, 0, (1 << level));
    }
+   return TRUE;
 }
 
 
@@ -447,7 +453,7 @@ aaline_create_texture(struct aaline_stage *aaline)
  * By using a mipmapped texture, we don't have to generate a different
  * texture image for each line size.
  */
-static void
+static boolean
 aaline_create_sampler(struct aaline_stage *aaline)
 {
    struct pipe_sampler_state sampler;
@@ -465,6 +471,10 @@ aaline_create_sampler(struct aaline_stage *aaline)
    sampler.max_lod = MAX_TEXTURE_LEVEL;
 
    aaline->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
+   if (aaline->sampler_cso == NULL)
+      return FALSE;
+
+   return TRUE;
 }
 
 
@@ -696,9 +706,11 @@ aaline_destroy(struct draw_stage *stage)
 {
    struct aaline_stage *aaline = aaline_stage(stage);
 
-   aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
+   if (aaline->sampler_cso)
+      aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
 
-   pipe_texture_release(&aaline->texture);
+   if (aaline->texture)
+      pipe_texture_release(&aaline->texture);
 
    draw_free_temp_verts( stage );
 
@@ -710,8 +722,11 @@ static struct aaline_stage *
 draw_aaline_stage(struct draw_context *draw)
 {
    struct aaline_stage *aaline = CALLOC_STRUCT(aaline_stage);
+   if (aaline == NULL)
+      return NULL;
 
-   draw_alloc_temp_verts( &aaline->stage, 8 );
+   if (draw_alloc_temp_verts( &aaline->stage, 8 ))
+      goto fail;
 
    aaline->stage.draw = draw;
    aaline->stage.next = NULL;
@@ -723,6 +738,12 @@ draw_aaline_stage(struct draw_context *draw)
    aaline->stage.destroy = aaline_destroy;
 
    return aaline;
+
+ fail:
+   if (aaline)
+      aaline_destroy(&aaline->stage);
+
+   return NULL;
 }
 
 
@@ -816,7 +837,7 @@ aaline_set_sampler_textures(struct pipe_context *pipe,
  * into the draw module's pipeline.  This will not be used if the
  * hardware has native support for AA lines.
  */
-void
+boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 {
    struct aaline_stage *aaline;
@@ -827,14 +848,17 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
     * Create / install AA line drawing / prim stage
     */
    aaline = draw_aaline_stage( draw );
-   assert(aaline);
-   draw->pipeline.aaline = &aaline->stage;
+   if (!aaline)
+      goto fail;
 
    aaline->pipe = pipe;
 
    /* create special texture, sampler state */
-   aaline_create_texture(aaline);
-   aaline_create_sampler(aaline);
+   if (!aaline_create_texture(aaline))
+      goto fail;
+
+   if (!aaline_create_sampler(aaline))
+      goto fail;
 
    /* save original driver functions */
    aaline->driver_create_fs_state = pipe->create_fs_state;
@@ -851,4 +875,16 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 
    pipe->bind_sampler_states = aaline_bind_sampler_states;
    pipe->set_sampler_textures = aaline_set_sampler_textures;
+   
+   /* Install once everything is known to be OK:
+    */
+   draw->pipeline.aaline = &aaline->stage;
+
+   return TRUE;
+
+ fail:
+   if (aaline)
+      aaline->stage.destroy( &aaline->stage );
+   
+   return FALSE;
 }

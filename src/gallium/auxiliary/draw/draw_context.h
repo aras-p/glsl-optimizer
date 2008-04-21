@@ -73,7 +73,7 @@ void draw_enable_line_stipple(struct draw_context *draw, boolean enable);
 void draw_enable_point_sprites(struct draw_context *draw, boolean enable);
 
 
-void
+boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
 
 void
