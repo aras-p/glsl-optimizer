@@ -26,14 +26,20 @@
  **************************************************************************/
 
 
+#include "pipe/p_debug.h"
 #include "rtasm_cpu.h"
 
+
+static boolean rtasm_sse_enabled(void)
+{
+   return !debug_get_bool_option("GALLIUM_NOSSE", FALSE);
+}
 
 int rtasm_cpu_has_sse(void)
 {
    /* FIXME: actually detect this at run-time */
 #if defined(__i386__) || defined(__386__) || defined(i386)
-   return 1;
+   return rtasm_sse_enabled();
 #else
    return 0;
 #endif
@@ -43,7 +49,7 @@ int rtasm_cpu_has_sse2(void)
 {
    /* FIXME: actually detect this at run-time */
 #if defined(__i386__) || defined(__386__) || defined(i386)
-   return 1;
+   return rtasm_sse_enabled();
 #else
    return 0;
 #endif

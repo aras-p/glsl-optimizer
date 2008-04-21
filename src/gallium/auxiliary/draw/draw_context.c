@@ -45,12 +45,6 @@ struct draw_context *draw_create( void )
    if (draw == NULL)
       goto fail;
 
-#if defined(__i386__) || defined(__386__)
-   draw->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
-#else
-   draw->use_sse = FALSE;
-#endif
-
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[2],  0, -1,  0, 1 );
@@ -318,12 +312,6 @@ draw_num_vs_outputs(struct draw_context *draw)
    return count;
 }
 
-
-
-boolean draw_use_sse(struct draw_context *draw)
-{
-   return (boolean) draw->use_sse;
-}
 
 
 void draw_set_render( struct draw_context *draw, 

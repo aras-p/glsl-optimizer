@@ -192,8 +192,6 @@ struct draw_context
    float plane[12][4];
    unsigned nr_planes;
 
-   boolean use_sse;
-
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */
    struct {

@@ -41,6 +41,7 @@
 #include "draw_private.h"
 #include "draw_context.h"
 
+#include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_sse2.h"
 #include "tgsi/util/tgsi_parse.h"
@@ -155,7 +156,7 @@ draw_create_vs_sse(struct draw_context *draw,
    struct draw_sse_vertex_shader *vs;
    uint nt = tgsi_num_tokens(templ->tokens);
 
-   if (!draw->use_sse) 
+   if (!rtasm_cpu_has_sse2())
       return NULL;
 
    vs = CALLOC_STRUCT( draw_sse_vertex_shader );
