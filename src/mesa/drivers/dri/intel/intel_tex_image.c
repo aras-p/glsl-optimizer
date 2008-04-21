@@ -348,8 +348,10 @@ intelTexImage(GLcontext * ctx,
 	 postConvWidth = 32 / texelBytes;
 	 texImage->RowStride = postConvWidth;
       }
-      
-      assert(texImage->RowStride == postConvWidth);
+
+      if (!intelImage->mt) {      
+	  assert(texImage->RowStride == postConvWidth);
+      }
    }
 
    /* Release the reference to a potentially orphaned buffer.   
