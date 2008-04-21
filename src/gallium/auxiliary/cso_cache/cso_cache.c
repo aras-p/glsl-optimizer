@@ -290,6 +290,8 @@ void * cso_take_state(struct cso_cache *sc,
 struct cso_cache *cso_cache_create(void)
 {
    struct cso_cache *sc = MALLOC_STRUCT(cso_cache);
+   if (sc == NULL)
+      return NULL;
 
    sc->max_size           = 4096;
    sc->blend_hash         = cso_hash_create();
