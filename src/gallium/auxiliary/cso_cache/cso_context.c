@@ -38,6 +38,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "tgsi/util/tgsi_parse.h"
 
 #include "cso_cache/cso_context.h"
 #include "cso_cache/cso_cache.h"
@@ -148,6 +149,7 @@ void cso_set_blend(struct cso_context *ctx,
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
+      /* FIXME: handle OOM */
       struct cso_blend *cso = MALLOC(sizeof(struct cso_blend));
 
       cso->state = *templ;
@@ -198,6 +200,7 @@ void cso_single_sampler(struct cso_context *ctx,
                                                           (void*)templ);
 
       if (cso_hash_iter_is_null(iter)) {
+	 /* FIXME: handle OOM */
          struct cso_sampler *cso = MALLOC(sizeof(struct cso_sampler));
          
          cso->state = *templ;
@@ -333,6 +336,7 @@ void cso_set_depth_stencil_alpha(struct cso_context *ctx,
    void *handle;
 
    if (cso_hash_iter_is_null(iter)) {
+      /* FIXME: handle OOM */
       struct cso_depth_stencil_alpha *cso = MALLOC(sizeof(struct cso_depth_stencil_alpha));
 
       cso->state = *templ;
@@ -381,6 +385,7 @@ void cso_set_rasterizer(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
+      /* FIXME: handle OOM */
       struct cso_rasterizer *cso = MALLOC(sizeof(struct cso_rasterizer));
 
       cso->state = *templ;
@@ -420,17 +425,23 @@ void cso_restore_rasterizer(struct cso_context *ctx)
 void cso_set_fragment_shader(struct cso_context *ctx,
                              const struct pipe_shader_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)templ,
-                                         sizeof(struct pipe_shader_state));
+   const struct tgsi_token *tokens = templ->tokens;
+   unsigned num_tokens = tgsi_num_tokens(tokens);
+   size_t tokens_size = num_tokens*sizeof(struct tgsi_token);
+   unsigned hash_key = cso_construct_key((void*)tokens, tokens_size);
    struct cso_hash_iter iter = cso_find_state_template(ctx->cache,
-                                                       hash_key, CSO_FRAGMENT_SHADER,
-                                                       (void*)templ);
+                                                       hash_key, 
+                                                       CSO_FRAGMENT_SHADER,
+                                                       (void*)tokens);
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
-      struct cso_fragment_shader *cso = MALLOC(sizeof(struct cso_fragment_shader));
+      /* FIXME: handle OOM */
+      struct cso_fragment_shader *cso = MALLOC(sizeof(struct cso_fragment_shader) + tokens_size);
+      struct tgsi_token *cso_tokens = (struct tgsi_token *)((char *)cso + sizeof(*cso));
 
-      cso->state = *templ;
+      memcpy(cso_tokens, tokens, tokens_size);
+      cso->state.tokens = cso_tokens;
       cso->data = ctx->pipe->create_fs_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_fs_state;
       cso->context = ctx->pipe;
@@ -477,6 +488,7 @@ void cso_set_vertex_shader(struct cso_context *ctx,
    void *handle = NULL;
 
    if (cso_hash_iter_is_null(iter)) {
+      /* FIXME: handle OOM */
       struct cso_vertex_shader *cso = MALLOC(sizeof(struct cso_vertex_shader));
 
       cso->state = *templ;
