@@ -122,8 +122,9 @@ void draw_set_rasterizer_state( struct draw_context *draw,
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    draw->rasterizer = raster;
-   draw->bypass_clipping = (draw->rasterizer->bypass_clipping || 
-                            draw->driver.bypass_clipping);
+   draw->bypass_clipping =
+      ((draw->rasterizer && draw->rasterizer->bypass_clipping) ||
+       draw->driver.bypass_clipping);
 }
 
 
