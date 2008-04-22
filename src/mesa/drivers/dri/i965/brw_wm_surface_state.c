@@ -69,7 +69,7 @@ static GLuint translate_tex_target( GLenum target )
 }
 
 
-static GLuint translate_tex_format( GLuint mesa_format )
+static GLuint translate_tex_format( GLuint mesa_format, GLenum depth_mode )
 {
    switch( mesa_format ) {
    case MESA_FORMAT_L8:
@@ -114,7 +114,12 @@ static GLuint translate_tex_format( GLuint mesa_format )
       return BRW_SURFACEFORMAT_FXT1;
 
    case MESA_FORMAT_Z16:
-      return BRW_SURFACEFORMAT_I16_UNORM;
+      if (depth_mode == GL_INTENSITY) 
+	  return BRW_SURFACEFORMAT_I16_UNORM;
+      else if (depth_mode == GL_ALPHA)
+	  return BRW_SURFACEFORMAT_A16_UNORM;
+      else
+	  return BRW_SURFACEFORMAT_L16_UNORM;
 
    case MESA_FORMAT_RGB_DXT1:
        return BRW_SURFACEFORMAT_DXT1_RGB;
@@ -143,7 +148,7 @@ static GLuint translate_tex_format( GLuint mesa_format )
 }
 
 struct brw_wm_surface_key {
-   GLenum target;
+   GLenum target, depthmode;
    dri_bo *bo;
    GLint format;
    GLint first_level, last_level;
@@ -163,7 +168,7 @@ brw_create_texture_surface( struct brw_context *brw,
 
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf.ss0.surface_type = translate_tex_target(key->target);
-   surf.ss0.surface_format = translate_tex_format(key->format);
+   surf.ss0.surface_format = translate_tex_format(key->format, key->depthmode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
@@ -219,6 +224,7 @@ brw_update_texture_surface( GLcontext *ctx, GLuint unit )
 
    memset(&key, 0, sizeof(key));
    key.target = tObj->Target;
+   key.depthmode = tObj->DepthMode;
    key.format = firstImage->TexFormat->MesaFormat;
    key.bo = intelObj->mt->region->buffer;
    key.first_level = intelObj->firstLevel;
