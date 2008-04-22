@@ -111,7 +111,7 @@ st_vertex_program( struct gl_vertex_program *vp )
 }
 
 
-extern const struct cso_fragment_shader *
+extern void
 st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *fp,
                               const GLuint inputMapping[]);
