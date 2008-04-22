@@ -228,8 +228,10 @@ struct cso_hash_iter cso_hash_insert(struct cso_hash *hash,
          return null_iter;
       }
 
-      struct cso_hash_iter iter = {hash, node};
-      return iter;
+      {
+         struct cso_hash_iter iter = {hash, node};
+         return iter;
+      }
    }
 }
 
