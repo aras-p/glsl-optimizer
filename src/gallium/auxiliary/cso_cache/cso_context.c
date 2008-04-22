@@ -600,7 +600,7 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 {
    assert(ctx->vertex_shader_saved);
    if (ctx->vertex_shader_saved != ctx->vertex_shader) {
-      ctx->pipe->bind_fs_state(ctx->pipe, ctx->vertex_shader_saved);
+      ctx->pipe->bind_vs_state(ctx->pipe, ctx->vertex_shader_saved);
       ctx->vertex_shader = ctx->vertex_shader_saved;
    }
    ctx->vertex_shader_saved = NULL;
