@@ -61,6 +61,7 @@ struct gen_mipmap_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
+   struct pipe_viewport_state viewport;
 
    struct pipe_shader_state vert_shader;
    struct pipe_shader_state frag_shader;
@@ -723,9 +724,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NEAREST;
    ctx->sampler.normalized_coords = 1;
 
-
-#if 0
-   /* viewport */
+   /* viewport state (identity, verts are in wincoords) */
    ctx->viewport.scale[0] = 1.0;
    ctx->viewport.scale[1] = 1.0;
    ctx->viewport.scale[2] = 1.0;
@@ -734,7 +733,6 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    ctx->viewport.translate[1] = 0.0;
    ctx->viewport.translate[2] = 0.0;
    ctx->viewport.translate[3] = 0.0;
-#endif
 
    /* vertex shader */
    {
@@ -825,26 +823,6 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 }
 
 
-#if 0
-static void
-simple_viewport(struct pipe_context *pipe, uint width, uint height)
-{
-   struct pipe_viewport_state vp;
-
-   vp.scale[0] =  0.5 * width;
-   vp.scale[1] = -0.5 * height;
-   vp.scale[2] = 1.0;
-   vp.scale[3] = 1.0;
-   vp.translate[0] = 0.5 * width;
-   vp.translate[1] = 0.5 * height;
-   vp.translate[2] = 0.0;
-   vp.translate[3] = 0.0;
-
-   pipe->set_viewport_state(pipe, &vp);
-}
-#endif
-
-
 /**
  * Generate mipmap images.  It's assumed all needed texture memory is
  * already allocated.
@@ -882,17 +860,16 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_viewport(ctx->cso);
 
    /* bind our state */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
    cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
-#if 0
-   cso_set_viewport(ctx->cso, &ctx->viewport);
-#endif
 
    /* init framebuffer state */
    memset(&fb, 0, sizeof(fb));
@@ -928,9 +905,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       ctx->sampler.lod_bias = (float) srcLevel;
       cso_single_sampler(ctx->cso, 0, &ctx->sampler);
       cso_single_sampler_done(ctx->cso);
-#if 0
-      simple_viewport(pipe, pt->width[dstLevel], pt->height[dstLevel]);
-#endif
 
       cso_set_sampler_textures(ctx->cso, 1, &pt);
 
@@ -958,4 +932,5 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_viewport(ctx->cso);
 }
