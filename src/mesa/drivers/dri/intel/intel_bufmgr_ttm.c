@@ -993,7 +993,7 @@ dri_ttm_bo_post_submit(dri_bo *bo)
 	/* Continue walking the tree depth-first. */
 	dri_ttm_bo_post_submit(r->target_buf);
 
-	r->last_target_offset = bo->offset;
+	r->last_target_offset = r->target_buf->offset;
     }
 }
 
