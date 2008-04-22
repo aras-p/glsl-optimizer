@@ -713,7 +713,7 @@ util_create_gen_mipmap(struct pipe_context *pipe,
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_clipping = 1;  /* bypasses viewport too */
+   ctx->rasterizer.bypass_clipping = 1;
    /*ctx->rasterizer.bypass_vs = 1;*/
 
    /* sampler state */
