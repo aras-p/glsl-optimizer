@@ -813,7 +813,7 @@ _mesa_load_state_parameters(GLcontext *ctx,
    GLuint i;
 
    if (!paramList)
-      return;
+      return retval;
 
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
