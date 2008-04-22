@@ -334,10 +334,10 @@ void cso_for_each_state(struct cso_cache *sc, enum cso_cache_type type,
    iter = cso_hash_first_node(hash);
    while (!cso_hash_iter_is_null(iter)) {
       void *state = cso_hash_iter_data(iter);
+      iter = cso_hash_iter_next(iter);
       if (state) {
          func(state, user_data);
       }
-      iter = cso_hash_iter_next(iter);
    }
 }
 
