@@ -82,6 +82,7 @@ softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 void
 softpipe_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
+   struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_fragment_shader *state = fs;
 
    assert(fs != softpipe->fs);
