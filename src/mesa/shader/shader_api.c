@@ -133,6 +133,11 @@ _mesa_free_shader_program_data(GLcontext *ctx,
       _mesa_free(shProg->Shaders);
       shProg->Shaders = NULL;
    }
+
+   if (shProg->InfoLog) {
+      _mesa_free(shProg->InfoLog);
+      shProg->InfoLog = NULL;
+   }
 }
 
 
@@ -143,10 +148,7 @@ void
 _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
-   if (shProg->Shaders) {
-      _mesa_free(shProg->Shaders);
-      shProg->Shaders = NULL;
-   }
+
    _mesa_free(shProg);
 }
 
