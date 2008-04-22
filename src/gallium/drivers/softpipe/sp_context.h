@@ -86,6 +86,8 @@ struct softpipe_context {
    unsigned num_vertex_elements;
    unsigned num_vertex_buffers;
 
+   boolean no_rast;
+
    /* Counter for occlusion queries.  Note this supports overlapping
     * queries.
     */

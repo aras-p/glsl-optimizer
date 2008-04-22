@@ -219,6 +219,9 @@ softpipe_create( struct pipe_screen *screen,
    assert(softpipe->draw);
    softpipe->setup = sp_draw_render_stage(softpipe);
 
+   if (GETENV( "SP_NO_RAST" ) != NULL)
+      softpipe->no_rast = TRUE;
+
    if (GETENV( "SP_VBUF" ) != NULL) {
       sp_init_vbuf(softpipe);
    }
