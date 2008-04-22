@@ -33,16 +33,67 @@
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
 
+#include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_hash.h"
 
 struct pt_fetch {
    struct draw_context *draw;
 
    struct translate *translate;
-   
+
    unsigned vertex_size;
+
+   struct cso_hash *hash;
 };
 
+static INLINE unsigned translate_hash_key_size(struct translate_key *key)
+{
+   unsigned size = sizeof(struct translate_key) -
+                   sizeof(struct translate_element) * (PIPE_MAX_ATTRIBS - key->nr_elements);
+   return size;
+}
 
+static INLINE unsigned create_key(struct translate_key *key)
+{
+   unsigned hash_key;
+   unsigned size = translate_hash_key_size(key);
+   /*debug_printf("key size = %d, (els = %d)\n",
+     size, key->nr_elements);*/
+   hash_key = cso_construct_key(key, size);
+   return hash_key;
+}
+
+static struct translate *cached_translate(struct pt_fetch *fetch,
+                                          struct translate_key *key)
+{
+   unsigned hash_key = create_key(key);
+   struct cso_hash_iter iter = cso_hash_find(fetch->hash, hash_key);
+   struct translate *translate = 0;
+
+   if (cso_hash_iter_is_null(iter)) {
+      translate = translate_create(key);
+      cso_hash_insert(fetch->hash, hash_key, translate);
+      /*debug_printf("\tCREATED with %d\n", hash_key);*/
+   } else {
+      translate = cso_hash_iter_data(iter);
+      /*debug_printf("\tOK with %d\n", hash_key);*/
+   }
+
+   return translate;
+}
+
+static INLINE void delete_translates(struct pt_fetch *fetch)
+{
+   struct cso_hash *hash = fetch->hash;
+   struct cso_hash_iter iter = cso_hash_first_node(hash);
+   while (!cso_hash_iter_is_null(iter)) {
+      struct translate *state = (struct translate*)cso_hash_iter_data(iter);
+      iter = cso_hash_iter_next(iter);
+      if (state) {
+         state->release(state);
+      }
+   }
+}
 
 /* Perform the fetch from API vertex elements & vertex buffers, to a
  * contiguous set of float[4] attributes as required for the
@@ -112,10 +163,7 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    if (!fetch->translate ||
        memcmp(&fetch->translate->key, &key, sizeof(key)) != 0) 
    {
-      if (fetch->translate)
-	 fetch->translate->release(fetch->translate);
-
-      fetch->translate = translate_create( &key );
+      fetch->translate = cached_translate(fetch, &key);
 
       {
 	 static struct vertex_header vh = { 0, 0, 0, 0xffff };
@@ -159,15 +207,16 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
    struct pt_fetch *fetch = CALLOC_STRUCT(pt_fetch);
    if (!fetch)
       return NULL;
-	 
+
    fetch->draw = draw;
+   fetch->hash = cso_hash_create();
    return fetch;
 }
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch )
 {
-   if (fetch->translate)
-      fetch->translate->release( fetch->translate );
+   delete_translates(fetch);
+   cso_hash_delete(fetch->hash);
 
    FREE(fetch);
 }
