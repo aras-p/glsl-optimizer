@@ -490,8 +490,8 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_samplers(cso);
    cso_restore_sampler_textures(cso);
    cso_restore_viewport(cso);
-   cso_save_fragment_shader(cso);
-   cso_save_vertex_shader(cso);
+   cso_restore_fragment_shader(cso);
+   cso_restore_vertex_shader(cso);
 }
 
 
