@@ -57,6 +57,7 @@ struct blit_state
    struct pipe_depth_stencil_alpha_state depthstencil;
    struct pipe_rasterizer_state rasterizer;
    struct pipe_sampler_state sampler;
+   struct pipe_viewport_state viewport;
 
    struct pipe_shader_state vert_shader;
    struct pipe_shader_state frag_shader;
@@ -100,7 +101,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    memset(&ctx->rasterizer, 0, sizeof(ctx->rasterizer));
    ctx->rasterizer.front_winding = PIPE_WINDING_CW;
    ctx->rasterizer.cull_mode = PIPE_WINDING_NONE;
-   ctx->rasterizer.bypass_clipping = 1;  /* bypasses viewport too */
+   ctx->rasterizer.bypass_clipping = 1;
    /*ctx->rasterizer.bypass_vs = 1;*/
 
    /* samplers */
@@ -113,8 +114,7 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->sampler.mag_img_filter = 0; /* set later */
    ctx->sampler.normalized_coords = 1;
 
-#if 0
-   /* viewport */
+   /* viewport (identity, we setup vertices in wincoords) */
    ctx->viewport.scale[0] = 1.0;
    ctx->viewport.scale[1] = 1.0;
    ctx->viewport.scale[2] = 1.0;
@@ -123,7 +123,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
    ctx->viewport.translate[1] = 0.0;
    ctx->viewport.translate[2] = 0.0;
    ctx->viewport.translate[3] = 0.0;
-#endif
 
    /* vertex shader */
    {
@@ -302,11 +301,13 @@ util_blit_pixels(struct blit_state *ctx,
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
+   cso_save_viewport(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
    cso_set_depth_stencil_alpha(ctx->cso, &ctx->depthstencil);
    cso_set_rasterizer(ctx->cso, &ctx->rasterizer);
+   cso_set_viewport(ctx->cso, &ctx->viewport);
 
    /* sampler */
    ctx->sampler.min_img_filter = filter;
@@ -348,6 +349,7 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
+   cso_restore_viewport(ctx->cso);
 
    /* free the texture */
    pipe_surface_reference(&texSurf, NULL);
