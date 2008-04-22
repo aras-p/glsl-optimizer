@@ -84,6 +84,7 @@ struct xmesa_surface
    struct pipe_surface surface;
 
    int tileSize;
+   boolean no_swap;
 };
 
 
@@ -251,6 +252,9 @@ xmesa_display_surface(XMesaBuffer b, const struct pipe_surface *surf)
    struct xm_buffer *xm_buf = xm_buffer(surf->buffer);
    const struct xmesa_surface *xm_surf
       = xmesa_surface((struct pipe_surface *) surf);
+
+   if (xm_surf->no_swap)
+      return;
 
    if (xm_surf->tileSize) {
       xmesa_display_surface_tiled(b, surf);
@@ -529,6 +533,13 @@ static struct pipe_surface *
 xm_surface_alloc(struct pipe_winsys *ws)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
+   static boolean no_swap = 0;
+   static boolean firsttime = 1;
+
+   if (firsttime) {
+      no_swap = getenv("SP_NO_RAST") != NULL;
+      firsttime = 0;
+   }
 
    assert(ws);
 
@@ -540,7 +551,9 @@ xm_surface_alloc(struct pipe_winsys *ws)
       xms->tileSize = 32; /** probably temporary */
    }
 #endif
-
+   
+   xms->no_swap = no_swap;
+   
    return &xms->surface;
 }
 
