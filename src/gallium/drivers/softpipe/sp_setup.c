@@ -299,13 +299,6 @@ static boolean setup_sort_vertices( struct setup_context *setup,
                                     const float (*v1)[4],
                                     const float (*v2)[4] )
 {
-#if DEBUG_VERTS
-   debug_printf("Triangle:\n");
-   print_vertex(setup, v0);
-   print_vertex(setup, v1);
-   print_vertex(setup, v2);
-#endif
-
    setup->vprovoke = v2;
 
    /* determine bottom to top order of vertices */
@@ -738,7 +731,12 @@ void setup_tri( struct setup_context *setup,
    setup->numFragsWritten = 0;
 #endif
 
-
+#if DEBUG_VERTS
+   debug_printf("Triangle:\n");
+   print_vertex(setup, v0);
+   print_vertex(setup, v1);
+   print_vertex(setup, v2);
+#endif
 
    if (cull_tri( setup, det ))
       return;
