@@ -94,7 +94,7 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
-   boolean clipped = FALSE;
+   unsigned clipped = 0;
    unsigned j;
 
    if (0) debug_printf("%s\n");
@@ -110,11 +110,10 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       out->clipmask = compute_clipmask_gl(out->clip, 
 					  pvs->draw->plane,
 					  pvs->draw->nr_planes);
+      clipped += out->clipmask;
 
       if (out->clipmask == 0)
       {
-         clipped = TRUE;
-
 	 /* divide by w */
 	 float w = 1.0f / out->data[0][3];
 
