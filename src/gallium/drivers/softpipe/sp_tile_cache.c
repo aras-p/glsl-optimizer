@@ -39,7 +39,7 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 
-#define NUM_ENTRIES 30
+#define NUM_ENTRIES 32
 
 
 /** XXX move these */
