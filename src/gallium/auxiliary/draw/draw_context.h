@@ -148,4 +148,16 @@ struct vbuf_render;
 void draw_set_render( struct draw_context *draw, 
 		      struct vbuf_render *render );
 
+void draw_set_driver_clipping( struct draw_context *draw,
+                               boolean bypass_clipping );
+
+/*******************************************************************************
+ * Draw pipeline 
+ */
+boolean draw_need_pipeline(const struct draw_context *draw,
+                           const struct pipe_rasterizer_state *rasterizer,
+                           unsigned prim );
+
+
+
 #endif /* DRAW_CONTEXT_H */

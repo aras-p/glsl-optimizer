@@ -81,7 +81,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
     * but gl vs dx9 clip spaces.
     */
    draw_pt_post_vs_prepare( fpme->post_vs,
-			    draw->rasterizer->bypass_clipping,
+			    draw->bypass_clipping,
 			    draw->identity_viewport,
 			    draw->rasterizer->gl_rasterization_rules );
 			    

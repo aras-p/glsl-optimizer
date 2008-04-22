@@ -58,11 +58,13 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_PIPELINE;
    }
 
-   if (draw_need_pipeline(draw, prim)) {
+   if (draw_need_pipeline(draw, 
+                          draw->rasterizer,
+                          prim)) {
       opt |= PT_PIPELINE;
    }
 
-   if (!draw->rasterizer->bypass_clipping) {
+   if (!draw->bypass_clipping) {
       opt |= PT_CLIPTEST;
    }
 

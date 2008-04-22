@@ -174,7 +174,12 @@ struct draw_context
 
    } pt;
 
+   struct {
+      boolean bypass_clipping;
+   } driver;
+
    boolean flushing;
+   boolean bypass_clipping;     /* set if either api or driver bypass_clipping true */
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
@@ -243,8 +248,6 @@ void draw_pipeline_run( struct draw_context *draw,
 void draw_pipeline_flush( struct draw_context *draw, 
                           unsigned flags );
 
-boolean draw_need_pipeline(const struct draw_context *draw,
-                           unsigned prim );
 
 
 /*******************************************************************************

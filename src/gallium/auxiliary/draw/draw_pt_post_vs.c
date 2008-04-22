@@ -94,8 +94,10 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
    struct vertex_header *out = vertices;
    const float *scale = pvs->draw->viewport.scale;
    const float *trans = pvs->draw->viewport.translate;
+   boolean clipped = FALSE;
    unsigned j;
-   unsigned clipped = 0;
+
+   if (0) debug_printf("%s\n");
 
    for (j = 0; j < count; j++) {
       out->clip[0] = out->data[0][0];
@@ -108,10 +110,11 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       out->clipmask = compute_clipmask_gl(out->clip, 
 					  pvs->draw->plane,
 					  pvs->draw->nr_planes);
-      clipped += out->clipmask;
 
       if (out->clipmask == 0)
       {
+         clipped = TRUE;
+
 	 /* divide by w */
 	 float w = 1.0f / out->data[0][3];
 
@@ -142,7 +145,7 @@ static boolean post_vs_viewport( struct pt_post_vs *pvs,
    const float *trans = pvs->draw->viewport.translate;
    unsigned j;
 
-   debug_printf("%s\n", __FUNCTION__);
+   if (0) debug_printf("%s\n", __FUNCTION__);
    for (j = 0; j < count; j++) {
       /* Viewport mapping only, no cliptest/rhw divide
        */
@@ -165,7 +168,7 @@ static boolean post_vs_none( struct pt_post_vs *pvs,
 			     unsigned count,
 			     unsigned stride )
 {
-   debug_printf("%s\n", __FUNCTION__);
+   if (0) debug_printf("%s\n", __FUNCTION__);
    return FALSE;
 }
 
