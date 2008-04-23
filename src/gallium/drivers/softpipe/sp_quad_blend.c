@@ -294,11 +294,12 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
          {
             const float *alpha = quadColor[3];
-            float diff[4];
+            float diff[4], temp[4];
             VEC4_SUB(diff, one, dest[3]);
-            VEC4_MIN(source[0], alpha, diff); /* R */
-            VEC4_MIN(source[1], alpha, diff); /* G */
-            VEC4_MIN(source[2], alpha, diff); /* B */
+            VEC4_MIN(temp, alpha, diff);
+            VEC4_MUL(source[0], quadColor[0], temp); /* R */
+            VEC4_MUL(source[1], quadColor[1], temp); /* G */
+            VEC4_MUL(source[2], quadColor[2], temp); /* B */
          }
          break;
       case PIPE_BLENDFACTOR_CONST_COLOR:
@@ -426,12 +427,8 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
          VEC4_MUL(source[3], quadColor[3], dest[3]); /* A */
          break;
       case PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE:
-         {
-            const float *alpha = quadColor[3];
-            float diff[4];
-            VEC4_SUB(diff, one, dest[3]);
-            VEC4_MIN(source[3], alpha, diff); /* A */
-         }
+         /* multiply alpha by 1.0 */
+         VEC4_COPY(source[3], quadColor[3]); /* A */
          break;
       case PIPE_BLENDFACTOR_CONST_COLOR:
          /* fall-through */
