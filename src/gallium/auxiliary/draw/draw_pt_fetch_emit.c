@@ -37,6 +37,7 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
+#include "translate/translate_cache.h"
 
 /* The simplest 'middle end' in the new vertex code.  
  * 
@@ -81,6 +82,7 @@ struct fetch_emit_middle_end {
     */
    float point_size;
 
+   struct translate_cache *cache;
 };
 
 
@@ -174,10 +176,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    if (!feme->translate ||
        memcmp(&feme->translate->key, &key, sizeof(key)) != 0) 
    {
-      if (feme->translate)
-	 feme->translate->release(feme->translate);
+      feme->translate = translate_cache_find(feme->cache,
+                                             &key);
 
-      feme->translate = translate_create( &key );
 
       feme->translate->set_buffer(feme->translate, 
 				  draw->pt.nr_vertex_buffers, 
@@ -266,9 +267,8 @@ static void fetch_emit_destroy( struct draw_pt_middle_end *middle )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
 
-   if (feme->translate)
-      feme->translate->release( feme->translate );
-   
+   translate_cache_destroy(feme->cache);
+
    FREE(middle);
 }
 
@@ -278,7 +278,13 @@ struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw )
    struct fetch_emit_middle_end *fetch_emit = CALLOC_STRUCT( fetch_emit_middle_end );
    if (fetch_emit == NULL)
       return NULL;
- 
+
+   fetch_emit->cache = translate_cache_create();
+   if (!fetch_emit->cache) {
+      FREE(fetch_emit);
+      return NULL;
+   }
+
    fetch_emit->base.prepare = fetch_emit_prepare;
    fetch_emit->base.run     = fetch_emit_run;
    fetch_emit->base.finish  = fetch_emit_finish;

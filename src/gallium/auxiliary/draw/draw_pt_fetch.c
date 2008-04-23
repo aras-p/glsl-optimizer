@@ -158,6 +158,11 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
 
    fetch->draw = draw;
    fetch->cache = translate_cache_create();
+   if (!fetch->cache) {
+      FREE(fetch);
+      return NULL;
+   }
+
    return fetch;
 }
 

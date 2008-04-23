@@ -185,6 +185,10 @@ struct pt_emit *draw_pt_emit_create( struct draw_context *draw )
 
    emit->draw = draw;
    emit->cache = translate_cache_create();
+   if (!emit->cache) {
+      FREE(emit);
+      return NULL;
+   }
 
    return emit;
 }
