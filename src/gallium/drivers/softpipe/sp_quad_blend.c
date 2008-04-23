@@ -232,6 +232,11 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_context *softpipe = qs->softpipe;
    uint cbuf;
 
+   if (softpipe->blend->logicop_enable) {
+      logicop_quad(qs, quad);
+      return;
+   }
+
    /* loop over colorbuffer outputs */
    for (cbuf = 0; cbuf < softpipe->framebuffer.num_cbufs; cbuf++) {
       float source[4][QUAD_SIZE], dest[4][QUAD_SIZE];
@@ -241,11 +246,6 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
                               quad->x0, quad->y0);
       float (*quadColor)[4] = quad->outputs.color[cbuf];
       uint i, j;
-
-      if (softpipe->blend->logicop_enable) {
-         logicop_quad(qs, quad);
-         return;
-      }
 
       /* get/swizzle dest colors */
       for (j = 0; j < QUAD_SIZE; j++) {
