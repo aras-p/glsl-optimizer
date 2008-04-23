@@ -469,7 +469,7 @@ pstip_create_sampler(struct pstip_stage *pstip)
 static boolean
 bind_pstip_fragment_shader(struct pstip_stage *pstip)
 {
-   if (!pstip->fs->pstip_fs || 
+   if (!pstip->fs->pstip_fs &&
        !generate_pstip_fs(pstip))
       return FALSE;
 
