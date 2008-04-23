@@ -144,6 +144,9 @@ struct pb_manager *
 pb_cache_manager_create(struct pb_manager *provider, 
                      	unsigned usecs); 
 
+void
+pb_cache_flush(struct pb_manager *mgr);
+
 
 /** 
  * Fenced buffer manager.

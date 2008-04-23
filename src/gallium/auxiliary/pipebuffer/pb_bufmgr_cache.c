@@ -294,8 +294,8 @@ pb_cache_manager_create_buffer(struct pb_manager *_mgr,
 }
 
 
-static void
-pb_cache_manager_destroy(struct pb_manager *_mgr)
+void
+pb_cache_flush(struct pb_manager *_mgr)
 {
    struct pb_cache_manager *mgr = pb_cache_manager(_mgr);
    struct list_head *curr, *next;
@@ -311,7 +311,13 @@ pb_cache_manager_destroy(struct pb_manager *_mgr)
       next = curr->next;
    }
    _glthread_UNLOCK_MUTEX(mgr->mutex);
-   
+}
+
+
+static void
+pb_cache_manager_destroy(struct pb_manager *mgr)
+{
+   pb_cache_flush(mgr);
    FREE(mgr);
 }
 
