@@ -45,6 +45,7 @@ SOURCES = \
 	point-param.c \
 	point-sprite.c \
 	point-wide.c \
+	point-wide-smooth.c \
 	point.c \
 	poly-flat.c \
 	poly-unfilled.c \
@@ -69,6 +70,7 @@ SOURCES = \
 	quadstrip-cont.c \
 	quadstrip-flat.c \
 	quadstrip.c \
+	tri-orig.c \
 	tri-alpha.c \
 	tri-blend-color.c \
 	tri-blend-max.c \
