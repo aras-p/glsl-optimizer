@@ -3,7 +3,7 @@
 
 #include "draw/draw_context.h"
 #include "draw/draw_vertex.h"
-#include "draw/draw_private.h"
+#include "draw/draw_pipe.h"
 
 #include "nv40_context.h"
 #define NV40_SHADER_NO_FUCKEDNESS

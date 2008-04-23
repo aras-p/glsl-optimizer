@@ -113,7 +113,6 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
 	struct nouveau_grobj *tesla = nv50_context(pipe)->screen->tesla;
 	struct nv50_rasterizer_stateobj *rso =
 		CALLOC_STRUCT(nv50_rasterizer_stateobj);
-	unsigned i;
 
 	/*XXX: ignored
 	 * 	- light_twosize
