@@ -136,7 +136,7 @@ emit_vertex( struct vbuf_stage *vbuf,
       vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0);
       vbuf->translate->run(vbuf->translate, 0, 1, vbuf->vertex_ptr);
 
-      if (0) draw_dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
+      if (1) draw_dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
       
       vbuf->vertex_ptr += vbuf->vertex_size/4;
       vertex->vertex_id = vbuf->nr_vertices++;
@@ -254,6 +254,7 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
       case EMIT_4UB:
 	 output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	 emit_sz = 4 * sizeof(ubyte);
+         break;
       default:
 	 assert(0);
 	 output_format = PIPE_FORMAT_NONE;
