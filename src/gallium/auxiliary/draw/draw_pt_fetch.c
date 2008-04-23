@@ -32,9 +32,8 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
+#include "translate/translate_cache.h"
 
-#include "cso_cache/cso_cache.h"
-#include "cso_cache/cso_hash.h"
 
 struct pt_fetch {
    struct draw_context *draw;
@@ -43,56 +42,8 @@ struct pt_fetch {
 
    unsigned vertex_size;
 
-   struct cso_hash *hash;
+   struct translate_cache *cache;
 };
-
-static INLINE unsigned translate_hash_key_size(struct translate_key *key)
-{
-   unsigned size = sizeof(struct translate_key) -
-                   sizeof(struct translate_element) * (PIPE_MAX_ATTRIBS - key->nr_elements);
-   return size;
-}
-
-static INLINE unsigned create_key(struct translate_key *key)
-{
-   unsigned hash_key;
-   unsigned size = translate_hash_key_size(key);
-   /*debug_printf("key size = %d, (els = %d)\n",
-     size, key->nr_elements);*/
-   hash_key = cso_construct_key(key, size);
-   return hash_key;
-}
-
-static struct translate *cached_translate(struct pt_fetch *fetch,
-                                          struct translate_key *key)
-{
-   unsigned hash_key = create_key(key);
-   struct translate *translate = (struct translate*)
-      cso_hash_find_data_from_template(fetch->hash,
-                                       hash_key,
-                                       key, sizeof(*key));
-
-   if (!translate) {
-      /* create/insert */
-      translate = translate_create(key);
-      cso_hash_insert(fetch->hash, hash_key, translate);
-   }
-
-   return translate;
-}
-
-static INLINE void delete_translates(struct pt_fetch *fetch)
-{
-   struct cso_hash *hash = fetch->hash;
-   struct cso_hash_iter iter = cso_hash_first_node(hash);
-   while (!cso_hash_iter_is_null(iter)) {
-      struct translate *state = (struct translate*)cso_hash_iter_data(iter);
-      iter = cso_hash_iter_next(iter);
-      if (state) {
-         state->release(state);
-      }
-   }
-}
 
 /* Perform the fetch from API vertex elements & vertex buffers, to a
  * contiguous set of float[4] attributes as required for the
@@ -157,17 +108,15 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    key.output_stride = vertex_size;
 
 
-   /* Don't bother with caching at this stage:
-    */
    if (!fetch->translate ||
-       memcmp(&fetch->translate->key, &key, sizeof(key)) != 0) 
+       memcmp(&fetch->translate->key, &key, sizeof(key)) != 0)
    {
-      fetch->translate = cached_translate(fetch, &key);
+      fetch->translate = translate_cache_find(fetch->cache, &key);
 
       {
 	 static struct vertex_header vh = { 0, 0, 0, 0xffff };
-	 fetch->translate->set_buffer(fetch->translate, 
-				      draw->pt.nr_vertex_buffers, 
+	 fetch->translate->set_buffer(fetch->translate,
+				      draw->pt.nr_vertex_buffers,
 				      &vh,
 				      0);
       }
@@ -208,14 +157,13 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
       return NULL;
 
    fetch->draw = draw;
-   fetch->hash = cso_hash_create();
+   fetch->cache = translate_cache_create();
    return fetch;
 }
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch )
 {
-   delete_translates(fetch);
-   cso_hash_delete(fetch->hash);
+   translate_cache_destroy(fetch->cache);
 
    FREE(fetch);
 }

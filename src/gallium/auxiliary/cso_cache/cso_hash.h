@@ -106,12 +106,12 @@ struct cso_hash_iter cso_hash_iter_prev(struct cso_hash_iter iter);
 
 
 /**
- * Convenience routine to iterate over the collision list while doing a memory 
+ * Convenience routine to iterate over the collision list while doing a memory
  * comparison to see which entry in the list is a direct copy of our template
  * and returns that entry.
  */
 void *cso_hash_find_data_from_template( struct cso_hash *hash,
-				        unsigned hash_key, 
+				        unsigned hash_key,
 				        void *templ,
 				        int size );
 

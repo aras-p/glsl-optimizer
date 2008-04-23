@@ -32,65 +32,15 @@
 #include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 #include "translate/translate.h"
-
-#include "cso_cache/cso_cache.h"
-#include "cso_cache/cso_hash.h"
+#include "translate/translate_cache.h"
 
 struct pt_emit {
    struct draw_context *draw;
 
    struct translate *translate;
 
-   struct cso_hash *hash;
+   struct translate_cache *cache;
 };
-
-static INLINE unsigned translate_hash_key_size(struct translate_key *key)
-{
-   unsigned size = sizeof(struct translate_key) -
-                   sizeof(struct translate_element) * (PIPE_MAX_ATTRIBS - key->nr_elements);
-   return size;
-}
-
-static INLINE unsigned create_key(struct translate_key *key)
-{
-   unsigned hash_key;
-   unsigned size = translate_hash_key_size(key);
-   /*debug_printf("key size = %d, (els = %d)\n",
-     size, key->nr_elements);*/
-   hash_key = cso_construct_key(key, size);
-   return hash_key;
-}
-
-static struct translate *cached_translate(struct pt_emit *emit,
-                                          struct translate_key *key)
-{
-   unsigned hash_key = create_key(key);
-   struct translate *translate = (struct translate*)
-      cso_hash_find_data_from_template(emit->hash,
-                                       hash_key,
-                                       key, sizeof(*key));
-   if (!translate) {
-      /* create/insert */
-      translate = translate_create(key);
-      cso_hash_insert(emit->hash, hash_key, translate);
-   }
-
-   return translate;
-}
-
-
-static INLINE void delete_translates(struct pt_emit *emit)
-{
-   struct cso_hash *hash = emit->hash;
-   struct cso_hash_iter iter = cso_hash_first_node(hash);
-   while (!cso_hash_iter_is_null(iter)) {
-      struct translate *state = (struct translate*)cso_hash_iter_data(iter);
-      iter = cso_hash_iter_next(iter);
-      if (state) {
-         state->release(state);
-      }
-   }
-}
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
 			   unsigned prim )
@@ -169,12 +119,10 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    hw_key.nr_elements = vinfo->num_attribs;
    hw_key.output_stride = vinfo->size * 4;
 
-   /* Don't bother with caching at this stage:
-    */
    if (!emit->translate ||
-       memcmp(&emit->translate->key, &hw_key, sizeof(hw_key)) != 0) 
+       memcmp(&emit->translate->key, &hw_key, sizeof(hw_key)) != 0)
    {
-      emit->translate = cached_translate(emit, &hw_key);
+      emit->translate = translate_cache_find(emit->cache, &hw_key);
    }
 }
 
@@ -236,15 +184,14 @@ struct pt_emit *draw_pt_emit_create( struct draw_context *draw )
       return NULL;
 
    emit->draw = draw;
-   emit->hash = cso_hash_create();
+   emit->cache = translate_cache_create();
 
    return emit;
 }
 
 void draw_pt_emit_destroy( struct pt_emit *emit )
 {
-   delete_translates(emit);
-   cso_hash_delete(emit->hash);
+   translate_cache_destroy(emit->cache);
 
    FREE(emit);
 }
