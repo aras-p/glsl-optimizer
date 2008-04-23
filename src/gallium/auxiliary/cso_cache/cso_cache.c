@@ -255,9 +255,9 @@ void *cso_hash_find_data_from_template( struct cso_hash *hash,
    while (!cso_hash_iter_is_null(iter)) {
       void *iter_data = cso_hash_iter_data(iter);
       if (!memcmp(iter_data, templ, size)) {
-	 /* Return the payload: 
+	 /* We found a match
 	  */
-         return (unsigned char *)iter_data + size;
+         return iter_data;
       }
       iter = cso_hash_iter_next(iter);
    }

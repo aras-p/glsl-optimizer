@@ -65,16 +65,14 @@ static struct translate *cached_translate(struct pt_emit *emit,
                                           struct translate_key *key)
 {
    unsigned hash_key = create_key(key);
-   struct cso_hash_iter iter = cso_hash_find(emit->hash, hash_key);
-   struct translate *translate = 0;
-
-   if (cso_hash_iter_is_null(iter)) {
+   struct translate *translate = (struct translate*)
+      cso_hash_find_data_from_template(emit->hash,
+                                       hash_key,
+                                       key, sizeof(*key));
+   if (!translate) {
+      /* create/insert */
       translate = translate_create(key);
       cso_hash_insert(emit->hash, hash_key, translate);
-      /*debug_printf("\tCREATED with %d\n", hash_key);*/
-   } else {
-      translate = cso_hash_iter_data(iter);
-      /*debug_printf("\tOK with %d\n", hash_key);*/
    }
 
    return translate;

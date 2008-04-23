@@ -67,19 +67,10 @@ static struct translate *cached_translate(struct pt_fetch *fetch,
                                           struct translate_key *key)
 {
    unsigned hash_key = create_key(key);
-   struct cso_hash_iter iter = cso_hash_find(fetch->hash, hash_key);
-   struct translate *translate = 0;
-
-   while (!cso_hash_iter_is_null(iter)) {
-      void *iter_data = cso_hash_iter_data(iter);
-      if (memcmp(iter_data, key, sizeof(*key)) == 0) {
-         /* found */
-         translate = cso_hash_iter_data(iter);
-         break;
-      }
-      iter = cso_hash_iter_next(iter);
-      /*debug_printf("\tOK with %d\n", hash_key);*/
-   }
+   struct translate *translate = (struct translate*)
+      cso_hash_find_data_from_template(fetch->hash,
+                                       hash_key,
+                                       key, sizeof(*key));
 
    if (!translate) {
       /* create/insert */
