@@ -144,9 +144,6 @@ struct st_context
 
    /** for glBitmap */
    struct {
-      struct st_fragment_program *program;  /**< bitmap tex/kil program */
-      GLuint user_prog_sn;  /**< user fragment program serial no. */
-      struct st_fragment_program *combined_prog;
       struct pipe_rasterizer_state rasterizer;
       struct pipe_sampler_state sampler;
       struct pipe_shader_state vert_shader;

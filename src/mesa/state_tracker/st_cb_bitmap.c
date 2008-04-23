@@ -105,7 +105,7 @@ struct bitmap_cache
  * This program will be combined with the user's fragment program.
  */
 static struct st_fragment_program *
-make_bitmap_fragment_program(GLcontext *ctx)
+make_bitmap_fragment_program(GLcontext *ctx, GLuint samplerIndex)
 {
    struct st_fragment_program *stfp;
    struct gl_program *p;
@@ -130,7 +130,7 @@ make_bitmap_fragment_program(GLcontext *ctx)
    p->Instructions[ic].DstReg.Index = 0;
    p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
    p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
-   p->Instructions[ic].TexSrcUnit = 0;
+   p->Instructions[ic].TexSrcUnit = samplerIndex;
    p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
 
@@ -148,13 +148,26 @@ make_bitmap_fragment_program(GLcontext *ctx)
 
    p->InputsRead = FRAG_BIT_TEX0;
    p->OutputsWritten = 0x0;
-   p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
+   p->SamplersUsed = (1 << samplerIndex);
 
    stfp = (struct st_fragment_program *) p;
    stfp->Base.UsesKill = GL_TRUE;
    st_translate_fragment_program(ctx->st, stfp, NULL);
 
    return stfp;
+}
+
+
+static int
+find_free_bit(uint bitfield)
+{
+   int i;
+   for (i = 0; i < 32; i++) {
+      if ((bitfield & (1 << i)) == 0) {
+         return i;
+      }
+   }
+   return -1;
 }
 
 
@@ -165,28 +178,26 @@ static struct st_fragment_program *
 combined_bitmap_fragment_program(GLcontext *ctx)
 {
    struct st_context *st = ctx->st;
-   struct st_fragment_program *stfp;
+   struct st_fragment_program *stfp = st->fp;
 
-   if (!st->bitmap.program) {
-      /* create the basic bitmap fragment program */
-      st->bitmap.program = make_bitmap_fragment_program(ctx);
-   }
-
-   if (st->bitmap.user_prog_sn == st->fp->serialNo) {
-      /* re-use */
-      stfp = st->bitmap.combined_prog;
-   }
-   else {
-      /* Concatenate the bitmap program with the current user-defined program.
+   if (!stfp->bitmap_program) {
+      /*
+       * Generate new program which is the user-defined program prefixed
+       * with the bitmap sampler/kill instructions.
        */
-      stfp = (struct st_fragment_program *)
-         _mesa_combine_programs(ctx,
-                                &st->bitmap.program->Base.Base,
-                                &st->fp->Base.Base);
+      struct st_fragment_program *bitmap_prog;
+      uint sampler;
 
+      sampler = find_free_bit(st->fp->Base.Base.SamplersUsed);
+      bitmap_prog = make_bitmap_fragment_program(ctx, sampler);
+
+      stfp->bitmap_program = (struct st_fragment_program *)
+         _mesa_combine_programs(ctx,
+                                &bitmap_prog->Base.Base, &stfp->Base.Base);
+      stfp->bitmap_program->bitmap_sampler = sampler;
 #if 0
       {
-         struct gl_program *p = &stfp->Base.Base;
+         struct gl_program *p = &stfp->bitmap_program->Base.Base;
          printf("Combined bitmap program:\n");
          _mesa_print_program(p);
          printf("InputsRead: 0x%x\n", p->InputsRead);
@@ -196,11 +207,7 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 #endif
 
       /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp, NULL);
-
-      /* save new program, update serial numbers */
-      st->bitmap.user_prog_sn = st->fp->serialNo;
-      st->bitmap.combined_prog = stfp;
+      st_translate_fragment_program(st, stfp->bitmap_program, NULL);
    }
 
    /* Ideally we'd have updated the pipe constants during the normal
@@ -208,7 +215,7 @@ combined_bitmap_fragment_program(GLcontext *ctx)
     */
    st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
 
-   return stfp;
+   return stfp->bitmap_program;
 }
 
 
@@ -451,10 +458,25 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* vertex shader state: position + texcoord pass-through */
    cso_set_vertex_shader_handle(cso, st->bitmap.vs);
 
-   /* sampler / texture state */
-   cso_single_sampler(cso, 0, &st->bitmap.sampler);
-   cso_single_sampler_done(cso);
-   pipe->set_sampler_textures(pipe, 1, &pt);
+   /* user samplers, plus our bitmap sampler */
+   {
+      struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
+      uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_samplers);
+      uint i;
+      for (i = 0; i < st->state.num_samplers; i++) {
+         samplers[i] = &st->state.samplers[i];
+      }
+      samplers[stfp->bitmap_sampler] = &st->bitmap.sampler;
+      cso_set_samplers(cso, num, (const struct pipe_sampler_state **) samplers);   }
+
+   /* user textures, plus the bitmap texture */
+   {
+      struct pipe_texture *textures[PIPE_MAX_SAMPLERS];
+      uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_textures);
+      memcpy(textures, st->state.sampler_texture, sizeof(textures));
+      textures[stfp->bitmap_sampler] = pt;
+      cso_set_sampler_textures(cso, num, textures);
+   }
 
    /* viewport state: viewport matching window dims */
    {
@@ -771,6 +793,7 @@ st_destroy_bitmap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
+#if 0
    if (st->bitmap.combined_prog) {
       st_delete_program(st->ctx, &st->bitmap.combined_prog->Base.Base);
    }
@@ -778,7 +801,7 @@ st_destroy_bitmap(struct st_context *st)
    if (st->bitmap.program) {
       st_delete_program(st->ctx, &st->bitmap.program->Base.Base);
    }
-
+#endif
    if (st->bitmap.vs) {
       pipe->delete_vs_state(pipe, st->bitmap.vs);
       st->bitmap.vs = NULL;

@@ -69,6 +69,10 @@ struct st_fragment_program
     * outputs match this fragment program's inputs.
     */
    struct translated_vertex_program *vertex_programs;
+
+   /** Program prefixed with glBitmap prologue */
+   struct st_fragment_program *bitmap_program;
+   uint bitmap_sampler;
 };
 
 
