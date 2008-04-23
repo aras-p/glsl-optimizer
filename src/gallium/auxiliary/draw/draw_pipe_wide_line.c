@@ -169,7 +169,7 @@ struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
    wide->stage.next = NULL;
    wide->stage.point = draw_pipe_passthrough_point;
    wide->stage.line = wideline_line;
-   wide->stage.tri = draw_pipe_passthrough_point;
+   wide->stage.tri = draw_pipe_passthrough_tri;
    wide->stage.flush = wideline_flush;
    wide->stage.reset_stipple_counter = wideline_reset_stipple_counter;
    wide->stage.destroy = wideline_destroy;
