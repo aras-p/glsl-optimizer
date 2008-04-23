@@ -38,9 +38,11 @@ struct translate *translate_create( const struct translate_key *key )
 {
    struct translate *translate = NULL;
 
+#if defined(__i386__) || defined(__386__) || defined(i386)
    translate = translate_sse2_create( key );
    if (translate)
       return translate;
+#endif
 
    return translate_generic_create( key );
 }
