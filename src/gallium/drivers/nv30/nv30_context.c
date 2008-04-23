@@ -63,7 +63,12 @@ nv30_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv30_init_state_functions(nv30);
 	nv30_init_miptree_functions(nv30);
 
+	/* Create, configure, and install fallback swtnl path */
 	nv30->draw = draw_create();
+	draw_wide_point_threshold(nv30->draw, 9999999.0);
+	draw_wide_line_threshold(nv30->draw, 9999999.0);
+	draw_enable_line_stipple(nv30->draw, FALSE);
+	draw_enable_point_sprites(nv30->draw, FALSE);
 	draw_set_rasterize_stage(nv30->draw, nv30_draw_render_stage(nv30));
 
 	return &nv30->pipe;
