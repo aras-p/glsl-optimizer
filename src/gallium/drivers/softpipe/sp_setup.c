@@ -719,6 +719,13 @@ void setup_tri( struct setup_context *setup,
 {
    float det = calc_det(v0, v1, v2);
 
+#if DEBUG_VERTS
+   debug_printf("Setup triangle:\n");
+   print_vertex(setup, v0);
+   print_vertex(setup, v1);
+   print_vertex(setup, v2);
+#endif
+
    if (setup->softpipe->no_rast)
       return;
 
@@ -729,13 +736,6 @@ void setup_tri( struct setup_context *setup,
 #if DEBUG_FRAGS
    setup->numFragsEmitted = 0;
    setup->numFragsWritten = 0;
-#endif
-
-#if DEBUG_VERTS
-   debug_printf("Triangle:\n");
-   print_vertex(setup, v0);
-   print_vertex(setup, v1);
-   print_vertex(setup, v2);
 #endif
 
    if (cull_tri( setup, det ))
@@ -935,6 +935,12 @@ setup_line(struct setup_context *setup,
    int dy = y1 - y0;
    int xstep, ystep;
 
+#if DEBUG_VERTS
+   debug_printf("Setup line:\n");
+   print_vertex(setup, v0);
+   print_vertex(setup, v1);
+#endif
+
    if (setup->softpipe->no_rast)
       return;
 
@@ -1056,6 +1062,10 @@ setup_point( struct setup_context *setup,
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
 
+#if DEBUG_VERTS
+   debug_printf("Setup point:\n");
+   print_vertex(setup, v0);
+#endif
 
    if (softpipe->no_rast)
       return;
