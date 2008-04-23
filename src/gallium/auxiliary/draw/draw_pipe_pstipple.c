@@ -44,7 +44,7 @@
 #include "tgsi/util/tgsi_dump.h"
 
 #include "draw_context.h"
-#include "draw_private.h"
+#include "draw_pipe.h"
 
 
 
@@ -320,7 +320,7 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
  * Generate the frag shader we'll use for doing polygon stipple.
  * This will be the user's shader prefixed with a TEX and KIL instruction.
  */
-static void
+static boolean
 generate_pstip_fs(struct pstip_stage *pstip)
 {
    const struct pipe_shader_state *orig_fs = &pstip->fs->state;
@@ -332,6 +332,8 @@ generate_pstip_fs(struct pstip_stage *pstip)
 
    pstip_fs = *orig_fs; /* copy to init */
    pstip_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   if (pstip_fs.tokens == NULL)
+      return FALSE;
 
    memset(&transform, 0, sizeof(transform));
    transform.wincoordInput = -1;
@@ -355,6 +357,8 @@ generate_pstip_fs(struct pstip_stage *pstip)
    assert(pstip->fs->sampler_unit < PIPE_MAX_SAMPLERS);
 
    pstip->fs->pstip_fs = pstip->driver_create_fs_state(pstip->pipe, &pstip_fs);
+
+   return TRUE;
 }
 
 
@@ -404,7 +408,7 @@ pstip_update_texture(struct pstip_stage *pstip)
 /**
  * Create the texture map we'll use for stippling.
  */
-static void
+static boolean
 pstip_create_texture(struct pstip_stage *pstip)
 {
    struct pipe_context *pipe = pstip->pipe;
@@ -421,7 +425,10 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.cpp = 1;
 
    pstip->texture = screen->texture_create(screen, &texTemp);
-   assert(pstip->texture->refcount == 1);
+   if (pstip->texture == NULL)
+      return FALSE;
+
+   return TRUE;
 }
 
 
@@ -430,7 +437,7 @@ pstip_create_texture(struct pstip_stage *pstip)
  * By using a mipmapped texture, we don't have to generate a different
  * texture image for each line size.
  */
-static void
+static boolean
 pstip_create_sampler(struct pstip_stage *pstip)
 {
    struct pipe_sampler_state sampler;
@@ -448,6 +455,10 @@ pstip_create_sampler(struct pstip_stage *pstip)
    sampler.max_lod = 0.0f;
 
    pstip->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
+   if (pstip->sampler_cso == NULL)
+      return FALSE;
+   
+   return TRUE;
 }
 
 
@@ -455,13 +466,15 @@ pstip_create_sampler(struct pstip_stage *pstip)
  * When we're about to draw our first AA line in a batch, this function is
  * called to tell the driver to bind our modified fragment shader.
  */
-static void
+static boolean
 bind_pstip_fragment_shader(struct pstip_stage *pstip)
 {
-   if (!pstip->fs->pstip_fs) {
-      generate_pstip_fs(pstip);
-   }
+   if (!pstip->fs->pstip_fs &&
+       !generate_pstip_fs(pstip))
+      return FALSE;
+
    pstip->driver_bind_fs_state(pstip->pipe, pstip->fs->pstip_fs);
+   return TRUE;
 }
 
 
@@ -473,25 +486,6 @@ pstip_stage( struct draw_stage *stage )
 }
 
 
-static void
-passthrough_point(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->point(stage->next, header);
-}
-
-
-static void
-passthrough_line(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->line(stage->next, header);
-}
-
-
-static void
-passthrough_tri(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 
@@ -505,7 +499,12 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    assert(stage->draw->rasterizer->poly_stipple_enable);
 
    /* bind our fragprog */
-   bind_pstip_fragment_shader(pstip);
+   if (!bind_pstip_fragment_shader(pstip)) {
+      stage->tri = draw_pipe_passthrough_tri;
+      stage->tri(stage, header);
+      return;
+   }
+      
 
    /* how many samplers? */
    /* we'll use sampler/texture[pstip->sampler_unit] for the stipple */
@@ -523,7 +522,7 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
 
    /* now really draw first line */
-   stage->tri = passthrough_tri;
+   stage->tri = draw_pipe_passthrough_tri;
    stage->tri(stage, header);
 }
 
@@ -579,8 +578,8 @@ draw_pstip_stage(struct draw_context *draw)
 
    pstip->stage.draw = draw;
    pstip->stage.next = NULL;
-   pstip->stage.point = passthrough_point;
-   pstip->stage.line = passthrough_line;
+   pstip->stage.point = draw_pipe_passthrough_point;
+   pstip->stage.line = draw_pipe_passthrough_line;
    pstip->stage.tri = pstip_first_tri;
    pstip->stage.flush = pstip_flush;
    pstip->stage.reset_stipple_counter = pstip_reset_stipple_counter;
@@ -705,7 +704,7 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
  * into the draw module's pipeline.  This will not be used if the
  * hardware has native support for AA lines.
  */
-void
+boolean
 draw_install_pstipple_stage(struct draw_context *draw,
                             struct pipe_context *pipe)
 {
@@ -717,14 +716,19 @@ draw_install_pstipple_stage(struct draw_context *draw,
     * Create / install AA line drawing / prim stage
     */
    pstip = draw_pstip_stage( draw );
-   assert(pstip);
+   if (pstip == NULL)
+      goto fail;
+
    draw->pipeline.pstipple = &pstip->stage;
 
    pstip->pipe = pipe;
 
    /* create special texture, sampler state */
-   pstip_create_texture(pstip);
-   pstip_create_sampler(pstip);
+   if (!pstip_create_texture(pstip))
+      goto fail;
+
+   if (!pstip_create_sampler(pstip))
+      goto fail;
 
    /* save original driver functions */
    pstip->driver_create_fs_state = pipe->create_fs_state;
@@ -743,4 +747,12 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->bind_sampler_states = pstip_bind_sampler_states;
    pipe->set_sampler_textures = pstip_set_sampler_textures;
    pipe->set_polygon_stipple = pstip_set_polygon_stipple;
+
+   return TRUE;
+
+ fail:
+   if (pstip)
+      pstip->stage.destroy( &pstip->stage );
+
+   return FALSE;
 }

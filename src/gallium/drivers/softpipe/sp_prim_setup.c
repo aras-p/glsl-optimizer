@@ -39,7 +39,7 @@
 #include "sp_setup.h"
 #include "sp_state.h"
 #include "sp_prim_setup.h"
-#include "draw/draw_private.h"
+#include "draw/draw_pipe.h"
 #include "draw/draw_vertex.h"
 #include "pipe/p_util.h"
 

@@ -299,13 +299,6 @@ static boolean setup_sort_vertices( struct setup_context *setup,
                                     const float (*v1)[4],
                                     const float (*v2)[4] )
 {
-#if DEBUG_VERTS
-   debug_printf("Triangle:\n");
-   print_vertex(setup, v0);
-   print_vertex(setup, v1);
-   print_vertex(setup, v2);
-#endif
-
    setup->vprovoke = v2;
 
    /* determine bottom to top order of vertices */
@@ -726,6 +719,9 @@ void setup_tri( struct setup_context *setup,
 {
    float det = calc_det(v0, v1, v2);
 
+   if (setup->softpipe->no_rast)
+      return;
+
    /*
    debug_printf("%s\n", __FUNCTION__ );
    */
@@ -735,7 +731,12 @@ void setup_tri( struct setup_context *setup,
    setup->numFragsWritten = 0;
 #endif
 
-
+#if DEBUG_VERTS
+   debug_printf("Triangle:\n");
+   print_vertex(setup, v0);
+   print_vertex(setup, v1);
+   print_vertex(setup, v2);
+#endif
 
    if (cull_tri( setup, det ))
       return;
@@ -934,6 +935,9 @@ setup_line(struct setup_context *setup,
    int dy = y1 - y0;
    int xstep, ystep;
 
+   if (setup->softpipe->no_rast)
+      return;
+
    if (dx == 0 && dy == 0)
       return;
 
@@ -1051,6 +1055,10 @@ setup_point( struct setup_context *setup,
    const float y = v0[0][1];
    const struct vertex_info *vinfo = softpipe_get_vertex_info(softpipe);
    uint fragSlot;
+
+
+   if (softpipe->no_rast)
+      return;
 
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.

@@ -31,6 +31,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
+#include "pipe/p_error.h"
 
 
 #ifdef	__cplusplus
@@ -45,47 +46,47 @@ void cso_destroy_context( struct cso_context *cso );
 
 
 
-void cso_set_blend( struct cso_context *cso,
-                    const struct pipe_blend_state *blend );
+enum pipe_error cso_set_blend( struct cso_context *cso,
+                               const struct pipe_blend_state *blend );
 void cso_save_blend(struct cso_context *cso);
 void cso_restore_blend(struct cso_context *cso);
 
 
 
-void cso_set_depth_stencil_alpha( struct cso_context *cso,
-                                  const struct pipe_depth_stencil_alpha_state *dsa );
+enum pipe_error cso_set_depth_stencil_alpha( struct cso_context *cso,
+                                             const struct pipe_depth_stencil_alpha_state *dsa );
 void cso_save_depth_stencil_alpha(struct cso_context *cso);
 void cso_restore_depth_stencil_alpha(struct cso_context *cso);
 
 
 
-void cso_set_rasterizer( struct cso_context *cso,
-                         const struct pipe_rasterizer_state *rasterizer );
+enum pipe_error cso_set_rasterizer( struct cso_context *cso,
+                                    const struct pipe_rasterizer_state *rasterizer );
 void cso_save_rasterizer(struct cso_context *cso);
 void cso_restore_rasterizer(struct cso_context *cso);
 
 
 
-void cso_set_samplers( struct cso_context *cso,
-                       unsigned count,
-                       const struct pipe_sampler_state **states );
+enum pipe_error cso_set_samplers( struct cso_context *cso,
+                                  unsigned count,
+                                  const struct pipe_sampler_state **states );
 void cso_save_samplers(struct cso_context *cso);
 void cso_restore_samplers(struct cso_context *cso);
 
 /* Alternate interface to support state trackers that like to modify
  * samplers one at a time:
  */
-void cso_single_sampler( struct cso_context *cso,
-                         unsigned nr,
-                         const struct pipe_sampler_state *states );
+enum pipe_error cso_single_sampler( struct cso_context *cso,
+                                    unsigned nr,
+                                    const struct pipe_sampler_state *states );
 
 void cso_single_sampler_done( struct cso_context *cso );
 
 
 
-void cso_set_sampler_textures( struct cso_context *cso,
-                               uint count,
-                               struct pipe_texture **textures );
+enum pipe_error cso_set_sampler_textures( struct cso_context *cso,
+                                          uint count,
+                                          struct pipe_texture **textures );
 void cso_save_sampler_textures( struct cso_context *cso );
 void cso_restore_sampler_textures( struct cso_context *cso );
 
@@ -96,34 +97,37 @@ void cso_restore_sampler_textures( struct cso_context *cso );
  * (eg mesa's internall-generated texenv programs), it will be up to
  * the state tracker to implement their own specialized caching.
  */
-void cso_set_fragment_shader( struct cso_context *cso,
-                              const struct pipe_shader_state *shader );
+enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
+                                               void *handle );
+enum pipe_error cso_set_fragment_shader( struct cso_context *cso,
+                                         const struct pipe_shader_state *shader );
 void cso_save_fragment_shader(struct cso_context *cso);
 void cso_restore_fragment_shader(struct cso_context *cso);
 
 
-
-void cso_set_vertex_shader( struct cso_context *cso,
-                            const struct pipe_shader_state *shader );
+enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
+                                             void *handle );
+enum pipe_error cso_set_vertex_shader( struct cso_context *cso,
+                                       const struct pipe_shader_state *shader );
 void cso_save_vertex_shader(struct cso_context *cso);
 void cso_restore_vertex_shader(struct cso_context *cso);
 
 
 
-void cso_set_framebuffer(struct cso_context *cso,
-                         const struct pipe_framebuffer_state *fb);
+enum pipe_error cso_set_framebuffer(struct cso_context *cso,
+                                    const struct pipe_framebuffer_state *fb);
 void cso_save_framebuffer(struct cso_context *cso);
 void cso_restore_framebuffer(struct cso_context *cso);
 
 
-void cso_set_viewport(struct cso_context *cso,
-                      const struct pipe_viewport_state *vp);
+enum pipe_error cso_set_viewport(struct cso_context *cso,
+                                 const struct pipe_viewport_state *vp);
 void cso_save_viewport(struct cso_context *cso);
 void cso_restore_viewport(struct cso_context *cso);
 
 
-void cso_set_blend_color(struct cso_context *cso,
-                         const struct pipe_blend_color *bc);
+enum pipe_error cso_set_blend_color(struct cso_context *cso,
+                                    const struct pipe_blend_color *bc);
 
 
 #ifdef	__cplusplus

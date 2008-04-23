@@ -106,5 +106,7 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
 
 extern void draw_compute_vertex_size(struct vertex_info *vinfo);
 
+void draw_dump_emitted_vertex(const struct vertex_info *vinfo, 
+                              const uint8_t *data);
 
 #endif /* DRAW_VERTEX_H */

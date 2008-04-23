@@ -77,7 +77,8 @@ shade_quad(
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
    struct tgsi_exec_machine *machine = &qss->machine;
-
+   boolean z_written;
+   
    /* Consts do not require 16 byte alignment. */
    machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
@@ -89,7 +90,7 @@ shade_quad(
 				    quad );
 
    /* store outputs */
-   boolean z_written = FALSE;
+   z_written = FALSE;
    {
       const ubyte *sem_name = softpipe->fs->info.output_semantic_name;
       const ubyte *sem_index = softpipe->fs->info.output_semantic_index;

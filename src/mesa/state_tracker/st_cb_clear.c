@@ -195,7 +195,6 @@ clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
    const GLfloat x0 = ctx->DrawBuffer->_Xmin;
    const GLfloat x1 = ctx->DrawBuffer->_Xmax;
    GLfloat y0, y1;
@@ -222,6 +221,8 @@ clear_with_quad(GLcontext *ctx,
    cso_save_depth_stencil_alpha(st->cso_context);
    cso_save_rasterizer(st->cso_context);
    cso_save_viewport(st->cso_context);
+   cso_save_fragment_shader(st->cso_context);
+   cso_save_vertex_shader(st->cso_context);
 
    /* blend state: RGBA masking */
    {
@@ -273,8 +274,8 @@ clear_with_quad(GLcontext *ctx,
    cso_set_rasterizer(st->cso_context, &st->clear.raster);
    cso_set_viewport(st->cso_context, &st->clear.viewport);
 
-   pipe->bind_fs_state(pipe, st->clear.fs);
-   pipe->bind_vs_state(pipe, st->clear.vs);
+   cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
+   cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
@@ -284,9 +285,8 @@ clear_with_quad(GLcontext *ctx,
    cso_restore_depth_stencil_alpha(st->cso_context);
    cso_restore_rasterizer(st->cso_context);
    cso_restore_viewport(st->cso_context);
-   /* these don't go through cso yet */
-   pipe->bind_fs_state(pipe, st->fp->driver_shader);
-   pipe->bind_vs_state(pipe, st->vp->driver_shader);
+   cso_restore_fragment_shader(st->cso_context);
+   cso_restore_vertex_shader(st->cso_context);
 }
 
 
@@ -406,7 +406,7 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       /* clear whole buffer w/out masking */
       struct st_renderbuffer *strb = st_renderbuffer(rb);
       uint clearValue;
-      util_pack_color(ctx->Color.ClearColor, strb->surface->format, &clearValue);
+      util_pack_color(ctx->Color.ClearColor, PIPE_FORMAT_A8R8G8B8_UNORM, &clearValue);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }

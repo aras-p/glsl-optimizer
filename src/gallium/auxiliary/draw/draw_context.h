@@ -42,36 +42,10 @@
 
 
 struct pipe_context;
-struct vertex_buffer;
-struct vertex_info;
 struct draw_context;
 struct draw_stage;
 struct draw_vertex_shader;
 
-
-/**
- * Clipmask flags
- */
-/*@{*/
-#define CLIP_RIGHT_BIT   0x01
-#define CLIP_LEFT_BIT    0x02
-#define CLIP_TOP_BIT     0x04
-#define CLIP_BOTTOM_BIT  0x08
-#define CLIP_NEAR_BIT    0x10
-#define CLIP_FAR_BIT     0x20
-/*@}*/
-
-/**
- * Bitshift for each clip flag
- */
-/*@{*/
-#define CLIP_RIGHT_SHIFT 	0
-#define CLIP_LEFT_SHIFT 	1
-#define CLIP_TOP_SHIFT  	2
-#define CLIP_BOTTOM_SHIFT       3
-#define CLIP_NEAR_SHIFT  	4
-#define CLIP_FAR_SHIFT  	5
-/*@}*/
 
 
 struct draw_context *draw_create( void );
@@ -99,15 +73,13 @@ void draw_enable_line_stipple(struct draw_context *draw, boolean enable);
 void draw_enable_point_sprites(struct draw_context *draw, boolean enable);
 
 
-boolean draw_use_sse(struct draw_context *draw);
-
-void
+boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe);
 
-void
+boolean
 draw_install_aapoint_stage(struct draw_context *draw, struct pipe_context *pipe);
 
-void
+boolean
 draw_install_pstipple_stage(struct draw_context *draw, struct pipe_context *pipe);
 
 
@@ -168,17 +140,24 @@ void draw_arrays(struct draw_context *draw, unsigned prim,
 
 void draw_flush(struct draw_context *draw);
 
-/***********************************************************************
- * draw_debug.c 
+
+/*******************************************************************************
+ * Driver backend interface 
  */
-boolean draw_validate_prim( unsigned prim, unsigned length );
-unsigned draw_trim_prim( unsigned mode, unsigned count );
-
-
-
-
 struct vbuf_render;
 void draw_set_render( struct draw_context *draw, 
 		      struct vbuf_render *render );
+
+void draw_set_driver_clipping( struct draw_context *draw,
+                               boolean bypass_clipping );
+
+/*******************************************************************************
+ * Draw pipeline 
+ */
+boolean draw_need_pipeline(const struct draw_context *draw,
+                           const struct pipe_rasterizer_state *rasterizer,
+                           unsigned prim );
+
+
 
 #endif /* DRAW_CONTEXT_H */

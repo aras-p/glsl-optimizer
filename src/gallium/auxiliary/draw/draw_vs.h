@@ -35,9 +35,38 @@
 #include "draw_private.h"
 
 
-struct draw_vertex_shader;
 struct draw_context;
 struct pipe_shader_state;
+
+/**
+ * Private version of the compiled vertex_shader
+ */
+struct draw_vertex_shader {
+
+   /* This member will disappear shortly:
+    */
+   struct pipe_shader_state   state;
+
+   struct tgsi_shader_info info;
+
+   void (*prepare)( struct draw_vertex_shader *shader,
+		    struct draw_context *draw );
+
+   /* Run the shader - this interface will get cleaned up in the
+    * future:
+    */
+   void (*run_linear)( struct draw_vertex_shader *shader,
+		       const float (*input)[4],
+		       float (*output)[4],
+		       const float (*constants)[4],
+		       unsigned count,
+		       unsigned input_stride,
+		       unsigned output_stride );
+
+
+   void (*delete)( struct draw_vertex_shader * );
+};
+
 
 struct draw_vertex_shader *
 draw_create_vs_exec(struct draw_context *draw,
@@ -52,32 +81,7 @@ draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ);
 
 
-/* Should be part of the generated shader:
- */
-static INLINE unsigned
-compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
-{
-   unsigned mask = 0x0;
-   unsigned i;
-
-   /* Do the hardwired planes first:
-    */
-   if (-clip[0] + clip[3] < 0) mask |= CLIP_RIGHT_BIT;
-   if ( clip[0] + clip[3] < 0) mask |= CLIP_LEFT_BIT;
-   if (-clip[1] + clip[3] < 0) mask |= CLIP_TOP_BIT;
-   if ( clip[1] + clip[3] < 0) mask |= CLIP_BOTTOM_BIT;
-   if (-clip[2] + clip[3] < 0) mask |= CLIP_FAR_BIT;
-   if ( clip[2] + clip[3] < 0) mask |= CLIP_NEAR_BIT;
-
-   /* Followed by any remaining ones:
-    */
-   for (i = 6; i < nr; i++) {
-      if (dot4(clip, plane[i]) < 0) 
-         mask |= (1<<i);
-   }
-
-   return mask;
-}
-
+#define MAX_TGSI_VERTICES 4
+   
 
 #endif

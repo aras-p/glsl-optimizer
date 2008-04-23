@@ -118,13 +118,21 @@ mm_bufmgr_create_from_buffer(struct pb_buffer *buffer,
  * Slab sub-allocator.
  */
 struct pb_manager *
-pb_slab_manager_create(struct pb_manager *provider, 
-                       const struct pb_desc *desc,
-                       size_t smallestSize,
-                       size_t numSizes,
-                       size_t desiredNumBuffers,
-                       size_t maxSlabSize,
-                       size_t pageAlignment);
+pb_slab_manager_create(struct pb_manager *provider,
+                       size_t bufSize,
+                       size_t slabSize,
+                       const struct pb_desc *desc);
+
+/**
+ * Allow a range of buffer size, by aggregating multiple slabs sub-allocators 
+ * with different bucket sizes.
+ */
+struct pb_manager *
+pb_slab_range_manager_create(struct pb_manager *provider,
+                             size_t minBufSize,
+                             size_t maxBufSize,
+                             size_t slabSize,
+                             const struct pb_desc *desc);
 
 
 /** 

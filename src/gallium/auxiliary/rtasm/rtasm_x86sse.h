@@ -43,6 +43,7 @@ struct x86_function {
    unsigned char *csr;
    unsigned stack_offset;
    int need_emms;
+   unsigned char error_overflow[4];
    const char *fn;
 };
 
@@ -165,6 +166,7 @@ void mmx_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg sr
 
 void sse2_cvtps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_cvttps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_cvtdq2ps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packsswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -202,6 +204,7 @@ void sse_rsqrtss( struct x86_function *p, struct x86_reg dst, struct x86_reg src
 void sse_shufps( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0,
                  unsigned char shuf );
 void sse_pmovmskb( struct x86_function *p, struct x86_reg dest, struct x86_reg src );
+void sse2_punpcklbw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
 void x86_add( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_and( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -211,6 +214,7 @@ void x86_inc( struct x86_function *p, struct x86_reg reg );
 void x86_lea( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_mov( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_mul( struct x86_function *p, struct x86_reg src );
+void x86_imul( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_or( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_pop( struct x86_function *p, struct x86_reg reg );
 void x86_push( struct x86_function *p, struct x86_reg reg );

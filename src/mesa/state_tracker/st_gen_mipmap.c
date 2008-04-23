@@ -95,12 +95,6 @@ st_render_mipmap(struct st_context *st,
    util_gen_mipmap(st->gen_mipmap, pt, face, baseLevel, lastLevel,
                    PIPE_TEX_FILTER_LINEAR);
 
-   /* shaders don't go through CSO yet */
-   if (st->fp)
-      pipe->bind_fs_state(pipe, st->fp->driver_shader);
-   if (st->vp)
-      pipe->bind_vs_state(pipe, st->vp->driver_shader);
-
    return TRUE;
 }
 

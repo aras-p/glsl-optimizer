@@ -30,7 +30,7 @@
  * \file
  * A buffer manager that wraps buffers in fenced buffers.
  * 
- * \author José Fonseca <jrfonseca@tungstengraphics.dot.com>
+ * \author JosÃ© Fonseca <jrfonseca@tungstengraphics.dot.com>
  */
 
 
@@ -101,7 +101,8 @@ fenced_bufmgr_destroy(struct pb_manager *mgr)
 
    fenced_buffer_list_destroy(fenced_mgr->fenced_list);
 
-   fenced_mgr->provider->destroy(fenced_mgr->provider);
+   if(fenced_mgr->provider)
+      fenced_mgr->provider->destroy(fenced_mgr->provider);
    
    FREE(fenced_mgr);
 }
@@ -113,6 +114,9 @@ fenced_bufmgr_create(struct pb_manager *provider,
 {
    struct fenced_pb_manager *fenced_mgr;
 
+   if(!provider)
+      return NULL;
+   
    fenced_mgr = (struct fenced_pb_manager *)CALLOC(1, sizeof(*fenced_mgr));
    if (!fenced_mgr)
       return NULL;

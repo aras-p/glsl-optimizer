@@ -31,16 +31,86 @@
   */
 
 #include "pipe/p_util.h"
-#include "draw/draw_context.h"
 #include "draw/draw_private.h"
-#include "draw/draw_vertex.h"
-#include "draw/draw_pt.h"
+#include "draw/draw_pipe.h"
 
 
-/**
- * Add a point to the primitive queue.
- * \param i0  index into user's vertex arrays
- */
+
+boolean draw_pipeline_init( struct draw_context *draw )
+{
+   /* create pipeline stages */
+   draw->pipeline.wide_line  = draw_wide_line_stage( draw );
+   draw->pipeline.wide_point = draw_wide_point_stage( draw );
+   draw->pipeline.stipple   = draw_stipple_stage( draw );
+   draw->pipeline.unfilled  = draw_unfilled_stage( draw );
+   draw->pipeline.twoside   = draw_twoside_stage( draw );
+   draw->pipeline.offset    = draw_offset_stage( draw );
+   draw->pipeline.clip      = draw_clip_stage( draw );
+   draw->pipeline.flatshade = draw_flatshade_stage( draw );
+   draw->pipeline.cull      = draw_cull_stage( draw );
+   draw->pipeline.validate  = draw_validate_stage( draw );
+   draw->pipeline.first     = draw->pipeline.validate;
+
+   if (!draw->pipeline.wide_line ||
+       !draw->pipeline.wide_point ||
+       !draw->pipeline.stipple ||
+       !draw->pipeline.unfilled ||
+       !draw->pipeline.twoside ||
+       !draw->pipeline.offset ||
+       !draw->pipeline.clip ||
+       !draw->pipeline.flatshade ||
+       !draw->pipeline.cull ||
+       !draw->pipeline.validate)
+      return FALSE;
+
+   /* these defaults are oriented toward the needs of softpipe */
+   draw->pipeline.wide_point_threshold = 1000000.0; /* infinity */
+   draw->pipeline.wide_line_threshold = 1.0;
+   draw->pipeline.line_stipple = TRUE;
+   draw->pipeline.point_sprite = TRUE;
+
+   return TRUE;
+}
+
+
+void draw_pipeline_destroy( struct draw_context *draw )
+{
+   if (draw->pipeline.wide_line)
+      draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
+   if (draw->pipeline.wide_point)
+      draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
+   if (draw->pipeline.stipple)
+      draw->pipeline.stipple->destroy( draw->pipeline.stipple );
+   if (draw->pipeline.unfilled)
+      draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
+   if (draw->pipeline.twoside)
+      draw->pipeline.twoside->destroy( draw->pipeline.twoside );
+   if (draw->pipeline.offset)
+      draw->pipeline.offset->destroy( draw->pipeline.offset );
+   if (draw->pipeline.clip)
+      draw->pipeline.clip->destroy( draw->pipeline.clip );
+   if (draw->pipeline.flatshade)
+      draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
+   if (draw->pipeline.cull)
+      draw->pipeline.cull->destroy( draw->pipeline.cull );
+   if (draw->pipeline.validate)
+      draw->pipeline.validate->destroy( draw->pipeline.validate );
+   if (draw->pipeline.aaline)
+      draw->pipeline.aaline->destroy( draw->pipeline.aaline );
+   if (draw->pipeline.aapoint)
+      draw->pipeline.aapoint->destroy( draw->pipeline.aapoint );
+   if (draw->pipeline.pstipple)
+      draw->pipeline.pstipple->destroy( draw->pipeline.pstipple );
+   if (draw->pipeline.rasterize)
+      draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
+}
+
+
+
+
+
+
+
 static void do_point( struct draw_context *draw,
 		      const char *v0 )
 {
@@ -55,11 +125,6 @@ static void do_point( struct draw_context *draw,
 }
 
 
-/**
- * Add a line to the primitive queue.
- * \param i0  index into user's vertex arrays
- * \param i1  index into user's vertex arrays
- */
 static void do_line( struct draw_context *draw,
 		     const char *v0,
 		     const char *v1 )
@@ -75,9 +140,7 @@ static void do_line( struct draw_context *draw,
    draw->pipeline.first->line( draw->pipeline.first, &prim );
 }
 
-/**
- * Add a triangle to the primitive queue.
- */
+
 static void do_triangle( struct draw_context *draw,
 			 char *v0,
 			 char *v1,
@@ -94,27 +157,10 @@ static void do_triangle( struct draw_context *draw,
                      (prim.v[2]->edgeflag << 2));
    prim.pad = 0;
 
-   if (0) debug_printf("tri ef: %d %d %d\n", 
-                       prim.v[0]->edgeflag,
-                       prim.v[1]->edgeflag,
-                       prim.v[2]->edgeflag);
-   
    draw->pipeline.first->tri( draw->pipeline.first, &prim );
 }
 
 
-
-void draw_pt_reset_vertex_ids( struct draw_context *draw )
-{
-   unsigned i;
-   char *verts = draw->pt.pipeline.verts;
-   unsigned stride = draw->pt.pipeline.vertex_stride;
-
-   for (i = 0; i < draw->pt.pipeline.vertex_count; i++) {
-      ((struct vertex_header *)verts)->vertex_id = UNDEFINED_VERTEX_ID;
-      verts += stride;
-   }
-}
 
 
 /* Code to run the pipeline on a fairly arbitary collection of vertices.
@@ -127,19 +173,20 @@ void draw_pt_reset_vertex_ids( struct draw_context *draw )
  * This code provides a callback to reset the vertex id's which the
  * draw_vbuf.c code uses when it has to perform a flush.
  */
-void draw_pt_run_pipeline( struct draw_context *draw,
-                           unsigned prim,
-                           char *verts,
-                           unsigned stride,
-                           unsigned vertex_count,
-                           const ushort *elts,
-                           unsigned count )
+void draw_pipeline_run( struct draw_context *draw,
+                        unsigned prim,
+                        struct vertex_header *vertices,
+                        unsigned vertex_count,
+                        unsigned stride,
+                        const ushort *elts,
+                        unsigned count )
 {
+   char *verts = (char *)vertices;
    unsigned i;
 
-   draw->pt.pipeline.verts = verts;
-   draw->pt.pipeline.vertex_stride = stride;
-   draw->pt.pipeline.vertex_count = vertex_count;
+   draw->pipeline.verts = verts;
+   draw->pipeline.vertex_stride = stride;
+   draw->pipeline.vertex_count = vertex_count;
    
    switch (prim) {
    case PIPE_PRIM_POINTS:
@@ -162,7 +209,15 @@ void draw_pt_run_pipeline( struct draw_context *draw,
       break;
    }
    
-   draw->pt.pipeline.verts = NULL;
-   draw->pt.pipeline.vertex_count = 0;
+   draw->pipeline.verts = NULL;
+   draw->pipeline.vertex_count = 0;
 }
 
+
+
+void draw_pipeline_flush( struct draw_context *draw, 
+                          unsigned flags )
+{
+   draw->pipeline.first->flush( draw->pipeline.first, flags );
+   draw->pipeline.first = draw->pipeline.validate;
+}

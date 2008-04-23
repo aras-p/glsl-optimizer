@@ -315,7 +315,7 @@ st_translate_vertex_program(struct st_context *st,
  * \param tokensOut  destination for TGSI tokens
  * \return  pointer to cached pipe_shader object.
  */
-const struct cso_fragment_shader *
+void
 st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *stfp,
                               const GLuint inputMapping[])
@@ -325,7 +325,6 @@ st_translate_fragment_program(struct st_context *st,
    GLuint outputMapping[FRAG_RESULT_MAX];
    GLuint defaultInputMapping[FRAG_ATTRIB_MAX];
    struct pipe_shader_state fs;
-   const struct cso_fragment_shader *cso;
    GLuint interpMode[16];  /* XXX size? */
    GLuint attr;
    const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
@@ -475,7 +474,5 @@ st_translate_fragment_program(struct st_context *st,
 
    if (TGSI_DEBUG)
       tgsi_dump( fs.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
-
-   return cso;
 }
 

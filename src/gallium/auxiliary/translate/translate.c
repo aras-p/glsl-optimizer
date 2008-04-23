@@ -30,84 +30,19 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "draw_private.h"
-#include "draw_context.h"
+#include "pipe/p_util.h"
+#include "pipe/p_state.h"
+#include "translate.h"
 
-
-
-static void
-draw_prim_info(unsigned prim, unsigned *first, unsigned *incr)
+struct translate *translate_create( const struct translate_key *key )
 {
-   assert(prim >= PIPE_PRIM_POINTS);
-   assert(prim <= PIPE_PRIM_POLYGON);
+   struct translate *translate = NULL;
 
-   switch (prim) {
-   case PIPE_PRIM_POINTS:
-      *first = 1;
-      *incr = 1;
-      break;
-   case PIPE_PRIM_LINES:
-      *first = 2;
-      *incr = 2;
-      break;
-   case PIPE_PRIM_LINE_STRIP:
-      *first = 2;
-      *incr = 1;
-      break;
-   case PIPE_PRIM_LINE_LOOP:
-      *first = 2;
-      *incr = 1;
-      break;
-   case PIPE_PRIM_TRIANGLES:
-      *first = 3;
-      *incr = 3;
-      break;
-   case PIPE_PRIM_TRIANGLE_STRIP:
-      *first = 3;
-      *incr = 1;
-      break;
-   case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
-      *first = 3;
-      *incr = 1;
-      break;
-   case PIPE_PRIM_QUADS:
-      *first = 4;
-      *incr = 4;
-      break;
-   case PIPE_PRIM_QUAD_STRIP:
-      *first = 4;
-      *incr = 2;
-      break;
-   default:
-      assert(0);
-      *first = 1;
-      *incr = 1;
-      break;
-   }
+#if defined(__i386__) || defined(__386__) || defined(i386)
+   translate = translate_sse2_create( key );
+   if (translate)
+      return translate;
+#endif
+
+   return translate_generic_create( key );
 }
-
-
-unsigned 
-draw_trim_prim( unsigned mode, unsigned count )
-{
-   unsigned length, first, incr;
-
-   draw_prim_info( mode, &first, &incr );
-
-   if (count < first)
-      length = 0;
-   else
-      length = count - (count - first) % incr; 
-
-   return length;
-}
-
-
-boolean
-draw_validate_prim( unsigned mode, unsigned count )
-{
-   return (count > 0 &&
-           count == draw_trim_prim( mode, count ));
-}
-

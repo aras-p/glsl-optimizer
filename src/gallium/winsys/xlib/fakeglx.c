@@ -1504,6 +1504,13 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
 #endif
       }
 
+      if (MakeCurrent_PrevContext == ctx &&
+          MakeCurrent_PrevDrawable == draw &&
+          MakeCurrent_PrevReadable == read &&
+          MakeCurrent_PrevDrawBuffer == drawBuffer &&
+          MakeCurrent_PrevReadBuffer == readBuffer)
+         return True;
+          
       MakeCurrent_PrevContext = ctx;
       MakeCurrent_PrevDrawable = draw;
       MakeCurrent_PrevReadable = read;

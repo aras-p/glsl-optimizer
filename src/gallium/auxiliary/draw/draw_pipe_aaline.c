@@ -43,6 +43,7 @@
 
 #include "draw_context.h"
 #include "draw_private.h"
+#include "draw_pipe.h"
 
 
 /**
@@ -333,11 +334,10 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
  * Generate the frag shader we'll use for drawing AA lines.
  * This will be the user's shader plus some texture/modulate instructions.
  */
-static void
+static boolean
 generate_aaline_fs(struct aaline_stage *aaline)
 {
    const struct pipe_shader_state *orig_fs = &aaline->fs->state;
-   //struct draw_context *draw = aaline->stage.draw;
    struct pipe_shader_state aaline_fs;
    struct aa_transform_context transform;
 
@@ -345,6 +345,8 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline_fs = *orig_fs; /* copy to init */
    aaline_fs.tokens = MALLOC(sizeof(struct tgsi_token) * MAX);
+   if (aaline_fs.tokens == NULL)
+      return FALSE;
 
    memset(&transform, 0, sizeof(transform));
    transform.colorOutput = -1;
@@ -369,15 +371,18 @@ generate_aaline_fs(struct aaline_stage *aaline)
 
    aaline->fs->aaline_fs
       = aaline->driver_create_fs_state(aaline->pipe, &aaline_fs);
+   if (aaline->fs->aaline_fs == NULL)
+      return FALSE;
 
    aaline->fs->generic_attrib = transform.maxGeneric + 1;
+   return TRUE;
 }
 
 
 /**
  * Create the texture map we'll use for antialiasing the lines.
  */
-static void
+static boolean
 aaline_create_texture(struct aaline_stage *aaline)
 {
    struct pipe_context *pipe = aaline->pipe;
@@ -395,6 +400,8 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.cpp = 1;
 
    aaline->texture = screen->texture_create(screen, &texTemp);
+   if (!aaline->texture)
+      return FALSE;
 
    /* Fill in mipmap images.
     * Basically each level is solid opaque, except for the outermost
@@ -410,6 +417,8 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       surface = screen->get_tex_surface(screen, aaline->texture, 0, level, 0);
       data = pipe_surface_map(surface);
+      if (data == NULL)
+         return FALSE;
 
       for (i = 0; i < size; i++) {
          for (j = 0; j < size; j++) {
@@ -435,6 +444,7 @@ aaline_create_texture(struct aaline_stage *aaline)
       pipe_surface_reference(&surface, NULL);
       pipe->texture_update(pipe, aaline->texture, 0, (1 << level));
    }
+   return TRUE;
 }
 
 
@@ -443,7 +453,7 @@ aaline_create_texture(struct aaline_stage *aaline)
  * By using a mipmapped texture, we don't have to generate a different
  * texture image for each line size.
  */
-static void
+static boolean
 aaline_create_sampler(struct aaline_stage *aaline)
 {
    struct pipe_sampler_state sampler;
@@ -461,6 +471,10 @@ aaline_create_sampler(struct aaline_stage *aaline)
    sampler.max_lod = MAX_TEXTURE_LEVEL;
 
    aaline->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
+   if (aaline->sampler_cso == NULL)
+      return FALSE;
+
+   return TRUE;
 }
 
 
@@ -468,13 +482,15 @@ aaline_create_sampler(struct aaline_stage *aaline)
  * When we're about to draw our first AA line in a batch, this function is
  * called to tell the driver to bind our modified fragment shader.
  */
-static void
+static boolean
 bind_aaline_fragment_shader(struct aaline_stage *aaline)
 {
-   if (!aaline->fs->aaline_fs) {
-      generate_aaline_fs(aaline);
-   }
+   if (!aaline->fs->aaline_fs && 
+       !generate_aaline_fs(aaline))
+      return FALSE;
+
    aaline->driver_bind_fs_state(aaline->pipe, aaline->fs->aaline_fs);
+   return TRUE;
 }
 
 
@@ -483,20 +499,6 @@ static INLINE struct aaline_stage *
 aaline_stage( struct draw_stage *stage )
 {
    return (struct aaline_stage *) stage;
-}
-
-
-static void
-passthrough_point(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->point(stage->next, header);
-}
-
-
-static void
-passthrough_tri(struct draw_stage *stage, struct prim_header *header)
-{
-   stage->next->tri(stage->next, header);
 }
 
 
@@ -637,7 +639,11 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    /*
     * Bind (generate) our fragprog, sampler and texture
     */
-   bind_aaline_fragment_shader(aaline);
+   if (!bind_aaline_fragment_shader(aaline)) {
+      stage->line = draw_pipe_passthrough_line;
+      stage->line(stage, header);
+      return;
+   }
 
    /* update vertex attrib info */
    aaline->tex_slot = draw->num_vs_outputs;
@@ -701,9 +707,11 @@ aaline_destroy(struct draw_stage *stage)
 {
    struct aaline_stage *aaline = aaline_stage(stage);
 
-   aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
+   if (aaline->sampler_cso)
+      aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
 
-   pipe_texture_release(&aaline->texture);
+   if (aaline->texture)
+      pipe_texture_release(&aaline->texture);
 
    draw_free_temp_verts( stage );
 
@@ -715,19 +723,28 @@ static struct aaline_stage *
 draw_aaline_stage(struct draw_context *draw)
 {
    struct aaline_stage *aaline = CALLOC_STRUCT(aaline_stage);
+   if (aaline == NULL)
+      return NULL;
 
-   draw_alloc_temp_verts( &aaline->stage, 8 );
+   if (!draw_alloc_temp_verts( &aaline->stage, 8 ))
+      goto fail;
 
    aaline->stage.draw = draw;
    aaline->stage.next = NULL;
-   aaline->stage.point = passthrough_point;
+   aaline->stage.point = draw_pipe_passthrough_point;
    aaline->stage.line = aaline_first_line;
-   aaline->stage.tri = passthrough_tri;
+   aaline->stage.tri = draw_pipe_passthrough_tri;
    aaline->stage.flush = aaline_flush;
    aaline->stage.reset_stipple_counter = aaline_reset_stipple_counter;
    aaline->stage.destroy = aaline_destroy;
 
    return aaline;
+
+ fail:
+   if (aaline)
+      aaline_destroy(&aaline->stage);
+
+   return NULL;
 }
 
 
@@ -749,13 +766,13 @@ aaline_create_fs_state(struct pipe_context *pipe,
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = CALLOC_STRUCT(aaline_fragment_shader);
+   if (aafs == NULL)
+      return NULL;
 
-   if (aafs) {
-      aafs->state = *fs;
+   aafs->state = *fs;
 
-      /* pass-through */
-      aafs->driver_fs = aaline->driver_create_fs_state(aaline->pipe, fs);
-   }
+   /* pass-through */
+   aafs->driver_fs = aaline->driver_create_fs_state(aaline->pipe, fs);
 
    return aafs;
 }
@@ -821,7 +838,7 @@ aaline_set_sampler_textures(struct pipe_context *pipe,
  * into the draw module's pipeline.  This will not be used if the
  * hardware has native support for AA lines.
  */
-void
+boolean
 draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 {
    struct aaline_stage *aaline;
@@ -832,14 +849,17 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
     * Create / install AA line drawing / prim stage
     */
    aaline = draw_aaline_stage( draw );
-   assert(aaline);
-   draw->pipeline.aaline = &aaline->stage;
+   if (!aaline)
+      goto fail;
 
    aaline->pipe = pipe;
 
    /* create special texture, sampler state */
-   aaline_create_texture(aaline);
-   aaline_create_sampler(aaline);
+   if (!aaline_create_texture(aaline))
+      goto fail;
+
+   if (!aaline_create_sampler(aaline))
+      goto fail;
 
    /* save original driver functions */
    aaline->driver_create_fs_state = pipe->create_fs_state;
@@ -856,4 +876,16 @@ draw_install_aaline_stage(struct draw_context *draw, struct pipe_context *pipe)
 
    pipe->bind_sampler_states = aaline_bind_sampler_states;
    pipe->set_sampler_textures = aaline_set_sampler_textures;
+   
+   /* Install once everything is known to be OK:
+    */
+   draw->pipeline.aaline = &aaline->stage;
+
+   return TRUE;
+
+ fail:
+   if (aaline)
+      aaline->stage.destroy( &aaline->stage );
+   
+   return FALSE;
 }

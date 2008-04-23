@@ -30,7 +30,8 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"
-#include "draw_private.h"
+#include "draw_vs.h"
+#include "draw_pipe.h"
 
 
 /** subclass of draw_stage */
@@ -151,13 +152,6 @@ static void flatshade_line_1( struct draw_stage *stage,
 }
 
 
-/* Flatshade point -- passthrough.
- */
-static void flatshade_point( struct draw_stage *stage,
-                             struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
 
 
 static void flatshade_init_state( struct draw_stage *stage )
@@ -230,12 +224,15 @@ static void flatshade_destroy( struct draw_stage *stage )
 struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
    struct flat_stage *flatshade = CALLOC_STRUCT(flat_stage);
+   if (flatshade == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &flatshade->stage, 2 );
+   if (!draw_alloc_temp_verts( &flatshade->stage, 2 ))
+      goto fail;
 
    flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;
-   flatshade->stage.point = flatshade_point;
+   flatshade->stage.point = draw_pipe_passthrough_point;
    flatshade->stage.line = flatshade_first_line;
    flatshade->stage.tri = flatshade_first_tri;
    flatshade->stage.flush = flatshade_flush;
@@ -243,6 +240,12 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    flatshade->stage.destroy = flatshade_destroy;
 
    return &flatshade->stage;
+
+ fail:
+   if (flatshade)
+      flatshade->stage.destroy( &flatshade->stage );
+
+   return NULL;
 }
 
 

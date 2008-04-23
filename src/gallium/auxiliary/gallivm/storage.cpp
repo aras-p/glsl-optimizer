@@ -186,26 +186,26 @@ llvm::Value *Storage::maskWrite(llvm::Value *src, int mask, llvm::Value *templ)
    if ((mask & TGSI_WRITEMASK_X)) {
       llvm::Value *x = new ExtractElementInst(src, unsigned(0),
                                               name("x"), m_block);
-      dst = new InsertElementInst(dst, x, unsigned(0),
-                                  name("dstx"), m_block);
+      dst = InsertElementInst::Create(dst, x, unsigned(0),
+                                      name("dstx"), m_block);
    }
    if ((mask & TGSI_WRITEMASK_Y)) {
       llvm::Value *y = new ExtractElementInst(src, unsigned(1),
                                               name("y"), m_block);
-      dst = new InsertElementInst(dst, y, unsigned(1),
-                                  name("dsty"), m_block);
+      dst = InsertElementInst::Create(dst, y, unsigned(1),
+                                      name("dsty"), m_block);
    }
    if ((mask & TGSI_WRITEMASK_Z)) {
       llvm::Value *z = new ExtractElementInst(src, unsigned(2),
                                               name("z"), m_block);
-      dst = new InsertElementInst(dst, z, unsigned(2),
-                                  name("dstz"), m_block);
+      dst = InsertElementInst::Create(dst, z, unsigned(2),
+                                      name("dstz"), m_block);
    }
    if ((mask & TGSI_WRITEMASK_W)) {
       llvm::Value *w = new ExtractElementInst(src, unsigned(3),
                                               name("w"), m_block);
-      dst = new InsertElementInst(dst, w, unsigned(3),
-                                  name("dstw"), m_block);
+      dst = InsertElementInst::Create(dst, w, unsigned(3),
+                                      name("dstw"), m_block);
    }
    return dst;
 }
@@ -308,11 +308,11 @@ llvm::Value * Storage::elemPtr(Args arg)
    std::vector<Value*> indices;
    indices.push_back(constantInt(0));
    indices.push_back(constantInt(static_cast<int>(arg)));
-   GetElementPtrInst *getElem = new GetElementPtrInst(m_INPUT,
-                                                      indices.begin(),
-                                                      indices.end(),
-                                                      name("input_ptr"),
-                                                      m_block);
+   GetElementPtrInst *getElem = GetElementPtrInst::Create(m_INPUT,
+                                                          indices.begin(),
+                                                          indices.end(),
+                                                          name("input_ptr"),
+                                                          m_block);
    return new LoadInst(getElem, name("input_field"), false, m_block);
 }
 
@@ -322,7 +322,7 @@ llvm::Value * Storage::elemIdx(llvm::Value *ptr, int idx,
    GetElementPtrInst *getElem = 0;
 
    if (indIdx) {
-      getElem = new GetElementPtrInst(ptr,
+      getElem = GetElementPtrInst::Create(ptr,
                                       BinaryOperator::create(Instruction::Add,
                                                              indIdx,
                                                              constantInt(idx),
@@ -331,7 +331,7 @@ llvm::Value * Storage::elemIdx(llvm::Value *ptr, int idx,
                                       name("field"),
                                       m_block);
    } else {
-      getElem = new GetElementPtrInst(ptr,
+      getElem = GetElementPtrInst::Create(ptr,
                                       constantInt(idx),
                                       name("field"),
                                       m_block);
@@ -350,7 +350,7 @@ void Storage::setKilElement(llvm::Value *val)
    std::vector<Value*> indices;
    indices.push_back(constantInt(0));
    indices.push_back(constantInt(static_cast<int>(KilArg)));
-   GetElementPtrInst *elem = new GetElementPtrInst(m_INPUT,
+   GetElementPtrInst *elem = GetElementPtrInst::Create(m_INPUT,
                                                    indices.begin(),
                                                    indices.end(),
                                                    name("kil_ptr"),

@@ -49,7 +49,7 @@
 typedef void (XSTDCALL *codegen_function)(
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
-   float (*constant)[4],
+   const float (*constant)[4],
    struct tgsi_exec_vector *temporary,
    const struct tgsi_interp_coef *coef,
    float (*immediates)[4]
@@ -67,9 +67,9 @@ struct sp_sse_fragment_shader {
 
 
 static void
-fs_sse_prepare( struct sp_fragment_shader *base,
-	      struct tgsi_exec_machine *machine,
-	      struct tgsi_sampler *samplers )
+fs_sse_prepare( const struct sp_fragment_shader *base,
+		struct tgsi_exec_machine *machine,
+		struct tgsi_sampler *samplers )
 {
 }
 
@@ -80,9 +80,9 @@ fs_sse_prepare( struct sp_fragment_shader *base,
  * TODO: process >1 quad at a time
  */
 static unsigned 
-fs_sse_run( struct sp_fragment_shader *base,
-	 struct tgsi_exec_machine *machine,
-	 struct quad_header *quad )
+fs_sse_run( const struct sp_fragment_shader *base,
+	    struct tgsi_exec_machine *machine,
+	    struct quad_header *quad )
 {
    struct sp_sse_fragment_shader *shader = (struct sp_sse_fragment_shader *) base;
 

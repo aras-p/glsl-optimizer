@@ -40,7 +40,8 @@
 #include "draw_vbuf.h"
 #include "draw_private.h"
 #include "draw_vertex.h"
-#include "draw_vf.h"
+#include "draw_pipe.h"
+#include "translate/translate.h"
 
 
 /**
@@ -56,7 +57,7 @@ struct vbuf_stage {
    /** Vertex size in bytes */
    unsigned vertex_size;
 
-   struct draw_vertex_fetch *vf;
+   struct translate *translate;
    
    /* FIXME: we have no guarantee that 'unsigned' is 32bit */
 
@@ -71,8 +72,9 @@ struct vbuf_stage {
    unsigned max_indices;
    unsigned nr_indices;
 
-   /** Pipe primitive */
-   unsigned prim;
+   /* Cache point size somewhere it's address won't change:
+    */
+   float point_size;
 };
 
 
@@ -113,61 +115,6 @@ check_space( struct vbuf_stage *vbuf, unsigned nr )
 }
 
 
-#if 0
-static INLINE void
-dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
-{
-   assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
-   unsigned i, j, k;
-
-   for (i = 0; i < vinfo->num_attribs; i++) {
-      j = vinfo->src_index[i];
-      switch (vinfo->emit[i]) {
-      case EMIT_OMIT:
-         debug_printf("EMIT_OMIT:");
-         break;
-      case EMIT_1F:
-         debug_printf("EMIT_1F:\t");
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         break;
-      case EMIT_1F_PSIZE:
-         debug_printf("EMIT_1F_PSIZE:\t");
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         break;
-      case EMIT_2F:
-         debug_printf("EMIT_2F:\t");
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         break;
-      case EMIT_3F:
-         debug_printf("EMIT_3F:\t");
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         data += sizeof(float);
-         break;
-      case EMIT_4F:
-         debug_printf("EMIT_4F:\t");
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         debug_printf("%f ", *(float *)data); data += sizeof(float);
-         break;
-      case EMIT_4UB:
-         debug_printf("EMIT_4UB:\t");
-         debug_printf("%u ", *data++);
-         debug_printf("%u ", *data++);
-         debug_printf("%u ", *data++);
-         debug_printf("%u ", *data++);
-         break;
-      default:
-         assert(0);
-      }
-      debug_printf("\n");
-   }
-   debug_printf("\n");
-}
-#endif
 
 
 /**
@@ -177,96 +124,25 @@ dump_emitted_vertex(const struct vertex_info *vinfo, const uint8_t *data)
  * have a couple of slots at the beginning (1-dword header, 4-dword
  * clip pos) that we ignore here.  We only use the vertex->data[] fields.
  */
-static INLINE void 
+static INLINE ushort 
 emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
-#if 0
-   debug_printf("emit vertex %d to %p\n", 
-           vbuf->nr_vertices, vbuf->vertex_ptr);
-#endif
+   if(vertex->vertex_id == UNDEFINED_VERTEX_ID) {      
+      /* Hmm - vertices are emitted one at a time - better make sure
+       * set_buffer is efficient.  Consider a special one-shot mode for
+       * translate.
+       */
+      vbuf->translate->set_buffer(vbuf->translate, 0, vertex->data[0], 0);
+      vbuf->translate->run(vbuf->translate, 0, 1, vbuf->vertex_ptr);
 
-   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
-      if(vertex->vertex_id < vbuf->nr_vertices)
-	 return;
-      else
-	 debug_printf("Bad vertex id 0x%04x (>= 0x%04x)\n", 
-	         vertex->vertex_id, vbuf->nr_vertices);
-      return;
-   }
+      if (0) draw_dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr);
       
-   vertex->vertex_id = vbuf->nr_vertices++;
-
-   if(!vbuf->vf) {
-      const struct vertex_info *vinfo = vbuf->vinfo;
-      uint i;
-      uint count = 0;  /* for debug/sanity */
-      
-      assert(vinfo == vbuf->render->get_vertex_info(vbuf->render));
-
-      for (i = 0; i < vinfo->num_attribs; i++) {
-         uint j = vinfo->src_index[i];
-         switch (vinfo->emit[i]) {
-         case EMIT_OMIT:
-            /* no-op */
-            break;
-         case EMIT_1F:
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-            count++;
-            break;
-         case EMIT_1F_PSIZE:
-            *vbuf->vertex_ptr++ = fui(vbuf->stage.draw->rasterizer->point_size);
-            count++;
-            break;
-         case EMIT_2F:
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
-            count += 2;
-            break;
-         case EMIT_3F:
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
-            count += 3;
-            break;
-         case EMIT_4F:
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][0]);
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][1]);
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][2]);
-            *vbuf->vertex_ptr++ = fui(vertex->data[j][3]);
-            count += 4;
-            break;
-         case EMIT_4UB:
-            *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[j][2] ),
-                                           float_to_ubyte( vertex->data[j][1] ),
-                                           float_to_ubyte( vertex->data[j][0] ),
-                                           float_to_ubyte( vertex->data[j][3] ));
-            count += 1;
-            break;
-         default:
-            assert(0);
-         }
-      }
-      assert(count == vinfo->size);
-#if 0
-      {
-	 static float data[256]; 
-	 draw_vf_emit_vertex(vbuf->vf, vertex, data);
-	 if(memcmp((uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size, data, vbuf->vertex_size)) {
-            debug_printf("With VF:\n");
-            dump_emitted_vertex(vbuf->vinfo, (uint8_t *)data);
-	    debug_printf("Without VF:\n");
-	    dump_emitted_vertex(vbuf->vinfo, (uint8_t *)vbuf->vertex_ptr - vbuf->vertex_size);
-	    assert(0);
-	 }
-      }
-#endif
-   }
-   else {
-      draw_vf_emit_vertex(vbuf->vf, vertex, vbuf->vertex_ptr);
-   
       vbuf->vertex_ptr += vbuf->vertex_size/4;
+      vertex->vertex_id = vbuf->nr_vertices++;
    }
+
+   return vertex->vertex_id;
 }
 
 
@@ -280,9 +156,7 @@ vbuf_tri( struct draw_stage *stage,
    check_space( vbuf, 3 );
 
    for (i = 0; i < 3; i++) {
-      emit_vertex( vbuf, prim->v[i] );
-      
-      vbuf->indices[vbuf->nr_indices++] = (ushort) prim->v[i]->vertex_id;
+      vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[i] );
    }
 }
 
@@ -297,9 +171,7 @@ vbuf_line( struct draw_stage *stage,
    check_space( vbuf, 2 );
 
    for (i = 0; i < 2; i++) {
-      emit_vertex( vbuf, prim->v[i] );
-
-      vbuf->indices[vbuf->nr_indices++] = (ushort) prim->v[i]->vertex_id;
+      vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[i] );
    }   
 }
 
@@ -312,10 +184,10 @@ vbuf_point( struct draw_stage *stage,
 
    check_space( vbuf, 1 );
 
-   emit_vertex( vbuf, prim->v[0] );
-   
-   vbuf->indices[vbuf->nr_indices++] = (ushort) prim->v[0]->vertex_id;
+   vbuf->indices[vbuf->nr_indices++] = emit_vertex( vbuf, prim->v[0] );
 }
+
+
 
 
 /**
@@ -324,31 +196,100 @@ vbuf_point( struct draw_stage *stage,
  * will be flushed if needed and a new one allocated.
  */
 static void
-vbuf_set_prim( struct vbuf_stage *vbuf, uint newprim )
+vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
 {
-   const struct vertex_info *vinfo;
-   unsigned vertex_size;
+   struct translate_key hw_key;
+   unsigned dst_offset;
+   unsigned i;
 
-   assert(newprim == PIPE_PRIM_POINTS ||
-          newprim == PIPE_PRIM_LINES ||
-          newprim == PIPE_PRIM_TRIANGLES);
+   vbuf->render->set_primitive(vbuf->render, prim);
 
-   vbuf->prim = newprim;
-   vbuf->render->set_primitive(vbuf->render, newprim);
+   /* Must do this after set_primitive() above:
+    * 
+    * XXX: need some state managment to track when this needs to be
+    * recalculated.  The driver should tell us whether there was a
+    * state change.
+    */
+   vbuf->vinfo = vbuf->render->get_vertex_info(vbuf->render);
 
-   vinfo = vbuf->render->get_vertex_info(vbuf->render);
-   vertex_size = vinfo->size * sizeof(float);
-
-   if (vertex_size != vbuf->vertex_size)
+   if (vbuf->vertex_size != vbuf->vinfo->size * sizeof(float)) {
       vbuf_flush_vertices(vbuf);
+      vbuf->vertex_size = vbuf->vinfo->size * sizeof(float);
+   }
 
-   vbuf->vinfo = vinfo;
-   vbuf->vertex_size = vertex_size;
-   if(vbuf->vf)
-      draw_vf_set_vertex_info(vbuf->vf, 
-                              vbuf->vinfo,
-                              vbuf->stage.draw->rasterizer->point_size);
-   
+   /* Translate from pipeline vertices to hw vertices.
+    */
+   dst_offset = 0;
+   memset(&hw_key, 0, sizeof(hw_key));
+
+   for (i = 0; i < vbuf->vinfo->num_attribs; i++) {
+      unsigned emit_sz = 0;
+      unsigned src_buffer = 0;
+      unsigned output_format;
+      unsigned src_offset = (vbuf->vinfo->src_index[i] * 4 * sizeof(float) );
+
+      switch (vbuf->vinfo->emit[i]) {
+      case EMIT_4F:
+	 output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+	 emit_sz = 4 * sizeof(float);
+	 break;
+      case EMIT_3F:
+	 output_format = PIPE_FORMAT_R32G32B32_FLOAT;
+	 emit_sz = 3 * sizeof(float);
+	 break;
+      case EMIT_2F:
+	 output_format = PIPE_FORMAT_R32G32_FLOAT;
+	 emit_sz = 2 * sizeof(float);
+	 break;
+      case EMIT_1F:
+	 output_format = PIPE_FORMAT_R32_FLOAT;
+	 emit_sz = 1 * sizeof(float);
+	 break;
+      case EMIT_1F_PSIZE:
+	 output_format = PIPE_FORMAT_R32_FLOAT;
+	 emit_sz = 1 * sizeof(float);
+	 src_buffer = 1;
+	 src_offset = 0;
+	 break;
+      case EMIT_4UB:
+	 output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+	 emit_sz = 4 * sizeof(ubyte);
+      default:
+	 assert(0);
+	 output_format = PIPE_FORMAT_NONE;
+	 emit_sz = 0;
+	 break;
+      }
+      
+      hw_key.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      hw_key.element[i].input_buffer = src_buffer;
+      hw_key.element[i].input_offset = src_offset;
+      hw_key.element[i].output_format = output_format;
+      hw_key.element[i].output_offset = dst_offset;
+
+      dst_offset += emit_sz;
+   }
+
+   hw_key.nr_elements = vbuf->vinfo->num_attribs;
+   hw_key.output_stride = vbuf->vinfo->size * 4;
+
+   /* Don't bother with caching at this stage:
+    */
+   if (!vbuf->translate ||
+       memcmp(&vbuf->translate->key, &hw_key, sizeof(hw_key)) != 0) 
+   {
+      if (vbuf->translate)
+	 vbuf->translate->release(vbuf->translate);
+
+      vbuf->translate = translate_create( &hw_key );
+
+      vbuf->translate->set_buffer(vbuf->translate, 1, &vbuf->point_size, 0);
+   }
+
+   vbuf->point_size = vbuf->stage.draw->rasterizer->point_size;
+
+   /* Allocate new buffer?
+    */
    if (!vbuf->vertices)
       vbuf_alloc_vertices(vbuf);
 }
@@ -402,29 +343,9 @@ vbuf_flush_indices( struct vbuf_stage *vbuf )
    assert((uint) (vbuf->vertex_ptr - vbuf->vertices) == 
           vbuf->nr_vertices * vbuf->vertex_size / sizeof(unsigned));
 
-   switch(vbuf->prim) {
-   case PIPE_PRIM_POINTS:
-      break;
-   case PIPE_PRIM_LINES:
-      assert(vbuf->nr_indices % 2 == 0);
-      break;
-   case PIPE_PRIM_TRIANGLES:
-      assert(vbuf->nr_indices % 3 == 0);
-      break;
-   default:
-      assert(0);
-   }
-   
    vbuf->render->draw(vbuf->render, vbuf->indices, vbuf->nr_indices);
    
    vbuf->nr_indices = 0;
-
-   /* don't need to reset point/line/tri functions */
-#if 0
-   stage->point = vbuf_first_point;
-   stage->line = vbuf_first_line;
-   stage->tri = vbuf_first_tri;
-#endif
 }
 
 
@@ -466,8 +387,8 @@ vbuf_alloc_vertices( struct vbuf_stage *vbuf )
    /* Allocate a new vertex buffer */
    vbuf->max_vertices = vbuf->render->max_vertex_buffer_bytes / vbuf->vertex_size;
    vbuf->vertices = (uint *) vbuf->render->allocate_vertices(vbuf->render,
-                                                    (ushort) vbuf->vertex_size,
-                                                    (ushort) vbuf->max_vertices);
+							     (ushort) vbuf->vertex_size,
+							     (ushort) vbuf->max_vertices);
    vbuf->vertex_ptr = vbuf->vertices;
 }
 
@@ -505,8 +426,8 @@ static void vbuf_destroy( struct draw_stage *stage )
    if(vbuf->indices)
       align_free( vbuf->indices );
    
-   if(vbuf->vf)
-      draw_vf_destroy( vbuf->vf );
+   if(vbuf->translate)
+      vbuf->translate->release( vbuf->translate );
 
    if (vbuf->render)
       vbuf->render->destroy( vbuf->render );
@@ -522,9 +443,8 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
                                     struct vbuf_render *render )
 {
    struct vbuf_stage *vbuf = CALLOC_STRUCT(vbuf_stage);
-
-   if(!vbuf)
-      return NULL;
+   if (vbuf == NULL)
+      goto fail;
    
    vbuf->stage.draw = draw;
    vbuf->stage.point = vbuf_first_point;
@@ -535,21 +455,22 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    vbuf->stage.destroy = vbuf_destroy;
    
    vbuf->render = render;
+   vbuf->max_indices = MAX2(render->max_indices, UNDEFINED_VERTEX_ID-1);
 
-   assert(render->max_indices < UNDEFINED_VERTEX_ID);
-   vbuf->max_indices = render->max_indices;
-   vbuf->indices = (ushort *)
-      align_malloc( vbuf->max_indices * sizeof(vbuf->indices[0]), 16 );
-   if(!vbuf->indices)
-      vbuf_destroy(&vbuf->stage);
+   vbuf->indices = (ushort *) align_malloc( vbuf->max_indices * 
+					    sizeof(vbuf->indices[0]), 
+					    16 );
+   if (!vbuf->indices)
+      goto fail;
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;
-
-   vbuf->prim = ~0;
-   
-   if(!GETENV("GALLIUM_NOVF"))
-      vbuf->vf = draw_vf_create();
    
    return &vbuf->stage;
+
+ fail:
+   if (vbuf)
+      vbuf_destroy(&vbuf->stage);
+   
+   return NULL;
 }

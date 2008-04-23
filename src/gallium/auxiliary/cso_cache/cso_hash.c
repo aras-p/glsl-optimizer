@@ -110,6 +110,10 @@ cso_hash_create_node(struct cso_hash *hash,
                       struct cso_node **anextNode)
 {
    struct cso_node *node = cso_data_allocate_node(hash->data.d);
+
+   if (!node)
+      return NULL;
+
    node->key = akey;
    node->value = avalue;
 
@@ -219,15 +223,30 @@ struct cso_hash_iter cso_hash_insert(struct cso_hash *hash,
    {
       struct cso_node **nextNode = cso_hash_find_node(hash, key);
       struct cso_node *node = cso_hash_create_node(hash, key, data, nextNode);
-      struct cso_hash_iter iter = {hash, node};
-      return iter;
+      if (!node) {
+         struct cso_hash_iter null_iter = {hash, 0};
+         return null_iter;
+      }
+
+      {
+         struct cso_hash_iter iter = {hash, node};
+         return iter;
+      }
    }
 }
 
 struct cso_hash * cso_hash_create(void)
 {
    struct cso_hash *hash = MALLOC_STRUCT(cso_hash);
+   if (!hash)
+      return NULL;
+
    hash->data.d = MALLOC_STRUCT(cso_hash_data);
+   if (!hash->data.d) {
+      FREE(hash);
+      return NULL;
+   }
+
    hash->data.d->fakeNext = 0;
    hash->data.d->buckets = 0;
    hash->data.d->size = 0;

@@ -36,6 +36,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
+#include "draw_pipe.h"
 
 
 struct unfilled_stage {
@@ -147,19 +148,6 @@ static void unfilled_first_tri( struct draw_stage *stage,
 }
 
 
-static void unfilled_line( struct draw_stage *stage,
-                           struct prim_header *header )
-{
-   stage->next->line( stage->next, header );
-}
-
-
-static void unfilled_point( struct draw_stage *stage,
-                            struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
-
 
 static void unfilled_flush( struct draw_stage *stage,
 			    unsigned flags )
@@ -189,18 +177,27 @@ static void unfilled_destroy( struct draw_stage *stage )
 struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
 {
    struct unfilled_stage *unfilled = CALLOC_STRUCT(unfilled_stage);
+   if (unfilled == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &unfilled->stage, 0 );
+   if (!draw_alloc_temp_verts( &unfilled->stage, 0 ))
+      goto fail;
 
    unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;
    unfilled->stage.tmp = NULL;
-   unfilled->stage.point = unfilled_point;
-   unfilled->stage.line = unfilled_line;
+   unfilled->stage.point = draw_pipe_passthrough_point;
+   unfilled->stage.line = draw_pipe_passthrough_line;
    unfilled->stage.tri = unfilled_first_tri;
    unfilled->stage.flush = unfilled_flush;
    unfilled->stage.reset_stipple_counter = unfilled_reset_stipple_counter;
    unfilled->stage.destroy = unfilled_destroy;
 
    return &unfilled->stage;
+
+ fail:
+   if (unfilled)
+      unfilled->stage.destroy( &unfilled->stage );
+
+   return NULL;
 }

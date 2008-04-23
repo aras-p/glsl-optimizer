@@ -71,7 +71,6 @@ st_BlitFramebuffer(GLcontext *ctx,
                    GLbitfield mask, GLenum filter)
 {
    struct st_context *st = ctx->st;
-   struct pipe_context *pipe = st->pipe;
 
    const uint pFilter = ((filter == GL_NEAREST)
                          ? PIPE_TEX_MIPFILTER_NEAREST
@@ -100,10 +99,6 @@ st_BlitFramebuffer(GLcontext *ctx,
                        0.0, pFilter);
 
    }
-
-   /* shaders don't go through CSO yet */
-   pipe->bind_fs_state(pipe, st->fp->driver_shader);
-   pipe->bind_vs_state(pipe, st->vp->driver_shader);
 }
 
 

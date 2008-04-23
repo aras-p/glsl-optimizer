@@ -31,7 +31,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
-#include "draw_private.h"
+#include "draw_vs.h"
+#include "draw_pipe.h"
 
 
 struct widepoint_stage {
@@ -60,23 +61,6 @@ widepoint_stage( struct draw_stage *stage )
 }
 
 
-static void passthrough_point( struct draw_stage *stage,
-                             struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
-
-static void widepoint_line( struct draw_stage *stage,
-                            struct prim_header *header )
-{
-   stage->next->line(stage->next, header);
-}
-
-static void widepoint_tri( struct draw_stage *stage,
-                           struct prim_header *header )
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 /**
@@ -199,16 +183,16 @@ static void widepoint_first_point( struct draw_stage *stage,
    wide->ybias = 0.0;
 
    if (draw->rasterizer->gl_rasterization_rules) {
-      wide->ybias = -0.125;
+      wide->xbias = 0.125;
    }
 
    /* XXX we won't know the real size if it's computed by the vertex shader! */
-   if ((draw->rasterizer->point_size > draw->wide_point_threshold) ||
-       (draw->rasterizer->point_sprite && draw->point_sprite)) {
+   if ((draw->rasterizer->point_size > draw->pipeline.wide_point_threshold) ||
+       (draw->rasterizer->point_sprite && draw->pipeline.point_sprite)) {
       stage->point = widepoint_point;
    }
    else {
-      stage->point = passthrough_point;
+      stage->point = draw_pipe_passthrough_point;
    }
 
    if (draw->rasterizer->point_sprite) {
@@ -265,17 +249,26 @@ static void widepoint_destroy( struct draw_stage *stage )
 struct draw_stage *draw_wide_point_stage( struct draw_context *draw )
 {
    struct widepoint_stage *wide = CALLOC_STRUCT(widepoint_stage);
+   if (wide == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &wide->stage, 4 );
+   if (!draw_alloc_temp_verts( &wide->stage, 4 ))
+      goto fail;
 
    wide->stage.draw = draw;
    wide->stage.next = NULL;
    wide->stage.point = widepoint_first_point;
-   wide->stage.line = widepoint_line;
-   wide->stage.tri = widepoint_tri;
+   wide->stage.line = draw_pipe_passthrough_line;
+   wide->stage.tri = draw_pipe_passthrough_tri;
    wide->stage.flush = widepoint_flush;
    wide->stage.reset_stipple_counter = widepoint_reset_stipple_counter;
    wide->stage.destroy = widepoint_destroy;
 
    return &wide->stage;
+
+ fail:
+   if (wide)
+      wide->stage.destroy( &wide->stage );
+   
+   return NULL;
 }

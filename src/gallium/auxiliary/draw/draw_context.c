@@ -33,8 +33,10 @@
 
 #include "pipe/p_util.h"
 #include "draw_context.h"
-#include "draw_private.h"
 #include "draw_vbuf.h"
+#include "draw_vs.h"
+#include "draw_pt.h"
+#include "draw_pipe.h"
 
 
 struct draw_context *draw_create( void )
@@ -42,40 +44,6 @@ struct draw_context *draw_create( void )
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
       goto fail;
-
-#if defined(__i386__) || defined(__386__)
-   draw->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
-#else
-   draw->use_sse = FALSE;
-#endif
-
-   draw->use_pt_shaders = GETENV( "GALLIUM_PT_SHADERS" ) != NULL;
-
-   /* create pipeline stages */
-   draw->pipeline.wide_line  = draw_wide_line_stage( draw );
-   draw->pipeline.wide_point = draw_wide_point_stage( draw );
-   draw->pipeline.stipple   = draw_stipple_stage( draw );
-   draw->pipeline.unfilled  = draw_unfilled_stage( draw );
-   draw->pipeline.twoside   = draw_twoside_stage( draw );
-   draw->pipeline.offset    = draw_offset_stage( draw );
-   draw->pipeline.clip      = draw_clip_stage( draw );
-   draw->pipeline.flatshade = draw_flatshade_stage( draw );
-   draw->pipeline.cull      = draw_cull_stage( draw );
-   draw->pipeline.validate  = draw_validate_stage( draw );
-   draw->pipeline.first     = draw->pipeline.validate;
-
-   if (!draw->pipeline.wide_line ||
-       !draw->pipeline.wide_point ||
-       !draw->pipeline.stipple ||
-       !draw->pipeline.unfilled ||
-       !draw->pipeline.twoside ||
-       !draw->pipeline.offset ||
-       !draw->pipeline.clip ||
-       !draw->pipeline.flatshade ||
-       !draw->pipeline.cull ||
-       !draw->pipeline.validate)
-      goto fail;
-
 
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
@@ -85,28 +53,18 @@ struct draw_context *draw_create( void )
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
 
-   /* Statically allocate maximum sized vertices for the cache - could be cleverer...
-    */
-   {
-      char *tmp = align_malloc(VS_QUEUE_LENGTH * MAX_VERTEX_ALLOCATION, 16);
-      if (!tmp)
-         goto fail;
-
-      draw->vs.vertex_cache = tmp;
-   }
-
-   draw->shader_queue_flush = draw_vertex_shader_queue_flush;
-
-   /* these defaults are oriented toward the needs of softpipe */
-   draw->wide_point_threshold = 1000000.0; /* infinity */
-   draw->wide_line_threshold = 1.0;
-   draw->line_stipple = TRUE;
-   draw->point_sprite = TRUE;
 
    draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
 
-   draw_vertex_cache_invalidate( draw );
-   draw_set_mapped_element_buffer( draw, 0, NULL );
+   tgsi_exec_machine_init(&draw->machine);
+
+   /* FIXME: give this machine thing a proper constructor:
+    */
+   draw->machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+   draw->machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+
+   if (!draw_pipeline_init( draw ))
+      goto fail;
 
    if (!draw_pt_init( draw ))
       goto fail;
@@ -124,39 +82,14 @@ void draw_destroy( struct draw_context *draw )
    if (!draw)
       return;
 
-   if (draw->pipeline.wide_line)
-      draw->pipeline.wide_line->destroy( draw->pipeline.wide_line );
-   if (draw->pipeline.wide_point)
-      draw->pipeline.wide_point->destroy( draw->pipeline.wide_point );
-   if (draw->pipeline.stipple)
-      draw->pipeline.stipple->destroy( draw->pipeline.stipple );
-   if (draw->pipeline.unfilled)
-      draw->pipeline.unfilled->destroy( draw->pipeline.unfilled );
-   if (draw->pipeline.twoside)
-      draw->pipeline.twoside->destroy( draw->pipeline.twoside );
-   if (draw->pipeline.offset)
-      draw->pipeline.offset->destroy( draw->pipeline.offset );
-   if (draw->pipeline.clip)
-      draw->pipeline.clip->destroy( draw->pipeline.clip );
-   if (draw->pipeline.flatshade)
-      draw->pipeline.flatshade->destroy( draw->pipeline.flatshade );
-   if (draw->pipeline.cull)
-      draw->pipeline.cull->destroy( draw->pipeline.cull );
-   if (draw->pipeline.validate)
-      draw->pipeline.validate->destroy( draw->pipeline.validate );
-   if (draw->pipeline.aaline)
-      draw->pipeline.aaline->destroy( draw->pipeline.aaline );
-   if (draw->pipeline.aapoint)
-      draw->pipeline.aapoint->destroy( draw->pipeline.aapoint );
-   if (draw->pipeline.pstipple)
-      draw->pipeline.pstipple->destroy( draw->pipeline.pstipple );
-   if (draw->pipeline.rasterize)
-      draw->pipeline.rasterize->destroy( draw->pipeline.rasterize );
+
+   if (draw->machine.Inputs)
+      align_free(draw->machine.Inputs);
+
+   if (draw->machine.Outputs)
+      align_free(draw->machine.Outputs);
 
    tgsi_exec_machine_free_data(&draw->machine);
-   
-   if (draw->vs.vertex_cache)
-      align_free( draw->vs.vertex_cache ); /* Frees all the vertices. */
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -164,6 +97,7 @@ void draw_destroy( struct draw_context *draw )
       draw->render->destroy( draw->render );
    */
 
+   draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
 
    FREE( draw );
@@ -188,6 +122,20 @@ void draw_set_rasterizer_state( struct draw_context *draw,
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    draw->rasterizer = raster;
+   draw->bypass_clipping =
+      ((draw->rasterizer && draw->rasterizer->bypass_clipping) ||
+       draw->driver.bypass_clipping);
+}
+
+
+void draw_set_driver_clipping( struct draw_context *draw,
+                               boolean bypass_clipping )
+{
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+
+   draw->driver.bypass_clipping = bypass_clipping;
+   draw->bypass_clipping = (draw->rasterizer->bypass_clipping || 
+                            draw->driver.bypass_clipping);
 }
 
 
@@ -246,9 +194,8 @@ draw_set_vertex_buffers(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-
-   memcpy(draw->vertex_buffer, buffers, count * sizeof(buffers[0]));
+   memcpy(draw->pt.vertex_buffer, buffers, count * sizeof(buffers[0]));
+   draw->pt.nr_vertex_buffers = count;
 }
 
 
@@ -259,9 +206,8 @@ draw_set_vertex_elements(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-
-   memcpy(draw->vertex_element, elements, count * sizeof(elements[0]));
+   memcpy(draw->pt.vertex_element, elements, count * sizeof(elements[0]));
+   draw->pt.nr_vertex_elements = count;
 }
 
 
@@ -272,8 +218,7 @@ void
 draw_set_mapped_vertex_buffer(struct draw_context *draw,
                               unsigned attr, const void *buffer)
 {
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-   draw->user.vbuffer[attr] = buffer;
+   draw->pt.user.vbuffer[attr] = buffer;
 }
 
 
@@ -281,8 +226,7 @@ void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer)
 {
-   draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE/*STATE_CHANGE*/ );
-   draw->user.constants = buffer;
+   draw->pt.user.constants = buffer;
 }
 
 
@@ -294,7 +238,7 @@ void
 draw_wide_point_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->wide_point_threshold = threshold;
+   draw->pipeline.wide_point_threshold = threshold;
 }
 
 
@@ -306,7 +250,7 @@ void
 draw_wide_line_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->wide_line_threshold = threshold;
+   draw->pipeline.wide_line_threshold = threshold;
 }
 
 
@@ -317,7 +261,7 @@ void
 draw_enable_line_stipple(struct draw_context *draw, boolean enable)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->line_stipple = enable;
+   draw->pipeline.line_stipple = enable;
 }
 
 
@@ -328,7 +272,7 @@ void
 draw_enable_point_sprites(struct draw_context *draw, boolean enable)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->point_sprite = enable;
+   draw->pipeline.point_sprite = enable;
 }
 
 
@@ -383,60 +327,6 @@ draw_num_vs_outputs(struct draw_context *draw)
 }
 
 
-/**
- * Allocate space for temporary post-transform vertices, such as for clipping.
- */
-void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr )
-{
-   assert(!stage->tmp);
-
-   stage->nr_tmps = nr;
-
-   if (nr) {
-      ubyte *store = (ubyte *) MALLOC( MAX_VERTEX_SIZE * nr );
-      unsigned i;
-
-      stage->tmp = (struct vertex_header **) MALLOC( sizeof(struct vertex_header *) * nr );
-      
-      for (i = 0; i < nr; i++)
-	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
-   }
-}
-
-
-void draw_free_temp_verts( struct draw_stage *stage )
-{
-   if (stage->tmp) {
-      FREE( stage->tmp[0] );
-      FREE( stage->tmp );
-      stage->tmp = NULL;
-   }
-}
-
-
-boolean draw_use_sse(struct draw_context *draw)
-{
-   return (boolean) draw->use_sse;
-}
-
-
-void draw_reset_vertex_ids(struct draw_context *draw)
-{
-   struct draw_stage *stage = draw->pipeline.first;
-   
-   while (stage) {
-      unsigned i;
-
-      for (i = 0; i < stage->nr_tmps; i++)
-	 stage->tmp[i]->vertex_id = UNDEFINED_VERTEX_ID;
-
-      stage = stage->next;
-   }
-
-   draw_vertex_cache_reset_vertex_ids(draw); /* going away soon */
-   draw_pt_reset_vertex_ids(draw);
-}
-
 
 void draw_set_render( struct draw_context *draw, 
 		      struct vbuf_render *render )
@@ -447,15 +337,44 @@ void draw_set_render( struct draw_context *draw,
 void draw_set_edgeflags( struct draw_context *draw,
                          const unsigned *edgeflag )
 {
-   draw->user.edgeflag = edgeflag;
+   draw->pt.user.edgeflag = edgeflag;
 }
 
 
-boolean draw_get_edgeflag( struct draw_context *draw,
-                           unsigned idx )
+
+
+/**
+ * Tell the drawing context about the index/element buffer to use
+ * (ala glDrawElements)
+ * If no element buffer is to be used (i.e. glDrawArrays) then this
+ * should be called with eltSize=0 and elements=NULL.
+ *
+ * \param draw  the drawing context
+ * \param eltSize  size of each element (1, 2 or 4 bytes)
+ * \param elements  the element buffer ptr
+ */
+void
+draw_set_mapped_element_buffer( struct draw_context *draw,
+                                unsigned eltSize, void *elements )
 {
-   if (draw->user.edgeflag)
-      return (draw->user.edgeflag[idx/32] & (1 << (idx%32))) != 0;
-   else
-      return 1;
+   draw->pt.user.elts = elements;
+   draw->pt.user.eltSize = eltSize;
+}
+
+
+ 
+/* Revamp me please:
+ */
+void draw_do_flush( struct draw_context *draw, unsigned flags )
+{
+   if (!draw->flushing && !draw->vcache_flushing)
+   {
+      draw->flushing = TRUE;
+
+      draw_pipeline_flush( draw, flags );
+
+      draw->reduced_prim = ~0; /* is reduced_prim needed any more? */
+      
+      draw->flushing = FALSE;
+   }
 }

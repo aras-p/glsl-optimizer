@@ -532,6 +532,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_save_viewport(cso);
    cso_save_samplers(cso);
    cso_save_sampler_textures(cso);
+   cso_save_fragment_shader(cso);
+   cso_save_vertex_shader(cso);
 
    /* rasterizer state: just scissor */
    {
@@ -543,10 +545,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   pipe->bind_fs_state(pipe, stfp->driver_shader);
+   cso_set_fragment_shader_handle(cso, stfp->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
-   pipe->bind_vs_state(pipe, stvp->driver_shader);
+   cso_set_vertex_shader_handle(cso, stvp->driver_shader);
 
 
    /* texture sampling state: */
@@ -562,6 +564,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.normalized_coords = 1;
 
       cso_single_sampler(cso, 0, &sampler);
+      if (st->pixel_xfer.pixelmap_enabled) {
+         cso_single_sampler(cso, 1, &sampler);
+      }
       cso_single_sampler_done(cso);
    }
 
@@ -582,7 +587,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* texture state: */
-   pipe->set_sampler_textures(pipe, 1, &pt);
+   if (st->pixel_xfer.pixelmap_enabled) {
+      struct pipe_texture *textures[2];
+      textures[0] = pt;
+      textures[1] = st->pixel_xfer.pixelmap_texture;
+      pipe->set_sampler_textures(pipe, 2, textures);
+   }
+   else {
+      pipe->set_sampler_textures(pipe, 1, &pt);
+   }
 
    /* Compute window coords (y=0=bottom) with pixel zoom.
     * Recall that these coords are transformed by the current
@@ -604,10 +617,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_viewport(cso);
    cso_restore_samplers(cso);
    cso_restore_sampler_textures(cso);
-
-   /* shaders don't go through cso yet */
-   pipe->bind_fs_state(pipe, st->fp->driver_shader);
-   pipe->bind_vs_state(pipe, st->vp->driver_shader);
+   cso_restore_fragment_shader(cso);
+   cso_restore_vertex_shader(cso);
 }
 
 
@@ -871,7 +882,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
    struct pipe_surface *psRead = rbRead->surface;
    struct pipe_surface *psDraw = rbDraw->surface;
-   ubyte *readMap, *drawMap;
+   ubyte *drawMap;
    ubyte *buffer;
    int i;
 
@@ -881,13 +892,12 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   /* map the stencil buffers */
-   readMap = pipe_surface_map(psRead);
-   drawMap = pipe_surface_map(psDraw);
-
    /* this will do stencil pixel transfer ops */
    st_read_stencil_pixels(ctx, srcx, srcy, width, height, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
+
+   /* map the stencil buffer */
+   drawMap = pipe_surface_map(psDraw);
 
    /* draw */
    /* XXX PixelZoom not handled yet */
@@ -926,8 +936,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    free(buffer);
 
-   /* unmap the stencil buffers */
-   pipe_surface_unmap(psRead);
+   /* unmap the stencil buffer */
    pipe_surface_unmap(psDraw);
 }
 

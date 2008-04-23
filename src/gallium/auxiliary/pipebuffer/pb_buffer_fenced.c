@@ -215,15 +215,21 @@ fenced_buffer_serialize(struct fenced_buffer *fenced_buf, unsigned flags)
    struct fenced_buffer_list *fenced_list = fenced_buf->list;
    struct pipe_winsys *winsys = fenced_list->winsys;
 
+   /* Allow concurrent reads */
    if(((fenced_buf->flags | flags) & PIPE_BUFFER_USAGE_WRITE) == 0)
       return PIPE_OK;
 
+   /* Wait for the CPU to finish */
    if(fenced_buf->mapcount) {
-      /* FIXME */
+      /* FIXME: Use thread conditions variables to signal when mapcount 
+       * reaches zero */
       debug_warning("attemp to write concurrently to buffer");
+      /* XXX: we must not fail here in order to support texture mipmap generation
       return PIPE_ERROR_RETRY;
+       */
    }
 
+   /* Wait for the GPU to finish */
    if(fenced_buf->fence) {
       if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0)
 	 return PIPE_ERROR_RETRY; 
@@ -352,6 +358,16 @@ buffer_fence(struct pb_buffer *buf,
    struct pipe_winsys *winsys = fenced_list->winsys;
    /* FIXME: receive this as a parameter */
    unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
+   
+   if(fence == fenced_buf->fence) {
+      /* Handle the same fence case specially, not only because it is a fast 
+       * path, but mostly to avoid serializing two writes with the same fence, 
+       * as that would bring the hardware down to synchronous operation without
+       * any benefit.
+       */
+      fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+      return;
+   }
    
    if(fenced_buffer_serialize(fenced_buf, flags) != PIPE_OK) {
       /* FIXME: propagate error */

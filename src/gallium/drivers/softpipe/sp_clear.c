@@ -49,6 +49,9 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
 
+   if (softpipe->no_rast)
+      return;
+
 #if 0
    softpipe_update_derived(softpipe); /* not needed?? */
 #endif

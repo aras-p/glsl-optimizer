@@ -59,10 +59,15 @@ void _debug_vprintf(const char *format, va_list ap)
 #ifdef WIN32
 #ifndef WINCE
    /* EngDebugPrint does not handle float point arguments, so we need to use
-    * our own vsnprintf implementation */
-   char buf[512 + 1];
-   util_vsnprintf(buf, sizeof(buf), format, ap);
-   _EngDebugPrint("%s", buf);
+    * our own vsnprintf implementation. It is also very slow, so buffer until
+    * we find a newline. */
+   static char buf[512 + 1] = {'\0'};
+   size_t len = strlen(buf);
+   int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
+   if(ret > (int)(sizeof(buf) - len - 1) || strchr(buf + len, '\n')) {
+      _EngDebugPrint("%s", buf);
+      buf[0] = '\0';
+   }
 #else
    /* TODO: Implement debug print for WINCE */
 #endif
@@ -195,6 +200,8 @@ debug_get_bool_option(const char *name, boolean dfault)
    
    if(str == NULL)
       result = dfault;
+   else if(!strcmp(str, "n"))
+      result = FALSE;
    else if(!strcmp(str, "no"))
       result = FALSE;
    else if(!strcmp(str, "0"))
@@ -246,57 +253,16 @@ debug_get_flags_option(const char *name,
 }
 
 
-#if defined(WIN32)
-ULONG_PTR debug_config_file = 0;
-void *mapped_config_file = 0;
-
-enum {
-	eAssertAbortEn = 0x1,
-};
-
-/* Check for aborts enabled. */
-static unsigned abort_en(void)
-{
-   if (!mapped_config_file)
-   {
-      /* Open an 8 byte file for configuration data. */
-      mapped_config_file = EngMapFile(L"\\??\\c:\\gaDebug.cfg", 8, &debug_config_file);
-   }
-
-   /* A value of "0" (ascii) in the configuration file will clear the
-    * first 8 bits in the test byte. 
-    *
-    * A value of "1" (ascii) in the configuration file will set the
-    * first bit in the test byte. 
-    *
-    * A value of "2" (ascii) in the configuration file will set the
-    * second bit in the test byte. 
-    *
-    * Currently the only interesting values are 0 and 1, which clear
-    * and set abort-on-assert behaviour respectively.
-    */
-   return ((((char *)mapped_config_file)[0]) - 0x30) & eAssertAbortEn;
-}
-#else /* WIN32 */
-static unsigned abort_en(void)
-{
-   return !GETENV("GALLIUM_ABORT_ON_ASSERT");
-}
-#endif
-
 void _debug_assert_fail(const char *expr, 
                         const char *file, 
                         unsigned line, 
                         const char *function) 
 {
    _debug_printf("%s:%u:%s: Assertion `%s' failed.\n", file, line, function, expr);
-   if (abort_en())
-   {
+   if (debug_get_bool_option("GALLIUM_ABORT_ON_ASSERT", TRUE))
       debug_break();
-   } else
-   {
+   else
       _debug_printf("continuing...\n");
-   }
 }
 
 

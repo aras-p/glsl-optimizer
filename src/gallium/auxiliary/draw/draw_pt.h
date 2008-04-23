@@ -50,6 +50,12 @@ struct draw_context;
 #define DRAW_PT_FLAG_MASK     (3<<30)
 
 
+#define PT_SHADE      0x1
+#define PT_CLIPTEST   0x2
+#define PT_PIPELINE   0x4
+#define PT_MAX_MIDDLE 0x8
+
+
 /* The "front end" - prepare sets of fetch, draw elements for the
  * middle end.
  *
@@ -64,7 +70,8 @@ struct draw_context;
 struct draw_pt_front_end {
    void (*prepare)( struct draw_pt_front_end *,
                     unsigned prim,
-                    struct draw_pt_middle_end * );
+                    struct draw_pt_middle_end *,
+		    unsigned opt );
 
    void (*run)( struct draw_pt_front_end *,
                 pt_elt_func elt_func,
@@ -82,15 +89,11 @@ struct draw_pt_front_end {
  * Currently two versions of this:
  *     - fetch, vertex shade, cliptest, prim-pipeline
  *     - fetch, emit (ie passthrough)
- * Later:
- *     - fetch, vertex shade, cliptest, maybe-pipeline, maybe-emit
- *     - fetch, vertex shade, emit
- *
- * Currenly only using the passthrough version.
  */
 struct draw_pt_middle_end {
    void (*prepare)( struct draw_pt_middle_end *,
-                    unsigned prim );
+                    unsigned prim,
+		    unsigned opt );
 
    void (*run)( struct draw_pt_middle_end *,
                 const unsigned *fetch_elts,
@@ -104,12 +107,9 @@ struct draw_pt_middle_end {
 
 
 /* The "back end" - supplied by the driver, defined in draw_vbuf.h.
- *
- * Not sure whether to wrap the prim pipeline up as an alternate
- * backend.  Would be a win for everything except pure passthrough
- * mode...  
  */
 struct vbuf_render;
+struct vertex_header;
 
 
 /* Helper functions.
@@ -118,12 +118,88 @@ pt_elt_func draw_pt_elt_func( struct draw_context *draw );
 const void *draw_pt_elt_ptr( struct draw_context *draw,
                              unsigned start );
 
-/* Implementations:
+/* Frontends: 
+ *
+ * Currently only the general-purpose vcache implementation, could add
+ * a special case for tiny vertex buffers.
  */
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
+
+/* Middle-ends:
+ *
+ * Currently one general-purpose case which can do all possibilities,
+ * at the slight expense of creating a vertex_header in some cases
+ * unecessarily.
+ *
+ * The special case fetch_emit code avoids pipeline vertices
+ * altogether and builds hardware vertices directly from API
+ * vertex_elements.
+ */
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw );
-struct draw_pt_middle_end *draw_pt_fetch_pipeline( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
+
+
+/* More helpers:
+ */
+boolean draw_pt_get_edgeflag( struct draw_context *draw,
+                              unsigned idx );
+
+
+/*******************************************************************************
+ * HW vertex emit:
+ */
+struct pt_emit;
+
+void draw_pt_emit_prepare( struct pt_emit *emit,
+			   unsigned prim );
+
+void draw_pt_emit( struct pt_emit *emit,
+		   const float (*vertex_data)[4],
+		   unsigned vertex_count,
+		   unsigned stride,
+		   const ushort *elts,
+		   unsigned count );
+
+void draw_pt_emit_destroy( struct pt_emit *emit );
+
+struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
+
+
+/*******************************************************************************
+ * API vertex fetch:
+ */
+
+struct pt_fetch;
+void draw_pt_fetch_prepare( struct pt_fetch *fetch,
+			    unsigned vertex_size );
+
+void draw_pt_fetch_run( struct pt_fetch *fetch,
+			const unsigned *elts,
+			unsigned count,
+			char *verts );
+
+void draw_pt_fetch_destroy( struct pt_fetch *fetch );
+
+struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw );
+
+/*******************************************************************************
+ * Post-VS: cliptest, rhw, viewport
+ */
+struct pt_post_vs;
+
+boolean draw_pt_post_vs_run( struct pt_post_vs *pvs,
+			     struct vertex_header *pipeline_verts,
+			     unsigned stride,
+			     unsigned count );
+
+void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
+			      boolean bypass_clipping,
+			      boolean identity_viewport,
+			      boolean opengl );
+
+struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
+
+void draw_pt_post_vs_destroy( struct pt_post_vs *pvs );
 
 
 #endif

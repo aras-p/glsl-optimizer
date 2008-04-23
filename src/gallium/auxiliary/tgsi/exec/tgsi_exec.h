@@ -166,7 +166,7 @@ struct tgsi_exec_machine
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
    unsigned                      ImmLimit;
-   float                         (*Consts)[4];
+   const float                   (*Consts)[4];
    struct tgsi_exec_vector       *Inputs;
    struct tgsi_exec_vector       *Outputs;
    const struct tgsi_token       *Tokens;

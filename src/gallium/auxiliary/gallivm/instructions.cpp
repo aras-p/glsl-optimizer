@@ -35,6 +35,8 @@
 
 #include "storage.h"
 
+#include "pipe/p_util.h"
+
 #include <llvm/CallingConv.h>
 #include <llvm/Constants.h>
 #include <llvm/DerivedTypes.h>
@@ -42,7 +44,8 @@
 #include <llvm/InstrTypes.h>
 #include <llvm/Instructions.h>
 #include <llvm/ParameterAttributes.h>
-#include <llvm/ParamAttrsList.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 
 #include <sstream>
 #include <fstream>
@@ -53,7 +56,6 @@ using namespace llvm;
 #include "gallivm_builtins.cpp"
 
 #if 0
-
 llvm::Value *arrayFromChannels(std::vector<llvm::Value*> &vals)
 {
    VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
@@ -84,7 +86,10 @@ Instructions::Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicB
    m_llvmLit  = 0;
    m_fmtPtr = 0;
 
-   createGallivmBuiltins(m_mod);
+   MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
+      (const char*)&llvm_builtins_data[0],
+      (const char*)&llvm_builtins_data[Elements(llvm_builtins_data)-1]);
+   m_mod = ParseBitcodeFile(buffer);
 }
 
 llvm::Value * Instructions::add(llvm::Value *in1, llvm::Value *in2)
@@ -134,12 +139,12 @@ llvm::Value *Instructions::callFSqrt(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> fsqrtArgs;
       fsqrtArgs.push_back(Type::FloatTy);
-      ParamAttrsList *fsqrtPal = 0;
+      PAListPtr fsqrtPal;
       FunctionType* fsqrtType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fsqrtArgs,
          /*isVarArg=*/false);
-      m_llvmFSqrt = new Function(
+      m_llvmFSqrt = Function::Create(
          /*Type=*/fsqrtType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"llvm.sqrt.f32", m_mod);
@@ -191,12 +196,12 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> fabsArgs;
       fabsArgs.push_back(Type::FloatTy);
-      ParamAttrsList *fabsPal = 0;
+      PAListPtr fabsPal;
       FunctionType* fabsType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/fabsArgs,
          /*isVarArg=*/false);
-      m_llvmFAbs = new Function(
+      m_llvmFAbs = Function::Create(
          /*Type=*/fabsType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"fabs", m_mod);
@@ -234,12 +239,12 @@ llvm::Value * Instructions::callPow(llvm::Value *val1, llvm::Value *val2)
       std::vector<const Type*> powArgs;
       powArgs.push_back(Type::FloatTy);
       powArgs.push_back(Type::FloatTy);
-      ParamAttrsList *powPal = 0;
+      PAListPtr powPal;
       FunctionType* powType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/powArgs,
          /*isVarArg=*/false);
-      m_llvmPow = new Function(
+      m_llvmPow = Function::Create(
          /*Type=*/powType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"llvm.pow.f32", m_mod);
@@ -333,12 +338,12 @@ llvm::Value * Instructions::callFloor(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> floorArgs;
       floorArgs.push_back(Type::FloatTy);
-      ParamAttrsList *floorPal = 0;
+      PAListPtr floorPal;
       FunctionType* floorType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/floorArgs,
          /*isVarArg=*/false);
-      m_llvmFloor = new Function(
+      m_llvmFloor = Function::Create(
          /*Type=*/floorType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"floorf", m_mod);
@@ -376,12 +381,12 @@ llvm::Value * Instructions::callFLog(llvm::Value *val)
       // predeclare the intrinsic
       std::vector<const Type*> flogArgs;
       flogArgs.push_back(Type::FloatTy);
-      ParamAttrsList *flogPal = 0;
+      PAListPtr flogPal;
       FunctionType* flogType = FunctionType::get(
          /*Result=*/Type::FloatTy,
          /*Params=*/flogArgs,
          /*isVarArg=*/false);
-      m_llvmFlog = new Function(
+      m_llvmFlog = Function::Create(
          /*Type=*/flogType,
          /*Linkage=*/GlobalValue::ExternalLinkage,
          /*Name=*/"logf", m_mod);
@@ -504,12 +509,12 @@ void Instructions::printVector(llvm::Value *val)
 llvm::Function * Instructions::declarePrintf()
 {
    std::vector<const Type*> args;
-   ParamAttrsList *params = 0;
+   PAListPtr params;
    FunctionType* funcTy = FunctionType::get(
       /*Result=*/IntegerType::get(32),
       /*Params=*/args,
       /*isVarArg=*/true);
-   Function* func_printf = new Function(
+   Function* func_printf = Function::Create(
       /*Type=*/funcTy,
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Name=*/"printf", m_mod);
@@ -633,8 +638,8 @@ llvm::Value * Instructions::abs(llvm::Value *in)
 
 void Instructions::ifop(llvm::Value *in)
 {
-   BasicBlock *ifthen = new BasicBlock(name("ifthen"), m_func,0);
-   BasicBlock *ifend = new BasicBlock(name("ifthenend"), m_func,0);
+   BasicBlock *ifthen = BasicBlock::Create(name("ifthen"), m_func,0);
+   BasicBlock *ifend = BasicBlock::Create(name("ifthenend"), m_func,0);
 
    //BasicBlock *yblock = new BasicBlock(name("yblock"), m_func,0);
    //BasicBlock *zblock = new BasicBlock(name("zblock"), m_func,0);
@@ -660,7 +665,7 @@ llvm::BasicBlock * Instructions::currentBlock() const
 void Instructions::elseop()
 {
    assert(!m_ifStack.empty());
-   BasicBlock *ifend = new BasicBlock(name("ifend"), m_func,0);
+   BasicBlock *ifend = BasicBlock::Create(name("ifend"), m_func,0);
    m_builder.CreateBr(ifend);
    m_builder.SetInsertPoint(m_ifStack.top());
    currentBlock()->setName(name("ifelse"));
@@ -687,8 +692,8 @@ llvm::Value * Instructions::lerp(llvm::Value *in1, llvm::Value *in2,
 
 void Instructions::beginLoop()
 {
-   BasicBlock *begin = new BasicBlock(name("loop"), m_func,0);
-   BasicBlock *end = new BasicBlock(name("endloop"), m_func,0);
+   BasicBlock *begin = BasicBlock::Create(name("loop"), m_func,0);
+   BasicBlock *end = BasicBlock::Create(name("endloop"), m_func,0);
 
    m_builder.CreateBr(begin);
    Loop loop;
@@ -711,7 +716,7 @@ void Instructions::endLoop()
 void Instructions::brk()
 {
    assert(!m_loopStack.empty());
-   BasicBlock *unr = new BasicBlock(name("unreachable"), m_func,0);
+   BasicBlock *unr = BasicBlock::Create(name("unreachable"), m_func,0);
    m_builder.CreateBr(m_loopStack.top().end);
    m_builder.SetInsertPoint(unr);
 }
@@ -760,13 +765,13 @@ llvm::Function * Instructions::declareFunc(int label)
    args.push_back(vecPtr);
    args.push_back(vecPtr);
    args.push_back(vecPtr);
-   ParamAttrsList *params = 0;
+   PAListPtr params;
    FunctionType *funcType = FunctionType::get(
       /*Result=*/Type::VoidTy,
       /*Params=*/args,
       /*isVarArg=*/false);
    std::string name = createFuncName(label);
-   Function *func = new Function(
+   Function *func = Function::Create(
       /*Type=*/funcType,
       /*Linkage=*/GlobalValue::ExternalLinkage,
       /*Name=*/name.c_str(), m_mod);
@@ -784,7 +789,7 @@ void Instructions::bgnSub(unsigned label)
    ptr_INPUT->setName("INPUT");
    m_storage->pushArguments(ptr_INPUT);
 
-   llvm::BasicBlock *entry = new BasicBlock("entry", func, 0);
+   llvm::BasicBlock *entry = BasicBlock::Create("entry", func, 0);
 
    m_func = func;
    m_builder.SetInsertPoint(entry);

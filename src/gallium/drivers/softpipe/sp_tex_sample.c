@@ -651,7 +651,9 @@ shadow_compare(uint compare_func,
       k = 0;
       break;
    default:
+      k = 0;
       assert(0);
+      break;
    }
 
    rgba[0][j] = rgba[1][j] = rgba[2][j] = (float) k;

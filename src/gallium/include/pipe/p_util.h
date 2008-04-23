@@ -402,6 +402,54 @@ extern void pipe_copy_rect(ubyte * dst, unsigned cpp, unsigned dst_pitch,
                            int src_pitch, unsigned src_x, int src_y);
 
 
+
+#ifdef WIN32
+
+#if !defined(_INC_MATH) || !defined(__cplusplus)
+
+static INLINE float cosf( float f ) 
+{
+   return (float) cos( (double) f );
+}
+
+static INLINE float sinf( float f ) 
+{
+   return (float) sin( (double) f );
+}
+
+static INLINE float ceilf( float f ) 
+{
+   return (float) ceil( (double) f );
+}
+
+static INLINE float floorf( float f ) 
+{
+   return (float) floor( (double) f );
+}
+
+static INLINE float powf( float f, float g ) 
+{
+   return (float) pow( (double) f, (double) g );
+}
+
+static INLINE float sqrtf( float f ) 
+{
+   return (float) sqrt( (double) f );
+}
+
+static INLINE float fabsf( float f ) 
+{
+   return (float) fabs( (double) f );
+}
+
+static INLINE float logf( float f ) 
+{
+   return (float) cos( (double) f );
+}
+#endif  /* _INC_MATH */
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

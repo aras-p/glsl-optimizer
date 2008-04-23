@@ -63,6 +63,7 @@ struct vcache_frontend {
 
 static void vcache_flush( struct vcache_frontend *vcache )
 {
+   vcache->draw->vcache_flushing = TRUE;
    if (vcache->draw_count) {
       vcache->middle->run( vcache->middle,
                            vcache->fetch_elts,
@@ -74,6 +75,7 @@ static void vcache_flush( struct vcache_frontend *vcache )
    memset(vcache->in, ~0, sizeof(vcache->in));
    vcache->fetch_count = 0;
    vcache->draw_count = 0;
+   vcache->draw->vcache_flushing = FALSE;
 }
 
 static void vcache_check_flush( struct vcache_frontend *vcache )
@@ -106,7 +108,7 @@ static unsigned add_edgeflag( struct vcache_frontend *vcache,
                               unsigned idx, 
                               unsigned mask )
 {
-   if (mask && draw_get_edgeflag(vcache->draw, idx)) 
+   if (0 && mask && draw_pt_get_edgeflag(vcache->draw, idx)) 
       return idx | DRAW_PT_EDGEFLAG;
    else
       return idx;
@@ -116,7 +118,7 @@ static unsigned add_edgeflag( struct vcache_frontend *vcache,
 static unsigned add_reset_stipple( unsigned idx,
                                    unsigned reset )
 {
-   if (reset)
+   if (0 && reset)
       return idx | DRAW_PT_RESET_STIPPLE;
    else
       return idx;
@@ -128,9 +130,9 @@ static void vcache_triangle( struct vcache_frontend *vcache,
                              unsigned i1,
                              unsigned i2 )
 {
-   vcache_elt(vcache, i0 | DRAW_PT_EDGEFLAG | DRAW_PT_RESET_STIPPLE);
-   vcache_elt(vcache, i1 | DRAW_PT_EDGEFLAG);
-   vcache_elt(vcache, i2 | DRAW_PT_EDGEFLAG);
+   vcache_elt(vcache, i0 /* | DRAW_PT_EDGEFLAG | DRAW_PT_RESET_STIPPLE */ );
+   vcache_elt(vcache, i1 /* | DRAW_PT_EDGEFLAG */);
+   vcache_elt(vcache, i2 /* | DRAW_PT_EDGEFLAG */);
    vcache_check_flush(vcache);
 }
 
@@ -142,11 +144,12 @@ static void vcache_ef_triangle( struct vcache_frontend *vcache,
                                 unsigned i1,
                                 unsigned i2 )
 {
+/*
    i0 = add_edgeflag( vcache, i0, (ef_mask >> 0) & 1 );
    i1 = add_edgeflag( vcache, i1, (ef_mask >> 1) & 1 );
    i2 = add_edgeflag( vcache, i2, (ef_mask >> 2) & 1 );
-
    i0 = add_reset_stipple( i0, reset_stipple );
+*/
 
    vcache_elt(vcache, i0);
    vcache_elt(vcache, i1);
@@ -448,7 +451,8 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 
 static void vcache_prepare( struct draw_pt_front_end *frontend,
                             unsigned prim,
-                            struct draw_pt_middle_end *middle )
+                            struct draw_pt_middle_end *middle,
+			    unsigned opt )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
 
@@ -464,7 +468,7 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    vcache->output_prim = reduced_prim[prim];
 
    vcache->middle = middle;
-   middle->prepare( middle, vcache->output_prim );
+   middle->prepare( middle, vcache->output_prim, opt );
 }
 
 
@@ -486,6 +490,8 @@ static void vcache_destroy( struct draw_pt_front_end *frontend )
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw )
 {
    struct vcache_frontend *vcache = CALLOC_STRUCT( vcache_frontend );
+   if (vcache == NULL)
+      return NULL;
  
    vcache->base.prepare = vcache_prepare;
    vcache->base.run     = NULL;

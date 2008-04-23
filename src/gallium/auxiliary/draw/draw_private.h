@@ -44,7 +44,6 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-#include "rtasm/rtasm_x86sse.h"
 #include "tgsi/exec/tgsi_exec.h"
 #include "tgsi/util/tgsi_scan.h"
 
@@ -52,11 +51,11 @@
 struct pipe_context;
 struct gallivm_prog;
 struct gallivm_cpu_engine;
+struct draw_vertex_shader;
+struct draw_context;
+struct draw_stage;
+struct vbuf_render;
 
-struct draw_pt_middle_end;
-struct draw_pt_front_end;
-
-#define MAX_SHADER_VERTICES 128
 
 /**
  * Basic vertex info.
@@ -70,16 +69,13 @@ struct vertex_header {
 
    float clip[4];
 
-   float data[][4];		/* Note variable size */
+   /* This will probably become float (*data)[4] soon:
+    */
+   float data[][4];
 };
 
 /* NOTE: It should match vertex_id size above */
 #define UNDEFINED_VERTEX_ID 0xffff
-
-/* XXX This is too large */
-#define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
-#define MAX_VERTEX_ALLOCATION ((MAX_VERTEX_SIZE + 0x0f) & ~0x0f)
-
 
 
 /**
@@ -95,92 +91,11 @@ struct prim_header {
 
 
 
-struct draw_context;
 
-/**
- * Base class for all primitive drawing stages.
- */
-struct draw_stage
-{
-   struct draw_context *draw;   /**< parent context */
-
-   struct draw_stage *next;     /**< next stage in pipeline */
-
-   struct vertex_header **tmp;  /**< temp vert storage, such as for clipping */
-   unsigned nr_tmps;
-
-   void (*point)( struct draw_stage *,
-		  struct prim_header * );
-
-   void (*line)( struct draw_stage *,
-		 struct prim_header * );
-
-   void (*tri)( struct draw_stage *,
-		struct prim_header * );
-
-   void (*flush)( struct draw_stage *,
-		  unsigned flags );
-
-   void (*reset_stipple_counter)( struct draw_stage * );
-
-   void (*destroy)( struct draw_stage * );
-};
-
-
-#define PRIM_QUEUE_LENGTH      32
-#define VCACHE_SIZE            32
-#define VCACHE_OVERFLOW        4
-#define VS_QUEUE_LENGTH        (VCACHE_SIZE + VCACHE_OVERFLOW + 1)	/* can never fill up */
-
-/**
- * Private version of the compiled vertex_shader
- */
-struct draw_vertex_shader {
-
-   /* This member will disappear shortly:
-    */
-   struct pipe_shader_state   state;
-
-   struct tgsi_shader_info info;
-
-   void (*prepare)( struct draw_vertex_shader *shader,
-		    struct draw_context *draw );
-
-   /* Run the shader - this interface will get cleaned up in the
-    * future:
-    */
-   boolean (*run)( struct draw_vertex_shader *shader,
-                   struct draw_context *draw,
-                   const unsigned *elts,
-                   unsigned count,
-                   void *out,
-                   unsigned vertex_size);
-
-
-   void (*delete)( struct draw_vertex_shader * );
-};
-
-
-/* Internal function for vertex fetch.
- */
-typedef void (*fetch_func)(const void *ptr, float *attrib);
-
-fetch_func draw_get_fetch_func( enum pipe_format format );
-
-
-
-typedef void (*full_fetch_func)( struct draw_context *draw,
-				 struct tgsi_exec_machine *machine,
-				 const unsigned *elts,
-				 unsigned count );
-
-typedef void (*pt_fetch_func)( struct draw_context *draw,
-			      float *out,
-			      unsigned start,
-			       unsigned count );
-
-
-struct vbuf_render;
+#define PT_SHADE      0x1
+#define PT_CLIPTEST   0x2
+#define PT_PIPELINE   0x4
+#define PT_MAX_MIDDLE 0x8
 
 /**
  * Private context for the drawing module.
@@ -207,6 +122,17 @@ struct draw_context
       struct draw_stage *wide_line;
       struct draw_stage *wide_point;
       struct draw_stage *rasterize;
+
+      float wide_point_threshold; /**< convert pnts to tris if larger than this */
+      float wide_line_threshold;  /**< convert lines to tris if wider than this */
+      boolean line_stipple;       /**< do line stipple? */
+      boolean point_sprite;       /**< convert points to quads for sprites? */
+
+      /* Temporary storage while the pipeline is being run:
+       */
+      char *verts;
+      unsigned vertex_stride;
+      unsigned vertex_count;
    } pipeline;
 
 
@@ -215,70 +141,62 @@ struct draw_context
    /* Support prototype passthrough path:
     */
    struct {
-      unsigned prim;           /* XXX: to be removed */
-      unsigned hw_vertex_size; /* XXX: to be removed */
-
       struct {
          struct draw_pt_middle_end *fetch_emit;
-         struct draw_pt_middle_end *fetch_pipeline;
-         struct draw_pt_middle_end *fetch_shade_emit;
-         struct draw_pt_middle_end *fetch_shade_cliptest_pipeline_or_emit;
+         struct draw_pt_middle_end *general;
       } middle;
 
       struct {
-         struct draw_pt_front_end *noop;
-         struct draw_pt_front_end *split_arrays;
          struct draw_pt_front_end *vcache;
       } front;
 
+      struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+      unsigned nr_vertex_buffers;
+
+      struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+      unsigned nr_vertex_elements;
+
+      /* user-space vertex data, buffers */
       struct {
-         char *verts;
-         unsigned vertex_stride;
-         unsigned vertex_count;
-      } pipeline;
+         const unsigned *edgeflag;
+
+         /** vertex element/index buffer (ex: glDrawElements) */
+         const void *elts;
+         /** bytes per index (0, 1, 2 or 4) */
+         unsigned eltSize;
+         
+         /** vertex arrays */
+         const void *vbuffer[PIPE_MAX_ATTRIBS];
+         
+         /** constant buffer (for vertex shader) */
+         const void *constants;
+      } user;
 
    } pt;
 
+   struct {
+      boolean bypass_clipping;
+   } driver;
+
    boolean flushing;
+   boolean vcache_flushing;
+   boolean bypass_clipping;     /* set if either api or driver bypass_clipping true */
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-   struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
+
    struct draw_vertex_shader *vertex_shader;
 
    boolean identity_viewport;
 
    uint num_vs_outputs;  /**< convenience, from vertex_shader */
 
-   /* user-space vertex data, buffers */
-   struct {
-      const unsigned *edgeflag;
-
-      /** vertex element/index buffer (ex: glDrawElements) */
-      const void *elts;
-      /** bytes per index (0, 1, 2 or 4) */
-      unsigned eltSize;
-
-      /** vertex arrays */
-      const void *vbuffer[PIPE_MAX_ATTRIBS];
-
-      /** constant buffer (for vertex shader) */
-      const void *constants;
-   } user;
 
    /* Clip derived state:
     */
    float plane[12][4];
    unsigned nr_planes;
-
-   float wide_point_threshold; /**< convert pnts to tris if larger than this */
-   float wide_line_threshold;  /**< convert lines to tris if wider than this */
-   boolean line_stipple;       /**< do line stipple? */
-   boolean point_sprite;       /**< convert points to quads for sprites? */
-   boolean use_sse;
-   boolean use_pt_shaders;	/* temporary flag to switch on pt shader paths */
 
    /* If a prim stage introduces new vertex attributes, they'll be stored here
     */
@@ -293,59 +211,6 @@ struct draw_context
    /** TGSI program interpreter runtime state */
    struct tgsi_exec_machine machine;
 
-   /* Vertex fetch internal state
-    */
-   struct {
-      const ubyte *src_ptr[PIPE_MAX_ATTRIBS];
-      unsigned pitch[PIPE_MAX_ATTRIBS];
-      fetch_func fetch[PIPE_MAX_ATTRIBS];
-      unsigned nr_attrs;
-      full_fetch_func fetch_func;
-      pt_fetch_func pt_fetch;
-   } vertex_fetch;
-
-   /* Post-tnl vertex cache:
-    */
-   struct {
-      unsigned referenced;  /**< bitfield */
-
-      struct {
-	 unsigned in;		/* client array element */
-	 unsigned out;		/* index in vs queue/array */
-      } idx[VCACHE_SIZE + VCACHE_OVERFLOW];
-
-      unsigned overflow;
-
-      /** To find space in the vertex cache: */
-      struct vertex_header *(*get_vertex)( struct draw_context *draw,
-                                           unsigned i );
-   } vcache;
-
-   /* Vertex shader queue:
-    */
-   struct {
-      unsigned elts[VS_QUEUE_LENGTH];   /**< index into the user's vertex arrays */
-      char *vertex_cache;
-      unsigned queue_nr;
-      unsigned post_nr;
-   } vs;
-
-   /**
-    * Run the vertex shader on all vertices in the vertex queue.
-    */
-   void (*shader_queue_flush)(struct draw_context *draw);
-
-   /* Prim pipeline queue:
-    */
-   struct {
-      /* Need to queue up primitives until their vertices have been
-       * transformed by a vs queue flush.
-       */
-      struct prim_header queue[PRIM_QUEUE_LENGTH];
-      unsigned queue_nr;
-   } pq;
-
-
    /* This (and the tgsi_exec_machine struct) probably need to be moved somewhere private.
     */
    struct gallivm_cpu_engine *engine;   
@@ -354,107 +219,49 @@ struct draw_context
 
 
 
-extern struct draw_stage *draw_unfilled_stage( struct draw_context *context );
-extern struct draw_stage *draw_twoside_stage( struct draw_context *context );
-extern struct draw_stage *draw_offset_stage( struct draw_context *context );
-extern struct draw_stage *draw_clip_stage( struct draw_context *context );
-extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
-extern struct draw_stage *draw_cull_stage( struct draw_context *context );
-extern struct draw_stage *draw_stipple_stage( struct draw_context *context );
-extern struct draw_stage *draw_wide_line_stage( struct draw_context *context );
-extern struct draw_stage *draw_wide_point_stage( struct draw_context *context );
-extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 
 
-extern void draw_free_temp_verts( struct draw_stage *stage );
-
-extern void draw_alloc_temp_verts( struct draw_stage *stage, unsigned nr );
-
-extern void draw_reset_vertex_ids( struct draw_context *draw );
 
 
-extern int draw_vertex_cache_check_space( struct draw_context *draw, 
-					  unsigned nr_verts );
-
-extern void draw_vertex_cache_invalidate( struct draw_context *draw );
-extern void draw_vertex_cache_unreference( struct draw_context *draw );
-extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
-
-extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
-
-extern void draw_update_vertex_fetch( struct draw_context *draw );
-
-extern boolean draw_need_pipeline(const struct draw_context *draw,
-                                  unsigned prim );
-
-
-/* Passthrough mode (second attempt):
+/*******************************************************************************
+ * Vertex processing (was passthrough) code:
  */
 boolean draw_pt_init( struct draw_context *draw );
 void draw_pt_destroy( struct draw_context *draw );
-boolean draw_pt_arrays( struct draw_context *draw,
+void draw_pt_reset_vertex_ids( struct draw_context *draw );
+
+
+/*******************************************************************************
+ * Primitive processing (pipeline) code: 
+ */
+
+boolean draw_pipeline_init( struct draw_context *draw );
+void draw_pipeline_destroy( struct draw_context *draw );
+
+void draw_pipeline_run( struct draw_context *draw,
                         unsigned prim,
-                        unsigned start,
+                        struct vertex_header *vertices,
+                        unsigned vertex_count,
+                        unsigned stride,
+                        const ushort *elts,
                         unsigned count );
 
-void draw_pt_reset_vertex_ids( struct draw_context *draw );
-void draw_pt_run_pipeline( struct draw_context *draw,
-                           unsigned prim,
-                           char *verts,
-                           unsigned vertex_stride,
-                           unsigned vertex_count,
-                           const ushort *elts,
-                           unsigned count );
+void draw_pipeline_flush( struct draw_context *draw, 
+                          unsigned flags );
 
 
-#define DRAW_FLUSH_SHADER_QUEUE              0x1 /* sized not to overflow, never raised */
-#define DRAW_FLUSH_PRIM_QUEUE                0x2
-#define DRAW_FLUSH_VERTEX_CACHE              0x4
+
+/*******************************************************************************
+ * Flushing 
+ */
+
 #define DRAW_FLUSH_STATE_CHANGE              0x8
 #define DRAW_FLUSH_BACKEND                   0x10
 
 
 void draw_do_flush( struct draw_context *draw, unsigned flags );
 
-boolean draw_get_edgeflag( struct draw_context *draw,
-                           unsigned idx );
 
 
-/**
- * Get a writeable copy of a vertex.
- * \param stage  drawing stage info
- * \param vert  the vertex to copy (source)
- * \param idx  index into stage's tmp[] array to put the copy (dest)
- * \return  pointer to the copied vertex
- */
-static INLINE struct vertex_header *
-dup_vert( struct draw_stage *stage,
-	  const struct vertex_header *vert,
-	  unsigned idx )
-{   
-   struct vertex_header *tmp = stage->tmp[idx];
-   const uint vsize = sizeof(struct vertex_header)
-      + stage->draw->num_vs_outputs * 4 * sizeof(float);
-   memcpy(tmp, vert, vsize);
-   tmp->vertex_id = UNDEFINED_VERTEX_ID;
-   return tmp;
-}
-
-static INLINE float
-dot4(const float *a, const float *b)
-{
-   float result = (a[0]*b[0] +
-                   a[1]*b[1] +
-                   a[2]*b[2] +
-                   a[3]*b[3]);
-
-   return result;
-}
-
-static INLINE struct vertex_header *
-draw_header_from_block(char *block, int size, int num)
-{
-   return (struct vertex_header*)(block + num * size);
-}
 
 #endif /* DRAW_PRIVATE_H */

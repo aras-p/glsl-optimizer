@@ -56,7 +56,7 @@
 #include "cso_cache/cso_cache.h"
 
 #include "draw/draw_context.h"
-#include "draw/draw_private.h"
+#include "draw/draw_pipe.h"
 
 
 /**
@@ -238,6 +238,12 @@ select_reset_stipple_counter( struct draw_stage *stage )
    /* no-op */
 }
 
+static void
+select_destroy( struct draw_stage *stage )
+{
+   /* no-op */
+}
+
 
 /**
  * Create GL selection mode drawing stage.
@@ -254,6 +260,7 @@ draw_glselect_stage(GLcontext *ctx, struct draw_context *draw)
    fs->stage.tri = select_tri;
    fs->stage.flush = select_flush;
    fs->stage.reset_stipple_counter = select_reset_stipple_counter;
+   fs->stage.destroy = select_destroy;
    fs->ctx = ctx;
 
    return &fs->stage;

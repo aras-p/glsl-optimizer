@@ -111,6 +111,8 @@ typedef enum gl_state_index_ {
    STATE_SPOT_DIR_NORMALIZED,   /* pre-normalized spot dir */
    STATE_PT_SCALE,              /**< Pixel transfer RGBA scale */
    STATE_PT_BIAS,               /**< Pixel transfer RGBA bias */
+   STATE_PCM_SCALE,             /**< Post color matrix RGBA scale */
+   STATE_PCM_BIAS,              /**< Post color matrix RGBA bias */
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 } gl_state_index;
 

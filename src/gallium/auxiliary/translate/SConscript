@@ -1,0 +1,11 @@
+Import('*')
+
+translate = env.ConvenienceLibrary(
+	target = 'translate',
+	source = [
+		'translate_generic.c',
+		'translate_sse.c',
+		'translate.c',
+	])
+
+auxiliaries.insert(0, translate)

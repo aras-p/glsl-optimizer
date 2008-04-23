@@ -35,7 +35,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
-#include "draw_private.h"
+#include "draw_pipe.h"
 
 
 struct cull_stage {
@@ -95,20 +95,6 @@ static void cull_first_tri( struct draw_stage *stage,
 
 
 
-static void cull_line( struct draw_stage *stage,
-		       struct prim_header *header )
-{
-   stage->next->line( stage->next, header );
-}
-
-
-static void cull_point( struct draw_stage *stage,
-			struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
-
-
 static void cull_flush( struct draw_stage *stage, unsigned flags )
 {
    stage->tri = cull_first_tri;
@@ -134,17 +120,26 @@ static void cull_destroy( struct draw_stage *stage )
 struct draw_stage *draw_cull_stage( struct draw_context *draw )
 {
    struct cull_stage *cull = CALLOC_STRUCT(cull_stage);
+   if (cull == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &cull->stage, 0 );
+   if (!draw_alloc_temp_verts( &cull->stage, 0 ))
+      goto fail;
 
    cull->stage.draw = draw;
    cull->stage.next = NULL;
-   cull->stage.point = cull_point;
-   cull->stage.line = cull_line;
+   cull->stage.point = draw_pipe_passthrough_point;
+   cull->stage.line = draw_pipe_passthrough_line;
    cull->stage.tri = cull_first_tri;
    cull->stage.flush = cull_flush;
    cull->stage.reset_stipple_counter = cull_reset_stipple_counter;
    cull->stage.destroy = cull_destroy;
 
    return &cull->stage;
+
+ fail:
+   if (cull)
+      cull->stage.destroy( &cull->stage );
+
+   return NULL;
 }

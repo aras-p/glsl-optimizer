@@ -1014,7 +1014,7 @@ tgsi_to_llvm(struct gallivm_ir *ir, const struct tgsi_token *tokens)
    Value *ptr_INPUT = args++;
    ptr_INPUT->setName("input");
 
-   BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
+   BasicBlock *label_entry = BasicBlock::Create("entry", shader, 0);
 
    tgsi_parse_init(&parse, tokens);
 
@@ -1085,7 +1085,7 @@ llvm::Module * tgsi_to_llvmir(struct gallivm_ir *ir,
    Value *temps = args++;
    temps->setName("temps");
 
-   BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
+   BasicBlock *label_entry = BasicBlock::Create("entry", shader, 0);
 
    tgsi_parse_init(&parse, tokens);
 

@@ -106,6 +106,16 @@ static boolean
 sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
+
+   /* XXX: break this dependency - make setup_context live under
+    * softpipe, rename the old "setup" draw stage to something else.
+    */
+   struct setup_context *setup_ctx = sp_draw_setup_context(cvbr->softpipe->setup);
+   
+   setup_prepare( setup_ctx );
+
+
+
    if (prim == PIPE_PRIM_TRIANGLES ||
        prim == PIPE_PRIM_LINES ||
        prim == PIPE_PRIM_POINTS) {
@@ -136,10 +146,6 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
     */
    struct draw_stage *setup = softpipe->setup;
    struct setup_context *setup_ctx = sp_draw_setup_context(softpipe->setup);
-   
-   /* XXX: call this from allocate_vertices: 
-    */
-   setup_prepare( setup_ctx );
 
 
    switch (cvbr->prim) {

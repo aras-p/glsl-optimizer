@@ -170,10 +170,6 @@ static void st_destroy_context_priv( struct st_context *st )
 
    _vbo_DestroyContext(st->ctx);
 
-   cso_destroy_context(st->cso_context);
-
-   _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
-
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
          pipe_buffer_reference(ws, &st->state.constants[i].buffer, NULL);
@@ -188,6 +184,12 @@ static void st_destroy_context_priv( struct st_context *st )
 void st_destroy_context( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
+
+   /* need to unbind and destroy CSO objects before anything else */
+   cso_destroy_context(st->cso_context);
+
+   _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
+
    _mesa_free_context_data(ctx);
    st_destroy_context_priv(st);
    free(ctx);

@@ -29,7 +29,7 @@
 #define INSTRUCTIONSSOA_H
 
 #include <pipe/p_shader_tokens.h>
-#include <llvm/Support/LLVMBuilder.h>
+#include <llvm/Support/IRBuilder.h>
 
 #include <map>
 #include <vector>
@@ -87,7 +87,7 @@ private:
                                          const std::vector<llvm::Value*> in3);
    void injectFunction(llvm::Function *originalFunc, int op = TGSI_OPCODE_LAST);
 private:
-   llvm::LLVMFoldingBuilder  m_builder;
+   llvm::IRBuilder  m_builder;
    StorageSoa *m_storage;
 
    std::map<int, std::string> m_functionsMap;

@@ -61,7 +61,7 @@ struct st_fragment_program
    GLuint input_map[PIPE_MAX_SHADER_INPUTS];
 
    struct pipe_shader_state state;
-   struct pipe_shader_state *driver_shader;
+   void *driver_shader;
 
    GLuint param_state;
 
@@ -69,6 +69,10 @@ struct st_fragment_program
     * outputs match this fragment program's inputs.
     */
    struct translated_vertex_program *vertex_programs;
+
+   /** Program prefixed with glBitmap prologue */
+   struct st_fragment_program *bitmap_program;
+   uint bitmap_sampler;
 };
 
 
@@ -88,7 +92,7 @@ struct st_vertex_program
    GLuint num_inputs;
 
    struct pipe_shader_state state;
-   struct pipe_shader_state *driver_shader;
+   void *driver_shader;
 
    /** For using our private draw module (glRasterPos) */
    struct draw_vertex_shader *draw_shader;
@@ -111,7 +115,7 @@ st_vertex_program( struct gl_vertex_program *vp )
 }
 
 
-extern const struct cso_fragment_shader *
+extern void
 st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *fp,
                               const GLuint inputMapping[]);

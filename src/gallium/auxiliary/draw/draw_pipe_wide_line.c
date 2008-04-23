@@ -32,6 +32,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "draw_private.h"
+#include "draw_pipe.h"
 
 
 struct wideline_stage {
@@ -47,19 +48,6 @@ static INLINE struct wideline_stage *wideline_stage( struct draw_stage *stage )
    return (struct wideline_stage *)stage;
 }
 
-
-static void wideline_point( struct draw_stage *stage,
-                               struct prim_header *header )
-{
-   stage->next->point( stage->next, header );
-}
-
-
-static void wideline_tri( struct draw_stage *stage,
-                             struct prim_header *header )
-{
-   stage->next->tri(stage->next, header);
-}
 
 
 /**
@@ -179,9 +167,9 @@ struct draw_stage *draw_wide_line_stage( struct draw_context *draw )
 
    wide->stage.draw = draw;
    wide->stage.next = NULL;
-   wide->stage.point = wideline_point;
+   wide->stage.point = draw_pipe_passthrough_point;
    wide->stage.line = wideline_line;
-   wide->stage.tri = wideline_tri;
+   wide->stage.tri = draw_pipe_passthrough_point;
    wide->stage.flush = wideline_flush;
    wide->stage.reset_stipple_counter = wideline_reset_stipple_counter;
    wide->stage.destroy = wideline_destroy;

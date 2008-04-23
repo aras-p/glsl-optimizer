@@ -31,8 +31,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
-#include "draw_private.h"
-
+#include "draw_vs.h"
+#include "draw_pipe.h"
 
 struct twoside_stage {
    struct draw_stage stage;
@@ -98,21 +98,6 @@ static void twoside_tri( struct draw_stage *stage,
    }
 }
 
-
-static void twoside_line( struct draw_stage *stage,
-		       struct prim_header *header )
-{
-   /* pass-through */
-   stage->next->line( stage->next, header );
-}
-
-
-static void twoside_point( struct draw_stage *stage,
-			struct prim_header *header )
-{
-   /* pass-through */
-   stage->next->point( stage->next, header );
-}
 
 
 static void twoside_first_tri( struct draw_stage *stage, 
@@ -187,17 +172,26 @@ static void twoside_destroy( struct draw_stage *stage )
 struct draw_stage *draw_twoside_stage( struct draw_context *draw )
 {
    struct twoside_stage *twoside = CALLOC_STRUCT(twoside_stage);
+   if (twoside == NULL)
+      goto fail;
 
-   draw_alloc_temp_verts( &twoside->stage, 3 );
+   if (!draw_alloc_temp_verts( &twoside->stage, 3 ))
+      goto fail;
 
    twoside->stage.draw = draw;
    twoside->stage.next = NULL;
-   twoside->stage.point = twoside_point;
-   twoside->stage.line = twoside_line;
+   twoside->stage.point = draw_pipe_passthrough_point;
+   twoside->stage.line = draw_pipe_passthrough_line;
    twoside->stage.tri = twoside_first_tri;
    twoside->stage.flush = twoside_flush;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
    twoside->stage.destroy = twoside_destroy;
 
    return &twoside->stage;
+
+ fail:
+   if (twoside)
+      twoside->stage.destroy( &twoside->stage );
+
+   return NULL;
 }

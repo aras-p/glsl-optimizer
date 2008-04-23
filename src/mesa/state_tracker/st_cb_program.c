@@ -159,6 +159,10 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
             stfp->state.tokens = NULL;
          }
 
+         if (stfp->bitmap_program) {
+            st_delete_program(ctx, &stfp->bitmap_program->Base.Base);
+         }
+
          st_free_translated_vertex_programs(st, stfp->vertex_programs);
       }
       break;
