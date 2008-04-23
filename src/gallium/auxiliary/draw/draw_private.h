@@ -179,6 +179,7 @@ struct draw_context
    } driver;
 
    boolean flushing;
+   boolean vcache_flushing;
    boolean bypass_clipping;     /* set if either api or driver bypass_clipping true */
 
    /* pipe state that we need: */

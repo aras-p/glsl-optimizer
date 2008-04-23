@@ -367,7 +367,7 @@ draw_set_mapped_element_buffer( struct draw_context *draw,
  */
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
-   if (!draw->flushing) 
+   if (!draw->flushing && !draw->vcache_flushing)
    {
       draw->flushing = TRUE;
 

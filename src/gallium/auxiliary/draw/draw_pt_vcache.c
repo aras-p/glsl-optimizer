@@ -63,6 +63,7 @@ struct vcache_frontend {
 
 static void vcache_flush( struct vcache_frontend *vcache )
 {
+   vcache->draw->vcache_flushing = TRUE;
    if (vcache->draw_count) {
       vcache->middle->run( vcache->middle,
                            vcache->fetch_elts,
@@ -74,6 +75,7 @@ static void vcache_flush( struct vcache_frontend *vcache )
    memset(vcache->in, ~0, sizeof(vcache->in));
    vcache->fetch_count = 0;
    vcache->draw_count = 0;
+   vcache->draw->vcache_flushing = FALSE;
 }
 
 static void vcache_check_flush( struct vcache_frontend *vcache )
