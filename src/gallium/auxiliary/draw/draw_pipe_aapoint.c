@@ -481,7 +481,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
 
 
 /**
- * Generate the frag shader we'll use for drawing AA lines.
+ * Generate the frag shader we'll use for drawing AA points.
  * This will be the user's shader plus some texture/modulate instructions.
  */
 static boolean
@@ -531,7 +531,7 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
 
 /**
- * When we're about to draw our first AA line in a batch, this function is
+ * When we're about to draw our first AA point in a batch, this function is
  * called to tell the driver to bind our modified fragment shader.
  */
 static boolean
@@ -697,7 +697,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
       }
    }
 
-   /* now really draw first line */
+   /* now really draw first point */
    stage->point = aapoint_point;
    stage->point(stage, header);
 }
