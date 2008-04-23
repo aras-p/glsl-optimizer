@@ -433,9 +433,7 @@ pstip_create_texture(struct pstip_stage *pstip)
 
 
 /**
- * Create the sampler CSO that'll be used for antialiasing.
- * By using a mipmapped texture, we don't have to generate a different
- * texture image for each line size.
+ * Create the sampler CSO that'll be used for stippling.
  */
 static boolean
 pstip_create_sampler(struct pstip_stage *pstip)
@@ -463,8 +461,8 @@ pstip_create_sampler(struct pstip_stage *pstip)
 
 
 /**
- * When we're about to draw our first AA line in a batch, this function is
- * called to tell the driver to bind our modified fragment shader.
+ * When we're about to draw our first stipple polygon in a batch, this function
+ * is called to tell the driver to bind our modified fragment shader.
  */
 static boolean
 bind_pstip_fragment_shader(struct pstip_stage *pstip)
@@ -478,15 +476,11 @@ bind_pstip_fragment_shader(struct pstip_stage *pstip)
 }
 
 
-
 static INLINE struct pstip_stage *
 pstip_stage( struct draw_stage *stage )
 {
    return (struct pstip_stage *) stage;
 }
-
-
-
 
 
 static void
@@ -521,7 +515,7 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
 
-   /* now really draw first line */
+   /* now really draw first triangle */
    stage->tri = draw_pipe_passthrough_tri;
    stage->tri(stage, header);
 }
@@ -698,11 +692,10 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 
-
 /**
- * Called by drivers that want to install this AA line prim stage
+ * Called by drivers that want to install this polygon stipple stage
  * into the draw module's pipeline.  This will not be used if the
- * hardware has native support for AA lines.
+ * hardware has native support for polygon stipple.
  */
 boolean
 draw_install_pstipple_stage(struct draw_context *draw,
@@ -713,7 +706,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->draw = (void *) draw;
 
    /*
-    * Create / install AA line drawing / prim stage
+    * Create / install pgon stipple drawing / prim stage
     */
    pstip = draw_pstip_stage( draw );
    if (pstip == NULL)
