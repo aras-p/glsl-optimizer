@@ -104,6 +104,8 @@ out:
 
 static void cso_release_all( struct cso_context *ctx )
 {
+   unsigned i;
+   
    if (ctx->pipe) {
       ctx->pipe->bind_blend_state( ctx->pipe, NULL );
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
@@ -112,6 +114,11 @@ static void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
    }
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+      pipe_texture_reference(&ctx->textures[i], NULL);
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+      pipe_texture_reference(&ctx->textures_saved[i], NULL);
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
