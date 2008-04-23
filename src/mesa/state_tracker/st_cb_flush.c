@@ -67,7 +67,9 @@ display_front_buffer(struct st_context *st)
    st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
                                         st->pipe->priv );
 
+   /*
    st->frontbuffer_status = FRONT_STATUS_UNDEFINED;
+   */
 }
 
 
