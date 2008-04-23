@@ -62,7 +62,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
    }
 
    if (intel->last_swap_fence) {
-      driFenceFinish(intel->last_swap_fence, driFenceType(intel->last_swap_fence), GL_FALSE);
+      driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, TRUE);
       driFenceUnReference(&intel->last_swap_fence);
       intel->last_swap_fence = NULL;
    }

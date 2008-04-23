@@ -227,6 +227,7 @@ driAllocKernelBO(struct _DriSlabSizeHeader *header)
     drmMMListHead *list, *next, *head;
     uint32_t size = header->bufSize * slabPool->desiredNumBuffers;
     struct _DriKernelBO *kbo;
+    struct _DriKernelBO *kboTmp;
     int ret;
 
     /*
@@ -248,27 +249,36 @@ driAllocKernelBO(struct _DriSlabSizeHeader *header)
 	 list != head;
 	 list = next, next = list->next) {
 
-	kbo = DRMLISTENTRY(struct _DriKernelBO, list, head);
+	kboTmp = DRMLISTENTRY(struct _DriKernelBO, list, head);
 
-	if ((kbo->bo.size == size) &&
+	if ((kboTmp->bo.size == size) &&
 	    (slabPool->pageAlignment == 0 ||
-	     (kbo->pageAlignment % slabPool->pageAlignment) == 0)) {
+	     (kboTmp->pageAlignment % slabPool->pageAlignment) == 0)) {
 
-	    DRMLISTDELINIT(&kbo->head);
-	    DRMLISTDELINIT(&kbo->timeoutHead);
-	    break;
+	    if (!kbo)
+		kbo = kboTmp;
+
+	    if ((kbo->bo.proposedFlags ^ slabPool->proposedFlags) == 0)
+		break;
+
 	}
+    }
 
-	kbo = NULL;
+    if (kbo) {
+	DRMLISTDELINIT(&kbo->head);
+	DRMLISTDELINIT(&kbo->timeoutHead);
     }
 
     _glthread_UNLOCK_MUTEX(fMan->mutex);
 
     if (kbo) {
+        uint64_t new_mask = kbo->bo.proposedFlags ^ slabPool->proposedFlags;
+
 	ret = 0;
-	ret = drmBOSetStatus(kbo->fd, &kbo->bo, slabPool->proposedFlags,
-			     (slabPool->proposedFlags ^ kbo->bo.flags),
-			     DRM_BO_HINT_DONT_FENCE, 0, 0);
+	if (new_mask) {
+	    ret = drmBOSetStatus(kbo->fd, &kbo->bo, slabPool->proposedFlags,
+				 new_mask, DRM_BO_HINT_DONT_FENCE, 0, 0);
+	}
 	if (ret == 0)
 	    return kbo;
 
@@ -284,7 +294,6 @@ driAllocKernelBO(struct _DriSlabSizeHeader *header)
     kbo->fd = slabPool->fd;
     DRMINITLISTHEAD(&kbo->head);
     DRMINITLISTHEAD(&kbo->timeoutHead);
-
     ret = drmBOCreate(kbo->fd, size, slabPool->pageAlignment, NULL,
 		      slabPool->proposedFlags,
 		      DRM_BO_HINT_DONT_FENCE, &kbo->bo);
@@ -417,47 +426,61 @@ driSlabFreeBufferLocked(struct _DriSlabBuffer *buf)
 static void
 driSlabCheckFreeLocked(struct _DriSlabSizeHeader *header, int wait)
 {
-   drmMMListHead *list, *prev;
+  drmMMListHead *list, *prev, *first;
    struct _DriSlabBuffer *buf;
    struct _DriSlab *slab;
-
-   int signaled = 0;
+   int firstWasSignaled = 1;
+   int signaled;
    int i;
    int ret;
 
-   list = header->delayedBuffers.next;
-
-   /* Only examine the oldest 1/3 of delayed buffers:
+   /*
+    * Rerun the freeing test if the youngest tested buffer
+    * was signaled, since there might be more idle buffers
+    * in the delay list.
     */
-   if (header->numDelayed > 3) {
-      for (i = 0; i < header->numDelayed; i += 3) {
-         list = list->next;
-      }
-   }
 
-   prev = list->prev;
-   for (; list != &header->delayedBuffers; list = prev, prev = list->prev) {
-       buf = DRMLISTENTRY(struct _DriSlabBuffer, list, head);
-       slab = buf->parent;
+   while (firstWasSignaled) {
+       firstWasSignaled = 0;
+       signaled = 0;
+       first = header->delayedBuffers.next;
 
-       if (!signaled) {
-	   if (wait) {
-	       ret = driFenceFinish(buf->fence, buf->fenceType, 0);
-	       if (ret)
-		   break;
-	       signaled = 1;
-	   } else {
-	       signaled = driFenceSignaled(buf->fence, buf->fenceType);
+       /* Only examine the oldest 1/3 of delayed buffers:
+	*/
+       if (header->numDelayed > 3) {
+	   for (i = 0; i < header->numDelayed; i += 3) {
+	       first = first->next;
 	   }
-	   if (signaled) {
+       }
+
+       for (list = first, prev = list->prev;
+	    list != &header->delayedBuffers;
+	    list = prev, prev = list->prev) {
+	   buf = DRMLISTENTRY(struct _DriSlabBuffer, list, head);
+	   slab = buf->parent;
+
+	   if (!signaled) {
+	       if (wait) {
+		   ret = driFenceFinish(buf->fence, buf->fenceType, 0);
+		   if (ret)
+		       break;
+		   signaled = 1;
+		   wait = 0;
+	       } else {
+		   signaled = driFenceSignaled(buf->fence, buf->fenceType);
+	       }
+	       if (signaled) {
+		   if (list == first)
+		       firstWasSignaled = 1;
+		   driFenceUnReference(&buf->fence);
+		   header->numDelayed--;
+		   driSlabFreeBufferLocked(buf);
+	       }
+	   } else if (driFenceSignaledCached(buf->fence, buf->fenceType)) {
 	       driFenceUnReference(&buf->fence);
 	       header->numDelayed--;
 	       driSlabFreeBufferLocked(buf);
 	   }
-       } else if (driFenceSignaledCached(buf->fence, buf->fenceType)) {
-	   driFenceUnReference(&buf->fence);
-	   header->numDelayed--;
-	   driSlabFreeBufferLocked(buf);
        }
    }
 }
@@ -480,15 +503,14 @@ driSlabAllocBuffer(struct _DriSlabSizeHeader *header)
 	_glthread_UNLOCK_MUTEX(header->mutex);
 	if (count != DRI_SLABPOOL_ALLOC_RETRIES)
 	    usleep(1);
-	(void) driAllocSlab(header);
 	_glthread_LOCK_MUTEX(header->mutex);
+	(void) driAllocSlab(header);
 	count--;
     }
 
     list = header->slabs.next;
     if (list == &header->slabs) {
 	_glthread_UNLOCK_MUTEX(header->mutex);
-	//assert(0, "no buffers in slab");
 	return NULL;
     }
     slab = DRMLISTENTRY(struct _DriSlab, list, head);
@@ -513,7 +535,6 @@ pool_create(struct _DriBufferPool *driPool, unsigned long size,
     void *dummy;
     int i;
     int ret;
-
 
     /*
      * FIXME: Check for compatibility.
@@ -605,6 +626,8 @@ pool_destroy(struct _DriBufferPool *driPool, void *private)
 	DRMLISTADDTAIL(&buf->head, &header->delayedBuffers);
 	header->numDelayed++;
     } else {
+	if (buf->fence)
+	    driFenceUnReference(&buf->fence);
 	driSlabFreeBufferLocked(buf);
     }
 
