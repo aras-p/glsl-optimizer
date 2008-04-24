@@ -367,8 +367,10 @@ draw_set_mapped_element_buffer( struct draw_context *draw,
  */
 void draw_do_flush( struct draw_context *draw, unsigned flags )
 {
-   if (!draw->flushing && !draw->vcache_flushing)
+   if (!draw->suspend_flushing)
    {
+      assert(!draw->flushing); /* catch inadvertant recursion */
+
       draw->flushing = TRUE;
 
       draw_pipeline_flush( draw, flags );

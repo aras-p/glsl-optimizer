@@ -178,9 +178,9 @@ struct draw_context
       boolean bypass_clipping;
    } driver;
 
-   boolean flushing;
-   boolean vcache_flushing;
-   boolean bypass_clipping;     /* set if either api or driver bypass_clipping true */
+   boolean flushing;         /**< debugging/sanity */
+   boolean suspend_flushing; /**< internally set */
+   boolean bypass_clipping;  /**< set if either api or driver bypass_clipping true */
 
    /* pipe state that we need: */
    const struct pipe_rasterizer_state *rasterizer;

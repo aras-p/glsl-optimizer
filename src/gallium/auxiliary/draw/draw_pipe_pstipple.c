@@ -467,11 +467,14 @@ pstip_create_sampler(struct pstip_stage *pstip)
 static boolean
 bind_pstip_fragment_shader(struct pstip_stage *pstip)
 {
+   struct draw_context *draw = pstip->stage.draw;
    if (!pstip->fs->pstip_fs &&
        !generate_pstip_fs(pstip))
       return FALSE;
 
+   draw->suspend_flushing = TRUE;
    pstip->driver_bind_fs_state(pstip->pipe, pstip->fs->pstip_fs);
+   draw->suspend_flushing = FALSE;
    return TRUE;
 }
 
@@ -488,6 +491,7 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 {
    struct pstip_stage *pstip = pstip_stage(stage);
    struct pipe_context *pipe = pstip->pipe;
+   struct draw_context *draw = stage->draw;
    uint num_samplers;
 
    assert(stage->draw->rasterizer->poly_stipple_enable);
@@ -512,8 +516,10 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 
    assert(num_samplers <= PIPE_MAX_SAMPLERS);
 
+   draw->suspend_flushing = TRUE;
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
+   draw->suspend_flushing = FALSE;
 
    /* now really draw first triangle */
    stage->tri = draw_pipe_passthrough_tri;
@@ -524,7 +530,7 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 static void
 pstip_flush(struct draw_stage *stage, unsigned flags)
 {
-   /*struct draw_context *draw = stage->draw;*/
+   struct draw_context *draw = stage->draw;
    struct pstip_stage *pstip = pstip_stage(stage);
    struct pipe_context *pipe = pstip->pipe;
 
@@ -534,11 +540,13 @@ pstip_flush(struct draw_stage *stage, unsigned flags)
    /* restore original frag shader */
    pstip->driver_bind_fs_state(pipe, pstip->fs->driver_fs);
 
-   /* XXX restore original texture, sampler state */
+   /* restore original texture, sampler state */
+   draw->suspend_flushing = TRUE;
    pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
                                      pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, pstip->num_textures,
                                       pstip->state.textures);
+   draw->suspend_flushing = FALSE;
 }
 
 
@@ -661,6 +669,7 @@ pstip_set_sampler_textures(struct pipe_context *pipe,
                            unsigned num, struct pipe_texture **texture)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
+   struct draw_context *draw = pstip->stage.draw;
    uint i;
 
    /* save current */
@@ -683,8 +692,11 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
                           const struct pipe_poly_stipple *stipple)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
+   struct draw_context *draw = (struct draw_context *) pipe->draw;
+
    /* save current */
    pstip->state.stipple = stipple;
+
    /* pass-through */
    pstip->driver_set_polygon_stipple(pstip->pipe, stipple);
 
