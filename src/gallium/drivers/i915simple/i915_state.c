@@ -549,6 +549,9 @@ static void i915_set_sampler_textures(struct pipe_context *pipe,
        !memcmp(i915->texture, texture, num * sizeof(struct pipe_texture *)))
       return;
 
+   /* Fixes wrong texture in texobj with VBUF */
+   draw_flush(i915->draw);
+
    for (i = 0; i < num; i++)
       pipe_texture_reference((struct pipe_texture **) &i915->texture[i],
                              texture[i]);
