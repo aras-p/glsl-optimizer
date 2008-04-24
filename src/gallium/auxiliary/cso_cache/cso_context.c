@@ -102,6 +102,10 @@ out:
    return NULL;
 }
 
+
+/**
+ * Prior to context destruction, this function unbinds all state objects.
+ */
 static void cso_release_all( struct cso_context *ctx )
 {
    unsigned i;
@@ -115,10 +119,10 @@ static void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
    }
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       pipe_texture_reference(&ctx->textures[i], NULL);
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
       pipe_texture_reference(&ctx->textures_saved[i], NULL);
+   }
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
@@ -129,10 +133,10 @@ static void cso_release_all( struct cso_context *ctx )
 
 void cso_destroy_context( struct cso_context *ctx )
 {
-   if (ctx)
+   if (ctx) {
       cso_release_all( ctx );
-
-   FREE( ctx );
+      FREE( ctx );
+   }
 }
 
 
