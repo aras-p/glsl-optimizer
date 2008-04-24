@@ -803,7 +803,7 @@ st_destroy_bitmap(struct st_context *st)
    }
 #endif
    if (st->bitmap.vs) {
-      pipe->delete_vs_state(pipe, st->bitmap.vs);
+      cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;
    }
 

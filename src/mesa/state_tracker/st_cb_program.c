@@ -39,7 +39,7 @@
 #include "shader/programopt.h"
 #include "shader/shader_api.h"
 
-#include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_context.h"
 #include "draw/draw_context.h"
 
 #include "st_context.h"
@@ -127,7 +127,6 @@ void
 st_delete_program(GLcontext *ctx, struct gl_program *prog)
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
 
    switch( prog->Target ) {
    case GL_VERTEX_PROGRAM_ARB:
@@ -135,7 +134,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
 
          if (stvp->driver_shader) {
-            pipe->delete_vs_state(pipe, stvp->driver_shader);
+            cso_delete_vertex_shader(st->cso_context, stvp->driver_shader);
             stvp->driver_shader = NULL;
          }
 
@@ -150,7 +149,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
 
          if (stfp->driver_shader) {
-            pipe->delete_fs_state(pipe, stfp->driver_shader);
+            cso_delete_fragment_shader(st->cso_context, stfp->driver_shader);
             stfp->driver_shader = NULL;
          }
          
@@ -187,7 +186,6 @@ static void st_program_string_notify( GLcontext *ctx,
 				      struct gl_program *prog )
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_context *pipe = st->pipe;
 
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
@@ -195,7 +193,7 @@ static void st_program_string_notify( GLcontext *ctx,
       stfp->serialNo++;
 
       if (stfp->driver_shader) {
-         pipe->delete_fs_state(pipe, stfp->driver_shader);
+         cso_delete_fragment_shader(st->cso_context, stfp->driver_shader);
          stfp->driver_shader = NULL;
       }
 
@@ -215,7 +213,7 @@ static void st_program_string_notify( GLcontext *ctx,
       stvp->serialNo++;
 
       if (stvp->driver_shader) {
-         pipe->delete_vs_state(pipe, stvp->driver_shader);
+         cso_delete_vertex_shader(st->cso_context, stvp->driver_shader);
          stvp->driver_shader = NULL;
       }
 

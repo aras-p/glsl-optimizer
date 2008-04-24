@@ -98,11 +98,11 @@ st_destroy_clear(struct st_context *st)
    struct pipe_context *pipe = st->pipe;
 
    if (st->clear.fs) {
-      pipe->delete_fs_state(pipe, st->clear.fs);
+      cso_delete_fragment_shader(st->cso_context, st->clear.fs);
       st->clear.fs = NULL;
    }
    if (st->clear.vs) {
-      pipe->delete_vs_state(pipe, st->clear.vs);
+      cso_delete_vertex_shader(st->cso_context, st->clear.vs);
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
