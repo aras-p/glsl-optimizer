@@ -170,3 +170,12 @@ softpipe_draw_elements(struct pipe_context *pipe,
 
    return TRUE;
 }
+
+
+void
+softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags)
+{
+   struct softpipe_context *sp = softpipe_context(pipe);
+   draw_set_edgeflags(sp->draw, edgeflags);
+}
+
