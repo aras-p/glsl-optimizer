@@ -33,8 +33,6 @@
 #include "pipe/p_util.h"
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
-//#include "draw/draw_vbuf.h"
-//#include "draw/draw_vertex.h"
 #include "draw/draw_pt.h"
 
 
@@ -86,8 +84,9 @@ static void vcache_check_flush( struct vcache_frontend *vcache )
 }
 
 
-static void vcache_elt( struct vcache_frontend *vcache,
-                        unsigned felt )
+static INLINE void vcache_elt( struct vcache_frontend *vcache,
+                               unsigned felt,
+                               ushort flags )
 {
    unsigned idx = felt % CACHE_MAX;
 
@@ -99,28 +98,9 @@ static void vcache_elt( struct vcache_frontend *vcache,
       vcache->fetch_elts[vcache->fetch_count++] = felt;
    }
 
-   vcache->draw_elts[vcache->draw_count++] = vcache->out[idx];
+   vcache->draw_elts[vcache->draw_count++] = vcache->out[idx] | flags;
 }
 
-static unsigned add_edgeflag( struct vcache_frontend *vcache,
-                              unsigned idx, 
-                              unsigned mask )
-{
-   if (0 && mask && draw_pt_get_edgeflag(vcache->draw, idx)) 
-      return idx | DRAW_PT_EDGEFLAG;
-   else
-      return idx;
-}
-
-
-static unsigned add_reset_stipple( unsigned idx,
-                                   unsigned reset )
-{
-   if (0 && reset)
-      return idx | DRAW_PT_RESET_STIPPLE;
-   else
-      return idx;
-}
 
                    
 static void vcache_triangle( struct vcache_frontend *vcache,
@@ -128,49 +108,42 @@ static void vcache_triangle( struct vcache_frontend *vcache,
                              unsigned i1,
                              unsigned i2 )
 {
-   vcache_elt(vcache, i0 /* | DRAW_PT_EDGEFLAG | DRAW_PT_RESET_STIPPLE */ );
-   vcache_elt(vcache, i1 /* | DRAW_PT_EDGEFLAG */);
-   vcache_elt(vcache, i2 /* | DRAW_PT_EDGEFLAG */);
+   vcache_elt(vcache, i0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, i2, 0);
    vcache_check_flush(vcache);
 }
 
 			  
-static void vcache_ef_triangle( struct vcache_frontend *vcache,
-                                boolean reset_stipple,
-                                unsigned ef_mask,
-                                unsigned i0,
-                                unsigned i1,
-                                unsigned i2 )
+static void vcache_triangle_flags( struct vcache_frontend *vcache,
+                                   ushort flags,
+                                   unsigned i0,
+                                   unsigned i1,
+                                   unsigned i2 )
 {
-/*
-   i0 = add_edgeflag( vcache, i0, (ef_mask >> 0) & 1 );
-   i1 = add_edgeflag( vcache, i1, (ef_mask >> 1) & 1 );
-   i2 = add_edgeflag( vcache, i2, (ef_mask >> 2) & 1 );
-   i0 = add_reset_stipple( i0, reset_stipple );
-*/
-
-   vcache_elt(vcache, i0);
-   vcache_elt(vcache, i1);
-   vcache_elt(vcache, i2);
+   vcache_elt(vcache, i0, flags);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, i2, 0);
    vcache_check_flush(vcache);
-
-   if (0) debug_printf("emit tri ef: %d %d %d\n", 
-                       !!(i0 & DRAW_PT_EDGEFLAG),
-                       !!(i1 & DRAW_PT_EDGEFLAG),
-                       !!(i2 & DRAW_PT_EDGEFLAG));
-   
 }
 
-
 static void vcache_line( struct vcache_frontend *vcache,
-                         boolean reset_stipple,
                          unsigned i0,
                          unsigned i1 )
 {
-   i0 = add_reset_stipple( i0, reset_stipple );
+   vcache_elt(vcache, i0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_check_flush(vcache);
+}
 
-   vcache_elt(vcache, i0);
-   vcache_elt(vcache, i1);
+
+static void vcache_line_flags( struct vcache_frontend *vcache,
+                               ushort flags,
+                               unsigned i0,
+                               unsigned i1 )
+{
+   vcache_elt(vcache, i0, flags);
+   vcache_elt(vcache, i1, 0);
    vcache_check_flush(vcache);
 }
 
@@ -178,7 +151,7 @@ static void vcache_line( struct vcache_frontend *vcache,
 static void vcache_point( struct vcache_frontend *vcache,
                           unsigned i0 )
 {
-   vcache_elt(vcache, i0);
+   vcache_elt(vcache, i0, 0);
    vcache_check_flush(vcache);
 }
 
@@ -198,237 +171,36 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
                             unsigned i2,
                             unsigned i3 )
 {
-   const unsigned omitEdge2 = ~(1 << 1);
-   const unsigned omitEdge3 = ~(1 << 2);
-   vcache_ef_triangle( vcache, 1, omitEdge2, i0, i1, i3 );
-   vcache_ef_triangle( vcache, 0, omitEdge3, i1, i2, i3 );
+   const unsigned omitEdge1 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_2;
+   const unsigned omitEdge2 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_1;
+
+   vcache_triangle_flags( vcache, 
+                          DRAW_PIPE_RESET_STIPPLE | omitEdge1, 
+                          i0, i1, i3 );
+
+   vcache_triangle_flags( vcache, 
+                          omitEdge2, 
+                          i1, i2, i3 );
 }
 
+/* At least for now, we're back to using a template include file for
+ * this.  The two paths aren't too different though - it may be
+ * possible to reunify them.
+ */
+#define TRIANGLE(vc,flags,i0,i1,i2) vcache_triangle_flags(vc,flags,i0,i1,i2)
+#define QUAD(vc,i0,i1,i2,i3)        vcache_ef_quad(vc,i0,i1,i2,i3)
+#define LINE(vc,flags,i0,i1)        vcache_line_flags(vc,flags,i0,i1)
+#define POINT(vc,i0)                vcache_point(vc,i0)
+#define FUNC vcache_run_extras
+#include "draw_pt_vcache_tmp.h"
 
+#define TRIANGLE(vc,flags,i0,i1,i2) vcache_triangle(vc,i0,i1,i2)
+#define QUAD(vc,i0,i1,i2,i3)        vcache_quad(vc,i0,i1,i2,i3)
+#define LINE(vc,flags,i0,i1)        vcache_line(vc,i0,i1)
+#define POINT(vc,i0)                vcache_point(vc,i0)
+#define FUNC vcache_run
+#include "draw_pt_vcache_tmp.h"
 
-
-static void vcache_run( struct draw_pt_front_end *frontend, 
-                        pt_elt_func get_elt,
-                        const void *elts,
-                        unsigned count )
-{
-   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
-   struct draw_context *draw = vcache->draw;
-
-   boolean unfilled = (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-		       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL);
-
-   boolean flatfirst = (draw->rasterizer->flatshade && 
-                        draw->rasterizer->flatshade_first);
-   unsigned i;
-
-//   debug_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
-
-   switch (vcache->input_prim) {
-   case PIPE_PRIM_POINTS:
-      for (i = 0; i < count; i ++) {
-	 vcache_point( vcache,
-                       get_elt(elts, i + 0) );
-      }
-      break;
-
-   case PIPE_PRIM_LINES:
-      for (i = 0; i+1 < count; i += 2) {
-         vcache_line( vcache, 
-                      TRUE,
-                      get_elt(elts, i + 0),
-                      get_elt(elts, i + 1));
-      }
-      break;
-
-   case PIPE_PRIM_LINE_LOOP:  
-      if (count >= 2) {
-	 for (i = 1; i < count; i++) {
-	    vcache_line( vcache, 
-                         i == 1, 	/* XXX: only if vb not split */
-                         get_elt(elts, i - 1),
-                         get_elt(elts, i ));
-	 }
-
-	 vcache_line( vcache, 
-                      0,
-                      get_elt(elts, count - 1),
-                      get_elt(elts, 0 ));
-      }
-      break;
-
-   case PIPE_PRIM_LINE_STRIP:
-      for (i = 1; i < count; i++) {
-         vcache_line( vcache,
-                      i == 1,
-                      get_elt(elts, i - 1),
-                      get_elt(elts, i ));
-      }
-      break;
-
-   case PIPE_PRIM_TRIANGLES:
-      if (unfilled) {
-         for (i = 0; i+2 < count; i += 3) {
-            vcache_ef_triangle( vcache,
-                                1, 
-                                ~0,
-                                get_elt(elts, i + 0),
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 2 ));
-         }
-      } 
-      else {
-         for (i = 0; i+2 < count; i += 3) {
-            vcache_triangle( vcache,
-                             get_elt(elts, i + 0),
-                             get_elt(elts, i + 1),
-                             get_elt(elts, i + 2 ));
-         }
-      }
-      break;
-
-   case PIPE_PRIM_TRIANGLE_STRIP:
-      if (flatfirst) {
-         for (i = 0; i+2 < count; i++) {
-            if (i & 1) {
-               vcache_triangle( vcache,
-                                get_elt(elts, i + 0),
-                                get_elt(elts, i + 2),
-                                get_elt(elts, i + 1 ));
-            }
-            else {
-               vcache_triangle( vcache,
-                                get_elt(elts, i + 0),
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 2 ));
-            }
-         }
-      }
-      else {
-         for (i = 0; i+2 < count; i++) {
-            if (i & 1) {
-               vcache_triangle( vcache,
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 0),
-                                get_elt(elts, i + 2 ));
-            }
-            else {
-               vcache_triangle( vcache,
-                                get_elt(elts, i + 0),
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 2 ));
-            }
-         }
-      }
-      break;
-
-   case PIPE_PRIM_TRIANGLE_FAN:
-      if (count >= 3) {
-         if (flatfirst) {
-            for (i = 0; i+2 < count; i++) {
-               vcache_triangle( vcache,
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 2),
-                                get_elt(elts, 0 ));
-            }
-         }
-         else {
-            for (i = 0; i+2 < count; i++) {
-               vcache_triangle( vcache,
-                                get_elt(elts, 0),
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 2 ));
-            }
-         }
-      }
-      break;
-
-
-   case PIPE_PRIM_QUADS:
-      if (unfilled) {
-	 for (i = 0; i+3 < count; i += 4) {
-	    vcache_ef_quad( vcache,
-                            get_elt(elts, i + 0),
-                            get_elt(elts, i + 1),
-                            get_elt(elts, i + 2),
-                            get_elt(elts, i + 3));
-	 }
-      }
-      else {
-	 for (i = 0; i+3 < count; i += 4) {
-	    vcache_quad( vcache,
-                         get_elt(elts, i + 0),
-                         get_elt(elts, i + 1),
-                         get_elt(elts, i + 2),
-                         get_elt(elts, i + 3));
-	 }
-      }
-      break;
-
-   case PIPE_PRIM_QUAD_STRIP:
-      if (unfilled) {
-	 for (i = 0; i+3 < count; i += 2) {
-	    vcache_ef_quad( vcache,
-                            get_elt(elts, i + 2),
-                            get_elt(elts, i + 0),
-                            get_elt(elts, i + 1),
-                            get_elt(elts, i + 3));
-	 }
-      }
-      else {
-	 for (i = 0; i+3 < count; i += 2) {
-	    vcache_quad( vcache,
-                         get_elt(elts, i + 2),
-                         get_elt(elts, i + 0),
-                         get_elt(elts, i + 1),
-                         get_elt(elts, i + 3));
-	 }
-      }
-      break;
-
-   case PIPE_PRIM_POLYGON:
-      if (unfilled) {
-         /* These bitflags look a little odd because we submit the
-          * vertices as (1,2,0) to satisfy flatshade requirements.  
-          */
-         const unsigned edge_first  = (1<<2);
-         const unsigned edge_middle = (1<<0);
-         const unsigned edge_last   = (1<<1);
-
-	 for (i = 0; i+2 < count; i++) {
-            unsigned ef_mask = edge_middle;
-
-            if (i == 0)
-               ef_mask |= edge_first;
-
-            if (i + 3 == count)
-	       ef_mask |= edge_last;
-
-	    vcache_ef_triangle( vcache,
-                                i == 0,
-                                ef_mask,
-                                get_elt(elts, i + 1),
-                                get_elt(elts, i + 2),
-                                get_elt(elts, 0));
-	 }
-      }
-      else {
-	 for (i = 0; i+2 < count; i++) {
-	    vcache_triangle( vcache,
-                             get_elt(elts, i + 1),
-                             get_elt(elts, i + 2),
-                             get_elt(elts, 0));
-	 }
-      }
-      break;
-
-   default:
-      assert(0);
-      break;
-   }
-   
-   vcache_flush( vcache );
-}
 
 
 
@@ -453,15 +225,21 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
 			    unsigned opt )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
+   const struct pipe_rasterizer_state *rasterizer = vcache->draw->rasterizer;
 
-/*
-   if (vcache->draw->rasterizer->flatshade_first)
-      vcache->base.run = vcache_run_pv0;
-   else
-      vcache->base.run = vcache_run_pv2;
-*/ 
 
-   vcache->base.run = vcache_run;
+   if (rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
+       rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL ||
+       rasterizer->line_stipple_enable)
+   {
+      assert(opt & PT_PIPELINE);
+      vcache->base.run = vcache_run_extras;
+   }
+   else 
+   {
+      vcache->base.run = vcache_run;
+   }
+
    vcache->input_prim = prim;
    vcache->output_prim = reduced_prim[prim];
 

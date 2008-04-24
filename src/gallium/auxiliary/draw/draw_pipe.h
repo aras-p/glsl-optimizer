@@ -37,6 +37,17 @@
 #include "draw_private.h"       /* for sizeof(vertex_header) */
 
 
+/**
+ * Basic info for a point/line/triangle primitive.
+ */
+struct prim_header {
+   float det;                 /**< front/back face determinant */
+   ushort flags;
+   ushort pad;
+   struct vertex_header *v[3];  /**< 1 to 3 vertex pointers */
+};
+
+
 
 /**
  * Base class for all primitive drawing stages.

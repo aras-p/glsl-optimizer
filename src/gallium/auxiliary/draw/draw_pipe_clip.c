@@ -119,7 +119,7 @@ static void interp( const struct clipper *clip,
     */
    {
       dst->clipmask = 0;
-      dst->edgeflag = 0;
+      dst->edgeflag = 0;        /* will get overwritten later */
       dst->pad = 0;
       dst->vertex_id = UNDEFINED_VERTEX_ID;
    }
@@ -162,45 +162,39 @@ static void emit_poly( struct draw_stage *stage,
    struct prim_header header;
    unsigned i;
 
+   const ushort edge_first  = DRAW_PIPE_EDGE_FLAG_2;
+   const ushort edge_middle = DRAW_PIPE_EDGE_FLAG_0;
+   const ushort edge_last   = DRAW_PIPE_EDGE_FLAG_1;
+
    /* later stages may need the determinant, but only the sign matters */
    header.det = origPrim->det;
+   header.flags = DRAW_PIPE_RESET_STIPPLE | edge_first | edge_middle;
+   header.pad = 0;
 
-   for (i = 2; i < n; i++) {
+   for (i = 2; i < n; i++, header.flags = 0) {
       header.v[0] = inlist[i-1];
       header.v[1] = inlist[i];
       header.v[2] = inlist[0];	/* keep in v[2] for flatshading */
-	
-      {
-	 unsigned tmp1 = header.v[1]->edgeflag;
-	 unsigned tmp2 = header.v[2]->edgeflag;
 
-	 if (i != n-1) header.v[1]->edgeflag = 0;
-	 if (i != 2)   header.v[2]->edgeflag = 0;
+      if (i == n-1)
+        header.flags |= edge_last;
 
-         header.edgeflags = ((header.v[0]->edgeflag << 0) | 
-                             (header.v[1]->edgeflag << 1) | 
-                             (header.v[2]->edgeflag << 2));
-
-         if (0) {
-            const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
-            uint j, k;
-            debug_printf("Clipped tri:\n");
-            for (j = 0; j < 3; j++) {
-               for (k = 0; k < vs->info.num_outputs; k++) {
-                  debug_printf("  Vert %d: Attr %d:  %f %f %f %f\n", j, k,
-                         header.v[j]->data[k][0],
-                         header.v[j]->data[k][1],
-                         header.v[j]->data[k][2],
-                         header.v[j]->data[k][3]);
-               }
+      if (0) {
+         const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+         uint j, k;
+         debug_printf("Clipped tri:\n");
+         for (j = 0; j < 3; j++) {
+            for (k = 0; k < vs->info.num_outputs; k++) {
+               debug_printf("  Vert %d: Attr %d:  %f %f %f %f\n", j, k,
+                            header.v[j]->data[k][0],
+                            header.v[j]->data[k][1],
+                            header.v[j]->data[k][2],
+                            header.v[j]->data[k][3]);
             }
          }
-
-	 stage->next->tri( stage->next, &header );
-
-	 header.v[1]->edgeflag = tmp1;
-	 header.v[2]->edgeflag = tmp2;
       }
+
+      stage->next->tri( stage->next, &header );
    }
 }
 

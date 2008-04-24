@@ -116,8 +116,7 @@ static void do_point( struct draw_context *draw,
 {
    struct prim_header prim;
    
-   prim.reset_line_stipple = 0;
-   prim.edgeflags = 1;
+   prim.flags = 0;
    prim.pad = 0;
    prim.v[0] = (struct vertex_header *)v0;
 
@@ -126,13 +125,13 @@ static void do_point( struct draw_context *draw,
 
 
 static void do_line( struct draw_context *draw,
+                     ushort flags,
 		     const char *v0,
 		     const char *v1 )
 {
    struct prim_header prim;
    
-   prim.reset_line_stipple = 1; /* fixme */
-   prim.edgeflags = 1;
+   prim.flags = flags;
    prim.pad = 0;
    prim.v[0] = (struct vertex_header *)v0;
    prim.v[1] = (struct vertex_header *)v1;
@@ -142,6 +141,7 @@ static void do_line( struct draw_context *draw,
 
 
 static void do_triangle( struct draw_context *draw,
+                         ushort flags,
 			 char *v0,
 			 char *v1,
 			 char *v2 )
@@ -151,10 +151,7 @@ static void do_triangle( struct draw_context *draw,
    prim.v[0] = (struct vertex_header *)v0;
    prim.v[1] = (struct vertex_header *)v1;
    prim.v[2] = (struct vertex_header *)v2;
-   prim.reset_line_stipple = 1;
-   prim.edgeflags = ((prim.v[0]->edgeflag)      |
-                     (prim.v[1]->edgeflag << 1) |
-                     (prim.v[2]->edgeflag << 2));
+   prim.flags = flags;
    prim.pad = 0;
 
    draw->pipeline.first->tri( draw->pipeline.first, &prim );
@@ -197,13 +194,15 @@ void draw_pipeline_run( struct draw_context *draw,
    case PIPE_PRIM_LINES:
       for (i = 0; i+1 < count; i += 2) 
          do_line( draw, 
-                  verts + stride * elts[i+0],
+                  elts[i+0],
+                  verts + stride * (elts[i+0] & ~DRAW_PIPE_FLAG_MASK),
                   verts + stride * elts[i+1]);
       break;
    case PIPE_PRIM_TRIANGLES:
       for (i = 0; i+2 < count; i += 3)
          do_triangle( draw, 
-                      verts + stride * elts[i+0],
+                      elts[i+0],
+                      verts + stride * (elts[i+0] & ~DRAW_PIPE_FLAG_MASK),
                       verts + stride * elts[i+1],
                       verts + stride * elts[i+2]);
       break;

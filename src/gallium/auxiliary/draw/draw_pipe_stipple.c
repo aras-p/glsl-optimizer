@@ -135,6 +135,10 @@ stipple_line(struct draw_stage *stage, struct prim_header *header)
    float length = MAX2(dx, dy);
    int i;
 
+   if (header->flags & DRAW_PIPE_RESET_STIPPLE)
+      stipple->counter = 0;
+
+
    /* XXX ToDo: intead of iterating pixel-by-pixel, use a look-up table.
     */
    for (i = 0; i < length; i++) {

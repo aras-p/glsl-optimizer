@@ -41,6 +41,7 @@ struct pt_fetch {
    struct translate *translate;
 
    unsigned vertex_size;
+   boolean need_edgeflags;
 
    struct translate_cache *cache;
 };
@@ -121,6 +122,10 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 				      0);
       }
    }
+
+   fetch->need_edgeflags = ((draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
+                             draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) &&
+                            draw->pt.user.edgeflag);
 }
 
 
@@ -147,6 +152,18 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			elts, 
 			count,
 			verts );
+
+   /* Edgeflags are hard to fit into a translate program, populate
+    * them separately if required.  In the setup above they are
+    * defaulted to one, so only need this if there is reason to change
+    * that default:
+    */
+   if (fetch->need_edgeflags) {
+      for (i = 0; i < count; i++) {
+         struct vertex_header *vh = (struct vertex_header *)(verts + i * fetch->vertex_size);
+         vh->edgeflag = draw_pt_get_edgeflag( draw, elts[i] );
+      }
+   }
 }
 
 

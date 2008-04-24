@@ -79,25 +79,6 @@ struct vertex_header {
 
 
 /**
- * Basic info for a point/line/triangle primitive.
- */
-struct prim_header {
-   float det;                 /**< front/back face determinant */
-   unsigned reset_line_stipple:1;
-   unsigned edgeflags:3;
-   unsigned pad:28;
-   struct vertex_header *v[3];  /**< 1 to 3 vertex pointers */
-};
-
-
-
-
-#define PT_SHADE      0x1
-#define PT_CLIPTEST   0x2
-#define PT_PIPELINE   0x4
-#define PT_MAX_MIDDLE 0x8
-
-/**
  * Private context for the drawing module.
  */
 struct draw_context
@@ -238,6 +219,25 @@ void draw_pt_reset_vertex_ids( struct draw_context *draw );
 boolean draw_pipeline_init( struct draw_context *draw );
 void draw_pipeline_destroy( struct draw_context *draw );
 
+
+
+
+
+/* We use the top few bits in the elts[] parameter to convey a little
+ * API information.  This limits the number of vertices we can address
+ * to only 4096 -- if that becomes a problem, we can switch to 32-bit
+ * draw indices.
+ *
+ * These flags expected at first vertex of lines & triangles when
+ * unfilled and/or line stipple modes are operational.
+ */
+#define DRAW_PIPE_EDGE_FLAG_0   (0x1<<12)
+#define DRAW_PIPE_EDGE_FLAG_1   (0x2<<12)
+#define DRAW_PIPE_EDGE_FLAG_2   (0x4<<12)
+#define DRAW_PIPE_EDGE_FLAG_ALL (0x7<<12)
+#define DRAW_PIPE_RESET_STIPPLE (0x8<<12)
+#define DRAW_PIPE_FLAG_MASK     (0xf<<12)
+
 void draw_pipeline_run( struct draw_context *draw,
                         unsigned prim,
                         struct vertex_header *vertices,
@@ -245,6 +245,8 @@ void draw_pipeline_run( struct draw_context *draw,
                         unsigned stride,
                         const ushort *elts,
                         unsigned count );
+
+
 
 void draw_pipeline_flush( struct draw_context *draw, 
                           unsigned flags );

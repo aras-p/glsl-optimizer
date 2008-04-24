@@ -40,15 +40,6 @@ typedef unsigned (*pt_elt_func)( const void *elts, unsigned idx );
 struct draw_pt_middle_end;
 struct draw_context;
 
-/* We use the top couple of bits in the vertex fetch index to convey a
- * little API information.  This limits the number of vertices we can
- * address to only 1 billion -- if that becomes a problem, these could
- * be moved out & passed separately.
- */
-#define DRAW_PT_EDGEFLAG      (1<<30)
-#define DRAW_PT_RESET_STIPPLE (1<<31)
-#define DRAW_PT_FLAG_MASK     (3<<30)
-
 
 #define PT_SHADE      0x1
 #define PT_CLIPTEST   0x2
