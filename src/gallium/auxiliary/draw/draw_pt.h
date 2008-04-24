@@ -115,6 +115,7 @@ const void *draw_pt_elt_ptr( struct draw_context *draw,
  * a special case for tiny vertex buffers.
  */
 struct draw_pt_front_end *draw_pt_vcache( struct draw_context *draw );
+struct draw_pt_front_end *draw_pt_varray(struct draw_context *draw);
 
 /* Middle-ends:
  *
