@@ -252,6 +252,8 @@ st_new_renderbuffer_fb(enum pipe_format format)
    switch (format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
    case PIPE_FORMAT_A1R5G5B5_UNORM:
    case PIPE_FORMAT_A4R4G4B4_UNORM:
    case PIPE_FORMAT_R5G6B5_UNORM:
@@ -268,6 +270,8 @@ st_new_renderbuffer_fb(enum pipe_format format)
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
       strb->Base.InternalFormat = GL_DEPTH24_STENCIL8_EXT;
       strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;

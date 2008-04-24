@@ -53,16 +53,34 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
          *d = (r << 24) | (g << 16) | (b << 8) | a;
       }
       return;
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (r << 24) | (g << 16) | (b << 8) | 0xff;
+      }
+      return;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       {
          uint *d = (uint *) dest;
          *d = (a << 24) | (r << 16) | (g << 8) | b;
       }
       return;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (0xff << 24) | (r << 16) | (g << 8) | b;
+      }
+      return;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
          uint *d = (uint *) dest;
          *d = (b << 24) | (g << 16) | (r << 8) | a;
+      }
+      return;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (b << 24) | (g << 16) | (r << 8) | 0xff;
       }
       return;
    case PIPE_FORMAT_R5G6B5_UNORM:
@@ -101,16 +119,34 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
          *d = (r << 24) | (g << 16) | (b << 8) | a;
       }
       return;
+   case PIPE_FORMAT_R8G8B8X8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (r << 24) | (g << 16) | (b << 8) | 0xff;
+      }
+      return;
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       {
          uint *d = (uint *) dest;
          *d = (a << 24) | (r << 16) | (g << 8) | b;
       }
       return;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (0xff << 24) | (r << 16) | (g << 8) | b;
+      }
+      return;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       {
          uint *d = (uint *) dest;
          *d = (b << 24) | (g << 16) | (r << 8) | a;
+      }
+      return;
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
+      {
+         uint *d = (uint *) dest;
+         *d = (b << 24) | (g << 16) | (r << 8) | 0xff;
       }
       return;
    case PIPE_FORMAT_R5G6B5_UNORM:
@@ -159,8 +195,10 @@ util_pack_z(enum pipe_format format, double z)
       else
          return (uint) (z * 0xffffffff);
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       return (uint) (z * 0xffffff);
    case PIPE_FORMAT_Z24S8_UNORM:
+   case PIPE_FORMAT_Z24X8_UNORM:
       return ((uint) (z * 0xffffff)) << 8;
    default:
       debug_printf("gallium: unhandled fomrat in util_pack_z()");
