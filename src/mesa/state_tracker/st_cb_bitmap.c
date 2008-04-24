@@ -355,7 +355,7 @@ setup_bitmap_vertex_data(struct st_context *st,
    const GLfloat x1 = x + width;
    const GLfloat y0 = y;
    const GLfloat y1 = y + height;
-   const GLfloat bias = st->bitmap_texcoord_bias;
+   const GLfloat bias = 0.0 * st->bitmap_texcoord_bias; /* XXX remove */
    const GLfloat xBias = bias / (x1-x0);
    const GLfloat yBias = bias / (y1-y0);
    const GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
