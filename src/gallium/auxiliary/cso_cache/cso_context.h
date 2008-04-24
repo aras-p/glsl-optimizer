@@ -99,16 +99,22 @@ void cso_restore_sampler_textures( struct cso_context *cso );
  */
 enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
                                                void *handle );
+void cso_delete_fragment_shader(struct cso_context *ctx, void *handle );
+/*
 enum pipe_error cso_set_fragment_shader( struct cso_context *cso,
                                          const struct pipe_shader_state *shader );
+*/
 void cso_save_fragment_shader(struct cso_context *cso);
 void cso_restore_fragment_shader(struct cso_context *cso);
 
 
 enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
                                              void *handle );
+void cso_delete_vertex_shader(struct cso_context *ctx, void *handle );
+/*
 enum pipe_error cso_set_vertex_shader( struct cso_context *cso,
                                        const struct pipe_shader_state *shader );
+*/
 void cso_save_vertex_shader(struct cso_context *cso);
 void cso_restore_vertex_shader(struct cso_context *cso);
 

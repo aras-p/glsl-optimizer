@@ -471,6 +471,8 @@ void cso_restore_rasterizer(struct cso_context *ctx)
    ctx->rasterizer_saved = NULL;
 }
 
+
+
 enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
                                                void *handle )
 {
@@ -481,6 +483,13 @@ enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
    return PIPE_OK;
 }
 
+void cso_delete_fragment_shader(struct cso_context *ctx, void *handle )
+{
+   if (handle == ctx->fragment_shader)
+      ctx->pipe->bind_fs_state(ctx->pipe, NULL);
+   ctx->pipe->delete_fs_state(ctx->pipe, handle);
+   ctx->fragment_shader = NULL;
+}
 
 /* Not really working:
  */
@@ -551,6 +560,14 @@ enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
       ctx->pipe->bind_vs_state(ctx->pipe, handle);
    }
    return PIPE_OK;
+}
+
+void cso_delete_vertex_shader(struct cso_context *ctx, void *handle )
+{
+   if (handle == ctx->vertex_shader)
+      ctx->pipe->bind_vs_state(ctx->pipe, NULL);
+   ctx->pipe->delete_vs_state(ctx->pipe, handle);
+   ctx->vertex_shader = NULL;
 }
 
 
