@@ -1459,6 +1459,13 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
                             GLXDrawable read, GLXContext ctx )
 {
    struct fake_glx_context *glxCtx = (struct fake_glx_context *) ctx;
+   static boolean firsttime = 1, no_rast = 0;
+
+   if (firsttime) {
+      no_rast = getenv("SP_NO_RAST") != NULL;
+      firsttime = 0;
+   }
+
 
    if (ctx && draw && read) {
       XMesaBuffer drawBuffer, readBuffer;
@@ -1504,7 +1511,8 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
 #endif
       }
 
-      if (MakeCurrent_PrevContext == ctx &&
+      if (no_rast &&
+          MakeCurrent_PrevContext == ctx &&
           MakeCurrent_PrevDrawable == draw &&
           MakeCurrent_PrevReadable == read &&
           MakeCurrent_PrevDrawBuffer == drawBuffer &&
