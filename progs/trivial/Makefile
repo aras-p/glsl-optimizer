@@ -94,6 +94,7 @@ SOURCES = \
 	tri-stencil.c \
 	tri-tex-3d.c \
 	tri-tri.c \
+	tri-unfilled-edgeflag.c \
 	tri-unfilled-clip.c \
 	tri-unfilled-smooth.c \
 	tri-unfilled-userclip-stip.c \
