@@ -112,7 +112,6 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       out->clip[3] = out->data[0][3];
 
       out->vertex_id = 0xffff;
-      out->edgeflag = 1;
       out->clipmask = compute_clipmask_gl(out->clip, 
 					  pvs->draw->plane,
 					  pvs->draw->nr_planes);
