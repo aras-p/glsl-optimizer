@@ -208,10 +208,14 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
         ctx->Polygon.BackMode != GL_FILL)) {
       /* need edge flags */
       GLuint i;
-      unsigned *vec = (unsigned *) calloc(sizeof(unsigned), (count + 31) / 32);
+      unsigned *vec;
       struct st_buffer_object *stobj = st_buffer_object(array->BufferObj);
       ubyte *map;
 
+      if (!stobj)
+         return NULL;
+
+      vec = (unsigned *) calloc(sizeof(unsigned), (count + 31) / 32);
       if (!vec)
          return NULL;
 
