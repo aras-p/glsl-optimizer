@@ -194,14 +194,14 @@ void draw_pipeline_run( struct draw_context *draw,
    case PIPE_PRIM_LINES:
       for (i = 0; i+1 < count; i += 2) 
          do_line( draw, 
-                  elts[i+0],
+                  elts[i+0],  /* flags */
                   verts + stride * (elts[i+0] & ~DRAW_PIPE_FLAG_MASK),
                   verts + stride * elts[i+1]);
       break;
    case PIPE_PRIM_TRIANGLES:
       for (i = 0; i+2 < count; i += 3)
          do_triangle( draw, 
-                      elts[i+0],
+                      elts[i+0],  /* flags */
                       verts + stride * (elts[i+0] & ~DRAW_PIPE_FLAG_MASK),
                       verts + stride * elts[i+1],
                       verts + stride * elts[i+2]);
