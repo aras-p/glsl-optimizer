@@ -42,6 +42,8 @@ struct cso_context;
 
 struct cso_context *cso_create_context( struct pipe_context *pipe );
 
+void cso_release_all( struct cso_context *ctx );
+
 void cso_destroy_context( struct cso_context *cso );
 
 
