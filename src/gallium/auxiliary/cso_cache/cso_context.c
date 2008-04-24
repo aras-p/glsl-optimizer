@@ -485,10 +485,12 @@ enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
 
 void cso_delete_fragment_shader(struct cso_context *ctx, void *handle )
 {
-   if (handle == ctx->fragment_shader)
+   if (handle == ctx->fragment_shader) {
+      /* unbind before deleting */
       ctx->pipe->bind_fs_state(ctx->pipe, NULL);
+      ctx->fragment_shader = NULL;
+   }
    ctx->pipe->delete_fs_state(ctx->pipe, handle);
-   ctx->fragment_shader = NULL;
 }
 
 /* Not really working:
@@ -564,10 +566,12 @@ enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
 
 void cso_delete_vertex_shader(struct cso_context *ctx, void *handle )
 {
-   if (handle == ctx->vertex_shader)
+   if (handle == ctx->vertex_shader) {
+      /* unbind before deleting */
       ctx->pipe->bind_vs_state(ctx->pipe, NULL);
+      ctx->vertex_shader = NULL;
+   }
    ctx->pipe->delete_vs_state(ctx->pipe, handle);
-   ctx->vertex_shader = NULL;
 }
 
 
