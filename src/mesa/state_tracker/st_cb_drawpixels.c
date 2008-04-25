@@ -409,32 +409,43 @@ static void
 draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
           GLfloat x1, GLfloat y1, GLboolean invertTex)
 {
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = ctx->st->pipe;
+   const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
+   const GLfloat fb_width = fb->Width;
+   const GLfloat fb_height = fb->Height;
+   const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
+   const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
+   const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
+   const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
+   const GLfloat sLeft = 0.0, sRight = 1.0;
+   const GLfloat tTop = invertTex, tBot = 1.0 - tTop;
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
+   struct pipe_buffer *buf;
+   ubyte *map;
    GLuint i;
-   GLfloat sLeft = 0.0, sRight = 1.0;
-   GLfloat tTop = invertTex, tBot = 1.0 - tTop;
 
    /* upper-left */
-   verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].y */
-   verts[0][1][0] = sLeft; /* attr[1].s */
-   verts[0][1][1] = tTop;  /* attr[1].t */
+   verts[0][0][0] = clip_x0;  /* attr[0].x */
+   verts[0][0][1] = clip_y0;  /* attr[0].y */
+   verts[0][1][0] = sLeft;    /* attr[1].s */
+   verts[0][1][1] = tTop;     /* attr[1].t */
 
    /* upper-right */
-   verts[1][0][0] = x1;
-   verts[1][0][1] = y0;
+   verts[1][0][0] = clip_x1;
+   verts[1][0][1] = clip_y0;
    verts[1][1][0] = sRight;
    verts[1][1][1] = tTop;
 
    /* lower-right */
-   verts[2][0][0] = x1;
-   verts[2][0][1] = y1;
+   verts[2][0][0] = clip_x1;
+   verts[2][0][1] = clip_y1;
    verts[2][1][0] = sRight;
    verts[2][1][1] = tBot;
 
    /* lower-left */
-   verts[3][0][0] = x0;
-   verts[3][0][1] = y1;
+   verts[3][0][0] = clip_x0;
+   verts[3][0][1] = clip_y1;
    verts[3][1][0] = sLeft;
    verts[3][1][1] = tBot;
 
@@ -446,7 +457,21 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][1][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, GL_FALSE);
+   buf  = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                      PIPE_BUFFER_USAGE_VERTEX,
+                                      sizeof(verts));
+   /* put vertex data into buffer */
+   map = pipe->winsys->buffer_map(pipe->winsys, buf,
+                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+   memcpy(map, verts, sizeof(verts));
+   pipe->winsys->buffer_unmap(pipe->winsys, buf);
+
+   util_draw_vertex_buffer(pipe, buf,
+                           PIPE_PRIM_QUADS,
+                           4,  /* verts */
+                           2); /* attribs/vert */
+
+   pipe->winsys->buffer_destroy(pipe->winsys, buf);
 }
 
 
@@ -455,6 +480,15 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
                   GLfloat x1, GLfloat y1, const GLfloat *color,
                   GLboolean invertTex)
 {
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = ctx->st->pipe;
+   const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
+   const GLfloat fb_width = fb->Width;
+   const GLfloat fb_height = fb->Height;
+   const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
+   const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
+   const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
+   const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
    GLfloat bias = ctx->st->bitmap_texcoord_bias;
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
    GLuint i;
@@ -462,28 +496,30 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
    GLfloat yBias = bias / (y1-y0);
    GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
    GLfloat tTop = invertTex - yBias, tBot = 1.0 - tTop - yBias;
+   struct pipe_buffer *buf;
+   ubyte *map;
 
    /* upper-left */
-   verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].y */
+   verts[0][0][0] = clip_x0;    /* attr[0].x */
+   verts[0][0][1] = clip_y0;    /* attr[0].y */
    verts[0][2][0] = sLeft; /* attr[2].s */
    verts[0][2][1] = tTop;  /* attr[2].t */
 
    /* upper-right */
-   verts[1][0][0] = x1;
-   verts[1][0][1] = y0;
+   verts[1][0][0] = clip_x1;
+   verts[1][0][1] = clip_y0;
    verts[1][2][0] = sRight;
    verts[1][2][1] = tTop;
 
    /* lower-right */
-   verts[2][0][0] = x1;
-   verts[2][0][1] = y1;
+   verts[2][0][0] = clip_x1;
+   verts[2][0][1] = clip_y1;
    verts[2][2][0] = sRight;
    verts[2][2][1] = tBot;
 
    /* lower-left */
-   verts[3][0][0] = x0;
-   verts[3][0][1] = y1;
+   verts[3][0][0] = clip_x0;
+   verts[3][0][1] = clip_y1;
    verts[3][2][0] = sLeft;
    verts[3][2][1] = tBot;
 
@@ -499,7 +535,19 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][2][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3, GL_FALSE);
+   buf  = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                      PIPE_BUFFER_USAGE_VERTEX,
+                                      sizeof(verts));
+   /* put vertex data into buffer */
+   map = pipe->winsys->buffer_map(pipe->winsys, buf,
+                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+   memcpy(map, verts, sizeof(verts));
+   pipe->winsys->buffer_unmap(pipe->winsys, buf);
+
+   util_draw_vertex_buffer(pipe, buf,
+                           PIPE_PRIM_QUADS,
+                           4,  /* verts */
+                           3); /* attribs/vert */
 }
 
 
@@ -878,9 +926,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
                     GLint dstx, GLint dsty)
 {
-   struct st_renderbuffer *rbRead = st_renderbuffer(ctx->ReadBuffer->_StencilBuffer);
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
-   struct pipe_surface *psRead = rbRead->surface;
    struct pipe_surface *psDraw = rbDraw->surface;
    ubyte *drawMap;
    ubyte *buffer;
