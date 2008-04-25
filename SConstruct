@@ -65,7 +65,7 @@ platform = env['platform']
 # derived options
 x86 = machine == 'x86'
 gcc = platform in ('linux', 'freebsd', 'darwin')
-msvc = platform in ('win32', 'winddk')
+msvc = platform in ('windows', 'winddk')
 
 Export([
 	'debug', 
@@ -84,8 +84,6 @@ Export([
 # TODO: put the compiler specific settings in separate files
 # TODO: auto-detect as much as possible
 
-common.generate(env)
-
 if platform == 'winddk':
 	env.Tool('winddk', ['.'])
 	
@@ -96,37 +94,7 @@ if platform == 'winddk':
 		env['CRT_INC_PATH'],
 	])
 
-# Optimization flags
-if gcc:
-	if debug:
-		env.Append(CFLAGS = '-O0 -g3')
-		env.Append(CXXFLAGS = '-O0 -g3')
-	else:
-		env.Append(CFLAGS = '-O3 -g3')
-		env.Append(CXXFLAGS = '-O3 -g3')
-
-	env.Append(CFLAGS = '-Wall -Wmissing-prototypes -Wno-long-long -ffast-math -pedantic')
-	env.Append(CXXFLAGS = '-Wall -pedantic')
-	
-	# Be nice to Eclipse
-	env.Append(CFLAGS = '-fmessage-length=0')
-	env.Append(CXXFLAGS = '-fmessage-length=0')
-
-if msvc:
-	cflags = [
-		#'/Wp64', # enable 64 bit porting warnings
-	]
-	env.Append(CFLAGS = cflags)
-	env.Append(CXXFLAGS = cflags)
-	# Put debugging information in a separate .pdb file for each object file as
-	# descrived in the scons manpage
-	env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
-
-# Defines
-if debug:
-	env.Append(CPPDEFINES = ['DEBUG'])
-else:
-	env.Append(CPPDEFINES = ['NDEBUG'])
+common.generate(env)
 
 
 # Includes
@@ -188,7 +156,6 @@ if llvm:
 	# See also http://www.scons.org/wiki/UsingPkgConfig
 	env.ParseConfig('llvm-config --cflags --ldflags --libs')
 	env.Append(CPPDEFINES = ['MESA_LLVM'])
-	env.Append(CXXFLAGS = ['-Wno-long-long'])
         # Force C++ linkage
 	env['LINK'] = env['CXX']
 
