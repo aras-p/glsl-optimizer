@@ -1373,7 +1373,7 @@ copy_image_data_to_texture(struct st_context *st,
 
       pipe_texture_release(&stImage->pt);
    }
-   else {
+   else if (stImage->base.Data) {
       assert(stImage->base.Data != NULL);
 
       /* More straightforward upload.  
