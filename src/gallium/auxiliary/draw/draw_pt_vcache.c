@@ -227,12 +227,8 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
    const struct pipe_rasterizer_state *rasterizer = vcache->draw->rasterizer;
 
-
-   if (rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-       rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL ||
-       rasterizer->line_stipple_enable)
+   if (opt & PT_PIPELINE)
    {
-      assert(opt & PT_PIPELINE);
       vcache->base.run = vcache_run_extras;
    }
    else 

@@ -202,13 +202,12 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
    struct varray_frontend *varray = (struct varray_frontend *)frontend;
    const struct pipe_rasterizer_state *rasterizer = varray->draw->rasterizer;
 
-   if (rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-       rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL ||
-       rasterizer->line_stipple_enable)
+   if (opt & PT_PIPELINE)
    {
-      assert(opt & PT_PIPELINE);
       varray->base.run = varray_run_extras;
-   } else {
+   } 
+   else 
+   {
       varray->base.run = varray_run;
    }
 
