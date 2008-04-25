@@ -165,6 +165,8 @@ struct st_context
       struct pipe_buffer *vbuf;
    } clear;
 
+   void *passthrough_fs;  /**< simple pass-through frag shader */
+
    struct gen_mipmap_state *gen_mipmap;
    struct blit_state *blit;
 

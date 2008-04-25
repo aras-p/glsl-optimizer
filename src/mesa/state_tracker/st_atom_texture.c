@@ -38,6 +38,23 @@
 #include "st_cb_texture.h"
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
+#include "cso_cache/cso_context.h"
+#include "util/u_simple_shaders.h"
+
+
+static void *
+get_passthrough_fs(struct st_context *st)
+{
+   struct pipe_shader_state shader;
+
+   if (!st->passthrough_fs) {
+      st->passthrough_fs =
+         util_make_fragment_passthrough_shader(st->pipe, &shader);
+      free((void *) shader.tokens);
+   }
+
+   return st->passthrough_fs;
+}
 
 
 /**
@@ -49,6 +66,7 @@ update_textures(struct st_context *st)
 {
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
    GLuint su;
+   GLboolean missing_textures = GL_FALSE;
 
    st->state.num_textures = 0;
 
@@ -67,6 +85,7 @@ update_textures(struct st_context *st)
             retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
             if (!retval) {
                /* out of mem */
+               missing_textures = GL_TRUE;
                continue;
             }
 
@@ -79,8 +98,15 @@ update_textures(struct st_context *st)
       pipe_texture_reference(&st->state.sampler_texture[su], pt);
    }
 
-   st->pipe->set_sampler_textures(st->pipe, st->state.num_textures,
-                                  st->state.sampler_texture);
+   cso_set_sampler_textures(st->cso_context,
+                            st->state.num_textures,
+                            st->state.sampler_texture);
+
+   if (missing_textures) {
+      /* use a pass-through frag shader that uses no textures */
+      void *fs = get_passthrough_fs(st);
+      cso_set_fragment_shader_handle(st->cso_context, fs);
+   }
 }
 
 
