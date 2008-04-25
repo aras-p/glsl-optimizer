@@ -896,6 +896,11 @@ st_TexSubimage(GLcontext * ctx,
       dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
    }
 
+   if (!texImage->Data) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
+      return;
+   }
+
    src = (const GLubyte *) pixels;
 
    for (i = 0; i++ < depth;) {
@@ -907,10 +912,11 @@ st_TexSubimage(GLcontext * ctx,
 					   texImage->ImageOffsets,
 					   width, height, 1,
 					   format, type, src, packing)) {
-	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "st_TexSubImage");
+	 _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexSubImage");
       }
 
       if (stImage->pt && i < depth) {
+         /* map next slice of 3D texture */
 	 st_texture_image_unmap(stImage);
 	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i);
 	 src += srcImageStride;
