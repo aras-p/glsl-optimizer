@@ -134,8 +134,6 @@ _fenced_buffer_add(struct fenced_buffer *fenced_buf)
 static INLINE void
 _fenced_buffer_destroy(struct fenced_buffer *fenced_buf)
 {
-   struct fenced_buffer_list *fenced_list = fenced_buf->list;
-
    assert(!fenced_buf->base.base.refcount);
    assert(!fenced_buf->fence);
    pb_reference(&fenced_buf->buffer, NULL);
