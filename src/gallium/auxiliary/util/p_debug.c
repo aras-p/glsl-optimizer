@@ -26,9 +26,11 @@
  **************************************************************************/
 
 
+#include "pipe/p_config.h" 
+
 #include <stdarg.h>
 
-#ifdef WIN32
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
 #include <windows.h>
 #include <winddi.h>
 #else
@@ -42,7 +44,7 @@
 #include "util/u_string.h" 
 
 
-#ifdef WIN32
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
 static INLINE void 
 _EngDebugPrint(const char *format, ...)
 {
@@ -56,7 +58,7 @@ _EngDebugPrint(const char *format, ...)
 
 void _debug_vprintf(const char *format, va_list ap)
 {
-#ifdef WIN32
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
 #ifndef WINCE
    /* EngDebugPrint does not handle float point arguments, so we need to use
     * our own vsnprintf implementation. It is also very slow, so buffer until
@@ -101,7 +103,7 @@ void _debug_break(void)
    __asm("int3");
 #elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
    _asm {int 3};
-#elif defined(WIN32) && !defined(WINCE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
    EngDebugBreak();
 #else
    abort();
@@ -109,7 +111,7 @@ void _debug_break(void)
 }
 
 
-#ifdef WIN32
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
 static const char *
 find(const char *start, const char *end, char c) 
 {
@@ -150,7 +152,7 @@ const char *
 debug_get_option(const char *name, const char *dfault)
 {
    const char *result;
-#ifdef WIN32
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
    ULONG_PTR iFile = 0;
    const void *pMap = NULL;
    const char *sol, *eol, *sep;
