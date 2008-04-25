@@ -815,7 +815,6 @@ aaline_bind_sampler_states(struct pipe_context *pipe,
                            unsigned num, void **sampler)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
-   struct draw_context *draw = aaline->stage.draw;
 
    /* save current */
    memcpy(aaline->state.sampler, sampler, num * sizeof(void *));
@@ -831,7 +830,6 @@ aaline_set_sampler_textures(struct pipe_context *pipe,
                             unsigned num, struct pipe_texture **texture)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
-   struct draw_context *draw = aaline->stage.draw;
    uint i;
 
    /* save current */

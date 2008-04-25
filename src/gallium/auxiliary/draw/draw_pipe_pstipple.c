@@ -667,7 +667,6 @@ pstip_set_sampler_textures(struct pipe_context *pipe,
                            unsigned num, struct pipe_texture **texture)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct draw_context *draw = pstip->stage.draw;
    uint i;
 
    /* save current */
@@ -690,7 +689,6 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
                           const struct pipe_poly_stipple *stipple)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct draw_context *draw = (struct draw_context *) pipe->draw;
 
    /* save current */
    pstip->state.stipple = stipple;
