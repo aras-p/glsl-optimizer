@@ -58,25 +58,33 @@ struct pipe_screen {
    void (*destroy)( struct pipe_screen * );
 
 
-   /* 
-    * Capability queries
-    */
    const char *(*get_name)( struct pipe_screen * );
 
    const char *(*get_vendor)( struct pipe_screen * );
 
+   /**
+    * Query an integer-valued capability/parameter/limit
+    * \param param  one of PIPE_CAP_x
+    */
    int (*get_param)( struct pipe_screen *, int param );
 
+   /**
+    * Query a float-valued capability/parameter/limit
+    * \param param  one of PIPE_CAP_x
+    */
    float (*get_paramf)( struct pipe_screen *, int param );
 
-   /**< type is one of PIPE_TEXTURE, PIPE_SURFACE */
+   /**
+    * Check if the given pipe_format is supported as a texture or
+    * drawing surface.
+    * \param type  one of PIPE_TEXTURE, PIPE_SURFACE
+    */
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format, 
                                    uint type );
 
-
-   /*
-    * Texture functions
+   /**
+    * Create a new texture object, using the given template info.
     */
    struct pipe_texture * (*texture_create)(struct pipe_screen *,
                                            const struct pipe_texture *templat);
