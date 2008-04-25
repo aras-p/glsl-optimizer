@@ -296,10 +296,9 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
                      struct pipe_surface *surf,
                      void *context_private)
 {
-   /* The Xlib driver's front color surfaces are actually X Windows so
-    * this flush is a no-op.
-    * If we instead did front buffer rendering to a temporary XImage,
-    * this would be the place to copy the Ximage to the on-screen Window.
+   /*
+    * The front color buffer is actually just another XImage buffer.
+    * This function copies that XImage to the actual X Window.
     */
    XMesaContext xmctx = (XMesaContext) context_private;
    xmesa_display_surface(xmctx->xm_buffer, surf);
