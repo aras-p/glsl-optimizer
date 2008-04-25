@@ -160,7 +160,7 @@ if llvm:
 	env['LINK'] = env['CXX']
 
 # libGL
-if platform not in ('winddk',):
+if platform in ('linux', 'freebsd', 'darwin'):
 	env.Append(LIBS = [
 		'X11',
 		'Xext',
