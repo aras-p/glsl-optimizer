@@ -53,8 +53,6 @@ draw_pt_arrays(struct draw_context *draw,
    struct draw_pt_front_end *frontend = NULL;
    struct draw_pt_middle_end *middle = NULL;
    unsigned opt = 0;
-   pt_elt_func get_elt = 0;
-   void *elts          = 0;
 
    if (!draw->render) {
       opt |= PT_PIPELINE;
@@ -83,18 +81,18 @@ draw_pt_arrays(struct draw_context *draw,
    /* Pick the right frontend
     */
    if (draw->pt.user.elts ||
-      count >= 256) {
+       count >= 256) {
       frontend = draw->pt.front.vcache;
-      get_elt = draw_pt_elt_func(draw);
-      elts = draw_pt_elt_ptr(draw, start);
    } else {
       frontend = draw->pt.front.varray;
-      elts = start;
    }
 
    frontend->prepare( frontend, prim, middle, opt );
 
-   frontend->run(frontend, get_elt, elts, count);
+   frontend->run(frontend, 
+                 draw_pt_elt_func(draw),
+                 draw_pt_elt_ptr(draw, start),
+                 count);
 
    frontend->finish( frontend );
 
