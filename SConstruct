@@ -108,12 +108,6 @@ env.Append(CPPPATH = [
 
 # x86 assembly
 if x86:
-	env.Append(CPPDEFINES = [
-		'USE_X86_ASM', 
-		'USE_MMX_ASM',
-		'USE_3DNOW_ASM',
-		'USE_SSE_ASM',
-	])
 	if gcc:	
 		env.Append(CFLAGS = '-m32')
 		env.Append(CXXFLAGS = '-m32')
