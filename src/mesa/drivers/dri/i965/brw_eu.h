@@ -335,14 +335,14 @@ static __inline struct brw_reg brw_imm_ud( GLuint ud )
 static __inline struct brw_reg brw_imm_uw( GLushort uw )
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_UW);
-   imm.dw1.ud = uw;
+   imm.dw1.ud = uw | (uw << 16);
    return imm;
 }
 
 static __inline struct brw_reg brw_imm_w( GLshort w )
 {
    struct brw_reg imm = brw_imm_reg(BRW_REGISTER_TYPE_W);
-   imm.dw1.d = w;
+   imm.dw1.d = w | (w << 16);
    return imm;
 }
 
