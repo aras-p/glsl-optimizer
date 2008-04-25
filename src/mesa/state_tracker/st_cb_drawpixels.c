@@ -425,11 +425,8 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
       const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
       const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
-      GLfloat bias = ctx->st->bitmap_texcoord_bias;
-      GLfloat xBias = 0*bias / (x1-x0);
-      GLfloat yBias = 0*bias / (y1-y0);
-      GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
-      GLfloat tTop = invertTex - yBias, tBot = 1.0 - tTop - yBias;
+      const GLfloat sLeft = 0.0F, sRight = 1.0F;
+      const GLfloat tTop = invertTex, tBot = 1.0 - tTop;
       GLuint tex, i;
 
       /* upper-left */

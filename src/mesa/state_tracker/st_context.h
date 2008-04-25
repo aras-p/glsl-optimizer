@@ -123,8 +123,6 @@ struct st_context
 
    GLfloat polygon_offset_scale; /* ?? */
 
-   GLfloat bitmap_texcoord_bias;
-
    /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;
 
