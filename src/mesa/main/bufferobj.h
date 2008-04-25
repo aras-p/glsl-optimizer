@@ -101,8 +101,8 @@ _mesa_map_drawpix_pbo(GLcontext *ctx,
                       const GLvoid *pixels);
 
 extern void
-_mesa_unmap_drapix_pbo(GLcontext *ctx,
-                       const struct gl_pixelstore_attrib *unpack);
+_mesa_unmap_drawpix_pbo(GLcontext *ctx,
+                        const struct gl_pixelstore_attrib *unpack);
 
 
 extern void *

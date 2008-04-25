@@ -877,7 +877,7 @@ end:
 
    RENDER_FINISH(swrast,ctx);
 
-   _mesa_unmap_drapix_pbo(ctx, unpack);
+   _mesa_unmap_drawpix_pbo(ctx, unpack);
 }
 
 

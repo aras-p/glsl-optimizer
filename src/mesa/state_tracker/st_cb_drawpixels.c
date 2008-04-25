@@ -349,7 +349,7 @@ make_texture(struct st_context *st,
    pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
 			  1, 0);
    if (!pt) {
-      _mesa_unmap_drapix_pbo(ctx, unpack);
+      _mesa_unmap_drawpix_pbo(ctx, unpack);
       return NULL;
    }
 
@@ -395,7 +395,7 @@ make_texture(struct st_context *st,
       ctx->_ImageTransferState = imageTransferStateSave;
    }
 
-   _mesa_unmap_drapix_pbo(ctx, unpack);
+   _mesa_unmap_drawpix_pbo(ctx, unpack);
 
    return pt;
 }
