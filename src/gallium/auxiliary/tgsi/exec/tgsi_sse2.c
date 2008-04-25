@@ -854,7 +854,7 @@ emit_rsqrt(
    /* On Intel CPUs at least, this is only accurate to 12 bits -- not
     * good enough.
     */
-   emit_rsqrtps(
+   sse_rsqrtps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
