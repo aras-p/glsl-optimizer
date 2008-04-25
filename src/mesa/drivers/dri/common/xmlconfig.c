@@ -279,7 +279,7 @@ static GLfloat strToF (const XML_Char *string, const XML_Char **tail) {
 /** \brief Parse a value of a given type. */
 static GLboolean parseValue (driOptionValue *v, driOptionType type,
 			     const XML_Char *string) {
-    const XML_Char *tail;
+    const XML_Char *tail = NULL;
   /* skip leading white-space */
     string += strspn (string, " \f\n\r\t\v");
     switch (type) {
