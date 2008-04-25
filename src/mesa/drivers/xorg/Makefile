@@ -84,8 +84,8 @@ clean:
 	-rm -f depend depend.bak
 
 install: $(LIBNAME)
-	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
-	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 $(SYMLINKS):
 	@[ -e $@ ] || ln -sf ../x11/$@ ./
