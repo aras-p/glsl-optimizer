@@ -49,6 +49,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
 #include "util/p_tile.h"
+#include "util/u_blit.h"
 
 
 #define DBG if (0) printf
@@ -1134,11 +1135,9 @@ do_copy_texsubimage(GLcontext *ctx,
    dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
                                           stImage->level, destZ);
 
-   if (src_format == dest_format &&
-       ctx->_ImageTransferState == 0x0 &&
+   if (ctx->_ImageTransferState == 0x0 &&
        strb->surface->buffer &&
-       dest_surface->buffer &&
-       strb->surface->cpp == stImage->pt->cpp) {
+       dest_surface->buffer) {
       /* do blit-style copy */
 
       /* XXX may need to invert image depending on window
@@ -1162,16 +1161,26 @@ do_copy_texsubimage(GLcontext *ctx,
                         GL_COPY); /* ? */
 #else
 
-      pipe->surface_copy(pipe,
-                         do_flip,
-			 /* dest */
-			 dest_surface,
-			 destX, destY,
-			 /* src */
-			 strb->surface,
-			 srcX, srcY,
-			 /* size */
-			 width, height);
+      if (src_format == dest_format) {
+          pipe->surface_copy(pipe,
+			     do_flip,
+			     /* dest */
+			     dest_surface,
+			     destX, destY,
+			     /* src */
+			     strb->surface,
+			     srcX, srcY,
+			     /* size */
+			     width, height);
+      } else {
+         util_blit_pixels(ctx->st->blit,
+                          strb->surface,
+                          srcX, do_flip ? srcY + height : srcY,
+                          srcX + width, do_flip ? srcY : srcY + height,
+                          dest_surface,
+                          destX, destY, destX + width, destY + height,
+                          0.0, PIPE_TEX_MIPFILTER_NEAREST);
+      }
 #endif
    }
    else {
