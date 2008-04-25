@@ -400,6 +400,10 @@ st_finish_render_texture(GLcontext *ctx,
 
    ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
+   ctx->st->pipe->texture_update(ctx->st->pipe,
+                                 st_get_texobj_texture(att->Texture),
+                                 att->CubeMapFace, 1 << att->TextureLevel);
+
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
    */
