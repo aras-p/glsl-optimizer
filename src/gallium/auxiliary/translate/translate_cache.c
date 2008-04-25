@@ -28,6 +28,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "translate.h"
+#include "translate_cache.h"
 
 #include "cso_cache/cso_cache.h"
 #include "cso_cache/cso_hash.h"
@@ -36,7 +37,7 @@ struct translate_cache {
    struct cso_hash *hash;
 };
 
-struct translate_cache * translate_cache_create()
+struct translate_cache * translate_cache_create( void )
 {
    struct translate_cache *cache = MALLOC_STRUCT(translate_cache);
    cache->hash = cso_hash_create();
