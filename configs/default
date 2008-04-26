@@ -80,6 +80,9 @@ GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lXt -lX11
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
 
+# GLcore dependencies
+XORG_CFLAGS = `pkg-config --cflags xorg-server`
+GLCORE_LIB_DEPS = -lm -lpthread
 
 
 # Installation directories (for make install)
