@@ -34,7 +34,7 @@
 
 #include "rtasm/rtasm_x86sse.h"
 
-#if defined(__i386__) || defined(__386__)
+#ifdef PIPE_ARCH_X86
 
 #define HIGH_PRECISION 1  /* for 1/sqrt() */
 
@@ -2181,4 +2181,4 @@ tgsi_emit_sse2(
    return ok;
 }
 
-#endif /* i386 */
+#endif /* PIPE_ARCH_X86 */
