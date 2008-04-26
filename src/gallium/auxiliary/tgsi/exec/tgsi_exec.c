@@ -517,6 +517,20 @@ micro_lg2(
 }
 
 static void
+micro_le(
+   union tgsi_exec_channel *dst,
+   const union tgsi_exec_channel *src0,
+   const union tgsi_exec_channel *src1,
+   const union tgsi_exec_channel *src2,
+   const union tgsi_exec_channel *src3 )
+{
+   dst->f[0] = src0->f[0] <= src1->f[0] ? src2->f[0] : src3->f[0];
+   dst->f[1] = src0->f[1] <= src1->f[1] ? src2->f[1] : src3->f[1];
+   dst->f[2] = src0->f[2] <= src1->f[2] ? src2->f[2] : src3->f[2];
+   dst->f[3] = src0->f[3] <= src1->f[3] ? src2->f[3] : src3->f[3];
+}
+
+static void
 micro_lt(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src0,
@@ -1975,7 +1989,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_lt( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+         micro_le( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1992,7 +2006,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_ge( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+         micro_le( &r[0], &r[0], &r[1], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C] );
          STORE( &r[0], 0, chan_index );
       }
       break;
