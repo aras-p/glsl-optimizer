@@ -290,8 +290,7 @@ st_texture_image_copy(struct pipe_context *pipe,
    GLuint i;
 
    /* XXX this is a hack */
-   if (dst->compressed)
-      height /= 4;
+   const GLuint copyHeight = dst->compressed ? height / 4 : height;
 
    for (i = 0; i < depth; i++) {
       GLuint srcLevel;
@@ -315,7 +314,7 @@ st_texture_image_copy(struct pipe_context *pipe,
 			 0, 0, /* destX, Y */
 			 src_surface,
 			 0, 0, /* srcX, Y */
-			 width, height);
+			 width, copyHeight);
 
       pipe_surface_reference(&dst_surface, NULL);
       pipe_surface_reference(&src_surface, NULL);

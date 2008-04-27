@@ -349,7 +349,7 @@ make_texture(struct st_context *st,
    pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
 			  1, 0);
    if (!pt) {
-      _mesa_unmap_drapix_pbo(ctx, unpack);
+      _mesa_unmap_drawpix_pbo(ctx, unpack);
       return NULL;
    }
 
@@ -395,111 +395,109 @@ make_texture(struct st_context *st,
       ctx->_ImageTransferState = imageTransferStateSave;
    }
 
-   _mesa_unmap_drapix_pbo(ctx, unpack);
+   _mesa_unmap_drawpix_pbo(ctx, unpack);
 
    return pt;
 }
 
 
 /**
- * Draw textured quad.
+ * Draw quad with texcoords and optional color.
  * Coords are window coords with y=0=bottom.
+ * \param color  may be null
+ * \param invertTex  if true, flip texcoords vertically
  */
 static void
 draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
-          GLfloat x1, GLfloat y1, GLboolean invertTex)
+          GLfloat x1, GLfloat y1, const GLfloat *color,
+          GLboolean invertTex)
 {
-   GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
-   GLuint i;
-   GLfloat sLeft = 0.0, sRight = 1.0;
-   GLfloat tTop = invertTex, tBot = 1.0 - tTop;
-
-   /* upper-left */
-   verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].y */
-   verts[0][1][0] = sLeft; /* attr[1].s */
-   verts[0][1][1] = tTop;  /* attr[1].t */
-
-   /* upper-right */
-   verts[1][0][0] = x1;
-   verts[1][0][1] = y0;
-   verts[1][1][0] = sRight;
-   verts[1][1][1] = tTop;
-
-   /* lower-right */
-   verts[2][0][0] = x1;
-   verts[2][0][1] = y1;
-   verts[2][1][0] = sRight;
-   verts[2][1][1] = tBot;
-
-   /* lower-left */
-   verts[3][0][0] = x0;
-   verts[3][0][1] = y1;
-   verts[3][1][0] = sLeft;
-   verts[3][1][1] = tBot;
-
-   /* same for all verts: */
-   for (i = 0; i < 4; i++) {
-      verts[i][0][2] = z;   /*Z*/
-      verts[i][0][3] = 1.0; /*W*/
-      verts[i][1][2] = 0.0; /*R*/
-      verts[i][1][3] = 1.0; /*Q*/
-   }
-
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, GL_FALSE);
-}
-
-
-static void
-draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
-                  GLfloat x1, GLfloat y1, const GLfloat *color,
-                  GLboolean invertTex)
-{
-   GLfloat bias = ctx->st->bitmap_texcoord_bias;
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = ctx->st->pipe;
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
-   GLuint i;
-   GLfloat xBias = bias / (x1-x0);
-   GLfloat yBias = bias / (y1-y0);
-   GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
-   GLfloat tTop = invertTex - yBias, tBot = 1.0 - tTop - yBias;
 
-   /* upper-left */
-   verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].y */
-   verts[0][2][0] = sLeft; /* attr[2].s */
-   verts[0][2][1] = tTop;  /* attr[2].t */
+   /* setup vertex data */
+   {
+      const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
+      const GLfloat fb_width = fb->Width;
+      const GLfloat fb_height = fb->Height;
+      const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
+      const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
+      const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
+      const GLfloat clip_y1 = y1 / fb_height * 2.0 - 1.0;
+      const GLfloat sLeft = 0.0F, sRight = 1.0F;
+      const GLfloat tTop = invertTex, tBot = 1.0 - tTop;
+      GLuint tex, i;
 
-   /* upper-right */
-   verts[1][0][0] = x1;
-   verts[1][0][1] = y0;
-   verts[1][2][0] = sRight;
-   verts[1][2][1] = tTop;
+      /* upper-left */
+      verts[0][0][0] = clip_x0;    /* v[0].attr[0].x */
+      verts[0][0][1] = clip_y0;    /* v[0].attr[0].y */
 
-   /* lower-right */
-   verts[2][0][0] = x1;
-   verts[2][0][1] = y1;
-   verts[2][2][0] = sRight;
-   verts[2][2][1] = tBot;
+      /* upper-right */
+      verts[1][0][0] = clip_x1;
+      verts[1][0][1] = clip_y0;
 
-   /* lower-left */
-   verts[3][0][0] = x0;
-   verts[3][0][1] = y1;
-   verts[3][2][0] = sLeft;
-   verts[3][2][1] = tBot;
+      /* lower-right */
+      verts[2][0][0] = clip_x1;
+      verts[2][0][1] = clip_y1;
 
-   /* same for all verts: */
-   for (i = 0; i < 4; i++) {
-      verts[i][0][2] = z;   /*Z*/
-      verts[i][0][3] = 1.0; /*W*/
-      verts[i][1][0] = color[0];
-      verts[i][1][1] = color[1];
-      verts[i][1][2] = color[2];
-      verts[i][1][3] = color[3];
-      verts[i][2][2] = 0.0; /*R*/
-      verts[i][2][3] = 1.0; /*Q*/
+      /* lower-left */
+      verts[3][0][0] = clip_x0;
+      verts[3][0][1] = clip_y1;
+
+      tex = color ? 2 : 1;
+      verts[0][tex][0] = sLeft; /* v[0].attr[tex].s */
+      verts[0][tex][1] = tTop;  /* v[0].attr[tex].t */
+      verts[1][tex][0] = sRight;
+      verts[1][tex][1] = tTop;
+      verts[2][tex][0] = sRight;
+      verts[2][tex][1] = tBot;
+      verts[3][tex][0] = sLeft;
+      verts[3][tex][1] = tBot;
+
+      /* same for all verts: */
+      if (color) {
+         for (i = 0; i < 4; i++) {
+            verts[i][0][2] = z;   /*Z*/
+            verts[i][0][3] = 1.0; /*W*/
+            verts[i][1][0] = color[0];
+            verts[i][1][1] = color[1];
+            verts[i][1][2] = color[2];
+            verts[i][1][3] = color[3];
+            verts[i][2][2] = 0.0; /*R*/
+            verts[i][2][3] = 1.0; /*Q*/
+         }
+      }
+      else {
+         for (i = 0; i < 4; i++) {
+            verts[i][0][2] = z;   /*Z*/
+            verts[i][0][3] = 1.0; /*W*/
+            verts[i][1][2] = 0.0; /*R*/
+            verts[i][1][3] = 1.0; /*Q*/
+         }
+      }
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3, GL_FALSE);
+   {
+      struct pipe_buffer *buf;
+      ubyte *map;
+
+      /* allocate/load buffer object with vertex data */
+      buf = pipe->winsys->buffer_create(pipe->winsys, 32,
+                                        PIPE_BUFFER_USAGE_VERTEX,
+                                         sizeof(verts));
+      map = pipe->winsys->buffer_map(pipe->winsys, buf,
+                                     PIPE_BUFFER_USAGE_CPU_WRITE);
+      memcpy(map, verts, sizeof(verts));
+      pipe->winsys->buffer_unmap(pipe->winsys, buf);
+
+      util_draw_vertex_buffer(pipe, buf,
+                              PIPE_PRIM_QUADS,
+                              4,  /* verts */
+                              3); /* attribs/vert */
+
+      pipe->winsys->buffer_destroy(pipe->winsys, buf);
+   }
 }
 
 
@@ -605,12 +603,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    x1 = x + width * ctx->Pixel.ZoomX;
    y0 = y;
    y1 = y + height * ctx->Pixel.ZoomY;
-
-   /* draw textured quad */
-   if (color)
-      draw_quad_colored(ctx, x0, y0, z, x1, y1, color, invertTex);
-   else
-      draw_quad(ctx, x0, y0, z, x1, y1, invertTex);
+   draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex);
 
    /* restore state */
    cso_restore_rasterizer(cso);
@@ -878,9 +871,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                     GLsizei width, GLsizei height,
                     GLint dstx, GLint dsty)
 {
-   struct st_renderbuffer *rbRead = st_renderbuffer(ctx->ReadBuffer->_StencilBuffer);
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
-   struct pipe_surface *psRead = rbRead->surface;
    struct pipe_surface *psDraw = rbDraw->surface;
    ubyte *drawMap;
    ubyte *buffer;

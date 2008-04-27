@@ -59,11 +59,4 @@ st_feedback_draw_vbo(GLcontext *ctx,
                      GLuint min_index,
                      GLuint max_index);
 
-void 
-st_draw_vertices(GLcontext *ctx, unsigned prim,
-                 unsigned numVertex, float *verts,
-                 unsigned numAttribs,
-                 GLboolean inClipCoords);
-
-
 #endif

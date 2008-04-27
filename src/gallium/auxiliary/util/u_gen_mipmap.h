@@ -31,6 +31,11 @@
 #include "pipe/p_state.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+   
 struct pipe_context;
 struct pipe_texture;
 struct cso_context;
@@ -51,5 +56,10 @@ extern void
 util_gen_mipmap(struct gen_mipmap_state *ctx,
                 struct pipe_texture *pt,
                 uint face, uint baseLevel, uint lastLevel, uint filter);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

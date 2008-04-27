@@ -355,11 +355,8 @@ setup_bitmap_vertex_data(struct st_context *st,
    const GLfloat x1 = x + width;
    const GLfloat y0 = y;
    const GLfloat y1 = y + height;
-   const GLfloat bias = st->bitmap_texcoord_bias;
-   const GLfloat xBias = bias / (x1-x0);
-   const GLfloat yBias = bias / (y1-y0);
-   const GLfloat sLeft = 0.0 + xBias, sRight = 1.0 + xBias;
-   const GLfloat tTop = yBias, tBot = 1.0 - tTop - yBias;
+   const GLfloat sLeft = 0.0F, sRight = 1.0F;
+   const GLfloat tTop = 0.0, tBot = 1.0 - tTop;
    const GLfloat clip_x0 = x0 / fb_width * 2.0 - 1.0;
    const GLfloat clip_y0 = y0 / fb_height * 2.0 - 1.0;
    const GLfloat clip_x1 = x1 / fb_width * 2.0 - 1.0;
@@ -803,7 +800,7 @@ st_destroy_bitmap(struct st_context *st)
    }
 #endif
    if (st->bitmap.vs) {
-      pipe->delete_vs_state(pipe, st->bitmap.vs);
+      cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;
    }
 

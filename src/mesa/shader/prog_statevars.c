@@ -253,7 +253,8 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       value[0] = ctx->Fog.Density;
       value[1] = ctx->Fog.Start;
       value[2] = ctx->Fog.End;
-      value[3] = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+      value[3] = (ctx->Fog.End == ctx->Fog.Start)
+         ? 1.0 : 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       return;
    case STATE_CLIPPLANE:
       {
@@ -424,8 +425,9 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
           * exp: 2^-(density/ln(2) * fogcoord)
           * exp2: 2^-((density/(ln(2)^2) * fogcoord)^2)
           */
-         value[0] = -1.0F / (ctx->Fog.End - ctx->Fog.Start);
-         value[1] = ctx->Fog.End / (ctx->Fog.End - ctx->Fog.Start);
+         value[0] = (ctx->Fog.End == ctx->Fog.Start)
+            ? 1.0 : -1.0F / (ctx->Fog.End - ctx->Fog.Start);
+         value[1] = ctx->Fog.End * -value[0];
          value[2] = ctx->Fog.Density * ONE_DIV_LN2;
          value[3] = ctx->Fog.Density * ONE_DIV_SQRT_LN2;
          return;

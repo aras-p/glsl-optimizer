@@ -176,22 +176,29 @@ static void st_destroy_context_priv( struct st_context *st )
       }
    }
 
-   st->pipe->destroy( st->pipe );
    free( st );
 }
 
  
 void st_destroy_context( struct st_context *st )
 {
+   struct pipe_context *pipe = st->pipe;
+   struct cso_context *cso = st->cso_context;
    GLcontext *ctx = st->ctx;
 
    /* need to unbind and destroy CSO objects before anything else */
-   cso_destroy_context(st->cso_context);
+   cso_release_all(st->cso_context);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 
    _mesa_free_context_data(ctx);
+
    st_destroy_context_priv(st);
+
+   cso_destroy_context(cso);
+
+   pipe->destroy( pipe );
+
    free(ctx);
 }
 

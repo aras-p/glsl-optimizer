@@ -71,9 +71,12 @@ static void Key(unsigned char key, int x, int y)
 static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
-   glDisable(GL_DEPTH_TEST);
 
    glPointSize(8.0);
+
+   glEnable(GL_POINT_SMOOTH);
+   glEnable(GL_BLEND);
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
    glBegin(GL_POINTS);
    glColor3f(1,0,0); 

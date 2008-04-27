@@ -485,11 +485,16 @@ aaline_create_sampler(struct aaline_stage *aaline)
 static boolean
 bind_aaline_fragment_shader(struct aaline_stage *aaline)
 {
+   struct draw_context *draw = aaline->stage.draw;
+
    if (!aaline->fs->aaline_fs && 
        !generate_aaline_fs(aaline))
       return FALSE;
 
+   draw->suspend_flushing = TRUE;
    aaline->driver_bind_fs_state(aaline->pipe, aaline->fs->aaline_fs);
+   draw->suspend_flushing = FALSE;
+
    return TRUE;
 }
 
@@ -663,8 +668,10 @@ aaline_first_line(struct draw_stage *stage, struct prim_header *header)
    pipe_texture_reference(&aaline->state.texture[aaline->fs->sampler_unit],
                           aaline->texture);
 
+   draw->suspend_flushing = TRUE;
    aaline->driver_bind_sampler_states(pipe, num_samplers, aaline->state.sampler);
    aaline->driver_set_sampler_textures(pipe, num_samplers, aaline->state.texture);
+   draw->suspend_flushing = FALSE;
 
    /* now really draw first line */
    stage->line = aaline_line;
@@ -682,14 +689,14 @@ aaline_flush(struct draw_stage *stage, unsigned flags)
    stage->line = aaline_first_line;
    stage->next->flush( stage->next, flags );
 
-   /* restore original frag shader */
+   /* restore original frag shader, texture, sampler state */
+   draw->suspend_flushing = TRUE;
    aaline->driver_bind_fs_state(pipe, aaline->fs->driver_fs);
-
-   /* XXX restore original texture, sampler state */
    aaline->driver_bind_sampler_states(pipe, aaline->num_samplers,
                                       aaline->state.sampler);
    aaline->driver_set_sampler_textures(pipe, aaline->num_textures,
                                        aaline->state.texture);
+   draw->suspend_flushing = FALSE;
 
    draw->extra_vp_outputs.slot = 0;
 }
@@ -783,6 +790,7 @@ aaline_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
    struct aaline_fragment_shader *aafs = (struct aaline_fragment_shader *) fs;
+
    /* save current */
    aaline->fs = aafs;
    /* pass-through */
@@ -807,9 +815,11 @@ aaline_bind_sampler_states(struct pipe_context *pipe,
                            unsigned num, void **sampler)
 {
    struct aaline_stage *aaline = aaline_stage_from_pipe(pipe);
+
    /* save current */
    memcpy(aaline->state.sampler, sampler, num * sizeof(void *));
    aaline->num_samplers = num;
+
    /* pass-through */
    aaline->driver_bind_sampler_states(aaline->pipe, num, sampler);
 }

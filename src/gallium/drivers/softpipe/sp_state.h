@@ -171,6 +171,9 @@ boolean softpipe_draw_elements(struct pipe_context *pipe,
 			       unsigned indexSize,
 			       unsigned mode, unsigned start, unsigned count);
 
+void
+softpipe_set_edgeflags(struct pipe_context *pipe, const unsigned *edgeflags);
+
 
 void
 softpipe_map_surfaces(struct softpipe_context *sp);

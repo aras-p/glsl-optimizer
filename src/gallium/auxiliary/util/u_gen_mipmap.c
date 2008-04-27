@@ -475,7 +475,9 @@ format_to_type_comps(enum pipe_format pformat,
 {
    switch (pformat) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
    case PIPE_FORMAT_B8G8R8A8_UNORM:
+   case PIPE_FORMAT_B8G8R8X8_UNORM:
       *datatype = UBYTE;
       *comps = 4;
       return;

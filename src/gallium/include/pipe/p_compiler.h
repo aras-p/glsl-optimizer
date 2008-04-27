@@ -29,6 +29,8 @@
 #define P_COMPILER_H
 
 
+#include "p_config.h"
+
 #include <stdlib.h>
 #include <string.h>
 

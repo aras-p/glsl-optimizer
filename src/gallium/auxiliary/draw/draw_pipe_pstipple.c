@@ -433,9 +433,7 @@ pstip_create_texture(struct pstip_stage *pstip)
 
 
 /**
- * Create the sampler CSO that'll be used for antialiasing.
- * By using a mipmapped texture, we don't have to generate a different
- * texture image for each line size.
+ * Create the sampler CSO that'll be used for stippling.
  */
 static boolean
 pstip_create_sampler(struct pstip_stage *pstip)
@@ -463,20 +461,22 @@ pstip_create_sampler(struct pstip_stage *pstip)
 
 
 /**
- * When we're about to draw our first AA line in a batch, this function is
- * called to tell the driver to bind our modified fragment shader.
+ * When we're about to draw our first stipple polygon in a batch, this function
+ * is called to tell the driver to bind our modified fragment shader.
  */
 static boolean
 bind_pstip_fragment_shader(struct pstip_stage *pstip)
 {
+   struct draw_context *draw = pstip->stage.draw;
    if (!pstip->fs->pstip_fs &&
        !generate_pstip_fs(pstip))
       return FALSE;
 
+   draw->suspend_flushing = TRUE;
    pstip->driver_bind_fs_state(pstip->pipe, pstip->fs->pstip_fs);
+   draw->suspend_flushing = FALSE;
    return TRUE;
 }
-
 
 
 static INLINE struct pstip_stage *
@@ -486,14 +486,12 @@ pstip_stage( struct draw_stage *stage )
 }
 
 
-
-
-
 static void
 pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 {
    struct pstip_stage *pstip = pstip_stage(stage);
    struct pipe_context *pipe = pstip->pipe;
+   struct draw_context *draw = stage->draw;
    uint num_samplers;
 
    assert(stage->draw->rasterizer->poly_stipple_enable);
@@ -518,10 +516,12 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 
    assert(num_samplers <= PIPE_MAX_SAMPLERS);
 
+   draw->suspend_flushing = TRUE;
    pstip->driver_bind_sampler_states(pipe, num_samplers, pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, num_samplers, pstip->state.textures);
+   draw->suspend_flushing = FALSE;
 
-   /* now really draw first line */
+   /* now really draw first triangle */
    stage->tri = draw_pipe_passthrough_tri;
    stage->tri(stage, header);
 }
@@ -530,21 +530,21 @@ pstip_first_tri(struct draw_stage *stage, struct prim_header *header)
 static void
 pstip_flush(struct draw_stage *stage, unsigned flags)
 {
-   /*struct draw_context *draw = stage->draw;*/
+   struct draw_context *draw = stage->draw;
    struct pstip_stage *pstip = pstip_stage(stage);
    struct pipe_context *pipe = pstip->pipe;
 
    stage->tri = pstip_first_tri;
    stage->next->flush( stage->next, flags );
 
-   /* restore original frag shader */
+   /* restore original frag shader, texture, sampler state */
+   draw->suspend_flushing = TRUE;
    pstip->driver_bind_fs_state(pipe, pstip->fs->driver_fs);
-
-   /* XXX restore original texture, sampler state */
    pstip->driver_bind_sampler_states(pipe, pstip->num_samplers,
                                      pstip->state.samplers);
    pstip->driver_set_sampler_textures(pipe, pstip->num_textures,
                                       pstip->state.textures);
+   draw->suspend_flushing = FALSE;
 }
 
 
@@ -689,8 +689,10 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
                           const struct pipe_poly_stipple *stipple)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
+
    /* save current */
    pstip->state.stipple = stipple;
+
    /* pass-through */
    pstip->driver_set_polygon_stipple(pstip->pipe, stipple);
 
@@ -698,11 +700,10 @@ pstip_set_polygon_stipple(struct pipe_context *pipe,
 }
 
 
-
 /**
- * Called by drivers that want to install this AA line prim stage
+ * Called by drivers that want to install this polygon stipple stage
  * into the draw module's pipeline.  This will not be used if the
- * hardware has native support for AA lines.
+ * hardware has native support for polygon stipple.
  */
 boolean
 draw_install_pstipple_stage(struct draw_context *draw,
@@ -713,7 +714,7 @@ draw_install_pstipple_stage(struct draw_context *draw,
    pipe->draw = (void *) draw;
 
    /*
-    * Create / install AA line drawing / prim stage
+    * Create / install pgon stipple drawing / prim stage
     */
    pstip = draw_pstip_stage( draw );
    if (pstip == NULL)

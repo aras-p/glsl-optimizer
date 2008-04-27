@@ -102,8 +102,14 @@ out:
    return NULL;
 }
 
-static void cso_release_all( struct cso_context *ctx )
+
+/**
+ * Prior to context destruction, this function unbinds all state objects.
+ */
+void cso_release_all( struct cso_context *ctx )
 {
+   unsigned i;
+   
    if (ctx->pipe) {
       ctx->pipe->bind_blend_state( ctx->pipe, NULL );
       ctx->pipe->bind_rasterizer_state( ctx->pipe, NULL );
@@ -111,6 +117,11 @@ static void cso_release_all( struct cso_context *ctx )
       ctx->pipe->bind_depth_stencil_alpha_state( ctx->pipe, NULL );
       ctx->pipe->bind_fs_state( ctx->pipe, NULL );
       ctx->pipe->bind_vs_state( ctx->pipe, NULL );
+   }
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      pipe_texture_reference(&ctx->textures[i], NULL);
+      pipe_texture_reference(&ctx->textures_saved[i], NULL);
    }
 
    if (ctx->cache) {
@@ -122,10 +133,10 @@ static void cso_release_all( struct cso_context *ctx )
 
 void cso_destroy_context( struct cso_context *ctx )
 {
-   if (ctx)
-      cso_release_all( ctx );
-
-   FREE( ctx );
+   if (ctx) {
+      //cso_release_all( ctx );
+      FREE( ctx );
+   }
 }
 
 
@@ -464,6 +475,8 @@ void cso_restore_rasterizer(struct cso_context *ctx)
    ctx->rasterizer_saved = NULL;
 }
 
+
+
 enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
                                                void *handle )
 {
@@ -474,6 +487,15 @@ enum pipe_error cso_set_fragment_shader_handle(struct cso_context *ctx,
    return PIPE_OK;
 }
 
+void cso_delete_fragment_shader(struct cso_context *ctx, void *handle )
+{
+   if (handle == ctx->fragment_shader) {
+      /* unbind before deleting */
+      ctx->pipe->bind_fs_state(ctx->pipe, NULL);
+      ctx->fragment_shader = NULL;
+   }
+   ctx->pipe->delete_fs_state(ctx->pipe, handle);
+}
 
 /* Not really working:
  */
@@ -544,6 +566,16 @@ enum pipe_error cso_set_vertex_shader_handle(struct cso_context *ctx,
       ctx->pipe->bind_vs_state(ctx->pipe, handle);
    }
    return PIPE_OK;
+}
+
+void cso_delete_vertex_shader(struct cso_context *ctx, void *handle )
+{
+   if (handle == ctx->vertex_shader) {
+      /* unbind before deleting */
+      ctx->pipe->bind_vs_state(ctx->pipe, NULL);
+      ctx->vertex_shader = NULL;
+   }
+   ctx->pipe->delete_vs_state(ctx->pipe, handle);
 }
 
 

@@ -270,7 +270,7 @@ st_translate_vertex_program(struct st_context *st,
       stvp->state.tokens = NULL;
    }
    if (stvp->driver_shader) {
-      pipe->delete_vs_state(pipe, stvp->driver_shader);
+      cso_delete_vertex_shader(st->cso_context, stvp->driver_shader);
       stvp->driver_shader = NULL;
    }
 

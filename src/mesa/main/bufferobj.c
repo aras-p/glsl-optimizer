@@ -551,8 +551,8 @@ _mesa_map_drawpix_pbo(GLcontext *ctx,
  * \sa _mesa_unmap_bitmap_pbo
  */
 void
-_mesa_unmap_drapix_pbo(GLcontext *ctx,
-                       const struct gl_pixelstore_attrib *unpack)
+_mesa_unmap_drawpix_pbo(GLcontext *ctx,
+                        const struct gl_pixelstore_attrib *unpack)
 {
    if (unpack->BufferObj->Name) {
       ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,

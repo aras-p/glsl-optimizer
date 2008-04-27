@@ -123,8 +123,6 @@ struct st_context
 
    GLfloat polygon_offset_scale; /* ?? */
 
-   GLfloat bitmap_texcoord_bias;
-
    /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
    const GLuint *vertex_result_to_slot;
 
@@ -164,6 +162,8 @@ struct st_context
       float vertices[4][2][4];  /**< vertex pos + color */
       struct pipe_buffer *vbuf;
    } clear;
+
+   void *passthrough_fs;  /**< simple pass-through frag shader */
 
    struct gen_mipmap_state *gen_mipmap;
    struct blit_state *blit;

@@ -34,7 +34,6 @@
 
 GLenum doubleBuffer;
 
-
 static void Init(void)
 {
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
@@ -51,7 +50,7 @@ static void Reshape(int width, int height)
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
+/*     glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0); */
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -71,19 +70,19 @@ static void Key(unsigned char key, int x, int y)
 static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
-   glDisable(GL_DEPTH_TEST);
+   glPolygonMode(GL_FRONT, GL_LINE);
+   glPolygonMode(GL_BACK, GL_LINE);
 
-   glPointSize(8.0);
-
-   glBegin(GL_POINTS);
-   glColor3f(1,0,0); 
-   glVertex3f( 0.9, -0.9, -30.0);
-   glColor3f(1,1,0); 
-   glVertex3f( 0.9,  0.9, -30.0);
-   glColor3f(1,0,1); 
-   glVertex3f(-0.9,  0.9, -30.0);
-   glColor3f(0,1,1); 
-   glVertex3f(-0.9,  -0.9, -30.0);
+   glBegin(GL_TRIANGLES);
+   glEdgeFlag(1);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.9, -0.9, -0.0);
+   glEdgeFlag(0);
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.9,  0.9, -0.0);
+   glEdgeFlag(1);
+   glColor3f(0,.9,0); 
+   glVertex3f(-0.9,  0.0, -0.0);
    glEnd();
 
    glFlush();

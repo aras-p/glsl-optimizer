@@ -190,6 +190,61 @@ pipe_vertex_format(GLenum type, GLuint size, GLboolean normalized)
 }
 
 
+/*
+ * If edge flags are needed, setup an bitvector of flags and call
+ * pipe->set_edgeflags().
+ * XXX memleak: need to free the returned pointer at some point
+ */
+static void *
+setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
+                const struct gl_client_array *array)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+
+   if ((primMode == GL_TRIANGLES ||
+        primMode == GL_QUADS ||
+        primMode == GL_POLYGON) &&
+       (ctx->Polygon.FrontMode != GL_FILL ||
+        ctx->Polygon.BackMode != GL_FILL)) {
+      /* need edge flags */
+      GLuint i;
+      unsigned *vec;
+      struct st_buffer_object *stobj = st_buffer_object(array->BufferObj);
+      ubyte *map;
+
+      if (!stobj)
+         return NULL;
+
+      vec = (unsigned *) calloc(sizeof(unsigned), (count + 31) / 32);
+      if (!vec)
+         return NULL;
+
+      map = pipe->winsys->buffer_map(pipe->winsys, stobj->buffer,
+                                     PIPE_BUFFER_USAGE_CPU_READ);
+      map = ADD_POINTERS(map, array->Ptr);
+
+      for (i = 0; i < count; i++) {
+         if (*((float *) map))
+            vec[i/32] |= 1 << (i % 32);
+
+         map += array->StrideB;
+      }
+
+      pipe->winsys->buffer_unmap(pipe->winsys, stobj->buffer);
+
+      pipe->set_edgeflags(pipe, vec);
+
+      return vec;
+   }
+   else {
+      /* edge flags not needed */
+      pipe->set_edgeflags(pipe, NULL);
+      return NULL;
+   }
+}
+
+
+
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
@@ -277,7 +332,6 @@ st_draw_vbo(GLcontext *ctx,
    pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
    pipe->set_vertex_elements(pipe, vp->num_inputs, velements);
 
-
    /* do actual drawing */
    if (ib) {
       /* indexed primitive */
@@ -317,6 +371,10 @@ st_draw_vbo(GLcontext *ctx,
 
       /* draw */
       for (i = 0; i < nr_prims; i++) {
+         setup_edgeflags(ctx, prims[i].mode,
+                         prims[i].start + indexOffset, prims[i].count,
+                         arrays[VERT_ATTRIB_EDGEFLAG]);
+
          pipe->draw_elements(pipe, indexBuf, indexSize,
                              prims[i].mode,
                              prims[i].start + indexOffset, prims[i].count);
@@ -328,6 +386,10 @@ st_draw_vbo(GLcontext *ctx,
       /* non-indexed */
       GLuint i;
       for (i = 0; i < nr_prims; i++) {
+         setup_edgeflags(ctx, prims[i].mode,
+                         prims[i].start, prims[i].count,
+                         arrays[VERT_ATTRIB_EDGEFLAG]);
+
          pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
       }
    }
@@ -340,76 +402,6 @@ st_draw_vbo(GLcontext *ctx,
    pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
 }
 
-
-
-/**
- * Utility function for drawing simple primitives (such as quads for
- * glClear and glDrawPixels).  Coordinates are in screen space.
- * \param mode  one of PIPE_PRIM_x
- * \param numVertex  number of vertices
- * \param verts  vertex data (all attributes are float[4])
- * \param numAttribs  number of attributes per vertex
- */
-void 
-st_draw_vertices(GLcontext *ctx, unsigned prim,
-                 unsigned numVertex, float *verts,
-                 unsigned numAttribs,
-                 GLboolean inClipCoords)
-{
-   const float width = ctx->DrawBuffer->Width;
-   const float height = ctx->DrawBuffer->Height;
-   const unsigned vertex_bytes = numVertex * numAttribs * 4 * sizeof(float);
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_buffer *vbuf;
-   struct pipe_vertex_buffer vbuffer;
-   struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
-   unsigned i;
-
-   assert(numAttribs > 0);
-
-   if (!inClipCoords) {
-      /* convert to clip coords */
-      for (i = 0; i < numVertex; i++) {
-         float x = verts[i * numAttribs * 4 + 0];
-         float y = verts[i * numAttribs * 4 + 1];
-         x = x / width * 2.0 - 1.0;
-         y = y / height * 2.0 - 1.0;
-         verts[i * numAttribs * 4 + 0] = x;
-         verts[i * numAttribs * 4 + 1] = y;
-      }
-   }
-
-   /* XXX create one-time */
-   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                      PIPE_BUFFER_USAGE_VERTEX, vertex_bytes);
-   assert(vbuf);
-
-   memcpy(pipe->winsys->buffer_map(pipe->winsys, vbuf,
-                                   PIPE_BUFFER_USAGE_CPU_WRITE),
-          verts, vertex_bytes);
-   pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
-
-   /* tell pipe about the vertex buffer */
-   vbuffer.buffer = vbuf;
-   vbuffer.pitch = numAttribs * 4 * sizeof(float);  /* vertex size */
-   vbuffer.buffer_offset = 0;
-   pipe->set_vertex_buffers(pipe, 1, &vbuffer);
-
-   /* tell pipe about the vertex attributes */
-   for (i = 0; i < numAttribs; i++) {
-      velements[i].src_offset = i * 4 * sizeof(GLfloat);
-      velements[i].vertex_buffer_index = 0;
-      velements[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      velements[i].nr_components = 4;
-   }
-   pipe->set_vertex_elements(pipe, numAttribs, velements);
-
-   /* draw */
-   pipe->draw_arrays(pipe, prim, 0, numVertex);
-
-   /* XXX: do one-time */
-   pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
-}
 
 
 /**

@@ -32,7 +32,9 @@
  * @author José Fonseca <jrfonseca@tungstengraphics.com>
  */
 
-#ifdef WIN32
+#include "pipe/p_config.h" 
+
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
 #include <windows.h>
 #include <winddi.h>
 #else
@@ -47,7 +49,7 @@
 #define DEBUG_MEMORY_MAGIC 0x6e34090aU 
 
 
-#if defined(WIN32) && !defined(WINCE)
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
 #define real_malloc(_size) EngAllocMem(0, _size, 'D3AG')
 #define real_free(_ptr) EngFreeMem(_ptr)
 #else

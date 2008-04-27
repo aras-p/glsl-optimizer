@@ -169,6 +169,52 @@ a8r8g8b8_put_tile_rgba(unsigned *dst,
 }
 
 
+/*** PIPE_FORMAT_A8R8G8B8_UNORM ***/
+
+static void
+x8r8g8b8_get_tile_rgba(unsigned *src,
+                       unsigned w, unsigned h,
+                       float *p,
+                       unsigned dst_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         const unsigned pixel = *src++;
+         pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
+         pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
+         pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
+         pRow[3] = UBYTE_TO_FLOAT(0xff);
+      }
+      p += dst_stride;
+   }
+}
+
+
+static void
+x8r8g8b8_put_tile_rgba(unsigned *dst,
+                       unsigned w, unsigned h,
+                       const float *p,
+                       unsigned src_stride)
+{
+   unsigned i, j;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++, pRow += 4) {
+         unsigned r, g, b;
+         UNCLAMPED_FLOAT_TO_UBYTE(r, pRow[0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(g, pRow[1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(b, pRow[2]);
+         *dst++ = (0xff << 24) | (r << 16) | (g << 8) | b;
+      }
+      p += src_stride;
+   }
+}
+
+
 /*** PIPE_FORMAT_B8G8R8A8_UNORM ***/
 
 static void
@@ -647,6 +693,9 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
       break;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      x8r8g8b8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
+      break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
       break;
@@ -722,6 +771,9 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
    switch (ps->format) {
    case PIPE_FORMAT_A8R8G8B8_UNORM:
       a8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
+      break;
+   case PIPE_FORMAT_X8R8G8B8_UNORM:
+      x8r8g8b8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);
       break;
    case PIPE_FORMAT_B8G8R8A8_UNORM:
       b8g8r8a8_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);

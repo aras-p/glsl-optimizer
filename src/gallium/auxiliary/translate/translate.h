@@ -96,7 +96,6 @@ struct translate *translate_lookup_or_create( struct translate_context *tctx,
 
 struct translate *translate_create( const struct translate_key *key );
 
-
 /*******************************************************************************
  *  Private:
  */

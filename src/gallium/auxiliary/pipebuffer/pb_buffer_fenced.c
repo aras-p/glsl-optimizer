@@ -34,6 +34,12 @@
  */
 
 
+#include "pipe/p_config.h"
+
+#if defined(PIPE_OS_LINUX)
+#include <unistd.h>
+#endif
+
 #include "pipe/p_compiler.h"
 #include "pipe/p_error.h"
 #include "pipe/p_debug.h"
@@ -45,9 +51,6 @@
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
 
-#ifndef WIN32
-#include <unistd.h>
-#endif
 
 
 /**
@@ -425,7 +428,7 @@ fenced_buffer_list_destroy(struct fenced_buffer_list *fenced_list)
    /* Wait on outstanding fences */
    while (fenced_list->numDelayed) {
       _glthread_UNLOCK_MUTEX(fenced_list->mutex);
-#ifndef WIN32
+#if defined(PIPE_OS_LINUX)
       sched_yield();
 #endif
       _fenced_buffer_list_check_free(fenced_list, 1);

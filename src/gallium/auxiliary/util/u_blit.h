@@ -30,7 +30,11 @@
 #define U_BLIT_H
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+   
 struct pipe_context;
 struct pipe_surface;
 struct cso_context;
@@ -57,5 +61,9 @@ util_blit_pixels(struct blit_state *ctx,
                  int dstX1, int dstY1,
                  float z, uint filter);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -36,7 +36,9 @@
 #define U_TIME_H_
 
 
-#ifndef WIN32
+#include "pipe/p_config.h"
+
+#if defined(PIPE_OS_LINUX)
 #include <time.h> /* timeval */
 #include <unistd.h> /* usleep */
 #endif
@@ -56,7 +58,7 @@ extern "C" {
  */
 struct util_time 
 {
-#ifndef WIN32
+#if defined(PIPE_OS_LINUX)
    struct timeval tv;
 #else
    long long counter;
@@ -84,7 +86,7 @@ util_time_timeout(const struct util_time *start,
                   const struct util_time *end,
                   const struct util_time *curr);
 
-#ifndef WIN32
+#if defined(PIPE_OS_LINUX)
 #define util_time_sleep usleep
 #else
 void

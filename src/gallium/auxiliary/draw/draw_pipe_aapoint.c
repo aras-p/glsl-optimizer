@@ -481,7 +481,7 @@ aa_transform_inst(struct tgsi_transform_context *ctx,
 
 
 /**
- * Generate the frag shader we'll use for drawing AA lines.
+ * Generate the frag shader we'll use for drawing AA points.
  * This will be the user's shader plus some texture/modulate instructions.
  */
 static boolean
@@ -531,17 +531,22 @@ generate_aapoint_fs(struct aapoint_stage *aapoint)
 
 
 /**
- * When we're about to draw our first AA line in a batch, this function is
+ * When we're about to draw our first AA point in a batch, this function is
  * called to tell the driver to bind our modified fragment shader.
  */
 static boolean
 bind_aapoint_fragment_shader(struct aapoint_stage *aapoint)
 {
+   struct draw_context *draw = aapoint->stage.draw;
+
    if (!aapoint->fs->aapoint_fs &&
        !generate_aapoint_fs(aapoint))
       return FALSE;
 
+   draw->suspend_flushing = TRUE;
    aapoint->driver_bind_fs_state(aapoint->pipe, aapoint->fs->aapoint_fs);
+   draw->suspend_flushing = FALSE;
+
    return TRUE;
 }
 
@@ -697,7 +702,7 @@ aapoint_first_point(struct draw_stage *stage, struct prim_header *header)
       }
    }
 
-   /* now really draw first line */
+   /* now really draw first point */
    stage->point = aapoint_point;
    stage->point(stage, header);
 }
@@ -714,7 +719,9 @@ aapoint_flush(struct draw_stage *stage, unsigned flags)
    stage->next->flush( stage->next, flags );
 
    /* restore original frag shader */
+   draw->suspend_flushing = TRUE;
    aapoint->driver_bind_fs_state(pipe, aapoint->fs->driver_fs);
+   draw->suspend_flushing = FALSE;
 
    draw->extra_vp_outputs.slot = 0;
 }

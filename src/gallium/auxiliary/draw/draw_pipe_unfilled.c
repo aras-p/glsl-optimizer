@@ -83,9 +83,9 @@ static void points( struct draw_stage *stage,
    struct vertex_header *v1 = header->v[1];
    struct vertex_header *v2 = header->v[2];
 
-   if (header->edgeflags & 0x1) point( stage, v0 );
-   if (header->edgeflags & 0x2) point( stage, v1 );
-   if (header->edgeflags & 0x4) point( stage, v2 );
+   if ((header->flags & DRAW_PIPE_EDGE_FLAG_0) && v0->edgeflag) point( stage, v0 );
+   if ((header->flags & DRAW_PIPE_EDGE_FLAG_1) && v1->edgeflag) point( stage, v1 );
+   if ((header->flags & DRAW_PIPE_EDGE_FLAG_2) && v2->edgeflag) point( stage, v2 );
 }
 
 
@@ -96,22 +96,22 @@ static void lines( struct draw_stage *stage,
    struct vertex_header *v1 = header->v[1];
    struct vertex_header *v2 = header->v[2];
 
-#if 0
-   assert(((header->edgeflags & 0x1) >> 0) == header->v[0]->edgeflag);
-   assert(((header->edgeflags & 0x2) >> 1) == header->v[1]->edgeflag);
-   assert(((header->edgeflags & 0x4) >> 2) == header->v[2]->edgeflag);
-#endif
+   if (header->flags & DRAW_PIPE_RESET_STIPPLE)
+      stage->next->reset_stipple_counter( stage->next );
 
-   if (header->edgeflags & 0x4) line( stage, v2, v0 );
-   if (header->edgeflags & 0x1) line( stage, v0, v1 );
-   if (header->edgeflags & 0x2) line( stage, v1, v2 );
+   if ((header->flags & DRAW_PIPE_EDGE_FLAG_2) && v2->edgeflag) line( stage, v2, v0 );
+   if ((header->flags & DRAW_PIPE_EDGE_FLAG_0) && v0->edgeflag) line( stage, v0, v1 );
+   if ((header->flags & DRAW_PIPE_EDGE_FLAG_1) && v1->edgeflag) line( stage, v1, v2 );
 }
 
 
 /* Unfilled tri:  
  *
  * Note edgeflags in the vertex struct is not sufficient as we will
- * need to manipulate them when decomposing primitives???
+ * need to manipulate them when decomposing primitives.  
+ * 
+ * We currently keep the vertex edgeflag and primitive edgeflag mask
+ * separate until the last possible moment.
  */
 static void unfilled_tri( struct draw_stage *stage,
 			  struct prim_header *header )

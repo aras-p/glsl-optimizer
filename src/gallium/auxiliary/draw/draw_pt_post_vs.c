@@ -61,6 +61,12 @@ compute_clipmask_gl(const float *clip, /*const*/ float plane[][4], unsigned nr)
    unsigned mask = 0x0;
    unsigned i;
 
+#if 0
+   debug_printf("compute clipmask %f %f %f %f\n",
+                clip[0], clip[1], clip[2], clip[3]);
+   assert(clip[3] != 0.0);
+#endif
+
    /* Do the hardwired planes first:
     */
    if (-clip[0] + clip[3] < 0) mask |= (1<<0);
@@ -106,7 +112,6 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
       out->clip[3] = out->data[0][3];
 
       out->vertex_id = 0xffff;
-      out->edgeflag = 1;
       out->clipmask = compute_clipmask_gl(out->clip, 
 					  pvs->draw->plane,
 					  pvs->draw->nr_planes);
@@ -122,6 +127,13 @@ static boolean post_vs_cliptest_viewport_gl( struct pt_post_vs *pvs,
 	 out->data[0][1] = out->data[0][1] * w * scale[1] + trans[1];
 	 out->data[0][2] = out->data[0][2] * w * scale[2] + trans[2];
 	 out->data[0][3] = w;
+#if 0
+         debug_printf("post viewport: %f %f %f %f\n",
+                      out->data[0][0],
+                      out->data[0][1],
+                      out->data[0][2],
+                      out->data[0][3]);
+#endif
       }
 
       out = (struct vertex_header *)( (char *)out + stride );

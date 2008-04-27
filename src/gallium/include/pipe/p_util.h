@@ -28,6 +28,7 @@
 #ifndef P_UTIL_H
 #define P_UTIL_H
 
+#include "p_config.h"
 #include "p_compiler.h"
 #include "p_debug.h"
 #include "p_pointer.h"
@@ -40,7 +41,7 @@ extern "C" {
 #endif
 
 
-#if defined(WIN32) && defined(DEBUG) /* memory debugging */
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && defined(DEBUG) /* memory debugging */
 
 #include "p_debug.h"
 
@@ -55,7 +56,7 @@ extern "C" {
 
 #else
    
-#ifdef WIN32
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 
 void * __stdcall
 EngAllocMem(
@@ -118,7 +119,7 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
    return new_ptr;
 }
 
-#else /* !WIN32 */
+#else /* !PIPE_SUBSYSTEM_WINDOWS_DISPLAY */
 
 #define MALLOC( SIZE )  malloc( SIZE )
 
@@ -128,7 +129,7 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 
 #define REALLOC( OLDPTR, OLDSIZE, NEWSIZE )  realloc( OLDPTR, NEWSIZE )
 
-#endif /* !WIN32 */
+#endif /* !PIPE_SUBSYSTEM_WINDOWS_DISPLAY */
 #endif /* !DEBUG */
 
 #define MALLOC_STRUCT(T)   (struct T *) MALLOC(sizeof(struct T))

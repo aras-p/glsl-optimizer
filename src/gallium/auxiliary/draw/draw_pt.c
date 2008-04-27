@@ -58,7 +58,7 @@ draw_pt_arrays(struct draw_context *draw,
       opt |= PT_PIPELINE;
    }
 
-   if (draw_need_pipeline(draw, 
+   if (draw_need_pipeline(draw,
                           draw->rasterizer,
                           prim)) {
       opt |= PT_PIPELINE;
@@ -78,16 +78,21 @@ draw_pt_arrays(struct draw_context *draw,
       middle = draw->pt.middle.fetch_emit;
 
 
-   /* May create a short-circuited version of this for small primitives:
+   /* Pick the right frontend
     */
-   frontend = draw->pt.front.vcache;
+   if (draw->pt.user.elts ||
+       count >= 256) {
+      frontend = draw->pt.front.vcache;
+   } else {
+      frontend = draw->pt.front.varray;
+   }
 
    frontend->prepare( frontend, prim, middle, opt );
 
-   frontend->run( frontend,
-                  draw_pt_elt_func( draw ),
-                  draw_pt_elt_ptr( draw, start ),
-                  count );
+   frontend->run(frontend, 
+                 draw_pt_elt_func(draw),
+                 draw_pt_elt_ptr(draw, start),
+                 count);
 
    frontend->finish( frontend );
 
@@ -99,6 +104,10 @@ boolean draw_pt_init( struct draw_context *draw )
 {
    draw->pt.front.vcache = draw_pt_vcache( draw );
    if (!draw->pt.front.vcache)
+      return FALSE;
+
+   draw->pt.front.varray = draw_pt_varray(draw);
+   if (!draw->pt.front.varray)
       return FALSE;
 
    draw->pt.middle.fetch_emit = draw_pt_fetch_emit( draw );
@@ -128,6 +137,11 @@ void draw_pt_destroy( struct draw_context *draw )
    if (draw->pt.front.vcache) {
       draw->pt.front.vcache->destroy( draw->pt.front.vcache );
       draw->pt.front.vcache = NULL;
+   }
+
+   if (draw->pt.front.varray) {
+      draw->pt.front.varray->destroy( draw->pt.front.varray );
+      draw->pt.front.varray = NULL;
    }
 }
 

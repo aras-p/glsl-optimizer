@@ -109,9 +109,6 @@ void st_init_limits(struct st_context *st)
    c->MaxTextureLodBias
       = screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);
 
-   st->bitmap_texcoord_bias
-      = screen->get_paramf(screen, PIPE_CAP_BITMAP_TEXCOORD_BIAS);
-
    c->MaxDrawBuffers
       = CLAMP(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
@@ -220,11 +217,12 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
    }
 
+#if 01
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
                                    PIPE_TEXTURE)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
-
+#endif
    if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, PIPE_TEXTURE) ||
        screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, PIPE_TEXTURE)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;

@@ -63,13 +63,13 @@ struct pipe_surface;
 struct pipe_winsys
 {
    /** Returns name of this winsys interface */
-   const char *(*get_name)( struct pipe_winsys *sws );
+   const char *(*get_name)( struct pipe_winsys *ws );
 
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */
-   void (*flush_frontbuffer)( struct pipe_winsys *sws,
+   void (*flush_frontbuffer)( struct pipe_winsys *ws,
                               struct pipe_surface *surf,
                               void *context_private );
 
@@ -79,8 +79,8 @@ struct pipe_winsys
 
    /**
     * Allocate storage for a pipe_surface.
-    * Returns 0 if succeeds.
-    * XXX: flags is unused and will be removed someday.
+    * \param flags XXX unused, remove someday
+    * \return  0 if succeeds.
     */
    int (*surface_alloc_storage)(struct pipe_winsys *ws,
                                 struct pipe_surface *surf,
@@ -105,7 +105,7 @@ struct pipe_winsys
     * alignment indicates the client's alignment requirements, eg for
     * SSE instructions.
     */
-   struct pipe_buffer *(*buffer_create)( struct pipe_winsys *sws, 
+   struct pipe_buffer *(*buffer_create)( struct pipe_winsys *ws, 
                                          unsigned alignment, 
                                          unsigned usage,
                                          unsigned size );
@@ -131,7 +131,7 @@ struct pipe_winsys
     * Note that ptr may be accessed at any time upto the time when the
     * buffer is destroyed, so the data must not be freed before then.
     */
-   struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *sws, 
+   struct pipe_buffer *(*user_buffer_create)(struct pipe_winsys *ws, 
                                                     void *ptr,
                                                     unsigned bytes);
 
@@ -139,44 +139,39 @@ struct pipe_winsys
     * Map the entire data store of a buffer object into the client's address.
     * flags is bitmask of PIPE_BUFFER_USAGE_CPU_READ/WRITE flags. 
     */
-   void *(*buffer_map)( struct pipe_winsys *sws, 
+   void *(*buffer_map)( struct pipe_winsys *ws, 
 			struct pipe_buffer *buf,
 			unsigned usage );
    
-   void (*buffer_unmap)( struct pipe_winsys *sws, 
+   void (*buffer_unmap)( struct pipe_winsys *ws, 
 			 struct pipe_buffer *buf );
 
-   void (*buffer_destroy)( struct pipe_winsys *sws,
+   void (*buffer_destroy)( struct pipe_winsys *ws,
 			   struct pipe_buffer *buf );
 
 
    /** Set ptr = fence, with reference counting */
-   void (*fence_reference)( struct pipe_winsys *sws,
+   void (*fence_reference)( struct pipe_winsys *ws,
                             struct pipe_fence_handle **ptr,
                             struct pipe_fence_handle *fence );
 
    /**
     * Checks whether the fence has been signalled.
-    *  
-    * The meaning of flag is pipe-driver specific.
-    *
-    * Returns zero if it has.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
     */
-   int (*fence_signalled)( struct pipe_winsys *sws,
+   int (*fence_signalled)( struct pipe_winsys *ws,
                            struct pipe_fence_handle *fence,
                            unsigned flag );
 
    /**
     * Wait for the fence to finish.
-    * 
-    * The meaning of flag is pipe-driver specific.
-    * 
-    * Returns zero on success.
+    * \param flags  driver-specific meaning
+    * \return zero on success.
     */
-   int (*fence_finish)( struct pipe_winsys *sws,
+   int (*fence_finish)( struct pipe_winsys *ws,
                         struct pipe_fence_handle *fence,
                         unsigned flag );
-
 
 };
 
