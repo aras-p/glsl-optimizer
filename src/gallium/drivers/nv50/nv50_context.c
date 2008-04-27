@@ -24,6 +24,12 @@ nv50_destroy(struct pipe_context *pipe)
 	free(nv50);
 }
 
+
+static void
+nv50_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
+{
+}
+
 struct pipe_context *
 nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 {
@@ -42,6 +48,7 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv50->pipe.destroy = nv50_destroy;
 
+	nv50->pipe.set_edgeflags = nv50_set_edgeflags;
 	nv50->pipe.draw_arrays = nv50_draw_arrays;
 	nv50->pipe.draw_elements = nv50_draw_elements;
 	nv50->pipe.clear = nv50_clear;
