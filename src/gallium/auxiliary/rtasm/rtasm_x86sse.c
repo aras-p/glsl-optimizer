@@ -498,6 +498,12 @@ void x86_ret( struct x86_function *p )
    emit_1ub(p, 0xc3);
 }
 
+void x86_retw( struct x86_function *p, unsigned short imm )
+{
+   DUMP();
+   emit_3ub(p, 0xc2, imm & 0xff, (imm >> 8) & 0xff);
+}
+
 void x86_sahf( struct x86_function *p )
 {
    DUMP();

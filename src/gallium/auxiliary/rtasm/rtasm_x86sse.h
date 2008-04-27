@@ -219,6 +219,7 @@ void x86_or( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_pop( struct x86_function *p, struct x86_reg reg );
 void x86_push( struct x86_function *p, struct x86_reg reg );
 void x86_ret( struct x86_function *p );
+void x86_retw( struct x86_function *p, unsigned short imm );
 void x86_sub( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
