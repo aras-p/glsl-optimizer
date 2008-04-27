@@ -356,11 +356,25 @@ void
 buffer_fence(struct pb_buffer *buf,
              struct pipe_fence_handle *fence)
 {
-   struct fenced_buffer *fenced_buf = fenced_buffer(buf);
-   struct fenced_buffer_list *fenced_list = fenced_buf->list;
-   struct pipe_winsys *winsys = fenced_list->winsys;
+   struct fenced_buffer *fenced_buf;
+   struct fenced_buffer_list *fenced_list;
+   struct pipe_winsys *winsys;
    /* FIXME: receive this as a parameter */
    unsigned flags = fence ? PIPE_BUFFER_USAGE_GPU_READ_WRITE : 0;
+
+   /* This is a public function, so be extra cautious with the buffer passed, 
+    * as happens frequently to receive null buffers, or pointer to buffers 
+    * other than fenced buffers. */
+   assert(buf);
+   if(!buf)
+      return;
+   assert(buf->vtbl == &fenced_buffer_vtbl);
+   if(buf->vtbl != &fenced_buffer_vtbl)
+      return;
+   
+   fenced_buf = fenced_buffer(buf);
+   fenced_list = fenced_buf->list;
+   winsys = fenced_list->winsys;
    
    if(fence == fenced_buf->fence) {
       /* Handle the same fence case specially, not only because it is a fast 
