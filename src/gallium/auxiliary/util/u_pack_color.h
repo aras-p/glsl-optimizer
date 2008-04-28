@@ -201,7 +201,7 @@ util_pack_z(enum pipe_format format, double z)
    case PIPE_FORMAT_Z24X8_UNORM:
       return ((uint) (z * 0xffffff)) << 8;
    default:
-      debug_printf("gallium: unhandled fomrat in util_pack_z()");
+      debug_printf("gallium: unhandled format in util_pack_z()\n");
       return 0;
    }
 }
