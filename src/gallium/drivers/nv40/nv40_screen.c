@@ -39,7 +39,7 @@ nv40_screen_get_param(struct pipe_screen *pscreen, int param)
 	case PIPE_CAP_GLSL:
 		return 0;
 	case PIPE_CAP_S3TC:
-		return 0;
+		return 1;
 	case PIPE_CAP_ANISOTROPIC_FILTER:
 		return 1;
 	case PIPE_CAP_POINT_SPRITE:
@@ -118,12 +118,10 @@ nv40_screen_surface_format_supported(struct pipe_screen *pscreen,
 		case PIPE_FORMAT_U_A8_L8:
 		case PIPE_FORMAT_Z16_UNORM:
 		case PIPE_FORMAT_Z24S8_UNORM:
-#if 0 /* state tracker not up to the task just yet. */
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
 		case PIPE_FORMAT_DXT3_RGBA:
 		case PIPE_FORMAT_DXT5_RGBA:
-#endif
 			return TRUE;
 		default:
 			break;
