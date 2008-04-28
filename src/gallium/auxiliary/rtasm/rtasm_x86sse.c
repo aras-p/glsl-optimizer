@@ -853,6 +853,20 @@ void sse_shufps( struct x86_function *p,
    emit_1ub(p, shuf); 
 }
 
+void sse_unpckhps( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_2ub( p, X86_TWOB, 0x15 );
+   emit_modrm( p, dst, src );
+}
+
+void sse_unpcklps( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
+{
+   DUMP_RR( dst, src );
+   emit_2ub( p, X86_TWOB, 0x14 );
+   emit_modrm( p, dst, src );
+}
+
 void sse_cmpps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src,

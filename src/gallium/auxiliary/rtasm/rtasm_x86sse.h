@@ -203,6 +203,8 @@ void sse_rsqrtps( struct x86_function *p, struct x86_reg dst, struct x86_reg src
 void sse_rsqrtss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_shufps( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0,
                  unsigned char shuf );
+void sse_unpckhps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_unpcklps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_pmovmskb( struct x86_function *p, struct x86_reg dest, struct x86_reg src );
 void sse2_punpcklbw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
