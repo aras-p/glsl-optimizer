@@ -1381,7 +1381,7 @@ copy_image_data_to_texture(struct st_context *st,
       st_texture_image_data(st->pipe,
                                stObj->pt,
                                stImage->face,
-                               stImage->level,
+                               dstLevel,
                                stImage->base.Data,
                                stImage->base.RowStride,
                                stImage->base.RowStride *
