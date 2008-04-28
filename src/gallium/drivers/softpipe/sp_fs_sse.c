@@ -133,7 +133,7 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
    x86_init_func( &shader->sse2_program );
    
    if (!tgsi_emit_sse2( templ->tokens, &shader->sse2_program,
-                        shader->immediates)) {
+                        shader->immediates, FALSE )) {
       FREE(shader);
       return NULL;
    }

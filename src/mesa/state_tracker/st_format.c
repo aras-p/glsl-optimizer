@@ -293,7 +293,7 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
 /**
  * Find an RGBA format supported by the context/winsys.
  */
-static GLuint
+static enum pipe_format
 default_rgba_format(struct pipe_screen *screen, uint type)
 {
    static const enum pipe_format colorFormats[] = {
@@ -315,7 +315,7 @@ default_rgba_format(struct pipe_screen *screen, uint type)
 /**
  * Search list of formats for first RGBA format with >8 bits/channel.
  */
-static GLuint
+static enum pipe_format
 default_deep_rgba_format(struct pipe_screen *screen, uint type)
 {
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM, type)) {
@@ -331,7 +331,7 @@ default_deep_rgba_format(struct pipe_screen *screen, uint type)
 /**
  * Find an Z format supported by the context/winsys.
  */
-static GLuint
+static enum pipe_format
 default_depth_format(struct pipe_screen *screen, uint type)
 {
    static const enum pipe_format zFormats[] = {

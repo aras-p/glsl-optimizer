@@ -38,7 +38,7 @@ struct translate_cache;
 struct translate_key;
 struct translate;
 
-struct translate_cache *translate_cache_create();
+struct translate_cache *translate_cache_create( void );
 void translate_cache_destroy(struct translate_cache *cache);
 
 /**

@@ -47,14 +47,29 @@
 #include "tgsi/util/tgsi_parse.h"
 
 #define SSE_MAX_VERTICES 4
+#define SSE_SWIZZLES 0
 
+#if SSE_SWIZZLES
+typedef void (XSTDCALL *codegen_function) (
+   const struct tgsi_exec_vector *input,
+   struct tgsi_exec_vector *output,
+   float (*constant)[4],
+   struct tgsi_exec_vector *temporary,
+   float (*immediates)[4],
+   const float (*aos_input)[4],
+   uint num_inputs,
+   uint input_stride,
+   float (*aos_output)[4],
+   uint num_outputs,
+   uint output_stride );
+#else
 typedef void (XSTDCALL *codegen_function) (
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
    float (*constant)[4],
    struct tgsi_exec_vector *temporary,
    float (*immediates)[4] );
-
+#endif
 
 struct draw_sse_vertex_shader {
    struct draw_vertex_shader base;
@@ -91,11 +106,30 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
 {
    struct draw_sse_vertex_shader *shader = (struct draw_sse_vertex_shader *)base;
    struct tgsi_exec_machine *machine = shader->machine;
-   unsigned int i, j;
-   unsigned slot;
+   unsigned int i;
 
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+
+#if SSE_SWIZZLES
+      /* run compiled shader
+       */
+      shader->func(machine->Inputs,
+		   machine->Outputs,
+		   (float (*)[4])constants,
+		   machine->Temps,
+		   shader->immediates,
+                   input,
+                   base->info.num_inputs,
+                   input_stride,
+                   output,
+                   base->info.num_outputs,
+                   output_stride );
+
+      input = (const float (*)[4])((const char *)input + input_stride * max_vertices);
+      output = (float (*)[4])((char *)output + output_stride * max_vertices);
+#else
+      unsigned int j, slot;
 
       /* Swizzle inputs.  
        */
@@ -105,10 +139,10 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
             machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
             machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
             machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
-         }
+         } 
 
 	 input = (const float (*)[4])((const char *)input + input_stride);
-      } 
+      }
 
       /* run compiled shader
        */
@@ -118,7 +152,6 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
 		   machine->Temps,
 		   shader->immediates);
 
-
       /* Unswizzle all output results.  
        */
       for (j = 0; j < max_vertices; j++) {
@@ -127,10 +160,11 @@ vs_sse_run_linear( struct draw_vertex_shader *base,
             output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
             output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
             output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-         }
+         } 
 
 	 output = (float (*)[4])((char *)output + output_stride);
-      } 
+      }
+#endif
    }
 }
 
@@ -176,7 +210,7 @@ draw_create_vs_sse(struct draw_context *draw,
    x86_init_func( &vs->sse2_program );
 
    if (!tgsi_emit_sse2( (struct tgsi_token *) vs->base.state.tokens,
-			&vs->sse2_program, vs->immediates )) 
+			&vs->sse2_program, vs->immediates, SSE_SWIZZLES )) 
       goto fail;
       
    vs->func = (codegen_function) x86_get_func( &vs->sse2_program );

@@ -730,6 +730,7 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
       z32_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       s8z24_get_tile_rgba((unsigned *) packed, w, h, p, dst_stride);
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
@@ -808,6 +809,7 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
       /*z32_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       /*s8z24_put_tile_rgba((unsigned *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_Z24S8_UNORM:
@@ -852,6 +854,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
       }
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       {
          const uint *pSrc
             = (const uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
@@ -912,6 +915,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
       }
       break;
    case PIPE_FORMAT_S8Z24_UNORM:
+   case PIPE_FORMAT_X8Z24_UNORM:
       {
          uint *pDest = (uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {

@@ -240,7 +240,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
                                                      format, type);
 
-      if (strb->surface->format == PIPE_FORMAT_S8Z24_UNORM) {
+      if (strb->surface->format == PIPE_FORMAT_S8Z24_UNORM ||
+          strb->surface->format == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
                GLuint ztemp[MAX_WIDTH], j;

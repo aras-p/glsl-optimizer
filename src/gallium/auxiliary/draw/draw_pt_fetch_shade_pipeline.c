@@ -109,9 +109,10 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vertex_shader;
    unsigned opt = fpme->opt;
+   unsigned alloc_count = align_int( fetch_count, 4 );
 
    struct vertex_header *pipeline_verts = 
-      (struct vertex_header *)MALLOC(fpme->vertex_size * fetch_count);
+      (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
    if (!pipeline_verts) {
       /* Not much we can do here - just skip the rendering.

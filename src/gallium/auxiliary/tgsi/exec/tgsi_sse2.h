@@ -12,8 +12,8 @@ unsigned
 tgsi_emit_sse2(
    const struct tgsi_token *tokens,
    struct x86_function *function,
-   float (*immediates)[4]
- );
+   float (*immediates)[4],
+   boolean do_swizzles );
 
 #if defined __cplusplus
 }

@@ -983,22 +983,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    else {
       /* srcFormat can't be used as a texture format */
       if (type == GL_DEPTH) {
-         static const enum pipe_format zFormats[] = {
-            PIPE_FORMAT_Z16_UNORM,
-            PIPE_FORMAT_Z32_UNORM,
-            PIPE_FORMAT_S8Z24_UNORM,
-            PIPE_FORMAT_Z24S8_UNORM
-         };
-         uint i;
-         texFormat = 0;
-         for (i = 0; i < Elements(zFormats); i++) {
-            if (screen->is_format_supported(screen, zFormats[i],
-                                            PIPE_TEXTURE)) {
-               texFormat = zFormats[i];
-               break;
-            }
-         }
-         assert(texFormat); /* XXX no depth texture formats??? */
+         texFormat = st_choose_format(pipe, GL_DEPTH_COMPONENT, PIPE_TEXTURE);
+         assert(texFormat != PIPE_FORMAT_NONE); /* XXX no depth texture formats??? */
       }
       else {
          /* todo */
