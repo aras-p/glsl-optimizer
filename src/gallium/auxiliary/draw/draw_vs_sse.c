@@ -47,7 +47,7 @@
 #include "tgsi/util/tgsi_parse.h"
 
 #define SSE_MAX_VERTICES 4
-#define SSE_SWIZZLES 1
+#define SSE_SWIZZLES 0
 
 #if SSE_SWIZZLES
 typedef void (XSTDCALL *codegen_function) (
