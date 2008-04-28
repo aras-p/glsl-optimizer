@@ -50,9 +50,10 @@
 #define _DRI_UTIL_H_
 
 #include <GL/gl.h>
-#include "drm.h"
-#include "drm_sarea.h"
-#include "xf86drm.h"
+#include <drm.h>
+#include <drm_sarea.h>
+#include <xf86drm.h>
+#include <xf86mm.h>
 #include "GL/internal/glcore.h"
 #include "GL/internal/dri_interface.h"
 #include "GL/internal/dri_sarea.h"
