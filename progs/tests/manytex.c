@@ -30,6 +30,7 @@ static GLboolean LinearFilter = GL_FALSE;
 static GLboolean RandomSize = GL_FALSE;
 static GLint Rows, Columns;
 static GLint LowPriorityCount = 0;
+static GLint Win;
 
 
 static void Idle( void )
@@ -125,6 +126,13 @@ static int RandomInt(int min, int max)
    int i = rand();
    int j = i % (max - min + 1);
    return min + j;
+}
+
+
+static void DeleteTextures(void)
+{
+   glDeleteTextures(NumTextures, TextureID);
+   free(TextureID);
 }
 
 
@@ -306,9 +314,12 @@ static void Key( unsigned char key, int x, int y )
          Zrot += step;
          break;
       case ' ':
+         DeleteTextures();
          Init();
          break;
       case 27:
+         DeleteTextures();
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -324,7 +335,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( WinWidth, WinHeight );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );
