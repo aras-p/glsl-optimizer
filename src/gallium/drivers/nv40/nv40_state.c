@@ -680,6 +680,16 @@ nv40_set_vertex_elements(struct pipe_context *pipe, unsigned count,
 	nv40->draw_dirty |= NV40_NEW_ARRAYS;
 }
 
+static void
+nv40_set_edgeflags(struct pipe_context *pipe, const unsigned *bitfield)
+{
+	struct nv40_context *nv40 = nv40_context(pipe);
+
+	nv40->edgeflags = bitfield;
+	nv40->dirty |= NV40_NEW_ARRAYS;
+	nv40->draw_dirty |= NV40_NEW_ARRAYS;
+}
+
 void
 nv40_init_state_functions(struct nv40_context *nv40)
 {
@@ -719,6 +729,7 @@ nv40_init_state_functions(struct nv40_context *nv40)
 	nv40->pipe.set_scissor_state = nv40_set_scissor_state;
 	nv40->pipe.set_viewport_state = nv40_set_viewport_state;
 
+	nv40->pipe.set_edgeflags = nv40_set_edgeflags;
 	nv40->pipe.set_vertex_buffers = nv40_set_vertex_buffers;
 	nv40->pipe.set_vertex_elements = nv40_set_vertex_elements;
 }

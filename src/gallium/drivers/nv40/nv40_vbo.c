@@ -488,6 +488,11 @@ nv40_vbo_validate(struct nv40_context *nv40)
 	unsigned vb_flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_GART | NOUVEAU_BO_RD;
 	int hw;
 
+	if (nv40->edgeflags) {
+		nv40->fallback_swtnl |= NV40_NEW_ARRAYS;
+		return FALSE;
+	}
+
 	vtxbuf = so_new(20, 18);
 	so_method(vtxbuf, curie, NV40TCL_VTXBUF_ADDRESS(0), nv40->vtxelt_nr);
 	vtxfmt = so_new(17, 0);

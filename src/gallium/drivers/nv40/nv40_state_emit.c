@@ -167,6 +167,7 @@ nv40_state_validate_swtnl(struct nv40_context *nv40)
 		draw_set_viewport_state(draw, &nv40->viewport);
 
 	if (nv40->draw_dirty & NV40_NEW_ARRAYS) {
+		draw_set_edgeflags(draw, nv40->edgeflags);
 		draw_set_vertex_buffers(draw, nv40->vtxbuf_nr, nv40->vtxbuf);
 		draw_set_vertex_elements(draw, nv40->vtxelt_nr, nv40->vtxelt);	
 	}
