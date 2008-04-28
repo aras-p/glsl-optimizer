@@ -2049,40 +2049,41 @@ static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num,
    x86_mov( func, aos_input, get_argument( aos + 1 ) );
    x86_mov( func, num_inputs, get_argument( num + 1 ) );
 
+   /* do */
    inner_loop = x86_get_label( func );
+   {
+      x86_mov( func, temp, get_argument( stride + 1 ) );
+      x86_push( func, aos_input );
+      sse_movlps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
+      sse_movlps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
+      x86_add( func, aos_input, temp );
+      sse_movhps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
+      sse_movhps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
+      x86_add( func, aos_input, temp );
+      sse_movlps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
+      sse_movlps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
+      x86_add( func, aos_input, temp );
+      sse_movhps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
+      sse_movhps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
+      x86_pop( func, aos_input );
 
-   x86_mov( func, temp, get_argument( stride + 1 ) );
-   x86_push( func, aos_input );
-   sse_movlps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
-   sse_movlps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
-   x86_add( func, aos_input, temp );
-   sse_movhps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
-   sse_movhps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
-   x86_add( func, aos_input, temp );
-   sse_movlps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
-   sse_movlps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
-   x86_add( func, aos_input, temp );
-   sse_movhps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
-   sse_movhps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
-   x86_pop( func, aos_input );
+      sse_movaps( func, make_xmm( 2 ), make_xmm( 0 ) );
+      sse_movaps( func, make_xmm( 5 ), make_xmm( 3 ) );
+      sse_shufps( func, make_xmm( 0 ), make_xmm( 1 ), 0x88 );
+      sse_shufps( func, make_xmm( 2 ), make_xmm( 1 ), 0xdd );
+      sse_shufps( func, make_xmm( 3 ), make_xmm( 4 ), 0x88 );
+      sse_shufps( func, make_xmm( 5 ), make_xmm( 4 ), 0xdd );
 
-   sse_movaps( func, make_xmm( 2 ), make_xmm( 0 ) );
-   sse_movaps( func, make_xmm( 5 ), make_xmm( 3 ) );
-   sse_shufps( func, make_xmm( 0 ), make_xmm( 1 ), 0x88 );
-   sse_shufps( func, make_xmm( 2 ), make_xmm( 1 ), 0xdd );
-   sse_shufps( func, make_xmm( 3 ), make_xmm( 4 ), 0x88 );
-   sse_shufps( func, make_xmm( 5 ), make_xmm( 4 ), 0xdd );
+      sse_movups( func, x86_make_disp( soa_input, 0 ), make_xmm( 0 ) );
+      sse_movups( func, x86_make_disp( soa_input, 16 ), make_xmm( 2 ) );
+      sse_movups( func, x86_make_disp( soa_input, 32 ), make_xmm( 3 ) );
+      sse_movups( func, x86_make_disp( soa_input, 48 ), make_xmm( 5 ) );
 
-   sse_movups( func, x86_make_disp( soa_input, 0 ), make_xmm( 0 ) );
-   sse_movups( func, x86_make_disp( soa_input, 16 ), make_xmm( 2 ) );
-   sse_movups( func, x86_make_disp( soa_input, 32 ), make_xmm( 3 ) );
-   sse_movups( func, x86_make_disp( soa_input, 48 ), make_xmm( 5 ) );
-
-   /* Advance to next input */
-   x86_mov_reg_imm( func, temp, 16 );
-   x86_add( func, aos_input, temp );
-   x86_mov_reg_imm( func, temp, 64 );
-   x86_add( func, soa_input, temp );
+      /* Advance to next input */
+      x86_lea( func, aos_input, x86_make_disp(aos_input, 16) );
+      x86_lea( func, soa_input, x86_make_disp(soa_input, 64) );
+   }
+   /* while --num_inputs */
    x86_dec( func, num_inputs );
    x86_jcc( func, cc_NE, inner_loop );
 
@@ -2110,40 +2111,41 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    x86_mov( func, aos_output, get_argument( aos + 1 ) );
    x86_mov( func, num_outputs, get_argument( num + 1 ) );
 
+   /* do */
    inner_loop = x86_get_label( func );
+   {
+      sse_movups( func, make_xmm( 0 ), x86_make_disp( soa_output, 0 ) );
+      sse_movups( func, make_xmm( 1 ), x86_make_disp( soa_output, 16 ) );
+      sse_movups( func, make_xmm( 3 ), x86_make_disp( soa_output, 32 ) );
+      sse_movups( func, make_xmm( 4 ), x86_make_disp( soa_output, 48 ) );
 
-   sse_movups( func, make_xmm( 0 ), x86_make_disp( soa_output, 0 ) );
-   sse_movups( func, make_xmm( 1 ), x86_make_disp( soa_output, 16 ) );
-   sse_movups( func, make_xmm( 3 ), x86_make_disp( soa_output, 32 ) );
-   sse_movups( func, make_xmm( 4 ), x86_make_disp( soa_output, 48 ) );
+      sse_movaps( func, make_xmm( 2 ), make_xmm( 0 ) );
+      sse_movaps( func, make_xmm( 5 ), make_xmm( 3 ) );
+      sse_unpcklps( func, make_xmm( 0 ), make_xmm( 1 ) );
+      sse_unpckhps( func, make_xmm( 2 ), make_xmm( 1 ) );
+      sse_unpcklps( func, make_xmm( 3 ), make_xmm( 4 ) );
+      sse_unpckhps( func, make_xmm( 5 ), make_xmm( 4 ) );
 
-   sse_movaps( func, make_xmm( 2 ), make_xmm( 0 ) );
-   sse_movaps( func, make_xmm( 5 ), make_xmm( 3 ) );
-   sse_unpcklps( func, make_xmm( 0 ), make_xmm( 1 ) );
-   sse_unpckhps( func, make_xmm( 2 ), make_xmm( 1 ) );
-   sse_unpcklps( func, make_xmm( 3 ), make_xmm( 4 ) );
-   sse_unpckhps( func, make_xmm( 5 ), make_xmm( 4 ) );
+      x86_mov( func, temp, get_argument( stride + 1 ) );
+      x86_push( func, aos_output );
+      sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
+      sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
+      x86_add( func, aos_output, temp );
+      sse_movhps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
+      sse_movhps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
+      x86_add( func, aos_output, temp );
+      sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 2 ) );
+      sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 5 ) );
+      x86_add( func, aos_output, temp );
+      sse_movhps( func, x86_make_disp( aos_output, 0 ), make_xmm( 2 ) );
+      sse_movhps( func, x86_make_disp( aos_output, 8 ), make_xmm( 5 ) );
+      x86_pop( func, aos_output );
 
-   x86_mov( func, temp, get_argument( stride + 1 ) );
-   x86_push( func, aos_output );
-   sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
-   sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
-   x86_add( func, aos_output, temp );
-   sse_movhps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
-   sse_movhps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
-   x86_add( func, aos_output, temp );
-   sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 2 ) );
-   sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 5 ) );
-   x86_add( func, aos_output, temp );
-   sse_movhps( func, x86_make_disp( aos_output, 0 ), make_xmm( 2 ) );
-   sse_movhps( func, x86_make_disp( aos_output, 8 ), make_xmm( 5 ) );
-   x86_pop( func, aos_output );
-
-   /* Advance to next output */
-   x86_mov_reg_imm( func, temp, 16 );
-   x86_add( func, aos_output, temp );
-   x86_mov_reg_imm( func, temp, 64 );
-   x86_add( func, soa_output, temp );
+      /* Advance to next output */
+      x86_lea( func, aos_output, x86_make_disp(aos_output, 16) );
+      x86_lea( func, soa_output, x86_make_disp(soa_output, 64) );
+   }
+   /* while --num_outputs */
    x86_dec( func, num_outputs );
    x86_jcc( func, cc_NE, inner_loop );
 
