@@ -91,7 +91,8 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
       return;
    /* XXX lots more cases to add */
    default:
-      debug_printf("gallium: unhandled format in util_pack_color_ub()\n");
+      debug_print_format("gallium: unhandled format in util_pack_color_ub()", format);
+      assert(0);
    }
 }
  
@@ -174,7 +175,8 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
       return;
    /* XXX lots more cases to add */
    default:
-      debug_printf("gallium: unhandled format in util_pack_color()\n");
+      debug_print_format("gallium: unhandled format in util_pack_color()", format);
+      assert(0);
    }
 }
  
@@ -201,7 +203,8 @@ util_pack_z(enum pipe_format format, double z)
    case PIPE_FORMAT_Z24X8_UNORM:
       return ((uint) (z * 0xffffff)) << 8;
    default:
-      debug_printf("gallium: unhandled format in util_pack_z()\n");
+      debug_print_format("gallium: unhandled format in util_pack_z()", format);
+      assert(0);
       return 0;
    }
 }

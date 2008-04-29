@@ -103,16 +103,19 @@ debug_printf(const char *format, ...)
 #endif
 
 
+#ifdef DEBUG
 /**
  * Dump a blob in hex to the same place that debug_printf sends its
  * messages.
  */
-#ifdef DEBUG
-void debug_print_blob( const char *name,
-                       const void *blob,
-                       unsigned size );
+void debug_print_blob( const char *name, const void *blob, unsigned size );
+
+/* Print a message along with a prettified format string
+ */
+void debug_print_format(const char *msg, enum pipe_format fmt );
 #else
 #define debug_print_blob(_name, _blob, _size) ((void)0)
+#define debug_print_format(_msg, _fmt) ((void)0)
 #endif
 
 

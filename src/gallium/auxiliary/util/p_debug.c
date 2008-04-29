@@ -41,6 +41,7 @@
 #include "pipe/p_compiler.h" 
 #include "pipe/p_util.h" 
 #include "pipe/p_debug.h" 
+#include "pipe/p_format.h" 
 #include "util/u_string.h" 
 
 
@@ -324,3 +325,99 @@ debug_dump_flags(const struct debug_named_value *names,
 }
 
 
+
+
+
+
+char *pf_sprint_name( char *str, enum pipe_format format )
+{
+   strcpy( str, "PIPE_FORMAT_" );
+   switch (pf_layout( format )) {
+   case PIPE_FORMAT_LAYOUT_RGBAZS:
+      {
+         pipe_format_rgbazs_t rgbazs = (pipe_format_rgbazs_t) format;
+         uint                 i;
+         uint                 scale = 1 << (pf_exp8( rgbazs ) * 3);
+
+         for (i = 0; i < 4; i++) {
+            uint  size = pf_size_xyzw( rgbazs, i );
+
+            if (size == 0) {
+               break;
+            }
+            switch (pf_swizzle_xyzw( rgbazs, i )) {
+            case PIPE_FORMAT_COMP_R:
+               strcat( str, "R" );
+               break;
+            case PIPE_FORMAT_COMP_G:
+               strcat( str, "G" );
+               break;
+            case PIPE_FORMAT_COMP_B:
+               strcat( str, "B" );
+               break;
+            case PIPE_FORMAT_COMP_A:
+               strcat( str, "A" );
+               break;
+            case PIPE_FORMAT_COMP_0:
+               strcat( str, "0" );
+               break;
+            case PIPE_FORMAT_COMP_1:
+               strcat( str, "1" );
+               break;
+            case PIPE_FORMAT_COMP_Z:
+               strcat( str, "Z" );
+               break;
+            case PIPE_FORMAT_COMP_S:
+               strcat( str, "S" );
+               break;
+            }
+            util_snprintf( &str[strlen( str )], 32, "%u", size * scale );
+         }
+         if (i != 0) {
+            strcat( str, "_" );
+         }
+         switch (pf_type( rgbazs )) {
+         case PIPE_FORMAT_TYPE_UNKNOWN:
+            strcat( str, "NONE" );
+            break;
+         case PIPE_FORMAT_TYPE_FLOAT:
+            strcat( str, "FLOAT" );
+            break;
+         case PIPE_FORMAT_TYPE_UNORM:
+            strcat( str, "UNORM" );
+            break;
+         case PIPE_FORMAT_TYPE_SNORM:
+            strcat( str, "SNORM" );
+            break;
+         case PIPE_FORMAT_TYPE_USCALED:
+            strcat( str, "USCALED" );
+            break;
+         case PIPE_FORMAT_TYPE_SSCALED:
+            strcat( str, "SSCALED" );
+            break;
+         }
+      }
+      break;
+   case PIPE_FORMAT_LAYOUT_YCBCR:
+      {
+         pipe_format_ycbcr_t  ycbcr = (pipe_format_ycbcr_t) format;
+
+         strcat( str, "YCBCR" );
+         if (pf_rev( ycbcr )) {
+            strcat( str, "_REV" );
+         }
+      }
+      break;
+   }
+   return str;
+}
+
+
+void debug_print_format(const char *msg, enum pipe_format fmt )
+{
+   char fmtstr[80];
+ 
+   pf_sprint_name(fmtstr, fmt);
+
+   debug_printf("%s: %s\n", msg, fmtstr); 
+}
