@@ -92,7 +92,7 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       {
          ushort *d = (ushort *) dest;
-         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 3) | (b >> 3);
+         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
@@ -171,7 +171,7 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
    case PIPE_FORMAT_A1R5G5B5_UNORM:
       {
          ushort *d = (ushort *) dest;
-         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 3) | (b >> 3);
+         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
       }
       return;
    case PIPE_FORMAT_A4R4G4B4_UNORM:
