@@ -658,6 +658,7 @@ Display(void)
          glDisable(GL_FRAGMENT_PROGRAM_ARB);
       }
 
+      glDisable(GL_TEXTURE_1D);
       glDisable(GL_TEXTURE_2D);
    }
 
