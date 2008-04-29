@@ -1815,6 +1815,12 @@ void r200UpdateTextureState( GLcontext *ctx )
    GLboolean ok;
    GLuint dbg;
 
+   /* NOTE: must not manipulate rmesa->state.texture.unit[].unitneeded or
+      rmesa->state.envneeded before a R200_STATECHANGE (or R200_NEWPRIM) since
+      we use these to determine if we want to emit the corresponding state
+      atoms. */
+   R200_NEWPRIM( rmesa );
+
    if (ctx->ATIFragmentShader._Enabled) {
       GLuint i;
       for (i = 0; i < R200_MAX_TEXTURE_UNITS; i++) {
