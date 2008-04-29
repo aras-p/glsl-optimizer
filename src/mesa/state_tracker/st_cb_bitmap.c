@@ -589,6 +589,11 @@ st_flush_bitmap_cache(struct st_context *st)
          pipe_surface_unmap(surf);
          pipe_surface_reference(&surf, NULL);
 
+         /* flush in case the previous texture contents haven't been
+          * used yet. XXX this is not ideal!  Revisit.
+          */
+         st->pipe->flush( st->pipe, 0x0, NULL );
+
          pipe->texture_update(pipe, cache->texture, 0, 0x1);
 
          draw_bitmap_quad(st->ctx,
@@ -597,7 +602,6 @@ st_flush_bitmap_cache(struct st_context *st)
                           st->ctx->Current.RasterPos[2],
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                           cache->texture);
-
       }
       reset_cache(st);
    }
