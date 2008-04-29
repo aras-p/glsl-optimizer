@@ -101,6 +101,24 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
          *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
       }
       return;
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      {
+         float *d = (float *) dest;
+         d[0] = (float)r / 255.0f;
+         d[1] = (float)g / 255.0f;
+         d[2] = (float)b / 255.0f;
+         d[3] = (float)a / 255.0f;
+      }
+      return;
+   case PIPE_FORMAT_R32G32B32_FLOAT:
+      {
+         float *d = (float *) dest;
+         d[0] = (float)r / 255.0f;
+         d[1] = (float)g / 255.0f;
+         d[2] = (float)b / 255.0f;
+      }
+      return;
+
    /* XXX lots more cases to add */
    default:
       debug_print_format("gallium: unhandled format in util_pack_color_ub()", format);
