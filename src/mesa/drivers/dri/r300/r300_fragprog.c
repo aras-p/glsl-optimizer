@@ -2217,6 +2217,7 @@ static void update_params(struct r300_fragment_program *fp)
 void r300TranslateFragmentShader(r300ContextPtr r300,
 				 struct r300_fragment_program *fp)
 {
+
 	struct r300_pfs_compile_state *cs = NULL;
 
 	if (!fp->translated) {
