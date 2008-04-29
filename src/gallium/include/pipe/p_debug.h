@@ -59,9 +59,6 @@ extern "C" {
 #endif
 #endif
 
-
-enum pipe_format;
-
 void _debug_vprintf(const char *format, va_list ap);
    
 
@@ -114,7 +111,7 @@ void debug_print_blob( const char *name, const void *blob, unsigned size );
 
 /* Print a message along with a prettified format string
  */
-void debug_print_format(const char *msg, enum pipe_format fmt );
+void debug_print_format(const char *msg, unsigned fmt );
 #else
 #define debug_print_blob(_name, _blob, _size) ((void)0)
 #define debug_print_format(_msg, _fmt) ((void)0)

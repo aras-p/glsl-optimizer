@@ -413,11 +413,11 @@ char *pf_sprint_name( char *str, enum pipe_format format )
 }
 
 
-void debug_print_format(const char *msg, enum pipe_format fmt )
+void debug_print_format(const char *msg, unsigned fmt )
 {
    char fmtstr[80];
  
-   pf_sprint_name(fmtstr, fmt);
+   pf_sprint_name(fmtstr, (enum pipe_format)fmt);
 
    debug_printf("%s: %s\n", msg, fmtstr); 
 }
