@@ -60,6 +60,8 @@ extern "C" {
 #endif
 
 
+enum pipe_format;
+
 void _debug_vprintf(const char *format, va_list ap);
    
 
