@@ -95,6 +95,12 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
          *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 3) | (b >> 3);
       }
       return;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+      }
+      return;
    /* XXX lots more cases to add */
    default:
       debug_print_format("gallium: unhandled format in util_pack_color_ub()", format);
@@ -166,6 +172,12 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
       {
          ushort *d = (ushort *) dest;
          *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 3) | (b >> 3);
+      }
+      return;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
       }
       return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
