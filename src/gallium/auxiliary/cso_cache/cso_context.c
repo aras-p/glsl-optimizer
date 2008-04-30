@@ -80,6 +80,131 @@ struct cso_context {
 };
 
 
+static boolean delete_blend_state(struct cso_context *ctx, void *state)
+{
+   struct cso_blend *cso = (struct cso_blend *)state;
+
+   if (ctx->blend == state)
+      return FALSE;
+
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+   return TRUE;
+}
+
+static boolean delete_depth_stencil_state(struct cso_context *ctx, void *state)
+{
+   struct cso_depth_stencil_alpha *cso = (struct cso_depth_stencil_alpha *)state;
+
+   if (ctx->depth_stencil == cso->data)
+      return FALSE;
+
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+
+   return TRUE;
+}
+
+static boolean delete_sampler_state(struct cso_context *ctx, void *state)
+{
+   struct cso_sampler *cso = (struct cso_sampler *)state;
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+   return TRUE;
+}
+
+static boolean delete_rasterizer_state(struct cso_context *ctx, void *state)
+{
+   struct cso_rasterizer *cso = (struct cso_rasterizer *)state;
+
+   if (ctx->rasterizer == cso->data)
+      return FALSE;
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+   return TRUE;
+}
+
+static boolean delete_fs_state(struct cso_context *ctx, void *state)
+{
+   struct cso_fragment_shader *cso = (struct cso_fragment_shader *)state;
+   if (ctx->fragment_shader == cso->data)
+      return FALSE;
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+   return TRUE;
+}
+
+static boolean delete_vs_state(struct cso_context *ctx, void *state)
+{
+   struct cso_vertex_shader *cso = (struct cso_vertex_shader *)state;
+   if (ctx->vertex_shader == cso->data)
+      return TRUE;
+   if (cso->delete_state)
+      cso->delete_state(cso->context, cso->data);
+   FREE(state);
+   return FALSE;
+}
+
+
+static INLINE boolean delete_cso(struct cso_context *ctx,
+                                 void *state, enum cso_cache_type type)
+{
+   switch (type) {
+   case CSO_BLEND:
+      return delete_blend_state(ctx, state);
+      break;
+   case CSO_SAMPLER:
+      return delete_sampler_state(ctx, state);
+      break;
+   case CSO_DEPTH_STENCIL_ALPHA:
+      return delete_depth_stencil_state(ctx, state);
+      break;
+   case CSO_RASTERIZER:
+      return delete_rasterizer_state(ctx, state);
+      break;
+   case CSO_FRAGMENT_SHADER:
+      return delete_fs_state(ctx, state);
+      break;
+   case CSO_VERTEX_SHADER:
+      return delete_vs_state(ctx, state);
+      break;
+   default:
+      assert(0);
+      FREE(state);
+   }
+   return FALSE;
+}
+
+static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
+                                 int max_size, void *user_data)
+{
+   struct cso_context *ctx = (struct cso_context *)user_data;
+   /* if we're approach the maximum size, remove fourth of the entries
+    * otherwise every subsequent call will go through the same */
+   int hash_size = cso_hash_size(hash);
+   int max_entries = (max_size > hash_size) ? max_size : hash_size;
+   int to_remove =  (max_size < max_entries) * max_entries/4;
+   struct cso_hash_iter iter = cso_hash_first_node(hash);
+   if (hash_size > max_size)
+      to_remove += hash_size - max_size;
+   while (to_remove) {
+      /*remove elements until we're good */
+      /*fixme: currently we pick the nodes to remove at random*/
+      void *cso = cso_hash_iter_data(iter);
+      if (delete_cso(ctx, cso, type)) {
+         iter = cso_hash_erase(hash, iter);
+         --to_remove;
+      } else
+         iter = cso_hash_iter_next(iter);
+   }
+}
+
+
 struct cso_context *cso_create_context( struct pipe_context *pipe )
 {
    struct cso_context *ctx = CALLOC_STRUCT(cso_context);
@@ -89,6 +214,9 @@ struct cso_context *cso_create_context( struct pipe_context *pipe )
    ctx->cache = cso_cache_create();
    if (ctx->cache == NULL)
       goto out;
+   cso_cache_set_sanitize_callback(ctx->cache,
+                                   sanitize_hash,
+                                   ctx);
 
    ctx->pipe = pipe;
 

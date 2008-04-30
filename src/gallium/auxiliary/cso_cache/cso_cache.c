@@ -43,6 +43,9 @@ struct cso_cache {
    struct cso_hash *rasterizer_hash;
    struct cso_hash *sampler_hash;
    int    max_size;
+
+   cso_sanitize_callback sanitize_cb;
+   void                 *sanitize_data;
 };
 
 #if 1
@@ -205,8 +208,19 @@ static INLINE void delete_cso(void *state, enum cso_cache_type type)
    }
 }
 
-static INLINE void sanitize_hash(struct cso_hash *hash, enum cso_cache_type type,
+
+static INLINE void sanitize_hash(struct cso_cache *sc,
+                                 struct cso_hash *hash,
+                                 enum cso_cache_type type,
                                  int max_size)
+{
+   if (sc->sanitize_cb)
+      sc->sanitize_cb(hash, type, max_size, sc->sanitize_data);
+}
+
+
+static INLINE void sanitize_cb(struct cso_hash *hash, enum cso_cache_type type,
+                               int max_size, void *user_data)
 {
    /* if we're approach the maximum size, remove fourth of the entries
     * otherwise every subsequent call will go through the same */
@@ -231,7 +245,7 @@ cso_insert_state(struct cso_cache *sc,
                  void *state)
 {
    struct cso_hash *hash = _cso_hash_for_type(sc, type);
-   sanitize_hash(hash, type, sc->max_size);
+   sanitize_hash(sc, hash, type, sc->max_size);
 
    return cso_hash_insert(hash, hash_key, state);
 }
@@ -300,6 +314,8 @@ struct cso_cache *cso_cache_create(void)
    sc->rasterizer_hash    = cso_hash_create();
    sc->fs_hash            = cso_hash_create();
    sc->vs_hash            = cso_hash_create();
+   sc->sanitize_cb        = sanitize_cb;
+   sc->sanitize_data      = 0;
 
    return sc;
 }
@@ -365,17 +381,25 @@ void cso_set_maximum_cache_size(struct cso_cache *sc, int number)
 {
    sc->max_size = number;
 
-   sanitize_hash(sc->blend_hash, CSO_BLEND, sc->max_size);
-   sanitize_hash(sc->depth_stencil_hash, CSO_DEPTH_STENCIL_ALPHA,
+   sanitize_hash(sc, sc->blend_hash, CSO_BLEND, sc->max_size);
+   sanitize_hash(sc, sc->depth_stencil_hash, CSO_DEPTH_STENCIL_ALPHA,
                  sc->max_size);
-   sanitize_hash(sc->fs_hash, CSO_FRAGMENT_SHADER, sc->max_size);
-   sanitize_hash(sc->vs_hash, CSO_VERTEX_SHADER, sc->max_size);
-   sanitize_hash(sc->rasterizer_hash, CSO_RASTERIZER, sc->max_size);
-   sanitize_hash(sc->sampler_hash, CSO_SAMPLER, sc->max_size);
+   sanitize_hash(sc, sc->fs_hash, CSO_FRAGMENT_SHADER, sc->max_size);
+   sanitize_hash(sc, sc->vs_hash, CSO_VERTEX_SHADER, sc->max_size);
+   sanitize_hash(sc, sc->rasterizer_hash, CSO_RASTERIZER, sc->max_size);
+   sanitize_hash(sc, sc->sampler_hash, CSO_SAMPLER, sc->max_size);
 }
 
 int cso_maximum_cache_size(const struct cso_cache *sc)
 {
    return sc->max_size;
+}
+
+void cso_cache_set_sanitize_callback(struct cso_cache *sc,
+                                     cso_sanitize_callback cb,
+                                     void *user_data)
+{
+   sc->sanitize_cb   = cb;
+   sc->sanitize_data = user_data;
 }
 
