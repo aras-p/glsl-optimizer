@@ -36,7 +36,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
 
 #include "st_context.h"
@@ -54,7 +53,7 @@ void st_upload_constants( struct st_context *st,
                           struct gl_program_parameter_list *params,
                           unsigned id)
 {
-   struct pipe_winsys *ws = st->pipe->winsys;
+   struct pipe_context *pipe = st->pipe;
    struct pipe_constant_buffer *cbuf = &st->state.constants[id];
 
    assert(id == PIPE_SHADER_VERTEX || id == PIPE_SHADER_FRAGMENT);
@@ -74,8 +73,8 @@ void st_upload_constants( struct st_context *st,
       /* We always need to get a new buffer, to keep the drivers simple and
        * avoid gratuitous rendering synchronization.
        */
-      pipe_buffer_reference( ws, &cbuf->buffer, NULL );
-      cbuf->buffer = ws->buffer_create( ws, 1, PIPE_BUFFER_USAGE_CONSTANT,
+      pipe_reference_buffer(pipe, &cbuf->buffer, NULL );
+      cbuf->buffer = pipe_buffer_create(pipe, 1, PIPE_BUFFER_USAGE_CONSTANT,
 					paramBytes );
 
       if (0)
@@ -87,9 +86,10 @@ void st_upload_constants( struct st_context *st,
 
       /* load Mesa constants into the constant buffer */
       if (cbuf->buffer) {
-         memcpy(ws->buffer_map(ws, cbuf->buffer, PIPE_BUFFER_USAGE_CPU_WRITE),
-                params->ParameterValues, paramBytes);
-         ws->buffer_unmap(ws, cbuf->buffer);
+         void *map = pipe_buffer_map(pipe, cbuf->buffer,
+                                     PIPE_BUFFER_USAGE_CPU_WRITE);
+         memcpy(map, params->ParameterValues, paramBytes);
+         pipe_buffer_unmap(pipe, cbuf->buffer);
       }
 
       cbuf->size = paramBytes;

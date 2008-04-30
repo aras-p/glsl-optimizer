@@ -50,7 +50,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
 #include "util/p_tile.h"
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
@@ -372,9 +371,8 @@ setup_bitmap_vertex_data(struct st_context *st,
    void *buf;
 
    if (!st->bitmap.vbuf) {
-      st->bitmap.vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                                   PIPE_BUFFER_USAGE_VERTEX,
-                                                   sizeof(st->bitmap.vertices));
+      st->bitmap.vbuf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
+                                           sizeof(st->bitmap.vertices));
    }
 
    /* Positions are in clip coords since we need to do clipping in case
@@ -413,10 +411,9 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe->winsys->buffer_map(pipe->winsys, st->bitmap.vbuf,
-                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(pipe, st->bitmap.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
    memcpy(buf, st->bitmap.vertices, sizeof(st->bitmap.vertices));
-   pipe->winsys->buffer_unmap(pipe->winsys, st->bitmap.vbuf);
+   pipe_buffer_unmap(pipe, st->bitmap.vbuf);
 }
 
 
@@ -761,7 +758,7 @@ st_destroy_bitmap(struct st_context *st)
    }
 
    if (st->bitmap.vbuf) {
-      pipe->winsys->buffer_destroy(pipe->winsys, st->bitmap.vbuf);
+      pipe_buffer_destroy(pipe, st->bitmap.vbuf);
       st->bitmap.vbuf = NULL;
    }
 

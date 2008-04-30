@@ -105,7 +105,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
    else if (strb->surface->buffer) {
       /* release/discard the old surface buffer */
-      pipe_buffer_reference(pipe->winsys, &strb->surface->buffer, NULL);
+      pipe_reference_buffer(pipe, &strb->surface->buffer, NULL);
    }
 
    /* Determine surface format here */

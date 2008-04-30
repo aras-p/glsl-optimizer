@@ -55,7 +55,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
 #include "util/p_tile.h"
 #include "util/u_draw_quad.h"
 #include "shader/prog_instruction.h"
@@ -483,20 +482,18 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       ubyte *map;
 
       /* allocate/load buffer object with vertex data */
-      buf = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                        PIPE_BUFFER_USAGE_VERTEX,
-                                         sizeof(verts));
-      map = pipe->winsys->buffer_map(pipe->winsys, buf,
-                                     PIPE_BUFFER_USAGE_CPU_WRITE);
+      buf = pipe_buffer_create(pipe,32, PIPE_BUFFER_USAGE_VERTEX,
+                               sizeof(verts));
+      map = pipe_buffer_map(pipe, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
       memcpy(map, verts, sizeof(verts));
-      pipe->winsys->buffer_unmap(pipe->winsys, buf);
+      pipe_buffer_unmap(pipe, buf);
 
       util_draw_vertex_buffer(pipe, buf,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */
 
-      pipe->winsys->buffer_destroy(pipe->winsys, buf);
+      pipe_buffer_destroy(pipe, buf);
    }
 }
 

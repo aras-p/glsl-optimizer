@@ -55,7 +55,6 @@
 #include "st_gen_mipmap.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
 #include "draw/draw_context.h"
 #include "cso_cache/cso_cache.h"
@@ -157,7 +156,6 @@ struct st_context *st_create_context(struct pipe_context *pipe,
 
 static void st_destroy_context_priv( struct st_context *st )
 {
-   struct pipe_winsys *ws = st->pipe->winsys;
    uint i;
 
    draw_destroy(st->draw);
@@ -172,7 +170,7 @@ static void st_destroy_context_priv( struct st_context *st )
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
-         pipe_buffer_reference(ws, &st->state.constants[i].buffer, NULL);
+         pipe_reference_buffer(st->pipe, &st->state.constants[i].buffer, NULL);
       }
    }
 

@@ -43,7 +43,6 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
 #include "pipe/p_inlines.h"
 
 #include "draw/draw_private.h"
@@ -219,8 +218,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
       if (!vec)
          return NULL;
 
-      map = pipe->winsys->buffer_map(pipe->winsys, stobj->buffer,
-                                     PIPE_BUFFER_USAGE_CPU_READ);
+      map = pipe_buffer_map(pipe, stobj->buffer, PIPE_BUFFER_USAGE_CPU_READ);
       map = ADD_POINTERS(map, array->Ptr);
 
       for (i = 0; i < count; i++) {
@@ -230,7 +228,7 @@ setup_edgeflags(GLcontext *ctx, GLenum primMode, GLint start, GLint count,
          map += array->StrideB;
       }
 
-      pipe->winsys->buffer_unmap(pipe->winsys, stobj->buffer);
+      pipe_buffer_unmap(pipe, stobj->buffer);
 
       pipe->set_edgeflags(pipe, vec);
 
@@ -260,7 +258,6 @@ st_draw_vbo(GLcontext *ctx,
             GLuint max_index)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
@@ -292,7 +289,7 @@ st_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffer[attr].buffer = NULL;
-         pipe_buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         pipe_reference_buffer(pipe, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
          assert(velements[attr].src_offset <= 2048); /* 11-bit field */
@@ -310,9 +307,8 @@ st_draw_vbo(GLcontext *ctx,
 
          /* wrap user data */
          vbuffer[attr].buffer
-            = winsys->user_buffer_create(winsys,
-                                         (void *) arrays[mesaAttr]->Ptr,
-                                         bytes);
+            = pipe_user_buffer_create(pipe, (void *) arrays[mesaAttr]->Ptr,
+                                      bytes);
          vbuffer[attr].buffer_offset = 0;
          velements[attr].src_offset = 0;
       }
@@ -358,14 +354,13 @@ st_draw_vbo(GLcontext *ctx,
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         pipe_buffer_reference(winsys, &indexBuf, stobj->buffer);
+         pipe_reference_buffer(pipe, &indexBuf, stobj->buffer);
          indexOffset = (unsigned) ib->ptr / indexSize;
       }
       else {
          /* element/indicies are in user space memory */
-         indexBuf = winsys->user_buffer_create(winsys,
-                                               (void *) ib->ptr,
-                                               ib->count * indexSize);
+         indexBuf = pipe_user_buffer_create(pipe, (void *) ib->ptr,
+                                            ib->count * indexSize);
          indexOffset = 0;
       }
 
@@ -380,7 +375,7 @@ st_draw_vbo(GLcontext *ctx,
                              prims[i].start + indexOffset, prims[i].count);
       }
 
-      pipe_buffer_reference(winsys, &indexBuf, NULL);
+      pipe_reference_buffer(pipe, &indexBuf, NULL);
    }
    else {
       /* non-indexed */
@@ -396,7 +391,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < vp->num_inputs; attr++) {
-      pipe_buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
+      pipe_reference_buffer(pipe, &vbuffer[attr].buffer, NULL);
       assert(!vbuffer[attr].buffer);
    }
    pipe->set_vertex_buffers(pipe, vp->num_inputs, vbuffer);
@@ -458,7 +453,6 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
    struct draw_context *draw = st->draw;
-   struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
    struct pipe_buffer *index_buffer_handle = 0;
@@ -509,7 +503,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
          assert(stobj->buffer);
 
          vbuffers[attr].buffer = NULL;
-         pipe_buffer_reference(winsys, &vbuffers[attr].buffer, stobj->buffer);
+         pipe_reference_buffer(pipe, &vbuffers[attr].buffer, stobj->buffer);
          vbuffers[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
@@ -521,9 +515,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
          /* wrap user data */
          vbuffers[attr].buffer
-            = winsys->user_buffer_create(winsys,
-                                         (void *) arrays[mesaAttr]->Ptr,
-                                         bytes);
+            = pipe_user_buffer_create(pipe, (void *) arrays[mesaAttr]->Ptr,
+                                      bytes);
          vbuffers[attr].buffer_offset = 0;
          velements[attr].src_offset = 0;
       }
@@ -544,9 +537,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
 #endif
 
       /* map the attrib buffer */
-      map = pipe->winsys->buffer_map(pipe->winsys,
-                                     vbuffers[attr].buffer,
-                                     PIPE_BUFFER_USAGE_CPU_READ);
+      map = pipe_buffer_map(pipe, vbuffers[attr].buffer,
+                            PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_vertex_buffer(draw, attr, map);
    }
 
@@ -572,9 +564,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
 	 return;
       }
 
-      map = pipe->winsys->buffer_map(pipe->winsys,
-                                     index_buffer_handle,
-                                     PIPE_BUFFER_USAGE_CPU_READ);
+      map = pipe_buffer_map(pipe, index_buffer_handle,
+                            PIPE_BUFFER_USAGE_CPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, map);
    }
    else {
@@ -584,7 +575,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
 
    /* map constant buffers */
-   mapped_constants = winsys->buffer_map(winsys,
+   mapped_constants = pipe_buffer_map(pipe,
                                st->state.constants[PIPE_SHADER_VERTEX].buffer,
                                PIPE_BUFFER_USAGE_CPU_READ);
    draw_set_mapped_constant_buffer(st->draw, mapped_constants);
@@ -597,21 +588,20 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
 
    /* unmap constant buffers */
-   winsys->buffer_unmap(winsys, st->state.constants[PIPE_SHADER_VERTEX].buffer);
+   pipe_buffer_unmap(pipe, st->state.constants[PIPE_SHADER_VERTEX].buffer);
 
    /*
     * unmap vertex/index buffers
     */
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->pt.vertex_buffer[i].buffer) {
-         pipe->winsys->buffer_unmap(pipe->winsys,
-                                    draw->pt.vertex_buffer[i].buffer);
-         pipe_buffer_reference(winsys, &draw->pt.vertex_buffer[i].buffer, NULL);
+         pipe_buffer_unmap(pipe, draw->pt.vertex_buffer[i].buffer);
+         pipe_reference_buffer(pipe, &draw->pt.vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
    }
    if (ib) {
-      pipe->winsys->buffer_unmap(pipe->winsys, index_buffer_handle);
+      pipe_buffer_unmap(pipe, index_buffer_handle);
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 }
