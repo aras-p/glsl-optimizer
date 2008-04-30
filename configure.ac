@@ -4,23 +4,12 @@ AC_PREREQ(2.59)
 
 dnl Versioning
 dnl Make version number available to autoconf and configure
-m4_define(mesa_major, 7)
-m4_define(mesa_minor, 1)
-m4_define(mesa_tiny, 0)
-m4_define(mesa_version, [mesa_major().mesa_minor().mesa_tiny()])
+m4_define([mesa_version],[7.1.0])
 
 AC_INIT([Mesa],[mesa_version()],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
 AC_CONFIG_AUX_DIR(bin)
 AC_CANONICAL_HOST
-
-dnl Substitute the version number into shell variables
-MESA_MAJOR=mesa_major()
-MESA_MINOR=mesa_minor()
-MESA_TINY=mesa_tiny()
-AC_SUBST(MESA_MAJOR)
-AC_SUBST(MESA_MINOR)
-AC_SUBST(MESA_TINY)
 
 dnl Check for progs
 AC_PROG_CPP
