@@ -23,6 +23,7 @@ PROGS = glthreads \
 	overlay \
 	pbinfo \
 	pbdemo \
+	sharedtex \
 	texture_from_pixmap \
 	wincopy \
 	xfont \
