@@ -224,6 +224,81 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 
 
 /**
+ * Copy user-provide bitmap bits into texture buffer, expanding
+ * bits into texels.
+ * "On" bits will set texels to 0xff.
+ * "Off" bits will not modify texels.
+ * Note that the image is actually going to be upside down in
+ * the texture.  We deal with that with texcoords.
+ */
+static void
+unpack_bitmap(struct st_context *st,
+              GLint px, GLint py, GLsizei width, GLsizei height,
+              const struct gl_pixelstore_attrib *unpack,
+              const GLubyte *bitmap,
+              ubyte *destBuffer, uint destStride)
+{
+   GLint row, col;
+
+#define SET_PIXEL(COL, ROW) \
+   destBuffer[(py + (ROW)) * destStride + px + (COL)] = 0x0;
+
+   for (row = 0; row < height; row++) {
+      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
+
+      if (unpack->LsbFirst) {
+         /* Lsb first */
+         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
+
+            if (mask == 128U) {
+               src++;
+               mask = 1U;
+            }
+            else {
+               mask = mask << 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 1)
+            src++;
+      }
+      else {
+         /* Msb first */
+         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
+
+            if (mask == 1U) {
+               src++;
+               mask = 128U;
+            }
+            else {
+               mask = mask >> 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 128)
+            src++;
+      }
+
+   } /* row */
+
+#undef SET_PIXEL
+}
+
+
+/**
  * Create a texture which represents a bitmap image.
  */
 static struct pipe_texture *
@@ -236,7 +311,6 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    struct pipe_surface *surface;
    ubyte *dest;
    struct pipe_texture *pt;
-   int row, col;
 
    /* PBO source... */
    bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
@@ -259,60 +333,10 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /* map texture surface */
    dest = pipe_surface_map(surface);
 
-   /* Put image into texture surface.
-    * Note that the image is actually going to be upside down in
-    * the texture.  We deal with that with texcoords.
-    */
-
-   for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-      ubyte *destRow = dest + row * surface->pitch;
-
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            /* set texel to 255 if bit is set */
-            destRow[col] = (*src & mask) ? 0x0 : 0xff;
-
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            /* set texel to 255 if bit is set */
-            destRow[col] =(*src & mask) ? 0x0 : 0xff;
-
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
-
-   } /* row */
+   /* Put image into texture surface */
+   memset(dest, 0xff, height * surface->pitch);
+   unpack_bitmap(ctx->st, 0, 0, width, height, unpack, bitmap,
+                 dest, surface->pitch);
 
    _mesa_unmap_bitmap_pbo(ctx, unpack);
 
@@ -585,7 +609,6 @@ accum_bitmap(struct st_context *st,
              const GLubyte *bitmap )
 {
    struct bitmap_cache *cache = st->bitmap.cache;
-   int row, col;
    int px = -999, py;
 
    if (width > BITMAP_CACHE_WIDTH ||
@@ -624,60 +647,8 @@ accum_bitmap(struct st_context *st,
    if (y + height > cache->ymax)
       cache->ymax = y + height;
 
-   /* XXX try to combine this code with code in make_bitmap_texture() */
-#define SET_PIXEL(COL, ROW) \
-   cache->buffer[(py + (ROW)) * BITMAP_CACHE_WIDTH + px + (COL)] = 0x0;
-
-   for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            if (*src & mask) {
-               SET_PIXEL(col, row);
-            }
-
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            if (*src & mask) {
-               SET_PIXEL(col, row);
-            }
-
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
-
-   } /* row */
+   unpack_bitmap(st, px, py, width, height, unpack, bitmap,
+                 cache->buffer, BITMAP_CACHE_WIDTH);
 
    return GL_TRUE; /* accumulated */
 }
