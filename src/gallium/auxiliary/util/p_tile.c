@@ -385,7 +385,7 @@ z16_get_tile_rgba(ushort *src,
 
 
 
-/*** PIPE_FORMAT_U_L8 ***/
+/*** PIPE_FORMAT_L8_UNORM ***/
 
 static void
 l8_get_tile_rgba(ubyte *src,
@@ -408,7 +408,7 @@ l8_get_tile_rgba(ubyte *src,
 }
 
 
-/*** PIPE_FORMAT_U_A8 ***/
+/*** PIPE_FORMAT_A8_UNORM ***/
 
 static void
 a8_get_tile_rgba(ubyte *src,
@@ -476,7 +476,7 @@ r16g16b16a16_put_tile_rgba(short *dst,
 
 
 
-/*** PIPE_FORMAT_U_I8 ***/
+/*** PIPE_FORMAT_I8_UNORM ***/
 
 static void
 i8_get_tile_rgba(ubyte *src,
@@ -499,7 +499,7 @@ i8_get_tile_rgba(ubyte *src,
 }
 
 
-/*** PIPE_FORMAT_U_A8_L8 ***/
+/*** PIPE_FORMAT_A8L8_UNORM ***/
 
 static void
 a8_l8_get_tile_rgba(ushort *src,
@@ -708,16 +708,16 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_R5G6B5_UNORM:
       r5g6b5_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
       break;
-   case PIPE_FORMAT_U_L8:
+   case PIPE_FORMAT_L8_UNORM:
       l8_get_tile_rgba((ubyte *) packed, w, h, p, dst_stride);
       break;
-   case PIPE_FORMAT_U_A8:
+   case PIPE_FORMAT_A8_UNORM:
       a8_get_tile_rgba((ubyte *) packed, w, h, p, dst_stride);
       break;
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_I8_UNORM:
       i8_get_tile_rgba((ubyte *) packed, w, h, p, dst_stride);
       break;
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       a8_l8_get_tile_rgba((ushort *) packed, w, h, p, dst_stride);
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:
@@ -787,16 +787,16 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
       break;
    case PIPE_FORMAT_R8G8B8A8_UNORM:
       break;
-   case PIPE_FORMAT_U_L8:
+   case PIPE_FORMAT_L8_UNORM:
       /*l8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_U_A8:
+   case PIPE_FORMAT_A8_UNORM:
       /*a8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_I8_UNORM:
       /*i8_put_tile_rgba((ubyte *) packed, w, h, p, src_stride);*/
       break;
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       /*a8_l8_put_tile_rgba((ushort *) packed, w, h, p, src_stride);*/
       break;
    case PIPE_FORMAT_R16G16B16A16_SNORM:

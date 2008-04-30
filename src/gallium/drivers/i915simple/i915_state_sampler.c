@@ -131,13 +131,13 @@ static uint
 translate_texture_format(enum pipe_format pipeFormat)
 {
    switch (pipeFormat) {
-   case PIPE_FORMAT_U_L8:
+   case PIPE_FORMAT_L8_UNORM:
       return MAPSURF_8BIT | MT_8BIT_L8;
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_I8_UNORM:
       return MAPSURF_8BIT | MT_8BIT_I8;
-   case PIPE_FORMAT_U_A8:
+   case PIPE_FORMAT_A8_UNORM:
       return MAPSURF_8BIT | MT_8BIT_A8;
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       return MAPSURF_16BIT | MT_16BIT_AY88;
    case PIPE_FORMAT_R5G6B5_UNORM:
       return MAPSURF_16BIT | MT_16BIT_RGB565;

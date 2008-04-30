@@ -57,16 +57,16 @@ static unsigned translate_tex_target( enum pipe_texture_target target )
 static unsigned translate_tex_format( enum pipe_format pipe_format )
 {
    switch( pipe_format ) {
-   case PIPE_FORMAT_U_L8:
+   case PIPE_FORMAT_L8_UNORM:
       return BRW_SURFACEFORMAT_L8_UNORM;
 
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_I8_UNORM:
       return BRW_SURFACEFORMAT_I8_UNORM;
 
-   case PIPE_FORMAT_U_A8:
+   case PIPE_FORMAT_A8_UNORM:
       return BRW_SURFACEFORMAT_A8_UNORM;
 
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       return BRW_SURFACEFORMAT_L8A8_UNORM;
 
    case PIPE_FORMAT_R8G8B8_UNORM:

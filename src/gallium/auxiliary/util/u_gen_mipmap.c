@@ -493,13 +493,13 @@ format_to_type_comps(enum pipe_format pformat,
       *datatype = USHORT_5_6_5;
       *comps = 3;
       return;
-   case PIPE_FORMAT_U_L8:
-   case PIPE_FORMAT_U_A8:
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_L8_UNORM:
+   case PIPE_FORMAT_A8_UNORM:
+   case PIPE_FORMAT_I8_UNORM:
       *datatype = UBYTE;
       *comps = 1;
       return;
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       *datatype = UBYTE;
       *comps = 2;
       return;

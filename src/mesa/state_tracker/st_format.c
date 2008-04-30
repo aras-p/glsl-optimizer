@@ -261,13 +261,13 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
    case MESA_FORMAT_RGB565:
       return PIPE_FORMAT_R5G6B5_UNORM;
    case MESA_FORMAT_AL88:
-      return PIPE_FORMAT_U_A8_L8;
+      return PIPE_FORMAT_A8L8_UNORM;
    case MESA_FORMAT_A8:
-      return PIPE_FORMAT_U_A8;
+      return PIPE_FORMAT_A8_UNORM;
    case MESA_FORMAT_L8:
-      return PIPE_FORMAT_U_L8;
+      return PIPE_FORMAT_L8_UNORM;
    case MESA_FORMAT_I8:
-      return PIPE_FORMAT_U_I8;
+      return PIPE_FORMAT_I8_UNORM;
    case MESA_FORMAT_Z16:
       return PIPE_FORMAT_Z16_UNORM;
    case MESA_FORMAT_Z32:
@@ -409,8 +409,8 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_U_A8, surfType ))
-         return PIPE_FORMAT_U_A8;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8_UNORM, surfType ))
+         return PIPE_FORMAT_A8_UNORM;
       return default_rgba_format( screen, surfType );
 
    case 1:
@@ -420,8 +420,8 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_U_L8, surfType ))
-         return PIPE_FORMAT_U_L8;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, surfType ))
+         return PIPE_FORMAT_L8_UNORM;
       return default_rgba_format( screen, surfType );
 
    case 2:
@@ -433,8 +433,8 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_U_A8_L8, surfType ))
-         return PIPE_FORMAT_U_A8_L8;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_A8L8_UNORM, surfType ))
+         return PIPE_FORMAT_A8L8_UNORM;
       return default_rgba_format( screen, surfType );
 
    case GL_INTENSITY:
@@ -443,8 +443,8 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, surfType ))
-         return PIPE_FORMAT_U_I8;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_I8_UNORM, surfType ))
+         return PIPE_FORMAT_I8_UNORM;
       return default_rgba_format( screen, surfType );
 
    case GL_YCBCR_MESA:
@@ -547,13 +547,13 @@ translate_gallium_format_to_mesa_format(enum pipe_format format)
       return &_mesa_texformat_argb4444;
    case PIPE_FORMAT_R5G6B5_UNORM:
       return &_mesa_texformat_rgb565;
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       return &_mesa_texformat_al88;
-   case PIPE_FORMAT_U_A8:
+   case PIPE_FORMAT_A8_UNORM:
       return &_mesa_texformat_a8;
-   case PIPE_FORMAT_U_L8:
+   case PIPE_FORMAT_L8_UNORM:
       return &_mesa_texformat_l8;
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_I8_UNORM:
       return &_mesa_texformat_i8;
    case PIPE_FORMAT_Z16_UNORM:
       return &_mesa_texformat_z16;

@@ -722,8 +722,8 @@ st_init_bitmap(struct st_context *st)
    st->bitmap.rasterizer.bypass_vs = 1;
 
    /* find a usable texture format */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE)) {
-      st->bitmap.tex_format = PIPE_FORMAT_U_I8;
+   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM, PIPE_TEXTURE)) {
+      st->bitmap.tex_format = PIPE_FORMAT_I8_UNORM;
    }
    else {
       /* XXX support more formats */

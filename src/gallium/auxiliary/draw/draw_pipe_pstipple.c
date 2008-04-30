@@ -417,7 +417,7 @@ pstip_create_texture(struct pstip_stage *pstip)
 
    memset(&texTemp, 0, sizeof(texTemp));
    texTemp.target = PIPE_TEXTURE_2D;
-   texTemp.format = PIPE_FORMAT_U_A8; /* XXX verify supported by driver! */
+   texTemp.format = PIPE_FORMAT_A8_UNORM; /* XXX verify supported by driver! */
    texTemp.last_level = 0;
    texTemp.width[0] = 32;
    texTemp.height[0] = 32;
