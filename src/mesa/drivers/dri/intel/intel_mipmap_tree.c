@@ -272,6 +272,11 @@ intel_miptree_match_image(struct intel_mipmap_tree *mt,
        image->IsCompressed != mt->compressed)
       return GL_FALSE;
 
+   if (!image->IsCompressed &&
+       !mt->compressed &&
+       image->TexFormat->TexelBytes != mt->cpp)
+      return GL_FALSE;
+
    /* Test image dimensions against the base level image adjusted for
     * minification.  This will also catch images not present in the
     * tree, changed targets, etc.
