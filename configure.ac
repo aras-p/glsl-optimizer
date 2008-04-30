@@ -36,9 +36,14 @@ AC_CHECK_FUNC([dlopen], [],
 
 dnl Make sure the pkg-config macros are defined
 m4_ifdef([PKG_PROG_PKG_CONFIG],,[
-    AC_MSG_ERROR([The pkg-config autoconf macros are not defined.
-                  Did you run 'make configure'?])]
-)
+    m4_errprint([Error: Could not locate the pkg-config autoconf macros.
+       These are usually located in /usr/share/aclocal/pkg.m4. If your
+       macros are in a different location, try setting the environment
+       variable ACLOCAL="aclocal -I/other/macro/dir" before running
+       autoreconf.
+])
+    m4_exit([1])
+])
 PKG_PROG_PKG_CONFIG()
 
 dnl LIB_DIR - library basename
