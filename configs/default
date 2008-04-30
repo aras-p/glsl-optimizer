@@ -11,6 +11,7 @@ CONFIG_NAME = default
 MESA_MAJOR=7
 MESA_MINOR=1
 MESA_TINY=0
+MESA_VERSION = $(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY)
 
 # external projects.  This should be useless now that we use libdrm.
 DRM_SOURCE_PATH=$(TOP)/../drm
