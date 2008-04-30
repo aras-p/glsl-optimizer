@@ -58,6 +58,8 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       return;
    }
 
+   memset(&hw_key, 0, sizeof(hw_key));
+
    /* Must do this after set_primitive() above:
     */
    vinfo = draw->render->get_vertex_info(draw->render);
