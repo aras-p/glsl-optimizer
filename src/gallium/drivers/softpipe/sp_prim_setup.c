@@ -150,6 +150,8 @@ static void reset_stipple_counter( struct draw_stage *stage )
 
 static void render_destroy( struct draw_stage *stage )
 {
+   struct setup_stage *ssetup = setup_stage(stage);
+   setup_destroy_context(ssetup->setup);
    FREE( stage );
 }
 
