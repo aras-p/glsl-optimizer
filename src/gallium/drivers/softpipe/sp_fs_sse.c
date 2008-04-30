@@ -40,7 +40,7 @@
 #include "tgsi/exec/tgsi_sse2.h"
 
 
-#if defined(__i386__) || defined(__386__)
+#ifdef PIPE_ARCH_X86
 
 #include "rtasm/rtasm_x86sse.h"
 

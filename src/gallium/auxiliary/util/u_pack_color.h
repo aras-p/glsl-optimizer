@@ -89,9 +89,40 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
          *d = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
       }
       return;
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
+      }
+      return;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+      }
+      return;
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      {
+         float *d = (float *) dest;
+         d[0] = (float)r / 255.0f;
+         d[1] = (float)g / 255.0f;
+         d[2] = (float)b / 255.0f;
+         d[3] = (float)a / 255.0f;
+      }
+      return;
+   case PIPE_FORMAT_R32G32B32_FLOAT:
+      {
+         float *d = (float *) dest;
+         d[0] = (float)r / 255.0f;
+         d[1] = (float)g / 255.0f;
+         d[2] = (float)b / 255.0f;
+      }
+      return;
+
    /* XXX lots more cases to add */
    default:
-      debug_printf("gallium: unhandled format in util_pack_color_ub()");
+      debug_print_format("gallium: unhandled format in util_pack_color_ub()", format);
+      assert(0);
    }
 }
  
@@ -155,6 +186,18 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
          *d = ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
       }
       return;
+   case PIPE_FORMAT_A1R5G5B5_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((a & 0x80) << 8) | ((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3);
+      }
+      return;
+   case PIPE_FORMAT_A4R4G4B4_UNORM:
+      {
+         ushort *d = (ushort *) dest;
+         *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+      }
+      return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       {
          float *d = (float *) dest;
@@ -174,7 +217,8 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
       return;
    /* XXX lots more cases to add */
    default:
-      debug_printf("gallium: unhandled format in util_pack_color()");
+      debug_print_format("gallium: unhandled format in util_pack_color()", format);
+      assert(0);
    }
 }
  
@@ -201,7 +245,8 @@ util_pack_z(enum pipe_format format, double z)
    case PIPE_FORMAT_Z24X8_UNORM:
       return ((uint) (z * 0xffffff)) << 8;
    default:
-      debug_printf("gallium: unhandled fomrat in util_pack_z()");
+      debug_print_format("gallium: unhandled format in util_pack_z()", format);
+      assert(0);
       return 0;
    }
 }

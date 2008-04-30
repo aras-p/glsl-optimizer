@@ -370,6 +370,8 @@ st_render_texture(GLcontext *ctx,
                                            att->TextureLevel,
                                            att->Zoffset);
    assert(strb->surface);
+   assert(screen->is_format_supported(screen, strb->surface->format, PIPE_TEXTURE));
+   assert(screen->is_format_supported(screen, strb->surface->format, PIPE_SURFACE));
 
    init_renderbuffer_bits(strb, pt->format);
 

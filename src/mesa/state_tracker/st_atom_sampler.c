@@ -159,6 +159,11 @@ update_samplers(struct st_context *st)
          sampler->max_lod = MIN2(texobj->MaxLevel, texobj->MaxLod);
 #endif
 
+         sampler->border_color[0] = texobj->BorderColor[RCOMP];
+         sampler->border_color[1] = texobj->BorderColor[GCOMP];
+         sampler->border_color[2] = texobj->BorderColor[BCOMP];
+         sampler->border_color[3] = texobj->BorderColor[ACOMP];
+
 	 sampler->max_anisotropy = texobj->MaxAnisotropy;
          if (sampler->max_anisotropy > 1.0) {
             sampler->min_img_filter = PIPE_TEX_FILTER_ANISO;

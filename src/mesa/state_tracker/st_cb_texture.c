@@ -31,6 +31,7 @@
 #include "main/image.h"
 #include "main/macros.h"
 #include "main/mipmap.h"
+#include "main/pixel.h"
 #include "main/texcompress.h"
 #include "main/texformat.h"
 #include "main/teximage.h"
@@ -1038,7 +1039,6 @@ fallback_copy_texsubimage(GLcontext *ctx,
    const uint face = texture_face(target);
    struct pipe_texture *pt = stImage->pt;
    struct pipe_surface *src_surf, *dest_surf;
-   GLfloat *data;
    GLint row, yStep;
 
    st_flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
@@ -1056,25 +1056,38 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ);
 
-   /* buffer for one row */
-   data = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
+   assert(width <= MAX_WIDTH);
 
-   /* do copy row by row */
-   for (row = 0; row < height; row++) {
-      pipe_get_tile_rgba(pipe, src_surf, srcX, srcY + row, width, 1, data);
+   /*
+    * To avoid a large temp memory allocation, do copy row by row.
+    */
+   if (baseFormat == GL_DEPTH_COMPONENT) {
+      const GLboolean scaleOrBias = (ctx->Pixel.DepthScale != 1.0F ||
+                                     ctx->Pixel.DepthBias != 0.0F);
 
-      /* XXX we're ignoring convolution for now */
-      if (ctx->_ImageTransferState) {
-         _mesa_apply_rgba_transfer_ops(ctx,
-                            ctx->_ImageTransferState & ~IMAGE_CONVOLUTION_BIT,
-                            width, (GLfloat (*)[4])data);
+      for (row = 0; row < height; row++, srcY++, destY += yStep) {
+         uint data[MAX_WIDTH];
+         pipe_get_tile_z(pipe, src_surf, srcX, srcY, width, 1, data);
+         if (scaleOrBias) {
+            _mesa_scale_and_bias_depth_uint(ctx, width, data);
+         }
+         pipe_put_tile_z(pipe, dest_surf, destX, destY, width, 1, data);
       }
-
-      pipe_put_tile_rgba(pipe, dest_surf, destX, destY, width, 1, data);
-      destY += yStep;
    }
-
-   free(data);
+   else {
+      /* RGBA format */
+      for (row = 0; row < height; row++, srcY++, destY += yStep) {
+         float data[4 * MAX_WIDTH];
+         pipe_get_tile_rgba(pipe, src_surf, srcX, srcY, width, 1, data);
+         /* XXX we're ignoring convolution for now */
+         if (ctx->_ImageTransferState) {
+            _mesa_apply_rgba_transfer_ops(ctx,
+                          ctx->_ImageTransferState & ~IMAGE_CONVOLUTION_BIT,
+                          width, (GLfloat (*)[4]) data);
+         }
+         pipe_put_tile_rgba(pipe, dest_surf, destX, destY, width, 1, data);
+      }
+   }
 }
 
 
@@ -1111,6 +1124,7 @@ do_copy_texsubimage(GLcontext *ctx,
    struct pipe_surface *dest_surface;
    uint dest_format, src_format;
    uint do_flip = FALSE;
+   GLboolean use_fallback = GL_TRUE;
 
    (void) texImage;
 
@@ -1178,7 +1192,12 @@ do_copy_texsubimage(GLcontext *ctx,
 			     srcX, srcY,
 			     /* size */
 			     width, height);
-      } else {
+          use_fallback = GL_FALSE;
+      }
+      else if (screen->is_format_supported(screen, strb->surface->format,
+                                           PIPE_TEXTURE) &&
+               screen->is_format_supported(screen, dest_surface->format,
+                                           PIPE_SURFACE)) {
          util_blit_pixels(ctx->st->blit,
                           strb->surface,
                           srcX, do_flip ? srcY + height : srcY,
@@ -1186,10 +1205,12 @@ do_copy_texsubimage(GLcontext *ctx,
                           dest_surface,
                           destX, destY, destX + width, destY + height,
                           0.0, PIPE_TEX_MIPFILTER_NEAREST);
+         use_fallback = GL_FALSE;
       }
 #endif
    }
-   else {
+
+   if (use_fallback) {
       fallback_copy_texsubimage(ctx, target, level,
                                 strb, stImage, baseFormat,
                                 destX, destY, destZ,

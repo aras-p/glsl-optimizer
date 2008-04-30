@@ -264,6 +264,9 @@ util_blit_pixels(struct blit_state *ctx,
       dstY1 = tmp;
    }
 
+   assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE));
+   assert(screen->is_format_supported(screen, dst->format, PIPE_SURFACE));
+
    /*
     * XXX for now we're always creating a temporary texture.
     * Strictly speaking that's not always needed.

@@ -127,7 +127,7 @@ softpipe_create( struct pipe_screen *screen,
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
 
-#if defined(__i386__) || defined(__386__)
+#ifdef PIPE_ARCH_X86
    softpipe->use_sse = GETENV( "GALLIUM_NOSSE" ) == NULL;
 #else
    softpipe->use_sse = FALSE;
