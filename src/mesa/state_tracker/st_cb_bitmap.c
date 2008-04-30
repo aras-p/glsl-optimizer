@@ -230,26 +230,9 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_surface *surface;
-   uint format = 0, cpp, comp;
    ubyte *dest;
    struct pipe_texture *pt;
    int row, col;
-
-   /* find a texture format we know */
-   if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
-      format = PIPE_FORMAT_U_I8;
-      cpp = 1;
-      comp = 0;
-   }
-   else if (screen->is_format_supported( screen, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
-      format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      cpp = 4;
-      comp = 3; /* alpha channel */ /*XXX little-endian dependency */
-   }
-   else {
-      /* XXX support more formats */
-      assert( 0 );
-   }
 
    /* PBO source... */
    bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
@@ -260,8 +243,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    /**
     * Create texture to hold bitmap pattern.
     */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
-			  1, 0);
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, ctx->st->bitmap.tex_format,
+                          0, width, height, 1, 0);
    if (!pt) {
       _mesa_unmap_bitmap_pbo(ctx, unpack);
       return NULL;
@@ -280,7 +263,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
                  bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-      ubyte *destRow = dest + row * surface->pitch * cpp;
+      ubyte *destRow = dest + row * surface->pitch;
 
       if (unpack->LsbFirst) {
          /* Lsb first */
@@ -288,8 +271,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] = (*src & mask) ? 0x0 : 0xff;
-            destRow += cpp;
+            destRow[col] = (*src & mask) ? 0x0 : 0xff;
 
             if (mask == 128U) {
                src++;
@@ -310,8 +292,7 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] =(*src & mask) ? 0x0 : 0xff;
-            destRow += cpp;
+            destRow[col] =(*src & mask) ? 0x0 : 0xff;
 
             if (mask == 1U) {
                src++;
@@ -335,8 +316,6 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    pipe_surface_unmap(surface);
    pipe_surface_reference(&surface, NULL);
    pipe->texture_update(pipe, pt, 0, 0x1);
-
-   pt->format = format;
 
    return pt;
 }
@@ -530,25 +509,12 @@ reset_cache(struct st_context *st)
 static void
 init_bitmap_cache(struct st_context *st)
 {
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   enum pipe_format format;
-
    st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
    if (!st->bitmap.cache)
       return;
 
-   /* find a usable texture format */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE)) {
-      format = PIPE_FORMAT_U_I8;
-   }
-   else {
-      /* XXX support more formats */
-      assert(0);
-   }
-
    st->bitmap.cache->texture
-      = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
+      = st_texture_create(st, PIPE_TEXTURE_2D, st->bitmap.tex_format, 0,
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT, 1, 0);
    if (!st->bitmap.cache->texture) {
       FREE(st->bitmap.cache);
@@ -768,6 +734,8 @@ void
 st_init_bitmap(struct st_context *st)
 {
    struct pipe_sampler_state *sampler = &st->bitmap.sampler;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
 
    /* init sampler state once */
    memset(sampler, 0, sizeof(*sampler));
@@ -783,6 +751,15 @@ st_init_bitmap(struct st_context *st)
    memset(&st->bitmap.rasterizer, 0, sizeof(st->bitmap.rasterizer));
    st->bitmap.rasterizer.gl_rasterization_rules = 1;
    st->bitmap.rasterizer.bypass_vs = 1;
+
+   /* find a usable texture format */
+   if (screen->is_format_supported(screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE)) {
+      st->bitmap.tex_format = PIPE_FORMAT_U_I8;
+   }
+   else {
+      /* XXX support more formats */
+      assert(0);
+   }
 
    init_bitmap_cache(st);
 }
