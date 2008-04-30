@@ -106,7 +106,16 @@
 #if defined(PIPE_SUBSYSTEM_KERNEL)
 #define PIPE_SUBSYSTEM_WINDOWS_DISPLAY
 #endif
+#if 0 /* FIXME */
+#define PIPE_SUBSYSTEM_WINDOWS_MINIPORT
 #endif
+#if 0 /* FIXME */
+#define PIPE_SUBSYSTEM_WINDOWS_CE
+#endif
+#if defined(PIPE_SUBSYSTEM_USER)
+#define PIPE_SUBSYSTEM_WINDOWS_USER
+#endif
+#endif /* PIPE_OS_WINDOWS */
 
 
 #endif /* P_CONFIG_H_ */

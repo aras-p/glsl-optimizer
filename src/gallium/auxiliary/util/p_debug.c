@@ -104,7 +104,7 @@ void _debug_break(void)
    __asm("int3");
 #elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
    _asm {int 3};
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    EngDebugBreak();
 #else
    abort();

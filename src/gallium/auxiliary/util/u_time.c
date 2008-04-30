@@ -37,11 +37,11 @@
 
 #if defined(PIPE_OS_LINUX)
 #include <sys/time.h>
-#elif defined(PIPE_OS_WINDOWS)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #include <windows.h>
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #include <winddi.h>
-#endif
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_USER)
+#include <windows.h>
 #else
 #error Unsupported OS
 #endif

@@ -34,9 +34,11 @@
 
 #include "pipe/p_config.h" 
 
-#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 #include <windows.h>
 #include <winddi.h>
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+#include <wdm.h>
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +54,9 @@
 #if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
 #define real_malloc(_size) EngAllocMem(0, _size, 'D3AG')
 #define real_free(_ptr) EngFreeMem(_ptr)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+#define real_malloc(_size) ExAllocatePool(0, _size)
+#define real_free(_ptr) ExFreePool(_ptr)
 #else
 #define real_malloc(_size) malloc(_size)
 #define real_free(_ptr) free(_ptr)
