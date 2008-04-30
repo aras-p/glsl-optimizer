@@ -90,10 +90,14 @@ struct bitmap_cache
    GLint xpos, ypos;
    /** Bounds of region used in window coords */
    GLint xmin, ymin, xmax, ymax;
+
    struct pipe_texture *texture;
+   struct pipe_surface *surf;
+
    GLboolean empty;
+
    /** An I8 texture image: */
-   GLubyte buffer[BITMAP_CACHE_HEIGHT][BITMAP_CACHE_WIDTH];
+   ubyte *buffer;
 };
 
 
@@ -496,33 +500,34 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 static void
 reset_cache(struct st_context *st)
 {
-   memset(st->bitmap.cache->buffer, 0xff, sizeof(st->bitmap.cache->buffer));
-   st->bitmap.cache->empty = GL_TRUE;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct bitmap_cache *cache = st->bitmap.cache;
 
-   st->bitmap.cache->xmin = 1000000;
-   st->bitmap.cache->xmax = -1000000;
-   st->bitmap.cache->ymin = 1000000;
-   st->bitmap.cache->ymax = -1000000;
-}
+   //memset(cache->buffer, 0xff, sizeof(cache->buffer));
+   cache->empty = GL_TRUE;
 
+   cache->xmin = 1000000;
+   cache->xmax = -1000000;
+   cache->ymin = 1000000;
+   cache->ymax = -1000000;
 
-static void
-init_bitmap_cache(struct st_context *st)
-{
-   st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
-   if (!st->bitmap.cache)
-      return;
+   assert(!cache->texture);
 
-   st->bitmap.cache->texture
-      = st_texture_create(st, PIPE_TEXTURE_2D, st->bitmap.tex_format, 0,
-                          BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT, 1, 0);
-   if (!st->bitmap.cache->texture) {
-      FREE(st->bitmap.cache);
-      st->bitmap.cache = NULL;
-      return;
-   }
+   /* allocate a new texture */
+   cache->texture = st_texture_create(st, PIPE_TEXTURE_2D,
+                                      st->bitmap.tex_format, 0,
+                                      BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
+                                      1, 0);
 
-   reset_cache(st);
+   /* Map the texture surface.
+    * Subsequent glBitmap calls will write into the texture image.
+    */
+   cache->surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
+   cache->buffer = pipe_surface_map(cache->surf);
+
+   /* init image to all 0xff */
+   memset(cache->buffer, 0xff, BITMAP_CACHE_WIDTH * BITMAP_CACHE_HEIGHT);
 }
 
 
@@ -536,9 +541,6 @@ st_flush_bitmap_cache(struct st_context *st)
       if (st->ctx->DrawBuffer) {
          struct bitmap_cache *cache = st->bitmap.cache;
          struct pipe_context *pipe = st->pipe;
-         struct pipe_screen *screen = pipe->screen;
-         struct pipe_surface *surf;
-         void *dest;
 
          assert(cache->xmin <= cache->xmax);
          /*
@@ -548,18 +550,13 @@ st_flush_bitmap_cache(struct st_context *st)
                 cache->xpos, cache->ypos);
          */
 
-         /* update the texture map image */
-         surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
-         dest = pipe_surface_map(surf);
-         memcpy(dest, cache->buffer, sizeof(cache->buffer));
-         pipe_surface_unmap(surf);
-         pipe_surface_reference(&surf, NULL);
-
-         /* flush in case the previous texture contents haven't been
-          * used yet. XXX this is not ideal!  Revisit.
+         /* The texture surface has been mapped until now.
+          * So unmap and release the texture surface before drawing.
           */
-         st->pipe->flush( st->pipe, 0x0, NULL );
+         pipe_surface_unmap(cache->surf);
+         pipe_surface_reference(&cache->surf, NULL);
 
+         /* XXX is this needed? */
          pipe->texture_update(pipe, cache->texture, 0, 0x1);
 
          draw_bitmap_quad(st->ctx,
@@ -568,6 +565,9 @@ st_flush_bitmap_cache(struct st_context *st)
                           st->ctx->Current.RasterPos[2],
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                           cache->texture);
+
+         /* release/free the texture */
+         pipe_texture_reference(&cache->texture, NULL);
       }
       reset_cache(st);
    }
@@ -626,7 +626,7 @@ accum_bitmap(struct st_context *st,
 
    /* XXX try to combine this code with code in make_bitmap_texture() */
 #define SET_PIXEL(COL, ROW) \
-   cache->buffer[py + (ROW)][px + (COL)] = 0x0;
+   cache->buffer[(py + (ROW)) * BITMAP_CACHE_WIDTH + px + (COL)] = 0x0;
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
@@ -716,6 +716,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       assert(pt->target == PIPE_TEXTURE_2D);
       draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
                        width, height, pt);
+      /* release/free the texture */
       pipe_texture_reference(&pt, NULL);
    }
 }
@@ -761,7 +762,10 @@ st_init_bitmap(struct st_context *st)
       assert(0);
    }
 
-   init_bitmap_cache(st);
+   /* alloc bitmap cache object */
+   st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
+
+   reset_cache(st);
 }
 
 
