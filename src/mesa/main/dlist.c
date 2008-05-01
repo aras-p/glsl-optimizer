@@ -611,9 +611,9 @@ destroy_list(GLcontext *ctx, GLuint list)
 
 
 /*
- * Translate the nth element of list from type to GLuint.
+ * Translate the nth element of list from <type> to GLint.
  */
-static GLuint
+static GLint
 translate_id(GLsizei n, GLenum type, const GLvoid * list)
 {
    GLbyte *bptr;
@@ -627,37 +627,40 @@ translate_id(GLsizei n, GLenum type, const GLvoid * list)
    switch (type) {
    case GL_BYTE:
       bptr = (GLbyte *) list;
-      return (GLuint) *(bptr + n);
+      return (GLint) bptr[n];
    case GL_UNSIGNED_BYTE:
       ubptr = (GLubyte *) list;
-      return (GLuint) *(ubptr + n);
+      return (GLint) ubptr[n];
    case GL_SHORT:
       sptr = (GLshort *) list;
-      return (GLuint) *(sptr + n);
+      return (GLint) sptr[n];
    case GL_UNSIGNED_SHORT:
       usptr = (GLushort *) list;
-      return (GLuint) *(usptr + n);
+      return (GLint) usptr[n];
    case GL_INT:
       iptr = (GLint *) list;
-      return (GLuint) *(iptr + n);
+      return iptr[n];
    case GL_UNSIGNED_INT:
       uiptr = (GLuint *) list;
-      return (GLuint) *(uiptr + n);
+      return (GLint) uiptr[n];
    case GL_FLOAT:
       fptr = (GLfloat *) list;
-      return (GLuint) *(fptr + n);
+      return (GLint) FLOORF(fptr[n]);
    case GL_2_BYTES:
       ubptr = ((GLubyte *) list) + 2 * n;
-      return (GLuint) *ubptr * 256 + (GLuint) * (ubptr + 1);
+      return (GLint) ubptr[0] * 256
+           + (GLint) ubptr[1];
    case GL_3_BYTES:
       ubptr = ((GLubyte *) list) + 3 * n;
-      return (GLuint) * ubptr * 65536
-           + (GLuint) *(ubptr + 1) * 256 + (GLuint) * (ubptr + 2);
+      return (GLint) ubptr[0] * 65536
+           + (GLint) ubptr[1] * 256
+           + (GLint) ubptr[2];
    case GL_4_BYTES:
       ubptr = ((GLubyte *) list) + 4 * n;
-      return (GLuint) *ubptr * 16777216
-           + (GLuint) *(ubptr + 1) * 65536
-           + (GLuint) *(ubptr + 2) * 256 + (GLuint) * (ubptr + 3);
+      return (GLint) ubptr[0] * 16777216
+           + (GLint) ubptr[1] * 65536
+           + (GLint) ubptr[2] * 256
+           + (GLint) ubptr[3];
    default:
       return 0;
    }
@@ -992,10 +995,10 @@ _mesa_save_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
    }
 
    for (i = 0; i < n; i++) {
-      GLuint list = translate_id(i, type, lists);
+      GLint list = translate_id(i, type, lists);
       Node *n = ALLOC_INSTRUCTION(ctx, OPCODE_CALL_LIST_OFFSET, 2);
       if (n) {
-         n[1].ui = list;
+         n[1].i = list;
          n[2].b = typeErrorFlag;
       }
    }
@@ -5774,7 +5777,8 @@ execute_list(GLcontext *ctx, GLuint list)
                _mesa_error(ctx, GL_INVALID_ENUM, "glCallLists(type)");
             }
             else if (ctx->ListState.CallDepth < MAX_LIST_NESTING) {
-               execute_list(ctx, ctx->List.ListBase + n[1].ui);
+               GLuint list = (GLuint) (ctx->List.ListBase + n[1].i);
+               execute_list(ctx, list);
             }
             break;
          case OPCODE_CLEAR:
@@ -6822,7 +6826,6 @@ void GLAPIENTRY
 _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
 {
    GET_CURRENT_CONTEXT(ctx);
-   GLuint list;
    GLint i;
    GLboolean save_compile_flag;
 
@@ -6854,8 +6857,8 @@ _mesa_CallLists(GLsizei n, GLenum type, const GLvoid * lists)
    ctx->CompileFlag = GL_FALSE;
 
    for (i = 0; i < n; i++) {
-      list = translate_id(i, type, lists);
-      execute_list(ctx, ctx->List.ListBase + list);
+      GLuint list = (GLuint) (ctx->List.ListBase + translate_id(i, type, lists));
+      execute_list(ctx, list);
    }
 
    ctx->CompileFlag = save_compile_flag;
