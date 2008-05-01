@@ -449,8 +449,15 @@ void x86_push( struct x86_function *p,
 	       struct x86_reg reg )
 {
    DUMP_R( reg );
-   assert(reg.mod == mod_REG);
-   emit_1ub(p, 0x50 + reg.idx);
+   if (reg.mod == mod_REG)
+      emit_1ub(p, 0x50 + reg.idx);
+   else 
+   {
+      emit_1ub(p, 0xff);
+      emit_modrm_noreg(p, 6, reg);
+   }
+
+
    p->stack_offset += 4;
 }
 
