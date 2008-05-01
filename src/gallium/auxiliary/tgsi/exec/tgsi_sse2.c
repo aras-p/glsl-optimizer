@@ -2021,7 +2021,7 @@ static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num,
    struct x86_reg aos_input;
    struct x86_reg num_inputs;
    struct x86_reg temp;
-   unsigned char *inner_loop;
+   int inner_loop;
 
    soa_input = x86_make_reg( file_REG32, reg_AX );
    aos_input = get_temp_base(); /* BX or SI */
@@ -2083,7 +2083,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    struct x86_reg aos_output;
    struct x86_reg num_outputs;
    struct x86_reg temp;
-   unsigned char *inner_loop;
+   int inner_loop;
 
    soa_output = x86_make_reg( file_REG32, reg_AX );
    aos_output = get_temp_base(); /* BX or SI */

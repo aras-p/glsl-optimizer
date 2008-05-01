@@ -124,23 +124,23 @@ struct x86_reg x86_get_base_reg( struct x86_reg reg );
 
 /* Labels, jumps and fixup:
  */
-unsigned char *x86_get_label( struct x86_function *p );
+int x86_get_label( struct x86_function *p );
 
 void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
-	      unsigned char *label );
+	      int label );
 
-unsigned char *x86_jcc_forward( struct x86_function *p,
+int x86_jcc_forward( struct x86_function *p,
 			  enum x86_cc cc );
 
-unsigned char *x86_jmp_forward( struct x86_function *p);
+int x86_jmp_forward( struct x86_function *p);
 
-unsigned char *x86_call_forward( struct x86_function *p);
+int x86_call_forward( struct x86_function *p);
 
 void x86_fixup_fwd_jump( struct x86_function *p,
-			 unsigned char *fixup );
+			 int fixup );
 
-void x86_jmp( struct x86_function *p, unsigned char *label );
+void x86_jmp( struct x86_function *p, int label );
 
 /* void x86_call( struct x86_function *p, void (*label)() ); */
 void x86_call( struct x86_function *p, struct x86_reg reg);
