@@ -37,6 +37,7 @@
 #include "xmesaP.h"
 
 #undef ASSERT
+#undef Elements
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_format.h"
@@ -88,18 +89,6 @@ struct xmesa_surface
 };
 
 
-/**
- * Derived from softpipe_winsys.
- * We just need one extra field which indicates the pixel format to use for
- * drawing surfaces so that we're compatible with the XVisual/window format.
- */
-struct xmesa_softpipe_winsys
-{
-   struct softpipe_winsys spws;
-   enum pipe_format pixelformat;
-};
-
-
 struct xmesa_pipe_winsys
 {
    struct pipe_winsys base;
@@ -119,12 +108,7 @@ xmesa_surface(struct pipe_surface *ps)
    return (struct xmesa_surface *) ps;
 }
 
-/** cast wrapper */
-static INLINE struct xmesa_softpipe_winsys *
-xmesa_softpipe_winsys(struct softpipe_winsys *spws)
-{
-   return (struct xmesa_softpipe_winsys *) spws;
-}
+
 
 /**
  * Turn the softpipe opaque buffer pointer into a dri_bufmgr opaque
@@ -525,8 +509,7 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
 
 
 /**
- * Called via pipe->surface_alloc() to create new surfaces (textures,
- * renderbuffers, etc.
+ * Called via winsys->surface_alloc() to create new surfaces.
  */
 static struct pipe_surface *
 xm_surface_alloc(struct pipe_winsys *ws)
@@ -610,10 +593,19 @@ xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
 {
    static struct xmesa_pipe_winsys *ws = NULL;
 
-   if (!ws && getenv("XM_AUB")) {
+   if (!ws) {
       ws = (struct xmesa_pipe_winsys *) xmesa_create_pipe_winsys_aub();
    }
-   else if (!ws) {
+   return &ws->base;
+}
+
+
+struct pipe_winsys *
+xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
+{
+   static struct xmesa_pipe_winsys *ws = NULL;
+
+   if (!ws) {
       ws = CALLOC_STRUCT(xmesa_pipe_winsys);
 
       ws->xm_visual = xm_vis;
@@ -644,45 +636,19 @@ xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
 }
 
 
-/**
- * Called via softpipe_winsys->is_format_supported().
- * This function is only called to test formats for front/back color surfaces.
- * The winsys being queried will have been created at glXCreateContext
- * time, with a pixel format corresponding to the context's visual.
- */
-static boolean
-xmesa_is_format_supported(struct softpipe_winsys *sws,
-                          enum pipe_format format)
-{
-   struct xmesa_softpipe_winsys *xmws = xmesa_softpipe_winsys(sws);
-   return (format == xmws->pixelformat);
-}
-
-
-/**
- * Return pointer to a softpipe_winsys object.
- */
-static struct softpipe_winsys *
-xmesa_get_softpipe_winsys(uint pixelformat)
-{
-   struct xmesa_softpipe_winsys *xmws
-      = CALLOC_STRUCT(xmesa_softpipe_winsys);
-   if (!xmws)
-      return NULL;
-
-   xmws->spws.is_format_supported = xmesa_is_format_supported;
-   xmws->pixelformat = pixelformat;
-
-   return &xmws->spws;
-}
-
-
 struct pipe_context *
 xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
 {
-   struct pipe_winsys *pws = xmesa_get_pipe_winsys_aub(xmesa->xm_visual);
+   struct pipe_winsys *pws;
    struct pipe_context *pipe;
    
+   if (getenv("XM_AUB")) {
+      pws = xmesa_get_pipe_winsys_aub(xmesa->xm_visual);
+   }
+   else {
+      pws = xmesa_get_pipe_winsys(xmesa->xm_visual);
+   }
+
 #ifdef GALLIUM_CELL
    if (!getenv("GALLIUM_NOCELL")) {
       struct cell_winsys *cws = cell_get_winsys(pixelformat);
@@ -693,10 +659,9 @@ xmesa_create_pipe_context(XMesaContext xmesa, uint pixelformat)
    else
 #endif
    {
-      struct softpipe_winsys *spws = xmesa_get_softpipe_winsys(pixelformat);
       struct pipe_screen *screen = softpipe_create_screen(pws);
 
-      pipe = softpipe_create(screen, pws, spws);
+      pipe = softpipe_create(screen, pws, NULL);
    }
 
    if (pipe)
