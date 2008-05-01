@@ -441,19 +441,13 @@ emit_push_gp(
 {
    x86_push(
       func,
-      get_const_base() );
+      x86_make_reg( file_REG32, reg_AX) );
    x86_push(
       func,
-      get_input_base() );
+      x86_make_reg( file_REG32, reg_CX) );
    x86_push(
       func,
-      get_output_base() );
-
-   /* It is important on non-win32 platforms that temp base is pushed last.
-    */
-   x86_push(
-      func,
-      get_temp_base() );
+      x86_make_reg( file_REG32, reg_DX) );
 }
 
 static void
@@ -464,16 +458,13 @@ x86_pop_gp(
     */
    x86_pop(
       func,
-      get_temp_base() );
+      x86_make_reg( file_REG32, reg_DX) );
    x86_pop(
       func,
-      get_output_base() );
+      x86_make_reg( file_REG32, reg_CX) );
    x86_pop(
       func,
-      get_input_base() );
-   x86_pop(
-      func,
-      get_const_base() );
+      x86_make_reg( file_REG32, reg_AX) );
 }
 
 static void
@@ -490,18 +481,22 @@ emit_func_call_dst(
    emit_push_gp(
       func );
 
-#ifdef WIN32
-   x86_push(
-      func,
-      get_temp( TEMP_R0, 0 ) );
-#endif
-
    {
       struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
 
+      x86_lea(
+         func,
+         ecx,
+         get_temp( TEMP_R0, 0 ) );
+
+      x86_push( func, ecx );
       x86_mov_reg_imm( func, ecx, (unsigned long) code );
       x86_call( func, ecx );
+#ifndef WIN32
+      x86_pop(func, ecx ); 
+#endif
    }
+
 
    x86_pop_gp(
       func );
@@ -563,11 +558,7 @@ static void XSTDCALL
 cos4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
 
    store[X + 0] = cosf( store[X + 0] );
    store[X + 1] = cosf( store[X + 1] );
@@ -590,11 +581,8 @@ static void XSTDCALL
 ex24f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = powf( 2.0f, store[X + 0] );
    store[X + 1] = powf( 2.0f, store[X + 1] );
    store[X + 2] = powf( 2.0f, store[X + 2] );
@@ -627,11 +615,8 @@ static void XSTDCALL
 flr4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = floorf( store[X + 0] );
    store[X + 1] = floorf( store[X + 1] );
    store[X + 2] = floorf( store[X + 2] );
@@ -653,11 +638,8 @@ static void XSTDCALL
 frc4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] -= floorf( store[X + 0] );
    store[X + 1] -= floorf( store[X + 1] );
    store[X + 2] -= floorf( store[X + 2] );
@@ -679,11 +661,8 @@ static void XSTDCALL
 lg24f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = LOG2( store[X + 0] );
    store[X + 1] = LOG2( store[X + 1] );
    store[X + 2] = LOG2( store[X + 2] );
@@ -741,11 +720,8 @@ static void XSTDCALL
 pow4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = powf( store[X + 0], store[X + 4] );
    store[X + 1] = powf( store[X + 1], store[X + 5] );
    store[X + 2] = powf( store[X + 2], store[X + 6] );
@@ -786,11 +762,8 @@ static void XSTDCALL
 rsqrt4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = 1.0F / sqrtf( store[X + 0] );
    store[X + 1] = 1.0F / sqrtf( store[X + 1] );
    store[X + 2] = 1.0F / sqrtf( store[X + 2] );
@@ -864,11 +837,8 @@ static void XSTDCALL
 sin4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = sinf( store[X + 0] );
    store[X + 1] = sinf( store[X + 1] );
    store[X + 2] = sinf( store[X + 2] );
@@ -2015,40 +1985,40 @@ emit_declaration(
    }
 }
 
-static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num, uint stride )
+static void aos_to_soa( struct x86_function *func, 
+                        uint arg_aos,
+                        uint arg_soa, 
+                        uint arg_num, 
+                        uint arg_stride )
 {
-   struct x86_reg soa_input;
-   struct x86_reg aos_input;
-   struct x86_reg num_inputs;
-   struct x86_reg temp;
+   struct x86_reg soa_input = x86_make_reg( file_REG32, reg_AX );
+   struct x86_reg aos_input = x86_make_reg( file_REG32, reg_BX );
+   struct x86_reg num_inputs = x86_make_reg( file_REG32, reg_CX );
+   struct x86_reg stride = x86_make_reg( file_REG32, reg_DX );
    int inner_loop;
 
-   soa_input = x86_make_reg( file_REG32, reg_AX );
-   aos_input = get_temp_base(); /* BX or SI */
-   num_inputs = x86_make_reg( file_REG32, reg_CX );
-   temp = x86_make_reg( file_REG32, reg_DX );
 
    /* Save EBX */
-   x86_push( func, aos_input );
+   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
 
-   x86_mov( func, soa_input, x86_fn_arg( func, soa ) );
-   x86_mov( func, aos_input, x86_fn_arg( func, aos ) );
-   x86_mov( func, num_inputs, x86_fn_arg( func, num ) );
+   x86_mov( func, aos_input,  x86_fn_arg( func, arg_aos ) );
+   x86_mov( func, soa_input,  x86_fn_arg( func, arg_soa ) );
+   x86_mov( func, num_inputs, x86_fn_arg( func, arg_num ) );
+   x86_mov( func, stride,     x86_fn_arg( func, arg_stride ) );
 
    /* do */
    inner_loop = x86_get_label( func );
    {
-      x86_mov( func, temp, x86_fn_arg( func, stride ) );
       x86_push( func, aos_input );
       sse_movlps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
       sse_movlps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
-      x86_add( func, aos_input, temp );
+      x86_add( func, aos_input, stride );
       sse_movhps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
       sse_movhps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
-      x86_add( func, aos_input, temp );
+      x86_add( func, aos_input, stride );
       sse_movlps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
       sse_movlps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
-      x86_add( func, aos_input, temp );
+      x86_add( func, aos_input, stride );
       sse_movhps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
       sse_movhps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
       x86_pop( func, aos_input );
@@ -2086,7 +2056,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    int inner_loop;
 
    soa_output = x86_make_reg( file_REG32, reg_AX );
-   aos_output = get_temp_base(); /* BX or SI */
+   aos_output = x86_make_reg( file_REG32, reg_BX );
    num_outputs = x86_make_reg( file_REG32, reg_CX );
    temp = x86_make_reg( file_REG32, reg_DX );
 
@@ -2213,7 +2183,11 @@ tgsi_emit_sse2(
       assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
 
       if (do_swizzles)
-         aos_to_soa( func, 6, 1, 7, 8 );
+         aos_to_soa( func, 
+                     6,         /* aos_input */
+                     1,         /* machine->input */
+                     7,         /* num_inputs */
+                     8 );       /* input_stride */
 
       x86_mov(
          func,
