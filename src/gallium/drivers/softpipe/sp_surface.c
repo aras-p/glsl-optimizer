@@ -46,7 +46,6 @@ sp_surface_copy(struct pipe_context *pipe,
 		struct pipe_surface *src,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   assert( dst->cpp == src->cpp );
    void *dst_map = pipe->screen->surface_map( pipe->screen,
                                               dst,
                                               PIPE_BUFFER_USAGE_CPU_WRITE );
@@ -55,6 +54,7 @@ sp_surface_copy(struct pipe_context *pipe,
                                                     src,
                                                     PIPE_BUFFER_USAGE_CPU_READ );
 
+   assert( dst->cpp == src->cpp );
    assert(src_map && dst_map);
 
    pipe_copy_rect(dst_map,
