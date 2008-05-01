@@ -769,8 +769,7 @@ void cso_restore_vertex_shader(struct cso_context *ctx)
 enum pipe_error cso_set_framebuffer(struct cso_context *ctx,
                                     const struct pipe_framebuffer_state *fb)
 {
-   /* XXX this memcmp() fails to detect buffer size changes */
-   if (1/*memcmp(&ctx->fb, fb, sizeof(*fb))*/) {
+   if (memcmp(&ctx->fb, fb, sizeof(*fb)) != 0) {
       ctx->fb = *fb;
       ctx->pipe->set_framebuffer_state(ctx->pipe, fb);
    }
