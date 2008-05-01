@@ -36,7 +36,7 @@
 
 #ifdef PIPE_ARCH_X86
 
-#define HIGH_PRECISION 0  /* for 1/sqrt() */
+#define HIGH_PRECISION 1  /* for 1/sqrt() */
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
