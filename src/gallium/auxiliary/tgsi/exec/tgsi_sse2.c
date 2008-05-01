@@ -133,14 +133,6 @@ get_immediate_base( void )
  * Data access helpers.
  */
 
-static struct x86_reg
-get_argument(
-   unsigned index )
-{
-   return x86_make_disp(
-      x86_make_reg( file_REG32, reg_SP ),
-      (index + 1) * 4 );
-}
 
 static struct x86_reg
 get_immediate(
@@ -2045,14 +2037,14 @@ static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num,
    /* Save EBX */
    x86_push( func, aos_input );
 
-   x86_mov( func, soa_input, get_argument( soa + 1 ) );
-   x86_mov( func, aos_input, get_argument( aos + 1 ) );
-   x86_mov( func, num_inputs, get_argument( num + 1 ) );
+   x86_mov( func, soa_input, x86_fn_arg( func, soa ) );
+   x86_mov( func, aos_input, x86_fn_arg( func, aos ) );
+   x86_mov( func, num_inputs, x86_fn_arg( func, num ) );
 
    /* do */
    inner_loop = x86_get_label( func );
    {
-      x86_mov( func, temp, get_argument( stride + 1 ) );
+      x86_mov( func, temp, x86_fn_arg( func, stride ) );
       x86_push( func, aos_input );
       sse_movlps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
       sse_movlps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
@@ -2107,9 +2099,9 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    /* Save EBX */
    x86_push( func, aos_output );
 
-   x86_mov( func, soa_output, get_argument( soa + 1 ) );
-   x86_mov( func, aos_output, get_argument( aos + 1 ) );
-   x86_mov( func, num_outputs, get_argument( num + 1 ) );
+   x86_mov( func, soa_output, x86_fn_arg( func, soa ) );
+   x86_mov( func, aos_output, x86_fn_arg( func, aos ) );
+   x86_mov( func, num_outputs, x86_fn_arg( func, num ) );
 
    /* do */
    inner_loop = x86_get_label( func );
@@ -2126,7 +2118,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
       sse_unpcklps( func, make_xmm( 3 ), make_xmm( 4 ) );
       sse_unpckhps( func, make_xmm( 5 ), make_xmm( 4 ) );
 
-      x86_mov( func, temp, get_argument( stride + 1 ) );
+      x86_mov( func, temp, x86_fn_arg( func, stride ) );
       x86_push( func, aos_output );
       sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
       sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
@@ -2185,6 +2177,13 @@ tgsi_emit_sse2(
 
    tgsi_parse_init( &parse, tokens );
 
+   /* Can't just use EDI without save/restoring it:
+    */
+   x86_push(
+      func,
+      get_immediate_base() );
+
+
    /*
     * Different function args for vertex/fragment shaders:
     */
@@ -2193,51 +2192,51 @@ tgsi_emit_sse2(
       x86_mov(
          func,
          get_input_base(),
-         get_argument( 0 ) );
+         x86_fn_arg( func, 1 ) );
       /* skipping outputs argument here */
       x86_mov(
          func,
          get_const_base(),
-         get_argument( 2 ) );
+         x86_fn_arg( func, 3 ) );
       x86_mov(
          func,
          get_temp_base(),
-         get_argument( 3 ) );
+         x86_fn_arg( func, 4 ) );
       x86_mov(
          func,
          get_coef_base(),
-         get_argument( 4 ) );
+         x86_fn_arg( func, 5 ) );
       x86_mov(
          func,
          get_immediate_base(),
-         get_argument( 5 ) );
+         x86_fn_arg( func, 6 ) );
    }
    else {
       assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
 
       if (do_swizzles)
-         aos_to_soa( func, 5, 0, 6, 7 );
+         aos_to_soa( func, 6, 1, 7, 8 );
 
       x86_mov(
          func,
          get_input_base(),
-         get_argument( 0 ) );
+         x86_fn_arg( func, 1 ) );
       x86_mov(
          func,
          get_output_base(),
-         get_argument( 1 ) );
+         x86_fn_arg( func, 2 ) );
       x86_mov(
          func,
          get_const_base(),
-         get_argument( 2 ) );
+         x86_fn_arg( func, 3 ) );
       x86_mov(
          func,
          get_temp_base(),
-         get_argument( 3 ) );
+         x86_fn_arg( func, 4 ) );
       x86_mov(
          func,
          get_immediate_base(),
-         get_argument( 4 ) );
+         x86_fn_arg( func, 5 ) );
    }
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
@@ -2260,7 +2259,7 @@ tgsi_emit_sse2(
                x86_mov(
                   func,
                   get_output_base(),
-                  get_argument( 1 ) );
+                  x86_fn_arg( func, 2 ) );
             }
          }
 
@@ -2307,8 +2306,14 @@ tgsi_emit_sse2(
 
    if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
       if (do_swizzles)
-         soa_to_aos( func, 8, 1, 9, 10 );
+         soa_to_aos( func, 9, 2, 10, 11 );
    }
+
+   /* Can't just use EDI without save/restoring it:
+    */
+   x86_pop(
+      func,
+      get_immediate_base() );
 
 #ifdef WIN32
    emit_retw( func, 16 );
