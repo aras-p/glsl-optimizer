@@ -103,15 +103,9 @@ get_output_base( void )
 static struct x86_reg
 get_temp_base( void )
 {
-#ifdef WIN32
    return x86_make_reg(
       file_REG32,
       reg_BX );
-#else
-   return x86_make_reg(
-      file_REG32,
-      reg_SI );
-#endif
 }
 
 static struct x86_reg
@@ -2177,11 +2171,15 @@ tgsi_emit_sse2(
 
    tgsi_parse_init( &parse, tokens );
 
-   /* Can't just use EDI without save/restoring it:
+   /* Can't just use EDI, EBX without save/restoring them:
     */
    x86_push(
       func,
       get_immediate_base() );
+
+   x86_push(
+      func,
+      get_temp_base() );
 
 
    /*
@@ -2309,8 +2307,12 @@ tgsi_emit_sse2(
          soa_to_aos( func, 9, 2, 10, 11 );
    }
 
-   /* Can't just use EDI without save/restoring it:
+   /* Can't just use EBX, EDI without save/restoring them:
     */
+   x86_pop(
+      func,
+      get_temp_base() );
+
    x86_pop(
       func,
       get_immediate_base() );
