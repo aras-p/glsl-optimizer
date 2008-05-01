@@ -278,6 +278,9 @@ struct pipe_surface
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
 
    struct pipe_texture *texture; /**< optional texture into which this is a view  */
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
 };
 
 
