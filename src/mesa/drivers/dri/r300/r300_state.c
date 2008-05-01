@@ -2048,6 +2048,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 	case CHIP_FAMILY_R420:
 	case CHIP_FAMILY_RV515:
 	case CHIP_FAMILY_R520:
+	case CHIP_FAMILY_RV530:
+	case CHIP_FAMILY_R580:
+	case CHIP_FAMILY_RV560:
+	case CHIP_FAMILY_RV570:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
 		    R300_GB_TILE_PIPE_COUNT_R420;
 		break;
