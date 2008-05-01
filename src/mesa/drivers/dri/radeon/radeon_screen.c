@@ -686,6 +686,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       fprintf(stderr, "Warning, RS690 detected, 3D support is incomplete.\n");
       break;
 
+   case PCI_CHIP_RV530_71C4:
+      screen->chip_family = CHIP_FAMILY_R520;
+      fprintf(stderr, "Warning, R520 detected, 3D HAHAHAHAHA!!.\n");
+      break;
+
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
 	      dri_priv->deviceID);

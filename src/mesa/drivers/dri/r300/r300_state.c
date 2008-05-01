@@ -1436,39 +1436,42 @@ static void r300SetupTextures(GLcontext * ctx)
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
-	R300_STATECHANGE(r300, fpt);
 
-	for (i = 0; i < fp->tex.length; i++) {
-		int unit;
-		int opcode;
-		unsigned long val;
+        if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
+		R300_STATECHANGE(r300, fpt);
 
-		unit = fp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
-		unit &= 15;
-
-		val = fp->tex.inst[i];
-		val &= ~R300_FPITX_IMAGE_MASK;
-
-		opcode =
-		    (val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
-		if (opcode == R300_FPITX_OP_KIL) {
-			r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
-		} else {
-			if (tmu_mappings[unit] >= 0) {
-				val |=
-				    tmu_mappings[unit] <<
-				    R300_FPITX_IMAGE_SHIFT;
+		for (i = 0; i < fp->tex.length; i++) {
+			int unit;
+			int opcode;
+			unsigned long val;
+			
+			unit = fp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
+			unit &= 15;
+			
+			val = fp->tex.inst[i];
+			val &= ~R300_FPITX_IMAGE_MASK;
+			
+			opcode =
+				(val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
+			if (opcode == R300_FPITX_OP_KIL) {
 				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
 			} else {
-				// We get here when the corresponding texture image is incomplete
-				// (e.g. incomplete mipmaps etc.)
-				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+				if (tmu_mappings[unit] >= 0) {
+					val |=
+						tmu_mappings[unit] <<
+						R300_FPITX_IMAGE_SHIFT;
+					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+				} else {
+					// We get here when the corresponding texture image is incomplete
+					// (e.g. incomplete mipmaps etc.)
+					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+				}
 			}
 		}
+		
+		r300->hw.fpt.cmd[R300_FPT_CMD_0] =
+			cmdpacket0(R300_PFS_TEXI_0, fp->tex.length);
 	}
-
-	r300->hw.fpt.cmd[R300_FPT_CMD_0] =
-	    cmdpacket0(R300_PFS_TEXI_0, fp->tex.length);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n",
@@ -1602,6 +1605,136 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
 }
+
+static void r500SetupRSUnit(GLcontext * ctx)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	/* I'm still unsure if these are needed */
+	GLuint interp_magic[8] = {
+		0x00,
+		1 << 24,
+		2 << 24,
+		3 << 24,
+		0x00,
+		0x00,
+		0x00,
+		0x00
+	};
+	union r300_outputs_written OutputsWritten;
+	GLuint InputsRead;
+	int fp_reg, high_rr;
+	int in_texcoords, col_interp_nr;
+	int i;
+
+	if (hw_tcl_on)
+		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
+	else
+		RENDERINPUTS_COPY(OutputsWritten.index_bitset, r300->state.render_inputs_bitset);
+
+	if (ctx->FragmentProgram._Current)
+		InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
+	else {
+		fprintf(stderr, "No ctx->FragmentProgram._Current!!\n");
+		return;		/* This should only ever happen once.. */
+	}
+
+	R300_STATECHANGE(r300, ri);
+	R300_STATECHANGE(r300, rc);
+	R300_STATECHANGE(r300, rr);
+
+	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
+
+	r300->hw.rr.cmd[R300_RR_INST_1] = 0;
+
+	if (InputsRead & FRAG_BIT_WPOS) {
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
+			if (!(InputsRead & (FRAG_BIT_TEX0 << i)))
+				break;
+
+		if (i == ctx->Const.MaxTextureUnits) {
+			fprintf(stderr, "\tno free texcoord found...\n");
+			_mesa_exit(-1);
+		}
+
+		InputsRead |= (FRAG_BIT_TEX0 << i);
+		InputsRead &= ~FRAG_BIT_WPOS;
+	}
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+	  
+	  //		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0 | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
+	  
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = (0 << R500_RS_IP_TEX_PTR_S_SHIFT) | 
+			(1 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+			(2 << R500_RS_IP_TEX_PTR_R_SHIFT) | 
+			(3 << R500_RS_IP_TEX_PTR_Q_SHIFT) |
+			(in_texcoords << 0) | interp_magic[i];
+
+		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
+		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
+			//assert(r300->state.texture.tc_count != 0);
+			r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] |= R500_RS_INST_TEX_CN_WRITE | i	/* source INTERP */
+			    | (fp_reg << R500_RS_INST_TEX_ADDR_SHIFT);
+			high_rr = fp_reg;
+
+			/* Passing invalid data here can lock the GPU. */
+			if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
+				InputsRead &= ~(FRAG_BIT_TEX0 << i);
+				fp_reg++;
+			} else {
+				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
+			}
+		}
+		/* Need to count all coords enabled at vof */
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
+			in_texcoords++;
+		}
+	}
+
+	if (InputsRead & FRAG_BIT_COL0) {
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
+			//			r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0 | R300_RS_ROUTE_0_COLOR | (fp_reg++ << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
+			r300->hw.rr.cmd[R300_RR_INST_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
+			InputsRead &= ~FRAG_BIT_COL0;
+			col_interp_nr++;
+		} else {
+			WARN_ONCE("fragprog wants col0, vp doesn't provide it\n");
+		}
+	}
+
+	if (InputsRead & FRAG_BIT_COL1) {
+		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
+			//			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11 | R300_RS_ROUTE_1_COLOR1 | (fp_reg++ << R300_RS_ROUTE_1_COLOR1_DEST_SHIFT);
+			r300->hw.rr.cmd[R300_RR_INST_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITE |  (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
+			InputsRead &= ~FRAG_BIT_COL1;
+			if (high_rr < 1)
+				high_rr = 1;
+			col_interp_nr++;
+		} else {
+			WARN_ONCE("fragprog wants col1, vp doesn't provide it\n");
+		}
+	}
+
+	/* Need at least one. This might still lock as the values are undefined... */
+	if (in_texcoords == 0 && col_interp_nr == 0) {
+		r300->hw.rr.cmd[R300_RR_INST_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
+		col_interp_nr++;
+	}
+
+	r300->hw.rc.cmd[1] = 0 | ((in_texcoords << 2) << R300_IT_COUNT_SHIFT)
+	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
+	  | R300_HIRES_EN;
+
+	assert(high_rr >= 0);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, high_rr + 1);
+	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
+
+	if (InputsRead)
+		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
+}
+
+
+
 
 #define bump_vpu_count(ptr, new_count)   do{\
 	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
@@ -1913,6 +2046,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 		    R300_GB_TILE_PIPE_COUNT_R300;
 		break;
 	case CHIP_FAMILY_R420:
+	case CHIP_FAMILY_RV515:
+	case CHIP_FAMILY_R520:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
 		    R300_GB_TILE_PIPE_COUNT_R420;
 		break;
@@ -2163,6 +2298,105 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	}
 }
 
+#define bump_r500fp_count(ptr, new_count)   do{\
+	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
+	int _nc=(new_count)/6; \
+	assert(_nc < 256); \
+	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
+} while(0)
+
+#define bump_r500fp_const_count(ptr, new_count)   do{\
+	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
+	int _nc=(new_count)/4; \
+	assert(_nc < 256); \
+	if(_nc>_p->r500fp.count)_p->r500fp.count=_nc;\
+} while(0)
+
+static void r500SetupPixelShader(r300ContextPtr rmesa)
+{
+	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *)
+	    (char *)ctx->FragmentProgram._Current;
+	int i, k;
+
+	if (!fp)		/* should only happenen once, just after context is created */
+		return;
+
+	/* emit the standard zero shader */
+	R300_STATECHANGE(rmesa, r500fp);
+	i = 1;
+	rmesa->hw.r500fp.cmd[i++] = 0x7808;
+	rmesa->hw.r500fp.cmd[i++] = R500_TEX_ID(0) | R500_TEX_INST_LD | R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
+	rmesa->hw.r500fp.cmd[i++] = R500_TEX_SRC_ADDR(0) |  R500_TEX_SRC_S_SWIZ_R |
+		R500_TEX_SRC_T_SWIZ_G |
+		R500_TEX_DST_ADDR(0) |
+		R500_TEX_DST_R_SWIZ_R |
+		R500_TEX_DST_G_SWIZ_G |
+		R500_TEX_DST_B_SWIZ_B |
+		R500_TEX_DST_A_SWIZ_A;
+	rmesa->hw.r500fp.cmd[i++] = R500_DX_ADDR(0) |
+		R500_DX_S_SWIZ_R |
+		R500_DX_T_SWIZ_R |
+		R500_DX_R_SWIZ_R |
+		R500_DX_Q_SWIZ_R |
+		R500_DY_ADDR(0) |
+		R500_DY_S_SWIZ_R |
+		R500_DY_T_SWIZ_R |
+		R500_DY_R_SWIZ_R |
+		R500_DY_Q_SWIZ_R;
+	rmesa->hw.r500fp.cmd[i++] = 0x0;
+	rmesa->hw.r500fp.cmd[i++] = 0x0;
+
+	rmesa->hw.r500fp.cmd[i++] = R500_INST_TYPE_OUT |
+		R500_INST_TEX_SEM_WAIT |
+		R500_INST_LAST |
+		R500_INST_RGB_OMASK_R |
+		R500_INST_RGB_OMASK_G |
+		R500_INST_RGB_OMASK_B |
+		R500_INST_ALPHA_OMASK;
+
+	rmesa->hw.r500fp.cmd[i++] = R500_RGB_ADDR0(0) |
+		R500_RGB_ADDR1(0) |
+		R500_RGB_ADDR1_CONST |
+		R500_RGB_ADDR2(0) |
+		R500_RGB_ADDR2_CONST |
+		R500_RGB_SRCP_OP_1_MINUS_2RGB0;
+	rmesa->hw.r500fp.cmd[i++] = R500_ALPHA_ADDR0(0) |
+		R500_ALPHA_ADDR1(0) |
+		R500_ALPHA_ADDR1_CONST |
+		R500_ALPHA_ADDR2(0) |
+		R500_ALPHA_ADDR2_CONST |
+		R500_ALPHA_SRCP_OP_1_MINUS_2A0;
+	rmesa->hw.r500fp.cmd[i++] = R500_ALU_RGB_SEL_A_SRC0 |
+		R500_ALU_RGB_R_SWIZ_A_R |
+		R500_ALU_RGB_G_SWIZ_A_G |
+		R500_ALU_RGB_B_SWIZ_A_B |
+		R500_ALU_RGB_SEL_B_SRC0 |
+		R500_ALU_RGB_R_SWIZ_B_1 |
+		R500_ALU_RGB_B_SWIZ_B_1 |
+		R500_ALU_RGB_G_SWIZ_B_1;
+	rmesa->hw.r500fp.cmd[i++] = R500_ALPHA_OP_MAD |
+		R500_ALPHA_SWIZ_A_A |
+		R500_ALPHA_SWIZ_B_1;
+	rmesa->hw.r500fp.cmd[i++] = R500_ALU_RGBA_OP_MAD |
+		R500_ALU_RGBA_R_SWIZ_0 |
+		R500_ALU_RGBA_G_SWIZ_0 |
+		R500_ALU_RGBA_B_SWIZ_0 |
+		R500_ALU_RGBA_A_SWIZ_0;
+
+	bump_r500fp_count(rmesa->hw.r500fp.cmd, 12);
+
+	R300_STATECHANGE(rmesa, r500fp_const);
+	for (i = 0; i < fp->const_nr; i++) {
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(fp->constant[i][0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(fp->constant[i][1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(fp->constant[i][2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(fp->constant[i][3]);
+	}
+	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->const_nr * 4);
+
+}
+
 void r300UpdateShaderStates(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
@@ -2170,12 +2404,19 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 
 	r300UpdateTextureState(ctx);
 
-	r300SetupPixelShader(rmesa);
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		r500SetupPixelShader(rmesa);
+	else
+		r300SetupPixelShader(rmesa);
 	r300SetupTextures(ctx);
 
 	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		r300SetupVertexProgram(rmesa);
-	r300SetupRSUnit(ctx);
+
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		r500SetupRSUnit(ctx);
+	else
+		r300SetupRSUnit(ctx);
 }
 
 /**
