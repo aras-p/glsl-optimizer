@@ -327,7 +327,7 @@ st_texture_image_copy(struct pipe_context *pipe,
 			 0, 0, /* srcX, Y */
 			 width, copyHeight);
 
-      pipe_surface_reference(&dst_surface, NULL);
-      pipe_surface_reference(&src_surface, NULL);
+      screen->tex_surface_release(screen, &src_surface);
+      screen->tex_surface_release(screen, &dst_surface);
    }
 }
