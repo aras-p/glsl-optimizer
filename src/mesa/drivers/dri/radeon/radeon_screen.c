@@ -682,13 +682,131 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       break;
 
    case PCI_CHIP_RS690_791E:
+   case PCI_CHIP_RS690_791F:
       screen->chip_family = CHIP_FAMILY_RS690;
       fprintf(stderr, "Warning, RS690 detected, 3D support is incomplete.\n");
       break;
+   case PCI_CHIP_RS740_796C:
+   case PCI_CHIP_RS740_796D:
+   case PCI_CHIP_RS740_796E:
+   case PCI_CHIP_RS740_796F:
+      screen->chip_family = CHIP_FAMILY_RS740;
+      fprintf(stderr, "Warning, RS740 detected, 3D support is incomplete.\n");
+      break;
 
-   case PCI_CHIP_RV530_71C4:
+   case PCI_CHIP_R520_7100:
+   case PCI_CHIP_R520_7101:
+   case PCI_CHIP_R520_7102:
+   case PCI_CHIP_R520_7103:
+   case PCI_CHIP_R520_7104:
+   case PCI_CHIP_R520_7105:
+   case PCI_CHIP_R520_7106:
+   case PCI_CHIP_R520_7108:
+   case PCI_CHIP_R520_7109:
+   case PCI_CHIP_R520_710A:
+   case PCI_CHIP_R520_710B:
+   case PCI_CHIP_R520_710C:
+   case PCI_CHIP_R520_710E:
+   case PCI_CHIP_R520_710F:
       screen->chip_family = CHIP_FAMILY_R520;
       fprintf(stderr, "Warning, R520 detected, 3D HAHAHAHAHA!!.\n");
+      break;
+
+   case PCI_CHIP_RV515_7140:
+   case PCI_CHIP_RV515_7141:
+   case PCI_CHIP_RV515_7142:
+   case PCI_CHIP_RV515_7143:
+   case PCI_CHIP_RV515_7144:
+   case PCI_CHIP_RV515_7145:
+   case PCI_CHIP_RV515_7146:
+   case PCI_CHIP_RV515_7147:
+   case PCI_CHIP_RV515_7149:
+   case PCI_CHIP_RV515_714A:
+   case PCI_CHIP_RV515_714B:
+   case PCI_CHIP_RV515_714C:
+   case PCI_CHIP_RV515_714D:
+   case PCI_CHIP_RV515_714E:
+   case PCI_CHIP_RV515_714F:
+   case PCI_CHIP_RV515_7151:
+   case PCI_CHIP_RV515_7152:
+   case PCI_CHIP_RV515_7153:
+   case PCI_CHIP_RV515_715E:
+   case PCI_CHIP_RV515_715F:
+   case PCI_CHIP_RV515_7180:
+   case PCI_CHIP_RV515_7181:
+   case PCI_CHIP_RV515_7183:
+   case PCI_CHIP_RV515_7186:
+   case PCI_CHIP_RV515_7187:
+   case PCI_CHIP_RV515_7188:
+   case PCI_CHIP_RV515_718A:
+   case PCI_CHIP_RV515_718B:
+   case PCI_CHIP_RV515_718C:
+   case PCI_CHIP_RV515_718D:
+   case PCI_CHIP_RV515_718F:
+   case PCI_CHIP_RV515_7193:
+   case PCI_CHIP_RV515_7196:
+   case PCI_CHIP_RV515_719B:
+   case PCI_CHIP_RV515_719F:
+   case PCI_CHIP_RV515_7200:
+   case PCI_CHIP_RV515_7210:
+   case PCI_CHIP_RV515_7211:
+      screen->chip_family = CHIP_FAMILY_RV515;
+      fprintf(stderr, "Warning, RV515 detected, 3D HAHAHAHAHA!!.\n");
+      break;
+
+   case PCI_CHIP_RV530_71C0:
+   case PCI_CHIP_RV530_71C1:
+   case PCI_CHIP_RV530_71C2:
+   case PCI_CHIP_RV530_71C3:
+   case PCI_CHIP_RV530_71C4:
+   case PCI_CHIP_RV530_71C5:
+   case PCI_CHIP_RV530_71C6:
+   case PCI_CHIP_RV530_71C7:
+   case PCI_CHIP_RV530_71CD:
+   case PCI_CHIP_RV530_71CE:
+   case PCI_CHIP_RV530_71D2:
+   case PCI_CHIP_RV530_71D4:
+   case PCI_CHIP_RV530_71D5:
+   case PCI_CHIP_RV530_71D6:
+   case PCI_CHIP_RV530_71DA:
+   case PCI_CHIP_RV530_71DE:
+      screen->chip_family = CHIP_FAMILY_RV530;
+      fprintf(stderr, "Warning, RV530 detected, 3D HAHAHAHAHA!!.\n");
+      break;
+
+   case PCI_CHIP_R580_7240:
+   case PCI_CHIP_R580_7243:
+   case PCI_CHIP_R580_7244:
+   case PCI_CHIP_R580_7245:
+   case PCI_CHIP_R580_7246:
+   case PCI_CHIP_R580_7247:
+   case PCI_CHIP_R580_7248:
+   case PCI_CHIP_R580_7249:
+   case PCI_CHIP_R580_724A:
+   case PCI_CHIP_R580_724B:
+   case PCI_CHIP_R580_724C:
+   case PCI_CHIP_R580_724D:
+   case PCI_CHIP_R580_724E:
+   case PCI_CHIP_R580_724F:
+   case PCI_CHIP_R580_7284:
+      screen->chip_family = CHIP_FAMILY_R580;
+      fprintf(stderr, "Warning, R580 detected, 3D HAHAHAHAHA!!.\n");
+      break;
+
+   case PCI_CHIP_RV570_7280:
+   case PCI_CHIP_RV560_7281:
+   case PCI_CHIP_RV560_7283:
+   case PCI_CHIP_RV560_7287:
+   case PCI_CHIP_RV570_7288:
+   case PCI_CHIP_RV570_7289:
+   case PCI_CHIP_RV570_728B:
+   case PCI_CHIP_RV570_728C:
+   case PCI_CHIP_RV560_7290:
+   case PCI_CHIP_RV560_7291:
+   case PCI_CHIP_RV560_7293:
+   case PCI_CHIP_RV560_7297:
+      screen->chip_family = CHIP_FAMILY_RV560;
+      fprintf(stderr, "Warning, RV560 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
    default:
