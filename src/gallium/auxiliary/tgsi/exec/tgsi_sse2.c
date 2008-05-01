@@ -36,7 +36,7 @@
 
 #ifdef PIPE_ARCH_X86
 
-#define HIGH_PRECISION 1  /* for 1/sqrt() */
+#define HIGH_PRECISION 0  /* for 1/sqrt() */
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -2038,12 +2038,12 @@ static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num,
    unsigned char *inner_loop;
 
    soa_input = x86_make_reg( file_REG32, reg_AX );
-   aos_input = x86_make_reg( file_REG32, reg_BX );
+   aos_input = get_temp_base(); /* BX or SI */
    num_inputs = x86_make_reg( file_REG32, reg_CX );
    temp = x86_make_reg( file_REG32, reg_DX );
 
    /* Save EBX */
-   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_push( func, aos_input );
 
    x86_mov( func, soa_input, get_argument( soa + 1 ) );
    x86_mov( func, aos_input, get_argument( aos + 1 ) );
@@ -2088,7 +2088,7 @@ static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_pop( func, aos_input );
 }
 
 static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num, uint stride )
@@ -2100,12 +2100,12 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    unsigned char *inner_loop;
 
    soa_output = x86_make_reg( file_REG32, reg_AX );
-   aos_output = x86_make_reg( file_REG32, reg_BX );
+   aos_output = get_temp_base(); /* BX or SI */
    num_outputs = x86_make_reg( file_REG32, reg_CX );
    temp = x86_make_reg( file_REG32, reg_DX );
 
    /* Save EBX */
-   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_push( func, aos_output );
 
    x86_mov( func, soa_output, get_argument( soa + 1 ) );
    x86_mov( func, aos_output, get_argument( aos + 1 ) );
@@ -2150,7 +2150,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_pop( func, aos_output );
 }
 
 /**
