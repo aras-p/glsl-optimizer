@@ -495,6 +495,7 @@ void x86_dec( struct x86_function *p,
 void x86_ret( struct x86_function *p )
 {
    DUMP();
+   assert(p->stack_offset == 0);
    emit_1ub(p, 0xc3);
 }
 
