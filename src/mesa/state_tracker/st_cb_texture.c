@@ -494,6 +494,10 @@ st_TexImage(GLcontext * ctx,
       strip_texture_border(border, &width, &height, &depth,
                            unpack, &unpackNB);
       unpack = &unpackNB;
+      texImage->Width = width;
+      texImage->Height = height;
+      texImage->Depth = depth;
+      texImage->Border = 0;
       border = 0;
    }
 
