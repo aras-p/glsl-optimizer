@@ -478,7 +478,6 @@ st_TexImage(GLcontext * ctx,
             struct gl_texture_image *texImage,
             GLsizei imageSize, int compressed)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLint postConvWidth, postConvHeight;
@@ -635,7 +634,8 @@ st_TexImage(GLcontext * ctx,
       return;
 
    if (stImage->pt) {
-      texImage->Data = st_texture_image_map(ctx->st, stImage, 0);
+      texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
+                                            PIPE_BUFFER_USAGE_CPU_WRITE);
       dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
    }
    else {
@@ -684,8 +684,9 @@ st_TexImage(GLcontext * ctx,
 	 }
 
 	 if (stImage->pt && i < depth) {
-	    st_texture_image_unmap(stImage);
-	    texImage->Data = st_texture_image_map(ctx->st, stImage, i);
+	    st_texture_image_unmap(ctx->st, stImage);
+	    texImage->Data = st_texture_image_map(ctx->st, stImage, i,
+                                                  PIPE_BUFFER_USAGE_CPU_WRITE);
 	    src += srcImageStride;
 	 }
       }
@@ -694,12 +695,9 @@ st_TexImage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (stImage->pt) {
-      st_texture_image_unmap(stImage);
+      st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
    }
-
-   if (stObj->pt)
-      pipe->texture_update(pipe, stObj->pt, stImage->face, (1 << level));
 
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
@@ -793,7 +791,8 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       /* Image is stored in hardware format in a buffer managed by the
        * kernel.  Need to explicitly map and unmap it.
        */
-      texImage->Data = st_texture_image_map(ctx->st, stImage, 0);
+      texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
+                                            PIPE_BUFFER_USAGE_CPU_READ);
       texImage->RowStride = stImage->surface->pitch;
    }
    else {
@@ -823,8 +822,9 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
       }
 
       if (stImage->pt && i < depth) {
-	 st_texture_image_unmap(stImage);
-	 texImage->Data = st_texture_image_map(ctx->st, stImage, i);
+	 st_texture_image_unmap(ctx->st, stImage);
+	 texImage->Data = st_texture_image_map(ctx->st, stImage, i,
+                                               PIPE_BUFFER_USAGE_CPU_READ);
 	 dest += dstImageStride;
       }
    }
@@ -833,7 +833,7 @@ st_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 
    /* Unmap */
    if (stImage->pt) {
-      st_texture_image_unmap(stImage);
+      st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
    }
 }
@@ -874,8 +874,6 @@ st_TexSubimage(GLcontext * ctx,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride;
    GLuint srcImageStride = _mesa_image_image_stride(packing, width, height,
@@ -897,7 +895,8 @@ st_TexSubimage(GLcontext * ctx,
     * from uploading the buffer under us.
     */
    if (stImage->pt) {
-      texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset);
+      texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
+                                            PIPE_BUFFER_USAGE_CPU_WRITE);
       dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
    }
 
@@ -922,8 +921,9 @@ st_TexSubimage(GLcontext * ctx,
 
       if (stImage->pt && i < depth) {
          /* map next slice of 3D texture */
-	 st_texture_image_unmap(stImage);
-	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i);
+	 st_texture_image_unmap(ctx->st, stImage);
+	 texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset + i,
+                                               PIPE_BUFFER_USAGE_CPU_WRITE);
 	 src += srcImageStride;
       }
    }
@@ -935,11 +935,9 @@ st_TexSubimage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    if (stImage->pt) {
-      st_texture_image_unmap(stImage);
+      st_texture_image_unmap(ctx->st, stImage);
       texImage->Data = NULL;
    }
-
-   pipe->texture_update(pipe, stObj->pt, stImage->face, (1 << level));
 }
 
 
@@ -1058,7 +1056,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    src_surf = strb->surface;
 
-   dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ);
+   dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
+                                       PIPE_BUFFER_USAGE_CPU_WRITE);
 
    assert(width <= MAX_WIDTH);
 
@@ -1119,7 +1118,6 @@ do_copy_texsubimage(GLcontext *ctx,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
    struct st_texture_image *stImage = st_texture_image(texImage);
-   struct st_texture_object *stObj = st_texture_object(texObj);
    GLenum baseFormat = texImage->InternalFormat;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb;
@@ -1157,7 +1155,8 @@ do_copy_texsubimage(GLcontext *ctx,
    dest_format = stImage->pt->format;
 
    dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
-                                          stImage->level, destZ);
+                                          stImage->level, destZ,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE);
 
    if (ctx->_ImageTransferState == 0x0 &&
        strb->surface->buffer &&
@@ -1222,8 +1221,6 @@ do_copy_texsubimage(GLcontext *ctx,
    }
 
    pipe_surface_reference(&dest_surface, NULL);
-
-   pipe->texture_update(pipe, stObj->pt, stImage->face, (1 << level));
 
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
@@ -1529,7 +1526,6 @@ st_finalize_texture(GLcontext *ctx,
          if (stImage && stObj->pt != stImage->pt) {
             copy_image_data_to_texture(ctx->st, stObj, level, stImage);
 	    *needFlush = GL_TRUE;
-            pipe->texture_update(pipe, stObj->pt, face, (1 << level));
          }
       }
    }

@@ -91,8 +91,13 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format pipeFormat;
-   GLbitfield flags = 0x0; /* XXX needed? */
+   unsigned flags = (PIPE_BUFFER_USAGE_CPU_WRITE | 
+                     PIPE_BUFFER_USAGE_CPU_READ |
+                     PIPE_BUFFER_USAGE_GPU_WRITE |
+                     PIPE_BUFFER_USAGE_GPU_READ);
    int ret;
+
+   pipe_surface_reference( &strb->surface, NULL );
 
    if (!strb->surface) {
       /* first time surface creation */
@@ -103,11 +108,16 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       if (!strb->surface)
          return GL_FALSE;
    }
+#if 0
    else if (strb->surface->buffer) {
       /* release/discard the old surface buffer */
       pipe_reference_buffer(pipe, &strb->surface->buffer, NULL);
    }
-
+#else
+   else {
+      assert(0);
+   }
+#endif
    /* Determine surface format here */
    if (strb->format != PIPE_FORMAT_NONE) {
       assert(strb->format != 0);
@@ -368,7 +378,11 @@ st_render_texture(GLcontext *ctx,
    strb->surface = screen->get_tex_surface(screen, pt,
                                            att->CubeMapFace,
                                            att->TextureLevel,
-                                           att->Zoffset);
+                                           att->Zoffset,
+                                           PIPE_BUFFER_USAGE_CPU_READ |
+                                           PIPE_BUFFER_USAGE_CPU_WRITE |
+                                           PIPE_BUFFER_USAGE_GPU_READ |
+                                           PIPE_BUFFER_USAGE_GPU_WRITE);
    assert(strb->surface);
    assert(screen->is_format_supported(screen, strb->surface->format, PIPE_TEXTURE));
    assert(screen->is_format_supported(screen, strb->surface->format, PIPE_SURFACE));
@@ -396,21 +410,18 @@ static void
 st_finish_render_texture(GLcontext *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
    assert(strb);
 
    ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   ctx->st->pipe->texture_update(ctx->st->pipe,
-                                 st_get_texobj_texture(att->Texture),
-                                 att->CubeMapFace, 1 << att->TextureLevel);
+   screen->tex_surface_release( screen, &strb->surface );
 
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
    */
-
-   pipe_surface_reference(&strb->surface, NULL);
 
    _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
 

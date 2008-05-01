@@ -61,13 +61,14 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                        GLvoid *pixels)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(fb->_StencilBuffer);
    struct pipe_surface *ps = strb->surface;
    ubyte *stmap;
    GLint j;
 
    /* map the stencil buffer */
-   stmap = pipe_surface_map(ps);
+   stmap = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_READ);
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -124,7 +125,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
 
    /* unmap the stencil buffer */
-   pipe_surface_unmap(ps);
+   screen->surface_unmap(screen, ps);
 }
 
 

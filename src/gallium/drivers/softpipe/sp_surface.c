@@ -47,18 +47,27 @@ sp_surface_copy(struct pipe_context *pipe,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
    assert( dst->cpp == src->cpp );
+   void *dst_map = pipe->screen->surface_map( pipe->screen,
+                                              dst,
+                                              PIPE_BUFFER_USAGE_GPU_WRITE );
 
-   pipe_copy_rect(pipe_surface_map(dst),
+   const void *src_map = pipe->screen->surface_map( pipe->screen,
+                                                    src,
+                                                    PIPE_BUFFER_USAGE_GPU_READ );
+
+   assert(src_map && dst_map);
+
+   pipe_copy_rect(dst_map,
                   dst->cpp,
                   dst->pitch,
                   dstx, dsty,
                   width, height,
-                  pipe_surface_map(src),
+                  src_map,
                   do_flip ? -(int) src->pitch : src->pitch,
                   srcx, do_flip ? 1 - srcy - height : srcy);
 
-   pipe_surface_unmap(src);
-   pipe_surface_unmap(dst);
+   pipe->screen->surface_unmap(pipe->screen, src);
+   pipe->screen->surface_unmap(pipe->screen, dst);
 }
 
 
@@ -83,7 +92,9 @@ sp_surface_fill(struct pipe_context *pipe,
 		unsigned width, unsigned height, unsigned value)
 {
    unsigned i, j;
-   void *dst_map = pipe_surface_map(dst);
+   void *dst_map = pipe->screen->surface_map( pipe->screen,
+                                              dst,
+                                              PIPE_BUFFER_USAGE_GPU_WRITE );
 
    assert(dst->pitch > 0);
    assert(width <= dst->pitch);
@@ -147,7 +158,7 @@ sp_surface_fill(struct pipe_context *pipe,
       break;
    }
 
-   pipe_surface_unmap( dst );
+   pipe->screen->surface_unmap(pipe->screen, dst);
 }
 
 

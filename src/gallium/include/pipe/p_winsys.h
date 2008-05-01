@@ -90,7 +90,7 @@ struct pipe_winsys
    
    void (*surface_release)(struct pipe_winsys *ws, struct pipe_surface **s);
 
-   
+
    /**
     * Buffer management. Buffer attributes are mostly fixed over its lifetime.
     *

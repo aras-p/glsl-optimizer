@@ -376,8 +376,14 @@ pstip_update_texture(struct pstip_stage *pstip)
    uint i, j;
    ubyte *data;
 
-   surface = screen->get_tex_surface(screen, pstip->texture, 0, 0, 0);
-   data = pipe_surface_map(surface);
+   /* XXX: want to avoid flushing just because we use stipple: 
+    */
+   pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
+
+   surface = screen->get_tex_surface(screen, pstip->texture, 0, 0, 0,
+                                     PIPE_BUFFER_USAGE_CPU_WRITE);
+   data = screen->surface_map(screen, surface,
+                              PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /*
     * Load alpha texture.
@@ -399,9 +405,8 @@ pstip_update_texture(struct pstip_stage *pstip)
    }
 
    /* unmap */
-   pipe_surface_unmap(surface);
-   pipe_surface_reference(&surface, NULL);
-   pipe->texture_update(pipe, pstip->texture, 0, 0x1);
+   screen->surface_unmap(screen, surface);
+   screen->tex_surface_release(screen, &surface);
 }
 
 

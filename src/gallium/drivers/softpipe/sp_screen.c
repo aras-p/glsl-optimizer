@@ -33,6 +33,7 @@
 
 #include "sp_texture.h"
 #include "sp_winsys.h"
+#include "sp_screen.h"
 
 
 static const char *
@@ -137,6 +138,7 @@ softpipe_destroy_screen( struct pipe_screen *screen )
 }
 
 
+
 /**
  * Create a new pipe_screen object
  * Note: we're not presently subclassing pipe_screen (no softpipe_screen).
@@ -144,22 +146,22 @@ softpipe_destroy_screen( struct pipe_screen *screen )
 struct pipe_screen *
 softpipe_create_screen(struct pipe_winsys *winsys)
 {
-   struct pipe_screen *screen = CALLOC_STRUCT(pipe_screen);
+   struct softpipe_screen *screen = CALLOC_STRUCT(softpipe_screen);
 
    if (!screen)
       return NULL;
 
-   screen->winsys = winsys;
+   screen->base.winsys = winsys;
 
-   screen->destroy = softpipe_destroy_screen;
+   screen->base.destroy = softpipe_destroy_screen;
 
-   screen->get_name = softpipe_get_name;
-   screen->get_vendor = softpipe_get_vendor;
-   screen->get_param = softpipe_get_param;
-   screen->get_paramf = softpipe_get_paramf;
-   screen->is_format_supported = softpipe_is_format_supported;
+   screen->base.get_name = softpipe_get_name;
+   screen->base.get_vendor = softpipe_get_vendor;
+   screen->base.get_param = softpipe_get_param;
+   screen->base.get_paramf = softpipe_get_paramf;
+   screen->base.is_format_supported = softpipe_is_format_supported;
 
-   softpipe_init_screen_texture_funcs(screen);
+   softpipe_init_screen_texture_funcs(&screen->base);
 
-   return screen;
+   return &screen->base;
 }

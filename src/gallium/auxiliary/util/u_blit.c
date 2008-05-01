@@ -287,7 +287,8 @@ util_blit_pixels(struct blit_state *ctx,
    if (!tex)
       return;
 
-   texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0);
+   texSurf = screen->get_tex_surface(screen, tex, 0, 0, 0, 
+                                     PIPE_BUFFER_USAGE_GPU_WRITE);
 
    /* load temp texture */
    pipe->surface_copy(pipe, FALSE,

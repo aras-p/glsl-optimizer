@@ -415,8 +415,11 @@ aaline_create_texture(struct aaline_stage *aaline)
 
       assert(aaline->texture->width[level] == aaline->texture->height[level]);
 
-      surface = screen->get_tex_surface(screen, aaline->texture, 0, level, 0);
-      data = pipe_surface_map(surface);
+      /* This texture is new, no need to flush. 
+       */
+      surface = screen->get_tex_surface(screen, aaline->texture, 0, level, 0,
+                                        PIPE_BUFFER_USAGE_CPU_WRITE);
+      data = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_WRITE);
       if (data == NULL)
          return FALSE;
 
@@ -440,9 +443,8 @@ aaline_create_texture(struct aaline_stage *aaline)
       }
 
       /* unmap */
-      pipe_surface_unmap(surface);
-      pipe_surface_reference(&surface, NULL);
-      pipe->texture_update(pipe, aaline->texture, 0, (1 << level));
+      screen->surface_unmap(screen, surface);
+      screen->tex_surface_release(screen, &surface);
    }
    return TRUE;
 }

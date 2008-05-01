@@ -61,7 +61,6 @@ softpipe_texture(struct pipe_texture *pt)
 extern void
 softpipe_init_texture_funcs( struct softpipe_context *softpipe );
 
-
 extern void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 

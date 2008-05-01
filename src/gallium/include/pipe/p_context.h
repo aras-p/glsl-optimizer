@@ -198,12 +198,6 @@ struct pipe_context {
    /*@}*/
 
 
-   /** Called when texture data is changed */
-   void (*texture_update)(struct pipe_context *pipe,
-                          struct pipe_texture *texture,
-                          uint face, uint dirtyLevelsMask);
-
-
    /** Flush rendering (flags = bitmask of PIPE_FLUSH_x tokens) */
    void (*flush)( struct pipe_context *pipe,
                   unsigned flags,

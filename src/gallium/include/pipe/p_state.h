@@ -273,7 +273,11 @@ struct pipe_surface
    unsigned pitch;               /**< in pixels */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
+   unsigned usage;              /**< PIPE_BUFFER_USAGE_*  */
+
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
+
+   struct pipe_texture *texture; /**< optional texture into which this is a view  */
 };
 
 

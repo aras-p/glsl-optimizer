@@ -541,13 +541,6 @@ i915_texture_release_screen(struct pipe_screen *screen,
 }
 
 
-static void
-i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
-                    uint face, uint levelsMask)
-{
-   /* no-op? */
-}
-
 
 /*
  * XXX note: same as code in sp_surface.c
@@ -555,7 +548,8 @@ i915_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
 static struct pipe_surface *
 i915_get_tex_surface_screen(struct pipe_screen *screen,
                             struct pipe_texture *pt,
-                            unsigned face, unsigned level, unsigned zslice)
+                            unsigned face, unsigned level, unsigned zslice,
+                            unsigned flags)
 {
    struct i915_texture *tex = (struct i915_texture *)pt;
    struct pipe_winsys *ws = screen->winsys;
@@ -586,6 +580,7 @@ i915_get_tex_surface_screen(struct pipe_screen *screen,
       ps->height = pt->height[level];
       ps->pitch = tex->pitch;
       ps->offset = offset;
+      ps->usage = flags;
    }
    return ps;
 }
@@ -594,7 +589,7 @@ i915_get_tex_surface_screen(struct pipe_screen *screen,
 void
 i915_init_texture_functions(struct i915_context *i915)
 {
-   i915->pipe.texture_update = i915_texture_update;
+//   i915->pipe.texture_update = i915_texture_update;
 }
 
 

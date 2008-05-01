@@ -96,7 +96,22 @@ struct pipe_screen {
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
                                            struct pipe_texture *texture,
                                            unsigned face, unsigned level,
-                                           unsigned zslice);
+                                           unsigned zslice,
+                                           unsigned usage );
+
+   /* Surfaces allocated by the above must be released here:
+    */
+   void (*tex_surface_release)( struct pipe_screen *,
+                                struct pipe_surface ** );
+   
+
+   void *(*surface_map)( struct pipe_screen *,
+                         struct pipe_surface *surface,
+                         unsigned flags );
+
+   void (*surface_unmap)( struct pipe_screen *,
+                          struct pipe_surface *surface );
+   
 };
 
 

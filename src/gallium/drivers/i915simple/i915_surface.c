@@ -51,17 +51,25 @@ i915_surface_copy(struct pipe_context *pipe,
    assert( dst->cpp == src->cpp );
 
    if (0) {
-      pipe_copy_rect(pipe_surface_map(dst),
+      void *dst_map = pipe->screen->surface_map( pipe->screen,
+                                                 dst,
+                                                 PIPE_BUFFER_USAGE_CPU_WRITE );
+      
+      const void *src_map = pipe->screen->surface_map( pipe->screen,
+                                                       src,
+                                                       PIPE_BUFFER_USAGE_CPU_READ );
+      
+      pipe_copy_rect(dst_map,
                      dst->cpp,
                      dst->pitch,
                      dstx, dsty, 
                      width, height, 
-                     pipe_surface_map(src), 
+                     src_map, 
                      do_flip ? -(int) src->pitch : src->pitch, 
                      srcx, do_flip ? 1 - srcy - height : srcy);
 
-      pipe_surface_unmap(src);
-      pipe_surface_unmap(dst);
+      pipe->screen->surface_unmap(pipe->screen, src);
+      pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
       i915_copy_blit( i915_context(pipe),
@@ -92,7 +100,10 @@ i915_surface_fill(struct pipe_context *pipe,
 {
    if (0) {
       unsigned i, j;
-      void *dst_map = pipe_surface_map(dst);
+      void *dst_map = pipe->screen->surface_map( pipe->screen,
+                                                 dst,
+                                                 PIPE_BUFFER_USAGE_CPU_WRITE );
+
 
       switch (dst->cpp) {
       case 1: {
@@ -126,7 +137,7 @@ i915_surface_fill(struct pipe_context *pipe,
 	 break;
       }
 
-      pipe_surface_unmap( dst );
+      pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
       i915_fill_blit( i915_context(pipe),

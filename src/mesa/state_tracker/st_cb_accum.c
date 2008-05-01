@@ -106,13 +106,15 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
    struct pipe_surface *acc_ps = acc_strb->surface;
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    const GLint xpos = ctx->DrawBuffer->_Xmin;
    const GLint ypos = ctx->DrawBuffer->_Ymin;
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
    GLvoid *map;
 
-   map = pipe_surface_map(acc_ps);
+   map = screen->surface_map(screen, acc_ps,
+                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* note acc_strb->format might not equal acc_ps->format */
    switch (acc_strb->format) {
@@ -140,7 +142,7 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       _mesa_problem(ctx, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_surface_unmap(acc_ps);
+   screen->surface_unmap(screen, acc_ps);
 }
 
 
@@ -150,10 +152,12 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
           GLint xpos, GLint ypos, GLint width, GLint height,
           struct st_renderbuffer *acc_strb)
 {
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct pipe_surface *acc_ps = acc_strb->surface;
    GLvoid *map;
 
-   map = pipe_surface_map(acc_ps);
+   map = screen->surface_map(screen, acc_ps, 
+                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* note acc_strb->format might not equal acc_ps->format */
    switch (acc_strb->format) {
@@ -174,7 +178,7 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
       _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_surface_unmap(acc_ps);
+   screen->surface_unmap(screen, acc_ps);
 }
 
 

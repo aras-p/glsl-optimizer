@@ -327,10 +327,11 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       return NULL;
    }
 
-   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
+   surface = screen->get_tex_surface(screen, pt, 0, 0, 0,
+                                     PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* map texture surface */
-   dest = pipe_surface_map(surface);
+   dest = screen->surface_map(screen, surface, PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* Put image into texture surface */
    memset(dest, 0xff, height * surface->pitch);
@@ -340,9 +341,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
    _mesa_unmap_bitmap_pbo(ctx, unpack);
 
    /* Release surface */
-   pipe_surface_unmap(surface);
+   screen->surface_unmap(screen, surface);
    pipe_surface_reference(&surface, NULL);
-   pipe->texture_update(pipe, pt, 0, 0x1);
 
    return pt;
 }
@@ -544,8 +544,10 @@ reset_cache(struct st_context *st)
    /* Map the texture surface.
     * Subsequent glBitmap calls will write into the texture image.
     */
-   cache->surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
-   cache->buffer = pipe_surface_map(cache->surf);
+   cache->surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0,
+                                         PIPE_BUFFER_USAGE_CPU_WRITE);
+   cache->buffer = screen->surface_map(screen, cache->surf,
+                                       PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* init image to all 0xff */
    memset(cache->buffer, 0xff, BITMAP_CACHE_WIDTH * BITMAP_CACHE_HEIGHT);
@@ -562,6 +564,7 @@ st_flush_bitmap_cache(struct st_context *st)
       if (st->ctx->DrawBuffer) {
          struct bitmap_cache *cache = st->bitmap.cache;
          struct pipe_context *pipe = st->pipe;
+         struct pipe_screen *screen = pipe->screen;
 
          assert(cache->xmin <= cache->xmax);
          /*
@@ -574,12 +577,18 @@ st_flush_bitmap_cache(struct st_context *st)
          /* The texture surface has been mapped until now.
           * So unmap and release the texture surface before drawing.
           */
+#if 0
          pipe_surface_unmap(cache->surf);
          pipe_surface_reference(&cache->surf, NULL);
+#else
+         screen->surface_unmap(screen, cache->surf);
+         screen->tex_surface_release(screen, &cache->surf);
+#endif         
 
+#if 0
          /* XXX is this needed? */
          pipe->texture_update(pipe, cache->texture, 0, 0x1);
-
+#endif
          draw_bitmap_quad(st->ctx,
                           cache->xpos,
                           cache->ypos,

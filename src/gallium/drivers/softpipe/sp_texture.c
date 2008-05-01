@@ -40,6 +40,7 @@
 #include "sp_state.h"
 #include "sp_texture.h"
 #include "sp_tile_cache.h"
+#include "sp_screen.h"
 
 
 /* Simple, maximally packed layout.
@@ -116,19 +117,10 @@ softpipe_texture_release(struct pipe_screen *screen,
    if (!*pt)
       return;
 
-   /*
-   DBG("%s %p refcount will be %d\n",
-       __FUNCTION__, (void *) *pt, (*pt)->refcount - 1);
-   */
    if (--(*pt)->refcount <= 0) {
       struct softpipe_texture *spt = softpipe_texture(*pt);
 
-      /*
-      DBG("%s deleting %p\n", __FUNCTION__, (void *) spt);
-      */
-
       pipe_buffer_reference(screen->winsys, &spt->buffer, NULL);
-
       FREE(spt);
    }
    *pt = NULL;
@@ -138,7 +130,8 @@ softpipe_texture_release(struct pipe_screen *screen,
 static struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_screen *screen,
                          struct pipe_texture *pt,
-                         unsigned face, unsigned level, unsigned zslice)
+                         unsigned face, unsigned level, unsigned zslice,
+                         unsigned usage)
 {
    struct pipe_winsys *ws = screen->winsys;
    struct softpipe_texture *spt = softpipe_texture(pt);
@@ -157,6 +150,7 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->height = pt->height[level];
       ps->pitch = ps->width;
       ps->offset = spt->level_offset[level];
+      ps->usage = usage;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
@@ -167,30 +161,74 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 	 assert(face == 0);
 	 assert(zslice == 0);
       }
+
+      if (usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
+                   PIPE_BUFFER_USAGE_GPU_WRITE)) {
+         /* XXX if writing to the texture, invalidate the texcache entries!!! */
+         assert(0);
+      }
    }
    return ps;
 }
 
 
-static void
-softpipe_texture_update(struct pipe_context *pipe,
-                        struct pipe_texture *texture,
-                        uint face, uint levelsMask)
+static void 
+softpipe_tex_surface_release(struct pipe_screen *screen, 
+                             struct pipe_surface **s)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   uint unit;
-   for (unit = 0; unit < softpipe->num_textures; unit++) {
-      if (softpipe->texture[unit] == texture) {
-         sp_flush_tile_cache(softpipe, softpipe->tex_cache[unit]);
-      }
+   /* Effectively do the texture_update work here - if texture images
+    * needed post-processing to put them into hardware layout, this is
+    * where it would happen.  For softpipe, nothing to do.
+    */
+   assert ((*s)->texture);
+
+   screen->winsys->surface_release(screen->winsys, s);
+}
+
+
+static void *
+softpipe_surface_map( struct pipe_screen *screen,
+                      struct pipe_surface *surface,
+                      unsigned flags )
+{
+   ubyte *map;
+
+   if (flags & ~surface->usage) {
+      assert(0);
+      return NULL;
    }
+
+   map = screen->winsys->buffer_map( screen->winsys, surface->buffer, flags );
+   if (map == NULL)
+      return NULL;
+
+   /* May want to different things here depending on read/write nature
+    * of the map:
+    */
+   if (surface->texture &&
+       (flags & PIPE_BUFFER_USAGE_GPU_WRITE)) 
+   {
+      /* Do something to notify sharing contexts of a texture change.
+       * In softpipe, that would mean flushing the texture cache.
+       */
+      softpipe_screen(screen)->timestamp++;
+   }
+   
+   return map + surface->offset;
+}
+
+
+static void
+softpipe_surface_unmap(struct pipe_screen *screen,
+                       struct pipe_surface *surface)
+{
+   screen->winsys->buffer_unmap( screen->winsys, surface->buffer );
 }
 
 
 void
-softpipe_init_texture_funcs( struct softpipe_context *softpipe )
+softpipe_init_texture_funcs(struct softpipe_context *sp)
 {
-   softpipe->pipe.texture_update = softpipe_texture_update;
 }
 
 
@@ -199,5 +237,10 @@ softpipe_init_screen_texture_funcs(struct pipe_screen *screen)
 {
    screen->texture_create = softpipe_texture_create;
    screen->texture_release = softpipe_texture_release;
+
    screen->get_tex_surface = softpipe_get_tex_surface;
+   screen->tex_surface_release = softpipe_tex_surface_release;
+
+   screen->surface_map = softpipe_surface_map;
+   screen->surface_unmap = softpipe_surface_unmap;
 }

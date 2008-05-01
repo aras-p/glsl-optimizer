@@ -50,25 +50,28 @@ softpipe_flush( struct pipe_context *pipe,
 
    draw_flush(softpipe->draw);
 
-   /* - flush the quad pipeline
-    * - flush the texture cache
-    * - flush the render cache
-    */
+   if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
+      for (i = 0; i < softpipe->num_textures; i++) {
+         sp_flush_tile_cache(softpipe, softpipe->tex_cache[i]);
+      }
+   }
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++)
-      if (softpipe->cbuf_cache[i])
-         sp_flush_tile_cache(softpipe, softpipe->cbuf_cache[i]);
+   if (flags & PIPE_FLUSH_RENDER_CACHE) {
+      for (i = 0; i < softpipe->framebuffer.num_cbufs; i++)
+         if (softpipe->cbuf_cache[i])
+            sp_flush_tile_cache(softpipe, softpipe->cbuf_cache[i]);
 
-   if (softpipe->zsbuf_cache)
-      sp_flush_tile_cache(softpipe, softpipe->zsbuf_cache);
+      if (softpipe->zsbuf_cache)
+         sp_flush_tile_cache(softpipe, softpipe->zsbuf_cache);
 
-   /* Need this call for hardware buffers before swapbuffers.
-    *
-    * there should probably be another/different flush-type function
-    * that's called before swapbuffers because we don't always want
-    * to unmap surfaces when flushing.
-    */
-   softpipe_unmap_surfaces(softpipe);
+      /* Need this call for hardware buffers before swapbuffers.
+       *
+       * there should probably be another/different flush-type function
+       * that's called before swapbuffers because we don't always want
+       * to unmap surfaces when flushing.
+       */
+      softpipe_unmap_surfaces(softpipe);
+   }
 
    if (fence)
       *fence = NULL;

@@ -407,7 +407,7 @@ brw_get_tex_surface_screen(struct pipe_screen *screen,
 void
 brw_init_texture_functions(struct brw_context *brw)
 {
-   brw->pipe.texture_update = brw_texture_update;
+//   brw->pipe.texture_update = brw_texture_update;
 }
 
 

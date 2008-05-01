@@ -50,7 +50,7 @@ softpipe_map_constant_buffers(struct softpipe_context *sp)
    for (i = 0; i < 2; i++) {
       if (sp->constants[i].size)
          sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
-                                                  PIPE_BUFFER_USAGE_CPU_READ);
+                                                  PIPE_BUFFER_USAGE_GPU_READ);
    }
 
    draw_set_mapped_constant_buffer(sp->draw,
@@ -133,14 +133,14 @@ softpipe_draw_elements(struct pipe_context *pipe,
       void *buf
          = pipe->winsys->buffer_map(pipe->winsys,
                                     sp->vertex_buffer[i].buffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+                                    PIPE_BUFFER_USAGE_GPU_READ);
       draw_set_mapped_vertex_buffer(draw, i, buf);
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
       void *mapped_indexes
          = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
-                                    PIPE_BUFFER_USAGE_CPU_READ);
+                                    PIPE_BUFFER_USAGE_GPU_READ);
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {

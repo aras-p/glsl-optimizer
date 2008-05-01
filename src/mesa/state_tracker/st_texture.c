@@ -184,25 +184,30 @@ st_texture_image_offset(const struct pipe_texture * pt,
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-		     GLuint zoffset)
+		     GLuint zoffset,
+                     GLuint flags )
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct pipe_texture *pt = stImage->pt;
    DBG("%s \n", __FUNCTION__);
 
    stImage->surface = screen->get_tex_surface(screen, pt, stImage->face,
-                                              stImage->level, zoffset);
+                                              stImage->level, zoffset, 
+                                              flags);
 
-   return pipe_surface_map(stImage->surface);
+   return screen->surface_map(screen, stImage->surface, flags);
 }
 
 
 void
-st_texture_image_unmap(struct st_texture_image *stImage)
+st_texture_image_unmap(struct st_context *st,
+                       struct st_texture_image *stImage)
 {
+   struct pipe_screen *screen = st->pipe->screen;
+
    DBG("%s\n", __FUNCTION__);
 
-   pipe_surface_unmap(stImage->surface);
+   screen->surface_unmap(screen, stImage->surface);
 
    pipe_surface_reference(&stImage->surface, NULL);
 }
@@ -224,12 +229,15 @@ st_surface_data(struct pipe_context *pipe,
 		const void *src, unsigned src_pitch,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   pipe_copy_rect(pipe_surface_map(dst),
+   struct pipe_screen *screen = pipe->screen;
+   void *map = screen->surface_map(screen, dst, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   pipe_copy_rect(map,
                   dst->cpp,
                   dst->pitch,
                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
-   pipe_surface_unmap(dst);
+   screen->surface_unmap(screen, dst);
 }
 
 
@@ -256,7 +264,8 @@ st_texture_image_data(struct pipe_context *pipe,
       if(dst->compressed)
 	 height /= 4;
 
-      dst_surface = screen->get_tex_surface(screen, dst, face, level, i);
+      dst_surface = screen->get_tex_surface(screen, dst, face, level, i,
+                                            PIPE_BUFFER_USAGE_CPU_WRITE);
 
       st_surface_data(pipe, dst_surface,
 		      0, 0,                             /* dstx, dsty */
@@ -265,7 +274,7 @@ st_texture_image_data(struct pipe_context *pipe,
 		      0, 0,                             /* source x, y */
 		      dst->width[level], height);       /* width, height */
 
-      pipe_surface_reference(&dst_surface, NULL);
+      screen->tex_surface_release(screen, &dst_surface);
 
       srcUB += src_image_pitch * dst->cpp;
    }
@@ -304,8 +313,11 @@ st_texture_image_copy(struct pipe_context *pipe,
       assert(src->width[srcLevel] == width);
       assert(src->height[srcLevel] == height);
 
-      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i);
-      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i);
+      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
+                                            PIPE_BUFFER_USAGE_GPU_WRITE);
+
+      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
+                                            PIPE_BUFFER_USAGE_GPU_READ);
 
       pipe->surface_copy(pipe,
                          FALSE,

@@ -121,10 +121,12 @@ st_texture_match_image(const struct pipe_texture *pt,
 extern GLubyte *
 st_texture_image_map(struct st_context *st,
                      struct st_texture_image *stImage,
-		     GLuint zoffset);
+		     GLuint zoffset,
+                     GLuint flags);
 
 extern void
-st_texture_image_unmap(struct st_texture_image *stImage);
+st_texture_image_unmap(struct st_context *st,
+                       struct st_texture_image *stImage);
 
 
 /* Return pointers to each 2d slice within an image.  Indexed by depth

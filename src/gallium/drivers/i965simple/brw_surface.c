@@ -35,27 +35,6 @@
 #include "util/p_tile.h"
 
 
-/* Upload data to a rectangular sub-region.  Lots of choices how to do this:
- *
- * - memcpy by span to current destination
- * - upload data as new buffer and blit
- *
- * Currently always memcpy.
- */
-static void
-brw_surface_data(struct pipe_context *pipe,
-                 struct pipe_surface *dst,
-                 unsigned dstx, unsigned dsty,
-                 const void *src, unsigned src_pitch,
-                 unsigned srcx, unsigned srcy, unsigned width, unsigned height)
-{
-   pipe_copy_rect(pipe_surface_map(dst) + dst->offset,
-                  dst->cpp, dst->pitch,
-                  dstx, dsty, width, height, src, src_pitch, srcx, srcy);
-
-   pipe_surface_unmap(dst);
-}
-
 
 /* Assumes all values are within bounds -- no checking at this level -
  * do it higher up if required.
@@ -72,17 +51,25 @@ brw_surface_copy(struct pipe_context *pipe,
    assert(dst->cpp == src->cpp);
 
    if (0) {
-      pipe_copy_rect(pipe_surface_map(dst) + dst->offset,
+      void *dst_map = pipe->screen->surface_map( pipe->screen,
+                                                 dst,
+                                                 PIPE_BUFFER_USAGE_CPU_WRITE );
+      
+      const void *src_map = pipe->screen->surface_map( pipe->screen,
+                                                       src,
+                                                       PIPE_BUFFER_USAGE_CPU_READ );
+      
+      pipe_copy_rect(dst_map,
                      dst->cpp,
                      dst->pitch,
-                     dstx, dsty,
-                     width, height,
-                     pipe_surface_map(src) + src->offset,
-                     do_flip ? -src->pitch : src->pitch,
+                     dstx, dsty, 
+                     width, height, 
+                     src_map, 
+                     do_flip ? -(int) src->pitch : src->pitch, 
                      srcx, do_flip ? 1 - srcy - height : srcy);
 
-      pipe_surface_unmap(src);
-      pipe_surface_unmap(dst);
+      pipe->screen->surface_unmap(pipe->screen, src);
+      pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
       brw_copy_blit(brw_context(pipe),
@@ -113,7 +100,10 @@ brw_surface_fill(struct pipe_context *pipe,
 {
    if (0) {
       unsigned i, j;
-      void *dst_map = pipe_surface_map(dst);
+      void *dst_map = pipe->screen->surface_map( pipe->screen,
+                                                 dst,
+                                                 PIPE_BUFFER_USAGE_CPU_WRITE );
+
 
       switch (dst->cpp) {
       case 1: {
@@ -147,7 +137,7 @@ brw_surface_fill(struct pipe_context *pipe,
 	 break;
       }
 
-      pipe_surface_unmap( dst );
+      pipe->screen->surface_unmap(pipe->screen, dst);
    }
    else {
       brw_fill_blit(brw_context(pipe),
@@ -164,7 +154,6 @@ brw_surface_fill(struct pipe_context *pipe,
 void
 brw_init_surface_functions(struct brw_context *brw)
 {
-   (void) brw_surface_data; /* silence warning */
    brw->pipe.surface_copy  = brw_surface_copy;
    brw->pipe.surface_fill  = brw_surface_fill;
 }
