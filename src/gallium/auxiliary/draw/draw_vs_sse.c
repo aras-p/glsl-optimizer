@@ -51,17 +51,17 @@
 
 #if SSE_SWIZZLES
 typedef void (XSTDCALL *codegen_function) (
-   const struct tgsi_exec_vector *input,
-   struct tgsi_exec_vector *output,
-   float (*constant)[4],
-   struct tgsi_exec_vector *temporary,
-   float (*immediates)[4],
-   const float (*aos_input)[4],
-   uint num_inputs,
-   uint input_stride,
-   float (*aos_output)[4],
-   uint num_outputs,
-   uint output_stride );
+   const struct tgsi_exec_vector *input, /* 1 */
+   struct tgsi_exec_vector *output, /* 2 */
+   float (*constant)[4],        /* 3 */
+   struct tgsi_exec_vector *temporary, /* 4 */
+   float (*immediates)[4],      /* 5 */
+   const float (*aos_input)[4], /* 6 */
+   uint num_inputs,             /* 7 */
+   uint input_stride,           /* 8 */
+   float (*aos_output)[4],      /* 9 */
+   uint num_outputs,            /* 10 */
+   uint output_stride );        /* 11 */
 #else
 typedef void (XSTDCALL *codegen_function) (
    const struct tgsi_exec_vector *input,
