@@ -49,11 +49,11 @@ sp_surface_copy(struct pipe_context *pipe,
    assert( dst->cpp == src->cpp );
    void *dst_map = pipe->screen->surface_map( pipe->screen,
                                               dst,
-                                              PIPE_BUFFER_USAGE_GPU_WRITE );
+                                              PIPE_BUFFER_USAGE_CPU_WRITE );
 
    const void *src_map = pipe->screen->surface_map( pipe->screen,
                                                     src,
-                                                    PIPE_BUFFER_USAGE_GPU_READ );
+                                                    PIPE_BUFFER_USAGE_CPU_READ );
 
    assert(src_map && dst_map);
 
@@ -94,7 +94,7 @@ sp_surface_fill(struct pipe_context *pipe,
    unsigned i, j;
    void *dst_map = pipe->screen->surface_map( pipe->screen,
                                               dst,
-                                              PIPE_BUFFER_USAGE_GPU_WRITE );
+                                              PIPE_BUFFER_USAGE_CPU_WRITE );
 
    assert(dst->pitch > 0);
    assert(width <= dst->pitch);

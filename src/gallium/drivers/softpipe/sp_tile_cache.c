@@ -165,8 +165,8 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    if (tc->surface) {
       if (tc->surface_map) /* XXX: this is always NULL!? */
 	 tc->surface_map = tc->screen->surface_map(tc->screen, tc->surface,
-                                                   PIPE_BUFFER_USAGE_GPU_READ | 
-                                                   PIPE_BUFFER_USAGE_GPU_WRITE);
+                                                   PIPE_BUFFER_USAGE_CPU_READ | 
+                                                   PIPE_BUFFER_USAGE_CPU_WRITE);
 
       tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
@@ -191,12 +191,12 @@ sp_tile_cache_map_surfaces(struct softpipe_tile_cache *tc)
 {
    if (tc->surface && !tc->surface_map)
       tc->surface_map = tc->screen->surface_map(tc->screen, tc->surface,
-                                                PIPE_BUFFER_USAGE_GPU_WRITE |
-                                                PIPE_BUFFER_USAGE_GPU_READ);
+                                                PIPE_BUFFER_USAGE_CPU_WRITE |
+                                                PIPE_BUFFER_USAGE_CPU_READ);
 
    if (tc->tex_surf && !tc->tex_surf_map)
       tc->tex_surf_map = tc->screen->surface_map(tc->screen, tc->tex_surf,
-                                                 PIPE_BUFFER_USAGE_GPU_READ);
+                                                 PIPE_BUFFER_USAGE_CPU_READ);
 }
 
 
@@ -523,9 +523,9 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
             tc->screen->surface_unmap(tc->screen, tc->tex_surf);
 
          tc->tex_surf = screen->get_tex_surface(screen, tc->texture, face, level, z, 
-                                                PIPE_BUFFER_USAGE_GPU_READ);
+                                                PIPE_BUFFER_USAGE_CPU_READ);
          tc->tex_surf_map = screen->surface_map(screen, tc->tex_surf,
-                                                PIPE_BUFFER_USAGE_GPU_READ);
+                                                PIPE_BUFFER_USAGE_CPU_READ);
 
          tc->tex_face = face;
          tc->tex_level = level;

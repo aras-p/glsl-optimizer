@@ -151,6 +151,23 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       ps->pitch = ps->width;
       ps->offset = spt->level_offset[level];
       ps->usage = usage;
+      
+      /* Because we are softpipe, anything that the state tracker
+       * thought was going to be done with the GPU will actually get
+       * done with the CPU.  Let's adjust the flags to take that into
+       * account.
+       */
+      if (ps->usage & PIPE_BUFFER_USAGE_GPU_WRITE)
+         ps->usage |= PIPE_BUFFER_USAGE_CPU_WRITE;
+
+      if (ps->usage & PIPE_BUFFER_USAGE_GPU_READ)
+         ps->usage |= PIPE_BUFFER_USAGE_CPU_READ;
+
+
+      pipe_texture_reference(&ps->texture, pt); 
+      ps->face = face;
+      ps->level = level;
+      ps->zslice = zslice;
 
       if (pt->target == PIPE_TEXTURE_CUBE || pt->target == PIPE_TEXTURE_3D) {
 	 ps->offset += ((pt->target == PIPE_TEXTURE_CUBE) ? face : zslice) *
@@ -164,8 +181,18 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
 
       if (usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
                    PIPE_BUFFER_USAGE_GPU_WRITE)) {
-         /* XXX if writing to the texture, invalidate the texcache entries!!! */
-         assert(0);
+         /* XXX if writing to the texture, invalidate the texcache entries!!! 
+          *
+          * Actually, no.  Flushing dependent contexts is still done
+          * explicitly and separately.  Hardware drivers won't insert
+          * FLUSH commands into a command stream at this point,
+          * neither should softpipe try to flush caches.  
+          *
+          * Those contexts could be living in separate threads & doing
+          * all sorts of unrelated stuff...  Context<->texture
+          * dependency tracking needs to happen elsewhere.
+          */
+         /* assert(0); */
       }
    }
    return ps;
@@ -181,6 +208,7 @@ softpipe_tex_surface_release(struct pipe_screen *screen,
     * where it would happen.  For softpipe, nothing to do.
     */
    assert ((*s)->texture);
+   pipe_texture_reference(&(*s)->texture, NULL); 
 
    screen->winsys->surface_release(screen->winsys, s);
 }
@@ -206,7 +234,7 @@ softpipe_surface_map( struct pipe_screen *screen,
     * of the map:
     */
    if (surface->texture &&
-       (flags & PIPE_BUFFER_USAGE_GPU_WRITE)) 
+       (flags & PIPE_BUFFER_USAGE_CPU_WRITE)) 
    {
       /* Do something to notify sharing contexts of a texture change.
        * In softpipe, that would mean flushing the texture cache.
