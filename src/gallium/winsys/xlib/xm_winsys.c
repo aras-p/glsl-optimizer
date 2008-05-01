@@ -58,6 +58,7 @@
 
 
 /**
+ * Subclass of pipe_buffer for Xlib winsys.
  * Low-level OS/window system memory buffer
  */
 struct xm_buffer
@@ -80,6 +81,10 @@ struct xm_buffer
 # define XSHM_ENABLED(b) 0
 #endif
 
+
+/**
+ * Subclass of pipe_surface for Xlib winsys
+ */
 struct xmesa_surface
 {
    struct pipe_surface surface;
@@ -89,6 +94,9 @@ struct xmesa_surface
 };
 
 
+/**
+ * Subclass of pipe_winsys for Xlib winsys
+ */
 struct xmesa_pipe_winsys
 {
    struct pipe_winsys base;
@@ -100,11 +108,11 @@ struct xmesa_pipe_winsys
 static void alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
     unsigned width, unsigned height);
 
+
 /** Cast wrapper */
 static INLINE struct xmesa_surface *
 xmesa_surface(struct pipe_surface *ps)
 {
-//   assert(0);
    return (struct xmesa_surface *) ps;
 }
 
