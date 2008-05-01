@@ -43,6 +43,8 @@ struct varray_frontend {
    unsigned draw_count;
    unsigned fetch_count;
 
+   unsigned fetch_start;
+
    struct draw_pt_middle_end *middle;
 
    unsigned input_prim;
@@ -68,15 +70,18 @@ static void varray_flush(struct varray_frontend *varray)
    varray->draw_count = 0;
 }
 
-#if 0
-static void varray_check_flush(struct varray_frontend *varray)
+static INLINE void fetch_init(struct varray_frontend *varray,
+                              unsigned current_count,
+                              unsigned count)
 {
-   if (varray->draw_count + 6 >= DRAW_MAX/* ||
-       varray->fetch_count + 4 >= FETCH_MAX*/) {
-      varray_flush(varray);
+   unsigned idx;
+   const unsigned end = MIN2(FETCH_MAX, count - current_count);
+   for (idx = 0; idx < end; ++idx) {
+      varray->fetch_elts[idx] = varray->fetch_start + idx;
    }
+   varray->fetch_start += idx;
+   varray->fetch_count = idx;
 }
-#endif
 
 static INLINE void add_draw_el(struct varray_frontend *varray,
                                int idx, ushort flags)

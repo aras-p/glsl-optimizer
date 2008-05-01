@@ -20,10 +20,8 @@ static void FUNC(struct draw_pt_front_end *frontend,
                 start, count);
 #endif
 
-   for (i = 0; i < count; ++i) {
-      varray->fetch_elts[i] = start + i;
-   }
-   varray->fetch_count = count;
+   varray->fetch_start = start;
+   fetch_init(varray, 0, count);
 
    switch (varray->input_prim) {
    case PIPE_PRIM_POINTS:
