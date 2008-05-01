@@ -209,6 +209,7 @@ remove_context_from_surface(struct sct_surface *si,
       }
       else {
          prev = curr;
+         next = curr->next;
       }
    }
 }
