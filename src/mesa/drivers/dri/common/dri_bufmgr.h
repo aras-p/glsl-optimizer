@@ -41,7 +41,12 @@ typedef struct _dri_bo dri_bo;
 typedef struct _dri_fence dri_fence;
 
 struct _dri_bo {
-   /** Size in bytes of the buffer object. */
+   /**
+    * Size in bytes of the buffer object.
+    *
+    * The size may be larger than the size originally requested for the
+    * allocation, such as being aligned to page size.
+    */
    unsigned long size;
    /**
     * Card virtual address (offset from the beginning of the aperture) for the
@@ -169,10 +174,10 @@ struct _dri_bufmgr {
     * into them the appopriate order.
     *
     * \param batch_buf buffer at the root of the tree of relocations
-    * \param count returns the number of buffers validated.
-    * \return relocation record for use in command submission.
-    * */
-   void *(*process_relocs)(dri_bo *batch_buf, GLuint *count);
+    * \return argument to be completed and passed to the execbuffers ioctl
+    *   (if any).
+    */
+   void *(*process_relocs)(dri_bo *batch_buf);
 
    void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
 
@@ -214,7 +219,7 @@ void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 
 int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		   GLuint offset, dri_bo *target_buf);
-void *dri_process_relocs(dri_bo *batch_buf, uint32_t *count);
+void *dri_process_relocs(dri_bo *batch_buf);
 void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
 int dri_bufmgr_check_aperture_space(dri_bo *bo);

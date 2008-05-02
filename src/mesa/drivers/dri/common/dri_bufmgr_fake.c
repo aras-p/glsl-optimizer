@@ -1098,7 +1098,7 @@ dri_fake_reloc_and_validate_buffer(dri_bo *bo)
 }
 
 static void *
-dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
+dri_fake_process_relocs(dri_bo *batch_buf)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
    dri_bo_fake *batch_fake = (dri_bo_fake *)batch_buf;
@@ -1125,8 +1125,6 @@ dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
    }
 
    assert(ret == 0);
-
-   *count_p = 0; /* junk */
 
    bufmgr_fake->current_total_size = 0;
    return NULL;

@@ -131,11 +131,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
 		GLuint used, GLboolean allow_unlock)
 {
    struct intel_context *intel = batch->intel;
-   void *start;
-   GLuint count;
 
    dri_bo_unmap(batch->buf);
-   start = dri_process_relocs(batch->buf, &count);
 
    batch->map = NULL;
    batch->ptr = NULL;
@@ -148,12 +145,16 @@ do_flush_locked(struct intel_batchbuffer *batch,
    if (!(intel->numClipRects == 0 &&
 	 batch->cliprect_mode == LOOP_CLIPRECTS)) {
       if (intel->ttm == GL_TRUE) {
+	 struct drm_i915_gem_execbuffer *execbuf;
+
+	 execbuf = dri_process_relocs(batch->buf);
 	 intel_exec_ioctl(batch->intel,
 			  used,
 			  batch->cliprect_mode != LOOP_CLIPRECTS,
 			  allow_unlock,
-			  start, count, &batch->last_fence);
+			  execbuf, &batch->last_fence);
       } else {
+	 dri_process_relocs(batch->buf);
 	 intel_batch_ioctl(batch->intel,
 			   batch->buf->offset,
 			   used,

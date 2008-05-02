@@ -148,9 +148,9 @@ int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
    return reloc_buf->bufmgr->emit_reloc(reloc_buf, flags, delta, offset, target_buf);
 }
 
-void *dri_process_relocs(dri_bo *batch_buf, GLuint *count)
+void *dri_process_relocs(dri_bo *batch_buf)
 {
-   return batch_buf->bufmgr->process_relocs(batch_buf, count);
+   return batch_buf->bufmgr->process_relocs(batch_buf);
 }
 
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence)

@@ -151,9 +151,9 @@ void
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
 		 GLboolean ignore_cliprects, GLboolean allow_unlock,
-		 void *start, GLuint count, dri_fence **fence)
+		 struct drm_i915_gem_execbuffer *execbuf,
+		 dri_fence **fence)
 {
-   struct drm_i915_execbuffer execbuf;
    dri_fence *fo;
    int ret;
 
@@ -169,16 +169,13 @@ intel_exec_ioctl(struct intel_context *intel,
 
    memset(&execbuf, 0, sizeof(execbuf));
 
-   execbuf.num_buffers = count;
-   execbuf.batch.used = used;
-   execbuf.batch.cliprects = intel->pClipRects;
-   execbuf.batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
-   execbuf.batch.DR1 = 0;
-   execbuf.batch.DR4 = ((((GLuint) intel->drawX) & 0xffff) |
-			(((GLuint) intel->drawY) << 16));
-
-   execbuf.ops_list = (unsigned long)start; // TODO
-   execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
+   execbuf->batch_start_offset = 0;
+   execbuf->batch_len = used;
+   execbuf->cliprects_ptr = (uintptr_t)intel->pClipRects;
+   execbuf->num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   execbuf->DR1 = 0;
+   execbuf->DR4 = ((((GLuint) intel->drawX) & 0xffff) |
+		   (((GLuint) intel->drawY) << 16));
 
    do {
       ret = drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
@@ -189,17 +186,6 @@ intel_exec_ioctl(struct intel_context *intel,
       fprintf(stderr, "DRM_I915_EXECBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
-   }
-
-   if (execbuf.fence_arg.error != 0) {
-
-      /*
-       * Fence creation has failed, but the GPU has been
-       * idled by the kernel. Safe to continue.
-       */ 
-
-      *fence = NULL;
-      return;
    }
 
    fo = intel_ttm_fence_create_from_arg(intel->bufmgr, "fence buffers",
