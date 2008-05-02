@@ -223,15 +223,10 @@ update_blend( struct st_context *st )
 
 
 const struct st_tracked_state st_update_blend = {
-   .name = "st_update_blend",
-   .dirty = {
-      .mesa = (_NEW_COLOR),  /* XXX _NEW_BLEND someday? */
-      .st  = 0,
+   "st_update_blend",					/* name */
+   {							/* dirty */
+      (_NEW_COLOR),  /* XXX _NEW_BLEND someday? */	/* mesa */
+      0,						/* st */
    },
-   .update = update_blend
+   update_blend,					/* update */
 };
-
-
-
-
-

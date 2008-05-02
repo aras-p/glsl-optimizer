@@ -463,10 +463,10 @@ update_pixel_transfer(struct st_context *st)
 
 
 const struct st_tracked_state st_update_pixel_transfer = {
-   .name = "st_update_pixel_transfer",
-   .dirty = {
-      .mesa = _NEW_PIXEL | _NEW_COLOR_MATRIX,
-      .st  = 0,
+   "st_update_pixel_transfer",				/* name */
+   {							/* dirty */
+      _NEW_PIXEL | _NEW_COLOR_MATRIX,			/* mesa */
+      0,						/* st */
    },
-   .update = update_pixel_transfer
+   update_pixel_transfer				/* update */
 };

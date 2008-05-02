@@ -113,12 +113,12 @@ static void update_vs_constants(struct st_context *st )
 }
 
 const struct st_tracked_state st_update_vs_constants = {
-   .name = "st_update_vs_constants",
-   .dirty = {
-      .mesa  = 0,  /* set dynamically above */
-      .st   = ST_NEW_VERTEX_PROGRAM,
+   "st_update_vs_constants",				/* name */
+   {							/* dirty */
+      0,  /* set dynamically above */			/* mesa */
+      ST_NEW_VERTEX_PROGRAM,				/* st */
    },
-   .update = update_vs_constants
+   update_vs_constants					/* update */
 };
 
 /* Fragment shader:
@@ -132,11 +132,11 @@ static void update_fs_constants(struct st_context *st )
 }
 
 const struct st_tracked_state st_update_fs_constants = {
-   .name = "st_update_fs_constants",
-   .dirty = {
-      .mesa  = 0,  /* set dynamically above */
-      .st   = ST_NEW_FRAGMENT_PROGRAM,
+   "st_update_fs_constants",				/* name */
+   {							/* dirty */
+      0,  /* set dynamically above */			/* mesa */
+      ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
-   .update = update_fs_constants
+   update_fs_constants					/* update */
 };
 

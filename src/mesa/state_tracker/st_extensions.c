@@ -38,17 +38,17 @@
 #include "st_extensions.h"
 
 
-static int min(int a, int b)
+static int _min(int a, int b)
 {
    return (a < b) ? a : b;
 }
 
-static int max(int a, int b)
+static int _max(int a, int b)
 {
    return (a > b) ? a : b;
 }
 
-static int clamp(int a, int min, int max)
+static int _clamp(int a, int min, int max)
 {
    if (a < min)
       return min;
@@ -69,42 +69,42 @@ void st_init_limits(struct st_context *st)
    struct gl_constants *c = &st->ctx->Const;
 
    c->MaxTextureLevels
-      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
+      = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
             MAX_TEXTURE_LEVELS);
 
    c->Max3DTextureLevels
-      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_3D_LEVELS),
+      = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_3D_LEVELS),
             MAX_3D_TEXTURE_LEVELS);
 
    c->MaxCubeTextureLevels
-      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS),
+      = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS),
             MAX_CUBE_TEXTURE_LEVELS);
 
    c->MaxTextureRectSize
-      = min(1 << (c->MaxTextureLevels - 1), MAX_TEXTURE_RECT_SIZE);
+      = _min(1 << (c->MaxTextureLevels - 1), MAX_TEXTURE_RECT_SIZE);
 
    c->MaxTextureUnits
       = c->MaxTextureImageUnits
       = c->MaxTextureCoordUnits
-      = min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
+      = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
             MAX_TEXTURE_IMAGE_UNITS);
 
    c->MaxDrawBuffers
-      = clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
+      = _clamp(screen->get_param(screen, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
 
    c->MaxLineWidth
-      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH));
+      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH));
    c->MaxLineWidthAA
-      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH_AA));
+      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_LINE_WIDTH_AA));
 
    c->MaxPointSize
-      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
+      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
    c->MaxPointSizeAA
-      = max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
+      = _max(1.0, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
 
    c->MaxTextureMaxAnisotropy
-      = max(2.0, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
+      = _max(2.0, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
 
    c->MaxTextureLodBias
       = screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);

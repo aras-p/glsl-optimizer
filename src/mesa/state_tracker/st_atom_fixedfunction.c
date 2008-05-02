@@ -55,12 +55,12 @@ static void update_tnl( struct st_context *st )
 
 
 const struct st_tracked_state st_update_tnl = {
-   .name = "st_update_tnl",
-   .dirty = {
-      .mesa  = TNL_FIXED_FUNCTION_STATE_FLAGS,
-      .st   = 0
+   "st_update_tnl",					/* name */
+   {							/* dirty */
+      TNL_FIXED_FUNCTION_STATE_FLAGS,			/* mesa */
+      0							/* st */
    },
-   .update = update_tnl
+   update_tnl						/* update */
 };
 
 
