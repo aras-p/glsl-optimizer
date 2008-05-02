@@ -37,6 +37,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "cso_cache/cso_context.h"
 
 
@@ -147,17 +148,8 @@ update_samplers(struct st_context *st)
             sampler->normalized_coords = 1;
 
          sampler->lod_bias = st->ctx->Texture.Unit[su].LodBias;
-#if 1
-         sampler->min_lod = (texobj->MinLod) < 0.0 ? 0.0 : texobj->MinLod;
-         sampler->max_lod = texobj->MaxLod;
-#else
-         /* min/max lod should really be as follows (untested).
-          * Also, calculate_first_last_level() needs to be overhauled
-          * since today's hardware had real support for LOD clamping.
-          */
          sampler->min_lod = MAX2(texobj->BaseLevel, texobj->MinLod);
          sampler->max_lod = MIN2(texobj->MaxLevel, texobj->MaxLod);
-#endif
 
          sampler->border_color[0] = texobj->BorderColor[RCOMP];
          sampler->border_color[1] = texobj->BorderColor[GCOMP];
@@ -193,15 +185,10 @@ update_samplers(struct st_context *st)
 
 
 const struct st_tracked_state st_update_sampler = {
-   .name = "st_update_sampler",
-   .dirty = {
-      .mesa = _NEW_TEXTURE,
-      .st  = 0,
+   "st_update_sampler",					/* name */
+   {							/* dirty */
+      _NEW_TEXTURE,					/* mesa */
+      0,						/* st */
    },
-   .update = update_samplers
+   update_samplers					/* update */
 };
-
-
-
-
-

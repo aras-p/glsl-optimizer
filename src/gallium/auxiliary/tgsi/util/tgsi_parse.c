@@ -43,7 +43,7 @@ tgsi_full_token_free(
    union tgsi_full_token *full_token )
 {
    if( full_token->Token.Type == TGSI_TOKEN_TYPE_IMMEDIATE ) {
-      FREE( full_token->FullImmediate.u.Pointer );
+      FREE( (void *) full_token->FullImmediate.u.Pointer );
    }
 }
 
@@ -156,7 +156,7 @@ tgsi_parse_token(
          imm->u.Pointer = MALLOC(
             sizeof( struct tgsi_immediate_float32 ) * (imm->Immediate.Size - 1) );
          for( i = 0; i < imm->Immediate.Size - 1; i++ ) {
-            next_token( ctx, &imm->u.ImmediateFloat32[i] );
+            next_token( ctx, (struct tgsi_immediate_float32 *) &imm->u.ImmediateFloat32[i] );
          }
          break;
 

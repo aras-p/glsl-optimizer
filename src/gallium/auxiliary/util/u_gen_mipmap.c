@@ -505,6 +505,9 @@ format_to_type_comps(enum pipe_format pformat,
       return;
    default:
       assert(0);
+      *datatype = UBYTE;
+      *comps = 0;
+      break;
    }
 }
 

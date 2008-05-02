@@ -83,15 +83,10 @@ update_scissor( struct st_context *st )
 
 
 const struct st_tracked_state st_update_scissor = {
-   .name = "st_update_scissor",
-   .dirty = {
-      .mesa = (_NEW_SCISSOR | _NEW_BUFFERS),
-      .st  = 0,
+   "st_update_scissor",					/* name */
+   {							/* dirty */
+      (_NEW_SCISSOR | _NEW_BUFFERS),			/* mesa */
+      0,						/* st */
    },
-   .update = update_scissor
+   update_scissor					/* update */
 };
-
-
-
-
-

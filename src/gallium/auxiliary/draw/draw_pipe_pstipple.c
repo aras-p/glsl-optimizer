@@ -256,7 +256,7 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
          uint size = 4;
          immed = tgsi_default_full_immediate();
          immed.Immediate.Size = 1 + size; /* one for the token itself */
-         immed.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
+         immed.u.Pointer = (void *) value;
          ctx->emit_immediate(ctx, &immed);
       }
 

@@ -35,8 +35,8 @@
 
 #include "vbo/vbo.h"
 
-#include "st_atom.h"
 #include "st_context.h"
+#include "st_atom.h"
 #include "st_cb_bufferobjects.h"
 #include "st_draw.h"
 #include "st_program.h"
@@ -549,8 +549,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
       unsigned indexSize;
       struct gl_buffer_object *bufobj = ib->obj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
-      index_buffer_handle = stobj->buffer;
       void *map;
+
+      index_buffer_handle = stobj->buffer;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:

@@ -404,7 +404,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
    struct x86_reg srcEAX       = x86_make_reg(file_REG32, reg_CX);
    struct x86_reg countEBP     = x86_make_reg(file_REG32, reg_BP);
    struct x86_reg translateESI = x86_make_reg(file_REG32, reg_SI);
-   uint8_t *fixup, *label;
+   int fixup, label;
    unsigned j;
 
    p->func = func;

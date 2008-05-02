@@ -1339,8 +1339,6 @@ static void
 calculate_first_last_level(struct st_texture_object *stObj)
 {
    struct gl_texture_object *tObj = &stObj->base;
-   const struct gl_texture_image *const baseImage =
-      tObj->Image[0][tObj->BaseLevel];
 
    /* These must be signed values.  MinLod and MaxLod can be negative numbers,
     * and having firstLevel and lastLevel as signed prevents the need for
@@ -1363,7 +1361,7 @@ calculate_first_last_level(struct st_texture_object *stObj)
       }
       else {
          firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel - tObj->BaseLevel, baseImage->MaxLog2);
+         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][0]->WidthLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -1486,10 +1484,7 @@ st_finalize_texture(GLcontext *ctx,
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
 	stObj->pt->format !=
 	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
-	stObj->pt->last_level != stObj->lastLevel ||
-	stObj->pt->width[0] != firstImage->base.Width2 ||
-	stObj->pt->height[0] != firstImage->base.Height2 ||
-	stObj->pt->depth[0] != firstImage->base.Depth2 ||
+	stObj->pt->last_level < stObj->lastLevel ||
 	stObj->pt->cpp != cpp ||
 	stObj->pt->compressed != firstImage->base.IsCompressed)) {
       pipe_texture_release(&stObj->pt);

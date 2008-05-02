@@ -296,6 +296,8 @@ util_blit_pixels(struct blit_state *ctx,
                       src, srcLeft, srcTop, /* src */
                       srcW, srcH);     /* size */
 
+   pipe->texture_update(pipe, tex, 0, 1 << 0);
+
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
    cso_save_depth_stencil_alpha(ctx->cso);

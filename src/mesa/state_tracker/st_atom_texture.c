@@ -111,15 +111,10 @@ update_textures(struct st_context *st)
 
 
 const struct st_tracked_state st_update_texture = {
-   .name = "st_update_texture",
-   .dirty = {
-      .mesa = _NEW_TEXTURE,
-      .st  = ST_NEW_FRAGMENT_PROGRAM,
+   "st_update_texture",					/* name */
+   {							/* dirty */
+      _NEW_TEXTURE,					/* mesa */
+      ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
-   .update = update_textures
+   update_textures					/* update */
 };
-
-
-
-
-

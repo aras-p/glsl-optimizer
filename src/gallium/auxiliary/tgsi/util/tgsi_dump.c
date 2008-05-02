@@ -767,6 +767,31 @@ dump_instruction_short(
       SID( dst->DstRegister.Index );
       CHR( ']' );
 
+      switch (dst->DstRegisterExtModulate.Modulate) {
+      case TGSI_MODULATE_1X:
+         break;
+      case TGSI_MODULATE_2X:
+         TXT( "_2X" );
+         break;
+      case TGSI_MODULATE_4X:
+         TXT( "_4X" );
+         break;
+      case TGSI_MODULATE_8X:
+         TXT( "_8X" );
+         break;
+      case TGSI_MODULATE_HALF:
+         TXT( "_D2" );
+         break;
+      case TGSI_MODULATE_QUARTER:
+         TXT( "_D4" );
+         break;
+      case TGSI_MODULATE_EIGHTH:
+         TXT( "_D8" );
+         break;
+      default:
+         assert( 0 );
+      }
+
       if( dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW ) {
          CHR( '.' );
          if( dst->DstRegister.WriteMask & TGSI_WRITEMASK_X ) {

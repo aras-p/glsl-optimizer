@@ -122,7 +122,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 struct pipe_context *
 softpipe_create( struct pipe_screen *screen,
                  struct pipe_winsys *pipe_winsys,
-                 struct softpipe_winsys *softpipe_winsys )
+                 void *unused )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
    uint i;
@@ -211,8 +211,6 @@ softpipe_create( struct pipe_screen *screen,
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);
-
-   softpipe->winsys = softpipe_winsys;
 
    /*
     * Create drawing context and plug our rendering stage into it.

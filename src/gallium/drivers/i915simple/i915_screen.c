@@ -182,6 +182,7 @@ i915_is_format_supported( struct pipe_screen *screen,
       break;
    default:
       assert(0);
+      return FALSE;
    }
 
    for (i = 0; list[i] != PIPE_FORMAT_NONE; i++) {

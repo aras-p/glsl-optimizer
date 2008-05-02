@@ -142,10 +142,10 @@ update_depth_stencil_alpha(struct st_context *st)
 
 
 const struct st_tracked_state st_update_depth_stencil_alpha = {
-   .name = "st_update_depth_stencil",
-   .dirty = {
-      .mesa = (_NEW_DEPTH|_NEW_STENCIL|_NEW_COLOR),
-      .st  = 0,
+   "st_update_depth_stencil",				/* name */
+   {							/* dirty */
+      (_NEW_DEPTH|_NEW_STENCIL|_NEW_COLOR),		/* mesa */
+      0,						/* st */
    },
-   .update = update_depth_stencil_alpha
+   update_depth_stencil_alpha				/* update */
 };
