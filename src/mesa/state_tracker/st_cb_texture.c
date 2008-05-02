@@ -1448,17 +1448,6 @@ st_finalize_texture(GLcontext *ctx,
    calculate_first_last_level(stObj);
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
-#if 0
-   /* Fallback case:
-    */
-   if (firstImage->base.Border) {
-      if (stObj->pt) {
-         pipe_texture_release(&stObj->pt);
-      }
-      return GL_FALSE;
-   }
-#endif
-
    /* If both firstImage and stObj point to a texture which can contain
     * all active images, favour firstImage.  Note that because of the
     * completeness requirement, we know that the image dimensions
@@ -1482,24 +1471,25 @@ st_finalize_texture(GLcontext *ctx,
       cpp = firstImage->base.TexFormat->TexelBytes;
    }
 
-   /* Check texture can hold all active levels.  Check texture matches
-    * target, imageFormat, dimensions, etc.
+   /* If we already have a gallium texture, check that it matches the texture
+    * object's format, target, size, num_levels, etc.
     */
-   if (stObj->pt &&
-       (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
-	stObj->pt->format !=
-	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
-	stObj->pt->last_level < stObj->lastLevel ||
-        stObj->pt->width[0] != firstImage->base.Width2 ||
-        stObj->pt->height[0] != firstImage->base.Height2 ||
-        stObj->pt->depth[0] != firstImage->base.Depth2 ||
-	stObj->pt->cpp != cpp ||
-	stObj->pt->compressed != firstImage->base.IsCompressed)) {
-      pipe_texture_release(&stObj->pt);
+   if (stObj->pt) {
+      const enum pipe_format fmt =
+         st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+      if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
+          stObj->pt->format != fmt ||
+          stObj->pt->last_level < stObj->lastLevel ||
+          stObj->pt->width[0] != firstImage->base.Width2 ||
+          stObj->pt->height[0] != firstImage->base.Height2 ||
+          stObj->pt->depth[0] != firstImage->base.Depth2 ||
+          stObj->pt->cpp != cpp ||
+          stObj->pt->compressed != firstImage->base.IsCompressed) {
+         pipe_texture_release(&stObj->pt);
+      }
    }
 
-
-   /* May need to create a new texture:
+   /* May need to create a new gallium texture:
     */
    if (!stObj->pt) {
       stObj->pt = st_texture_create(ctx->st,
