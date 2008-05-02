@@ -286,7 +286,8 @@ struct pipe_surface
 
 #define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
 #define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
-#define PIPE_TEXTURE_USAGE_SAMPLER         0x4
+#define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x4
+#define PIPE_TEXTURE_USAGE_SAMPLER         0x8
 
 /**
  * Texture object.

@@ -77,6 +77,11 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
    return info.size;
 }
 
+static INLINE GLboolean pf_is_depth_stencil( enum pipe_format format )
+{
+   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
+           pf_get_component_bits( format, PIPE_FORMAT_COMP_S )) != 0;
+}
 
 /**
  * gl_renderbuffer::AllocStorage()
@@ -117,8 +122,15 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    template.height[0] = height;
    template.depth[0] = 1;
    template.last_level = 0;
-   template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
-                         PIPE_TEXTURE_USAGE_RENDER_TARGET);
+
+   if (pf_is_depth_stencil(template.format)) {
+      template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+   }
+   else {
+      template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                            PIPE_TEXTURE_USAGE_RENDER_TARGET);
+   }
+
 
    /* Probably need dedicated flags for surface usage too: 
     */
