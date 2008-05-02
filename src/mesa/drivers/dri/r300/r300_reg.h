@@ -70,6 +70,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Stolen from r200 code from Christoph Brill (It's a guess!)
  */
 #define R300_VAP_CNTL	0x2080
+#       define R300_PVS_NUM_SLOTS_SHIFT                 0
+#       define R300_PVS_NUM_CNTLRS_SHIFT                4
+#       define R300_PVS_NUM_FPUS_SHIFT                  8
+#       define R300_VF_MAX_VTX_NUM_SHIFT                18
+#       define R300_GL_CLIP_SPACE_DEF                   (0 << 22)
+#       define R300_DX_CLIP_SPACE_DEF                   (1 << 22)
+#       define R500_TCL_STATE_OPTIMIZATION              (1 << 23)
 
 /* This register is written directly and also starts data section
  * in many 3d CP_PACKET3's
@@ -375,7 +382,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_CLIP_CNTL                       0x221C
 #       define R300_221C_NORMAL                  0x00000000
 #       define R300_221C_CLEAR                   0x0001C000
-#define R300_VAP_UCP_ENABLE_0 (1 << 0)
+#       define R300_VAP_UCP_ENABLE_0 (1 << 0)
 
 /* These seem to be per-pixel and per-vertex X and Y clipping planes. The first
  * plane is per-pixel and the second plane is per-vertex.
