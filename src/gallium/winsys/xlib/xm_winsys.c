@@ -75,12 +75,6 @@ struct xm_buffer
 #endif
 };
 
-#if defined(USE_XSHM) && !defined(XFree86Server)
-# define XSHM_ENABLED(b) ((b)->shm)
-#else
-# define XSHM_ENABLED(b) 0
-#endif
-
 
 /**
  * Subclass of pipe_surface for Xlib winsys
@@ -105,9 +99,6 @@ struct xmesa_pipe_winsys
 };
 
 
-static void alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
-    unsigned width, unsigned height);
-
 
 /** Cast wrapper */
 static INLINE struct xmesa_surface *
@@ -117,16 +108,136 @@ xmesa_surface(struct pipe_surface *ps)
 }
 
 
-
-/**
- * Turn the softpipe opaque buffer pointer into a dri_bufmgr opaque
- * buffer pointer...
- */
+/** Cast wrapper */
 static INLINE struct xm_buffer *
 xm_buffer( struct pipe_buffer *buf )
 {
    return (struct xm_buffer *)buf;
 }
+
+
+/**
+ * X Shared Memory Image extension code
+ */
+#if defined(USE_XSHM) && !defined(XFree86Server)
+
+#define XSHM_ENABLED(b) ((b)->shm)
+
+static volatile int mesaXErrorFlag = 0;
+
+/**
+ * Catches potential Xlib errors.
+ */
+static int
+mesaHandleXError(XMesaDisplay *dpy, XErrorEvent *event)
+{
+   (void) dpy;
+   (void) event;
+   mesaXErrorFlag = 1;
+   return 0;
+}
+
+
+static GLboolean alloc_shm(struct xm_buffer *buf, unsigned size)
+{
+   XShmSegmentInfo *const shminfo = & buf->shminfo;
+
+   shminfo->shmid = shmget(IPC_PRIVATE, size, IPC_CREAT|0777);
+   if (shminfo->shmid < 0) {
+      return GL_FALSE;
+   }
+
+   shminfo->shmaddr = (char *) shmat(shminfo->shmid, 0, 0);
+   if (shminfo->shmaddr == (char *) -1) {
+      shmctl(shminfo->shmid, IPC_RMID, 0);
+      return GL_FALSE;
+   }
+
+   shminfo->readOnly = False;
+   return GL_TRUE;
+}
+
+
+/**
+ * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
+ */
+static void
+alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
+                 unsigned width, unsigned height)
+{
+   /*
+    * We have to do a _lot_ of error checking here to be sure we can
+    * really use the XSHM extension.  It seems different servers trigger
+    * errors at different points if the extension won't work.  Therefore
+    * we have to be very careful...
+    */
+#if 0
+   GC gc;
+#endif
+   int (*old_handler)(XMesaDisplay *, XErrorEvent *);
+
+   b->tempImage = XShmCreateImage(xmb->xm_visual->display,
+                                  xmb->xm_visual->visinfo->visual,
+                                  xmb->xm_visual->visinfo->depth,
+                                  ZPixmap,
+                                  NULL,
+                                  &b->shminfo,
+                                  width, height);
+   if (b->tempImage == NULL) {
+      b->shm = 0;
+      return;
+   }
+
+
+   mesaXErrorFlag = 0;
+   old_handler = XSetErrorHandler(mesaHandleXError);
+   /* This may trigger the X protocol error we're ready to catch: */
+   XShmAttach(xmb->xm_visual->display, &b->shminfo);
+   XSync(xmb->xm_visual->display, False);
+
+   if (mesaXErrorFlag) {
+      /* we are on a remote display, this error is normal, don't print it */
+      XFlush(xmb->xm_visual->display);
+      mesaXErrorFlag = 0;
+      XDestroyImage(b->tempImage);
+      b->tempImage = NULL;
+      b->shm = 0;
+      (void) XSetErrorHandler(old_handler);
+      return;
+   }
+
+
+   /* Finally, try an XShmPutImage to be really sure the extension works */
+#if 0
+   gc = XCreateGC(xmb->xm_visual->display, xmb->drawable, 0, NULL);
+   XShmPutImage(xmb->xm_visual->display, xmb->drawable, gc,
+                b->tempImage, 0, 0, 0, 0, 1, 1 /*one pixel*/, False);
+   XSync(xmb->xm_visual->display, False);
+   XFreeGC(xmb->xm_visual->display, gc);
+   (void) XSetErrorHandler(old_handler);
+   if (mesaXErrorFlag) {
+      XFlush(xmb->xm_visual->display);
+      mesaXErrorFlag = 0;
+      XDestroyImage(b->tempImage);
+      b->tempImage = NULL;
+      b->shm = 0;
+      return;
+   }
+#endif
+}
+
+#else
+
+#define XSHM_ENABLED(b) 0
+
+static void
+alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
+                 unsigned width, unsigned height)
+{
+   b->shm = 0;
+}
+#endif /* USE_XSHM */
+
 
 
 
@@ -303,119 +414,6 @@ xm_get_name(struct pipe_winsys *pws)
 {
    return "Xlib";
 }
-
-
-#if defined(USE_XSHM) && !defined(XFree86Server)
-static volatile int mesaXErrorFlag = 0;
-
-/**
- * Catches potential Xlib errors.
- */
-static int
-mesaHandleXError(XMesaDisplay *dpy, XErrorEvent *event)
-{
-   (void) dpy;
-   (void) event;
-   mesaXErrorFlag = 1;
-   return 0;
-}
-
-
-static GLboolean alloc_shm(struct xm_buffer *buf, unsigned size)
-{
-   XShmSegmentInfo *const shminfo = & buf->shminfo;
-
-   shminfo->shmid = shmget(IPC_PRIVATE, size, IPC_CREAT|0777);
-   if (shminfo->shmid < 0) {
-      return GL_FALSE;
-   }
-
-   shminfo->shmaddr = (char *) shmat(shminfo->shmid, 0, 0);
-   if (shminfo->shmaddr == (char *) -1) {
-      shmctl(shminfo->shmid, IPC_RMID, 0);
-      return GL_FALSE;
-   }
-
-   shminfo->readOnly = False;
-   return GL_TRUE;
-}
-
-
-/**
- * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
- */
-static void
-alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
-                 unsigned width, unsigned height)
-{
-   /*
-    * We have to do a _lot_ of error checking here to be sure we can
-    * really use the XSHM extension.  It seems different servers trigger
-    * errors at different points if the extension won't work.  Therefore
-    * we have to be very careful...
-    */
-#if 0
-   GC gc;
-#endif
-   int (*old_handler)(XMesaDisplay *, XErrorEvent *);
-
-   b->tempImage = XShmCreateImage(xmb->xm_visual->display,
-                                  xmb->xm_visual->visinfo->visual,
-                                  xmb->xm_visual->visinfo->depth,
-                                  ZPixmap,
-                                  NULL,
-                                  &b->shminfo,
-                                  width, height);
-   if (b->tempImage == NULL) {
-      b->shm = 0;
-      return;
-   }
-
-
-   mesaXErrorFlag = 0;
-   old_handler = XSetErrorHandler(mesaHandleXError);
-   /* This may trigger the X protocol error we're ready to catch: */
-   XShmAttach(xmb->xm_visual->display, &b->shminfo);
-   XSync(xmb->xm_visual->display, False);
-
-   if (mesaXErrorFlag) {
-      /* we are on a remote display, this error is normal, don't print it */
-      XFlush(xmb->xm_visual->display);
-      mesaXErrorFlag = 0;
-      XDestroyImage(b->tempImage);
-      b->tempImage = NULL;
-      b->shm = 0;
-      (void) XSetErrorHandler(old_handler);
-      return;
-   }
-
-
-   /* Finally, try an XShmPutImage to be really sure the extension works */
-#if 0
-   gc = XCreateGC(xmb->xm_visual->display, xmb->drawable, 0, NULL);
-   XShmPutImage(xmb->xm_visual->display, xmb->drawable, gc,
-                b->tempImage, 0, 0, 0, 0, 1, 1 /*one pixel*/, False);
-   XSync(xmb->xm_visual->display, False);
-   XFreeGC(xmb->xm_visual->display, gc);
-   (void) XSetErrorHandler(old_handler);
-   if (mesaXErrorFlag) {
-      XFlush(xmb->xm_visual->display);
-      mesaXErrorFlag = 0;
-      XDestroyImage(b->tempImage);
-      b->tempImage = NULL;
-      b->shm = 0;
-      return;
-   }
-#endif
-}
-#else
-static void
-alloc_shm_ximage(struct xm_buffer *b, struct xmesa_buffer *xmb,
-                 unsigned width, unsigned height)
-{
-   b->shm = 0;
-}
-#endif
 
 
 static struct pipe_buffer *
