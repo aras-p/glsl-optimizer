@@ -36,7 +36,11 @@
 
 #ifdef PIPE_ARCH_X86
 
-#define HIGH_PRECISION 1  /* for 1/sqrt() */
+/* for 1/sqrt() 
+ * 
+ * This costs about 100fps (close to 10%) in gears:
+ */
+#define HIGH_PRECISION 1  
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -794,20 +798,25 @@ emit_rsqrt(
     *
     * See: http://softwarecommunity.intel.com/articles/eng/1818.htm
     */
-   /* This is some code that woudl do the above for a scalar 'a'.  We
-    * obviously are interested in a vector version:
-    *
-    * movss   xmm3, a;
-    * movss   xmm1, half;
-    * movss   xmm2, three;
-    * rsqrtss xmm0, xmm3;
-    * mulss   xmm3, xmm0;
-    * mulss   xmm1, xmm0;
-    * mulss   xmm3, xmm0;
-    * subss   xmm2, xmm3;
-    * mulss   xmm1, xmm2;
-    * movss   x,    xmm1;
-    */
+   {
+      struct x86_reg dst = make_xmm( xmm_dst );
+      struct x86_reg src = make_xmm( xmm_src );
+      struct x86_reg tmp0 = make_xmm( 2 );
+      struct x86_reg tmp1 = make_xmm( 3 );
+
+      assert( xmm_dst != xmm_src );
+      assert( xmm_dst != 2 && xmm_dst != 3 );
+      assert( xmm_src != 2 && xmm_src != 3 );
+
+      sse_movaps(  func, dst,  get_temp( TGSI_EXEC_TEMP_HALF_I, TGSI_EXEC_TEMP_HALF_C ) );
+      sse_movaps(  func, tmp0, get_temp( TGSI_EXEC_TEMP_THREE_I, TGSI_EXEC_TEMP_THREE_C ) );
+      sse_rsqrtps( func, tmp1, src  );
+      sse_mulps(   func, src,  tmp1 );
+      sse_mulps(   func, dst,  tmp1 );
+      sse_mulps(   func, src,  tmp1 );
+      sse_subps(   func, tmp0, src  );
+      sse_mulps(   func, dst,  tmp0 );
+   }
 #endif
 #else
    /* On Intel CPUs at least, this is only accurate to 12 bits -- not
@@ -1295,9 +1304,9 @@ emit_instruction(
    case TGSI_OPCODE_RSQ:
    /* TGSI_OPCODE_RECIPSQRT */
       FETCH( func, *inst, 0, 0, CHAN_X );
-      emit_rsqrt( func, 0, 0 );
+      emit_rsqrt( func, 1, 0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( func, *inst, 0, 0, chan_index );
+         STORE( func, *inst, 1, 0, chan_index );
       }
       break;
 
