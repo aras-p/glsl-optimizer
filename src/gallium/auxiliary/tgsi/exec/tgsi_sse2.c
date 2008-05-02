@@ -36,11 +36,11 @@
 
 #ifdef PIPE_ARCH_X86
 
-/* for 1/sqrt() 
- * 
+/* for 1/sqrt()
+ *
  * This costs about 100fps (close to 10%) in gears:
  */
-#define HIGH_PRECISION 1  
+#define HIGH_PRECISION 1
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
