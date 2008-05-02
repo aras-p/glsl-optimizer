@@ -1190,11 +1190,16 @@ emit_instruction(
 
    switch( inst->Instruction.Opcode ) {
    case TGSI_OPCODE_ARL:
+#if 0
+      /* XXX this isn't working properly (see glean vertProg1 test) */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_f2it( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
+#else
+      return 0;
+#endif
       break;
 
    case TGSI_OPCODE_MOV:
