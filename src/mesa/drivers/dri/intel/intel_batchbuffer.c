@@ -269,7 +269,6 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              GLuint flags, GLuint delta)
 {
    int ret;
-   int count = 0;
 
    ret = dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
 
