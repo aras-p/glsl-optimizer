@@ -80,8 +80,7 @@ draw_pt_arrays(struct draw_context *draw,
 
    /* Pick the right frontend
     */
-   if (draw->pt.user.elts ||
-       count >= 256) {
+   if (draw->pt.user.elts) {
       frontend = draw->pt.front.vcache;
    } else {
       frontend = draw->pt.front.varray;

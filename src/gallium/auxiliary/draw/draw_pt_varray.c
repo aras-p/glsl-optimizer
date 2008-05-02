@@ -58,6 +58,11 @@ static void varray_flush(struct varray_frontend *varray)
       debug_printf("FLUSH fc = %d, dc = %d\n",
                    varray->fetch_count,
                    varray->draw_count);
+      debug_printf("\telt0 = %d, eltx = %d, draw0 = %d, drawx = %d\n",
+                   varray->fetch_elts[0],
+                   varray->fetch_elts[varray->fetch_count-1],
+                   varray->draw_elts[0],
+                   varray->draw_elts[varray->draw_count-1]);
 #endif
       varray->middle->run(varray->middle,
                           varray->fetch_elts,
@@ -71,17 +76,68 @@ static void varray_flush(struct varray_frontend *varray)
 }
 
 static INLINE void fetch_init(struct varray_frontend *varray,
-                              unsigned current_count,
                               unsigned count)
 {
    unsigned idx;
-   const unsigned end = MIN2(FETCH_MAX, count - current_count);
-   for (idx = 0; idx < end; ++idx) {
+#if 0
+      debug_printf("FETCH INIT c = %d, fs = %d\n",
+                   count,
+                   varray->fetch_start);
+#endif
+   for (idx = 0; idx < count; ++idx) {
       varray->fetch_elts[idx] = varray->fetch_start + idx;
    }
    varray->fetch_start += idx;
    varray->fetch_count = idx;
 }
+
+
+static boolean split_prim_inplace(unsigned prim, unsigned *first, unsigned *incr)
+{
+   switch (prim) {
+   case PIPE_PRIM_POINTS:
+      *first = 1;
+      *incr = 1;
+      return TRUE;
+   case PIPE_PRIM_LINES:
+      *first = 2;
+      *incr = 2;
+      return TRUE;
+   case PIPE_PRIM_LINE_STRIP:
+      *first = 2;
+      *incr = 1;
+      return TRUE;
+   case PIPE_PRIM_TRIANGLES:
+      *first = 3;
+      *incr = 3;
+      return TRUE;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      *first = 3;
+      *incr = 1;
+      return TRUE;
+   case PIPE_PRIM_TRIANGLE_FAN:
+      *first = 3;
+      *incr = 1;
+      return TRUE;
+   case PIPE_PRIM_QUADS:
+      *first = 4;
+      *incr = 4;
+      return TRUE;
+   case PIPE_PRIM_QUAD_STRIP:
+      *first = 4;
+      *incr = 2;
+      return TRUE;
+   case PIPE_PRIM_POLYGON:
+      *first = 3;
+      *incr = 1;
+      return TRUE;
+   default:
+      *first = 0;
+      *incr = 1;		/* set to one so that count % incr works */
+      return FALSE;
+   }
+}
+
 
 static INLINE void add_draw_el(struct varray_frontend *varray,
                                int idx, ushort flags)
