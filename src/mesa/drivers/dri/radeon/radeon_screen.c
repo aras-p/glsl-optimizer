@@ -711,7 +711,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R520_710E:
    case PCI_CHIP_R520_710F:
       screen->chip_family = CHIP_FAMILY_R520;
-      //screen->chip_flags = RADEON_CHIPSET_TCL;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       fprintf(stderr, "Warning, R520 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
@@ -754,7 +754,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV515_7210:
    case PCI_CHIP_RV515_7211:
       screen->chip_family = CHIP_FAMILY_RV515;
-      //screen->chip_flags = RADEON_CHIPSET_TCL;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       fprintf(stderr, "Warning, RV515 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
@@ -775,7 +775,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV530_71DA:
    case PCI_CHIP_RV530_71DE:
       screen->chip_family = CHIP_FAMILY_RV530;
-      //screen->chip_flags = RADEON_CHIPSET_TCL;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       fprintf(stderr, "Warning, RV530 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
@@ -795,7 +795,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_R580_724F:
    case PCI_CHIP_R580_7284:
       screen->chip_family = CHIP_FAMILY_R580;
-      //screen->chip_flags = RADEON_CHIPSET_TCL;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       fprintf(stderr, "Warning, R580 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
@@ -812,7 +812,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RV560_7293:
    case PCI_CHIP_RV560_7297:
       screen->chip_family = CHIP_FAMILY_RV560;
-      //screen->chip_flags = RADEON_CHIPSET_TCL;
+      screen->chip_flags = RADEON_CHIPSET_TCL;
       fprintf(stderr, "Warning, RV560 detected, 3D HAHAHAHAHA!!.\n");
       break;
 

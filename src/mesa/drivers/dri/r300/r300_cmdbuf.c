@@ -333,7 +333,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.vir[1].cmd[R300_VIR_CMD_0] =
 	    cmdpacket0(R300_VAP_PROG_STREAM_CNTL_EXT_0, 1);
 	ALLOC_STATE(vic, always, R300_VIC_CMDSIZE, 0);
-	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
+	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_VTX_STATE_CNTL, 2);
 	ALLOC_STATE(vap_psc_sgn_norm_cntl, always, 2, 0);
 	r300->hw.vap_psc_sgn_norm_cntl.cmd[0] = cmdpacket0(R300_VAP_PSC_SGN_NORM_CNTL, SGN_NORM_ZERO_CLAMP_MINUS_ONE);
 
@@ -481,27 +481,35 @@ void r300InitCmdBuf(r300ContextPtr r300)
    	        int i;
 		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
 		r300->hw.vpi.cmd[R300_VPI_CMD_0] =
-		    cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
-
-		ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
-		r300->hw.vpp.cmd[R300_VPP_CMD_0] =
-		    cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
-
-		ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
-		r300->hw.vps.cmd[R300_VPS_CMD_0] =
-		    cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
+		    cmdvpu(R300_PVS_CODE_START, 0);
 
 		if (is_r500) {
+		    ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+		    r300->hw.vpp.cmd[R300_VPP_CMD_0] =
+			cmdvpu(R500_PVS_CONST_START, 0);
+
+		    ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
+		    r300->hw.vps.cmd[R300_VPS_CMD_0] =
+			cmdvpu(R500_POINT_VPORT_SCALE_OFFSET, 1);
+
 			for (i = 0; i < 6; i++) {
 				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
 				r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
-					cmdvpu(R500_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+					cmdvpu(R500_PVS_UCP_START + i, 1);
 			}
 		} else {
+		    ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+		    r300->hw.vpp.cmd[R300_VPP_CMD_0] =
+			cmdvpu(R300_PVS_CONST_START, 0);
+
+		    ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
+		    r300->hw.vps.cmd[R300_VPS_CMD_0] =
+			cmdvpu(R300_POINT_VPORT_SCALE_OFFSET, 1);
+
 			for (i = 0; i < 6; i++) {
 				ALLOC_STATE(vpucp[i], vpu, R300_VPUCP_CMDSIZE, 0);
 				r300->hw.vpucp[i].cmd[R300_VPUCP_CMD_0] =
-					cmdvpu(R300_PVS_UPLOAD_CLIP_PLANE0+i, 1);
+					cmdvpu(R300_PVS_UCP_START + i, 1);
 			}
 		}
 	}
