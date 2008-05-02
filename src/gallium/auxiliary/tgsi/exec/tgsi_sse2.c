@@ -761,20 +761,6 @@ emit_rcp (
       make_xmm( xmm_src ) );
 }
 
-#if HIGH_PRECISION
-static void XSTDCALL
-rsqrt4f(
-   float *store )
-{
-   const unsigned X = 0;
-
-   store[X + 0] = 1.0F / sqrtf( store[X + 0] );
-   store[X + 1] = 1.0F / sqrtf( store[X + 1] );
-   store[X + 2] = 1.0F / sqrtf( store[X + 2] );
-   store[X + 3] = 1.0F / sqrtf( store[X + 3] );
-}
-#endif
-
 static void
 emit_rsqrt(
    struct x86_function *func,
@@ -782,13 +768,6 @@ emit_rsqrt(
    unsigned xmm_src )
 {
 #if HIGH_PRECISION
-#if 1
-   emit_func_call_dst_src(
-      func,
-      xmm_dst,
-      xmm_src,
-      rsqrt4f );
-#else
    /* Although rsqrtps() and rcpps() are low precision on some/all SSE
     * implementations, it is possible to improve its precision at
     * fairly low cost, using a newton/raphson step, as below:
@@ -817,7 +796,6 @@ emit_rsqrt(
       sse_subps(   func, tmp0, src  );
       sse_mulps(   func, dst,  tmp0 );
    }
-#endif
 #else
    /* On Intel CPUs at least, this is only accurate to 12 bits -- not
     * good enough.
