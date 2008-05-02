@@ -1802,7 +1802,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	prog->program.length = program_end;
 
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM,
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START,
 				       &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
@@ -1837,7 +1837,7 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM, &(prog->program));
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START, &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
 	R300_STATECHANGE(rmesa, pvs);

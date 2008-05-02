@@ -139,17 +139,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS 4
 
 #define R300_SE_VTE_CNTL                  0x20b0
-#	define     R300_VPORT_X_SCALE_ENA                0x00000001
-#	define     R300_VPORT_X_OFFSET_ENA               0x00000002
-#	define     R300_VPORT_Y_SCALE_ENA                0x00000004
-#	define     R300_VPORT_Y_OFFSET_ENA               0x00000008
-#	define     R300_VPORT_Z_SCALE_ENA                0x00000010
-#	define     R300_VPORT_Z_OFFSET_ENA               0x00000020
-#	define     R300_VTX_XY_FMT                       0x00000100
-#	define     R300_VTX_Z_FMT                        0x00000200
-#	define     R300_VTX_W0_FMT                       0x00000400
-#	define     R300_VTX_W0_NORMALIZE                 0x00000800
-#	define     R300_VTX_ST_DENORMALIZED              0x00001000
+#	define     R300_VPORT_X_SCALE_ENA                (1 << 0)
+#	define     R300_VPORT_X_OFFSET_ENA               (1 << 1)
+#	define     R300_VPORT_Y_SCALE_ENA                (1 << 2)
+#	define     R300_VPORT_Y_OFFSET_ENA               (1 << 3)
+#	define     R300_VPORT_Z_SCALE_ENA                (1 << 4)
+#	define     R300_VPORT_Z_OFFSET_ENA               (1 << 5)
+#	define     R300_VTX_XY_FMT                       (1 << 8)
+#	define     R300_VTX_Z_FMT                        (1 << 9)
+#	define     R300_VTX_W0_FMT                       (1 << 10)
+#	define     R300_SERIAL_PROC_ENA                  (1 << 11)
 
 /* BEGIN: Vertex data assembly - lots of uncertainties */
 
@@ -250,9 +249,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *    if vertex program uses only position, fglrx will set normal, too
  *  - INPUT_CNTL_0_COLOR and INPUT_CNTL_COLOR bits are always equal.
  */
-#define R300_VAP_INPUT_CNTL_0               0x2180
-#       define R300_INPUT_CNTL_0_COLOR           0x00000001
-#define R300_VAP_INPUT_CNTL_1               0x2184
+#define R300_VAP_VTX_STATE_CNTL               0x2180
+#       define R300_COLOR_0_ASSEMBLY_SHIFT    0
+#       define R300_SEL_COLOR                 0
+#       define R300_SEL_USER_COLOR_0          1
+#       define R300_SEL_USER_COLOR_1          2
+#       define R300_COLOR_1_ASSEMBLY_SHIFT    2
+#       define R300_COLOR_2_ASSEMBLY_SHIFT    4
+#       define R300_COLOR_3_ASSEMBLY_SHIFT    6
+#       define R300_COLOR_4_ASSEMBLY_SHIFT    8
+#       define R300_COLOR_5_ASSEMBLY_SHIFT    10
+#       define R300_COLOR_6_ASSEMBLY_SHIFT    12
+#       define R300_COLOR_7_ASSEMBLY_SHIFT    14
+#       define R300_UPDATE_USER_COLOR_0_ENA   (1 << 16)
+
+/*
+ * Each bit in this field applies to the corresponding vector in the VSM
+ * memory (i.e. Bit 0 applies to VECTOR_0 (POSITION), etc.). If the bit
+ * is set, then the corresponding 4-Dword Vector is output into the Vertex Stream.
+ */
+#define R300_VAP_VSM_VTX_ASSM               0x2184
 #       define R300_INPUT_CNTL_POS               0x00000001
 #       define R300_INPUT_CNTL_NORMAL            0x00000002
 #       define R300_INPUT_CNTL_COLOR             0x00000004
@@ -345,25 +361,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Multiple vertex programs and parameter sets can be loaded at once,
  * which could explain the size discrepancy.
  */
-#define R300_VAP_PVS_UPLOAD_ADDRESS         0x2200
-#       define R300_PVS_UPLOAD_PROGRAM           0x00000000
-/* gap */
-#       define R300_PVS_UPLOAD_PARAMETERS        0x00000200
-/* gap */
-#       define R300_PVS_UPLOAD_CLIP_PLANE0       0x00000400
-#       define R300_PVS_UPLOAD_CLIP_PLANE1       0x00000401
-#       define R300_PVS_UPLOAD_CLIP_PLANE2       0x00000402
-#       define R300_PVS_UPLOAD_CLIP_PLANE3       0x00000403
-#       define R300_PVS_UPLOAD_CLIP_PLANE4       0x00000404
-#       define R300_PVS_UPLOAD_CLIP_PLANE5       0x00000405
-#       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
-
-#       define R500_PVS_UPLOAD_CLIP_PLANE0       0x00000600
-#       define R500_PVS_UPLOAD_CLIP_PLANE1       0x00000601
-#       define R500_PVS_UPLOAD_CLIP_PLANE2       0x00000602
-#       define R500_PVS_UPLOAD_CLIP_PLANE3       0x00000603
-#       define R500_PVS_UPLOAD_CLIP_PLANE4       0x00000604
-#       define R500_PVS_UPLOAD_CLIP_PLANE5       0x00000605
+#define R300_VAP_PVS_VECTOR_INDX_REG         0x2200
+#       define R300_PVS_CODE_START           0
+#       define R300_MAX_PVS_CODE_LINES       256
+#       define R500_MAX_PVS_CODE_LINES       1024
+#       define R300_PVS_CONST_START          512
+#       define R500_PVS_CONST_START          1024
+#       define R300_MAX_PVS_CONST_VECS       256
+#       define R500_MAX_PVS_CONST_VECS       1024
+#       define R300_PVS_UCP_START            1024
+#       define R500_PVS_UCP_START            1536
+#       define R300_POINT_VPORT_SCALE_OFFSET 1030
+#       define R500_POINT_VPORT_SCALE_OFFSET 1542
+#       define R300_POINT_GEN_TEX_OFFSET     1031
+#       define R500_POINT_GEN_TEX_OFFSET     1543
 
 /*
  * These are obsolete defines form r300_context.h, but they might give some
