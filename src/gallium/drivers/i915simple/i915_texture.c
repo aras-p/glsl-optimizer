@@ -105,6 +105,50 @@ i915_miptree_set_image_offset(struct i915_texture *tex,
 }
 
 
+/* Hack it up to use the old winsys->surface_alloc_storage()
+ * method for now:
+ */
+static boolean
+i915_displaytarget_layout(struct pipe_screen *screen,
+                          struct i915_texture *tex)
+{
+   struct pipe_winsys *ws = screen->winsys;
+   struct pipe_surface surf;
+   unsigned flags = (PIPE_BUFFER_USAGE_CPU_READ |
+                     PIPE_BUFFER_USAGE_CPU_WRITE |
+                     PIPE_BUFFER_USAGE_GPU_READ |
+                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+
+   memset(&surf, 0, sizeof(surf));
+
+   ws->surface_alloc_storage( ws, 
+                              &surf,
+                              tex->base.width[0], 
+                              tex->base.height[0],
+                              tex->base.format,
+                              flags);
+      
+   /* Now extract the goodies: 
+    */
+   i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
+   i915_miptree_set_level_info( tex, 0, 0, 0, 0, 
+                                tex->base.width[0],
+                                tex->base.height[0],
+                                1 );
+
+   tex->buffer = surf.buffer;
+   tex->pitch = surf.pitch;
+   tex->total_height = 0;
+
+
+   return tex->buffer != NULL;
+}
+
+
+
+
+
 static void
 i945_miptree_layout_2d( struct i915_texture *tex )
 {
@@ -483,30 +527,45 @@ static struct pipe_texture *
 i915_texture_create_screen(struct pipe_screen *screen,
                            const struct pipe_texture *templat)
 {
+   struct i915_screen *i915screen = i915_screen(screen);
+   struct pipe_winsys *ws = screen->winsys;
    struct i915_texture *tex = CALLOC_STRUCT(i915_texture);
 
-   if (tex) {
-      struct i915_screen *i915screen = i915_screen(screen);
-      struct pipe_winsys *ws = screen->winsys;
+   if (!tex) 
+      return NULL;
 
-      tex->base = *templat;
-      tex->base.refcount = 1;
-      tex->base.screen = screen;
+   tex->base = *templat;
+   tex->base.refcount = 1;
+   tex->base.screen = screen;
 
-      if (i915screen->is_i945 ? i945_miptree_layout(tex) :
-	  i915_miptree_layout(tex))
-	 tex->buffer = ws->buffer_create(ws, 64,
-                                         PIPE_BUFFER_USAGE_PIXEL,
-                                         tex->pitch * tex->base.cpp *
-                                         tex->total_height);
-
-      if (!tex->buffer) {
-	 FREE(tex);
-	 return NULL;
+   if (tex->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if (!i915_displaytarget_layout(screen, tex))
+         goto fail;
+   }
+   else {
+      if (i915screen->is_i945) {
+         if (!i945_miptree_layout(tex))
+            goto fail;
       }
+      else {
+         if (!i915_miptree_layout(tex))
+            goto fail;
+      }
+      
+      tex->buffer = ws->buffer_create(ws, 64,
+                                      PIPE_BUFFER_USAGE_PIXEL,
+                                      tex->pitch * tex->base.cpp *
+                                      tex->total_height);
+
+      if (!tex->buffer) 
+         goto fail;
    }
 
    return &tex->base;
+
+ fail:
+   FREE(tex);
+   return NULL;
 }
 
 
