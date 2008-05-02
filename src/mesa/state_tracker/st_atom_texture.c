@@ -90,6 +90,8 @@ update_textures(struct st_context *st)
             }
 
             st->state.num_textures = su + 1;
+
+            stObj->teximage_realloc = TRUE;
          }
 
          pt = st_get_stobj_texture(stObj);

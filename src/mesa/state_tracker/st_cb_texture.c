@@ -556,15 +556,17 @@ st_TexImage(GLcontext * ctx,
     * waiting on any outstanding fences.
     */
    if (stObj->pt &&
-       /*stObj->pt->first_level == level &&*/
-       stObj->pt->last_level == level &&
-       stObj->pt->target != PIPE_TEXTURE_CUBE &&
-       !st_texture_match_image(stObj->pt, &stImage->base,
-                                  stImage->face, stImage->level)) {
+       (stObj->teximage_realloc ||
+        (/*stObj->pt->first_level == level &&*/
+         stObj->pt->last_level == level &&
+         stObj->pt->target != PIPE_TEXTURE_CUBE &&
+         !st_texture_match_image(stObj->pt, &stImage->base,
+                                 stImage->face, stImage->level)))) {
 
       DBG("release it\n");
       pipe_texture_release(&stObj->pt);
       assert(!stObj->pt);
+      stObj->teximage_realloc = FALSE;
    }
 
    if (!stObj->pt) {
