@@ -1549,22 +1549,24 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_LOG:
-      debug_printf("TGSI: LOG opcode not implemented\n");
-      /* from ARB_v_p:
-      tmp = fabs(ScalarLoad(op0));
-      result.x = floor(log2(tmp));
-      result.y = tmp / 2^(floor(log2(tmp)));
-      result.z = RoughApproxLog2(tmp);
-      result.w = 1.0;
-      */
-#if 0
-      /* something like this: */
       FETCH( &r[0], 0, CHAN_X );
-      micro_lg2( &r[0], &r[0] );
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 STORE( &r[0], 0, chan_index );
+      micro_abs( &r[2], &r[0] );  /* r2 = abs(r0) */
+      micro_lg2( &r[1], &r[2] );  /* r1 = lg2(r2) */
+      micro_flr( &r[0], &r[1] );  /* r0 = floor(r1) */
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
+	 STORE( &r[0], 0, CHAN_X );
       }
-#endif
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+         micro_exp2( &r[0], &r[0] );       /* r0 = 2 ^ r0 */
+         micro_div( &r[0], &r[2], &r[0] ); /* r0 = r2 / r0 */
+	 STORE( &r[0], 0, CHAN_Y );
+      }
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+	 STORE( &r[1], 0, CHAN_Z );
+      }
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
+	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+      }
       break;
 
    case TGSI_OPCODE_MUL:
