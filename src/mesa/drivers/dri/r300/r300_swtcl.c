@@ -85,19 +85,24 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	GLuint i, dw;
 
 	/* type, inputs, stop bit, size */
-	for (i = 0; i + 1 < nr; i += 2) {
-		dw = (inputs[tab[i]] << 8) | 0x3;
-		dw |= ((inputs[tab[i + 1]] << 8) | 0x3) << 16;
-		if (i + 2 == nr) {
-			dw |= (R300_VAP_INPUT_ROUTE_END << 16);
+	for (i = 0; i < nr; i += 2) {
+		/* make sure input is valid, would lockup the gpu */
+		assert(inputs[tab[i]] != -1);
+		dw = (R300_SIGNED |
+		      (inputs[tab[i]] << R300_DST_VEC_LOC_SHIFT) |
+		      (attribptr[tab[i]]->size - 1)) << R300_DATA_TYPE_0_SHIFT;
+		if (i + 1 == nr) {
+			dw |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
+		} else {
+			assert(inputs[tab[i + 1]] != -1);
+			dw |= (R300_SIGNED |
+			       (inputs[tab[i + 1]] << R300_DST_VEC_LOC_SHIFT) |
+			       (attribptr[tab[i + 1]]->size - 1)) << R300_DATA_TYPE_1_SHIFT;
+			if (i + 2 == nr) {
+				dw |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
+			}
 		}
 		dst[i >> 1] = dw;
-	}
-
-	if (nr & 1) {
-		dw = (inputs[tab[nr - 1]] << 8) | 0x3;
-		dw |= R300_VAP_INPUT_ROUTE_END;
-		dst[nr >> 1] = dw;
 	}
 
 	return (nr + 1) >> 1;
