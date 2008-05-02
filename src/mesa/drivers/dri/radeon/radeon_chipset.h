@@ -147,12 +147,8 @@
 #define PCI_CHIP_RV410_5E4D		0x5E4D
 #define PCI_CHIP_RV410_5E4F		0x5E4F
 
-<<<<<<< HEAD:src/mesa/drivers/dri/radeon/radeon_chipset.h
 #define PCI_CHIP_RV530_71C4		0x71C4
 #define PCI_CHIP_RV530_71D5		0x71D5
-=======
-#define PCI_CHIP_RV530_71C4             0x71C4
->>>>>>> eff6f1203222a776c5990b5d104b57a7f69b9aab:src/mesa/drivers/dri/radeon/radeon_chipset.h
 
 #define PCI_CHIP_RS350_7834		0x7834
 #define PCI_CHIP_RS350_7835		0x7835

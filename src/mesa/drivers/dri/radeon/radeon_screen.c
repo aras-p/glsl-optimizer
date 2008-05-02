@@ -691,14 +691,11 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       fprintf(stderr, "Warning, R520 detected, 3D HAHAHAHAHA!!.\n");
       break;
 
-<<<<<<< HEAD:src/mesa/drivers/dri/radeon/radeon_screen.c
    case PCI_CHIP_RV530_71D5:
       screen->chip_family = CHIP_FAMILY_R520;
       fprintf(stderr, "Warning, RV530 detected, all your base belong to us\n");
       break;
 
-=======
->>>>>>> eff6f1203222a776c5990b5d104b57a7f69b9aab:src/mesa/drivers/dri/radeon/radeon_screen.c
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
 	      dri_priv->deviceID);
