@@ -946,34 +946,32 @@ static void build_lighting( struct tnl_program *p )
 	 _bfc1 = _bfc0;
    }
 
-
    /* If no lights, still need to emit the scenecolor.
     */
-      {
-	 struct ureg res0 = register_output( p, VERT_RESULT_COL0 );
-	 emit_op1(p, OPCODE_MOV, res0, 0, _col0);
-      }
+   {
+      struct ureg res0 = register_output( p, VERT_RESULT_COL0 );
+      emit_op1(p, OPCODE_MOV, res0, 0, _col0);
+   }
 
-      if (separate) {
-	 struct ureg res1 = register_output( p, VERT_RESULT_COL1 );
-	 emit_op1(p, OPCODE_MOV, res1, 0, _col1);
-      }
+   if (separate) {
+      struct ureg res1 = register_output( p, VERT_RESULT_COL1 );
+      emit_op1(p, OPCODE_MOV, res1, 0, _col1);
+   }
 
-      if (twoside) {
-	 struct ureg res0 = register_output( p, VERT_RESULT_BFC0 );
-	 emit_op1(p, OPCODE_MOV, res0, 0, _bfc0);
-      }
+   if (twoside) {
+      struct ureg res0 = register_output( p, VERT_RESULT_BFC0 );
+      emit_op1(p, OPCODE_MOV, res0, 0, _bfc0);
+   }
       
-      if (twoside && separate) {
-	 struct ureg res1 = register_output( p, VERT_RESULT_BFC1 );
-	 emit_op1(p, OPCODE_MOV, res1, 0, _bfc1);
-      }
+   if (twoside && separate) {
+      struct ureg res1 = register_output( p, VERT_RESULT_BFC1 );
+      emit_op1(p, OPCODE_MOV, res1, 0, _bfc1);
+   }
       
    if (nr_lights == 0) {
       release_temps(p);
       return;
    }
-
 
    for (i = 0; i < MAX_LIGHTS; i++) {
       if (p->state->unit[i].light_enabled) {
@@ -1006,7 +1004,7 @@ static void build_lighting( struct tnl_program *p )
 	    VPpli = get_temp(p); 
 	    half = get_temp(p);
  
-	    /* Calulate VPpli vector
+	    /* Calculate VPpli vector
 	     */
 	    emit_op2(p, OPCODE_SUB, VPpli, 0, Ppli, V); 
 
@@ -1017,15 +1015,13 @@ static void build_lighting( struct tnl_program *p )
 	    emit_op1(p, OPCODE_RSQ, dist, 0, dist);
 	    emit_op2(p, OPCODE_MUL, VPpli, 0, VPpli, dist);
 
-
-	    /* Calculate  attenuation:
+	    /* Calculate attenuation:
 	     */ 
 	    if (!p->state->unit[i].light_spotcutoff_is_180 ||
 		p->state->unit[i].light_attenuated) {
 	       att = calculate_light_attenuation(p, i, VPpli, dist);
 	    }
-	 
-      
+
 	    /* Calculate viewer direction, or use infinite viewer:
 	     */
 	    if (p->state->light_local_viewer) {
@@ -1047,7 +1043,6 @@ static void build_lighting( struct tnl_program *p )
 	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
 	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
 
-	
 	 /* Front face lighting:
 	  */
 	 {
