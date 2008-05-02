@@ -1802,7 +1802,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	prog->program.length = program_end;
 
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM,
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START,
 				       &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
@@ -1837,7 +1837,7 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM, &(prog->program));
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START, &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
 	R300_STATECHANGE(rmesa, pvs);
@@ -1981,10 +1981,34 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
 
-	if (!has_tcl)
-		r300->hw.vap_cntl.cmd[1] = 0x0014045a;
+	/* setup the VAP */
+	/* for tcl, PVS_NUM_SLOTS, PVS_NUM_CNTLRS, VF_MAX_VTX_NUM need to be adjusted
+	 * dynamically.  PVS_NUM_FPUS is fixed based on asic
+	 */
+	if (has_tcl) {
+	    r300->hw.vap_cntl.cmd[1] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+					(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+					(12 << R300_VF_MAX_VTX_NUM_SHIFT));
+	    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		r300->hw.vap_cntl.cmd[1] |= R500_TCL_STATE_OPTIMIZATION;
+	} else
+	    r300->hw.vap_cntl.cmd[1] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+					(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+					(5 << R300_VF_MAX_VTX_NUM_SHIFT));
+
+	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
+	    r300->hw.vap_cntl.cmd[1] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
+	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560))
+	    r300->hw.vap_cntl.cmd[1] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
+	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
+	    r300->hw.vap_cntl.cmd[1] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
+	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
+	    r300->hw.vap_cntl.cmd[1] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
 	else
-		r300->hw.vap_cntl.cmd[1] = 0x0030045A;	//0x0030065a /* Dangerous */
+	    r300->hw.vap_cntl.cmd[1] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
 
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 	    | R300_VPORT_X_OFFSET_ENA
@@ -2011,7 +2035,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	/* XXX: Other families? */
 	if (has_tcl) {
-		r300->hw.vap_clip_cntl.cmd[1] = R300_221C_NORMAL;
+		r300->hw.vap_clip_cntl.cmd[1] = R300_PS_UCP_MODE_DIST_COP;
 
 		r300->hw.vap_clip.cmd[1] = r300PackFloat32(1.0); /* X */
 		r300->hw.vap_clip.cmd[2] = r300PackFloat32(1.0); /* X */
@@ -2035,19 +2059,30 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
 
-	/* XXX: Other families? */
+	/* num pipes needs to be read back from the GB_PIPE_SELECT register
+	 * on r4xx/r5xx/rs4xx/rs6xx
+	 * should move this to the drm
+	 */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-	    R300_GB_TILE_ENABLE | R300_GB_TILE_SIZE_16;
+	    R300_GB_TILE_ENABLE | R300_GB_TILE_SIZE_16 /*| R300_GB_SUBPIXEL_1_16*/;
 	switch (r300->radeon.radeonScreen->chip_family) {
 	case CHIP_FAMILY_R300:
 	case CHIP_FAMILY_R350:
-	case CHIP_FAMILY_RV410:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
 		    R300_GB_TILE_PIPE_COUNT_R300;
 		break;
-	case CHIP_FAMILY_R420:
+	case CHIP_FAMILY_RV350:
 	case CHIP_FAMILY_RV515:
+	case CHIP_FAMILY_RV530:
+	case CHIP_FAMILY_RV410:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_RV300;
+		break;
+	case CHIP_FAMILY_R420:
 	case CHIP_FAMILY_R520:
+	case CHIP_FAMILY_R580:
+	case CHIP_FAMILY_RV560:
+	case CHIP_FAMILY_RV570:
 		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
 		    R300_GB_TILE_PIPE_COUNT_R420;
 		break;
@@ -2341,6 +2376,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	}
 
 	bump_r500fp_count(rmesa->hw.r500fp.cmd, fp->cs->nrslots * 6);
+
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < fp->const_nr; i++) {

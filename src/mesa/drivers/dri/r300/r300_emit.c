@@ -216,14 +216,18 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	for (i = 0; i < nr; i += 2) {
 		/* make sure input is valid, would lockup the gpu */
 		assert(inputs[tab[i]] != -1);
-		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
+		dw = (R300_SIGNED |
+		      (inputs[tab[i]] << R300_DST_VEC_LOC_SHIFT) |
+		      (attribptr[tab[i]]->size - 1)) << R300_DATA_TYPE_0_SHIFT;
 		if (i + 1 == nr) {
-			dw |= R300_VAP_INPUT_ROUTE_END;
+			dw |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
 		} else {
 			assert(inputs[tab[i + 1]] != -1);
-			dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
+			dw |= (R300_SIGNED |
+			       (inputs[tab[i + 1]] << R300_DST_VEC_LOC_SHIFT) |
+			       (attribptr[tab[i + 1]]->size - 1)) << R300_DATA_TYPE_1_SHIFT;
 			if (i + 2 == nr) {
-				dw |= (R300_VAP_INPUT_ROUTE_END << 16);
+				dw |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
 			}
 		}
 		dst[i >> 1] = dw;
@@ -234,10 +238,10 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 
 static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 {
-	return (swizzle[0] << R300_INPUT_ROUTE_X_SHIFT) |
-	    (swizzle[1] << R300_INPUT_ROUTE_Y_SHIFT) |
-	    (swizzle[2] << R300_INPUT_ROUTE_Z_SHIFT) |
-	    (swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
+	return (swizzle[0] << R300_SWIZZLE_SELECT_X_SHIFT) |
+	    (swizzle[1] << R300_SWIZZLE_SELECT_Y_SHIFT) |
+	    (swizzle[2] << R300_SWIZZLE_SELECT_Z_SHIFT) |
+	    (swizzle[3] << R300_SWIZZLE_SELECT_W_SHIFT);
 }
 
 GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
@@ -245,9 +249,13 @@ GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 	GLuint i, dw;
 
 	for (i = 0; i < nr; i += 2) {
-		dw = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+		dw = (r300VAPInputRoute1Swizzle(swizzle[i]) |
+		      ((R300_WRITE_ENA_X | R300_WRITE_ENA_Y |
+			R300_WRITE_ENA_Z | R300_WRITE_ENA_W) << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE0_SHIFT;
 		if (i + 1 < nr) {
-			dw |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
+			dw |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) |
+			       ((R300_WRITE_ENA_X | R300_WRITE_ENA_Y |
+				 R300_WRITE_ENA_Z | R300_WRITE_ENA_W) << R300_WRITE_ENA_SHIFT)) << R300_SWIZZLE1_SHIFT;
 		}
 		dst[i >> 1] = dw;
 	}

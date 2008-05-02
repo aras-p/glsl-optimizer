@@ -70,6 +70,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Stolen from r200 code from Christoph Brill (It's a guess!)
  */
 #define R300_VAP_CNTL	0x2080
+#       define R300_PVS_NUM_SLOTS_SHIFT                 0
+#       define R300_PVS_NUM_CNTLRS_SHIFT                4
+#       define R300_PVS_NUM_FPUS_SHIFT                  8
+#       define R300_VF_MAX_VTX_NUM_SHIFT                18
+#       define R300_GL_CLIP_SPACE_DEF                   (0 << 22)
+#       define R300_DX_CLIP_SPACE_DEF                   (1 << 22)
+#       define R500_TCL_STATE_OPTIMIZATION              (1 << 23)
 
 /* This register is written directly and also starts data section
  * in many 3d CP_PACKET3's
@@ -125,24 +132,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_5_COMP_CNT_SHIFT 15
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_6_COMP_CNT_SHIFT 18
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_7_COMP_CNT_SHIFT 21
-#	define R300_VAP_OUTPUT_VTX_FMT_1__NOT_PRESENT  (1<<0)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__1_COMPONENT  (1<<1)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__2_COMPONENTS (1<<2)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__3_COMPONENTS (1<<3)
-#	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS (1<<4)
+#	define R300_VAP_OUTPUT_VTX_FMT_1__NOT_PRESENT  0
+#	define R300_VAP_OUTPUT_VTX_FMT_1__1_COMPONENT  1
+#	define R300_VAP_OUTPUT_VTX_FMT_1__2_COMPONENTS 2
+#	define R300_VAP_OUTPUT_VTX_FMT_1__3_COMPONENTS 3
+#	define R300_VAP_OUTPUT_VTX_FMT_1__4_COMPONENTS 4
 
 #define R300_SE_VTE_CNTL                  0x20b0
-#	define     R300_VPORT_X_SCALE_ENA                0x00000001
-#	define     R300_VPORT_X_OFFSET_ENA               0x00000002
-#	define     R300_VPORT_Y_SCALE_ENA                0x00000004
-#	define     R300_VPORT_Y_OFFSET_ENA               0x00000008
-#	define     R300_VPORT_Z_SCALE_ENA                0x00000010
-#	define     R300_VPORT_Z_OFFSET_ENA               0x00000020
-#	define     R300_VTX_XY_FMT                       0x00000100
-#	define     R300_VTX_Z_FMT                        0x00000200
-#	define     R300_VTX_W0_FMT                       0x00000400
-#	define     R300_VTX_W0_NORMALIZE                 0x00000800
-#	define     R300_VTX_ST_DENORMALIZED              0x00001000
+#	define     R300_VPORT_X_SCALE_ENA                (1 << 0)
+#	define     R300_VPORT_X_OFFSET_ENA               (1 << 1)
+#	define     R300_VPORT_Y_SCALE_ENA                (1 << 2)
+#	define     R300_VPORT_Y_OFFSET_ENA               (1 << 3)
+#	define     R300_VPORT_Z_SCALE_ENA                (1 << 4)
+#	define     R300_VPORT_Z_OFFSET_ENA               (1 << 5)
+#	define     R300_VTX_XY_FMT                       (1 << 8)
+#	define     R300_VTX_Z_FMT                        (1 << 9)
+#	define     R300_VTX_W0_FMT                       (1 << 10)
+#	define     R300_SERIAL_PROC_ENA                  (1 << 11)
 
 /* BEGIN: Vertex data assembly - lots of uncertainties */
 
@@ -211,27 +217,31 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Always set COMPONENTS_4 in immediate mode.
  */
 
-#define R300_VAP_INPUT_ROUTE_0_0            0x2150
-#       define R300_INPUT_ROUTE_COMPONENTS_1     (0 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_2     (1 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_3     (2 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_4     (3 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_RGBA  (4 << 0) /* GUESS */
-#       define R300_VAP_INPUT_ROUTE_IDX_SHIFT    8
-#       define R300_VAP_INPUT_ROUTE_IDX_MASK     (31 << 8) /* GUESS */
-#       define R300_VAP_INPUT_ROUTE_END          (1 << 13)
-#       define R300_INPUT_ROUTE_IMMEDIATE_MODE   (0 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_FLOAT            (1 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_UNSIGNED_BYTE    (2 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_FLOAT_COLOR      (3 << 14) /* GUESS */
-#define R300_VAP_INPUT_ROUTE_0_1            0x2154
-#define R300_VAP_INPUT_ROUTE_0_2            0x2158
-#define R300_VAP_INPUT_ROUTE_0_3            0x215C
-#define R300_VAP_INPUT_ROUTE_0_4            0x2160
-#define R300_VAP_INPUT_ROUTE_0_5            0x2164
-#define R300_VAP_INPUT_ROUTE_0_6            0x2168
-#define R300_VAP_INPUT_ROUTE_0_7            0x216C
-
+#define R300_VAP_PROG_STREAM_CNTL_0                     0x2150
+#       define R300_DATA_TYPE_0_SHIFT                   0
+#       define R300_DATA_TYPE_FLOAT_1                   0
+#       define R300_DATA_TYPE_FLOAT_2                   1
+#       define R300_DATA_TYPE_FLOAT_3                   2
+#       define R300_DATA_TYPE_FLOAT_4                   3
+#       define R300_DATA_TYPE_BYTE                      4
+#       define R300_DATA_TYPE_D3DCOLOR                  5
+#       define R300_DATA_TYPE_SHORT_2                   6
+#       define R300_DATA_TYPE_SHORT_4                   7
+#       define R300_DATA_TYPE_VECTOR_3_TTT              8
+#       define R300_DATA_TYPE_VECTOR_3_EET              9
+#       define R300_SKIP_DWORDS_SHIFT                   4
+#       define R300_DST_VEC_LOC_SHIFT                   8
+#       define R300_LAST_VEC                            (1 << 13)
+#       define R300_SIGNED                              (1 << 14)
+#       define R300_NORMALIZE                           (1 << 15)
+#       define R300_DATA_TYPE_1_SHIFT                   16
+#define R300_VAP_PROG_STREAM_CNTL_1                     0x2154
+#define R300_VAP_PROG_STREAM_CNTL_2                     0x2158
+#define R300_VAP_PROG_STREAM_CNTL_3                     0x215C
+#define R300_VAP_PROG_STREAM_CNTL_4                     0x2160
+#define R300_VAP_PROG_STREAM_CNTL_5                     0x2164
+#define R300_VAP_PROG_STREAM_CNTL_6                     0x2168
+#define R300_VAP_PROG_STREAM_CNTL_7                     0x216C
 /* gap */
 
 /* Notes:
@@ -239,9 +249,26 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *    if vertex program uses only position, fglrx will set normal, too
  *  - INPUT_CNTL_0_COLOR and INPUT_CNTL_COLOR bits are always equal.
  */
-#define R300_VAP_INPUT_CNTL_0               0x2180
-#       define R300_INPUT_CNTL_0_COLOR           0x00000001
-#define R300_VAP_INPUT_CNTL_1               0x2184
+#define R300_VAP_VTX_STATE_CNTL               0x2180
+#       define R300_COLOR_0_ASSEMBLY_SHIFT    0
+#       define R300_SEL_COLOR                 0
+#       define R300_SEL_USER_COLOR_0          1
+#       define R300_SEL_USER_COLOR_1          2
+#       define R300_COLOR_1_ASSEMBLY_SHIFT    2
+#       define R300_COLOR_2_ASSEMBLY_SHIFT    4
+#       define R300_COLOR_3_ASSEMBLY_SHIFT    6
+#       define R300_COLOR_4_ASSEMBLY_SHIFT    8
+#       define R300_COLOR_5_ASSEMBLY_SHIFT    10
+#       define R300_COLOR_6_ASSEMBLY_SHIFT    12
+#       define R300_COLOR_7_ASSEMBLY_SHIFT    14
+#       define R300_UPDATE_USER_COLOR_0_ENA   (1 << 16)
+
+/*
+ * Each bit in this field applies to the corresponding vector in the VSM
+ * memory (i.e. Bit 0 applies to VECTOR_0 (POSITION), etc.). If the bit
+ * is set, then the corresponding 4-Dword Vector is output into the Vertex Stream.
+ */
+#define R300_VAP_VSM_VTX_ASSM               0x2184
 #       define R300_INPUT_CNTL_POS               0x00000001
 #       define R300_INPUT_CNTL_NORMAL            0x00000002
 #       define R300_INPUT_CNTL_COLOR             0x00000004
@@ -269,26 +296,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * mode, the swizzling pattern is e.g. used to set zw components in texture
  * coordinates with only tweo components.
  */
-#define R300_VAP_INPUT_ROUTE_1_0            0x21E0
+#define R300_VAP_PROG_STREAM_CNTL_EXT_0                 0x21e0
+#       define R300_SWIZZLE0_SHIFT                      0
+#       define R300_SWIZZLE_SELECT_X_SHIFT              0
+#       define R300_SWIZZLE_SELECT_Y_SHIFT              3
+#       define R300_SWIZZLE_SELECT_Z_SHIFT              6
+#       define R300_SWIZZLE_SELECT_W_SHIFT              9
+
+#       define R300_SWIZZLE_SELECT_X                    0
+#       define R300_SWIZZLE_SELECT_Y                    1
+#       define R300_SWIZZLE_SELECT_Z                    2
+#       define R300_SWIZZLE_SELECT_W                    3
+#       define R300_SWIZZLE_SELECT_FP_ZERO              4
+#       define R300_SWIZZLE_SELECT_FP_ONE               5
+/* alternate forms for r300_emit.c */
 #       define R300_INPUT_ROUTE_SELECT_X    0
 #       define R300_INPUT_ROUTE_SELECT_Y    1
 #       define R300_INPUT_ROUTE_SELECT_Z    2
 #       define R300_INPUT_ROUTE_SELECT_W    3
 #       define R300_INPUT_ROUTE_SELECT_ZERO 4
 #       define R300_INPUT_ROUTE_SELECT_ONE  5
-#       define R300_INPUT_ROUTE_SELECT_MASK 7
-#       define R300_INPUT_ROUTE_X_SHIFT     0
-#       define R300_INPUT_ROUTE_Y_SHIFT     3
-#       define R300_INPUT_ROUTE_Z_SHIFT     6
-#       define R300_INPUT_ROUTE_W_SHIFT     9
-#       define R300_INPUT_ROUTE_ENABLE      (15 << 12)
-#define R300_VAP_INPUT_ROUTE_1_1            0x21E4
-#define R300_VAP_INPUT_ROUTE_1_2            0x21E8
-#define R300_VAP_INPUT_ROUTE_1_3            0x21EC
-#define R300_VAP_INPUT_ROUTE_1_4            0x21F0
-#define R300_VAP_INPUT_ROUTE_1_5            0x21F4
-#define R300_VAP_INPUT_ROUTE_1_6            0x21F8
-#define R300_VAP_INPUT_ROUTE_1_7            0x21FC
+
+#       define R300_WRITE_ENA_SHIFT                     12
+#       define R300_WRITE_ENA_X                         1
+#       define R300_WRITE_ENA_Y                         2
+#       define R300_WRITE_ENA_Z                         4
+#       define R300_WRITE_ENA_W                         8
+#       define R300_SWIZZLE1_SHIFT                      16
+#define R300_VAP_PROG_STREAM_CNTL_EXT_1                 0x21e4
+#define R300_VAP_PROG_STREAM_CNTL_EXT_2                 0x21e8
+#define R300_VAP_PROG_STREAM_CNTL_EXT_3                 0x21ec
+#define R300_VAP_PROG_STREAM_CNTL_EXT_4                 0x21f0
+#define R300_VAP_PROG_STREAM_CNTL_EXT_5                 0x21f4
+#define R300_VAP_PROG_STREAM_CNTL_EXT_6                 0x21f8
+#define R300_VAP_PROG_STREAM_CNTL_EXT_7                 0x21fc
 
 /* END: Vertex data assembly */
 
@@ -320,25 +361,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Multiple vertex programs and parameter sets can be loaded at once,
  * which could explain the size discrepancy.
  */
-#define R300_VAP_PVS_UPLOAD_ADDRESS         0x2200
-#       define R300_PVS_UPLOAD_PROGRAM           0x00000000
-/* gap */
-#       define R300_PVS_UPLOAD_PARAMETERS        0x00000200
-/* gap */
-#       define R300_PVS_UPLOAD_CLIP_PLANE0       0x00000400
-#       define R300_PVS_UPLOAD_CLIP_PLANE1       0x00000401
-#       define R300_PVS_UPLOAD_CLIP_PLANE2       0x00000402
-#       define R300_PVS_UPLOAD_CLIP_PLANE3       0x00000403
-#       define R300_PVS_UPLOAD_CLIP_PLANE4       0x00000404
-#       define R300_PVS_UPLOAD_CLIP_PLANE5       0x00000405
-#       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
-
-#       define R500_PVS_UPLOAD_CLIP_PLANE0       0x00000600
-#       define R500_PVS_UPLOAD_CLIP_PLANE1       0x00000601
-#       define R500_PVS_UPLOAD_CLIP_PLANE2       0x00000602
-#       define R500_PVS_UPLOAD_CLIP_PLANE3       0x00000603
-#       define R500_PVS_UPLOAD_CLIP_PLANE4       0x00000604
-#       define R500_PVS_UPLOAD_CLIP_PLANE5       0x00000605
+#define R300_VAP_PVS_VECTOR_INDX_REG         0x2200
+#       define R300_PVS_CODE_START           0
+#       define R300_MAX_PVS_CODE_LINES       256
+#       define R500_MAX_PVS_CODE_LINES       1024
+#       define R300_PVS_CONST_START          512
+#       define R500_PVS_CONST_START          1024
+#       define R300_MAX_PVS_CONST_VECS       256
+#       define R500_MAX_PVS_CONST_VECS       1024
+#       define R300_PVS_UCP_START            1024
+#       define R500_PVS_UCP_START            1536
+#       define R300_POINT_VPORT_SCALE_OFFSET 1030
+#       define R500_POINT_VPORT_SCALE_OFFSET 1542
+#       define R300_POINT_GEN_TEX_OFFSET     1031
+#       define R500_POINT_GEN_TEX_OFFSET     1543
 
 /*
  * These are obsolete defines form r300_context.h, but they might give some
@@ -373,9 +409,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * See bug #9871. http://bugs.freedesktop.org/attachment.cgi?id=10672&action=view
  */
 #define R300_VAP_CLIP_CNTL                       0x221C
-#       define R300_221C_NORMAL                  0x00000000
-#       define R300_221C_CLEAR                   0x0001C000
-#define R300_VAP_UCP_ENABLE_0 (1 << 0)
+#       define R300_VAP_UCP_ENABLE_0             (1 << 0)
+#       define R300_VAP_UCP_ENABLE_1             (1 << 1)
+#       define R300_VAP_UCP_ENABLE_2             (1 << 2)
+#       define R300_VAP_UCP_ENABLE_3             (1 << 3)
+#       define R300_VAP_UCP_ENABLE_4             (1 << 4)
+#       define R300_VAP_UCP_ENABLE_5             (1 << 5)
+#       define R300_PS_UCP_MODE_DIST_COP         (0 << 14)
+#       define R300_PS_UCP_MODE_RADIUS_COP       (1 << 14)
+#       define R300_PS_UCP_MODE_RADIUS_COP_CLIP  (2 << 14)
+#       define R300_PS_UCP_MODE_CLIP_AS_TRIFAN   (3 << 14)
+#       define R300_CLIP_DISABLE                 (1 << 16)
+#       define R300_UCP_CULL_ONLY_ENABLE         (1 << 17)
+#       define R300_BOUNDARY_EDGE_FLAG_ENABLE    (1 << 18)
+#       define R500_COLOR2_IS_TEXTURE            (1 << 20)
+#       define R500_COLOR3_IS_TEXTURE            (1 << 21)
 
 /* These seem to be per-pixel and per-vertex X and Y clipping planes. The first
  * plane is per-pixel and the second plane is per-vertex.
