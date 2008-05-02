@@ -90,8 +90,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-
    struct pipe_texture template, *texture;
+   unsigned surface_usage;
 
    /* Free the old surface (and texture if we hold the last
     * reference):
@@ -117,10 +117,15 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    template.height[0] = height;
    template.depth[0] = 1;
    template.last_level = 0;
-   template.usage = (PIPE_BUFFER_USAGE_CPU_WRITE | 
-                     PIPE_BUFFER_USAGE_CPU_READ |
-                     PIPE_BUFFER_USAGE_GPU_WRITE |
-                     PIPE_BUFFER_USAGE_GPU_READ);
+   template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                         PIPE_TEXTURE_USAGE_RENDER_TARGET);
+
+   /* Probably need dedicated flags for surface usage too: 
+    */
+   surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
+                    PIPE_BUFFER_USAGE_GPU_WRITE |
+                    PIPE_BUFFER_USAGE_CPU_READ |
+                    PIPE_BUFFER_USAGE_CPU_WRITE);
 
    texture = pipe->screen->texture_create( pipe->screen,
                                            &template );
@@ -137,11 +142,13 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
        * to tell the driver to go ahead and allocate the buffer, even
        * if HW doesn't support the format.
        */
-      template.usage = (PIPE_BUFFER_USAGE_CPU_READ |
-                        PIPE_BUFFER_USAGE_CPU_WRITE);
+      template.tex_usage = 0;
+      surface_usage = (PIPE_BUFFER_USAGE_CPU_READ |
+                       PIPE_BUFFER_USAGE_CPU_WRITE);
 
       texture = pipe->screen->texture_create( pipe->screen,
                                               &template );
+
    }
 
    if (!texture) 
@@ -150,7 +157,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->surface = pipe->screen->get_tex_surface( pipe->screen,
                                                   texture,
                                                   0, 0, 0,
-                                                  template.usage );
+                                                  surface_usage );
 
    pipe_texture_reference( &texture, NULL );
 

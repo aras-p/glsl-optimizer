@@ -75,7 +75,8 @@ st_texture_create(struct st_context *st,
 		  GLuint width0,
 		  GLuint height0,
 		  GLuint depth0,
-		  GLuint compress_byte)
+		  GLuint compress_byte,
+                  GLuint usage )
 {
    struct pipe_texture pt, *newtex;
    struct pipe_screen *screen = st->pipe->screen;
@@ -98,6 +99,7 @@ st_texture_create(struct st_context *st,
    pt.depth[0] = depth0;
    pt.compressed = compress_byte ? 1 : 0;
    pt.cpp = pt.compressed ? compress_byte : st_sizeof_format(format);
+   pt.tex_usage = usage;
 
    newtex = screen->texture_create(screen, &pt);
 

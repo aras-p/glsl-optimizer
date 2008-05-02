@@ -52,40 +52,87 @@ static unsigned minify( unsigned d )
 }
 
 
-static void
-softpipe_texture_layout(struct softpipe_texture * spt)
+/* Conventional allocation path for non-display textures:
+ */
+static boolean
+softpipe_texture_layout(struct pipe_screen *screen,
+                        struct softpipe_texture * spt)
 {
+   struct pipe_winsys *ws = screen->winsys;
    struct pipe_texture *pt = &spt->base;
    unsigned level;
    unsigned width = pt->width[0];
    unsigned height = pt->height[0];
    unsigned depth = pt->depth[0];
 
-   spt->buffer_size = 0;
+   unsigned buffer_size = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
       pt->width[level] = width;
       pt->height[level] = height;
       pt->depth[level] = depth;
+      spt->pitch[level] = width;
 
-      spt->level_offset[level] = spt->buffer_size;
+      spt->level_offset[level] = buffer_size;
 
-      spt->buffer_size += ((pt->compressed) ? MAX2(1, height/4) : height) *
-			  ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-			  width * pt->cpp;
+      buffer_size += (((pt->compressed) ? MAX2(1, height/4) : height) *
+                      ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
+                      width * pt->cpp);
 
       width  = minify(width);
       height = minify(height);
       depth = minify(depth);
    }
+
+   spt->buffer = ws->buffer_create(ws, 32,
+                                   PIPE_BUFFER_USAGE_PIXEL,
+                                   buffer_size);
+
+   return spt->buffer != NULL;
 }
+
+
+
+/* Hack it up to use the old winsys->surface_alloc_storage()
+ * method for now:
+ */
+static boolean
+softpipe_displaytarget_layout(struct pipe_screen *screen,
+                              struct softpipe_texture * spt)
+{
+   struct pipe_winsys *ws = screen->winsys;
+   struct pipe_surface surf;
+   unsigned flags = (PIPE_BUFFER_USAGE_CPU_READ |
+                     PIPE_BUFFER_USAGE_CPU_WRITE |
+                     PIPE_BUFFER_USAGE_GPU_READ |
+                     PIPE_BUFFER_USAGE_GPU_WRITE);
+
+
+   memset(&surf, 0, sizeof(surf));
+
+   ws->surface_alloc_storage( ws, 
+                              &surf,
+                              spt->base.width[0], 
+                              spt->base.height[0],
+                              spt->base.format,
+                              flags);
+      
+   /* Now extract the goodies: 
+    */
+   spt->buffer = surf.buffer;
+   spt->pitch[0] = surf.pitch;
+
+   return spt->buffer != NULL;
+}
+
+
+
 
 
 static struct pipe_texture *
 softpipe_texture_create(struct pipe_screen *screen,
                         const struct pipe_texture *templat)
 {
-   struct pipe_winsys *ws = screen->winsys;
    struct softpipe_texture *spt = CALLOC_STRUCT(softpipe_texture);
    if (!spt)
       return NULL;
@@ -94,19 +141,21 @@ softpipe_texture_create(struct pipe_screen *screen,
    spt->base.refcount = 1;
    spt->base.screen = screen;
 
-   softpipe_texture_layout(spt);
-
-   spt->buffer = ws->buffer_create(ws, 32,
-                                   PIPE_BUFFER_USAGE_PIXEL,
-                                   spt->buffer_size);
-   if (!spt->buffer) {
-      FREE(spt);
-      return NULL;
+   if (spt->base.tex_usage & PIPE_TEXTURE_USAGE_DISPLAY_TARGET) {
+      if (!softpipe_displaytarget_layout(screen, spt))
+         goto fail;
    }
-
+   else {
+      if (!softpipe_texture_layout(screen, spt))
+         goto fail;
+   }
+    
    assert(spt->base.refcount == 1);
-
    return &spt->base;
+
+ fail:
+   FREE(spt);
+   return NULL;
 }
 
 
@@ -177,22 +226,6 @@ softpipe_get_tex_surface(struct pipe_screen *screen,
       else {
 	 assert(face == 0);
 	 assert(zslice == 0);
-      }
-
-      if (usage & (PIPE_BUFFER_USAGE_CPU_WRITE |
-                   PIPE_BUFFER_USAGE_GPU_WRITE)) {
-         /* XXX if writing to the texture, invalidate the texcache entries!!! 
-          *
-          * Actually, no.  Flushing dependent contexts is still done
-          * explicitly and separately.  Hardware drivers won't insert
-          * FLUSH commands into a command stream at this point,
-          * neither should softpipe try to flush caches.  
-          *
-          * Those contexts could be living in separate threads & doing
-          * all sorts of unrelated stuff...  Context<->texture
-          * dependency tracking needs to happen elsewhere.
-          */
-         /* assert(0); */
       }
    }
    return ps;

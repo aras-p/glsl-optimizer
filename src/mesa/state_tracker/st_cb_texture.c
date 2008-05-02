@@ -333,7 +333,9 @@ guess_and_alloc_texture(struct st_context *st,
                                  width,
                                  height,
                                  depth,
-                                 comp_byte);
+                                 comp_byte,
+                                 ( PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                   PIPE_TEXTURE_USAGE_SAMPLER ));
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -1501,7 +1503,11 @@ st_finalize_texture(GLcontext *ctx,
                                     firstImage->base.Width2,
                                     firstImage->base.Height2,
                                     firstImage->base.Depth2,
-                                    comp_byte);
+                                    comp_byte,
+
+                                    ( PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                      PIPE_TEXTURE_USAGE_SAMPLER ));
+
       if (!stObj->pt) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
          return GL_FALSE;

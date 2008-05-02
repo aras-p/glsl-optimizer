@@ -346,7 +346,8 @@ make_texture(struct st_context *st,
       return NULL;
 
    pt = st_texture_create(st, PIPE_TEXTURE_2D, pipeFormat, 0, width, height,
-			  1, 0);
+			  1, 0,
+                          PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt) {
       _mesa_unmap_drawpix_pbo(ctx, unpack);
       return NULL;
@@ -994,7 +995,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, texFormat, 0,
-                          width, height, 1, 0);
+                          width, height, 1, 0,
+                          PIPE_TEXTURE_USAGE_SAMPLER);
    if (!pt)
       return;
 
