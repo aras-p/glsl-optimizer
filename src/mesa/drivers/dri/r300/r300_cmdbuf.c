@@ -328,10 +328,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
 	ALLOC_STATE(vir[0], variable, R300_VIR_CMDSIZE, 0);
 	r300->hw.vir[0].cmd[R300_VIR_CMD_0] =
-	    cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
+	    cmdpacket0(R300_VAP_PROG_STREAM_CNTL_0, 1);
 	ALLOC_STATE(vir[1], variable, R300_VIR_CMDSIZE, 1);
 	r300->hw.vir[1].cmd[R300_VIR_CMD_0] =
-	    cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
+	    cmdpacket0(R300_VAP_PROG_STREAM_CNTL_EXT_0, 1);
 	ALLOC_STATE(vic, always, R300_VIC_CMDSIZE, 0);
 	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
 	ALLOC_STATE(vap_psc_sgn_norm_cntl, always, 2, 0);

@@ -218,27 +218,31 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Always set COMPONENTS_4 in immediate mode.
  */
 
-#define R300_VAP_INPUT_ROUTE_0_0            0x2150
-#       define R300_INPUT_ROUTE_COMPONENTS_1     (0 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_2     (1 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_3     (2 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_4     (3 << 0)
-#       define R300_INPUT_ROUTE_COMPONENTS_RGBA  (4 << 0) /* GUESS */
-#       define R300_VAP_INPUT_ROUTE_IDX_SHIFT    8
-#       define R300_VAP_INPUT_ROUTE_IDX_MASK     (31 << 8) /* GUESS */
-#       define R300_VAP_INPUT_ROUTE_END          (1 << 13)
-#       define R300_INPUT_ROUTE_IMMEDIATE_MODE   (0 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_FLOAT            (1 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_UNSIGNED_BYTE    (2 << 14) /* GUESS */
-#       define R300_INPUT_ROUTE_FLOAT_COLOR      (3 << 14) /* GUESS */
-#define R300_VAP_INPUT_ROUTE_0_1            0x2154
-#define R300_VAP_INPUT_ROUTE_0_2            0x2158
-#define R300_VAP_INPUT_ROUTE_0_3            0x215C
-#define R300_VAP_INPUT_ROUTE_0_4            0x2160
-#define R300_VAP_INPUT_ROUTE_0_5            0x2164
-#define R300_VAP_INPUT_ROUTE_0_6            0x2168
-#define R300_VAP_INPUT_ROUTE_0_7            0x216C
-
+#define R300_VAP_PROG_STREAM_CNTL_0                     0x2150
+#       define R300_DATA_TYPE_0_SHIFT                   0
+#       define R300_DATA_TYPE_FLOAT_1                   0
+#       define R300_DATA_TYPE_FLOAT_2                   1
+#       define R300_DATA_TYPE_FLOAT_3                   2
+#       define R300_DATA_TYPE_FLOAT_4                   3
+#       define R300_DATA_TYPE_BYTE                      4
+#       define R300_DATA_TYPE_D3DCOLOR                  5
+#       define R300_DATA_TYPE_SHORT_2                   6
+#       define R300_DATA_TYPE_SHORT_4                   7
+#       define R300_DATA_TYPE_VECTOR_3_TTT              8
+#       define R300_DATA_TYPE_VECTOR_3_EET              9
+#       define R300_SKIP_DWORDS_SHIFT                   4
+#       define R300_DST_VEC_LOC_SHIFT                   8
+#       define R300_LAST_VEC                            (1 << 13)
+#       define R300_SIGNED                              (1 << 14)
+#       define R300_NORMALIZE                           (1 << 15)
+#       define R300_DATA_TYPE_1_SHIFT                   16
+#define R300_VAP_PROG_STREAM_CNTL_1                     0x2154
+#define R300_VAP_PROG_STREAM_CNTL_2                     0x2158
+#define R300_VAP_PROG_STREAM_CNTL_3                     0x215C
+#define R300_VAP_PROG_STREAM_CNTL_4                     0x2160
+#define R300_VAP_PROG_STREAM_CNTL_5                     0x2164
+#define R300_VAP_PROG_STREAM_CNTL_6                     0x2168
+#define R300_VAP_PROG_STREAM_CNTL_7                     0x216C
 /* gap */
 
 /* Notes:
@@ -276,26 +280,40 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * mode, the swizzling pattern is e.g. used to set zw components in texture
  * coordinates with only tweo components.
  */
-#define R300_VAP_INPUT_ROUTE_1_0            0x21E0
+#define R300_VAP_PROG_STREAM_CNTL_EXT_0                 0x21e0
+#       define R300_SWIZZLE0_SHIFT                      0
+#       define R300_SWIZZLE_SELECT_X_SHIFT              0
+#       define R300_SWIZZLE_SELECT_Y_SHIFT              3
+#       define R300_SWIZZLE_SELECT_Z_SHIFT              6
+#       define R300_SWIZZLE_SELECT_W_SHIFT              9
+
+#       define R300_SWIZZLE_SELECT_X                    0
+#       define R300_SWIZZLE_SELECT_Y                    1
+#       define R300_SWIZZLE_SELECT_Z                    2
+#       define R300_SWIZZLE_SELECT_W                    3
+#       define R300_SWIZZLE_SELECT_FP_ZERO              4
+#       define R300_SWIZZLE_SELECT_FP_ONE               5
+/* alternate forms for r300_emit.c */
 #       define R300_INPUT_ROUTE_SELECT_X    0
 #       define R300_INPUT_ROUTE_SELECT_Y    1
 #       define R300_INPUT_ROUTE_SELECT_Z    2
 #       define R300_INPUT_ROUTE_SELECT_W    3
 #       define R300_INPUT_ROUTE_SELECT_ZERO 4
 #       define R300_INPUT_ROUTE_SELECT_ONE  5
-#       define R300_INPUT_ROUTE_SELECT_MASK 7
-#       define R300_INPUT_ROUTE_X_SHIFT     0
-#       define R300_INPUT_ROUTE_Y_SHIFT     3
-#       define R300_INPUT_ROUTE_Z_SHIFT     6
-#       define R300_INPUT_ROUTE_W_SHIFT     9
-#       define R300_INPUT_ROUTE_ENABLE      (15 << 12)
-#define R300_VAP_INPUT_ROUTE_1_1            0x21E4
-#define R300_VAP_INPUT_ROUTE_1_2            0x21E8
-#define R300_VAP_INPUT_ROUTE_1_3            0x21EC
-#define R300_VAP_INPUT_ROUTE_1_4            0x21F0
-#define R300_VAP_INPUT_ROUTE_1_5            0x21F4
-#define R300_VAP_INPUT_ROUTE_1_6            0x21F8
-#define R300_VAP_INPUT_ROUTE_1_7            0x21FC
+
+#       define R300_WRITE_ENA_SHIFT                     12
+#       define R300_WRITE_ENA_X                         1
+#       define R300_WRITE_ENA_Y                         2
+#       define R300_WRITE_ENA_Z                         4
+#       define R300_WRITE_ENA_W                         8
+#       define R300_SWIZZLE1_SHIFT                      16
+#define R300_VAP_PROG_STREAM_CNTL_EXT_1                 0x21e4
+#define R300_VAP_PROG_STREAM_CNTL_EXT_2                 0x21e8
+#define R300_VAP_PROG_STREAM_CNTL_EXT_3                 0x21ec
+#define R300_VAP_PROG_STREAM_CNTL_EXT_4                 0x21f0
+#define R300_VAP_PROG_STREAM_CNTL_EXT_5                 0x21f4
+#define R300_VAP_PROG_STREAM_CNTL_EXT_6                 0x21f8
+#define R300_VAP_PROG_STREAM_CNTL_EXT_7                 0x21fc
 
 /* END: Vertex data assembly */
 
