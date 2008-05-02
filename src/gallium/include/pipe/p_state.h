@@ -299,6 +299,8 @@ struct pipe_texture
    unsigned cpp:8;
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;
+   
+   unsigned usage;
 
    /* These are also refcounted:
     */
