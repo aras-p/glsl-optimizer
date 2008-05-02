@@ -131,7 +131,7 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
    uint pos;
 
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
-      //assert(tc->entries[pos].x < 0);
+      /*assert(tc->entries[pos].x < 0);*/
    }
    if (tc->surface) {
       pipe_surface_reference(&tc->surface, NULL);
@@ -332,8 +332,8 @@ sp_tile_cache_flush_clear(struct pipe_context *pipe,
       for (x = 0; x < w; x += TILE_SIZE) {
          if (is_clear_flag_set(tc->clear_flags, x, y)) {
             pipe_put_tile_raw(pipe, ps,
-                           x, y, TILE_SIZE, TILE_SIZE,
-                           tc->tile.data.color32, 0/*STRIDE*/);
+                              x, y, TILE_SIZE, TILE_SIZE,
+                              tc->tile.data.color32, 0/*STRIDE*/);
 
             /* do this? */
             clear_clear_flag(tc->clear_flags, x, y);
@@ -367,8 +367,8 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
          if (tile->x >= 0) {
             if (tc->depth_stencil) {
                pipe_put_tile_raw(pipe, ps,
-                              tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                              tile->data.depth32, 0/*STRIDE*/);
+                                 tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                 tile->data.depth32, 0/*STRIDE*/);
             }
             else {
                pipe_put_tile_rgba(pipe, ps,
@@ -385,7 +385,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
 #endif
    }
    else if (tc->texture) {
-      /* caching a texture, mark all entries as embpy */
+      /* caching a texture, mark all entries as empty */
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          tc->entries[pos].x = -1;
       }
