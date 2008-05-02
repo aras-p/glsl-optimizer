@@ -1530,22 +1530,23 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_EXP:
-      debug_printf("TGSI: EXP opcode not implemented\n");
-      /* from ARB_v_p:
-      tmp = ScalarLoad(op0);
-      result.x = 2^floor(tmp);
-      result.y = tmp - floor(tmp);
-      result.z = RoughApprox2ToX(tmp);
-      result.w = 1.0;
-      */
-#if 0
-      /* something like this: */
       FETCH( &r[0], 0, CHAN_X );
-      micro_exp2( &r[0], &r[0] );
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 STORE( &r[0], 0, chan_index );
+      micro_flr( &r[1], &r[0] );  /* r1 = floor(r0) */
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
+         micro_exp2( &r[2], &r[1] );       /* r2 = 2 ^ r1 */
+	 STORE( &r[2], 0, CHAN_X );        /* store r2 */
       }
-#endif
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
+         micro_sub( &r[2], &r[0], &r[1] ); /* r2 = r0 - r1 */
+	 STORE( &r[2], 0, CHAN_Y );        /* store r2 */
+      }
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
+         micro_exp2( &r[2], &r[0] );       /* r2 = 2 ^ r0 */
+	 STORE( &r[2], 0, CHAN_Z );        /* store r2 */
+      }
+      if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
+	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
+      }
       break;
 
    case TGSI_OPCODE_LOG:
