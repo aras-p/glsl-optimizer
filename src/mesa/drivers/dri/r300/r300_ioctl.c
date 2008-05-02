@@ -316,6 +316,14 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
 
 	if (has_tcl) {
+		R300_STATECHANGE(rmesa, vap_cntl);
+		reg_start(R300_VAP_CNTL, 0);
+
+		e32((10 << R300_VAP_CNTL__PVS_NUM_SLOTS__SHIFT) |
+		    (6 << R300_VAP_CNTL__PVS_NUM_CNTRLS__SHIFT) |
+		    (4 << R300_VAP_CNTL__PVS_NUM_FPUS__SHIFT) |
+		    (12 << R300_VAP_CNTL__VF_MAX_VTX_NUM__SHIFT));
+
 		R300_STATECHANGE(r300, pvs);
 		reg_start(R300_VAP_PVS_CNTL_1, 2);
 

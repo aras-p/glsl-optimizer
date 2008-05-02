@@ -1648,10 +1648,51 @@ static inline void r300SetupVertexProgramFragment(r300ContextPtr r300, int dest,
 	}
 }
 
+/* FIXME: move near the MIN2 define. */
+#define MIN3(a, b, c)	((a) < (b) ? MIN2(a, c) : MIN2(b, c))
+
+/* FIXME: need to add a structure for per-card/chipset values; they are
+ * currently hard-coded. */
+static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count,
+			GLuint output_count, GLuint temp_count)
+{
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
+
+	int vtx_mem_size = 72;	/* FIXME: R3XX vs R5XX */
+
+	/* Flush PVS engine before changing PVS_NUM_SLOTS, PVS_NUM_CNTRLS.
+	 * See r500 docs 6.5.2 */
+	reg_start(R300_VAP_PVS_WAITIDLE, 0);
+	e32(0x00000000);
+
+	/* avoid division by zero */
+	if (input_count == 0)
+		input_count = 1;
+	if (output_count == 0)
+		output_count = 1;
+	if (temp_count == 0)
+		temp_count = 1;
+
+	int pvs_num_slots =
+	    MIN3(10, vtx_mem_size / input_count, vtx_mem_size / output_count);
+	int pvs_num_cntrls = MIN2(6, vtx_mem_size / temp_count);
+
+	R300_STATECHANGE(rmesa, vap_cntl);
+	rmesa->hw.vap_cntl.cmd[1] =
+	    (pvs_num_slots << R300_VAP_CNTL__PVS_NUM_SLOTS__SHIFT) |
+	    (pvs_num_cntrls << R300_VAP_CNTL__PVS_NUM_CNTRLS__SHIFT) |
+	    (4 << R300_VAP_CNTL__PVS_NUM_FPUS__SHIFT) |
+	    (12 << R300_VAP_CNTL__VF_MAX_VTX_NUM__SHIFT) |
+	    R500_VAP_CNTL__TCL_STATE_OPTIMIZATION;
+}
+
 static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 {
 	struct r300_vertex_shader_state *prog = &(rmesa->state.vertex_shader);
 	GLuint o_reg = 0;
+	GLuint i_reg = 0;
 	int i;
 	int inst_count = 0;
 	int param_count = 0;
@@ -1664,6 +1705,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 			prog->program.body.i[program_end + 2] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 3] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			program_end += 4;
+			i_reg++;
 		}
 	}
 
@@ -1672,6 +1714,8 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM,
 				       &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
+
+	r300VapCntl(rmesa, i_reg, o_reg, 0);
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
@@ -1684,6 +1728,15 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
 	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
 	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
+}
+
+static int r300BitCount(int x)
+{
+	x = ((x & 0xaaaaaaaaU) >> 1) + (x & 0x55555555U);
+	x = ((x & 0xccccccccU) >> 2) + (x & 0x33333333U);
+	x = (x >> 16) + (x & 0xffff);
+	x = ((x & 0xf0f0) >> 4) + (x & 0x0f0f);
+	return (x >> 8) + (x & 0x00ff);
 }
 
 static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
@@ -1707,6 +1760,10 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM, &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
+	r300VapCntl(rmesa, r300BitCount(prog->key.InputsRead),
+		    r300BitCount(prog->key.OutputsWritten),
+		    prog->num_temporaries);
+	
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
 	  (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
@@ -1740,13 +1797,6 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 		r300SetupDefaultVertexProgram(rmesa);
 	}
 
-
-	/* FIXME: This is done for vertex shader fragments, but also needs to be
-	 * done for vap_pvs, so I leave it as a reminder. */
-#if 0
-	reg_start(R300_VAP_PVS_WAITIDLE, 0);
-	e32(0x00000000);
-#endif
 }
 
 /**
@@ -1847,11 +1897,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
-
-	if (!has_tcl)
-		r300->hw.vap_cntl.cmd[1] = 0x0014045a;
-	else
-		r300->hw.vap_cntl.cmd[1] = 0x0030045A;	//0x0030065a /* Dangerous */
 
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 	    | R300_VPORT_X_OFFSET_ENA

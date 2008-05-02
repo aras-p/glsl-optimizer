@@ -67,9 +67,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Vertex Array Processing (VAP) Control
- * Stolen from r200 code from Christoph Brill (It's a guess!)
  */
 #define R300_VAP_CNTL	0x2080
+#	define  R300_VAP_CNTL__PVS_NUM_SLOTS__SHIFT             0
+#	define  R300_VAP_CNTL__PVS_NUM_CNTRLS__SHIFT            4
+#	define  R300_VAP_CNTL__PVS_NUM_FPUS__SHIFT              8
+#	define  R300_VAP_CNTL__VF_MAX_VTX_NUM__SHIFT            18
+#	define  R500_VAP_CNTL__VAP_NO_RENDER                    (1<<17)
+#	define  R300_VAP_CNTL__DX_CLIP_SPACE_DEF                (1<<22)
+#	define  R500_VAP_CNTL__TCL_STATE_OPTIMIZATION           (1<<23)
 
 /* This register is written directly and also starts data section
  * in many 3d CP_PACKET3's
