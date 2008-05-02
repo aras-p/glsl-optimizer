@@ -53,21 +53,21 @@ st_get_string(GLcontext * ctx, GLenum name)
       const char *vendor = screen->get_vendor( screen );
       const char *tungsten = "Tungsten Graphics, Inc.";
 
-      /* Tungsten developed the state_tracker module (and much of
-       * Mesa), but the driver itself may come from elsewhere.  The
-       * additional string allows "and XyzCorp" to reflect this.
+      /* Tungsten Graphics, Inc. developed the state_tracker module
+       * (and much of Mesa), but the driver itself may come from elsewhere.
+       * The additional string allows "and XyzCorp" to reflect this.
        */
       if (vendor && strcmp(vendor, tungsten) != 0)
-	 snprintf(st->vendor, sizeof(st->vendor),
+	 util_snprintf(st->vendor, sizeof(st->vendor),
                   "%s and %s", tungsten, vendor);
       else
-	 snprintf(st->vendor, sizeof(st->vendor), "%s", tungsten);
+	 util_snprintf(st->vendor, sizeof(st->vendor), "%s", tungsten);
 
       return (GLubyte *) st->vendor;
    }
 
    case GL_RENDERER:
-      snprintf(st->renderer, sizeof(st->renderer), "Gallium %s, %s on %s", 
+      util_snprintf(st->renderer, sizeof(st->renderer), "Gallium %s, %s on %s", 
                ST_VERSION_STRING,
 	       screen->get_name( screen ),
 	       screen->winsys->get_name( screen->winsys ));
