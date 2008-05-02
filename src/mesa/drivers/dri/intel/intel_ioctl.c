@@ -43,7 +43,7 @@
 #include "drm.h"
 #include "i915_drm.h"
 
-#include "intel_bufmgr_ttm.h"
+#include "intel_bufmgr_gem.h"
 
 #define FILE_DEBUG_FLAG DEBUG_IOCTL
 
@@ -151,10 +151,8 @@ void
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
 		 GLboolean ignore_cliprects, GLboolean allow_unlock,
-		 struct drm_i915_gem_execbuffer *execbuf,
-		 dri_fence **fence)
+		 struct drm_i915_gem_execbuffer *execbuf)
 {
-   dri_fence *fo;
    int ret;
 
    assert(intel->locked);
@@ -162,10 +160,6 @@ intel_exec_ioctl(struct intel_context *intel,
 
    if (intel->no_hw)
       return;
-
-   if (*fence) {
-     dri_fence_unreference(*fence);
-   }
 
    memset(&execbuf, 0, sizeof(execbuf));
 
@@ -187,13 +181,4 @@ intel_exec_ioctl(struct intel_context *intel,
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
-
-   fo = intel_ttm_fence_create_from_arg(intel->bufmgr, "fence buffers",
-					&execbuf.fence_arg);
-   if (!fo) {
-      fprintf(stderr, "failed to fence handle: %08x\n", execbuf.fence_arg.handle);
-      UNLOCK_HARDWARE(intel);
-      exit(1);
-   }
-   *fence = fo;
 }

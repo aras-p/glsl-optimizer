@@ -38,7 +38,6 @@
 
 typedef struct _dri_bufmgr dri_bufmgr;
 typedef struct _dri_bo dri_bo;
-typedef struct _dri_fence dri_fence;
 
 struct _dri_bo {
    /**
@@ -58,18 +57,6 @@ struct _dri_bo {
     */
    void *virtual;
    /** Buffer manager context associated with this buffer object */
-   dri_bufmgr *bufmgr;
-};
-
-struct _dri_fence {
-   /**
-    * This is an ORed mask of DRM_BO_FLAG_READ, DRM_BO_FLAG_WRITE, and
-    * DRM_FLAG_EXE indicating the operations associated with this fence.
-    *
-    * It is constant for the life of the fence object.
-    */
-   unsigned int type;
-   /** Buffer manager context associated with this fence */
    dri_bufmgr *bufmgr;
 };
 
@@ -113,27 +100,14 @@ struct _dri_bufmgr {
    /**
     * Maps the buffer into userspace.
     *
-    * This function will block waiting for any existing fence on the buffer to
-    * clear, first.  The resulting mapping is available at buf->virtual.
-\    */
+    * This function will block waiting for any existing execution on the
+    * buffer to complete, first.  The resulting mapping is available at
+    * buf->virtual.
+    */
    int (*bo_map)(dri_bo *buf, GLboolean write_enable);
 
    /** Reduces the refcount on the userspace mapping of the buffer object. */
    int (*bo_unmap)(dri_bo *buf);
-
-   /** Takes a reference on a fence object */
-   void (*fence_reference)(dri_fence *fence);
-
-   /**
-    * Releases a reference on a fence object, freeing the data if
-    * rerefences remain.
-    */
-   void (*fence_unreference)(dri_fence *fence);
-
-   /**
-    * Blocks until the given fence is signaled.
-    */
-   void (*fence_wait)(dri_fence *fence);
 
    /**
     * Tears down the buffer manager instance.
@@ -179,7 +153,7 @@ struct _dri_bufmgr {
     */
    void *(*process_relocs)(dri_bo *batch_buf);
 
-   void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
+   void (*post_submit)(dri_bo *batch_buf);
 
    int (*check_aperture_space)(dri_bo *bo);
    GLboolean debug; /**< Enables verbose debugging printouts */
@@ -194,9 +168,6 @@ void dri_bo_reference(dri_bo *bo);
 void dri_bo_unreference(dri_bo *bo);
 int dri_bo_map(dri_bo *buf, GLboolean write_enable);
 int dri_bo_unmap(dri_bo *buf);
-void dri_fence_wait(dri_fence *fence);
-void dri_fence_reference(dri_fence *fence);
-void dri_fence_unreference(dri_fence *fence);
 
 void dri_bo_subdata(dri_bo *bo, unsigned long offset,
 		    unsigned long size, const void *data);
@@ -221,7 +192,7 @@ int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
 		   GLuint offset, dri_bo *target_buf);
 void *dri_process_relocs(dri_bo *batch_buf);
 void dri_post_process_relocs(dri_bo *batch_buf);
-void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
+void dri_post_submit(dri_bo *batch_buf);
 int dri_bufmgr_check_aperture_space(dri_bo *bo);
 
 #endif

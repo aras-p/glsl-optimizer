@@ -59,7 +59,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 #include "intel_decode.h"
-#include "intel_bufmgr_ttm.h"
+#include "intel_bufmgr_gem.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -368,12 +368,16 @@ intelFlush(GLcontext * ctx)
 void
 intelFinish(GLcontext * ctx)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   int i;
+
    intelFlush(ctx);
-   if (intel->batch->last_fence) {
-      dri_fence_wait(intel->batch->last_fence);
-      dri_fence_unreference(intel->batch->last_fence);
-      intel->batch->last_fence = NULL;
+
+   for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
+      /* XXX: Wait on buffer idle */
+   }
+   if (fb->_DepthBuffer) {
+      /* XXX: Wait on buffer idle */
    }
 }
 
@@ -439,28 +443,25 @@ static GLboolean
 intel_init_bufmgr(struct intel_context *intel)
 {
    intelScreenPrivate *intelScreen = intel->intelScreen;
-   GLboolean ttm_disable = getenv("INTEL_NO_TTM") != NULL;
-   GLboolean ttm_supported;
+   GLboolean gem_disable = getenv("INTEL_NO_GEM") != NULL;
+   GLboolean gem_supported;
 
-   /* If we've got a new enough DDX that's initializing TTM and giving us
+   /* If we've got a new enough DDX that's initializing GEM and giving us
     * object handles for the shared buffers, use that.
     */
    intel->ttm = GL_FALSE;
    if (intel->intelScreen->driScrnPriv->dri2.enabled)
-       ttm_supported = GL_TRUE;
+       gem_supported = GL_TRUE;
    else if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
 	    intel->intelScreen->drmMinor >= 11 &&
 	    intel->intelScreen->front.bo_handle != -1)
-       ttm_supported = GL_TRUE;
+       gem_supported = GL_TRUE;
    else
-       ttm_supported = GL_FALSE;
+       gem_supported = GL_FALSE;
 
-   if (!ttm_disable && ttm_supported) {
+   if (!gem_disable && gem_supported) {
       int bo_reuse_mode;
-      intel->bufmgr = intel_bufmgr_ttm_init(intel->driFd,
-					    DRM_FENCE_TYPE_EXE,
-					    DRM_FENCE_TYPE_EXE |
-					    DRM_I915_FENCE_TYPE_RW,
+      intel->bufmgr = intel_bufmgr_gem_init(intel->driFd,
 					    BATCH_SZ);
       if (intel->bufmgr != NULL)
 	 intel->ttm = GL_TRUE;
@@ -470,16 +471,16 @@ intel_init_bufmgr(struct intel_context *intel)
       case DRI_CONF_BO_REUSE_DISABLED:
 	 break;
       case DRI_CONF_BO_REUSE_ALL:
-	 intel_ttm_enable_bo_reuse(intel->bufmgr);
+	 intel_gem_enable_bo_reuse(intel->bufmgr);
 	 break;
       }
    }
    /* Otherwise, use the classic buffer manager. */
    if (intel->bufmgr == NULL) {
-      if (ttm_disable) {
-	 fprintf(stderr, "TTM buffer manager disabled.  Using classic.\n");
+      if (gem_disable) {
+	 fprintf(stderr, "GEM disabled.  Using classic.\n");
       } else {
-	 fprintf(stderr, "Failed to initialize TTM buffer manager.  "
+	 fprintf(stderr, "Failed to initialize GEM.  "
 		 "Falling back to classic.\n");
       }
 
@@ -663,8 +664,6 @@ intelInitContext(struct intel_context *intel,
       intel_recreate_static_regions(intel);
 
    intel->batch = intel_batchbuffer_alloc(intel);
-   intel->last_swap_fence = NULL;
-   intel->first_swap_fence = NULL;
 
    intel_bufferobj_init(intel);
    intel_fbo_init(intel);
@@ -717,17 +716,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
-
-      if (intel->last_swap_fence) {
-	 dri_fence_wait(intel->last_swap_fence);
-	 dri_fence_unreference(intel->last_swap_fence);
-	 intel->last_swap_fence = NULL;
-      }
-      if (intel->first_swap_fence) {
-	 dri_fence_wait(intel->first_swap_fence);
-	 dri_fence_unreference(intel->first_swap_fence);
-	 intel->first_swap_fence = NULL;
-      }
 
       if (release_texture_heaps) {
          /* This share group is about to go away, free our private

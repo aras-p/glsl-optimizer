@@ -91,27 +91,6 @@ dri_bo_unmap(dri_bo *buf)
 }
 
 void
-dri_fence_wait(dri_fence *fence)
-{
-   fence->bufmgr->fence_wait(fence);
-}
-
-void
-dri_fence_reference(dri_fence *fence)
-{
-   fence->bufmgr->fence_reference(fence);
-}
-
-void
-dri_fence_unreference(dri_fence *fence)
-{
-   if (fence == NULL)
-      return;
-
-   fence->bufmgr->fence_unreference(fence);
-}
-
-void
 dri_bo_subdata(dri_bo *bo, unsigned long offset,
 	       unsigned long size, const void *data)
 {
@@ -153,9 +132,9 @@ void *dri_process_relocs(dri_bo *batch_buf)
    return batch_buf->bufmgr->process_relocs(batch_buf);
 }
 
-void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
+void dri_post_submit(dri_bo *batch_buf)
 {
-   batch_buf->bufmgr->post_submit(batch_buf, last_fence);
+   batch_buf->bufmgr->post_submit(batch_buf);
 }
 
 void

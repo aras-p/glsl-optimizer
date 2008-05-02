@@ -66,14 +66,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    intelScreen = intel->intelScreen;
 
-   if (intel->last_swap_fence) {
-      dri_fence_wait(intel->last_swap_fence);
-      dri_fence_unreference(intel->last_swap_fence);
-      intel->last_swap_fence = NULL;
-   }
-   intel->last_swap_fence = intel->first_swap_fence;
-   intel->first_swap_fence = NULL;
-
    /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
     * should work regardless.
     */
@@ -163,12 +155,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 ADVANCE_BATCH();
       }
 
-      if (intel->first_swap_fence)
-	 dri_fence_unreference(intel->first_swap_fence);
       intel_batchbuffer_flush(intel->batch);
-      intel->first_swap_fence = intel->batch->last_fence;
-      if (intel->first_swap_fence)
-	 dri_fence_reference(intel->first_swap_fence);
    }
 
    UNLOCK_HARDWARE(intel);

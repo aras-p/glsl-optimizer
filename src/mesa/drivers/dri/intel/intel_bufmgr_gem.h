@@ -4,12 +4,9 @@
 
 #include "dri_bufmgr.h"
 
-extern dri_bo *intel_gem_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
+extern dri_bo *intel_gem_bo_create_from_handle(dri_bufmgr *bufmgr,
+					       const char *name,
 					       unsigned int handle);
-
-dri_fence *intel_gem_fence_create_from_arg(dri_bufmgr *bufmgr, const char *name,
-					   drm_fence_arg_t *arg);
-
 
 dri_bufmgr *intel_bufmgr_gem_init(int fd, int batch_size);
 

@@ -49,7 +49,7 @@
 #include "i830_dri.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
-#include "intel_bufmgr_ttm.h"
+#include "intel_bufmgr_gem.h"
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN

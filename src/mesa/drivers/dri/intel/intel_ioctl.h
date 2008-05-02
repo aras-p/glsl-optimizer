@@ -41,7 +41,6 @@ void intel_batch_ioctl( struct intel_context *intel,
 void intel_exec_ioctl(struct intel_context *intel,
 		      GLuint used,
 		      GLboolean ignore_cliprects, GLboolean allow_unlock,
-		      struct drm_i915_gem_execbuffer *execbuf,
-		      dri_fence **fence);
+		      struct drm_i915_gem_execbuffer *execbuf);
 
 #endif

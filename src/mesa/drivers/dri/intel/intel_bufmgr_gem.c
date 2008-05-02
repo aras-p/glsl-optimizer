@@ -127,15 +127,6 @@ typedef struct _dri_bo_gem {
     void *virtual;
 } dri_bo_gem;
 
-typedef struct _dri_fence_gem
-{
-    dri_fence fence;
-
-    int refcount;
-    const char *name;
-    drmFence drm_fence;
-} dri_fence_gem;
-
 static int
 logbase2(int n)
 {
@@ -527,58 +518,6 @@ dri_gem_bo_unmap(dri_bo *bo)
 }
 
 static void
-dri_gem_fence_reference(dri_fence *fence)
-{
-    dri_fence_gem *fence_gem = (dri_fence_gem *)fence;
-    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)fence->bufmgr;
-
-    ++fence_gem->refcount;
-    DBG("fence_reference: %p (%s)\n", &fence_gem->fence, fence_gem->name);
-}
-
-static void
-dri_gem_fence_unreference(dri_fence *fence)
-{
-    dri_fence_gem *fence_gem = (dri_fence_gem *)fence;
-    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)fence->bufmgr;
-
-    if (!fence)
-	return;
-
-    DBG("fence_unreference: %p (%s)\n", &fence_gem->fence, fence_gem->name);
-
-    if (--fence_gem->refcount == 0) {
-	int ret;
-
-	ret = drmFenceUnreference(bufmgr_gem->fd, &fence_gem->drm_fence);
-	if (ret != 0) {
-	    fprintf(stderr, "drmFenceUnreference failed (%s): %s\n",
-		    fence_gem->name, strerror(-ret));
-	}
-
-	free(fence);
-	return;
-    }
-}
-
-static void
-dri_gem_fence_wait(dri_fence *fence)
-{
-    dri_fence_gem *fence_gem = (dri_fence_gem *)fence;
-    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)fence->bufmgr;
-    int ret;
-
-    ret = drmFenceWait(bufmgr_gem->fd, DRM_FENCE_FLAG_WAIT_LAZY, &fence_gem->drm_fence, 0);
-    if (ret != 0) {
-        fprintf(stderr, "%s:%d: Error waiting for fence %s: %s.\n",
-		__FILE__, __LINE__, fence_gem->name, strerror(-ret));
-	abort();
-    }
-
-    DBG("fence_wait: %p (%s)\n", &fence_gem->fence, fence_gem->name);
-}
-
-static void
 dri_bufmgr_gem_destroy(dri_bufmgr *bufmgr)
 {
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bufmgr;
@@ -717,7 +656,7 @@ intel_update_buffer_offsets (dri_bufmgr_gem *bufmgr_gem)
 }
 
 static void
-dri_gem_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
+dri_gem_post_submit(dri_bo *batch_buf)
 {
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)batch_buf->bufmgr;
     int i;
@@ -773,9 +712,6 @@ dri_gem_check_aperture_space(dri_bo *bo)
  * and manage map buffer objections.
  *
  * \param fd File descriptor of the opened DRM device.
- * \param fence_type Driver-specific fence type used for fences with no flush.
- * \param fence_type_flush Driver-specific fence type used for fences with a
- *	  flush.
  */
 dri_bufmgr *
 intel_bufmgr_gem_init(int fd, int batch_size)
@@ -800,9 +736,6 @@ intel_bufmgr_gem_init(int fd, int batch_size)
     bufmgr_gem->bufmgr.bo_unreference = dri_gem_bo_unreference;
     bufmgr_gem->bufmgr.bo_map = dri_gem_bo_map;
     bufmgr_gem->bufmgr.bo_unmap = dri_gem_bo_unmap;
-    bufmgr_gem->bufmgr.fence_reference = dri_gem_fence_reference;
-    bufmgr_gem->bufmgr.fence_unreference = dri_gem_fence_unreference;
-    bufmgr_gem->bufmgr.fence_wait = dri_gem_fence_wait;
     bufmgr_gem->bufmgr.destroy = dri_bufmgr_gem_destroy;
     bufmgr_gem->bufmgr.emit_reloc = dri_gem_emit_reloc;
     bufmgr_gem->bufmgr.process_relocs = dri_gem_process_reloc;

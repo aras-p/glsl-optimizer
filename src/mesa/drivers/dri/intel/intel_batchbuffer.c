@@ -99,7 +99,6 @@ intel_batchbuffer_alloc(struct intel_context *intel)
    struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
 
    batch->intel = intel;
-   batch->last_fence = NULL;
    intel_batchbuffer_reset(batch);
 
    return batch;
@@ -108,11 +107,6 @@ intel_batchbuffer_alloc(struct intel_context *intel)
 void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
-   if (batch->last_fence) {
-      dri_fence_wait(batch->last_fence);
-      dri_fence_unreference(batch->last_fence);
-      batch->last_fence = NULL;
-   }
    if (batch->map) {
       dri_bo_unmap(batch->buf);
       batch->map = NULL;
@@ -152,7 +146,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
 			  used,
 			  batch->cliprect_mode != LOOP_CLIPRECTS,
 			  allow_unlock,
-			  execbuf, &batch->last_fence);
+			  execbuf);
       } else {
 	 dri_process_relocs(batch->buf);
 	 intel_batch_ioctl(batch->intel,
@@ -162,8 +156,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
 			   allow_unlock);
       }
    }
-      
-   dri_post_submit(batch->buf, &batch->last_fence);
+
+   dri_post_submit(batch->buf);
 
    if (intel->numClipRects == 0 &&
        batch->cliprect_mode == LOOP_CLIPRECTS) {
@@ -243,22 +237,18 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
       UNLOCK_HARDWARE(intel);
 
    if (INTEL_DEBUG & DEBUG_SYNC) {
+      int irq;
+
       fprintf(stderr, "waiting for idle\n");
-      if (batch->last_fence != NULL)
-	 dri_fence_wait(batch->last_fence);
+      LOCK_HARDWARE(intel);
+      irq = intelEmitIrqLocked(intel);
+      UNLOCK_HARDWARE(intel);
+      intelWaitIrq(intel, irq);
    }
 
    /* Reset the buffer:
     */
    intel_batchbuffer_reset(batch);
-}
-
-void
-intel_batchbuffer_finish(struct intel_batchbuffer *batch)
-{
-   intel_batchbuffer_flush(batch);
-   if (batch->last_fence != NULL)
-      dri_fence_wait(batch->last_fence);
 }
 
 

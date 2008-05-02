@@ -170,15 +170,6 @@ typedef struct _dri_bo_fake {
    void *invalidate_ptr;
 } dri_bo_fake;
 
-typedef struct _dri_fence_fake {
-   dri_fence fence;
-
-   const char *name;
-   unsigned int refcount;
-   unsigned int fence_cookie;
-   GLboolean flushed;
-} dri_fence_fake;
-
 static int clear_fenced(dri_bufmgr_fake *bufmgr_fake,
 			unsigned int fence_cookie);
 
@@ -898,63 +889,16 @@ dri_fake_bo_validate(dri_bo *bo, uint64_t flags)
    return 0;
 }
 
-static dri_fence *
-dri_fake_fence_validated(dri_bufmgr *bufmgr, const char *name,
-			 GLboolean flushed)
+static void
+dri_fake_fence_validated(dri_bufmgr *bufmgr)
 {
-   dri_fence_fake *fence_fake;
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bufmgr;
    unsigned int cookie;
 
-   fence_fake = malloc(sizeof(*fence_fake));
-   if (!fence_fake)
-      return NULL;
-
-   fence_fake->refcount = 1;
-   fence_fake->name = name;
-   fence_fake->flushed = flushed;
-   fence_fake->fence.bufmgr = bufmgr;
-
    cookie = _fence_emit_internal(bufmgr_fake);
-   fence_fake->fence_cookie = cookie;
    fence_blocks(bufmgr_fake, cookie);
 
-   DBG("drm_fence_validated: 0x%08x cookie\n", fence_fake->fence_cookie);
-
-   return &fence_fake->fence;
-}
-
-static void
-dri_fake_fence_reference(dri_fence *fence)
-{
-   dri_fence_fake *fence_fake = (dri_fence_fake *)fence;
-
-   ++fence_fake->refcount;
-}
-
-static void
-dri_fake_fence_unreference(dri_fence *fence)
-{
-   dri_fence_fake *fence_fake = (dri_fence_fake *)fence;
-
-   if (!fence)
-      return;
-
-   if (--fence_fake->refcount == 0) {
-      free(fence);
-      return;
-   }
-}
-
-static void
-dri_fake_fence_wait(dri_fence *fence)
-{
-   dri_fence_fake *fence_fake = (dri_fence_fake *)fence;
-   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)fence->bufmgr;
-
-   DBG("drm_fence_wait: 0x%08x cookie\n", fence_fake->fence_cookie);
-
-   _fence_wait_internal(bufmgr_fake, fence_fake->fence_cookie);
+   DBG("drm_fence_validated: 0x%08x cookie\n", cookie);
 }
 
 static void
@@ -1156,19 +1100,9 @@ dri_bo_fake_post_submit(dri_bo *bo)
 
 
 static void
-dri_fake_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
+dri_fake_post_submit(dri_bo *batch_buf)
 {
-   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
-   dri_fence *fo;
-
-   fo = dri_fake_fence_validated(batch_buf->bufmgr, "Batch fence", GL_TRUE);
-
-   if (bufmgr_fake->performed_rendering) {
-      dri_fence_unreference(*last_fence);
-      *last_fence = fo;
-   } else {
-      dri_fence_unreference(fo);
-   }
+   dri_fake_fence_validated(batch_buf->bufmgr);
 
    dri_bo_fake_post_submit(batch_buf);
 }
@@ -1224,9 +1158,6 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    bufmgr_fake->bufmgr.bo_unreference = dri_fake_bo_unreference;
    bufmgr_fake->bufmgr.bo_map = dri_fake_bo_map;
    bufmgr_fake->bufmgr.bo_unmap = dri_fake_bo_unmap;
-   bufmgr_fake->bufmgr.fence_wait = dri_fake_fence_wait;
-   bufmgr_fake->bufmgr.fence_reference = dri_fake_fence_reference;
-   bufmgr_fake->bufmgr.fence_unreference = dri_fake_fence_unreference;
    bufmgr_fake->bufmgr.destroy = dri_fake_destroy;
    bufmgr_fake->bufmgr.emit_reloc = dri_fake_emit_reloc;
    bufmgr_fake->bufmgr.process_relocs = dri_fake_process_relocs;

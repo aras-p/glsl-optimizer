@@ -174,9 +174,6 @@ struct intel_context
     */
    GLboolean ttm;
 
-   dri_fence *last_swap_fence;
-   dri_fence *first_swap_fence;
-
    struct intel_batchbuffer *batch;
    GLboolean no_batch_wrap;
    unsigned batch_id;

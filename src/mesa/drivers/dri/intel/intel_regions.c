@@ -44,7 +44,7 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "dri_bufmgr.h"
-#include "intel_bufmgr_ttm.h"
+#include "intel_bufmgr_gem.h"
 #include "intel_batchbuffer.h"
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
@@ -121,7 +121,7 @@ intel_region_alloc_for_handle(struct intel_context *intel,
 {
    dri_bo *buffer;
 
-   buffer = intel_ttm_bo_create_from_handle(intel->bufmgr, "region", handle);
+   buffer = intel_gem_bo_create_from_handle(intel->bufmgr, "region", handle);
 
    return intel_region_alloc_internal(intel,
 				      cpp, pitch, height, tiled, buffer);
@@ -440,7 +440,7 @@ intel_recreate_static(struct intel_context *intel,
 
    if (intel->ttm) {
       assert(region_desc->bo_handle != -1);
-      region->buffer = intel_ttm_bo_create_from_handle(intel->bufmgr,
+      region->buffer = intel_gem_bo_create_from_handle(intel->bufmgr,
 						       name,
 						       region_desc->bo_handle);
    } else {

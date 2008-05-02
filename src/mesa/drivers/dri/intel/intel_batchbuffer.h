@@ -40,7 +40,6 @@ struct intel_batchbuffer
    struct intel_context *intel;
 
    dri_bo *buf;
-   dri_fence *last_fence;
 
    GLubyte *map;
    GLubyte *ptr;
@@ -57,8 +56,6 @@ struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
 
 void intel_batchbuffer_free(struct intel_batchbuffer *batch);
 
-
-void intel_batchbuffer_finish(struct intel_batchbuffer *batch);
 
 void _intel_batchbuffer_flush(struct intel_batchbuffer *batch,
 			      const char *file, int line);
