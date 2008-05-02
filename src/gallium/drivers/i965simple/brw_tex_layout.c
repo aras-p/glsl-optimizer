@@ -357,14 +357,6 @@ brw_texture_release_screen(struct pipe_screen *screen,
 }
 
 
-static void
-brw_texture_update(struct pipe_context *pipe, struct pipe_texture *texture,
-                   uint face, uint levelsMask)
-{
-   /* no-op? */
-}
-
-
 static struct pipe_surface *
 brw_get_tex_surface_screen(struct pipe_screen *screen,
                            struct pipe_texture *pt,
