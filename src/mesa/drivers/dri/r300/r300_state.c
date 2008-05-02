@@ -1982,7 +1982,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
 
 	/* setup the VAP */
-	/* PVS_NUM_SLOTS, PVS_NUM_CNTLRS, VF_MAX_VTX_NUM need to be adjusted
+	/* for tcl, PVS_NUM_SLOTS, PVS_NUM_CNTLRS, VF_MAX_VTX_NUM need to be adjusted
 	 * dynamically.  PVS_NUM_FPUS is fixed based on asic
 	 */
 	if (has_tcl) {
