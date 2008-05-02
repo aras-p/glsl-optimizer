@@ -296,7 +296,9 @@ util_blit_pixels(struct blit_state *ctx,
                       src, srcLeft, srcTop, /* src */
                       srcW, srcH);     /* size */
 
-   pipe->texture_update(pipe, tex, 0, 1 << 0);
+   /* free the surface, update the texture if necessary.
+    */
+   screen->tex_surface_release(screen, &texSurf);
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
@@ -357,8 +359,6 @@ util_blit_pixels(struct blit_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_viewport(ctx->cso);
 
-   /* free the texture */
-   pipe_surface_reference(&texSurf, NULL);
    screen->texture_release(screen, &tex);
 }
 
