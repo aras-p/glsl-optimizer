@@ -1483,13 +1483,16 @@ st_finalize_texture(GLcontext *ctx,
    }
 
    /* Check texture can hold all active levels.  Check texture matches
-    * target, imageFormat, etc.
+    * target, imageFormat, dimensions, etc.
     */
    if (stObj->pt &&
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
 	stObj->pt->format !=
 	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
 	stObj->pt->last_level < stObj->lastLevel ||
+        stObj->pt->width[0] != firstImage->base.Width2 ||
+        stObj->pt->height[0] != firstImage->base.Height2 ||
+        stObj->pt->depth[0] != firstImage->base.Depth2 ||
 	stObj->pt->cpp != cpp ||
 	stObj->pt->compressed != firstImage->base.IsCompressed)) {
       pipe_texture_release(&stObj->pt);
