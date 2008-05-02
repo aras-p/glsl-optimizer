@@ -116,6 +116,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->Base.Height = height;
    init_renderbuffer_bits(strb, template.format);
 
+   template.target = PIPE_TEXTURE_2D;
    template.compressed = 0;
    template.cpp = pf_get_size(template.format);
    template.width[0] = width;
