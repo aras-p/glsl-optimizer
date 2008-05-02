@@ -2035,7 +2035,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	/* XXX: Other families? */
 	if (has_tcl) {
-		r300->hw.vap_clip_cntl.cmd[1] = R300_221C_NORMAL;
+		r300->hw.vap_clip_cntl.cmd[1] = R300_PS_UCP_MODE_DIST_COP;
 
 		r300->hw.vap_clip.cmd[1] = r300PackFloat32(1.0); /* X */
 		r300->hw.vap_clip.cmd[2] = r300PackFloat32(1.0); /* X */

@@ -283,7 +283,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	if (has_tcl) {
 	    R300_STATECHANGE(r300, vap_clip_cntl);
 	    reg_start(R300_VAP_CLIP_CNTL, 0);
-	    e32(R300_221C_CLEAR);
+	    e32(R300_PS_UCP_MODE_CLIP_AS_TRIFAN | R300_CLIP_DISABLE);
         }
 
 	R300_STATECHANGE(r300, ps);

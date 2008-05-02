@@ -398,9 +398,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * See bug #9871. http://bugs.freedesktop.org/attachment.cgi?id=10672&action=view
  */
 #define R300_VAP_CLIP_CNTL                       0x221C
-#       define R300_221C_NORMAL                  0x00000000
-#       define R300_221C_CLEAR                   0x0001C000
-#       define R300_VAP_UCP_ENABLE_0 (1 << 0)
+#       define R300_VAP_UCP_ENABLE_0             (1 << 0)
+#       define R300_VAP_UCP_ENABLE_1             (1 << 1)
+#       define R300_VAP_UCP_ENABLE_2             (1 << 2)
+#       define R300_VAP_UCP_ENABLE_3             (1 << 3)
+#       define R300_VAP_UCP_ENABLE_4             (1 << 4)
+#       define R300_VAP_UCP_ENABLE_5             (1 << 5)
+#       define R300_PS_UCP_MODE_DIST_COP         (0 << 14)
+#       define R300_PS_UCP_MODE_RADIUS_COP       (1 << 14)
+#       define R300_PS_UCP_MODE_RADIUS_COP_CLIP  (2 << 14)
+#       define R300_PS_UCP_MODE_CLIP_AS_TRIFAN   (3 << 14)
+#       define R300_CLIP_DISABLE                 (1 << 16)
+#       define R300_UCP_CULL_ONLY_ENABLE         (1 << 17)
+#       define R300_BOUNDARY_EDGE_FLAG_ENABLE    (1 << 18)
+#       define R500_COLOR2_IS_TEXTURE            (1 << 20)
+#       define R500_COLOR3_IS_TEXTURE            (1 << 21)
 
 /* These seem to be per-pixel and per-vertex X and Y clipping planes. The first
  * plane is per-pixel and the second plane is per-vertex.
