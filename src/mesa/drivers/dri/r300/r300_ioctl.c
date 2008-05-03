@@ -306,7 +306,7 @@ static void r300EmitClearState(GLcontext * ctx)
 
 		R300_STATECHANGE(r300, rr);
 		reg_start(R300_RS_INST_0, 0);
-		e32(R300_RS_INST_COL_CN_WRITE);
+		e32(R500_RS_INST_COL_CN_WRITE);
 	} else {
 	  
 		R300_STATECHANGE(r300, ri);

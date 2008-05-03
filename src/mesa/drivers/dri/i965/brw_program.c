@@ -33,6 +33,7 @@
 #include "main/enums.h"
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
+#include "shader/programopt.h"
 #include "tnl/tnl.h"
 
 #include "brw_context.h"

@@ -1491,21 +1491,17 @@ static void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	/* I'm still unsure if these are needed */
-	GLuint interp_magic[8] = {
-		0x00,
-		R300_RS_COL_PTR(1),
-		R300_RS_COL_PTR(2),
-		R300_RS_COL_PTR(3),
-		0x00,
-		0x00,
-		0x00,
-		0x00
-	};
+	GLuint interp_col[8];
+        TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
 	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
-	int in_texcoords, col_interp_nr;
-	int i;
+	int col_interp_nr;
+	int rs_tex_count = 0, rs_col_count = 0;
+	int i, count;
+
+	memset(interp_col, 0, 8);
 
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
@@ -1523,7 +1519,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 
-	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
+	fp_reg = col_interp_nr = high_rr = 0;
 
 	r300->hw.rr.cmd[R300_RR_INST_1] = 0;
 
@@ -1541,12 +1537,50 @@ static void r300SetupRSUnit(GLcontext * ctx)
 		InputsRead &= ~FRAG_BIT_WPOS;
 	}
 
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0 | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
-		    | interp_magic[i];
+	if (InputsRead & FRAG_BIT_COL0) {
+		count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
+		interp_col[0] |= R300_RS_COL_PTR(rs_col_count);
+		if (count == 3)
+			interp_col[0] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
+		rs_col_count += count;
+	}
+	else
+		interp_col[0] = R300_RS_COL_FMT(R300_RS_COL_FMT_0001);
 
+	if (InputsRead & FRAG_BIT_COL1) {
+		count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
+		if (count == 3)
+			interp_col[1] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
+		interp_col[1] |= R300_RS_COL_PTR(1);
+		rs_col_count += count;
+	}
+
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+		int swiz;
+
+		/* with TCL we always seem to route 4 components */
+		if (hw_tcl_on)
+		  count = 4;
+		else
+		  count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
+
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | rs_tex_count;
+		switch(count) {
+		case 4:swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3); break;
+		case 3: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
+		default:
+		case 1:
+		case 2: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(R300_RS_SEL_K0) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
+		};
+
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] |= swiz;
+ 
 		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
+
+			rs_tex_count += count;
+
 			//assert(r300->state.texture.tc_count != 0);
 			r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] |= R300_RS_INST_TEX_CN_WRITE | i	/* source INTERP */
 			    | (fp_reg << R300_RS_INST_TEX_ADDR_SHIFT);
@@ -1559,10 +1593,6 @@ static void r300SetupRSUnit(GLcontext * ctx)
 			} else {
 				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
 			}
-		}
-		/* Need to count all coords enabled at vof */
-		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
-			in_texcoords++;
 		}
 	}
 
@@ -1589,18 +1619,18 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	}
 
 	/* Need at least one. This might still lock as the values are undefined... */
-	if (in_texcoords == 0 && col_interp_nr == 0) {
+	if (rs_tex_count == 0 && col_interp_nr == 0) {
 		r300->hw.rr.cmd[R300_RR_INST_0] |= R300_RS_INST_COL_ID(0) | R300_RS_INST_COL_CN_WRITE | (fp_reg++ << R300_RS_INST_COL_ADDR_SHIFT);
 		col_interp_nr++;
 	}
 
-	r300->hw.rc.cmd[1] = 0 | ((in_texcoords << 2) << R300_IT_COUNT_SHIFT)
+	r300->hw.rc.cmd[1] = 0 | (rs_tex_count << R300_IT_COUNT_SHIFT)
 	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
 	  | R300_HIRES_EN;
 
 	assert(high_rr >= 0);
 	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, high_rr + 1);
-	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
+	r300->hw.rc.cmd[2] = high_rr;
 
 	if (InputsRead)
 		WARN_ONCE("Don't know how to satisfy InputsRead=0x%08x\n", InputsRead);
@@ -2354,7 +2384,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	    (char *)ctx->FragmentProgram._Current;
 	int i, k;
 
-	if (!fp)	/* should only happen once, just after context is created */
+	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
 	r500TranslateFragmentShader(rmesa, fp);

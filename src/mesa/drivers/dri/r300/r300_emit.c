@@ -207,7 +207,10 @@ static void r300EmitVec(GLcontext * ctx, struct r300_dma_region *rvb,
 	}
 }
 
-static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
+#define DW_SIZE(x) ((inputs[tab[(x)]] << R300_DST_VEC_LOC_SHIFT) |	\
+		    (attribptr[tab[(x)]]->size - 1) << R300_DATA_TYPE_0_SHIFT)
+
+GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 				 int *inputs, GLint * tab, GLuint nr)
 {
 	GLuint i, dw;
@@ -216,16 +219,13 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	for (i = 0; i < nr; i += 2) {
 		/* make sure input is valid, would lockup the gpu */
 		assert(inputs[tab[i]] != -1);
-		dw = (R300_SIGNED |
-		      (inputs[tab[i]] << R300_DST_VEC_LOC_SHIFT) |
-		      (attribptr[tab[i]]->size - 1)) << R300_DATA_TYPE_0_SHIFT;
+		dw = (R300_SIGNED | DW_SIZE(i));
 		if (i + 1 == nr) {
 			dw |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
 		} else {
 			assert(inputs[tab[i + 1]] != -1);
 			dw |= (R300_SIGNED |
-			       (inputs[tab[i + 1]] << R300_DST_VEC_LOC_SHIFT) |
-			       (attribptr[tab[i + 1]]->size - 1)) << R300_DATA_TYPE_1_SHIFT;
+			       DW_SIZE(i + 1)) << R300_DATA_TYPE_1_SHIFT;
 			if (i + 2 == nr) {
 				dw |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
 			}

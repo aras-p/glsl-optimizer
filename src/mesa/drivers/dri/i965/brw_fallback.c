@@ -45,7 +45,6 @@ static GLboolean do_check_fallback(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    GLuint i;
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    /* BRW_NEW_METAOPS
     */

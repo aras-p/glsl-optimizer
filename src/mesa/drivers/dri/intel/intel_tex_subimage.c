@@ -29,6 +29,7 @@
 #include "mtypes.h"
 #include "texobj.h"
 #include "texstore.h"
+#include "texcompress.h"
 #include "enums.h"
 
 #include "intel_context.h"
