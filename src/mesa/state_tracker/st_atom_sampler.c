@@ -32,12 +32,14 @@
   */
  
 
+#include "main/macros.h"
+
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
+
 #include "cso_cache/cso_context.h"
 
 

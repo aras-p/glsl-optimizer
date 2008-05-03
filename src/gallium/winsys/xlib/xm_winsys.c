@@ -606,7 +606,7 @@ xmesa_get_pipe_winsys_aub(struct xmesa_visual *xm_vis)
 }
 
 
-struct pipe_winsys *
+static struct pipe_winsys *
 xmesa_get_pipe_winsys(struct xmesa_visual *xm_vis)
 {
    static struct xmesa_pipe_winsys *ws = NULL;
