@@ -67,6 +67,8 @@
 
 /* "Register" flags */
 #define REG_CONSTANT (1 << 8)
+#define REG_SRC_REL (1 << 9)
+#define REG_DEST_REL (1 << 7)
 
 /* Swizzle tools */
 #define R500_SWIZZLE_ZERO 4
@@ -187,26 +189,36 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 
 static void dumb_shader(struct r500_fragment_program *fp)
 {
-	/* R500_INST_TYPE_TEX? */
-	fp->inst[0].inst0 = 0x7808;
-	fp->inst[0].inst1 = R500_TEX_ID(0) | R500_TEX_INST_LD | R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
-	fp->inst[0].inst2 = R500_TEX_SRC_ADDR(0) |  R500_TEX_SRC_S_SWIZ_R |
-		R500_TEX_SRC_T_SWIZ_G |
-		R500_TEX_DST_ADDR(0) |
-		R500_TEX_DST_R_SWIZ_R |
-		R500_TEX_DST_G_SWIZ_G |
-		R500_TEX_DST_B_SWIZ_B |
-		R500_TEX_DST_A_SWIZ_A;
-	fp->inst[0].inst3 = R500_DX_ADDR(0) |
-		R500_DX_S_SWIZ_R |
-		R500_DX_T_SWIZ_R |
-		R500_DX_R_SWIZ_R |
-		R500_DX_Q_SWIZ_R |
-		R500_DY_ADDR(0) |
-		R500_DY_S_SWIZ_R |
-		R500_DY_T_SWIZ_R |
-		R500_DY_R_SWIZ_R |
-		R500_DY_Q_SWIZ_R;
+	fp->inst[0].inst0 = R500_INST_TYPE_TEX
+		| R500_INST_TEX_SEM_WAIT
+		| R500_INST_RGB_WMASK_R
+		| R500_INST_RGB_WMASK_G
+		| R500_INST_RGB_WMASK_B
+		| R500_INST_ALPHA_WMASK
+		| R500_INST_RGB_CLAMP
+		| R500_INST_ALPHA_CLAMP;
+	fp->inst[0].inst1 = R500_TEX_ID(0)
+		| R500_TEX_INST_LD
+		| R500_TEX_SEM_ACQUIRE
+		| R500_TEX_IGNORE_UNCOVERED;
+	fp->inst[0].inst2 = R500_TEX_SRC_ADDR(0)
+		| R500_TEX_SRC_S_SWIZ_R
+		| R500_TEX_SRC_T_SWIZ_G
+		| R500_TEX_DST_ADDR(0)
+		| R500_TEX_DST_R_SWIZ_R
+		| R500_TEX_DST_G_SWIZ_G
+		| R500_TEX_DST_B_SWIZ_B
+		| R500_TEX_DST_A_SWIZ_A;
+	fp->inst[0].inst3 = R500_DX_ADDR(0)
+		| R500_DX_S_SWIZ_R
+		| R500_DX_T_SWIZ_R
+		| R500_DX_R_SWIZ_R
+		| R500_DX_Q_SWIZ_R
+		| R500_DY_ADDR(0)
+		| R500_DY_S_SWIZ_R
+		| R500_DY_T_SWIZ_R
+		| R500_DY_R_SWIZ_R
+		| R500_DY_Q_SWIZ_R;
 	fp->inst[0].inst4 = 0x0;
 	fp->inst[0].inst5 = 0x0;
 
