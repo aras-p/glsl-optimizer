@@ -170,12 +170,12 @@ intel_exec_ioctl(struct intel_context *intel,
 		   (((GLuint) intel->drawY) << 16));
 
    do {
-      ret = drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
+      ret = drmCommandWriteRead(intel->driFd, DRM_I915_GEM_EXECBUFFER, &execbuf,
 				sizeof(execbuf));
    } while (ret == -EAGAIN);
 
    if (ret != 0) {
-      fprintf(stderr, "DRM_I915_EXECBUFFER: %d\n", -errno);
+      fprintf(stderr, "DRM_I915_GEM_EXECBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
