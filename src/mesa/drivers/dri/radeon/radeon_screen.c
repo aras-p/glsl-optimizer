@@ -697,6 +697,9 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
 
+   if (getenv("R300_NO_TCL"))
+     screen->chip_flags &= ~RADEON_CHIPSET_TCL;
+
    if (screen->chip_family <= CHIP_FAMILY_RS200)
       screen->chip_flags |= RADEON_CLASS_R100;
    else if (screen->chip_family <= CHIP_FAMILY_RV280)
