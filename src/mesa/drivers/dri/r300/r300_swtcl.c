@@ -78,36 +78,6 @@ do {									\
    rmesa->swtcl.vertex_attr_count++;					\
 } while (0)
 
-/* this differs from the VIR0 in emit.c - TODO merge them using another option */
-static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
-				 int *inputs, GLint * tab, GLuint nr)
-{
-	GLuint i, dw;
-
-	/* type, inputs, stop bit, size */
-	for (i = 0; i < nr; i += 2) {
-		/* make sure input is valid, would lockup the gpu */
-		assert(inputs[tab[i]] != -1);
-		dw = (R300_SIGNED |
-		      (inputs[tab[i]] << R300_DST_VEC_LOC_SHIFT) |
-		      (attribptr[tab[i]]->size - 1)) << R300_DATA_TYPE_0_SHIFT;
-		if (i + 1 == nr) {
-			dw |= R300_LAST_VEC << R300_DATA_TYPE_0_SHIFT;
-		} else {
-			assert(inputs[tab[i + 1]] != -1);
-			dw |= (R300_SIGNED |
-			       (inputs[tab[i + 1]] << R300_DST_VEC_LOC_SHIFT) |
-			       (attribptr[tab[i + 1]]->size - 1)) << R300_DATA_TYPE_1_SHIFT;
-			if (i + 2 == nr) {
-				dw |= R300_LAST_VEC << R300_DATA_TYPE_1_SHIFT;
-			}
-		}
-		dst[i >> 1] = dw;
-	}
-
-	return (nr + 1) >> 1;
-}
-
 static void r300SetVertexFormat( GLcontext *ctx )
 {
 	r300ContextPtr rmesa = R300_CONTEXT( ctx );
@@ -123,6 +93,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
 	GLuint i, nr;
+	GLuint sz, vap_fmt_1 = 0;
 
 	DECLARE_RENDERINPUTS(render_inputs_bitset);
 	RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
@@ -145,14 +116,15 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	 * build up a hardware vertex.
 	 */
 	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS)) {
-		vap_vte_cntl |= R300_VTX_W0_FMT;
+		sz = VB->AttribPtr[VERT_ATTRIB_POS]->size;
 		InputsRead |= 1 << VERT_ATTRIB_POS;
 		OutputsWritten |= 1 << VERT_RESULT_HPOS;
-		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-	} else
+		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_1F + sz - 1 );
+		offset = sz;
+	} else {
+		offset = 4;
 		EMIT_PAD(4 * sizeof(float));
-
-	offset = 4;
+	}
 
 	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
 		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
@@ -161,18 +133,19 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	}
 
 	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
+		sz = VB->AttribPtr[VERT_ATTRIB_COLOR0]->size;
 	        rmesa->swtcl.coloroffset = offset;
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
 		OutputsWritten |= 1 << VERT_RESULT_COL0;
-		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
+		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_1F + sz - 1 );
+		offset += sz;
 	}
-
-	offset += 4;
 
 	rmesa->swtcl.specoffset = 0;
 	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
+		sz = VB->AttribPtr[VERT_ATTRIB_COLOR1]->size;
 		rmesa->swtcl.specoffset = offset;
-		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F );
+		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_1F + sz - 1 );
 		InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 		OutputsWritten |= 1 << VERT_RESULT_COL1;
 	}
@@ -182,9 +155,11 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 			if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+				sz = VB->TexCoordPtr[i]->size;
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
-				EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_4F );
+				EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_1F + sz - 1 );
+				vap_fmt_1 |= sz << (3 * i);
 			}
 		}
 	}
@@ -243,7 +218,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
    
 	R300_STATECHANGE(rmesa, vof);
 	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_fmt_1;
    
 	rmesa->swtcl.vertex_size =
 		_tnl_install_attrs( ctx,
