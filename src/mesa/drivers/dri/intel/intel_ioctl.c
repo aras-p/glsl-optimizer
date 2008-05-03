@@ -30,6 +30,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sched.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include "mtypes.h"
 #include "context.h"
@@ -170,8 +172,7 @@ intel_exec_ioctl(struct intel_context *intel,
 		   (((GLuint) intel->drawY) << 16));
 
    do {
-      ret = drmCommandWriteRead(intel->driFd, DRM_I915_GEM_EXECBUFFER, &execbuf,
-				sizeof(execbuf));
+      ret = ioctl(intel->driFd, DRM_IOCTL_I915_GEM_EXECBUFFER, execbuf);
    } while (ret == -EAGAIN);
 
    if (ret != 0) {
