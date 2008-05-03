@@ -227,6 +227,7 @@ intel_add_validate_buffer(dri_bo *bo)
     bufmgr_gem->validate_array[index].buffer_handle = bo_gem->gem_handle;
     bufmgr_gem->validate_array[index].relocation_count = bo_gem->reloc_count;
     bufmgr_gem->validate_array[index].relocs_ptr = (uintptr_t)bo_gem->relocs;
+    bufmgr_gem->validate_array[index].alignment = 0;
     bufmgr_gem->validate_bo[index] = bo;
     dri_bo_reference(bo);
     bufmgr_gem->validate_count++;
@@ -366,7 +367,7 @@ intel_gem_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     open_arg.name = handle;
     ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_OPEN, &open_arg);
     if (ret != 0) {
-       fprintf(stderr, "Couldn't reference %s handle 0x%08x: %s\n",
+	fprintf(stderr, "Couldn't reference %s handle 0x%08x: %s\n",
 	       name, handle, strerror(-ret));
 	free(bo_gem);
 	return NULL;
@@ -378,6 +379,7 @@ intel_gem_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     bo_gem->name = name;
     bo_gem->refcount = 1;
     bo_gem->validate_index = -1;
+    bo_gem->gem_handle = open_arg.handle;
 
     DBG("bo_create_from_handle: %p %08x (%s)\n",
 	&bo_gem->bo, handle, bo_gem->name);
