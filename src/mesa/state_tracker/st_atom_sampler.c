@@ -148,7 +148,7 @@ update_samplers(struct st_context *st)
             sampler->normalized_coords = 1;
 
          sampler->lod_bias = st->ctx->Texture.Unit[su].LodBias;
-         sampler->min_lod = MAX2(texobj->BaseLevel, texobj->MinLod);
+         sampler->min_lod = MAX2(0, texobj->MinLod);
          sampler->max_lod = MIN2(texobj->MaxLevel, texobj->MaxLod);
 
          sampler->border_color[0] = texobj->BorderColor[RCOMP];
