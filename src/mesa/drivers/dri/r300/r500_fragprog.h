@@ -96,7 +96,10 @@ typedef struct r300_fragment_program_swizzle {
 #define DRI_CONF_FP_OPTIMIZATION_SPEED   0
 #define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
 
-struct r300_fragment_program;
+struct r500_fragment_program;
+
+extern void r500TranslateFragmentShader(r300ContextPtr r300,
+					struct r500_fragment_program *fp);
 
 extern void r300TranslateFragmentShader(r300ContextPtr r300,
 					struct r300_fragment_program *fp);

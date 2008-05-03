@@ -2380,54 +2380,33 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 static void r500SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *fp = (struct r300_fragment_program *)
+	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
 	int i, k;
 
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
-	/* emit the standard zero shader */
+	r500TranslateFragmentShader(rmesa, fp);
+	if (!fp->translated) {
+		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
+			__FUNCTION__);
+		return;
+	}
+
 	R300_STATECHANGE(rmesa, r500fp);
-	i = 1;
-	rmesa->hw.r500fp.cmd[i++] = R500_INST_TYPE_OUT |
-		R500_INST_TEX_SEM_WAIT |
-		R500_INST_LAST |
-		R500_INST_RGB_OMASK_R |
-		R500_INST_RGB_OMASK_G |
-		R500_INST_RGB_OMASK_B |
-		R500_INST_ALPHA_OMASK;
+	/* Emit our shader... */
+	for (i = 0; i < fp->cs->nrslots; i++) {
+		rmesa->hw.r500fp.cmd[i*6+1] = fp->inst[i].inst0;
+		rmesa->hw.r500fp.cmd[i*6+2] = fp->inst[i].inst1;
+		rmesa->hw.r500fp.cmd[i*6+3] = fp->inst[i].inst2;
+		rmesa->hw.r500fp.cmd[i*6+4] = fp->inst[i].inst3;
+		rmesa->hw.r500fp.cmd[i*6+5] = fp->inst[i].inst4;
+		rmesa->hw.r500fp.cmd[i*6+6] = fp->inst[i].inst5;
+	}
 
-	rmesa->hw.r500fp.cmd[i++] = R500_RGB_ADDR0(0) |
-		R500_RGB_ADDR1(0) |
-		R500_RGB_ADDR1_CONST |
-		R500_RGB_ADDR2(0) |
-		R500_RGB_ADDR2_CONST |
-		R500_RGB_SRCP_OP_1_MINUS_2RGB0;
-	rmesa->hw.r500fp.cmd[i++] = R500_ALPHA_ADDR0(0) |
-		R500_ALPHA_ADDR1(0) |
-		R500_ALPHA_ADDR1_CONST |
-		R500_ALPHA_ADDR2(0) |
-		R500_ALPHA_ADDR2_CONST |
-		R500_ALPHA_SRCP_OP_1_MINUS_2A0;
-	rmesa->hw.r500fp.cmd[i++] = R500_ALU_RGB_SEL_A_SRC0 |
-		R500_ALU_RGB_R_SWIZ_A_R |
-		R500_ALU_RGB_G_SWIZ_A_G |
-		R500_ALU_RGB_B_SWIZ_A_B |
-		R500_ALU_RGB_SEL_B_SRC0 |
-		R500_ALU_RGB_R_SWIZ_B_1 |
-		R500_ALU_RGB_B_SWIZ_B_1 |
-		R500_ALU_RGB_G_SWIZ_B_1;
-	rmesa->hw.r500fp.cmd[i++] = R500_ALPHA_OP_MAD |
-		R500_ALPHA_SWIZ_A_A |
-		R500_ALPHA_SWIZ_B_1;
-	rmesa->hw.r500fp.cmd[i++] = R500_ALU_RGBA_OP_MAD |
-		R500_ALU_RGBA_R_SWIZ_0 |
-		R500_ALU_RGBA_G_SWIZ_0 |
-		R500_ALU_RGBA_B_SWIZ_0 |
-		R500_ALU_RGBA_A_SWIZ_0;
+	bump_r500fp_count(rmesa->hw.r500fp.cmd, fp->cs->nrslots * 6);
 
-	bump_r500fp_count(rmesa->hw.r500fp.cmd, 6);
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < fp->const_nr; i++) {

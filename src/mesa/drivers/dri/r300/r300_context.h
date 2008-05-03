@@ -774,6 +774,54 @@ struct r300_fragment_program {
 	GLuint optimization;
 };
 
+struct r500_fragment_program {
+	struct gl_fragment_program mesa_program;
+
+	GLcontext *ctx;
+	GLboolean translated;
+	GLboolean error;
+	struct r300_pfs_compile_state *cs;
+
+	struct {
+		GLuint inst0;
+		GLuint inst1;
+		GLuint inst2;
+		GLuint inst3;
+		GLuint inst4;
+		GLuint inst5;
+	} inst[512];
+	/* TODO: This is magic! */
+
+	struct {
+		int tex_offset;
+		int tex_end;
+		int alu_offset;
+		int alu_end;
+		int flags;
+	} node[4];
+	int cur_node;
+	int first_node_has_tex;
+
+	int alu_offset;
+	int alu_end;
+	int tex_offset;
+	int tex_end;
+
+	/* Hardware constants.
+	 * Contains a pointer to the value. The destination of the pointer
+	 * is supposed to be updated when GL state changes.
+	 * Typically, this is either a pointer into
+	 * gl_program_parameter_list::ParameterValues, or a pointer to a
+	 * global constant (e.g. for sin/cos-approximation)
+	 */
+	const GLfloat *constant[PFS_NUM_CONST_REGS];
+	int const_nr;
+
+	int max_temp_idx;
+
+	GLuint optimization;
+};
+
 #define R300_MAX_AOS_ARRAYS		16
 
 #define REG_COORDS	0
