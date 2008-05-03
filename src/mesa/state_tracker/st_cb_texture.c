@@ -1363,7 +1363,7 @@ calculate_first_last_level(struct st_texture_object *stObj)
       }
       else {
          firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][0]->WidthLog2);
+         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][tObj->BaseLevel]->WidthLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -1488,6 +1488,9 @@ st_finalize_texture(GLcontext *ctx,
 	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
 	stObj->pt->last_level < stObj->lastLevel ||
 	stObj->pt->cpp != cpp ||
+        stObj->pt->width[0] != firstImage->base.Width2 ||
+        stObj->pt->height[0] != firstImage->base.Height2 ||
+        stObj->pt->depth[0] != firstImage->base.Depth2 ||
 	stObj->pt->compressed != firstImage->base.IsCompressed)) {
       pipe_texture_release(&stObj->pt);
    }
