@@ -100,13 +100,19 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 
+	vte = rmesa->hw.vte.cmd[1];
+	vte &= ~(R300_VTX_XY_FMT | R300_VTX_Z_FMT | R300_VTX_W0_FMT);
 	/* Important:
 	 */
 	if ( VB->NdcPtr != NULL ) {
+	  fprintf(stderr,"NDC NDC\n");
 		VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
+		vte |= R300_VTX_XY_FMT | R300_VTX_Z_FMT;
 	}
 	else {
+	  fprintf(stderr,"CLIPPY \n");
 		VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
+		vte |= R300_VTX_W0_FMT;
 	}
 
 	assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
@@ -230,7 +236,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
 	RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
 
-	vte = rmesa->hw.vte.cmd[1];
+
 	R300_STATECHANGE(rmesa, vte);
 	rmesa->hw.vte.cmd[1] = vte;
 	rmesa->hw.vte.cmd[2] = rmesa->swtcl.vertex_size;
