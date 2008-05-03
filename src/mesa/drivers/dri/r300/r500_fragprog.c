@@ -93,7 +93,8 @@ static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp;
 	/* This could be optimized, but it should be plenty fast already. */
-	for (int i = 0; i < 3; i++) {
+	int i;
+	for (i = 0; i < 3; i++) {
 		temp = (src.Swizzle >> i*3) & 0x7;
 		/* Fix SWIZZLE_ONE */
 		if (temp == 5) temp++;
@@ -111,7 +112,8 @@ static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
 static inline GLuint make_strq_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp = src.Swizzle;
-	for (int i = 0; i < 4; i++) {
+	int i;
+	for (i = 0; i < 4; i++) {
 		swiz += (temp & 0x3) << i*2;
 		temp >>= 3;
 	}
