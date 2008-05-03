@@ -174,6 +174,12 @@ enum pipe_texture_target {
 
 
 /**
+ * Surface layout
+ */
+#define PIPE_SURFACE_LAYOUT_LINEAR  0
+
+
+/**
  * Surface status
  */
 #define PIPE_SURFACE_STATUS_UNDEFINED  0

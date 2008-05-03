@@ -271,6 +271,7 @@ struct pipe_surface
    unsigned width;
    unsigned height;
    unsigned pitch;               /**< in pixels */
+   unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
    unsigned usage;              /**< PIPE_BUFFER_USAGE_*  */
