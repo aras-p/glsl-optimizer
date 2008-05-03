@@ -161,8 +161,6 @@ intel_exec_ioctl(struct intel_context *intel,
    if (intel->no_hw)
       return;
 
-   memset(&execbuf, 0, sizeof(execbuf));
-
    execbuf->batch_start_offset = 0;
    execbuf->batch_len = used;
    execbuf->cliprects_ptr = (uintptr_t)intel->pClipRects;

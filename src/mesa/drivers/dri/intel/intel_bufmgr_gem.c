@@ -250,9 +250,9 @@ intel_setup_reloc_list(dri_bo *bo)
 }
 
 static dri_bo *
-dri_gem_alloc(dri_bufmgr *bufmgr, const char *name,
-	      unsigned long size, unsigned int alignment,
-	      uint64_t location_mask)
+dri_gem_bo_alloc(dri_bufmgr *bufmgr, const char *name,
+		 unsigned long size, unsigned int alignment,
+		 uint64_t location_mask)
 {
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bufmgr;
     dri_bo_gem *bo_gem;
@@ -336,9 +336,9 @@ dri_gem_alloc(dri_bufmgr *bufmgr, const char *name,
  * working around the X Server not creating buffers and passing handles to us.
  */
 static dri_bo *
-dri_gem_alloc_static(dri_bufmgr *bufmgr, const char *name,
-		     unsigned long offset, unsigned long size, void *virtual,
-		     uint64_t location_mask)
+dri_gem_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
+			unsigned long offset, unsigned long size, void *virtual,
+			uint64_t location_mask)
 {
     return NULL;
 }
@@ -475,7 +475,10 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
     if (bo_gem->virtual == NULL) {
 	struct drm_gem_mmap mmap_arg;
 
+	memset(&mmap_arg, 0, sizeof(mmap_arg));
 	mmap_arg.handle = bo_gem->gem_handle;
+	mmap_arg.offset = 0;
+	mmap_arg.size = bo->size;
 	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_MMAP, &mmap_arg);
 	if (ret != 0) {
 	    fprintf(stderr, "%s:%d: Error mapping buffer %s: %s .\n",
@@ -730,8 +733,8 @@ intel_bufmgr_gem_init(int fd, int batch_size)
      */
     bufmgr_gem->max_relocs = batch_size / sizeof(uint32_t) / 2 - 2;
 
-    bufmgr_gem->bufmgr.bo_alloc = dri_gem_alloc;
-    bufmgr_gem->bufmgr.bo_alloc_static = dri_gem_alloc_static;
+    bufmgr_gem->bufmgr.bo_alloc = dri_gem_bo_alloc;
+    bufmgr_gem->bufmgr.bo_alloc_static = dri_gem_bo_alloc_static;
     bufmgr_gem->bufmgr.bo_reference = dri_gem_bo_reference;
     bufmgr_gem->bufmgr.bo_unreference = dri_gem_bo_unreference;
     bufmgr_gem->bufmgr.bo_map = dri_gem_bo_map;
