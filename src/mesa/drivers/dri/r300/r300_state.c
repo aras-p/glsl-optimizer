@@ -1811,10 +1811,70 @@ static inline void r300SetupVertexProgramFragment(r300ContextPtr r300, int dest,
 	}
 }
 
+#define MIN3(a,b,c) ((a)<(b) ? MIN2(a, c): MIN2(b, c))
+
+static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_count, GLuint temp_count)
+{
+    int vtx_mem_size;
+    int cmd_reserved = 0;
+    int cmd_written = 0;
+    drm_radeon_cmd_header_t *cmd = NULL;
+    int pvs_num_slots;
+    int pvs_num_cntrls;
+
+    /* Flush PVS engine before changing PVS_NUM_SLOTS, PVS_NUM_CNTRLS.
+     * See r500 docs 6.5.2 */
+    reg_start(R300_VAP_PVS_WAITIDLE, 0);
+    e32(0x00000000);
+
+    /* avoid division by zero */
+    if (input_count == 0) input_count = 1;
+    if (output_count == 0) output_count = 1;
+    if (temp_count == 0) temp_count = 1;
+
+    if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+	vtx_mem_size = 128;
+    else
+	vtx_mem_size = 72;
+
+    pvs_num_slots = MIN3(10, vtx_mem_size/input_count, vtx_mem_size/output_count);
+    pvs_num_cntrls = MIN2(6, vtx_mem_size/temp_count);
+
+    R300_STATECHANGE(rmesa, vap_cntl);
+    if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
+	rmesa->hw.vap_cntl.cmd[1] = 
+	    (pvs_num_slots << R300_PVS_NUM_SLOTS_SHIFT) |
+	    (pvs_num_cntrls << R300_PVS_NUM_CNTLRS_SHIFT) |
+	    (12 << R300_VF_MAX_VTX_NUM_SHIFT);
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+	    rmesa->hw.vap_cntl.cmd[1] |= R500_TCL_STATE_OPTIMIZATION;
+    } else
+	/* not sure about non-tcl */
+	rmesa->hw.vap_cntl.cmd[1] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+				    (5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+				    (5 << R300_VF_MAX_VTX_NUM_SHIFT));
+
+    if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
+	rmesa->hw.vap_cntl.cmd[1] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
+    else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560))
+	rmesa->hw.vap_cntl.cmd[1] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
+    else if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
+	rmesa->hw.vap_cntl.cmd[1] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
+    else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
+	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
+	rmesa->hw.vap_cntl.cmd[1] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
+    else
+	rmesa->hw.vap_cntl.cmd[1] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+
+}
+
 static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 {
 	struct r300_vertex_shader_state *prog = &(rmesa->state.vertex_shader);
 	GLuint o_reg = 0;
+	GLuint i_reg = 0;
 	int i;
 	int inst_count = 0;
 	int param_count = 0;
@@ -1827,6 +1887,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 			prog->program.body.i[program_end + 2] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			prog->program.body.i[program_end + 3] = PVS_SRC_OPERAND(rmesa->state.sw_tcl_inputs[i], PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_SELECT_FORCE_1, PVS_SRC_REG_INPUT, VSF_FLAG_NONE);
 			program_end += 4;
+			i_reg++;
 		}
 	}
 
@@ -1835,6 +1896,8 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START,
 				       &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
+
+	r300VapCntl(rmesa, i_reg, o_reg, 0);
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
@@ -1847,6 +1910,15 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
 	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
 	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
+}
+
+static int bit_count (int x)
+{
+    x = ((x & 0xaaaaaaaaU) >> 1) + (x & 0x55555555U);
+    x = ((x & 0xccccccccU) >> 2) + (x & 0x33333333U);
+    x = (x >> 16) + (x & 0xffff);
+    x = ((x & 0xf0f0) >> 4) + (x & 0x0f0f);
+    return (x >> 8) + (x & 0x00ff);
 }
 
 static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
@@ -1869,6 +1941,9 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 
 	r300SetupVertexProgramFragment(rmesa, R300_PVS_CODE_START, &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
+
+	r300VapCntl(rmesa, bit_count(prog->key.InputsRead),
+		    bit_count(prog->key.OutputsWritten), prog->num_temporaries);
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
@@ -1903,13 +1978,6 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 		r300SetupDefaultVertexProgram(rmesa);
 	}
 
-
-	/* FIXME: This is done for vertex shader fragments, but also needs to be
-	 * done for vap_pvs, so I leave it as a reminder. */
-#if 0
-	reg_start(R300_VAP_PVS_WAITIDLE, 0);
-	e32(0x00000000);
-#endif
 }
 
 /**
@@ -2010,35 +2078,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
-
-	/* setup the VAP */
-	/* for tcl, PVS_NUM_SLOTS, PVS_NUM_CNTLRS, VF_MAX_VTX_NUM need to be adjusted
-	 * dynamically.  PVS_NUM_FPUS is fixed based on asic
-	 */
-	if (has_tcl) {
-	    r300->hw.vap_cntl.cmd[1] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
-					(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-					(12 << R300_VF_MAX_VTX_NUM_SHIFT));
-	    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-		r300->hw.vap_cntl.cmd[1] |= R500_TCL_STATE_OPTIMIZATION;
-	} else
-	    r300->hw.vap_cntl.cmd[1] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
-					(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
-					(5 << R300_VF_MAX_VTX_NUM_SHIFT));
-
-	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
-	    r300->hw.vap_cntl.cmd[1] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
-	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
-		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560))
-	    r300->hw.vap_cntl.cmd[1] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
-	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
-	    r300->hw.vap_cntl.cmd[1] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
-	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
-		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
-		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
-	    r300->hw.vap_cntl.cmd[1] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
-	else
-	    r300->hw.vap_cntl.cmd[1] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
 
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 	    | R300_VPORT_X_OFFSET_ENA

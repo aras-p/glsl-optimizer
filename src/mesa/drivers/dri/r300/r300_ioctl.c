@@ -187,6 +187,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	drm_radeon_cmd_header_t *cmd = NULL;
 	int has_tcl = 1;
 	int is_r500 = 0;
+	GLuint vap_cntl;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
@@ -206,11 +207,9 @@ static void r300EmitClearState(GLcontext * ctx)
 	R300_STATECHANGE(r300, vir[0]);
 	reg_start(R300_VAP_PROG_STREAM_CNTL_0, 0);
 	if (!has_tcl)
-	    /*e32(0x22030003);*/
 	    e32(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
 		 ((R300_LAST_VEC | (2 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT)));
 	else
-	    /*e32(0x21030003);*/
 	    e32(((((0 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_0_SHIFT) |
 		 ((R300_LAST_VEC | (1 << R300_DST_VEC_LOC_SHIFT) | R300_DATA_TYPE_FLOAT_4) << R300_DATA_TYPE_1_SHIFT)));
 
@@ -424,6 +423,35 @@ static void r300EmitClearState(GLcontext * ctx)
 		    R500_ALU_RGBA_B_SWIZ_0 |
 		    R500_ALU_RGBA_A_SWIZ_0);
 	}
+
+	if (has_tcl) {
+	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+			(12 << R300_VF_MAX_VTX_NUM_SHIFT));
+	    if (r300->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
+		vap_cntl |= R500_TCL_STATE_OPTIMIZATION;
+	} else
+	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
+			(5 << R300_VF_MAX_VTX_NUM_SHIFT));
+
+	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
+	    vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
+	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560))
+	    vap_cntl |= (5 << R300_PVS_NUM_FPUS_SHIFT);
+	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
+	    vap_cntl |= (6 << R300_PVS_NUM_FPUS_SHIFT);
+	else if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
+		 (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
+	    vap_cntl |= (8 << R300_PVS_NUM_FPUS_SHIFT);
+	else
+	    vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+
+	R300_STATECHANGE(rmesa, vap_cntl);
+	reg_start(R300_VAP_CNTL, 0);
+	e32(vap_cntl);
 
 	if (has_tcl) {
 		R300_STATECHANGE(r300, pvs);
