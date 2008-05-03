@@ -105,12 +105,10 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	/* Important:
 	 */
 	if ( VB->NdcPtr != NULL ) {
-	  fprintf(stderr,"NDC NDC\n");
 		VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
 		vte |= R300_VTX_XY_FMT | R300_VTX_Z_FMT;
 	}
 	else {
-	  fprintf(stderr,"CLIPPY \n");
 		VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
 		vte |= R300_VTX_W0_FMT;
 	}
