@@ -179,6 +179,51 @@ void draw_pt_emit( struct pt_emit *emit,
 }
 
 
+void draw_pt_emit_linear(struct pt_emit *emit,
+                         const float (*vertex_data)[4],
+                         unsigned vertex_count,
+                         unsigned stride,
+                         unsigned start,
+                         unsigned count)
+{
+   struct draw_context *draw = emit->draw;
+   struct translate *translate = emit->translate;
+   struct vbuf_render *render = draw->render;
+   void *hw_verts;
+
+   debug_printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   hw_verts = render->allocate_vertices(render,
+					(ushort)translate->key.output_stride,
+					(ushort)count);
+   if (!hw_verts) {
+      assert(0);
+      return;
+   }
+
+   translate->set_buffer(translate, 0,
+			 vertex_data, stride);
+
+   translate->set_buffer(translate, 1,
+			 &draw->rasterizer->point_size,
+			 0);
+
+   translate->run(translate,
+                  0,
+                  vertex_count,
+                  hw_verts);
+
+   render->draw_arrays(render, start, count);
+
+   render->release_vertices(render,
+			    hw_verts,
+			    translate->key.output_stride,
+			    vertex_count);
+}
+
 struct pt_emit *draw_pt_emit_create( struct draw_context *draw )
 {
    struct pt_emit *emit = CALLOC_STRUCT(pt_emit);

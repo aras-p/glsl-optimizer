@@ -92,6 +92,12 @@ struct draw_pt_middle_end {
                 const ushort *draw_elts,
                 unsigned draw_count );
 
+   void (*run_linear)(struct draw_pt_middle_end *,
+                      unsigned fetch_start,
+                      unsigned fetch_count,
+                      const ushort *draw_elts,
+                      unsigned draw_count);
+
    void (*finish)( struct draw_pt_middle_end * );
    void (*destroy)( struct draw_pt_middle_end * );
 };
@@ -152,6 +158,13 @@ void draw_pt_emit( struct pt_emit *emit,
 		   const ushort *elts,
 		   unsigned count );
 
+void draw_pt_emit_linear( struct pt_emit *emit,
+                          const float (*vertex_data)[4],
+                          unsigned vertex_count,
+                          unsigned stride,
+                          unsigned start,
+                          unsigned count );
+
 void draw_pt_emit_destroy( struct pt_emit *emit );
 
 struct pt_emit *draw_pt_emit_create( struct draw_context *draw );
@@ -169,6 +182,11 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			const unsigned *elts,
 			unsigned count,
 			char *verts );
+
+void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
+                               unsigned start,
+                               unsigned count,
+                               char *verts );
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch );
 

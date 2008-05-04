@@ -75,6 +75,28 @@ static void varray_flush(struct varray_frontend *varray)
    varray->draw_count = 0;
 }
 
+static void varray_flush_linear(struct varray_frontend *varray)
+{
+   if (varray->draw_count) {
+      debug_printf("FLUSH LINEAR fc = %d, dc = %d\n",
+                   varray->fetch_count,
+                   varray->draw_count);
+      debug_printf("\telt0 = %d, eltx = %d, draw0 = %d, drawx = %d\n",
+                   varray->fetch_elts[0],
+                   varray->fetch_elts[varray->fetch_count-1],
+                   varray->draw_elts[0],
+                   varray->draw_elts[varray->draw_count-1]);
+      varray->middle->run_linear(varray->middle,
+                                 varray->fetch_elts[0],
+                                 varray->fetch_count,
+                                 varray->draw_elts,
+                                 varray->draw_count);
+   }
+
+   varray->fetch_count = 0;
+   varray->draw_count = 0;
+}
+
 static INLINE void fetch_init(struct varray_frontend *varray,
                               unsigned count)
 {
@@ -265,8 +287,8 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
    if (opt & PT_PIPELINE)
    {
       varray->base.run = varray_run_extras;
-   } 
-   else 
+   }
+   else
    {
       varray->base.run = varray_run;
    }

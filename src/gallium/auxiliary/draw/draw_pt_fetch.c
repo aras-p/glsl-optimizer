@@ -167,6 +167,42 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 }
 
 
+void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
+                               unsigned start,
+                               unsigned count,
+                               char *verts )
+{
+   struct draw_context *draw = fetch->draw;
+   struct translate *translate = fetch->translate;
+   unsigned i;
+
+   for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
+      translate->set_buffer(translate,
+			    i,
+			    ((char *)draw->pt.user.vbuffer[i] +
+			     draw->pt.vertex_buffer[i].buffer_offset),
+			    draw->pt.vertex_buffer[i].pitch );
+   }
+
+   translate->run( translate,
+                   start,
+                   count,
+                   verts );
+
+   /* Edgeflags are hard to fit into a translate program, populate
+    * them separately if required.  In the setup above they are
+    * defaulted to one, so only need this if there is reason to change
+    * that default:
+    */
+   if (fetch->need_edgeflags) {
+      for (i = 0; i < count; i++) {
+         struct vertex_header *vh = (struct vertex_header *)(verts + i * fetch->vertex_size);
+         vh->edgeflag = draw_pt_get_edgeflag( draw, start + i );
+      }
+   }
+}
+
+
 struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
 {
    struct pt_fetch *fetch = CALLOC_STRUCT(pt_fetch);

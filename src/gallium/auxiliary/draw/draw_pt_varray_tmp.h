@@ -17,7 +17,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
    split_prim_inplace(varray->input_prim, &first, &incr);
 
-#if 1
+#if 0
    debug_printf("%s (%d) %d/%d\n", __FUNCTION__,
                 varray->input_prim,
                 start, count);
@@ -88,7 +88,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                      i + 0, i + 1, i + 2);
          }
          fetch_init(varray, end);
-         varray_flush(varray);
+         varray_flush_linear(varray);
       }
       break;
 
