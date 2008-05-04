@@ -88,6 +88,7 @@ static void varray_flush_linear(struct varray_frontend *varray)
                    varray->draw_elts[0],
                    varray->draw_elts[varray->draw_count-1]);
 #endif
+      assert(varray->middle->run_linear);
       varray->middle->run_linear(varray->middle,
                                  varray->fetch_start,
                                  varray->fetch_count,

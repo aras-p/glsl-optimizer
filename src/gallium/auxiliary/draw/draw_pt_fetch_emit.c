@@ -257,6 +257,61 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 }
 
 
+static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
+                                   unsigned fetch_start,
+                                   unsigned fetch_count,
+                                   const ushort *draw_elts,
+                                   unsigned draw_count )
+{
+   struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
+   struct draw_context *draw = feme->draw;
+   void *hw_verts;
+
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation??
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   hw_verts = draw->render->allocate_vertices( draw->render,
+                                               (ushort)feme->translate->key.output_stride,
+                                               (ushort)fetch_count );
+   if (!hw_verts) {
+      assert(0);
+      return;
+   }
+
+   /* Single routine to fetch vertices and emit HW verts.
+    */
+   feme->translate->run( feme->translate,
+                         fetch_start,
+                         fetch_count,
+                         hw_verts );
+
+   if (0) {
+      unsigned i;
+      for (i = 0; i < fetch_count; i++) {
+         debug_printf("\n\nvertex %d:\n", i);
+         draw_dump_emitted_vertex( feme->vinfo,
+                                   (const uint8_t *)hw_verts + feme->vinfo->size * 4 * i );
+      }
+   }
+
+   /* XXX: Draw arrays path to avoid re-emitting index list again and
+    * again.
+    */
+   draw->render->draw_arrays( draw->render,
+                              0, /*start*/
+                              draw_count );
+
+   /* Done -- that was easy, wasn't it:
+    */
+   draw->render->release_vertices( draw->render,
+                                   hw_verts,
+                                   feme->translate->key.output_stride,
+                                   fetch_count );
+
+}
+
+
 
 static void fetch_emit_finish( struct draw_pt_middle_end *middle )
 {
@@ -285,10 +340,11 @@ struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw )
       return NULL;
    }
 
-   fetch_emit->base.prepare = fetch_emit_prepare;
-   fetch_emit->base.run     = fetch_emit_run;
-   fetch_emit->base.finish  = fetch_emit_finish;
-   fetch_emit->base.destroy = fetch_emit_destroy;
+   fetch_emit->base.prepare    = fetch_emit_prepare;
+   fetch_emit->base.run        = fetch_emit_run;
+   fetch_emit->base.run_linear = fetch_emit_run_linear;
+   fetch_emit->base.finish     = fetch_emit_finish;
+   fetch_emit->base.destroy    = fetch_emit_destroy;
 
    fetch_emit->draw = draw;
      
