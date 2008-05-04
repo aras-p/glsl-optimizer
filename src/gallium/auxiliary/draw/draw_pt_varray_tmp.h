@@ -87,8 +87,9 @@ static void FUNC(struct draw_pt_front_end *frontend,
             TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                      i + 0, i + 1, i + 2);
          }
-         fetch_init(varray, end);
+         varray->fetch_count = end;
          varray_flush_linear(varray);
+         varray->fetch_start += end;
       }
       break;
 

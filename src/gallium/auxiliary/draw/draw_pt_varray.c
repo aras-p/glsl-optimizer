@@ -78,6 +78,7 @@ static void varray_flush(struct varray_frontend *varray)
 static void varray_flush_linear(struct varray_frontend *varray)
 {
    if (varray->draw_count) {
+#if 0
       debug_printf("FLUSH LINEAR fc = %d, dc = %d\n",
                    varray->fetch_count,
                    varray->draw_count);
@@ -86,8 +87,9 @@ static void varray_flush_linear(struct varray_frontend *varray)
                    varray->fetch_elts[varray->fetch_count-1],
                    varray->draw_elts[0],
                    varray->draw_elts[varray->draw_count-1]);
+#endif
       varray->middle->run_linear(varray->middle,
-                                 varray->fetch_elts[0],
+                                 varray->fetch_start,
                                  varray->fetch_count,
                                  varray->draw_elts,
                                  varray->draw_count);
