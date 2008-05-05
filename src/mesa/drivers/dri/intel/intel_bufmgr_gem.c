@@ -228,6 +228,7 @@ intel_add_validate_buffer(dri_bo *bo)
     bufmgr_gem->validate_array[index].relocation_count = bo_gem->reloc_count;
     bufmgr_gem->validate_array[index].relocs_ptr = (uintptr_t)bo_gem->relocs;
     bufmgr_gem->validate_array[index].alignment = 0;
+    bufmgr_gem->validate_array[index].buffer_offset = 0;
     bufmgr_gem->validate_bo[index] = bo;
     dri_bo_reference(bo);
     bufmgr_gem->validate_count++;
