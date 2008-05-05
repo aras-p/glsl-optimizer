@@ -94,7 +94,7 @@ static void
 i915InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
-   intelInitPixelFuncs(functions);
+//   intelInitPixelFuncs(functions);
    i915InitStateFunctions(functions);
    i915InitTextureFuncs(functions);
    i915InitFragProgFuncs(functions);

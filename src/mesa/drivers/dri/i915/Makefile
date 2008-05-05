@@ -6,6 +6,11 @@ LIBNAME = i915_dri.so
 
 MINIGLX_SOURCES = server/intel_dri.c
 
+PIXEL_SOURCES = \
+	intel_pixel.c \
+	intel_pixel_read.c \
+	intel_pixel_draw.c
+
 DRIVER_SOURCES = \
 	i830_context.c \
 	i830_metaops.c \
@@ -27,10 +32,7 @@ DRIVER_SOURCES = \
 	intel_tex_validate.c \
 	intel_tex_format.c \
 	intel_tex.c \
-	intel_pixel.c \
 	intel_pixel_copy.c \
-	intel_pixel_read.c \
-	intel_pixel_draw.c \
 	intel_buffers.c \
 	intel_blit.c \
 	i915_tex.c \
@@ -68,6 +70,7 @@ DRIVER_DEFINES = -I../intel -I../intel/server -DI915 \
 include ../Makefile.template
 
 intel_decode.o: ../intel/intel_decode.c
+
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 symlinks:
