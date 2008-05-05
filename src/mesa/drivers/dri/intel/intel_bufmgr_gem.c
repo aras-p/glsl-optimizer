@@ -223,6 +223,7 @@ intel_add_validate_buffer(dri_bo *bo)
     }
 
     index = bufmgr_gem->validate_count;
+    bo_gem->validate_index = index;
     /* Fill in array entry */
     bufmgr_gem->validate_array[index].buffer_handle = bo_gem->gem_handle;
     bufmgr_gem->validate_array[index].relocation_count = bo_gem->reloc_count;
