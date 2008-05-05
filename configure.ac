@@ -207,13 +207,6 @@ if test "x$enable_debug" = xyes; then
         CXXFLAGS="$CXXFLAGS -g"
     fi
 fi
-dnl These will be used near the end in the arch specific options
-AC_ARG_ENABLE([asm],
-    [AS_HELP_STRING([--disable-asm],
-        [disable assembly usage @<:@default=enabled on supported plaforms@:>@])],
-    [enable_asm="$enableval"],
-    [enable_asm=yes]
-)
 
 dnl
 dnl library names
@@ -809,62 +802,98 @@ fi
 AC_SUBST([APP_LIB_DEPS])
 AC_SUBST([PROGRAM_DIRS])
 
+dnl
 dnl Arch/platform-specific settings
-PIC_FLAGS=""
+dnl
+AC_ARG_ENABLE([asm],
+    [AS_HELP_STRING([--disable-asm],
+        [disable assembly usage @<:@default=enabled on supported plaforms@:>@])],
+    [enable_asm="$enableval"],
+    [enable_asm=yes]
+)
+asm_arch=""
 ASM_FLAGS=""
 ASM_SOURCES=""
 ASM_API=""
-AC_SUBST([PIC_FLAGS])
+AC_MSG_CHECKING([whether to enable assembly])
+test "x$enable_asm" = xno && AC_MSG_RESULT([no])
+# disable if cross compiling on x86/x86_64 since we must run gen_matypes
+if test "x$enable_asm" = xyes && test "x$cross_compiling" = xyes; then
+    case "$host_cpu" in
+    i?86 | x86_64)
+        enable_asm=no
+        AC_MSG_RESULT([no, cross compiling])
+        ;;
+    esac
+fi
+# check for supported arches
+if test "x$enable_asm" = xyes; then
+    case "$host_cpu" in
+    i?86)
+        case "$host_os" in
+        linux* | freebsd* | dragonfly*)
+            test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
+            ;;
+        esac
+        ;;
+    x86_64)
+        case "$host_os" in
+        linux* | freebsd* | dragonfly*)
+            test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
+            ;;
+        esac
+        ;;
+    powerpc)
+        case "$host_os" in
+        linux*)
+            asm_arch=ppc
+            ;;
+        esac
+        ;;
+    esac
+
+    case "$asm_arch" in
+    x86)
+        ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
+        ASM_SOURCES='$(X86_SOURCES)'
+        ASM_API='$(X86_API)'
+        AC_MSG_RESULT([yes, x86])
+        ;;
+    x86_64)
+        ASM_FLAGS="-DUSE_X86_64_ASM"
+        ASM_SOURCES='$(X86-64_SOURCES)'
+        ASM_API='$(X86-64_API)'
+        AC_MSG_RESULT([yes, x86_64])
+        ;;
+    ppc)
+        ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
+        ASM_SOURCES='$(PPC_SOURCES)'
+        AC_MSG_RESULT([yes, ppc])
+        ;;
+    *)
+        AC_MSG_RESULT([no, platform not supported])
+        ;;
+    esac
+fi
 AC_SUBST([ASM_FLAGS])
 AC_SUBST([ASM_SOURCES])
 AC_SUBST([ASM_API])
+
+PIC_FLAGS=""
 case "$host_os" in
 linux*)
     PIC_FLAGS="-fPIC"
-    case "$host_cpu" in
-    i*86)
-        if test "x$enable_asm" = xyes; then
-            ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-            ASM_SOURCES='$(X86_SOURCES)'
-            ASM_API='$(X86_API)'
-        fi
-        ;;
-    x86_64)
-        if test "x$enable_asm" = xyes; then
-            ASM_FLAGS="-DUSE_X86_64_ASM"
-            ASM_SOURCES='$(X86-64_SOURCES)'
-            ASM_API='$(X86-64_API)'
-        fi
-        ;;
-    powerpc)
-        if test "x$enable_asm" = xyes; then
-            ASM_FLAGS="-DUSE_PPC_ASM -DUSE_VMX_ASM"
-            ASM_SOURCES='$(PPC_SOURCES)'
-        fi
-        ;;
-    esac
     ;;
 freebsd* | dragonfly*)
     PIC_FLAGS="-fPIC"
     case "$host_cpu" in
-    i*86)
+    i?86)
         PIC_FLAGS=""
-        if test "x$enable_asm" = xyes; then
-            ASM_FLAGS="-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM"
-            ASM_SOURCES='$(X86_SOURCES)'
-            ASM_API='$(X86_API)'
-        fi
-        ;;
-    x86_64)
-        if test "x$enable_asm" = xyes; then
-            ASM_FLAGS="-DUSE_X86_64_ASM"
-            ASM_SOURCES='$(X86-64_SOURCES)'
-            ASM_API='$(X86-64_API)'
-        fi
         ;;
     esac
     ;;
 esac
+AC_SUBST([PIC_FLAGS])
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
