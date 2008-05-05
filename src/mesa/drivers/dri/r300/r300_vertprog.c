@@ -1426,6 +1426,8 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	GLint wpos_idx;
 
 	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
+	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
+	wanted_key.OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
 	InputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
 
 	wpos_idx = -1;
@@ -1439,11 +1441,9 @@ void r300SelectVertexShader(r300ContextPtr r300)
 			_mesa_exit(-1);
 		}
 
-		InputsRead |= (FRAG_BIT_TEX0 << i);
+		wanted_key.OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 		wpos_idx = i;
 	}
-	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
-	wanted_key.OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
 
 	add_outputs(&wanted_key, VERT_RESULT_HPOS);
 
