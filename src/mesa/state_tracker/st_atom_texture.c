@@ -90,6 +90,8 @@ update_textures(struct st_context *st)
             }
 
             st->state.num_textures = su + 1;
+
+            stObj->teximage_realloc = TRUE;
          }
 
          pt = st_get_stobj_texture(stObj);
@@ -111,15 +113,10 @@ update_textures(struct st_context *st)
 
 
 const struct st_tracked_state st_update_texture = {
-   .name = "st_update_texture",
-   .dirty = {
-      .mesa = _NEW_TEXTURE,
-      .st  = ST_NEW_FRAGMENT_PROGRAM,
+   "st_update_texture",					/* name */
+   {							/* dirty */
+      _NEW_TEXTURE,					/* mesa */
+      ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
-   .update = update_textures
+   update_textures					/* update */
 };
-
-
-
-
-

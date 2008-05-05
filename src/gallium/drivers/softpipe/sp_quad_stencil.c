@@ -243,7 +243,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
          stencilVals[j] = tile->data.depth32[y][x] & 0xff;
       }
       break;
-   case PIPE_FORMAT_U_S8:
+   case PIPE_FORMAT_S8_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
          int y = quad->y0 % TILE_SIZE + (j >> 1);
@@ -311,7 +311,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
          tile->data.depth32[y][x] = z24s8;
       }
       break;
-   case PIPE_FORMAT_U_S8:
+   case PIPE_FORMAT_S8_UNORM:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
          int y = quad->y0 % TILE_SIZE + (j >> 1);

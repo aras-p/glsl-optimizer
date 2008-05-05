@@ -36,7 +36,11 @@
 
 #ifdef PIPE_ARCH_X86
 
-#define HIGH_PRECISION 1  /* for 1/sqrt() */
+/* for 1/sqrt()
+ *
+ * This costs about 100fps (close to 10%) in gears:
+ */
+#define HIGH_PRECISION 1
 
 
 #define FOR_EACH_CHANNEL( CHAN )\
@@ -103,15 +107,9 @@ get_output_base( void )
 static struct x86_reg
 get_temp_base( void )
 {
-#ifdef WIN32
    return x86_make_reg(
       file_REG32,
       reg_BX );
-#else
-   return x86_make_reg(
-      file_REG32,
-      reg_SI );
-#endif
 }
 
 static struct x86_reg
@@ -133,14 +131,6 @@ get_immediate_base( void )
  * Data access helpers.
  */
 
-static struct x86_reg
-get_argument(
-   unsigned index )
-{
-   return x86_make_disp(
-      x86_make_reg( file_REG32, reg_SP ),
-      (index + 1) * 4 );
-}
 
 static struct x86_reg
 get_immediate(
@@ -455,19 +445,13 @@ emit_push_gp(
 {
    x86_push(
       func,
-      get_const_base() );
+      x86_make_reg( file_REG32, reg_AX) );
    x86_push(
       func,
-      get_input_base() );
+      x86_make_reg( file_REG32, reg_CX) );
    x86_push(
       func,
-      get_output_base() );
-
-   /* It is important on non-win32 platforms that temp base is pushed last.
-    */
-   x86_push(
-      func,
-      get_temp_base() );
+      x86_make_reg( file_REG32, reg_DX) );
 }
 
 static void
@@ -478,16 +462,13 @@ x86_pop_gp(
     */
    x86_pop(
       func,
-      get_temp_base() );
+      x86_make_reg( file_REG32, reg_DX) );
    x86_pop(
       func,
-      get_output_base() );
+      x86_make_reg( file_REG32, reg_CX) );
    x86_pop(
       func,
-      get_input_base() );
-   x86_pop(
-      func,
-      get_const_base() );
+      x86_make_reg( file_REG32, reg_AX) );
 }
 
 static void
@@ -504,18 +485,22 @@ emit_func_call_dst(
    emit_push_gp(
       func );
 
-#ifdef WIN32
-   x86_push(
-      func,
-      get_temp( TEMP_R0, 0 ) );
-#endif
-
    {
       struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
 
+      x86_lea(
+         func,
+         ecx,
+         get_temp( TEMP_R0, 0 ) );
+
+      x86_push( func, ecx );
       x86_mov_reg_imm( func, ecx, (unsigned long) code );
       x86_call( func, ecx );
+#ifndef WIN32
+      x86_pop(func, ecx ); 
+#endif
    }
+
 
    x86_pop_gp(
       func );
@@ -577,11 +562,7 @@ static void XSTDCALL
 cos4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
 
    store[X + 0] = cosf( store[X + 0] );
    store[X + 1] = cosf( store[X + 1] );
@@ -604,11 +585,8 @@ static void XSTDCALL
 ex24f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = powf( 2.0f, store[X + 0] );
    store[X + 1] = powf( 2.0f, store[X + 1] );
    store[X + 2] = powf( 2.0f, store[X + 2] );
@@ -641,11 +619,8 @@ static void XSTDCALL
 flr4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = floorf( store[X + 0] );
    store[X + 1] = floorf( store[X + 1] );
    store[X + 2] = floorf( store[X + 2] );
@@ -667,11 +642,8 @@ static void XSTDCALL
 frc4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] -= floorf( store[X + 0] );
    store[X + 1] -= floorf( store[X + 1] );
    store[X + 2] -= floorf( store[X + 2] );
@@ -693,11 +665,8 @@ static void XSTDCALL
 lg24f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = LOG2( store[X + 0] );
    store[X + 1] = LOG2( store[X + 1] );
    store[X + 2] = LOG2( store[X + 2] );
@@ -755,11 +724,8 @@ static void XSTDCALL
 pow4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = powf( store[X + 0], store[X + 4] );
    store[X + 1] = powf( store[X + 1], store[X + 5] );
    store[X + 2] = powf( store[X + 2], store[X + 6] );
@@ -795,23 +761,6 @@ emit_rcp (
       make_xmm( xmm_src ) );
 }
 
-#if HIGH_PRECISION
-static void XSTDCALL
-rsqrt4f(
-   float *store )
-{
-#ifdef WIN32
-   const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
-   store[X + 0] = 1.0F / sqrtf( store[X + 0] );
-   store[X + 1] = 1.0F / sqrtf( store[X + 1] );
-   store[X + 2] = 1.0F / sqrtf( store[X + 2] );
-   store[X + 3] = 1.0F / sqrtf( store[X + 3] );
-}
-#endif
-
 static void
 emit_rsqrt(
    struct x86_function *func,
@@ -819,13 +768,6 @@ emit_rsqrt(
    unsigned xmm_src )
 {
 #if HIGH_PRECISION
-#if 1
-   emit_func_call_dst_src(
-      func,
-      xmm_dst,
-      xmm_src,
-      rsqrt4f );
-#else
    /* Although rsqrtps() and rcpps() are low precision on some/all SSE
     * implementations, it is possible to improve its precision at
     * fairly low cost, using a newton/raphson step, as below:
@@ -835,21 +777,25 @@ emit_rsqrt(
     *
     * See: http://softwarecommunity.intel.com/articles/eng/1818.htm
     */
-   /* This is some code that woudl do the above for a scalar 'a'.  We
-    * obviously are interested in a vector version:
-    *
-    * movss   xmm3, a;
-    * movss   xmm1, half;
-    * movss   xmm2, three;
-    * rsqrtss xmm0, xmm3;
-    * mulss   xmm3, xmm0;
-    * mulss   xmm1, xmm0;
-    * mulss   xmm3, xmm0;
-    * subss   xmm2, xmm3;
-    * mulss   xmm1, xmm2;
-    * movss   x,    xmm1;
-    */
-#endif
+   {
+      struct x86_reg dst = make_xmm( xmm_dst );
+      struct x86_reg src = make_xmm( xmm_src );
+      struct x86_reg tmp0 = make_xmm( 2 );
+      struct x86_reg tmp1 = make_xmm( 3 );
+
+      assert( xmm_dst != xmm_src );
+      assert( xmm_dst != 2 && xmm_dst != 3 );
+      assert( xmm_src != 2 && xmm_src != 3 );
+
+      sse_movaps(  func, dst,  get_temp( TGSI_EXEC_TEMP_HALF_I, TGSI_EXEC_TEMP_HALF_C ) );
+      sse_movaps(  func, tmp0, get_temp( TGSI_EXEC_TEMP_THREE_I, TGSI_EXEC_TEMP_THREE_C ) );
+      sse_rsqrtps( func, tmp1, src  );
+      sse_mulps(   func, src,  tmp1 );
+      sse_mulps(   func, dst,  tmp1 );
+      sse_mulps(   func, src,  tmp1 );
+      sse_subps(   func, tmp0, src  );
+      sse_mulps(   func, dst,  tmp0 );
+   }
 #else
    /* On Intel CPUs at least, this is only accurate to 12 bits -- not
     * good enough.
@@ -878,11 +824,8 @@ static void XSTDCALL
 sin4f(
    float *store )
 {
-#ifdef WIN32
    const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
+
    store[X + 0] = sinf( store[X + 0] );
    store[X + 1] = sinf( store[X + 1] );
    store[X + 2] = sinf( store[X + 2] );
@@ -1234,11 +1177,16 @@ emit_instruction(
 
    switch( inst->Instruction.Opcode ) {
    case TGSI_OPCODE_ARL:
+#if 0
+      /* XXX this isn't working properly (see glean vertProg1 test) */
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          emit_f2it( func, 0 );
          STORE( func, *inst, 0, 0, chan_index );
       }
+#else
+      return 0;
+#endif
       break;
 
    case TGSI_OPCODE_MOV:
@@ -1334,9 +1282,9 @@ emit_instruction(
    case TGSI_OPCODE_RSQ:
    /* TGSI_OPCODE_RECIPSQRT */
       FETCH( func, *inst, 0, 0, CHAN_X );
-      emit_rsqrt( func, 0, 0 );
+      emit_rsqrt( func, 1, 0 );
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
-         STORE( func, *inst, 0, 0, chan_index );
+         STORE( func, *inst, 1, 0, chan_index );
       }
       break;
 
@@ -2029,40 +1977,40 @@ emit_declaration(
    }
 }
 
-static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num, uint stride )
+static void aos_to_soa( struct x86_function *func, 
+                        uint arg_aos,
+                        uint arg_soa, 
+                        uint arg_num, 
+                        uint arg_stride )
 {
-   struct x86_reg soa_input;
-   struct x86_reg aos_input;
-   struct x86_reg num_inputs;
-   struct x86_reg temp;
-   unsigned char *inner_loop;
+   struct x86_reg soa_input = x86_make_reg( file_REG32, reg_AX );
+   struct x86_reg aos_input = x86_make_reg( file_REG32, reg_BX );
+   struct x86_reg num_inputs = x86_make_reg( file_REG32, reg_CX );
+   struct x86_reg stride = x86_make_reg( file_REG32, reg_DX );
+   int inner_loop;
 
-   soa_input = x86_make_reg( file_REG32, reg_AX );
-   aos_input = x86_make_reg( file_REG32, reg_BX );
-   num_inputs = x86_make_reg( file_REG32, reg_CX );
-   temp = x86_make_reg( file_REG32, reg_DX );
 
    /* Save EBX */
    x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
 
-   x86_mov( func, soa_input, get_argument( soa + 1 ) );
-   x86_mov( func, aos_input, get_argument( aos + 1 ) );
-   x86_mov( func, num_inputs, get_argument( num + 1 ) );
+   x86_mov( func, aos_input,  x86_fn_arg( func, arg_aos ) );
+   x86_mov( func, soa_input,  x86_fn_arg( func, arg_soa ) );
+   x86_mov( func, num_inputs, x86_fn_arg( func, arg_num ) );
+   x86_mov( func, stride,     x86_fn_arg( func, arg_stride ) );
 
    /* do */
    inner_loop = x86_get_label( func );
    {
-      x86_mov( func, temp, get_argument( stride + 1 ) );
       x86_push( func, aos_input );
       sse_movlps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
       sse_movlps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
-      x86_add( func, aos_input, temp );
+      x86_add( func, aos_input, stride );
       sse_movhps( func, make_xmm( 0 ), x86_make_disp( aos_input, 0 ) );
       sse_movhps( func, make_xmm( 3 ), x86_make_disp( aos_input, 8 ) );
-      x86_add( func, aos_input, temp );
+      x86_add( func, aos_input, stride );
       sse_movlps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
       sse_movlps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
-      x86_add( func, aos_input, temp );
+      x86_add( func, aos_input, stride );
       sse_movhps( func, make_xmm( 1 ), x86_make_disp( aos_input, 0 ) );
       sse_movhps( func, make_xmm( 4 ), x86_make_disp( aos_input, 8 ) );
       x86_pop( func, aos_input );
@@ -2088,7 +2036,7 @@ static void aos_to_soa( struct x86_function *func, uint aos, uint soa, uint num,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_pop( func, aos_input );
 }
 
 static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num, uint stride )
@@ -2097,7 +2045,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    struct x86_reg aos_output;
    struct x86_reg num_outputs;
    struct x86_reg temp;
-   unsigned char *inner_loop;
+   int inner_loop;
 
    soa_output = x86_make_reg( file_REG32, reg_AX );
    aos_output = x86_make_reg( file_REG32, reg_BX );
@@ -2105,11 +2053,11 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    temp = x86_make_reg( file_REG32, reg_DX );
 
    /* Save EBX */
-   x86_push( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_push( func, aos_output );
 
-   x86_mov( func, soa_output, get_argument( soa + 1 ) );
-   x86_mov( func, aos_output, get_argument( aos + 1 ) );
-   x86_mov( func, num_outputs, get_argument( num + 1 ) );
+   x86_mov( func, soa_output, x86_fn_arg( func, soa ) );
+   x86_mov( func, aos_output, x86_fn_arg( func, aos ) );
+   x86_mov( func, num_outputs, x86_fn_arg( func, num ) );
 
    /* do */
    inner_loop = x86_get_label( func );
@@ -2126,7 +2074,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
       sse_unpcklps( func, make_xmm( 3 ), make_xmm( 4 ) );
       sse_unpckhps( func, make_xmm( 5 ), make_xmm( 4 ) );
 
-      x86_mov( func, temp, get_argument( stride + 1 ) );
+      x86_mov( func, temp, x86_fn_arg( func, stride ) );
       x86_push( func, aos_output );
       sse_movlps( func, x86_make_disp( aos_output, 0 ), make_xmm( 0 ) );
       sse_movlps( func, x86_make_disp( aos_output, 8 ), make_xmm( 3 ) );
@@ -2150,7 +2098,7 @@ static void soa_to_aos( struct x86_function *func, uint aos, uint soa, uint num,
    x86_jcc( func, cc_NE, inner_loop );
 
    /* Restore EBX */
-   x86_pop( func, x86_make_reg( file_REG32, reg_BX ) );
+   x86_pop( func, aos_output );
 }
 
 /**
@@ -2185,6 +2133,17 @@ tgsi_emit_sse2(
 
    tgsi_parse_init( &parse, tokens );
 
+   /* Can't just use EDI, EBX without save/restoring them:
+    */
+   x86_push(
+      func,
+      get_immediate_base() );
+
+   x86_push(
+      func,
+      get_temp_base() );
+
+
    /*
     * Different function args for vertex/fragment shaders:
     */
@@ -2193,51 +2152,55 @@ tgsi_emit_sse2(
       x86_mov(
          func,
          get_input_base(),
-         get_argument( 0 ) );
+         x86_fn_arg( func, 1 ) );
       /* skipping outputs argument here */
       x86_mov(
          func,
          get_const_base(),
-         get_argument( 2 ) );
+         x86_fn_arg( func, 3 ) );
       x86_mov(
          func,
          get_temp_base(),
-         get_argument( 3 ) );
+         x86_fn_arg( func, 4 ) );
       x86_mov(
          func,
          get_coef_base(),
-         get_argument( 4 ) );
+         x86_fn_arg( func, 5 ) );
       x86_mov(
          func,
          get_immediate_base(),
-         get_argument( 5 ) );
+         x86_fn_arg( func, 6 ) );
    }
    else {
       assert(parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX);
 
       if (do_swizzles)
-         aos_to_soa( func, 5, 0, 6, 7 );
+         aos_to_soa( func, 
+                     6,         /* aos_input */
+                     1,         /* machine->input */
+                     7,         /* num_inputs */
+                     8 );       /* input_stride */
 
       x86_mov(
          func,
          get_input_base(),
-         get_argument( 0 ) );
+         x86_fn_arg( func, 1 ) );
       x86_mov(
          func,
          get_output_base(),
-         get_argument( 1 ) );
+         x86_fn_arg( func, 2 ) );
       x86_mov(
          func,
          get_const_base(),
-         get_argument( 2 ) );
+         x86_fn_arg( func, 3 ) );
       x86_mov(
          func,
          get_temp_base(),
-         get_argument( 3 ) );
+         x86_fn_arg( func, 4 ) );
       x86_mov(
          func,
          get_immediate_base(),
-         get_argument( 4 ) );
+         x86_fn_arg( func, 5 ) );
    }
 
    while( !tgsi_parse_end_of_tokens( &parse ) && ok ) {
@@ -2260,7 +2223,7 @@ tgsi_emit_sse2(
                x86_mov(
                   func,
                   get_output_base(),
-                  get_argument( 1 ) );
+                  x86_fn_arg( func, 2 ) );
             }
          }
 
@@ -2307,8 +2270,18 @@ tgsi_emit_sse2(
 
    if (parse.FullHeader.Processor.Processor == TGSI_PROCESSOR_VERTEX) {
       if (do_swizzles)
-         soa_to_aos( func, 8, 1, 9, 10 );
+         soa_to_aos( func, 9, 2, 10, 11 );
    }
+
+   /* Can't just use EBX, EDI without save/restoring them:
+    */
+   x86_pop(
+      func,
+      get_temp_base() );
+
+   x86_pop(
+      func,
+      get_immediate_base() );
 
 #ifdef WIN32
    emit_retw( func, 16 );

@@ -493,18 +493,21 @@ format_to_type_comps(enum pipe_format pformat,
       *datatype = USHORT_5_6_5;
       *comps = 3;
       return;
-   case PIPE_FORMAT_U_L8:
-   case PIPE_FORMAT_U_A8:
-   case PIPE_FORMAT_U_I8:
+   case PIPE_FORMAT_L8_UNORM:
+   case PIPE_FORMAT_A8_UNORM:
+   case PIPE_FORMAT_I8_UNORM:
       *datatype = UBYTE;
       *comps = 1;
       return;
-   case PIPE_FORMAT_U_A8_L8:
+   case PIPE_FORMAT_A8L8_UNORM:
       *datatype = UBYTE;
       *comps = 2;
       return;
    default:
       assert(0);
+      *datatype = UBYTE;
+      *comps = 0;
+      break;
    }
 }
 
@@ -775,23 +778,23 @@ set_vertex_data(struct gen_mipmap_state *ctx, float width, float height)
 {
    void *buf;
 
-   ctx->vertices[0][0][0] = -0.5f; /*x*/
-   ctx->vertices[0][0][1] = -0.5f; /*y*/
+   ctx->vertices[0][0][0] = 0.0f; /*x*/
+   ctx->vertices[0][0][1] = 0.0f; /*y*/
    ctx->vertices[0][1][0] = 0.0f; /*s*/
    ctx->vertices[0][1][1] = 0.0f; /*t*/
 
-   ctx->vertices[1][0][0] = width - 0.5f; /*x*/
-   ctx->vertices[1][0][1] = -0.5f;  /*y*/
-   ctx->vertices[1][1][0] = 1.0f; /*s*/
-   ctx->vertices[1][1][1] = 0.0f; /*t*/
+   ctx->vertices[1][0][0] = width;
+   ctx->vertices[1][0][1] = 0.0f;
+   ctx->vertices[1][1][0] = 1.0f;
+   ctx->vertices[1][1][1] = 0.0f;
 
-   ctx->vertices[2][0][0] = width - 0.5f;
-   ctx->vertices[2][0][1] = height - 0.5f;
+   ctx->vertices[2][0][0] = width;
+   ctx->vertices[2][0][1] = height;
    ctx->vertices[2][1][0] = 1.0f;
    ctx->vertices[2][1][1] = 1.0f;
 
-   ctx->vertices[3][0][0] = -0.5f;
-   ctx->vertices[3][0][1] = height - 0.5f;
+   ctx->vertices[3][0][0] = 0.0f;
+   ctx->vertices[3][0][1] = height;
    ctx->vertices[3][1][0] = 0.0f;
    ctx->vertices[3][1][1] = 1.0f;
 

@@ -57,8 +57,6 @@ struct sp_vertex_shader;
 
 struct softpipe_context {
    struct pipe_context pipe;  /**< base class */
-   struct softpipe_winsys *winsys;	/**< window system interface */
-
 
    /* The most recent drawing state as set by the driver:
     */

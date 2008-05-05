@@ -494,6 +494,10 @@ st_TexImage(GLcontext * ctx,
       strip_texture_border(border, &width, &height, &depth,
                            unpack, &unpackNB);
       unpack = &unpackNB;
+      texImage->Width = width;
+      texImage->Height = height;
+      texImage->Depth = depth;
+      texImage->Border = 0;
       border = 0;
    }
 
@@ -552,15 +556,17 @@ st_TexImage(GLcontext * ctx,
     * waiting on any outstanding fences.
     */
    if (stObj->pt &&
-       /*stObj->pt->first_level == level &&*/
-       stObj->pt->last_level == level &&
-       stObj->pt->target != PIPE_TEXTURE_CUBE &&
-       !st_texture_match_image(stObj->pt, &stImage->base,
-                                  stImage->face, stImage->level)) {
+       (stObj->teximage_realloc ||
+        (/*stObj->pt->first_level == level &&*/
+         stObj->pt->last_level == level &&
+         stObj->pt->target != PIPE_TEXTURE_CUBE &&
+         !st_texture_match_image(stObj->pt, &stImage->base,
+                                 stImage->face, stImage->level)))) {
 
       DBG("release it\n");
       pipe_texture_release(&stObj->pt);
       assert(!stObj->pt);
+      stObj->teximage_realloc = FALSE;
    }
 
    if (!stObj->pt) {
@@ -1338,8 +1344,6 @@ static void
 calculate_first_last_level(struct st_texture_object *stObj)
 {
    struct gl_texture_object *tObj = &stObj->base;
-   const struct gl_texture_image *const baseImage =
-      tObj->Image[0][tObj->BaseLevel];
 
    /* These must be signed values.  MinLod and MaxLod can be negative numbers,
     * and having firstLevel and lastLevel as signed prevents the need for
@@ -1362,7 +1366,7 @@ calculate_first_last_level(struct st_texture_object *stObj)
       }
       else {
          firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel - tObj->BaseLevel, baseImage->MaxLog2);
+         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][0]->WidthLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
@@ -1444,17 +1448,6 @@ st_finalize_texture(GLcontext *ctx,
    calculate_first_last_level(stObj);
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
-#if 0
-   /* Fallback case:
-    */
-   if (firstImage->base.Border) {
-      if (stObj->pt) {
-         pipe_texture_release(&stObj->pt);
-      }
-      return GL_FALSE;
-   }
-#endif
-
    /* If both firstImage and stObj point to a texture which can contain
     * all active images, favour firstImage.  Note that because of the
     * completeness requirement, we know that the image dimensions
@@ -1478,24 +1471,25 @@ st_finalize_texture(GLcontext *ctx,
       cpp = firstImage->base.TexFormat->TexelBytes;
    }
 
-   /* Check texture can hold all active levels.  Check texture matches
-    * target, imageFormat, etc.
+   /* If we already have a gallium texture, check that it matches the texture
+    * object's format, target, size, num_levels, etc.
     */
-   if (stObj->pt &&
-       (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
-	stObj->pt->format !=
-	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
-	stObj->pt->last_level != stObj->lastLevel ||
-	stObj->pt->width[0] != firstImage->base.Width2 ||
-	stObj->pt->height[0] != firstImage->base.Height2 ||
-	stObj->pt->depth[0] != firstImage->base.Depth2 ||
-	stObj->pt->cpp != cpp ||
-	stObj->pt->compressed != firstImage->base.IsCompressed)) {
-      pipe_texture_release(&stObj->pt);
+   if (stObj->pt) {
+      const enum pipe_format fmt =
+         st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+      if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
+          stObj->pt->format != fmt ||
+          stObj->pt->last_level < stObj->lastLevel ||
+          stObj->pt->width[0] != firstImage->base.Width2 ||
+          stObj->pt->height[0] != firstImage->base.Height2 ||
+          stObj->pt->depth[0] != firstImage->base.Depth2 ||
+          stObj->pt->cpp != cpp ||
+          stObj->pt->compressed != firstImage->base.IsCompressed) {
+         pipe_texture_release(&stObj->pt);
+      }
    }
 
-
-   /* May need to create a new texture:
+   /* May need to create a new gallium texture:
     */
    if (!stObj->pt) {
       stObj->pt = st_texture_create(ctx->st,

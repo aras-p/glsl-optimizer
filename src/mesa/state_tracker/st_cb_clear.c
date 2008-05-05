@@ -34,8 +34,8 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "shader/prog_instruction.h"
-#include "st_atom.h"
 #include "st_context.h"
+#include "st_atom.h"
 #include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
@@ -45,9 +45,9 @@
 #include "st_mesa_to_tgsi.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
 #include "util/u_pack_color.h"
 #include "util/u_simple_shaders.h"
 #include "util/u_draw_quad.h"
@@ -106,7 +106,7 @@ st_destroy_clear(struct st_context *st)
       st->clear.vs = NULL;
    }
    if (st->clear.vbuf) {
-      pipe->winsys->buffer_destroy(pipe->winsys, st->clear.vbuf);
+      pipe_buffer_destroy(pipe, st->clear.vbuf);
       st->clear.vbuf = NULL;
    }
 }
@@ -142,9 +142,8 @@ draw_quad(GLcontext *ctx,
    void *buf;
 
    if (!st->clear.vbuf) {
-      st->clear.vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                                   PIPE_BUFFER_USAGE_VERTEX,
-                                                   sizeof(st->clear.vertices));
+      st->clear.vbuf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
+                                          sizeof(st->clear.vertices));
    }
 
    /* positions */
@@ -171,10 +170,9 @@ draw_quad(GLcontext *ctx,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe->winsys->buffer_map(pipe->winsys, st->clear.vbuf,
-                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(pipe, st->clear.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
    memcpy(buf, st->clear.vertices, sizeof(st->clear.vertices));
-   pipe->winsys->buffer_unmap(pipe->winsys, st->clear.vbuf);
+   pipe_buffer_unmap(pipe, st->clear.vbuf);
 
    /* draw */
    util_draw_vertex_buffer(pipe, st->clear.vbuf,

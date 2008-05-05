@@ -50,7 +50,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
 #include "util/p_tile.h"
 #include "util/u_draw_quad.h"
 #include "util/u_simple_shaders.h"
@@ -90,10 +89,14 @@ struct bitmap_cache
    GLint xpos, ypos;
    /** Bounds of region used in window coords */
    GLint xmin, ymin, xmax, ymax;
+
    struct pipe_texture *texture;
+   struct pipe_surface *surf;
+
    GLboolean empty;
+
    /** An I8 texture image: */
-   GLubyte buffer[BITMAP_CACHE_HEIGHT][BITMAP_CACHE_WIDTH];
+   ubyte *buffer;
 };
 
 
@@ -220,76 +223,37 @@ combined_bitmap_fragment_program(GLcontext *ctx)
 
 
 /**
- * Create a texture which represents a bitmap image.
+ * Copy user-provide bitmap bits into texture buffer, expanding
+ * bits into texels.
+ * "On" bits will set texels to 0xff.
+ * "Off" bits will not modify texels.
+ * Note that the image is actually going to be upside down in
+ * the texture.  We deal with that with texcoords.
  */
-static struct pipe_texture *
-make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
-                    const struct gl_pixelstore_attrib *unpack,
-                    const GLubyte *bitmap)
+static void
+unpack_bitmap(struct st_context *st,
+              GLint px, GLint py, GLsizei width, GLsizei height,
+              const struct gl_pixelstore_attrib *unpack,
+              const GLubyte *bitmap,
+              ubyte *destBuffer, uint destStride)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *surface;
-   uint format = 0, cpp, comp;
-   ubyte *dest;
-   struct pipe_texture *pt;
-   int row, col;
+   GLint row, col;
 
-   /* find a texture format we know */
-   if (screen->is_format_supported( screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE )) {
-      format = PIPE_FORMAT_U_I8;
-      cpp = 1;
-      comp = 0;
-   }
-   else if (screen->is_format_supported( screen, PIPE_FORMAT_A8R8G8B8_UNORM, PIPE_TEXTURE )) {
-      format = PIPE_FORMAT_A8R8G8B8_UNORM;
-      cpp = 4;
-      comp = 3; /* alpha channel */ /*XXX little-endian dependency */
-   }
-   else {
-      /* XXX support more formats */
-      assert( 0 );
-   }
-
-   /* PBO source... */
-   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
-   if (!bitmap) {
-      return NULL;
-   }
-
-   /**
-    * Create texture to hold bitmap pattern.
-    */
-   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0, width, height,
-			  1, 0);
-   if (!pt) {
-      _mesa_unmap_bitmap_pbo(ctx, unpack);
-      return NULL;
-   }
-
-   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
-
-   /* map texture surface */
-   dest = pipe_surface_map(surface);
-
-   /* Put image into texture surface.
-    * Note that the image is actually going to be upside down in
-    * the texture.  We deal with that with texcoords.
-    */
+#define SET_PIXEL(COL, ROW) \
+   destBuffer[(py + (ROW)) * destStride + px + (COL)] = 0x0;
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
                  bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-      ubyte *destRow = dest + row * surface->pitch * cpp;
 
       if (unpack->LsbFirst) {
          /* Lsb first */
          GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
          for (col = 0; col < width; col++) {
 
-            /* set texel to 255 if bit is set */
-            destRow[comp] = (*src & mask) ? 0x0 : 0xff;
-            destRow += cpp;
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
 
             if (mask == 128U) {
                src++;
@@ -309,9 +273,9 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
          for (col = 0; col < width; col++) {
 
-            /* set texel to 255 if bit is set */
-            destRow[comp] =(*src & mask) ? 0x0 : 0xff;
-            destRow += cpp;
+            if (*src & mask) {
+               SET_PIXEL(col, row);
+            }
 
             if (mask == 1U) {
                src++;
@@ -329,14 +293,56 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    } /* row */
 
+#undef SET_PIXEL
+}
+
+
+/**
+ * Create a texture which represents a bitmap image.
+ */
+static struct pipe_texture *
+make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
+                    const struct gl_pixelstore_attrib *unpack,
+                    const GLubyte *bitmap)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_surface *surface;
+   ubyte *dest;
+   struct pipe_texture *pt;
+
+   /* PBO source... */
+   bitmap = _mesa_map_bitmap_pbo(ctx, unpack, bitmap);
+   if (!bitmap) {
+      return NULL;
+   }
+
+   /**
+    * Create texture to hold bitmap pattern.
+    */
+   pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, ctx->st->bitmap.tex_format,
+                          0, width, height, 1, 0);
+   if (!pt) {
+      _mesa_unmap_bitmap_pbo(ctx, unpack);
+      return NULL;
+   }
+
+   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
+
+   /* map texture surface */
+   dest = pipe_surface_map(surface);
+
+   /* Put image into texture surface */
+   memset(dest, 0xff, height * surface->pitch);
+   unpack_bitmap(ctx->st, 0, 0, width, height, unpack, bitmap,
+                 dest, surface->pitch);
+
    _mesa_unmap_bitmap_pbo(ctx, unpack);
 
    /* Release surface */
    pipe_surface_unmap(surface);
    pipe_surface_reference(&surface, NULL);
    pipe->texture_update(pipe, pt, 0, 0x1);
-
-   pt->format = format;
 
    return pt;
 }
@@ -365,9 +371,8 @@ setup_bitmap_vertex_data(struct st_context *st,
    void *buf;
 
    if (!st->bitmap.vbuf) {
-      st->bitmap.vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
-                                                   PIPE_BUFFER_USAGE_VERTEX,
-                                                   sizeof(st->bitmap.vertices));
+      st->bitmap.vbuf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
+                                           sizeof(st->bitmap.vertices));
    }
 
    /* Positions are in clip coords since we need to do clipping in case
@@ -406,10 +411,9 @@ setup_bitmap_vertex_data(struct st_context *st,
    }
 
    /* put vertex data into vbuf */
-   buf = pipe->winsys->buffer_map(pipe->winsys, st->bitmap.vbuf,
-                                  PIPE_BUFFER_USAGE_CPU_WRITE);
+   buf = pipe_buffer_map(pipe, st->bitmap.vbuf, PIPE_BUFFER_USAGE_CPU_WRITE);
    memcpy(buf, st->bitmap.vertices, sizeof(st->bitmap.vertices));
-   pipe->winsys->buffer_unmap(pipe->winsys, st->bitmap.vbuf);
+   pipe_buffer_unmap(pipe, st->bitmap.vbuf);
 }
 
 
@@ -517,46 +521,34 @@ draw_bitmap_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 static void
 reset_cache(struct st_context *st)
 {
-   memset(st->bitmap.cache->buffer, 0xff, sizeof(st->bitmap.cache->buffer));
-   st->bitmap.cache->empty = GL_TRUE;
-
-   st->bitmap.cache->xmin = 1000000;
-   st->bitmap.cache->xmax = -1000000;
-   st->bitmap.cache->ymin = 1000000;
-   st->bitmap.cache->ymax = -1000000;
-}
-
-
-static void
-init_bitmap_cache(struct st_context *st)
-{
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   enum pipe_format format;
+   struct bitmap_cache *cache = st->bitmap.cache;
 
-   st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
-   if (!st->bitmap.cache)
-      return;
+   //memset(cache->buffer, 0xff, sizeof(cache->buffer));
+   cache->empty = GL_TRUE;
 
-   /* find a usable texture format */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_U_I8, PIPE_TEXTURE)) {
-      format = PIPE_FORMAT_U_I8;
-   }
-   else {
-      /* XXX support more formats */
-      assert(0);
-   }
+   cache->xmin = 1000000;
+   cache->xmax = -1000000;
+   cache->ymin = 1000000;
+   cache->ymax = -1000000;
 
-   st->bitmap.cache->texture
-      = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
-                          BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT, 1, 0);
-   if (!st->bitmap.cache->texture) {
-      FREE(st->bitmap.cache);
-      st->bitmap.cache = NULL;
-      return;
-   }
+   assert(!cache->texture);
 
-   reset_cache(st);
+   /* allocate a new texture */
+   cache->texture = st_texture_create(st, PIPE_TEXTURE_2D,
+                                      st->bitmap.tex_format, 0,
+                                      BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
+                                      1, 0);
+
+   /* Map the texture surface.
+    * Subsequent glBitmap calls will write into the texture image.
+    */
+   cache->surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
+   cache->buffer = pipe_surface_map(cache->surf);
+
+   /* init image to all 0xff */
+   memset(cache->buffer, 0xff, BITMAP_CACHE_WIDTH * BITMAP_CACHE_HEIGHT);
 }
 
 
@@ -570,9 +562,6 @@ st_flush_bitmap_cache(struct st_context *st)
       if (st->ctx->DrawBuffer) {
          struct bitmap_cache *cache = st->bitmap.cache;
          struct pipe_context *pipe = st->pipe;
-         struct pipe_screen *screen = pipe->screen;
-         struct pipe_surface *surf;
-         void *dest;
 
          assert(cache->xmin <= cache->xmax);
          /*
@@ -582,18 +571,13 @@ st_flush_bitmap_cache(struct st_context *st)
                 cache->xpos, cache->ypos);
          */
 
-         /* update the texture map image */
-         surf = screen->get_tex_surface(screen, cache->texture, 0, 0, 0);
-         dest = pipe_surface_map(surf);
-         memcpy(dest, cache->buffer, sizeof(cache->buffer));
-         pipe_surface_unmap(surf);
-         pipe_surface_reference(&surf, NULL);
-
-         /* flush in case the previous texture contents haven't been
-          * used yet. XXX this is not ideal!  Revisit.
+         /* The texture surface has been mapped until now.
+          * So unmap and release the texture surface before drawing.
           */
-         st->pipe->flush( st->pipe, 0x0, NULL );
+         pipe_surface_unmap(cache->surf);
+         pipe_surface_reference(&cache->surf, NULL);
 
+         /* XXX is this needed? */
          pipe->texture_update(pipe, cache->texture, 0, 0x1);
 
          draw_bitmap_quad(st->ctx,
@@ -602,6 +586,9 @@ st_flush_bitmap_cache(struct st_context *st)
                           st->ctx->Current.RasterPos[2],
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                           cache->texture);
+
+         /* release/free the texture */
+         pipe_texture_reference(&cache->texture, NULL);
       }
       reset_cache(st);
    }
@@ -619,7 +606,6 @@ accum_bitmap(struct st_context *st,
              const GLubyte *bitmap )
 {
    struct bitmap_cache *cache = st->bitmap.cache;
-   int row, col;
    int px = -999, py;
 
    if (width > BITMAP_CACHE_WIDTH ||
@@ -658,60 +644,8 @@ accum_bitmap(struct st_context *st,
    if (y + height > cache->ymax)
       cache->ymax = y + height;
 
-   /* XXX try to combine this code with code in make_bitmap_texture() */
-#define SET_PIXEL(COL, ROW) \
-   cache->buffer[py + (ROW)][px + (COL)] = 0x0;
-
-   for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
-
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            if (*src & mask) {
-               SET_PIXEL(col, row);
-            }
-
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-
-            if (*src & mask) {
-               SET_PIXEL(col, row);
-            }
-
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
-
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
-
-   } /* row */
+   unpack_bitmap(st, px, py, width, height, unpack, bitmap,
+                 cache->buffer, BITMAP_CACHE_WIDTH);
 
    return GL_TRUE; /* accumulated */
 }
@@ -750,6 +684,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       assert(pt->target == PIPE_TEXTURE_2D);
       draw_bitmap_quad(ctx, x, y, ctx->Current.RasterPos[2],
                        width, height, pt);
+      /* release/free the texture */
       pipe_texture_reference(&pt, NULL);
    }
 }
@@ -768,6 +703,8 @@ void
 st_init_bitmap(struct st_context *st)
 {
    struct pipe_sampler_state *sampler = &st->bitmap.sampler;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
 
    /* init sampler state once */
    memset(sampler, 0, sizeof(*sampler));
@@ -784,7 +721,19 @@ st_init_bitmap(struct st_context *st)
    st->bitmap.rasterizer.gl_rasterization_rules = 1;
    st->bitmap.rasterizer.bypass_vs = 1;
 
-   init_bitmap_cache(st);
+   /* find a usable texture format */
+   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM, PIPE_TEXTURE)) {
+      st->bitmap.tex_format = PIPE_FORMAT_I8_UNORM;
+   }
+   else {
+      /* XXX support more formats */
+      assert(0);
+   }
+
+   /* alloc bitmap cache object */
+   st->bitmap.cache = CALLOC_STRUCT(bitmap_cache);
+
+   reset_cache(st);
 }
 
 
@@ -809,7 +758,7 @@ st_destroy_bitmap(struct st_context *st)
    }
 
    if (st->bitmap.vbuf) {
-      pipe->winsys->buffer_destroy(pipe->winsys, st->bitmap.vbuf);
+      pipe_buffer_destroy(pipe, st->bitmap.vbuf);
       st->bitmap.vbuf = NULL;
    }
 

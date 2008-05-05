@@ -281,10 +281,10 @@ update_linkage( struct st_context *st )
 
 
 const struct st_tracked_state st_update_shader = {
-   .name = "st_update_shader",
-   .dirty = {
-      .mesa  = 0,
-      .st   = ST_NEW_VERTEX_PROGRAM | ST_NEW_FRAGMENT_PROGRAM
+   "st_update_shader",					/* name */
+   {							/* dirty */
+      0,						/* mesa */
+      ST_NEW_VERTEX_PROGRAM | ST_NEW_FRAGMENT_PROGRAM	/* st */
    },
-   .update = update_linkage
+   update_linkage					/* update */
 };

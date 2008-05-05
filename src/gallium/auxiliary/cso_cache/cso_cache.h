@@ -84,7 +84,21 @@
 extern "C" {
 #endif
 
+enum cso_cache_type {
+   CSO_BLEND,
+   CSO_SAMPLER,
+   CSO_DEPTH_STENCIL_ALPHA,
+   CSO_RASTERIZER,
+   CSO_FRAGMENT_SHADER,
+   CSO_VERTEX_SHADER
+};
+
 typedef void (*cso_state_callback)(void *ctx, void *obj);
+
+typedef void (*cso_sanitize_callback)(struct cso_hash *hash,
+                                      enum cso_cache_type type,
+                                      int max_size,
+                                      void *user_data);
 
 struct cso_cache;
 
@@ -130,20 +144,14 @@ struct cso_sampler {
    struct pipe_context *context;
 };
 
-
-enum cso_cache_type {
-   CSO_BLEND,
-   CSO_SAMPLER,
-   CSO_DEPTH_STENCIL_ALPHA,
-   CSO_RASTERIZER,
-   CSO_FRAGMENT_SHADER,
-   CSO_VERTEX_SHADER
-};
-
 unsigned cso_construct_key(void *item, int item_size);
 
 struct cso_cache *cso_cache_create(void);
 void cso_cache_delete(struct cso_cache *sc);
+
+void cso_cache_set_sanitize_callback(struct cso_cache *sc,
+                                     cso_sanitize_callback cb,
+                                     void *user_data);
 
 struct cso_hash_iter cso_insert_state(struct cso_cache *sc,
                                       unsigned hash_key, enum cso_cache_type type,

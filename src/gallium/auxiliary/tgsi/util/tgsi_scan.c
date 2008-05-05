@@ -103,18 +103,14 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_max[file] = MAX2(info->file_max[file], (int)i);
 
                if (file == TGSI_FILE_INPUT) {
-                  info->input_semantic_name[info->num_inputs]
-                     = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->input_semantic_index[info->num_inputs]
-                     = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->input_semantic_name[i] = (ubyte)fulldecl->Semantic.SemanticName;
+                  info->input_semantic_index[i] = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_inputs++;
                }
 
                if (file == TGSI_FILE_OUTPUT) {
-                  info->output_semantic_name[info->num_outputs]
-                     = (ubyte)fulldecl->Semantic.SemanticName;
-                  info->output_semantic_index[info->num_outputs]
-                     = (ubyte)fulldecl->Semantic.SemanticIndex;
+                  info->output_semantic_name[i] = (ubyte)fulldecl->Semantic.SemanticName;
+                  info->output_semantic_index[i] = (ubyte)fulldecl->Semantic.SemanticIndex;
                   info->num_outputs++;
                }
 
@@ -136,6 +132,9 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
          assert( 0 );
       }
    }
+
+   assert( info->file_max[TGSI_FILE_INPUT] + 1 == info->num_inputs );
+   assert( info->file_max[TGSI_FILE_OUTPUT] + 1 == info->num_outputs );
 
    info->uses_kill = (info->opcode_count[TGSI_OPCODE_KIL] ||
                       info->opcode_count[TGSI_OPCODE_KILP]);

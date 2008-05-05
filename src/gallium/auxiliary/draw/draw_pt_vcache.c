@@ -225,7 +225,6 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
 			    unsigned opt )
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
-   const struct pipe_rasterizer_state *rasterizer = vcache->draw->rasterizer;
 
    if (opt & PT_PIPELINE)
    {

@@ -101,14 +101,14 @@ struct st_vertex_program
 };
 
 
-static inline struct st_fragment_program *
+static INLINE struct st_fragment_program *
 st_fragment_program( struct gl_fragment_program *fp )
 {
    return (struct st_fragment_program *)fp;
 }
 
 
-static inline struct st_vertex_program *
+static INLINE struct st_vertex_program *
 st_vertex_program( struct gl_vertex_program *vp )
 {
    return (struct st_vertex_program *)vp;

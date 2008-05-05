@@ -805,7 +805,7 @@ tgsi_translate_mesa_program(
    {
       GLboolean tempsUsed[MAX_PROGRAM_TEMPS + 1];
       GLboolean inside_range = GL_FALSE;
-      GLuint start_range;
+      GLuint start_range = 0;
 
       find_temporaries(program, tempsUsed);
       tempsUsed[MAX_PROGRAM_TEMPS] = GL_FALSE;

@@ -238,10 +238,10 @@ enum pipe_format {
    PIPE_FORMAT_A1R5G5B5_UNORM        = _PIPE_FORMAT_RGBAZS_1 ( _PIPE_FORMAT_ARGB, 1, 5, 5, 5, PIPE_FORMAT_TYPE_UNORM ),
    PIPE_FORMAT_A4R4G4B4_UNORM        = _PIPE_FORMAT_RGBAZS_1 ( _PIPE_FORMAT_ARGB, 4, 4, 4, 4, PIPE_FORMAT_TYPE_UNORM ),
    PIPE_FORMAT_R5G6B5_UNORM          = _PIPE_FORMAT_RGBAZS_1 ( _PIPE_FORMAT_RGB1, 5, 6, 5, 0, PIPE_FORMAT_TYPE_UNORM ),
-   PIPE_FORMAT_U_L8                  = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRR1, 1, 1, 1, 0, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte luminance */
-   PIPE_FORMAT_U_A8                  = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_000R, 0, 0, 0, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte alpha */
-   PIPE_FORMAT_U_I8                  = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRR, 1, 1, 1, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte intensity */
-   PIPE_FORMAT_U_A8_L8               = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte alpha, luminance */
+   PIPE_FORMAT_L8_UNORM              = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRR1, 1, 1, 1, 0, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte luminance */
+   PIPE_FORMAT_A8_UNORM              = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_000R, 0, 0, 0, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte alpha */
+   PIPE_FORMAT_I8_UNORM              = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRR, 1, 1, 1, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte intensity */
+   PIPE_FORMAT_A8L8_UNORM            = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_RRRG, 1, 1, 1, 1, PIPE_FORMAT_TYPE_UNORM ), /**< ubyte alpha, luminance */
    PIPE_FORMAT_YCBCR                 = _PIPE_FORMAT_YCBCR( 0 ),
    PIPE_FORMAT_YCBCR_REV             = _PIPE_FORMAT_YCBCR( 1 ),
    PIPE_FORMAT_Z16_UNORM             = _PIPE_FORMAT_RGBAZS_8 ( _PIPE_FORMAT_Z000, 2, 0, 0, 0, PIPE_FORMAT_TYPE_UNORM ),
@@ -327,11 +327,12 @@ enum pipe_format {
 };
 
 
-/**
- * Unsigned 8-bit stencil format.
- * XXX should remove this, but S8_UNORM is a poor name
- */
-#define PIPE_FORMAT_U_S8                  PIPE_FORMAT_S8_UNORM
+/** XXX remove these deprecated names */
+#define PIPE_FORMAT_U_L8     PIPE_FORMAT_L8_UNORM
+#define PIPE_FORMAT_U_A8     PIPE_FORMAT_A8_UNORM
+#define PIPE_FORMAT_U_I8     PIPE_FORMAT_I8_UNORM
+#define PIPE_FORMAT_U_A8_L8  PIPE_FORMAT_A8L8_UNORM
+#define PIPE_FORMAT_U_S8     PIPE_FORMAT_S8_UNORM
 
 
 /**

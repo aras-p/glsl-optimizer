@@ -154,10 +154,10 @@ i915_is_format_supported( struct pipe_screen *screen,
       PIPE_FORMAT_R8G8B8A8_UNORM,
       PIPE_FORMAT_A8R8G8B8_UNORM,
       PIPE_FORMAT_R5G6B5_UNORM,
-      PIPE_FORMAT_U_L8,
-      PIPE_FORMAT_U_A8,
-      PIPE_FORMAT_U_I8,
-      PIPE_FORMAT_U_A8_L8,
+      PIPE_FORMAT_L8_UNORM,
+      PIPE_FORMAT_A8_UNORM,
+      PIPE_FORMAT_I8_UNORM,
+      PIPE_FORMAT_A8L8_UNORM,
       PIPE_FORMAT_YCBCR,
       PIPE_FORMAT_YCBCR_REV,
       PIPE_FORMAT_S8Z24_UNORM,
@@ -182,6 +182,7 @@ i915_is_format_supported( struct pipe_screen *screen,
       break;
    default:
       assert(0);
+      return FALSE;
    }
 
    for (i = 0; list[i] != PIPE_FORMAT_NONE; i++) {

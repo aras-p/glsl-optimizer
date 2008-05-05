@@ -392,7 +392,7 @@ aaline_create_texture(struct aaline_stage *aaline)
 
    memset(&texTemp, 0, sizeof(texTemp));
    texTemp.target = PIPE_TEXTURE_2D;
-   texTemp.format = PIPE_FORMAT_U_A8; /* XXX verify supported by driver! */
+   texTemp.format = PIPE_FORMAT_A8_UNORM; /* XXX verify supported by driver! */
    texTemp.last_level = MAX_TEXTURE_LEVEL;
    texTemp.width[0] = 1 << MAX_TEXTURE_LEVEL;
    texTemp.height[0] = 1 << MAX_TEXTURE_LEVEL;

@@ -347,9 +347,9 @@ struct x86_reg x86_get_base_reg( struct x86_reg reg )
    return x86_make_reg( reg.file, reg.idx );
 }
 
-unsigned char *x86_get_label( struct x86_function *p )
+int x86_get_label( struct x86_function *p )
 {
-   return p->csr;
+   return p->csr - p->store;
 }
 
 
@@ -361,17 +361,22 @@ unsigned char *x86_get_label( struct x86_function *p )
 
 void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
-	      unsigned char *label )
+	      int label )
 {
-   intptr_t offset = pointer_to_intptr( label ) - (pointer_to_intptr( x86_get_label(p) ) + 2);
+   int offset = label - (x86_get_label(p) + 2);
    DUMP_I(cc);
    
+   if (offset < 0) {
+      int amt = p->csr - p->store;
+      assert(amt > -offset);
+   }
+
    if (offset <= 127 && offset >= -128) {
       emit_1ub(p, 0x70 + cc);
       emit_1b(p, (char) offset);
    }
    else {
-      offset = pointer_to_intptr( label ) - (pointer_to_intptr( x86_get_label(p) ) + 6);
+      offset = label - (x86_get_label(p) + 6);
       emit_2ub(p, 0x0f, 0x80 + cc);
       emit_1i(p, offset);
    }
@@ -379,8 +384,8 @@ void x86_jcc( struct x86_function *p,
 
 /* Always use a 32bit offset for forward jumps:
  */
-unsigned char *x86_jcc_forward( struct x86_function *p,
-			  enum x86_cc cc )
+int x86_jcc_forward( struct x86_function *p,
+                     enum x86_cc cc )
 {
    DUMP_I(cc);
    emit_2ub(p, 0x0f, 0x80 + cc);
@@ -388,7 +393,7 @@ unsigned char *x86_jcc_forward( struct x86_function *p,
    return x86_get_label(p);
 }
 
-unsigned char *x86_jmp_forward( struct x86_function *p)
+int x86_jmp_forward( struct x86_function *p)
 {
    DUMP();
    emit_1ub(p, 0xe9);
@@ -396,7 +401,7 @@ unsigned char *x86_jmp_forward( struct x86_function *p)
    return x86_get_label(p);
 }
 
-unsigned char *x86_call_forward( struct x86_function *p)
+int x86_call_forward( struct x86_function *p)
 {
    DUMP();
 
@@ -408,42 +413,24 @@ unsigned char *x86_call_forward( struct x86_function *p)
 /* Fixup offset from forward jump:
  */
 void x86_fixup_fwd_jump( struct x86_function *p,
-			 unsigned char *fixup )
+			 int fixup )
 {
-   *(int *)(fixup - 4) = pointer_to_intptr( x86_get_label(p) ) - pointer_to_intptr( fixup );
+   *(int *)(p->store + fixup - 4) = x86_get_label(p) - fixup;
 }
 
-void x86_jmp( struct x86_function *p, unsigned char *label)
+void x86_jmp( struct x86_function *p, int label)
 {
    DUMP_I( label );
    emit_1ub(p, 0xe9);
-   emit_1i(p, pointer_to_intptr( label ) - pointer_to_intptr( x86_get_label(p) ) - 4);
+   emit_1i(p, label - x86_get_label(p) - 4);
 }
 
-#if 0
-static unsigned char *cptr( void (*label)() )
-{
-   return (unsigned char *) label;
-}
-
-/* This doesn't work once we start reallocating & copying the
- * generated code on buffer fills, because the call is relative to the
- * current pc.
- */
-void x86_call( struct x86_function *p, void (*label)())
-{
-   DUMP_I( label );
-   emit_1ub(p, 0xe8);
-   emit_1i(p, cptr(label) - x86_get_label(p) - 4);
-}
-#else
 void x86_call( struct x86_function *p, struct x86_reg reg)
 {
    DUMP_R( reg );
    emit_1ub(p, 0xff);
    emit_modrm_noreg(p, 2, reg);
 }
-#endif
 
 
 /* michal:
@@ -462,8 +449,15 @@ void x86_push( struct x86_function *p,
 	       struct x86_reg reg )
 {
    DUMP_R( reg );
-   assert(reg.mod == mod_REG);
-   emit_1ub(p, 0x50 + reg.idx);
+   if (reg.mod == mod_REG)
+      emit_1ub(p, 0x50 + reg.idx);
+   else 
+   {
+      emit_1ub(p, 0xff);
+      emit_modrm_noreg(p, 6, reg);
+   }
+
+
    p->stack_offset += 4;
 }
 
@@ -495,6 +489,7 @@ void x86_dec( struct x86_function *p,
 void x86_ret( struct x86_function *p )
 {
    DUMP();
+   assert(p->stack_offset == 0);
    emit_1ub(p, 0xc3);
 }
 

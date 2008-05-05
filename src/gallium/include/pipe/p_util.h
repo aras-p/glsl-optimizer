@@ -41,7 +41,9 @@ extern "C" {
 #endif
 
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && defined(DEBUG) /* memory debugging */
+#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && defined(DEBUG) 
+
+/* memory debugging */
 
 #include "p_debug.h"
 
@@ -54,9 +56,7 @@ extern "C" {
 #define REALLOC( _ptr, _old_size, _size ) \
    debug_realloc( __FILE__, __LINE__, __FUNCTION__,  _ptr, _old_size, _size )
 
-#else
-   
-#if defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
 
 void * __stdcall
 EngAllocMem(
@@ -68,17 +68,33 @@ void __stdcall
 EngFreeMem(
     void *Mem );
 
-static INLINE void *
-MALLOC( unsigned size )
-{
-#ifdef WINCE
-   /* TODO: Need to abstract this */
-   return malloc( size );
-#else
-   return EngAllocMem( 0, size, 'D3AG' );
-#endif
-}
+#define MALLOC( _size ) EngAllocMem( 0, _size, 'D3AG' )
+#define _FREE( _ptr ) EngFreeMem( _ptr )
 
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_MINIPORT)
+
+void *
+ExAllocatePool(
+    unsigned long PoolType, 
+    size_t NumberOfBytes);
+
+void 
+ExFreePool(void *P);
+
+#define MALLOC(_size) ExAllocatePool(0, _size)
+#define _FREE(_ptr) ExFreePool(_ptr)
+
+#else
+
+#define MALLOC( SIZE )  malloc( SIZE )
+#define CALLOC( COUNT, SIZE )   calloc( COUNT, SIZE )
+#define FREE( PTR )  free( PTR )
+#define REALLOC( OLDPTR, OLDSIZE, NEWSIZE )  realloc( OLDPTR, NEWSIZE )
+
+#endif
+
+
+#ifndef CALLOC
 static INLINE void *
 CALLOC( unsigned count, unsigned size )
 {
@@ -88,20 +104,19 @@ CALLOC( unsigned count, unsigned size )
    }
    return ptr;
 }
+#endif /* !CALLOC */
 
+#ifndef FREE
 static INLINE void
 FREE( void *ptr )
 {
    if( ptr ) {
-#ifdef WINCE
-      /* TODO: Need to abstract this */
-      free( ptr );
-#else
-      EngFreeMem( ptr );
-#endif
+      _FREE( ptr );
    }
 }
+#endif /* !FREE */
 
+#ifndef REALLOC
 static INLINE void *
 REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
 {
@@ -118,19 +133,8 @@ REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
    FREE( old_ptr );
    return new_ptr;
 }
+#endif /* !REALLOC */
 
-#else /* !PIPE_SUBSYSTEM_WINDOWS_DISPLAY */
-
-#define MALLOC( SIZE )  malloc( SIZE )
-
-#define CALLOC( COUNT, SIZE )   calloc( COUNT, SIZE )
-
-#define FREE( PTR )  free( PTR )
-
-#define REALLOC( OLDPTR, OLDSIZE, NEWSIZE )  realloc( OLDPTR, NEWSIZE )
-
-#endif /* !PIPE_SUBSYSTEM_WINDOWS_DISPLAY */
-#endif /* !DEBUG */
 
 #define MALLOC_STRUCT(T)   (struct T *) MALLOC(sizeof(struct T))
 

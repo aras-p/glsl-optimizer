@@ -129,6 +129,56 @@ pipe_texture_release(struct pipe_texture **ptr)
 }
 
 
+/**
+ * Convenience wrappers for winsys buffer functions.
+ */
+
+static INLINE struct pipe_buffer *
+pipe_buffer_create( struct pipe_context *pipe,
+                    unsigned alignment, unsigned usage, unsigned size )
+{
+   return pipe->winsys->buffer_create(pipe->winsys, alignment, usage, size);
+}
+
+static INLINE struct pipe_buffer *
+pipe_user_buffer_create( struct pipe_context *pipe, void *ptr, unsigned size )
+{
+   return pipe->winsys->user_buffer_create(pipe->winsys, ptr, size);
+}
+
+static INLINE void
+pipe_buffer_destroy( struct pipe_context *pipe, struct pipe_buffer *buf )
+{
+   pipe->winsys->buffer_destroy(pipe->winsys, buf);
+}
+
+static INLINE void *
+pipe_buffer_map(struct pipe_context *pipe,
+                struct pipe_buffer *buf,
+                unsigned usage)
+{
+   return pipe->winsys->buffer_map(pipe->winsys, buf, usage);
+}
+
+static INLINE void
+pipe_buffer_unmap(struct pipe_context *pipe,
+                  struct pipe_buffer *buf)
+{
+   pipe->winsys->buffer_unmap(pipe->winsys, buf);
+}
+
+/* XXX when we're using this everywhere, get rid of
+ * pipe_buffer_reference() above.
+ */
+static INLINE void
+pipe_reference_buffer(struct pipe_context *pipe,
+		      struct pipe_buffer **ptr,
+		      struct pipe_buffer *buf)
+{
+   pipe_buffer_reference(pipe->winsys, ptr, buf);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

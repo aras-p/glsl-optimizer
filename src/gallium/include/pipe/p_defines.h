@@ -192,7 +192,7 @@ enum pipe_texture_target {
 #define PIPE_BUFFER_USAGE_VERTEX    (1 << 5)
 #define PIPE_BUFFER_USAGE_INDEX     (1 << 6)
 #define PIPE_BUFFER_USAGE_CONSTANT  (1 << 7)
-/** Pipe driver custam usage flags should be greater or equal to this value */
+/** Pipe driver custom usage flags should be greater or equal to this value */
 #define PIPE_BUFFER_USAGE_CUSTOM    (1 << 16)
 
 
@@ -268,7 +268,7 @@ enum pipe_texture_target {
 #define PIPE_CAP_MAX_POINT_WIDTH_AA      17
 #define PIPE_CAP_MAX_TEXTURE_ANISOTROPY  18
 #define PIPE_CAP_MAX_TEXTURE_LOD_BIAS    19
-#define PIPE_CAP_BITMAP_TEXCOORD_BIAS    20
+
 
 #ifdef __cplusplus
 }

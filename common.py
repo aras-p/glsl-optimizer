@@ -44,8 +44,14 @@ else:
 # Common options
 
 def AddOptions(opts):
-	from SCons.Options.BoolOption import BoolOption
-	from SCons.Options.EnumOption import EnumOption
+	try:
+		from SCons.Options.BoolOption import BoolOption
+	except ImportError:
+		from SCons.Variables.BoolVariable import BoolVariable as BoolOption
+	try:
+		from SCons.Options.EnumOption import EnumOption
+	except ImportError:
+		from SCons.Variables.EnumVariable import EnumVariable as EnumOption
 	opts.Add(BoolOption('debug', 'build debug version', 'no'))
 	#opts.Add(BoolOption('quiet', 'quiet command lines', 'no'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,

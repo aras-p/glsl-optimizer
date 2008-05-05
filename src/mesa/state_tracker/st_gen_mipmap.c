@@ -36,7 +36,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_inlines.h"
-#include "pipe/p_winsys.h"
 #include "util/u_gen_mipmap.h"
 
 #include "cso_cache/cso_cache.h"
@@ -105,7 +104,6 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_winsys *ws = pipe->winsys;
    struct pipe_texture *pt = st_get_texobj_texture(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
@@ -128,11 +126,11 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
       srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice);
       dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
 
-      srcData = (ubyte *) ws->buffer_map(ws, srcSurf->buffer,
-                                         PIPE_BUFFER_USAGE_CPU_READ)
+      srcData = (ubyte *) pipe_buffer_map(pipe, srcSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_READ)
               + srcSurf->offset;
-      dstData = (ubyte *) ws->buffer_map(ws, dstSurf->buffer,
-                                         PIPE_BUFFER_USAGE_CPU_WRITE)
+      dstData = (ubyte *) pipe_buffer_map(pipe, dstSurf->buffer,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE)
               + dstSurf->offset;
 
       _mesa_generate_mipmap_level(target, datatype, comps,
@@ -144,8 +142,8 @@ fallback_generate_mipmap(GLcontext *ctx, GLenum target,
                    dstSurf->pitch * dstSurf->cpp, /* stride in bytes */
                    dstData);
 
-      ws->buffer_unmap(ws, srcSurf->buffer);
-      ws->buffer_unmap(ws, dstSurf->buffer);
+      pipe_buffer_unmap(pipe, srcSurf->buffer);
+      pipe_buffer_unmap(pipe, dstSurf->buffer);
 
       pipe_surface_reference(&srcSurf, NULL);
       pipe_surface_reference(&dstSurf, NULL);

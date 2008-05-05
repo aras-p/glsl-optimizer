@@ -256,7 +256,7 @@ pstip_transform_inst(struct tgsi_transform_context *ctx,
          uint size = 4;
          immed = tgsi_default_full_immediate();
          immed.Immediate.Size = 1 + size; /* one for the token itself */
-         immed.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
+         immed.u.Pointer = (void *) value;
          ctx->emit_immediate(ctx, &immed);
       }
 
@@ -417,7 +417,7 @@ pstip_create_texture(struct pstip_stage *pstip)
 
    memset(&texTemp, 0, sizeof(texTemp));
    texTemp.target = PIPE_TEXTURE_2D;
-   texTemp.format = PIPE_FORMAT_U_A8; /* XXX verify supported by driver! */
+   texTemp.format = PIPE_FORMAT_A8_UNORM; /* XXX verify supported by driver! */
    texTemp.last_level = 0;
    texTemp.width[0] = 32;
    texTemp.height[0] = 32;

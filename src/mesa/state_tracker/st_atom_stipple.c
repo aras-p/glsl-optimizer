@@ -54,10 +54,10 @@ update_stipple( struct st_context *st )
 
 
 const struct st_tracked_state st_update_polygon_stipple = {
-   .name = "st_update_polygon_stipple",
-   .dirty = {
-      .mesa = (_NEW_POLYGONSTIPPLE),
-      .st  = 0,
+   "st_update_polygon_stipple",				/* name */
+   {							/* dirty */
+      (_NEW_POLYGONSTIPPLE),				/* mesa */
+      0,						/* st */
    },
-   .update = update_stipple
+   update_stipple					/* update */
 };

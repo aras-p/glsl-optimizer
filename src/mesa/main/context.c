@@ -1504,15 +1504,19 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           * or not bound to a user-created FBO.
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
-            _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
          /* fix up the fb fields - these will end up wrong otherwise
-            if the DRIdrawable changes, and everything relies on them.
-            This is a bit messy (same as needed in _mesa_BindFramebufferEXT) */
+          * if the DRIdrawable changes, and everything relies on them.
+          * This is a bit messy (same as needed in _mesa_BindFramebufferEXT)
+	  */
             int i;
             GLenum buffers[MAX_DRAW_BUFFERS];
+
+            _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
+
             for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
                buffers[i] = newCtx->Color.DrawBuffer[i];
             }
+
             _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {

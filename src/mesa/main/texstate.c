@@ -238,6 +238,9 @@ calculate_derived_texenv( struct gl_tex_env_combine_state *state,
       return;
    }
 
+   if (mode == GL_REPLACE_EXT)
+      mode = GL_REPLACE;
+
    switch (mode) {
    case GL_REPLACE:
    case GL_MODULATE:
@@ -340,7 +343,9 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       switch (pname) {
       case GL_TEXTURE_ENV_MODE:
          {
-            const GLenum mode = (GLenum) (GLint) *param;
+            GLenum mode = (GLenum) (GLint) *param;
+            if (mode == GL_REPLACE_EXT)
+               mode = GL_REPLACE;
 	    if (texUnit->EnvMode == mode)
 	       return;
             if (mode == GL_MODULATE ||

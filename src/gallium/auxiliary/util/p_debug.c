@@ -104,7 +104,7 @@ void _debug_break(void)
    __asm("int3");
 #elif (defined(__i386__) || defined(__386__)) && defined(__MSC__)
    _asm {int 3};
-#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY) && !defined(WINCE)
+#elif defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
    EngDebugBreak();
 #else
    abort();
@@ -413,6 +413,7 @@ char *pf_sprint_name( char *str, enum pipe_format format )
 }
 
 
+#ifdef DEBUG
 void debug_print_format(const char *msg, unsigned fmt )
 {
    char fmtstr[80];
@@ -421,3 +422,4 @@ void debug_print_format(const char *msg, unsigned fmt )
 
    debug_printf("%s: %s\n", msg, fmtstr); 
 }
+#endif

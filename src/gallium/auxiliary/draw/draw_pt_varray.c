@@ -200,7 +200,6 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
                            unsigned opt)
 {
    struct varray_frontend *varray = (struct varray_frontend *)frontend;
-   const struct pipe_rasterizer_state *rasterizer = varray->draw->rasterizer;
 
    if (opt & PT_PIPELINE)
    {

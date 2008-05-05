@@ -68,9 +68,7 @@ struct st_texture_object
     */
    struct pipe_texture *pt;
 
-   GLboolean imageOverride;
-   GLint depthOverride;
-   GLuint pitchOverride;
+   GLboolean teximage_realloc;
 };
 
 

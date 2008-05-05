@@ -59,7 +59,7 @@ struct pipe_context;
 
 struct pipe_context *softpipe_create( struct pipe_screen *,
                                       struct pipe_winsys *,
-				      struct softpipe_winsys * );
+				      void *unused );
 
 
 struct pipe_screen *

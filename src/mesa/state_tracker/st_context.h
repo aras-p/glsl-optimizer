@@ -145,6 +145,7 @@ struct st_context
       struct pipe_rasterizer_state rasterizer;
       struct pipe_sampler_state sampler;
       struct pipe_shader_state vert_shader;
+      enum pipe_format tex_format;
       void *vs;
       float vertices[4][3][4];  /**< vertex pos + color + texcoord */
       struct pipe_buffer *vbuf;

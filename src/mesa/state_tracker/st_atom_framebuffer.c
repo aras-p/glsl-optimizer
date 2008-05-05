@@ -96,11 +96,11 @@ update_framebuffer_state( struct st_context *st )
 
 
 const struct st_tracked_state st_update_framebuffer = {
-   .name = "st_update_framebuffer",
-   .dirty = {
-      .mesa = _NEW_BUFFERS,
-      .st  = 0,
+   "st_update_framebuffer",				/* name */
+   {							/* dirty */
+      _NEW_BUFFERS,					/* mesa */
+      0,						/* st */
    },
-   .update = update_framebuffer_state
+   update_framebuffer_state				/* update */
 };
 

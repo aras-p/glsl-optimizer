@@ -52,8 +52,8 @@ struct tgsi_full_immediate
    struct tgsi_immediate   Immediate;
    union
    {
-      void                          *Pointer;
-      struct tgsi_immediate_float32 *ImmediateFloat32;
+      const void                          *Pointer;
+      const struct tgsi_immediate_float32 *ImmediateFloat32;
    } u;
 };
 
