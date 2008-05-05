@@ -179,10 +179,10 @@ static void dri_gem_dump_validation_list(dri_bufmgr_gem *bufmgr_gem)
 	    dri_bo *target_bo = bo_gem->reloc_target_bo[j];
 	    dri_bo_gem *target_gem = (dri_bo_gem *)target_bo;
 
-	    DBG("%2d: %d (%s)@0x%08llx -> %s@0x%08lx + 0x%08x\n",
+	    DBG("%2d: %d (%s)@0x%08llx -> %d (%s)@0x%08lx + 0x%08x\n",
 		i,
 		bo_gem->gem_handle, bo_gem->name, bo_gem->relocs[j].offset,
-		target_gem->name, target_bo->offset,
+		target_gem->gem_handle, target_gem->name, target_bo->offset,
 		bo_gem->relocs[j].delta);
 	}
     }
