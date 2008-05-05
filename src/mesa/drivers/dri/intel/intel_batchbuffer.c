@@ -125,6 +125,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
 		GLuint used, GLboolean allow_unlock)
 {
    struct intel_context *intel = batch->intel;
+   int ret = 0;
 
    dri_bo_unmap(batch->buf);
 
@@ -142,18 +143,18 @@ do_flush_locked(struct intel_batchbuffer *batch,
 	 struct drm_i915_gem_execbuffer *execbuf;
 
 	 execbuf = dri_process_relocs(batch->buf);
-	 intel_exec_ioctl(batch->intel,
-			  used,
-			  batch->cliprect_mode != LOOP_CLIPRECTS,
-			  allow_unlock,
-			  execbuf);
+	 ret = intel_exec_ioctl(batch->intel,
+				used,
+				batch->cliprect_mode != LOOP_CLIPRECTS,
+				allow_unlock,
+				execbuf);
       } else {
 	 dri_process_relocs(batch->buf);
-	 intel_batch_ioctl(batch->intel,
-			   batch->buf->offset,
-			   used,
-			   batch->cliprect_mode != LOOP_CLIPRECTS,
-			   allow_unlock);
+	 ret = intel_batch_ioctl(batch->intel,
+				 batch->buf->offset,
+				 used,
+				 batch->cliprect_mode != LOOP_CLIPRECTS,
+				 allow_unlock);
       }
    }
 
@@ -182,6 +183,10 @@ do_flush_locked(struct intel_batchbuffer *batch,
 	 intel->vtbl.debug_batch(intel);
    }
 
+   if (ret != 0) {
+      UNLOCK_HARDWARE(intel);
+      exit(1);
+   }
    intel->vtbl.new_batch(intel);
 }
 

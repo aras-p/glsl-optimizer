@@ -106,7 +106,7 @@ intelWaitIrq(struct intel_context *intel, int seq)
 }
 
 
-void
+int
 intel_batch_ioctl(struct intel_context *intel,
                   GLuint start_offset,
                   GLuint used,
@@ -115,7 +115,7 @@ intel_batch_ioctl(struct intel_context *intel,
    struct drm_i915_batchbuffer batch;
 
    if (intel->no_hw)
-      return;
+      return 0;
 
    assert(intel->locked);
    assert(used);
@@ -144,12 +144,13 @@ intel_batch_ioctl(struct intel_context *intel,
    if (drmCommandWrite(intel->driFd, DRM_I915_BATCHBUFFER, &batch,
                        sizeof(batch))) {
       fprintf(stderr, "DRM_I915_BATCHBUFFER: %d\n", -errno);
-      UNLOCK_HARDWARE(intel);
-      exit(1);
+      return -errno;
    }
+
+   return 0;
 }
 
-void
+int
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
 		 GLboolean ignore_cliprects, GLboolean allow_unlock,
@@ -161,7 +162,7 @@ intel_exec_ioctl(struct intel_context *intel,
    assert(used);
 
    if (intel->no_hw)
-      return;
+      return 0;
 
    execbuf->batch_start_offset = 0;
    execbuf->batch_len = used;
@@ -177,7 +178,8 @@ intel_exec_ioctl(struct intel_context *intel,
 
    if (ret != 0) {
       fprintf(stderr, "DRM_I915_GEM_EXECBUFFER: %d\n", -errno);
-      UNLOCK_HARDWARE(intel);
-      exit(1);
+      return -errno;
    }
+
+   return 0;
 }

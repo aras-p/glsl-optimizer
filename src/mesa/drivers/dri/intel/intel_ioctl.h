@@ -33,14 +33,14 @@
 void intelWaitIrq( struct intel_context *intel, int seq );
 int intelEmitIrqLocked( struct intel_context *intel );
 
-void intel_batch_ioctl( struct intel_context *intel, 
-			GLuint start_offset,
-			GLuint used,
-			GLboolean ignore_cliprects,
-			GLboolean allow_unlock );
-void intel_exec_ioctl(struct intel_context *intel,
+int intel_batch_ioctl(struct intel_context *intel,
+		      GLuint start_offset,
 		      GLuint used,
-		      GLboolean ignore_cliprects, GLboolean allow_unlock,
-		      struct drm_i915_gem_execbuffer *execbuf);
+		      GLboolean ignore_cliprects,
+		      GLboolean allow_unlock);
+int intel_exec_ioctl(struct intel_context *intel,
+		     GLuint used,
+		     GLboolean ignore_cliprects, GLboolean allow_unlock,
+		     struct drm_i915_gem_execbuffer *execbuf);
 
 #endif
