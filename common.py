@@ -245,12 +245,11 @@ def generate(env):
 				'/GX-', # disable C++ EH
 				'/GR-', # disable C++ RTTI
 				'/GF', # enable read-only string pooling
-				'/GS', # enable security checks
 				'/G6', # optimize for PPro, P-II, P-III
 				'/Ze', # enable extensions
-				#'/Gi-', # ???
+				'/Gi-', # disable incremental compilation
 				'/QIfdiv-', # disable Pentium FDIV fix
-				#'/hotpatch', # ???
+				'/hotpatch', # prepares an image for hotpatching.
 				#'/Z7', #enable old-style debug info
 			]
 		# Put debugging information in a separate .pdb file for each object file as
