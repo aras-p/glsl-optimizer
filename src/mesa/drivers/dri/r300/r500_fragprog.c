@@ -192,6 +192,43 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 	return reg;
 }
 
+static void emit_tex(struct r500_fragment_program *fp,
+		     struct prog_instruction *fpi, int opcode, int dest, int counter)
+{
+	int hwsrc, hwdest;
+	GLuint mask;
+
+	mask = fpi->DstReg.WriteMask << 11;
+	hwsrc = make_src(fp, fpi->SrcReg[0]);
+
+	fp->inst[counter].inst0 = R500_INST_TYPE_TEX | mask
+		| R500_INST_TEX_SEM_WAIT;
+
+	fp->inst[counter].inst1 = fpi->TexSrcUnit
+		| R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
+	switch (opcode) {
+	case OPCODE_TEX:
+		fp->inst[counter].inst1 |= R500_TEX_INST_LD;
+		break;
+	case OPCODE_TXP:
+		fp->inst[counter].inst1 |= R500_TEX_INST_PROJ;
+	}
+
+	fp->inst[counter].inst2 = R500_TEX_SRC_ADDR(hwsrc)
+		/* | MAKE_SWIZ_TEX_STRQ(make_strq_swizzle(fpi->SrcReg[0])) */
+		| R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G
+		| R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A
+		| R500_TEX_DST_ADDR(dest)
+		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
+		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
+
+
+
+	fp->inst[counter].inst3 = 0x0;
+	fp->inst[counter].inst4 = 0x0;
+	fp->inst[counter].inst5 = 0x0;	
+}
+
 static void dumb_shader(struct r500_fragment_program *fp)
 {
 	fp->inst[0].inst0 = R500_INST_TYPE_TEX
@@ -515,37 +552,10 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ALPHA_MOD_C_NEG;
 				break;
 			case OPCODE_TEX:
-				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_TEX | mask
-					| R500_INST_TEX_SEM_WAIT;
-				fp->inst[counter].inst1 = fpi->TexSrcUnit
-					| R500_TEX_INST_LD | R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
-				fp->inst[counter].inst2 = R500_TEX_SRC_ADDR(src[0])
-					/* | MAKE_SWIZ_TEX_STRQ(make_strq_swizzle(fpi->SrcReg[0])) */
-					| R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G
-					| R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A
-					| R500_TEX_DST_ADDR(dest)
-					| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
-					| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
-				fp->inst[counter].inst3 = 0x0;
-				fp->inst[counter].inst4 = 0x0;
-				fp->inst[counter].inst5 = 0x0;
+				emit_tex(fp, fpi, OPCODE_TEX, dest, counter);
 				break;
 			case OPCODE_TXP:
-				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_TEX | mask;
-				fp->inst[counter].inst1 = fpi->TexSrcUnit
-					| R500_TEX_INST_PROJ | R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
-				fp->inst[counter].inst2 = R500_TEX_SRC_ADDR(src[0])
-					/* | MAKE_SWIZ_TEX_STRQ(make_strq_swizzle(fpi->SrcReg[0])) */
-					| R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G
-					| R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A
-					| R500_TEX_DST_ADDR(dest)
-					| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
-					| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
-				fp->inst[counter].inst3 = 0x0;
-				fp->inst[counter].inst4 = 0x0;
-				fp->inst[counter].inst5 = 0x0;
+				emit_tex(fp, fpi, OPCODE_TXP, dest, counter);
 				break;
 			default:
 				ERROR("unknown fpi->Opcode %d\n", fpi->Opcode);
