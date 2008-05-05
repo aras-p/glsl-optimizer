@@ -354,6 +354,11 @@ struct r300_state_atom {
 #define R300_FP_NODE3		8
 #define R300_FP_CMDSIZE		9
 
+#define R500_FP_CMD_0           0
+#define R500_FP_CNTL            1
+#define R500_FP_PIXSIZE         2
+#define R500_FP_CMDSIZE         3
+
 #define R300_FPT_CMD_0		0
 #define R300_FPT_INSTR_0	1
 #define R300_FPT_CMDSIZE	65

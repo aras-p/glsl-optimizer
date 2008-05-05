@@ -2434,6 +2434,9 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 		return;
 	}
 
+	R300_STATECHANGE(rmesa, fp);
+	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = fp->max_temp_idx;
+
 	R300_STATECHANGE(rmesa, r500fp);
 	/* Emit our shader... */
 	for (i = 0; i < fp->cs->nrslots; i++) {
