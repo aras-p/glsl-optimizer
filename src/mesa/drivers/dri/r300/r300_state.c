@@ -2453,10 +2453,10 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(fp->constant[i][0]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(fp->constant[i][1]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(fp->constant[i][2]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(fp->constant[i][3]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(fp->constant[i][0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(fp->constant[i][1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(fp->constant[i][2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(fp->constant[i][3]);
 	}
 	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->const_nr * 4);
 

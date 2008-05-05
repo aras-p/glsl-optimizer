@@ -54,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 
 // Set this to 1 for extremely verbose debugging of command buffers
-#define DEBUG_CMDBUF		0
+#define DEBUG_CMDBUF		1
 
 /**
  * Send the current command buffer via ioctl to the hardware.

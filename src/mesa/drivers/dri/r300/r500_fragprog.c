@@ -158,6 +158,8 @@ static GLuint make_src(struct r500_fragment_program *fp, struct prog_src_registe
 			 * fragments don't get loaded right otherwise! */
 			reg = 0x0;
 			break;
+	        case PROGRAM_STATE_VAR:
+	        case PROGRAM_NAMED_PARAM:
 		case PROGRAM_CONSTANT:
 			reg = emit_const4fv(fp, fp->mesa_program.Base.Parameters->
 				  ParameterValues[src.Index]);
@@ -440,8 +442,9 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_MOV:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				/* We use MAX, but MIN, CND, and CMP also work.
-				 * Just remember to disable the OMOD! */
+
+				/* changed to use MAD - not sure if we
+				   ever have negative things which max will fail on */
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
 					| mask;
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
@@ -449,14 +452,17 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 					| R500_ALU_RGB_R_SWIZ_A_R | R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B
 					| R500_ALU_RGB_SEL_B_SRC0
-					| R500_ALU_RGB_R_SWIZ_B_R | R500_ALU_RGB_G_SWIZ_B_G | R500_ALU_RGB_B_SWIZ_B_B
-					| R500_ALU_RGB_OMOD_DISABLE;
-				fp->inst[counter].inst4 = R500_ALPHA_OP_MAX
+				  | R500_ALU_RGB_R_SWIZ_B_1 | R500_ALU_RGB_G_SWIZ_B_1 | R500_ALU_RGB_B_SWIZ_B_1;
+
+				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SEL_B_SRC0
-					| R500_ALPHA_OMOD_DISABLE;
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAX
-					| R500_ALU_RGBA_ADDRD(dest);
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SEL_B_SRC0 
+				  | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_1;
+
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(dest)
+				  | R500_ALU_RGBA_R_SWIZ_0 | R500_ALU_RGBA_G_SWIZ_0
+				  | R500_ALU_RGBA_B_SWIZ_0 | R500_ALU_RGBA_A_SWIZ_0;
 				break;
 			case OPCODE_MUL:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -593,7 +599,7 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	fp->cur_node = 0;
 	fp->first_node_has_tex = 0;
 	fp->const_nr = 0;
-	fp->max_temp_idx = 0;
+	fp->max_temp_idx = 64;
 	fp->node[0].alu_end = -1;
 	fp->node[0].tex_end = -1;
 
