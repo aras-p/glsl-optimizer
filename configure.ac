@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to create configure.
 
-AC_PREREQ(2.59)
+AC_PREREQ([2.59])
 
 dnl Versioning - scrape the version from configs/default
 m4_define([mesa_version],
@@ -14,16 +14,16 @@ m4_ifval(mesa_version,[],[
 
 AC_INIT([Mesa],[mesa_version],
     [https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa])
-AC_CONFIG_AUX_DIR(bin)
+AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
 dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-AC_CHECK_PROGS(MAKE, [gmake make])
-AC_PATH_PROG(MKDEP, makedepend)
-AC_PATH_PROG(SED, sed)
+AC_CHECK_PROGS([MAKE], [gmake make])
+AC_PATH_PROG([MKDEP], [makedepend])
+AC_PATH_PROG([SED], [sed])
 
 MKDEP_OPTIONS=-fdepend
 dnl Ask gcc where it's keeping its secret headers
@@ -33,15 +33,15 @@ if test "x$GCC" = xyes; then
         MKDEP_OPTIONS="$MKDEP_OPTIONS -I$GCC_INCLUDES"
     fi
 fi
-AC_SUBST(MKDEP_OPTIONS)
+AC_SUBST([MKDEP_OPTIONS])
 
 dnl Check to see if dlopen is in default libraries (like Solaris, which
 dnl has it in libc), or if libdl is needed to get it.
 AC_CHECK_FUNC([dlopen], [],
-	AC_CHECK_LIB([dl], [dlopen], DLOPEN_LIBS="-ldl"))
+	[AC_CHECK_LIB([dl], [dlopen], [DLOPEN_LIBS="-ldl"])])
 
 dnl Make sure the pkg-config macros are defined
-m4_ifdef([PKG_PROG_PKG_CONFIG],,[
+m4_ifdef([PKG_PROG_PKG_CONFIG],[],[
     m4_errprint([Error: Could not locate the pkg-config autoconf macros.
        These are usually located in /usr/share/aclocal/pkg.m4. If your
        macros are in a different location, try setting the environment
@@ -54,21 +54,21 @@ PKG_PROG_PKG_CONFIG()
 
 dnl LIB_DIR - library basename
 LIB_DIR=`echo $libdir | $SED 's%.*/%%'`
-AC_SUBST(LIB_DIR)
+AC_SUBST([LIB_DIR])
 
 dnl Cache LDFLAGS so we can add EXTRA_LIB_PATH and restore it later
 _SAVE_LDFLAGS="$LDFLAGS"
-AC_ARG_VAR(EXTRA_LIB_PATH,[Extra -L paths for the linker])
-AC_SUBST(EXTRA_LIB_PATH)
+AC_ARG_VAR([EXTRA_LIB_PATH],[Extra -L paths for the linker])
+AC_SUBST([EXTRA_LIB_PATH])
 
 dnl Cache CPPFLAGS so we can add *_INCLUDES and restore it later
 _SAVE_CPPFLAGS="$CPPFLAGS"
-AC_ARG_VAR(X11_INCLUDES,[Extra -I paths for X11 headers])
-AC_SUBST(X11_INCLUDES)
+AC_ARG_VAR([X11_INCLUDES],[Extra -I paths for X11 headers])
+AC_SUBST([X11_INCLUDES])
 
 dnl Compiler macros
 DEFINES=""
-AC_SUBST(DEFINES)
+AC_SUBST([DEFINES])
 case "$host_os" in
 linux*)
 if test "x$GCC" = xyes; then
@@ -93,21 +93,21 @@ if test "x$GXX" = xyes; then
 fi
 
 dnl These should be unnecessary, but let the user set them if they want
-AC_ARG_VAR(OPT_FLAGS, [Additional optimization flags for the compiler.
+AC_ARG_VAR([OPT_FLAGS], [Additional optimization flags for the compiler.
     Default is to use CFLAGS.])
-AC_ARG_VAR(ARCH_FLAGS, [Additional architecture specific flags for the
+AC_ARG_VAR([ARCH_FLAGS], [Additional architecture specific flags for the
     compiler. Default is to use CFLAGS.])
-AC_SUBST(OPT_FLAGS)
-AC_SUBST(ARCH_FLAGS)
+AC_SUBST([OPT_FLAGS])
+AC_SUBST([ARCH_FLAGS])
 
 dnl
 dnl Hacks to enable 32 or 64 bit build
 dnl
-AC_ARG_ENABLE(32-bit,
+AC_ARG_ENABLE([32-bit],
     [AS_HELP_STRING([--enable-32-bit],
         [build 32-bit libraries @<:@default=auto@:>@])],
-    enable_32bit="$enableval",
-    enable_32bit=auto
+    [enable_32bit="$enableval"],
+    [enable_32bit=auto]
 )
 if test "x$enable_32bit" = xyes; then
     if test "x$GCC" = xyes; then
@@ -117,11 +117,11 @@ if test "x$enable_32bit" = xyes; then
         CXXFLAGS="$CXXFLAGS -m32"
     fi
 fi
-AC_ARG_ENABLE(64-bit,
+AC_ARG_ENABLE([64-bit],
     [AS_HELP_STRING([--enable-64-bit],
         [build 64-bit libraries @<:@default=auto@:>@])],
-    enable_64bit="$enableval",
-    enable_64bit=auto
+    [enable_64bit="$enableval"],
+    [enable_64bit=auto]
 )
 if test "x$enable_64bit" = xyes; then
     if test "x$GCC" = xyes; then
@@ -135,11 +135,11 @@ fi
 dnl
 dnl shared/static libraries, mimic libtool options
 dnl
-AC_ARG_ENABLE(static,
+AC_ARG_ENABLE([static],
     [AS_HELP_STRING([--enable-static],
         [build static libraries @<:@default=disabled@:>@])],
-    enable_static="$enableval",
-    enable_static=no
+    [enable_static="$enableval"],
+    [enable_static=no]
 )
 case "x$enable_static" in
 xyes|xno ) ;;
@@ -148,11 +148,11 @@ x ) enable_static=no ;;
     AC_MSG_ERROR([Static library option '$enable_static' is not a valid])
     ;;
 esac
-AC_ARG_ENABLE(shared,
+AC_ARG_ENABLE([shared],
     [AS_HELP_STRING([--disable-shared],
         [build shared libraries @<:@default=enabled@:>@])],
-    enable_shared="$enableval",
-    enable_shared=yes
+    [enable_shared="$enableval"],
+    [enable_shared=yes]
 )
 case "x$enable_shared" in
 xyes|xno ) ;;
@@ -179,20 +179,20 @@ esac
 dnl
 dnl mklib options
 dnl
-AC_ARG_VAR(MKLIB_OPTIONS,[Options for the Mesa library script, mklib])
+AC_ARG_VAR([MKLIB_OPTIONS],[Options for the Mesa library script, mklib])
 if test "$enable_static" = yes; then
     MKLIB_OPTIONS="$MKLIB_OPTIONS -static"
 fi
-AC_SUBST(MKLIB_OPTIONS)
+AC_SUBST([MKLIB_OPTIONS])
 
 dnl
 dnl other compiler options
 dnl
-AC_ARG_ENABLE(debug,
+AC_ARG_ENABLE([debug],
     [AS_HELP_STRING([--enable-debug],
         [use debug compiler flags and macros @<:@default=disabled@:>@])],
-    enable_debug="$enableval",
-    enable_debug=no
+    [enable_debug="$enableval"],
+    [enable_debug=no]
 )
 if test "x$enable_debug" = xyes; then
     DEFINES="$DEFINES -DDEBUG"
@@ -204,11 +204,11 @@ if test "x$enable_debug" = xyes; then
     fi
 fi
 dnl These will be used near the end in the arch specific options
-AC_ARG_ENABLE(asm,
+AC_ARG_ENABLE([asm],
     [AS_HELP_STRING([--disable-asm],
         [disable assembly usage @<:@default=enabled on supported plaforms@:>@])],
-    enable_asm="$enableval",
-    enable_asm=yes
+    [enable_asm="$enableval"],
+    [enable_asm=yes]
 )
 
 dnl
@@ -227,11 +227,11 @@ else
     GLW_LIB_NAME='lib$(GLW_LIB).so'
     OSMESA_LIB_NAME='lib$(OSMESA_LIB).so'
 fi
-AC_SUBST(GL_LIB_NAME)
-AC_SUBST(GLU_LIB_NAME)
-AC_SUBST(GLUT_LIB_NAME)
-AC_SUBST(GLW_LIB_NAME)
-AC_SUBST(OSMESA_LIB_NAME)
+AC_SUBST([GL_LIB_NAME])
+AC_SUBST([GLU_LIB_NAME])
+AC_SUBST([GLUT_LIB_NAME])
+AC_SUBST([GLW_LIB_NAME])
+AC_SUBST([OSMESA_LIB_NAME])
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
@@ -252,11 +252,11 @@ freebsd* | dragonfly*)
     ;;
 esac
 
-AC_ARG_WITH(driver,
+AC_ARG_WITH([driver],
     [AS_HELP_STRING([--with-driver=DRIVER],
         [driver for Mesa: xlib,dri,osmesa @<:@default=dri when available, or xlib@:>@])],
-    mesa_driver="$withval",
-    mesa_driver="$default_driver")
+    [mesa_driver="$withval"],
+    [mesa_driver="$default_driver"])
 dnl Check for valid option
 case "x$mesa_driver" in
 xxlib|xdri|xosmesa)
@@ -285,10 +285,10 @@ osmesa)
     DRIVER_DIRS="osmesa"
     ;;
 esac
-AC_SUBST(SRC_DIRS)
-AC_SUBST(GLU_DIRS)
-AC_SUBST(DRIVER_DIRS)
-AC_SUBST(WINDOW_SYSTEM)
+AC_SUBST([SRC_DIRS])
+AC_SUBST([GLU_DIRS])
+AC_SUBST([DRIVER_DIRS])
+AC_SUBST([WINDOW_SYSTEM])
 
 dnl
 dnl User supplied program configuration
@@ -298,12 +298,12 @@ if test -d "$srcdir/progs/demos"; then
 else
     default_demos=no
 fi
-AC_ARG_WITH(demos,
+AC_ARG_WITH([demos],
     [AS_HELP_STRING([--with-demos@<:@=DIRS...@:>@],
         [optional comma delimited demo directories to build
         @<:@default=auto if source available@:>@])],
-    with_demos="$withval",
-    with_demos="$default_demos")
+    [with_demos="$withval"],
+    [with_demos="$default_demos"])
 if test "x$with_demos" = x; then
     with_demos=no
 fi
@@ -360,12 +360,16 @@ xlib|dri)
 esac
 
 # SELinux awareness.
-AC_ARG_ENABLE(selinux, AS_HELP_STRING([--enable-selinux], [Build SELinux-aware Mesa (default: disabled)]), [MESA_SELINUX=$enableval], [MESA_SELINUX=no])
+AC_ARG_ENABLE([selinux],
+    [AS_HELP_STRING([--enable-selinux],
+        [Build SELinux-aware Mesa (default: disabled)])],
+    [MESA_SELINUX="$enableval"],
+    [MESA_SELINUX=no])
 if test "x$enable_selinux" = "xyes"; then
-    AC_CHECK_HEADER(selinux/selinux.h,,
-		    AC_MSG_ERROR([SELinux headers not found]))
-    AC_CHECK_LIB(selinux,is_selinux_enabled,,
-		 AC_MSG_ERROR([SELinux library not found]))
+    AC_CHECK_HEADER([selinux/selinux.h],[],
+		    [AC_MSG_ERROR([SELinux headers not found])])
+    AC_CHECK_LIB([selinux],[is_selinux_enabled],[],
+		 [AC_MSG_ERROR([SELinux library not found])])
     SELINUX_LIBS="-lselinux"
     DEFINES="$DEFINES -DMESA_SELINUX"
 fi
@@ -376,7 +380,7 @@ dnl
 case "$mesa_driver" in
 xlib)
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES(XLIBGL, x11 xext)
+        PKG_CHECK_MODULES([XLIBGL], [x11 xext])
         X11_INCLUDES="$X11_INCLUDES $XLIBGL_CFLAGS"
         GL_LIB_DEPS="$XLIBGL_LIBS"
     else
@@ -400,12 +404,12 @@ dri)
     fi
 
     # Check for libdrm
-    PKG_CHECK_MODULES(LIBDRM, libdrm)
-    PKG_CHECK_MODULES(DRI2PROTO, dri2proto >= 1.1)
+    PKG_CHECK_MODULES([LIBDRM], [libdrm])
+    PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= 1.1])
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES(DRIGL, x11 xext xxf86vm xdamage xfixes)
+        PKG_CHECK_MODULES([DRIGL], [x11 xext xxf86vm xdamage xfixes])
         X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
         GL_LIB_DEPS="$DRIGL_LIBS"
     else
@@ -422,7 +426,7 @@ osmesa)
     GL_LIB_DEPS=""
     ;;
 esac
-AC_SUBST(GL_LIB_DEPS)
+AC_SUBST([GL_LIB_DEPS])
 
 dnl
 dnl More X11 setup
@@ -434,31 +438,31 @@ fi
 dnl
 dnl More DRI setup
 dnl
-AC_ARG_ENABLE(glx-tls,
+AC_ARG_ENABLE([glx-tls],
     [AS_HELP_STRING([--enable-glx-tls],
         [enable TLS support in GLX @<:@default=disabled@:>@])],
-        GLX_USE_TLS="$enableval",
-        GLX_USE_TLS=no)
+    [GLX_USE_TLS="$enableval"],
+    [GLX_USE_TLS=no])
 dnl Directory for DRI drivers
-AC_ARG_WITH(dri-driverdir,
+AC_ARG_WITH([dri-driverdir],
     [AS_HELP_STRING([--with-dri-driverdir=DIR],
         [directory for the DRI drivers @<:@/usr/X11R6/lib/modules/dri@:>@])],
-    DRI_DRIVER_INSTALL_DIR="$withval",
-    DRI_DRIVER_INSTALL_DIR='/usr/X11R6/lib/modules/dri')
-AC_SUBST(DRI_DRIVER_INSTALL_DIR)
+    [DRI_DRIVER_INSTALL_DIR="$withval"],
+    [DRI_DRIVER_INSTALL_DIR='/usr/X11R6/lib/modules/dri'])
+AC_SUBST([DRI_DRIVER_INSTALL_DIR])
 dnl Direct rendering or just indirect rendering
-AC_ARG_ENABLE(driglx-direct,
+AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
         [enable direct rendering in GLX for DRI @<:@default=enabled@:>@])],
-        driglx_direct="$enableval",
-        driglx_direct="yes")
+    [driglx_direct="$enableval"],
+    [driglx_direct="yes"])
 
 dnl Which drivers to build - default is chosen by platform
-AC_ARG_WITH(dri-drivers,
+AC_ARG_WITH([dri-drivers],
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
         [comma delimited DRI drivers, e.g. "i965,radeon,nouveau" @<:@default=auto@:>@])],
-    with_dri_drivers="$withval",
-    with_dri_drivers=yes)
+    [with_dri_drivers="$withval"],
+    [with_dri_drivers=yes])
 if test "x$with_dri_drivers" = x; then
     with_dri_drivers=no
 fi
@@ -481,7 +485,7 @@ esac
 
 dnl Just default to no EGL for now
 USING_EGL=0
-AC_SUBST(USING_EGL)
+AC_SUBST([USING_EGL])
 
 dnl Set DRI_DIRS, DEFINES and LIB_DEPS
 if test "$mesa_driver" = dri; then
@@ -554,23 +558,24 @@ if test "$mesa_driver" = dri; then
     # Check for expat
     EXPAT_INCLUDES=""
     EXPAT_LIB=-lexpat
-    AC_ARG_WITH(expat, AS_HELP_STRING([--with-expat=DIR],
-            [expat install directory]),[
+    AC_ARG_WITH([expat],
+        [AS_HELP_STRING([--with-expat=DIR],
+            [expat install directory])],[
         EXPAT_INCLUDES="-I$withval/include"
         CPPFLAGS="$CPPFLAGS $EXPAT_INCLUDES"
         LDFLAGS="$LDFLAGS -L$withval/$LIB_DIR"
         EXPAT_LIB="-L$withval/$LIB_DIR -lexpat"
         ])
-    AC_CHECK_HEADER(expat.h,,AC_MSG_ERROR([Expat required for DRI.]))
-    AC_CHECK_LIB(expat, XML_ParserCreate,,
-        AC_MSG_ERROR([Expat required for DRI.]))
+    AC_CHECK_HEADER([expat.h],[],[AC_MSG_ERROR([Expat required for DRI.])])
+    AC_CHECK_LIB([expat],[XML_ParserCreate],[],
+        [AC_MSG_ERROR([Expat required for DRI.])])
 
     # put all the necessary libs together
     DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
 fi
-AC_SUBST(DRI_DIRS)
-AC_SUBST(EXPAT_INCLUDES)
-AC_SUBST(DRI_LIB_DEPS)
+AC_SUBST([DRI_DIRS])
+AC_SUBST([EXPAT_INCLUDES])
+AC_SUBST([DRI_LIB_DEPS])
 
 dnl
 dnl OSMesa configuration
@@ -580,11 +585,11 @@ if test "$mesa_driver" = xlib; then
 else
     default_gl_osmesa=no
 fi
-AC_ARG_ENABLE(gl-osmesa,
+AC_ARG_ENABLE([gl-osmesa],
     [AS_HELP_STRING([--enable-gl-osmesa],
         [enable OSMesa on libGL @<:@default=enabled for xlib driver@:>@])],
-        gl_osmesa="$enableval",
-        gl_osmesa="$default_gl_osmesa")
+    [gl_osmesa="$enableval"],
+    [gl_osmesa="$default_gl_osmesa"])
 if test "x$gl_osmesa" = xyes; then
     if test "$mesa_driver" = osmesa; then
         AC_MSG_ERROR([libGL is not available for OSMesa driver])
@@ -594,11 +599,11 @@ if test "x$gl_osmesa" = xyes; then
 fi
 
 dnl Configure the channel bits for OSMesa (libOSMesa, libOSMesa16, ...)
-AC_ARG_WITH(osmesa-bits,
+AC_ARG_WITH([osmesa-bits],
     [AS_HELP_STRING([--with-osmesa-bits=BITS],
         [OSMesa channel bits and library name: 8, 16, 32 @<:@default=8@:>@])],
-        osmesa_bits="$withval",
-        osmesa_bits=8)
+    [osmesa_bits="$withval"],
+    [osmesa_bits=8])
 if test "$mesa_driver" != osmesa && test "x$osmesa_bits" != x8; then
     AC_MSG_WARN([Ignoring OSMesa channel bits for non-OSMesa driver])
     osmesa_bits=8
@@ -615,7 +620,7 @@ x16|x32)
     AC_MSG_ERROR([OSMesa bits '$osmesa_bits' is not a valid option])
     ;;
 esac
-AC_SUBST(OSMESA_LIB)
+AC_SUBST([OSMESA_LIB])
 
 case "$mesa_driver" in
 osmesa)
@@ -638,8 +643,8 @@ osmesa)
     fi
     ;;
 esac
-AC_SUBST(OSMESA_LIB_DEPS)
-AC_SUBST(OSMESA_MESA_DEPS)
+AC_SUBST([OSMESA_LIB_DEPS])
+AC_SUBST([OSMESA_MESA_DEPS])
 
 dnl
 dnl GLcore configuration
@@ -650,17 +655,17 @@ GLCORE_LIB_DEPS='-lm -lpthread'
 if test "$mesa_driver" = dri; then
     GLCORE_LIB_DEPS="$GLCORE_LIB_DEPS $DLOPEN_LIBS"
 fi
-AC_SUBST(XORG_CFLAGS)
-AC_SUBST(GLCORE_LIB_DEPS)
+AC_SUBST([XORG_CFLAGS])
+AC_SUBST([GLCORE_LIB_DEPS])
 
 dnl
 dnl GLU configuration
 dnl
-AC_ARG_ENABLE(glu,
+AC_ARG_ENABLE([glu],
     [AS_HELP_STRING([--disable-glu],
         [enable OpenGL Utility library @<:@default=enabled@:>@])],
-    enable_glu="$enableval",
-    enable_glu=yes)
+    [enable_glu="$enableval"],
+    [enable_glu=yes])
 if test "x$enable_glu" = xyes; then
     SRC_DIRS="$SRC_DIRS glu"
 
@@ -693,17 +698,17 @@ if test "x$enable_glu" = xyes; then
         ;;
     esac
 fi
-AC_SUBST(GLU_LIB_DEPS)
-AC_SUBST(GLU_MESA_DEPS)
+AC_SUBST([GLU_LIB_DEPS])
+AC_SUBST([GLU_MESA_DEPS])
 
 dnl
 dnl GLw configuration
 dnl
-AC_ARG_ENABLE(glw,
+AC_ARG_ENABLE([glw],
     [AS_HELP_STRING([--disable-glw],
         [enable Xt/Motif widget library @<:@default=enabled@:>@])],
-    enable_glw="$enableval",
-    enable_glw=yes)
+    [enable_glw="$enableval"],
+    [enable_glw=yes])
 dnl Don't build GLw on osmesa
 if test "x$enable_glw" = xyes && test "$mesa_driver" = osmesa; then
     AC_MSG_WARN([Disabling GLw since the driver is OSMesa])
@@ -712,7 +717,7 @@ fi
 if test "x$enable_glw" = xyes; then
     SRC_DIRS="$SRC_DIRS glw"
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES(GLW, x11 xt)
+        PKG_CHECK_MODULES([GLW],[x11 xt])
         GLW_LIB_DEPS="$GLW_LIBS"
     else
         # should check these...
@@ -728,8 +733,8 @@ if test "x$enable_glw" = xyes; then
         GLW_MESA_DEPS=""
     fi
 fi
-AC_SUBST(GLW_LIB_DEPS)
-AC_SUBST(GLW_MESA_DEPS)
+AC_SUBST([GLW_LIB_DEPS])
+AC_SUBST([GLW_MESA_DEPS])
 
 dnl
 dnl GLUT configuration
@@ -739,11 +744,11 @@ if test -f "$srcdir/include/GL/glut.h"; then
 else
     default_glut=no
 fi
-AC_ARG_ENABLE(glut,
+AC_ARG_ENABLE([glut],
     [AS_HELP_STRING([--disable-glut],
         [enable GLUT library @<:@default=enabled if source available@:>@])],
-    enable_glut="$enableval",
-    enable_glut="$default_glut")
+    [enable_glut="$enableval"],
+    [enable_glut="$default_glut"])
 
 dnl Can't build glut if GLU not available
 if test "x$enable_glu$enable_glut" = xnoyes; then
@@ -763,7 +768,7 @@ if test "x$enable_glut" = xyes; then
         GLUT_CFLAGS="-fexceptions"
     fi
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES(GLUT, x11 xmu xi)
+        PKG_CHECK_MODULES([GLUT],[x11 xmu xi])
         GLUT_LIB_DEPS="$GLUT_LIBS"
     else
         # should check these...
@@ -785,9 +790,9 @@ if test "x$enable_glut" = xyes; then
         GLUT_MESA_DEPS=""
     fi
 fi
-AC_SUBST(GLUT_LIB_DEPS)
-AC_SUBST(GLUT_MESA_DEPS)
-AC_SUBST(GLUT_CFLAGS)
+AC_SUBST([GLUT_LIB_DEPS])
+AC_SUBST([GLUT_MESA_DEPS])
+AC_SUBST([GLUT_CFLAGS])
 
 dnl
 dnl Program library dependencies
@@ -797,18 +802,18 @@ dnl
 if test "x$APP_LIB_DEPS" = x; then
     APP_LIB_DEPS="-lm"
 fi
-AC_SUBST(APP_LIB_DEPS)
-AC_SUBST(PROGRAM_DIRS)
+AC_SUBST([APP_LIB_DEPS])
+AC_SUBST([PROGRAM_DIRS])
 
 dnl Arch/platform-specific settings
 PIC_FLAGS=""
 ASM_FLAGS=""
 ASM_SOURCES=""
 ASM_API=""
-AC_SUBST(PIC_FLAGS)
-AC_SUBST(ASM_FLAGS)
-AC_SUBST(ASM_SOURCES)
-AC_SUBST(ASM_API)
+AC_SUBST([PIC_FLAGS])
+AC_SUBST([ASM_FLAGS])
+AC_SUBST([ASM_SOURCES])
+AC_SUBST([ASM_API])
 case "$host_os" in
 linux*)
     PIC_FLAGS="-fPIC"
