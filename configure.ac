@@ -17,6 +17,10 @@ AC_INIT([Mesa],[mesa_version],
 AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
+dnl Versions for external dependencies
+LIBDRM_REQUIRED=2.3.1
+DRI2PROTO_REQUIRED=1.1
+
 dnl Check for progs
 AC_PROG_CPP
 AC_PROG_CC
@@ -404,8 +408,8 @@ dri)
     fi
 
     # Check for libdrm
-    PKG_CHECK_MODULES([LIBDRM], [libdrm])
-    PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= 1.1])
+    PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
+    PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
