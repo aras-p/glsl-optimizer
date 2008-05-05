@@ -330,20 +330,18 @@ yes)
 esac
 
 dnl
-dnl Find out if X is available. The variables have_x or no_x will be
-dnl set and used later in the driver setups
+dnl Find out if X is available. The variable have_x is set if libX11 is
+dnl to mimic AC_PATH_XTRA.
 dnl
 if test -n "$PKG_CONFIG"; then
     AC_MSG_CHECKING([pkg-config files for X11 are available])
-    if $PKG_CONFIG --exists x11; then
+    PKG_CHECK_EXISTS([x11],[
         x11_pkgconfig=yes
         have_x=yes
-        AC_MSG_RESULT(yes)
-    else
+        ],[
         x11_pkgconfig=no
-        no_x=yes
-        AC_MSG_RESULT(no)
-    fi
+    ])
+    AC_MSG_RESULT([$x11_pkgconfig])
 else
     x11_pkgconfig=no
 fi
