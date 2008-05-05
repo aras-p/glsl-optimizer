@@ -28,9 +28,10 @@ static void FUNC(struct draw_pt_front_end *frontend,
       for (j = 0; j + first <= count; j += i) {
          unsigned end = MIN2(FETCH_MAX, count - j);
          end -= (end % incr);
-         for (i = 0; i < count; i ++) {
+         for (i = 0; i < count; i++) {
             POINT(varray, i + 0);
          }
+         i = end;
          fetch_init(varray, end);
          varray_flush(varray);
       }
@@ -44,6 +45,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
             LINE(varray, DRAW_PIPE_RESET_STIPPLE,
                  i + 0, i + 1);
          }
+         i = end;
          fetch_init(varray, end);
          varray_flush(varray);
       }
@@ -60,6 +62,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                LINE(varray, flags, i - 1, i);
             }
             LINE(varray, flags, i - 1, 0);
+            i = end;
             fetch_init(varray, end);
             varray_flush(varray);
          }
@@ -74,6 +77,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
          for (i = 1; i < end; i++, flags = 0) {
             LINE(varray, flags, i - 1, i);
          }
+         i = end;
          fetch_init(varray, end);
          varray_flush(varray);
       }
@@ -87,6 +91,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
             TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                      i + 0, i + 1, i + 2);
          }
+         i = end;
          varray->fetch_count = end;
          varray_flush_linear(varray);
          varray->fetch_start += end;
@@ -102,6 +107,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                         i + 0, i + 1 + (i&1), i + 2 - (i&1));
             }
+            i = end;
             fetch_init(varray, end);
             varray_flush(varray);
          }
@@ -114,6 +120,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                         i + 0 + (i&1), i + 1 - (i&1), i + 2);
             }
+            i = end;
             fetch_init(varray, end);
             varray_flush(varray);
          }
@@ -130,6 +137,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                for (i = 0; i+2 < end; i++) {
                   TRIANGLE(varray, flags, i + 1, i + 2, 0);
                }
+               i = end;
                fetch_init(varray, end);
                varray_flush(varray);
             }
@@ -142,6 +150,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
                for (i = 0; i+2 < end; i++) {
                   TRIANGLE(varray, flags, 0, i + 1, i + 2);
                }
+               i = end;
                fetch_init(varray, end);
                varray_flush(varray);
             }
@@ -156,6 +165,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
          for (i = 0; i+3 < end; i += 4) {
             QUAD(varray, i + 0, i + 1, i + 2, i + 3);
          }
+         i = end;
          fetch_init(varray, end);
          varray_flush(varray);
       }
@@ -168,6 +178,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
          for (i = 0; i+3 < end; i += 2) {
             QUAD(varray, i + 2, i + 0, i + 1, i + 3);
          }
+         i = end;
          fetch_init(varray, end);
          varray_flush(varray);
       }
@@ -193,6 +204,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
             TRIANGLE(varray, flags, i + 1, i + 2, 0);
          }
+         i = end;
          fetch_init(varray, end);
          varray_flush(varray);
       }
