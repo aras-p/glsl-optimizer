@@ -2323,10 +2323,11 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			hw_tcl_on = future_hw_tcl_on = 0;
 			r300ResetHwState(rmesa);
 
+			r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 			return;
 		}
-		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 	}
+	r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 }
 
 static void r300SetupPixelShader(r300ContextPtr rmesa)
