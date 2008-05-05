@@ -14,6 +14,30 @@ static boolean
 nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 				enum pipe_format format, uint type)
 {
+	switch (type) {
+	case PIPE_SURFACE:
+		switch (format) {
+		case PIPE_FORMAT_A8R8G8B8_UNORM:
+		case PIPE_FORMAT_R5G6B5_UNORM:
+		case PIPE_FORMAT_Z24S8_UNORM:
+		case PIPE_FORMAT_Z16_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
+		break;
+	case PIPE_TEXTURE:
+		switch (format) {
+		case PIPE_FORMAT_I8_UNORM:
+			return TRUE;
+		default:
+			break;
+		}
+		break;
+	default:
+		assert(0);
+	}
+
 	return FALSE;
 }
 
