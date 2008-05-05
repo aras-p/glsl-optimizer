@@ -171,7 +171,7 @@ static void dri_gem_dump_validation_list(dri_bufmgr_gem *bufmgr_gem)
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
 	if (bo_gem->relocs == NULL) {
-	    DBG("%2d: %s\n", i, bo_gem->name);
+	    DBG("%2d: %d (%s)\n", i, bo_gem->gem_handle, bo_gem->name);
 	    continue;
 	}
 
@@ -179,9 +179,9 @@ static void dri_gem_dump_validation_list(dri_bufmgr_gem *bufmgr_gem)
 	    dri_bo *target_bo = bo_gem->reloc_target_bo[j];
 	    dri_bo_gem *target_gem = (dri_bo_gem *)target_bo;
 
-	    DBG("%2d: %s@0x%08llx -> %s@0x%08lx + 0x%08x\n",
+	    DBG("%2d: %d (%s)@0x%08llx -> %s@0x%08lx + 0x%08x\n",
 		i,
-		bo_gem->name, bo_gem->relocs[j].offset,
+		bo_gem->gem_handle, bo_gem->name, bo_gem->relocs[j].offset,
 		target_gem->name, target_bo->offset,
 		bo_gem->relocs[j].delta);
 	}
@@ -328,7 +328,8 @@ dri_gem_bo_alloc(dri_bufmgr *bufmgr, const char *name,
     bo_gem->refcount = 1;
     bo_gem->validate_index = -1;
 
-    DBG("bo_create: %p (%s) %ldb\n", &bo_gem->bo, bo_gem->name, size);
+    DBG("bo_create: buf %d (%s) %ldb\n",
+	bo_gem->gem_handle, bo_gem->name, size);
 
     return &bo_gem->bo;
 }
@@ -382,8 +383,7 @@ intel_gem_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
     bo_gem->validate_index = -1;
     bo_gem->gem_handle = open_arg.handle;
 
-    DBG("bo_create_from_handle: %p %08x (%s)\n",
-	&bo_gem->bo, handle, bo_gem->name);
+    DBG("bo_create_from_handle: %d (%s)\n", handle, bo_gem->name);
 
     return &bo_gem->bo;
 }
@@ -444,12 +444,14 @@ dri_gem_bo_unreference(dri_bo *bo)
 	    unref.handle = bo_gem->gem_handle;
 	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_UNREFERENCE, &unref);
 	    if (ret != 0) {
-	       fprintf(stderr, "DRM_IOCTL_GEM_UNREFERENCE failed (%s): %s\n",
-		       bo_gem->name, strerror(-ret));
+	       fprintf(stderr,
+		       "DRM_IOCTL_GEM_UNREFERENCE %d failed (%s): %s\n",
+		       bo_gem->gem_handle, bo_gem->name, strerror(-ret));
 	    }
 	}
 
-	DBG("bo_unreference final: %p (%s)\n", &bo_gem->bo, bo_gem->name);
+	DBG("bo_unreference final: %d (%s)\n",
+	    bo_gem->gem_handle, bo_gem->name);
 
 	free(bo);
 	return;
@@ -473,7 +475,7 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
 
     assert(bo->virtual == NULL);
 
-    DBG("bo_map: %p (%s)\n", &bo_gem->bo, bo_gem->name);
+    DBG("bo_map: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
 
     if (bo_gem->virtual == NULL) {
 	struct drm_gem_mmap mmap_arg;
@@ -484,8 +486,9 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
 	mmap_arg.size = bo->size;
 	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_MMAP, &mmap_arg);
 	if (ret != 0) {
-	    fprintf(stderr, "%s:%d: Error mapping buffer %s: %s .\n",
-		    __FILE__, __LINE__, bo_gem->name, strerror(-ret));
+	    fprintf(stderr, "%s:%d: Error mapping buffer %d (%s): %s .\n",
+		    __FILE__, __LINE__,
+		    bo_gem->gem_handle, bo_gem->name, strerror(-ret));
 	}
 	bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
     }
@@ -514,7 +517,7 @@ dri_gem_bo_unmap(dri_bo *bo)
 
     assert(bo->virtual != NULL);
 
-    DBG("bo_unmap: %p (%s)\n", &bo_gem->bo, bo_gem->name);
+    DBG("bo_unmap: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
 
     munmap(bo_gem->virtual, bo->size);
     bo_gem->virtual = NULL;
@@ -653,8 +656,8 @@ intel_update_buffer_offsets (dri_bufmgr_gem *bufmgr_gem)
 
 	/* Update the buffer offset */
 	if (bufmgr_gem->validate_array[i].buffer_offset != bo->offset) {
-	    DBG("BO %s migrated: 0x%08lx -> 0x%08llx\n",
-		bo_gem->name, bo->offset,
+	    DBG("BO %d (%s) migrated: 0x%08lx -> 0x%08llx\n",
+		bo_gem->gem_handle, bo_gem->name, bo->offset,
 		bufmgr_gem->validate_array[i].buffer_offset);
 	    bo->offset = bufmgr_gem->validate_array[i].buffer_offset;
 	}
