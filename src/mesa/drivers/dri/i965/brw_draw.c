@@ -257,10 +257,12 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
-   GLuint i, ret;
+   GLuint i;
    GLuint ib_offset;
    dri_bo *ib_bo;
    GLboolean force_flush = GL_FALSE;
+   int ret;
+
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
