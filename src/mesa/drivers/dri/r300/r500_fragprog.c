@@ -76,6 +76,7 @@
 #define R500_SWIZZLE_ONE 6
 #define R500_SWIZ_RGB_ZERO ((4 << 0) | (4 << 3) | (4 << 6))
 #define R500_SWIZ_RGB_ONE ((6 << 0) | (6 << 3) | (6 << 6))
+#define R500_SWIZ_RGB_RGB ((0 << 0) | (1 << 3) | (2 << 6))
 /* Swizzles for inst2 */
 #define MAKE_SWIZ_TEX_STRQ(x) (x << 8)
 #define MAKE_SWIZ_TEX_RGBA(x) (x << 24)
@@ -450,10 +451,9 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| R500_ALU_RGB_R_SWIZ_A_R | R500_ALU_RGB_G_SWIZ_A_G | R500_ALU_RGB_B_SWIZ_A_B
-					| R500_ALU_RGB_SEL_B_SRC0
-				  | R500_ALU_RGB_R_SWIZ_B_1 | R500_ALU_RGB_G_SWIZ_B_1 | R500_ALU_RGB_B_SWIZ_B_1;
-
+				  | MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB) 
+				  | R500_ALU_RGB_SEL_B_SRC0
+				  | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
 				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
 					| R500_ALPHA_ADDRD(dest)
 					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SEL_B_SRC0 
@@ -461,8 +461,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
 					| R500_ALU_RGBA_ADDRD(dest)
-				  | R500_ALU_RGBA_R_SWIZ_0 | R500_ALU_RGBA_G_SWIZ_0
-				  | R500_ALU_RGBA_B_SWIZ_0 | R500_ALU_RGBA_A_SWIZ_0;
+				  | MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+				  | MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 				break;
 			case OPCODE_MUL:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
