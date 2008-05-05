@@ -73,8 +73,6 @@ nv10_screen_get_paramf(struct pipe_screen *screen, int param)
 		return 2.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
 		return 4.0;
-	case PIPE_CAP_BITMAP_TEXCOORD_BIAS:
-		return 0.0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0.0;
