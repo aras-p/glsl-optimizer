@@ -178,18 +178,16 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 
 
 static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
-                                       unsigned fetch_start,
-                                       unsigned fetch_count,
-                                       const ushort *draw_elts,
-                                       unsigned draw_count )
+                                       unsigned start,
+                                       unsigned count)
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
    struct draw_vertex_shader *shader = draw->vertex_shader;
    unsigned opt = fpme->opt;
-   unsigned alloc_count = align_int( fetch_count, 4 );
+   unsigned alloc_count = align_int( count, 4 );
 
-   struct vertex_header *pipeline_verts = 
+   struct vertex_header *pipeline_verts =
       (struct vertex_header *)MALLOC(fpme->vertex_size * alloc_count);
 
    if (!pipeline_verts) {
@@ -202,8 +200,8 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    /* Fetch into our vertex buffer
     */
    draw_pt_fetch_run_linear( fpme->fetch,
-                             fetch_start,
-                             fetch_count,
+                             start,
+                             count,
                              (char *)pipeline_verts );
 
    /* Run the shader, note that this overwrites the data[] parts of
@@ -213,18 +211,18 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
     */
    if (opt & PT_SHADE)
    {
-      shader->run_linear(shader, 
+      shader->run_linear(shader,
 			 (const float (*)[4])pipeline_verts->data,
 			 (      float (*)[4])pipeline_verts->data,
 			 (const float (*)[4])draw->pt.user.constants,
-			 fetch_count,
+			 count,
 			 fpme->vertex_size,
 			 fpme->vertex_size);
    }
 
    if (draw_pt_post_vs_run( fpme->post_vs,
 			    pipeline_verts,
-			    fetch_count,
+			    count,
 			    fpme->vertex_size ))
    {
       opt |= PT_PIPELINE;
@@ -233,21 +231,19 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
    /* Do we need to run the pipeline?
     */
    if (opt & PT_PIPELINE) {
-      draw_pipeline_run( fpme->draw,
-                         fpme->prim,
-                         pipeline_verts,
-                         fetch_count,
-                         fpme->vertex_size,
-                         draw_elts,
-                         draw_count );
+      draw_pipeline_run_linear( fpme->draw,
+                                fpme->prim,
+                                pipeline_verts,
+                                count,
+                                fpme->vertex_size);
    }
    else {
       draw_pt_emit_linear( fpme->emit,
                            (const float (*)[4])pipeline_verts->data,
-                           fetch_count,
+                           count,
                            fpme->vertex_size,
                            0, /*start*/
-                           draw_count );
+                           count );
    }
 
    FREE(pipeline_verts);

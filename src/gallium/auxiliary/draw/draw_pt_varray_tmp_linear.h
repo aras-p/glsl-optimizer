@@ -25,29 +25,14 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
    switch (varray->input_prim) {
    case PIPE_PRIM_POINTS:
-      for (j = 0; j + first <= count; j += i) {
-         unsigned end = MIN2(FETCH_MAX, count - j);
-         end -= (end % incr);
-         for (i = 0; i < count; i++) {
-            POINT(varray, i + 0);
-         }
-         i = end;
-         fetch_init(varray, end);
-         varray_flush(varray);
-      }
-      break;
-
    case PIPE_PRIM_LINES:
-      for (j = 0; j + first <= count; j += i) {
+   case PIPE_PRIM_TRIANGLES:
+      j = 0;
+      while (j + first <= count) {
          unsigned end = MIN2(FETCH_MAX, count - j);
          end -= (end % incr);
-         for (i = 0; i+1 < end; i += 2) {
-            LINE(varray, DRAW_PIPE_RESET_STIPPLE,
-                 i + 0, i + 1);
-         }
-         i = end;
-         fetch_init(varray, end);
-         varray_flush(varray);
+         varray_flush_linear(varray, start + j, end);
+         j += end;
       }
       break;
 
@@ -83,20 +68,6 @@ static void FUNC(struct draw_pt_front_end *frontend,
       }
       break;
 
-   case PIPE_PRIM_TRIANGLES:
-      for (j = 0; j + first <= count; j += i) {
-         unsigned end = MIN2(FETCH_MAX, count - j);
-         end -= (end % incr);
-         for (i = 0; i+2 < end; i += 3) {
-            TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
-                     i + 0, i + 1, i + 2);
-         }
-         i = end;
-         fetch_init(varray, end);
-         varray_flush(varray);
-      }
-      break;
-
    case PIPE_PRIM_TRIANGLE_STRIP:
       if (flatfirst) {
          for (j = 0; j + first <= count; j += i) {
@@ -112,16 +83,18 @@ static void FUNC(struct draw_pt_front_end *frontend,
          }
       }
       else {
-         for (j = 0; j + first <= count; j += i) {
+         for (j = 0; j + first <= count;) {
             unsigned end = MIN2(FETCH_MAX, count - j);
-            end -= (end % incr);
+            //end -= (end % incr);
             for (i = 0; i+2 < end; i++) {
                TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                         i + 0 + (i&1), i + 1 - (i&1), i + 2);
             }
-            i = end;
             fetch_init(varray, end);
             varray_flush(varray);
+            j += end;
+            if (j <= count)
+               j -= incr;
          }
       }
       break;

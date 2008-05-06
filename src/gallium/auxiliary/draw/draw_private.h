@@ -247,6 +247,12 @@ void draw_pipeline_run( struct draw_context *draw,
                         const ushort *elts,
                         unsigned count );
 
+void draw_pipeline_run_linear( struct draw_context *draw,
+                               unsigned prim,
+                               struct vertex_header *vertices,
+                               unsigned count,
+                               unsigned stride );
+
 
 
 void draw_pipeline_flush( struct draw_context *draw, 

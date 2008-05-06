@@ -75,29 +75,18 @@ static void varray_flush(struct varray_frontend *varray)
    varray->draw_count = 0;
 }
 
-static void varray_flush_linear(struct varray_frontend *varray)
+static void varray_flush_linear(struct varray_frontend *varray,
+                                unsigned start, unsigned count)
 {
-   if (varray->draw_count) {
+   if (count) {
 #if 0
-      debug_printf("FLUSH LINEAR fc = %d, dc = %d\n",
-                   varray->fetch_count,
-                   varray->draw_count);
-      debug_printf("\telt0 = %d, eltx = %d, draw0 = %d, drawx = %d\n",
-                   varray->fetch_elts[0],
-                   varray->fetch_elts[varray->fetch_count-1],
-                   varray->draw_elts[0],
-                   varray->draw_elts[varray->draw_count-1]);
+      debug_printf("FLUSH LINEAR start = %d, count = %d\n",
+                   start,
+                   count);
 #endif
       assert(varray->middle->run_linear);
-      varray->middle->run_linear(varray->middle,
-                                 varray->fetch_start,
-                                 varray->fetch_count,
-                                 varray->draw_elts,
-                                 varray->draw_count);
+      varray->middle->run_linear(varray->middle, start, count);
    }
-
-   varray->fetch_count = 0;
-   varray->draw_count = 0;
 }
 
 static INLINE void fetch_init(struct varray_frontend *varray,
@@ -261,7 +250,7 @@ static INLINE void varray_ef_quad( struct varray_frontend *varray,
 #define LINE(vc,flags,i0,i1)        varray_line(vc,i0,i1)
 #define POINT(vc,i0)                varray_point(vc,i0)
 #define FUNC varray_run
-#include "draw_pt_varray_tmp.h"
+#include "draw_pt_varray_tmp_linear.h"
 
 
 

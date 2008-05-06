@@ -212,6 +212,45 @@ void draw_pipeline_run( struct draw_context *draw,
    draw->pipeline.vertex_count = 0;
 }
 
+void draw_pipeline_run_linear( struct draw_context *draw,
+                               unsigned prim,
+                               struct vertex_header *vertices,
+                               unsigned count,
+                               unsigned stride )
+{
+   char *verts = (char *)vertices;
+   unsigned i;
+
+   draw->pipeline.verts = verts;
+   draw->pipeline.vertex_stride = stride;
+   draw->pipeline.vertex_count = count;
+
+   switch (prim) {
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < count; i++)
+         do_point( draw,
+                   verts + stride * i );
+      break;
+   case PIPE_PRIM_LINES:
+      for (i = 0; i+1 < count; i += 2)
+         do_line( draw,
+                  i+0,  /* flags */
+                  verts + stride * ((i+0) & ~DRAW_PIPE_FLAG_MASK),
+                  verts + stride * (i+1));
+      break;
+   case PIPE_PRIM_TRIANGLES:
+      for (i = 0; i+2 < count; i += 3)
+         do_triangle( draw,
+                      (i+0),  /* flags */
+                      verts + stride * ((i+0) & ~DRAW_PIPE_FLAG_MASK),
+                      verts + stride * (i+1),
+                      verts + stride * (i+2));
+      break;
+   }
+
+   draw->pipeline.verts = NULL;
+   draw->pipeline.vertex_count = 0;
+}
 
 
 void draw_pipeline_flush( struct draw_context *draw, 

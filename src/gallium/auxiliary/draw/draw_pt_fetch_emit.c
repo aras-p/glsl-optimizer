@@ -258,10 +258,8 @@ static void fetch_emit_run( struct draw_pt_middle_end *middle,
 
 
 static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
-                                   unsigned fetch_start,
-                                   unsigned fetch_count,
-                                   const ushort *draw_elts,
-                                   unsigned draw_count )
+                                   unsigned start,
+                                   unsigned count )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
    struct draw_context *draw = feme->draw;
@@ -273,7 +271,7 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
 
    hw_verts = draw->render->allocate_vertices( draw->render,
                                                (ushort)feme->translate->key.output_stride,
-                                               (ushort)fetch_count );
+                                               (ushort)count );
    if (!hw_verts) {
       assert(0);
       return;
@@ -282,13 +280,13 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
    /* Single routine to fetch vertices and emit HW verts.
     */
    feme->translate->run( feme->translate,
-                         fetch_start,
-                         fetch_count,
+                         start,
+                         count,
                          hw_verts );
 
    if (0) {
       unsigned i;
-      for (i = 0; i < fetch_count; i++) {
+      for (i = 0; i < count; i++) {
          debug_printf("\n\nvertex %d:\n", i);
          draw_dump_emitted_vertex( feme->vinfo,
                                    (const uint8_t *)hw_verts + feme->vinfo->size * 4 * i );
@@ -300,14 +298,14 @@ static void fetch_emit_run_linear( struct draw_pt_middle_end *middle,
     */
    draw->render->draw_arrays( draw->render,
                               0, /*start*/
-                              draw_count );
+                              count );
 
    /* Done -- that was easy, wasn't it:
     */
    draw->render->release_vertices( draw->render,
                                    hw_verts,
                                    feme->translate->key.output_stride,
-                                   fetch_count );
+                                   count );
 
 }
 

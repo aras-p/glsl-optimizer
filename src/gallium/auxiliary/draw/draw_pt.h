@@ -93,10 +93,8 @@ struct draw_pt_middle_end {
                 unsigned draw_count );
 
    void (*run_linear)(struct draw_pt_middle_end *,
-                      unsigned fetch_start,
-                      unsigned fetch_count,
-                      const ushort *draw_elts,
-                      unsigned draw_count);
+                      unsigned start,
+                      unsigned count);
 
    void (*finish)( struct draw_pt_middle_end * );
    void (*destroy)( struct draw_pt_middle_end * );
