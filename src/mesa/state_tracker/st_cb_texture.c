@@ -1172,7 +1172,7 @@ do_copy_texsubimage(GLcontext *ctx,
                                           stImage->level, destZ,
                                           PIPE_BUFFER_USAGE_CPU_WRITE);
 
-   if (0&& ctx->_ImageTransferState == 0x0 &&
+   if (ctx->_ImageTransferState == 0x0 &&
        strb->surface->buffer &&
        dest_surface->buffer) {
       /* do blit-style copy */
