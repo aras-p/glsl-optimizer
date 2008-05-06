@@ -24,7 +24,7 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
 # Figure out what to make here
-default:
+default: depend
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
 	    x11)      $(MAKE) stand-alone ;; \
