@@ -63,9 +63,13 @@ $(TOP)/configs/current:
 	@echo
 	@echo
 	@echo "Please choose a configuration from the following list:"
-	@ls -1 $(TOP)/configs | grep -v "current\|default\|CVS"
+	@ls -1 $(TOP)/configs | grep -v "current\|default\|CVS\|autoconf.*"
 	@echo
 	@echo "Then type 'make <config>' (ex: 'make linux-x86')"
+	@echo
+	@echo "Or, run './configure' then 'make'"
+	@echo "See './configure --help' for details"
+	@echo
 	@echo "(ignore the following error message)"
 	@exit 1
 
