@@ -152,7 +152,10 @@ static GLuint make_src(struct r500_fragment_program *fp, struct prog_src_registe
 	GLuint reg;
 	switch (src.File) {
 		case PROGRAM_TEMPORARY:
-			reg = (src.Index << 0x1) | 0x1;
+			// reg = (src.Index << 0x1) | 0x1;
+			reg = src.Index;
+			if (src.Index > fp->max_temp_idx)
+				fp->max_temp_idx = src.Index;
 			break;
 		case PROGRAM_INPUT:
 			/* Ugly hack needed to work around Mesa;
@@ -177,7 +180,10 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 	GLuint reg;
 	switch (dest.File) {
 		case PROGRAM_TEMPORARY:
-			reg = (dest.Index << 0x1) | 0x1;
+			// reg = (dest.Index << 0x1) | 0x1;
+			reg = dest.Index;
+			if (dest.Index > fp->max_temp_idx)
+				fp->max_temp_idx = src.Index;
 			break;
 		case PROGRAM_OUTPUT:
 			/* Eventually we may need to handle multiple
@@ -354,9 +360,9 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
 					| mask;
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
-					| R500_RGB_ADDR1(src[1]);
+					| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(0);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
-					| R500_ALPHA_ADDR1(src[1]);
+					| R500_ALPHA_ADDR1(src[1]) | R500_ALPHA_ADDR2(0);
 				fp->inst[counter].inst3 = /* 1 */
 					MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE)
 					| R500_ALU_RGB_SEL_B_SRC0 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[0]));
@@ -586,7 +592,11 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	if ((fp->inst[counter].inst0 & 0x3) ^ 0x2) {
 		fp->inst[counter].inst0 |= R500_INST_TYPE_OUT
 		| R500_INST_TEX_SEM_WAIT | R500_INST_LAST;
+	} else {
+		/* We still need to put an output inst, right? */
 	}
+
+	fp->max_temp_idx++;
 
 	return GL_TRUE;
 }
