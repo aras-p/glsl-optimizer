@@ -83,6 +83,6 @@ install:
 clean:
 	-rm -f drmtest $(TOP)/$(LIB_DIR)/libGL.so*
 	-rm -f *.o *~
-	-rm -f depend
+	-rm -f depend depend.bak
 
 include depend

@@ -91,6 +91,6 @@ install: $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 clean:
 	-rm -f $(TOP)/$(LIB_DIR)/libGL.so*
 	-rm -f *.o *~
-	-rm -f depend
+	-rm -f depend depend.bak
 
 -include depend

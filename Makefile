@@ -31,10 +31,8 @@ realclean:
 	-rm -f $(TOP)/configs/current
 	-rm -f $(TOP)/configs/autoconf
 	-rm -rf autom4te.cache
-	-rm -f `find . -name \*.o`
-	-rm -f `find . -name \*.a`
-	-rm -f `find . -name \*.so`
-	-rm -f `find . -name depend`
+	-find . '(' -name '*.o' -o -name '*.a' -o -name '*.so' -o \
+	  -name depend -o -name depend.bak ')' -exec rm -f '{}' ';'
 
 
 

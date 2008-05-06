@@ -91,7 +91,7 @@ install: glut.pc
 
 # Remove .o and backup files
 clean: depend
-	-rm -f depend
+	-rm -f depend depend.bak
 	-rm -f *.o *~ *.o *~ *.so libglut.so.3.7
 
 include depend

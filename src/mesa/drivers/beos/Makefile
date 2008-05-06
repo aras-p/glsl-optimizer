@@ -191,6 +191,6 @@ depend: $(DRIVER_SOURCES) $(GLU_SOURCES)
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(DRIVER_SOURCES) $(GLU_SOURCES) > /dev/null 
 
 clean:
-	rm -f depend $(OBJECTS)
+	-rm -f depend depend.bak $(OBJECTS)
 
 include depend

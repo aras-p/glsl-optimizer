@@ -42,7 +42,7 @@ install: glw.pc
 	$(INSTALL) -m 644 glw.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 
 clean:
-	-rm depend depend.bak
+	-rm -f depend depend.bak
 	-rm -f *.o *~
 
 
