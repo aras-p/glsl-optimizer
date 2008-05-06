@@ -901,13 +901,16 @@ CPPFLAGS="$_SAVE_CPPFLAGS"
 
 dnl Substitute the config
 AC_CONFIG_FILES([configs/autoconf])
-AC_OUTPUT
 
 dnl Replace the configs/current symlink
+AC_CONFIG_COMMANDS([configs],[
 if test -f configs/current || test -L configs/current; then
     rm -f configs/current
 fi
 ln -s autoconf configs/current
+])
+
+AC_OUTPUT
 
 dnl
 dnl Output some configuration info for the user
