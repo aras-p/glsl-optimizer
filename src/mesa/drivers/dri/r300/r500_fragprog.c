@@ -585,16 +585,34 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 
 	}
 
-	fp->cs->nrslots = counter;
-
-	/* Finish him! (If it's an output instruction...)
-	 * Yes, I know it's ugly... */
+	/* Finish him! (If it's an ALU/OUT instruction...) */
 	if ((fp->inst[counter].inst0 & 0x3) ^ 0x2) {
 		fp->inst[counter].inst0 |= R500_INST_TYPE_OUT
-		| R500_INST_TEX_SEM_WAIT | R500_INST_LAST;
+			| R500_INST_TEX_SEM_WAIT | R500_INST_LAST;
 	} else {
 		/* We still need to put an output inst, right? */
+		counter++;
+		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
+			| R500_INST_TEX_SEM_WAIT | R500_INST_LAST
+			| R500_INST_RGB_OMASK_R | R500_INST_RGB_OMASK_G
+			| R500_INST_RGB_OMASK_B | R500_INST_ALPHA_OMASK;
+		fp->inst[counter].inst1 = R500_RGB_ADDR0(dest);
+		fp->inst[counter].inst2 = R500_ALPHA_ADDR0(dest);
+		fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+			| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB) 
+			| R500_ALU_RGB_SEL_B_SRC0
+			| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
+		fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
+			| R500_ALPHA_ADDRD(0)
+			| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SEL_B_SRC0 
+			| R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_1;
+		fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+			| R500_ALU_RGBA_ADDRD(0)
+			| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 	}
+
+	fp->cs->nrslots = counter;
 
 	fp->max_temp_idx++;
 
