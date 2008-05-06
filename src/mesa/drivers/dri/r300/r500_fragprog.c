@@ -183,7 +183,7 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 			// reg = (dest.Index << 0x1) | 0x1;
 			reg = dest.Index;
 			if (dest.Index > fp->max_temp_idx)
-				fp->max_temp_idx = src.Index;
+				fp->max_temp_idx = dest.Index;
 			break;
 		case PROGRAM_OUTPUT:
 			/* Eventually we may need to handle multiple
