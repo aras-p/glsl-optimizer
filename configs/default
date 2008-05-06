@@ -88,7 +88,7 @@ GLCORE_LIB_DEPS = -lm -lpthread
 
 # Installation directories (for make install)
 INSTALL_DIR = /usr/local
-DRI_DRIVER_INSTALL_DIR = /usr/X11R6/lib/modules/dri
+DRI_DRIVER_INSTALL_DIR = $(INSTALL_DIR)/$(LIB_DIR)/dri
 
 # Where libGL will look for DRI hardware drivers
 DRI_DRIVER_SEARCH_DIR = $(DRI_DRIVER_INSTALL_DIR)

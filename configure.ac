@@ -443,9 +443,9 @@ AC_ARG_ENABLE([glx-tls],
 dnl Directory for DRI drivers
 AC_ARG_WITH([dri-driverdir],
     [AS_HELP_STRING([--with-dri-driverdir=DIR],
-        [directory for the DRI drivers @<:@/usr/X11R6/lib/modules/dri@:>@])],
+        [directory for the DRI drivers @<:@${libdir}/dri@:>@])],
     [DRI_DRIVER_INSTALL_DIR="$withval"],
-    [DRI_DRIVER_INSTALL_DIR='/usr/X11R6/lib/modules/dri'])
+    [DRI_DRIVER_INSTALL_DIR='${libdir}/dri'])
 AC_SUBST([DRI_DRIVER_INSTALL_DIR])
 dnl Direct rendering or just indirect rendering
 AC_ARG_ENABLE([driglx-direct],
