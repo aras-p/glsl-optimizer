@@ -221,16 +221,16 @@ intelPrintSAREA(const struct drm_i915_sarea * sarea)
            sarea->height);
    fprintf(stderr, "SAREA: pitch: %d\n", sarea->pitch);
    fprintf(stderr,
-           "SAREA: front offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           "SAREA: front offset: 0x%08x  size: 0x%x  handle: 0x%x tiled: %d\n",
            sarea->front_offset, sarea->front_size,
-           (unsigned) sarea->front_handle);
+           (unsigned) sarea->front_handle, sarea->front_tiled);
    fprintf(stderr,
-           "SAREA: back  offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           "SAREA: back  offset: 0x%08x  size: 0x%x  handle: 0x%x tiled: %d\n",
            sarea->back_offset, sarea->back_size,
-           (unsigned) sarea->back_handle);
-   fprintf(stderr, "SAREA: depth offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
+           (unsigned) sarea->back_handle, sarea->back_tiled);
+   fprintf(stderr, "SAREA: depth offset: 0x%08x  size: 0x%x  handle: 0x%x tiled: %d\n",
            sarea->depth_offset, sarea->depth_size,
-           (unsigned) sarea->depth_handle);
+           (unsigned) sarea->depth_handle, sarea->depth_tiled);
    fprintf(stderr, "SAREA: tex   offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
            sarea->tex_offset, sarea->tex_size, (unsigned) sarea->tex_handle);
 }
