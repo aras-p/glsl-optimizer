@@ -313,6 +313,17 @@ void
 debug_memory_end(unsigned long beginning);
 
 
+#ifdef DEBUG
+void debug_dump_image(const char *prefix,
+                      unsigned format, unsigned cpp,
+                      unsigned width, unsigned height,
+                      unsigned pitch,
+                      const void *data);
+#else
+#define debug_dump_image(prefix, format, cpp, width, height, pitch, data) ((void)0)
+#endif
+
+
 #ifdef	__cplusplus
 }
 #endif

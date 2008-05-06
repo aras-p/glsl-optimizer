@@ -423,3 +423,50 @@ void debug_print_format(const char *msg, unsigned fmt )
    debug_printf("%s: %s\n", msg, fmtstr); 
 }
 #endif
+
+
+#ifdef DEBUG
+void debug_dump_image(const char *prefix,
+                      unsigned format, unsigned cpp,
+                      unsigned width, unsigned height,
+                      unsigned pitch,
+                      const void *data)     
+{
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+   static unsigned no = 0; 
+   char filename[256];
+   WCHAR wfilename[sizeof(filename)];
+   ULONG_PTR iFile = 0;
+   struct {
+      unsigned format;
+      unsigned cpp;
+      unsigned width;
+      unsigned height;
+   } header;
+   unsigned char *pMap = NULL;
+   unsigned i;
+
+   util_snprintf(filename, sizeof(filename), "\\??\\c:\\%03u%s.raw", ++no, prefix);
+   for(i = 0; i < sizeof(filename); ++i)
+      wfilename[i] = (WCHAR)filename[i];
+   
+   pMap = (unsigned char *)EngMapFile(wfilename, sizeof(header) + cpp*width*height, &iFile);
+   if(!pMap)
+      return;
+   
+   header.format = format;
+   header.cpp = cpp;
+   header.width = width;
+   header.height = height;
+   memcpy(pMap, &header, sizeof(header));
+   pMap += sizeof(header);
+   
+   for(i = 0; i < height; ++i) {
+      memcpy(pMap, (unsigned char *)data + cpp*pitch*i, cpp*width);
+      pMap += cpp*width;
+   }
+      
+   EngUnmapFile(iFile);
+#endif
+}
+#endif
