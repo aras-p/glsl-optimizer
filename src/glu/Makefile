@@ -10,7 +10,7 @@ SUBDIRS = $(GLU_DIRS)
 
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; $(MAKE)) ; \
+		(cd $$dir && $(MAKE)) || exit 1 ; \
 	done
 
 # GLU pkg-config file
@@ -29,5 +29,5 @@ install: glu.pc
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; $(MAKE) clean) ; \
+		(cd $$dir && $(MAKE) clean) ; \
 	done

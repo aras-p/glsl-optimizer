@@ -14,7 +14,7 @@ default: $(TOP)/configs/current
 
 
 doxygen:
-	(cd doxygen ; make) ; \
+	cd doxygen && $(MAKE)
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
@@ -52,10 +52,10 @@ linux-directfb-install:
 
 # Xserver GLcore module
 glcore:
-	cd src/mesa/drivers/xorg ; $(MAKE)
+	cd src/mesa/drivers/xorg && $(MAKE)
 
 glcore-install:
-	cd src/mesa/drivers/xorg ; $(MAKE) install
+	cd src/mesa/drivers/xorg && $(MAKE) install
 
 .PHONY: default doxygen clean realclean install linux-directfb-install \
 	glcore glcore-install

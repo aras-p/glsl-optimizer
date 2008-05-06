@@ -42,7 +42,7 @@ default:
 # BeOS driver target
 
 beos: depend subdirs libmesa.a
-	cd drivers/beos; $(MAKE)
+	cd drivers/beos && $(MAKE)
 
 
 ######################################################################
@@ -56,7 +56,7 @@ libmesa.a: $(SOLO_OBJECTS)
 	fi
 
 linux-solo: depend subdirs libmesa.a
-	cd drivers/dri ; $(MAKE)
+	cd drivers/dri && $(MAKE)
 
 
 #####################################################################
@@ -69,7 +69,7 @@ libgl-core: $(CORE_OBJECTS)
 		$(GL_LIB_DEPS)
 
 directfb: depend subdirs libgl-core
-	cd drivers/directfb ; $(MAKE)
+	cd drivers/directfb && $(MAKE)
 
 
 #####################################################################
@@ -145,11 +145,11 @@ depend: $(ALL_SOURCES)
 
 subdirs:
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
-		(cd x86 ; $(MAKE)) ; \
+		(cd x86 && $(MAKE)) || exit 1 ; \
 	fi
 	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_64_ASM ; then \
-		(cd x86 ; $(MAKE)) ; \
-		(cd x86-64 ; $(MAKE)) ; \
+		(cd x86 && $(MAKE)) || exit 1 ; \
+		(cd x86-64 && $(MAKE)) || exit 1 ; \
 	fi
 
 pcedit = sed \
@@ -180,7 +180,7 @@ install-osmesa:
 install-drivers:
 	@for target in $(DRIVER_DIRS); do \
 	  case "$$target" in \
-	    dri) cd drivers/dri ; $(MAKE) install ;; \
+	    dri) (cd drivers/dri && $(MAKE) install) || exit 1 ;; \
 	  esac; \
 	done
 
