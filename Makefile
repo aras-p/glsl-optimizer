@@ -57,6 +57,9 @@ glcore:
 glcore-install:
 	cd src/mesa/drivers/xorg ; $(MAKE) install
 
+.PHONY: default doxygen clean realclean install linux-directfb-install \
+	glcore glcore-install
+
 # If there's no current configuration file
 $(TOP)/configs/current:
 	@echo
@@ -531,3 +534,6 @@ md5:
 	@-md5sum $(GLUT_NAME).tar.gz
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
+
+.PHONY: tarballs rm_depend lib_gz demo_gz glut_gz lib_bz2 demo_bz2 \
+	glut_bz2 lib_zip demo_zip glut_zip md5
