@@ -404,6 +404,7 @@ int brw_prepare_vertices( struct brw_context *brw,
        */
       copy_array_to_vbo_array(brw, upload[0], interleave);
 
+      ret |= dri_bufmgr_check_aperture_space(upload[0]->bo);
       for (i = 1; i < nr_uploads; i++) {
 	 /* Then, just point upload[i] at upload[0]'s buffer. */
 	 upload[i]->stride = interleave;
@@ -416,13 +417,13 @@ int brw_prepare_vertices( struct brw_context *brw,
    else {
       /* Upload non-interleaved arrays */
       for (i = 0; i < nr_uploads; i++) {
-	 copy_array_to_vbo_array(brw, upload[i], upload[i]->element_size);
+          copy_array_to_vbo_array(brw, upload[i], upload[i]->element_size);
+          if (upload[i]->bo) {
+              ret |= dri_bufmgr_check_aperture_space(upload[i]->bo);
+          }
       }
    }
 
-   if (brw->vb.upload.bo) {
-     ret |= dri_bufmgr_check_aperture_space(brw->vb.upload.bo);
-   }
 
    if (ret)
      return 1;
