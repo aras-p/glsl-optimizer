@@ -306,6 +306,11 @@ guess_and_alloc_texture(struct st_context *st,
          depth <<= 1;
    }
 
+   if (width == 0 || height == 0 || depth == 0) {
+      /* no texture needed */
+      return;
+   }
+
    /* Guess a reasonable value for lastLevel.  This is probably going
     * to be wrong fairly often and might mean that we have to look at
     * resizable buffers, or require that buffers implement lazy
@@ -1059,6 +1064,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    src_surf = strb->surface;
+   src_surf = screen->get_tex_surface(screen, strb->texture, face, level, destZ,
+                                       PIPE_BUFFER_USAGE_CPU_READ);
 
    dest_surf = screen->get_tex_surface(screen, pt, face, level, destZ,
                                        PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -1097,6 +1104,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
    }
 
    screen->tex_surface_release(screen, &dest_surf);
+   screen->tex_surface_release(screen, &src_surf);
 }
 
 
@@ -1164,7 +1172,7 @@ do_copy_texsubimage(GLcontext *ctx,
                                           stImage->level, destZ,
                                           PIPE_BUFFER_USAGE_CPU_WRITE);
 
-   if (ctx->_ImageTransferState == 0x0 &&
+   if (0&& ctx->_ImageTransferState == 0x0 &&
        strb->surface->buffer &&
        dest_surface->buffer) {
       /* do blit-style copy */

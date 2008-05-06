@@ -41,7 +41,8 @@
 struct st_renderbuffer
 {
    struct gl_renderbuffer Base;
-   struct pipe_surface *surface;
+   struct pipe_texture *texture;
+   struct pipe_surface *surface; /* temporary view into texture */
    enum pipe_format format;  /** preferred format, or PIPE_FORMAT_NONE */
 };
 

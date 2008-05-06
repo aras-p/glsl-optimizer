@@ -95,7 +95,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   struct pipe_texture template, *texture;
+   struct pipe_texture template;
    unsigned surface_usage;
 
    /* Free the old surface (and texture if we hold the last
@@ -136,12 +136,14 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    /* Probably need dedicated flags for surface usage too: 
     */
    surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
-                    PIPE_BUFFER_USAGE_GPU_WRITE |
+                    PIPE_BUFFER_USAGE_GPU_WRITE);
+#if 0
                     PIPE_BUFFER_USAGE_CPU_READ |
                     PIPE_BUFFER_USAGE_CPU_WRITE);
+#endif
 
-   texture = pipe->screen->texture_create( pipe->screen,
-                                           &template );
+   strb->texture = pipe->screen->texture_create( pipe->screen,
+                                                 &template );
 
    /* Special path for accum buffers.  
     *
@@ -149,7 +151,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
     * only for now, the surface pixel format doesn't really matter,
     * only that the buffer is large enough.
     */
-   if (!texture && template.format == DEFAULT_ACCUM_PIPE_FORMAT) 
+   if (!strb->texture && template.format == DEFAULT_ACCUM_PIPE_FORMAT) 
    {
       /* Actually, just setting this usage value should be sufficient
        * to tell the driver to go ahead and allocate the buffer, even
@@ -159,20 +161,18 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       surface_usage = (PIPE_BUFFER_USAGE_CPU_READ |
                        PIPE_BUFFER_USAGE_CPU_WRITE);
 
-      texture = pipe->screen->texture_create( pipe->screen,
-                                              &template );
+      strb->texture = pipe->screen->texture_create( pipe->screen,
+                                                    &template );
 
    }
 
-   if (!texture) 
+   if (!strb->texture) 
       return FALSE;
 
    strb->surface = pipe->screen->get_tex_surface( pipe->screen,
-                                                  texture,
+                                                  strb->texture,
                                                   0, 0, 0,
                                                   surface_usage );
-
-   pipe_texture_reference( &texture, NULL );
 
    assert(strb->surface->buffer);
    assert(strb->surface->format);
@@ -195,6 +195,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    ASSERT(strb);
    pipe_surface_reference(&strb->surface, NULL);
+   pipe_texture_reference(&strb->texture, NULL);
    free(strb);
 }
 
@@ -379,6 +380,8 @@ st_render_texture(GLcontext *ctx,
 
    rb->Width = pt->width[att->TextureLevel];
    rb->Height = pt->height[att->TextureLevel];
+
+   pipe_texture_reference( &strb->texture, pt );
 
    /* the renderbuffer's surface is inside the texture */
    strb->surface = screen->get_tex_surface(screen, pt,

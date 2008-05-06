@@ -734,12 +734,18 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *ps = st->state.framebuffer.zsbuf;
+   struct st_renderbuffer *strb;
+   struct pipe_surface *ps;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    GLint skipPixels;
    ubyte *stmap;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+
+   strb = st_renderbuffer(ctx->DrawBuffer->
+                          Attachment[BUFFER_STENCIL].Renderbuffer);
+   ps = screen->get_tex_surface(screen, strb->texture, 0, 0, 0,
+                                PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* map the stencil buffer */
    stmap = screen->surface_map(screen, ps, 
@@ -801,6 +807,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
    /* unmap the stencil buffer */
    screen->surface_unmap(screen, ps);
+   pipe_surface_reference(&ps, NULL);
 }
 
 
@@ -874,7 +881,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 {
    struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
    struct pipe_screen *screen = ctx->st->pipe->screen;
-   struct pipe_surface *psDraw = rbDraw->surface;
+   struct pipe_surface *psDraw;
    ubyte *drawMap;
    ubyte *buffer;
    int i;
@@ -888,6 +895,9 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* this will do stencil pixel transfer ops */
    st_read_stencil_pixels(ctx, srcx, srcy, width, height, GL_UNSIGNED_BYTE,
                           &ctx->DefaultPacking, buffer);
+
+   psDraw = screen->get_tex_surface(screen, rbDraw->texture, 0, 0, 0,
+                                    PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* map the stencil buffer */
    drawMap = screen->surface_map(screen, psDraw, PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -931,6 +941,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    /* unmap the stencil buffer */
    screen->surface_unmap(screen, psDraw);
+   pipe_surface_reference(&psDraw, NULL);
 }
 
 
@@ -945,7 +956,6 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_renderbuffer *rbRead;
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
-   struct pipe_surface *psRead;
    struct pipe_surface *psTex;
    struct pipe_texture *pt;
    GLfloat *color;
@@ -976,8 +986,12 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
    }
 
+#if 0
    psRead = rbRead->surface;
    srcFormat = psRead->format;
+#else
+   srcFormat = rbRead->texture->format;
+#endif
 
    if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE)) {
       texFormat = srcFormat;
@@ -1005,18 +1019,26 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    if (srcFormat == texFormat) {
+      /* copy source framebuffer surface into mipmap/texture */
+      struct pipe_surface *psRead = screen->get_tex_surface(screen,
+                                       rbRead->texture, 0, 0, 0,
+                                       PIPE_BUFFER_USAGE_GPU_READ);
       psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_GPU_WRITE );
-
-      /* copy source framebuffer surface into mipmap/texture */
       pipe->surface_copy(pipe,
                          FALSE,
 			 psTex, /* dest */
 			 0, 0, /* destx/y */
 			 psRead,
 			 srcx, srcy, width, height);
+      pipe_surface_reference(&psRead, NULL);
    }
    else {
+      /* CPU-based fallback/conversion */
+      struct pipe_surface *psRead = screen->get_tex_surface(screen,
+                                       rbRead->texture, 0, 0, 0,
+                                       PIPE_BUFFER_USAGE_CPU_READ);
+
       psTex = screen->get_tex_surface(screen, pt, 0, 0, 0, 
                                       PIPE_BUFFER_USAGE_CPU_WRITE );
 
@@ -1036,6 +1058,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          pipe_put_tile_z(pipe, psTex, 0, 0, width, height, buf);
          free(buf);
       }
+      pipe_surface_reference(&psRead, NULL);
    }
 
    pipe_surface_reference(&psTex, NULL);
