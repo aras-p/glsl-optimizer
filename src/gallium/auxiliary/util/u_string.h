@@ -158,6 +158,7 @@ util_memmove(void *dest, const void *src, size_t n)
 
 #define util_vsnprintf vsnprintf
 #define util_snprintf snprintf
+#define util_sprintf sprintf
 #define util_strchr strchr
 #define util_strcmp strcmp
 #define util_strncmp strncmp
