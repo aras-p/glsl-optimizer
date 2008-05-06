@@ -191,6 +191,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
 	$(DIRECTORY)/configure						\
 	$(DIRECTORY)/configure.ac					\
+	$(DIRECTORY)/acinclude.m4					\
 	$(DIRECTORY)/aclocal.m4						\
 	$(DIRECTORY)/descrip.mms					\
 	$(DIRECTORY)/mms-config.					\
@@ -455,9 +456,9 @@ ACLOCAL = aclocal
 ACLOCAL_FLAGS =
 AUTOCONF = autoconf
 AC_FLAGS =
-aclocal.m4: configure.ac
+aclocal.m4: configure.ac acinclude.m4
 	$(ACLOCAL) $(ACLOCAL_FLAGS)
-configure: configure.ac aclocal.m4
+configure: configure.ac aclocal.m4 acinclude.m4
 	$(AUTOCONF) $(AC_FLAGS)
 
 rm_depend:

@@ -879,21 +879,9 @@ AC_SUBST([ASM_FLAGS])
 AC_SUBST([ASM_SOURCES])
 AC_SUBST([ASM_API])
 
-PIC_FLAGS=""
-case "$host_os" in
-linux*)
-    PIC_FLAGS="-fPIC"
-    ;;
-freebsd* | dragonfly*)
-    PIC_FLAGS="-fPIC"
-    case "$host_cpu" in
-    i?86)
-        PIC_FLAGS=""
-        ;;
-    esac
-    ;;
-esac
-AC_SUBST([PIC_FLAGS])
+dnl PIC code macro
+MESA_PIC_FLAGS
+
 
 dnl Restore LDFLAGS and CPPFLAGS
 LDFLAGS="$_SAVE_LDFLAGS"
