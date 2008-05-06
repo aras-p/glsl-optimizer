@@ -295,7 +295,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Height = height;
 
       /* This sets the Get/PutRow/Value functions */
-      intel_set_span_functions(&irb->Base);
+      /* XXX can we choose a different tile here? */
+      intel_set_span_functions(&irb->Base, INTEL_TILE_NONE);
 
       return GL_TRUE;
    }
@@ -375,7 +376,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *rb,
  * not a user-created renderbuffer.
  */
 struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat)
+intel_create_renderbuffer(GLenum intFormat, int tiling)
 {
    GET_CURRENT_CONTEXT(ctx);
 
@@ -442,12 +443,14 @@ intel_create_renderbuffer(GLenum intFormat)
 
    irb->Base.InternalFormat = intFormat;
 
+   irb->tiling = tiling;
+
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_alloc_window_storage;
    irb->Base.GetPointer = intel_get_pointer;
    /* This sets the Get/PutRow/Value functions */
-   intel_set_span_functions(&irb->Base);
+   intel_set_span_functions(&irb->Base, tiling);
 
    return irb;
 }
@@ -519,7 +522,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
 
 static GLboolean
 intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb, 
-                          struct gl_texture_image *texImage)
+		     struct gl_texture_image *texImage)
 {
    if (texImage->TexFormat == &_mesa_texformat_argb8888) {
       irb->Base._ActualFormat = GL_RGBA8;
@@ -558,7 +561,7 @@ intel_update_wrapper(GLcontext *ctx, struct intel_renderbuffer *irb,
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
-   intel_set_span_functions(&irb->Base);
+   intel_set_span_functions(&irb->Base, irb->tiling);
 
    irb->RenderToTexture = GL_TRUE;
 
@@ -585,6 +588,9 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
 
    _mesa_init_renderbuffer(&irb->Base, name);
    irb->Base.ClassID = INTEL_RB_CLASS;
+
+   /* XXX can we fix this? */
+   irb->tiling = INTEL_TILE_NONE;
 
    if (!intel_update_wrapper(ctx, irb, texImage)) {
       _mesa_free(irb);

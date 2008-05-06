@@ -72,6 +72,7 @@ struct intel_renderbuffer
    struct intel_region *region;
    void *pfMap;                 /* possibly paged flipped map pointer */
    GLuint pfPitch;              /* possibly paged flipped pitch */
+   int tiling;
    GLboolean RenderToTexture;   /* RTT? */
 
    GLuint PairedDepth;   /**< only used if this is a depth renderbuffer */
@@ -90,7 +91,7 @@ intel_renderbuffer_set_region(struct intel_renderbuffer *irb,
 			      struct intel_region *region);
 
 extern struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat);
+intel_create_renderbuffer(GLenum intFormat, int tiling);
 
 extern void intel_fbo_init(struct intel_context *intel);
 

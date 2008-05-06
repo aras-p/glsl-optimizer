@@ -74,6 +74,8 @@ typedef struct
    int irq_active;
    int allow_batchbuffer;
 
+   int ttm;
+
    /**
    * Configuration cache with default values for all contexts
    */

@@ -498,6 +498,9 @@ intel_init_bufmgr(struct intel_context *intel)
 					   intel);
    }
 
+   /* XXX bufmgr should be per-screen, not per-context */
+   intelScreen->ttm = intel->ttm;
+
    return GL_TRUE;
 }
 

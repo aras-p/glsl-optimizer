@@ -40,6 +40,111 @@
 #include "swrast/swrast.h"
 
 /*
+ * Deal with tiled surfaces
+ */
+
+#if 0
+/* These are pre-965 tile swizzling functions -- power of two widths */
+static uintptr_t x_tile_swizzle_pow2 (uintptr_t addr, int n)
+{
+	uintptr_t	a = addr;
+	uintptr_t	base_mask = (((~0) << (n + 4)) | 0xff);
+	uintptr_t	x_mask = ((~0) << 12) & ~base_mask;
+
+	a = ((a & base_mask) | 
+	     ((a >> (n-8)) & 0x7) |
+	     ((a << 3) & x_mask));
+	_mesa_printf ("x_swizzle %08x (base %x yrow %x tile#x %x xsword %x byte %x) %08x\n",
+		      addr,
+		      addr >> (n + 4),
+		      (addr >> (n + 1)) & 0x7,
+		      (addr >> 9) & ((1 << (n-8)) - 1),
+		      (addr >> 5) & 0xf,
+		      (addr & 0x1f),
+		      a);
+	return a;
+}
+
+static uintptr_t y_tile_swizzle_pow2 (uintptr_t addr, int n)
+{
+	uintptr_t	a = (uintptr_t) addr;
+	uintptr_t	base_mask = (((~0) << (n + 6)) | 0xf);
+	uintptr_t	x_mask = ((~0) << 9) & ~base_mask;
+
+	a = ((a & base_mask) | 
+	     ((a >> (n-3)) & 0x1f) |
+	     ((a << 5) & x_mask));
+	_mesa_printf ("y_swizzle %08x (base %x yrow %x tile#x %x xoword %x byte %x) %08x\n",
+		      addr,
+		      addr >> (n + 6),
+		      (addr >> (n + 1)) & 0x01f,
+		      (addr >> 7) & ((1 << (n-6)) - 1),
+		      (addr >> 4) & 0x7,
+		      (addr & 0xf),
+		      a);
+	return a;
+}
+#endif
+
+static GLubyte *x_tile_swizzle(struct intel_renderbuffer *irb, struct intel_context *intel,
+			       int x, int y)
+{
+	GLubyte	*buf = (GLubyte *) irb->pfMap;
+	int	tile_stride;
+	int	xbyte;
+	int	x_tile_off, y_tile_off;
+	int	x_tile_number, y_tile_number;
+	int	tile_off, tile_base;
+	
+	tile_stride = (irb->pfPitch * irb->region->cpp) << 3;
+	
+	x += intel->drawX;
+	y += intel->drawY;
+
+	xbyte = x * irb->region->cpp;
+
+	x_tile_off = xbyte & 0x1ff;
+	y_tile_off = y & 7;
+
+	x_tile_number = xbyte >> 9;
+	y_tile_number = y >> 3;
+
+	tile_off = (y_tile_off << 9) + x_tile_off;
+	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
+
+	return buf + tile_base + tile_off;
+}
+
+static GLubyte *y_tile_swizzle(struct intel_renderbuffer *irb, struct intel_context *intel,
+			       int x, int y)
+{
+	GLubyte	*buf = (GLubyte *) irb->pfMap;
+	int	tile_stride;
+	int	xbyte;
+	int	x_tile_off, y_tile_off;
+	int	x_tile_number, y_tile_number;
+	int	tile_off, tile_base;
+	
+	tile_stride = (irb->pfPitch * irb->region->cpp) << 3;
+	
+	x += intel->drawX;
+	y += intel->drawY;
+
+	xbyte = x * irb->region->cpp;
+
+	x_tile_off = xbyte & 0x7f;
+	y_tile_off = y & 0x1f;
+
+	x_tile_number = xbyte >> 7;
+	y_tile_number = y >> 5;
+
+	tile_off = ((x_tile_off & ~0xf) << 5) + (y_tile_off << 4) + (x_tile_off & 0xf);
+	tile_base = (x_tile_number << 12) + y_tile_number * tile_stride;
+
+	return buf + tile_base + tile_off;
+}
+
+/*
   break intelWriteRGBASpan_ARGB8888
 */
 
@@ -55,7 +160,7 @@
       + (intel->drawY * irb->pfPitch + intel->drawX) * irb->region->cpp;\
    GLuint p;								\
    assert(irb->pfMap);\
-   (void) p;
+   (void) p; (void) buf;
 
 /* XXX FBO: this is identical to the macro in spantmp2.h except we get
  * the cliprect info from the context, not the driDrawable.
@@ -69,12 +174,14 @@
 	 int miny = intel->pClipRects[_nc].y1 - intel->drawY;		\
 	 int maxx = intel->pClipRects[_nc].x2 - intel->drawX;		\
 	 int maxy = intel->pClipRects[_nc].y2 - intel->drawY;
-
-
-
+	
+#if 0
+      }}
+#endif
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
 
+/* XXX with GEM, these need to tell the kernel */
 #define HW_LOCK()
 
 #define HW_UNLOCK()
@@ -99,6 +206,43 @@
 #define GET_PTR(X,Y) (buf + ((Y) * irb->pfPitch + (X)) * 4)
 #include "spantmp2.h"
 
+/* 16 bit RGB565 color tile spanline and pixel functions
+ */
+
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+
+#define TAG(x)    intel_XTile_##x##_RGB565
+#define TAG2(x,y) intel_XTile_##x##_RGB565##y
+#define GET_PTR(X,Y) x_tile_swizzle(irb, intel, X, Y)
+#include "spantmp2.h"
+
+#define SPANTMP_PIXEL_FMT GL_RGB
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
+
+#define TAG(x)    intel_YTile_##x##_RGB565
+#define TAG2(x,y) intel_YTile_##x##_RGB565##y
+#define GET_PTR(X,Y) y_tile_swizzle(irb, intel, X, Y)
+#include "spantmp2.h"
+
+/* 32 bit ARGB888 color tile spanline and pixel functions
+ */
+
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+
+#define TAG(x)    intel_XTile_##x##_ARGB8888
+#define TAG2(x,y) intel_XTile_##x##_ARGB8888##y
+#define GET_PTR(X,Y) x_tile_swizzle(irb, intel, X, Y)
+#include "spantmp2.h"
+
+#define SPANTMP_PIXEL_FMT GL_BGRA
+#define SPANTMP_PIXEL_TYPE GL_UNSIGNED_INT_8_8_8_8_REV
+
+#define TAG(x)    intel_YTile_##x##_ARGB8888
+#define TAG2(x,y) intel_YTile_##x##_ARGB8888##y
+#define GET_PTR(X,Y) y_tile_swizzle(irb, intel, X, Y)
+#include "spantmp2.h"
 
 #define LOCAL_DEPTH_VARS						\
    struct intel_context *intel = intel_context(ctx);			\
@@ -107,7 +251,7 @@
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
    const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;	\
    char *buf = (char *) irb->pfMap/*XXX use region->map*/ +             \
-      (intel->drawY * pitch + intel->drawX) * irb->region->cpp;
+      (intel->drawY * pitch + intel->drawX) * irb->region->cpp; (void) buf;
 
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
@@ -123,6 +267,33 @@
 
 
 #define TAG(x) intel##x##_z16
+#include "depthtmp.h"
+
+
+/**
+ ** 16-bit x tile depthbuffer functions.
+ **/
+#define WRITE_DEPTH( _x, _y, d ) \
+   (*((GLushort *)x_tile_swizzle (irb, intel, _x, _y)) = d)
+
+#define READ_DEPTH( d, _x, _y )	\
+   d = *((GLushort *)x_tile_swizzle (irb, intel, _x, _y))
+
+
+#define TAG(x) intel_XTile_##x##_z16
+#include "depthtmp.h"
+
+/**
+ ** 16-bit y tile depthbuffer functions.
+ **/
+#define WRITE_DEPTH( _x, _y, d ) \
+   (*((GLushort *)y_tile_swizzle (irb, intel, _x, _y)) = d)
+
+#define READ_DEPTH( d, _x, _y )	\
+   (d = *((GLushort *)y_tile_swizzle (irb, intel, _x, _y)))
+
+
+#define TAG(x) intel_YTile_##x##_z16
 #include "depthtmp.h"
 
 
@@ -149,6 +320,49 @@
 
 
 /**
+ ** 24/8-bit x-tile interleaved depth/stencil functions
+ ** Note: we're actually reading back combined depth+stencil values.
+ ** The wrappers in main/depthstencil.c are used to extract the depth
+ ** and stencil values.
+ **/
+/* Change ZZZS -> SZZZ */
+#define WRITE_DEPTH( _x, _y, d ) {				\
+   GLuint tmp = ((d) >> 8) | ((d) << 24);			\
+   *((GLuint *)x_tile_swizzle (irb, intel, _x, _y)) = tmp;			\
+}
+
+/* Change SZZZ -> ZZZS */
+#define READ_DEPTH( d, _x, _y ) {				\
+   GLuint tmp = *((GLuint *)x_tile_swizzle (irb, intel, _x, _y));		\
+   d = (tmp << 8) | (tmp >> 24);				\
+}
+
+#define TAG(x) intel_XTile_##x##_z24_s8
+#include "depthtmp.h"
+
+/**
+ ** 24/8-bit y-tile interleaved depth/stencil functions
+ ** Note: we're actually reading back combined depth+stencil values.
+ ** The wrappers in main/depthstencil.c are used to extract the depth
+ ** and stencil values.
+ **/
+/* Change ZZZS -> SZZZ */
+#define WRITE_DEPTH( _x, _y, d ) {				\
+   GLuint tmp = ((d) >> 8) | ((d) << 24);			\
+   *((GLuint *)y_tile_swizzle (irb, intel, _x, _y)) = tmp;			\
+}
+
+/* Change SZZZ -> ZZZS */
+#define READ_DEPTH( d, _x, _y ) {				\
+   GLuint tmp = *((GLuint *)y_tile_swizzle (irb, intel, _x, _y));		\
+   d = (tmp << 8) | (tmp >> 24);				\
+}
+
+#define TAG(x) intel_YTile_##x##_z24_s8
+#include "depthtmp.h"
+
+
+/**
  ** 8-bit stencil function (XXX FBO: This is obsolete)
  **/
 #define WRITE_STENCIL( _x, _y, d ) {				\
@@ -162,6 +376,40 @@
    d = ((GLuint *)buf)[(_x) + (_y) * pitch] >> 24;
 
 #define TAG(x) intel##x##_z24_s8
+#include "stenciltmp.h"
+
+/**
+ ** 8-bit x-tile stencil function (XXX FBO: This is obsolete)
+ **/
+#define WRITE_STENCIL( _x, _y, d ) {				\
+   GLuint *a = (GLuint *) x_tile_swizzle (irb, intel, _x, _y);  \
+   GLuint tmp = *a;					        \
+   tmp &= 0xffffff;						\
+   tmp |= ((d) << 24);						\
+   *a = tmp;						        \
+}
+
+#define READ_STENCIL( d, _x, _y )				\
+   (d = *((GLuint*) x_tile_swizzle (irb, intel, _x, _y)) >> 24)
+
+#define TAG(x) intel_XTile_##x##_z24_s8
+#include "stenciltmp.h"
+
+/**
+ ** 8-bit y-tile stencil function (XXX FBO: This is obsolete)
+ **/
+#define WRITE_STENCIL( _x, _y, d ) {				\
+   GLuint *a = (GLuint *) y_tile_swizzle (irb, intel, _x, _y);  \
+   GLuint tmp = *a;					        \
+   tmp &= 0xffffff;						\
+   tmp |= ((d) << 24);						\
+   *a = tmp;						        \
+}
+
+#define READ_STENCIL( d, _x, _y )				\
+   (d = *((GLuint*) y_tile_swizzle (irb, intel, _x, _y)) >> 24)
+
+#define TAG(x) intel_YTile_##x##_z24_s8
 #include "stenciltmp.h"
 
 
@@ -379,25 +627,80 @@ intelInitSpanFuncs(GLcontext * ctx)
  * These are used for the software fallbacks.
  */
 void
-intel_set_span_functions(struct gl_renderbuffer *rb)
+intel_set_span_functions(struct gl_renderbuffer *rb, int tiling)
 {
    if (rb->_ActualFormat == GL_RGB5) {
       /* 565 RGB */
-      intelInitPointers_RGB565(rb);
+      switch (tiling) {
+      case INTEL_TILE_NONE:
+      default:
+	 intelInitPointers_RGB565(rb);
+	 break;
+      case INTEL_TILE_X:
+	 intel_XTile_InitPointers_RGB565(rb);
+	 break;
+      case INTEL_TILE_Y:
+	 intel_YTile_InitPointers_RGB565(rb);
+	 break;
+      }
    }
    else if (rb->_ActualFormat == GL_RGBA8) {
       /* 8888 RGBA */
-      intelInitPointers_ARGB8888(rb);
+      switch (tiling) {
+      case INTEL_TILE_NONE:
+      default:
+	 intelInitPointers_ARGB8888(rb);
+	 break;
+      case INTEL_TILE_X:
+	 intel_XTile_InitPointers_ARGB8888(rb);
+	 break;
+      case INTEL_TILE_Y:
+	 intel_YTile_InitPointers_ARGB8888(rb);
+	 break;
+      }
    }
    else if (rb->_ActualFormat == GL_DEPTH_COMPONENT16) {
-      intelInitDepthPointers_z16(rb);
+      switch (tiling) {
+      case INTEL_TILE_NONE:
+      default:
+	 intelInitDepthPointers_z16(rb);
+	 break;
+      case INTEL_TILE_X:
+	 intel_XTile_InitDepthPointers_z16(rb);
+	 break;
+      case INTEL_TILE_Y:
+	 intel_YTile_InitDepthPointers_z16(rb);
+	 break;
+      }
    }
    else if (rb->_ActualFormat == GL_DEPTH_COMPONENT24 ||        /* XXX FBO remove */
             rb->_ActualFormat == GL_DEPTH24_STENCIL8_EXT) {
-      intelInitDepthPointers_z24_s8(rb);
+      switch (tiling) {
+      case INTEL_TILE_NONE:
+      default:
+	 intelInitDepthPointers_z24_s8(rb);
+	 break;
+      case INTEL_TILE_X:
+	 intel_XTile_InitDepthPointers_z24_s8(rb);
+	 break;
+      case INTEL_TILE_Y:
+	 intel_YTile_InitDepthPointers_z24_s8(rb);
+	 break;
+      }
    }
-   else if (rb->_ActualFormat == GL_STENCIL_INDEX8_EXT) {       /* XXX FBO remove */
-      intelInitStencilPointers_z24_s8(rb);
+   else if (rb->_ActualFormat == GL_STENCIL_INDEX8_EXT) {
+      switch (tiling) {
+      case INTEL_TILE_NONE:
+      default:
+	 intelInitStencilPointers_z24_s8(rb);
+	 break;
+      case INTEL_TILE_X:
+	 intel_XTile_InitStencilPointers_z24_s8(rb);
+	 break;
+      case INTEL_TILE_Y:
+	 intel_YTile_InitStencilPointers_z24_s8(rb);
+	 break;
+      }
    }
    else {
       _mesa_problem(NULL,
