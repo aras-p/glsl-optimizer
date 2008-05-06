@@ -385,8 +385,6 @@ st_render_texture(GLcontext *ctx,
                                            att->CubeMapFace,
                                            att->TextureLevel,
                                            att->Zoffset,
-                                           PIPE_BUFFER_USAGE_CPU_READ |
-                                           PIPE_BUFFER_USAGE_CPU_WRITE |
                                            PIPE_BUFFER_USAGE_GPU_READ |
                                            PIPE_BUFFER_USAGE_GPU_WRITE);
    assert(strb->surface);
