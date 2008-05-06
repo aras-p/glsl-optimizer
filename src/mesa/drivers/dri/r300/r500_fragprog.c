@@ -619,7 +619,7 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	fp->cur_node = 0;
 	fp->first_node_has_tex = 0;
 	fp->const_nr = 0;
-	fp->max_temp_idx = 64;
+	fp->max_temp_idx = 0;
 	fp->node[0].alu_end = -1;
 	fp->node[0].tex_end = -1;
 
