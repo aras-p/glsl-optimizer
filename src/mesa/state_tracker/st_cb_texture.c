@@ -1129,6 +1129,7 @@ do_copy_texsubimage(GLcontext *ctx,
    struct st_renderbuffer *strb;
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_screen *screen = pipe->screen;
+   struct pipe_surface *dest_surface;
    uint dest_format, src_format;
    uint do_flip = FALSE;
    GLboolean use_fallback = GL_TRUE;
@@ -1159,7 +1160,13 @@ do_copy_texsubimage(GLcontext *ctx,
    src_format = strb->surface->format;
    dest_format = stImage->pt->format;
 
-   if (ctx->_ImageTransferState == 0x0) {
+   dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
+                                          stImage->level, destZ,
+                                          PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   if (ctx->_ImageTransferState == 0x0 &&
+       strb->surface->buffer &&
+       dest_surface->buffer) {
       /* do blit-style copy */
 
       /* XXX may need to invert image depending on window
@@ -1182,14 +1189,6 @@ do_copy_texsubimage(GLcontext *ctx,
                         x, y + height, dstx, dsty, width, height,
                         GL_COPY); /* ? */
 #else
-      struct pipe_surface *dest_surface;
-
-      dest_surface = screen->get_tex_surface(screen, stImage->pt, stImage->face,
-                                             stImage->level, destZ,
-                                             PIPE_BUFFER_USAGE_GPU_WRITE);
-
-      assert(strb->surface->buffer);
-      assert(dest_surface->buffer);
 
       if (src_format == dest_format) {
           pipe->surface_copy(pipe,
@@ -1217,8 +1216,6 @@ do_copy_texsubimage(GLcontext *ctx,
                           0.0, PIPE_TEX_MIPFILTER_NEAREST);
          use_fallback = GL_FALSE;
       }
-
-      pipe_surface_reference(&dest_surface, NULL);
 #endif
    }
 
@@ -1228,6 +1225,8 @@ do_copy_texsubimage(GLcontext *ctx,
                                 destX, destY, destZ,
                                 srcX, srcY, width, height);
    }
+
+   pipe_surface_reference(&dest_surface, NULL);
 
    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
       ctx->Driver.GenerateMipmap(ctx, target, texObj);
