@@ -1095,6 +1095,8 @@ fallback_copy_texsubimage(GLcontext *ctx,
          pipe_put_tile_rgba(pipe, dest_surf, destX, destY, width, 1, data);
       }
    }
+
+   screen->tex_surface_release(screen, &dest_surf);
 }
 
 

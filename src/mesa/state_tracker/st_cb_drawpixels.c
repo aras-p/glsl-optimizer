@@ -1038,12 +1038,13 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       }
    }
 
+   pipe_surface_reference(&psTex, NULL);
+
    /* draw textured quad */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
                       pt, stvp, stfp, color, GL_TRUE);
 
-   pipe_surface_reference(&psTex, NULL);
    pipe_texture_reference(&pt, NULL);
 }
 
