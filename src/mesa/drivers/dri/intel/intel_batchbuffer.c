@@ -206,16 +206,21 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 	      used);
 
    /* Emit a flush if the bufmgr doesn't do it for us. */
-   if (!intel->ttm)
-      intel_batchbuffer_emit_dword(intel->batch, intel->vtbl.flush_cmd());
+   if (!intel->ttm) {
+      *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
+      batch->ptr += 4;
+   }
 
    /* Round batchbuffer usage to 2 DWORDs. */
    used = batch->ptr - batch->map;
-   if ((used & 4) == 0)
-      intel_batchbuffer_emit_dword(intel->batch, 0); /* noop */
+   if ((used & 4) == 0) {
+      *(GLuint *) (batch->ptr) = 0; /* noop */
+      batch->ptr += 4;
+   }
 
    /* Mark the end of the buffer. */
-   intel_batchbuffer_emit_dword(intel->batch, MI_BATCH_BUFFER_END);
+   *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END; /* noop */
+   batch->ptr += 4;
 
    used = batch->ptr - batch->map;
 
