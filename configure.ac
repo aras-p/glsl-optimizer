@@ -356,6 +356,18 @@ xlib|dri)
     ;;
 esac
 
+dnl XCB - this is only used for GLX right now
+AC_ARG_ENABLE([xcb],
+    [AS_HELP_STRING([--enable-xcb],
+        [use XCB for GLX @<:@default=disabled@:>@])],
+    [enable_xcb="$enableval"],
+    [enable_xcb=no])
+if test "x$enable_xcb" = xyes; then
+    DEFINES="$DEFINES -DUSE_XCB"
+else
+    enable_xcb=no
+fi
+
 # SELinux awareness.
 AC_ARG_ENABLE([selinux],
     [AS_HELP_STRING([--enable-selinux],
@@ -406,13 +418,26 @@ dri)
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
-        PKG_CHECK_MODULES([DRIGL], [x11 xext xxf86vm xdamage xfixes])
+        # add xcb modules if necessary
+        dri_modules="x11 xext xxf86vm xdamage xfixes"
+        if test "$enable_xcb" = yes; then
+            dri_modules="$dri_modules x11-xcb xcb-glx"
+        fi
+
+        PKG_CHECK_MODULES([DRIGL], [$dri_modules])
         X11_INCLUDES="$X11_INCLUDES $DRIGL_CFLAGS"
         GL_LIB_DEPS="$DRIGL_LIBS"
     else
         # should check these...
         X11_INCLUDES="$X11_INCLUDES $X_CFLAGS"
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext -lXxf86vm -lXdamage -lXfixes"
+
+        # XCB can only be used from pkg-config
+        if test "$enable_xcb" = yes; then
+            PKG_CHECK_MODULES([XCB],[x11-xcb xcb-glx])
+            X11_INCLUDES="$X11_INCLUDES $XCB_CFLAGS"
+            GL_LIB_DEPS="$GL_LIB_DEPS $XCB_LIBS"
+        fi
     fi
 
     # need DRM libs, -lpthread, etc.
