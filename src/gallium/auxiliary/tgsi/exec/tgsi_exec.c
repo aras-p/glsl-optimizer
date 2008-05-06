@@ -88,6 +88,10 @@
 #define TEMP_OUTPUT_C      TGSI_EXEC_TEMP_OUTPUT_C
 #define TEMP_PRIMITIVE_I   TGSI_EXEC_TEMP_PRIMITIVE_I
 #define TEMP_PRIMITIVE_C   TGSI_EXEC_TEMP_PRIMITIVE_C
+#define TEMP_3_I           TGSI_EXEC_TEMP_THREE_I
+#define TEMP_3_C           TGSI_EXEC_TEMP_THREE_C
+#define TEMP_HALF_I        TGSI_EXEC_TEMP_HALF_I
+#define TEMP_HALF_C        TGSI_EXEC_TEMP_HALF_C
 #define TEMP_R0            TGSI_EXEC_TEMP_R0
 
 #define FOR_EACH_CHANNEL(CHAN)\
@@ -262,6 +266,8 @@ tgsi_exec_machine_init(
       mach->Temps[TEMP_2_I].xyzw[TEMP_2_C].f[i] = 2.0f;
       mach->Temps[TEMP_128_I].xyzw[TEMP_128_C].f[i] = 128.0f;
       mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].f[i] = -128.0f;
+      mach->Temps[TEMP_3_I].xyzw[TEMP_3_C].f[i] = 3.0f;
+      mach->Temps[TEMP_HALF_I].xyzw[TEMP_HALF_C].f[i] = 0.5f;
    }
 }
 

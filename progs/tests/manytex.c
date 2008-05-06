@@ -133,6 +133,7 @@ static void DeleteTextures(void)
 {
    glDeleteTextures(NumTextures, TextureID);
    free(TextureID);
+   TextureID = NULL;
 }
 
 

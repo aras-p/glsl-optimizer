@@ -1051,5 +1051,19 @@ sp_get_samples(struct tgsi_sampler *sampler,
    default:
       assert(0);
    }
+
+#if 0 /* DEBUG */
+   {
+      int i;
+      printf("Sampled at %f, %f, %f:\n", s[0], t[0], p[0]);
+      for (i = 0; i < 4; i++) {
+         printf("Frag %d: %f %f %f %f\n", i,
+                rgba[0][i],
+                rgba[1][i],
+                rgba[2][i],
+                rgba[3][i]);
+      }
+   }
+#endif
 }
 

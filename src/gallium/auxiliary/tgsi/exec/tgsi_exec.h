@@ -133,9 +133,15 @@ struct tgsi_exec_labels
 #define TGSI_EXEC_TEMP_PRIMITIVE_I  34
 #define TGSI_EXEC_TEMP_PRIMITIVE_C  2
 
-#define TGSI_EXEC_TEMP_R0           35
+#define TGSI_EXEC_TEMP_THREE_I      34
+#define TGSI_EXEC_TEMP_THREE_C      3
 
-#define TGSI_EXEC_NUM_TEMPS   (32 + 4)
+#define TGSI_EXEC_TEMP_HALF_I       35
+#define TGSI_EXEC_TEMP_HALF_C       0
+
+#define TGSI_EXEC_TEMP_R0           36
+
+#define TGSI_EXEC_NUM_TEMPS   (32 + 5)
 #define TGSI_EXEC_NUM_ADDRS   1
 #define TGSI_EXEC_NUM_IMMEDIATES  256
 

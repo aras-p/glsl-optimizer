@@ -542,26 +542,24 @@ int
 _mesa_ffs(int i)
 {
 #if (defined(_WIN32) && !defined(__MINGW32__) ) || defined(__IBMC__) || defined(__IBMCPP__)
-   register int bit = 0;
-   if (i != 0) {
-      if ((i & 0xffff) == 0) {
-         bit += 16;
-         i >>= 16;
-      }
-      if ((i & 0xff) == 0) {
-         bit += 8;
-         i >>= 8;
-      }
-      if ((i & 0xf) == 0) {
-         bit += 4;
-         i >>= 4;
-      }
-      while ((i & 1) == 0) {
-         bit++;
-         i >>= 1;
-      }
+   register int bit = 1;
+   if ((i & 0xffff) == 0) {
+      bit += 16;
+      i >>= 16;
    }
-   return bit;
+   if ((i & 0xff) == 0) {
+      bit += 8;
+      i >>= 8;
+   }
+   if ((i & 0xf) == 0) {
+      bit += 4;
+      i >>= 4;
+   }
+   if ((i & 0x3) == 0) {
+      bit += 2;
+      i >>= 2;
+   }
+   return (i) ? (bit + ((i + 1) & 0x01)) : 0;
 #else
    return ffs(i);
 #endif

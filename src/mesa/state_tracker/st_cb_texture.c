@@ -557,15 +557,17 @@ st_TexImage(GLcontext * ctx,
     * waiting on any outstanding fences.
     */
    if (stObj->pt &&
-       /*stObj->pt->first_level == level &&*/
-       stObj->pt->last_level == level &&
-       stObj->pt->target != PIPE_TEXTURE_CUBE &&
-       !st_texture_match_image(stObj->pt, &stImage->base,
-                                  stImage->face, stImage->level)) {
+       (stObj->teximage_realloc ||
+        (/*stObj->pt->first_level == level &&*/
+         stObj->pt->last_level == level &&
+         stObj->pt->target != PIPE_TEXTURE_CUBE &&
+         !st_texture_match_image(stObj->pt, &stImage->base,
+                                 stImage->face, stImage->level)))) {
 
       DBG("release it\n");
       pipe_texture_release(&stObj->pt);
       assert(!stObj->pt);
+      stObj->teximage_realloc = FALSE;
    }
 
    if (!stObj->pt) {
@@ -1445,17 +1447,6 @@ st_finalize_texture(GLcontext *ctx,
    calculate_first_last_level(stObj);
    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
-#if 0
-   /* Fallback case:
-    */
-   if (firstImage->base.Border) {
-      if (stObj->pt) {
-         pipe_texture_release(&stObj->pt);
-      }
-      return GL_FALSE;
-   }
-#endif
-
    /* If both firstImage and stObj point to a texture which can contain
     * all active images, favour firstImage.  Note that because of the
     * completeness requirement, we know that the image dimensions
@@ -1479,8 +1470,8 @@ st_finalize_texture(GLcontext *ctx,
       cpp = firstImage->base.TexFormat->TexelBytes;
    }
 
-   /* Check texture can hold all active levels.  Check texture matches
-    * target, imageFormat, etc.
+   /* If we already have a gallium texture, check that it matches the texture
+    * object's format, target, size, num_levels, etc.
     */
    if (stObj->pt &&
        (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
@@ -1495,8 +1486,7 @@ st_finalize_texture(GLcontext *ctx,
       pipe_texture_release(&stObj->pt);
    }
 
-
-   /* May need to create a new texture:
+   /* May need to create a new gallium texture:
     */
    if (!stObj->pt) {
       stObj->pt = st_texture_create(ctx->st,
