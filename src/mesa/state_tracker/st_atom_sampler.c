@@ -150,7 +150,7 @@ update_samplers(struct st_context *st)
             sampler->normalized_coords = 1;
 
          sampler->lod_bias = st->ctx->Texture.Unit[su].LodBias;
-         sampler->min_lod = MAX2(0.0f, texobj->MinLod - texobj->BaseLevel);
+         sampler->min_lod = MAX2(0.0f, texobj->MinLod);
          sampler->max_lod = MIN2(texobj->MaxLevel - texobj->BaseLevel,
                                  texobj->MaxLod);
 

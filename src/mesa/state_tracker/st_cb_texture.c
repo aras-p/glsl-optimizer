@@ -1476,17 +1476,19 @@ st_finalize_texture(GLcontext *ctx,
    /* If we already have a gallium texture, check that it matches the texture
     * object's format, target, size, num_levels, etc.
     */
-   if (stObj->pt &&
-       (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
-	stObj->pt->format !=
-	st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat) ||
-	stObj->pt->last_level < stObj->lastLevel ||
-	stObj->pt->cpp != cpp ||
-        stObj->pt->width[0] != firstImage->base.Width2 ||
-        stObj->pt->height[0] != firstImage->base.Height2 ||
-        stObj->pt->depth[0] != firstImage->base.Depth2 ||
-	stObj->pt->compressed != firstImage->base.IsCompressed)) {
-      pipe_texture_release(&stObj->pt);
+   if (stObj->pt) {
+      const enum pipe_format fmt =
+         st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+      if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
+          stObj->pt->format != fmt ||
+          stObj->pt->last_level < stObj->lastLevel ||
+          stObj->pt->width[0] != firstImage->base.Width2 ||
+          stObj->pt->height[0] != firstImage->base.Height2 ||
+          stObj->pt->depth[0] != firstImage->base.Depth2 ||
+          stObj->pt->cpp != cpp ||
+          stObj->pt->compressed != firstImage->base.IsCompressed) {
+         pipe_texture_release(&stObj->pt);
+      }
    }
 
    /* May need to create a new gallium texture:
