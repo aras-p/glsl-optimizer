@@ -101,6 +101,19 @@ util_pack_color_ub(ubyte r, ubyte g, ubyte b, ubyte a,
          *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
       }
       return;
+   case PIPE_FORMAT_A8_UNORM:
+      {
+         ubyte *d = (ubyte *) dest;
+         *d = a;
+      }
+      return;
+   case PIPE_FORMAT_L8_UNORM:
+   case PIPE_FORMAT_I8_UNORM:
+      {
+         ubyte *d = (ubyte *) dest;
+         *d = r;
+      }
+      return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
       {
          float *d = (float *) dest;
@@ -196,6 +209,19 @@ util_pack_color(const float rgba[4], enum pipe_format format, void *dest)
       {
          ushort *d = (ushort *) dest;
          *d = ((a & 0xf0) << 8) | ((r & 0xf0) << 4) | ((g & 0xf0) << 0) | (b >> 4);
+      }
+      return;
+   case PIPE_FORMAT_A8_UNORM:
+      {
+         ubyte *d = (ubyte *) dest;
+         *d = a;
+      }
+      return;
+   case PIPE_FORMAT_L8_UNORM:
+   case PIPE_FORMAT_I8_UNORM:
+      {
+         ubyte *d = (ubyte *) dest;
+         *d = r;
       }
       return;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
