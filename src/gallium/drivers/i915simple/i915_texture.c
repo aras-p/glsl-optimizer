@@ -127,7 +127,8 @@ i915_displaytarget_layout(struct pipe_screen *screen,
                               tex->base.width[0], 
                               tex->base.height[0],
                               tex->base.format,
-                              flags);
+                              flags,
+                              tex->base.tex_usage);
       
    /* Now extract the goodies: 
     */

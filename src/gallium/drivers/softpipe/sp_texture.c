@@ -115,7 +115,8 @@ softpipe_displaytarget_layout(struct pipe_screen *screen,
                               spt->base.width[0], 
                               spt->base.height[0],
                               spt->base.format,
-                              flags);
+                              flags,
+                              spt->base.tex_usage);
       
    /* Now extract the goodies: 
     */

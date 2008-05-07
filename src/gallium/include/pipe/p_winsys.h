@@ -86,7 +86,8 @@ struct pipe_winsys
                                 struct pipe_surface *surf,
                                 unsigned width, unsigned height,
                                 enum pipe_format format,
-                                unsigned flags);
+                                unsigned flags,
+                                unsigned tex_usage);
    
    void (*surface_release)(struct pipe_winsys *ws, struct pipe_surface **s);
 
