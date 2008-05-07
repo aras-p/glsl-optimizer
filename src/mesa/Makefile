@@ -27,12 +27,12 @@ GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 default: depend
 	@for driver in $(DRIVER_DIRS) ; do \
 	  case "$$driver" in \
-	    x11)      $(MAKE) stand-alone ;; \
-	    dri)      $(MAKE) linux-solo ;; \
-	    osmesa)   $(MAKE) osmesa-only ;; \
-	    beos)     $(MAKE) beos ;; \
-	    directfb) $(MAKE) directfb ;; \
-	    fbdev)    $(MAKE) fbdev ;; \
+	    x11)      $(MAKE) stand-alone || exit 1 ;; \
+	    dri)      $(MAKE) linux-solo || exit 1 ;; \
+	    osmesa)   $(MAKE) osmesa-only || exit 1 ;; \
+	    beos)     $(MAKE) beos || exit 1 ;; \
+	    directfb) $(MAKE) directfb || exit 1 ;; \
+	    fbdev)    $(MAKE) fbdev || exit 1 ;; \
 	    *) echo "$$driver is invalid in DRIVER_DIRS" >&2; exit 1;; \
 	  esac ; \
 	done

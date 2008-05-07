@@ -37,7 +37,7 @@ default:
 		echo "$(GLU_LIB_NAME) not build under BeOS, but integrated into ${GL_LIB_NAME}." ; \
 		exit 0 ; \
 	else \
-		$(MAKE) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) ; \
+		$(MAKE) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) || exit 1 ; \
 	fi
 
 $(TOP)/$(LIB_DIR):
