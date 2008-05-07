@@ -37,8 +37,8 @@ LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 default:  depend $(PROGS)
 
 clean:
-	rm -f $(PROGS)
-	rm -f *.o
+	-rm -f $(PROGS)
+	-rm -f *.o
 
 
 depend: $(SOURCES)

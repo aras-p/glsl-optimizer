@@ -19,8 +19,8 @@ INCLUDES = -I. -I- -I../../include
 default: demo sample GLInfo
 
 clean:
-	rm -f demo sample GLInfo
-	rm -f *.o
+	-rm -f demo sample GLInfo
+	-rm -f *.o
 
 demo: demo.o
 	$(LD) demo.o $(LDFLAGS) $(LIBS) -o $@

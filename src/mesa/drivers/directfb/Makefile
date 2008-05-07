@@ -50,5 +50,5 @@ install:
 
 
 clean:
-	rm -f *.o *.so
+	-rm -f *.o *.so
 

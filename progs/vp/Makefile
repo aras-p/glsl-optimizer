@@ -40,9 +40,9 @@ INCLUDES = -I. -I$(TOP)/include -I../samples
 default: $(PROGS)
 
 clean:
-	rm -f $(PROGS)
-	rm -f *.o
-	rm -f getproclist.h
+	-rm -f $(PROGS)
+	-rm -f *.o
+	-rm -f getproclist.h
 
 
 

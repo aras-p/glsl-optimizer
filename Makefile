@@ -17,16 +17,16 @@ doxygen:
 	cd doxygen && $(MAKE)
 
 clean:
-	@for dir in $(SUBDIRS) ; do \
+	-@touch $(TOP)/configs/current
+	-@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \
 	done
+	-@test -s $(TOP)/configs/current || rm -f $(TOP)/configs/current
 
 
-realclean:
-	touch $(TOP)/configs/current
-	$(MAKE) clean
+realclean: clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
 	-rm -f $(TOP)/configs/autoconf

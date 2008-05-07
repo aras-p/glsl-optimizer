@@ -8,5 +8,5 @@ default:
 
 
 clean:
-	cd mini && $(MAKE) clean
+	-@cd mini && $(MAKE) clean
 

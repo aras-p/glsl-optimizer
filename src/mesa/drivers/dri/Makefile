@@ -33,7 +33,7 @@ install:
 
 
 clean:
-	@for dir in $(DRI_DIRS) ; do \
+	-@for dir in $(DRI_DIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE) clean) ; \
 		fi \

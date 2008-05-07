@@ -24,7 +24,7 @@ tests: default
 	! ./cltest 2> /dev/null | (grep -e ^[*][*][*])
 
 clean:
-	rm -f cltest.o sotest.o vstest.o framework.o cltest sotest vstest
+	-rm -f cltest.o sotest.o vstest.o framework.o cltest sotest vstest
 
 #
 # executables

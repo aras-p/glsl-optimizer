@@ -57,8 +57,8 @@ all: options.h
 # Only intermediate files are cleaned up. options.h is not deleted because
 # it's in CVS. 
 clean:
-	rm -f $(POT) *~
-	rm -rf $(LANGS)
+	-rm -f $(POT) *~
+	-rm -rf $(LANGS)
 
 # Default target options.h
 options.h: t_options.h mo

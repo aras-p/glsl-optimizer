@@ -113,5 +113,5 @@ $(GLX_DIR)/indirect_table.c: glX_server_table.py gl_and_glX_API.xml $(COMMON_GLX
 	$(PYTHON2) $(PYTHON_FLAGS) $< -f gl_and_glX_API.xml > $@
 
 clean:
-	rm -f *~ *.pyo
-	rm -f $(OUTPUTS)
+	-rm -f *~ *.pyo
+	-rm -f $(OUTPUTS)
