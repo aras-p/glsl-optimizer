@@ -327,96 +327,110 @@ debug_dump_flags(const struct debug_named_value *names,
 
 char *pf_sprint_name( char *str, enum pipe_format format )
 {
-   strcpy( str, "PIPE_FORMAT_" );
-   switch (pf_layout( format )) {
-   case PIPE_FORMAT_LAYOUT_RGBAZS:
-      {
-         pipe_format_rgbazs_t rgbazs = (pipe_format_rgbazs_t) format;
-         uint                 i;
-         uint                 scale = 1 << (pf_exp8( rgbazs ) * 3);
-
-         for (i = 0; i < 4; i++) {
-            uint  size = pf_size_xyzw( rgbazs, i );
-
-            if (size == 0) {
-               break;
-            }
-            switch (pf_swizzle_xyzw( rgbazs, i )) {
-            case PIPE_FORMAT_COMP_R:
-               strcat( str, "R" );
-               break;
-            case PIPE_FORMAT_COMP_G:
-               strcat( str, "G" );
-               break;
-            case PIPE_FORMAT_COMP_B:
-               strcat( str, "B" );
-               break;
-            case PIPE_FORMAT_COMP_A:
-               strcat( str, "A" );
-               break;
-            case PIPE_FORMAT_COMP_0:
-               strcat( str, "0" );
-               break;
-            case PIPE_FORMAT_COMP_1:
-               strcat( str, "1" );
-               break;
-            case PIPE_FORMAT_COMP_Z:
-               strcat( str, "Z" );
-               break;
-            case PIPE_FORMAT_COMP_S:
-               strcat( str, "S" );
-               break;
-            }
-            util_snprintf( &str[strlen( str )], 32, "%u", size * scale );
-         }
-         if (i != 0) {
-            strcat( str, "_" );
-         }
-         switch (pf_type( rgbazs )) {
-         case PIPE_FORMAT_TYPE_UNKNOWN:
-            strcat( str, "NONE" );
-            break;
-         case PIPE_FORMAT_TYPE_FLOAT:
-            strcat( str, "FLOAT" );
-            break;
-         case PIPE_FORMAT_TYPE_UNORM:
-            strcat( str, "UNORM" );
-            break;
-         case PIPE_FORMAT_TYPE_SNORM:
-            strcat( str, "SNORM" );
-            break;
-         case PIPE_FORMAT_TYPE_USCALED:
-            strcat( str, "USCALED" );
-            break;
-         case PIPE_FORMAT_TYPE_SSCALED:
-            strcat( str, "SSCALED" );
-            break;
-         }
-      }
-      break;
-   case PIPE_FORMAT_LAYOUT_YCBCR:
-      {
-         pipe_format_ycbcr_t  ycbcr = (pipe_format_ycbcr_t) format;
-
-         strcat( str, "YCBCR" );
-         if (pf_rev( ycbcr )) {
-            strcat( str, "_REV" );
-         }
-      }
-      break;
-   }
+   strcpy( str, debug_dump_enum(pipe_format_names, fmt) );
    return str;
 }
 
 
 #ifdef DEBUG
+static const struct debug_named_value pipe_format_names[] = {
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_NONE),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8R8G8B8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_X8R8G8B8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_B8G8R8A8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_B8G8R8X8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A1R5G5B5_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A4R4G4B4_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R5G6B5_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_L8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_I8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8L8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_YCBCR),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_YCBCR_REV),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_S8Z24_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z24S8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_X8Z24_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z24X8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_S8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64G64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64G64B64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64G64B64A64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_L8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8_L8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGBA),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT3_RGBA),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT5_RGBA),
+   DEBUG_NAMED_VALUE_END
+};
+
 void debug_print_format(const char *msg, unsigned fmt )
 {
-   char fmtstr[80];
- 
-   pf_sprint_name(fmtstr, (enum pipe_format)fmt);
-
-   debug_printf("%s: %s\n", msg, fmtstr); 
+   debug_printf("%s: %s\n", msg, debug_dump_enum(pipe_format_names, fmt)); 
 }
 #endif
 
