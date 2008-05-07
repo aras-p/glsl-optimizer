@@ -37,6 +37,19 @@ default: depend
 	  esac ; \
 	done
 
+install: default
+	@for driver in $(DRIVER_DIRS) ; do \
+	  case "$$driver" in \
+	    osmesa) if [ "$(DRIVER_DIRS)" = osmesa ]; then \
+	              $(MAKE) install-headers install-osmesa || exit 1 ; \
+	            else \
+	              $(MAKE) install-osmesa || exit 1 ; \
+	            fi ;; \
+	    dri)    $(MAKE) install-libgl install-dri || exit 1 ;; \
+	    *)      $(MAKE) install-libgl || exit 1 ;; \
+	  esac ; \
+	done
+
 
 ######################################################################
 # BeOS driver target
@@ -160,31 +173,25 @@ pcedit = sed \
 gl.pc: gl.pc.in
 	$(pcedit) $< > $@
 
-install-libgl: gl.pc
+install-headers:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h \
+		$(DESTDIR)$(INSTALL_DIR)/include/GL
+
+install-libgl: default gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
-	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(DESTDIR)$(INSTALL_DIR)/include/GL
-	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* \
-			$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
-	fi
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)* \
+		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 
-install-osmesa:
-	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* \
-			$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
-	fi
+install-osmesa: default
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)* \
+		$(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
-install-drivers:
-	@for target in $(DRIVER_DIRS); do \
-	  case "$$target" in \
-	    dri) (cd drivers/dri && $(MAKE) install) || exit 1 ;; \
-	  esac; \
-	done
-
-install: default install-libgl install-osmesa install-drivers
+install-dri:
+	cd drivers/dri && $(MAKE) install
 
 ## NOT INSTALLED YET:
 ## $(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES
