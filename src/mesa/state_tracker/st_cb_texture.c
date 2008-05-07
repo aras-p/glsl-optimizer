@@ -1496,6 +1496,7 @@ st_finalize_texture(GLcontext *ctx,
           stObj->pt->cpp != cpp ||
           stObj->pt->compressed != firstImage->base.IsCompressed) {
          pipe_texture_release(&stObj->pt);
+         ctx->st->dirty.st |= ST_NEW_FRAMEBUFFER;
       }
    }
 

@@ -315,6 +315,22 @@ st_texture_image_copy(struct pipe_context *pipe,
       assert(src->width[srcLevel] == width);
       assert(src->height[srcLevel] == height);
 
+#if 0
+      {
+         src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
+                                               PIPE_BUFFER_USAGE_CPU_READ);
+         ubyte *map = screen->surface_map(screen, src_surface, PIPE_BUFFER_USAGE_CPU_READ);
+         map += src_surface->width * src_surface->height * 4 / 2;
+         printf("%s center pixel: %d %d %d %d (pt %p[%d] -> %p[%d])\n",
+                __FUNCTION__,
+                map[0], map[1], map[2], map[3],
+                src, srcLevel, dst, dstLevel);
+
+         screen->surface_unmap(screen, src_surface);
+         pipe_surface_reference(&src_surface, NULL);
+      }
+#endif
+
       dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
                                             PIPE_BUFFER_USAGE_GPU_WRITE);
 

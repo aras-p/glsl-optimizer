@@ -34,13 +34,60 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_cb_fbo.h"
+#include "st_texture.h"
 #include "pipe/p_context.h"
+#include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
+
+
+
+/**
+ * When doing GL render to texture, we have to be sure that finalize_texture()
+ * didn't yank out the pipe_texture that we earlier created a surface for.
+ * Check for that here and create a new surface if needed.
+ */
+static void
+update_renderbuffer_surface(struct st_context *st,
+                            struct st_renderbuffer *strb)
+{
+   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_texture *texture = strb->rtt->pt;
+   int rtt_width = strb->Base.Width;
+   int rtt_height = strb->Base.Height;
+
+   if (!strb->surface ||
+       strb->surface->texture != texture ||
+       strb->surface->width != rtt_width ||
+       strb->surface->height != rtt_height) {
+      int level;
+      /* find matching mipmap level size */
+      for (level = 0; level <= texture->last_level; level++) {
+         if (texture->width[level] == rtt_width &&
+             texture->height[level] == rtt_height) {
+
+            pipe_surface_reference(&strb->surface, NULL);
+
+            strb->surface = screen->get_tex_surface(screen,
+                                              texture,
+                                              strb->rtt_face,
+                                              level,
+                                              strb->rtt_slice,
+                                              PIPE_BUFFER_USAGE_GPU_READ |
+                                              PIPE_BUFFER_USAGE_GPU_WRITE);
+#if 0
+            printf("-- alloc new surface %d x %d into tex %p\n",
+                   strb->surface->width, strb->surface->height,
+                   texture);
+#endif
+            break;
+         }
+      }
+   }
+}
 
 
 /**
  * Update framebuffer state (color, depth, stencil, etc. buffers)
- * XXX someday: separate draw/read buffers.
  */
 static void
 update_framebuffer_state( struct st_context *st )
@@ -55,6 +102,8 @@ update_framebuffer_state( struct st_context *st )
    framebuffer->width = fb->Width;
    framebuffer->height = fb->Height;
 
+   /*printf("------ fb size %d x %d\n", fb->Width, fb->Height);*/
+
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
@@ -62,6 +111,13 @@ update_framebuffer_state( struct st_context *st )
    for (j = 0; j < MAX_DRAW_BUFFERS; j++) {
       for (i = 0; i < fb->_NumColorDrawBuffers[j]; i++) {
          strb = st_renderbuffer(fb->_ColorDrawBuffers[j][i]);
+
+         /*printf("--------- framebuffer surface rtt %p\n", strb->rtt);*/
+         if (strb->rtt) {
+            /* rendering to a GL texture, may have to update surface */
+            update_renderbuffer_surface(st, strb);
+         }
+
          assert(strb->surface);
          framebuffer->cbufs[framebuffer->num_cbufs] = strb->surface;
          framebuffer->num_cbufs++;
@@ -99,7 +155,7 @@ const struct st_tracked_state st_update_framebuffer = {
    "st_update_framebuffer",				/* name */
    {							/* dirty */
       _NEW_BUFFERS,					/* mesa */
-      0,						/* st */
+      ST_NEW_FRAMEBUFFER,				/* st */
    },
    update_framebuffer_state				/* update */
 };

@@ -39,34 +39,13 @@
 #include "pipe/p_context.h"
 #include "pipe/p_inlines.h"
 #include "cso_cache/cso_context.h"
-#include "util/u_simple_shaders.h"
 
 
-static void *
-get_passthrough_fs(struct st_context *st)
-{
-   struct pipe_shader_state shader;
-
-   if (!st->passthrough_fs) {
-      st->passthrough_fs =
-         util_make_fragment_passthrough_shader(st->pipe, &shader);
-      free((void *) shader.tokens);
-   }
-
-   return st->passthrough_fs;
-}
-
-
-/**
- * XXX This needs some work yet....
- * Need to "upload" texture images at appropriate times.
- */
 static void 
 update_textures(struct st_context *st)
 {
    struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
    GLuint su;
-   GLboolean missing_textures = GL_FALSE;
 
    st->state.num_textures = 0;
 
@@ -85,13 +64,11 @@ update_textures(struct st_context *st)
             retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
             if (!retval) {
                /* out of mem */
-               missing_textures = GL_TRUE;
+               /* missing texture */
                continue;
             }
 
             st->state.num_textures = su + 1;
-
-            stObj->teximage_realloc = TRUE;
          }
 
          pt = st_get_stobj_texture(stObj);
@@ -103,12 +80,6 @@ update_textures(struct st_context *st)
    cso_set_sampler_textures(st->cso_context,
                             st->state.num_textures,
                             st->state.sampler_texture);
-
-   if (missing_textures) {
-      /* use a pass-through frag shader that uses no textures */
-      void *fs = get_passthrough_fs(st);
-      cso_set_fragment_shader_handle(st->cso_context, fs);
-   }
 }
 
 
@@ -119,4 +90,53 @@ const struct st_tracked_state st_update_texture = {
       ST_NEW_FRAGMENT_PROGRAM,				/* st */
    },
    update_textures					/* update */
+};
+
+
+
+
+static void 
+finalize_textures(struct st_context *st)
+{
+   struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
+   const GLboolean prev_missing_textures = st->missing_textures;
+   GLuint su;
+
+   st->missing_textures = GL_FALSE;
+
+   for (su = 0; su < st->ctx->Const.MaxTextureCoordUnits; su++) {
+      if (fprog->Base.SamplersUsed & (1 << su)) {
+         const GLuint texUnit = fprog->Base.SamplerUnits[su];
+         struct gl_texture_object *texObj
+            = st->ctx->Texture.Unit[texUnit]._Current;
+         struct st_texture_object *stObj = st_texture_object(texObj);
+
+         if (texObj) {
+            GLboolean flush, retval;
+
+            retval = st_finalize_texture(st->ctx, st->pipe, texObj, &flush);
+            if (!retval) {
+               /* out of mem */
+               st->missing_textures = GL_TRUE;
+               continue;
+            }
+
+            stObj->teximage_realloc = TRUE;
+         }
+      }
+   }
+
+   if (prev_missing_textures != st->missing_textures)
+      st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+}
+
+
+
+const struct st_tracked_state st_finalize_textures = {
+   "st_finalize_textures",		/* name */
+   {					/* dirty */
+      _NEW_TEXTURE,			/* mesa */
+      0,				/* st */
+   },
+   finalize_textures			/* update */
 };

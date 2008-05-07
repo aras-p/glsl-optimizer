@@ -358,6 +358,10 @@ st_render_texture(GLcontext *ctx,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt;
+   struct st_texture_object *stObj;
+   const struct gl_texture_image *texImage =
+      att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+
 
    assert(!att->Renderbuffer);
 
@@ -374,27 +378,42 @@ st_render_texture(GLcontext *ctx,
    strb = st_renderbuffer(rb);
 
    /* get the texture for the texture object */
+   stObj = st_texture_object(att->Texture);
+
+   /* point renderbuffer at texobject */
+   strb->rtt = stObj;
+   strb->rtt_level = att->TextureLevel;
+   strb->rtt_face = att->CubeMapFace;
+   strb->rtt_slice = att->Zoffset;
+
+   rb->Width = texImage->Width2;
+   rb->Height = texImage->Height2;
+   /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
+
    pt = st_get_texobj_texture(att->Texture);
    assert(pt);
-   assert(pt->width[att->TextureLevel]);
-
-   rb->Width = pt->width[att->TextureLevel];
-   rb->Height = pt->height[att->TextureLevel];
+   /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
 
    pipe_texture_reference( &strb->texture, pt );
 
+   pipe_surface_reference(&strb->surface, NULL);
+
+#if 0
    /* the renderbuffer's surface is inside the texture */
    strb->surface = screen->get_tex_surface(screen, pt,
                                            att->CubeMapFace,
-                                           att->TextureLevel,
+                                           att->TextureLevel /*- att->Texture->BaseLevel*/,
                                            att->Zoffset,
                                            PIPE_BUFFER_USAGE_GPU_READ |
                                            PIPE_BUFFER_USAGE_GPU_WRITE);
+   printf("***** surface size: %d x %d\n", strb->surface->width, strb->surface->height);
+
    assert(strb->surface);
    assert(screen->is_format_supported(screen, strb->surface->format, PIPE_TEXTURE));
    assert(screen->is_format_supported(screen, strb->surface->format, PIPE_SURFACE));
 
    init_renderbuffer_bits(strb, pt->format);
+#endif
 
    /*
    printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
@@ -424,7 +443,10 @@ st_finish_render_texture(GLcontext *ctx,
 
    ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   screen->tex_surface_release( screen, &strb->surface );
+   if (strb->surface)
+      screen->tex_surface_release( screen, &strb->surface );
+
+   strb->rtt = NULL;
 
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);

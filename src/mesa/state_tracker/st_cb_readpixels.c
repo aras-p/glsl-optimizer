@@ -183,6 +183,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct gl_pixelstore_attrib clippedPacking = *pack;
    struct pipe_surface *surf;
 
+   assert(ctx->ReadBuffer->Width > 0);
+
    /* XXX convolution not done yet */
    assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
 
