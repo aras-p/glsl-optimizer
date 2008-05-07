@@ -310,7 +310,30 @@ static void dumb_shader(struct r500_fragment_program *fp)
 	fp->translated = GL_TRUE;
 }
 
-static void emit_alu(struct r500_fragment_program *fp) {
+/* static void emit_alu(struct r500_fragment_program *fp) {
+ * } */
+
+static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_src_register src, GLuint dest) {
+	/* The r3xx shader uses MAD to implement MOV. We are using CMP, since
+	 * it is technically more accurate and recommended by ATI/AMD. */
+	GLuint src_reg = make_src(fp, src);
+	fp->inst[counter].inst0 = R500_INST_TYPE_ALU;
+	fp->inst[counter].inst1 = R500_RGB_ADDR0(src_reg);
+	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src_reg);
+	fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+		| MAKE_SWIZ_RGB_A(make_rgb_swizzle(src))
+		| R500_ALU_RGB_SEL_B_SRC0
+		| MAKE_SWIZ_RGB_B(make_rgb_swizzle(src))
+		| R500_ALU_RGB_OMOD_DISABLE;
+	fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+		| R500_ALPHA_ADDRD(dest)
+		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(src))
+		| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(src))
+		| R500_ALPHA_OMOD_DISABLE;
+	fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
+		| R500_ALU_RGBA_ADDRD(dest)
+		| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+		| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 }
 
 static GLboolean parse_program(struct r500_fragment_program *fp)
@@ -335,23 +358,12 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 
 		switch (fpi->Opcode) {
 			case OPCODE_ABS:
-				src[0] = make_src(fp, fpi->SrcReg[0]);
-				/* Variation on MOV */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| mask;
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
-					| R500_ALU_RGB_MOD_A_ABS | R500_ALU_RGB_SEL_B_SRC0
-					| MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst4 = R500_ALPHA_OP_MAX
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0
-					| MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0])) | R500_ALPHA_MOD_A_ABS
-					| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[0]));
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAX
-					| R500_ALU_RGBA_ADDRD(dest);
+				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				fp->inst[counter].inst0 |= mask;
+				fp->inst[counter].inst3 |= R500_ALU_RGB_MOD_A_ABS
+					| R500_ALU_RGB_MOD_B_ABS;
+				fp->inst[counter].inst4 |= R500_ALPHA_MOD_A_ABS
+					| R500_ALPHA_MOD_B_ABS;
 				break;
 			case OPCODE_ADD:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -485,27 +497,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
 			case OPCODE_MOV:
-				src[0] = make_src(fp, fpi->SrcReg[0]);
-
-				/* changed to use MAD - not sure if we
-				   ever have negative things which max will fail on */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| mask;
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-				  | MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB) 
-				  | R500_ALU_RGB_SEL_B_SRC0
-				  | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
-				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SEL_B_SRC0 
-				  | R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_1;
-
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-					| R500_ALU_RGBA_ADDRD(dest)
-				  | MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-				  | MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				fp->inst[counter].inst0 |= mask;
 				break;
 			case OPCODE_MUL:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
