@@ -150,8 +150,6 @@ int MESA_DEBUG_FLAGS = 0;
 /* ubyte -> float conversion */
 GLfloat _mesa_ubyte_to_float_color_tab[256];
 
-static void
-free_shared_state( GLcontext *ctx, struct gl_shared_state *ss );
 
 
 /**
@@ -423,12 +421,14 @@ alloc_shared_state( GLcontext *ctx )
 #endif
 
 #if FEATURE_ARB_vertex_program
-   ss->DefaultVertexProgram = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+   ss->DefaultVertexProgram = (struct gl_vertex_program *)
+      ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!ss->DefaultVertexProgram)
       goto cleanup;
 #endif
 #if FEATURE_ARB_fragment_program
-   ss->DefaultFragmentProgram = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   ss->DefaultFragmentProgram = (struct gl_fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!ss->DefaultFragmentProgram)
       goto cleanup;
 #endif
@@ -513,12 +513,10 @@ alloc_shared_state( GLcontext *ctx )
       _mesa_DeleteHashTable(ss->Programs);
 #endif
 #if FEATURE_ARB_vertex_program
-   if (ss->DefaultVertexProgram)
-      ctx->Driver.DeleteProgram(ctx, ss->DefaultVertexProgram);
+   _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
 #if FEATURE_ARB_fragment_program
-   if (ss->DefaultFragmentProgram)
-      ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentProgram);
+   _mesa_reference_fragprog(ctx, &ss->DefaultFragmentProgram, NULL);
 #endif
 #if FEATURE_ATI_fragment_shader
    if (ss->DefaultFragmentShader)
@@ -695,10 +693,10 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->Programs);
 #endif
 #if FEATURE_ARB_vertex_program
-   ctx->Driver.DeleteProgram(ctx, ss->DefaultVertexProgram);
+   _mesa_reference_vertprog(ctx, &ss->DefaultVertexProgram, NULL);
 #endif
 #if FEATURE_ARB_fragment_program
-   ctx->Driver.DeleteProgram(ctx, ss->DefaultFragmentProgram);
+   _mesa_reference_fragprog(ctx, &ss->DefaultFragmentProgram, NULL);
 #endif
 
 #if FEATURE_ATI_fragment_shader
@@ -1189,6 +1187,14 @@ _mesa_free_context_data( GLcontext *ctx )
       _mesa_unreference_framebuffer(&ctx->DrawBuffer);
       _mesa_unreference_framebuffer(&ctx->ReadBuffer);
    }
+
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current, NULL);
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, NULL);
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, NULL);
+
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current, NULL);
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current, NULL);
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram, NULL);
 
    _mesa_free_lighting_data( ctx );
    _mesa_free_eval_data( ctx );

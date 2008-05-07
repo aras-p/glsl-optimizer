@@ -30,6 +30,7 @@
 #include "main/mtypes.h"
 #include "main/imports.h"
 #include "shader/prog_cache.h"
+#include "shader/program.h"
 
 
 struct cache_item
@@ -109,7 +110,7 @@ clear_cache(GLcontext *ctx, struct gl_program_cache *cache)
       for (c = cache->items[i]; c; c = next) {
 	 next = c->next;
 	 _mesa_free(c->key);
-	 ctx->Driver.DeleteProgram(ctx, c->program);
+         _mesa_reference_program(ctx, &c->program, NULL);
 	 _mesa_free(c);
       }
       cache->items[i] = NULL;
@@ -177,7 +178,7 @@ _mesa_program_cache_insert(GLcontext *ctx,
    c->key = _mesa_malloc(keysize);
    memcpy(c->key, key, keysize);
 
-   c->program = program;
+   c->program = program;  /* no refcount change */
 
    if (cache->n_items > cache->size * 1.5) {
       if (cache->size < 1000)

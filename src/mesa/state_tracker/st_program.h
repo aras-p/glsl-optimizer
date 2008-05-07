@@ -34,7 +34,8 @@
 #ifndef ST_PROGRAM_H
 #define ST_PROGRAM_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "shader/program.h"
 #include "pipe/p_shader_tokens.h"
 
 
@@ -112,6 +113,27 @@ static INLINE struct st_vertex_program *
 st_vertex_program( struct gl_vertex_program *vp )
 {
    return (struct st_vertex_program *)vp;
+}
+
+
+static INLINE void
+st_reference_vertprog(struct st_context *st,
+                      struct st_vertex_program **ptr,
+                      struct st_vertex_program *prog)
+{
+   _mesa_reference_program(st->ctx,
+                           (struct gl_program **) ptr,
+                           (struct gl_program *) prog);
+}
+
+static INLINE void
+st_reference_fragprog(struct st_context *st,
+                      struct st_fragment_program **ptr,
+                      struct st_fragment_program *prog)
+{
+   _mesa_reference_program(st->ctx,
+                           (struct gl_program **) ptr,
+                           (struct gl_program *) prog);
 }
 
 
