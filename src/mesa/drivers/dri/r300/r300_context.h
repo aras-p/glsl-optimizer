@@ -807,10 +807,7 @@ struct r500_fragment_program {
 	int cur_node;
 	int first_node_has_tex;
 
-	int alu_offset;
-	int alu_end;
-	int tex_offset;
-	int tex_end;
+	int temp_reg_offset;
 
 	/* Hardware constants.
 	 * Contains a pointer to the value. The destination of the pointer

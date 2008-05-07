@@ -65,6 +65,9 @@
 
 #define COMPILE_STATE struct r300_pfs_compile_state *cs = fp->cs
 
+#define R500_US_NUM_TEMP_REGS 128
+#define R500_US_NUM_CONST_REGS 256
+
 /* "Register" flags */
 #define REG_CONSTANT (1 << 8)
 #define REG_SRC_REL (1 << 9)
@@ -121,6 +124,30 @@ static inline GLuint make_strq_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
+static int get_temp(struct r500_fragment_program *fp, int slot) {
+
+	COMPILE_STATE;
+
+	int r = slot + fp->temp_reg_offset;
+
+	while (cs->inputs[r].refcount != 0) {
+		/* Crap, taken. */
+		r++;
+	}
+
+	fp->temp_reg_offset = r - slot;
+
+	if (r >= R500_US_NUM_TEMP_REGS) {
+		ERROR("Out of hardware temps!\n");
+		return 0;
+	}
+
+	if (r > fp->max_temp_idx)
+		fp->max_temp_idx = r;
+
+	return r;
+}
+
 /* Borrowed verbatim from r300_fragprog since it hasn't changed. */
 static GLuint emit_const4fv(struct r500_fragment_program *fp,
 			    const GLfloat * cp)
@@ -134,8 +161,7 @@ static GLuint emit_const4fv(struct r500_fragment_program *fp,
 	}
 
 	if (index >= fp->const_nr) {
-		/* TODO: This should be r5xx nums, not r300 */
-		if (index >= PFS_NUM_CONST_REGS) {
+		if (index >= R500_US_NUM_CONST_REGS) {
 			ERROR("Out of hw constants!\n");
 			return reg;
 		}
@@ -152,15 +178,12 @@ static GLuint make_src(struct r500_fragment_program *fp, struct prog_src_registe
 	GLuint reg;
 	switch (src.File) {
 		case PROGRAM_TEMPORARY:
-			// reg = (src.Index << 0x1) | 0x1;
-			reg = src.Index;
-			if (src.Index > fp->max_temp_idx)
-				fp->max_temp_idx = src.Index;
+			reg = get_temp(fp, src.Index);
 			break;
 		case PROGRAM_INPUT:
 			/* Ugly hack needed to work around Mesa;
 			 * fragments don't get loaded right otherwise! */
-			reg = 0x0;
+			reg = src.Index;
 			break;
 	        case PROGRAM_STATE_VAR:
 	        case PROGRAM_NAMED_PARAM:
@@ -180,10 +203,7 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 	GLuint reg;
 	switch (dest.File) {
 		case PROGRAM_TEMPORARY:
-			// reg = (dest.Index << 0x1) | 0x1;
-			reg = dest.Index;
-			if (dest.Index > fp->max_temp_idx)
-				fp->max_temp_idx = dest.Index;
+			reg = get_temp(fp, dest.Index);
 			break;
 		case PROGRAM_OUTPUT:
 			/* Eventually we may need to handle multiple
@@ -323,7 +343,7 @@ static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_
 	/* The r3xx shader uses MAD to implement MOV. We are using CMP, since
 	 * it is technically more accurate and recommended by ATI/AMD. */
 	GLuint src_reg = make_src(fp, src);
-	fp->inst[counter].inst0 = R500_INST_TYPE_ALU;
+	fp->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT;
 	fp->inst[counter].inst1 = R500_RGB_ADDR0(src_reg);
 	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src_reg);
 	fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -511,7 +531,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Variation on MAD: src0*src1+0 */
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| mask;
+					| R500_INST_TEX_SEM_WAIT | mask;
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -639,7 +659,10 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	fp->cur_node = 0;
 	fp->first_node_has_tex = 0;
 	fp->const_nr = 0;
-	fp->max_temp_idx = 0;
+	/* Size of pixel stack, plus 1. */
+	fp->max_temp_idx = 1;
+	/* Temp register offset. */
+	fp->temp_reg_offset = 0;
 	fp->node[0].alu_end = -1;
 	fp->node[0].tex_end = -1;
 
@@ -659,49 +682,6 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	 * starting from register 0.
 	 */
 
-#if 0
-	/* Texcoords come first */
-	for (i = 0; i < fp->ctx->Const.MaxTextureUnits; i++) {
-		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
-			cs->inputs[FRAG_ATTRIB_TEX0 + i].refcount = 0;
-			cs->inputs[FRAG_ATTRIB_TEX0 + i].reg =
-			    get_hw_temp(fp, 0);
-		}
-	}
-	InputsRead &= ~FRAG_BITS_TEX_ANY;
-
-	/* fragment position treated as a texcoord */
-	if (InputsRead & FRAG_BIT_WPOS) {
-		cs->inputs[FRAG_ATTRIB_WPOS].refcount = 0;
-		cs->inputs[FRAG_ATTRIB_WPOS].reg = get_hw_temp(fp, 0);
-		insert_wpos(&mp->Base);
-	}
-	InputsRead &= ~FRAG_BIT_WPOS;
-
-	/* Then primary colour */
-	if (InputsRead & FRAG_BIT_COL0) {
-		cs->inputs[FRAG_ATTRIB_COL0].refcount = 0;
-		cs->inputs[FRAG_ATTRIB_COL0].reg = get_hw_temp(fp, 0);
-	}
-	InputsRead &= ~FRAG_BIT_COL0;
-
-	/* Secondary color */
-	if (InputsRead & FRAG_BIT_COL1) {
-		cs->inputs[FRAG_ATTRIB_COL1].refcount = 0;
-		cs->inputs[FRAG_ATTRIB_COL1].reg = get_hw_temp(fp, 0);
-	}
-	InputsRead &= ~FRAG_BIT_COL1;
-
-	/* Anything else */
-	if (InputsRead) {
-		WARN_ONCE("Don't know how to handle inputs 0x%x\n", InputsRead);
-		/* force read from hwreg 0 for now */
-		for (i = 0; i < 32; i++)
-			if (InputsRead & (1 << i))
-				cs->inputs[i].reg = 0;
-	}
-#endif
-
 	/* Pre-parse the mesa program, grabbing refcounts on input/temp regs.
 	 * That way, we can free up the reg when it's no longer needed
 	 */
@@ -712,34 +692,13 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 
 	for (fpi = mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
 		int idx;
-
 		for (i = 0; i < 3; i++) {
 			idx = fpi->SrcReg[i].Index;
-			switch (fpi->SrcReg[i].File) {
-			case PROGRAM_TEMPORARY:
-				if (!(temps_used & (1 << idx))) {
-					cs->temps[idx].reg = -1;
-					cs->temps[idx].refcount = 1;
-					temps_used |= (1 << idx);
-				} else
-					cs->temps[idx].refcount++;
-				break;
-			case PROGRAM_INPUT:
+			if (fpi->SrcReg[i].File == PROGRAM_INPUT) {
 				cs->inputs[idx].refcount++;
-				break;
-			default:
-				break;
+				if (fp->max_temp_idx < idx)
+					fp->max_temp_idx = idx;
 			}
-		}
-
-		idx = fpi->DstReg.Index;
-		if (fpi->DstReg.File == PROGRAM_TEMPORARY) {
-			if (!(temps_used & (1 << idx))) {
-				cs->temps[idx].reg = -1;
-				cs->temps[idx].refcount = 1;
-				temps_used |= (1 << idx);
-			} else
-				cs->temps[idx].refcount++;
 		}
 	}
 	cs->temp_in_use = temps_used;
@@ -776,16 +735,6 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 			dumb_shader(fp);
 			return;
 		}
-
-		/* Finish off */
-		fp->node[fp->cur_node].alu_end =
-		    cs->nrslots - fp->node[fp->cur_node].alu_offset - 1;
-		if (fp->node[fp->cur_node].tex_end < 0)
-			fp->node[fp->cur_node].tex_end = 0;
-		fp->alu_offset = 0;
-		fp->alu_end = cs->nrslots - 1;
-		//assert(fp->node[fp->cur_node].alu_end >= 0);
-		//assert(fp->alu_end >= 0);
 
 		fp->translated = GL_TRUE;
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
