@@ -128,7 +128,7 @@ static int get_temp(struct r500_fragment_program *fp, int slot) {
 
 	COMPILE_STATE;
 
-	int r = slot + fp->temp_reg_offset;
+	int r = slot;
 
 	while (cs->inputs[r].refcount != 0) {
 		/* Crap, taken. */
@@ -175,15 +175,14 @@ static GLuint emit_const4fv(struct r500_fragment_program *fp,
 }
 
 static GLuint make_src(struct r500_fragment_program *fp, struct prog_src_register src) {
+	COMPILE_STATE;
 	GLuint reg;
 	switch (src.File) {
 		case PROGRAM_TEMPORARY:
-			reg = get_temp(fp, src.Index);
+			reg = src.Index + fp->temp_reg_offset;
 			break;
 		case PROGRAM_INPUT:
-			/* Ugly hack needed to work around Mesa;
-			 * fragments don't get loaded right otherwise! */
-			reg = src.Index;
+			reg = cs->inputs[src.Index].reg;
 			break;
 	        case PROGRAM_STATE_VAR:
 	        case PROGRAM_NAMED_PARAM:
@@ -203,7 +202,7 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 	GLuint reg;
 	switch (dest.File) {
 		case PROGRAM_TEMPORARY:
-			reg = get_temp(fp, dest.Index);
+			reg = dest.Index + fp->temp_reg_offset;
 			break;
 		case PROGRAM_OUTPUT:
 			/* Eventually we may need to handle multiple
@@ -669,17 +668,65 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	 * configures itself based on the fragprog's InputsRead
 	 *
 	 * NOTE: this depends on get_hw_temp() allocating registers in order,
-	 * starting from register 0.
+	 * starting from register 0, so we're just going to do that instead.
 	 */
+
+	/* Texcoords come first */
+	for (i = 0; i < fp->ctx->Const.MaxTextureUnits; i++) {
+		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
+			cs->inputs[FRAG_ATTRIB_TEX0 + i].refcount = 0;
+			cs->inputs[FRAG_ATTRIB_TEX0 + i].reg =
+				fp->temp_reg_offset;
+			fp->temp_reg_offset++;
+		}
+	}
+	InputsRead &= ~FRAG_BITS_TEX_ANY;
+
+	/* fragment position treated as a texcoord */
+	if (InputsRead & FRAG_BIT_WPOS) {
+		cs->inputs[FRAG_ATTRIB_WPOS].refcount = 0;
+		cs->inputs[FRAG_ATTRIB_WPOS].reg =
+			fp->temp_reg_offset;
+		fp->temp_reg_offset++;
+	}
+	InputsRead &= ~FRAG_BIT_WPOS;
+
+	/* Then primary colour */
+	if (InputsRead & FRAG_BIT_COL0) {
+		cs->inputs[FRAG_ATTRIB_COL0].refcount = 0;
+		cs->inputs[FRAG_ATTRIB_COL0].reg =
+			fp->temp_reg_offset;
+		fp->temp_reg_offset++;
+	}
+	InputsRead &= ~FRAG_BIT_COL0;
+
+	/* Secondary color */
+	if (InputsRead & FRAG_BIT_COL1) {
+		cs->inputs[FRAG_ATTRIB_COL1].refcount = 0;
+		cs->inputs[FRAG_ATTRIB_COL1].reg =
+			fp->temp_reg_offset;
+		fp->temp_reg_offset++;
+	}
+	InputsRead &= ~FRAG_BIT_COL1;
+
+	/* Anything else */
+	if (InputsRead) {
+		WARN_ONCE("Don't know how to handle inputs 0x%x\n", InputsRead);
+		/* force read from hwreg 0 for now */
+		for (i = 0; i < 32; i++)
+			if (InputsRead & (1 << i))
+				cs->inputs[i].reg = 0;
+	}
 
 	/* Pre-parse the mesa program, grabbing refcounts on input/temp regs.
 	 * That way, we can free up the reg when it's no longer needed
 	 */
 	if (!mp->Base.Instructions) {
-		ERROR("No instructions found in program\n");
+		ERROR("No instructions found in program, going to go die now.\n");
 		return;
 	}
 
+#if 0
 	for (fpi = mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
 		int idx;
 		for (i = 0; i < 3; i++) {
@@ -691,6 +738,10 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 			}
 		}
 	}
+#endif
+
+	fp->max_temp_idx = fp->temp_reg_offset + 1;
+
 	cs->temp_in_use = temps_used;
 }
 
