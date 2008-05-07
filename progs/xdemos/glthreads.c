@@ -24,10 +24,24 @@
  * This program tests GLX thread safety.
  * Command line options:
  *  -p                       Open a display connection for each thread
+ *  -l                       Enable application-side locking
  *  -n <num threads>         Number of threads to create (default is 2)
  *  -display <display name>  Specify X display (default is :0.0)
+ *  -t                       Use texture mapping
  *
  * Brian Paul  20 July 2000
+ */
+
+
+/*
+ * Notes:
+ * - Each thread gets its own GLX context.
+ *
+ * - The GLX contexts share texture objects.
+ *
+ * - When 't' is pressed to update the texture image, the window/thread which
+ *   has input focus is signalled to change the texture.  The other threads
+ *   should see the updated texture the next time they call glBindTexture.
  */
 
 
@@ -36,6 +50,7 @@
 #include <assert.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +70,8 @@ struct winthread {
    float Angle;
    int WinWidth, WinHeight;
    GLboolean NewSize;
+   GLboolean Initialized;
+   GLboolean MakeNewTexture;
 };
 
 
@@ -65,8 +82,13 @@ static volatile GLboolean ExitFlag = GL_FALSE;
 
 static GLboolean MultiDisplays = 0;
 static GLboolean Locking = 0;
+static GLboolean Texture = GL_FALSE;
+static GLuint TexObj = 12;
+static GLboolean Animate = GL_TRUE;
 
 static pthread_mutex_t Mutex;
+static pthread_cond_t CondVar;
+static pthread_mutex_t CondMutex;
 
 
 static void
@@ -77,6 +99,59 @@ Error(const char *msg)
 }
 
 
+static void
+signal_redraw(void)
+{
+   pthread_mutex_lock(&CondMutex);
+   pthread_cond_broadcast(&CondVar);
+   pthread_mutex_unlock(&CondMutex);
+}
+
+
+static void
+MakeNewTexture(struct winthread *wt)
+{
+#define TEX_SIZE 128
+   static float step = 0.0;
+   GLfloat image[TEX_SIZE][TEX_SIZE][4];
+   GLint width;
+   int i, j;
+
+   for (j = 0; j < TEX_SIZE; j++) {
+      for (i = 0; i < TEX_SIZE; i++) {
+         float dt = 5.0 * (j - 0.5 * TEX_SIZE) / TEX_SIZE;
+         float ds = 5.0 * (i - 0.5 * TEX_SIZE) / TEX_SIZE;
+         float r = dt * dt + ds * ds + step;
+         image[j][i][0] = 
+         image[j][i][1] = 
+         image[j][i][2] = 0.75 + 0.25 * cos(r);
+         image[j][i][3] = 1.0;
+      }
+   }
+
+   step += 0.5;
+
+   glBindTexture(GL_TEXTURE_2D, TexObj);
+
+   glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+   if (width) {
+      assert(width == TEX_SIZE);
+      /* sub-tex replace */
+      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, TEX_SIZE, TEX_SIZE,
+                   GL_RGBA, GL_FLOAT, image);
+   }
+   else {
+      /* create new */
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEX_SIZE, TEX_SIZE, 0, 
+                   GL_RGBA, GL_FLOAT, image);
+   }
+}
+
+
+
 /* draw a colored cube */
 static void
 draw_object(void)
@@ -85,52 +160,61 @@ draw_object(void)
    glScalef(0.75, 0.75, 0.75);
 
    glColor3f(1, 0, 0);
-   glBegin(GL_POLYGON);
-   glVertex3f(1, -1, -1);
-   glVertex3f(1,  1, -1);
-   glVertex3f(1,  1,  1);
-   glVertex3f(1, -1,  1);
-   glEnd();
 
+   if (Texture) {
+      glBindTexture(GL_TEXTURE_2D, TexObj);
+      glEnable(GL_TEXTURE_2D);
+   }
+   else {
+      glDisable(GL_TEXTURE_2D);
+   }
+
+   glBegin(GL_QUADS);
+
+   /* -X */
    glColor3f(0, 1, 1);
-   glBegin(GL_POLYGON);
-   glVertex3f(-1, -1, -1);
-   glVertex3f(-1,  1, -1);
-   glVertex3f(-1,  1,  1);
-   glVertex3f(-1, -1,  1);
-   glEnd();
+   glTexCoord2f(0, 0);  glVertex3f(-1, -1, -1);
+   glTexCoord2f(1, 0);  glVertex3f(-1,  1, -1);
+   glTexCoord2f(1, 1);  glVertex3f(-1,  1,  1);
+   glTexCoord2f(0, 1);  glVertex3f(-1, -1,  1);
 
-   glColor3f(0, 1, 0);
-   glBegin(GL_POLYGON);
-   glVertex3f(-1, 1, -1);
-   glVertex3f( 1, 1, -1);
-   glVertex3f( 1, 1,  1);
-   glVertex3f(-1, 1,  1);
-   glEnd();
+   /* +X */
+   glColor3f(1, 0, 0);
+   glTexCoord2f(0, 0);  glVertex3f(1, -1, -1);
+   glTexCoord2f(1, 0);  glVertex3f(1,  1, -1);
+   glTexCoord2f(1, 1);  glVertex3f(1,  1,  1);
+   glTexCoord2f(0, 1);  glVertex3f(1, -1,  1);
 
+   /* -Y */
    glColor3f(1, 0, 1);
-   glBegin(GL_POLYGON);
-   glVertex3f(-1, -1, -1);
-   glVertex3f( 1, -1, -1);
-   glVertex3f( 1, -1,  1);
-   glVertex3f(-1, -1,  1);
-   glEnd();
+   glTexCoord2f(0, 0);  glVertex3f(-1, -1, -1);
+   glTexCoord2f(1, 0);  glVertex3f( 1, -1, -1);
+   glTexCoord2f(1, 1);  glVertex3f( 1, -1,  1);
+   glTexCoord2f(0, 1);  glVertex3f(-1, -1,  1);
 
-   glColor3f(0, 0, 1);
-   glBegin(GL_POLYGON);
-   glVertex3f(-1, -1, 1);
-   glVertex3f( 1, -1, 1);
-   glVertex3f( 1,  1, 1);
-   glVertex3f(-1,  1, 1);
-   glEnd();
+   /* +Y */
+   glColor3f(0, 1, 0);
+   glTexCoord2f(0, 0);  glVertex3f(-1, 1, -1);
+   glTexCoord2f(1, 0);  glVertex3f( 1, 1, -1);
+   glTexCoord2f(1, 1);  glVertex3f( 1, 1,  1);
+   glTexCoord2f(0, 1);  glVertex3f(-1, 1,  1);
 
+   /* -Z */
    glColor3f(1, 1, 0);
-   glBegin(GL_POLYGON);
-   glVertex3f(-1, -1, -1);
-   glVertex3f( 1, -1, -1);
-   glVertex3f( 1,  1, -1);
-   glVertex3f(-1,  1, -1);
+   glTexCoord2f(0, 0);  glVertex3f(-1, -1, -1);
+   glTexCoord2f(1, 0);  glVertex3f( 1, -1, -1);
+   glTexCoord2f(1, 1);  glVertex3f( 1,  1, -1);
+   glTexCoord2f(0, 1);  glVertex3f(-1,  1, -1);
+
+   /* +Y */
+   glColor3f(0, 0, 1);
+   glTexCoord2f(0, 0);  glVertex3f(-1, -1, 1);
+   glTexCoord2f(1, 0);  glVertex3f( 1, -1, 1);
+   glTexCoord2f(1, 1);  glVertex3f( 1,  1, 1);
+   glTexCoord2f(0, 1);  glVertex3f(-1,  1, 1);
+
    glEnd();
+
    glPopMatrix();
 }
 
@@ -142,6 +226,8 @@ resize(struct winthread *wt, int w, int h)
    wt->NewSize = GL_TRUE;
    wt->WinWidth = w;
    wt->WinHeight = h;
+   if (!Animate)
+      signal_redraw();
 }
 
 
@@ -151,18 +237,19 @@ resize(struct winthread *wt, int w, int h)
 static void
 draw_loop(struct winthread *wt)
 {
-   GLboolean firstIter = GL_TRUE;
-
    while (!ExitFlag) {
 
       if (Locking)
          pthread_mutex_lock(&Mutex);
 
       glXMakeCurrent(wt->Dpy, wt->Win, wt->Context);
-      if (firstIter) {
+      if (!wt->Initialized) {
          printf("glthreads: %d: GL_RENDERER = %s\n", wt->Index,
                 (char *) glGetString(GL_RENDERER));
-         firstIter = GL_FALSE;
+         if (Texture /*&& wt->Index == 0*/) {
+            MakeNewTexture(wt);
+         }
+         wt->Initialized = GL_TRUE;
       }
 
       if (Locking)
@@ -182,10 +269,15 @@ draw_loop(struct winthread *wt)
          wt->NewSize = GL_FALSE;
       }
 
+      if (wt->MakeNewTexture) {
+         MakeNewTexture(wt);
+         wt->MakeNewTexture = GL_FALSE;
+      }
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       glPushMatrix();
-         glRotatef(wt->Angle, 0, 0, 1);
+         glRotatef(wt->Angle, 0, 1, 0);
          glRotatef(wt->Angle, 1, 0, 0);
          glScalef(0.7, 0.7, 0.7);
          draw_object();
@@ -199,8 +291,59 @@ draw_loop(struct winthread *wt)
       if (Locking)
          pthread_mutex_unlock(&Mutex);
 
-      usleep(5000);
+      if (Animate) {
+         usleep(5000);
+      }
+      else {
+         /* wait for signal to draw */
+         pthread_mutex_lock(&CondMutex);
+         pthread_cond_wait(&CondVar, &CondMutex);
+         pthread_mutex_unlock(&CondMutex);
+      }
       wt->Angle += 1.0;
+   }
+}
+
+
+static void
+keypress(XEvent *event, struct winthread *wt)
+{
+   char buf[100];
+   KeySym keySym;
+   XComposeStatus stat;
+
+   XLookupString(&event->xkey, buf, sizeof(buf), &keySym, &stat);
+
+   switch (keySym) {
+   case XK_Escape:
+      /* tell all threads to exit */
+      if (!Animate) {
+         signal_redraw();
+      }
+      ExitFlag = GL_TRUE;
+      /*printf("exit draw_loop %d\n", wt->Index);*/
+      return;
+   case XK_t:
+   case XK_T:
+      if (Texture) {
+         wt->MakeNewTexture = GL_TRUE;
+         if (!Animate)
+            signal_redraw();
+      }
+      break;
+   case XK_a:
+   case XK_A:
+      Animate = !Animate;
+      if (Animate)  /* yes, prev Animate state! */
+         signal_redraw();
+      break;
+   case XK_s:
+   case XK_S:
+      if (!Animate)
+         signal_redraw();
+      break;
+   default:
+      ; /* nop */
    }
 }
 
@@ -250,10 +393,14 @@ event_loop(Display *dpy)
             }
             break;
          case KeyPress:
-            /* tell all threads to exit */
-            ExitFlag = GL_TRUE;
-            /*printf("exit draw_loop %d\n", wt->Index);*/
-            return;
+            for (i = 0; i < NumWinThreads; i++) {
+               struct winthread *wt = &WinThreads[i];
+               if (event.xkey.window == wt->Win) {
+                  keypress(&event, wt);
+                  break;
+               }
+            }
+            break;
          default:
             /*no-op*/ ;
       }
@@ -281,12 +428,10 @@ event_loop_multi(void)
             resize(wt, event.xconfigure.width, event.xconfigure.height);
             break;
          case KeyPress:
-            /* tell all threads to exit */
-            ExitFlag = GL_TRUE;
-            /*printf("exit draw_loop %d\n", wt->Index);*/
-            return;
+            keypress(&event, wt);
+            break;
          default:
-            /*no-op*/ ;
+            ; /* nop */
          }
       }
       w = (w + 1) % NumWinThreads;
@@ -300,7 +445,7 @@ event_loop_multi(void)
  * we'll call this once for each thread, before the threads are created.
  */
 static void
-create_window(struct winthread *wt)
+create_window(struct winthread *wt, GLXContext shareCtx)
 {
    Window win;
    GLXContext ctx;
@@ -316,9 +461,9 @@ create_window(struct winthread *wt)
    unsigned long mask;
    Window root;
    XVisualInfo *visinfo;
-   int width = 80, height = 80;
-   int xpos = (wt->Index % 10) * 90;
-   int ypos = (wt->Index / 10) * 100;
+   int width = 160, height = 160;
+   int xpos = (wt->Index % 8) * (width + 10);
+   int ypos = (wt->Index / 8) * (width + 20);
 
    scrnum = DefaultScreen(wt->Dpy);
    root = RootWindow(wt->Dpy, scrnum);
@@ -355,7 +500,7 @@ create_window(struct winthread *wt)
    }
 
 
-   ctx = glXCreateContext(wt->Dpy, visinfo, NULL, True);
+   ctx = glXCreateContext(wt->Dpy, visinfo, shareCtx, True);
    if (!ctx) {
       Error("Couldn't create GLX context");
    }
@@ -405,6 +550,23 @@ clean_up(void)
 }
 
 
+static void
+usage(void)
+{
+   printf("glthreads: test of GL thread safety (any key = exit)\n");
+   printf("Usage:\n");
+   printf("  glthreads [options]\n");
+   printf("Options:\n");
+   printf("   -display DISPLAYNAME  Specify display string\n");
+   printf("   -n NUMTHREADS  Number of threads to create\n");
+   printf("   -p  Use a separate display connection for each thread\n");
+   printf("   -l  Use application-side locking\n");
+   printf("   -t  Enable texturing\n");
+   printf("Keyboard:\n");
+   printf("   Esc  Exit\n");
+   printf("   t    Change texture image (requires -t option)\n");
+}
+
 
 int
 main(int argc, char *argv[])
@@ -416,9 +578,7 @@ main(int argc, char *argv[])
    Status threadStat;
 
    if (argc == 1) {
-      printf("glthreads: test of GL thread safety (any key = exit)\n");
-      printf("Usage:\n");
-      printf("  glthreads [-display dpyName] [-n numthreads]\n");
+      usage();
    }
    else {
       int i;
@@ -433,6 +593,9 @@ main(int argc, char *argv[])
          else if (strcmp(argv[i], "-l") == 0) {
             Locking = 1;
          }
+         else if (strcmp(argv[i], "-t") == 0) {
+            Texture = 1;
+         }
          else if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
             numThreads = atoi(argv[i + 1]);
             if (numThreads < 1)
@@ -442,13 +605,14 @@ main(int argc, char *argv[])
             i++;
          }
          else {
-            fprintf(stderr, "glthreads: unexpected flag: %s\n", argv[i]);
+            usage();
+            exit(1);
          }
       }
    }
    
    if (Locking)
-      printf("glthreads: Using explict locks around Xlib calls.\n");
+      printf("glthreads: Using explicit locks around Xlib calls.\n");
    else
       printf("glthreads: No explict locking.\n");
 
@@ -478,9 +642,9 @@ main(int argc, char *argv[])
       }
    }
 
-   if (Locking) {
-      pthread_mutex_init(&Mutex, NULL);
-   }
+   pthread_mutex_init(&Mutex, NULL);
+   pthread_mutex_init(&CondMutex, NULL);
+   pthread_cond_init(&CondVar, NULL);
 
    printf("glthreads: creating windows\n");
 
@@ -488,6 +652,8 @@ main(int argc, char *argv[])
 
    /* Create the GLX windows and contexts */
    for (i = 0; i < numThreads; i++) {
+      GLXContext share;
+
       if (MultiDisplays) {
          WinThreads[i].Dpy = XOpenDisplay(displayName);
          assert(WinThreads[i].Dpy);
@@ -496,7 +662,11 @@ main(int argc, char *argv[])
          WinThreads[i].Dpy = dpy;
       }
       WinThreads[i].Index = i;
-      create_window(&WinThreads[i]);
+      WinThreads[i].Initialized = GL_FALSE;
+
+      share = (Texture && i > 0) ? WinThreads[0].Context : 0;
+
+      create_window(&WinThreads[i], share);
    }
 
    printf("glthreads: creating threads\n");
@@ -505,7 +675,7 @@ main(int argc, char *argv[])
    for (i = 0; i < numThreads; i++) {
       pthread_create(&WinThreads[i].Thread, NULL, thread_function,
                      (void*) &WinThreads[i]);
-      printf("glthreads: Created thread %u\n", (unsigned int) WinThreads[i].Thread);
+      printf("glthreads: Created thread %p\n", (void *) WinThreads[i].Thread);
    }
 
    if (MultiDisplays)
