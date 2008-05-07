@@ -123,6 +123,8 @@ typedef struct _dri_bo_gem {
     dri_bo **reloc_target_bo;
     /** Number of entries in relocs */
     int reloc_count;
+    /** Memory domains for synchronization */
+    uint32_t read_domains, write_domain;
     /** Mapped address for the buffer */
     void *virtual;
 } dri_bo_gem;
@@ -230,6 +232,8 @@ intel_add_validate_buffer(dri_bo *bo)
     bufmgr_gem->validate_array[index].relocs_ptr = (uintptr_t)bo_gem->relocs;
     bufmgr_gem->validate_array[index].alignment = 0;
     bufmgr_gem->validate_array[index].buffer_offset = 0;
+    bufmgr_gem->validate_array[index].read_domains = bo_gem->read_domains;
+    bufmgr_gem->validate_array[index].write_domain = bo_gem->write_domain;
     bufmgr_gem->validate_bo[index] = bo;
     dri_bo_reference(bo);
     bufmgr_gem->validate_count++;
@@ -597,6 +601,18 @@ dri_gem_emit_reloc(dri_bo *bo, uint64_t flags, GLuint delta,
     bo_gem->reloc_target_bo[bo_gem->reloc_count] = target_bo;
     dri_bo_reference(target_bo);
 
+    /** XXX set memory domains, using existing TTM flags (which is wrong) */
+    if (flags & DRM_BO_FLAG_WRITE)
+    {
+	/* assume this means the rendering buffer */
+	target_bo_gem->read_domains |= DRM_GEM_DOMAIN_I915_RENDER;
+	target_bo_gem->write_domain = DRM_GEM_DOMAIN_I915_RENDER;
+    }
+    if (flags & DRM_BO_FLAG_READ)
+    {
+	/* assume this means the sampler buffer */
+	target_bo_gem->read_domains |= DRM_GEM_DOMAIN_I915_SAMPLER;
+    }
     bo_gem->reloc_count++;
     return 0;
 }
@@ -629,7 +645,10 @@ dri_gem_bo_process_reloc(dri_bo *bo)
 static void *
 dri_gem_process_reloc(dri_bo *batch_buf)
 {
-    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)batch_buf->bufmgr;
+    dri_bo_gem *bo_gem = (dri_bo_gem *)batch_buf;
+    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *) batch_buf->bufmgr;
+
+    bo_gem->read_domains |= DRM_GEM_DOMAIN_I915_COMMAND;
 
     /* Update indices and set up the validate list. */
     dri_gem_bo_process_reloc(batch_buf);
@@ -680,6 +699,9 @@ dri_gem_post_submit(dri_bo *batch_buf)
 	dri_bo *bo = bufmgr_gem->validate_bo[i];
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
+	/* clear read/write domain bits */
+	bo_gem->read_domains = 0;
+	bo_gem->write_domain = 0;
 	/* Disconnect the buffer from the validate list */
 	bo_gem->validate_index = -1;
 	dri_bo_unreference(bo);
