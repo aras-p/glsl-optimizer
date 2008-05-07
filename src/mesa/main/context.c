@@ -631,6 +631,21 @@ delete_arrayobj_cb(GLuint id, void *data, void *userData)
 }
 
 /**
+ * Callback for freeing shader program data. Call it before delete_shader_cb
+ * to avoid memory access error.
+ */
+static void
+free_shader_program_data_cb(GLuint id, void *data, void *userData)
+{
+   GLcontext *ctx = (GLcontext *) userData;
+   struct gl_shader_program *shProg = (struct gl_shader_program *) data;
+
+   if (shProg->Type == GL_SHADER_PROGRAM_MESA) {
+       _mesa_free_shader_program_data(ctx, shProg);
+   }
+}
+
+/**
  * Callback for deleting shader and shader programs objects.
  * Called by _mesa_HashDeleteAll().
  */
@@ -714,6 +729,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
 #if FEATURE_ARB_shader_objects
+   _mesa_HashWalk(ss->ShaderObjects, free_shader_program_data_cb, ctx);
    _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
    _mesa_DeleteHashTable(ss->ShaderObjects);
 #endif
