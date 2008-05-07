@@ -1,45 +1,100 @@
+#ifndef __egl_types_h_
+#define __egl_types_h_
+
 /*
-** egltypes.h for Mesa
+** egltypes.h is platform dependent. It defines:
 **
-** ONLY egl.h SHOULD INCLUDE THIS FILE!
+**     - EGL types and resources
+**     - Native types
+**     - EGL and native handle values
 **
-** See comments about egltypes.h in the standard egl.h file.
+** EGL types and resources are to be typedef'ed with appropriate platform
+** dependent resource handle types. EGLint must be an integer of at least
+** 32-bit.
+**
+** NativeDisplayType, NativeWindowType and NativePixmapType are to be
+** replaced with corresponding types of the native window system in egl.h.
+**
+** EGL and native handle values must match their types.
 */
 
+#if (defined(WIN32) || defined(_WIN32_WCE))
 
-#include <sys/types.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#endif
 
+// Windows Header Files:
+#include <windows.h>
 
-/*
-** These opaque EGL types are implemented as unsigned 32-bit integers:
-*/
-typedef u_int32_t EGLDisplay;
-typedef u_int32_t EGLConfig;
-typedef u_int32_t EGLSurface;
-typedef u_int32_t EGLContext;
+typedef HDC		NativeDisplayType;
+typedef HWND	NativeWindowType;
+typedef HBITMAP NativePixmapType;
 
-/* EGL_MESA_screen_surface */
-typedef u_int32_t EGLModeMESA;
-typedef u_int32_t EGLScreenMESA;
+#define EGL_DEFAULT_DISPLAY GetDC(0)
 
+#elif defined(__SYMBIAN32__)
 
-/*
-** Other basic EGL types:
-*/
-typedef u_int8_t EGLBoolean;
-typedef int32_t EGLint;
+#include <e32def.h>
 
-typedef void * NativeDisplayType;
-typedef int NativePixmapType;
-typedef int NativeWindowType;
+class RWindow;
+class CWindowGc;
+class CFbsBitmap;
 
-/*
-** EGL and native handle null values:
-*/
+typedef CWindowGc *		NativeDisplayType;
+typedef RWindow *		NativeWindowType;
+typedef CFbsBitmap * 	NativePixmapType;
+
 #define EGL_DEFAULT_DISPLAY ((NativeDisplayType) 0)
-#define EGL_NO_CONTEXT ((EGLContext) 0)
-#define EGL_NO_DISPLAY ((EGLDisplay) 0)
-#define EGL_NO_SURFACE ((EGLSurface) 0)
 
-/* EGL_MESA_screen_surface */
-#define EGL_NO_MODE_MESA ((EGLModeMESA) 0)
+#elif defined(__gnu_linux__)
+
+typedef void *		NativeDisplayType;
+typedef void *		NativeWindowType;
+typedef void * 		NativePixmapType;
+
+#define EGL_DEFAULT_DISPLAY ((NativeDisplayType) 0)
+
+#else
+
+#	error "Unsupported Operating System"
+
+#endif
+
+#ifdef __cplusplus
+
+namespace EGL {
+	class Context;
+	class Config;
+	class Surface;
+}
+
+typedef const EGL::Config *		EGLConfig;
+typedef EGL::Surface *			EGLSurface;
+typedef EGL::Context  *			EGLContext;
+
+#else
+
+typedef void *			EGLConfig;
+typedef void *			EGLSurface;
+typedef void *			EGLContext;
+
+#endif
+
+
+/*
+** Types and resources
+*/
+typedef int				EGLBoolean;
+typedef int				EGLint;
+typedef void *			EGLDisplay;
+
+/*
+** EGL and native handle values
+*/
+#define EGL_NO_CONTEXT ((EGLContext)0)
+#define EGL_NO_DISPLAY ((EGLDisplay)0)
+#define EGL_NO_SURFACE ((EGLSurface)0)
+
+
+#endif //ndef __egl_types_h_
