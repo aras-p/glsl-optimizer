@@ -325,13 +325,6 @@ debug_dump_flags(const struct debug_named_value *names,
 }
 
 
-char *pf_sprint_name( char *str, enum pipe_format format )
-{
-   strcpy( str, debug_dump_enum(pipe_format_names, fmt) );
-   return str;
-}
-
-
 #ifdef DEBUG
 static const struct debug_named_value pipe_format_names[] = {
    DEBUG_NAMED_VALUE(PIPE_FORMAT_NONE),
@@ -431,6 +424,12 @@ static const struct debug_named_value pipe_format_names[] = {
 void debug_print_format(const char *msg, unsigned fmt )
 {
    debug_printf("%s: %s\n", msg, debug_dump_enum(pipe_format_names, fmt)); 
+}
+
+char *pf_sprint_name( char *str, enum pipe_format format )
+{
+   strcpy( str, debug_dump_enum(pipe_format_names, format) );
+   return str;
 }
 #endif
 
