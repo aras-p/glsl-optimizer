@@ -2185,10 +2185,10 @@ struct gl_shared_state
    /*@{*/
    struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
 #if FEATURE_ARB_vertex_program
-   struct gl_program *DefaultVertexProgram;
+   struct gl_vertex_program *DefaultVertexProgram;
 #endif
 #if FEATURE_ARB_fragment_program
-   struct gl_program *DefaultFragmentProgram;
+   struct gl_fragment_program *DefaultFragmentProgram;
 #endif
    /*@}*/
 

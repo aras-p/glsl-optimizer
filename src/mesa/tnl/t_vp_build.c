@@ -1573,7 +1573,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 	 if (0) 
 	    _mesa_printf("Found existing TNL program for key %x\n", hash);
       }
-      ctx->VertexProgram._Current = ctx->VertexProgram._TnlProgram;
+      _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current,
+                               ctx->VertexProgram._TnlProgram);
    }
 
    /* Tell the driver about the change.  Could define a new target for

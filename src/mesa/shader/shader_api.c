@@ -79,8 +79,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
          /* to prevent a double-free in the next call */
          shProg->VertexProgram->Base.Parameters = NULL;
       }
-      ctx->Driver.DeleteProgram(ctx, &shProg->VertexProgram->Base);
-      shProg->VertexProgram = NULL;
+      _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
    }
 
    if (shProg->FragmentProgram) {
@@ -88,8 +87,7 @@ _mesa_clear_shader_program_data(GLcontext *ctx,
          /* to prevent a double-free in the next call */
          shProg->FragmentProgram->Base.Parameters = NULL;
       }
-      ctx->Driver.DeleteProgram(ctx, &shProg->FragmentProgram->Base);
-      shProg->FragmentProgram = NULL;
+      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
    }
 
    if (shProg->Uniforms) {
@@ -1099,6 +1097,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
       _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
 }
