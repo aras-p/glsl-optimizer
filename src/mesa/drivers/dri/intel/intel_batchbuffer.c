@@ -195,7 +195,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 			 int line)
 {
    struct intel_context *intel = batch->intel;
-   GLuint used = batch->ptr - batch->map;
+   GLuint used;
    GLboolean was_locked = intel->locked;
 
    if (used == 0)
@@ -204,20 +204,25 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    if (INTEL_DEBUG & DEBUG_BATCH)
       fprintf(stderr, "%s:%d: Batchbuffer flush with %db used\n", file, line,
 	      used);
-   /* Add the MI_BATCH_BUFFER_END.  Always add an MI_FLUSH - this is a
-    * performance drain that we would like to avoid.
-    */
-   if (used & 4) {
-      ((int *) batch->ptr)[0] = intel->vtbl.flush_cmd();
-      ((int *) batch->ptr)[1] = 0;
-      ((int *) batch->ptr)[2] = MI_BATCH_BUFFER_END;
-      used += 12;
+
+   /* Emit a flush if the bufmgr doesn't do it for us. */
+   if (!intel->ttm) {
+      *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
+      batch->ptr += 4;
    }
-   else {
-      ((int *) batch->ptr)[0] = intel->vtbl.flush_cmd();
-      ((int *) batch->ptr)[1] = MI_BATCH_BUFFER_END;
-      used += 8;
+
+   /* Round batchbuffer usage to 2 DWORDs. */
+   used = batch->ptr - batch->map;
+   if ((used & 4) == 0) {
+      *(GLuint *) (batch->ptr) = 0; /* noop */
+      batch->ptr += 4;
    }
+
+   /* Mark the end of the buffer. */
+   *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END; /* noop */
+   batch->ptr += 4;
+
+   used = batch->ptr - batch->map;
 
    /* Workaround for recursive batchbuffer flushing: If the window is
     * moved, we can get into a case where we try to flush during a
