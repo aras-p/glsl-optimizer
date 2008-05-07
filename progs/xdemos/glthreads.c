@@ -565,6 +565,8 @@ usage(void)
    printf("Keyboard:\n");
    printf("   Esc  Exit\n");
    printf("   t    Change texture image (requires -t option)\n");
+   printf("   a    Toggle animation\n");
+   printf("   s    Step rotation (when not animating)\n");
 }
 
 
