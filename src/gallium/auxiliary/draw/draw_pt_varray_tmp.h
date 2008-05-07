@@ -28,7 +28,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
       for (j = 0; j + first <= count; j += i) {
          unsigned end = MIN2(FETCH_MAX, count - j);
          end -= (end % incr);
-         for (i = 0; i < count; i++) {
+         for (i = 0; i < end; i++) {
             POINT(varray, i + 0);
          }
          i = end;
