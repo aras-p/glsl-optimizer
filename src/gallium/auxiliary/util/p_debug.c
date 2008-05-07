@@ -67,7 +67,7 @@ void _debug_vprintf(const char *format, va_list ap)
    static char buf[512 + 1] = {'\0'};
    size_t len = strlen(buf);
    int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
-   if(ret > (int)(sizeof(buf) - len - 1) || strchr(buf + len, '\n')) {
+   if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
       _EngDebugPrint("%s", buf);
       buf[0] = '\0';
    }
@@ -203,15 +203,15 @@ debug_get_bool_option(const char *name, boolean dfault)
    
    if(str == NULL)
       result = dfault;
-   else if(!strcmp(str, "n"))
+   else if(!util_strcmp(str, "n"))
       result = FALSE;
-   else if(!strcmp(str, "no"))
+   else if(!util_strcmp(str, "no"))
       result = FALSE;
-   else if(!strcmp(str, "0"))
+   else if(!util_strcmp(str, "0"))
       result = FALSE;
-   else if(!strcmp(str, "f"))
+   else if(!util_strcmp(str, "f"))
       result = FALSE;
-   else if(!strcmp(str, "false"))
+   else if(!util_strcmp(str, "false"))
       result = FALSE;
    else
       result = TRUE;
@@ -244,7 +244,7 @@ debug_get_flags_option(const char *name,
    else {
       result = 0;
       while( flags->name ) {
-	 if (!strcmp(str, "all") || strstr(str, flags->name ))
+	 if (!util_strcmp(str, "all") || util_strstr(str, flags->name ))
 	    result |= flags->value;
 	 ++flags;
       }
@@ -299,10 +299,10 @@ debug_dump_flags(const struct debug_named_value *names,
    while(names->name) {
       if((names->value & value) == names->value) {
 	 if (!first)
-	    strncat(output, "|", sizeof(output));
+	    util_strncat(output, "|", sizeof(output));
 	 else
 	    first = 0;
-	 strncat(output, names->name, sizeof(output));
+	 util_strncat(output, names->name, sizeof(output));
 	 value &= ~names->value;
       }
       ++names;
@@ -310,12 +310,12 @@ debug_dump_flags(const struct debug_named_value *names,
    
    if (value) {
       if (!first)
-	 strncat(output, "|", sizeof(output));
+	 util_strncat(output, "|", sizeof(output));
       else
 	 first = 0;
       
       util_snprintf(rest, sizeof(rest), "0x%08lx", value);
-      strncat(output, rest, sizeof(output));
+      util_strncat(output, rest, sizeof(output));
    }
    
    if(first)
@@ -323,10 +323,6 @@ debug_dump_flags(const struct debug_named_value *names,
    
    return output;
 }
-
-
-
-
 
 
 char *pf_sprint_name( char *str, enum pipe_format format )
