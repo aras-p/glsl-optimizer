@@ -211,6 +211,7 @@ debug_memory_begin(void)
 void 
 debug_memory_end(unsigned long start_no)
 {
+   size_t total_size = 0;
    struct list_head *entry;
 
    entry = list.prev;
@@ -220,9 +221,15 @@ debug_memory_end(unsigned long start_no)
       hdr = LIST_ENTRY(struct debug_memory_header, entry, head);
       ptr = data_from_header(hdr);
       if(start_no <= hdr->no && hdr->no < last_no ||
-	 last_no < start_no && (hdr->no < last_no || start_no <= hdr->no))
+	 last_no < start_no && (hdr->no < last_no || start_no <= hdr->no)) {
 	 debug_printf("%s:%u:%s: %u bytes at %p not freed\n",
 		      hdr->file, hdr->line, hdr->function,
 		      hdr->size, ptr);
+	 total_size += hdr->size;
+      }
+   }
+   if(total_size) {
+      debug_printf("Total of %u KB of system memory apparently leaked\n",
+		   (total_size + 1023)/1024);
    }
 }
