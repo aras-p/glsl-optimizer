@@ -216,8 +216,14 @@ static void emit_tex(struct r500_fragment_program *fp,
 	case OPCODE_TEX:
 		fp->inst[counter].inst1 |= R500_TEX_INST_LD;
 		break;
+	case OPCODE_TXB:
+		fp->inst[counter].inst1 |= R500_TEX_INST_LODBIAS;
+		break;
 	case OPCODE_TXP:
 		fp->inst[counter].inst1 |= R500_TEX_INST_PROJ;
+		break;
+	default:
+		ERROR("emit_tex can't handle opcode %x\n", opcode);
 	}
 
 	fp->inst[counter].inst2 = R500_TEX_SRC_ADDR(hwsrc)
@@ -552,6 +558,9 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_TEX:
 				emit_tex(fp, fpi, OPCODE_TEX, dest, counter);
+				break;
+			case OPCODE_TXB:
+				emit_tex(fp, fpi, OPCODE_TXB, dest, counter);
 				break;
 			case OPCODE_TXP:
 				emit_tex(fp, fpi, OPCODE_TXP, dest, counter);
