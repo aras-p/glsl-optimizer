@@ -325,8 +325,8 @@ debug_dump_flags(const struct debug_named_value *names,
 }
 
 
-#ifdef DEBUG
 static const struct debug_named_value pipe_format_names[] = {
+#ifdef DEBUG
    DEBUG_NAMED_VALUE(PIPE_FORMAT_NONE),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_A8R8G8B8_UNORM),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_X8R8G8B8_UNORM),
@@ -418,20 +418,22 @@ static const struct debug_named_value pipe_format_names[] = {
    DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGBA),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT3_RGBA),
    DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT5_RGBA),
+#endif
    DEBUG_NAMED_VALUE_END
 };
 
+#ifdef DEBUG
 void debug_print_format(const char *msg, unsigned fmt )
 {
    debug_printf("%s: %s\n", msg, debug_dump_enum(pipe_format_names, fmt)); 
 }
+#endif
 
 char *pf_sprint_name( char *str, enum pipe_format format )
 {
    strcpy( str, debug_dump_enum(pipe_format_names, format) );
    return str;
 }
-#endif
 
 
 #ifdef DEBUG
