@@ -54,6 +54,7 @@ DRIVER_SOURCES = \
 	intel_tris.c \
 	intel_fbo.c \
 	intel_depthstencil.c \
+	intel_bufmgr_fake.c \
 	intel_bufmgr_gem.c
 
 C_SOURCES = \

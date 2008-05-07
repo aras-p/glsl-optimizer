@@ -35,7 +35,9 @@
  */
 #include "mtypes.h"
 #include "dri_bufmgr.h"
+#include "intel_bufmgr_fake.h"
 #include "drm.h"
+#include "i915_drm.h"
 
 #include "simple_list.h"
 #include "mm.h"
@@ -70,8 +72,10 @@ struct fake_buffer_reloc
    GLuint last_target_offset;
    /** Value added to target_buf's offset to get the relocation entry. */
    GLuint delta;
-   /** Flags to validate the target buffer under. */
-   uint64_t validate_flags;
+   /** Cache domains the target buffer is read into. */
+   uint32_t read_domains;
+   /** Cache domain the target buffer will have dirty cachelines in. */
+   uint32_t write_domain;
 };
 
 struct block {
@@ -153,12 +157,14 @@ typedef struct _dri_bo_fake {
     * driver private flags.
     */
    uint64_t flags;
+   /** Cache domains the target buffer is read into. */
+   uint32_t read_domains;
+   /** Cache domain the target buffer will have dirty cachelines in. */
+   uint32_t write_domain;
+
    unsigned int alignment;
    GLboolean is_static, validated;
    unsigned int map_count;
-
-   /* Flags for the buffer to be validated with in command submission */
-   uint64_t validate_flags;
 
    /** relocation list */
    struct fake_buffer_reloc *relocs;
@@ -814,7 +820,7 @@ dri_fake_kick_all(dri_bufmgr_fake *bufmgr_fake)
 }
 
 static int
-dri_fake_bo_validate(dri_bo *bo, uint64_t flags)
+dri_fake_bo_validate(dri_bo *bo)
 {
    dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
@@ -911,8 +917,9 @@ dri_fake_destroy(dri_bufmgr *bufmgr)
 }
 
 static int
-dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
-		    GLuint offset, dri_bo *target_buf)
+dri_fake_emit_reloc(dri_bo *reloc_buf,
+		    uint32_t read_domains, uint32_t write_domain,
+		    uint32_t delta, uint32_t offset, dri_bo *target_buf)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)reloc_buf->bufmgr;
    struct fake_buffer_reloc *r;
@@ -940,7 +947,8 @@ dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
    r->offset = offset;
    r->last_target_offset = target_buf->offset;
    r->delta = delta;
-   r->validate_flags = flags;
+   r->read_domains = read_domains;
+   r->write_domain = write_domain;
 
    if (bufmgr_fake->debug) {
       /* Check that a conflicting relocation hasn't already been emitted. */
@@ -959,7 +967,7 @@ dri_fake_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
  * the combined validation flags for the buffer on this batchbuffer submission.
  */
 static void
-dri_fake_calculate_validate_flags(dri_bo *bo)
+dri_fake_calculate_domains(dri_bo *bo)
 {
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
    int i;
@@ -969,21 +977,11 @@ dri_fake_calculate_validate_flags(dri_bo *bo)
       dri_bo_fake *target_fake = (dri_bo_fake *)r->target_buf;
 
       /* Do the same for the tree of buffers we depend on */
-      dri_fake_calculate_validate_flags(r->target_buf);
+      dri_fake_calculate_domains(r->target_buf);
 
-      if (target_fake->validate_flags == 0) {
-	 target_fake->validate_flags = r->validate_flags;
-      } else {
-	 /* Mask the memory location to the intersection of all the memory
-	  * locations the buffer is being validated to.
-	  */
-	 target_fake->validate_flags =
-	    (target_fake->validate_flags & ~DRM_BO_MASK_MEM) |
-	    (r->validate_flags & target_fake->validate_flags &
-	     DRM_BO_MASK_MEM);
-	 /* All the other flags just accumulate. */
-	 target_fake->validate_flags |= r->validate_flags & ~DRM_BO_MASK_MEM;
-      }
+      target_fake->read_domains |= r->read_domains;
+      if (target_fake->write_domain != 0)
+	 target_fake->write_domain = r->write_domain;
    }
 }
 
@@ -1028,7 +1026,7 @@ dri_fake_reloc_and_validate_buffer(dri_bo *bo)
    if (bo->virtual != NULL)
       dri_bo_unmap(bo);
 
-   if (bo_fake->validate_flags & DRM_BO_FLAG_WRITE) {
+   if (bo_fake->write_domain != 0) {
       if (!(bo_fake->flags & (BM_NO_BACKING_STORE|BM_PINNED))) {
          if (bo_fake->backing_store == 0)
             alloc_backing_store(bo);
@@ -1038,7 +1036,7 @@ dri_fake_reloc_and_validate_buffer(dri_bo *bo)
       bufmgr_fake->performed_rendering = GL_TRUE;
    }
 
-   return dri_fake_bo_validate(bo, bo_fake->validate_flags);
+   return dri_fake_bo_validate(bo);
 }
 
 static void *
@@ -1051,9 +1049,9 @@ dri_fake_process_relocs(dri_bo *batch_buf)
 
    bufmgr_fake->performed_rendering = GL_FALSE;
 
-   dri_fake_calculate_validate_flags(batch_buf);
+   dri_fake_calculate_domains(batch_buf);
 
-   batch_fake->validate_flags = DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ;
+   batch_fake->read_domains = DRM_GEM_DOMAIN_I915_COMMAND;
 
    /* we've ran out of RAM so blow the whole lot away and retry */
  restart:
@@ -1095,7 +1093,8 @@ dri_bo_fake_post_submit(dri_bo *bo)
 
    assert(bo_fake->map_count == 0);
    bo_fake->validated = GL_FALSE;
-   bo_fake->validate_flags = 0;
+   bo_fake->read_domains = 0;
+   bo_fake->write_domain = 0;
 }
 
 

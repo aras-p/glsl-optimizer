@@ -116,7 +116,7 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
 
    /* Emit VS program relocation */
    dri_emit_reloc(bo,
-		  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		  DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
 		  vs.thread0.grf_reg_count << 1,
 		  offsetof(struct brw_vs_unit_state, thread0),
 		  brw->vs.prog_bo);

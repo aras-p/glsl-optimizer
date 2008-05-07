@@ -267,11 +267,13 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 GLboolean
 intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              dri_bo *buffer,
-                             GLuint flags, GLuint delta)
+                             uint32_t read_domains, uint32_t write_domain,
+			     uint32_t delta)
 {
    int ret;
 
-   ret = dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
+   ret = dri_emit_reloc(batch->buf, read_domains, write_domain,
+			delta, batch->ptr - batch->map, buffer);
 
    /*
     * Using the old buffer offset, write in what the right data would be, in case

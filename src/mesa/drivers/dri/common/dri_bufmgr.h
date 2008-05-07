@@ -135,8 +135,9 @@ struct _dri_bufmgr {
     * \param target Buffer whose offset should be written into the relocation
     *	     entry.
     */
-   int (*emit_reloc)(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
-		      GLuint offset, dri_bo *target);
+   int (*emit_reloc)(dri_bo *reloc_buf,
+		     uint32_t read_domains, uint32_t write_domain,
+		     uint32_t delta, uint32_t offset, dri_bo *target);
 
    /**
     * Processes the relocations, either in userland or by converting the list
@@ -174,22 +175,12 @@ void dri_bo_subdata(dri_bo *bo, unsigned long offset,
 void dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
 			unsigned long size, void *data);
 
-void dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr);
-dri_bufmgr *dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
-				 unsigned long size,
-				 unsigned int (*fence_emit)(void *private),
-				 int (*fence_wait)(void *private,
-						   unsigned int cookie),
-				 void *driver_priv);
 void dri_bufmgr_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug);
-void dri_bo_fake_disable_backing_store(dri_bo *bo,
-				       void (*invalidate_cb)(dri_bo *bo,
-							     void *ptr),
-				       void *ptr);
 void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 
-int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
-		   GLuint offset, dri_bo *target_buf);
+int dri_emit_reloc(dri_bo *reloc_buf,
+		   uint32_t read_domains, uint32_t write_domain,
+		   uint32_t delta, uint32_t offset, dri_bo *target_buf);
 void *dri_process_relocs(dri_bo *batch_buf);
 void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf);

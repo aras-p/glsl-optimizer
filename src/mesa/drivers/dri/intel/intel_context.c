@@ -59,6 +59,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 #include "intel_decode.h"
+#include "intel_bufmgr_fake.h"
 #include "intel_bufmgr_gem.h"
 
 #include "drirenderbuffer.h"

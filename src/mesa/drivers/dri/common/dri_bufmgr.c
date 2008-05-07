@@ -121,10 +121,12 @@ dri_bufmgr_destroy(dri_bufmgr *bufmgr)
 }
 
 
-int dri_emit_reloc(dri_bo *reloc_buf, uint64_t flags, GLuint delta,
-		    GLuint offset, dri_bo *target_buf)
+int dri_emit_reloc(dri_bo *reloc_buf,
+		   uint32_t read_domains, uint32_t write_domain,
+		   uint32_t delta, uint32_t offset, dri_bo *target_buf)
 {
-   return reloc_buf->bufmgr->emit_reloc(reloc_buf, flags, delta, offset, target_buf);
+   return reloc_buf->bufmgr->emit_reloc(reloc_buf, read_domains, write_domain,
+					delta, offset, target_buf);
 }
 
 void *dri_process_relocs(dri_bo *batch_buf)
