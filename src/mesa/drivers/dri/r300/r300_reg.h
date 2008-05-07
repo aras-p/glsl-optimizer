@@ -721,23 +721,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R500_RS_IP_13					0x40A8
 #define R500_RS_IP_14					0x40AC
 #define R500_RS_IP_15					0x40B0
+#define R500_RS_IP_PTR_K0                               62
+#define R500_RS_IP_PTR_K1                               63
 #define R500_RS_IP_TEX_PTR_S_SHIFT 			0
 #define R500_RS_IP_TEX_PTR_T_SHIFT 			6
 #define R500_RS_IP_TEX_PTR_R_SHIFT 			12
 #define R500_RS_IP_TEX_PTR_Q_SHIFT 			18
 #define R500_RS_IP_COL_PTR_SHIFT 			24
 #define R500_RS_IP_COL_FMT_SHIFT 			27
-#define R500_RS_IP_COL_FMT_RGBA 			(0 << 27)
-#define R500_RS_IP_COL_FMT_RGB0 			(1 << 27)
-#define R500_RS_IP_COL_FMT_RGB1 			(2 << 27)
-/* gap */
-#define R500_RS_IP_COL_FMT_000A 			(4 << 27)
-#define R500_RS_IP_COL_FMT_0000 			(5 << 27)
-#define R500_RS_IP_COL_FMT_0001 			(6 << 27)
-/* gap */
-#define R500_RS_IP_COL_FMT_111A 			(8 << 27)
-#define R500_RS_IP_COL_FMT_1110 			(9 << 27)
-#define R500_RS_IP_COL_FMT_1111 			(10 << 27)
+#	define R500_RS_COL_PTR(x)		        (x << 24)
+#       define R500_RS_COL_FMT(x)                       (x << 27)
 /* gap */
 #define R500_RS_IP_OFFSET_DIS 				(0 << 31)
 #define R500_RS_IP_OFFSET_EN 				(1 << 31)
