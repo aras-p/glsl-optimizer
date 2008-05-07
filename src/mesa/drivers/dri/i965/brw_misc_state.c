@@ -383,40 +383,6 @@ const struct brw_tracked_state brw_line_stipple = {
 };
 
 
-
-/***********************************************************************
- * Misc constant state packets
- */
-
-static void upload_pipe_control(struct brw_context *brw)
-{
-   struct brw_pipe_control pc;
-
-   return;
-
-   memset(&pc, 0, sizeof(pc));
-
-   pc.header.opcode = CMD_PIPE_CONTROL;
-   pc.header.length = sizeof(pc)/4 - 2;
-   pc.header.post_sync_operation = PIPE_CONTROL_NOWRITE;
-
-   pc.header.instruction_state_cache_flush_enable = 1;
-
-   pc.bits1.dest_addr_type = PIPE_CONTROL_GTTWRITE_GLOBAL;
-
-   BRW_BATCH_STRUCT(brw, &pc);
-}
-
-const struct brw_tracked_state brw_pipe_control = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = 0
-   },
-   .emit = upload_pipe_control
-};
-
-
 /***********************************************************************
  * Misc invarient state packets
  */

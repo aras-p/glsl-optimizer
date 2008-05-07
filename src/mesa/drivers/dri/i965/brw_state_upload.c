@@ -80,7 +80,6 @@ const struct brw_tracked_state *atoms[] =
     */
    &brw_invarient_state,
    &brw_state_base_address,
-   &brw_pipe_control,
 
    &brw_binding_table_pointers,
    &brw_blend_constant_color,
