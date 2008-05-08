@@ -126,6 +126,8 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    for (i = 0; i < shProg->NumShaders; i++) {
       _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
    }
+   shProg->NumShaders = 0;
+
    if (shProg->Shaders) {
       _mesa_free(shProg->Shaders);
       shProg->Shaders = NULL;
@@ -1007,6 +1009,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
       _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
 }
