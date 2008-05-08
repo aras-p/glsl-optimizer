@@ -682,6 +682,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       break;
 
    case PCI_CHIP_RS690_791E:
+   case PCI_CHIP_RS690_791F:
       screen->chip_family = CHIP_FAMILY_RS690;
       fprintf(stderr, "Warning, RS690 detected, 3D support is incomplete.\n");
       break;
