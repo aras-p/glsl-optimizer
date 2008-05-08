@@ -50,7 +50,8 @@
 #define PB_BUFMGR_H_
 
 
-#include <stddef.h>
+#include "pipe/p_compiler.h"
+#include "pipe/p_error.h"
 
 
 #ifdef __cplusplus
@@ -68,7 +69,6 @@ struct pipe_winsys;
  */
 struct pb_manager
 {
-   /* XXX: we will likely need more allocation flags */
    struct pb_buffer *
    (*create_buffer)( struct pb_manager *mgr, 
 	             size_t size,
