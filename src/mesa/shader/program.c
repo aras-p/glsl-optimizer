@@ -303,7 +303,7 @@ void
 _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
 {
    (void) ctx;
-   ASSERT(prog);
+   ASSERT(prog);   assert(prog->RefCount==0);
 
    if (prog == &_mesa_DummyProgram)
       return;
@@ -378,7 +378,7 @@ _mesa_reference_program(GLcontext *ctx,
       GLboolean deleteFlag;
 
       /*_glthread_LOCK_MUTEX((*ptr)->Mutex);*/
-#if 0
+#if 01
       printf("Program %p %u 0x%x  Refcount-- to %d\n",
              *ptr, (*ptr)->Id, (*ptr)->Target, (*ptr)->RefCount - 1);
 #endif
@@ -400,7 +400,7 @@ _mesa_reference_program(GLcontext *ctx,
    if (prog) {
       /*_glthread_LOCK_MUTEX(prog->Mutex);*/
       prog->RefCount++;
-#if 0
+#if 01
       printf("Program %p %u 0x%x  Refcount++ to %d\n",
              prog, prog->Id, prog->Target, prog->RefCount);
 #endif

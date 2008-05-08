@@ -388,7 +388,7 @@ struct tnl_clipspace
 struct tnl_cache_item {
    GLuint hash;
    void *key;
-   void *data;
+   struct gl_vertex_program *prog;
    struct tnl_cache_item *next;
 };
 

@@ -1544,18 +1544,16 @@ struct gl_texture_unit
    /*@}*/
 };
 
-struct texenvprog_cache_item {
-   GLuint hash;
-   void *key;
-   struct gl_fragment_program *data;
-   struct texenvprog_cache_item *next;
-};
 
-struct texenvprog_cache {
+struct texenvprog_cache_item;
+
+struct texenvprog_cache
+{
    struct texenvprog_cache_item **items;
    GLuint size, n_items;
    GLcontext *ctx;
 };
+
 
 /**
  * Texture attribute group (GL_TEXTURE_BIT).
