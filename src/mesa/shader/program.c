@@ -378,7 +378,7 @@ _mesa_reference_program(GLcontext *ctx,
       GLboolean deleteFlag;
 
       /*_glthread_LOCK_MUTEX((*ptr)->Mutex);*/
-#if 01
+#if 0
       printf("Program %p %u 0x%x  Refcount-- to %d\n",
              *ptr, (*ptr)->Id, (*ptr)->Target, (*ptr)->RefCount - 1);
 #endif
@@ -400,7 +400,7 @@ _mesa_reference_program(GLcontext *ctx,
    if (prog) {
       /*_glthread_LOCK_MUTEX(prog->Mutex);*/
       prog->RefCount++;
-#if 01
+#if 0
       printf("Program %p %u 0x%x  Refcount++ to %d\n",
              prog, prog->Id, prog->Target, prog->RefCount);
 #endif
