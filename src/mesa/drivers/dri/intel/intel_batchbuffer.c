@@ -195,7 +195,7 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
 			 int line)
 {
    struct intel_context *intel = batch->intel;
-   GLuint used;
+   GLuint used = batch->ptr - batch->map;
    GLboolean was_locked = intel->locked;
 
    if (used == 0)
@@ -209,19 +209,20 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    if (!intel->ttm) {
       *(GLuint *) (batch->ptr) = intel->vtbl.flush_cmd();
       batch->ptr += 4;
+      used = batch->ptr - batch->map;
    }
 
    /* Round batchbuffer usage to 2 DWORDs. */
-   used = batch->ptr - batch->map;
+
    if ((used & 4) == 0) {
       *(GLuint *) (batch->ptr) = 0; /* noop */
       batch->ptr += 4;
+      used = batch->ptr - batch->map;
    }
 
    /* Mark the end of the buffer. */
    *(GLuint *) (batch->ptr) = MI_BATCH_BUFFER_END; /* noop */
    batch->ptr += 4;
-
    used = batch->ptr - batch->map;
 
    /* Workaround for recursive batchbuffer flushing: If the window is
@@ -272,6 +273,9 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 {
    int ret;
 
+   if (batch->ptr - batch->map > batch->buf->size)
+    _mesa_printf ("bad relocation ptr %p map %p offset %d size %d\n",
+		  batch->ptr, batch->map, batch->ptr - batch->map, batch->buf->size);
    ret = dri_emit_reloc(batch->buf, read_domains, write_domain,
 			delta, batch->ptr - batch->map, buffer);
 
