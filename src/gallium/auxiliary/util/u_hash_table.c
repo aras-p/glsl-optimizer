@@ -67,6 +67,13 @@ struct hash_table_item
 };
 
 
+static INLINE struct hash_table_item *
+hash_table_item(struct cso_hash_iter iter)
+{
+   return (struct hash_table_item *)cso_hash_iter_data(iter);
+}
+
+
 struct hash_table *
 hash_table_create(unsigned (*hash)(void *key),
                   int (*compare)(void *key1, void *key2))
@@ -90,7 +97,27 @@ hash_table_create(unsigned (*hash)(void *key),
 }
 
 
-static struct hash_table_item *
+static INLINE struct cso_hash_iter
+hash_table_find_iter(struct hash_table *ht,
+                     void *key, 
+                     unsigned key_hash)
+{
+   struct cso_hash_iter iter;
+   struct hash_table_item *item;
+   
+   iter = cso_hash_find(ht->cso, key_hash);
+   while (!cso_hash_iter_is_null(iter)) {
+      item = (struct hash_table_item *)cso_hash_iter_data(iter);
+      if (!ht->compare(item->key, key))
+         break;
+      iter = cso_hash_iter_next(iter);
+   }
+   
+   return iter;
+}
+
+
+static INLINE struct hash_table_item *
 hash_table_find_item(struct hash_table *ht,
                      void *key, 
                      unsigned key_hash)
@@ -117,6 +144,7 @@ hash_table_set(struct hash_table *ht,
 {
    unsigned key_hash;
    struct hash_table_item *item;
+   struct cso_hash_iter iter;
 
    assert(ht);
 
@@ -136,9 +164,8 @@ hash_table_set(struct hash_table *ht,
    item->key = key;
    item->value = value;
    
-   cso_hash_insert(ht->cso, key_hash, item);
-   /* FIXME: there is no OOM propagation in cso_hash */
-   if(0) {
+   iter = cso_hash_insert(ht->cso, key_hash, item);
+   if(cso_hash_iter_is_null(iter)) {
       FREE(item);
       return PIPE_ERROR_OUT_OF_MEMORY;
    }
@@ -171,19 +198,39 @@ hash_table_remove(struct hash_table *ht,
                   void *key)
 {
    unsigned key_hash;
+   struct cso_hash_iter iter;
    struct hash_table_item *item;
 
    assert(ht);
 
    key_hash = ht->hash(key);
 
-   item = hash_table_find_item(ht, key, key_hash);
-   if(!item)
+   iter = hash_table_find_iter(ht, key, key_hash);
+   if(cso_hash_iter_is_null(iter))
       return;
    
-   /* FIXME: cso_hash_take takes the first element of the collision list 
-    * indiscriminately, so we can not take the item down. */
-   item->value = NULL;
+   item = hash_table_item(iter);
+   assert(item);
+   FREE(item);
+   
+   cso_hash_erase(ht->cso, iter);
+}
+
+
+void 
+hash_table_clear(struct hash_table *ht)
+{
+   struct cso_hash_iter iter;
+   struct hash_table_item *item;
+
+   assert(ht);
+   
+   iter = cso_hash_first_node(ht->cso);
+   while (!cso_hash_iter_is_null(iter)) {
+      item = (struct hash_table_item *)cso_hash_take(ht->cso, cso_hash_iter_key(iter));
+      FREE(item);
+      iter = cso_hash_first_node(ht->cso);
+   }
 }
 
 
@@ -195,6 +242,8 @@ hash_table_foreach(struct hash_table *ht,
    struct cso_hash_iter iter;
    struct hash_table_item *item;
    enum pipe_error result;
+   
+   assert(ht);
    
    iter = cso_hash_first_node(ht->cso);
    while (!cso_hash_iter_is_null(iter)) {
@@ -212,7 +261,17 @@ hash_table_foreach(struct hash_table *ht,
 void
 hash_table_destroy(struct hash_table *ht)
 {
+   struct cso_hash_iter iter;
+   struct hash_table_item *item;
+   
    assert(ht);
+   
+   iter = cso_hash_first_node(ht->cso);
+   while (!cso_hash_iter_is_null(iter)) {
+      item = (struct hash_table_item *)cso_hash_iter_data(iter);
+      FREE(item);
+      iter = cso_hash_iter_next(iter);
+   }
 
    cso_hash_delete(ht->cso);
    
