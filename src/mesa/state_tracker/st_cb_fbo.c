@@ -398,22 +398,9 @@ st_render_texture(GLcontext *ctx,
 
    pipe_surface_reference(&strb->surface, NULL);
 
-#if 0
-   /* the renderbuffer's surface is inside the texture */
-   strb->surface = screen->get_tex_surface(screen, pt,
-                                           att->CubeMapFace,
-                                           att->TextureLevel /*- att->Texture->BaseLevel*/,
-                                           att->Zoffset,
-                                           PIPE_BUFFER_USAGE_GPU_READ |
-                                           PIPE_BUFFER_USAGE_GPU_WRITE);
-   printf("***** surface size: %d x %d\n", strb->surface->width, strb->surface->height);
-
-   assert(strb->surface);
-   assert(screen->is_format_supported(screen, strb->surface->format, PIPE_TEXTURE));
-   assert(screen->is_format_supported(screen, strb->surface->format, PIPE_SURFACE));
+   /* the new surface will be created during framebuffer validation */
 
    init_renderbuffer_bits(strb, pt->format);
-#endif
 
    /*
    printf("RENDER TO TEXTURE obj=%p pt=%p surf=%p  %d x %d\n",
