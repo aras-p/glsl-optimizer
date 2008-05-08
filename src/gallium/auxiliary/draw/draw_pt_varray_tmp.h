@@ -109,19 +109,27 @@ static void FUNC(struct draw_pt_front_end *frontend,
             i = end;
             fetch_init(varray, end);
             varray_flush(varray);
+            if (j + first + i <= count) {
+               varray->fetch_start -= 2;
+               i -= 2;
+            }
          }
       }
       else {
          for (j = 0; j + first <= count; j += i) {
             unsigned end = MIN2(FETCH_MAX, count - j);
-            end -= (end % incr);
-            for (i = 0; i+2 < end; i++) {
+            end -= (end  % incr);
+            for (i = 0; i + 2 < end; i++) {
                TRIANGLE(varray, DRAW_PIPE_RESET_STIPPLE | DRAW_PIPE_EDGE_FLAG_ALL,
                         i + 0 + (i&1), i + 1 - (i&1), i + 2);
             }
             i = end;
             fetch_init(varray, end);
             varray_flush(varray);
+            if (j + first + i <= count) {
+               varray->fetch_start -= 2;
+               i -= 2;
+            }
          }
       }
       break;
