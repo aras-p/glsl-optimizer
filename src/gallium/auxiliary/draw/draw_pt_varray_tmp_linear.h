@@ -159,6 +159,10 @@ static void FUNC(struct draw_pt_front_end *frontend,
          i = end;
          fetch_init(varray, end);
          varray_flush(varray);
+         if (j + first + i <= count) {
+            varray->fetch_start -= 2;
+            i -= 2;
+         }
       }
       break;
 
