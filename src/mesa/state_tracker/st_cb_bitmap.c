@@ -579,18 +579,9 @@ st_flush_bitmap_cache(struct st_context *st)
          /* The texture surface has been mapped until now.
           * So unmap and release the texture surface before drawing.
           */
-#if 0
-         pipe_surface_unmap(cache->surf);
-         pipe_surface_reference(&cache->surf, NULL);
-#else
          screen->surface_unmap(screen, cache->surf);
          screen->tex_surface_release(screen, &cache->surf);
-#endif         
 
-#if 0
-         /* XXX is this needed? */
-         pipe->texture_update(pipe, cache->texture, 0, 0x1);
-#endif
          draw_bitmap_quad(st->ctx,
                           cache->xpos,
                           cache->ypos,
