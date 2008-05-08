@@ -840,8 +840,10 @@ _swrast_DrawPixels( GLcontext *ctx,
       _swrast_validate_derived( ctx );
 
     pixels = _mesa_map_drawpix_pbo(ctx, unpack, pixels);
-    if (!pixels)
+    if (!pixels) {
+       RENDER_FINISH(swrast,ctx);
        return;
+    }
 
    switch (format) {
    case GL_STENCIL_INDEX:
