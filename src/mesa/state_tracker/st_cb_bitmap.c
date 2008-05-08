@@ -673,6 +673,9 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct st_context *st = ctx->st;
    struct pipe_texture *pt;
 
+   if (width == 0 || height == 0)
+      return;
+
    st_validate_state(st);
 
    if (!st->bitmap.vs) {
