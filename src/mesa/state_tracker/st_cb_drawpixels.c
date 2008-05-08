@@ -986,12 +986,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       stvp = st_make_passthrough_vertex_shader(ctx->st, GL_TRUE);
    }
 
-#if 0
-   psRead = rbRead->surface;
-   srcFormat = psRead->format;
-#else
    srcFormat = rbRead->texture->format;
-#endif
 
    if (screen->is_format_supported(screen, srcFormat, PIPE_TEXTURE)) {
       texFormat = srcFormat;
@@ -1003,8 +998,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
          assert(texFormat != PIPE_FORMAT_NONE); /* XXX no depth texture formats??? */
       }
       else {
-         /* todo */
-         assert(0);
+         /* default color format */
+         texFormat = st_choose_format(pipe, GL_RGBA, PIPE_TEXTURE);
+         assert(texFormat != PIPE_FORMAT_NONE);
       }
    }
 
