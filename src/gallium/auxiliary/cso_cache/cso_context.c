@@ -84,7 +84,7 @@ static boolean delete_blend_state(struct cso_context *ctx, void *state)
 {
    struct cso_blend *cso = (struct cso_blend *)state;
 
-   if (ctx->blend == state)
+   if (ctx->blend == cso->data)
       return FALSE;
 
    if (cso->delete_state)
