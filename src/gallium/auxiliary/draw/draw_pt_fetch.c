@@ -62,10 +62,11 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
    unsigned i, nr = 0;
    unsigned dst_offset = 0;
    struct translate_key key;
+   unsigned keysize;
 
    fetch->vertex_size = vertex_size;
-
-   memset(&key, 0, sizeof(key));
+   keysize = (2*4 + 
+              (draw->pt.nr_vertex_elements + 1) * sizeof(key.element[0]));
 
    /* Always emit/leave space for a vertex header.
     *
@@ -110,8 +111,9 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 
 
    if (!fetch->translate ||
-       memcmp(&fetch->translate->key, &key, sizeof(key)) != 0)
+       memcmp(&fetch->translate->key, &key, keysize) != 0)
    {
+      memset((char *)&key + keysize, 0, sizeof(key) - keysize);
       fetch->translate = translate_cache_find(fetch->cache, &key);
 
       {
