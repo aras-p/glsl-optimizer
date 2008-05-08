@@ -717,7 +717,7 @@ void setup_tri( struct setup_context *setup,
                 const float (*v1)[4],
                 const float (*v2)[4] )
 {
-   float det = calc_det(v0, v1, v2);
+   float det;
 
 #if DEBUG_VERTS
    debug_printf("Setup triangle:\n");
@@ -728,7 +728,8 @@ void setup_tri( struct setup_context *setup,
 
    if (setup->softpipe->no_rast)
       return;
-
+   
+   det = calc_det(v0, v1, v2);
    /*
    debug_printf("%s\n", __FUNCTION__ );
    */
