@@ -123,8 +123,6 @@ typedef struct _dri_bo_gem {
     dri_bo **reloc_target_bo;
     /** Number of entries in relocs */
     int reloc_count;
-    /** Memory domains for synchronization */
-    uint32_t read_domains, write_domain;
     /** Mapped address for the buffer */
     void *virtual;
 } dri_bo_gem;
@@ -232,8 +230,6 @@ intel_add_validate_buffer(dri_bo *bo)
     bufmgr_gem->validate_array[index].relocs_ptr = (uintptr_t)bo_gem->relocs;
     bufmgr_gem->validate_array[index].alignment = 0;
     bufmgr_gem->validate_array[index].buffer_offset = 0;
-    bufmgr_gem->validate_array[index].read_domains = bo_gem->read_domains;
-    bufmgr_gem->validate_array[index].write_domain = bo_gem->write_domain;
     bufmgr_gem->validate_bo[index] = bo;
     dri_bo_reference(bo);
     bufmgr_gem->validate_count++;
@@ -468,6 +464,7 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
 {
     dri_bufmgr_gem *bufmgr_gem;
     dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
+    struct drm_gem_set_domain set_domain;
     int ret;
 
     bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
@@ -493,14 +490,23 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
 	if (ret != 0) {
 	    fprintf(stderr, "%s:%d: Error mapping buffer %d (%s): %s .\n",
 		    __FILE__, __LINE__,
-		    bo_gem->gem_handle, bo_gem->name, strerror(-ret));
+		    bo_gem->gem_handle, bo_gem->name, strerror(errno));
 	}
 	bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
     }
-
-    /* XXX Synchronization with hardware */
-
     bo->virtual = bo_gem->virtual;
+    DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name, bo_gem->virtual);
+
+    set_domain.handle = bo_gem->gem_handle;
+    set_domain.read_domains = DRM_GEM_DOMAIN_CPU;
+    set_domain.write_domain = write_enable ? DRM_GEM_DOMAIN_CPU : 0;
+    ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_GEM_SET_DOMAIN, &set_domain);
+    if (ret != 0) {
+	fprintf (stderr, "%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
+		 __FILE__, __LINE__,
+		 bo_gem->gem_handle, set_domain.read_domains, set_domain.write_domain,
+		 strerror (errno));
+    }
 
     return 0;
 }
@@ -593,24 +599,19 @@ dri_gem_emit_reloc(dri_bo *bo, uint32_t read_domains, uint32_t write_domain,
     /* Check overflow */
     assert(bo_gem->reloc_count < bufmgr_gem->max_relocs);
 
+    /* Check args */
+    assert (offset <= bo->size - 4);
+    assert ((write_domain & (write_domain-1)) == 0);
+
     bo_gem->relocs[bo_gem->reloc_count].offset = offset;
     bo_gem->relocs[bo_gem->reloc_count].delta = delta;
     bo_gem->relocs[bo_gem->reloc_count].target_handle =
 	target_bo_gem->gem_handle;
+    bo_gem->relocs[bo_gem->reloc_count].read_domains = read_domains;
+    bo_gem->relocs[bo_gem->reloc_count].write_domain = write_domain;
 
     bo_gem->reloc_target_bo[bo_gem->reloc_count] = target_bo;
     dri_bo_reference(target_bo);
-
-    /* Just accumulate the read domains into the target buffer.  We don't care
-     * enough about minimizing the flags associated with a buffer for a
-     * specific set of relocations being done against it.
-     */
-    target_bo_gem->read_domains |= read_domains;
-    /* XXX: this is broken if we have more than one write domain.  We
-     * would need to be computing the write domain on the buffer based on
-     * order of relocs in the batchbuffer.  But we only have one write buffer.
-     */
-    target_bo_gem->write_domain = write_domain;
 
     bo_gem->reloc_count++;
     return 0;
@@ -644,10 +645,7 @@ dri_gem_bo_process_reloc(dri_bo *bo)
 static void *
 dri_gem_process_reloc(dri_bo *batch_buf)
 {
-    dri_bo_gem *bo_gem = (dri_bo_gem *)batch_buf;
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *) batch_buf->bufmgr;
-
-    bo_gem->read_domains |= DRM_GEM_DOMAIN_I915_COMMAND;
 
     /* Update indices and set up the validate list. */
     dri_gem_bo_process_reloc(batch_buf);
