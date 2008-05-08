@@ -173,6 +173,12 @@ feedback_reset_stipple_counter( struct draw_stage *stage )
 }
 
 
+static void
+feedback_destroy( struct draw_stage *stage )
+{
+   /* no-op */
+}
+
 /**
  * Create GL feedback drawing stage.
  */
@@ -188,6 +194,7 @@ draw_glfeedback_stage(GLcontext *ctx, struct draw_context *draw)
    fs->stage.tri = feedback_tri;
    fs->stage.flush = feedback_flush;
    fs->stage.reset_stipple_counter = feedback_reset_stipple_counter;
+   fs->stage.destroy = feedback_destroy;
    fs->ctx = ctx;
 
    return &fs->stage;
