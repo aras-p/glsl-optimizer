@@ -38,51 +38,62 @@
 #include "pipe/p_util.h"
 #include "pipe/p_debug.h"
 
-#include "util/u_hash_table.h"
-
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
 #include "pb_validate.h"
 
 
+#define PB_VALIDATE_INITIAL_SIZE 1 /* 512 */ 
+
+
 struct pb_validate
 {
-   struct hash_table *buffer_table;
+   struct pb_buffer **buffers;
+   unsigned used;
+   unsigned size;
 };
-
-
-static unsigned buffer_table_hash(void *pb_buf) 
-{
-   return (unsigned)(uintptr_t)pb_buf;
-}
-
-
-static int buffer_table_compare(void *pb_buf1, void *pb_buf2)
-{
-   return (char *)pb_buf2 - (char *)pb_buf1; 
-}
 
 
 enum pipe_error
 pb_validate_add_buffer(struct pb_validate *vl,
                        struct pb_buffer *buf)
 {
-   enum pipe_error ret;
-   
    assert(buf);
    if(!buf)
       return PIPE_ERROR;
-   
-   if(!hash_table_get(vl->buffer_table, buf)) {
-      struct pb_buffer *tmp = NULL;
-      
-      ret = hash_table_set(vl->buffer_table, buf, buf);
-      if(ret != PIPE_OK)
-	 return ret;
-      
-      /* Increment reference count */
-      pb_reference(&tmp, buf);
+
+   /* We only need to store one reference for each buffer, so avoid storing
+    * consecutive references for the same buffer. It might not be the more 
+    * common pasttern, but it is easy to implement.
+    */
+   if(vl->used && vl->buffers[vl->used - 1] == buf) {
+      return PIPE_OK;
    }
+   
+   /* Grow the table */
+   if(vl->used == vl->size) {
+      unsigned new_size;
+      struct pb_buffer **new_buffers;
+      
+      new_size = vl->size * 2;
+      if(!new_size)
+	 return PIPE_ERROR_OUT_OF_MEMORY;
+
+      new_buffers = (struct pb_buffer **)REALLOC(vl->buffers,
+                                                 vl->size*sizeof(struct pb_buffer *),
+                                                 new_size*sizeof(struct pb_buffer *));
+      if(!new_buffers)
+         return PIPE_ERROR_OUT_OF_MEMORY;
+      
+      memset(new_buffers + vl->size, 0, (new_size - vl->size)*sizeof(struct pb_buffer *));
+      
+      vl->size = new_size;
+      vl->buffers = new_buffers;
+   }
+   
+   assert(!vl->buffers[vl->used]);
+   pb_reference(&vl->buffers[vl->used], buf);
+   ++vl->used;
    
    return PIPE_OK;
 }
@@ -97,54 +108,26 @@ pb_validate_validate(struct pb_validate *vl)
 }
 
 
-struct pb_validate_fence_data {
-   struct pb_validate *vl;
-   struct pipe_fence_handle *fence;
-};
-
-
-static enum pipe_error
-pb_validate_fence_cb(void *key, void *value, void *_data) 
-{
-   struct pb_buffer *buf = (struct pb_buffer *)key;
-   struct pb_validate_fence_data *data = (struct pb_validate_fence_data *)_data;
-   struct pipe_fence_handle *fence = data->fence;
-   
-   assert(value == key);
-   
-   buffer_fence(buf, fence);
-   
-   /* Decrement the reference count -- table entry destroyed later */
-   pb_reference(&buf, NULL);
-   
-   return PIPE_OK;
-}
-
-
 void
 pb_validate_fence(struct pb_validate *vl,
                   struct pipe_fence_handle *fence)
 {
-   struct pb_validate_fence_data data;
-   
-   data.vl = vl;
-   data.fence = fence;
-   
-   hash_table_foreach(vl->buffer_table, 
-                      pb_validate_fence_cb, 
-                      &data);
-
-   /* FIXME: cso_hash shrinks here, which is not desirable in this use case, 
-    * as it will be refilled right soon */ 
-   hash_table_clear(vl->buffer_table);
+   unsigned i;
+   for(i = 0; i < vl->used; ++i) {
+      buffer_fence(vl->buffers[i], fence);
+      pb_reference(&vl->buffers[i], NULL);
+   }
+   vl->used = 0;
 }
 
 
 void
 pb_validate_destroy(struct pb_validate *vl)
 {
-   pb_validate_fence(vl, NULL);
-   hash_table_destroy(vl->buffer_table);
+   unsigned i;
+   for(i = 0; i < vl->used; ++i)
+      pb_reference(&vl->buffers[i], NULL);
+   FREE(vl->buffers);
    FREE(vl);
 }
 
@@ -158,9 +141,9 @@ pb_validate_create()
    if(!vl)
       return NULL;
    
-   vl->buffer_table = hash_table_create(buffer_table_hash,
-                                        buffer_table_compare);
-   if(!vl->buffer_table) {
+   vl->size = PB_VALIDATE_INITIAL_SIZE;
+   vl->buffers = (struct pb_buffer **)CALLOC(vl->size, sizeof(struct pb_buffer *));
+   if(!vl->buffers) {
       FREE(vl);
       return NULL;
    }
