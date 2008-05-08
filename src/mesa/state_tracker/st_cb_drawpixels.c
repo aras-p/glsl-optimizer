@@ -484,7 +484,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       ubyte *map;
 
       /* allocate/load buffer object with vertex data */
-      buf = pipe_buffer_create(pipe,32, PIPE_BUFFER_USAGE_VERTEX,
+      buf = pipe_buffer_create(pipe, 32, PIPE_BUFFER_USAGE_VERTEX,
                                sizeof(verts));
       map = pipe_buffer_map(pipe, buf, PIPE_BUFFER_USAGE_CPU_WRITE);
       memcpy(map, verts, sizeof(verts));
@@ -494,8 +494,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */
-
-      pipe_buffer_destroy(pipe, buf);
+      pipe_buffer_reference(pipe->winsys, &buf, NULL);
    }
 }
 
@@ -602,8 +601,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    x1 = x + width * ctx->Pixel.ZoomX;
    y0 = y;
    y1 = y + height * ctx->Pixel.ZoomY;
+   //if(!color)
    draw_quad(ctx, x0, y0, z, x1, y1, color, invertTex);
-
+   //else
+   //printf("skip draw quad\n");
    /* restore state */
    cso_restore_rasterizer(cso);
    cso_restore_viewport(cso);
