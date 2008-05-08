@@ -12,8 +12,7 @@ COMMON_SOURCES = \
         ../common/drirenderbuffer.c 
 
 COMMON_BM_SOURCES = \
-	../common/dri_bufmgr.c \
-	../common/dri_bufmgr_fake.c
+	../common/dri_bufmgr.c
 
 
 ifeq ($(WINDOW_SYSTEM),dri)

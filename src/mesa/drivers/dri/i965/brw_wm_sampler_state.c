@@ -306,7 +306,7 @@ static int upload_wm_samplers( struct brw_context *brw )
 
 	 ret |= dri_bufmgr_check_aperture_space(brw->wm.sdc_bo[i]);
 	 dri_emit_reloc(brw->wm.sampler_bo,
-			DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+			DRM_GEM_DOMAIN_I915_INSTRUCTION, 0,
 			0,
 			i * sizeof(struct brw_sampler_state) +
 			offsetof(struct brw_sampler_state, ss2),

@@ -88,7 +88,9 @@ static void upload_binding_table_pointers(struct brw_context *brw)
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
    OUT_BATCH(0); /* sf */
-   OUT_RELOC(brw->wm.bind_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->wm.bind_bo,
+	     DRM_GEM_DOMAIN_I915_SAMPLER, 0,
+	     0);
    ADVANCE_BATCH();
 }
 
@@ -114,18 +116,18 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
 
    BEGIN_BATCH(7, IGNORE_CLIPRECTS);
    OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
-   OUT_RELOC(brw->vs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->vs.state_bo, DRM_GEM_DOMAIN_I915_INSTRUCTION, 0, 0);
    if (brw->gs.prog_active)
-      OUT_RELOC(brw->gs.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 1);
+      OUT_RELOC(brw->gs.state_bo, DRM_GEM_DOMAIN_I915_INSTRUCTION, 0, 1);
    else
       OUT_BATCH(0);
    if (!brw->metaops.active)
-      OUT_RELOC(brw->clip.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 1);
+      OUT_RELOC(brw->clip.state_bo, DRM_GEM_DOMAIN_I915_INSTRUCTION, 0, 1);
    else
       OUT_BATCH(0);
-   OUT_RELOC(brw->sf.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
-   OUT_RELOC(brw->wm.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
-   OUT_RELOC(brw->cc.state_bo, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+   OUT_RELOC(brw->sf.state_bo, DRM_GEM_DOMAIN_I915_INSTRUCTION, 0, 0);
+   OUT_RELOC(brw->wm.state_bo, DRM_GEM_DOMAIN_I915_INSTRUCTION, 0, 0);
+   OUT_RELOC(brw->cc.state_bo, DRM_GEM_DOMAIN_I915_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();
 
    brw->state.dirty.brw |= BRW_NEW_PSP;
@@ -233,7 +235,8 @@ static void emit_depthbuffer(struct brw_context *brw)
 		(region->tiled << 27) |
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(region->buffer,
-		DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
+		DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
+		0);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((region->pitch - 1) << 6) |
 		((region->height - 1) << 19));
@@ -377,40 +380,6 @@ const struct brw_tracked_state brw_line_stipple = {
       .cache = 0
    },
    .emit = upload_line_stipple
-};
-
-
-
-/***********************************************************************
- * Misc constant state packets
- */
-
-static void upload_pipe_control(struct brw_context *brw)
-{
-   struct brw_pipe_control pc;
-
-   return;
-
-   memset(&pc, 0, sizeof(pc));
-
-   pc.header.opcode = CMD_PIPE_CONTROL;
-   pc.header.length = sizeof(pc)/4 - 2;
-   pc.header.post_sync_operation = PIPE_CONTROL_NOWRITE;
-
-   pc.header.instruction_state_cache_flush_enable = 1;
-
-   pc.bits1.dest_addr_type = PIPE_CONTROL_GTTWRITE_GLOBAL;
-
-   BRW_BATCH_STRUCT(brw, &pc);
-}
-
-const struct brw_tracked_state brw_pipe_control = {
-   .dirty = {
-      .mesa = 0,
-      .brw = BRW_NEW_BATCH,
-      .cache = 0
-   },
-   .emit = upload_pipe_control
 };
 
 

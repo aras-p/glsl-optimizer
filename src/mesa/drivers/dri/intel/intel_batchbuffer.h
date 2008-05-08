@@ -79,7 +79,9 @@ void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
 
 GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                                        dri_bo *buffer,
-                                       GLuint flags, GLuint offset);
+				       uint32_t read_domains,
+				       uint32_t write_domain,
+				       uint32_t offset);
 
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to
@@ -131,9 +133,10 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
 
-#define OUT_RELOC(buf, cliprect_mode, delta) do { 			\
+#define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
    assert((delta) >= 0);						\
-   intel_batchbuffer_emit_reloc(intel->batch, buf, cliprect_mode, delta); \
+   intel_batchbuffer_emit_reloc(intel->batch, buf,			\
+				read_domains, write_domain, delta);	\
 } while (0)
 
 #define ADVANCE_BATCH() do { } while(0)

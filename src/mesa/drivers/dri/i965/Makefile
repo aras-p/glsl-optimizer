@@ -9,6 +9,7 @@ DRIVER_SOURCES = \
 	intel_blit.c \
 	intel_buffer_objects.c \
 	intel_buffers.c \
+	intel_bufmgr_fake.c \
 	intel_bufmgr_gem.c \
 	intel_context.c \
 	intel_decode.c \

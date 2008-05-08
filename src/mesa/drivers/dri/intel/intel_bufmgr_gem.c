@@ -579,8 +579,8 @@ dri_bufmgr_gem_destroy(dri_bufmgr *bufmgr)
  * last known offset in target_bo.
  */
 static int
-dri_gem_emit_reloc(dri_bo *bo, uint64_t flags, GLuint delta,
-		   GLuint offset, dri_bo *target_bo)
+dri_gem_emit_reloc(dri_bo *bo, uint32_t read_domains, uint32_t write_domain,
+		   uint32_t delta, uint32_t offset, dri_bo *target_bo)
 {
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
     dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
@@ -601,18 +601,17 @@ dri_gem_emit_reloc(dri_bo *bo, uint64_t flags, GLuint delta,
     bo_gem->reloc_target_bo[bo_gem->reloc_count] = target_bo;
     dri_bo_reference(target_bo);
 
-    /** XXX set memory domains, using existing TTM flags (which is wrong) */
-    if (flags & DRM_BO_FLAG_WRITE)
-    {
-	/* assume this means the rendering buffer */
-	target_bo_gem->read_domains |= DRM_GEM_DOMAIN_I915_RENDER;
-	target_bo_gem->write_domain = DRM_GEM_DOMAIN_I915_RENDER;
-    }
-    if (flags & DRM_BO_FLAG_READ)
-    {
-	/* assume this means the sampler buffer */
-	target_bo_gem->read_domains |= DRM_GEM_DOMAIN_I915_SAMPLER;
-    }
+    /* Just accumulate the read domains into the target buffer.  We don't care
+     * enough about minimizing the flags associated with a buffer for a
+     * specific set of relocations being done against it.
+     */
+    target_bo_gem->read_domains |= read_domains;
+    /* XXX: this is broken if we have more than one write domain.  We
+     * would need to be computing the write domain on the buffer based on
+     * order of relocs in the batchbuffer.  But we only have one write buffer.
+     */
+    target_bo_gem->write_domain = write_domain;
+
     bo_gem->reloc_count++;
     return 0;
 }
@@ -699,9 +698,6 @@ dri_gem_post_submit(dri_bo *batch_buf)
 	dri_bo *bo = bufmgr_gem->validate_bo[i];
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
-	/* clear read/write domain bits */
-	bo_gem->read_domains = 0;
-	bo_gem->write_domain = 0;
 	/* Disconnect the buffer from the validate list */
 	bo_gem->validate_index = -1;
 	dri_bo_unreference(bo);

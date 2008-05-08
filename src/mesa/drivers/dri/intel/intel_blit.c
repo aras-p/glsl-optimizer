@@ -148,10 +148,14 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH((box.y2 << 16) | box.x2);
 
-	 OUT_RELOC(dst->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, 0);
+	 OUT_RELOC(dst->buffer,
+		   DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
+		   0);
 	 OUT_BATCH((src_y << 16) | src_x);
 	 OUT_BATCH(src_pitch);
-	 OUT_RELOC(src->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0);
+	 OUT_RELOC(src->buffer,
+		   DRM_GEM_DOMAIN_I915_RENDER, 0,
+		   0);
 	 ADVANCE_BATCH();
       }
 
@@ -212,7 +216,9 @@ intelEmitFillBlit(struct intel_context *intel,
    OUT_BATCH(BR13 | dst_pitch);
    OUT_BATCH((y << 16) | x);
    OUT_BATCH(((y + h) << 16) | (x + w));
-   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
+   OUT_RELOC(dst_buffer,
+	     DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
+	     dst_offset);
    OUT_BATCH(color);
    ADVANCE_BATCH();
 }
@@ -332,11 +338,13 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((dst_y << 16) | dst_x);
       OUT_BATCH((dst_y2 << 16) | dst_x2);
-      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+      OUT_RELOC(dst_buffer,
+		DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
 		dst_offset);
       OUT_BATCH((src_y << 16) | src_x);
       OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+      OUT_RELOC(src_buffer,
+		DRM_GEM_DOMAIN_I915_RENDER, 0,
 		src_offset);
       ADVANCE_BATCH();
    }
@@ -349,11 +357,13 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((0 << 16) | dst_x);
       OUT_BATCH((h << 16) | dst_x2);
-      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+      OUT_RELOC(dst_buffer,
+		DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
 		dst_offset + dst_y * dst_pitch);
       OUT_BATCH((0 << 16) | src_x);
       OUT_BATCH(src_pitch);
-      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+      OUT_RELOC(src_buffer,
+		DRM_GEM_DOMAIN_I915_RENDER, 0,
 		src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
@@ -528,7 +538,8 @@ intelClearWithBlit(GLcontext *ctx, GLbitfield mask)
                OUT_BATCH(BR13);
                OUT_BATCH((b.y1 << 16) | b.x1);
                OUT_BATCH((b.y2 << 16) | b.x2);
-               OUT_RELOC(write_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+               OUT_RELOC(write_buffer,
+			 DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
                          irb_region->draw_offset);
                OUT_BATCH(clearVal);
                ADVANCE_BATCH();
@@ -600,7 +611,9 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
    OUT_BATCH((100 << 16) | 100); /* clip x2, y2 */
-   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
+   OUT_RELOC(dst_buffer,
+	     DRM_GEM_DOMAIN_I915_RENDER, DRM_GEM_DOMAIN_I915_RENDER,
+	     dst_offset);
    OUT_BATCH(0); /* bg */
    OUT_BATCH(fg_color); /* fg */
    OUT_BATCH(0); /* pattern base addr */
