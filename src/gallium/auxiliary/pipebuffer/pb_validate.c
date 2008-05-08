@@ -42,6 +42,7 @@
 
 #include "pb_buffer.h"
 #include "pb_buffer_fenced.h"
+#include "pb_validate.h"
 
 
 struct pb_validate
@@ -107,7 +108,6 @@ pb_validate_fence_cb(void *key, void *value, void *_data)
 {
    struct pb_buffer *buf = (struct pb_buffer *)key;
    struct pb_validate_fence_data *data = (struct pb_validate_fence_data *)_data;
-   struct pb_validate *vl = data->vl;
    struct pipe_fence_handle *fence = data->fence;
    
    assert(value == key);

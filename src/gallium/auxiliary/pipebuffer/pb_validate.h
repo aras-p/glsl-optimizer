@@ -78,7 +78,7 @@ pb_validate_fence(struct pb_validate *vl,
                   struct pipe_fence_handle *fence);
 
 struct pb_validate *
-pb_validate_create();
+pb_validate_create(void);
 
 void
 pb_validate_destroy(struct pb_validate *vl);
