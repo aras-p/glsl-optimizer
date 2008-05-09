@@ -197,7 +197,10 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
                                               stImage->level, zoffset, 
                                               flags);
 
-   return screen->surface_map(screen, stImage->surface, flags);
+   if (stImage->surface)
+      return screen->surface_map(screen, stImage->surface, flags);
+   else
+      return NULL;
 }
 
 

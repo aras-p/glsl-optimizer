@@ -645,7 +645,8 @@ st_TexImage(GLcontext * ctx,
    if (stImage->pt) {
       texImage->Data = st_texture_image_map(ctx->st, stImage, 0,
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
-      dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
+      if (stImage->surface)
+         dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
@@ -661,6 +662,11 @@ st_TexImage(GLcontext * ctx,
       }
 
       texImage->Data = malloc(sizeInBytes);
+   }
+
+   if (!texImage->Data) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage");
+      return;
    }
 
    DBG("Upload image %dx%dx%d row_len %x pitch %x\n",
@@ -906,7 +912,8 @@ st_TexSubimage(GLcontext * ctx,
    if (stImage->pt) {
       texImage->Data = st_texture_image_map(ctx->st, stImage, zoffset, 
                                             PIPE_BUFFER_USAGE_CPU_WRITE);
-      dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
+      if (stImage->surface)
+         dstRowStride = stImage->surface->pitch * stImage->surface->cpp;
    }
 
    if (!texImage->Data) {
