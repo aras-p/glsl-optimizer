@@ -154,6 +154,7 @@ debug_get_option(const char *name, const char *dfault)
 {
    const char *result;
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+#ifdef DEBUG
    ULONG_PTR iFile = 0;
    const void *pMap = NULL;
    const char *sol, *eol, *sep;
@@ -183,6 +184,9 @@ debug_get_option(const char *name, const char *dfault)
       }
       EngUnmapFile(iFile);
    }
+#else
+   result = dfault;
+#endif
 #else
    
    result = getenv(name);
