@@ -262,7 +262,9 @@ get_passthrough_fs(struct st_context *st)
    if (!st->passthrough_fs) {
       st->passthrough_fs =
          util_make_fragment_passthrough_shader(st->pipe, &shader);
+#if 0      /* We actually need to keep the tokens around at this time */
       free((void *) shader.tokens);
+#endif
    }
 
    return st->passthrough_fs;
