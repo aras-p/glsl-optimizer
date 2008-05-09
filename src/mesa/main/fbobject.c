@@ -1542,10 +1542,16 @@ _mesa_GenerateMipmapEXT(GLenum target)
    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
 
+   if (ctx->Driver.MapTexture)
+      ctx->Driver.MapTexture(ctx, texObj);
+
    /* XXX this might not handle cube maps correctly */
    _mesa_lock_texture(ctx, texObj);
    _mesa_generate_mipmap(ctx, target, texUnit, texObj);
    _mesa_unlock_texture(ctx, texObj);
+
+   if (ctx->Driver.UnmapTexture)
+      ctx->Driver.UnmapTexture(ctx, texObj);
 }
 
 
