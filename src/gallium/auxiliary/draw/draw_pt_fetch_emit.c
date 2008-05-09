@@ -174,8 +174,9 @@ static void fetch_emit_prepare( struct draw_pt_middle_end *middle,
    /* Don't bother with caching at this stage:
     */
    if (!feme->translate ||
-       memcmp(&feme->translate->key, &key, sizeof(key)) != 0) 
+       translate_key_compare(&feme->translate->key, &key) != 0) 
    {
+      translate_key_sanitize(&key);
       feme->translate = translate_cache_find(feme->cache,
                                              &key);
 

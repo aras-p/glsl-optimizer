@@ -42,6 +42,7 @@
 #include "draw_vertex.h"
 #include "draw_pipe.h"
 #include "translate/translate.h"
+#include "translate/translate_cache.h"
 
 
 /**
@@ -75,6 +76,8 @@ struct vbuf_stage {
    /* Cache point size somewhere it's address won't change:
     */
    float point_size;
+
+   struct translate_cache *cache;
 };
 
 
@@ -220,7 +223,6 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
    /* Translate from pipeline vertices to hw vertices.
     */
    dst_offset = 0;
-   memset(&hw_key, 0, sizeof(hw_key));
 
    for (i = 0; i < vbuf->vinfo->num_attribs; i++) {
       unsigned emit_sz = 0;
@@ -277,12 +279,10 @@ vbuf_set_prim( struct vbuf_stage *vbuf, uint prim )
    /* Don't bother with caching at this stage:
     */
    if (!vbuf->translate ||
-       memcmp(&vbuf->translate->key, &hw_key, sizeof(hw_key)) != 0) 
+       translate_key_compare(&vbuf->translate->key, &hw_key) != 0) 
    {
-      if (vbuf->translate)
-	 vbuf->translate->release(vbuf->translate);
-
-      vbuf->translate = translate_create( &hw_key );
+      translate_key_sanitize(&hw_key);
+      vbuf->translate = translate_cache_find(vbuf->cache, &hw_key);
 
       vbuf->translate->set_buffer(vbuf->translate, 1, &vbuf->point_size, 0);
    }
@@ -430,6 +430,9 @@ static void vbuf_destroy( struct draw_stage *stage )
    if (vbuf->render)
       vbuf->render->destroy( vbuf->render );
 
+   if (vbuf->cache)
+      translate_cache_destroy(vbuf->cache);
+
    FREE( stage );
 }
 
@@ -460,6 +463,11 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
 					    16 );
    if (!vbuf->indices)
       goto fail;
+
+   vbuf->cache = translate_cache_create();
+   if (!vbuf->cache) 
+      goto fail;
+      
    
    vbuf->vertices = NULL;
    vbuf->vertex_ptr = vbuf->vertices;
