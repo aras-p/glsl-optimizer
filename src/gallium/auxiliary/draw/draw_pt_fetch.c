@@ -223,7 +223,8 @@ struct pt_fetch *draw_pt_fetch_create( struct draw_context *draw )
 
 void draw_pt_fetch_destroy( struct pt_fetch *fetch )
 {
-   translate_cache_destroy(fetch->cache);
+   if (fetch->cache)
+      translate_cache_destroy(fetch->cache);
 
    FREE(fetch);
 }

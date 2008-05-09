@@ -427,9 +427,6 @@ static void vbuf_destroy( struct draw_stage *stage )
    if(vbuf->indices)
       align_free( vbuf->indices );
    
-   if(vbuf->translate)
-      vbuf->translate->release( vbuf->translate );
-
    if (vbuf->render)
       vbuf->render->destroy( vbuf->render );
 
