@@ -55,6 +55,12 @@ int util_vsnprintf(char *, size_t, const char *, va_list);
 int util_snprintf(char *str, size_t size, const char *format, ...);
 
 static INLINE void 
+util_vsprintf(char *str, const char *format, va_list ap)
+{
+   util_vsnprintf(str, (size_t)-1, format, ap);
+}
+
+static INLINE void 
 util_sprintf(char *str, const char *format, ...)
 {
    va_list ap;
@@ -158,6 +164,7 @@ util_memmove(void *dest, const void *src, size_t n)
 
 #define util_vsnprintf vsnprintf
 #define util_snprintf snprintf
+#define util_vsprintf vsprintf
 #define util_sprintf sprintf
 #define util_strchr strchr
 #define util_strcmp strcmp
