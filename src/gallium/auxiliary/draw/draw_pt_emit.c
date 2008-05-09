@@ -49,6 +49,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    const struct vertex_info *vinfo;
    unsigned dst_offset;
    struct translate_key hw_key;
+   unsigned keysize;
    unsigned i;
    boolean ok;
 
@@ -58,12 +59,10 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       return;
    }
 
-   memset(&hw_key, 0, sizeof(hw_key));
-
    /* Must do this after set_primitive() above:
     */
    vinfo = draw->render->get_vertex_info(draw->render);
-
+   keysize = 2*4 + vinfo->num_attribs * sizeof(hw_key.element[0]);
 
    /* Translate from pipeline vertices to hw vertices.
     */
@@ -122,8 +121,9 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    hw_key.output_stride = vinfo->size * 4;
 
    if (!emit->translate ||
-       memcmp(&emit->translate->key, &hw_key, sizeof(hw_key)) != 0)
+       memcmp(&emit->translate->key, &hw_key, keysize) != 0)
    {
+      memset((char *)&hw_key + keysize, 0, sizeof(hw_key) - keysize);
       emit->translate = translate_cache_find(emit->cache, &hw_key);
    }
 }
