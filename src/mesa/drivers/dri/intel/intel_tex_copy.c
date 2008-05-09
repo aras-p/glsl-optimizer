@@ -161,9 +161,7 @@ do_copy_texsubimage(struct intel_context *intel,
 
    /* GL_SGIS_generate_mipmap */
    if (intelImage->level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      intel_generate_mipmap(ctx, target,
-                            &ctx->Texture.Unit[ctx->Texture.CurrentUnit],
-                            texObj);
+      intel_generate_mipmap(ctx, target, texObj);
    }
 
    return GL_TRUE;

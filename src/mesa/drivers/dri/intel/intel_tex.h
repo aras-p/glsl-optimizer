@@ -151,7 +151,6 @@ void intel_tex_unmap_images(struct intel_context *intel,
 int intel_compressed_num_bytes(GLuint mesaFormat);
 
 void intel_generate_mipmap(GLcontext *ctx, GLenum target,
-			   const struct gl_texture_unit *texUnit,
 			   struct gl_texture_object *texObj);
 
 #endif

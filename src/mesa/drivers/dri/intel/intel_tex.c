@@ -172,7 +172,6 @@ timed_memcpy(void *dest, const void *src, size_t n)
  */
 void
 intel_generate_mipmap(GLcontext *ctx, GLenum target,
-                      const struct gl_texture_unit *texUnit,
                       struct gl_texture_object *texObj)
 {
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
@@ -198,6 +197,15 @@ intel_generate_mipmap(GLcontext *ctx, GLenum target,
    }
 }
 
+static void intelGenerateMipmap(GLcontext *ctx, GLenum target, struct gl_texture_object *texObj)
+{
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_texture_object *intelObj = intel_texture_object(texObj);
+
+   intel_tex_map_images(intel, intelObj);
+   intel_generate_mipmap(ctx, target, texObj);
+   intel_tex_unmap_images(intel, intelObj);
+}
 
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
@@ -221,6 +229,7 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->CopyTexSubImage2D = _swrast_copy_texsubimage2d;
 #endif
    functions->GetTexImage = intelGetTexImage;
+   functions->GenerateMipmap = intelGenerateMipmap;
 
    /* compressed texture functions */
    functions->CompressedTexImage2D = intelCompressedTexImage2D;
