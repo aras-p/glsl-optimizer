@@ -198,21 +198,6 @@ intel_generate_mipmap(GLcontext *ctx, GLenum target,
    }
 }
 
-void intelMapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);  
-   struct intel_context *intel = intel_context(ctx);
-
-   intel_tex_map_images(intel, intelObj);
-}
-
-void intelUnmapTexture(GLcontext *ctx, struct gl_texture_object *texObj)
-{
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);  
-   struct intel_context *intel = intel_context(ctx);
-
-   intel_tex_unmap_images(intel, intelObj);
-}
 
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
@@ -247,9 +232,6 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->FreeTexImageData = intelFreeTextureImageData;
    functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = intelIsTextureResident;
-
-   functions->MapTexture = intelMapTexture;
-   functions->UnmapTexture = intelUnmapTexture;
 
 #if DO_DEBUG && !defined(__ia64__)
    if (INTEL_DEBUG & DEBUG_BUFMGR)
