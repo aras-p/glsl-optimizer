@@ -95,6 +95,27 @@ struct translate *translate_lookup_or_create( struct translate_context *tctx,
 
 struct translate *translate_create( const struct translate_key *key );
 
+static INLINE int translate_keysize( const struct translate_key *key )
+{
+   return 2 * sizeof(int) + key->nr_elements * sizeof(struct translate_element);
+}
+
+static INLINE int translate_key_compare( const struct translate_key *a,
+                                         const struct translate_key *b )
+{
+   int keysize = translate_keysize(a);
+   return memcmp(a, b, keysize);
+}
+
+
+static INLINE void translate_key_sanitize( struct translate_key *a )
+{
+   int keysize = translate_keysize(a);
+   char *ptr = (char *)a;
+   memset(ptr + keysize, 0, sizeof(*a) - keysize);
+}
+
+
 /*******************************************************************************
  *  Private:
  */
