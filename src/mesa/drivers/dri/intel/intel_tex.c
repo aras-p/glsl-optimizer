@@ -179,7 +179,7 @@ intel_generate_mipmap(GLcontext *ctx, GLenum target,
    GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    int face, i;
 
-   _mesa_generate_mipmap(ctx, target, texUnit, texObj);
+   _mesa_generate_mipmap(ctx, target, texObj);
 
    /* Update the level information in our private data in the new images, since
     * it didn't get set as part of a normal TexImage path.
