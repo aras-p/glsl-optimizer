@@ -82,52 +82,51 @@ util_draw_texquad(struct pipe_context *pipe,
 {
    struct pipe_buffer *vbuf;
    uint numAttribs = 2, vertexBytes, i, j;
-   float *v;
 
    vertexBytes = 4 * (4 * numAttribs * sizeof(float));
 
    /* XXX create one-time */
    vbuf = pipe->winsys->buffer_create(pipe->winsys, 32,
                                       PIPE_BUFFER_USAGE_VERTEX, vertexBytes);
-   assert(vbuf);
+   if (vbuf) {
+      float *v = (float *) pipe->winsys->buffer_map(pipe->winsys, vbuf,
+                                             PIPE_BUFFER_USAGE_CPU_WRITE);
+      if (v) {
+         /*
+          * Load vertex buffer
+          */
+         for (i = j = 0; i < 4; i++) {
+            v[j + 2] = z;   /* z */
+            v[j + 3] = 1.0; /* w */
+            v[j + 6] = 0.0; /* r */
+            v[j + 7] = 1.0; /* q */
+            j += 8;
+         }
 
-   v = (float *) pipe->winsys->buffer_map(pipe->winsys, vbuf,
-                                          PIPE_BUFFER_USAGE_CPU_WRITE);
+         v[0] = x0;
+         v[1] = y0;
+         v[4] = 0.0; /*s*/
+         v[5] = 0.0; /*t*/
 
-   /*
-    * Load vertex buffer
-    */
-   for (i = j = 0; i < 4; i++) {
-      v[j + 2] = z;   /* z */
-      v[j + 3] = 1.0; /* w */
-      v[j + 6] = 0.0; /* r */
-      v[j + 7] = 1.0; /* q */
-      j += 8;
+         v[8] = x1;
+         v[9] = y0;
+         v[12] = 1.0;
+         v[13] = 0.0;
+
+         v[16] = x1;
+         v[17] = y1;
+         v[20] = 1.0;
+         v[21] = 1.0;
+
+         v[24] = x0;
+         v[25] = y1;
+         v[28] = 0.0;
+         v[29] = 1.0;
+
+         pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
+         util_draw_vertex_buffer(pipe, vbuf, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+      }
+
+      pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
    }
-
-   v[0] = x0;
-   v[1] = y0;
-   v[4] = 0.0; /*s*/
-   v[5] = 0.0; /*t*/
-
-   v[8] = x1;
-   v[9] = y0;
-   v[12] = 1.0;
-   v[13] = 0.0;
-
-   v[16] = x1;
-   v[17] = y1;
-   v[20] = 1.0;
-   v[21] = 1.0;
-
-   v[24] = x0;
-   v[25] = y1;
-   v[28] = 0.0;
-   v[29] = 1.0;
-
-   pipe->winsys->buffer_unmap(pipe->winsys, vbuf);
-
-   util_draw_vertex_buffer(pipe, vbuf, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
-
-   pipe_buffer_reference(pipe->winsys, &vbuf, NULL);
 }
