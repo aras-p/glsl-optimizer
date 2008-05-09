@@ -272,6 +272,7 @@ guess_and_alloc_texture(struct st_context *st,
    GLuint height = stImage->base.Height2;
    GLuint depth = stImage->base.Depth2;
    GLuint i, comp_byte = 0;
+   enum pipe_format fmt;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -331,15 +332,18 @@ guess_and_alloc_texture(struct st_context *st,
    if (stImage->base.IsCompressed)
       comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
 
+   fmt = st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
-                                 st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat),
+                                 fmt,
                                  lastLevel,
                                  width,
                                  height,
                                  depth,
                                  comp_byte,
-                                 ( PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                 ( (pf_is_depth_stencil(fmt) ?
+                                   PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
+                                   PIPE_TEXTURE_USAGE_RENDER_TARGET) |
                                    PIPE_TEXTURE_USAGE_SAMPLER ));
 
    DBG("%s - success\n", __FUNCTION__);
@@ -1510,16 +1514,19 @@ st_finalize_texture(GLcontext *ctx,
    /* May need to create a new gallium texture:
     */
    if (!stObj->pt) {
+      const enum pipe_format fmt =
+         st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
       stObj->pt = st_texture_create(ctx->st,
                                     gl_target_to_pipe(stObj->base.Target),
-                                    st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat),
+                                    fmt,
                                     stObj->lastLevel,
                                     firstImage->base.Width2,
                                     firstImage->base.Height2,
                                     firstImage->base.Depth2,
                                     comp_byte,
-
-                                    ( PIPE_TEXTURE_USAGE_RENDER_TARGET |
+                                    ( (pf_is_depth_stencil(fmt) ?
+                                      PIPE_TEXTURE_USAGE_DEPTH_STENCIL :
+                                      PIPE_TEXTURE_USAGE_RENDER_TARGET) |
                                       PIPE_TEXTURE_USAGE_SAMPLER ));
 
       if (!stObj->pt) {

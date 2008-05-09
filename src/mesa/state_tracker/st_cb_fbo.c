@@ -77,12 +77,6 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
    return info.size;
 }
 
-static INLINE GLboolean pf_is_depth_stencil( enum pipe_format format )
-{
-   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
-           pf_get_component_bits( format, PIPE_FORMAT_COMP_S )) != 0;
-}
-
 /**
  * gl_renderbuffer::AllocStorage()
  * This is called to allocate the original drawing surface, and
