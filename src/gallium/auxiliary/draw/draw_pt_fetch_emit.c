@@ -268,7 +268,8 @@ static void fetch_emit_destroy( struct draw_pt_middle_end *middle )
 {
    struct fetch_emit_middle_end *feme = (struct fetch_emit_middle_end *)middle;
 
-   translate_cache_destroy(feme->cache);
+   if (feme->cache)
+      translate_cache_destroy(feme->cache);
 
    FREE(middle);
 }
