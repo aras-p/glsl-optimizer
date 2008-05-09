@@ -29,6 +29,7 @@
 #include "buffers.h"
 #include "context.h"
 #include "framebuffer.h"
+#include "mipmap.h"
 #include "queryobj.h"
 #include "renderbuffer.h"
 #include "texcompress.h"
@@ -98,6 +99,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->CopyTexSubImage1D = _swrast_copy_texsubimage1d;
    driver->CopyTexSubImage2D = _swrast_copy_texsubimage2d;
    driver->CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+   driver->GenerateMipmap = _mesa_generate_mipmap;
    driver->TestProxyTexImage = _mesa_test_proxy_teximage;
    driver->CompressedTexImage1D = _mesa_store_compressed_teximage1d;
    driver->CompressedTexImage2D = _mesa_store_compressed_teximage2d;

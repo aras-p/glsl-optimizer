@@ -328,6 +328,13 @@ struct dd_function_table {
                               GLsizei width, GLsizei height );
 
    /**
+    * Called by glGenerateMipmap() or when GL_GENERATE_MIPMAP_SGIS is enabled.
+    */
+   void (*GenerateMipmap)(GLcontext *ctx,  GLenum target,
+                          const struct gl_texture_unit *texUnit,
+                          struct gl_texture_object *texObj);
+
+   /**
     * Called by glTexImage[123]D when user specifies a proxy texture
     * target.  
     *
