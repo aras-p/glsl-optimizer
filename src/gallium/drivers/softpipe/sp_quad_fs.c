@@ -53,7 +53,6 @@ struct quad_shade_stage
    struct tgsi_sampler samplers[PIPE_MAX_SAMPLERS];
    struct tgsi_exec_machine machine;
    struct tgsi_exec_vector *inputs, *outputs;
-   int colorOutSlot, depthOutSlot;
 };
 
 
@@ -156,20 +155,6 @@ static void shade_begin(struct quad_stage *qs)
       qss->samplers[i].texture = softpipe->texture[i];
    }
 
-   /* find output slots for depth, color */
-   qss->colorOutSlot = -1;
-   qss->depthOutSlot = -1;
-   for (i = 0; i < qss->stage.softpipe->fs->info.num_outputs; i++) {
-      switch (qss->stage.softpipe->fs->info.output_semantic_name[i]) {
-      case TGSI_SEMANTIC_POSITION:
-         qss->depthOutSlot = i;
-         break;
-      case TGSI_SEMANTIC_COLOR:
-         qss->colorOutSlot = i;
-         break;
-      }
-   }
-   
    softpipe->fs->prepare( softpipe->fs, 
 			  &qss->machine,
 			  qss->samplers );
