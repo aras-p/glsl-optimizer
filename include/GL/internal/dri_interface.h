@@ -67,6 +67,7 @@ typedef struct __DRImediaStreamCounterExtensionRec	__DRImediaStreamCounterExtens
 typedef struct __DRItexOffsetExtensionRec	__DRItexOffsetExtension;
 typedef struct __DRItexBufferExtensionRec	__DRItexBufferExtension;
 typedef struct __DRIlegacyExtensionRec		__DRIlegacyExtension;
+typedef struct __DRIswrastExtensionRec		__DRIswrastExtension;
 /*@}*/
 
 
@@ -256,6 +257,7 @@ typedef struct __DRIgetDrawableInfoExtensionRec __DRIgetDrawableInfoExtension;
 typedef struct __DRIsystemTimeExtensionRec __DRIsystemTimeExtension;
 typedef struct __DRIdamageExtensionRec __DRIdamageExtension;
 typedef struct __DRIloaderExtensionRec __DRIloaderExtension;
+typedef struct __DRIswrastLoaderExtensionRec __DRIswrastLoaderExtension;
 
 
 /**
@@ -355,6 +357,40 @@ struct __DRIloaderExtensionRec {
 
     void (*postDamage)(__DRIdrawable *draw, struct drm_clip_rect *rects,
 		       int num_rects, void *loaderPrivate);
+};
+
+#define __DRI_SWRAST_IMAGE_OP_DRAW	1
+#define __DRI_SWRAST_IMAGE_OP_CLEAR	2
+#define __DRI_SWRAST_IMAGE_OP_SWAP	3
+
+/**
+ * SWRast Loader extension.
+ */
+#define __DRI_SWRAST_LOADER "DRI_SWRastLoader"
+#define __DRI_SWRAST_LOADER_VERSION 1
+struct __DRIswrastLoaderExtensionRec {
+    __DRIextension base;
+
+    /*
+     * Drawable position and size
+     */
+    void (*getDrawableInfo)(__DRIdrawable *drawable,
+			    int *x, int *y, int *width, int *height,
+			    void *loaderPrivate);
+
+    /**
+     * Put image to drawable
+     */
+    void (*putImage)(__DRIdrawable *drawable, int op,
+		     int x, int y, int width, int height, char *data,
+		     void *loaderPrivate);
+
+    /**
+     * Get image from drawable
+     */
+    void (*getImage)(__DRIdrawable *drawable,
+		     int x, int y, int width, int height, char *data,
+		     void *loaderPrivate);
 };
 
 /**
@@ -567,6 +603,27 @@ struct __DRIlegacyExtensionRec {
 				      __DRIcontext *shared,
 				      drm_context_t hwContext,
 				      void *loaderPrivate);
+};
+
+/**
+ * This extension provides alternative screen, drawable and context
+ * constructors for swrast DRI functionality.  This is used in
+ * conjunction with the core extension.
+ */
+#define __DRI_SWRAST "DRI_SWRast"
+#define __DRI_SWRAST_VERSION 1
+
+struct __DRIswrastExtensionRec {
+    __DRIextension base;
+
+    __DRIscreen *(*createNewScreen)(int screen,
+				    const __DRIextension **extensions,
+				    const __DRIconfig ***driver_configs,
+				    void *loaderPrivate);
+
+    __DRIdrawable *(*createNewDrawable)(__DRIscreen *screen,
+					const __DRIconfig *config,
+					void *loaderPrivate);
 };
 
 #endif

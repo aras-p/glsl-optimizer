@@ -537,14 +537,14 @@ if test "$mesa_driver" = dri; then
             # be used.
             if test "x$DRI_DIRS" = x; then
                 DRI_DIRS="i915 i965 mach64 mga r128 r200 r300 radeon \
-                    savage tdfx unichrome"
+                    savage tdfx unichrome swrast"
             fi
             ;;
         powerpc*)
             # Build only the drivers for cards that exist on PowerPC.
             # At some point MGA will be added, but not yet.
             if test "x$DRI_DIRS" = x; then
-                DRI_DIRS="mach64 r128 r200 r300 radeon tdfx"
+                DRI_DIRS="mach64 r128 r200 r300 radeon tdfx swrast"
             fi
             ;;
         esac
@@ -564,7 +564,7 @@ if test "$mesa_driver" = dri; then
         # to use the new interface.
         if test "x$DRI_DIRS" = x; then
             DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
-                unichrome savage sis"
+                unichrome savage sis swrast"
         fi
         ;;
     esac
@@ -572,7 +572,7 @@ if test "$mesa_driver" = dri; then
     # default drivers
     if test "x$DRI_DIRS" = x; then
         DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon s3v \
-            savage sis tdfx trident unichrome ffb"
+            savage sis tdfx trident unichrome ffb swrast"
     fi
 
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
