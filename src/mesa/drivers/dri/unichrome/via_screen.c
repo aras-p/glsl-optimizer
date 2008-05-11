@@ -24,8 +24,8 @@
 
 #include <stdio.h>
 
-#include "utils.h"
 #include "dri_util.h"
+#include "utils.h"
 #include "glheader.h"
 #include "context.h"
 #include "framebuffer.h"

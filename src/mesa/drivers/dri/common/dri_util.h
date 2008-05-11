@@ -61,7 +61,6 @@
 #define GLX_BAD_CONTEXT                    5
 
 typedef struct __DRIswapInfoRec        __DRIswapInfo;
-typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
 /* Typedefs to avoid rewriting the world. */
 typedef struct __DRIscreenRec	__DRIscreenPrivate;
@@ -536,22 +535,6 @@ struct __DRIscreenRec {
     drmLock *lock;
 };
 
-struct __DRIconfigRec {
-    __GLcontextModes modes;
-};
-
-/**
- * Used to store a version which includes a major range instead of a single
- * major version number.
- */
-struct __DRIutilversionRec2 {
-    int    major_min;    /** min allowed Major version number. */
-    int    major_max;    /** max allowed Major version number. */
-    int    minor;        /**< Minor version number. */
-    int    patch;        /**< Patch-level. */
-};
-
-
 extern void
 __driUtilMessage(const char *f, ...);
 
@@ -565,5 +548,8 @@ __driParseEvents(__DRIcontext *psp, __DRIdrawable *pdp);
 extern float
 driCalculateSwapUsage( __DRIdrawable *dPriv,
 		       int64_t last_swap_ust, int64_t current_ust );
+
+extern GLint
+driIntersectArea( drm_clip_rect_t rect1, drm_clip_rect_t rect2 );
 
 #endif /* _DRI_UTIL_H_ */
