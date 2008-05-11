@@ -110,6 +110,24 @@ struct _dri_bufmgr {
    int (*bo_unmap)(dri_bo *buf);
 
    /**
+    * Write data into an object.
+    *
+    * This is an optional function, if missing,
+    * dri_bo will map/memcpy/unmap.
+    */
+   int (*bo_subdata) (dri_bo *buf, unsigned long offset,
+		      unsigned long size, const void *data);
+
+   /**
+    * Read data from an object
+    *
+    * This is an optional function, if missing,
+    * dri_bo will map/memcpy/unmap.
+    */
+   int (*bo_get_subdata) (dri_bo *bo, unsigned long offset,
+			  unsigned long size, void *data);
+
+   /**
     * Tears down the buffer manager instance.
     */
    void (*destroy)(dri_bufmgr *bufmgr);
@@ -170,10 +188,10 @@ void dri_bo_unreference(dri_bo *bo);
 int dri_bo_map(dri_bo *buf, GLboolean write_enable);
 int dri_bo_unmap(dri_bo *buf);
 
-void dri_bo_subdata(dri_bo *bo, unsigned long offset,
-		    unsigned long size, const void *data);
-void dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
-			unsigned long size, void *data);
+int dri_bo_subdata(dri_bo *bo, unsigned long offset,
+		   unsigned long size, const void *data);
+int dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
+		       unsigned long size, void *data);
 
 void dri_bufmgr_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug);
 void dri_bufmgr_destroy(dri_bufmgr *bufmgr);

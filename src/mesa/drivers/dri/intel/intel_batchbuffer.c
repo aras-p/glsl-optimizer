@@ -78,11 +78,18 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->buf = NULL;
    }
 
+   if (!batch->buffer && intel->ttm == GL_TRUE)
+      batch->buffer = malloc (intel->maxBatchSize);
+
    batch->buf = dri_bo_alloc(intel->bufmgr, "batchbuffer",
 			     intel->maxBatchSize, 4096,
 			     DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
-   dri_bo_map(batch->buf, GL_TRUE);
-   batch->map = batch->buf->virtual;
+   if (batch->buffer)
+      batch->map = batch->buffer;
+   else {
+      dri_bo_map(batch->buf, GL_TRUE);
+      batch->map = batch->buf->virtual;
+   }
    batch->size = intel->maxBatchSize;
    batch->ptr = batch->map;
    batch->dirty_state = ~0;
@@ -107,9 +114,13 @@ intel_batchbuffer_alloc(struct intel_context *intel)
 void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
-   if (batch->map) {
-      dri_bo_unmap(batch->buf);
-      batch->map = NULL;
+   if (batch->buffer)
+      free (batch->buffer);
+   else {
+      if (batch->map) {
+	 dri_bo_unmap(batch->buf);
+	 batch->map = NULL;
+      }
    }
    dri_bo_unreference(batch->buf);
    batch->buf = NULL;
@@ -127,7 +138,10 @@ do_flush_locked(struct intel_batchbuffer *batch,
    struct intel_context *intel = batch->intel;
    int ret = 0;
 
-   dri_bo_unmap(batch->buf);
+   if (batch->buffer)
+      dri_bo_subdata (batch->buf, 0, used, batch->buffer);
+   else
+      dri_bo_unmap(batch->buf);
 
    batch->map = NULL;
    batch->ptr = NULL;

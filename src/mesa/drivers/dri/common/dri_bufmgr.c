@@ -90,28 +90,41 @@ dri_bo_unmap(dri_bo *buf)
    return buf->bufmgr->bo_unmap(buf);
 }
 
-void
+int
 dri_bo_subdata(dri_bo *bo, unsigned long offset,
 	       unsigned long size, const void *data)
 {
+   int ret;
+   if (bo->bufmgr->bo_subdata)
+      return bo->bufmgr->bo_subdata(bo, offset, size, data);
    if (size == 0 || data == NULL)
-      return;
+      return 0;
 
-   dri_bo_map(bo, GL_TRUE);
+   ret = dri_bo_map(bo, GL_TRUE);
+   if (ret)
+       return ret;
    memcpy((unsigned char *)bo->virtual + offset, data, size);
    dri_bo_unmap(bo);
+   return 0;
 }
 
-void
+int
 dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
 		   unsigned long size, void *data)
 {
-   if (size == 0 || data == NULL)
-      return;
+   int ret;
+   if (bo->bufmgr->bo_subdata)
+      return bo->bufmgr->bo_get_subdata(bo, offset, size, data);
 
-   dri_bo_map(bo, GL_FALSE);
+   if (size == 0 || data == NULL)
+      return 0;
+
+   ret = dri_bo_map(bo, GL_FALSE);
+   if (ret)
+       return ret;
    memcpy(data, (unsigned char *)bo->virtual + offset, size);
    dri_bo_unmap(bo);
+   return 0;
 }
 
 void

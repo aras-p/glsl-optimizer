@@ -92,10 +92,10 @@ typedef struct _dri_bufmgr_gem {
 
     uint32_t max_relocs;
 
-    struct drm_i915_gem_validate_entry *validate_array;
-    dri_bo **validate_bo;
-    int validate_array_size;
-    int validate_count;
+    struct drm_i915_gem_exec_object *exec_objects;
+    dri_bo **exec_bos;
+    int exec_size;
+    int exec_count;
 
     /** Array of lists of cached gem objects of power-of-two sizes */
     struct dri_gem_bo_bucket cache_bucket[INTEL_GEM_BO_BUCKETS];
@@ -166,8 +166,8 @@ static void dri_gem_dump_validation_list(dri_bufmgr_gem *bufmgr_gem)
 {
     int i, j;
 
-    for (i = 0; i < bufmgr_gem->validate_count; i++) {
-	dri_bo *bo = bufmgr_gem->validate_bo[i];
+    for (i = 0; i < bufmgr_gem->exec_count; i++) {
+	dri_bo *bo = bufmgr_gem->exec_bos[i];
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
 	if (bo_gem->relocs == NULL) {
@@ -207,32 +207,32 @@ intel_add_validate_buffer(dri_bo *bo)
 	return;
 
     /* Extend the array of validation entries as necessary. */
-    if (bufmgr_gem->validate_count == bufmgr_gem->validate_array_size) {
-	int new_size = bufmgr_gem->validate_array_size * 2;
+    if (bufmgr_gem->exec_count == bufmgr_gem->exec_size) {
+	int new_size = bufmgr_gem->exec_size * 2;
 
 	if (new_size == 0)
 	    new_size = 5;
 
-	bufmgr_gem->validate_array =
-	    realloc(bufmgr_gem->validate_array,
-		    sizeof(*bufmgr_gem->validate_array) * new_size);
-	bufmgr_gem->validate_bo =
-	    realloc(bufmgr_gem->validate_bo,
-		    sizeof(*bufmgr_gem->validate_bo) * new_size);
-	bufmgr_gem->validate_array_size = new_size;
+	bufmgr_gem->exec_objects =
+	    realloc(bufmgr_gem->exec_objects,
+		    sizeof(*bufmgr_gem->exec_objects) * new_size);
+	bufmgr_gem->exec_bos =
+	    realloc(bufmgr_gem->exec_bos,
+		    sizeof(*bufmgr_gem->exec_bos) * new_size);
+	bufmgr_gem->exec_size = new_size;
     }
 
-    index = bufmgr_gem->validate_count;
+    index = bufmgr_gem->exec_count;
     bo_gem->validate_index = index;
     /* Fill in array entry */
-    bufmgr_gem->validate_array[index].buffer_handle = bo_gem->gem_handle;
-    bufmgr_gem->validate_array[index].relocation_count = bo_gem->reloc_count;
-    bufmgr_gem->validate_array[index].relocs_ptr = (uintptr_t)bo_gem->relocs;
-    bufmgr_gem->validate_array[index].alignment = 0;
-    bufmgr_gem->validate_array[index].buffer_offset = 0;
-    bufmgr_gem->validate_bo[index] = bo;
+    bufmgr_gem->exec_objects[index].handle = bo_gem->gem_handle;
+    bufmgr_gem->exec_objects[index].relocation_count = bo_gem->reloc_count;
+    bufmgr_gem->exec_objects[index].relocs_ptr = (uintptr_t)bo_gem->relocs;
+    bufmgr_gem->exec_objects[index].alignment = 0;
+    bufmgr_gem->exec_objects[index].offset = 0;
+    bufmgr_gem->exec_bos[index] = bo;
     dri_bo_reference(bo);
-    bufmgr_gem->validate_count++;
+    bufmgr_gem->exec_count++;
 }
 
 
@@ -309,13 +309,13 @@ dri_gem_bo_alloc(dri_bufmgr *bufmgr, const char *name,
     }
 
     if (!alloc_from_cache) {
-	struct drm_gem_alloc alloc;
+	struct drm_gem_create create;
 
-	memset(&alloc, 0, sizeof(alloc));
-	alloc.size = bo_gem->bo.size;
+	memset(&create, 0, sizeof(create));
+	create.size = bo_gem->bo.size;
 
-	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_ALLOC, &alloc);
-	bo_gem->gem_handle = alloc.handle;
+	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_CREATE, &create);
+	bo_gem->gem_handle = create.handle;
 	if (ret != 0) {
 	    free(bo_gem);
 	    return NULL;
@@ -439,14 +439,14 @@ dri_gem_bo_unreference(dri_bo *bo)
 	    bucket->tail = &entry->next;
 	    bucket->num_entries++;
 	} else {
-	    struct drm_gem_unreference unref;
+	    struct drm_gem_close close;
 
-	    /* Decrement the kernel refcount for the buffer. */
-	    unref.handle = bo_gem->gem_handle;
-	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_UNREFERENCE, &unref);
+	    /* Close this object */
+	    close.handle = bo_gem->gem_handle;
+	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_CLOSE, &close);
 	    if (ret != 0) {
 	       fprintf(stderr,
-		       "DRM_IOCTL_GEM_UNREFERENCE %d failed (%s): %s\n",
+		       "DRM_IOCTL_GEM_CLOSE %d failed (%s): %s\n",
 		       bo_gem->gem_handle, bo_gem->name, strerror(-ret));
 	    }
 	}
@@ -537,14 +537,62 @@ dri_gem_bo_unmap(dri_bo *bo)
     return 0;
 }
 
+static int
+dri_gem_bo_subdata (dri_bo *bo, unsigned long offset,
+		    unsigned long size, const void *data)
+{
+    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
+    dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
+    struct drm_gem_pwrite pwrite;
+    int ret;
+
+    memset (&pwrite, 0, sizeof (pwrite));
+    pwrite.handle = bo_gem->gem_handle;
+    pwrite.offset = offset;
+    pwrite.size = size;
+    pwrite.data_ptr = (uint64_t) (uintptr_t) data;
+    ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_GEM_PWRITE, &pwrite);
+    if (ret != 0) {
+	fprintf (stderr, "%s:%d: Error writing data to buffer %d: (%d %d) %s .\n",
+		 __FILE__, __LINE__,
+		 bo_gem->gem_handle, (int) offset, (int) size,
+		 strerror (errno));
+    }
+    return 0;
+}
+
+static int
+dri_gem_bo_get_subdata (dri_bo *bo, unsigned long offset,
+			unsigned long size, void *data)
+{
+    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
+    dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
+    struct drm_gem_pread pread;
+    int ret;
+
+    memset (&pread, 0, sizeof (pread));
+    pread.handle = bo_gem->gem_handle;
+    pread.offset = offset;
+    pread.size = size;
+    pread.data_ptr = (uint64_t) (uintptr_t) data;
+    ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_GEM_PREAD, &pread);
+    if (ret != 0) {
+	fprintf (stderr, "%s:%d: Error reading data from buffer %d: (%d %d) %s .\n",
+		 __FILE__, __LINE__,
+		 bo_gem->gem_handle, (int) offset, (int) size,
+		 strerror (errno));
+    }
+    return 0;
+}
+
 static void
 dri_bufmgr_gem_destroy(dri_bufmgr *bufmgr)
 {
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bufmgr;
     int i;
 
-    free(bufmgr_gem->validate_array);
-    free(bufmgr_gem->validate_bo);
+    free(bufmgr_gem->exec_objects);
+    free(bufmgr_gem->exec_bos);
 
     /* Free any cached buffer objects we were going to reuse */
     for (i = 0; i < INTEL_GEM_BO_BUCKETS; i++) {
@@ -552,7 +600,7 @@ dri_bufmgr_gem_destroy(dri_bufmgr *bufmgr)
 	struct dri_gem_bo_bucket_entry *entry;
 
 	while ((entry = bucket->head) != NULL) {
-	    struct drm_gem_unreference unref;
+	    struct drm_gem_close close;
 	    int ret;
 
 	    bucket->head = entry->next;
@@ -560,11 +608,11 @@ dri_bufmgr_gem_destroy(dri_bufmgr *bufmgr)
 		bucket->tail = &bucket->head;
 	    bucket->num_entries--;
 
-	    /* Decrement the kernel refcount for the buffer. */
-	    unref.handle = entry->gem_handle;
-	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_UNREFERENCE, &unref);
+	    /* Close this object */
+	    close.handle = entry->gem_handle;
+	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_CLOSE, &close);
 	    if (ret != 0) {
-	       fprintf(stderr, "DRM_IOCTL_GEM_UNREFERENCE failed: %s\n",
+	       fprintf(stderr, "DRM_IOCTL_GEM_CLOSE failed: %s\n",
 		       strerror(-ret));
 	    }
 
@@ -655,9 +703,10 @@ dri_gem_process_reloc(dri_bo *batch_buf)
      */
     intel_add_validate_buffer(batch_buf);
 
-    bufmgr_gem->exec_arg.buffers_ptr = (uintptr_t)bufmgr_gem->validate_array;
-    bufmgr_gem->exec_arg.buffer_count = bufmgr_gem->validate_count;
-    bufmgr_gem->exec_arg.batch_start_offset = bufmgr_gem->validate_count;
+    bufmgr_gem->exec_arg.buffers_ptr = (uintptr_t)bufmgr_gem->exec_objects;
+    bufmgr_gem->exec_arg.buffer_count = bufmgr_gem->exec_count;
+    bufmgr_gem->exec_arg.batch_start_offset = 0;
+    bufmgr_gem->exec_arg.batch_len = 0;	/* written in intel_exec_ioctl */
 
     return &bufmgr_gem->exec_arg;
 }
@@ -667,16 +716,16 @@ intel_update_buffer_offsets (dri_bufmgr_gem *bufmgr_gem)
 {
     int i;
 
-    for (i = 0; i < bufmgr_gem->validate_count; i++) {
-	dri_bo *bo = bufmgr_gem->validate_bo[i];
+    for (i = 0; i < bufmgr_gem->exec_count; i++) {
+	dri_bo *bo = bufmgr_gem->exec_bos[i];
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
 	/* Update the buffer offset */
-	if (bufmgr_gem->validate_array[i].buffer_offset != bo->offset) {
+	if (bufmgr_gem->exec_objects[i].offset != bo->offset) {
 	    DBG("BO %d (%s) migrated: 0x%08lx -> 0x%08llx\n",
 		bo_gem->gem_handle, bo_gem->name, bo->offset,
-		bufmgr_gem->validate_array[i].buffer_offset);
-	    bo->offset = bufmgr_gem->validate_array[i].buffer_offset;
+		bufmgr_gem->exec_objects[i].offset);
+	    bo->offset = bufmgr_gem->exec_objects[i].offset;
 	}
     }
 }
@@ -692,16 +741,16 @@ dri_gem_post_submit(dri_bo *batch_buf)
     if (bufmgr_gem->bufmgr.debug)
 	dri_gem_dump_validation_list(bufmgr_gem);
 
-    for (i = 0; i < bufmgr_gem->validate_count; i++) {
-	dri_bo *bo = bufmgr_gem->validate_bo[i];
+    for (i = 0; i < bufmgr_gem->exec_count; i++) {
+	dri_bo *bo = bufmgr_gem->exec_bos[i];
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
 	/* Disconnect the buffer from the validate list */
 	bo_gem->validate_index = -1;
 	dri_bo_unreference(bo);
-	bufmgr_gem->validate_bo[i] = NULL;
+	bufmgr_gem->exec_bos[i] = NULL;
     }
-    bufmgr_gem->validate_count = 0;
+    bufmgr_gem->exec_count = 0;
 }
 
 /**
@@ -762,6 +811,8 @@ intel_bufmgr_gem_init(int fd, int batch_size)
     bufmgr_gem->bufmgr.bo_unreference = dri_gem_bo_unreference;
     bufmgr_gem->bufmgr.bo_map = dri_gem_bo_map;
     bufmgr_gem->bufmgr.bo_unmap = dri_gem_bo_unmap;
+    bufmgr_gem->bufmgr.bo_subdata = dri_gem_bo_subdata;
+    bufmgr_gem->bufmgr.bo_get_subdata = dri_gem_bo_get_subdata;
     bufmgr_gem->bufmgr.destroy = dri_bufmgr_gem_destroy;
     bufmgr_gem->bufmgr.emit_reloc = dri_gem_emit_reloc;
     bufmgr_gem->bufmgr.process_relocs = dri_gem_process_reloc;
