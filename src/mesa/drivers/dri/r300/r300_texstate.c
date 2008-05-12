@@ -398,16 +398,24 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		R300_TX_HEIGHTMASK_SHIFT))
 	    | ((numLevels - 1) << R300_TX_MAX_MIP_LEVEL_SHIFT);
 
+	t->pitch = 0;
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+	    if (tObj->Image[0][t->base.firstLevel]->Width > 2048)
+		t->pitch |= R500_TXWIDTH_BIT11;
+	    if (tObj->Image[0][t->base.firstLevel]->Height > 2048)
+		t->pitch |= R500_TXHEIGHT_BIT11;
+	}
+
 	/* Only need to round to nearest 32 for textures, but the blitter
 	 * requires 64-byte aligned pitches, and we may/may not need the
 	 * blitter.   NPOT only!
 	 */
 	if (baseImage->IsCompressed) {
-		t->pitch =
+		t->pitch |=
 		    (tObj->Image[0][t->base.firstLevel]->Width + 63) & ~(63);
 	} else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
 		unsigned int align = blitWidth - 1;
-		t->pitch = ((tObj->Image[0][t->base.firstLevel]->Width *
+		t->pitch |= ((tObj->Image[0][t->base.firstLevel]->Width *
 			     texelBytes) + 63) & ~(63);
 		t->size |= R300_TX_SIZE_TXPITCH_EN;
 		if (!t->image_override)
@@ -415,7 +423,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 			    (((tObj->Image[0][t->base.firstLevel]->Width) +
 			      align) & ~align) - 1;
 	} else {
-		t->pitch =
+		t->pitch |=
 		    ((tObj->Image[0][t->base.firstLevel]->Width *
 		      texelBytes) + 63) & ~(63);
 	}

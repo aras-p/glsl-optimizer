@@ -745,7 +745,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* gap */
 
 /* Zero to flush caches. */
-#define R300_TX_CNTL                        0x4100
+#define R300_TX_INVALTAGS                   0x4100
 #define R300_TX_FLUSH                       0x0
 
 /* The upper enable bits are guessed, based on fglrx reported limits. */

@@ -164,7 +164,7 @@ static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 	r300->cmdbuf.count_used++;
 
 	/* Emit cache flush */
-	*dest = cmdpacket0(R300_TX_CNTL, 1);
+	*dest = cmdpacket0(R300_TX_INVALTAGS, 1);
 	dest++;
 	r300->cmdbuf.count_used++;
 
