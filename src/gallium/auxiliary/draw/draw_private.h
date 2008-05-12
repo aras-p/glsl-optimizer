@@ -124,12 +124,14 @@ struct draw_context
    struct {
       struct {
          struct draw_pt_middle_end *fetch_emit;
+         /*struct draw_pt_middle_end *fetch_shade_emit;*/
          struct draw_pt_middle_end *general;
       } middle;
 
       struct {
          struct draw_pt_front_end *vcache;
          struct draw_pt_front_end *varray;
+         struct draw_pt_front_end *fetch_shade_emit; /* temp hack */
       } front;
 
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
@@ -154,6 +156,7 @@ struct draw_context
          const void *constants;
       } user;
 
+      boolean test_fse;
    } pt;
 
    struct {

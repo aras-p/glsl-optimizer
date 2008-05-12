@@ -26,6 +26,7 @@ C_SOURCES = \
 	draw_pt_emit.c \
 	draw_pt_fetch.c \
 	draw_pt_fetch_emit.c \
+	draw_pt_fetch_shade_emit.c \
 	draw_pt_fetch_shade_pipeline.c \
 	draw_pt_post_vs.c \
         draw_pt_varray.c \
