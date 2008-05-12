@@ -54,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 
 // Set this to 1 for extremely verbose debugging of command buffers
-#define DEBUG_CMDBUF		0
+#define DEBUG_CMDBUF		1
 
 /**
  * Send the current command buffer via ioctl to the hardware.
@@ -412,6 +412,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, 5);
 
 	if (is_r500) {
+		ALLOC_STATE(fp, always, R500_FP_CMDSIZE, 0);
+		r300->hw.fp.cmd[R500_FP_CMD_0] = cmdpacket0(R500_US_CONFIG, 2);
+		r300->hw.fp.cmd[R500_FP_CNTL] = R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO;
+		
 		ALLOC_STATE(r500fp, r500fp, R300_FPI_CMDSIZE, 0);
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 0, 0);
 		ALLOC_STATE(r500fp_const, r500fp_const, R300_FPP_CMDSIZE, 0);

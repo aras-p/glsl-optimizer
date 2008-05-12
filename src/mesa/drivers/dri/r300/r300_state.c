@@ -1501,7 +1501,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	int rs_tex_count = 0, rs_col_count = 0;
 	int i, count;
 
-	memset(interp_col, 0, 8);
+	memset(interp_col, 0, sizeof(interp_col));
 
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
@@ -1640,22 +1640,17 @@ static void r500SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	/* I'm still unsure if these are needed */
-	GLuint interp_magic[8] = {
-		0x00,
-		1 << 24,
-		2 << 24,
-		3 << 24,
-		0x00,
-		0x00,
-		0x00,
-		0x00
-	};
+	GLuint interp_col[8];
 	union r300_outputs_written OutputsWritten;
+        TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
+	int rs_tex_count = 0, rs_col_count = 0;
 	int in_texcoords, col_interp_nr;
-	int i;
+	int i, count;
 
+	memset(interp_col, 0, sizeof(interp_col));
 	if (hw_tcl_on)
 		OutputsWritten.vp_outputs = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	else
@@ -1672,7 +1667,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	R300_STATECHANGE(r300, rc);
 	R300_STATECHANGE(r300, rr);
 
-	fp_reg = in_texcoords = col_interp_nr = high_rr = 0;
+	fp_reg = col_interp_nr = high_rr = in_texcoords = 0;
 
 	r300->hw.rr.cmd[R300_RR_INST_1] = 0;
 
@@ -1690,15 +1685,51 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		InputsRead &= ~FRAG_BIT_WPOS;
 	}
 
+	if (InputsRead & FRAG_BIT_COL0) {
+		count = VB->AttribPtr[_TNL_ATTRIB_COLOR0]->size;
+		interp_col[0] |= R500_RS_COL_PTR(rs_col_count);
+		if (count == 3)
+			interp_col[0] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
+		rs_col_count += count;
+	}
+	else
+		interp_col[0] = R500_RS_COL_FMT(R300_RS_COL_FMT_0001);
+
+	if (InputsRead & FRAG_BIT_COL1) {
+		count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
+		interp_col[1] |= R500_RS_COL_PTR(1);
+		if (count == 3)
+			interp_col[1] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
+		rs_col_count += count;
+	}
+
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	  
-	  //		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0 | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3) | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
-	  
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = (0 << R500_RS_IP_TEX_PTR_S_SHIFT) | 
-			(1 << R500_RS_IP_TEX_PTR_T_SHIFT) |
-			(2 << R500_RS_IP_TEX_PTR_R_SHIFT) | 
-			(3 << R500_RS_IP_TEX_PTR_Q_SHIFT) |
-			(in_texcoords << 0) | interp_magic[i];
+		GLuint swiz;
+
+		/* with TCL we always seem to route 4 components */
+		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
+		  
+		  if (hw_tcl_on)
+		    count = 4;
+		  else
+		    count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
+		  
+		  swiz = 0;
+		  if (count == 4) 
+		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		  else
+		    swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
+		  
+		  if (count >= 3)
+		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_R_SHIFT;
+		  else
+		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
+		  
+		  /* always have a least 2 tex coords */
+		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
+		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
+		}
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | rs_tex_count | swiz;
 
 		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
@@ -1715,16 +1746,11 @@ static void r500SetupRSUnit(GLcontext * ctx)
 				WARN_ONCE("fragprog wants coords for tex%d, vp doesn't provide them!\n", i);
 			}
 		}
-		/* Need to count all coords enabled at vof */
-		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_TEX0 + i, _TNL_ATTRIB_TEX(i))) {
-			in_texcoords++;
-		}
 	}
 
 	if (InputsRead & FRAG_BIT_COL0) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL0, _TNL_ATTRIB_COLOR0)) {
-			//			r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0 | R300_RS_ROUTE_0_COLOR | (fp_reg++ << R300_RS_ROUTE_0_COLOR_DEST_SHIFT);
-			r300->hw.rr.cmd[R300_RR_INST_0] |= 0 | R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
+			r300->hw.rr.cmd[R300_RR_INST_0] |= R500_RS_INST_COL_CN_WRITE | (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
 			InputsRead &= ~FRAG_BIT_COL0;
 			col_interp_nr++;
 		} else {
@@ -1734,7 +1760,6 @@ static void r500SetupRSUnit(GLcontext * ctx)
 
 	if (InputsRead & FRAG_BIT_COL1) {
 		if (R300_OUTPUTS_WRITTEN_TEST(OutputsWritten, VERT_RESULT_COL1, _TNL_ATTRIB_COLOR1)) {
-			//			r300->hw.rr.cmd[R300_RR_ROUTE_1] |= R300_RS_ROUTE_1_UNKNOWN11 | R300_RS_ROUTE_1_COLOR1 | (fp_reg++ << R300_RS_ROUTE_1_COLOR1_DEST_SHIFT);
 			r300->hw.rr.cmd[R300_RR_INST_1] |= (1 << 12) | R500_RS_INST_COL_CN_WRITE |  (fp_reg++ << R500_RS_INST_COL_ADDR_SHIFT);
 			InputsRead &= ~FRAG_BIT_COL1;
 			if (high_rr < 1)
@@ -1751,7 +1776,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		col_interp_nr++;
 	}
 
-	r300->hw.rc.cmd[1] = 0 | ((in_texcoords << 2) << R300_IT_COUNT_SHIFT)
+	r300->hw.rc.cmd[1] = 0 | (rs_tex_count << R300_IT_COUNT_SHIFT)
 	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
 	  | R300_HIRES_EN;
 
@@ -2323,10 +2348,11 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			hw_tcl_on = future_hw_tcl_on = 0;
 			r300ResetHwState(rmesa);
 
+			r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 			return;
 		}
-		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 	}
+	r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 }
 
 static void r300SetupPixelShader(r300ContextPtr rmesa)
@@ -2433,6 +2459,9 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 		return;
 	}
 
+	R300_STATECHANGE(rmesa, fp);
+	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = fp->max_temp_idx;
+
 	R300_STATECHANGE(rmesa, r500fp);
 	/* Emit our shader... */
 	for (i = 0; i < fp->cs->nrslots; i++) {
@@ -2449,10 +2478,10 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(fp->constant[i][0]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(fp->constant[i][1]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(fp->constant[i][2]);
-		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(fp->constant[i][3]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat32(fp->constant[i][0]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat32(fp->constant[i][1]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat32(fp->constant[i][2]);
+		rmesa->hw.r500fp_const.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat32(fp->constant[i][3]);
 	}
 	bump_r500fp_const_count(rmesa->hw.r500fp_const.cmd, fp->const_nr * 4);
 
