@@ -64,16 +64,17 @@ static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
 }
 
 
+typedef const float (*cptrf4)[4];
 
 static void
 do_tri(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
-
+   
    setup_tri( setup->setup,
-              prim->v[0]->data,
-              prim->v[1]->data,
-              prim->v[2]->data );
+              (cptrf4)prim->v[0]->data,
+              (cptrf4)prim->v[1]->data,
+              (cptrf4)prim->v[2]->data );
 }
 
 static void
@@ -82,8 +83,8 @@ do_line(struct draw_stage *stage, struct prim_header *prim)
    struct setup_stage *setup = setup_stage( stage );
 
    setup_line( setup->setup,
-               prim->v[0]->data,
-               prim->v[1]->data );
+               (cptrf4)prim->v[0]->data,
+               (cptrf4)prim->v[1]->data );
 }
 
 static void
@@ -92,7 +93,7 @@ do_point(struct draw_stage *stage, struct prim_header *prim)
    struct setup_stage *setup = setup_stage( stage );
 
    setup_point( setup->setup,
-                prim->v[0]->data );
+                (cptrf4)prim->v[0]->data );
 }
 
 

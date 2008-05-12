@@ -129,17 +129,22 @@ sp_vbuf_set_primitive(struct vbuf_render *vbr, unsigned prim)
 }
 
 
+static INLINE cptrf4 get_vert( const void *vertex_buffer,
+                               int index,
+                               int stride )
+{
+   return (cptrf4)((char *)vertex_buffer + index * stride);
+}
 
 
 static void
-sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
+sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr)
 {
    struct softpipe_vbuf_render *cvbr = softpipe_vbuf_render(vbr);
    struct softpipe_context *softpipe = cvbr->softpipe;
-   unsigned vertex_size = softpipe->vertex_info_vbuf.size * sizeof(float);
-   unsigned i, j;
-   void *vertex_buffer = cvbr->vertex_buffer;
-   cptrf4 v[3];
+   unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
+   unsigned i;
+   const void *vertex_buffer = cvbr->vertex_buffer;
 
    /* XXX: break this dependency - make setup_context live under
     * softpipe, rename the old "setup" draw stage to something else.
@@ -149,40 +154,98 @@ sp_vbuf_draw(struct vbuf_render *vbr, const ushort *indices, uint nr_indices)
 
 
    switch (cvbr->prim) {
-   case PIPE_PRIM_TRIANGLES:
-      for (i = 0; i < nr_indices; i += 3) {
-         for (j = 0; j < 3; j++)
-            v[j] = (cptrf4)((char *)vertex_buffer +
-                             indices[i+j] * vertex_size);
-
-         setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2]);
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < nr; i++) {
+         setup_point( setup_ctx,
+                      get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
 
    case PIPE_PRIM_LINES:
-      for (i = 0; i < nr_indices; i += 2) {
-         for (j = 0; j < 2; j++)
-            v[j] = (cptrf4)((char *)vertex_buffer +
-                            indices[i+j] * vertex_size);
-
+      for (i = 1; i < nr; i += 2) {
          setup_line( setup_ctx,
-                     v[0],
-                     v[1] );
+                     get_vert(vertex_buffer, indices[i-1], stride),
+                     get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
 
-   case PIPE_PRIM_POINTS:
-      for (i = 0; i < nr_indices; i++) {
-         v[0] = (cptrf4)((char *)vertex_buffer +
-                         indices[i] * vertex_size);
-
-         setup_point( setup_ctx,
-                      v[0] );
+   case PIPE_PRIM_LINE_STRIP:
+      for (i = 1; i < nr; i ++) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, indices[i-1], stride),
+                     get_vert(vertex_buffer, indices[i-0], stride) );
       }
       break;
+
+   case PIPE_PRIM_LINE_LOOP:
+      for (i = 1; i < nr; i ++) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, indices[i-1], stride),
+                     get_vert(vertex_buffer, indices[i-0], stride) );
+      }
+      if (nr) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, indices[nr-1], stride),
+                     get_vert(vertex_buffer, indices[0], stride) );
+      }
+      break;
+
+
+   case PIPE_PRIM_TRIANGLES:
+      for (i = 2; i < nr; i += 3) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[i-2], stride),
+                    get_vert(vertex_buffer, indices[i-1], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride));
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      for (i = 2; i < nr; i += 3) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[i+(i&1)-2], stride),
+                    get_vert(vertex_buffer, indices[i-(i&1)-1], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride));
+      }
+      break;
+
+   case PIPE_PRIM_TRIANGLE_FAN:
+   case PIPE_PRIM_POLYGON:
+      for (i = 2; i < nr; i += 3) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[0], stride),
+                    get_vert(vertex_buffer, indices[i-1], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride));
+      }
+      break;
+   case PIPE_PRIM_QUADS:
+      for (i = 3; i < nr; i += 4) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[i-3], stride),
+                    get_vert(vertex_buffer, indices[i-2], stride),
+                    get_vert(vertex_buffer, indices[i-1], stride));
+
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[i-3], stride),
+                    get_vert(vertex_buffer, indices[i-1], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride));
+      }
+      break;
+   case PIPE_PRIM_QUAD_STRIP:
+      for (i = 3; i < nr; i += 2) {
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[i-2], stride),
+                    get_vert(vertex_buffer, indices[i-1], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride));
+
+         setup_tri( setup_ctx,
+                    get_vert(vertex_buffer, indices[i-3], stride),
+                    get_vert(vertex_buffer, indices[i-0], stride),
+                    get_vert(vertex_buffer, indices[i-2], stride));
+      }
+      break;
+   default:
+      assert(0);
    }
 
    /* XXX: why are we calling this???  If we had to call something, it
@@ -203,130 +266,106 @@ sp_vbuf_draw_arrays(struct vbuf_render *vbr, uint start, uint nr)
    struct softpipe_context *softpipe = cvbr->softpipe;
    struct draw_stage *setup = softpipe->setup;
    const void *vertex_buffer = cvbr->vertex_buffer;
-   const unsigned vertex_size = softpipe->vertex_info_vbuf.size * sizeof(float);
+   const unsigned stride = softpipe->vertex_info_vbuf.size * sizeof(float);
    unsigned i;
    struct setup_context *setup_ctx = sp_draw_setup_context(setup);
-   cptrf4 v[3];
-
-#define VERTEX(I) \
-   (cptrf4) ((char *) vertex_buffer + (I) * vertex_size)
 
    switch (cvbr->prim) {
    case PIPE_PRIM_POINTS:
       for (i = 0; i < nr; i++) {
-         v[0] = VERTEX(i);
-         setup_point( setup_ctx, v[0] );
+         setup_point( setup_ctx,
+                      get_vert(vertex_buffer, i-0, stride) );
       }
       break;
+
    case PIPE_PRIM_LINES:
-      assert(nr % 2 == 0);
-      for (i = 0; i < nr; i += 2) {
-         v[0] = VERTEX(i);
-         v[1] = VERTEX(i + 1);
-         setup_line( setup_ctx, v[0], v[1] );
+      for (i = 1; i < nr; i += 2) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, i-1, stride),
+                     get_vert(vertex_buffer, i-0, stride) );
       }
       break;
+
    case PIPE_PRIM_LINE_STRIP:
-      for (i = 1; i < nr; i++) {
-         v[0] = VERTEX(i - 1);
-         v[1] = VERTEX(i);
-         setup_line( setup_ctx, v[0], v[1] );
+      for (i = 1; i < nr; i ++) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, i-1, stride),
+                     get_vert(vertex_buffer, i-0, stride) );
       }
       break;
+
+   case PIPE_PRIM_LINE_LOOP:
+      for (i = 1; i < nr; i ++) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, i-1, stride),
+                     get_vert(vertex_buffer, i-0, stride) );
+      }
+      if (nr) {
+         setup_line( setup_ctx,
+                     get_vert(vertex_buffer, nr-1, stride),
+                     get_vert(vertex_buffer, 0, stride) );
+      }
+      break;
+
+
    case PIPE_PRIM_TRIANGLES:
-      assert(nr % 3 == 0);
-      for (i = 0; i < nr; i += 3) {
-         v[0] = VERTEX(i + 0);
-         v[1] = VERTEX(i + 1);
-         v[2] = VERTEX(i + 2);
+      for (i = 2; i < nr; i += 3) {
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, i-2, stride),
+                    get_vert(vertex_buffer, i-1, stride),
+                    get_vert(vertex_buffer, i-0, stride));
       }
       break;
+
    case PIPE_PRIM_TRIANGLE_STRIP:
-      assert(nr >= 3);
-      for (i = 2; i < nr; i++) {
-         v[0] = VERTEX(i - 2);
-         v[1] = VERTEX(i - 1);
-         v[2] = VERTEX(i);
+      for (i = 2; i < nr; i += 3) {
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, i+(i&1)-2, stride),
+                    get_vert(vertex_buffer, i-(i&1)-1, stride),
+                    get_vert(vertex_buffer, i-0, stride));
       }
       break;
+
    case PIPE_PRIM_TRIANGLE_FAN:
-      assert(nr >= 3);
-      for (i = 2; i < nr; i++) {
-         v[0] = VERTEX(0);
-         v[1] = VERTEX(i - 1);
-         v[2] = VERTEX(i);
+   case PIPE_PRIM_POLYGON:
+      for (i = 2; i < nr; i += 3) {
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, 0, stride),
+                    get_vert(vertex_buffer, i-1, stride),
+                    get_vert(vertex_buffer, i-0, stride));
       }
       break;
    case PIPE_PRIM_QUADS:
       assert(nr % 4 == 0);
-      for (i = 0; i < nr; i += 4) {
-         v[0] = VERTEX(i + 0);
-         v[1] = VERTEX(i + 1);
-         v[2] = VERTEX(i + 2);
+      for (i = 3; i < nr; i += 4) {
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, i-3, stride),
+                    get_vert(vertex_buffer, i-2, stride),
+                    get_vert(vertex_buffer, i-1, stride));
 
-         v[0] = VERTEX(i + 0);
-         v[1] = VERTEX(i + 2);
-         v[2] = VERTEX(i + 3);
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, i-3, stride),
+                    get_vert(vertex_buffer, i-1, stride),
+                    get_vert(vertex_buffer, i-0, stride));
       }
       break;
    case PIPE_PRIM_QUAD_STRIP:
       assert(nr >= 4);
-      for (i = 2; i < nr; i += 2) {
-         v[0] = VERTEX(i - 2);
-         v[1] = VERTEX(i);
-         v[2] = VERTEX(i + 1);
+      for (i = 3; i < nr; i += 2) {
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, i-2, stride),
+                    get_vert(vertex_buffer, i-1, stride),
+                    get_vert(vertex_buffer, i-0, stride));
 
-         v[0] = VERTEX(i - 2);
-         v[1] = VERTEX(i + 1);
-         v[2] = VERTEX(i - 1);
          setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
-      }
-      break;
-   case PIPE_PRIM_POLYGON:
-      /* draw as tri fan */
-      for (i = 2; i < nr; i++) {
-         v[0] = VERTEX(0);
-         v[1] = VERTEX(i - 1);
-         v[2] = VERTEX(i);
-         setup_tri( setup_ctx,
-                    v[0],
-                    v[1],
-                    v[2] );
+                    get_vert(vertex_buffer, i-3, stride),
+                    get_vert(vertex_buffer, i-0, stride),
+                    get_vert(vertex_buffer, i-2, stride));
       }
       break;
    default:
-      /* XXX finish remaining prim types */
       assert(0);
    }
-
-#undef VERTEX
 }
 
 
