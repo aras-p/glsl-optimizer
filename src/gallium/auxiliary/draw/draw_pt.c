@@ -81,7 +81,7 @@ draw_pt_arrays(struct draw_context *draw,
 
    /* Pick the right frontend
     */
-   if (draw->pt.user.elts) {
+   if (draw->pt.user.elts || (opt & PT_PIPELINE)) {
       frontend = draw->pt.front.vcache;
    } else if (opt == PT_SHADE && draw->pt.test_fse) {
       /* should be a middle end.. */

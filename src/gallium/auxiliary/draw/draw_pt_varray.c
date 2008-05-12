@@ -154,9 +154,9 @@ static boolean split_prim_inplace(unsigned prim, unsigned *first, unsigned *incr
 
 
 static INLINE void add_draw_el(struct varray_frontend *varray,
-                               int idx, ushort flags)
+                               int idx)
 {
-   varray->draw_elts[varray->draw_count++] = idx | flags;
+   varray->draw_elts[varray->draw_count++] = idx;
 }
 
 
@@ -165,106 +165,47 @@ static INLINE void varray_triangle( struct varray_frontend *varray,
                                     unsigned i1,
                                     unsigned i2 )
 {
-   add_draw_el(varray, i0, 0);
-   add_draw_el(varray, i1, 0);
-   add_draw_el(varray, i2, 0);
-}
-
-static INLINE void varray_triangle_flags( struct varray_frontend *varray,
-                                          ushort flags,
-                                          unsigned i0,
-                                          unsigned i1,
-                                          unsigned i2 )
-{
-   add_draw_el(varray, i0, flags);
-   add_draw_el(varray, i1, 0);
-   add_draw_el(varray, i2, 0);
+   add_draw_el(varray, i0);
+   add_draw_el(varray, i1);
+   add_draw_el(varray, i2);
 }
 
 static INLINE void varray_line( struct varray_frontend *varray,
                                 unsigned i0,
                                 unsigned i1 )
 {
-   add_draw_el(varray, i0, 0);
-   add_draw_el(varray, i1, 0);
-}
-
-
-static INLINE void varray_line_flags( struct varray_frontend *varray,
-                                      ushort flags,
-                                      unsigned i0,
-                                      unsigned i1 )
-{
-   add_draw_el(varray, i0, flags);
-   add_draw_el(varray, i1, 0);
+   add_draw_el(varray, i0);
+   add_draw_el(varray, i1);
 }
 
 
 static INLINE void varray_point( struct varray_frontend *varray,
                                  unsigned i0 )
 {
-   add_draw_el(varray, i0, 0);
+   add_draw_el(varray, i0);
 }
 
-static INLINE void varray_quad( struct varray_frontend *varray,
-                                unsigned i0,
-                                unsigned i1,
-                                unsigned i2,
-                                unsigned i3 )
-{
-   varray_triangle( varray, i0, i1, i3 );
-   varray_triangle( varray, i1, i2, i3 );
-}
 
-static INLINE void varray_ef_quad( struct varray_frontend *varray,
-                                   unsigned i0,
-                                   unsigned i1,
-                                   unsigned i2,
-                                   unsigned i3 )
-{
-   const unsigned omitEdge1 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_2;
-   const unsigned omitEdge2 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_1;
 
-   varray_triangle_flags( varray,
-                          DRAW_PIPE_RESET_STIPPLE | omitEdge1,
-                          i0, i1, i3 );
-
-   varray_triangle_flags( varray,
-                          omitEdge2,
-                          i1, i2, i3 );
-}
-
-/* At least for now, we're back to using a template include file for
- * this.  The two paths aren't too different though - it may be
- * possible to reunify them.
- */
-#define TRIANGLE(vc,flags,i0,i1,i2) varray_triangle_flags(vc,flags,i0,i1,i2)
-#define QUAD(vc,i0,i1,i2,i3)        varray_ef_quad(vc,i0,i1,i2,i3)
-#define LINE(vc,flags,i0,i1)        varray_line_flags(vc,flags,i0,i1)
-#define POINT(vc,i0)                varray_point(vc,i0)
-#define FUNC varray_run_extras
-#include "draw_pt_varray_tmp.h"
-
-#define TRIANGLE(vc,flags,i0,i1,i2) varray_triangle(vc,i0,i1,i2)
-#define QUAD(vc,i0,i1,i2,i3)        varray_quad(vc,i0,i1,i2,i3)
-#define LINE(vc,flags,i0,i1)        varray_line(vc,i0,i1)
+#define TRIANGLE(vc,i0,i1,i2)       varray_triangle(vc,i0,i1,i2)
+#define LINE(vc,i0,i1)              varray_line(vc,i0,i1)
 #define POINT(vc,i0)                varray_point(vc,i0)
 #define FUNC varray_run
 #include "draw_pt_varray_tmp_linear.h"
 
 
 
-static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
+static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
    PIPE_PRIM_POINTS,
    PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
+   PIPE_PRIM_LINE_STRIP,
+   PIPE_PRIM_LINES,             /* decomposed */
    PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
+   PIPE_PRIM_TRIANGLE_STRIP,
+   PIPE_PRIM_TRIANGLES,         /* decomposed */
+   PIPE_PRIM_QUADS,
+   PIPE_PRIM_QUAD_STRIP,
+   PIPE_PRIM_TRIANGLES          /* decomposed */
 };
 
 
@@ -276,17 +217,10 @@ static void varray_prepare(struct draw_pt_front_end *frontend,
 {
    struct varray_frontend *varray = (struct varray_frontend *)frontend;
 
-   if (opt & PT_PIPELINE)
-   {
-      varray->base.run = varray_run_extras;
-   }
-   else
-   {
-      varray->base.run = varray_run;
-   }
+   varray->base.run = varray_run;
 
    varray->input_prim = prim;
-   varray->output_prim = reduced_prim[prim];
+   varray->output_prim = decompose_prim[prim];
 
    varray->middle = middle;
    middle->prepare(middle, varray->output_prim, opt);
