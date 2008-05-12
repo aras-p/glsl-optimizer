@@ -166,10 +166,9 @@ llvm::Value * Instructions::rsq(llvm::Value *in1)
    Value *abs  = callFAbs(x);
    Value *sqrt = callFSqrt(abs);
 
-   Value *rsqrt = m_builder.CreateFDiv(ConstantFP::get(Type::FloatTy,
-                                                                APFloat(1.f)),
-                                                sqrt,
-                                                name("rsqrt"));
+   Value *rsqrt = m_builder.CreateFDiv(ConstantFP::get(APFloat(1.f)),
+                                       sqrt,
+                                       name("rsqrt"));
    return vectorFromVals(rsqrt, rsqrt, rsqrt, rsqrt);
 }
 
@@ -278,9 +277,8 @@ llvm::Value * Instructions::rcp(llvm::Value *in1)
    Value *x1 = m_builder.CreateExtractElement(in1,
                                               m_storage->constantInt(0),
                                               name("x1"));
-   Value *res = m_builder.CreateFDiv(ConstantFP::get(Type::FloatTy,
-                                                              APFloat(1.f)),
-                                              x1, name("rcp"));
+   Value *res = m_builder.CreateFDiv(ConstantFP::get(APFloat(1.f)),
+                                     x1, name("rcp"));
    return vectorFromVals(res, res, res, res);
 }
 
@@ -319,13 +317,13 @@ llvm::Value * Instructions::dst(llvm::Value *in1, llvm::Value *in2)
                                              m_storage->constantInt(3),
                                              name("w"));
    Value *ry = m_builder.CreateMul(y1, y2, name("tyuy"));
-   return vectorFromVals(ConstantFP::get(Type::FloatTy, APFloat(1.f)),
+   return vectorFromVals(ConstantFP::get(APFloat(1.f)),
                          ry, z, w);
 }
 
 llvm::Value * Instructions::ex2(llvm::Value *in)
 {
-   llvm::Value *val = callPow(ConstantFP::get(Type::FloatTy, APFloat(2.f)),
+   llvm::Value *val = callPow(ConstantFP::get(APFloat(2.f)),
                               m_builder.CreateExtractElement(
                                  in, m_storage->constantInt(0),
                                  name("x1")));
@@ -526,7 +524,7 @@ llvm::Function * Instructions::declarePrintf()
 
 llvm::Value * Instructions::sgt(llvm::Value *in1, llvm::Value *in2)
 {
-   Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   Constant *const1f = ConstantFP::get(APFloat(1.000000e+00f));
    Constant *const0f = Constant::getNullValue(Type::FloatTy);
 
    std::vector<llvm::Value*> vec1 = extractVector(in1);
@@ -547,7 +545,7 @@ llvm::Value * Instructions::sgt(llvm::Value *in1, llvm::Value *in2)
 }
 llvm::Value * Instructions::sge(llvm::Value *in1, llvm::Value *in2)
 {
-   Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   Constant *const1f = ConstantFP::get(APFloat(1.000000e+00f));
    Constant *const0f = Constant::getNullValue(Type::FloatTy);
 
    std::vector<llvm::Value*> vec1 = extractVector(in1);
@@ -571,7 +569,7 @@ llvm::Value * Instructions::sge(llvm::Value *in1, llvm::Value *in2)
 
 llvm::Value * Instructions::slt(llvm::Value *in1, llvm::Value *in2)
 {
-   Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   Constant *const1f = ConstantFP::get(APFloat(1.000000e+00f));
    Constant *const0f = Constant::getNullValue(Type::FloatTy);
 
    std::vector<llvm::Value*> vec1 = extractVector(in1);
@@ -814,10 +812,10 @@ llvm::Function * Instructions::findFunction(int label)
 llvm::Value * Instructions::constVector(float x, float y, float z, float w)
 {
    std::vector<Constant*> vec(4);
-   vec[0] = ConstantFP::get(Type::FloatTy, APFloat(x));
-   vec[1] = ConstantFP::get(Type::FloatTy, APFloat(y));
-   vec[2] = ConstantFP::get(Type::FloatTy, APFloat(z));
-   vec[3] = ConstantFP::get(Type::FloatTy, APFloat(w));
+   vec[0] = ConstantFP::get(APFloat(x));
+   vec[1] = ConstantFP::get(APFloat(y));
+   vec[2] = ConstantFP::get(APFloat(z));
+   vec[3] = ConstantFP::get(APFloat(w));
    return ConstantVector::get(m_floatVecType, vec);
 }
 
