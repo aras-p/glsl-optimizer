@@ -15,7 +15,7 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
    varray->fetch_start = start;
 
-   split_prim_inplace(varray->input_prim, &first, &incr);
+   draw_pt_split_prim(varray->input_prim, &first, &incr);
 
 #if 0
    debug_printf("%s (%d) %d/%d\n", __FUNCTION__,

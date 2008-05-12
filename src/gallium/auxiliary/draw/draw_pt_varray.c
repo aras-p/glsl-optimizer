@@ -106,51 +106,6 @@ static INLINE void fetch_init(struct varray_frontend *varray,
 }
 
 
-static boolean split_prim_inplace(unsigned prim, unsigned *first, unsigned *incr)
-{
-   switch (prim) {
-   case PIPE_PRIM_POINTS:
-      *first = 1;
-      *incr = 1;
-      return TRUE;
-   case PIPE_PRIM_LINES:
-      *first = 2;
-      *incr = 2;
-      return TRUE;
-   case PIPE_PRIM_LINE_STRIP:
-      *first = 2;
-      *incr = 1;
-      return TRUE;
-   case PIPE_PRIM_TRIANGLES:
-      *first = 3;
-      *incr = 3;
-      return TRUE;
-   case PIPE_PRIM_TRIANGLE_STRIP:
-      *first = 3;
-      *incr = 1;
-      return TRUE;
-   case PIPE_PRIM_TRIANGLE_FAN:
-      *first = 3;
-      *incr = 1;
-      return TRUE;
-   case PIPE_PRIM_QUADS:
-      *first = 4;
-      *incr = 4;
-      return TRUE;
-   case PIPE_PRIM_QUAD_STRIP:
-      *first = 4;
-      *incr = 2;
-      return TRUE;
-   case PIPE_PRIM_POLYGON:
-      *first = 3;
-      *incr = 1;
-      return TRUE;
-   default:
-      *first = 0;
-      *incr = 1;		/* set to one so that count % incr works */
-      return FALSE;
-   }
-}
 
 
 static INLINE void add_draw_el(struct varray_frontend *varray,

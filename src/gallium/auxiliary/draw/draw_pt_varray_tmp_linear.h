@@ -16,7 +16,13 @@ static void FUNC(struct draw_pt_front_end *frontend,
 
    varray->fetch_start = start;
 
-   split_prim_inplace(varray->input_prim, &first, &incr);
+   draw_pt_split_prim(varray->input_prim, &first, &incr);
+   
+   /* Sanitize primitive length:
+    */
+   count = trim(count, first, incr); 
+   if (count < first)
+      return;
 
 #if 0
    debug_printf("%s (%d) %d/%d\n", __FUNCTION__,
@@ -32,7 +38,6 @@ static void FUNC(struct draw_pt_front_end *frontend,
    case PIPE_PRIM_TRIANGLE_STRIP:
    case PIPE_PRIM_QUADS:
    case PIPE_PRIM_QUAD_STRIP:
-      
       for (j = 0; j < count;) {
          unsigned remaining = count - j;
          unsigned nr = trim( MIN2(FETCH_MAX, remaining), first, incr );

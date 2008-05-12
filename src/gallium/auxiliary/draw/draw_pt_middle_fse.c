@@ -50,13 +50,18 @@ struct fse_shader {
                        unsigned start,
                        unsigned count,
                        char *buffer );
+
+   void (*run_elts)( const struct fetch_shade_emit *fse,
+                     const unsigned *fetch_elts,
+                     unsigned fetch_count,
+                     char *buffer );
+
 };
 
 /* Prototype fetch, shade, emit-hw-verts all in one go.
  */
 struct fetch_shade_emit {
-   struct draw_pt_front_end base;
-
+   struct draw_pt_middle_end base;
    struct draw_context *draw;
 
    struct translate_key key;
@@ -85,26 +90,19 @@ struct fetch_shade_emit {
 /* Not quite passthrough yet -- we're still running the 'shader' here,
  * inlined into the vertex fetch function.
  */
-static void fetch_xyz_rgb_st( const struct fetch_shade_emit *fse,
-			      unsigned start,
-			      unsigned count,
-                              char *buffer )
+static void shader0_run_linear( const struct fetch_shade_emit *fse,
+                                   unsigned start,
+                                   unsigned count,
+                                   char *buffer )
 {
    unsigned i;
 
    const float *m = fse->constants;
-   const float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
-   const float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
-   const float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-   const float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
-
    const ubyte *xyz = fse->src[0] + start * fse->pitch[0];
+   const ubyte *rgb = fse->src[1] + start * fse->pitch[1];
    const ubyte *st = fse->src[2] + start * fse->pitch[2];
    
    float *out = (float *)buffer;
-
-
-   assert(fse->pitch[1] == 0);
 
    /* loop over vertex attributes (vertex shader inputs)
     */
@@ -113,26 +111,29 @@ static void fetch_xyz_rgb_st( const struct fetch_shade_emit *fse,
 	 const float *in = (const float *)xyz;
 	 const float ix = in[0], iy = in[1], iz = in[2];
 
-	 out[0] = m0 * ix + m4 * iy + m8  * iz + m12;
-	 out[1] = m1 * ix + m5 * iy + m9  * iz + m13;
-	 out[2] = m2 * ix + m6 * iy + m10 * iz + m14;
-	 out[3] = m3 * ix + m7 * iy + m11 * iz + m15;
+	 out[0] = m[0] * ix + m[4] * iy + m[8]  * iz + m[12];
+	 out[1] = m[1] * ix + m[5] * iy + m[9]  * iz + m[13];
+	 out[2] = m[2] * ix + m[6] * iy + m[10] * iz + m[14];
+	 out[3] = m[3] * ix + m[7] * iy + m[11] * iz + m[15];
 	 xyz += fse->pitch[0];
       }
 
       {
-	 out[4] = 1.0f;
-	 out[5] = 1.0f;
-	 out[6] = 1.0f;
+	 const float *in = (const float *)rgb;
+	 out[4] = in[0];
+	 out[5] = in[1];
+	 out[6] = in[2];
  	 out[7] = 1.0f;
+         rgb += fse->pitch[1];
       }
 
       {
-	 const float *in = (const float *)st; st += fse->pitch[2];
+	 const float *in = (const float *)st; 
 	 out[8] = in[0];
 	 out[9] = in[1];
 	 out[10] = 0.0f;
  	 out[11] = 1.0f;
+         st += fse->pitch[2];
       }
 
       out += 12;
@@ -141,22 +142,15 @@ static void fetch_xyz_rgb_st( const struct fetch_shade_emit *fse,
 
 
 
-static void fetch_xyz_rgb( const struct fetch_shade_emit *fse,
+static void shader1_run_linear( const struct fetch_shade_emit *fse,
 			   unsigned start,
 			   unsigned count,
                            char *buffer )
 {
    unsigned i;
-
    const float *m = (const float *)fse->constants;
-   const float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
-   const float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
-   const float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-   const float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
-
    const ubyte *xyz = fse->src[0] + start * fse->pitch[0];
    const ubyte *rgb = fse->src[1] + start * fse->pitch[1];
-
    float *out = (float *)buffer;
 
 //   debug_printf("rgb %f %f %f\n", rgb[0], rgb[1], rgb[2]);
@@ -167,10 +161,10 @@ static void fetch_xyz_rgb( const struct fetch_shade_emit *fse,
 	 const float *in = (const float *)xyz;
 	 const float ix = in[0], iy = in[1], iz = in[2];
 
-	 out[0] = m0 * ix + m4 * iy + m8  * iz + m12;
-	 out[1] = m1 * ix + m5 * iy + m9  * iz + m13;
-	 out[2] = m2 * ix + m6 * iy + m10 * iz + m14;
-	 out[3] = m3 * ix + m7 * iy + m11 * iz + m15;
+	 out[0] = m[0] * ix + m[4] * iy + m[8]  * iz + m[12];
+	 out[1] = m[1] * ix + m[5] * iy + m[9]  * iz + m[13];
+	 out[2] = m[2] * ix + m[6] * iy + m[10] * iz + m[14];
+	 out[3] = m[3] * ix + m[7] * iy + m[11] * iz + m[15];
 	 xyz += fse->pitch[0];
       }
 
@@ -190,23 +184,16 @@ static void fetch_xyz_rgb( const struct fetch_shade_emit *fse,
 
 
 
-static void fetch_xyz_rgb_psiz( const struct fetch_shade_emit *fse,
+static void shader2_run_linear( const struct fetch_shade_emit *fse,
 				unsigned start,
 				unsigned count,
                                 char *buffer )
 {
    unsigned i;
-
    const float *m = (const float *)fse->constants;
-   const float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
-   const float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
-   const float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-   const float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
-
    const ubyte *xyz = fse->src[0] + start * fse->pitch[0];
-   const float *rgb = (const float *)(fse->src[1] + start * fse->pitch[1]);
+   const ubyte *rgb = fse->src[1] + start * fse->pitch[1];
    const float psiz = 1.0;
-
    float *out = (float *)buffer;
 
 
@@ -217,14 +204,148 @@ static void fetch_xyz_rgb_psiz( const struct fetch_shade_emit *fse,
 	 const float *in = (const float *)xyz;
 	 const float ix = in[0], iy = in[1], iz = in[2];
 
-	 out[0] = m0 * ix + m4 * iy + m8  * iz + m12;
-	 out[1] = m1 * ix + m5 * iy + m9  * iz + m13;
-	 out[2] = m2 * ix + m6 * iy + m10 * iz + m14;
-	 out[3] = m3 * ix + m7 * iy + m11 * iz + m15;
+	 out[0] = m[0] * ix + m[4] * iy + m[8]  * iz + m[12];
+	 out[1] = m[1] * ix + m[5] * iy + m[9]  * iz + m[13];
+	 out[2] = m[2] * ix + m[6] * iy + m[10] * iz + m[14];
+	 out[3] = m[3] * ix + m[7] * iy + m[11] * iz + m[15];
 	 xyz += fse->pitch[0];
       }
 
       {
+	 const float *in = (const float *)rgb;
+	 out[4] = in[0];
+	 out[5] = in[1];
+	 out[6] = in[2];
+ 	 out[7] = 1.0f;
+         rgb += fse->pitch[1];
+      }
+
+      {
+	 out[8] = psiz;
+      }
+
+      out += 9;
+   }
+}
+
+
+
+
+static void shader0_run_elts( const struct fetch_shade_emit *fse,
+                              const unsigned *elts,
+                              unsigned count,
+                              char *buffer )
+{
+   unsigned i;
+   const float *m = fse->constants;
+   float *out = (float *)buffer;
+
+
+   /* loop over vertex attributes (vertex shader inputs)
+    */
+   for (i = 0; i < count; i++) {
+      unsigned elt = elts[i];
+      {
+         const ubyte *xyz = fse->src[0] + elt * fse->pitch[0];
+	 const float *in = (const float *)xyz;
+	 const float ix = in[0], iy = in[1], iz = in[2];
+
+	 out[0] = m[0] * ix + m[4] * iy + m[8]  * iz + m[12];
+	 out[1] = m[1] * ix + m[5] * iy + m[9]  * iz + m[13];
+	 out[2] = m[2] * ix + m[6] * iy + m[10] * iz + m[14];
+	 out[3] = m[3] * ix + m[7] * iy + m[11] * iz + m[15];
+      }
+
+      {
+         const ubyte *rgb = fse->src[1] + elt * fse->pitch[1];
+	 const float *in = (const float *)rgb;
+	 out[4] = in[0];
+	 out[5] = in[1];
+	 out[6] = in[2];
+ 	 out[7] = 1.0f;
+      }
+
+      {
+         const ubyte *st = fse->src[2] + elt * fse->pitch[2];
+	 const float *in = (const float *)st;
+	 out[8] = in[0];
+	 out[9] = in[1];
+	 out[10] = 0.0f;
+ 	 out[11] = 1.0f;
+      }
+
+      out += 12;
+   }
+}
+
+
+
+static void shader1_run_elts( const struct fetch_shade_emit *fse,
+                              const unsigned *elts,
+                              unsigned count,
+                              char *buffer )
+{
+   unsigned i;
+   const float *m = (const float *)fse->constants;
+   float *out = (float *)buffer;
+
+   for (i = 0; i < count; i++) {
+      unsigned elt = elts[i];
+
+      {
+         const ubyte *xyz = fse->src[0] + elt * fse->pitch[0];
+	 const float *in = (const float *)xyz;
+	 const float ix = in[0], iy = in[1], iz = in[2];
+
+	 out[0] = m[0] * ix + m[4] * iy + m[8]  * iz + m[12];
+	 out[1] = m[1] * ix + m[5] * iy + m[9]  * iz + m[13];
+	 out[2] = m[2] * ix + m[6] * iy + m[10] * iz + m[14];
+	 out[3] = m[3] * ix + m[7] * iy + m[11] * iz + m[15];
+	 xyz += fse->pitch[0];
+      }
+
+      {
+         const ubyte *rgb = fse->src[1] + elt * fse->pitch[1];
+	 const float *in = (const float *)rgb;
+	 out[4] = in[0];
+	 out[5] = in[1];
+	 out[6] = in[2];
+ 	 out[7] = 1.0f;
+         rgb += fse->pitch[1];
+      }
+
+      out += 8;
+   }
+}
+
+
+
+
+static void shader2_run_elts( const struct fetch_shade_emit *fse,
+                              const unsigned *elts,
+                              unsigned count,
+                              char *buffer )
+{
+   unsigned i;
+   const float *m = (const float *)fse->constants;
+   const float psiz = 1.0;
+   float *out = (float *)buffer;
+
+   for (i = 0; i < count; i++) {
+      unsigned elt = elts[i];
+      {
+         const ubyte *xyz = fse->src[0] + elt * fse->pitch[0];
+	 const float *in = (const float *)xyz;
+	 const float ix = in[0], iy = in[1], iz = in[2];
+
+	 out[0] = m[0] * ix + m[4] * iy + m[8]  * iz + m[12];
+	 out[1] = m[1] * ix + m[5] * iy + m[9]  * iz + m[13];
+	 out[2] = m[2] * ix + m[6] * iy + m[10] * iz + m[14];
+	 out[3] = m[3] * ix + m[7] * iy + m[11] * iz + m[15];
+      }
+
+      {
+         const ubyte *rgb = fse->src[1] + elt * fse->pitch[1];
 	 out[4] = rgb[0];
 	 out[5] = rgb[1];
 	 out[6] = rgb[2];
@@ -240,54 +361,12 @@ static void fetch_xyz_rgb_psiz( const struct fetch_shade_emit *fse,
 }
 
 
-
-
-static boolean set_prim( struct fetch_shade_emit *fse,
-                         unsigned prim,
-                         unsigned count )
-{
-   struct draw_context *draw = fse->draw;
-
-   fse->prim = prim;
-
-   switch (prim) { 
-   case PIPE_PRIM_LINE_LOOP:
-      if (count > 1024)
-         return FALSE;
-      draw->render->set_primitive( draw->render, PIPE_PRIM_LINE_STRIP );
-      break;
-
-   case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
-      if (count > 1024)
-         return FALSE;
-      draw->render->set_primitive( draw->render, prim );
-      break;
-
-   case PIPE_PRIM_QUADS:
-   case PIPE_PRIM_QUAD_STRIP:
-      draw->render->set_primitive( draw->render, PIPE_PRIM_TRIANGLES );
-      break;
-
-   default:
-      draw->render->set_primitive( draw->render, prim );
-      break;
-   }
-
-   return TRUE;
-}
-
-
-
-
-
 			       
-static void fse_prepare( struct draw_pt_front_end *fe,
-                            unsigned prim,
-                            struct draw_pt_middle_end *unused,
-                            unsigned opt )
+static void fse_prepare( struct draw_pt_middle_end *middle,
+                         unsigned prim, 
+                         unsigned opt )
 {
-   struct fetch_shade_emit *fse = (struct fetch_shade_emit *)fe;
+   struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
    unsigned num_vs_inputs = draw->vertex_shader->info.num_inputs;
    unsigned num_vs_outputs = draw->vertex_shader->info.num_outputs;
@@ -301,9 +380,10 @@ static void fse_prepare( struct draw_pt_front_end *fe,
       return ;
    }
 
-   if (!set_prim(fse, prim, /*count*/1022 )) {
+   if (!draw->render->set_primitive( draw->render, 
+                                     prim )) {
       assert(0);
-      return ;
+      return;
    }
 
    /* Must do this after set_primitive() above:
@@ -438,91 +518,33 @@ static void fse_prepare( struct draw_pt_front_end *fe,
 
 
 
-#define INDEX(i) (start + (i))
-static void fse_render_linear( struct vbuf_render *render,
-                               unsigned prim,
-                               unsigned start,
-                               unsigned length )
+
+static void fse_run_linear( struct draw_pt_middle_end *middle, 
+                            unsigned start, 
+                            unsigned count )
 {
-   ushort *tmp = NULL;
-   unsigned i, j;
-
-   switch (prim) {
-   case PIPE_PRIM_LINE_LOOP:
-      tmp = MALLOC( sizeof(ushort) * (length + 1) );
-
-      for (i = 0; i < length; i++)
-	 tmp[i] = INDEX(i);
-      tmp[length] = 0;
-
-      render->draw( render,
-			  tmp,
-			  length+1 );
-      break;
-
-
-   case PIPE_PRIM_QUAD_STRIP:
-      tmp = MALLOC( sizeof(ushort) * (length / 2 * 6) );
-
-      for (j = i = 0; i + 3 < length; i += 2, j += 6) {
-	 tmp[j+0] = INDEX(i+0);
-	 tmp[j+1] = INDEX(i+1);
-	 tmp[j+2] = INDEX(i+3);
-
-	 tmp[j+3] = INDEX(i+2);
-	 tmp[j+4] = INDEX(i+0);
-	 tmp[j+5] = INDEX(i+3);
-      }
-
-      if (j)
-	 render->draw( render, tmp, j );
-      break;
-
-   case PIPE_PRIM_QUADS:
-      tmp = MALLOC( sizeof(int) * (length / 4 * 6) );
-
-      for (j = i = 0; i + 3 < length; i += 4, j += 6) {
-	 tmp[j+0] = INDEX(i+0);
-	 tmp[j+1] = INDEX(i+1);
-	 tmp[j+2] = INDEX(i+3);
-
-	 tmp[j+3] = INDEX(i+1);
-	 tmp[j+4] = INDEX(i+2);
-	 tmp[j+5] = INDEX(i+3);
-      }
-
-      if (j)
-	 render->draw( render, tmp, j );
-      break;
-
-   default:
-      render->draw_arrays( render,
-                                 start,
-                                 length );
-      break;
-   }
-
-   if (tmp)
-      FREE(tmp);
-}
-
-
-
-static boolean do_draw( struct fetch_shade_emit *fse, 
-                        unsigned start, unsigned count )
-{
+   struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
 
-   char *hw_verts = 
-      draw->render->allocate_vertices( draw->render,
-                                       (ushort)fse->key.output_stride,
-                                       (ushort)count );
+   char *hw_verts;
 
-   if (!hw_verts)
-      return FALSE;
-					
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation??
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   hw_verts = draw->render->allocate_vertices( draw->render,
+                                               (ushort)fse->key.output_stride,
+                                               (ushort)count );
+
+   if (!hw_verts) {
+      assert(0);
+      return;
+   }
+
    /* Single routine to fetch vertices, run shader and emit HW verts.
-    * Clipping and viewport transformation are done on hardware.
+    * Clipping and viewport transformation are done elsewhere --
+    * either by the API or on hardware, or for some other reason not
+    * required...
     */
    fse->active->run_linear( fse, 
                             start, count,
@@ -531,71 +553,73 @@ static boolean do_draw( struct fetch_shade_emit *fse,
    /* Draw arrays path to avoid re-emitting index list again and
     * again.
     */
-   fse_render_linear( draw->render,
-                      fse->prim,
-                      0,
-                      count );
+   draw->render->draw_arrays( draw->render,
+                              0,
+                              count );
    
 
    draw->render->release_vertices( draw->render, 
 				   hw_verts, 
 				   fse->key.output_stride, 
 				   count );
-
-   return TRUE;
 }
 
 
 static void
-fse_run(struct draw_pt_front_end *fe, 
-        pt_elt_func elt_func,
-        const void *elt_ptr,
-        unsigned count)
+fse_run(struct draw_pt_middle_end *middle,
+        const unsigned *fetch_elts,
+        unsigned fetch_count,
+        const ushort *draw_elts,
+        unsigned draw_count )
 {
-   struct fetch_shade_emit *fse = (struct fetch_shade_emit *)fe;
-   unsigned i = 0;
-   unsigned first, incr;
-   unsigned start = elt_func(elt_ptr, 0);
+   struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
+   struct draw_context *draw = fse->draw;
+   void *hw_verts;
    
-   //debug_printf("%s prim %d start %d count %d\n", __FUNCTION__, prim, start, count);
-   
-   draw_pt_split_prim(fse->prim, &first, &incr);
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
-   count -= (count - first) % incr; 
-
-   while (i + first <= count) {
-      int nr = MIN2( count - i, 1024 );
-
-      /* snap to prim boundary 
-       */
-      nr -= (nr - first) % incr; 
-
-      if (!do_draw( fse, start + i, nr )) {
-         assert(0);
-         return ;
-      }
-
-      /* increment allowing for repeated vertices
-       */
-      i += nr - (first - incr);
+   hw_verts = draw->render->allocate_vertices( draw->render,
+                                               (ushort)fse->key.output_stride,
+                                               (ushort)fetch_count );
+   if (!hw_verts) {
+      assert(0);
+      return;
    }
+         
+					
+   /* Single routine to fetch vertices, run shader and emit HW verts.
+    */
+   fse->active->run_elts( fse, 
+                           fetch_elts,
+                           fetch_count,
+                           hw_verts );
 
-   //return TRUE;
+   draw->render->draw( draw->render, 
+                       draw_elts, 
+                       draw_count );
+
+   draw->render->release_vertices( draw->render, 
+                                   hw_verts, 
+                                   fse->key.output_stride, 
+                                   fetch_count );
+
 }
 
 
-static void fse_finish( struct draw_pt_front_end *frontend )
+static void fse_finish( struct draw_pt_middle_end *middle )
 {
 }
 
 
 static void
-fse_destroy( struct draw_pt_front_end *frontend ) 
+fse_destroy( struct draw_pt_middle_end *middle ) 
 {
-   FREE(frontend);
+   FREE(middle);
 }
 
-struct draw_pt_front_end *draw_pt_fetch_shade_emit( struct draw_context *draw )
+struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw )
 {
    struct fetch_shade_emit *fse = CALLOC_STRUCT(fetch_shade_emit);
    if (!fse)
@@ -603,11 +627,13 @@ struct draw_pt_front_end *draw_pt_fetch_shade_emit( struct draw_context *draw )
 
    fse->base.prepare = fse_prepare;
    fse->base.run = fse_run;
+   fse->base.run_linear = fse_run_linear;
    fse->base.finish = fse_finish;
    fse->base.destroy = fse_destroy;
    fse->draw = draw;
 
-   fse->shader[0].run_linear = fetch_xyz_rgb_st;
+   fse->shader[0].run_linear = shader0_run_linear;
+   fse->shader[0].run_elts = shader0_run_elts;
    fse->shader[0].key.nr_elements = 3;
    fse->shader[0].key.output_stride = 12 * sizeof(float);
 
@@ -629,7 +655,8 @@ struct draw_pt_front_end *draw_pt_fetch_shade_emit( struct draw_context *draw )
    fse->shader[0].key.element[1].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    fse->shader[0].key.element[1].output_offset = 32; 
 
-   fse->shader[1].run_linear = fetch_xyz_rgb;
+   fse->shader[1].run_linear = shader1_run_linear;
+   fse->shader[1].run_elts = shader1_run_elts;
    fse->shader[1].key.nr_elements = 2;
    fse->shader[1].key.output_stride = 8 * sizeof(float);
 
@@ -645,7 +672,8 @@ struct draw_pt_front_end *draw_pt_fetch_shade_emit( struct draw_context *draw )
    fse->shader[1].key.element[1].output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    fse->shader[1].key.element[1].output_offset = 16; 
 
-   fse->shader[2].run_linear = fetch_xyz_rgb_psiz;
+   fse->shader[2].run_linear = shader2_run_linear;
+   fse->shader[2].run_elts = shader2_run_elts;
    fse->shader[2].key.nr_elements = 3;
    fse->shader[2].key.output_stride = 9 * sizeof(float);
 

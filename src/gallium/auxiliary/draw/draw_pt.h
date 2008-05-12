@@ -134,7 +134,7 @@ struct draw_pt_front_end *draw_pt_fetch_shade_emit( struct draw_context *draw );
  * vertex_elements.
  */
 struct draw_pt_middle_end *draw_pt_fetch_emit( struct draw_context *draw );
-//struct draw_pt_middle_end *draw_pt_fetch_shade_emit( struct draw_context *draw );
+struct draw_pt_middle_end *draw_pt_middle_fse( struct draw_context *draw );
 struct draw_pt_middle_end *draw_pt_fetch_pipeline_or_emit(struct draw_context *draw);
 
 
@@ -211,6 +211,13 @@ void draw_pt_post_vs_prepare( struct pt_post_vs *pvs,
 struct pt_post_vs *draw_pt_post_vs_create( struct draw_context *draw );
 
 void draw_pt_post_vs_destroy( struct pt_post_vs *pvs );
+
+
+/*******************************************************************************
+ * Utils: 
+ */
+void draw_pt_split_prim(unsigned prim, unsigned *first, unsigned *incr);
+unsigned draw_pt_reduced_prim(unsigned prim);
 
 
 #endif

@@ -124,7 +124,7 @@ struct draw_context
    struct {
       struct {
          struct draw_pt_middle_end *fetch_emit;
-         /*struct draw_pt_middle_end *fetch_shade_emit;*/
+         struct draw_pt_middle_end *fetch_shade_emit;
          struct draw_pt_middle_end *general;
       } middle;
 

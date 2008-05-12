@@ -204,19 +204,6 @@ static void vcache_ef_quad( struct vcache_frontend *vcache,
 
 
 
-static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
-   PIPE_PRIM_POINTS,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_LINES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES,
-   PIPE_PRIM_TRIANGLES
-};
-
 
 
 static void vcache_prepare( struct draw_pt_front_end *frontend,
@@ -236,7 +223,7 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
    }
 
    vcache->input_prim = prim;
-   vcache->output_prim = reduced_prim[prim];
+   vcache->output_prim = draw_pt_reduced_prim(prim);
 
    vcache->middle = middle;
    middle->prepare( middle, vcache->output_prim, opt );
