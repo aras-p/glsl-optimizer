@@ -29,8 +29,10 @@ nv50_surface_copy_prep(struct nouveau_context *nv,
 	assert(surf_format >= 0);
 
 	BEGIN_RING(chan, eng2d, NV50_2D_DMA_IN_MEMORY0, 2);
-	OUT_RELOCo(chan, src->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RELOCo(chan, dst->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCo(chan, nouveau_buffer(src->buffer)->bo,
+		   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 
 	BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 2);
 	OUT_RING  (chan, surf_format);
@@ -39,9 +41,9 @@ nv50_surface_copy_prep(struct nouveau_context *nv,
 	OUT_RING  (chan, dst->pitch * dst->cpp);
 	OUT_RING  (chan, dst->pitch);
 	OUT_RING  (chan, dst->height);
-	OUT_RELOCh(chan, dst->buffer, dst->offset,
+	OUT_RELOCh(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, dst->buffer, dst->offset,
+	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, eng2d, NV50_2D_CLIP_X, 4);
 	OUT_RING  (chan, 0);
@@ -56,9 +58,9 @@ nv50_surface_copy_prep(struct nouveau_context *nv,
 	OUT_RING  (chan, src->pitch * src->cpp);
 	OUT_RING  (chan, src->pitch);
 	OUT_RING  (chan, src->height);
-	OUT_RELOCh(chan, src->buffer, src->offset,
+	OUT_RELOCh(chan, nouveau_buffer(src->buffer)->bo, src->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-	OUT_RELOCl(chan, src->buffer, src->offset,
+	OUT_RELOCl(chan, nouveau_buffer(src->buffer)->bo, src->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
 	return 0;
@@ -112,7 +114,8 @@ nv50_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 		return 1;
 
 	BEGIN_RING(chan, eng2d, NV50_2D_DMA_IN_MEMORY1, 1);
-	OUT_RELOCo(chan, dst->buffer, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCo(chan, nouveau_buffer(dst->buffer)->bo,
+		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, eng2d, NV50_2D_DST_FORMAT, 2);
 	OUT_RING  (chan, surf_format);
 	OUT_RING  (chan, 1);
@@ -120,9 +123,9 @@ nv50_surface_fill(struct nouveau_context *nv, struct pipe_surface *dst,
 	OUT_RING  (chan, dst->pitch * dst->cpp);
 	OUT_RING  (chan, dst->pitch);
 	OUT_RING  (chan, dst->height);
-	OUT_RELOCh(chan, dst->buffer, dst->offset,
+	OUT_RELOCh(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, dst->buffer, dst->offset,
+	OUT_RELOCl(chan, nouveau_buffer(dst->buffer)->bo, dst->offset,
 		   NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	BEGIN_RING(chan, eng2d, NV50_2D_CLIP_X, 4);
 	OUT_RING  (chan, 0);

@@ -74,45 +74,44 @@ BIND_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr, unsigned subc)
 }
 
 static INLINE void
-OUT_RELOC(struct nouveau_channel *chan, struct pipe_buffer *buf,
+OUT_RELOC(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	  unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
-	nouveau_pushbuf_emit_reloc(chan, chan->pushbuf->cur++,
-				   nouveau_buffer(buf)->bo,
+	nouveau_pushbuf_emit_reloc(chan, chan->pushbuf->cur++, bo,
 				   data, flags, vor, tor);
 }
 
 /* Raw data + flags depending on FB/TT buffer */
 static INLINE void
-OUT_RELOCd(struct nouveau_channel *chan, struct pipe_buffer *buf,
+OUT_RELOCd(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	   unsigned data, unsigned flags, unsigned vor, unsigned tor)
 {
-	OUT_RELOC(chan, buf, data, flags | NOUVEAU_BO_OR, vor, tor);
+	OUT_RELOC(chan, bo, data, flags | NOUVEAU_BO_OR, vor, tor);
 }
 
 /* FB/TT object handle */
 static INLINE void
-OUT_RELOCo(struct nouveau_channel *chan, struct pipe_buffer *buf,
+OUT_RELOCo(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	   unsigned flags)
 {
-	OUT_RELOC(chan, buf, 0, flags | NOUVEAU_BO_OR,
+	OUT_RELOC(chan, bo, 0, flags | NOUVEAU_BO_OR,
 		  chan->vram->handle, chan->gart->handle);
 }
 
 /* Low 32-bits of offset */
 static INLINE void
-OUT_RELOCl(struct nouveau_channel *chan, struct pipe_buffer *buf,
+OUT_RELOCl(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	   unsigned delta, unsigned flags)
 {
-	OUT_RELOC(chan, buf, delta, flags | NOUVEAU_BO_LOW, 0, 0);
+	OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_LOW, 0, 0);
 }
 
 /* High 32-bits of offset */
 static INLINE void
-OUT_RELOCh(struct nouveau_channel *chan, struct pipe_buffer *buf,
+OUT_RELOCh(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	   unsigned delta, unsigned flags)
 {
-	OUT_RELOC(chan, buf, delta, flags | NOUVEAU_BO_HIGH, 0, 0);
+	OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_HIGH, 0, 0);
 }
 
 #endif
