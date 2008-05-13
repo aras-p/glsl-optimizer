@@ -131,7 +131,6 @@ struct draw_context
       struct {
          struct draw_pt_front_end *vcache;
          struct draw_pt_front_end *varray;
-         struct draw_pt_front_end *fetch_shade_emit; /* temp hack */
       } front;
 
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];

@@ -85,11 +85,6 @@ draw_pt_arrays(struct draw_context *draw,
     */
    if (draw->pt.user.elts || (opt & PT_PIPELINE)) {
       frontend = draw->pt.front.vcache;
-#if 0
-   } else if (opt == PT_SHADE && draw->pt.test_fse) {
-      /* should be a middle end.. */
-      frontend = draw->pt.front.fetch_shade_emit;
-#endif
    } else {
       frontend = draw->pt.front.varray;
    }
@@ -127,10 +122,6 @@ boolean draw_pt_init( struct draw_context *draw )
       draw->pt.middle.fetch_shade_emit = draw_pt_middle_fse( draw );
       if (!draw->pt.middle.fetch_shade_emit)
          return FALSE;
-
-      draw->pt.front.fetch_shade_emit = draw_pt_fetch_shade_emit( draw );
-      if (!draw->pt.front.fetch_shade_emit)
-         return FALSE;
    }
 
 
@@ -157,11 +148,6 @@ void draw_pt_destroy( struct draw_context *draw )
    if (draw->pt.middle.fetch_shade_emit) {
       draw->pt.middle.fetch_shade_emit->destroy( draw->pt.middle.fetch_shade_emit );
       draw->pt.middle.fetch_shade_emit = NULL;
-   }
-
-   if (draw->pt.front.fetch_shade_emit) {
-      draw->pt.front.fetch_shade_emit->destroy( draw->pt.front.fetch_shade_emit );
-      draw->pt.front.fetch_shade_emit = NULL;
    }
 
    if (draw->pt.front.vcache) {
