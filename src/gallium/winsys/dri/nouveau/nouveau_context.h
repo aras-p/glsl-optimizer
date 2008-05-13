@@ -21,8 +21,6 @@ struct nouveau_channel_context {
 	unsigned nr_pctx;
 	struct pipe_context **pctx;
 
-	unsigned chipset;
-
 	struct nouveau_channel  *channel;
 
 	struct nouveau_notifier *sync_notifier;
@@ -46,9 +44,6 @@ struct nouveau_channel_context {
 
 struct nouveau_context {
 	struct st_context *st;
-
-	/* Misc HW info */
-	uint64_t chipset;
 
 	/* DRI stuff */
 	__DRIscreenPrivate    *dri_screen;

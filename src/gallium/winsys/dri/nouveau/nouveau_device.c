@@ -50,6 +50,19 @@ nouveau_device_open_existing(struct nouveau_device **dev, int close,
 		return ret;
 	}
 
+	{
+		uint64_t value;
+
+		ret = nouveau_device_get_param(&nvdev->base,
+					       NOUVEAU_GETPARAM_CHIPSET_ID,
+					       &value);
+		if (ret) {
+			nouveau_device_close((void *)&nvdev);
+			return ret;
+		}
+		nvdev->base.chipset = value;
+	}
+
 	*dev = &nvdev->base;
 	return 0;
 }

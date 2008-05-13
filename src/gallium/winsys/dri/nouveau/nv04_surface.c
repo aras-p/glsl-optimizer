@@ -179,7 +179,7 @@ int
 nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 {
 	struct nouveau_channel *chan = nvc->channel;
-	unsigned class;
+	unsigned chipset = nvc->channel->device->chipset, class;
 	int ret;
 
 	if ((ret = nouveau_grobj_alloc(chan, nvc->next_handle++, 0x39,
@@ -192,8 +192,8 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 		   NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
 	OUT_RING  (chan, nvc->sync_notifier->handle);
 
-	class = nvc->chipset < 0x10 ? NV04_CONTEXT_SURFACES_2D :
-				      NV10_CONTEXT_SURFACES_2D;
+	class = chipset < 0x10 ? NV04_CONTEXT_SURFACES_2D :
+				 NV10_CONTEXT_SURFACES_2D;
 	if ((ret = nouveau_grobj_alloc(chan, nvc->next_handle++, class,
 				       &nvc->NvCtxSurf2D))) {
 		NOUVEAU_ERR("Error creating 2D surface object: %d\n", ret);
@@ -205,8 +205,7 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 	OUT_RING  (chan, nvc->channel->vram->handle);
 	OUT_RING  (chan, nvc->channel->vram->handle);
 
-	class = nvc->chipset < 0x10 ? NV04_IMAGE_BLIT :
-				      NV12_IMAGE_BLIT;
+	class = chipset < 0x10 ? NV04_IMAGE_BLIT : NV12_IMAGE_BLIT;
 	if ((ret = nouveau_grobj_alloc(chan, nvc->next_handle++, class,
 				       &nvc->NvImageBlit))) {
 		NOUVEAU_ERR("Error creating blit object: %d\n", ret);
@@ -237,7 +236,7 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 		   NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT, 1);
 	OUT_RING  (chan, NV04_GDI_RECTANGLE_TEXT_MONOCHROME_FORMAT_LE);
 
-	switch (nvc->chipset & 0xf0) {
+	switch (chipset & 0xf0) {
 	case 0x00:
 	case 0x10:
 		class = NV04_SWIZZLED_SURFACE;
@@ -267,10 +266,10 @@ nouveau_surface_channel_create_nv04(struct nouveau_channel_context *nvc)
 
 	BIND_RING (chan, nvc->NvSwzSurf, nvc->next_subchannel++);
 
-	if (nvc->chipset < 0x10) {
+	if (chipset < 0x10) {
 		class = NV04_SCALED_IMAGE_FROM_MEMORY;
 	} else
-	if (nvc->chipset < 0x40) {
+	if (chipset < 0x40) {
 		class = NV10_SCALED_IMAGE_FROM_MEMORY;
 	} else {
 		class = NV40_SCALED_IMAGE_FROM_MEMORY;

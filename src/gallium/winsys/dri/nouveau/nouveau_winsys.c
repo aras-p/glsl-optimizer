@@ -1,6 +1,7 @@
 #include "pipe/p_util.h"
 
 #include "nouveau_context.h"
+#include "nouveau_screen.h"
 #include "nouveau_winsys_pipe.h"
 
 #include "nouveau/nouveau_winsys.h"
@@ -94,11 +95,12 @@ nouveau_pipe_create(struct nouveau_context *nv)
 					  unsigned chipset);
 	struct pipe_context *(*hw_create)(struct pipe_screen *, unsigned);
 	struct pipe_winsys *ws;
+	unsigned chipset = nv->nv_screen->device->chipset;
 
 	if (!nvws)
 		return NULL;
 
-	switch (nv->chipset & 0xf0) {
+	switch (chipset & 0xf0) {
 	case 0x10:
 	case 0x20:
 		hws_create = nv10_screen_create;
@@ -120,7 +122,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 		hw_create = nv50_create;
 		break;
 	default:
-		NOUVEAU_ERR("Unknown chipset NV%02x\n", (int)nv->chipset);
+		NOUVEAU_ERR("Unknown chipset NV%02x\n", chipset);
 		return NULL;
 	}
 
@@ -150,7 +152,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	ws = nouveau_create_pipe_winsys(nv);
 
 	if (!nvc->pscreen)
-		nvc->pscreen = hws_create(ws, nvws, nv->chipset);
+		nvc->pscreen = hws_create(ws, nvws, chipset);
 	nvc->pctx[nv->pctx_id] = hw_create(nvc->pscreen, nv->pctx_id);
 	return nvc->pctx[nv->pctx_id];
 }

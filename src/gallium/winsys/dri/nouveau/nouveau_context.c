@@ -43,7 +43,7 @@ nouveau_channel_context_destroy(struct nouveau_channel_context *nvc)
 }
 
 static struct nouveau_channel_context *
-nouveau_channel_context_create(struct nouveau_device *nvdev, unsigned chipset)
+nouveau_channel_context_create(struct nouveau_device *dev)
 {
 	struct nouveau_channel_context *nvc;
 	int ret;
@@ -51,9 +51,8 @@ nouveau_channel_context_create(struct nouveau_device *nvdev, unsigned chipset)
 	nvc = CALLOC_STRUCT(nouveau_channel_context);
 	if (!nvc)
 		return NULL;
-	nvc->chipset = chipset;
 
-	if ((ret = nouveau_channel_alloc(nvdev, 0x8003d001, 0x8003d002,
+	if ((ret = nouveau_channel_alloc(dev, 0x8003d001, 0x8003d002,
 					 &nvc->channel))) {
 		NOUVEAU_ERR("Error creating GPU channel: %d\n", ret);
 		nouveau_channel_context_destroy(nvc);
@@ -75,7 +74,7 @@ nouveau_channel_context_create(struct nouveau_device *nvdev, unsigned chipset)
 		return NULL;
 	}
 
-	switch (chipset & 0xf0) {
+	switch (dev->chipset & 0xf0) {
 	case 0x50:
 	case 0x80:
 	case 0x90:
@@ -103,25 +102,17 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	__DRIscreenPrivate *driScrnPriv = driContextPriv->driScreenPriv;
 	struct nouveau_screen  *nv_screen = driScrnPriv->private;
 	struct nouveau_context *nv = CALLOC_STRUCT(nouveau_context);
-	struct nouveau_device_priv *nvdev;
 	struct pipe_context *pipe = NULL;
 	struct st_context *st_share = NULL;
 	struct nouveau_channel_context *nvc = NULL;
+	struct nouveau_device *dev = nv_screen->device;
 	int i, ret;
 
 	if (sharedContextPrivate) {
 		st_share = ((struct nouveau_context *)sharedContextPrivate)->st;
 	}
 
-	/* Check for supported arch */
-	if ((ret = nouveau_device_get_param(nv_screen->device,
-					    NOUVEAU_GETPARAM_CHIPSET_ID,
-					    &nv->chipset))) {
-		NOUVEAU_ERR("Error determining chipset id: %d\n", ret);
-		return GL_FALSE;
-	}
-
-	switch (nv->chipset & 0xf0) {
+	switch (dev->chipset & 0xf0) {
 	case 0x10:
 	case 0x20:
 		/* NV10 */
@@ -136,7 +127,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 		/* G80 */
 		break;
 	default:
-		NOUVEAU_ERR("Unsupported chipset: NV%02x\n", (int)nv->chipset);
+		NOUVEAU_ERR("Unsupported chipset: NV%02x\n", dev->chipset);
 		return GL_FALSE;
 	}
 
@@ -144,9 +135,12 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	nv->nv_screen  = nv_screen;
 	nv->dri_screen = driScrnPriv;
 
-	nvdev = nouveau_device(nv_screen->device);
-	nvdev->ctx  = driContextPriv->hHWContext;
-	nvdev->lock = (drmLock *)&driScrnPriv->pSAREA->lock;
+	{
+		struct nouveau_device_priv *nvdev = nouveau_device(dev);
+
+		nvdev->ctx  = driContextPriv->hHWContext;
+		nvdev->lock = (drmLock *)&driScrnPriv->pSAREA->lock;
+	}
 
 	driParseConfigFiles(&nv->dri_option_cache, &nv_screen->option_cache,
 			    nv->dri_screen->myNum, "nouveau");
@@ -201,7 +195,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	/*XXX: temporary - disable multi-context/single-channel on pre-NV4x */
-	switch (nv->chipset & 0xf0) {
+	switch (dev->chipset & 0xf0) {
 	case 0x40:
 	case 0x60:
 		/* NV40 class */
@@ -216,7 +210,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	if (!nvc) {
-		nvc = nouveau_channel_context_create(&nvdev->base, nv->chipset);
+		nvc = nouveau_channel_context_create(dev);
 		if (!nvc) {
 			NOUVEAU_ERR("Failed initialising GPU context\n");
 			return GL_FALSE;
@@ -244,7 +238,7 @@ nouveau_context_create(const __GLcontextModes *glVis,
 	}
 
 	/* Create pipe */
-	switch (nv->chipset & 0xf0) {
+	switch (dev->chipset & 0xf0) {
 	case 0x50:
 	case 0x80:
 	case 0x90:
