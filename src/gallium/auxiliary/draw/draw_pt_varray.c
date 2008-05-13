@@ -141,14 +141,19 @@ static INLINE void varray_point( struct varray_frontend *varray,
 }
 
 
-
+#if 0
+#define TRIANGLE(flags,i0,i1,i2)       varray_triangle(varray,i0,i1,i2)
+#define LINE(flags,i0,i1)              varray_line(varray,i0,i1)
+#define POINT(i0)                      varray_point(varray,i0)
+#define FUNC varray_decompose
+#include "draw_pt_decompose.h"
+#else
 #define TRIANGLE(vc,i0,i1,i2)       varray_triangle(vc,i0,i1,i2)
 #define LINE(vc,i0,i1)              varray_line(vc,i0,i1)
 #define POINT(vc,i0)                varray_point(vc,i0)
 #define FUNC varray_run
 #include "draw_pt_varray_tmp_linear.h"
-
-
+#endif
 
 static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
    PIPE_PRIM_POINTS,
