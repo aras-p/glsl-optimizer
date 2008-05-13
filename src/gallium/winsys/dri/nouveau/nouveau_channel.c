@@ -85,6 +85,13 @@ nouveau_channel_alloc(struct nouveau_device *dev, uint32_t fb_ctxdma,
 		return ret;
 	}
 
+	ret = nouveau_grobj_alloc(&nvchan->base, 0x00000000, 0x0030,
+				  &nvchan->base.nullobj);
+	if (ret) {
+		nouveau_channel_free((void *)&nvchan);
+		return ret;
+	}
+
 	nouveau_dma_channel_init(&nvchan->base);
 	nouveau_pushbuf_init(&nvchan->base);
 
@@ -109,6 +116,7 @@ nouveau_channel_free(struct nouveau_channel **chan)
 
 	nouveau_grobj_free(&nvchan->base.vram);
 	nouveau_grobj_free(&nvchan->base.gart);
+	nouveau_grobj_free(&nvchan->base.nullobj);
 
 	cf.channel = nvchan->drm.channel;
 	drmCommandWrite(nvdev->fd, DRM_NOUVEAU_CHANNEL_FREE, &cf, sizeof(cf));

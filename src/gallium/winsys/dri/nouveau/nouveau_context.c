@@ -26,7 +26,6 @@ int __nouveau_debug = 0;
 static void
 nouveau_channel_context_destroy(struct nouveau_channel_context *nvc)
 {
-	nouveau_grobj_free(&nvc->NvNull);
 	nouveau_grobj_free(&nvc->NvCtxSurf2D);
 	nouveau_grobj_free(&nvc->NvImageBlit);
 	nouveau_grobj_free(&nvc->NvGdiRect);
@@ -59,12 +58,6 @@ nouveau_channel_context_create(struct nouveau_device *dev)
 		return NULL;
 	}
 
-	if ((ret = nouveau_grobj_alloc(nvc->channel, 0x00000000, 0x30,
-				       &nvc->NvNull))) {
-		NOUVEAU_ERR("Error creating NULL object: %d\n", ret);
-		nouveau_channel_context_destroy(nvc);
-		return NULL;
-	}
 	nvc->next_handle = 0x80000000;
 
 	if ((ret = nouveau_notifier_alloc(nvc->channel, nvc->next_handle++, 1,

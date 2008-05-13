@@ -26,7 +26,6 @@ struct nouveau_channel_context {
 	struct nouveau_notifier *sync_notifier;
 
 	/* Common */
-	struct nouveau_grobj    *NvNull;
 	struct nouveau_grobj    *NvM2MF;
 	/* NV04-NV40 */
 	struct nouveau_grobj    *NvCtxSurf2D;

@@ -29,6 +29,7 @@ struct nouveau_channel {
 
 	struct nouveau_pushbuf *pushbuf;
 
+	struct nouveau_grobj *nullobj;
 	struct nouveau_grobj *vram;
 	struct nouveau_grobj *gart;
 

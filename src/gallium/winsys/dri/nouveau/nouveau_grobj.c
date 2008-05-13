@@ -50,7 +50,7 @@ nouveau_grobj_alloc(struct nouveau_channel *chan, uint32_t handle,
 	ret = drmCommandWrite(nvdev->fd, DRM_NOUVEAU_GROBJ_ALLOC,
 			      &g, sizeof(g));
 	if (ret) {
-		nouveau_grobj_free((void *)&grobj);
+		nouveau_grobj_free((void *)&nvgrobj);
 		return ret;
 	}
 
