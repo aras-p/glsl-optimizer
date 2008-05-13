@@ -91,8 +91,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	struct nouveau_channel_context *nvc = nv->nvc;
 	struct nouveau_winsys *nvws = CALLOC_STRUCT(nouveau_winsys);
 	struct pipe_screen *(*hws_create)(struct pipe_winsys *,
-					  struct nouveau_winsys *,
-					  unsigned chipset);
+					  struct nouveau_winsys *);
 	struct pipe_context *(*hw_create)(struct pipe_screen *, unsigned);
 	struct pipe_winsys *ws;
 	unsigned chipset = nv->nv_screen->device->chipset;
@@ -152,7 +151,7 @@ nouveau_pipe_create(struct nouveau_context *nv)
 	ws = nouveau_create_pipe_winsys(nv);
 
 	if (!nvc->pscreen)
-		nvc->pscreen = hws_create(ws, nvws, chipset);
+		nvc->pscreen = hws_create(ws, nvws);
 	nvc->pctx[nv->pctx_id] = hw_create(nvc->pscreen, nv->pctx_id);
 	return nvc->pctx[nv->pctx_id];
 }

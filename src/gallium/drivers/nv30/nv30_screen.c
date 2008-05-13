@@ -12,9 +12,10 @@ static const char *
 nv30_screen_get_name(struct pipe_screen *pscreen)
 {
 	struct nv30_screen *screen = nv30_screen(pscreen);
+	struct nouveau_device *dev = screen->nvws->channel->device;
 	static char buffer[128];
 
-	snprintf(buffer, sizeof(buffer), "NV%02X", screen->chipset);
+	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
 	return buffer;
 }
 
@@ -140,17 +141,16 @@ nv30_screen_destroy(struct pipe_screen *pscreen)
 }
 
 struct pipe_screen *
-nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
-		   unsigned chipset)
+nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv30_screen *screen = CALLOC_STRUCT(nv30_screen);
 	struct nouveau_stateobj *so;
 	unsigned rankine_class = 0;
+	unsigned chipset = nvws->channel->device->chipset;
 	int ret, i;
 
 	if (!screen)
 		return NULL;
-	screen->chipset = chipset;
 	screen->nvws = nvws;
 
 	/* 3D object */

@@ -85,8 +85,6 @@ struct nv30_context {
 
 	struct draw_context *draw;
 
-	int chipset;
-
 	uint32_t dirty;
 
 	struct nv30_sampler_state *tex_sampler[PIPE_MAX_SAMPLERS];

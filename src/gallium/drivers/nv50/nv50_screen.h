@@ -7,7 +7,6 @@ struct nv50_screen {
 	struct pipe_screen pipe;
 
 	struct nouveau_winsys *nvws;
-	unsigned chipset;
 
 	unsigned cur_pctx;
 

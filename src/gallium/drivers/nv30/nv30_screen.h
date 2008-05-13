@@ -7,7 +7,6 @@ struct nv30_screen {
 	struct pipe_screen pipe;
 
 	struct nouveau_winsys *nvws;
-	unsigned chipset;
 
 	/* HW graphics objects */
 	struct nouveau_grobj *rankine;

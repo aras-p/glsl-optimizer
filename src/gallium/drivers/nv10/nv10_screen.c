@@ -8,9 +8,10 @@ static const char *
 nv10_screen_get_name(struct pipe_screen *screen)
 {
 	struct nv10_screen *nv10screen = nv10_screen(screen);
+	struct nouveau_device *dev = nv10screen->nvws->channel->device;
 	static char buffer[128];
 
-	snprintf(buffer, sizeof(buffer), "NV%02X", nv10screen->chipset);
+	snprintf(buffer, sizeof(buffer), "NV%02X", dev->chipset);
 	return buffer;
 }
 
@@ -129,16 +130,15 @@ nv10_screen_destroy(struct pipe_screen *pscreen)
 }
 
 struct pipe_screen *
-nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws,
-		   unsigned chipset)
+nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 {
 	struct nv10_screen *screen = CALLOC_STRUCT(nv10_screen);
 	unsigned celsius_class;
+	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
 	if (!screen)
 		return NULL;
-	screen->chipset = chipset;
 	screen->nvws = nvws;
 
 	/* 3D object */

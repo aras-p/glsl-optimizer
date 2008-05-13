@@ -111,8 +111,6 @@ struct nv40_context {
 
 	struct draw_context *draw;
 
-	int chipset;
-
 	/* HW state derived from pipe states */
 	struct nv40_state state;
 	struct {

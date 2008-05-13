@@ -264,7 +264,6 @@ nv10_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	struct nv10_screen *screen = nv10_screen(pscreen);
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv10_context *nv10;
-	unsigned chipset = screen->chipset;
 	struct nouveau_winsys *nvws = screen->nvws;
 
 	nv10 = CALLOC(1, sizeof(struct nv10_context));
@@ -273,7 +272,6 @@ nv10_create(struct pipe_screen *pscreen, unsigned pctx_id)
 	nv10->screen = screen;
 	nv10->pctx_id = pctx_id;
 
-	nv10->chipset = chipset;
 	nv10->nvws = nvws;
 
 	nv10->pipe.winsys = ws;

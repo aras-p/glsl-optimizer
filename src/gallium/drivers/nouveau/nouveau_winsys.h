@@ -8,6 +8,7 @@
 #include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_class.h"
+#include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_notifier.h"
 #include "nouveau/nouveau_resource.h"
@@ -56,29 +57,25 @@ struct nouveau_winsys {
 };
 
 extern struct pipe_screen *
-nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
-		   unsigned chipset);
+nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
 
 extern struct pipe_context *
 nv10_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
-		   unsigned chipset);
+nv30_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
 
 extern struct pipe_context *
 nv30_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
-		   unsigned chipset);
+nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
 
 extern struct pipe_context *
 nv40_create(struct pipe_screen *, unsigned pctx_id);
 
 extern struct pipe_screen *
-nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *,
-		   unsigned chipset);
+nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *);
 
 extern struct pipe_context *
 nv50_create(struct pipe_screen *, unsigned pctx_id);
