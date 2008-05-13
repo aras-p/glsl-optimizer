@@ -573,7 +573,7 @@ static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 static void r300UpdatePolygonMode(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	uint32_t hw_mode = GA_POLY_MODE_DISABLE;
+	uint32_t hw_mode = R300_GA_POLY_MODE_DISABLE;
 
 	/* Only do something if a polygon mode is wanted, default is GL_FILL */
 	if (ctx->Polygon.FrontMode != GL_FILL ||
@@ -592,29 +592,29 @@ static void r300UpdatePolygonMode(GLcontext * ctx)
 		}
 
 		/* Enable polygon mode */
-		hw_mode |= GA_POLY_MODE_DUAL;
+		hw_mode |= R300_GA_POLY_MODE_DUAL;
 
 		switch (f) {
 		case GL_LINE:
-			hw_mode |= GA_POLY_MODE_FRONT_PTYPE_LINE;
+			hw_mode |= R300_GA_POLY_MODE_FRONT_PTYPE_LINE;
 			break;
 		case GL_POINT:
-			hw_mode |= GA_POLY_MODE_FRONT_PTYPE_POINT;
+			hw_mode |= R300_GA_POLY_MODE_FRONT_PTYPE_POINT;
 			break;
 		case GL_FILL:
-			hw_mode |= GA_POLY_MODE_FRONT_PTYPE_TRI;
+			hw_mode |= R300_GA_POLY_MODE_FRONT_PTYPE_TRI;
 			break;
 		}
 
 		switch (b) {
 		case GL_LINE:
-			hw_mode |= GA_POLY_MODE_BACK_PTYPE_LINE;
+			hw_mode |= R300_GA_POLY_MODE_BACK_PTYPE_LINE;
 			break;
 		case GL_POINT:
-			hw_mode |= GA_POLY_MODE_BACK_PTYPE_POINT;
+			hw_mode |= R300_GA_POLY_MODE_BACK_PTYPE_POINT;
 			break;
 		case GL_FILL:
-			hw_mode |= GA_POLY_MODE_BACK_PTYPE_TRI;
+			hw_mode |= R300_GA_POLY_MODE_BACK_PTYPE_TRI;
 			break;
 		}
 	}
