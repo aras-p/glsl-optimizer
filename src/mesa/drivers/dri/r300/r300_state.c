@@ -415,10 +415,10 @@ static void r300SetEarlyZState(GLcontext * ctx)
 	R300_STATECHANGE(r300, zstencil_format);
 	switch (ctx->Visual.depthBits) {
 	case 16:
-		r300->hw.zstencil_format.cmd[1] = ZB_FORMAR_DEPTHFORMAT_16BIT_INT_Z;
+		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_16BIT_INT_Z;
 		break;
 	case 24:
-		r300->hw.zstencil_format.cmd[1] = ZB_FORMAR_DEPTHFORMAT_24BIT_INT_Z;
+		r300->hw.zstencil_format.cmd[1] = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
 		break;
 	default:
 		fprintf(stderr, "Error: Unsupported depth %d... exiting\n", ctx->Visual.depthBits);
@@ -427,14 +427,14 @@ static void r300SetEarlyZState(GLcontext * ctx)
 
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		/* disable early Z */
-		r300->hw.zstencil_format.cmd[2] = R300_EARLY_Z_DISABLE;
+		r300->hw.zstencil_format.cmd[2] = R300_ZTOP_DISABLE;
 	else {
 		if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER)
 			/* enable early Z */
-			r300->hw.zstencil_format.cmd[2] = R300_EARLY_Z_ENABLE;
+			r300->hw.zstencil_format.cmd[2] = R300_ZTOP_ENABLE;
 		else
 			/* disable early Z */
-			r300->hw.zstencil_format.cmd[2] = R300_EARLY_Z_DISABLE;
+			r300->hw.zstencil_format.cmd[2] = R300_ZTOP_DISABLE;
 	}
 
 	r300->hw.zstencil_format.cmd[3] = 0x00000003;
@@ -527,24 +527,24 @@ static void r300SetDepthState(GLcontext * ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(r300, zs);
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_RB3D_STENCIL_ENABLE;
+	r300->hw.zs.cmd[R300_ZS_CNTL_0] &= R300_STENCIL_ENABLE; // XXX
 	r300->hw.zs.cmd[R300_ZS_CNTL_1] &=
-	    ~(R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+	    ~(R300_ZS_MASK << R300_Z_FUNC_SHIFT);
 
 	if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER) {
 		if (ctx->Depth.Mask)
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-			    R300_RB3D_Z_TEST_AND_WRITE;
+			    R300_Z_ENABLE | R300_Z_WRITE_ENABLE | R300_STENCIL_FRONT_BACK; // XXX
 		else
-			r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_TEST;
+		    r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_Z_ENABLE | R300_STENCIL_FRONT_BACK; // XXX
 
 		r300->hw.zs.cmd[R300_ZS_CNTL_1] |=
 		    translate_func(ctx->Depth.
-				   Func) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
+				   Func) << R300_Z_FUNC_SHIFT;
 	} else {
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_DISABLED_1;
+	    r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_STENCIL_FRONT_BACK; // XXX
 		r300->hw.zs.cmd[R300_ZS_CNTL_1] |=
-		    translate_func(GL_NEVER) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
+		    translate_func(GL_NEVER) << R300_Z_FUNC_SHIFT;
 	}
 
 	r300SetEarlyZState(ctx);
@@ -558,10 +558,10 @@ static void r300SetStencilState(GLcontext * ctx, GLboolean state)
 		R300_STATECHANGE(r300, zs);
 		if (state) {
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-			    R300_RB3D_STENCIL_ENABLE;
+			    R300_STENCIL_ENABLE;
 		} else {
 			r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
-			    ~R300_RB3D_STENCIL_ENABLE;
+			    ~R300_STENCIL_ENABLE;
 		}
 	} else {
 #if R200_MERGED
@@ -916,36 +916,36 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint refmask =
 	    (((ctx->Stencil.
-	       Ref[0] & 0xff) << ZB_STENCILREFMASK_STENCILREF_SHIFT) | ((ctx->
-								      Stencil.
-								      ValueMask
-								      [0] &
-								      0xff)
-								     <<
-								     ZB_STENCILREFMASK_STENCILMASK_SHIFT));
+	       Ref[0] & 0xff) << R300_STENCILREF_SHIFT) | ((ctx->
+							    Stencil.
+							    ValueMask
+							    [0] &
+							    0xff)
+							   <<
+							   R300_STENCILMASK_SHIFT));
 
 	GLuint flag;
 
 	R300_STATECHANGE(rmesa, zs);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &= ~((R300_ZS_MASK <<
-					       R300_RB3D_ZS1_FRONT_FUNC_SHIFT)
+					       R300_S_FRONT_FUNC_SHIFT)
 					      | (R300_ZS_MASK <<
-						 R300_RB3D_ZS1_BACK_FUNC_SHIFT));
+						 R300_S_BACK_FUNC_SHIFT));
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=
-	    ~((ZB_STENCILREFMASK_STENCIL_MASK << ZB_STENCILREFMASK_STENCILREF_SHIFT) |
-	      (ZB_STENCILREFMASK_STENCIL_MASK << ZB_STENCILREFMASK_STENCILMASK_SHIFT));
+	    ~((R300_STENCILREF_MASK << R300_STENCILREF_SHIFT) |
+	      (R300_STENCILREF_MASK << R300_STENCILMASK_SHIFT));
 
 	flag = translate_func(ctx->Stencil.Function[0]);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-	    (flag << R300_RB3D_ZS1_FRONT_FUNC_SHIFT);
+	    (flag << R300_S_FRONT_FUNC_SHIFT);
 
 	if (ctx->Stencil._TestTwoSide)
 		flag = translate_func(ctx->Stencil.Function[1]);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
-	    (flag << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
+	    (flag << R300_S_BACK_FUNC_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
 }
 
@@ -955,12 +955,12 @@ static void r300StencilMaskSeparate(GLcontext * ctx, GLenum face, GLuint mask)
 
 	R300_STATECHANGE(rmesa, zs);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] &=
-	    ~(ZB_STENCILREFMASK_STENCIL_MASK <<
-	      ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT);
+	    ~(R300_STENCILREF_MASK <<
+	      R300_STENCILWRITEMASK_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |=
 	    (ctx->Stencil.
-	     WriteMask[0] & ZB_STENCILREFMASK_STENCIL_MASK) <<
-	     ZB_STENCILREFMASK_STENCILWRITEMASK_SHIFT;
+	     WriteMask[0] & R300_STENCILREF_MASK) <<
+	     R300_STENCILWRITEMASK_SHIFT;
 }
 
 static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
@@ -971,34 +971,34 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face,
 	R300_STATECHANGE(rmesa, zs);
 	/* It is easier to mask what's left.. */
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] &=
-	    (R300_ZS_MASK << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT) |
-	    (R300_ZS_MASK << R300_RB3D_ZS1_FRONT_FUNC_SHIFT) |
-	    (R300_ZS_MASK << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
+	    (R300_ZS_MASK << R300_Z_FUNC_SHIFT) |
+	    (R300_ZS_MASK << R300_S_FRONT_FUNC_SHIFT) |
+	    (R300_ZS_MASK << R300_S_BACK_FUNC_SHIFT);
 
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 	    (translate_stencil_op(ctx->Stencil.FailFunc[0]) <<
-	     R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT)
+	     R300_S_FRONT_SFAIL_OP_SHIFT)
 	    | (translate_stencil_op(ctx->Stencil.ZFailFunc[0]) <<
-	       R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT)
+	       R300_S_FRONT_ZFAIL_OP_SHIFT)
 	    | (translate_stencil_op(ctx->Stencil.ZPassFunc[0]) <<
-	       R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT);
+	       R300_S_FRONT_ZPASS_OP_SHIFT);
 
 	if (ctx->Stencil._TestTwoSide) {
 		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 		    (translate_stencil_op(ctx->Stencil.FailFunc[1]) <<
-		     R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+		     R300_S_BACK_SFAIL_OP_SHIFT)
 		    | (translate_stencil_op(ctx->Stencil.ZFailFunc[1]) <<
-		       R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+		       R300_S_BACK_ZFAIL_OP_SHIFT)
 		    | (translate_stencil_op(ctx->Stencil.ZPassFunc[1]) <<
-		       R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+		       R300_S_BACK_ZPASS_OP_SHIFT);
 	} else {
 		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 		    (translate_stencil_op(ctx->Stencil.FailFunc[0]) <<
-		     R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+		     R300_S_BACK_SFAIL_OP_SHIFT)
 		    | (translate_stencil_op(ctx->Stencil.ZFailFunc[0]) <<
-		       R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+		       R300_S_BACK_ZFAIL_OP_SHIFT)
 		    | (translate_stencil_op(ctx->Stencil.ZPassFunc[0]) <<
-		       R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+		       R300_S_BACK_ZPASS_OP_SHIFT);
 	}
 }
 
@@ -1007,10 +1007,10 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	rmesa->state.stencil.clear =
-	    ((GLuint) (ctx->Stencil.Clear & ZB_STENCILREFMASK_STENCIL_MASK) |
-	     (ZB_STENCILREFMASK_STENCIL_MASK << ZB_STENCILREFMASK_STENCILMASK_SHIFT) |
-	     ((ctx->Stencil.WriteMask[0] & ZB_STENCILREFMASK_STENCIL_MASK) <<
-		ZB_STENCILREFMASK_STENCILMASK_SHIFT));
+	    ((GLuint) (ctx->Stencil.Clear & R300_STENCILREF_MASK) |
+	     (R300_STENCILREF_MASK << R300_STENCILMASK_SHIFT) |
+	     ((ctx->Stencil.WriteMask[0] & R300_STENCILREF_MASK) <<
+		R300_STENCILMASK_SHIFT));
 }
 
 /* =============================================================
@@ -2287,11 +2287,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	if (r300->radeon.sarea->tiling_enabled) {
 		/* XXX: Turn off when clearing buffers ? */
-		r300->hw.zb.cmd[R300_ZB_PITCH] |= ZB_DEPTHPITCH_DEPTHMACROTILE_ENABLE;
+		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTHMACROTILE_ENABLE;
 
 		if (ctx->Visual.depthBits == 24)
 			r300->hw.zb.cmd[R300_ZB_PITCH] |=
-			    ZB_DEPTHPITCH_DEPTHMICROTILE_TILED;
+			    R300_DEPTHMICROTILE_TILED;
 	}
 
 	r300->hw.zb_depthclearvalue.cmd[1] = 0;
@@ -2546,12 +2546,12 @@ void r300InitState(r300ContextPtr r300)
 	switch (ctx->Visual.depthBits) {
 	case 16:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffff;
-		depth_fmt = ZB_FORMAR_DEPTHFORMAT_16BIT_INT_Z;
+		depth_fmt = R300_DEPTHFORMAT_16BIT_INT_Z;
 		r300->state.stencil.clear = 0x00000000;
 		break;
 	case 24:
 		r300->state.depth.scale = 1.0 / (GLfloat) 0xffffff;
-		depth_fmt = ZB_FORMAR_DEPTHFORMAT_24BIT_INT_Z;
+		depth_fmt = R300_DEPTHFORMAT_24BIT_INT_Z_8BIT_STENCIL;
 		r300->state.stencil.clear = 0x00ff0000;
 		break;
 	default:

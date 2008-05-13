@@ -118,7 +118,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	}
 
 	R300_STATECHANGE(r300, zs);
-	reg_start(R300_RB3D_ZSTENCIL_CNTL_0, 2);
+	reg_start(R300_ZB_CNTL, 2);
 
 	{
 		uint32_t t1, t2;
@@ -127,32 +127,32 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		t2 = 0x0;
 
 		if (flags & CLEARBUFFER_DEPTH) {
-			t1 |= R300_RB3D_Z_WRITE_ONLY;
+			t1 |= R300_Z_ENABLE | R300_Z_WRITE_ENABLE;
 			t2 |=
-			    (R300_ZS_ALWAYS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
-		} else {
-			t1 |= R300_RB3D_Z_DISABLED_1;	// disable
+			    (R300_ZS_ALWAYS << R300_Z_FUNC_SHIFT);
+		} else { //XXX
+			t1 |= R300_STENCIL_FRONT_BACK;	// disable
 		}
 
 		if (flags & CLEARBUFFER_STENCIL) {
-			t1 |= R300_RB3D_STENCIL_ENABLE;
+			t1 |= R300_STENCIL_ENABLE;
 			t2 |=
 			    (R300_ZS_ALWAYS <<
-			     R300_RB3D_ZS1_FRONT_FUNC_SHIFT) |
+			     R300_S_FRONT_FUNC_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
+			     R300_S_FRONT_SFAIL_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
+			     R300_S_FRONT_ZPASS_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
+			     R300_S_FRONT_ZFAIL_OP_SHIFT) |
 			    (R300_ZS_ALWAYS <<
-			     R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
+			     R300_S_BACK_FUNC_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
+			     R300_S_BACK_SFAIL_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
+			     R300_S_BACK_ZPASS_OP_SHIFT) |
 			    (R300_ZS_REPLACE <<
-			     R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT);
+			     R300_S_BACK_ZFAIL_OP_SHIFT);
 		}
 
 		e32(t1);
