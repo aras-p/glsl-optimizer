@@ -1849,7 +1849,7 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_
 
     /* Flush PVS engine before changing PVS_NUM_SLOTS, PVS_NUM_CNTRLS.
      * See r500 docs 6.5.2 */
-    reg_start(R300_VAP_PVS_WAITIDLE, 0);
+    reg_start(R300_VAP_PVS_STATE_FLUSH_REG, 0);
     e32(0x00000000);
 
     /* avoid division by zero */
@@ -1926,15 +1926,14 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	    (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-	    (inst_count << R300_PVS_CNTL_1_POS_END_SHIFT) |
-	    (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	    (0 << R300_PVS_FIRST_INST_SHIFT) |
+	    (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
+	    (inst_count << R300_PVS_LAST_INST_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	    (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
-	    (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	    (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
+	    (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
+	    (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 }
 
 static int bit_count (int x)
@@ -1972,15 +1971,14 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	  (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-	  (inst_count << R300_PVS_CNTL_1_POS_END_SHIFT) |
-	  (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	  (0 << R300_PVS_FIRST_INST_SHIFT) |
+	  (inst_count << R300_PVS_XYZW_VALID_INST_SHIFT) |
+	  (inst_count << R300_PVS_LAST_INST_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	  (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
-	  (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	  (0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
+	  (param_count << R300_PVS_MAX_CONST_ADDR_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
+	  (inst_count << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 }
 
 static void r300SetupVertexProgram(r300ContextPtr rmesa)

@@ -455,13 +455,14 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	if (has_tcl) {
 		R300_STATECHANGE(r300, pvs);
-		reg_start(R300_VAP_PVS_CNTL_1, 2);
+		reg_start(R300_VAP_PVS_CODE_CNTL_0, 2);
 
-		e32((0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-		    (0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
-		    (1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT));
-		e32(0x0);
-		e32(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
+		e32((0 << R300_PVS_FIRST_INST_SHIFT) |
+		    (0 << R300_PVS_XYZW_VALID_INST_SHIFT) |
+		    (1 << R300_PVS_LAST_INST_SHIFT));
+		e32((0 << R300_PVS_CONST_BASE_OFFSET_SHIFT) |
+		    (0 << R300_PVS_MAX_CONST_ADDR_SHIFT));
+		e32(1 << R300_PVS_LAST_VTX_SRC_INST_SHIFT);
 
 		R300_STATECHANGE(r300, vpi);
 		vsf_start_fragment(0x0, 8);

@@ -353,7 +353,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (has_tcl) {
 		ALLOC_STATE(pvs, always, R300_PVS_CMDSIZE, 0);
 		r300->hw.pvs.cmd[R300_PVS_CMD_0] =
-		    cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
+		    cmdpacket0(R300_VAP_PVS_CODE_CNTL_0, 3);
 	}
 
 	ALLOC_STATE(gb_enable, always, 2, 0);

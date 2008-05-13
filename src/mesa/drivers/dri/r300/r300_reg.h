@@ -444,7 +444,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Therefore, I suspect writing zero to 0x2284 synchronizes the engine and
  * avoids bugs caused by still running shaders reading bad data from memory.
  */
-#define R300_VAP_PVS_WAITIDLE               0x2284 /* GUESS */
+#define R300_VAP_PVS_STATE_FLUSH_REG        0x2284
 
 /* This register is used to define the number of core clocks to wait for a
  * vertex to be received by the VAP input controller (while the primitive
@@ -474,17 +474,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * is sometimes accepted other instruction that have no relationship with
  * position calculations.
  */
-#define R300_VAP_PVS_CNTL_1                 0x22D0
-#       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
-#       define R300_PVS_CNTL_1_POS_END_SHIFT         10
-#       define R300_PVS_CNTL_1_PROGRAM_END_SHIFT     20
+#define R300_VAP_PVS_CODE_CNTL_0            0x22D0
+#       define R300_PVS_FIRST_INST_SHIFT         0
+#       define R300_PVS_XYZW_VALID_INST_SHIFT    10
+#       define R300_PVS_LAST_INST_SHIFT          20
 /* Addresses are relative the the vertex program parameters area. */
-#define R300_VAP_PVS_CNTL_2                 0x22D4
-#       define R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT 0
-#       define R300_PVS_CNTL_2_PARAM_COUNT_SHIFT  16
-#define R300_VAP_PVS_CNTL_3	           0x22D8
-#       define R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT 10
-#       define R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT 0
+#define R300_VAP_PVS_CONST_CNTL             0x22D4
+#       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0
+#       define R300_PVS_MAX_CONST_ADDR_SHIFT     16
+#define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
+#       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
 
 /* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
  * immediate vertices
