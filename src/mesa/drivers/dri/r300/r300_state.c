@@ -1445,21 +1445,21 @@ static void r300SetupTextures(GLcontext * ctx)
 			int opcode;
 			unsigned long val;
 			
-			unit = fp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
+			unit = fp->tex.inst[i] >> R300_TEX_ID_SHIFT;
 			unit &= 15;
 			
 			val = fp->tex.inst[i];
-			val &= ~R300_FPITX_IMAGE_MASK;
+			val &= ~R300_TEX_ID_MASK;
 			
 			opcode =
-				(val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
-			if (opcode == R300_FPITX_OP_KIL) {
+				(val & R300_TEX_INST_MASK) >> R300_TEX_INST_SHIFT;
+			if (opcode == R300_TEX_OP_KIL) {
 				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
 			} else {
 				if (tmu_mappings[unit] >= 0) {
 					val |=
 						tmu_mappings[unit] <<
-						R300_FPITX_IMAGE_SHIFT;
+						R300_TEX_ID_SHIFT;
 					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
 				} else {
 					// We get here when the corresponding texture image is incomplete
@@ -1470,7 +1470,7 @@ static void r300SetupTextures(GLcontext * ctx)
 		}
 		
 		r300->hw.fpt.cmd[R300_FPT_CMD_0] =
-			cmdpacket0(R300_PFS_TEXI_0, fp->tex.length);
+			cmdpacket0(R300_US_TEX_INST_0, fp->tex.length);
 	}
 
 	if (RADEON_DEBUG & DEBUG_STATE)
@@ -2371,25 +2371,25 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	}
 
 	R300_STATECHANGE(rmesa, fpi[0]);
-	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, fp->alu_end + 1);
+	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, fp->alu_end + 1);
 	for (i = 0; i <= fp->alu_end; i++) {
 		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst0;
 	}
 
 	R300_STATECHANGE(rmesa, fpi[1]);
-	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, fp->alu_end + 1);
+	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, fp->alu_end + 1);
 	for (i = 0; i <= fp->alu_end; i++) {
 		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst1;
 	}
 
 	R300_STATECHANGE(rmesa, fpi[2]);
-	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, fp->alu_end + 1);
+	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, fp->alu_end + 1);
 	for (i = 0; i <= fp->alu_end; i++) {
 		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst2;
 	}
 
 	R300_STATECHANGE(rmesa, fpi[3]);
-	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, fp->alu_end + 1);
+	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, fp->alu_end + 1);
 	for (i = 0; i <= fp->alu_end; i++) {
 		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst3;
 	}
@@ -2406,10 +2406,10 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 	for (i = 0, k = (4 - (fp->cur_node + 1)); i < 4; i++, k++) {
 		if (i < (fp->cur_node + 1)) {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + k] =
-			  (fp->node[i].alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT) |
-			  (fp->node[i].alu_end << R300_PFS_NODE_ALU_END_SHIFT) |
-			  (fp->node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT) |
-			  (fp->node[i].tex_end << R300_PFS_NODE_TEX_END_SHIFT) |
+			  (fp->node[i].alu_offset << R300_ALU_START_SHIFT) |
+			  (fp->node[i].alu_end << R300_ALU_SIZE_SHIFT) |
+			  (fp->node[i].tex_offset << R300_TEX_START_SHIFT) |
+			  (fp->node[i].tex_end << R300_TEX_SIZE_SHIFT) |
 			  fp->node[i].flags;
 		} else {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;

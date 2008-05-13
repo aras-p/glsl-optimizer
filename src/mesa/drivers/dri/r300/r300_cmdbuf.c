@@ -409,7 +409,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(sc_screendoor, always, 2, 0);
 	r300->hw.sc_screendoor.cmd[0] = cmdpacket0(R300_SC_SCREENDOOR, 1);
 	ALLOC_STATE(us_out_fmt, always, 6, 0);
-	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R500_US_OUT_FMT, 5);
+	r300->hw.us_out_fmt.cmd[0] = cmdpacket0(R300_US_OUT_FMT, 5);
 
 	if (is_r500) {
 		ALLOC_STATE(fp, always, R500_FP_CMDSIZE, 0);
@@ -422,19 +422,19 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.r500fp_const.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 1, 0);
 	} else {
 		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
-		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_PFS_CNTL_0, 3);
-		r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_PFS_NODE_0, 4);
+		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_US_CONFIG, 3);
+		r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_US_CODE_ADDR_0, 4);
 		ALLOC_STATE(fpt, variable, R300_FPT_CMDSIZE, 0);
-		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
+		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_US_TEX_INST_0, 0);
 
 		ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
-		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
+		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, 1);
 		ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
-		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
+		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_ADDR_0, 1);
 		ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, 2);
-		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
+		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_INST_0, 1);
 		ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
-		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
+		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_ALPHA_ADDR_0, 1);
 		ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
 		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	}

@@ -75,23 +75,23 @@ typedef struct r300_fragment_program_swizzle {
 #define SRC_STRIDE		6
 
 #define NOP_INST0 (						 \
-		(R300_FPI0_OUTC_MAD) |				 \
-		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG0C_SHIFT) | \
-		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG1C_SHIFT) | \
-		(R300_FPI0_ARGC_ZERO << R300_FPI0_ARG2C_SHIFT))
+		(R300_ALU_OUTC_MAD) |				 \
+		(R300_ALU_ARGC_ZERO << R300_ALU_ARG0C_SHIFT) | \
+		(R300_ALU_ARGC_ZERO << R300_ALU_ARG1C_SHIFT) | \
+		(R300_ALU_ARGC_ZERO << R300_ALU_ARG2C_SHIFT))
 #define NOP_INST1 (					     \
-		((0 | SRC_CONST) << R300_FPI1_SRC0C_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI1_SRC1C_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI1_SRC2C_SHIFT))
+		((0 | SRC_CONST) << R300_ALU_SRC0C_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC1C_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC2C_SHIFT))
 #define NOP_INST2 ( \
-		(R300_FPI2_OUTA_MAD) |				 \
-		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG0A_SHIFT) | \
-		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG1A_SHIFT) | \
-		(R300_FPI2_ARGA_ZERO << R300_FPI2_ARG2A_SHIFT))
+		(R300_ALU_OUTA_MAD) |				 \
+		(R300_ALU_ARGA_ZERO << R300_ALU_ARG0A_SHIFT) | \
+		(R300_ALU_ARGA_ZERO << R300_ALU_ARG1A_SHIFT) | \
+		(R300_ALU_ARGA_ZERO << R300_ALU_ARG2A_SHIFT))
 #define NOP_INST3 (					     \
-		((0 | SRC_CONST) << R300_FPI3_SRC0A_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI3_SRC1A_SHIFT) | \
-		((0 | SRC_CONST) << R300_FPI3_SRC2A_SHIFT))
+		((0 | SRC_CONST) << R300_ALU_SRC0A_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC1A_SHIFT) | \
+		((0 | SRC_CONST) << R300_ALU_SRC2A_SHIFT))
 
 #define DRI_CONF_FP_OPTIMIZATION_SPEED   0
 #define DRI_CONF_FP_OPTIMIZATION_QUALITY 1
@@ -117,42 +117,42 @@ typedef struct r300_fragment_program_swizzle {
 #define FP_SELC_MASK_XYZ	7
 
 #define FP_SELC(destidx,regmask,outmask,src0,src1,src2) \
-	(((destidx) << R300_FPI1_DSTC_SHIFT) |		\
+	(((destidx) << R300_ALU_DSTC_SHIFT) |		\
 	 (FP_SELC_MASK_##regmask << 23) |		\
 	 (FP_SELC_MASK_##outmask << 26) |		\
-	 ((src0) << R300_FPI1_SRC0C_SHIFT) |		\
-	 ((src1) << R300_FPI1_SRC1C_SHIFT) |		\
-	 ((src2) << R300_FPI1_SRC2C_SHIFT))
+	 ((src0) << R300_ALU_SRC0C_SHIFT) |		\
+	 ((src1) << R300_ALU_SRC1C_SHIFT) |		\
+	 ((src2) << R300_ALU_SRC2C_SHIFT))
 
 #define FP_SELA_MASK_NO		0
 #define FP_SELA_MASK_W		1
 
 #define FP_SELA(destidx,regmask,outmask,src0,src1,src2) \
-	(((destidx) << R300_FPI3_DSTA_SHIFT) |		\
+	(((destidx) << R300_ALU_DSTA_SHIFT) |		\
 	 (FP_SELA_MASK_##regmask << 23) |		\
 	 (FP_SELA_MASK_##outmask << 24) |		\
-	 ((src0) << R300_FPI3_SRC0A_SHIFT) |		\
-	 ((src1) << R300_FPI3_SRC1A_SHIFT) |		\
-	 ((src2) << R300_FPI3_SRC2A_SHIFT))
+	 ((src0) << R300_ALU_SRC0A_SHIFT) |		\
+	 ((src1) << R300_ALU_SRC1A_SHIFT) |		\
+	 ((src2) << R300_ALU_SRC2A_SHIFT))
 
 /* Produce unshifted argument selectors */
-#define FP_ARGC(source)	R300_FPI0_ARGC_##source
-#define FP_ARGA(source) R300_FPI2_ARGA_##source
+#define FP_ARGC(source)	R300_ALU_ARGC_##source
+#define FP_ARGA(source) R300_ALU_ARGA_##source
 #define FP_ABS(arg) ((arg) | (1 << 6))
 #define FP_NEG(arg) ((arg) ^ (1 << 5))
 
 /* Produce instruction dword */
 #define FP_INSTRC(opcode,arg0,arg1,arg2) \
-	(R300_FPI0_OUTC_##opcode | 		\
-	((arg0) << R300_FPI0_ARG0C_SHIFT) |	\
-	((arg1) << R300_FPI0_ARG1C_SHIFT) |	\
-	((arg2) << R300_FPI0_ARG2C_SHIFT))
+	(R300_ALU_OUTC_##opcode | 		\
+	((arg0) << R300_ALU_ARG0C_SHIFT) |	\
+	((arg1) << R300_ALU_ARG1C_SHIFT) |	\
+	((arg2) << R300_ALU_ARG2C_SHIFT))
 
 #define FP_INSTRA(opcode,arg0,arg1,arg2) \
-	(R300_FPI2_OUTA_##opcode | 		\
-	((arg0) << R300_FPI2_ARG0A_SHIFT) |	\
-	((arg1) << R300_FPI2_ARG1A_SHIFT) |	\
-	((arg2) << R300_FPI2_ARG2A_SHIFT))
+	(R300_ALU_OUTA_##opcode | 		\
+	((arg0) << R300_ALU_ARG0A_SHIFT) |	\
+	((arg1) << R300_ALU_ARG1A_SHIFT) |	\
+	((arg2) << R300_ALU_ARG2A_SHIFT))
 
 #endif
 

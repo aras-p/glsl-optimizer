@@ -1596,23 +1596,23 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * offsets into the respective instruction streams, while *_END points to the
  * last instruction relative to this offset.
  */
-#define R300_PFS_CNTL_0                     0x4600
+#define R300_US_CONFIG                      0x4600
 #       define R300_PFS_CNTL_LAST_NODES_SHIFT    0
 #       define R300_PFS_CNTL_LAST_NODES_MASK     (3 << 0)
 #       define R300_PFS_CNTL_FIRST_NODE_HAS_TEX  (1 << 3)
-#define R300_PFS_CNTL_1                     0x4604
+#define R300_US_PIXSIZE                     0x4604
 /* There is an unshifted value here which has so far always been equal to the
  * index of the highest used temporary register.
  */
-#define R300_PFS_CNTL_2                     0x4608
+#define R300_US_CODE_OFFSET                 0x4608
 #       define R300_PFS_CNTL_ALU_OFFSET_SHIFT    0
 #       define R300_PFS_CNTL_ALU_OFFSET_MASK     (63 << 0)
 #       define R300_PFS_CNTL_ALU_END_SHIFT       6
 #       define R300_PFS_CNTL_ALU_END_MASK        (63 << 6)
-#       define R300_PFS_CNTL_TEX_OFFSET_SHIFT    12
-#       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 12) /* GUESS */
+#       define R300_PFS_CNTL_TEX_OFFSET_SHIFT    13
+#       define R300_PFS_CNTL_TEX_OFFSET_MASK     (31 << 13)
 #       define R300_PFS_CNTL_TEX_END_SHIFT       18
-#       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18) /* GUESS */
+#       define R300_PFS_CNTL_TEX_END_MASK        (31 << 18)
 
 /* gap */
 
@@ -1623,70 +1623,65 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Offsets are relative to the master offset from PFS_CNTL_2.
  */
-#define R300_PFS_NODE_0                     0x4610
-#define R300_PFS_NODE_1                     0x4614
-#define R300_PFS_NODE_2                     0x4618
-#define R300_PFS_NODE_3                     0x461C
-#       define R300_PFS_NODE_ALU_OFFSET_SHIFT    0
-#       define R300_PFS_NODE_ALU_OFFSET_MASK     (63 << 0)
-#       define R300_PFS_NODE_ALU_END_SHIFT       6
-#       define R300_PFS_NODE_ALU_END_MASK        (63 << 6)
-#       define R300_PFS_NODE_TEX_OFFSET_SHIFT    12
-#       define R300_PFS_NODE_TEX_OFFSET_MASK     (31 << 12)
-#       define R300_PFS_NODE_TEX_END_SHIFT       17
-#       define R300_PFS_NODE_TEX_END_MASK        (31 << 17)
-#		define R300_PFS_NODE_OUTPUT_COLOR        (1 << 22)
-#		define R300_PFS_NODE_OUTPUT_DEPTH        (1 << 23)
+#define R300_US_CODE_ADDR_0                 0x4610
+#define R300_US_CODE_ADDR_1                 0x4614
+#define R300_US_CODE_ADDR_2                 0x4618
+#define R300_US_CODE_ADDR_3                 0x461C
+#       define R300_ALU_START_SHIFT         0
+#       define R300_ALU_START_MASK          (63 << 0)
+#       define R300_ALU_SIZE_SHIFT          6
+#       define R300_ALU_SIZE_MASK           (63 << 6)
+#       define R300_TEX_START_SHIFT         12
+#       define R300_TEX_START_MASK          (31 << 12)
+#       define R300_TEX_SIZE_SHIFT          17
+#       define R300_TEX_SIZE_MASK           (31 << 17)
+#	define R300_RGBA_OUT                (1 << 22)
+#	define R300_W_OUT                   (1 << 23)
 
 /* TEX
  * As far as I can tell, texture instructions cannot write into output
  * registers directly. A subsequent ALU instruction is always necessary,
  * even if it's just MAD o0, r0, 1, 0
  */
-#define R300_PFS_TEXI_0                     0x4620
-#	define R300_FPITX_SRC_SHIFT              0
-#	define R300_FPITX_SRC_MASK               (31 << 0)
-	/* GUESS */
-#	define R300_FPITX_SRC_CONST              (1 << 5)
-#	define R300_FPITX_DST_SHIFT              6
-#	define R300_FPITX_DST_MASK               (31 << 6)
-#	define R300_FPITX_IMAGE_SHIFT            11
-	/* GUESS based on layout and native limits */
-#       define R300_FPITX_IMAGE_MASK             (15 << 11)
-/* Unsure if these are opcodes, or some kind of bitfield, but this is how
- * they were set when I checked
- */
-#	define R300_FPITX_OPCODE_SHIFT		15
-#		define R300_FPITX_OP_TEX	1
-#		define R300_FPITX_OP_KIL	2
-#		define R300_FPITX_OP_TXP	3
-#		define R300_FPITX_OP_TXB	4
-#	define R300_FPITX_OPCODE_MASK           (7 << 15)
+#define R300_US_TEX_INST_0                  0x4620
+#	define R300_SRC_ADDR_SHIFT          0
+#	define R300_SRC_ADDR_MASK           (31 << 0)
+#	define R300_DST_ADDR_SHIFT          6
+#	define R300_DST_ADDR_MASK           (31 << 6)
+#	define R300_TEX_ID_SHIFT            11
+#       define R300_TEX_ID_MASK             (15 << 11)
+#	define R300_TEX_INST_SHIFT		15
+#		define R300_TEX_OP_NOP	        0
+#		define R300_TEX_OP_LD	        1
+#		define R300_TEX_OP_KIL	        2
+#		define R300_TEX_OP_TXP	        3
+#		define R300_TEX_OP_TXB	        4
+#	define R300_TEX_INST_MASK               (7 << 15)
 
 /* Output format from the unfied shader */
-#define R500_US_OUT_FMT                     0x46A4
-#	define R500_US_OUT_FMT_C4_8         (0 << 0)
-#	define R500_US_OUT_FMT_C4_10        (1 << 0)
-#	define R500_US_OUT_FMT_C4_10_GAMMA  (2 << 0)
-#	define R500_US_OUT_FMT_C_16         (3 << 0)
-#	define R500_US_OUT_FMT_C2_16        (4 << 0)
-#	define R500_US_OUT_FMT_C4_16        (5 << 0)
-#	define R500_US_OUT_FMT_C_16_MPEG    (6 << 0)
-#	define R500_US_OUT_FMT_C2_16_MPEG   (7 << 0)
-#	define R500_US_OUT_FMT_C2_4         (8 << 0)
-#	define R500_US_OUT_FMT_C_3_3_2      (9 << 0)
-#	define R500_US_OUT_FMT_C_6_5_6      (10 << 0)
-#	define R500_US_OUT_FMT_C_11_11_10   (11 << 0)
-#	define R500_US_OUT_FMT_C_10_11_11   (12 << 0)
-#	define R500_US_OUT_FMT_C_2_10_10_10 (13 << 0)
+#define R300_US_OUT_FMT                     0x46A4
+#	define R300_US_OUT_FMT_C4_8         (0 << 0)
+#	define R300_US_OUT_FMT_C4_10        (1 << 0)
+#	define R300_US_OUT_FMT_C4_10_GAMMA  (2 << 0)
+#	define R300_US_OUT_FMT_C_16         (3 << 0)
+#	define R300_US_OUT_FMT_C2_16        (4 << 0)
+#	define R300_US_OUT_FMT_C4_16        (5 << 0)
+#	define R300_US_OUT_FMT_C_16_MPEG    (6 << 0)
+#	define R300_US_OUT_FMT_C2_16_MPEG   (7 << 0)
+#	define R300_US_OUT_FMT_C2_4         (8 << 0)
+#	define R300_US_OUT_FMT_C_3_3_2      (9 << 0)
+#	define R300_US_OUT_FMT_C_6_5_6      (10 << 0)
+#	define R300_US_OUT_FMT_C_11_11_10   (11 << 0)
+#	define R300_US_OUT_FMT_C_10_11_11   (12 << 0)
+#	define R300_US_OUT_FMT_C_2_10_10_10 (13 << 0)
 /* reserved */
-#	define R500_US_OUT_FMT_UNUSED       (15 << 0)
-#	define R500_US_OUT_FMT_C_16_FP      (16 << 0)
-#	define R500_US_OUT_FMT_C2_16_FP     (17 << 0)
-#	define R500_US_OUT_FMT_C4_16_FP     (18 << 0)
-#	define R500_US_OUT_FMT_C_32_FP      (19 << 0)
-#	define R500_US_OUT_FMT_C2_32_FP     (20 << 0)
-#	define R500_US_OUT_FMT_C4_32_FP     (20 << 0)
+#	define R300_US_OUT_FMT_UNUSED       (15 << 0)
+#	define R300_US_OUT_FMT_C_16_FP      (16 << 0)
+#	define R300_US_OUT_FMT_C2_16_FP     (17 << 0)
+#	define R300_US_OUT_FMT_C4_16_FP     (18 << 0)
+#	define R300_US_OUT_FMT_C_32_FP      (19 << 0)
+#	define R300_US_OUT_FMT_C2_32_FP     (20 << 0)
+#	define R300_US_OUT_FMT_C4_32_FP     (20 << 0)
 
 /* ALU
  * The ALU instructions register blocks are enumerated according to the order
@@ -1752,147 +1747,189 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  - Set FPI0/FPI2_SPECIAL_LRP
  * Arbitrary LRP (including support for swizzling) requires vanilla MAD+MAD
  */
-#define R300_PFS_INSTR1_0                   0x46C0
-#       define R300_FPI1_SRC0C_SHIFT             0
-#       define R300_FPI1_SRC0C_MASK              (31 << 0)
-#       define R300_FPI1_SRC0C_CONST             (1 << 5)
-#       define R300_FPI1_SRC1C_SHIFT             6
-#       define R300_FPI1_SRC1C_MASK              (31 << 6)
-#       define R300_FPI1_SRC1C_CONST             (1 << 11)
-#       define R300_FPI1_SRC2C_SHIFT             12
-#       define R300_FPI1_SRC2C_MASK              (31 << 12)
-#       define R300_FPI1_SRC2C_CONST             (1 << 17)
-#       define R300_FPI1_SRC_MASK                0x0003ffff
-#       define R300_FPI1_DSTC_SHIFT              18
-#       define R300_FPI1_DSTC_MASK               (31 << 18)
-#		define R300_FPI1_DSTC_REG_MASK_SHIFT     23
-#       define R300_FPI1_DSTC_REG_X              (1 << 23)
-#       define R300_FPI1_DSTC_REG_Y              (1 << 24)
-#       define R300_FPI1_DSTC_REG_Z              (1 << 25)
-#		define R300_FPI1_DSTC_OUTPUT_MASK_SHIFT  26
-#       define R300_FPI1_DSTC_OUTPUT_X           (1 << 26)
-#       define R300_FPI1_DSTC_OUTPUT_Y           (1 << 27)
-#       define R300_FPI1_DSTC_OUTPUT_Z           (1 << 28)
+#define R300_US_ALU_RGB_ADDR_0                   0x46C0
+#       define R300_ALU_SRC0C_SHIFT             0
+#       define R300_ALU_SRC0C_MASK              (31 << 0)
+#       define R300_ALU_SRC0C_CONST             (1 << 5)
+#       define R300_ALU_SRC1C_SHIFT             6
+#       define R300_ALU_SRC1C_MASK              (31 << 6)
+#       define R300_ALU_SRC1C_CONST             (1 << 11)
+#       define R300_ALU_SRC2C_SHIFT             12
+#       define R300_ALU_SRC2C_MASK              (31 << 12)
+#       define R300_ALU_SRC2C_CONST             (1 << 17)
+#       define R300_ALU_SRC_MASK                0x0003ffff
+#       define R300_ALU_DSTC_SHIFT              18
+#       define R300_ALU_DSTC_MASK               (31 << 18)
+#		define R300_ALU_DSTC_REG_MASK_SHIFT     23
+#       define R300_ALU_DSTC_REG_X              (1 << 23)
+#       define R300_ALU_DSTC_REG_Y              (1 << 24)
+#       define R300_ALU_DSTC_REG_Z              (1 << 25)
+#		define R300_ALU_DSTC_OUTPUT_MASK_SHIFT  26
+#       define R300_ALU_DSTC_OUTPUT_X           (1 << 26)
+#       define R300_ALU_DSTC_OUTPUT_Y           (1 << 27)
+#       define R300_ALU_DSTC_OUTPUT_Z           (1 << 28)
 
-#define R300_PFS_INSTR3_0                   0x47C0
-#       define R300_FPI3_SRC0A_SHIFT             0
-#       define R300_FPI3_SRC0A_MASK              (31 << 0)
-#       define R300_FPI3_SRC0A_CONST             (1 << 5)
-#       define R300_FPI3_SRC1A_SHIFT             6
-#       define R300_FPI3_SRC1A_MASK              (31 << 6)
-#       define R300_FPI3_SRC1A_CONST             (1 << 11)
-#       define R300_FPI3_SRC2A_SHIFT             12
-#       define R300_FPI3_SRC2A_MASK              (31 << 12)
-#       define R300_FPI3_SRC2A_CONST             (1 << 17)
-#       define R300_FPI3_SRC_MASK                0x0003ffff
-#       define R300_FPI3_DSTA_SHIFT              18
-#       define R300_FPI3_DSTA_MASK               (31 << 18)
-#       define R300_FPI3_DSTA_REG                (1 << 23)
-#       define R300_FPI3_DSTA_OUTPUT             (1 << 24)
-#		define R300_FPI3_DSTA_DEPTH              (1 << 27)
+#define R300_US_ALU_ALPHA_ADDR_0                 0x47C0
+#       define R300_ALU_SRC0A_SHIFT             0
+#       define R300_ALU_SRC0A_MASK              (31 << 0)
+#       define R300_ALU_SRC0A_CONST             (1 << 5)
+#       define R300_ALU_SRC1A_SHIFT             6
+#       define R300_ALU_SRC1A_MASK              (31 << 6)
+#       define R300_ALU_SRC1A_CONST             (1 << 11)
+#       define R300_ALU_SRC2A_SHIFT             12
+#       define R300_ALU_SRC2A_MASK              (31 << 12)
+#       define R300_ALU_SRC2A_CONST             (1 << 17)
+#       define R300_ALU_SRC_MASK                0x0003ffff
+#       define R300_ALU_DSTA_SHIFT              18
+#       define R300_ALU_DSTA_MASK               (31 << 18)
+#       define R300_ALU_DSTA_REG                (1 << 23)
+#       define R300_ALU_DSTA_OUTPUT             (1 << 24)
+#		define R300_ALU_DSTA_DEPTH              (1 << 27)
 
-#define R300_PFS_INSTR0_0                   0x48C0
-#       define R300_FPI0_ARGC_SRC0C_XYZ          0
-#       define R300_FPI0_ARGC_SRC0C_XXX          1
-#       define R300_FPI0_ARGC_SRC0C_YYY          2
-#       define R300_FPI0_ARGC_SRC0C_ZZZ          3
-#       define R300_FPI0_ARGC_SRC1C_XYZ          4
-#       define R300_FPI0_ARGC_SRC1C_XXX          5
-#       define R300_FPI0_ARGC_SRC1C_YYY          6
-#       define R300_FPI0_ARGC_SRC1C_ZZZ          7
-#       define R300_FPI0_ARGC_SRC2C_XYZ          8
-#       define R300_FPI0_ARGC_SRC2C_XXX          9
-#       define R300_FPI0_ARGC_SRC2C_YYY          10
-#       define R300_FPI0_ARGC_SRC2C_ZZZ          11
-#       define R300_FPI0_ARGC_SRC0A              12
-#       define R300_FPI0_ARGC_SRC1A              13
-#       define R300_FPI0_ARGC_SRC2A              14
-#       define R300_FPI0_ARGC_SRC1C_LRP          15
-#       define R300_FPI0_ARGC_ZERO               20
-#       define R300_FPI0_ARGC_ONE                21
-	/* GUESS */
-#       define R300_FPI0_ARGC_HALF               22
-#       define R300_FPI0_ARGC_SRC0C_YZX          23
-#       define R300_FPI0_ARGC_SRC1C_YZX          24
-#       define R300_FPI0_ARGC_SRC2C_YZX          25
-#       define R300_FPI0_ARGC_SRC0C_ZXY          26
-#       define R300_FPI0_ARGC_SRC1C_ZXY          27
-#       define R300_FPI0_ARGC_SRC2C_ZXY          28
-#       define R300_FPI0_ARGC_SRC0CA_WZY         29
-#       define R300_FPI0_ARGC_SRC1CA_WZY         30
-#       define R300_FPI0_ARGC_SRC2CA_WZY         31
+#define R300_US_ALU_RGB_INST_0                   0x48C0
+#       define R300_ALU_ARGC_SRC0C_XYZ          0
+#       define R300_ALU_ARGC_SRC0C_XXX          1
+#       define R300_ALU_ARGC_SRC0C_YYY          2
+#       define R300_ALU_ARGC_SRC0C_ZZZ          3
+#       define R300_ALU_ARGC_SRC1C_XYZ          4
+#       define R300_ALU_ARGC_SRC1C_XXX          5
+#       define R300_ALU_ARGC_SRC1C_YYY          6
+#       define R300_ALU_ARGC_SRC1C_ZZZ          7
+#       define R300_ALU_ARGC_SRC2C_XYZ          8
+#       define R300_ALU_ARGC_SRC2C_XXX          9
+#       define R300_ALU_ARGC_SRC2C_YYY          10
+#       define R300_ALU_ARGC_SRC2C_ZZZ          11
+#       define R300_ALU_ARGC_SRC0A              12
+#       define R300_ALU_ARGC_SRC1A              13
+#       define R300_ALU_ARGC_SRC2A              14
+#       define R300_ALU_ARGC_SRCP_XYZ           15
+#       define R300_ALU_ARGC_SRCP_XXX           16
+#       define R300_ALU_ARGC_SRCP_YYY           17
+#       define R300_ALU_ARGC_SRCP_ZZZ           18
+#       define R300_ALU_ARGC_SRCP_WWW           19
+#       define R300_ALU_ARGC_ZERO               20
+#       define R300_ALU_ARGC_ONE                21
+#       define R300_ALU_ARGC_HALF               22
+#       define R300_ALU_ARGC_SRC0C_YZX          23
+#       define R300_ALU_ARGC_SRC1C_YZX          24
+#       define R300_ALU_ARGC_SRC2C_YZX          25
+#       define R300_ALU_ARGC_SRC0C_ZXY          26
+#       define R300_ALU_ARGC_SRC1C_ZXY          27
+#       define R300_ALU_ARGC_SRC2C_ZXY          28
+#       define R300_ALU_ARGC_SRC0CA_WZY         29
+#       define R300_ALU_ARGC_SRC1CA_WZY         30
+#       define R300_ALU_ARGC_SRC2CA_WZY         31
 
-#       define R300_FPI0_ARG0C_SHIFT             0
-#       define R300_FPI0_ARG0C_MASK              (31 << 0)
-#       define R300_FPI0_ARG0C_NEG               (1 << 5)
-#       define R300_FPI0_ARG0C_ABS               (1 << 6)
-#       define R300_FPI0_ARG1C_SHIFT             7
-#       define R300_FPI0_ARG1C_MASK              (31 << 7)
-#       define R300_FPI0_ARG1C_NEG               (1 << 12)
-#       define R300_FPI0_ARG1C_ABS               (1 << 13)
-#       define R300_FPI0_ARG2C_SHIFT             14
-#       define R300_FPI0_ARG2C_MASK              (31 << 14)
-#       define R300_FPI0_ARG2C_NEG               (1 << 19)
-#       define R300_FPI0_ARG2C_ABS               (1 << 20)
-#       define R300_FPI0_SPECIAL_LRP             (1 << 21)
-#       define R300_FPI0_OUTC_MAD                (0 << 23)
-#       define R300_FPI0_OUTC_DP3                (1 << 23)
-#       define R300_FPI0_OUTC_DP4                (2 << 23)
-#       define R300_FPI0_OUTC_MIN                (4 << 23)
-#       define R300_FPI0_OUTC_MAX                (5 << 23)
-#       define R300_FPI0_OUTC_CMPH               (7 << 23)
-#       define R300_FPI0_OUTC_CMP                (8 << 23)
-#       define R300_FPI0_OUTC_FRC                (9 << 23)
-#       define R300_FPI0_OUTC_REPL_ALPHA         (10 << 23)
-#       define R300_FPI0_OUTC_SAT                (1 << 30)
-#       define R300_FPI0_INSERT_NOP              (1 << 31)
+#       define R300_ALU_ARG0C_SHIFT             0
+#       define R300_ALU_ARG0C_MASK              (31 << 0)
+#       define R300_ALU_ARG0C_NOP               (0 << 5)
+#       define R300_ALU_ARG0C_NEG               (1 << 5)
+#       define R300_ALU_ARG0C_ABS               (2 << 5)
+#       define R300_ALU_ARG0C_NAB               (3 << 5)
+#       define R300_ALU_ARG1C_SHIFT             7
+#       define R300_ALU_ARG1C_MASK              (31 << 7)
+#       define R300_ALU_ARG1C_NOP               (0 << 12)
+#       define R300_ALU_ARG1C_NEG               (1 << 12)
+#       define R300_ALU_ARG1C_ABS               (2 << 12)
+#       define R300_ALU_ARG1C_NAB               (3 << 12)
+#       define R300_ALU_ARG2C_SHIFT             14
+#       define R300_ALU_ARG2C_MASK              (31 << 14)
+#       define R300_ALU_ARG2C_NOP               (0 << 19)
+#       define R300_ALU_ARG2C_NEG               (1 << 19)
+#       define R300_ALU_ARG2C_ABS               (2 << 19)
+#       define R300_ALU_ARG2C_NAB               (3 << 19)
+#       define R300_ALU_SRCP_1_MINUS_2_SRC0     (0 << 21)
+#       define R300_ALU_SRCP_SRC1_MINUS_SRC0    (1 << 21)
+#       define R300_ALU_SRCP_SRC1_PLUS_SRC0     (2 << 21)
+#       define R300_ALU_SRCP_1_MINUS_SRC0       (3 << 21)
 
-#define R300_PFS_INSTR2_0                   0x49C0
-#       define R300_FPI2_ARGA_SRC0C_X            0
-#       define R300_FPI2_ARGA_SRC0C_Y            1
-#       define R300_FPI2_ARGA_SRC0C_Z            2
-#       define R300_FPI2_ARGA_SRC1C_X            3
-#       define R300_FPI2_ARGA_SRC1C_Y            4
-#       define R300_FPI2_ARGA_SRC1C_Z            5
-#       define R300_FPI2_ARGA_SRC2C_X            6
-#       define R300_FPI2_ARGA_SRC2C_Y            7
-#       define R300_FPI2_ARGA_SRC2C_Z            8
-#       define R300_FPI2_ARGA_SRC0A              9
-#       define R300_FPI2_ARGA_SRC1A              10
-#       define R300_FPI2_ARGA_SRC2A              11
-#       define R300_FPI2_ARGA_SRC1A_LRP          15
-#       define R300_FPI2_ARGA_ZERO               16
-#       define R300_FPI2_ARGA_ONE                17
-	/* GUESS */
-#       define R300_FPI2_ARGA_HALF               18
-#       define R300_FPI2_ARG0A_SHIFT             0
-#       define R300_FPI2_ARG0A_MASK              (31 << 0)
-#       define R300_FPI2_ARG0A_NEG               (1 << 5)
-	/* GUESS */
-#	define R300_FPI2_ARG0A_ABS		 (1 << 6)
-#       define R300_FPI2_ARG1A_SHIFT             7
-#       define R300_FPI2_ARG1A_MASK              (31 << 7)
-#       define R300_FPI2_ARG1A_NEG               (1 << 12)
-	/* GUESS */
-#	define R300_FPI2_ARG1A_ABS		 (1 << 13)
-#       define R300_FPI2_ARG2A_SHIFT             14
-#       define R300_FPI2_ARG2A_MASK              (31 << 14)
-#       define R300_FPI2_ARG2A_NEG               (1 << 19)
-	/* GUESS */
-#	define R300_FPI2_ARG2A_ABS		 (1 << 20)
-#       define R300_FPI2_SPECIAL_LRP             (1 << 21)
-#       define R300_FPI2_OUTA_MAD                (0 << 23)
-#       define R300_FPI2_OUTA_DP4                (1 << 23)
-#       define R300_FPI2_OUTA_MIN                (2 << 23)
-#       define R300_FPI2_OUTA_MAX                (3 << 23)
-#       define R300_FPI2_OUTA_CMP                (6 << 23)
-#       define R300_FPI2_OUTA_FRC                (7 << 23)
-#       define R300_FPI2_OUTA_EX2                (8 << 23)
-#       define R300_FPI2_OUTA_LG2                (9 << 23)
-#       define R300_FPI2_OUTA_RCP                (10 << 23)
-#       define R300_FPI2_OUTA_RSQ                (11 << 23)
-#       define R300_FPI2_OUTA_SAT                (1 << 30)
-#       define R300_FPI2_UNKNOWN_31              (1 << 31)
+#       define R300_ALU_OUTC_MAD                (0 << 23)
+#       define R300_ALU_OUTC_DP3                (1 << 23)
+#       define R300_ALU_OUTC_DP4                (2 << 23)
+#       define R300_ALU_OUTC_D2A                (3 << 23)
+#       define R300_ALU_OUTC_MIN                (4 << 23)
+#       define R300_ALU_OUTC_MAX                (5 << 23)
+#       define R300_ALU_OUTC_CMPH               (7 << 23)
+#       define R300_ALU_OUTC_CMP                (8 << 23)
+#       define R300_ALU_OUTC_FRC                (9 << 23)
+#       define R300_ALU_OUTC_REPL_ALPHA         (10 << 23)
+
+#       define R300_ALU_OUTC_MOD_NOP            (0 << 27)
+#       define R300_ALU_OUTC_MOD_MUL2           (1 << 27)
+#       define R300_ALU_OUTC_MOD_MUL4           (2 << 27)
+#       define R300_ALU_OUTC_MOD_MUL8           (3 << 27)
+#       define R300_ALU_OUTC_MOD_DIV2           (4 << 27)
+#       define R300_ALU_OUTC_MOD_DIV4           (5 << 27)
+#       define R300_ALU_OUTC_MOD_DIV8           (6 << 27)
+
+#       define R300_ALU_OUTC_CLAMP              (1 << 30)
+#       define R300_ALU_INSERT_NOP              (1 << 31)
+
+#define R300_US_ALU_ALPHA_INST_0                 0x49C0
+#       define R300_ALU_ARGA_SRC0C_X            0
+#       define R300_ALU_ARGA_SRC0C_Y            1
+#       define R300_ALU_ARGA_SRC0C_Z            2
+#       define R300_ALU_ARGA_SRC1C_X            3
+#       define R300_ALU_ARGA_SRC1C_Y            4
+#       define R300_ALU_ARGA_SRC1C_Z            5
+#       define R300_ALU_ARGA_SRC2C_X            6
+#       define R300_ALU_ARGA_SRC2C_Y            7
+#       define R300_ALU_ARGA_SRC2C_Z            8
+#       define R300_ALU_ARGA_SRC0A              9
+#       define R300_ALU_ARGA_SRC1A              10
+#       define R300_ALU_ARGA_SRC2A              11
+#       define R300_ALU_ARGA_SRCP_X             12
+#       define R300_ALU_ARGA_SRCP_Y             13
+#       define R300_ALU_ARGA_SRCP_Z             14
+#       define R300_ALU_ARGA_SRCP_W             15
+
+#       define R300_ALU_ARGA_ZERO               16
+#       define R300_ALU_ARGA_ONE                17
+#       define R300_ALU_ARGA_HALF               18
+#       define R300_ALU_ARG0A_SHIFT             0
+#       define R300_ALU_ARG0A_MASK              (31 << 0)
+#       define R300_ALU_ARG0A_NOP               (0 << 5)
+#       define R300_ALU_ARG0A_NEG               (1 << 5)
+#	define R300_ALU_ARG0A_ABS		 (2 << 5)
+#	define R300_ALU_ARG0A_NAB		 (3 << 5)
+#       define R300_ALU_ARG1A_SHIFT             7
+#       define R300_ALU_ARG1A_MASK              (31 << 7)
+#       define R300_ALU_ARG1A_NOP               (0 << 12)
+#       define R300_ALU_ARG1A_NEG               (1 << 12)
+#	define R300_ALU_ARG1A_ABS		 (2 << 12)
+#	define R300_ALU_ARG1A_NAB		 (3 << 12)
+#       define R300_ALU_ARG2A_SHIFT             14
+#       define R300_ALU_ARG2A_MASK              (31 << 14)
+#       define R300_ALU_ARG2A_NOP               (0 << 19)
+#       define R300_ALU_ARG2A_NEG               (1 << 19)
+#	define R300_ALU_ARG2A_ABS		 (2 << 19)
+#	define R300_ALU_ARG2A_NAB		 (3 << 19)
+#       define R300_ALU_SRCP_1_MINUS_2_SRC0     (0 << 21)
+#       define R300_ALU_SRCP_SRC1_MINUS_SRC0    (1 << 21)
+#       define R300_ALU_SRCP_SRC1_PLUS_SRC0     (2 << 21)
+#       define R300_ALU_SRCP_1_MINUS_SRC0       (3 << 21)
+
+#       define R300_ALU_OUTA_MAD                (0 << 23)
+#       define R300_ALU_OUTA_DP4                (1 << 23)
+#       define R300_ALU_OUTA_MIN                (2 << 23)
+#       define R300_ALU_OUTA_MAX                (3 << 23)
+#       define R300_ALU_OUTA_CND                (5 << 23)
+#       define R300_ALU_OUTA_CMP                (6 << 23)
+#       define R300_ALU_OUTA_FRC                (7 << 23)
+#       define R300_ALU_OUTA_EX2                (8 << 23)
+#       define R300_ALU_OUTA_LG2                (9 << 23)
+#       define R300_ALU_OUTA_RCP                (10 << 23)
+#       define R300_ALU_OUTA_RSQ                (11 << 23)
+
+#       define R300_ALU_OUTA_MOD_NOP            (0 << 27)
+#       define R300_ALU_OUTA_MOD_MUL2           (1 << 27)
+#       define R300_ALU_OUTA_MOD_MUL4           (2 << 27)
+#       define R300_ALU_OUTA_MOD_MUL8           (3 << 27)
+#       define R300_ALU_OUTA_MOD_DIV2           (4 << 27)
+#       define R300_ALU_OUTA_MOD_DIV4           (5 << 27)
+#       define R300_ALU_OUTA_MOD_DIV8           (6 << 27)
+
+#       define R300_ALU_OUTA_CLAMP              (1 << 30)
 /* END: Fragment program instruction set */
 
 /* Fog: Fog Blending Enable */
@@ -1967,7 +2004,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_PFS_PARAM_0_Y                  0x4C04
 #define R300_PFS_PARAM_0_Z                  0x4C08
 #define R300_PFS_PARAM_0_W                  0x4C0C
-/* GUESS: PARAM_31 is last, based on native limits reported by fglrx */
+/* last consts */
 #define R300_PFS_PARAM_31_X                 0x4DF0
 #define R300_PFS_PARAM_31_Y                 0x4DF4
 #define R300_PFS_PARAM_31_Z                 0x4DF8
@@ -3103,12 +3140,12 @@ enum {
 #   define R500_TEX_SEM_ACQUIRE				(1 << 25)
 #   define R500_TEX_IGNORE_UNCOVERED			(1 << 26)
 #   define R500_TEX_UNSCALED				(1 << 27)
-#define R500_US_W_FMT					0x46b4
-#   define R500_W_FMT_W0				(0 << 0)
-#   define R500_W_FMT_W24				(1 << 0)
-#   define R500_W_FMT_W24FP				(2 << 0)
-#   define R500_W_SRC_US				(0 << 2)
-#   define R500_W_SRC_RAS				(1 << 2)
+#define R300_US_W_FMT					0x46b4
+#   define R300_W_FMT_W0				(0 << 0)
+#   define R300_W_FMT_W24				(1 << 0)
+#   define R300_W_FMT_W24FP				(2 << 0)
+#   define R300_W_SRC_US				(0 << 2)
+#   define R300_W_SRC_RAS				(1 << 2)
 
 
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.

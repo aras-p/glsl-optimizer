@@ -330,31 +330,31 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	if (!is_r500) {
 		R300_STATECHANGE(r300, fp);
-		reg_start(R300_PFS_CNTL_0, 2);
+		reg_start(R300_US_CONFIG, 2);
 		e32(0x0);
 		e32(0x0);
 		e32(0x0);
-		reg_start(R300_PFS_NODE_0, 3);
+		reg_start(R300_US_CODE_ADDR_0, 3);
 		e32(0x0);
 		e32(0x0);
 		e32(0x0);
-		e32(R300_PFS_NODE_OUTPUT_COLOR);
+		e32(R300_RGBA_OUT);
 
 		R300_STATECHANGE(r300, fpi[0]);
 		R300_STATECHANGE(r300, fpi[1]);
 		R300_STATECHANGE(r300, fpi[2]);
 		R300_STATECHANGE(r300, fpi[3]);
 
-		reg_start(R300_PFS_INSTR0_0, 0);
+		reg_start(R300_US_ALU_RGB_INST_0, 0);
 		e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
 
-		reg_start(R300_PFS_INSTR1_0, 0);
+		reg_start(R300_US_ALU_RGB_ADDR_0, 0);
 		e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
 
-		reg_start(R300_PFS_INSTR2_0, 0);
+		reg_start(R300_US_ALU_ALPHA_INST_0, 0);
 		e32(FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO)));
 
-		reg_start(R300_PFS_INSTR3_0, 0);
+		reg_start(R300_US_ALU_ALPHA_ADDR_0, 0);
 		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
 	} else {
 		R300_STATECHANGE(r300, r500fp);
