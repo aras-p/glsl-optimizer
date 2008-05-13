@@ -1933,60 +1933,61 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* END: Fragment program instruction set */
 
 /* Fog: Fog Blending Enable */
-#define FG_FOG_BLEND                             0x4bc0
-#       define FG_FOG_BLEND_DISABLE              (0 << 0)
-#       define FG_FOG_BLEND_ENABLE               (1 << 0)
-#	define FG_FOG_BLEND_FN_LINEAR            (0 << 1)
-#	define FG_FOG_BLEND_FN_EXP               (1 << 1)
-#	define FG_FOG_BLEND_FN_EXP2              (2 << 1)
-#	define FG_FOG_BLEND_FN_CONSTANT          (3 << 1)
-#	define FG_FOG_BLEND_FN_MASK              0x00000006
+#define R300_FG_FOG_BLEND                             0x4bc0
+#       define R300_FG_FOG_BLEND_DISABLE              (0 << 0)
+#       define R300_FG_FOG_BLEND_ENABLE               (1 << 0)
+#	define R300_FG_FOG_BLEND_FN_LINEAR            (0 << 1)
+#	define R300_FG_FOG_BLEND_FN_EXP               (1 << 1)
+#	define R300_FG_FOG_BLEND_FN_EXP2              (2 << 1)
+#	define R300_FG_FOG_BLEND_FN_CONSTANT          (3 << 1)
+#	define R300_FG_FOG_BLEND_FN_MASK              (3 << 1)
 
 /* Fog: Red Component of Fog Color */
-#define FG_FOG_COLOR_R                           0x4bc8
+#define R300_FG_FOG_COLOR_R                           0x4bc8
 /* Fog: Green Component of Fog Color */
-#define FG_FOG_COLOR_G                           0x4bcc
+#define R300_FG_FOG_COLOR_G                           0x4bcc
 /* Fog: Blue Component of Fog Color */
-#define FG_FOG_COLOR_B                           0x4bd0
-#	define FG_FOG_COLOR_MASK 0x000001ff
+#define R300_FG_FOG_COLOR_B                           0x4bd0
+#	define R300_FG_FOG_COLOR_MASK 0x000003ff
 
 /* Fog: Constant Factor for Fog Blending */
-#define FG_FOG_FACTOR                            0x4bc4
-#	define FG_FOG_FACTOR_MASK 0x000001ff
+#define R300_FG_FOG_FACTOR                            0x4bc4
+#	define FG_FOG_FACTOR_MASK 0x000003ff
 
 /* Fog: Alpha function */
-#define FG_ALPHA_FUNC                            0x4bd4
-#       define R300_REF_ALPHA_MASK               0x000000ff
-#       define FG_ALPHA_FUNC_NEVER                     (0 << 8)
-#       define FG_ALPHA_FUNC_LESS                      (1 << 8)
-#       define FG_ALPHA_FUNC_EQUAL                     (2 << 8)
-#       define FG_ALPHA_FUNC_LE                        (3 << 8)
-#       define FG_ALPHA_FUNC_GREATER                   (4 << 8)
-#       define FG_ALPHA_FUNC_NOTEQUAL                  (5 << 8)
-#       define FG_ALPHA_FUNC_GE                        (6 << 8)
-#       define FG_ALPHA_FUNC_ALWAYS                    (7 << 8)
-#       define R300_ALPHA_TEST_OP_MASK                 (7 << 8)
-#       define FG_ALPHA_FUNC_DISABLE                   (0 << 11)
-#       define FG_ALPHA_FUNC_ENABLE                    (1 << 11)
-#       define FG_ALPHA_FUNC_10BIT                     (0 << 12)
-#       define FG_ALPHA_FUNC_8BIT                      (1 << 12)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_MASK_DISABLE              (0 << 16)
-#       define FG_ALPHA_FUNC_MASK_ENABLE               (1 << 16)
-#       define FG_ALPHA_FUNC_CFG_2_OF_4                (0 << 17)
-#       define FG_ALPHA_FUNC_CFG_3_OF_6                (1 << 17)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_DITH_DISABLE              (0 << 20)
-#       define FG_ALPHA_FUNC_DITH_ENABLE               (1 << 20)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_OFFSET_DISABLE            (0 << 24) /* Not supported in R520. Default R300 and RV350 behaviour. */
-#       define FG_ALPHA_FUNC_OFFSET_ENABLE             (1 << 24) /* Not supported in R520 */
-#       define FG_ALPHA_FUNC_DISC_ZERO_MASK_DISABLE    (0 << 25)
-#       define FG_ALPHA_FUNC_DISC_ZERO_MASK_ENABLE     (1 << 25)
-/* gap in AMD spec */
-#       define FG_ALPHA_FUNC_FP16_DISABLE              (0 << 28)
-#       define FG_ALPHA_FUNC_FP16_ENABLE               (1 << 28)
-/* gap in AMD spec */
+#define R300_FG_ALPHA_FUNC                            0x4bd4
+#       define R300_FG_ALPHA_FUNC_VAL_MASK               0x0000000f
+#       define R300_FG_ALPHA_FUNC_NEVER                     (0 << 8)
+#       define R300_FG_ALPHA_FUNC_LESS                      (1 << 8)
+#       define R300_FG_ALPHA_FUNC_EQUAL                     (2 << 8)
+#       define R300_FG_ALPHA_FUNC_LE                        (3 << 8)
+#       define R300_FG_ALPHA_FUNC_GREATER                   (4 << 8)
+#       define R300_FG_ALPHA_FUNC_NOTEQUAL                  (5 << 8)
+#       define R300_FG_ALPHA_FUNC_GE                        (6 << 8)
+#       define R300_FG_ALPHA_FUNC_ALWAYS                    (7 << 8)
+#       define R300_ALPHA_TEST_OP_MASK                      (7 << 8)
+#       define R300_FG_ALPHA_FUNC_DISABLE                   (0 << 11)
+#       define R300_FG_ALPHA_FUNC_ENABLE                    (1 << 11)
+
+#       define R500_FG_ALPHA_FUNC_10BIT                     (0 << 12)
+#       define R500_FG_ALPHA_FUNC_8BIT                      (1 << 12)
+
+#       define R300_FG_ALPHA_FUNC_MASK_DISABLE              (0 << 16)
+#       define R300_FG_ALPHA_FUNC_MASK_ENABLE               (1 << 16)
+#       define R300_FG_ALPHA_FUNC_CFG_2_OF_4                (0 << 17)
+#       define R300_FG_ALPHA_FUNC_CFG_3_OF_6                (1 << 17)
+
+#       define R300_FG_ALPHA_FUNC_DITH_DISABLE              (0 << 20)
+#       define R300_FG_ALPHA_FUNC_DITH_ENABLE               (1 << 20)
+
+#       define R500_FG_ALPHA_FUNC_OFFSET_DISABLE            (0 << 24)
+#       define R500_FG_ALPHA_FUNC_OFFSET_ENABLE             (1 << 24) /* Not supported in R520 */
+#       define R500_FG_ALPHA_FUNC_DISC_ZERO_MASK_DISABLE    (0 << 25)
+#       define R500_FG_ALPHA_FUNC_DISC_ZERO_MASK_ENABLE     (1 << 25)
+
+#       define R500_FG_ALPHA_FUNC_FP16_DISABLE              (0 << 28)
+#       define R500_FG_ALPHA_FUNC_FP16_ENABLE               (1 << 28)
+
 
 /* Fog: Where does the depth come from? */
 #define R300_FG_DEPTH_SRC                  0x4bd8
@@ -1994,8 +1995,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_FG_DEPTH_SRC_SHADER (1 << 0)
 
 /* Fog: Alpha Compare Value */
-#define FG_ALPHA_VALUE                0x4be0
-#	define FG_ALPHA_VALUE_MASK 0x0000ffff
+#define R500_FG_ALPHA_VALUE                0x4be0
+#	define R500_FG_ALPHA_VALUE_MASK 0x0000ffff
 
 /* gap */
 
@@ -2012,14 +2013,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Unpipelined. */
 #define R300_RB3D_CCTL                      0x4e00
-/* gap in AMD docs */
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_1_BUFFER                (0 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_2_BUFFERS               (1 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_3_BUFFERS               (2 << 5)
 #	define R300_RB3D_CCTL_NUM_MULTIWRITES_4_BUFFERS               (3 << 5)
 #	define R300_RB3D_CCTL_CLRCMP_FLIPE_DISABLE                    (0 << 7)
 #	define R300_RB3D_CCTL_CLRCMP_FLIPE_ENABLE                     (1 << 7)
-/* gap in AMD docs */
 #	define R300_RB3D_CCTL_AA_COMPRESSION_DISABLE                  (0 << 9)
 #	define R300_RB3D_CCTL_AA_COMPRESSION_ENABLE                   (1 << 9)
 #	define R300_RB3D_CCTL_CMASK_DISABLE                           (0 << 10)

@@ -439,11 +439,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
 	}
 	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, 0);
-	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(FG_FOG_BLEND, 1);
+	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_FG_FOG_BLEND, 1);
 	ALLOC_STATE(fogc, always, R300_FOGC_CMDSIZE, 0);
-	r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(FG_FOG_COLOR_R, 3);
+	r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(R300_FG_FOG_COLOR_R, 3);
 	ALLOC_STATE(at, always, R300_AT_CMDSIZE, 0);
-	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(FG_ALPHA_FUNC, 2);
+	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(R300_FG_ALPHA_FUNC, 2);
 	ALLOC_STATE(fg_depth_src, always, 2, 0);
 	r300->hw.fg_depth_src.cmd[0] = cmdpacket0(R300_FG_DEPTH_SRC, 1);
 	ALLOC_STATE(rb3d_cctl, always, 2, 0);

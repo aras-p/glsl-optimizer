@@ -450,25 +450,25 @@ static void r300SetAlphaState(GLcontext * ctx)
 
 	switch (ctx->Color.AlphaFunc) {
 	case GL_NEVER:
-		pp_misc |= FG_ALPHA_FUNC_NEVER;
+		pp_misc |= R300_FG_ALPHA_FUNC_NEVER;
 		break;
 	case GL_LESS:
-		pp_misc |= FG_ALPHA_FUNC_LESS;
+		pp_misc |= R300_FG_ALPHA_FUNC_LESS;
 		break;
 	case GL_EQUAL:
-		pp_misc |= FG_ALPHA_FUNC_EQUAL;
+		pp_misc |= R300_FG_ALPHA_FUNC_EQUAL;
 		break;
 	case GL_LEQUAL:
-		pp_misc |= FG_ALPHA_FUNC_LE;
+		pp_misc |= R300_FG_ALPHA_FUNC_LE;
 		break;
 	case GL_GREATER:
-		pp_misc |= FG_ALPHA_FUNC_GREATER;
+		pp_misc |= R300_FG_ALPHA_FUNC_GREATER;
 		break;
 	case GL_NOTEQUAL:
-		pp_misc |= FG_ALPHA_FUNC_NOTEQUAL;
+		pp_misc |= R300_FG_ALPHA_FUNC_NOTEQUAL;
 		break;
 	case GL_GEQUAL:
-		pp_misc |= FG_ALPHA_FUNC_GE;
+		pp_misc |= R300_FG_ALPHA_FUNC_GE;
 		break;
 	case GL_ALWAYS:
 		/*pp_misc |= FG_ALPHA_FUNC_ALWAYS; */
@@ -477,8 +477,8 @@ static void r300SetAlphaState(GLcontext * ctx)
 	}
 
 	if (really_enabled) {
-		pp_misc |= FG_ALPHA_FUNC_ENABLE;
-		pp_misc |= (refByte & R300_REF_ALPHA_MASK);
+		pp_misc |= R300_FG_ALPHA_FUNC_ENABLE;
+		pp_misc |= (refByte & R300_FG_ALPHA_FUNC_VAL_MASK);
 	} else {
 		pp_misc = 0x0;
 	}
@@ -716,8 +716,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			R300_STATECHANGE(r300, fogs);
 			r300->hw.fogs.cmd[R300_FOGS_STATE] =
 			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~FG_FOG_BLEND_FN_MASK) |
-			    FG_FOG_BLEND_FN_LINEAR;
+			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
+			    R300_FG_FOG_BLEND_FN_LINEAR;
 
 			if (ctx->Fog.Start == ctx->Fog.End) {
 				fogScale.f = -1.0;
@@ -734,8 +734,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			R300_STATECHANGE(r300, fogs);
 			r300->hw.fogs.cmd[R300_FOGS_STATE] =
 			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~FG_FOG_BLEND_FN_MASK) |
-			    FG_FOG_BLEND_FN_EXP;
+			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
+			    R300_FG_FOG_BLEND_FN_EXP;
 			fogScale.f = 0.0933 * ctx->Fog.Density;
 			fogStart.f = 0.0;
 			break;
@@ -743,8 +743,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 			R300_STATECHANGE(r300, fogs);
 			r300->hw.fogs.cmd[R300_FOGS_STATE] =
 			    (r300->hw.fogs.
-			     cmd[R300_FOGS_STATE] & ~FG_FOG_BLEND_FN_MASK) |
-			    FG_FOG_BLEND_FN_EXP2;
+			     cmd[R300_FOGS_STATE] & ~R300_FG_FOG_BLEND_FN_MASK) |
+			    R300_FG_FOG_BLEND_FN_EXP2;
 			fogScale.f = 0.3 * ctx->Fog.Density;
 			fogStart.f = 0.0;
 		default:
@@ -808,7 +808,7 @@ static void r300SetFogState(GLcontext * ctx, GLboolean state)
 
 	R300_STATECHANGE(r300, fogs);
 	if (state) {
-		r300->hw.fogs.cmd[R300_FOGS_STATE] |= FG_FOG_BLEND_ENABLE;
+		r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FG_FOG_BLEND_ENABLE;
 
 		r300Fogfv(ctx, GL_FOG_MODE, NULL);
 		r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
@@ -816,7 +816,7 @@ static void r300SetFogState(GLcontext * ctx, GLboolean state)
 		r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
 		r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
 	} else {
-		r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~FG_FOG_BLEND_ENABLE;
+		r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FG_FOG_BLEND_ENABLE;
 	}
 }
 

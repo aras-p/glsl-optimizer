@@ -215,7 +215,7 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	/* disable fog */
 	R300_STATECHANGE(r300, fogs);
-	reg_start(FG_FOG_BLEND, 0);
+	reg_start(R300_FG_FOG_BLEND, 0);
 	e32(0x0);
 
 	R300_STATECHANGE(r300, vir[1]);
@@ -271,7 +271,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	efloat(0.0);
 
 	R300_STATECHANGE(r300, at);
-	reg_start(FG_ALPHA_FUNC, 0);
+	reg_start(R300_FG_ALPHA_FUNC, 0);
 	e32(0x0);
 
 	R300_STATECHANGE(r300, bld);
