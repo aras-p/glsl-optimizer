@@ -657,6 +657,7 @@ dri_gem_emit_reloc(dri_bo *bo, uint32_t read_domains, uint32_t write_domain,
 	target_bo_gem->gem_handle;
     bo_gem->relocs[bo_gem->reloc_count].read_domains = read_domains;
     bo_gem->relocs[bo_gem->reloc_count].write_domain = write_domain;
+    bo_gem->relocs[bo_gem->reloc_count].presumed_offset = target_bo->offset;
 
     bo_gem->reloc_target_bo[bo_gem->reloc_count] = target_bo;
     dri_bo_reference(target_bo);
