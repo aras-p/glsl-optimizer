@@ -55,7 +55,7 @@ static void fetch_pipeline_prepare( struct draw_pt_middle_end *middle,
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *vs = draw->vertex_shader;
+   struct draw_vertex_shader *vs = draw->vs.vertex_shader;
 
    /* Add one to num_outputs because the pipeline occasionally tags on
     * an additional texcoord, eg for AA lines.
@@ -107,7 +107,7 @@ static void fetch_pipeline_run( struct draw_pt_middle_end *middle,
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *shader = draw->vertex_shader;
+   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align_int( fetch_count, 4 );
 
@@ -183,7 +183,7 @@ static void fetch_pipeline_linear_run( struct draw_pt_middle_end *middle,
 {
    struct fetch_pipeline_middle_end *fpme = (struct fetch_pipeline_middle_end *)middle;
    struct draw_context *draw = fpme->draw;
-   struct draw_vertex_shader *shader = draw->vertex_shader;
+   struct draw_vertex_shader *shader = draw->vs.vertex_shader;
    unsigned opt = fpme->opt;
    unsigned alloc_count = align_int( count, 4 );
 

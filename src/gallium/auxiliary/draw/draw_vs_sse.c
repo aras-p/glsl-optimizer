@@ -158,7 +158,7 @@ draw_create_vs_sse(struct draw_context *draw,
    vs->base.prepare = vs_sse_prepare;
    vs->base.run_linear = vs_sse_run_linear;
    vs->base.delete = vs_sse_delete;
-   vs->machine = &draw->machine;
+   vs->machine = &draw->vs.machine;
    
    x86_init_func( &vs->sse2_program );
 

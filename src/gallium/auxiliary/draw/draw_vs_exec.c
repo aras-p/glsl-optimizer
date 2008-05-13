@@ -182,7 +182,7 @@ draw_create_vs_exec(struct draw_context *draw,
    vs->base.prepare = vs_exec_prepare;
    vs->base.run_linear = vs_exec_run_linear;
    vs->base.delete = vs_exec_delete;
-   vs->machine = &draw->machine;
+   vs->machine = &draw->vs.machine;
 
    return &vs->base;
 }

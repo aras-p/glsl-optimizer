@@ -105,7 +105,7 @@ static void twoside_first_tri( struct draw_stage *stage,
 			       struct prim_header *header )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
-   const struct draw_vertex_shader *vs = stage->draw->vertex_shader;
+   const struct draw_vertex_shader *vs = stage->draw->vs.vertex_shader;
    uint i;
 
    twoside->attrib_front0 = 0;

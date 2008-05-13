@@ -368,8 +368,8 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 {
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
-   unsigned num_vs_inputs = draw->vertex_shader->info.num_inputs;
-   unsigned num_vs_outputs = draw->vertex_shader->info.num_outputs;
+   unsigned num_vs_inputs = draw->vs.vertex_shader->info.num_inputs;
+   unsigned num_vs_outputs = draw->vs.vertex_shader->info.num_outputs;
    const struct vertex_info *vinfo;
    unsigned i;
    boolean need_psize = 0;

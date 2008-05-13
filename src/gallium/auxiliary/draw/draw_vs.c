@@ -66,13 +66,13 @@ draw_bind_vertex_shader(struct draw_context *draw,
    
    if (dvs) 
    {
-      draw->vertex_shader = dvs;
-      draw->num_vs_outputs = dvs->info.num_outputs;
+      draw->vs.vertex_shader = dvs;
+      draw->vs.num_vs_outputs = dvs->info.num_outputs;
       dvs->prepare( dvs, draw );
    }
    else {
-      draw->vertex_shader = NULL;
-      draw->num_vs_outputs = 0;
+      draw->vs.vertex_shader = NULL;
+      draw->vs.num_vs_outputs = 0;
    }
 }
 
@@ -82,4 +82,31 @@ draw_delete_vertex_shader(struct draw_context *draw,
                           struct draw_vertex_shader *dvs)
 {
    dvs->delete( dvs );
+}
+
+
+
+boolean 
+draw_vs_init( struct draw_context *draw )
+{
+   tgsi_exec_machine_init(&draw->vs.machine);
+   /* FIXME: give this machine thing a proper constructor:
+    */
+   draw->vs.machine.Inputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+   draw->vs.machine.Outputs = align_malloc(PIPE_MAX_ATTRIBS * sizeof(struct tgsi_exec_vector), 16);
+
+   return TRUE;
+}
+
+void
+draw_vs_destroy( struct draw_context *draw )
+{
+   if (draw->vs.machine.Inputs)
+      align_free(draw->vs.machine.Inputs);
+
+   if (draw->vs.machine.Outputs)
+      align_free(draw->vs.machine.Outputs);
+
+   tgsi_exec_machine_free_data(&draw->vs.machine);
+
 }
