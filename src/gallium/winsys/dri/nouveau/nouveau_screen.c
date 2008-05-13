@@ -7,7 +7,6 @@
 #include "state_tracker/st_cb_fbo.h"
 
 #include "nouveau_context.h"
-#include "nouveau_device.h"
 #include "nouveau_drm.h"
 #include "nouveau_dri.h"
 #include "nouveau_local.h"

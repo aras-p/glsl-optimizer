@@ -2,7 +2,6 @@
 #define __NOUVEAU_SCREEN_H__
 
 #include "xmlconfig.h"
-#include "nouveau_device.h"
 
 struct nouveau_screen {
 	__DRIscreenPrivate *driScrnPriv;

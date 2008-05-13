@@ -5,7 +5,6 @@
 #include "xmlconfig.h"
 
 #include "nouveau/nouveau_winsys.h"
-#include "nouveau_device.h"
 #include "nouveau_drmif.h"
 #include "nouveau_dma.h"
 

@@ -4,7 +4,6 @@
 #include "pipe/p_inlines.h"
 
 #include "nouveau_context.h"
-#include "nouveau_device.h"
 #include "nouveau_local.h"
 #include "nouveau_screen.h"
 #include "nouveau_swapbuffers.h"

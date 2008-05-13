@@ -27,7 +27,7 @@
 #include <xf86drm.h>
 #include <nouveau_drm.h>
 
-#include "nouveau_device.h"
+#include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_channel.h"
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_notifier.h"
