@@ -189,7 +189,7 @@ static void r300SetBlendCntl(r300ContextPtr r300, int func, int eqn,
 	 */
 #if 0
 	if (new_ablend == new_cblend) {
-		new_cblend |= R300_BLEND_NO_SEPARATE;
+		new_cblend |= R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0;
 	}
 #endif
 	new_cblend |= cbits;
@@ -295,7 +295,9 @@ static void r300SetBlendState(GLcontext * ctx)
 
 	r300SetBlendCntl(r300,
 			 func, eqn,
-			 R300_BLEND_UNKNOWN | R300_BLEND_ENABLE, funcA, eqnA);
+			 (R300_SEPARATE_ALPHA_ENABLE |
+			  R300_READ_ENABLE |
+			  R300_ALPHA_BLEND_ENABLE), funcA, eqnA);
 }
 
 static void r300BlendEquationSeparate(GLcontext * ctx,

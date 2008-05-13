@@ -2043,9 +2043,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RB3D_CBLEND                    0x4E04
 #define R300_RB3D_ABLEND                    0x4E08
 /* the following only appear in CBLEND */
-#       define R300_BLEND_ENABLE                     (1 << 0)
-#       define R300_BLEND_UNKNOWN                    (3 << 1)
-#       define R300_BLEND_NO_SEPARATE                (1 << 3)
+#       define R300_ALPHA_BLEND_ENABLE         (1 << 0)
+#       define R300_SEPARATE_ALPHA_ENABLE      (1 << 1)
+#       define R300_READ_ENABLE                (1 << 2)
+#       define R300_DISCARD_SRC_PIXELS_DIS     (0 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_0     (1 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_0     (2 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_0     (3 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_1     (4 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_COLOR_1     (5 << 3)
+#       define R300_DISCARD_SRC_PIXELS_SRC_ALPHA_COLOR_1     (6 << 3)
+
 /* the following are shared between CBLEND and ABLEND */
 #       define R300_FCN_MASK                         (3  << 12)
 #       define R300_COMB_FCN_ADD_CLAMP               (0  << 12)
@@ -2120,7 +2128,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Color Buffer Address Offset of multibuffer 0. Unpipelined. */
 #define R300_RB3D_COLOROFFSET0              0x4E28
-#       define R300_COLOROFFSET_MASK             0xFFFFFFF0 /* GUESS */
+#       define R300_COLOROFFSET_MASK             0xFFFFFFE0
 /* Color Buffer Address Offset of multibuffer 1. Unpipelined. */
 #define R300_RB3D_COLOROFFSET1              0x4E2C
 /* Color Buffer Address Offset of multibuffer 2. Unpipelined. */
@@ -2137,7 +2145,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Bit 18: Extremely weird tile like, but some pixels duplicated?
  */
 #define R300_RB3D_COLORPITCH0               0x4E38
-#       define R300_COLORPITCH_MASK              0x00001FF8 /* GUESS, should be 13:1 */
+#       define R300_COLORPITCH_MASK              0x00003FFE
 #       define R300_COLOR_TILE_DISABLE            (0 << 16)
 #       define R300_COLOR_TILE_ENABLE             (1 << 16)
 #       define R300_COLOR_MICROTILE_DISABLE       (0 << 17)
@@ -2147,12 +2155,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_COLOR_ENDIAN_WORD_SWAP        (1 << 19)
 #       define R300_COLOR_ENDIAN_DWORD_SWAP       (2 << 19)
 #       define R300_COLOR_ENDIAN_HALF_DWORD_SWAP  (3 << 19)
-#	define R300_COLOR_FORMAT_ARGB10101010     (0 << 21)
-#	define R300_COLOR_FORMAT_UV1010           (1 << 21)
-#	define R300_COLOR_FORMAT_CI8              (2 << 21) /* 2D only */
+#	define R500_COLOR_FORMAT_ARGB10101010     (0 << 21)
+#	define R500_COLOR_FORMAT_UV1010           (1 << 21)
+#	define R500_COLOR_FORMAT_CI8              (2 << 21) /* 2D only */
 #	define R300_COLOR_FORMAT_ARGB1555         (3 << 21)
 #       define R300_COLOR_FORMAT_RGB565           (4 << 21)
-#       define R300_COLOR_FORMAT_ARGB2101010      (5 << 21)
+#       define R500_COLOR_FORMAT_ARGB2101010      (5 << 21)
 #       define R300_COLOR_FORMAT_ARGB8888         (6 << 21)
 #       define R300_COLOR_FORMAT_ARGB32323232     (7 << 21)
 /* reserved */
@@ -2161,7 +2169,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_COLOR_FORMAT_VYUY             (11 << 21)
 #       define R300_COLOR_FORMAT_YVYU             (12 << 21)
 #       define R300_COLOR_FORMAT_UV88             (13 << 21)
-#       define R300_COLOR_FORMAT_I10              (14 << 21)
+#       define R500_COLOR_FORMAT_I10              (14 << 21)
 #       define R300_COLOR_FORMAT_ARGB4444         (15 << 21)
 #define R300_RB3D_COLORPITCH1               0x4E3C
 #define R300_RB3D_COLORPITCH2               0x4E40
@@ -2180,16 +2188,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Set to 0A before 3D operations, set to 02 afterwards.
  */
 #define R300_RB3D_DSTCACHE_CTLSTAT               0x4e4c
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT         (0 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT_1       (1 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D    (2 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D_1  (3 << 0)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT          (0 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT_1        (1 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS       (2 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS_1     (3 << 2)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FINISH_NO_SIGNAL        (0 << 4)
-#	define RB3D_DSTCACHE_CTLSTAT_DC_FINISH_SIGNAL           (1 << 4)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT         (0 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_NO_EFFECT_1       (1 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D    (2 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FLUSH_FLUSH_DIRTY_3D_1  (3 << 0)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT          (0 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_NO_EFFECT_1        (1 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS       (2 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FREE_FREE_3D_TAGS_1     (3 << 2)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FINISH_NO_SIGNAL        (0 << 4)
+#	define R300_RB3D_DSTCACHE_CTLSTAT_DC_FINISH_SIGNAL           (1 << 4)
 
 #define R300_RB3D_DITHER_CTL 0x4E50
 #	define R300_RB3D_DITHER_CTL_DITHER_MODE_TRUNCATE         (0 << 0)
@@ -2204,68 +2212,67 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Resolve buffer destination address. The cache must be empty before changing
  * this register if the cb is in resolve mode. Unpipelined
  */
-#define RB3D_AARESOLVE_OFFSET        0x4e80
-#	define RB3D_AARESOLVE_OFFSET_SHIFT 5
-#	define RB3D_AARESOLVE_OFFSET_MASK 0xffffffe0 /* At least according to the calculations of Christoph Brill */
+#define R300_RB3D_AARESOLVE_OFFSET        0x4e80
+#	define R300_RB3D_AARESOLVE_OFFSET_SHIFT 5
+#	define R300_RB3D_AARESOLVE_OFFSET_MASK 0xffffffe0 /* At least according to the calculations of Christoph Brill */
 
 /* Resolve Buffer Pitch and Tiling Control. The cache must be empty before
  * changing this register if the cb is in resolve mode. Unpipelined
  */
-#define RB3D_AARESOLVE_PITCH         0x4e84
-#	define RB3D_AARESOLVE_PITCH_SHIFT 1
-#	define RB3D_AARESOLVE_PITCH_MASK  0x00003ffe /* At least according to the calculations of Christoph Brill */
+#define R300_RB3D_AARESOLVE_PITCH         0x4e84
+#	define R300_RB3D_AARESOLVE_PITCH_SHIFT 1
+#	define R300_RB3D_AARESOLVE_PITCH_MASK  0x00003ffe /* At least according to the calculations of Christoph Brill */
 
 /* Resolve Buffer Control. Unpipelined */
-#define RB3D_AARESOLVE_CTL           0x4e88
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_10      (0 << 1)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
-#	define RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
+#define R300_RB3D_AARESOLVE_CTL           0x4e88
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_NORMAL   (0 << 0)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE  (1 << 0)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_10      (0 << 1)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_GAMMA_22      (1 << 1)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_SAMPLE0 (0 << 2)
+#	define R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE (1 << 2)
   
 
 /* Discard src pixels less than or equal to threshold. */
-#define RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
+#define R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD 0x4ea0
 /* Discard src pixels greater than or equal to threshold. */
-#define RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD 0x4ea4
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_SHIFT 0
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_MASK 0x000000ff
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_SHIFT 8
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_MASK 0x0000ff00
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_SHIFT 16
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_MASK 0x00ff0000
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_SHIFT 24
-#	define RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_MASK 0xff000000
+#define R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD 0x4ea4
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_SHIFT 0
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_BLUE_MASK 0x000000ff
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_SHIFT 8
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_GREEN_MASK 0x0000ff00
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_SHIFT 16
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_RED_MASK 0x00ff0000
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_SHIFT 24
+#	define R500_RB3D_DISCARD_SRC_PIXEL_THRESHOLD_ALPHA_MASK 0xff000000
 
 /* 3D ROP Control. Stalls the 2d/3d datapath until it is idle. */
-#define RB3D_ROPCNTL                             0x4e18
+#define R300_RB3D_ROPCNTL                             0x4e18
 /* TODO: fill in content here */
 
 /* Color Compare Flip. Stalls the 2d/3d datapath until it is idle. */
-#define RB3D_CLRCMP_FLIPE                        0x4e1c
+#define R300_RB3D_CLRCMP_FLIPE                        0x4e1c
 
 /* Sets the fifo sizes */
-#define RB3D_FIFO_SIZE                           0x4ef4
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
-#	define RB3D_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (3 << 0)
-/* gap in AMD spec */
+#define R500_RB3D_FIFO_SIZE                           0x4ef4
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_FULL   (0 << 0)
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_HALF   (1 << 0)
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_QUATER (2 << 0)
+#	define R500_RB3D_FIFO_SIZE_OP_FIFO_SIZE_EIGTHS (3 << 0)
 
 /* Constant color used by the blender. Pipelined through the blender. */
-#define RB3D_CONSTANT_COLOR_AR                   0x4ef8
-#	define RB3D_CONSTANT_COLOR_AR_RED_MASK    0x0000ffff
-#	define RB3D_CONSTANT_COLOR_AR_RED_SHIFT   0
-#	define RB3D_CONSTANT_COLOR_AR_ALPHA_MASK  0xffff0000
-#	define RB3D_CONSTANT_COLOR_AR_ALPHA_SHIFT 16
+#define R500_RB3D_CONSTANT_COLOR_AR                   0x4ef8
+#	define R500_RB3D_CONSTANT_COLOR_AR_RED_MASK    0x0000ffff
+#	define R500_RB3D_CONSTANT_COLOR_AR_RED_SHIFT   0
+#	define R500_RB3D_CONSTANT_COLOR_AR_ALPHA_MASK  0xffff0000
+#	define R500_RB3D_CONSTANT_COLOR_AR_ALPHA_SHIFT 16
 
 /* Constant color used by the blender. Pipelined through the blender. */
-#define RB3D_CONSTANT_COLOR_GB                   0x4efc
-#	define RB3D_CONSTANT_COLOR_AR_BLUE_MASK   0x0000ffff
-#	define RB3D_CONSTANT_COLOR_AR_BLUE_SHIFT  0
-#	define RB3D_CONSTANT_COLOR_AR_GREEN_MASK  0xffff0000
-#	define RB3D_CONSTANT_COLOR_AR_GREEN_SHIFT 16
+#define R500_RB3D_CONSTANT_COLOR_GB                   0x4efc
+#	define R500_RB3D_CONSTANT_COLOR_AR_BLUE_MASK   0x0000ffff
+#	define R500_RB3D_CONSTANT_COLOR_AR_BLUE_SHIFT  0
+#	define R500_RB3D_CONSTANT_COLOR_AR_GREEN_MASK  0xffff0000
+#	define R500_RB3D_CONSTANT_COLOR_AR_GREEN_SHIFT 16
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
