@@ -119,6 +119,23 @@ _mesa_copy_instructions(struct prog_instruction *dest,
 
 
 /**
+ * Free an array of instructions
+ */
+void
+_mesa_free_instructions(struct prog_instruction *inst, GLuint count)
+{
+   GLuint i;
+   for (i = 0; i < count; i++) {
+      if (inst[i].Data)
+         _mesa_free(inst[i].Data);
+      if (inst[i].Comment)
+         _mesa_free((char *) inst[i].Comment);
+   }
+   _mesa_free(inst);
+}
+
+
+/**
  * Basic info about each instruction
  */
 struct instruction_info
