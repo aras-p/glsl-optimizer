@@ -193,13 +193,13 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       inst->DstReg.WriteMask = WRITEMASK_X;
       inst->SrcReg[0].File = PROGRAM_INPUT;
       inst->SrcReg[0].Index = FRAG_ATTRIB_FOGC;
-      inst->SrcReg[0].Swizzle = SWIZZLE_X;
+      inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
       inst->SrcReg[1].File = PROGRAM_STATE_VAR;
       inst->SrcReg[1].Index = fogPRefOpt;
-      inst->SrcReg[1].Swizzle = SWIZZLE_X;
+      inst->SrcReg[1].Swizzle = SWIZZLE_XXXX;
       inst->SrcReg[2].File = PROGRAM_STATE_VAR;
       inst->SrcReg[2].Index = fogPRefOpt;
-      inst->SrcReg[2].Swizzle = SWIZZLE_Y;
+      inst->SrcReg[2].Swizzle = SWIZZLE_YYYY;
       inst->SaturateMode = SATURATE_ZERO_ONE;
       inst++;
    }
@@ -215,10 +215,10 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       inst->SrcReg[0].File = PROGRAM_STATE_VAR;
       inst->SrcReg[0].Index = fogPRefOpt;
       inst->SrcReg[0].Swizzle
-         = (fprog->FogOption == GL_EXP) ? SWIZZLE_Z : SWIZZLE_W;
+         = (fprog->FogOption == GL_EXP) ? SWIZZLE_ZZZZ : SWIZZLE_WWWW;
       inst->SrcReg[1].File = PROGRAM_INPUT;
       inst->SrcReg[1].Index = FRAG_ATTRIB_FOGC;
-      inst->SrcReg[1].Swizzle = SWIZZLE_X;
+      inst->SrcReg[1].Swizzle = SWIZZLE_XXXX;
       inst++;
       if (fprog->FogOption == GL_EXP2) {
          /* MUL fogFactorTemp.x, fogFactorTemp.x, fogFactorTemp.x; */
@@ -228,10 +228,10 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
          inst->DstReg.WriteMask = WRITEMASK_X;
          inst->SrcReg[0].File = PROGRAM_TEMPORARY;
          inst->SrcReg[0].Index = fogFactorTemp;
-         inst->SrcReg[0].Swizzle = SWIZZLE_X;
+         inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
          inst->SrcReg[1].File = PROGRAM_TEMPORARY;
          inst->SrcReg[1].Index = fogFactorTemp;
-         inst->SrcReg[1].Swizzle = SWIZZLE_X;
+         inst->SrcReg[1].Swizzle = SWIZZLE_XXXX;
          inst++;
       }
       /* EX2_SAT fogFactorTemp.x, -fogFactorTemp.x; */
@@ -241,8 +241,8 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       inst->DstReg.WriteMask = WRITEMASK_X;
       inst->SrcReg[0].File = PROGRAM_TEMPORARY;
       inst->SrcReg[0].Index = fogFactorTemp;
-      inst->SrcReg[0].NegateBase = GL_TRUE;
-      inst->SrcReg[0].Swizzle = SWIZZLE_X;
+      inst->SrcReg[0].NegateBase = NEGATE_XYZW;
+      inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
       inst->SaturateMode = SATURATE_ZERO_ONE;
       inst++;
    }
@@ -253,8 +253,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    inst->DstReg.WriteMask = WRITEMASK_XYZ;
    inst->SrcReg[0].File = PROGRAM_TEMPORARY;
    inst->SrcReg[0].Index = fogFactorTemp;
-   inst->SrcReg[0].Swizzle
-      = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X);
+   inst->SrcReg[0].Swizzle = SWIZZLE_XXXX;
    inst->SrcReg[1].File = PROGRAM_TEMPORARY;
    inst->SrcReg[1].Index = colorTemp;
    inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
