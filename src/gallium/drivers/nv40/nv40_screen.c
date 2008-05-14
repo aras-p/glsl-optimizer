@@ -155,7 +155,7 @@ nv40_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	struct nv40_screen *screen = CALLOC_STRUCT(nv40_screen);
 	struct nouveau_stateobj *so;
 	unsigned curie_class;
-	unsigned chipset = nvws->channel->device;
+	unsigned chipset = nvws->channel->device->chipset;
 	int ret;
 
 	if (!screen)
