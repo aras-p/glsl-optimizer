@@ -538,10 +538,10 @@ new_not(slang_ir_node *n)
 
 
 /**
- * Inlined subroutine.
+ * Non-inlined function call.
  */
 static slang_ir_node *
-new_inlined_function_call(slang_ir_node *code, slang_label *name)
+new_function_call(slang_ir_node *code, slang_label *name)
 {
    slang_ir_node *n = new_node1(IR_CALL, code);
    assert(name);
@@ -1229,7 +1229,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
          else {
             callOper = inlined;
          }
-         callOper->type = SLANG_OPER_INLINED_CALL;
+         callOper->type = SLANG_OPER_NON_INLINED_CALL;
          callOper->fun = fun;
          callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
       }
@@ -2552,7 +2552,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
                _slang_free_ir_tree(tree);
                return NULL; /* error must have occured */
             }
-            tree = tree ? new_seq(tree, n) : n;
+            tree = new_seq(tree, n);
          }
 
 #if 00
@@ -2779,17 +2779,17 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 return n;
       }
 
-   case SLANG_OPER_INLINED_CALL:
+   case SLANG_OPER_NON_INLINED_CALL:
    case SLANG_OPER_SEQUENCE:
       {
          slang_ir_node *tree = NULL;
          GLuint i;
          for (i = 0; i < oper->num_children; i++) {
             slang_ir_node *n = _slang_gen_operation(A, &oper->children[i]);
-            tree = tree ? new_seq(tree, n) : n;
+            tree = new_seq(tree, n);
          }
-         if (oper->type == SLANG_OPER_INLINED_CALL) {
-            tree = new_inlined_function_call(tree, oper->label);
+         if (oper->type == SLANG_OPER_NON_INLINED_CALL) {
+            tree = new_function_call(tree, oper->label);
          }
          return tree;
       }
