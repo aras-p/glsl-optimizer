@@ -495,6 +495,9 @@ new_node0(slang_ir_opcode op)
 }
 
 
+/**
+ * Create sequence of two nodes.
+ */
 static slang_ir_node *
 new_seq(slang_ir_node *left, slang_ir_node *right)
 {
@@ -1844,6 +1847,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      A->program->NumTemporaries++;
       assert(n->Store->Size > 0);
    }
    return n;
@@ -2060,7 +2064,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       }
       /* XXX make copy of this initializer? */
       rhs = _slang_gen_operation(A, &oper->children[0]);
-      assert(rhs);
+      if (!rhs)
+         return NULL;  /* must have found an error */
       init = new_node2(IR_MOVE, var, rhs);
       /*assert(rhs->Opcode != IR_SEQ);*/
       n = new_seq(varDecl, init);
@@ -2347,7 +2352,8 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       return n;
    }
    else if (   ti.spec.type == SLANG_SPEC_FLOAT
-            || ti.spec.type == SLANG_SPEC_INT) {
+            || ti.spec.type == SLANG_SPEC_INT
+            || ti.spec.type == SLANG_SPEC_BOOL) {
       const GLuint rows = 1;
       slang_swizzle swz;
       slang_ir_node *n;
@@ -2879,17 +2885,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
        * store->Index = sampler number (0..7, typically)
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-#if 0
-      GLint samplerUniform
-         = _mesa_add_sampler(prog->Parameters, varName, datatype);
-#elif 0
-      GLint samplerUniform
-         = _mesa_add_sampler(prog->Samplers, varName, datatype);
-      (void) _mesa_add_sampler(prog->Parameters, varName, datatype); /* dummy entry */
-#else
       const GLint sampNum = A->numSamplers++;
       _mesa_add_sampler(prog->Parameters, varName, datatype, sampNum);
-#endif
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
       if (dbg) printf("SAMPLER ");
    }
