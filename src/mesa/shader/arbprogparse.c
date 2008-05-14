@@ -3851,8 +3851,11 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.NumNativeTexIndirections = ap.Base.NumTexIndirections;
    program->Base.InputsRead      = ap.Base.InputsRead;
    program->Base.OutputsWritten  = ap.Base.OutputsWritten;
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++) {
       program->Base.TexturesUsed[i] = ap.TexturesUsed[i];
+      if (ap.TexturesUsed[i])
+         program->Base.SamplersUsed |= (1 << i);
+   }
    program->Base.ShadowSamplers = ap.ShadowSamplers;
    program->FogOption          = ap.FogOption;
    program->UsesKill          = ap.UsesKill;
