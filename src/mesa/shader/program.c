@@ -120,25 +120,17 @@ void
 _mesa_update_default_objects_program(GLcontext *ctx)
 {
 #if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
-   if (ctx->VertexProgram.Current) {
-      ctx->VertexProgram.Current->Base.RefCount--;
-      if (ctx->VertexProgram.Current->Base.RefCount <= 0)
-         ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
-   }
-   ctx->VertexProgram.Current = (struct gl_vertex_program *) ctx->Shared->DefaultVertexProgram;
+   _mesa_reference_vertprog(ctx, &ctx->VertexProgram.Current,
+                            (struct gl_vertex_program *)
+                            ctx->Shared->DefaultVertexProgram);
    assert(ctx->VertexProgram.Current);
-   ctx->VertexProgram.Current->Base.RefCount++;
 #endif
 
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
-   if (ctx->FragmentProgram.Current) {
-      ctx->FragmentProgram.Current->Base.RefCount--;
-      if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
-         ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
-   }
-   ctx->FragmentProgram.Current = (struct gl_fragment_program *) ctx->Shared->DefaultFragmentProgram;
+   _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
+                            (struct gl_fragment_program *)
+                            ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
-   ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
    /* XXX probably move this stuff */
@@ -303,7 +295,8 @@ void
 _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
 {
    (void) ctx;
-   ASSERT(prog);   assert(prog->RefCount==0);
+   ASSERT(prog);
+   ASSERT(prog->RefCount==0);
 
    if (prog == &_mesa_DummyProgram)
       return;
@@ -432,7 +425,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    clone->Format = prog->Format;
    clone->Instructions = _mesa_alloc_instructions(prog->NumInstructions);
    if (!clone->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, clone);
+      _mesa_reference_program(ctx, &clone, NULL);
       return NULL;
    }
    _mesa_copy_instructions(clone->Instructions, prog->Instructions,
