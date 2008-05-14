@@ -31,6 +31,8 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "shader/program.h"
+#include "shader/programopt.h"
+#include "shader/prog_print.h"
 #include "shader/prog_parameter.h"
 #include "shader/grammar/grammar_mesa.h"
 #include "slang_codegen.h"
@@ -1618,6 +1620,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.program = O->program;
       A.vartable = O->vartable;
       A.curFuncEndLabel = NULL;
+      A.numSamplers = 0;
       if (!_slang_codegen_global_variable(&A, var, C->type))
          return 0;
    }
@@ -1640,6 +1643,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
          A.space.funcs = O->funs;
          A.space.structs = O->structs;
          A.space.vars = O->vars;
+         A.numSamplers = 0;
          if (!initialize_global(&A, var))
             return 0;
       }
@@ -1773,6 +1777,7 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       A.program = O->program;
       A.vartable = O->vartable;
       A.log = C->L;
+      A.numSamplers = 0;
 
       _slang_codegen_function(&A, *parsed_func_ret);
    }
@@ -2179,6 +2184,19 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    _slang_delete_mempool((slang_mempool *) ctx->Shader.MemPool);
    ctx->Shader.MemPool = NULL;
+
+   if (shader->Type == GL_VERTEX_SHADER) {
+      /* remove any reads of varying (output) registers */
+#if 0
+      printf("Pre-remove output reads:\n");
+      _mesa_print_program(shader->Programs[0]);
+#endif
+      _mesa_remove_varying_reads(shader->Programs[0]);
+#if 0
+      printf("Post-remove output reads:\n");
+      _mesa_print_program(shader->Programs[0]);
+#endif
+   }
 
    return success;
 }

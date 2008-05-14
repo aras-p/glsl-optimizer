@@ -1863,6 +1863,7 @@ enum register_file
 /** Vertex and fragment instructions */
 struct prog_instruction;
 struct gl_program_parameter_list;
+struct gl_uniform_list;
 
 
 /**
@@ -1882,6 +1883,7 @@ struct gl_program
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
    GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
+   GLbitfield SamplersUsed;   /**< Bitfield of which samplers are used */
    GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
 
    /** Named parameters, constants, etc. from program text */
@@ -1893,6 +1895,11 @@ struct gl_program
    struct gl_program_parameter_list *Varying;
    /** Vertex program user-defined attributes */
    struct gl_program_parameter_list *Attributes;
+
+   /** Map from sampler unit to texture unit (set by glUniform1i()) */
+   GLubyte SamplerUnits[MAX_SAMPLERS];
+   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
+   GLubyte SamplerTargets[MAX_SAMPLERS];
 
    /** Logical counts */
    /*@{*/
@@ -2086,7 +2093,7 @@ struct gl_query_state
 
 
 /**
- * A GLSL shader object.
+ * A GLSL vertex or fragment shader object.
  */
 struct gl_shader
 {
@@ -2104,7 +2111,8 @@ struct gl_shader
 
 
 /**
- * A GLSL program object.  Basically a linked collection of "shaders".
+ * A GLSL program object.
+ * Basically a linked collection of vertex and fragment shaders.
  */
 struct gl_shader_program
 {
@@ -2119,7 +2127,7 @@ struct gl_shader_program
    /* post-link info: */
    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
-   struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
+   struct gl_uniform_list *Uniforms;
    struct gl_program_parameter_list *Varying;
    struct gl_program_parameter_list *Attributes; /**< Vertex attributes */
    GLboolean LinkStatus;   /**< GL_LINK_STATUS */

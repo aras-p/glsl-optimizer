@@ -922,11 +922,15 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n->Children[0]->Store->Size >= TEXTURE_1D_INDEX);
    assert(n->Children[0]->Store->Size <= TEXTURE_RECT_INDEX);
 
-   inst->Sampler = n->Children[0]->Store->Index; /* i.e. uniform's index */
    inst->TexSrcTarget = n->Children[0]->Store->Size;
+#if 0
    inst->TexSrcUnit = 27; /* Dummy value; the TexSrcUnit will be computed at
                            * link time, using the sampler uniform's value.
                            */
+   inst->Sampler = n->Children[0]->Store->Index; /* i.e. uniform's index */
+#else
+   inst->TexSrcUnit = n->Children[0]->Store->Index; /* i.e. uniform's index */
+#endif
    return inst;
 }
 

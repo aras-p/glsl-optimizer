@@ -1401,7 +1401,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
     * Write to renderbuffers
     */
    {
-      const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
       const GLuint numBuffers = fb->_NumColorDrawBuffers;
       const GLboolean multiFragOutputs = numBuffers > 1;
       GLuint buf;

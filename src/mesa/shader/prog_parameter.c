@@ -282,22 +282,25 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
  * Add a sampler to the parameter list.
  * \param name  uniform's name
  * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
+ * \param index  the sampler number (as seen in TEX instructions)
  */
 GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name, GLenum datatype)
+                  const char *name, GLenum datatype, GLuint index)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
       ASSERT(paramList->Parameters[i].Size == 1);
       ASSERT(paramList->Parameters[i].DataType == datatype);
+      ASSERT(paramList->ParameterValues[i][0] == index);
       /* already in list */
       return i;
    }
    else {
+      GLfloat indexf = index;
       const GLint size = 1; /* a sampler is basically a texture unit number */
       i = _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
-                              size, datatype, NULL, NULL);
+                              size, datatype, &indexf, NULL);
       return i;
    }
 }

@@ -310,6 +310,8 @@ fetch_texel(GLcontext *ctx,
             const GLfloat texcoord[4], GLfloat lodBias,
             GLfloat color[4])
 {
+   const GLuint unit = machine->Samplers[inst->TexSrcUnit];
+
    /* Note: we only have the right derivatives for fragment input attribs.
     */
    if (machine->NumDeriv > 0 &&
@@ -320,12 +322,10 @@ fetch_texel(GLcontext *ctx,
       machine->FetchTexelDeriv(ctx, texcoord,
                                machine->DerivX[attr],
                                machine->DerivY[attr],
-                               lodBias,
-                               inst->TexSrcUnit, color);
+                               lodBias, unit, color);
    }
    else {
-      machine->FetchTexelLod(ctx, texcoord, lodBias,
-                             inst->TexSrcUnit, color);
+      machine->FetchTexelLod(ctx, texcoord, lodBias, unit, color);
    }
 }
 

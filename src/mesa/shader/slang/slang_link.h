@@ -33,10 +33,6 @@ _slang_link(GLcontext *ctx, GLhandleARB h,
             struct gl_shader_program *shProg);
 
 extern void
-_slang_resolve_samplers(struct gl_shader_program *shProg,
-                        struct gl_program *prog);
-
-extern void
 _slang_remap_attribute(struct gl_program *prog, GLuint oldAttrib,
                        GLuint newAttrib);
 
