@@ -527,6 +527,155 @@ _mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count)
 
 
 /**
+ * Search instructions for registers that match (oldFile, oldIndex),
+ * replacing them with (newFile, newIndex).
+ */
+static void
+replace_registers(struct prog_instruction *inst, GLuint numInst,
+                  GLuint oldFile, GLuint oldIndex,
+                  GLuint newFile, GLuint newIndex)
+{
+   GLuint i, j;
+   for (i = 0; i < numInst; i++) {
+      for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
+         if (inst[i].SrcReg[j].File == oldFile &&
+             inst[i].SrcReg[j].Index == oldIndex) {
+            inst[i].SrcReg[j].File = newFile;
+            inst[i].SrcReg[j].Index = newIndex;
+         }
+      }
+   }
+}
+
+
+/**
+ * Search instructions for references to program parameters.  When found,
+ * increment the parameter index by 'offset'.
+ * Used when combining programs.
+ */
+static void
+adjust_param_indexes(struct prog_instruction *inst, GLuint numInst,
+                     GLuint offset)
+{
+   GLuint i, j;
+   for (i = 0; i < numInst; i++) {
+      for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
+         GLuint f = inst[i].SrcReg[j].File;
+         if (f == PROGRAM_CONSTANT ||
+             f == PROGRAM_UNIFORM ||
+             f == PROGRAM_STATE_VAR) {
+            inst[i].SrcReg[j].Index += offset;
+         }
+      }
+   }
+}
+
+
+/**
+ * Combine two programs into one.  Fix instructions so the outputs of
+ * the first program go to the inputs of the second program.
+ */
+struct gl_program *
+_mesa_combine_programs(GLcontext *ctx,
+                       struct gl_program *progA, struct gl_program *progB)
+{
+   struct prog_instruction *newInst;
+   struct gl_program *newProg;
+   const GLuint lenA = progA->NumInstructions - 1; /* omit END instr */
+   const GLuint lenB = progB->NumInstructions;
+   const GLuint numParamsA = _mesa_num_parameters(progA->Parameters);
+   const GLuint newLength = lenA + lenB;
+   GLuint i;
+
+   ASSERT(progA->Target == progB->Target);
+
+   newInst = _mesa_alloc_instructions(newLength);
+   if (!newInst)
+      return GL_FALSE;
+
+   _mesa_copy_instructions(newInst, progA->Instructions, lenA);
+   _mesa_copy_instructions(newInst + lenA, progB->Instructions, lenB);
+
+   /* adjust branch / instruction addresses for B's instructions */
+   for (i = 0; i < lenB; i++) {
+      newInst[lenA + i].BranchTarget += lenA;
+   }
+
+   newProg = ctx->Driver.NewProgram(ctx, progA->Target, 0);
+   newProg->Instructions = newInst;
+   newProg->NumInstructions = newLength;
+
+   if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
+      /* connect color outputs/inputs */
+      if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
+          (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {
+         replace_registers(newInst + lenA, lenB,
+                           PROGRAM_INPUT, FRAG_ATTRIB_COL0,
+                           PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+      }
+
+      newProg->InputsRead = progA->InputsRead;
+      newProg->InputsRead |= (progB->InputsRead & ~(1 << FRAG_ATTRIB_COL0));
+      newProg->OutputsWritten = progB->OutputsWritten;
+   }
+   else {
+      /* vertex program */
+      assert(0);      /* XXX todo */
+   }
+
+   /*
+    * Merge parameters (uniforms, constants, etc)
+    */
+   newProg->Parameters = _mesa_combine_parameter_lists(progA->Parameters,
+                                                       progB->Parameters);
+
+   adjust_param_indexes(newInst + lenA, lenB, numParamsA);
+
+
+   return newProg;
+}
+
+
+
+
+/**
+ * Scan the given program to find a free register of the given type.
+ * \param regFile - PROGRAM_INPUT, PROGRAM_OUTPUT or PROGRAM_TEMPORARY
+ */
+GLint
+_mesa_find_free_register(const struct gl_program *prog, GLuint regFile)
+{
+   GLboolean used[MAX_PROGRAM_TEMPS];
+   GLuint i, k;
+
+   assert(regFile == PROGRAM_INPUT ||
+          regFile == PROGRAM_OUTPUT ||
+          regFile == PROGRAM_TEMPORARY);
+
+   _mesa_memset(used, 0, sizeof(used));
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      const struct prog_instruction *inst = prog->Instructions + i;
+      const GLuint n = _mesa_num_inst_src_regs(inst->Opcode);
+
+      for (k = 0; k < n; k++) {
+         if (inst->SrcReg[k].File == regFile) {
+            used[inst->SrcReg[k].Index] = GL_TRUE;
+         }
+      }
+   }
+
+   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+      if (!used[i])
+         return i;
+   }
+
+   return -1;
+}
+
+
+
+/**
  * Mixing ARB and NV vertex/fragment programs can be tricky.
  * Note: GL_VERTEX_PROGRAM_ARB == GL_VERTEX_PROGRAM_NV
  *  but, GL_FRAGMENT_PROGRAM_ARB != GL_FRAGMENT_PROGRAM_NV

@@ -604,6 +604,39 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
 
 
 /**
+ * Return a new parameter list which is listA + listB.
+ */
+struct gl_program_parameter_list *
+_mesa_combine_parameter_lists(const struct gl_program_parameter_list *listA,
+                              const struct gl_program_parameter_list *listB)
+{
+   struct gl_program_parameter_list *list;
+
+   if (listA) {
+      list = _mesa_clone_parameter_list(listA);
+      if (list && listB) {
+         GLuint i;
+         for (i = 0; i < listB->NumParameters; i++) {
+            struct gl_program_parameter *param = listB->Parameters + i;
+            _mesa_add_parameter(list, param->Type, param->Name, param->Size,
+                                param->DataType,
+                                listB->ParameterValues[i],
+                                param->StateIndexes);
+         }
+      }
+   }
+   else if (listB) {
+      list = _mesa_clone_parameter_list(listB);
+   }
+   else {
+      list = NULL;
+   }
+   return list;
+}
+
+
+
+/**
  * Find longest name of all uniform parameters in list.
  */
 GLuint
