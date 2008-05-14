@@ -116,8 +116,6 @@ _mesa_free_program_data(GLcontext *ctx)
 }
 
 
-
-
 /**
  * Set the vertex/fragment program error state (position and error string).
  * This is generally called from within the parsers.
@@ -272,6 +270,7 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
 {
    (void) ctx;
    ASSERT(prog);
+   ASSERT(prog->RefCount==0);
 
    if (prog == &_mesa_DummyProgram)
       return;
@@ -391,7 +390,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
    clone->Format = prog->Format;
    clone->Instructions = _mesa_alloc_instructions(prog->NumInstructions);
    if (!clone->Instructions) {
-      ctx->Driver.DeleteProgram(ctx, clone);
+      _mesa_reference_program(ctx, &clone, NULL);
       return NULL;
    }
    _mesa_copy_instructions(clone->Instructions, prog->Instructions,

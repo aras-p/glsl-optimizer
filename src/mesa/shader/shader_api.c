@@ -243,10 +243,8 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
       _mesa_free((void *) sh->Source);
    if (sh->InfoLog)
       _mesa_free(sh->InfoLog);
-   for (i = 0; i < sh->NumPrograms; i++) {
-      assert(sh->Programs[i]);
-      ctx->Driver.DeleteProgram(ctx, sh->Programs[i]);
-   }
+   for (i = 0; i < sh->NumPrograms; i++)
+      _mesa_reference_program(ctx, &sh->Programs[i], NULL);
    if (sh->Programs)
       _mesa_free(sh->Programs);
    _mesa_free(sh);
