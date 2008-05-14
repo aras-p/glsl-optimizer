@@ -112,6 +112,8 @@ _mesa_reference_fragprog(GLcontext *ctx,
 extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
 
+extern  GLboolean
+_mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count);
 
 /*
  * API functions common to ARB/NV_vertex/fragment_program
