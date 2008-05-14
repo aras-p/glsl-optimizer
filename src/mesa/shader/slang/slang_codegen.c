@@ -2515,49 +2515,6 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
- * Look for expressions such as:  gl_ModelviewMatrix * gl_Vertex
- * and replace with this:  gl_Vertex * gl_ModelviewMatrixTranpose
- * Since matrices are stored in column-major order, the second form of
- * multiplication is much more efficient (just 4 dot products).
- */
-static void
-_slang_check_matmul_optimization(slang_assemble_ctx *A, slang_operation *oper)
-{
-   static const struct {
-      const char *orig;
-      const char *tranpose;
-   } matrices[] = {
-      {"gl_ModelViewMatrix", "gl_ModelViewMatrixTranspose"},
-      {"gl_ProjectionMatrix", "gl_ProjectionMatrixTranspose"},
-      {"gl_ModelViewProjectionMatrix", "gl_ModelViewProjectionMatrixTranspose"},
-      {"gl_TextureMatrix", "gl_TextureMatrixTranspose"},
-      {"gl_NormalMatrix", "__NormalMatrixTranspose"},
-      { NULL, NULL }
-   };
-
-   assert(oper->type == SLANG_OPER_MULTIPLY);
-   if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
-      GLuint i;
-      for (i = 0; matrices[i].orig; i++) {
-         if (oper->children[0].a_id
-             == slang_atom_pool_atom(A->atoms, matrices[i].orig)) {
-            /*
-            _mesa_printf("Replace %s with %s\n",
-                         matrices[i].orig, matrices[i].tranpose);
-            */
-            assert(oper->children[0].type == SLANG_OPER_IDENTIFIER);
-            oper->children[0].a_id
-               = slang_atom_pool_atom(A->atoms, matrices[i].tranpose);
-            /* finally, swap the operands */
-            _slang_operation_swap(&oper->children[0], &oper->children[1]);
-            return;
-         }
-      }
-   }
-}
-
-
-/**
  * Generate IR tree for a slang_operation (AST node)
  */
 static slang_ir_node *
@@ -2690,7 +2647,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-         _slang_check_matmul_optimization(A, oper);
          n = _slang_gen_function_call_name(A, "*", oper, NULL);
 	 return n;
       }
