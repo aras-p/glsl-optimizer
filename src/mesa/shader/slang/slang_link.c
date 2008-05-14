@@ -369,12 +369,9 @@ link_error(struct gl_shader_program *shProg, const char *msg)
  * 2. Varying vars in the two shaders are combined so their locations
  *    agree between the vertex and fragment stages.  They're treated as
  *    vertex program output attribs and as fragment program input attribs.
- * 3. Uniform vars (including state references, constants, etc) from the
- *    vertex and fragment shaders are merged into one group.  Recall that
- *    GLSL uniforms are shared by all linked shaders.
- * 4. The vertex and fragment programs are cloned and modified to update
- *    src/dst register references so they use the new, linked uniform/
- *    varying storage locations.
+ * 3. The vertex and fragment programs are cloned and modified to update
+ *    src/dst register references so they use the new, linked varying
+ *    storage locations.
  */
 void
 _slang_link(GLcontext *ctx,
