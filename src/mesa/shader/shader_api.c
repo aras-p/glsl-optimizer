@@ -1151,6 +1151,10 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
+   if (location == -1)
+      return;   /* The standard specifies this as a no-op */
+
+
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
       return;
@@ -1246,11 +1250,16 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLboolean transpose, const GLfloat *values)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
          "glUniformMatrix(program not linked)");
       return;
    }
+
+   if (location == -1)
+      return;   /* The standard specifies this as a no-op */
+
    if (location < 0 || location >= shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
       return;
