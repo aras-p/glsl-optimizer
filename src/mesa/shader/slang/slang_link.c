@@ -410,19 +410,19 @@ _slang_link(GLcontext *ctx,
     * changing src/dst registers after merging the uniforms and varying vars.
     */
    if (vertProg) {
-      shProg->VertexProgram
-         = vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
+      _mesa_reference_vertprog(ctx, &shProg->VertexProgram,
+                               vertex_program(_mesa_clone_program(ctx, &vertProg->Base)));
    }
    else {
-      shProg->VertexProgram = NULL;
+      _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
    }
 
    if (fragProg) {
-      shProg->FragmentProgram
-         = fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
+      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram,
+                               fragment_program(_mesa_clone_program(ctx, &fragProg->Base)));
    }
    else {
-      shProg->FragmentProgram = NULL;
+      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
    }
 
    /* link varying vars */

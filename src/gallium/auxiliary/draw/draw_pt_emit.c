@@ -58,8 +58,6 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       return;
    }
 
-   memset(&hw_key, 0, sizeof(hw_key));
-
    /* Must do this after set_primitive() above:
     */
    vinfo = draw->render->get_vertex_info(draw->render);
@@ -122,8 +120,9 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    hw_key.output_stride = vinfo->size * 4;
 
    if (!emit->translate ||
-       memcmp(&emit->translate->key, &hw_key, sizeof(hw_key)) != 0)
+       translate_key_compare(&emit->translate->key, &hw_key) != 0)
    {
+      translate_key_sanitize(&hw_key);
       emit->translate = translate_cache_find(emit->cache, &hw_key);
    }
 }
@@ -147,7 +146,7 @@ void draw_pt_emit( struct pt_emit *emit,
 
    hw_verts = render->allocate_vertices(render,
 					(ushort)translate->key.output_stride,
-					(ushort)count);
+					(ushort)vertex_count);
    if (!hw_verts) {
       assert(0);
       return;
@@ -197,7 +196,8 @@ struct pt_emit *draw_pt_emit_create( struct draw_context *draw )
 
 void draw_pt_emit_destroy( struct pt_emit *emit )
 {
-   translate_cache_destroy(emit->cache);
+   if (emit->cache)
+      translate_cache_destroy(emit->cache);
 
    FREE(emit);
 }

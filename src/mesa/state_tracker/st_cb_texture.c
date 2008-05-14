@@ -1366,7 +1366,7 @@ calculate_first_last_level(struct st_texture_object *stObj)
       }
       else {
          firstLevel = 0;
-         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][0]->WidthLog2);
+         lastLevel = MIN2(tObj->MaxLevel, tObj->Image[0][tObj->BaseLevel]->WidthLog2);
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:

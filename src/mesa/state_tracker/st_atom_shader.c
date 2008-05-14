@@ -39,6 +39,7 @@
 
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "shader/program.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
@@ -264,14 +265,16 @@ update_linkage( struct st_context *st )
     */
    assert(st->ctx->VertexProgram._Current);
    stvp = st_vertex_program(st->ctx->VertexProgram._Current);
+   assert(stvp->Base.Base.Target == GL_VERTEX_PROGRAM_ARB);
 
    assert(st->ctx->FragmentProgram._Current);
    stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
+   assert(stfp->Base.Base.Target == GL_FRAGMENT_PROGRAM_ARB);
 
    xvp = find_translated_vp(st, stvp, stfp);
 
-   st->vp = stvp;
-   st->fp = stfp;
+   st_reference_vertprog(st, &st->vp, stvp);
+   st_reference_fragprog(st, &st->fp, stfp);
 
    cso_set_vertex_shader_handle(st->cso_context, stvp->driver_shader);
    cso_set_fragment_shader_handle(st->cso_context, stfp->driver_shader);

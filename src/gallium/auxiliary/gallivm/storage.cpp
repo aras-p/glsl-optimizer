@@ -69,10 +69,10 @@ llvm::Constant *Storage::shuffleMask(int vec)
 {
    if (!m_extSwizzleVec) {
       std::vector<Constant*> elems;
-      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(0.f)));
-      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(1.f)));
-      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(0.f)));
-      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(1.f)));
+      elems.push_back(ConstantFP::get(APFloat(0.f)));
+      elems.push_back(ConstantFP::get(APFloat(1.f)));
+      elems.push_back(ConstantFP::get(APFloat(0.f)));
+      elems.push_back(ConstantFP::get(APFloat(1.f)));
       m_extSwizzleVec = ConstantVector::get(m_floatVecType, elems);
    }
 
@@ -295,10 +295,10 @@ llvm::Value * Storage::immediateElement(int idx)
 void Storage::addImmediate(float *val)
 {
    std::vector<Constant*> vec(4);
-   vec[0] = ConstantFP::get(Type::FloatTy, APFloat(val[0]));
-   vec[1] = ConstantFP::get(Type::FloatTy, APFloat(val[1]));
-   vec[2] = ConstantFP::get(Type::FloatTy, APFloat(val[2]));
-   vec[3] = ConstantFP::get(Type::FloatTy, APFloat(val[3]));
+   vec[0] = ConstantFP::get(APFloat(val[0]));
+   vec[1] = ConstantFP::get(APFloat(val[1]));
+   vec[2] = ConstantFP::get(APFloat(val[2]));
+   vec[3] = ConstantFP::get(APFloat(val[3]));
    m_immediates.push_back(ConstantVector::get(m_floatVecType, vec));
 }
 

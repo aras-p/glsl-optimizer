@@ -158,6 +158,9 @@ static void st_destroy_context_priv( struct st_context *st )
 {
    uint i;
 
+   st_reference_fragprog(st, &st->fp, NULL);
+   st_reference_vertprog(st, &st->vp, NULL);
+
    draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );

@@ -110,6 +110,9 @@ int xmesa_check_for_xshm( XMesaDisplay *display )
    int major, minor, ignore;
    Bool pixmaps;
 
+   if (getenv("SP_NO_RAST")) 
+      return 0;
+
    if (getenv("MESA_NOSHM")) {
       return 0;
    }

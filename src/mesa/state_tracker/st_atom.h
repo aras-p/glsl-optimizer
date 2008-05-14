@@ -44,20 +44,20 @@ void st_destroy_atoms( struct st_context *st );
 void st_validate_state( struct st_context *st );
 
 
-const struct st_tracked_state st_update_framebuffer;
-const struct st_tracked_state st_update_clip;
-const struct st_tracked_state st_update_depth_stencil_alpha;
-const struct st_tracked_state st_update_shader;
-const struct st_tracked_state st_update_rasterizer;
-const struct st_tracked_state st_update_polygon_stipple;
-const struct st_tracked_state st_update_viewport;
-const struct st_tracked_state st_update_scissor;
-const struct st_tracked_state st_update_blend;
-const struct st_tracked_state st_update_sampler;
-const struct st_tracked_state st_update_texture;
-const struct st_tracked_state st_update_fs_constants;
-const struct st_tracked_state st_update_vs_constants;
-const struct st_tracked_state st_update_pixel_transfer;
+extern const struct st_tracked_state st_update_framebuffer;
+extern const struct st_tracked_state st_update_clip;
+extern const struct st_tracked_state st_update_depth_stencil_alpha;
+extern const struct st_tracked_state st_update_shader;
+extern const struct st_tracked_state st_update_rasterizer;
+extern const struct st_tracked_state st_update_polygon_stipple;
+extern const struct st_tracked_state st_update_viewport;
+extern const struct st_tracked_state st_update_scissor;
+extern const struct st_tracked_state st_update_blend;
+extern const struct st_tracked_state st_update_sampler;
+extern const struct st_tracked_state st_update_texture;
+extern const struct st_tracked_state st_update_fs_constants;
+extern const struct st_tracked_state st_update_vs_constants;
+extern const struct st_tracked_state st_update_pixel_transfer;
 
 
 uint st_compare_func_to_pipe(GLenum func);

@@ -65,8 +65,6 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 
    fetch->vertex_size = vertex_size;
 
-   memset(&key, 0, sizeof(key));
-
    /* Always emit/leave space for a vertex header.
     *
     * It's worth considering whether the vertex headers should contain
@@ -110,8 +108,9 @@ void draw_pt_fetch_prepare( struct pt_fetch *fetch,
 
 
    if (!fetch->translate ||
-       memcmp(&fetch->translate->key, &key, sizeof(key)) != 0)
+       translate_key_compare(&fetch->translate->key, &key) != 0)
    {
+      translate_key_sanitize(&key);
       fetch->translate = translate_cache_find(fetch->cache, &key);
 
       {

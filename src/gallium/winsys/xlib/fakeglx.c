@@ -1689,6 +1689,15 @@ static void
 Fake_glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 {
    XMesaBuffer buffer = XMesaFindBuffer( dpy, drawable );
+   static boolean firsttime = 1, no_rast = 0;
+
+   if (firsttime) {
+      no_rast = getenv("SP_NO_RAST") != NULL;
+      firsttime = 0;
+   }
+
+   if (no_rast)
+      return;
 
    if (buffer) {
       XMesaSwapBuffers(buffer);

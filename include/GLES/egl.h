@@ -1,64 +1,24 @@
-#ifndef _EGL_H
-#define _EGL_H
+#ifndef __egl_h_
+#define __egl_h_
 
 /*
-** License Applicability. Except to the extent portions of this file are
-** made subject to an alternative license as permitted in the SGI Free
-** Software License B, Version 1.0 (the "License"), the contents of this
-** file are subject only to the provisions of the License. You may not use
-** this file except in compliance with the License. You may obtain a copy
-** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
-** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** Copyright 2002-2003 Promoters of the Khronos Group (3Dlabs, ARM Ltd.,
+** ATI Technologies, Inc., Discreet, Ericsson Mobile, Imagination
+** Technologies Group plc, Motorola, Inc., Nokia, Silicon Graphics, Inc.,
+** SK Telecom, and Sun Microsystems).
 **
-** http://oss.sgi.com/projects/FreeB
-**
-** Note that, as provided in the License, the Software is distributed on an
-** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
-** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
-** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
-** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-**
-** Original Code. The Original Code is: OpenGL Sample Implementation,
-** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
-** Inc. The Original Code is Copyright (c) 1991-2004 Silicon Graphics, Inc.
-** Copyright in any portions created by third parties is as indicated
-** elsewhere herein. All Rights Reserved.
-**
-** Additional Notice Provisions: The application programming interfaces
-** established by SGI in conjunction with the Original Code are The
-** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
-** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
-** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
-** Window System(R) (Version 1.3), released October 19, 1998. This software
-** was created using the OpenGL(R) version 1.2.1 Sample Implementation
-** published by SGI, but has not been independently verified as being
-** compliant with the OpenGL(R) version 1.2.1 Specification.
+** This document is protected by copyright, and contains information
+** proprietary to The Khronos Group. Any copying, adaptation, distribution,
+** public performance, or public display of this document without the
+** express written consent of the copyright holders is strictly prohibited.
+** The receipt or possession of this document does not convey any rights to
+** reproduce, disclose, or distribute its contents, or to manufacture, use,
+** or sell anything that it may describe, in whole or in part.
 */
 
-#if 0/*XXX TEMPORARY HACK*/
 #include <GLES/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <GLES/egltypes.h>
 
-/* XXX should go in eglext.h */
-#define GL_OES_VERSION_1_0  1
-#define GL_OES_read_format  1
-#define GL_OES_compressed_paletted_texture 1
-#define GL_IMPLEMENTATION_COLOR_READ_TYPE_OES 0x8B9A
-#define GL_IMPLEMENTATION_COLOR_READ_FORMAT_OES 0x8B9B
-#define GL_PALETTE4_RGB8_OES        0x8B90
-#define GL_PALETTE4_RGBA8_OES       0x8B91
-#define GL_PALETTE4_R5_G6_B5_OES    0x8B92
-#define GL_PALETTE4_RGBA4_OES       0x8B93
-#define GL_PALETTE4_RGB5_A1_OES     0x8B94
-#define GL_PALETTE8_RGB8_OES        0x8B95
-#define GL_PALETTE8_RGBA8_OES       0x8B96
-#define GL_PALETTE8_R5_G6_B5_OES    0x8B97
-#define GL_PALETTE8_RGBA4_OES       0x8B98
-#define GL_PALETTE8_RGB5_A1_OES     0x8B99
-/* XXX */
 
 /*
 ** Versioning and extensions
@@ -194,7 +154,7 @@ GLAPI EGLDisplay APIENTRY eglGetDisplay (NativeDisplayType display);
 GLAPI EGLBoolean APIENTRY eglInitialize (EGLDisplay dpy, EGLint *major, EGLint *minor);
 GLAPI EGLBoolean APIENTRY eglTerminate (EGLDisplay dpy);
 GLAPI const char * APIENTRY eglQueryString (EGLDisplay dpy, EGLint name);
-GLAPI void (* APIENTRY eglGetProcAddress (const char *procname))(void);
+GLAPI void (APIENTRY * eglGetProcAddress (const char *procname))();
 
 GLAPI EGLBoolean APIENTRY eglGetConfigs (EGLDisplay dpy, EGLConfig *configs, EGLint config_size, EGLint *num_config);
 GLAPI EGLBoolean APIENTRY eglChooseConfig (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config);
@@ -227,98 +187,79 @@ GLAPI EGLBoolean APIENTRY eglWaitNative (EGLint engine);
 GLAPI EGLBoolean APIENTRY eglSwapBuffers (EGLDisplay dpy, EGLSurface draw);
 GLAPI EGLBoolean APIENTRY eglCopyBuffers (EGLDisplay dpy, EGLSurface surface, NativePixmapType target);
 
-
-
-/* EGL_MESA_screen extension  >>> PRELIMINARY <<< */
-#ifndef EGL_MESA_screen_surface
-#define EGL_MESA_screen_surface 1
-
-#define EGL_BAD_SCREEN_MESA                    0x4000
-#define EGL_BAD_MODE_MESA                      0x4001
-#define EGL_SCREEN_COUNT_MESA                  0x4002
-#define EGL_SCREEN_POSITION_MESA               0x4003
-#define EGL_SCREEN_POSITION_GRANULARITY_MESA   0x4004
-#define EGL_MODE_ID_MESA                       0x4005
-#define EGL_REFRESH_RATE_MESA                  0x4006
-#define EGL_OPTIMAL_MESA                       0x4007
-#define EGL_INTERLACED_MESA                    0x4008
-#define EGL_SCREEN_BIT_MESA                    0x08
-
-GLAPI EGLBoolean APIENTRY eglChooseModeMESA(EGLDisplay dpy, EGLScreenMESA screen, const EGLint *attrib_list, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
-GLAPI EGLBoolean APIENTRY eglGetModesMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *modes, EGLint modes_size, EGLint *num_modes);
-GLAPI EGLBoolean APIENTRY eglGetModeAttribMESA(EGLDisplay dpy, EGLModeMESA mode, EGLint attribute, EGLint *value);
-GLAPI EGLBoolean APIENTRY eglGetScreensMESA(EGLDisplay dpy, EGLScreenMESA *screens, EGLint max_screens, EGLint *num_screens);
-GLAPI EGLSurface APIENTRY eglCreateScreenSurfaceMESA(EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list);
-GLAPI EGLBoolean APIENTRY eglShowScreenSurfaceMESA(EGLDisplay dpy, EGLint screen, EGLSurface surface, EGLModeMESA mode);
-GLAPI EGLBoolean APIENTRY eglScreenPositionMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint x, EGLint y);
-GLAPI EGLBoolean APIENTRY eglQueryScreenMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLint attribute, EGLint *value);
-GLAPI EGLBoolean APIENTRY eglQueryScreenSurfaceMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLSurface *surface);
-GLAPI EGLBoolean APIENTRY eglQueryScreenModeMESA(EGLDisplay dpy, EGLScreenMESA screen, EGLModeMESA *mode);
-GLAPI const char * APIENTRY eglQueryModeStringMESA(EGLDisplay dpy, EGLModeMESA mode);
-
-#endif /* EGL_MESA_screen_surface */
-
-
-#ifndef EGL_MESA_copy_context
-#define EGL_MESA_copy_context 1
-
-GLAPI EGLBoolean APIENTRY eglCopyContextMESA(EGLDisplay dpy, EGLContext source, EGLContext dest, EGLint mask);
-
-#endif /* EGL_MESA_copy_context */
-
-
-/* XXX this is preliminary! */
-#ifndef EGL_VERSION_1_2
-#define EGL_VERSION_1_2 1
-
-typedef int EGLenum;
-typedef int EGLClientBuffer;
-
-#define EGL_DISPLAY_SCALING		10000
-#define EGL_UNKNOWN			((EGLint)-1)
-
-#define EGL_OPENGL_ES_BIT               0x1
-#define EGL_OPENVG_BIT                  0x2
-
-#define EGL_OPENGL_ES_API               0x30A0
-#define EGL_OPENVG_API                  0x30A1
-
-#define EGL_LUMINANCE_SIZE		0x303D
-#define EGL_ALPHA_MASK_SIZE		0x303E
-#define EGL_COLOR_BUFFER_TYPE		0x303F
-#define EGL_RENDERABLE_TYPE		0x3040
-
-#define EGL_SINGLE_BUFFER		0x3085
-#define EGL_RENDER_BUFFER		0x3086
-#define EGL_COLORSPACE			0x3087
-#define EGL_ALPHA_FORMAT		0x3088
-#define EGL_COLORSPACE_sRGB		0x3089
-#define EGL_COLORSPACE_LINEAR		0x308A
-#define EGL_ALPHA_FORMAT_NONPRE		0x308B
-#define EGL_ALPHA_FORMAT_PRE		0x308C
-#define EGL_CLIENT_APIS			0x308D
-#define EGL_RGB_BUFFER			0x308E
-#define EGL_LUMINANCE_BUFFER		0x308F
-#define EGL_HORIZONTAL_RESOLUTION	0x3090
-#define EGL_VERTICAL_RESOLUTION		0x3091
-#define EGL_PIXEL_ASPECT_RATIO		0x3092
-#define EGL_SWAP_BEHAVIOR		0x3093
-#define EGL_BUFFER_PRESERVED		0x3094
-#define EGL_BUFFER_DESTROYED		0x3095
-#define EGL_OPENVG_IMAGE		0x3096
-#define EGL_CONTEXT_CLIENT_TYPE		0x3097
-
-GLAPI EGLBoolean APIENTRY eglBindAPI(EGLenum api);
-GLAPI EGLenum APIENTRY eglQueryAPI(void);
-GLAPI EGLBoolean APIENTRY eglWaitClient(void);
-GLAPI EGLBoolean APIENTRY eglReleaseThread(void);
-GLAPI EGLSurface APIENTRY eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer, EGLConfig config, const EGLint *attrib_list);
-
-#endif /* EGL_VERSION_1_2 */
-
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _EGL_H */
+#endif /* ___egl_h_ */
+
+
+
+/* usage
+
+	// ----------------------------------------------------------------------
+	// Initialization
+	// ----------------------------------------------------------------------
+
+    HDC hdc = GetDC(0);		// the screen or window device context, for example 
+
+	EGLDisplay display = eglGetDisplay(hdc);
+	
+	EGLint major, minor;
+
+	if (!eglInitialize(display, &major, &minor)) {
+		// could not initialize display
+	}
+
+    EGLConfig configs[10];
+	EGLint matchingConfigs;
+	EGLint attribList[] = { 0 };	// extend this
+
+	if (!eglChooseConfig(display, attribList, &configs, 10, &matchingConfigs)) {
+		// could not choose config
+	}
+
+	if (matchingConfigs < 1) {
+		// did not find a suitable configuration
+	}
+
+	EGLConfig config = configs[0];	// pick any
+
+	EGLSurface surface = eglCreatePbufferSurface(display, config, attribList);
+	
+	// test for error 
+
+	EGLContext context = eglCreateContext(display, config, 0, attribList);
+	
+	// test for error
+
+	// ----------------------------------------------------------------------
+	// Rendering Loop
+	// ----------------------------------------------------------------------
+
+	eglMakeCurrent(display, surface, surface, context);
+
+	// actual GL rendering goes here
+
+	eglWait();
+    eglSwapBuffers(display, surface);
+
+	// ----------------------------------------------------------------------
+	// Cleanup
+	// ----------------------------------------------------------------------
+
+
+	if (!eglDestoyContext(display, context)) {
+		// error deallocating context
+	}
+	
+	if (!eglDestroySurface(display, surface)) {
+		// error deallocating surface
+	}
+
+	if (!eglTerminate(display)) {
+		// error while cleaning up display
+	}
+
+	
+*/
