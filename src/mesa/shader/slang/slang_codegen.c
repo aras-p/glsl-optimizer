@@ -1090,7 +1090,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    slang_operation_copy(inlined, fun->body);
 
    /*** XXX review this */
-   assert(inlined->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE);
+   assert(inlined->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE);
    inlined->type = SLANG_OPER_BLOCK_NEW_SCOPE;
 
 #if 0
