@@ -173,6 +173,7 @@ std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
 
 void InstructionsSoa::createFunctionMap()
 {
+   m_functionsMap[TGSI_OPCODE_ABS]   = "abs";
    m_functionsMap[TGSI_OPCODE_DP3]   = "dp3";
    m_functionsMap[TGSI_OPCODE_DP4]   = "dp4";
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
@@ -180,9 +181,16 @@ void InstructionsSoa::createFunctionMap()
 
 void InstructionsSoa::createDependencies()
 {
-   std::vector<std::string> powDeps(1);
-   powDeps[0] = "powf";
-   m_builtinDependencies["pow"] = powDeps;
+   {
+      std::vector<std::string> powDeps(1);
+      powDeps[0] = "powf";
+      m_builtinDependencies["pow"] = powDeps;
+   }
+   {
+      std::vector<std::string> absDeps(1);
+      absDeps[0] = "fabsf";
+      m_builtinDependencies["abs"] = absDeps;
+   }
 }
 
 llvm::Function * InstructionsSoa::function(int op)
@@ -224,6 +232,13 @@ void InstructionsSoa::createBuiltins()
    std::cout<<"Builtins created at "<<m_builtins<<std::endl;
    assert(m_builtins);
    createDependencies();
+}
+
+
+std::vector<llvm::Value*> InstructionsSoa::abs(const std::vector<llvm::Value*> in1)
+{
+   llvm::Function *func = function(TGSI_OPCODE_ABS);
+   return callBuiltin(func, in1);
 }
 
 std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> in1,
@@ -418,3 +433,17 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
       m_functions[op] = func;
    }
 }
+
+std::vector<llvm::Value*> InstructionsSoa::sub(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   std::vector<llvm::Value*> res(4);
+
+   res[0] = m_builder.CreateSub(in1[0], in2[0], name("subx"));
+   res[1] = m_builder.CreateSub(in1[1], in2[1], name("suby"));
+   res[2] = m_builder.CreateSub(in1[2], in2[2], name("subz"));
+   res[3] = m_builder.CreateSub(in1[3], in2[3], name("subw"));
+
+   return res;
+}
+

@@ -33,6 +33,33 @@
   */
 typedef __attribute__(( ext_vector_type(4) )) float float4;
 
+
+extern float fabsf(float val);
+
+void abs(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
+{
+   res[0].x = fabsf(tmp0x.x);
+   res[0].y = fabsf(tmp0x.y);
+   res[0].z = fabsf(tmp0x.z);
+   res[0].w = fabsf(tmp0x.w);
+
+   res[1].x = fabsf(tmp0y.x);
+   res[1].y = fabsf(tmp0y.y);
+   res[1].z = fabsf(tmp0y.z);
+   res[1].w = fabsf(tmp0y.w);
+
+   res[2].x = fabsf(tmp0z.x);
+   res[2].y = fabsf(tmp0z.y);
+   res[2].z = fabsf(tmp0z.z);
+   res[2].w = fabsf(tmp0z.w);
+
+   res[3].x = fabsf(tmp0w.x);
+   res[3].y = fabsf(tmp0w.y);
+   res[3].z = fabsf(tmp0w.z);
+   res[3].w = fabsf(tmp0w.w);
+}
+
 void dp3(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
          float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
@@ -77,14 +104,3 @@ void pow(float4 *res,
    res[2] = p;
    res[3] = p;
 }
-
-#if 0
-void yo(float4 *out, float4 *in)
-{
-   float4 res[4];
-
-   dp3(res, in[0], in[1], in[2], in[3],
-       in[4], in[5], in[6], in[7]);
-   out[1] = res[1];
-}
-#endif

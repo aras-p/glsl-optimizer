@@ -740,6 +740,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_SUB: {
+      out = instr->sub(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_LERP: {
@@ -781,6 +782,7 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_MULTIPLYMATRIX:
       break;
    case TGSI_OPCODE_ABS: {
+      out = instr->abs(inputs[0]);
    }
       break;
    case TGSI_OPCODE_RCC:

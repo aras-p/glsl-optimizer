@@ -303,11 +303,11 @@ struct gallivm_prog * gallivm_ir_compile(struct gallivm_ir *ir)
 {
    struct gallivm_prog *prog =
       (struct gallivm_prog *)calloc(1, sizeof(struct gallivm_prog));
-   
+
    std::cout << "Before optimizations:"<<std::endl;
    ir->module->dump();
    std::cout<<"-------------------------------"<<std::endl;
-   
+
    PassManager veri;
    veri.add(createVerifierPass());
    veri.run(*ir->module);
@@ -315,7 +315,7 @@ struct gallivm_prog * gallivm_ir_compile(struct gallivm_ir *ir)
    prog->num_consts = ir->num_consts;
    memcpy(prog->interpolators, ir->interpolators, sizeof(prog->interpolators));
    prog->num_interp = ir->num_interp;
-   
+
    /* Run optimization passes over it */
    PassManager passes;
    passes.add(new TargetData(mod));
