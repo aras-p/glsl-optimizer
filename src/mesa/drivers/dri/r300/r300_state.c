@@ -2500,13 +2500,14 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		r300SetupPixelShader(rmesa);
 	r300SetupTextures(ctx);
 
-	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		r300SetupVertexProgram(rmesa);
-
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 		r500SetupRSUnit(ctx);
 	else
 		r300SetupRSUnit(ctx);
+
+	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		r300SetupVertexProgram(rmesa);
+
 }
 
 /**
