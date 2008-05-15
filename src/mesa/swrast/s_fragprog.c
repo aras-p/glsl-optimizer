@@ -64,7 +64,7 @@ fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
 static void
 fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
                    const GLfloat texdx[4], const GLfloat texdy[4],
-                   GLuint unit, GLfloat color[4] )
+                   GLfloat lodBias, GLuint unit, GLfloat color[4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
