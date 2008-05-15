@@ -184,7 +184,9 @@ struct draw_context
       struct gallivm_cpu_engine *engine;   
 
 
+      struct translate *fetch;
       struct translate_cache *fetch_cache;
+      struct translate *emit;
       struct translate_cache *emit_cache;
    } vs;
 

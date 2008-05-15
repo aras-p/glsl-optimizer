@@ -179,9 +179,11 @@ draw_create_vs_exec(struct draw_context *draw,
 
    tgsi_scan_shader(state->tokens, &vs->base.info);
 
+   vs->base.draw = draw;
    vs->base.prepare = vs_exec_prepare;
    vs->base.run_linear = vs_exec_run_linear;
    vs->base.delete = vs_exec_delete;
+   vs->base.create_varient = draw_vs_varient_generic;
    vs->machine = &draw->vs.machine;
 
    return &vs->base;

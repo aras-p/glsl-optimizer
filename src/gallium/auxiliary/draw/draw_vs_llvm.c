@@ -114,7 +114,9 @@ draw_create_vs_llvm(struct draw_context *draw,
 
    tgsi_scan_shader(vs->base.state.tokens, &vs->base.info);
 
+   vs->base.draw = draw;
    vs->base.prepare = vs_llvm_prepare;
+   vs->base.create_varient = draw_vs_varient_generic;
    vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
    vs->machine = &draw->machine;

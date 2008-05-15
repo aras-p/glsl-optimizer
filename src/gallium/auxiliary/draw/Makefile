@@ -26,7 +26,7 @@ C_SOURCES = \
 	draw_pt_emit.c \
 	draw_pt_fetch.c \
 	draw_pt_fetch_emit.c \
-	draw_pt_middle_fse.c \
+	draw_pt_fetch_shade_emit.c \
 	draw_pt_fetch_shade_pipeline.c \
 	draw_pt_post_vs.c \
         draw_pt_util.c \
@@ -34,6 +34,7 @@ C_SOURCES = \
 	draw_pt_vcache.c \
 	draw_vertex.c \
 	draw_vs.c \
+	draw_vs_varient.c \
 	draw_vs_exec.c \
 	draw_vs_llvm.c \
 	draw_vs_sse.c 

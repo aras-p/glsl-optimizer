@@ -155,6 +155,8 @@ draw_create_vs_sse(struct draw_context *draw,
 
    tgsi_scan_shader(templ->tokens, &vs->base.info);
 
+   vs->base.draw = draw;
+   vs->base.create_varient = draw_vs_varient_generic;
    vs->base.prepare = vs_sse_prepare;
    vs->base.run_linear = vs_sse_run_linear;
    vs->base.delete = vs_sse_delete;
