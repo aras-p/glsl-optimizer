@@ -229,11 +229,11 @@ static void emit_tex(struct r500_fragment_program *fp,
 	fp->inst[counter].inst0 = R500_INST_TYPE_TEX | mask
 		| R500_INST_TEX_SEM_WAIT;
 
-	fp->inst[counter].inst1 = fpi->TexSrcUnit
+	fp->inst[counter].inst1 = R500_TEX_ID(fpi->TexSrcUnit)
 		| R500_TEX_SEM_ACQUIRE | R500_TEX_IGNORE_UNCOVERED;
 	
 	if (fpi->TexSrcTarget == TEXTURE_RECT_INDEX)
-		fp->inst[counter].inst1 |= R500_TEX_UNSCALED;
+	        fp->inst[counter].inst1 |= R500_TEX_UNSCALED;
 
 	switch (opcode) {
 	case OPCODE_TEX:
