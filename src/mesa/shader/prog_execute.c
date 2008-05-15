@@ -1522,9 +1522,7 @@ _mesa_execute_program(GLcontext * ctx,
       default:
          _mesa_problem(ctx, "Bad opcode %d in _mesa_execute_program",
                        inst->Opcode);
-		       assert(0);
          return GL_TRUE;        /* return value doesn't matter */
-
       }
 
       numExec++;
