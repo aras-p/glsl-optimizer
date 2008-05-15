@@ -305,7 +305,7 @@ static void r300EmitClearState(GLcontext * ctx)
 
 		R300_STATECHANGE(r300, rr);
 		reg_start(R300_RS_INST_0, 0);
-		e32(R500_RS_INST_COL_CN_WRITE);
+		e32(R300_RS_INST_COL_CN_WRITE);
 	} else {
 	  
 		R300_STATECHANGE(r300, ri);
@@ -357,6 +357,10 @@ static void r300EmitClearState(GLcontext * ctx)
 		reg_start(R300_US_ALU_ALPHA_ADDR_0, 0);
 		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
 	} else {
+		R300_STATECHANGE(r300, fp);
+		reg_start(R500_US_PIXSIZE, 0);
+		e32(0x2);
+
 		R300_STATECHANGE(r300, r500fp);
 		r500fp_start_fragment(0, 6);
 
@@ -387,15 +391,15 @@ static void r300EmitClearState(GLcontext * ctx)
 		    R500_ALU_RGB_G_SWIZ_A_G |
 		    R500_ALU_RGB_B_SWIZ_A_B |
 		    R500_ALU_RGB_SEL_B_SRC0 |
-		    R500_ALU_RGB_R_SWIZ_B_1 |
-		    R500_ALU_RGB_B_SWIZ_B_1 |
-		    R500_ALU_RGB_G_SWIZ_B_1);
+		    R500_ALU_RGB_R_SWIZ_B_R |
+		    R500_ALU_RGB_B_SWIZ_B_G |
+		    R500_ALU_RGB_G_SWIZ_B_B);
 
-		e32(R500_ALPHA_OP_MAD |
+		e32(R500_ALPHA_OP_CMP |
 		    R500_ALPHA_SWIZ_A_A |
-		    R500_ALPHA_SWIZ_B_1);
+		    R500_ALPHA_SWIZ_B_A);
 
-		e32(R500_ALU_RGBA_OP_MAD |
+		e32(R500_ALU_RGBA_OP_CMP |
 		    R500_ALU_RGBA_R_SWIZ_0 |
 		    R500_ALU_RGBA_G_SWIZ_0 |
 		    R500_ALU_RGBA_B_SWIZ_0 |

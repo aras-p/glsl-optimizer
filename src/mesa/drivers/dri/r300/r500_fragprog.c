@@ -601,12 +601,11 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	}
 
 	/* Finish him! (If it's an ALU/OUT instruction...) */
-	if ((fp->inst[counter].inst0 & 0x3) ^ 0x2) {
-		fp->inst[counter].inst0 |= R500_INST_TYPE_OUT
+	if ((fp->inst[counter-1].inst0 & 0x3) <= 1) {
+		fp->inst[counter-1].inst0 |= R500_INST_TYPE_OUT
 			| R500_INST_TEX_SEM_WAIT | R500_INST_LAST;
 	} else {
 		/* We still need to put an output inst, right? */
-		counter++;
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
 			| R500_INST_TEX_SEM_WAIT | R500_INST_LAST
 			| R500_INST_RGB_OMASK_R | R500_INST_RGB_OMASK_G
@@ -625,6 +624,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			| R500_ALU_RGBA_ADDRD(0)
 			| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
 			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+		counter++;
 	}
 
 	fp->cs->nrslots = counter;
