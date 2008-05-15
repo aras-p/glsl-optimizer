@@ -38,7 +38,6 @@
 #include <llvm/Instructions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/ParameterAttributes.h>
-//#include <llvm/ParamAttrsList.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 
@@ -193,9 +192,13 @@ llvm::Function * InstructionsSoa::function(int op)
 
     std::string name = m_functionsMap[op];
 
+    std::cout <<"For op = "<<op<<", func is '"<<name<<"'"<<std::endl;
+
     std::vector<std::string> deps = m_builtinDependencies[name];
     for (unsigned int i = 0; i < deps.size(); ++i) {
-       injectFunction(m_builtins->getFunction(deps[i]));
+       llvm::Function *func = m_builtins->getFunction(deps[i]);
+       std::cout <<"\tinjecting dep = '"<<func->getName()<<"'"<<std::endl;
+       injectFunction(func);
     }
 
     llvm::Function *originalFunc = m_builtins->getFunction(name);
@@ -216,8 +219,10 @@ void InstructionsSoa::createBuiltins()
 {
    MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
       (const char*)&soabuiltins_data[0],
-      (const char*)&soabuiltins_data[Elements(soabuiltins_data)-1]);
+      (const char*)&soabuiltins_data[Elements(soabuiltins_data)]);
    m_builtins = ParseBitcodeFile(buffer);
+   std::cout<<"Builtins created at "<<m_builtins<<std::endl;
+   assert(m_builtins);
    createDependencies();
 }
 
@@ -388,7 +393,6 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
    }
    llvm::Function *func = 0;
    if (originalFunc->isDeclaration()) {
-      std::cout << "function decleration" <<std::endl;
       func = Function::Create(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
                               originalFunc->getName(), currentModule());
       func->setCallingConv(CallingConv::C);
@@ -398,17 +402,17 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
    } else {
       DenseMap<const Value*, Value *> val;
       val[m_builtins->getFunction("powf")] = currentModule()->getFunction("powf");
+      func = CloneFunction(originalFunc, val);
+#if 0
       std::cout <<" replacing "<<m_builtins->getFunction("powf")
                 <<", with " <<currentModule()->getFunction("powf")<<std::endl;
-      func = CloneFunction(originalFunc, val);
       std::cout<<"1111-------------------------------"<<std::endl;
       checkFunction(originalFunc);
       std::cout<<"2222-------------------------------"<<std::endl;
       checkFunction(func);
       std::cout <<"XXXX = " <<val[m_builtins->getFunction("powf")]<<std::endl;
+#endif
       currentModule()->getFunctionList().push_back(func);
-      std::cout << "Func parent is "<<func->getParent()
-                <<", cur is "<<currentModule() <<std::endl;
    }
    if (op != TGSI_OPCODE_LAST) {
       m_functions[op] = func;

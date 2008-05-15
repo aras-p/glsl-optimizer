@@ -288,10 +288,7 @@ void gallivm_ir_fill_from_tgsi(struct gallivm_ir *ir,
    std::cout << "Creating llvm from: " <<std::endl;
    tgsi_dump(tokens, 0);
 
-
    llvm::Module *mod = tgsi_to_llvmir(ir, tokens);
-
-   //llvm::Module *mod = tgsi_to_llvm(ir, tokens);
    ir->module = mod;
    gallivm_ir_dump(ir, 0);
 }
