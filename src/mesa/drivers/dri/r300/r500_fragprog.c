@@ -371,7 +371,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
-	int flags, pixel_mask = 0, output_mask = 0, counter = 0;
+	int flags, pixel_mask = 0, output_mask = 0, counter = 0, temp_pixel_mask = 0;
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("The program is empty!\n");
@@ -652,6 +652,56 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
+#if 0
+			case OPCODE_SCS:
+				/* Do a cosine, then a sine, masking out the channels we want to protect. */
+				src[0] = make_src(fp, fpi->SrcReg[0]);
+				/* Cosine only goes in R (x) channel. */
+				temp_pixel_mask = 0x1 << 11;
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
+					| R500_INST_TEX_SEM_WAIT | temp_pixel_mask;
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
+				fp->inst[counter].inst4 = R500_ALPHA_OP_COS
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
+					| R500_ALU_RGBA_ADDRD(dest);
+				counter++;
+				/* Sine only goes in G (y) channel. */
+				temp_pixel_mask = 0x2 << 11;
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | temp_pixel_mask;
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
+				fp->inst[counter].inst4 = R500_ALPHA_OP_SIN
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
+					| R500_ALU_RGBA_ADDRD(dest);
+				counter++;
+				/* Put 0 into B,A (z,w) channels. */
+				temp_pixel_mask = 0xC << 11;
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | temp_pixel_mask;
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ZERO)
+					| R500_ALU_RGB_SEL_B_SRC0
+					| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ZERO);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZ_ZERO)
+					| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(R500_SWIZ_ZERO);
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
+					| R500_ALU_RGBA_ADDRD(dest)
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+				break;
+#endif
 			case OPCODE_SIN:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
