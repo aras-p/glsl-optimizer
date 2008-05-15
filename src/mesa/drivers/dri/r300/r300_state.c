@@ -1716,7 +1716,6 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		  else
 		    count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
 		  
-		  swiz = 0;
 		  /* always have a least 2 tex coords */
 		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
 		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
@@ -1731,8 +1730,12 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		  else
 		    swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
 		  
-		  
-		}
+		} else
+		   swiz = (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+		          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+		          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+		          (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT);
+
 		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | swiz;
 
 		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;

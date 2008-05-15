@@ -297,6 +297,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	int size, mtu;
 	int has_tcl = 1;
 	int is_r500 = 0;
+	int i;
 
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
@@ -396,6 +397,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	if (is_r500) {
 		ALLOC_STATE(ri, always, R500_RI_CMDSIZE, 0);
 		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R500_RS_IP_0, 16);
+		for (i = 0; i < 8; i++) {
+			r300->hw.ri.cmd[R300_RI_CMD_0 + i +1] = 
+			  (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+                          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+                          (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+                          (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT);
+		}
 		ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
 		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R500_RS_INST_0, 1);
 	} else {
