@@ -1569,7 +1569,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 
 		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | rs_tex_count;
 		switch(count) {
-		case 4:swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3); break;
+		case 4: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3); break;
 		case 3: swiz = R300_RS_SEL_S(0) | R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(R300_RS_SEL_K1); break;
 		default:
 		case 1:
@@ -1648,7 +1648,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	struct vertex_buffer *VB = &tnl->vb;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
-	int rs_tex_count = 0, rs_col_count = 0;
+	int rs_col_count = 0;
 	int in_texcoords, col_interp_nr;
 	int i, count;
 
@@ -1706,7 +1706,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	}
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		GLuint swiz;
+		GLuint swiz = 0;
 
 		/* with TCL we always seem to route 4 components */
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
@@ -1717,21 +1717,23 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		    count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
 		  
 		  swiz = 0;
+		  /* always have a least 2 tex coords */
+		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
+		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
+
+		  if (count >= 3)
+		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_R_SHIFT;
+		  else
+		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
+
 		  if (count == 4) 
 		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_Q_SHIFT;
 		  else
 		    swiz |= R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT;
 		  
-		  if (count >= 3)
-		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_R_SHIFT;
-		  else
-		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT;
 		  
-		  /* always have a least 2 tex coords */
-		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
-		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
 		}
-		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | rs_tex_count | swiz;
+		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = interp_col[i] | swiz;
 
 		r300->hw.rr.cmd[R300_RR_INST_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
@@ -1778,7 +1780,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		col_interp_nr++;
 	}
 
-	r300->hw.rc.cmd[1] = 0 | (rs_tex_count << R300_IT_COUNT_SHIFT)
+	r300->hw.rc.cmd[1] = 0 | (in_texcoords << R300_IT_COUNT_SHIFT)
 	  | (col_interp_nr << R300_IC_COUNT_SHIFT)
 	  | R300_HIRES_EN;
 
@@ -2447,7 +2449,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	GLcontext *ctx = rmesa->radeon.glCtx;
 	struct r500_fragment_program *fp = (struct r500_fragment_program *)
 	    (char *)ctx->FragmentProgram._Current;
-	int i, k;
+	int i;
 
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
