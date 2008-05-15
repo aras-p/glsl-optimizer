@@ -1,4 +1,3 @@
-/*clang --emit-llvm llvm_builtins.c |llvm-as|opt -std-compile-opts|llvm2cpp -gen-contents -o=gallivm_builtins.cpp -f -for=shader -funcname=createGallivmBuiltins*/
 /**************************************************************************
  *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
