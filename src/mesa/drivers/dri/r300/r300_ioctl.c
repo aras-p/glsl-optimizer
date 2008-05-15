@@ -358,40 +358,7 @@ static void r300EmitClearState(GLcontext * ctx)
 		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
 	} else {
 		R300_STATECHANGE(r300, r500fp);
-		r500fp_start_fragment(0, 12);
-
-		e32((R500_INST_TYPE_TEX |
-		     R500_INST_TEX_SEM_WAIT |
-		     R500_INST_RGB_WMASK_R |
-		     R500_INST_RGB_WMASK_G |
-		     R500_INST_RGB_WMASK_B |
-		     R500_INST_ALPHA_WMASK |
-		     R500_INST_RGB_CLAMP |
-		     R500_INST_ALPHA_CLAMP));
-		e32(R500_TEX_ID(0) |
-		    R500_TEX_INST_LD |
-		    R500_TEX_SEM_ACQUIRE |
-		    R500_TEX_IGNORE_UNCOVERED);
-		e32(R500_TEX_SRC_ADDR(0) |
-		    R500_TEX_SRC_S_SWIZ_R |
-		    R500_TEX_SRC_T_SWIZ_G |
-		    R500_TEX_DST_ADDR(0) |
-		    R500_TEX_DST_R_SWIZ_R |
-		    R500_TEX_DST_G_SWIZ_G |
-		    R500_TEX_DST_B_SWIZ_B |
-		    R500_TEX_DST_A_SWIZ_A);
-		e32(R500_DX_ADDR(0) |
-		    R500_DX_S_SWIZ_R |
-		    R500_DX_T_SWIZ_R |
-		    R500_DX_R_SWIZ_R |
-		    R500_DX_Q_SWIZ_R |
-		    R500_DY_ADDR(0) |
-		    R500_DY_S_SWIZ_R |
-		    R500_DY_T_SWIZ_R |
-		    R500_DY_R_SWIZ_R |
-		    R500_DY_Q_SWIZ_R);
-		e32(0x0);
-		e32(0x0);
+		r500fp_start_fragment(0, 6);
 
 		e32(R500_INST_TYPE_OUT |
 		    R500_INST_TEX_SEM_WAIT |
