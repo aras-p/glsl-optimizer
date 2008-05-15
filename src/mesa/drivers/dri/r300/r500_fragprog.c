@@ -509,7 +509,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_MAX:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				src[1] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | pixel_mask;
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
@@ -526,7 +526,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_MIN:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				src[1] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | pixel_mask;
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
