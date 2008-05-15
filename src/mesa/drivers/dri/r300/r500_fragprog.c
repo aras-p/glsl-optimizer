@@ -418,6 +418,30 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ALPHA_SEL_C_SRC1
 					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[1]));
 				break;
+		        case OPCODE_CMP:
+				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
+				src[2] = make_src(fp, fpi->SrcReg[2]);
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
+					| mask;
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(src[2]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1]) | R500_ALPHA_ADDR2(src[2]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]))
+					| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[1]));
+				fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
+					| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
+					| R500_ALU_RGBA_ADDRD(dest)
+					| R500_ALU_RGBA_SEL_C_SRC2
+					| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[2]))
+					| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
+					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[2]));
+				break;
 			case OPCODE_DP3:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
