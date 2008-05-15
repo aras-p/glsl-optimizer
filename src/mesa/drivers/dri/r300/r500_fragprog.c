@@ -371,7 +371,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
-	int flags, pixel_mask, output_mask, counter = 0;
+	int flags, pixel_mask = 0, output_mask = 0, counter = 0;
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("The program is empty!\n");
@@ -544,8 +544,6 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			case OPCODE_MOV:
 				emit_mov(fp, counter, fpi->SrcReg[0], dest);
 				fp->inst[counter].inst0 |= pixel_mask;
-				fprintf(stderr,"wm is %x\n", pixel_mask);
-
 				break;
 			case OPCODE_MUL:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
