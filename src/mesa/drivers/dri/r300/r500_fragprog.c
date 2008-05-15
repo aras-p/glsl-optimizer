@@ -741,6 +741,10 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[1]))
 					| R500_ALU_RGBA_ALPHA_MOD_C_NEG;
 				break;
+			case OPCODE_SWZ:
+				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				fp->inst[counter].inst0 |= pixel_mask;
+				break;
 			case OPCODE_TEX:
 				emit_tex(fp, fpi, OPCODE_TEX, dest, counter);
 				break;
