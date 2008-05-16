@@ -75,21 +75,8 @@ void
 _mesa_clear_shader_program_data(GLcontext *ctx,
                                 struct gl_shader_program *shProg)
 {
-   if (shProg->VertexProgram) {
-      /* Set ptr to NULL since the param list is shared with the
-       * original/unlinked program.
-       */
-      shProg->VertexProgram->Base.Parameters = NULL;
-      _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
-   }
-
-   if (shProg->FragmentProgram) {
-      /* Set ptr to NULL since the param list is shared with the
-       * original/unlinked program.
-       */
-      shProg->FragmentProgram->Base.Parameters = NULL;
-      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
-   }
+   _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
+   _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
 
    if (shProg->Uniforms) {
       _mesa_free_uniform_list(shProg->Uniforms);
@@ -176,8 +163,10 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
       ASSERT(old->RefCount > 0);
       old->RefCount--;
-      /*printf("SHPROG DECR %p (%d) to %d\n",
-        (void*) old, old->Name, old->RefCount);*/
+#if 0
+      printf("ShaderProgram %p ID=%u  RefCount-- to %d\n",
+             (void *) old, old->Name, old->RefCount);
+#endif
       deleteFlag = (old->RefCount == 0);
 
       if (deleteFlag) {
@@ -191,8 +180,10 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
    if (shProg) {
       shProg->RefCount++;
-      /*printf("SHPROG INCR %p (%d) to %d\n",
-        (void*) shProg, shProg->Name, shProg->RefCount);*/
+#if 0
+      printf("ShaderProgram %p ID=%u  RefCount++ to %d\n",
+             (void *) shProg, shProg->Name, shProg->RefCount);
+#endif
       *ptr = shProg;
    }
 }
