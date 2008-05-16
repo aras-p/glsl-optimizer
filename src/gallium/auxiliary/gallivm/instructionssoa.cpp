@@ -176,20 +176,33 @@ void InstructionsSoa::createFunctionMap()
    m_functionsMap[TGSI_OPCODE_ABS]   = "abs";
    m_functionsMap[TGSI_OPCODE_DP3]   = "dp3";
    m_functionsMap[TGSI_OPCODE_DP4]   = "dp4";
+   m_functionsMap[TGSI_OPCODE_MIN]   = "min";
+   m_functionsMap[TGSI_OPCODE_MAX]   = "max";
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
 }
 
 void InstructionsSoa::createDependencies()
 {
    {
-      std::vector<std::string> powDeps(1);
+      std::vector<std::string> powDeps(2);
       powDeps[0] = "powf";
+      powDeps[1] = "powvec";
       m_builtinDependencies["pow"] = powDeps;
    }
    {
       std::vector<std::string> absDeps(1);
       absDeps[0] = "fabsf";
       m_builtinDependencies["abs"] = absDeps;
+   }
+   {
+      std::vector<std::string> maxDeps(1);
+      maxDeps[0] = "maxvec";
+      m_builtinDependencies["max"] = maxDeps;
+   }
+   {
+      std::vector<std::string> minDeps(1);
+      minDeps[0] = "minvec";
+      m_builtinDependencies["min"] = minDeps;
    }
 }
 
@@ -371,6 +384,21 @@ std::vector<llvm::Value*> InstructionsSoa::pow(const std::vector<llvm::Value*> i
                                                const std::vector<llvm::Value*> in2)
 {
    llvm::Function *func = function(TGSI_OPCODE_POWER);
+   return callBuiltin(func, in1, in2);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::min(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_MIN);
+   return callBuiltin(func, in1, in2);
+}
+
+
+std::vector<llvm::Value*> InstructionsSoa::max(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_MAX);
    return callBuiltin(func, in1, in2);
 }
 

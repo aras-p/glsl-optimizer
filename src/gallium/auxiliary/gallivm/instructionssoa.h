@@ -59,6 +59,10 @@ public:
    std::vector<llvm::Value*> madd(const std::vector<llvm::Value*> in1,
                                   const std::vector<llvm::Value*> in2,
                                   const std::vector<llvm::Value*> in3);
+   std::vector<llvm::Value*> max(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> min(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> mul(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> pow(const std::vector<llvm::Value*> in1,
