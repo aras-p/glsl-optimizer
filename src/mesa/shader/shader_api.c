@@ -361,54 +361,6 @@ copy_string(GLchar *dst, GLsizei maxLength, GLsizei *length, const GLchar *src)
 
 
 /**
- * Return size (in floats) of the given GLSL type.
- * See also _slang_sizeof_type_specifier().
- */
-static GLint
-sizeof_glsl_type(GLenum type)
-{
-   switch (type) {
-   case GL_BOOL:
-   case GL_FLOAT:
-   case GL_INT:
-      return 1;
-   case GL_BOOL_VEC2:
-   case GL_FLOAT_VEC2:
-   case GL_INT_VEC2:
-      return 2;
-   case GL_BOOL_VEC3:
-   case GL_FLOAT_VEC3:
-   case GL_INT_VEC3:
-      return 3;
-   case GL_BOOL_VEC4:
-   case GL_FLOAT_VEC4:
-   case GL_INT_VEC4:
-      return 4;
-   case GL_FLOAT_MAT2:
-      return 8;  /* 2 rows of 4, actually */
-   case GL_FLOAT_MAT3:
-      return 12;  /* 3 rows of 4, actually */
-   case GL_FLOAT_MAT4:
-      return 16;
-   case GL_FLOAT_MAT2x3:
-      return 8;   /* 2 rows of 4, actually */
-   case GL_FLOAT_MAT2x4:
-      return 8;
-   case GL_FLOAT_MAT3x2:
-      return 12;  /* 3 rows of 4, actually */
-   case GL_FLOAT_MAT3x4:
-      return 12;
-   case GL_FLOAT_MAT4x2:
-      return 16;  /* 4 rows of 4, actually */
-   case GL_FLOAT_MAT4x3:
-      return 16;  /* 4 rows of 4, actually */
-   default:
-      return 0; /* error */
-   }
-}
-
-
-/**
  * Called via ctx->Driver.AttachShader()
  */
 void
@@ -449,6 +401,37 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    shProg->Shaders[n] = NULL; /* since realloc() didn't zero the new space */
    _mesa_reference_shader(ctx, &shProg->Shaders[n], sh);
    shProg->NumShaders++;
+}
+
+
+GLint
+_mesa_get_attrib_location(GLcontext *ctx, GLuint program,
+                          const GLchar *name)
+{
+   struct gl_shader_program *shProg
+      = _mesa_lookup_shader_program(ctx, program);
+
+   if (!shProg) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
+      return -1;
+   }
+
+   if (!shProg->LinkStatus) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGetAttribLocation(program not linked)");
+      return -1;
+   }
+
+   if (!name)
+      return -1;
+
+   if (shProg->Attributes) {
+      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
+      if (i >= 0) {
+         return shProg->Attributes->Parameters[i].StateIndexes[0];
+      }
+   }
+   return -1;
 }
 
 
@@ -686,7 +669,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   struct gl_shader_program *shProg
+   const struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    const struct gl_program *prog;
    GLint progPos;
@@ -746,37 +729,6 @@ _mesa_get_attached_shaders(GLcontext *ctx, GLuint program, GLsizei maxCount,
    else {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttachedShaders");
    }
-}
-
-
-GLint
-_mesa_get_attrib_location(GLcontext *ctx, GLuint program,
-                          const GLchar *name)
-{
-   struct gl_shader_program *shProg
-      = _mesa_lookup_shader_program(ctx, program);
-
-   if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetAttribLocation");
-      return -1;
-   }
-
-   if (!shProg->LinkStatus) {
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glGetAttribLocation(program not linked)");
-      return -1;
-   }
-
-   if (!name)
-      return -1;
-
-   if (shProg->Attributes) {
-      GLint i = _mesa_lookup_parameter_index(shProg->Attributes, -1, name);
-      if (i >= 0) {
-         return shProg->Attributes->Parameters[i].StateIndexes[0];
-      }
-   }
-   return -1;
 }
 
 
