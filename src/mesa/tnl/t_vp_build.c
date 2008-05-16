@@ -1575,6 +1575,9 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
       } else {
 	 FREE(key);
       }
+      else {
+         FREE(key);
+      }
 
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, newProg);
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._Current, newProg);
