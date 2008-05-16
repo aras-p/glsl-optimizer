@@ -1572,11 +1572,9 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
 	 cache_item(ctx, tnl->vp_cache, hash, key, newProg);
 
          _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, newProg);
-      } else {
-	 FREE(key);
       }
       else {
-         FREE(key);
+	 FREE(key);
       }
 
       _mesa_reference_vertprog(ctx, &ctx->VertexProgram._TnlProgram, newProg);
