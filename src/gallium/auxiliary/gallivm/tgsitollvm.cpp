@@ -699,6 +699,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_RSQ: {
+      out = instr->rsq(inputs[0]);
    }
       break;
    case TGSI_OPCODE_EXP:

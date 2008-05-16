@@ -180,6 +180,7 @@ void InstructionsSoa::createFunctionMap()
    m_functionsMap[TGSI_OPCODE_MAX]   = "max";
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
    m_functionsMap[TGSI_OPCODE_LIT]   = "lit";
+   m_functionsMap[TGSI_OPCODE_RSQ]   = "rsq";
 }
 
 void InstructionsSoa::createDependencies()
@@ -191,8 +192,9 @@ void InstructionsSoa::createDependencies()
       m_builtinDependencies["pow"] = powDeps;
    }
    {
-      std::vector<std::string> absDeps(1);
+      std::vector<std::string> absDeps(2);
       absDeps[0] = "fabsf";
+      absDeps[1] = "absvec";
       m_builtinDependencies["abs"] = absDeps;
    }
    {
@@ -212,6 +214,14 @@ void InstructionsSoa::createDependencies()
       litDeps[2] = "powf";
       litDeps[3] = "powvec";
       m_builtinDependencies["lit"] = litDeps;
+   }
+   {
+      std::vector<std::string> rsqDeps(4);
+      rsqDeps[0] = "sqrtf";
+      rsqDeps[1] = "sqrtvec";
+      rsqDeps[2] = "fabsf";
+      rsqDeps[3] = "absvec";
+      m_builtinDependencies["rsq"] = rsqDeps;
    }
 }
 
@@ -453,7 +463,9 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
       currentModule()->dump();
    } else {
       DenseMap<const Value*, Value *> val;
+      val[m_builtins->getFunction("fabsf")] = currentModule()->getFunction("fabsf");
       val[m_builtins->getFunction("powf")] = currentModule()->getFunction("powf");
+      val[m_builtins->getFunction("sqrtf")] = currentModule()->getFunction("sqrtf");
       func = CloneFunction(originalFunc, val);
 #if 0
       std::cout <<" replacing "<<m_builtins->getFunction("powf")
@@ -487,6 +499,12 @@ std::vector<llvm::Value*> InstructionsSoa::sub(const std::vector<llvm::Value*> i
 std::vector<llvm::Value*> InstructionsSoa::lit(const std::vector<llvm::Value*> in)
 {
    llvm::Function *func = function(TGSI_OPCODE_LIT);
+   return callBuiltin(func, in);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::rsq(const std::vector<llvm::Value*> in)
+{
+   llvm::Function *func = function(TGSI_OPCODE_RSQ);
    return callBuiltin(func, in);
 }
 

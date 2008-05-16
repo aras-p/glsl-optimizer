@@ -36,28 +36,24 @@ typedef __attribute__(( ext_vector_type(4) )) float float4;
 
 extern float fabsf(float val);
 
+float4 absvec(float4 vec)
+{
+   float4 res;
+   res.x = fabsf(vec.x);
+   res.y = fabsf(vec.y);
+   res.z = fabsf(vec.z);
+   res.w = fabsf(vec.w);
+
+   return res;
+}
+
 void abs(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
 {
-   res[0].x = fabsf(tmp0x.x);
-   res[0].y = fabsf(tmp0x.y);
-   res[0].z = fabsf(tmp0x.z);
-   res[0].w = fabsf(tmp0x.w);
-
-   res[1].x = fabsf(tmp0y.x);
-   res[1].y = fabsf(tmp0y.y);
-   res[1].z = fabsf(tmp0y.z);
-   res[1].w = fabsf(tmp0y.w);
-
-   res[2].x = fabsf(tmp0z.x);
-   res[2].y = fabsf(tmp0z.y);
-   res[2].z = fabsf(tmp0z.z);
-   res[2].w = fabsf(tmp0z.w);
-
-   res[3].x = fabsf(tmp0w.x);
-   res[3].y = fabsf(tmp0w.y);
-   res[3].z = fabsf(tmp0w.z);
-   res[3].w = fabsf(tmp0w.w);
+   res[0] = absvec(tmp0x);
+   res[1] = absvec(tmp0y);
+   res[2] = absvec(tmp0z);
+   res[3] = absvec(tmp0w);
 }
 
 void dp3(float4 *res,
@@ -88,6 +84,7 @@ void dp4(float4 *res,
 }
 
 extern float powf(float num, float p);
+extern float sqrtf(float x);
 
 float4 powvec(float4 vec, float4 q)
 {
@@ -167,4 +164,25 @@ void lit(float4 *res,
       res[2] = zerovec;
    }
    res[3] = (float4){1.0, 1.0, 1.0, 1.0};
+}
+
+
+float4 sqrtvec(float4 vec)
+{
+   float4 p;
+   p.x = sqrtf(vec.x);
+   p.y = sqrtf(vec.y);
+   p.z = sqrtf(vec.z);
+   p.w = sqrtf(vec.w);
+   return p;
+}
+
+void rsq(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
+{
+   const float4 onevec = (float4) {1., 1., 1., 1.};
+   res[0] = onevec/sqrtvec(absvec(tmp0x));
+   res[1] = res[0];
+   res[2] = res[0];
+   res[3] = res[0];
 }
