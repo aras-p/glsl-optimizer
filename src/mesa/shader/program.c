@@ -73,7 +73,6 @@ _mesa_init_program(GLcontext *ctx)
    _mesa_reference_fragprog(ctx, &ctx->FragmentProgram.Current,
                             ctx->Shared->DefaultFragmentProgram);
    assert(ctx->FragmentProgram.Current);
-   ctx->FragmentProgram.Current->Base.RefCount++;
 #endif
 
    /* XXX probably move this stuff */
