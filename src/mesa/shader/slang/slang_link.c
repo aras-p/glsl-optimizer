@@ -406,20 +406,20 @@ _slang_link(GLcontext *ctx,
     * Make copies of the vertex/fragment programs now since we'll be
     * changing src/dst registers after merging the uniforms and varying vars.
     */
+   _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
    if (vertProg) {
-      _mesa_reference_vertprog(ctx, &shProg->VertexProgram,
-                               vertex_program(_mesa_clone_program(ctx, &vertProg->Base)));
-   }
-   else {
-      _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
+      struct gl_vertex_program *linked_vprog =
+         vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
+      shProg->VertexProgram = linked_vprog; /* refcount OK */
+      ASSERT(shProg->VertexProgram->Base.RefCount == 1);
    }
 
+   _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
    if (fragProg) {
-      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram,
-                               fragment_program(_mesa_clone_program(ctx, &fragProg->Base)));
-   }
-   else {
-      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
+      struct gl_fragment_program *linked_fprog = 
+         fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
+      shProg->FragmentProgram = linked_fprog; /* refcount OK */
+      ASSERT(shProg->FragmentProgram->Base.RefCount == 1);
    }
 
    /* link varying vars */
@@ -435,18 +435,6 @@ _slang_link(GLcontext *ctx,
       link_uniform_vars(shProg, &shProg->FragmentProgram->Base, &numSamplers);
 
    /*_mesa_print_uniforms(shProg->Uniforms);*/
-
-   if (shProg->VertexProgram) {
-      /* Rather than cloning the parameter list here, just share it.
-       * We need to be careful _mesa_clear_shader_program_data() in
-       * to avoid double-freeing.
-       */
-      shProg->VertexProgram->Base.Parameters = vertProg->Base.Parameters;
-   }
-   if (shProg->FragmentProgram) {
-      /* see comment just above */
-      shProg->FragmentProgram->Base.Parameters = fragProg->Base.Parameters;
-   }
 
    if (shProg->VertexProgram) {
       if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
