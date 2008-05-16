@@ -747,6 +747,11 @@ void
 st_destroy_bitmap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
+   struct pipe_screen *screen = pipe->screen;
+   struct bitmap_cache *cache = st->bitmap.cache;
+
+   screen->surface_unmap(screen, cache->surf);
+   screen->tex_surface_release(screen, &cache->surf);
 
 #if 0
    if (st->bitmap.combined_prog) {
