@@ -146,7 +146,7 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
 	 
 	 assert(arrays[attr].BufferObj->Name);
 
-	 data += node->attrsz[attr] * sizeof(GLfloat);
+	 data += node->attrsz[src] * sizeof(GLfloat);
       }
    }
 }
