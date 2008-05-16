@@ -182,7 +182,7 @@ void rsq(float4 *res,
 {
    const float4 onevec = (float4) {1., 1., 1., 1.};
    res[0] = onevec/sqrtvec(absvec(tmp0x));
-   res[1] = res[0];
-   res[2] = res[0];
-   res[3] = res[0];
+   res[1] = onevec/sqrtvec(absvec(tmp0y));
+   res[2] = onevec/sqrtvec(absvec(tmp0z));
+   res[3] = onevec/sqrtvec(absvec(tmp0w));
 }
