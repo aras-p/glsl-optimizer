@@ -942,7 +942,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    if (shProg) {
       if (location < shProg->Uniforms->NumUniforms) {
          GLint progPos, i;
-         const struct gl_program *prog;
+         const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
          if (progPos >= 0) {
@@ -955,8 +955,11 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
             }
          }
 
-         for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
-            params[i] = prog->Parameters->ParameterValues[progPos][i];
+         ASSERT(prog);
+         if (prog) {
+            for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
+               params[i] = prog->Parameters->ParameterValues[progPos][i];
+            }
          }
       }
       else {
