@@ -147,17 +147,16 @@ void max(float4 *res,
 void lit(float4 *res,
          float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
 {
-   const float4 zerovec = (float4) {0, 0, 0, 0};
+   const float4 zerovec = (float4) {0.0, 0.0, 0.0, 0.0};
    const float4 min128 = (float4) {-128.f, -128.f, -128.f, -128.f};
    const float4 plus128 = (float4) {128.f,  128.f,  128.f,  128.f};
 
    res[0] = (float4){1.0, 1.0, 1.0, 1.0};
    if (tmp0x.x > 0) {
-      float4 tmpx = maxvec(tmpx, zerovec);
       float4 tmpy = maxvec(tmp0y, zerovec);
       float4 tmpw = minvec(tmp0w, plus128);
       tmpw = maxvec(tmpw, min128);
-      res[1] = tmpx;
+      res[1] = tmp0x;
       res[2] = powvec(tmpy, tmpw);
    } else {
       res[1] = zerovec;
