@@ -369,7 +369,7 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
-   const GLuint n = shProg->NumShaders;
+   GLuint n;
    GLuint i;
 
    if (!shProg || !sh) {
@@ -377,6 +377,8 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
                   "glAttachShader(bad program or shader name)");
       return;
    }
+
+   n = shProg->NumShaders;
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i] == sh) {
@@ -570,7 +572,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   const GLuint n = shProg->NumShaders;
+   GLuint n;
    GLuint i, j;
 
    if (!shProg) {
@@ -578,6 +580,8 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
                   "glDetachShader(bad program or shader name)");
       return;
    }
+
+   n = shProg->NumShaders;
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i]->Name == shader) {
@@ -890,7 +894,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    if (shProg) {
       if (location < shProg->Uniforms->NumUniforms) {
          GLint progPos, i;
-         const struct gl_program *prog;
+         const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
          if (progPos >= 0) {
@@ -903,8 +907,11 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
             }
          }
 
-         for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
-            params[i] = prog->Parameters->ParameterValues[progPos][i];
+         ASSERT(prog);
+         if (prog) {
+            for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
+               params[i] = prog->Parameters->ParameterValues[progPos][i];
+            }
          }
       }
       else {
@@ -1000,6 +1007,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
       _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
 }
