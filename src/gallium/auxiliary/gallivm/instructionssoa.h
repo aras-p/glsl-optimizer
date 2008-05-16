@@ -56,6 +56,7 @@ public:
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> dp4(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> lit(const std::vector<llvm::Value*> in);
    std::vector<llvm::Value*> madd(const std::vector<llvm::Value*> in1,
                                   const std::vector<llvm::Value*> in2,
                                   const std::vector<llvm::Value*> in3);

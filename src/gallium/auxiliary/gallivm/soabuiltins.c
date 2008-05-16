@@ -109,20 +109,6 @@ void pow(float4 *res,
    res[3] = res[0];
 }
 
-void lit(float4 *res,
-         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w,
-         float4 tmp1x, float4 tmp1y, float4 tmp1z, float4 tmp1w)
-{
-   const float4 zerovec = (float4) {0, 0, 0, 0};
-   float4 tmpx = tmp0x;
-   float4 tmpy = tmp0y;
-
-   res[0] = (float4){1.0, 1.0, 1.0, 1.0};
-   res[1] = tmpx;
-   res[2] = tmpy;
-   res[3] = (float4){1.0, 1.0, 1.0, 1.0};
-}
-
 float4 minvec(float4 a, float4 b)
 {
    return (float4){(a.x < b.x) ? a.x : b.x,
@@ -158,4 +144,27 @@ void max(float4 *res,
    res[1] = maxvec(tmp0y, tmp1y);
    res[2] = maxvec(tmp0z, tmp1z);
    res[3] = maxvec(tmp0w, tmp1w);
+}
+
+
+void lit(float4 *res,
+         float4 tmp0x, float4 tmp0y, float4 tmp0z, float4 tmp0w)
+{
+   const float4 zerovec = (float4) {0, 0, 0, 0};
+   const float4 min128 = (float4) {-128.f, -128.f, -128.f, -128.f};
+   const float4 plus128 = (float4) {128.f,  128.f,  128.f,  128.f};
+
+   res[0] = (float4){1.0, 1.0, 1.0, 1.0};
+   if (tmp0x.x > 0) {
+      float4 tmpx = maxvec(tmpx, zerovec);
+      float4 tmpy = maxvec(tmp0y, zerovec);
+      float4 tmpw = minvec(tmp0w, plus128);
+      tmpw = maxvec(tmpw, min128);
+      res[1] = tmpx;
+      res[2] = powvec(tmpy, tmpw);
+   } else {
+      res[1] = zerovec;
+      res[2] = zerovec;
+   }
+   res[3] = (float4){1.0, 1.0, 1.0, 1.0};
 }

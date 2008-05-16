@@ -179,6 +179,7 @@ void InstructionsSoa::createFunctionMap()
    m_functionsMap[TGSI_OPCODE_MIN]   = "min";
    m_functionsMap[TGSI_OPCODE_MAX]   = "max";
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
+   m_functionsMap[TGSI_OPCODE_LIT]   = "lit";
 }
 
 void InstructionsSoa::createDependencies()
@@ -203,6 +204,14 @@ void InstructionsSoa::createDependencies()
       std::vector<std::string> minDeps(1);
       minDeps[0] = "minvec";
       m_builtinDependencies["min"] = minDeps;
+   }
+   {
+      std::vector<std::string> litDeps(4);
+      litDeps[0] = "minvec";
+      litDeps[1] = "maxvec";
+      litDeps[2] = "powf";
+      litDeps[3] = "powvec";
+      m_builtinDependencies["lit"] = litDeps;
    }
 }
 
@@ -473,5 +482,11 @@ std::vector<llvm::Value*> InstructionsSoa::sub(const std::vector<llvm::Value*> i
    res[3] = m_builder.CreateSub(in1[3], in2[3], name("subw"));
 
    return res;
+}
+
+std::vector<llvm::Value*> InstructionsSoa::lit(const std::vector<llvm::Value*> in)
+{
+   llvm::Function *func = function(TGSI_OPCODE_LIT);
+   return callBuiltin(func, in);
 }
 
