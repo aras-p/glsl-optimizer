@@ -268,19 +268,23 @@ _mesa_init_vertex_program( GLcontext *ctx, struct gl_vertex_program *prog,
 struct gl_program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
 {
+   struct gl_program *prog;
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
-      return _mesa_init_vertex_program(ctx, CALLOC_STRUCT(gl_vertex_program),
+      prog = _mesa_init_vertex_program(ctx, CALLOC_STRUCT(gl_vertex_program),
                                        target, id );
+      break;
    case GL_FRAGMENT_PROGRAM_NV:
    case GL_FRAGMENT_PROGRAM_ARB:
-      return _mesa_init_fragment_program(ctx,
+      prog =_mesa_init_fragment_program(ctx,
                                          CALLOC_STRUCT(gl_fragment_program),
                                          target, id );
+      break;
    default:
       _mesa_problem(ctx, "bad target in _mesa_new_program");
-      return NULL;
+      prog = NULL;
    }
+   return prog;
 }
 
 
@@ -362,8 +366,10 @@ _mesa_reference_program(GLcontext *ctx,
 
       /*_glthread_LOCK_MUTEX((*ptr)->Mutex);*/
 #if 0
-      printf("Program %p %u 0x%x  Refcount-- to %d\n",
-             *ptr, (*ptr)->Id, (*ptr)->Target, (*ptr)->RefCount - 1);
+      printf("Program %p ID=%u Target=%s  Refcount-- to %d\n",
+             *ptr, (*ptr)->Id,
+             ((*ptr)->Target == GL_VERTEX_PROGRAM_ARB ? "VP" : "FP"),
+             (*ptr)->RefCount - 1);
 #endif
       ASSERT((*ptr)->RefCount > 0);
       (*ptr)->RefCount--;
@@ -384,8 +390,10 @@ _mesa_reference_program(GLcontext *ctx,
       /*_glthread_LOCK_MUTEX(prog->Mutex);*/
       prog->RefCount++;
 #if 0
-      printf("Program %p %u 0x%x  Refcount++ to %d\n",
-             prog, prog->Id, prog->Target, prog->RefCount);
+      printf("Program %p ID=%u Target=%s  Refcount++ to %d\n",
+             prog, prog->Id,
+             (prog->Target == GL_VERTEX_PROGRAM_ARB ? "VP" : "FP"),
+             prog->RefCount);
 #endif
       /*_glthread_UNLOCK_MUTEX(prog->Mutex);*/
    }
