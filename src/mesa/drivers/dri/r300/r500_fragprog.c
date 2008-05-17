@@ -236,6 +236,9 @@ static void emit_tex(struct r500_fragment_program *fp,
 	        fp->inst[counter].inst1 |= R500_TEX_UNSCALED;
 
 	switch (opcode) {
+	case OPCODE_KIL:
+		fp->inst[counter].inst1 |= R500_TEX_INST_TEXKILL;
+		break;
 	case OPCODE_TEX:
 		fp->inst[counter].inst1 |= R500_TEX_INST_LD;
 		break;
@@ -544,6 +547,9 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
 					| R500_ALU_RGBA_ADDRD(dest);
+				break;
+			case OPCODE_KIL:
+				emit_tex(fp, fpi, OPCODE_KIL, dest, counter);
 				break;
 			case OPCODE_LG2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
