@@ -434,10 +434,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * These registers are called X_QUAD0_1_FL to X_QUAD0_4_FL by glxtest.
  */
-#define R300_VAP_CLIP_X_0                   0x2220
-#define R300_VAP_CLIP_X_1                   0x2224
-#define R300_VAP_CLIP_Y_0                   0x2228
-#define R300_VAP_CLIP_Y_1                   0x222c
+#define R300_VAP_GB_VERT_CLIP_ADJ                   0x2220
+#define R300_VAP_GB_VERT_DISC_ADJ                   0x2224
+#define R300_VAP_GB_HORZ_CLIP_ADJ                   0x2228
+#define R300_VAP_GB_HORZ_DISC_ADJ                   0x222c
 
 /* gap */
 
@@ -486,6 +486,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_MAX_CONST_ADDR_SHIFT     16
 #define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
 #       define R300_PVS_LAST_VTX_SRC_INST_SHIFT  0
+#define R300_VAP_PVS_FLOW_CNTL_OPC          0x22DC
 
 /* The entire range from 0x2300 to 0x2AC inclusive seems to be used for
  * immediate vertices
@@ -1085,9 +1086,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GA_OFFSET_Y_OFFSET_MASK  0xffff0000
 
 /* Specifies the scale to apply to fog. */
-#define R300_RE_FOG_SCALE                     0x4294
+#define R300_GA_FOG_SCALE                     0x4294
 /* Specifies the offset to apply to fog. */
-#define R300_RE_FOG_START                     0x4298
+#define R300_GA_FOG_OFFSET                    0x4298
+/* Specifies number of cycles to assert reset, and also causes RB3D soft reset to assert. */
+#define R300_GA_SOFT_RESET                    0x429c
 
 /* Not sure why there are duplicate of factor and constant values.
  * My best guess so far is that there are seperate zbiases for test and write.
@@ -1095,11 +1098,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Some of the tests indicate that fgl has a fallback implementation of zbias
  * via pixel shaders.
  */
-#define R300_RE_ZBIAS_CNTL                    0x42A0 /* GUESS */
-#define R300_RE_ZBIAS_T_FACTOR                0x42A4
-#define R300_RE_ZBIAS_T_CONSTANT              0x42A8
-#define R300_RE_ZBIAS_W_FACTOR                0x42AC
-#define R300_RE_ZBIAS_W_CONSTANT              0x42B0
+#define R300_SU_TEX_WRAP                      0x42A0
+#define R300_SU_POLY_OFFSET_FRONT_SCALE       0x42A4
+#define R300_SU_POLY_OFFSET_FRONT_OFFSET      0x42A8
+#define R300_SU_POLY_OFFSET_BACK_SCALE        0x42AC
+#define R300_SU_POLY_OFFSET_BACK_OFFSET       0x42B0
 
 /* This register needs to be set to (1<<1) for RV350 to correctly
  * perform depth test (see --vb-triangles in r300_demo)
@@ -1110,10 +1113,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *  One to enable depth test and one for depth write.
  * Yet this doesnt explain why depth writes work ...
  */
-#define R300_RE_OCCLUSION_CNTL		    0x42B4
-#	define R300_OCCLUSION_ON		(1<<1)
+#define R300_SU_POLY_OFFSET_ENABLE	       0x42B4
+#	define R300_FRONT_ENABLE	       (1 << 0)
+#	define R300_BACK_ENABLE 	       (1 << 1)
+#	define R300_PARA_ENABLE 	       (1 << 2)
 
-#define R300_RE_CULL_CNTL                   0x42B8
+#define R300_SU_CULL_MODE                      0x42B8
 #       define R300_CULL_FRONT                   (1 << 0)
 #       define R300_CULL_BACK                    (1 << 1)
 #       define R300_FRONT_FACE_CCW               (0 << 2)
@@ -1262,6 +1267,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_SC_HYPERZ_HZ_Z0MAX_NO (0 << 6)
 #	define R300_SC_HYPERZ_HZ_Z0MAX    (1 << 6)
 
+#define R300_SC_EDGERULE                 0x43a8
 
 /* BEGIN: Scissors and cliprects */
 
@@ -1279,21 +1285,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * For some reason, the top-left corner of the framebuffer is at (1440, 1440)
  * for the purpose of clipping and scissors.
  */
-#define R300_RE_CLIPRECT_TL_0               0x43B0
-#define R300_RE_CLIPRECT_BR_0               0x43B4
-#define R300_RE_CLIPRECT_TL_1               0x43B8
-#define R300_RE_CLIPRECT_BR_1               0x43BC
-#define R300_RE_CLIPRECT_TL_2               0x43C0
-#define R300_RE_CLIPRECT_BR_2               0x43C4
-#define R300_RE_CLIPRECT_TL_3               0x43C8
-#define R300_RE_CLIPRECT_BR_3               0x43CC
+#define R300_SC_CLIPRECT_TL_0               0x43B0
+#define R300_SC_CLIPRECT_BR_0               0x43B4
+#define R300_SC_CLIPRECT_TL_1               0x43B8
+#define R300_SC_CLIPRECT_BR_1               0x43BC
+#define R300_SC_CLIPRECT_TL_2               0x43C0
+#define R300_SC_CLIPRECT_BR_2               0x43C4
+#define R300_SC_CLIPRECT_TL_3               0x43C8
+#define R300_SC_CLIPRECT_BR_3               0x43CC
 #       define R300_CLIPRECT_OFFSET              1440
 #       define R300_CLIPRECT_MASK                0x1FFF
 #       define R300_CLIPRECT_X_SHIFT             0
 #       define R300_CLIPRECT_X_MASK              (0x1FFF << 0)
 #       define R300_CLIPRECT_Y_SHIFT             13
 #       define R300_CLIPRECT_Y_MASK              (0x1FFF << 13)
-#define R300_RE_CLIPRECT_CNTL               0x43D0
+#define R300_SC_CLIP_RULE                   0x43D0
 #       define R300_CLIP_OUT                     (1 << 0)
 #       define R300_CLIP_0                       (1 << 1)
 #       define R300_CLIP_1                       (1 << 2)
@@ -1313,8 +1319,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-#define R300_RE_SCISSORS_TL                 0x43E0
-#define R300_RE_SCISSORS_BR                 0x43E4
+#define R300_SC_SCISSORS_TL                 0x43E0
+#define R300_SC_SCISSORS_BR                 0x43E4
 #       define R300_SCISSORS_OFFSET              1440
 #       define R300_SCISSORS_X_SHIFT             0
 #       define R300_SCISSORS_X_MASK              (0x1FFF << 0)

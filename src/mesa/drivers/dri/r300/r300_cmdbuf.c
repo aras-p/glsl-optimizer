@@ -347,7 +347,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		ALLOC_STATE(vap_clip_cntl, always, 2, 0);
 		r300->hw.vap_clip_cntl.cmd[0] = cmdpacket0(R300_VAP_CLIP_CNTL, 1);
 		ALLOC_STATE(vap_clip, always, 5, 0);
-		r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
+		r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_GB_VERT_CLIP_ADJ, 4);
 		ALLOC_STATE(vap_pvs_vtx_timeout_reg, always, 2, 0);
 		r300->hw.vap_pvs_vtx_timeout_reg.cmd[0] = cmdpacket0(VAP_PVS_VTX_TIMEOUT_REG, 1);
 	}
@@ -385,16 +385,16 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(polygon_mode, always, 4, 0);
 	r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_GA_POLY_MODE, 3);
 	ALLOC_STATE(fogp, always, 3, 0);
-	r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
+	r300->hw.fogp.cmd[0] = cmdpacket0(R300_GA_FOG_SCALE, 2);
 	ALLOC_STATE(zbias_cntl, always, 2, 0);
-	r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_RE_ZBIAS_CNTL, 1);
+	r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_SU_TEX_WRAP, 1);
 	ALLOC_STATE(zbs, always, R300_ZBS_CMDSIZE, 0);
 	r300->hw.zbs.cmd[R300_ZBS_CMD_0] =
-	    cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
+	    cmdpacket0(R300_SU_POLY_OFFSET_FRONT_SCALE, 4);
 	ALLOC_STATE(occlusion_cntl, always, 2, 0);
-	r300->hw.occlusion_cntl.cmd[0] = cmdpacket0(R300_RE_OCCLUSION_CNTL, 1);
+	r300->hw.occlusion_cntl.cmd[0] = cmdpacket0(R300_SU_POLY_OFFSET_ENABLE, 1);
 	ALLOC_STATE(cul, always, R300_CUL_CMDSIZE, 0);
-	r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_RE_CULL_CNTL, 1);
+	r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_SU_CULL_MODE, 1);
 	ALLOC_STATE(su_depth_scale, always, 3, 0);
 	r300->hw.su_depth_scale.cmd[0] = cmdpacket0(R300_SU_DEPTH_SCALE, 2);
 	ALLOC_STATE(rc, always, R300_RC_CMDSIZE, 0);
