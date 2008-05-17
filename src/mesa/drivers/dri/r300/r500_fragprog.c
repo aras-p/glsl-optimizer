@@ -798,14 +798,15 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		init_program(r300, fp);
 		cs = fp->cs;
 
-		fp->inst_offset = 0;
-		fp->inst_end = cs->nrslots - 1;
-
 		if (parse_program(fp) == GL_FALSE) {
 			ERROR("Huh. Couldn't parse program. There should be additional errors explaining why.\nUsing dumb shader...\n");
 			dumb_shader(fp);
+			fp->inst_offset = 0;
+			fp->inst_end = cs->nrslots - 1;
 			return;
 		}
+		fp->inst_offset = 0;
+		fp->inst_end = cs->nrslots - 1;
 
 		fp->translated = GL_TRUE;
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
