@@ -770,7 +770,7 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
             }
 
             switch (ps->format) {
-            case PIPE_FORMAT_U_S8:
+            case PIPE_FORMAT_S8_UNORM:
                {
                   ubyte *dest = stmap + spanY * ps->pitch + spanX;
                   memcpy(dest, values, spanWidth);
@@ -914,7 +914,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
             }
          }
          break;
-      case PIPE_FORMAT_U_S8:
+      case PIPE_FORMAT_S8_UNORM:
          memcpy(dst, src, width);
          break;
       default:

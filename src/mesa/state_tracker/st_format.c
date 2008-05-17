@@ -503,8 +503,8 @@ st_choose_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      if (screen->is_format_supported( screen, PIPE_FORMAT_U_S8, surfType ))
-         return PIPE_FORMAT_U_S8;
+      if (screen->is_format_supported( screen, PIPE_FORMAT_S8_UNORM, surfType ))
+         return PIPE_FORMAT_S8_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_S8Z24_UNORM, surfType ))
          return PIPE_FORMAT_S8Z24_UNORM;
       if (screen->is_format_supported( screen, PIPE_FORMAT_Z24S8_UNORM, surfType ))
