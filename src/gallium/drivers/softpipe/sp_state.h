@@ -54,9 +54,11 @@
 
 struct tgsi_sampler;
 struct tgsi_exec_machine;
+struct vertex_info;
 
 
-/** Subclass of pipe_shader_state (though it doesn't really need to be).
+/**
+ * Subclass of pipe_shader_state (though it doesn't really need to be).
  *
  * This is starting to look an awful lot like a quad pipeline stage...
  */
@@ -80,11 +82,10 @@ struct sp_fragment_shader {
    void (*delete)( struct sp_fragment_shader * );
 };
 
-struct vertex_info;
 
 /** Subclass of pipe_shader_state */
 struct sp_vertex_shader {
-   struct pipe_shader_state shader;
+   struct pipe_shader_state shader;  /* Note: this field not actually used */
    struct draw_vertex_shader *draw_data;
 };
 

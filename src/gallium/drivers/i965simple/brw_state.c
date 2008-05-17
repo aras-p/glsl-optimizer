@@ -35,6 +35,7 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/util/tgsi_dump.h"
+#include "tgsi/util/tgsi_parse.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -182,9 +183,7 @@ static void * brw_create_fs_state(struct pipe_context *pipe,
 {
    struct brw_fragment_program *brw_fp = CALLOC_STRUCT(brw_fragment_program);
 
-   /* XXX: Do I have to duplicate the tokens as well??
-    */
-   brw_fp->program = *shader;
+   brw_fp->program.tokens = tgsi_dup_tokens(shader->tokens);
    brw_fp->id = brw_context(pipe)->program_id++;
 
    tgsi_scan_shader(shader->tokens, &brw_fp->info);
@@ -210,7 +209,10 @@ static void brw_bind_fs_state(struct pipe_context *pipe, void *shader)
 
 static void brw_delete_fs_state(struct pipe_context *pipe, void *shader)
 {
-   FREE(shader);
+   struct brw_fragment_program *brw_fp = (struct brw_fragment_program *) shader;
+
+   FREE((void *) brw_fp->program.tokens);
+   FREE(brw_fp);
 }
 
 
@@ -223,9 +225,7 @@ static void *brw_create_vs_state(struct pipe_context *pipe,
 {
    struct brw_vertex_program *brw_vp = CALLOC_STRUCT(brw_vertex_program);
 
-   /* XXX: Do I have to duplicate the tokens as well??
-    */
-   brw_vp->program = *shader;
+   brw_vp->program.tokens = tgsi_dup_tokens(shader->tokens);
    brw_vp->id = brw_context(pipe)->program_id++;
 
    tgsi_scan_shader(shader->tokens, &brw_vp->info);
@@ -251,7 +251,10 @@ static void brw_bind_vs_state(struct pipe_context *pipe, void *vs)
 
 static void brw_delete_vs_state(struct pipe_context *pipe, void *shader)
 {
-   FREE(shader);
+   struct brw_vertex_program *brw_vp = (struct brw_vertex_program *) shader;
+
+   FREE((void *) brw_vp->program.tokens);
+   FREE(brw_vp);
 }
 
 

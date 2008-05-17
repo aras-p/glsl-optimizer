@@ -138,14 +138,17 @@ draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ)
 {
    struct draw_llvm_vertex_shader *vs;
-   uint nt = tgsi_num_tokens(templ->tokens);
 
    vs = CALLOC_STRUCT( draw_llvm_vertex_shader );
    if (vs == NULL) 
       return NULL;
 
    /* we make a private copy of the tokens */
-   vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
+   vs->base.state.tokens = tgsi_dup_tokens(templ->tokens);
+   if (!vs->base.state.tokens) {
+      FREE(vs);
+      return NULL;
+   }
 
    tgsi_scan_shader(vs->base.state.tokens, &vs->base.info);
 
