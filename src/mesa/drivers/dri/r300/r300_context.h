@@ -357,7 +357,13 @@ struct r300_state_atom {
 #define R500_FP_CMD_0           0
 #define R500_FP_CNTL            1
 #define R500_FP_PIXSIZE         2
-#define R500_FP_CMDSIZE         3
+#define R500_FP_CMD_1           3
+#define R500_FP_CODE_ADDR       4
+#define R500_FP_CODE_RANGE      5
+#define R500_FP_CODE_OFFSET     6
+#define R500_FP_CMD_2           7
+#define R500_FP_FC_CNTL         8
+#define R500_FP_CMDSIZE         9
 
 #define R300_FPT_CMD_0		0
 #define R300_FPT_INSTR_0	1
@@ -458,6 +464,7 @@ struct r300_hw_state {
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
 	struct r300_state_atom vap_cntl;
+        struct r300_state_atom vap_index_offset; /* 0x208c r5xx only */
 	struct r300_state_atom vof;	/* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom vap_vf_max_vtx_indx;	/* Maximum Vertex Indx Clamp (2134) */
@@ -480,7 +487,7 @@ struct r300_hw_state {
 	struct r300_state_atom shade;
 	struct r300_state_atom polygon_mode;
 	struct r300_state_atom fogp;	/* fog parameters (4294) */
-	struct r300_state_atom unk429C;	/* (429C) */
+	struct r300_state_atom ga_soft_reset;	/* (429C) */
 	struct r300_state_atom zbias_cntl;
 	struct r300_state_atom zbs;	/* zbias (42A4) */
 	struct r300_state_atom occlusion_cntl;
@@ -808,6 +815,9 @@ struct r500_fragment_program {
 	int first_node_has_tex;
 
 	int temp_reg_offset;
+
+	int inst_offset;
+	int inst_end;
 
 	/* Hardware constants.
 	 * Contains a pointer to the value. The destination of the pointer

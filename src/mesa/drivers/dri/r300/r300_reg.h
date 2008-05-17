@@ -113,6 +113,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	/* number of vertices */
 #	define	R300_VAP_VF_CNTL__NUM_VERTICES__SHIFT           16
 
+#define R500_VAP_INDEX_OFFSET		    0x208c
+
 #define R300_VAP_OUTPUT_VTX_FMT_0           0x2090
 #       define R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT     (1<<0)
 #       define R300_VAP_OUTPUT_VTX_FMT_0__COLOR_0_PRESENT (1<<1)

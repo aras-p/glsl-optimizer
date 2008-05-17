@@ -2467,6 +2467,15 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, fp);
 	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = fp->max_temp_idx;
 
+	rmesa->hw.fp.cmd[R500_FP_CODE_ADDR] =
+	    R500_US_CODE_START_ADDR(fp->inst_offset) |
+	    R500_US_CODE_END_ADDR(fp->inst_end);
+	rmesa->hw.fp.cmd[R500_FP_CODE_RANGE] =
+	    R500_US_CODE_RANGE_ADDR(fp->inst_offset) |
+	    R500_US_CODE_RANGE_SIZE(fp->inst_end);
+	rmesa->hw.fp.cmd[R500_FP_CODE_OFFSET] =
+	    R500_US_CODE_OFFSET_ADDR(0); /* FIXME when we add flow control */
+
 	R300_STATECHANGE(rmesa, r500fp);
 	/* Emit our shader... */
 	for (i = 0; i < fp->cs->nrslots; i++) {

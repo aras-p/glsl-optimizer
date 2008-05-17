@@ -321,6 +321,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
 	ALLOC_STATE(vap_cntl, always, 2, 0);
 	r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
+	if (is_r500) {
+	    ALLOC_STATE(vap_index_offset, always, 2, 0);
+	    r300->hw.vap_index_offset.cmd[0] = cmdpacket0(R500_VAP_INDEX_OFFSET, 1);
+	    r300->hw.vap_index_offset.cmd[1] = 0;
+	}
 	ALLOC_STATE(vte, always, 3, 0);
 	r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE(vap_vf_max_vtx_indx, always, 3, 0);
@@ -423,7 +428,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		ALLOC_STATE(fp, always, R500_FP_CMDSIZE, 0);
 		r300->hw.fp.cmd[R500_FP_CMD_0] = cmdpacket0(R500_US_CONFIG, 2);
 		r300->hw.fp.cmd[R500_FP_CNTL] = R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO;
-		
+		r300->hw.fp.cmd[R500_FP_CMD_1] = cmdpacket0(R500_US_CODE_ADDR, 3);
+		r300->hw.fp.cmd[R500_FP_CMD_2] = cmdpacket0(R500_US_FC_CTRL, 1);
+		r300->hw.fp.cmd[R500_FP_FC_CNTL] = 0; /* FIXME when we add flow control */
+
 		ALLOC_STATE(r500fp, r500fp, R300_FPI_CMDSIZE, 0);
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 0, 0);
 		ALLOC_STATE(r500fp_const, r500fp_const, R300_FPP_CMDSIZE, 0);

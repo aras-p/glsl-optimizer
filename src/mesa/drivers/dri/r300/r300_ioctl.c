@@ -357,9 +357,14 @@ static void r300EmitClearState(GLcontext * ctx)
 		reg_start(R300_US_ALU_ALPHA_ADDR_0, 0);
 		e32(FP_SELA(0, NO, W, FP_TMP(0), 0, 0));
 	} else {
-		R300_STATECHANGE(r300, fp);
-		reg_start(R500_US_PIXSIZE, 0);
-		e32(0x2);
+ 		R300_STATECHANGE(r300, fp);
+ 		reg_start(R500_US_CONFIG, 1);
+ 		e32(R500_ZERO_TIMES_ANYTHING_EQUALS_ZERO);
+ 		e32(0x0);
+ 		reg_start(R500_US_CODE_ADDR, 2);
+ 		e32(R500_US_CODE_START_ADDR(0) | R500_US_CODE_END_ADDR(1));
+ 		e32(R500_US_CODE_RANGE_ADDR(0) | R500_US_CODE_RANGE_SIZE(1));
+ 		e32(R500_US_CODE_OFFSET_ADDR(0));
 
 		R300_STATECHANGE(r300, r500fp);
 		r500fp_start_fragment(0, 6);
