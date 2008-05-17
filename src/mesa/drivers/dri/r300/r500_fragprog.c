@@ -524,6 +524,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
 					| R500_ALU_RGBA_ADDRD(dest);
+				break;
 			case OPCODE_LG2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
@@ -724,6 +725,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
+				break;
 			case OPCODE_SUB:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
