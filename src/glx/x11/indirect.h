@@ -517,9 +517,7 @@ extern HIDDEN void __indirect_glGetProgramivARB(GLenum target, GLenum pname, GLi
 extern HIDDEN void __indirect_glGetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble * params);
 extern HIDDEN void __indirect_glGetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat * params);
 extern HIDDEN void __indirect_glGetVertexAttribivARB(GLuint index, GLenum pname, GLint * params);
-extern HIDDEN void __indirect_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 extern HIDDEN void __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index, const GLdouble * params);
-extern HIDDEN void __indirect_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 extern HIDDEN void __indirect_glProgramEnvParameter4fvARB(GLenum target, GLuint index, const GLfloat * params);
 extern HIDDEN void __indirect_glProgramLocalParameter4dARB(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 extern HIDDEN void __indirect_glProgramLocalParameter4dvARB(GLenum target, GLuint index, const GLdouble * params);
@@ -639,10 +637,6 @@ extern HIDDEN void __indirect_glGetVertexAttribfvNV(GLuint index, GLenum pname, 
 extern HIDDEN void __indirect_glGetVertexAttribivNV(GLuint index, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsProgramNV(GLuint program);
 extern HIDDEN void __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte * program);
-extern HIDDEN void __indirect_glProgramParameter4dNV(GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w);
-extern HIDDEN void __indirect_glProgramParameter4dvNV(GLenum target, GLuint index, const GLdouble * params);
-extern HIDDEN void __indirect_glProgramParameter4fNV(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
-extern HIDDEN void __indirect_glProgramParameter4fvNV(GLenum target, GLuint index, const GLfloat * params);
 extern HIDDEN void __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLuint num, const GLdouble * params);
 extern HIDDEN void __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLuint num, const GLfloat * params);
 extern HIDDEN void __indirect_glRequestResidentProgramsNV(GLsizei n, const GLuint * ids);

@@ -7470,26 +7470,6 @@ __indirect_glGetProgramivARB(GLenum target, GLenum pname, GLint * params)
 
 #define X_GLrop_ProgramEnvParameter4dvARB 4185
 void
-__indirect_glProgramEnvParameter4dARB(GLenum target, GLuint index, GLdouble x,
-                                      GLdouble y, GLdouble z, GLdouble w)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44;
-    emit_header(gc->pc, X_GLrop_ProgramEnvParameter4dvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&x), 8);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&y), 8);
-    (void) memcpy((void *) (gc->pc + 28), (void *) (&z), 8);
-    (void) memcpy((void *) (gc->pc + 36), (void *) (&w), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramEnvParameter4dvARB 4185
-void
 __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                        const GLdouble * params)
 {
@@ -7499,26 +7479,6 @@ __indirect_glProgramEnvParameter4dvARB(GLenum target, GLuint index,
     (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
     (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (params), 32);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramEnvParameter4fvARB 4184
-void
-__indirect_glProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x,
-                                      GLfloat y, GLfloat z, GLfloat w)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28;
-    emit_header(gc->pc, X_GLrop_ProgramEnvParameter4fvARB, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&x), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&z), 4);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&w), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);
@@ -9101,80 +9061,6 @@ __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len,
         if (__builtin_expect(gc->pc > gc->limit, 0)) {
             (void) __glXFlushRenderBuffer(gc, gc->pc);
         }
-    }
-}
-
-#define X_GLrop_ProgramParameter4dvNV 4185
-void
-__indirect_glProgramParameter4dNV(GLenum target, GLuint index, GLdouble x,
-                                  GLdouble y, GLdouble z, GLdouble w)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44;
-    emit_header(gc->pc, X_GLrop_ProgramParameter4dvNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&x), 8);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&y), 8);
-    (void) memcpy((void *) (gc->pc + 28), (void *) (&z), 8);
-    (void) memcpy((void *) (gc->pc + 36), (void *) (&w), 8);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramParameter4dvNV 4185
-void
-__indirect_glProgramParameter4dvNV(GLenum target, GLuint index,
-                                   const GLdouble * params)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 44;
-    emit_header(gc->pc, X_GLrop_ProgramParameter4dvNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), 32);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramParameter4fvNV 4184
-void
-__indirect_glProgramParameter4fNV(GLenum target, GLuint index, GLfloat x,
-                                  GLfloat y, GLfloat z, GLfloat w)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28;
-    emit_header(gc->pc, X_GLrop_ProgramParameter4fvNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (&x), 4);
-    (void) memcpy((void *) (gc->pc + 16), (void *) (&y), 4);
-    (void) memcpy((void *) (gc->pc + 20), (void *) (&z), 4);
-    (void) memcpy((void *) (gc->pc + 24), (void *) (&w), 4);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
-    }
-}
-
-#define X_GLrop_ProgramParameter4fvNV 4184
-void
-__indirect_glProgramParameter4fvNV(GLenum target, GLuint index,
-                                   const GLfloat * params)
-{
-    __GLXcontext *const gc = __glXGetCurrentContext();
-    const GLuint cmdlen = 28;
-    emit_header(gc->pc, X_GLrop_ProgramParameter4fvNV, cmdlen);
-    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
-    (void) memcpy((void *) (gc->pc + 8), (void *) (&index), 4);
-    (void) memcpy((void *) (gc->pc + 12), (void *) (params), 16);
-    gc->pc += cmdlen;
-    if (__builtin_expect(gc->pc > gc->limit, 0)) {
-        (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
