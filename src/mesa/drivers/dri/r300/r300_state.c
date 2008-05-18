@@ -1716,9 +1716,12 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		  else
 		    count = VB->AttribPtr[_TNL_ATTRIB_TEX(i)]->size;
 		  
-		  /* always have a least 2 tex coords */
+		  /* always have on texcoord */
 		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_S_SHIFT;
-		  swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
+		  if (count >= 2) 
+		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_T_SHIFT;
+		  else
+		    swiz |= R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT;
 
 		  if (count >= 3)
 		    swiz |= in_texcoords++ << R500_RS_IP_TEX_PTR_R_SHIFT;
