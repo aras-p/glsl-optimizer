@@ -245,9 +245,9 @@ intel_setup_reloc_list(dri_bo *bo)
     dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
 
-    bo_gem->relocs = calloc(bufmgr_gem->max_relocs,
+    bo_gem->relocs = malloc(bufmgr_gem->max_relocs *
 			    sizeof(struct drm_i915_gem_relocation_entry));
-    bo_gem->reloc_target_bo = calloc(bufmgr_gem->max_relocs, sizeof(dri_bo *));
+    bo_gem->reloc_target_bo = malloc(bufmgr_gem->max_relocs * sizeof(dri_bo *));
 
     return 0;
 }
