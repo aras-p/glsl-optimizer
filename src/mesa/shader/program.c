@@ -214,11 +214,17 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
 {
    (void) ctx;
    if (prog) {
+      GLuint i;
+      _mesa_bzero(prog, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
       prog->Resident = GL_TRUE;
       prog->RefCount = 1;
       prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+
+      /* default mapping from samplers to texture units */
+      for (i = 0; i < MAX_SAMPLERS; i++)
+         prog->SamplerUnits[i] = i;
    }
 
    return prog;
@@ -430,6 +436,7 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
                            prog->NumInstructions);
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
+   clone->SamplersUsed = prog->SamplersUsed;
    memcpy(clone->TexturesUsed, prog->TexturesUsed, sizeof(prog->TexturesUsed));
 
    if (prog->Parameters)
@@ -544,12 +551,18 @@ replace_registers(struct prog_instruction *inst, GLuint numInst,
 {
    GLuint i, j;
    for (i = 0; i < numInst; i++) {
+      /* src regs */
       for (j = 0; j < _mesa_num_inst_src_regs(inst->Opcode); j++) {
          if (inst[i].SrcReg[j].File == oldFile &&
              inst[i].SrcReg[j].Index == oldIndex) {
             inst[i].SrcReg[j].File = newFile;
             inst[i].SrcReg[j].Index = newIndex;
          }
+      }
+      /* dst reg */
+      if (inst[i].DstReg.File == oldFile && inst[i].DstReg.Index == oldIndex) {
+         inst[i].DstReg.File = newFile;
+         inst[i].DstReg.Index = newIndex;
       }
    }
 }
@@ -584,7 +597,8 @@ adjust_param_indexes(struct prog_instruction *inst, GLuint numInst,
  */
 struct gl_program *
 _mesa_combine_programs(GLcontext *ctx,
-                       struct gl_program *progA, struct gl_program *progB)
+                       const struct gl_program *progA,
+                       const struct gl_program *progB)
 {
    struct prog_instruction *newInst;
    struct gl_program *newProg;
@@ -592,6 +606,7 @@ _mesa_combine_programs(GLcontext *ctx,
    const GLuint lenB = progB->NumInstructions;
    const GLuint numParamsA = _mesa_num_parameters(progA->Parameters);
    const GLuint newLength = lenA + lenB;
+   GLbitfield inputsB;
    GLuint i;
 
    ASSERT(progA->Target == progB->Target);
@@ -613,17 +628,41 @@ _mesa_combine_programs(GLcontext *ctx,
    newProg->NumInstructions = newLength;
 
    if (newProg->Target == GL_FRAGMENT_PROGRAM_ARB) {
-      /* connect color outputs/inputs */
+      struct gl_fragment_program *fprogA, *fprogB, *newFprog;
+      fprogA = (struct gl_fragment_program *) progA;
+      fprogB = (struct gl_fragment_program *) progB;
+      newFprog = (struct gl_fragment_program *) newProg;
+
+      newFprog->UsesKill = fprogA->UsesKill || fprogB->UsesKill;
+
+      /* Connect color outputs of fprogA to color inputs of fprogB, via a
+       * new temporary register.
+       */
       if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
           (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {
+         GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
+         if (!tempReg) {
+            _mesa_problem(ctx, "No free temp regs found in "
+                          "_mesa_combine_programs(), using 31");
+            tempReg = 31;
+         }
+         /* replace writes to result.color[0] with tempReg */
+         replace_registers(newInst, lenA,
+                           PROGRAM_OUTPUT, FRAG_RESULT_COLR,
+                           PROGRAM_TEMPORARY, tempReg);
+         /* replace reads from input.color[0] with tempReg */
          replace_registers(newInst + lenA, lenB,
                            PROGRAM_INPUT, FRAG_ATTRIB_COL0,
-                           PROGRAM_OUTPUT, FRAG_RESULT_COLR);
+                           PROGRAM_TEMPORARY, tempReg);
       }
 
-      newProg->InputsRead = progA->InputsRead;
-      newProg->InputsRead |= (progB->InputsRead & ~(1 << FRAG_ATTRIB_COL0));
+      inputsB = progB->InputsRead;
+      if (progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+         inputsB &= ~(1 << FRAG_ATTRIB_COL0);
+      }
+      newProg->InputsRead = progA->InputsRead | inputsB;
       newProg->OutputsWritten = progB->OutputsWritten;
+      newProg->SamplersUsed = progA->SamplersUsed | progB->SamplersUsed;
    }
    else {
       /* vertex program */

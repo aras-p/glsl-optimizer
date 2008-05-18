@@ -117,7 +117,8 @@ _mesa_insert_instructions(struct gl_program *prog, GLuint start, GLuint count);
 
 extern struct gl_program *
 _mesa_combine_programs(GLcontext *ctx,
-                       struct gl_program *progA, struct gl_program *progB);
+                       const struct gl_program *progA,
+                       const struct gl_program *progB);
 
 extern GLint
 _mesa_find_free_register(const struct gl_program *prog, GLuint regFile);
