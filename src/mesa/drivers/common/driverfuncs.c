@@ -262,43 +262,6 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
 
 
 /**
- * Plug in Mesa's GLSL functions.
- */
-void
-_mesa_init_glsl_driver_functions(struct dd_function_table *driver)
-{
-   driver->AttachShader = _mesa_attach_shader;
-   driver->BindAttribLocation = _mesa_bind_attrib_location;
-   driver->CompileShader = _mesa_compile_shader;
-   driver->CreateProgram = _mesa_create_program;
-   driver->CreateShader = _mesa_create_shader;
-   driver->DeleteProgram2 = _mesa_delete_program2;
-   driver->DeleteShader = _mesa_delete_shader;
-   driver->DetachShader = _mesa_detach_shader;
-   driver->GetActiveAttrib = _mesa_get_active_attrib;
-   driver->GetActiveUniform = _mesa_get_active_uniform;
-   driver->GetAttachedShaders = _mesa_get_attached_shaders;
-   driver->GetAttribLocation = _mesa_get_attrib_location;
-   driver->GetHandle = _mesa_get_handle;
-   driver->GetProgramiv = _mesa_get_programiv;
-   driver->GetProgramInfoLog = _mesa_get_program_info_log;
-   driver->GetShaderiv = _mesa_get_shaderiv;
-   driver->GetShaderInfoLog = _mesa_get_shader_info_log;
-   driver->GetShaderSource = _mesa_get_shader_source;
-   driver->GetUniformfv = _mesa_get_uniformfv;
-   driver->GetUniformLocation = _mesa_get_uniform_location;
-   driver->IsProgram = _mesa_is_program;
-   driver->IsShader = _mesa_is_shader;
-   driver->LinkProgram = _mesa_link_program;
-   driver->ShaderSource = _mesa_shader_source;
-   driver->Uniform = _mesa_uniform;
-   driver->UniformMatrix = _mesa_uniform_matrix;
-   driver->UseProgram = _mesa_use_program;
-   driver->ValidateProgram = _mesa_validate_program;
-}
-
-
-/**
  * Call the ctx->Driver.* state functions with current values to initialize
  * driver state.
  * Only the Intel drivers use this so far.
