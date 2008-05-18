@@ -2239,11 +2239,15 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.sc_screendoor.cmd[1] = 0x00FFFFFF;
 
-	r300->hw.us_out_fmt.cmd[1] = 0x00001B01;
-	r300->hw.us_out_fmt.cmd[2] = 0x00001B0F;
-	r300->hw.us_out_fmt.cmd[3] = 0x00001B0F;
-	r300->hw.us_out_fmt.cmd[4] = 0x00001B0F;
-	r300->hw.us_out_fmt.cmd[5] = 0x00000001;
+	r300->hw.us_out_fmt.cmd[1] = R500_OUT_FMT_C4_8  |
+	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
+	r300->hw.us_out_fmt.cmd[2] = R500_OUT_FMT_UNUSED |
+	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
+	r300->hw.us_out_fmt.cmd[3] = R500_OUT_FMT_UNUSED |
+	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
+	r300->hw.us_out_fmt.cmd[4] = R500_OUT_FMT_UNUSED |
+	  R500_C0_SEL_B | R500_C1_SEL_G | R500_C2_SEL_R | R500_C3_SEL_A;
+	r300->hw.us_out_fmt.cmd[5] = R300_W_FMT_W24;
 
 	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
 	r300Fogfv(ctx, GL_FOG_MODE, NULL);
