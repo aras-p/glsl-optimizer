@@ -31,6 +31,7 @@ static GLenum Target = GL_TEXTURE_2D;
 static GLenum Filter = GL_NEAREST;
 GLenum doubleBuffer;
 static float Rot = 0;
+static int win = 0;
 
 static void Init(void)
 {
@@ -88,6 +89,7 @@ static void Reshape(int width, int height)
    glFrustum(-1, 1, -1, 1, 10, 20);
 #endif
    glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
    glTranslatef(0, 0, -15);
 }
 
@@ -101,6 +103,7 @@ static void Key(unsigned char key, int x, int y)
       Rot -= 10.0;
       break;
    case 27:
+      glutDestroyWindow(win);
       exit(0);
    default:
       return;
@@ -170,7 +173,8 @@ int main(int argc, char **argv)
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
-    if (glutCreateWindow("First Tri") == GL_FALSE) {
+    win = glutCreateWindow("First Tri");
+    if (!win) {
 	exit(1);
     }
 

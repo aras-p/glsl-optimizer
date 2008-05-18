@@ -37,6 +37,7 @@
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
 #include "tgsi/exec/tgsi_exec.h"
+#include "tgsi/util/tgsi_parse.h"
 
 struct sp_exec_fragment_shader {
    struct sp_fragment_shader base;
@@ -116,6 +117,7 @@ exec_run( const struct sp_fragment_shader *base,
 static void 
 exec_delete( struct sp_fragment_shader *base )
 {
+   FREE((void *) base->shader.tokens);
    FREE(base);
 }
 
@@ -137,7 +139,8 @@ softpipe_create_fs_exec(struct softpipe_context *softpipe,
    if (!shader)
       return NULL;
 
-   shader->base.shader = *templ;
+   /* we need to keep a local copy of the tokens */
+   shader->base.shader.tokens = tgsi_dup_tokens(templ->tokens);
    shader->base.prepare = exec_prepare;
    shader->base.run = exec_run;
    shader->base.delete = exec_delete;

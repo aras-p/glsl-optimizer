@@ -229,7 +229,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       struct gl_vertex_program *prog = ctx->VertexProgram.Current;
       _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
       
-      if (ctx->Driver.ProgramStringNotify)
+      if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
 	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
    }
    else if (target == GL_FRAGMENT_PROGRAM_ARB
@@ -237,7 +237,7 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
       struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
       _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
 
-      if (ctx->Driver.ProgramStringNotify)
+      if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
 	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
    }
    else {
@@ -247,6 +247,12 @@ _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 }
 
 
+/**
+ * Set a program env parameter register.
+ * \note Called from the GL API dispatcher.
+ * Note, this function is also used by the GL_NV_vertex_program extension
+ * (alias to ProgramParameterdNV)
+ */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
                                GLdouble x, GLdouble y, GLdouble z, GLdouble w)
@@ -256,6 +262,12 @@ _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Set a program env parameter register.
+ * \note Called from the GL API dispatcher.
+ * Note, this function is also used by the GL_NV_vertex_program extension
+ * (alias to ProgramParameterdvNV)
+ */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
                                 const GLdouble *params)
@@ -266,6 +278,12 @@ _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
 }
 
 
+/**
+ * Set a program env parameter register.
+ * \note Called from the GL API dispatcher.
+ * Note, this function is also used by the GL_NV_vertex_program extension
+ * (alias to ProgramParameterfNV)
+ */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
                                GLfloat x, GLfloat y, GLfloat z, GLfloat w)
@@ -283,8 +301,8 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
       }
       ASSIGN_4V(ctx->FragmentProgram.Parameters[index], x, y, z, w);
    }
-   else if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
+   else if (target == GL_VERTEX_PROGRAM_ARB /* == GL_VERTEX_PROGRAM_NV */
+       && (ctx->Extensions.ARB_vertex_program || ctx->Extensions.NV_vertex_program)) {
       if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
          return;
@@ -297,7 +315,12 @@ _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
    }
 }
 
-
+/**
+ * Set a program env parameter register.
+ * \note Called from the GL API dispatcher.
+ * Note, this function is also used by the GL_NV_vertex_program extension
+ * (alias to ProgramParameterfvNV)
+ */
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
                                    const GLfloat *params)

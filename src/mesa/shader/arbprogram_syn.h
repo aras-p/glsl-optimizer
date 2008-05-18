@@ -926,6 +926,8 @@
 "stateTexEnvProperty\n"
 " \"color\" .emit TEX_ENV_COLOR;\n"
 "optLegacyTexUnitNum\n"
+" optLegacyTexUnitNum_1 .or .true .emit 0x00;\n"
+"optLegacyTexUnitNum_1\n"
 " lbracket_ne .and legacyTexUnitNum .and rbracket;\n"
 "legacyTexUnitNum\n"
 " integer;\n"

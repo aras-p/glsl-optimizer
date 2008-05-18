@@ -92,7 +92,7 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
       /* get stencil values */
       switch (ps->format) {
-      case PIPE_FORMAT_U_S8:
+      case PIPE_FORMAT_S8_UNORM:
          {
             const ubyte *src = stmap + srcY * ps->pitch + x;
             memcpy(values, src, width);

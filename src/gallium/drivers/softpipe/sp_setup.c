@@ -209,69 +209,67 @@ static INLINE int block( int x )
 
 
 /**
- * Compute mask which indicates which pixels in the 2x2 quad are actually inside
- * the triangle's bounds.
- *
- * this is pretty nasty...  may need to rework flush_spans again to
- * fix it, if possible.
- */
-static unsigned calculate_mask( struct setup_context *setup, int x )
-{
-   unsigned mask = 0x0;
-
-   if (x >= setup->span.left[0] && x < setup->span.right[0])
-      mask |= MASK_TOP_LEFT;
-
-   if (x >= setup->span.left[1] && x < setup->span.right[1])
-      mask |= MASK_BOTTOM_LEFT;
-
-   if (x+1 >= setup->span.left[0] && x+1 < setup->span.right[0])
-      mask |= MASK_TOP_RIGHT;
-
-   if (x+1 >= setup->span.left[1] && x+1 < setup->span.right[1])
-      mask |= MASK_BOTTOM_RIGHT;
-
-   return mask;
-}
-
-
-/**
  * Render a horizontal span of quads
  */
 static void flush_spans( struct setup_context *setup )
 {
+   const int xleft0 = setup->span.left[0];
+   const int xleft1 = setup->span.left[1];
+   const int xright0 = setup->span.right[0];
+   const int xright1 = setup->span.right[1];
    int minleft, maxright;
    int x;
 
    switch (setup->span.y_flags) {
    case 0x3:
       /* both odd and even lines written (both quad rows) */
-      minleft = MIN2(setup->span.left[0], setup->span.left[1]);
-      maxright = MAX2(setup->span.right[0], setup->span.right[1]);
+      minleft = block(MIN2(xleft0, xleft1));
+      maxright = block(MAX2(xright0, xright1));
+      for (x = minleft; x <= maxright; x += 2) {
+         /* determine which of the four pixels is inside the span bounds */
+         uint mask = 0x0;
+         if (x >= xleft0 && x < xright0)
+            mask |= MASK_TOP_LEFT;
+         if (x >= xleft1 && x < xright1)
+            mask |= MASK_BOTTOM_LEFT;
+         if (x+1 >= xleft0 && x+1 < xright0)
+            mask |= MASK_TOP_RIGHT;
+         if (x+1 >= xleft1 && x+1 < xright1)
+            mask |= MASK_BOTTOM_RIGHT;
+         emit_quad( setup, x, setup->span.y, mask );
+      }
       break;
 
    case 0x1:
       /* only even line written (quad top row) */
-      minleft = setup->span.left[0];
-      maxright = setup->span.right[0];
+      minleft = block(xleft0);
+      maxright = block(xright0);
+      for (x = minleft; x <= maxright; x += 2) {
+         uint mask = 0x0;
+         if (x >= xleft0 && x < xright0)
+            mask |= MASK_TOP_LEFT;
+         if (x+1 >= xleft0 && x+1 < xright0)
+            mask |= MASK_TOP_RIGHT;
+         emit_quad( setup, x, setup->span.y, mask );
+      }
       break;
 
    case 0x2:
       /* only odd line written (quad bottom row) */
-      minleft = setup->span.left[1];
-      maxright = setup->span.right[1];
+      minleft = block(xleft1);
+      maxright = block(xright1);
+      for (x = minleft; x <= maxright; x += 2) {
+         uint mask = 0x0;
+         if (x >= xleft1 && x < xright1)
+            mask |= MASK_BOTTOM_LEFT;
+         if (x+1 >= xleft1 && x+1 < xright1)
+            mask |= MASK_BOTTOM_RIGHT;
+         emit_quad( setup, x, setup->span.y, mask );
+      }
       break;
 
    default:
       return;
-   }
-
-   /* XXX this loop could be moved into the above switch cases and
-    * calculate_mask() could be simplified a bit...
-    */
-   for (x = block(minleft); x <= block(maxright); x += 2) {
-      emit_quad( setup, x, setup->span.y,
-                 calculate_mask( setup, x ) );
    }
 
    setup->span.y = 0;
@@ -279,6 +277,7 @@ static void flush_spans( struct setup_context *setup )
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
 }
+
 
 #if DEBUG_VERTS
 static void print_vertex(const struct setup_context *setup,

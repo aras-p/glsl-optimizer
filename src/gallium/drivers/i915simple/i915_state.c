@@ -33,6 +33,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "tgsi/util/tgsi_parse.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -436,7 +437,7 @@ i915_create_fs_state(struct pipe_context *pipe,
    if (!ifs)
       return NULL;
 
-   ifs->state = *templ;
+   ifs->state.tokens = tgsi_dup_tokens(templ->tokens);
 
    tgsi_scan_shader(templ->tokens, &ifs->info);
 
@@ -464,6 +465,8 @@ void i915_delete_fs_state(struct pipe_context *pipe, void *shader)
    if (ifs->program)
       FREE(ifs->program);
    ifs->program_len = 0;
+
+   FREE(ifs->state.tokens);
 
    FREE(ifs);
 }

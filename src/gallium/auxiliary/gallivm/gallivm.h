@@ -90,10 +90,15 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
 struct gallivm_cpu_engine *gallivm_cpu_engine_create(struct gallivm_prog *prog);
 struct gallivm_cpu_engine *gallivm_global_cpu_engine();
 int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
-                        struct tgsi_exec_vector       *inputs,
-                        struct tgsi_exec_vector       *dests,
-                        float (*consts)[4],
-                        struct tgsi_exec_vector       *temps);
+                        struct tgsi_exec_machine *machine,
+                        const float (*input)[4],
+                        unsigned num_inputs,
+                        float (*output)[4],
+                        unsigned num_outputs,
+                        const float (*constants)[4],
+                        unsigned count,
+                        unsigned input_stride,
+                        unsigned output_stride);
 int gallivm_cpu_fs_exec(struct gallivm_prog *prog,
                         float x, float y,
                         float (*dests)[PIPE_MAX_SHADER_INPUTS][4],

@@ -2157,9 +2157,6 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
       shader->Programs[0]->Parameters = _mesa_new_parameter_list();
       shader->Programs[0]->Varying = _mesa_new_parameter_list();
       shader->Programs[0]->Attributes = _mesa_new_parameter_list();
-#if 0
-      shader->Programs[0]->Samplers = _mesa_new_parameter_list();
-#endif
    }
 
    slang_info_log_construct(&info_log);

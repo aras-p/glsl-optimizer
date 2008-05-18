@@ -93,7 +93,7 @@ typedef enum slang_operation_type_
    SLANG_OPER_NOT,              /* "!" [expr] */
    SLANG_OPER_SUBSCRIPT,        /* [expr] "[" [expr] "]" */
    SLANG_OPER_CALL,             /* [func name] [param] [param] [...] */
-   SLANG_OPER_INLINED_CALL,     /* inlined function call */
+   SLANG_OPER_NON_INLINED_CALL, /* a real function call */
    SLANG_OPER_FIELD,            /* i.e.: ".next" or ".xzy" or ".xxx" etc */
    SLANG_OPER_POSTINCREMENT,    /* [var] "++" */
    SLANG_OPER_POSTDECREMENT     /* [var] "--" */

@@ -39,6 +39,7 @@
 #include "draw_vs.h"
 
 #include "tgsi/util/tgsi_parse.h"
+#include "tgsi/util/tgsi_scan.h"
 
 
 struct exec_vertex_shader {
@@ -165,21 +166,23 @@ draw_create_vs_exec(struct draw_context *draw,
 		    const struct pipe_shader_state *state)
 {
    struct exec_vertex_shader *vs = CALLOC_STRUCT( exec_vertex_shader );
-   uint nt = tgsi_num_tokens(state->tokens);
 
    if (vs == NULL) 
       return NULL;
 
    /* we make a private copy of the tokens */
-   vs->base.state.tokens = mem_dup(state->tokens, nt * sizeof(state->tokens[0]));
-   tgsi_scan_shader(state->tokens, &vs->base.info);
+   vs->base.state.tokens = tgsi_dup_tokens(state->tokens);
+   if (!vs->base.state.tokens) {
+      FREE(vs);
+      return NULL;
+   }
 
+   tgsi_scan_shader(state->tokens, &vs->base.info);
 
    vs->base.prepare = vs_exec_prepare;
    vs->base.run_linear = vs_exec_run_linear;
    vs->base.delete = vs_exec_delete;
    vs->machine = &draw->machine;
-
 
    return &vs->base;
 }

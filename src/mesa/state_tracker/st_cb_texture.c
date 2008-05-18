@@ -151,7 +151,7 @@ st_DeleteTextureObject(GLcontext *ctx,
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    if (stObj->pt)
-      pipe_texture_release(&stObj->pt);
+      pipe_texture_reference(&stObj->pt, NULL);
 
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -165,7 +165,7 @@ st_FreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
    DBG("%s\n", __FUNCTION__);
 
    if (stImage->pt) {
-      pipe_texture_release(&stImage->pt);
+      pipe_texture_reference(&stImage->pt, NULL);
    }
 
    if (texImage->Data) {
@@ -554,7 +554,7 @@ st_TexImage(GLcontext * ctx,
     * Release any old malloced memory.
     */
    if (stImage->pt) {
-      pipe_texture_release(&stImage->pt);
+      pipe_texture_reference(&stImage->pt, NULL);
       assert(!texImage->Data);
    }
    else if (texImage->Data) {
@@ -574,7 +574,7 @@ st_TexImage(GLcontext * ctx,
                                  stImage->face, stImage->level)))) {
 
       DBG("release it\n");
-      pipe_texture_release(&stObj->pt);
+      pipe_texture_reference(&stObj->pt, NULL);
       assert(!stObj->pt);
       stObj->teximage_realloc = FALSE;
    }
@@ -1417,7 +1417,7 @@ copy_image_data_to_texture(struct st_context *st,
                             stImage->face
                             );
 
-      pipe_texture_release(&stImage->pt);
+      pipe_texture_reference(&stImage->pt, NULL);
    }
    else if (stImage->base.Data) {
       assert(stImage->base.Data != NULL);
@@ -1477,9 +1477,6 @@ st_finalize_texture(GLcontext *ctx,
    if (firstImage->pt &&
        firstImage->pt != stObj->pt &&
        firstImage->pt->last_level >= stObj->lastLevel) {
-
-      if (stObj->pt)
-         pipe_texture_release(&stObj->pt);
 
       pipe_texture_reference(&stObj->pt, firstImage->pt);
    }

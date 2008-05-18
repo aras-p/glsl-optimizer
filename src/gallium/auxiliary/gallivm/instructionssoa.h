@@ -48,6 +48,7 @@ public:
    InstructionsSoa(llvm::Module *mod, llvm::Function *func,
                    llvm::BasicBlock *block, StorageSoa *storage);
 
+   std::vector<llvm::Value*> abs(const std::vector<llvm::Value*> in1);
    std::vector<llvm::Value*> arl(const std::vector<llvm::Value*> in);
    std::vector<llvm::Value*> add(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
@@ -55,12 +56,20 @@ public:
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> dp4(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> lit(const std::vector<llvm::Value*> in);
    std::vector<llvm::Value*> madd(const std::vector<llvm::Value*> in1,
                                   const std::vector<llvm::Value*> in2,
                                   const std::vector<llvm::Value*> in3);
+   std::vector<llvm::Value*> max(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> min(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> mul(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    std::vector<llvm::Value*> pow(const std::vector<llvm::Value*> in1,
+                                 const std::vector<llvm::Value*> in2);
+   std::vector<llvm::Value*> rsq(const std::vector<llvm::Value*> in1);
+   std::vector<llvm::Value*> sub(const std::vector<llvm::Value*> in1,
                                  const std::vector<llvm::Value*> in2);
    void         end();
 
