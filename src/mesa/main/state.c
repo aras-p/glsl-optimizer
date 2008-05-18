@@ -536,10 +536,10 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_GetVertexAttribPointervNV(exec, _mesa_GetVertexAttribPointervNV);
    SET_IsProgramNV(exec, _mesa_IsProgramARB);
    SET_LoadProgramNV(exec, _mesa_LoadProgramNV);
-   SET_ProgramParameter4dNV(exec, _mesa_ProgramParameter4dNV);
-   SET_ProgramParameter4dvNV(exec, _mesa_ProgramParameter4dvNV);
-   SET_ProgramParameter4fNV(exec, _mesa_ProgramParameter4fNV);
-   SET_ProgramParameter4fvNV(exec, _mesa_ProgramParameter4fvNV);
+   SET_ProgramEnvParameter4dARB(exec, _mesa_ProgramEnvParameter4dARB); /* alias to ProgramParameter4dNV */
+   SET_ProgramEnvParameter4dvARB(exec, _mesa_ProgramEnvParameter4dvARB);  /* alias to ProgramParameter4dvNV */
+   SET_ProgramEnvParameter4fARB(exec, _mesa_ProgramEnvParameter4fARB);  /* alias to ProgramParameter4fNV */
+   SET_ProgramEnvParameter4fvARB(exec, _mesa_ProgramEnvParameter4fvARB);  /* alias to ProgramParameter4fvNV */
    SET_ProgramParameters4dvNV(exec, _mesa_ProgramParameters4dvNV);
    SET_ProgramParameters4fvNV(exec, _mesa_ProgramParameters4fvNV);
    SET_TrackMatrixNV(exec, _mesa_TrackMatrixNV);
