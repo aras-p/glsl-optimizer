@@ -139,7 +139,11 @@ softpipe_create_fs_sse(struct softpipe_context *softpipe,
    }
 
    shader->func = (codegen_function) x86_get_func( &shader->sse2_program );
-   assert(shader->func);
+   if (!shader->func) {
+      x86_release_func( &shader->sse2_program );
+      FREE(shader);
+      return NULL;
+   }
 
    shader->base.shader = *templ;
    shader->base.prepare = fs_sse_prepare;

@@ -264,10 +264,10 @@ llvm::Constant * StorageSoa::createConstGlobalVector(const std::vector<float> &v
 {
    VectorType *vectorType = VectorType::get(Type::FloatTy, 4);
    std::vector<Constant*> immValues;
-   ConstantFP *constx = ConstantFP::get(Type::FloatTy, APFloat(vec[0]));
-   ConstantFP *consty = ConstantFP::get(Type::FloatTy, APFloat(vec[1]));
-   ConstantFP *constz = ConstantFP::get(Type::FloatTy, APFloat(vec[2]));
-   ConstantFP *constw = ConstantFP::get(Type::FloatTy, APFloat(vec[3]));
+   ConstantFP *constx = ConstantFP::get(APFloat(vec[0]));
+   ConstantFP *consty = ConstantFP::get(APFloat(vec[1]));
+   ConstantFP *constz = ConstantFP::get(APFloat(vec[2]));
+   ConstantFP *constw = ConstantFP::get(APFloat(vec[3]));
    immValues.push_back(constx);
    immValues.push_back(consty);
    immValues.push_back(constz);

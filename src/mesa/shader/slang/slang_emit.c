@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0.3
  *
  * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
@@ -79,7 +79,7 @@ new_subroutine(slang_emit_info *emitInfo, GLuint *id)
       _mesa_realloc(emitInfo->Subroutines,
                     n * sizeof(struct gl_program),
                     (n + 1) * sizeof(struct gl_program));
-   emitInfo->Subroutines[n] = _mesa_new_program(ctx, emitInfo->prog->Target, 0);
+   emitInfo->Subroutines[n] = ctx->Driver.NewProgram(ctx, emitInfo->prog->Target, 0);
    emitInfo->Subroutines[n]->Parameters = emitInfo->prog->Parameters;
    emitInfo->NumSubroutines++;
    *id = n;
@@ -869,12 +869,18 @@ emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
 static struct prog_instruction *
 emit_kill(slang_emit_info *emitInfo)
 {
+   struct gl_fragment_program *fp;
    struct prog_instruction *inst;
    /* NV-KILL - discard fragment depending on condition code.
     * Note that ARB-KILL depends on sign of vector operand.
     */
    inst = new_instruction(emitInfo, OPCODE_KIL_NV);
    inst->DstReg.CondMask = COND_TR;  /* always branch */
+
+   assert(emitInfo->prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+   fp = (struct gl_fragment_program *) emitInfo->prog;
+   fp->UsesKill = GL_TRUE;
+
    return inst;
 }
 
@@ -1500,6 +1506,10 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    if (n->Store->File == PROGRAM_STATE_VAR) {
       n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
+      if (n->Store->Index < 0) {
+         slang_info_log_error(emitInfo->log, "Error parsing state variable");
+         return NULL;
+      }
    }
    else {
       GLint offset = n->FieldOffset / 4;
@@ -1787,7 +1797,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
                               sub->NumInstructions);
       /* delete subroutine code */
       sub->Parameters = NULL; /* prevent double-free */
-      _mesa_delete_program(ctx, sub);
+      _mesa_reference_program(ctx, &emitInfo->Subroutines[i], NULL);
    }
 
    /* free subroutine list */

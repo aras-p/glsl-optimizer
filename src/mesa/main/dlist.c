@@ -303,7 +303,6 @@ typedef enum
    OPCODE_EXECUTE_PROGRAM_NV,
    OPCODE_REQUEST_RESIDENT_PROGRAMS_NV,
    OPCODE_LOAD_PROGRAM_NV,
-   OPCODE_PROGRAM_PARAMETER4F_NV,
    OPCODE_TRACK_MATRIX_NV,
    /* GL_NV_fragment_program */
    OPCODE_PROGRAM_LOCAL_PARAMETER_ARB,
@@ -4248,7 +4247,91 @@ save_BindProgramNV(GLenum target, GLuint id)
       CALL_BindProgramNV(ctx->Exec, (target, id));
    }
 }
-#endif /* FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
+
+static void GLAPIENTRY
+save_ProgramEnvParameter4fARB(GLenum target, GLuint index,
+                              GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_ENV_PARAMETER_ARB, 6);
+   if (n) {
+      n[1].e = target;
+      n[2].ui = index;
+      n[3].f = x;
+      n[4].f = y;
+      n[5].f = z;
+      n[6].f = w;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramEnvParameter4fARB(ctx->Exec, (target, index, x, y, z, w));
+   }
+}
+
+
+static void GLAPIENTRY
+save_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
+                               const GLfloat *params)
+{
+   save_ProgramEnvParameter4fARB(target, index, params[0], params[1],
+                                 params[2], params[3]);
+}
+
+
+static void GLAPIENTRY
+save_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
+				const GLfloat * params)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (count > 0) {
+      GLint i;
+      const GLfloat * p = params;
+
+      for (i = 0 ; i < count ; i++) {
+	 n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_ENV_PARAMETER_ARB, 6);
+	 if (n) {
+	    n[1].e = target;
+	    n[2].ui = index;
+	    n[3].f = p[0];
+	    n[4].f = p[1];
+	    n[5].f = p[2];
+	    n[6].f = p[3];
+	    p += 4;
+	 }
+      }
+   }
+
+   if (ctx->ExecuteFlag) {
+      CALL_ProgramEnvParameters4fvEXT(ctx->Exec, (target, index, count, params));
+   }
+}
+
+
+static void GLAPIENTRY
+save_ProgramEnvParameter4dARB(GLenum target, GLuint index,
+                              GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+{
+   save_ProgramEnvParameter4fARB(target, index,
+                                 (GLfloat) x,
+                                 (GLfloat) y, (GLfloat) z, (GLfloat) w);
+}
+
+
+static void GLAPIENTRY
+save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
+                               const GLdouble *params)
+{
+   save_ProgramEnvParameter4fARB(target, index,
+                                 (GLfloat) params[0],
+                                 (GLfloat) params[1],
+                                 (GLfloat) params[2], (GLfloat) params[3]);
+}
+
+#endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program || FEATURE_NV_vertex_program */
 
 #if FEATURE_NV_vertex_program
 static void GLAPIENTRY
@@ -4273,62 +4356,12 @@ save_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params)
 
 
 static void GLAPIENTRY
-save_ProgramParameter4fNV(GLenum target, GLuint index,
-                          GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_PARAMETER4F_NV, 6);
-   if (n) {
-      n[1].e = target;
-      n[2].ui = index;
-      n[3].f = x;
-      n[4].f = y;
-      n[5].f = z;
-      n[6].f = w;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_ProgramParameter4fNV(ctx->Exec, (target, index, x, y, z, w));
-   }
-}
-
-
-static void GLAPIENTRY
-save_ProgramParameter4fvNV(GLenum target, GLuint index,
-                           const GLfloat *params)
-{
-   save_ProgramParameter4fNV(target, index, params[0], params[1],
-                             params[2], params[3]);
-}
-
-
-static void GLAPIENTRY
-save_ProgramParameter4dNV(GLenum target, GLuint index,
-                          GLdouble x, GLdouble y, GLdouble z, GLdouble w)
-{
-   save_ProgramParameter4fNV(target, index, (GLfloat) x, (GLfloat) y,
-                             (GLfloat) z, (GLfloat) w);
-}
-
-
-static void GLAPIENTRY
-save_ProgramParameter4dvNV(GLenum target, GLuint index,
-                           const GLdouble *params)
-{
-   save_ProgramParameter4fNV(target, index, (GLfloat) params[0],
-                             (GLfloat) params[1], (GLfloat) params[2],
-                             (GLfloat) params[3]);
-}
-
-
-static void GLAPIENTRY
 save_ProgramParameters4dvNV(GLenum target, GLuint index,
                             GLuint num, const GLdouble *params)
 {
    GLuint i;
    for (i = 0; i < num; i++) {
-      save_ProgramParameter4dvNV(target, index + i, params + 4 * i);
+      save_ProgramEnvParameter4dvARB(target, index + i, params + 4 * i);
    }
 }
 
@@ -4339,7 +4372,7 @@ save_ProgramParameters4fvNV(GLenum target, GLuint index,
 {
    GLuint i;
    for (i = 0; i < num; i++) {
-      save_ProgramParameter4fvNV(target, index + i, params + 4 * i);
+      save_ProgramEnvParameter4fvARB(target, index + i, params + 4 * i);
    }
 }
 
@@ -4665,90 +4698,6 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
    if (ctx->ExecuteFlag) {
       CALL_ProgramStringARB(ctx->Exec, (target, format, len, string));
    }
-}
-
-
-static void GLAPIENTRY
-save_ProgramEnvParameter4fARB(GLenum target, GLuint index,
-                              GLfloat x, GLfloat y, GLfloat z, GLfloat w)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-   n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_ENV_PARAMETER_ARB, 6);
-   if (n) {
-      n[1].e = target;
-      n[2].ui = index;
-      n[3].f = x;
-      n[4].f = y;
-      n[5].f = z;
-      n[6].f = w;
-   }
-   if (ctx->ExecuteFlag) {
-      CALL_ProgramEnvParameter4fARB(ctx->Exec, (target, index, x, y, z, w));
-   }
-}
-
-
-static void GLAPIENTRY
-save_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
-                               const GLfloat *params)
-{
-   save_ProgramEnvParameter4fARB(target, index, params[0], params[1],
-                                 params[2], params[3]);
-}
-
-
-static void GLAPIENTRY
-save_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
-				const GLfloat * params)
-{
-   GET_CURRENT_CONTEXT(ctx);
-   Node *n;
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (count > 0) {
-      GLint i;
-      const GLfloat * p = params;
-
-      for (i = 0 ; i < count ; i++) {
-	 n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_ENV_PARAMETER_ARB, 6);
-	 if (n) {
-	    n[1].e = target;
-	    n[2].ui = index;
-	    n[3].f = p[0];
-	    n[4].f = p[1];
-	    n[5].f = p[2];
-	    n[6].f = p[3];
-	    p += 4;
-	 }
-      }
-   }
-
-   if (ctx->ExecuteFlag) {
-      CALL_ProgramEnvParameters4fvEXT(ctx->Exec, (target, index, count, params));
-   }
-}
-
-
-static void GLAPIENTRY
-save_ProgramEnvParameter4dARB(GLenum target, GLuint index,
-                              GLdouble x, GLdouble y, GLdouble z, GLdouble w)
-{
-   save_ProgramEnvParameter4fARB(target, index,
-                                 (GLfloat) x,
-                                 (GLfloat) y, (GLfloat) z, (GLfloat) w);
-}
-
-
-static void GLAPIENTRY
-save_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
-                               const GLdouble *params)
-{
-   save_ProgramEnvParameter4fARB(target, index,
-                                 (GLfloat) params[0],
-                                 (GLfloat) params[1],
-                                 (GLfloat) params[2], (GLfloat) params[3]);
 }
 
 #endif /* FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program */
@@ -6425,10 +6374,6 @@ execute_list(GLcontext *ctx, GLuint list)
             CALL_LoadProgramNV(ctx->Exec, (n[1].e, n[2].ui, n[3].i,
                                            (const GLubyte *) n[4].data));
             break;
-         case OPCODE_PROGRAM_PARAMETER4F_NV:
-            CALL_ProgramParameter4fNV(ctx->Exec, (n[1].e, n[2].ui, n[3].f,
-                                                  n[4].f, n[5].f, n[6].f));
-            break;
          case OPCODE_TRACK_MATRIX_NV:
             CALL_TrackMatrixNV(ctx->Exec, (n[1].e, n[2].ui, n[3].e, n[4].e));
             break;
@@ -6459,6 +6404,8 @@ execute_list(GLcontext *ctx, GLuint list)
             CALL_ProgramStringARB(ctx->Exec,
                                   (n[1].e, n[2].e, n[3].i, n[4].data));
             break;
+#endif
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program || FEATURE_NV_vertex_program
          case OPCODE_PROGRAM_ENV_PARAMETER_ARB:
             CALL_ProgramEnvParameter4fARB(ctx->Exec, (n[1].e, n[2].ui, n[3].f,
                                                       n[4].f, n[5].f,
@@ -8014,10 +7961,10 @@ _mesa_init_dlist_table(struct _glapi_table *table)
    SET_GetVertexAttribPointervNV(table, _mesa_GetVertexAttribPointervNV);
    SET_IsProgramNV(table, _mesa_IsProgramARB);
    SET_LoadProgramNV(table, save_LoadProgramNV);
-   SET_ProgramParameter4dNV(table, save_ProgramParameter4dNV);
-   SET_ProgramParameter4dvNV(table, save_ProgramParameter4dvNV);
-   SET_ProgramParameter4fNV(table, save_ProgramParameter4fNV);
-   SET_ProgramParameter4fvNV(table, save_ProgramParameter4fvNV);
+   SET_ProgramEnvParameter4dARB(table, save_ProgramEnvParameter4dARB);
+   SET_ProgramEnvParameter4dvARB(table, save_ProgramEnvParameter4dvARB);
+   SET_ProgramEnvParameter4fARB(table, save_ProgramEnvParameter4fARB);
+   SET_ProgramEnvParameter4fvARB(table, save_ProgramEnvParameter4fvARB);
    SET_ProgramParameters4dvNV(table, save_ProgramParameters4dvNV);
    SET_ProgramParameters4fvNV(table, save_ProgramParameters4fvNV);
    SET_TrackMatrixNV(table, save_TrackMatrixNV);

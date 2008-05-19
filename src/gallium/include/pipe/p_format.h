@@ -327,14 +327,6 @@ enum pipe_format {
 };
 
 
-/** XXX remove these deprecated names */
-#define PIPE_FORMAT_U_L8     PIPE_FORMAT_L8_UNORM
-#define PIPE_FORMAT_U_A8     PIPE_FORMAT_A8_UNORM
-#define PIPE_FORMAT_U_I8     PIPE_FORMAT_I8_UNORM
-#define PIPE_FORMAT_U_A8_L8  PIPE_FORMAT_A8L8_UNORM
-#define PIPE_FORMAT_U_S8     PIPE_FORMAT_S8_UNORM
-
-
 /**
  * Builds pipe format name from format token.
  */

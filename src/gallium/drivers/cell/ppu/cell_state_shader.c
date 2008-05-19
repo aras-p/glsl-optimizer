@@ -30,15 +30,28 @@
 #include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "draw/draw_context.h"
-#if 0
-#include "pipe/p_shader_tokens.h"
-#include "gallivm/gallivm.h"
-#include "tgsi/util/tgsi_dump.h"
-#include "tgsi/exec/tgsi_sse2.h"
-#endif
+#include "tgsi/util/tgsi_parse.h"
 
 #include "cell_context.h"
 #include "cell_state.h"
+
+
+
+/** cast wrapper */
+static INLINE struct cell_fragment_shader_state *
+cell_fragment_shader_state(void *shader)
+{
+   return (struct pipe_shader_state *) shader;
+}
+
+
+/** cast wrapper */
+static INLINE struct cell_vertex_shader_state *
+cell_vertex_shader_state(void *shader)
+{
+   return (struct pipe_shader_state *) shader;
+}
+
 
 
 static void *
@@ -46,17 +59,21 @@ cell_create_fs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
    /*struct cell_context *cell = cell_context(pipe);*/
-   struct cell_fragment_shader_state *state;
+   struct cell_fragment_shader_state *cfs;
 
-   state = CALLOC_STRUCT(cell_fragment_shader_state);
-   if (!state)
+   cfs = CALLOC_STRUCT(cell_fragment_shader_state);
+   if (!cfs)
       return NULL;
 
-   state->shader = *templ;
+   cfs->shader.tokens = tgsi_dup_tokens(templ->tokens);
+   if (!cfs->shader.tokens) {
+      FREE(cfs);
+      return NULL;
+   }
 
-   tgsi_scan_shader(templ->tokens, &state->info);
+   tgsi_scan_shader(templ->tokens, &cfs->info);
 
-   return state;
+   return cfs;
 }
 
 
@@ -65,7 +82,7 @@ cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct cell_context *cell = cell_context(pipe);
 
-   cell->fs = (struct cell_fragment_shader_state *) fs;
+   cell->fs = cell_fragment_shader_state(fs);
 
    cell->dirty |= CELL_NEW_FS;
 }
@@ -74,10 +91,10 @@ cell_bind_fs_state(struct pipe_context *pipe, void *fs)
 static void
 cell_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
-   struct cell_fragment_shader_state *state =
-      (struct cell_fragment_shader_state *) fs;
+   struct cell_fragment_shader_state *cfs = cell_fragment_shader_state(fs);
 
-   FREE( state );
+   FREE((void *) cfs->shader.tokens);
+   FREE(cfs);
 }
 
 
@@ -86,22 +103,28 @@ cell_create_vs_state(struct pipe_context *pipe,
                      const struct pipe_shader_state *templ)
 {
    struct cell_context *cell = cell_context(pipe);
-   struct cell_vertex_shader_state *state;
+   struct cell_vertex_shader_state *cvs;
 
-   state = CALLOC_STRUCT(cell_vertex_shader_state);
-   if (!state)
+   cvs = CALLOC_STRUCT(cell_vertex_shader_state);
+   if (!cvs)
       return NULL;
 
-   state->shader = *templ;
-   tgsi_scan_shader(templ->tokens, &state->info);
-
-   state->draw_data = draw_create_vertex_shader(cell->draw, &state->shader);
-   if (state->draw_data == NULL) {
-      FREE( state );
+   cvs->shader.tokens = tgsi_dup_tokens(templ->tokens);
+   if (!cvs->shader.tokens) {
+      FREE(cvs);
       return NULL;
    }
 
-   return state;
+   tgsi_scan_shader(templ->tokens, &cvs->info);
+
+   cvs->draw_data = draw_create_vertex_shader(cell->draw, &cvs->shader);
+   if (cvs->draw_data == NULL) {
+      FREE( (void *) cvs->shader.tokens );
+      FREE( cvs );
+      return NULL;
+   }
+
+   return cvs;
 }
 
 
@@ -110,7 +133,7 @@ cell_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct cell_context *cell = cell_context(pipe);
 
-   cell->vs = (const struct cell_vertex_shader_state *) vs;
+   cell->vs = cell_vertex_shader_state(vs);
 
    draw_bind_vertex_shader(cell->draw,
                            (cell->vs ? cell->vs->draw_data : NULL));
@@ -123,12 +146,11 @@ static void
 cell_delete_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct cell_context *cell = cell_context(pipe);
+   struct cell_vertex_shader_state *cvs = cell_vertex_shader_state(vs);
 
-   struct cell_vertex_shader_state *state =
-      (struct cell_vertex_shader_state *) vs;
-
-   draw_delete_vertex_shader(cell->draw, state->draw_data);
-   FREE( state );
+   draw_delete_vertex_shader(cell->draw, cvs->draw_data);
+   FREE( (void *) cvs->shader.tokens );
+   FREE( cvs );
 }
 
 

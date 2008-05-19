@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.0.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,18 +33,21 @@
 
 
 /**
- * Fetch a texel.
+ * Fetch a texel with given lod.
+ * Called via machine->FetchTexelLod()
  */
 static void
-fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
-             GLuint unit, GLfloat color[4] )
+fetch_texel_lod( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
+                 GLuint unit, GLfloat color[4] )
 {
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+
+   lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
    /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
-                               1, (const GLfloat (*)[4]) texcoord,
+   swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);
    color[0] = CHAN_TO_FLOAT(rgba[0]);
    color[1] = CHAN_TO_FLOAT(rgba[1]);
@@ -56,11 +59,12 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
 /**
  * Fetch a texel with the given partial derivatives to compute a level
  * of detail in the mipmap.
+ * Called via machine->FetchTexelDeriv()
  */
 static void
 fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
                    const GLfloat texdx[4], const GLfloat texdy[4],
-                   GLuint unit, GLfloat color[4] )
+                   GLfloat lodBias, GLuint unit, GLfloat color[4] )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
@@ -69,15 +73,17 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
    const GLfloat texH = (GLfloat) texImg->HeightScale;
    GLchan rgba[4];
 
-   GLfloat lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
-                                         texdx[1], texdy[1], /* dt/dx, dt/dy */
-                                         texdx[3], texdy[2], /* dq/dx, dq/dy */
-                                         texW, texH,
-                                         texcoord[0], texcoord[1], texcoord[3],
-                                         1.0F / texcoord[3]);
+   GLfloat lambda
+      = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
+                               texdx[1], texdy[1], /* dt/dx, dt/dy */
+                               texdx[3], texdy[2], /* dq/dx, dq/dy */
+                               texW, texH,
+                               texcoord[0], texcoord[1], texcoord[3],
+                               1.0F / texcoord[3]) + lodBias;
 
-   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
-                               1, (const GLfloat (*)[4]) texcoord,
+   lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
+
+   swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);
    color[0] = CHAN_TO_FLOAT(rgba[0]);
    color[1] = CHAN_TO_FLOAT(rgba[1]);
@@ -132,7 +138,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    /* init call stack */
    machine->StackDepth = 0;
 
-   machine->FetchTexelLod = fetch_texel;
+   machine->FetchTexelLod = fetch_texel_lod;
    machine->FetchTexelDeriv = fetch_texel_deriv;
 }
 

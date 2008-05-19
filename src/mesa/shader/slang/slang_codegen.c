@@ -495,6 +495,9 @@ new_node0(slang_ir_opcode op)
 }
 
 
+/**
+ * Create sequence of two nodes.
+ */
 static slang_ir_node *
 new_seq(slang_ir_node *left, slang_ir_node *right)
 {
@@ -535,10 +538,10 @@ new_not(slang_ir_node *n)
 
 
 /**
- * Inlined subroutine.
+ * Non-inlined function call.
  */
 static slang_ir_node *
-new_inlined_function_call(slang_ir_node *code, slang_label *name)
+new_function_call(slang_ir_node *code, slang_label *name)
 {
    slang_ir_node *n = new_node1(IR_CALL, code);
    assert(name);
@@ -1226,7 +1229,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
          else {
             callOper = inlined;
          }
-         callOper->type = SLANG_OPER_INLINED_CALL;
+         callOper->type = SLANG_OPER_NON_INLINED_CALL;
          callOper->fun = fun;
          callOper->label = _slang_label_new_unique((char*) fun->header.a_name);
       }
@@ -1844,6 +1847,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      A->program->NumTemporaries++;
       assert(n->Store->Size > 0);
    }
    return n;
@@ -2060,7 +2064,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       }
       /* XXX make copy of this initializer? */
       rhs = _slang_gen_operation(A, &oper->children[0]);
-      assert(rhs);
+      if (!rhs)
+         return NULL;  /* must have found an error */
       init = new_node2(IR_MOVE, var, rhs);
       /*assert(rhs->Opcode != IR_SEQ);*/
       n = new_seq(varDecl, init);
@@ -2347,7 +2352,8 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       return n;
    }
    else if (   ti.spec.type == SLANG_SPEC_FLOAT
-            || ti.spec.type == SLANG_SPEC_INT) {
+            || ti.spec.type == SLANG_SPEC_INT
+            || ti.spec.type == SLANG_SPEC_BOOL) {
       const GLuint rows = 1;
       slang_swizzle swz;
       slang_ir_node *n;
@@ -2509,49 +2515,6 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
 
 
 /**
- * Look for expressions such as:  gl_ModelviewMatrix * gl_Vertex
- * and replace with this:  gl_Vertex * gl_ModelviewMatrixTranpose
- * Since matrices are stored in column-major order, the second form of
- * multiplication is much more efficient (just 4 dot products).
- */
-static void
-_slang_check_matmul_optimization(slang_assemble_ctx *A, slang_operation *oper)
-{
-   static const struct {
-      const char *orig;
-      const char *tranpose;
-   } matrices[] = {
-      {"gl_ModelViewMatrix", "gl_ModelViewMatrixTranspose"},
-      {"gl_ProjectionMatrix", "gl_ProjectionMatrixTranspose"},
-      {"gl_ModelViewProjectionMatrix", "gl_ModelViewProjectionMatrixTranspose"},
-      {"gl_TextureMatrix", "gl_TextureMatrixTranspose"},
-      {"gl_NormalMatrix", "__NormalMatrixTranspose"},
-      { NULL, NULL }
-   };
-
-   assert(oper->type == SLANG_OPER_MULTIPLY);
-   if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
-      GLuint i;
-      for (i = 0; matrices[i].orig; i++) {
-         if (oper->children[0].a_id
-             == slang_atom_pool_atom(A->atoms, matrices[i].orig)) {
-            /*
-            _mesa_printf("Replace %s with %s\n",
-                         matrices[i].orig, matrices[i].tranpose);
-            */
-            assert(oper->children[0].type == SLANG_OPER_IDENTIFIER);
-            oper->children[0].a_id
-               = slang_atom_pool_atom(A->atoms, matrices[i].tranpose);
-            /* finally, swap the operands */
-            _slang_operation_swap(&oper->children[0], &oper->children[1]);
-            return;
-         }
-      }
-   }
-}
-
-
-/**
  * Generate IR tree for a slang_operation (AST node)
  */
 static slang_ir_node *
@@ -2589,7 +2552,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
                _slang_free_ir_tree(tree);
                return NULL; /* error must have occured */
             }
-            tree = tree ? new_seq(tree, n) : n;
+            tree = new_seq(tree, n);
          }
 
 #if 00
@@ -2684,7 +2647,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 2);
-         _slang_check_matmul_optimization(A, oper);
          n = _slang_gen_function_call_name(A, "*", oper, NULL);
 	 return n;
       }
@@ -2817,17 +2779,17 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 return n;
       }
 
-   case SLANG_OPER_INLINED_CALL:
+   case SLANG_OPER_NON_INLINED_CALL:
    case SLANG_OPER_SEQUENCE:
       {
          slang_ir_node *tree = NULL;
          GLuint i;
          for (i = 0; i < oper->num_children; i++) {
             slang_ir_node *n = _slang_gen_operation(A, &oper->children[i]);
-            tree = tree ? new_seq(tree, n) : n;
+            tree = new_seq(tree, n);
          }
-         if (oper->type == SLANG_OPER_INLINED_CALL) {
-            tree = new_inlined_function_call(tree, oper->label);
+         if (oper->type == SLANG_OPER_NON_INLINED_CALL) {
+            tree = new_function_call(tree, oper->label);
          }
          return tree;
       }
@@ -2879,17 +2841,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
        * store->Index = sampler number (0..7, typically)
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-#if 0
-      GLint samplerUniform
-         = _mesa_add_sampler(prog->Parameters, varName, datatype);
-#elif 0
-      GLint samplerUniform
-         = _mesa_add_sampler(prog->Samplers, varName, datatype);
-      (void) _mesa_add_sampler(prog->Parameters, varName, datatype); /* dummy entry */
-#else
       const GLint sampNum = A->numSamplers++;
       _mesa_add_sampler(prog->Parameters, varName, datatype, sampNum);
-#endif
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
       if (dbg) printf("SAMPLER ");
    }

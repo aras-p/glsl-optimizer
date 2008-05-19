@@ -692,12 +692,14 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_LIT: {
+      out = instr->lit(inputs[0]);
    }
       break;
    case TGSI_OPCODE_RCP: {
    }
       break;
    case TGSI_OPCODE_RSQ: {
+      out = instr->rsq(inputs[0]);
    }
       break;
    case TGSI_OPCODE_EXP:
@@ -724,9 +726,11 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_MIN: {
+      out = instr->min(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_MAX: {
+      out = instr->max(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_SLT: {
@@ -740,6 +744,7 @@ translate_instructionir(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_SUB: {
+      out = instr->sub(inputs[0], inputs[1]);
    }
       break;
    case TGSI_OPCODE_LERP: {
@@ -781,6 +786,7 @@ translate_instructionir(llvm::Module *module,
    case TGSI_OPCODE_MULTIPLYMATRIX:
       break;
    case TGSI_OPCODE_ABS: {
+      out = instr->abs(inputs[0]);
    }
       break;
    case TGSI_OPCODE_RCC:

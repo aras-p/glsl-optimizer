@@ -159,7 +159,9 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          }
 
          if (stfp->bitmap_program) {
-            st_delete_program(ctx, &stfp->bitmap_program->Base.Base);
+            struct gl_program *prg = &stfp->bitmap_program->Base.Base;
+            _mesa_reference_program(ctx, &prg, NULL);
+            stfp->bitmap_program = NULL;
          }
 
          st_free_translated_vertex_programs(st, stfp->vertex_programs);

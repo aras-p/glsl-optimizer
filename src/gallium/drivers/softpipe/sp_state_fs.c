@@ -102,10 +102,7 @@ softpipe_create_vs_state(struct pipe_context *pipe,
       return NULL;
    }
 
-   state->shader = *templ;
-
-   state->draw_data = draw_create_vertex_shader(softpipe->draw,
-                                                &state->shader);
+   state->draw_data = draw_create_vertex_shader(softpipe->draw, templ);
    if (state->draw_data == NULL) {
       FREE( state );
       return NULL;

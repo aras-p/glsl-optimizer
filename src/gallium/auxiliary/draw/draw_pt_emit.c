@@ -146,7 +146,7 @@ void draw_pt_emit( struct pt_emit *emit,
 
    hw_verts = render->allocate_vertices(render,
 					(ushort)translate->key.output_stride,
-					(ushort)count);
+					(ushort)vertex_count);
    if (!hw_verts) {
       assert(0);
       return;

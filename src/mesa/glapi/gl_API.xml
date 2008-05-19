@@ -11275,7 +11275,7 @@
         <glx rop="4183"/>
     </function>
 
-    <function name="ProgramParameter4dNV" offset="assign" vectorequiv="ProgramParameter4dvNV">
+    <function name="ProgramParameter4dNV" alias="ProgramEnvParameter4dARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
@@ -11284,14 +11284,13 @@
         <param name="w" type="GLdouble"/>
     </function>
 
-    <function name="ProgramParameter4dvNV" offset="assign">
+    <function name="ProgramParameter4dvNV" alias="ProgramEnvParameter4dvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="params" type="const GLdouble *" count="4"/>
-        <glx rop="4185" doubles_in_order="true"/>
+        <param name="params" type="const GLdouble *"/>
     </function>
 
-    <function name="ProgramParameter4fNV" offset="assign" vectorequiv="ProgramParameter4fvNV">
+    <function name="ProgramParameter4fNV" alias="ProgramEnvParameter4fARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
         <param name="x" type="GLfloat"/>
@@ -11300,11 +11299,10 @@
         <param name="w" type="GLfloat"/>
     </function>
 
-    <function name="ProgramParameter4fvNV" offset="assign">
+    <function name="ProgramParameter4fvNV" alias="ProgramEnvParameter4fvARB">
         <param name="target" type="GLenum"/>
         <param name="index" type="GLuint"/>
-        <param name="params" type="const GLfloat *" count="4"/>
-        <glx rop="4184"/>
+        <param name="params" type="const GLfloat *"/>
     </function>
 
     <function name="ProgramParameters4dvNV" offset="assign">

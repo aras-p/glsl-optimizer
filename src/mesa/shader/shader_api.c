@@ -75,21 +75,8 @@ void
 _mesa_clear_shader_program_data(GLcontext *ctx,
                                 struct gl_shader_program *shProg)
 {
-   if (shProg->VertexProgram) {
-      /* Set ptr to NULL since the param list is shared with the
-       * original/unlinked program.
-       */
-      shProg->VertexProgram->Base.Parameters = NULL;
-      _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
-   }
-
-   if (shProg->FragmentProgram) {
-      /* Set ptr to NULL since the param list is shared with the
-       * original/unlinked program.
-       */
-      shProg->FragmentProgram->Base.Parameters = NULL;
-      _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
-   }
+   _mesa_reference_vertprog(ctx, &shProg->VertexProgram, NULL);
+   _mesa_reference_fragprog(ctx, &shProg->FragmentProgram, NULL);
 
    if (shProg->Uniforms) {
       _mesa_free_uniform_list(shProg->Uniforms);
@@ -126,9 +113,16 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    for (i = 0; i < shProg->NumShaders; i++) {
       _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
    }
+   shProg->NumShaders = 0;
+
    if (shProg->Shaders) {
       _mesa_free(shProg->Shaders);
       shProg->Shaders = NULL;
+   }
+
+   if (shProg->InfoLog) {
+      _mesa_free(shProg->InfoLog);
+      shProg->InfoLog = NULL;
    }
 }
 
@@ -140,10 +134,7 @@ void
 _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
-   if (shProg->Shaders) {
-      _mesa_free(shProg->Shaders);
-      shProg->Shaders = NULL;
-   }
+
    _mesa_free(shProg);
 }
 
@@ -172,8 +163,10 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
       ASSERT(old->RefCount > 0);
       old->RefCount--;
-      /*printf("SHPROG DECR %p (%d) to %d\n",
-        (void*) old, old->Name, old->RefCount);*/
+#if 0
+      printf("ShaderProgram %p ID=%u  RefCount-- to %d\n",
+             (void *) old, old->Name, old->RefCount);
+#endif
       deleteFlag = (old->RefCount == 0);
 
       if (deleteFlag) {
@@ -187,8 +180,10 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
    if (shProg) {
       shProg->RefCount++;
-      /*printf("SHPROG INCR %p (%d) to %d\n",
-        (void*) shProg, shProg->Name, shProg->RefCount);*/
+#if 0
+      printf("ShaderProgram %p ID=%u  RefCount++ to %d\n",
+             (void *) shProg, shProg->Name, shProg->RefCount);
+#endif
       *ptr = shProg;
    }
 }
@@ -243,10 +238,8 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
       _mesa_free((void *) sh->Source);
    if (sh->InfoLog)
       _mesa_free(sh->InfoLog);
-   for (i = 0; i < sh->NumPrograms; i++) {
-      assert(sh->Programs[i]);
-      ctx->Driver.DeleteProgram(ctx, sh->Programs[i]);
-   }
+   for (i = 0; i < sh->NumPrograms; i++)
+      _mesa_reference_program(ctx, &sh->Programs[i], NULL);
    if (sh->Programs)
       _mesa_free(sh->Programs);
    _mesa_free(sh);
@@ -376,7 +369,7 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
-   const GLuint n = shProg->NumShaders;
+   GLuint n;
    GLuint i;
 
    if (!shProg || !sh) {
@@ -384,6 +377,8 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
                   "glAttachShader(bad program or shader name)");
       return;
    }
+
+   n = shProg->NumShaders;
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i] == sh) {
@@ -577,7 +572,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   const GLuint n = shProg->NumShaders;
+   GLuint n;
    GLuint i, j;
 
    if (!shProg) {
@@ -585,6 +580,8 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
                   "glDetachShader(bad program or shader name)");
       return;
    }
+
+   n = shProg->NumShaders;
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i]->Name == shader) {
@@ -897,7 +894,7 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
    if (shProg) {
       if (location < shProg->Uniforms->NumUniforms) {
          GLint progPos, i;
-         const struct gl_program *prog;
+         const struct gl_program *prog = NULL;
 
          progPos = shProg->Uniforms->Uniforms[location].VertPos;
          if (progPos >= 0) {
@@ -910,8 +907,11 @@ _mesa_get_uniformfv(GLcontext *ctx, GLuint program, GLint location,
             }
          }
 
-         for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
-            params[i] = prog->Parameters->ParameterValues[progPos][i];
+         ASSERT(prog);
+         if (prog) {
+            for (i = 0; i < prog->Parameters->Parameters[progPos].Size; i++) {
+               params[i] = prog->Parameters->ParameterValues[progPos][i];
+            }
          }
       }
       else {
@@ -1007,6 +1007,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
       _mesa_error(ctx, GL_INVALID_VALUE, "glLinkProgram(program)");
       return;
    }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
    _slang_link(ctx, program, shProg);
 }
@@ -1153,6 +1155,10 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
+   if (location == -1)
+      return;   /* The standard specifies this as a no-op */
+
+
    if (location < 0 || location >= (GLint) shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(location)");
       return;
@@ -1248,11 +1254,16 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
                      GLboolean transpose, const GLfloat *values)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
          "glUniformMatrix(program not linked)");
       return;
    }
+
+   if (location == -1)
+      return;   /* The standard specifies this as a no-op */
+
    if (location < 0 || location >= shProg->Uniforms->NumUniforms) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniformMatrix(location)");
       return;

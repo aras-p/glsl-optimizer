@@ -188,7 +188,6 @@ draw_create_vs_sse(struct draw_context *draw,
                           const struct pipe_shader_state *templ)
 {
    struct draw_sse_vertex_shader *vs;
-   uint nt = tgsi_num_tokens(templ->tokens);
 
    if (!rtasm_cpu_has_sse2())
       return NULL;
@@ -198,7 +197,9 @@ draw_create_vs_sse(struct draw_context *draw,
       return NULL;
 
    /* we make a private copy of the tokens */
-   vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
+   vs->base.state.tokens = tgsi_dup_tokens(templ->tokens);
+   if (!vs->base.state.tokens)
+      goto fail;
 
    tgsi_scan_shader(templ->tokens, &vs->base.info);
 
@@ -214,6 +215,9 @@ draw_create_vs_sse(struct draw_context *draw,
       goto fail;
       
    vs->func = (codegen_function) x86_get_func( &vs->sse2_program );
+   if (!vs->func) {
+      goto fail;
+   }
    
    return &vs->base;
 
