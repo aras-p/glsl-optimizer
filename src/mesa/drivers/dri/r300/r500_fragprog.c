@@ -101,7 +101,7 @@ static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 	/* This could be optimized, but it should be plenty fast already. */
 	int i;
 	for (i = 0; i < 3; i++) {
-		temp = (src.Swizzle >> i*3) & 0x7;
+	        temp = GET_SWZ(src.Swizzle, i);
 		/* Fix SWIZZLE_ONE */
 		if (temp == 5) temp++;
 		swiz += temp << i*3;
@@ -110,7 +110,8 @@ static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 }
 
 static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
-	GLuint swiz = (src.Swizzle >> 12) & 0x7;
+	GLuint swiz = GET_SWZ(src.Swizzle, 3);
+
 	if (swiz == 5) swiz++;
 	return swiz;
 }
@@ -1012,6 +1013,7 @@ static char *toswiz(int swiz_val) {
   case 6: return "1";
   case 7: return "U";
   }
+  return NULL;
 }
 
 static char *toop(int op_val)
@@ -1037,7 +1039,7 @@ static char *toop(int op_val)
 
 static char *to_alpha_op(int op_val)
 {
-  char *str;
+  char *str = NULL;
   switch (op_val) {
   case 0: str = "MAD"; break;
   case 1: str = "DP"; break;
@@ -1061,7 +1063,7 @@ static char *to_alpha_op(int op_val)
 
 static char *to_mask(int val)
 {
-  char *str;
+  char *str = NULL;
   switch(val) {
   case 0: str = "NONE"; break;
   case 1: str = "R"; break;
@@ -1089,7 +1091,7 @@ static void dump_program(struct r500_fragment_program *fp)
   int n;
   uint32_t inst;
   uint32_t inst0;
-  char *str;
+  char *str = NULL;
 
   for (n = 0; n < fp->inst_end+1; n++) {
     inst0 = inst = fp->inst[n].inst0;
@@ -1161,6 +1163,5 @@ static void dump_program(struct r500_fragment_program *fp)
     }
     fprintf(stderr,"\n");
   }
-
     
 }
