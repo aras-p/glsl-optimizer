@@ -93,6 +93,8 @@
 #define MAKE_SWIZ_RGBA_C(x) (x << 14)
 #define MAKE_SWIZ_ALPHA_C(x) (x << 27)
 
+static void dump_program(struct r500_fragment_program *fp);
+
 static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp;
@@ -989,8 +991,151 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		fp->inst_end = cs->nrslots - 1;
 
 		fp->translated = GL_TRUE;
+		if (RADEON_DEBUG & DEBUG_PIXEL)
+		  dump_program(fp);
+
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
 	}
 
 	update_params(fp);
+
+}
+
+static char *toswiz(int swiz_val) {
+  switch(swiz_val) {
+  case 0: return "R";
+  case 1: return "G";
+  case 2: return "B";
+  case 3: return "A";
+  case 4: return "0";
+  case 5: return "1/2";
+  case 6: return "1";
+  case 7: return "U";
+  }
+}
+
+static char *toop(int op_val)
+{
+  char *str;
+  switch (op_val) {
+  case 0: str = "MAD"; break;
+  case 1: str = "DP3"; break;
+  case 2: str = "DP4"; break;
+  case 3: str = "D2A"; break;
+  case 4: str = "MIN"; break;
+  case 5: str = "MAX"; break;
+  case 6: str = "Reserved"; break;
+  case 7: str = "CND"; break;
+  case 8: str = "CMP"; break;
+  case 9: str = "FRC"; break;
+  case 10: str = "SOP"; break;
+  case 11: str = "MDH"; break;
+  case 12: str = "MDV"; break;
+  }
+  return str;
+}
+
+static char *to_alpha_op(int op_val)
+{
+  char *str;
+  switch (op_val) {
+  case 0: str = "MAD"; break;
+  case 1: str = "DP"; break;
+  case 2: str = "MIN"; break;
+  case 3: str = "MAX"; break;
+  case 4: str = "Reserved"; break;
+  case 5: str = "CND"; break;
+  case 6: str = "CMP"; break;
+  case 7: str = "FRC"; break;
+  case 8: str = "EX2"; break;
+  case 9: str = "LN2"; break;
+  case 10: str = "RCP"; break;
+  case 11: str = "RSQ"; break;
+  case 12: str = "SIN"; break;
+  case 13: str = "COS"; break;
+  case 14: str = "MDH"; break;
+  case 15: str = "MDV"; break;
+  }
+  return str;
+}
+
+static void dump_program(struct r500_fragment_program *fp)
+{
+  int pc = 0;
+  int n;
+  uint32_t inst;
+  uint32_t inst0;
+  char *str;
+
+  for (n = 0; n < fp->inst_end+1; n++) {
+    inst0 = inst = fp->inst[n].inst0;
+    fprintf(stderr,"%d\t0:CMN_INST   0x%08x:", n, inst);
+    switch(inst & 0x3) {
+    case R500_INST_TYPE_ALU: str = "ALU"; break;
+    case R500_INST_TYPE_OUT: str = "OUT"; break;
+    case R500_INST_TYPE_FC: str = "FC"; break;
+    case R500_INST_TYPE_TEX: str = "TEX"; break;
+    };
+    fprintf(stderr,"%s %s %s %s %s ", str,
+	    inst & R500_INST_TEX_SEM_WAIT ? "TEX_WAIT" : "",
+	    inst & R500_INST_LAST ? "LAST" : "",
+	    inst & R500_INST_NOP ? "NOP" : "",
+	    inst & R500_INST_ALU_WAIT ? "ALU WAIT" : "");
+    fprintf(stderr,"%x %x\n", (inst >> 11) & 0xf, (inst >> 15) & 0xf);
+
+    switch(inst0 & 0x3) {
+    case 0:
+    case 1:
+      fprintf(stderr,"\t1:RGB_ADDR   0x%08x:", fp->inst[n].inst1);
+      inst = fp->inst[n].inst1;
+
+      fprintf(stderr,"Addr0: %d%c, Addr1: %d%c, Addr2: %d%c, srcp:%d\n",
+	      inst & 0xff, (inst & (1<<8)) ? 'c' : 't',
+	      (inst >> 10) & 0xff, (inst & (1<<18)) ? 'c' : 't',
+	      (inst >> 20) & 0xff, (inst & (1<<28)) ? 'c' : 't',
+	      (inst >> 30));
+
+      fprintf(stderr,"\t2:ALPHA_ADDR 0x%08x:", fp->inst[n].inst2);
+      inst = fp->inst[n].inst2;
+      fprintf(stderr,"Addr0: %d%c, Addr1: %d%c, Addr2: %d%c, srcp:%d\n",
+	      inst & 0xff, (inst & (1<<8)) ? 'c' : 't',
+	      (inst >> 10) & 0xff, (inst & (1<<18)) ? 'c' : 't',
+	      (inst >> 20) & 0xff, (inst & (1<<28)) ? 'c' : 't',
+	      (inst >> 30));
+      fprintf(stderr,"\t3 RGB_INST:  0x%08x:", fp->inst[n].inst3);
+      inst = fp->inst[n].inst3;
+      fprintf(stderr,"rgb_A_src:%d %s/%s/%s %d rgb_B_src:%d %s/%s/%s %d\n",
+	      (inst) & 0x3, toswiz((inst >> 2) & 0x7), toswiz((inst >> 5) & 0x7), toswiz((inst >> 8) & 0x7), 
+	      (inst >> 11) & 0x3,
+	      (inst >> 13) & 0x3, toswiz((inst >> 15) & 0x7), toswiz((inst >> 18) & 0x7), toswiz((inst >> 21) & 0x7), 
+	      (inst >> 24) & 0x3);
+
+
+      fprintf(stderr,"\t4 ALPHA_INST:0x%08x:", fp->inst[n].inst4);
+      inst = fp->inst[n].inst4;
+      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_b_src:%d %s %d\n", to_alpha_op(inst & 0xf),
+	      (inst >> 4) & 0x7f, inst & (1<<11) ? "(rel)":"",
+	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), (inst >> 17) & 0x3,
+	      (inst >> 19) & 0x3, toswiz((inst >> 21) & 0x7), (inst >> 24) & 0x3);
+
+      fprintf(stderr,"\t5 RGBA_INST: 0x%08x:", fp->inst[n].inst5);
+      inst = fp->inst[n].inst5;
+      fprintf(stderr,"%s dest:%d%s rgb_C_src:%d %s/%s/%s %d alp_C_src:%d %s %d\n", toop(inst & 0xf),
+	      (inst >> 4) & 0x7f, inst & (1<<11) ? "(rel)":"",
+	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), toswiz((inst >> 17) & 0x7), toswiz((inst >> 20) & 0x7), 
+	      (inst >> 23) & 0x3,
+	      (inst >> 25) & 0x3, toswiz((inst >> 27) & 0x7), (inst >> 30) & 0x3);
+      break;
+    case 2:
+      break;
+    case 3:
+      fprintf(stderr,"1: TEX INST 0x%08x\n", fp->inst[n].inst1);
+      fprintf(stderr,"2: TEX ADDR 0x%08x\n", fp->inst[n].inst2);
+      fprintf(stderr,"2: TEX ADDR DXDY 0x%08x\n", fp->inst[n].inst3);
+      break;
+    }
+    fprintf(stderr,"\n");
+  }
+
+    
 }
