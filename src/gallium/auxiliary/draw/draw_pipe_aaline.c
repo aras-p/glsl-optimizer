@@ -715,6 +715,11 @@ static void
 aaline_destroy(struct draw_stage *stage)
 {
    struct aaline_stage *aaline = aaline_stage(stage);
+   uint i;
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      pipe_texture_reference(&aaline->state.texture[i], NULL);
+   }
 
    if (aaline->sampler_cso)
       aaline->pipe->delete_sampler_state(aaline->pipe, aaline->sampler_cso);
@@ -837,6 +842,9 @@ aaline_set_sampler_textures(struct pipe_context *pipe,
    /* save current */
    for (i = 0; i < num; i++) {
       pipe_texture_reference(&aaline->state.texture[i], texture[i]);
+   }
+   for ( ; i < PIPE_MAX_SAMPLERS; i++) {
+      pipe_texture_reference(&aaline->state.texture[i], NULL);
    }
    aaline->num_textures = num;
 

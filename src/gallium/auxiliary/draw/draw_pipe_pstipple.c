@@ -564,6 +564,11 @@ static void
 pstip_destroy(struct draw_stage *stage)
 {
    struct pstip_stage *pstip = pstip_stage(stage);
+   uint i;
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      pipe_texture_reference(&pstip->state.textures[i], NULL);
+   }
 
    pstip->pipe->delete_sampler_state(pstip->pipe, pstip->sampler_cso);
 
