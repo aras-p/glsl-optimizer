@@ -602,7 +602,7 @@ _mesa_combine_programs(GLcontext *ctx,
       if ((progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) &&
           (progB->InputsRead & (1 << FRAG_ATTRIB_COL0))) {
          GLint tempReg = _mesa_find_free_register(newProg, PROGRAM_TEMPORARY);
-         if (!tempReg) {
+         if (tempReg < 0) {
             _mesa_problem(ctx, "No free temp regs found in "
                           "_mesa_combine_programs(), using 31");
             tempReg = 31;
