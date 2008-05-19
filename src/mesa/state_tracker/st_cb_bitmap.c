@@ -753,15 +753,6 @@ st_destroy_bitmap(struct st_context *st)
    screen->surface_unmap(screen, cache->surf);
    screen->tex_surface_release(screen, &cache->surf);
 
-#if 0
-   if (st->bitmap.combined_prog) {
-      st_delete_program(st->ctx, &st->bitmap.combined_prog->Base.Base);
-   }
-
-   if (st->bitmap.program) {
-      st_delete_program(st->ctx, &st->bitmap.program->Base.Base);
-   }
-#endif
    if (st->bitmap.vs) {
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;
