@@ -593,6 +593,8 @@ delete_program_cb(GLuint id, void *data, void *userData)
 {
    struct gl_program *prog = (struct gl_program *) data;
    GLcontext *ctx = (GLcontext *) userData;
+   ASSERT(prog->RefCount == 1); /* should only be referenced by hash table */
+   prog->RefCount = 0;  /* now going away */
    ctx->Driver.DeleteProgram(ctx, prog);
 }
 
@@ -686,22 +688,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_HashDeleteAll(ss->DisplayList, delete_displaylist_cb, ctx);
    _mesa_DeleteHashTable(ss->DisplayList);
 
-   /*
-    * Free texture objects
-    */
-   ASSERT(ctx->Driver.DeleteTexture);
-   /* the default textures */
-   ctx->Driver.DeleteTexture(ctx, ss->Default1D);
-   ctx->Driver.DeleteTexture(ctx, ss->Default2D);
-   ctx->Driver.DeleteTexture(ctx, ss->Default3D);
-   ctx->Driver.DeleteTexture(ctx, ss->DefaultCubeMap);
-   ctx->Driver.DeleteTexture(ctx, ss->DefaultRect);
-   ctx->Driver.DeleteTexture(ctx, ss->Default1DArray);
-   ctx->Driver.DeleteTexture(ctx, ss->Default2DArray);
-
-   /* all other textures */
-   _mesa_HashDeleteAll(ss->TexObjects, delete_texture_cb, ctx);
-   _mesa_DeleteHashTable(ss->TexObjects);
+#if FEATURE_ARB_shader_objects
+   _mesa_HashWalk(ss->ShaderObjects, free_shader_program_data_cb, ctx);
+   _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
+   _mesa_DeleteHashTable(ss->ShaderObjects);
+#endif
 
 #if defined(FEATURE_NV_vertex_program) || defined(FEATURE_NV_fragment_program)
    _mesa_HashDeleteAll(ss->Programs, delete_program_cb, ctx);
@@ -728,16 +719,27 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_HashDeleteAll(ss->ArrayObjects, delete_arrayobj_cb, ctx);
    _mesa_DeleteHashTable(ss->ArrayObjects);
 
-#if FEATURE_ARB_shader_objects
-   _mesa_HashWalk(ss->ShaderObjects, free_shader_program_data_cb, ctx);
-   _mesa_HashDeleteAll(ss->ShaderObjects, delete_shader_cb, ctx);
-   _mesa_DeleteHashTable(ss->ShaderObjects);
-#endif
-
 #if FEATURE_EXT_framebuffer_object
    _mesa_DeleteHashTable(ss->FrameBuffers);
    _mesa_DeleteHashTable(ss->RenderBuffers);
 #endif
+
+   /*
+    * Free texture objects (after FBOs since some textures might have
+    * been bound to FBOs).
+    */
+   ASSERT(ctx->Driver.DeleteTexture);
+   /* the default textures */
+   ctx->Driver.DeleteTexture(ctx, ss->Default1D);
+   ctx->Driver.DeleteTexture(ctx, ss->Default2D);
+   ctx->Driver.DeleteTexture(ctx, ss->Default3D);
+   ctx->Driver.DeleteTexture(ctx, ss->DefaultCubeMap);
+   ctx->Driver.DeleteTexture(ctx, ss->DefaultRect);
+   ctx->Driver.DeleteTexture(ctx, ss->Default1DArray);
+   ctx->Driver.DeleteTexture(ctx, ss->Default2DArray);
+   /* all other textures */
+   _mesa_HashDeleteAll(ss->TexObjects, delete_texture_cb, ctx);
+   _mesa_DeleteHashTable(ss->TexObjects);
 
    _glthread_DESTROY_MUTEX(ss->Mutex);
 
