@@ -346,7 +346,7 @@ static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_
 	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
 			/* output_mask */
-			| (fpi->DstReg.WriteMask << 14);
+			| (fpi->DstReg.WriteMask << 15);
 	} else {
 		fp->inst[counter].inst0 = R500_INST_TYPE_ALU
 			/* pixel_mask */
@@ -397,7 +397,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			dest = make_dest(fp, fpi->DstReg);
 
 			pixel_mask = fpi->DstReg.WriteMask << 11;
-			output_mask = fpi->DstReg.WriteMask << 14;
+			output_mask = fpi->DstReg.WriteMask << 15;
 		}
 
 		switch (fpi->Opcode) {
