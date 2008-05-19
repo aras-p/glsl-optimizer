@@ -116,6 +116,13 @@ static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
+static inline GLuint make_sop_swizzle(struct prog_src_register src) {
+	GLuint swiz = GET_SWZ(src.Swizzle, 0);
+
+	if (swiz == 5) swiz++;
+	return swiz;
+}
+
 static inline GLuint make_strq_swizzle(struct prog_src_register src) {
 	GLuint swiz = 0x0;
 	GLuint temp = src.Swizzle;
@@ -481,11 +488,10 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0;
 				fp->inst[counter].inst4 = R500_ALPHA_OP_COS
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
@@ -704,20 +710,13 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				/* Cosine only goes in R (x) channel. */
 				fpi->DstReg.WriteMask = 0x1;
 				emit_alu(fp, counter, fpi);
-				if (fpi->DstReg.File == PROGRAM_OUTPUT) {
-					fp->inst[counter].inst0 = R500_INST_TYPE_OUT
-						| R500_INST_TEX_SEM_WAIT | 0x1 << 14;
-				} else {
-					fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-						| R500_INST_TEX_SEM_WAIT | 0x1 << 11;
-				}
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_COS
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				counter++;
@@ -730,7 +729,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_SIN
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				/* Put 0 into B,A (z,w) channels.
@@ -786,11 +785,10 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0;
 				fp->inst[counter].inst4 = R500_ALPHA_OP_SIN
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
@@ -1021,11 +1019,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 	if (!fp->translated) {
 
-		/* I need to see what I'm working with! */
-		fprintf(stderr, "Mesa program:\n");
-		fprintf(stderr, "-------------\n");
-		_mesa_print_program(&fp->mesa_program.Base);
-		fflush(stdout);
+
 
 		init_program(r300, fp);
 		cs = fp->cs;
@@ -1041,8 +1035,13 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		fp->inst_end = cs->nrslots - 1;
 
 		fp->translated = GL_TRUE;
-		if (RADEON_DEBUG & DEBUG_PIXEL)
-		  dump_program(fp);
+		if (RADEON_DEBUG & DEBUG_PIXEL) {
+			dump_program(fp);
+			fprintf(stderr, "Mesa program:\n");
+			fprintf(stderr, "-------------\n");
+			_mesa_print_program(&fp->mesa_program.Base);
+			fflush(stdout);
+		}
 
 
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
@@ -1190,7 +1189,7 @@ static void dump_program(struct r500_fragment_program *fp)
 
       fprintf(stderr,"\t4 ALPHA_INST:0x%08x:", fp->inst[n].inst4);
       inst = fp->inst[n].inst4;
-      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_b_src:%d %s %d\n", to_alpha_op(inst & 0xf),
+      fprintf(stderr,"%s dest:%d%s alp_A_src:%d %s %d alp_B_src:%d %s %d\n", to_alpha_op(inst & 0xf),
 	      (inst >> 4) & 0x7f, inst & (1<<11) ? "(rel)":"",
 	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), (inst >> 17) & 0x3,
 	      (inst >> 19) & 0x3, toswiz((inst >> 21) & 0x7), (inst >> 24) & 0x3);
