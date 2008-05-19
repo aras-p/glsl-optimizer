@@ -181,22 +181,32 @@ static GLuint make_src(struct r500_fragment_program *fp, struct prog_src_registe
 	COMPILE_STATE;
 	GLuint reg;
 	switch (src.File) {
-		case PROGRAM_TEMPORARY:
-			reg = src.Index + fp->temp_reg_offset;
-			break;
-		case PROGRAM_INPUT:
-			reg = cs->inputs[src.Index].reg;
-			break;
-	        case PROGRAM_STATE_VAR:
-	        case PROGRAM_NAMED_PARAM:
-		case PROGRAM_CONSTANT:
-			reg = emit_const4fv(fp, fp->mesa_program.Base.Parameters->
-				  ParameterValues[src.Index]);
-			break;
-		default:
-			ERROR("Can't handle src.File %x\n", src.File);
-			reg = 0x0;
-			break;
+	case PROGRAM_TEMPORARY:
+		reg = src.Index + fp->temp_reg_offset;
+		break;
+	case PROGRAM_INPUT:
+		reg = cs->inputs[src.Index].reg;
+		break;
+	case PROGRAM_LOCAL_PARAM:
+		reg = emit_const4fv(fp,
+				    fp->mesa_program.Base.LocalParams[src.
+								      Index]);
+		break;
+	case PROGRAM_ENV_PARAM:
+		reg = emit_const4fv(fp,
+				    fp->ctx->FragmentProgram.Parameters[src.
+									Index]);
+		break;
+	case PROGRAM_STATE_VAR:
+	case PROGRAM_NAMED_PARAM:
+	case PROGRAM_CONSTANT:
+		reg = emit_const4fv(fp, fp->mesa_program.Base.Parameters->
+				    ParameterValues[src.Index]);
+		break;
+	default:
+		ERROR("Can't handle src.File %x\n", src.File);
+		reg = 0x0;
+		break;
 	}
 	return reg;
 }
