@@ -215,6 +215,9 @@ draw_create_vs_sse(struct draw_context *draw,
       goto fail;
       
    vs->func = (codegen_function) x86_get_func( &vs->sse2_program );
+   if (!vs->func) {
+      goto fail;
+   }
    
    return &vs->base;
 
