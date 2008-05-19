@@ -44,7 +44,6 @@ struct x86_function {
    unsigned stack_offset;
    int need_emms;
    unsigned char error_overflow[4];
-   const char *fn;
 };
 
 enum x86_reg_file {
