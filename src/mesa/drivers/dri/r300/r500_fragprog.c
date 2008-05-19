@@ -127,28 +127,8 @@ static inline GLuint make_strq_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
-static int get_temp(struct r500_fragment_program *fp, int slot) {
-
-	COMPILE_STATE;
-
-	int r = slot;
-
-	while (cs->inputs[r].refcount != 0) {
-		/* Crap, taken. */
-		r++;
-	}
-
-	fp->temp_reg_offset = r - slot;
-
-	if (r >= R500_US_NUM_TEMP_REGS) {
-		ERROR("Out of hardware temps!\n");
-		return 0;
-	}
-
-	if (r > fp->max_temp_idx)
-		fp->max_temp_idx = r;
-
-	return r;
+static int get_temp(struct r500_fragment_program *fp) {
+	return fp->max_temp_idx + 1;
 }
 
 /* Borrowed verbatim from r300_fragprog since it hasn't changed. */
@@ -239,6 +219,12 @@ static void emit_tex(struct r500_fragment_program *fp,
 	mask = fpi->DstReg.WriteMask << 11;
 	hwsrc = make_src(fp, fpi->SrcReg[0]);
 
+	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
+		hwdest = get_temp(fp);
+	} else {
+		hwdest = dest;
+	}
+
 	fp->inst[counter].inst0 = R500_INST_TYPE_TEX | mask
 		| R500_INST_TEX_SEM_WAIT;
 
@@ -269,15 +255,35 @@ static void emit_tex(struct r500_fragment_program *fp,
 		/* | MAKE_SWIZ_TEX_STRQ(make_strq_swizzle(fpi->SrcReg[0])) */
 		| R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G
 		| R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A
-		| R500_TEX_DST_ADDR(dest)
+		| R500_TEX_DST_ADDR(hwdest)
 		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
 		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
 
-
-
 	fp->inst[counter].inst3 = 0x0;
 	fp->inst[counter].inst4 = 0x0;
-	fp->inst[counter].inst5 = 0x0;	
+	fp->inst[counter].inst5 = 0x0;
+
+	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
+		counter++;
+		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
+			| R500_INST_TEX_SEM_WAIT | (mask << 4);
+		fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp));
+		fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp));
+		fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+			| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
+			| R500_ALU_RGB_SEL_B_SRC0
+			| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB)
+			| R500_ALU_RGB_OMOD_DISABLE;
+		fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+			| R500_ALPHA_ADDRD(dest)
+			| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_ALPHA_SWIZ_A_A)
+			| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(R500_ALPHA_SWIZ_A_A)
+			| R500_ALPHA_OMOD_DISABLE;
+		fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
+			| R500_ALU_RGBA_ADDRD(dest)
+			| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+	}
 }
 
 static void dumb_shader(struct r500_fragment_program *fp)
@@ -727,8 +733,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
+				/* Put 0 into B,A (z,w) channels.
 				counter++;
-				/* Put 0 into B,A (z,w) channels. */
 				fpi->DstReg.WriteMask = 0xC;
 				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
@@ -744,7 +750,36 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
 					| R500_ALU_RGBA_ADDRD(dest)
 					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO); */
+				break;
+			case OPCODE_SGE:
+				/* We use SRCP, so as a precaution we're
+				 * going to set NOP in previous inst, if possible. */
+				/* This inst's selects need to be swapped as follows:
+				 * 0 -> C ; 1 -> B ; 2 -> A */
+				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
+				emit_alu(fp, counter, fpi);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1])
+					| R500_RGB_SRCP_OP_RGB1_MINUS_RGB0;
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1])
+					| R500_ALPHA_SRCP_OP_A1_MINUS_A0;
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE)
+					| R500_ALU_RGB_SEL_B_SRC1
+					| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ZERO);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
+					| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ZERO);
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
+					| R500_ALU_RGBA_ADDRD(dest)
+					| R500_ALU_RGBA_SEL_C_SRCP
+					| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[0]))
+					| R500_ALU_RGBA_ALPHA_SEL_C_SRCP
+					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[0]));
 				break;
 			case OPCODE_SIN:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -758,6 +793,35 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
+				break;
+			case OPCODE_SLT:
+				/* We use SRCP, so as a precaution we're
+				 * going to set NOP in previous inst, if possible. */
+				/* This inst's selects need to be swapped as follows:
+				 * 0 -> C ; 1 -> B ; 2 -> A */
+				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
+				emit_alu(fp, counter, fpi);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1])
+					| R500_RGB_SRCP_OP_RGB1_MINUS_RGB0;
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1])
+					| R500_ALPHA_SRCP_OP_A1_MINUS_A0;
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ZERO)
+					| R500_ALU_RGB_SEL_B_SRC1
+					| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ZERO)
+					| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ONE);
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
+					| R500_ALU_RGBA_ADDRD(dest)
+					| R500_ALU_RGBA_SEL_C_SRCP
+					| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[0]))
+					| R500_ALU_RGBA_ALPHA_SEL_C_SRCP
+					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[0]));
 				break;
 			case OPCODE_SUB:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -791,12 +855,18 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_TEX:
 				emit_tex(fp, fpi, OPCODE_TEX, dest, counter);
+					if (fpi->DstReg.File == PROGRAM_OUTPUT)
+						counter++;
 				break;
 			case OPCODE_TXB:
 				emit_tex(fp, fpi, OPCODE_TXB, dest, counter);
+					if (fpi->DstReg.File == PROGRAM_OUTPUT)
+						counter++;
 				break;
 			case OPCODE_TXP:
 				emit_tex(fp, fpi, OPCODE_TXP, dest, counter);
+					if (fpi->DstReg.File == PROGRAM_OUTPUT)
+						counter++;
 				break;
 			default:
 				ERROR("unknown fpi->Opcode %d\n", fpi->Opcode);
@@ -822,24 +892,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 		/* We still need to put an output inst, right? */
 		WARN_ONCE("Final FP instruction is not an OUT.\n");
 #if 0
-		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
-			| R500_INST_TEX_SEM_WAIT | R500_INST_LAST |
-			output_mask;
-		fp->inst[counter].inst1 = R500_RGB_ADDR0(dest);
-		fp->inst[counter].inst2 = R500_ALPHA_ADDR0(dest);
-		fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-			| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
-			| R500_ALU_RGB_SEL_B_SRC0
-			| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
-		fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
-			| R500_ALPHA_ADDRD(0)
-			| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SEL_B_SRC0 
-			| R500_ALPHA_SWIZ_A_A | R500_ALPHA_SWIZ_B_1;
-		fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
-			| R500_ALU_RGBA_ADDRD(0)
-			| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
-		counter++;
+
 #endif
 	}
 
@@ -946,20 +999,6 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 		return;
 	}
 
-#if 0
-	for (fpi = mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
-		int idx;
-		for (i = 0; i < 3; i++) {
-			idx = fpi->SrcReg[i].Index;
-			if (fpi->SrcReg[i].File == PROGRAM_INPUT) {
-				cs->inputs[idx].refcount++;
-				if (fp->max_temp_idx < idx)
-					fp->max_temp_idx = idx;
-			}
-		}
-	}
-#endif
-
 	fp->max_temp_idx = fp->temp_reg_offset + 1;
 
 	cs->temp_in_use = temps_used;
@@ -1004,6 +1043,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		fp->translated = GL_TRUE;
 		if (RADEON_DEBUG & DEBUG_PIXEL)
 		  dump_program(fp);
+
 
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
 	}
@@ -1094,7 +1134,7 @@ static char *to_mask(int val)
   }
   return str;
 }
-  
+
 static void dump_program(struct r500_fragment_program *fp)
 {
   int pc = 0;
@@ -1142,9 +1182,9 @@ static void dump_program(struct r500_fragment_program *fp)
       fprintf(stderr,"\t3 RGB_INST:  0x%08x:", fp->inst[n].inst3);
       inst = fp->inst[n].inst3;
       fprintf(stderr,"rgb_A_src:%d %s/%s/%s %d rgb_B_src:%d %s/%s/%s %d\n",
-	      (inst) & 0x3, toswiz((inst >> 2) & 0x7), toswiz((inst >> 5) & 0x7), toswiz((inst >> 8) & 0x7), 
+	      (inst) & 0x3, toswiz((inst >> 2) & 0x7), toswiz((inst >> 5) & 0x7), toswiz((inst >> 8) & 0x7),
 	      (inst >> 11) & 0x3,
-	      (inst >> 13) & 0x3, toswiz((inst >> 15) & 0x7), toswiz((inst >> 18) & 0x7), toswiz((inst >> 21) & 0x7), 
+	      (inst >> 13) & 0x3, toswiz((inst >> 15) & 0x7), toswiz((inst >> 18) & 0x7), toswiz((inst >> 21) & 0x7),
 	      (inst >> 24) & 0x3);
 
 
@@ -1159,7 +1199,7 @@ static void dump_program(struct r500_fragment_program *fp)
       inst = fp->inst[n].inst5;
       fprintf(stderr,"%s dest:%d%s rgb_C_src:%d %s/%s/%s %d alp_C_src:%d %s %d\n", toop(inst & 0xf),
 	      (inst >> 4) & 0x7f, inst & (1<<11) ? "(rel)":"",
-	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), toswiz((inst >> 17) & 0x7), toswiz((inst >> 20) & 0x7), 
+	      (inst >> 12) & 0x3, toswiz((inst >> 14) & 0x7), toswiz((inst >> 17) & 0x7), toswiz((inst >> 20) & 0x7),
 	      (inst >> 23) & 0x3,
 	      (inst >> 25) & 0x3, toswiz((inst >> 27) & 0x7), (inst >> 30) & 0x3);
       break;
@@ -1173,5 +1213,5 @@ static void dump_program(struct r500_fragment_program *fp)
     }
     fprintf(stderr,"\n");
   }
-    
+
 }
