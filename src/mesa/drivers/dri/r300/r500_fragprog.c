@@ -1059,6 +1059,30 @@ static char *to_alpha_op(int op_val)
   return str;
 }
 
+static char *to_mask(int val)
+{
+  char *str;
+  switch(val) {
+  case 0: str = "NONE"; break;
+  case 1: str = "R"; break;
+  case 2: str = "G"; break;
+  case 3: str = "RG"; break;
+  case 4: str = "B"; break;
+  case 5: str = "RB"; break;
+  case 6: str = "GB"; break;
+  case 7: str = "RGB"; break;
+  case 8: str = "A"; break;
+  case 9: str = "AR"; break;
+  case 10: str = "AG"; break;
+  case 11: str = "ARG"; break;
+  case 12: str = "AB"; break;
+  case 13: str = "ARB"; break;
+  case 14: str = "AGB"; break;
+  case 15: str = "ARGB"; break;
+  }
+  return str;
+}
+  
 static void dump_program(struct r500_fragment_program *fp)
 {
   int pc = 0;
@@ -1081,7 +1105,8 @@ static void dump_program(struct r500_fragment_program *fp)
 	    inst & R500_INST_LAST ? "LAST" : "",
 	    inst & R500_INST_NOP ? "NOP" : "",
 	    inst & R500_INST_ALU_WAIT ? "ALU WAIT" : "");
-    fprintf(stderr,"%x %x\n", (inst >> 11) & 0xf, (inst >> 15) & 0xf);
+    fprintf(stderr,"wmask: %s omask: %s\n", to_mask((inst >> 11) & 0xf),
+	    to_mask((inst >> 15) & 0xf));
 
     switch(inst0 & 0x3) {
     case 0:
