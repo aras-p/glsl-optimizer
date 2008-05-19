@@ -343,7 +343,7 @@ static void dumb_shader(struct r500_fragment_program *fp)
 }
 
 static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi) {
-	if (fpi->DstReg.Index == PROGRAM_OUTPUT) {
+	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
 			/* output_mask */
 			| (fpi->DstReg.WriteMask << 14);
