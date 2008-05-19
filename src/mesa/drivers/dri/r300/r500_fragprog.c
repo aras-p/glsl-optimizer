@@ -342,14 +342,24 @@ static void dumb_shader(struct r500_fragment_program *fp)
 	fp->translated = GL_TRUE;
 }
 
-/* static void emit_alu(struct r500_fragment_program *fp) {
- * } */
+static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi) {
+	if (fpi->DstReg.Index == PROGRAM_OUTPUT) {
+		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
+			/* output_mask */
+			| (fpi->DstReg.WriteMask << 14);
+	} else {
+		fp->inst[counter].inst0 = R500_INST_TYPE_ALU
+			/* pixel_mask */
+			| (fpi->DstReg.WriteMask << 11);
+	}
+
+	fp->inst[counter].inst0 |= R500_INST_TEX_SEM_WAIT;
+}
 
 static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_src_register src, GLuint dest) {
 	/* The r3xx shader uses MAD to implement MOV. We are using CMP, since
 	 * it is technically more accurate and recommended by ATI/AMD. */
 	GLuint src_reg = make_src(fp, src);
-	fp->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT;
 	fp->inst[counter].inst1 = R500_RGB_ADDR0(src_reg);
 	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src_reg);
 	fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -374,7 +384,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
-	int flags, pixel_mask = 0, output_mask = 0, counter = 0, temp_pixel_mask = 0;
+	int flags, pixel_mask = 0, output_mask = 0, counter = 0;
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("The program is empty!\n");
@@ -392,8 +402,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 
 		switch (fpi->Opcode) {
 			case OPCODE_ABS:
+				emit_alu(fp, counter, fpi);
 				emit_mov(fp, counter, fpi->SrcReg[0], dest);
-				fp->inst[counter].inst0 |= pixel_mask;
 				fp->inst[counter].inst3 |= R500_ALU_RGB_MOD_A_ABS
 					| R500_ALU_RGB_MOD_B_ABS;
 				fp->inst[counter].inst4 |= R500_ALPHA_MOD_A_ABS
@@ -403,8 +413,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Variation on MAD: 1*src0+src1 */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(0);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -427,8 +436,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				src[2] = make_src(fp, fpi->SrcReg[2]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(src[2]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -449,8 +457,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_COS:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -464,8 +471,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			case OPCODE_DP3:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -484,8 +490,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Based on DP3 */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -504,8 +509,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Based on DP3 */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -522,8 +526,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_EX2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -536,8 +539,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_FRC:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -553,8 +555,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_LG2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -569,8 +570,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				src[2] = make_src(fp, fpi->SrcReg[2]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(src[2]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -592,7 +592,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			case OPCODE_MAX:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -609,7 +609,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			case OPCODE_MIN:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]) | R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]) | R500_ALPHA_ADDR1(src[1]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -624,15 +624,14 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
 			case OPCODE_MOV:
+				emit_alu(fp, counter, fpi);
 				emit_mov(fp, counter, fpi->SrcReg[0], dest);
-				fp->inst[counter].inst0 |= pixel_mask;
 				break;
 			case OPCODE_MUL:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Variation on MAD: src0*src1+0 */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
@@ -653,8 +652,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_RCP:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -667,8 +665,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_RSQ:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -684,6 +681,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				/* Do a cosine, then a sine, masking out the channels we want to protect. */
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				/* Cosine only goes in R (x) channel. */
+				fpi->DstReg.WriteMask = 0x1;
+				emit_alu(fp, counter, fpi);
 				if (fpi->DstReg.File == PROGRAM_OUTPUT) {
 					fp->inst[counter].inst0 = R500_INST_TYPE_OUT
 						| R500_INST_TEX_SEM_WAIT | 0x1 << 14;
@@ -702,11 +701,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ADDRD(dest);
 				counter++;
 				/* Sine only goes in G (y) channel. */
-				if (fpi->DstReg.File == PROGRAM_OUTPUT) {
-					fp->inst[counter].inst0 = R500_INST_TYPE_OUT | 0x2 << 14;
-				} else {
-					fp->inst[counter].inst0 = R500_INST_TYPE_ALU | 0x2 << 11;
-				}
+				fpi->DstReg.WriteMask = 0x2;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -718,11 +714,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ADDRD(dest);
 				counter++;
 				/* Put 0 into B,A (z,w) channels. */
-				if (fpi->DstReg.File == PROGRAM_OUTPUT) {
-					fp->inst[counter].inst0 = R500_INST_TYPE_OUT | 0xC << 14;
-				} else {
-					fp->inst[counter].inst0 = R500_INST_TYPE_ALU | 0xC << 11;
-				}
+				fpi->DstReg.WriteMask = 0xC;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -740,8 +733,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_SIN:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| R500_INST_TEX_SEM_WAIT | pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -756,8 +748,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Variation on MAD: 1*src0-src1 */
-				fp->inst[counter].inst0 = R500_INST_TYPE_ALU
-					| pixel_mask;
+				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR1(src[0])
 					| R500_RGB_ADDR2(src[1]);
 				fp->inst[counter].inst2 = R500_ALPHA_ADDR1(src[0])
@@ -780,8 +771,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_SWZ:
 				/* TODO: Negation masks! */
+				emit_alu(fp, counter, fpi);
 				emit_mov(fp, counter, fpi->SrcReg[0], dest);
-				fp->inst[counter].inst0 |= pixel_mask;
 				break;
 			case OPCODE_TEX:
 				emit_tex(fp, fpi, OPCODE_TEX, dest, counter);
@@ -801,9 +792,6 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 		if (fpi->SaturateMode == SATURATE_ZERO_ONE) {
 			fp->inst[counter].inst0 |= R500_INST_RGB_CLAMP | R500_INST_ALPHA_CLAMP;
 		}
-		if (fpi->DstReg.File == PROGRAM_OUTPUT) {
-			fp->inst[counter].inst0 |= R500_INST_TYPE_OUT | output_mask;
-		}
 
 		counter++;
 
@@ -813,9 +801,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	}
 
 	/* Finish him! (If it's an ALU/OUT instruction...) */
-	if ((fp->inst[counter-1].inst0 & 0x3) <= 1) {
-		fp->inst[counter-1].inst0 |= R500_INST_TYPE_OUT
-			| R500_INST_TEX_SEM_WAIT | R500_INST_LAST;
+	if ((fp->inst[counter-1].inst0 & 0x3) == 1) {
+		fp->inst[counter-1].inst0 |= R500_INST_LAST;
 	} else {
 		/* We still need to put an output inst, right? */
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
@@ -824,7 +811,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 		fp->inst[counter].inst1 = R500_RGB_ADDR0(dest);
 		fp->inst[counter].inst2 = R500_ALPHA_ADDR0(dest);
 		fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-			| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB) 
+			| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
 			| R500_ALU_RGB_SEL_B_SRC0
 			| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
 		fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
