@@ -533,10 +533,13 @@ dri_bufmgr_fake_wait_idle(dri_bufmgr_fake *bufmgr_fake)
 }
 
 /**
- * Wait for execution pending on a buffer
+ * Wait for rendering to a buffer to complete.
+ *
+ * It is assumed that the bathcbuffer which performed the rendering included
+ * the necessary flushing.
  */
 static void
-dri_bufmgr_fake_bo_wait_idle(dri_bo *bo)
+dri_fake_bo_wait_rendering(dri_bo *bo)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
@@ -757,7 +760,7 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
 
 	    if (!(bo_fake->flags & BM_NO_FENCE_SUBDATA) &&
 		bo_fake->block->fenced) {
-	       dri_bufmgr_fake_bo_wait_idle(bo);
+	       dri_fake_bo_wait_rendering(bo);
 	    }
 
 	    bo->virtual = bo_fake->block->virtual;
@@ -1157,6 +1160,7 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    bufmgr_fake->bufmgr.bo_unreference = dri_fake_bo_unreference;
    bufmgr_fake->bufmgr.bo_map = dri_fake_bo_map;
    bufmgr_fake->bufmgr.bo_unmap = dri_fake_bo_unmap;
+   bufmgr_fake->bufmgr.bo_wait_rendering = dri_fake_bo_wait_rendering;
    bufmgr_fake->bufmgr.destroy = dri_fake_destroy;
    bufmgr_fake->bufmgr.emit_reloc = dri_fake_emit_reloc;
    bufmgr_fake->bufmgr.process_relocs = dri_fake_process_relocs;

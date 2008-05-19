@@ -596,6 +596,26 @@ dri_gem_bo_get_subdata (dri_bo *bo, unsigned long offset,
 }
 
 static void
+dri_gem_bo_wait_rendering(dri_bo *bo)
+{
+    dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
+    dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
+    struct drm_gem_set_domain set_domain;
+    int ret;
+
+    set_domain.handle = bo_gem->gem_handle;
+    set_domain.read_domains = DRM_GEM_DOMAIN_CPU;
+    set_domain.write_domain = 0;
+    ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_GEM_SET_DOMAIN, &set_domain);
+    if (ret != 0) {
+	fprintf (stderr, "%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
+		 __FILE__, __LINE__,
+		 bo_gem->gem_handle, set_domain.read_domains, set_domain.write_domain,
+		 strerror (errno));
+    }
+}
+
+static void
 dri_bufmgr_gem_destroy(dri_bufmgr *bufmgr)
 {
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bufmgr;
@@ -827,6 +847,7 @@ intel_bufmgr_gem_init(int fd, int batch_size)
     bufmgr_gem->bufmgr.bo_unmap = dri_gem_bo_unmap;
     bufmgr_gem->bufmgr.bo_subdata = dri_gem_bo_subdata;
     bufmgr_gem->bufmgr.bo_get_subdata = dri_gem_bo_get_subdata;
+    bufmgr_gem->bufmgr.bo_wait_rendering = dri_gem_bo_wait_rendering;
     bufmgr_gem->bufmgr.destroy = dri_bufmgr_gem_destroy;
     bufmgr_gem->bufmgr.emit_reloc = dri_gem_emit_reloc;
     bufmgr_gem->bufmgr.process_relocs = dri_gem_process_reloc;

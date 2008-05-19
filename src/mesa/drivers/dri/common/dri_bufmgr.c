@@ -128,6 +128,12 @@ dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
 }
 
 void
+dri_bo_wait_rendering(dri_bo *bo)
+{
+   bo->bufmgr->bo_wait_rendering(bo);
+}
+
+void
 dri_bufmgr_destroy(dri_bufmgr *bufmgr)
 {
    bufmgr->destroy(bufmgr);

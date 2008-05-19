@@ -128,6 +128,14 @@ struct _dri_bufmgr {
 			  unsigned long size, void *data);
 
    /**
+    * Waits for rendering to an object by the GPU to have completed.
+    *
+    * This is not required for any access to the BO by bo_map, bo_subdata, etc.
+    * It is merely a way for the driver to implement glFinish.
+    */
+   void (*bo_wait_rendering) (dri_bo *bo);
+
+   /**
     * Tears down the buffer manager instance.
     */
    void (*destroy)(dri_bufmgr *bufmgr);
@@ -192,6 +200,7 @@ int dri_bo_subdata(dri_bo *bo, unsigned long offset,
 		   unsigned long size, const void *data);
 int dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
 		       unsigned long size, void *data);
+void dri_bo_wait_rendering(dri_bo *bo);
 
 void dri_bufmgr_set_debug(dri_bufmgr *bufmgr, GLboolean enable_debug);
 void dri_bufmgr_destroy(dri_bufmgr *bufmgr);

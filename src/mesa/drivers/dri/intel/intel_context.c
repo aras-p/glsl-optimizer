@@ -375,7 +375,12 @@ intelFinish(GLcontext * ctx)
    intelFlush(ctx);
 
    for (i = 0; i < fb->_NumColorDrawBuffers; i++) {
-      /* XXX: Wait on buffer idle */
+       struct intel_renderbuffer *irb;
+
+       irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
+
+       if (irb->region)
+	  dri_bo_wait_rendering(irb->region->buffer);
    }
    if (fb->_DepthBuffer) {
       /* XXX: Wait on buffer idle */
