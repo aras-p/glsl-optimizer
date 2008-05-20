@@ -134,8 +134,17 @@ static inline GLuint make_strq_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
-static int get_temp(struct r500_fragment_program *fp) {
-	return fp->max_temp_idx + 1;
+static int get_temp(struct r500_fragment_program *fp, int slot) {
+
+	COMPILE_STATE;
+
+	int r = cs->temp_in_use + 1 + slot;
+
+	if (r > R500_US_NUM_TEMP_REGS) {
+		ERROR("Too many temporary registers requested, can't compile!\n");
+	}
+
+	return r;
 }
 
 /* Borrowed verbatim from r300_fragprog since it hasn't changed. */
@@ -227,7 +236,7 @@ static void emit_tex(struct r500_fragment_program *fp,
 	hwsrc = make_src(fp, fpi->SrcReg[0]);
 
 	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
-		hwdest = get_temp(fp);
+		hwdest = get_temp(fp, 0);
 	} else {
 		hwdest = dest;
 	}
@@ -274,8 +283,8 @@ static void emit_tex(struct r500_fragment_program *fp,
 		counter++;
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
 			| R500_INST_TEX_SEM_WAIT | (mask << 4);
-		fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp));
-		fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp));
+		fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0));
+		fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0));
 		fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 			| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
 			| R500_ALU_RGB_SEL_B_SRC0
@@ -907,7 +916,7 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	struct gl_fragment_program *mp = &fp->mesa_program;
 	struct prog_instruction *fpi;
 	GLuint InputsRead = mp->Base.InputsRead;
-	GLuint temps_used = 0;	/* for fp->temps[] */
+	GLuint temps_used = 0;
 	int i, j;
 
 	/* New compile, reset tracking data */
@@ -989,17 +998,23 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 				cs->inputs[i].reg = 0;
 	}
 
-	/* Pre-parse the mesa program, grabbing refcounts on input/temp regs.
-	 * That way, we can free up the reg when it's no longer needed
-	 */
 	if (!mp->Base.Instructions) {
 		ERROR("No instructions found in program, going to go die now.\n");
 		return;
 	}
 
-	fp->max_temp_idx = fp->temp_reg_offset + 1;
+	for (fpi = mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
+		for (i = 0; i < 3; i++) {
+			if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
+				if (fpi->SrcReg[i].Index > temps_used)
+					temps_used = fpi->SrcReg[i].Index;
+			}
+		}
+	}
 
 	cs->temp_in_use = temps_used;
+
+	fp->max_temp_idx = fp->temp_reg_offset + cs->temp_in_use + 1;
 }
 
 static void update_params(struct r500_fragment_program *fp)
