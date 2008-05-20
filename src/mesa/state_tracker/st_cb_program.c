@@ -89,8 +89,12 @@ static void st_use_program( GLcontext *ctx,
 
 
 
+/**
+ * Called via ctx->Driver.NewProgram() to allocate a new vertex or
+ * fragment program.
+ */
 static struct gl_program *st_new_program( GLcontext *ctx,
-					  GLenum target, 
+					  GLenum target,
 					  GLuint id )
 {
    switch (target) {
@@ -118,7 +122,8 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    }
 
    default:
-      return _mesa_new_program(ctx, target, id);
+      assert(0);
+      return NULL;
    }
 }
 
