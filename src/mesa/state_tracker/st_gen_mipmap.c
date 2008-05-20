@@ -197,6 +197,6 @@ st_generate_mipmap(GLcontext *ctx, GLenum target,
       dstImage->TexFormat = srcImage->TexFormat;
 
       stImage = (struct st_texture_image *) dstImage;
-      stImage->pt = pt;
+      pipe_texture_reference(&stImage->pt, pt);
    }
 }
