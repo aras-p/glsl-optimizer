@@ -472,13 +472,7 @@ static boolean build_vertex_emit( struct translate_sse *p,
    x86_lea(p->func, vertexECX, x86_make_disp(vertexECX, p->translate.key.output_stride));
 
    /* Incr index
-    */   /* Emit code for each of the attributes.  Currently routes
-    * everything through SSE registers, even when it might be more
-    * efficient to stick with regular old x86.  No optimization or
-    * other tricks - enough new ground to cover here just getting
-    * things working.
-    */
-
+    */ 
    if (linear) {
       x86_inc(p->func, idxEBX);
    } 
