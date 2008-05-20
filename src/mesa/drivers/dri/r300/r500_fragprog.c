@@ -560,7 +560,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_EX2
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
@@ -589,7 +589,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_LN2
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
@@ -686,7 +686,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_RCP
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
@@ -699,7 +699,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_RSQ
 					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
