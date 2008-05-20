@@ -1177,8 +1177,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_RS_COL_PTR(x)		        (x << 6)
 #	define R300_RS_COL_FMT(x)		        (x << 9)
 #	define R300_RS_COL_FMT_RGBA		        0
-#	define R300_RS_COL_FMT_RGB0		        2
-#	define R300_RS_COL_FMT_RGB1		        3
+#	define R300_RS_COL_FMT_RGB0		        1
+#	define R300_RS_COL_FMT_RGB1		        2
 #	define R300_RS_COL_FMT_000A		        4
 #	define R300_RS_COL_FMT_0000		        5
 #	define R300_RS_COL_FMT_0001		        6
