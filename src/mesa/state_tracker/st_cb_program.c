@@ -143,6 +143,12 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
             stvp->driver_shader = NULL;
          }
 
+         if (stvp->draw_shader) {
+            /* this would only have been allocated for the RasterPos path */
+            draw_delete_vertex_shader(st->draw, stvp->draw_shader);
+            stvp->draw_shader = NULL;
+         }
+
          if (stvp->state.tokens) {
             FREE((void *) stvp->state.tokens);
             stvp->state.tokens = NULL;
@@ -226,6 +232,7 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       if (stvp->draw_shader) {
+         /* this would only have been allocated for the RasterPos path */
          draw_delete_vertex_shader(st->draw, stvp->draw_shader);
          stvp->draw_shader = NULL;
       }
