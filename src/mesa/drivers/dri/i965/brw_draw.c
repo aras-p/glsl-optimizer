@@ -318,6 +318,14 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
          goto flush;
       }
 
+      /* Various fallback checks:
+       */
+      if (brw->intel.Fallback) 
+	 goto out;
+
+      if (check_fallbacks( brw, prim, nr_prims ))
+	 goto out;
+
       /* need to account for index buffer and vertex buffer */
       if (ib) {
          ret = brw_prepare_indices( brw, ib , &ib_bo, &ib_offset);
@@ -335,16 +343,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
          force_flush = GL_TRUE;
          goto flush;
       }
-
-
-
-      /* Various fallback checks:
-       */
-      if (brw->intel.Fallback) 
-	 goto out;
-
-      if (check_fallbacks( brw, prim, nr_prims ))
-	 goto out;
 	  
       /* Upload index, vertex data: 
        */
