@@ -608,6 +608,8 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
       }
    }
 
+   clone->StateFlags = list->StateFlags;
+
    return clone;
 }
 
