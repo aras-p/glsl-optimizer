@@ -158,9 +158,6 @@ static void st_destroy_context_priv( struct st_context *st )
 {
    uint i;
 
-   st_reference_fragprog(st, &st->fp, NULL);
-   st_reference_vertprog(st, &st->vp, NULL);
-
    draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );
@@ -194,6 +191,9 @@ void st_destroy_context( struct st_context *st )
 
    /* need to unbind and destroy CSO objects before anything else */
    cso_release_all(st->cso_context);
+
+   st_reference_fragprog(st, &st->fp, NULL);
+   st_reference_vertprog(st, &st->vp, NULL);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 
