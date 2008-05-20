@@ -164,14 +164,16 @@ static struct st_fragment_program *
 make_fragment_shader_z(struct st_context *st)
 {
    GLcontext *ctx = st->ctx;
-   /* only make programs once and re-use */
-   static struct st_fragment_program *stfp = NULL;
    struct gl_program *p;
    GLuint ic = 0;
 
-   if (stfp)
-      return stfp;
+   if (st->drawpix.z_shader) {
+      return st->drawpix.z_shader;
+   }
 
+   /*
+    * Create shader now
+    */
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
       return NULL;
@@ -213,10 +215,10 @@ make_fragment_shader_z(struct st_context *st)
    p->OutputsWritten = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR);
    p->SamplersUsed = 0x1;  /* sampler 0 (bit 0) is used */
 
-   stfp = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, stfp, NULL);
+   st->drawpix.z_shader = (struct st_fragment_program *) p;
+   st_translate_fragment_program(st, st->drawpix.z_shader, NULL);
 
-   return stfp;
+   return st->drawpix.z_shader;
 }
 
 
@@ -228,16 +230,17 @@ make_fragment_shader_z(struct st_context *st)
 static struct st_vertex_program *
 st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
 {
-   /* only make programs once and re-use */
-   static struct st_vertex_program *progs[2] = { NULL, NULL };
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
    GLuint ic = 0;
 
-   if (progs[passColor])
-      return progs[passColor];
+   if (st->drawpix.vert_shaders[passColor])
+      return st->drawpix.vert_shaders[passColor];
 
+   /*
+    * Create shader now
+    */
    p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!p)
       return NULL;
@@ -293,7 +296,7 @@ st_make_passthrough_vertex_shader(struct st_context *st, GLboolean passColor)
    stvp = (struct st_vertex_program *) p;
    st_translate_vertex_program(st, stvp, NULL);
 
-   progs[passColor] = stvp;
+   st->drawpix.vert_shaders[passColor] = stvp;
 
    return stvp;
 }
@@ -1042,3 +1045,15 @@ void st_init_drawpixels_functions(struct dd_function_table *functions)
    functions->DrawPixels = st_DrawPixels;
    functions->CopyPixels = st_CopyPixels;
 }
+
+
+void
+st_destroy_drawpix(struct st_context *st)
+{
+   st_reference_fragprog(st, &st->drawpix.z_shader, NULL);
+   st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
+   st_reference_vertprog(st, &st->drawpix.vert_shaders[0], NULL);
+   st_reference_vertprog(st, &st->drawpix.vert_shaders[1], NULL);
+}
+
+
