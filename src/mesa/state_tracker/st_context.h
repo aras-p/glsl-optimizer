@@ -155,6 +155,12 @@ struct st_context
       struct bitmap_cache *cache;
    } bitmap;
 
+   /** for glDraw/CopyPixels */
+   struct {
+      struct st_fragment_program *z_shader;
+      struct st_vertex_program *vert_shaders[2];
+   } drawpix;
+
    /** for glClear */
    struct {
       struct pipe_shader_state vert_shader;

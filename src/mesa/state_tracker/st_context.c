@@ -168,6 +168,7 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_bitmap(st);
    st_destroy_blit(st);
    st_destroy_clear(st);
+   st_destroy_drawpix(st);
 
    _vbo_DestroyContext(st->ctx);
 

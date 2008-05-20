@@ -32,5 +32,8 @@
 
 extern void st_init_drawpixels_functions(struct dd_function_table *functions);
 
+extern void
+st_destroy_drawpix(struct st_context *st);
+
 
 #endif /* ST_CB_DRAWPIXELS_H */
