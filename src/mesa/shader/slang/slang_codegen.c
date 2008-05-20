@@ -2841,8 +2841,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
        * store->Index = sampler number (0..7, typically)
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-      const GLint sampNum = A->numSamplers++;
-      _mesa_add_sampler(prog->Parameters, varName, datatype, sampNum);
+      GLint sampNum = _mesa_add_sampler(prog->Parameters, varName, datatype);
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, sampNum, texIndex);
       if (dbg) printf("SAMPLER ");
    }

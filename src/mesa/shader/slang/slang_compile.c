@@ -1620,7 +1620,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.program = O->program;
       A.vartable = O->vartable;
       A.curFuncEndLabel = NULL;
-      A.numSamplers = 0;
       if (!_slang_codegen_global_variable(&A, var, C->type))
          return 0;
    }
@@ -1643,7 +1642,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
          A.space.funcs = O->funs;
          A.space.structs = O->structs;
          A.space.vars = O->vars;
-         A.numSamplers = 0;
          if (!initialize_global(&A, var))
             return 0;
       }
@@ -1777,7 +1775,6 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       A.program = O->program;
       A.vartable = O->vartable;
       A.log = C->L;
-      A.numSamplers = 0;
 
       _slang_codegen_function(&A, *parsed_func_ret);
    }
