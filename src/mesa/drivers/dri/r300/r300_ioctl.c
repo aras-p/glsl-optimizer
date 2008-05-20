@@ -248,7 +248,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	    R300_VPORT_Z_OFFSET_ENA);
 	e32(0x8);
 
-	reg_start(R300_VAP_PSC_SGN_NORM_CNTL, SGN_NORM_ZERO);
+	reg_start(R300_VAP_PSC_SGN_NORM_CNTL, 0);
 	e32(0xaaaaaaaa);
 
 	R300_STATECHANGE(r300, vof);
@@ -292,7 +292,7 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	if (!is_r500) {
 		R300_STATECHANGE(r300, ri);
-		reg_start(R300_RS_IP_0, 8);
+		reg_start(R300_RS_IP_0, 7);
 		for (i = 0; i < 8; ++i) {
 			e32(R300_RS_SEL_T(1) | R300_RS_SEL_R(2) | R300_RS_SEL_Q(3));
 		}
@@ -309,11 +309,12 @@ static void r300EmitClearState(GLcontext * ctx)
 	} else {
 	  
 		R300_STATECHANGE(r300, ri);
-		reg_start(R500_RS_IP_0, 8);
+		reg_start(R500_RS_IP_0, 7);
 		for (i = 0; i < 8; ++i) {
-			e32((1 << R500_RS_IP_TEX_PTR_T_SHIFT) |
-			    (2 << R500_RS_IP_TEX_PTR_R_SHIFT) | 
-			    (3 << R500_RS_IP_TEX_PTR_Q_SHIFT) );
+			e32((R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_S_SHIFT) |
+			    (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_T_SHIFT) |
+			    (R500_RS_IP_PTR_K0 << R500_RS_IP_TEX_PTR_R_SHIFT) |
+			    (R500_RS_IP_PTR_K1 << R500_RS_IP_TEX_PTR_Q_SHIFT));
 		}
 
 		R300_STATECHANGE(r300, rc);
