@@ -36,11 +36,8 @@
 
 #define DUMP_SSE  0
 
-#if DUMP_SSE
 
-static void
-_print_reg(
-   struct x86_reg reg )
+void x86_print_reg( struct x86_reg reg )
 {
    if (reg.mod != mod_REG) 
       debug_printf( "[" );
@@ -77,6 +74,7 @@ _print_reg(
       debug_printf( "]" );
 }
 
+#if DUMP_SSE
 
 #define DUMP_START() debug_printf( "\n" )
 #define DUMP_END() debug_printf( "\n" )
@@ -87,7 +85,7 @@ _print_reg(
       foo++;                                    \
    if  (*foo)                                   \
       foo++;                                    \
-   debug_printf( "\n% 15s ", foo );             \
+   debug_printf( "\n% 4x% 15s ", p->csr - p->store, foo );             \
 } while (0)
 
 #define DUMP_I( I ) do {                        \
@@ -97,27 +95,27 @@ _print_reg(
 
 #define DUMP_R( R0 ) do {                       \
    DUMP();                                      \
-   _print_reg( R0 );                            \
+   x86_print_reg( R0 );                            \
 } while( 0 )
 
 #define DUMP_RR( R0, R1 ) do {                  \
    DUMP();                                      \
-   _print_reg( R0 );                            \
+   x86_print_reg( R0 );                            \
    debug_printf( ", " );                        \
-   _print_reg( R1 );                            \
+   x86_print_reg( R1 );                            \
 } while( 0 )
 
 #define DUMP_RI( R0, I ) do {                   \
    DUMP();                                      \
-   _print_reg( R0 );                            \
+   x86_print_reg( R0 );                            \
    debug_printf( ", %u", I );                   \
 } while( 0 )
 
 #define DUMP_RRI( R0, R1, I ) do {              \
    DUMP();                                      \
-   _print_reg( R0 );                            \
+   x86_print_reg( R0 );                            \
    debug_printf( ", " );                        \
-   _print_reg( R1 );                            \
+   x86_print_reg( R1 );                            \
    debug_printf( ", %u", I );                   \
 } while( 0 )
 

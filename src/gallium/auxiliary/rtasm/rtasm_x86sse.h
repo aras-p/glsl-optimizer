@@ -106,6 +106,9 @@ void x86_init_func_size( struct x86_function *p, unsigned code_size );
 void x86_release_func( struct x86_function *p );
 void (*x86_get_func( struct x86_function *p ))( void );
 
+/* Debugging:
+ */
+void x86_print_reg( struct x86_reg reg );
 
 
 /* Create and manipulate registers and regmem values:
