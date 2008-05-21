@@ -990,14 +990,12 @@ static void note_x87_pop( struct x86_function *p )
 {
    p->x87_stack--;
    assert(p->x87_stack >= 0);
-   debug_printf("\nstack: %d\n", p->x87_stack);
 }
 
 static void note_x87_push( struct x86_function *p )
 {
    p->x87_stack++;
    assert(p->x87_stack <= 7);
-   debug_printf("\nstack: %d\n", p->x87_stack);
 }
 
 void x87_assert_stack_empty( struct x86_function *p )
