@@ -20,17 +20,30 @@ OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h dispatch.h \
 	../../glx/x11/indirect_size.c
 
 
-#XORG_BASE = /home/idr/devel/graphics/Xorg/xserver/xorg
-GLX_DIR   = $(XORG_BASE)/GL/glx
+GLX_DIR = $(XORG_BASE)/GL/glx
 
-SERVER_OUTPUTS = $(GLX_DIR)/indirect_dispatch.c \
+SERVER_GLAPI_FILES = \
+	$(GLX_DIR)/glapi.h \
+	$(GLX_DIR)/glapi.c \
+	$(GLX_DIR)/glthread.c \
+	$(GLX_DIR)/glthread.h
+
+SERVER_OUTPUTS = \
+	$(GLX_DIR)/indirect_dispatch.c \
 	$(GLX_DIR)/indirect_dispatch_swap.c \
 	$(GLX_DIR)/indirect_dispatch.h \
 	$(GLX_DIR)/indirect_reqsize.c \
 	$(GLX_DIR)/indirect_reqsize.h \
+	$(GLX_DIR)/indirect_size.h \
 	$(GLX_DIR)/indirect_size_get.c \
 	$(GLX_DIR)/indirect_size_get.h \
-	$(GLX_DIR)/indirect_table.c
+	$(GLX_DIR)/indirect_table.c \
+	$(GLX_DIR)/glapitemp.h \
+	$(GLX_DIR)/glapitable.h \
+	$(GLX_DIR)/glapioffsets.h \
+	$(GLX_DIR)/glprocs.h \
+	$(GLX_DIR)/dispatch.h \
+	$(SERVER_GLAPI_FILES)
 
 API_XML = gl_API.xml \
 	EXT_framebuffer_object.xml \
@@ -39,23 +52,33 @@ API_XML = gl_API.xml \
 COMMON = gl_XML.py glX_XML.py license.py $(API_XML) typeexpr.py
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
-all: $(OUTPUTS)
+all: check-xorg-source $(OUTPUTS) $(SERVER_OUTPUTS)
 
-server: $(SERVER_OUTPUTS)
+check-xorg-source:
+	@if ! test -d $(XORG_BASE)/GL/glx; then \
+		echo "ERROR: Must specify path to xserver checkout; set XORG_BASE."; \
+		exit 1; \
+	fi
 
-glprocs.h: gl_procs.py $(COMMON)
+$(GLX_DIR)/%.c: %.c
+	cp $< $@
+
+$(GLX_DIR)/%.h: %.h
+	cp $< $@
+
+glprocs.h $(GLX_DIR)/glprocs.h: gl_procs.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapitemp.h: gl_apitemp.py $(COMMON)
+glapitemp.h $(GLX_DIR)/glapitemp.h: gl_apitemp.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapioffsets.h: gl_offsets.py $(COMMON)
+glapioffsets.h $(GLX_DIR)/glapioffsets.h: gl_offsets.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-glapitable.h: gl_table.py $(COMMON)
+glapitable.h $(GLX_DIR)/glapitable.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
 
-dispatch.h: gl_table.py $(COMMON)
+dispatch.h $(GLX_DIR)/dispatch.h: gl_table.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m remap_table > $@
 
 ../main/enums.c: gl_enums.py $(COMMON)
@@ -83,7 +106,7 @@ dispatch.h: gl_table.py $(COMMON)
 ../../glx/x11/indirect_init.c: glX_proto_send.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m init_c > $@
 
-../../glx/x11/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
+../../glx/x11/indirect_size.h $(GLX_DIR)/indirect_size.h: glX_proto_size.py $(COMMON_GLX)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -m size_h --only-set -h _INDIRECT_SIZE_H_ \
 	  | $(INDENT) $(INDENT_FLAGS) > $@
 
