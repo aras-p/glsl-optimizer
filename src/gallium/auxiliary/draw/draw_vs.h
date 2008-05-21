@@ -62,6 +62,19 @@ struct draw_vs_varient_key {
    struct draw_vs_element element[PIPE_MAX_ATTRIBS];
 };
 
+struct draw_vs_varient;
+
+typedef void (PIPE_CDECL *vsv_run_elts_func)( struct draw_vs_varient *,
+                                              const unsigned *elts,
+                                              unsigned count,
+                                              void *output_buffer);
+
+typedef void (PIPE_CDECL *vsv_run_linear_func)( struct draw_vs_varient *,
+                                                unsigned start,
+                                                unsigned count,
+                                                void *output_buffer);
+
+
 struct draw_vs_varient {
    struct draw_vs_varient_key key;
 
@@ -75,16 +88,15 @@ struct draw_vs_varient {
    void (*set_constants)( struct draw_vs_varient *,
                           const float (*constants)[4] );
 
+   void (PIPE_CDECL *run_linear)( struct draw_vs_varient *shader,
+                                  unsigned start,
+                                  unsigned count,
+                                  void *output_buffer );
 
-   void (*run_linear)( struct draw_vs_varient *shader,
-                       unsigned start,
-		       unsigned count,
-		       void *output_buffer );
-
-   void (*run_elts)( struct draw_vs_varient *shader,
-                     const unsigned *elts,
-                     unsigned count,
-                     void *output_buffer );
+   void (PIPE_CDECL *run_elts)( struct draw_vs_varient *shader,
+                                const unsigned *elts,
+                                unsigned count,
+                                void *output_buffer );
 
    void (*destroy)( struct draw_vs_varient * );
 };
