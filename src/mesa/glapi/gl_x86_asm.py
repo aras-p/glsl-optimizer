@@ -51,7 +51,7 @@ class PrintGenericStubs(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#include "assyntax.h"'
-		print '#include "glapioffsets.h"'
+		print '#include "glapi/glapioffsets.h"'
 		print ''
 		print '#if defined(STDCALL_API)'
 		print '# if defined(USE_MGL_NAMESPACE)'
