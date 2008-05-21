@@ -980,7 +980,7 @@ static boolean emit_EXP( struct aos_compilation *cp, const struct tgsi_full_inst
 
     x87_fstp_or_pop(cp->func, writemask, 0, dst); /* flr(a) a 2^flr(a) */
 
-    x87_fsubrp(cp->func, st1); /* frac(a) 2^flr(a) */
+    x87_fsubp(cp->func, st1);                     /* frac(a) 2^flr(a) */
 
     x87_fst_or_nop(cp->func, writemask, 1, dst);    /* frac(a) 2^flr(a) */
 
@@ -1041,9 +1041,9 @@ static boolean emit_FLR( struct aos_compilation *cp, const struct tgsi_full_inst
 
    /* Load all sources first to avoid aliasing
     */
-   for (i = 0; i < 4; i++) {
+   for (i = 3; i >= 0; i--) {
       if (writemask & (1<<i)) {
-         x87_fld_src(cp, &op->FullSrcRegisters[0], i);
+         x87_fld_src(cp, &op->FullSrcRegisters[0], i);   
       }
    }
 
@@ -1068,9 +1068,9 @@ static boolean emit_RND( struct aos_compilation *cp, const struct tgsi_full_inst
 
    /* Load all sources first to avoid aliasing
     */
-   for (i = 0; i < 4; i++) {
+   for (i = 3; i >= 0; i--) {
       if (writemask & (1<<i)) {
-         x87_fld_src(cp, &op->FullSrcRegisters[0], i);
+         x87_fld_src(cp, &op->FullSrcRegisters[0], i);   
       }
    }
 
@@ -1098,7 +1098,7 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
    /* suck all the source values onto the stack before writing out any
     * dst, which may alias...
     */
-   for (i = 0; i < 4; i++) {
+   for (i = 3; i >= 0; i--) {
       if (writemask & (1<<i)) {
          x87_fld_src(cp, &op->FullSrcRegisters[0], i);   
       }
@@ -1108,7 +1108,7 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
       if (writemask & (1<<i)) {
          x87_fld(cp->func, st0);     /* a a */
          x87_fprndint( cp->func );   /* flr(a) a */
-         x87_fsubrp(cp->func, st1);  /* frc(a) */
+         x87_fsubp(cp->func, st1);  /* frc(a) */
          x87_fstp(cp->func, x86_make_disp(dst, i*4));
       }
    }
@@ -1392,6 +1392,8 @@ static boolean
 emit_instruction( struct aos_compilation *cp,
                   struct tgsi_full_instruction *inst )
 {
+   x87_assert_stack_empty(cp->func);
+
    switch( inst->Instruction.Opcode ) {
    case TGSI_OPCODE_MOV:
       return emit_MOV( cp, inst );
@@ -1657,6 +1659,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
             break;
          }
 
+         x87_assert_stack_empty(cp.func);
          cp.insn_counter++;
          debug_printf("\n");
       }
@@ -1712,6 +1715,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    x86_pop(cp.func, cp.count_ESI);
    x86_pop(cp.func, cp.idx_EBX);
 
+   x87_assert_stack_empty(cp.func);
    x86_ret(cp.func);
 
    tgsi_parse_free( &parse );
