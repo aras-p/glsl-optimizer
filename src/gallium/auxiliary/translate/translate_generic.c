@@ -541,10 +541,10 @@ static emit_func get_emit_func( enum pipe_format format )
 /**
  * Fetch vertex attributes for 'count' vertices.
  */
-static void generic_run_elts( struct translate *translate,
-			      const unsigned *elts,
-			      unsigned count,
-			      void *output_buffer )
+static void PIPE_CDECL generic_run_elts( struct translate *translate,
+                                         const unsigned *elts,
+                                         unsigned count,
+                                         void *output_buffer )
 {
    struct translate_generic *tg = translate_generic(translate);
    char *vert = output_buffer;
@@ -580,10 +580,10 @@ static void generic_run_elts( struct translate *translate,
 
 
 
-static void generic_run( struct translate *translate,
-			 unsigned start,
-			 unsigned count,
-			 void *output_buffer )
+static void PIPE_CDECL generic_run( struct translate *translate,
+                                    unsigned start,
+                                    unsigned count,
+                                    void *output_buffer )
 {
    struct translate_generic *tg = translate_generic(translate);
    char *vert = output_buffer;

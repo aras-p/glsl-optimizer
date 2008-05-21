@@ -45,21 +45,15 @@
 #define W    3
 
 
-#ifdef WIN32
-#define RTASM __cdecl
-#else
-#define RTASM
-#endif
-
-typedef void (RTASM *run_func)( struct translate *translate,
-                                unsigned start,
-                                unsigned count,
-                                void *output_buffer );
-
-typedef void (RTASM *run_elts_func)( struct translate *translate,
-                                     const unsigned *elts,
+typedef void (PIPE_CDECL *run_func)( struct translate *translate,
+                                     unsigned start,
                                      unsigned count,
                                      void *output_buffer );
+
+typedef void (PIPE_CDECL *run_elts_func)( struct translate *translate,
+                                          const unsigned *elts,
+                                          unsigned count,
+                                          void *output_buffer );
 
 
 
