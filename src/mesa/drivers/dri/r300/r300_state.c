@@ -1552,7 +1552,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	if (InputsRead & FRAG_BIT_COL1) {
 		count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
 		if (count == 3)
-			interp_col[1] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
+			interp_col[1] |= R300_RS_COL_FMT(R300_RS_COL_FMT_RGB0);
 		interp_col[1] |= R300_RS_COL_PTR(1);
 		rs_col_count += count;
 	}
@@ -1701,7 +1701,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 		count = VB->AttribPtr[_TNL_ATTRIB_COLOR1]->size;
 		interp_col[1] |= R500_RS_COL_PTR(1);
 		if (count == 3)
-			interp_col[1] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGB1);
+			interp_col[1] |= R500_RS_COL_FMT(R300_RS_COL_FMT_RGB0);
 		rs_col_count += count;
 	}
 
@@ -1791,7 +1791,7 @@ static void r500SetupRSUnit(GLcontext * ctx)
 	  | R300_HIRES_EN;
 
 	assert(high_rr >= 0);
-	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_INST_0, high_rr + 1);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R500_RS_INST_0, high_rr + 1);
 	r300->hw.rc.cmd[2] = 0xC0 | high_rr;
 
 	if (InputsRead)
