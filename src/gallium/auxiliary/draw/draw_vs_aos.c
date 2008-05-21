@@ -735,23 +735,26 @@ static void set_fpu_round_nearest( struct aos_compilation *cp )
 }
 
 
-static void emit_x87_ex2( struct aos_compilation *cp )
+static void x87_emit_ex2( struct aos_compilation *cp )
 {
    struct x86_reg st0 = x86_make_reg(file_x87, 0);
    struct x86_reg st1 = x86_make_reg(file_x87, 1);
-   struct x86_reg st3 = x86_make_reg(file_x87, 3);
+   int stack = cp->func->x87_stack;
 
    set_fpu_round_neg_inf( cp );
 
-   x87_fld(cp->func, st0); /* a a */
-   x87_fprndint( cp->func );	/* int(a) a */
-   x87_fld(cp->func, st0); /* int(a) int(a) a */
-   x87_fstp(cp->func, st3); /* int(a) a int(a)*/
-   x87_fsubp(cp->func, st1); /* frac(a) int(a) */
-   x87_f2xm1(cp->func);    /* (2^frac(a))-1 int(a)*/
-   x87_fld1(cp->func);    /* 1 (2^frac(a))-1 int(a)*/
-   x87_faddp(cp->func, st1);	/* 2^frac(a) int(a) */
-   x87_fscale(cp->func);	/* 2^a */
+   x87_fld(cp->func, st0);      /* a a */
+   x87_fld(cp->func, st0);      /* a a a */
+   x87_fprndint( cp->func );	/* flr(a) a a*/
+   x87_fsubp(cp->func, st1);    /* frac(a) a */
+   x87_f2xm1(cp->func);         /* (2^frac(a))-1 a */
+   x87_fld1(cp->func);          /* 1 (2^frac(a))-1 a */
+   x87_faddp(cp->func, st1);	/* 2^frac(a) a  */
+   x87_fscale(cp->func);	/* 2^a a */
+   x87_fstp(cp->func, st1);
+
+   assert( stack == cp->func->x87_stack);
+      
 }
 
 
@@ -907,9 +910,7 @@ static boolean emit_LG2( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_EX2( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);
-
-   emit_x87_ex2(cp);
-
+   x87_emit_ex2(cp);
    x87_fstp_dest4(cp, &op->FullDstRegisters[0]);
    return TRUE;
 }
@@ -1084,63 +1085,62 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg dst = get_dst_ptr(cp, &op->FullDstRegisters[0]); 
-   struct x86_reg st1 = x86_make_reg(file_x87, 1);
-   unsigned fixup1, fixup2;
    unsigned writemask = op->FullDstRegisters[0].DstRegister.WriteMask;
 
 
-   /* Load the interesting parts of arg0:
-    */
-   x87_fld_src(cp, &op->FullSrcRegisters[0], 3);
-   x87_fld_src(cp, &op->FullSrcRegisters[0], 1);
-   x87_fld_src(cp, &op->FullSrcRegisters[0], 0);
+
+
+   if (writemask & TGSI_WRITEMASK_YZ) {
+      struct x86_reg st1 = x86_make_reg(file_x87, 1);
+      struct x86_reg st2 = x86_make_reg(file_x87, 2);
+
    
+      
+
+      /* a1' = a1 <= 0 ? 1 : a1;
+       */
+      x87_fldz(cp->func);                           /* 0  */
+      x87_fld1(cp->func);                           /* 1 0  */
+      x87_fld_src(cp, &op->FullSrcRegisters[0], 1); /* a1 1 0  */
+      x87_fcomi(cp->func, st2);	                    /* a1 1 0  */
+      x87_fcmovb(cp->func, st1);                    /* a1' 1 0  */
+      x87_fstp(cp->func, st1);                      /* a1' 0  */
+      x87_fstp(cp->func, st1);                      /* a1'  */
+
+      x87_fld_src(cp, &op->FullSrcRegisters[0], 3); /* a3 a1'  */
+      x87_fxch(cp->func, st1);                      /* a1' a3  */
+      
+
+      /* Compute pow(a1, a3)
+       */
+      x87_fyl2x(cp->func);	/* a3*log2(a1)      */
+      x87_emit_ex2( cp );       /* 2^(a3*log2(a1))   */
+
+
+      /* a0' = max2(a0, 0):
+       */
+      x87_fldz(cp->func);                           /* 0 r2 */
+      x87_fld_src(cp, &op->FullSrcRegisters[0], 0); /* a0 0 r2 */
+      x87_fcomi(cp->func, st1);	
+      x87_fcmovb(cp->func, st1);                    /* a0' 0 r2 */
+      x87_fstp(cp->func, st1);                      /* a0' r2 */
+
+      x87_fxch(cp->func, st1);   /* a0' r2 */
+      x87_fst_or_nop(cp->func, writemask, 1, dst); /* result[1] = a0' */
+
+      x87_fldz(cp->func);       /* 0 a0' r2 */
+      x87_fcomi(cp->func, st1);  /* 0 a0' r2 */
+      x87_fcmovnbe(cp->func, st2); /* r2' a0' r2 */
+
+      x87_fstp_or_pop(cp->func, writemask, 2, dst);
+      x87_fpop(cp->func);
+      x87_fpop(cp->func);
+   }
 
    if (writemask & TGSI_WRITEMASK_XW) {
       x87_fld1(cp->func);
       x87_fst_or_nop(cp->func, writemask, 0, dst);
       x87_fstp_or_pop(cp->func, writemask, 3, dst);
-   }
-
-   if (writemask & TGSI_WRITEMASK_YZ) {
-      
-      /* Pre-zero destinations, may be overwritten later...  fixme. 
-       */
-      x87_fldz(cp->func);
-      x87_fst_or_nop(cp->func, writemask, 1, dst);
-      x87_fstp_or_pop(cp->func, writemask, 2, dst);
-
-
-      /* Check arg0[0]:
-       */
-      x87_fldz(cp->func);		/* 0 a0 a1 a3 */
-      x87_fucomp(cp->func, st1);	/* a0 a1 a3 */
-      x87_fnstsw(cp->func, cp->tmp_EAX);
-      x86_sahf(cp->func);
-      fixup1 = x86_jcc_forward(cp->func, cc_AE); 
-   
-      x87_fstp_or_pop(cp->func, writemask, 1, dst);	/* a1 a3 */
-
-      /* Check arg0[1]:
-       */ 
-      x87_fldz(cp->func);		/* 0 a1 a3 */
-      x87_fucomp(cp->func, st1);	/* a1 a3 */
-      x87_fnstsw(cp->func, cp->tmp_EAX);
-      x86_sahf(cp->func);
-      fixup2 = x86_jcc_forward(cp->func, cc_AE); 
-
-      /* Compute pow(a1, a3)
-       */
-      x87_fyl2x(cp->func);	/* a3*log2(a1) */
-
-      emit_x87_ex2( cp );		/* 2^(a3*log2(a1)) */
-
-      x87_fstp_or_pop(cp->func, writemask, 2, dst);
-   
-      /* Land jumps:
-       */
-      x86_fixup_fwd_jump(cp->func, fixup1);
-      x86_fixup_fwd_jump(cp->func, fixup2);
    }
 
    return TRUE;
@@ -1222,7 +1222,7 @@ static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_inst
    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);	/* a0.x a1.x */
    x87_fyl2x(cp->func);	                                /* a1*log2(a0) */
 
-   emit_x87_ex2( cp );		/* 2^(a1*log2(a0)) */
+   x87_emit_ex2( cp );		/* 2^(a1*log2(a0)) */
 
    x87_fstp_dest4(cp, &op->FullDstRegisters[0]);
    return TRUE;
