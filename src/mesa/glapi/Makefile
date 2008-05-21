@@ -20,7 +20,7 @@ OUTPUTS = glprocs.h glapitemp.h glapioffsets.h glapitable.h dispatch.h \
 	../../glx/x11/indirect_size.c
 
 
-GLX_DIR = $(XORG_BASE)/GL/glx
+GLX_DIR = $(XORG_BASE)/glx
 
 SERVER_GLAPI_FILES = \
 	$(GLX_DIR)/glapi.h \
@@ -55,7 +55,7 @@ COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 all: check-xorg-source $(OUTPUTS) $(SERVER_OUTPUTS)
 
 check-xorg-source:
-	@if ! test -d $(XORG_BASE)/GL/glx; then \
+	@if ! test -d $(GLX_DIR); then \
 		echo "ERROR: Must specify path to xserver checkout; set XORG_BASE."; \
 		exit 1; \
 	fi
