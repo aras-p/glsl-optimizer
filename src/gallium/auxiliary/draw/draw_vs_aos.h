@@ -52,9 +52,12 @@ struct x86_function;
 #define MAX_TEMPS      PIPE_MAX_ATTRIBS /* say */
 #define MAX_CONSTANTS  PIPE_MAX_ATTRIBS /* say */
 #define MAX_IMMEDIATES PIPE_MAX_ATTRIBS /* say */
-#define MAX_INTERNALS  4
+#define MAX_INTERNALS  8
 
 #define AOS_FILE_INTERNAL TGSI_FILE_COUNT
+
+#define FPU_RND_NEG    1
+#define FPU_RND_NEAREST 2
 
 /* This is the temporary storage used by all the aos_sse vs varients.
  * Create one per context and reuse by passing a pointer in at
@@ -71,8 +74,8 @@ struct aos_machine {
    float scale[4];              /* viewport */
    float translate[4];          /* viewport */
 
-   ushort fpu_round_nearest;
-   ushort fpu_round_neg_inf;
+   ushort fpu_rnd_nearest;
+   ushort fpu_rnd_neg_inf;
    ushort fpu_restore;
    ushort fpucntl;              /* one of FPU_* above */
 

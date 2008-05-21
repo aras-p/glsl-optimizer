@@ -83,7 +83,7 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
       return x86_make_disp(ptr, Offset(struct aos_machine, constant[idx]));
 
    case AOS_FILE_INTERNAL:
-      return x86_make_disp(ptr, Offset(struct aos_machine, immediate[idx]));
+      return x86_make_disp(ptr, Offset(struct aos_machine, internal[idx]));
 
    default:
       ERROR(cp, "unknown reg file");
@@ -97,8 +97,62 @@ struct x86_reg aos_get_internal( struct aos_compilation *cp,
 {
    return get_reg_ptr( cp,
                        AOS_FILE_INTERNAL, 
-                       imm + 1 );
+                       imm );
 }
+
+#define X87_CW_EXCEPTION_INV_OP       (1<<0)
+#define X87_CW_EXCEPTION_DENORM_OP    (1<<1)
+#define X87_CW_EXCEPTION_ZERO_DIVIDE  (1<<2)
+#define X87_CW_EXCEPTION_OVERFLOW     (1<<3)
+#define X87_CW_EXCEPTION_UNDERFLOW    (1<<4)
+#define X87_CW_EXCEPTION_PRECISION    (1<<5)
+#define X87_CW_PRECISION_SINGLE       (0<<8)
+#define X87_CW_PRECISION_RESERVED     (1<<8)
+#define X87_CW_PRECISION_DOUBLE       (2<<8)
+#define X87_CW_PRECISION_DOUBLE_EXT   (3<<8)
+#define X87_CW_PRECISION_MASK         (3<<8)
+#define X87_CW_ROUND_NEAREST          (0<<10)
+#define X87_CW_ROUND_DOWN             (1<<10)
+#define X87_CW_ROUND_UP               (2<<10)
+#define X87_CW_ROUND_ZERO             (3<<10)
+#define X87_CW_ROUND_MASK             (3<<10)
+#define X87_CW_INFINITY               (1<<12)
+
+static void init_internals( struct aos_machine *machine )
+{
+   float inv = 1.0f/255.0f;
+   float f255 = 255.0f;
+
+   ASSIGN_4V(machine->internal[IMM_ONES],      1.0f,  1.0f,  1.0f,  1.0f);
+   ASSIGN_4V(machine->internal[IMM_NEGS],     -1.0f, -1.0f, -1.0f, -1.0f);
+   ASSIGN_4V(machine->internal[IMM_IDENTITY],  0.0f,  0.0f,  0.0f,  1.0f);
+   ASSIGN_4V(machine->internal[IMM_INV_255],   inv,   inv,   inv,   inv);
+   ASSIGN_4V(machine->internal[IMM_255],       f255,   f255,   f255,   f255);
+
+
+   machine->fpu_rnd_nearest = (X87_CW_EXCEPTION_INV_OP |
+                               X87_CW_EXCEPTION_DENORM_OP |
+                               X87_CW_EXCEPTION_ZERO_DIVIDE |
+                               X87_CW_EXCEPTION_OVERFLOW |
+                               X87_CW_EXCEPTION_UNDERFLOW |
+                               X87_CW_EXCEPTION_PRECISION |
+                               (1<<6) |
+                               X87_CW_ROUND_NEAREST |
+                               X87_CW_PRECISION_DOUBLE_EXT);
+
+   assert(machine->fpu_rnd_nearest == 0x37f);
+                               
+   machine->fpu_rnd_neg_inf = (X87_CW_EXCEPTION_INV_OP |
+                               X87_CW_EXCEPTION_DENORM_OP |
+                               X87_CW_EXCEPTION_ZERO_DIVIDE |
+                               X87_CW_EXCEPTION_OVERFLOW |
+                               X87_CW_EXCEPTION_UNDERFLOW |
+                               X87_CW_EXCEPTION_PRECISION |
+                               (1<<6) |
+                               X87_CW_ROUND_DOWN |
+                               X87_CW_PRECISION_DOUBLE_EXT);
+}
+
 
 static void spill( struct aos_compilation *cp, unsigned idx )
 {
@@ -1736,6 +1790,7 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
       goto fail;
    
    memset(vaos->machine, 0, sizeof(struct aos_machine));
+   init_internals(vaos->machine);
 
    tgsi_dump(vs->state.tokens, 0);
 
