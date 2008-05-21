@@ -690,41 +690,47 @@ static void x87_fstp_dest4( struct aos_compilation *cp,
    x87_fstp_or_pop(cp->func, writemask, 3, ptr);
 }
 
+#define FPU_MANIP 1
 /* Save current x87 state and put it into single precision mode.
  */
 static void save_fpu_state( struct aos_compilation *cp )
 {
-#if 0
-   x87_fnstcw( cp->func, x86_make_disp(regEDX, get_offset(m, &m->fpucntl_restore)));
-   x87_fldcw( cp->func, );
+#if FPU_MANIP
+   x87_fnstcw( cp->func, x86_make_disp(cp->machine_EDX, 
+                                       Offset(struct aos_machine, fpu_restore)));
 #endif
 }
 
 static void restore_fpu_state( struct aos_compilation *cp )
 {
-#if 0
+#if FPU_MANIP
    x87_fnclex(cp->func);
-   x87_fldcw(cp->func, x86_make_disp(regEDX, get_offset(m, &m->fpucntl_restore)));
+   x87_fldcw( cp->func, x86_make_disp(cp->machine_EDX, 
+                                      Offset(struct aos_machine, fpu_restore)));
 #endif
 }
 
 static void set_fpu_round_neg_inf( struct aos_compilation *cp )
 {
-#if 0
-   if (cp->fpucntl != RND_NEG_FPU) {
-      struct x86_reg regEDX = x86_make_reg(file_REG32, reg_DX);
-      struct arb_vp_machine *m = NULL;
-
-      cp->fpucntl = RND_NEG_FPU;
+#if FPU_MANIP
+   if (cp->fpucntl != FPU_RND_NEG) {
+      cp->fpucntl = FPU_RND_NEG;
       x87_fnclex(cp->func);
-      x87_fldcw(cp->func, x86_make_disp(regEDX, get_offset(m, &m->fpucntl_rnd_neg)));
+      x87_fldcw( cp->func, x86_make_disp(cp->machine_EDX, 
+                                         Offset(struct aos_machine, fpu_rnd_neg_inf)));
    }
 #endif
 }
 
 static void set_fpu_round_nearest( struct aos_compilation *cp )
 {
-#if 0
+#if FPU_MANIP
+   if (cp->fpucntl != FPU_RND_NEAREST) {
+      cp->fpucntl = FPU_RND_NEAREST;
+      x87_fnclex(cp->func);
+      x87_fldcw( cp->func, x86_make_disp(cp->machine_EDX, 
+                                         Offset(struct aos_machine, fpu_rnd_nearest)));
+   }
 #endif
 }
 
@@ -1590,6 +1596,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
                          Offset( struct draw_vs_varient_aos_sse, machine )));
 
    save_fpu_state( &cp );
+   set_fpu_round_nearest( &cp );
 
    /* Note address for loop jump 
     */
