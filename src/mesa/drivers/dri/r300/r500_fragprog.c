@@ -1149,6 +1149,20 @@ static char *to_mask(int val)
   return str;
 }
 
+static char *to_texop(int val)
+{
+  switch(val) {
+  case 0: return "NOP";
+  case 1: return "LD";
+  case 2: return "TEXKILL";
+  case 3: return "PROJ";
+  case 4: return "LODBIAS";
+  case 5: return "LOD";
+  case 6: return "DXDY";
+  }
+  return NULL;
+}
+
 static void dump_program(struct r500_fragment_program *fp)
 {
   int pc = 0;
@@ -1220,9 +1234,20 @@ static void dump_program(struct r500_fragment_program *fp)
     case 2:
       break;
     case 3:
-      fprintf(stderr,"1: TEX INST 0x%08x\n", fp->inst[n].inst1);
-      fprintf(stderr,"2: TEX ADDR 0x%08x\n", fp->inst[n].inst2);
-      fprintf(stderr,"2: TEX ADDR DXDY 0x%08x\n", fp->inst[n].inst3);
+      inst = fp->inst[n].inst1;
+      fprintf(stderr,"\t1:TEX_INST:  0x%08x: id: %d op:%s, %s, %s %s\n", inst, (inst >> 16) & 0xf,
+	      to_texop((inst >> 22) & 0x7), (inst & (1<<25)) ? "ACQ" : "",
+	      (inst & (1<<26)) ? "IGNUNC" : "", (inst & (1<<27)) ? "UNSCALED" : "SCALED");
+      inst = fp->inst[n].inst2;
+      fprintf(stderr,"\t2:TEX_ADDR:  0x%08x: src: %d%s %s/%s/%s/%s dst: %d%s %s/%s/%s/%s\n", inst,
+	      inst & 127, inst & (1<<7) ? "(rel)" : "",
+	      toswiz((inst >> 8) & 0x3), toswiz((inst >> 10) & 0x3),
+	      toswiz((inst >> 12) & 0x3), toswiz((inst >> 14) & 0x3),
+	      (inst >> 16) & 127, inst & (1<<23) ? "(rel)" : "",
+	      toswiz((inst >> 24) & 0x3), toswiz((inst >> 26) & 0x3),
+	      toswiz((inst >> 28) & 0x3), toswiz((inst >> 30) & 0x3));
+
+      fprintf(stderr,"\t3:TEX_DXDY:  0x%08x\n", fp->inst[n].inst3);
       break;
     }
     fprintf(stderr,"\n");
