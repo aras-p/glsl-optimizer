@@ -174,14 +174,44 @@ static void spill( struct aos_compilation *cp, unsigned idx )
    }
 }
 
+static boolean is_xmm_tmp( struct aos_compilation *cp,
+                           struct x86_reg reg )
+{
+   return (reg.file == file_XMM &&
+           cp->xmm[reg.idx].file == TGSI_FILE_NULL);
+}
+
+static struct x86_reg get_xmm_tmp( struct aos_compilation *cp,
+                                   struct x86_reg reg )
+{
+   if (!is_xmm_tmp(cp, reg)) {
+      struct x86_reg tmp = aos_get_xmm_reg(cp);
+      sse_movups(cp->func, tmp, reg);
+      reg = tmp;
+   }
+
+   return reg;
+}
+
+
 struct x86_reg aos_get_xmm_reg( struct aos_compilation *cp )
 {
    unsigned i;
    unsigned oldest = 0;
+   boolean found = FALSE;
 
    for (i = 0; i < 8; i++) 
-      if (cp->xmm[i].last_used < cp->xmm[oldest].last_used)
+      if (cp->xmm[i].last_used != cp->insn_counter &&
+          cp->xmm[i].file == TGSI_FILE_NULL) {
 	 oldest = i;
+         found = TRUE;
+      }
+
+   if (!found) {
+      for (i = 0; i < 8; i++) 
+         if (cp->xmm[i].last_used < cp->xmm[oldest].last_used)
+            oldest = i;
+   }
 
    /* Need to write out the old value?
     */
@@ -237,15 +267,24 @@ void aos_adopt_xmm_reg( struct aos_compilation *cp,
                         unsigned idx,
                         unsigned dirty )
 {
+   unsigned i;
+
    if (reg.file != file_XMM) {
       assert(0);
       return;
    }
 
-   invalidate_xmm(cp, file, idx);
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].file == file && 
+          cp->xmm[i].idx == idx) {
+         aos_release_xmm_reg(cp, i);
+      }
+   }
+
    cp->xmm[reg.idx].file = file;
    cp->xmm[reg.idx].idx = idx;
    cp->xmm[reg.idx].dirty = dirty;
+   cp->xmm[reg.idx].last_used = cp->insn_counter;
 }
 
 
@@ -659,6 +698,7 @@ static void x87_fst_or_nop( struct x86_function *func,
                             unsigned channel,
                             struct x86_reg ptr )
 {
+   assert(ptr.file == file_REG32);
    if (writemask & (1<<channel)) 
       x87_fst( func, x86_make_disp(ptr, channel * sizeof(float)) );
 }
@@ -668,6 +708,7 @@ static void x87_fstp_or_pop( struct x86_function *func,
                              unsigned channel,
                              struct x86_reg ptr )
 {
+   assert(ptr.file == file_REG32);
    if (writemask & (1<<channel)) 
       x87_fstp( func, x86_make_disp(ptr, channel * sizeof(float)) );
    else
@@ -767,10 +808,9 @@ static void x87_emit_ex2( struct aos_compilation *cp )
 static boolean emit_ABS( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_mulps(cp->func, dst, neg);
    sse_maxps(cp->func, dst, arg0);
    
@@ -782,9 +822,8 @@ static boolean emit_ADD( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_addps(cp->func, dst, arg1);
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -806,10 +845,9 @@ static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg tmp = aos_get_xmm_reg(cp); 
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_mulps(cp->func, dst, arg1);
    
    /* Now the hard bit: sum the first 3 values:
@@ -831,10 +869,9 @@ static boolean emit_DP4( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg tmp = aos_get_xmm_reg(cp);      
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_mulps(cp->func, dst, arg1);
    
    /* Now the hard bit: sum the values:
@@ -854,10 +891,9 @@ static boolean emit_DPH( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg tmp = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_mulps(cp->func, dst, arg1);
 
    /* Now the hard bit: sum the values (from DP3):
@@ -1152,9 +1188,8 @@ static boolean emit_MAX( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_maxps(cp->func, dst, arg1);
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -1166,9 +1201,8 @@ static boolean emit_MIN( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_minps(cp->func, dst, arg1);
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -1178,9 +1212,9 @@ static boolean emit_MIN( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_MOV( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
+   /* potentially nothing to do */
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
@@ -1190,9 +1224,8 @@ static boolean emit_MUL( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_mulps(cp->func, dst, arg1);
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -1205,13 +1238,15 @@ static boolean emit_MAD( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
    struct x86_reg arg2 = fetch_src(cp, &op->FullSrcRegisters[2]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
 
-   sse_movups(cp->func, dst, arg0);
-   sse_mulps(cp->func, dst, arg1);
-   sse_addps(cp->func, dst, arg2);
+   /* If we can't clobber old contents of arg0, get a temporary & copy
+    * it there, then clobber it...
+    */
+   arg0 = get_xmm_tmp(cp, arg0);
 
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   sse_mulps(cp->func, arg0, arg1);
+   sse_addps(cp->func, arg0, arg2);
+   store_dest(cp, &op->FullDstRegisters[0], arg0);
    return TRUE;
 }
 
@@ -1272,10 +1307,9 @@ static boolean emit_SGE( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg ones = aos_get_internal(cp, IMM_ONES);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_cmpps(cp->func, dst, arg1, cc_NotLessThan);
    sse_andps(cp->func, dst, ones);
 
@@ -1297,10 +1331,9 @@ static boolean emit_SLT( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg ones = aos_get_internal(cp, IMM_ONES);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
    
-   sse_movups(cp->func, dst, arg0);
    sse_cmpps(cp->func, dst, arg1, cc_LessThan);
    sse_andps(cp->func, dst, ones);
 
@@ -1312,9 +1345,8 @@ static boolean emit_SUB( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
+   struct x86_reg dst = get_xmm_tmp(cp, arg0);
 
-   sse_movups(cp->func, dst, arg0);
    sse_subps(cp->func, dst, arg1);
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
