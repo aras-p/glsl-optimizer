@@ -162,6 +162,16 @@ struct draw_vertex_shader *
 draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ);
 
+
+
+struct draw_vs_varient_key;
+struct draw_vertex_shader;
+
+struct draw_vs_varient *draw_vs_varient_aos_sse( struct draw_vertex_shader *vs,
+                                                 const struct draw_vs_varient_key *key );
+
+
+
 /********************************************************************************
  * Helpers for vs implementations that don't do their own fetch/emit varients.
  * Means these can be shared between shaders.
