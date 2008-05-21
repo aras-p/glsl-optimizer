@@ -51,10 +51,19 @@
 
 
 #ifdef HAVE_DIX_CONFIG_H
+
 #include <dix-config.h>
-#endif
+#define PUBLIC
+
+#else
 
 #include "glheader.h"
+
+#endif
+
+#include <stdlib.h>
+#include <string.h>
+
 #include "glapi.h"
 #include "glapioffsets.h"
 #include "glapitable.h"
