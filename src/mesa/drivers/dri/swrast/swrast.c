@@ -156,18 +156,23 @@ swrastFillInModes(__DRIscreen *psp,
 	GLX_NONE, GLX_SWAP_UNDEFINED_OML
     };
 
-    u_int8_t depth_bits_array[3];
-    u_int8_t stencil_bits_array[3];
+    u_int8_t depth_bits_array[4];
+    u_int8_t stencil_bits_array[4];
 
     depth_bits_array[0] = 0;
-    depth_bits_array[1] = depth_bits;
+    depth_bits_array[1] = 0;
     depth_bits_array[2] = depth_bits;
+    depth_bits_array[3] = depth_bits;
 
+    /* Just like with the accumulation buffer, always provide some modes
+     * with a stencil buffer.
+     */
     stencil_bits_array[0] = 0;
-    stencil_bits_array[1] = 0;
-    stencil_bits_array[2] = stencil_bits;
+    stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+    stencil_bits_array[2] = 0;
+    stencil_bits_array[3] = (stencil_bits == 0) ? 8 : stencil_bits;
 
-    depth_buffer_factor = 3;
+    depth_buffer_factor = 4;
     back_buffer_factor = 2;
 
     if (pixel_bits == 16) {
