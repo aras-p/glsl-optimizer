@@ -1401,6 +1401,37 @@ emit_instruction( struct aos_compilation *cp,
    }
 }
 
+
+static boolean emit_viewport( struct aos_compilation *cp )
+{
+   struct x86_reg pos = aos_get_shader_reg(cp, 
+                                           TGSI_FILE_OUTPUT, 
+                                           0);
+
+   struct x86_reg scale = x86_make_disp(cp->machine_EDX, 
+                                        Offset(struct aos_machine, scale));
+
+   struct x86_reg translate = x86_make_disp(cp->machine_EDX, 
+                                        Offset(struct aos_machine, translate));
+
+   if (pos.file != file_XMM) {
+      struct x86_reg dst = aos_get_xmm_reg(cp);
+      sse_movups(cp->func, dst, pos);
+      pos = dst;
+   }
+
+   sse_mulps(cp->func, pos, scale);
+   sse_addps(cp->func, pos, translate);
+
+   aos_adopt_xmm_reg( cp,
+                      pos,
+                      TGSI_FILE_OUTPUT,
+                      0,
+                      TRUE );
+   return TRUE;
+}
+
+
 static boolean note_immediate( struct aos_compilation *cp,
                                struct tgsi_full_immediate *imm )
 {
@@ -1540,6 +1571,10 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
       if (cp.error)
          goto fail;
 
+      if (cp.vaos->base.key.viewport) {
+         emit_viewport(&cp);
+      }
+
       /* Emit output...  TODO: do this eagerly after the last write to a
        * given output.
        */
@@ -1665,10 +1700,24 @@ static void vaos_set_constants( struct draw_vs_varient *varient,
 }
 
 
+static void vaos_set_viewport( struct draw_vs_varient *varient,
+                               const struct pipe_viewport_state *viewport )
+{
+   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+
+   memcpy(vaos->machine->scale, viewport->scale, 4 * sizeof(float));
+   memcpy(vaos->machine->translate, viewport->translate, 4 * sizeof(float));
+}
+
+
+
 static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
                                                  const struct draw_vs_varient_key *key )
 {
    struct draw_vs_varient_aos_sse *vaos = CALLOC_STRUCT(draw_vs_varient_aos_sse);
+
+   if (key->clip)
+      return NULL;
 
    if (!vaos)
       goto fail;
@@ -1677,6 +1726,7 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    vaos->base.vs = vs;
    vaos->base.set_input = vaos_set_buffer;
    vaos->base.set_constants = vaos_set_constants;
+   vaos->base.set_viewport = vaos_set_viewport;
    vaos->base.destroy = vaos_destroy;
    vaos->base.run_linear = vaos_run_linear;
    vaos->base.run_elts = vaos_run_elts;

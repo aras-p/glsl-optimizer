@@ -68,8 +68,13 @@ struct aos_machine {
    float immediate[MAX_IMMEDIATES][4]; /* fixme -- should just be a pointer */
    float internal [MAX_INTERNALS ][4];
 
-   unsigned fpu_round_nearest;
-   unsigned fpu_round_neg_inf;
+   float scale[4];              /* viewport */
+   float translate[4];          /* viewport */
+
+   ushort fpu_round_nearest;
+   ushort fpu_round_neg_inf;
+   ushort fpu_restore;
+   ushort fpucntl;              /* one of FPU_* above */
 
    struct {
       const void *input_ptr;

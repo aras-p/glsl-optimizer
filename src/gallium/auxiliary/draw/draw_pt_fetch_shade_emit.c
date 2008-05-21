@@ -95,10 +95,14 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    
 
 
+   fse->key.output_stride = vinfo->size * 4;
    fse->key.nr_elements = MAX2(num_vs_outputs,     /* outputs - translate to hw format */
                                num_vs_inputs);     /* inputs - fetch from api format */
 
-   fse->key.output_stride = vinfo->size * 4;
+   fse->key.viewport = 1;
+   fse->key.clip = 0;
+   fse->key.pad = 0;
+
    memset(fse->key.element, 0, 
           fse->key.nr_elements * sizeof(fse->key.element[0]));
 
@@ -210,6 +214,9 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 
    fse->active->set_constants( fse->active,
                                (const float (*)[4])draw->pt.user.constants );
+
+   fse->active->set_viewport( fse->active,
+                              &draw->viewport );
 
    //return TRUE;
 }

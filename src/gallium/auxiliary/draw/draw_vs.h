@@ -58,7 +58,10 @@ struct draw_vs_element {
 
 struct draw_vs_varient_key {
    unsigned output_stride;
-   unsigned nr_elements;
+   unsigned nr_elements:16;
+   unsigned viewport:1;
+   unsigned clip:1;
+   unsigned pad:14;
    struct draw_vs_element element[PIPE_MAX_ATTRIBS];
 };
 
@@ -87,6 +90,9 @@ struct draw_vs_varient {
 
    void (*set_constants)( struct draw_vs_varient *,
                           const float (*constants)[4] );
+
+   void (*set_viewport)( struct draw_vs_varient *,
+                         const struct pipe_viewport_state * );
 
    void (PIPE_CDECL *run_linear)( struct draw_vs_varient *shader,
                                   unsigned start,
