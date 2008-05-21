@@ -103,7 +103,7 @@ mandelbrot: mandelbrot.o shaderutil.o
 	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) mandelbrot.o shaderutil.o $(LIBS) -o $@
 
 
-multitex.o: multitex.c extfuncs.h shaderutil.h
+multitex.o: multitex.c extfuncs.h readtex.h shaderutil.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) multitex.c
 
 multitex: multitex.o readtex.o shaderutil.o
