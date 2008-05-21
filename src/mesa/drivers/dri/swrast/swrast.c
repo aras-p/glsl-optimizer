@@ -143,53 +143,53 @@ swrastFillInModes(__DRIscreen *psp,
 		  unsigned pixel_bits, unsigned depth_bits,
 		  unsigned stencil_bits, GLboolean have_back_buffer)
 {
-   __DRIconfig **configs;
-   unsigned depth_buffer_factor;
-   unsigned back_buffer_factor;
-   GLenum fb_format;
-   GLenum fb_type;
+    __DRIconfig **configs;
+    unsigned depth_buffer_factor;
+    unsigned back_buffer_factor;
+    GLenum fb_format;
+    GLenum fb_type;
 
-   /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
-    * support pageflipping at all.
-    */
-   static const GLenum back_buffer_modes[] = {
-      GLX_NONE, GLX_SWAP_UNDEFINED_OML
-   };
+    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
+     * support pageflipping at all.
+     */
+    static const GLenum back_buffer_modes[] = {
+	GLX_NONE, GLX_SWAP_UNDEFINED_OML
+    };
 
-   u_int8_t depth_bits_array[3];
-   u_int8_t stencil_bits_array[3];
+    u_int8_t depth_bits_array[3];
+    u_int8_t stencil_bits_array[3];
 
-   depth_bits_array[0] = 0;
-   depth_bits_array[1] = depth_bits;
-   depth_bits_array[2] = depth_bits;
+    depth_bits_array[0] = 0;
+    depth_bits_array[1] = depth_bits;
+    depth_bits_array[2] = depth_bits;
 
-   stencil_bits_array[0] = 0;
-   stencil_bits_array[1] = 0;
-   stencil_bits_array[2] = stencil_bits;
+    stencil_bits_array[0] = 0;
+    stencil_bits_array[1] = 0;
+    stencil_bits_array[2] = stencil_bits;
 
-   depth_buffer_factor = 3;
-   back_buffer_factor = 2;
+    depth_buffer_factor = 3;
+    back_buffer_factor = 2;
 
-   if (pixel_bits == 16) {
-      fb_format = GL_RGB;
-      fb_type = GL_UNSIGNED_SHORT_5_6_5;
-   }
-   else {
-      fb_format = GL_BGRA;
-      fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
-   }
+    if (pixel_bits == 16) {
+	fb_format = GL_RGB;
+	fb_type = GL_UNSIGNED_SHORT_5_6_5;
+    }
+    else {
+	fb_format = GL_BGRA;
+	fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+    }
 
-   configs = driCreateConfigs(fb_format, fb_type,
-			      depth_bits_array, stencil_bits_array,
-			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
-   if (configs == NULL) {
-      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
-              __LINE__);
-      return NULL;
-   }
+    configs = driCreateConfigs(fb_format, fb_type,
+			       depth_bits_array, stencil_bits_array,
+			       depth_buffer_factor, back_buffer_modes,
+			       back_buffer_factor);
+    if (configs == NULL) {
+	fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+		__LINE__);
+	return NULL;
+    }
 
-   return configs;
+    return configs;
 }
 
 static __DRIscreen *
