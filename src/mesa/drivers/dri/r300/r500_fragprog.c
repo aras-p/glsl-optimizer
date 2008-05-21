@@ -876,7 +876,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 						counter++;
 				break;
 			default:
-				ERROR("unknown fpi->Opcode %d\n", fpi->Opcode);
+			        ERROR("unknown fpi->Opcode %s\n", _mesa_opcode_string(fpi->Opcode));
 				break;
 		}
 
