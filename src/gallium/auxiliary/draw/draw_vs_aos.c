@@ -1481,6 +1481,46 @@ static boolean emit_viewport( struct aos_compilation *cp )
 }
 
 
+/* This is useful to be able to see the results on softpipe.  Doesn't
+ * do proper clipping, just assumes the backend can do it during
+ * rasterization -- for debug only...
+ */
+static boolean emit_rhw_viewport( struct aos_compilation *cp )
+{
+   struct x86_reg tmp = aos_get_xmm_reg(cp);
+   struct x86_reg pos = aos_get_shader_reg_xmm(cp, 
+                                               TGSI_FILE_OUTPUT, 
+                                               0);
+
+   struct x86_reg scale = x86_make_disp(cp->machine_EDX, 
+                                        Offset(struct aos_machine, scale));
+
+   struct x86_reg translate = x86_make_disp(cp->machine_EDX, 
+                                        Offset(struct aos_machine, translate));
+
+
+
+   emit_pshufd(cp, tmp, pos, SHUF(W, W, W, W));
+   sse2_rcpss(cp->func, tmp, tmp);
+   sse_shufps(cp->func, tmp, tmp, SHUF(X, X, X, X));
+   
+   sse_mulps(cp->func, pos, scale);
+   sse_mulps(cp->func, pos, tmp);
+   sse_addps(cp->func, pos, translate);
+
+   /* Set pos[3] = w 
+    */
+   mask_write(cp, pos, tmp, TGSI_WRITEMASK_W);
+
+   aos_adopt_xmm_reg( cp,
+                      pos,
+                      TGSI_FILE_OUTPUT,
+                      0,
+                      TRUE );
+   return TRUE;
+}
+
+
 static boolean note_immediate( struct aos_compilation *cp,
                                struct tgsi_full_immediate *imm )
 {
@@ -1623,7 +1663,10 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
          goto fail;
 
       if (cp.vaos->base.key.viewport) {
-         emit_viewport(&cp);
+         if (0)
+            emit_viewport(&cp);
+         else
+            emit_rhw_viewport(&cp);
       }
 
       /* Emit output...  TODO: do this eagerly after the last write to a
