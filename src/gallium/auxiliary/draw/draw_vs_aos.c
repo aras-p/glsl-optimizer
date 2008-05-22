@@ -693,48 +693,39 @@ static void x87_fstp_dest4( struct aos_compilation *cp,
    x87_fstp_or_pop(cp->func, writemask, 3, ptr);
 }
 
-#define FPU_MANIP 1
 /* Save current x87 state and put it into single precision mode.
  */
 static void save_fpu_state( struct aos_compilation *cp )
 {
-#if FPU_MANIP
    x87_fnstcw( cp->func, x86_make_disp(cp->machine_EDX, 
                                        Offset(struct aos_machine, fpu_restore)));
-#endif
 }
 
 static void restore_fpu_state( struct aos_compilation *cp )
 {
-#if FPU_MANIP
    x87_fnclex(cp->func);
    x87_fldcw( cp->func, x86_make_disp(cp->machine_EDX, 
                                       Offset(struct aos_machine, fpu_restore)));
-#endif
 }
 
 static void set_fpu_round_neg_inf( struct aos_compilation *cp )
 {
-#if FPU_MANIP
    if (cp->fpucntl != FPU_RND_NEG) {
       cp->fpucntl = FPU_RND_NEG;
       x87_fnclex(cp->func);
       x87_fldcw( cp->func, x86_make_disp(cp->machine_EDX, 
                                          Offset(struct aos_machine, fpu_rnd_neg_inf)));
    }
-#endif
 }
 
 static void set_fpu_round_nearest( struct aos_compilation *cp )
 {
-#if FPU_MANIP
    if (cp->fpucntl != FPU_RND_NEAREST) {
       cp->fpucntl = FPU_RND_NEAREST;
       x87_fnclex(cp->func);
       x87_fldcw( cp->func, x86_make_disp(cp->machine_EDX, 
                                          Offset(struct aos_machine, fpu_rnd_nearest)));
    }
-#endif
 }
 
 
@@ -754,7 +745,7 @@ static void x87_emit_ex2( struct aos_compilation *cp )
    x87_fld1(cp->func);          /* 1 (2^frac(a))-1 a */
    x87_faddp(cp->func, st1);	/* 2^frac(a) a  */
    x87_fscale(cp->func);	/* 2^a a */
-   x87_fstp(cp->func, st1);
+   x87_fstp(cp->func, st1);     /* 2^a */
 
    assert( stack == cp->func->x87_stack);
       
