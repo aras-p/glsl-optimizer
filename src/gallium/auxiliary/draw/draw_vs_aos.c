@@ -171,7 +171,7 @@ static boolean is_xmm_tmp( struct aos_compilation *cp,
            cp->xmm[reg.idx].file == TGSI_FILE_NULL);
 }
 
-static struct x86_reg get_xmm_tmp( struct aos_compilation *cp,
+static struct x86_reg get_xmm_clone( struct aos_compilation *cp,
                                    struct x86_reg reg )
 {
    if (!is_xmm_tmp(cp, reg)) {
@@ -380,29 +380,35 @@ static void emit_pshufd( struct aos_compilation *cp,
    }
 }
 
-
-
-
-/* Helper for writemask:
+/* load masks (pack into negs??)
+ * pshufd - shuffle according to writemask
+ * and - result, mask
+ * nand - dest, mask
+ * or - dest, result
  */
-static boolean emit_shuf_copy1( struct aos_compilation *cp,
-				  struct x86_reg dst,
-				  struct x86_reg arg0,
-				  struct x86_reg arg1,
-				  ubyte shuf )
+static boolean mask_write( struct aos_compilation *cp,
+                           struct x86_reg dst,
+                           struct x86_reg result,
+                           unsigned mask )
 {
+   struct x86_reg imm_swz = aos_get_internal_xmm(cp, IMM_SWZ);
    struct x86_reg tmp = aos_get_xmm_reg(cp);
-   sse_movups(cp->func, dst, arg1);
-   emit_pshufd(cp, dst, dst, shuf);
-   emit_pshufd(cp, tmp, arg0, shuf);
+   
+   emit_pshufd(cp, tmp, imm_swz, 
+               SHUF((mask & 1) ? 2 : 3,
+                    (mask & 2) ? 2 : 3,
+                    (mask & 4) ? 2 : 3,
+                    (mask & 8) ? 2 : 3));
 
-   sse_movss(cp->func, dst, tmp);
-
-   emit_pshufd(cp, dst, dst, shuf);
+   sse_andps(cp->func, dst, tmp);
+   sse_andnps(cp->func, tmp, result);
+   sse_orps(cp->func, dst, tmp);
 
    aos_release_xmm_reg(cp, tmp.idx);
    return TRUE;
 }
+
+
 
 
 /* Helper for writemask:
@@ -414,16 +420,17 @@ static boolean emit_shuf_copy2( struct aos_compilation *cp,
 				  ubyte shuf )
 {
    struct x86_reg tmp = aos_get_xmm_reg(cp);
+
    emit_pshufd(cp, dst, arg1, shuf);
    emit_pshufd(cp, tmp, arg0, shuf);
-
    sse_shufps(cp->func, dst, tmp, SHUF(X, Y, Z, W));
-
    emit_pshufd(cp, dst, dst, shuf);
 
    aos_release_xmm_reg(cp, tmp.idx);
    return TRUE;
 }
+
+
 
 #define SSE_SWIZZLE_NOOP ((0<<0) | (1<<2) | (2<<4) | (3<<6))
 
@@ -593,131 +600,58 @@ static void store_dest( struct aos_compilation *cp,
                         const struct tgsi_full_dst_register *reg,
                         struct x86_reg result )
 {
-   if (reg->DstRegister.WriteMask == 0) 
-   {
+   struct x86_reg dst;
+
+   switch (reg->DstRegister.WriteMask) {
+   case 0:
       return;
-   }
-   else if (reg->DstRegister.WriteMask == TGSI_WRITEMASK_XYZW)
-   {
-      if (result.file == file_XMM) {
-         aos_adopt_xmm_reg(cp, 
-                           result, 
-                           reg->DstRegister.File,
-                           reg->DstRegister.Index,
-                           TRUE);
-      }
-      else {
-         struct x86_reg dst = aos_get_xmm_reg(cp);
-         aos_adopt_xmm_reg(cp, 
-                           dst, 
-                           reg->DstRegister.File,
-                           reg->DstRegister.Index,
-                           TRUE);
-         sse_movups(cp->func, dst, result);
-      }
-   }
-   else
-   {
-      /* Previous value of the dest register:
-       */
-      struct x86_reg old_dst = aos_get_shader_reg(cp, 
-                                                  reg->DstRegister.File,
-                                                  reg->DstRegister.Index);
-
-
-      /* Alloc an xmm reg to hold the new value of the dest register:
-       */
-      struct x86_reg dst = aos_get_xmm_reg(cp);
-
+   
+   case TGSI_WRITEMASK_XYZW:
       aos_adopt_xmm_reg(cp, 
-                        dst, 
+                        get_xmm_clone(cp, result), 
                         reg->DstRegister.File,
                         reg->DstRegister.Index,
-                        TRUE );
-
-      switch (reg->DstRegister.WriteMask) {
-      case TGSI_WRITEMASK_X:
-         if (result.file == file_XMM) {
-            sse_movups(cp->func, dst, old_dst);
-            sse_movss(cp->func, dst, result);
-         }
-         else {
-            struct x86_reg tmp = aos_get_xmm_reg(cp);
-            sse_movups(cp->func, dst, old_dst);
-            sse_movss(cp->func, tmp, result);
-            sse_movss(cp->func, dst, tmp);
-            aos_release_xmm_reg(cp, tmp.idx);
-         }
-         break;
-
-      case TGSI_WRITEMASK_XY:
-         sse_movups(cp->func, dst, old_dst);
-         sse_shufps(cp->func, dst, result, SHUF(X, Y, Z, W));
-         break;
-
-      case TGSI_WRITEMASK_ZW: 
-         sse_movups(cp->func, dst, result);
-         sse_shufps(cp->func, dst, old_dst, SHUF(X, Y, Z, W));
-         break;
-
-      case TGSI_WRITEMASK_YZW: 
-         if (old_dst.file == file_XMM) {
-            sse_movups(cp->func, dst, result);
-            sse_movss(cp->func, dst, old_dst);
-         }
-         else {
-            struct x86_reg tmp = aos_get_xmm_reg(cp);      
-            sse_movups(cp->func, dst, result);
-            sse_movss(cp->func, tmp, old_dst);
-            sse_movss(cp->func, dst, tmp);
-            aos_release_xmm_reg(cp, tmp.idx);
-         }
-         break;
-
-      case TGSI_WRITEMASK_Y:
-         emit_shuf_copy1(cp, dst, result, old_dst, SHUF(Y,X,Z,W));
-         break;
-
-      case TGSI_WRITEMASK_Z: 
-         emit_shuf_copy1(cp, dst, result, old_dst, SHUF(Z,Y,X,W));
-         break;
-
-      case TGSI_WRITEMASK_W: 
-         emit_shuf_copy1(cp, dst, result, old_dst, SHUF(W,Y,Z,X));
-         break;
-
-      case TGSI_WRITEMASK_XZ:
-         emit_shuf_copy2(cp, dst, result, old_dst, SHUF(X,Z,Y,W));
-         break;
-
-      case TGSI_WRITEMASK_XW: 
-         emit_shuf_copy2(cp, dst, result, old_dst, SHUF(X,W,Z,Y));
-
-      case TGSI_WRITEMASK_YZ:      
-         emit_shuf_copy2(cp, dst, result, old_dst, SHUF(Z,Y,X,W));
-         break;
-
-      case TGSI_WRITEMASK_YW:
-         emit_shuf_copy2(cp, dst, result, old_dst, SHUF(W,Y,Z,X));
-         break;
-
-      case TGSI_WRITEMASK_XZW:
-         emit_shuf_copy1(cp, dst, old_dst, result, SHUF(Y,X,Z,W));
-         break;
-
-      case TGSI_WRITEMASK_XYW: 
-         emit_shuf_copy1(cp, dst, old_dst, result, SHUF(Z,Y,X,W));
-         break;
-
-      case TGSI_WRITEMASK_XYZ: 
-         emit_shuf_copy1(cp, dst, old_dst, result, SHUF(W,Y,Z,X));
-         break;
-
-      default:
-         assert(0);             /* not possible */
-         break;
-      }
+                        TRUE);
+      return;
+   default: 
+      break;
    }
+
+   dst = aos_get_shader_reg_xmm(cp, 
+                                reg->DstRegister.File,
+                                reg->DstRegister.Index);
+
+   switch (reg->DstRegister.WriteMask) {
+   case TGSI_WRITEMASK_X:
+      sse_movss(cp->func, dst, get_xmm_clone(cp, result));
+      break;
+      
+   case TGSI_WRITEMASK_XY:
+      sse_shufps(cp->func, dst, get_xmm_clone(cp, result), SHUF(X, Y, Z, W));
+      break;
+
+   case TGSI_WRITEMASK_ZW: 
+      result = get_xmm_clone(cp, result);
+      sse_shufps(cp->func, result, dst, SHUF(X, Y, Z, W));
+      dst = result;
+      break;
+
+   case TGSI_WRITEMASK_YZW: 
+      sse_movss(cp->func, result, dst);
+      dst = result;
+      break;
+
+   default:
+      mask_write(cp, dst, result, reg->DstRegister.WriteMask);
+      break;
+   }
+
+   aos_adopt_xmm_reg(cp, 
+                     dst, 
+                     reg->DstRegister.File,
+                     reg->DstRegister.Index,
+                     TRUE);
+
 }
 
 
@@ -837,7 +771,7 @@ static boolean emit_ABS( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_mulps(cp->func, dst, neg);
    sse_maxps(cp->func, dst, arg0);
@@ -850,7 +784,7 @@ static boolean emit_ADD( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_addps(cp->func, dst, arg1);
 
@@ -874,7 +808,7 @@ static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
    struct x86_reg tmp = aos_get_xmm_reg(cp); 
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_mulps(cp->func, dst, arg1);
    
@@ -898,7 +832,7 @@ static boolean emit_DP4( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
    struct x86_reg tmp = aos_get_xmm_reg(cp);      
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_mulps(cp->func, dst, arg1);
    
@@ -920,7 +854,7 @@ static boolean emit_DPH( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
    struct x86_reg tmp = aos_get_xmm_reg(cp);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_mulps(cp->func, dst, arg1);
 
@@ -1216,7 +1150,7 @@ static boolean emit_MAX( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_maxps(cp->func, dst, arg1);
 
@@ -1229,7 +1163,7 @@ static boolean emit_MIN( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_minps(cp->func, dst, arg1);
 
@@ -1240,7 +1174,7 @@ static boolean emit_MIN( struct aos_compilation *cp, const struct tgsi_full_inst
 static boolean emit_MOV( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    /* potentially nothing to do */
 
@@ -1252,7 +1186,7 @@ static boolean emit_MUL( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_mulps(cp->func, dst, arg1);
 
@@ -1270,7 +1204,7 @@ static boolean emit_MAD( struct aos_compilation *cp, const struct tgsi_full_inst
    /* If we can't clobber old contents of arg0, get a temporary & copy
     * it there, then clobber it...
     */
-   arg0 = get_xmm_tmp(cp, arg0);
+   arg0 = get_xmm_clone(cp, arg0);
 
    sse_mulps(cp->func, arg0, arg1);
    sse_addps(cp->func, arg0, arg2);
@@ -1336,7 +1270,7 @@ static boolean emit_SGE( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
    struct x86_reg ones = aos_get_internal(cp, IMM_ONES);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_cmpps(cp->func, dst, arg1, cc_NotLessThan);
    sse_andps(cp->func, dst, ones);
@@ -1360,7 +1294,7 @@ static boolean emit_SLT( struct aos_compilation *cp, const struct tgsi_full_inst
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
    struct x86_reg ones = aos_get_internal(cp, IMM_ONES);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
    
    sse_cmpps(cp->func, dst, arg1, cc_LessThan);
    sse_andps(cp->func, dst, ones);
@@ -1373,7 +1307,7 @@ static boolean emit_SUB( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = get_xmm_tmp(cp, arg0);
+   struct x86_reg dst = get_xmm_clone(cp, arg0);
 
    sse_subps(cp->func, dst, arg1);
 
@@ -1526,21 +1460,15 @@ emit_instruction( struct aos_compilation *cp,
 
 static boolean emit_viewport( struct aos_compilation *cp )
 {
-   struct x86_reg pos = aos_get_shader_reg(cp, 
-                                           TGSI_FILE_OUTPUT, 
-                                           0);
+   struct x86_reg pos = aos_get_shader_reg_xmm(cp, 
+                                               TGSI_FILE_OUTPUT, 
+                                               0);
 
    struct x86_reg scale = x86_make_disp(cp->machine_EDX, 
                                         Offset(struct aos_machine, scale));
 
    struct x86_reg translate = x86_make_disp(cp->machine_EDX, 
                                         Offset(struct aos_machine, translate));
-
-   if (pos.file != file_XMM) {
-      struct x86_reg dst = aos_get_xmm_reg(cp);
-      sse_movups(cp->func, dst, pos);
-      pos = dst;
-   }
 
    sse_mulps(cp->func, pos, scale);
    sse_addps(cp->func, pos, translate);
