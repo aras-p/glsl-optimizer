@@ -432,9 +432,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.fp.cmd[R500_FP_CMD_2] = cmdpacket0(R500_US_FC_CTRL, 1);
 		r300->hw.fp.cmd[R500_FP_FC_CNTL] = 0; /* FIXME when we add flow control */
 
-		ALLOC_STATE(r500fp, r500fp, R300_FPI_CMDSIZE, 0);
+		ALLOC_STATE(r500fp, r500fp, R500_FPI_CMDSIZE, 0);
 		r300->hw.r500fp.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 0, 0);
-		ALLOC_STATE(r500fp_const, r500fp_const, R300_FPP_CMDSIZE, 0);
+		ALLOC_STATE(r500fp_const, r500fp_const, R500_FPP_CMDSIZE, 0);
 		r300->hw.r500fp_const.cmd[R300_FPI_CMD_0] = cmdr500fp(0, 0, 1, 0);
 	} else {
 		ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);

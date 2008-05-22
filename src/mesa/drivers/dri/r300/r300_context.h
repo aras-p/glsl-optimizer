@@ -372,10 +372,14 @@ struct r300_state_atom {
 #define R300_FPI_CMD_0		0
 #define R300_FPI_INSTR_0	1
 #define R300_FPI_CMDSIZE	65
+/* R500 has space for 512 instructions - 6 dwords per instruction */
+#define R500_FPI_CMDSIZE	(512*6+1)
 
 #define R300_FPP_CMD_0		0
 #define R300_FPP_PARAM_0	1
 #define R300_FPP_CMDSIZE	(32*4+1)
+/* R500 has spcae for 256 constants - 4 dwords per constant */
+#define R500_FPP_CMDSIZE	(256*4+1)
 
 #define R300_FOGS_CMD_0		0
 #define R300_FOGS_STATE		1
