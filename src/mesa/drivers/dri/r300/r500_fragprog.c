@@ -1141,11 +1141,11 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 		fp->translated = GL_TRUE;
 		if (RADEON_DEBUG & DEBUG_PIXEL) {
-			dump_program(fp);
 			fprintf(stderr, "Mesa program:\n");
 			fprintf(stderr, "-------------\n");
 			_mesa_print_program(&fp->mesa_program.Base);
 			fflush(stdout);
+			dump_program(fp);
 		}
 
 
