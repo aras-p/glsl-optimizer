@@ -717,10 +717,16 @@ static void i915_set_vertex_elements(struct pipe_context *pipe,
 }
 
 
+static void i915_set_edgeflags(struct pipe_context *pipe,
+                               const unsigned *bitfield)
+{
+   /* TODO do something here */
+}
 
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
+   i915->pipe.set_edgeflags = i915_set_edgeflags;
    i915->pipe.create_blend_state = i915_create_blend_state;
    i915->pipe.bind_blend_state = i915_bind_blend_state;
    i915->pipe.delete_blend_state = i915_delete_blend_state;
