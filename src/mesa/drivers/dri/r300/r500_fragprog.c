@@ -96,6 +96,13 @@
 /* Writemasks */
 #define R500_WRITEMASK_ARGB 0xF
 
+/* 1/(2pi), needed for quick modulus in trig insts
+ * Thanks to glisse for pointing out how to do it! */
+static const GLfloat RCP_2PI[] = {0.15915494309189535,
+	0.15915494309189535,
+	0.15915494309189535,
+	0.15915494309189535};
+
 static void dump_program(struct r500_fragment_program *fp);
 
 static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
@@ -497,9 +504,39 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_COS:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = emit_const4fv(fp, RCP_2PI);
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
+					| (R500_WRITEMASK_ARGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
+					| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
+					| R500_ALPHA_ADDRD(get_temp(fp, 0))
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
+					| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 0))
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+				counter++;
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0));
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_FRC
+					| R500_ALPHA_ADDRD(get_temp(fp, 1))
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 1));
+				counter++;
 				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 1));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 1));
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0;
 				fp->inst[counter].inst4 = R500_ALPHA_OP_COS
 					| R500_ALPHA_ADDRD(dest)
@@ -807,14 +844,43 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
 			case OPCODE_SCS:
-				/* TODO: Make this elegant! */
-				/* Do a cosine, then a sine, masking out the channels we want to protect. */
 				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = emit_const4fv(fp, RCP_2PI);
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
+					| (R500_WRITEMASK_ARGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
+					| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
+					| R500_ALPHA_ADDRD(get_temp(fp, 0))
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
+					| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 0))
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+				counter++;
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0));
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_FRC
+					| R500_ALPHA_ADDRD(get_temp(fp, 1))
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 1));
+				counter++;
+				/* Do a cosine, then a sine, masking out the channels we want to protect. */
 				/* Cosine only goes in R (x) channel. */
 				fpi->DstReg.WriteMask = 0x1;
 				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 1));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 1));
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_COS
@@ -826,8 +892,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				/* Sine only goes in G (y) channel. */
 				fpi->DstReg.WriteMask = 0x2;
 				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 1));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 1));
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 					| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst4 = R500_ALPHA_OP_SIN
@@ -835,24 +901,6 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_sop_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_SOP
 					| R500_ALU_RGBA_ADDRD(dest);
-				/* Put 0 into B,A (z,w) channels.
-				counter++;
-				fpi->DstReg.WriteMask = 0xC;
-				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
-				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ZERO)
-					| R500_ALU_RGB_SEL_B_SRC0
-					| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ZERO);
-				fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
-					| R500_ALPHA_ADDRD(dest)
-					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ZERO)
-					| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ZERO);
-				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
-					| R500_ALU_RGBA_ADDRD(dest)
-					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
-					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO); */
 				break;
 			case OPCODE_SGE:
 				/* We use SRCP, so as a precaution we're
@@ -885,9 +933,39 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_SIN:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = emit_const4fv(fp, RCP_2PI);
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
+					| (R500_WRITEMASK_ARGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB)
+					| R500_ALU_RGB_SEL_B_SRC1 | MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_RGB);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
+					| R500_ALPHA_ADDRD(get_temp(fp, 0))
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
+					| R500_ALPHA_SEL_B_SRC1 | R500_ALPHA_SWIZ_B_A;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 0))
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+				counter++;
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_ARGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0));
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_RGB);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_FRC
+					| R500_ALPHA_ADDRD(get_temp(fp, 1))
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 1));
+				counter++;
 				emit_alu(fp, counter, fpi);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0]);
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0]);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 1));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 1));
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0;
 				fp->inst[counter].inst4 = R500_ALPHA_OP_SIN
 					| R500_ALPHA_ADDRD(dest)
@@ -1144,7 +1222,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		fp->inst_end = cs->nrslots - 1;
 
 		fp->translated = GL_TRUE;
-		if (RADEON_DEBUG & DEBUG_PIXEL) {
+		if (1 || RADEON_DEBUG & DEBUG_PIXEL) {
 			fprintf(stderr, "Mesa program:\n");
 			fprintf(stderr, "-------------\n");
 			_mesa_print_program(&fp->mesa_program.Base);
