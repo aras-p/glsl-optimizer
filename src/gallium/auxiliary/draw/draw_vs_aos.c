@@ -1093,10 +1093,12 @@ static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_inst
    
       
 
-      /* a1' = a1 <= 0 ? 1 : a1;
+      /* a1' = a1 <= 0 ? 1 : a1;  
+       *
+       * Note: use 1.0 to avoid passing zero to 
        */
-      x87_fldz(cp->func);                           /* 0  */
-      x87_fld1(cp->func);                           /* 1 0  */
+      x87_fldz(cp->func);                           /* 1 0  */
+      x87_fldz(cp->func);                           /* 1 0  */
       x87_fld_src(cp, &op->FullSrcRegisters[0], 1); /* a1 1 0  */
       x87_fcomi(cp->func, st2);	                    /* a1 1 0  */
       x87_fcmovb(cp->func, st1);                    /* a1' 1 0  */
@@ -1119,17 +1121,14 @@ static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_inst
       x87_fld_src(cp, &op->FullSrcRegisters[0], 0); /* a0 0 r2 */
       x87_fcomi(cp->func, st1);	
       x87_fcmovb(cp->func, st1);                    /* a0' 0 r2 */
-      x87_fstp(cp->func, st1);                      /* a0' r2 */
 
-      x87_fxch(cp->func, st1);   /* a0' r2 */
       x87_fst_or_nop(cp->func, writemask, 1, dst); /* result[1] = a0' */
 
-      x87_fldz(cp->func);       /* 0 a0' r2 */
-      x87_fcomi(cp->func, st1);  /* 0 a0' r2 */
-      x87_fcmovnbe(cp->func, st2); /* r2' a0' r2 */
+      x87_fcomi(cp->func, st1);  /* a0' 0 r2 */
+      x87_fcmovnbe(cp->func, st2); /* r2' 0' r2 */
 
-      x87_fstp_or_pop(cp->func, writemask, 2, dst);
-      x87_fpop(cp->func);
+      x87_fstp_or_pop(cp->func, writemask, 2, dst); /* 0 r2 */
+      x87_fpop(cp->func);       /* r2 */
       x87_fpop(cp->func);
    }
 
