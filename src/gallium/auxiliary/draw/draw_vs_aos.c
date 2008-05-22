@@ -735,16 +735,17 @@ static void x87_emit_ex2( struct aos_compilation *cp )
    struct x86_reg st1 = x86_make_reg(file_x87, 1);
    int stack = cp->func->x87_stack;
 
-   set_fpu_round_neg_inf( cp );
+//   set_fpu_round_neg_inf( cp );
 
    x87_fld(cp->func, st0);      /* a a */
-   x87_fld(cp->func, st0);      /* a a a */
-   x87_fprndint( cp->func );	/* flr(a) a a*/
-   x87_fsubp(cp->func, st1);    /* frac(a) a */
-   x87_f2xm1(cp->func);         /* (2^frac(a))-1 a */
-   x87_fld1(cp->func);          /* 1 (2^frac(a))-1 a */
-   x87_faddp(cp->func, st1);	/* 2^frac(a) a  */
-   x87_fscale(cp->func);	/* 2^a a */
+   x87_fprndint( cp->func );	/* int(a) a*/
+   x87_fsubr(cp->func, st1, st0);    /* int(a) frc(a) */
+   x87_fxch(cp->func, st1);     /* frc(a) int(a) */
+   x87_f2xm1(cp->func);         /* (2^frc(a))-1 int(a) */
+   x87_fld1(cp->func);          /* 1 (2^frc(a))-1 int(a) */
+   x87_faddp(cp->func, st1);	/* 2^frac(a) int(a)  */
+   x87_fscale(cp->func);	/* (2^frac(a)*2^int(int(a))) int(a) */
+                                /* 2^a int(a) */
    x87_fstp(cp->func, st1);     /* 2^a */
 
    assert( stack == cp->func->x87_stack);
