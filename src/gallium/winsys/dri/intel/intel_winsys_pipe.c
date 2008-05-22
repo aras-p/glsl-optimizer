@@ -50,6 +50,7 @@
 struct intel_pipe_winsys {
    struct pipe_winsys winsys;
    struct _DriBufferPool *regionPool;
+   struct _DriBufferPool *mallocPool;
    struct _DriFreeSlabManager *fMan;
 };
 
@@ -110,16 +111,19 @@ intel_buffer_create(struct pipe_winsys *winsys,
    struct intel_buffer *buffer = CALLOC_STRUCT( intel_buffer );
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    unsigned flags = 0;
+   struct _DriBufferPool *pool;
 
    buffer->base.refcount = 1;
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
 
-   if (usage & (PIPE_BUFFER_USAGE_VERTEX /*| IWS_BUFFER_USAGE_LOCAL*/)) {
+   if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
       flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
+      pool = iws->mallocPool;
    } else {
       flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
+      pool = iws->regionPool;
    }
 
    if (usage & PIPE_BUFFER_USAGE_GPU_READ)
@@ -141,10 +145,11 @@ intel_buffer_create(struct pipe_winsys *winsys,
       flags |= DRM_BO_FLAG_CACHED;
 #endif
 
-   driGenBuffers( iws->regionPool, 
+   buffer->pool = pool;
+   driGenBuffers( buffer->pool, 
 		  "pipe buffer", 1, &buffer->driBO, alignment, flags, 0 );
 
-   driBOData( buffer->driBO, size, NULL, iws->regionPool, 0 );
+   driBOData( buffer->driBO, size, NULL, buffer->pool, 0 );
 
    return &buffer->base;
 }
@@ -278,8 +283,7 @@ intel_fence_finish( struct pipe_winsys *sws,
                     struct pipe_fence_handle *fence,
                     unsigned flag )
 {
-   /* JB: Lets allways lazy wait */
-   return driFenceFinish((struct _DriFenceObject *)fence, flag, 1);
+   return driFenceFinish((struct _DriFenceObject *)fence, flag, 0);
 }
 
 struct pipe_winsys *
@@ -310,15 +314,9 @@ intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
    iws->winsys.fence_finish = intel_fence_finish;
 
    if (fd)
-      iws->regionPool = driSlabPoolInit(fd,
-			DRM_BO_FLAG_READ |
-			DRM_BO_FLAG_WRITE |
-			DRM_BO_FLAG_MEM_TT,
-			DRM_BO_FLAG_READ |
-			DRM_BO_FLAG_WRITE |
-			DRM_BO_FLAG_MEM_TT,
-			64, 6, 16, 4096, 0,
-			fMan);
+     iws->regionPool = driDRMPoolInit(fd);
+
+   iws->mallocPool = driMallocPoolInit();
 
    return &iws->winsys;
 }
@@ -330,6 +328,9 @@ intel_destroy_pipe_winsys( struct pipe_winsys *winsys )
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    if (iws->regionPool) {
       driPoolTakeDown(iws->regionPool);
+   }
+   if (iws->mallocPool) {
+      driPoolTakeDown(iws->mallocPool);
    }
    free(iws);
 }

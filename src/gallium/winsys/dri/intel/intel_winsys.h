@@ -53,6 +53,7 @@ intel_create_i915simple( struct intel_context *intel,
 
 struct intel_buffer {
    struct pipe_buffer base;
+   struct _DriBufferPool *pool;
    struct _DriBufferObject *driBO;
 };
 
@@ -67,7 +68,6 @@ dri_bo( struct pipe_buffer *buf )
 {
    return intel_buffer(buf)->driBO;
 }
-
 
 
 #endif
