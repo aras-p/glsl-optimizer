@@ -117,6 +117,13 @@ typedef struct _dri_bo_gem {
      */
     int validate_index;
 
+    /**
+     * Tracks whether set_domain to CPU is current
+     * Set when set_domain has been called
+     * Cleared when a batch has been submitted
+     */
+    GLboolean cpu_domain_set;
+
     /** Array passed to the DRM containing relocation information. */
     struct drm_i915_gem_relocation_entry *relocs;
     /** Array of bos corresponding to relocs[i].target_handle */
@@ -472,40 +479,43 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
     /* Allow recursive mapping. Mesa may recursively map buffers with
      * nested display loops.
      */
-    if (bo_gem->map_count++ != 0)
-	return 0;
-
-    assert(bo->virtual == NULL);
-
-    DBG("bo_map: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
-
-    if (bo_gem->virtual == NULL) {
-	struct drm_gem_mmap mmap_arg;
-
-	memset(&mmap_arg, 0, sizeof(mmap_arg));
-	mmap_arg.handle = bo_gem->gem_handle;
-	mmap_arg.offset = 0;
-	mmap_arg.size = bo->size;
-	ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_MMAP, &mmap_arg);
-	if (ret != 0) {
-	    fprintf(stderr, "%s:%d: Error mapping buffer %d (%s): %s .\n",
-		    __FILE__, __LINE__,
-		    bo_gem->gem_handle, bo_gem->name, strerror(errno));
+    if (bo_gem->map_count++ == 0) {
+    
+	assert(bo->virtual == NULL);
+    
+	DBG("bo_map: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
+    
+	if (bo_gem->virtual == NULL) {
+	    struct drm_gem_mmap mmap_arg;
+    
+	    memset(&mmap_arg, 0, sizeof(mmap_arg));
+	    mmap_arg.handle = bo_gem->gem_handle;
+	    mmap_arg.offset = 0;
+	    mmap_arg.size = bo->size;
+	    ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_GEM_MMAP, &mmap_arg);
+	    if (ret != 0) {
+		fprintf(stderr, "%s:%d: Error mapping buffer %d (%s): %s .\n",
+			__FILE__, __LINE__,
+			bo_gem->gem_handle, bo_gem->name, strerror(errno));
+	    }
+	    bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
 	}
-	bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
+	bo->virtual = bo_gem->virtual;
+	DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name, bo_gem->virtual);
     }
-    bo->virtual = bo_gem->virtual;
-    DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name, bo_gem->virtual);
 
-    set_domain.handle = bo_gem->gem_handle;
-    set_domain.read_domains = DRM_GEM_DOMAIN_CPU;
-    set_domain.write_domain = write_enable ? DRM_GEM_DOMAIN_CPU : 0;
-    ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_GEM_SET_DOMAIN, &set_domain);
-    if (ret != 0) {
-	fprintf (stderr, "%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
-		 __FILE__, __LINE__,
-		 bo_gem->gem_handle, set_domain.read_domains, set_domain.write_domain,
-		 strerror (errno));
+    if (!bo_gem->cpu_domain_set) {
+	set_domain.handle = bo_gem->gem_handle;
+	set_domain.read_domains = DRM_GEM_DOMAIN_CPU;
+	set_domain.write_domain = write_enable ? DRM_GEM_DOMAIN_CPU : 0;
+	ret = ioctl (bufmgr_gem->fd, DRM_IOCTL_GEM_SET_DOMAIN, &set_domain);
+	if (ret != 0) {
+	    fprintf (stderr, "%s:%d: Error setting memory domains %d (%08x %08x): %s .\n",
+		     __FILE__, __LINE__,
+		     bo_gem->gem_handle, set_domain.read_domains, set_domain.write_domain,
+		     strerror (errno));
+	}
+	bo_gem->cpu_domain_set = GL_TRUE;
     }
 
     return 0;
@@ -745,6 +755,9 @@ dri_gem_post_submit(dri_bo *batch_buf)
     for (i = 0; i < bufmgr_gem->exec_count; i++) {
 	dri_bo *bo = bufmgr_gem->exec_bos[i];
 	dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
+
+	/* Need to call set_domain on next bo_map */
+	bo_gem->cpu_domain_set = GL_FALSE;
 
 	/* Disconnect the buffer from the validate list */
 	bo_gem->validate_index = -1;
