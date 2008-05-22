@@ -159,7 +159,7 @@ static void spill( struct aos_compilation *cp, unsigned idx )
                                           cp->xmm[idx].idx);
       
       assert(cp->xmm[idx].dirty);
-      sse_movups(cp->func, oldval, x86_make_reg(file_XMM, idx));
+      sse_movaps(cp->func, oldval, x86_make_reg(file_XMM, idx));
       cp->xmm[idx].dirty = 0;
    }
 }
@@ -176,7 +176,7 @@ static struct x86_reg get_xmm_clone( struct aos_compilation *cp,
 {
    if (!is_xmm_tmp(cp, reg)) {
       struct x86_reg tmp = aos_get_xmm_reg(cp);
-      sse_movups(cp->func, tmp, reg);
+      sse_movaps(cp->func, tmp, reg);
       reg = tmp;
    }
 
@@ -335,7 +335,7 @@ static struct x86_reg aos_get_shader_reg_xmm( struct aos_compilation *cp,
 
    if (reg.file != file_XMM) {
       struct x86_reg tmp = aos_get_xmm_reg(cp);
-      sse_movups(cp->func, tmp, reg);
+      sse_movaps(cp->func, tmp, reg);
       aos_adopt_xmm_reg( cp, tmp, file, idx, FALSE );
       reg = tmp;
    }
@@ -374,7 +374,7 @@ static void emit_pshufd( struct aos_compilation *cp,
    }
    else {
       if (!eq(dst, arg0)) 
-	 sse_movups(cp->func, dst, arg0);
+	 sse_movaps(cp->func, dst, arg0);
 
       sse_shufps(cp->func, dst, dst, shuf);
    }
@@ -523,7 +523,7 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
          struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
          struct x86_reg tmp = aos_get_xmm_reg(cp);
 
-         sse_movups(cp->func, tmp, arg0);
+         sse_movaps(cp->func, tmp, arg0);
          sse_mulps(cp->func, tmp, neg);
          sse_maxps(cp->func, dst, arg0);
 
