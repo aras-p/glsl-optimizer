@@ -809,7 +809,9 @@ static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_inst
    sse_addss(cp->func, dst, tmp); /* a*x+c*z, b*y, ?, ? */
    emit_pshufd(cp, tmp, dst, SHUF(Y,X,W,Z));
    sse_addss(cp->func, dst, tmp);
-   sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
+   
+   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
+      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
 
    aos_release_xmm_reg(cp, tmp.idx);
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -833,7 +835,9 @@ static boolean emit_DP4( struct aos_compilation *cp, const struct tgsi_full_inst
    sse_addps(cp->func, dst, tmp); /* a*x+c*z, b*y+d*w, a*x+c*z, b*y+d*w */
    emit_pshufd(cp, tmp, dst, SHUF(Y,X,W,Z));
    sse_addss(cp->func, dst, tmp);
-   sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
+
+   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
+      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
 
    aos_release_xmm_reg(cp, tmp.idx);
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -857,7 +861,9 @@ static boolean emit_DPH( struct aos_compilation *cp, const struct tgsi_full_inst
    sse_addss(cp->func, dst, tmp);
    emit_pshufd(cp, tmp, arg1, SHUF(W,W,W,W));
    sse_addss(cp->func, dst, tmp);
-   sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
+
+   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
+      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
 
    aos_release_xmm_reg(cp, tmp.idx);
    store_dest(cp, &op->FullDstRegisters[0], dst);
@@ -1233,7 +1239,8 @@ static boolean emit_RCP( struct aos_compilation *cp, const struct tgsi_full_inst
       sse_divss(cp->func, dst, arg0);
    }
 
-   sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
+   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
+      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
@@ -1249,7 +1256,8 @@ static boolean emit_RSQ( struct aos_compilation *cp, const struct tgsi_full_inst
    /* Extend precision here...
     */
 
-   sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
+   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
+      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
 
    store_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
