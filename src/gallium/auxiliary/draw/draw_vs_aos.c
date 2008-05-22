@@ -44,12 +44,6 @@
 #ifdef PIPE_ARCH_X86
 
 
-#define DISASSEM 0
-
-
-
-
-
 static INLINE boolean eq( struct x86_reg a,
 			    struct x86_reg b )
 {
@@ -92,13 +86,6 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
 }
 		
 
-struct x86_reg aos_get_internal( struct aos_compilation *cp,
-                                 unsigned imm )
-{
-   return get_reg_ptr( cp,
-                       AOS_FILE_INTERNAL, 
-                       imm );
-}
 
 #define X87_CW_EXCEPTION_INV_OP       (1<<0)
 #define X87_CW_EXCEPTION_DENORM_OP    (1<<1)
@@ -122,6 +109,9 @@ static void init_internals( struct aos_machine *machine )
 {
    float inv = 1.0f/255.0f;
    float f255 = 255.0f;
+
+   ASSIGN_4V(machine->internal[IMM_SWZ],       1.0f,  -1.0f,  0.0f, 1.0f);
+   *(unsigned *)&machine->internal[IMM_SWZ][3] = 0xffffffff;
 
    ASSIGN_4V(machine->internal[IMM_ONES],      1.0f,  1.0f,  1.0f,  1.0f);
    ASSIGN_4V(machine->internal[IMM_NEGS],     -1.0f, -1.0f, -1.0f, -1.0f);
@@ -337,6 +327,39 @@ struct x86_reg aos_get_shader_reg( struct aos_compilation *cp,
 
 
 
+static struct x86_reg aos_get_shader_reg_xmm( struct aos_compilation *cp, 
+                                              unsigned file,
+                                              unsigned idx )
+{
+   struct x86_reg reg = aos_get_shader_reg( cp, file, idx );
+
+   if (reg.file != file_XMM) {
+      struct x86_reg tmp = aos_get_xmm_reg(cp);
+      sse_movups(cp->func, tmp, reg);
+      aos_adopt_xmm_reg( cp, tmp, file, idx, FALSE );
+      reg = tmp;
+   }
+
+   return reg;
+}
+
+
+
+struct x86_reg aos_get_internal_xmm( struct aos_compilation *cp,
+                                     unsigned imm )
+{
+   return aos_get_shader_reg_xmm( cp, AOS_FILE_INTERNAL, imm );
+}
+
+
+struct x86_reg aos_get_internal( struct aos_compilation *cp,
+                                 unsigned imm )
+{
+   return aos_get_shader_reg( cp, AOS_FILE_INTERNAL, imm );
+}
+
+
+
 
 
 /* Emulate pshufd insn in regular SSE, if necessary:
@@ -461,15 +484,15 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
          arg0 = dst;
       }
 
-      if (negs) {
-         struct x86_reg imm_negs = aos_get_internal(cp, IMM_NEGS);
+      if (negs && negs != 0xf) {
+         struct x86_reg imm_swz = aos_get_internal_xmm(cp, IMM_SWZ);
          struct x86_reg tmp = aos_get_xmm_reg(cp);
 
          /* Load 1,-1,0,0
           * Use neg as arg to pshufd
           * Multiply
           */
-         emit_pshufd(cp, tmp, imm_negs, 
+         emit_pshufd(cp, tmp, imm_swz, 
                      SHUF((negs & 1) ? 1 : 0,
                           (negs & 2) ? 1 : 0,
                           (negs & 4) ? 1 : 0,
@@ -479,12 +502,17 @@ static struct x86_reg fetch_src( struct aos_compilation *cp,
          aos_release_xmm_reg(cp, tmp.idx);
          arg0 = dst;
       }
+      else if (negs) {
+         struct x86_reg imm_negs = aos_get_internal_xmm(cp, IMM_NEGS);
+         sse_mulps(cp->func, dst, imm_negs);
+         arg0 = dst;
+      }
+
 
       if (abs && abs != 0xf) {
          ERROR(cp, "unsupported partial abs");
       }
-
-      if (abs) {
+      else if (abs) {
          struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
          struct x86_reg tmp = aos_get_xmm_reg(cp);
 

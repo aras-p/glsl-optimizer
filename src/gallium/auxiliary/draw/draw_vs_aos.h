@@ -142,13 +142,16 @@ boolean aos_emit_outputs( struct aos_compilation *cp );
 
 
 #define IMM_ONES     0              /* 1, 1,1,1 */
-#define IMM_NEGS     1              /* 1,-1,0,0 */
+#define IMM_SWZ      1              /* 1,-1,0, 0xffffffff */
 #define IMM_IDENTITY 2              /* 0, 0,0,1 */
 #define IMM_INV_255  3              /* 1/255, 1/255, 1/255, 1/255 */
 #define IMM_255      4              /* 255, 255, 255, 255 */
+#define IMM_NEGS     5              /* -1,-1,-1,-1 */
 
 struct x86_reg aos_get_internal( struct aos_compilation *cp,
                                  unsigned imm );
+struct x86_reg aos_get_internal_xmm( struct aos_compilation *cp,
+                                     unsigned imm );
 
 
 #define ERROR(cp, msg)                                                  \

@@ -54,7 +54,7 @@ static void emit_load_R32G32B32( struct aos_compilation *cp,
 				 struct x86_reg src_ptr )
 {
    sse_movss(cp->func, data, x86_make_disp(src_ptr, 8));
-   sse_shufps(cp->func, data, aos_get_internal( cp, IMM_IDENTITY ), SHUF(X,Y,Z,W) );
+   sse_shufps(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ), SHUF(X,Y,Z,W) );
    sse_shufps(cp->func, data, data, SHUF(Y,Z,X,W) );
    sse_movlps(cp->func, data, src_ptr);
 }
@@ -63,7 +63,7 @@ static void emit_load_R32G32( struct aos_compilation *cp,
 			   struct x86_reg data,
 			   struct x86_reg src_ptr )
 {
-   sse_movups(cp->func, data, aos_get_internal( cp, IMM_IDENTITY ) );
+   sse_movups(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ) );
    sse_movlps(cp->func, data, src_ptr);
 }
 
@@ -73,7 +73,7 @@ static void emit_load_R32( struct aos_compilation *cp,
 			   struct x86_reg src_ptr )
 {
    sse_movss(cp->func, data, src_ptr);
-   sse_orps(cp->func, data, aos_get_internal( cp, IMM_IDENTITY ) );
+   sse_orps(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ) );
 }
 
 
@@ -82,8 +82,8 @@ static void emit_load_R8G8B8A8_UNORM( struct aos_compilation *cp,
 				       struct x86_reg src_ptr )
 {
    sse_movss(cp->func, data, src_ptr);
-   sse2_punpcklbw(cp->func, data, aos_get_internal( cp, IMM_IDENTITY ));
-   sse2_punpcklbw(cp->func, data, aos_get_internal( cp, IMM_IDENTITY ));
+   sse2_punpcklbw(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ));
+   sse2_punpcklbw(cp->func, data, aos_get_internal_xmm( cp, IMM_IDENTITY ));
    sse2_cvtdq2ps(cp->func, data, data);
    sse_mulps(cp->func, data, aos_get_internal(cp, IMM_INV_255));
 }
