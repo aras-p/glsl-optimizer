@@ -78,11 +78,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    boolean need_psize = 0;
    
 
-   if (draw->pt.user.elts) {
-      assert(0);
-      return ;
-   }
-
    if (!draw->render->set_primitive( draw->render, 
                                      prim )) {
       assert(0);
@@ -250,9 +245,8 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
    }
 
    /* Single routine to fetch vertices, run shader and emit HW verts.
-    * Clipping and viewport transformation are done elsewhere --
-    * either by the API or on hardware, or for some other reason not
-    * required...
+    * Clipping is done elsewhere -- either by the API or on hardware,
+    * or for some other reason not required...
     */
    fse->active->run_linear( fse->active, 
                             start, count,
