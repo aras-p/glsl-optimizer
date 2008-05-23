@@ -312,81 +312,6 @@ static void emit_tex(struct r500_fragment_program *fp,
 	}
 }
 
-static void dumb_shader(struct r500_fragment_program *fp)
-{
-	fp->inst[0].inst0 = R500_INST_TYPE_TEX
-		| R500_INST_TEX_SEM_WAIT
-		| R500_INST_RGB_WMASK_R
-		| R500_INST_RGB_WMASK_G
-		| R500_INST_RGB_WMASK_B
-		| R500_INST_ALPHA_WMASK
-		| R500_INST_RGB_CLAMP
-		| R500_INST_ALPHA_CLAMP;
-	fp->inst[0].inst1 = R500_TEX_ID(0)
-		| R500_TEX_INST_LD
-		| R500_TEX_SEM_ACQUIRE
-		| R500_TEX_IGNORE_UNCOVERED;
-	fp->inst[0].inst2 = R500_TEX_SRC_ADDR(0)
-		| R500_TEX_SRC_S_SWIZ_R
-		| R500_TEX_SRC_T_SWIZ_G
-		| R500_TEX_DST_ADDR(0)
-		| R500_TEX_DST_R_SWIZ_R
-		| R500_TEX_DST_G_SWIZ_G
-		| R500_TEX_DST_B_SWIZ_B
-		| R500_TEX_DST_A_SWIZ_A;
-	fp->inst[0].inst3 = R500_DX_ADDR(0)
-		| R500_DX_S_SWIZ_R
-		| R500_DX_T_SWIZ_R
-		| R500_DX_R_SWIZ_R
-		| R500_DX_Q_SWIZ_R
-		| R500_DY_ADDR(0)
-		| R500_DY_S_SWIZ_R
-		| R500_DY_T_SWIZ_R
-		| R500_DY_R_SWIZ_R
-		| R500_DY_Q_SWIZ_R;
-	fp->inst[0].inst4 = 0x0;
-	fp->inst[0].inst5 = 0x0;
-
-	fp->inst[1].inst0 = R500_INST_TYPE_OUT |
-		R500_INST_TEX_SEM_WAIT |
-		R500_INST_LAST |
-		R500_INST_RGB_OMASK_R |
-		R500_INST_RGB_OMASK_G |
-		R500_INST_RGB_OMASK_B |
-		R500_INST_ALPHA_OMASK;
-	fp->inst[1].inst1 = R500_RGB_ADDR0(0) |
-		R500_RGB_ADDR1(0) |
-		R500_RGB_ADDR1_CONST |
-		R500_RGB_ADDR2(0) |
-		R500_RGB_ADDR2_CONST |
-		R500_RGB_SRCP_OP_1_MINUS_2RGB0;
-	fp->inst[1].inst2 = R500_ALPHA_ADDR0(0) |
-		R500_ALPHA_ADDR1(0) |
-		R500_ALPHA_ADDR1_CONST |
-		R500_ALPHA_ADDR2(0) |
-		R500_ALPHA_ADDR2_CONST |
-		R500_ALPHA_SRCP_OP_1_MINUS_2A0;
-	fp->inst[1].inst3 = R500_ALU_RGB_SEL_A_SRC0 |
-		R500_ALU_RGB_R_SWIZ_A_R |
-		R500_ALU_RGB_G_SWIZ_A_G |
-		R500_ALU_RGB_B_SWIZ_A_B |
-		R500_ALU_RGB_SEL_B_SRC0 |
-		R500_ALU_RGB_R_SWIZ_B_1 |
-		R500_ALU_RGB_B_SWIZ_B_1 |
-		R500_ALU_RGB_G_SWIZ_B_1;
-	fp->inst[1].inst4 = R500_ALPHA_OP_MAD |
-		R500_ALPHA_SWIZ_A_A |
-		R500_ALPHA_SWIZ_B_1;
-	fp->inst[1].inst5 = R500_ALU_RGBA_OP_MAD |
-		R500_ALU_RGBA_R_SWIZ_0 |
-		R500_ALU_RGBA_G_SWIZ_0 |
-		R500_ALU_RGBA_B_SWIZ_0 |
-		R500_ALU_RGBA_A_SWIZ_0;
-
-	fp->cs->nrslots = 2;
-	fp->translated = GL_TRUE;
-}
-
 static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi) {
 	if (fpi->DstReg.File == PROGRAM_OUTPUT) {
 		fp->inst[counter].inst0 = R500_INST_TYPE_OUT
@@ -1225,6 +1150,81 @@ static void update_params(struct r500_fragment_program *fp)
 		_mesa_load_state_parameters(fp->ctx, mp->Base.Parameters);
 }
 
+static void dumb_shader(struct r500_fragment_program *fp)
+{
+	fp->inst[0].inst0 = R500_INST_TYPE_TEX
+		| R500_INST_TEX_SEM_WAIT
+		| R500_INST_RGB_WMASK_R
+		| R500_INST_RGB_WMASK_G
+		| R500_INST_RGB_WMASK_B
+		| R500_INST_ALPHA_WMASK
+		| R500_INST_RGB_CLAMP
+		| R500_INST_ALPHA_CLAMP;
+	fp->inst[0].inst1 = R500_TEX_ID(0)
+		| R500_TEX_INST_LD
+		| R500_TEX_SEM_ACQUIRE
+		| R500_TEX_IGNORE_UNCOVERED;
+	fp->inst[0].inst2 = R500_TEX_SRC_ADDR(0)
+		| R500_TEX_SRC_S_SWIZ_R
+		| R500_TEX_SRC_T_SWIZ_G
+		| R500_TEX_DST_ADDR(0)
+		| R500_TEX_DST_R_SWIZ_R
+		| R500_TEX_DST_G_SWIZ_G
+		| R500_TEX_DST_B_SWIZ_B
+		| R500_TEX_DST_A_SWIZ_A;
+	fp->inst[0].inst3 = R500_DX_ADDR(0)
+		| R500_DX_S_SWIZ_R
+		| R500_DX_T_SWIZ_R
+		| R500_DX_R_SWIZ_R
+		| R500_DX_Q_SWIZ_R
+		| R500_DY_ADDR(0)
+		| R500_DY_S_SWIZ_R
+		| R500_DY_T_SWIZ_R
+		| R500_DY_R_SWIZ_R
+		| R500_DY_Q_SWIZ_R;
+	fp->inst[0].inst4 = 0x0;
+	fp->inst[0].inst5 = 0x0;
+
+	fp->inst[1].inst0 = R500_INST_TYPE_OUT |
+		R500_INST_TEX_SEM_WAIT |
+		R500_INST_LAST |
+		R500_INST_RGB_OMASK_R |
+		R500_INST_RGB_OMASK_G |
+		R500_INST_RGB_OMASK_B |
+		R500_INST_ALPHA_OMASK;
+	fp->inst[1].inst1 = R500_RGB_ADDR0(0) |
+		R500_RGB_ADDR1(0) |
+		R500_RGB_ADDR1_CONST |
+		R500_RGB_ADDR2(0) |
+		R500_RGB_ADDR2_CONST |
+		R500_RGB_SRCP_OP_1_MINUS_2RGB0;
+	fp->inst[1].inst2 = R500_ALPHA_ADDR0(0) |
+		R500_ALPHA_ADDR1(0) |
+		R500_ALPHA_ADDR1_CONST |
+		R500_ALPHA_ADDR2(0) |
+		R500_ALPHA_ADDR2_CONST |
+		R500_ALPHA_SRCP_OP_1_MINUS_2A0;
+	fp->inst[1].inst3 = R500_ALU_RGB_SEL_A_SRC0 |
+		R500_ALU_RGB_R_SWIZ_A_R |
+		R500_ALU_RGB_G_SWIZ_A_G |
+		R500_ALU_RGB_B_SWIZ_A_B |
+		R500_ALU_RGB_SEL_B_SRC0 |
+		R500_ALU_RGB_R_SWIZ_B_1 |
+		R500_ALU_RGB_B_SWIZ_B_1 |
+		R500_ALU_RGB_G_SWIZ_B_1;
+	fp->inst[1].inst4 = R500_ALPHA_OP_MAD |
+		R500_ALPHA_SWIZ_A_A |
+		R500_ALPHA_SWIZ_B_1;
+	fp->inst[1].inst5 = R500_ALU_RGBA_OP_MAD |
+		R500_ALU_RGBA_R_SWIZ_0 |
+		R500_ALU_RGBA_G_SWIZ_0 |
+		R500_ALU_RGBA_B_SWIZ_0 |
+		R500_ALU_RGBA_A_SWIZ_0;
+
+	fp->cs->nrslots = 2;
+	fp->translated = GL_TRUE;
+}
+
 void r500TranslateFragmentShader(r300ContextPtr r300,
 				 struct r500_fragment_program *fp)
 {
@@ -1232,8 +1232,6 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 	struct r300_pfs_compile_state *cs = NULL;
 
 	if (!fp->translated) {
-
-
 
 		init_program(r300, fp);
 		cs = fp->cs;
