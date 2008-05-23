@@ -200,7 +200,7 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
 						DRM_BO_FLAG_MEM_TT,
 						DRM_BO_FLAG_EXE |
 						DRM_BO_FLAG_MEM_TT,
-						4096, //intelScreen->maxBatchSize,
+						4 * 4096, //intelScreen->maxBatchSize,
 						1, 40, 16*16384, 0,
 						intelScreen->fMan);
 #endif

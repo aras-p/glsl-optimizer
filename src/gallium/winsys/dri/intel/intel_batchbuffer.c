@@ -65,7 +65,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    driBOUnrefUserList(batch->list);
    driBOResetList(batch->list);
 
-   batch->size = 4096; // ZZZ JB batch->intel->intelScreen->maxBatchSize;
+   batch->size = 4 * 4096; // ZZZ JB batch->intel->intelScreen->maxBatchSize;
    driBOData(batch->buffer, batch->size, NULL, NULL, 0);
 
    /*
