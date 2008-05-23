@@ -429,7 +429,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
-	int flags, pixel_mask = 0, output_mask = 0, counter = 0;
+	int temp_swiz, pixel_mask = 0, output_mask = 0, counter = 0;
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("The program is empty!\n");
@@ -599,6 +599,33 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_DP4
 					| R500_ALU_RGBA_ADDRD(dest);
+				break;
+			case OPCODE_DST:
+				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
+				/* [1, src0.y*src1.y, src0.z, src1.w]
+				 * So basically MUL with lotsa swizzling. */
+				emit_alu(fp, counter, fpi);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1]);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| R500_ALU_RGB_SEL_B_SRC1;
+				/* Select [1, y, z, 1] */
+				temp_swiz = (make_rgb_swizzle(fpi->SrcReg[0]) & ~0x7) | R500_SWIZZLE_ONE;
+				fp->inst[counter].inst3 |= MAKE_SWIZ_RGB_A(temp_swiz);
+				/* Select [1, y, 1, w] */
+				temp_swiz = (make_rgb_swizzle(fpi->SrcReg[0]) & ~0x1c7) | R500_SWIZZLE_ONE | (R500_SWIZZLE_ONE << 6);
+				fp->inst[counter].inst3 |= MAKE_SWIZ_RGB_B(temp_swiz);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE)
+					| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(dest)
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 				break;
 			case OPCODE_EX2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
