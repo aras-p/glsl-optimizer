@@ -953,19 +953,19 @@ static void emit_degenerate_lit( struct tnl_program *p,
 {
    struct ureg id = get_identity_param(p);
    
-   /* 1, 0, 0, 1 
+   /* Note that result.x & result.w will not be examined.  Note also that
+    * dots.xyzw == dots.xxxx.
     */
-   emit_op1(p, OPCODE_MOV, lit, 0, swizzle(id, Z, X, X, Z)); 
 
-   /* 1, MAX2(in[0], 0), 0, 1
+   /* result[1] = MAX2(in, 0)
     */
-   emit_op2(p, OPCODE_MAX, lit, WRITEMASK_Y, lit, swizzle1(dots, X)); 
+   emit_op2(p, OPCODE_MAX, lit, 0, id, dots); 
 
-   /* 1, MAX2(in[0], 0), (in[0] > 0 ? 1 : 0), 1
+   /* result[2] = (in > 0 ? 1 : 0)
     */
    emit_op2(p, OPCODE_SLT, lit, WRITEMASK_Z, 
             lit,                /* 0 */
-            swizzle1(dots, X)); /* in[0] */
+            dots); /* in[0] */
 }
 
 
@@ -1122,10 +1122,13 @@ static void build_lighting( struct tnl_program *p )
 
 	 /* Calculate dot products:
 	  */
-	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
-
-         if (!p->state->material_shininess_is_zero)
+         if (p->state->material_shininess_is_zero) {
+            emit_op2(p, OPCODE_DP3, dots, 0, normal, VPpli);
+         }
+         else {
+            emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
             emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
+         }
 
 	 /* Front face lighting:
 	  */
