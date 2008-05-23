@@ -50,7 +50,6 @@
 struct intel_pipe_winsys {
    struct pipe_winsys winsys;
    struct _DriBufferPool *regionPool;
-   struct _DriBufferPool *mallocPool;
    struct _DriFreeSlabManager *fMan;
 };
 
@@ -111,19 +110,16 @@ intel_buffer_create(struct pipe_winsys *winsys,
    struct intel_buffer *buffer = CALLOC_STRUCT( intel_buffer );
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    unsigned flags = 0;
-   struct _DriBufferPool *pool;
 
    buffer->base.refcount = 1;
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
 
-   if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
+   if (usage & (PIPE_BUFFER_USAGE_VERTEX /*| IWS_BUFFER_USAGE_LOCAL*/)) {
       flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
-      pool = iws->mallocPool;
    } else {
       flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
-      pool = iws->regionPool;
    }
 
    if (usage & PIPE_BUFFER_USAGE_GPU_READ)
@@ -145,11 +141,10 @@ intel_buffer_create(struct pipe_winsys *winsys,
       flags |= DRM_BO_FLAG_CACHED;
 #endif
 
-   buffer->pool = pool;
-   driGenBuffers( buffer->pool, 
+   driGenBuffers( iws->regionPool, 
 		  "pipe buffer", 1, &buffer->driBO, alignment, flags, 0 );
 
-   driBOData( buffer->driBO, size, NULL, buffer->pool, 0 );
+   driBOData( buffer->driBO, size, NULL, iws->regionPool, 0 );
 
    return &buffer->base;
 }
@@ -179,10 +174,12 @@ intel_flush_frontbuffer( struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          void *context_private)
 {
+#if 0
    struct intel_context *intel = (struct intel_context *) context_private;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
 
    intelDisplaySurface(dPriv, surf, NULL);
+#endif
 }
 
 
@@ -255,7 +252,7 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 static const char *
 intel_get_name( struct pipe_winsys *winsys )
 {
-   return "Intel/DRI/ttm";
+   return "Intel/EGL/ttm";
 }
 
 static void
@@ -283,7 +280,8 @@ intel_fence_finish( struct pipe_winsys *sws,
                     struct pipe_fence_handle *fence,
                     unsigned flag )
 {
-   return driFenceFinish((struct _DriFenceObject *)fence, flag, 0);
+   /* JB: Lets allways lazy wait */
+   return driFenceFinish((struct _DriFenceObject *)fence, flag, 1);
 }
 
 struct pipe_winsys *
@@ -314,9 +312,15 @@ intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
    iws->winsys.fence_finish = intel_fence_finish;
 
    if (fd)
-     iws->regionPool = driDRMPoolInit(fd);
-
-   iws->mallocPool = driMallocPoolInit();
+      iws->regionPool = driSlabPoolInit(fd,
+			DRM_BO_FLAG_READ |
+			DRM_BO_FLAG_WRITE |
+			DRM_BO_FLAG_MEM_TT,
+			DRM_BO_FLAG_READ |
+			DRM_BO_FLAG_WRITE |
+			DRM_BO_FLAG_MEM_TT,
+			64, 6, 16, 4096, 0,
+			fMan);
 
    return &iws->winsys;
 }
@@ -328,9 +332,6 @@ intel_destroy_pipe_winsys( struct pipe_winsys *winsys )
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    if (iws->regionPool) {
       driPoolTakeDown(iws->regionPool);
-   }
-   if (iws->mallocPool) {
-      driPoolTakeDown(iws->mallocPool);
    }
    free(iws);
 }

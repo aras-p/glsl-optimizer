@@ -54,6 +54,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DRM_I830_DESTROY_HEAP             0x0c
 #define DRM_I830_SET_VBLANK_PIPE          0x0d
 #define DRM_I830_GET_VBLANK_PIPE          0x0e
+#define DRM_I830_MMIO		       	  0x10
 
 typedef struct {
    enum {
@@ -85,6 +86,7 @@ typedef struct {
         int last_enqueue;	/* last time a buffer was enqueued */
 	int last_dispatch;	/* age of the most recently dispatched buffer */
 	int ctxOwner;		/* last context to upload state */
+	/** Last context that used the buffer manager. */
 	int texAge;
         int pf_enabled;		/* is pageflipping allowed? */
         int pf_active;               
@@ -121,20 +123,29 @@ typedef struct {
 	unsigned int rotated_tiled;
 	unsigned int rotated2_tiled;
 
-	int pipeA_x;
-	int pipeA_y;
-	int pipeA_w;
-	int pipeA_h;
-	int pipeB_x;
-	int pipeB_y;
-	int pipeB_w;
-	int pipeB_h;
+	int planeA_x;
+	int planeA_y;
+	int planeA_w;
+	int planeA_h;
+	int planeB_x;
+	int planeB_y;
+	int planeB_w;
+	int planeB_h;
 
 	/* Triple buffering */
 	drm_handle_t third_handle;
 	int third_offset;
 	int third_size;
 	unsigned int third_tiled;
+
+	/* buffer object handles for the static buffers.  May change
+	 * over the lifetime of the client, though it doesn't in our current
+	 * implementation.
+	 */
+	unsigned int front_bo_handle;
+	unsigned int back_bo_handle;
+	unsigned int third_bo_handle;
+	unsigned int depth_bo_handle;
 } drmI830Sarea;
 
 /* Flags for perf_boxes
@@ -222,5 +233,24 @@ typedef struct {
 typedef struct {
         int pipe;
 } drmI830VBlankPipe;
+
+#define MMIO_READ  0
+#define MMIO_WRITE 1
+
+#define MMIO_REGS_IA_PRIMATIVES_COUNT           0
+#define MMIO_REGS_IA_VERTICES_COUNT             1
+#define MMIO_REGS_VS_INVOCATION_COUNT           2
+#define MMIO_REGS_GS_PRIMITIVES_COUNT           3
+#define MMIO_REGS_GS_INVOCATION_COUNT           4
+#define MMIO_REGS_CL_PRIMITIVES_COUNT           5
+#define MMIO_REGS_CL_INVOCATION_COUNT           6
+#define MMIO_REGS_PS_INVOCATION_COUNT           7
+#define MMIO_REGS_PS_DEPTH_COUNT                8
+
+typedef struct {
+        unsigned int read_write:1;
+        unsigned int reg:31;
+        void __user *data;
+} drmI830MMIO;
 
 #endif /* _I830_DRM_H_ */

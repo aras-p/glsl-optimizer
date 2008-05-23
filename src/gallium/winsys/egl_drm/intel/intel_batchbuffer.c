@@ -27,6 +27,8 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_context.h"
+#include "intel_egl.h"
+
 #include <errno.h>
 
 #if 0
@@ -59,14 +61,16 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    /*
     * Get a new, free batchbuffer.
     */
-    drmBO *bo;
-    struct drm_bo_info_req *req;
-    
+   drmBO *bo;
+   struct drm_bo_info_req *req;
+   int ret;
+
    driBOUnrefUserList(batch->list);
    driBOResetList(batch->list);
 
-   batch->size = 4 * 4096; // ZZZ JB batch->intel->intelScreen->maxBatchSize;
-   driBOData(batch->buffer, batch->size, NULL, NULL, 0);
+   batch->size = 4096; // ZZZ JB batch->intel->intelScreen->maxBatchSize;
+   ret = driBOData(batch->buffer, batch->size, NULL, NULL, 0);
+   assert(!ret);
 
    /*
     * Add the batchbuffer to the validate list.
@@ -118,13 +122,13 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
  * Public functions
  */
 struct intel_batchbuffer *
-intel_batchbuffer_alloc(struct intel_context *intel)
+intel_batchbuffer_alloc(struct intel_screen *intel_screen)
 {
    struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
 
-   batch->intel = intel;
+   batch->intel_screen = intel_screen;
 
-   driGenBuffers(intel->intelScreen->batchPool, "batchbuffer", 1,
+   driGenBuffers(intel_screen->batchPool, "batchbuffer", 1,
                  &batch->buffer, 4096,
                  DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE, 0);
    batch->last_fence = NULL;
@@ -221,7 +225,7 @@ i915_execbuf(struct intel_batchbuffer *batch,
 	     drmBOList *list,
 	     struct drm_i915_execbuffer *ea)
 {
-   struct intel_context *intel = batch->intel;
+   struct intel_screen *intel_screen = batch->intel_screen;
    drmBONode *node;
    drmMMListHead *l;
    struct drm_i915_op_arg *arg, *first;
@@ -277,12 +281,14 @@ i915_execbuf(struct intel_batchbuffer *batch,
 
    //return -EFAULT;
    do {
-      ret = drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, ea,
+      ret = drmCommandWriteRead(intel_screen->device->drmFD, DRM_I915_EXECBUFFER, ea,
 				sizeof(*ea));
    } while (ret == -EAGAIN);
 
-   if (ret != 0)
+   if (ret != 0) {
+      printf("%s somebody set us up the bomb\n", __FUNCTION__);
       return ret;
+   }
 
    for (l = list->list.next; l != &list->list; l = l->next) {
       node = DRMLISTENTRY(drmBONode, l, head);
@@ -308,7 +314,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
                 GLuint used,
                 GLboolean ignore_cliprects, GLboolean allow_unlock)
 {
-   struct intel_context *intel = batch->intel;
+   struct intel_screen *intel_screen = batch->intel_screen;
    struct _DriFenceObject *fo;
    drmFence fence;
    drmBOList *boList;
@@ -356,7 +362,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
    fence.flags = ea.fence_arg.flags;
    fence.signaled = ea.fence_arg.signaled;
 
-   fo = driBOFenceUserList(batch->intel->intelScreen->mgr, batch->list,
+   fo = driBOFenceUserList(intel_screen->mgr, batch->list,
 			   "SuperFence", &fence);
 
    if (driFenceType(fo) & DRM_I915_FENCE_TYPE_RW) {
@@ -372,7 +378,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
 #if 0 /* ZZZ JB: fix this */
    intel->vtbl.lost_hardware(intel);
 #else
-   (void)intel;
 #endif
    return fo;
 }
@@ -381,9 +386,9 @@ do_flush_locked(struct intel_batchbuffer *batch,
 struct _DriFenceObject *
 intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 {
-   struct intel_context *intel = batch->intel;
+   //struct intel_context *intel = batch->intel;
    GLuint used = batch->ptr - batch->map;
-   GLboolean was_locked = intel->locked;
+   //GLboolean was_locked = 1;
    struct _DriFenceObject *fence;
 
    if (used == 0) {
@@ -426,14 +431,14 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
-   if (!was_locked)
-      LOCK_HARDWARE(intel);
+/*   if (!was_locked)
+      LOCK_HARDWARE(intel);*/
 
    fence = do_flush_locked(batch, used, !(batch->flags & INTEL_BATCH_CLIPRECTS),
 			   GL_FALSE);
 
-   if (!was_locked)
-      UNLOCK_HARDWARE(intel);
+/*   if (!was_locked)
+      UNLOCK_HARDWARE(intel);*/
 
    /* Reset the buffer:
     */

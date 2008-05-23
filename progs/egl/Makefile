@@ -46,7 +46,7 @@ demo3.o: demo3.c $(HEADERS)
 
 
 eglinfo: eglinfo.o $(TOP)/$(LIB_DIR)/libEGL.so
-	$(CC) $(CFLAGS) eglinfo.o -L$(TOP)/$(LIB_DIR) -lEGL $(LIBDRM_LIB) -o $@
+	$(CC) $(CFLAGS) eglinfo.o -L$(TOP)/$(LIB_DIR) -lGL -lEGL $(LIBDRM_LIB) -o $@
 
 eglinfo.o: eglinfo.c $(HEADERS)
 	$(CC) -c $(CFLAGS) -I$(TOP)/include eglinfo.c
@@ -63,3 +63,9 @@ clean:
 	rm -f *.o *~
 	rm -f *.so
 	rm -f $(PROGRAMS)
+
+run:
+	LD_LIBRARY_PATH=$(TOP)/lib ./eglgears
+
+debug:
+	LD_LIBRARY_PATH=$(TOP)/lib gdb ./eglgears

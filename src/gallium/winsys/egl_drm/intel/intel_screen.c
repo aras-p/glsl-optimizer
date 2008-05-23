@@ -36,15 +36,119 @@
 #include "intel_swapbuffers.h"
 #include "intel_winsys.h"
 
-#include "i830_dri.h"
 #include "ws_dri_bufpool.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_cb_fbo.h"
+#include "intel_egl.h"
 
+static boolean
+intel_create_pools(struct intel_screen *intel_screen)
+{
+	if (intel_screen->havePools)
+		return GL_TRUE;
 
+	intel_screen->mgr = driFenceMgrTTMInit(intel_screen->device->drmFD);
+	if (!intel_screen->mgr) {
+		fprintf(stderr, "Failed to create fence manager.\n");
+		return FALSE;
+	}
 
+	intel_screen->fMan = driInitFreeSlabManager(10, 10);
+	if (!intel_screen->fMan) {
+		fprintf(stderr, "Failed to create free slab manager.\n");
+		return FALSE;
+	}
+
+	intel_screen->staticPool = driDRMPoolInit(intel_screen->device->drmFD);
+	intel_screen->batchPool = driSlabPoolInit(intel_screen->device->drmFD,
+						DRM_BO_FLAG_EXE |
+						DRM_BO_FLAG_MEM_TT,
+						DRM_BO_FLAG_EXE |
+						DRM_BO_FLAG_MEM_TT,
+						4096, //intelScreen->maxBatchSize,
+						1, 40, 16*16384, 0,
+						intel_screen->fMan);
+
+	intel_screen->havePools = GL_TRUE;
+
+	return GL_TRUE;
+}
+
+extern const struct dri_extension card_extensions[];
+
+int
+intel_init_driver(struct egl_drm_device *device)
+{
+	struct intel_screen *intel_screen;
+
+	/* Allocate the private area */
+	intel_screen = CALLOC_STRUCT(intel_screen);
+	if (!intel_screen) 
+		return FALSE;
+
+	device->priv = (void *)intel_screen;
+	intel_screen->device = device;
+
+	if (!intel_create_pools(intel_screen))
+		return FALSE;
+
+	intel_screen->batch = intel_batchbuffer_alloc(intel_screen);
+
+	intel_screen->winsys = intel_create_pipe_winsys(device->drmFD, intel_screen->fMan);
+
+	/* hack */
+	driInitExtensions(NULL, card_extensions, GL_FALSE);
+
+	return TRUE;
+}
+
+int
+intel_create_drawable(struct egl_drm_drawable *drawable,
+                      const __GLcontextModes * visual)
+{
+	enum pipe_format colorFormat, depthFormat, stencilFormat;
+	struct intel_framebuffer *intelfb = CALLOC_STRUCT(intel_framebuffer);
+
+	if (!intelfb)
+		return GL_FALSE;
+
+	if (visual->redBits == 5)
+		colorFormat = PIPE_FORMAT_R5G6B5_UNORM;
+	else
+		colorFormat = PIPE_FORMAT_A8R8G8B8_UNORM;
+
+	if (visual->depthBits == 16)
+		depthFormat = PIPE_FORMAT_Z16_UNORM;
+	else if (visual->depthBits == 24)
+		depthFormat = PIPE_FORMAT_S8Z24_UNORM;
+	else
+		depthFormat = PIPE_FORMAT_NONE;
+
+	if (visual->stencilBits == 8)
+		stencilFormat = PIPE_FORMAT_S8Z24_UNORM;
+	else
+		stencilFormat = PIPE_FORMAT_NONE;
+
+	intelfb->stfb = st_create_framebuffer(visual,
+			colorFormat,
+			depthFormat,
+			stencilFormat,
+			drawable->w,
+			drawable->h,
+			(void*) intelfb);
+
+	if (!intelfb->stfb) {
+		free(intelfb);
+		return GL_FALSE;
+	}
+
+   drawable->priv = (void *) intelfb;
+   return GL_TRUE;
+}
+
+#if 0
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN DRI_CONF_SECTION_PERFORMANCE
    DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
@@ -75,8 +179,6 @@ intelPrintDRIInfo(struct intel_screen * intelScreen,
    fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
 }
 
-
-#if 0
 static void
 intelPrintSAREA(const drmI830Sarea * sarea)
 {
@@ -102,8 +204,6 @@ intelPrintSAREA(const drmI830Sarea * sarea)
            sarea->rotated_offset, sarea->rotated_size);
    fprintf(stderr, "SAREA: rotated pitch: %d\n", sarea->rotated_pitch);
 }
-#endif
-
 
 /**
  * Use the information in the sarea to update the screen parameters
@@ -200,13 +300,13 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
 						DRM_BO_FLAG_MEM_TT,
 						DRM_BO_FLAG_EXE |
 						DRM_BO_FLAG_MEM_TT,
-						4 * 4096, //intelScreen->maxBatchSize,
+						4096, //intelScreen->maxBatchSize,
 						1, 40, 16*16384, 0,
 						intelScreen->fMan);
 #endif
    intelScreen->havePools = GL_TRUE;
 
-   intelUpdateScreenRotation(sPriv, intelScreen->sarea);
+   //intelUpdateScreenRotation(sPriv, intelScreen->sarea);
 
    return GL_TRUE;
 }
@@ -246,8 +346,10 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    intelScreen->front.cpp = gDRIPriv->cpp;
    intelScreen->drmMinor = sPriv->drmMinor;
 
+
    assert(gDRIPriv->bitsPerPixel == 16 ||
 	  gDRIPriv->bitsPerPixel == 32);
+
 
    intelUpdateScreenRotation(sPriv, intelScreen->sarea);
 
@@ -575,4 +677,4 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
 
    return (void *) psp;
 }
-
+#endif
