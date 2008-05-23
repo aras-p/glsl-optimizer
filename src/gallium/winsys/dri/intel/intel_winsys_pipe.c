@@ -51,7 +51,8 @@ struct intel_pipe_winsys {
    struct pipe_winsys winsys;
    struct _DriBufferPool *regionPool;
    struct _DriBufferPool *mallocPool;
-   struct _DriFreeSlabManager *fMan;
+   struct _DriBufferPool *vertexPool;
+   struct _DriFreeSlabManager *fMan; /** shared between all pipes */
 };
 
 
@@ -119,8 +120,12 @@ intel_buffer_create(struct pipe_winsys *winsys,
    buffer->base.size = size;
 
    if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
-      flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
+      flags |= DRM_BO_FLAG_MEM_LOCAL;
       pool = iws->mallocPool;
+   } else if (usage & PIPE_BUFFER_USAGE_CUSTOM) {
+      /* For vertex buffers */
+      flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
+      pool = iws->vertexPool;
    } else {
       flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
       pool = iws->regionPool;
@@ -313,8 +318,19 @@ intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
    iws->winsys.fence_signalled = intel_fence_signalled;
    iws->winsys.fence_finish = intel_fence_finish;
 
-   if (fd)
+   if (fd) {
      iws->regionPool = driDRMPoolInit(fd);
+     iws->vertexPool = driSlabPoolInit(fd,
+					DRM_BO_FLAG_READ |
+					DRM_BO_FLAG_WRITE |
+					DRM_BO_FLAG_MEM_TT,
+					DRM_BO_FLAG_READ |
+					DRM_BO_FLAG_WRITE |
+					DRM_BO_FLAG_MEM_TT,
+					32 * 4096,
+					1, 40, 32 * 4096 * 2, 0,
+					fMan);
+   }
 
    iws->mallocPool = driMallocPoolInit();
 
