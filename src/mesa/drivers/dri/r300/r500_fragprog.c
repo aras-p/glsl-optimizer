@@ -1023,9 +1023,6 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	} else {
 		/* We still need to put an output inst, right? */
 		WARN_ONCE("Final FP instruction is not an OUT.\n");
-#if 0
-
-#endif
 	}
 
 	fp->cs->nrslots = counter;
@@ -1248,7 +1245,7 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 		fp->inst_end = cs->nrslots - 1;
 
 		fp->translated = GL_TRUE;
-		if (1 || RADEON_DEBUG & DEBUG_PIXEL) {
+		if (RADEON_DEBUG & DEBUG_PIXEL) {
 			fprintf(stderr, "Mesa program:\n");
 			fprintf(stderr, "-------------\n");
 			_mesa_print_program(&fp->mesa_program.Base);
