@@ -19,36 +19,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* TODO:
- *   - depth 8 (ci8, r3g3b2 ?)
- *   - XMesaResizeBuffers() ?
- *     add it to __DRIcoreExtension or own extension (GL_MESA_resize_buffers) ?
- *   - GLX_MESA_copy_sub_buffer
- *   - GLX_EXT_texture_from_pixmap
- *
- * BUGS:
- *   - winpos, glxpixmap: draw half width only with xorg at depth 16,
- *     they somehow manage to get a wrong drawable with depth 32,
- *     the "depth 32" visual is the composite overlay visual which is the
- *     only available single-buffer visual with glx_visuals "min" ...
- *
- *   there is clearly something wrong with GLX visual setup, the assumption
- *   that GLX runs before composite no longer holds ...
- *
- *   at depth 16:
- *   with glx_visuals "min", the composite overlay visual is added
- *   with glx_visuals "all", segfaults when moving cursor over glx window
- *
- *   - texobj: loses textures at depth 32
- *   - texcyl: crashes mesa with "Linear Filtrered"
- *
- * DONE:
- *   - round image (i.e. backbuffer) pitch to 32 bits
- *   - depth 16
- *   - front-buffer rendering - depths, wincopy
- *   - GLX_SGI_make_current_read (wincopy with front)
- */
-
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 #include "context.h"
