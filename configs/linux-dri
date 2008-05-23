@@ -53,9 +53,10 @@ GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 USING_EGL=0
 
 # Directories
-SRC_DIRS := glx/x11 egl $(SRC_DIRS)
+SRC_DIRS := glx/x11 $(SRC_DIRS)
 PROGRAM_DIRS := egl $(PROGRAM_DIRS)
 ifeq ($(USING_EGL), 1)
+SRC_DIRS := egl $(SRC_DIRS)
 PROGRAM_DIRS = egl
 endif
 
