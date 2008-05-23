@@ -120,7 +120,7 @@ intel_buffer_create(struct pipe_winsys *winsys,
    buffer->base.size = size;
 
    if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
-      flags |= DRM_BO_FLAG_MEM_LOCAL;
+      flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
       pool = iws->mallocPool;
    } else if (usage & PIPE_BUFFER_USAGE_CUSTOM) {
       /* For vertex buffers */
