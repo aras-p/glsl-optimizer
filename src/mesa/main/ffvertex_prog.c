@@ -305,7 +305,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM (MESA_VERBOSE&VERBOSE_DISASSEM)
+#define DISASSEM 1
 
 /* Should be tunable by the driver - do we want to do matrix
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
@@ -687,11 +687,9 @@ static void emit_normalize_vec3( struct tnl_program *p,
 				 struct ureg dest,
 				 struct ureg src )
 {
-   struct ureg tmp = get_temp(p);
-   emit_op2(p, OPCODE_DP3, tmp, WRITEMASK_X, src, src);
-   emit_op1(p, OPCODE_RSQ, tmp, WRITEMASK_X, tmp);
-   emit_op2(p, OPCODE_MUL, dest, 0, src, swizzle1(tmp, X));
-   release_temp(p, tmp);
+   emit_op2(p, OPCODE_DP3, dest, WRITEMASK_X, src, src);
+   emit_op1(p, OPCODE_RSQ, dest, WRITEMASK_X, dest);
+   emit_op2(p, OPCODE_MUL, dest, 0, src, swizzle1(dest, X));
 }
 
 static void emit_passthrough( struct tnl_program *p, 
