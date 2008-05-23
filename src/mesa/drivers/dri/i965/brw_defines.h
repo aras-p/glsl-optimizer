@@ -38,7 +38,6 @@
 #define MI_NOOP                              0x00
 #define MI_USER_INTERRUPT                    0x02
 #define MI_WAIT_FOR_EVENT                    0x03
-#define MI_FLUSH                             0x04
 #define MI_REPORT_HEAD                       0x07
 #define MI_ARB_ON_OFF                        0x08
 #define MI_BATCH_BUFFER_END                  0x0A

@@ -31,6 +31,10 @@
 
 #define MI_BATCH_BUFFER_END		(CMD_MI | 0xA << 23)
 
+#define MI_FLUSH			(CMD_MI | (4 << 23))
+#define FLUSH_MAP_CACHE				(1 << 0)
+#define INHIBIT_FLUSH_RENDER_CACHE		(1 << 2)
+
 /* Stalls command execution waiting for the given events to have occurred. */
 #define MI_WAIT_FOR_EVENT               (CMD_MI | (0x3 << 23))
 #define MI_WAIT_FOR_PLANE_B_FLIP        (1<<6)

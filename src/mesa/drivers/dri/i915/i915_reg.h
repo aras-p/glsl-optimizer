@@ -855,10 +855,4 @@
 #define _3DSTATE_DEFAULT_DIFFUSE    ((0x3<<29)|(0x1d<<24)|(0x99<<16))
 #define _3DSTATE_DEFAULT_SPECULAR   ((0x3<<29)|(0x1d<<24)|(0x9a<<16))
 
-
-#define MI_FLUSH                   ((0<<29)|(4<<23))
-#define FLUSH_MAP_CACHE            (1<<0)
-#define INHIBIT_FLUSH_RENDER_CACHE (1<<2)
-
-
 #endif

@@ -635,8 +635,4 @@
 #define ENABLE_TEX_STREAM_MAP_IDX	(1<<3)
 #define TEX_STREAM_MAP_IDX(x)		(x)
 
-
-#define MI_FLUSH           ((0<<29)|(4<<23))
-#define FLUSH_MAP_CACHE    (1<<0)
-
 #endif

@@ -159,6 +159,14 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 ADVANCE_BATCH();
       }
 
+      /* Emit a flush so that, on systems where we don't have automatic flushing
+       * set (such as 965), the results all land on the screen in a timely
+       * fashion.
+       */
+      BEGIN_BATCH(1, IGNORE_CLIPRECTS);
+      OUT_BATCH(MI_FLUSH);
+      ADVANCE_BATCH();
+
       intel_batchbuffer_flush(intel->batch);
    }
 
