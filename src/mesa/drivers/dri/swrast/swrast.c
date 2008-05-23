@@ -145,7 +145,11 @@ swrastFillInModes(__DRIscreen *psp,
     depth_buffer_factor = 4;
     back_buffer_factor = 2;
 
-    if (pixel_bits == 16) {
+    if (pixel_bits == 8) {
+	fb_format = GL_RGB;
+	fb_type = GL_UNSIGNED_BYTE_2_3_3_REV;
+    }
+    else if (pixel_bits == 16) {
 	fb_format = GL_RGB;
 	fb_type = GL_UNSIGNED_SHORT_5_6_5;
     }
@@ -173,6 +177,7 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
 {
     static const __DRIextension *emptyExtensionList[] = { NULL };
     __DRIscreen *psp;
+    __DRIconfig **configs8, **configs16, **configs32;
 
     (void) data;
 
@@ -187,8 +192,13 @@ driCreateNewScreen(int scrn, const __DRIextension **extensions,
     psp->num = scrn;
     psp->extensions = emptyExtensionList;
 
-    *driver_configs = driConcatConfigs(swrastFillInModes(psp, 16, 16, 0, 1),
-				       swrastFillInModes(psp, 32, 24, 8, 1));
+    configs8  = swrastFillInModes(psp,  8,  8, 0, 1);
+    configs16 = swrastFillInModes(psp, 16, 16, 0, 1);
+    configs32 = swrastFillInModes(psp, 32, 24, 8, 1);
+
+    configs16 = (__DRIconfig **)driConcatConfigs(configs8, configs16);
+
+    *driver_configs = driConcatConfigs(configs16, configs32);
 
     driInitExtensions( NULL, card_extensions, GL_FALSE );
 
@@ -235,6 +245,11 @@ choose_pixel_format(const GLvisual *v)
 	    && v->greenMask == 0x07e0
 	    && v->blueMask  == 0x001f)
 	    return PF_R5G6B5;
+	else if (bpp == 8
+	    && v->redMask   == 0x07
+	    && v->greenMask == 0x38
+	    && v->blueMask  == 0xc0)
+	    return PF_R3G3B2;
     }
     else {
 	if (v->indexBits == 8)
@@ -345,6 +360,15 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	    xrb->Base.RedBits   = 5 * sizeof(GLubyte);
 	    xrb->Base.GreenBits = 6 * sizeof(GLubyte);
 	    xrb->Base.BlueBits  = 5 * sizeof(GLubyte);
+	    xrb->Base.AlphaBits = 0;
+	    break;
+	case PF_R3G3B2:
+	    xrb->Base.InternalFormat = GL_RGB;
+	    xrb->Base._BaseFormat = GL_RGB;
+	    xrb->Base.DataType = GL_UNSIGNED_BYTE;
+	    xrb->Base.RedBits   = 3 * sizeof(GLubyte);
+	    xrb->Base.GreenBits = 3 * sizeof(GLubyte);
+	    xrb->Base.BlueBits  = 2 * sizeof(GLubyte);
 	    xrb->Base.AlphaBits = 0;
 	    break;
 	case PF_CI8:

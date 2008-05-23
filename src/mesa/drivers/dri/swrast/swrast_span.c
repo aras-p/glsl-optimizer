@@ -71,6 +71,24 @@
    } while(0)
 
 
+/* 8-bit BGR */
+#define STORE_PIXEL_R3G3B2(DST, X, Y, VALUE) \
+   do { \
+   GLubyte *p = (GLubyte *)DST; \
+   *p = ( (((VALUE[RCOMP]) & 0xe0) >> 5) | \
+	  (((VALUE[GCOMP]) & 0xe0) >> 2) | \
+	  (((VALUE[BCOMP]) & 0xc0) >> 0) ); \
+   } while(0)
+#define FETCH_PIXEL_R3G3B2(DST, SRC) \
+   do { \
+   GLubyte p = *(GLubyte *)SRC; \
+   DST[ACOMP] = 0xff; \
+   DST[RCOMP] = ((p << 5) & 0xe0) * 255 / 0xe0; \
+   DST[GCOMP] = ((p << 2) & 0xe0) * 255 / 0xe0; \
+   DST[BCOMP] = ((p << 0) & 0xc0) * 255 / 0xc0; \
+   } while(0)
+
+
 /*
  * Generate code for image span functions.
  */
@@ -105,6 +123,22 @@
    STORE_PIXEL_R5G6B5(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
    FETCH_PIXEL_R5G6B5(DST, SRC)
+
+#include "swrast/s_spantemp.h"
+
+
+/* 8-bit BGR */
+#define NAME(FUNC) FUNC##_R3G3B2
+#define RB_TYPE GLubyte
+#define SPAN_VARS \
+   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+#define INIT_PIXEL_PTR(P, X, Y) \
+   GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X) * 1;
+#define INC_PIXEL_PTR(P) P += 1
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   STORE_PIXEL_R3G3B2(DST, X, Y, VALUE)
+#define FETCH_PIXEL(DST, SRC) \
+   FETCH_PIXEL_R3G3B2(DST, SRC)
 
 #include "swrast/s_spantemp.h"
 
@@ -164,6 +198,22 @@
 #include "swrast_spantemp.h"
 
 
+/* 8-bit BGR */
+#define NAME(FUNC) FUNC##_R3G3B2_pixmap
+#define RB_TYPE GLubyte
+#define SPAN_VARS \
+   struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
+#define INIT_PIXEL_PTR(P, X, Y) \
+   GLubyte *P = (GLubyte *)row;
+#define INC_PIXEL_PTR(P) P += 1
+#define STORE_PIXEL(DST, X, Y, VALUE) \
+   STORE_PIXEL_R3G3B2(DST, X, Y, VALUE)
+#define FETCH_PIXEL(DST, SRC) \
+   FETCH_PIXEL_R3G3B2(DST, SRC)
+
+#include "swrast_spantemp.h"
+
+
 /* 8-bit color index */
 #define NAME(FUNC) FUNC##_CI8_pixmap
 #define CI_MODE
@@ -210,6 +260,15 @@ swrast_set_span_funcs_ximage(struct swrast_renderbuffer *xrb,
 	xrb->Base.PutValues = put_values_R5G6B5;
 	xrb->Base.PutMonoValues = put_mono_values_R5G6B5;
 	break;
+    case PF_R3G3B2:
+	xrb->Base.GetRow = get_row_R3G3B2;
+	xrb->Base.GetValues = get_values_R3G3B2;
+	xrb->Base.PutRow = put_row_R3G3B2;
+	xrb->Base.PutRowRGB = put_row_rgb_R3G3B2;
+	xrb->Base.PutMonoRow = put_mono_row_R3G3B2;
+	xrb->Base.PutValues = put_values_R3G3B2;
+	xrb->Base.PutMonoValues = put_mono_values_R3G3B2;
+	break;
     case PF_CI8:
 	xrb->Base.GetRow = get_row_CI8;
 	xrb->Base.GetValues = get_values_CI8;
@@ -255,6 +314,15 @@ swrast_set_span_funcs_pixmap(struct swrast_renderbuffer *xrb,
 	xrb->Base.PutMonoRow = put_mono_row_R5G6B5_pixmap;
 	xrb->Base.PutValues = put_values_R5G6B5_pixmap;
 	xrb->Base.PutMonoValues = put_mono_values_R5G6B5_pixmap;
+	break;
+    case PF_R3G3B2:
+	xrb->Base.GetRow = get_row_R3G3B2_pixmap;
+	xrb->Base.GetValues = get_values_R3G3B2_pixmap;
+	xrb->Base.PutRow = put_row_R3G3B2_pixmap;
+	xrb->Base.PutRowRGB = put_row_rgb_R3G3B2_pixmap;
+	xrb->Base.PutMonoRow = put_mono_row_R3G3B2_pixmap;
+	xrb->Base.PutValues = put_values_R3G3B2_pixmap;
+	xrb->Base.PutMonoValues = put_mono_values_R3G3B2_pixmap;
 	break;
     case PF_CI8:
 	xrb->Base.GetRow = get_row_CI8_pixmap;
