@@ -54,7 +54,6 @@ USING_EGL=0
 
 # Directories
 SRC_DIRS := glx/x11 $(SRC_DIRS)
-PROGRAM_DIRS := egl $(PROGRAM_DIRS)
 ifeq ($(USING_EGL), 1)
 SRC_DIRS := egl $(SRC_DIRS)
 PROGRAM_DIRS = egl
