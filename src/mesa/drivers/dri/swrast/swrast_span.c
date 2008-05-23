@@ -32,6 +32,32 @@
 #define YFLIP(_xrb, Y) ((_xrb)->Base.Height - (Y) - 1)
 
 /*
+ * Dithering support takes the "computation" extreme in the "computation vs.
+ * storage" trade-off. This approach is very simple to implement and any
+ * computational overhead should be acceptable. XMesa uses table lookups for
+ * around 8KB of storage overhead per visual.
+ */
+#define DITHER 1
+
+static const GLubyte kernel[16] = {
+    0*16,  8*16,  2*16, 10*16,
+   12*16,  4*16, 14*16,  6*16,
+    3*16, 11*16,  1*16,  9*16,
+   15*16,  7*16, 13*16,  5*16,
+};
+
+#if DITHER
+#define DITHER_COMP(X, Y) kernel[((X) & 0x3) | (((Y) & 0x3) << 2)]
+
+#define DITHER_CLAMP(X) (((X) < CHAN_MAX) ? (X) : CHAN_MAX)
+#else
+#define DITHER_COMP(X, Y) 0
+
+#define DITHER_CLAMP(X) (X)
+#endif
+
+
+/*
  * Pixel macros shared across front/back buffer span functions.
  */
 
@@ -56,10 +82,11 @@
 /* 16-bit BGR */
 #define STORE_PIXEL_R5G6B5(DST, X, Y, VALUE) \
    do { \
+   int d = DITHER_COMP(X, Y) >> 6; \
    GLushort *p = (GLushort *)DST; \
-   *p = ( (((VALUE[RCOMP]) & 0xf8) << 8) | \
-	  (((VALUE[GCOMP]) & 0xfc) << 3) | \
-	  (((VALUE[BCOMP]) & 0xf8) >> 3) ); \
+   *p = ( ((DITHER_CLAMP((VALUE[RCOMP]) + d) & 0xf8) << 8) | \
+	  ((DITHER_CLAMP((VALUE[GCOMP]) + d) & 0xfc) << 3) | \
+	  ((DITHER_CLAMP((VALUE[BCOMP]) + d) & 0xf8) >> 3) ); \
    } while(0)
 #define FETCH_PIXEL_R5G6B5(DST, SRC) \
    do { \
@@ -74,10 +101,11 @@
 /* 8-bit BGR */
 #define STORE_PIXEL_R3G3B2(DST, X, Y, VALUE) \
    do { \
+   int d = DITHER_COMP(X, Y) >> 3; \
    GLubyte *p = (GLubyte *)DST; \
-   *p = ( (((VALUE[RCOMP]) & 0xe0) >> 5) | \
-	  (((VALUE[GCOMP]) & 0xe0) >> 2) | \
-	  (((VALUE[BCOMP]) & 0xc0) >> 0) ); \
+   *p = ( ((DITHER_CLAMP((VALUE[RCOMP]) + d) & 0xe0) >> 5) | \
+	  ((DITHER_CLAMP((VALUE[GCOMP]) + d) & 0xe0) >> 2) | \
+	  ((DITHER_CLAMP((VALUE[BCOMP]) + d) & 0xc0) >> 0) ); \
    } while(0)
 #define FETCH_PIXEL_R3G3B2(DST, SRC) \
    do { \
