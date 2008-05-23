@@ -48,15 +48,7 @@ install:
 linux-directfb-install:
 	cd src/mesa/drivers/directfb && $(MAKE) install
 
-# Xserver GLcore module
-glcore:
-	cd src/mesa/drivers/xorg && $(MAKE)
-
-glcore-install:
-	cd src/mesa/drivers/xorg && $(MAKE) install
-
-.PHONY: default doxygen clean realclean install linux-directfb-install \
-	glcore glcore-install
+.PHONY: default doxygen clean realclean install linux-directfb-install
 
 # If there's no current configuration file
 $(TOP)/configs/current:

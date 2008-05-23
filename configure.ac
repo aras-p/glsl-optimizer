@@ -669,18 +669,6 @@ AC_SUBST([OSMESA_LIB_DEPS])
 AC_SUBST([OSMESA_MESA_DEPS])
 
 dnl
-dnl GLcore configuration
-dnl
-# delay pkg-config checks until `make glcore' run
-XORG_CFLAGS='`pkg-config --cflags xorg-server`'
-GLCORE_LIB_DEPS='-lm -lpthread'
-if test "$mesa_driver" = dri; then
-    GLCORE_LIB_DEPS="$GLCORE_LIB_DEPS $DLOPEN_LIBS"
-fi
-AC_SUBST([XORG_CFLAGS])
-AC_SUBST([GLCORE_LIB_DEPS])
-
-dnl
 dnl GLU configuration
 dnl
 AC_ARG_ENABLE([glu],
