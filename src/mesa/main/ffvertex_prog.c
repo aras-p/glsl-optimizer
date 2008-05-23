@@ -54,6 +54,7 @@ struct state_key {
    unsigned light_color_material_mask:12;
    unsigned light_material_mask:12;
 
+   unsigned need_eye_coords:1;
    unsigned normalize:1;
    unsigned rescale_normals:1;
    unsigned fog_source_is_depth:1;
@@ -166,6 +167,8 @@ static struct state_key *make_state_key( GLcontext *ctx )
    /* This now relies on texenvprogram.c being active:
     */
    assert(fp);
+
+   key->need_eye_coords = ctx->_NeedEyeCoords;
 
    key->fragprog_inputs_read = fp->Base.InputsRead;
 
@@ -310,7 +313,7 @@ struct tnl_program {
    
    struct ureg eye_position;
    struct ureg eye_position_normalized;
-   struct ureg eye_normal;
+   struct ureg transformed_normal;
    struct ureg identity;
 
    GLuint materials;
@@ -653,9 +656,9 @@ static void emit_normalize_vec3( struct tnl_program *p,
 				 struct ureg src )
 {
    struct ureg tmp = get_temp(p);
-   emit_op2(p, OPCODE_DP3, tmp, 0, src, src);
-   emit_op1(p, OPCODE_RSQ, tmp, 0, tmp);
-   emit_op2(p, OPCODE_MUL, dest, 0, src, tmp);
+   emit_op2(p, OPCODE_DP3, tmp, WRITEMASK_X, src, src);
+   emit_op1(p, OPCODE_RSQ, tmp, WRITEMASK_X, tmp);
+   emit_op2(p, OPCODE_MUL, dest, 0, src, swizzle1(tmp, X));
    release_temp(p, tmp);
 }
 
@@ -705,36 +708,53 @@ static struct ureg get_eye_position_normalized( struct tnl_program *p )
 }
 
 
-static struct ureg get_eye_normal( struct tnl_program *p )
+static struct ureg get_transformed_normal( struct tnl_program *p )
 {
-   if (is_undef(p->eye_normal)) {
+   if (is_undef(p->transformed_normal) &&
+       !p->state->need_eye_coords &&
+       !p->state->normalize &&
+       !(p->state->need_eye_coords == p->state->rescale_normals))
+   {
+      p->transformed_normal = register_input(p, VERT_ATTRIB_NORMAL );
+   }
+   else if (is_undef(p->transformed_normal)) 
+   {
       struct ureg normal = register_input(p, VERT_ATTRIB_NORMAL );
       struct ureg mvinv[3];
+      struct ureg transformed_normal = reserve_temp(p);
 
-      register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
-			      STATE_MATRIX_INVTRANS, mvinv );
+      if (p->state->need_eye_coords) {
+         register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
+                                 STATE_MATRIX_INVTRANS, mvinv );
 
-      p->eye_normal = reserve_temp(p);
-
-      /* Transform to eye space:
-       */
-      emit_matrix_transform_vec3( p, p->eye_normal, mvinv, normal );
+         /* Transform to eye space:
+          */
+         emit_matrix_transform_vec3( p, transformed_normal, mvinv, normal );
+         normal = transformed_normal;
+      }
 
       /* Normalize/Rescale:
        */
       if (p->state->normalize) {
-	 emit_normalize_vec3( p, p->eye_normal, p->eye_normal );
+	 emit_normalize_vec3( p, transformed_normal, normal );
+         normal = transformed_normal;
       }
-      else if (p->state->rescale_normals) {
+      else if (p->state->need_eye_coords == p->state->rescale_normals) {
+         /* This is already adjusted for eye/non-eye rendering:
+          */
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
-					       STATE_NORMAL_SCALE);
+                                               STATE_NORMAL_SCALE);
 
-	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, p->eye_normal,
+	 emit_op2( p, OPCODE_MUL, transformed_normal, 0, normal,
 		   swizzle1(rescale, X));
+         normal = transformed_normal;
       }
+      
+      assert(normal.file == PROGRAM_TEMPORARY);
+      p->transformed_normal = normal;
    }
 
-   return p->eye_normal;
+   return p->transformed_normal;
 }
 
 
@@ -856,7 +876,7 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
     */
    if (!p->state->unit[i].light_spotcutoff_is_180) {
       struct ureg spot_dir_norm = register_param3(p, STATE_INTERNAL,
-						  STATE_SPOT_DIR_NORMALIZED, i);
+						  STATE_LIGHT_SPOT_DIR_NORMALIZED, i);
       struct ureg spot = get_temp(p);
       struct ureg slt = get_temp(p);
 
@@ -907,7 +927,7 @@ static void build_lighting( struct tnl_program *p )
    const GLboolean twoside = p->state->light_twoside;
    const GLboolean separate = p->state->separate_specular;
    GLuint nr_lights = 0, count = 0;
-   struct ureg normal = get_eye_normal(p);
+   struct ureg normal = get_transformed_normal(p);
    struct ureg lit = get_temp(p);
    struct ureg dots = get_temp(p);
    struct ureg _col0 = undef, _col1 = undef;
@@ -984,20 +1004,21 @@ static void build_lighting( struct tnl_program *p )
 	    /* Can used precomputed constants in this case.
 	     * Attenuation never applies to infinite lights.
 	     */
-	    VPpli = register_param3(p, STATE_LIGHT, i, 
-				    STATE_POSITION_NORMALIZED); 
+	    VPpli = register_param3(p, STATE_INTERNAL, 
+				    STATE_LIGHT_POSITION_NORMALIZED, i); 
             if (p->state->light_local_viewer) {
                 struct ureg eye_hat = get_eye_position_normalized(p);
                 half = get_temp(p);
                 emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
                 emit_normalize_vec3(p, half, half);
             } else {
-                half = register_param3(p, STATE_LIGHT, i, STATE_HALF_VECTOR);
+                half = register_param3(p, STATE_INTERNAL, 
+                                       STATE_LIGHT_HALF_VECTOR, i);
             }
 	 } 
 	 else {
-	    struct ureg Ppli = register_param3(p, STATE_LIGHT, i, 
-					       STATE_POSITION); 
+	    struct ureg Ppli = register_param3(p, STATE_INTERNAL, 
+					       STATE_LIGHT_POSITION, i); 
 	    struct ureg V = get_eye_position(p);
 	    struct ureg dist = get_temp(p);
 
@@ -1201,7 +1222,7 @@ static void build_reflect_texgen( struct tnl_program *p,
 				  struct ureg dest,
 				  GLuint writemask )
 {
-   struct ureg normal = get_eye_normal(p);
+   struct ureg normal = get_transformed_normal(p);
    struct ureg eye_hat = get_eye_position_normalized(p);
    struct ureg tmp = get_temp(p);
 
@@ -1219,7 +1240,7 @@ static void build_sphere_texgen( struct tnl_program *p,
 				 struct ureg dest,
 				 GLuint writemask )
 {
-   struct ureg normal = get_eye_normal(p);
+   struct ureg normal = get_transformed_normal(p);
    struct ureg eye_hat = get_eye_position_normalized(p);
    struct ureg tmp = get_temp(p);
    struct ureg half = register_scalar_const(p, .5);
@@ -1338,7 +1359,7 @@ static void build_texture_transform( struct tnl_program *p )
 	    }
 
 	    if (normal_mask) {
-	       struct ureg normal = get_eye_normal(p);
+	       struct ureg normal = get_transformed_normal(p);
 	       emit_op1(p, OPCODE_MOV, out_texgen, normal_mask, normal );
 	    }
 
@@ -1475,7 +1496,7 @@ create_new_program( const struct state_key *key,
    p.program = program;
    p.eye_position = undef;
    p.eye_position_normalized = undef;
-   p.eye_normal = undef;
+   p.transformed_normal = undef;
    p.identity = undef;
    p.temp_in_use = 0;
    
