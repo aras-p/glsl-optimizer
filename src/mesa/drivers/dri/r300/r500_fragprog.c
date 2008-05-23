@@ -353,7 +353,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 	struct gl_fragment_program *mp = &fp->mesa_program;
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
-	GLuint src[3], dest, temp[2];
+	GLuint src[3], dest = 0;
 	int temp_swiz, pixel_mask = 0, output_mask = 0, counter = 0;
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
