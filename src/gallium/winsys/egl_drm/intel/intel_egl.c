@@ -94,6 +94,18 @@ drm_update_res(struct drm_driver *drm_drv)
 	drm_drv->res = drmModeGetResources(drm_drv->device->drmFD);
 }
 
+static void
+drm_add_modes_from_output(_EGLScreen *screen, drmModeOutputPtr output)
+{
+	struct drm_mode_modeinfo *m;
+	int i;
+
+	for (i = 0; i < output->count_modes; i++) {
+		m = &output->modes[i];
+		_eglAddNewMode(screen, m->hdisplay, m->vdisplay, m->vrefresh, m->name);
+	}
+}
+
 static EGLBoolean
 drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
@@ -137,7 +149,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 		screen->output = output;
 		_eglInitScreen(&screen->base);
 		_eglAddScreen(disp, &screen->base);
-		_eglAddNewMode(&screen->base, 1024, 768, 60 * 1000, "1024x768-60");
+		drm_add_modes_from_output(&screen->base, output);
 	}
 
 	/* for now we only have one config */
@@ -396,7 +408,7 @@ drm_find_mode(drmModeOutputPtr output, _EGLMode *mode)
 
 	for (i = 0; i < output->count_modes; i++) {
 		m = &output->modes[i];
-		if (m->hdisplay == mode->Width && m->vdisplay == mode->Height)
+		if (m->hdisplay == mode->Width && m->vdisplay == mode->Height && m->vrefresh == mode->RefreshRate)
 			break;
 		m = NULL;
 	}
