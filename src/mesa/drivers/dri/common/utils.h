@@ -29,7 +29,8 @@
 #ifndef DRI_DEBUG_H
 #define DRI_DEBUG_H
 
-#include "GL/internal/dri_interface.h"
+#include <GL/gl.h>
+#include <GL/internal/dri_interface.h>
 #include "context.h"
 
 typedef struct __DRIutilversionRec2    __DRIutilversion2;

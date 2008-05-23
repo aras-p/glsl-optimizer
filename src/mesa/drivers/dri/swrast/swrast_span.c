@@ -118,7 +118,7 @@ static const GLubyte kernel[16] = {
 
 
 /*
- * Generate code for image span functions.
+ * Generate code for back-buffer span functions.
  */
 
 /* 32-bit BGRA */
@@ -189,11 +189,11 @@ static const GLubyte kernel[16] = {
 
 
 /*
- * Generate code for pixmap span functions.
+ * Generate code for front-buffer span functions.
  */
 
 /* 32-bit BGRA */
-#define NAME(FUNC) FUNC##_A8R8G8B8_pixmap
+#define NAME(FUNC) FUNC##_A8R8G8B8_front
 #define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -211,7 +211,7 @@ static const GLubyte kernel[16] = {
 
 
 /* 16-bit BGR */
-#define NAME(FUNC) FUNC##_R5G6B5_pixmap
+#define NAME(FUNC) FUNC##_R5G6B5_front
 #define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -227,7 +227,7 @@ static const GLubyte kernel[16] = {
 
 
 /* 8-bit BGR */
-#define NAME(FUNC) FUNC##_R3G3B2_pixmap
+#define NAME(FUNC) FUNC##_R3G3B2_front
 #define RB_TYPE GLubyte
 #define SPAN_VARS \
    struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
@@ -243,7 +243,7 @@ static const GLubyte kernel[16] = {
 
 
 /* 8-bit color index */
-#define NAME(FUNC) FUNC##_CI8_pixmap
+#define NAME(FUNC) FUNC##_CI8_front
 #define CI_MODE
 #define RB_TYPE GLubyte
 #define SPAN_VARS \
@@ -260,14 +260,14 @@ static const GLubyte kernel[16] = {
 
 
 /*
- * Images are malloced memory used for private back-buffers.
+ * Back-buffers are malloced memory and always private.
  *
  * BACK_PIXMAP (not supported)
  * BACK_XIMAGE
  */
 void
-swrast_set_span_funcs_ximage(struct swrast_renderbuffer *xrb,
-			     GLuint pixel_format)
+swrast_set_span_funcs_back(struct swrast_renderbuffer *xrb,
+			   GLuint pixel_format)
 {
     switch (pixel_format) {
     case PF_A8R8G8B8:
@@ -313,7 +313,7 @@ swrast_set_span_funcs_ximage(struct swrast_renderbuffer *xrb,
 
 
 /*
- * Pixmaps are used for front-buffers.
+ * Front-buffers are provided by the loader, the xorg loader uses pixmaps.
  *
  * WINDOW,          An X window
  * GLXWINDOW,       GLX window
@@ -321,44 +321,44 @@ swrast_set_span_funcs_ximage(struct swrast_renderbuffer *xrb,
  * PBUFFER          GLX Pbuffer
  */
 void
-swrast_set_span_funcs_pixmap(struct swrast_renderbuffer *xrb,
-			     GLuint pixel_format)
+swrast_set_span_funcs_front(struct swrast_renderbuffer *xrb,
+			    GLuint pixel_format)
 {
     switch (pixel_format) {
     case PF_A8R8G8B8:
-	xrb->Base.GetRow = get_row_A8R8G8B8_pixmap;
-	xrb->Base.GetValues = get_values_A8R8G8B8_pixmap;
-	xrb->Base.PutRow = put_row_A8R8G8B8_pixmap;
-	xrb->Base.PutRowRGB = put_row_rgb_A8R8G8B8_pixmap;
-	xrb->Base.PutMonoRow = put_mono_row_A8R8G8B8_pixmap;
-	xrb->Base.PutValues = put_values_A8R8G8B8_pixmap;
-	xrb->Base.PutMonoValues = put_mono_values_A8R8G8B8_pixmap;
+	xrb->Base.GetRow = get_row_A8R8G8B8_front;
+	xrb->Base.GetValues = get_values_A8R8G8B8_front;
+	xrb->Base.PutRow = put_row_A8R8G8B8_front;
+	xrb->Base.PutRowRGB = put_row_rgb_A8R8G8B8_front;
+	xrb->Base.PutMonoRow = put_mono_row_A8R8G8B8_front;
+	xrb->Base.PutValues = put_values_A8R8G8B8_front;
+	xrb->Base.PutMonoValues = put_mono_values_A8R8G8B8_front;
 	break;
     case PF_R5G6B5:
-	xrb->Base.GetRow = get_row_R5G6B5_pixmap;
-	xrb->Base.GetValues = get_values_R5G6B5_pixmap;
-	xrb->Base.PutRow = put_row_R5G6B5_pixmap;
-	xrb->Base.PutRowRGB = put_row_rgb_R5G6B5_pixmap;
-	xrb->Base.PutMonoRow = put_mono_row_R5G6B5_pixmap;
-	xrb->Base.PutValues = put_values_R5G6B5_pixmap;
-	xrb->Base.PutMonoValues = put_mono_values_R5G6B5_pixmap;
+	xrb->Base.GetRow = get_row_R5G6B5_front;
+	xrb->Base.GetValues = get_values_R5G6B5_front;
+	xrb->Base.PutRow = put_row_R5G6B5_front;
+	xrb->Base.PutRowRGB = put_row_rgb_R5G6B5_front;
+	xrb->Base.PutMonoRow = put_mono_row_R5G6B5_front;
+	xrb->Base.PutValues = put_values_R5G6B5_front;
+	xrb->Base.PutMonoValues = put_mono_values_R5G6B5_front;
 	break;
     case PF_R3G3B2:
-	xrb->Base.GetRow = get_row_R3G3B2_pixmap;
-	xrb->Base.GetValues = get_values_R3G3B2_pixmap;
-	xrb->Base.PutRow = put_row_R3G3B2_pixmap;
-	xrb->Base.PutRowRGB = put_row_rgb_R3G3B2_pixmap;
-	xrb->Base.PutMonoRow = put_mono_row_R3G3B2_pixmap;
-	xrb->Base.PutValues = put_values_R3G3B2_pixmap;
-	xrb->Base.PutMonoValues = put_mono_values_R3G3B2_pixmap;
+	xrb->Base.GetRow = get_row_R3G3B2_front;
+	xrb->Base.GetValues = get_values_R3G3B2_front;
+	xrb->Base.PutRow = put_row_R3G3B2_front;
+	xrb->Base.PutRowRGB = put_row_rgb_R3G3B2_front;
+	xrb->Base.PutMonoRow = put_mono_row_R3G3B2_front;
+	xrb->Base.PutValues = put_values_R3G3B2_front;
+	xrb->Base.PutMonoValues = put_mono_values_R3G3B2_front;
 	break;
     case PF_CI8:
-	xrb->Base.GetRow = get_row_CI8_pixmap;
-	xrb->Base.GetValues = get_values_CI8_pixmap;
-	xrb->Base.PutRow = put_row_CI8_pixmap;
-	xrb->Base.PutMonoRow = put_mono_row_CI8_pixmap;
-	xrb->Base.PutValues = put_values_CI8_pixmap;
-	xrb->Base.PutMonoValues = put_mono_values_CI8_pixmap;
+	xrb->Base.GetRow = get_row_CI8_front;
+	xrb->Base.GetValues = get_values_CI8_front;
+	xrb->Base.PutRow = put_row_CI8_front;
+	xrb->Base.PutMonoRow = put_mono_row_CI8_front;
+	xrb->Base.PutValues = put_values_CI8_front;
+	xrb->Base.PutMonoValues = put_mono_values_CI8_front;
 	break;
     default:
 	assert(0);

@@ -19,8 +19,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <GL/gl.h>
-#include <GL/internal/dri_interface.h>
+/*
+ * DRI software rasterizer
+ *
+ * This is the mesa swrast module packaged into a DRI driver structure.
+ *
+ * The front-buffer is allocated by the loader. The loader provides read/write
+ * callbacks for access to the front-buffer. The driver uses a scratch row for
+ * front-buffer rendering to avoid repeated calls to the loader.
+ *
+ * The back-buffer is allocated by the driver and is private.
+ */
+
 #include "context.h"
 #include "extensions.h"
 #include "framebuffer.h"
@@ -95,6 +105,11 @@ const struct dri_extension card_extensions[] =
     { "GL_NV_fragment_program",		GL_NV_fragment_program_functions },
     { NULL,				NULL }
 };
+
+
+/**
+ * Screen and config-related functions
+ */
 
 static void
 setupLoaderExtensions(__DRIscreen *psp,
@@ -223,17 +238,14 @@ static const __DRIextension **driGetExtensions(__DRIscreen *psp)
 
 
 /**
- * swrast_buffer.c
+ * Framebuffer and renderbuffer-related functions.
  */
 
 static GLuint
 choose_pixel_format(const GLvisual *v)
 {
     if (v->rgbMode) {
-	/* XXX 24bpp packed, 8bpp, xmesa gets bitsPerPixel from xserver */
 	int bpp = v->rgbBits;
-	if (bpp == 24)
-	    bpp = 32;
 
 	if (bpp == 32
 	    && v->redMask   == 0xff0000
@@ -275,6 +287,7 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
     int bpp;
+    unsigned mask = PITCH_ALIGN_BITS - 1;
 
     TRACE;
 
@@ -297,15 +310,15 @@ swrast_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 	return GL_FALSE;
     }
 
-    /* always pad to 32 bits */
-    xrb->pitch = ((width * bpp + 0x1f) & ~0x1f) / 8;
+    /* always pad to PITCH_ALIGN_BITS */
+    xrb->pitch = ((width * bpp + mask) & ~mask) / 8;
 
     return GL_TRUE;
 }
 
 static GLboolean
 swrast_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
-			GLenum internalFormat, GLuint width, GLuint height)
+			  GLenum internalFormat, GLuint width, GLuint height)
 {
     struct swrast_renderbuffer *xrb = swrast_renderbuffer(rb);
 
@@ -336,11 +349,11 @@ swrast_new_renderbuffer(const GLvisual *visual, GLboolean front)
 	xrb->Base.Delete = swrast_delete_renderbuffer;
 	if (front) {
 	    xrb->Base.AllocStorage = swrast_alloc_front_storage;
-	    swrast_set_span_funcs_pixmap(xrb, pixel_format);
+	    swrast_set_span_funcs_front(xrb, pixel_format);
 	}
 	else {
 	    xrb->Base.AllocStorage = swrast_alloc_back_storage;
-	    swrast_set_span_funcs_ximage(xrb, pixel_format);
+	    swrast_set_span_funcs_back(xrb, pixel_format);
 	}
 
 	switch (pixel_format) {
@@ -476,7 +489,7 @@ static void driSwapBuffers(__DRIdrawable *buf)
 
 
 /**
- * swrast_dd.c
+ * General device driver functions.
  */
 
 static void
@@ -510,7 +523,7 @@ get_string(GLcontext *ctx, GLenum pname)
 	case GL_VENDOR:
 	    return (const GLubyte *) "Mesa Project";
 	case GL_RENDERER:
-	    return (const GLubyte *) "X.Org";
+	    return (const GLubyte *) "Software Rasterizer";
 	default:
 	    return NULL;
     }
@@ -547,7 +560,7 @@ swrast_init_driver_functions(struct dd_function_table *driver)
 
 
 /**
- * swrast_context.c
+ * Context-related functions.
  */
 
 static __DRIcontext *
@@ -645,10 +658,11 @@ static int driBindContext(__DRIcontext *ctx,
 	if (!draw || !read)
 	    return GL_FALSE;
 
-	/* check for same context and buffer */
 	mesaCtx = &ctx->Base;
 	mesaDraw = &draw->Base;
 	mesaRead = &read->Base;
+
+	/* check for same context and buffer */
 	if (mesaCtx == _mesa_get_current_context()
 	    && mesaCtx->DrawBuffer == mesaDraw
 	    && mesaCtx->ReadBuffer == mesaRead) {
@@ -684,12 +698,12 @@ static int driUnbindContext(__DRIcontext *ctx)
 
 static const __DRIcoreExtension driCoreExtension = {
     { __DRI_CORE, __DRI_CORE_VERSION },
-    NULL,
+    NULL, /* driCreateNewScreen */
     driDestroyScreen,
     driGetExtensions,
     driGetConfigAttrib,
     driIndexConfigAttrib,
-    NULL,
+    NULL, /* driCreateNewDrawable */
     driDestroyDrawable,
     driSwapBuffers,
     driCreateNewContext,
@@ -702,7 +716,7 @@ static const __DRIcoreExtension driCoreExtension = {
 static const __DRIswrastExtension driSWRastExtension = {
     { __DRI_SWRAST, __DRI_SWRAST_VERSION },
     driCreateNewScreen,
-    driCreateNewDrawable,
+    driCreateNewDrawable
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

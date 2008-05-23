@@ -24,12 +24,12 @@
 
 
 /*
- * This is a modified version of swrast/s_spantemp.h for rendering to X11
- * drawables. The no-mask paths use a scratch row to avoid repeated calls
- * to xserver.
+ * Modified version of swrast/s_spantemp.h for front-buffer rendering. The
+ * no-mask paths use a scratch row to avoid repeated calls to the loader.
  *
- * For the mask paths we always use an array of 4 elements of RB_TYPE because
- * we should pad "image" pitch to 32 bits. 
+ * For the mask paths we always use an array of 4 elements of RB_TYPE. This is
+ * to satisfy the xorg loader requirement of an image pitch of 32 bits and
+ * should be ok for other loaders also.
  */
 
 
@@ -54,12 +54,12 @@ static inline void
 GET_PIXEL( GLcontext *glCtx, GLint x, GLint y, GLubyte *p )
 {
     __DRIcontext *ctx = swrast_context(glCtx);
-    __DRIdrawable *draw = swrast_drawable(glCtx->ReadBuffer);
+    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer);
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
-    screen->swrast_loader->getImage(draw, x, y, 1, 1, (char *)p,
-				    draw->loaderPrivate);
+    screen->swrast_loader->getImage(read, x, y, 1, 1, (char *)p,
+				    read->loaderPrivate);
 }
 
 static inline void
@@ -79,12 +79,12 @@ static inline void
 GET_ROW( GLcontext *glCtx, GLint x, GLint y, GLuint n, char *row )
 {
     __DRIcontext *ctx = swrast_context(glCtx);
-    __DRIdrawable *draw = swrast_drawable(glCtx->ReadBuffer);
+    __DRIdrawable *read = swrast_drawable(glCtx->ReadBuffer);
 
     __DRIscreen *screen = ctx->driScreenPriv;
 
-    screen->swrast_loader->getImage(draw, x, y, n, 1, row,
-				    draw->loaderPrivate);
+    screen->swrast_loader->getImage(read, x, y, n, 1, row,
+				    read->loaderPrivate);
 }
 
 #endif /* _SWRAST_SPANTEMP_ONCE */
@@ -133,7 +133,7 @@ NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
    RB_TYPE (*dest)[RB_COMPONENTS] = (RB_TYPE (*)[RB_COMPONENTS]) values;
 #endif
    GLuint i;
-   char *row = swrast_drawable(ctx->DrawBuffer)->row;
+   char *row = swrast_drawable(ctx->ReadBuffer)->row;
    INIT_PIXEL_PTR(pixel, x, y);
    GET_ROW( ctx, x, YFLIP(xrb, y), count, row );
    for (i = 0; i < count; i++) {

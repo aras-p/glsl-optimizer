@@ -35,8 +35,12 @@
 #include <GL/internal/dri_interface.h>
 #include "mtypes.h"
 
+
+/**
+ * Debugging
+ */
 #define DEBUG_CORE	0
-#define DEBUG_SPAN	1
+#define DEBUG_SPAN	0
 
 #if DEBUG_CORE
 #define TRACE _mesa_printf("--> %s\n", __FUNCTION__)
@@ -77,12 +81,14 @@ struct __DRIdrawableRec {
 
     __DRIscreen *driScreenPriv;
 
+    /* scratch row for optimized front-buffer rendering */
     char *row;
 };
 
 struct swrast_renderbuffer {
     struct gl_renderbuffer Base;
 
+    /* renderbuffer pitch (in bytes) */
     GLuint pitch;
 };
 
@@ -114,14 +120,23 @@ swrast_renderbuffer(struct gl_renderbuffer *rb)
 #define PF_R3G3B2     4		/**<  8-bit TrueColor:  3-R, 3-G, 2-B bits */
 
 
+/**
+ * Renderbuffer pitch alignment (in bits).
+ *
+ * The xorg loader requires padding images to 32 bits. However, this should
+ * become a screen/drawable parameter XXX
+ */
+#define PITCH_ALIGN_BITS 32
+
+
 /* swrast_span.c */
 
 extern void
-swrast_set_span_funcs_ximage(struct swrast_renderbuffer *xrb,
-			     GLuint pixel_format);
+swrast_set_span_funcs_back(struct swrast_renderbuffer *xrb,
+			   GLuint pixel_format);
 
 extern void
-swrast_set_span_funcs_pixmap(struct swrast_renderbuffer *xrb,
-			     GLuint pixel_format);
+swrast_set_span_funcs_front(struct swrast_renderbuffer *xrb,
+			    GLuint pixel_format);
 
 #endif /* _SWRAST_PRIV_H_ */
