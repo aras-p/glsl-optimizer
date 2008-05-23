@@ -53,6 +53,7 @@ struct state_key {
    unsigned light_color_material:1;
    unsigned light_color_material_mask:12;
    unsigned light_material_mask:12;
+   unsigned material_shininess_is_zero:1;
 
    unsigned need_eye_coords:1;
    unsigned normalize:1;
@@ -155,6 +156,26 @@ tnl_get_per_vertex_fog(GLcontext *ctx)
 #endif
 }
 
+static GLboolean check_active_shininess( GLcontext *ctx,
+                                         const struct state_key *key,
+                                         GLuint side )
+{
+   GLuint bit = 1 << (MAT_ATTRIB_FRONT_SHININESS + side);
+
+   if (key->light_color_material_mask & bit)
+      return GL_TRUE;
+
+   if (key->light_material_mask & bit)
+      return GL_TRUE;
+
+   if (ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_SHININESS + side][0] != 0.0F)
+      return GL_TRUE;
+
+   return GL_FALSE;
+}
+     
+
+
 
 static struct state_key *make_state_key( GLcontext *ctx )
 {
@@ -213,6 +234,17 @@ static struct state_key *make_state_key( GLcontext *ctx )
 		light->QuadraticAttenuation != 0.0)
 	       key->unit[i].light_attenuated = 1;
 	 }
+      }
+
+      if (check_active_shininess(ctx, key, 0)) {
+         key->material_shininess_is_zero = 0;
+      }
+      else if (key->light_twoside &&
+               check_active_shininess(ctx, key, 1)) {
+         key->material_shininess_is_zero = 0;
+      }
+      else {
+         key->material_shininess_is_zero = 1;
       }
    }
 
@@ -915,7 +947,26 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
 }
 						
 
+static void emit_degenerate_lit( struct tnl_program *p,
+                                 struct ureg lit,
+                                 struct ureg dots )
+{
+   struct ureg id = get_identity_param(p);
+   
+   /* 1, 0, 0, 1 
+    */
+   emit_op1(p, OPCODE_MOV, lit, 0, swizzle(id, Z, X, X, Z)); 
 
+   /* 1, MAX2(in[0], 0), 0, 1
+    */
+   emit_op2(p, OPCODE_MAX, lit, WRITEMASK_Y, lit, swizzle1(dots, X)); 
+
+   /* 1, MAX2(in[0], 0), (in[0] > 0 ? 1 : 0), 1
+    */
+   emit_op2(p, OPCODE_SLT, lit, WRITEMASK_Z, 
+            lit,                /* 0 */
+            swizzle1(dots, X)); /* in[0] */
+}
 
 
 /* Need to add some addtional parameters to allow lighting in object
@@ -941,9 +992,11 @@ static void build_lighting( struct tnl_program *p )
    set_material_flags(p);
 
    {
-      struct ureg shininess = get_material(p, 0, STATE_SHININESS);
-      emit_op1(p, OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
-      release_temp(p, shininess);
+      if (!p->state->material_shininess_is_zero) {
+         struct ureg shininess = get_material(p, 0, STATE_SHININESS);
+         emit_op1(p, OPCODE_MOV, dots,  WRITEMASK_W, swizzle1(shininess,X));
+         release_temp(p, shininess);
+      }
 
       _col0 = make_temp(p, get_scenecolor(p, 0));
       if (separate)
@@ -954,10 +1007,12 @@ static void build_lighting( struct tnl_program *p )
    }
 
    if (twoside) {
-      struct ureg shininess = get_material(p, 1, STATE_SHININESS);
-      emit_op1(p, OPCODE_MOV, dots, WRITEMASK_Z, 
-	       negate(swizzle1(shininess,X)));
-      release_temp(p, shininess);
+      if (!p->state->material_shininess_is_zero) {
+         struct ureg shininess = get_material(p, 1, STATE_SHININESS);
+         emit_op1(p, OPCODE_MOV, dots, WRITEMASK_Z, 
+                  negate(swizzle1(shininess,X)));
+         release_temp(p, shininess);
+      }
 
       _bfc0 = make_temp(p, get_scenecolor(p, 1));
       if (separate)
@@ -1006,14 +1061,17 @@ static void build_lighting( struct tnl_program *p )
 	     */
 	    VPpli = register_param3(p, STATE_INTERNAL, 
 				    STATE_LIGHT_POSITION_NORMALIZED, i); 
-            if (p->state->light_local_viewer) {
-                struct ureg eye_hat = get_eye_position_normalized(p);
-                half = get_temp(p);
-                emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
-                emit_normalize_vec3(p, half, half);
-            } else {
-                half = register_param3(p, STATE_INTERNAL, 
-                                       STATE_LIGHT_HALF_VECTOR, i);
+            
+            if (!p->state->material_shininess_is_zero) {
+               if (p->state->light_local_viewer) {
+                  struct ureg eye_hat = get_eye_position_normalized(p);
+                  half = get_temp(p);
+                  emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
+                  emit_normalize_vec3(p, half, half);
+               } else {
+                  half = register_param3(p, STATE_INTERNAL, 
+                                         STATE_LIGHT_HALF_VECTOR, i);
+               }
             }
 	 } 
 	 else {
@@ -1023,7 +1081,6 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg dist = get_temp(p);
 
 	    VPpli = get_temp(p); 
-	    half = get_temp(p);
  
 	    /* Calculate VPpli vector
 	     */
@@ -1045,16 +1102,20 @@ static void build_lighting( struct tnl_program *p )
 
 	    /* Calculate viewer direction, or use infinite viewer:
 	     */
-	    if (p->state->light_local_viewer) {
-	       struct ureg eye_hat = get_eye_position_normalized(p);
-	       emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
-	    }
-	    else {
-	       struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z); 
-	       emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
-	    }
+            if (!p->state->material_shininess_is_zero) {
+               half = get_temp(p);
 
-	    emit_normalize_vec3(p, half, half);
+               if (p->state->light_local_viewer) {
+                  struct ureg eye_hat = get_eye_position_normalized(p);
+                  emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
+               }
+               else {
+                  struct ureg z_dir = swizzle(get_identity_param(p),X,Y,W,Z); 
+                  emit_op2(p, OPCODE_ADD, half, 0, VPpli, z_dir);
+               }
+
+               emit_normalize_vec3(p, half, half);
+            }
 
 	    release_temp(p, dist);
 	 }
@@ -1062,7 +1123,9 @@ static void build_lighting( struct tnl_program *p )
 	 /* Calculate dot products:
 	  */
 	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_X, normal, VPpli);
-	 emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
+
+         if (!p->state->material_shininess_is_zero)
+            emit_op2(p, OPCODE_DP3, dots, WRITEMASK_Y, normal, half);
 
 	 /* Front face lighting:
 	  */
@@ -1073,7 +1136,11 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 
-	    emit_op1(p, OPCODE_LIT, lit, 0, dots);
+            if (p->state->material_shininess_is_zero) {
+               emit_degenerate_lit(p, lit, dots);
+            } else {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+            }
    
 	    if (!is_undef(att)) 
 	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
@@ -1099,7 +1166,7 @@ static void build_lighting( struct tnl_program *p )
 	       res1 = _col1;
 	    }
 
-	    emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
+	    emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _col0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _col1);
       
@@ -1117,7 +1184,11 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 	       
-	    emit_op1(p, OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
+            if (p->state->material_shininess_is_zero) {
+               emit_degenerate_lit(p, lit, negate(swizzle(dots,X,Y,W,Z)));
+            } else {
+               emit_op1(p, OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
+            }
 
 	    if (!is_undef(att)) 
 	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
@@ -1142,7 +1213,7 @@ static void build_lighting( struct tnl_program *p )
 	       mask1 = 0;
 	    }
 
-	    emit_op3(p, OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
+	    emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _bfc1);
 
