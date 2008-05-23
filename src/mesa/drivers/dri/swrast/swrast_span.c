@@ -32,6 +32,46 @@
 #define YFLIP(_xrb, Y) ((_xrb)->Base.Height - (Y) - 1)
 
 /*
+ * Pixel macros shared across front/back buffer span functions.
+ */
+
+/* 32-bit BGRA */
+#define STORE_PIXEL_A8R8G8B8(DST, X, Y, VALUE) \
+   DST[3] = VALUE[ACOMP]; \
+   DST[2] = VALUE[RCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[0] = VALUE[BCOMP]
+#define STORE_PIXEL_RGB_A8R8G8B8(DST, X, Y, VALUE) \
+   DST[3] = 0xff; \
+   DST[2] = VALUE[RCOMP]; \
+   DST[1] = VALUE[GCOMP]; \
+   DST[0] = VALUE[BCOMP]
+#define FETCH_PIXEL_A8R8G8B8(DST, SRC) \
+   DST[ACOMP] = SRC[3]; \
+   DST[RCOMP] = SRC[2]; \
+   DST[GCOMP] = SRC[1]; \
+   DST[BCOMP] = SRC[0]
+
+
+/* 16-bit BGR */
+#define STORE_PIXEL_R5G6B5(DST, X, Y, VALUE) \
+   do { \
+   GLushort *p = (GLushort *)DST; \
+   *p = ( (((VALUE[RCOMP]) & 0xf8) << 8) | \
+	  (((VALUE[GCOMP]) & 0xfc) << 3) | \
+	  (((VALUE[BCOMP]) & 0xf8) >> 3) ); \
+   } while(0)
+#define FETCH_PIXEL_R5G6B5(DST, SRC) \
+   do { \
+   GLushort p = *(GLushort *)SRC; \
+   DST[ACOMP] = 0xff; \
+   DST[RCOMP] = ((p >> 8) & 0xf8) * 255 / 0xf8; \
+   DST[GCOMP] = ((p >> 3) & 0xfc) * 255 / 0xfc; \
+   DST[BCOMP] = ((p << 3) & 0xf8) * 255 / 0xf8; \
+   } while(0)
+
+
+/*
  * Generate code for image span functions.
  */
 
@@ -44,20 +84,11 @@
    GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X) * 4;
 #define INC_PIXEL_PTR(P) P += 4
 #define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[3] = VALUE[ACOMP]; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   STORE_PIXEL_A8R8G8B8(DST, X, Y, VALUE)
 #define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[3] = 0xff; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   STORE_PIXEL_RGB_A8R8G8B8(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
-   DST[ACOMP] = SRC[3]; \
-   DST[RCOMP] = SRC[2]; \
-   DST[GCOMP] = SRC[1]; \
-   DST[BCOMP] = SRC[0]
+   FETCH_PIXEL_A8R8G8B8(DST, SRC)
 
 #include "swrast/s_spantemp.h"
 
@@ -71,20 +102,9 @@
    GLubyte *P = (GLubyte *)xrb->Base.Data + YFLIP(xrb, Y) * xrb->pitch + (X) * 2;
 #define INC_PIXEL_PTR(P) P += 2
 #define STORE_PIXEL(DST, X, Y, VALUE) \
-   do { \
-   GLushort *p = (GLushort *)DST; \
-   *p = ( (((VALUE[RCOMP]) & 0xf8) << 8) | \
-	  (((VALUE[GCOMP]) & 0xfc) << 3) | \
-	  (((VALUE[BCOMP]) & 0xf8) >> 3) ); \
-   } while(0)
+   STORE_PIXEL_R5G6B5(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
-   do { \
-   GLushort p = *(GLushort *)SRC; \
-   DST[ACOMP] = 0xff; \
-   DST[RCOMP] = ((p >> 8) & 0xf8) * 255 / 0xf8; \
-   DST[GCOMP] = ((p >> 3) & 0xfc) * 255 / 0xfc; \
-   DST[BCOMP] = ((p << 3) & 0xf8) * 255 / 0xf8; \
-   } while(0)
+   FETCH_PIXEL_R5G6B5(DST, SRC)
 
 #include "swrast/s_spantemp.h"
 
@@ -119,20 +139,11 @@
    GLubyte *P = (GLubyte *)row;
 #define INC_PIXEL_PTR(P) P += 4
 #define STORE_PIXEL(DST, X, Y, VALUE) \
-   DST[3] = VALUE[ACOMP]; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   STORE_PIXEL_A8R8G8B8(DST, X, Y, VALUE)
 #define STORE_PIXEL_RGB(DST, X, Y, VALUE) \
-   DST[3] = 0xff; \
-   DST[2] = VALUE[RCOMP]; \
-   DST[1] = VALUE[GCOMP]; \
-   DST[0] = VALUE[BCOMP]
+   STORE_PIXEL_RGB_A8R8G8B8(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
-   DST[ACOMP] = SRC[3]; \
-   DST[RCOMP] = SRC[2]; \
-   DST[GCOMP] = SRC[1]; \
-   DST[BCOMP] = SRC[0]
+   FETCH_PIXEL_A8R8G8B8(DST, SRC)
 
 #include "swrast_spantemp.h"
 
@@ -146,20 +157,9 @@
    GLubyte *P = (GLubyte *)row;
 #define INC_PIXEL_PTR(P) P += 2
 #define STORE_PIXEL(DST, X, Y, VALUE) \
-   do { \
-   GLushort *p = (GLushort *)DST; \
-   *p = ( (((VALUE[RCOMP]) & 0xf8) << 8) | \
-	  (((VALUE[GCOMP]) & 0xfc) << 3) | \
-	  (((VALUE[BCOMP]) & 0xf8) >> 3) ); \
-   } while(0)
+   STORE_PIXEL_R5G6B5(DST, X, Y, VALUE)
 #define FETCH_PIXEL(DST, SRC) \
-   do { \
-   GLushort p = *(GLushort *)SRC; \
-   DST[ACOMP] = 0xff; \
-   DST[RCOMP] = ((p >> 8) & 0xf8) * 255 / 0xf8; \
-   DST[GCOMP] = ((p >> 3) & 0xfc) * 255 / 0xfc; \
-   DST[BCOMP] = ((p << 3) & 0xf8) * 255 / 0xf8; \
-   } while(0)
+   FETCH_PIXEL_R5G6B5(DST, SRC)
 
 #include "swrast_spantemp.h"
 
