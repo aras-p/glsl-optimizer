@@ -1098,7 +1098,13 @@ static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_inst
        * Note: use 1.0 to avoid passing zero to 
        */
       x87_fldz(cp->func);                           /* 1 0  */
+#if 1
+      x87_fld1(cp->func);                           /* 1 0  */
+#else
+      /* Correct but slow due to fp exceptions generated in fyl2x - fix me.
+       */
       x87_fldz(cp->func);                           /* 1 0  */
+#endif
       x87_fld_src(cp, &op->FullSrcRegisters[0], 1); /* a1 1 0  */
       x87_fcomi(cp->func, st2);	                    /* a1 1 0  */
       x87_fcmovb(cp->func, st1);                    /* a1' 1 0  */
