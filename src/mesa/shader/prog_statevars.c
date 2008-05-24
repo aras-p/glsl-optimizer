@@ -397,7 +397,11 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
    case STATE_INTERNAL:
       switch (state[1]) {
       case STATE_NORMAL_SCALE:
-         ASSIGN_4V(value, ctx->_ModelViewInvScale, 0, 0, 1);
+         ASSIGN_4V(value, 
+                   ctx->_ModelViewInvScale, 
+                   ctx->_ModelViewInvScale, 
+                   ctx->_ModelViewInvScale, 
+                   1);
          return;
       case STATE_TEXRECT_SCALE:
          {

@@ -775,8 +775,7 @@ static struct ureg get_transformed_normal( struct tnl_program *p )
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
                                                STATE_NORMAL_SCALE);
 
-	 emit_op2( p, OPCODE_MUL, transformed_normal, 0, normal,
-		   swizzle1(rescale, X));
+	 emit_op2( p, OPCODE_MUL, transformed_normal, 0, normal, rescale );
          normal = transformed_normal;
       }
       
