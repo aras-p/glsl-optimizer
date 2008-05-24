@@ -105,8 +105,31 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
 #define X87_CW_ROUND_MASK             (3<<10)
 #define X87_CW_INFINITY               (1<<12)
 
+static void do_populate_lut( struct shine_tab *tab,
+                             float unclamped_exponent )
+{
+   const float epsilon = 1.0F / 256.0F;    
+   float exponent = CLAMP(unclamped_exponent, -(128.0F - epsilon), (128.0F - epsilon));
+   unsigned i;
+
+   tab->exponent = unclamped_exponent; /* for later comparison */
+   
+   tab->values[0] = 0;
+   if (exponent == 0) {
+      for (i = 1; i < 258; i++) {
+         tab->values[i] = 1.0;
+      }      
+   }
+   else {
+      for (i = 1; i < 258; i++) {
+         tab->values[i] = powf((float)i * epsilon, exponent);
+      }
+   }
+}
+
 static void init_internals( struct aos_machine *machine )
 {
+   unsigned i;
    float inv = 1.0f/255.0f;
    float f255 = 255.0f;
 
@@ -141,6 +164,9 @@ static void init_internals( struct aos_machine *machine )
                                (1<<6) |
                                X87_CW_ROUND_DOWN |
                                X87_CW_PRECISION_DOUBLE_EXT);
+
+   for (i = 0; i < MAX_SHINE_TAB; i++)
+      do_populate_lut( &machine->shine_tab[i], 1.0f );
 }
 
 
@@ -1132,26 +1158,231 @@ static boolean emit_FRC( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
+static PIPE_CDECL void do_lit( struct aos_machine *machine,
+                               float *result,
+                               const float *in,
+                               unsigned count )
+{
+   if (in[0] > 0) 
+   {
+      if (in[1] <= 0.0) 
+      {
+         result[0] = 1.0F;
+         result[1] = in[0];
+         result[2] = 1.0;
+         result[3] = 1.0F;
+      }
+      else
+      {
+         const float epsilon = 1.0F / 256.0F;    
+         float exponent = CLAMP(in[3], -(128.0F - epsilon), (128.0F - epsilon));
+         result[0] = 1.0F;
+         result[1] = in[0];
+         result[2] = powf(in[1], exponent);
+         result[3] = 1.0;
+      }
+   }
+   else 
+   {
+      result[0] = 1.0F;
+      result[1] = 0.0;
+      result[2] = 0.0;
+      result[3] = 1.0F;
+   }
+}
+
+
+static PIPE_CDECL void do_lit_lut( struct aos_machine *machine,
+                                   float *result,
+                                   const float *in,
+                                   unsigned count )
+{
+   if (in[0] > 0) 
+   {
+      if (in[1] <= 0.0) 
+      {
+         result[0] = 1.0F;
+         result[1] = in[0];
+         result[2] = 1.0;
+         result[3] = 1.0F;
+         return;
+      }
+      
+      if (machine->lit_info[count].shine_tab->exponent != in[3]) {
+         machine->lit_info[count].func = do_lit;
+         goto no_luck;
+      }
+
+      if (in[1] <= 1.0)
+      {
+         const float *tab = machine->lit_info[count].shine_tab->values;
+         float f = in[1] * 256;
+         int k = (int)f;
+         float frac = f - (float)k;
+         
+         result[0] = 1.0F;
+         result[1] = in[0];
+         result[2] = tab[k] + frac*(tab[k+1]-tab[k]);
+         result[3] = 1.0;
+         return;
+      }
+      
+   no_luck:
+      {
+         const float epsilon = 1.0F / 256.0F;    
+         float exponent = CLAMP(in[3], -(128.0F - epsilon), (128.0F - epsilon));
+         result[0] = 1.0F;
+         result[1] = in[0];
+         result[2] = powf(in[1], exponent);
+         result[3] = 1.0;
+      }
+   }
+   else 
+   {
+      result[0] = 1.0F;
+      result[1] = 0.0;
+      result[2] = 0.0;
+      result[3] = 1.0F;
+   }
+}
+
+
+
+static void PIPE_CDECL populate_lut( struct aos_machine *machine,
+                                     float *result,
+                                     const float *in,
+                                     unsigned count )
+{
+   unsigned i, tab;
+
+   /* Search for an existing table for this value.  Note that without
+    * static analysis we don't really know if in[3] will be constant,
+    * but it usually is...
+    */
+   for (tab = 0; tab < 4; tab++) {
+      if (machine->shine_tab[tab].exponent == in[3]) {
+         goto found;
+      }
+   }
+
+   for (tab = 0, i = 1; i < 4; i++) {
+      if (machine->shine_tab[i].last_used < machine->shine_tab[tab].last_used)
+         tab = i;
+   }
+
+   if (machine->shine_tab[tab].last_used == machine->now) {
+      /* No unused tables (this is not a ffvertex program...).  Just
+       * call pow each time:
+       */
+      machine->lit_info[count].func = do_lit;
+      machine->lit_info[count].func( machine, result, in, count );
+      return;
+   }
+   else {
+      do_populate_lut( &machine->shine_tab[tab], in[3] );
+   }
+
+ found:
+   machine->shine_tab[tab].last_used = machine->now;
+   machine->lit_info[count].shine_tab = &machine->shine_tab[tab];
+   machine->lit_info[count].func = do_lit_lut;
+   machine->lit_info[count].func( machine, result, in, count );
+}
+
+
+
 
 
 static boolean emit_LIT( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
+   struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
+   unsigned writemask = op->FullDstRegisters[0].DstRegister.WriteMask;
+   unsigned lit_count = cp->lit_count++;
+   struct x86_reg result, arg0;
+   unsigned i;
+
+#if 1
+   /* For absolute correctness, need to spill/invalidate all XMM regs
+    * too.  
+    */
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].dirty) 
+         spill(cp, i);
+      aos_release_xmm_reg(cp, i);
+   }
+#endif
+
+   if (writemask != TGSI_WRITEMASK_XYZW) 
+      result = x86_make_disp(cp->machine_EDX, Offset(struct aos_machine, tmp[0]));
+   else 
+      result = get_dst_ptr(cp, &op->FullDstRegisters[0]);    
+
+   
+   arg0 = fetch_src( cp, &op->FullSrcRegisters[0] );
+   if (arg0.file == file_XMM) {
+      struct x86_reg tmp = x86_make_disp(cp->machine_EDX, 
+                                         Offset(struct aos_machine, tmp[1]));
+      sse_movaps( cp->func, tmp, arg0 );
+      arg0 = tmp;
+   }
+                  
+      
+
+   /* Push caller-save (ie scratch) regs.  
+    */
+   x86_cdecl_caller_push_regs( cp->func );
+
+   /* Push the arguments:
+    */
+   x86_push_imm32( cp->func, lit_count );
+
+   x86_lea( cp->func, ecx, arg0 );
+   x86_push( cp->func, ecx );
+
+   x86_lea( cp->func, ecx, result );
+   x86_push( cp->func, ecx );
+
+   x86_push( cp->func, cp->machine_EDX );
+
+   if (lit_count < MAX_LIT_INFO) {
+      x86_mov( cp->func, ecx, x86_make_disp( cp->machine_EDX, 
+                                             Offset(struct aos_machine, lit_info) + 
+                                             lit_count * sizeof(struct lit_info) + 
+                                             Offset(struct lit_info, func)));
+   }
+   else {
+      x86_mov_reg_imm( cp->func, ecx, (int)do_lit );
+   }
+
+   x86_call( cp->func, ecx );
+            
+   x86_pop( cp->func, ecx );    /* fixme... */
+   x86_pop( cp->func, ecx );
+   x86_pop( cp->func, ecx );
+   x86_pop( cp->func, ecx );
+
+   x86_cdecl_caller_pop_regs( cp->func );
+
+   if (writemask != TGSI_WRITEMASK_XYZW) {
+      store_dest( cp, 
+                  &op->FullDstRegisters[0],
+                  get_xmm_clone( cp, result ) );
+   }
+
+   return TRUE;
+}
+
+   
+static boolean emit_inline_LIT( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
+{
    struct x86_reg dst = get_dst_ptr(cp, &op->FullDstRegisters[0]); 
    unsigned writemask = op->FullDstRegisters[0].DstRegister.WriteMask;
-
-
-
 
    if (writemask & TGSI_WRITEMASK_YZ) {
       struct x86_reg st1 = x86_make_reg(file_x87, 1);
       struct x86_reg st2 = x86_make_reg(file_x87, 2);
 
-   
-      
-
       /* a1' = a1 <= 0 ? 1 : a1;  
-       *
-       * Note: use 1.0 to avoid passing zero to 
        */
       x87_fldz(cp->func);                           /* 1 0  */
 #if 1
@@ -1865,6 +2096,14 @@ static void vaos_set_constants( struct draw_vs_varient *varient,
                    constants[i][2],
                    constants[i][3]);
 #endif
+
+   {
+      unsigned i;
+      for (i = 0; i < MAX_LIT_INFO; i++) {
+         vaos->machine->lit_info[i].func = populate_lut;
+         vaos->machine->now++;
+      }
+   }
 }
 
 

@@ -59,6 +59,25 @@ struct x86_function;
 #define FPU_RND_NEG    1
 #define FPU_RND_NEAREST 2
 
+struct aos_machine;
+typedef void PIPE_CDECL (*lit_func)( struct aos_machine *,
+                                    float *result,
+                                    const float *in,
+                                    unsigned count );
+struct shine_tab {
+   float exponent;
+   float values[258];
+   unsigned last_used;
+};
+
+struct lit_info {
+   lit_func func;
+   struct shine_tab *shine_tab;
+};
+
+#define MAX_SHINE_TAB    4
+#define MAX_LIT_INFO     16
+
 /* This is the temporary storage used by all the aos_sse vs varients.
  * Create one per context and reuse by passing a pointer in at
  * vs_varient creation??
@@ -73,6 +92,13 @@ struct aos_machine {
 
    float scale[4];              /* viewport */
    float translate[4];          /* viewport */
+
+   float tmp[2][4];             /* scratch space for LIT */
+
+   struct shine_tab shine_tab[MAX_SHINE_TAB];
+   struct lit_info  lit_info[MAX_LIT_INFO];
+   unsigned now;
+   
 
    ushort fpu_rnd_nearest;
    ushort fpu_rnd_neg_inf;
@@ -97,6 +123,7 @@ struct aos_compilation {
    unsigned insn_counter;
    unsigned num_immediates;
    unsigned count;
+   unsigned lit_count;
 
    struct {
       unsigned idx:16;
