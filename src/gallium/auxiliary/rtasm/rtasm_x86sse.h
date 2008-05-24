@@ -155,6 +155,7 @@ void x86_call( struct x86_function *p, struct x86_reg reg);
  * I load the immediate into general purpose register and use it.
  */
 void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm );
+void x86_add_reg_imm8( struct x86_function *p, struct x86_reg dst, ubyte imm );
 
 
 /* Macro for sse_shufps() and sse2_pshufd():
@@ -225,12 +226,17 @@ void x86_imul( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_or( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_pop( struct x86_function *p, struct x86_reg reg );
 void x86_push( struct x86_function *p, struct x86_reg reg );
+void x86_push_imm32( struct x86_function *p, int imm );
 void x86_ret( struct x86_function *p );
 void x86_retw( struct x86_function *p, unsigned short imm );
 void x86_sub( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_test( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_xor( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_sahf( struct x86_function *p );
+
+
+void x86_cdecl_caller_push_regs( struct x86_function *p );
+void x86_cdecl_caller_pop_regs( struct x86_function *p );
 
 void x87_assert_stack_empty( struct x86_function *p );
 

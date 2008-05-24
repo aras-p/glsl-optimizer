@@ -218,6 +218,8 @@ static void emit_3ub( struct x86_function *p, unsigned char b0, unsigned char b1
 
 /* Build a modRM byte + possible displacement.  No treatment of SIB
  * indexing.  BZZT - no way to encode an absolute address.
+ *
+ * This is the "/r" field in the x86 manuals...
  */
 static void emit_modrm( struct x86_function *p, 
 			struct x86_reg reg, 
@@ -256,7 +258,8 @@ static void emit_modrm( struct x86_function *p,
    }
 }
 
-
+/* Emits the "/0".."/7" specialized versions of the modrm ("/r") bytes.
+ */
 static void emit_modrm_noreg( struct x86_function *p,
 			      unsigned op,
 			      struct x86_reg regmem )
@@ -365,8 +368,7 @@ void x86_jcc( struct x86_function *p,
    DUMP_I(cc);
    
    if (offset < 0) {
-      int amt = p->csr - p->store;
-      assert(amt > -offset);
+      assert(p->csr - p->store > -offset);
    }
 
    if (offset <= 127 && offset >= -128) {
@@ -443,6 +445,16 @@ void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm )
    emit_1i(p, imm);
 }
 
+void x86_add_reg_imm8( struct x86_function *p, struct x86_reg dst, ubyte imm )
+{
+   DUMP_RI( dst, imm );
+   assert(dst.mod == mod_REG);
+   emit_1ub(p, 0x80);
+   emit_modrm_noreg(p, 0, dst);
+   emit_1ub(p, imm);
+}
+
+
 void x86_push( struct x86_function *p,
 	       struct x86_reg reg )
 {
@@ -458,6 +470,17 @@ void x86_push( struct x86_function *p,
 
    p->stack_offset += 4;
 }
+
+void x86_push_imm32( struct x86_function *p,
+                     int imm32 )
+{
+   DUMP_I( imm32 );
+   emit_1ub(p, 0x68);
+   emit_1i(p,  imm32);
+
+   p->stack_offset += 4;
+}
+
 
 void x86_pop( struct x86_function *p,
 	      struct x86_reg reg )
@@ -1556,6 +1579,21 @@ void mmx_movq( struct x86_function *p,
 /***********************************************************************
  * Helper functions
  */
+
+
+void x86_cdecl_caller_push_regs( struct x86_function *p )
+{
+   x86_push(p, x86_make_reg(file_REG32, reg_AX));
+   x86_push(p, x86_make_reg(file_REG32, reg_CX));
+   x86_push(p, x86_make_reg(file_REG32, reg_DX));
+}
+
+void x86_cdecl_caller_pop_regs( struct x86_function *p )
+{
+   x86_pop(p, x86_make_reg(file_REG32, reg_DX));
+   x86_pop(p, x86_make_reg(file_REG32, reg_CX));
+   x86_pop(p, x86_make_reg(file_REG32, reg_AX));
+}
 
 
 /* Retreive a reference to one of the function arguments, taking into
