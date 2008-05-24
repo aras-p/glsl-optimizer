@@ -237,7 +237,7 @@ static GLuint make_dest(struct r500_fragment_program *fp, struct prog_dst_regist
 }
 
 static void emit_tex(struct r500_fragment_program *fp,
-		     struct prog_instruction *fpi, int opcode, int dest, int counter)
+		     struct prog_instruction *fpi, int dest, int counter)
 {
 	int hwsrc, hwdest;
 	GLuint mask;
@@ -260,7 +260,7 @@ static void emit_tex(struct r500_fragment_program *fp,
 	if (fpi->TexSrcTarget == TEXTURE_RECT_INDEX)
 	        fp->inst[counter].inst1 |= R500_TEX_UNSCALED;
 
-	switch (opcode) {
+	switch (fpi->Opcode) {
 	case OPCODE_KIL:
 		fp->inst[counter].inst1 |= R500_TEX_INST_TEXKILL;
 		break;
@@ -274,7 +274,7 @@ static void emit_tex(struct r500_fragment_program *fp,
 		fp->inst[counter].inst1 |= R500_TEX_INST_PROJ;
 		break;
 	default:
-		ERROR("emit_tex can't handle opcode %x\n", opcode);
+		ERROR("emit_tex can't handle opcode %x\n", fpi->Opcode);
 	}
 
 	fp->inst[counter].inst2 = R500_TEX_SRC_ADDR(hwsrc)
@@ -578,9 +578,6 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]));
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_FRC
 					| R500_ALU_RGBA_ADDRD(dest);
-				break;
-			case OPCODE_KIL:
-				emit_tex(fp, fpi, OPCODE_KIL, dest, counter);
 				break;
 			case OPCODE_LG2:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
@@ -1017,18 +1014,11 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				emit_alu(fp, counter, fpi);
 				emit_mov(fp, counter, fpi->SrcReg[0], dest);
 				break;
+			case OPCODE_KIL:
 			case OPCODE_TEX:
-				emit_tex(fp, fpi, OPCODE_TEX, dest, counter);
-					if (fpi->DstReg.File == PROGRAM_OUTPUT)
-						counter++;
-				break;
 			case OPCODE_TXB:
-				emit_tex(fp, fpi, OPCODE_TXB, dest, counter);
-					if (fpi->DstReg.File == PROGRAM_OUTPUT)
-						counter++;
-				break;
 			case OPCODE_TXP:
-				emit_tex(fp, fpi, OPCODE_TXP, dest, counter);
+				emit_tex(fp, fpi, dest, counter);
 					if (fpi->DstReg.File == PROGRAM_OUTPUT)
 						counter++;
 				break;
