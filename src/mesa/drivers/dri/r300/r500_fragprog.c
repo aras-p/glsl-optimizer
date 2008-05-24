@@ -341,7 +341,7 @@ static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_
 		| R500_ALU_RGB_SEL_B_SRC0
 		| MAKE_SWIZ_RGB_B(make_rgb_swizzle(src))
 		| R500_ALU_RGB_OMOD_DISABLE;
-	fp->inst[counter].inst4 = R500_ALPHA_OP_CMP
+	fp->inst[counter].inst4 |= R500_ALPHA_OP_CMP
 		| R500_ALPHA_ADDRD(dest)
 		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(src))
 		| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(src))
@@ -383,7 +383,6 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			case OPCODE_ADD:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
-				fp->inst[counter].inst4 = 0;
 				/* Variation on MAD: 1*src0+src1 */
 				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
