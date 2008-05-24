@@ -7,7 +7,82 @@ import struct
 
 __version__ = '0.1'
 
+
 verbose = False
+
+
+class ParseError(Exception):
+	pass
+
+
+class MsvcDemangler:
+		# http://www.kegel.com/mangle.html
+
+	def __init__(self, symbol):
+		self._symbol = symbol
+		self._pos = 0
+
+	def lookahead(self):
+		return self._symbol[self._pos]
+
+	def consume(self):
+		ret = self.lookahead()
+		self._pos += 1
+		return ret
+	
+	def match(self, c):
+		if self.lookahead() != c:
+			raise ParseError
+		self.consume()
+
+	def parse(self):
+		self.match('?')
+		name = self.parse_name()
+		qualifications = self.parse_qualifications()
+		return '::'.join(qualifications + [name])
+
+	def parse_name(self):
+		if self.lookahead() == '?':
+			return self.consume() + self.consume()
+		else:
+			name = self.parse_id()
+			self.match('@')
+			return name
+
+	def parse_qualifications(self):
+		qualifications = []
+		while self.lookahead() != '@':
+			name = self.parse_id()
+			qualifications.append(name)
+			self.match('@')
+		return qualifications
+
+	def parse_id(self):
+		s = ''
+		while True:
+			c = self.lookahead()
+			if c.isalnum() or c in '_':
+				s += c
+				self.consume()
+			else:
+				break
+		return s
+
+
+def demangle(name):
+	if name.startswith('_'):
+		name = name[1:]
+		idx = name.rfind('@')
+		if idx != -1 and name[idx+1:].isdigit():
+			name = name[:idx]
+		return name
+	if name.startswith('?'):
+		demangler = MsvcDemangler(name)
+		return demangler.parse()
+
+		return name
+	return name
+
 
 class Profile:
 
@@ -19,15 +94,6 @@ class Profile:
 		self.last_stamp = 0
 		self.stamp_base = 0
 	
-	def demangle(self, name):
-		if name.startswith('_'):
-			name = name[1:]
-			idx = name.rfind('@')
-			if idx != -1 and name[idx+1:].isdigit():
-				name = name[:idx]
-		# TODO: Demangle C++ names
-		return name
-
 	def unwrap_stamp(self, stamp):
 		if stamp < self.last_stamp:
 			self.stamp_base += 1 << 32
@@ -47,7 +113,7 @@ class Profile:
 			if type != 'f':
 				continue
 			addr = int(addr, 16)
-			name = self.demangle(name)
+			name = demangle(name)
 			if last_addr == addr:
 				# TODO: handle collapsed functions
 				#assert last_name == name
@@ -197,9 +263,7 @@ def main():
 			profile.read_data(arg)
 		profile.write_report()
 
+
 if __name__ == '__main__':
 	main()
-
-
-
 
