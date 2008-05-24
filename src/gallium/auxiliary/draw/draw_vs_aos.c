@@ -752,7 +752,63 @@ static void x87_emit_ex2( struct aos_compilation *cp )
       
 }
 
+static void PIPE_CDECL print_reg( const char *msg,
+                                  const float *reg )
+{
+   debug_printf("%s: %f %f %f %f\n", msg, reg[0], reg[1], reg[2], reg[3]);
+}
 
+static void emit_print( struct aos_compilation *cp,
+                        const char *message, /* must point to a static string! */
+                        unsigned file,
+                        unsigned idx )
+{
+   struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
+   struct x86_reg arg = get_reg_ptr( cp, file, idx );
+   unsigned i;
+
+   /* There shouldn't be anything on the x87 stack.  Can add this
+    * capacity later if need be.
+    */
+   assert(cp->func->x87_stack == 0);
+
+   /* For absolute correctness, need to spill/invalidate all XMM regs
+    * too.  We're obviously not concerned about performance on this
+    * debug path, so here goes:
+    */
+   for (i = 0; i < 8; i++) {
+      if (cp->xmm[i].dirty) 
+         spill(cp, i);
+
+      aos_release_xmm_reg(cp, i);
+   }
+
+   /* Push caller-save (ie scratch) regs.  
+    */
+   x86_cdecl_caller_push_regs( cp->func );
+
+
+   /* Push the arguments:
+    */
+   x86_lea( cp->func, ecx, arg );
+   x86_push( cp->func, ecx );
+   x86_push_imm32( cp->func, (int)message );
+
+   /* Call the helper.  Could call debug_printf directly, but
+    * print_reg is a nice place to put a breakpoint if need be.
+    */
+   x86_mov_reg_imm( cp->func, ecx, (int)print_reg );
+   x86_call( cp->func, ecx );
+   x86_pop( cp->func, ecx );
+   x86_pop( cp->func, ecx );
+
+   /* Pop caller-save regs 
+    */
+   x86_cdecl_caller_pop_regs( cp->func );
+
+   /* Done... 
+    */
+}
 
 /**
  * The traditional instructions.  All operate on internal registers
@@ -1798,6 +1854,17 @@ static void vaos_set_constants( struct draw_vs_varient *varient,
    memcpy(vaos->machine->constant,
           constants,
           (vaos->base.vs->info.file_max[TGSI_FILE_CONSTANT] + 1) * 4 * sizeof(float));
+
+#if 0
+   unsigned i;
+   for (i =0; i < vaos->base.vs->info.file_max[TGSI_FILE_CONSTANT] + 1; i++)
+      debug_printf("state %d: %f %f %f %f\n",
+                   i, 
+                   constants[i][0],
+                   constants[i][1],
+                   constants[i][2],
+                   constants[i][3]);
+#endif
 }
 
 

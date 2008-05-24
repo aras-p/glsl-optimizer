@@ -96,6 +96,7 @@ struct aos_compilation {
 
    unsigned insn_counter;
    unsigned num_immediates;
+   unsigned count;
 
    struct {
       unsigned idx:16;
