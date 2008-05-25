@@ -697,6 +697,72 @@ static void store_dest( struct aos_compilation *cp,
 
 }
 
+static void inject_scalar( struct aos_compilation *cp,
+                           struct x86_reg dst,
+                           struct x86_reg result,
+                           unsigned swizzle )
+{
+   sse_shufps(cp->func, dst, dst, swizzle);
+   sse_movss(cp->func, dst, result);
+   sse_shufps(cp->func, dst, dst, swizzle);
+}
+
+
+static void store_scalar_dest( struct aos_compilation *cp, 
+                               const struct tgsi_full_dst_register *reg,
+                               struct x86_reg result )
+{
+   unsigned writemask = reg->DstRegister.WriteMask;
+   struct x86_reg dst;
+
+   if (writemask != TGSI_WRITEMASK_X &&
+       writemask != TGSI_WRITEMASK_Y &&
+       writemask != TGSI_WRITEMASK_Z &&
+       writemask != TGSI_WRITEMASK_W &&
+       writemask != 0) 
+   {
+      result = get_xmm_writable(cp, result); /* already true, right? */
+      sse_shufps(cp->func, result, result, SHUF(X,X,X,X));
+      store_dest(cp, reg, result);
+      return;
+   }
+
+   result = get_xmm(cp, result);
+   dst = aos_get_shader_reg_xmm(cp, 
+                                reg->DstRegister.File,
+                                reg->DstRegister.Index);
+
+
+
+   switch (reg->DstRegister.WriteMask) {
+   case TGSI_WRITEMASK_X:
+      sse_movss(cp->func, dst, result);
+      break;
+
+   case TGSI_WRITEMASK_Y:
+      inject_scalar(cp, dst, result, SHUF(Y, X, Z, W));
+      break;
+
+   case TGSI_WRITEMASK_Z:
+      inject_scalar(cp, dst, result, SHUF(Z, Y, X, W));
+      break;
+
+   case TGSI_WRITEMASK_W:
+      inject_scalar(cp, dst, result, SHUF(W, Y, Z, X));
+      break;
+
+   default:
+      break;
+   }
+
+   aos_adopt_xmm_reg(cp, 
+                     dst, 
+                     reg->DstRegister.File,
+                     reg->DstRegister.Index,
+                     TRUE);
+}
+   
+
 
 static void x87_fst_or_nop( struct x86_function *func,
                             unsigned writemask,
@@ -909,11 +975,8 @@ static boolean emit_DP3( struct aos_compilation *cp, const struct tgsi_full_inst
    emit_pshufd(cp, tmp, dst, SHUF(Y,X,W,Z));
    sse_addss(cp->func, dst, tmp);
    
-   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
-      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
-
    aos_release_xmm_reg(cp, tmp.idx);
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_scalar_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
 }
 
@@ -935,11 +998,8 @@ static boolean emit_DP4( struct aos_compilation *cp, const struct tgsi_full_inst
    emit_pshufd(cp, tmp, dst, SHUF(Y,X,W,Z));
    sse_addss(cp->func, dst, tmp);
 
-   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
-      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
-
    aos_release_xmm_reg(cp, tmp.idx);
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_scalar_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
 }
 
@@ -961,11 +1021,8 @@ static boolean emit_DPH( struct aos_compilation *cp, const struct tgsi_full_inst
    emit_pshufd(cp, tmp, arg1, SHUF(W,W,W,W));
    sse_addss(cp->func, dst, tmp);
 
-   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
-      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
-
    aos_release_xmm_reg(cp, tmp.idx);
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_scalar_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
 }
 
@@ -1518,7 +1575,9 @@ static boolean emit_MAD( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-
+/* Really not sufficient -- need to check for conditions that could
+ * generate inf/nan values, which will slow things down hugely.
+ */
 static boolean emit_POW( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
    x87_fld_src(cp, &op->FullSrcRegisters[1], 0);  /* a1.x */
@@ -1548,27 +1607,45 @@ static boolean emit_RCP( struct aos_compilation *cp, const struct tgsi_full_inst
       sse_divss(cp->func, dst, arg0);
    }
 
-   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
-      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
-
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_scalar_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
 }
 
+
+/* Although rsqrtps() and rcpps() are low precision on some/all SSE
+ * implementations, it is possible to improve its precision at
+ * fairly low cost, using a newton/raphson step, as below:
+ * 
+ * x1 = 2 * rcpps(a) - a * rcpps(a) * rcpps(a)
+ * x1 = 0.5 * rsqrtps(a) * [3.0 - (a * rsqrtps(a))* rsqrtps(a)]
+ *
+ * See: http://softwarecommunity.intel.com/articles/eng/1818.htm
+ */
 static boolean emit_RSQ( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg dst = aos_get_xmm_reg(cp);
 
-   sse_rsqrtss(cp->func, dst, arg0);
+   if (1) {
+      sse_rsqrtss(cp->func, dst, arg0);
+   }
+   else {
+#if 0
+      /* Extend precision here...
+       */
+      sse_movaps(  func, dst,  get_temp( TGSI_EXEC_TEMP_HALF_I, TGSI_EXEC_TEMP_HALF_C ) );
+      sse_movaps(  func, tmp0, get_temp( TGSI_EXEC_TEMP_THREE_I, TGSI_EXEC_TEMP_THREE_C ) );
 
-   /* Extend precision here...
-    */
+      sse_rsqrtss( func, tmp1, src  ); /* rsqrtss(a) */
+      sse_mulss(   func, src,  tmp1 ); /* a * rsqrtss(a) */
+      sse_mulss(   func, dst,  tmp1 ); /* .5 * rsqrtss(a) */
+      sse_mulss(   func, src,  tmp1 ); /* a * rsqrtss(a) * rsqrtss(a) */
+      sse_subss(   func, tmp0, src  ); /* 3.0 - (a * rsqrtss(a) * rsqrtss(a)) */
+      sse_mulss(   func, dst,  tmp0 ); /* .5 * r * (3.0 - (a * r * r)) */
+#endif
+   }
 
-   if (op->FullDstRegisters[0].DstRegister.WriteMask != 0x1)
-      sse_shufps(cp->func, dst, dst, SHUF(X, X, X, X));
-
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_scalar_dest(cp, &op->FullDstRegisters[0], dst);
    return TRUE;
 }
 
