@@ -1066,85 +1066,6 @@ static boolean emit_EX2( struct aos_compilation *cp, const struct tgsi_full_inst
    return TRUE;
 }
 
-static boolean emit_EXP( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
-{
-    struct x86_reg dst = get_dst_ptr(cp, &op->FullDstRegisters[0]); 
-    struct x86_reg st0 = x86_make_reg(file_x87, 0);
-    struct x86_reg st1 = x86_make_reg(file_x87, 1);
-    struct x86_reg st3 = x86_make_reg(file_x87, 3);
-    unsigned writemask = op->FullDstRegisters[0].DstRegister.WriteMask;
-
-    /* CAUTION: dst may alias arg0!
-     */
-    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);	/* arg0.x */
-    x87_fld(cp->func, st0); /* arg arg */
-
-    /* by default, fpu is setup to round-to-nearest.  We want to
-     * change this now, and track the state through to the end of the
-     * generated function so that it isn't repeated unnecessarily.
-     * Alternately, could subtract .5 to get round to -inf behaviour.
-     */
-    set_fpu_round_neg_inf( cp );
-    x87_fprndint( cp->func );	/* flr(a) a */
-    x87_fld(cp->func, st0); /* flr(a) flr(a) a */
-    x87_fld1(cp->func);    /* 1 floor(a) floor(a) a */
-    x87_fst_or_nop(cp->func, writemask, 3, dst);  /* stack unchanged */
-
-    x87_fscale(cp->func);  /* 2^floor(a) floor(a) a */
-    x87_fst(cp->func, st3); /* 2^floor(a) floor(a) a 2^floor(a)*/
-
-    x87_fstp_or_pop(cp->func, writemask, 0, dst); /* flr(a) a 2^flr(a) */
-
-    x87_fsubp(cp->func, st1);                     /* frac(a) 2^flr(a) */
-
-    x87_fst_or_nop(cp->func, writemask, 1, dst);    /* frac(a) 2^flr(a) */
-
-    x87_f2xm1(cp->func);    /* (2^frac(a))-1 2^flr(a)*/
-    x87_fld1(cp->func);    /* 1 (2^frac(a))-1 2^flr(a)*/
-    x87_faddp(cp->func, st1);	/* 2^frac(a) 2^flr(a) */
-    x87_fmulp(cp->func, st1);	/* 2^a */
-    
-    x87_fstp_or_pop(cp->func, writemask, 2, dst);    
-
-/*    dst[0] = 2^floor(tmp); */
-/*    dst[1] = frac(tmp); */
-/*    dst[2] = 2^floor(tmp) * 2^frac(tmp); */
-/*    dst[3] = 1.0F; */
-    return TRUE;
-}
-
-static boolean emit_LOG( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
-{
-    struct x86_reg dst = get_dst_ptr(cp, &op->FullDstRegisters[0]); 
-    struct x86_reg st0 = x86_make_reg(file_x87, 0);
-    struct x86_reg st1 = x86_make_reg(file_x87, 1);
-    struct x86_reg st2 = x86_make_reg(file_x87, 2);
-    unsigned writemask = op->FullDstRegisters[0].DstRegister.WriteMask;
- 
-    /* CAUTION: dst may alias arg0!
-     */
-    x87_fld_src(cp, &op->FullSrcRegisters[0], 0);	/* arg0.x */
-    x87_fabs(cp->func);	/* |arg0.x| */
-    x87_fxtract(cp->func);	/* mantissa(arg0.x), exponent(arg0.x) */
-    x87_fst(cp->func, st2);	/* mantissa, exponent, mantissa */
-    x87_fld1(cp->func);	/* 1, mantissa, exponent, mantissa */
-    x87_fyl2x(cp->func); 	/* log2(mantissa), exponent, mantissa */
-    x87_fadd(cp->func, st0, st1);	/* e+l2(m), e, m  */
-    
-    x87_fstp_or_pop(cp->func, writemask, 2, dst); /* e, m */
-
-    x87_fld1(cp->func);	/* 1, e, m */
-    x87_fsub(cp->func, st1, st0);	/* 1, e-1, m */
-
-    x87_fstp_or_pop(cp->func, writemask, 3, dst); /* e-1,m */
-    x87_fstp_or_pop(cp->func, writemask, 0, dst);	/* m */
-
-    x87_fadd(cp->func, st0, st0);	/* 2m */
-
-    x87_fstp_or_pop( cp->func, writemask, 1, dst );
-
-    return TRUE;
-}
 
 static boolean emit_FLR( struct aos_compilation *cp, const struct tgsi_full_instruction *op ) 
 {
@@ -1755,10 +1676,12 @@ emit_instruction( struct aos_compilation *cp,
       return emit_RSQ(cp, inst);
 
    case TGSI_OPCODE_EXP:
-      return emit_EXP(cp, inst);
+      /*return emit_EXP(cp, inst);*/
+      return FALSE;
 
    case TGSI_OPCODE_LOG:
-      return emit_LOG(cp, inst);
+      /*return emit_LOG(cp, inst);*/
+      return FALSE;
 
    case TGSI_OPCODE_MUL:
       return emit_MUL(cp, inst);
