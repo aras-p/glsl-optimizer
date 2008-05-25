@@ -80,6 +80,9 @@
 #define R500_SWIZ_RGB_ZERO ((4 << 0) | (4 << 3) | (4 << 6))
 #define R500_SWIZ_RGB_ONE ((6 << 0) | (6 << 3) | (6 << 6))
 #define R500_SWIZ_RGB_RGB ((0 << 0) | (1 << 3) | (2 << 6))
+#define R500_SWIZ_MOD_NEG 1
+#define R500_SWIZ_MOD_ABS 2
+#define R500_SWIZ_MOD_NEG_ABS 3
 /* Swizzles for inst2 */
 #define MAKE_SWIZ_TEX_STRQ(x) (x << 8)
 #define MAKE_SWIZ_TEX_RGBA(x) (x << 24)
@@ -378,8 +381,12 @@ static void emit_mad(struct r500_fragment_program *fp, int counter, struct prog_
 			fp->inst[counter].inst4 |= R500_ALPHA_SEL_A_SRC0
 				| MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[one]));
 			break;
+		case R500_SWIZZLE_ONE:
+			fp->inst[counter].inst3 |= MAKE_SWIZ_RGB_A(R500_SWIZ_RGB_ONE);
+			fp->inst[counter].inst4 |= MAKE_SWIZ_ALPHA_A(R500_SWIZZLE_ONE);
+			break;
 		default:
-			WARN_ONCE("Bad src index in emit_mad: %d\n", one);
+			ERROR("Bad src index in emit_mad: %d\n", one);
 			break;
 	}
 	switch (two) {
@@ -393,8 +400,12 @@ static void emit_mad(struct r500_fragment_program *fp, int counter, struct prog_
 			fp->inst[counter].inst4 |= R500_ALPHA_SEL_B_SRC1
 				| MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[two]));
 			break;
+		case R500_SWIZZLE_ONE:
+			fp->inst[counter].inst3 |= MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
+			fp->inst[counter].inst4 |= MAKE_SWIZ_ALPHA_B(R500_SWIZZLE_ONE);
+			break;
 		default:
-			WARN_ONCE("Bad src index in emit_mad: %d\n", one);
+			ERROR("Bad src index in emit_mad: %d\n", two);
 			break;
 	}
 	switch (three) {
@@ -408,8 +419,12 @@ static void emit_mad(struct r500_fragment_program *fp, int counter, struct prog_
 				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
 				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[three]));
 			break;
+		case R500_SWIZZLE_ONE:
+			fp->inst[counter].inst5 |= MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ONE)
+			| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ONE);
+			break;
 		default:
-			WARN_ONCE("Bad src index in emit_mad: %d\n", one);
+			ERROR("Bad src index in emit_mad: %d\n", three);
 			break;
 	}
 }
@@ -446,6 +461,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				/* Variation on MAD: 1*src0+src1 */
+#if 0
 				emit_alu(fp, counter, fpi);
 				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
 					| R500_RGB_ADDR1(src[1]) | R500_RGB_ADDR2(0);
@@ -464,6 +480,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[1]))
 					| R500_ALU_RGBA_ALPHA_SEL_C_SRC1
 					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[1]));
+#endif
+				emit_mad(fp, counter, fpi, R500_SWIZZLE_ONE, 0, 1);
 				break;
 		        case OPCODE_CMP:
 				/* This inst's selects need to be swapped as follows:
