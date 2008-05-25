@@ -1626,31 +1626,24 @@ static boolean emit_XPD( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg arg1 = fetch_src(cp, &op->FullSrcRegisters[1]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
    struct x86_reg tmp0 = aos_get_xmm_reg(cp);
    struct x86_reg tmp1 = aos_get_xmm_reg(cp);
 
-   /* Could avoid tmp0, tmp1 if we overwrote arg0, arg1.  Need a way
-    * to invalidate registers.  This will come with better analysis
-    * (liveness analysis) of the incoming program.
-    */
-   emit_pshufd(cp, dst, arg0, SHUF(Y, Z, X, W));
-   emit_pshufd(cp, tmp1, arg1, SHUF(Z, X, Y, W));
-   sse_mulps(cp->func, dst, tmp1);
-   emit_pshufd(cp, tmp0, arg0, SHUF(Z, X, Y, W));
    emit_pshufd(cp, tmp1, arg1, SHUF(Y, Z, X, W));
-   sse_mulps(cp->func, tmp0, tmp1);
-   sse_subps(cp->func, dst, tmp0);
+   sse_mulps(cp->func, tmp1, arg0);
+   emit_pshufd(cp, tmp0, arg0, SHUF(Y, Z, X, W));
+   sse_mulps(cp->func, tmp0, arg1);
+   sse_subps(cp->func, tmp1, tmp0);
+   sse_shufps(cp->func, tmp1, tmp1, SHUF(Y, Z, X, W));
 
+/*    dst[2] = arg0[0] * arg1[1] - arg0[1] * arg1[0]; */
 /*    dst[0] = arg0[1] * arg1[2] - arg0[2] * arg1[1]; */
 /*    dst[1] = arg0[2] * arg1[0] - arg0[0] * arg1[2]; */
-/*    dst[2] = arg0[0] * arg1[1] - arg0[1] * arg1[0]; */
 /*    dst[3] is undef */
 
 
    aos_release_xmm_reg(cp, tmp0.idx);
-   aos_release_xmm_reg(cp, tmp1.idx);
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_dest(cp, &op->FullDstRegisters[0], tmp1);
    return TRUE;
 }
 
