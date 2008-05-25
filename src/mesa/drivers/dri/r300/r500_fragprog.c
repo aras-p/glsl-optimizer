@@ -328,6 +328,12 @@ static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_
 	}
 
 	fp->inst[counter].inst0 |= R500_INST_TEX_SEM_WAIT;
+
+	/* Ideally, we shouldn't have to explicitly clear memory here! */
+	fp->inst[counter].inst1 = 0x0;
+	fp->inst[counter].inst2 = 0x0;
+	fp->inst[counter].inst3 = 0x0;
+	fp->inst[counter].inst5 = 0x0;
 }
 
 static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_src_register src, GLuint dest) {
@@ -350,6 +356,62 @@ static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_
 		| R500_ALU_RGBA_ADDRD(dest)
 		| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
 		| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+}
+
+static void emit_mad(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi, int one, int two, int three) {
+	/* Note: This code was all Corbin's. Corbin is a rather hackish coder.
+	 * If you can make it pretty or fast, please do so! */
+	emit_alu(fp, counter, fpi);
+	/* Common MAD stuff */
+	fp->inst[counter].inst4 |= R500_ALPHA_OP_MAD
+		| R500_ALPHA_ADDRD(make_dest(fp, fpi->DstReg));
+	fp->inst[counter].inst5 |= R500_ALU_RGBA_OP_MAD
+		| R500_ALU_RGBA_ADDRD(make_dest(fp, fpi->DstReg));
+	switch (one) {
+		case 0:
+		case 1:
+		case 2:
+			fp->inst[counter].inst1 |= R500_RGB_ADDR0(make_src(fp, fpi->SrcReg[one]));
+			fp->inst[counter].inst2 |= R500_ALPHA_ADDR0(make_src(fp, fpi->SrcReg[one]));
+			fp->inst[counter].inst3 |= R500_ALU_RGB_SEL_A_SRC0
+				| MAKE_SWIZ_RGB_A(make_rgb_swizzle(fpi->SrcReg[one]));
+			fp->inst[counter].inst4 |= R500_ALPHA_SEL_A_SRC0
+				| MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[one]));
+			break;
+		default:
+			WARN_ONCE("Bad src index in emit_mad: %d\n", one);
+			break;
+	}
+	switch (two) {
+		case 0:
+		case 1:
+		case 2:
+			fp->inst[counter].inst1 |= R500_RGB_ADDR1(make_src(fp, fpi->SrcReg[two]));
+			fp->inst[counter].inst2 |= R500_ALPHA_ADDR1(make_src(fp, fpi->SrcReg[two]));
+			fp->inst[counter].inst3 |= R500_ALU_RGB_SEL_B_SRC1
+				| MAKE_SWIZ_RGB_B(make_rgb_swizzle(fpi->SrcReg[two]));
+			fp->inst[counter].inst4 |= R500_ALPHA_SEL_B_SRC1
+				| MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[two]));
+			break;
+		default:
+			WARN_ONCE("Bad src index in emit_mad: %d\n", one);
+			break;
+	}
+	switch (three) {
+		case 0:
+		case 1:
+		case 2:
+			fp->inst[counter].inst1 |= R500_RGB_ADDR2(make_src(fp, fpi->SrcReg[three]));
+			fp->inst[counter].inst2 |= R500_ALPHA_ADDR2(make_src(fp, fpi->SrcReg[three]));
+			fp->inst[counter].inst5 |= R500_ALU_RGBA_SEL_C_SRC2
+				| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[three]))
+				| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
+				| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[three]));
+			break;
+		default:
+			WARN_ONCE("Bad src index in emit_mad: %d\n", one);
+			break;
+	}
 }
 
 static GLboolean parse_program(struct r500_fragment_program *fp)
@@ -640,7 +702,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[2]));
 				break;
 			case OPCODE_MAD:
-				src[0] = make_src(fp, fpi->SrcReg[0]);
+				/* src[0] = make_src(fp, fpi->SrcReg[0]);
 				src[1] = make_src(fp, fpi->SrcReg[1]);
 				src[2] = make_src(fp, fpi->SrcReg[2]);
 				emit_alu(fp, counter, fpi);
@@ -660,7 +722,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_SEL_C_SRC2
 					| MAKE_SWIZ_RGBA_C(make_rgb_swizzle(fpi->SrcReg[2]))
 					| R500_ALU_RGBA_ALPHA_SEL_C_SRC2
-					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[2]));
+					| MAKE_SWIZ_ALPHA_C(make_alpha_swizzle(fpi->SrcReg[2])); */
+				emit_mad(fp, counter, fpi, 0, 1, 2);
 				break;
 			case OPCODE_MAX:
 				src[0] = make_src(fp, fpi->SrcReg[0]);
