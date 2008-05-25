@@ -202,6 +202,7 @@ static struct x86_reg get_xmm_writable( struct aos_compilation *cp,
       reg = tmp;
    }
 
+   cp->xmm[reg.idx].last_used = cp->insn_counter;
    return reg;
 }
 
@@ -215,6 +216,7 @@ static struct x86_reg get_xmm( struct aos_compilation *cp,
       reg = tmp;
    }
 
+   cp->xmm[reg.idx].last_used = cp->insn_counter;
    return reg;
 }
 
@@ -280,6 +282,18 @@ void aos_adopt_xmm_reg( struct aos_compilation *cp,
       assert(0);
       return;
    }
+
+   /* If this xmm reg is already holding this shader reg, just update
+    * last_used, and don't clobber the dirty flag...
+    */
+   if (cp->xmm[reg.idx].file == file &&
+       cp->xmm[reg.idx].idx == idx) 
+   {
+      cp->xmm[reg.idx].dirty |= dirty;
+      cp->xmm[reg.idx].last_used = cp->insn_counter;
+      return;
+   }
+   
 
    /* If any xmm reg thinks it holds this shader reg, break the
     * illusion.
@@ -382,8 +396,16 @@ static struct x86_reg aos_get_shader_reg_xmm( struct aos_compilation *cp,
                                               unsigned file,
                                               unsigned idx )
 {
-   struct x86_reg reg = aos_get_shader_reg( cp, file, idx );
-   return get_xmm( cp, reg );
+   struct x86_reg reg = get_xmm( cp,
+                                 aos_get_shader_reg( cp, file, idx ) );
+
+   aos_adopt_xmm_reg( cp,
+                      reg,
+                      file,
+                      idx,
+                      FALSE );
+   
+   return reg;
 }
 
 
