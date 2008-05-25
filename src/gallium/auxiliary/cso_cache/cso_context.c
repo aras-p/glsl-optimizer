@@ -292,7 +292,7 @@ enum pipe_error cso_set_blend(struct cso_context *ctx,
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      cso->state = *templ;
+      memcpy(&cso->state, templ, sizeof(*templ));
       cso->data = ctx->pipe->create_blend_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_blend_state;
       cso->context = ctx->pipe;
@@ -350,7 +350,7 @@ enum pipe_error cso_single_sampler(struct cso_context *ctx,
          if (!cso)
             return PIPE_ERROR_OUT_OF_MEMORY;
 
-         cso->state = *templ;
+         memcpy(&cso->state, templ, sizeof(*templ));
          cso->data = ctx->pipe->create_sampler_state(ctx->pipe, &cso->state);
          cso->delete_state = (cso_state_callback)ctx->pipe->delete_sampler_state;
          cso->context = ctx->pipe;
@@ -508,7 +508,7 @@ enum pipe_error cso_set_depth_stencil_alpha(struct cso_context *ctx,
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      cso->state = *templ;
+      memcpy(&cso->state, templ, sizeof(*templ));
       cso->data = ctx->pipe->create_depth_stencil_alpha_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_depth_stencil_alpha_state;
       cso->context = ctx->pipe;
@@ -564,7 +564,7 @@ enum pipe_error cso_set_rasterizer(struct cso_context *ctx,
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      cso->state = *templ;
+      memcpy(&cso->state, templ, sizeof(*templ));
       cso->data = ctx->pipe->create_rasterizer_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_rasterizer_state;
       cso->context = ctx->pipe;
@@ -726,7 +726,7 @@ enum pipe_error cso_set_vertex_shader(struct cso_context *ctx,
       if (!cso)
          return PIPE_ERROR_OUT_OF_MEMORY;
 
-      cso->state = *templ;
+      memcpy(cso->state, templ, sizeof(*templ));
       cso->data = ctx->pipe->create_vs_state(ctx->pipe, &cso->state);
       cso->delete_state = (cso_state_callback)ctx->pipe->delete_vs_state;
       cso->context = ctx->pipe;
