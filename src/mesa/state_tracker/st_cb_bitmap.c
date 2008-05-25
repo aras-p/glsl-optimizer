@@ -198,6 +198,10 @@ combined_bitmap_fragment_program(GLcontext *ctx)
          _mesa_combine_programs(ctx,
                                 &bitmap_prog->Base.Base, &stfp->Base.Base);
       stfp->bitmap_program->bitmap_sampler = sampler;
+
+      /* done with this after combining */
+      st_reference_fragprog(st, &bitmap_prog, NULL);
+
 #if 0
       {
          struct gl_program *p = &stfp->bitmap_program->Base.Base;
@@ -743,15 +747,6 @@ st_destroy_bitmap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
 
-#if 0
-   if (st->bitmap.combined_prog) {
-      st_delete_program(st->ctx, &st->bitmap.combined_prog->Base.Base);
-   }
-
-   if (st->bitmap.program) {
-      st_delete_program(st->ctx, &st->bitmap.program->Base.Base);
-   }
-#endif
    if (st->bitmap.vs) {
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);
       st->bitmap.vs = NULL;

@@ -385,7 +385,7 @@ main(int argc, char *argv[])
 	}
 	
 	/* DBR : Create EGL context/surface etc */
-        d = eglGetDisplay(":0");
+        d = eglGetDisplay("!EGL_i915");
 	assert(d);
 
 	if (!eglInitialize(d, &maj, &min)) {

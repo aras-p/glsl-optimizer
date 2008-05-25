@@ -32,12 +32,12 @@
 #include "intel_context.h"
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
-#include "intel_batchpool.h"
+//#include "intel_batchpool.h"
 #include "intel_swapbuffers.h"
 #include "intel_winsys.h"
 
 #include "i830_dri.h"
-#include "dri_bufpool.h"
+#include "ws_dri_bufpool.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_public.h"
@@ -132,6 +132,7 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
    assert( sarea->front_size >=
 	   intelScreen->front.pitch * intelScreen->front.height );
 
+#if 0 /* JB not important */
    if (!sarea->front_handle)
       return;
 
@@ -142,30 +143,41 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
       fprintf(stderr, "drmMap(frontbuffer) failed!\n");
       return;
    }
+#endif
 
+#if 0 /* JB */
    if (intelScreen->staticPool) {
       driGenBuffers(intelScreen->staticPool, "static region", 1,
 		    &intelScreen->front.buffer, 64,
 		    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_NO_MOVE |
 		    DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
-      
+
       driBOSetStatic(intelScreen->front.buffer, 
 		     intelScreen->front.offset, 		  
 		     intelScreen->front.pitch * intelScreen->front.height, 
 		     intelScreen->front.map, 0);
    }
+#else
+   if (intelScreen->staticPool) {
+      if (intelScreen->front.buffer)
+	 driBOUnReference(intelScreen->front.buffer);
+      driGenBuffers(intelScreen->staticPool, "front", 1, &intelScreen->front.buffer, 0, 0, 0);
+      driBOSetReferenced(intelScreen->front.buffer, sarea->front_bo_handle);
+   }
+#endif
 }
 
 
 boolean
 intelCreatePools(__DRIscreenPrivate * sPriv)
 {
-   unsigned batchPoolSize = 1024*1024;
+   //unsigned batchPoolSize = 1024*1024;
    struct intel_screen *intelScreen = intel_screen(sPriv);
 
    if (intelScreen->havePools)
       return GL_TRUE;
 
+#if 0 /* ZZZ JB fix this */
    intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
    if (!intelScreen->staticPool)
       return GL_FALSE;
@@ -181,7 +193,17 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
       fprintf(stderr, "Failed to initialize batch pool - possible incorrect agpgart installed\n");
       return GL_FALSE;
    }
-   
+#else
+   intelScreen->staticPool = driDRMPoolInit(sPriv->fd);
+   intelScreen->batchPool = driSlabPoolInit(sPriv->fd,
+						DRM_BO_FLAG_EXE |
+						DRM_BO_FLAG_MEM_TT,
+						DRM_BO_FLAG_EXE |
+						DRM_BO_FLAG_MEM_TT,
+						4 * 4096, //intelScreen->maxBatchSize,
+						1, 40, 16*16384, 0,
+						intelScreen->fMan);
+#endif
    intelScreen->havePools = GL_TRUE;
 
    intelUpdateScreenRotation(sPriv, intelScreen->sarea);
@@ -240,7 +262,26 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   intelScreen->winsys = intel_create_pipe_winsys(sPriv->fd);
+
+
+#if 1 // ZZZ JB
+   intelScreen->mgr = driFenceMgrTTMInit(sPriv->fd);
+   if (!intelScreen->mgr) {
+      fprintf(stderr, "Failed to create fence manager.\n");
+      return GL_FALSE;
+   }
+
+   intelScreen->fMan = driInitFreeSlabManager(10, 10);
+   if (!intelScreen->fMan) {
+      fprintf(stderr, "Failed to create free slab manager.\n");
+      return GL_FALSE;
+   }
+
+   if (!intelCreatePools(sPriv))
+      return GL_FALSE;
+#endif
+
+   intelScreen->winsys = intel_create_pipe_winsys(sPriv->fd, intelScreen->fMan);
 
    return GL_TRUE;
 }

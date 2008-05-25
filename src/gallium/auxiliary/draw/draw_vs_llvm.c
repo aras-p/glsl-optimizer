@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
  /*
@@ -72,47 +72,9 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
    struct draw_llvm_vertex_shader *shader =
       (struct draw_llvm_vertex_shader *)base;
 
-   struct tgsi_exec_machine *machine = shader->machine;
-   unsigned int i, j;
-   unsigned slot;
-
-
-   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
-      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
-
-      /* Swizzle inputs.
-       */
-      for (j = 0; j < max_vertices; j++) {
-	 for (slot = 0; slot < base->info.num_inputs; slot++) {
-	    machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
-	    machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
-	    machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
-	    machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
-	 }
-
-	 input = (const float (*)[4])((const char *)input + input_stride);
-      } 
-
-      /* run shader */
-      gallivm_cpu_vs_exec(shader->llvm_prog,
-                          machine->Inputs,
-                          machine->Outputs,
-			  (float (*)[4]) constants,
-                          machine->Temps);
-
-
-      /* Unswizzle all output results
-       */
-      for (j = 0; j < max_vertices; j++) {
-         for (slot = 0; slot < base->info.num_outputs; slot++) {
-            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-         }
-         output = (float (*)[4])((char *)output + output_stride);
-      }
-   }
+   gallivm_cpu_vs_exec(shader->llvm_prog, shader->machine,
+                       input, base->info.num_inputs, output, base->info.num_outputs,
+                       constants, count, input_stride, output_stride);
 }
 
 
@@ -120,7 +82,7 @@ vs_llvm_run_linear( struct draw_vertex_shader *base,
 static void
 vs_llvm_delete( struct draw_vertex_shader *base )
 {
-   struct draw_llvm_vertex_shader *shader = 
+   struct draw_llvm_vertex_shader *shader =
       (struct draw_llvm_vertex_shader *)base;
 
    /* Do something to free compiled shader:
@@ -138,14 +100,17 @@ draw_create_vs_llvm(struct draw_context *draw,
 		    const struct pipe_shader_state *templ)
 {
    struct draw_llvm_vertex_shader *vs;
-   uint nt = tgsi_num_tokens(templ->tokens);
 
    vs = CALLOC_STRUCT( draw_llvm_vertex_shader );
-   if (vs == NULL) 
+   if (vs == NULL)
       return NULL;
 
    /* we make a private copy of the tokens */
-   vs->base.state.tokens = mem_dup(templ->tokens, nt * sizeof(templ->tokens[0]));
+   vs->base.state.tokens = tgsi_dup_tokens(templ->tokens);
+   if (!vs->base.state.tokens) {
+      FREE(vs);
+      return NULL;
+   }
 
    tgsi_scan_shader(vs->base.state.tokens, &vs->base.info);
 

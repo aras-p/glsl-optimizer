@@ -116,9 +116,49 @@ typedef pthread_mutex_t _glthread_Mutex;
 #define _glthread_UNLOCK_MUTEX(name) \
    (void) pthread_mutex_unlock(&(name))
 
-#endif /* PTHREADS */
+typedef pthread_cond_t _glthread_Cond;
+
+#define _glthread_DECLARE_STATIC_COND(name) \
+   static _glthread_Cond name = PTHREAD_COND_INITIALIZER
+
+#define _glthread_INIT_COND(cond)			\
+   pthread_cond_init(&(cond), NULL)
+
+#define _glthread_DESTROY_COND(name) \
+   pthread_cond_destroy(&(name))
+
+#define _glthread_COND_WAIT(cond, mutex) \
+  pthread_cond_wait(&(cond), &(mutex))
+
+#define _glthread_COND_SIGNAL(cond) \
+  pthread_cond_signal(&(cond))
+
+#define _glthread_COND_BROADCAST(cond) \
+  pthread_cond_broadcast(&(cond))
 
 
+#else /* PTHREADS */
+
+typedef unsigned int _glthread_Cond;
+#define _glthread_DECLARE_STATIC_COND(name) \
+//  #warning Condition variables not implemented.
+
+#define _glthread_INIT_COND(cond)	    \
+  abort();
+
+#define _glthread_DESTROY_COND(name) \
+  abort();
+
+#define _glthread_COND_WAIT(cond, mutex) \
+  abort();
+
+#define _glthread_COND_SIGNAL(cond) \
+  abort();
+
+#define _glthread_COND_BROADCAST(cond) \
+  abort();
+
+#endif
 
 
 /*
@@ -259,11 +299,11 @@ typedef benaphore _glthread_Mutex;
  * THREADS not defined
  */
 
-typedef unsigned _glthread_TSD;
+typedef GLuint _glthread_TSD;
 
-typedef unsigned _glthread_Thread;
+typedef GLuint _glthread_Thread;
 
-typedef unsigned _glthread_Mutex;
+typedef GLuint _glthread_Mutex;
 
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 

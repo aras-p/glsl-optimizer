@@ -14,6 +14,7 @@ fs-tri
 line
 line-clip
 line-cull
+line-smooth
 line-stipple-wide
 line-userclip
 line-userclip-clip
@@ -33,6 +34,7 @@ point-clip
 point-param
 point-sprite
 point-wide
+point-wide-smooth
 poly
 poly-flat
 poly-unfilled
@@ -77,6 +79,7 @@ tri-flat
 tri-flat-clip
 tri-fog
 tri-mask-tri
+tri-orig
 tri-query
 tri-scissor-tri
 tri-stencil
@@ -84,6 +87,7 @@ tri-tex-3d
 tri-tri
 tri-unfilled
 tri-unfilled-clip
+tri-unfilled-edgeflag
 tri-unfilled-smooth
 tri-unfilled-userclip
 tri-unfilled-userclip-stip

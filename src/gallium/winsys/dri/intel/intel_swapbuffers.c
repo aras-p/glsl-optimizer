@@ -63,7 +63,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
 
    if (intel->last_swap_fence) {
       driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, TRUE);
-      driFenceUnReference(intel->last_swap_fence);
+      driFenceUnReference(&intel->last_swap_fence);
       intel->last_swap_fence = NULL;
    }
    intel->last_swap_fence = intel->first_swap_fence;
@@ -178,9 +178,8 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
       }
 
       if (intel->first_swap_fence)
-	 driFenceUnReference(intel->first_swap_fence);
+	 driFenceUnReference(&intel->first_swap_fence);
       intel->first_swap_fence = intel_batchbuffer_flush(intel->batch);
-      driFenceReference(intel->first_swap_fence);
    }
 
    UNLOCK_HARDWARE(intel);

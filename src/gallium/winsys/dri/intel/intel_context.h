@@ -28,7 +28,7 @@
 #ifndef INTEL_CONTEXT_H
 #define INTEL_CONTEXT_H
 
-
+#include <stdint.h>
 #include "drm.h"
 
 #include "pipe/p_debug.h"

@@ -330,3 +330,18 @@ tgsi_num_tokens(const struct tgsi_token *tokens)
    }
    return 0;
 }
+
+
+/**
+ * Make a new copy of a token array.
+ */
+struct tgsi_token *
+tgsi_dup_tokens(const struct tgsi_token *tokens)
+{
+   unsigned n = tgsi_num_tokens(tokens);
+   unsigned bytes = n * sizeof(struct tgsi_token);
+   struct tgsi_token *new_tokens = (struct tgsi_token *) MALLOC(bytes);
+   if (new_tokens)
+      memcpy(new_tokens, tokens, bytes);
+   return new_tokens;
+}

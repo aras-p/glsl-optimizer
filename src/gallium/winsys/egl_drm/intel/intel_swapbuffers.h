@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,13 +25,23 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_BATCHPOOL_H
-#define INTEL_BATCHPOOL_H
-
-extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
-                                               unsigned long bufSize,
-                                               unsigned numBufs,
-                                               unsigned checkDelayed);
+#ifndef INTEL_SWAPBUFFERS_H
+#define INTEL_SWAPBUFFERS_H
 
 
-#endif /* INTEL_BATCHPOOL_H */
+struct pipe_surface;
+
+#if 0
+extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
+                                struct pipe_surface *surf,
+                                const drm_clip_rect_t * rect);
+
+extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
+
+extern void intelCopySubBuffer(__DRIdrawablePrivate * dPriv,
+                               int x, int y, int w, int h);
+
+extern void intelUpdateWindowSize(__DRIdrawablePrivate *dPriv);
+#endif
+
+#endif /* INTEL_SWAPBUFFERS_H */

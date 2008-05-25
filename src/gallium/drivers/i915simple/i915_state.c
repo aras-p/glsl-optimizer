@@ -33,6 +33,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/p_util.h"
 #include "pipe/p_inlines.h"
+#include "tgsi/util/tgsi_parse.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -436,7 +437,7 @@ i915_create_fs_state(struct pipe_context *pipe,
    if (!ifs)
       return NULL;
 
-   ifs->state = *templ;
+   ifs->state.tokens = tgsi_dup_tokens(templ->tokens);
 
    tgsi_scan_shader(templ->tokens, &ifs->info);
 
@@ -464,6 +465,8 @@ void i915_delete_fs_state(struct pipe_context *pipe, void *shader)
    if (ifs->program)
       FREE(ifs->program);
    ifs->program_len = 0;
+
+   FREE(ifs->state.tokens);
 
    FREE(ifs);
 }
@@ -714,10 +717,16 @@ static void i915_set_vertex_elements(struct pipe_context *pipe,
 }
 
 
+static void i915_set_edgeflags(struct pipe_context *pipe,
+                               const unsigned *bitfield)
+{
+   /* TODO do something here */
+}
 
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
+   i915->pipe.set_edgeflags = i915_set_edgeflags;
    i915->pipe.create_blend_state = i915_create_blend_state;
    i915->pipe.bind_blend_state = i915_bind_blend_state;
    i915->pipe.delete_blend_state = i915_delete_blend_state;

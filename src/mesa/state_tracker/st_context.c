@@ -158,9 +158,6 @@ static void st_destroy_context_priv( struct st_context *st )
 {
    uint i;
 
-   st_reference_fragprog(st, &st->fp, NULL);
-   st_reference_vertprog(st, &st->vp, NULL);
-
    draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );
@@ -168,8 +165,13 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_bitmap(st);
    st_destroy_blit(st);
    st_destroy_clear(st);
+   st_destroy_drawpix(st);
 
    _vbo_DestroyContext(st->ctx);
+
+   for (i = 0; i < Elements(st->state.sampler_texture); i++) {
+      pipe_texture_reference(&st->state.sampler_texture[i], NULL);
+   }
 
    for (i = 0; i < Elements(st->state.constants); i++) {
       if (st->state.constants[i].buffer) {
@@ -189,6 +191,9 @@ void st_destroy_context( struct st_context *st )
 
    /* need to unbind and destroy CSO objects before anything else */
    cso_release_all(st->cso_context);
+
+   st_reference_fragprog(st, &st->fp, NULL);
+   st_reference_vertprog(st, &st->vp, NULL);
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 

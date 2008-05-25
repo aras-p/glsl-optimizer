@@ -31,7 +31,7 @@
 #include "dri_util.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
-#include "dri_bufpool.h"
+#include "ws_dri_bufpool.h"
 
 #include "pipe/p_compiler.h"
 
@@ -73,6 +73,13 @@ struct intel_screen
     * which we need a rendering context, but none is currently bound.
     */
    struct intel_context *dummyContext;
+
+   /* 
+    * New stuff form the i915tex integration
+    */
+   struct _DriFenceMgr *mgr;
+   struct _DriFreeSlabManager *fMan;
+   unsigned batch_id;
 
    struct pipe_winsys *winsys;
 };

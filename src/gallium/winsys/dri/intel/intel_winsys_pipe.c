@@ -31,8 +31,8 @@
 
 #include <stdlib.h>
 #include <xf86drm.h>
-#include "dri_bufpool.h"
-#include "dri_bufmgr.h"
+//#include "dri_bufpool.h"
+//#include "dri_bufmgr.h"
 
 #include "intel_context.h"
 #include "intel_winsys.h"
@@ -50,6 +50,9 @@
 struct intel_pipe_winsys {
    struct pipe_winsys winsys;
    struct _DriBufferPool *regionPool;
+   struct _DriBufferPool *mallocPool;
+   struct _DriBufferPool *vertexPool;
+   struct _DriFreeSlabManager *fMan; /** shared between all pipes */
 };
 
 
@@ -92,6 +95,7 @@ intel_buffer_destroy(struct pipe_winsys *winsys,
 		     struct pipe_buffer *buf)
 {
    driBOUnReference( dri_bo(buf) );
+   FREE(buf);
 }
 
 
@@ -108,16 +112,23 @@ intel_buffer_create(struct pipe_winsys *winsys,
    struct intel_buffer *buffer = CALLOC_STRUCT( intel_buffer );
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    unsigned flags = 0;
+   struct _DriBufferPool *pool;
 
    buffer->base.refcount = 1;
    buffer->base.alignment = alignment;
    buffer->base.usage = usage;
    buffer->base.size = size;
 
-   if (usage & (PIPE_BUFFER_USAGE_VERTEX /*| IWS_BUFFER_USAGE_LOCAL*/)) {
+   if (usage & (PIPE_BUFFER_USAGE_VERTEX | PIPE_BUFFER_USAGE_CONSTANT)) {
       flags |= DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED;
+      pool = iws->mallocPool;
+   } else if (usage & PIPE_BUFFER_USAGE_CUSTOM) {
+      /* For vertex buffers */
+      flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
+      pool = iws->vertexPool;
    } else {
       flags |= DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_TT;
+      pool = iws->regionPool;
    }
 
    if (usage & PIPE_BUFFER_USAGE_GPU_READ)
@@ -139,10 +150,11 @@ intel_buffer_create(struct pipe_winsys *winsys,
       flags |= DRM_BO_FLAG_CACHED;
 #endif
 
-   driGenBuffers( iws->regionPool, 
+   buffer->pool = pool;
+   driGenBuffers( buffer->pool, 
 		  "pipe buffer", 1, &buffer->driBO, alignment, flags, 0 );
 
-   driBOData( buffer->driBO, size, NULL, 0 );
+   driBOData( buffer->driBO, size, NULL, buffer->pool, 0 );
 
    return &buffer->base;
 }
@@ -155,7 +167,9 @@ intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
 
    driGenUserBuffer( iws->regionPool, 
-                     "pipe user buffer", &buffer->driBO, ptr, bytes);
+		     "pipe user buffer", &buffer->driBO, ptr, bytes );
+
+   buffer->base.refcount = 1;
 
    return &buffer->base;
 }
@@ -209,7 +223,7 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                  unsigned flags)
 {
    const unsigned alignment = 64;
-   int ret;
+   //int ret;
 
    surf->width = width;
    surf->height = height;
@@ -249,9 +263,36 @@ intel_get_name( struct pipe_winsys *winsys )
    return "Intel/DRI/ttm";
 }
 
+static void
+intel_fence_reference( struct pipe_winsys *sws,
+                       struct pipe_fence_handle **ptr,
+                       struct pipe_fence_handle *fence )
+{
+   if (*ptr)
+      driFenceUnReference((struct _DriFenceObject **)ptr);
+
+   if (fence)
+      *ptr = (struct pipe_fence_handle *)driFenceReference((struct _DriFenceObject *)fence);
+}
+
+static int
+intel_fence_signalled( struct pipe_winsys *sws,
+                       struct pipe_fence_handle *fence,
+                       unsigned flag )
+{
+   return driFenceSignaled((struct _DriFenceObject *)fence, flag);
+}
+
+static int
+intel_fence_finish( struct pipe_winsys *sws,
+                    struct pipe_fence_handle *fence,
+                    unsigned flag )
+{
+   return driFenceFinish((struct _DriFenceObject *)fence, flag, 0);
+}
 
 struct pipe_winsys *
-intel_create_pipe_winsys( int fd )
+intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
 {
    struct intel_pipe_winsys *iws = CALLOC_STRUCT( intel_pipe_winsys );
    
@@ -273,8 +314,25 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.surface_alloc_storage = intel_i915_surface_alloc_storage;
    iws->winsys.surface_release = intel_i915_surface_release;
 
-   if (fd)
-      iws->regionPool = driDRMPoolInit(fd);
+   iws->winsys.fence_reference = intel_fence_reference;
+   iws->winsys.fence_signalled = intel_fence_signalled;
+   iws->winsys.fence_finish = intel_fence_finish;
+
+   if (fd) {
+     iws->regionPool = driDRMPoolInit(fd);
+     iws->vertexPool = driSlabPoolInit(fd,
+					DRM_BO_FLAG_READ |
+					DRM_BO_FLAG_WRITE |
+					DRM_BO_FLAG_MEM_TT,
+					DRM_BO_FLAG_READ |
+					DRM_BO_FLAG_WRITE |
+					DRM_BO_FLAG_MEM_TT,
+					32 * 4096,
+					1, 40, 32 * 4096 * 2, 0,
+					fMan);
+   }
+
+   iws->mallocPool = driMallocPoolInit();
 
    return &iws->winsys;
 }
@@ -286,6 +344,9 @@ intel_destroy_pipe_winsys( struct pipe_winsys *winsys )
    struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
    if (iws->regionPool) {
       driPoolTakeDown(iws->regionPool);
+   }
+   if (iws->mallocPool) {
+      driPoolTakeDown(iws->mallocPool);
    }
    free(iws);
 }

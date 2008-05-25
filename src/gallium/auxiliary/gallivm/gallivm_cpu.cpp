@@ -41,6 +41,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
+#include "pipe/p_util.h"
 
 #include "tgsi/exec/tgsi_exec.h"
 #include "tgsi/util/tgsi_dump.h"
@@ -179,22 +180,63 @@ typedef void (*vertex_shader_runner)(void *ainputs,
                                      float (*aconsts)[4],
                                      void *temps);
 
-
+#define MAX_TGSI_VERTICES 4
 /*!
   This function is used to execute the gallivm_prog in software. Before calling
   this function the gallivm_prog has to be JIT compiled with the gallivm_cpu_jit_compile
   function.
  */
 int gallivm_cpu_vs_exec(struct gallivm_prog *prog,
-                        struct tgsi_exec_vector       *inputs,
-                        struct tgsi_exec_vector       *dests,
-                        float (*consts)[4],
-                        struct tgsi_exec_vector       *temps)
+                        struct tgsi_exec_machine *machine,
+                        const float (*input)[4],
+                        unsigned num_inputs,
+                        float (*output)[4],
+                        unsigned num_outputs,
+                        const float (*constants)[4],
+                        unsigned count,
+                        unsigned input_stride,
+                        unsigned output_stride )
 {
+   unsigned int i, j;
+   unsigned slot;
    vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
+
    assert(runner);
-   /*FIXME*/
-   runner(inputs, dests, consts, temps);
+
+   for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
+      unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
+
+      /* Swizzle inputs.
+       */
+      for (j = 0; j < max_vertices; j++) {
+	 for (slot = 0; slot < num_inputs; slot++) {
+	    machine->Inputs[slot].xyzw[0].f[j] = input[slot][0];
+	    machine->Inputs[slot].xyzw[1].f[j] = input[slot][1];
+	    machine->Inputs[slot].xyzw[2].f[j] = input[slot][2];
+	    machine->Inputs[slot].xyzw[3].f[j] = input[slot][3];
+	 }
+
+	 input = (const float (*)[4])((const char *)input + input_stride);
+      }
+
+      /* run shader */
+      runner(machine->Inputs,
+             machine->Outputs,
+             (float (*)[4]) constants,
+             machine->Temps);
+
+      /* Unswizzle all output results
+       */
+      for (j = 0; j < max_vertices; j++) {
+         for (slot = 0; slot < num_outputs; slot++) {
+            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+         }
+         output = (float (*)[4])((char *)output + output_stride);
+      }
+   }
 
    return 0;
 }

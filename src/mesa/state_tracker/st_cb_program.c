@@ -89,8 +89,12 @@ static void st_use_program( GLcontext *ctx,
 
 
 
+/**
+ * Called via ctx->Driver.NewProgram() to allocate a new vertex or
+ * fragment program.
+ */
 static struct gl_program *st_new_program( GLcontext *ctx,
-					  GLenum target, 
+					  GLenum target,
 					  GLuint id )
 {
    switch (target) {
@@ -118,7 +122,8 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    }
 
    default:
-      return _mesa_new_program(ctx, target, id);
+      assert(0);
+      return NULL;
    }
 }
 
@@ -136,6 +141,12 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          if (stvp->driver_shader) {
             cso_delete_vertex_shader(st->cso_context, stvp->driver_shader);
             stvp->driver_shader = NULL;
+         }
+
+         if (stvp->draw_shader) {
+            /* this would only have been allocated for the RasterPos path */
+            draw_delete_vertex_shader(st->draw, stvp->draw_shader);
+            stvp->draw_shader = NULL;
          }
 
          if (stvp->state.tokens) {
@@ -159,7 +170,9 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
          }
 
          if (stfp->bitmap_program) {
-            st_delete_program(ctx, &stfp->bitmap_program->Base.Base);
+            struct gl_program *prg = &stfp->bitmap_program->Base.Base;
+            _mesa_reference_program(ctx, &prg, NULL);
+            stfp->bitmap_program = NULL;
          }
 
          st_free_translated_vertex_programs(st, stfp->vertex_programs);
@@ -218,6 +231,7 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       if (stvp->draw_shader) {
+         /* this would only have been allocated for the RasterPos path */
          draw_delete_vertex_shader(st->draw, stvp->draw_shader);
          stvp->draw_shader = NULL;
       }

@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -46,9 +46,6 @@
 #include "shader/slang/slang_library_noise.h"
 
 
-/* See comments below for info about this */
-#define LAMBDA_ZERO 1
-
 /* debug predicate */
 #define DEBUG_PROG 0
 
@@ -92,6 +89,7 @@ get_register_pointer(const struct prog_src_register *source,
       else {
          const struct gl_program_parameter_list *params;
          ASSERT(source->File == PROGRAM_LOCAL_PARAM ||
+                source->File == PROGRAM_CONSTANT ||
                 source->File == PROGRAM_STATE_VAR);
          params = machine->CurProgram->Parameters;
          if (reg < 0 || reg >= params->NumParameters)
@@ -298,6 +296,36 @@ fetch_vector1(const struct prog_src_register *source,
    }
    if (source->NegateAbs) {
       result[0] = -result[0];
+   }
+}
+
+
+/**
+ * Fetch texel from texture.  Use partial derivatives when possible.
+ */
+static INLINE void
+fetch_texel(GLcontext *ctx,
+            const struct gl_program_machine *machine,
+            const struct prog_instruction *inst,
+            const GLfloat texcoord[4], GLfloat lodBias,
+            GLfloat color[4])
+{
+   const GLuint unit = machine->Samplers[inst->TexSrcUnit];
+
+   /* Note: we only have the right derivatives for fragment input attribs.
+    */
+   if (machine->NumDeriv > 0 &&
+       inst->SrcReg[0].File == PROGRAM_INPUT &&
+       inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit) {
+      /* simple texture fetch for which we should have derivatives */
+      GLuint attr = inst->SrcReg[0].Index;
+      machine->FetchTexelDeriv(ctx, texcoord,
+                               machine->DerivX[attr],
+                               machine->DerivY[attr],
+                               lodBias, unit, color);
+   }
+   else {
+      machine->FetchTexelLod(ctx, texcoord, lodBias, unit, color);
    }
 }
 
@@ -1306,33 +1334,18 @@ _mesa_execute_program(GLcontext * ctx,
          }
          break;
       case OPCODE_TEX:         /* Both ARB and NV frag prog */
-         /* Texel lookup */
+         /* Simple texel lookup */
          {
-            /* Note: only use the precomputed lambda value when we're
-             * sampling texture unit [K] with texcoord[K].
-             * Otherwise, the lambda value may have no relation to the
-             * instruction's texcoord or texture image.  Using the wrong
-             * lambda is usually bad news.
-             * The rest of the time, just use zero (until we get a more
-             * sophisticated way of computing lambda).
-             */
-            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
-            GLfloat coord[4], color[4], lambda;
-#if 0
-            if (inst->SrcReg[0].File == PROGRAM_INPUT &&
-                inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + unit)
-               lambda = span->array->lambda[unit][column];
-            else
-#endif
-               lambda = 0.0;
-            fetch_vector4(&inst->SrcReg[0], machine, coord);
-            machine->FetchTexelLod(ctx, coord, lambda, unit, color);
+            GLfloat texcoord[4], color[4];
+            fetch_vector4(&inst->SrcReg[0], machine, texcoord);
+
+            fetch_texel(ctx, machine, inst, texcoord, 0.0, color);
+
             if (DEBUG_PROG) {
-               printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g], "
-                      "lod %f\n",
+               printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g]\n",
                       color[0], color[1], color[2], color[3],
-                      unit,
-                      coord[0], coord[1], coord[2], coord[3], lambda);
+                      inst->TexSrcUnit,
+                      texcoord[0], texcoord[1], texcoord[2], texcoord[3]);
             }
             store_vector4(inst, machine, color);
          }
@@ -1342,21 +1355,18 @@ _mesa_execute_program(GLcontext * ctx,
          {
             const struct gl_texture_unit *texUnit
                = &ctx->Texture.Unit[inst->TexSrcUnit];
-            GLfloat coord[4], color[4], lambda, bias;
-#if 0
-            if (inst->SrcReg[0].File == PROGRAM_INPUT &&
-                inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit)
-               lambda = span->array->lambda[inst->TexSrcUnit][column];
-            else
-#endif
-               lambda = 0.0;
-            fetch_vector4(&inst->SrcReg[0], machine, coord);
-            /* coord[3] is the bias to add to lambda */
-            bias = texUnit->LodBias + coord[3];
-            if (texUnit->_Current)
-               bias += texUnit->_Current->LodBias;
-            machine->FetchTexelLod(ctx, coord, lambda + bias,
-                                   inst->TexSrcUnit, color);
+            GLfloat texcoord[4], color[4], lodBias;
+
+            fetch_vector4(&inst->SrcReg[0], machine, texcoord);
+
+            /* texcoord[3] is the bias to add to lambda */
+            lodBias = texUnit->LodBias + texcoord[3];
+            if (texUnit->_Current) {
+               lodBias += texUnit->_Current->LodBias;
+            }
+
+            fetch_texel(ctx, machine, inst, texcoord, lodBias, color);
+
             store_vector4(inst, machine, color);
          }
          break;
@@ -1368,6 +1378,7 @@ _mesa_execute_program(GLcontext * ctx,
             fetch_vector4(&inst->SrcReg[1], machine, dtdx);
             fetch_vector4(&inst->SrcReg[2], machine, dtdy);
             machine->FetchTexelDeriv(ctx, texcoord, dtdx, dtdy,
+                                     0.0, /* lodBias */
                                      inst->TexSrcUnit, color);
             store_vector4(inst, machine, color);
          }
@@ -1375,15 +1386,8 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_TXP:         /* GL_ARB_fragment_program only */
          /* Texture lookup w/ projective divide */
          {
-            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
-            GLfloat texcoord[4], color[4], lambda;
-#if 0
-            if (inst->SrcReg[0].File == PROGRAM_INPUT &&
-                inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit)
-               lambda = span->array->lambda[unit][column];
-            else
-#endif
-               lambda = 0.0;
+            GLfloat texcoord[4], color[4];
+
             fetch_vector4(&inst->SrcReg[0], machine, texcoord);
             /* Not so sure about this test - if texcoord[3] is
              * zero, we'd probably be fine except for an ASSERT in
@@ -1394,21 +1398,19 @@ _mesa_execute_program(GLcontext * ctx,
                texcoord[1] /= texcoord[3];
                texcoord[2] /= texcoord[3];
             }
-            machine->FetchTexelLod(ctx, texcoord, lambda, unit, color);
+
+            fetch_texel(ctx, machine, inst, texcoord, 0.0, color);
+
             store_vector4(inst, machine, color);
          }
          break;
       case OPCODE_TXP_NV:      /* GL_NV_fragment_program only */
-         /* Texture lookup w/ projective divide */
+         /* Texture lookup w/ projective divide, as above, but do not
+          * do the divide by w if sampling from a cube map.
+          */
          {
-            GLfloat texcoord[4], color[4], lambda;
-#if 0
-            if (inst->SrcReg[0].File == PROGRAM_INPUT &&
-                inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit)
-               lambda = span->array->lambda[inst->TexSrcUnit][column];
-            else
-#endif
-               lambda = 0.0;
+            GLfloat texcoord[4], color[4];
+
             fetch_vector4(&inst->SrcReg[0], machine, texcoord);
             if (inst->TexSrcTarget != TEXTURE_CUBE_INDEX &&
                 texcoord[3] != 0.0) {
@@ -1416,8 +1418,9 @@ _mesa_execute_program(GLcontext * ctx,
                texcoord[1] /= texcoord[3];
                texcoord[2] /= texcoord[3];
             }
-            machine->FetchTexelLod(ctx, texcoord, lambda,
-                                   inst->TexSrcUnit, color);
+
+            fetch_texel(ctx, machine, inst, texcoord, 0.0, color);
+
             store_vector4(inst, machine, color);
          }
          break;
@@ -1517,10 +1520,9 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_END:
          return GL_TRUE;
       default:
-         _mesa_problem(ctx, "Bad opcode %d in _mesa_exec_fragment_program",
+         _mesa_problem(ctx, "Bad opcode %d in _mesa_execute_program",
                        inst->Opcode);
          return GL_TRUE;        /* return value doesn't matter */
-
       }
 
       numExec++;

@@ -526,9 +526,7 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->GetVertexAttribdvARB = __indirect_glGetVertexAttribdvARB;
     glAPI->GetVertexAttribfvARB = __indirect_glGetVertexAttribfvARB;
     glAPI->GetVertexAttribivARB = __indirect_glGetVertexAttribivARB;
-    glAPI->ProgramEnvParameter4dARB = __indirect_glProgramEnvParameter4dARB;
     glAPI->ProgramEnvParameter4dvARB = __indirect_glProgramEnvParameter4dvARB;
-    glAPI->ProgramEnvParameter4fARB = __indirect_glProgramEnvParameter4fARB;
     glAPI->ProgramEnvParameter4fvARB = __indirect_glProgramEnvParameter4fvARB;
     glAPI->ProgramLocalParameter4dARB = __indirect_glProgramLocalParameter4dARB;
     glAPI->ProgramLocalParameter4dvARB = __indirect_glProgramLocalParameter4dvARB;
@@ -681,10 +679,6 @@ __GLapi * __glXNewIndirectAPI( void )
     glAPI->GetVertexAttribivNV = __indirect_glGetVertexAttribivNV;
     glAPI->IsProgramNV = __indirect_glIsProgramNV;
     glAPI->LoadProgramNV = __indirect_glLoadProgramNV;
-    glAPI->ProgramParameter4dNV = __indirect_glProgramParameter4dNV;
-    glAPI->ProgramParameter4dvNV = __indirect_glProgramParameter4dvNV;
-    glAPI->ProgramParameter4fNV = __indirect_glProgramParameter4fNV;
-    glAPI->ProgramParameter4fvNV = __indirect_glProgramParameter4fvNV;
     glAPI->ProgramParameters4dvNV = __indirect_glProgramParameters4dvNV;
     glAPI->ProgramParameters4fvNV = __indirect_glProgramParameters4fvNV;
     glAPI->RequestResidentProgramsNV = __indirect_glRequestResidentProgramsNV;

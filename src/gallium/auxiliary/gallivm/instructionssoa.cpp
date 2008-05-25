@@ -38,7 +38,6 @@
 #include <llvm/Instructions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/ParameterAttributes.h>
-//#include <llvm/ParamAttrsList.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 
@@ -174,16 +173,56 @@ std::vector<llvm::Value*> InstructionsSoa::extractVector(llvm::Value *vector)
 
 void InstructionsSoa::createFunctionMap()
 {
+   m_functionsMap[TGSI_OPCODE_ABS]   = "abs";
    m_functionsMap[TGSI_OPCODE_DP3]   = "dp3";
    m_functionsMap[TGSI_OPCODE_DP4]   = "dp4";
+   m_functionsMap[TGSI_OPCODE_MIN]   = "min";
+   m_functionsMap[TGSI_OPCODE_MAX]   = "max";
    m_functionsMap[TGSI_OPCODE_POWER] = "pow";
+   m_functionsMap[TGSI_OPCODE_LIT]   = "lit";
+   m_functionsMap[TGSI_OPCODE_RSQ]   = "rsq";
 }
 
 void InstructionsSoa::createDependencies()
 {
-   std::vector<std::string> powDeps(1);
-   powDeps[0] = "powf";
-   m_builtinDependencies["pow"] = powDeps;
+   {
+      std::vector<std::string> powDeps(2);
+      powDeps[0] = "powf";
+      powDeps[1] = "powvec";
+      m_builtinDependencies["pow"] = powDeps;
+   }
+   {
+      std::vector<std::string> absDeps(2);
+      absDeps[0] = "fabsf";
+      absDeps[1] = "absvec";
+      m_builtinDependencies["abs"] = absDeps;
+   }
+   {
+      std::vector<std::string> maxDeps(1);
+      maxDeps[0] = "maxvec";
+      m_builtinDependencies["max"] = maxDeps;
+   }
+   {
+      std::vector<std::string> minDeps(1);
+      minDeps[0] = "minvec";
+      m_builtinDependencies["min"] = minDeps;
+   }
+   {
+      std::vector<std::string> litDeps(4);
+      litDeps[0] = "minvec";
+      litDeps[1] = "maxvec";
+      litDeps[2] = "powf";
+      litDeps[3] = "powvec";
+      m_builtinDependencies["lit"] = litDeps;
+   }
+   {
+      std::vector<std::string> rsqDeps(4);
+      rsqDeps[0] = "sqrtf";
+      rsqDeps[1] = "sqrtvec";
+      rsqDeps[2] = "fabsf";
+      rsqDeps[3] = "absvec";
+      m_builtinDependencies["rsq"] = rsqDeps;
+   }
 }
 
 llvm::Function * InstructionsSoa::function(int op)
@@ -193,9 +232,13 @@ llvm::Function * InstructionsSoa::function(int op)
 
     std::string name = m_functionsMap[op];
 
+    std::cout <<"For op = "<<op<<", func is '"<<name<<"'"<<std::endl;
+
     std::vector<std::string> deps = m_builtinDependencies[name];
     for (unsigned int i = 0; i < deps.size(); ++i) {
-       injectFunction(m_builtins->getFunction(deps[i]));
+       llvm::Function *func = m_builtins->getFunction(deps[i]);
+       std::cout <<"\tinjecting dep = '"<<func->getName()<<"'"<<std::endl;
+       injectFunction(func);
     }
 
     llvm::Function *originalFunc = m_builtins->getFunction(name);
@@ -216,9 +259,18 @@ void InstructionsSoa::createBuiltins()
 {
    MemoryBuffer *buffer = MemoryBuffer::getMemBuffer(
       (const char*)&soabuiltins_data[0],
-      (const char*)&soabuiltins_data[Elements(soabuiltins_data)-1]);
+      (const char*)&soabuiltins_data[Elements(soabuiltins_data)]);
    m_builtins = ParseBitcodeFile(buffer);
+   std::cout<<"Builtins created at "<<m_builtins<<std::endl;
+   assert(m_builtins);
    createDependencies();
+}
+
+
+std::vector<llvm::Value*> InstructionsSoa::abs(const std::vector<llvm::Value*> in1)
+{
+   llvm::Function *func = function(TGSI_OPCODE_ABS);
+   return callBuiltin(func, in1);
 }
 
 std::vector<llvm::Value*> InstructionsSoa::dp3(const std::vector<llvm::Value*> in1,
@@ -354,6 +406,21 @@ std::vector<llvm::Value*> InstructionsSoa::pow(const std::vector<llvm::Value*> i
    return callBuiltin(func, in1, in2);
 }
 
+std::vector<llvm::Value*> InstructionsSoa::min(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_MIN);
+   return callBuiltin(func, in1, in2);
+}
+
+
+std::vector<llvm::Value*> InstructionsSoa::max(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   llvm::Function *func = function(TGSI_OPCODE_MAX);
+   return callBuiltin(func, in1, in2);
+}
+
 void checkFunction(Function *func)
 {
    for (Function::const_iterator BI = func->begin(), BE = func->end();
@@ -388,7 +455,6 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
    }
    llvm::Function *func = 0;
    if (originalFunc->isDeclaration()) {
-      std::cout << "function decleration" <<std::endl;
       func = Function::Create(originalFunc->getFunctionType(), GlobalValue::ExternalLinkage,
                               originalFunc->getName(), currentModule());
       func->setCallingConv(CallingConv::C);
@@ -397,20 +463,48 @@ void InstructionsSoa::injectFunction(llvm::Function *originalFunc, int op)
       currentModule()->dump();
    } else {
       DenseMap<const Value*, Value *> val;
+      val[m_builtins->getFunction("fabsf")] = currentModule()->getFunction("fabsf");
       val[m_builtins->getFunction("powf")] = currentModule()->getFunction("powf");
+      val[m_builtins->getFunction("sqrtf")] = currentModule()->getFunction("sqrtf");
+      func = CloneFunction(originalFunc, val);
+#if 0
       std::cout <<" replacing "<<m_builtins->getFunction("powf")
                 <<", with " <<currentModule()->getFunction("powf")<<std::endl;
-      func = CloneFunction(originalFunc, val);
       std::cout<<"1111-------------------------------"<<std::endl;
       checkFunction(originalFunc);
       std::cout<<"2222-------------------------------"<<std::endl;
       checkFunction(func);
       std::cout <<"XXXX = " <<val[m_builtins->getFunction("powf")]<<std::endl;
+#endif
       currentModule()->getFunctionList().push_back(func);
-      std::cout << "Func parent is "<<func->getParent()
-                <<", cur is "<<currentModule() <<std::endl;
    }
    if (op != TGSI_OPCODE_LAST) {
       m_functions[op] = func;
    }
 }
+
+std::vector<llvm::Value*> InstructionsSoa::sub(const std::vector<llvm::Value*> in1,
+                                               const std::vector<llvm::Value*> in2)
+{
+   std::vector<llvm::Value*> res(4);
+
+   res[0] = m_builder.CreateSub(in1[0], in2[0], name("subx"));
+   res[1] = m_builder.CreateSub(in1[1], in2[1], name("suby"));
+   res[2] = m_builder.CreateSub(in1[2], in2[2], name("subz"));
+   res[3] = m_builder.CreateSub(in1[3], in2[3], name("subw"));
+
+   return res;
+}
+
+std::vector<llvm::Value*> InstructionsSoa::lit(const std::vector<llvm::Value*> in)
+{
+   llvm::Function *func = function(TGSI_OPCODE_LIT);
+   return callBuiltin(func, in);
+}
+
+std::vector<llvm::Value*> InstructionsSoa::rsq(const std::vector<llvm::Value*> in)
+{
+   llvm::Function *func = function(TGSI_OPCODE_RSQ);
+   return callBuiltin(func, in);
+}
+

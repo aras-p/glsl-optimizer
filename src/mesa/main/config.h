@@ -163,25 +163,6 @@
 /** For GL_EXT_texture_lod_bias (typically MAX_TEXTURE_LEVELS - 1) */
 #define MAX_TEXTURE_LOD_BIAS 11.0
 
-/** For GL_NV_vertex_program */
-/*@{*/
-#define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
-#define MAX_NV_VERTEX_PROGRAM_TEMPS         12
-#define MAX_NV_VERTEX_PROGRAM_PARAMS        128	/* KW: power of two */
-#define MAX_NV_VERTEX_PROGRAM_INPUTS        16
-#define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
-/*@}*/
-
-/** For GL_NV_fragment_program */
-/*@{*/
-#define MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS 1024 /* 72 for GL_ARB_f_p */
-#define MAX_NV_FRAGMENT_PROGRAM_TEMPS         96
-#define MAX_NV_FRAGMENT_PROGRAM_PARAMS        64
-#define MAX_NV_FRAGMENT_PROGRAM_INPUTS        12
-#define MAX_NV_FRAGMENT_PROGRAM_OUTPUTS        3
-#define MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS    2
-/*@}*/
-
 /** For GL_ARB_vertex_program */
 /*@{*/
 #define MAX_VERTEX_PROGRAM_ADDRESS_REGS 1
@@ -209,6 +190,26 @@
 #define MAX_VARYING 8
 #define MAX_SAMPLERS 8
 /*@}*/
+
+/** For GL_NV_vertex_program */
+/*@{*/
+#define MAX_NV_VERTEX_PROGRAM_INSTRUCTIONS 128
+#define MAX_NV_VERTEX_PROGRAM_TEMPS         12
+#define MAX_NV_VERTEX_PROGRAM_PARAMS        MAX_PROGRAM_ENV_PARAMS
+#define MAX_NV_VERTEX_PROGRAM_INPUTS        16
+#define MAX_NV_VERTEX_PROGRAM_OUTPUTS       15
+/*@}*/
+
+/** For GL_NV_fragment_program */
+/*@{*/
+#define MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS 1024 /* 72 for GL_ARB_f_p */
+#define MAX_NV_FRAGMENT_PROGRAM_TEMPS         96
+#define MAX_NV_FRAGMENT_PROGRAM_PARAMS        64
+#define MAX_NV_FRAGMENT_PROGRAM_INPUTS        12
+#define MAX_NV_FRAGMENT_PROGRAM_OUTPUTS        3
+#define MAX_NV_FRAGMENT_PROGRAM_WRITE_ONLYS    2
+/*@}*/
+
 
 /** For GL_ARB_vertex_shader */
 /*@{*/

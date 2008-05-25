@@ -162,6 +162,7 @@ intelCreateContext(const __GLcontextModes * visual,
     * memory pools
     */
    DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   // ZZZ JB should be per screen and not be done per context
    havePools = intelCreatePools(sPriv);
    DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
    if (!havePools)
@@ -234,12 +235,12 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       if (intel->last_swap_fence) {
 	 driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-	 driFenceUnReference(intel->last_swap_fence);
+	 driFenceUnReference(&intel->last_swap_fence);
 	 intel->last_swap_fence = NULL;
       }
       if (intel->first_swap_fence) {
 	 driFenceFinish(intel->first_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-	 driFenceUnReference(intel->first_swap_fence);
+	 driFenceUnReference(&intel->first_swap_fence);
 	 intel->first_swap_fence = NULL;
       }
 
