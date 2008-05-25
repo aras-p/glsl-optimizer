@@ -310,7 +310,8 @@ nouveau_bo_set_status(struct nouveau_bo *bo, uint32_t flags)
 	/* Check current memtype vs requested, if they match do nothing */
 	if ((nvbo->drm.flags & NOUVEAU_MEM_FB) && (flags & NOUVEAU_BO_VRAM))
 		return 0;
-	if ((nvbo->drm.flags & NOUVEAU_MEM_AGP) && (flags & NOUVEAU_BO_GART))
+	if ((nvbo->drm.flags & (NOUVEAU_MEM_AGP | NOUVEAU_MEM_PCI)) &&
+	    (flags & NOUVEAU_BO_GART))
 		return 0;
 	if (nvbo->drm.size == 0 && nvbo->sysmem && (flags & NOUVEAU_BO_LOCAL))
 		return 0;
