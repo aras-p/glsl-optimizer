@@ -282,7 +282,7 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
 {
    unsigned i;
    
-   for (i = 0; i < cp->vaos->base.vs->info.num_inputs; i++) {
+   for (i = 0; i < cp->vaos->base.vs->info.num_outputs; i++) {
       unsigned format = cp->vaos->base.key.element[i].out.format;
       unsigned offset = cp->vaos->base.key.element[i].out.offset;
 
