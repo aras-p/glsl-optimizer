@@ -117,8 +117,10 @@ static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 	        temp = GET_SWZ(src.Swizzle, i);
 		/* Fix SWIZZLE_ONE */
 		if (temp == 5) temp++;
-		swiz += temp << i*3;
+		swiz |= temp << i*3;
 	}
+	if (src.NegateBase)
+		swiz |= (R500_SWIZ_MOD_NEG << 10);
 	return swiz;
 }
 
@@ -126,6 +128,10 @@ static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 3);
 
 	if (swiz == 5) swiz++;
+
+	if (src.NegateBase)
+		swiz |= (R500_SWIZ_MOD_NEG << 4);
+
 	return swiz;
 }
 
