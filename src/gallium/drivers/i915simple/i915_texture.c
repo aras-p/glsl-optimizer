@@ -132,11 +132,11 @@ i915_displaytarget_layout(struct pipe_screen *screen,
       
    /* Now extract the goodies: 
     */
-   i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
-   i915_miptree_set_level_info( tex, 0, 0, 0, 0, 
+   i915_miptree_set_level_info( tex, 0, 1, 0, 0,
                                 tex->base.width[0],
                                 tex->base.height[0],
                                 1 );
+   i915_miptree_set_image_offset( tex, 0, 0, 0, 0 );
 
    tex->buffer = surf.buffer;
    tex->pitch = surf.pitch;
@@ -633,6 +633,7 @@ i915_get_tex_surface_screen(struct pipe_screen *screen,
    if (ps) {
       assert(ps->refcount);
       assert(ps->winsys);
+      pipe_texture_reference(&ps->texture, pt);
       pipe_buffer_reference(ws, &ps->buffer, tex->buffer);
       ps->format = pt->format;
       ps->cpp = pt->cpp;
@@ -652,6 +653,29 @@ i915_init_texture_functions(struct i915_context *i915)
 //   i915->pipe.texture_update = i915_texture_update;
 }
 
+static void
+i915_tex_surface_release_screen(struct pipe_screen *screen,
+                                struct pipe_surface **surface)
+{
+   struct pipe_surface *surf = *surface;
+
+   if (--surf->refcount == 0) {
+
+      /* This really should not be possible, but it's actually
+       * happening quite a bit...  Will fix.
+       */
+      if (surf->status == PIPE_SURFACE_STATUS_CLEAR) {
+         debug_printf("XXX destroying a surface with pending clears...\n");
+         assert(0);
+      }
+
+      pipe_texture_reference(&surf->texture, NULL);
+      pipe_buffer_reference(screen->winsys, &surf->buffer, NULL);
+      FREE(surf);
+   }
+
+   *surface = NULL;
+}
 
 void
 i915_init_screen_texture_functions(struct pipe_screen *screen)
@@ -659,4 +683,5 @@ i915_init_screen_texture_functions(struct pipe_screen *screen)
    screen->texture_create = i915_texture_create_screen;
    screen->texture_release = i915_texture_release_screen;
    screen->get_tex_surface = i915_get_tex_surface_screen;
+   screen->tex_surface_release = i915_tex_surface_release_screen;
 }
