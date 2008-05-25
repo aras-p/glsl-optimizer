@@ -44,7 +44,7 @@
 struct draw_vs_varient_generic {
    struct draw_vs_varient base;
 
-
+   struct pipe_viewport_state viewport;
 
    struct draw_vertex_shader *shader;
    struct draw_context *draw;
@@ -87,6 +87,30 @@ static void vsvg_set_input( struct draw_vs_varient *varient,
 }
 
 
+/* Mainly for debug at this stage:
+ */
+static void do_viewport( struct draw_vs_varient_generic *vsvg,
+                         unsigned count,
+                         void *output_buffer )
+{
+   char *ptr = (char *)output_buffer;
+   const float *scale = vsvg->viewport.scale;
+   const float *trans = vsvg->viewport.translate;
+   unsigned stride = vsvg->base.key.output_stride;
+   unsigned j;
+
+   for (j = 0; j < count; j++, ptr += stride) {
+      float *data = (float *)ptr;
+      float w = 1.0f / data[3];
+
+      data[0] = data[0] * w * scale[0] + trans[0];
+      data[1] = data[1] * w * scale[1] + trans[1];
+      data[2] = data[2] * w * scale[2] + trans[2];
+      data[3] = w;
+   }
+}
+                         
+
 static void vsvg_run_elts( struct draw_vs_varient *varient,
                            const unsigned *elts,
                            unsigned count,
@@ -111,6 +135,12 @@ static void vsvg_run_elts( struct draw_vs_varient *varient,
                                  count,
                                  vsvg->base.key.output_stride, 
                                  vsvg->base.key.output_stride);
+
+      if (vsvg->base.key.viewport)
+         do_viewport( vsvg,
+                      count,
+                      output_buffer );
+
 
       //if (!vsvg->already_in_emit_format)
 
@@ -152,6 +182,12 @@ static void vsvg_run_linear( struct draw_vs_varient *varient,
                                  vsvg->base.key.output_stride, 
                                  vsvg->base.key.output_stride);
 
+      if (vsvg->base.key.viewport)
+         do_viewport( vsvg,
+                      count,
+                      output_buffer );
+
+
       //if (!vsvg->already_in_emit_format)
       vsvg->emit->set_buffer( vsvg->emit,
                               0, 
@@ -171,6 +207,9 @@ static void vsvg_run_linear( struct draw_vs_varient *varient,
 static void vsvg_set_viewport( struct draw_vs_varient *varient,
                                const struct pipe_viewport_state *viewport )
 {
+   struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
+
+   vsvg->viewport = *viewport;
 }
 
 static void vsvg_destroy( struct draw_vs_varient *varient )
@@ -185,7 +224,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    unsigned i;
    struct translate_key fetch, emit;
 
-   if (key->viewport || key->clip)
+   if (key->clip)
       return NULL;
 
    struct draw_vs_varient_generic *vsvg = CALLOC_STRUCT( draw_vs_varient_generic );
