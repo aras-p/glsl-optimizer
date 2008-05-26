@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_rendertmp.h,v 1.2 2003/01/29 23:00:40 dawes Exp $ */
 
 #define IMPL_LOCAL_VARS						\
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);			\

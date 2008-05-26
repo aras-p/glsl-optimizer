@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_tritmp.h,v 1.2 2002/02/22 21:32:59 dawes Exp $ */
 
 static void TAG(ffb_triangle)( GLcontext *ctx, 	
 			       ffb_vertex *v0,

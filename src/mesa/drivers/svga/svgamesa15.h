@@ -1,4 +1,3 @@
-/* $Id: svgamesa15.h,v 1.7 2002/11/11 18:42:39 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

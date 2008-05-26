@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tris.c,v 1.7 2002/10/30 12:51:33 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2001 VA Linux Systems Inc., Fremont, California.

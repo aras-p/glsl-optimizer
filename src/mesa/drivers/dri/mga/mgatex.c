@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.14 2002/10/30 12:51:36 alanh Exp $ */
 
 #include "glheader.h"
 #include "mm.h"

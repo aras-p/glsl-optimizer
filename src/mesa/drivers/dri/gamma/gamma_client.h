@@ -31,7 +31,6 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * 
- * $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_client.h,v 1.3 2002/02/22 21:33:00 dawes Exp $
  * 
  */
 

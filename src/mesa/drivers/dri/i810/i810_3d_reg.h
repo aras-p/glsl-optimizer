@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_3d_reg.h,v 1.7 2002/02/22 21:33:03 dawes Exp $ */
 
 #ifndef I810_3D_REG_H
 #define I810_3D_REG_H

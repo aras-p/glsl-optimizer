@@ -1,4 +1,3 @@
-/* $Id: sharedtex.c,v 1.2 2002/01/16 14:32:46 joukj Exp $ */
 
 /*
  * Test sharing of display lists and texture objects between GLX contests.

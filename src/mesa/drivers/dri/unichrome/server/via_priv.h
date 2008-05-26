@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_priv.h,v 1.3 2003/08/27 15:16:12 tsi Exp $ */
 
 #ifndef _VIA_PRIV_H_
 #define _VIA_PRIV_H_ 1

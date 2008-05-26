@@ -2,7 +2,6 @@
  * This file defines macros and types necessary for accessing glide3.
  */
 
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_glide.h,v 1.1 2002/02/22 21:45:03 dawes Exp $ */
 
 #ifndef NEWGLIDE_H
 #define NEWGLIDE_H

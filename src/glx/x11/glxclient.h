@@ -31,7 +31,6 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
-/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.21 2004/02/09 23:46:31 alanh Exp $ */
 
 /**
  * \file glxclient.h

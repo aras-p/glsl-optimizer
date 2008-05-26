@@ -1,4 +1,3 @@
-/* $Id: svgamesa24.c,v 1.12.36.1 2006/11/02 12:02:17 alanh Exp $ */
 
 /*
  * Mesa 3-D graphics library

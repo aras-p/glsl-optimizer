@@ -1,4 +1,3 @@
-/* $Id: gld_vb_mesa_render_dx8.c,v 1.6 2005/08/27 13:56:08 brianp Exp $ */
 
 /*
  * Mesa 3-D graphics library

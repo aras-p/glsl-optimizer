@@ -16,7 +16,6 @@ Status
 
 Version
 
-    $Id: MESA_window_pos.spec,v 1.4 2004/03/25 01:42:42 brianp Exp $
 
 Number
 

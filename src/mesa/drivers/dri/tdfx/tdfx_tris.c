@@ -23,7 +23,6 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.c,v 1.4 2002/10/30 12:52:01 alanh Exp $ */
 
 /* New fixes:
  *	Daniel Borca <dborca@users.sourceforge.net>, 19 Jul 2004

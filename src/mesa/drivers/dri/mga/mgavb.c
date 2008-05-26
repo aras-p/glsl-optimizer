@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.15 2003/03/26 20:43:49 tsi Exp $ */
 
 #include <stdlib.h>
 #include "mgacontext.h"

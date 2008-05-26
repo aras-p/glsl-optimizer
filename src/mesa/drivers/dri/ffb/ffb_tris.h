@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_tris.h,v 1.2 2002/02/22 21:32:59 dawes Exp $ */
 
 #ifndef _FFB_TRIS_H
 #define _FFB_TRIS_H

@@ -1,4 +1,3 @@
-/* $Id: texline.c,v 1.5 2004/01/28 10:07:48 keithw Exp $ */
 
 /*
  * Test textured lines.
