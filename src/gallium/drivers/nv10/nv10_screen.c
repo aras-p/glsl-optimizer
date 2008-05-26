@@ -117,6 +117,28 @@ nv10_screen_is_format_supported(struct pipe_screen *screen,
 	return FALSE;
 }
 
+static void *
+nv10_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
+		 unsigned flags )
+{
+	struct pipe_winsys *ws = screen->winsys;
+	void *map;
+
+	map = ws->buffer_map(ws, surface->buffer, flags);
+	if (!map)
+		return NULL;
+
+	return map + surface->offset;
+}
+
+static void
+nv10_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
+{
+	struct pipe_winsys *ws = screen->winsys;
+
+	ws->buffer_unmap(ws, surface->buffer);
+}
+
 static void
 nv10_screen_destroy(struct pipe_screen *pscreen)
 {
@@ -179,6 +201,9 @@ nv10_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	screen->pipe.get_paramf = nv10_screen_get_paramf;
 
 	screen->pipe.is_format_supported = nv10_screen_is_format_supported;
+
+	screen->pipe.surface_map = nv10_surface_map;
+	screen->pipe.surface_unmap = nv10_surface_unmap;
 
 	nv10_screen_init_miptree_functions(&screen->pipe);
 

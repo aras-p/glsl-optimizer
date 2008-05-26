@@ -100,15 +100,10 @@ nv40_miptree_release(struct pipe_screen *pscreen, struct pipe_texture **pt)
 	}
 }
 
-static void
-nv40_miptree_update(struct pipe_context *pipe, struct pipe_texture *mt,
-		    uint face, uint levels)
-{
-}
-
 static struct pipe_surface *
-nv40_miptree_surface(struct pipe_screen *pscreen, struct pipe_texture *pt,
-                     unsigned face, unsigned level, unsigned zslice)
+nv40_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_texture *pt,
+			 unsigned face, unsigned level, unsigned zslice,
+			 unsigned flags)
 {
 	struct pipe_winsys *ws = pscreen->winsys;
 	struct nv40_miptree *nv40mt = (struct nv40_miptree *)pt;
@@ -136,10 +131,10 @@ nv40_miptree_surface(struct pipe_screen *pscreen, struct pipe_texture *pt,
 	return ps;
 }
 
-void
-nv40_init_miptree_functions(struct nv40_context *nv40)
+static void
+nv40_miptree_surface_del(struct pipe_screen *pscreen,
+			 struct pipe_surface **psurface)
 {
-	nv40->pipe.texture_update = nv40_miptree_update;
 }
 
 void
@@ -147,6 +142,7 @@ nv40_screen_init_miptree_functions(struct pipe_screen *pscreen)
 {
 	pscreen->texture_create = nv40_miptree_create;
 	pscreen->texture_release = nv40_miptree_release;
-	pscreen->get_tex_surface = nv40_miptree_surface;
+	pscreen->get_tex_surface = nv40_miptree_surface_new;
+	pscreen->tex_surface_release = nv40_miptree_surface_del;
 }
 

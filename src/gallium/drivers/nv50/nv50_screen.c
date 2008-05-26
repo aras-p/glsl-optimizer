@@ -117,6 +117,28 @@ nv50_screen_get_paramf(struct pipe_screen *pscreen, int param)
 	}
 }
 
+static void *
+nv50_surface_map(struct pipe_screen *screen, struct pipe_surface *surface,
+		 unsigned flags )
+{
+	struct pipe_winsys *ws = screen->winsys;
+	void *map;
+
+	map = ws->buffer_map(ws, surface->buffer, flags);
+	if (!map)
+		return NULL;
+
+	return map + surface->offset;
+}
+
+static void
+nv50_surface_unmap(struct pipe_screen *screen, struct pipe_surface *surface)
+{
+	struct pipe_winsys *ws = screen->winsys;
+
+	ws->buffer_unmap(ws, surface->buffer);
+}
+
 static void
 nv50_screen_destroy(struct pipe_screen *pscreen)
 {
@@ -208,6 +230,9 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_winsys *nvws)
 	screen->pipe.get_paramf = nv50_screen_get_paramf;
 
 	screen->pipe.is_format_supported = nv50_screen_is_format_supported;
+
+	screen->pipe.surface_map = nv50_surface_map;
+	screen->pipe.surface_unmap = nv50_surface_unmap;
 
 	nv50_screen_init_miptree_functions(&screen->pipe);
 

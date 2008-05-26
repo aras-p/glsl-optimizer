@@ -109,7 +109,6 @@ nv10_context(struct pipe_context *pipe)
 
 extern void nv10_init_state_functions(struct nv10_context *nv10);
 extern void nv10_init_surface_functions(struct nv10_context *nv10);
-extern void nv10_init_miptree_functions(struct nv10_context *nv10);
 
 extern void nv10_screen_init_miptree_functions(struct pipe_screen *pscreen);
 

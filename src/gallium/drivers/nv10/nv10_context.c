@@ -285,7 +285,6 @@ nv10_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv10_init_surface_functions(nv10);
 	nv10_init_state_functions(nv10);
-	nv10_init_miptree_functions(nv10);
 
 	nv10->draw = draw_create();
 	assert(nv10->draw);

@@ -55,7 +55,6 @@ nv50_create(struct pipe_screen *pscreen, unsigned pctx_id)
 
 	nv50->pipe.flush = nv50_flush;
 
-	nv50_init_miptree_functions(nv50);
 	nv50_init_surface_functions(nv50);
 	nv50_init_state_functions(nv50);
 	nv50_init_query_functions(nv50);
