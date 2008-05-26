@@ -293,16 +293,11 @@ dri_gem_bo_alloc(dri_bufmgr *bufmgr, const char *name,
     /* Get a buffer out of the cache if available */
     if (bucket != NULL && bucket->num_entries > 0) {
 	struct dri_gem_bo_bucket_entry *entry = bucket->head;
-#if 0
-	int busy;
-
-	/* XXX */
-	/* Check if the buffer is still in flight.  If not, reuse it. */
-	ret = drmBOBusy(bufmgr_gem->fd, &entry->drm_bo, &busy);
-	alloc_from_cache = (ret == 0 && busy == 0);
-#else
-	alloc_from_cache = 0;
-#endif
+	struct drm_i915_gem_busy busy;
+	
+        busy.handle = entry->gem_handle;
+        ret = ioctl(bufmgr_gem->fd, DRM_IOCTL_I915_GEM_BUSY, &busy);
+        alloc_from_cache = (ret == 0 && busy.busy == 0);
 
 	if (alloc_from_cache) {
 	    bucket->head = entry->next;
@@ -797,14 +792,12 @@ dri_gem_post_submit(dri_bo *batch_buf)
 void
 intel_gem_enable_bo_reuse(dri_bufmgr *bufmgr)
 {
-    /*
     dri_bufmgr_gem *bufmgr_gem = (dri_bufmgr_gem *)bufmgr;
     int i;
 
     for (i = 0; i < INTEL_GEM_BO_BUCKETS; i++) {
 	bufmgr_gem->cache_bucket[i].max_entries = -1;
     }
-    */
 }
 
 /*
