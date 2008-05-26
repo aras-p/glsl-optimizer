@@ -375,6 +375,10 @@ intelEmitCopyBlit(struct intel_context *intel,
 		src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
+   BEGIN_BATCH(1, NO_LOOP_CLIPRECTS);
+   OUT_BATCH(MI_FLUSH);
+   ADVANCE_BATCH();
+   intel_batchbuffer_flush(intel->batch);
 }
 
 
