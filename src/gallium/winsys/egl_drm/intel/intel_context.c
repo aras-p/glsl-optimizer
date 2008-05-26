@@ -26,8 +26,6 @@
  **************************************************************************/
 
 
-#include "i830_dri.h"
-
 #include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_swapbuffers.h"
@@ -37,9 +35,8 @@
 #include "state_tracker/st_public.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
-
+#include "intel_egl.h"
 #include "utils.h"
-
 
 #ifdef DEBUG
 int __intel_debug = 0;
@@ -117,20 +114,82 @@ const struct dri_extension card_extensions[] = {
    {NULL, NULL}
 };
 
+int
+intel_create_context(struct egl_drm_context *eglCon, const __GLcontextModes *visual, void *sharedContextPrivate)
+{
+	struct intel_context *iCon = CALLOC_STRUCT(intel_context);
+	struct intel_screen *iScrn = (struct intel_screen *)eglCon->device->priv;
+	struct pipe_context *pipe;
+	struct st_context *st_share = NULL;
 
+	eglCon->priv = iCon;
 
-#ifdef DEBUG
-static const struct dri_debug_control debug_control[] = {
-   {"ioctl", DEBUG_IOCTL},
-   {"bat", DEBUG_BATCH},
-   {"lock", DEBUG_LOCK},
-   {"swap", DEBUG_SWAP},
-   {NULL, 0}
-};
-#endif
+	iCon->intel_screen = iScrn;
+	iCon->egl_context = eglCon;
+	iCon->egl_device = eglCon->device;
 
+	iCon->batch = intel_batchbuffer_alloc(iScrn);
+	iCon->last_swap_fence = NULL;
+	iCon->first_swap_fence = NULL;
 
+	pipe = intel_create_i915simple(iCon, iScrn->winsys);
+//	pipe = intel_create_softpipe(iCon, iScrn->winsys);
 
+	pipe->priv = iCon;
+
+	iCon->st = st_create_context(pipe, visual, st_share);
+	return TRUE;
+}
+
+void
+intel_make_current(struct egl_drm_context *context, struct egl_drm_drawable *draw, struct egl_drm_drawable *read)
+{
+	if (context) {
+		struct intel_context *intel = (struct intel_context *)context->priv;
+		struct intel_framebuffer *draw_fb = (struct intel_framebuffer *)draw->priv;
+		struct intel_framebuffer *read_fb = (struct intel_framebuffer *)read->priv;
+
+		assert(draw_fb->stfb);
+		assert(read_fb->stfb);
+
+		st_make_current(intel->st, draw_fb->stfb, read_fb->stfb);
+
+		intel->egl_drawable = draw;
+
+		st_resize_framebuffer(draw_fb->stfb, draw->w, draw->h);
+
+		if (draw != read)
+			st_resize_framebuffer(read_fb->stfb, read->w, read->h);
+
+		//intelUpdateWindowSize(driDrawPriv);
+	} else {
+		st_make_current(NULL, NULL, NULL);
+	}
+}
+
+void
+intel_bind_frontbuffer(struct egl_drm_drawable *draw, struct egl_drm_frontbuffer *front)
+{
+	struct intel_screen *intelScreen = (struct intel_screen *)draw->device->priv;
+	struct intel_framebuffer *draw_fb = (struct intel_framebuffer *)draw->priv;
+
+	driBOUnReference(draw_fb->front_buffer);
+	draw_fb->front_buffer = NULL;
+	draw_fb->front = NULL;
+
+	/* to unbind just call this function with front == NULL */
+	if (!front)
+		return;
+
+	draw_fb->front = front;
+
+	driGenBuffers(intelScreen->staticPool, "front", 1, &draw_fb->front_buffer, 0, 0, 0);
+	driBOSetReferenced(draw_fb->front_buffer, front->handle);
+
+	st_resize_framebuffer(draw_fb->stfb, draw->w, draw->h);
+}
+
+#if 0
 GLboolean
 intelCreateContext(const __GLcontextModes * visual,
                    __DRIcontextPrivate * driContextPriv,
@@ -304,3 +363,4 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
    return GL_TRUE;
 }
+#endif

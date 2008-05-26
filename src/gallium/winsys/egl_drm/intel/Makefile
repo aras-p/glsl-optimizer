@@ -2,9 +2,7 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = i915_dri.so
-
-MINIGLX_SOURCES = server/intel_dri.c
+LIBNAME = EGL_i915.so
 
 PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
@@ -23,7 +21,8 @@ DRIVER_SOURCES = \
 	ws_dri_drmpool.c \
 	ws_dri_fencemgr.c \
 	ws_dri_mallocpool.c \
-	ws_dri_slabpool.c
+	ws_dri_slabpool.c \
+	intel_egl.c
 
 C_SOURCES = \
 	$(COMMON_GALLIUM_SOURCES) \

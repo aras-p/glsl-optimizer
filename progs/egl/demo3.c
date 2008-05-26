@@ -576,7 +576,7 @@ main(int argc, char *argv[])
    /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
    */
-   EGLDisplay d = eglGetDisplay(":0");
+   EGLDisplay d = eglGetDisplay("!EGL_i915");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {

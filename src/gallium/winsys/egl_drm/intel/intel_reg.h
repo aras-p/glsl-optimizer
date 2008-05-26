@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,49 +25,29 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_WINSYS_H
-#define INTEL_WINSYS_H
 
-#include "pipe/p_state.h"
-
-struct intel_context;
-struct pipe_context;
-struct pipe_winsys;
-struct pipe_buffer;
-struct _DriBufferObject;
-
-struct pipe_winsys *
-intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan );
-
-void
-intel_destroy_pipe_winsys( struct pipe_winsys *winsys );
-
-struct pipe_context *
-intel_create_softpipe( struct intel_context *intel,
-                       struct pipe_winsys *winsys );
-
-struct pipe_context *
-intel_create_i915simple( struct intel_context *intel,
-                       struct pipe_winsys *winsys );
+#ifndef _INTEL_REG_H_
+#define _INTEL_REG_H_
 
 
-struct intel_buffer {
-   struct pipe_buffer base;
-   struct _DriBufferPool *pool;
-   struct _DriBufferObject *driBO;
-};
+#define BR00_BITBLT_CLIENT   0x40000000
+#define BR00_OP_COLOR_BLT    0x10000000
+#define BR00_OP_SRC_COPY_BLT 0x10C00000
+#define BR13_SOLID_PATTERN   0x80000000
 
-static INLINE struct intel_buffer *
-intel_buffer( struct pipe_buffer *buf )
-{
-   return (struct intel_buffer *)buf;
-}
+#define XY_COLOR_BLT_CMD		((2<<29)|(0x50<<22)|0x4)
+#define XY_COLOR_BLT_WRITE_ALPHA	(1<<21)
+#define XY_COLOR_BLT_WRITE_RGB		(1<<20)
 
-static INLINE struct _DriBufferObject *
-dri_bo( struct pipe_buffer *buf )
-{
-   return intel_buffer(buf)->driBO;
-}
+#define XY_SRC_COPY_BLT_CMD             ((2<<29)|(0x53<<22)|6)
+#define XY_SRC_COPY_BLT_WRITE_ALPHA     (1<<21)
+#define XY_SRC_COPY_BLT_WRITE_RGB       (1<<20)
+
+#define MI_WAIT_FOR_EVENT               ((0x3<<23))
+#define MI_WAIT_FOR_PLANE_B_FLIP        (1<<6)
+#define MI_WAIT_FOR_PLANE_A_FLIP        (1<<2)
+
+#define MI_BATCH_BUFFER_END 	        (0xA<<23)
 
 
 #endif

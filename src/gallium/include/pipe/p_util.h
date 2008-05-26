@@ -207,7 +207,6 @@ mem_dup(const void *src, uint size)
 #ifndef Elements
 #define Elements(x) (sizeof(x)/sizeof((x)[0]))
 #endif
-
 #define Offset(TYPE, MEMBER) ((unsigned)&(((TYPE *)NULL)->MEMBER))
 
 /**

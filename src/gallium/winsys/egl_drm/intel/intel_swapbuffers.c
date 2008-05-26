@@ -36,8 +36,80 @@
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
+#include "intel_egl.h"
 
 
+static void
+intel_display_surface(struct egl_drm_drawable *draw,
+                      struct pipe_surface *surf);
+
+void intel_swap_buffers(struct egl_drm_drawable *draw)
+{
+	struct intel_framebuffer *intel_fb = (struct intel_framebuffer *)draw->priv;
+	struct pipe_surface *back_surf;
+
+	assert(intel_fb);
+	assert(intel_fb->stfb);
+
+	back_surf = st_get_framebuffer_surface(intel_fb->stfb, ST_SURFACE_BACK_LEFT);
+	if (back_surf) {
+		st_notify_swapbuffers(intel_fb->stfb);
+		intel_display_surface(draw, back_surf);
+		st_notify_swapbuffers_complete(intel_fb->stfb);
+	}
+}
+
+static void
+intel_display_surface(struct egl_drm_drawable *draw,
+                      struct pipe_surface *surf)
+{
+	struct intel_screen *intel = (struct intel_screen *)draw->device->priv;
+	struct intel_framebuffer *intel_fb = (struct intel_framebuffer *)draw->priv;
+	struct _DriFenceObject *fence;
+
+	//const int srcWidth = surf->width;
+	//const int srcHeight = surf->height;
+	const int srcPitch = surf->pitch;
+
+	const int dstWidth = intel_fb->front->width;
+	const int dstHeight = intel_fb->front->height;
+	const int dstPitch = intel_fb->front->pitch / 4;//draw->front.cpp;
+
+	const int cpp = 4;//intel_fb->front->cpp;
+
+	int BR13, CMD;
+	//int i;
+
+
+	BR13 = (dstPitch * cpp) | (0xCC << 16) | (1 << 24) | (1 << 25);
+	CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
+			XY_SRC_COPY_BLT_WRITE_RGB);
+
+	printf("srcPitch: %u, dstWidth: %u, dstHeight: %u, dstPitch: %u, cpp: %u\n", srcPitch, dstWidth, dstHeight, dstPitch, cpp);
+	BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+	OUT_BATCH(CMD);
+	OUT_BATCH(BR13);
+	OUT_BATCH((0 << 16) | 0);
+	OUT_BATCH((dstHeight << 16) | dstWidth);
+
+	OUT_RELOC(intel_fb->front_buffer,
+		DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+
+	OUT_BATCH((0 << 16) | 0);
+	OUT_BATCH((srcPitch * cpp) & 0xffff);
+	OUT_RELOC(dri_bo(surf->buffer),
+			DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+			DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
+
+	ADVANCE_BATCH();
+
+	fence = intel_batchbuffer_flush(intel->batch);
+	driFenceUnReference(&fence);
+	intel_batchbuffer_finish(intel->batch);
+}
+
+#if 0
 /**
  * Display a colorbuffer surface in an X window.
  * Used for SwapBuffers and flushing front buffer rendering.
@@ -52,14 +124,16 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
                     const drm_clip_rect_t *rect)
 {
    struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
-   struct intel_context *intel = intelScreen->dummyContext;
+   //struct intel_context *intel = intelScreen->dummyContext;
 
    DBG(SWAP, "%s\n", __FUNCTION__);
 
+#if 0
    if (!intel) {
       /* XXX this is where some kind of extra/meta context could be useful */
       return;
    }
+#endif
 
    if (intel->last_swap_fence) {
       driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, TRUE);
@@ -250,3 +324,4 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
       intelDisplaySurface(dPriv, back_surf, &rect);
    }
 }
+#endif

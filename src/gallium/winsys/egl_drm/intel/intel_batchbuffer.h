@@ -4,7 +4,7 @@
 #include "mtypes.h"
 #include "ws_dri_bufmgr.h"
 
-struct intel_context;
+struct intel_screen;
 
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
@@ -18,7 +18,7 @@ struct intel_context;
 struct intel_batchbuffer
 {
    struct bufmgr *bm;
-   struct intel_context *intel;
+   struct intel_screen *intel_screen;
 
    struct _DriBufferObject *buffer;
    struct _DriFenceObject *last_fence;
@@ -44,7 +44,7 @@ struct intel_batchbuffer
   int dest_location;     /* Validation list sequence for this buffer */
 };
 
-struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
+struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_screen
                                                   *intel);
 
 void intel_batchbuffer_free(struct intel_batchbuffer *batch);
@@ -129,6 +129,5 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 } while (0)
 
 #define ADVANCE_BATCH() do { } while(0)
-
 
 #endif

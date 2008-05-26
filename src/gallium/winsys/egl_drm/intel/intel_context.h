@@ -41,6 +41,9 @@ struct pipe_context;
 struct intel_context;
 struct _DriBufferObject;
 struct st_context;
+struct egl_drm_device;
+struct egl_drm_context;
+struct egl_drm_frontbuffer;
 
 
 #define INTEL_MAX_FIXUP 64
@@ -57,28 +60,23 @@ struct intel_context
 
    struct intel_batchbuffer *batch;
 
+#if 0
    boolean locked;
    char *prevLockFile;
    int prevLockLine;
+#endif
 
-   uint irqsEmitted;
-   drm_i915_irq_wait_t iw;
+	/* pick this up from the screen instead
+   int drmFd;
+	*/
 
-   drm_context_t hHWContext;
-   drmLock *driHwLock;
-   int driFd;
-
-   __DRIdrawablePrivate *driDrawable;
-   __DRIscreenPrivate *driScreen;
-   struct intel_screen *intelScreen;
-   drmI830Sarea *sarea;
+   struct intel_screen *intel_screen;
 
    uint lastStamp;
-
-   /**
-    * Configuration cache
-    */
-   driOptionCache optionCache;
+   /* new egl stuff */
+   struct egl_drm_device *egl_device;
+   struct egl_drm_context *egl_context;
+   struct egl_drm_drawable *egl_drawable;
 };
 
 
@@ -92,6 +90,8 @@ struct intel_framebuffer
 
    /* other fields TBD */
    int other;
+   struct _DriBufferObject *front_buffer;
+   struct egl_drm_frontbuffer *front;
 };
 
 
@@ -142,6 +142,7 @@ extern int __intel_debug;
 #define PCI_CHIP_Q33_G			0x29D2
 
 
+#if 0
 /** Cast wrapper */
 static INLINE struct intel_context *
 intel_context(__DRIcontextPrivate *driContextPriv)
@@ -156,6 +157,6 @@ intel_framebuffer(__DRIdrawablePrivate * driDrawPriv)
 {
    return (struct intel_framebuffer *) driDrawPriv->driverPrivate;
 }
-
+#endif
 
 #endif

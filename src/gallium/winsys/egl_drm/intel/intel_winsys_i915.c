@@ -147,7 +147,7 @@ static void intel_i915_batch_flush( struct i915_winsys *sws,
       if (fence)
 	 *fence = fu.pipe;
       else
-         driFenceUnReference(&fu.dri);
+	 driFenceUnReference(&fu.dri);
    }
 
 }
@@ -173,7 +173,8 @@ intel_create_i915simple( struct intel_context *intel,
    iws->pws = winsys;
    iws->intel = intel;
 
-   screen = i915_create_screen(winsys, intel->intelScreen->deviceID);
+   screen = i915_create_screen(winsys, PCI_CHIP_I945_GM);
+   assert(screen);
 
    /* Create the i915simple context:
     */
