@@ -358,21 +358,22 @@ static void emit_alu(struct r500_fragment_program *fp, int counter, struct prog_
 	fp->inst[counter].inst5 = 0x0;
 }
 
-static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_src_register src, GLuint dest) {
+static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_instruction *fpi, GLuint src_reg, GLuint swizzle, GLuint dest) {
 	/* The r3xx shader uses MAD to implement MOV. We are using CMP, since
 	 * it is technically more accurate and recommended by ATI/AMD. */
-	GLuint src_reg = make_src(fp, src);
+	emit_alu(fp, counter, fpi);
 	fp->inst[counter].inst1 = R500_RGB_ADDR0(src_reg);
 	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src_reg);
+	/* 0x1FF is 9 bits, size of an RGB swizzle. */
 	fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
-		| MAKE_SWIZ_RGB_A(make_rgb_swizzle(src))
+		| MAKE_SWIZ_RGB_A((swizzle & 0x1ff))
 		| R500_ALU_RGB_SEL_B_SRC0
-		| MAKE_SWIZ_RGB_B(make_rgb_swizzle(src))
+		| MAKE_SWIZ_RGB_B((swizzle & 0x1ff))
 		| R500_ALU_RGB_OMOD_DISABLE;
 	fp->inst[counter].inst4 |= R500_ALPHA_OP_CMP
 		| R500_ALPHA_ADDRD(dest)
-		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(src))
-		| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(src))
+		| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(GET_SWZ(swizzle, 3))
+		| R500_ALPHA_SEL_B_SRC0 | MAKE_SWIZ_ALPHA_B(GET_SWZ(swizzle, 3))
 		| R500_ALPHA_OMOD_DISABLE;
 	fp->inst[counter].inst5 = R500_ALU_RGBA_OP_CMP
 		| R500_ALU_RGBA_ADDRD(dest)
@@ -481,8 +482,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 
 		switch (fpi->Opcode) {
 			case OPCODE_ABS:
-				emit_alu(fp, counter, fpi);
-				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				emit_mov(fp, counter, fpi, make_src(fp, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
 				fp->inst[counter].inst3 |= R500_ALU_RGB_MOD_A_ABS
 					| R500_ALU_RGB_MOD_B_ABS;
 				fp->inst[counter].inst4 |= R500_ALPHA_MOD_A_ABS
@@ -773,10 +773,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 				counter++;
 				/* Final instruction */
-				emit_alu(fp, counter, fpi);
-				fpi->SrcReg[0].Index = get_temp(fp, 0);
-				fpi->SrcReg[0].Swizzle = 1672;
-				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				emit_mov(fp, counter, fpi, get_temp(fp, 0), 1672, dest);
 				break;
 			case OPCODE_LRP:
 				/* src0 * src1 + INV(src0) * src2
@@ -863,8 +860,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| R500_ALU_RGBA_ADDRD(dest);
 				break;
 			case OPCODE_MOV:
-				emit_alu(fp, counter, fpi);
-				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				emit_mov(fp, counter, fpi, make_src(fp, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
 				break;
 			case OPCODE_MUL:
 				/* Variation on MAD: src0*src1+0 */
@@ -1138,8 +1134,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				break;
 			case OPCODE_SWZ:
 				/* TODO: The rarer negation masks! */
-				emit_alu(fp, counter, fpi);
-				emit_mov(fp, counter, fpi->SrcReg[0], dest);
+				emit_mov(fp, counter, fpi, make_src(fp, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
 				break;
 			case OPCODE_KIL:
 			case OPCODE_TEX:
