@@ -18,12 +18,11 @@
  *  (mark@rsinc.com).
  */
 
-/* $Log: ddcolors.h 1997/6/14 by Li Wei(liwei@aiar.xjtu.edu.cn)
+/*
  * Macros for pixel format defined
  */
 
 /*
- * $Log: colors.h,v $
  * Revision 1.1  2004/04/20 11:13:11  alanh
  * add SciTech's GLDirect driver for Windows.
  *
@@ -46,7 +45,6 @@
  */
 
 /*
- * $Log: colors.h,v $
  * Revision 1.1  2004/04/20 11:13:11  alanh
  * add SciTech's GLDirect driver for Windows.
  *
@@ -69,7 +67,6 @@
  */
  
 /*
- * $Log: colors.h,v $
  * Revision 1.1  2004/04/20 11:13:11  alanh
  * add SciTech's GLDirect driver for Windows.
  *

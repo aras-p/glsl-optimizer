@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810ioctl.c,v 1.7 2002/10/30 12:51:33 alanh Exp $ */
 
 #include <unistd.h> /* for usleep() */
 

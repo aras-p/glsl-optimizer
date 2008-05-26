@@ -52,7 +52,8 @@ def AddOptions(opts):
 		from SCons.Options.EnumOption import EnumOption
 	except ImportError:
 		from SCons.Variables.EnumVariable import EnumVariable as EnumOption
-	opts.Add(BoolOption('debug', 'build debug version', 'no'))
+	opts.Add(BoolOption('debug', 'debug build', 'no'))
+	opts.Add(BoolOption('profile', 'profile build', 'no'))
 	#opts.Add(BoolOption('quiet', 'quiet command lines', 'no'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'x86', 'x86_64')))
@@ -125,6 +126,8 @@ def make_build_dir(env):
 		build_subdir += '-' + env['machine']
 	if env['debug']:
 		build_subdir += "-debug"
+	if env['profile']:
+		build_subdir += "-profile"
 	build_dir = os.path.join(build_topdir, build_subdir)
 	# Place the .sconsign file on the builddir too, to avoid issues with different scons
 	# versions building the same source file
@@ -154,6 +157,8 @@ def generate(env):
 		cppdefines += ['DEBUG']
 	else:
 		cppdefines += ['NDEBUG']
+	if env['profile']:
+		cppdefines += ['PROFILE']
 	if platform == 'windows':
 		cppdefines += [
 			'WIN32', 
@@ -204,6 +209,8 @@ def generate(env):
 			cflags += ['-O0', '-g3']
 		else:
 			cflags += ['-O3', '-g3']
+		if env['profile']:
+			cflags += ['-pg']
 		cflags += [
 			'-Wall', 
 			'-Wmissing-prototypes',
@@ -228,6 +235,11 @@ def generate(env):
 			  '/Oi', # enable intrinsic functions
 			  '/Os', # favor code space
 			]
+		if env['profile']:
+			cflags += [
+				'/Gh', # enable _penter hook function
+				'/GH', # enable _pexit hook function
+			]
 		if platform == 'windows':
 			cflags += [
 				# TODO
@@ -245,12 +257,11 @@ def generate(env):
 				'/GX-', # disable C++ EH
 				'/GR-', # disable C++ RTTI
 				'/GF', # enable read-only string pooling
-				'/GS', # enable security checks
 				'/G6', # optimize for PPro, P-II, P-III
 				'/Ze', # enable extensions
-				#'/Gi-', # ???
+				'/Gi-', # disable incremental compilation
 				'/QIfdiv-', # disable Pentium FDIV fix
-				#'/hotpatch', # ???
+				'/hotpatch', # prepares an image for hotpatching.
 				#'/Z7', #enable old-style debug info
 			]
 		# Put debugging information in a separate .pdb file for each object file as

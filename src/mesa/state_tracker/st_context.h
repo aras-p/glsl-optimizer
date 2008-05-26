@@ -53,6 +53,7 @@ struct bitmap_cache;
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
+#define ST_NEW_FRAMEBUFFER             0x8
 
 
 struct st_state_flags {
@@ -120,6 +121,8 @@ struct st_context
    GLuint nr_atoms;
 
    struct st_state_flags dirty;
+
+   GLboolean missing_textures;
 
    GLfloat polygon_offset_scale; /* ?? */
 

@@ -39,20 +39,39 @@ extern "C" {
 #endif
 
 
+/* XXX: these are a kludge.  will fix when all surfaces are views into
+ * textures, and free-floating winsys surfaces go away.
+ */
 static INLINE void *
-pipe_surface_map(struct pipe_surface *surface)
+pipe_surface_map( struct pipe_surface *surf, unsigned flags )
 {
-   return (char *)surface->winsys->buffer_map( surface->winsys, surface->buffer,
-					       PIPE_BUFFER_USAGE_CPU_WRITE |
-					       PIPE_BUFFER_USAGE_CPU_READ )
-      + surface->offset;
+   if (surf->texture) {
+      struct pipe_screen *screen = surf->texture->screen;
+      return surf->texture->screen->surface_map( screen, surf, flags );
+   }
+   else {
+      struct pipe_winsys *winsys = surf->winsys;
+      char *map = (char *)winsys->buffer_map( winsys, surf->buffer, flags );
+      if (map == NULL)
+         return NULL;
+      return (void *)(map + surf->offset);
+   }
 }
 
 static INLINE void
-pipe_surface_unmap(struct pipe_surface *surface)
+pipe_surface_unmap( struct pipe_surface *surf )
 {
-   surface->winsys->buffer_unmap( surface->winsys, surface->buffer );
+   if (surf->texture) {
+      struct pipe_screen *screen = surf->texture->screen;
+      surf->texture->screen->surface_unmap( screen, surf );
+   }
+   else {
+      struct pipe_winsys *winsys = surf->winsys;
+      winsys->buffer_unmap( winsys, surf->buffer );
+   }
 }
+
+
 
 /**
  * Set 'ptr' to point to 'surf' and update reference counting.
@@ -66,9 +85,20 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
    if (surf) 
       surf->refcount++;
 
-   if (*ptr /* && --(*ptr)->refcount == 0 */) {
-      struct pipe_winsys *winsys = (*ptr)->winsys;
-      winsys->surface_release(winsys, ptr);
+   if (*ptr) {
+
+      /* There are currently two sorts of surfaces... This needs to be
+       * fixed so that all surfaces are views into a texture.
+       */
+      if ((*ptr)->texture) {
+         struct pipe_screen *screen = (*ptr)->texture->screen;
+         screen->tex_surface_release( screen, ptr );
+      }
+      else {
+         struct pipe_winsys *winsys = (*ptr)->winsys;
+         winsys->surface_release(winsys, ptr);
+      }
+
       assert(!*ptr);
    }
 

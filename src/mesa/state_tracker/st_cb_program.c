@@ -182,6 +182,7 @@ st_delete_program(GLcontext *ctx, struct gl_program *prog)
       assert(0); /* problem */
    }
 
+   /* delete base class */
    _mesa_delete_program( ctx, prog );
 }
 

@@ -192,11 +192,11 @@ softpipe_create( struct pipe_screen *screen,
     * Must be before quad stage setup!
     */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      softpipe->cbuf_cache[i] = sp_create_tile_cache();
-   softpipe->zsbuf_cache = sp_create_tile_cache();
+      softpipe->cbuf_cache[i] = sp_create_tile_cache( screen );
+   softpipe->zsbuf_cache = sp_create_tile_cache( screen );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
-      softpipe->tex_cache[i] = sp_create_tile_cache();
+      softpipe->tex_cache[i] = sp_create_tile_cache( screen );
 
 
    /* setup quad rendering stages */

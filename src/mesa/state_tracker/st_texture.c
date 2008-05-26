@@ -75,7 +75,8 @@ st_texture_create(struct st_context *st,
 		  GLuint width0,
 		  GLuint height0,
 		  GLuint depth0,
-		  GLuint compress_byte)
+		  GLuint compress_byte,
+                  GLuint usage )
 {
    struct pipe_texture pt, *newtex;
    struct pipe_screen *screen = st->pipe->screen;
@@ -98,6 +99,7 @@ st_texture_create(struct st_context *st,
    pt.depth[0] = depth0;
    pt.compressed = compress_byte ? 1 : 0;
    pt.cpp = pt.compressed ? compress_byte : st_sizeof_format(format);
+   pt.tex_usage = usage;
 
    newtex = screen->texture_create(screen, &pt);
 
@@ -184,25 +186,33 @@ st_texture_image_offset(const struct pipe_texture * pt,
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-		     GLuint zoffset)
+		     GLuint zoffset,
+                     GLuint flags )
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct pipe_texture *pt = stImage->pt;
    DBG("%s \n", __FUNCTION__);
 
    stImage->surface = screen->get_tex_surface(screen, pt, stImage->face,
-                                              stImage->level, zoffset);
+                                              stImage->level, zoffset, 
+                                              flags);
 
-   return pipe_surface_map(stImage->surface);
+   if (stImage->surface)
+      return screen->surface_map(screen, stImage->surface, flags);
+   else
+      return NULL;
 }
 
 
 void
-st_texture_image_unmap(struct st_texture_image *stImage)
+st_texture_image_unmap(struct st_context *st,
+                       struct st_texture_image *stImage)
 {
+   struct pipe_screen *screen = st->pipe->screen;
+
    DBG("%s\n", __FUNCTION__);
 
-   pipe_surface_unmap(stImage->surface);
+   screen->surface_unmap(screen, stImage->surface);
 
    pipe_surface_reference(&stImage->surface, NULL);
 }
@@ -224,12 +234,15 @@ st_surface_data(struct pipe_context *pipe,
 		const void *src, unsigned src_pitch,
 		unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   pipe_copy_rect(pipe_surface_map(dst),
+   struct pipe_screen *screen = pipe->screen;
+   void *map = screen->surface_map(screen, dst, PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   pipe_copy_rect(map,
                   dst->cpp,
                   dst->pitch,
                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
-   pipe_surface_unmap(dst);
+   screen->surface_unmap(screen, dst);
 }
 
 
@@ -256,7 +269,8 @@ st_texture_image_data(struct pipe_context *pipe,
       if(dst->compressed)
 	 height /= 4;
 
-      dst_surface = screen->get_tex_surface(screen, dst, face, level, i);
+      dst_surface = screen->get_tex_surface(screen, dst, face, level, i,
+                                            PIPE_BUFFER_USAGE_CPU_WRITE);
 
       st_surface_data(pipe, dst_surface,
 		      0, 0,                             /* dstx, dsty */
@@ -265,7 +279,7 @@ st_texture_image_data(struct pipe_context *pipe,
 		      0, 0,                             /* source x, y */
 		      dst->width[level], height);       /* width, height */
 
-      pipe_surface_reference(&dst_surface, NULL);
+      screen->tex_surface_release(screen, &dst_surface);
 
       srcUB += src_image_pitch * dst->cpp;
    }
@@ -304,8 +318,27 @@ st_texture_image_copy(struct pipe_context *pipe,
       assert(src->width[srcLevel] == width);
       assert(src->height[srcLevel] == height);
 
-      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i);
-      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i);
+#if 0
+      {
+         src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
+                                               PIPE_BUFFER_USAGE_CPU_READ);
+         ubyte *map = screen->surface_map(screen, src_surface, PIPE_BUFFER_USAGE_CPU_READ);
+         map += src_surface->width * src_surface->height * 4 / 2;
+         printf("%s center pixel: %d %d %d %d (pt %p[%d] -> %p[%d])\n",
+                __FUNCTION__,
+                map[0], map[1], map[2], map[3],
+                src, srcLevel, dst, dstLevel);
+
+         screen->surface_unmap(screen, src_surface);
+         pipe_surface_reference(&src_surface, NULL);
+      }
+#endif
+
+      dst_surface = screen->get_tex_surface(screen, dst, face, dstLevel, i,
+                                            PIPE_BUFFER_USAGE_GPU_WRITE);
+
+      src_surface = screen->get_tex_surface(screen, src, face, srcLevel, i,
+                                            PIPE_BUFFER_USAGE_GPU_READ);
 
       pipe->surface_copy(pipe,
                          FALSE,
@@ -315,7 +348,7 @@ st_texture_image_copy(struct pipe_context *pipe,
 			 0, 0, /* srcX, Y */
 			 width, copyHeight);
 
-      pipe_surface_reference(&dst_surface, NULL);
-      pipe_surface_reference(&src_surface, NULL);
+      screen->tex_surface_release(screen, &src_surface);
+      screen->tex_surface_release(screen, &dst_surface);
    }
 }

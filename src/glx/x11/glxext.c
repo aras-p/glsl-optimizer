@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/glx/glxext.c,v 1.22 2003/12/08 17:35:28 dawes Exp $ */
 
 /*
 ** License Applicability. Except to the extent portions of this file are

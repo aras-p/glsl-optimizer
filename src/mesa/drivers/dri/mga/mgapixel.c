@@ -34,7 +34,6 @@
  * \author Keith Whitwell <keith@tungstengraphics.com>
  * \author Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapixel.c,v 1.9 2002/11/05 17:46:08 tsi Exp $ */
 
 #include "mtypes.h"
 #include "macros.h"

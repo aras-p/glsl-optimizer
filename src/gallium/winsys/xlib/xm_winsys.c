@@ -489,7 +489,8 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
                          struct pipe_surface *surf,
                          unsigned width, unsigned height,
                          enum pipe_format format, 
-                         unsigned flags)
+                         unsigned flags,
+                         unsigned tex_usage)
 {
    const unsigned alignment = 64;
 
@@ -498,6 +499,7 @@ xm_surface_alloc_storage(struct pipe_winsys *winsys,
    surf->format = format;
    surf->cpp = pf_get_size(format);
    surf->pitch = round_up(width, alignment / surf->cpp);
+   surf->usage = flags;
 
 #ifdef GALLIUM_CELL /* XXX a bit of a hack */
    height = round_up(height, TILE_SIZE);
@@ -551,6 +553,7 @@ static void
 xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 {
    struct pipe_surface *surf = *s;
+   assert(!surf->texture);
    surf->refcount--;
    if (surf->refcount == 0) {
       if (surf->buffer)

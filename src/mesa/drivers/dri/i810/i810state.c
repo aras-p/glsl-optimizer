@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810state.c,v 1.9 2002/10/30 12:51:33 alanh Exp $ */
 
 #include <stdio.h>
 

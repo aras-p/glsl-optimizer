@@ -168,6 +168,28 @@ _fenced_buffer_remove(struct fenced_buffer *fenced_buf)
 }
 
 
+static INLINE enum pipe_error
+_fenced_buffer_finish(struct fenced_buffer *fenced_buf)
+{
+   struct fenced_buffer_list *fenced_list = fenced_buf->list;
+   struct pipe_winsys *winsys = fenced_list->winsys;
+
+   debug_warning("waiting for GPU");
+
+   assert(fenced_buf->fence);
+   if(fenced_buf->fence) {
+      if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0) {
+	 return PIPE_ERROR;
+      }
+      /* Remove from the fenced list */
+      _fenced_buffer_remove(fenced_buf); /* TODO: remove consequents */
+   }
+
+   fenced_buf->flags &= ~PIPE_BUFFER_USAGE_GPU_READ_WRITE;
+   return PIPE_OK;
+}
+
+
 /**
  * Free as many fenced buffers from the list head as possible. 
  */
@@ -204,40 +226,6 @@ _fenced_buffer_list_check_free(struct fenced_buffer_list *fenced_list,
       curr = next; 
       next = curr->next;
    }
-}
-
-
-/**
- * Serialize writes, but allow concurrent reads.
- */
-static INLINE enum pipe_error
-fenced_buffer_serialize(struct fenced_buffer *fenced_buf, unsigned flags)
-{
-   struct fenced_buffer_list *fenced_list = fenced_buf->list;
-   struct pipe_winsys *winsys = fenced_list->winsys;
-
-   /* Allow concurrent reads */
-   if(((fenced_buf->flags | flags) & PIPE_BUFFER_USAGE_WRITE) == 0)
-      return PIPE_OK;
-
-   /* Wait for the CPU to finish */
-   if(fenced_buf->mapcount) {
-      /* FIXME: Use thread conditions variables to signal when mapcount 
-       * reaches zero */
-      debug_warning("attemp to write concurrently to buffer");
-      /* XXX: we must not fail here in order to support texture mipmap generation
-      return PIPE_ERROR_RETRY;
-       */
-   }
-
-   /* Wait for the GPU to finish */
-   if(fenced_buf->fence) {
-      if(winsys->fence_finish(winsys, fenced_buf->fence, 0) != 0)
-	 return PIPE_ERROR_RETRY; 
-      _fenced_buffer_remove(fenced_buf);
-   }
-
-   return PIPE_OK;
 }
 
 
@@ -280,15 +268,28 @@ fenced_buffer_map(struct pb_buffer *buf,
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    void *map;
-   assert((flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE) == 0);
+
+   assert(!(flags & ~PIPE_BUFFER_USAGE_CPU_READ_WRITE));
+   flags &= PIPE_BUFFER_USAGE_CPU_READ_WRITE;
    
-   if(fenced_buffer_serialize(fenced_buf, flags) != PIPE_OK)
-      return NULL;
+   /* Check for GPU read/write access */
+   if(fenced_buf->flags & PIPE_BUFFER_USAGE_GPU_WRITE) {
+      /* Wait for the GPU to finish writing */
+      _fenced_buffer_finish(fenced_buf);
+   }
+
+   /* Check for CPU write access (read is OK) */
+   if(fenced_buf->flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE) {
+      /* this is legal -- just for debugging */
+      debug_warning("concurrent CPU writes");
+   }
    
    map = pb_map(fenced_buf->buffer, flags);
-   if(map)
+   if(map) {
       ++fenced_buf->mapcount;
-   fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+      fenced_buf->flags |= flags;
+   }
+
    return map;
 }
 
@@ -298,10 +299,12 @@ fenced_buffer_unmap(struct pb_buffer *buf)
 {
    struct fenced_buffer *fenced_buf = fenced_buffer(buf);
    assert(fenced_buf->mapcount);
-   pb_unmap(fenced_buf->buffer);
-   --fenced_buf->mapcount;
-   if(!fenced_buf->mapcount)
-      fenced_buf->flags &= ~PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+   if(fenced_buf->mapcount) {
+      pb_unmap(fenced_buf->buffer);
+      --fenced_buf->mapcount;
+      if(!fenced_buf->mapcount)
+	 fenced_buf->flags &= ~PIPE_BUFFER_USAGE_CPU_READ_WRITE;
+   }
 }
 
 
@@ -334,8 +337,10 @@ fenced_buffer_create(struct fenced_buffer_list *fenced_list,
       return NULL;
    
    buf = CALLOC_STRUCT(fenced_buffer);
-   if(!buf)
+   if(!buf) {
+      pb_reference(&buffer, NULL);
       return NULL;
+   }
    
    buf->base.base.refcount = 1;
    buf->base.base.alignment = buffer->base.alignment;
@@ -374,7 +379,7 @@ buffer_fence(struct pb_buffer *buf,
    fenced_list = fenced_buf->list;
    winsys = fenced_list->winsys;
    
-   if(fence == fenced_buf->fence) {
+   if(!fence || fence == fenced_buf->fence) {
       /* Handle the same fence case specially, not only because it is a fast 
        * path, but mostly to avoid serializing two writes with the same fence, 
        * as that would bring the hardware down to synchronous operation without
@@ -382,11 +387,6 @@ buffer_fence(struct pb_buffer *buf,
        */
       fenced_buf->flags |= flags & PIPE_BUFFER_USAGE_GPU_READ_WRITE;
       return;
-   }
-   
-   if(fenced_buffer_serialize(fenced_buf, flags) != PIPE_OK) {
-      /* FIXME: propagate error */
-      (void)0;
    }
    
    _glthread_LOCK_MUTEX(fenced_list->mutex);

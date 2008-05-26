@@ -126,7 +126,8 @@ create_color_map_texture(GLcontext *ctx)
 
    /* create texture for color map/table */
    pt = st_texture_create(ctx->st, PIPE_TEXTURE_2D, format, 0,
-                          texSize, texSize, 1, 0);
+                          texSize, texSize, 1, 0,
+                          PIPE_TEXTURE_USAGE_SAMPLER);
    return pt;
 }
 
@@ -148,8 +149,10 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
    uint *dest;
    uint i, j;
 
-   surface = screen->get_tex_surface(screen, pt, 0, 0, 0);
-   dest = (uint *) pipe_surface_map(surface);
+   surface = screen->get_tex_surface(screen, pt, 0, 0, 0, 
+                                     PIPE_BUFFER_USAGE_CPU_WRITE);
+   dest = (uint *) screen->surface_map(screen, surface,
+                                       PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* Pack four 1D maps into a 2D texture:
     * R map is placed horizontally, indexed by S, in channel 0
@@ -168,9 +171,8 @@ load_color_map_texture(GLcontext *ctx, struct pipe_texture *pt)
       }
    }
 
-   pipe_surface_unmap(surface);
+   screen->surface_unmap(screen, surface);
    pipe_surface_reference(&surface, NULL);
-   pipe->texture_update(pipe, pt, 0, 0x1);
 }
 
 

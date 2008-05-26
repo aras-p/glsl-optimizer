@@ -89,6 +89,18 @@ struct pipe_screen {
    struct pipe_texture * (*texture_create)(struct pipe_screen *,
                                            const struct pipe_texture *templat);
 
+   /**
+    * Create a new texture object, using the given template info, but on top of 
+    * existing memory.
+    * 
+    * It is assumed that the buffer data is layed out according to the expected
+    * by the hardware. NULL will be returned if any inconsistency is found.  
+    */
+   struct pipe_texture * (*texture_blanket)(struct pipe_screen *,
+                                            const struct pipe_texture *templat,
+                                            const unsigned *pitch,
+                                            struct pipe_buffer *buffer);
+
    void (*texture_release)(struct pipe_screen *,
                            struct pipe_texture **pt);
 
@@ -96,7 +108,22 @@ struct pipe_screen {
    struct pipe_surface *(*get_tex_surface)(struct pipe_screen *,
                                            struct pipe_texture *texture,
                                            unsigned face, unsigned level,
-                                           unsigned zslice);
+                                           unsigned zslice,
+                                           unsigned usage );
+
+   /* Surfaces allocated by the above must be released here:
+    */
+   void (*tex_surface_release)( struct pipe_screen *,
+                                struct pipe_surface ** );
+   
+
+   void *(*surface_map)( struct pipe_screen *,
+                         struct pipe_surface *surface,
+                         unsigned flags );
+
+   void (*surface_unmap)( struct pipe_screen *,
+                          struct pipe_surface *surface );
+   
 };
 
 

@@ -67,7 +67,7 @@ void _debug_vprintf(const char *format, va_list ap)
    static char buf[512 + 1] = {'\0'};
    size_t len = strlen(buf);
    int ret = util_vsnprintf(buf + len, sizeof(buf) - len, format, ap);
-   if(ret > (int)(sizeof(buf) - len - 1) || strchr(buf + len, '\n')) {
+   if(ret > (int)(sizeof(buf) - len - 1) || util_strchr(buf + len, '\n')) {
       _EngDebugPrint("%s", buf);
       buf[0] = '\0';
    }
@@ -154,6 +154,7 @@ debug_get_option(const char *name, const char *dfault)
 {
    const char *result;
 #ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+#ifdef DEBUG
    ULONG_PTR iFile = 0;
    const void *pMap = NULL;
    const char *sol, *eol, *sep;
@@ -184,6 +185,9 @@ debug_get_option(const char *name, const char *dfault)
       EngUnmapFile(iFile);
    }
 #else
+   result = dfault;
+#endif
+#else
    
    result = getenv(name);
    if(!result)
@@ -203,15 +207,15 @@ debug_get_bool_option(const char *name, boolean dfault)
    
    if(str == NULL)
       result = dfault;
-   else if(!strcmp(str, "n"))
+   else if(!util_strcmp(str, "n"))
       result = FALSE;
-   else if(!strcmp(str, "no"))
+   else if(!util_strcmp(str, "no"))
       result = FALSE;
-   else if(!strcmp(str, "0"))
+   else if(!util_strcmp(str, "0"))
       result = FALSE;
-   else if(!strcmp(str, "f"))
+   else if(!util_strcmp(str, "f"))
       result = FALSE;
-   else if(!strcmp(str, "false"))
+   else if(!util_strcmp(str, "false"))
       result = FALSE;
    else
       result = TRUE;
@@ -244,7 +248,7 @@ debug_get_flags_option(const char *name,
    else {
       result = 0;
       while( flags->name ) {
-	 if (!strcmp(str, "all") || strstr(str, flags->name ))
+	 if (!util_strcmp(str, "all") || util_strstr(str, flags->name ))
 	    result |= flags->value;
 	 ++flags;
       }
@@ -299,10 +303,10 @@ debug_dump_flags(const struct debug_named_value *names,
    while(names->name) {
       if((names->value & value) == names->value) {
 	 if (!first)
-	    strncat(output, "|", sizeof(output));
+	    util_strncat(output, "|", sizeof(output));
 	 else
 	    first = 0;
-	 strncat(output, names->name, sizeof(output));
+	 util_strncat(output, names->name, sizeof(output));
 	 value &= ~names->value;
       }
       ++names;
@@ -310,12 +314,12 @@ debug_dump_flags(const struct debug_named_value *names,
    
    if (value) {
       if (!first)
-	 strncat(output, "|", sizeof(output));
+	 util_strncat(output, "|", sizeof(output));
       else
 	 first = 0;
       
       util_snprintf(rest, sizeof(rest), "0x%08lx", value);
-      strncat(output, rest, sizeof(output));
+      util_strncat(output, rest, sizeof(output));
    }
    
    if(first)
@@ -325,101 +329,159 @@ debug_dump_flags(const struct debug_named_value *names,
 }
 
 
+static const struct debug_named_value pipe_format_names[] = {
+#ifdef DEBUG
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_NONE),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8R8G8B8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_X8R8G8B8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_B8G8R8A8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_B8G8R8X8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A1R5G5B5_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A4R4G4B4_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R5G6B5_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_L8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_I8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8L8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_YCBCR),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_YCBCR_REV),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_S8Z24_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z24S8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_X8Z24_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_Z24X8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_S8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64G64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64G64B64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R64G64B64A64_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_FLOAT),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R32G32B32A32_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R16G16B16A16_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_UNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_USCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SNORM),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SSCALED),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_L8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_A8_L8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8A8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_R8G8B8X8_SRGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGB),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT1_RGBA),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT3_RGBA),
+   DEBUG_NAMED_VALUE(PIPE_FORMAT_DXT5_RGBA),
+#endif
+   DEBUG_NAMED_VALUE_END
+};
 
-
-
+#ifdef DEBUG
+void debug_print_format(const char *msg, unsigned fmt )
+{
+   debug_printf("%s: %s\n", msg, debug_dump_enum(pipe_format_names, fmt)); 
+}
+#endif
 
 char *pf_sprint_name( char *str, enum pipe_format format )
 {
-   strcpy( str, "PIPE_FORMAT_" );
-   switch (pf_layout( format )) {
-   case PIPE_FORMAT_LAYOUT_RGBAZS:
-      {
-         pipe_format_rgbazs_t rgbazs = (pipe_format_rgbazs_t) format;
-         uint                 i;
-         uint                 scale = 1 << (pf_exp8( rgbazs ) * 3);
-
-         for (i = 0; i < 4; i++) {
-            uint  size = pf_size_xyzw( rgbazs, i );
-
-            if (size == 0) {
-               break;
-            }
-            switch (pf_swizzle_xyzw( rgbazs, i )) {
-            case PIPE_FORMAT_COMP_R:
-               strcat( str, "R" );
-               break;
-            case PIPE_FORMAT_COMP_G:
-               strcat( str, "G" );
-               break;
-            case PIPE_FORMAT_COMP_B:
-               strcat( str, "B" );
-               break;
-            case PIPE_FORMAT_COMP_A:
-               strcat( str, "A" );
-               break;
-            case PIPE_FORMAT_COMP_0:
-               strcat( str, "0" );
-               break;
-            case PIPE_FORMAT_COMP_1:
-               strcat( str, "1" );
-               break;
-            case PIPE_FORMAT_COMP_Z:
-               strcat( str, "Z" );
-               break;
-            case PIPE_FORMAT_COMP_S:
-               strcat( str, "S" );
-               break;
-            }
-            util_snprintf( &str[strlen( str )], 32, "%u", size * scale );
-         }
-         if (i != 0) {
-            strcat( str, "_" );
-         }
-         switch (pf_type( rgbazs )) {
-         case PIPE_FORMAT_TYPE_UNKNOWN:
-            strcat( str, "NONE" );
-            break;
-         case PIPE_FORMAT_TYPE_FLOAT:
-            strcat( str, "FLOAT" );
-            break;
-         case PIPE_FORMAT_TYPE_UNORM:
-            strcat( str, "UNORM" );
-            break;
-         case PIPE_FORMAT_TYPE_SNORM:
-            strcat( str, "SNORM" );
-            break;
-         case PIPE_FORMAT_TYPE_USCALED:
-            strcat( str, "USCALED" );
-            break;
-         case PIPE_FORMAT_TYPE_SSCALED:
-            strcat( str, "SSCALED" );
-            break;
-         }
-      }
-      break;
-   case PIPE_FORMAT_LAYOUT_YCBCR:
-      {
-         pipe_format_ycbcr_t  ycbcr = (pipe_format_ycbcr_t) format;
-
-         strcat( str, "YCBCR" );
-         if (pf_rev( ycbcr )) {
-            strcat( str, "_REV" );
-         }
-      }
-      break;
-   }
+   strcpy( str, debug_dump_enum(pipe_format_names, format) );
    return str;
 }
 
 
 #ifdef DEBUG
-void debug_print_format(const char *msg, unsigned fmt )
+void debug_dump_image(const char *prefix,
+                      unsigned format, unsigned cpp,
+                      unsigned width, unsigned height,
+                      unsigned pitch,
+                      const void *data)     
 {
-   char fmtstr[80];
- 
-   pf_sprint_name(fmtstr, (enum pipe_format)fmt);
+#ifdef PIPE_SUBSYSTEM_WINDOWS_DISPLAY
+   static unsigned no = 0; 
+   char filename[256];
+   WCHAR wfilename[sizeof(filename)];
+   ULONG_PTR iFile = 0;
+   struct {
+      unsigned format;
+      unsigned cpp;
+      unsigned width;
+      unsigned height;
+   } header;
+   unsigned char *pMap = NULL;
+   unsigned i;
 
-   debug_printf("%s: %s\n", msg, fmtstr); 
+   util_snprintf(filename, sizeof(filename), "\\??\\c:\\%03u%s.raw", ++no, prefix);
+   for(i = 0; i < sizeof(filename); ++i)
+      wfilename[i] = (WCHAR)filename[i];
+   
+   pMap = (unsigned char *)EngMapFile(wfilename, sizeof(header) + cpp*width*height, &iFile);
+   if(!pMap)
+      return;
+   
+   header.format = format;
+   header.cpp = cpp;
+   header.width = width;
+   header.height = height;
+   memcpy(pMap, &header, sizeof(header));
+   pMap += sizeof(header);
+   
+   for(i = 0; i < height; ++i) {
+      memcpy(pMap, (unsigned char *)data + cpp*pitch*i, cpp*width);
+      pMap += cpp*width;
+   }
+      
+   EngUnmapFile(iFile);
+#endif
 }
 #endif

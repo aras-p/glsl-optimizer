@@ -47,9 +47,6 @@
 #include "pb_bufmgr.h"
 
 
-#define DRI_SLABPOOL_ALLOC_RETRIES 100
-
-
 struct pb_slab;
 
 struct pb_slab_buffer
@@ -313,7 +310,6 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    static struct pb_slab_buffer *buf;
    struct pb_slab *slab;
    struct list_head *list;
-   int count = DRI_SLABPOOL_ALLOC_RETRIES;
 
    /* check size */
    assert(size == mgr->bufSize);
@@ -331,23 +327,14 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    /* XXX: check for compatible buffer usage too? */
    
    _glthread_LOCK_MUTEX(mgr->mutex);
-   while (mgr->slabs.next == &mgr->slabs && count > 0) {
-      if (mgr->slabs.next != &mgr->slabs)
-	 break;
-
-      _glthread_UNLOCK_MUTEX(mgr->mutex);
-      if (count != DRI_SLABPOOL_ALLOC_RETRIES)
-	 util_time_sleep(1);
-      _glthread_LOCK_MUTEX(mgr->mutex);
+   if (mgr->slabs.next == &mgr->slabs) {
       (void) pb_slab_create(mgr);
-      count--;
+      if (mgr->slabs.next == &mgr->slabs) {
+	 _glthread_UNLOCK_MUTEX(mgr->mutex);
+	 return NULL;
+      }
    }
-
    list = mgr->slabs.next;
-   if (list == &mgr->slabs) {
-      _glthread_UNLOCK_MUTEX(mgr->mutex);
-      return NULL;
-   }
    slab = LIST_ENTRY(struct pb_slab, list, head);
    if (--slab->numFree == 0)
       LIST_DELINIT(list);

@@ -50,6 +50,7 @@ pipe_get_tile_raw(struct pipe_context *pipe,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride)
 {
+   struct pipe_screen *screen = pipe->screen;
    const uint cpp = ps->cpp;
    const ubyte *pSrc;
    const uint src_stride = ps->pitch * cpp;
@@ -63,7 +64,11 @@ pipe_get_tile_raw(struct pipe_context *pipe,
    if (pipe_clip_tile(x, y, &w, &h, ps))
       return;
 
-   pSrc = (const ubyte *) pipe_surface_map(ps) + (y * ps->pitch + x) * cpp;
+   pSrc = (const ubyte *) screen->surface_map(screen, ps,
+                                              PIPE_BUFFER_USAGE_CPU_READ);
+   assert(pSrc);                /* XXX: proper error handling! */
+
+   pSrc += (y * ps->pitch + x) * cpp;
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
@@ -72,7 +77,7 @@ pipe_get_tile_raw(struct pipe_context *pipe,
       pSrc += src_stride;
    }
 
-   pipe_surface_unmap(ps);
+   screen->surface_unmap(screen, ps);
 }
 
 
@@ -86,6 +91,7 @@ pipe_put_tile_raw(struct pipe_context *pipe,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride)
 {
+   struct pipe_screen *screen = pipe->screen;
    const uint cpp = ps->cpp;
    const ubyte *pSrc;
    const uint dst_stride = ps->pitch * cpp;
@@ -100,7 +106,11 @@ pipe_put_tile_raw(struct pipe_context *pipe,
       return;
 
    pSrc = (const ubyte *) p;
-   pDest = (ubyte *) pipe_surface_map(ps) + (y * ps->pitch + x) * cpp;
+
+   pDest = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_WRITE);
+   assert(pDest);               /* XXX: proper error handling */
+
+   pDest += (y * ps->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
       memcpy(pDest, pSrc, w * cpp);
@@ -108,7 +118,7 @@ pipe_put_tile_raw(struct pipe_context *pipe,
       pSrc += src_stride;
    }
 
-   pipe_surface_unmap(ps);
+   screen->surface_unmap(screen, ps);
 }
 
 
@@ -834,18 +844,26 @@ pipe_get_tile_z(struct pipe_context *pipe,
                 uint x, uint y, uint w, uint h,
                 uint *z)
 {
+   struct pipe_screen *screen = pipe->screen;
    const uint dstStride = w;
+   void *map;
    uint *pDest = z;
    uint i, j;
 
    if (pipe_clip_tile(x, y, &w, &h, ps))
       return;
 
+   map = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_READ);
+   if (!map) {
+      assert(0);
+      return;
+   }
+
    switch (ps->format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
          const uint *pSrc
-            = (const uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+            = (const uint *)map  + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {
             memcpy(pDest, pSrc, 4 * w);
             pDest += dstStride;
@@ -857,7 +875,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_X8Z24_UNORM:
       {
          const uint *pSrc
-            = (const uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+            = (const uint *)map + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 24-bit Z to 32-bit Z */
@@ -871,7 +889,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_Z16_UNORM:
       {
          const ushort *pSrc
-            = (const ushort *) pipe_surface_map(ps) + (y * ps->pitch + x);
+            = (const ushort *)map + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 16-bit Z to 32-bit Z */
@@ -886,7 +904,7 @@ pipe_get_tile_z(struct pipe_context *pipe,
       assert(0);
    }
 
-   pipe_surface_unmap(ps);
+   screen->surface_unmap(screen, ps);
 }
 
 
@@ -896,17 +914,25 @@ pipe_put_tile_z(struct pipe_context *pipe,
                 uint x, uint y, uint w, uint h,
                 const uint *zSrc)
 {
+   struct pipe_screen *screen = pipe->screen;
    const uint srcStride = w;
    const uint *pSrc = zSrc;
+   void *map;
    uint i, j;
 
    if (pipe_clip_tile(x, y, &w, &h, ps))
       return;
 
+   map = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_WRITE);
+   if (!map) {
+      assert(0);
+      return;
+   }
+
    switch (ps->format) {
    case PIPE_FORMAT_Z32_UNORM:
       {
-         uint *pDest = (uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         uint *pDest = (uint *) map + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {
             memcpy(pDest, pSrc, 4 * w);
             pDest += ps->pitch;
@@ -917,7 +943,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
    case PIPE_FORMAT_S8Z24_UNORM:
    case PIPE_FORMAT_X8Z24_UNORM:
       {
-         uint *pDest = (uint *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         uint *pDest = (uint *) map + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 24-bit Z (0 stencil) */
@@ -930,7 +956,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
       break;
    case PIPE_FORMAT_Z16_UNORM:
       {
-         ushort *pDest = (ushort *) pipe_surface_map(ps) + (y * ps->pitch + x);
+         ushort *pDest = (ushort *) map + (y * ps->pitch + x);
          for (i = 0; i < h; i++) {
             for (j = 0; j < w; j++) {
                /* convert 32-bit Z to 16-bit Z */
@@ -945,7 +971,7 @@ pipe_put_tile_z(struct pipe_context *pipe,
       assert(0);
    }
 
-   pipe_surface_unmap(ps);
+   screen->surface_unmap(screen, ps);
 }
 
 

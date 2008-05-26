@@ -93,6 +93,11 @@ st_get_stobj_texture(struct st_texture_object *stObj)
    return stObj ? stObj->pt : NULL;
 }
 
+static INLINE GLboolean pf_is_depth_stencil( enum pipe_format format )
+{
+   return (pf_get_component_bits( format, PIPE_FORMAT_COMP_Z ) +
+           pf_get_component_bits( format, PIPE_FORMAT_COMP_S )) != 0;
+}
 
 
 extern struct pipe_texture *
@@ -103,7 +108,8 @@ st_texture_create(struct st_context *st,
                   GLuint width0,
                   GLuint height0,
                   GLuint depth0,
-                  GLuint compress_byte);
+                  GLuint compress_byte,
+                  GLuint tex_usage );
 
 
 /* Check if an image fits into an existing texture object.
@@ -119,10 +125,12 @@ st_texture_match_image(const struct pipe_texture *pt,
 extern GLubyte *
 st_texture_image_map(struct st_context *st,
                      struct st_texture_image *stImage,
-		     GLuint zoffset);
+		     GLuint zoffset,
+                     GLuint flags);
 
 extern void
-st_texture_image_unmap(struct st_texture_image *stImage);
+st_texture_image_unmap(struct st_context *st,
+                       struct st_texture_image *stImage);
 
 
 /* Return pointers to each 2d slice within an image.  Indexed by depth

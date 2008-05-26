@@ -146,6 +146,8 @@ pb_map(struct pb_buffer *buf,
        unsigned flags)
 {
    assert(buf);
+   if(!buf)
+      return NULL;
    return buf->vtbl->map(buf, flags);
 }
 
@@ -154,6 +156,8 @@ static INLINE void
 pb_unmap(struct pb_buffer *buf)
 {
    assert(buf);
+   if(!buf)
+      return;
    buf->vtbl->unmap(buf);
 }
 
@@ -163,6 +167,12 @@ pb_get_base_buffer( struct pb_buffer *buf,
 		    struct pb_buffer **base_buf,
 		    unsigned *offset )
 {
+   assert(buf);
+   if(!buf) {
+      base_buf = NULL;
+      offset = 0;
+      return;
+   }
    buf->vtbl->get_base_buffer(buf, base_buf, offset);
 }
 
@@ -171,7 +181,8 @@ static INLINE void
 pb_destroy(struct pb_buffer *buf)
 {
    assert(buf);
-   assert(buf->vtbl);
+   if(!buf)
+      return;
    buf->vtbl->destroy(buf);
 }
 

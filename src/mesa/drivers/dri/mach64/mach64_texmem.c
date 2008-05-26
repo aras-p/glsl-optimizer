@@ -1,4 +1,4 @@
-/* $XFree86$ */ /* -*- mode: c; c-basic-offset: 3 -*- */
+/* -*- mode: c; c-basic-offset: 3 -*- */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
  *                                                Cedar Park, Texas.

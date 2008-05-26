@@ -271,11 +271,25 @@ struct pipe_surface
    unsigned width;
    unsigned height;
    unsigned pitch;               /**< in pixels */
+   unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
    unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned refcount;
+   unsigned usage;              /**< PIPE_BUFFER_USAGE_*  */
+
    struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
+
+   struct pipe_texture *texture; /**< optional texture into which this is a view  */
+   unsigned face;
+   unsigned level;
+   unsigned zslice;
 };
 
+
+#define PIPE_TEXTURE_USAGE_RENDER_TARGET   0x1
+#define PIPE_TEXTURE_USAGE_DISPLAY_TARGET  0x2 /* ie a backbuffer */
+#define PIPE_TEXTURE_USAGE_PRIMARY         0x4 /* ie a frontbuffer */
+#define PIPE_TEXTURE_USAGE_DEPTH_STENCIL   0x8
+#define PIPE_TEXTURE_USAGE_SAMPLER         0x10
 
 /**
  * Texture object.
@@ -292,6 +306,8 @@ struct pipe_texture
    unsigned cpp:8;
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned compressed:1;
+   
+   unsigned tex_usage;          /* PIPE_TEXTURE_USAGE_* */
 
    /* These are also refcounted:
     */

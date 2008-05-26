@@ -1,4 +1,3 @@
-/* $Id: xform4.S,v 1.2 2006/04/17 18:58:24 krh Exp $ */
 
 /*
  * Mesa 3-D graphics library

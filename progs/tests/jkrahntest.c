@@ -1,4 +1,3 @@
-/* $Id: jkrahntest.c,v 1.2 2006/01/30 17:12:10 brianp Exp $ */
 
 /* This is a good test for glXSwapBuffers on non-current windows,
  * and the glXCopyContext function.  Fixed several Mesa/DRI bugs with

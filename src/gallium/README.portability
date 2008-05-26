@@ -6,7 +6,7 @@
 The state tracker and winsys driver support a rather limited number of
 platforms. However, the pipe drivers are meant to run in a wide number of
 platforms. Hence the pipe drivers, the auxiliary modules, and all public
-headers in general, should stricly follow these guidelines to ensure
+headers in general, should strictly follow these guidelines to ensure
 
 
 = Compiler Support =

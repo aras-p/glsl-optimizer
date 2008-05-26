@@ -22,7 +22,6 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_vb.h,v 1.2 2002/02/22 21:45:04 dawes Exp $ */
 
 #ifndef TDFXVB_INC
 #define TDFXVB_INC

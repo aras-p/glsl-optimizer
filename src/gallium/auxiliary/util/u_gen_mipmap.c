@@ -589,8 +589,11 @@ make_1d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_surface *srcSurf, *dstSurf;
       void *srcMap, *dstMap;
       
-      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice);
-      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_READ);
+
+      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_WRITE);
 
       srcMap = ((ubyte *) winsys->buffer_map(winsys, srcSurf->buffer,
                                             PIPE_BUFFER_USAGE_CPU_READ)
@@ -629,8 +632,10 @@ make_2d_mipmap(struct gen_mipmap_state *ctx,
       struct pipe_surface *srcSurf, *dstSurf;
       ubyte *srcMap, *dstMap;
       
-      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice);
-      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+      srcSurf = screen->get_tex_surface(screen, pt, face, srcLevel, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_READ);
+      dstSurf = screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
+                                        PIPE_BUFFER_USAGE_CPU_WRITE);
 
       srcMap = ((ubyte *) winsys->buffer_map(winsys, srcSurf->buffer,
                                             PIPE_BUFFER_USAGE_CPU_READ)
@@ -891,10 +896,14 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
    for (dstLevel = baseLevel + 1; dstLevel <= lastLevel; dstLevel++) {
       const uint srcLevel = dstLevel - 1;
 
+      struct pipe_surface *surf = 
+         screen->get_tex_surface(screen, pt, face, dstLevel, zslice,
+                                 PIPE_BUFFER_USAGE_GPU_WRITE);
+
       /*
        * Setup framebuffer / dest surface
        */
-      fb.cbufs[0] = screen->get_tex_surface(screen, pt, face, dstLevel, zslice);
+      fb.cbufs[0] = surf;
       fb.width = pt->width[dstLevel];
       fb.height = pt->height[dstLevel];
       cso_set_framebuffer(ctx->cso, &fb);
@@ -925,7 +934,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
       /* need to signal that the texture has changed _after_ rendering to it */
-      pipe->texture_update(pipe, pt, face, (1 << dstLevel));
+      pipe_surface_reference( &surf, NULL );
    }
 
    /* restore state we changed */

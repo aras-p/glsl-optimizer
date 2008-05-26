@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/glx/render2.c,v 1.6 2004/01/31 09:29:33 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free

@@ -42,11 +42,11 @@ struct softpipe_texture
    struct pipe_texture base;
 
    unsigned long level_offset[PIPE_MAX_TEXTURE_LEVELS];
+   unsigned long pitch[PIPE_MAX_TEXTURE_LEVELS];
 
    /* The data is held here:
     */
    struct pipe_buffer *buffer;
-   unsigned long buffer_size;
 };
 
 
@@ -60,7 +60,6 @@ softpipe_texture(struct pipe_texture *pt)
 
 extern void
 softpipe_init_texture_funcs( struct softpipe_context *softpipe );
-
 
 extern void
 softpipe_init_screen_texture_funcs(struct pipe_screen *screen);

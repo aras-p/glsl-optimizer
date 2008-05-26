@@ -44,6 +44,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_shader_tokens.h"
 
+#include "util/u_simple_shaders.h"
+
 #include "cso_cache/cso_context.h"
 
 #include "st_context.h"
@@ -252,6 +254,22 @@ st_free_translated_vertex_programs(struct st_context *st,
 }
 
 
+static void *
+get_passthrough_fs(struct st_context *st)
+{
+   struct pipe_shader_state shader;
+
+   if (!st->passthrough_fs) {
+      st->passthrough_fs =
+         util_make_fragment_passthrough_shader(st->pipe, &shader);
+#if 0      /* We actually need to keep the tokens around at this time */
+      free((void *) shader.tokens);
+#endif
+   }
+
+   return st->passthrough_fs;
+}
+
 
 static void
 update_linkage( struct st_context *st )
@@ -277,7 +295,15 @@ update_linkage( struct st_context *st )
    st_reference_fragprog(st, &st->fp, stfp);
 
    cso_set_vertex_shader_handle(st->cso_context, stvp->driver_shader);
-   cso_set_fragment_shader_handle(st->cso_context, stfp->driver_shader);
+
+   if (st->missing_textures) {
+      /* use a pass-through frag shader that uses no textures */
+      void *fs = get_passthrough_fs(st);
+      cso_set_fragment_shader_handle(st->cso_context, fs);
+   }
+   else {
+      cso_set_fragment_shader_handle(st->cso_context, stfp->driver_shader);
+   }
 
    st->vertex_result_to_slot = xvp->output_to_slot;
 }

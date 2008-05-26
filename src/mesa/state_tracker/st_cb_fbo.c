@@ -77,7 +77,6 @@ init_renderbuffer_bits(struct st_renderbuffer *strb,
    return info.size;
 }
 
-
 /**
  * gl_renderbuffer::AllocStorage()
  * This is called to allocate the original drawing surface, and
@@ -90,80 +89,94 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   enum pipe_format pipeFormat;
-   GLbitfield flags = 0x0; /* XXX needed? */
-   int ret;
+   struct pipe_texture template;
+   unsigned surface_usage;
 
-   if (!strb->surface) {
-      /* first time surface creation */
-      strb->surface = pipe->winsys->surface_alloc(pipe->winsys);
-      assert(strb->surface);
-      assert(strb->surface->refcount);
-      assert(strb->surface->winsys);
-      if (!strb->surface)
-         return GL_FALSE;
-   }
-   else if (strb->surface->buffer) {
-      /* release/discard the old surface buffer */
-      pipe_reference_buffer(pipe, &strb->surface->buffer, NULL);
-   }
+   /* Free the old surface (and texture if we hold the last
+    * reference):
+    */
+   pipe_surface_reference( &strb->surface, NULL );
 
-   /* Determine surface format here */
+   memset(&template, 0, sizeof(template));
+
    if (strb->format != PIPE_FORMAT_NONE) {
-      assert(strb->format != 0);
-      /* we'll hit this for front/back color bufs */
-      pipeFormat = strb->format;
+      template.format = strb->format;
    }
    else {
-      pipeFormat = st_choose_renderbuffer_format(pipe, internalFormat);
+      template.format = st_choose_renderbuffer_format(pipe, internalFormat);
    }
-
-   init_renderbuffer_bits(strb, pipeFormat);
-
-   ret = pipe->winsys->surface_alloc_storage(pipe->winsys,
-                                             strb->surface,
-                                             width,
-                                             height,
-                                             pipeFormat,
-                                             flags);
-   if (ret || !strb->surface->buffer) {
-      if (pipeFormat == DEFAULT_ACCUM_PIPE_FORMAT) {
-         /* Accum buffer.  Try a different surface format.  Since accum
-          * buffers are s/w only for now, the surface pixel format doesn't
-          * really matter, only that the buffer is large enough.
-          */
-         int sz, mult;
-         enum pipe_format accum_format;
-
-         /* allocate a buffer of (typically) double height to get 64bpp */
-         accum_format = st_choose_renderbuffer_format(pipe, GL_RGBA);
-         sz = pf_get_size(accum_format);
-         mult = pf_get_size(DEFAULT_ACCUM_PIPE_FORMAT) / sz;
-
-         ret = pipe->winsys->surface_alloc_storage(pipe->winsys,
-                                                   strb->surface,
-                                                   width, height * mult,
-                                                   accum_format, flags);
-         if (ret)
-            return GL_FALSE; /* we've _really_ failed */
-
-      }
-      else {
-         return GL_FALSE; /* out of memory, try s/w buffer? */
-      }
-   }
-
-   ASSERT(strb->surface->buffer);
-   ASSERT(strb->surface->format);
-   ASSERT(strb->surface->cpp);
-   ASSERT(strb->surface->width == width);
-   /*ASSERT(strb->surface->height == height);*/
-   ASSERT(strb->surface->pitch);
 
    strb->Base.Width  = width;
    strb->Base.Height = height;
+   init_renderbuffer_bits(strb, template.format);
 
-   return GL_TRUE;
+   template.target = PIPE_TEXTURE_2D;
+   template.compressed = 0;
+   template.cpp = pf_get_size(template.format);
+   template.width[0] = width;
+   template.height[0] = height;
+   template.depth[0] = 1;
+   template.last_level = 0;
+
+   if (pf_is_depth_stencil(template.format)) {
+      template.tex_usage = PIPE_TEXTURE_USAGE_DEPTH_STENCIL;
+   }
+   else {
+      template.tex_usage = (PIPE_TEXTURE_USAGE_DISPLAY_TARGET |
+                            PIPE_TEXTURE_USAGE_RENDER_TARGET);
+   }
+
+
+   /* Probably need dedicated flags for surface usage too: 
+    */
+   surface_usage = (PIPE_BUFFER_USAGE_GPU_READ |
+                    PIPE_BUFFER_USAGE_GPU_WRITE);
+#if 0
+                    PIPE_BUFFER_USAGE_CPU_READ |
+                    PIPE_BUFFER_USAGE_CPU_WRITE);
+#endif
+
+   strb->texture = pipe->screen->texture_create( pipe->screen,
+                                                 &template );
+
+   /* Special path for accum buffers.  
+    *
+    * Try a different surface format.  Since accum buffers are s/w
+    * only for now, the surface pixel format doesn't really matter,
+    * only that the buffer is large enough.
+    */
+   if (!strb->texture && template.format == DEFAULT_ACCUM_PIPE_FORMAT) 
+   {
+      /* Actually, just setting this usage value should be sufficient
+       * to tell the driver to go ahead and allocate the buffer, even
+       * if HW doesn't support the format.
+       */
+      template.tex_usage = 0;
+      surface_usage = (PIPE_BUFFER_USAGE_CPU_READ |
+                       PIPE_BUFFER_USAGE_CPU_WRITE);
+
+      strb->texture = pipe->screen->texture_create( pipe->screen,
+                                                    &template );
+
+   }
+
+   if (!strb->texture) 
+      return FALSE;
+
+   strb->surface = pipe->screen->get_tex_surface( pipe->screen,
+                                                  strb->texture,
+                                                  0, 0, 0,
+                                                  surface_usage );
+
+   assert(strb->surface->buffer);
+   assert(strb->surface->format);
+   assert(strb->surface->cpp);
+   assert(strb->surface->width == width);
+   assert(strb->surface->height == height);
+   assert(strb->surface->pitch);
+
+
+   return strb->surface != NULL;
 }
 
 
@@ -175,10 +188,8 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    ASSERT(strb);
-   if (strb->surface) {
-      struct pipe_winsys *ws = strb->surface->winsys;
-      ws->surface_release(ws, &strb->surface);
-   }
+   pipe_surface_reference(&strb->surface, NULL);
+   pipe_texture_reference(&strb->texture, NULL);
    free(strb);
 }
 
@@ -341,6 +352,10 @@ st_render_texture(GLcontext *ctx,
    struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = pipe->screen;
    struct pipe_texture *pt;
+   struct st_texture_object *stObj;
+   const struct gl_texture_image *texImage =
+      att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+
 
    assert(!att->Renderbuffer);
 
@@ -357,21 +372,27 @@ st_render_texture(GLcontext *ctx,
    strb = st_renderbuffer(rb);
 
    /* get the texture for the texture object */
+   stObj = st_texture_object(att->Texture);
+
+   /* point renderbuffer at texobject */
+   strb->rtt = stObj;
+   strb->rtt_level = att->TextureLevel;
+   strb->rtt_face = att->CubeMapFace;
+   strb->rtt_slice = att->Zoffset;
+
+   rb->Width = texImage->Width2;
+   rb->Height = texImage->Height2;
+   /*printf("***** render to texture level %d: %d x %d\n", att->TextureLevel, rb->Width, rb->Height);*/
+
    pt = st_get_texobj_texture(att->Texture);
    assert(pt);
-   assert(pt->width[att->TextureLevel]);
+   /*printf("***** pipe texture %d x %d\n", pt->width[0], pt->height[0]);*/
 
-   rb->Width = pt->width[att->TextureLevel];
-   rb->Height = pt->height[att->TextureLevel];
+   pipe_texture_reference( &strb->texture, pt );
 
-   /* the renderbuffer's surface is inside the texture */
-   strb->surface = screen->get_tex_surface(screen, pt,
-                                           att->CubeMapFace,
-                                           att->TextureLevel,
-                                           att->Zoffset);
-   assert(strb->surface);
-   assert(screen->is_format_supported(screen, strb->surface->format, PIPE_TEXTURE));
-   assert(screen->is_format_supported(screen, strb->surface->format, PIPE_SURFACE));
+   pipe_surface_reference(&strb->surface, NULL);
+
+   /* the new surface will be created during framebuffer validation */
 
    init_renderbuffer_bits(strb, pt->format);
 
@@ -396,21 +417,21 @@ static void
 st_finish_render_texture(GLcontext *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
    assert(strb);
 
    ctx->st->pipe->flush(ctx->st->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   ctx->st->pipe->texture_update(ctx->st->pipe,
-                                 st_get_texobj_texture(att->Texture),
-                                 att->CubeMapFace, 1 << att->TextureLevel);
+   if (strb->surface)
+      screen->tex_surface_release( screen, &strb->surface );
+
+   strb->rtt = NULL;
 
    /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
    */
-
-   pipe_surface_reference(&strb->surface, NULL);
 
    _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
 

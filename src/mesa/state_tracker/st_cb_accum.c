@@ -105,14 +105,18 @@ void
 st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
-   struct pipe_surface *acc_ps = acc_strb->surface;
+   struct pipe_surface *acc_ps;
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    const GLint xpos = ctx->DrawBuffer->_Xmin;
    const GLint ypos = ctx->DrawBuffer->_Ymin;
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
    GLvoid *map;
 
-   map = pipe_surface_map(acc_ps);
+   acc_ps = screen->get_tex_surface(screen, acc_strb->texture, 0, 0, 0,
+                                    PIPE_BUFFER_USAGE_CPU_WRITE);
+   map = screen->surface_map(screen, acc_ps,
+                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* note acc_strb->format might not equal acc_ps->format */
    switch (acc_strb->format) {
@@ -140,7 +144,8 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       _mesa_problem(ctx, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_surface_unmap(acc_ps);
+   screen->surface_unmap(screen, acc_ps);
+   pipe_surface_reference(&acc_ps, NULL);
 }
 
 
@@ -150,10 +155,12 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
           GLint xpos, GLint ypos, GLint width, GLint height,
           struct st_renderbuffer *acc_strb)
 {
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct pipe_surface *acc_ps = acc_strb->surface;
    GLvoid *map;
 
-   map = pipe_surface_map(acc_ps);
+   map = screen->surface_map(screen, acc_ps, 
+                             PIPE_BUFFER_USAGE_CPU_WRITE);
 
    /* note acc_strb->format might not equal acc_ps->format */
    switch (acc_strb->format) {
@@ -174,77 +181,107 @@ accum_mad(GLcontext *ctx, GLfloat scale, GLfloat bias,
       _mesa_problem(NULL, "unexpected format in st_clear_accum_buffer()");
    }
 
-   pipe_surface_unmap(acc_ps);
+   screen->surface_unmap(screen, acc_ps);
 }
 
 
 static void
 accum_accum(struct pipe_context *pipe, GLfloat value,
             GLint xpos, GLint ypos, GLint width, GLint height,
-            struct pipe_surface *acc_ps,
-            struct pipe_surface *color_ps)
+            struct st_renderbuffer *acc_strb,
+            struct st_renderbuffer *color_strb)
 {
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_surface *acc_surf, *color_surf;
    GLfloat *colorBuf, *accBuf;
    GLint i;
+
+   acc_surf = screen->get_tex_surface(screen, acc_strb->texture, 0, 0, 0,
+                                      (PIPE_BUFFER_USAGE_CPU_WRITE |
+                                       PIPE_BUFFER_USAGE_CPU_READ));
+
+   color_surf = screen->get_tex_surface(screen, color_strb->texture, 0, 0, 0,
+                                        PIPE_BUFFER_USAGE_CPU_READ);
 
    colorBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
    accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, colorBuf);
-   acc_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   pipe_get_tile_rgba(pipe, color_surf, xpos, ypos, width, height, colorBuf);
+   acc_get_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
       accBuf[i] = accBuf[i] + colorBuf[i] * value;
    }
 
-   acc_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, accBuf);
+   acc_put_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, accBuf);
 
    free(colorBuf);
    free(accBuf);
+   pipe_surface_reference(&acc_surf, NULL);
+   pipe_surface_reference(&color_surf, NULL);
 }
 
 
 static void
 accum_load(struct pipe_context *pipe, GLfloat value,
            GLint xpos, GLint ypos, GLint width, GLint height,
-           struct pipe_surface *acc_ps,
-           struct pipe_surface *color_ps)
+           struct st_renderbuffer *acc_strb,
+           struct st_renderbuffer *color_strb)
 {
+   struct pipe_screen *screen = pipe->screen;
+   struct pipe_surface *acc_surf, *color_surf;
    GLfloat *buf;
    GLint i;
 
+   acc_surf = screen->get_tex_surface(screen, acc_strb->texture, 0, 0, 0,
+                                      PIPE_BUFFER_USAGE_CPU_WRITE);
+
+   color_surf = screen->get_tex_surface(screen, color_strb->texture, 0, 0, 0,
+                                        PIPE_BUFFER_USAGE_CPU_READ);
+
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, buf);
+   pipe_get_tile_rgba(pipe, color_surf, xpos, ypos, width, height, buf);
 
    for (i = 0; i < 4 * width * height; i++) {
       buf[i] = buf[i] * value;
    }
 
-   acc_put_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, buf);
+   acc_put_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, buf);
 
    free(buf);
+   pipe_surface_reference(&acc_surf, NULL);
+   pipe_surface_reference(&color_surf, NULL);
 }
 
 
 static void
 accum_return(GLcontext *ctx, GLfloat value,
              GLint xpos, GLint ypos, GLint width, GLint height,
-             struct pipe_surface *acc_ps,
-             struct pipe_surface *color_ps)
+             struct st_renderbuffer *acc_strb,
+             struct st_renderbuffer *color_strb)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    const GLubyte *colormask = ctx->Color.ColorMask;
+   struct pipe_surface *acc_surf, *color_surf;
    GLfloat *abuf, *cbuf = NULL;
    GLint i, ch;
 
    abuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
-   acc_get_tile_rgba(pipe, acc_ps, xpos, ypos, width, height, abuf);
+   acc_surf = screen->get_tex_surface(screen, acc_strb->texture, 0, 0, 0,
+                                      PIPE_BUFFER_USAGE_CPU_READ);
+
+   color_surf = screen->get_tex_surface(screen, color_strb->texture, 0, 0, 0,
+                                        (PIPE_BUFFER_USAGE_CPU_READ |
+                                         PIPE_BUFFER_USAGE_CPU_WRITE));
+
+   acc_get_tile_rgba(pipe, acc_surf, xpos, ypos, width, height, abuf);
 
    if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
       cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-      pipe_get_tile_rgba(pipe, color_ps, xpos, ypos, width, height, cbuf);
+      pipe_get_tile_rgba(pipe, color_surf, xpos, ypos, width, height, cbuf);
    }
 
    for (i = 0; i < width * height; i++) {
@@ -259,11 +296,13 @@ accum_return(GLcontext *ctx, GLfloat value,
       }
    }
 
-   pipe_put_tile_rgba(pipe, color_ps, xpos, ypos, width, height, abuf);
+   pipe_put_tile_rgba(pipe, color_surf, xpos, ypos, width, height, abuf);
 
    free(abuf);
    if (cbuf)
       free(cbuf);
+   pipe_surface_reference(&acc_surf, NULL);
+   pipe_surface_reference(&color_surf, NULL);
 }
 
 
@@ -276,8 +315,6 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
      = st_renderbuffer(ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
    struct st_renderbuffer *color_strb
       = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-   struct pipe_surface *acc_ps = acc_strb->surface;
-   struct pipe_surface *color_ps = color_strb->surface;
 
    const GLint xpos = ctx->DrawBuffer->_Xmin;
    const GLint ypos = ctx->DrawBuffer->_Ymin;
@@ -300,14 +337,14 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
       break;
    case GL_ACCUM:
       if (value != 0.0F) {
-         accum_accum(pipe, value, xpos, ypos, width, height, acc_ps, color_ps);
+         accum_accum(pipe, value, xpos, ypos, width, height, acc_strb, color_strb);
       }
       break;
    case GL_LOAD:
-      accum_load(pipe, value, xpos, ypos, width, height, acc_ps, color_ps);
+      accum_load(pipe, value, xpos, ypos, width, height, acc_strb, color_strb);
       break;
    case GL_RETURN:
-      accum_return(ctx, value, xpos, ypos, width, height, acc_ps, color_ps);
+      accum_return(ctx, value, xpos, ypos, width, height, acc_strb, color_strb);
       break;
    default:
       assert(0);

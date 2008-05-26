@@ -313,6 +313,28 @@ void
 debug_memory_end(unsigned long beginning);
 
 
+#if defined(PROFILE) && defined(PIPE_SUBSYSTEM_WINDOWS_DISPLAY)
+
+void
+debug_profile_start(void);
+
+void 
+debug_profile_stop(void);
+
+#endif
+
+
+#ifdef DEBUG
+void debug_dump_image(const char *prefix,
+                      unsigned format, unsigned cpp,
+                      unsigned width, unsigned height,
+                      unsigned pitch,
+                      const void *data);
+#else
+#define debug_dump_image(prefix, format, cpp, width, height, pitch, data) ((void)0)
+#endif
+
+
 #ifdef	__cplusplus
 }
 #endif

@@ -1,4 +1,3 @@
-/* $Id: texwrap.c,v 1.8 2005/08/25 03:09:12 brianp Exp $ */
 
 /*
  * Test texture wrap modes.

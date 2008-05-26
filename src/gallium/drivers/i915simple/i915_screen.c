@@ -201,6 +201,35 @@ i915_destroy_screen( struct pipe_screen *screen )
 }
 
 
+static void *
+i915_surface_map( struct pipe_screen *screen,
+                  struct pipe_surface *surface,
+                  unsigned flags )
+{
+   char *map = screen->winsys->buffer_map( screen->winsys, surface->buffer, flags );
+   if (map == NULL)
+      return NULL;
+
+   if (surface->texture &&
+       (flags & PIPE_BUFFER_USAGE_CPU_WRITE)) 
+   {
+      /* Do something to notify contexts of a texture change.  
+       */
+      /* i915_screen(screen)->timestamp++; */
+   }
+   
+   return map + surface->offset;
+}
+
+static void
+i915_surface_unmap(struct pipe_screen *screen,
+                   struct pipe_surface *surface)
+{
+   screen->winsys->buffer_unmap( screen->winsys, surface->buffer );
+}
+
+
+
 /**
  * Create a new i915_screen object
  */
@@ -244,6 +273,8 @@ i915_create_screen(struct pipe_winsys *winsys, uint pci_id)
    i915screen->screen.get_param = i915_get_param;
    i915screen->screen.get_paramf = i915_get_paramf;
    i915screen->screen.is_format_supported = i915_is_format_supported;
+   i915screen->screen.surface_map = i915_surface_map;
+   i915screen->screen.surface_unmap = i915_surface_unmap;
 
    i915_init_screen_texture_functions(&i915screen->screen);
 

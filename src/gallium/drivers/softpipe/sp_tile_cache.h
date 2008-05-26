@@ -61,7 +61,7 @@ struct softpipe_cached_tile
 
 
 extern struct softpipe_tile_cache *
-sp_create_tile_cache(void);
+sp_create_tile_cache( struct pipe_screen *screen );
 
 extern void
 sp_destroy_tile_cache(struct softpipe_tile_cache *tc);

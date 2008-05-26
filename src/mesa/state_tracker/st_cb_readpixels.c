@@ -61,13 +61,18 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                        GLvoid *pixels)
 {
    struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct pipe_screen *screen = ctx->st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(fb->_StencilBuffer);
-   struct pipe_surface *ps = strb->surface;
+   struct pipe_surface *ps;
    ubyte *stmap;
    GLint j;
 
+   /* Create a CPU-READ surface/view into the renderbuffer's texture */
+   ps = screen->get_tex_surface(screen, strb->texture,  0, 0, 0,
+                                PIPE_BUFFER_USAGE_CPU_READ);
+
    /* map the stencil buffer */
-   stmap = pipe_surface_map(ps);
+   stmap = screen->surface_map(screen, ps, PIPE_BUFFER_USAGE_CPU_READ);
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -124,7 +129,8 @@ st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
 
 
    /* unmap the stencil buffer */
-   pipe_surface_unmap(ps);
+   screen->surface_unmap(screen, ps);
+   pipe_surface_reference(&ps, NULL);
 }
 
 
@@ -168,12 +174,16 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLvoid *dest)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_screen *screen = pipe->screen;
    GLfloat temp[MAX_WIDTH][4];
    const GLbitfield transferOps = ctx->_ImageTransferState;
    GLint i, yStep, dfStride;
    GLfloat *df;
    struct st_renderbuffer *strb;
    struct gl_pixelstore_attrib clippedPacking = *pack;
+   struct pipe_surface *surf;
+
+   assert(ctx->ReadBuffer->Width > 0);
 
    /* XXX convolution not done yet */
    assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
@@ -229,6 +239,10 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       yStep = 1;
    }
 
+   /* Create a CPU-READ surface/view into the renderbuffer's texture */
+   surf = screen->get_tex_surface(screen, strb->texture,  0, 0, 0,
+                                  PIPE_BUFFER_USAGE_CPU_READ);
+
    /*
     * Copy pixels from pipe_surface to user memory
     */
@@ -240,15 +254,14 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
                                                      format, type);
 
-      if (strb->surface->format == PIPE_FORMAT_S8Z24_UNORM ||
-          strb->surface->format == PIPE_FORMAT_X8Z24_UNORM) {
+      if (surf->format == PIPE_FORMAT_S8Z24_UNORM ||
+          surf->format == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
                GLuint ztemp[MAX_WIDTH], j;
                GLfloat zfloat[MAX_WIDTH];
                const double scale = 1.0 / ((1 << 24) - 1);
-               pipe_get_tile_raw(pipe, strb->surface, x, y,
-                                 width, 1, ztemp, 0);
+               pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
                y += yStep;
                for (j = 0; j < width; j++) {
                   zfloat[j] = (float) (scale * (ztemp[j] & 0xffffff));
@@ -262,18 +275,18 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             /* untested, but simple: */
             assert(format == GL_DEPTH_STENCIL_EXT);
             for (i = 0; i < height; i++) {
-               pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, dst, 0);
+               pipe_get_tile_raw(pipe, surf, x, y, width, 1, dst, 0);
                y += yStep;
                dst += dstStride;
             }
          }
       }
-      else if (strb->surface->format == PIPE_FORMAT_Z16_UNORM) {
+      else if (surf->format == PIPE_FORMAT_Z16_UNORM) {
          for (i = 0; i < height; i++) {
             GLushort ztemp[MAX_WIDTH], j;
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffff;
-            pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, ztemp, 0);
+            pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
@@ -283,12 +296,12 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
             dst += dstStride;
          }
       }
-      else if (strb->surface->format == PIPE_FORMAT_Z32_UNORM) {
+      else if (surf->format == PIPE_FORMAT_Z32_UNORM) {
          for (i = 0; i < height; i++) {
             GLuint ztemp[MAX_WIDTH], j;
             GLfloat zfloat[MAX_WIDTH];
             const double scale = 1.0 / 0xffffffff;
-            pipe_get_tile_raw(pipe, strb->surface, x, y, width, 1, ztemp, 0);
+            pipe_get_tile_raw(pipe, surf, x, y, width, 1, ztemp, 0);
             y += yStep;
             for (j = 0; j < width; j++) {
                zfloat[j] = (float) (scale * ztemp[j]);
@@ -302,7 +315,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          /* RGBA format */
          /* Do a row at a time to flip image data vertically */
          for (i = 0; i < height; i++) {
-            pipe_get_tile_rgba(pipe, strb->surface, x, y, width, 1, df);
+            pipe_get_tile_rgba(pipe, surf, x, y, width, 1, df);
             y += yStep;
             df += dfStride;
             if (!dfStride) {
@@ -313,6 +326,8 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          }
       }
    }
+
+   pipe_surface_reference(&surf, NULL);
 
    _mesa_unmap_readpix_pbo(ctx, &clippedPacking);
 }

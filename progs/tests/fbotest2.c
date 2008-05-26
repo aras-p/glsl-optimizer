@@ -68,6 +68,7 @@ Display( void )
 
    /* draw to window */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+   glDisable(GL_DEPTH_TEST);  /* in case window has depth buffer */
    glWindowPos2iARB(0, 0);
    glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 

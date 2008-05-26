@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_state.c,v 1.5 2002/11/05 17:46:07 tsi Exp $ */
 /*
  * Copyright 2001 by Alan Hourihane.
  *

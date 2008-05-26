@@ -49,6 +49,7 @@
 
 struct softpipe_tile_cache
 {
+   struct pipe_screen *screen;
    struct pipe_surface *surface;  /**< the surface we're caching */
    void *surface_map;
    struct pipe_texture *texture;  /**< if caching a texture */
@@ -109,13 +110,14 @@ clear_clear_flag(uint *bitvec, int x, int y)
    
 
 struct softpipe_tile_cache *
-sp_create_tile_cache(void)
+sp_create_tile_cache( struct pipe_screen *screen )
 {
    struct softpipe_tile_cache *tc;
    uint pos;
 
    tc = CALLOC_STRUCT( softpipe_tile_cache );
    if (tc) {
+      tc->screen = screen;
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          tc->entries[pos].x =
          tc->entries[pos].y = -1;
@@ -154,16 +156,17 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    assert(!tc->texture);
 
    if (tc->surface_map) {
-      /*assert(tc->surface != ps);*/
-      pipe_surface_unmap(tc->surface);
+      tc->screen->surface_unmap(tc->screen, tc->surface);
       tc->surface_map = NULL;
    }
 
    pipe_surface_reference(&tc->surface, ps);
 
-   if (ps) {
-      if (tc->surface_map)
-	 tc->surface_map = pipe_surface_map(ps);
+   if (tc->surface) {
+      if (tc->surface_map) /* XXX: this is always NULL!? */
+	 tc->surface_map = tc->screen->surface_map(tc->screen, tc->surface,
+                                                   PIPE_BUFFER_USAGE_CPU_READ | 
+                                                   PIPE_BUFFER_USAGE_CPU_WRITE);
 
       tc->depth_stencil = (ps->format == PIPE_FORMAT_S8Z24_UNORM ||
                            ps->format == PIPE_FORMAT_Z16_UNORM ||
@@ -187,10 +190,13 @@ void
 sp_tile_cache_map_surfaces(struct softpipe_tile_cache *tc)
 {
    if (tc->surface && !tc->surface_map)
-      tc->surface_map = pipe_surface_map(tc->surface);
+      tc->surface_map = tc->screen->surface_map(tc->screen, tc->surface,
+                                                PIPE_BUFFER_USAGE_CPU_WRITE |
+                                                PIPE_BUFFER_USAGE_CPU_READ);
 
    if (tc->tex_surf && !tc->tex_surf_map)
-      tc->tex_surf_map = pipe_surface_map(tc->tex_surf);
+      tc->tex_surf_map = tc->screen->surface_map(tc->screen, tc->tex_surf,
+                                                 PIPE_BUFFER_USAGE_CPU_READ);
 }
 
 
@@ -198,12 +204,12 @@ void
 sp_tile_cache_unmap_surfaces(struct softpipe_tile_cache *tc)
 {
    if (tc->surface_map) {
-      pipe_surface_unmap(tc->surface);
+      tc->screen->surface_unmap(tc->screen, tc->surface);
       tc->surface_map = NULL;
    }
 
    if (tc->tex_surf_map) {
-      pipe_surface_unmap(tc->tex_surf);
+      tc->screen->surface_unmap(tc->screen, tc->tex_surf);
       tc->tex_surf_map = NULL;
    }
 }
@@ -224,7 +230,7 @@ sp_tile_cache_set_texture(struct pipe_context *pipe,
    pipe_texture_reference(&tc->texture, texture);
 
    if (tc->tex_surf_map) {
-      pipe_surface_unmap(tc->tex_surf);
+      tc->screen->surface_unmap(tc->screen, tc->tex_surf);
       tc->tex_surf_map = NULL;
    }
    pipe_surface_reference(&tc->tex_surf, NULL);
@@ -514,10 +520,12 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
          /* get new surface (view into texture) */
 
 	 if (tc->tex_surf_map)
-            pipe_surface_unmap(tc->tex_surf);
+            tc->screen->surface_unmap(tc->screen, tc->tex_surf);
 
-         tc->tex_surf = screen->get_tex_surface(screen, tc->texture, face, level, z);
-         tc->tex_surf_map = pipe_surface_map(tc->tex_surf);
+         tc->tex_surf = screen->get_tex_surface(screen, tc->texture, face, level, z, 
+                                                PIPE_BUFFER_USAGE_CPU_READ);
+         tc->tex_surf_map = screen->surface_map(screen, tc->tex_surf,
+                                                PIPE_BUFFER_USAGE_CPU_READ);
 
          tc->tex_face = face;
          tc->tex_level = level;

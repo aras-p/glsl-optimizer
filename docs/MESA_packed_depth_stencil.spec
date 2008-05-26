@@ -17,7 +17,6 @@ Status
 
 Version
 
-    $Id: MESA_packed_depth_stencil.spec,v 1.2 2003/09/19 14:58:21 brianp Exp $
 
 Number
 
