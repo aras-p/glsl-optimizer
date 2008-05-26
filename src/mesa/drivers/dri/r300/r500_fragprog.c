@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2005 Ben Skeggs.
  *
+ * Copyright 2008 Corbin Simpson <MostAwesomeDude@gmail.com>
+ * Adaptation and modification for ATI/AMD Radeon R500 GPU chipsets.
+ *
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
