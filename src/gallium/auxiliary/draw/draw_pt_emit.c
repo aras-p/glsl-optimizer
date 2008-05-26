@@ -53,6 +53,10 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    unsigned i;
    boolean ok;
    
+   /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
+    */
+   draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
 
    /* XXX: may need to defensively reset this later on as clipping can
     * clobber this state in the render backend.
