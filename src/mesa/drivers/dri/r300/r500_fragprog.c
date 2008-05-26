@@ -143,12 +143,11 @@ static inline GLuint make_sop_swizzle(struct prog_src_register src) {
 }
 
 static inline GLuint make_strq_swizzle(struct prog_src_register src) {
-	GLuint swiz = 0x0;
-	GLuint temp = src.Swizzle;
+	GLuint swiz = 0x0, temp = 0x0;
 	int i;
 	for (i = 0; i < 4; i++) {
-		swiz += (temp & 0x3) << i*2;
-		temp >>= 3;
+		temp = GET_SWZ(src.Swizzle, i) & 0x3;
+		swiz |= temp << i*2;
 	}
 	return swiz;
 }
@@ -287,9 +286,9 @@ static void emit_tex(struct r500_fragment_program *fp,
 	}
 
 	fp->inst[counter].inst2 = R500_TEX_SRC_ADDR(hwsrc)
-		/* | MAKE_SWIZ_TEX_STRQ(make_strq_swizzle(fpi->SrcReg[0])) */
-		| R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G
-		| R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A
+		| MAKE_SWIZ_TEX_STRQ(make_strq_swizzle(fpi->SrcReg[0]))
+		/* | R500_TEX_SRC_S_SWIZ_R | R500_TEX_SRC_T_SWIZ_G
+		| R500_TEX_SRC_R_SWIZ_B | R500_TEX_SRC_Q_SWIZ_A */
 		| R500_TEX_DST_ADDR(hwdest)
 		| R500_TEX_DST_R_SWIZ_R | R500_TEX_DST_G_SWIZ_G
 		| R500_TEX_DST_B_SWIZ_B | R500_TEX_DST_A_SWIZ_A;
