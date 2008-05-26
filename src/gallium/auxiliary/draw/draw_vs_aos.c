@@ -140,7 +140,8 @@ static void init_internals( struct aos_machine *machine )
    ASSIGN_4V(machine->internal[IMM_NEGS],     -1.0f, -1.0f, -1.0f, -1.0f);
    ASSIGN_4V(machine->internal[IMM_IDENTITY],  0.0f,  0.0f,  0.0f,  1.0f);
    ASSIGN_4V(machine->internal[IMM_INV_255],   inv,   inv,   inv,   inv);
-   ASSIGN_4V(machine->internal[IMM_255],       f255,   f255,   f255,   f255);
+   ASSIGN_4V(machine->internal[IMM_255],       f255,  f255,  f255,  f255);
+   ASSIGN_4V(machine->internal[IMM_RSQ],       -.5f,  1.5f,  0.0f,  0.0f);
 
 
    machine->fpu_rnd_nearest = (X87_CW_EXCEPTION_INV_OP |
@@ -1561,35 +1562,40 @@ static boolean emit_RCP( struct aos_compilation *cp, const struct tgsi_full_inst
  * 
  * x1 = 2 * rcpps(a) - a * rcpps(a) * rcpps(a)
  * x1 = 0.5 * rsqrtps(a) * [3.0 - (a * rsqrtps(a))* rsqrtps(a)]
+ * or:
+ *   x1 = rsqrtps(a) * [1.5 - .5 * a * rsqrtps(a) * rsqrtps(a)]
+ * 
  *
  * See: http://softwarecommunity.intel.com/articles/eng/1818.htm
  */
 static boolean emit_RSQ( struct aos_compilation *cp, const struct tgsi_full_instruction *op )
 {
-   struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
-   struct x86_reg dst = aos_get_xmm_reg(cp);
 
-   if (1) {
-      sse_rsqrtss(cp->func, dst, arg0);
+   if (0) {
+      struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
+      struct x86_reg r = aos_get_xmm_reg(cp);
+      sse_rsqrtss(cp->func, r, arg0);
+      store_scalar_dest(cp, &op->FullDstRegisters[0], r);
+      return TRUE;
    }
    else {
-#if 0
-      /* Extend precision here...
-       */
-      sse_movaps(  func, dst,  get_temp( TGSI_EXEC_TEMP_HALF_I, TGSI_EXEC_TEMP_HALF_C ) );
-      sse_movaps(  func, tmp0, get_temp( TGSI_EXEC_TEMP_THREE_I, TGSI_EXEC_TEMP_THREE_C ) );
+      struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
+      struct x86_reg r = aos_get_xmm_reg(cp);
 
-      sse_rsqrtss( func, tmp1, src  ); /* rsqrtss(a) */
-      sse_mulss(   func, src,  tmp1 ); /* a * rsqrtss(a) */
-      sse_mulss(   func, dst,  tmp1 ); /* .5 * rsqrtss(a) */
-      sse_mulss(   func, src,  tmp1 ); /* a * rsqrtss(a) * rsqrtss(a) */
-      sse_subss(   func, tmp0, src  ); /* 3.0 - (a * rsqrtss(a) * rsqrtss(a)) */
-      sse_mulss(   func, dst,  tmp0 ); /* .5 * r * (3.0 - (a * r * r)) */
-#endif
+      struct x86_reg neg_half       = get_reg_ptr( cp, AOS_FILE_INTERNAL, IMM_RSQ );
+      struct x86_reg one_point_five = x86_make_disp( neg_half, 4 );
+      struct x86_reg src            = get_xmm_writable( cp, arg0 );
+      
+      sse_rsqrtss( cp->func, r, src  );             /* rsqrtss(a) */
+      sse_mulss(   cp->func, src, neg_half  );      /* -.5 * a */
+      sse_mulss(   cp->func, src,  r );             /* -.5 * a * r */
+      sse_mulss(   cp->func, src,  r );             /* -.5 * a * r * r */
+      sse_addss(   cp->func, src, one_point_five ); /* 1.5 - .5 * a * r * r */
+      sse_mulss(   cp->func, r,  src );             /* r * (1.5 - .5 * a * r * r) */
+
+      store_scalar_dest(cp, &op->FullDstRegisters[0], r);
+      return TRUE;
    }
-
-   store_scalar_dest(cp, &op->FullDstRegisters[0], dst);
-   return TRUE;
 }
 
 
