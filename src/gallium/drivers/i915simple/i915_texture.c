@@ -525,8 +525,8 @@ i945_miptree_layout(struct i915_texture * tex)
 
 
 static struct pipe_texture *
-i915_texture_create_screen(struct pipe_screen *screen,
-                           const struct pipe_texture *templat)
+i915_texture_create(struct pipe_screen *screen,
+                    const struct pipe_texture *templat)
 {
    struct i915_screen *i915screen = i915_screen(screen);
    struct pipe_winsys *ws = screen->winsys;
@@ -571,8 +571,8 @@ i915_texture_create_screen(struct pipe_screen *screen,
 
 
 static void
-i915_texture_release_screen(struct pipe_screen *screen,
-                            struct pipe_texture **pt)
+i915_texture_release(struct pipe_screen *screen,
+                     struct pipe_texture **pt)
 {
    if (!*pt)
       return;
@@ -606,10 +606,10 @@ i915_texture_release_screen(struct pipe_screen *screen,
  * XXX note: same as code in sp_surface.c
  */
 static struct pipe_surface *
-i915_get_tex_surface_screen(struct pipe_screen *screen,
-                            struct pipe_texture *pt,
-                            unsigned face, unsigned level, unsigned zslice,
-                            unsigned flags)
+i915_get_tex_surface(struct pipe_screen *screen,
+                     struct pipe_texture *pt,
+                     unsigned face, unsigned level, unsigned zslice,
+                     unsigned flags)
 {
    struct i915_texture *tex = (struct i915_texture *)pt;
    struct pipe_winsys *ws = screen->winsys;
@@ -654,8 +654,8 @@ i915_init_texture_functions(struct i915_context *i915)
 }
 
 static void
-i915_tex_surface_release_screen(struct pipe_screen *screen,
-                                struct pipe_surface **surface)
+i915_tex_surface_release(struct pipe_screen *screen,
+                         struct pipe_surface **surface)
 {
    struct pipe_surface *surf = *surface;
 
@@ -680,8 +680,8 @@ i915_tex_surface_release_screen(struct pipe_screen *screen,
 void
 i915_init_screen_texture_functions(struct pipe_screen *screen)
 {
-   screen->texture_create = i915_texture_create_screen;
-   screen->texture_release = i915_texture_release_screen;
-   screen->get_tex_surface = i915_get_tex_surface_screen;
-   screen->tex_surface_release = i915_tex_surface_release_screen;
+   screen->texture_create = i915_texture_create;
+   screen->texture_release = i915_texture_release;
+   screen->get_tex_surface = i915_get_tex_surface;
+   screen->tex_surface_release = i915_tex_surface_release;
 }
