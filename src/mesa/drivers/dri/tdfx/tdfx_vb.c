@@ -22,7 +22,6 @@
  *
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_vb.c,v 1.3 2002/10/30 12:52:01 alanh Exp $ */
  
 #include "glheader.h"
 #include "mtypes.h"

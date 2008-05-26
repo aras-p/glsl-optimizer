@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vbtmp.h,v 1.1 2002/02/22 21:32:59 dawes Exp $ */
 
 static void TAG(emit)(GLcontext *ctx, GLuint start, GLuint end)
 {

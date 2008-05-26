@@ -25,7 +25,6 @@
  * Authors:
  *    Ian Romanick <idr@us.ibm.com>
  */
-/* $XFree86:$ */
 
 #ifndef DRI_VBLANK_H
 #define DRI_VBLANK_H

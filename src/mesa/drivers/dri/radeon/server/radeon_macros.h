@@ -35,7 +35,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.20 2002/10/12 01:38:07 martin Exp $ */
 
 #ifndef _RADEON_MACROS_H_
 #define _RADEON_MACROS_H_

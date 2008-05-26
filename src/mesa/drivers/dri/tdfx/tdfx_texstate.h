@@ -23,7 +23,6 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_texstate.h,v 1.1 2002/02/22 21:45:04 dawes Exp $ */
 
 /*
  * Original rewrite:

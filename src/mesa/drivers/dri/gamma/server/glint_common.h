@@ -25,7 +25,6 @@
  * Converted to common header format:
  *   Jens Owen <jens@tungstengraphics.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_common.h,v 1.2 2003/04/03 16:52:18 dawes Exp $
  *
  */
 

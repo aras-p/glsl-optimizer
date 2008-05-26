@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgarender.c,v 1.4 2002/10/30 12:51:36 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and

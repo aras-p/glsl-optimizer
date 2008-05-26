@@ -19,7 +19,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaregs.h,v 1.6 2003/01/12 03:55:46 tsi Exp $ */
 
 #ifndef _MGAREGS_H_
 #define _MGAREGS_H_

@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_context.c,v 1.9 2003/09/24 02:43:12 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and

@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_drishare.h,v 1.2 2000/06/21 00:47:37 dawes Exp $ */
 
 #ifndef _FFB_DRISHARE_H
 #define _FFB_DRISHARE_H

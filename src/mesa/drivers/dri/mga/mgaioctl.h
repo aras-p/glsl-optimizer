@@ -25,7 +25,6 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  *    Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.h,v 1.11 2002/10/30 12:51:36 alanh Exp $ */
 
 #ifndef MGA_IOCTL_H
 #define MGA_IOCTL_H

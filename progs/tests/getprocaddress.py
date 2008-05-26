@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# $Id: getprocaddress.py,v 1.7 2005/06/21 23:42:43 idr Exp $
 
 # Helper for the getprocaddress.c test.
 

@@ -1,4 +1,3 @@
-/* $Id: manytex.c,v 1.2 2003/08/23 01:28:59 jonsmirl Exp $ */
 
 /*
  * test handling of many texture maps

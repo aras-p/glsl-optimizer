@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/glx/packsingle.h,v 1.5tsi Exp $ */
 #ifndef __GLX_packsingle_h__
 #define __GLX_packsingle_h__
 

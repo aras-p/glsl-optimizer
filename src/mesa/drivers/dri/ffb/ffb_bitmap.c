@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_bitmap.c,v 1.1 2002/02/22 21:32:58 dawes Exp $
+/* 
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2001 David S. Miller

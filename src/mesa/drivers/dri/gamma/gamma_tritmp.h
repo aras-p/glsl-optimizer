@@ -1,4 +1,3 @@
-/* $XFree86: xc/extras/Mesa/src/mesa/drivers/dri/gamma/gamma_tritmp.h,v 1.2 2004/12/13 22:40:49 tsi Exp $ */
 
 static void TAG(gamma_point)( gammaContextPtr gmesa, 
 			     const gammaVertex *v0 )

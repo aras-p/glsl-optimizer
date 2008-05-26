@@ -24,7 +24,6 @@
  * Authors:
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mga_xmesa.h,v 1.12 2002/12/16 16:18:52 dawes Exp $ */
 
 #ifndef _MGA_INIT_H_
 #define _MGA_INIT_H_

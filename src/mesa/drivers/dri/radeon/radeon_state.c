@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_state.c,v 1.8 2002/12/16 16:18:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 VA Linux Systems Inc., Fremont, California.

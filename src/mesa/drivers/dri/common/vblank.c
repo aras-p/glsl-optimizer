@@ -25,7 +25,6 @@
  * Authors:
  *    Ian Romanick <idr@us.ibm.com>
  */
-/* $XFree86:$ */
 
 #include "glheader.h"
 #include "xf86drm.h"

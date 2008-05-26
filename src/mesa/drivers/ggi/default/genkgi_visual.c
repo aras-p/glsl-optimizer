@@ -1,4 +1,4 @@
-/* $Id: genkgi_visual.c,v 1.7 2000/06/11 20:11:55 jtaylor Exp $
+/* 
 ******************************************************************************
 
    genkgi_visual.c: visual handling for the generic KGI helper
