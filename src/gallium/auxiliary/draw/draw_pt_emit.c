@@ -100,6 +100,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
       case EMIT_4UB:
 	 output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
 	 emit_sz = 4 * sizeof(ubyte);
+         break;
       default:
 	 assert(0);
 	 output_format = PIPE_FORMAT_NONE;
