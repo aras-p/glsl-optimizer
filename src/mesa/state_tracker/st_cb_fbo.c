@@ -92,10 +92,11 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct pipe_texture template;
    unsigned surface_usage;
 
-   /* Free the old surface (and texture if we hold the last
-    * reference):
+   /* Free the old surface and texture
     */
    pipe_surface_reference( &strb->surface, NULL );
+   pipe_texture_reference( &strb->texture, NULL );
+
 
    memset(&template, 0, sizeof(template));
 
