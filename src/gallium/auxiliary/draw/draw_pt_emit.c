@@ -40,6 +40,7 @@ struct pt_emit {
    struct translate *translate;
 
    struct translate_cache *cache;
+   unsigned prim;
 };
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
@@ -51,8 +52,14 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
    struct translate_key hw_key;
    unsigned i;
    boolean ok;
+   
 
-   ok = draw->render->set_primitive(draw->render, prim);
+   /* XXX: may need to defensively reset this later on as clipping can
+    * clobber this state in the render backend.
+    */
+   emit->prim = prim;
+
+   ok = draw->render->set_primitive(draw->render, emit->prim);
    if (!ok) {
       assert(0);
       return;
@@ -144,6 +151,14 @@ void draw_pt_emit( struct pt_emit *emit,
    /* XXX: need to flush to get prim_vbuf.c to release its allocation?? 
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
+
+   /* XXX: and work out some way to coordinate the render primitive
+    * between vbuf.c and here...
+    */
+   if (!draw->render->set_primitive(draw->render, emit->prim)) {
+      assert(0);
+      return;
+   }
 
    hw_verts = render->allocate_vertices(render,
 					(ushort)translate->key.output_stride,
