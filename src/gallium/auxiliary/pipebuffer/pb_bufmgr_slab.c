@@ -312,8 +312,8 @@ pb_slab_manager_create_buffer(struct pb_manager *_mgr,
    struct list_head *list;
 
    /* check size */
-   assert(size == mgr->bufSize);
-   if(size != mgr->bufSize)
+   assert(size <= mgr->bufSize);
+   if(size > mgr->bufSize)
       return NULL;
    
    /* check if we can provide the requested alignment */
