@@ -213,6 +213,14 @@ void draw_pt_emit_linear(struct pt_emit *emit,
     */
    draw_do_flush( draw, DRAW_FLUSH_BACKEND );
 
+   /* XXX: and work out some way to coordinate the render primitive
+    * between vbuf.c and here...
+    */
+   if (!draw->render->set_primitive(draw->render, emit->prim)) {
+      assert(0);
+      return;
+   }
+
    hw_verts = render->allocate_vertices(render,
 					(ushort)translate->key.output_stride,
 					(ushort)count);
