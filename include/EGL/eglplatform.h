@@ -47,6 +47,13 @@
 	etc.
  */
 
+/** BEGIN Added for X (Mesa) **/
+#include <X11/Xlib.h>
+typedef Display *NativeDisplayType;
+typedef Window NativeWindowType;
+typedef Pixmap NativePixmapType;
+/** END Added for X (Mesa) **/
+
 /* EGL 1.2 types, renamed for consistency in EGL 1.3 */
 typedef NativeDisplayType EGLNativeDisplayType;
 typedef NativePixmapType EGLNativePixmapType;
