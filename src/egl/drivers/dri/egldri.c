@@ -23,6 +23,7 @@
 #include "egldisplay.h"
 #include "eglcontext.h"
 #include "eglconfig.h"
+#include "eglconfigutil.h"
 #include "eglsurface.h"
 #include "eglscreen.h"
 #include "eglglobals.h"
