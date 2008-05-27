@@ -143,7 +143,10 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
             output_format = PIPE_FORMAT_R32_FLOAT;
             emit_sz = 1 * sizeof(float);
             vs_output = num_vs_outputs + 1;
-         
+            break;
+         case EMIT_4UB:
+            output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+            emit_sz = 4 * sizeof(ubyte);
             break;
          default:
             assert(0);
