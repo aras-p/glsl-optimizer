@@ -3,9 +3,8 @@
 
 
 #include "egltypedefs.h"
-#if 0
+#include <GLES/gl.h>
 #include "GL/internal/glcore.h"
-#endif
 
 
 #define MAX_ATTRIBS 100
@@ -68,10 +67,9 @@ _eglFillInConfigs( _EGLConfig *configs,
                    int visType );
 #endif
 
-#if 0
+
 extern void
 _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode);
-#endif
 
 
 #endif /* EGLCONFIG_INCLUDED */

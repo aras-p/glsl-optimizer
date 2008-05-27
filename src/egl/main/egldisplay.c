@@ -1,7 +1,14 @@
+
+/**
+ * Functions related to EGLDisplay.
+ */
+
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "eglcontext.h"
 #include "egldisplay.h"
+#include "egldriver.h"
 #include "eglglobals.h"
 #include "eglhash.h"
 
@@ -9,31 +16,41 @@
 static char *
 my_strdup(const char *s)
 {
-   int l = strlen(s);
-   char *s2 = malloc(l + 1);
-   strcpy(s2, s);
-   return s2;
+   if (s) {
+      int l = strlen(s);
+      char *s2 = malloc(l + 1);
+      if (s2)
+         strcpy(s2, s);
+      return s2;
+   }
+   return NULL;
 }
 
 
 /**
- * We're assuming that the NativeDisplayType parameter is actually
- * a string.
- * Return a new _EGLDisplay object for the given displayName
+ * Allocate a new _EGLDisplay object for the given nativeDisplay handle.
+ * We'll also try to determine the device driver name at this time.
  */
 _EGLDisplay *
-_eglNewDisplay(NativeDisplayType displayName)
+_eglNewDisplay(NativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
       EGLuint key = _eglHashGenKey(_eglGlobal.Displays);
+
       dpy->Handle = (EGLDisplay) key;
       _eglHashInsert(_eglGlobal.Displays, key, dpy);
-      if (displayName)
-         dpy->Name = my_strdup((char *) displayName);
-      else
-         dpy->Name = NULL;
-      dpy->Driver = NULL;  /* this gets set later */
+
+      dpy->NativeDisplay = nativeDisplay;
+#if defined(_EGL_PLATFORM_X)
+      dpy->Xdpy = (Display *) nativeDisplay;
+#endif
+
+      dpy->DriverName = my_strdup(_eglChooseDriver(dpy));
+      if (!dpy->DriverName) {
+         free(dpy);
+         return NULL;
+      }
    }
    return dpy;
 }
@@ -67,6 +84,18 @@ _eglLookupDisplay(EGLDisplay dpy)
 }
 
 
+void
+_eglSaveDisplay(_EGLDisplay *dpy)
+{
+   EGLuint key = _eglHashGenKey(_eglGlobal.Displays);
+   assert(dpy);
+   assert(!dpy->Handle);
+   dpy->Handle = (EGLDisplay) key;
+   assert(dpy->Handle);
+   _eglHashInsert(_eglGlobal.Displays, key, dpy);
+}
+
+
 _EGLDisplay *
 _eglGetCurrentDisplay(void)
 {
@@ -83,6 +112,6 @@ _eglCleanupDisplay(_EGLDisplay *disp)
 {
    /* XXX incomplete */
    free(disp->Configs);
-   free(disp->Name);
+   free((void *) disp->DriverName);
    /* driver deletes _EGLDisplay */
 }

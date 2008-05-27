@@ -1,15 +1,19 @@
 #ifndef EGLDISPLAY_INCLUDED
 #define EGLDISPLAY_INCLUDED
 
+#ifdef _EGL_PLATFORM_X
+#include <X11/Xlib.h>
+#endif
 
 #include "egltypedefs.h"
 
 
 struct _egl_display 
 {
+   EGLNativeDisplayType NativeDisplay;
    EGLDisplay Handle;
 
-   char *Name;
+   const char *DriverName;
    _EGLDriver *Driver;
 
    EGLint NumScreens;
@@ -17,6 +21,10 @@ struct _egl_display
 
    EGLint NumConfigs;
    _EGLConfig *Configs;  /* array [NumConfigs] */
+
+#ifdef _EGL_PLATFORM_X
+   Display *Xdpy;
+#endif
 };
 
 
@@ -30,6 +38,10 @@ _eglGetDisplayHandle(_EGLDisplay *display);
 
 extern _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy);
+
+
+extern void
+_eglSaveDisplay(_EGLDisplay *dpy);
 
 
 extern _EGLDisplay *

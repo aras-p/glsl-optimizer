@@ -45,12 +45,12 @@ struct _egl_driver
 extern _EGLDriver *_eglMain(_EGLDisplay *dpy);
 
 
-extern _EGLDriver *
-_eglChooseDriver(EGLDisplay dpy);
+extern const char *
+_eglChooseDriver(_EGLDisplay *dpy);
 
 
 extern _EGLDriver *
-_eglOpenDriver(_EGLDisplay *dpy, const char *driverName);
+_eglOpenDriver(_EGLDisplay *dpy, const char *DriverName);
 
 
 extern EGLBoolean

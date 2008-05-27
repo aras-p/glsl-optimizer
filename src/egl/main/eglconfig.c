@@ -17,7 +17,6 @@
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
-#if 0
 /**
  * Convert an _EGLConfig to a __GLcontextModes object.
  * NOTE: This routine may be incomplete - we're only making sure that
@@ -58,7 +57,6 @@ _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
    mode->visualType = GLX_TRUE_COLOR;
    mode->renderType = GLX_RGBA_BIT;
 }
-#endif
 
 
 void
@@ -445,6 +443,7 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
 }
 
 
+#if 0
 /**
  * Creates a set of \c __GLcontextModes that a driver will expose.
  * 
@@ -512,7 +511,6 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
  * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
  * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
  */
-#if 0
 GLboolean
 _eglFillInConfigs(_EGLConfig * configs,
                   GLenum fb_format, GLenum fb_type,

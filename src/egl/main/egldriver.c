@@ -1,3 +1,8 @@
+/**
+ * Functions for choosing and opening/loading device drivers.
+ */
+
+
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdio.h>
@@ -11,62 +16,64 @@
 #include "eglmode.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
+#include "eglx.h"
 
 
 const char *DefaultDriverName = "demodriver";
 
 
 /**
- * Choose and open/init the hardware driver for the given EGLDisplay.
- * Previously, the EGLDisplay was created with _eglNewDisplay() where
- * we recorded the user's NativeDisplayType parameter.
+ * Determine/return the name of the driver to use for the given _EGLDisplay.
  *
- * Now we'll use the NativeDisplayType value.
+ * Try to be clever and determine if nativeDisplay is an Xlib Display
+ * ptr or a string (naming a driver or screen number, etc).
  *
- * Currently, the native display value is treated as a string.
  * If the first character is ':' we interpret it as a screen or card index
  * number (i.e. ":0" or ":1", etc)
  * Else if the first character is '!' we interpret it as specific driver name
  * (i.e. "!r200" or "!i830".
+ *
+ * The caller should make a copy of the returned string.
  */
-_EGLDriver *
-_eglChooseDriver(EGLDisplay display)
+const char *
+_eglChooseDriver(_EGLDisplay *dpy)
 {
-   _EGLDisplay *dpy = _eglLookupDisplay(display);
-   _EGLDriver *drv;
-   const char *driverName = DefaultDriverName;
-   const char *name;
+   const char *name = (const char *) dpy->NativeDisplay;
+   const char *driverName = NULL;
 
-   assert(dpy);
-
-   name = dpy->Name;
-   if (!name) {
-      /* use default */
+   if (!dpy->NativeDisplay) {
+      /* choose a default */
+      driverName = DefaultDriverName;
    }
-   else if (name[0] == ':' && (name[1] >= '0' && name[1] <= '9') && !name[2]) {
+   else if (name && name[0] == ':' &&
+            (name[1] >= '0' && name[1] <= '9') && !name[2]) {
       /* XXX probe hardware here to determine which driver to open */
       driverName = "libEGLdri";
    }
-   else if (name[0] == '!') {
+   else if (name && name[0] == '!') {
       /* use specified driver name */
       driverName = name + 1;
    }
    else {
-      /* Maybe display was returned by XOpenDisplay? */
-      _eglLog(_EGL_FATAL, "eglChooseDriver() bad name");
+#if defined(_EGL_PLATFORM_X)
+      driverName = _xeglChooseDriver(dpy);
+#elif defined(_EGL_PLATFORM_WINDOWS)
+      /* XXX to do */
+      driverName = _weglChooseDriver(dpy);
+#elif defined(_EGL_PLATFORM_WINCE)
+      /* XXX to do */
+#endif
    }
 
-   _eglLog(_EGL_INFO, "eglChooseDriver() choosing %s", driverName);
-
-   drv = _eglOpenDriver(dpy, driverName);
-   dpy->Driver = drv;
-
-   return drv;
+   return driverName;
 }
 
 
 /**
  * Open/load the named driver and call its bootstrap function: _eglMain().
+ * By the time this function is called, the dpy->DriverName should have
+ * been determined.
+ *
  * \return  new _EGLDriver object.
  */
 _EGLDriver *
@@ -76,6 +83,8 @@ _eglOpenDriver(_EGLDisplay *dpy, const char *driverName)
    _EGLMain_t mainFunc;
    void *lib;
    char driverFilename[1000];
+
+   assert(driverName);
 
    /* XXX also prepend a directory path??? */
    sprintf(driverFilename, "%s.so", driverName);

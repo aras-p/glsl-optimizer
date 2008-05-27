@@ -43,27 +43,38 @@
 
 
 /**
- * NOTE: displayName is treated as a string in _eglChooseDriver()!!!
- * This will probably change!
- * See _eglChooseDriver() for details!
+ * This is typically the first EGL function that an application calls.
+ * We initialize our global vars and create a private _EGLDisplay object.
  */
 EGLDisplay EGLAPIENTRY
-eglGetDisplay(NativeDisplayType displayName)
+eglGetDisplay(NativeDisplayType nativeDisplay)
 {
    _EGLDisplay *dpy;
    _eglInitGlobals();
-   dpy = _eglNewDisplay(displayName);
+   dpy = _eglNewDisplay(nativeDisplay);
    return _eglGetDisplayHandle(dpy);
 }
 
 
+/**
+ * This is typically the second EGL function that an application calls.
+ * Here we load/initialize the actual hardware driver.
+ */
 EGLBoolean EGLAPIENTRY
 eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
    if (dpy) {
-      _EGLDriver *drv = _eglChooseDriver(dpy);
-      if (drv)
-         return drv->API.Initialize(drv, dpy, major, minor);
+      _EGLDisplay *dpyPriv = _eglLookupDisplay(dpy);
+      if (!dpyPriv) {
+         return EGL_FALSE;
+      }
+      dpyPriv->Driver = _eglOpenDriver(dpyPriv, dpyPriv->DriverName);
+      if (!dpyPriv->Driver) {
+         return EGL_FALSE;
+      }
+      /* Initialize the particular driver now */
+      return dpyPriv->Driver->API.Initialize(dpyPriv->Driver, dpy,
+                                             major, minor);
    }
    return EGL_FALSE;
 }
