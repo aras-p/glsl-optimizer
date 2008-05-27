@@ -2432,6 +2432,8 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 		return;
 	}
 
+	r300SetupTextures(ctx);
+
 	R300_STATECHANGE(rmesa, fpi[0]);
 	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_US_ALU_RGB_INST_0, fp->alu_end + 1);
 	for (i = 0; i <= fp->alu_end; i++) {
@@ -2519,6 +2521,8 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 		return;
 	}
 
+	r300SetupTextures(ctx);
+
 	R300_STATECHANGE(rmesa, fp);
 	rmesa->hw.fp.cmd[R500_FP_PIXSIZE] = fp->max_temp_idx;
 
@@ -2567,7 +2571,6 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 		r500SetupPixelShader(rmesa);
 	else
 		r300SetupPixelShader(rmesa);
-	r300SetupTextures(ctx);
 
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
 		r500SetupRSUnit(ctx);
