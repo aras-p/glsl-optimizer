@@ -40,8 +40,23 @@ _eglNewDisplay(NativeDisplayType displayName)
 
 
 /**
+ * Return the public handle for an internal _EGLDisplay.
+ * This is the inverse of _eglLookupDisplay().
+ */
+EGLDisplay
+_eglGetDisplayHandle(_EGLDisplay *display)
+{
+   if (display)
+      return display->Handle;
+   else
+      return EGL_NO_DISPLAY;
+}
+
+ 
+/**
  * Return the _EGLDisplay object that corresponds to the given public/
  * opaque display handle.
+ * This is the inverse of _eglGetDisplayHandle().
  */
 _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy)

@@ -102,7 +102,19 @@ _eglInitConfig(_EGLConfig *config, EGLint id)
 
 
 /**
+ * Return the public handle for an internal _EGLConfig.
+ * This is the inverse of _eglLookupConfig().
+ */
+EGLConfig
+_eglGetConfigHandle(_EGLConfig *config)
+{
+   return  config ? config->Handle : 0;
+}
+
+
+/**
  * Given an EGLConfig handle, return the corresponding _EGLConfig object.
+ * This is the inverse of _eglGetConfigHandle().
  */
 _EGLConfig *
 _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config)

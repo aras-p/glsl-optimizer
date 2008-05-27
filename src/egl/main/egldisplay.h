@@ -24,6 +24,10 @@ extern _EGLDisplay *
 _eglNewDisplay(NativeDisplayType displayName);
 
 
+EGLDisplay
+_eglGetDisplayHandle(_EGLDisplay *display);
+
+
 extern _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy);
 

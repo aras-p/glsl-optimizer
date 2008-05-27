@@ -27,6 +27,10 @@ extern void
 _eglInitConfig(_EGLConfig *config, EGLint id);
 
 
+extern EGLConfig
+_eglGetConfigHandle(_EGLConfig *config);
+
+
 extern _EGLConfig *
 _eglLookupConfig(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config);
 

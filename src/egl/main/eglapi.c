@@ -53,10 +53,7 @@ eglGetDisplay(NativeDisplayType displayName)
    _EGLDisplay *dpy;
    _eglInitGlobals();
    dpy = _eglNewDisplay(displayName);
-   if (dpy)
-      return dpy->Handle;
-   else
-      return EGL_NO_DISPLAY;
+   return _eglGetDisplayHandle(dpy);
 }
 
 
@@ -269,10 +266,7 @@ EGLDisplay EGLAPIENTRY
 eglGetCurrentDisplay(void)
 {
    _EGLDisplay *dpy = _eglGetCurrentDisplay();
-   if (dpy)
-      return dpy->Handle;
-   else
-      return EGL_NO_DISPLAY;
+   return _eglGetDisplayHandle(dpy);
 }
 
 
@@ -288,10 +282,7 @@ EGLSurface EGLAPIENTRY
 eglGetCurrentSurface(EGLint readdraw)
 {
    _EGLSurface *s = _eglGetCurrentSurface(readdraw);
-   if (s)
-      return s->Handle;
-   else
-      return EGL_NO_SURFACE;
+   return _eglGetSurfaceHandle(s);
 }
 
 

@@ -223,6 +223,26 @@ _eglRemoveSurface(_EGLSurface *surf)
 }
 
 
+
+/**
+ * Return the public handle for an internal _EGLSurface.
+ * This is the inverse of _eglLookupSurface().
+ */
+EGLSurface
+_eglGetSurfaceHandle(_EGLSurface *surface)
+{
+   if (surface)
+      return surface->Handle;
+   else
+      return EGL_NO_SURFACE;
+}
+
+
+/**
+ * Return the private _EGLSurface which corresponds to a public EGLSurface
+ * handle.
+ * This is the inverse of _eglGetSurfaceHandle().
+ */
 _EGLSurface *
 _eglLookupSurface(EGLSurface surf)
 {
