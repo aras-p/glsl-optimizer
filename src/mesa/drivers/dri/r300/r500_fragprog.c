@@ -1402,6 +1402,9 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
+	} else {
+		fp->inst_offset = 0;
+		fp->inst_end = fp->cs->nrslots - 1;
 	}
 
 	update_params(fp);
