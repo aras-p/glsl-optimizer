@@ -2512,6 +2512,9 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 	if (!fp)		/* should only happenen once, just after context is created */
 		return;
 
+	((drm_r300_cmd_header_t *) rmesa->hw.r500fp.cmd)->r500fp.count = 0;
+	((drm_r300_cmd_header_t *) rmesa->hw.r500fp_const.cmd)->r500fp.count = 0;
+
 	r500TranslateFragmentShader(rmesa, fp);
 	if (!fp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
