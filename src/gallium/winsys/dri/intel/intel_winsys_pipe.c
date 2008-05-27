@@ -328,8 +328,8 @@ intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
 					DRM_BO_FLAG_READ |
 					DRM_BO_FLAG_WRITE |
 					DRM_BO_FLAG_MEM_TT,
-					32 * 4096,
-					1, 40, 32 * 4096 * 2, 0,
+					128,
+					6, 120, 32 * 4096, 0,
 					fMan);
    }
 

@@ -62,8 +62,14 @@ struct i915_vbuf_render {
    /** Vertex size in bytes */
    unsigned vertex_size;
 
+   /** Software primitive */
+   unsigned prim;
+
    /** Hardware primitive */
    unsigned hwprim;
+
+   /** Genereate a vertex list */
+   unsigned fallback;
 };
 
 
@@ -95,8 +101,8 @@ i915_vbuf_render_get_vertex_info( struct vbuf_render *render )
 
 static void *
 i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
-			            ushort vertex_size,
-				    ushort nr_vertices )
+                                    ushort vertex_size,
+                                    ushort nr_vertices )
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
@@ -107,9 +113,9 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
    assert(!i915->vbo);
    i915->vbo = winsys->buffer_create(winsys, 64, I915_BUFFER_USAGE_LIT_VERTEX,
                                      size);
-   
+
    i915->dirty |= I915_NEW_VBO;
-   
+
    return winsys->buffer_map(winsys, 
                              i915->vbo, 
                              PIPE_BUFFER_USAGE_CPU_WRITE);
@@ -121,16 +127,36 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
                                 unsigned prim )
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
-   
+   i915_render->prim = prim;
+
    switch(prim) {
    case PIPE_PRIM_POINTS:
       i915_render->hwprim = PRIM3D_POINTLIST;
+      i915_render->fallback = 0;
       return TRUE;
    case PIPE_PRIM_LINES:
       i915_render->hwprim = PRIM3D_LINELIST;
+      i915_render->fallback = 0;
+      return TRUE;
+   case PIPE_PRIM_LINE_STRIP:
+      i915_render->hwprim = PRIM3D_LINESTRIP;
+      i915_render->fallback = 0;
       return TRUE;
    case PIPE_PRIM_TRIANGLES:
       i915_render->hwprim = PRIM3D_TRILIST;
+      i915_render->fallback = 0;
+      return TRUE;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      i915_render->hwprim = PRIM3D_TRISTRIP;
+      i915_render->fallback = 0;
+      return TRUE;
+   case PIPE_PRIM_QUADS:
+      i915_render->hwprim = PRIM3D_TRILIST;
+      i915_render->fallback = PIPE_PRIM_QUADS;
+      return TRUE;
+   case PIPE_PRIM_QUAD_STRIP:
+      i915_render->hwprim = PRIM3D_TRILIST;
+      i915_render->fallback = PIPE_PRIM_QUAD_STRIP;
       return TRUE;
    default:
       /* Actually, can handle a lot more just fine...  Fixme.
@@ -140,6 +166,179 @@ i915_vbuf_render_set_primitive( struct vbuf_render *render,
 }
 
 
+
+/**
+ * Used for fallbacks in draw_arrays
+ */
+static void
+draw_arrays_generate_indices( struct vbuf_render *render,
+                              unsigned start, uint nr,
+                              unsigned type )
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
+   unsigned i;
+   unsigned end = start + nr;
+   switch(type) {
+   case 0:
+      for (i = start; i+1 < end; i += 2)
+	 OUT_BATCH( (i+0) | (i+1) << 16 );
+      if (i < end)
+	 OUT_BATCH( i );
+      break;
+   case PIPE_PRIM_QUADS:
+      for (i = start; i + 3 < end; i += 4) {
+	 OUT_BATCH( (i+0) | (i+1) << 16 );
+	 OUT_BATCH( (i+3) | (i+1) << 16 );
+	 OUT_BATCH( (i+2) | (i+3) << 16 );
+      }
+      break;
+   case PIPE_PRIM_QUAD_STRIP:
+      for (i = start; i + 3 < end; i += 2) {
+	 OUT_BATCH( (i+0) | (i+1) << 16 );
+	 OUT_BATCH( (i+3) | (i+2) << 16 );
+	 OUT_BATCH( (i+0) | (i+3) << 16 );
+      }
+      break;
+   default:
+      assert(0);
+   }
+}
+
+static unsigned
+draw_arrays_calc_nr_indices( uint nr, unsigned type )
+{
+   switch (type) {
+   case 0:
+      return nr;
+   case PIPE_PRIM_QUADS:
+      return (nr / 4) * 6;
+   case PIPE_PRIM_QUAD_STRIP:
+      return ((nr - 2) / 2) * 6;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+static void
+draw_arrays_fallback( struct vbuf_render *render,
+                      unsigned start,
+                      uint nr )
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
+   struct pipe_winsys *winsys = i915->pipe.winsys;
+   unsigned nr_indices;
+
+   winsys->buffer_unmap( winsys, i915->vbo );
+   if (i915->dirty)
+      i915_update_derived( i915 );
+
+   if (i915->hardware_dirty)
+      i915_emit_hardware_state( i915 );
+
+   nr_indices = draw_arrays_calc_nr_indices( nr, i915_render->fallback );
+
+   if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
+      FLUSH_BATCH(NULL);
+
+      /* Make sure state is re-emitted after a flush:
+       */
+      i915_update_derived( i915 );
+      i915_emit_hardware_state( i915 );
+
+      if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
+	 assert(0);
+	 goto out;
+      }
+   }
+   OUT_BATCH( _3DPRIMITIVE |
+	      PRIM_INDIRECT |
+	      i915_render->hwprim |
+	      PRIM_INDIRECT_ELTS |
+	      nr_indices );
+
+   draw_arrays_generate_indices( render, start, nr, i915_render->fallback );
+out:
+   winsys->buffer_map( winsys, i915->vbo, PIPE_BUFFER_USAGE_CPU_WRITE );
+}
+
+static void
+i915_vbuf_render_draw_arrays( struct vbuf_render *render,
+                              unsigned start,
+                              uint nr )
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+
+   if (i915_render->fallback) {
+      draw_arrays_fallback( render, start, nr );
+      return;
+   }
+
+   /* JB: TODO submit direct cmds */
+   draw_arrays_fallback( render, start, nr );
+}
+
+/**
+ * Used for normal and fallback emitting of indices
+ * If type is zero normal operation assumed.
+ */
+static void
+draw_generate_indices( struct vbuf_render *render,
+                       const ushort *indices,
+                       uint nr_indices,
+                       unsigned type )
+{
+   struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
+   struct i915_context *i915 = i915_render->i915;
+   unsigned i;
+
+   switch(type) {
+   case 0:
+      for (i = 0; i + 1 < nr_indices; i += 2) {
+	 OUT_BATCH( (indices[i] & 0x0FFF) | ((indices[i+1] & 0x0FFF) << 16) );
+      }
+      if (i < nr_indices) {
+	 OUT_BATCH( indices[i] & 0x0FFF );
+      }
+      break;
+   case PIPE_PRIM_QUADS:
+      for (i = 0; i + 3 < nr_indices; i += 4) {
+	 OUT_BATCH( (indices[i+0] & 0x0FFF) | (indices[i+1] & 0x0FFF) << 16 );
+	 OUT_BATCH( (indices[i+3] & 0x0FFF) | (indices[i+1] & 0x0FFF) << 16 );
+	 OUT_BATCH( (indices[i+2] & 0x0FFF) | (indices[i+3] & 0x0FFF) << 16 );
+      }
+      break;
+   case PIPE_PRIM_QUAD_STRIP:
+      for (i = 0; i + 3 < nr_indices; i += 2) {
+	 OUT_BATCH( (indices[i+0] & 0x0FFF) | (indices[i+1] & 0x0FFF) << 16 );
+	 OUT_BATCH( (indices[i+3] & 0x0FFF) | (indices[i+2] & 0x0FFF) << 16 );
+	 OUT_BATCH( (indices[i+0] & 0x0FFF) | (indices[i+3] & 0x0FFF) << 16 );
+      }
+      break;
+   default:
+      assert(0);
+      break;
+   }
+}
+
+static unsigned
+draw_calc_nr_indices( uint nr_indices, unsigned type )
+{
+   switch (type) {
+   case 0:
+      return nr_indices;
+   case PIPE_PRIM_QUADS:
+      return (nr_indices / 4) * 6;
+   case PIPE_PRIM_QUAD_STRIP:
+      return ((nr_indices - 2) / 2) * 6;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
 static void 
 i915_vbuf_render_draw( struct vbuf_render *render,
                        const ushort *indices,
@@ -147,13 +346,15 @@ i915_vbuf_render_draw( struct vbuf_render *render,
 {
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
-   unsigned i;
+   struct pipe_winsys *winsys = i915->pipe.winsys;
+   unsigned save_nr_indices;
+
+   save_nr_indices = nr_indices;
+   nr_indices = draw_calc_nr_indices( nr_indices, i915_render->fallback );
 
    assert(nr_indices);
+   winsys->buffer_unmap( winsys, i915->vbo );
 
-   /* this seems to be bogus, since we validate state right after this */
-   /*assert((i915->dirty & ~I915_NEW_VBO) == 0);*/
-   
    if (i915->dirty)
       i915_update_derived( i915 );
 
@@ -170,22 +371,23 @@ i915_vbuf_render_draw( struct vbuf_render *render,
 
       if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
 	 assert(0);
-	 return;
+     goto out;
       }
    }
 
    OUT_BATCH( _3DPRIMITIVE |
-              PRIM_INDIRECT |
-              i915_render->hwprim |
-   	      PRIM_INDIRECT_ELTS |
-   	      nr_indices );
-   for (i = 0; i + 1 < nr_indices; i += 2) {
-      OUT_BATCH( indices[i] |
-                 (indices[i + 1] << 16) );
-   }
-   if (i < nr_indices) {
-      OUT_BATCH( indices[i] );
-   }
+	      PRIM_INDIRECT |
+	      i915_render->hwprim |
+	      PRIM_INDIRECT_ELTS |
+	      nr_indices );
+   draw_generate_indices( render,
+			  indices,
+			  save_nr_indices,
+			  i915_render->fallback );
+
+out:
+   winsys->buffer_map( winsys, i915->vbo, PIPE_BUFFER_USAGE_CPU_WRITE );
+   return;
 }
 
 
@@ -234,6 +436,7 @@ i915_vbuf_render_create( struct i915_context *i915 )
    i915_render->base.allocate_vertices = i915_vbuf_render_allocate_vertices;
    i915_render->base.set_primitive = i915_vbuf_render_set_primitive;
    i915_render->base.draw = i915_vbuf_render_draw;
+   i915_render->base.draw_arrays = i915_vbuf_render_draw_arrays;
    i915_render->base.release_vertices = i915_vbuf_render_release_vertices;
    i915_render->base.destroy = i915_vbuf_render_destroy;
    
@@ -258,6 +461,7 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 )
       render->destroy(render);
       return NULL;
    }
-    
+   draw_set_render(i915->draw, render);
+
    return stage;
 }
