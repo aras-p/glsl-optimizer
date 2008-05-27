@@ -207,7 +207,7 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
 void
 _eglSaveSurface(_EGLSurface *surf)
 {
-   EGLuint key = _eglHashGenKey(_eglGlobal.Contexts);
+   EGLuint key = _eglHashGenKey(_eglGlobal.Surfaces);
    assert(surf);
    assert(!surf->Handle);
    surf->Handle = (EGLSurface) key;
