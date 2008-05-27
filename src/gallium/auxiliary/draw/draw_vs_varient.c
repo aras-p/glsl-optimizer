@@ -276,11 +276,11 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
 
 
 
-   /* OK, have to build a new one: 
+   /* Build free-standing fetch and emit functions:
     */
-   fetch.nr_elements = vs->info.num_inputs;
+   fetch.nr_elements = key->nr_inputs;
    fetch.output_stride = 0;
-   for (i = 0; i < vs->info.num_inputs; i++) {
+   for (i = 0; i < key->nr_inputs; i++) {
       fetch.element[i].input_format = key->element[i].in.format;
       fetch.element[i].input_buffer = key->element[i].in.buffer;
       fetch.element[i].input_offset = key->element[i].in.offset;
@@ -290,9 +290,9 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    }
 
 
-   emit.nr_elements = vs->info.num_outputs;
+   emit.nr_elements = key->nr_outputs;
    emit.output_stride = key->output_stride;
-   for (i = 0; i < vs->info.num_outputs; i++) {
+   for (i = 0; i < key->nr_outputs; i++) {
       emit.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       emit.element[i].input_buffer = 0;
       emit.element[i].input_offset = i * 4 * sizeof(float);

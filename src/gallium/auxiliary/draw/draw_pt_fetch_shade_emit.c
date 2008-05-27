@@ -72,7 +72,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    struct fetch_shade_emit *fse = (struct fetch_shade_emit *)middle;
    struct draw_context *draw = fse->draw;
    unsigned num_vs_inputs = draw->vs.vertex_shader->info.num_inputs;
-   unsigned num_vs_outputs = draw->vs.vertex_shader->info.num_outputs;
    const struct vertex_info *vinfo;
    unsigned i;
    boolean need_psize = 0;
@@ -91,8 +90,11 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 
 
    fse->key.output_stride = vinfo->size * 4;
-   fse->key.nr_elements = MAX2(num_vs_outputs,     /* outputs - translate to hw format */
-                               num_vs_inputs);     /* inputs - fetch from api format */
+   fse->key.nr_outputs = vinfo->num_attribs;
+   fse->key.nr_inputs = num_vs_inputs;
+
+   fse->key.nr_elements = MAX2(fse->key.nr_outputs,     /* outputs - translate to hw format */
+                               fse->key.nr_inputs);     /* inputs - fetch from api format */
 
    fse->key.viewport = !draw->identity_viewport;
    fse->key.clip = !draw->bypass_clipping;
@@ -142,7 +144,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
             need_psize = 1;
             output_format = PIPE_FORMAT_R32_FLOAT;
             emit_sz = 1 * sizeof(float);
-            vs_output = num_vs_outputs + 1;
+            vs_output = vinfo->num_attribs + 1;
             break;
          case EMIT_4UB:
             output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
@@ -177,7 +179,9 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
       fse->key.element[i].input_buffer = 0; //nr_buffers + 1;
       fse->key.element[i].input_offset = 0; 
 
-      fse->key.nr_elements += 1;
+      fse->key.nr_inputs += 1;
+      fse->key.nr_elements = MAX2(fse->key.nr_inputs,
+                                  fse->key.nr_outputs);
       
    }
 #endif

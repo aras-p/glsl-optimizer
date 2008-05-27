@@ -2095,7 +2095,7 @@ static void vaos_set_buffer( struct draw_vs_varient *varient,
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
    unsigned i;
 
-   for (i = 0; i < vaos->base.vs->info.num_inputs; i++) {
+   for (i = 0; i < vaos->base.key.nr_inputs; i++) {
       if (vaos->base.key.element[i].in.buffer == buf) {
          vaos->machine->attrib[i].input_ptr = ((char *)ptr +
                                                vaos->base.key.element[i].in.offset);

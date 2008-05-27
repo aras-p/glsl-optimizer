@@ -58,10 +58,12 @@ struct draw_vs_element {
 
 struct draw_vs_varient_key {
    unsigned output_stride;
-   unsigned nr_elements:16;
+   unsigned nr_elements:8;      /* max2(nr_inputs, nr_outputs) */
+   unsigned nr_inputs:8;
+   unsigned nr_outputs:8;
    unsigned viewport:1;
    unsigned clip:1;
-   unsigned pad:14;
+   unsigned pad:5;
    struct draw_vs_element element[PIPE_MAX_ATTRIBS];
 };
 
