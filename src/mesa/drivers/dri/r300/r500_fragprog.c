@@ -138,6 +138,19 @@ static inline GLuint make_rgb_swizzle(struct prog_src_register src) {
 	return swiz;
 }
 
+static inline GLuint make_rgba_swizzle(GLuint src) {
+	GLuint swiz = 0x0;
+	GLuint temp;
+	int i;
+	for (i = 0; i < 4; i++) {
+	        temp = GET_SWZ(src, i);
+		/* Fix SWIZZLE_ONE */
+		if (temp == 5) temp++;
+		swiz |= temp << i*3;
+	}
+	return swiz;
+}
+
 static inline GLuint make_alpha_swizzle(struct prog_src_register src) {
 	GLuint swiz = GET_SWZ(src.Swizzle, 3);
 
@@ -364,6 +377,8 @@ static void emit_mov(struct r500_fragment_program *fp, int counter, struct prog_
 	emit_alu(fp, counter, fpi);
 	fp->inst[counter].inst1 = R500_RGB_ADDR0(src_reg);
 	fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src_reg);
+	/* (De)mangle the swizzle from Mesa to R500. */
+	swizzle = make_rgba_swizzle(swizzle);
 	/* 0x1FF is 9 bits, size of an RGB swizzle. */
 	fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
 		| MAKE_SWIZ_RGB_A((swizzle & 0x1ff))
