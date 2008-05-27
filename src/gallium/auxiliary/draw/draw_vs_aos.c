@@ -964,12 +964,13 @@ static boolean emit_ABS( struct aos_compilation *cp, const struct tgsi_full_inst
 {
    struct x86_reg arg0 = fetch_src(cp, &op->FullSrcRegisters[0]);
    struct x86_reg neg = aos_get_internal(cp, IMM_NEGS);
-   struct x86_reg dst = get_xmm_writable(cp, arg0);
+   struct x86_reg tmp = aos_get_xmm_reg(cp);
 
-   sse_mulps(cp->func, dst, neg);
-   sse_maxps(cp->func, dst, arg0);
+   sse_movaps(cp->func, tmp, arg0);
+   sse_mulps(cp->func, tmp, neg);
+   sse_maxps(cp->func, tmp, arg0);
    
-   store_dest(cp, &op->FullDstRegisters[0], dst);
+   store_dest(cp, &op->FullDstRegisters[0], tmp);
    return TRUE;
 }
 
