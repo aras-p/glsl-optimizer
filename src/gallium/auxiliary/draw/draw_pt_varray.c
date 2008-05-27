@@ -158,14 +158,14 @@ static INLINE void varray_point( struct varray_frontend *varray,
 static unsigned decompose_prim[PIPE_PRIM_POLYGON + 1] = {
    PIPE_PRIM_POINTS,
    PIPE_PRIM_LINES,
+   PIPE_PRIM_LINES,             /* decomposed LINELOOP */
    PIPE_PRIM_LINE_STRIP,
-   PIPE_PRIM_LINES,             /* decomposed */
    PIPE_PRIM_TRIANGLES,
    PIPE_PRIM_TRIANGLE_STRIP,
-   PIPE_PRIM_TRIANGLES,         /* decomposed */
+   PIPE_PRIM_TRIANGLES,         /* decomposed TRI_FAN */
    PIPE_PRIM_QUADS,
    PIPE_PRIM_QUAD_STRIP,
-   PIPE_PRIM_TRIANGLES          /* decomposed */
+   PIPE_PRIM_TRIANGLES          /* decomposed POLYGON */
 };
 
 
