@@ -104,10 +104,22 @@ static INLINE void vcache_elt( struct vcache_frontend *vcache,
 
                    
 static void vcache_triangle( struct vcache_frontend *vcache,
-                             ushort flags,
                              unsigned i0,
                              unsigned i1,
                              unsigned i2 )
+{
+   vcache_elt(vcache, i0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_elt(vcache, i2, 0);
+   vcache_check_flush(vcache);
+}
+
+			  
+static void vcache_triangle_flags( struct vcache_frontend *vcache,
+                                   ushort flags,
+                                   unsigned i0,
+                                   unsigned i1,
+                                   unsigned i2 )
 {
    vcache_elt(vcache, i0, flags);
    vcache_elt(vcache, i1, 0);
@@ -116,9 +128,19 @@ static void vcache_triangle( struct vcache_frontend *vcache,
 }
 
 static void vcache_line( struct vcache_frontend *vcache,
-                         ushort flags,
                          unsigned i0,
                          unsigned i1 )
+{
+   vcache_elt(vcache, i0, 0);
+   vcache_elt(vcache, i1, 0);
+   vcache_check_flush(vcache);
+}
+
+
+static void vcache_line_flags( struct vcache_frontend *vcache,
+                               ushort flags,
+                               unsigned i0,
+                               unsigned i1 )
 {
    vcache_elt(vcache, i0, flags);
    vcache_elt(vcache, i1, 0);
@@ -139,63 +161,46 @@ static void vcache_quad( struct vcache_frontend *vcache,
                          unsigned i2,
                          unsigned i3 )
 {
-   vcache_triangle( vcache,
-                    ( DRAW_PIPE_RESET_STIPPLE |
-                      DRAW_PIPE_EDGE_FLAG_0 |
-                      DRAW_PIPE_EDGE_FLAG_2 ),
-                    i0, i1, i3 );
+   vcache_triangle( vcache, i0, i1, i3 );
+   vcache_triangle( vcache, i1, i2, i3 );
+}
 
-   vcache_triangle( vcache,
-                    ( DRAW_PIPE_EDGE_FLAG_0 |
-                      DRAW_PIPE_EDGE_FLAG_1 ),
-                    i1, i2, i3 );
+static void vcache_ef_quad( struct vcache_frontend *vcache,
+                            unsigned i0,
+                            unsigned i1,
+                            unsigned i2,
+                            unsigned i3 )
+{
+   vcache_triangle_flags( vcache,
+                          ( DRAW_PIPE_RESET_STIPPLE |
+                            DRAW_PIPE_EDGE_FLAG_0 |
+                            DRAW_PIPE_EDGE_FLAG_2 ),
+                          i0, i1, i3 );
+
+   vcache_triangle_flags( vcache,
+                          ( DRAW_PIPE_EDGE_FLAG_0 |
+                            DRAW_PIPE_EDGE_FLAG_1 ),
+                          i1, i2, i3 );
 }
 
 /* At least for now, we're back to using a template include file for
  * this.  The two paths aren't too different though - it may be
  * possible to reunify them.
  */
-#define TRIANGLE(flags,i0,i1,i2)                \
-  vcache_triangle(vcache,                       \
-                  flags,                        \
-                  get_elt(elts,i0),             \
-                  get_elt(elts,i1),             \
-                  get_elt(elts,i2))
+#define TRIANGLE(vc,flags,i0,i1,i2) vcache_triangle_flags(vc,flags,i0,i1,i2)
+#define QUAD(vc,i0,i1,i2,i3)        vcache_ef_quad(vc,i0,i1,i2,i3)
+#define LINE(vc,flags,i0,i1)        vcache_line_flags(vc,flags,i0,i1)
+#define POINT(vc,i0)                vcache_point(vc,i0)
+#define FUNC vcache_run_extras
+#include "draw_pt_vcache_tmp.h"
 
-#define QUAD(i0,i1,i2,i3)                       \
-  vcache_quad(vcache,                           \
-              get_elt(elts,i0),                 \
-              get_elt(elts,i1),                 \
-              get_elt(elts,i2),                 \
-              get_elt(elts,i3))
-
-#define LINE(flags,i0,i1)                       \
-  vcache_line(vcache,                           \
-              flags,                            \
-              get_elt(elts,i0),                 \
-              get_elt(elts,i1))
-
-#define POINT(i0)                               \
-  vcache_point(vcache,                          \
-               get_elt(elts,i0))
-
+#define TRIANGLE(vc,flags,i0,i1,i2) vcache_triangle(vc,i0,i1,i2)
+#define QUAD(vc,i0,i1,i2,i3)        vcache_quad(vc,i0,i1,i2,i3)
+#define LINE(vc,flags,i0,i1)        vcache_line(vc,i0,i1)
+#define POINT(vc,i0)                vcache_point(vc,i0)
 #define FUNC vcache_run
-#define ARGS                                    \
-    struct draw_pt_front_end *frontend,         \
-    pt_elt_func get_elt,                        \
-    const void *elts
+#include "draw_pt_vcache_tmp.h"
 
-#define LOCAL_VARS                                                      \
-   struct vcache_frontend *vcache = (struct vcache_frontend *)frontend; \
-   struct draw_context *draw = vcache->draw;                            \
-   boolean flatfirst = (draw->rasterizer->flatshade &&                  \
-                        draw->rasterizer->flatshade_first);             \
-   unsigned prim = vcache->input_prim;                                  \
-   unsigned i, flags;
-
-#define FLUSH vcache_flush( vcache )
-
-#include "draw_pt_decompose.h"
 
 
 
@@ -208,7 +213,15 @@ static void vcache_prepare( struct draw_pt_front_end *frontend,
 {
    struct vcache_frontend *vcache = (struct vcache_frontend *)frontend;
 
-   vcache->base.run = vcache_run;
+   if (opt & PT_PIPELINE)
+   {
+      vcache->base.run = vcache_run_extras;
+   }
+   else 
+   {
+      vcache->base.run = vcache_run;
+   }
+
    vcache->input_prim = prim;
    vcache->output_prim = draw_pt_reduced_prim(prim);
 
