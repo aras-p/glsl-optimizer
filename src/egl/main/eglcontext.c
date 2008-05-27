@@ -32,7 +32,7 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
          /* no attribs defined for now */
       default:
          _eglError(EGL_BAD_ATTRIBUTE, "eglCreateContext");
-         return EGL_NO_CONTEXT;
+         return EGL_FALSE;
       }
    }
 
@@ -53,9 +53,10 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
 void
 _eglSaveContext(_EGLContext *ctx)
 {
+   EGLuint key = _eglHashGenKey(_eglGlobal.Contexts);
    assert(ctx);
-   ctx->Handle = _eglHashGenKey(_eglGlobal.Contexts);
-   _eglHashInsert(_eglGlobal.Contexts, ctx->Handle, ctx);
+   ctx->Handle = (EGLContext) key;
+   _eglHashInsert(_eglGlobal.Contexts, key, ctx);
 }
 
 
@@ -65,7 +66,8 @@ _eglSaveContext(_EGLContext *ctx)
 void
 _eglRemoveContext(_EGLContext *ctx)
 {
-   _eglHashRemove(_eglGlobal.Contexts, ctx->Handle);
+   EGLuint key = (EGLuint) ctx->Handle;
+   _eglHashRemove(_eglGlobal.Contexts, key);
 }
 
 
@@ -76,7 +78,8 @@ _eglRemoveContext(_EGLContext *ctx)
 _EGLContext *
 _eglLookupContext(EGLContext ctx)
 {
-   _EGLContext *c = (_EGLContext *) _eglHashLookup(_eglGlobal.Contexts, ctx);
+   EGLuint key = (EGLuint) ctx;
+   _EGLContext *c = (_EGLContext *) _eglHashLookup(_eglGlobal.Contexts, key);
    return c;
 }
 
@@ -126,7 +129,8 @@ _eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
 {
    _EGLContext *context = _eglLookupContext(ctx);
    if (context) {
-      _eglHashRemove(_eglGlobal.Contexts, ctx);
+      EGLuint key = (EGLuint) ctx;
+      _eglHashRemove(_eglGlobal.Contexts, key);
       if (context->IsBound) {
          context->DeletePending = EGL_TRUE;
       }

@@ -17,6 +17,7 @@
 #define MIN2(A, B)  (((A) < (B)) ? (A) : (B))
 
 
+#if 0
 /**
  * Convert an _EGLConfig to a __GLcontextModes object.
  * NOTE: This routine may be incomplete - we're only making sure that
@@ -57,6 +58,7 @@ _eglConfigToContextModesRec(const _EGLConfig *config, __GLcontextModes *mode)
    mode->visualType = GLX_TRUE_COLOR;
    mode->renderType = GLX_RGBA_BIT;
 }
+#endif
 
 
 void
@@ -76,7 +78,7 @@ void
 _eglInitConfig(_EGLConfig *config, EGLint id)
 {
    memset(config, 0, sizeof(*config));
-   config->Handle = id;
+   config->Handle = (EGLConfig) id;
    _eglSetConfigAttrib(config, EGL_CONFIG_ID,               id);
    _eglSetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGB,     EGL_DONT_CARE);
    _eglSetConfigAttrib(config, EGL_BIND_TO_TEXTURE_RGBA,    EGL_DONT_CARE);
@@ -132,7 +134,7 @@ _eglAddConfig(_EGLDisplay *display, const _EGLConfig *config)
    if (newConfigs) {
       display->Configs = newConfigs;
       display->Configs[n] = *config; /* copy struct */
-      display->Configs[n].Handle = n;
+      display->Configs[n].Handle = (EGLConfig) n;
       display->NumConfigs++;
       return display->Configs + n;
    }
@@ -498,6 +500,7 @@ _eglGetConfigs(_EGLDriver *drv, EGLDisplay dpy, EGLConfig *configs,
  * \c GL_UNSIGNED_3BYTE_8_8_8, \c GL_4FLOAT_32_32_32_32, 
  * \c GL_4HALF_16_16_16_16, etc.  We can cross that bridge when we come to it.
  */
+#if 0
 GLboolean
 _eglFillInConfigs(_EGLConfig * configs,
                   GLenum fb_format, GLenum fb_type,
@@ -636,3 +639,4 @@ _eglFillInConfigs(_EGLConfig * configs,
    }
    return GL_TRUE;
 }
+#endif

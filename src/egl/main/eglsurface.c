@@ -207,25 +207,27 @@ _eglInitSurface(_EGLDriver *drv, EGLDisplay dpy,
 void
 _eglSaveSurface(_EGLSurface *surf)
 {
+   EGLuint key = _eglHashGenKey(_eglGlobal.Contexts);
    assert(surf);
    assert(!surf->Handle);
-   surf->Handle = _eglHashGenKey(_eglGlobal.Contexts);
+   surf->Handle = (EGLSurface) key;
    assert(surf->Handle);
-   _eglHashInsert(_eglGlobal.Surfaces, surf->Handle, surf);
+   _eglHashInsert(_eglGlobal.Surfaces, key, surf);
 }
 
 
 void
 _eglRemoveSurface(_EGLSurface *surf)
 {
-   _eglHashRemove(_eglGlobal.Surfaces, surf->Handle);
+   _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surf->Handle);
 }
 
 
 _EGLSurface *
 _eglLookupSurface(EGLSurface surf)
 {
-   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces, surf);
+   _EGLSurface *c = (_EGLSurface *) _eglHashLookup(_eglGlobal.Surfaces,
+                                                   (EGLuint) surf);
    return c;
 }
 
@@ -439,7 +441,7 @@ _eglDestroySurface(_EGLDriver *drv, EGLDisplay dpy, EGLSurface surface)
 {
    _EGLSurface *surf = _eglLookupSurface(surface);
    if (surf) {
-      _eglHashRemove(_eglGlobal.Surfaces, surface);
+      _eglHashRemove(_eglGlobal.Surfaces, (EGLuint) surface);
       if (surf->IsBound) {
          surf->DeletePending = EGL_TRUE;
       }

@@ -26,10 +26,11 @@ _eglNewDisplay(NativeDisplayType displayName)
 {
    _EGLDisplay *dpy = (_EGLDisplay *) calloc(1, sizeof(_EGLDisplay));
    if (dpy) {
-      dpy->Handle = _eglHashGenKey(_eglGlobal.Displays);
-      _eglHashInsert(_eglGlobal.Displays, dpy->Handle, dpy);
+      EGLuint key = _eglHashGenKey(_eglGlobal.Displays);
+      dpy->Handle = (EGLDisplay) key;
+      _eglHashInsert(_eglGlobal.Displays, key, dpy);
       if (displayName)
-         dpy->Name = my_strdup(displayName);
+         dpy->Name = my_strdup((char *) displayName);
       else
          dpy->Name = NULL;
       dpy->Driver = NULL;  /* this gets set later */
@@ -45,7 +46,8 @@ _eglNewDisplay(NativeDisplayType displayName)
 _EGLDisplay *
 _eglLookupDisplay(EGLDisplay dpy)
 {
-   _EGLDisplay *d = (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, dpy);
+   EGLuint key = (EGLuint) dpy;
+   _EGLDisplay *d = (_EGLDisplay *) _eglHashLookup(_eglGlobal.Displays, key);
    return d;
 }
 
