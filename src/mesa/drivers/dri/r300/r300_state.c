@@ -1396,7 +1396,6 @@ static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
 					new_unit = 0;
 				}
 			}
-			fprintf(stderr,"unit translate %d to %d\n", unit, new_unit);
 			val |= R500_TEX_ID(new_unit);
 			fp->inst[i].inst1 = val;
 		}
