@@ -687,17 +687,18 @@ static void store_dest( struct aos_compilation *cp,
       sse_movss(cp->func, dst, get_xmm(cp, result));
       break;
       
-   case TGSI_WRITEMASK_XY:
+   case TGSI_WRITEMASK_ZW:
       sse_shufps(cp->func, dst, get_xmm(cp, result), SHUF(X, Y, Z, W));
       break;
 
-   case TGSI_WRITEMASK_ZW: 
+   case TGSI_WRITEMASK_XY: 
       result = get_xmm_writable(cp, result);
       sse_shufps(cp->func, result, dst, SHUF(X, Y, Z, W));
       dst = result;
       break;
 
    case TGSI_WRITEMASK_YZW: 
+      result = get_xmm_writable(cp, result);
       sse_movss(cp->func, result, dst);
       dst = result;
       break;
@@ -891,7 +892,7 @@ static void emit_print( struct aos_compilation *cp,
                         unsigned idx )
 {
    struct x86_reg ecx = x86_make_reg( file_REG32, reg_CX );
-   struct x86_reg arg = get_reg_ptr( cp, file, idx );
+   struct x86_reg arg = aos_get_shader_reg_ptr( cp, file, idx );
    unsigned i;
 
    /* There shouldn't be anything on the x87 stack.  Can add this
