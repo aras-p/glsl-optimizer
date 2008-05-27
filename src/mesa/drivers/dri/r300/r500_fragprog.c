@@ -170,7 +170,7 @@ static int get_temp(struct r500_fragment_program *fp, int slot) {
 
 	COMPILE_STATE;
 
-	int r = cs->temp_in_use + 1 + slot;
+	int r = fp->temp_reg_offset + cs->temp_in_use + slot;
 
 	if (r > R500_US_NUM_TEMP_REGS) {
 		ERROR("Too many temporary registers requested, can't compile!\n");
@@ -1272,15 +1272,18 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	for (fpi = mp->Base.Instructions; fpi->Opcode != OPCODE_END; fpi++) {
 		for (i = 0; i < 3; i++) {
 			if (fpi->SrcReg[i].File == PROGRAM_TEMPORARY) {
-				if (fpi->SrcReg[i].Index > temps_used)
-					temps_used = fpi->SrcReg[i].Index;
+				if (fpi->SrcReg[i].Index >= temps_used)
+					temps_used = fpi->SrcReg[i].Index + 1;
 			}
 		}
 	}
 
-	cs->temp_in_use = temps_used;
+	cs->temp_in_use = temps_used + 1;
 
-	fp->max_temp_idx = fp->temp_reg_offset + cs->temp_in_use + 1;
+	fp->max_temp_idx = fp->temp_reg_offset + cs->temp_in_use;
+
+	if (RADEON_DEBUG & DEBUG_PIXEL)
+		fprintf(stderr, "FP temp indices: fp->max_temp_idx: %d cs->temp_in_use: %d\n", fp->max_temp_idx, cs->temp_in_use);
 }
 
 static void update_params(struct r500_fragment_program *fp)
