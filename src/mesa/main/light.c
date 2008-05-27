@@ -1357,6 +1357,7 @@ _mesa_init_lighting( GLcontext *ctx )
    /* Miscellaneous */
    ctx->Light._NeedEyeCoords = GL_FALSE;
    ctx->_NeedEyeCoords = GL_FALSE;
+   ctx->_ForceEyeCoords = GL_TRUE;
    ctx->_ModelViewInvScale = 1.0;
 }
 

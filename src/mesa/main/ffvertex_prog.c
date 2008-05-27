@@ -1161,15 +1161,6 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 
-            if (p->state->material_shininess_is_zero) {
-               emit_degenerate_lit(p, lit, dots);
-            } else {
-               emit_op1(p, OPCODE_LIT, lit, 0, dots);
-            }
-   
-	    if (!is_undef(att)) 
-	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
-   
 	    
 	    if (count == nr_lights) {
 	       if (separate) {
@@ -1191,7 +1182,21 @@ static void build_lighting( struct tnl_program *p )
 	       res1 = _col1;
 	    }
 
-	    emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+
+	    if (!is_undef(att)) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+               emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
+               emit_op3(p, OPCODE_MAD, _col0, 0, swizzle1(lit,X), ambient, _col0);
+            } 
+            else if (!p->state->material_shininess_is_zero) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            } 
+            else {
+               emit_degenerate_lit(p, lit, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            }
+
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _col0);
 	    emit_op3(p, OPCODE_MAD, res1, mask1, swizzle1(lit,Z), specular, _col1);
       
@@ -1209,15 +1214,6 @@ static void build_lighting( struct tnl_program *p )
 	    struct ureg res0, res1;
 	    GLuint mask0, mask1;
 	       
-            if (p->state->material_shininess_is_zero) {
-               emit_degenerate_lit(p, lit, negate(swizzle(dots,X,Y,W,Z)));
-            } else {
-               emit_op1(p, OPCODE_LIT, lit, 0, negate(swizzle(dots,X,Y,W,Z)));
-            }
-
-	    if (!is_undef(att)) 
-	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
-
 	    if (count == nr_lights) {
 	       if (separate) {
 		  mask0 = WRITEMASK_XYZ;
@@ -1237,6 +1233,22 @@ static void build_lighting( struct tnl_program *p )
 	       mask0 = 0;
 	       mask1 = 0;
 	    }
+
+            dots = negate(swizzle(dots,X,Y,W,Z));
+
+	    if (!is_undef(att)) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+	       emit_op2(p, OPCODE_MUL, lit, 0, lit, att);
+               emit_op3(p, OPCODE_MAD, _bfc0, 0, swizzle1(lit,X), ambient, _bfc0);
+            }
+            else if (!p->state->material_shininess_is_zero) {
+               emit_op1(p, OPCODE_LIT, lit, 0, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            } 
+            else {
+               emit_degenerate_lit(p, lit, dots);
+               emit_op2(p, OPCODE_ADD, _col0, 0, ambient, _col0);
+            }
 
 	    emit_op2(p, OPCODE_ADD, _bfc0, 0, ambient, _bfc0);
 	    emit_op3(p, OPCODE_MAD, res0, mask0, swizzle1(lit,Y), diffuse, _bfc0);
