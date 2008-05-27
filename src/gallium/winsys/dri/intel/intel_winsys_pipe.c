@@ -212,6 +212,15 @@ round_up(unsigned n, unsigned multiple)
    return (n + multiple - 1) & ~(multiple - 1);
 }
 
+static unsigned
+power_of_two(unsigned x)
+{
+   int value = 1;
+   while (value <= x)
+      value = value << 1;
+   return value;
+}
+   /*pipe_buffer_reference(winsys, &i915_render->vbo, NULL);*/
 /**
  * Copied from xm_winsys.c
  */
@@ -224,18 +233,31 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                  unsigned tex_usage)
 {
    const unsigned alignment = 64;
+   assert(!surf->buffer);
+#if 0
+   surf->width = width;
+   surf->height = round_up(height, 8);
+   surf->format = format;
+   surf->cpp = pf_get_size(format);
+   surf->pitch = power_of_two(MAX2(width * surf->cpp, 512));
 
+   surf->buffer = winsys->buffer_create(winsys, 2*4096,
+                                        PIPE_BUFFER_USAGE_PIXEL,
+                                        surf->pitch * surf->height);
+
+   surf->pitch = surf->pitch / surf->cpp;
+   surf->height = height;
+#else
    surf->width = width;
    surf->height = height;
    surf->format = format;
    surf->cpp = pf_get_size(format);
    surf->pitch = round_up(width, alignment / surf->cpp);
 
-   assert(!surf->buffer);
    surf->buffer = winsys->buffer_create(winsys, alignment,
                                         PIPE_BUFFER_USAGE_PIXEL,
                                         surf->pitch * surf->cpp * surf->height);
-
+#endif
    if(!surf->buffer)
       return -1;
 

@@ -217,6 +217,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
 	 OUT_BATCH(BUF_3D_ID_COLOR_BACK | 
 		   BUF_3D_PITCH(pitch) |  /* pitch in bytes */
+//		   BUF_3D_TILED_SURFACE); /* JB: Used to force tileing */
 		   BUF_3D_USE_FENCE);
 
 	 OUT_RELOC(cbuf_surface->buffer,
