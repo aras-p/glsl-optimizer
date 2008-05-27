@@ -2,35 +2,54 @@
  * Exercise EGL API functions
  */
 
+#define EGL_EGLEXT_PROTOTYPES
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 #include <GLES/egl.h>
+#include <GLES/eglext.h>
+#include <GLES/gl.h>
 
 /*#define FRONTBUFFER*/
 
-static void _subset_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2)
+static void _subset_Rectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2,
+                          GLfloat r, GLfloat g, GLfloat b)
 {
-   glBegin( GL_QUADS );
-   glVertex2f( x1, y1 );
-   glVertex2f( x2, y1 );
-   glVertex2f( x2, y2 );
-   glVertex2f( x1, y2 );
-   glEnd();
+   GLfloat v[4][2], c[4][4];
+   int i;
+
+   v[0][0] = x1;   v[0][1] = y1;
+   v[1][0] = x2;   v[1][1] = y1;
+   v[2][0] = x2;   v[2][1] = y2;
+   v[3][0] = x1;   v[3][1] = y2;
+
+   for (i = 0; i < 4; i++) {
+      c[i][0] = r;
+      c[i][1] = g;
+      c[i][2] = b;
+      c[i][3] = 1.0;
+   }
+
+   glVertexPointer(2, GL_FLOAT, 0, v);
+   glColorPointer(4, GL_FLOAT, 0, v);
+   glEnableClientState(GL_VERTEX_ARRAY);
+   glEnableClientState(GL_COLOR_ARRAY);
+
+   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+   glDisableClientState(GL_VERTEX_ARRAY);
+   glDisableClientState(GL_COLOR_ARRAY);
 }
 
 
 static void redraw(EGLDisplay dpy, EGLSurface surf, int rot)
 {
-   printf("Redraw event\n");
+   GLfloat r, g, b;
 
-#ifdef FRONTBUFFER
-    glDrawBuffer( GL_FRONT ); 
-#else
-    glDrawBuffer( GL_BACK );
-#endif
+   printf("Redraw event\n");
 
    glClearColor( rand()/(float)RAND_MAX, 
 		 rand()/(float)RAND_MAX, 
@@ -39,13 +58,14 @@ static void redraw(EGLDisplay dpy, EGLSurface surf, int rot)
 
    glClear( GL_COLOR_BUFFER_BIT ); 
 
-   glColor3f( rand()/(float)RAND_MAX, 
-	      rand()/(float)RAND_MAX, 
-	      rand()/(float)RAND_MAX );
+   r = rand()/(float)RAND_MAX;
+   g = rand()/(float)RAND_MAX;
+   b = rand()/(float)RAND_MAX;
+
    glPushMatrix();
    glRotatef(rot, 0, 0, 1);
    glScalef(.5, .5, .5);
-   _subset_Rectf( -1, -1, 1, 1 );
+   _subset_Rectf( -1, -1, 1, 1, r, g, b );
    glPopMatrix();
 
 #ifdef FRONTBUFFER
@@ -102,7 +122,7 @@ main(int argc, char *argv[])
    /*
    EGLDisplay d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
    */
-   EGLDisplay d = eglGetDisplay("!EGL_i915");
+   EGLDisplay d = eglGetDisplay((EGLNativeDisplayType) "!EGL_i915");
    assert(d);
 
    if (!eglInitialize(d, &maj, &min)) {
@@ -161,7 +181,6 @@ main(int argc, char *argv[])
    }
 
    glViewport(0, 0, 1024, 768);
-   glDrawBuffer( GL_FRONT ); 
 
    glClearColor( 0, 
 		 1.0, 
