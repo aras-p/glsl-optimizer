@@ -81,7 +81,7 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLUNLOCKSURFACEKHRPROC) (EGLDisplay display
 typedef void *EGLImageKHR;
 extern const EGLImageKHR EGL_NO_IMAGE_KHR;
 #ifdef EGL_EGLEXT_PROTOTYPES
-EGLAPI EGLImageKHR EGLAPIENTRY eglCreateImageKHR (EGLDisplay dpy, EGLContext ctx, EGL!enum target, EGLClientBuffer buffer, EGLint *attr_list);
+EGLAPI EGLImageKHR EGLAPIENTRY eglCreateImageKHR (EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, EGLint *attr_list);
 EGLAPI EGLBoolean EGLAPIENTRY eglDestroyImageKHR (EGLDisplay dpy, EGLImageKHR image);
 #endif /* EGL_EGLEXT_PROTOTYPES */
 typedef EGLImageKHR (EGLAPIENTRYP PFNEGLCREATEIMAGEKHRPROC) (EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, EGLint *attr_list);
