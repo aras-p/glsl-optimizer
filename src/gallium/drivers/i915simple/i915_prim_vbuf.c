@@ -70,6 +70,13 @@ struct i915_vbuf_render {
 
    /** Genereate a vertex list */
    unsigned fallback;
+
+   /* Stuff for the vbo */
+   struct pipe_buffer *vbo;
+   size_t vbo_size;
+   size_t vbo_offset;
+   void *vbo_ptr;
+   size_t vbo_alloc_size;
 };
 
 
@@ -111,14 +118,31 @@ i915_vbuf_render_allocate_vertices( struct vbuf_render *render,
 
    /* FIXME: handle failure */
    assert(!i915->vbo);
-   i915->vbo = winsys->buffer_create(winsys, 64, I915_BUFFER_USAGE_LIT_VERTEX,
-                                     size);
 
+   if (i915_render->vbo_size > size + i915_render->vbo_offset && !i915->vbo_flushed) {
+   } else {
+      i915->vbo_flushed = 0;
+      pipe_buffer_reference(winsys, &i915_render->vbo, NULL);
+   }
+
+   if (!i915_render->vbo) {
+      i915_render->vbo_size = MAX2(size, i915_render->vbo_alloc_size);
+      i915_render->vbo_offset = 0;
+      i915_render->vbo = winsys->buffer_create(winsys,
+					       64,
+					       I915_BUFFER_USAGE_LIT_VERTEX,
+					       i915_render->vbo_size);
+      i915_render->vbo_ptr = winsys->buffer_map(winsys,
+						i915_render->vbo,
+						PIPE_BUFFER_USAGE_CPU_WRITE);
+      winsys->buffer_unmap(winsys, i915_render->vbo);
+   }
+
+   i915->vbo = i915_render->vbo;
+   i915->vbo_offset = i915_render->vbo_offset;
    i915->dirty |= I915_NEW_VBO;
 
-   return winsys->buffer_map(winsys, 
-                             i915->vbo, 
-                             PIPE_BUFFER_USAGE_CPU_WRITE);
+   return i915_render->vbo_ptr + i915->vbo_offset;
 }
 
 
@@ -231,7 +255,6 @@ draw_arrays_fallback( struct vbuf_render *render,
    struct pipe_winsys *winsys = i915->pipe.winsys;
    unsigned nr_indices;
 
-   winsys->buffer_unmap( winsys, i915->vbo );
    if (i915->dirty)
       i915_update_derived( i915 );
 
@@ -247,6 +270,7 @@ draw_arrays_fallback( struct vbuf_render *render,
        */
       i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
+      i915->vbo_flushed = 1;
 
       if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
 	 assert(0);
@@ -260,8 +284,9 @@ draw_arrays_fallback( struct vbuf_render *render,
 	      nr_indices );
 
    draw_arrays_generate_indices( render, start, nr, i915_render->fallback );
+
 out:
-   winsys->buffer_map( winsys, i915->vbo, PIPE_BUFFER_USAGE_CPU_WRITE );
+   return;
 }
 
 static void
@@ -353,7 +378,6 @@ i915_vbuf_render_draw( struct vbuf_render *render,
    nr_indices = draw_calc_nr_indices( nr_indices, i915_render->fallback );
 
    assert(nr_indices);
-   winsys->buffer_unmap( winsys, i915->vbo );
 
    if (i915->dirty)
       i915_update_derived( i915 );
@@ -368,6 +392,7 @@ i915_vbuf_render_draw( struct vbuf_render *render,
        */
       i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
+      i915->vbo_flushed = 1;
 
       if (!BEGIN_BATCH( 1 + (nr_indices + 1)/2, 1 )) {
 	 assert(0);
@@ -386,7 +411,6 @@ i915_vbuf_render_draw( struct vbuf_render *render,
 			  i915_render->fallback );
 
 out:
-   winsys->buffer_map( winsys, i915->vbo, PIPE_BUFFER_USAGE_CPU_WRITE );
    return;
 }
 
@@ -400,10 +424,13 @@ i915_vbuf_render_release_vertices( struct vbuf_render *render,
    struct i915_vbuf_render *i915_render = i915_vbuf_render(render);
    struct i915_context *i915 = i915_render->i915;
    struct pipe_winsys *winsys = i915->pipe.winsys;
+   size_t size = (size_t)vertex_size * (size_t)vertices_used;
 
    assert(i915->vbo);
-   winsys->buffer_unmap(winsys, i915->vbo);
-   pipe_buffer_reference(winsys, &i915->vbo, NULL);
+
+   i915_render->vbo_offset += size;
+   i915->vbo = NULL;
+   i915->dirty |= I915_NEW_VBO;
 }
 
 
@@ -422,6 +449,7 @@ static struct vbuf_render *
 i915_vbuf_render_create( struct i915_context *i915 )
 {
    struct i915_vbuf_render *i915_render = CALLOC_STRUCT(i915_vbuf_render);
+   struct pipe_winsys *winsys = i915->pipe.winsys;
 
    i915_render->i915 = i915;
    
@@ -431,7 +459,7 @@ i915_vbuf_render_create( struct i915_context *i915 )
     * batch buffer.
     */
    i915_render->base.max_indices = 16*1024;
-   
+
    i915_render->base.get_vertex_info = i915_vbuf_render_get_vertex_info;
    i915_render->base.allocate_vertices = i915_vbuf_render_allocate_vertices;
    i915_render->base.set_primitive = i915_vbuf_render_set_primitive;
@@ -439,7 +467,19 @@ i915_vbuf_render_create( struct i915_context *i915 )
    i915_render->base.draw_arrays = i915_vbuf_render_draw_arrays;
    i915_render->base.release_vertices = i915_vbuf_render_release_vertices;
    i915_render->base.destroy = i915_vbuf_render_destroy;
-   
+
+   i915_render->vbo_alloc_size = 128 * 4096;
+   i915_render->vbo_size = i915_render->vbo_alloc_size;
+   i915_render->vbo_offset = 0;
+   i915_render->vbo = winsys->buffer_create(winsys,
+					    64,
+					    I915_BUFFER_USAGE_LIT_VERTEX,
+					    i915_render->vbo_size);
+   i915_render->vbo_ptr = winsys->buffer_map(winsys,
+					     i915_render->vbo,
+					     PIPE_BUFFER_USAGE_CPU_WRITE);
+   winsys->buffer_unmap(winsys, i915_render->vbo);
+
    return &i915_render->base;
 }
 

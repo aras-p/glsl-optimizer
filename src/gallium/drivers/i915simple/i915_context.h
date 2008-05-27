@@ -245,6 +245,8 @@ struct i915_context
 
    /** Vertex buffer */
    struct pipe_buffer *vbo;
+   size_t vbo_offset;
+   unsigned vbo_flushed;
 
    struct i915_state current;
    unsigned hardware_dirty;

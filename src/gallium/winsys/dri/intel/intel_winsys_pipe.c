@@ -224,7 +224,6 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
                                  unsigned tex_usage)
 {
    const unsigned alignment = 64;
-   //int ret;
 
    surf->width = width;
    surf->height = height;
@@ -235,7 +234,8 @@ intel_i915_surface_alloc_storage(struct pipe_winsys *winsys,
    assert(!surf->buffer);
    surf->buffer = winsys->buffer_create(winsys, alignment,
                                         PIPE_BUFFER_USAGE_PIXEL,
-                                        surf->pitch * surf->cpp * height);
+                                        surf->pitch * surf->cpp * surf->height);
+
    if(!surf->buffer)
       return -1;
 
@@ -328,8 +328,8 @@ intel_create_pipe_winsys( int fd, struct _DriFreeSlabManager *fMan )
 					DRM_BO_FLAG_READ |
 					DRM_BO_FLAG_WRITE |
 					DRM_BO_FLAG_MEM_TT,
-					128,
-					6, 120, 32 * 4096, 0,
+					128 * 4096,
+					1, 120, 128 * 4096 * 4, 0,
 					fMan);
    }
 

@@ -54,7 +54,7 @@ static void upload_S0S1(struct i915_context *i915)
 
    /* INTEL_NEW_VBO */
    /* TODO: re-use vertex buffers here? */
-   LIS0 = 0;
+   LIS0 = i915->vbo_offset;
 
    /* INTEL_NEW_VERTEX_SIZE -- do this where the vertex size is calculated! 
     */
