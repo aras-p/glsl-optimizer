@@ -24,7 +24,6 @@ struct _egl_global
    EGLBoolean Initialized;
 
    _EGLHashtable *Displays;
-   _EGLHashtable *Contexts;
    _EGLHashtable *Surfaces;
 
    EGLScreenMESA FreeScreenHandle;

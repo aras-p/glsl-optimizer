@@ -6,12 +6,12 @@
 #include "egldisplay.h"
 #include "egldriver.h"
 #include "eglglobals.h"
-#include "eglhash.h"
 #include "eglsurface.h"
 
 
 /**
- * Initialize the given _EGLContext object to defaults.
+ * Initialize the given _EGLContext object to defaults and/or the values
+ * in the attrib_list.
  */
 EGLBoolean
 _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
@@ -23,15 +23,17 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
 
    conf = _eglLookupConfig(drv, dpy, config);
    if (!conf) {
-      _eglError(EGL_BAD_CONFIG, "eglCreateContext");
+      _eglError(EGL_BAD_CONFIG, "_eglInitContext");
       return EGL_FALSE;
    }
 
    for (i = 0; attrib_list && attrib_list[i] != EGL_NONE; i++) {
       switch (attrib_list[i]) {
-         /* no attribs defined for now */
+      case EGL_CONTEXT_CLIENT_VERSION:
+         /* xxx todo */
+         break;
       default:
-         _eglError(EGL_BAD_ATTRIBUTE, "eglCreateContext");
+         _eglError(EGL_BAD_ATTRIBUTE, "_eglInitContext");
          return EGL_FALSE;
       }
    }
@@ -46,17 +48,15 @@ _eglInitContext(_EGLDriver *drv, EGLDisplay dpy, _EGLContext *ctx,
 }
 
 
-/*
- * Assign an EGLContext handle to the _EGLContext object then put it into
- * the hash table.
+/**
+ * Save a new _EGLContext into the hash table.
  */
 void
 _eglSaveContext(_EGLContext *ctx)
 {
-   EGLuint key = _eglHashGenKey(_eglGlobal.Contexts);
-   assert(ctx);
-   ctx->Handle = (EGLContext) key;
-   _eglHashInsert(_eglGlobal.Contexts, key, ctx);
+   /* no-op.
+    * Public EGLContext handle and private _EGLContext are the same.
+    */
 }
 
 
@@ -66,21 +66,34 @@ _eglSaveContext(_EGLContext *ctx)
 void
 _eglRemoveContext(_EGLContext *ctx)
 {
-   EGLuint key = (EGLuint) ctx->Handle;
-   _eglHashRemove(_eglGlobal.Contexts, key);
+   /* no-op.
+    * Public EGLContext handle and private _EGLContext are the same.
+    */
+}
+
+
+/**
+ * Return the public handle for the given private context ptr.
+ * This is the inverse of _eglLookupContext().
+ */
+EGLContext
+_eglGetContextHandle(_EGLContext *ctx)
+{
+   /* just a cast! */
+   return (EGLContext) ctx;
 }
 
 
 /**
  * Return the _EGLContext object that corresponds to the given
  * EGLContext handle.
+ * This is the inverse of _eglGetContextHandle().
  */
 _EGLContext *
 _eglLookupContext(EGLContext ctx)
 {
-   EGLuint key = (EGLuint) ctx;
-   _EGLContext *c = (_EGLContext *) _eglHashLookup(_eglGlobal.Contexts, key);
-   return c;
+   /* just a cast since EGLContext is just a void ptr */
+   return (_EGLContext *) ctx;
 }
 
 
@@ -115,7 +128,7 @@ _eglCreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    }
 
    _eglSaveContext(context);
-   return context->Handle;
+   return (EGLContext) context;
 #endif
    return EGL_NO_CONTEXT;
 }
@@ -129,8 +142,6 @@ _eglDestroyContext(_EGLDriver *drv, EGLDisplay dpy, EGLContext ctx)
 {
    _EGLContext *context = _eglLookupContext(ctx);
    if (context) {
-      EGLuint key = (EGLuint) ctx;
-      _eglHashRemove(_eglGlobal.Contexts, key);
       if (context->IsBound) {
          context->DeletePending = EGL_TRUE;
       }
@@ -243,7 +254,7 @@ _eglMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface d,
             ctx = NULL;
          }
          /* really delete context now */
-         drv->API.DestroyContext(drv, dpy, oldContext->Handle);
+         drv->API.DestroyContext(drv, dpy, _eglGetContextHandle(oldContext));
       }
    }
 

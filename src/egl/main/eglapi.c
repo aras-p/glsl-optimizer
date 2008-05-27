@@ -280,10 +280,7 @@ EGLContext EGLAPIENTRY
 eglGetCurrentContext(void)
 {
    _EGLContext *ctx = _eglGetCurrentContext();
-   if (ctx)
-      return ctx->Handle;
-   else
-      return EGL_NO_CONTEXT;
+   return _eglGetContextHandle(ctx);
 }
 
 

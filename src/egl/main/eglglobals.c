@@ -15,7 +15,6 @@ _eglInitGlobals(void)
 {
    if (!_eglGlobal.Initialized) {
       _eglGlobal.Displays = _eglNewHashTable();
-      _eglGlobal.Contexts = _eglNewHashTable();
       _eglGlobal.Surfaces = _eglNewHashTable();
       _eglGlobal.FreeScreenHandle = 1;
       _eglGlobal.Initialized = EGL_TRUE;
@@ -37,7 +36,6 @@ _eglDestroyGlobals(void)
 {
    /* XXX TODO walk over table entries, deleting each */
    _eglDeleteHashTable(_eglGlobal.Displays);
-   _eglDeleteHashTable(_eglGlobal.Contexts);
    _eglDeleteHashTable(_eglGlobal.Surfaces);
 }
 

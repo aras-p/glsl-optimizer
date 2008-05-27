@@ -11,8 +11,6 @@
  */
 struct _egl_context
 {
-   EGLContext Handle;  /* The public/opaque handle which names this object */
-
    _EGLDisplay *Display; /* who do I belong to? */
 
    _EGLConfig *Config;
@@ -39,6 +37,10 @@ _eglSaveContext(_EGLContext *ctx);
 
 extern void
 _eglRemoveContext(_EGLContext *ctx);
+
+
+extern EGLContext
+_eglGetContextHandle(_EGLContext *ctx);
 
 
 extern _EGLContext *
