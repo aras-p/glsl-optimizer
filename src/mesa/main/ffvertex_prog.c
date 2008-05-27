@@ -305,7 +305,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
  * generated program with line/function references for each
  * instruction back into this file:
  */
-#define DISASSEM (MESA_VERBOSE&VERBOSE_DISASSEM)
+#define DISASSEM 1
 
 /* Should be tunable by the driver - do we want to do matrix
  * multiplications with DP4's or with MUL/MAD's?  SSE works better
@@ -344,6 +344,7 @@ struct tnl_program {
    GLuint temp_reserved;
    
    struct ureg eye_position;
+   struct ureg eye_position_z;
    struct ureg eye_position_normalized;
    struct ureg transformed_normal;
    struct ureg identity;
@@ -726,6 +727,28 @@ static struct ureg get_eye_position( struct tnl_program *p )
    
    return p->eye_position;
 }
+
+
+static struct ureg get_eye_position_z( struct tnl_program *p )
+{
+   if (!is_undef(p->eye_position)) 
+      return swizzle1(p->eye_position, Z);
+
+   if (is_undef(p->eye_position_z)) {
+      struct ureg pos = register_input( p, VERT_ATTRIB_POS ); 
+      struct ureg modelview[4];
+
+      p->eye_position_z = reserve_temp(p);
+
+      register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
+                              0, modelview );
+
+      emit_op2(p, OPCODE_DP4, p->eye_position_z, 0, pos, modelview[2]);
+   }
+   
+   return p->eye_position_z;
+}
+   
 
 
 static struct ureg get_eye_position_normalized( struct tnl_program *p )
@@ -1240,7 +1263,7 @@ static void build_fog( struct tnl_program *p )
    struct ureg input;
 
    if (p->state->fog_source_is_depth) {
-      input = swizzle1(get_eye_position(p), Z);
+      input = get_eye_position_z(p);
    }
    else {
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
@@ -1470,7 +1493,7 @@ static void build_texture_transform( struct tnl_program *p )
 
 static void build_pointsize( struct tnl_program *p )
 {
-   struct ureg eye = get_eye_position(p);
+   struct ureg eye = get_eye_position_z(p);
    struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
    struct ureg state_attenuation = register_param1(p, STATE_POINT_ATTENUATION);
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
@@ -1568,6 +1591,7 @@ create_new_program( const struct state_key *key,
    p.state = key;
    p.program = program;
    p.eye_position = undef;
+   p.eye_position_z = undef;
    p.eye_position_normalized = undef;
    p.transformed_normal = undef;
    p.identity = undef;
