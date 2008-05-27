@@ -3,6 +3,7 @@
  */
 
 #include <GLES/egl.h>
+#include <GL/gl.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
