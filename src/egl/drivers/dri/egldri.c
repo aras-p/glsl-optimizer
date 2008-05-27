@@ -32,7 +32,7 @@
 #include "egldri.h"
 
 const char *sysfs = "/sys/class";
-#define None 0
+
 static const int empty_attribute_list[1] = { None };
 
 
@@ -62,10 +62,11 @@ _eglMain(_EGLDisplay *dpy)
 
       if (strncmp(&dirent->d_name[0], "card", 4) != 0)
          continue;
-      if (strcmp(&dirent->d_name[4], &dpy->Name[1]) != 0)
+      if (strcmp(&dirent->d_name[4], &dpy->DriverName[1]) != 0)
          continue;
 
-      snprintf(path, sizeof(path), "%s/drm/card%s/dri_library_name", sysfs, &dpy->Name[1]);
+      snprintf(path, sizeof(path), "%s/drm/card%s/dri_library_name",
+               sysfs, &dpy->DriverName[1]);
       _eglLog(_EGL_INFO, "Opening %s", path);
 #if 1
       file = fopen(path, "r");
@@ -141,7 +142,7 @@ _eglDRICreateContext(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
    /* generate handle and insert into hash table */
    _eglSaveContext(&c->Base);
 
-   return c->Base.Handle;
+   return _eglGetContextHandle(&c->Base);
 }
 
 
@@ -152,13 +153,15 @@ _eglDRIMakeCurrent(_EGLDriver *drv, EGLDisplay dpy, EGLSurface draw,
    driDisplay *disp = Lookup_driDisplay(dpy);
    driContext *ctx = Lookup_driContext(context);
    EGLBoolean b;
+   __DRIid drawBuf = (__DRIid) draw;
+   __DRIid readBuf = (__DRIid) read;
 
    b = _eglMakeCurrent(drv, dpy, draw, read, context);
    if (!b)
       return EGL_FALSE;
 
    if (ctx) {
-      ctx->driContext.bindContext(disp, 0, read, draw, &ctx->driContext);
+      ctx->driContext.bindContext(disp, 0, drawBuf, readBuf, &ctx->driContext);
    }
    else {
       /* what's this??? */
@@ -190,7 +193,7 @@ _eglDRICreatePbufferSurface(_EGLDriver *drv, EGLDisplay dpy, EGLConfig config,
 #if 0
       GLcontext *ctx = NULL; /* this _should_ be OK */
 #endif
-      GLvisual visMode;
+      __GLcontextModes visMode;
       _EGLConfig *conf = _eglLookupConfig(drv, dpy, config);
       assert(conf); /* bad config should be caught earlier */
       _eglConfigToContextModesRec(conf, &visMode);
@@ -267,7 +270,8 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    _EGLConfig *config = _eglLookupConfig(drv, dpy, cfg);
    driDisplay *disp = Lookup_driDisplay(dpy);
    driSurface *surface;
-   GLvisual visMode;
+   __GLcontextModes visMode;
+   __DRIid drawBuf;
 
    surface = (driSurface *) calloc(1, sizeof(*surface));
    if (!surface) {
@@ -292,8 +296,10 @@ _eglDRICreateScreenSurfaceMESA(_EGLDriver *drv, EGLDisplay dpy, EGLConfig cfg,
    /* convert EGLConfig to GLvisual */
    _eglConfigToContextModesRec(config, &visMode);
 
+   drawBuf = (__DRIid) _eglGetSurfaceHandle(&surface->Base);
+
    /* Create a new DRI drawable */
-   if (!disp->driScreen.createNewDrawable(disp, &visMode, surface->Base.Handle,
+   if (!disp->driScreen.createNewDrawable(disp, &visMode, drawBuf,
                                           &surface->drawable, GLX_WINDOW_BIT,
                                           empty_attribute_list)) {
       _eglRemoveSurface(&surface->Base);
@@ -715,7 +721,7 @@ __eglGetDrawableInfo(__DRInativeDisplay * ndpy, int screen, __DRIid drawable,
 {
     __DRIscreen *pDRIScreen;
     __DRIscreenPrivate *psp;
-   driSurface *surf = Lookup_driSurface(drawable);
+    driSurface *surf = Lookup_driSurface((EGLSurface) drawable);
 
    pDRIScreen = __eglFindDRIScreen(ndpy, screen);
 
@@ -1088,13 +1094,13 @@ _eglDRIInitialize(_EGLDriver *drv, EGLDisplay dpy,
     */
    display = calloc(1, sizeof(*display));
    display->Base = *disp;
-   _eglHashInsert(_eglGlobal.Displays, disp->Handle, display);
+   _eglSaveDisplay(&display->Base);
    free(disp);
 
    *major = 1;
    *minor = 0;
 
-   sscanf(&disp->Name[1], "%d", &display->minor);
+   sscanf(&disp->DriverName[1], "%d", &display->minor);
 
    drv->Initialized = EGL_TRUE;
    return EGL_TRUE;

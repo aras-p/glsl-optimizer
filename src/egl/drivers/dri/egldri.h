@@ -1,11 +1,13 @@
 #ifndef EGLDRI_INCLUDED
 #define EGLDRI_INCLUDED
 
+#include <stdlib.h>
+#include <string.h>
 #include "egldisplay.h"
 #include "eglscreen.h"
 #include "eglsurface.h"
 #include "eglcontext.h"
-#include "mtypes.h"
+
 #include "dri_util.h"
 #include "drm_sarea.h"
 
@@ -14,7 +16,7 @@
  */
 typedef struct dri_display
 {
-   _EGLDisplay Base;  /* base class/object */
+   _EGLDisplay Base;  /**< base class */
    void *pFB;
    int drmFD;  /**< \brief DRM device file descriptor */
    int minor;
@@ -32,7 +34,7 @@ typedef struct dri_display
    unsigned long FBStart;   /**< \brief physical address of the framebuffer */
    void *driverClientMsg;
    int driverClientMsgSize;
-   int chipset;
+   unsigned chipset;
    void *driverPrivate;
    drm_magic_t magic;
 
