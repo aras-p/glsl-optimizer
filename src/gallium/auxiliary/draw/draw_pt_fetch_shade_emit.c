@@ -94,8 +94,8 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    fse->key.nr_elements = MAX2(num_vs_outputs,     /* outputs - translate to hw format */
                                num_vs_inputs);     /* inputs - fetch from api format */
 
-   fse->key.viewport = 1;
-   fse->key.clip = 0;
+   fse->key.viewport = !draw->identity_viewport;
+   fse->key.clip = !draw->bypass_clipping;
    fse->key.pad = 0;
 
    memset(fse->key.element, 0, 

@@ -2021,11 +2021,14 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
       if (cp.error)
          goto fail;
 
-      if (cp.vaos->base.key.viewport) {
-         if (0)
-            emit_viewport(&cp);
-         else
-            emit_rhw_viewport(&cp);
+      if (cp.vaos->base.key.clip) {
+         /* not really handling clipping, just do the rhw so we can
+          * see the results...
+          */
+         emit_rhw_viewport(&cp); 
+      }
+      else if (cp.vaos->base.key.viewport) {
+         emit_viewport(&cp);
       }
 
       /* Emit output...  TODO: do this eagerly after the last write to a
@@ -2187,9 +2190,6 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
                                                  const struct draw_vs_varient_key *key )
 {
    struct draw_vs_varient_aos_sse *vaos = CALLOC_STRUCT(draw_vs_varient_aos_sse);
-
-   if (key->clip)
-      return NULL;
 
    if (!vaos)
       goto fail;

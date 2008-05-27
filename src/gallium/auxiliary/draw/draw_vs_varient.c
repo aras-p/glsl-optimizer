@@ -89,9 +89,9 @@ static void vsvg_set_input( struct draw_vs_varient *varient,
 
 /* Mainly for debug at this stage:
  */
-static void do_viewport( struct draw_vs_varient_generic *vsvg,
-                         unsigned count,
-                         void *output_buffer )
+static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
+                             unsigned count,
+                             void *output_buffer )
 {
    char *ptr = (char *)output_buffer;
    const float *scale = vsvg->viewport.scale;
@@ -107,6 +107,25 @@ static void do_viewport( struct draw_vs_varient_generic *vsvg,
       data[1] = data[1] * w * scale[1] + trans[1];
       data[2] = data[2] * w * scale[2] + trans[2];
       data[3] = w;
+   }
+}
+
+static void do_viewport( struct draw_vs_varient_generic *vsvg,
+                             unsigned count,
+                             void *output_buffer )
+{
+   char *ptr = (char *)output_buffer;
+   const float *scale = vsvg->viewport.scale;
+   const float *trans = vsvg->viewport.translate;
+   unsigned stride = vsvg->base.key.output_stride;
+   unsigned j;
+
+   for (j = 0; j < count; j++, ptr += stride) {
+      float *data = (float *)ptr;
+
+      data[0] = data[0] * scale[0] + trans[0];
+      data[1] = data[1] * scale[1] + trans[1];
+      data[2] = data[2] * scale[2] + trans[2];
    }
 }
                          
@@ -136,10 +155,20 @@ static void vsvg_run_elts( struct draw_vs_varient *varient,
                                  vsvg->base.key.output_stride, 
                                  vsvg->base.key.output_stride);
 
-      if (vsvg->base.key.viewport)
+
+      if (vsvg->base.key.clip) {
+         /* not really handling clipping, just do the rhw so we can
+          * see the results...
+          */
+         do_rhw_viewport( vsvg,
+                          count,
+                          output_buffer );
+      }
+      else if (vsvg->base.key.viewport) {
          do_viewport( vsvg,
                       count,
                       output_buffer );
+      }
 
 
       //if (!vsvg->already_in_emit_format)
@@ -182,11 +211,19 @@ static void vsvg_run_linear( struct draw_vs_varient *varient,
                                  vsvg->base.key.output_stride, 
                                  vsvg->base.key.output_stride);
 
-      if (vsvg->base.key.viewport)
+      if (vsvg->base.key.clip) {
+         /* not really handling clipping, just do the rhw so we can
+          * see the results...
+          */
+         do_rhw_viewport( vsvg,
+                          count,
+                          output_buffer );
+      }
+      else if (vsvg->base.key.viewport) {
          do_viewport( vsvg,
                       count,
                       output_buffer );
-
+      }
 
       //if (!vsvg->already_in_emit_format)
       vsvg->emit->set_buffer( vsvg->emit,
@@ -223,9 +260,6 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
 {
    unsigned i;
    struct translate_key fetch, emit;
-
-   if (key->clip)
-      return NULL;
 
    struct draw_vs_varient_generic *vsvg = CALLOC_STRUCT( draw_vs_varient_generic );
    if (vsvg == NULL)
