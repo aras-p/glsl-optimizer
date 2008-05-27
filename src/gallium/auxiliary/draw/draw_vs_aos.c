@@ -253,6 +253,7 @@ struct x86_reg aos_get_xmm_reg( struct aos_compilation *cp )
 
    cp->xmm[oldest].file = TGSI_FILE_NULL;
    cp->xmm[oldest].idx = 0;
+   cp->xmm[oldest].dirty = 0;
    cp->xmm[oldest].last_used = cp->insn_counter;
    return x86_make_reg(file_XMM, oldest);
 }
@@ -284,24 +285,18 @@ void aos_adopt_xmm_reg( struct aos_compilation *cp,
       return;
    }
 
-   /* If this xmm reg is already holding this shader reg, just update
-    * last_used, and don't clobber the dirty flag...
-    */
-   if (cp->xmm[reg.idx].file == file &&
-       cp->xmm[reg.idx].idx == idx) 
-   {
-      cp->xmm[reg.idx].dirty |= dirty;
-      cp->xmm[reg.idx].last_used = cp->insn_counter;
-      return;
-   }
-   
 
    /* If any xmm reg thinks it holds this shader reg, break the
     * illusion.
     */
    for (i = 0; i < 8; i++) {
       if (cp->xmm[i].file == file && 
-          cp->xmm[i].idx == idx) {
+          cp->xmm[i].idx == idx) 
+      {
+         /* If an xmm reg is already holding this shader reg, take into account its
+          * dirty flag...
+          */
+         dirty |= cp->xmm[i].dirty;
          aos_release_xmm_reg(cp, i);
       }
    }
@@ -1987,6 +1982,17 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
          x87_assert_stack_empty(cp.func);
          cp.insn_counter++;
          debug_printf("\n");
+      }
+
+   
+      {
+         unsigned i;
+         for (i = 0; i < 8; i++) {
+            if (cp.xmm[i].file != TGSI_FILE_OUTPUT) {
+               cp.xmm[i].file = TGSI_FILE_NULL;
+               cp.xmm[i].dirty = 0;
+            }
+         }
       }
 
       if (cp.error)
