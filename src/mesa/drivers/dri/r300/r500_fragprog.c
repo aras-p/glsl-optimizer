@@ -101,6 +101,7 @@
 
 /* Writemasks */
 #define R500_WRITEMASK_G 0x2
+#define R500_WRITEMASK_RGB 0x7
 #define R500_WRITEMASK_A 0x8
 #define R500_WRITEMASK_AR 0x9
 #define R500_WRITEMASK_AG 0xA
@@ -1150,6 +1151,65 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 			case OPCODE_SWZ:
 				/* TODO: The rarer negation masks! */
 				emit_mov(fp, counter, fpi, make_src(fp, fpi->SrcReg[0]), fpi->SrcReg[0].Swizzle, dest);
+				break;
+			case OPCODE_XPD:
+				/* src0 * src1 - src1 * src0
+				 * 1) MUL temp.xyz, src0.yzx, src1.zxy
+				 * 2) MAD src0.zxy, src1.yzx, -temp.xyz */
+				src[0] = make_src(fp, fpi->SrcReg[0]);
+				src[1] = make_src(fp, fpi->SrcReg[1]);
+				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | R500_INST_TEX_SEM_WAIT
+					| (R500_WRITEMASK_RGB << 11);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1]);
+				/* Select [y, z, x] */
+				temp_swiz = make_rgb_swizzle(fpi->SrcReg[0]);
+				temp_swiz = (GET_SWZ(temp_swiz, 1) << 0) | (GET_SWZ(temp_swiz, 2) << 3) | (GET_SWZ(temp_swiz, 0) << 6);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(temp_swiz);
+				/* Select [z, x, y] */
+				temp_swiz = make_rgb_swizzle(fpi->SrcReg[1]);
+				temp_swiz = (GET_SWZ(temp_swiz, 2) << 0) | (GET_SWZ(temp_swiz, 0) << 3) | (GET_SWZ(temp_swiz, 1) << 6);
+				fp->inst[counter].inst3 |= R500_ALU_RGB_SEL_B_SRC1
+					| MAKE_SWIZ_RGB_B(temp_swiz);
+				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
+					| R500_ALPHA_ADDRD(get_temp(fp, 0))
+					| R500_ALPHA_SEL_A_SRC0 | MAKE_SWIZ_ALPHA_A(make_alpha_swizzle(fpi->SrcReg[0]))
+					| R500_ALPHA_SEL_B_SRC1 | MAKE_SWIZ_ALPHA_B(make_alpha_swizzle(fpi->SrcReg[1]));
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(get_temp(fp, 0))
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
+					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
+				counter++;
+				emit_alu(fp, counter, fpi);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(src[0])
+					| R500_RGB_ADDR1(src[1])
+					| R500_RGB_ADDR2(get_temp(fp, 0));
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(src[0])
+					| R500_ALPHA_ADDR1(src[1])
+					| R500_ALPHA_ADDR2(get_temp(fp, 0));
+				/* Select [z, x, y] */
+				temp_swiz = make_rgb_swizzle(fpi->SrcReg[0]);
+				temp_swiz = (GET_SWZ(temp_swiz, 2) << 0) | (GET_SWZ(temp_swiz, 0) << 3) | (GET_SWZ(temp_swiz, 1) << 6);
+				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
+					| MAKE_SWIZ_RGB_A(temp_swiz);
+				/* Select [y, z, x] */
+				temp_swiz = make_rgb_swizzle(fpi->SrcReg[1]);
+				temp_swiz = (GET_SWZ(temp_swiz, 1) << 0) | (GET_SWZ(temp_swiz, 2) << 3) | (GET_SWZ(temp_swiz, 0) << 6);
+				fp->inst[counter].inst3 |= R500_ALU_RGB_SEL_B_SRC1
+					| MAKE_SWIZ_RGB_B(temp_swiz);
+				fp->inst[counter].inst4 |= R500_ALPHA_OP_MAD
+					| R500_ALPHA_ADDRD(dest)
+					| R500_ALPHA_SWIZ_A_1
+					| R500_ALPHA_SWIZ_B_1;
+				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
+					| R500_ALU_RGBA_ADDRD(dest)
+					| R500_ALU_RGBA_SEL_C_SRC2
+					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_RGB)
+					| R500_ALU_RGBA_MOD_C_NEG
+					| R500_ALU_RGBA_A_SWIZ_0;
 				break;
 			case OPCODE_KIL:
 			case OPCODE_TEX:
