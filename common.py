@@ -34,7 +34,7 @@ default_machine = _machine_map.get(default_machine, 'generic')
 
 if default_platform in ('linux', 'freebsd', 'darwin'):
 	default_dri = 'yes'
-elif default_platform in ('winddk', 'windows'):
+elif default_platform in ('winddk', 'windows', 'wince'):
 	default_dri = 'no'
 else:
 	default_dri = 'no'
@@ -58,7 +58,7 @@ def AddOptions(opts):
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', default_platform,
-											 allowed_values=('linux', 'cell', 'windows', 'winddk')))
+											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince')))
 	opts.Add(BoolOption('llvm', 'use LLVM', 'no'))
 	opts.Add(BoolOption('dri', 'build DRI drivers', default_dri))
 
@@ -149,7 +149,7 @@ def generate(env):
 	platform = env['platform']
 	x86 = env['machine'] == 'x86'
 	gcc = env['platform'] in ('linux', 'freebsd', 'darwin')
-	msvc = env['platform'] in ('windows', 'winddk')
+	msvc = env['platform'] in ('windows', 'winddk', 'wince')
 
 	# C preprocessor options
 	cppdefines = []
@@ -196,6 +196,19 @@ def generate(env):
 		]
 		if debug:
 			cppdefines += [('DBG', 1)]
+	if platform == 'wince':
+		cppdefines += [
+			('_WIN32_WCE', '500'), 
+			'WCE_PLATFORM_STANDARDSDK_500',
+			'_i386_',
+			('UNDER_CE', '500'),
+			'UNICODE',
+			'_UNICODE',
+			'_X86_',
+			'x86',
+			'_USRDLL',
+			'TEST_EXPORTS' ,
+		]
 	if platform == 'windows':
 		cppdefines += ['PIPE_SUBSYSTEM_USER']
 	if platform == 'winddk':
@@ -263,6 +276,11 @@ def generate(env):
 				'/QIfdiv-', # disable Pentium FDIV fix
 				'/hotpatch', # prepares an image for hotpatching.
 				#'/Z7', #enable old-style debug info
+			]
+		if platform == 'wince':
+			cflags += [
+				'/Gs8192',
+				'/GF', # enable read-only string pooling
 			]
 		# Put debugging information in a separate .pdb file for each object file as
 		# descrived in the scons manpage

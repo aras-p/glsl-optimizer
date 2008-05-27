@@ -85,7 +85,7 @@ Export([
 # TODO: auto-detect as much as possible
 
 if platform == 'winddk':
-	env.Tool('winddk', ['.'])
+	env.Tool('winddk', ['scons'])
 	
 	env.Append(CPPPATH = [
 		env['SDK_INC_PATH'],
@@ -93,6 +93,9 @@ if platform == 'winddk':
 		env['WDM_INC_PATH'],
 		env['CRT_INC_PATH'],
 	])
+
+if platform == 'wince':
+	env.Tool('evc', ['scons'])
 
 common.generate(env)
 

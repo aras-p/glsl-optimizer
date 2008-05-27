@@ -1,18 +1,13 @@
-"""winddk
+"""msvc_sa
 
-Tool-specific initialization for Microsoft Windows DDK.
+Tool-specific initialization for Microsoft Visual C/C++.
 
-Based on engine.SCons.Tool.msvc.
-
-There normally shouldn't be any need to import this module directly.
-It will usually be imported through the generic SCons.Tool.Tool()
-selection method.
+Based on SCons.Tool.msvc, without the MSVS detection.
 
 """
 
 #
-# Copyright (c) 2001-2007 The SCons Foundation
-# Copyright (c) 2008 Tungsten Graphics, Inc.
+# Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 The SCons Foundation
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -43,51 +38,11 @@ import SCons.Builder
 import SCons.Errors
 import SCons.Platform.win32
 import SCons.Tool
-import SCons.Tool.mslib
-import SCons.Tool.mslink
 import SCons.Util
 import SCons.Warnings
 
 CSuffixes = ['.c', '.C']
 CXXSuffixes = ['.cc', '.cpp', '.cxx', '.c++', '.C++']
-
-def get_winddk_paths(env, version=None):
-    """Return a 3-tuple of (INCLUDE, LIB, PATH) as the values
-    of those three environment variables that should be set
-    in order to execute the MSVC tools properly."""
-    
-    WINDDKdir = None
-    exe_paths = []
-    lib_paths = []
-    include_paths = []
-
-    if 'BASEDIR' in os.environ:
-        WINDDKdir = os.environ['BASEDIR']
-    else:
-        WINDDKdir = "C:\\WINDDK\\3790.1830"
-
-    exe_paths.append( os.path.join(WINDDKdir, 'bin') )
-    exe_paths.append( os.path.join(WINDDKdir, 'bin', 'x86') )
-    include_paths.append( os.path.join(WINDDKdir, 'inc', 'wxp') )
-    lib_paths.append( os.path.join(WINDDKdir, 'lib') )
-
-    target_os = 'wxp'
-    target_cpu = 'i386'
-    
-    env['SDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc', target_os) 
-    env['CRT_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'crt') 
-    env['DDK_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'ddk', target_os) 
-    env['WDM_INC_PATH'] = os.path.join(WINDDKdir, 'inc', 'ddk', 'wdm', target_os) 
-
-    env['SDK_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu) 
-    env['CRT_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', 'crt', target_cpu) 
-    env['DDK_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu)
-    env['WDM_LIB_PATH'] = os.path.join(WINDDKdir, 'lib', target_os, target_cpu)
-                                     
-    include_path = string.join( include_paths, os.pathsep )
-    lib_path = string.join(lib_paths, os.pathsep )
-    exe_path = string.join(exe_paths, os.pathsep )
-    return (include_path, lib_path, exe_path)
 
 def validate_vars(env):
     """Validate the PCH and PCHSTOP construction variables."""
@@ -207,30 +162,12 @@ def generate(env):
     env['PCHCOM'] = '$CXX $CXXFLAGS $CPPFLAGS $_CPPDEFFLAGS $_CPPINCFLAGS /c $SOURCES /Fo${TARGETS[1]} /Yc$PCHSTOP /Fp${TARGETS[0]} $CCPDBFLAGS $PCHPDBFLAGS'
     env['BUILDERS']['PCH'] = pch_builder
 
-    env['AR']          = 'lib'
-    env['ARFLAGS']     = SCons.Util.CLVar('/nologo')
-    env['ARCOM']       = "${TEMPFILE('$AR $ARFLAGS /OUT:$TARGET $SOURCES')}"
-    env['LIBPREFIX']   = ''
-    env['LIBSUFFIX']   = '.lib'
-
-    SCons.Tool.mslink.generate(env)
-
     if not env.has_key('ENV'):
         env['ENV'] = {}
-    
-    try:
-        include_path, lib_path, exe_path = get_winddk_paths(env)
-
-        # since other tools can set these, we just make sure that the
-        # relevant stuff from WINDDK is in there somewhere.
-        env.PrependENVPath('INCLUDE', include_path)
-        env.PrependENVPath('LIB', lib_path)
-        env.PrependENVPath('PATH', exe_path)
-    except (SCons.Util.RegError, SCons.Errors.InternalError):
-        pass
-
+    if not env['ENV'].has_key('SystemRoot'):    # required for dlls in the winsxs folders
+        env['ENV']['SystemRoot'] = SCons.Platform.win32.get_system_root()
 
 def exists(env):
     return env.Detect('cl')
 
-# vim:set sw=4 et:
+# vim:set ts=4 sw=4 et:
