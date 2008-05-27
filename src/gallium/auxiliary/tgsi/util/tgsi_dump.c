@@ -539,9 +539,9 @@ static const char *TGSI_MODULATES[] =
    "MODULATE_EIGHTH"
 };
 
-static void
-dump_declaration_short(
-   struct tgsi_full_declaration  *decl )
+void
+tgsi_dump_declaration(
+   const struct tgsi_full_declaration  *decl )
 {
    TXT( "\nDCL " );
    ENM( decl->Declaration.File, TGSI_FILES_SHORT );
@@ -672,9 +672,9 @@ dump_declaration_verbose(
    }
 }
 
-static void
-dump_immediate_short(
-   struct tgsi_full_immediate *imm )
+void
+tgsi_dump_immediate(
+   const struct tgsi_full_immediate *imm )
 {
    unsigned i;
 
@@ -727,9 +727,9 @@ dump_immediate_verbose(
    }
 }
 
-static void
-dump_instruction_short(
-   struct tgsi_full_instruction  *inst,
+void
+tgsi_dump_instruction(
+   const struct tgsi_full_instruction  *inst,
    unsigned                      instno )
 {
    unsigned i;
@@ -1281,17 +1281,17 @@ tgsi_dump(
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         dump_declaration_short(
+         tgsi_dump_declaration(
             &parse.FullToken.FullDeclaration );
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         dump_immediate_short(
+         tgsi_dump_immediate(
             &parse.FullToken.FullImmediate );
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         dump_instruction_short(
+         tgsi_dump_instruction(
             &parse.FullToken.FullInstruction,
             instno );
          instno++;
