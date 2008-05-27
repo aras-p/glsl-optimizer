@@ -41,6 +41,8 @@ struct pt_emit {
 
    struct translate_cache *cache;
    unsigned prim;
+
+   const struct vertex_info *vinfo;
 };
 
 void draw_pt_emit_prepare( struct pt_emit *emit,
@@ -71,7 +73,7 @@ void draw_pt_emit_prepare( struct pt_emit *emit,
 
    /* Must do this after set_primitive() above:
     */
-   vinfo = draw->render->get_vertex_info(draw->render);
+   emit->vinfo = vinfo = draw->render->get_vertex_info(draw->render);
 
 
    /* Translate from pipeline vertices to hw vertices.
@@ -244,6 +246,17 @@ void draw_pt_emit_linear(struct pt_emit *emit,
                   0,
                   vertex_count,
                   hw_verts);
+
+   if (0) {
+      unsigned i;
+      for (i = 0; i < vertex_count; i++) {
+         debug_printf("\n\n%s vertex %d:\n", __FUNCTION__, i);
+         draw_dump_emitted_vertex( emit->vinfo, 
+                                   (const uint8_t *)hw_verts + 
+                                   translate->key.output_stride * i );
+      }
+   }
+
 
    render->draw_arrays(render, start, count);
 

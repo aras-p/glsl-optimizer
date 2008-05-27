@@ -60,6 +60,9 @@ struct fetch_shade_emit {
 
    struct draw_vs_varient_key key;
    struct draw_vs_varient *active;
+
+
+   const struct vertex_info *vinfo;
 };
 
 
@@ -85,7 +88,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 
    /* Must do this after set_primitive() above:
     */
-   vinfo = draw->render->get_vertex_info(draw->render);
+   fse->vinfo = vinfo = draw->render->get_vertex_info(draw->render);
    
 
 
@@ -267,6 +270,18 @@ static void fse_run_linear( struct draw_pt_middle_end *middle,
                               0,
                               count );
    
+   if (0) {
+      unsigned i;
+      for (i = 0; i < count; i++) {
+         debug_printf("\n\n%s vertex %d: (stride %d, offset %d)\n", __FUNCTION__, i,
+                      fse->key.output_stride,
+                      fse->key.output_stride * i);
+
+         draw_dump_emitted_vertex( fse->vinfo, 
+                                   (const uint8_t *)hw_verts + fse->key.output_stride * i );
+      }
+   }
+
 
    draw->render->release_vertices( draw->render, 
 				   hw_verts, 
@@ -310,6 +325,17 @@ fse_run(struct draw_pt_middle_end *middle,
    draw->render->draw( draw->render, 
                        draw_elts, 
                        draw_count );
+
+   if (0) {
+      unsigned i;
+      for (i = 0; i < fetch_count; i++) {
+         debug_printf("\n\n%s vertex %d:\n", __FUNCTION__, i);
+         draw_dump_emitted_vertex( fse->vinfo, 
+                                   (const uint8_t *)hw_verts + 
+                                   fse->key.output_stride * i );
+      }
+   }
+
 
    draw->render->release_vertices( draw->render, 
                                    hw_verts, 
