@@ -231,6 +231,10 @@ static void vsvg_run_linear( struct draw_vs_varient *varient,
                               output_buffer,
                               vsvg->base.key.output_stride );
 
+      vsvg->emit->set_buffer( vsvg->emit, 
+                              1,
+                              &vsvg->draw->rasterizer->point_size,
+                              0);
 
       vsvg->emit->run( vsvg->emit,
                        0, count,
@@ -293,11 +297,21 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
    emit.nr_elements = key->nr_outputs;
    emit.output_stride = key->output_stride;
    for (i = 0; i < key->nr_outputs; i++) {
-      emit.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-      emit.element[i].input_buffer = 0;
-      emit.element[i].input_offset = i * 4 * sizeof(float);
-      emit.element[i].output_format = key->element[i].out.format;
-      emit.element[i].output_offset = key->element[i].out.offset;
+      if (key->element[i].out.format != EMIT_1F_PSIZE)
+      {      
+         emit.element[i].input_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         emit.element[i].input_buffer = 0;
+         emit.element[i].input_offset = key->element[i].out.vs_output * 4 * sizeof(float);
+         emit.element[i].output_format = draw_translate_vinfo_format(key->element[i].out.format);
+         emit.element[i].output_offset = key->element[i].out.offset;
+      }
+      else {
+         emit.element[i].input_format = PIPE_FORMAT_R32_FLOAT;
+         emit.element[i].input_buffer = 1;
+         emit.element[i].input_offset = 0;
+         emit.element[i].output_format = PIPE_FORMAT_R32_FLOAT;
+         emit.element[i].output_offset = key->element[i].out.offset;
+      }
    }
 
    vsvg->fetch = draw_vs_get_fetch( vs->draw, &fetch );

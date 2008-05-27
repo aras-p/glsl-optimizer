@@ -33,6 +33,7 @@
 #include "tgsi/exec/tgsi_exec.h"
 #include "draw_vs.h"
 #include "draw_vs_aos.h"
+#include "draw_vertex.h"
 
 #include "rtasm/rtasm_x86sse.h"
 
@@ -249,24 +250,27 @@ static boolean emit_output( struct aos_compilation *cp,
                             unsigned format )
 {
    switch (format) {
-   case PIPE_FORMAT_R32_FLOAT:
+   case EMIT_1F:
+   case EMIT_1F_PSIZE:
       emit_store_R32(cp, ptr, dataXMM);
       break;
-   case PIPE_FORMAT_R32G32_FLOAT:
+   case EMIT_2F:
       emit_store_R32G32(cp, ptr, dataXMM);
       break;
-   case PIPE_FORMAT_R32G32B32_FLOAT:
+   case EMIT_3F:
       emit_store_R32G32B32(cp, ptr, dataXMM);
       break;
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+   case EMIT_4F:
       emit_store_R32G32B32A32(cp, ptr, dataXMM);
       break;
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      emit_swizzle(cp, dataXMM, dataXMM, SHUF(Z,Y,X,W));
-      emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
-      break;
-   case PIPE_FORMAT_R8G8B8A8_UNORM:
-      emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
+   case EMIT_4UB:
+      if (1) {
+         emit_swizzle(cp, dataXMM, dataXMM, SHUF(Z,Y,X,W));
+         emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
+      }
+      else {
+         emit_store_R8G8B8A8_UNORM(cp, ptr, dataXMM);
+      }
       break;
    default:
       ERROR(cp, "unhandled output format");
@@ -287,9 +291,16 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
       unsigned offset = cp->vaos->base.key.element[i].out.offset;
       unsigned vs_output = cp->vaos->base.key.element[i].out.vs_output;
 
-      struct x86_reg data = aos_get_shader_reg( cp, 
-                                                TGSI_FILE_OUTPUT,
-                                                vs_output );
+      struct x86_reg data;
+
+      if (format == EMIT_1F_PSIZE) {
+         data = aos_get_internal_xmm( cp, IMM_PSIZE );
+      }
+      else {
+         data = aos_get_shader_reg( cp, 
+                                    TGSI_FILE_OUTPUT,
+                                    vs_output );
+      }
 
       if (data.file != file_XMM) {
          struct x86_reg tmp = aos_get_xmm_reg( cp );

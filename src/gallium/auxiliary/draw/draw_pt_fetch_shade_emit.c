@@ -77,7 +77,6 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    unsigned num_vs_inputs = draw->vs.vertex_shader->info.num_inputs;
    const struct vertex_info *vinfo;
    unsigned i;
-   boolean need_psize = 0;
    
 
    if (!draw->render->set_primitive( draw->render, 
@@ -123,34 +122,24 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
 
       for (i = 0; i < vinfo->num_attribs; i++) {
          unsigned emit_sz = 0;
-         unsigned output_format = PIPE_FORMAT_NONE;
-         unsigned vs_output = vinfo->src_index[i];
 
          switch (vinfo->emit[i]) {
          case EMIT_4F:
-            output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
             emit_sz = 4 * sizeof(float);
             break;
          case EMIT_3F:
-            output_format = PIPE_FORMAT_R32G32B32_FLOAT;
             emit_sz = 3 * sizeof(float);
             break;
          case EMIT_2F:
-            output_format = PIPE_FORMAT_R32G32_FLOAT;
             emit_sz = 2 * sizeof(float);
             break;
          case EMIT_1F:
-            output_format = PIPE_FORMAT_R32_FLOAT;
             emit_sz = 1 * sizeof(float);
             break;
          case EMIT_1F_PSIZE:
-            need_psize = 1;
-            output_format = PIPE_FORMAT_R32_FLOAT;
             emit_sz = 1 * sizeof(float);
-            vs_output = vinfo->num_attribs + 1;
             break;
          case EMIT_4UB:
-            output_format = PIPE_FORMAT_B8G8R8A8_UNORM;
             emit_sz = 4 * sizeof(ubyte);
             break;
          default:
@@ -162,33 +151,15 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
           * numbers, not to positions in the hw vertex description --
           * that's handled by the output_offset field.
           */
-         fse->key.element[vs_output].out.format = output_format;
-         fse->key.element[vs_output].out.vs_output = vs_output;
-         fse->key.element[vs_output].out.offset = dst_offset;
+         fse->key.element[i].out.format = vinfo->emit[i];
+         fse->key.element[i].out.vs_output = vinfo->src_index[i];
+         fse->key.element[i].out.offset = dst_offset;
       
          dst_offset += emit_sz;
          assert(fse->key.output_stride >= dst_offset);
       }
    }
 
-   /* To make psize work, really need to tell the vertex shader to
-    * copy that value from input->output.  For 'translate' this was
-    * implicit for all elements.
-    */
-#if 0
-   if (need_psize) {
-      unsigned input = num_vs_inputs + 1;
-      const struct pipe_vertex_element *src = &draw->pt.vertex_element[i];
-      fse->key.element[i].input_format = PIPE_FORMAT_R32_FLOAT;
-      fse->key.element[i].input_buffer = 0; //nr_buffers + 1;
-      fse->key.element[i].input_offset = 0; 
-
-      fse->key.nr_inputs += 1;
-      fse->key.nr_elements = MAX2(fse->key.nr_inputs,
-                                  fse->key.nr_outputs);
-      
-   }
-#endif
 
    /* Would normally look up a vertex shader and peruse its list of
     * varients somehow.  We omitted that step and put all the

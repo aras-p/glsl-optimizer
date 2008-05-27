@@ -2126,6 +2126,7 @@ static void vaos_run_elts( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
+   vaos->machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
    vaos->gen_run_elts( varient,
                        elts,
                        count,
@@ -2139,6 +2140,7 @@ static void vaos_run_linear( struct draw_vs_varient *varient,
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
+   vaos->machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
    vaos->gen_run_linear( varient,
                          start,
                          count,
@@ -2204,6 +2206,7 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    vaos->base.run_linear = vaos_run_linear;
    vaos->base.run_elts = vaos_run_elts;
 
+   vaos->draw = vs->draw;
    vaos->machine = align_malloc( sizeof(struct aos_machine), 16 );
    if (!vaos->machine)
       goto fail;

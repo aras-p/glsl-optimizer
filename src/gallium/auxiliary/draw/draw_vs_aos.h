@@ -176,6 +176,7 @@ boolean aos_emit_outputs( struct aos_compilation *cp );
 #define IMM_255      4              /* 255, 255, 255, 255 */
 #define IMM_NEGS     5              /* -1,-1,-1,-1 */
 #define IMM_RSQ      6              /* -.5,1.5,_,_ */
+#define IMM_PSIZE    7              /* not really an immediate - updated each run */
 
 struct x86_reg aos_get_internal( struct aos_compilation *cp,
                                  unsigned imm );
