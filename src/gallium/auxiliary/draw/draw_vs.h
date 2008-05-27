@@ -38,22 +38,23 @@
 struct draw_context;
 struct pipe_shader_state;
 
-struct draw_vs_input 
+struct draw_varient_input 
 {
    enum pipe_format format;
    unsigned buffer;
    unsigned offset; 
 };
 
-struct draw_vs_output
+struct draw_varient_output
 {
-   enum pipe_format format;
-   unsigned offset;
+   enum pipe_format format;     /* output format */
+   unsigned vs_output:8;        /* which vertex shader output is this? */
+   unsigned offset:24;          /* offset into output vertex */
 };
 
-struct draw_vs_element {
-   struct draw_vs_input in;
-   struct draw_vs_output out;
+struct draw_varient_element {
+   struct draw_varient_input in;
+   struct draw_varient_output out;
 };
 
 struct draw_vs_varient_key {
@@ -64,7 +65,7 @@ struct draw_vs_varient_key {
    unsigned viewport:1;
    unsigned clip:1;
    unsigned pad:5;
-   struct draw_vs_element element[PIPE_MAX_ATTRIBS];
+   struct draw_varient_element element[PIPE_MAX_ATTRIBS];
 };
 
 struct draw_vs_varient;
@@ -201,7 +202,7 @@ struct draw_vs_varient *draw_vs_varient_generic( struct draw_vertex_shader *vs,
 
 static INLINE int draw_vs_varient_keysize( const struct draw_vs_varient_key *key )
 {
-   return 2 * sizeof(int) + key->nr_elements * sizeof(struct draw_vs_element);
+   return 2 * sizeof(int) + key->nr_elements * sizeof(struct draw_varient_element);
 }
 
 static INLINE int draw_vs_varient_key_compare( const struct draw_vs_varient_key *a,

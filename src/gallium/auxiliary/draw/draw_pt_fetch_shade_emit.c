@@ -160,6 +160,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
           * that's handled by the output_offset field.
           */
          fse->key.element[vs_output].out.format = output_format;
+         fse->key.element[vs_output].out.vs_output = vs_output;
          fse->key.element[vs_output].out.offset = dst_offset;
       
          dst_offset += emit_sz;

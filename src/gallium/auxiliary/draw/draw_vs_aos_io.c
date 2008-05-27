@@ -285,10 +285,11 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
    for (i = 0; i < cp->vaos->base.key.nr_outputs; i++) {
       unsigned format = cp->vaos->base.key.element[i].out.format;
       unsigned offset = cp->vaos->base.key.element[i].out.offset;
+      unsigned vs_output = cp->vaos->base.key.element[i].out.vs_output;
 
       struct x86_reg data = aos_get_shader_reg( cp, 
                                                 TGSI_FILE_OUTPUT,
-                                                i );
+                                                vs_output );
 
       if (data.file != file_XMM) {
          struct x86_reg tmp = aos_get_xmm_reg( cp );
