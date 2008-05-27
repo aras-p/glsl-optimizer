@@ -114,6 +114,7 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 	struct drm_screen *screen = NULL;
 	drmModeOutputPtr output = NULL;
 	drmModeResPtr res = NULL;
+	unsigned count_outputs = 0;
 
 	EGLint i;
 	int fd;
@@ -131,8 +132,10 @@ drm_initialize(_EGLDriver *drv, EGLDisplay dpy, EGLint *major, EGLint *minor)
 
 	drm_update_res(drm_drv);
 	res = drm_drv->res;
+	if (res)
+		count_outputs = res->count_outputs;
 
-	for(i = 0; i < res->count_outputs; i++) {
+	for(i = 0; i < count_outputs; i++) {
 		output = drmModeGetOutput(fd, res->outputs[i]);
 
 		if (!output)
