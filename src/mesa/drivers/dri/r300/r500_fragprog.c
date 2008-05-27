@@ -720,8 +720,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 				counter++;
 				/* Second instruction */
 				fp->inst[counter].inst0 = R500_INST_TYPE_ALU | (R500_WRITEMASK_AB << 11);
-				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0));
-				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0)) | R500_ALPHA_ADDR1(src[1]);
+				fp->inst[counter].inst1 = R500_RGB_ADDR0(get_temp(fp, 0)) | R500_RGB_ADDR1(src[1]);
+				fp->inst[counter].inst2 = R500_ALPHA_ADDR0(get_temp(fp, 0));
 				/* Select [z, z, z, y] */
 				temp_swiz = 2 | (2 << 3) | (2 << 6);
 				fp->inst[counter].inst3 = R500_ALU_RGB_SEL_A_SRC0
@@ -746,8 +746,8 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_RGB_B(R500_SWIZ_RGB_ONE);
 				fp->inst[counter].inst4 = R500_ALPHA_OP_MAD
 					| R500_ALPHA_ADDRD(get_temp(fp, 1))
-					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_B
-					| R500_ALPHA_SEL_B_SRC0 | R500_ALPHA_SWIZ_B_A;
+					| R500_ALPHA_SEL_A_SRC0 | R500_ALPHA_SWIZ_A_A
+					| R500_ALPHA_SEL_B_SRC0 | R500_ALPHA_SWIZ_B_B;
 				fp->inst[counter].inst5 = R500_ALU_RGBA_OP_MAD
 					| R500_ALU_RGBA_ADDRD(get_temp(fp, 1))
 					| MAKE_SWIZ_RGBA_C(R500_SWIZ_RGB_ZERO)
@@ -788,7 +788,7 @@ static GLboolean parse_program(struct r500_fragment_program *fp)
 					| MAKE_SWIZ_ALPHA_C(R500_SWIZZLE_ZERO);
 				counter++;
 				/* Final instruction */
-				emit_mov(fp, counter, fpi, get_temp(fp, 0), 1672, dest);
+				emit_mov(fp, counter, fpi, get_temp(fp, 0), SWIZZLE_NOOP, dest);
 				break;
 			case OPCODE_LRP:
 				/* src0 * src1 + INV(src0) * src2
