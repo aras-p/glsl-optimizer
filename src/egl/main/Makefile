@@ -8,6 +8,7 @@ INCLUDE_DIRS = -I$(TOP)/include -I$(TOP)/src/mesa/glapi
 
 HEADERS = \
 	eglconfig.h \
+	eglconfigutil.h \
 	eglcontext.h \
 	egldisplay.h \
 	egldriver.h \
@@ -22,6 +23,7 @@ HEADERS = \
 SOURCES = \
 	eglapi.c \
 	eglconfig.c \
+	eglconfigutil.c \
 	eglcontext.c \
 	egldisplay.c \
 	egldriver.c \
