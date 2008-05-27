@@ -100,6 +100,7 @@
 #endif
 
 #if defined(PIPE_OS_WINDOWS)
+#ifndef _WIN32_WCE
 #if !defined(PIPE_SUBSYSTEM_USER) && !defined(PIPE_SUBSYSTEM_KERNEL)
 #error Neither PIPE_SUBSYSTEM_USER or PIPE_SUBSYSTEM_KERNEL defined.
 #endif
@@ -109,12 +110,12 @@
 #if 0 /* FIXME */
 #define PIPE_SUBSYSTEM_WINDOWS_MINIPORT
 #endif
-#if 0 /* FIXME */
-#define PIPE_SUBSYSTEM_WINDOWS_CE
-#endif
 #if defined(PIPE_SUBSYSTEM_USER)
 #define PIPE_SUBSYSTEM_WINDOWS_USER
 #endif
+#else /* _WIN32_WCE */
+#define PIPE_SUBSYSTEM_WINDOWS_CE
+#endif /* _WIN32_WCE */
 #endif /* PIPE_OS_WINDOWS */
 
 
