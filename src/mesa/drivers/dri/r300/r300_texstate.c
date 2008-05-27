@@ -399,12 +399,6 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	    | ((numLevels - 1) << R300_TX_MAX_MIP_LEVEL_SHIFT);
 
 	t->pitch = 0;
-	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
-	    if (tObj->Image[0][t->base.firstLevel]->Width > 2048)
-		t->pitch |= R500_TXWIDTH_BIT11;
-	    if (tObj->Image[0][t->base.firstLevel]->Height > 2048)
-		t->pitch |= R500_TXHEIGHT_BIT11;
-	}
 
 	/* Only need to round to nearest 32 for textures, but the blitter
 	 * requires 64-byte aligned pitches, and we may/may not need the
@@ -426,6 +420,13 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		t->pitch |=
 		    ((tObj->Image[0][t->base.firstLevel]->Width *
 		      texelBytes) + 63) & ~(63);
+	}
+
+	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515) {
+	    if (tObj->Image[0][t->base.firstLevel]->Width > 2048)
+		t->pitch_reg |= R500_TXWIDTH_BIT11;
+	    if (tObj->Image[0][t->base.firstLevel]->Height > 2048)
+		t->pitch_reg |= R500_TXHEIGHT_BIT11;
 	}
 
 	t->dirty_state = TEX_ALL;
@@ -581,6 +582,7 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	r300TexObjPtr t;
+	uint32_t pitch_val;
 
 	if (!tObj)
 		return;
@@ -593,28 +595,30 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 		return;
 
 	t->offset = offset;
-	t->pitch_reg = pitch;
+	t->pitch_reg &= (1 << 13) -1;
+	pitch_val = pitch;
 
 	switch (depth) {
 	case 32:
 		t->format = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
 		t->filter |= tx_table[2].filter;
-		t->pitch_reg /= 4;
+		pitch_val /= 4;
 		break;
 	case 24:
 	default:
 		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
 		t->filter |= tx_table[4].filter;
-		t->pitch_reg /= 4;
+		pitch_val /= 4;
 		break;
 	case 16:
 		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
 		t->filter |= tx_table[5].filter;
-		t->pitch_reg /= 2;
+		pitch_val /= 2;
 		break;
 	}
+	pitch_val--;
 
-	t->pitch_reg--;
+	t->pitch_reg |= pitch_val;
 }
 
 static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
