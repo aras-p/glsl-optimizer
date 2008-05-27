@@ -227,11 +227,13 @@ softpipe_create( struct pipe_screen *screen,
    if (GETENV( "SP_NO_RAST" ) != NULL)
       softpipe->no_rast = TRUE;
 
-   if (GETENV( "SP_VBUF" ) != NULL) {
-      sp_init_vbuf(softpipe);
+   if (GETENV( "SP_NO_VBUF" ) != NULL) {
+      /* Deprecated path -- vbuf is the intended interface to the draw module:
+       */
+      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
    }
    else {
-      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
+      sp_init_vbuf(softpipe);
    }
 
    /* plug in AA line/point stages */
