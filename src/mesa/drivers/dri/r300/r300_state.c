@@ -1324,6 +1324,85 @@ static unsigned long gen_fixed_filter(unsigned long f)
 	return f;
 }
 
+static void r300SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int i;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *)
+	    (char *)ctx->FragmentProgram._Current;
+
+	R300_STATECHANGE(r300, fpt);
+
+	for (i = 0; i < fp->tex.length; i++) {
+		int unit;
+		int opcode;
+		unsigned long val;
+			
+		unit = fp->tex.inst[i] >> R300_TEX_ID_SHIFT;
+		unit &= 15;
+			
+		val = fp->tex.inst[i];
+		val &= ~R300_TEX_ID_MASK;
+			
+		opcode =
+			(val & R300_TEX_INST_MASK) >> R300_TEX_INST_SHIFT;
+		if (opcode == R300_TEX_OP_KIL) {
+			r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+		} else {
+			if (tmu_mappings[unit] >= 0) {
+				val |=
+					tmu_mappings[unit] <<
+					R300_TEX_ID_SHIFT;
+				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+			} else {
+				// We get here when the corresponding texture image is incomplete
+				// (e.g. incomplete mipmaps etc.)
+				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
+			}
+		}
+	}
+	
+	r300->hw.fpt.cmd[R300_FPT_CMD_0] =
+		cmdpacket0(R300_US_TEX_INST_0, fp->tex.length);
+	
+}
+
+static void r500SetupFragmentShaderTextures(GLcontext *ctx, int *tmu_mappings)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	int i;
+	struct r500_fragment_program *fp = (struct r500_fragment_program *)
+	    (char *)ctx->FragmentProgram._Current;
+
+	/* find all the texture instructions and relocate the texture units */
+	for (i = 0; i < fp->inst_end + 1; i++) {
+		if ((fp->inst[i].inst0 & 0x3) == R500_INST_TYPE_TEX) {
+			uint32_t val;
+			int unit, opcode, new_unit;
+
+			val = fp->inst[i].inst1;
+
+			unit = (val >> 16) & 0xf;
+
+			val &= ~(0xf << 16);
+			
+			opcode = val & (0x7 << 22);
+			if (opcode == R500_TEX_INST_TEXKILL) {
+				new_unit = 0;
+			} else {
+				if (tmu_mappings[unit] >= 0) {
+					new_unit = tmu_mappings[unit];
+				} else {
+					new_unit = 0;
+				}
+			}
+			fprintf(stderr,"unit translate %d to %d\n", unit, new_unit);
+			val |= R500_TEX_ID(new_unit);
+			fp->inst[i].inst1 = val;
+		}
+	}
+}
+
 static void r300SetupTextures(GLcontext * ctx)
 {
 	int i, mtu;
@@ -1439,41 +1518,10 @@ static void r300SetupTextures(GLcontext * ctx)
 		return;
 
 
-        if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515) {
-		R300_STATECHANGE(r300, fpt);
-
-		for (i = 0; i < fp->tex.length; i++) {
-			int unit;
-			int opcode;
-			unsigned long val;
-			
-			unit = fp->tex.inst[i] >> R300_TEX_ID_SHIFT;
-			unit &= 15;
-			
-			val = fp->tex.inst[i];
-			val &= ~R300_TEX_ID_MASK;
-			
-			opcode =
-				(val & R300_TEX_INST_MASK) >> R300_TEX_INST_SHIFT;
-			if (opcode == R300_TEX_OP_KIL) {
-				r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
-			} else {
-				if (tmu_mappings[unit] >= 0) {
-					val |=
-						tmu_mappings[unit] <<
-						R300_TEX_ID_SHIFT;
-					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
-				} else {
-					// We get here when the corresponding texture image is incomplete
-					// (e.g. incomplete mipmaps etc.)
-					r300->hw.fpt.cmd[R300_FPT_INSTR_0 + i] = val;
-				}
-			}
-		}
-		
-		r300->hw.fpt.cmd[R300_FPT_CMD_0] =
-			cmdpacket0(R300_US_TEX_INST_0, fp->tex.length);
-	}
+        if (r300->radeon.radeonScreen->chip_family < CHIP_FAMILY_RV515)
+		r300SetupFragmentShaderTextures(ctx, tmu_mappings);
+	else 
+		r500SetupFragmentShaderTextures(ctx, tmu_mappings);
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "TX_ENABLE: %08x  last_hw_tmu=%d\n",
