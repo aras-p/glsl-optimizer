@@ -42,7 +42,20 @@
 #include "rtasm/rtasm_x86sse.h"
 
 #ifdef PIPE_ARCH_X86
+#define DISASSEM 0
 
+static const char *files[] =
+{
+   "NULL",
+   "CONST",
+   "IN",
+   "OUT",
+   "TEMP",
+   "SAMP",
+   "ADDR",
+   "IMM",
+   "INTERNAL",
+};
 
 static INLINE boolean eq( struct x86_reg a,
 			    struct x86_reg b )
@@ -184,7 +197,11 @@ static void spill( struct aos_compilation *cp, unsigned idx )
       struct x86_reg oldval = get_reg_ptr(cp,
                                           cp->xmm[idx].file,
                                           cp->xmm[idx].idx);
-      
+     
+      if (0) debug_printf("\nspill %s[%d]", 
+                          files[cp->xmm[idx].file],
+                          cp->xmm[idx].idx);
+ 
       assert(cp->xmm[idx].dirty);
       sse_movaps(cp->func, oldval, x86_make_reg(file_XMM, idx));
       cp->xmm[idx].dirty = 0;
@@ -1975,6 +1992,9 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
             break;
 
          case TGSI_TOKEN_TYPE_INSTRUCTION:
+            if (DISASSEM)
+               tgsi_dump_instruction( &parse.FullToken.FullInstruction, cp.insn_counter );
+
             if (!emit_instruction( &cp, &parse.FullToken.FullInstruction ))
                goto fail;
             break;
@@ -1982,7 +2002,9 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
          x87_assert_stack_empty(cp.func);
          cp.insn_counter++;
-         debug_printf("\n");
+
+         if (DISASSEM)
+            debug_printf("\n");
       }
 
    
