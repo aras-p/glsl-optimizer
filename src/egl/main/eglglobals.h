@@ -29,6 +29,7 @@ struct _egl_global
    EGLScreenMESA FreeScreenHandle;
 
    /* XXX these may be temporary */
+   EGLBoolean OpenGLAPISupported;
    EGLBoolean OpenGLESAPISupported;
    EGLBoolean OpenVGAPISupported;
 

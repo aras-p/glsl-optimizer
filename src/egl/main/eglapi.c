@@ -511,6 +511,15 @@ eglBindAPI(EGLenum api)
    _EGLThreadInfo *t = _eglGetCurrentThread();
 
    switch (api) {
+#ifdef EGL_VERSION_1_4
+   case EGL_OPENGL_API:
+      if (_eglGlobal.OpenGLAPISupported) {
+         t->CurrentAPI = api;
+         return EGL_TRUE;
+      }
+      _eglError(EGL_BAD_PARAMETER, "eglBindAPI");
+      return EGL_FALSE;
+#endif
    case EGL_OPENGL_ES_API:
       if (_eglGlobal.OpenGLESAPISupported) {
          t->CurrentAPI = api;
@@ -546,7 +555,7 @@ eglCreatePbufferFromClientBuffer(EGLDisplay dpy, EGLenum buftype,
 EGLenum
 eglQueryAPI(void)
 {
-   /* returns one of EGL_OPENGL_ES_API or EGL_OPENVG_API */
+   /* returns one of EGL_OPENGL_API, EGL_OPENGL_ES_API or EGL_OPENVG_API */
    _EGLThreadInfo *t = _eglGetCurrentThread();
    return t->CurrentAPI;
 }
