@@ -567,8 +567,9 @@ void
 st_flush_bitmap_cache(struct st_context *st)
 {
    if (!st->bitmap.cache->empty) {
+      struct bitmap_cache *cache = st->bitmap.cache;
+
       if (st->ctx->DrawBuffer) {
-         struct bitmap_cache *cache = st->bitmap.cache;
          struct pipe_context *pipe = st->pipe;
          struct pipe_screen *screen = pipe->screen;
 
@@ -592,10 +593,11 @@ st_flush_bitmap_cache(struct st_context *st)
                           st->ctx->Current.RasterPos[2],
                           BITMAP_CACHE_WIDTH, BITMAP_CACHE_HEIGHT,
                           cache->texture);
-
-         /* release/free the texture */
-         pipe_texture_reference(&cache->texture, NULL);
       }
+
+      /* release/free the texture */
+      pipe_texture_reference(&cache->texture, NULL);
+
       reset_cache(st);
    }
 }
