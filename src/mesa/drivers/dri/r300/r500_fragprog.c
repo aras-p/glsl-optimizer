@@ -1191,15 +1191,11 @@ static void init_program(r300ContextPtr r300, struct r500_fragment_program *fp)
 	fp->translated = GL_FALSE;
 	fp->error = GL_FALSE;
 	fp->cs = cs = &(R300_CONTEXT(fp->ctx)->state.pfs_compile);
-	fp->cur_node = 0;
-	fp->first_node_has_tex = 0;
 	fp->const_nr = 0;
 	/* Size of pixel stack, plus 1. */
 	fp->max_temp_idx = 1;
 	/* Temp register offset. */
 	fp->temp_reg_offset = 0;
-	fp->node[0].alu_end = -1;
-	fp->node[0].tex_end = -1;
 
 	_mesa_memset(cs, 0, sizeof(*fp->cs));
 	for (i = 0; i < PFS_MAX_ALU_INST; i++) {
@@ -1402,9 +1398,6 @@ void r500TranslateFragmentShader(r300ContextPtr r300,
 
 
 		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
-	} else {
-		fp->inst_offset = 0;
-		fp->inst_end = fp->cs->nrslots - 1;
 	}
 
 	update_params(fp);

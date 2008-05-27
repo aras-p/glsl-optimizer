@@ -814,16 +814,6 @@ struct r500_fragment_program {
 	} inst[512];
 	/* TODO: This is magic! */
 
-	struct {
-		int tex_offset;
-		int tex_end;
-		int alu_offset;
-		int alu_end;
-		int flags;
-	} node[4];
-	int cur_node;
-	int first_node_has_tex;
-
 	int temp_reg_offset;
 
 	int inst_offset;

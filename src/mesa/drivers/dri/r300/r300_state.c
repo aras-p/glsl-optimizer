@@ -2538,7 +2538,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 
 	R300_STATECHANGE(rmesa, r500fp);
 	/* Emit our shader... */
-	for (i = 0; i < fp->cs->nrslots; i++) {
+	for (i = 0; i < fp->inst_end+1; i++) {
 		rmesa->hw.r500fp.cmd[i*6+1] = fp->inst[i].inst0;
 		rmesa->hw.r500fp.cmd[i*6+2] = fp->inst[i].inst1;
 		rmesa->hw.r500fp.cmd[i*6+3] = fp->inst[i].inst2;
@@ -2547,8 +2547,7 @@ static void r500SetupPixelShader(r300ContextPtr rmesa)
 		rmesa->hw.r500fp.cmd[i*6+6] = fp->inst[i].inst5;
 	}
 
-	bump_r500fp_count(rmesa->hw.r500fp.cmd, fp->cs->nrslots * 6);
-
+	bump_r500fp_count(rmesa->hw.r500fp.cmd, (fp->inst_end + 1) * 6);
 
 	R300_STATECHANGE(rmesa, r500fp_const);
 	for (i = 0; i < fp->const_nr; i++) {
