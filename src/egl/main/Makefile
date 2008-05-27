@@ -61,7 +61,8 @@ depend: $(SOURCES) $(HEADERS)
 	@ rm -f depend
 	@ touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) \
-		$(SOURCES) $(HEADERS) > /dev/null 
+		$(SOURCES) $(HEADERS) > /dev/null 2>/dev/null
+
 
 include depend
 # DO NOT DELETE
