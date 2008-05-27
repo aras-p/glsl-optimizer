@@ -427,6 +427,12 @@ struct r300_state_atom {
 #define R300_ZB_PITCH		2
 #define R300_ZB_CMDSIZE		3
 
+#define R300_VAP_CNTL_FLUSH     0
+#define R300_VAP_CNTL_FLUSH_1   1
+#define R300_VAP_CNTL_CMD       2
+#define R300_VAP_CNTL_INSTR     3
+#define R300_VAP_CNTL_SIZE      4
+
 #define R300_VPI_CMD_0		0
 #define R300_VPI_INSTR_0	1
 #define R300_VPI_CMDSIZE	1025	/* 256 16 byte instructions */

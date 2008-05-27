@@ -319,8 +319,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	/* Initialize state atoms */
 	ALLOC_STATE(vpt, always, R300_VPT_CMDSIZE, 0);
 	r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
-	ALLOC_STATE(vap_cntl, always, 2, 0);
-	r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
+	ALLOC_STATE(vap_cntl, always, R300_VAP_CNTL_SIZE, 0);
+	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_FLUSH] = cmdpacket0(R300_VAP_PVS_STATE_FLUSH_REG, 1);
+	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_FLUSH_1] = 0;
+	r300->hw.vap_cntl.cmd[R300_VAP_CNTL_CMD] = cmdpacket0(R300_VAP_CNTL, 1);
 	if (is_r500) {
 	    ALLOC_STATE(vap_index_offset, always, 2, 0);
 	    r300->hw.vap_index_offset.cmd[0] = cmdpacket0(R500_VAP_INDEX_OFFSET, 1);

@@ -1905,9 +1905,7 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_
     int pvs_num_cntrls;
 
     /* Flush PVS engine before changing PVS_NUM_SLOTS, PVS_NUM_CNTRLS.
-     * See r500 docs 6.5.2 */
-    reg_start(R300_VAP_PVS_STATE_FLUSH_REG, 0);
-    e32(0x00000000);
+     * See r500 docs 6.5.2 - done in emit */
 
     /* avoid division by zero */
     if (input_count == 0) input_count = 1;
@@ -1924,31 +1922,31 @@ static void r300VapCntl(r300ContextPtr rmesa, GLuint input_count, GLuint output_
 
     R300_STATECHANGE(rmesa, vap_cntl);
     if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
-	rmesa->hw.vap_cntl.cmd[1] = 
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] = 
 	    (pvs_num_slots << R300_PVS_NUM_SLOTS_SHIFT) |
 	    (pvs_num_cntrls << R300_PVS_NUM_CNTLRS_SHIFT) |
 	    (12 << R300_VF_MAX_VTX_NUM_SHIFT);
 	if (rmesa->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV515)
-	    rmesa->hw.vap_cntl.cmd[1] |= R500_TCL_STATE_OPTIMIZATION;
+	    rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= R500_TCL_STATE_OPTIMIZATION;
     } else
 	/* not sure about non-tcl */
-	rmesa->hw.vap_cntl.cmd[1] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
 				    (5 << R300_PVS_NUM_CNTLRS_SHIFT) |
 				    (5 << R300_VF_MAX_VTX_NUM_SHIFT));
 
     if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV515)
-	rmesa->hw.vap_cntl.cmd[1] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (2 << R300_PVS_NUM_FPUS_SHIFT);
     else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV530) ||
 	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV560))
-	rmesa->hw.vap_cntl.cmd[1] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (5 << R300_PVS_NUM_FPUS_SHIFT);
     else if (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
-	rmesa->hw.vap_cntl.cmd[1] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (6 << R300_PVS_NUM_FPUS_SHIFT);
     else if ((rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R520) ||
 	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_R580) ||
 	     (rmesa->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV570))
-	rmesa->hw.vap_cntl.cmd[1] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (8 << R300_PVS_NUM_FPUS_SHIFT);
     else
-	rmesa->hw.vap_cntl.cmd[1] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+	rmesa->hw.vap_cntl.cmd[R300_VAP_CNTL_INSTR] |= (4 << R300_PVS_NUM_FPUS_SHIFT);
 
 }
 
@@ -2362,6 +2360,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.zb_hiz_pitch.cmd[1] = 0;
 
+	r300VapCntl(r300, 0, 0, 0);
 	if (has_tcl) {
 		r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;
 		r300->hw.vps.cmd[R300_VPS_ZERO_1] = 0;

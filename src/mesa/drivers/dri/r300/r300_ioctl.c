@@ -412,6 +412,8 @@ static void r300EmitClearState(GLcontext * ctx)
 		    R500_ALU_RGBA_A_SWIZ_0);
 	}
 
+	reg_start(R300_VAP_PVS_STATE_FLUSH_REG, 0);
+	e32(0x00000000);
 	if (has_tcl) {
 	    vap_cntl = ((10 << R300_PVS_NUM_SLOTS_SHIFT) |
 			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
