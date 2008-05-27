@@ -21,7 +21,7 @@
 typedef struct demo_driver
 {
    _EGLDriver Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoDriver;
 
 #define DEMO_DRIVER(D) ((DemoDriver *) (D))
@@ -33,7 +33,7 @@ typedef struct demo_driver
 typedef struct demo_surface
 {
    _EGLSurface Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoSurface;
 
 
@@ -43,7 +43,7 @@ typedef struct demo_surface
 typedef struct demo_context
 {
    _EGLContext Base;  /* base class/object */
-   GLuint DemoStuff;
+   unsigned DemoStuff;
 } DemoContext;
 
 
