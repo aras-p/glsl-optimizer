@@ -107,7 +107,7 @@ typedef struct _dri_bo_gem {
     dri_bo bo;
 
     int refcount;
-    unsigned int map_count;
+    GLboolean mapped;
     uint32_t gem_handle;
     const char *name;
 
@@ -412,7 +412,8 @@ dri_gem_bo_unreference(dri_bo *bo)
 	struct dri_gem_bo_bucket *bucket;
 	int ret;
 
-	assert(bo_gem->map_count == 0);
+	if (bo_gem->mapped)
+	    munmap (bo_gem->virtual, bo->size);
 
 	if (bo_gem->relocs != NULL) {
 	    int i;
@@ -474,7 +475,7 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
     /* Allow recursive mapping. Mesa may recursively map buffers with
      * nested display loops.
      */
-    if (bo_gem->map_count++ == 0) {
+    if (!bo_gem->mapped) {
     
 	assert(bo->virtual == NULL);
     
@@ -496,6 +497,7 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
 	    bo_gem->virtual = (void *)(uintptr_t)mmap_arg.addr_ptr;
 	}
 	bo->virtual = bo_gem->virtual;
+	bo_gem->mapped = GL_TRUE;
 	DBG("bo_map: %d (%s) -> %p\n", bo_gem->gem_handle, bo_gem->name, bo_gem->virtual);
     }
 
@@ -519,25 +521,12 @@ dri_gem_bo_map(dri_bo *bo, GLboolean write_enable)
 static int
 dri_gem_bo_unmap(dri_bo *bo)
 {
-    dri_bufmgr_gem *bufmgr_gem;
     dri_bo_gem *bo_gem = (dri_bo_gem *)bo;
 
     if (bo == NULL)
 	return 0;
 
-    assert(bo_gem->map_count != 0);
-    if (--bo_gem->map_count != 0)
-	return 0;
-
-    bufmgr_gem = (dri_bufmgr_gem *)bo->bufmgr;
-
-    assert(bo->virtual != NULL);
-
-    DBG("bo_unmap: %d (%s)\n", bo_gem->gem_handle, bo_gem->name);
-
-    munmap(bo_gem->virtual, bo->size);
-    bo_gem->virtual = NULL;
-    bo->virtual = NULL;
+    assert(bo_gem->mapped);
 
     return 0;
 }
