@@ -30,6 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include "pipe/p_config.h"
 #include "pipe/p_util.h"
 #include "pipe/p_state.h"
 #include "translate.h"
@@ -38,7 +39,7 @@ struct translate *translate_create( const struct translate_key *key )
 {
    struct translate *translate = NULL;
 
-#if defined(__i386__) || defined(__386__) || defined(i386)
+#if defined(PIPE_ARCH_X86)
    translate = translate_sse2_create( key );
    if (translate)
       return translate;

@@ -52,39 +52,55 @@
 #endif /* __MSC__ */
 
 
-typedef unsigned int       uint;
-typedef unsigned char      ubyte;
-typedef unsigned char      boolean;
-typedef unsigned short     ushort;
-typedef unsigned long long uint64;
-
-
 #if defined(__MSC__)
 
-typedef char               int8_t;
-typedef unsigned char      uint8_t;
-typedef short              int16_t;
-typedef unsigned short     uint16_t;
-typedef long               int32_t;
-typedef unsigned long      uint32_t;
-typedef long long          int64_t;
-typedef unsigned long long uint64_t;
+typedef __int8             int8_t;
+typedef unsigned __int8    uint8_t;
+typedef __int16            int16_t;
+typedef unsigned __int16   uint16_t;
+typedef __int32            int32_t;
+typedef unsigned __int32   uint32_t;
+typedef __int64            int64_t;
+typedef unsigned __int64   uint64_t;
 
 #if defined(_WIN64)
 typedef __int64            intptr_t;
 typedef unsigned __int64   uintptr_t;
 #else
-typedef int                intptr_t;
-typedef unsigned int       uintptr_t;
+typedef __int32            intptr_t;
+typedef unsigned __int32   uintptr_t;
 #endif
+
+#ifndef __cplusplus
+#define false   0
+#define true    1
+#define bool    _Bool
+typedef int     _Bool;
+#define __bool_true_false_are_defined   1
+#endif /* !__cplusplus */
 
 #else
 #include <stdint.h>
+#include <stdbool.h>
 #endif
 
 
-#define TRUE  1
-#define FALSE 0
+typedef unsigned int       uint;
+typedef unsigned char      ubyte;
+typedef unsigned short     ushort;
+typedef uint64_t           uint64;
+
+#if 0
+#define boolean bool
+#else
+typedef unsigned char boolean;
+#endif
+#ifndef TRUE
+#define TRUE  true
+#endif
+#ifndef FALSE
+#define FALSE false
+#endif
 
 
 /* Function inlining */

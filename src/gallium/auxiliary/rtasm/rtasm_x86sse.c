@@ -21,7 +21,9 @@
  *
  **************************************************************************/
 
-#if defined(__i386__) || defined(__386__) || defined(i386)
+#include "pipe/p_config.h"
+
+#if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_debug.h"

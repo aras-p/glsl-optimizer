@@ -26,6 +26,7 @@
  */
 
 
+#include "pipe/p_config.h"
 #include "pipe/p_compiler.h"
 #include "pipe/p_util.h"
 #include "util/u_simple_list.h"
@@ -33,7 +34,7 @@
 #include "translate.h"
 
 
-#if defined(__i386__) || defined(__386__) || defined(i386)
+#if defined(PIPE_ARCH_X86)
 
 #include "rtasm/rtasm_cpu.h"
 #include "rtasm/rtasm_x86sse.h"
@@ -617,7 +618,7 @@ struct translate *translate_sse2_create( const struct translate_key *key )
 
 #else
 
-void translate_create_sse( const struct translate_key *key )
+struct translate *translate_sse2_create( const struct translate_key *key )
 {
    return NULL;
 }

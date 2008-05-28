@@ -147,8 +147,8 @@ static INLINE void varray_ef_quad( struct varray_frontend *varray,
                                    unsigned i2,
                                    unsigned i3 )
 {
-   const unsigned omitEdge1 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_2;
-   const unsigned omitEdge2 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_1;
+   const ushort omitEdge1 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_2;
+   const ushort omitEdge2 = DRAW_PIPE_EDGE_FLAG_0 | DRAW_PIPE_EDGE_FLAG_1;
 
    varray_triangle_flags( varray,
                           DRAW_PIPE_RESET_STIPPLE | omitEdge1,

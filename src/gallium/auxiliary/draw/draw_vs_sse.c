@@ -31,9 +31,11 @@
   *   Brian Paul
   */
 
+#include "pipe/p_config.h"
+
 #include "draw_vs.h"
 
-#if defined(__i386__) || defined(__386__)
+#if defined(PIPE_ARCH_X86)
 
 #include "pipe/p_util.h"
 #include "pipe/p_shader_tokens.h"

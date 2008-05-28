@@ -8,7 +8,7 @@
 union pointer_hack
 {
    void *pointer;
-   unsigned long long uint64;
+   uint64_t uint64;
 };
 
 void *

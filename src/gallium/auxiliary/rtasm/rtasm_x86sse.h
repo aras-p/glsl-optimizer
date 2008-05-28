@@ -24,7 +24,9 @@
 #ifndef _RTASM_X86SSE_H_
 #define _RTASM_X86SSE_H_
 
-#if defined(__i386__) || defined(__386__) || defined(i386)
+#include "pipe/p_config.h"
+
+#if defined(PIPE_ARCH_X86)
 
 /* It is up to the caller to ensure that instructions issued are
  * suitable for the host cpu.  There are no checks made in this module
