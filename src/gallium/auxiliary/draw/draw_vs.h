@@ -123,6 +123,10 @@ struct draw_vertex_shader {
 
    struct tgsi_shader_info info;
 
+   /* Extracted from shader:
+    */
+   const float (*immediates)[4];
+
    /* 
     */
    struct draw_vs_varient *varient[16];

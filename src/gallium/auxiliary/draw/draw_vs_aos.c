@@ -66,6 +66,37 @@ static INLINE boolean eq( struct x86_reg a,
 	   a.disp == b.disp);
 }
       
+struct x86_reg aos_get_x86( struct aos_compilation *cp,
+                            unsigned value )
+{
+   if (cp->ebp != value) {
+      unsigned offset;
+
+      switch (value) {
+      case X86_IMMEDIATES:
+         offset = Offset(struct aos_machine, immediates);
+         break;
+      case X86_CONSTANTS:
+         offset = Offset(struct aos_machine, constants);
+         break;
+      case X86_ATTRIBS:
+         offset = Offset(struct aos_machine, attrib);
+         break;
+      default:
+         assert(0);
+         offset = 0;
+      }
+
+      x86_mov(cp->func, cp->temp_EBP, 
+              x86_make_disp(cp->machine_EDX, offset));
+      /* x86_deref(x86_make_disp(cp->machine_EDX, offset))); */
+
+      cp->ebp = value;
+   }
+
+   return cp->temp_EBP;
+}
+
 
 static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
                                   unsigned file,
@@ -83,14 +114,14 @@ static struct x86_reg get_reg_ptr(struct aos_compilation *cp,
    case TGSI_FILE_TEMPORARY:
       return x86_make_disp(ptr, Offset(struct aos_machine, temp[idx]));
 
-   case TGSI_FILE_IMMEDIATE:
-      return x86_make_disp(ptr, Offset(struct aos_machine, immediate[idx]));
-
-   case TGSI_FILE_CONSTANT:       
-      return x86_make_disp(ptr, Offset(struct aos_machine, constant[idx]));
-
    case AOS_FILE_INTERNAL:
       return x86_make_disp(ptr, Offset(struct aos_machine, internal[idx]));
+
+   case TGSI_FILE_IMMEDIATE: 
+      return x86_make_disp(aos_get_x86(cp, X86_IMMEDIATES), idx * 4 * sizeof(float));
+
+   case TGSI_FILE_CONSTANT: 
+      return x86_make_disp(aos_get_x86(cp, X86_CONSTANTS), idx * 4 * sizeof(float));
 
    default:
       ERROR(cp, "unknown reg file");
@@ -1865,6 +1896,7 @@ static boolean emit_rhw_viewport( struct aos_compilation *cp )
 }
 
 
+#if 0
 static boolean note_immediate( struct aos_compilation *cp,
                                struct tgsi_full_immediate *imm )
 {
@@ -1877,6 +1909,7 @@ static boolean note_immediate( struct aos_compilation *cp,
 
    return TRUE;
 }
+#endif
 
 
 
@@ -1939,6 +1972,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    cp.outbuf_ECX    = x86_make_reg(file_REG32, reg_CX);
    cp.machine_EDX   = x86_make_reg(file_REG32, reg_DX);
    cp.count_ESI     = x86_make_reg(file_REG32, reg_SI);
+   cp.temp_EBP     = x86_make_reg(file_REG32, reg_BP);
 
    x86_init_func(cp.func);
 
@@ -1946,6 +1980,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
    x86_push(cp.func, cp.idx_EBX);
    x86_push(cp.func, cp.count_ESI);
+   x86_push(cp.func, cp.temp_EBP);
 
 
    /* Load arguments into regs:
@@ -1988,8 +2023,10 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
 
          switch (parse.FullToken.Token.Type) {
          case TGSI_TOKEN_TYPE_IMMEDIATE:
+#if 0
             if (!note_immediate( &cp, &parse.FullToken.FullImmediate ))
                goto fail;
+#endif
             break;
 
          case TGSI_TOKEN_TYPE_INSTRUCTION:
@@ -2072,6 +2109,7 @@ static boolean build_vertex_program( struct draw_vs_varient_aos_sse *varient,
    if (cp.func->need_emms)
       mmx_emms(cp.func);
 
+   x86_pop(cp.func, cp.temp_EBP);
    x86_pop(cp.func, cp.count_ESI);
    x86_pop(cp.func, cp.idx_EBX);
 
@@ -2098,26 +2136,14 @@ static void vaos_set_buffer( struct draw_vs_varient *varient,
 
    for (i = 0; i < vaos->base.key.nr_inputs; i++) {
       if (vaos->base.key.element[i].in.buffer == buf) {
-         vaos->machine->attrib[i].input_ptr = ((char *)ptr +
-                                               vaos->base.key.element[i].in.offset);
-         vaos->machine->attrib[i].input_stride = stride;
+         vaos->attrib[i].input_ptr = ((char *)ptr +
+                                      vaos->base.key.element[i].in.offset);
+         vaos->attrib[i].input_stride = stride;
       }
    }
 }
 
 
-static void vaos_destroy( struct draw_vs_varient *varient )
-{
-   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
-
-   if (vaos->machine)
-      align_free( vaos->machine );
-
-   x86_release_func( &vaos->func[0] );
-   x86_release_func( &vaos->func[1] );
-
-   FREE(vaos);
-}
 
 static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
                                       const unsigned *elts,
@@ -2127,6 +2153,10 @@ static void PIPE_CDECL vaos_run_elts( struct draw_vs_varient *varient,
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
    vaos->machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
+   vaos->machine->constants = vaos->draw->pt.user.constants;
+   vaos->machine->immediates = vaos->base.vs->immediates;
+   vaos->machine->attrib = vaos->attrib;
+
    vaos->gen_run_elts( varient,
                        elts,
                        count,
@@ -2141,6 +2171,10 @@ static void PIPE_CDECL vaos_run_linear( struct draw_vs_varient *varient,
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
 
    vaos->machine->internal[IMM_PSIZE][0] = vaos->draw->rasterizer->point_size;
+   vaos->machine->constants = vaos->draw->pt.user.constants;
+   vaos->machine->immediates = vaos->base.vs->immediates;
+   vaos->machine->attrib = vaos->attrib;
+
    vaos->gen_run_linear( varient,
                          start,
                          count,
@@ -2152,10 +2186,6 @@ static void vaos_set_constants( struct draw_vs_varient *varient,
                                 const float (*constants)[4] )
 {
    struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
-
-   memcpy(vaos->machine->constant,
-          constants,
-          (vaos->base.vs->info.file_max[TGSI_FILE_CONSTANT] + 1) * 4 * sizeof(float));
 
 #if 0
    unsigned i;
@@ -2187,6 +2217,21 @@ static void vaos_set_viewport( struct draw_vs_varient *varient,
    memcpy(vaos->machine->translate, viewport->translate, 4 * sizeof(float));
 }
 
+static void vaos_destroy( struct draw_vs_varient *varient )
+{
+   struct draw_vs_varient_aos_sse *vaos = (struct draw_vs_varient_aos_sse *)varient;
+
+   if (vaos->machine)
+      align_free( vaos->machine );
+
+   FREE( vaos->attrib );
+
+   x86_release_func( &vaos->func[0] );
+   x86_release_func( &vaos->func[1] );
+
+   FREE(vaos);
+}
+
 
 
 static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
@@ -2207,6 +2252,11 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    vaos->base.run_elts = vaos_run_elts;
 
    vaos->draw = vs->draw;
+
+   vaos->attrib = MALLOC( key->nr_inputs * sizeof(vaos->attrib[0]) );
+   if (!vaos->attrib)
+      goto fail;
+
    vaos->machine = align_malloc( sizeof(struct aos_machine), 16 );
    if (!vaos->machine)
       goto fail;
@@ -2233,7 +2283,10 @@ static struct draw_vs_varient *varient_aos_sse( struct draw_vertex_shader *vs,
    return &vaos->base;
 
  fail:
-   if (vaos->machine)
+   if (vaos && vaos->attrib)
+      FREE(vaos->attrib);
+
+   if (vaos && vaos->machine)
       align_free( vaos->machine );
 
    if (vaos)

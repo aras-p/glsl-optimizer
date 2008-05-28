@@ -75,7 +75,7 @@ draw_pt_arrays(struct draw_context *draw,
 
    if (opt == 0) 
       middle = draw->pt.middle.fetch_emit;
-   else if (opt == PT_SHADE && draw->pt.test_fse)
+   else if (opt == PT_SHADE)
       middle = draw->pt.middle.fetch_shade_emit;
    else
       middle = draw->pt.middle.general;
@@ -118,12 +118,9 @@ boolean draw_pt_init( struct draw_context *draw )
    if (!draw->pt.middle.fetch_emit)
       return FALSE;
 
-   if (draw->pt.test_fse) {
-      draw->pt.middle.fetch_shade_emit = draw_pt_middle_fse( draw );
-      if (!draw->pt.middle.fetch_shade_emit)
-         return FALSE;
-   }
-
+   draw->pt.middle.fetch_shade_emit = draw_pt_middle_fse( draw );
+   if (!draw->pt.middle.fetch_shade_emit)
+      return FALSE;
 
    draw->pt.middle.general = draw_pt_fetch_pipeline_or_emit( draw );
    if (!draw->pt.middle.general)

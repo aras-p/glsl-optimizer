@@ -78,6 +78,14 @@ struct lit_info {
 #define MAX_SHINE_TAB    4
 #define MAX_LIT_INFO     16
 
+struct aos_attrib {
+   const void *input_ptr;
+   unsigned input_stride;
+};
+
+
+
+
 /* This is the temporary storage used by all the aos_sse vs varients.
  * Create one per context and reuse by passing a pointer in at
  * vs_varient creation??
@@ -86,8 +94,6 @@ struct aos_machine {
    float input    [MAX_INPUTS    ][4];
    float output   [MAX_OUTPUTS   ][4];
    float temp     [MAX_TEMPS     ][4];
-   float constant [MAX_CONSTANTS ][4]; /* fixme -- should just be a pointer */
-   float immediate[MAX_IMMEDIATES][4]; /* fixme -- should just be a pointer */
    float internal [MAX_INTERNALS ][4];
 
    float scale[4];              /* viewport */
@@ -105,12 +111,10 @@ struct aos_machine {
    ushort fpu_restore;
    ushort fpucntl;              /* one of FPU_* above */
 
-   struct {
-      const void *input_ptr;
-      unsigned input_stride;
+   const float (*immediates)[4];     /* points to shader data */
+   const float (*constants)[4];      /* points to draw data */
 
-      unsigned output_offset;
-   } attrib[PIPE_MAX_ATTRIBS];
+   const struct aos_attrib *attrib; /* points to ? */
 };
 
 
@@ -132,6 +136,7 @@ struct aos_compilation {
       unsigned last_used;
    } xmm[8];
 
+   unsigned ebp;                /* one of X86_* */
 
    boolean input_fetched[PIPE_MAX_ATTRIBS];
    unsigned output_last_write[PIPE_MAX_ATTRIBS];
@@ -148,6 +153,7 @@ struct aos_compilation {
    struct x86_reg outbuf_ECX;
    struct x86_reg machine_EDX;
    struct x86_reg count_ESI;    /* decrements to zero */
+   struct x86_reg temp_EBP;
 };
 
 struct x86_reg aos_get_xmm_reg( struct aos_compilation *cp );
@@ -192,20 +198,20 @@ do {                                                                    \
 } while (0)
 
 
+#define X86_NULL       0
+#define X86_IMMEDIATES 1
+#define X86_CONSTANTS  2
+#define X86_ATTRIBS    3
 
-
+struct x86_reg aos_get_x86( struct aos_compilation *cp,
+                            unsigned value );
 
 
 struct draw_vs_varient_aos_sse {
    struct draw_vs_varient base;
    struct draw_context *draw;
 
-#if 0
-   struct {
-      const void *ptr;
-      unsigned stride;
-   } attrib[PIPE_MAX_ATTRIBS];
-#endif
+   struct aos_attrib *attrib;
 
    struct aos_machine *machine; /* XXX: temporarily unshared */
 
