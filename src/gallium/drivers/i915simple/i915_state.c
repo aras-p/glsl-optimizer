@@ -41,7 +41,6 @@
 #include "i915_state_inlines.h"
 #include "i915_fpc.h"
 
-
 /* The i915 (and related graphics cores) do not support GL_CLAMP.  The
  * Intel drivers for "other operating systems" implement GL_CLAMP as
  * GL_CLAMP_TO_EDGE, so the same is done here.
@@ -178,6 +177,7 @@ static void i915_bind_blend_state(struct pipe_context *pipe,
                                   void *blend)
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    i915->blend = (struct i915_blend_state*)blend;
 
@@ -194,6 +194,7 @@ static void i915_set_blend_color( struct pipe_context *pipe,
 			     const struct pipe_blend_color *blend_color )
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    i915->blend_color = *blend_color;
 
@@ -279,6 +280,8 @@ static void i915_bind_sampler_states(struct pipe_context *pipe,
    if (num == i915->num_samplers &&
        !memcmp(i915->sampler, sampler, num * sizeof(void *)))
       return;
+
+   draw_flush(i915->draw);
 
    for (i = 0; i < num; ++i)
       i915->sampler[i] = sampler[i];
@@ -398,6 +401,7 @@ static void i915_bind_depth_stencil_state(struct pipe_context *pipe,
                                           void *depth_stencil)
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    i915->depth_stencil = (const struct i915_depth_stencil_state *)depth_stencil;
 
@@ -415,6 +419,7 @@ static void i915_set_scissor_state( struct pipe_context *pipe,
                                  const struct pipe_scissor_state *scissor )
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    memcpy( &i915->scissor, scissor, sizeof(*scissor) );
    i915->dirty |= I915_NEW_SCISSOR;
@@ -451,6 +456,7 @@ static void
 i915_bind_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    i915->fs = (struct i915_fragment_shader*) shader;
 
@@ -506,6 +512,7 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    struct pipe_winsys *ws = pipe->winsys;
+   draw_flush(i915->draw);
 
    assert(shader < PIPE_SHADER_TYPES);
    assert(index == 0);
@@ -574,6 +581,7 @@ static void i915_set_framebuffer_state(struct pipe_context *pipe,
 				       const struct pipe_framebuffer_state *fb)
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    i915->framebuffer = *fb; /* struct copy */
 
@@ -586,6 +594,7 @@ static void i915_set_clip_state( struct pipe_context *pipe,
 			     const struct pipe_clip_state *clip )
 {
    struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
 
    draw_set_clip_state(i915->draw, clip);
 
@@ -698,6 +707,10 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
                                     const struct pipe_vertex_buffer *buffers)
 {
    struct i915_context *i915 = i915_context(pipe);
+   /* Because we change state before the draw_set_vertex_buffers call
+    * we need a flush here, just to be sure.
+    */
+   draw_flush(i915->draw);
 
    memcpy(i915->vertex_buffer, buffers, count * sizeof(buffers[0]));
    i915->num_vertex_buffers = count;
@@ -711,6 +724,11 @@ static void i915_set_vertex_elements(struct pipe_context *pipe,
                                      const struct pipe_vertex_element *elements)
 {
    struct i915_context *i915 = i915_context(pipe);
+   /* Because we change state before the draw_set_vertex_buffers call
+    * we need a flush here, just to be sure.
+    */
+   draw_flush(i915->draw);
+
    i915->num_vertex_elements = count;
    /* pass-through to draw module */
    draw_set_vertex_elements(i915->draw, count, elements);
